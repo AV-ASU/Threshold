@@ -1,5 +1,7 @@
 # Threshold
 
+[![CI](https://github.com/AV-ASU/Threshold/actions/workflows/ci.yml/badge.svg)](https://github.com/AV-ASU/Threshold/actions/workflows/ci.yml)
+
 A 2D top-down narrative-horror game built with pygame. You arrive in a
 small town in 1994 looking for someone, and slowly come to understand
 what the town is. There is no combat -- only walking, watching, hiding,
