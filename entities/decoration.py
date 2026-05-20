@@ -1,0 +1,1544 @@
+"""Animated decorative props (candles, smoke, the well, gore...).
+Pure draw functions, no game logic."""
+import re
+import time
+import math
+import random
+import pygame
+from constants import (
+    SCREEN_W, SCREEN_H,
+    C_BLACK, C_WHITE, C_GOLD, C_RED, C_DIM, C_PANEL, C_PANEL_BORDER,
+)
+
+# Compass-octant lookup. Index = 0..7 starting from EAST and walking
+# clockwise (E, SE, S, SW, W, NW, N, NE). Each entry is a unit-circle
+# offset; multiplied by per-axis travel inside _compass_offset.
+_COMPASS_UNIT = (
+    ( 1.0,  0.0),   # 0 E
+    ( 0.7,  0.7),   # 1 SE
+    ( 0.0,  1.0),   # 2 S
+    (-0.7,  0.7),   # 3 SW
+    (-1.0,  0.0),   # 4 W
+    (-0.7, -0.7),   # 5 NW
+    ( 0.0, -1.0),   # 6 N
+    ( 0.7, -0.7),   # 7 NE
+)
+
+
+def _compass_offset(dx, dy, travel_x, travel_y):
+    """Bucket a (dx, dy) world-vector into one of 8 compass directions
+    (E, SE, S, SW, W, NW, N, NE) and return an integer (ox, oy) pixel
+    offset capped to (travel_x, travel_y). Used by watching_eye and
+    watching_wound to snap their tracking to discrete states instead
+    of smooth analog drift -- the discrete shift is what the player's
+    peripheral vision catches.
+
+    `dx` is east-positive; `dy` is south-positive (screen coords).
+    Player directly on top of the prop returns (0, 0). atan2 gives an
+    angle in [-pi, pi]; we add pi/8 and divide by pi/4 so the
+    quantisation lines up centred on each octant rather than on the
+    octant boundary."""
+    if abs(dx) < 1.0 and abs(dy) < 1.0:
+        return (0, 0)
+    ang = math.atan2(dy, dx)            # -pi..pi, 0=E, +pi/2=S
+    # Shift so EAST sits at the centre of bucket 0, then floor.
+    bucket = int(math.floor((ang + math.pi / 8) / (math.pi / 4))) % 8
+    ux, uy = _COMPASS_UNIT[bucket]
+    return (int(round(ux * travel_x)), int(round(uy * travel_y)))
+
+
+class Decoration:
+    # Class-level player position cache. Game updates this every step
+    # so a Decoration draw can read the player's world coords without
+    # the draw signature having to plumb them through. Used by the
+    # watching_eye to point its pupil at the player and by any future
+    # tracking decoration.
+    player_world = (0, 0)
+
+    def __init__(self, x, y, kind, scale=1.0, seed=None, **kwargs):
+        self.x = x; self.y = y
+        self.kind = kind
+        self.scale = scale
+        self.t = random.uniform(0, 100)
+        self.seed = seed if seed is not None else random.randint(0, 9999)
+        self.kwargs = kwargs
+
+    def update(self, dt):
+        self.t += dt
+
+    def draw(self, surf, cam_x, cam_y):
+        sx = int(self.x - cam_x)
+        sy = int(self.y - cam_y)
+        if sx < -64 or sx > SCREEN_W + 64 or sy < -64 or sy > SCREEN_H + 64:
+            return
+        getattr(self, f"_draw_{self.kind}", self._draw_unknown)(surf, sx, sy)
+
+    def _draw_unknown(self, surf, x, y):
+        pygame.draw.rect(surf, (255, 0, 255), (x - 4, y - 4, 8, 8))
+
+    def _draw_candle(self, surf, x, y):
+        pygame.draw.rect(surf, (180, 180, 200), (x - 2, y, 4, 8))
+        pygame.draw.rect(surf, (240, 230, 200), (x - 1, y - 4, 2, 4))
+        f_h = 6 + math.sin(self.t * 18) * 1 + (random.random() - 0.5)
+        f_w = 3 + math.sin(self.t * 13) * 0.5
+        # Optional scripted dip: the flame nearly snuffs and re-grows
+        # over ~0.7s when something passes the candle (the opening
+        # watcher manifestation cue). Set kwargs["dip_t0"] = time.time()
+        # to fire. Outside the dip window the candle is unchanged.
+        dip_t0 = self.kwargs.get("dip_t0", 0.0)
+        if dip_t0:
+            elapsed = time.time() - dip_t0
+            if 0.0 <= elapsed < 0.7:
+                if elapsed < 0.15:
+                    dim = 1.0 - (elapsed / 0.15) * 0.70
+                else:
+                    dim = 0.30 + 0.70 * ((elapsed - 0.15) / 0.55)
+                f_h *= dim
+                f_w *= dim
+        pygame.draw.polygon(surf, (255, 200, 80), [(x, y - 4 - f_h), (x - f_w, y - 4), (x + f_w, y - 4)])
+        pygame.draw.polygon(surf, (255, 240, 180),
+                            [(x, y - 4 - f_h * 0.7), (x - f_w * 0.5, y - 4), (x + f_w * 0.5, y - 4)])
+        if int(self.t * 6) % 2 == 0:
+            glow = pygame.Surface((20, 20), pygame.SRCALPHA)
+            pygame.draw.circle(glow, (255, 200, 80, 30), (10, 10), 10)
+            surf.blit(glow, (x - 10, y - 12))
+
+    def _draw_mud_footprint(self, surf, x, y):
+        # A single boot print -- dark muddy oval with a heel mark and
+        # three toe dabs. `dir` kwarg (0..3) rotates the print so a
+        # trail can suggest direction. `alpha` kwarg fades it.
+        d = self.kwargs.get("dir", 0)
+        a = max(20, min(220, int(self.kwargs.get("alpha", 180))))
+        layer = pygame.Surface((16, 22), pygame.SRCALPHA)
+        col = (32, 22, 14, a)
+        # oval body
+        pygame.draw.ellipse(layer, col, (3, 6, 10, 14))
+        # toe dabs (top of print)
+        pygame.draw.ellipse(layer, col, (4, 2, 3, 4))
+        pygame.draw.ellipse(layer, col, (8, 1, 3, 4))
+        pygame.draw.ellipse(layer, col, (11, 3, 2, 3))
+        # heel cleat
+        pygame.draw.ellipse(layer, col, (5, 16, 6, 4))
+        # rotate per direction (0=up, 1=right, 2=down, 3=left)
+        if d:
+            layer = pygame.transform.rotate(layer, -90 * d)
+        surf.blit(layer, (x - layer.get_width() // 2,
+                          y - layer.get_height() // 2))
+
+    def _draw_calendar(self, surf, x, y):
+        """Stripped-down wall calendar. Just the month abbreviation
+        and the day number on a small paper card -- no grid, no X
+        marks, no week-day headers. Reads kwargs:
+          today_d -- 1-based day-of-month for the current day
+          month   -- numeric month (10, 11, 12, or 1)
+        `month_days` is still accepted for compatibility but ignored.
+
+        The Game advances `today_d` and `month` on each sleep; this
+        prop just rerenders the new label. Cached SysFont surface so
+        we don't re-rasterise every frame."""
+        today_d = self.kwargs.get("today_d", 4)
+        month = self.kwargs.get("month", 10)
+        # Paper. Smaller now that the grid is gone -- a tear-off
+        # day-card pinned to the wall.
+        paper_w, paper_h = 26, 26
+        px = x - paper_w // 2
+        py = y - paper_h // 2
+        pygame.draw.rect(surf, (224, 218, 200), (px, py, paper_w, paper_h))
+        pygame.draw.rect(surf, (50, 40, 30), (px, py, paper_w, paper_h), 1)
+        # Header band carries the month abbreviation.
+        pygame.draw.rect(surf, (40, 30, 24), (px, py, paper_w, 8))
+        name = {10: "OCT", 11: "NOV", 12: "DEC", 1: "JAN"}.get(month, "OCT")
+        # The day number, big and centred on the lower portion.
+        day_str = str(today_d)
+        try:
+            cache = self.kwargs.get("_label_cache")
+            cache_key = self.kwargs.get("_label_cache_key")
+            target_key = (name, day_str)
+            if cache is None or cache_key != target_key:
+                month_font = pygame.font.SysFont(None, 10)
+                day_font = pygame.font.SysFont(None, 18)
+                month_surf = month_font.render(
+                    name, False, (224, 218, 200))
+                day_surf = day_font.render(
+                    day_str, False, (40, 30, 24))
+                cache = (month_surf, day_surf)
+                self.kwargs["_label_cache"] = cache
+                self.kwargs["_label_cache_key"] = target_key
+            month_surf, day_surf = cache
+            surf.blit(month_surf,
+                      (px + (paper_w - month_surf.get_width()) // 2,
+                       py + 1))
+            surf.blit(day_surf,
+                      (px + (paper_w - day_surf.get_width()) // 2,
+                       py + 9))
+        except Exception:
+            pass
+
+    def _draw_wheelbarrow(self, surf, x, y):
+        """Single-wheel wooden wheelbarrow seen from a 3/4 angle.
+        Loaded with a small pile of rusted hand tools (claw hammer
+        head, bent wrench, the tip of a saw). The tools are
+        deliberately drawn looking dirty/old at distance, but the
+        scene's interaction text ('these have been recently
+        cleaned') contradicts what the player is seeing -- the
+        horror is in the contradiction. Static, not animated."""
+        # Tray (the bucket of the wheelbarrow). Trapezoid with a
+        # darker rim. Brown weathered wood.
+        tray_top_w = 26
+        tray_bot_w = 18
+        tray_h = 10
+        tray_top_y = y - 4
+        # Use polygon for the trapezoid silhouette.
+        pygame.draw.polygon(surf, (110, 78, 50), [
+            (x - tray_top_w // 2, tray_top_y),
+            (x + tray_top_w // 2, tray_top_y),
+            (x + tray_bot_w // 2, tray_top_y + tray_h),
+            (x - tray_bot_w // 2, tray_top_y + tray_h),
+        ])
+        pygame.draw.polygon(surf, (60, 40, 24), [
+            (x - tray_top_w // 2, tray_top_y),
+            (x + tray_top_w // 2, tray_top_y),
+            (x + tray_bot_w // 2, tray_top_y + tray_h),
+            (x - tray_bot_w // 2, tray_top_y + tray_h),
+        ], 1)
+        # Plank seam across the tray.
+        pygame.draw.line(surf, (60, 40, 24),
+                         (x - tray_top_w // 2 + 2, tray_top_y + tray_h // 2),
+                         (x + tray_top_w // 2 - 2, tray_top_y + tray_h // 2), 1)
+        # Two front legs poking down past the tray.
+        pygame.draw.rect(surf, (60, 40, 24), (x - 9, tray_top_y + tray_h, 2, 5))
+        pygame.draw.rect(surf, (60, 40, 24), (x + 7, tray_top_y + tray_h, 2, 5))
+        # Wheel out the front.
+        pygame.draw.circle(surf, (40, 28, 20), (x - 12, y + 3), 4)
+        pygame.draw.circle(surf, (16, 12, 10), (x - 12, y + 3), 4, 1)
+        pygame.draw.line(surf, (90, 70, 50), (x - 16, y + 3),
+                         (x - 8, y + 3), 1)
+        # Long handle running back-right (the user's grip end).
+        pygame.draw.line(surf, (90, 60, 36),
+                         (x + 12, y), (x + 18, y + 5), 2)
+        # Tools poking out of the tray. Rusty steel + dark wood.
+        # Hammer head (rectangular block with a dark eye for the haft).
+        pygame.draw.rect(surf, (130, 90, 70), (x - 4, tray_top_y - 4, 5, 4))
+        pygame.draw.rect(surf, (60, 40, 30), (x - 4, tray_top_y - 4, 5, 4), 1)
+        pygame.draw.rect(surf, (60, 40, 30), (x - 2, tray_top_y - 3, 1, 2))
+        # Wrench at an angle (a bent steel rod with a notched head).
+        pygame.draw.line(surf, (140, 110, 90),
+                         (x + 2, tray_top_y - 2),
+                         (x + 9, tray_top_y - 6), 2)
+        pygame.draw.rect(surf, (140, 110, 90),
+                         (x + 8, tray_top_y - 8, 3, 4))
+        pygame.draw.rect(surf, (60, 40, 30),
+                         (x + 8, tray_top_y - 8, 3, 4), 1)
+        # Saw tip protruding (a small triangle of toothed steel).
+        pygame.draw.polygon(surf, (170, 150, 140), [
+            (x - 8, tray_top_y - 1),
+            (x - 1, tray_top_y - 6),
+            (x - 1, tray_top_y - 4),
+        ])
+        # Rust streaks down the tray face.
+        pygame.draw.line(surf, (130, 60, 30),
+                         (x - 6, tray_top_y + 2),
+                         (x - 5, tray_top_y + tray_h - 1), 1)
+        pygame.draw.line(surf, (130, 60, 30),
+                         (x + 4, tray_top_y + 1),
+                         (x + 4, tray_top_y + tray_h - 1), 1)
+
+    def _draw_watching_wound(self, surf, x, y):
+        """Vertical slit-cut on a stone or bark surface, with a wet
+        glint at the edge that catches the player's facing. Reads as
+        an open wound rather than an eye -- no iris, no pupil. The
+        glint is what tracks; the wound itself is just a dark cut.
+
+        Same `size` kwarg as `watching_eye` (small / large). Designed
+        to be placed alongside watching_eye decorations so the cult
+        marks read as a mix of literal eyes and abstract cuts. The
+        gaze sensation comes from the moving glint, not from a pupil
+        the player can see directly."""
+        size = self.kwargs.get("size", "small")
+        if size == "large":
+            slit_w, slit_h = 6, 28
+            glint_w = 4
+        else:
+            slit_w, slit_h = 3, 14
+            glint_w = 2
+        # The cut itself -- a dark vertical slot. Slight outer halo
+        # of bruised tissue where the surface has parted.
+        pygame.draw.ellipse(surf, (60, 30, 32),
+                            (x - slit_w // 2 - 2, y - slit_h // 2 - 2,
+                             slit_w + 4, slit_h + 4))
+        pygame.draw.ellipse(surf, (8, 4, 8),
+                            (x - slit_w // 2, y - slit_h // 2,
+                             slit_w, slit_h))
+        # A thin rim of dried-blood smear around the rim.
+        pygame.draw.ellipse(surf, (90, 22, 28),
+                            (x - slit_w // 2, y - slit_h // 2,
+                             slit_w, slit_h), 1)
+        # The wet glint -- a 1-2px streak inside the cut. Snaps to one
+        # of 8 compass positions inside the slit based on where the
+        # player is standing. The discrete shift is what catches
+        # peripheral vision; the player notices the wound's eye dart
+        # as they cross a diagonal.
+        ox, oy = _compass_offset(
+            Decoration.player_world[0] - self.x,
+            Decoration.player_world[1] - self.y,
+            travel_x=max(1, slit_w // 4),
+            travel_y=max(1, slit_h // 3),
+        )
+        # A slow wet pulse so the glint doesn't sit static.
+        pulse = 0.7 + 0.3 * math.sin(self.t * 1.4 + self.seed)
+        glint_alpha = max(40, int(180 * pulse))
+        layer = pygame.Surface((slit_w + 4, slit_h + 4),
+                                pygame.SRCALPHA)
+        pygame.draw.rect(layer, (220, 210, 200, glint_alpha),
+                         (slit_w // 2 + 2 + ox - glint_w // 2,
+                          slit_h // 2 + oy,
+                          glint_w, 2))
+        surf.blit(layer, (x - (slit_w + 4) // 2,
+                          y - (slit_h + 4) // 2))
+
+    def _draw_passing_silhouette(self, surf, x, y):
+        # One-shot scripted silhouette: a dark vertical strip drifts
+        # left-to-right across the window glass over `dur` seconds
+        # starting at `t0`. Outside that window the decoration is
+        # invisible; the scene removes it after dur+1.
+        t0 = self.kwargs.get("t0", 0.0)
+        dur = self.kwargs.get("dur", 1.8)
+        if not t0:
+            return
+        elapsed = time.time() - t0
+        if elapsed < 0.0 or elapsed > dur:
+            return
+        phase = elapsed / dur            # 0..1 across the glass
+        # Window glass spans roughly +/-10px around (x, y). Strip is
+        # 3px wide, 18px tall; soft edges via per-column alpha.
+        fx = int(x - 12 + phase * 24)
+        strip = pygame.Surface((4, 20), pygame.SRCALPHA)
+        for col_x in range(4):
+            edge = 1.0 - abs(col_x - 1.5) / 1.8
+            a = max(0, int(170 * edge))
+            pygame.draw.rect(strip, (8, 6, 14, a), (col_x, 0, 1, 20))
+        surf.blit(strip, (fx, y - 10))
+
+    def _draw_lantern(self, surf, x, y):
+        # Lamppost: vertical iron pole grounded at y+18, cross-arm at the
+        # top, lantern hangs from the arm tip. Earlier rounds drew only
+        # the lantern + a stub of chain, which read as floating in the
+        # corridor. The pole anchors it to the ground.
+        ground_y = y + 18
+        top_y = y - 22
+        # vertical pole
+        pygame.draw.line(surf, (50, 50, 60), (x, ground_y), (x, top_y), 2)
+        # base flare
+        pygame.draw.rect(surf, (50, 50, 60), (x - 3, ground_y - 1, 7, 3))
+        # cross-arm reaching right to where the lantern hangs
+        pygame.draw.line(surf, (50, 50, 60), (x, top_y), (x + 8, top_y), 2)
+        sway = math.sin(self.t * 1.2 + self.seed) * 1
+        # short chain from arm tip down to lantern body
+        pygame.draw.line(surf, (60, 60, 70),
+                         (x + 8, top_y),
+                         (x + 8 + sway, y - 6), 1)
+        # lantern body
+        pygame.draw.rect(surf, (80, 60, 30), (x + 3 + sway, y - 6, 10, 12))
+        flick = (255, 200 + int(math.sin(self.t * 20) * 20), 80)
+        pygame.draw.rect(surf, flick, (x + 5 + sway, y - 4, 6, 8))
+
+    def _draw_smoke(self, surf, x, y):
+        for i in range(4):
+            phase = (self.t * 0.6 + i * 0.4 + self.seed * 0.1) % 1.0
+            ox = math.sin(phase * 6 + self.seed) * 3
+            oy = -phase * 36
+            r = int(4 + phase * 6)
+            alpha = int((1 - phase) * 130)
+            puff = pygame.Surface((r * 2 + 2, r * 2 + 2), pygame.SRCALPHA)
+            pygame.draw.circle(puff, (160, 160, 170, alpha), (r + 1, r + 1), r)
+            surf.blit(puff, (x + ox - r, y + oy - r))
+
+    def _draw_clock(self, surf, x, y):
+        pygame.draw.rect(surf, (90, 60, 40), (x - 8, y - 16, 16, 28))
+        pygame.draw.rect(surf, (40, 25, 15), (x - 8, y - 16, 16, 28), 1)
+        pygame.draw.circle(surf, (240, 230, 210), (x, y - 8), 6)
+        pygame.draw.circle(surf, (40, 25, 15), (x, y - 8), 6, 1)
+        pygame.draw.line(surf, C_BLACK, (x, y - 13), (x, y - 12), 1)
+        pygame.draw.line(surf, C_BLACK, (x, y - 4), (x, y - 3), 1)
+        minute = self.t * 0.05
+        second = math.floor(self.t * 1.0) * (math.pi / 30)
+        mx = x + math.cos(minute - math.pi / 2) * 4
+        my = (y - 8) + math.sin(minute - math.pi / 2) * 4
+        pygame.draw.line(surf, C_BLACK, (x, y - 8), (mx, my), 1)
+        sx2 = x + math.cos(second - math.pi / 2) * 5
+        sy2 = (y - 8) + math.sin(second - math.pi / 2) * 5
+        pygame.draw.line(surf, C_RED, (x, y - 8), (sx2, sy2), 1)
+        sw = math.sin(self.t * 2) * 3
+        pygame.draw.line(surf, (40, 25, 15), (x, y - 4), (x + sw, y + 8), 1)
+        pygame.draw.circle(surf, (200, 180, 60), (int(x + sw), y + 8), 2)
+
+    def _draw_meat(self, surf, x, y):
+        sway = math.sin(self.t * 0.8 + self.seed) * 1.5
+        pygame.draw.line(surf, (140, 140, 150), (x, y - 16), (x, y - 8), 1)
+        pygame.draw.circle(surf, (140, 140, 150), (x, y - 8), 2)
+        for ay in range(0, 12):
+            w = int(5 + math.sin(ay / 3) * 1.5)
+            cx = x + sway
+            pygame.draw.line(surf, (130, 30, 40), (cx - w, y - 6 + ay), (cx + w, y - 6 + ay), 1)
+        drip_phase = (self.t * 0.3 + self.seed * 0.07) % 3.0
+        if drip_phase < 1.0:
+            dy = int(drip_phase * 8)
+            pygame.draw.rect(surf, (90, 20, 30), (x + sway, y + 6 + dy, 1, 2))
+
+    def _draw_banner(self, surf, x, y):
+        col = self.kwargs.get("color", (140, 60, 70))
+        for i in range(8):
+            wy = math.sin(self.t * 3 + i * 0.5 + self.seed) * 1.5
+            pygame.draw.line(surf, col, (x - 6, y + i * 2 + wy), (x + 6, y + i * 2 + wy), 2)
+
+    def _draw_well(self, surf, x, y):
+        # Stone rim
+        pygame.draw.ellipse(surf, (90, 90, 100), (x - 14, y - 4, 28, 14))
+        pygame.draw.ellipse(surf, (60, 60, 70), (x - 14, y - 4, 28, 14), 2)
+        # Dark interior shaft -- the well reads as bottomless without water.
+        pygame.draw.ellipse(surf, (8, 6, 12), (x - 10, y - 1, 20, 8))
+        # Wooden frame (posts + crossbar)
+        pygame.draw.line(surf, (90, 60, 40), (x - 12, y - 4), (x - 12, y - 18), 2)
+        pygame.draw.line(surf, (90, 60, 40), (x + 12, y - 4), (x + 12, y - 18), 2)
+        pygame.draw.line(surf, (90, 60, 40), (x - 14, y - 18), (x + 14, y - 18), 2)
+
+    def _draw_radio(self, surf, x, y):
+        pygame.draw.rect(surf, (90, 60, 40), (x - 10, y - 4, 20, 12))
+        pygame.draw.rect(surf, (40, 25, 15), (x - 10, y - 4, 20, 12), 1)
+        pygame.draw.rect(surf, (20, 18, 22), (x - 8, y - 2, 12, 6))
+        nx = x - 8 + int((math.sin(self.t * 0.6) + 1) * 6)
+        pygame.draw.line(surf, (220, 60, 60), (nx, y - 2), (nx, y + 4), 1)
+
+    def _draw_photo(self, surf, x, y):
+        pygame.draw.rect(surf, (140, 110, 70), (x - 10, y - 8, 20, 16))
+        pygame.draw.rect(surf, (60, 40, 25), (x - 10, y - 8, 20, 16), 1)
+        pygame.draw.rect(surf, (180, 180, 200), (x - 8, y - 6, 16, 12))
+        pygame.draw.circle(surf, (220, 190, 160), (x - 4, y - 2), 1)
+        pygame.draw.circle(surf, (220, 190, 160), (x, y - 2), 1)
+        pygame.draw.circle(surf, (220, 190, 160), (x + 4, y - 2), 1)
+
+    def _draw_crow(self, surf, x, y):
+        hop = int(abs(math.sin(self.t * 0.8)) * 1)
+        head_turn = int(math.sin(self.t * 0.5) * 2)
+        # Body
+        pygame.draw.ellipse(surf, (10, 10, 14), (x - 5, y - 2 - hop, 10, 6))
+        # Anomaly: at a rare per-seed phase, the head is flipped to
+        # the OPPOSITE side of the body -- the crow is looking
+        # backwards. Held for ~120ms (~one stale frame) so the
+        # player only catches it if they happen to look at this crow
+        # during that window.
+        anomaly_phase = (self.t + self.seed * 0.13) % 9.0
+        looking_back = anomaly_phase > 8.88
+        if looking_back:
+            head_x = x - 4 - head_turn
+            eye_x = x - 5 - head_turn
+        else:
+            head_x = x + 4 + head_turn
+            eye_x = x + 5 + head_turn
+        pygame.draw.circle(surf, (10, 10, 14), (head_x, y - 4 - hop), 2)
+        pygame.draw.circle(surf, (220, 200, 50), (eye_x, y - 4 - hop), 1)
+
+    def _draw_grass_tuft(self, surf, x, y):
+        sway = math.sin(self.t * 2 + self.seed) * 1
+        col = (50, 110, 60)
+        for i in range(3):
+            pygame.draw.line(surf, col,
+                             (x - 2 + i * 2, y + 4),
+                             (x - 2 + i * 2 + sway, y - 2 - i), 1)
+
+    def _draw_mote(self, surf, x, y):
+        dx = math.sin(self.t * 0.4 + self.seed) * 8
+        dy = math.cos(self.t * 0.3 + self.seed * 0.7) * 4
+        col = (200, 200, 220)
+        try:
+            surf.set_at((int(x + dx), int(y + dy)), col)
+            surf.set_at((int(x + dx + 1), int(y + dy)), col)
+        except (IndexError, ValueError):
+            pass
+
+    def _draw_terminal(self, surf, x, y):
+        pygame.draw.rect(surf, (10, 12, 14), (x - 12, y - 10, 24, 20))
+        pygame.draw.rect(surf, (40, 40, 50), (x - 12, y - 10, 24, 20), 1)
+        for i in range(5):
+            ly = (y - 8 + i * 4 + int(self.t * 8)) % 16 + (y - 10)
+            w = (self.seed + i * 31) % 12 + 4
+            pygame.draw.line(surf, (50, 200, 80), (x - 10, ly), (x - 10 + w, ly), 1)
+
+    def _draw_cauldron(self, surf, x, y):
+        """THRESHOLD: cast-iron cauldron suspended on a triangular
+        iron frame over a fire pit. Used in the clearing scene
+        (the cult's purification site). Black-iron body with a
+        rolled rim, three-leg frame angling out from above the pot,
+        embers visible at the base when 'lit' kwarg is True."""
+        # Triangular frame (three iron rods crossing above the pot)
+        rod = (30, 28, 34)
+        pygame.draw.line(surf, rod, (x - 14, y - 18), (x, y - 22), 2)
+        pygame.draw.line(surf, rod, (x + 14, y - 18), (x, y - 22), 2)
+        pygame.draw.line(surf, rod, (x - 14, y - 18), (x - 18, y + 6), 2)
+        pygame.draw.line(surf, rod, (x + 14, y - 18), (x + 18, y + 6), 2)
+        # Hanging chain
+        for i in range(3):
+            pygame.draw.line(surf, rod,
+                             (x, y - 22 + i * 4),
+                             (x, y - 18 + i * 4), 1)
+        # Cauldron body (cast iron)
+        pygame.draw.ellipse(surf, (16, 14, 18), (x - 12, y - 10, 24, 16))
+        pygame.draw.ellipse(surf, (40, 36, 42), (x - 12, y - 10, 24, 16), 1)
+        # Rolled rim
+        pygame.draw.ellipse(surf, (50, 46, 52), (x - 12, y - 12, 24, 6))
+        pygame.draw.ellipse(surf, (8, 6, 10), (x - 10, y - 11, 20, 4))
+        # Liquid surface (dark, slightly steaming)
+        if self.kwargs.get("lit", True):
+            pygame.draw.ellipse(surf, (60, 30, 30), (x - 9, y - 10, 18, 4))
+            # Steam wisps
+            wisp_t = self.t * 2
+            for i in range(3):
+                wy = int(y - 18 - (wisp_t + i * 4) % 12)
+                wx = int(x - 4 + i * 3 + math.sin(wisp_t + i) * 2)
+                pygame.draw.rect(surf, (100, 90, 100), (wx, wy, 2, 2))
+        # Embers at the base
+        if self.kwargs.get("lit", True):
+            for i in range(4):
+                ex = x - 8 + i * 5
+                ey = y + 8
+                col = (200 + int(math.sin(self.t * 6 + i) * 20),
+                       80, 30)
+                pygame.draw.rect(surf, col, (ex, ey, 2, 2))
+
+    def _draw_bowl(self, surf, x, y):
+        # ceramic bowl on table — empty by default; if "filled" kwarg is True, contains an egg
+        pygame.draw.ellipse(surf, (180, 170, 155), (x - 10, y - 4, 20, 10))
+        pygame.draw.ellipse(surf, (130, 120, 110), (x - 10, y - 4, 20, 10), 1)
+        pygame.draw.ellipse(surf, (60, 50, 45), (x - 8, y - 3, 16, 6))
+        if self.kwargs.get("filled"):
+            # painted egg in bowl
+            cols = [(220, 80, 80), (80, 180, 220), (220, 200, 80)]
+            pygame.draw.ellipse(surf, (240, 220, 200), (x - 5, y - 8, 10, 12))
+            pygame.draw.ellipse(surf, cols[0], (x - 4, y - 6, 4, 2))
+            pygame.draw.ellipse(surf, cols[1], (x, y - 4, 4, 2))
+            pygame.draw.ellipse(surf, cols[2], (x - 3, y - 2, 4, 2))
+
+    def _draw_item_drop(self, surf, x, y):
+        # generic loot bob: small box that bobs gently with subtle glow
+        bob = int(math.sin(self.t * 2) * 1)
+        col = self.kwargs.get("color", C_GOLD)
+        pygame.draw.rect(surf, col, (x - 4, y - 4 + bob, 8, 8))
+        pygame.draw.rect(surf, C_BLACK, (x - 4, y - 4 + bob, 8, 8), 1)
+        if int(self.t * 4) % 4 == 0:
+            pygame.draw.line(surf, (255, 255, 200), (x - 6, y - 6 + bob), (x - 4, y - 4 + bob), 1)
+
+    def _draw_bloody_pile(self, surf, x, y):
+        # Lumpy mound of meat / cloth scraps in a pool of blood. Used
+        # in the barn after the doll is taken -- the room dirties
+        # immediately, this deco appears next to the chest. Static
+        # (no animation): the horror is in finding it, not watching it.
+        pool = (90, 8, 14)
+        dark = (50, 4, 10)
+        flesh = (130, 50, 50)
+        scrap = (160, 110, 100)
+        # Pool of blood underneath
+        pygame.draw.ellipse(surf, pool, (x - 14, y - 2, 28, 12))
+        pygame.draw.ellipse(surf, dark, (x - 9, y + 2, 18, 6))
+        # Mound (three lumps)
+        pygame.draw.ellipse(surf, flesh, (x - 10, y - 8, 14, 10))
+        pygame.draw.ellipse(surf, flesh, (x - 2, y - 10, 12, 9))
+        pygame.draw.ellipse(surf, flesh, (x + 1, y - 5, 10, 8))
+        pygame.draw.ellipse(surf, dark, (x - 10, y - 8, 14, 10), 1)
+        pygame.draw.ellipse(surf, dark, (x - 2, y - 10, 12, 9), 1)
+        # Scraps poking out
+        pygame.draw.line(surf, scrap, (x - 6, y - 4), (x - 9, y - 8), 1)
+        pygame.draw.line(surf, scrap, (x + 4, y - 6), (x + 8, y - 9), 1)
+
+    def _draw_drowned_body(self, surf, x, y):
+        """Slumped, tied, drowned figure. Built on the same silhouette
+        as the well-passage `gore` decoration -- broken pose, dark
+        underbody pool, head turned -- but the palette is drowned
+        (cold blue-grey) and the figure is bound at wrists and ankles
+        with long hair fanning out into the water. Static."""
+        # Underbody pool -- not blood here, just the dark water /
+        # silt under the body. Same shape language as the well gore.
+        pygame.draw.ellipse(surf, (10, 18, 36), (x - 18, y, 36, 14))
+        pygame.draw.ellipse(surf, (16, 28, 56), (x - 14, y - 2, 28, 10))
+        pygame.draw.ellipse(surf, (4, 10, 24), (x - 6, y + 2, 12, 6))
+        # Slumped torso (cold cloth)
+        pygame.draw.rect(surf, (50, 60, 80), (x - 9, y - 12, 18, 14))
+        pygame.draw.rect(surf, (24, 30, 44), (x - 9, y - 12, 18, 14), 1)
+        # Splayed limb to the right (same direction as the gore)
+        pygame.draw.rect(surf, (50, 60, 80), (x + 8, y - 4, 12, 5))
+        pygame.draw.rect(surf, (24, 30, 44), (x + 8, y - 4, 12, 5), 1)
+        # Rope binding the wrists where the splayed limb meets the
+        # body -- a cinched dark band.
+        pygame.draw.rect(surf, (140, 110, 70), (x + 6, y - 4, 4, 5))
+        pygame.draw.line(surf, (90, 60, 30), (x + 10, y - 1),
+                         (x + 14, y + 4), 1)
+        # Rope binding the ankles -- visible band across the lower
+        # body where the legs are pinned together.
+        pygame.draw.rect(surf, (140, 110, 70), (x - 6, y + 6, 12, 2))
+        # Head turned away (off-centre to the left like the gore).
+        pygame.draw.circle(surf, (170, 180, 190), (x - 6, y - 14), 5)
+        pygame.draw.circle(surf, (40, 50, 70), (x - 6, y - 14), 5, 1)
+        # Eyes-open variant -- triggered after the player has come
+        # close once. Two small bright dots where the closed eyes
+        # used to be lineless. The body has not moved otherwise.
+        if self.kwargs.get("eyes_open"):
+            pygame.draw.circle(surf, (240, 240, 250), (x - 7, y - 14), 1)
+            pygame.draw.circle(surf, (240, 240, 250), (x - 5, y - 14), 1)
+        # Long hair fanning OUT from the head into the surrounding
+        # water -- streaks on every side, longer than the head is wide.
+        hair = (30, 24, 28)
+        for ang_step in range(8):
+            ang = (ang_step / 8) * 6.283
+            length = 12 + (ang_step % 3) * 2
+            ex = x - 6 + int(math.cos(ang) * length)
+            ey = y - 14 + int(math.sin(ang) * length)
+            pygame.draw.line(surf, hair, (x - 6, y - 14), (ex, ey), 1)
+        # A few darker smudges for texture (matches well-gore style).
+        pygame.draw.line(surf, (4, 10, 18), (x - 10, y + 4),
+                         (x + 12, y + 6), 1)
+        pygame.draw.line(surf, (4, 10, 18), (x - 8, y + 8),
+                         (x + 10, y + 8), 1)
+
+    def _draw_watching_eye(self, surf, x, y):
+        """An eye that always looks at the player. The pupil rotates
+        toward the player's world position each frame using the
+        class-level Decoration.player_world cache. Random blink every
+        few seconds. Sized via self.kwargs.get('size', 'small') to
+        either 'small' (sclera ~10px) or 'large' (~22px) so the same
+        kind serves close embedded eyes and far peripheral ones.
+
+        The eye is meant to be placed where the player will see it
+        only out of the corner of their attention -- in tree lines,
+        wall faces, water surfaces. The pupil following them is the
+        beat that makes the player feel observed.
+
+        Cosmetic upgrades: bloodshot vein lines etched into the sclera
+        (deterministic per-seed so each eye has its own pattern), and
+        a vertical-slit pupil variant when `slit=True` is passed via
+        kwargs -- used in the late-game cult sites to push the gaze
+        from human to inhuman."""
+        # THRESHOLD redesign: drop the cartoon-eyeball palette. The eye
+        # now reads as something *carved* or *sunken* into the surface
+        # it sits on -- a narrow lid-slit framing a recessed iris that
+        # tracks the player. No bright sclera, no catchlight, no
+        # candy-coloured iris. Same kwargs (`size`, `slit`) so all
+        # existing scene wiring keeps working.
+        #
+        # 8-WAY DIRECTIONAL TRACKING: instead of a continuous pupil
+        # offset (which feels like a smooth analog stick), the iris
+        # now snaps to ONE of eight compass positions (N / NE / E /
+        # SE / S / SW / W / NW) based on the player's bearing from
+        # this eye. The discrete jump catches peripheral vision
+        # better -- the player notices the eye SHIFT when they
+        # cross a diagonal, instead of an iris that just slowly
+        # drifts. Reads as someone making a deliberate look.
+        size = self.kwargs.get("size", "small")
+        slit = self.kwargs.get("slit", False)
+        if size == "large":
+            socket_w, socket_h = 26, 12
+            pupil_r = 5
+            travel = 6
+        else:
+            socket_w, socket_h = 14, 7
+            pupil_r = 2
+            travel = 3
+        # Blink schedule: every ~6s, the slit closes for 0.18s.
+        cycle = 6.0
+        local = (self.t + self.seed * 0.1) % cycle
+        blinking = local > (cycle - 0.18)
+        # Recessed socket -- a dark horizontal hollow carved into the
+        # surface. Slight inner shadow to suggest depth.
+        pygame.draw.ellipse(surf, (16, 12, 16),
+                            (x - socket_w // 2, y - socket_h // 2,
+                             socket_w, socket_h))
+        pygame.draw.ellipse(surf, (4, 2, 6),
+                            (x - socket_w // 2, y - socket_h // 2,
+                             socket_w, socket_h), 1)
+        if blinking:
+            # Lid closed -- the slit goes opaque. No pupil this frame.
+            pygame.draw.rect(surf, (24, 18, 22),
+                             (x - socket_w // 2, y - 1,
+                              socket_w, 2))
+            return
+        # Bucket the player bearing into one of 8 compass octants.
+        # Vertical travel halved so the iris stays inside the
+        # horizontal socket on N/S looks.
+        ox, oy = _compass_offset(
+            Decoration.player_world[0] - self.x,
+            Decoration.player_world[1] - self.y,
+            travel, max(1, travel // 2),
+        )
+        # Iris -- desaturated dried-blood ring rather than purple.
+        # Smaller than before so the eye doesn't bulge out of the socket.
+        if pupil_r >= 3:
+            pygame.draw.circle(surf, (90, 30, 30),
+                               (x + ox, y + oy), pupil_r)
+        if slit:
+            # Vertical-slit pupil -- inhuman, animal. Two pixels wide.
+            slit_w = 1
+            slit_h = max(2, pupil_r + 1)
+            pygame.draw.ellipse(surf, (4, 2, 6),
+                                (x + ox - slit_w, y + oy - slit_h // 2,
+                                 slit_w * 2, slit_h))
+        else:
+            pygame.draw.circle(surf, (4, 2, 6),
+                               (x + ox, y + oy), max(1, pupil_r - 1))
+        # Faint wet glint at the socket's inner edge -- on the side
+        # the iris is looking from, so the moisture catches with
+        # the gaze direction.
+        if ox > 0:
+            glint_x = x - (socket_w // 2) + 2
+        elif ox < 0:
+            glint_x = x + (socket_w // 2) - 2
+        else:
+            # Pure N / S look -- glint sits centre.
+            glint_x = x
+        pygame.draw.rect(surf, (60, 50, 50),
+                         (glint_x, y, 1, 1))
+
+    def _draw_polaroid_wall(self, surf, x, y):
+        """The polaroid family pinned to the bedroom wall above the bed
+        after polaroid_taken flips. Reads as a photo frame containing
+        the four-figure family from the polaroid item -- tall man,
+        blonde woman, small boy, small girl. The frame is intact;
+        the figures all face out, looking at the bed."""
+        # Frame
+        pygame.draw.rect(surf, (90, 60, 40), (x - 9, y - 12, 18, 16))
+        pygame.draw.rect(surf, (40, 25, 15), (x - 9, y - 12, 18, 16), 1)
+        # Photo paper
+        pygame.draw.rect(surf, (210, 200, 180), (x - 7, y - 10, 14, 12))
+        # Tall man (centre)
+        pygame.draw.rect(surf, (60, 50, 70), (x - 1, y - 8, 2, 7))
+        pygame.draw.circle(surf, (200, 180, 160), (x, y - 9), 1)
+        # Blonde woman (right of man, leans on him)
+        pygame.draw.rect(surf, (160, 80, 100), (x + 2, y - 7, 2, 6))
+        pygame.draw.circle(surf, (220, 200, 140), (x + 3, y - 8), 1)
+        # Boy (front of man, on crutches)
+        pygame.draw.rect(surf, (200, 180, 80), (x - 3, y - 4, 1, 4))
+        pygame.draw.circle(surf, (200, 180, 160), (x - 3, y - 5), 1)
+        pygame.draw.line(surf, (90, 60, 30), (x - 4, y - 4),
+                         (x - 4, y), 1)
+        # Girl (next to boy)
+        pygame.draw.rect(surf, (200, 100, 130), (x - 5, y - 4, 1, 4))
+        pygame.draw.circle(surf, (200, 180, 160), (x - 5, y - 5), 1)
+        # All four faces have black-dot eyes that point AT the viewer.
+        for ex, ey in [(x, y - 9), (x + 3, y - 8),
+                       (x - 3, y - 5), (x - 5, y - 5)]:
+            pygame.draw.circle(surf, (10, 10, 14), (ex, ey), 1)
+
+    def _draw_small_chair(self, surf, x, y):
+        """A child-sized chair pulled out from the writing table after
+        crutch_taken. Wood-toned, smaller proportions than the regular
+        chair object tile. Sits diagonally as if just stood up from."""
+        pygame.draw.rect(surf, (110, 80, 60), (x - 6, y - 4, 12, 10))
+        pygame.draw.rect(surf, (90, 60, 40), (x - 6, y - 8, 12, 6))
+        pygame.draw.rect(surf, (60, 40, 25), (x - 6, y - 8, 12, 14), 1)
+        pygame.draw.rect(surf, (70, 50, 32), (x - 5, y + 6, 2, 4))
+        pygame.draw.rect(surf, (70, 50, 32), (x + 3, y + 6, 2, 4))
+
+    def _draw_overturned_chair(self, surf, x, y):
+        pygame.draw.rect(surf, (110, 80, 60), (x - 10, y - 2, 18, 6))
+        pygame.draw.rect(surf, (60, 40, 25), (x - 10, y - 2, 18, 6), 1)
+        pygame.draw.rect(surf, (70, 50, 32), (x + 8, y - 8, 4, 6))
+        pygame.draw.rect(surf, (70, 50, 32), (x + 8, y, 4, 6))
+        pygame.draw.rect(surf, (90, 60, 40), (x - 10, y - 8, 6, 14))
+
+    def _draw_doll_on_bed(self, surf, x, y):
+        """The old_doll laid on the bed after the player has taken the
+        item version. Pink dress, X eyes, short blond hair. Static,
+        flat -- it is on the bed. The bed beneath it is the existing
+        'b' object tile in the bedroom."""
+        # Dress
+        pygame.draw.rect(surf, (200, 100, 130), (x - 5, y - 2, 10, 12))
+        pygame.draw.rect(surf, (140, 60, 80), (x - 5, y - 2, 10, 12), 1)
+        # Head
+        pygame.draw.circle(surf, (240, 220, 200), (x, y - 8), 4)
+        pygame.draw.circle(surf, (60, 40, 30), (x - 4, y - 12), 3)
+        pygame.draw.circle(surf, (60, 40, 30), (x + 4, y - 12), 3)
+        # X eyes
+        pygame.draw.line(surf, (10, 10, 14), (x - 3, y - 9),
+                         (x - 1, y - 7), 1)
+        pygame.draw.line(surf, (10, 10, 14), (x - 1, y - 9),
+                         (x - 3, y - 7), 1)
+        pygame.draw.line(surf, (10, 10, 14), (x + 1, y - 9),
+                         (x + 3, y - 7), 1)
+        pygame.draw.line(surf, (10, 10, 14), (x + 3, y - 9),
+                         (x + 1, y - 7), 1)
+
+    def _draw_place_setting(self, surf, x, y):
+        """A single place setting on the writing table after the player
+        carries the reservation slip back into the bedroom: one plate,
+        one chair, one candle. The other three settings the slip
+        listed are conspicuously absent."""
+        # Plate
+        pygame.draw.ellipse(surf, (220, 220, 230), (x - 7, y - 4, 14, 8))
+        pygame.draw.ellipse(surf, (60, 60, 70), (x - 7, y - 4, 14, 8), 1)
+        pygame.draw.ellipse(surf, (240, 240, 250), (x - 5, y - 3, 10, 6))
+        # Fork to the left
+        pygame.draw.line(surf, (180, 180, 200), (x - 10, y - 2),
+                         (x - 10, y + 4), 1)
+        pygame.draw.line(surf, (180, 180, 200), (x - 11, y - 2),
+                         (x - 9, y - 2), 1)
+        # Knife to the right
+        pygame.draw.line(surf, (180, 180, 200), (x + 10, y - 2),
+                         (x + 10, y + 4), 1)
+        # Tiny candle
+        pygame.draw.rect(surf, (220, 200, 160), (x - 1, y - 12, 2, 7))
+        glow = 0.7 + math.sin(self.t * 4 + self.seed) * 0.3
+        pygame.draw.circle(surf, (240, 200, 100),
+                           (x, y - 13), max(2, int(3 * glow)))
+
+    def _draw_apology_wall(self, surf, x, y):
+        """A patch of wall covered in scratched 'I'M SORRY' text,
+        repeated overlapping rows in cramped uneven handwriting.
+        The lines are deterministic per-instance via self.seed so
+        adjacent placements don't share identical patterns. Drawn
+        as short white scratches so the text reads as carved/etched
+        rather than written. Static -- no animation."""
+        rng = random.Random(self.seed)
+        col = (210, 210, 220)
+        # 4 stacked rows of "I'M SORRY" using simple stroke shapes
+        # for each letter. Each row jittered slightly horizontally
+        # so the text feels written by hand, not typeset.
+        word = "IM SORRY"
+        for row in range(4):
+            ry = y - 14 + row * 8
+            rx = x - 22 + rng.randint(-2, 2)
+            for ch in word:
+                if ch == " ":
+                    rx += 3
+                    continue
+                self._draw_etched_char(surf, ch, rx, ry, col, rng)
+                rx += 5
+        # Outer scratches around the patch suggest more text just
+        # off the visible area.
+        for _ in range(6):
+            sx = x + rng.randint(-22, 22)
+            sy = y + rng.randint(-14, 14)
+            ex = sx + rng.randint(-3, 3)
+            ey = sy + rng.randint(-2, 2)
+            pygame.draw.line(surf, col, (sx, sy), (ex, ey), 1)
+
+    def _draw_etched_char(self, surf, ch, x, y, col, rng):
+        """Skeletal stroke renderer for a single letter inside an
+        apology-wall patch. Tiny 4x6 characters drawn with short
+        line strokes -- only the letters used by I'M SORRY are
+        defined."""
+        j = lambda: rng.randint(-1, 1)
+        if ch == "I":
+            pygame.draw.line(surf, col, (x + 1, y), (x + 1, y + 5), 1)
+        elif ch == "M":
+            pygame.draw.line(surf, col, (x, y + 5), (x, y), 1)
+            pygame.draw.line(surf, col, (x, y), (x + 2, y + 2), 1)
+            pygame.draw.line(surf, col, (x + 2, y + 2), (x + 4, y), 1)
+            pygame.draw.line(surf, col, (x + 4, y), (x + 4, y + 5), 1)
+        elif ch == "S":
+            pygame.draw.line(surf, col, (x + 3, y), (x, y), 1)
+            pygame.draw.line(surf, col, (x, y), (x, y + 2), 1)
+            pygame.draw.line(surf, col, (x, y + 2), (x + 3, y + 3), 1)
+            pygame.draw.line(surf, col, (x + 3, y + 3), (x + 3, y + 5), 1)
+            pygame.draw.line(surf, col, (x + 3, y + 5), (x, y + 5), 1)
+        elif ch == "O":
+            pygame.draw.rect(surf, col, (x, y, 4, 6), 1)
+        elif ch == "R":
+            pygame.draw.line(surf, col, (x, y + 5), (x, y), 1)
+            pygame.draw.line(surf, col, (x, y), (x + 3, y), 1)
+            pygame.draw.line(surf, col, (x + 3, y), (x + 3, y + 2), 1)
+            pygame.draw.line(surf, col, (x + 3, y + 2), (x, y + 2), 1)
+            pygame.draw.line(surf, col, (x, y + 2), (x + 3, y + 5), 1)
+        elif ch == "Y":
+            pygame.draw.line(surf, col, (x, y), (x + 2, y + 2), 1)
+            pygame.draw.line(surf, col, (x + 4, y), (x + 2, y + 2), 1)
+            pygame.draw.line(surf, col, (x + 2, y + 2), (x + 2, y + 5), 1)
+
+    def _draw_pillar(self, surf, x, y):
+        """Stone pillar. `large=True` draws a fat 32x44 column with a
+        capital and base; default is a slim 18x36 supporting pillar.
+        When `filled=True` the pillar shows its offering: the orb
+        (large) or a big fish (small) sits on top of the capital with
+        a soft glow."""
+        large = self.kwargs.get("large", False)
+        filled = self.kwargs.get("filled", False)
+        if large:
+            body = (130, 130, 140)
+            edge = (70, 70, 80)
+            cap = (160, 160, 170)
+            pygame.draw.rect(surf, body, (x - 16, y - 30, 32, 44))
+            pygame.draw.rect(surf, edge, (x - 16, y - 30, 32, 44), 1)
+            pygame.draw.rect(surf, cap, (x - 18, y - 34, 36, 6))
+            pygame.draw.rect(surf, edge, (x - 18, y - 34, 36, 6), 1)
+            pygame.draw.rect(surf, cap, (x - 18, y + 12, 36, 6))
+            pygame.draw.rect(surf, edge, (x - 18, y + 12, 36, 6), 1)
+            pygame.draw.line(surf, edge, (x, y - 28), (x, y + 12), 1)
+            if filled:
+                # Orb resting on top of the capital. Soft purple glow,
+                # subtle pulse via self.t.
+                pulse = 0.7 + math.sin(self.t * 2.0 + self.seed) * 0.3
+                glow = pygame.Surface((40, 40), pygame.SRCALPHA)
+                pygame.draw.circle(glow, (180, 80, 220, int(80 * pulse)),
+                                   (20, 20), int(16 * pulse))
+                surf.blit(glow, (x - 20, y - 56))
+                pygame.draw.circle(surf, (60, 30, 80), (x, y - 40), 7)
+                pygame.draw.circle(surf, (200, 120, 240), (x, y - 40), 6)
+                pygame.draw.circle(surf, (255, 220, 255),
+                                   (x - 2, y - 42), 2)
+        else:
+            body = (118, 118, 128)
+            edge = (60, 60, 70)
+            cap = (150, 150, 160)
+            pygame.draw.rect(surf, body, (x - 9, y - 22, 18, 32))
+            pygame.draw.rect(surf, edge, (x - 9, y - 22, 18, 32), 1)
+            pygame.draw.rect(surf, cap, (x - 11, y - 26, 22, 5))
+            pygame.draw.rect(surf, edge, (x - 11, y - 26, 22, 5), 1)
+            pygame.draw.rect(surf, cap, (x - 11, y + 8, 22, 5))
+            pygame.draw.rect(surf, edge, (x - 11, y + 8, 22, 5), 1)
+            if filled:
+                # Fish lying across the capital, head left. Static.
+                fish_body = (90, 110, 140)
+                fish_dark = (50, 60, 80)
+                belly = (180, 190, 200)
+                pygame.draw.ellipse(surf, fish_body,
+                                    (x - 9, y - 33, 18, 7))
+                pygame.draw.ellipse(surf, fish_dark,
+                                    (x - 9, y - 33, 18, 7), 1)
+                pygame.draw.ellipse(surf, belly,
+                                    (x - 7, y - 31, 14, 4))
+                pygame.draw.polygon(surf, fish_body,
+                                    [(x + 8, y - 30), (x + 12, y - 33),
+                                     (x + 12, y - 27)])
+                pygame.draw.circle(surf, (20, 20, 30),
+                                   (x - 6, y - 30), 1)
+
+    def _draw_pedestal(self, surf, x, y):
+        # Stone pedestal: a tapered grey block. Used at the end of the
+        # abducted_hallway to stage the final diary page. Slow inner
+        # glow when `lit=True` is passed via kwargs.
+        body = (110, 110, 120)
+        edge = (60, 60, 70)
+        pygame.draw.rect(surf, body, (x - 9, y - 4, 18, 12))
+        pygame.draw.rect(surf, edge, (x - 9, y - 4, 18, 12), 1)
+        pygame.draw.rect(surf, body, (x - 11, y + 6, 22, 4))
+        pygame.draw.rect(surf, edge, (x - 11, y + 6, 22, 4), 1)
+        pygame.draw.rect(surf, (140, 140, 150), (x - 7, y - 6, 14, 3))
+        if self.kwargs.get("lit", True):
+            pulse = 0.6 + math.sin(self.t * 2.0 + self.seed) * 0.4
+            glow = pygame.Surface((18, 8), pygame.SRCALPHA)
+            alpha = int(120 * pulse)
+            pygame.draw.ellipse(glow, (200, 180, 220, alpha), (0, 0, 18, 8))
+            surf.blit(glow, (x - 9, y - 10))
+
+    def _draw_bloodstain(self, surf, x, y):
+        # static blob
+        pygame.draw.ellipse(surf, (90, 10, 14), (x - 8, y - 3, 16, 8))
+        pygame.draw.ellipse(surf, (60, 6, 10), (x - 4, y, 8, 4))
+
+    def _draw_symbol(self, surf, x, y):
+        # Pulsing arcane sigil on the floor. Two concentric circles + an
+        # inner triangle, all in violet. Pulses size with a slow sine so
+        # it reads as 'active' rather than painted.
+        pulse = 1.0 + math.sin(self.t * 1.5 + self.seed) * 0.18
+        col = (180, 80, 220)
+        r1 = max(2, int(14 * pulse))
+        r2 = max(2, int(8 * pulse))
+        pygame.draw.circle(surf, col, (x, y), r1, 1)
+        pygame.draw.circle(surf, col, (x, y), r2, 1)
+        h = max(2, int(8 * pulse))
+        pygame.draw.polygon(surf, col, [
+            (x, y - h),
+            (x - h, y + h // 2),
+            (x + h, y + h // 2),
+        ], 1)
+
+    def _draw_binding_sigil(self, surf, x, y):
+        # A golden triangle scratched into the stone, point up. Three
+        # bright lines drift across it at three different slow periods
+        # regardless of the player -- the sigil is doing its work
+        # whether anyone watches it or not.
+        gold      = (200, 170, 60)
+        gold_lo   = (130, 100, 30)
+        h = 18
+        pts = [(x, y - h), (x - h, y + h - 4), (x + h, y + h - 4)]
+        pygame.draw.polygon(surf, gold_lo, pts)
+        pygame.draw.polygon(surf, gold, pts, 1)
+        for i, period in enumerate((9.0, 13.0, 17.0)):
+            f = ((self.t / period) + i * 0.31) % 1.0
+            ly = int(y - h + f * (h * 2 - 4))
+            tri_t = (ly - (y - h)) / float(h * 2 - 4)
+            w = max(1, int(h * tri_t))
+            pygame.draw.line(surf, gold, (x - w, ly), (x + w, ly), 1)
+
+    def _draw_chest(self, surf, x, y):
+        # Wooden chest. Closed = lid down with a gold lock plate (and a
+        # padlock if locked=True). Open = lid swung up and a dark
+        # empty interior. State is driven by `open` (bool) and `locked`
+        # (bool) kwargs; the scene's on_interact_fn flips `open` once
+        # the chest has been emptied.
+        open_state = self.kwargs.get("open", False)
+        locked = self.kwargs.get("locked", False)
+        # Body (lower half)
+        pygame.draw.rect(surf, (110, 80, 50), (x - 9, y - 2, 18, 12))
+        pygame.draw.rect(surf, (60, 40, 25), (x - 9, y - 2, 18, 12), 1)
+        pygame.draw.line(surf, (40, 30, 20), (x - 9, y + 4),
+                         (x + 9, y + 4), 1)
+        if open_state:
+            # Lid swung up, dark interior visible
+            pygame.draw.polygon(surf, (130, 95, 60), [
+                (x - 9, y - 2), (x - 9, y - 14),
+                (x + 9, y - 14), (x + 9, y - 2),
+            ])
+            pygame.draw.polygon(surf, (60, 40, 25), [
+                (x - 9, y - 2), (x - 9, y - 14),
+                (x + 9, y - 14), (x + 9, y - 2),
+            ], 1)
+            pygame.draw.rect(surf, (10, 8, 6), (x - 6, y, 12, 6))
+        else:
+            # Lid closed
+            pygame.draw.rect(surf, (130, 95, 60), (x - 9, y - 6, 18, 5))
+            pygame.draw.rect(surf, (60, 40, 25), (x - 9, y - 6, 18, 5), 1)
+            # Gold lock plate
+            pygame.draw.rect(surf, (200, 180, 60), (x - 2, y - 3, 4, 5))
+            pygame.draw.rect(surf, (40, 30, 20), (x - 2, y - 3, 4, 5), 1)
+            if locked:
+                # Iron padlock hanging from the plate
+                pygame.draw.rect(surf, (60, 60, 70), (x - 1, y - 8, 2, 3))
+                pygame.draw.circle(surf, (90, 90, 100), (x, y - 6), 2, 1)
+
+    def _draw_missing_flyer(self, surf, x, y):
+        # Pinned paper flyer -- beige sheet with a small portrait sketch
+        # at the top, MISSING bar in red, and three text lines below.
+        # Two corner tacks sell the "pinned to wood" read; the bottom-
+        # right corner curls slightly so it doesn't look freshly
+        # printed.
+        # Paper body
+        pygame.draw.rect(surf, (220, 200, 160), (x - 7, y - 12, 14, 24))
+        pygame.draw.rect(surf, (60, 40, 25), (x - 7, y - 12, 14, 24), 1)
+        # Corner curl (bottom-right)
+        pygame.draw.polygon(surf, (180, 160, 130),
+                            [(x + 7, y + 8), (x + 7, y + 12), (x + 3, y + 12)])
+        pygame.draw.line(surf, (60, 40, 25), (x + 7, y + 8),
+                         (x + 3, y + 12), 1)
+        # MISSING bar (red) at top
+        pygame.draw.rect(surf, (160, 30, 30), (x - 5, y - 11, 10, 2))
+        # Portrait circle
+        pygame.draw.circle(surf, (40, 28, 22), (x, y - 6), 3, 1)
+        # Text lines
+        for i in range(3):
+            pygame.draw.line(surf, (60, 40, 25),
+                             (x - 5, y + i * 3),
+                             (x + 5, y + i * 3), 1)
+        # Tacks
+        pygame.draw.circle(surf, (200, 60, 60), (x - 5, y - 11), 1)
+        pygame.draw.circle(surf, (200, 60, 60), (x + 5, y - 11), 1)
+
+    def _draw_phantom_mark(self, surf, x, y):
+        # A small chalk symbol scratched into a wall. Static (no anim).
+        # Shape is suggestive but doesn't match any other game mark.
+        pygame.draw.line(surf, (220, 220, 230), (x - 6, y - 4), (x + 6, y - 4), 1)
+        pygame.draw.line(surf, (220, 220, 230), (x, y - 6), (x, y + 4), 1)
+        pygame.draw.line(surf, (220, 220, 230), (x - 4, y + 4), (x + 4, y + 4), 1)
+        pygame.draw.circle(surf, (220, 220, 230), (x, y), 1)
+
+    def _draw_body(self, surf, x, y):
+        # Slumped guard body. The kit reads at a glance: helmet beside the
+        # head, spear on the ground, blood pool. Static -- this is a
+        # decoration, not an NPC. Disappears after 2 re-entries via the
+        # scene's on_enter logic.
+        # Blood pool
+        pygame.draw.ellipse(surf, (60, 6, 10), (x - 14, y + 2, 28, 8))
+        pygame.draw.ellipse(surf, (90, 10, 14), (x - 11, y + 1, 22, 6))
+        # Slumped torso (tabard-grey like the guard)
+        pygame.draw.rect(surf, (110, 110, 130), (x - 9, y - 6, 18, 10))
+        pygame.draw.rect(surf, (50, 50, 70), (x - 9, y - 6, 18, 10), 1)
+        # Helmet, fallen sideways to the left of the body
+        pygame.draw.rect(surf, (140, 140, 160), (x - 16, y - 4, 10, 7))
+        pygame.draw.rect(surf, (40, 40, 60), (x - 14, y - 2, 4, 2))
+        # Spear, dropped diagonally to the right
+        pygame.draw.line(surf, (60, 40, 25), (x + 6, y - 4), (x + 18, y + 6), 2)
+        pygame.draw.polygon(surf, (200, 200, 220),
+                            [(x + 18, y + 6), (x + 14, y + 4), (x + 19, y + 3)])
+
+    def _draw_gore(self, surf, x, y):
+        # A slumped, broken figure. Read as "could be a person"; not an
+        # animated NPC. Wide blood pool around it. The crutch pickup sits
+        # adjacent so the noun does the heavy lifting.
+        # Pool of blood (large, irregular-feeling via two ellipses)
+        pygame.draw.ellipse(surf, (60, 6, 10), (x - 18, y, 36, 14))
+        pygame.draw.ellipse(surf, (90, 10, 14), (x - 14, y - 2, 28, 10))
+        pygame.draw.ellipse(surf, (40, 4, 8), (x - 6, y + 2, 12, 6))
+        # Slumped torso
+        pygame.draw.rect(surf, (60, 30, 30), (x - 9, y - 12, 18, 14))
+        pygame.draw.rect(surf, (40, 18, 22), (x - 9, y - 12, 18, 14), 1)
+        # Splayed limb
+        pygame.draw.rect(surf, (60, 30, 30), (x + 8, y - 4, 12, 5))
+        # Head, turned away
+        pygame.draw.circle(surf, (80, 50, 50), (x - 6, y - 14), 5)
+        # A few darker smudges for texture
+        pygame.draw.line(surf, (30, 4, 6), (x - 10, y + 4), (x + 12, y + 6), 1)
+        pygame.draw.line(surf, (30, 4, 6), (x - 8, y + 8), (x + 10, y + 8), 1)
+
+    def _draw_computer(self, surf, x, y):
+        # Beige 1990s-era CRT on a small desk. Power LED blinks. Screen
+        # shows a slow pulsing cursor / scanlines -- nothing readable yet
+        # (the ARG content lives behind this for later).
+        # Desk
+        pygame.draw.rect(surf, (110, 80, 50), (x - 14, y + 4, 28, 10))
+        pygame.draw.rect(surf, (60, 40, 25), (x - 14, y + 4, 28, 10), 1)
+        # CRT body
+        pygame.draw.rect(surf, (200, 190, 170), (x - 12, y - 14, 24, 18))
+        pygame.draw.rect(surf, (110, 100, 90), (x - 12, y - 14, 24, 18), 1)
+        # Screen
+        pygame.draw.rect(surf, (10, 14, 20), (x - 9, y - 12, 18, 14))
+        # Scanlines (animated)
+        for i in range(3):
+            ly = y - 11 + ((int(self.t * 8) + i * 4) % 12)
+            pygame.draw.line(surf, (40, 80, 60), (x - 8, ly), (x + 8, ly), 1)
+        # Cursor blink
+        if int(self.t * 2) % 2 == 0:
+            pygame.draw.rect(surf, (120, 220, 140), (x - 8, y - 4, 3, 2))
+        # Power LED
+        led = (220, 80, 60) if int(self.t * 3) % 2 == 0 else (120, 40, 30)
+        pygame.draw.rect(surf, led, (x + 9, y + 5, 2, 2))
+
+    def _draw_creepy_tree(self, surf, x, y):
+        """A leafless, gnarled tree. The trunk leans slightly off
+        vertical so it never lines up with the regular trees on the
+        same row -- a wrongness the player feels before they see it.
+        Two darker oblong gouges in the bark sit where eyes would be,
+        and a vertical gash beneath them suggests a pulled-open mouth.
+        Branches splay outward like fingers, bare of all leaves."""
+        trunk = (38, 28, 20)
+        bark = (24, 16, 12)
+        knot = (10, 6, 6)
+        # Slightly leaning trunk
+        pygame.draw.polygon(surf, trunk, [
+            (x - 4, y + 12), (x - 5, y - 18),
+            (x + 4, y - 18), (x + 3, y + 12),
+        ])
+        pygame.draw.polygon(surf, bark, [
+            (x - 4, y + 12), (x - 5, y - 18),
+            (x + 4, y - 18), (x + 3, y + 12),
+        ], 1)
+        # Vertical bark cracks
+        pygame.draw.line(surf, knot, (x - 1, y - 16), (x - 2, y + 8), 1)
+        pygame.draw.line(surf, knot, (x + 1, y - 12), (x + 2, y + 4), 1)
+        # Face in the bark -- eye gouges
+        pygame.draw.ellipse(surf, knot, (x - 3, y - 10, 2, 3))
+        pygame.draw.ellipse(surf, knot, (x + 1, y - 10, 2, 3))
+        # Mouth gash (two stacked lines so it reads as torn-open)
+        pygame.draw.line(surf, knot, (x - 2, y - 4), (x + 2, y - 4), 1)
+        pygame.draw.line(surf, knot, (x - 1, y - 3), (x + 1, y - 3), 1)
+        # Bare finger-branches
+        for s, m, t in [
+            ((x, y - 16), (x - 12, y - 22), (x - 18, y - 18)),
+            ((x, y - 16), (x + 12, y - 22), (x + 18, y - 16)),
+            ((x, y - 18), (x - 6, y - 28), (x - 4, y - 36)),
+            ((x, y - 18), (x + 6, y - 28), (x + 4, y - 36)),
+            ((x, y - 18), (x, y - 32), (x + 2, y - 38)),
+        ]:
+            pygame.draw.line(surf, bark, s, m, 2)
+            pygame.draw.line(surf, bark, m, t, 1)
+        # Twigs at branch tips so they read as fingers, not sticks
+        for tx_, ty_, dx_ in [(-18, -18, -1), (18, -16, 1),
+                               (-4, -36, -1), (4, -36, 1), (2, -38, 1)]:
+            pygame.draw.line(surf, bark,
+                             (x + tx_, y + ty_),
+                             (x + tx_ + dx_, y + ty_ - 3), 1)
+
+    def _draw_hanging_figure(self, surf, x, y):
+        """Vague humanoid silhouette suspended from a rope going off-
+        tile upward. Slumped, no facial detail, very small slow sway.
+        Used in the deep tree band of mistlands and the cornfield's
+        far rows."""
+        sway = math.sin(self.t * 0.5 + self.seed) * 1.5
+        sx_ = int(sway)
+        # Long rope going up out of frame
+        pygame.draw.line(surf, (140, 110, 70),
+                         (x, y - 32), (x + sx_, y - 14), 1)
+        # Knot at neck
+        pygame.draw.circle(surf, (90, 60, 30), (x + sx_, y - 14), 2)
+        # Slumped head
+        pygame.draw.circle(surf, (20, 16, 22), (x + sx_, y - 10), 4)
+        # Body / robes (trapezoid hanging straight down)
+        pygame.draw.polygon(surf, (16, 12, 18), [
+            (x + sx_ - 5, y - 8), (x + sx_ + 5, y - 8),
+            (x + sx_ + 7, y + 12), (x + sx_ - 7, y + 12),
+        ])
+        pygame.draw.polygon(surf, (4, 2, 6), [
+            (x + sx_ - 5, y - 8), (x + sx_ + 5, y - 8),
+            (x + sx_ + 7, y + 12), (x + sx_ - 7, y + 12),
+        ], 1)
+        # Limp arms drooping at sides
+        pygame.draw.line(surf, (16, 12, 18),
+                         (x + sx_ - 5, y - 6), (x + sx_ - 7, y + 4), 2)
+        pygame.draw.line(surf, (16, 12, 18),
+                         (x + sx_ + 5, y - 6), (x + sx_ + 7, y + 4), 2)
+        # Limp feet
+        pygame.draw.line(surf, (8, 6, 10),
+                         (x + sx_ - 4, y + 12), (x + sx_ - 4, y + 14), 2)
+        pygame.draw.line(surf, (8, 6, 10),
+                         (x + sx_ + 4, y + 12), (x + sx_ + 4, y + 14), 2)
+
+    def _draw_dead_crow(self, surf, x, y):
+        """A crow lying on its side -- one stiff leg pointing up, wing
+        splayed, glazed-film eye. A few loose feathers around it.
+        Static. Read as a dead bird, not a sleeping one."""
+        # Body
+        pygame.draw.ellipse(surf, (8, 8, 12), (x - 6, y - 1, 12, 5))
+        pygame.draw.ellipse(surf, (16, 16, 20), (x - 6, y - 1, 12, 5), 1)
+        # Head turned away with film-eye
+        pygame.draw.circle(surf, (8, 8, 12), (x - 7, y), 2)
+        pygame.draw.circle(surf, (90, 90, 70), (x - 8, y), 1)
+        # Stiff leg sticking up + foot
+        pygame.draw.line(surf, (40, 30, 20), (x + 2, y - 1), (x + 2, y - 6), 1)
+        pygame.draw.line(surf, (40, 30, 20), (x + 2, y - 6), (x + 4, y - 7), 1)
+        # Splayed wing
+        pygame.draw.polygon(surf, (4, 4, 8),
+                            [(x + 1, y - 1), (x + 7, y - 4),
+                             (x + 6, y), (x + 1, y + 1)])
+        # Loose feathers
+        for fx, fy in [(-9, 4), (8, 4), (-3, 5)]:
+            pygame.draw.line(surf, (8, 8, 12),
+                             (x + fx, y + fy),
+                             (x + fx + 1, y + fy - 2), 1)
+
+    def _draw_claw_marks(self, surf, x, y):
+        """Five parallel deep gouges torn diagonally across a wall.
+        Each gouge has a rawer outer band and a near-black floor so
+        it reads as cut INTO the surface, not painted on. Stroke
+        jitter is per-instance via self.seed."""
+        rng = random.Random(self.seed)
+        outer = (60, 30, 30)
+        deep = (16, 6, 10)
+        for i in range(5):
+            ox = -10 + i * 5 + rng.randint(-1, 1)
+            top = (x + ox, y - 8)
+            bot = (x + ox + 4 + rng.randint(-1, 1), y + 8)
+            pygame.draw.line(surf, outer, top, bot, 2)
+            pygame.draw.line(surf, deep, top, bot, 1)
+
+    def _draw_bloody_handprint(self, surf, x, y):
+        """A blood-red handprint pressed onto a surface, with three
+        downward streaks where the fingers dragged on the way off.
+        Palm sits darker than the fingertip pads -- the hand pushed
+        off and smeared as it left."""
+        palm = (140, 20, 28)
+        drip = (80, 10, 18)
+        bright = (180, 32, 36)
+        # Palm
+        pygame.draw.ellipse(surf, palm, (x - 5, y - 2, 10, 7))
+        # Four finger pads + thumb
+        pygame.draw.circle(surf, bright, (x - 4, y - 5), 1)
+        pygame.draw.circle(surf, bright, (x - 1, y - 6), 1)
+        pygame.draw.circle(surf, bright, (x + 2, y - 6), 1)
+        pygame.draw.circle(surf, bright, (x + 5, y - 4), 1)
+        pygame.draw.circle(surf, bright, (x - 6, y - 1), 1)
+        # Downward drag streaks
+        pygame.draw.line(surf, drip, (x - 3, y + 4), (x - 3, y + 12), 1)
+        pygame.draw.line(surf, drip, (x, y + 4), (x, y + 14), 1)
+        pygame.draw.line(surf, drip, (x + 3, y + 4), (x + 3, y + 11), 1)
+
+    def _draw_cellar_hatch(self, surf, x, y):
+        """A floor hatch -- wood box flush to the ground, plank seams,
+        iron pull-ring centred on top. Identical visual to the `L`
+        ladder-down tile but drawn as a decoration so the scene can
+        gate the trip down behind an E-press handler instead of an
+        auto-transition. Used in the barn to replace the chest-as-
+        trapdoor placeholder."""
+        pygame.draw.rect(surf, (110, 80, 50), (x - 12, y - 12, 24, 24))
+        pygame.draw.rect(surf, (60, 38, 24), (x - 12, y - 12, 24, 24), 2)
+        pygame.draw.line(surf, (60, 38, 24),
+                         (x - 12, y - 4), (x + 12, y - 4), 1)
+        pygame.draw.line(surf, (60, 38, 24),
+                         (x - 12, y + 4), (x + 12, y + 4), 1)
+        pygame.draw.rect(surf, (50, 50, 60), (x - 4, y - 3, 8, 4))
+        pygame.draw.rect(surf, (30, 30, 38), (x - 4, y - 3, 8, 4), 1)
+        pygame.draw.circle(surf, (180, 180, 200), (x, y + 2), 4, 2)
+        pygame.draw.circle(surf, (90, 90, 110), (x, y + 2), 4, 1)
+
+    def _draw_gas_pump(self, surf, x, y):
+        """A 1990s rural gas pump. Beige body, red side panel, a
+        rubber hose looping back into the pump. The dial wheel
+        creeps slowly so the pump reads as plugged in but unused."""
+        body = (200, 190, 170)
+        edge = (60, 50, 40)
+        red = (160, 40, 40)
+        hose = (20, 18, 22)
+        # Base
+        pygame.draw.rect(surf, (90, 90, 100), (x - 6, y + 8, 12, 4))
+        # Body column
+        pygame.draw.rect(surf, body, (x - 6, y - 16, 12, 24))
+        pygame.draw.rect(surf, edge, (x - 6, y - 16, 12, 24), 1)
+        # Red side panel
+        pygame.draw.rect(surf, red, (x - 6, y - 16, 12, 6))
+        # Display window
+        pygame.draw.rect(surf, (10, 14, 20), (x - 4, y - 8, 8, 5))
+        # Slowly creeping dial digits
+        digit = int(self.t * 0.7) % 10
+        pygame.draw.rect(surf, (40, 200, 60),
+                         (x - 3 + (digit % 4) * 2, y - 7, 1, 3))
+        # Nozzle hook + hose looping back
+        pygame.draw.line(surf, hose, (x + 6, y - 6), (x + 9, y - 4), 1)
+        pygame.draw.line(surf, hose, (x + 9, y - 4), (x + 9, y + 4), 1)
+        pygame.draw.line(surf, hose, (x + 9, y + 4), (x + 6, y + 6), 1)
+        # Logo decal
+        pygame.draw.rect(surf, (220, 200, 80), (x - 3, y - 14, 6, 2))
+
+    def _draw_payphone(self, surf, x, y):
+        """1990s glass-walled phone booth. Vertical box with metal
+        framing, clear glass body, a black handset on a chrome cord,
+        and a small red 'in use' light that blinks irregularly. The
+        receiver sits slightly off the cradle on a per-seed schedule
+        -- as if someone just hung up. The booth replaces a 'lantern'
+        placeholder in village.py."""
+        # Foundation slab
+        pygame.draw.rect(surf, (60, 60, 70), (x - 9, y + 12, 18, 4))
+        # Booth body (glass)
+        pygame.draw.rect(surf, (140, 170, 200), (x - 8, y - 22, 16, 34))
+        # Frame
+        pygame.draw.rect(surf, (40, 40, 50), (x - 8, y - 22, 16, 34), 1)
+        pygame.draw.line(surf, (40, 40, 50),
+                         (x - 8, y - 6), (x + 8, y - 6), 1)
+        # Roof cap
+        pygame.draw.rect(surf, (50, 50, 60), (x - 10, y - 24, 20, 4))
+        # Inner phone unit (metal box on the back wall)
+        pygame.draw.rect(surf, (90, 90, 100), (x - 5, y - 16, 10, 8))
+        pygame.draw.rect(surf, (40, 40, 50), (x - 5, y - 16, 10, 8), 1)
+        # Handset hanging slightly off the hook (off-cradle anomaly)
+        off_cradle = (self.t + self.seed * 0.07) % 8.0
+        cord_y = y - 4 if off_cradle < 4.0 else y - 2
+        # Cord (chromed line)
+        pygame.draw.line(surf, (180, 180, 200),
+                         (x - 4, y - 12), (x - 4, cord_y), 1)
+        # Handset body
+        pygame.draw.rect(surf, (10, 10, 14), (x - 6, cord_y, 4, 2))
+        # Red "in use" light, blinks irregularly
+        light_phase = (self.t * 1.7 + self.seed * 0.3) % 3.0
+        if light_phase < 0.4:
+            pygame.draw.rect(surf, (220, 60, 50), (x + 3, y - 18, 2, 2))
+        else:
+            pygame.draw.rect(surf, (90, 24, 20), (x + 3, y - 18, 2, 2))
+        # Coin slot
+        pygame.draw.line(surf, (10, 10, 14),
+                         (x - 1, y - 10), (x + 1, y - 10), 1)
+
+    def _draw_pickup_truck(self, surf, x, y):
+        """A faded-blue 1990s rural pickup truck, parked. ~2 tiles wide,
+        ~1.5 tiles tall -- physically a real vehicle the player can't
+        slip past on accident. Pair the decoration with a solid 'X'
+        tile under it in scene-builder so collision matches. Cab with
+        windshield, open bed, four wheels, side mirror, rust streak."""
+        body = (74, 96, 124)
+        body_dark = (40, 56, 80)
+        rust = (130, 70, 40)
+        glass = (140, 170, 200)
+        tire = (20, 18, 22)
+        chrome = (200, 200, 210)
+        # Truck bed (rear, open box). Outer 28w x 20h, inner cavity 4 px in.
+        pygame.draw.rect(surf, body, (x - 24, y - 10, 24, 20))
+        pygame.draw.rect(surf, body_dark, (x - 24, y - 10, 24, 20), 1)
+        pygame.draw.rect(surf, (50, 64, 90), (x - 22, y - 8, 20, 16))
+        # Tailgate seam
+        pygame.draw.line(surf, body_dark, (x - 24, y), (x, y), 1)
+        # Cab body
+        pygame.draw.rect(surf, body, (x, y - 16, 22, 26))
+        pygame.draw.rect(surf, body_dark, (x, y - 16, 22, 26), 1)
+        # Windshield slant
+        pygame.draw.polygon(surf, glass, [
+            (x + 2, y - 14), (x + 14, y - 14),
+            (x + 17, y - 6), (x + 2, y - 6),
+        ])
+        pygame.draw.polygon(surf, body_dark, [
+            (x + 2, y - 14), (x + 14, y - 14),
+            (x + 17, y - 6), (x + 2, y - 6),
+        ], 1)
+        # Side window
+        pygame.draw.rect(surf, glass, (x + 14, y - 4, 6, 8))
+        pygame.draw.rect(surf, body_dark, (x + 14, y - 4, 6, 8), 1)
+        # Hood
+        pygame.draw.rect(surf, body, (x + 16, y - 4, 8, 14))
+        pygame.draw.rect(surf, body_dark, (x + 16, y - 4, 8, 14), 1)
+        # Headlights
+        pygame.draw.rect(surf, (220, 220, 180), (x + 23, y, 2, 4))
+        # Side mirror
+        pygame.draw.line(surf, body_dark, (x + 2, y - 14), (x - 1, y - 17), 1)
+        pygame.draw.rect(surf, body_dark, (x - 3, y - 19, 3, 3))
+        # Rust streak on one fender
+        pygame.draw.line(surf, rust, (x - 22, y + 6), (x - 8, y + 6), 1)
+        pygame.draw.line(surf, rust, (x - 18, y + 8), (x - 10, y + 8), 1)
+        # Bumpers (chrome)
+        pygame.draw.rect(surf, chrome, (x - 24, y + 9, 50, 2))
+        # Wheels
+        pygame.draw.circle(surf, tire, (x - 16, y + 11), 5)
+        pygame.draw.circle(surf, tire, (x + 18, y + 11), 5)
+        pygame.draw.circle(surf, chrome, (x - 16, y + 11), 2)
+        pygame.draw.circle(surf, chrome, (x + 18, y + 11), 2)
+
+    def _draw_player_car(self, surf, x, y):
+        """A faded-red 1990s sedan, parked. Approx 3 tiles wide, 1.5
+        tiles tall -- properly sized so it reads as a real vehicle
+        the player physically can't squeeze past. Pair with a solid
+        'X' tile under it so collision matches the silhouette."""
+        body = (140, 60, 60)
+        body_dark = (80, 32, 32)
+        glass = (140, 170, 200)
+        tire = (20, 18, 22)
+        chrome = (200, 200, 210)
+        # Lower body
+        pygame.draw.rect(surf, body, (x - 28, y - 4, 56, 16))
+        pygame.draw.rect(surf, body_dark, (x - 28, y - 4, 56, 16), 1)
+        # Greenhouse / roof
+        pygame.draw.rect(surf, body, (x - 18, y - 16, 36, 12))
+        pygame.draw.rect(surf, body_dark, (x - 18, y - 16, 36, 12), 1)
+        # Windshield + rear window slants
+        pygame.draw.polygon(surf, glass, [
+            (x - 18, y - 4), (x - 14, y - 14),
+            (x - 6, y - 14), (x - 6, y - 4),
+        ])
+        pygame.draw.polygon(surf, glass, [
+            (x + 6, y - 4), (x + 6, y - 14),
+            (x + 14, y - 14), (x + 18, y - 4),
+        ])
+        # Side window
+        pygame.draw.rect(surf, glass, (x - 5, y - 14, 10, 11))
+        pygame.draw.rect(surf, body_dark, (x - 5, y - 14, 10, 11), 1)
+        # Door seam (centre split)
+        pygame.draw.line(surf, body_dark, (x, y - 3), (x, y + 10), 1)
+        # Roof rack with rolled tarp
+        pygame.draw.line(surf, chrome, (x - 18, y - 16), (x + 18, y - 16), 1)
+        pygame.draw.rect(surf, (110, 80, 60), (x - 14, y - 19, 28, 3))
+        pygame.draw.line(surf, (60, 40, 25),
+                         (x - 14, y - 17), (x + 14, y - 17), 1)
+        # Headlights
+        pygame.draw.rect(surf, (220, 220, 180), (x + 27, y - 1, 2, 4))
+        pygame.draw.rect(surf, (220, 220, 180), (x + 27, y + 5, 2, 4))
+        # Tail lights
+        pygame.draw.rect(surf, (200, 30, 30), (x - 29, y - 1, 2, 4))
+        pygame.draw.rect(surf, (200, 30, 30), (x - 29, y + 5, 2, 4))
+        # Bumpers (chrome)
+        pygame.draw.rect(surf, chrome, (x - 30, y + 10, 60, 2))
+        # Wheels
+        pygame.draw.circle(surf, tire, (x - 19, y + 12), 5)
+        pygame.draw.circle(surf, tire, (x + 19, y + 12), 5)
+        pygame.draw.circle(surf, chrome, (x - 19, y + 12), 2)
+        pygame.draw.circle(surf, chrome, (x + 19, y + 12), 2)
+        # Antenna
+        pygame.draw.line(surf, chrome, (x + 16, y - 16), (x + 18, y - 24), 1)
+
+    def _draw_mirror(self, surf, x, y):
+        """Wall-mounted mirror with a slim wood frame. The reflection
+        shows a faint grey humanoid silhouette that doesn't match the
+        room (no player, no NPC -- just an extra figure). On a slow
+        per-seed cycle, the silhouette's position shifts by a pixel
+        as if it stepped sideways while you weren't looking. The
+        wrongness is small enough that the player questions whether
+        they imagined it."""
+        frame = (90, 60, 40)
+        edge = (50, 32, 18)
+        glass = (60, 70, 90)
+        glass_hl = (110, 130, 160)
+        # Frame
+        pygame.draw.rect(surf, frame, (x - 7, y - 12, 14, 22))
+        pygame.draw.rect(surf, edge, (x - 7, y - 12, 14, 22), 1)
+        # Glass
+        pygame.draw.rect(surf, glass, (x - 5, y - 10, 10, 18))
+        # Reflection highlights (diagonal gleam)
+        pygame.draw.line(surf, glass_hl,
+                         (x - 4, y - 9), (x + 1, y - 4), 1)
+        pygame.draw.line(surf, glass_hl,
+                         (x + 1, y + 5), (x + 4, y + 2), 1)
+        # The wrong silhouette inside the glass. Position shifts by 1
+        # pixel on a slow cycle keyed to seed so each mirror has its
+        # own anomaly schedule.
+        cycle = 11.0
+        local = (self.t + self.seed * 0.13) % cycle
+        shift = -1 if local > (cycle / 2) else 1
+        sil_col = (30, 28, 36)
+        pygame.draw.rect(surf, sil_col,
+                         (x - 2 + shift, y - 5, 3, 8))
+        pygame.draw.circle(surf, sil_col,
+                           (x - 1 + shift, y - 6), 1)
+        # Eye-glints on the silhouette -- two pinprick whites that
+        # only appear during the brief "wrong" window.
+        if local < 0.4:
+            try:
+                surf.set_at((x - 2 + shift, y - 6), (240, 240, 240))
+                surf.set_at((x + shift, y - 6), (240, 240, 240))
+            except (IndexError, ValueError):
+                pass
+
+    def _draw_wrong_radio(self, surf, x, y):
+        """A 1990s portable transistor radio sitting on a surface.
+        Brown plastic body, chrome tuning dial, leather carry strap
+        slumped beside it. The dial creeps clockwise on a slow cycle
+        -- nobody is touching it. Visible static lines crawl across
+        the speaker grille. Replaces or layers on top of the
+        existing 'radio' deco when the wrongness should be visible."""
+        body = (90, 60, 40)
+        edge = (50, 32, 18)
+        chrome = (180, 180, 200)
+        # Body
+        pygame.draw.rect(surf, body, (x - 10, y - 5, 20, 12))
+        pygame.draw.rect(surf, edge, (x - 10, y - 5, 20, 12), 1)
+        # Speaker grille (left side) with crawling static lines
+        pygame.draw.rect(surf, (20, 18, 22), (x - 9, y - 3, 8, 8))
+        rng_t = self.t * 6
+        for i in range(3):
+            sy = int(y - 3 + (rng_t + i * 3) % 8)
+            pygame.draw.line(surf, (110, 130, 110),
+                             (x - 8, sy), (x - 2, sy), 1)
+        # Tuning dial (right side) -- needle creeps
+        pygame.draw.rect(surf, (20, 18, 22), (x, y - 3, 8, 6))
+        pygame.draw.line(surf, edge, (x, y), (x + 8, y), 1)
+        needle_x = x + int((math.sin(self.t * 0.4 + self.seed) + 1) * 4)
+        pygame.draw.line(surf, (220, 60, 60),
+                         (needle_x, y - 3), (needle_x, y + 3), 1)
+        # Antenna
+        pygame.draw.line(surf, chrome, (x + 8, y - 5), (x + 12, y - 12), 1)
+        # Carry strap slumped
+        pygame.draw.line(surf, (50, 32, 18), (x - 10, y - 5), (x - 14, y), 1)
+
+    def _draw_wrong_photo(self, surf, x, y):
+        """A framed photograph whose subjects degrade between visits.
+        First visit: a family of three. Subsequent visits: faces
+        progressively erased -- eyes go first, then mouths, then the
+        whole face. Driven by `stage` kwarg (0..3). When stage>=2,
+        a single fresh red dot appears in the corner of the frame
+        as if someone marked it."""
+        stage = self.kwargs.get("stage", 0)
+        # Frame
+        pygame.draw.rect(surf, (140, 110, 70), (x - 10, y - 8, 20, 16))
+        pygame.draw.rect(surf, (60, 40, 25), (x - 10, y - 8, 20, 16), 1)
+        # Photo paper
+        pygame.draw.rect(surf, (200, 190, 170), (x - 8, y - 6, 16, 12))
+        # Three figures
+        skin = (220, 190, 160)
+        clothes_a = (160, 80, 100)
+        clothes_b = (80, 100, 140)
+        clothes_c = (180, 160, 80)
+        # Adult man (centre)
+        pygame.draw.rect(surf, clothes_b, (x - 1, y - 2, 2, 6))
+        pygame.draw.circle(surf, skin, (x, y - 3), 1)
+        # Adult woman (right)
+        pygame.draw.rect(surf, clothes_a, (x + 2, y - 2, 2, 6))
+        pygame.draw.circle(surf, skin, (x + 3, y - 3), 1)
+        # Child (left)
+        pygame.draw.rect(surf, clothes_c, (x - 4, y, 2, 4))
+        pygame.draw.circle(surf, skin, (x - 3, y - 1), 1)
+        # Eye dots -- present at stage 0, gone by stage 1+.
+        if stage < 1:
+            pygame.draw.circle(surf, (10, 10, 14), (x, y - 3), 1)
+            pygame.draw.circle(surf, (10, 10, 14), (x + 3, y - 3), 1)
+            pygame.draw.circle(surf, (10, 10, 14), (x - 3, y - 1), 1)
+        # Mouth lines -- gone by stage 2+.
+        if stage < 2:
+            pygame.draw.line(surf, (90, 60, 70),
+                             (x - 1, y - 2), (x + 1, y - 2), 1)
+        # Face-erase scratches -- appear at stage 2+, oblitering each
+        # face entirely.
+        if stage >= 2:
+            for ex, ey in [(x, y - 3), (x + 3, y - 3), (x - 3, y - 1)]:
+                pygame.draw.line(surf, (200, 190, 170),
+                                 (ex - 1, ey), (ex + 1, ey), 1)
+        # Red corner dot
+        if stage >= 2:
+            pygame.draw.circle(surf, (200, 40, 40),
+                               (x + 8, y - 6), 1)

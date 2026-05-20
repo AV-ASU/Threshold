@@ -1,0 +1,372 @@
+"""The depths -- everything below the basement level. The polaroid-
+on-binding ritual at well_bottom drops the player here; from this
+point the only direction is down.
+
+Floors, top to bottom:
+  depths_antechamber  -- the fall zone
+  depths_procession   -- the moving-candle column
+  depths_hall         -- the kneeling grid (Hall of Mouths)
+  depths_threshing    -- grain + blood, the King in the Field's tribute
+  depths_stair        -- the empty spiral down
+  dark                -- single black room, flashlight-gated bodies
+  threshold           -- the doorframe, the lintel sigil
+
+Phase 4: hooded cultist chasers populated in the first three rooms.
+The flashlight is force-disabled in all depths scenes; the dread
+aperture closes on the player here, and the King in Yellow ring
+encroaches when it does. Hide spots placed liberally so the player
+has cover to recover in.
+"""
+import random
+from constants import TILE
+from entities.decoration import Decoration
+from entities.enemy import Enemy
+from .base import Scene
+from .dialogue import _evidence
+
+
+def _ambient(scene, sfx, vol, lo, hi):
+    """Wire a periodic ambient sfx to scene.on_update_fn. Each room
+    gets its own cue + period so the depths read as different
+    spaces, not one repeated basement."""
+    scene._amb_t = random.uniform(lo, hi)
+    def _tick(game, sc, dt):
+        sc._amb_t -= dt
+        if sc._amb_t <= 0:
+            sc._amb_t = random.uniform(lo, hi)
+            game.audio.play(sfx, vol)
+    scene.on_update_fn = _tick
+
+
+def _cultist(x, y, speed=1.0, waypoints=None):
+    """Hooded chaser. Combat is gone, so atk is forced to 0 every
+    tick by Enemy.update; the danger is contact -- the dread
+    aperture slams to 0 if a cultist touches the player. Slightly
+    slower than the player's walk so cover-running works. Aggro
+    is short (~180px line of sight) and respects player.hidden, so
+    the player can sneak past in cover and stand still in a hide
+    spot to break the chase. Optional waypoints walk a fixed route
+    while the player is out of aggro range."""
+    e = Enemy(x, y, kind="cultist", hp=1, atk=0, speed=speed,
+              aggro=180, atk_range=22, ai="chase",
+              drops=[], can_charge=False)
+    e.respawning = False
+    e.respects_hide = True
+    if waypoints:
+        e.waypoints = list(waypoints)
+        e._wp_i = 0
+        e.wp_pause = 0.8
+    return e
+
+
+def _box(w, h):
+    """Return a (floor, objects) pair for a w x h walled room with
+    walkable interior. Caller punches exits into objects after."""
+    floor = ["x" * w for _ in range(h)]
+    objects_l = []
+    for y in range(h):
+        if y == 0 or y == h - 1:
+            objects_l.append(list("#" * w))
+        else:
+            row = ["#"] + ["."] * (w - 2) + ["#"]
+            objects_l.append(row)
+    return floor, objects_l
+
+
+def build_depths_antechamber():
+    floor, objs = _box(10, 10)
+    objs[5][9] = "E"   # east passage to procession
+    objects = ["".join(r) for r in objs]
+    sc = Scene("depths_antechamber", floor, objects, music="basement")
+    sc.add_exit("E", "depths_procession", "from_antechamber")
+    sc.set_spawn("default",   4, 5)
+    sc.set_spawn("from_above", 4, 5)
+    sc.add_decoration(Decoration(2 * TILE + 16, 3 * TILE + 16, "candle"))
+    sc.add_decoration(Decoration(7 * TILE + 16, 6 * TILE + 16, "candle"))
+    sc.add_decoration(Decoration(4 * TILE + 16, 4 * TILE + 16, "bloodstain"))
+    sc.add_decoration(Decoration(5 * TILE + 16, 7 * TILE + 16, "bloodstain"))
+    # Two pillar-style hide spots in opposite corners.
+    sc.hide_spots = [
+        (1 * TILE + 24, 8 * TILE + 16, "behind"),
+        (8 * TILE + 16, 1 * TILE + 24, "behind"),
+    ]
+    # One cultist patrolling a small loop near the east passage.
+    sc.add_enemy(_cultist(8 * TILE + 16, 8 * TILE + 16, speed=0.85,
+                          waypoints=[(8 * TILE + 16, 8 * TILE + 16),
+                                     (8 * TILE + 16, 3 * TILE + 16),
+                                     (5 * TILE + 16, 3 * TILE + 16),
+                                     (5 * TILE + 16, 8 * TILE + 16)]))
+    _ambient(sc, "cult_breath", 0.18, 6.0, 10.0)
+
+    def _interact(game):
+        px, py = game.player.x, game.player.y
+        if abs(px - (4 * TILE + 16)) < 36 and abs(py - (4 * TILE + 16)) < 36:
+            _evidence(game, "the_fall",
+                "You fell. You are not bleeding.\n"
+                "The candles were knocked sideways by the same\n"
+                "tremor that brought you down.\n"
+                "Someone heard. Someone is coming."
+            )
+    sc.on_interact_fn = _interact
+    return sc
+
+
+def build_depths_procession():
+    floor, objs = _box(14, 8)
+    objs[4][13] = "E"   # east to hall
+    objects = ["".join(r) for r in objs]
+    sc = Scene("depths_procession", floor, objects, music="basement")
+    sc.add_exit("E", "depths_hall", "from_procession")
+    sc.set_spawn("default",          1, 4)
+    sc.set_spawn("from_antechamber", 1, 4)
+    # A line of candles along the centre, suggesting the procession
+    # column. Two cultists walking it at this hour.
+    for cx in range(2, 13, 2):
+        sc.add_decoration(Decoration(cx * TILE + 16, 4 * TILE + 16,
+                                     "candle"))
+    sc.hide_spots = [
+        (3 * TILE + 16, 1 * TILE + 24, "behind"),
+        (10 * TILE + 16, 6 * TILE + 16, "behind"),
+        (6 * TILE + 16, 6 * TILE + 16, "behind"),
+    ]
+    # Two cultists walking the column, single file, opposite phases
+    # so they meet between (5..10) and pass each other. Endpoints
+    # held away from the west-edge spawn (col 1) so the player
+    # arrives with breathing room.
+    sc.add_enemy(_cultist(5 * TILE + 16, 4 * TILE + 16, speed=0.9,
+                          waypoints=[(12 * TILE + 16, 4 * TILE + 16),
+                                     (5  * TILE + 16, 4 * TILE + 16)]))
+    sc.add_enemy(_cultist(10 * TILE + 16, 4 * TILE + 16, speed=0.9,
+                          waypoints=[(4  * TILE + 16, 4 * TILE + 16),
+                                     (10 * TILE + 16, 4 * TILE + 16)]))
+    _ambient(sc, "blip_soft", 0.12, 2.5, 4.5)
+    return sc
+
+
+def build_depths_hall():
+    floor, objs = _box(14, 10)
+    objs[5][13] = "E"   # east to threshing floor
+    objects = ["".join(r) for r in objs]
+    sc = Scene("depths_hall", floor, objects, music="basement")
+    sc.add_exit("E", "depths_threshing", "from_hall")
+    sc.set_spawn("default",        1, 5)
+    sc.set_spawn("from_procession", 1, 5)
+    # The east wall holds the iron door the kneeling grid faces.
+    # Three cultists in the room: two flanking the door, one on
+    # patrol. Hide spots scatter so the player can pick a route.
+    sc.add_decoration(Decoration(12 * TILE + 16, 5 * TILE + 16,
+                                 "phantom_mark"))
+    sc.add_decoration(Decoration(6 * TILE + 16, 4 * TILE + 16, "candle"))
+    sc.add_decoration(Decoration(6 * TILE + 16, 6 * TILE + 16, "candle"))
+    sc.hide_spots = [
+        (1 * TILE + 24, 2 * TILE + 16, "behind"),
+        (1 * TILE + 24, 7 * TILE + 16, "behind"),
+        (8 * TILE + 16, 1 * TILE + 24, "behind"),
+        (8 * TILE + 16, 8 * TILE + 16, "behind"),
+    ]
+    # Two stationary cultists kneel at the iron door, facing east.
+    # Aggro starts at 0 (oblivious) so they don't react until the
+    # centre-aisle trigger flips them. Single-point waypoint pins
+    # them in place; lock_facing keeps them turned toward the door.
+    # The third cultist patrols a vertical strip on the west side,
+    # regardless.
+    kneel_a = _cultist(11 * TILE + 16, 4 * TILE + 16, speed=0.8,
+                       waypoints=[(11 * TILE + 16, 4 * TILE + 16)])
+    kneel_b = _cultist(11 * TILE + 16, 6 * TILE + 16, speed=0.8,
+                       waypoints=[(11 * TILE + 16, 6 * TILE + 16)])
+    for k in (kneel_a, kneel_b):
+        k.aggro = 0
+        k.facing = (1, 0)
+        k.lock_facing = True
+    sc.add_enemy(kneel_a)
+    sc.add_enemy(kneel_b)
+    # Patrol starts at the south end so the player (arriving from
+    # the west at (1,5)) doesn't spawn within touch range.
+    sc.add_enemy(_cultist(2 * TILE + 16, 8 * TILE + 16, speed=0.95,
+                          waypoints=[(2 * TILE + 16, 2 * TILE + 16),
+                                     (2 * TILE + 16, 8 * TILE + 16)]))
+
+    # Centre-aisle trigger: stepping into the middle column wakes
+    # the kneelers. Trigger rect spans the full vertical run of the
+    # aisle, x = cols 6..7 inclusive.
+    def _alert_kneelers(game):
+        for e in sc.enemies:
+            if e.kind == "cultist" and getattr(e, "aggro", 0) == 0:
+                e.aggro = 600
+                e.lock_facing = False
+                e.waypoints = None
+        game.audio.play("low_pulse", 0.55)
+    sc.triggers.append({
+        "rect": (6 * TILE, 1 * TILE, 8 * TILE, 9 * TILE),
+        "fn": _alert_kneelers,
+        "once": True,
+        "fired": False,
+    })
+    _ambient(sc, "whisper", 0.14, 7.0, 12.0)
+    return sc
+
+
+def build_depths_threshing():
+    floor, objs = _box(12, 10)
+    objs[5][11] = "E"   # east to stair
+    objects = ["".join(r) for r in objs]
+    sc = Scene("depths_threshing", floor, objects, music="basement")
+    sc.add_exit("E", "depths_stair", "from_threshing")
+    sc.set_spawn("default",   1, 5)
+    sc.set_spawn("from_hall", 1, 5)
+    # The yield. Grain mixed with old blood. No cultists -- the room
+    # itself does the work. One hide spot tucked at the far edge.
+    for bx, by in [(4, 4), (6, 5), (8, 6), (5, 7), (7, 4)]:
+        sc.add_decoration(Decoration(bx * TILE + 16, by * TILE + 16,
+                                     "bloodstain"))
+    sc.add_decoration(Decoration(6 * TILE + 16, 5 * TILE + 16,
+                                 "phantom_mark"))
+    sc.hide_spots = [
+        (2 * TILE + 16, 8 * TILE + 16, "behind"),
+        (10 * TILE + 16, 1 * TILE + 24, "behind"),
+    ]
+    _ambient(sc, "step_grass", 0.22, 3.5, 6.0)
+
+    def _interact(game):
+        px, py = game.player.x, game.player.y
+        if abs(px - (6 * TILE + 16)) < 36 and abs(py - (5 * TILE + 16)) < 36:
+            _evidence(game, "threshing_floor",
+                "Grain. Blood-dark in the cracks of the stone.\n"
+                "What the field gives him. What last spring meant.\n"
+                "The harvest was hard this year. The Lord giveth."
+            )
+    sc.on_interact_fn = _interact
+    return sc
+
+
+def build_depths_stair():
+    floor, objs = _box(8, 10)
+    objs[8][4] = "D"   # south to dark
+    objects = ["".join(r) for r in objs]
+    sc = Scene("depths_stair", floor, objects, music="basement")
+    sc.add_exit("D", "dark", "from_stair")
+    sc.set_spawn("default",        1, 5)
+    sc.set_spawn("from_threshing", 1, 5)
+    # One candle at the head of the stair. The Stair is empty per
+    # design -- silence is the keeper.
+    sc.add_decoration(Decoration(4 * TILE + 16, 4 * TILE + 16, "candle"))
+    sc.hide_spots = [
+        (1 * TILE + 24, 8 * TILE + 16, "behind"),
+        (6 * TILE + 16, 1 * TILE + 24, "behind"),
+    ]
+    _ambient(sc, "low_pulse", 0.10, 11.0, 16.0)
+    return sc
+
+
+def build_dark():
+    floor, objs = _box(12, 10)
+    objs[8][6] = "D"   # south to threshold
+    objects = ["".join(r) for r in objs]
+    sc = Scene("dark", floor, objects, music="basement")
+    sc.add_exit("D", "threshold", "from_dark")
+    sc.set_spawn("default",    6, 1)
+    sc.set_spawn("from_stair", 6, 1)
+    # Bodies of the disappeared, laid out where they fell. Each body
+    # is an E-press evidence beat -- the player chooses what to look
+    # at and what to keep walking past. The flashlight is force-off
+    # here (CULT_DARK_SCENES) so the dread aperture's centre clear
+    # circle is the only light.
+    body_positions = [
+        (3, 4, "ellie",   "Ellie. The boy's sister.\nShe still has the doll's other arm in her fist."),
+        (8, 5, "father",  "The boy's father. The well rope is around his wrist.\nHe got most of the way out."),
+        (5, 7, "mother",  "The boy's mother. The plate she still set for Ellie\nis here too. They put it in with her."),
+    ]
+    for bx, by, _, _ in body_positions:
+        sc.add_decoration(Decoration(bx * TILE + 16, by * TILE + 16,
+                                     "body"))
+    sc.hide_spots = [
+        (10 * TILE + 16, 8 * TILE + 16, "behind"),
+        (1 * TILE + 24,  3 * TILE + 16, "behind"),
+    ]
+    _ambient(sc, "heartbeat", 0.18, 3.5, 5.0)
+
+    def _dark_interact(game):
+        px, py = game.player.x, game.player.y
+        for bx, by, slug, lines in body_positions:
+            wx = bx * TILE + 16
+            wy = by * TILE + 16
+            if abs(px - wx) < 36 and abs(py - wy) < 36:
+                _evidence(game, f"dark_{slug}", lines)
+                return
+    sc.on_interact_fn = _dark_interact
+    return sc
+
+
+def build_threshold():
+    floor, objs = _box(10, 10)
+    objects = ["".join(r) for r in objs]
+    sc = Scene("threshold", floor, objects, music="void")
+    sc.set_spawn("default",   5, 1)
+    sc.set_spawn("from_dark", 5, 1)
+    # Doorframe at the centre. The binding_sigil deco IS the lintel
+    # sigil; pressing E here with the kid's drawing inverts it and
+    # seals the door (seal_threshold ending). Without the drawing
+    # the player can stand at it but can't act on it.
+    lintel_x, lintel_y = 5 * TILE + 16, 5 * TILE + 16
+    sc._lintel_pos = (lintel_x, lintel_y)
+    sc.add_decoration(Decoration(lintel_x, lintel_y, "binding_sigil"))
+    sc.add_decoration(Decoration(lintel_x, lintel_y - TILE, "smoke"))
+
+    def _threshold_on_enter(game, scene):
+        # Kid-follower spike: the cap on Pursuer proximity that the
+        # kid was holding lifts the moment he steps onto the slab.
+        # The cult is here to collect; the line slams shut. Set the
+        # flag so _tick_pursuer drops its kid-cap, then push prox to
+        # the closure-arm threshold so the apex timer engages within
+        # seconds. Player has to seal or surrender fast.
+        if (getattr(game, "_kid_follower_active", False)
+                and not game.save.flag("kid_at_threshold")):
+            game.save.set_flag("kid_at_threshold", True)
+            game.pursuer_proximity = max(game.pursuer_proximity, 0.95)
+            game.audio.play("low_pulse", 0.85)
+        if game.save.flag("first_threshold"):
+            return
+        game.save.set_flag("first_threshold", True)
+        _evidence(game, "the_doorframe",
+            "A doorframe with no wall, smoking from no source.\n"
+            "The lintel sigil matches the boy's drawing.\n"
+            "Whatever's on the other side is what they were\n"
+            "feeding us to."
+        )
+    sc.on_enter_fn = _threshold_on_enter
+
+    def _threshold_interact(game):
+        px, py = game.player.x, game.player.y
+        if abs(px - lintel_x) > 40 or abs(py - lintel_y) > 40:
+            return
+        inv = game.player.inventory
+        if not inv.has("kid_drawing"):
+            game.audio.play("low_pulse", 0.4)
+            game.show_notice("The lintel sigil. The smoke pulls at you.")
+            return
+        inv.remove("kid_drawing", 1)
+        with_kid = getattr(game, "_kid_follower_active", False)
+        game.audio.force_silence()
+        game.audio.play("arg_chime", 0.7)
+        if with_kid:
+            game.dialog.show([
+                "[c=dim](You hand him the drawing.)[/c]",
+                "[c=dim]He presses it against the stone himself.[/c]",
+                "[c=dim]The eye on the lintel turns inside out.[/c]",
+                "[s=slow][c=dim]...the smoke stops.[/c][/s]",
+            ], speaker="", voice="blip_soft", portrait="narrator")
+        else:
+            game.dialog.show([
+                "[c=dim](You press the drawing against the stone.)[/c]",
+                "[c=dim]The eye on the lintel turns inside out.[/c]",
+                "[s=slow][c=dim]...the smoke stops.[/c][/s]",
+            ], speaker="", voice="blip_soft", portrait="narrator")
+        _evidence(game, "the_seal",
+            "The kid's hand undid it.\n"
+            "What was on the other side will not come through.\n"
+            "The cult is owed nothing now."
+        )
+        game._play_ending("seal_threshold_with_kid" if with_kid
+                         else "seal_threshold")
+    sc.on_interact_fn = _threshold_interact
+    return sc

@@ -1,0 +1,555 @@
+"""The mistlands -- 100x100 plain west of the Innkeeper's farm,
+split roughly 1/3 / 2/3 by a north-south river. A planked bridge
+crosses near its north end (rows 23-26 x cols 32-34). THRESHOLD
+rework: the village's six buildings have been scattered across
+this map. Three sit on the west bank (Church north, Sheriff +
+Farmhouse south); three sit middle-south on the east bank (Shop,
+Kid's House, Barn). Player walks the bank to find them. The
+cauldron clearing and player's car are still here.
+
+Atmosphere: black haze drawn by Game._draw_mistlands_haze, ambient
+'wind' track played by music='wind'. Both cut to silence the moment
+the player picks up the orb (handled in mistlands_on_enter so re-entry
+under that flag stays quiet)."""
+from constants import TILE
+from entities.decoration import Decoration
+from .base import Scene
+
+
+def _stamp_building(objects_l, left, right, top, bot,
+                     door_char, door_col):
+    """Stamp a rectangular building footprint into objects_l. Outer
+    perimeter is wall (W); interior is roof (r); a single door tile
+    (door_char) is punched through the south face at door_col. Used
+    by build_mistlands for each scattered village building."""
+    for cx in range(left, right + 1):
+        objects_l[top][cx] = "W"
+        objects_l[bot][cx] = "W"
+    for ry in range(top + 1, bot):
+        objects_l[ry][left] = "W"
+        objects_l[ry][right] = "W"
+        for cx in range(left + 1, right):
+            objects_l[ry][cx] = "r"
+    # Punch the door on the south face.
+    objects_l[bot][door_col] = door_char
+
+
+def build_mistlands():
+    w = 100
+    h = 100
+    river_cols = (32, 33, 34)
+    bridge_rows = (23, 24, 25, 26)
+    floor_rows = []
+    for ty in range(h):
+        row = []
+        for tx in range(w):
+            if tx in river_cols:
+                if ty in bridge_rows:
+                    row.append("g")        # walkable grass under bridge
+                else:
+                    row.append("~")        # river water (solid)
+            else:
+                row.append("g")
+        floor_rows.append("".join(row))
+
+    objects_l = []
+    for ty in range(h):
+        row = ["."] * w
+        if ty == 0 or ty == h - 1:
+            row = ["T"] * w
+            for cx in river_cols:
+                row[cx] = "."
+        else:
+            row[0] = "T"
+            row[-1] = "T"
+        if ty in bridge_rows:
+            for cx in river_cols:
+                row[cx] = "$"
+        objects_l.append(row)
+
+    # 3-wide opening to the village/farm along the east edge -- rows
+    # 6, 7, 8.
+    for ry in (6, 7, 8):
+        objects_l[ry][w - 1] = "4"
+
+    # ---- Scattered buildings ----
+    # Same footprints (7w x 6h) for visual consistency. Each has its
+    # door on the south face. Coordinates picked so:
+    #   * Church (m) is the NORTH-WEST anchor (re-uses the legacy
+    #     mist_house footprint -- the orb-shadow spawns already pin
+    #     to this rectangle, so the cult emerging from the church
+    #     after the orb-binding is broken stays narratively correct).
+    #   * Sheriff (y) is mid-south on the WEST bank.
+    #   * Farmhouse (o) is deep south on the WEST bank.
+    #   * Shop (D), Kid's House (J), Barn (n) are spread middle-to-
+    #     south on the EAST bank, walking distance apart.
+    # Door cols are stored so the door-side spawn in the building
+    # interior maps back to the mistlands tile one south of the door.
+    # Church (NORTH-WEST). Footprint cols 4..10 rows 4..9. Door at
+    # col 7. Re-used legacy mist_house footprint so orb_shadows
+    # spawn anchors stay valid.
+    church_left, church_right = 4, 10
+    church_top, church_bot = 4, 9
+    church_door = 7
+    _stamp_building(objects_l, church_left, church_right,
+                    church_top, church_bot, "m", church_door)
+
+    # Sheriff (SOUTH-WEST upper). Footprint cols 4..10 rows 60..65.
+    sheriff_left, sheriff_right = 4, 10
+    sheriff_top, sheriff_bot = 60, 65
+    sheriff_door = 7
+    _stamp_building(objects_l, sheriff_left, sheriff_right,
+                    sheriff_top, sheriff_bot, "y", sheriff_door)
+
+    # Farmhouse (SOUTH-WEST lower). Footprint cols 4..10 rows 88..93.
+    farm_left, farm_right = 4, 10
+    farm_top, farm_bot = 88, 93
+    farm_door = 7
+    _stamp_building(objects_l, farm_left, farm_right,
+                    farm_top, farm_bot, "o", farm_door)
+
+    # Shop (EAST middle). Footprint cols 50..56 rows 55..60.
+    shop_left, shop_right = 50, 56
+    shop_top, shop_bot = 55, 60
+    shop_door = 53
+    _stamp_building(objects_l, shop_left, shop_right,
+                    shop_top, shop_bot, "D", shop_door)
+
+    # Kid's house (EAST middle-south). Footprint cols 65..71 rows 65..70.
+    kid_left, kid_right = 65, 71
+    kid_top, kid_bot = 65, 70
+    kid_door = 68
+    _stamp_building(objects_l, kid_left, kid_right,
+                    kid_top, kid_bot, "J", kid_door)
+
+    # Barn (EAST deep south). Footprint cols 80..86 rows 75..80.
+    barn_left, barn_right = 80, 86
+    barn_top, barn_bot = 75, 80
+    barn_door = 83
+    _stamp_building(objects_l, barn_left, barn_right,
+                    barn_top, barn_bot, "n", barn_door)
+
+    objects = ["".join(r) for r in objects_l]
+
+    sc = Scene("mistlands", floor_rows, objects, music="wind")
+    # Village re-entry, the cauldron-clearing entrance, and the six
+    # scattered building exits. Each building's door tile (m, y, o,
+    # D, J, n) wires straight into its old interior scene -- the
+    # buildings moved, but their interiors didn't.
+    sc.add_exit("4", "village", "from_mistlands")
+    sc.add_exit("a", "river_crossing", "from_mistlands")
+    sc.add_exit("m", "old_man_house",     "from_mistlands")  # Church
+    sc.add_exit("o", "haunted_house",     "from_mistlands")  # Farmhouse
+    sc.add_exit("J", "kid_house",         "from_mistlands")  # Kid
+    sc.add_exit("n", "barn",              "from_mistlands")  # Barn
+    # Sheriff (y) and Shop (D) now open onto the town street, not the
+    # mistlands. Their old field-side doors are sealed below.
+    cauldron_tx, cauldron_ty = 15, 80
+    objects_list = [list(r) for r in objects]
+    objects_list[cauldron_ty][cauldron_tx] = "j"
+    # North passage to the river_crossing -- a single tile carved
+    # into the north tree line, west of the river.
+    objects_list[0][50] = "a"
+    # Hand-authored loot crates. Both inside the playable area; the
+    # west-bank crate sits near the cauldron path, the east-bank
+    # crate sits just west of the relocated barn footprint.
+    objects_list[78][14] = "K"
+    objects_list[78][78] = "K"
+    sc.objects = objects_list
+    # Seal the relocated Sheriff + Shop doors (their interiors are now
+    # reached from the town street). Closed facade doors, not walls, so
+    # the buildings still read as buildings out here in the fields.
+    sc.objects[65][7] = "l"     # was the Sheriff 'y' door (row 65, col 7)
+    sc.objects[60][53] = "l"    # was the Shop 'D' door (row 60, col 53)
+    sc.add_exit("j", "void_boss", "from_mistlands")
+    sc.set_spawn("default", w - 2, 7)
+    sc.set_spawn("from_village", w - 2, 7)
+    sc.set_spawn("from_mist_house", 7, church_bot + 1)
+    sc.set_spawn("from_alter", 1, 85)
+    sc.set_spawn("from_river_crossing", 50, 1)
+    # Cornfield maze pushes north and emerges into the mistlands
+    # a few tiles west of the river crossing -- the maze led you
+    # somewhere wrong. Spawn point on the open north band.
+    sc.set_spawn("from_cornfield_maze", 40, 1)
+    # Returning from the clearing -- spawn one tile EAST of the j
+    # tile so the player doesn't auto-retrigger.
+    sc.set_spawn("from_clearing", cauldron_tx + 1, cauldron_ty)
+    # Returning from each scattered building lands the player one
+    # tile south of the door so they don't immediately re-enter.
+    sc.set_spawn("from_old_man_house",     church_door,  church_bot + 1)
+    sc.set_spawn("from_fisherman_cottage", sheriff_door, sheriff_bot + 1)
+    sc.set_spawn("from_haunted_house",     farm_door,    farm_bot + 1)
+    sc.set_spawn("from_shop",              shop_door,    shop_bot + 1)
+    sc.set_spawn("from_kid_house",         kid_door,     kid_bot + 1)
+    sc.set_spawn("from_barn",              barn_door,    barn_bot + 1)
+
+    # Sparse ambience -- a few crow decorations and grass tufts on the
+    # east side, NOTHING on the west side past the river. The empty
+    # west bank is the dread.
+    sc.add_decoration(Decoration(60 * TILE + 16, 12 * TILE + 16, "crow"))
+    sc.add_decoration(Decoration(72 * TILE + 16, 40 * TILE + 16, "crow"))
+    sc.add_decoration(Decoration(85 * TILE + 16, 70 * TILE + 16, "crow"))
+    # Creepy bank dressing -- creepy_trees, hanging figures, dead
+    # crows. The cauldron-clearing entrance at (15, 80) gets its own
+    # creepy_tree so the player can SPOT it among the empty bank.
+    # A bloody-handprint trail leads east-to-west across the bank
+    # from the river to the entrance, marking the cult's path.
+    sc.add_decoration(Decoration(50 * TILE + 16, 25 * TILE + 16, "creepy_tree"))
+    sc.add_decoration(Decoration(78 * TILE + 16, 55 * TILE + 16, "creepy_tree"))
+    sc.add_decoration(Decoration(68 * TILE + 16, 85 * TILE + 16, "creepy_tree"))
+    sc.add_decoration(Decoration(55 * TILE + 16, 35 * TILE + 16, "hanging_figure"))
+    sc.add_decoration(Decoration(82 * TILE + 16, 65 * TILE + 16, "hanging_figure"))
+    sc.add_decoration(Decoration(63 * TILE + 16, 45 * TILE + 16, "dead_crow"))
+    sc.add_decoration(Decoration(74 * TILE + 16, 78 * TILE + 16, "dead_crow"))
+    # The cauldron-entrance threshold -- creepy_tree on the j tile
+    # itself, a single bloody handprint at the threshold, and a
+    # candle melted to a stone at the foot. Just enough cue for
+    # the player to recognise the route without a blood trail
+    # that telegraphs the discovery from the river.
+    sc.add_decoration(Decoration(cauldron_tx * TILE + 16,
+                                 cauldron_ty * TILE + 16, "creepy_tree"))
+    sc.add_decoration(Decoration((cauldron_tx + 1) * TILE + 16,
+                                 cauldron_ty * TILE + 16,
+                                 "bloody_handprint"))
+    sc.add_decoration(Decoration((cauldron_tx + 1) * TILE + 16,
+                                 cauldron_ty * TILE + 8, "candle"))
+    # Cult marks scattered through the bank. A mix of the redesigned
+    # watching_eye (sunken sockets) and the new watching_wound
+    # (vertical slit-cuts) so the player sees both variants in the
+    # same map. Placed near the buildings -- something has been
+    # observing each of these scattered houses.
+    # West-bank marks
+    sc.add_decoration(Decoration(11 * TILE + 16, 6 * TILE + 16,
+                                 "watching_eye", size="small"))   # near church
+    sc.add_decoration(Decoration(2 * TILE + 24, 62 * TILE + 16,
+                                 "watching_wound", size="small")) # near sheriff
+    sc.add_decoration(Decoration(11 * TILE + 16, 90 * TILE + 16,
+                                 "watching_eye", size="small"))   # near farmhouse
+    sc.add_decoration(Decoration(2 * TILE + 24, 92 * TILE + 16,
+                                 "watching_wound", size="small")) # farmhouse rim
+    # East-bank marks
+    sc.add_decoration(Decoration(48 * TILE + 16, 57 * TILE + 16,
+                                 "watching_wound", size="small")) # near shop
+    sc.add_decoration(Decoration(63 * TILE + 16, 67 * TILE + 16,
+                                 "watching_eye", size="small"))   # near kid
+    sc.add_decoration(Decoration(78 * TILE + 16, 77 * TILE + 16,
+                                 "watching_wound", size="small")) # near barn
+    # Original mid-bank scatter
+    sc.add_decoration(Decoration(50 * TILE + 16, 50 * TILE + 16,
+                                 "watching_eye", size="small"))
+    sc.add_decoration(Decoration(75 * TILE + 16, 75 * TILE + 16,
+                                 "phantom_mark"))
+    for tx, ty in [(50, 50), (60, 30), (70, 60), (80, 40), (90, 80),
+                   (55, 80), (75, 20), (65, 75)]:
+        sc.add_decoration(Decoration(tx * TILE + 16, ty * TILE + 16,
+                                     "grass_tuft"))
+
+    # Hide spots colocated with VISIBLE cover so the prompt always
+    # matches what the player can see. Each entry sits on top of a
+    # grass-tuft / watching-eye / dead-tree decoration on the east
+    # bank; the empty west bank deliberately offers no cover.
+    sc.hide_spots = [
+        (50 * TILE + 16, 50 * TILE + 16, "behind"),  # eye + tuft
+        (60 * TILE + 16, 30 * TILE + 16, "behind"),  # tuft
+        (70 * TILE + 16, 60 * TILE + 16, "behind"),  # tuft
+        (75 * TILE + 16, 75 * TILE + 16, "behind"),  # eye + tuft
+        (55 * TILE + 16, 80 * TILE + 16, "behind"),  # tuft
+        (80 * TILE + 16, 40 * TILE + 16, "behind"),  # tuft
+    ]
+
+    sc.on_enter_fn = mistlands_on_enter
+    # Player's car: parked on the east bank, visible from the
+    # village entry. Reaching it with car_keys triggers the escape
+    # ending (the car was previously at the diner; moved here so
+    # the mistlands river area IS the escape geography). 3-tile
+    # footprint of solid 'X' tiles under the sprite so collision
+    # matches the visual.
+    car_tx, car_ty = 85, 8
+    car_x = car_tx * TILE + 16
+    car_y = car_ty * TILE + 16
+    sc.add_decoration(Decoration(car_x, car_y, "player_car"))
+    sc._car_pos = (car_x, car_y)
+    objects_list = [list(r) for r in sc.objects]
+    for cx in (car_tx - 1, car_tx, car_tx + 1):
+        if 0 <= cx < sc.w:
+            objects_list[car_ty][cx] = "X"
+    sc.objects = objects_list
+    # Hide spot beside the car (cover for a brief breather between
+    # village and west bank).
+    sc.hide_spots.append((car_x, (car_ty + 1) * TILE + 16, "behind"))
+
+    def _mistlands_interact(game):
+        cx, cy = sc._car_pos
+        if (abs(game.player.x - cx) < 40
+                and abs(game.player.y - cy) < 40):
+            if game.player.inventory.has("car_keys"):
+                if hasattr(game, "_begin_car_escape"):
+                    game._begin_car_escape()
+                else:
+                    game.show_notice("You unlock the door. (Ending stub.)")
+                return
+            game.audio.play("door_locked", 0.6)
+            game.show_notice("Locked. The keys are with the innkeeper.")
+    sc.on_interact_fn = _mistlands_interact
+    return sc
+
+
+def mistlands_on_enter(game, scene):
+    """Cut the wind to silence once the orb is in the player's pack
+    until the woodsman quest closes. Otherwise let load_scene_now's
+    normal music swap play 'wind'.
+
+    Also spawns the post-orb shadows on the FIRST mistlands entry
+    after the orb has been taken: five black_figures pinned around
+    the perimeter of the mist house. Once spawned, they never come
+    back -- if the player kills them they stay dead, if they leave
+    them alive they persist."""
+    if (game.save.flag("orb_taken")
+            and not game.save.flag("orb_quest_done")):
+        game.audio.stop_music()
+    if (game.save.flag("orb_taken")
+            and not game.save.flag("orb_shadows_spawned")):
+        game.save.set_flag("orb_shadows_spawned", True)
+        from entities.enemy import Enemy
+        # Mist house footprint is cols 4..10, rows 4..9. Place the
+        # five shadows one tile out from each face -- north (above
+        # the roof), south flanking the door, west and east flanks.
+        for tx, ty in [(7, 2), (3, 6), (11, 6), (5, 11), (10, 11)]:
+            e = Enemy(tx * TILE + 16, ty * TILE + 16,
+                      kind="black_figure", hp=110, atk=22, speed=1.5,
+                      aggro=380, atk_range=22,
+                      ai="chase", drops=[],
+                      can_dash=True, dash_speed_mult=2.6,
+                      dash_dur=0.32, dash_cd=2.4)
+            e.respawning = False
+            scene.add_enemy(e)
+
+
+def build_mist_house():
+    """Single-room interior at the NW of the mistlands. Bed, table, a
+    locked-feeling chest holding the orb. No NPC."""
+    floor = ["=" * 9 for _ in range(7)]
+    objects = [
+        "WWWWWWWWW",
+        "W.......W",
+        "W..b....W",
+        "W.......W",
+        "W..t....W",
+        "W....H..W",
+        "WWWWWWWWW",
+    ]
+    sc = Scene("mist_house", floor, objects, music="home")
+    sc.add_exit("H", "mistlands", "from_mist_house")
+    sc.set_spawn("default", 4, 4)
+    sc.set_spawn("from_mistlands", 5, 4)
+
+    chest_x = 6 * TILE + 16
+    chest_y = 2 * TILE + 16
+    sc.add_decoration(Decoration(chest_x, chest_y, "chest", open=False))
+    sc._mist_chest_pos = (chest_x, chest_y)
+    sc.add_decoration(Decoration(2 * TILE + 24,  0 * TILE + 22 , "candle"))
+    sc.add_decoration(Decoration(7 * TILE + 16, 4 * TILE + 16, "candle"))
+
+    sc.on_enter_fn = mist_house_on_enter
+    sc.on_interact_fn = mist_house_interact
+    return sc
+
+
+def mist_house_on_enter(game, scene):
+    for deco in scene.decorations:
+        if deco.kind == "chest":
+            deco.kwargs["open"] = game.save.flag("chest_mist")
+
+
+def mist_house_interact(game):
+    from .base import chest_interact
+    cx, cy = getattr(game.scene, "_mist_chest_pos", (None, None))
+    if cx is None:
+        return
+    chest_interact(game, game.scene, cx, cy,
+                   "chest_mist", ["orb"])
+    if game.player.inventory.has("orb") and not game.save.flag("orb_taken"):
+        game.save.set_flag("orb_taken", True)
+
+
+def build_alter_room():
+    """An OUTDOOR clearing on the other side of the mistlands west
+    passage (and the destination of the void-room chain). One large
+    pillar in the middle, three smaller pillars around it forming a
+    triangle. Tree perimeter, grass floor -- the structure is open
+    sky, not an interior. Pillars are solid (invisible-solid object
+    tile under each so the player can't walk through them) and
+    accept offerings: orb on the large pillar, big_fish on each
+    small. Once everything is placed nothing happens yet -- the
+    payoff is staged for later."""
+    w, h = 17, 13
+    floor = ["g" * w for _ in range(h)]
+    objects_l = []
+    for ty in range(h):
+        if ty == 0 or ty == h - 1:
+            objects_l.append(list("T" * w))
+        else:
+            row = ["T"] + ["."] * (w - 2) + ["T"]
+            objects_l.append(row)
+    # East edge passage back to the mistlands.
+    objects_l[h // 2][w - 1] = "e"
+    # Pillar tile coordinates -- one large in the centre, three small
+    # at the apex, SW and SE of centre. Tile chars set to "X"
+    # (invisible solid) so the pillar decorations sit on a blocking
+    # tile and can't be walked through.
+    cx_tile, cy_tile = w // 2, h // 2
+    pillar_tiles = [
+        (cx_tile,     cy_tile,     True),
+        (cx_tile,     cy_tile - 3, False),
+        (cx_tile - 3, cy_tile + 2, False),
+        (cx_tile + 3, cy_tile + 2, False),
+    ]
+    for tx, ty, _is_large in pillar_tiles:
+        objects_l[ty][tx] = "X"
+    objects = ["".join(r) for r in objects_l]
+    sc = Scene("alter_room", floor, objects, music="void")
+    sc.add_exit("e", "mistlands", "from_alter")
+    sc.set_spawn("default", 2, h // 2)
+    sc.set_spawn("from_mistlands", w - 2, h // 2)
+    sc.set_spawn("from_void_2", w // 2, h - 3)
+    sc._pillars = []  # decoration handles for on_enter sync
+    for tx, ty, is_large in pillar_tiles:
+        deco = Decoration(tx * TILE + 16, ty * TILE + 16, "pillar",
+                          large=is_large)
+        sc.add_decoration(deco)
+        sc._pillars.append((deco, tx, ty))
+    # A few grass tufts to read as a clearing rather than a flat plane.
+    for tx, ty in [(3, 3), (13, 3), (3, 9), (13, 9), (8, 1), (8, 11)]:
+        sc.add_decoration(Decoration(tx * TILE + 16, ty * TILE + 16,
+                                     "grass_tuft"))
+    # Watching eyes embedded in the tree perimeter. The pillars are
+    # not what's looking at you -- the trees are. Player is observed
+    # the entire ritual.
+    for tx, ty in [(0, 3), (0, 9), (16, 3), (16, 9), (8, 0), (8, 12)]:
+        sc.add_decoration(Decoration(tx * TILE + 16, ty * TILE + 16,
+                                     "watching_eye", size="small"))
+    sc.on_enter_fn = alter_on_enter
+    sc.on_interact_fn = alter_interact
+    return sc
+
+
+def _alter_pillar_flag(tx, ty):
+    """Save-flag key for a placed offering on the pillar at (tx, ty).
+    Per-coord so each pillar persists independently."""
+    return f"alter_pillar_{tx}_{ty}"
+
+
+def alter_on_enter(game, scene):
+    """Re-apply each pillar's filled state from save flags on every
+    entry, so placements persist."""
+    for deco, tx, ty in getattr(scene, "_pillars", []):
+        if game.save.flag(_alter_pillar_flag(tx, ty)):
+            deco.kwargs["filled"] = True
+
+
+def alter_interact(game):
+    """Handle E presses near a pillar. Large pillar takes the orb;
+    small pillars take a big_fish each. Items are consumed, the
+    pillar's filled visual flips, and a per-coord save flag persists
+    the placement. Pressing E adjacent to an already-filled pillar
+    does nothing -- the user wants no payoff yet."""
+    sc = game.scene
+    px, py = game.player.x, game.player.y
+    inv = game.player.inventory
+    save = game.save
+    for deco, tx, ty in getattr(sc, "_pillars", []):
+        if abs(deco.x - px) > 40 or abs(deco.y - py) > 48:
+            continue
+        flag_key = _alter_pillar_flag(tx, ty)
+        if save.flag(flag_key):
+            return
+        is_large = deco.kwargs.get("large", False)
+        if is_large:
+            if not inv.has("orb"):
+                return
+            inv.remove("orb", 1)
+            save.set_flag(flag_key, True)
+            deco.kwargs["filled"] = True
+            game.audio.play("arg_chime", 0.7)
+            game.show_notice("The Orb settles into the pillar.")
+            return
+        else:
+            if not inv.has("big_fish"):
+                return
+            inv.remove("big_fish", 1)
+            save.set_flag(flag_key, True)
+            deco.kwargs["filled"] = True
+            game.audio.play("pickup_rare", 0.7)
+            game.show_notice("Offering placed.")
+            return
+
+
+def _add_void_room_eyes(sc, w, h):
+    """Place 2 watching eyes inside a void room. They're embedded in
+    the invisible walls -- the player doesn't know they're there
+    until they get close enough to see the pupils tracking. Petscop:
+    the void is not empty. It is *watched*."""
+    for tx, ty in [(2, 1), (w - 3, h - 2)]:
+        sc.add_decoration(Decoration(tx * TILE + 16, ty * TILE + 16,
+                                     "watching_eye", size="small"))
+
+
+def _build_void_room(key, next_key, next_spawn):
+    """Shared builder for the two empty void rooms in the south-tree
+    chain. Spawn is in the centre; walking onto any non-corner edge
+    tile triggers the transition to the next scene. No decorations,
+    no NPCs -- the rooms ARE the absence."""
+    w, h = 13, 9
+    floor = ["@" * w for _ in range(h)]
+    objects_l = []
+    for ty in range(h):
+        if ty == 0 or ty == h - 1:
+            objects_l.append(list("X" * w))      # invisible solid
+        else:
+            row = ["X"] + ["."] * (w - 2) + ["X"]
+            objects_l.append(row)
+    objects = ["".join(r) for r in objects_l]
+    sc = Scene(key, floor, objects, music="void")
+    sc.set_spawn("default", w // 2, h // 2)
+    sc.set_spawn("from_tree", w // 2, h // 2)
+    sc.set_spawn("from_void_1", w // 2, h // 2)
+
+    def _walk_to_edge(game):
+        if game.state == "transition":
+            return
+        game.begin_transition(next_key, next_spawn)
+    # Trigger zone covering the inner perimeter (one tile thick around
+    # the room interior). Any step onto an edge fires the transition.
+    margin = TILE
+    sc.triggers.append({
+        "rect": (1 * TILE, 1 * TILE,
+                 (w - 1) * TILE, (h - 1) * TILE),
+        "fn": lambda game: _check_edge(game, sc, w, h, _walk_to_edge),
+        "once": False, "fired": False,
+    })
+    _add_void_room_eyes(sc, w, h)
+    return sc
+
+
+def _check_edge(game, scene, w, h, fire):
+    """Fire `fire(game)` only when the player is bumping the wall --
+    not just standing on the perimeter floor tile. The walls are
+    invisible solids at the outer rows/cols, so the player's center
+    sits at most ~14px from the wall when bumping. Tighter threshold
+    so the player has to actively touch the wall, not drift near it."""
+    px, py = game.player.x, game.player.y
+    margin = 14
+    near_edge = (px < TILE + margin
+                 or px > (w - 1) * TILE - margin
+                 or py < TILE + margin
+                 or py > (h - 1) * TILE - margin)
+    if near_edge:
+        fire(game)
+
+
+def build_void_room_1():
+    return _build_void_room("void_room_1", "void_room_2", "from_void_1")
+
+
+def build_void_room_2():
+    return _build_void_room("void_room_2", "alter_room", "from_void_2")

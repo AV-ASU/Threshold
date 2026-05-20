@@ -1,0 +1,568 @@
+"""Interiors for the four villager houses. Each is a small
+one-room interior with a single NPC resident and an exit back to
+the parent overworld scene."""
+import random
+import pygame
+from constants import TILE
+from entities.npc import NPC
+from entities.decoration import Decoration
+from .base import Scene
+from .dialogue import (
+    old_man_dialogue, fisherman_dialogue, innkeeper_dialogue, _evidence,
+)
+
+
+def _open_login_terminal(game, npc):
+    """Invisible-NPC dialogue handler bolted onto the computer's tile.
+    Pressing E next to the computer opens the LOGIN: text-input modal.
+    The modal accepts the User-D### credential dropped by the bandit
+    boss. Anything else returns ACCESS DENIED. The credential is stored
+    lowercase ('user-d###') so the case-insensitive compare just lowers
+    the input."""
+    def _on_submit(s):
+        # Round-9: credential compare is digit-only. The Badge in the
+        # player's pocket reads as "D-234"; the saved arg is "d-234".
+        # Accept anything whose digit-run matches the saved digits, so
+        # "D-234", "d-234", "234", and the legacy "user-d234" form all
+        # validate.
+        import re
+        saved = game.save.arg("user_code") or ""
+        attempt = (s or "").strip()
+        m = re.search(r"\d+", saved)
+        saved_digits = m.group() if m else None
+        m = re.search(r"\d+", attempt)
+        attempt_digits = m.group() if m else None
+        ok = bool(saved_digits) and saved_digits == attempt_digits
+        if ok:
+            if not game.save.flag("terminal_unlocked"):
+                game.save.set_flag("terminal_unlocked", True)
+            game.audio.play("arg_chime", 0.7)
+            game.show_notice("ACCESS GRANTED.")
+            # State-police bulletin shows in dialog every grant, so the
+            # player can re-read it from the terminal at any time. The
+            # outside-world view of the incident: domestic annihilation,
+            # spouse at large. The substrate's "we" surveillance line
+            # is gone in round-9; the closing lines now read as a flat
+            # connection-terminated stub instead of a containment note.
+            game.dialog.show([
+                "[c=dim](The terminal flickers. A bulletin loads.)[/c]",
+                "STATE BULLETIN -- CASE #044",
+                "Incident: Domestic. Three Reported Missing.",
+                "Missing: F Adult; M Minor (In Brace); F Minor.",
+                "Suspect: Adult M, of the Residence.",
+                "          Surname [Redacted] in Agency Files.",
+                "Status: At Large.",
+                "[c=dim]error: Connection Terminated...[/c]",
+            ], speaker="", voice="blip_soft", portrait="narrator")
+        else:
+            game.audio.play("door_locked", 0.7)
+            game.show_notice("ACCESS DENIED.")
+    def _on_cancel():
+        game.audio.play("menu_close", 0.5)
+    if hasattr(game, "text_input") and game.text_input is not None:
+        game.audio.play("menu_open", 0.6)
+        game.text_input.open(prompt="LOGIN:",
+                             on_submit=_on_submit, on_cancel=_on_cancel)
+    else:
+        # Defensive fallback so the prompt isn't silent if the modal
+        # somehow hasn't been wired in yet.
+        game.show_notice("The terminal hums quietly.")
+
+
+def build_old_man_house():
+    """THRESHOLD: the church and parsonage. Single combined room.
+    Door 'm' on the south wall back to the town crossroads. Door
+    '?' on the north wall to the graveyard behind the church."""
+    floor = ["=" * 10 for _ in range(8)]
+    objects = [
+        "WWWW?WWWWW",   # ? = graveyard gate (north)
+        "W..C....UW",   # C = computer placeholder; U = stairs to bell tower
+        "W..t..s..W",
+        "W..c.....W",
+        "W........W",
+        "W.O....b.W",   # O = preacher (still old_man_dialogue)
+        "W....m...W",   # m = exit south to crossroads
+        "WWWWWWWWWW",
+    ]
+    # Replace the placeholder C with '.' so it doesn't draw as anything,
+    # and remember its tile -- the invisible interact NPC + the computer
+    # decoration both go there. (We can't put a marker into OBJECT_DEFS
+    # for "computer" without polluting the global table.)
+    rows = [list(r) for r in objects]
+    comp_tx, comp_ty = 3, 1
+    rows[comp_ty][comp_tx] = "."
+    objects = ["".join(r) for r in rows]
+
+    sc = Scene("old_man_house", floor, objects, music="home")
+    # Church now sits on the mistlands west bank. The `m` exit routes
+    # to the mistlands; the legacy `from_village` spawn stays as a
+    # save-state fallback.
+    sc.add_exit("m", "mistlands", "from_old_man_house")
+    sc.add_exit("?", "graveyard", "from_church")
+    sc.add_exit("U", "bell_tower", "from_church")
+    sc.set_spawn("default", 5, 5)
+    sc.set_spawn("from_mistlands", 4, 5)       # one tile north of m door
+    sc.set_spawn("from_village", 4, 5)         # legacy fallback
+    sc.set_spawn("from_graveyard", 4, 1)       # one tile south of ? door
+    sc.set_spawn("from_bell_tower", 7, 1)      # one tile west of U stairs
+
+    pos = sc.consume_marker("O")
+    if pos:
+        tx, ty = pos
+        sc.add_npc(NPC(tx * TILE + 16, ty * TILE + 16,
+                       "Old Man", "old", voice="blip_low", portrait="old",
+                       dialogue_fn=old_man_dialogue, movement="idle"))
+
+    # Computer: a beige CRT decoration plus an invisible solid NPC at the
+    # same tile so try_interact() picks it up and the [E] prompt shows.
+    comp_x = comp_tx * TILE + 16
+    comp_y = comp_ty * TILE + 16
+    sc.add_decoration(Decoration(comp_x, comp_y, "computer"))
+    sc.add_npc(NPC(comp_x, comp_y, "Terminal", "_invisible",
+                   voice="blip_soft", portrait="narrator",
+                   dialogue_fn=_open_login_terminal,
+                   movement="idle", solid=True, tag="computer"))
+
+    sc.add_decoration(Decoration(7 * TILE + 16,  0 * TILE + 22 , "candle"))
+    sc.add_decoration(Decoration(8 * TILE + 16, 5 * TILE + 24, "candle"))
+    # The Preacher's parsonage. A faded banner above the desk reads
+    # like a hung tapestry. The old computer is the cult's ancient
+    # church-records terminal -- the LOGIN: prompt is unchanged.
+    sc.add_decoration(Decoration(2 * TILE + 16, 4 * TILE + 16, "banner",
+                                 color=(120, 80, 50)))
+    sc.add_decoration(Decoration(8 * TILE + 8, 2 * TILE + 16, "clock"))
+    sc.add_decoration(Decoration(5 * TILE + 16, 2 * TILE + 16, "photo"))
+    # ONE sigil on the parsonage wall, plus phantom-mark chalk on
+    # adjacent walls. The Preacher displays his cult symbol but not
+    # in clusters -- it shouldn't read as a printing-press output.
+    # The eye is also a trespass camera: standing in its cone
+    # unhidden rings the church bell and bumps Pursuer hard.
+    eye_x = 1 * TILE + 28
+    eye_y = 3 * TILE + 16
+    sc.add_decoration(Decoration(eye_x, eye_y,
+                                 "watching_eye", size="small", slit=True))
+    sc.eye_cameras.append({"x": eye_x, "y": eye_y, "range": 140,
+                            "_t": 0.0, "fired": False, "alarm": True})
+    sc.add_decoration(Decoration(8 * TILE + 4, 4 * TILE + 16,
+                                 "phantom_mark"))
+    for mx, my in [(4, 4), (6, 3), (5, 4)]:
+        sc.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16,
+                                     "mote"))
+    # Hide spots: behind the desk, behind the shelf.
+    sc.hide_spots = [
+        (3 * TILE + 16, 2 * TILE + 24, "behind"),
+        (7 * TILE + 16, 2 * TILE + 24, "behind"),
+    ]
+    return sc
+
+
+def build_fisherman_cottage():
+    floor = ["=" * 10 for _ in range(8)]
+    objects = [
+        "WWWWWWWWWW",
+        "W........W",
+        "W..s..t..W",
+        "W..b..c..W",
+        "W........W",
+        "W..Y.....W",   # Y = fisherman marker
+        "W....y...W",   # y = exit door
+        "WWWWWWWWWW",
+    ]
+    sc = Scene("fisherman_cottage", floor, objects, music="home")
+    # Sheriff's office now opens onto the town street.
+    sc.add_exit("y", "town", "from_sheriff")
+    sc.set_spawn("default", 5, 5)
+    sc.set_spawn("from_mistlands", 4, 5)       # legacy fallback
+    sc.set_spawn("from_village", 4, 5)         # legacy fallback
+    sc.set_spawn("from_town", 4, 5)            # arrive from the town street
+
+    pos = sc.consume_marker("Y")
+    if pos:
+        tx, ty = pos
+        # The Sheriff sits at his desk. He doesn't patrol -- the lesser
+        # cult walks the roads. He just watches the player from the
+        # chair. The first read is friendly; later visits dim him.
+        sc.add_npc(NPC(tx * TILE + 16, ty * TILE + 16,
+                       "Sheriff", "policeman",
+                       voice="blip_gruff", portrait="guard",
+                       dialogue_fn=fisherman_dialogue, movement="watch"))
+
+    sc.add_decoration(Decoration(7 * TILE + 16,  0 * TILE + 22 , "candle"))
+    sc.add_decoration(Decoration(2 * TILE + 16,  0 * TILE + 22 , "candle"))
+    sc.add_decoration(Decoration(7 * TILE + 16, 4 * TILE + 16, "banner",
+                                 color=(60, 100, 130)))
+    # AM radio on the desk, a lantern by the door.
+    sc.add_decoration(Decoration(4 * TILE + 16, 2 * TILE + 16, "radio"))
+    sc.add_decoration(Decoration(8 * TILE + 16, 5 * TILE + 24, "lantern"))
+    # Trespass camera: a watching eye over the desk reads the room
+    # for the Sheriff. Standing in its cone unhidden rings an alarm
+    # and bumps Pursuer hard.
+    eye_x = 5 * TILE + 16
+    eye_y = 0 * TILE + 24
+    sc.add_decoration(Decoration(eye_x, eye_y,
+                                 "watching_eye", size="small", slit=True))
+    sc.eye_cameras.append({"x": eye_x, "y": eye_y, "range": 140,
+                            "_t": 0.0, "fired": False, "alarm": True})
+    for mx, my in [(4, 3), (5, 4), (3, 5)]:
+        sc.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16,
+                                     "mote"))
+    # Hide spots: behind the desk, under the table.
+    sc.hide_spots = [
+        (3 * TILE + 16, 2 * TILE + 24, "behind"),
+        (7 * TILE + 16, 2 * TILE + 24, "under"),
+    ]
+    return sc
+
+
+def build_haunted_house():
+    """Round-10 rework: now the 'normal' face of a two-stage house.
+    On first entry it looks like a plain empty interior -- a candle,
+    a couple of motes, otherwise bare. The trick is the south face:
+    one tile is a glitch wall (passable wood). Walking through it
+    drops the player into the haunted version of the same house
+    (haunted_house_glitch), which is where the phantom marks, broken
+    table, bloodstains, and the path to the portal room live.
+
+    Two seal conditions both turn the glitch wall back into a real W
+    on subsequent entries:
+      * haunted_glitch_sealed -- the player walked back out of the
+        haunted version through its north door (point-2 of the spec)
+      * symbol_portal_used    -- the player took the portal route
+                                 from the haunted version
+    Either way, after one trip through, the route is closed."""
+    # THRESHOLD: cleaned up the void buffer + passable % glitch
+    # wall the original used to drop the player into the alternate
+    # haunted version. South face is now solid; row 7 was an open
+    # void buffer and is now a sealed wall row so the player can't
+    # walk into nothing.
+    floor = ["=" * 8 for _ in range(8)]
+    objects = [
+        "WWWoWWWW",   # 0  o = exit back to village (north face)
+        "W......W",   # 1
+        "W......W",   # 2
+        "W......W",   # 3
+        "W......W",   # 4
+        "W......W",   # 5
+        "W......W",   # 6
+        "WWWWWWWW",   # 7  sealed south wall
+    ]
+    sc = Scene("haunted_house", floor, objects, music="home")
+    # Abandoned farmhouse now sits deep south on the mistlands
+    # west bank.
+    sc.add_exit("o", "mistlands", "from_haunted_house")
+    sc.set_spawn("default",     3, 1)
+    sc.set_spawn("from_mistlands", 3, 1)
+    sc.set_spawn("from_village", 3, 1)         # legacy fallback
+    # When the player climbs back up from the cult chamber, they
+    # come up through the hatch in the south of the room, not the
+    # village door at the north. Spawn one tile north of the hatch
+    # so they don't auto-trigger it.
+    sc.set_spawn("from_chamber", 4, 4)
+    # THRESHOLD: this is the abandoned farmhouse. Sigils on every
+    # wall. Phantom marks. The cult held meetings here before the
+    # cauldron was moved out to the clearing. There's a hatch in
+    # the back that drops down to the well_passage / cult_chamber.
+    sc.add_decoration(Decoration(6 * TILE + 16,  0 * TILE + 22 , "candle"))
+    sc.add_decoration(Decoration(2 * TILE + 16,  0 * TILE + 22 , "candle"))
+    sc.add_decoration(Decoration(2 * TILE + 16, 5 * TILE + 16,
+                                 "phantom_mark"))
+    sc.add_decoration(Decoration(5 * TILE + 16, 4 * TILE + 16,
+                                 "phantom_mark"))
+    sc.add_decoration(Decoration(1 * TILE + 28, 3 * TILE + 16,
+                                 "phantom_mark"))
+    sc.add_decoration(Decoration(6 * TILE + 4, 5 * TILE + 16,
+                                 "phantom_mark"))
+    sc.add_decoration(Decoration(4 * TILE + 16, 3 * TILE + 24,
+                                 "bloodstain"))
+    for mx, my in [(2, 2), (5, 3), (3, 4)]:
+        sc.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16,
+                                     "mote"))
+
+    # Cult-chamber hatch: press E in the south part of the room to
+    # descend. The hatch is the only way to reach symbol_portal_room
+    # in THRESHOLD (the void buffer + glitch trick is gone). Drawn
+    # as a cellar_hatch (wood box + iron pull-ring), NOT a chest.
+    hatch_x = 4 * TILE + 16
+    hatch_y = 5 * TILE + 16
+    sc.add_decoration(Decoration(hatch_x, hatch_y, "cellar_hatch"))
+    sc._farmhouse_hatch = (hatch_x, hatch_y)
+
+    sc.hide_spots = [
+        (2 * TILE + 16, 4 * TILE + 24, "behind"),
+        (6 * TILE + 16, 4 * TILE + 24, "behind"),
+    ]
+
+    def _farmhouse_interact(game):
+        if (abs(game.player.x - hatch_x) < 36
+                and abs(game.player.y - hatch_y) < 36):
+            game.audio.play("door_open", 0.6)
+            game.show_notice("You drop into the dark.")
+            game.begin_transition("symbol_portal_room", "from_farmhouse")
+    sc.on_interact_fn = _farmhouse_interact
+
+    sc.on_enter_fn = haunted_house_on_enter
+    return sc
+
+
+def haunted_house_on_enter(game, scene):
+    """THRESHOLD: glitch wall is gone -- the cult-chamber access is
+    a hatch interact. The on_enter now also drops a spare_batteries
+    pickup in the NW corner once per save -- the abandoned farmhouse
+    is dark and the player is encouraged to descend with the
+    flashlight on."""
+    if not game.save.flag("batteries_haunted_taken"):
+        scene.add_item(
+            1 * TILE + 16, 1 * TILE + 16, "spare_batteries",
+            on_pickup=lambda g: g.save.set_flag(
+                "batteries_haunted_taken", True),
+        )
+
+
+def build_haunted_house_glitch():
+    """Round-10: the haunted face of the house. Same 8-wide footprint
+    on top, but extends an extra eight rows of @ void floor below the
+    south wall. The south wall has its own glitch tile; walking
+    through it drops onto the void floor, which extends invisibly
+    south to a trigger that fires the symbol_portal_room transition.
+
+    Two ways out:
+      * North door (o) -> village. on_exit fires haunted_glitch_sealed,
+        which turns the normal haunted_house's south wall into a real
+        W on the next entry.
+      * Walk south through the second glitch wall + invisible-floor
+        path to the portal room. The portal room sets symbol_portal_used
+        which also seals the route."""
+    floor = []
+    for y in range(16):
+        if y < 7:
+            floor.append("=" * 8)
+        else:
+            floor.append("@" * 8)
+    objects = [
+        "WWWoWWWW",   # 0  north door back to village
+        "W......W",   # 1
+        "W.t....W",   # 2  broken table
+        "W......W",   # 3
+        "W....c.W",   # 4  displaced chair
+        "W......W",   # 5
+        "WWW%WWWW",   # 6  inner glitch wall to the void path
+        "........",   # 7
+        "........",   # 8
+        "........",   # 9
+        "........",   # 10
+        "........",   # 11
+        "........",   # 12
+        "........",   # 13
+        "........",   # 14
+        "........",   # 15  trigger zone -> symbol_portal_room
+    ]
+    sc = Scene("haunted_house_glitch", floor, objects, music="home")
+    sc.add_exit("o", "village", "from_haunted_house")
+    sc.set_spawn("default",      3, 1)
+    sc.set_spawn("from_normal",  3, 1)             # entry from the normal house
+    sc.set_spawn("from_village", 3, 1)             # safety fallback
+    # Haunted dressing -- candles, scratch marks, bloodstains. None
+    # of the void-floor rows have decorations; that path is meant to
+    # read as empty / invisible.
+    sc.add_decoration(Decoration(6 * TILE + 16,  0 * TILE + 22 , "candle"))
+    sc.add_decoration(Decoration(5 * TILE + 16, 4 * TILE + 24, "candle"))
+    sc.add_decoration(Decoration(2 * TILE + 16, 5 * TILE + 16, "phantom_mark"))
+    sc.add_decoration(Decoration(4 * TILE + 16, 1 * TILE + 18, "phantom_mark"))
+    sc.add_decoration(Decoration(6 * TILE + 16, 3 * TILE + 16, "phantom_mark"))
+    sc.add_decoration(Decoration(2 * TILE + 16, 2 * TILE + 18, "phantom_mark"))
+    sc.add_decoration(Decoration(3 * TILE + 16, 5 * TILE + 24, "bloodstain"))
+    sc.add_decoration(Decoration(5 * TILE + 16, 5 * TILE + 16, "bloodstain"))
+
+    def _portal_trigger(game):
+        if game.state == "transition": return
+        if game.save.flag("symbol_portal_used"): return
+        game.audio.play("blip_glitch", 0.55)
+        game.begin_transition("symbol_portal_room", "from_haunted")
+
+    # Trigger covers the bottom two rows of the void path so the
+    # transition fires when the player has actually walked far enough
+    # south to be off the visible house portion.
+    sc.triggers.append({
+        "rect": (0, 14 * TILE, 8 * TILE, 16 * TILE),
+        "fn": _portal_trigger, "once": True, "fired": False,
+    })
+
+    sc.on_exit_fn = haunted_glitch_on_exit
+    return sc
+
+
+def haunted_glitch_on_exit(game, scene):
+    """When the player leaves the haunted version, check the target
+    of the transition. If they walked back out via the north door
+    (target == 'village'), seal the route. If they took the portal
+    path (target == 'symbol_portal_room'), the portal flow sets
+    symbol_portal_used for us -- but we still set haunted_glitch_sealed
+    here defensively so the normal house's wall is sealed regardless
+    of which exit was taken."""
+    target = (game.transition_target or (None, None))[0]
+    if target in ("village", "symbol_portal_room"):
+        game.save.set_flag("haunted_glitch_sealed", True)
+
+
+def build_symbol_portal_room():
+    """THRESHOLD: the cult chamber. Underground stone room beneath
+    the abandoned farmhouse. The cult's actual altar -- an enormous
+    spiral-eye sigil scratched into the floor at the centre. A
+    short ladder up to the farmhouse on the west; a passage east to
+    the well_passage. No teleport mechanic anymore -- the room is
+    just a place. Standing on the sigil triggers a notice; reading
+    Mom's notebook page 3 in this room would also fire the
+    flashback (handled in Pass H).
+    """
+    floor = ["x" * 12 for _ in range(10)]
+    objects_l = []
+    for y in range(10):
+        if y == 0 or y == 9:
+            objects_l.append(list("#" * 12))
+        else:
+            row = ["#"] + ["."] * 10 + ["#"]
+            objects_l.append(row)
+    # Ladder up to the farmhouse on the west wall, passage east.
+    objects_l[5][0] = "U"
+    objects_l[5][11] = "e"
+    objects = ["".join(r) for r in objects_l]
+    sc = Scene("symbol_portal_room", floor, objects, music="void")
+    sc.add_exit("U", "haunted_house", "from_chamber")
+    sc.add_exit("e", "well_passage", "from_chamber")
+    sc.set_spawn("default",        2, 5)
+    sc.set_spawn("from_haunted",   1, 5)
+    sc.set_spawn("from_farmhouse", 1, 5)
+    sc.set_spawn("from_well_passage", 10, 5)
+
+    sym_x = 7 * TILE + 16
+    sym_y = 5 * TILE + 16
+    sc.add_decoration(Decoration(sym_x, sym_y, "symbol"))
+    # Candles around the altar.
+    for cx, cy in [(5, 3), (9, 3), (5, 7), (9, 7)]:
+        sc.add_decoration(Decoration(cx * TILE + 16, cy * TILE + 16,
+                                     "candle"))
+    # Cult robes on a hook (banner deco).
+    sc.add_decoration(Decoration(2 * TILE + 16, 7 * TILE + 16,
+                                 "banner", color=(110, 90, 50)))
+    # Ambient bloodstains.
+    # ONE bloodstain near the sigil -- the rite leaks. Cult chamber
+    # gets ONE slit-pupil watcher (the altar's gaze) and a single
+    # claw gouge on the south wall.
+    sc.add_decoration(Decoration(7 * TILE + 16, 3 * TILE + 24,
+                                 "bloodstain"))
+    sc.add_decoration(Decoration(11 * TILE + 4, 5 * TILE + 16,
+                                 "watching_eye", size="small", slit=True))
+    sc.eye_cameras.append({"x": 11 * TILE + 4, "y": 5 * TILE + 16,
+                            "range": 120, "_t": 0.0, "fired": False})
+    sc.add_decoration(Decoration(8 * TILE + 16, 8 * TILE + 22,
+                                 "claw_marks"))
+    sc.hide_spots = [
+        # Behind the cult robes hung on the west wall hook.
+        (2 * TILE + 16, 7 * TILE + 16, "behind"),
+        # Behind the north candle row.
+        (5 * TILE + 16, 3 * TILE + 16, "behind"),
+    ]
+
+    return sc
+
+
+def build_locked_house():
+    """Red herring: the brass_key found in bandit_cave_east opens this
+    house. No NPC, no quest, no evidence file. The let-down IS the point
+    -- but the room should look lived-in-then-left, not blank-canvas
+    empty. Dust, scattered furniture, a faded family photo over the bed.
+
+    Note: village uses 'z' (solid) as the locked-from-outside door;
+    inside the house we use 'D' (non-solid) so the player can walk back
+    out without unlocking from the inside."""
+    floor = ["=" * 8 for _ in range(6)]
+    objects = [
+        "WWWDWWWW",   # 0  D = exit door north (passable from inside)
+        "W......W",   # 1   <- spawn (col 3); kept clear so the door is approachable
+        "W.tc..sW",   # 2  table + chair clustered; shelf shoved against east wall
+        "W......W",   # 3
+        "W.b....W",   # 4  bed against west wall, alone
+        "WWWWWWWW",   # 5
+    ]
+    sc = Scene("locked_house", floor, objects, music="home")
+    sc.add_exit("D", "village", "from_locked_house")
+    sc.set_spawn("default", 3, 1)
+    sc.set_spawn("from_village", 3, 1)
+
+    # Atmosphere: an old single candle still burning by the table, a
+    # faded family-photo frame hung over the bed, and a smattering of
+    # floating dust motes that catch the light.
+    sc.add_decoration(Decoration(2 * TILE + 16,  0 * TILE + 22 , "candle"))
+    sc.add_decoration(Decoration(2 * TILE + 16, 3 * TILE + 16, "photo"))
+    # Faded banner left on the wall -- desaturated brown so it reads as
+    # cloth that has lost its colour rather than a fresh hanging.
+    sc.add_decoration(Decoration(6 * TILE + 16,  0 * TILE + 22 , "banner",
+                                 color=(110, 90, 70)))
+    # A clock that the inhabitants left running, and a faded second
+    # photo over the bed. The let-down stays -- but the abandonment
+    # reads as having a story behind it now.
+    sc.add_decoration(Decoration(5 * TILE + 24,  0 * TILE + 22 , "clock"))
+    sc.add_decoration(Decoration(2 * TILE + 16, 4 * TILE + 6, "photo"))
+    # Dust motes scattered through the interior. Deterministic positions
+    # so the room reads consistently on every entry.
+    for mx, my in [(3, 2), (4, 3), (5, 1), (2, 4), (6, 3), (4, 4)]:
+        sc.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16, "mote"))
+    return sc
+
+
+def build_daughter_room():
+    """The daughter's bedroom -- accessed once the old_doll has been
+    taken from easter_egg_room. Pre-polaroid: a small pink-banner room
+    with dolls implied via decorations. Post-polaroid: same shape, but
+    the bright pink has faded, the dolls' presence reads as broken,
+    and bloodstains streak the floor."""
+    floor = ["=" * 8 for _ in range(6)]
+    objects = [
+        "WWWDWWWW",   # 0
+        "W......W",   # 1   <- spawn
+        "W..b...W",   # 2  small bed
+        "W......W",   # 3
+        "W..s...W",   # 4  shelf (where her dolls live)
+        "WWWWWWWW",   # 5
+    ]
+    sc = Scene("daughter_room", floor, objects, music="home")
+    sc.add_exit("D", "house", "from_daughter_room")
+    sc.set_spawn("default", 3, 1)
+    sc.set_spawn("from_house", 3, 1)
+    sc.on_enter_fn = daughter_room_on_enter
+    return sc
+
+
+def daughter_room_on_enter(game, scene):
+    scene.decorations = []
+    polaroid = game.save.flag("polaroid_taken")
+    # Round-11: one-shot dim popup the first time the player walks
+    # into the polaroid-altered version. The line lands harder if the
+    # player has been wondering about the chewed doll.
+    if polaroid and not game.save.flag("daughter_dog_line_seen"):
+        game.save.set_flag("daughter_dog_line_seen", True)
+        game.dialog.show([
+            "[c=dim]She was scared of the dogs.[/c]",
+        ], speaker="", voice="blip_soft", portrait="narrator")
+    if polaroid:
+        # Faded pink-grey banner
+        scene.add_decoration(Decoration(6 * TILE + 16,  0 * TILE + 22 , "banner",
+                                        color=(120, 90, 100)))
+        scene.add_decoration(Decoration(2 * TILE + 16, 2 * TILE + 16, "phantom_mark"))
+        scene.add_decoration(Decoration(6 * TILE + 16, 3 * TILE + 16, "phantom_mark"))
+        scene.add_decoration(Decoration(2 * TILE + 16, 4 * TILE + 16, "phantom_mark"))
+        scene.add_decoration(Decoration(4 * TILE + 16, 3 * TILE + 24, "bloodstain"))
+        scene.add_decoration(Decoration(5 * TILE + 16, 4 * TILE + 24, "bloodstain"))
+        # Heavy dust
+        for mx, my in [(2, 2), (3, 3), (5, 2), (4, 4), (6, 3), (5, 3), (3, 4)]:
+            scene.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16, "mote"))
+    else:
+        # Warm pink banner
+        scene.add_decoration(Decoration(2 * TILE + 16,  0 * TILE + 22 , "candle"))
+        scene.add_decoration(Decoration(6 * TILE + 16,  0 * TILE + 22 , "banner",
+                                        color=(220, 130, 170)))
+        # Light dust
+        for mx, my in [(4, 2), (5, 3)]:
+            scene.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16, "mote"))
+
+
