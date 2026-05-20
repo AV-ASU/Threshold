@@ -1,0 +1,12 @@
+# Python bytecode
+__pycache__/
+*.py[cod]
+
+# Runtime-generated game data
+saves/
+.archive/
+
+# Virtualenvs / editor cruft
+.venv/
+venv/
+.DS_Store

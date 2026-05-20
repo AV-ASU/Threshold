@@ -1,0 +1,2 @@
+# Threshold runtime dependency.
+pygame>=2.5
