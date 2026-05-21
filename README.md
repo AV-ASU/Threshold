@@ -41,11 +41,14 @@ sleeping at the cot.
 
 ```bash
 python tests/smoke.py
+python tests/render_smoke.py
 ```
 
 `smoke.py` verifies that every scene builds, that spawn points are
-walkable, and that every exit resolves to a valid target spawn. It forces
-SDL to dummy drivers, so no display or audio device is required.
+walkable, and that every exit resolves to a valid target spawn.
+`render_smoke.py` drives the draw pipeline across representative scenes
+and threat states to catch rendering regressions. Both force SDL to
+dummy drivers, so no display or audio device is required.
 
 ## Project layout
 
