@@ -91,8 +91,7 @@ def old_man_dialogue(game, npc):
 # ---- The Kid ----
 
 def kid_dialogue(game, npc):
-    """The kid NPC. Visit 7 is the binary follower-choice prompt
-    (Yes flips game._kid_follower_active). Control flow preserved."""
+    """A generic boy NPC. Placeholder lines per visit count."""
     save = game.save
     inv = game.player.inventory
     # Orb-recognition one-shot (kept; flow unchanged, text bland).
@@ -139,38 +138,6 @@ def kid_dialogue(game, npc):
             save.set_flag("kid_gave_doll", True)
             game.player.inventory.add("old_doll", 1)
             game.show_notice("The boy gives you the cloth doll.")
-    elif count == 7 and not save.flag("kid_choice_made"):
-        # The follower-choice prompt. Yes flips the kid into a
-        # follower in every scene the player loads from now on.
-        def _on_pick(idx):
-            save.set_flag("kid_choice_made", True)
-            if idx == 0:
-                # Yes
-                save.set_flag("kid_taken", True)
-                game.dialog.show([
-                    "[c=dim](He stands up and waits by the door.)[/c]",
-                ], speaker="Boy", voice="blip_kid", portrait="kid")
-                game._kid_follower_active = True
-            else:
-                # No
-                save.set_flag("kid_left", True)
-                game.dialog.show([
-                    "[c=dim](He nods and sits back down.)[/c]",
-                ], speaker="Boy", voice="blip_kid", portrait="kid")
-        game.dialog.show_choice(
-            "Can I come with you?",
-            ["Yes. Come on.", "Not this time."],
-            _on_pick,
-            speaker="Boy", voice="blip_kid", portrait="kid",
-        )
-    elif count >= 8 and save.flag("kid_left"):
-        game.dialog.show([
-            "[c=dim]No one is here.[/c]",
-        ], speaker="", voice="blip_soft", portrait="kid")
-    elif count >= 8:
-        game.dialog.show([
-            "[c=dim]The house is empty.[/c]",
-        ], speaker="", voice="blip_soft", portrait="kid")
     else:
         game.dialog.show([
             "[c=dim]Nothing to say.[/c]",

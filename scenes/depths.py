@@ -303,16 +303,6 @@ def build_threshold():
     sc.add_decoration(Decoration(lintel_x, lintel_y - TILE, "smoke"))
 
     def _threshold_on_enter(game, scene):
-        # Kid-follower spike: the cap on Pursuer proximity that the
-        # kid was holding lifts the moment he steps onto the slab.
-        # Set the flag so _tick_pursuer drops its kid-cap, then push
-        # prox to the closure-arm threshold so the apex timer engages
-        # within seconds. Player has to seal or surrender fast.
-        if (getattr(game, "_kid_follower_active", False)
-                and not game.save.flag("kid_at_threshold")):
-            game.save.set_flag("kid_at_threshold", True)
-            game.pursuer_proximity = max(game.pursuer_proximity, 0.95)
-            game.audio.play("low_pulse", 0.85)
         if game.save.flag("first_threshold"):
             return
         game.save.set_flag("first_threshold", True)
@@ -331,23 +321,15 @@ def build_threshold():
             game.show_notice("Nothing happens.")
             return
         inv.remove("kid_drawing", 1)
-        with_kid = getattr(game, "_kid_follower_active", False)
         game.audio.force_silence()
         game.audio.play("arg_chime", 0.7)
-        if with_kid:
-            game.dialog.show([
-                "[c=dim](He presses the drawing against the stone.)[/c]",
-                "[s=slow][c=dim]...the smoke stops.[/c][/s]",
-            ], speaker="", voice="blip_soft", portrait="narrator")
-        else:
-            game.dialog.show([
-                "[c=dim](You press the drawing against the stone.)[/c]",
-                "[s=slow][c=dim]...the smoke stops.[/c][/s]",
-            ], speaker="", voice="blip_soft", portrait="narrator")
+        game.dialog.show([
+            "[c=dim](You press the drawing against the stone.)[/c]",
+            "[s=slow][c=dim]...the smoke stops.[/c][/s]",
+        ], speaker="", voice="blip_soft", portrait="narrator")
         _evidence(game, "the_seal",
             "It is done."
         )
-        game._play_ending("seal_threshold_with_kid" if with_kid
-                         else "seal_threshold")
+        game._play_ending("seal_threshold")
     sc.on_interact_fn = _threshold_interact
     return sc

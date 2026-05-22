@@ -770,31 +770,4 @@ def build_kid_house():
             game.audio.play("pickup", 0.7)
             game.show_notice("You take the drawing off the wall.")
     sc.on_interact_fn = _kid_house_interact
-
-    def _kid_house_on_enter(game, scene):
-        # The kid is not in this house if any of:
-        #   * kid_taken     -- he is the player's follower
-        #   * kid_left      -- he stayed; the cult took him at dusk
-        #   * polaroid_taken (without kid_taken) -- the cult came
-        #     for him while the player was in the basement
-        # In all three cases, strip the static kid NPC. The
-        # polaroid-without-follower branch also fires a one-shot
-        # evidence beat the first time the player walks in.
-        not_here = (game.save.flag("kid_taken")
-                    or game.save.flag("kid_left")
-                    or game.save.flag("polaroid_taken"))
-        if not_here:
-            scene.npcs = [n for n in scene.npcs
-                          if getattr(n, "name", None) != "Village Kid"]
-        if (game.save.flag("polaroid_taken")
-                and not game.save.flag("kid_taken")
-                and not game.save.flag("kid_left")
-                and not game.save.flag("kid_house_empty_seen")):
-            game.save.set_flag("kid_house_empty_seen", True)
-            from .dialogue import _evidence
-            _evidence(game, "kid_house_empty",
-                "No one is here."
-            )
-    sc.on_enter_fn = _kid_house_on_enter
-
     return sc
