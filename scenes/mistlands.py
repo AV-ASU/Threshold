@@ -213,30 +213,18 @@ def build_mistlands():
                                  "bloody_handprint"))
     sc.add_decoration(Decoration((cauldron_tx + 1) * TILE + 16,
                                  cauldron_ty * TILE + 8, "candle"))
-    # Cult marks scattered through the bank. A mix of the redesigned
-    # watching_eye (sunken sockets) and the new watching_wound
-    # (vertical slit-cuts) so the player sees both variants in the
-    # same map. Placed near the buildings -- something has been
-    # observing each of these scattered houses.
+    # Marks scattered through the bank, placed near the buildings.
     # West-bank marks
-    sc.add_decoration(Decoration(11 * TILE + 16, 6 * TILE + 16,
-                                 "watching_eye", size="small"))   # near church
     sc.add_decoration(Decoration(2 * TILE + 24, 62 * TILE + 16,
                                  "watching_wound", size="small")) # near sheriff
-    sc.add_decoration(Decoration(11 * TILE + 16, 90 * TILE + 16,
-                                 "watching_eye", size="small"))   # near farmhouse
     sc.add_decoration(Decoration(2 * TILE + 24, 92 * TILE + 16,
                                  "watching_wound", size="small")) # farmhouse rim
     # East-bank marks
     sc.add_decoration(Decoration(48 * TILE + 16, 57 * TILE + 16,
                                  "watching_wound", size="small")) # near shop
-    sc.add_decoration(Decoration(63 * TILE + 16, 67 * TILE + 16,
-                                 "watching_eye", size="small"))   # near kid
     sc.add_decoration(Decoration(78 * TILE + 16, 77 * TILE + 16,
                                  "watching_wound", size="small")) # near barn
     # Original mid-bank scatter
-    sc.add_decoration(Decoration(50 * TILE + 16, 50 * TILE + 16,
-                                 "watching_eye", size="small"))
     sc.add_decoration(Decoration(75 * TILE + 16, 75 * TILE + 16,
                                  "phantom_mark"))
     for tx, ty in [(50, 50), (60, 30), (70, 60), (80, 40), (90, 80),
@@ -422,12 +410,6 @@ def build_alter_room():
     for tx, ty in [(3, 3), (13, 3), (3, 9), (13, 9), (8, 1), (8, 11)]:
         sc.add_decoration(Decoration(tx * TILE + 16, ty * TILE + 16,
                                      "grass_tuft"))
-    # Watching eyes embedded in the tree perimeter. The pillars are
-    # not what's looking at you -- the trees are. Player is observed
-    # the entire ritual.
-    for tx, ty in [(0, 3), (0, 9), (16, 3), (16, 9), (8, 0), (8, 12)]:
-        sc.add_decoration(Decoration(tx * TILE + 16, ty * TILE + 16,
-                                     "watching_eye", size="small"))
     sc.on_enter_fn = alter_on_enter
     sc.on_interact_fn = alter_interact
     return sc
@@ -485,13 +467,10 @@ def alter_interact(game):
 
 
 def _add_void_room_eyes(sc, w, h):
-    """Place 2 watching eyes inside a void room. They're embedded in
-    the invisible walls -- the player doesn't know they're there
-    until they get close enough to see the pupils tracking. Petscop:
-    the void is not empty. It is *watched*."""
-    for tx, ty in [(2, 1), (w - 3, h - 2)]:
-        sc.add_decoration(Decoration(tx * TILE + 16, ty * TILE + 16,
-                                     "watching_eye", size="small"))
+    """No-op kept for signature/call-site compatibility. (Formerly
+    placed watching-eye decorations; the eyeball imagery has been
+    removed.)"""
+    return
 
 
 def _build_void_room(key, next_key, next_spawn):

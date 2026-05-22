@@ -1,21 +1,19 @@
-"""The depths -- everything below the basement level. The polaroid-
-on-binding ritual at well_bottom drops the player here; from this
-point the only direction is down.
+"""The depths -- everything below the basement level. The ritual at
+well_bottom drops the player here; from this point the only
+direction is down.
 
 Floors, top to bottom:
   depths_antechamber  -- the fall zone
   depths_procession   -- the moving-candle column
-  depths_hall         -- the kneeling grid (Hall of Mouths)
-  depths_threshing    -- grain + blood, the King in the Field's tribute
+  depths_hall         -- the kneeling grid
+  depths_threshing    -- the threshing floor
   depths_stair        -- the empty spiral down
   dark                -- single black room, flashlight-gated bodies
-  threshold           -- the doorframe, the lintel sigil
+  threshold           -- the doorframe
 
-Phase 4: hooded cultist chasers populated in the first three rooms.
-The flashlight is force-disabled in all depths scenes; the dread
-aperture closes on the player here, and the King in Yellow ring
-encroaches when it does. Hide spots placed liberally so the player
-has cover to recover in.
+Hooded chasers populate the first three rooms. The flashlight is
+force-disabled in all depths scenes. Hide spots placed liberally so
+the player has cover to recover in.
 """
 import random
 from constants import TILE
@@ -102,10 +100,7 @@ def build_depths_antechamber():
         px, py = game.player.x, game.player.y
         if abs(px - (4 * TILE + 16)) < 36 and abs(py - (4 * TILE + 16)) < 36:
             _evidence(game, "the_fall",
-                "You fell. You are not bleeding.\n"
-                "The candles were knocked sideways by the same\n"
-                "tremor that brought you down.\n"
-                "Someone heard. Someone is coming."
+                "You fell. You are not hurt."
             )
     sc.on_interact_fn = _interact
     return sc
@@ -231,9 +226,7 @@ def build_depths_threshing():
         px, py = game.player.x, game.player.y
         if abs(px - (6 * TILE + 16)) < 36 and abs(py - (5 * TILE + 16)) < 36:
             _evidence(game, "threshing_floor",
-                "Grain. Blood-dark in the cracks of the stone.\n"
-                "What the field gives him. What last spring meant.\n"
-                "The harvest was hard this year. The Lord giveth."
+                "Nothing here."
             )
     sc.on_interact_fn = _interact
     return sc
@@ -266,15 +259,14 @@ def build_dark():
     sc.add_exit("D", "threshold", "from_dark")
     sc.set_spawn("default",    6, 1)
     sc.set_spawn("from_stair", 6, 1)
-    # Bodies of the disappeared, laid out where they fell. Each body
-    # is an E-press evidence beat -- the player chooses what to look
-    # at and what to keep walking past. The flashlight is force-off
-    # here (CULT_DARK_SCENES) so the dread aperture's centre clear
-    # circle is the only light.
+    # Bodies laid out where they fell. Each body is an E-press
+    # evidence beat. The flashlight is force-off here
+    # (CULT_DARK_SCENES) so the dread aperture's centre clear circle
+    # is the only light.
     body_positions = [
-        (3, 4, "ellie",   "Ellie. The boy's sister.\nShe still has the doll's other arm in her fist."),
-        (8, 5, "father",  "The boy's father. The well rope is around his wrist.\nHe got most of the way out."),
-        (5, 7, "mother",  "The boy's mother. The plate she still set for Ellie\nis here too. They put it in with her."),
+        (3, 4, "ellie",   "Nothing here."),
+        (8, 5, "father",  "Nothing here."),
+        (5, 7, "mother",  "Nothing here."),
     ]
     for bx, by, _, _ in body_positions:
         sc.add_decoration(Decoration(bx * TILE + 16, by * TILE + 16,
@@ -303,35 +295,19 @@ def build_threshold():
     sc = Scene("threshold", floor, objects, music="void")
     sc.set_spawn("default",   5, 1)
     sc.set_spawn("from_dark", 5, 1)
-    # Doorframe at the centre. The binding_sigil deco IS the lintel
-    # sigil; pressing E here with the kid's drawing inverts it and
-    # seals the door (seal_threshold ending). Without the drawing
-    # the player can stand at it but can't act on it.
+    # Doorframe at the centre. Pressing E here with the kid's drawing
+    # seals the door (seal_threshold ending). Without the drawing the
+    # player can stand at it but can't act on it.
     lintel_x, lintel_y = 5 * TILE + 16, 5 * TILE + 16
     sc._lintel_pos = (lintel_x, lintel_y)
-    sc.add_decoration(Decoration(lintel_x, lintel_y, "binding_sigil"))
     sc.add_decoration(Decoration(lintel_x, lintel_y - TILE, "smoke"))
 
     def _threshold_on_enter(game, scene):
-        # Kid-follower spike: the cap on Pursuer proximity that the
-        # kid was holding lifts the moment he steps onto the slab.
-        # The cult is here to collect; the line slams shut. Set the
-        # flag so _tick_pursuer drops its kid-cap, then push prox to
-        # the closure-arm threshold so the apex timer engages within
-        # seconds. Player has to seal or surrender fast.
-        if (getattr(game, "_kid_follower_active", False)
-                and not game.save.flag("kid_at_threshold")):
-            game.save.set_flag("kid_at_threshold", True)
-            game.pursuer_proximity = max(game.pursuer_proximity, 0.95)
-            game.audio.play("low_pulse", 0.85)
         if game.save.flag("first_threshold"):
             return
         game.save.set_flag("first_threshold", True)
         _evidence(game, "the_doorframe",
-            "A doorframe with no wall, smoking from no source.\n"
-            "The lintel sigil matches the boy's drawing.\n"
-            "Whatever's on the other side is what they were\n"
-            "feeding us to."
+            "A doorframe with no wall."
         )
     sc.on_enter_fn = _threshold_on_enter
 
@@ -342,31 +318,18 @@ def build_threshold():
         inv = game.player.inventory
         if not inv.has("kid_drawing"):
             game.audio.play("low_pulse", 0.4)
-            game.show_notice("The lintel sigil. The smoke pulls at you.")
+            game.show_notice("Nothing happens.")
             return
         inv.remove("kid_drawing", 1)
-        with_kid = getattr(game, "_kid_follower_active", False)
         game.audio.force_silence()
         game.audio.play("arg_chime", 0.7)
-        if with_kid:
-            game.dialog.show([
-                "[c=dim](You hand him the drawing.)[/c]",
-                "[c=dim]He presses it against the stone himself.[/c]",
-                "[c=dim]The eye on the lintel turns inside out.[/c]",
-                "[s=slow][c=dim]...the smoke stops.[/c][/s]",
-            ], speaker="", voice="blip_soft", portrait="narrator")
-        else:
-            game.dialog.show([
-                "[c=dim](You press the drawing against the stone.)[/c]",
-                "[c=dim]The eye on the lintel turns inside out.[/c]",
-                "[s=slow][c=dim]...the smoke stops.[/c][/s]",
-            ], speaker="", voice="blip_soft", portrait="narrator")
+        game.dialog.show([
+            "[c=dim](You press the drawing against the stone.)[/c]",
+            "[s=slow][c=dim]...the smoke stops.[/c][/s]",
+        ], speaker="", voice="blip_soft", portrait="narrator")
         _evidence(game, "the_seal",
-            "The kid's hand undid it.\n"
-            "What was on the other side will not come through.\n"
-            "The cult is owed nothing now."
+            "It is done."
         )
-        game._play_ending("seal_threshold_with_kid" if with_kid
-                         else "seal_threshold")
+        game._play_ending("seal_threshold")
     sc.on_interact_fn = _threshold_interact
     return sc

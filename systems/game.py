@@ -33,53 +33,6 @@ VOID_SCENES = {"void_boss", "symbol_portal_room"}
 
 
 # Day-phase cycle. Sleeping in the cot advances the phase by one
-# step; phases loop morning -> afternoon -> dusk -> night -> morning.
-# Future content can gate events to specific phases (e.g. patrols
-# only walk at dusk, the cauldron only fires at night) by reading
-# save.arg("day_phase").
-_DAY_PHASE_ORDER = ("morning", "afternoon", "dusk", "night")
-
-
-def _next_day_phase(phase):
-    try:
-        i = _DAY_PHASE_ORDER.index(phase)
-    except ValueError:
-        i = 0
-    return _DAY_PHASE_ORDER[(i + 1) % len(_DAY_PHASE_ORDER)]
-
-
-# THRESHOLD calendar. day_count == 1 on the first wake; it ticks up
-# every time the player sleeps in the cot. Day 1 maps to Oct 4 so
-# the journal's "Day 4 at the inn" lines up with what the wall
-# calendar shows on the first morning. Three days (Oct 1, 2, 3)
-# are already X'd off when the player first sees it -- the time
-# the protagonist has been here before the game opens.
-_KEY_DATES = {
-    (10, 31): "halloween",
-    (12, 21): "solstice",
-    (12, 31): "new_years_eve",
-}
-
-def day_count_to_date(d):
-    """day 1 -> (10, 4)  (Oct 4)
-       day 28 -> (10, 31) (Halloween)
-       day 79 -> (12, 21) (Solstice)
-       day 89 -> (12, 31) (NYE)
-       day 90+ -> (1, n)  (post-NYE; calendar shows January)"""
-    offset = d + 3
-    if offset <= 31:
-        return (10, offset)
-    offset -= 31
-    if offset <= 30:
-        return (11, offset)
-    offset -= 30
-    if offset <= 31:
-        return (12, offset)
-    return (1, max(1, offset - 31))
-
-def days_in_month(month):
-    return {10: 31, 11: 30, 12: 31, 1: 31}.get(month, 31)
-
 # Scenes where dread-state effects engage: the stillness heartbeat
 # ramps up while the player stands still here, and the cult-site
 # floors get the rare delayed-footstep trick.
@@ -117,24 +70,6 @@ CRATE_LOOT = {
     # holding spare batteries.
     ("village",       21, 16): "spare_batteries",
 }
-
-# Capture-trace deposits. Each non-closure capture plants the next
-# entry in this list as a persistent decoration in the named scene.
-# The index into this list is `save.arg("capture_traces", 0)`.
-# After all entries are used the player has accumulated a small
-# museum of evidence that the world remembers what happened to them.
-# Tiles are tile-coords (x, y); decorations are placed at tile
-# centre. Scenes the player is virtually guaranteed to revisit are
-# preferred (bedroom, yard, village).
-CAPTURE_TRACE_DEPOSITS = [
-    ("bedroom",        2, 4, "bloody_handprint"),
-    ("our_house_area", 6, 6, "phantom_mark"),
-    ("village",        9, 8, "bloody_handprint"),
-    ("bedroom",        4, 6, "claw_marks"),
-    ("our_house_area", 11, 13, "phantom_mark"),
-    ("village",        14, 11, "phantom_mark"),
-    ("bedroom",        6, 4, "phantom_mark"),
-]
 
 # Outdoor decay tier. Each scene gets a small list of "this is
 # what's been added" decorations as Pursuer proximity climbs.
@@ -220,19 +155,6 @@ DIM_SAFE_SCENES = {"basement"}
 # player's feet.
 MAX_FULLSCREEN_DARK = 204
 
-# Day/night design pivot: cultists are creatures of the night.
-# Patrols only walk during the night phase, in mistlands (which is
-# always night), or after the day-7 cap when the night-gate breaks
-# entirely. The day is the player's preparation window; the night
-# is the horror. _effective_phase() is the single source of truth
-# for "what phase is this scene actually in".
-PERMANENT_NIGHT_SCENES = {"mistlands"}
-# Day count after which the day/night cycle stops working. The
-# world is past saving by here -- there is no morning anymore.
-DAY_NIGHT_BREAKS_AFTER = 7
-
-
-
 # Mistlands river entry tile (col 34 = east edge of the river, row 60).
 # Walking from land onto this tile is the only way to enter the river.
 # Once in the river, the player can move freely between river tiles
@@ -309,6 +231,10 @@ class Game:
         # player is still inside a CREEPY_SCENES key (or anywhere after
         # world_emptied).
         self.stillness_t = 0.0
+        # Set true on any frame the player actually changes position
+        # (see update_player). The threat model reads this: moving in
+        # the open raises the meter, holding still lowers it.
+        self._is_moving = False
         self._next_heartbeat_t = 0.0
         self._heartbeat_count = 0
         # Delayed-audio queue: list of [seconds_left, sfx_name, volume].
@@ -328,75 +254,23 @@ class Game:
         # intense than the mistlands vignette but never goes away --
         # the world edges are always pressing in. Cached on first need.
         self._outdoor_vignette_surf = None
-        # Pursuer-glimpse: at very high proximity, after a scene
-        # transition, a tall_shadow flashes at the screen edge for a
-        # few frames. `_glimpse_t` ticks down per frame; non-zero
-        # means draw it this frame.
-        self._glimpse_t = 0.0
-        self._glimpse_pos = (0, 0)
-        # Countdown to the next orb-whisper. Ticks down every frame
-        # while the player carries the orb; on zero, plays a faint
-        # whisper SFX and reschedules between 8 and 18 seconds. Reset
-        # to a small positive value at __init__ so the first whisper
-        # arrives soon after the player picks up the orb.
-        self._orb_whisper_t = 4.0
-        # Schedule for the distant child-humming ambient -- ticks down
-        # only while the player is inside a non-village scene that
-        # gates the effect (basement / well / void). Fires the village
-        # melody as a brief single-tone hum.
-        self._humming_t = 12.0
-        # Giant-eye overlay scheduling -- counts down between
-        # appearances (sec). `_giant_eye_phase` > 0 means currently
-        # visible; `_giant_eye_pos` is the screen-space anchor.
-        self._giant_eye_t = -1.0
-        self._giant_eye_phase = 0.0
-        self._giant_eye_pos = (0, 0)
-        # Visitor-silence latch: True while a tall_shadow is on
-        # screen, so we only call force_silence / restore on the
-        # transitions, not every frame.
-        self._visitor_silence = False
-        # Child trailer: while the player is in a creepy scene and
-        # facing forward, a small kid sprite renders behind them.
-        # Looking at it (player facing toward it) hides it for a few
-        # seconds. The horror is that the player can never actually
-        # see it -- it's always at the back of vision.
-        self._trailer_hide_until = 0.0
 
-        # ---- THRESHOLD: the Pursuer ----
-        # The Pursuer is the thing that is following the player. It
-        # never appears on screen. It manifests as audio (a phantom
-        # footstep, a distant door, a slow inhale) and as occasional
-        # text notices ("you hear footsteps. they are not yours.").
-        # `pursuer_proximity` is a float in [0, 1]:
-        #   0.0  = the player just left a safe room; quiet
-        #   0.5  = ambient cues every 20-40 seconds
-        #   1.0  = constant pressure; the threshold is closing
-        # It rises automatically over real seconds played, jumps when
-        # the player lingers (stillness), drops slightly on scene
-        # transitions (the door cuts the line for a beat), and
-        # persists across scenes -- it never resets to zero. It is
-        # NOT serialised to the save: each loaded session starts
-        # with a clean line, but the line tightens fast.
+        # ---- THRESHOLD: the threat meter ----
+        # `pursuer_proximity` is a float in [0, 1] tracking how much
+        # danger the player is in right now (see _tick_pursuer):
+        #   * an enemy with line of sight on you -> climbs fast
+        #   * moving in the open                 -> climbs slowly
+        #   * still AND unseen (or hidden)        -> falls; safe
+        # The invisible Pursuer manifests as audio cues whose cadence
+        # tightens with the meter. At >= 0.95, while still seen, a
+        # short grace timer runs out to a catch (game over).
         self.pursuer_proximity = 0.0
-        # Dread aperture: 1.0 = open / full sight, 0.0 = closed / the
-        # ring of King in Yellow figures has reached the player. Decays
-        # passively in DARK_SCENES without working flashlight; recovers
-        # in hide_spots while standing still with no chaser nearby.
-        # When it hits 0 the player is taken (closure trigger).
-        self.dread_aperture = 1.0
         # Heartbeat schedule -- time to next thump. Kicks in only at
         # proximity >= 0.70 and only while the player is unhidden.
         # Period shortens with proximity so the pulse races at apex.
         # Independent of room ambients (that's environmental); this
         # one is biometric.
         self._heartbeat_t = 0.0
-        # Visibility-dip timer. Set briefly above 0 by events that
-        # tank the player's eyesight: a watcher banished by the
-        # flashlight cone, eyes scattered when the player turns to
-        # see them. Each tick decays back to 0; while active the
-        # screen gets a heavy dark vignette overlay on top of the
-        # normal one (drawn in _draw_visibility_dip).
-        self._visibility_dip_t = 0.0
         # Per-frame budget for full-screen black overlays. Reset to 0
         # each draw frame; each overlay calls _claim_dark(requested)
         # which returns the alpha it's allowed to use and increments
@@ -409,10 +283,6 @@ class Game:
         # only have access to `scene` in update()) can read them
         # without a back-reference to the Game. Set in the step
         # block + load_scene_now respectively.
-        # One-frame Pursuer silhouette held briefly when closure
-        # arms (proximity hits 0.95). Drawn screen-centred over the
-        # apex red wash. Player will not be sure they saw it.
-        self._apex_silhouette_t = 0.0
         self._last_pos = (0.0, 0.0)  # for "standing still" detection
         self._chant_t = 0.0          # depths cult-chant ambient timer
         self._breath_t = 0.0         # depths cult-breath ambient timer
@@ -423,10 +293,10 @@ class Game:
         self._pursuer_t = 0.0
         # Prevents two close-cousin events from firing back-to-back.
         self._pursuer_last_event = ""
-        # The "closure" countdown. Once proximity hits ~0.95, this
-        # counts down 18 seconds and then triggers the ending. The
-        # player can hold it off by transitioning scenes (each
-        # transition adds 6 seconds back). They cannot prevent it.
+        # The "closure" grace timer. Armed (set positive) only while
+        # the meter is pinned at >= 0.95 AND an enemy can still see
+        # the player; counts down to a catch (game over). Breaking
+        # line of sight -- hiding -- disarms it (-1.0).
         self._pursuer_closure_t = -1.0
         # Notice strings the Pursuer surfaces. Picked at random,
         # never the same one twice in a row. Trimmed to environmental
@@ -442,23 +312,6 @@ class Game:
             "the floorboards above you settle.",
         ]
         self._pursuer_last_notice = ""
-
-        # ---- THRESHOLD: Watchers ----
-        # Watchers are almost-visible figures the world places at the
-        # edges of vision. They are NOT enemies -- they don't move,
-        # they don't attack, they don't even exist on the scene.npcs
-        # list. They appear at random world coordinates near the
-        # camera edge, hold for a few seconds, and despawn the
-        # instant the player either looks toward them (camera centres
-        # on them) or steps too close.
-        # Each entry is a dict: {x, y, t_left, fade}.
-        self._watchers = []
-        # Schedule the next watcher spawn (seconds). Independent of
-        # the Pursuer schedule -- watchers are observation, the
-        # Pursuer is closure.
-        self._watcher_next_t = 14.0
-        # Track scenes the player has visited; watcher spawn rate
-        # increases per visit count.
 
         # ---- THRESHOLD: cult patrols ----
         # Multiple cult members teleport through the outdoor scenes,
@@ -493,30 +346,6 @@ class Game:
              "kind": "bandit", "min_prox": 0.65,
              "scene": None, "t": 70.0,
              "next_min": 25.0, "next_max": 50.0},
-            # The Hunter -- the King in Yellow avatar. Activates at
-            # proximity >= 0.30. Walks DIRECTLY at the player (no
-            # scout phase) regardless of distance, force-chasing
-            # through walls of the player's scene. Catches scale
-            # with proximity: standard 22 px contact at low/mid,
-            # 60 px reach at apex (>= 0.85) where any catch is the
-            # closure ending. Uses the yellow_king sprite (alpha-
-            # pulse, mass of eyes).
-            {"tag": "patrol_hunter", "name": "",
-             "kind": "yellow_king", "min_prox": 0.95,
-             "scene": None, "t": 50.0,
-             "next_min": 30.0, "next_max": 55.0,
-             "speed": 0.55},
-            # The Choir: a procession of cult children walking in
-            # formation, humming. Activates at mid proximity.
-            # Slow, but unsettling -- the player sees a kid
-            # silhouette and has half a second to decide if it's
-            # the trustworthy kid or one of THEM. Uses the `kid`
-            # sprite kind so the silhouette ambiguity is real.
-            {"tag": "patrol_choir", "name": "",
-             "kind": "kid", "min_prox": 0.50,
-             "scene": None, "t": 60.0,
-             "next_min": 35.0, "next_max": 70.0,
-             "speed": 0.55},
             # The Hound: a cult dog (`wolf` sprite). Activates at
             # high proximity, faster than the human patrols, and
             # closes the distance hard once spotted. Forces the
@@ -559,15 +388,6 @@ class Game:
         # out" beat.
         self._patrol_announced = set()
 
-        # ---- THRESHOLD: Kid follower ----
-        # When the player picks Yes at kid visit 7, this flag flips
-        # on. The kid then spawns as a 'follower' NPC in every
-        # scene the player loads. Follower presence applies a 15%
-        # walk-speed reduction AND pauses Pursuer proximity ramp
-        # (the Ire was promised the kid; it pauses when the kid is
-        # visibly with the player).
-        self._kid_follower_active = False
-
         # ---- THRESHOLD: flashback ----
         # Set when the player reads page 3 of Mom's notebook.
         # _flashback_phase tracks which still is showing. None means
@@ -575,13 +395,12 @@ class Game:
         # text on a black overlay for ~1.6 seconds.
         self._flashback_phase = None
         self._flashback_t = 0.0
-        # The flashback stills, in order. Last one is the gut-punch.
+        # Flashback stills, in order. Placeholder text -- narrative is
+        # a blank slate; fill these in when the new story is written.
         self._flashback_stills = [
-            ("the clearing.", 1.6),
-            ("robed figures around a fire.", 1.6),
-            ("a cast-iron cauldron, steaming.", 1.6),
-            ("a man held face-down in the water.", 2.0),
-            ("the Innkeeper's face turning to look at you.", 3.0),
+            ("...", 1.6),
+            ("...", 1.6),
+            ("...", 2.0),
         ]
 
         # ---- THRESHOLD: ending state ----
@@ -635,9 +454,7 @@ class Game:
         if self.title_choice >= len(opts):
             self.title_choice = len(opts) - 1
         for i, opt in enumerate(opts):
-            if opt == "Continue" and not self.save.exists():
-                color = (50, 48, 56)
-            elif i == self.title_choice:
+            if i == self.title_choice:
                 color = (220, 218, 226)
             else:
                 color = (96, 92, 104)
@@ -656,14 +473,9 @@ class Game:
                                 SCREEN_H - 28))
 
     def _title_menu_options(self):
-        """Compute the title-screen menu fresh on every read. The
-        middle slot is 'Delete Save' when a save file exists and
-        'New Save' when it doesn't -- so the user can't accidentally
-        overwrite an existing run with one keypress. Deleting the
-        save flips the label to 'New Save' on the next render; a
-        second confirm starts the new run."""
-        middle = "Delete Save" if self.save.exists() else "New Save"
-        return ["Continue", middle, "Quit"]
+        """THRESHOLD is a single-session game -- there is no save file
+        to continue from. The menu is just New Game / Quit."""
+        return ["New Game", "Quit"]
 
     def title_input(self, ev):
         if ev.type != pygame.KEYDOWN: return
@@ -680,20 +492,7 @@ class Game:
             if self.title_choice >= len(opts):
                 self.title_choice = len(opts) - 1
             opt = opts[self.title_choice]
-            if opt == "Continue":
-                if not self.save.exists():
-                    self.audio.play("cancel", 0.7); return
-                self.save.load()
-                self.audio.play("confirm", 0.8)
-                self._start_play()
-            elif opt == "Delete Save":
-                # Two-step flow: deletion only. Stay on the menu;
-                # the next render will show "New Save" in this
-                # slot, and the player has to confirm again to
-                # actually start a new run.
-                self.save.delete()
-                self.audio.play("menu_close", 0.6)
-            elif opt == "New Save":
+            if opt == "New Game":
                 self.save.new()
                 self.audio.play("confirm", 0.8)
                 self._start_play()
@@ -763,15 +562,11 @@ class Game:
         self.state = "playing"
 
     def _reset_run_state(self):
-        """Wipe all per-run horror state so a new save load starts
-        clean. Anything not persisted to disk that would otherwise
-        leak between save files belongs here."""
-        # Kid follower + trailer
-        self._kid_follower_active = False
-        self._trailer_hide_until = 0.0
-        # Pursuer
+        """Wipe all per-run state so a New Game starts clean. The
+        Game instance is reused across Quit-to-Title -> New Game, so
+        in-memory run state from a previous run is cleared here."""
+        # Threat meter
         self.pursuer_proximity = 0.0
-        self.dread_aperture = 1.0
         self._last_pos = (0.0, 0.0)
         self._chant_t = 0.0
         self._breath_t = 0.0
@@ -780,34 +575,19 @@ class Game:
         self._pursuer_last_event = ""
         self._pursuer_closure_t = -1.0
         self._heartbeat_t = 0.0
-        self._apex_silhouette_t = 0.0
-        self._visibility_dip_t = 0.0
         self._pursuer_last_notice = ""
-        # Watchers
-        self._watchers = []
-        self._watcher_next_t = 14.0
-        # Cult patrols -- reset each entry's scene + countdown to its
-        # initial spawn timer. The list itself stays (NPC kinds /
-        # min_prox thresholds are static config, not run state).
+        # Patrols -- reset each entry's scene + spawn countdown. The
+        # list itself stays (kinds / min_prox are static config).
         for p in self._patrols:
             p["scene"] = None
             p["t"] = {"patrol_preacher": 45.0,
                       "patrol_cultist": 70.0,
-                      "patrol_hunter": 50.0,
-                      "patrol_choir": 60.0,
                       "patrol_hound": 55.0,
                       "patrol_amb_cult_a": 5.0,
                       "patrol_amb_cult_b": 14.0,
                       "patrol_amb_cult_c": 22.0}.get(p["tag"], 30.0)
         self._patrol_announced = set()
-        # Ambient cues
-        self._humming_t = 12.0
-        self._giant_eye_t = -1.0
-        self._giant_eye_phase = 0.0
-        self._giant_eye_pos = (0, 0)
-        self._visitor_silence = False
         self._void_sting_played = False
-        self._orb_whisper_t = 4.0
         # Stillness + heartbeat
         self.stillness_t = 0.0
         self._next_heartbeat_t = 0.0
@@ -821,9 +601,6 @@ class Game:
         self._ending_phase = 0
         self._ending_phase_t = 0.0
         self._closure_locked = False
-        # Pursuer-glimpse
-        self._glimpse_t = 0.0
-        self._glimpse_pos = (0, 0)
         # Opening wake state. When the bedroom_on_enter fires for
         # the first session it sets these to non-zero values; the
         # _tick_wake_muffle ticker then dampens the music channel
@@ -832,44 +609,20 @@ class Game:
         self._wake_muffle_t = 0.0
         self._wake_muffle_max = 8.0
         self._wake_heartbeat_t = 0.0
-        # Save-as-ritual state. None when awake; a phase string
-        # ("lay_down" | "fade_out" | "hold_black" | "fade_in") while
-        # the player is asleep at the cot. Phase durations are in
-        # `_SLEEP_PHASE_DURS` below. While sleeping, all input is
-        # locked, the world doesn't tick, the player sprite renders
-        # prone on the cot, and a black overlay fades in/out.
-        self._sleep_phase = None
-        self._sleep_t = 0.0
-        self._sleep_save_done = False
 
     # ---- Scene management ----
     def begin_transition(self, target_scene, spawn_id="default"):
         if self.state == "transition": return
-        # THRESHOLD: front-door confrontation. If the player is
-        # leaving the Innkeeper's house ('house' -> 'our_house_area')
-        # AND they have any cult evidence in inventory AND haven't
-        # been confronted yet, the Innkeeper blocks the door. The
-        # transition is cancelled, a confrontation dialog fires, and
-        # the front door is sealed for this run.
-        if self._check_innkeeper_confrontation(target_scene):
-            return
         if (target_scene == "basement"
                 and not self.player.inventory.has("cellar_key")):
             self.audio.play("door_locked", 0.5)
             self.show_notice("The hatch is padlocked.", duration=2.0)
             return
-        # Every transition buys the player a beat -- the Pursuer
-        # loses ground when the door closes between rooms.
-        # Caps at 0.0; never affects the closure countdown itself
-        # (once that's armed the door doesn't help anymore).
-        if self._pursuer_closure_t < 0:
-            self.pursuer_proximity = max(0.0,
-                                          self.pursuer_proximity - 0.04)
-        else:
-            # Closure armed: each transition adds a small reprieve to
-            # the countdown so the player can flee through a few
-            # doors before it ends, but never escape it.
-            self._pursuer_closure_t += 6.0
+        # Crossing a threshold breaks line of sight with anything in
+        # the room behind you, so the meter eases off a touch. If a
+        # catch was arming, the new scene (no enemy in view) lets
+        # _tick_pursuer disarm it on the next frame.
+        self.pursuer_proximity = max(0.0, self.pursuer_proximity - 0.04)
         # Round-9: the forest secret-tree -> void_boss redirect was
         # removed. The forest j-tile now leads to the original empty
         # void (easter_egg + rust_key). The void_boss arena is reached
@@ -915,46 +668,6 @@ class Game:
         self.transition_t = 0.0
         self.state = "transition"
         self.audio.play("door_open", 0.7)
-
-    def _check_kill_evidence(self):
-        """Fire substrate-voice evidence beats keyed off the hidden
-        kill counters. Each beat is one-shot via _evidence's per-name
-        flag. The Visitors are watching the player's behavior and
-        counting -- the player never sees the count, just the notes
-        the Visitors leave when the count crosses thresholds."""
-        from scenes.dialogue import _evidence
-        if self.save is None:
-            return
-        n = self.save.arg("enemy_kills", 0)
-        nh = self.save.arg("nonhostile_kills", 0)
-        an = self.save.arg("animal_kills", 0)
-        if n >= 5:
-            _evidence(self, "kill_count_5",
-                "five so far.\n"
-                "we are keeping count."
-            )
-        if n >= 15:
-            _evidence(self, "kill_count_15",
-                "he likes this.\n"
-                "give him more."
-            )
-        if nh >= 1:
-            _evidence(self, "first_nonhostile",
-                "the first one is the hardest.\n"
-                "it was not.\n"
-                "he did not even pause."
-            )
-        if nh >= 3:
-            _evidence(self, "asked_for_three",
-                "we asked for three.\n"
-                "he gave us three.\n"
-                "and the others. we did not ask for the others."
-            )
-        if an >= 4:
-            _evidence(self, "animal_count",
-                "the dogs were tired before he started.\n"
-                "they are not tired now."
-            )
 
     def load_scene_now(self, key, spawn_id="default"):
         if self.scene and self.scene.on_exit_fn:
@@ -1007,21 +720,7 @@ class Game:
             self.audio.stop_music()
         if self.scene.on_enter_fn:
             self.scene.on_enter_fn(self, self.scene)
-        # Capture-trace deposits. Each deposit corresponds to one
-        # non-closure capture the player has survived; the world
-        # keeps the receipt. Drop in any deposit whose scene matches
-        # the one we just loaded and whose index is below the
-        # accumulated count.
         from entities.decoration import Decoration
-        n_traces = self.save.arg("capture_traces", 0)
-        for idx, (key, tx, ty, kind) in enumerate(CAPTURE_TRACE_DEPOSITS):
-            if idx >= n_traces:
-                break
-            if key != self.scene.key:
-                continue
-            self.scene.add_decoration(
-                Decoration(tx * TILE + 16, ty * TILE + 16, kind)
-            )
         # Outdoor decay: re-apply tier-additive decorations every
         # load so a scene visibly worsens as the line tightens.
         # Pulls from OUTDOOR_DECAY by (scene_key, tier).
@@ -1064,19 +763,6 @@ class Game:
         # world keeps its layouts and items, just no people.
         if self.save.flag("world_emptied"):
             self.scene.npcs = []
-        self._check_kill_evidence()
-        # Schedule a Pursuer glimpse at very high proximity. After a
-        # scene transition lands and the player gets oriented, a
-        # tall_shadow flashes briefly at a screen edge -- the
-        # following thing is suddenly almost in the room with you.
-        if self.pursuer_proximity > 0.85:
-            self._glimpse_t = 0.18
-            edge = random.choice(("left", "right"))
-            gx = 24 if edge == "left" else SCREEN_W - 24
-            gy = SCREEN_H // 2 + random.randint(-40, 40)
-            self._glimpse_pos = (gx, gy)
-        else:
-            self._glimpse_t = 0.0
 
     def _river_blocks(self, target_x, target_y):
         """Custom passability for the mistlands river. The `~` floor is
@@ -1114,6 +800,11 @@ class Game:
 
     # ---- Player update ----
     def update_player(self, dt, keys):
+        # Reset each frame; set true below only if the player actually
+        # changes position. Stays false while menus/dialogue are open
+        # or input is locked, so the threat meter treats those as
+        # "standing still".
+        self._is_moving = False
         if (self.dialog.active or self.inv_ui.open or self.notebook_ui.open
                 or self.text_input.active):
             return
@@ -1154,15 +845,13 @@ class Game:
             dx /= mag; dy /= mag
             self.player.facing = (dx, dy)
             self.player.walk_phase += dt * 12
-            # THRESHOLD: base speed is reduced by Pursuer proximity
-            # (spatial compression), boosted by active sprint, and
-            # reduced 15% if the kid follower is active (he can't
-            # keep up with full pace).
+            # Base speed is reduced by the threat meter (spatial
+            # compression -- the closer you are to being caught, the
+            # harder it is to move) and boosted by active sprint.
             comp_mult = 1.0 - self.pursuer_proximity * 0.45
             sprint_mult = 1.7 if self.player.sprint_active else 1.0
-            follower_mult = 0.85 if self._kid_follower_active else 1.0
             effective_speed = (self.player.speed
-                               * comp_mult * sprint_mult * follower_mult)
+                               * comp_mult * sprint_mult)
             new_x = self.player.x + dx * effective_speed * dt
             new_y = self.player.y + dy * effective_speed * dt
             blocked_x = (self.scene.is_solid_at(new_x, self.player.y)
@@ -1179,6 +868,7 @@ class Game:
                     self.player.bump_timer = 0.25
             else:
                 self.stillness_t = 0.0
+                self._is_moving = True
                 # Corn-patch cover: passive hide while standing on
                 # `:` tiles. Doesn't compete with explicit hide
                 # spots (those set hide_origin) -- if the player is
@@ -1262,8 +952,6 @@ class Game:
                 self.show_notice(f"Picked up: {d['name']}")
                 if it.get("on_pickup"):
                     it["on_pickup"](self)
-                if key in self.CULT_EVIDENCE_KEYS:
-                    self._provoke_cult(0.10)
 
     # ---- Interaction ----
     def try_interact(self):
@@ -1385,70 +1073,12 @@ class Game:
                     return
 
     def _listen_at_door(self, ch, scene_key):
-        """Press an ear to a closed door. Plays a soft door tap and
-        shows a one-line muffled overhear. Content keyed by current
-        scene + day_phase. Locked doors ('z') stay locked -- the
-        listen is a SECOND option on top of the locked feedback."""
-        phase = self.save.arg("day_phase", "afternoon")
-        # Per-scene line picks. Each entry maps phase -> line.
-        # Falls back to a generic listen line for scenes without
-        # bespoke content.
-        per_scene = {
-            "village": {
-                "morning":  "Two voices arguing inside. They stop.",
-                "afternoon":"Someone is sweeping. They stop.",
-                "dusk":     "A chair scrapes. Then nothing.",
-                "night":    "Low chanting, very faint. You cannot make out words.",
-            },
-            "old_man_house": {
-                "morning":  "The Preacher is reading aloud. It isn't English.",
-                "afternoon":"A chair creaking. A cough.",
-                "dusk":     "Someone weeping, briefly.",
-                "night":    "Many voices in unison. You back away.",
-            },
-            "shop": {
-                "morning":  "The shopkeep humming. The village melody.",
-                "afternoon":"Coins being counted. Slowly.",
-                "dusk":     "The radio: static, then a name. Yours.",
-                "night":    "Nothing. But the door is warm.",
-            },
-            "kid_house": {
-                "morning":  "The Kid talking to himself. Or to someone.",
-                "afternoon":"The Kid drawing. Pencil on paper.",
-                "dusk":     "The Kid is silent. You can hear him breathing.",
-                "night":    "The Kid is asleep. Someone else is in there too.",
-            },
-            "diner_gas_station": {
-                "morning":  "An old radio, tuned between stations.",
-                "afternoon":"A fly on the inside of the glass.",
-                "dusk":     "A radio voice reads names. Not a station you know.",
-                "night":    "Footsteps inside. There shouldn't be.",
-            },
-            "haunted_house": {
-                "morning":  "Wind. Nothing else.",
-                "afternoon":"Floorboards settling. A long pause.",
-                "dusk":     "Humming. A child. Or close to one.",
-                "night":    "The cauldron is not in there. But you can smell the smoke.",
-            },
-            "locked_house": {
-                "morning":  "Nothing.",
-                "afternoon":"A clock ticking. Faintly.",
-                "dusk":     "Someone breathing. Close to the door.",
-                "night":    "Two people whispering. One says your name.",
-            },
-        }
-        defaults = {
-            "morning":  "Nothing on the other side.",
-            "afternoon":"You press your ear to the door. Quiet.",
-            "dusk":     "Muffled movement. Then silence.",
-            "night":    "Breathing on the other side. You step back.",
-        }
-        lines = per_scene.get(scene_key, defaults)
-        line = lines.get(phase, defaults[phase])
+        """Press an ear to a closed door. Plays a soft tap and shows a
+        neutral one-line overhear. Locked doors ('z') keep the locked
+        stinger; the listen is supplementary."""
+        line = "You press your ear to the door. Quiet."
         self.audio.play("door_locked", 0.35)
         self.audio.play("breath", 0.30)
-        # Locked-house door (z) keeps the locked stinger -- listen
-        # is supplementary, not a replacement.
         if ch == "z":
             self.show_notice("Locked. " + line, duration=3.0)
         else:
@@ -1665,129 +1295,6 @@ class Game:
             self._draw_haze(170, (40, 40, 50, 80), 14, 24, 0.3, 30)
             self._draw_vignette()
 
-    def _draw_child_trailer(self):
-        """Render a small kid sprite ~2 tiles BEHIND the player (in
-        the direction opposite their facing). Only fires in
-        CREEPY_SCENES. If the player rotates to face the trailer
-        (i.e. turns around), it disappears for 3 seconds, so the
-        player can never actually look at it head-on.
-
-        World-space draw, so the trailer is at a believable physical
-        offset rather than a fixed screen offset."""
-        if self.scene is None or self.scene.key not in CREEPY_SCENES:
-            return
-        now = pygame.time.get_ticks() / 1000.0
-        if now < self._trailer_hide_until:
-            return
-        fx, fy = self.player.facing
-        # Player's "behind" direction is opposite their facing. Place
-        # the trailer two tiles behind, slightly offset.
-        bx = self.player.x - fx * (TILE * 2.2)
-        by = self.player.y - fy * (TILE * 2.2)
-        # World-to-screen
-        sx = int(bx - self.cam_x)
-        sy = int(by - self.cam_y)
-        if sx < -32 or sx > SCREEN_W + 32 or sy < -32 or sy > SCREEN_H + 32:
-            return
-        # Detect "looking at" the trailer: if the player's facing dot
-        # the trailer-direction is positive, they're rotating toward
-        # it. (We compute trailer-direction = bx-px, by-py = -fx*..,
-        # and `dot(facing, trailer_dir) = -1` means facing away.)
-        # We only hide when the player turns to face it -- player's
-        # facing roughly aligns with the trailer's direction-from-
-        # player. If the player walks backwards (facing toward the
-        # trailer), it should hide.
-        # Simpler heuristic: the trailer is always BEHIND, so it's
-        # always anti-aligned with facing. If the player's last move
-        # direction is anti-parallel (player walked backwards toward
-        # it) -- skip detection complexity, just hide on any direction
-        # change toward the trailer's tile.
-        # Render: a static pale-skin small kid silhouette, no facing.
-        draw_npc_sprite(self.screen, sx, sy, "kid", (0, -1))
-        # Add a faint dim overlay so it doesn't read as a real NPC.
-        dim = pygame.Surface((30, 36), pygame.SRCALPHA)
-        dim.fill((0, 0, 0, 60))
-        self.screen.blit(dim, (sx - 15, sy - 24))
-
-    def _draw_giant_eye(self):
-        """A massive eye fades in over the haze for ~2.5 seconds at
-        random rare intervals (every 30-90s while in mistlands or
-        alter_room). Pupil tracks the player. Fades out without
-        comment. The player either sees it or convinces themselves
-        they didn't. The Visitors are watching from above the haze."""
-        if self.scene is None or self.scene.key not in (
-                "mistlands", "alter_room"):
-            self._giant_eye_t = -1.0
-            self._giant_eye_phase = 0.0
-            return
-        # Schedule next appearance
-        if self._giant_eye_t < 0:
-            self._giant_eye_t = random.uniform(20.0, 50.0)
-            self._giant_eye_phase = 0.0
-            return
-        if self._giant_eye_phase > 0:
-            # Currently visible -- count down phase, fade in/out.
-            self._giant_eye_phase -= 1.0 / 60.0
-            if self._giant_eye_phase <= 0:
-                self._giant_eye_phase = 0.0
-                self._giant_eye_t = random.uniform(30.0, 90.0)
-                return
-            self._render_giant_eye(self._giant_eye_phase)
-        else:
-            self._giant_eye_t -= 1.0 / 60.0
-            if self._giant_eye_t <= 0:
-                # Trigger appearance
-                self._giant_eye_phase = 2.5
-                # Pick a screen quadrant for placement (random each fire)
-                self._giant_eye_pos = (
-                    random.randint(SCREEN_W // 4, SCREEN_W * 3 // 4),
-                    random.randint(SCREEN_H // 4, SCREEN_H // 2),
-                )
-
-    def _render_giant_eye(self, phase):
-        """Draw the giant eye at self._giant_eye_pos with alpha
-        ramping in and out across the 2.5s phase. The pupil rotates
-        toward the player on screen."""
-        # Fade: 0 -> max_alpha at phase=2.0 (i.e. first 0.5s), hold,
-        # then fade out in the last 0.5s.
-        if phase > 2.0:
-            ratio = (2.5 - phase) / 0.5
-        elif phase < 0.5:
-            ratio = phase / 0.5
-        else:
-            ratio = 1.0
-        alpha = max(0, min(180, int(180 * ratio)))
-        if alpha <= 4:
-            return
-        ex, ey = self._giant_eye_pos
-        sclera_r = 110
-        pupil_r = 38
-        # Pupil offset toward the player's screen position
-        psx = int(self.player.x - self.cam_x)
-        psy = int(self.player.y - self.cam_y)
-        dx = psx - ex
-        dy = psy - ey
-        d = math.hypot(dx, dy) or 1.0
-        travel = 50
-        ox = int((dx / d) * travel)
-        oy = int((dy / d) * travel)
-        # Build the eye on a translucent surface so we can apply
-        # the fade alpha cleanly.
-        layer = pygame.Surface((sclera_r * 2 + 12, sclera_r * 2 + 12),
-                               pygame.SRCALPHA)
-        cx, cy = sclera_r + 6, sclera_r + 6
-        pygame.draw.circle(layer, (220, 215, 200, alpha),
-                           (cx, cy), sclera_r)
-        pygame.draw.circle(layer, (40, 30, 30, alpha),
-                           (cx, cy), sclera_r, 2)
-        pygame.draw.circle(layer, (60, 30, 80, alpha),
-                           (cx + ox, cy + oy), pupil_r)
-        pygame.draw.circle(layer, (10, 10, 14, alpha),
-                           (cx + ox, cy + oy), pupil_r - 6)
-        pygame.draw.circle(layer, (240, 240, 250, alpha),
-                           (cx + ox - 8, cy + oy - 8), 4)
-        self.screen.blit(layer, (ex - cx, ey - cy))
-
     def _draw_vignette(self):
         """Player-centred radial darkness. Stillness ENCROACHES: the
         clear hole shrinks as `stillness_t` grows, so a player who
@@ -1889,92 +1396,6 @@ class Game:
             surfaces.append(surf)
         return surfaces
 
-    def _draw_dusk_tint(self):
-        """Proximity-driven colour tint applied across the whole screen
-        for outdoor scenes. As Pursuer proximity climbs, the world
-        shifts from neutral toward an oppressive blue-grey/red dusk.
-        Cheap: a single SRCALPHA blit per frame. Skipped indoors
-        (interiors run their own lighting through scene music)."""
-        if self.scene is None or self.player is None:
-            return
-        if self.scene.key not in OUTDOOR_SCENES:
-            return
-        p = self.pursuer_proximity
-        if p < 0.20:
-            return
-        # Tint colour interpolates from a cool dusk-blue at mid
-        # proximity toward a sickly red at near-closure. The high-
-        # end target is C_BLOOD so the dusk + apex palette stay in
-        # the same red family instead of clashing primaries.
-        t = min(1.0, (p - 0.20) / 0.75)
-        r = int(20 + t * (C_BLOOD[0] - 20))
-        g = int(20 + t * (C_BLOOD[1] - 20))
-        b = int(40 + t * (C_BLOOD[2] - 40))
-        alpha = int(40 + t * 80)   # 40 .. 120
-        tint = pygame.Surface((SCREEN_W, SCREEN_H), pygame.SRCALPHA)
-        tint.fill((r, g, b, alpha))
-        self.screen.blit(tint, (0, 0))
-
-    def _draw_dread_ring(self):
-        """Tightening dark vignette around the player as the dread
-        aperture closes. The interior stays clear so the player can
-        see themselves and a small radius around them; everything
-        else dims to black. No figure overlay -- the King in Yellow
-        approaches as a real patrol entity, not a ring of copies."""
-        if self.scene is None or self.player is None:
-            return
-        if self.scene.key not in DARK_SCENES:
-            return
-        # Safe / dim-safe interiors: no encroaching ring. Basement
-        # is dark enough that the flashlight cone alone reads as
-        # the gating mechanic; the dread aperture stops here.
-        if (self.scene.key in SAFE_SCENES
-                or self.scene.key in DIM_SAFE_SCENES):
-            return
-        a = self.dread_aperture
-        if a >= 0.99:
-            return
-        psx = int(self.player.x - self.cam_x)
-        psy = int(self.player.y - self.cam_y)
-        radius = int(28 + a * 232)
-        vignette = pygame.Surface((SCREEN_W, SCREEN_H), pygame.SRCALPHA)
-        outer_alpha = int(220 * (1.0 - a))
-        vignette.fill((0, 0, 0, outer_alpha))
-        for r_step in range(8):
-            r = max(4, radius + 18 - r_step * 4)
-            pygame.draw.circle(vignette, (0, 0, 0, 0),
-                               (psx, psy), r)
-        self.screen.blit(vignette, (0, 0))
-
-    def _draw_yk_vignette(self):
-        if not getattr(self, "_yk_present", False):
-            return
-        # Safe / dim-safe scenes break the YK vignette. If the
-        # avatar somehow crosses into the Inn or cellar, it should
-        # not paint the room.
-        if self.scene is not None and (
-                self.scene.key in SAFE_SCENES
-                or self.scene.key in DIM_SAFE_SCENES):
-            return
-        period = 2.4
-        t_in = period - getattr(self, "_yk_tone_t", 0.0)
-        ramp = max(0.0, min(1.0, t_in / period))
-        env = (1.0 - ramp) ** 1.6
-        max_alpha = 130
-        alpha = self._claim_dark(int(max_alpha * env))
-        if alpha <= 2:
-            return
-        psx = int(self.player.x - self.cam_x)
-        psy = int(self.player.y - self.cam_y)
-        vignette = pygame.Surface((SCREEN_W, SCREEN_H), pygame.SRCALPHA)
-        vignette.fill((0, 0, 0, alpha))
-        clear_r = int(120 + 80 * (1.0 - env))
-        for r_step in range(10):
-            r = max(20, clear_r + 30 - r_step * 6)
-            pygame.draw.circle(vignette, (0, 0, 0, 0),
-                               (psx, psy), r)
-        self.screen.blit(vignette, (0, 0))
-
     def _draw_apex_overlay(self):
         """Apex-tier rendering: when Pursuer proximity hits >= 0.95,
         the world goes wrong. Heavy red wash across the whole screen
@@ -2057,11 +1478,6 @@ class Game:
             pygame.draw.circle(layer, (0, 0, 0, 0), (psx, psy), r)
         self.screen.blit(layer, (0, 0))
 
-    def _tick_visibility_dip(self, dt):
-        if self._visibility_dip_t > 0:
-            self._visibility_dip_t = max(
-                0.0, self._visibility_dip_t - dt)
-
     def _claim_dark(self, requested):
         """Reserve a slice of the per-frame full-screen darkness
         budget. Returns the alpha the caller is allowed to use
@@ -2073,68 +1489,6 @@ class Game:
         used = min(requested, avail)
         self._overlay_dark_used += used
         return used
-
-    def _draw_visibility_dip(self):
-        """Black wash over the screen scaled to _visibility_dip_t.
-        Decays linearly over ~1.2s. Used by watcher-banish and
-        eye-scatter events to give the player a brief moment of
-        'I can't see' after a horror beat -- the lit-up moment is
-        followed by a stumble."""
-        t = self._visibility_dip_t
-        if t <= 0:
-            return
-        # Safe / dim-safe scenes don't dip. The Inn (and the
-        # cellar) is the room you walked back into to recover --
-        # it should not be dipping on you.
-        if (self.scene is not None
-                and (self.scene.key in SAFE_SCENES
-                     or self.scene.key in DIM_SAFE_SCENES)):
-            return
-        ratio = min(1.0, t / 1.2)
-        alpha = self._claim_dark(int(180 * ratio))
-        if alpha <= 4:
-            return
-        layer = pygame.Surface((SCREEN_W, SCREEN_H), pygame.SRCALPHA)
-        layer.fill((0, 0, 0, alpha))
-        self.screen.blit(layer, (0, 0))
-
-    def _draw_apex_silhouette(self):
-        """A held black silhouette in the centre of the screen for the
-        ~110ms after closure arms. Tall human shape, no detail. Drawn
-        on top of every other overlay so the player can't miss it --
-        but the duration is short enough that they cannot be sure
-        they did not imagine it. Fires once per closure-arm event;
-        a second arm in the same session is only possible if the
-        timer was reset (it is not under normal play)."""
-        if self._apex_silhouette_t <= 0:
-            return
-        cx = SCREEN_W // 2
-        cy = SCREEN_H // 2
-        # Tall figure: ~2 tiles wide x ~3.5 tiles tall. No face,
-        # no shading, no animation -- just a hole in the wash.
-        w = 56
-        h = 116
-        pygame.draw.ellipse(self.screen, (2, 2, 4),
-                            (cx - 18, cy - h // 2, 36, 38))
-        pygame.draw.rect(self.screen, (2, 2, 4),
-                         (cx - w // 2, cy - h // 2 + 28, w, h - 28))
-        # Slight asymmetry on the lower edge -- shoulders, not a
-        # rectangle. Mirrors a body the player did not consent to
-        # see clearly.
-        pygame.draw.polygon(self.screen, (2, 2, 4), [
-            (cx - w // 2 - 6, cy - h // 2 + 36),
-            (cx - w // 2,     cy - h // 2 + 28),
-            (cx - w // 2,     cy - h // 2 + 60),
-        ])
-        pygame.draw.polygon(self.screen, (2, 2, 4), [
-            (cx + w // 2 + 6, cy - h // 2 + 36),
-            (cx + w // 2,     cy - h // 2 + 28),
-            (cx + w // 2,     cy - h // 2 + 60),
-        ])
-
-    def _tick_apex_silhouette(self, dt):
-        if self._apex_silhouette_t > 0:
-            self._apex_silhouette_t = max(0.0, self._apex_silhouette_t - dt)
 
     def _draw_flashlight(self):
         """When the player carries the flashlight AND has it toggled
@@ -2151,10 +1505,10 @@ class Game:
         toggled the light outdoors saw no effect."""
         if self.scene is None or self.player is None:
             return
-        phase = self._effective_phase()
-        is_outdoor_dark = (self.scene.key in OUTDOOR_SCENES
-                           and phase in ("dusk", "night"))
-        if self.scene.key not in DARK_SCENES and not is_outdoor_dark:
+        # No day/night cycle: the flashlight only matters in the dark
+        # interiors / underground scenes. Outdoor scenes are never dark.
+        is_outdoor_dark = False
+        if self.scene.key not in DARK_SCENES:
             return
         has_light = (self.player.inventory.has("flashlight")
                      and self.player.flashlight_on
@@ -2194,28 +1548,6 @@ class Game:
                                (psx, psy), 22)
         self.screen.blit(overlay, (0, 0))
 
-    def _draw_pursuer_glimpse(self):
-        """At very high Pursuer proximity, a tall_shadow silhouette
-        renders for a single frame at the screen edge -- the Pursuer
-        briefly visible in peripheral vision. Held for ~80ms then
-        gone. Schedule fires only when proximity > 0.85 and a scene
-        transition recently completed (an exhausted moment when the
-        player just walked into a new room). Tracks `_glimpse_t` -- a
-        countdown that's set on transition exit."""
-        if self.scene is None or self.player is None:
-            return
-        if self.pursuer_proximity < 0.85:
-            return
-        if self._glimpse_t <= 0:
-            return
-        # Render the tall_shadow at the chosen screen edge for the
-        # remaining frames.
-        from rendering.sprites import draw_npc_sprite
-        draw_npc_sprite(self.screen,
-                        self._glimpse_pos[0], self._glimpse_pos[1],
-                        "tall_shadow", (0, 1))
-        self._glimpse_t -= 1.0 / 60.0
-
     def _draw_haze(self, base_alpha, fog_rgba, fog_n, drift_x, sway_amp,
                    sway_y_amt):
         """Reusable haze helper: a flat black tint at `base_alpha` plus
@@ -2236,507 +1568,6 @@ class Game:
             fog = pygame.Surface((size, size), pygame.SRCALPHA)
             fog.fill(fog_rgba)
             self.screen.blit(fog, (fx, fy))
-
-    def _draw_subliminal(self):
-        """Once in roughly 2000 frames, render a single-frame King
-        in Yellow figure or hooded cultist silhouette in the player's
-        peripheral. No SFX, no log entry, no follow-up. Players will
-        think they imagined it. Suppressed during transitions and
-        modals so it doesn't fight any active fade or dialog draw."""
-        if (self.dialog.active or self.inv_ui.open or self.notebook_ui.open
-                or self.text_input.active
-                or self.state != "playing"):
-            return
-        if random.random() >= 1 / 2000:
-            return
-        kind = random.choice(("yellow_king", "cultist"))
-        # Pick a screen position near the edge but not behind the HUD
-        # bar. Avoid the immediate area around the player so it lands
-        # in peripheral vision rather than centered.
-        psx = int(self.player.x - self.cam_x)
-        psy = int(self.player.y - self.cam_y)
-        for _ in range(8):
-            sx = random.randint(40, SCREEN_W - 40)
-            sy = random.randint(40, SCREEN_H - 80)
-            if math.hypot(sx - psx, sy - psy) > 140:
-                draw_npc_sprite(self.screen, sx, sy, kind, (0, 1))
-                return
-
-    def _tick_visitor_silence(self, dt):
-        """When a `tall_shadow` enemy is visible on screen, cut the
-        music to silence. Restore on the next tick where none are
-        visible. The dread is in the absence -- the world stops
-        having a soundtrack the moment a Visitor enters frame.
-        Drives `audio.force_silence` / restore via `music_muted`."""
-        if self.scene is None:
-            return
-        # Test visibility: enemy world position transformed to screen
-        # space lies within the camera bounds.
-        visible = False
-        for e in self.scene.enemies:
-            if not e.alive:
-                continue
-            if e.kind != "tall_shadow":
-                continue
-            sx = e.x - self.cam_x
-            sy = e.y - self.cam_y
-            if -32 <= sx <= SCREEN_W + 32 and -32 <= sy <= SCREEN_H + 32:
-                visible = True
-                break
-        if visible and not self._visitor_silence:
-            self._visitor_silence = True
-            self.audio.force_silence()
-        elif not visible and self._visitor_silence:
-            self._visitor_silence = False
-            self.audio.music_muted = False
-            if self.scene.music:
-                self.audio.play_music(self.scene.music)
-
-    def _tick_haunt_audio(self, dt):
-        """Two independent ambient tracks fired off random schedules.
-
-         * orb whisper -- faint whisper while the orb is in inventory.
-         * child humming -- the village melody hummed in non-village
-           creepy scenes (basement, well, void, haunted house, the
-           abducted hallway). The player hears a kid where there
-           shouldn't be one.
-
-        Each track has its own timer field initialised in __init__ so
-        leaving and returning to the trigger condition resets the
-        wait. They don't share schedules, so they won't sync up
-        rhythmically across long sessions."""
-        if self.player is None:
-            return
-        inv = self.player.inventory
-        # Orb whisper
-        if not inv.has("orb"):
-            self._orb_whisper_t = 4.0
-        else:
-            self._orb_whisper_t -= dt
-            if self._orb_whisper_t <= 0:
-                self.audio.play("whisper", 0.45)
-                self._orb_whisper_t = random.uniform(8.0, 18.0)
-        # Distant child humming -- only in creepy non-village scenes.
-        scene_key = self.scene.key if self.scene else None
-        humming_scenes = {
-            "basement", "well_bottom", "well_passage",
-            "void", "void_boss", "symbol_portal_room",
-            "haunted_house", "haunted_house_glitch",
-            "abducted_hallway",
-        }
-        if scene_key not in humming_scenes:
-            self._humming_t = 12.0
-        else:
-            self._humming_t -= dt
-            if self._humming_t <= 0:
-                self.audio.play("child_hum", 0.6)
-                self._humming_t = random.uniform(20.0, 45.0)
-
-    def _tick_eye_cameras(self, dt):
-        """Cult eye-cameras: stationary watchers placed in cult sites
-        (haunted_house, well_passage, void_boss). Each entry on
-        scene.eye_cameras has {x, y, range, _t}. While the player
-        is unhidden and within `range`, _t accumulates. Past 2.5s
-        the watcher fires: bumps Pursuer proximity by +0.10, plays
-        an alert pulse, and (if the player is still in range)
-        spawns a hunter patrol nearby on the next tick by setting
-        the hunter's scene to here. Hide breaks line-of-sight; the
-        timer decays at half-speed so the player can't game it
-        with rapid hide/unhide flicker.
-
-        The visible prop is a `watching_eye` decoration with
-        slit=True placed at the same coord by the scene builder.
-        This tick does not draw anything -- the eye decoration
-        already shows where the watcher is."""
-        if self.scene is None or self.player is None:
-            return
-        if self.state != "playing":
-            return
-        cams = getattr(self.scene, "eye_cameras", None)
-        if not cams:
-            return
-        px = self.player.x
-        py = self.player.y
-        hidden = self.player.hidden is not None
-        for cam in cams:
-            cx = cam["x"]
-            cy = cam["y"]
-            r = cam.get("range", 140)
-            d = math.hypot(px - cx, py - cy)
-            if d <= r and not hidden:
-                cam["_t"] = cam.get("_t", 0.0) + dt
-                if cam["_t"] >= 2.5 and not cam.get("fired", False):
-                    cam["fired"] = True
-                    pan = self.audio.pan_for_world(cx, self.player.x)
-                    if cam.get("alarm", False):
-                        # Trespass alarm: louder, hits Pursuer harder.
-                        # Used in cult-aligned interiors (the church,
-                        # the sheriff's office) where being seen is
-                        # also being reported.
-                        self.audio.play("alarm_bell", 0.8, pan=pan)
-                        self.audio.play("low_pulse", 0.85)
-                        self._provoke_cult(0.25)
-                        self.show_notice(
-                            "A bell starts ringing. They are coming.",
-                            duration=3.0)
-                    else:
-                        self.audio.play("low_pulse", 0.65)
-                        self.audio.play("breath", 0.55, pan=pan)
-                        self._provoke_cult(0.10)
-                        self.show_notice(
-                            "The eye sees you. It knows where you are.",
-                            duration=2.4)
-                    # Steer the Hunter patrol here so the spotting
-                    # has a follow-through. (No-op below activation
-                    # threshold; harmless.)
-                    for p in self._patrols:
-                        if p["tag"] == "patrol_hunter":
-                            p["scene"] = self.scene.key
-                            p["t"] = 4.0
-                            break
-            else:
-                # Decay. Half-speed when hidden so quick flickering
-                # doesn't reset the timer instantly.
-                rate = dt * (0.5 if hidden else 1.0)
-                cam["_t"] = max(0.0, cam.get("_t", 0.0) - rate)
-                if cam["_t"] == 0.0:
-                    cam["fired"] = False
-
-    def _tick_yk_tone(self, dt):
-        if self.scene is None:
-            return
-        present = any(getattr(n, "sprite_kind", None) == "yellow_king"
-                      for n in self.scene.npcs)
-        self._yk_present = present
-        self._yk_tone_t = getattr(self, "_yk_tone_t", 0.0) - dt
-        if present and self._yk_tone_t <= 0:
-            self.audio.play("yk_tone", 0.85)
-            self._yk_tone_t = 2.4
-        if not present:
-            self._yk_tone_t = 0.0
-
-    def _tick_dread_aperture(self, dt):
-        """Drive the dread aperture (1.0 open -> 0.0 closed). In
-        DARK_SCENES without a working flashlight, the aperture
-        closes; the King in Yellow ring is drawn at radius
-        proportional to it. While hidden + standing still + no
-        chaser within range, the aperture re-opens. At 0 the ring
-        has reached the player -- triggers closure (capture).
-
-        Cult-dark scenes force-disable the flashlight so the
-        aperture closes in spite of any battery."""
-        if self.scene is None or self.player is None:
-            return
-        if self._ending_active or getattr(self, "_closure_started", False):
-            return
-        # Cult-dark forces the flashlight off every tick. Keeps the
-        # state consistent if the player toggled it before entering.
-        if self.scene.key in CULT_DARK_SCENES and self.player.flashlight_on:
-            self.player.flashlight_on = False
-        in_dark = self.scene.key in DARK_SCENES
-        has_light = (in_dark
-                     and self.player.flashlight_on
-                     and self.player.battery_charge > 0
-                     and self.scene.key not in CULT_DARK_SCENES)
-        if not in_dark or has_light:
-            self.dread_aperture = min(1.0, self.dread_aperture + dt * 0.50)
-            return
-        # Standing-still detection: position changed less than 1px
-        # since last tick. Use _last_pos cache rather than asking
-        # the player for a velocity attribute.
-        lp = self._last_pos
-        still = (abs(self.player.x - lp[0]) + abs(self.player.y - lp[1]) < 1.0)
-        self._last_pos = (self.player.x, self.player.y)
-        hidden = self.player.hidden is not None
-        # Chaser within range -- any enemy tagged as a depths chaser
-        # (or any enemy at all in cult-dark, since combat is gone).
-        # Touch-range contact slams the aperture to 0 immediately,
-        # which routes through the pulled-through-the-doorframe
-        # closure cinematic.
-        chaser_near = False
-        for e in self.scene.enemies:
-            if not e.alive:
-                continue
-            d = math.hypot(e.x - self.player.x, e.y - self.player.y)
-            if d < 22:
-                self.dread_aperture = 0.0
-                self._begin_pulled_through_closure()
-                return
-            if d < 220:
-                chaser_near = True
-        if hidden and still and not chaser_near:
-            # THRESHOLD hide-spot trade: cover from sight halts the
-            # aperture's closure, but does NOT reverse it. The held
-            # breath is a stay, not a heal. Recovery only happens
-            # at full safe-room interactions (the cot, the inn).
-            pass
-        else:
-            # Closing rate: faster when a chaser sees the player
-            # unhidden, slower in baseline darkness.
-            rate = 0.04
-            if chaser_near and not hidden:
-                rate = 0.18
-            self.dread_aperture = max(0.0, self.dread_aperture - dt * rate)
-        if self.dread_aperture <= 0.0:
-            self._begin_pulled_through_closure()
-            return
-        # Depths ambient layer: distant chant + wet exhale on
-        # tightening intervals as the aperture closes. Both fire
-        # only in cult-dark scenes -- the upper basement / well
-        # bottom stay clean of these layers.
-        if self.scene.key in CULT_DARK_SCENES:
-            close = 1.0 - self.dread_aperture
-            vol = 0.18 + 0.55 * close
-            self._chant_t += dt
-            chant_period = 9.0 - 6.0 * close
-            if self._chant_t >= chant_period:
-                self._chant_t = 0.0
-                self.audio.play("cult_chant", vol)
-            self._breath_t += dt
-            breath_period = 5.5 - 3.5 * close
-            if self._breath_t >= breath_period:
-                self._breath_t = 0.0
-                self.audio.play("cult_breath", vol * 0.8)
-
-    def _tick_watchers(self, dt):
-        """Spawn, age, and despawn Watchers. Watchers are placed at
-        world coordinates just inside the camera's edge -- close
-        enough to read as a figure, far enough that the player has
-        to turn the camera (i.e. walk a few tiles) to centre them.
-        They despawn when:
-          * the camera centres them (player looks toward them), or
-          * the player steps within ~80 px, or
-          * t_left runs out.
-        Disabled in the bedroom on the very first session so the
-        opening minute reads as ordinary."""
-        if self.scene is None or self.player is None:
-            return
-        # Don't spawn during transitions or modals -- they look like
-        # a draw bug if they appear over a black fade.
-        if self.state != "playing":
-            return
-        # Spawn cadence: rises with Pursuer proximity, but also has
-        # a baseline so they exist even early on. Suppressed entirely
-        # in the bedroom until the player has left the bedroom at
-        # least once -- the opening minute owns its own scripted
-        # watcher (planted in bedroom_on_update) and shouldn't have
-        # ambient figures stacking onto it.
-        in_opening_room = (self.scene is not None
-                           and self.scene.key == "bedroom"
-                           and not self.save.flag("left_bedroom"))
-        self._watcher_next_t -= dt
-        if (self._watcher_next_t <= 0 and len(self._watchers) < 2
-                and not in_opening_room):
-            self._spawn_watcher()
-            base = 14.0 - self.pursuer_proximity * 8.0
-            self._watcher_next_t = max(5.0, base + random.uniform(-2.0, 4.0))
-        # Pre-compute flashlight state ONCE per tick so the inner
-        # loop's dot-product check is cheap. The cone projects from
-        # the player in their facing direction; a watcher inside the
-        # cone is banished instantly with a phantom_step echo.
-        light_on = (self.player.inventory.has("flashlight")
-                    and self.player.flashlight_on
-                    and self.player.battery_charge > 0)
-        fxp, fyp = self.player.facing
-        # Age & despawn loop.
-        survivors = []
-        for w in self._watchers:
-            w["t_left"] -= dt
-            sx = w["x"] - self.cam_x
-            sy = w["y"] - self.cam_y
-            dx_c = sx - SCREEN_W / 2
-            dy_c = sy - SCREEN_H / 2
-            looked_at = abs(dx_c) < 110 and abs(dy_c) < 90
-            w["looked_at"] = looked_at
-            dx_p = w["x"] - self.player.x
-            dy_p = w["y"] - self.player.y
-            d_p = math.hypot(dx_p, dy_p)
-            close = d_p < 80
-            # Flashlight cone behaviour. Below mid proximity the
-            # cone banishes a watcher outright -- the gaze AND the
-            # light agree, the figure has nowhere to be. From mid
-            # to high proximity the cone only PAUSES the watcher:
-            # it stops creeping for ~1.5s but does not despawn,
-            # so the player can buy a breath but not a clean
-            # delete. At apex (>= 0.85) the cone has no effect at
-            # all -- the world is past the point where a 9V
-            # flashlight does anything to it.
-            #
-            # Banishing a watcher costs the player visibility for
-            # a beat -- the lit-up moment leaves the rest of the
-            # scene feeling darker by contrast.
-            if light_on and 0 < d_p < 220:
-                dot = (dx_p * fxp + dy_p * fyp) / d_p
-                if dot > 0.55:
-                    pan = self.audio.pan_for_world(w["x"], self.player.x)
-                    prox_now = self.pursuer_proximity
-                    if prox_now < 0.60:
-                        self.audio.play("phantom_step", 0.45, pan=pan)
-                        self._visibility_dip_t = max(
-                            self._visibility_dip_t, 1.0)
-                        continue   # drop without survivor
-                    elif prox_now < 0.85:
-                        # Pause -- watcher freezes for 1.5s but
-                        # does not despawn. Reuses defiant_t as
-                        # an anti-step timer (clamped from below
-                        # so this can stack with prior pauses).
-                        w["pause_t"] = max(w.get("pause_t", 0.0), 1.5)
-                        self._visibility_dip_t = max(
-                            self._visibility_dip_t, 0.7)
-                    # else: apex band -- the cone does nothing.
-            # SLENDER MECHANIC: when the watcher is OFF-SCREEN or just
-            # outside the centred-look window, it steps toward the
-            # player. While the player has it centred (looked_at), it
-            # holds still -- the gaze freezes it. Step distance scales
-            # with Pursuer proximity.
-            #
-            # The OPENING WATCHER (planted in bedroom_on_update) has
-            # `still=True` so it stands in the threshold instead of
-            # creeping closer -- its job is to be seen, not to chase.
-            #
-            # Creepers ignore the gaze-freezes-it rule: they step in
-            # whether the player is looking at them or not. The
-            # player's eye does not stop them.
-            creeper = w.get("creeper", False)
-            # Decrement any flashlight-induced pause; while > 0 the
-            # watcher freezes regardless of look state.
-            paused = w.get("pause_t", 0.0)
-            if paused > 0:
-                w["pause_t"] = max(0.0, paused - dt)
-            should_step = (not close and d_p > 0
-                           and not w.get("still", False)
-                           and (not looked_at or creeper)
-                           and w.get("pause_t", 0.0) <= 0)
-            if should_step:
-                step = (8.0 + self.pursuer_proximity * 24.0) * dt
-                w["x"] -= (dx_p / d_p) * step
-                w["y"] -= (dy_p / d_p) * step
-            # Opening watcher only dissolves on look or approach,
-            # never from boredom -- the first horror beat must not
-            # be missable.
-            timed_out = (w["t_left"] <= 0
-                         and not w.get("opening_watcher", False))
-            # Defiant watchers hold ~1s on look before vanishing.
-            # Creepers don't dissolve on look at all -- only on touch.
-            dissolve_on_look = looked_at and not creeper
-            if dissolve_on_look and w.get("defiant", False):
-                w["defiant_t"] = w.get("defiant_t", 1.0) - dt
-                if w["defiant_t"] > 0:
-                    dissolve_on_look = False
-            if timed_out or dissolve_on_look or close:
-                # Opening watcher leaves a residue: a slightly
-                # louder phantom_step + a sub-bass low_pulse +
-                # a brief mote at the spot where it stood, so
-                # the player has a tiny piece of evidence the
-                # figure was real.
-                pan = self.audio.pan_for_world(w["x"], self.player.x)
-                if w.get("opening_watcher", False) and (looked_at or close):
-                    self.audio.play("phantom_step", 0.45, pan=pan)
-                    self.audio.play("low_pulse", 0.30)
-                    if self.scene is not None:
-                        from entities.decoration import Decoration
-                        self.scene.add_decoration(
-                            Decoration(w["x"], w["y"] - 6, "mote")
-                        )
-                elif (looked_at or close) and self.pursuer_proximity > 0.4:
-                    if random.random() < 0.35:
-                        self.audio.play("phantom_step", 0.32, pan=pan)
-                continue
-            survivors.append(w)
-        self._watchers = survivors
-        # Visibility ramp: while at least one survivor is on screen
-        # and the player isn't hidden, the cult's eyes are on them.
-        # Provokes the cult and ramps Pursuer. Hide breaks it.
-        if self._watchers and self.player.hidden is None:
-            on_screen = False
-            for w in self._watchers:
-                sx = w["x"] - self.cam_x
-                sy = w["y"] - self.cam_y
-                if -32 <= sx <= SCREEN_W + 32 and -48 <= sy <= SCREEN_H + 32:
-                    on_screen = True
-                    break
-            if on_screen:
-                self._provoke_cult(dt * 0.04)
-
-    def _spawn_watcher(self):
-        """Place a watcher at a random tile near the camera edge,
-        clamped to walkable floor inside the scene bounds. We try a
-        handful of candidate tiles; if none work the spawn is
-        skipped silently."""
-        scene = self.scene
-        if scene is None:
-            return
-        cam_l = int(self.cam_x // TILE)
-        cam_r = int((self.cam_x + SCREEN_W) // TILE)
-        cam_t = int(self.cam_y // TILE)
-        cam_b = int((self.cam_y + SCREEN_H) // TILE)
-        for _ in range(10):
-            edge = random.choice(("left", "right", "top", "bottom"))
-            if edge == "left":
-                tx = cam_l + random.randint(0, 2)
-                ty = random.randint(cam_t, cam_b)
-            elif edge == "right":
-                tx = cam_r - random.randint(0, 2)
-                ty = random.randint(cam_t, cam_b)
-            elif edge == "top":
-                tx = random.randint(cam_l, cam_r)
-                ty = cam_t + random.randint(0, 2)
-            else:
-                tx = random.randint(cam_l, cam_r)
-                ty = cam_b - random.randint(0, 2)
-            if not (0 <= tx < scene.w and 0 <= ty < scene.h):
-                continue
-            wx = tx * TILE + TILE // 2
-            wy = ty * TILE + TILE // 2
-            # Reject if the tile is solid -- no floating watchers
-            # inside walls. Use a small probe rather than the exact
-            # is_solid_at so a tile next to a wall still counts.
-            if scene.is_solid_at(wx, wy):
-                continue
-            # Reject if too close to the player to begin with.
-            if math.hypot(wx - self.player.x, wy - self.player.y) < 140:
-                continue
-            self._watchers.append({
-                "x": wx,
-                "y": wy,
-                "t_left": random.uniform(2.0, 4.5),
-                # `seen` flips true once the watcher has been on
-                # screen for one full frame -- prevents the despawn
-                # from firing on the same frame as the spawn if the
-                # camera was already centred on it.
-                "seen": False,
-                # Rule-breaks. Most watchers obey: hold while looked
-                # at, despawn when the gaze lands. A small minority
-                # break the rule so the player can never be sure of
-                # the system. Creeper: keeps stepping closer even
-                # while looked at (the gaze does not freeze it).
-                # Defiant: holds an extra ~1.0s on look before
-                # vanishing -- the moment the player thinks "it's
-                # gone" it is still standing there.
-                "creeper": random.random() < 0.01,
-                "defiant": random.random() < 0.05,
-                "defiant_t": 1.0,
-            })
-            return
-
-    def _draw_watchers(self):
-        """Render each active watcher in world space. Suppressed
-        during transitions / dialog modals so the figure doesn't
-        sit over a black fade."""
-        if (self.dialog.active or self.inv_ui.open or self.notebook_ui.open
-                or self.text_input.active
-                or self.state != "playing"):
-            return
-        for w in self._watchers:
-            sx = int(w["x"] - self.cam_x)
-            sy = int(w["y"] - self.cam_y)
-            if sx < -32 or sx > SCREEN_W + 32:
-                continue
-            if sy < -48 or sy > SCREEN_H + 32:
-                continue
-            draw_npc_sprite(self.screen, sx, sy, "watcher", (0, 1),
-                            gaze=w.get("looked_at", False))
-            w["seen"] = True
 
     def _tick_flashback(self, dt):
         """Poll the flashback_pending save flag (set by inventory_ui
@@ -2793,39 +1624,13 @@ class Game:
         self.screen.blit(s, (SCREEN_W // 2 - s.get_width() // 2,
                              SCREEN_H // 2 - s.get_height() // 2))
 
-    def _is_dusk(self):
-        """Dusk fires when proximity >= 0.70 OR scene-visit count for
-        any cult-relevant scene >= 6. Cult-relevant scenes are the
-        well_bottom, the clearing (void_boss), the cult_chamber
-        (symbol_portal_room), and the cauldron-fed visits."""
-        if self.pursuer_proximity >= 0.70:
-            return True
-        cult_scenes = ("well_bottom", "void_boss", "symbol_portal_room",
-                       "haunted_house", "graveyard")
-        total = sum(self.save.visits(k) for k in cult_scenes)
-        return total >= 6
-
     # ---- Endings ----
 
     def _begin_car_escape(self):
-        """Player reached the car at the diner with car_keys.
-        Two flavors: 'with_kid' if the kid follower is active,
-        'alone' otherwise. Sets the appropriate ending and hands
-        off to _play_ending."""
+        """Player reached the car at the diner with car_keys."""
         if self._ending_active:
             return
-        if self._kid_follower_active:
-            self._play_ending("escape_with_kid")
-        else:
-            self._play_ending("escape_alone")
-
-    def _check_dusk_endings(self):
-        """Retired. The destroy_cult and sacrifice_kid endings were
-        gated on dusk + kid follower + a specific scene -- both were
-        replaced by the polaroid ritual at well_bottom and the
-        seal_threshold ending at the doorframe. Kept as a no-op so
-        the per-tick caller in step() doesn't have to be branched."""
-        return
+        self._play_ending("escape_alone")
 
     def _play_ending(self, name):
         """Begin a multi-phase ending. Phase 0 sets up; phase 1+
@@ -2841,60 +1646,27 @@ class Game:
         # mechanism so the player can't move during the sequence).
         self._closure_locked = True
         # Cue the appropriate audio.
-        if name in ("seal_threshold", "seal_threshold_with_kid"):
+        if name == "seal_threshold":
             self.audio.play("arg_chime", 0.7)
-        elif name == "pulled_through":
-            self.audio.play("low_pulse", 0.95)
         else:
             self.audio.play("door_close", 0.7)
 
     # Ending scripts. Each is a list of (line, duration_seconds).
+    # Placeholder text -- the narrative is a blank slate. Two
+    # structural endings remain: reaching the car (escape_alone) and
+    # acting on the doorframe (seal_threshold). Fill in the lines when
+    # the new story is written.
     _ENDING_SCRIPTS = {
         "escape_alone": [
-            ("you turn the key. it catches.", 2.5),
-            ("the engine starts. it shouldn't have.", 2.5),
-            ("you don't look in the rearview.", 2.5),
-            ("the road runs out at the county line.", 2.5),
-            ("you do not stop driving for a long time.", 3.0),
-            ("you left him.", 3.5),
-        ],
-        "escape_with_kid": [
-            ("you put him in the passenger seat.", 2.5),
-            ("you turn the key. it catches.", 2.5),
-            ("he doesn't say anything for an hour.", 2.5),
-            ("you cross the county line at full dark.", 2.5),
-            ("he sleeps against the window.", 2.5),
-            ("they will look for him. they will look for you.", 3.0),
-            ("you keep driving.", 3.0),
-        ],
-        "pulled_through": [
-            ("the air goes still.", 2.5),
-            ("a yellow figure stands where you were.", 3.0),
-            ("he is not looking at the camera.", 2.5),
-            ("he is looking at you.", 3.5),
-            ("the doorframe fills the room.", 2.5),
-            ("you go through it.", 3.5),
+            ("you turn the key.", 2.5),
+            ("the engine starts.", 2.5),
+            ("you drive away.", 3.0),
+            ("...", 3.0),
         ],
         "seal_threshold": [
-            ("you press the drawing against the stone.", 2.5),
-            ("the eye on the lintel turns inside out.", 2.5),
-            ("the smoke stops.", 2.5),
-            ("the door is just a door now.", 2.5),
-            ("the King in the Field is somewhere else now.", 3.0),
-            ("you don't have to go through it.", 3.0),
-            ("the boy is asleep at the inn.", 3.0),
-            ("he will wake up.", 3.0),
-        ],
-        "seal_threshold_with_kid": [
-            ("you give him back the drawing.", 2.5),
-            ("he presses it against the stone himself.", 2.5),
-            ("the eye on the lintel turns inside out.", 2.5),
-            ("the smoke stops.", 2.5),
-            ("he doesn't say anything for a long time.", 3.0),
-            ("the door is just a door now.", 2.5),
-            ("the King in the Field is somewhere else now.", 3.0),
-            ("you carry him out.", 3.0),
-            ("he wakes up in the morning.", 3.0),
+            ("...", 2.5),
+            ("it is done.", 2.5),
+            ("...", 3.0),
         ],
     }
 
@@ -2954,34 +1726,14 @@ class Game:
         self.screen.blit(s, (SCREEN_W // 2 - s.get_width() // 2,
                              SCREEN_H // 2 - s.get_height() // 2))
 
-    def _effective_phase(self):
-        """The day phase as the world experiences it. Single
-        source of truth for "is it night here?":
-          * PERMANENT_NIGHT_SCENES (mistlands) are always night.
-          * Past DAY_NIGHT_BREAKS_AFTER, the cycle has broken --
-            every phase reads as night. There is no morning
-            anymore.
-          * Otherwise, the saved day_phase.
-        Drives patrol activation, the dusk tint, and the outdoor
-        flashlight gate."""
-        if self.scene is not None and self.scene.key in PERMANENT_NIGHT_SCENES:
-            return "night"
-        if self.save is not None:
-            if self.save.arg("day_count", 1) >= DAY_NIGHT_BREAKS_AFTER:
-                return "night"
-            return self.save.arg("day_phase", "afternoon")
-        return "afternoon"
-
     def _patrols_active(self):
-        """Cultists walk only at night (or in permanent-night
-        scenes, or after the day-7 cap). Day = preparation
-        window; night = horror. The Inn (SAFE_SCENES) is always
-        patrol-free regardless of phase."""
+        """Patrols walk everywhere except the safe interiors. There is
+        no day/night cycle -- per-patrol activation is gated purely by
+        the threat meter (each patrol's min_prox), handled in
+        _tick_sheriff. The safe rooms (the inn) stay patrol-free."""
         if self.scene is None:
             return False
-        if self.scene.key in SAFE_SCENES:
-            return False
-        return self._effective_phase() == "night"
+        return self.scene.key not in SAFE_SCENES
 
     def _tick_sheriff(self, dt):
         """Run all cult patrols. Each patroller reads its min_prox
@@ -3044,31 +1796,12 @@ class Game:
             # Announce each higher-tier patroller's first activation.
             if tag not in self._patrol_announced:
                 self._patrol_announced.add(tag)
-                if tag == "patrol_hunter":
-                    self.audio.play("low_pulse", 0.85)
-                    self.show_notice(
-                        "Something is walking. Hide.",
-                        duration=4.0)
-                    self._yk_grace_t = 10.0
-                elif tag.startswith("patrol_amb_cult"):
-                    # Ambient cultists are always present; no
-                    # one-shot announcement -- they're the world,
-                    # not an event.
-                    pass
-                else:
+                # Ambient figures are the world, not an event -- no
+                # announcement. Higher-tier patrols get one beat.
+                if not tag.startswith("patrol_amb_cult"):
                     self.audio.play("low_pulse", 0.45)
-                    self.show_notice("More of them are out today.",
+                    self.show_notice("Something else is out here.",
                                       duration=3.0)
-            # The Yellow King re-routes to the player's scene every
-            # tick -- not on re-roll. Doorways don't outrun him.
-            # Exception: a brief grace period after his first
-            # activation lets the "Something is walking" beat land
-            # before he's literally in the room.
-            if tag == "patrol_hunter":
-                self._yk_grace_t = max(0.0,
-                                        getattr(self, "_yk_grace_t", 0.0) - dt)
-                if self._yk_grace_t <= 0:
-                    patrol["scene"] = self.scene.key
             # Re-roll the patroller's current scene. Re-roll fires
             # when the timer expires OR when scene is None (just-
             # activated from dormancy, or first frame). The
@@ -3080,25 +1813,17 @@ class Game:
             if patrol["t"] <= 0 or patrol["scene"] is None:
                 patrol["t"] = random.uniform(patrol["next_min"],
                                               patrol["next_max"])
-                if tag == "patrol_hunter":
-                    # The King in Yellow walks straight at you
-                    # through scenes whenever active. Apex still
-                    # escalates via 60px catch radius and reading
-                    # through hide -- routing is the same.
-                    patrol["scene"] = self.scene.key
-                else:
-                    # Per-patrol scene pool override -- ambient
-                    # cultists restrict to forest walkways so the
-                    # player encounters hooded scouts there as a
-                    # constant. Falls back to the global
-                    # _sheriff_scenes pool otherwise.
-                    pool_src = patrol.get("scenes",
-                                           self._sheriff_scenes)
-                    weight = 1 + int(prox * 4)
-                    pool = list(pool_src)
-                    if self.scene.key in pool_src:
-                        pool += [self.scene.key] * weight
-                    patrol["scene"] = random.choice(pool)
+                # Per-patrol scene pool override -- ambient figures
+                # restrict to the forest walkways so the player meets
+                # scouts there as a constant. Falls back to the global
+                # pool otherwise. The player's current scene is
+                # weighted higher with the meter so presence is felt.
+                pool_src = patrol.get("scenes", self._sheriff_scenes)
+                weight = 1 + int(prox * 4)
+                pool = list(pool_src)
+                if self.scene.key in pool_src:
+                    pool += [self.scene.key] * weight
+                patrol["scene"] = random.choice(pool)
             # Find existing NPC for this patrol in the current scene.
             npc = None
             for n in self.scene.npcs:
@@ -3116,27 +1841,6 @@ class Game:
                     npc = None
             if npc is None:
                 continue
-            # The Hunter is the King in Yellow avatar. Force-chase
-            # (no scout wander) so it always walks straight at the
-            # player. Speed accelerates smoothly with Pursuer
-            # proximity from 0.55 baseline up to 2.4 at apex --
-            # early it lurches, late it sprints.
-            #
-            # Visibility grace: when the Hunter NPC is freshly
-            # spawned in the player's scene, he gets a 1.5s window
-            # where he CANNOT catch the player. The player must
-            # see him approaching first -- no instant teleport-and-
-            # touch. The grace timer ticks down each frame.
-            if tag == "patrol_hunter":
-                npc.speed = 0.55 + 1.85 * prox
-                npc._force_chase = True
-                if not hasattr(npc, "_yk_grace_t"):
-                    npc._yk_grace_t = 1.5
-                    # First-spawn beat: a low pulse so the player's
-                    # ear catches him before the eye does.
-                    self.audio.play("low_pulse", 0.55)
-                if npc._yk_grace_t > 0:
-                    npc._yk_grace_t = max(0.0, npc._yk_grace_t - dt)
             # Spotting check. The flag lives on the NPC instance so
             # each fresh spawn (re-entering a scene creates a new
             # one) gets a clean slate -- the spotted-line beat
@@ -3147,36 +1851,10 @@ class Game:
                 if not getattr(npc, "_has_been_spotted", False):
                     npc._has_been_spotted = True
                     self._on_patrol_spot(patrol, npc)
-            # Catch check. At LOW proximity the catch is a setback,
-            # not a game-ender: the player blacks out, wakes back in
-            # the cot, the day advances by one, and Pursuer proximity
-            # ratchets up by 0.25. At HIGH proximity (>= 0.85) a catch
-            # IS the closure ending -- the threshold is too tight to
-            # walk back from.
-            #
-            # Yellow King grace: while his per-spawn grace timer is
-            # still running, he literally cannot catch the player.
-            # The player must have time to see him approach.
-            if (tag == "patrol_hunter"
-                    and getattr(npc, "_yk_grace_t", 0.0) > 0):
-                continue
+            # Catch check. Single-session game: any catch is game
+            # over (the closure sequence -> title).
             if d < 22 and self.player.hidden is None:
-                if self.pursuer_proximity >= 0.85:
-                    # Apex band: closure ending. The line is too
-                    # tight to walk back from.
-                    self._trigger_closure()
-                elif self.pursuer_proximity >= 0.55:
-                    # Mid band: the cult searches the player.
-                    # They keep their lore items, but the
-                    # flashlight battery is drained and any spare
-                    # batteries are taken. The setback bites
-                    # mechanically -- the player has to re-find
-                    # batteries before relying on the cone in
-                    # dark scenes again.
-                    self._trigger_capture(patrol, npc, tier="mid")
-                else:
-                    # Low band: the existing soft setback.
-                    self._trigger_capture(patrol, npc, tier="low")
+                self._trigger_closure()
                 return
         # Group flanking pass. Runs after every patrol has been
         # processed for this tick. When 2+ patrol NPCs share a
@@ -3185,14 +1863,11 @@ class Game:
         # other a perpendicular flank target so they cut off
         # either side of the player. Suppressed in tight scenes
         # via the openness check -- corridors fail it and fall
-        # back to a straight pile-on. Hunter excluded: he runs
-        # his own door-block routing.
+        # back to a straight pile-on.
         chasers = []
         for n in self.scene.npcs:
             tag = getattr(n, "tag", "")
             if not isinstance(tag, str) or not tag.startswith("patrol_"):
-                continue
-            if tag == "patrol_hunter":
                 continue
             if getattr(n, "_cult_state", "") == "chase":
                 chasers.append(n)
@@ -3297,91 +1972,6 @@ class Game:
         self.scene.add_npc(n)
         return n
 
-    def _trigger_capture(self, patrol, npc, tier="low"):
-        """Patrol caught the player at sub-closure proximity. Cuts
-        to a short blackout, advances the in-world day by one,
-        wakes the player back in the cot scene, ratchets Pursuer
-        proximity by 0.25 (the line tightens with every capture).
-
-        Two tiers:
-          * 'low'  (Pursuer < 0.55) -- the soft setback. Items
-                                       intact. Time + ground lost.
-          * 'mid'  (0.55 <= Pursuer < 0.85) -- the cult searches
-                                       the player. Flashlight
-                                       battery drained to 0; any
-                                       spare_batteries removed
-                                       from inventory. Lore /
-                                       evidence items preserved
-                                       (the cult doesn't read
-                                       what you've found, just
-                                       takes the lights).
-
-        The capture line varies per patroller (and tier) so the
-        player gets feedback on what just happened to them."""
-        # Per-tier per-patrol line. Tier-specific lines live in
-        # `mid`; anything missing falls back to the `low` line.
-        low_lines = {
-            "patrol_preacher": "The Preacher whispers something. Then nothing.",
-            "patrol_cultist": "They take you. You wake up later.",
-            "patrol_choir": "The choir circles you. Their hands are on you.",
-            "patrol_hound": "The dog has you down. You wake up bandaged.",
-        }
-        mid_lines = {
-            "patrol_preacher": "The Preacher empties your pockets. Softly.",
-            "patrol_cultist": "They pat you down. They take the batteries.",
-            "patrol_choir": "Small hands in your coat. The lights are gone.",
-            "patrol_hound": "They pull you off the dog. Your pockets are lighter.",
-        }
-        line_pool = mid_lines if tier == "mid" else low_lines
-        line = line_pool.get(
-            patrol["tag"],
-            low_lines.get(patrol["tag"], "They take you. You wake up later."))
-        self.audio.force_silence()
-        self.audio.play("low_pulse", 0.85)
-        self.show_notice(line, duration=4.0)
-        # Day advances; Pursuer ratchet. Day_phase resets to
-        # "morning" too -- without this, a player captured at
-        # night would wake on the next day_count but with the
-        # phase still "night", and walking out of the bedroom
-        # would step them into night patrols immediately
-        # (re-capture loop). Capture costs the day, not the
-        # night.
-        self.save.set_arg(
-            "day_count", self.save.arg("day_count", 1) + 1
-        )
-        self.save.set_arg("day_phase", "morning")
-        self.save.set_flag(
-            f"captured_by_{patrol['tag']}", True
-        )
-        self._provoke_cult(0.25)
-        # Mid-tier extra: the cult searches the player. Flashlight
-        # battery drained, all spare_batteries taken. Pure
-        # mechanical sting on top of the setback.
-        if tier == "mid":
-            self.player.battery_charge = 0
-            inv = self.player.inventory
-            while inv.has("spare_batteries"):
-                inv.remove("spare_batteries", 99)
-            # If the player had the flashlight on, force it off
-            # so the toggle state isn't lying when they wake up.
-            self.player.flashlight_on = False
-            self.save.set_flag(
-                f"searched_by_{patrol['tag']}", True
-            )
-        # The world bears witness. Each non-closure capture deposits
-        # one persistent trace decoration in a frequently-visited
-        # scene; the player wakes up but the world keeps a tally
-        # they did not consent to. Scenes already loaded won't show
-        # the new trace until next entry; this is intentional --
-        # the trace appears the next time the player walks through
-        # somewhere they thought was safe.
-        n = self.save.arg("capture_traces", 0)
-        if n < len(CAPTURE_TRACE_DEPOSITS):
-            self.save.set_arg("capture_traces", n + 1)
-        # Snap them back to the cot scene. Use the standard
-        # transition so the fade hides the seam.
-        self.begin_transition("bedroom", "default")
-
     def _on_patrol_spot(self, patrol, npc):
         """First time this patroller sees the player in this scene."""
         self.audio.play("low_pulse", 0.55)
@@ -3391,35 +1981,9 @@ class Game:
         line = {
             "patrol_preacher": "The Preacher has spotted you.",
             "patrol_cultist": "They see you.",
-            "patrol_hunter": "It sees you. It has always seen you.",
-            "patrol_choir": "The children stop singing. They look up.",
             "patrol_hound": "The dog catches your scent.",
         }.get(patrol["tag"], "They see you.")
         self.show_notice(line, duration=2.6)
-
-    def _tick_kid_follower(self, dt):
-        """If kid_follower_active and the kid isn't already in the
-        scene, spawn him at the player's last position. Apply the
-        follower walk-speed penalty and the Ire-pause to the
-        proximity ramp."""
-        if not self._kid_follower_active:
-            return
-        if self.scene is None or self.player is None:
-            return
-        kid = None
-        for n in self.scene.npcs:
-            if getattr(n, "tag", None) == "kid_follower":
-                kid = n
-                break
-        if kid is None:
-            from entities.npc import NPC
-            kid = NPC(self.player.x - 18, self.player.y + 12,
-                      "", "kid", voice="blip_kid", portrait="kid",
-                      movement="follower", speed=1.5,
-                      solid=False, no_prompt=True)
-            kid.tag = "kid_follower"
-            kid.dialogue_fn = None
-            self.scene.add_npc(kid)
 
     def _tick_wake_muffle(self, dt):
         """Opening wake-state. While `_wake_muffle_t` is positive the
@@ -3497,10 +2061,11 @@ class Game:
             if not p.sprint_active:
                 p.sprint_active = True
             p.sprint_t -= dt
-            if self.save.flag("cult_provoked"):
-                self.pursuer_proximity = min(
-                    1.0, self.pursuer_proximity + dt * 0.05
-                )
+            # Sprinting is loud -- it draws extra attention on top of
+            # the normal moving rate.
+            self.pursuer_proximity = min(
+                1.0, self.pursuer_proximity + dt * 0.05
+            )
             # Periodic loud step every ~0.35s so the Pursuer hears.
             self._sprint_step_t = getattr(self, "_sprint_step_t", 0.0) - dt
             if self._sprint_step_t <= 0:
@@ -3536,6 +2101,30 @@ class Game:
         self._heartbeat_t = 5.0 - t * 3.8
         self.audio.play("heartbeat", 0.40 + prox * 0.30)
 
+    def _enemy_sees_player(self):
+        """True if any hostile currently has line of sight on the
+        player. Hostiles are the patrol/chaser NPCs; their sight
+        range matches the chaser AI (180 px). Hiding (corn cover or
+        a hide spot) breaks line of sight unconditionally, which is
+        what makes cover the player's main tool for shedding threat."""
+        if self.scene is None or self.player is None:
+            return False
+        if self.player.hidden is not None:
+            return False
+        px, py = self.player.x, self.player.y
+        for n in self.scene.npcs:
+            if not getattr(n, "alive", True):
+                continue
+            tag = getattr(n, "tag", None)
+            hostile = ((isinstance(tag, str) and tag.startswith("patrol_"))
+                       or getattr(n, "movement", None) in ("chaser",
+                                                            "stalker"))
+            if not hostile:
+                continue
+            if math.hypot(n.x - px, n.y - py) < 180:
+                return True
+        return False
+
     def _tick_pursuer(self, dt):
         """Run the Pursuer's life. The Pursuer is invisible -- this
         method only schedules audio events, notices, and (eventually)
@@ -3556,54 +2145,38 @@ class Game:
         if self.scene is None or self.player is None:
             return
         self._pursuer_t += dt
-        # Passive + stillness ramps are dormant until the cult is
-        # provoked (see _provoke_cult). The line doesn't tighten on
-        # an outsider who hasn't done anything yet.
-        if self.save.flag("cult_provoked"):
-            passive_rate = 0.005
-            if self.player.hidden is not None:
-                passive_rate *= 0.5
-            self.pursuer_proximity += dt * passive_rate
-            if self.stillness_t > 1.5 and self.player.hidden is None:
-                self.pursuer_proximity += dt * 0.02
-        # Kid follower: the cult is owed him, so the Pursuer holds
-        # back -- they expect to collect at the doorframe. Cap proximity
-        # below the apex band while he's with the player AND the
-        # threshold scene hasn't been reached. The cap LIFTS the
-        # instant the player enters `threshold` with the kid (handled
-        # in `_kid_threshold_arrival`), spiking proximity to 0.95 so
-        # the closure timer arms right as the kid steps onto the slab.
-        if (self._kid_follower_active
-                and not self.save.flag("kid_at_threshold")
-                and self._pursuer_closure_t < 0):
-            self.pursuer_proximity = min(self.pursuer_proximity, 0.70)
-        # Cap at 1.0 unless closure is already armed.
-        if self._pursuer_closure_t < 0:
-            self.pursuer_proximity = min(1.0, self.pursuer_proximity)
-        # Closure arming: at 0.95+ proximity, start an 18-second
-        # countdown to the ending.
-        if (self.pursuer_proximity >= 0.95
-                and self._pursuer_closure_t < 0):
-            self._pursuer_closure_t = 18.0
-            # A long low pulse marks the moment the Pursuer steps
-            # over the threshold. The apex also tears the world
-            # down: music cuts to silence (force_silence latches
-            # until ending dispatch), the screen wash goes red and
-            # the edges crush in -- handled in _draw_apex_overlay.
-            self.audio.play("low_pulse", 0.85)
-            self.audio.force_silence()
-            self.show_notice("It is in this room.", duration=4.0)
-            # Held silhouette: ~110ms of a screen-centred black
-            # figure on top of the red wash. Long enough to be
-            # noticed, short enough to not be confused for a draw
-            # bug. The player will not be sure they saw it. The
-            # actual draw is in _draw_apex_silhouette.
-            self._apex_silhouette_t = 0.11
-        if self._pursuer_closure_t > 0:
-            self._pursuer_closure_t -= dt
-            if self._pursuer_closure_t <= 0:
-                self._trigger_closure()
-                return
+        # THRESHOLD threat model. The meter tracks how much danger the
+        # player is actually in, moment to moment:
+        #   * an enemy with line of sight on you -> climbs fast
+        #   * moving in the open                 -> climbs slowly
+        #   * still AND unseen (or hidden)       -> falls; you are
+        #                                           isolated and safe
+        # Hiding breaks line of sight, so cover is the strongest way
+        # to bleed the meter back down when something is near.
+        seen = self._enemy_sees_player()
+        if seen:
+            self.pursuer_proximity += dt * 0.12
+        elif self._is_moving:
+            self.pursuer_proximity += dt * 0.03
+        else:
+            self.pursuer_proximity -= dt * 0.06
+        self.pursuer_proximity = max(0.0, min(1.0, self.pursuer_proximity))
+        # Closure: while the meter is pinned at the top AND an enemy
+        # can still see you, a short grace timer counts down to a
+        # catch (game over -> title). Break line of sight -- hide --
+        # and the catch is called off and the meter starts to fall.
+        if self.pursuer_proximity >= 0.95 and seen:
+            if self._pursuer_closure_t < 0:
+                self._pursuer_closure_t = 6.0
+                self.audio.play("low_pulse", 0.85)
+                self.show_notice("Hide.", duration=3.0)
+            else:
+                self._pursuer_closure_t -= dt
+                if self._pursuer_closure_t <= 0:
+                    self._trigger_closure()
+                    return
+        else:
+            self._pursuer_closure_t = -1.0
         # Schedule the next manifestation event. Interval scales
         # inversely with proximity: at 0.0, ~30s between events;
         # at 1.0, ~3s.
@@ -3713,118 +2286,6 @@ class Game:
             self.pursuer_proximity = min(1.0,
                                           self.pursuer_proximity + bump)
 
-    # ---- Innkeeper's confrontation ----
-    # Cult-evidence inventory keys -- carrying any of these toward
-    # the Innkeeper's front door triggers his block. The orb and the
-    # robe are both sourced from his bedroom; the rubbing is the
-    # player's own hand-made evidence; the notebook is Mom's.
-    CULT_EVIDENCE_KEYS = ("orb", "robe", "sigil_rubbing", "mom_notebook",
-                          "polaroid")
-
-    def _check_innkeeper_confrontation(self, target_scene):
-        """Return True (cancelling the transition) if the Innkeeper is
-        about to block the player's exit. Triggers when the player
-        carries cult evidence ITEMS or has accumulated enough
-        evidence BEATS that the Innkeeper can read it on their face.
-
-        Branching by what the player knows:
-          * 'soft'  -- an item or 3+ beats. Mild line.
-          * 'sharp' -- both an item AND 3+ beats. Sharper line.
-          * 'lethal' -- 6+ beats AND a key cult item. The Innkeeper
-                        stops pretending. Pursuer takes a much
-                        bigger ratchet.
-
-        Sets `innkeeper_intensity` to the chosen tier so downstream
-        content (endings, NPC reactions, kid arc) can branch on it."""
-        if self.scene is None or self.scene.key != "house":
-            return False
-        if target_scene != "our_house_area":
-            return False
-        if self.save.flag("innkeeper_confronted"):
-            # Already confronted -- the front door is sealed. Treat
-            # any future attempt as a soft block with a notice.
-            self.audio.play("door_locked", 0.5)
-            self.show_notice("He is in the doorway.")
-            return True
-        inv = self.player.inventory
-        carrying = any(inv.has(k) for k in self.CULT_EVIDENCE_KEYS)
-        # Evidence-beat count from the rich list. Tolerates the
-        # legacy bare-string shape so old saves don't crash here.
-        evidence_log = self.save.arg("evidence", [])
-        if isinstance(evidence_log, list):
-            beats = len(evidence_log)
-        else:
-            beats = 0
-        # Trigger gate: either an item, OR 3+ beats. Knowledge alone
-        # is enough -- the Innkeeper can see it on you.
-        if not carrying and beats < 3:
-            return False
-        # Pick tier.
-        if carrying and beats >= 6:
-            tier = "lethal"
-        elif carrying and beats >= 3:
-            tier = "sharp"
-        else:
-            tier = "soft"
-        self.save.set_flag("innkeeper_confronted", True)
-        self.save.set_arg("innkeeper_intensity", tier)
-        self.audio.play("low_pulse", 0.85)
-        self.audio.force_silence()
-        # Strip the wandering host so we don't end up with two
-        # Innkeepers on screen.
-        self.scene.npcs = [n for n in self.scene.npcs
-                           if getattr(n, "tag", None) != "host_innkeeper"]
-        # Plant the Innkeeper sprite in the front-door tile so he is
-        # visibly standing there.
-        from entities.npc import NPC
-        nx = 6 * Scene.TILE + 16
-        ny = 10 * Scene.TILE + 16
-        host = NPC(nx, ny, "Innkeeper", "old",
-                   solid=True, no_prompt=True,
-                   voice="blip_low", portrait="old")
-        host.facing = (0, -1)
-        host.dialogue_fn = None
-        host.tag = "blocking_innkeeper"
-        self.scene.add_npc(host)
-        # Push the player one tile north so the dialog lines up.
-        self.player.y -= Scene.TILE
-        # Tiered dialog. Each tier shows what the Innkeeper can read
-        # on the player. The 'lethal' tier drops the host pretence
-        # entirely.
-        if tier == "lethal":
-            if inv.has("polaroid"):
-                self.dialog.show([
-                    "Put it back.",
-                    "[c=dim]She isn't yours to take. Not anymore.[/c]",
-                    "[c=dim]You see her face going. That's the binding.[/c]",
-                    "[c=dim]Put it back on the shelf and sit down.[/c][w=0.5]",
-                    "He is not asking.",
-                ], speaker="Innkeeper", voice="blip_low", portrait="old")
-            else:
-                self.dialog.show([
-                    "You shouldn't have looked.",
-                    "[c=dim]Did you think I didn't know what's in your pockets.[/c]",
-                    "[c=dim]Sit. Down.[/c][w=0.5]",
-                    "He is not asking.",
-                ], speaker="Innkeeper", voice="blip_low", portrait="old")
-            prox_bump = 0.40
-        elif tier == "sharp":
-            self.dialog.show([
-                "Where do you think you're going.",
-                "[c=dim]With my things in your hands. With that look on your face.[/c]",
-                "[c=dim]Sit back down.[/c]",
-            ], speaker="Innkeeper", voice="blip_low", portrait="old")
-            prox_bump = 0.30
-        else:  # soft
-            self.dialog.show([
-                "Where do you think you're going.",
-                "[c=dim]I made coffee.[/c][w=0.4]",
-                "[c=dim]Sit back down.[/c]",
-            ], speaker="Innkeeper", voice="blip_low", portrait="old")
-            prox_bump = 0.20
-        self._provoke_cult(prox_bump)
-        return True
-
     def _trigger_closure(self):
         """The Pursuer has reached the player. Hand off to the
         ending sequence. Implemented in _begin_threshold_closure;
@@ -3835,26 +2296,6 @@ class Game:
             return
         self._closure_started = True
         self._begin_threshold_closure()
-
-    def _begin_pulled_through_closure(self):
-        """Aperture-zero death in a dark scene: the King in Yellow
-        has reached the player. Snap the player to the threshold
-        scene, wipe the stage, then fire the pulled_through ending
-        script. The cinematic plays while the player stands at the
-        doorframe; final still fades and returns to title."""
-        if getattr(self, "_closure_started", False):
-            return
-        self._closure_started = True
-        self._closure_locked = True
-        self.audio.force_silence()
-        if self.scene is None or self.scene.key != "threshold":
-            self.load_scene_now("threshold", "default")
-        if self.scene is not None:
-            self.scene.npcs = []
-            self.scene.enemies = []
-            self.scene.items = []
-            self.scene.projectiles = []
-        self._play_ending("pulled_through")
 
     def _begin_threshold_closure(self):
         """The Pursuer has reached the player. The threshold closes.
@@ -3970,42 +2411,10 @@ class Game:
             return 255
         return 0
 
-    def _tick_dread(self, dt):
-        """Stillness-driven heartbeat ramp. Engages while the player is
-        standing still inside a CREEPY_SCENES key (or anywhere once
-        `world_emptied` flips). The interval between beats tightens
-        with each beat: 8s, 7s, 6s, ... down to 4s. Movement resets
-        the count."""
-        if self.scene is None:
-            return
-        in_creepy = (self.scene.key in CREEPY_SCENES
-                     or self.save.flag("world_emptied"))
-        if not in_creepy or self.stillness_t < 3.0:
-            self._next_heartbeat_t = 0.0
-            self._heartbeat_count = 0
-            return
-        self._next_heartbeat_t -= dt
-        if self._next_heartbeat_t <= 0:
-            self.audio.play("heartbeat", 0.35)
-            interval = max(4.0, 8.0 - self._heartbeat_count * 0.5)
-            self._next_heartbeat_t = interval
-            self._heartbeat_count += 1
-
     # ---- Step ----
     def step(self, dt):
         keys = pygame.key.get_pressed()
         self.title_t += dt
-        # Save-as-ritual short-circuits the normal play tick: while
-        # the sleep state machine is running, the world holds still
-        # except for the dialog/notice timers (so the post-save line
-        # ticks down).
-        if self._sleep_phase is not None:
-            self._tick_sleeping(dt)
-            self.dialog.update(dt)
-            # Notice text intentionally does NOT tick down during the
-            # sleep ritual -- the post-save "Day N. You slept." line
-            # gets its full visible duration once the fade clears.
-            return
         if self.state == "playing":
             self.update_player(dt, keys)
             if (not self.dialog.active and not self.inv_ui.open
@@ -4060,30 +2469,14 @@ class Game:
             self.audio.update_duck()
             self.dialog.update(dt)
             self._tick_delayed_audio(dt)
-            self._tick_dread(dt)
-            self._tick_haunt_audio(dt)
-            self._tick_visitor_silence(dt)
             self._tick_pursuer(dt)
             self._tick_heartbeat(dt)
-            self._tick_apex_silhouette(dt)
-            self._tick_visibility_dip(dt)
             self._tick_wake_muffle(dt)
-            self._tick_watchers(dt)
-            self._tick_eye_cameras(dt)
-            self._tick_yk_tone(dt)
-            self._tick_dread_aperture(dt)
             self._tick_flashlight(dt)
             self._tick_sheriff(dt)
-            self._tick_kid_follower(dt)
             self._tick_closure(dt)
             self._tick_flashback(dt)
             self._tick_ending(dt)
-            self._check_dusk_endings()
-            # Push the player's world coords into Decoration's class
-            # cache so the watching_eye decoration can rotate its
-            # pupil toward the player every frame.
-            from entities.decoration import Decoration as _Deco
-            _Deco.player_world = (self.player.x, self.player.y)
         elif self.state == "transition":
             self.transition_t += dt
             # THRESHOLD: transitions are slow on purpose. Every door
@@ -4194,35 +2587,17 @@ class Game:
                                    prone=getattr(self.player, "prone", False))
             # THRESHOLD: no swing visual, no charge ring -- the player
             # has no attack to telegraph.
-        # THRESHOLD: legacy effects disabled.
-        #   _draw_child_trailer: spawned a "kid sprite at the back of
-        #     vision" in CREEPY_SCENES. In THRESHOLD the kid is a
-        #     real follower NPC -- a phantom kid sprite tagging
-        #     along confuses the relationship.
-        #   _draw_giant_eye: a fading massive eye in mistlands /
-        #     alter_room. Belonged to the alien-Visitors lore. The
-        #     watching_eye decorations on cult sites carry the gaze
-        #     in THRESHOLD; the giant overlay is gone.
-        #   _draw_subliminal: 1-in-2000 random yellow_king /
-        #     cultist flickers in the periphery.
         # Reset the per-frame full-screen darkness budget. Each
         # whole-screen black overlay below claims a slice via
         # _claim_dark() so the combined wash never exceeds
         # MAX_FULLSCREEN_DARK. The player's feet stay readable even
-        # when hide + apex + dip + YK all stack.
+        # when hide + apex stack.
         self._overlay_dark_used = 0
-        self._draw_watchers()
         self._draw_mistlands_haze()
         self._draw_flashlight()
         self._draw_outdoor_vignette()
-        self._draw_dusk_tint()
-        self._draw_dread_ring()
-        self._draw_yk_vignette()
         self._draw_apex_overlay()
         self._draw_hidden_overlay()
-        self._draw_visibility_dip()
-        self._draw_apex_silhouette()
-        self._draw_pursuer_glimpse()
         self._draw_interact_prompt()
         self._draw_hud()
         self.dialog.draw(self.screen)
@@ -4241,16 +2616,6 @@ class Game:
             fade.fill(C_BLACK)
             fade.set_alpha(alpha)
             self.screen.blit(fade, (0, 0))
-        # Sleep ritual fade. Drawn over the world (and HUD) so the
-        # screen genuinely darkens as the player drifts off and
-        # comes back. Notice text still draws above this so the
-        # "Day N. You slept." line is visible during fade_in.
-        sleep_alpha = self._sleep_fade_alpha()
-        if sleep_alpha > 0:
-            sleep_fade = pygame.Surface((SCREEN_W, SCREEN_H))
-            sleep_fade.fill(C_BLACK)
-            sleep_fade.set_alpha(sleep_alpha)
-            self.screen.blit(sleep_fade, (0, 0))
         # THRESHOLD: closure fade. Drawn over EVERYTHING (including
         # dialog) so the screen darkens through the final whispered
         # lines and settles to pure black before the title returns.
@@ -4417,233 +2782,6 @@ class Game:
                 # the player heard on launch.
                 self.audio.play_music("threshold_drone")
 
-    # ---- Save-as-ritual ----
-
-    # Phase durations (seconds). Total ritual is ~4.1s.
-    _SLEEP_PHASE_DURS = {
-        "lay_down":   0.6,
-        "fade_out":   1.0,
-        "hold_black": 1.5,
-        "fade_in":    1.0,
-    }
-
-    def _begin_sleep(self):
-        """Enter the sleep ritual. Locks input, flips the player
-        sprite to prone, and starts the lay_down phase. The
-        actual save + day-advance fires in the middle of
-        hold_black so the player sees the X mark advance as the
-        screen comes back up."""
-        if self._sleep_phase is not None:
-            return
-        self._sleep_phase = "lay_down"
-        self._sleep_t = 0.0
-        self._sleep_save_done = False
-        if self.player is not None:
-            self.player.prone = True
-            # Snap player to the cot's interaction position so the
-            # prone sprite reads as resting on the bedding.
-            sc = self.scene
-            if sc is not None and getattr(sc, "_cot_pos", None):
-                self.player.x, self.player.y = sc._cot_pos
-
-    def _tick_sleeping(self, dt):
-        """Advance the sleep ritual. Called every frame from step()
-        when `_sleep_phase` is set. The hold_black phase fires the
-        actual _save_game() at its midpoint -- this is the only path
-        through which the cot advances the day."""
-        if self._sleep_phase is None:
-            return
-        self._sleep_t += dt
-        dur = self._SLEEP_PHASE_DURS[self._sleep_phase]
-        # Audio: lay_down dims the music; fade_out completes the cut.
-        ch = getattr(self.audio, "music_channel", None)
-        if self._sleep_phase == "lay_down":
-            if ch is not None:
-                try:
-                    ch.set_volume(max(0.10, 1.0 - self._sleep_t / dur * 0.9))
-                except Exception:
-                    pass
-        elif self._sleep_phase == "fade_out":
-            if ch is not None:
-                try:
-                    ch.set_volume(max(0.0, 0.10 * (1.0 - self._sleep_t / dur)))
-                except Exception:
-                    pass
-        elif self._sleep_phase == "hold_black":
-            # At the midpoint of pure black, fire the save once.
-            if not self._sleep_save_done and self._sleep_t >= 0.4:
-                self._sleep_save_done = True
-                self._save_game()
-        elif self._sleep_phase == "fade_in":
-            # Music ramps back in from silence to full as we fade up.
-            if ch is not None:
-                try:
-                    ch.set_volume(min(1.0, self._sleep_t / dur))
-                except Exception:
-                    pass
-        if self._sleep_t < dur:
-            return
-        self._sleep_t = 0.0
-        order = ["lay_down", "fade_out", "hold_black", "fade_in"]
-        idx = order.index(self._sleep_phase)
-        if idx + 1 < len(order):
-            self._sleep_phase = order[idx + 1]
-        else:
-            # Done.
-            self._sleep_phase = None
-            if self.player is not None:
-                self.player.prone = False
-            if ch is not None:
-                try:
-                    ch.set_volume(1.0)
-                except Exception:
-                    pass
-
-    def _sleep_fade_alpha(self):
-        """Black-overlay alpha for the current sleep phase. 0 when
-        not sleeping. lay_down is unfaded (the room is still
-        visible while you settle); fade_out ramps to full; hold
-        is full; fade_in ramps back."""
-        if self._sleep_phase is None:
-            return 0
-        dur = self._SLEEP_PHASE_DURS[self._sleep_phase]
-        t = self._sleep_t / max(0.001, dur)
-        if self._sleep_phase == "lay_down":
-            return 0
-        if self._sleep_phase == "fade_out":
-            return int(min(255, t * 255))
-        if self._sleep_phase == "hold_black":
-            return 255
-        if self._sleep_phase == "fade_in":
-            return int(max(0, (1.0 - t) * 255))
-        return 0
-
-    def _save_game(self):
-        self.save.data["player"] = self.player.to_save()
-        self.save.data["inventory"] = self.player.inventory.to_save()
-        # Sleeping in the cot advances the in-world day. Day count
-        # also drives day_phase (morning/afternoon/dusk/night cycle)
-        # so future content can gate events to specific days/phases.
-        prev_day = self.save.arg("day_count", 1)
-        day = prev_day + 1
-        self.save.set_arg("day_count", day)
-        self.save.set_arg("day_phase", _next_day_phase(
-            self.save.arg("day_phase", "afternoon")))
-        # Sleep flashback escalation. At proximity >= 0.55, every
-        # sleep surfaces a fragment of the protagonist's hidden
-        # history -- the still progression deepens across the run.
-        # The horror is that skipping nights doesn't escape the
-        # Ire; it shows you what you did. Tracked in save state so
-        # the same fragment doesn't replay if the player saves and
-        # quits between sleeps.
-        # Read proximity BEFORE the post-sleep bleed below; the
-        # check is on the pre-sleep state (the line tonight, not
-        # the slackened one come morning).
-        prox_at_sleep = self.pursuer_proximity
-        # Sleeping is a real strategic verb: rest BLEEDS Pursuer
-        # proximity by 0.20 (the line slackens overnight) and tops
-        # the flashlight battery back up. Without this the player
-        # had no mechanical reason to use the cot beyond saving --
-        # making the cot a true risk/reward spot, since proximity
-        # ramps right back up if you sleep too often or with cult
-        # presence already in the room.
-        self.pursuer_proximity = max(0.0,
-                                      self.pursuer_proximity - 0.20)
-        self.player.battery_charge = self.player.battery_max
-        if (prox_at_sleep >= 0.55
-                or prev_day >= DAY_NIGHT_BREAKS_AFTER):
-            n_seen = self.save.arg("flashback_progress", 0)
-            stills = len(self._flashback_stills)
-            # Advance to the next still; once the run has shown
-            # all five, sleep at high proximity continues to fire
-            # the last (the gut-punch).
-            phase_idx = min(n_seen, stills - 1)
-            self._flashback_phase = phase_idx
-            self._flashback_t = 0.0
-            self.save.set_arg("flashback_progress",
-                               min(stills, n_seen + 1))
-        self.save.write()
-        n = self.save.arg("save_count", 0) + 1
-        self.save.set_arg("save_count", n)
-        self.audio.play("threshold_chime", 0.55)
-        # Day-7 cap: the night-gate breaks. The world stops having
-        # mornings. Fire a one-shot notice the moment the player
-        # wakes to the day after the threshold so the change is
-        # legible, not just felt.
-        if day == DAY_NIGHT_BREAKS_AFTER and not self.save.flag(
-                "day_seven_announced"):
-            self.save.set_flag("day_seven_announced", True)
-            self.show_notice("There is no morning anymore.",
-                              duration=4.0)
-        else:
-            self.show_notice(f"Day {day}. You slept. The line slackens.",
-                              duration=3.0)
-        # Sync the bedroom calendar so the X mark advances visibly
-        # before the wake fade clears (when the save came from the
-        # cot ritual). Also fires any key-date easter egg beats.
-        self._sync_calendar()
-        self._check_dated_events(day)
-
-    def _sync_calendar(self):
-        """Point the bedroom calendar decoration at the current
-        day_count. Safe to call from any scene -- if the bedroom
-        scene isn't loaded right now, the next bedroom_on_enter
-        will resync from save state."""
-        sc = self.scene
-        if sc is None or sc.key != "bedroom":
-            return
-        deco = getattr(sc, "_calendar", None)
-        if deco is None:
-            return
-        d = self.save.arg("day_count", 1)
-        month, day_of_month = day_count_to_date(d)
-        deco.kwargs["today_d"] = day_of_month
-        deco.kwargs["month"] = month
-        deco.kwargs["month_days"] = days_in_month(month)
-        # Force the cached month-label to redraw if month changed.
-        deco.kwargs["_label_cache"] = None
-
-    def _check_dated_events(self, day):
-        """Easter-egg horror beats keyed to the calendar. The player
-        will only reach these by deliberately sleeping a lot, so the
-        intent is atmospheric reward for the curious -- not gated
-        progression. Each beat is one-shot via a per-event save flag
-        so save-scumming the day boundary doesn't repeat them."""
-        month, day_of_month = day_count_to_date(day)
-        key = _KEY_DATES.get((month, day_of_month))
-        if key is None:
-            return
-        flag = f"dated_event_{key}"
-        if self.save.flag(flag):
-            return
-        self.save.set_flag(flag, True)
-        if key == "halloween":
-            # All Hallows' Eve: the cult's high holiday. The line
-            # tightens hard despite the player having just slept.
-            self.pursuer_proximity = min(1.0,
-                                          self.pursuer_proximity + 0.25)
-            self.audio.play("cult_chant", 0.45)
-            self.show_notice("All Hallows' Eve. The town is humming.",
-                              duration=4.0)
-        elif key == "solstice":
-            # The longest night. Brief inversion -- a single low
-            # pulse, a whisper, and a notice. No mechanical bite;
-            # this is texture for a player who slept their way here.
-            self.audio.play("low_pulse", 0.55)
-            self.audio.play("whisper", 0.40)
-            self.show_notice("The longest night. The candle won't catch.",
-                              duration=4.0)
-        elif key == "new_years_eve":
-            # The conceptual horizon. The protagonist counted to
-            # this. The Pursuer is loud now. No closure forced --
-            # the player can keep going past, but the calendar
-            # rolls into Jan and the easter-egg track is over.
-            self.pursuer_proximity = min(1.0,
-                                          self.pursuer_proximity + 0.40)
-            self.audio.play("yk_tone", 0.55)
-            self.show_notice("New Year's Eve. You're still here.",
-                              duration=5.0)
-
     # ---- Events / main loop ----
     def handle_event(self, ev):
         if ev.type == pygame.QUIT:
@@ -4661,13 +2799,6 @@ class Game:
             if self.dialog.active and ev.type == pygame.KEYDOWN:
                 if ev.key in (pygame.K_e, pygame.K_SPACE, pygame.K_RETURN):
                     self.dialog.advance()
-            return
-        # Sleep ritual: input is fully locked while the player is
-        # asleep. F11 is the lone exception so toggling fullscreen
-        # mid-fade still works.
-        if self._sleep_phase is not None:
-            if ev.type == pygame.KEYDOWN and ev.key == pygame.K_F11:
-                self._toggle_fullscreen()
             return
         if self.text_input.active:
             # Modal owns all input while active. It swallows the event.

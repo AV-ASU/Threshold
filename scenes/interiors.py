@@ -55,9 +55,7 @@ def void_on_enter(game, scene):
     if not game.save.arg("found_oob_void"):
         game.save.set_arg("found_oob_void", True)
         _evidence(game, "geometry_violation",
-            "There is a tree you can walk through.\n"
-            "Nobody planted it there.\n"
-            "It is waiting for you to step inside."
+            "There is a tree you can walk through."
         )
 
 
@@ -141,18 +139,6 @@ def build_void_boss():
     # prepared. Two reads as redundant.
     sc.add_decoration(Decoration(6 * TILE + 16, 7 * TILE + 16,
                                  "bloody_pile"))
-    # Three slit-pupil cult watchers: two flanking the cauldron,
-    # one at the entrance threshold. Each eye is also a LIVE
-    # detection cone -- standing in its ~110 px radius unhidden
-    # ramps a 2.5 s timer; trigger fires a proximity bump and
-    # steers the Hunter to this scene. Hide breaks the line.
-    for ex, ey in [(4 * TILE + 16, 7 * TILE + 16),
-                   (13 * TILE + 16, 7 * TILE + 16),
-                   (9 * TILE + 16, 12 * TILE + 8)]:
-        sc.add_decoration(Decoration(ex, ey, "watching_eye",
-                                     size="small", slit=True))
-        sc.eye_cameras.append({"x": ex, "y": ey, "range": 110,
-                                "_t": 0.0, "fired": False})
     for sx, sy in [(4, 5), (13, 5), (4, 9), (13, 9), (9, 4)]:
         sc.add_decoration(Decoration(sx * TILE + 16, sy * TILE + 16,
                                      "phantom_mark"))
@@ -223,10 +209,7 @@ def build_void_boss():
         if abs(px - cauldron_x) > 40 or abs(py - cauldron_y) > 40:
             return
         _evidence(game, "the_cauldron",
-            "The pot is heavy. The smell will not come off.\n"
-            "Pine smoke. Iron. The fat of something that\n"
-            "was not a deer.\n"
-            "The kid was meant to go in this."
+            "Nothing here."
         )
     sc.on_interact_fn = _void_boss_interact
     return sc
@@ -755,11 +738,7 @@ def build_kid_house():
                                  color=(220, 180, 70)))
     sc.add_decoration(Decoration(8 * TILE + 8, 2 * TILE + 16, "clock"))
     sc.add_decoration(Decoration(2 * TILE + 16,  0 * TILE + 22 , "candle"))
-    # The kid's drawings on the walls -- ONE sigil, plus chalk
-    # phantom-marks. The wall-of-eyes was visually overwhelming;
-    # a single eye reads stronger when it's the only one present.
-    sc.add_decoration(Decoration(1 * TILE + 28, 4 * TILE + 16,
-                                 "watching_eye", size="small"))
+    # Chalk phantom-marks on the walls.
     sc.add_decoration(Decoration(1 * TILE + 28, 2 * TILE + 16,
                                  "phantom_mark"))
     sc.add_decoration(Decoration(8 * TILE + 4, 4 * TILE + 16,
@@ -791,33 +770,4 @@ def build_kid_house():
             game.audio.play("pickup", 0.7)
             game.show_notice("You take the drawing off the wall.")
     sc.on_interact_fn = _kid_house_interact
-
-    def _kid_house_on_enter(game, scene):
-        # The kid is not in this house if any of:
-        #   * kid_taken     -- he is the player's follower
-        #   * kid_left      -- he stayed; the cult took him at dusk
-        #   * polaroid_taken (without kid_taken) -- the cult came
-        #     for him while the player was in the basement
-        # In all three cases, strip the static kid NPC. The
-        # polaroid-without-follower branch also fires a one-shot
-        # evidence beat the first time the player walks in.
-        not_here = (game.save.flag("kid_taken")
-                    or game.save.flag("kid_left")
-                    or game.save.flag("polaroid_taken"))
-        if not_here:
-            scene.npcs = [n for n in scene.npcs
-                          if getattr(n, "name", None) != "Village Kid"]
-        if (game.save.flag("polaroid_taken")
-                and not game.save.flag("kid_taken")
-                and not game.save.flag("kid_left")
-                and not game.save.flag("kid_house_empty_seen")):
-            game.save.set_flag("kid_house_empty_seen", True)
-            from .dialogue import _evidence
-            _evidence(game, "kid_house_empty",
-                "The bed is unmade. His shoes are by the door.\n"
-                "He never went outside without them.\n"
-                "They came for him while you were in the cellar."
-            )
-    sc.on_enter_fn = _kid_house_on_enter
-
     return sc

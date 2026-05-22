@@ -1,12 +1,10 @@
 """cornfield_path (key: 'forest_path') -- the dirt road east of
 the Innkeeper's house. Stubble cornfield to the north and south,
 the trees thicken at the east end where the road bends into the
-woods toward the cauldron clearing.
+woods.
 
-THRESHOLD reskin: cuts the bandit spawns and the runaway tall_shadow.
-The Preacher walks this road as part of his patrol route (Pass F).
-The 'secret tree' to the void is preserved as the route to the
-clearing -- the cornstalks and dense trees are perfect hide cover.
+The Preacher walks this road as part of his patrol route. The
+cornstalks and dense trees are perfect hide cover.
 """
 import re
 import random
@@ -47,8 +45,8 @@ def build_forest_path():
     for dy in (-1, 0, 1):
         objects_l[PATH_ROW + dy][W - 1] = "e"
 
-    # The cult clearing is reached via the mistlands river bank,
-    # not via a secret tree off the cornfield path.
+    # The clearing is reached via the mistlands river bank, not via
+    # a secret tree off the cornfield path.
 
     # Scattered rocks in the open patches.
     rock_positions = [(6, 4), (12, 9), (22, 3), (32, 8), (45, 4), (52, 10)]
