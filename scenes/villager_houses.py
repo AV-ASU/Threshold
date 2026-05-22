@@ -38,20 +38,11 @@ def _open_login_terminal(game, npc):
                 game.save.set_flag("terminal_unlocked", True)
             game.audio.play("arg_chime", 0.7)
             game.show_notice("ACCESS GRANTED.")
-            # State-police bulletin shows in dialog every grant, so the
-            # player can re-read it from the terminal at any time. The
-            # outside-world view of the incident: domestic annihilation,
-            # spouse at large. The substrate's "we" surveillance line
-            # is gone in round-9; the closing lines now read as a flat
-            # connection-terminated stub instead of a containment note.
+            # A bulletin loads in dialog on every grant so the player
+            # can re-read it from the terminal at any time.
             game.dialog.show([
                 "[c=dim](The terminal flickers. A bulletin loads.)[/c]",
-                "STATE BULLETIN -- CASE #044",
-                "Incident: Domestic. Three Reported Missing.",
-                "Missing: F Adult; M Minor (In Brace); F Minor.",
-                "Suspect: Adult M, of the Residence.",
-                "          Surname [Redacted] in Agency Files.",
-                "Status: At Large.",
+                "[c=dim]The text is blank.[/c]",
                 "[c=dim]error: Connection Terminated...[/c]",
             ], speaker="", voice="blip_soft", portrait="narrator")
         else:
@@ -132,17 +123,7 @@ def build_old_man_house():
                                  color=(120, 80, 50)))
     sc.add_decoration(Decoration(8 * TILE + 8, 2 * TILE + 16, "clock"))
     sc.add_decoration(Decoration(5 * TILE + 16, 2 * TILE + 16, "photo"))
-    # ONE sigil on the parsonage wall, plus phantom-mark chalk on
-    # adjacent walls. The Preacher displays his cult symbol but not
-    # in clusters -- it shouldn't read as a printing-press output.
-    # The eye is also a trespass camera: standing in its cone
-    # unhidden rings the church bell and bumps Pursuer hard.
-    eye_x = 1 * TILE + 28
-    eye_y = 3 * TILE + 16
-    sc.add_decoration(Decoration(eye_x, eye_y,
-                                 "watching_eye", size="small", slit=True))
-    sc.eye_cameras.append({"x": eye_x, "y": eye_y, "range": 140,
-                            "_t": 0.0, "fired": False, "alarm": True})
+    # Phantom-mark chalk on the wall.
     sc.add_decoration(Decoration(8 * TILE + 4, 4 * TILE + 16,
                                  "phantom_mark"))
     for mx, my in [(4, 4), (6, 3), (5, 4)]:
@@ -194,15 +175,6 @@ def build_fisherman_cottage():
     # AM radio on the desk, a lantern by the door.
     sc.add_decoration(Decoration(4 * TILE + 16, 2 * TILE + 16, "radio"))
     sc.add_decoration(Decoration(8 * TILE + 16, 5 * TILE + 24, "lantern"))
-    # Trespass camera: a watching eye over the desk reads the room
-    # for the Sheriff. Standing in its cone unhidden rings an alarm
-    # and bumps Pursuer hard.
-    eye_x = 5 * TILE + 16
-    eye_y = 0 * TILE + 24
-    sc.add_decoration(Decoration(eye_x, eye_y,
-                                 "watching_eye", size="small", slit=True))
-    sc.eye_cameras.append({"x": eye_x, "y": eye_y, "range": 140,
-                            "_t": 0.0, "fired": False, "alarm": True})
     for mx, my in [(4, 3), (5, 4), (3, 5)]:
         sc.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16,
                                      "mote"))
@@ -258,10 +230,8 @@ def build_haunted_house():
     # village door at the north. Spawn one tile north of the hatch
     # so they don't auto-trigger it.
     sc.set_spawn("from_chamber", 4, 4)
-    # THRESHOLD: this is the abandoned farmhouse. Sigils on every
-    # wall. Phantom marks. The cult held meetings here before the
-    # cauldron was moved out to the clearing. There's a hatch in
-    # the back that drops down to the well_passage / cult_chamber.
+    # The abandoned farmhouse. Phantom marks on the walls. There's
+    # a hatch in the back that drops down to the well_passage.
     sc.add_decoration(Decoration(6 * TILE + 16,  0 * TILE + 22 , "candle"))
     sc.add_decoration(Decoration(2 * TILE + 16,  0 * TILE + 22 , "candle"))
     sc.add_decoration(Decoration(2 * TILE + 16, 5 * TILE + 16,
@@ -405,14 +375,9 @@ def haunted_glitch_on_exit(game, scene):
 
 
 def build_symbol_portal_room():
-    """THRESHOLD: the cult chamber. Underground stone room beneath
-    the abandoned farmhouse. The cult's actual altar -- an enormous
-    spiral-eye sigil scratched into the floor at the centre. A
+    """Underground stone room beneath the abandoned farmhouse. A
     short ladder up to the farmhouse on the west; a passage east to
-    the well_passage. No teleport mechanic anymore -- the room is
-    just a place. Standing on the sigil triggers a notice; reading
-    Mom's notebook page 3 in this room would also fire the
-    flashback (handled in Pass H).
+    the well_passage. The room is just a place.
     """
     floor = ["x" * 12 for _ in range(10)]
     objects_l = []
@@ -444,16 +409,9 @@ def build_symbol_portal_room():
     # Cult robes on a hook (banner deco).
     sc.add_decoration(Decoration(2 * TILE + 16, 7 * TILE + 16,
                                  "banner", color=(110, 90, 50)))
-    # Ambient bloodstains.
-    # ONE bloodstain near the sigil -- the rite leaks. Cult chamber
-    # gets ONE slit-pupil watcher (the altar's gaze) and a single
-    # claw gouge on the south wall.
+    # Ambient bloodstains and a claw gouge on the south wall.
     sc.add_decoration(Decoration(7 * TILE + 16, 3 * TILE + 24,
                                  "bloodstain"))
-    sc.add_decoration(Decoration(11 * TILE + 4, 5 * TILE + 16,
-                                 "watching_eye", size="small", slit=True))
-    sc.eye_cameras.append({"x": 11 * TILE + 4, "y": 5 * TILE + 16,
-                            "range": 120, "_t": 0.0, "fired": False})
     sc.add_decoration(Decoration(8 * TILE + 16, 8 * TILE + 22,
                                  "claw_marks"))
     sc.hide_spots = [
@@ -536,13 +494,12 @@ def build_daughter_room():
 def daughter_room_on_enter(game, scene):
     scene.decorations = []
     polaroid = game.save.flag("polaroid_taken")
-    # Round-11: one-shot dim popup the first time the player walks
-    # into the polaroid-altered version. The line lands harder if the
-    # player has been wondering about the chewed doll.
+    # One-shot dim popup the first time the player walks into the
+    # polaroid-altered version.
     if polaroid and not game.save.flag("daughter_dog_line_seen"):
         game.save.set_flag("daughter_dog_line_seen", True)
         game.dialog.show([
-            "[c=dim]She was scared of the dogs.[/c]",
+            "[c=dim]Nothing here.[/c]",
         ], speaker="", voice="blip_soft", portrait="narrator")
     if polaroid:
         # Faded pink-grey banner

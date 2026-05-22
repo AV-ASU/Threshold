@@ -117,9 +117,6 @@ def bedroom_on_enter(game, scene):
     Subsequent visits (after sleeping in the cot, or returning
     later in the run) skip the opening entirely -- only the
     cot-as-save-point remains."""
-    # Always re-sync the wall calendar to current day_count so the
-    # X marks reflect saves made between visits.
-    game._sync_calendar()
     if game.save.flag("wake_up"):
         return
     game.save.set_flag("wake_up", True)
@@ -317,14 +314,12 @@ def bedroom_interact(game):
         if not game.save.flag("read_journal"):
             game.save.set_flag("read_journal", True)
         return
-    # Cot interaction: enter the sleep ritual. The save itself
-    # fires from inside _tick_sleeping at the midpoint of the
-    # black-hold phase so the X mark on the wall calendar
-    # advances while the screen is fully dark.
+    # The cot is just furniture now -- single-session game, no sleeping
+    # or saving.
     cx, cy = sc._cot_pos
     if abs(px - cx) > 40 or abs(py - cy) > 40:
         return
-    game._begin_sleep()
+    game.show_notice("A cot. You don't feel like lying down.")
 
 
 # ---- innkeeper_house (key: 'house') ----
