@@ -102,6 +102,13 @@ class NPC:
         self.flash = 0.0
         self.drops = drops or []
         self.on_kill = on_kill
+        # Vessel-bloom transform. `morph` (0..1) ramps toward
+        # `morph_target`; the renderer (rendering.transform) turns the
+        # human sprite into the Yellow-King maw as it rises. PROTOTYPE:
+        # the trigger is wired to the chase state below, but the final
+        # trigger is still open -- one assignment to change.
+        self.morph = 0.0
+        self.morph_target = 0.0
 
     def take_damage(self, amount):
         if not self.alive:
@@ -115,6 +122,12 @@ class NPC:
         if not self.alive:
             return
         self.flash = max(0, self.flash - dt)
+        if self.morph != self.morph_target:
+            step = dt / 1.4
+            if self.morph < self.morph_target:
+                self.morph = min(self.morph_target, self.morph + step)
+            else:
+                self.morph = max(self.morph_target, self.morph - step)
         if self.sprite_kind == "yellow_king":
             self._yk_update(dt, scene, player)
             return
@@ -214,6 +227,10 @@ class NPC:
                 self._cult_state = "chase"
                 self._cult_state_t = 0.0
                 self._scout_target = None
+                # PROTOTYPE trigger: a cultist that locks onto the
+                # player blooms into the vessel as it closes.
+                if self.sprite_kind in ("bandit", "cultist"):
+                    self.morph_target = 1.0
             self._last_seen_pos = (player.x, player.y)
             target = (self._flank_target if self._flank_target
                       else (player.x, player.y))
@@ -232,6 +249,7 @@ class NPC:
             if self._cult_state_t <= 0 or self._last_seen_pos is None:
                 self._cult_state = "scout"
                 self._scout_target = None
+                self.morph_target = 0.0
                 return
             tx, ty = self._last_seen_pos
             d_target = math.hypot(self.x - tx, self.y - ty)
@@ -248,6 +266,7 @@ class NPC:
             if self._cult_state_t <= 0 or self._last_seen_pos is None:
                 self._cult_state = "scout"
                 self._scout_target = None
+                self.morph_target = 0.0
                 return
             tx, ty = self._last_seen_pos
             d_target = math.hypot(self.x - tx, self.y - ty)

@@ -5,6 +5,7 @@ import math
 import random
 import pygame
 from rendering.sprites import draw_npc_sprite
+from rendering.transform import draw_vessel_bloom
 
 
 class Projectile:
@@ -193,6 +194,11 @@ class Enemy:
         self._cult_state = "scout"
         self._cult_state_t = 0.0
         self._last_seen_pos = None
+        # Vessel-bloom transform (see rendering.transform). PROTOTYPE:
+        # cultist chasers bloom into the Yellow-King maw on lock-on;
+        # final trigger still open.
+        self.morph = 0.0
+        self.morph_target = 0.0
 
     def update(self, dt, scene, player):
         if not self.alive: return
@@ -218,6 +224,12 @@ class Enemy:
         self.flash = max(0, self.flash - dt)
         self.telegraph = False
         self.just_shot = False
+        if self.morph != self.morph_target:
+            step = dt / 1.4
+            if self.morph < self.morph_target:
+                self.morph = min(self.morph_target, self.morph + step)
+            else:
+                self.morph = max(self.morph_target, self.morph - step)
 
         if self.ai == "flee":
             if d < self.aggro:
@@ -413,6 +425,7 @@ class Enemy:
                 self._cult_state = "chase"
                 self._cult_state_t = 0.0
                 self.move_target = None
+                self.morph_target = 1.0
             self._last_seen_pos = (player.x, player.y)
             if d > self.atk_range:
                 self._cult_step(player.x, player.y, dt, scene)
@@ -427,6 +440,7 @@ class Enemy:
                 self._cult_state = "scout"
                 self.move_target = None
                 self.move_timer = 0.0
+                self.morph_target = 0.0
                 return
             tx, ty = self._last_seen_pos
             d_target = math.hypot(self.x - tx, self.y - ty)
@@ -452,6 +466,7 @@ class Enemy:
                 self._cult_state = "scout"
                 self.move_target = None
                 self.move_timer = 0.0
+                self.morph_target = 0.0
                 return
             tx, ty = self._last_seen_pos
             d_target = math.hypot(self.x - tx, self.y - ty)
@@ -510,8 +525,10 @@ class Enemy:
         if not self.alive: return
         sx = int(self.x - cam_x); sy = int(self.y - cam_y)
         kind = "glitch_npc" if self.kind == "_glitch" else self.kind
-        if self.flash > 0:
-            draw_npc_sprite(surf, sx, sy, kind, self.facing)
+        m = getattr(self, "morph", 0.0)
+        if m > 0.0:
+            draw_vessel_bloom(surf, sx, sy, kind, self.facing, m,
+                              seed=id(self) & 0xffff)
         else:
             draw_npc_sprite(surf, sx, sy, kind, self.facing)
         # THRESHOLD: enemies can no longer hurt the player (atk is

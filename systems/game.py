@@ -12,6 +12,7 @@ from constants import (
     C_BLUE, C_GREEN, C_PURPLE, C_PANEL, C_PANEL_BORDER, C_DIM,
 )
 from rendering.sprites import draw_player_sprite, draw_npc_sprite
+from rendering.transform import draw_vessel_bloom
 from ui.fonts import make_fonts
 from ui.dialog import DialogueBox
 from ui.inventory_ui import InventoryUI
@@ -2545,8 +2546,13 @@ class Game:
                 blink_idx = random.choice(human_npcs)
         for i, npc in enumerate(self.scene.npcs):
             sx = int(npc.x - self.cam_x); sy = int(npc.y - self.cam_y)
-            draw_npc_sprite(self.screen, sx, sy, npc.sprite_kind, npc.facing,
-                            blink=(i == blink_idx))
+            m = getattr(npc, "morph", 0.0)
+            if m > 0.0:
+                draw_vessel_bloom(self.screen, sx, sy, npc.sprite_kind,
+                                  npc.facing, m, seed=id(npc) & 0xffff)
+            else:
+                draw_npc_sprite(self.screen, sx, sy, npc.sprite_kind,
+                                npc.facing, blink=(i == blink_idx))
             # THRESHOLD: NPC name labels removed. They were the
             # last RPG-tell on screen -- the player should learn
             # who an NPC is by interacting with them, not by
