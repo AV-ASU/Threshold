@@ -1,15 +1,13 @@
 """village (key: 'village') -- the Innkeeper's farm.
 
-THRESHOLD rework: this scene used to be the town crossroads with
-six villager buildings. The buildings have been scattered across
-the mistlands; what remains here is the Innkeeper's land --
-cornfields, the woodshed, the well, the payphone, and a wheelbarrow
-of "rusted" tools that aren't quite what they look like.
+This scene's six villager buildings have been scattered across the
+mistlands; what remains here is the Innkeeper's land -- cornfields,
+the woodshed, the well, the payphone, and a wheelbarrow of "rusted"
+tools.
 
 Cornstalks form the perimeter (replacing the old tree wall) and run
-through the field as crop rows. The well is still the binding site
-for the destroy-cult ending. The woodshed is the same interior the
-yard's `our_house_area` already opens -- two doors, one shed.
+through the field as crop rows. The woodshed is the same interior
+the yard's `our_house_area` already opens -- two doors, one shed.
 """
 import math
 import random
@@ -140,15 +138,10 @@ def build_village():
                     "from_haunted_house"):
         sc.set_spawn(legacy, 17, 7)
 
-    # The well + payphone stay where they were. The well is the
-    # binding site for the destroy-cult ending; the payphone is the
-    # cult-line gag.
+    # The well + payphone stay where they were.
     well_x = 17 * TILE + 16
     well_y = 14 * TILE + 16
     sc.add_decoration(Decoration(well_x, well_y, "well"))
-    # Sigil etched on the well rim -- the cult marked the site.
-    sc.add_decoration(Decoration(well_x, well_y - 18,
-                                 "watching_eye", size="small"))
     payphone_x = 8 * TILE + 16
     payphone_y = 13 * TILE + 16
     sc.add_decoration(Decoration(payphone_x, payphone_y, "payphone"))
@@ -163,9 +156,7 @@ def build_village():
 
     # Atmosphere: chimney smoke from the shed, crows on the corn
     # perimeter, lanterns on the road, a faint phantom_mark on the
-    # cult-marked footpath. The empty field where the houses used to
-    # be carries the weight -- the cornfield is doing the horror
-    # work, not props.
+    # footpath.
     sc.add_decoration(Decoration(24 * TILE + 16, 13 * TILE - 6, "smoke"))
     sc.add_decoration(Decoration(2 * TILE + 8, 0 * TILE + 22, "crow"))
     sc.add_decoration(Decoration(33 * TILE + 8, 1 * TILE + 22, "crow"))
@@ -175,9 +166,8 @@ def build_village():
     sc.add_decoration(Decoration(15 * TILE + 16, 16 * TILE + 16, "lantern"))
     sc.add_decoration(Decoration(14 * TILE + 16, 13 * TILE + 16,
                                  "phantom_mark"))
-    # Cult dressing: a creepy_tree at each rear corner, a hanging
-    # figure deep in the south corn (only visible from the right
-    # angle), dead crows.
+    # A creepy_tree at each rear corner, a hanging figure deep in the
+    # south corn (only visible from the right angle), dead crows.
     sc.add_decoration(Decoration(2 * TILE + 16, 1 * TILE + 22,
                                  "creepy_tree"))
     sc.add_decoration(Decoration(33 * TILE + 16, 1 * TILE + 22,
@@ -186,9 +176,7 @@ def build_village():
                                  "hanging_figure"))
     sc.add_decoration(Decoration(28 * TILE + 16, 8 * TILE + 16,
                                  "dead_crow"))
-    # Two watching_wound cuts in the corn perimeter -- the new
-    # decoration variant. Placed alongside the well's watching_eye
-    # so the player sees both versions in the same scene.
+    # Two watching_wound cuts in the corn perimeter.
     sc.add_decoration(Decoration(0 * TILE + 24, 12 * TILE + 16,
                                  "watching_wound", size="small"))
     sc.add_decoration(Decoration(35 * TILE + 8,  4 * TILE + 16,
@@ -213,7 +201,7 @@ def build_village():
         # Innkeeper on liquor-crate turn-in). Once unlocked, the
         # door opens into the same `woodshed` interior the yard's
         # door used to open. Anti-softlock: once the polaroid is
-        # taken, the lock forces open (cult panic / no minder).
+        # taken, the lock forces open (anti-softlock).
         shed_door_x = 24 * TILE + 16
         shed_door_y = shed_top * TILE + 16
         if (abs(game.player.x - shed_door_x) < 40
@@ -240,13 +228,10 @@ def build_village():
             if not game.save.flag("barrow_inspected"):
                 game.save.set_flag("barrow_inspected", True)
                 _evidence(game, "barrow_tools",
-                    "The hammer is rust to the eye. The handle is\n"
-                    "polished. Someone keeps these. Someone uses\n"
-                    "them, and then makes sure they look unused."
+                    "Some old tools."
                 )
             return
-        # The well -- requires rope to descend. Same mechanic as
-        # before; the well is the destroy-cult endpoint.
+        # The well -- requires rope to descend.
         if (abs(game.player.x - well_x) < 36
                 and abs(game.player.y - well_y) < 36):
             if game.save.flag("well_rope_broken"):
@@ -263,22 +248,19 @@ def build_village():
                 game.audio.play("door_locked", 0.7)
                 game.show_notice("Too deep without a rope.")
             return
-        # Payphone -- always reaches the cult.
+        # Payphone.
         if (abs(game.player.x - payphone_x) < 36
                 and abs(game.player.y - payphone_y) < 36):
             game.audio.play("door_distant", 0.6)
             if not game.save.flag("payphone_called"):
                 game.save.set_flag("payphone_called", True)
                 game.dialog.show([
-                    "[c=dim](You dial the operator.)[/c]",
-                    "[c=dim]A click. A long second of silence.[/c]",
-                    "[c=dim](A voice you recognise:)[/c]",
-                    "[s=slow]\"Sheriff's office.\"[/s]",
-                    "[c=dim](You hang up.)[/c]",
+                    "[c=dim](You pick up the phone.)[/c]",
+                    "[c=dim]The line is dead.[/c]",
                 ], speaker="", voice="blip_soft", portrait="narrator")
             else:
                 game.dialog.show([
-                    "[c=dim](Every number reaches the same office.)[/c]",
+                    "[c=dim]The line is dead.[/c]",
                 ], speaker="", voice="blip_soft", portrait="narrator")
             return
     sc.on_interact_fn = _village_interact

@@ -1,11 +1,11 @@
 """Scene registry. Each scene_key -> builder function.
 
-THRESHOLD: registry trimmed from ~32 scenes down to the 23-scene
-1994-Yellow-King-cult fiction map. Builder functions for cut scenes
-are still imported (so static analysis stays clean) but they are
-not registered — nothing in the new world reaches them. Reskinned
-scenes keep the same key when the geometry is reused, so old saves
-that store a scene key load into the new content for that key.
+Registry trimmed from ~32 scenes down to the active map. Builder
+functions for cut scenes are still imported (so static analysis
+stays clean) but they are not registered — nothing in the world
+reaches them. Reused scenes keep the same key when the geometry is
+reused, so old saves that store a scene key load into the content
+for that key.
 """
 from .base import Scene, tile_footstep, OBJECT_DEFS, FLOOR_DEFS, TILE
 from .house import (build_bedroom, build_house, build_basement,

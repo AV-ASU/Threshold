@@ -1,14 +1,11 @@
-"""THRESHOLD: three new scenes added to the registry.
+"""Additional scenes added to the registry.
 
-  schoolhouse        -- one-room schoolhouse, empty for months. The
-                        kid's old drawings (sigils) on the walls.
-  graveyard          -- behind the church. Mom's grave + the kid's
-                        family's fresh-dirt graves. Standing near
-                        Mom's stone unlocks an evidence beat.
+  schoolhouse        -- one-room schoolhouse, empty for months.
+  graveyard          -- behind the church. One readable headstone.
   diner_gas_station  -- closed-up diner with a gas pump. The
                         player's CAR is parked here. Reaching the
                         car with the keys triggers the car-escape
-                        ending (wired in Pass H).
+                        ending.
 """
 import math
 import random
@@ -23,54 +20,41 @@ from .dialogue import _evidence
 def _backwoods_note_pickup(game):
     game.save.set_flag("backwoods_note_taken", True)
     _evidence(game, "backwoods_note",
-        "The Hunter's bunkhouse. Tally marks on the wall.\n"
-        "One for every visitor. One for every kid.\n"
-        "The last few marks are fresh.")
+        "A small stash.")
 
 
 def _river_cache_pickup(game):
     game.save.set_flag("river_cache_taken", True)
     _evidence(game, "river_cache",
-        "Stashed under the bridge plank. An oilskin packet.\n"
-        "Spare batteries. Somebody else has been crossing.\n"
-        "They did not want to be seen.")
+        "A small stash.")
 
 
 def _grave_cache_pickup(game):
     game.save.set_flag("grave_cache_taken", True)
     _evidence(game, "grave_cache",
-        "Someone keeps a stash here. Oilskin, fresh.\n"
-        "The groundskeeper does not work the day shift.\n"
-        "He visits at night and he is afraid of the dark."
+        "A small stash."
     )
 
 
 def _forest_cache_pickup(game):
     game.save.set_flag("forest_cache_taken", True)
     _evidence(game, "forest_cache",
-        "Boarded into the cornfield edge. A torn page.\n"
-        "Your handwriting from before. You do not\n"
-        "remember writing it. You remember following him."
+        "A small stash."
     )
 
 
 def _school_cache_pickup(game):
     game.save.set_flag("school_cache_taken", True)
     _evidence(game, "school_cache",
-        "The teacher boarded this corner herself.\n"
-        "She knew. She left this for whoever came after.\n"
-        "Her handwriting is steadier than yours."
+        "A small stash."
     )
 
 
 def build_schoolhouse():
-    """One-room rural schoolhouse on the edge of town. Closed since
-    the kid's family vanished six months ago; the cult quietly let
-    the building stop being a school. Drawings on the walls are
-    the kid's -- sigils he didn't know what they meant when he
-    drew them. A small desk at the front of the room. Hide spots:
-    in the coat closet, under the teacher's desk, behind the
-    storage shelf at the back."""
+    """One-room rural schoolhouse on the edge of town. Closed for
+    months. A small desk at the front of the room. Hide spots: in
+    the coat closet, under the teacher's desk, behind the storage
+    shelf at the back."""
     floor = ["=" * 14 for _ in range(10)]
     objects = [
         "WWWWiWWWWWWWWW",   # 0  window
@@ -95,14 +79,7 @@ def build_schoolhouse():
     sc.set_spawn("from_town_crossroads", 6, 8)
     sc.set_spawn("from_town", 6, 8)
 
-    # Drawings on the walls -- the kid's chalk sigils. Just two in
-    # opposite corners; the rest of the room sells the abandonment.
-    sc.add_decoration(Decoration(0 * TILE + 28, 5 * TILE + 16,
-                                 "watching_eye", size="small"))
-    sc.add_decoration(Decoration(13 * TILE + 4, 7 * TILE + 16,
-                                 "watching_eye", size="small"))
-    # Phantom-mark sigils elsewhere on the walls -- different shape,
-    # less pupil-tracking, less repetitive.
+    # Chalk marks on the walls.
     sc.add_decoration(Decoration(13 * TILE + 4, 2 * TILE + 16,
                                  "phantom_mark"))
     sc.add_decoration(Decoration(0 * TILE + 28, 7 * TILE + 16,
@@ -154,9 +131,7 @@ def build_schoolhouse():
             if not game.save.flag("school_desk_searched"):
                 game.save.set_flag("school_desk_searched", True)
                 _evidence(game, "school_desk",
-                    "The boy's report card. Last graded six months ago.\n"
-                    "The teacher's name is on it. She lives in town.\n"
-                    "You have not seen her on the street."
+                    "Just papers."
                 )
             else:
                 game.show_notice("Just papers.")
@@ -171,8 +146,7 @@ def build_country_lane():
     walk feels like time passing rather than a single doorway. The
     road itself is a 3-tile dirt strip in the middle; corn / wild
     grass on either side; a busted wooden fence runs along the
-    south edge. A single creepy_tree on the north side at midway
-    marks where the cult marked the lane.
+    south edge. A single creepy_tree on the north side at midway.
 
     Two exits: west `a` -> village (from_country_lane), east `e` ->
     our_house_area (from_country_lane). No interior building, no
@@ -238,10 +212,6 @@ def build_country_lane():
                                  "dead_crow"))
     sc.add_decoration(Decoration(11 * TILE + 16, 9 * TILE + 16,
                                  "missing_flyer"))
-    # Sigil on the worn dirt at midway -- a single small slit-pupil
-    # eye, NOT a cluster of them. The user wanted fewer eyes.
-    sc.add_decoration(Decoration(16 * TILE + 16, 6 * TILE + 16,
-                                 "watching_eye", size="small", slit=True))
     # Hide spots colocated with cover (cornstalks).
     sc.hide_spots = [
         (5 * TILE + 16, 3 * TILE + 16, "behind"),
@@ -252,10 +222,8 @@ def build_country_lane():
 
 
 def build_graveyard():
-    """Small graveyard behind the Lutheran church. Iron fence, two
-    crooked rows of headstones. The first stone (near the gate) is
-    Mom's. Several others are recent -- the kid's family, names
-    matching the lore. Stand near Mom's stone to read it.
+    """Small graveyard behind the church. Iron fence, two crooked
+    rows of headstones. One stone near the gate can be read.
 
     Hide spots: behind the larger headstones, in the gardener's
     shed at the back.
@@ -353,28 +321,22 @@ def build_graveyard():
                 game.audio.play("low_pulse", 0.35)
                 game.dialog.show([
                     "[c=dim](A weather-worn headstone.)[/c]",
-                    "[c=dim]The name is your mother's.[/c]",
-                    "[c=dim]The date is from before you were born.[/c]",
-                    "[c=dim]It does not say how she died.[/c]",
+                    "[c=dim]The name has worn away.[/c]",
                 ], speaker="", voice="blip_soft", portrait="narrator")
                 _evidence(game, "moms_stone",
-                    "She went missing the year you were born.\n"
-                    "The town buried her here without a body.\n"
-                    "You never knew."
+                    "A weathered headstone."
                 )
             else:
                 game.dialog.show([
-                    "[c=dim]Her name. The wrong year.[/c]",
+                    "[c=dim]A worn headstone.[/c]",
                 ], speaker="", voice="blip_soft", portrait="narrator")
             return
-        # Kid's family stones -- any of the three.
+        # Other stones -- any of the three.
         for i, (sx, sy) in enumerate(sc._kids_family_stones):
             if (abs(game.player.x - sx) < 36
                     and abs(game.player.y - sy) < 36):
-                names = ("father", "mother", "older sister")
                 game.dialog.show([
-                    f"[c=dim](A fresh stone. The boy's {names[i]}.)[/c]",
-                    "[c=dim]Buried last spring. Quietly.[/c]",
+                    "[c=dim](A fresh stone.)[/c]",
                 ], speaker="", voice="blip_soft", portrait="narrator")
                 return
     sc.on_interact_fn = _graveyard_interact
@@ -494,8 +456,7 @@ def build_diner_gas_station():
         if 6 <= ty_ <= 10 or 2 <= ty_ <= 5:   # keep lot/building clear
             continue
         sc.add_decoration(Decoration(gx, gy, "grass_tuft"))
-    # One dead crow at the foot of the gas pump (the cult feeds the
-    # birds to the cauldron; the diner is on the cult's route).
+    # One dead crow at the foot of the gas pump.
     sc.add_decoration(Decoration(8 * TILE + 16, 9 * TILE + 22,
                                  "dead_crow"))
     # Hide spots beside cover (NOT on the solid pump tiles).
@@ -697,9 +658,9 @@ def build_backwoods_cabin():
 
 
 def build_backwoods_cabin_interior():
-    """Carl's cabin interior. He is gone. Chair tipped, cup on the
-    floor, a smear of blood on the boards. The cellar key is where
-    he dropped it. The door was left open."""
+    """A cabin interior. Chair tipped, cup on the floor, a smear on
+    the boards. The cellar key is on the floor. The door was left
+    open."""
     floor = ["=" * 8 for _ in range(7)]
     objects = [
         "WWWWWWWW",
@@ -895,20 +856,11 @@ def build_bell_tower():
         # First visit: a single evidence beat from the lookout.
         # Content varies by phase -- night reveals the most.
         beat = {
-            "morning":  ("From the bell tower the town is small.\n"
-                         "Smoke from chimneys that should be cold.\n"
-                         "Three of them. Always three."),
-            "afternoon":("From the bell tower you can see the road\n"
-                         "north of town. Someone is walking it.\n"
-                         "Slowly. Toward the cabin."),
-            "dusk":     ("From the bell tower the river goes red.\n"
-                         "A figure stands on the far bank, facing you.\n"
-                         "It does not move."),
-            "night":    ("Lights move on every street.\n"
-                         "Lanterns. People walking with purpose.\n"
-                         "Nobody in this town walks at night."),
-        }.get(phase, ("From the bell tower the town is small.\n"
-                      "Something below is wrong."))
+            "morning":  "From the bell tower the town is small.",
+            "afternoon": "From the bell tower the town is small.",
+            "dusk":     "From the bell tower the town is small.",
+            "night":    "From the bell tower the town is small.",
+        }.get(phase, "From the bell tower the town is small.")
         _evidence(game, "bell_tower_view", beat)
     sc.on_enter_fn = _bell_tower_on_enter
     return sc
@@ -1079,37 +1031,28 @@ def build_cornfield_maze():
                 and abs(game.player.y - sy) < 40):
             if not game.save.flag("scarecrow_evidence"):
                 _evidence(game, "scarecrow",
-                    "The scarecrow's coat is yours.\n"
-                    "It was in your duffel two days ago.\n"
-                    "You don't know how it got out here."
+                    "A scarecrow."
                 )
             return
         # The crate-note: a folded slip pinned to a corn stalk.
         # Reading it once sets `crate_note_read` so the Innkeeper
-        # turn-in line shifts. Truth of the 'service.'
+        # turn-in line shifts.
         nx, ny = sc._crate_note_pos
         if (abs(game.player.x - nx) < 36
                 and abs(game.player.y - ny) < 36):
             if game.save.flag("crate_note_read"):
                 game.dialog.show([
-                    "[c=dim]The slip is still pinned to the stalk.[/c]",
-                    "[c=dim]Service for the Lord. Six bottles. Tomorrow.[/c]",
+                    "[c=dim]A slip pinned to the stalk.[/c]",
                 ], speaker="", voice="blip_soft", portrait="narrator")
                 return
             game.save.set_flag("crate_note_read", True)
             game.audio.play("pickup", 0.5)
             game.dialog.show([
                 "[c=dim](A folded slip pinned to a stalk.)[/c]",
-                "[c=dim]Inn -- back orders for the religious service.[/c]",
-                "[c=dim]Six bottles. Wine. Crate to be retrieved",
-                "by the new arrival.[/c]",
-                "[c=dim]Service for the Lord. Tomorrow.[/c]",
-                "[s=slow][c=dim]It's the innkeeper's handwriting.[/c][/s]",
+                "[c=dim]A note about the crate.[/c]",
             ], speaker="", voice="blip_soft", portrait="narrator")
             _evidence(game, "service_note",
-                "The crate isn't for guests.\n"
-                "The 'service' is the cult's rite.\n"
-                "The new arrival is you."
+                "A note about the crate."
             )
             return
     sc.on_interact_fn = _cornfield_maze_interact
@@ -1123,17 +1066,11 @@ def build_cornfield_maze():
 
 
 # ---------------------------------------------------------------------------
-# THRESHOLD: the town. A populated main street -- the civic centre the
-# scattered-building rework had left the world without. Most residents
-# are ordinary people seeing out an ordinary evening; one or two are
-# cult, and nothing marks which. The dread here is social, not monstrous:
-# you are an outsider in a small town where everyone already knows your
-# name, and everyone is a little too glad you came.
+# The town. A populated main street -- the civic centre of the world.
 #
 # Wired to: the general store (shop), the sheriff's office
 # (fisherman_cottage), the schoolhouse, and the road south back to the
-# village/farm. The church stays out in the mistlands -- its footprint
-# there anchors the orb-shadow / Preacher cult sequence -- so the town
+# village/farm. The church stays out in the mistlands, so the town
 # reaches it the long way, through the fields.
 # ---------------------------------------------------------------------------
 def _town_voice(pages, voice="blip_mid"):
@@ -1236,10 +1173,7 @@ def build_town():
         sc.add_decoration(Decoration(gx, gy, "grass_tuft"))
 
     # ---- Residents ----
-    # Mostly ordinary people. One or two are cult. Nothing tells you
-    # which. The recurring notes -- be indoors by dusk, the "service,"
-    # how glad everyone is you came -- read as small-town habit until
-    # they don't.
+    # Ordinary people going about an ordinary evening.
     def _resident(tx, ty, name, kind, pages, movement="wander",
                    voice="blip_mid", radius=52):
         sc.add_npc(NPC(tx * TILE + 16, ty * TILE + 16, name, kind,
@@ -1248,40 +1182,31 @@ def build_town():
 
     _resident(5, 9, "Hettie", "shopkeep", [
         "Store's stocked, if you need anything.",
-        "You're the one staying up at the inn.\n"
-        "We don't get many new faces. We remember\nthe ones we do.",
+        "[c=dim]...[/c]",
     ])
     _resident(11, 10, "Old Pell", "old", [
         "Cold came in early this year.",
-        "You'll want to be indoors before dusk.\n"
-        "Everyone is, come evening. You'll see.",
+        "[c=dim]...[/c]",
     ], voice="blip_low")
     _resident(4, 11, "Mrs. Calder", "mom", [
-        "Have you seen a boy? About so high, he —",
-        "[c=dim](She stops herself.)[/c] No. No, of course\n"
-        "not. He's inside. They're all inside now.",
+        "Hello there.",
+        "[c=dim]...[/c]",
     ], movement="idle")
     _resident(19, 10, "Royce", "fisherman", [
-        "River's running high past the ford.\n"
-        "I wouldn't try crossing it.",
-        "Not that folks leave, this time of year.",
+        "River's running high past the ford.",
+        "[c=dim]...[/c]",
     ])
     _resident(13, 11, "the Tisdale boy", "kid", [
-        "Are you coming to the service?",
-        "Everybody's going. The whole town.\n"
-        "You have to come. You're the special one.",
+        "Hi.",
+        "[c=dim]...[/c]",
     ], voice="blip_kid", radius=40)
     _resident(15, 8, "Garrick", "old", [
-        "Sheriff likes new arrivals to check in.",
-        "No rush about it. You'll come round.\nEverybody does, in the end.",
+        "Afternoon.",
+        "[c=dim]...[/c]",
     ])
-    # The one who only watches. She looks like any other resident.
     sc.add_npc(NPC(17 * TILE + 16, 9 * TILE + 16, "A woman", "mom",
                    dialogue_fn=_town_voice([
-                       "[c=dim](She has been watching you since you\n"
-                       "came up the road.)[/c]",
-                       "We're so glad you came. Truly. We were\n"
-                       "starting to think no one would.",
+                       "[c=dim]Hello.[/c]",
                    ], "blip_soft"),
                    movement="watch"))
 

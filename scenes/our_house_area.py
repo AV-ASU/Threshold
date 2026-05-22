@@ -30,9 +30,7 @@ from .dialogue import _evidence
 def _yard_cache_pickup(game):
     game.save.set_flag("yard_cache_taken", True)
     _evidence(game, "yard_cache",
-        "The Innkeeper put these here. Before. When he\n"
-        "still left himself notes for the dark. The\n"
-        "package is the same brand he used to buy."
+        "A small stash."
     )
 
 
@@ -135,31 +133,6 @@ def build_our_house_area():
         return
     sc.on_interact_fn = _outside_interact
 
-    def _yard_on_enter(game, scene):
-        # The yard's legacy spare-battery cache has been retired --
-        # spare batteries are now in the village/farm crate.
-        # First time the player steps into the yard (after coming
-        # out of the inn for the first time), plant a single
-        # silhouette far off at the NE tree line. Reuses the
-        # opening-watcher flag so it stands still, has no
-        # boredom timeout, and leaves a phantom_step + low_pulse
-        # residue when the player either looks at it or walks
-        # toward it. One beat per save -- after this, ambient
-        # watchers handle yard observation as normal.
-        if (not game.save.flag("yard_figure_seen")
-                and game.save.flag("left_bedroom")):
-            game.save.set_flag("yard_figure_seen", True)
-            wx = 19 * TILE + 16
-            wy = 1 * TILE + 16
-            game._watchers.append({
-                "x": wx, "y": wy,
-                "t_left": 9999.0,
-                "seen": False,
-                "opening_watcher": True,
-                "still": True,
-            })
-    sc.on_enter_fn = _yard_on_enter
-
     # Atmosphere -- chimney smoke from the house, a couple of crows,
     # scattered grass. No guard NPC. No bandit spawn.
     sc.add_decoration(Decoration(5 * TILE + 16, 2 * TILE - 6, "smoke"))
@@ -182,7 +155,7 @@ def build_our_house_area():
     # Small mailbox on the road shoulder (use a gas_pump deco -- close
     # enough silhouette; future polish could carve a true mailbox).
     sc.add_decoration(Decoration(11 * TILE + 16, 9 * TILE + 16,
-                                 "phantom_mark"))   # cult mark in the dirt
+                                 "phantom_mark"))   # mark in the dirt
     rng = random.Random(2026)
     for _ in range(20):
         gx = rng.randint(1, 22) * TILE + rng.randint(0, 30)

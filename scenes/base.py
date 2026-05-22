@@ -575,7 +575,7 @@ DISPLAY_NAMES = {
     "well_bottom":          "Well Bottom",
     "well_passage":         "Well Passage",
     "haunted_house":        "the Abandoned Farmhouse",
-    "symbol_portal_room":   "the Cult Chamber",
+    "symbol_portal_room":   "the Stone Chamber",
     "mistlands":            "the River",
     "schoolhouse":          "the Schoolhouse",
     "graveyard":            "the Graveyard",
@@ -583,7 +583,7 @@ DISPLAY_NAMES = {
     "country_lane":         "the Country Lane",
     "gravel_road_north":    "the Gravel Road",
     "backwoods_cabin":      "the Hunter's Cabin",
-    "backwoods_cabin_interior": "Carl's Cabin",
+    "backwoods_cabin_interior": "the Cabin",
     "river_crossing":       "the River Crossing",
     "bell_tower":           "the Bell Tower",
     "cornfield_maze":       "the Cornfield",
@@ -642,15 +642,14 @@ class Scene:
         # and finally to titlecasing the scene key. Builders can
         # override for bespoke labels (e.g. "the Cellar").
         self.display_name = None
-        # Cult watcher cameras. Each entry is a dict:
+        # Watcher cameras. Each entry is a dict:
         #   {"x": px, "y": px, "range": px, "_t": 0.0}
         # The Game's _tick_eye_cameras polls them every frame: if
         # the player is unhidden and within `range`, the watcher's
         # `_t` accumulates. At threshold (~2.5 s) the watcher
         # fires a proximity bump + alert audio. Hide breaks line
-        # of sight and the timer decays. Drop a `watching_eye`
-        # decoration with slit=True at the same coord so the prop
-        # is visible to the player.
+        # of sight and the timer decays. (No scenes populate this
+        # list currently.)
         self.eye_cameras = []
 
     def char_floor_at(self, x_px, y_px):

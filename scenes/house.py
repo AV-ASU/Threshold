@@ -1,13 +1,11 @@
 """The Innkeeper's house (above the inn): spare_room (player's cot),
 main floor (kitchen + living + front door), the Innkeeper's bedroom
-(locked, holds the orb + car keys + robe), the basement (Mom's
-photograph, notebook, flashlight, bulkhead exit).
+(locked, holds the orb + car keys + robe), the basement (photograph,
+notebook, flashlight, bulkhead exit).
 
-THRESHOLD: re-skin of the original player-house scenes. The
-bedroom KEY now means the spare room above the inn. The house KEY
-now means the Innkeeper's downstairs. Geometries are mostly
-preserved; pickups, decorations, NPCs, and triggers are redone for
-the 1994 Yellow-King-cult fiction.
+The bedroom KEY means the spare room above the inn. The house KEY
+means the Innkeeper's downstairs. Geometries, pickups, decorations,
+NPCs, and triggers are preserved.
 """
 import math
 import time
@@ -191,36 +189,9 @@ def bedroom_on_update(game, scene, dt):
     if slots["wake_notice_armed"] and moved:
         slots["wake_notice_armed"] = False
         game.show_notice(
-            "Your head is pounding. "
-            "There is mud on your boots.",
+            "You wake up.",
             duration=5.0,
         )
-    if slots["watcher_armed"] and moved:
-        slots["watcher_armed"] = False
-        # Plant the opening watcher just inside the south
-        # doorway (col 7 row 10 in the redesigned bedroom).
-        # `opening_watcher` flag tells _tick_watchers to suppress
-        # the slender step (the figure stands still in the
-        # threshold), suppress the boredom timeout, and leave a
-        # residue on dissolve.
-        wx = 7 * TILE + 16
-        wy = 10 * TILE + 16
-        game._watchers.append({
-            "x": wx, "y": wy,
-            "t_left": 9999.0,
-            "seen": False,
-            "opening_watcher": True,
-            "still": True,
-        })
-        # Manifestation cue: a soft floor creak from the
-        # doorway side + a brief candle dip. The creak gives
-        # the player something to turn toward; the candle dip
-        # confirms the watcher caused it.
-        game.audio.play("phantom_step", 0.55)
-        game.audio.play("low_pulse", 0.22)
-        for d in scene.decorations:
-            if d.kind == "candle":
-                d.kwargs["dip_t0"] = time.time()
     # One-shot window silhouette ~28s in. The two windows are
     # at row 0 cols 4 and 9; we pass on the EAST window (col 9)
     # so the player has to be facing or scanning that side to
@@ -285,13 +256,10 @@ def bedroom_on_update(game, scene, dt):
 
 
 def bedroom_interact(game):
-    """E near the cot: lie down, save the game, advance the day.
-    E near the writing table: read the player's own field journal
-    -- a short investigator-tone readable that gives the player
-    *why* they're at the inn before they leave the bedroom. The
-    journal is diegetic (no inventory pickup); re-reading is
-    allowed. First read sets `read_journal` so other systems can
-    react."""
+    """E near the cot: a furniture-only save point in this build.
+    E near the writing table: read a short notebook. The notebook
+    is diegetic (no inventory pickup); re-reading is allowed. First
+    read sets `read_journal` so other systems can react."""
     sc = game.scene
     px, py = game.player.x, game.player.y
     # Writing table -- col 8 row 6. Range 40 matches the cot's.
@@ -299,17 +267,8 @@ def bedroom_interact(game):
     ty = 6 * TILE + 16
     if abs(px - tx) <= 40 and abs(py - ty) <= 40:
         game.dialog.show([
-            "[c=dim](Lined notebook on the writing table.\n"
-            "Your handwriting. The pen still uncapped.)[/c]",
-            "[c=dim]Day 4 at the inn. Three names confirmed:\n"
-            "Mott. Calley. The Reuter girl.[/c]",
-            "[c=dim]All within the year. None reported beyond\n"
-            "the county. No bodies. The sheriff did not ask.[/c]",
-            "[c=dim]Innkeeper says no one's come down the road\n"
-            "in a week. He says it like he's counting.[/c]",
-            "[c=dim]Tomorrow: the cellar. If he won't open it\n"
-            "I'll —[/c]",
-            "[c=dim](The next line is missing. Mud on the page.)[/c]",
+            "[c=dim](A lined notebook on the writing table.)[/c]",
+            "[c=dim]The pages are blank.[/c]",
         ], speaker="", voice="blip_soft", portrait="narrator")
         if not game.save.flag("read_journal"):
             game.save.set_flag("read_journal", True)
@@ -327,8 +286,8 @@ def bedroom_interact(game):
 def build_house():
     """The Innkeeper's downstairs: kitchen on the left half, living
     room on the right half. Wall divider with a door between them.
-    Front door on the south wall (B exit -- the player will be
-    blocked here once they have cult evidence). Cellar hatch in the
+    Front door on the south wall (B exit -- the player may be
+    blocked here by the Innkeeper). Cellar hatch in the
     kitchen. Door to spare_room hallway on the north (col 13). Door
     to the Innkeeper's bedroom on the north (col 4) -- locked
     initially."""
@@ -510,10 +469,8 @@ def house_interact(game):
 
 def build_son_room():
     """The Innkeeper's bedroom. Locked door from the kitchen. Inside:
-    a dresser (car keys), a closet (the cult robe + the orb behind
-    it), a window. Player's first big find. The room reads as a
-    stranger's bedroom -- lived in, but with one too-large hook on
-    the wall, a faint smell of pine."""
+    a dresser (car keys), a closet (the robe + the orb behind it),
+    a window. The room reads as a stranger's bedroom -- lived in."""
     floor = [
         "==========",
         "==========",
@@ -594,13 +551,13 @@ def innkeeper_bedroom_interact(game):
         game.save.set_flag("robe_taken", True)
         game.player.inventory.add("robe", 1)
         game.audio.play("pickup_rare", 0.7)
-        game.show_notice("Cult robe. Folded in the closet.")
+        game.show_notice("A robe, folded in the closet.")
         return
     if not game.save.flag("orb_taken_innkeeper"):
         game.save.set_flag("orb_taken_innkeeper", True)
         game.player.inventory.add("orb", 1)
         game.audio.play("pickup_rare", 0.7)
-        game.show_notice("An orb. Heavy. Behind the robe.")
+        game.show_notice("An orb, behind the robe.")
         return
     game.show_notice("The closet is empty now.")
 
@@ -609,9 +566,9 @@ def innkeeper_bedroom_interact(game):
 
 def build_basement():
     """The Innkeeper's cellar. Stone walls, packed dirt floor, a
-    single hanging bulb. Mom's photograph stands on a shelf. Her
-    notebook is hidden in a wall panel. A flashlight, charcoal, and
-    a coil of rope on a workbench.
+    single hanging bulb. A photograph stands on a shelf. A notebook
+    is hidden in a wall panel. A flashlight, charcoal, and a coil of
+    rope on a workbench.
 
     Single entry/exit via the kitchen cellar hatch. A previous build
     had a south-wall bulkhead leading to the back yard; removed
@@ -634,7 +591,7 @@ def build_basement():
     sc.set_spawn("default", 9, 1)
     sc.set_spawn("from_house", 9, 1)
 
-    # Mom's photograph -- placed via the P marker, with the photo
+    # A photograph -- placed via the P marker, with the photo
     # NPC (basement_photo_dialogue) hosting interaction.
     pos = sc.consume_marker("P")
     if pos:
@@ -665,8 +622,7 @@ def build_basement():
                                  "bloodstain"))
     sc.add_decoration(Decoration(1 * TILE + 24, 4 * TILE + 16, "candle"))
     sc.add_decoration(Decoration(10 * TILE + 8, 4 * TILE + 16, "candle"))
-    # ONE claw gouge etched into the cellar wall -- the cult's mark.
-    # The watcher sigils + photo + workbench already establish dread.
+    # One claw gouge etched into the cellar wall.
     sc.add_decoration(Decoration(7 * TILE + 16, 0 * TILE + 22, "claw_marks"))
     for mx, my in [(2, 5), (6, 6), (4, 3), (8, 7)]:
         sc.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16,
@@ -680,8 +636,7 @@ def build_basement():
 def basement_on_enter(game, scene):
     """Place charcoal + flashlight pickups on the workbench (idempotent
     via save flags). The notebook is gated behind the wall_panel
-    interaction in basement_interact. Entering at all provokes the
-    cult -- the cellar is theirs."""
+    interaction in basement_interact."""
     game._provoke_cult(0.10)
     wbx, wby = scene._workbench_pos
     if not game.save.flag("charcoal_taken"):
@@ -696,7 +651,7 @@ def basement_on_enter(game, scene):
         )
     # A spare battery pack on the workbench shelf -- one freebie so
     # the player learns the resource. More are scattered in dark
-    # cult sites (haunted_house, well_passage) for top-up.
+    # sites (haunted_house, well_passage) for top-up.
     if not game.save.flag("batteries_basement_taken"):
         scene.add_item(
             wbx, wby - 16, "spare_batteries",
@@ -737,7 +692,7 @@ def basement_on_enter(game, scene):
 
 
 def basement_interact(game):
-    """E near the wall panel finds Mom's notebook (one-shot)."""
+    """E near the wall panel finds a notebook (one-shot)."""
     sc = game.scene
     px, py = game.player.x, game.player.y
     wpx, wpy = sc._wall_panel_pos
@@ -750,7 +705,7 @@ def basement_interact(game):
     game.player.inventory.add("mom_notebook", 1)
     game.audio.play("pickup_rare", 0.7)
     game.audio.play("low_pulse", 0.45)
-    game.show_notice("Her handwriting. She left it for you.")
+    game.show_notice("A notebook, tucked in the wall.")
 
 
 # ---- abducted_hallway: cut from registry but keep stub ----

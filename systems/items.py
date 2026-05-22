@@ -36,7 +36,7 @@ ITEM_DEFS = {
                        "desc": "A coarse wool robe."},
     "mom_notebook":  {"name": "A Notebook",
                        "kind": "lore",
-                       "desc": "A spiral-bound notebook."},
+                       "desc": "A small notebook."},
     "flashlight":    {"name": "Flashlight",
                        "kind": "key",
                        "desc": "A flashlight.\n\n"

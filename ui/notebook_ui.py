@@ -1,10 +1,8 @@
-"""Notebook UI -- review the evidence beats the player has noticed.
+"""Notebook UI -- review the notes the player has accumulated.
 
-Toggled with N. Lists every entry the player has accumulated in
-save.arg("evidence"); the cursor moves through entries, and the
-right pane reads back the full text. There is no editing, no
-choices -- it is a notebook the player keeps because the player
-keeps a notebook.
+Toggled with N. Lists every entry in save.arg("evidence"); the
+cursor moves through entries, and the right pane reads back the
+full text. There is no editing, no choices.
 
 Each save entry is the dict shape `{"name": slug, "lines": [...]}`,
 written by scenes/dialogue.py:_evidence. If a legacy save still
@@ -19,18 +17,9 @@ from constants import (
 
 
 def _humanise(slug):
-    """Turn 'moms_stone' into 'Mom's Stone'. Good enough for titles
-    until we want hand-authored ones."""
+    """Turn a slug like 'some_note' into a title 'Some Note'."""
     parts = slug.split("_")
-    fixed = []
-    for p in parts:
-        if p == "moms":
-            fixed.append("Mom's")
-        elif p == "kids":
-            fixed.append("Kid's")
-        else:
-            fixed.append(p.capitalize())
-    return " ".join(fixed)
+    return " ".join(p.capitalize() for p in parts)
 
 
 class NotebookUI:
@@ -80,7 +69,7 @@ class NotebookUI:
         title = self.fonts["lg"].render("Notebook", True, C_GOLD)
         surf.blit(title, (panel.x + 20, panel.y + 14))
         sub = self.fonts["sm"].render(
-            "What you have noticed.", True, C_DIM)
+            "Your notes.", True, C_DIM)
         surf.blit(sub, (panel.x + 22, panel.y + 56))
 
         entries = self._entries()
