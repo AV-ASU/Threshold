@@ -91,7 +91,7 @@ class NPC:
         self._yk_stuck_t = 0.0
         self._yk_last_pos = None
         # Round-14: NPCs are killable. They take damage from the
-        # player's attacks (melee or pistol). The Visitors take a
+        # player's attacks (melee or pistol). The cult takes a
         # specific interest in this -- the kill counter feeds the
         # substrate's later evidence files. Non-hostile by default,
         # which means the player's first hit on them is the moral

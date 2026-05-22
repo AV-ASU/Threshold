@@ -224,10 +224,10 @@ def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False):
         pygame.draw.circle(surf, (220, 30, 30), (x + 3, y - 11), 1)
     elif kind == "tall_shadow":
         # Tall, THIN smear of darkness. ~2.5x a normal NPC vertically, but
-        # narrow enough that it reads as not-quite-human. Used for the
-        # runaway forest enemy. In lore the figure is a Visitor (alien),
-        # which is why the eyes are three blue dots stacked vertically --
-        # not a face we recognise.
+        # narrow enough that it reads as not-quite-human. In lore the
+        # figure is a pilgrim of the Yellow King -- which is why the eyes
+        # are three jaundiced dots stacked vertically, not a face we
+        # recognise.
         # The silhouette now BREATHES on a slow sine: top of the body
         # drifts left/right by a pixel, and the seam wavers. Adds a
         # subliminal "this isn't standing still" cue without changing
@@ -249,11 +249,11 @@ def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False):
         # -- the eyes never quite "match" each other.
         flicker = int(t * 2.4) % 7
         if flicker != 0:
-            pygame.draw.circle(surf, (60, 130, 220), (x, y - 42), 1)
+            pygame.draw.circle(surf, (210, 188, 70), (x, y - 42), 1)
         if flicker != 3:
-            pygame.draw.circle(surf, (60, 130, 220), (x, y - 38), 1)
+            pygame.draw.circle(surf, (210, 188, 70), (x, y - 38), 1)
         if flicker != 5:
-            pygame.draw.circle(surf, (60, 130, 220), (x, y - 34), 1)
+            pygame.draw.circle(surf, (210, 188, 70), (x, y - 34), 1)
     elif kind == "yellow_king":
         # The Yellow King avatar. A jaundiced, pulpy mass of eyes
         # and tentacles that PHASES in and out of being on a slow
@@ -391,12 +391,12 @@ def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False):
         # Hem stain
         pygame.draw.line(surf, (40, 25, 20),
                          (x - 8, y + 16), (x + 8, y + 16), 2)
-    elif kind == "alien_boss":
-        # Final encounter: a Visitor with reaching tentacles. Body is
+    elif kind == "vessel_avatar":
+        # A towering Yellow-King vessel with reaching tentacles. Body is
         # the tall_shadow silhouette enlarged + four wiggling tentacles
         # that point in the `facing` direction (toward the player when
         # in chase). Animated by pygame.time so the wiggle keeps moving
-        # even when the enemy is mid-attack.
+        # even when the figure is mid-lunge.
         import pygame as _pg
         t = _pg.time.get_ticks() / 1000.0
         body_rect = pygame.Rect(x - 11, y - 56, 22, 72)
@@ -404,7 +404,7 @@ def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False):
         pygame.draw.rect(surf, (12, 8, 18), body_rect.inflate(-6, -8))
         pygame.draw.line(surf, (2, 0, 4), (x, y - 54), (x, y + 14), 1)
         for ey in (-46, -42, -38):
-            pygame.draw.circle(surf, (60, 130, 220), (x, y + ey), 2)
+            pygame.draw.circle(surf, (210, 188, 70), (x, y + ey), 2)
         fx, fy = facing
         for i in range(4):
             phase = t * 6 + i * 1.4
@@ -422,7 +422,7 @@ def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False):
             pygame.draw.line(surf, (16, 12, 24),
                              (int(mid[0]), int(mid[1])),
                              (int(tip[0]), int(tip[1])), 2)
-            pygame.draw.circle(surf, (60, 130, 220),
+            pygame.draw.circle(surf, (210, 188, 70),
                                (int(tip[0]), int(tip[1])), 1)
     elif kind == "static_figure":
         pygame.draw.rect(surf, (40, 40, 50), (x - 8, y - 2, 16, 18))

@@ -1,6 +1,6 @@
 """Enemies: chase + flee AI, on_kill callback support, optional dash
 burst, optional projectile attack. Plus the standalone Projectile
-entity used by ranged enemies (the void-boss alien)."""
+entity used by ranged enemies."""
 import math
 import random
 import pygame
@@ -15,7 +15,7 @@ class Projectile:
     seconds. The visual is a glowing pulsing dot in `color`."""
 
     def __init__(self, x, y, dx, dy, dmg=10, speed=220,
-                 color=(60, 130, 220), lifespan=2.5):
+                 color=(210, 188, 70), lifespan=2.5):
         self.x = x; self.y = y
         norm = math.hypot(dx, dy) or 1
         self.dx = dx / norm
@@ -93,7 +93,7 @@ class Enemy:
                  dash_dur=0.32, dash_cd=2.4, dash_telegraph=0.35,
                  can_shoot=False, shoot_cd=1.4, shoot_dmg=10,
                  shoot_range=320,
-                 projectile_color=(60, 130, 220),
+                 projectile_color=(210, 188, 70),
                  projectile_speed=220,
                  shoot_sfx=None,
                  attack_cd=1.1,
@@ -138,15 +138,15 @@ class Enemy:
         self.dash_cd = random.uniform(0.5, dash_cd)
         self.dash_t = 0.0
         # Per-enemy windup window for the dash. The default 0.35s suits
-        # the wolves; the final alien boss bumps this to 0.8s so the
+        # the wolves; the apex vessel bumps this to 0.8s so the
         # gold-ring telegraph reads as a *commit* rather than a flicker.
         self.dash_telegraph = dash_telegraph
         # Ranged-attack params: when can_shoot is True, the chase AI
         # spawns a Projectile every shoot_cd seconds toward the player
-        # (gated by shoot_range so the alien doesn't snipe across an
+        # (gated by shoot_range so a shooter doesn't snipe across an
         # off-screen arena). projectile_color sets the visual tint --
-        # the void boss uses blue, but the field is generic for future
-        # ranged enemies.
+        # jaundiced by default, but the field is generic for any
+        # ranged enemy.
         self.can_shoot = can_shoot
         self.shoot_cd_full = shoot_cd
         self.shoot_cd = random.uniform(0.4, shoot_cd)
@@ -154,14 +154,14 @@ class Enemy:
         self.shoot_range = shoot_range
         self.projectile_color = projectile_color
         self.projectile_speed = projectile_speed
-        # SFX name to play on each shot. None means silent (preserves
-        # the alien void boss's behaviour). Set per-enemy at construction
-        # so the policeman can fire `pistol_shot` while the alien stays
-        # quiet. The Game polls `just_shot` after each update tick.
+        # SFX name to play on each shot. None means silent. Set per-enemy
+        # at construction so the policeman can fire `pistol_shot` while a
+        # silent shooter stays quiet. The Game polls `just_shot` after
+        # each update tick.
         self.shoot_sfx = shoot_sfx
         self.just_shot = False
         # Melee attack-cooldown override. The chase AI used to reset to
-        # a hardcoded 1.1s; some enemies (the alien bosses, scaled to
+        # a hardcoded 1.1s; some enemies (the bosses, scaled to
         # 35 dmg/s) need a different rate. Default keeps prior behavior.
         self.attack_cd = attack_cd
         # Mirror of the player's tap/charge attack model. `can_charge`
@@ -543,5 +543,5 @@ class Enemy:
         # Round-14: HP bars removed entirely. Combat is meant to feel
         # opaque -- the player swings, the enemy flashes white on hit
         # (`self.flash`), and at some point it dies. No progress meter,
-        # no math. The Visitors and the bandits and the wolves are all
+        # no math. The cult and the bandits and the wolves are all
         # threats whose state the player cannot read.

@@ -630,7 +630,7 @@ class Scene:
         self.decorations = []
         self.enemies = []
         self.items = []          # list of {x,y,key,qty,on_pickup?}
-        self.projectiles = []    # ranged-attack bullets (alien boss etc.)
+        self.projectiles = []    # ranged-attack bullets
         self.triggers = []
         self.on_enter_fn = None
         self.on_exit_fn = None

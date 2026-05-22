@@ -756,7 +756,7 @@ class Game:
                     if self.save.flag(
                             f"crate_broken_{self.scene.key}_{tx}_{ty}"):
                         self.scene.objects[ty][tx] = "."
-        # Round-9: dying to the alien boss empties the world. Every
+        # Round-9: dying to the Yellow King empties the world. Every
         # scene loaded after `world_emptied` is set has its NPC list
         # cleared post-on_enter, so any villagers / shopkeep / kid /
         # innkeeper / guard / terminal handler placed by the builder or
