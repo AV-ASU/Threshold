@@ -404,25 +404,19 @@ class NPC:
                     continue
                 visited[(nx_, ny_)] = (cx, cy)
                 q.append((nx_, ny_))
-        entry = getattr(scene, "_last_entry_exit_tile", None)
+        # Relentless: always path to the player's current tile (or the
+        # nearest reachable tile to them). The King does not block or
+        # wander -- once he is here, he comes straight for you.
+        self._yk_mode = "chase"
         target = None
-        if entry is not None and entry in visited:
-            self._yk_mode = "block"
-            target = entry
-        elif random.random() < 0.2:
-            self._yk_mode = "chase"
-            ptx = int(player.x // TILE)
-            pty = int(player.y // TILE)
-            if (ptx, pty) in visited:
-                target = (ptx, pty)
-            else:
-                target = min(visited.keys(),
-                             key=lambda t: (t[0] - ptx) ** 2
-                                            + (t[1] - pty) ** 2)
+        ptx = int(player.x // TILE)
+        pty = int(player.y // TILE)
+        if (ptx, pty) in visited:
+            target = (ptx, pty)
         else:
-            self._yk_mode = "wander"
-            cands = [t for t in visited.keys() if t != (sx, sy)]
-            target = random.choice(cands) if cands else (sx, sy)
+            target = min(visited.keys(),
+                         key=lambda t: (t[0] - ptx) ** 2
+                                        + (t[1] - pty) ** 2)
         path = []
         cur = target
         while visited.get(cur) is not None:

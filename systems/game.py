@@ -256,16 +256,13 @@ class Game:
         # the world edges are always pressing in. Cached on first need.
         self._outdoor_vignette_surf = None
 
-        # ---- THRESHOLD: the threat meter ----
-        # `pursuer_proximity` is a float in [0, 1] tracking how much
-        # danger the player is in right now (see _tick_pursuer):
-        #   * an enemy with line of sight on you -> climbs fast
-        #   * moving in the open                 -> climbs slowly
-        #   * still AND unseen (or hidden)        -> falls; safe
-        # The invisible Pursuer manifests as audio cues whose cadence
-        # tightens with the meter. At >= 0.95, while still seen, a
-        # short grace timer runs out to a catch (game over).
-        self.pursuer_proximity = 0.0
+        # ---- THRESHOLD: the visibility meter ----
+        # `visibility` is a float in [0, 1]: how visible the player is
+        # to the King in Yellow right now. Watchers (spawned by a
+        # cultist's curse) raise it; hiding bleeds it back down. At 1.0
+        # the King materialises at the doorway and hunts; drop below
+        # 0.90 and he dissolves. See _tick_visibility + _tick_king.
+        self.visibility = 0.0
         # Heartbeat schedule -- time to next thump. Kicks in only at
         # proximity >= 0.70 and only while the player is unhidden.
         # Period shortens with proximity so the pulse races at apex.
@@ -287,32 +284,14 @@ class Game:
         self._last_pos = (0.0, 0.0)  # for "standing still" detection
         self._chant_t = 0.0          # depths cult-chant ambient timer
         self._breath_t = 0.0         # depths cult-breath ambient timer
-        # Schedule of next manifestation event (seconds). Set when
-        # the pursuer fires an event; tightens as proximity grows.
-        self._pursuer_next_event = 8.0
-        # Total seconds since pursuer init -- drives the slow ramp.
-        self._pursuer_t = 0.0
-        # Prevents two close-cousin events from firing back-to-back.
-        self._pursuer_last_event = ""
-        # The "closure" grace timer. Armed (set positive) only while
-        # the meter is pinned at >= 0.95 AND an enemy can still see
-        # the player; counts down to a catch (game over). Breaking
-        # line of sight -- hiding -- disarms it (-1.0).
-        self._pursuer_closure_t = -1.0
-        # Notice strings the Pursuer surfaces. Picked at random,
-        # never the same one twice in a row. Trimmed to environmental
-        # observations only -- the player narrates "behind you" /
-        # "closer now" themselves once the audio has done its job.
-        # What the notice does is point the eye at something the player
-        # might not have inferred from the sound alone.
-        self._pursuer_notices = [
-            "a door closed somewhere.",
-            "something moved in the next room.",
-            "the sound of breathing.",
-            "the candle was lit. it isn't now.",
-            "the floorboards above you settle.",
-        ]
-        self._pursuer_last_notice = ""
+        # ---- THRESHOLD: the King in Yellow ----
+        # The King is the lethal apex. `_king` holds his NPC while he
+        # is in the scene (None otherwise); `_king_anchor` is the
+        # doorway the player entered from -- where he materialises. He
+        # spawns when visibility hits 1.0 and dissolves below 0.90.
+        # See _tick_king.
+        self._king = None
+        self._king_anchor = None
 
         # ---- THRESHOLD: cult patrols ----
         # Multiple cult members teleport through the outdoor scenes,
@@ -566,17 +545,14 @@ class Game:
         """Wipe all per-run state so a New Game starts clean. The
         Game instance is reused across Quit-to-Title -> New Game, so
         in-memory run state from a previous run is cleared here."""
-        # Threat meter
-        self.pursuer_proximity = 0.0
+        # Visibility meter + the King in Yellow
+        self.visibility = 0.0
         self._last_pos = (0.0, 0.0)
         self._chant_t = 0.0
         self._breath_t = 0.0
-        self._pursuer_next_event = 8.0
-        self._pursuer_t = 0.0
-        self._pursuer_last_event = ""
-        self._pursuer_closure_t = -1.0
         self._heartbeat_t = 0.0
-        self._pursuer_last_notice = ""
+        self._king = None
+        self._king_anchor = None
         # Patrols -- reset each entry's scene + spawn countdown. The
         # list itself stays (kinds / min_prox are static config).
         for p in self._patrols:
@@ -619,11 +595,11 @@ class Game:
             self.audio.play("door_locked", 0.5)
             self.show_notice("The hatch is padlocked.", duration=2.0)
             return
-        # Crossing a threshold breaks line of sight with anything in
-        # the room behind you, so the meter eases off a touch. If a
-        # catch was arming, the new scene (no enemy in view) lets
-        # _tick_pursuer disarm it on the next frame.
-        self.pursuer_proximity = max(0.0, self.pursuer_proximity - 0.04)
+        # Crossing a threshold eases the meter a touch -- you've put a
+        # wall between yourself and the room behind. With hiding, this
+        # is how the player claws visibility back under 0.90 to shake
+        # the King.
+        self.visibility = max(0.0, self.visibility - 0.04)
         # Round-9: the forest secret-tree -> void_boss redirect was
         # removed. The forest j-tile now leads to the original empty
         # void (easter_egg + rust_key). The void_boss arena is reached
@@ -679,6 +655,11 @@ class Game:
         spawn = self.scene.spawns.get(spawn_id, self.scene.spawns.get("default"))
         if spawn:
             self.player.x, self.player.y = spawn
+        # The King materialises at the doorway the player entered from.
+        # He stays behind on a scene change (cleared here) and re-forms
+        # at the new entry if visibility is still pinned at the top.
+        self._king = None
+        self._king_anchor = (self.player.x, self.player.y)
         # Hide state never carries across scenes. Corn cover (`:`
         # tile) is per-tile; an explicit hide_spot's hide_origin
         # would point at OLD-scene coords if it leaked through.
@@ -727,7 +708,7 @@ class Game:
         # Pulls from OUTDOOR_DECAY by (scene_key, tier).
         from systems.threat import (proximity_tier,
                                      PROX_TIER_MID, PROX_TIER_HIGH)
-        tier = proximity_tier(self.pursuer_proximity)
+        tier = proximity_tier(self.visibility)
         if tier in (PROX_TIER_MID, PROX_TIER_HIGH):
             extras = OUTDOOR_DECAY.get((self.scene.key, tier), [])
             for tx, ty, kind in extras:
@@ -849,7 +830,7 @@ class Game:
             # Base speed is reduced by the threat meter (spatial
             # compression -- the closer you are to being caught, the
             # harder it is to move) and boosted by active sprint.
-            comp_mult = 1.0 - self.pursuer_proximity * 0.45
+            comp_mult = 1.0 - self.visibility * 0.45
             sprint_mult = 1.7 if self.player.sprint_active else 1.0
             effective_speed = (self.player.speed
                                * comp_mult * sprint_mult)
@@ -1364,7 +1345,7 @@ class Game:
         # Pursuer proximity selects between two cached surfaces:
         # 0 = early game (wide), 1 = late (tighter). Avoids
         # rebuilding the gradient every frame.
-        level = 1 if self.pursuer_proximity > 0.55 else 0
+        level = 1 if self.visibility > 0.55 else 0
         surf = self._outdoor_vignette_surf[level]
         psx = int(self.player.x - self.cam_x)
         psy = int(self.player.y - self.cam_y)
@@ -1409,7 +1390,7 @@ class Game:
         visually distinct from regular high-proximity unease."""
         if self.scene is None or self.player is None:
             return
-        if self.pursuer_proximity < 0.95:
+        if self.visibility < 0.95:
             return
         # Safe / dim-safe interiors break the apex wash. The Inn is
         # the refuge. Standing inside it lifts the apex pressure --
@@ -1778,7 +1759,7 @@ class Game:
                         and n.tag.startswith("patrol_"))
             ]
             return
-        prox = self.pursuer_proximity
+        prox = self.visibility
         # Per-patrol phase gates collapsed into the global night
         # gate above (every patrol is night-only now). Each patrol
         # still owns its proximity floor.
@@ -1976,8 +1957,8 @@ class Game:
     def _on_patrol_spot(self, patrol, npc):
         """First time this patroller sees the player in this scene."""
         self.audio.play("low_pulse", 0.55)
-        self.pursuer_proximity = min(1.0,
-                                      self.pursuer_proximity + 0.20)
+        self.visibility = min(1.0,
+                                      self.visibility + 0.20)
         # Different notice text per patroller for variety.
         line = {
             "patrol_preacher": "The Preacher has spotted you.",
@@ -2062,12 +2043,7 @@ class Game:
             if not p.sprint_active:
                 p.sprint_active = True
             p.sprint_t -= dt
-            # Sprinting is loud -- it draws extra attention on top of
-            # the normal moving rate.
-            self.pursuer_proximity = min(
-                1.0, self.pursuer_proximity + dt * 0.05
-            )
-            # Periodic loud step every ~0.35s so the Pursuer hears.
+            # Periodic loud step every ~0.35s.
             self._sprint_step_t = getattr(self, "_sprint_step_t", 0.0) - dt
             if self._sprint_step_t <= 0:
                 self._sprint_step_t = 0.35
@@ -2090,7 +2066,7 @@ class Game:
             return
         if self.state != "playing":
             return
-        prox = self.pursuer_proximity
+        prox = self.visibility
         if prox < 0.70 or self.player.hidden is not None:
             self._heartbeat_t = 0.0
             return
@@ -2126,153 +2102,72 @@ class Game:
                 return True
         return False
 
-    def _tick_pursuer(self, dt):
-        """Run the Pursuer's life. The Pursuer is invisible -- this
-        method only schedules audio events, notices, and (eventually)
-        the closure countdown that ends the game.
+    def _tick_visibility(self, dt):
+        """The visibility meter [0, 1] -- how visible the player is to
+        the King in Yellow. Watchers (spawned by a cultist's curse)
+        push it up; hiding bleeds it down. At 1.0 the King materialises
+        (see _tick_king); claw it back under 0.90 and he dissolves.
 
-        Proximity ramps:
-          * +0.005/sec passively (about 3 minutes from 0 to 1)
-          * +0.02/sec while the player is standing still
-          * -0.04 on every scene transition (the door delays it)
-          * +0.10 on the rare moment the player passes through the
-            same exit twice in a short window (it has noticed)
-
-        The set of audio events tightens as proximity grows: at low
-        proximity it's mostly distant doors; at high proximity it's
-        breath cues every few seconds and a low_pulse pulse that
-        kicks in once per minute. Past ~0.95 the closure timer arms,
-        and once that hits zero, _trigger_closure is called."""
+        PLACEHOLDER raiser: until the cultist / curse / Watcher input
+        lands in the next pass, visibility creeps up while the player
+        moves in the open and bleeds down while hidden -- just enough
+        to make the King reachable so the lethal core is playable. The
+        Watcher system replaces this climb wholesale."""
         if self.scene is None or self.player is None:
             return
-        self._pursuer_t += dt
-        # THRESHOLD threat model. The meter tracks how much danger the
-        # player is actually in, moment to moment:
-        #   * an enemy with line of sight on you -> climbs fast
-        #   * moving in the open                 -> climbs slowly
-        #   * still AND unseen (or hidden)       -> falls; you are
-        #                                           isolated and safe
-        # Hiding breaks line of sight, so cover is the strongest way
-        # to bleed the meter back down when something is near.
-        seen = self._enemy_sees_player()
-        if seen:
-            self.pursuer_proximity += dt * 0.12
+        hidden = getattr(self.player, "hidden", None) is not None
+        if hidden:
+            self.visibility -= dt * 0.08
         elif self._is_moving:
-            self.pursuer_proximity += dt * 0.03
+            self.visibility += dt * 0.04   # PLACEHOLDER -> Watchers
         else:
-            self.pursuer_proximity -= dt * 0.06
-        self.pursuer_proximity = max(0.0, min(1.0, self.pursuer_proximity))
-        # Closure: while the meter is pinned at the top AND an enemy
-        # can still see you, a short grace timer counts down to a
-        # catch (game over -> title). Break line of sight -- hide --
-        # and the catch is called off and the meter starts to fall.
-        if self.pursuer_proximity >= 0.95 and seen:
-            if self._pursuer_closure_t < 0:
-                self._pursuer_closure_t = 6.0
-                self.audio.play("low_pulse", 0.85)
-                self.show_notice("Hide.", duration=3.0)
-            else:
-                self._pursuer_closure_t -= dt
-                if self._pursuer_closure_t <= 0:
-                    self._trigger_closure()
-                    return
-        else:
-            self._pursuer_closure_t = -1.0
-        # Schedule the next manifestation event. Interval scales
-        # inversely with proximity: at 0.0, ~30s between events;
-        # at 1.0, ~3s.
-        self._pursuer_next_event -= dt
-        if self._pursuer_next_event > 0:
-            return
-        # Pick the next interval before firing so the schedule keeps
-        # ticking even if we early-out below. Apex band (>= 0.95)
-        # collapses the cadence to ~1.6s so the breathing/pulse
-        # feels directly overhead.
-        prox = self.pursuer_proximity
-        if prox >= 0.95:
-            base = 1.6
-            jitter = random.uniform(-0.4, 0.6)
-            self._pursuer_next_event = max(0.8, base + jitter)
-        else:
-            base = 30.0 - prox * 26.0   # 30 .. 4
-            jitter = random.uniform(-1.0, 3.0)
-            self._pursuer_next_event = max(2.0, base + jitter)
-        # Choose an event by proximity band. Notices are kept rare --
-        # the audio cues are the narration; the on-screen text is for
-        # the rare environmental beat the player cannot infer from
-        # sound alone.
-        events = []
-        if prox < 0.30:
-            events = ["distant_door", "phantom_step", "phantom_step"]
-        elif prox < 0.55:
-            events = ["distant_door", "phantom_step", "phantom_step",
-                      "breath", "notice"]
-        elif prox < 0.80:
-            events = ["phantom_step", "phantom_step", "breath",
-                      "breath", "low_pulse", "notice"]
-        elif prox < 0.95:
-            events = ["breath", "breath", "breath", "phantom_step",
-                      "low_pulse", "notice"]
-        else:
-            # Apex: the breath is in the room. Drop the steps and
-            # notices; everything is breath and bass pulse, almost
-            # constant. The notice is gone -- there is nothing
-            # left to "notice."
-            events = ["breath", "breath", "breath", "breath",
-                      "low_pulse", "low_pulse"]
-        # Avoid immediate repeats so two breaths don't land back-to-back.
-        candidates = [e for e in events if e != self._pursuer_last_event]
-        if not candidates:
-            candidates = events
-        ev = random.choice(candidates)
-        self._pursuer_last_event = ev
-        # Spatial bias: pursuer cues come from one side of the player,
-        # not the centre of their head. Steps + doors hard-pan; breath
-        # rides close to centre with a subtle drift; low_pulse stays
-        # centred (sub-bass localisation is weak anyway). Sign is
-        # random per event so the player can't learn a side.
-        side = random.choice((-1.0, 1.0))
-        # Music duck: at mid-prox and above, drop the drone briefly so
-        # the cue lands in negative space. The cue itself is queued to
-        # fire ~0.5s after the duck starts so the gap is audible.
-        ducking = prox >= 0.55 and ev in ("phantom_step", "breath",
-                                           "distant_door")
-        if ducking:
-            self.audio.duck(1.6, depth=0.10)
-            cue_delay = 0.5
-        else:
-            cue_delay = 0.0
-        def _queue(name, vol, pan):
-            if cue_delay <= 0:
-                self.audio.play(name, vol, pan=pan)
-            else:
-                self._delayed_audio.append([cue_delay, name, vol, pan])
-        if ev == "phantom_step":
-            pan = side * random.uniform(0.55, 0.95)
-            _queue("phantom_step", 0.50 + prox * 0.30, pan)
-        elif ev == "distant_door":
-            pan = side * random.uniform(0.40, 0.80)
-            _queue("door_distant", 0.45 + prox * 0.30, pan)
-        elif ev == "breath":
-            pan = side * random.uniform(0.05, 0.25)
-            _queue("breath", 0.40 + prox * 0.40, pan)
-        elif ev == "low_pulse":
-            self.audio.play("low_pulse", 0.55 + prox * 0.30)
-        elif ev == "notice":
-            self._pursuer_show_notice()
+            self.visibility -= dt * 0.02
+        self.visibility = max(0.0, min(1.0, self.visibility))
 
-    def _pursuer_show_notice(self):
-        """Pick a Pursuer notice line, avoiding immediate repeats,
-        and surface it as a dim text overlay. The notices read as
-        the player's own narration of what they heard -- the game
-        never confirms it directly."""
-        candidates = [n for n in self._pursuer_notices
-                      if n != self._pursuer_last_notice]
-        if not candidates:
-            candidates = self._pursuer_notices
-        line = random.choice(candidates)
-        self._pursuer_last_notice = line
-        self.show_notice(line, duration=2.6)
+    def _tick_king(self, dt):
+        """The King in Yellow -- the lethal apex. The instant
+        visibility hits 1.0 he materialises at the doorway the player
+        entered from and hunts relentlessly; reaching the player ends
+        the run (the closure sequence). Drop visibility below 0.90 --
+        by hiding -- and he dissolves. Safe rooms never host him."""
+        if self.scene is None or self.player is None:
+            return
+        in_safe = self.scene.key in SAFE_SCENES
+        if self._king is None:
+            if self.visibility >= 1.0 and not in_safe:
+                self._spawn_king()
+            return
+        # He is here. Dissolve if visibility falls or the player
+        # reaches a refuge; otherwise check for the catch.
+        if self.visibility < 0.90 or in_safe:
+            self._despawn_king()
+            return
+        d = math.hypot(self._king.x - self.player.x,
+                       self._king.y - self.player.y)
+        if d < 24:
+            self._trigger_closure()
+
+    def _spawn_king(self):
+        """Materialise the King at the entry doorway (_king_anchor),
+        falling back to the player's position if no anchor was set."""
+        from entities.npc import NPC
+        ax, ay = self._king_anchor or (self.player.x, self.player.y)
+        king = NPC(ax, ay, "", "yellow_king",
+                   movement="chaser", speed=2.4,
+                   no_prompt=True, solid=False)
+        king.tag = "king"
+        king.dialogue_fn = None
+        self.scene.add_npc(king)
+        self._king = king
+        self.audio.play("void_sting", 0.7)
+
+    def _despawn_king(self):
+        if self._king is not None and self.scene is not None:
+            try:
+                self.scene.npcs.remove(self._king)
+            except ValueError:
+                pass
+        self._king = None
 
     # Until the cult is provoked, passive/stillness/sprint Pursuer
     # ramps stay dormant -- proximity holds at 0 even on long idle.
@@ -2284,8 +2179,8 @@ class Game:
         if not self.save.flag("cult_provoked"):
             self.save.set_flag("cult_provoked", True)
         if bump > 0:
-            self.pursuer_proximity = min(1.0,
-                                          self.pursuer_proximity + bump)
+            self.visibility = min(1.0,
+                                          self.visibility + bump)
 
     def _trigger_closure(self):
         """The Pursuer has reached the player. Hand off to the
@@ -2392,8 +2287,7 @@ class Game:
                 self._closure_locked = False
                 self._closure_started = False
                 self._closure_phase = -1
-                self.pursuer_proximity = 0.40   # not zero; never zero
-                self._pursuer_closure_t = -1.0
+                self.visibility = 0.40   # not zero; never zero
                 self.audio.music_muted = False
                 self.state = "title"
                 self.audio.play_music("threshold_drone")
@@ -2470,11 +2364,11 @@ class Game:
             self.audio.update_duck()
             self.dialog.update(dt)
             self._tick_delayed_audio(dt)
-            self._tick_pursuer(dt)
+            self._tick_visibility(dt)
             self._tick_heartbeat(dt)
             self._tick_wake_muffle(dt)
             self._tick_flashlight(dt)
-            self._tick_sheriff(dt)
+            self._tick_king(dt)
             self._tick_closure(dt)
             self._tick_flashback(dt)
             self._tick_ending(dt)
@@ -2685,7 +2579,7 @@ class Game:
         # bone-cold red and pulses at >= 0.95, where the Yellow King
         # avatar is loose. Player has no number, just a feel for
         # the line tightening.
-        prox = max(0.0, min(1.0, self.pursuer_proximity))
+        prox = max(0.0, min(1.0, self.visibility))
         bar_w = 80
         bar_h = 4
         tx = SCREEN_W - 14 - bar_w

@@ -41,7 +41,7 @@ def escalate(game, low, mid, high):
     """
     from systems.threat import (proximity_tier,
                                  PROX_TIER_LOW, PROX_TIER_MID)
-    p = getattr(game, "pursuer_proximity", 0.0)
+    p = getattr(game, "visibility", 0.0)
     tier = proximity_tier(p)
     if tier == PROX_TIER_LOW:
         return low
