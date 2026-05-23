@@ -231,6 +231,38 @@ def build_mistlands():
     _stamp_building(objects_l, school_left, school_right,
                     school_top, school_bot, "B", school_door)
 
+    # Thicken + fray the enclosing forest: a ragged second/third rank of
+    # trees just inside the single-tile border, so the wall of woods has
+    # depth and its inner line wavers instead of ruling straight (you
+    # can't see out, and you can't tell how deep it goes). Skips the exit
+    # gaps + border spawns, and never overwrites a building.
+    def _border_protected(tx, ty):
+        if ty in (6, 7, 8) and tx >= w - 4:
+            return True                                  # east road exit + spawn
+        if tx in (49, 50, 51) and ty <= 3:
+            return True                                  # north passage + river_crossing spawn
+        if tx in (39, 40, 41) and ty <= 3:
+            return True                                  # cornfield_maze spawn
+        if tx <= 2 and 83 <= ty <= 87:
+            return True                                  # alter spawn
+        if tx in river_cols and (ty <= 3 or ty >= h - 4):
+            return True                                  # river mouths
+        return False
+
+    forest = random.Random(53)
+    for ty in range(2, h - 2):                           # west + east ranks
+        for edge_tx, step in ((1, 1), (w - 2, -1)):
+            for dd in range(forest.randint(0, 2)):
+                tx = edge_tx + step * dd
+                if objects_l[ty][tx] == "." and not _border_protected(tx, ty):
+                    objects_l[ty][tx] = "T"
+    for tx in range(2, w - 2):                           # north + south ranks
+        for edge_ty, step in ((1, 1), (h - 2, -1)):
+            for dd in range(forest.randint(0, 2)):
+                ty = edge_ty + step * dd
+                if objects_l[ty][tx] == "." and not _border_protected(tx, ty):
+                    objects_l[ty][tx] = "T"
+
     # (Church graveyard headstones are placed as crooked decorations
     # below, near the Preacher -- not grid-locked rock tiles.)
 
