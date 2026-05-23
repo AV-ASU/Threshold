@@ -1,10 +1,9 @@
-"""Headless pygame -> PNG. The foundational 'see pygame output as an
-image' helper for THRESHOLD.
+"""Headless pygame -> PNG. The 'see pygame output as an image' helper.
 
 Importing this sets the dummy SDL drivers and inits pygame, so it works
-with no display. Draw onto any Surface, then save_png() it (optionally
-integer-upscaled for pixel art), Read the file to check it, and send it
-with the SendUserFile tool.
+with no display/server. Draw onto any Surface, then save_png() it
+(optionally integer-upscaled for pixel art), view the file, and share
+it.
 """
 import os
 os.environ.setdefault("SDL_VIDEODRIVER", "dummy")
@@ -20,7 +19,7 @@ def save_png(surface, out, scale=1):
     """Save a pygame Surface to `out` as a PNG.
 
     `scale` integer-upscales with nearest-neighbour so small pixel-art
-    reads clearly (use 5-8 for single sprites). Returns the path.
+    reads clearly (try 5-8 for a single sprite). Returns the path.
     """
     if scale != 1:
         w, h = surface.get_size()
