@@ -811,28 +811,100 @@ def _draw_wall_mass(surf, scene, cam_x, cam_y, x0, y0, x1, y1):
                                  (rx + TILE - 1 - j, ry + TILE), 1)
 
 
-def _draw_door(surf, rx, ry, scene, tx, ty):
-    """Orientation-aware door. A south-facing door (the player sees its
-    front) draws closed + ajar; a door the player catches from the back
-    or the side (N / E / W) hangs open onto black, swung out of the
-    frame. Off-map edges don't count as wall, so a building's
-    south-edge exit still faces out instead of swinging."""
+def _door_room_dir(scene, tx, ty):
+    """Which way the door opens -- the floor (room) side its leaf swings
+    into. Off-map edges don't count as wall, so a building's south-edge
+    exit still opens toward its interior."""
     def w(ax, ay):
         return (0 <= ay < scene.h and 0 <= ax < scene.w
                 and scene.objects[ay][ax] in _WALL_CHARS)
+    def fl(ax, ay):
+        return (0 <= ay < scene.h and 0 <= ax < scene.w
+                and scene.objects[ay][ax] not in _WALL_CHARS)
     wl, wr, wu, wd = w(tx - 1, ty), w(tx + 1, ty), w(tx, ty - 1), w(tx, ty + 1)
-    # Off-centre by a deterministic per-tile nudge so doors aren't all
-    # dead-centre and identical (natural variation + break the grid).
-    rx += ((tx * 17 + ty * 11) % 7) - 3
-    # Vertical wall = walls above/below, the door faces sideways -- we'd
-    # be seeing a side door head-on, which reads wrong, so hang it open.
-    if (wu or wd) and not (wl or wr):
-        floor_right = (not wr) and (tx + 1 < scene.w)
-        _door_open(surf, rx, ry, "E" if floor_right else "W")
+    if (wu or wd) and not (wl or wr):           # vertical wall -> opens L/R
+        return "E" if fl(tx + 1, ty) else "W"
+    if (wl or wr) and not (wu or wd):           # horizontal wall -> opens up/down
+        return "S" if fl(tx, ty + 1) else "N"
+    if fl(tx, ty + 1):                          # corner / ambiguous
+        return "S"
+    if fl(tx + 1, ty):
+        return "E"
+    if fl(tx, ty - 1):
+        return "N"
+    return "W"
+
+
+def _draw_door_opening(surf, rx, ry, room):
+    """The doorway itself, drawn in-tile during the terrain pass: the
+    wall fills through (continuous mass) with a dark opening punched in
+    it + a lit face on the room side. The swung leaf is a separate,
+    unconfined sprite drawn later (draw_scene_doors)."""
+    pygame.draw.rect(surf, _WALL_BASE, (rx, ry, TILE, TILE))
+    hsh = (rx * 73856093) ^ (ry * 19349663)
+    if hsh % 4 == 0:
+        pygame.draw.rect(surf, (11, 10, 14),
+                         (rx + (hsh % 22) + 4, ry + ((hsh // 7) % 22) + 4, 3, 2))
+    if room == "S":
+        pygame.draw.rect(surf, _WALL_FACE, (rx, ry + TILE - 2, TILE, 2))
+    elif room == "N":
+        pygame.draw.rect(surf, _WALL_TOP, (rx, ry, TILE, 2))
+    elif room == "E":
+        pygame.draw.rect(surf, _WALL_FACE, (rx + TILE - 2, ry, 2, TILE))
     else:
-        # Horizontal wall (or ambiguous): the standard front-on door,
-        # hinged left or right by parity.
-        _door_front_closed(surf, rx, ry, "L" if (tx + ty) % 2 == 0 else "R")
+        pygame.draw.rect(surf, _WALL_FACE, (rx, ry, 2, TILE))
+    pygame.draw.rect(surf, (3, 2, 5), (rx + 9, ry + 9, 14, 14))      # the dark doorway
+
+
+def _leaf_quad(hx, hy, ang, L, Wd):
+    dx, dy = math.cos(ang), math.sin(ang)
+    px, py = -dy, dx
+    return [(hx, hy), (hx + px * Wd, hy + py * Wd),
+            (hx + dx * L + px * Wd, hy + dy * L + py * Wd),
+            (hx + dx * L, hy + dy * L)]
+
+
+def _draw_door_leaf(surf, rx, ry, room, seed):
+    """The door leaf as an UNCONFINED sprite -- it swings a full tile
+    out of its cell into the room (collision stays on the grid; the
+    doorway tile is passable, like a creature with a tile of collision
+    but a sprite that spills past it). Swing angle, length, and hinge
+    jamb vary per door (deterministic) so no two hang alike."""
+    skew = 0.16 + (seed % 64) / 100.0           # ~0.16 .. 0.80 rad
+    L = 33 + (seed // 7) % 8
+    Wd = 9
+    hinge_side = (seed >> 5) & 1
+    if room == "N":
+        base = -math.pi / 2
+        hx, hy, ang = ((rx + 9, ry + 22, base + skew) if hinge_side
+                       else (rx + 23, ry + 22, base - skew))
+    elif room == "S":
+        base = math.pi / 2
+        hx, hy, ang = ((rx + 9, ry + 10, base - skew) if hinge_side
+                       else (rx + 23, ry + 10, base + skew))
+    elif room == "E":
+        base = 0.0
+        hx, hy, ang = ((rx + 10, ry + 9, base + skew) if hinge_side
+                       else (rx + 10, ry + 23, base - skew))
+    else:  # W
+        base = math.pi
+        hx, hy, ang = ((rx + 22, ry + 9, base - skew) if hinge_side
+                       else (rx + 22, ry + 23, base + skew))
+    dx, dy = math.cos(ang), math.sin(ang)
+    px, py = -dy, dx
+    face = [(int(x), int(y)) for x, y in _leaf_quad(hx, hy, ang, L, Wd)]
+    edge = [(int(x), int(y)) for x, y in
+            _leaf_quad(hx + px * Wd, hy + py * Wd, ang, L, 2)]
+    pygame.draw.polygon(surf, (38, 27, 16), edge)
+    pygame.draw.polygon(surf, (60, 45, 28), face)
+    pygame.draw.polygon(surf, (88, 66, 40), face, 1)
+    for f in (0.32, 0.62, 0.86):
+        ax_, ay_ = hx + dx * L * f, hy + dy * L * f
+        pygame.draw.line(surf, (38, 27, 16), (int(ax_), int(ay_)),
+                         (int(ax_ + px * Wd), int(ay_ + py * Wd)), 1)
+    tx_ = hx + dx * L + px * Wd * 0.5
+    ty_ = hy + dy * L + py * Wd * 0.5
+    pygame.draw.circle(surf, (122, 112, 94), (int(tx_), int(ty_)), 2)
 
 
 def draw_scene_terrain(surf, scene, cam_x, cam_y, x0, y0, x1, y1):
@@ -859,9 +931,24 @@ def draw_scene_terrain(surf, scene, cam_x, cam_y, x0, y0, x1, y1):
             rx = tx * TILE - cam_x
             ry = ty * TILE - cam_y
             if ch in _DOOR_CHARS:
-                _draw_door(surf, rx, ry, scene, tx, ty)
+                _draw_door_opening(surf, rx, ry, _door_room_dir(scene, tx, ty))
             else:
                 draw_object(surf, ch, rx, ry)
+
+
+def draw_scene_doors(surf, scene, cam_x, cam_y, x0, y0, x1, y1):
+    """Late pass: the swung door leaves, drawn unconfined so each spills
+    out of its tile into the room. Called after terrain + decorations
+    and before entities, so a leaf sits over the floor but under anyone
+    walking through the doorway."""
+    for ty in range(y0, y1):
+        for tx in range(x0, x1):
+            ch = scene.objects[ty][tx]
+            if ch not in _DOOR_CHARS:
+                continue
+            seed = (tx * 73856093) ^ (ty * 19349663)
+            _draw_door_leaf(surf, tx * TILE - cam_x, ty * TILE - cam_y,
+                            _door_room_dir(scene, tx, ty), seed)
 
 
 # ---- Screen-space film grade (grain + vignette + desaturate + tint) ----
@@ -1066,6 +1153,7 @@ class Scene:
         draw_scene_terrain(surf, self, cam_x, cam_y, x0, y0, x1, y1)
         for d in self.decorations:
             d.draw(surf, cam_x, cam_y)
+        draw_scene_doors(surf, self, cam_x, cam_y, x0, y0, x1, y1)
 
 
 def tile_footstep(ch):
