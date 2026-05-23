@@ -817,10 +817,13 @@ def _draw_yellow_king(surf, x, y, facing):
             ey = cy + math.sin(ang) * R * 0.7 * rn + fb[1]
             _yk_radial(layer, ex, ey, 5, _YK_HOT, 110)
             pygame.draw.circle(layer, _YK_PIT, (int(ex), int(ey)), 1)
-    # Arms spawn from the body and reach toward where it's heading (aa) -- a
-    # fan led by the longest arm in the travel direction.
-    for idx, (da, ln) in enumerate([(0.0, R * 2.05), (0.45, R * 1.7), (-0.45, R * 1.7),
-                                    (0.95, R * 1.45), (-0.95, R * 1.45)]):
-        _yk_arm(layer, cx, cy, aa + da, ln, R, t, idx)
     layer.set_alpha(int(255 * max(0.05, phase)))
     surf.blit(layer, (mcx - cx, mcy - cy))
+    # Arms LAST, on their own layer blitted after the body -- so they reach out
+    # on top of the wake particles and the glow alike, never washed behind them.
+    arml = pygame.Surface((L, L), pygame.SRCALPHA)
+    for idx, (da, ln) in enumerate([(0.0, R * 2.05), (0.45, R * 1.7), (-0.45, R * 1.7),
+                                    (0.95, R * 1.45), (-0.95, R * 1.45)]):
+        _yk_arm(arml, cx, cy, aa + da, ln, R, t, idx)
+    arml.set_alpha(int(255 * max(0.05, phase)))
+    surf.blit(arml, (mcx - cx, mcy - cy))
