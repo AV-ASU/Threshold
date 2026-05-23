@@ -73,7 +73,7 @@ on the surface* — a fair, brutal "you dug too deep, too fast."
 |---|---|---|---|---|
 | 1 | **Mara's Room** | `son_room` (robe + `orb`) | Lodge — her rented room | She came, and she joined *willingly* |
 | 2 | **Mara's Journal** | `mom_notebook` | Lodge cellar wall-panel | Her descent, in her own words |
-| 3 | **The Ledger** | (new) | Lodge cellar | Brimley's pattern — guests who never check out |
+| 3 | **The Ledger** (the Lodge's guest register) | (new) | Arcadia Lodge — its cellar (`basement` scene) | Brimley's pattern — guests who check in and never out |
 | 4 | **The Preacher** | (his body) | Mistlands (farmhouse / cauldron) | The town murders witnesses |
 | 5 | **The Sign** | `charcoal` → `sigil_rubbing` | Cult chamber / well bottom | What they actually worship |
 | 6 | **The Congregation** | (Mara, turned) | The Depths / the hive | There was never anyone to save |
@@ -82,36 +82,40 @@ on the surface* — a fair, brutal "you dug too deep, too fast."
 
 ## 5. The Descent — "how deep does this go"
 
-Four strata of the same corruption. The two surface mouths (the village
-**well** and the mistlands **barn-cellar hatch**) converge underground,
-so the river map is the cult's **surface body** sitting on top of its
-works.
+The descent is strictly **vertical**, and it has exactly **one mouth**:
+the village **well**. You go down it on a **rope** — there is no other
+route down and **no secret paths**. The Mistlands are *not* part of the
+descent; they're the surface **edge** (the cult's outdoor sites, the
+Preacher's body, the car). Going *deeper* than the first underground
+layer is gated by the **orb**.
 
 ```
-SURFACE   Brimley — town, Arcadia Lodge, yard, cornfields, church  ─┐
-            │ well (needs rope)                                      │
-EDGE        │                          The Mistlands — river, fog,   │
-            │                          empty bank, cult buildings,    │
-            │                          cauldron clearing, the CAR ────┤ (break debris w/ axe)
-            │                               │ barn cellar hatch       │
-UNDERGROUND WELL BOTTOM ──► WELL PASSAGE (hub) ──► CULT CHAMBER (Sign)◄┘
-            │ (the floor opens)
-DEEP        The Depths  antechamber → procession → hall → threshing →
-            │           stair → dark
-SOURCE      The Threshold — the doorframe to Carcosa  ──► END IT (seal)
-            ┊
-DEEPER      The Hive / The Gathering (soon) — the congregation; Mara is here
-(soon)
-            ┊ lose to the King here or anywhere →
-[no map]    CARCOSA — the King's fire-and-masks catch-cutscene
+SURFACE         Brimley — town, Arcadia Lodge, yard, cornfields, church.
+                West, across the broken debris: the MISTLANDS — river,
+                fog, cult buildings, the Preacher's body, the CAR (Spread it).
+                  │
+                  │   THE ONLY WAY DOWN — a rope down the village WELL.
+                  │   No other route. No secret paths.
+                  ▼
+THE BASEMENT    The first layer of the cult's works, reached by the well.
+LEVEL              >>> being redesigned wholesale — see §9 <<<
+                  │
+                  │   gated by the ORB
+                  ▼
+DEEPER          The Depths → the Threshold (END IT / seal) → the Hive
+                (the congregation; Mara is here).   (soon)
+                  ┊  lose to the King anywhere →
+[not a place]   CARCOSA — the King's fire-and-masks catch-cutscene.
 ```
 
-- **Surface (Brimley):** the investigation. Talk, snoop, read the town. Sealed.
-- **Edge (Mistlands):** the mask slips — fog, looping corn, the cult's outdoor sites, and the **car** (the Spread-it exit).
-- **Underground (the works):** the cult's machinery — passage hub, the chamber, the Sign.
-- **Deep (the Depths):** the King's domain.
-- **Source (the Threshold):** the doorframe. **End it** resolves here.
-- **Deeper — the Hive (soon):** the congregation's mass; **Mara** is here.
+- **Surface:** Brimley + the **Mistlands** edge — the investigation, the cult's outdoor sites, the Preacher's body, the car. Sealed. Sole way down = the well (rope).
+- **The Basement Level:** the first underground layer, reached by the well. *Whole-layer redesign in progress (§9).*
+- **Deeper (orb-gated):** the Depths, the Threshold (**End it**), and the Hive where **Mara** is. (soon)
+
+> **Naming, to avoid the collision:** the **lodge cellar** is the
+> `basement` *scene* — the Arcadia's own cellar, a *surface* interior
+> (holds the Ledger + Mara's journal). **The Basement Level** is the
+> underground stratum below the well. Different places, similar words.
 
 **Carcosa is not a level.** Your King sprite is the floating
 glow-of-faces, so Carcosa *is* the inside of Him: every mask drifting in
@@ -157,13 +161,17 @@ Only display names and fiction change.
   catch) are both net-new — there is no death-card system today.
 
 ### Reworks the new fiction forces
-- `well_bottom` currently **consumes the `polaroid`** to open the Depths.
-  The polaroid is now Mara's photo (evidence) — open the floor on
-  something else (the `orb` as a cult key, or simply being deep enough).
-- `dark` room bodies are tagged `ellie / father / mother` (old family) —
-  recast as the **vanished guests** (tie to The Ledger) or Mara-adjacent.
-- Mistlands still carries the `orb` chest, `black_figure` shadows, and the
-  alter / void-room offering chain — **prune** to fit.
+- **One mouth down.** The well + rope is the *only* surface→underground
+  route. Close the `well_passage` → `barn` hatch (and any other
+  shortcut) so there are no secret paths down.
+- `well_bottom` currently **consumes the `polaroid`** to open the floor.
+  The polaroid is now evidence (Mara's photo) — instead, the **`orb`**
+  is the key that opens the way *deeper* (Basement Level → the Depths).
+- `dark` room bodies (`ellie / father / mother`, old family) — **remove
+  them** and their evidence beats. Cleaned up, not recast.
+- The `orb` now lives in **Mara's room** (evidence #1). Remove the
+  `mist_house` orb chest; prune the `black_figure` shadows and the
+  alter / void-room offering chain.
 - `threshold` seal trigger item (`kid_drawing`) — re-fictionalize.
 - **Innkeeper → Lodge Clerk** across dialogue + `DISPLAY_NAMES`
   (`son_room` → "Mara's Room", etc.).
@@ -174,9 +182,29 @@ Only display names and fiction change.
 ---
 
 ## 8. Still loose (design TODO)
+- **The Basement Level redesign** (active — see §9).
 - The Preacher's body location: bell-tower hanging / graveyard / mistlands farmhouse.
 - The **hive** layout (the deeper layer).
 - Mara's journal text; each NPC's dialogue arc.
-- The exact Depths-open trigger (what replaces the consumed polaroid).
 - The death-card word: **CAPTURED** (leaning) vs KILLED.
 - The client's given name (surname Blaine).
+
+---
+
+## 9. The Basement Level (redesign — in progress)
+
+The first underground stratum, reached *only* by the rope down the well.
+The whole layer is being redesigned from scratch.
+
+**Locked constraints:**
+- **One entrance:** rope down the village well. No other route, no
+  secret paths.
+- **Exit deeper is orb-gated:** you need the **orb** to descend from
+  here to the Depths.
+- **No bodies** carried over from the old fiction.
+- Currently occupies the `well_bottom` / `well_passage` /
+  `symbol_portal_room` (cult chamber) scenes — all up for redesign.
+
+**TBD:** purpose and feel of the layer, layout, what's down here, the
+Sign-rubbing placement (evidence #5), enemy spawns, hiding, and exactly
+where the orb-gate sits.
