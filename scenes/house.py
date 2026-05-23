@@ -152,7 +152,6 @@ def bedroom_on_enter(game, scene):
     scene._opening_t = 0.0
     scene._opening_slots = {
         "wake_notice_armed":   True,    # fires on first step
-        "watcher_armed":       True,    # fires on first step
         "silhouette_at":       28.0,    # passing-figure scare
         "silhouette_done":     False,
         # Calendar anomaly. ~12s in, the wall calendar's

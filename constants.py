@@ -3,9 +3,7 @@ No Python imports beyond stdlib -- safe to import from anywhere."""
 import os
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-SAVE_DIR = os.path.join(HERE, "saves")
 ARCHIVE_DIR = os.path.join(HERE, ".archive")
-os.makedirs(SAVE_DIR, exist_ok=True)
 
 SCREEN_W, SCREEN_H = 960, 640
 TILE = 32

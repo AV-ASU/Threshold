@@ -259,10 +259,6 @@ class Game:
         # player is still inside a CREEPY_SCENES key (or anywhere after
         # world_emptied).
         self.stillness_t = 0.0
-        # Set true on any frame the player actually changes position
-        # (see update_player). The threat model reads this: moving in
-        # the open raises the meter, holding still lowers it.
-        self._is_moving = False
         self._next_heartbeat_t = 0.0
         self._heartbeat_count = 0
         # Delayed-audio queue: list of [seconds_left, sfx_name, volume].
@@ -540,6 +536,7 @@ class Game:
         self._ending_phase = 0
         self._ending_phase_t = 0.0
         self._closure_locked = False
+        self._closure_started = False
         # Opening wake state. When the bedroom_on_enter fires for
         # the first session it sets these to non-zero values; the
         # _tick_wake_muffle ticker then dampens the music channel
@@ -750,11 +747,6 @@ class Game:
 
     # ---- Player update ----
     def update_player(self, dt, keys):
-        # Reset each frame; set true below only if the player actually
-        # changes position. Stays false while menus/dialogue are open
-        # or input is locked, so the threat meter treats those as
-        # "standing still".
-        self._is_moving = False
         if (self.dialog.active or self.inv_ui.open or self.notebook_ui.open
                 or self.text_input.active):
             return
@@ -818,7 +810,6 @@ class Game:
                     self.player.bump_timer = 0.25
             else:
                 self.stillness_t = 0.0
-                self._is_moving = True
                 # Corn-patch cover: passive hide while standing on
                 # `:` tiles. Doesn't compete with explicit hide
                 # spots (those set hide_origin) -- if the player is
@@ -2035,7 +2026,10 @@ class Game:
             return
         d = math.hypot(self._king.x - self.player.x,
                        self._king.y - self.player.y)
-        if d < 24:
+        # Don't let the King catch mid-eruption: while _birth ramps
+        # 0->1 (~1.2s, npc._yk_update) he can't move, so he mustn't
+        # kill either -- that ramp is the player's grace window.
+        if d < 24 and getattr(self._king, "_birth", 1.0) >= 1.0:
             self._trigger_closure()
 
     def _spawn_king(self):
