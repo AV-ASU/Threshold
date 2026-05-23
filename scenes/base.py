@@ -242,6 +242,48 @@ OBJECT_DEFS = {
 }
 
 
+def _door_front_closed(surf, rx, ry):
+    """A door seen front-on (south-facing): frame + plank slab drawn
+    over the floor, hung a crack ajar onto black."""
+    pygame.draw.rect(surf, (10, 9, 12), (rx + 5, ry + 28, 22, 3))    # threshold
+    pygame.draw.rect(surf, (15, 14, 18), (rx + 5, ry + 3, 4, 27))    # left jamb
+    pygame.draw.rect(surf, (15, 14, 18), (rx + 23, ry + 3, 4, 27))   # right jamb
+    pygame.draw.rect(surf, (15, 14, 18), (rx + 5, ry + 3, 22, 3))    # head
+    pygame.draw.rect(surf, (44, 32, 21), (rx + 9, ry + 5, 14, 24))   # frame
+    pygame.draw.rect(surf, (57, 42, 26), (rx + 10, ry + 6, 12, 22))  # slab
+    for sx in (14, 18):
+        pygame.draw.line(surf, (37, 26, 15),
+                         (rx + sx, ry + 7), (rx + sx, ry + 27), 1)
+    pygame.draw.rect(surf, (3, 2, 5), (rx + 10, ry + 6, 3, 22))      # ajar gap
+    pygame.draw.line(surf, (70, 53, 32), (rx + 13, ry + 6),
+                     (rx + 13, ry + 27), 1)
+    pygame.draw.circle(surf, (112, 102, 88), (rx + 20, ry + 16), 2)  # knob
+
+
+def _door_open(surf, rx, ry, face):
+    """A door the player is catching from the wrong side: it hangs open
+    onto black, the slab swung out of the frame. Frame posts orient to
+    the wall (left/right for a horizontal wall, top/bottom for a
+    vertical one). `face` is the direction it opens toward."""
+    if face in ("N", "S"):
+        pygame.draw.rect(surf, (15, 14, 18), (rx + 5, ry + 3, 4, 27))
+        pygame.draw.rect(surf, (15, 14, 18), (rx + 23, ry + 3, 4, 27))
+    else:
+        pygame.draw.rect(surf, (15, 14, 18), (rx + 3, ry + 5, 27, 4))
+        pygame.draw.rect(surf, (15, 14, 18), (rx + 3, ry + 23, 27, 4))
+    pygame.draw.rect(surf, (3, 2, 5), (rx + 9, ry + 8, 14, 16))      # the dark opening
+    if face == "N":
+        pts = [(rx + 9, ry + 8), (rx + 21, ry + 3), (rx + 23, ry + 9), (rx + 11, ry + 14)]
+    elif face == "S":
+        pts = [(rx + 9, ry + 24), (rx + 21, ry + 29), (rx + 23, ry + 23), (rx + 11, ry + 18)]
+    elif face == "E":
+        pts = [(rx + 23, ry + 9), (rx + 28, ry + 21), (rx + 22, ry + 23), (rx + 17, ry + 11)]
+    else:  # W
+        pts = [(rx + 9, ry + 9), (rx + 4, ry + 21), (rx + 10, ry + 23), (rx + 15, ry + 11)]
+    pygame.draw.polygon(surf, (52, 39, 24), pts)
+    pygame.draw.polygon(surf, (80, 60, 37), pts, 1)
+
+
 def draw_object(surf, ch, rx, ry):
     od = OBJECT_DEFS.get(ch)
     if not od or od["kind"] in ("invisible", "void_passage", "outdoor_passage"):
@@ -383,26 +425,9 @@ def draw_object(surf, ch, rx, ry):
         pygame.draw.circle(surf, (10, 10, 14), (rx + 22, ry + 12), 4)
         pygame.draw.rect(surf, (10, 10, 14), (rx + 6, ry + 18, 20, 10))
     elif kind == "door":
-        # A doorframe + slab drawn OVER the floor -- no full-tile dark
-        # fill. In a wall the jamb posts blend into the black mass; out
-        # in the open they read as frame posts. Either way the floor
-        # shows around it, so a door never becomes a black box jutting
-        # out of the floor.
-        pygame.draw.rect(surf, (10, 9, 12), (rx + 5, ry + 28, 22, 3))    # threshold shadow
-        pygame.draw.rect(surf, (15, 14, 18), (rx + 5, ry + 3, 4, 27))    # left jamb
-        pygame.draw.rect(surf, (15, 14, 18), (rx + 23, ry + 3, 4, 27))   # right jamb
-        pygame.draw.rect(surf, (15, 14, 18), (rx + 5, ry + 3, 22, 3))    # head
-        pygame.draw.rect(surf, (44, 32, 21), (rx + 9, ry + 5, 14, 24))   # frame
-        pygame.draw.rect(surf, (57, 42, 26), (rx + 10, ry + 6, 12, 22))  # slab
-        for sx in (14, 18):                                             # planks
-            pygame.draw.line(surf, (37, 26, 15),
-                             (rx + sx, ry + 7), (rx + sx, ry + 27), 1)
-        # Ajar gap -- a real slice of black down the hinge edge.
-        pygame.draw.rect(surf, (3, 2, 5), (rx + 10, ry + 6, 3, 22))
-        pygame.draw.line(surf, (70, 53, 32), (rx + 13, ry + 6),
-                         (rx + 13, ry + 27), 1)                          # lit jamb
-        # Dim iron knob (no bright brass to draw the eye).
-        pygame.draw.circle(surf, (112, 102, 88), (rx + 20, ry + 16), 2)
+        # Fallback front-on door (the orientation-aware path in
+        # draw_scene_terrain handles N/E/S/W + swung-open).
+        _door_front_closed(surf, rx, ry)
     elif kind == "ladder_down":
         # Round-7 redraw: cellar HATCH (was a ladder visual). A square
         # wood box flush to the ground, two horizontal plank seams, and
@@ -778,6 +803,26 @@ def _draw_wall_mass(surf, scene, cam_x, cam_y, x0, y0, x1, y1):
                                  (rx + TILE - 1 - j, ry + TILE), 1)
 
 
+def _draw_door(surf, rx, ry, scene, tx, ty):
+    """Orientation-aware door. A south-facing door (the player sees its
+    front) draws closed + ajar; a door the player catches from the back
+    or the side (N / E / W) hangs open onto black, swung out of the
+    frame. Off-map edges don't count as wall, so a building's
+    south-edge exit still faces out instead of swinging."""
+    def w(ax, ay):
+        return (0 <= ay < scene.h and 0 <= ax < scene.w
+                and scene.objects[ay][ax] in _WALL_CHARS)
+    wl, wr, wu, wd = w(tx - 1, ty), w(tx + 1, ty), w(tx, ty - 1), w(tx, ty + 1)
+    # Vertical wall = walls above/below, the door faces sideways -- we'd
+    # be seeing a side door head-on, which reads wrong, so hang it open.
+    if (wu or wd) and not (wl or wr):
+        floor_right = (not wr) and (tx + 1 < scene.w)
+        _door_open(surf, rx, ry, "E" if floor_right else "W")
+    else:
+        # Horizontal wall (or ambiguous): the standard front-on door.
+        _door_front_closed(surf, rx, ry)
+
+
 def draw_scene_terrain(surf, scene, cam_x, cam_y, x0, y0, x1, y1):
     """Floor -> wall-cast shadows -> continuous wall mass -> non-wall
     objects, for a tile window. Shared by Scene.draw (camera window) and
@@ -799,7 +844,12 @@ def draw_scene_terrain(surf, scene, cam_x, cam_y, x0, y0, x1, y1):
             ch = scene.objects[ty][tx]
             if ch == "." or ch in _WALL_CHARS:
                 continue
-            draw_object(surf, ch, tx * TILE - cam_x, ty * TILE - cam_y)
+            rx = tx * TILE - cam_x
+            ry = ty * TILE - cam_y
+            if ch in _DOOR_CHARS:
+                _draw_door(surf, rx, ry, scene, tx, ty)
+            else:
+                draw_object(surf, ch, rx, ry)
 
 
 # ---- Screen-space film grade (grain + vignette + desaturate + tint) ----
