@@ -229,6 +229,15 @@ def build_mistlands():
         for gx in (4, 6, 8, 10):
             objects_l[gy][gx] = "R"
 
+    # Lit windows flanking a few doors (the 'i' tile glows + a dark
+    # figure passes behind the glass on its own clock). Someone's still
+    # inside -- and something walks past the window when you're not
+    # looking straight at it. South walls so they face the approach.
+    for (wy, wx) in [(53, 61), (53, 65),     # schoolhouse
+                     (60, 51), (60, 55),     # store
+                     (70, 66), (70, 70)]:    # kid's house
+        objects_l[wy][wx] = "i"
+
     # ---- Worn dirt tracks ----
     # The townsfolk and the cult have beaten paths across the field over
     # the years, linking the village entry and the river bridge to the
@@ -488,6 +497,27 @@ def build_mistlands():
         "fn": _find_preacher, "once": True, "fired": False,
     })
 
+    # ---- Light is the mood ----
+    # A guttering lantern over each occupied door -- warm pools of relief
+    # in the haze, and a row of lit thresholds that says the town is
+    # still keeping itself lit for someone. Light is the only mercy here.
+    for (lx, ly) in [(7, 9), (7, 65), (7, 93),        # church, sheriff, farmhouse
+                     (53, 60), (63, 53), (68, 70), (83, 80)]:  # shop, school, kid, barn
+        sc.add_decoration(Decoration(lx * TILE + 16, ly * TILE - 2, "lantern"))
+    # The bridge: a single lantern on the exposed crossing -- the one
+    # light, and the one place the river leaves you with no cover. A
+    # creepy_tree on each bank gives a held-breath pocket before and
+    # after the open span (hide-spots wired below).
+    sc.add_decoration(Decoration(33 * TILE + 16, 25 * TILE + 16, "lantern"))
+    sc.add_decoration(Decoration(37 * TILE + 16, 21 * TILE + 16, "creepy_tree"))
+    sc.add_decoration(Decoration(29 * TILE + 16, 27 * TILE + 16, "creepy_tree"))
+
+    # Break the tidy boxes: a tipped wheelbarrow by the store, a dead
+    # filling-station pump stranded on the lane, mud tracked off the path.
+    sc.add_decoration(Decoration(49 * TILE + 16, 59 * TILE + 16, "wheelbarrow"))
+    sc.add_decoration(Decoration(60 * TILE + 16, 40 * TILE + 16, "gas_pump"))
+    sc.add_decoration(Decoration(58 * TILE + 16, 47 * TILE + 16, "mud_footprint"))
+
     # Hide spots colocated with VISIBLE cover so the prompt always
     # matches what the player can see. Each entry sits on top of a
     # grass-tuft / watching-eye / dead-tree decoration on the east
@@ -499,6 +529,8 @@ def build_mistlands():
         (75 * TILE + 16, 75 * TILE + 16, "behind"),  # eye + tuft
         (55 * TILE + 16, 80 * TILE + 16, "behind"),  # tuft
         (80 * TILE + 16, 40 * TILE + 16, "behind"),  # tuft
+        (37 * TILE + 16, 21 * TILE + 16, "behind"),  # creepy_tree, bridge east pocket
+        (29 * TILE + 16, 27 * TILE + 16, "behind"),  # creepy_tree, bridge west pocket
     ]
 
     sc.on_enter_fn = mistlands_on_enter
