@@ -529,6 +529,7 @@ def draw_player_sprite(surf, x, y, facing, walk_phase=0, armor=None, mud=0.0,
 _YK_TRAIL = []                       # recent mass-centre screen positions
 _YK_PARTS = []                       # particle wake: dicts x,y,vx,vy,age,life,r,kind
 _YK_LAST = [0.0]                     # last draw time (for particle dt)
+_YK_ACC = [0.0]                      # distance accumulator (spaces shed orbs)
 _YK_PRNG = random.Random(99)         # own RNG -> never touches the game's stream
 _YK_T1, _YK_T2, _YK_T3, _YK_T4 = (140, 96, 22), (196, 150, 42), (236, 198, 66), (252, 226, 120)
 _YK_GOLD, _YK_HOT = (236, 204, 64), (252, 226, 120)
@@ -661,6 +662,23 @@ def _yk_mask(surf, cx, cy, r, vis, kind):
     surf.blit(m, (cx - mx, cy - my))
 
 
+def _yk_orb(surf, cx, cy, r, vis, seed, t):
+    """A shed SOUL-ORB: a small copy of the body -- a glowing gold clot with a
+    mask or two floating in it -- fading out in the wake. Hell, trailing."""
+    if vis <= 0.04:
+        return
+    _yk_radial(surf, cx, cy, int(r * 1.8), _YK_GOLD, int(46 * vis))
+    _yk_radial(surf, cx, cy, int(r * 1.05), _YK_T2, int(58 * vis))
+    _yk_radial(surf, cx, cy, int(r * 0.62), _YK_T3, int(72 * vis))
+    _yk_radial(surf, cx, cy, int(r * 0.32), _YK_T4, int(88 * vis))
+    kinds = ("plain", "scream", "hollow", "crack")
+    for k in range(2 if r >= 9 else 1):
+        ang = seed * 1.7 + k * 2.4 + t * 1.4    # masks float / orbit inside
+        rad = r * 0.36
+        _yk_mask(surf, cx + math.cos(ang) * rad, cy + math.sin(ang) * rad,
+                 max(3, int(r * 0.44)), vis * 0.9, kinds[(seed + k) % 4])
+
+
 def _yk_arm(layer, cx, cy, ang, length, R, t, idx):
     """A broken arm that spawns from the body and reaches out of the light:
     it extends outward then draws back on its own cycle, reflex elbow,
@@ -702,8 +720,9 @@ def _draw_yellow_king(surf, x, y, facing):
     if s < -0.7:
         phase *= 0.35
     # Short ghost-trail of the glow. Reset on a teleport/respawn jump.
-    # ---- particle wake: it sheds glowing gold motes and the odd drifting
-    # mask as it tears along, all fading out behind it ----
+    # ---- wake of glowing SOUL-ORBS: it sheds smaller copies of itself --
+    # glowing gold clots with masks floating inside -- that drift and fade
+    # out behind it. Hell, chasing you. A few sparks fill the gaps. ----
     dt = t - _YK_LAST[0]
     _YK_LAST[0] = t
     if dt <= 0 or dt > 0.2:
@@ -713,30 +732,33 @@ def _draw_yellow_king(surf, x, y, facing):
         if (mcx - px) ** 2 + (mcy - py) ** 2 > 70 ** 2 or (t - pt) > 0.45:
             _YK_TRAIL = []
             _YK_PARTS.clear()
+            _YK_ACC[0] = 0.0
     disp = math.hypot(mcx - _YK_TRAIL[-1][0], mcy - _YK_TRAIL[-1][1]) if _YK_TRAIL else 0.0
     _YK_TRAIL.append((mcx, mcy, t))
     _YK_TRAIL = _YK_TRAIL[-5:]
     tvx, tvy = (mcx - _YK_TRAIL[0][0], mcy - _YK_TRAIL[0][1])
     tl = math.hypot(tvx, tvy) or 1.0
     bvx, bvy = -tvx / tl, -tvy / tl              # backward (shed this way)
-    if disp > 0.4:                               # only shed while moving
-        for _ in range(min(3, 1 + int(disp / 5))):
+    _YK_ACC[0] += disp
+    while disp > 0.4 and _YK_ACC[0] >= 15:       # space the orbs along the path
+        _YK_ACC[0] -= 15
+        _YK_PARTS.append({
+            "kind": "orb", "seed": _YK_PRNG.randint(0, 999),
+            "x": mcx + _YK_PRNG.uniform(-5, 5), "y": mcy + _YK_PRNG.uniform(-5, 5),
+            "vx": bvx * 9 + _YK_PRNG.uniform(-8, 8),
+            "vy": bvy * 9 + _YK_PRNG.uniform(-8, 8),
+            "age": 0.0, "life": _YK_PRNG.uniform(0.5, 0.95),
+            "r": _YK_PRNG.uniform(7, 15)})
+        for _ in range(2):                       # sparks around each orb
             _YK_PARTS.append({
-                "x": mcx + _YK_PRNG.uniform(-7, 7), "y": mcy + _YK_PRNG.uniform(-7, 7),
-                "vx": bvx * 16 + _YK_PRNG.uniform(-14, 14),
-                "vy": bvy * 16 + _YK_PRNG.uniform(-14, 14),
-                "age": 0.0, "life": _YK_PRNG.uniform(0.30, 0.58),
-                "r": _YK_PRNG.uniform(2.0, 4.0), "kind": None})
-        if _YK_PRNG.random() < 0.5:              # a face shears off into the wake
-            _YK_PARTS.append({
-                "x": mcx + _YK_PRNG.uniform(-6, 6), "y": mcy + _YK_PRNG.uniform(-6, 6),
-                "vx": bvx * 11 + _YK_PRNG.uniform(-8, 8),
-                "vy": bvy * 11 + _YK_PRNG.uniform(-8, 8),
-                "age": 0.0, "life": _YK_PRNG.uniform(0.4, 0.7),
-                "r": _YK_PRNG.uniform(4.0, 6.0),
-                "kind": _YK_PRNG.choice(["plain", "scream", "hollow", "crack"])})
-    if len(_YK_PARTS) > 80:
-        del _YK_PARTS[:len(_YK_PARTS) - 80]
+                "kind": "mote", "seed": 0,
+                "x": mcx + _YK_PRNG.uniform(-9, 9), "y": mcy + _YK_PRNG.uniform(-9, 9),
+                "vx": bvx * 18 + _YK_PRNG.uniform(-16, 16),
+                "vy": bvy * 18 + _YK_PRNG.uniform(-16, 16),
+                "age": 0.0, "life": _YK_PRNG.uniform(0.25, 0.5),
+                "r": _YK_PRNG.uniform(1.5, 3.0)})
+    if len(_YK_PARTS) > 90:
+        del _YK_PARTS[:len(_YK_PARTS) - 90]
     keep = []
     for p in _YK_PARTS:
         p["age"] += dt
@@ -746,12 +768,11 @@ def _draw_yellow_king(surf, x, y, facing):
         p["x"] += p["vx"] * dt
         p["y"] += p["vy"] * dt
         a = (1.0 - fr) * phase
-        if p["kind"] is None:
+        if p["kind"] == "orb":
+            _yk_orb(surf, p["x"], p["y"], p["r"] * (1 - 0.22 * fr), a, p["seed"], t)
+        else:
             _yk_radial(surf, p["x"], p["y"], max(2, p["r"] * (1 - 0.4 * fr)),
                        _YK_GOLD, int(150 * a))
-        else:
-            _yk_mask(surf, p["x"], p["y"], max(2, int(p["r"] * (1 - 0.3 * fr))),
-                     0.6 * a, p["kind"])
         keep.append(p)
     _YK_PARTS[:] = keep
     # Faint floating shadow on the ground, far below the mass.
