@@ -496,7 +496,7 @@ def bandit_cave_boss_on_enter(game, scene):
     that leads to the void_boss arena. The wall is only kept passable
     while the player carries the broken_crutch AND has not yet won or
     died at the void boss. After resolution the wall is sealed back to
-    a normal "#" forever, so the alien arena stays one-shot."""
+    a normal "#" forever, so the boss arena stays one-shot."""
     scene.enemies = []
     if game.save.arg("user_code") is None:
         _spawn_boss(scene)

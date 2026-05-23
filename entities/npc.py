@@ -91,7 +91,7 @@ class NPC:
         self._yk_stuck_t = 0.0
         self._yk_last_pos = None
         # Round-14: NPCs are killable. They take damage from the
-        # player's attacks (melee or pistol). The Visitors take a
+        # player's attacks (melee or pistol). The cult takes a
         # specific interest in this -- the kill counter feeds the
         # substrate's later evidence files. Non-hostile by default,
         # which means the player's first hit on them is the moral
@@ -102,6 +102,13 @@ class NPC:
         self.flash = 0.0
         self.drops = drops or []
         self.on_kill = on_kill
+        # Vessel-bloom transform. `morph` (0..1) ramps toward
+        # `morph_target`; the renderer (rendering.transform) turns the
+        # human sprite into the Yellow-King maw as it rises. PROTOTYPE:
+        # the trigger is wired to the chase state below, but the final
+        # trigger is still open -- one assignment to change.
+        self.morph = 0.0
+        self.morph_target = 0.0
 
     def take_damage(self, amount):
         if not self.alive:
@@ -115,6 +122,12 @@ class NPC:
         if not self.alive:
             return
         self.flash = max(0, self.flash - dt)
+        if self.morph != self.morph_target:
+            step = dt / 1.4
+            if self.morph < self.morph_target:
+                self.morph = min(self.morph_target, self.morph + step)
+            else:
+                self.morph = max(self.morph_target, self.morph - step)
         if self.sprite_kind == "yellow_king":
             self._yk_update(dt, scene, player)
             return
@@ -214,6 +227,10 @@ class NPC:
                 self._cult_state = "chase"
                 self._cult_state_t = 0.0
                 self._scout_target = None
+                # PROTOTYPE trigger: a cultist that locks onto the
+                # player blooms into the vessel as it closes.
+                if self.sprite_kind in ("bandit", "cultist"):
+                    self.morph_target = 1.0
             self._last_seen_pos = (player.x, player.y)
             target = (self._flank_target if self._flank_target
                       else (player.x, player.y))
@@ -232,6 +249,7 @@ class NPC:
             if self._cult_state_t <= 0 or self._last_seen_pos is None:
                 self._cult_state = "scout"
                 self._scout_target = None
+                self.morph_target = 0.0
                 return
             tx, ty = self._last_seen_pos
             d_target = math.hypot(self.x - tx, self.y - ty)
@@ -248,6 +266,7 @@ class NPC:
             if self._cult_state_t <= 0 or self._last_seen_pos is None:
                 self._cult_state = "scout"
                 self._scout_target = None
+                self.morph_target = 0.0
                 return
             tx, ty = self._last_seen_pos
             d_target = math.hypot(self.x - tx, self.y - ty)
@@ -315,11 +334,11 @@ class NPC:
         pdy = player.y - self.y
         pd = math.hypot(pdx, pdy) or 1
         self.facing = (pdx / pd, pdy / pd)
-        if not self._yk_seen_lock:
-            self._yk_seen_lock = True
-            self._yk_halt_t = 0.5
-        if self._yk_halt_t > 0:
-            self._yk_halt_t -= dt
+        # Birth: the King erupts from a cult member over ~1.2s before it
+        # can move; _birth ramps 0->1 and the renderer plays the
+        # emergence. It still turns to face the player while being born.
+        self._birth = min(1.0, getattr(self, "_birth", 0.0) + dt / 1.2)
+        if self._birth < 1.0:
             return
         if self._yk_target is None or not self._yk_path:
             self._yk_pick_target(scene, player)
@@ -349,8 +368,12 @@ class NPC:
         dx = nx - self.x
         dy = ny - self.y
         d = math.hypot(dx, dy) or 1
-        self.x += (dx / d) * self.speed * 60 * dt
-        self.y += (dy / d) * self.speed * 60 * dt
+        step = self.speed * 60 * dt
+        self.x += (dx / d) * step
+        self.y += (dy / d) * step
+        # Advance the gait phase with distance covered so the run cycle
+        # matches the King's speed and freezes when it isn't moving.
+        self._gait = getattr(self, "_gait", 0.0) + step * 0.18
 
     def _yk_pick_target(self, scene, player):
         """Pick the next path target for the Hunter. Door-block
@@ -385,25 +408,19 @@ class NPC:
                     continue
                 visited[(nx_, ny_)] = (cx, cy)
                 q.append((nx_, ny_))
-        entry = getattr(scene, "_last_entry_exit_tile", None)
+        # Relentless: always path to the player's current tile (or the
+        # nearest reachable tile to them). The King does not block or
+        # wander -- once he is here, he comes straight for you.
+        self._yk_mode = "chase"
         target = None
-        if entry is not None and entry in visited:
-            self._yk_mode = "block"
-            target = entry
-        elif random.random() < 0.2:
-            self._yk_mode = "chase"
-            ptx = int(player.x // TILE)
-            pty = int(player.y // TILE)
-            if (ptx, pty) in visited:
-                target = (ptx, pty)
-            else:
-                target = min(visited.keys(),
-                             key=lambda t: (t[0] - ptx) ** 2
-                                            + (t[1] - pty) ** 2)
+        ptx = int(player.x // TILE)
+        pty = int(player.y // TILE)
+        if (ptx, pty) in visited:
+            target = (ptx, pty)
         else:
-            self._yk_mode = "wander"
-            cands = [t for t in visited.keys() if t != (sx, sy)]
-            target = random.choice(cands) if cands else (sx, sy)
+            target = min(visited.keys(),
+                         key=lambda t: (t[0] - ptx) ** 2
+                                        + (t[1] - pty) ** 2)
         path = []
         cur = target
         while visited.get(cur) is not None:

@@ -12,6 +12,7 @@ from constants import (
     C_BLUE, C_GREEN, C_PURPLE, C_PANEL, C_PANEL_BORDER, C_DIM,
 )
 from rendering.sprites import draw_player_sprite, draw_npc_sprite
+from rendering.transform import draw_vessel_bloom
 from ui.fonts import make_fonts
 from ui.dialog import DialogueBox
 from ui.inventory_ui import InventoryUI
@@ -147,6 +148,33 @@ SAFE_SCENES = {"bedroom", "house", "son_room", "kid_house"}
 # still runs (cover here is meaningful).
 DIM_SAFE_SCENES = {"basement"}
 
+# ---- THRESHOLD: cult geography + threat tuning ----
+# Regular cultists roam every outdoor scene; the safe lodge interiors
+# (SAFE_SCENES) are the only refuge. The special curse-priest only
+# haunts the deep cult sites -- venturing there is what risks the
+# permanent curse.
+CULTIST_SCENES = {
+    "village", "forest_path", "our_house_area", "graveyard",
+    "diner_gas_station", "mistlands", "country_lane",
+    "gravel_road_north", "river_crossing", "backwoods_cabin",
+    "cornfield_maze",
+}
+CURSER_SCENES = {"mistlands", "graveyard", "cornfield_maze"}
+
+CURSE_RITUAL_TIME = 3.0        # seconds of held sight to land a curse
+WATCHERS_PER_CURSE = 3         # Watcher cap added per curse level
+WATCHER_SPAWN_INTERVAL = 4.0   # seconds between Watcher manifestations
+CULT_REGULARS = 2              # roaming cultists kept per cult scene
+CULT_TOPUP_INTERVAL = 8.0      # seconds between cultist (re)spawns
+# Visibility rates, per second. Watchers + cultist gaze push the meter
+# up; hiding pulls it down. Enough Watchers out-pace even hiding --
+# that is the spiral toward a King the player can no longer shake.
+VIS_HIDE_BLEED = 0.10
+VIS_IDLE_DECAY = 0.02
+VIS_WATCHER_OPEN = 0.03
+VIS_WATCHER_HIDDEN = 0.015
+VIS_GAZE = 0.04
+
 # 80% combined-darkness cap. Full-screen black overlays
 # (visibility dip, apex wash, hide wash, YK vignette) decrement
 # this budget per frame so the screen never goes opaque even when
@@ -255,16 +283,13 @@ class Game:
         # the world edges are always pressing in. Cached on first need.
         self._outdoor_vignette_surf = None
 
-        # ---- THRESHOLD: the threat meter ----
-        # `pursuer_proximity` is a float in [0, 1] tracking how much
-        # danger the player is in right now (see _tick_pursuer):
-        #   * an enemy with line of sight on you -> climbs fast
-        #   * moving in the open                 -> climbs slowly
-        #   * still AND unseen (or hidden)        -> falls; safe
-        # The invisible Pursuer manifests as audio cues whose cadence
-        # tightens with the meter. At >= 0.95, while still seen, a
-        # short grace timer runs out to a catch (game over).
-        self.pursuer_proximity = 0.0
+        # ---- THRESHOLD: the visibility meter ----
+        # `visibility` is a float in [0, 1]: how visible the player is
+        # to the King in Yellow right now. Watchers (spawned by a
+        # cultist's curse) raise it; hiding bleeds it back down. At 1.0
+        # the King materialises at the doorway and hunts; drop below
+        # 0.90 and he dissolves. See _tick_visibility + _tick_king.
+        self.visibility = 0.0
         # Heartbeat schedule -- time to next thump. Kicks in only at
         # proximity >= 0.70 and only while the player is unhidden.
         # Period shortens with proximity so the pulse races at apex.
@@ -286,107 +311,29 @@ class Game:
         self._last_pos = (0.0, 0.0)  # for "standing still" detection
         self._chant_t = 0.0          # depths cult-chant ambient timer
         self._breath_t = 0.0         # depths cult-breath ambient timer
-        # Schedule of next manifestation event (seconds). Set when
-        # the pursuer fires an event; tightens as proximity grows.
-        self._pursuer_next_event = 8.0
-        # Total seconds since pursuer init -- drives the slow ramp.
-        self._pursuer_t = 0.0
-        # Prevents two close-cousin events from firing back-to-back.
-        self._pursuer_last_event = ""
-        # The "closure" grace timer. Armed (set positive) only while
-        # the meter is pinned at >= 0.95 AND an enemy can still see
-        # the player; counts down to a catch (game over). Breaking
-        # line of sight -- hiding -- disarms it (-1.0).
-        self._pursuer_closure_t = -1.0
-        # Notice strings the Pursuer surfaces. Picked at random,
-        # never the same one twice in a row. Trimmed to environmental
-        # observations only -- the player narrates "behind you" /
-        # "closer now" themselves once the audio has done its job.
-        # What the notice does is point the eye at something the player
-        # might not have inferred from the sound alone.
-        self._pursuer_notices = [
-            "a door closed somewhere.",
-            "something moved in the next room.",
-            "the sound of breathing.",
-            "the candle was lit. it isn't now.",
-            "the floorboards above you settle.",
-        ]
-        self._pursuer_last_notice = ""
+        # ---- THRESHOLD: the King in Yellow ----
+        # The King is the lethal apex. `_king` holds his NPC while he
+        # is in the scene (None otherwise); `_king_anchor` is the
+        # doorway the player entered from -- where he materialises. He
+        # spawns when visibility hits 1.0 and dissolves below 0.90.
+        # See _tick_king.
+        self._king = None
+        self._king_anchor = None
 
-        # ---- THRESHOLD: cult patrols ----
-        # Multiple cult members teleport through the outdoor scenes,
-        # scaling with Pursuer proximity. Each entry is a dict that
-        # tracks its own current scene and re-roll timer. Patrols
-        # whose `min_prox` is above current proximity stay dormant.
-        # When active, they chase the player on sight.
-        self._sheriff_scenes = (
-            "village", "forest_path", "our_house_area",
-            "graveyard", "diner_gas_station", "mistlands",
-            "country_lane",
-            "gravel_road_north", "river_crossing",
-            "backwoods_cabin",
-            "cornfield_maze",
-        )
-        self._patrols = [
-            # The Preacher: emerges from the church at proximity >=
-            # 0.40. He used to be church-bound; once the cult is
-            # mobilising, he walks the road too. Slowest of the
-            # human patrols -- the player should read his silhouette
-            # as a deliberate, unhurried walker.
-            {"tag": "patrol_preacher", "name": "Preacher",
-             "kind": "old", "min_prox": 0.40,
-             "scene": None, "t": 45.0,
-             "next_min": 40.0, "next_max": 75.0,
-             "speed": 0.55},
-            # A generic cultist: appears at proximity >= 0.65. The
-            # town's other adults coming out to look for the
-            # outsider. Uses the bandit sprite as a cult-robe stand-
-            # in (hood, dim eyes).
-            {"tag": "patrol_cultist", "name": "Cultist",
-             "kind": "bandit", "min_prox": 0.65,
-             "scene": None, "t": 70.0,
-             "next_min": 25.0, "next_max": 50.0},
-            # The Hound: a cult dog (`wolf` sprite). Activates at
-            # high proximity, faster than the human patrols, and
-            # closes the distance hard once spotted. Forces the
-            # player to break for cover earlier.
-            {"tag": "patrol_hound", "name": "",
-             "kind": "wolf", "min_prox": 0.70,
-             "scene": None, "t": 55.0,
-             "next_min": 25.0, "next_max": 50.0,
-             "speed": 1.35},
-            # Ambient hooded cultists -- always-active, restricted
-            # to the forest walkways. Three slots so the player
-            # usually encounters 1-2 in any forest scene at once.
-            # Bandit sprite (hood + dim eyes). The chaser AI's
-            # scout-mode wandering means they look like searchers
-            # rather than homing missiles -- they pick a tile,
-            # walk there, look around, repeat. Spotting the
-            # player (within 180 px, not hidden) flips them to
-            # chase exactly like the named cultist patrol.
-            {"tag": "patrol_amb_cult_a", "name": "",
-             "kind": "bandit", "min_prox": 0.0,
-             "scene": None, "t": 5.0,
-             "next_min": 25.0, "next_max": 50.0,
-             "speed": 0.8,
-             "scenes": ("forest_path", "cornfield_maze")},
-            {"tag": "patrol_amb_cult_b", "name": "",
-             "kind": "bandit", "min_prox": 0.0,
-             "scene": None, "t": 14.0,
-             "next_min": 30.0, "next_max": 60.0,
-             "speed": 0.8,
-             "scenes": ("forest_path", "cornfield_maze")},
-            {"tag": "patrol_amb_cult_c", "name": "",
-             "kind": "bandit", "min_prox": 0.0,
-             "scene": None, "t": 22.0,
-             "next_min": 35.0, "next_max": 70.0,
-             "speed": 0.8,
-             "scenes": ("forest_path", "cornfield_maze")},
-        ]
-        # Notice flag set the first time each higher-tier patroller
-        # activates so the player gets a single "more of them are
-        # out" beat.
-        self._patrol_announced = set()
+        # ---- THRESHOLD: cultists, the curse, and Watchers ----
+        # Regular cultists roam the outdoor scenes (chaser AI: scout,
+        # chase on sight, search, investigate). Their gaze raises
+        # visibility while they hold line of sight; contact spikes it.
+        # The special curse-priest (a stalker) runs a ritual: hold the
+        # player in its sightline long enough and it lands a *permanent*
+        # curse. Each curse manifests Watchers -- staring figures only
+        # the cursed sees -- and every Watcher pushes visibility up,
+        # marching the player toward a King they can no longer shake.
+        self._curse_level = 0          # permanent within a run; resets on New Game
+        self._watchers = []            # Watcher NPCs currently manifested
+        self._watcher_spawn_t = 0.0    # cadence to the next manifestation
+        self._gaze_count = 0           # cultists watching the player this frame
+        self._cult_topup_t = 0.0       # rate-limits cultist (re)spawns per scene
 
         # ---- THRESHOLD: flashback ----
         # Set when the player reads page 3 of Mom's notebook.
@@ -565,28 +512,20 @@ class Game:
         """Wipe all per-run state so a New Game starts clean. The
         Game instance is reused across Quit-to-Title -> New Game, so
         in-memory run state from a previous run is cleared here."""
-        # Threat meter
-        self.pursuer_proximity = 0.0
+        # Visibility meter + the King in Yellow
+        self.visibility = 0.0
         self._last_pos = (0.0, 0.0)
         self._chant_t = 0.0
         self._breath_t = 0.0
-        self._pursuer_next_event = 8.0
-        self._pursuer_t = 0.0
-        self._pursuer_last_event = ""
-        self._pursuer_closure_t = -1.0
         self._heartbeat_t = 0.0
-        self._pursuer_last_notice = ""
-        # Patrols -- reset each entry's scene + spawn countdown. The
-        # list itself stays (kinds / min_prox are static config).
-        for p in self._patrols:
-            p["scene"] = None
-            p["t"] = {"patrol_preacher": 45.0,
-                      "patrol_cultist": 70.0,
-                      "patrol_hound": 55.0,
-                      "patrol_amb_cult_a": 5.0,
-                      "patrol_amb_cult_b": 14.0,
-                      "patrol_amb_cult_c": 22.0}.get(p["tag"], 30.0)
-        self._patrol_announced = set()
+        self._king = None
+        self._king_anchor = None
+        # Cultists, the curse, and Watchers
+        self._curse_level = 0
+        self._watchers = []
+        self._watcher_spawn_t = 0.0
+        self._gaze_count = 0
+        self._cult_topup_t = 0.0
         self._void_sting_played = False
         # Stillness + heartbeat
         self.stillness_t = 0.0
@@ -618,11 +557,11 @@ class Game:
             self.audio.play("door_locked", 0.5)
             self.show_notice("The hatch is padlocked.", duration=2.0)
             return
-        # Crossing a threshold breaks line of sight with anything in
-        # the room behind you, so the meter eases off a touch. If a
-        # catch was arming, the new scene (no enemy in view) lets
-        # _tick_pursuer disarm it on the next frame.
-        self.pursuer_proximity = max(0.0, self.pursuer_proximity - 0.04)
+        # Crossing a threshold eases the meter a touch -- you've put a
+        # wall between yourself and the room behind. With hiding, this
+        # is how the player claws visibility back under 0.90 to shake
+        # the King.
+        self.visibility = max(0.0, self.visibility - 0.04)
         # Round-9: the forest secret-tree -> void_boss redirect was
         # removed. The forest j-tile now leads to the original empty
         # void (easter_egg + rust_key). The void_boss arena is reached
@@ -678,6 +617,17 @@ class Game:
         spawn = self.scene.spawns.get(spawn_id, self.scene.spawns.get("default"))
         if spawn:
             self.player.x, self.player.y = spawn
+        # The King materialises at the doorway the player entered from.
+        # He stays behind on a scene change (cleared here) and re-forms
+        # at the new entry if visibility is still pinned at the top.
+        self._king = None
+        self._king_anchor = (self.player.x, self.player.y)
+        # Watchers are tied to YOU, not the room -- they re-manifest in
+        # the new scene from the persistent curse. Clear the old set and
+        # the per-scene cultist top-up timer so cultists re-populate.
+        self._watchers = []
+        self._gaze_count = 0
+        self._cult_topup_t = 0.0
         # Hide state never carries across scenes. Corn cover (`:`
         # tile) is per-tile; an explicit hide_spot's hide_origin
         # would point at OLD-scene coords if it leaked through.
@@ -726,7 +676,7 @@ class Game:
         # Pulls from OUTDOOR_DECAY by (scene_key, tier).
         from systems.threat import (proximity_tier,
                                      PROX_TIER_MID, PROX_TIER_HIGH)
-        tier = proximity_tier(self.pursuer_proximity)
+        tier = proximity_tier(self.visibility)
         if tier in (PROX_TIER_MID, PROX_TIER_HIGH):
             extras = OUTDOOR_DECAY.get((self.scene.key, tier), [])
             for tx, ty, kind in extras:
@@ -755,7 +705,7 @@ class Game:
                     if self.save.flag(
                             f"crate_broken_{self.scene.key}_{tx}_{ty}"):
                         self.scene.objects[ty][tx] = "."
-        # Round-9: dying to the alien boss empties the world. Every
+        # Round-9: dying to the Yellow King empties the world. Every
         # scene loaded after `world_emptied` is set has its NPC list
         # cleared post-on_enter, so any villagers / shopkeep / kid /
         # innkeeper / guard / terminal handler placed by the builder or
@@ -848,7 +798,7 @@ class Game:
             # Base speed is reduced by the threat meter (spatial
             # compression -- the closer you are to being caught, the
             # harder it is to move) and boosted by active sprint.
-            comp_mult = 1.0 - self.pursuer_proximity * 0.45
+            comp_mult = 1.0 - self.visibility * 0.45
             sprint_mult = 1.7 if self.player.sprint_active else 1.0
             effective_speed = (self.player.speed
                                * comp_mult * sprint_mult)
@@ -1363,7 +1313,7 @@ class Game:
         # Pursuer proximity selects between two cached surfaces:
         # 0 = early game (wide), 1 = late (tighter). Avoids
         # rebuilding the gradient every frame.
-        level = 1 if self.pursuer_proximity > 0.55 else 0
+        level = 1 if self.visibility > 0.55 else 0
         surf = self._outdoor_vignette_surf[level]
         psx = int(self.player.x - self.cam_x)
         psy = int(self.player.y - self.cam_y)
@@ -1408,7 +1358,7 @@ class Game:
         visually distinct from regular high-proximity unease."""
         if self.scene is None or self.player is None:
             return
-        if self.pursuer_proximity < 0.95:
+        if self.visibility < 0.95:
             return
         # Safe / dim-safe interiors break the apex wash. The Inn is
         # the refuge. Standing inside it lifts the apex pressure --
@@ -1726,157 +1676,116 @@ class Game:
         self.screen.blit(s, (SCREEN_W // 2 - s.get_width() // 2,
                              SCREEN_H // 2 - s.get_height() // 2))
 
-    def _patrols_active(self):
-        """Patrols walk everywhere except the safe interiors. There is
-        no day/night cycle -- per-patrol activation is gated purely by
-        the threat meter (each patrol's min_prox), handled in
-        _tick_sheriff. The safe rooms (the inn) stay patrol-free."""
-        if self.scene is None:
-            return False
-        return self.scene.key not in SAFE_SCENES
-
-    def _tick_sheriff(self, dt):
-        """Run all cult patrols. Each patroller reads its min_prox
-        threshold; below it, they stay dormant (no scene picked, no
-        NPC spawned). At or above, they teleport between random
-        outdoor scenes every 30-60s. If they land in the player's
-        current scene, an NPC sprite spawns and starts walking
-        toward the player ('chaser' AI). On sight (within range,
-        player not hidden) the patroller bumps proximity by 0.20
-        once per scene visit. On touch (within ~22 px) the closure
-        triggers.
-
-        Hard-gated to night: cultists are creatures of the dark.
-        The day is the player's exploration window. _patrols_active
-        owns the phase + scene + day-cap rules."""
+    def _tick_cultists(self, dt):
+        """Regular cultists roam every outdoor scene (chaser AI: scout,
+        chase on sight, search, investigate). Their gaze raises
+        visibility while they hold line of sight, and contact spikes it
+        -- but they never kill (the King is the only kill). The special
+        curse-priest runs a ritual: hold the player in its sightline
+        long enough and a permanent curse lands. Safe interiors are
+        refuges -- no cultists, and the gaze-pressure lifts."""
+        self._gaze_count = 0
         if self.scene is None or self.player is None:
             return
-        # SAFE_SCENES are refuges -- no patrol presence here.
-        # Walking into the Inn lifts the cult pressure; this is the
-        # sanctuary mechanic that makes the rest of the world's
-        # closing-in feel meaningful. Despawn any leftover patrol
-        # NPCs that wandered in from a prior scene's tick.
-        if self.scene.key in SAFE_SCENES:
-            self.scene.npcs = [
-                n for n in self.scene.npcs
-                if not (isinstance(getattr(n, "tag", None), str)
-                        and n.tag.startswith("patrol_"))
-            ]
+        key = self.scene.key
+        # Safe interiors + non-cult scenes: sweep any strays and bail.
+        if key in SAFE_SCENES or key not in CULTIST_SCENES:
+            if any(str(getattr(n, "tag", "")).startswith("cult_")
+                   for n in self.scene.npcs):
+                self.scene.npcs = [
+                    n for n in self.scene.npcs
+                    if not str(getattr(n, "tag", "")).startswith("cult_")
+                ]
             return
-        # Day/night gate: outside permanent-night scenes (mistlands)
-        # and outside the day-7 cap, patrols stay in their burrows
-        # during morning/afternoon/dusk. Despawn any leftover NPCs
-        # so the player walking into a scene at dawn sees an empty
-        # village, not a frozen cultist mid-step.
-        if not self._patrols_active():
-            for patrol in self._patrols:
-                patrol["scene"] = None
-            self.scene.npcs = [
-                n for n in self.scene.npcs
-                if not (isinstance(getattr(n, "tag", None), str)
-                        and n.tag.startswith("patrol_"))
-            ]
-            return
-        prox = self.pursuer_proximity
-        # Per-patrol phase gates collapsed into the global night
-        # gate above (every patrol is night-only now). Each patrol
-        # still owns its proximity floor.
-        for patrol in self._patrols:
-            tag = patrol["tag"]
-            # Activation gate.
-            if prox < patrol["min_prox"]:
-                # Despawn any leftover NPC from a previous activation
-                # (proximity could have ticked back down past a
-                # transition reprieve, or the day has rolled into
-                # a phase where this patroller doesn't walk).
-                self.scene.npcs = [n for n in self.scene.npcs
-                                    if getattr(n, "tag", None) != tag]
-                patrol["scene"] = None
-                continue
-            # Announce each higher-tier patroller's first activation.
-            if tag not in self._patrol_announced:
-                self._patrol_announced.add(tag)
-                # Ambient figures are the world, not an event -- no
-                # announcement. Higher-tier patrols get one beat.
-                if not tag.startswith("patrol_amb_cult"):
-                    self.audio.play("low_pulse", 0.45)
-                    self.show_notice("Something else is out here.",
-                                      duration=3.0)
-            # Re-roll the patroller's current scene. Re-roll fires
-            # when the timer expires OR when scene is None (just-
-            # activated from dormancy, or first frame). The
-            # player's current scene is weighted higher so cult
-            # presence is felt -- at proximity 0 it's 1x weight
-            # (mostly random), at full proximity it's 5x more
-            # likely to land where the player is.
-            patrol["t"] -= dt
-            if patrol["t"] <= 0 or patrol["scene"] is None:
-                patrol["t"] = random.uniform(patrol["next_min"],
-                                              patrol["next_max"])
-                # Per-patrol scene pool override -- ambient figures
-                # restrict to the forest walkways so the player meets
-                # scouts there as a constant. Falls back to the global
-                # pool otherwise. The player's current scene is
-                # weighted higher with the meter so presence is felt.
-                pool_src = patrol.get("scenes", self._sheriff_scenes)
-                weight = 1 + int(prox * 4)
-                pool = list(pool_src)
-                if self.scene.key in pool_src:
-                    pool += [self.scene.key] * weight
-                patrol["scene"] = random.choice(pool)
-            # Find existing NPC for this patrol in the current scene.
-            npc = None
-            for n in self.scene.npcs:
-                if getattr(n, "tag", None) == tag:
-                    npc = n
-                    break
-            # If patrol is supposed to be here, ensure NPC exists.
-            if patrol["scene"] == self.scene.key:
-                if npc is None:
-                    npc = self._spawn_patrol_in_current(patrol)
-            else:
-                # Patrol moved on -- remove the NPC if it's still here.
-                if npc is not None:
-                    self.scene.npcs.remove(npc)
-                    npc = None
-            if npc is None:
-                continue
-            # Spotting check. The flag lives on the NPC instance so
-            # each fresh spawn (re-entering a scene creates a new
-            # one) gets a clean slate -- the spotted-line beat
-            # fires every re-entry, not once per scene per session.
-            d = math.hypot(npc.x - self.player.x,
-                            npc.y - self.player.y)
-            if d < 180 and self.player.hidden is None:
-                if not getattr(npc, "_has_been_spotted", False):
-                    npc._has_been_spotted = True
-                    self._on_patrol_spot(patrol, npc)
-            # Catch check. Single-session game: any catch is game
-            # over (the closure sequence -> title).
-            if d < 22 and self.player.hidden is None:
-                self._trigger_closure()
-                return
-        # Group flanking pass. Runs after every patrol has been
-        # processed for this tick. When 2+ patrol NPCs share a
-        # CHASE state in the player's scene, designate the
-        # closest as leader (straight chase) and assign each
-        # other a perpendicular flank target so they cut off
-        # either side of the player. Suppressed in tight scenes
-        # via the openness check -- corridors fail it and fall
-        # back to a straight pile-on.
-        chasers = []
+        self._ensure_cultists(key, dt)
+        hidden = self.player.hidden is not None
         for n in self.scene.npcs:
             tag = getattr(n, "tag", "")
-            if not isinstance(tag, str) or not tag.startswith("patrol_"):
+            if not isinstance(tag, str) or not tag.startswith("cult_"):
                 continue
-            if getattr(n, "_cult_state", "") == "chase":
-                chasers.append(n)
-        flank_ok = (len(chasers) >= 2
-                    and self._openness_around(
-                        self.player.x, self.player.y) >= 6)
-        if flank_ok:
-            chasers.sort(key=lambda n: math.hypot(
-                n.x - self.player.x, n.y - self.player.y))
+            d = math.hypot(n.x - self.player.x, n.y - self.player.y)
+            sees = (d < getattr(n, "_gaze_range", 180)) and not hidden
+            if sees:
+                self._gaze_count += 1
+            if tag == "cult_curser":
+                self._tick_ritual(n, dt, sees)
+                continue
+            # Regular cultist: one "they've seen you" beat per fresh
+            # spawn, plus a hard visibility spike if they reach you.
+            if sees and not getattr(n, "_has_been_spotted", False):
+                n._has_been_spotted = True
+                self.audio.play("low_pulse", 0.5)
+                self.show_notice("They've seen you.", duration=2.4)
+            if d < 24 and not hidden:
+                n._grab_cd = getattr(n, "_grab_cd", 0.0) - dt
+                if n._grab_cd <= 0:
+                    n._grab_cd = 2.0
+                    self.visibility = min(1.0, self.visibility + 0.15)
+                    self.audio.play("low_pulse", 0.7)
+        self._flank_cultists()
+
+    def _tick_ritual(self, npc, dt, sees):
+        """The curse-priest's ritual. While it holds the player in
+        sight the timer climbs; cross CURSE_RITUAL_TIME and a permanent
+        curse lands. Breaking sight -- cover, a corner, distance --
+        bleeds the timer back down. The only way out is to not be seen."""
+        cd = getattr(npc, "_curse_cd", 0.0)
+        if cd > 0:
+            # Respite after a curse: it can't re-bind for a beat.
+            npc._curse_cd = max(0.0, cd - dt)
+            npc._ritual_t = 0.0
+            return
+        t = getattr(npc, "_ritual_t", 0.0)
+        if sees:
+            if t == 0.0:
+                self.audio.play("low_pulse", 0.6)
+                self.show_notice("It fixes you with its gaze. Break its "
+                                 "sight.", duration=3.0)
+            t += dt
+            if t >= CURSE_RITUAL_TIME:
+                self._apply_curse()
+                t = 0.0
+                npc._curse_cd = CURSE_RITUAL_TIME
+        else:
+            t = max(0.0, t - dt * 1.5)
+        npc._ritual_t = t
+
+    def _ensure_cultists(self, key, dt):
+        """Keep the current cult scene topped up: CULT_REGULARS roaming
+        cultists, plus the curse-priest in the deep cult sites. Rate-
+        limited so killing one buys a breather, not an instant respawn."""
+        self._cult_topup_t -= dt
+        if self._cult_topup_t > 0:
+            return
+        self._cult_topup_t = CULT_TOPUP_INTERVAL
+        regulars = [n for n in self.scene.npcs
+                    if getattr(n, "tag", "") == "cult_regular"
+                    and getattr(n, "alive", True)]
+        if len(regulars) < CULT_REGULARS:
+            self._spawn_cultist("cult_regular", "cultist",
+                                 speed=0.85, gaze_range=180)
+        if key in CURSER_SCENES:
+            curser = [n for n in self.scene.npcs
+                      if getattr(n, "tag", "") == "cult_curser"
+                      and getattr(n, "alive", True)]
+            if not curser:
+                self._spawn_cultist("cult_curser", "curse_priest",
+                                     speed=0.6, gaze_range=210,
+                                     movement="stalker", name="The Preacher")
+
+    def _flank_cultists(self):
+        """When 2+ regular cultists are chasing in an open scene, the
+        closest leads a straight chase and the rest peel to perpendicular
+        flanks to cut the player off. Tight scenes fall back to a
+        straight pile-on."""
+        chasers = [n for n in self.scene.npcs
+                   if getattr(n, "tag", "") == "cult_regular"
+                   and getattr(n, "_cult_state", "") == "chase"]
+        if (len(chasers) >= 2
+                and self._openness_around(self.player.x,
+                                          self.player.y) >= 6):
+            chasers.sort(key=lambda n: math.hypot(n.x - self.player.x,
+                                                  n.y - self.player.y))
             leader = chasers[0]
             leader._flank_target = None
             for follower in chasers[1:]:
@@ -1884,25 +1793,18 @@ class Game:
                 ldy = self.player.y - leader.y
                 ld = math.hypot(ldx, ldy) or 1.0
                 offset = max(60.0, min(160.0, ld * 0.8))
-                # Two perpendicular candidates around the player.
                 cand_a = (self.player.x + (-ldy / ld) * offset,
-                          self.player.y + ( ldx / ld) * offset)
-                cand_b = (self.player.x + ( ldy / ld) * offset,
+                          self.player.y + (ldx / ld) * offset)
+                cand_b = (self.player.x + (ldy / ld) * offset,
                           self.player.y + (-ldx / ld) * offset)
-                # Pick whichever is closer to the follower's
-                # current position so they don't cross the leader.
                 da = math.hypot(follower.x - cand_a[0],
-                                 follower.y - cand_a[1])
+                                follower.y - cand_a[1])
                 db = math.hypot(follower.x - cand_b[0],
-                                 follower.y - cand_b[1])
+                                follower.y - cand_b[1])
                 follower._flank_target = cand_a if da < db else cand_b
         else:
-            # Not enough chasers (or scene too tight): clear any
-            # leftover flank intent from previous ticks.
-            for n in self.scene.npcs:
-                if isinstance(getattr(n, "tag", None), str) and (
-                        n.tag.startswith("patrol_")):
-                    n._flank_target = None
+            for n in chasers:
+                n._flank_target = None
 
     def _openness_around(self, x, y, ring_r=64):
         """Count how many of 8 ring points around (x,y) are
@@ -1921,69 +1823,39 @@ class Game:
                 n += 1
         return n
 
-    def _spawn_patrol_in_current(self, patrol):
-        """Plant a patrol NPC at one of the scene's four corners,
-        avoiding solid tiles. Prefers a corner > 200 px from the
-        player; if no corner is that far (small scenes like the
-        bedroom), falls back to the FARTHEST available walkable
-        corner. Previously the >200 hard requirement silently
-        failed in tight rooms, so apex Yellow King catches never
-        landed there -- the patrol existed but never spawned."""
+    def _spawn_cultist(self, tag, kind, speed=0.85, gaze_range=180,
+                       movement="chaser", name=""):
+        """Plant a cultist at the farthest walkable scene corner from
+        the player, so they enter from the edges rather than on top of
+        you. Returns the NPC, or None if no corner is walkable."""
         from entities.npc import NPC
         scene = self.scene
-        candidates = [
+        corners = [
             (4 * Scene.TILE, 4 * Scene.TILE),
             ((scene.w - 4) * Scene.TILE, 4 * Scene.TILE),
             (4 * Scene.TILE, (scene.h - 4) * Scene.TILE),
-            ((scene.w - 4) * Scene.TILE,
-             (scene.h - 4) * Scene.TILE),
+            ((scene.w - 4) * Scene.TILE, (scene.h - 4) * Scene.TILE),
         ]
-        random.shuffle(candidates)
-        # First pass: prefer a corner with breathing room.
-        for sx, sy in candidates:
-            if not scene.is_solid_at(sx, sy):
-                if math.hypot(sx - self.player.x,
-                               sy - self.player.y) > 200:
-                    return self._make_patrol_npc(patrol, sx, sy)
-        # Fallback: pick the farthest available walkable corner so
-        # tight scenes still get a spawn instead of silently failing.
-        best = None
-        best_d = -1.0
-        for sx, sy in candidates:
+        best, best_d = None, -1.0
+        for sx, sy in corners:
             if scene.is_solid_at(sx, sy):
                 continue
             d = math.hypot(sx - self.player.x, sy - self.player.y)
             if d > best_d:
-                best_d = d
-                best = (sx, sy)
-        if best is not None:
-            return self._make_patrol_npc(patrol, *best)
-        return None
-
-    def _make_patrol_npc(self, patrol, sx, sy):
-        from entities.npc import NPC
-        n = NPC(sx, sy, patrol["name"], patrol["kind"],
+                best_d, best = d, (sx, sy)
+        if best is None:
+            return None
+        n = NPC(best[0], best[1], name, kind,
                 voice="blip_low", portrait="guard",
-                movement="chaser",
-                speed=patrol.get("speed", 0.85),
+                movement=movement, speed=speed,
                 no_prompt=True, solid=False)
-        n.tag = patrol["tag"]
+        n.tag = tag
         n.dialogue_fn = None
+        n._gaze_range = gaze_range
+        n._ritual_t = 0.0
+        n._has_been_spotted = False
         self.scene.add_npc(n)
         return n
-
-    def _on_patrol_spot(self, patrol, npc):
-        """First time this patroller sees the player in this scene."""
-        self.audio.play("low_pulse", 0.55)
-        self.pursuer_proximity = min(1.0,
-                                      self.pursuer_proximity + 0.20)
-        # Different notice text per patroller for variety.
-        line = {
-            "patrol_preacher": "The Preacher has spotted you.",
-            "patrol_cultist": "They see you.",
-            "patrol_hound": "The dog catches your scent.",
-        }.get(patrol["tag"], "They see you.")
-        self.show_notice(line, duration=2.6)
 
     def _tick_wake_muffle(self, dt):
         """Opening wake-state. While `_wake_muffle_t` is positive the
@@ -2061,12 +1933,7 @@ class Game:
             if not p.sprint_active:
                 p.sprint_active = True
             p.sprint_t -= dt
-            # Sprinting is loud -- it draws extra attention on top of
-            # the normal moving rate.
-            self.pursuer_proximity = min(
-                1.0, self.pursuer_proximity + dt * 0.05
-            )
-            # Periodic loud step every ~0.35s so the Pursuer hears.
+            # Periodic loud step every ~0.35s.
             self._sprint_step_t = getattr(self, "_sprint_step_t", 0.0) - dt
             if self._sprint_step_t <= 0:
                 self._sprint_step_t = 0.35
@@ -2089,7 +1956,7 @@ class Game:
             return
         if self.state != "playing":
             return
-        prox = self.pursuer_proximity
+        prox = self.visibility
         if prox < 0.70 or self.player.hidden is not None:
             self._heartbeat_t = 0.0
             return
@@ -2125,153 +1992,142 @@ class Game:
                 return True
         return False
 
-    def _tick_pursuer(self, dt):
-        """Run the Pursuer's life. The Pursuer is invisible -- this
-        method only schedules audio events, notices, and (eventually)
-        the closure countdown that ends the game.
+    def _tick_visibility(self, dt):
+        """The visibility meter [0, 1] -- how visible the player is to
+        the King in Yellow. Watchers (spawned by a cultist's curse)
+        push it up; hiding bleeds it down. At 1.0 the King materialises
+        (see _tick_king); claw it back under 0.90 and he dissolves.
 
-        Proximity ramps:
-          * +0.005/sec passively (about 3 minutes from 0 to 1)
-          * +0.02/sec while the player is standing still
-          * -0.04 on every scene transition (the door delays it)
-          * +0.10 on the rare moment the player passes through the
-            same exit twice in a short window (it has noticed)
-
-        The set of audio events tightens as proximity grows: at low
-        proximity it's mostly distant doors; at high proximity it's
-        breath cues every few seconds and a low_pulse pulse that
-        kicks in once per minute. Past ~0.95 the closure timer arms,
-        and once that hits zero, _trigger_closure is called."""
+        Heavy curses tip the balance: enough Watchers out-pace even
+        hiding -- the spiral toward a King the player can no longer
+        shake."""
         if self.scene is None or self.player is None:
             return
-        self._pursuer_t += dt
-        # THRESHOLD threat model. The meter tracks how much danger the
-        # player is actually in, moment to moment:
-        #   * an enemy with line of sight on you -> climbs fast
-        #   * moving in the open                 -> climbs slowly
-        #   * still AND unseen (or hidden)       -> falls; you are
-        #                                           isolated and safe
-        # Hiding breaks line of sight, so cover is the strongest way
-        # to bleed the meter back down when something is near.
-        seen = self._enemy_sees_player()
-        if seen:
-            self.pursuer_proximity += dt * 0.12
-        elif self._is_moving:
-            self.pursuer_proximity += dt * 0.03
+        hidden = getattr(self.player, "hidden", None) is not None
+        n_watch = len(self._watchers)
+        if hidden:
+            # In cover the cult's gaze breaks, but the curse seeps through.
+            rise = n_watch * VIS_WATCHER_HIDDEN
+            self.visibility += dt * (rise - VIS_HIDE_BLEED)
         else:
-            self.pursuer_proximity -= dt * 0.06
-        self.pursuer_proximity = max(0.0, min(1.0, self.pursuer_proximity))
-        # Closure: while the meter is pinned at the top AND an enemy
-        # can still see you, a short grace timer counts down to a
-        # catch (game over -> title). Break line of sight -- hide --
-        # and the catch is called off and the meter starts to fall.
-        if self.pursuer_proximity >= 0.95 and seen:
-            if self._pursuer_closure_t < 0:
-                self._pursuer_closure_t = 6.0
-                self.audio.play("low_pulse", 0.85)
-                self.show_notice("Hide.", duration=3.0)
-            else:
-                self._pursuer_closure_t -= dt
-                if self._pursuer_closure_t <= 0:
-                    self._trigger_closure()
-                    return
-        else:
-            self._pursuer_closure_t = -1.0
-        # Schedule the next manifestation event. Interval scales
-        # inversely with proximity: at 0.0, ~30s between events;
-        # at 1.0, ~3s.
-        self._pursuer_next_event -= dt
-        if self._pursuer_next_event > 0:
-            return
-        # Pick the next interval before firing so the schedule keeps
-        # ticking even if we early-out below. Apex band (>= 0.95)
-        # collapses the cadence to ~1.6s so the breathing/pulse
-        # feels directly overhead.
-        prox = self.pursuer_proximity
-        if prox >= 0.95:
-            base = 1.6
-            jitter = random.uniform(-0.4, 0.6)
-            self._pursuer_next_event = max(0.8, base + jitter)
-        else:
-            base = 30.0 - prox * 26.0   # 30 .. 4
-            jitter = random.uniform(-1.0, 3.0)
-            self._pursuer_next_event = max(2.0, base + jitter)
-        # Choose an event by proximity band. Notices are kept rare --
-        # the audio cues are the narration; the on-screen text is for
-        # the rare environmental beat the player cannot infer from
-        # sound alone.
-        events = []
-        if prox < 0.30:
-            events = ["distant_door", "phantom_step", "phantom_step"]
-        elif prox < 0.55:
-            events = ["distant_door", "phantom_step", "phantom_step",
-                      "breath", "notice"]
-        elif prox < 0.80:
-            events = ["phantom_step", "phantom_step", "breath",
-                      "breath", "low_pulse", "notice"]
-        elif prox < 0.95:
-            events = ["breath", "breath", "breath", "phantom_step",
-                      "low_pulse", "notice"]
-        else:
-            # Apex: the breath is in the room. Drop the steps and
-            # notices; everything is breath and bass pulse, almost
-            # constant. The notice is gone -- there is nothing
-            # left to "notice."
-            events = ["breath", "breath", "breath", "breath",
-                      "low_pulse", "low_pulse"]
-        # Avoid immediate repeats so two breaths don't land back-to-back.
-        candidates = [e for e in events if e != self._pursuer_last_event]
-        if not candidates:
-            candidates = events
-        ev = random.choice(candidates)
-        self._pursuer_last_event = ev
-        # Spatial bias: pursuer cues come from one side of the player,
-        # not the centre of their head. Steps + doors hard-pan; breath
-        # rides close to centre with a subtle drift; low_pulse stays
-        # centred (sub-bass localisation is weak anyway). Sign is
-        # random per event so the player can't learn a side.
-        side = random.choice((-1.0, 1.0))
-        # Music duck: at mid-prox and above, drop the drone briefly so
-        # the cue lands in negative space. The cue itself is queued to
-        # fire ~0.5s after the duck starts so the gap is audible.
-        ducking = prox >= 0.55 and ev in ("phantom_step", "breath",
-                                           "distant_door")
-        if ducking:
-            self.audio.duck(1.6, depth=0.10)
-            cue_delay = 0.5
-        else:
-            cue_delay = 0.0
-        def _queue(name, vol, pan):
-            if cue_delay <= 0:
-                self.audio.play(name, vol, pan=pan)
-            else:
-                self._delayed_audio.append([cue_delay, name, vol, pan])
-        if ev == "phantom_step":
-            pan = side * random.uniform(0.55, 0.95)
-            _queue("phantom_step", 0.50 + prox * 0.30, pan)
-        elif ev == "distant_door":
-            pan = side * random.uniform(0.40, 0.80)
-            _queue("door_distant", 0.45 + prox * 0.30, pan)
-        elif ev == "breath":
-            pan = side * random.uniform(0.05, 0.25)
-            _queue("breath", 0.40 + prox * 0.40, pan)
-        elif ev == "low_pulse":
-            self.audio.play("low_pulse", 0.55 + prox * 0.30)
-        elif ev == "notice":
-            self._pursuer_show_notice()
+            rise = (n_watch * VIS_WATCHER_OPEN
+                    + self._gaze_count * VIS_GAZE)
+            self.visibility += dt * (rise - VIS_IDLE_DECAY)
+        self.visibility = max(0.0, min(1.0, self.visibility))
 
-    def _pursuer_show_notice(self):
-        """Pick a Pursuer notice line, avoiding immediate repeats,
-        and surface it as a dim text overlay. The notices read as
-        the player's own narration of what they heard -- the game
-        never confirms it directly."""
-        candidates = [n for n in self._pursuer_notices
-                      if n != self._pursuer_last_notice]
-        if not candidates:
-            candidates = self._pursuer_notices
-        line = random.choice(candidates)
-        self._pursuer_last_notice = line
-        self.show_notice(line, duration=2.6)
+    def _tick_king(self, dt):
+        """The King in Yellow -- the lethal apex. The instant
+        visibility hits 1.0 he materialises at the doorway the player
+        entered from and hunts relentlessly; reaching the player ends
+        the run (the closure sequence). Drop visibility below 0.90 --
+        by hiding -- and he dissolves. Safe rooms never host him."""
+        if self.scene is None or self.player is None:
+            return
+        in_safe = self.scene.key in SAFE_SCENES
+        if self._king is None:
+            if self.visibility >= 1.0 and not in_safe:
+                self._spawn_king()
+            return
+        # He is here. Dissolve if visibility falls or the player
+        # reaches a refuge; otherwise check for the catch.
+        if self.visibility < 0.90 or in_safe:
+            self._despawn_king()
+            return
+        d = math.hypot(self._king.x - self.player.x,
+                       self._king.y - self.player.y)
+        if d < 24:
+            self._trigger_closure()
+
+    def _spawn_king(self):
+        """Materialise the King at the entry doorway (_king_anchor),
+        falling back to the player's position if no anchor was set."""
+        from entities.npc import NPC
+        ax, ay = self._king_anchor or (self.player.x, self.player.y)
+        king = NPC(ax, ay, "", "yellow_king",
+                   movement="chaser", speed=2.4,
+                   no_prompt=True, solid=False)
+        king.tag = "king"
+        king.dialogue_fn = None
+        king._birth = 0.0      # 0..1 eruption progress (renderer reads it)
+        king._gait = 0.0       # run-cycle phase, advanced by movement
+        self.scene.add_npc(king)
+        self._king = king
+        self.audio.play("void_sting", 0.7)
+
+    def _despawn_king(self):
+        if self._king is not None and self.scene is not None:
+            try:
+                self.scene.npcs.remove(self._king)
+            except ValueError:
+                pass
+        self._king = None
+
+    def _apply_curse(self):
+        """Land a permanent curse. Each one deepens the Watcher cap, so
+        repeated rituals march the player toward an unshakeable King."""
+        self._curse_level += 1
+        self.visibility = min(1.0, self.visibility + 0.12)
+        self.audio.play("void_sting", 0.8)
+        if self._curse_level == 1:
+            self.show_notice("Something has been bound to you. You feel "
+                             "watched.", duration=3.5)
+        else:
+            self.show_notice("The curse deepens. More eyes open.",
+                             duration=3.5)
+
+    def _tick_watchers(self, dt):
+        """Manifest Watchers from the curse. Each curse level raises the
+        cap by WATCHERS_PER_CURSE; they appear one at a time at the edge
+        of view and stare. Their presence drives visibility up in
+        _tick_visibility. Safe interiors hold them off -- they re-form
+        the instant the player steps back out."""
+        if self.scene is None or self.player is None:
+            return
+        # Drop any that left the scene's npc list (swept on load/death).
+        self._watchers = [w for w in self._watchers
+                          if w in self.scene.npcs]
+        if self._curse_level <= 0 or self.scene.key in SAFE_SCENES:
+            if self._watchers:
+                self.scene.npcs = [n for n in self.scene.npcs
+                                   if getattr(n, "tag", "") != "watcher"]
+                self._watchers = []
+            return
+        cap = self._curse_level * WATCHERS_PER_CURSE
+        self._watcher_spawn_t -= dt
+        if self._watcher_spawn_t <= 0 and len(self._watchers) < cap:
+            self._watcher_spawn_t = WATCHER_SPAWN_INTERVAL
+            self._spawn_watcher()
+
+    def _spawn_watcher(self):
+        """Manifest one Watcher at a walkable tile a little way off, in a
+        random direction around the player. It stands and stares (the
+        'watch' movement). A faint breath and a small visibility nudge
+        mark the moment it opens its eyes."""
+        from entities.npc import NPC
+        scene = self.scene
+        spot = None
+        for _ in range(12):
+            ang = random.uniform(0, math.tau)
+            r = random.uniform(180, 300)
+            wx = self.player.x + math.cos(ang) * r
+            wy = self.player.y + math.sin(ang) * r
+            if (0 < wx < scene.w * Scene.TILE
+                    and 0 < wy < scene.h * Scene.TILE
+                    and not scene.is_solid_at(wx, wy)):
+                spot = (wx, wy)
+                break
+        if spot is None:
+            return
+        w = NPC(spot[0], spot[1], "", "watcher",
+                voice="blip_low", portrait="watcher",
+                movement="watch", speed=0.0,
+                no_prompt=True, solid=False)
+        w.tag = "watcher"
+        w.dialogue_fn = None
+        scene.add_npc(w)
+        self._watchers.append(w)
+        self.visibility = min(1.0, self.visibility + 0.03)
+        self.audio.play("breath", 0.4)
 
     # Until the cult is provoked, passive/stillness/sprint Pursuer
     # ramps stay dormant -- proximity holds at 0 even on long idle.
@@ -2283,8 +2139,8 @@ class Game:
         if not self.save.flag("cult_provoked"):
             self.save.set_flag("cult_provoked", True)
         if bump > 0:
-            self.pursuer_proximity = min(1.0,
-                                          self.pursuer_proximity + bump)
+            self.visibility = min(1.0,
+                                          self.visibility + bump)
 
     def _trigger_closure(self):
         """The Pursuer has reached the player. Hand off to the
@@ -2391,8 +2247,7 @@ class Game:
                 self._closure_locked = False
                 self._closure_started = False
                 self._closure_phase = -1
-                self.pursuer_proximity = 0.40   # not zero; never zero
-                self._pursuer_closure_t = -1.0
+                self.visibility = 0.40   # not zero; never zero
                 self.audio.music_muted = False
                 self.state = "title"
                 self.audio.play_music("threshold_drone")
@@ -2469,11 +2324,13 @@ class Game:
             self.audio.update_duck()
             self.dialog.update(dt)
             self._tick_delayed_audio(dt)
-            self._tick_pursuer(dt)
+            self._tick_cultists(dt)
+            self._tick_watchers(dt)
+            self._tick_visibility(dt)
             self._tick_heartbeat(dt)
             self._tick_wake_muffle(dt)
             self._tick_flashlight(dt)
-            self._tick_sheriff(dt)
+            self._tick_king(dt)
             self._tick_closure(dt)
             self._tick_flashback(dt)
             self._tick_ending(dt)
@@ -2545,8 +2402,15 @@ class Game:
                 blink_idx = random.choice(human_npcs)
         for i, npc in enumerate(self.scene.npcs):
             sx = int(npc.x - self.cam_x); sy = int(npc.y - self.cam_y)
-            draw_npc_sprite(self.screen, sx, sy, npc.sprite_kind, npc.facing,
-                            blink=(i == blink_idx))
+            m = getattr(npc, "morph", 0.0)
+            if m > 0.0:
+                draw_vessel_bloom(self.screen, sx, sy, npc.sprite_kind,
+                                  npc.facing, m, seed=id(npc) & 0xffff)
+            else:
+                draw_npc_sprite(self.screen, sx, sy, npc.sprite_kind,
+                                npc.facing, blink=(i == blink_idx),
+                                birth=getattr(npc, "_birth", None),
+                                gait=getattr(npc, "_gait", None))
             # THRESHOLD: NPC name labels removed. They were the
             # last RPG-tell on screen -- the player should learn
             # who an NPC is by interacting with them, not by
@@ -2679,7 +2543,7 @@ class Game:
         # bone-cold red and pulses at >= 0.95, where the Yellow King
         # avatar is loose. Player has no number, just a feel for
         # the line tightening.
-        prox = max(0.0, min(1.0, self.pursuer_proximity))
+        prox = max(0.0, min(1.0, self.visibility))
         bar_w = 80
         bar_h = 4
         tx = SCREEN_W - 14 - bar_w

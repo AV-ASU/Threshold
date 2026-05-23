@@ -1,9 +1,11 @@
 # Threshold
 
-A 2D top-down narrative-horror game built with pygame. You arrive in a
-small town in 1994 looking for someone, and slowly come to understand
-what the town is. There is no combat -- only walking, watching, hiding,
-and the thing that follows.
+A 2D top-down narrative-horror game built with pygame. In 1994 your car
+dies on a backroad outside **Brimley**, and the town's only garage can't
+touch it before morning. You take a room at the **Arcadia Lodge** to wait
+out the repair -- and as the days drag on, you come to understand what
+Brimley is. There is no combat -- only walking, watching, hiding, and the
+thing that follows.
 
 ## Requirements
 
