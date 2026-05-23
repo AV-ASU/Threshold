@@ -111,6 +111,10 @@ FLOOR_DEFS = {
     # at a glance; scenes are encouraged to layer grass_tuft
     # decorations on top for body.
     ":": {"color": (38, 52, 40),   "step": "step_grass"},
+    # Marsh mud -- wet churned low ground, walkable. Stamped in organic
+    # patches across the Brimley fields so the plain reads as a sodden
+    # mistlands marsh, not a flat lawn.
+    ";": {"color": (40, 37, 30),   "step": "step_grass"},
 }
 
 
@@ -678,6 +682,25 @@ def draw_floor(surf, ch, rx, ry, tx, ty):
             pygame.draw.rect(surf, (66, 44, 28),
                              (rx + (seed * 3 % 22) + 4,
                               ry + (seed * 7 % 22) + 4, 4, 3))
+    elif ch == ";":
+        # Marsh mud -- wet, churned ground. Dark puddle blotches with a
+        # cold standing-water glint, dead reeds, hairline mud cracks.
+        seed = tx * 17 + ty * 29
+        if seed % 2 == 0:
+            pygame.draw.ellipse(surf, (27, 26, 22),
+                                (rx + (seed % 16) + 2,
+                                 ry + ((seed // 5) % 16) + 2, 13, 8))
+        if seed % 5 == 0:                          # standing water
+            pygame.draw.ellipse(surf, (42, 50, 50),
+                                (rx + (seed % 14) + 5, ry + ((seed // 7) % 14) + 7, 9, 4))
+            pygame.draw.ellipse(surf, (60, 70, 70),
+                                (rx + (seed % 14) + 7, ry + ((seed // 7) % 14) + 8, 3, 1))
+        if seed % 4 == 0:                          # dead reed
+            fx = rx + (seed % 26) + 2
+            pygame.draw.line(surf, (72, 68, 44), (fx, ry + 22), (fx - 1, ry + 13), 1)
+        if seed % 7 == 0:                          # mud crack
+            cx = rx + (seed % 20) + 4
+            pygame.draw.line(surf, (20, 19, 16), (cx, ry + 8), (cx + 5, ry + 13), 1)
     # Macro shadow blotches: a low-frequency, world-anchored darkening
     # that rolls across many tiles at once, so the floor stops reading
     # as a grid of identical cells. Two cheap sine layers, darken-only.

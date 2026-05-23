@@ -271,6 +271,30 @@ def build_mistlands():
                  [(31, 24), (18, 44), (9, 58), (7, 66)], trk)                # -> Sheriff door
     _carve_track(floor_ll, objects_l, [(7, 66), (7, 80), (7, 94)], trk)      # -> Farmhouse door
     _carve_track(floor_ll, objects_l, [(7, 82), (11, 81), (14, 80)], trk)    # -> cauldron entrance
+
+    # ---- Marsh ----
+    # Sodden low ground churned into mud + standing water, stamped as
+    # organic blobs across the open fields (elliptical falloff + hash
+    # noise so the edges are ragged). Only plain grass converts, so the
+    # river, corn cover, worn tracks and buildings are left intact -- the
+    # marsh just fills the open plain so it reads as wet mistlands.
+    for (pl, pt, pr, pb) in [(16, 46, 26, 58), (40, 30, 50, 42),
+                             (20, 84, 34, 94), (62, 82, 76, 92),
+                             (44, 60, 56, 70)]:
+        cxm, cym = (pl + pr) / 2.0, (pt + pb) / 2.0
+        rxr, ryr = (pr - pl) / 2.0 + 1.0, (pb - pt) / 2.0 + 1.0
+        for ty2 in range(pt - 1, pb + 2):
+            for tx2 in range(pl - 1, pr + 2):
+                if not (0 <= ty2 < h and 0 <= tx2 < w):
+                    continue
+                if floor_ll[ty2][tx2] != "g":
+                    continue
+                nx = (tx2 - cxm) / rxr
+                ny = (ty2 - cym) / ryr
+                dd = nx * nx + ny * ny
+                hsh = ((tx2 * 73856093) ^ (ty2 * 19349663)) % 100
+                if dd <= 0.6 or (dd <= 1.1 and hsh < 48):
+                    floor_ll[ty2][tx2] = ";"
     floor_rows = ["".join(r) for r in floor_ll]
 
     objects = ["".join(r) for r in objects_l]
