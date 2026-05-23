@@ -608,22 +608,27 @@ def build_mistlands():
     sc.add_decoration(Decoration(60 * TILE + 16, 40 * TILE + 16, "gas_pump"))
     sc.add_decoration(Decoration(58 * TILE + 16, 47 * TILE + 16, "mud_footprint"))
 
-    # Weeds reclaiming the foundations -- tufts crowding up the walls and
-    # spilling over the footings of every building, so the wall never
-    # meets the ground on a clean line. The town is being taken back.
+    # Weeds reclaiming the foundations -- tufts crowding the ground just
+    # OUTSIDE the walls (south footing + the east/west bases), so the
+    # wall meets the ground in an overgrown line, never buried in the
+    # wall itself. The town is being taken back.
     weeds = random.Random(317)
+
+    def _weed(px, py):                           # only on open ground, never in a wall
+        tx, ty = int(px // TILE), int(py // TILE)
+        if 0 <= ty < h and 0 <= tx < w and sc.objects[ty][tx] == ".":
+            sc.add_decoration(Decoration(px, py, "grass_tuft"))
+
     for (bl, br, bt, bb) in [(4, 10, 4, 9), (4, 10, 60, 65), (4, 10, 88, 93),
                              (50, 56, 55, 60), (60, 66, 48, 53),
                              (65, 71, 65, 70), (80, 86, 75, 80)]:
-        for _ in range(7):                       # along the front footing
-            gx = weeds.randint(bl, br) * TILE + weeds.randint(2, 28)
-            gy = (bb + 1) * TILE + weeds.randint(-6, 10)
-            sc.add_decoration(Decoration(gx, gy, "grass_tuft"))
-        for ey in (bt, bb):                      # crowding the corners up the sides
-            for ex in (bl, br):
-                sc.add_decoration(Decoration(
-                    ex * TILE + weeds.randint(-4, 28),
-                    ey * TILE + weeds.randint(-2, 28), "grass_tuft"))
+        for _ in range(6):                       # front footing, on the ground below
+            _weed(weeds.randint(bl, br) * TILE + weeds.randint(2, 28),
+                  (bb + 1) * TILE + weeds.randint(2, 16))
+        for _ in range(4):                       # hugging the outside of the side walls
+            ry2 = weeds.randint(bt, bb) * TILE + weeds.randint(2, 28)
+            _weed((bl - 1) * TILE + weeds.randint(16, 28), ry2)
+            _weed((br + 1) * TILE + weeds.randint(2, 14), ry2)
 
     # A dead grove on the bare west bank -- a stand of leafless trees out
     # in the open emptiness, a focal dread that offers no cover.
