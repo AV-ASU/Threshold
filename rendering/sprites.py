@@ -535,7 +535,7 @@ _YK_T1, _YK_T2, _YK_T3, _YK_T4 = (140, 96, 22), (196, 150, 42), (236, 198, 66), 
 _YK_GOLD, _YK_HOT = (236, 204, 64), (252, 226, 120)
 _YK_DK, _YK_DK_HI = (28, 25, 34), (60, 55, 72)
 _YK_BONE = (150, 128, 70)
-_YK_FHI, _YK_FMID, _YK_FLO, _YK_PIT = (210, 202, 180), (150, 143, 120), (92, 86, 70), (10, 8, 12)
+_YK_PIT = (10, 8, 12)
 # Warm, gold-tinted mask tones so the masks read as part of the light (drawn
 # translucent + luminous) rather than separate pale objects floating in it.
 _YK_MHI, _YK_MMID, _YK_MLO, _YK_MPIT = (238, 222, 174), (210, 178, 108), (150, 116, 52), (78, 52, 18)
