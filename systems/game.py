@@ -168,6 +168,10 @@ WATCHERS_PER_CURSE = 3         # Watcher cap added per curse level
 WATCHER_SPAWN_INTERVAL = 4.0   # seconds between Watcher manifestations
 CULT_REGULARS = 2              # roaming cultists kept per cult scene
 CULT_TOPUP_INTERVAL = 8.0      # seconds between cultist (re)spawns
+# Desperation melee: a non-lethal shove that stuns a cultist/shadow.
+MELEE_CD = 0.85                # seconds between shoves
+MELEE_STUN_DUR = 1.6           # seconds a target stays frozen
+MELEE_REACH = 30               # px from the swing point a target must be
 # Visibility rates, per second. Watchers + cultist gaze push the meter
 # up; hiding pulls it down. Enough Watchers out-pace even hiding --
 # that is the spiral toward a King the player can no longer shake.
@@ -891,6 +895,8 @@ class Game:
             self.stillness_t += dt
         self.player.attack_timer = max(0, self.player.attack_timer - dt)
         self.player.swing_t = max(0, self.player.swing_t - dt)
+        self.player.melee_cd = max(0, self.player.melee_cd - dt)
+        self.player.melee_swing_t = max(0, self.player.melee_swing_t - dt)
         self.player.invuln = max(0, self.player.invuln - dt)
         if self.player.charging:
             self.player.charge_t = min(2.0, self.player.charge_t + dt)
@@ -1037,6 +1043,49 @@ class Game:
             self.show_notice(line, duration=3.0)
 
     # ---- Combat ----
+    def player_melee_stun(self):
+        """The player's only 'combat': a desperation shove. Non-lethal --
+        a cultist or shadow caught in the short arc in front is STUNNED
+        (frozen + blind) for a beat, never killed; the King stays the
+        only lethal thing. It buys the seconds to break line of sight and
+        get to cover. Cooldown-gated, and kept entirely separate from the
+        legacy swing/damage path so it can't ever deal damage."""
+        p = self.player
+        if (self.state != "playing" or p.hidden is not None
+                or p.melee_cd > 0 or self.dialog.active):
+            return
+        p.melee_cd = MELEE_CD
+        p.melee_swing_t = 0.2
+        p.melee_dir = p.facing
+        self.audio.play("swing", 0.55)
+        fx, fy = p.facing
+        cx, cy = p.x + fx * 22, p.y + fy * 22
+        hit = False
+        for n in self.scene.npcs:
+            if not str(getattr(n, "tag", "")).startswith("cult_"):
+                continue
+            if not getattr(n, "alive", True):
+                continue
+            if math.hypot(n.x - cx, n.y - cy) < MELEE_REACH:
+                n._stun_t = MELEE_STUN_DUR
+                n.flash = 0.12
+                n._has_been_spotted = False      # they lose the lock on you
+                hit = True
+        for e in self.scene.enemies:
+            if not getattr(e, "alive", False):
+                continue
+            if (getattr(e, "kind", "") == "black_figure"
+                    and math.hypot(e.x - cx, e.y - cy) < MELEE_REACH):
+                e._stun_t = MELEE_STUN_DUR
+                e.flash = 0.12
+                hit = True
+        if hit:
+            self.audio.play("hit", 0.5)
+            if not self.save.flag("stun_taught"):
+                self.save.set_flag("stun_taught", True)
+                self.show_notice("You knock it back -- it won't stay "
+                                 "down. Run.", duration=2.6)
+
     def player_start_charge(self):
         """Press attack input. Begins a charge; the actual swing fires
         on release (release_charge). No SFX here -- the swing sound
@@ -1705,6 +1754,8 @@ class Game:
             tag = getattr(n, "tag", "")
             if not isinstance(tag, str) or not tag.startswith("cult_"):
                 continue
+            if getattr(n, "_stun_t", 0) > 0:
+                continue                     # shoved: blind + can't grab
             d = math.hypot(n.x - self.player.x, n.y - self.player.y)
             sees = (d < getattr(n, "_gaze_range", 180)) and not hidden
             if sees:
@@ -2451,8 +2502,18 @@ class Game:
                                    armor=self.player.inventory.equipped["armor"],
                                    mud=getattr(self.player, "mud", 0.0),
                                    prone=getattr(self.player, "prone", False))
-            # THRESHOLD: no swing visual, no charge ring -- the player
-            # has no attack to telegraph.
+            # The shove telegraph: a brief bright bar thrown out in front
+            # of the player for the length of the swing. No charge ring --
+            # the only "attack" is this one desperate push.
+            if self.player.melee_swing_t > 0:
+                fx, fy = self.player.melee_dir
+                ax = psx + int(fx * 16)
+                ay = psy + int(fy * 16)
+                px, py = -fy, fx
+                L = 11
+                pygame.draw.line(self.screen, (225, 220, 205),
+                                 (ax + int(px * L), ay + int(py * L)),
+                                 (ax - int(px * L), ay - int(py * L)), 3)
         # Reset the per-frame full-screen darkness budget. Each
         # whole-screen black overlay below claims a slice via
         # _claim_dark() so the combined wash never exceeds
@@ -2786,11 +2847,9 @@ class Game:
                 if ev.key in (pygame.K_e, pygame.K_SPACE, pygame.K_RETURN):
                     self.try_interact()
                 elif ev.key in (pygame.K_j, pygame.K_z):
-                    # THRESHOLD: combat is gone. The attack input still
-                    # registers so muscle memory doesn't cause UI bugs,
-                    # but it does nothing. The player will press it once,
-                    # then twice, then realise.
-                    pass
+                    # The desperation shove -- a non-lethal stun, the
+                    # player's only answer to a cultist closing in.
+                    self.player_melee_stun()
                 elif ev.key == pygame.K_i:
                     self.inv_ui.toggle()
                 elif ev.key == pygame.K_n:
@@ -2811,7 +2870,7 @@ class Game:
                     self.state = "paused"
                     self.audio.play("menu_open", 0.6)
             elif ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 1:
-                pass  # No attack on click either.
+                self.player_melee_stun()
             elif ev.type == pygame.MOUSEBUTTONUP and ev.button == 1:
                 pass
 
