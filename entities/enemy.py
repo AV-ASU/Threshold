@@ -110,6 +110,7 @@ class Enemy:
         self.color = color
         self.attack_timer = 0
         self.flash = 0
+        self._stun_t = 0.0      # player's shove freezes the AI for a beat
         self.facing = (0, 1)
         self.move_timer = random.uniform(0, 2)
         self.move_target = None
@@ -222,6 +223,9 @@ class Enemy:
             d = 1e9
         self.attack_timer -= dt
         self.flash = max(0, self.flash - dt)
+        if self._stun_t > 0:
+            self._stun_t = max(0.0, self._stun_t - dt)
+            return                      # frozen by the player's shove
         self.telegraph = False
         self.just_shot = False
         if self.morph != self.morph_target:

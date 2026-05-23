@@ -511,12 +511,13 @@ def build_shop():
         "WWWWWWWWWWWW",
     ]
     sc = Scene("shop", floor, objects, music="home")
-    # General store now opens onto the town street.
-    sc.add_exit("D", "town", "from_shop")
+    # The General Store stands out on the Brimley bank now; its door
+    # opens back onto the field.
+    sc.add_exit("D", "mistlands", "from_shop")
     sc.set_spawn("default", 6, 5)
-    sc.set_spawn("from_mistlands", 5, 6)       # legacy fallback
+    sc.set_spawn("from_mistlands", 5, 6)       # arrive from Brimley
     sc.set_spawn("from_village", 5, 6)         # legacy fallback
-    sc.set_spawn("from_town", 5, 6)            # arrive from the town street
+    sc.set_spawn("from_town", 5, 6)            # legacy fallback
 
     pos = sc.consume_marker("S")
     if pos:
@@ -671,11 +672,12 @@ def build_barn():
     ]
 
     def _barn_interact(game):
+        # The old tunnel down to the Works has been nailed shut: the
+        # well is the ONLY way underground now (no secret paths).
         if (abs(game.player.x - hatch_x) < 36
                 and abs(game.player.y - hatch_y) < 36):
-            game.audio.play("door_open", 0.6)
-            game.show_notice("You climb down into the dark.")
-            game.begin_transition("well_passage", "from_barn")
+            game.audio.play("door_locked", 0.6)
+            game.show_notice("Boarded over and nailed shut from below.")
     sc.on_interact_fn = _barn_interact
     return sc
 

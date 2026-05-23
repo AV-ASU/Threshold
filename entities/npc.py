@@ -104,6 +104,10 @@ class NPC:
         # trigger is still open -- one assignment to change.
         self.morph = 0.0
         self.morph_target = 0.0
+        # Stun timer (player's desperation shove). While > 0 the NPC is
+        # frozen -- no movement -- and the cultist tick treats it as
+        # blind, so its gaze stops feeding visibility. Buys a breath.
+        self._stun_t = 0.0
 
     def take_damage(self, amount):
         if not self.alive:
@@ -117,6 +121,9 @@ class NPC:
         if not self.alive:
             return
         self.flash = max(0, self.flash - dt)
+        if self._stun_t > 0:
+            self._stun_t = max(0.0, self._stun_t - dt)
+            return                      # frozen: skip all movement/AI
         if self.morph != self.morph_target:
             step = dt / 1.4
             if self.morph < self.morph_target:

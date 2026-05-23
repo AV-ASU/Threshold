@@ -6,24 +6,102 @@ import random
 import pygame
 from constants import SCREEN_W, SCREEN_H, TILE
 
+
+# ---- Darkwood lighting / shadow helpers ----
+# Cheap, cached surfaces that turn the flat tile grid into something
+# with depth and mood: soft contact shadows ground props, warm light
+# pools relieve the dark, and a gradient strip casts wall shadows onto
+# the floor below them.
+_SHADOW_CACHE = {}
+
+
+def _ground_shadow(surf, cx, cy, rw, rh, alpha=80):
+    """Soft dark contact ellipse under a standing prop -- grounds it
+    so it stops looking like a sticker on the grid."""
+    key = (rw, rh, alpha)
+    s = _SHADOW_CACHE.get(key)
+    if s is None:
+        s = pygame.Surface((rw * 2, rh * 2), pygame.SRCALPHA)
+        pygame.draw.ellipse(s, (0, 0, 0, alpha), (0, 0, rw * 2, rh * 2))
+        _SHADOW_CACHE[key] = s
+    surf.blit(s, (int(cx - rw), int(cy - rh)))
+
+
+_POOL_CACHE = {}
+
+
+def _light_pool(surf, cx, cy, radius, color=(255, 170, 70), peak=70):
+    """Warm radial light pool with falloff. Normal-alpha overlay so it
+    reads as light spilling on the dark floor without blowing out."""
+    key = (radius, color, peak)
+    s = _POOL_CACHE.get(key)
+    if s is None:
+        s = pygame.Surface((radius * 2, radius * 2), pygame.SRCALPHA)
+        steps = 10
+        for k in range(steps, 0, -1):
+            r = max(1, int(radius * k / steps))
+            a = int(peak * (1 - k / steps) ** 1.4) + 4
+            pygame.draw.circle(s, (color[0], color[1], color[2], a),
+                               (radius, radius), r)
+        _POOL_CACHE[key] = s
+    surf.blit(s, (int(cx - radius), int(cy - radius)))
+
+
+_WALL_SHADOW = None
+
+
+def _wall_shadow_strip():
+    """A TILE-wide gradient (dark at top, fading down) blitted onto the
+    floor tile south of a wall, faking cast shadow + height."""
+    global _WALL_SHADOW
+    if _WALL_SHADOW is None:
+        h = (TILE * 3) // 4
+        s = pygame.Surface((TILE, h), pygame.SRCALPHA)
+        for yy in range(h):
+            a = int(100 * (1 - yy / h))
+            pygame.draw.line(s, (0, 0, 0, a), (0, yy), (TILE, yy))
+        _WALL_SHADOW = s
+    return _WALL_SHADOW
+
+
+# Object chars tall enough to throw a shadow onto the floor below.
+_SHADOW_CASTERS = frozenset("#WTpj%&lzqKR")
+# draw_object kinds that get a soft contact shadow at their base.
+_STANDING_KINDS = frozenset((
+    "tree", "cornstalk", "rock", "bed", "table", "chair",
+    "shelf", "stove", "crate", "debris",
+))
+
+_DARK_TILES = {}
+
+
+def _dark_tile(alpha):
+    s = _DARK_TILES.get(alpha)
+    if s is None:
+        s = pygame.Surface((TILE, TILE), pygame.SRCALPHA)
+        s.fill((0, 0, 0, alpha))
+        _DARK_TILES[alpha] = s
+    return s
+
+
 FLOOR_DEFS = {
-    "g": {"color": (58, 100, 60),  "step": "step_grass"},
-    "G": {"color": (40, 80, 48),   "step": "step_grass"},
-    "_": {"color": (118, 110, 100),"step": "step_stone"},
-    "=": {"color": (132, 96, 60),  "step": "step_wood"},
-    ",": {"color": (110, 50, 70),  "step": "step_carpet"},
-    ".": {"color": (40, 36, 50),   "step": "step_stone"},
+    "g": {"color": (46, 58, 44),   "step": "step_grass"},
+    "G": {"color": (34, 46, 36),   "step": "step_grass"},
+    "_": {"color": (80, 78, 74),   "step": "step_stone"},
+    "=": {"color": (88, 66, 42),   "step": "step_wood"},
+    ",": {"color": (74, 40, 50),   "step": "step_carpet"},
+    ".": {"color": (30, 28, 38),   "step": "step_stone"},
     "@": {"color": (8, 6, 14),     "step": "step_void"},
     # Round-13: river floor is no longer universally solid. The
     # mistlands river enforces directional access via Game's
     # `_river_blocks` check (player.in_river state + designated entry
     # tile). Other scenes can still use `~` as decorative water; nothing
     # else currently does.
-    "~": {"color": (38, 80, 140),  "step": "step_stone"},
+    "~": {"color": (26, 40, 40),   "step": "step_stone"},
     # Dirt footpath -- the worn-grass walking lane that runs through every
     # outdoor scene (replaces the round-4 stone corridor). Soft ochre so
     # it reads as packed dirt next to grass without going full road.
-    "d": {"color": (132, 102, 70), "step": "step_grass"},
+    "d": {"color": (96, 76, 52),   "step": "step_grass"},
     "x": {"color": (28, 22, 30),   "step": "step_stone"},  # basement floor
     # Dense corn cover. Walkable + step_grass, but the per-tick
     # cover check in Game.update_player flips player.hidden to
@@ -32,7 +110,11 @@ FLOOR_DEFS = {
     # Visually a deeper corn-green than `g` so the patches read
     # at a glance; scenes are encouraged to layer grass_tuft
     # decorations on top for body.
-    ":": {"color": (44, 78, 46),   "step": "step_grass"},
+    ":": {"color": (38, 52, 40),   "step": "step_grass"},
+    # Marsh mud -- wet churned low ground, walkable. Stamped in organic
+    # patches across the Brimley fields so the plain reads as a sodden
+    # mistlands marsh, not a flat lawn.
+    ";": {"color": (40, 37, 30),   "step": "step_grass"},
 }
 
 
@@ -164,52 +246,126 @@ OBJECT_DEFS = {
 }
 
 
-def draw_object(surf, ch, rx, ry):
+def _vary(seed, i):
+    """Cheap deterministic hash -> 32-bit int. Lets one tile seed fan out
+    into many independent values, so per-tile variation is stable no
+    matter where the camera is (screen-space jitter shimmers when you
+    walk; tile-space doesn't)."""
+    v = (seed ^ ((i + 1) * 0x9E3779B1)) & 0xFFFFFFFF
+    v ^= v >> 15
+    v = (v * 0x2C1B3C6D) & 0xFFFFFFFF
+    v ^= v >> 13
+    return v
+
+
+def _draw_tree(surf, rx, ry, seed):
+    """An oversized, irregular canopy that spills past its tile and
+    overhangs its neighbours -- a run of trees reads as one organic
+    canopy line, not a grid of identical discs. Center, radius, lean,
+    lobe layout and tint all vary per tile (deterministic). Light reads
+    from the upper-left, matching the wall faces."""
+    cx = rx + 16 + (_vary(seed, 0) % 11) - 5            # -5..+5
+    cy = ry + 12 + (_vary(seed, 1) % 9) - 5             # -5..+3 (bias up)
+    R = 18 + (_vary(seed, 2) % 9)                       # 18..26 > half-tile -> overhangs
+    lean = (_vary(seed, 3) % 7) - 3
+    tw = 5 + (_vary(seed, 4) % 2)
+    bx = rx + 16 - tw // 2 + lean                       # short trunk, mostly hidden
+    pygame.draw.rect(surf, (44, 32, 22), (bx, ry + 18, tw, 14))
+    pygame.draw.rect(surf, (28, 20, 13), (bx, ry + 18, 2, 14))
+    g = _vary(seed, 5) % 12
+    base = (16 + g // 2, 38 + g, 22 + g // 2)
+    mid = (26 + g, 56 + g, 32 + g)
+    lite = (42 + g, 78 + g, 46 + g)
+    for k, (ox, oy, rr) in enumerate((
+            (0.0, 0.10, 1.00), (-0.55, 0.22, 0.64), (0.55, 0.16, 0.60),
+            (-0.30, -0.46, 0.58), (0.34, -0.40, 0.54), (0.0, 0.48, 0.50))):
+        wob = (_vary(seed, 10 + k) % 5) - 2
+        pygame.draw.circle(surf, base,
+                           (int(cx + ox * R), int(cy + oy * R)),
+                           max(3, int(rr * R) + wob))
+    for ox, oy, rr in ((-0.18, -0.10, 0.72), (0.30, 0.06, 0.54),
+                       (-0.05, -0.42, 0.46)):
+        pygame.draw.circle(surf, mid,
+                           (int(cx + ox * R), int(cy + oy * R)),
+                           max(2, int(rr * R)))
+    for ox, oy, rr in ((-0.34, -0.34, 0.34), (-0.06, -0.20, 0.24)):
+        pygame.draw.circle(surf, lite,
+                           (int(cx + ox * R), int(cy + oy * R)),
+                           max(2, int(rr * R)))
+
+
+def _draw_corn(surf, rx, ry, seed):
+    """A corn clump taller and wider than its tile: stalks lean, overhang
+    sideways and spill above the tile top, so a corn block reads as a
+    dense continuous field rather than a grid of identical plants. Sway
+    is time-animated; everything else varies per tile (deterministic)."""
+    t = pygame.time.get_ticks() / 600.0
+    n = 3 + (_vary(seed, 0) % 2)                         # 3-4 stalks
+    g = _vary(seed, 1) % 10
+    stalk = (58 + g, 72 + g, 38 + g // 2)
+    blade = (82 + g, 96 + g, 48 + g)
+    tip = (150 + g, 130, 70)
+    amp = 2.0 + (_vary(seed, 2) % 3)
+    ph = (seed % 628) / 100.0                            # per-tile sway phase (camera-stable)
+    for s in range(n):
+        sx = rx + 5 + int(s * (TILE - 8) / max(1, n - 1)) \
+            + (_vary(seed, 10 + s) % 7) - 3              # spread across + overhang
+        bx = rx + 13 + (_vary(seed, 30 + s) % 8) - 4     # base clustered, foot of tile
+        top = ry - 6 + (_vary(seed, 20 + s) % 9)         # tops spill above the tile
+        bottom = ry + 31
+        tipx = sx + int(math.sin(t + ph + s * 0.7) * amp)
+        midx, midy = (bx + tipx) // 2, (bottom + top) // 2
+        pygame.draw.line(surf, stalk, (bx, bottom), (midx, midy), 2)
+        pygame.draw.line(surf, stalk, (midx, midy), (tipx, top), 2)
+        pygame.draw.line(surf, blade, (midx, midy),
+                         (midx - 8, midy - 2), 2)
+        pygame.draw.line(surf, blade, (midx + 1, midy + 4),
+                         (midx + 9, midy + 1), 2)
+        pygame.draw.line(surf, tip, (tipx, top), (tipx, top - 5), 2)
+
+
+def draw_object(surf, ch, rx, ry, tx, ty):
     od = OBJECT_DEFS.get(ch)
     if not od or od["kind"] in ("invisible", "void_passage", "outdoor_passage"):
         return
     kind = od["kind"]
+    if kind in _STANDING_KINDS:
+        _ground_shadow(surf, rx + TILE // 2, ry + TILE - 5, 11, 4, 70)
     if kind == "stone_wall":
-        pygame.draw.rect(surf, (74, 70, 86), (rx, ry, TILE, TILE))
-        pygame.draw.rect(surf, (40, 36, 48), (rx, ry, TILE, TILE), 1)
-        pygame.draw.line(surf, (40, 36, 48), (rx, ry + 16), (rx + TILE, ry + 16), 1)
-        pygame.draw.line(surf, (40, 36, 48), (rx + 16, ry), (rx + 16, ry + 16), 1)
-        pygame.draw.line(surf, (40, 36, 48), (rx + 8, ry + 16), (rx + 8, ry + TILE), 1)
-        pygame.draw.line(surf, (40, 36, 48), (rx + 24, ry + 16), (rx + 24, ry + TILE), 1)
+        pygame.draw.rect(surf, (64, 62, 66), (rx, ry, TILE, TILE))
+        pygame.draw.rect(surf, (34, 32, 38), (rx, ry, TILE, TILE), 1)
+        pygame.draw.line(surf, (34, 32, 38), (rx, ry + 16), (rx + TILE, ry + 16), 1)
+        pygame.draw.line(surf, (34, 32, 38), (rx + 16, ry), (rx + 16, ry + 16), 1)
+        pygame.draw.line(surf, (34, 32, 38), (rx + 8, ry + 16), (rx + 8, ry + TILE), 1)
+        pygame.draw.line(surf, (34, 32, 38), (rx + 24, ry + 16), (rx + 24, ry + TILE), 1)
+        # Height bevel: lit top edge, shadowed base -- fakes a block
+        # with mass instead of a flat painted tile.
+        pygame.draw.line(surf, (88, 86, 92), (rx, ry), (rx + TILE - 1, ry), 1)
+        pygame.draw.rect(surf, (22, 20, 26), (rx, ry + TILE - 3, TILE, 3))
     elif kind == "wood_wall" or kind == "fake_wall":
         # fake_wall draws identically to wood_wall so the player can't
         # distinguish them visually -- the only tell is that walking
         # into a fake_wall doesn't bump.
-        pygame.draw.rect(surf, (96, 70, 50), (rx, ry, TILE, TILE))
-        pygame.draw.rect(surf, (60, 40, 25), (rx, ry, TILE, TILE), 1)
-        pygame.draw.line(surf, (60, 40, 25), (rx, ry + 10), (rx + TILE, ry + 10), 1)
-        pygame.draw.line(surf, (60, 40, 25), (rx, ry + 22), (rx + TILE, ry + 22), 1)
+        pygame.draw.rect(surf, (80, 58, 40), (rx, ry, TILE, TILE))
+        pygame.draw.rect(surf, (48, 32, 20), (rx, ry, TILE, TILE), 1)
+        pygame.draw.line(surf, (48, 32, 20), (rx, ry + 10), (rx + TILE, ry + 10), 1)
+        pygame.draw.line(surf, (48, 32, 20), (rx, ry + 22), (rx + TILE, ry + 22), 1)
+        pygame.draw.line(surf, (104, 80, 56), (rx, ry), (rx + TILE - 1, ry), 1)
+        pygame.draw.rect(surf, (40, 28, 18), (rx, ry + TILE - 3, TILE, 3))
     elif kind == "tree":
-        pygame.draw.rect(surf, (60, 40, 25), (rx + 13, ry + 22, 6, 10))
-        pygame.draw.circle(surf, (24, 56, 30), (rx + 16, ry + 14), 14)
-        pygame.draw.circle(surf, (40, 80, 46), (rx + 12, ry + 12), 6)
-        pygame.draw.circle(surf, (40, 80, 46), (rx + 20, ry + 14), 5)
+        _draw_tree(surf, rx, ry, (tx * 73856093) ^ (ty * 19349663))
     elif kind == "cornstalk":
-        t = pygame.time.get_ticks() / 600.0
-        sway = int(math.sin(t + (rx + ry) * 0.07) * 1.5)
-        for cx in (8, 16, 24):
-            pygame.draw.line(surf, (96, 110, 50),
-                             (rx + cx, ry + 30),
-                             (rx + cx + sway, ry + 2), 2)
-        for cx, cy in ((6, 6), (12, 10), (22, 6), (26, 12),
-                       (10, 18), (20, 20)):
-            pygame.draw.ellipse(surf, (130, 150, 60),
-                                (rx + cx + sway, ry + cy, 8, 4))
-        pygame.draw.ellipse(surf, (180, 160, 70),
-                            (rx + 14 + sway, ry + 4, 4, 7))
+        _draw_corn(surf, rx, ry, (tx * 73856093) ^ (ty * 19349663))
     elif kind == "rock":
         pygame.draw.circle(surf, (100, 100, 110), (rx + 16, ry + 18), 12)
         pygame.draw.circle(surf, (70, 70, 80), (rx + 12, ry + 14), 4)
     elif kind == "bed":
-        pygame.draw.rect(surf, (220, 200, 220), (rx + 3, ry + 6, 26, 22))
-        pygame.draw.rect(surf, (180, 80, 100), (rx + 3, ry + 6, 26, 6))
-        pygame.draw.rect(surf, (240, 230, 240), (rx + 5, ry + 8, 8, 4))
-        pygame.draw.rect(surf, (90, 60, 40), (rx + 3, ry + 26, 26, 4))
+        pygame.draw.rect(surf, (150, 142, 138), (rx + 3, ry + 6, 26, 22))
+        pygame.draw.rect(surf, (120, 70, 78), (rx + 3, ry + 6, 26, 6))
+        pygame.draw.rect(surf, (178, 170, 162), (rx + 5, ry + 8, 8, 4))
+        pygame.draw.rect(surf, (66, 46, 32), (rx + 3, ry + 26, 26, 4))
+        # An old stain, the kind that doesn't wash out.
+        pygame.draw.rect(surf, (92, 84, 66), (rx + 17, ry + 16, 7, 7))
     elif kind == "table":
         pygame.draw.rect(surf, (160, 120, 90), (rx + 2, ry + 6, 28, 20))
         pygame.draw.rect(surf, (90, 60, 40), (rx + 2, ry + 22, 28, 6))
@@ -223,7 +379,7 @@ def draw_object(surf, ch, rx, ry):
         pygame.draw.line(surf, (60, 40, 25), (rx + 2, ry + 12), (rx + 30, ry + 12), 2)
         pygame.draw.line(surf, (60, 40, 25), (rx + 2, ry + 22), (rx + 30, ry + 22), 2)
         for i in range(3):
-            col = [(180, 60, 60), (60, 100, 180), (60, 160, 80)][i]
+            col = [(120, 60, 55), (66, 78, 110), (78, 104, 72)][i]
             pygame.draw.rect(surf, col, (rx + 4 + i * 8, ry + 4, 6, 6))
             pygame.draw.rect(surf, col, (rx + 4 + i * 8, ry + 14, 6, 6))
     elif kind == "window":
@@ -235,7 +391,11 @@ def draw_object(surf, ch, rx, ry):
         # don't pass the same figure at the same instant.
         pygame.draw.rect(surf, (96, 70, 50), (rx, ry, TILE, TILE))
         pygame.draw.rect(surf, (60, 40, 25), (rx, ry, TILE, TILE), 1)
-        pygame.draw.rect(surf, (140, 170, 200), (rx + 6, ry + 6, 20, 20))
+        # Lit-from-within: a dim, sickly amber pane (no cheerful primary
+        # blue) with a warmer core, so a window reads as an oil lamp
+        # burning behind grimy glass at dusk -- occupied, and wrong.
+        pygame.draw.rect(surf, (138, 104, 50), (rx + 6, ry + 6, 20, 20))
+        pygame.draw.rect(surf, (170, 138, 78), (rx + 9, ry + 9, 14, 14))
         # Passing-figure anomaly. Each window is on its own clock,
         # AND its cycle length is jittered by up to +/-20% based on
         # tile position so adjacent windows can never sync into a
@@ -254,8 +414,8 @@ def draw_object(surf, ch, rx, ry):
             if rx + 6 <= fx <= rx + 24:
                 pygame.draw.rect(surf, (40, 30, 50),
                                  (fx, ry + 8, 2, 16))
-        pygame.draw.line(surf, (60, 60, 80), (rx + 16, ry + 6), (rx + 16, ry + 26), 1)
-        pygame.draw.line(surf, (60, 60, 80), (rx + 6, ry + 16), (rx + 26, ry + 16), 1)
+        pygame.draw.line(surf, (74, 54, 34), (rx + 16, ry + 6), (rx + 16, ry + 26), 1)
+        pygame.draw.line(surf, (74, 54, 34), (rx + 6, ry + 16), (rx + 26, ry + 16), 1)
         pygame.draw.rect(surf, (60, 40, 25), (rx + 6, ry + 6, 20, 20), 1)
     elif kind == "fireplace":
         # Stone hearth, dark mouth, animated flame. At a rare phase
@@ -263,7 +423,8 @@ def draw_object(surf, ch, rx, ry):
         # inner flame -- the fire briefly resembles a face with two
         # hollow eyes. Held for ~80ms then the flame returns to its
         # normal taper.
-        pygame.draw.rect(surf, (74, 70, 86), (rx, ry, TILE, TILE))
+        _light_pool(surf, rx + 16, ry + 22, 44, (255, 140, 50), 92)
+        pygame.draw.rect(surf, (64, 62, 66), (rx, ry, TILE, TILE))
         pygame.draw.rect(surf, (10, 8, 12), (rx + 6, ry + 8, 20, 20))
         t = pygame.time.get_ticks() / 100.0
         f_h = 6 + int(math.sin(t) * 2)
@@ -289,19 +450,6 @@ def draw_object(surf, ch, rx, ry):
         pygame.draw.circle(surf, (10, 10, 14), (rx + 10, ry + 12), 4)
         pygame.draw.circle(surf, (10, 10, 14), (rx + 22, ry + 12), 4)
         pygame.draw.rect(surf, (10, 10, 14), (rx + 6, ry + 18, 20, 10))
-    elif kind == "door":
-        # Wooden door with brass knob and a horizontal panel seam.
-        # A pure-black thin sliver runs down the hinge edge -- every
-        # door is faintly ajar, never properly closed. Subliminal:
-        # the player's eye catches the gap before they realise why
-        # the doors look wrong.
-        pygame.draw.rect(surf, (90, 60, 30), (rx + 6, ry + 4, 20, 28))
-        pygame.draw.rect(surf, (60, 40, 20), (rx + 6, ry + 4, 20, 28), 1)
-        # Always-ajar sliver on the hinge side
-        pygame.draw.line(surf, (4, 2, 6),
-                         (rx + 7, ry + 5), (rx + 7, ry + 31), 1)
-        pygame.draw.circle(surf, (220, 200, 80), (rx + 22, ry + 18), 2)
-        pygame.draw.line(surf, (60, 40, 20), (rx + 6, ry + 18), (rx + 26, ry + 18), 1)
     elif kind == "ladder_down":
         # Round-7 redraw: cellar HATCH (was a ladder visual). A square
         # wood box flush to the ground, two horizontal plank seams, and
@@ -391,24 +539,10 @@ def draw_object(surf, ch, rx, ry):
         pygame.draw.line(surf, (50, 32, 18), (rx, ry + 26),
                          (rx + TILE, ry + 26), 1)
     elif kind == "roof":
-        # Wood-shingle ridge stripe. Each tile draws three rows of shingles
-        # offset to suggest the ridge runs east-west; deterministic per tile
-        # via tx/ty so adjacent tiles align into a continuous roof surface.
-        pygame.draw.rect(surf, (110, 70, 50), (rx, ry, TILE, TILE))
-        for sy in range(3):
-            row_y = ry + 2 + sy * 10
-            offset = (sy & 1) * 4
-            for sx in range(-1, 4):
-                shingle_x = rx + offset + sx * 9
-                pygame.draw.rect(surf, (140, 95, 70),
-                                 (shingle_x, row_y, 8, 8))
-                pygame.draw.line(surf, (60, 38, 24),
-                                 (shingle_x, row_y + 8),
-                                 (shingle_x + 8, row_y + 8), 1)
-        # Central ridge highlight so the roof reads as a peaked surface
-        pygame.draw.line(surf, (60, 38, 24),
-                         (rx, ry + TILE // 2),
-                         (rx + TILE, ry + TILE // 2), 1)
+        # Drawn by the unified gabled-roof pass (_draw_scene_roofs), not
+        # per tile -- one overhanging roof per building instead of a flat
+        # grid of shingle tiles. Nothing to do here.
+        pass
 
 
 def draw_floor(surf, ch, rx, ry, tx, ty):
@@ -424,14 +558,14 @@ def draw_floor(surf, ch, rx, ry, tx, ty):
         for i in range(2):
             sx = (seed * (i * 3 + 1)) % 28
             sy = (seed * (i * 5 + 7)) % 28
-            pygame.draw.rect(surf, (48, 86, 54),
+            pygame.draw.rect(surf, (40, 50, 40),
                              (rx + sx, ry + sy, 2, 2))
         if seed % 7 == 0:
-            pygame.draw.rect(surf, (40, 90, 50),
+            pygame.draw.rect(surf, (54, 64, 46),
                              (rx + (seed % 26), ry + (seed * 3 % 26), 2, 4))
         if seed % 11 == 0:
             # Dead clump
-            pygame.draw.rect(surf, (90, 78, 40),
+            pygame.draw.rect(surf, (66, 56, 34),
                              (rx + (seed * 2 % 26),
                               ry + (seed * 5 % 26), 3, 2))
         if seed % 73 == 0:
@@ -441,7 +575,7 @@ def draw_floor(surf, ch, rx, ry, tx, ty):
                              (rx + (seed * 3 % 28),
                               ry + (seed * 7 % 28), 1, 1))
     elif ch == "_":
-        pygame.draw.rect(surf, (130, 125, 120),
+        pygame.draw.rect(surf, (92, 90, 86),
                          (rx + 1, ry + 1, TILE - 2, TILE - 2), 1)
         # Scatter a few darker grout lines so stone reads as paved
         # rather than a single block.
@@ -481,17 +615,26 @@ def draw_floor(surf, ch, rx, ry, tx, ty):
             pygame.draw.rect(surf, (110, 50, 70),
                              (rx + 8, ry + 12, 14, 8))
     elif ch == "~":
-        # Water with two phase-offset ripples and a rare foam fleck.
-        t = (tx + ty + pygame.time.get_ticks() // 200) % 8
-        pygame.draw.rect(surf, (60, 100, 160),
-                         (rx + t, ry + 8, 8, 2))
-        pygame.draw.rect(surf, (60, 100, 160),
-                         (rx + (t + 4) % TILE, ry + 22, 8, 2))
+        # A dead, cold river -- murky and scummed over, not clean blue.
+        # Darker depths, slow dim ripples, patches of algae, and only a
+        # rare cold glint instead of bright foam.
         seed = tx * 11 + ty * 23
-        if seed % 13 == 0:
-            pygame.draw.rect(surf, (180, 200, 230),
-                             (rx + (seed % 28), ry + (seed * 5 % 28),
-                              1, 1))
+        if seed % 3 == 0:                          # darker depth mottle
+            pygame.draw.rect(surf, (17, 28, 30),
+                             (rx + (seed % 22) + 2,
+                              ry + ((seed // 5) % 22) + 2, 9, 6))
+        t = (tx + ty + pygame.time.get_ticks() // 320) % 8
+        pygame.draw.line(surf, (40, 54, 52), (rx + t, ry + 9),
+                         (rx + t + 7, ry + 9), 1)
+        pygame.draw.line(surf, (40, 54, 52), (rx + (t + 4) % TILE, ry + 23),
+                         (rx + (t + 4) % TILE + 7, ry + 23), 1)
+        if seed % 7 == 0:                          # algae scum
+            pygame.draw.ellipse(surf, (50, 62, 40),
+                                (rx + (seed % 18) + 4,
+                                 ry + ((seed // 7) % 18) + 4, 9, 5))
+        if seed % 19 == 0:                         # rare cold glint
+            pygame.draw.rect(surf, (88, 104, 100),
+                             (rx + (seed % 26), ry + (seed * 5 % 26), 1, 1))
     elif ch == "@":
         # Void floor -- animated speck drift, plus a static darker
         # mottle so the void never reads as flat black.
@@ -539,6 +682,33 @@ def draw_floor(surf, ch, rx, ry, tx, ty):
             pygame.draw.rect(surf, (66, 44, 28),
                              (rx + (seed * 3 % 22) + 4,
                               ry + (seed * 7 % 22) + 4, 4, 3))
+    elif ch == ";":
+        # Marsh mud -- wet, churned ground. Dark puddle blotches with a
+        # cold standing-water glint, dead reeds, hairline mud cracks.
+        seed = tx * 17 + ty * 29
+        if seed % 2 == 0:
+            pygame.draw.ellipse(surf, (27, 26, 22),
+                                (rx + (seed % 16) + 2,
+                                 ry + ((seed // 5) % 16) + 2, 13, 8))
+        if seed % 5 == 0:                          # standing water
+            pygame.draw.ellipse(surf, (42, 50, 50),
+                                (rx + (seed % 14) + 5, ry + ((seed // 7) % 14) + 7, 9, 4))
+            pygame.draw.ellipse(surf, (60, 70, 70),
+                                (rx + (seed % 14) + 7, ry + ((seed // 7) % 14) + 8, 3, 1))
+        if seed % 4 == 0:                          # dead reed
+            fx = rx + (seed % 26) + 2
+            pygame.draw.line(surf, (72, 68, 44), (fx, ry + 22), (fx - 1, ry + 13), 1)
+        if seed % 7 == 0:                          # mud crack
+            cx = rx + (seed % 20) + 4
+            pygame.draw.line(surf, (20, 19, 16), (cx, ry + 8), (cx + 5, ry + 13), 1)
+    # Macro shadow blotches: a low-frequency, world-anchored darkening
+    # that rolls across many tiles at once, so the floor stops reading
+    # as a grid of identical cells. Two cheap sine layers, darken-only.
+    shade = (math.sin(tx * 0.23 + ty * 0.15)
+             + 0.6 * math.sin(tx * 0.09 - ty * 0.19))
+    a = int(max(0.0, -shade) * 30)
+    if a:
+        surf.blit(_dark_tile(min(58, a)), (rx, ry))
 
 
 def is_floor_solid(ch):
@@ -572,11 +742,16 @@ DISPLAY_NAMES = {
     "forest_path":          "Cornfield Path",
     "void_boss":            "the Clearing",
     "barn":                 "the Barn",
-    "well_bottom":          "Well Bottom",
-    "well_passage":         "Well Passage",
+    "well_bottom":          "the Shaft Floor",
+    "well_passage":         "the Drying Racks",
+    "works_vats":           "the Tallow Vats",
+    "works_sorting":        "the Sorting Hall",
+    "works_scriptorium":    "the Scriptorium",
+    "works_sign":           "the Sign Chamber",
+    "works_deepstair":      "the Deep Stair",
     "haunted_house":        "the Abandoned Farmhouse",
     "symbol_portal_room":   "the Stone Chamber",
-    "mistlands":            "the River",
+    "mistlands":            "Brimley",
     "schoolhouse":          "the Schoolhouse",
     "graveyard":            "the Graveyard",
     "diner_gas_station":    "the Diner",
@@ -601,6 +776,513 @@ def scene_display_name(scene):
     if label:
         return label
     return scene.key.replace("_", " ").title()
+
+
+# ---- Continuous wall mass (break the tile grid) ----
+# Wall tiles are rendered as one near-black form with lit edges only on
+# faces that touch open floor -- no per-tile borders or grout, so a run
+# of wall stops reading as a row of grey blocks (the RimWorld tell).
+_WALL_CHARS = frozenset("#W%&")
+# Door tiles cast the same floor-shadow as walls so a door in a south
+# wall grounds into the building instead of leaving a lit threshold gap
+# between the shadows of its flanking walls.
+_DOOR_CHARS = frozenset(c for c, d in OBJECT_DEFS.items()
+                        if d and d.get("kind") == "door")
+_WALL_BASE = (19, 18, 23)
+_WALL_FACE = (50, 48, 56)
+_WALL_TOP = (74, 72, 82)
+_WALL_FOOT = (8, 7, 11)
+
+
+def _is_wall(scene, tx, ty):
+    if 0 <= ty < scene.h and 0 <= tx < scene.w:
+        return scene.objects[ty][tx] in _WALL_CHARS
+    return True   # off-map reads as wall so the mass closes at edges
+
+
+def _draw_wall_mass(surf, scene, cam_x, cam_y, x0, y0, x1, y1):
+    for ty in range(y0, y1):
+        for tx in range(x0, x1):
+            if scene.objects[ty][tx] not in _WALL_CHARS:
+                continue
+            rx = tx * TILE - cam_x
+            ry = ty * TILE - cam_y
+            pygame.draw.rect(surf, _WALL_BASE, (rx, ry, TILE, TILE))
+            hsh = (tx * 73856093) ^ (ty * 19349663)
+            if hsh % 5 == 0:                       # pitting / grime
+                pygame.draw.rect(surf, (11, 10, 14),
+                                 (rx + (hsh % (TILE - 6)) + 3,
+                                  ry + ((hsh // 7) % (TILE - 6)) + 3, 3, 2))
+            elif hsh % 9 == 0:                      # hairline crack
+                cx = rx + (hsh % (TILE - 4)) + 2
+                cy = ry + ((hsh // 5) % (TILE - 8)) + 2
+                pygame.draw.line(surf, (30, 28, 35), (cx, cy), (cx, cy + 5), 1)
+            if hsh % 7 == 0:                        # water-stain dribble
+                sx = rx + (hsh % (TILE - 6)) + 3
+                pygame.draw.line(surf, (12, 11, 15), (sx, ry + 2),
+                                 (sx + ((hsh >> 5) & 1), ry + TILE - 3), 2)
+            elif hsh % 8 == 0:                      # exposed boards where it's rotted through
+                bx = rx + (hsh % (TILE - 8)) + 3
+                for k in range(3):
+                    pygame.draw.line(surf, (46, 37, 30),
+                                     (bx + k * 3, ry + 4), (bx + k * 3, ry + TILE - 4), 1)
+            j = (hsh >> 3) & 1     # 1px edge jitter -> hand-drawn wobble
+            if not _is_wall(scene, tx, ty - 1):     # room above: lit cap
+                pygame.draw.rect(surf, _WALL_TOP, (rx, ry, TILE, 2))
+                pygame.draw.line(surf, _WALL_FACE, (rx, ry + 2 + j),
+                                 (rx + TILE, ry + 2 + j), 1)
+            if not _is_wall(scene, tx, ty + 1):     # room below: foot shadow
+                # Damp band wicking up from the ground + a little moss,
+                # only where the wall actually meets open floor.
+                pygame.draw.rect(surf, (12, 11, 15), (rx, ry + TILE - 8, TILE, 5))
+                if hsh % 3 == 0:
+                    mx = rx + (hsh % (TILE - 6)) + 2
+                    pygame.draw.circle(surf, (44, 56, 40), (mx, ry + TILE - 3), 2)
+                pygame.draw.rect(surf, _WALL_FOOT, (rx, ry + TILE - 2, TILE, 2))
+                pygame.draw.line(surf, _WALL_FACE, (rx, ry + TILE - 3 - j),
+                                 (rx + TILE, ry + TILE - 3 - j), 1)
+                if hsh % 4 == 0:    # rubble/grime spilling onto the floor,
+                    bx = rx + (hsh % 18) + 4   # crossing the tile boundary so
+                    pygame.draw.rect(surf, (27, 25, 29),  # the room edge isn't
+                                     (bx, ry + TILE, 7, 3))     # a clean line
+                    pygame.draw.rect(surf, (15, 14, 18), (bx + 2, ry + TILE + 1, 3, 2))
+            if not _is_wall(scene, tx - 1, ty):
+                pygame.draw.line(surf, _WALL_FACE, (rx + j, ry),
+                                 (rx + j, ry + TILE), 1)
+            if not _is_wall(scene, tx + 1, ty):
+                pygame.draw.line(surf, _WALL_FACE, (rx + TILE - 1 - j, ry),
+                                 (rx + TILE - 1 - j, ry + TILE), 1)
+
+
+def _draw_building_eaves(surf, scene, cam_x, cam_y, x0, y0, x1, y1):
+    """Hang a ragged shingle eave + overhang shadow off the exterior
+    walls of roofed buildings where they meet open ground, so a building
+    reads as a structure with an overhanging roof instead of a flat
+    rectangle stamped on the grass. Keyed off roof-adjacency, so ONLY
+    roofed overworld houses get eaves -- interior room walls (no roof
+    tile behind them) are left as the clean continuous mass."""
+    objs = scene.objects
+    h, w = scene.h, scene.w
+
+    def roof(ax, ay):
+        return 0 <= ay < h and 0 <= ax < w and objs[ay][ax] == "r"
+
+    def openg(ax, ay):
+        if not (0 <= ay < h and 0 <= ax < w):
+            return False
+        ch = objs[ay][ax]
+        return ch not in _WALL_CHARS and ch != "r" and ch not in _DOOR_CHARS
+
+    eave = (90, 58, 42)
+    lip = (120, 82, 58)
+    for ty in range(y0, y1):
+        for tx in range(x0, x1):
+            if objs[ty][tx] not in _WALL_CHARS:
+                continue
+            if not (roof(tx, ty - 1) or roof(tx, ty + 1)
+                    or roof(tx - 1, ty) or roof(tx + 1, ty)):
+                continue
+            rx = tx * TILE - cam_x
+            ry = ty * TILE - cam_y
+            j = (tx * 7 + ty * 13) & 3                 # irregular overhang depth
+            if openg(tx, ty + 1):                      # south overhang (front)
+                d = 5 + j
+                _ground_shadow(surf, rx + TILE // 2, ry + TILE + d, 17, 4, 85)
+                pygame.draw.rect(surf, eave, (rx, ry + TILE - 1, TILE, d))
+                pygame.draw.rect(surf, lip, (rx, ry + TILE - 1 + d, TILE, 1))
+            if openg(tx, ty - 1):                      # north (back)
+                d = 3 + (j & 1)
+                pygame.draw.rect(surf, eave, (rx, ry - d, TILE, d))
+            if openg(tx - 1, ty):                      # west
+                d = 4 + (j & 1)
+                pygame.draw.rect(surf, eave, (rx - d, ry, d, TILE))
+            if openg(tx + 1, ty):                      # east
+                d = 4 + (j & 1)
+                pygame.draw.rect(surf, eave, (rx + TILE, ry, d, TILE))
+
+
+def _build_roof_regions(scene):
+    """Flood-fill the roof ('r') tiles into one region per building and
+    cache each region's tile bounding box on the scene. Roof layout is
+    static after build, so this runs once. Each region -> one gabled
+    roof drawn over its footprint."""
+    regions = getattr(scene, "_roof_regions", None)
+    if regions is not None:
+        return regions
+    objs, h, w = scene.objects, scene.h, scene.w
+    seen = [[False] * w for _ in range(h)]
+    regions = []
+    for ty in range(h):
+        for tx in range(w):
+            if objs[ty][tx] != "r" or seen[ty][tx]:
+                continue
+            stack = [(tx, ty)]
+            seen[ty][tx] = True
+            minx = maxx = tx
+            miny = maxy = ty
+            while stack:
+                cx, cy = stack.pop()
+                minx = min(minx, cx); maxx = max(maxx, cx)
+                miny = min(miny, cy); maxy = max(maxy, cy)
+                for ax, ay in ((cx + 1, cy), (cx - 1, cy),
+                               (cx, cy + 1), (cx, cy - 1)):
+                    if (0 <= ax < w and 0 <= ay < h
+                            and not seen[ay][ax] and objs[ay][ax] == "r"):
+                        seen[ay][ax] = True
+                        stack.append((ax, ay))
+            regions.append((minx, miny, maxx, maxy))
+    scene._roof_regions = regions
+    return regions
+
+
+def _draw_gable_roof(surf, region, cam_x, cam_y):
+    """One overhanging gabled roof over a building footprint: rounded
+    corners, two pitched slopes split at a sagging ridge, deep eaves on
+    the back + sides (it spills past the walls, so the silhouette is the
+    roof, not the tile rectangle), shingle courses, blown-out holes to
+    the joists, moss, and a crooked chimney. The FRONT (south) edge
+    stops at the top of the south wall so the door stays visible under
+    the eave."""
+    minx, miny, maxx, maxy = region
+    rng = random.Random((minx * 73856093) ^ (maxy * 19349663))
+    E = 9                                            # eave overhang
+    L = (minx - 1) * TILE - cam_x - E
+    R = (maxx + 2) * TILE - cam_x + E
+    T = (miny - 1) * TILE - cam_y - E
+    Bf = (maxy + 1) * TILE - cam_y + 5               # front eave lip, door stays clear
+    Wd, Hd = R - L, Bf - T
+    if Wd < 8 or Hd < 8:
+        return
+    # Ground drop-shadow so the roof has height + overhangs onto the yard.
+    sh = pygame.Surface((Wd + 16, Hd + 18), pygame.SRCALPHA)
+    pygame.draw.rect(sh, (0, 0, 0, 96), (8, 14, Wd, Hd), border_radius=11)
+    surf.blit(sh, (L - 8, T - 7))
+    pygame.draw.rect(surf, (92, 60, 42), (L, T, Wd, Hd), border_radius=10)
+    ridge_y = T + int(Hd * 0.42)
+    pygame.draw.rect(surf, (124, 86, 58), (L + 2, T + 2, Wd - 4, ridge_y - T - 2),
+                     border_top_left_radius=9, border_top_right_radius=9)
+    pygame.draw.rect(surf, (74, 48, 33), (L + 2, ridge_y, Wd - 4, Bf - ridge_y - 2),
+                     border_bottom_left_radius=9, border_bottom_right_radius=9)
+    for yy in range(T + 5, ridge_y - 1, 5):          # shingle courses, lit slope
+        pygame.draw.line(surf, (104, 72, 48), (L + 5, yy), (R - 5, yy), 1)
+    for yy in range(ridge_y + 4, Bf - 3, 5):         # shingle courses, shaded slope
+        pygame.draw.line(surf, (60, 39, 27), (L + 5, yy), (R - 5, yy), 1)
+    sag = max(2, Wd // 22)                            # ridge beam, sagging in the middle
+    mid_x = (L + R) // 2
+    pygame.draw.lines(surf, (44, 28, 19), False,
+                      [(L + 4, ridge_y), (mid_x, ridge_y + sag), (R - 4, ridge_y)], 2)
+    for _ in range(max(1, (Wd * Hd) // 1700)):       # blown-out shingles -> joists
+        hx = L + rng.randint(5, max(6, Wd - 9))
+        hy = T + rng.randint(5, max(6, Hd - 8))
+        pygame.draw.rect(surf, (30, 23, 19), (hx, hy, rng.randint(4, 7), 4))
+    for _ in range(max(1, (Wd * Hd) // 2000)):       # moss
+        mx = L + rng.randint(4, max(5, Wd - 6))
+        my = T + rng.randint(4, max(5, Hd - 6))
+        pygame.draw.circle(surf, (56, 70, 46), (mx, my), 2)
+    chx, chy = R - 18, T + 6                          # crooked chimney
+    pygame.draw.rect(surf, (58, 40, 36), (chx, chy, 10, 13))
+    pygame.draw.rect(surf, (30, 22, 20), (chx, chy, 10, 13), 1)
+    pygame.draw.rect(surf, (40, 30, 28), (chx + 1, chy - 2, 8, 2))
+
+
+def _draw_scene_roofs(surf, scene, cam_x, cam_y, x0, y0, x1, y1):
+    for region in _build_roof_regions(scene):
+        minx, miny, maxx, maxy = region
+        if maxx + 2 < x0 or minx - 2 > x1 or maxy + 2 < y0 or miny - 2 > y1:
+            continue
+        _draw_gable_roof(surf, region, cam_x, cam_y)
+
+
+def _door_room_dir(scene, tx, ty):
+    """Which way the door opens -- the floor (room) side its leaf swings
+    into. Off-map edges don't count as wall, so a building's south-edge
+    exit still opens toward its interior."""
+    def w(ax, ay):
+        return (0 <= ay < scene.h and 0 <= ax < scene.w
+                and scene.objects[ay][ax] in _WALL_CHARS)
+    def fl(ax, ay):
+        return (0 <= ay < scene.h and 0 <= ax < scene.w
+                and scene.objects[ay][ax] not in _WALL_CHARS)
+    wl, wr, wu, wd = w(tx - 1, ty), w(tx + 1, ty), w(tx, ty - 1), w(tx, ty + 1)
+    if (wu or wd) and not (wl or wr):           # vertical wall -> opens L/R
+        return "E" if fl(tx + 1, ty) else "W"
+    if (wl or wr) and not (wu or wd):           # horizontal wall -> opens up/down
+        return "S" if fl(tx, ty + 1) else "N"
+    if fl(tx, ty + 1):                          # corner / ambiguous
+        return "S"
+    if fl(tx + 1, ty):
+        return "E"
+    if fl(tx, ty - 1):
+        return "N"
+    return "W"
+
+
+def _draw_door_opening(surf, rx, ry, room):
+    """The doorway itself, drawn in-tile during the terrain pass: the
+    wall fills through (continuous mass) with a dark opening punched in
+    it + a lit face on the room side. The swung leaf is a separate,
+    unconfined sprite drawn later (draw_scene_doors)."""
+    pygame.draw.rect(surf, _WALL_BASE, (rx, ry, TILE, TILE))
+    hsh = (rx * 73856093) ^ (ry * 19349663)
+    if hsh % 4 == 0:
+        pygame.draw.rect(surf, (11, 10, 14),
+                         (rx + (hsh % 22) + 4, ry + ((hsh // 7) % 22) + 4, 3, 2))
+    if room == "S":
+        pygame.draw.rect(surf, _WALL_FACE, (rx, ry + TILE - 2, TILE, 2))
+    elif room == "N":
+        pygame.draw.rect(surf, _WALL_TOP, (rx, ry, TILE, 2))
+    elif room == "E":
+        pygame.draw.rect(surf, _WALL_FACE, (rx + TILE - 2, ry, 2, TILE))
+    else:
+        pygame.draw.rect(surf, _WALL_FACE, (rx, ry, 2, TILE))
+    pygame.draw.rect(surf, (3, 2, 5), (rx + 9, ry + 9, 14, 14))      # the dark doorway
+
+
+def _leaf_quad(hx, hy, ang, L, Wd):
+    dx, dy = math.cos(ang), math.sin(ang)
+    px, py = -dy, dx
+    return [(hx, hy), (hx + px * Wd, hy + py * Wd),
+            (hx + dx * L + px * Wd, hy + dy * L + py * Wd),
+            (hx + dx * L, hy + dy * L)]
+
+
+def _draw_door_leaf(surf, rx, ry, room, seed):
+    """The door leaf as an UNCONFINED sprite -- hung on a hinge at one
+    CORNER of the doorway and swung out into the room, the way a real
+    door pivots. It spills past the tile (collision stays on the grid;
+    the doorway tile is passable). Hinge corner, swing angle and length
+    vary per door (deterministic) so no two hang alike."""
+    skew = 0.22 + (seed % 50) / 100.0           # swing angle varies per door
+    L = 26 + (seed // 7) % 5                      # door span -- a touch longer; spills past tile
+    Wd = 5                                        # door thickness, seen top-down
+    TL = (rx + 8, ry + 8); TR = (rx + 24, ry + 8)
+    BL = (rx + 8, ry + 24); BR = (rx + 24, ry + 24)
+    # Fixed hinge corner per wall (right-handed doors); the leaf swings
+    # in toward the room. A north-wall door (room to the south) hinges
+    # at the bottom-left corner of the cell.
+    if room == "S":          # north wall -> swings down into the room below
+        hx, hy, ang = BL[0], BL[1], math.pi / 2 - skew
+    elif room == "N":        # south wall -> swings up
+        hx, hy, ang = TR[0], TR[1], -math.pi / 2 - skew
+    elif room == "E":        # west wall -> swings right
+        hx, hy, ang = BR[0], BR[1], -skew
+    else:                    # east wall -> swings left
+        hx, hy, ang = TL[0], TL[1], math.pi - skew
+    dx, dy = math.cos(ang), math.sin(ang)
+    px, py = -dy, dx
+    face = [(int(x), int(y)) for x, y in _leaf_quad(hx, hy, ang, L, Wd)]
+    pygame.draw.polygon(surf, (58, 43, 27), face)
+    pygame.draw.polygon(surf, (88, 66, 40), face, 1)
+    for f in (0.45, 0.78):                       # cross-planks
+        ax_, ay_ = hx + dx * L * f, hy + dy * L * f
+        pygame.draw.line(surf, (37, 26, 15), (int(ax_), int(ay_)),
+                         (int(ax_ + px * Wd), int(ay_ + py * Wd)), 1)
+    kx = hx + dx * (L - 3) + px * Wd * 0.5       # knob near the free end
+    ky = hy + dy * (L - 3) + py * Wd * 0.5
+    pygame.draw.circle(surf, (124, 114, 96), (int(kx), int(ky)), 2)
+    pygame.draw.circle(surf, (28, 26, 31), (int(hx), int(hy)), 2)  # hinge knuckle
+
+
+_PATH_GRASS = frozenset(("g", "G", ":"))
+
+
+def _draw_path_fringe(surf, scene, tx, ty, rx, ry):
+    """Fray a dirt-path tile's edge wherever it meets grass: dirt tongues
+    spill raggedly into the grass and a few grass tufts bite back into the
+    dirt, so the worn track wanders instead of reading as a clean
+    rectangle. Run after every floor fill so the blobs paint across the
+    tile boundary. Dirt only frays its grass-facing sides, so adjacent
+    path tiles leave their shared (interior) edge clean."""
+    floor, h, w = scene.floor, scene.h, scene.w
+    dirt, dirt2 = (88, 68, 45), (74, 56, 37)
+    for si, (ndx, ndy) in enumerate(((0, -1), (0, 1), (-1, 0), (1, 0))):
+        nx, ny = tx + ndx, ty + ndy
+        if not (0 <= nx < w and 0 <= ny < h) or floor[ny][nx] not in _PATH_GRASS:
+            continue
+        grass = FLOOR_DEFS[floor[ny][nx]]["color"]
+        seed = (tx * 73856093) ^ (ty * 19349663) ^ (si * 83492791)
+        if ndy:                                  # horizontal edge (N/S)
+            ex = rx; ey = ry + (TILE if ndy > 0 else 0); ax, ay = 1, 0
+        else:                                    # vertical edge (W/E)
+            ex = rx + (TILE if ndx > 0 else 0); ey = ry; ax, ay = 0, 1
+        for k in range(6):                       # ragged dirt fringe, mostly into grass
+            u = (k + (_vary(seed, k) % 3) / 3.0) / 6.0
+            depth = (_vary(seed, 10 + k) % 9) - 3
+            cx = int(ex + ax * TILE * u + ndx * depth)
+            cy = int(ey + ay * TILE * u + ndy * depth)
+            col = dirt if (_vary(seed, 30 + k) % 3) else dirt2
+            pygame.draw.circle(surf, col, (cx, cy), 3 + (_vary(seed, 20 + k) % 3))
+        for k in range(2):                       # grass tufts biting back into the dirt
+            u = (1 + 2 * k) / 4.0
+            d = 2 + (_vary(seed, 40 + k) % 3)
+            cx = int(ex + ax * TILE * u - ndx * d)
+            cy = int(ey + ay * TILE * u - ndy * d)
+            pygame.draw.circle(surf, grass, (cx, cy), 2 + (_vary(seed, 50 + k) % 2))
+
+
+_BANK_LAND = frozenset(("g", "G", ":", "d"))
+
+
+def _draw_bank_fringe(surf, scene, tx, ty, rx, ry):
+    """Muddy, reedy bank where the river meets land: mud bleeding across
+    the waterline and reeds rising at the edge, so the river reads as a
+    silted marsh channel, not a clean-edged blue stripe. Only water tiles
+    fringe their land-facing sides."""
+    floor, h, w = scene.floor, scene.h, scene.w
+    mud, mud2 = (54, 44, 30), (38, 31, 21)
+    reed, reed_dk = (80, 88, 46), (50, 58, 30)
+    for si, (ndx, ndy) in enumerate(((0, -1), (0, 1), (-1, 0), (1, 0))):
+        nx, ny = tx + ndx, ty + ndy
+        if not (0 <= nx < w and 0 <= ny < h) or floor[ny][nx] not in _BANK_LAND:
+            continue
+        seed = (tx * 73856093) ^ (ty * 19349663) ^ (si * 40503)
+        if ndy:
+            ex = rx; ey = ry + (TILE if ndy > 0 else 0); ax, ay = 1, 0
+        else:
+            ex = rx + (TILE if ndx > 0 else 0); ey = ry; ax, ay = 0, 1
+        for k in range(5):                       # silt straddling the waterline
+            u = (k + (_vary(seed, k) % 3) / 3.0) / 5.0
+            depth = (_vary(seed, 10 + k) % 7) - 3
+            cx = int(ex + ax * TILE * u + ndx * depth)
+            cy = int(ey + ay * TILE * u + ndy * depth)
+            pygame.draw.circle(surf, mud if (_vary(seed, 30 + k) % 3) else mud2,
+                               (cx, cy), 3 + (_vary(seed, 20 + k) % 2))
+        for k in range(3):                       # reeds rising at the edge
+            u = (k + 0.5) / 3.0
+            bx = int(ex + ax * TILE * u + ndx * 2)
+            by = int(ey + ay * TILE * u + ndy * 2)
+            tipx = bx + (_vary(seed, 60 + k) % 3) - 1
+            tipy = by - (6 + (_vary(seed, 70 + k) % 6))
+            pygame.draw.line(surf, reed_dk, (bx, by), (tipx, tipy), 1)
+            pygame.draw.line(surf, reed, (bx, by), (tipx, tipy - 1), 1)
+
+
+def draw_scene_terrain(surf, scene, cam_x, cam_y, x0, y0, x1, y1):
+    """Floor -> path fringe -> wall-cast shadows -> continuous wall mass
+    -> non-wall objects, for a tile window. Shared by Scene.draw (camera
+    window) and the offline full-map renderer."""
+    for ty in range(y0, y1):
+        for tx in range(x0, x1):
+            draw_floor(surf, scene.floor[ty][tx],
+                       tx * TILE - cam_x, ty * TILE - cam_y, tx, ty)
+    for ty in range(y0, y1):
+        for tx in range(x0, x1):
+            ch = scene.floor[ty][tx]
+            if ch == "d":
+                _draw_path_fringe(surf, scene, tx, ty,
+                                  tx * TILE - cam_x, ty * TILE - cam_y)
+            elif ch == "~":
+                _draw_bank_fringe(surf, scene, tx, ty,
+                                  tx * TILE - cam_x, ty * TILE - cam_y)
+    strip = _wall_shadow_strip()
+    for ty in range(y0, y1):
+        for tx in range(x0, x1):
+            ch = scene.objects[ty][tx]
+            if ch in _SHADOW_CASTERS or ch in _DOOR_CHARS:
+                surf.blit(strip, (tx * TILE - cam_x,
+                                  (ty + 1) * TILE - cam_y))
+    _draw_wall_mass(surf, scene, cam_x, cam_y, x0, y0, x1, y1)
+    for ty in range(y0, y1):
+        for tx in range(x0, x1):
+            ch = scene.objects[ty][tx]
+            if ch == "." or ch in _WALL_CHARS:
+                continue
+            rx = tx * TILE - cam_x
+            ry = ty * TILE - cam_y
+            if ch in _DOOR_CHARS:
+                _draw_door_opening(surf, rx, ry, _door_room_dir(scene, tx, ty))
+            else:
+                draw_object(surf, ch, rx, ry, tx, ty)
+    # Unified gabled roofs, drawn over the walls so each building reads
+    # as one overhanging roof (door stays visible under the front eave).
+    _draw_scene_roofs(surf, scene, cam_x, cam_y, x0, y0, x1, y1)
+
+
+def draw_scene_doors(surf, scene, cam_x, cam_y, x0, y0, x1, y1):
+    """Late pass: the swung door leaves, drawn unconfined so each spills
+    out of its tile into the room. Called after terrain + decorations
+    and before entities, so a leaf sits over the floor but under anyone
+    walking through the doorway."""
+    for ty in range(y0, y1):
+        for tx in range(x0, x1):
+            ch = scene.objects[ty][tx]
+            if ch not in _DOOR_CHARS:
+                continue
+            seed = (tx * 73856093) ^ (ty * 19349663)
+            _draw_door_leaf(surf, tx * TILE - cam_x, ty * TILE - cam_y,
+                            _door_room_dir(scene, tx, ty), seed)
+
+
+# ---- Screen-space film grade (grain + vignette + desaturate + tint) ----
+# A whole-frame pass that fuses the image into one grimy film look --
+# the thing hand-recoloring tiles can't do. Applied to the finished
+# frame by the game each draw, and by the offline renderer.
+_GRAIN_TILE = None
+_VIGNETTE_CACHE = {}
+_GRADE_TINT = (16, 20, 22)
+
+
+def _grain_tile():
+    global _GRAIN_TILE
+    if _GRAIN_TILE is None:
+        size = 256
+        g = pygame.Surface((size, size), pygame.SRCALPHA)
+        rng = random.Random(99)
+        for _ in range((size * size) // 5):
+            gx = rng.randint(0, size - 1)
+            gy = rng.randint(0, size - 1)
+            v = rng.randint(0, 255)
+            if v < 128:
+                g.set_at((gx, gy), (0, 0, 0, 18 if v < 40 else 9))
+            else:
+                g.set_at((gx, gy), (255, 255, 255, 13 if v > 220 else 6))
+        _GRAIN_TILE = g
+    return _GRAIN_TILE
+
+
+def _vignette(w, h):
+    v = _VIGNETTE_CACHE.get((w, h))
+    if v is None:
+        base = 192
+        s = pygame.Surface((base, base), pygame.SRCALPHA)
+        cx = cy = base / 2.0
+        maxd = (cx * cx + cy * cy) ** 0.5
+        for yy in range(base):
+            for xx in range(base):
+                d = (((xx - cx) ** 2 + (yy - cy) ** 2) ** 0.5) / maxd
+                a = int(max(0.0, d - 0.44) / 0.56 * 140)
+                if a:
+                    s.set_at((xx, yy), (0, 0, 0, min(140, a)))
+        v = pygame.transform.smoothscale(s, (w, h))
+        _VIGNETTE_CACHE[(w, h)] = v
+    return v
+
+
+def apply_grade(surf, t=0.0, desat=82):
+    """Grade a finished frame in place: partial desaturation, a cool
+    tint, a radial vignette, and animated film grain."""
+    w, h = surf.get_size()
+    try:
+        grey = pygame.transform.grayscale(surf)
+        grey.set_alpha(desat)
+        surf.blit(grey, (0, 0))
+    except Exception:
+        pass
+    tint = pygame.Surface((w, h), pygame.SRCALPHA)
+    tint.fill((_GRADE_TINT[0], _GRADE_TINT[1], _GRADE_TINT[2], 38))
+    surf.blit(tint, (0, 0))
+    surf.blit(_vignette(w, h), (0, 0))
+    g = _grain_tile()
+    gw, gh = g.get_size()
+    ox = int(t * 41) % gw
+    oy = int(t * 67) % gh
+    yy = -oy
+    while yy < h:
+        xx = -ox
+        while xx < w:
+            surf.blit(g, (xx, yy))
+            xx += gw
+        yy += gh
 
 
 class Scene:
@@ -730,21 +1412,10 @@ class Scene:
         y0 = max(0, int(cam_y // TILE) - 1)
         x1 = min(self.w, int((cam_x + SCREEN_W) // TILE) + 2)
         y1 = min(self.h, int((cam_y + SCREEN_H) // TILE) + 2)
-        for ty in range(y0, y1):
-            for tx in range(x0, x1):
-                ch = self.floor[ty][tx]
-                rx = tx * TILE - cam_x
-                ry = ty * TILE - cam_y
-                draw_floor(surf, ch, rx, ry, tx, ty)
-        for ty in range(y0, y1):
-            for tx in range(x0, x1):
-                ch = self.objects[ty][tx]
-                if ch == ".": continue
-                rx = tx * TILE - cam_x
-                ry = ty * TILE - cam_y
-                draw_object(surf, ch, rx, ry)
+        draw_scene_terrain(surf, self, cam_x, cam_y, x0, y0, x1, y1)
         for d in self.decorations:
             d.draw(surf, cam_x, cam_y)
+        draw_scene_doors(surf, self, cam_x, cam_y, x0, y0, x1, y1)
 
 
 def tile_footstep(ch):

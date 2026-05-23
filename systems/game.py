@@ -122,6 +122,8 @@ OUTDOOR_SCENES = {"our_house_area", "village", "forest_path",
 # dimmed with a small clear circle around the player. With it,
 # the dimness lifts to a wider cone in the facing direction.
 DARK_SCENES = {"basement", "well_passage", "well_bottom",
+               "works_vats", "works_sorting", "works_scriptorium",
+               "works_sign", "works_deepstair",
                "symbol_portal_room", "haunted_house",
                "depths_antechamber", "depths_procession",
                "depths_hall", "depths_threshing", "depths_stair",
@@ -166,6 +168,10 @@ WATCHERS_PER_CURSE = 3         # Watcher cap added per curse level
 WATCHER_SPAWN_INTERVAL = 4.0   # seconds between Watcher manifestations
 CULT_REGULARS = 2              # roaming cultists kept per cult scene
 CULT_TOPUP_INTERVAL = 8.0      # seconds between cultist (re)spawns
+# Desperation melee: a non-lethal shove that stuns a cultist/shadow.
+MELEE_CD = 0.85                # seconds between shoves
+MELEE_STUN_DUR = 1.6           # seconds a target stays frozen
+MELEE_REACH = 30               # px from the swing point a target must be
 # Visibility rates, per second. Watchers + cultist gaze push the meter
 # up; hiding pulls it down. Enough Watchers out-pace even hiding --
 # that is the spiral toward a King the player can no longer shake.
@@ -880,6 +886,8 @@ class Game:
             self.stillness_t += dt
         self.player.attack_timer = max(0, self.player.attack_timer - dt)
         self.player.swing_t = max(0, self.player.swing_t - dt)
+        self.player.melee_cd = max(0, self.player.melee_cd - dt)
+        self.player.melee_swing_t = max(0, self.player.melee_swing_t - dt)
         self.player.invuln = max(0, self.player.invuln - dt)
         if self.player.charging:
             self.player.charge_t = min(2.0, self.player.charge_t + dt)
@@ -1025,6 +1033,49 @@ class Game:
             self.show_notice(line, duration=3.0)
 
     # ---- Combat ----
+    def player_melee_stun(self):
+        """The player's only 'combat': a desperation shove. Non-lethal --
+        a cultist or shadow caught in the short arc in front is STUNNED
+        (frozen + blind) for a beat, never killed; the King stays the
+        only lethal thing. It buys the seconds to break line of sight and
+        get to cover. Cooldown-gated, and kept entirely separate from the
+        legacy swing/damage path so it can't ever deal damage."""
+        p = self.player
+        if (self.state != "playing" or p.hidden is not None
+                or p.melee_cd > 0 or self.dialog.active):
+            return
+        p.melee_cd = MELEE_CD
+        p.melee_swing_t = 0.2
+        p.melee_dir = p.facing
+        self.audio.play("swing", 0.55)
+        fx, fy = p.facing
+        cx, cy = p.x + fx * 22, p.y + fy * 22
+        hit = False
+        for n in self.scene.npcs:
+            if not str(getattr(n, "tag", "")).startswith("cult_"):
+                continue
+            if not getattr(n, "alive", True):
+                continue
+            if math.hypot(n.x - cx, n.y - cy) < MELEE_REACH:
+                n._stun_t = MELEE_STUN_DUR
+                n.flash = 0.12
+                n._has_been_spotted = False      # they lose the lock on you
+                hit = True
+        for e in self.scene.enemies:
+            if not getattr(e, "alive", False):
+                continue
+            if (getattr(e, "kind", "") == "black_figure"
+                    and math.hypot(e.x - cx, e.y - cy) < MELEE_REACH):
+                e._stun_t = MELEE_STUN_DUR
+                e.flash = 0.12
+                hit = True
+        if hit:
+            self.audio.play("hit", 0.5)
+            if not self.save.flag("stun_taught"):
+                self.save.set_flag("stun_taught", True)
+                self.show_notice("You knock it back -- it won't stay "
+                                 "down. Run.", duration=2.6)
+
     def player_start_charge(self):
         """Press attack input. Begins a charge; the actual swing fires
         on release (release_charge). No SFX here -- the swing sound
@@ -1681,6 +1732,8 @@ class Game:
             tag = getattr(n, "tag", "")
             if not isinstance(tag, str) or not tag.startswith("cult_"):
                 continue
+            if getattr(n, "_stun_t", 0) > 0:
+                continue                     # shoved: blind + can't grab
             d = math.hypot(n.x - self.player.x, n.y - self.player.y)
             sees = (d < getattr(n, "_gaze_range", 180)) and not hidden
             if sees:
@@ -2430,8 +2483,18 @@ class Game:
                                    armor=self.player.inventory.equipped["armor"],
                                    mud=getattr(self.player, "mud", 0.0),
                                    prone=getattr(self.player, "prone", False))
-            # THRESHOLD: no swing visual, no charge ring -- the player
-            # has no attack to telegraph.
+            # The shove telegraph: a brief bright bar thrown out in front
+            # of the player for the length of the swing. No charge ring --
+            # the only "attack" is this one desperate push.
+            if self.player.melee_swing_t > 0:
+                fx, fy = self.player.melee_dir
+                ax = psx + int(fx * 16)
+                ay = psy + int(fy * 16)
+                px, py = -fy, fx
+                L = 11
+                pygame.draw.line(self.screen, (225, 220, 205),
+                                 (ax + int(px * L), ay + int(py * L)),
+                                 (ax - int(px * L), ay - int(py * L)), 3)
         # Reset the per-frame full-screen darkness budget. Each
         # whole-screen black overlay below claims a slice via
         # _claim_dark() so the combined wash never exceeds
@@ -2443,6 +2506,11 @@ class Game:
         self._draw_outdoor_vignette()
         self._draw_apex_overlay()
         self._draw_hidden_overlay()
+        # Film grade over the whole world layer (desaturate, cool tint,
+        # vignette, animated grain) -- fuses the frame into one grimy
+        # image. Applied before the HUD so UI text stays crisp.
+        from scenes.base import apply_grade
+        apply_grade(self.screen, pygame.time.get_ticks() / 1000.0)
         self._draw_interact_prompt()
         self._draw_hud()
         self.dialog.draw(self.screen)
@@ -2488,22 +2556,57 @@ class Game:
         }.get(d.get("kind"), (220, 220, 220))
 
     def _draw_interact_prompt(self):
+        """Float an [E] over whatever pressing E would act on right now,
+        mirroring try_interact's priority so the cue never lies: a
+        hide-spot first (the core stealth affordance), then an adjacent
+        axe-chop target, a chest, or an NPC to talk to. Drawn over the
+        world, under the HUD."""
         if (self.dialog.active or self.inv_ui.open or self.notebook_ui.open
                 or self.text_input.active
                 or self.state != "playing"):
             return
-        for npc in self.scene.npcs:
-            if getattr(npc, "no_prompt", False):
-                continue
-            d = math.hypot(npc.x - self.player.x, npc.y - self.player.y)
-            if d < 40:
-                sx = int(npc.x - self.cam_x)
-                sy = int(npc.y - self.cam_y) - 40
-                t = pygame.time.get_ticks() / 250.0
-                yo = int(math.sin(t) * 2)
-                txt = self.fonts["sm"].render("[E]", True, C_GOLD)
-                self.screen.blit(txt, (sx - txt.get_width()//2, sy + yo))
-                return
+        if self.player.hidden is not None:
+            return
+        px, py = self.player.x, self.player.y
+        target = None
+        # 1. Hide spot within reach -- the single most important cue in a
+        # hide-or-die game: tell the player where cover is.
+        for hx, hy, _k in (getattr(self.scene, "hide_spots", None) or []):
+            if math.hypot(hx - px, hy - py) < 36:
+                target = (hx, hy)
+                break
+        # 2. Axe-chop target on an adjacent tile (debris / boards / crate).
+        if target is None and self.player.inventory.has("lumber_axe"):
+            for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                tx = int((px + dx * TILE) // TILE)
+                ty = int((py + dy * TILE) // TILE)
+                if (0 <= ty < self.scene.h and 0 <= tx < self.scene.w
+                        and self.scene.objects[ty][tx] in ("*", "q", "K")):
+                    target = (tx * TILE + 16, ty * TILE + 16)
+                    break
+        # 3. A chest within reach.
+        if target is None:
+            for d in self.scene.decorations:
+                if (getattr(d, "kind", "") == "chest"
+                        and math.hypot(d.x - px, d.y - py) < 40):
+                    target = (d.x, d.y - 8)
+                    break
+        # 4. An NPC to talk to.
+        if target is None:
+            for npc in self.scene.npcs:
+                if getattr(npc, "no_prompt", False):
+                    continue
+                if math.hypot(npc.x - px, npc.y - py) < 40:
+                    target = (npc.x, npc.y)
+                    break
+        if target is None:
+            return
+        sx = int(target[0] - self.cam_x)
+        sy = int(target[1] - self.cam_y) - 40
+        t = pygame.time.get_ticks() / 250.0
+        yo = int(math.sin(t) * 2)
+        txt = self.fonts["sm"].render("[E]", True, C_GOLD)
+        self.screen.blit(txt, (sx - txt.get_width() // 2, sy + yo))
 
     def _draw_hud(self):
         """THRESHOLD HUD. No HP bar, no equipped-weapon label. The
@@ -2553,6 +2656,28 @@ class Game:
         # Fill
         pygame.draw.rect(self.screen, col,
                          (tx, ty, int(bar_w * prox), bar_h))
+        # Stamina (sprint wind) -- lower-left, just above the scene
+        # label. Hidden while full + idle so the minimalist HUD stays
+        # quiet; it surfaces the instant you spend wind. Cool blue while
+        # you still have breath, red + refilling while you're blown and
+        # locked out -- so a chase becomes a gamble: sprint now and risk
+        # being caught winded, or keep something in reserve to break for
+        # cover.
+        p = self.player
+        winded = p.sprint_cd > 0
+        if p.sprint_active or winded or p.sprint_t < p.sprint_t_max - 0.01:
+            sw, sh = 70, 4
+            sx2, sy2 = 14, SCREEN_H - 32
+            if winded:
+                ratio = 1.0 - max(0.0, min(1.0, p.sprint_cd / p.sprint_cd_max))
+                fill = (150, 60, 60)
+            else:
+                ratio = max(0.0, min(1.0, p.sprint_t / p.sprint_t_max))
+                fill = (110, 150, 170)
+            pygame.draw.rect(self.screen, (40, 36, 50),
+                             (sx2 - 1, sy2 - 1, sw + 2, sh + 2), 1)
+            pygame.draw.rect(self.screen, fill,
+                             (sx2, sy2, int(sw * ratio), sh))
         # Battery indicator -- visible only when the player has the
         # flashlight AND it's on (or recently died). A thin bar in
         # the lower-right with a soft glow when lit.
@@ -2703,11 +2828,9 @@ class Game:
                 if ev.key in (pygame.K_e, pygame.K_SPACE, pygame.K_RETURN):
                     self.try_interact()
                 elif ev.key in (pygame.K_j, pygame.K_z):
-                    # THRESHOLD: combat is gone. The attack input still
-                    # registers so muscle memory doesn't cause UI bugs,
-                    # but it does nothing. The player will press it once,
-                    # then twice, then realise.
-                    pass
+                    # The desperation shove -- a non-lethal stun, the
+                    # player's only answer to a cultist closing in.
+                    self.player_melee_stun()
                 elif ev.key == pygame.K_i:
                     self.inv_ui.toggle()
                 elif ev.key == pygame.K_n:
@@ -2728,7 +2851,7 @@ class Game:
                     self.state = "paused"
                     self.audio.play("menu_open", 0.6)
             elif ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 1:
-                pass  # No attack on click either.
+                self.player_melee_stun()
             elif ev.type == pygame.MOUSEBUTTONUP and ev.button == 1:
                 pass
 

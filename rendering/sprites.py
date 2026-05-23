@@ -525,21 +525,23 @@ def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False,
 
 def draw_player_sprite(surf, x, y, facing, walk_phase=0, armor=None, mud=0.0,
                         prone=False):
-    """THRESHOLD: drifter in 1994 rural America. Faded denim jacket
-    over a dark-grey shirt, blue jeans, brown work boots, brown
-    hair. Replaces the original purple cloak/body. Armor overlays
-    are vestigial (combat is gone) but still draw if equipped, so
-    old saves render cleanly.
+    """THRESHOLD: the private investigator, 1994. A long dark wool
+    overcoat over a pale collar, dark trousers, scuffed work boots --
+    the silhouette of a man who drove here on a case, not a tourist.
+    Muted to sit in the graded, desaturated palette. Armor overlays
+    are vestigial (combat is gone) but still draw if equipped so old
+    saves render cleanly.
 
     A faint ground-shadow ellipse roots the player in the scene.
-    None of the NPCs cast a shadow, which is by design -- the player
-    is the only thing here that's properly *here*."""
-    jacket = (78, 92, 120)        # faded denim
-    shirt  = (50, 50, 56)         # dark grey shirt under
-    jeans  = (50, 60, 100)        # blue jeans
-    boots  = (40, 28, 20)         # brown leather
-    skin   = (220, 190, 160)
-    hair   = (80, 50, 30)
+    None of the NPCs cast a shadow, by design -- the player is the
+    only thing here that's properly *here*."""
+    coat    = (56, 52, 56)        # worn dark wool overcoat
+    coat_lo = (37, 34, 39)        # coat shadow side / hem
+    collar  = (150, 146, 138)     # pale shirt collar
+    pants   = (40, 38, 45)        # dark trousers
+    boots   = (34, 26, 20)        # scuffed work boots
+    skin    = (188, 158, 134)     # muted
+    hair    = (52, 40, 30)
     if prone:
         # Lying on the cot. Compress the figure to a horizontal
         # silhouette with a thin blanket overlay. Drawn off-centre
@@ -563,14 +565,16 @@ def draw_player_sprite(surf, x, y, facing, walk_phase=0, armor=None, mud=0.0,
     shadow = pygame.Surface((22, 8), pygame.SRCALPHA)
     pygame.draw.ellipse(shadow, (0, 0, 0, 90), (0, 0, 22, 8))
     surf.blit(shadow, (x - 11, y + 16))
-    # Lower body: jeans
-    pygame.draw.rect(surf, jeans, (x - 7, y + 6, 14, 8))
-    # Upper body: shirt under jacket (small inner stripe shows)
-    pygame.draw.rect(surf, shirt, (x - 6, y - 4, 12, 12))
-    # Jacket panels
-    pygame.draw.rect(surf, jacket, (x - 8, y - 4, 4, 14))   # left
-    pygame.draw.rect(surf, jacket, (x + 4, y - 4, 4, 14))   # right
-    pygame.draw.rect(surf, jacket, (x - 8, y - 4, 16, 3))   # collar/yoke
+    # Trousers (legs), under the coat hem.
+    pygame.draw.rect(surf, pants, (x - 6, y + 9, 12, 6))
+    # The overcoat: a long slab from shoulders to mid-thigh -- the PI
+    # silhouette. Shadowed on the right side + along the hem for form.
+    pygame.draw.rect(surf, coat, (x - 8, y - 5, 16, 17))
+    pygame.draw.rect(surf, coat_lo, (x + 3, y - 5, 5, 17))   # right shadow side
+    pygame.draw.rect(surf, coat_lo, (x - 8, y + 9, 16, 3))   # hem shadow
+    pygame.draw.line(surf, coat_lo, (x, y - 3), (x, y + 8), 1)  # front seam
+    # Pale collar at the throat.
+    pygame.draw.rect(surf, collar, (x - 3, y - 5, 6, 3))
     # Vestigial armor overlay (combat is gone; if a player has
     # equipped armor from a legacy save it still renders so the
     # save isn't broken visually).

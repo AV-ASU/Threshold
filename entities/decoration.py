@@ -47,6 +47,46 @@ def _compass_offset(dx, dy, travel_x, travel_y):
     return (int(round(ux * travel_x)), int(round(uy * travel_y)))
 
 
+# ---- Darkwood lighting helpers (mirror of scenes.base; kept local so
+# entities/ doesn't import scenes/) ----
+_DECO_SHADOW_CACHE = {}
+
+
+def _ground_shadow(surf, cx, cy, rw, rh, alpha=80):
+    key = (rw, rh, alpha)
+    s = _DECO_SHADOW_CACHE.get(key)
+    if s is None:
+        s = pygame.Surface((rw * 2, rh * 2), pygame.SRCALPHA)
+        pygame.draw.ellipse(s, (0, 0, 0, alpha), (0, 0, rw * 2, rh * 2))
+        _DECO_SHADOW_CACHE[key] = s
+    surf.blit(s, (int(cx - rw), int(cy - rh)))
+
+
+_DECO_POOL_CACHE = {}
+
+
+def _light_pool(surf, cx, cy, radius, color=(255, 170, 70), peak=70):
+    key = (radius, color, peak)
+    s = _DECO_POOL_CACHE.get(key)
+    if s is None:
+        s = pygame.Surface((radius * 2, radius * 2), pygame.SRCALPHA)
+        steps = 10
+        for k in range(steps, 0, -1):
+            r = max(1, int(radius * k / steps))
+            a = int(peak * (1 - k / steps) ** 1.4) + 4
+            pygame.draw.circle(s, (color[0], color[1], color[2], a),
+                               (radius, radius), r)
+        _DECO_POOL_CACHE[key] = s
+    surf.blit(s, (int(cx - radius), int(cy - radius)))
+
+
+_GROUNDED_DECOS = frozenset((
+    "well", "creepy_tree", "pickup_truck", "player_car", "cauldron",
+    "gas_pump", "payphone", "pedestal", "pillar", "wheelbarrow",
+    "headstone",
+))
+
+
 class Decoration:
     # Class-level player position cache. Game updates this every step
     # so a Decoration draw can read the player's world coords without
@@ -71,12 +111,15 @@ class Decoration:
         sy = int(self.y - cam_y)
         if sx < -64 or sx > SCREEN_W + 64 or sy < -64 or sy > SCREEN_H + 64:
             return
+        if self.kind in _GROUNDED_DECOS:
+            _ground_shadow(surf, sx, sy + 16, 13, 5, 75)
         getattr(self, f"_draw_{self.kind}", self._draw_unknown)(surf, sx, sy)
 
     def _draw_unknown(self, surf, x, y):
         pygame.draw.rect(surf, (255, 0, 255), (x - 4, y - 4, 8, 8))
 
     def _draw_candle(self, surf, x, y):
+        _light_pool(surf, x, y - 2, 30, (255, 170, 80), 58)
         pygame.draw.rect(surf, (180, 180, 200), (x - 2, y, 4, 8))
         pygame.draw.rect(surf, (240, 230, 200), (x - 1, y - 4, 2, 4))
         f_h = 6 + math.sin(self.t * 18) * 1 + (random.random() - 0.5)
@@ -98,10 +141,6 @@ class Decoration:
         pygame.draw.polygon(surf, (255, 200, 80), [(x, y - 4 - f_h), (x - f_w, y - 4), (x + f_w, y - 4)])
         pygame.draw.polygon(surf, (255, 240, 180),
                             [(x, y - 4 - f_h * 0.7), (x - f_w * 0.5, y - 4), (x + f_w * 0.5, y - 4)])
-        if int(self.t * 6) % 2 == 0:
-            glow = pygame.Surface((20, 20), pygame.SRCALPHA)
-            pygame.draw.circle(glow, (255, 200, 80, 30), (10, 10), 10)
-            surf.blit(glow, (x - 10, y - 12))
 
     def _draw_mud_footprint(self, surf, x, y):
         # A single boot print -- dark muddy oval with a heel mark and
@@ -324,6 +363,7 @@ class Decoration:
         # top, lantern hangs from the arm tip. Earlier rounds drew only
         # the lantern + a stub of chain, which read as floating in the
         # corridor. The pole anchors it to the ground.
+        _light_pool(surf, x + 8, y, 40, (255, 175, 80), 72)
         ground_y = y + 18
         top_y = y - 22
         # vertical pole
@@ -392,15 +432,32 @@ class Decoration:
             pygame.draw.line(surf, col, (x - 6, y + i * 2 + wy), (x + 6, y + i * 2 + wy), 2)
 
     def _draw_well(self, surf, x, y):
-        # Stone rim
-        pygame.draw.ellipse(surf, (90, 90, 100), (x - 14, y - 4, 28, 14))
-        pygame.draw.ellipse(surf, (60, 60, 70), (x - 14, y - 4, 28, 14), 2)
-        # Dark interior shaft -- the well reads as bottomless without water.
-        pygame.draw.ellipse(surf, (8, 6, 12), (x - 10, y - 1, 20, 8))
-        # Wooden frame (posts + crossbar)
-        pygame.draw.line(surf, (90, 60, 40), (x - 12, y - 4), (x - 12, y - 18), 2)
-        pygame.draw.line(surf, (90, 60, 40), (x + 12, y - 4), (x + 12, y - 18), 2)
-        pygame.draw.line(surf, (90, 60, 40), (x - 14, y - 18), (x + 14, y - 18), 2)
+        # Redesign: a fuller, ominous wellhead -- the ONLY way down into
+        # the Works. Mossy ring of fitted stones, a bottomless black
+        # shaft, a winch frame, and the rope that descends into the dark.
+        # Outer stone ring (3/4 top-down ellipse)
+        pygame.draw.ellipse(surf, (78, 78, 88), (x - 18, y - 8, 36, 22))
+        pygame.draw.ellipse(surf, (54, 54, 64), (x - 18, y - 8, 36, 22), 2)
+        # Fitted stones around the rim
+        for i in range(8):
+            ang = i / 8 * math.tau
+            sx = x + int(math.cos(ang) * 15)
+            sy = y + 3 + int(math.sin(ang) * 8)
+            pygame.draw.rect(surf, (96, 96, 106), (sx - 2, sy - 2, 4, 4))
+            pygame.draw.rect(surf, (50, 50, 60), (sx - 2, sy - 2, 4, 4), 1)
+        # Moss creeping the near rim
+        pygame.draw.arc(surf, (54, 86, 54), (x - 16, y + 1, 32, 15), 3.5, 6.0, 2)
+        # Bottomless shaft -- no water, just dark that keeps going
+        pygame.draw.ellipse(surf, (10, 8, 14), (x - 12, y - 3, 24, 14))
+        pygame.draw.ellipse(surf, (2, 2, 4), (x - 8, y - 1, 16, 9))
+        # Winch frame: two posts + crossbar on the north side
+        pygame.draw.line(surf, (84, 56, 36), (x - 13, y - 6), (x - 13, y - 22), 3)
+        pygame.draw.line(surf, (84, 56, 36), (x + 13, y - 6), (x + 13, y - 22), 3)
+        pygame.draw.line(surf, (70, 46, 28), (x - 15, y - 22), (x + 15, y - 22), 3)
+        # Winch drum on the crossbar
+        pygame.draw.rect(surf, (60, 40, 24), (x - 6, y - 24, 12, 4))
+        # The rope -- from the drum straight down into the shaft
+        pygame.draw.line(surf, (150, 130, 90), (x, y - 22), (x, y + 3), 1)
 
     def _draw_radio(self, surf, x, y):
         pygame.draw.rect(surf, (90, 60, 40), (x - 10, y - 4, 20, 12))
@@ -453,6 +510,39 @@ class Decoration:
         try:
             surf.set_at((int(x + dx), int(y + dy)), col)
             surf.set_at((int(x + dx + 1), int(y + dy)), col)
+        except (IndexError, ValueError):
+            pass
+
+    def _draw_mist(self, surf, x, y):
+        """Low ground fog -- soft translucent pools that breathe and
+        slide on the wind. Sized via kwargs w/h; laid over the water and
+        the marsh so the fog clings to the wet ground."""
+        ww = self.kwargs.get("w", 96)
+        hh = self.kwargs.get("h", 48)
+        drift = int(math.sin(self.t * 0.18 + self.seed) * 10)
+        breath = 1.0 + math.sin(self.t * 0.25 + self.seed * 0.5) * 0.12
+        pad = 30
+        fog = pygame.Surface((ww + pad * 2, hh + pad * 2), pygame.SRCALPHA)
+        rng = random.Random(self.seed)
+        for _ in range(5):
+            ew = int(rng.randint(ww // 2, ww) * breath)
+            eh = int(rng.randint(hh // 2, hh) * breath)
+            ox = pad + rng.randint(-ww // 4, ww // 4) + (ww - ew) // 2
+            oy = pad + rng.randint(-hh // 4, hh // 4) + (hh - eh) // 2
+            pygame.draw.ellipse(fog, (150, 156, 162, 22), (ox, oy, ew, eh))
+        surf.blit(fog, (x - ww // 2 - pad + drift, y - hh // 2 - pad))
+
+    def _draw_wisp(self, surf, x, y):
+        """A will-o'-the-wisp -- a small cold pale glow drifting low over
+        the bog. Marsh gas, or something out there carrying a light."""
+        cx = int(x + math.sin(self.t * 0.5 + self.seed) * 14)
+        cy = int(y + math.cos(self.t * 0.37 + self.seed * 0.6) * 8)
+        glow = pygame.Surface((22, 22), pygame.SRCALPHA)
+        pygame.draw.circle(glow, (110, 168, 146, 38), (11, 11), 10)
+        pygame.draw.circle(glow, (150, 200, 174, 70), (11, 11), 5)
+        surf.blit(glow, (cx - 11, cy - 11))
+        try:
+            surf.set_at((cx, cy), (210, 235, 220))
         except (IndexError, ValueError):
             pass
 
@@ -966,6 +1056,35 @@ class Decoration:
             w = max(1, int(h * tri_t))
             pygame.draw.line(surf, gold, (x - w, ly), (x + w, ly), 1)
 
+    def _draw_yellow_sign(self, surf, x, y):
+        # The Yellow Sign -- the cult's glyph, daubed on stone. An
+        # asymmetric three-armed curl in jaundiced yellow, breathing
+        # faintly. Deliberately wrong: the arms don't match, and the
+        # eye sits off-centre. This is the cosmic-horror anchor; it
+        # repeats at scale across the Scriptorium and Sign Chamber.
+        pulse = 1.0 + math.sin(self.t * 1.1 + self.seed) * 0.10
+        col = (196, 178, 72)
+        dark = (92, 80, 28)
+        R = 13 * pulse
+        arms = ((-1.5, 1.05), (1.15, 0.85), (0.25, 1.3))
+        for base_ang, lscale in arms:
+            L = R * lscale
+            pts = []
+            seg = 6
+            for i in range(seg + 1):
+                t = i / seg
+                a = base_ang + t * 1.05      # curl as the arm extends
+                rr = L * t
+                pts.append((int(x + math.cos(a) * rr),
+                            int(y + math.sin(a) * rr)))
+            pygame.draw.lines(surf, dark, False, pts, 4)
+            pygame.draw.lines(surf, col, False, pts, 2)
+        # Off-centre hooked eye at the heart of the glyph.
+        ex, ey = int(x - 1), int(y + 1)
+        pygame.draw.circle(surf, dark, (ex, ey), int(5 * pulse))
+        pygame.draw.circle(surf, col, (ex, ey), int(5 * pulse), 1)
+        pygame.draw.circle(surf, col, (ex + 2, ey - 1), 2)
+
     def _draw_chest(self, surf, x, y):
         # Wooden chest. Closed = lid down with a gold lock plate (and a
         # padlock if locked=True). Open = lid swung up and a dark
@@ -1321,56 +1440,101 @@ class Decoration:
                          (x - 1, y - 10), (x + 1, y - 10), 1)
 
     def _draw_pickup_truck(self, surf, x, y):
-        """A faded-blue 1990s rural pickup truck, parked. ~2 tiles wide,
-        ~1.5 tiles tall -- physically a real vehicle the player can't
-        slip past on accident. Pair the decoration with a solid 'X'
-        tile under it in scene-builder so collision matches. Cab with
-        windshield, open bed, four wheels, side mirror, rust streak."""
-        body = (74, 96, 124)
-        body_dark = (40, 56, 80)
-        rust = (130, 70, 40)
-        glass = (140, 170, 200)
-        tire = (20, 18, 22)
-        chrome = (200, 200, 210)
-        # Truck bed (rear, open box). Outer 28w x 20h, inner cavity 4 px in.
-        pygame.draw.rect(surf, body, (x - 24, y - 10, 24, 20))
-        pygame.draw.rect(surf, body_dark, (x - 24, y - 10, 24, 20), 1)
-        pygame.draw.rect(surf, (50, 64, 90), (x - 22, y - 8, 20, 16))
-        # Tailgate seam
-        pygame.draw.line(surf, body_dark, (x - 24, y), (x, y), 1)
-        # Cab body
-        pygame.draw.rect(surf, body, (x, y - 16, 22, 26))
-        pygame.draw.rect(surf, body_dark, (x, y - 16, 22, 26), 1)
-        # Windshield slant
+        """A dead farm pickup, ~2.5 tiles long -- big, weathered, and
+        long abandoned: faded muddy paint eaten through with rust,
+        cracked-out windows, sagging on a flat tire, weeds growing up
+        through the bed. The truck that drove for the county line and got
+        handed back. Pair with solid 'X' tiles so the player can't walk
+        through it. Faces right (nosed east, into the tree line)."""
+        rng = random.Random(self.seed)
+        # Sunk, oversized contact shadow under the whole hulk.
+        sh = pygame.Surface((110, 34), pygame.SRCALPHA)
+        pygame.draw.ellipse(sh, (0, 0, 0, 95), (0, 0, 110, 34))
+        surf.blit(sh, (x - 52, y + 6))
+        body = (96, 88, 66)          # faded, dirtied paint -- muddy tan/olive
+        body_dark = (52, 48, 36)
+        rust = (118, 60, 32)
+        rust_dk = (78, 40, 22)
+        glass = (60, 70, 70)         # dead, grimy glass
+        tire = (24, 22, 26)
+        # ---- Bed (rear/left), a big open rusted box ----
+        pygame.draw.rect(surf, body, (x - 50, y - 16, 38, 30))
+        pygame.draw.rect(surf, body_dark, (x - 50, y - 16, 38, 30), 2)
+        pygame.draw.rect(surf, (40, 38, 30), (x - 46, y - 12, 30, 22))   # cavity
+        # Weeds growing up through the bed and the wheel wells.
+        for _ in range(9):
+            wx = x - 44 + rng.randint(0, 28)
+            wy = y - 10 + rng.randint(0, 18)
+            g = 60 + rng.randint(0, 40)
+            pygame.draw.line(surf, (44, g, 44), (wx, wy), (wx - 1, wy - 6), 1)
+        # ---- Cab ----
+        pygame.draw.rect(surf, body, (x - 12, y - 24, 34, 38))
+        pygame.draw.rect(surf, body_dark, (x - 12, y - 24, 34, 38), 2)
+        # Roof, sun-bleached + rust-blistered.
+        pygame.draw.rect(surf, (108, 100, 78), (x - 10, y - 22, 30, 12))
+        # Windshield -- cracked, mostly dark.
         pygame.draw.polygon(surf, glass, [
-            (x + 2, y - 14), (x + 14, y - 14),
-            (x + 17, y - 6), (x + 2, y - 6),
-        ])
-        pygame.draw.polygon(surf, body_dark, [
-            (x + 2, y - 14), (x + 14, y - 14),
-            (x + 17, y - 6), (x + 2, y - 6),
-        ], 1)
-        # Side window
-        pygame.draw.rect(surf, glass, (x + 14, y - 4, 6, 8))
-        pygame.draw.rect(surf, body_dark, (x + 14, y - 4, 6, 8), 1)
-        # Hood
-        pygame.draw.rect(surf, body, (x + 16, y - 4, 8, 14))
-        pygame.draw.rect(surf, body_dark, (x + 16, y - 4, 8, 14), 1)
-        # Headlights
-        pygame.draw.rect(surf, (220, 220, 180), (x + 23, y, 2, 4))
-        # Side mirror
-        pygame.draw.line(surf, body_dark, (x + 2, y - 14), (x - 1, y - 17), 1)
-        pygame.draw.rect(surf, body_dark, (x - 3, y - 19, 3, 3))
-        # Rust streak on one fender
-        pygame.draw.line(surf, rust, (x - 22, y + 6), (x - 8, y + 6), 1)
-        pygame.draw.line(surf, rust, (x - 18, y + 8), (x - 10, y + 8), 1)
-        # Bumpers (chrome)
-        pygame.draw.rect(surf, chrome, (x - 24, y + 9, 50, 2))
-        # Wheels
-        pygame.draw.circle(surf, tire, (x - 16, y + 11), 5)
-        pygame.draw.circle(surf, tire, (x + 18, y + 11), 5)
-        pygame.draw.circle(surf, chrome, (x - 16, y + 11), 2)
-        pygame.draw.circle(surf, chrome, (x + 18, y + 11), 2)
+            (x - 6, y - 20), (x + 16, y - 20), (x + 19, y - 8), (x - 6, y - 8)])
+        pygame.draw.line(surf, (150, 150, 140), (x - 2, y - 20), (x + 10, y - 9), 1)
+        pygame.draw.line(surf, (150, 150, 140), (x + 10, y - 18), (x + 4, y - 8), 1)
+        pygame.draw.rect(surf, body_dark, (x - 6, y - 20, 25, 12), 1)
+        # Side window, glass gone -- just a dark hole.
+        pygame.draw.rect(surf, (22, 22, 26), (x + 14, y - 6, 8, 12))
+        # ---- Hood / front (right) ----
+        pygame.draw.rect(surf, body, (x + 22, y - 8, 16, 22))
+        pygame.draw.rect(surf, body_dark, (x + 22, y - 8, 16, 22), 2)
+        pygame.draw.rect(surf, (150, 140, 90), (x + 37, y - 2, 3, 6))    # dead headlight
+        # Bent front bumper, hanging.
+        pygame.draw.line(surf, (96, 92, 96), (x + 38, y + 12), (x + 42, y + 16), 2)
+        # ---- Rust eating the body (deterministic blotches) ----
+        for _ in range(14):
+            bx = x - 48 + rng.randint(0, 84)
+            by = y - 22 + rng.randint(0, 34)
+            r = rng.randint(2, 5)
+            pygame.draw.circle(surf, rust if rng.random() < 0.6 else rust_dk,
+                               (bx, by), r)
+        # Long rust runs bleeding down from the seams.
+        for sx0 in (x - 44, x - 30, x - 6, x + 16, x + 30):
+            pygame.draw.line(surf, rust_dk, (sx0, y + 2), (sx0, y + 12), 1)
+        # ---- Wheels: rear sound, front flat (the hulk sags forward) ----
+        pygame.draw.circle(surf, tire, (x - 36, y + 13), 7)
+        pygame.draw.circle(surf, (60, 58, 60), (x - 36, y + 13), 3)
+        pygame.draw.ellipse(surf, tire, (x + 20, y + 13, 18, 8))         # flat tire
+        pygame.draw.rect(surf, (60, 58, 60), (x + 27, y + 15, 4, 3))
+
+    def _draw_headstone(self, surf, x, y):
+        """A weathered grave marker set crooked in the dirt -- a
+        rounded slab or a cross, leaning, mossy, its inscription worn to
+        illegible scratches. Per-instance variation (seed) so a row of
+        them reads as graves, never a clean grid of identical rocks."""
+        rng = random.Random(self.seed)
+        h = rng.randint(18, 26)
+        w = rng.randint(11, 15)
+        lean = rng.randint(-4, 4)              # top shifted sideways = crooked
+        cross = rng.random() < 0.30
+        stone = (94, 92, 90)
+        stone_dk = (56, 54, 54)
+        moss = (58, 74, 50)
+        tx = x + lean
+        top = y - h
+        # Turned dirt at the foot.
+        pygame.draw.ellipse(surf, (30, 26, 23), (x - w // 2 - 2, y, w + 4, 7))
+        if cross:
+            pygame.draw.line(surf, stone, (tx, top), (x, y), 5)
+            pygame.draw.line(surf, stone, (tx - w // 2, top + h // 3),
+                             (tx + w // 2, top + h // 3), 5)
+            pygame.draw.line(surf, stone_dk, (tx, top), (x, y), 1)
+        else:
+            pts = [(x - w // 2, y), (x - w // 2 + lean, top + 5),
+                   (tx - w // 4, top), (tx + w // 4, top),
+                   (x + w // 2 + lean, top + 5), (x + w // 2, y)]
+            pygame.draw.polygon(surf, stone, pts)
+            pygame.draw.polygon(surf, stone_dk, pts, 1)
+            for i in range(2):                 # illegible inscription
+                ly = top + 9 + i * 5
+                lx = x - w // 4 + int(lean * (1 - (ly - top) / h))
+                pygame.draw.line(surf, stone_dk, (lx, ly), (lx + w // 2, ly), 1)
+        pygame.draw.circle(surf, moss, (x - w // 4, y - 2), 2)
 
     def _draw_player_car(self, surf, x, y):
         """A faded-red 1990s sedan, parked. Approx 3 tiles wide, 1.5

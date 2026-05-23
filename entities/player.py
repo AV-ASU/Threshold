@@ -49,6 +49,14 @@ class Player:
         self.sprint_t_max = 3.0
         self.sprint_cd = 0.0         # seconds remaining in cooldown
         self.sprint_cd_max = 6.0
+        # THRESHOLD desperation melee. A non-lethal shove that STUNS a
+        # cultist/shadow for a beat -- never a kill (the King is still
+        # the only lethal thing). Kept fully separate from the legacy
+        # swing_t/attack system so it can't deal damage. melee_swing_t
+        # drives a brief visual; melee_cd gates the next swing.
+        self.melee_cd = 0.0
+        self.melee_swing_t = 0.0
+        self.melee_dir = (0, 1)
         # THRESHOLD hide state. Set to a hide-spot id while the player
         # is in cover; None when out in the open. While hidden, the
         # player draws at low alpha, watchers/cultists ignore them,

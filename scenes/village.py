@@ -29,9 +29,11 @@ def build_village():
             floor_rows.append(list("d" * 36))
         else:
             floor_rows.append(list("g" * 36))
-    # Footpath south to the well (col 17, rows 9..13)
-    for fy in range(9, 14):
-        floor_rows[fy][17] = "d"
+    # Footpath south off the road to the well (col 16, rows 9..11).
+    # The well sits just south of the road now -- a clear landmark on
+    # entry rather than buried in the deep south of the field.
+    for fy in range(9, 12):
+        floor_rows[fy][16] = "d"
     # Footpath south-east to the woodshed door (col 24, rows 9..14)
     for fy in range(9, 15):
         floor_rows[fy][24] = "d"
@@ -73,7 +75,7 @@ def build_village():
     # well/payphone area, and the woodshed footprint.
     crop_north_rows = (2, 4)
     crop_south_rows = (10, 12, 18 - 1)   # 10, 12, 17
-    crop_cols_blocked = {14, 17, 24}     # footpaths
+    crop_cols_blocked = {14, 16, 24}     # footpaths
     for ty in crop_north_rows:
         for tx in range(2, 34):
             if tx in crop_cols_blocked:
@@ -119,14 +121,14 @@ def build_village():
     sc = Scene("village", floor, objects, music="village")
     sc.add_exit("e", "country_lane",      "from_village")
     sc.add_exit("4", "mistlands",         "from_village")  # west, after debris
-    sc.add_exit("/", "town",              "from_village")
+    sc.add_exit("/", "mistlands",         "from_village_road")  # old town road, into Brimley
     sc.add_exit("a", "gravel_road_north", "from_village")
 
     sc.set_spawn("default",                17, 7)
     sc.set_spawn("from_country_lane",      34, 7)
     sc.set_spawn("from_our_house_area",    34, 7)   # legacy save alias
     sc.set_spawn("from_mistlands",         2, 7)
-    sc.set_spawn("from_well",              17, 13)
+    sc.set_spawn("from_well",              16, 9)    # climb out beside the well
     sc.set_spawn("from_woodshed",          24, 12)
     sc.set_spawn("from_schoolhouse",       14, 15)
     sc.set_spawn("from_town",              14, 15)
@@ -138,9 +140,11 @@ def build_village():
                     "from_haunted_house"):
         sc.set_spawn(legacy, 17, 7)
 
-    # The well + payphone stay where they were.
-    well_x = 17 * TILE + 16
-    well_y = 14 * TILE + 16
+    # The well -- repositioned just south of the road (col 16, row 11)
+    # so it reads as a landmark the moment the player walks in. It is
+    # the ONLY way down into the Works.
+    well_x = 16 * TILE + 16
+    well_y = 11 * TILE + 16
     sc.add_decoration(Decoration(well_x, well_y, "well"))
     payphone_x = 8 * TILE + 16
     payphone_y = 13 * TILE + 16
@@ -186,6 +190,12 @@ def build_village():
                    (3, 17), (29, 17), (30, 9), (33, 13)]:
         sc.add_decoration(Decoration(sx * TILE + 16, sy * TILE + 16,
                                      "grass_tuft"))
+    # Liminal dressing: someone is hunting the vanished out here too --
+    # a flyer nailed to the shed, another by the dead payphone -- and a
+    # single chair sits in a gap in the corn where no chair belongs.
+    sc.add_decoration(Decoration(25 * TILE + 16, 13 * TILE - 4, "missing_flyer"))
+    sc.add_decoration(Decoration(6 * TILE + 16, 13 * TILE + 6, "missing_flyer"))
+    sc.add_decoration(Decoration(20 * TILE + 16, 17 * TILE + 16, "small_chair"))
 
     # Hide spots: in the corn rows themselves and behind the shed.
     sc.hide_spots = [
@@ -231,12 +241,20 @@ def build_village():
                     "Some old tools."
                 )
             return
-        # The well -- requires rope to descend.
+        # The well -- the only way down into the Works. Needs the rope
+        # to rig the first descent; once tied, the rope stays as the
+        # climb route (down AND back up) until the orb breaks it on a
+        # later descent (handled in well_bottom's on_enter).
         if (abs(game.player.x - well_x) < 36
                 and abs(game.player.y - well_y) < 36):
             if game.save.flag("well_rope_broken"):
                 game.audio.play("door_locked", 0.6)
-                game.show_notice("The rope is broken.")
+                game.show_notice("The rope's gone. There's no climbing "
+                                 "back down.")
+                return
+            if game.save.flag("well_rope_tied"):
+                game.audio.play("door_open", 0.7)
+                game.begin_transition("well_bottom", "from_well")
                 return
             if game.player.inventory.has("rope"):
                 game.player.inventory.remove("rope", 1)
@@ -244,9 +262,9 @@ def build_village():
                 game.audio.play("door_open", 0.7)
                 game.show_notice("You tie the rope and climb down.")
                 game.begin_transition("well_bottom", "from_well")
-            else:
-                game.audio.play("door_locked", 0.7)
-                game.show_notice("Too deep without a rope.")
+                return
+            game.audio.play("door_locked", 0.7)
+            game.show_notice("Too deep without a rope.")
             return
         # Payphone.
         if (abs(game.player.x - payphone_x) < 36
