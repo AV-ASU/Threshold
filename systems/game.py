@@ -2514,22 +2514,57 @@ class Game:
         }.get(d.get("kind"), (220, 220, 220))
 
     def _draw_interact_prompt(self):
+        """Float an [E] over whatever pressing E would act on right now,
+        mirroring try_interact's priority so the cue never lies: a
+        hide-spot first (the core stealth affordance), then an adjacent
+        axe-chop target, a chest, or an NPC to talk to. Drawn over the
+        world, under the HUD."""
         if (self.dialog.active or self.inv_ui.open or self.notebook_ui.open
                 or self.text_input.active
                 or self.state != "playing"):
             return
-        for npc in self.scene.npcs:
-            if getattr(npc, "no_prompt", False):
-                continue
-            d = math.hypot(npc.x - self.player.x, npc.y - self.player.y)
-            if d < 40:
-                sx = int(npc.x - self.cam_x)
-                sy = int(npc.y - self.cam_y) - 40
-                t = pygame.time.get_ticks() / 250.0
-                yo = int(math.sin(t) * 2)
-                txt = self.fonts["sm"].render("[E]", True, C_GOLD)
-                self.screen.blit(txt, (sx - txt.get_width()//2, sy + yo))
-                return
+        if self.player.hidden is not None:
+            return
+        px, py = self.player.x, self.player.y
+        target = None
+        # 1. Hide spot within reach -- the single most important cue in a
+        # hide-or-die game: tell the player where cover is.
+        for hx, hy, _k in (getattr(self.scene, "hide_spots", None) or []):
+            if math.hypot(hx - px, hy - py) < 36:
+                target = (hx, hy)
+                break
+        # 2. Axe-chop target on an adjacent tile (debris / boards / crate).
+        if target is None and self.player.inventory.has("lumber_axe"):
+            for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                tx = int((px + dx * TILE) // TILE)
+                ty = int((py + dy * TILE) // TILE)
+                if (0 <= ty < self.scene.h and 0 <= tx < self.scene.w
+                        and self.scene.objects[ty][tx] in ("*", "q", "K")):
+                    target = (tx * TILE + 16, ty * TILE + 16)
+                    break
+        # 3. A chest within reach.
+        if target is None:
+            for d in self.scene.decorations:
+                if (getattr(d, "kind", "") == "chest"
+                        and math.hypot(d.x - px, d.y - py) < 40):
+                    target = (d.x, d.y - 8)
+                    break
+        # 4. An NPC to talk to.
+        if target is None:
+            for npc in self.scene.npcs:
+                if getattr(npc, "no_prompt", False):
+                    continue
+                if math.hypot(npc.x - px, npc.y - py) < 40:
+                    target = (npc.x, npc.y)
+                    break
+        if target is None:
+            return
+        sx = int(target[0] - self.cam_x)
+        sy = int(target[1] - self.cam_y) - 40
+        t = pygame.time.get_ticks() / 250.0
+        yo = int(math.sin(t) * 2)
+        txt = self.fonts["sm"].render("[E]", True, C_GOLD)
+        self.screen.blit(txt, (sx - txt.get_width() // 2, sy + yo))
 
     def _draw_hud(self):
         """THRESHOLD HUD. No HP bar, no equipped-weapon label. The
