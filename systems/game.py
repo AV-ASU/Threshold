@@ -2464,6 +2464,11 @@ class Game:
         self._draw_outdoor_vignette()
         self._draw_apex_overlay()
         self._draw_hidden_overlay()
+        # Film grade over the whole world layer (desaturate, cool tint,
+        # vignette, animated grain) -- fuses the frame into one grimy
+        # image. Applied before the HUD so UI text stays crisp.
+        from scenes.base import apply_grade
+        apply_grade(self.screen, pygame.time.get_ticks() / 1000.0)
         self._draw_interact_prompt()
         self._draw_hud()
         self.dialog.draw(self.screen)

@@ -72,6 +72,17 @@ _STANDING_KINDS = frozenset((
     "shelf", "stove", "crate", "debris",
 ))
 
+_DARK_TILES = {}
+
+
+def _dark_tile(alpha):
+    s = _DARK_TILES.get(alpha)
+    if s is None:
+        s = pygame.Surface((TILE, TILE), pygame.SRCALPHA)
+        s.fill((0, 0, 0, alpha))
+        _DARK_TILES[alpha] = s
+    return s
+
 
 FLOOR_DEFS = {
     "g": {"color": (46, 58, 44),   "step": "step_grass"},
@@ -265,17 +276,21 @@ def draw_object(surf, ch, rx, ry):
         pygame.draw.circle(surf, (40, 80, 46), (rx + 12, ry + 12), 6)
         pygame.draw.circle(surf, (40, 80, 46), (rx + 20, ry + 14), 5)
     elif kind == "cornstalk":
+        # Per-tile jitter so rows never line up into a clean grid, and
+        # muddier stalk colors to sit in the desaturated palette.
+        rx += ((rx * 13 + ry * 7) % 7) - 3
+        ry += ((rx * 5 + ry * 11) % 5) - 2
         t = pygame.time.get_ticks() / 600.0
         sway = int(math.sin(t + (rx + ry) * 0.07) * 1.5)
         for cx in (8, 16, 24):
-            pygame.draw.line(surf, (96, 110, 50),
+            pygame.draw.line(surf, (78, 86, 46),
                              (rx + cx, ry + 30),
                              (rx + cx + sway, ry + 2), 2)
         for cx, cy in ((6, 6), (12, 10), (22, 6), (26, 12),
                        (10, 18), (20, 20)):
-            pygame.draw.ellipse(surf, (130, 150, 60),
+            pygame.draw.ellipse(surf, (96, 104, 54),
                                 (rx + cx + sway, ry + cy, 8, 4))
-        pygame.draw.ellipse(surf, (180, 160, 70),
+        pygame.draw.ellipse(surf, (150, 134, 68),
                             (rx + 14 + sway, ry + 4, 4, 7))
     elif kind == "rock":
         pygame.draw.circle(surf, (100, 100, 110), (rx + 16, ry + 18), 12)
@@ -617,6 +632,14 @@ def draw_floor(surf, ch, rx, ry, tx, ty):
             pygame.draw.rect(surf, (66, 44, 28),
                              (rx + (seed * 3 % 22) + 4,
                               ry + (seed * 7 % 22) + 4, 4, 3))
+    # Macro shadow blotches: a low-frequency, world-anchored darkening
+    # that rolls across many tiles at once, so the floor stops reading
+    # as a grid of identical cells. Two cheap sine layers, darken-only.
+    shade = (math.sin(tx * 0.23 + ty * 0.15)
+             + 0.6 * math.sin(tx * 0.09 - ty * 0.19))
+    a = int(max(0.0, -shade) * 30)
+    if a:
+        surf.blit(_dark_tile(min(58, a)), (rx, ry))
 
 
 def is_floor_solid(ch):
@@ -684,6 +707,152 @@ def scene_display_name(scene):
     if label:
         return label
     return scene.key.replace("_", " ").title()
+
+
+# ---- Continuous wall mass (break the tile grid) ----
+# Wall tiles are rendered as one near-black form with lit edges only on
+# faces that touch open floor -- no per-tile borders or grout, so a run
+# of wall stops reading as a row of grey blocks (the RimWorld tell).
+_WALL_CHARS = frozenset("#W%&")
+_WALL_BASE = (19, 18, 23)
+_WALL_FACE = (50, 48, 56)
+_WALL_TOP = (74, 72, 82)
+_WALL_FOOT = (8, 7, 11)
+
+
+def _is_wall(scene, tx, ty):
+    if 0 <= ty < scene.h and 0 <= tx < scene.w:
+        return scene.objects[ty][tx] in _WALL_CHARS
+    return True   # off-map reads as wall so the mass closes at edges
+
+
+def _draw_wall_mass(surf, scene, cam_x, cam_y, x0, y0, x1, y1):
+    for ty in range(y0, y1):
+        for tx in range(x0, x1):
+            if scene.objects[ty][tx] not in _WALL_CHARS:
+                continue
+            rx = tx * TILE - cam_x
+            ry = ty * TILE - cam_y
+            pygame.draw.rect(surf, _WALL_BASE, (rx, ry, TILE, TILE))
+            hsh = (tx * 73856093) ^ (ty * 19349663)
+            if hsh % 5 == 0:                       # pitting / grime
+                pygame.draw.rect(surf, (11, 10, 14),
+                                 (rx + (hsh % (TILE - 6)) + 3,
+                                  ry + ((hsh // 7) % (TILE - 6)) + 3, 3, 2))
+            elif hsh % 9 == 0:                      # hairline crack
+                cx = rx + (hsh % (TILE - 4)) + 2
+                cy = ry + ((hsh // 5) % (TILE - 8)) + 2
+                pygame.draw.line(surf, (30, 28, 35), (cx, cy), (cx, cy + 5), 1)
+            j = (hsh >> 3) & 1     # 1px edge jitter -> hand-drawn wobble
+            if not _is_wall(scene, tx, ty - 1):     # room above: lit cap
+                pygame.draw.rect(surf, _WALL_TOP, (rx, ry, TILE, 2))
+                pygame.draw.line(surf, _WALL_FACE, (rx, ry + 2 + j),
+                                 (rx + TILE, ry + 2 + j), 1)
+            if not _is_wall(scene, tx, ty + 1):     # room below: foot shadow
+                pygame.draw.rect(surf, _WALL_FOOT, (rx, ry + TILE - 2, TILE, 2))
+                pygame.draw.line(surf, _WALL_FACE, (rx, ry + TILE - 3 - j),
+                                 (rx + TILE, ry + TILE - 3 - j), 1)
+            if not _is_wall(scene, tx - 1, ty):
+                pygame.draw.line(surf, _WALL_FACE, (rx + j, ry),
+                                 (rx + j, ry + TILE), 1)
+            if not _is_wall(scene, tx + 1, ty):
+                pygame.draw.line(surf, _WALL_FACE, (rx + TILE - 1 - j, ry),
+                                 (rx + TILE - 1 - j, ry + TILE), 1)
+
+
+def draw_scene_terrain(surf, scene, cam_x, cam_y, x0, y0, x1, y1):
+    """Floor -> wall-cast shadows -> continuous wall mass -> non-wall
+    objects, for a tile window. Shared by Scene.draw (camera window) and
+    the offline full-map renderer."""
+    for ty in range(y0, y1):
+        for tx in range(x0, x1):
+            draw_floor(surf, scene.floor[ty][tx],
+                       tx * TILE - cam_x, ty * TILE - cam_y, tx, ty)
+    strip = _wall_shadow_strip()
+    for ty in range(y0, y1):
+        for tx in range(x0, x1):
+            if scene.objects[ty][tx] in _SHADOW_CASTERS:
+                surf.blit(strip, (tx * TILE - cam_x,
+                                  (ty + 1) * TILE - cam_y))
+    _draw_wall_mass(surf, scene, cam_x, cam_y, x0, y0, x1, y1)
+    for ty in range(y0, y1):
+        for tx in range(x0, x1):
+            ch = scene.objects[ty][tx]
+            if ch == "." or ch in _WALL_CHARS:
+                continue
+            draw_object(surf, ch, tx * TILE - cam_x, ty * TILE - cam_y)
+
+
+# ---- Screen-space film grade (grain + vignette + desaturate + tint) ----
+# A whole-frame pass that fuses the image into one grimy film look --
+# the thing hand-recoloring tiles can't do. Applied to the finished
+# frame by the game each draw, and by the offline renderer.
+_GRAIN_TILE = None
+_VIGNETTE_CACHE = {}
+_GRADE_TINT = (16, 20, 22)
+
+
+def _grain_tile():
+    global _GRAIN_TILE
+    if _GRAIN_TILE is None:
+        size = 256
+        g = pygame.Surface((size, size), pygame.SRCALPHA)
+        rng = random.Random(99)
+        for _ in range((size * size) // 5):
+            gx = rng.randint(0, size - 1)
+            gy = rng.randint(0, size - 1)
+            v = rng.randint(0, 255)
+            if v < 128:
+                g.set_at((gx, gy), (0, 0, 0, 18 if v < 40 else 9))
+            else:
+                g.set_at((gx, gy), (255, 255, 255, 13 if v > 220 else 6))
+        _GRAIN_TILE = g
+    return _GRAIN_TILE
+
+
+def _vignette(w, h):
+    v = _VIGNETTE_CACHE.get((w, h))
+    if v is None:
+        base = 192
+        s = pygame.Surface((base, base), pygame.SRCALPHA)
+        cx = cy = base / 2.0
+        maxd = (cx * cx + cy * cy) ** 0.5
+        for yy in range(base):
+            for xx in range(base):
+                d = (((xx - cx) ** 2 + (yy - cy) ** 2) ** 0.5) / maxd
+                a = int(max(0.0, d - 0.44) / 0.56 * 140)
+                if a:
+                    s.set_at((xx, yy), (0, 0, 0, min(140, a)))
+        v = pygame.transform.smoothscale(s, (w, h))
+        _VIGNETTE_CACHE[(w, h)] = v
+    return v
+
+
+def apply_grade(surf, t=0.0, desat=82):
+    """Grade a finished frame in place: partial desaturation, a cool
+    tint, a radial vignette, and animated film grain."""
+    w, h = surf.get_size()
+    try:
+        grey = pygame.transform.grayscale(surf)
+        grey.set_alpha(desat)
+        surf.blit(grey, (0, 0))
+    except Exception:
+        pass
+    tint = pygame.Surface((w, h), pygame.SRCALPHA)
+    tint.fill((_GRADE_TINT[0], _GRADE_TINT[1], _GRADE_TINT[2], 38))
+    surf.blit(tint, (0, 0))
+    surf.blit(_vignette(w, h), (0, 0))
+    g = _grain_tile()
+    gw, gh = g.get_size()
+    ox = int(t * 41) % gw
+    oy = int(t * 67) % gh
+    yy = -oy
+    while yy < h:
+        xx = -ox
+        while xx < w:
+            surf.blit(g, (xx, yy))
+            xx += gw
+        yy += gh
 
 
 class Scene:
@@ -813,29 +982,7 @@ class Scene:
         y0 = max(0, int(cam_y // TILE) - 1)
         x1 = min(self.w, int((cam_x + SCREEN_W) // TILE) + 2)
         y1 = min(self.h, int((cam_y + SCREEN_H) // TILE) + 2)
-        for ty in range(y0, y1):
-            for tx in range(x0, x1):
-                ch = self.floor[ty][tx]
-                rx = tx * TILE - cam_x
-                ry = ty * TILE - cam_y
-                draw_floor(surf, ch, rx, ry, tx, ty)
-        # Wall-cast shadows: every tall tile throws a soft shadow onto
-        # the floor tile to its south, faking height + grounding the
-        # walls. Drawn between floor and objects so the shadow lands on
-        # the floor but is covered where the southern tile is also a wall.
-        strip = _wall_shadow_strip()
-        for ty in range(y0, y1):
-            for tx in range(x0, x1):
-                if self.objects[ty][tx] in _SHADOW_CASTERS:
-                    surf.blit(strip, (tx * TILE - cam_x,
-                                      (ty + 1) * TILE - cam_y))
-        for ty in range(y0, y1):
-            for tx in range(x0, x1):
-                ch = self.objects[ty][tx]
-                if ch == ".": continue
-                rx = tx * TILE - cam_x
-                ry = ty * TILE - cam_y
-                draw_object(surf, ch, rx, ry)
+        draw_scene_terrain(surf, self, cam_x, cam_y, x0, y0, x1, y1)
         for d in self.decorations:
             d.draw(surf, cam_x, cam_y)
 

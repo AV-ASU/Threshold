@@ -233,16 +233,27 @@ Built into the procedural draw layer (`scenes/base.py`,
 `entities/decoration.py`) so every scene gets it for free.
 
 **Locked rules:**
+- **Break the grid — walls are a continuous mass, not blocks.** The #1
+  RimWorld tell was per-tile grey wall blocks with borders/grout. Walls
+  (`#W%&`) now render as one near-black form via `_draw_wall_mass` (in
+  `scenes/base.py`): no per-tile borders, lit edges only on faces that
+  touch open floor, faint pitting/cracks. The seams vanish; a run reads
+  as a single battered surface. Terrain rendering is shared through
+  `draw_scene_terrain` (Scene.draw + the offline renderer use the same).
+- **Frame film grade.** `apply_grade` runs over the whole world layer
+  each frame (game.py `draw_world`, before the HUD): partial
+  desaturation, a cool tint, a radial vignette, and animated film grain.
+  This is what hand-recoloring tiles couldn't do — it fuses everything
+  into one grimy film image.
 - **Palette: muddy + desaturated.** Earthy olive grass, murky water,
-  muddy dirt, greyed stone. Saturation and brightness pulled down across
-  `FLOOR_DEFS` + the per-tile detail colors. No cheerful primaries — aged
-  props (the bed and shelves were the worst offenders, now muted/stained).
-- **Lighting is the mood.** Three cheap, cached primitives do the work:
-  soft **contact shadows** under standing props (ground them), **wall-cast
-  shadows** onto the floor south of every tall tile + a **height bevel**
-  (lit top edge, shadowed base) on walls, and warm **light pools** with
-  falloff from every emitter (candle, lantern, fireplace). Light is the
-  only relief in the dark.
+  muddy dirt, greyed stone, plus a **macro shadow** layer (low-frequency
+  sine darkening that rolls across many tiles) so floors stop reading as
+  a grid of identical cells. Cornstalks are jittered off the grid. No
+  cheerful primaries — props aged/stained.
+- **Lighting is the mood.** Cheap cached primitives: soft **contact
+  shadows** under props, **wall-cast shadows** + lit wall faces, and warm
+  **light pools** with falloff from every emitter (candle, lantern,
+  fireplace). Light is the only relief in the dark.
 - **The Yellow Sign is the cosmic anchor.** A bespoke, asymmetric,
   jaundiced glyph (`yellow_sign` decoration) — *not* random scratches.
   Repeated at scale across the Scriptorium and Sign Chamber, faintly
