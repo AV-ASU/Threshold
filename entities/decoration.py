@@ -83,7 +83,7 @@ def _light_pool(surf, cx, cy, radius, color=(255, 170, 70), peak=70):
 _GROUNDED_DECOS = frozenset((
     "well", "creepy_tree", "pickup_truck", "player_car", "cauldron",
     "gas_pump", "payphone", "pedestal", "pillar", "wheelbarrow",
-    "headstone",
+    "headstone", "brazier",
 ))
 
 
@@ -545,6 +545,51 @@ class Decoration:
             surf.set_at((cx, cy), (210, 235, 220))
         except (IndexError, ValueError):
             pass
+
+    def _draw_brazier(self, surf, x, y):
+        """A cult fire-bowl on an iron tripod -- a warm focal light at a
+        ritual site, the flame guttering. Pools of fire are the only
+        warmth out here, and the eye goes straight to them."""
+        _light_pool(surf, x, y - 6, 40, (255, 150, 56), 82)
+        pygame.draw.line(surf, (28, 26, 30), (x, y - 2), (x - 6, y + 11), 2)
+        pygame.draw.line(surf, (28, 26, 30), (x, y - 2), (x + 6, y + 11), 2)
+        pygame.draw.line(surf, (28, 26, 30), (x, y - 2), (x, y + 12), 2)
+        pygame.draw.ellipse(surf, (42, 40, 44), (x - 9, y - 5, 18, 8))
+        pygame.draw.ellipse(surf, (18, 16, 20), (x - 7, y - 4, 14, 5))
+        t = self.t * 6 + self.seed
+        fh = 8 + int(math.sin(t) * 3)
+        pygame.draw.polygon(surf, (208, 88, 28),
+                            [(x, y - 5 - fh), (x - 5, y - 3), (x + 5, y - 3)])
+        pygame.draw.polygon(surf, (250, 178, 68),
+                            [(x, y - 4 - int(fh * 0.6)), (x - 3, y - 3), (x + 3, y - 3)])
+
+    def _draw_steeple(self, surf, x, y):
+        """A church bell-tower, near-top-down: a tall narrow spire rising
+        up the screen from its base, a dark louvered belfry with a faint
+        bell, a pointed cap + a crooked cross, and a long shadow thrown
+        across the ground -- the one TALL thing for miles, the landmark
+        you orient by."""
+        H = 74
+        topx = x + int(math.sin(self.seed) * 4)        # leans a touch
+        top = y - H
+        sh = pygame.Surface((64, 30), pygame.SRCALPHA)  # long cast shadow, down-right
+        pygame.draw.polygon(sh, (0, 0, 0, 88), [(0, 26), (14, 26), (58, 4), (44, 0)])
+        surf.blit(sh, (x - 6, y - 6))
+        bw = 16
+        body = [(x - bw // 2, y), (topx - bw // 2 + 3, top + 14),
+                (topx + bw // 2 - 3, top + 14), (x + bw // 2, y)]
+        pygame.draw.polygon(surf, (70, 64, 54), body)
+        pygame.draw.polygon(surf, (38, 34, 28), body, 1)
+        pygame.draw.line(surf, (98, 92, 80),
+                         (x - bw // 2, y), (topx - bw // 2 + 3, top + 14), 2)
+        pygame.draw.rect(surf, (15, 13, 17), (topx - 5, top + 14, 10, 12))  # belfry
+        pygame.draw.circle(surf, (66, 58, 42), (topx, top + 21), 3)         # bell
+        spire = [(topx - bw // 2 + 2, top + 14), (topx, top - 8),
+                 (topx + bw // 2 - 2, top + 14)]
+        pygame.draw.polygon(surf, (54, 40, 30), spire)
+        pygame.draw.polygon(surf, (32, 24, 18), spire, 1)
+        pygame.draw.line(surf, (44, 40, 32), (topx, top - 8), (topx, top - 18), 2)
+        pygame.draw.line(surf, (44, 40, 32), (topx - 4, top - 14), (topx + 4, top - 14), 2)
 
     def _draw_terminal(self, surf, x, y):
         pygame.draw.rect(surf, (10, 12, 14), (x - 12, y - 10, 24, 20))
@@ -1063,6 +1108,10 @@ class Decoration:
         # eye sits off-centre. This is the cosmic-horror anchor; it
         # repeats at scale across the Scriptorium and Sign Chamber.
         pulse = 1.0 + math.sin(self.t * 1.1 + self.seed) * 0.10
+        # A sickly jaundiced glow behind the glyph -- the one note of
+        # real colour in the muck, and a focal point the eye catches.
+        _light_pool(surf, int(x), int(y), int(30 * pulse), (206, 188, 84),
+                    int(46 + 10 * math.sin(self.t * 1.1 + self.seed)))
         col = (196, 178, 72)
         dark = (92, 80, 28)
         R = 13 * pulse

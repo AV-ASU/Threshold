@@ -625,11 +625,19 @@ def build_mistlands():
     for (gx, gy) in [(17, 39), (19, 41), (16, 43), (20, 44), (18, 46), (15, 41)]:
         sc.add_decoration(Decoration(gx * TILE + 16, gy * TILE + 16, "creepy_tree"))
     # A cult standing-stone ring in the open north-east field, a Yellow
-    # Sign cut into the ground at its centre.
+    # Sign cut into the ground at its centre, lit by two braziers -- a
+    # warm, watched focal point out in the dark.
     for (px, py) in [(77, 31), (81, 31), (79, 30),
                      (76, 34), (82, 34), (79, 36)]:
         sc.add_decoration(Decoration(px * TILE + 16, py * TILE + 16, "pillar"))
     sc.add_decoration(Decoration(79 * TILE + 16, 33 * TILE + 16, "yellow_sign"))
+    sc.add_decoration(Decoration(77 * TILE + 16, 33 * TILE + 16, "brazier"))
+    sc.add_decoration(Decoration(81 * TILE + 16, 33 * TILE + 16, "brazier"))
+    # The church steeple -- the one tall thing for miles, a landmark to
+    # orient by, rising over the roof into the treeline.
+    sc.add_decoration(Decoration(7 * TILE + 16, 7 * TILE + 16, "steeple"))
+    # A brazier marking the cauldron-clearing threshold.
+    sc.add_decoration(Decoration(13 * TILE + 16, 80 * TILE + 16, "brazier"))
     # A murder of crows posted along the treeline, watching.
     for (cx, cy) in [(2, 22), (2, 71), (50, 2), (88, 31), (97, 60), (41, 97)]:
         sc.add_decoration(Decoration(cx * TILE + 16, cy * TILE + 16,
