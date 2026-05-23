@@ -292,7 +292,85 @@ def _door_open(surf, rx, ry, face):
     pygame.draw.circle(surf, (120, 110, 92), (knob_x, ry + 16), 2)
 
 
-def draw_object(surf, ch, rx, ry):
+def _vary(seed, i):
+    """Cheap deterministic hash -> 32-bit int. Lets one tile seed fan out
+    into many independent values, so per-tile variation is stable no
+    matter where the camera is (screen-space jitter shimmers when you
+    walk; tile-space doesn't)."""
+    v = (seed ^ ((i + 1) * 0x9E3779B1)) & 0xFFFFFFFF
+    v ^= v >> 15
+    v = (v * 0x2C1B3C6D) & 0xFFFFFFFF
+    v ^= v >> 13
+    return v
+
+
+def _draw_tree(surf, rx, ry, seed):
+    """An oversized, irregular canopy that spills past its tile and
+    overhangs its neighbours -- a run of trees reads as one organic
+    canopy line, not a grid of identical discs. Center, radius, lean,
+    lobe layout and tint all vary per tile (deterministic). Light reads
+    from the upper-left, matching the wall faces."""
+    cx = rx + 16 + (_vary(seed, 0) % 11) - 5            # -5..+5
+    cy = ry + 12 + (_vary(seed, 1) % 9) - 5             # -5..+3 (bias up)
+    R = 18 + (_vary(seed, 2) % 9)                       # 18..26 > half-tile -> overhangs
+    lean = (_vary(seed, 3) % 7) - 3
+    tw = 5 + (_vary(seed, 4) % 2)
+    bx = rx + 16 - tw // 2 + lean                       # short trunk, mostly hidden
+    pygame.draw.rect(surf, (44, 32, 22), (bx, ry + 18, tw, 14))
+    pygame.draw.rect(surf, (28, 20, 13), (bx, ry + 18, 2, 14))
+    g = _vary(seed, 5) % 12
+    base = (16 + g // 2, 38 + g, 22 + g // 2)
+    mid = (26 + g, 56 + g, 32 + g)
+    lite = (42 + g, 78 + g, 46 + g)
+    for k, (ox, oy, rr) in enumerate((
+            (0.0, 0.10, 1.00), (-0.55, 0.22, 0.64), (0.55, 0.16, 0.60),
+            (-0.30, -0.46, 0.58), (0.34, -0.40, 0.54), (0.0, 0.48, 0.50))):
+        wob = (_vary(seed, 10 + k) % 5) - 2
+        pygame.draw.circle(surf, base,
+                           (int(cx + ox * R), int(cy + oy * R)),
+                           max(3, int(rr * R) + wob))
+    for ox, oy, rr in ((-0.18, -0.10, 0.72), (0.30, 0.06, 0.54),
+                       (-0.05, -0.42, 0.46)):
+        pygame.draw.circle(surf, mid,
+                           (int(cx + ox * R), int(cy + oy * R)),
+                           max(2, int(rr * R)))
+    for ox, oy, rr in ((-0.34, -0.34, 0.34), (-0.06, -0.20, 0.24)):
+        pygame.draw.circle(surf, lite,
+                           (int(cx + ox * R), int(cy + oy * R)),
+                           max(2, int(rr * R)))
+
+
+def _draw_corn(surf, rx, ry, seed):
+    """A corn clump taller and wider than its tile: stalks lean, overhang
+    sideways and spill above the tile top, so a corn block reads as a
+    dense continuous field rather than a grid of identical plants. Sway
+    is time-animated; everything else varies per tile (deterministic)."""
+    t = pygame.time.get_ticks() / 600.0
+    n = 3 + (_vary(seed, 0) % 2)                         # 3-4 stalks
+    g = _vary(seed, 1) % 10
+    stalk = (58 + g, 72 + g, 38 + g // 2)
+    blade = (82 + g, 96 + g, 48 + g)
+    tip = (150 + g, 130, 70)
+    amp = 2.0 + (_vary(seed, 2) % 3)
+    ph = (seed % 628) / 100.0                            # per-tile sway phase (camera-stable)
+    for s in range(n):
+        sx = rx + 5 + int(s * (TILE - 8) / max(1, n - 1)) \
+            + (_vary(seed, 10 + s) % 7) - 3              # spread across + overhang
+        bx = rx + 13 + (_vary(seed, 30 + s) % 8) - 4     # base clustered, foot of tile
+        top = ry - 6 + (_vary(seed, 20 + s) % 9)         # tops spill above the tile
+        bottom = ry + 31
+        tipx = sx + int(math.sin(t + ph + s * 0.7) * amp)
+        midx, midy = (bx + tipx) // 2, (bottom + top) // 2
+        pygame.draw.line(surf, stalk, (bx, bottom), (midx, midy), 2)
+        pygame.draw.line(surf, stalk, (midx, midy), (tipx, top), 2)
+        pygame.draw.line(surf, blade, (midx, midy),
+                         (midx - 8, midy - 2), 2)
+        pygame.draw.line(surf, blade, (midx + 1, midy + 4),
+                         (midx + 9, midy + 1), 2)
+        pygame.draw.line(surf, tip, (tipx, top), (tipx, top - 5), 2)
+
+
+def draw_object(surf, ch, rx, ry, tx, ty):
     od = OBJECT_DEFS.get(ch)
     if not od or od["kind"] in ("invisible", "void_passage", "outdoor_passage"):
         return
@@ -321,27 +399,9 @@ def draw_object(surf, ch, rx, ry):
         pygame.draw.line(surf, (104, 80, 56), (rx, ry), (rx + TILE - 1, ry), 1)
         pygame.draw.rect(surf, (40, 28, 18), (rx, ry + TILE - 3, TILE, 3))
     elif kind == "tree":
-        pygame.draw.rect(surf, (60, 40, 25), (rx + 13, ry + 22, 6, 10))
-        pygame.draw.circle(surf, (24, 56, 30), (rx + 16, ry + 14), 14)
-        pygame.draw.circle(surf, (40, 80, 46), (rx + 12, ry + 12), 6)
-        pygame.draw.circle(surf, (40, 80, 46), (rx + 20, ry + 14), 5)
+        _draw_tree(surf, rx, ry, (tx * 73856093) ^ (ty * 19349663))
     elif kind == "cornstalk":
-        # Per-tile jitter so rows never line up into a clean grid, and
-        # muddier stalk colors to sit in the desaturated palette.
-        rx += ((rx * 13 + ry * 7) % 7) - 3
-        ry += ((rx * 5 + ry * 11) % 5) - 2
-        t = pygame.time.get_ticks() / 600.0
-        sway = int(math.sin(t + (rx + ry) * 0.07) * 1.5)
-        for cx in (8, 16, 24):
-            pygame.draw.line(surf, (78, 86, 46),
-                             (rx + cx, ry + 30),
-                             (rx + cx + sway, ry + 2), 2)
-        for cx, cy in ((6, 6), (12, 10), (22, 6), (26, 12),
-                       (10, 18), (20, 20)):
-            pygame.draw.ellipse(surf, (96, 104, 54),
-                                (rx + cx + sway, ry + cy, 8, 4))
-        pygame.draw.ellipse(surf, (150, 134, 68),
-                            (rx + 14 + sway, ry + 4, 4, 7))
+        _draw_corn(surf, rx, ry, (tx * 73856093) ^ (ty * 19349663))
     elif kind == "rock":
         pygame.draw.circle(surf, (100, 100, 110), (rx + 16, ry + 18), 12)
         pygame.draw.circle(surf, (70, 70, 80), (rx + 12, ry + 14), 4)
@@ -927,7 +987,7 @@ def draw_scene_terrain(surf, scene, cam_x, cam_y, x0, y0, x1, y1):
             if ch in _DOOR_CHARS:
                 _draw_door_opening(surf, rx, ry, _door_room_dir(scene, tx, ty))
             else:
-                draw_object(surf, ch, rx, ry)
+                draw_object(surf, ch, rx, ry, tx, ty)
 
 
 def draw_scene_doors(surf, scene, cam_x, cam_y, x0, y0, x1, y1):
