@@ -152,7 +152,6 @@ def bedroom_on_enter(game, scene):
     scene._opening_t = 0.0
     scene._opening_slots = {
         "wake_notice_armed":   True,    # fires on first step
-        "watcher_armed":       True,    # fires on first step
         "silhouette_at":       28.0,    # passing-figure scare
         "silhouette_done":     False,
         # Calendar anomaly. ~12s in, the wall calendar's
@@ -216,7 +215,7 @@ def bedroom_on_update(game, scene, dt):
         scene._silhouette_deco = None
     # Calendar anomaly. Fire-and-forget: at the armed timestamp,
     # swap the calendar's today_d to a wrong value; once the dur
-    # has elapsed, restore from the live day_count. No sound. The
+    # has elapsed, restore the saved real date. No sound. The
     # player either sees it or doesn't.
     cal = getattr(scene, "_calendar", None)
     state = slots.get("calendar_anomaly_state", "done")
@@ -396,7 +395,6 @@ def house_on_enter(game, scene):
     scene.npcs = [n for n in scene.npcs
                   if getattr(n, "tag", None) not in
                   ("blocking_innkeeper", "host_innkeeper")]
-    phase = game.save.arg("day_phase", "afternoon")
     scene._key_hook_pos = None
     if game.save.flag("innkeeper_confronted"):
         nx = 6 * TILE + 16
@@ -407,31 +405,6 @@ def house_on_enter(game, scene):
         host.facing = (0, -1)
         host.tag = "blocking_innkeeper"
         host.dialogue_fn = None
-        scene.add_npc(host)
-    elif phase == "night":
-        nx = 13 * TILE + 16
-        ny = 7 * TILE + 16
-        host = NPC(nx, ny, "Innkeeper", "old",
-                   solid=True, no_prompt=True,
-                   voice="blip_low", portrait="old")
-        host.tag = "host_innkeeper"
-        host.dialogue_fn = None
-        if game.save.flag("polaroid_taken"):
-            # The polaroid is in the player's pocket. He is awake
-            # now. Standing. Watching the cellar hatch. No dialogue,
-            # no key on the hook -- whatever happens next, it is not
-            # going to be quiet. The actual block fires when the
-            # player tries to leave (CULT_EVIDENCE_KEYS includes
-            # polaroid now, so begin_transition catches it).
-            host.facing = (0, -1)
-        else:
-            # Slumped at the table, breath even. The hook by his
-            # head is empty -- the woodshed key lives in the
-            # cellar now (the new trade-chain spine: alc -> cellar
-            # -> shed -> axe). The night-tableau remains because
-            # the dread of the kitchen at night is part of the
-            # scene's body even without the pickup.
-            host.facing = (0, 1)
         scene.add_npc(host)
     else:
         # Daytime: the Innkeeper is at the table by the fireplace on

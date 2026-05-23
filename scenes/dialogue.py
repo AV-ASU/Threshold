@@ -384,7 +384,7 @@ def bowl_examine(game):
 
 def basement_photo_dialogue(game, npc):
     """The Photo NPC in the basement. Flow preserved (grants the
-    polaroid item, sets day_phase=night); text blanked."""
+    polaroid item); text blanked."""
     save = game.save
     n = save.arg("photo_reads", 0) + 1
     save.set_arg("photo_reads", n)
@@ -397,7 +397,6 @@ def basement_photo_dialogue(game, npc):
             save.set_flag("polaroid_taken", True)
             game.player.inventory.add("polaroid", 1)
             game.show_notice("You take the photograph.")
-            save.set_arg("day_phase", "night")
     else:
         game.dialog.show([
             "[c=dim](An empty frame.)[/c]",

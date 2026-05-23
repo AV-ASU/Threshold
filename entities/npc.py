@@ -80,11 +80,6 @@ class NPC:
         # spotted-line beat fires every re-entry, not once per
         # scene per session. Read+set by Game._tick_sheriff.
         self._has_been_spotted = False
-        # Yellow King halt-on-LOS-lock state. Per-scene one-shot:
-        # the first frame he acquires LOS he freezes for ~0.5s
-        # before resuming. The pause is what the player remembers.
-        self._yk_halt_t = 0.0
-        self._yk_seen_lock = False
         self._yk_path = []
         self._yk_target = None
         self._yk_mode = None
@@ -166,7 +161,10 @@ class NPC:
         elif self.movement == "stalker":
             dx = player.x - self.x; dy = player.y - self.y
             d = math.hypot(dx, dy) or 1
-            facing_away = (player.facing[0] * dx + player.facing[1] * dy) / d < 0.2
+            # (dx,dy) points npc->player, so this dot/d is +1 when the
+            # player faces away from us and -1 when facing toward us.
+            # Advance only while unobserved (or too far to matter).
+            facing_away = (player.facing[0] * dx + player.facing[1] * dy) / d > -0.2
             if facing_away or d > 220:
                 self._step_toward((player.x, player.y), dt, scene)
         elif self.movement == "follower":
