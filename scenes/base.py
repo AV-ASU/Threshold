@@ -261,27 +261,30 @@ def _door_front_closed(surf, rx, ry):
 
 
 def _door_open(surf, rx, ry, face):
-    """A door the player is catching from the wrong side: it hangs open
-    onto black, the slab swung out of the frame. Frame posts orient to
-    the wall (left/right for a horizontal wall, top/bottom for a
-    vertical one). `face` is the direction it opens toward."""
-    if face in ("N", "S"):
-        pygame.draw.rect(surf, (15, 14, 18), (rx + 5, ry + 3, 4, 27))
-        pygame.draw.rect(surf, (15, 14, 18), (rx + 23, ry + 3, 4, 27))
-    else:
-        pygame.draw.rect(surf, (15, 14, 18), (rx + 3, ry + 5, 27, 4))
-        pygame.draw.rect(surf, (15, 14, 18), (rx + 3, ry + 23, 27, 4))
-    pygame.draw.rect(surf, (3, 2, 5), (rx + 9, ry + 8, 14, 16))      # the dark opening
-    if face == "N":
-        pts = [(rx + 9, ry + 8), (rx + 21, ry + 3), (rx + 23, ry + 9), (rx + 11, ry + 14)]
-    elif face == "S":
-        pts = [(rx + 9, ry + 24), (rx + 21, ry + 29), (rx + 23, ry + 23), (rx + 11, ry + 18)]
-    elif face == "E":
-        pts = [(rx + 23, ry + 9), (rx + 28, ry + 21), (rx + 22, ry + 23), (rx + 17, ry + 11)]
-    else:  # W
-        pts = [(rx + 9, ry + 9), (rx + 4, ry + 21), (rx + 10, ry + 23), (rx + 15, ry + 11)]
-    pygame.draw.polygon(surf, (52, 39, 24), pts)
-    pygame.draw.polygon(surf, (80, 60, 37), pts, 1)
+    """A door in a vertical wall, hung open. The tile fills as wall (so
+    the wall line stays continuous) with a dark doorway punched through
+    it; the slab swings OUT of the frame, *past the tile edge* into the
+    room -- deliberately breaking the square so the world stops reading
+    as a grid of equal cells. `face` is the room side it opens toward."""
+    pygame.draw.rect(surf, _WALL_BASE, (rx, ry, TILE, TILE))         # fill: continuous wall
+    hsh = (rx * 73856093) ^ (ry * 19349663)
+    if hsh % 4 == 0:                                                 # grime so it isn't flat
+        pygame.draw.rect(surf, (11, 10, 14),
+                         (rx + (hsh % 22) + 4, ry + ((hsh // 7) % 22) + 4, 3, 2))
+    if face == "E":     # room to the right -> doorway left-of-centre, slab swings out right
+        pygame.draw.line(surf, _WALL_FACE, (rx + TILE - 1, ry), (rx + TILE - 1, ry + TILE), 1)
+        pygame.draw.rect(surf, (3, 2, 5), (rx + 6, ry + 6, 12, 20))
+        pts = [(rx + 17, ry + 8), (rx + 17, ry + 24),
+               (rx + TILE + 8, ry + 20), (rx + TILE + 8, ry + 12)]
+    else:               # W: room to the left -> doorway right-of-centre, slab swings out left
+        pygame.draw.line(surf, _WALL_FACE, (rx, ry), (rx, ry + TILE), 1)
+        pygame.draw.rect(surf, (3, 2, 5), (rx + 14, ry + 6, 12, 20))
+        pts = [(rx + 15, ry + 8), (rx + 15, ry + 24),
+               (rx - 8, ry + 20), (rx - 8, ry + 12)]
+    pygame.draw.polygon(surf, (54, 40, 25), pts)
+    pygame.draw.polygon(surf, (82, 62, 38), pts, 1)
+    mx = (pts[0][0] + pts[2][0]) // 2                                # plank seam on the slab
+    pygame.draw.line(surf, (37, 26, 15), (mx, ry + 11), (mx, ry + 21), 1)
 
 
 def draw_object(surf, ch, rx, ry):
