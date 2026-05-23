@@ -620,6 +620,21 @@ def build_mistlands():
                     ex * TILE + weeds.randint(-4, 28),
                     ey * TILE + weeds.randint(-2, 28), "grass_tuft"))
 
+    # A dead grove on the bare west bank -- a stand of leafless trees out
+    # in the open emptiness, a focal dread that offers no cover.
+    for (gx, gy) in [(17, 39), (19, 41), (16, 43), (20, 44), (18, 46), (15, 41)]:
+        sc.add_decoration(Decoration(gx * TILE + 16, gy * TILE + 16, "creepy_tree"))
+    # A cult standing-stone ring in the open north-east field, a Yellow
+    # Sign cut into the ground at its centre.
+    for (px, py) in [(77, 31), (81, 31), (79, 30),
+                     (76, 34), (82, 34), (79, 36)]:
+        sc.add_decoration(Decoration(px * TILE + 16, py * TILE + 16, "pillar"))
+    sc.add_decoration(Decoration(79 * TILE + 16, 33 * TILE + 16, "yellow_sign"))
+    # A murder of crows posted along the treeline, watching.
+    for (cx, cy) in [(2, 22), (2, 71), (50, 2), (88, 31), (97, 60), (41, 97)]:
+        sc.add_decoration(Decoration(cx * TILE + 16, cy * TILE + 16,
+                                     "dead_crow" if (cx + cy) % 2 else "crow"))
+
     # ---- Mist + marsh wisps ----
     # Low fog clinging to the water and pooling over the marsh, and cold
     # will-o'-wisps drifting the bog -- the "mist" the lands are named
