@@ -527,6 +527,9 @@ def draw_player_sprite(surf, x, y, facing, walk_phase=0, armor=None, mud=0.0,
 # apex Pursuer proximity; contact is the closure ending.
 # ===========================================================================
 _YK_TRAIL = []                       # recent mass-centre screen positions
+_YK_PARTS = []                       # particle wake: dicts x,y,vx,vy,age,life,r,kind
+_YK_LAST = [0.0]                     # last draw time (for particle dt)
+_YK_PRNG = random.Random(99)         # own RNG -> never touches the game's stream
 _YK_T1, _YK_T2, _YK_T3, _YK_T4 = (140, 96, 22), (196, 150, 42), (236, 198, 66), (252, 226, 120)
 _YK_GOLD, _YK_HOT = (236, 204, 64), (252, 226, 120)
 _YK_DK, _YK_DK_HI = (28, 25, 34), (60, 55, 72)
@@ -699,29 +702,58 @@ def _draw_yellow_king(surf, x, y, facing):
     if s < -0.7:
         phase *= 0.35
     # Short ghost-trail of the glow. Reset on a teleport/respawn jump.
-    WIN = 0.34
+    # ---- particle wake: it sheds glowing gold motes and the odd drifting
+    # mask as it tears along, all fading out behind it ----
+    dt = t - _YK_LAST[0]
+    _YK_LAST[0] = t
+    if dt <= 0 or dt > 0.2:
+        dt = 0.016
     if _YK_TRAIL:
         px, py, pt = _YK_TRAIL[-1]
         if (mcx - px) ** 2 + (mcy - py) ** 2 > 70 ** 2 or (t - pt) > 0.45:
             _YK_TRAIL = []
+            _YK_PARTS.clear()
+    disp = math.hypot(mcx - _YK_TRAIL[-1][0], mcy - _YK_TRAIL[-1][1]) if _YK_TRAIL else 0.0
     _YK_TRAIL.append((mcx, mcy, t))
-    _YK_TRAIL = [e for e in _YK_TRAIL if t - e[2] < WIN][-12:]
-    # A glowing, mask-filled wake: it tears a seam of light and faces through
-    # space that seals (fades) behind it.
-    ghosts = _YK_TRAIL[:-1]
-    for i, (gx, gy, gt) in enumerate(ghosts):
-        age = (t - gt) / WIN
-        a = int(74 * (1 - age) * phase)
-        if a > 0:
-            _yk_radial(surf, gx, gy, int(R * 1.15 * (1 - 0.32 * age)), _YK_GOLD, a)
-        if i % 2 == 0:                          # faces caught in the rip
-            mv = 0.55 * (1 - age) * phase
-            if mv > 0.05:
-                kk = _YK_FACES[i % len(_YK_FACES)][6]
-                if kk == "double":
-                    kk = "plain"
-                _yk_mask(surf, gx + ((i % 3) - 1) * 3, gy + ((i % 2) * 5 - 2),
-                         4 + i % 2, mv, kk)
+    _YK_TRAIL = _YK_TRAIL[-5:]
+    tvx, tvy = (mcx - _YK_TRAIL[0][0], mcy - _YK_TRAIL[0][1])
+    tl = math.hypot(tvx, tvy) or 1.0
+    bvx, bvy = -tvx / tl, -tvy / tl              # backward (shed this way)
+    if disp > 0.4:                               # only shed while moving
+        for _ in range(min(3, 1 + int(disp / 5))):
+            _YK_PARTS.append({
+                "x": mcx + _YK_PRNG.uniform(-7, 7), "y": mcy + _YK_PRNG.uniform(-7, 7),
+                "vx": bvx * 16 + _YK_PRNG.uniform(-14, 14),
+                "vy": bvy * 16 + _YK_PRNG.uniform(-14, 14),
+                "age": 0.0, "life": _YK_PRNG.uniform(0.30, 0.58),
+                "r": _YK_PRNG.uniform(2.0, 4.0), "kind": None})
+        if _YK_PRNG.random() < 0.5:              # a face shears off into the wake
+            _YK_PARTS.append({
+                "x": mcx + _YK_PRNG.uniform(-6, 6), "y": mcy + _YK_PRNG.uniform(-6, 6),
+                "vx": bvx * 11 + _YK_PRNG.uniform(-8, 8),
+                "vy": bvy * 11 + _YK_PRNG.uniform(-8, 8),
+                "age": 0.0, "life": _YK_PRNG.uniform(0.4, 0.7),
+                "r": _YK_PRNG.uniform(4.0, 6.0),
+                "kind": _YK_PRNG.choice(["plain", "scream", "hollow", "crack"])})
+    if len(_YK_PARTS) > 80:
+        del _YK_PARTS[:len(_YK_PARTS) - 80]
+    keep = []
+    for p in _YK_PARTS:
+        p["age"] += dt
+        fr = p["age"] / p["life"]
+        if fr >= 1.0:
+            continue
+        p["x"] += p["vx"] * dt
+        p["y"] += p["vy"] * dt
+        a = (1.0 - fr) * phase
+        if p["kind"] is None:
+            _yk_radial(surf, p["x"], p["y"], max(2, p["r"] * (1 - 0.4 * fr)),
+                       _YK_GOLD, int(150 * a))
+        else:
+            _yk_mask(surf, p["x"], p["y"], max(2, int(p["r"] * (1 - 0.3 * fr))),
+                     0.6 * a, p["kind"])
+        keep.append(p)
+    _YK_PARTS[:] = keep
     # Faint floating shadow on the ground, far below the mass.
     sh = pygame.Surface((40, 12), pygame.SRCALPHA)
     pygame.draw.ellipse(sh, (0, 0, 0, int(80 * phase)), (0, 0, 40, 12))
