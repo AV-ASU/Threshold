@@ -188,6 +188,18 @@ def build_mistlands():
     farm_door = 7
     _stamp_building(objects_l, farm_left, farm_right,
                     farm_top, farm_bot, "o", farm_door)
+    # A lean-to shed bolted onto the farmhouse's east wall (cols 10-13,
+    # rows 90-93, no door -- a closed store). A separate roof region, so
+    # it gets its own small gable beside the house: the footprint stops
+    # reading as one clean rectangle and gains an attached outbuilding.
+    for cx in range(10, 14):
+        objects_l[90][cx] = "W"
+        objects_l[93][cx] = "W"
+    for ry in range(91, 93):
+        objects_l[ry][10] = "W"
+        objects_l[ry][13] = "W"
+        for cx in range(11, 13):
+            objects_l[ry][cx] = "r"
 
     # Shop (EAST middle). Footprint cols 50..56 rows 55..60.
     shop_left, shop_right = 50, 56
