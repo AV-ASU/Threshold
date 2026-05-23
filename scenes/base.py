@@ -907,14 +907,56 @@ def _draw_door_leaf(surf, rx, ry, room, seed):
     pygame.draw.circle(surf, (28, 26, 31), (int(hx), int(hy)), 2)  # hinge knuckle
 
 
+_PATH_GRASS = frozenset(("g", "G", ":"))
+
+
+def _draw_path_fringe(surf, scene, tx, ty, rx, ry):
+    """Fray a dirt-path tile's edge wherever it meets grass: dirt tongues
+    spill raggedly into the grass and a few grass tufts bite back into the
+    dirt, so the worn track wanders instead of reading as a clean
+    rectangle. Run after every floor fill so the blobs paint across the
+    tile boundary. Dirt only frays its grass-facing sides, so adjacent
+    path tiles leave their shared (interior) edge clean."""
+    floor, h, w = scene.floor, scene.h, scene.w
+    dirt, dirt2 = (88, 68, 45), (74, 56, 37)
+    for si, (ndx, ndy) in enumerate(((0, -1), (0, 1), (-1, 0), (1, 0))):
+        nx, ny = tx + ndx, ty + ndy
+        if not (0 <= nx < w and 0 <= ny < h) or floor[ny][nx] not in _PATH_GRASS:
+            continue
+        grass = FLOOR_DEFS[floor[ny][nx]]["color"]
+        seed = (tx * 73856093) ^ (ty * 19349663) ^ (si * 83492791)
+        if ndy:                                  # horizontal edge (N/S)
+            ex = rx; ey = ry + (TILE if ndy > 0 else 0); ax, ay = 1, 0
+        else:                                    # vertical edge (W/E)
+            ex = rx + (TILE if ndx > 0 else 0); ey = ry; ax, ay = 0, 1
+        for k in range(6):                       # ragged dirt fringe, mostly into grass
+            u = (k + (_vary(seed, k) % 3) / 3.0) / 6.0
+            depth = (_vary(seed, 10 + k) % 9) - 3
+            cx = int(ex + ax * TILE * u + ndx * depth)
+            cy = int(ey + ay * TILE * u + ndy * depth)
+            col = dirt if (_vary(seed, 30 + k) % 3) else dirt2
+            pygame.draw.circle(surf, col, (cx, cy), 3 + (_vary(seed, 20 + k) % 3))
+        for k in range(2):                       # grass tufts biting back into the dirt
+            u = (1 + 2 * k) / 4.0
+            d = 2 + (_vary(seed, 40 + k) % 3)
+            cx = int(ex + ax * TILE * u - ndx * d)
+            cy = int(ey + ay * TILE * u - ndy * d)
+            pygame.draw.circle(surf, grass, (cx, cy), 2 + (_vary(seed, 50 + k) % 2))
+
+
 def draw_scene_terrain(surf, scene, cam_x, cam_y, x0, y0, x1, y1):
-    """Floor -> wall-cast shadows -> continuous wall mass -> non-wall
-    objects, for a tile window. Shared by Scene.draw (camera window) and
-    the offline full-map renderer."""
+    """Floor -> path fringe -> wall-cast shadows -> continuous wall mass
+    -> non-wall objects, for a tile window. Shared by Scene.draw (camera
+    window) and the offline full-map renderer."""
     for ty in range(y0, y1):
         for tx in range(x0, x1):
             draw_floor(surf, scene.floor[ty][tx],
                        tx * TILE - cam_x, ty * TILE - cam_y, tx, ty)
+    for ty in range(y0, y1):
+        for tx in range(x0, x1):
+            if scene.floor[ty][tx] == "d":
+                _draw_path_fringe(surf, scene, tx, ty,
+                                  tx * TILE - cam_x, ty * TILE - cam_y)
     strip = _wall_shadow_strip()
     for ty in range(y0, y1):
         for tx in range(x0, x1):
