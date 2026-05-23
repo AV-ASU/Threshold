@@ -242,56 +242,6 @@ OBJECT_DEFS = {
 }
 
 
-def _door_front_closed(surf, rx, ry, hinge="L"):
-    """A door seen front-on (south-facing): frame + plank slab drawn
-    over the floor, hung a crack ajar onto black. `hinge` flips which
-    side the gap + knob sit on so doors aren't all identical."""
-    pygame.draw.rect(surf, (10, 9, 12), (rx + 5, ry + 28, 22, 3))    # threshold
-    pygame.draw.rect(surf, (15, 14, 18), (rx + 5, ry + 3, 4, 27))    # left jamb
-    pygame.draw.rect(surf, (15, 14, 18), (rx + 23, ry + 3, 4, 27))   # right jamb
-    pygame.draw.rect(surf, (15, 14, 18), (rx + 5, ry + 3, 22, 3))    # head
-    pygame.draw.rect(surf, (44, 32, 21), (rx + 9, ry + 5, 14, 24))   # frame
-    pygame.draw.rect(surf, (57, 42, 26), (rx + 10, ry + 6, 12, 22))  # slab
-    for sx in (14, 18):
-        pygame.draw.line(surf, (37, 26, 15),
-                         (rx + sx, ry + 7), (rx + sx, ry + 27), 1)
-    if hinge == "L":
-        pygame.draw.rect(surf, (3, 2, 5), (rx + 10, ry + 6, 3, 22))  # ajar gap, hinge L
-        pygame.draw.circle(surf, (120, 110, 92), (rx + 19, ry + 16), 2)
-    else:
-        pygame.draw.rect(surf, (3, 2, 5), (rx + 19, ry + 6, 3, 22))  # ajar gap, hinge R
-        pygame.draw.circle(surf, (120, 110, 92), (rx + 13, ry + 16), 2)
-
-
-def _door_open(surf, rx, ry, face):
-    """A door in a vertical wall, hung open. The tile fills as wall (so
-    the wall line stays continuous) with a dark doorway punched through
-    it; the slab swings OUT of the frame, *past the tile edge* into the
-    room -- deliberately breaking the square so the world stops reading
-    as a grid of equal cells. `face` is the room side it opens toward."""
-    pygame.draw.rect(surf, _WALL_BASE, (rx, ry, TILE, TILE))         # fill: continuous wall
-    hsh = (rx * 73856093) ^ (ry * 19349663)
-    if hsh % 4 == 0:                                                 # grime so it isn't flat
-        pygame.draw.rect(surf, (11, 10, 14),
-                         (rx + (hsh % 22) + 4, ry + ((hsh // 7) % 22) + 4, 3, 2))
-    if face == "E":     # room to the right -> doorway left-of-centre, slab swings out right
-        pygame.draw.line(surf, _WALL_FACE, (rx + TILE - 1, ry), (rx + TILE - 1, ry + TILE), 1)
-        pygame.draw.rect(surf, (3, 2, 5), (rx + 6, ry + 6, 12, 20))
-        pts = [(rx + 17, ry + 8), (rx + 17, ry + 24),
-               (rx + TILE + 8, ry + 20), (rx + TILE + 8, ry + 12)]
-    else:               # W: room to the left -> doorway right-of-centre, slab swings out left
-        pygame.draw.line(surf, _WALL_FACE, (rx, ry), (rx, ry + TILE), 1)
-        pygame.draw.rect(surf, (3, 2, 5), (rx + 14, ry + 6, 12, 20))
-        pts = [(rx + 15, ry + 8), (rx + 15, ry + 24),
-               (rx - 8, ry + 20), (rx - 8, ry + 12)]
-    pygame.draw.polygon(surf, (54, 40, 25), pts)
-    pygame.draw.polygon(surf, (82, 62, 38), pts, 1)
-    mx = (pts[0][0] + pts[2][0]) // 2                                # plank seam on the slab
-    pygame.draw.line(surf, (37, 26, 15), (mx, ry + 11), (mx, ry + 21), 1)
-    knob_x = (rx + TILE + 3) if face == "E" else (rx - 3)            # knob near the free edge
-    pygame.draw.circle(surf, (120, 110, 92), (knob_x, ry + 16), 2)
-
-
 def _vary(seed, i):
     """Cheap deterministic hash -> 32-bit int. Lets one tile seed fan out
     into many independent values, so per-tile variation is stable no
@@ -492,10 +442,6 @@ def draw_object(surf, ch, rx, ry, tx, ty):
         pygame.draw.circle(surf, (10, 10, 14), (rx + 10, ry + 12), 4)
         pygame.draw.circle(surf, (10, 10, 14), (rx + 22, ry + 12), 4)
         pygame.draw.rect(surf, (10, 10, 14), (rx + 6, ry + 18, 20, 10))
-    elif kind == "door":
-        # Fallback front-on door (the orientation-aware path in
-        # draw_scene_terrain handles N/E/S/W + swung-open).
-        _door_front_closed(surf, rx, ry)
     elif kind == "ladder_down":
         # Round-7 redraw: cellar HATCH (was a ladder visual). A square
         # wood box flush to the ground, two horizontal plank seams, and
