@@ -455,8 +455,9 @@ def build_mistlands():
     sc.add_decoration(Decoration(61 * TILE + 16, 55 * TILE + 16, "missing_flyer"))  # Mara
     sc.add_decoration(Decoration(52 * TILE + 16, 61 * TILE + 16, "missing_flyer"))
     sc.add_decoration(Decoration(40 * TILE + 16, 27 * TILE + 16, "missing_flyer"))
-    sc.add_decoration(Decoration(63 * TILE + 16, 54 * TILE + 16, "clock"))
-    sc.add_decoration(Decoration(53 * TILE + 16, 61 * TILE + 16, "calendar"))
+    # The calendar, every day crossed off the same, nailed to the
+    # schoolhouse wall beside the door (Old Pell: "the days fold back").
+    sc.add_decoration(Decoration(62 * TILE + 16, 53 * TILE + 16, "calendar"))
     sc.add_decoration(Decoration(95 * TILE + 16, 55 * TILE + 16, "pickup_truck"))
     sc.add_decoration(Decoration(72 * TILE + 16, 73 * TILE + 16, "place_setting"))
     sc.add_decoration(Decoration(73 * TILE + 16, 74 * TILE + 16, "overturned_chair"))
@@ -502,12 +503,15 @@ def build_mistlands():
     })
 
     # ---- Light is the mood ----
-    # A guttering lantern over each occupied door -- warm pools of relief
-    # in the haze, and a row of lit thresholds that says the town is
-    # still keeping itself lit for someone. Light is the only mercy here.
+    # A guttering lamppost in the yard just off each occupied door (these
+    # 'lantern' decos are full lampposts -- standing them ON the door read
+    # as a lamppost blocking it, so they sit one tile SW, on open ground,
+    # throwing their pool across the threshold). A row of lit thresholds:
+    # the town still keeping itself lit for someone. Light is the mercy.
     for (lx, ly) in [(7, 9), (7, 65), (7, 93),        # church, sheriff, farmhouse
                      (53, 60), (63, 53), (68, 70), (83, 80)]:  # shop, school, kid, barn
-        sc.add_decoration(Decoration(lx * TILE + 16, ly * TILE - 2, "lantern"))
+        sc.add_decoration(Decoration((lx - 1) * TILE + 20,
+                                     (ly + 1) * TILE + 16, "lantern"))
     # The bridge: a single lantern on the exposed crossing -- the one
     # light, and the one place the river leaves you with no cover. A
     # creepy_tree on each bank gives a held-breath pocket before and
