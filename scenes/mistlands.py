@@ -668,6 +668,14 @@ def build_mistlands():
                        (70, 88), (50, 66)]:
         sc.add_decoration(Decoration(wtx * TILE + 16, wty * TILE + 16, "wisp"))
 
+    # Ambient sky + wind: distant flocks drifting over, dead leaves
+    # tumbling across the fields -- the world is never quite still.
+    for (ftx, fty) in [(40, 15), (70, 48), (24, 68)]:
+        sc.add_decoration(Decoration(ftx * TILE + 16, fty * TILE + 16, "flock"))
+    for (ltx, lty) in [(45, 40), (55, 52), (30, 60), (62, 62),
+                       (20, 40), (52, 80), (75, 42), (36, 30)]:
+        sc.add_decoration(Decoration(ltx * TILE + 16, lty * TILE + 16, "leaves"))
+
     # Hide spots colocated with VISIBLE cover so the prompt always
     # matches what the player can see. Each entry sits on top of a
     # grass-tuft / watching-eye / dead-tree decoration on the east

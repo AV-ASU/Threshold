@@ -583,13 +583,49 @@ class Decoration:
         pygame.draw.line(surf, (98, 92, 80),
                          (x - bw // 2, y), (topx - bw // 2 + 3, top + 14), 2)
         pygame.draw.rect(surf, (15, 13, 17), (topx - 5, top + 14, 10, 12))  # belfry
-        pygame.draw.circle(surf, (66, 58, 42), (topx, top + 21), 3)         # bell
+        bell_dx = int(math.sin(self.t * 1.7 + self.seed) * 2)               # tolling
+        pygame.draw.circle(surf, (66, 58, 42), (topx + bell_dx, top + 21), 3)
+        pygame.draw.line(surf, (28, 24, 18), (topx + bell_dx, top + 18),
+                         (topx + bell_dx, top + 24), 1)                      # clapper line
         spire = [(topx - bw // 2 + 2, top + 14), (topx, top - 8),
                  (topx + bw // 2 - 2, top + 14)]
         pygame.draw.polygon(surf, (54, 40, 30), spire)
         pygame.draw.polygon(surf, (32, 24, 18), spire, 1)
         pygame.draw.line(surf, (44, 40, 32), (topx, top - 8), (topx, top - 18), 2)
         pygame.draw.line(surf, (44, 40, 32), (topx - 4, top - 14), (topx + 4, top - 14), 2)
+
+    def _draw_flock(self, surf, x, y):
+        """A few distant birds drifting across the grey, wings beating.
+        Loops slowly so the sky is never quite still. `span`/`speed`
+        kwargs tune the drift."""
+        span = self.kwargs.get("span", 180)
+        speed = self.kwargs.get("speed", 0.5)
+        lead = ((self.t * speed * 16 + self.seed * 7) % (span + 60)) - 30
+        n = 3 + (self.seed % 3)
+        for i in range(n):
+            bx = int(x + lead - i * (11 + (self.seed + i) % 8))
+            by = int(y + (i % 3 - 1) * 8 + math.sin(self.t * 0.6 + i) * 3)
+            flap = int(math.sin(self.t * 6 + i * 1.3) * 4)
+            # ground shadow offset below -> reads as flying above the field
+            pygame.draw.line(surf, (10, 12, 15), (bx - 4, by + 11),
+                             (bx, by + 9), 1)
+            pygame.draw.line(surf, (10, 12, 15), (bx + 4, by + 11),
+                             (bx, by + 9), 1)
+            col = (52, 52, 60)                            # lit-from-above silhouette
+            pygame.draw.line(surf, col, (bx - 5, by + flap), (bx, by), 2)
+            pygame.draw.line(surf, col, (bx + 5, by + flap), (bx, by), 2)
+
+    def _draw_leaves(self, surf, x, y):
+        """Dead leaves and grit tumbling across the ground on the wind --
+        a low, restless drift that loops near the anchor."""
+        rng = random.Random(self.seed)
+        cols = [(86, 68, 40), (70, 56, 34), (54, 60, 36), (60, 48, 30)]
+        for i in range(4 + (self.seed % 4)):
+            ph = self.t * 0.6 + i * 0.9 + self.seed
+            dx = math.sin(ph) * 16 + ((self.t * 9 + i * 19) % 74) - 37
+            dy = math.cos(ph * 1.3) * 9 + math.sin(ph * 0.5) * 4
+            sz = 1 + (i & 1)
+            pygame.draw.rect(surf, cols[i % 4], (int(x + dx), int(y + dy), sz, sz))
 
     def _draw_terminal(self, surf, x, y):
         pygame.draw.rect(surf, (10, 12, 14), (x - 12, y - 10, 24, 20))
