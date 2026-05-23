@@ -387,7 +387,11 @@ def draw_object(surf, ch, rx, ry, tx, ty):
         # don't pass the same figure at the same instant.
         pygame.draw.rect(surf, (96, 70, 50), (rx, ry, TILE, TILE))
         pygame.draw.rect(surf, (60, 40, 25), (rx, ry, TILE, TILE), 1)
-        pygame.draw.rect(surf, (140, 170, 200), (rx + 6, ry + 6, 20, 20))
+        # Lit-from-within: a dim, sickly amber pane (no cheerful primary
+        # blue) with a warmer core, so a window reads as an oil lamp
+        # burning behind grimy glass at dusk -- occupied, and wrong.
+        pygame.draw.rect(surf, (138, 104, 50), (rx + 6, ry + 6, 20, 20))
+        pygame.draw.rect(surf, (170, 138, 78), (rx + 9, ry + 9, 14, 14))
         # Passing-figure anomaly. Each window is on its own clock,
         # AND its cycle length is jittered by up to +/-20% based on
         # tile position so adjacent windows can never sync into a
@@ -406,8 +410,8 @@ def draw_object(surf, ch, rx, ry, tx, ty):
             if rx + 6 <= fx <= rx + 24:
                 pygame.draw.rect(surf, (40, 30, 50),
                                  (fx, ry + 8, 2, 16))
-        pygame.draw.line(surf, (60, 60, 80), (rx + 16, ry + 6), (rx + 16, ry + 26), 1)
-        pygame.draw.line(surf, (60, 60, 80), (rx + 6, ry + 16), (rx + 26, ry + 16), 1)
+        pygame.draw.line(surf, (74, 54, 34), (rx + 16, ry + 6), (rx + 16, ry + 26), 1)
+        pygame.draw.line(surf, (74, 54, 34), (rx + 6, ry + 16), (rx + 26, ry + 16), 1)
         pygame.draw.rect(surf, (60, 40, 25), (rx + 6, ry + 6, 20, 20), 1)
     elif kind == "fireplace":
         # Stone hearth, dark mouth, animated flame. At a rare phase
