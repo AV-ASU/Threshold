@@ -865,46 +865,42 @@ def _leaf_quad(hx, hy, ang, L, Wd):
 
 
 def _draw_door_leaf(surf, rx, ry, room, seed):
-    """The door leaf as an UNCONFINED sprite -- it swings a full tile
-    out of its cell into the room (collision stays on the grid; the
-    doorway tile is passable, like a creature with a tile of collision
-    but a sprite that spills past it). Swing angle, length, and hinge
-    jamb vary per door (deterministic) so no two hang alike."""
-    skew = 0.16 + (seed % 64) / 100.0           # ~0.16 .. 0.80 rad
-    L = 33 + (seed // 7) % 8
-    Wd = 9
-    hinge_side = (seed >> 5) & 1
-    if room == "N":
+    """The door leaf as an UNCONFINED sprite -- hung on a hinge at one
+    CORNER of the doorway and swung out into the room, the way a real
+    door pivots. It spills past the tile (collision stays on the grid;
+    the doorway tile is passable). Hinge corner, swing angle and length
+    vary per door (deterministic) so no two hang alike."""
+    skew = 0.22 + (seed % 50) / 100.0           # how far it stands off the wall
+    L = 21 + (seed // 7) % 6                     # door span (spills past the tile)
+    Wd = 5                                       # door thickness, seen top-down
+    hs = (seed >> 5) & 1
+    TL = (rx + 8, ry + 8); TR = (rx + 24, ry + 8)
+    BL = (rx + 8, ry + 24); BR = (rx + 24, ry + 24)
+    if room == "N":          # swings up into the room above
         base = -math.pi / 2
-        hx, hy, ang = ((rx + 9, ry + 22, base + skew) if hinge_side
-                       else (rx + 23, ry + 22, base - skew))
-    elif room == "S":
+        hx, hy, ang = (TR + (base - skew,)) if hs else (TL + (base + skew,))
+    elif room == "S":        # swings down
         base = math.pi / 2
-        hx, hy, ang = ((rx + 9, ry + 10, base - skew) if hinge_side
-                       else (rx + 23, ry + 10, base + skew))
-    elif room == "E":
+        hx, hy, ang = (BR + (base + skew,)) if hs else (BL + (base - skew,))
+    elif room == "E":        # swings right
         base = 0.0
-        hx, hy, ang = ((rx + 10, ry + 9, base + skew) if hinge_side
-                       else (rx + 10, ry + 23, base - skew))
-    else:  # W
+        hx, hy, ang = (TR + (base + skew,)) if hs else (BR + (base - skew,))
+    else:                    # W: swings left
         base = math.pi
-        hx, hy, ang = ((rx + 22, ry + 9, base - skew) if hinge_side
-                       else (rx + 22, ry + 23, base + skew))
+        hx, hy, ang = (TL + (base - skew,)) if hs else (BL + (base + skew,))
     dx, dy = math.cos(ang), math.sin(ang)
     px, py = -dy, dx
     face = [(int(x), int(y)) for x, y in _leaf_quad(hx, hy, ang, L, Wd)]
-    edge = [(int(x), int(y)) for x, y in
-            _leaf_quad(hx + px * Wd, hy + py * Wd, ang, L, 2)]
-    pygame.draw.polygon(surf, (38, 27, 16), edge)
-    pygame.draw.polygon(surf, (60, 45, 28), face)
+    pygame.draw.polygon(surf, (58, 43, 27), face)
     pygame.draw.polygon(surf, (88, 66, 40), face, 1)
-    for f in (0.32, 0.62, 0.86):
+    for f in (0.45, 0.78):                       # cross-planks
         ax_, ay_ = hx + dx * L * f, hy + dy * L * f
-        pygame.draw.line(surf, (38, 27, 16), (int(ax_), int(ay_)),
+        pygame.draw.line(surf, (37, 26, 15), (int(ax_), int(ay_)),
                          (int(ax_ + px * Wd), int(ay_ + py * Wd)), 1)
-    tx_ = hx + dx * L + px * Wd * 0.5
-    ty_ = hy + dy * L + py * Wd * 0.5
-    pygame.draw.circle(surf, (122, 112, 94), (int(tx_), int(ty_)), 2)
+    kx = hx + dx * (L - 3) + px * Wd * 0.5       # knob near the free end
+    ky = hy + dy * (L - 3) + py * Wd * 0.5
+    pygame.draw.circle(surf, (124, 114, 96), (int(kx), int(ky)), 2)
+    pygame.draw.circle(surf, (28, 26, 31), (int(hx), int(hy)), 2)  # hinge knuckle
 
 
 def draw_scene_terrain(surf, scene, cam_x, cam_y, x0, y0, x1, y1):
