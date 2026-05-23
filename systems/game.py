@@ -2579,6 +2579,28 @@ class Game:
         # Fill
         pygame.draw.rect(self.screen, col,
                          (tx, ty, int(bar_w * prox), bar_h))
+        # Stamina (sprint wind) -- lower-left, just above the scene
+        # label. Hidden while full + idle so the minimalist HUD stays
+        # quiet; it surfaces the instant you spend wind. Cool blue while
+        # you still have breath, red + refilling while you're blown and
+        # locked out -- so a chase becomes a gamble: sprint now and risk
+        # being caught winded, or keep something in reserve to break for
+        # cover.
+        p = self.player
+        winded = p.sprint_cd > 0
+        if p.sprint_active or winded or p.sprint_t < p.sprint_t_max - 0.01:
+            sw, sh = 70, 4
+            sx2, sy2 = 14, SCREEN_H - 32
+            if winded:
+                ratio = 1.0 - max(0.0, min(1.0, p.sprint_cd / p.sprint_cd_max))
+                fill = (150, 60, 60)
+            else:
+                ratio = max(0.0, min(1.0, p.sprint_t / p.sprint_t_max))
+                fill = (110, 150, 170)
+            pygame.draw.rect(self.screen, (40, 36, 50),
+                             (sx2 - 1, sy2 - 1, sw + 2, sh + 2), 1)
+            pygame.draw.rect(self.screen, fill,
+                             (sx2, sy2, int(sw * ratio), sh))
         # Battery indicator -- visible only when the player has the
         # flashlight AND it's on (or recently died). A thin bar in
         # the lower-right with a soft glow when lit.
