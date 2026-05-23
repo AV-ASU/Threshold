@@ -532,6 +532,23 @@ def build_mistlands():
     sc.add_decoration(Decoration(60 * TILE + 16, 40 * TILE + 16, "gas_pump"))
     sc.add_decoration(Decoration(58 * TILE + 16, 47 * TILE + 16, "mud_footprint"))
 
+    # Weeds reclaiming the foundations -- tufts crowding up the walls and
+    # spilling over the footings of every building, so the wall never
+    # meets the ground on a clean line. The town is being taken back.
+    weeds = random.Random(317)
+    for (bl, br, bt, bb) in [(4, 10, 4, 9), (4, 10, 60, 65), (4, 10, 88, 93),
+                             (50, 56, 55, 60), (60, 66, 48, 53),
+                             (65, 71, 65, 70), (80, 86, 75, 80)]:
+        for _ in range(7):                       # along the front footing
+            gx = weeds.randint(bl, br) * TILE + weeds.randint(2, 28)
+            gy = (bb + 1) * TILE + weeds.randint(-6, 10)
+            sc.add_decoration(Decoration(gx, gy, "grass_tuft"))
+        for ey in (bt, bb):                      # crowding the corners up the sides
+            for ex in (bl, br):
+                sc.add_decoration(Decoration(
+                    ex * TILE + weeds.randint(-4, 28),
+                    ey * TILE + weeds.randint(-2, 28), "grass_tuft"))
+
     # Hide spots colocated with VISIBLE cover so the prompt always
     # matches what the player can see. Each entry sits on top of a
     # grass-tuft / watching-eye / dead-tree decoration on the east
