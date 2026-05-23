@@ -459,8 +459,14 @@ def build_mistlands():
     # schoolhouse wall beside the door (Old Pell: "the days fold back").
     sc.add_decoration(Decoration(62 * TILE + 16, 53 * TILE + 16, "calendar"))
     sc.add_decoration(Decoration(95 * TILE + 16, 55 * TILE + 16, "pickup_truck"))
-    sc.add_decoration(Decoration(72 * TILE + 16, 73 * TILE + 16, "place_setting"))
-    sc.add_decoration(Decoration(73 * TILE + 16, 74 * TILE + 16, "overturned_chair"))
+    # Mrs. Calder's table, laid out in the open by the kid's house: two
+    # settings (hers, and his -- set every night), a candle burned down,
+    # and his chair knocked over where he got up and never came back.
+    # (The table itself is a solid 't' tile placed below.)
+    sc.add_decoration(Decoration(71 * TILE + 10, 72 * TILE + 12, "place_setting"))
+    sc.add_decoration(Decoration(71 * TILE + 24, 72 * TILE + 12, "place_setting"))
+    sc.add_decoration(Decoration(71 * TILE + 16, 72 * TILE + 2, "candle"))
+    sc.add_decoration(Decoration(71 * TILE + 28, 74 * TILE + 12, "overturned_chair"))
 
     # ---- The Preacher -- evidence #4 ----
     # They told you he left town. He's in the churchyard, barely under
@@ -562,6 +568,8 @@ def build_mistlands():
     for cx in (93, 94, 95, 96):
         if 0 <= cx < sc.w:
             objects_list[55][cx] = "X"
+    # Mrs. Calder's outdoor table (solid), her settings drawn on top.
+    objects_list[72][71] = "t"
     sc.objects = objects_list
     # Hide spot beside the car (cover for a brief breather between
     # village and west bank).
