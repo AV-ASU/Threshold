@@ -1769,9 +1769,9 @@ class Game:
                       if getattr(n, "tag", "") == "cult_curser"
                       and getattr(n, "alive", True)]
             if not curser:
-                self._spawn_cultist("cult_curser", "old", speed=0.6,
-                                     gaze_range=210, movement="stalker",
-                                     name="The Preacher")
+                self._spawn_cultist("cult_curser", "curse_priest",
+                                     speed=0.6, gaze_range=210,
+                                     movement="stalker", name="The Preacher")
 
     def _flank_cultists(self):
         """When 2+ regular cultists are chasing in an open scene, the

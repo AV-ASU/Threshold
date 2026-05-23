@@ -255,26 +255,27 @@ def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False):
         if flicker != 5:
             pygame.draw.circle(surf, (210, 188, 70), (x, y - 34), 1)
     elif kind == "yellow_king":
-        # The Yellow King avatar. A jaundiced, pulpy mass of eyes
-        # and tentacles that PHASES in and out of being on a slow
-        # sine -- some seconds you can almost not see it. Spawns
-        # only at maximum Pursuer proximity (>= 0.95) as the apex
-        # patroller; if the player isn't hidden, contact triggers
-        # the closure ending. Rendered onto a SRCALPHA layer so
+        # The Yellow King avatar. A jaundiced, pulpy mass of eyes, a
+        # tearing toothed maw, and oozing tentacles that PHASES in and
+        # out of being on a slow sine -- some seconds you can almost
+        # not see it. Gore pass: dark veins crawl the body, the maw
+        # gapes on its own cycle, and arterial ichor weeps down and
+        # drips off the underside. Rendered onto a SRCALPHA layer so
         # the whole sprite alpha-pulses together.
         import pygame as _pg
         t = _pg.time.get_ticks() / 1000.0
         # Phase: 0..1, where 0 is nearly transparent, 1 is solid.
         phase = 0.55 + 0.45 * math.sin(t * 1.7)
-        # Throw in a brief "blink-out" at the troughs so the figure
-        # genuinely vanishes for an instant -- not just a soft
-        # alpha pulse.
+        # Brief "blink-out" at the troughs so the figure genuinely
+        # vanishes for an instant -- not just a soft alpha pulse.
         if math.sin(t * 1.7) < -0.8:
             phase *= 0.15
-        layer = _pg.Surface((60, 76), _pg.SRCALPHA)
-        lx, ly = 30, 56     # local origin (feet)
+        layer = _pg.Surface((64, 82), _pg.SRCALPHA)
+        lx, ly = 32, 60     # local origin (feet)
         body_yellow = (210, 190, 60)
-        body_dark = (130, 110, 30)
+        body_dark = (120, 95, 28)
+        ichor = (152, 30, 24)       # dark arterial red
+        ichor_lo = (92, 14, 12)
         eye_white = (240, 230, 160)
         eye_pupil = (20, 12, 0)
         # Lurching, asymmetrical blob body. Two stacked ellipses
@@ -283,46 +284,65 @@ def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False):
         _pg.draw.ellipse(layer, body_dark, (lx - 16, ly - 38, 32, 30), 1)
         _pg.draw.ellipse(layer, body_yellow, (lx - 14, ly - 22, 28, 26))
         _pg.draw.ellipse(layer, body_dark, (lx - 14, ly - 22, 28, 26), 1)
-        # Mass of eyes. Twelve eyes scattered across the body,
-        # blinking on staggered cycles -- never all open at once.
+        # Veins -- dark-red threads crawling over the mass, twitching.
+        for i in range(5):
+            vx = lx - 10 + i * 5
+            vy = ly - 34 + (i % 2) * 4
+            _pg.draw.line(layer, ichor_lo, (vx, vy),
+                          (vx + int(math.sin(t * 1.1 + i) * 2), vy + 12), 1)
+        # A tearing maw low on the body: a vertical split that gapes on
+        # its own cycle, lined with wet teeth.
+        gape = 2 + int((math.sin(t * 1.9) * 0.5 + 0.5) * 6)
+        mcx, mcy = lx, ly - 6
+        _pg.draw.ellipse(layer, (15, 6, 4), (mcx - gape, mcy - 9, gape * 2, 18))
+        for tj in range(-gape + 1, gape, 3):
+            _pg.draw.polygon(layer, (235, 225, 200),
+                             [(mcx + tj, mcy - 8), (mcx + tj + 1, mcy - 4),
+                              (mcx + tj + 2, mcy - 8)])
+            _pg.draw.polygon(layer, (235, 225, 200),
+                             [(mcx + tj, mcy + 8), (mcx + tj + 1, mcy + 4),
+                              (mcx + tj + 2, mcy + 8)])
+        # Mass of eyes scattered across the body, blinking on
+        # staggered cycles -- never all open at once.
         eye_pos = [
             (-10, -32), (0, -34), (10, -32),
             (-12, -24), (-2, -26), (8, -24),
             (-9, -16), (1, -18), (11, -16),
-            (-6, -8), (4, -10), (-2, 0),
+            (-6, -10), (4, -12),
         ]
         for i, (ex, ey) in enumerate(eye_pos):
-            cycle = (t * 1.3 + i * 0.7) % 4.0
-            if cycle < 0.25:
+            if (t * 1.3 + i * 0.7) % 4.0 < 0.25:
                 continue        # this eye is shut
             cx = lx + ex
             cy = ly + ey
             _pg.draw.circle(layer, eye_white, (cx, cy), 2)
             # Pupil tracks toward the player (facing direction).
             fx, fy = facing
-            px = cx + int(fx * 1)
-            py = cy + int(fy * 1)
-            _pg.draw.circle(layer, eye_pupil, (px, py), 1)
+            _pg.draw.circle(layer, eye_pupil,
+                            (cx + int(fx), cy + int(fy)), 1)
         # Tentacles. Four wavering legs trailing from the bottom of
-        # the body to the ground, each on its own phase. They
-        # don't stride -- they pulse and ooze.
+        # the body to the ground -- they don't stride, they pulse.
         for i in range(4):
             base_x = lx + (i - 1.5) * 6
             base_y = ly - 4
-            tip_y = ly + 14
             for s_step in range(0, 18, 2):
                 wob = math.sin(t * 2.4 + i * 1.1 + s_step * 0.3) * 2
                 seg_x = int(base_x + wob)
                 seg_y = base_y + s_step
                 _pg.draw.line(layer, body_dark,
                               (seg_x, seg_y), (seg_x, seg_y + 2), 2)
-            # Curled tip
             _pg.draw.circle(layer, body_dark,
                             (int(base_x + math.sin(t * 2.4 + i) * 2),
-                             tip_y), 2)
-        # Sickly halo behind the body so it reads even when low-
-        # alpha. Same yellow but very translucent.
-        halo = _pg.Surface((60, 76), _pg.SRCALPHA)
+                             ly + 14), 2)
+        # Ichor drips: red beads welling and sliding down on a loop.
+        for i in range(3):
+            dphase = (t * 0.8 + i * 0.6) % 1.0
+            dx = lx - 8 + i * 8
+            dy = ly - 2 + int(dphase * 16)
+            _pg.draw.circle(layer, ichor, (dx, dy), 2)
+            _pg.draw.circle(layer, ichor_lo, (dx, dy), 2, 1)
+        # Sickly halo behind the body so it reads even when low-alpha.
+        halo = _pg.Surface((64, 82), _pg.SRCALPHA)
         _pg.draw.ellipse(halo, (210, 190, 60, 50),
                          (lx - 22, ly - 42, 44, 50))
         layer.blit(halo, (0, 0), special_flags=_pg.BLEND_RGBA_ADD)
@@ -372,25 +392,92 @@ def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False):
         pygame.draw.rect(surf, outline, (x - 6, y + 14, 5, 8))
         pygame.draw.rect(surf, outline, (x + 1, y + 14, 5, 8))
     elif kind == "cultist":
-        # Hooded cultist. Coarse undyed robe, deep cowl, no face. Used
-        # for the chasers in the depths. Walks with a slight forward
-        # lean so the silhouette reads as "coming for you" even when
-        # idling. No facial detail at all -- the cult has erased him.
-        robe = (110, 95, 70)
-        robe_lo = (70, 60, 45)
-        cowl = (50, 42, 30)
-        # Body
+        # Hooded cultist -- coarse robe, deep cowl, the cult has erased
+        # his face but for two dim eyes that catch the light in the
+        # cowl-shadow. Breathes and sways on a slow cycle so even an
+        # idling figure reads as alive and coming for you. A crusted
+        # dark stain runs down the robe.
+        t = pygame.time.get_ticks() / 1000.0
+        lean = int(math.sin(t * 1.6 + x * 0.02))         # upper-body sway
+        breathe = int((math.sin(t * 2.2) * 0.5 + 0.5))   # hood rise/fall
+        robe = (96, 84, 62)
+        robe_lo = (60, 52, 38)
+        cowl = (38, 32, 22)
+        # Body (shoulders sway via `lean`).
         pygame.draw.polygon(surf, robe,
-                            [(x - 9, y + 16), (x - 7, y - 10),
-                             (x + 7, y - 10), (x + 9, y + 16)])
+                            [(x - 9, y + 16), (x - 7 + lean, y - 10),
+                             (x + 7 + lean, y - 10), (x + 9, y + 16)])
         pygame.draw.polygon(surf, robe_lo,
-                            [(x - 9, y + 16), (x - 7, y - 10),
-                             (x + 7, y - 10), (x + 9, y + 16)], 1)
+                            [(x - 9, y + 16), (x - 7 + lean, y - 10),
+                             (x + 7 + lean, y - 10), (x + 9, y + 16)], 1)
         # Hood
-        pygame.draw.ellipse(surf, cowl, (x - 7, y - 18, 14, 12))
-        # Hem stain
+        pygame.draw.ellipse(surf, cowl,
+                            (x - 7 + lean, y - 18 - breathe, 14, 12))
+        # Two dim eyes in the cowl shadow, blinking together on a cycle.
+        if (t + x * 0.05) % 3.4 > 0.18:
+            ey = y - 13 - breathe
+            pygame.draw.circle(surf, (168, 148, 70), (x - 3 + lean, ey), 1)
+            pygame.draw.circle(surf, (168, 148, 70), (x + 3 + lean, ey), 1)
+        # Crusted blood up the robe + dark hem.
+        pygame.draw.line(surf, (74, 22, 18), (x, y + 4), (x + 1, y + 14), 2)
         pygame.draw.line(surf, (40, 25, 20),
                          (x - 8, y + 16), (x + 8, y + 16), 2)
+    elif kind == "curse_priest":
+        # The cult's curse-priest -- the special cultist that binds the
+        # Watchers to you. Taller and gaunter than the rank-and-file:
+        # a blood-dark robe, a low hood over a pale ruined face with a
+        # stitched-shut mouth and hollow sockets, hands raised mid-rite
+        # with ichor dripping from the fingertips. A vertical row of
+        # small yellow curse-eyes opens down its chest -- the curse,
+        # looking out. Sways, twitches, and drips.
+        t = pygame.time.get_ticks() / 1000.0
+        sway = math.sin(t * 1.2 + x * 0.02)
+        lean = int(sway)
+        robe = (54, 40, 44)
+        robe_lo = (32, 22, 26)
+        blood = (122, 24, 22)
+        face = (190, 180, 165)
+        face_lo = (120, 110, 100)
+        # Tall robe body.
+        pygame.draw.polygon(surf, robe,
+                            [(x - 10, y + 18), (x - 7 + lean, y - 18),
+                             (x + 7 + lean, y - 18), (x + 10, y + 18)])
+        pygame.draw.polygon(surf, robe_lo,
+                            [(x - 10, y + 18), (x - 7 + lean, y - 18),
+                             (x + 7 + lean, y - 18), (x + 10, y + 18)], 1)
+        # Blood down the robe front.
+        pygame.draw.line(surf, blood, (x + lean, y - 14), (x, y + 16), 2)
+        pygame.draw.line(surf, (70, 14, 12), (x - 3, y + 2), (x - 2, y + 16), 1)
+        # Raised hands, mid-rite, ichor beading off the fingertips.
+        for s in (-1, 1):
+            hx = x + s * (10 + int(sway * s))
+            hy = y - 6 + int(math.sin(t * 1.7 + s) * 1)
+            pygame.draw.line(surf, robe, (x + s * 5, y - 8), (hx, hy), 3)
+            pygame.draw.circle(surf, face, (hx, hy), 2)
+            drip = (t * 0.9 + (s + 1) * 0.4) % 1.0
+            pygame.draw.circle(surf, blood, (hx, hy + 2 + int(drip * 10)), 1)
+        # Hood + ruined pale face.
+        pygame.draw.ellipse(surf, robe_lo, (x - 7 + lean, y - 26, 14, 16))
+        pygame.draw.ellipse(surf, face, (x - 4 + lean, y - 23, 8, 11))
+        pygame.draw.ellipse(surf, face_lo, (x - 4 + lean, y - 23, 8, 11), 1)
+        # Hollow sockets -- no light there.
+        pygame.draw.circle(surf, (12, 8, 10), (x - 2 + lean, y - 19), 1)
+        pygame.draw.circle(surf, (12, 8, 10), (x + 2 + lean, y - 19), 1)
+        # Stitched-shut mouth.
+        my = y - 14
+        pygame.draw.line(surf, (60, 20, 22),
+                         (x - 3 + lean, my), (x + 3 + lean, my), 1)
+        for sx in range(-3, 4, 2):
+            pygame.draw.line(surf, (40, 12, 14),
+                             (x + lean + sx, my - 1), (x + lean + sx, my + 1), 1)
+        # A vertical row of small yellow curse-eyes down the chest,
+        # blinking on staggered cycles -- the curse, looking out.
+        for i in range(3):
+            if (t * 1.1 + i * 0.8) % 3.0 > 0.3:
+                pygame.draw.circle(surf, (210, 185, 70), (x + lean, y - 6 + i * 6), 1)
+        # Dark hem.
+        pygame.draw.line(surf, (24, 14, 16),
+                         (x - 9, y + 18), (x + 9, y + 18), 2)
     elif kind == "vessel_avatar":
         # A towering Yellow-King vessel with reaching tentacles. Body is
         # the tall_shadow silhouette enlarged + four wiggling tentacles
@@ -452,40 +539,50 @@ def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False):
         pygame.draw.line(surf, (180, 130, 140),
                          (x + 3, y - 7), (x + 3, y - 4), 1)
     elif kind == "watcher":
-        # A floating orb with a vertical seam. The seam parts to
-        # reveal a yellow iris when the orb is watching the player
-        # (gaze=False -> player isn't looking AT it). When the
-        # player looks at it (gaze=True), the seam closes.
+        # A Watcher -- the curse made flesh. A bloodshot, weeping eye
+        # that hangs in the air and stares: a fleshy sclera laced with
+        # red veins, a yellow iris that dilates, and a blood tear that
+        # wells and falls on a loop. It blinks shut on a slow cycle,
+        # and clenches shut the instant the player looks straight at it
+        # (gaze=True). Only the cursed see them.
         t = pygame.time.get_ticks() / 1000.0
         bob = int(math.sin(t * 1.4 + x * 0.013) * 2)
-        layer = pygame.Surface((36, 36), pygame.SRCALPHA)
-        cx = 18
-        cy = 18 + bob
-        body    = (60, 60, 72, 230)
-        body_lo = (25, 25, 35, 230)
-        body_hi = (105, 105, 120, 230)
-        pygame.draw.circle(layer, body, (cx, cy), 13)
-        pygame.draw.circle(layer, body_lo, (cx, cy), 13, 1)
-        pygame.draw.circle(layer, body_hi, (cx - 4, cy - 5), 3)
-        if gaze:
-            pygame.draw.line(layer, (10, 10, 14, 255),
-                             (cx, cy - 11), (cx, cy + 11), 2)
+        layer = pygame.Surface((40, 40), pygame.SRCALPHA)
+        cx = 20
+        cy = 20 + bob
+        sclera = (200, 180, 150, 235)       # sickly fleshy white
+        sclera_lo = (120, 95, 80, 235)
+        vein = (150, 40, 34, 235)
+        pygame.draw.circle(layer, sclera, (cx, cy), 14)
+        pygame.draw.circle(layer, sclera_lo, (cx, cy), 14, 1)
+        # Bloodshot veins crawling in from the rim.
+        for i in range(7):
+            ang = t * 0.3 + i * (math.tau / 7)
+            ex = cx + int(math.cos(ang) * 13)
+            ey = cy + int(math.sin(ang) * 13)
+            mx = cx + int(math.cos(ang) * 6)
+            my = cy + int(math.sin(ang) * 6)
+            pygame.draw.line(layer, vein, (ex, ey), (mx, my), 1)
+        if gaze or (t + x * 0.02) % 4.2 < 0.2:
+            # Lid clenched shut -- a wet seam.
+            pygame.draw.line(layer, (70, 40, 36, 255),
+                             (cx - 13, cy), (cx + 13, cy), 3)
         else:
-            split = 3 + int(math.sin(t * 2.1) * 1)
-            pygame.draw.ellipse(layer, (10, 10, 14, 255),
-                                (cx - split, cy - 11, split * 2, 22))
-            iw = max(2, split * 2 - 2)
-            pygame.draw.ellipse(layer, (210, 190, 70, 255),
-                                (cx - split + 1, cy - 8, iw, 16))
-            pygame.draw.ellipse(layer, (240, 220, 110, 255),
-                                (cx - split + 1, cy - 4, iw, 8))
-            pygame.draw.ellipse(layer, (10, 8, 0, 255),
-                                (cx - 1, cy - 3, 2, 6))
-            halo = pygame.Surface((36, 36), pygame.SRCALPHA)
-            pygame.draw.circle(halo, (210, 190, 70, 60),
-                               (cx, cy), 16)
+            irad = 7 + int(math.sin(t * 1.3))             # iris dilates
+            pygame.draw.circle(layer, (200, 175, 60, 255), (cx, cy), irad)
+            pygame.draw.circle(layer, (240, 220, 110, 255), (cx, cy), irad, 1)
+            prad = max(2, irad - 4 + int(math.sin(t * 0.9)))
+            pygame.draw.circle(layer, (8, 6, 0, 255), (cx, cy), prad)
+            pygame.draw.circle(layer, (255, 250, 220, 255), (cx - 2, cy - 2), 1)
+            halo = pygame.Surface((40, 40), pygame.SRCALPHA)
+            pygame.draw.circle(halo, (200, 175, 60, 55), (cx, cy), 18)
             layer.blit(halo, (0, 0), special_flags=pygame.BLEND_RGBA_ADD)
-        surf.blit(layer, (x - 18, y - 26))
+        # Blood tear: a bead welling at the base and falling on a loop.
+        tphase = (t * 0.7 + x * 0.05) % 1.0
+        ty = cy + 8 + int(tphase * 16)
+        pygame.draw.circle(layer, (150, 30, 28, 255), (cx + 3, ty), 2)
+        pygame.draw.circle(layer, (90, 16, 14, 255), (cx + 3, ty), 2, 1)
+        surf.blit(layer, (x - 20, y - 28))
     elif kind == "glitch_npc":
         for _ in range(30):
             ox = random.randint(-9, 9); oy = random.randint(-12, 8)
