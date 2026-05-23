@@ -530,6 +530,7 @@ _YK_TRAIL = []                       # recent mass-centre screen positions
 _YK_PARTS = []                       # particle wake: dicts x,y,vx,vy,age,life,r,kind
 _YK_LAST = [0.0]                     # last draw time (for particle dt)
 _YK_ACC = [0.0]                      # distance accumulator (spaces shed orbs)
+_YK_AIM = [None]                     # smoothed arm-aim angle (swivels to player)
 _YK_PRNG = random.Random(99)         # own RNG -> never touches the game's stream
 _YK_T1, _YK_T2, _YK_T3, _YK_T4 = (140, 96, 22), (196, 150, 42), (236, 198, 66), (252, 226, 120)
 _YK_GOLD, _YK_HOT = (236, 204, 64), (252, 226, 120)
@@ -733,6 +734,7 @@ def _draw_yellow_king(surf, x, y, facing):
             _YK_TRAIL = []
             _YK_PARTS.clear()
             _YK_ACC[0] = 0.0
+            _YK_AIM[0] = None        # snap the swivel to the new spot on respawn
     disp = math.hypot(mcx - _YK_TRAIL[-1][0], mcy - _YK_TRAIL[-1][1]) if _YK_TRAIL else 0.0
     _YK_TRAIL.append((mcx, mcy, t))
     _YK_TRAIL = _YK_TRAIL[-5:]
@@ -740,14 +742,14 @@ def _draw_yellow_king(surf, x, y, facing):
     tl = math.hypot(tvx, tvy) or 1.0
     bvx, bvy = -tvx / tl, -tvy / tl              # backward (shed this way)
     _YK_ACC[0] += disp
-    while disp > 0.4 and _YK_ACC[0] >= 15:       # space the orbs along the path
-        _YK_ACC[0] -= 15
+    while disp > 0.4 and _YK_ACC[0] >= 8:        # space the orbs along the path
+        _YK_ACC[0] -= 8
         _YK_PARTS.append({
             "kind": "orb", "seed": _YK_PRNG.randint(0, 999),
             "x": mcx + _YK_PRNG.uniform(-5, 5), "y": mcy + _YK_PRNG.uniform(-5, 5),
             "vx": bvx * 9 + _YK_PRNG.uniform(-8, 8),
             "vy": bvy * 9 + _YK_PRNG.uniform(-8, 8),
-            "age": 0.0, "life": _YK_PRNG.uniform(0.5, 0.95),
+            "age": 0.0, "life": _YK_PRNG.uniform(0.8, 1.25),
             "r": _YK_PRNG.uniform(7, 15)})
         for _ in range(2):                       # sparks around each orb
             _YK_PARTS.append({
@@ -783,18 +785,17 @@ def _draw_yellow_king(surf, x, y, facing):
     L = 170
     layer = pygame.Surface((L, L), pygame.SRCALPHA)
     cx = cy = L // 2
-    # Direction of travel, read off the trail -> the arms reach the way it's
-    # heading (like it hauls itself along); fall back to facing when at rest.
-    tdx = tdy = 0.0
-    if len(_YK_TRAIL) >= 2:
-        ox, oy, _ot = _YK_TRAIL[0]
-        tdx, tdy = mcx - ox, mcy - oy
-    if tdx * tdx + tdy * tdy > 9:
-        aa = math.atan2(tdy, tdx)
-    else:
-        fxx, fyy = facing if facing != (0, 0) else (0, 1)
-        aa = math.atan2(fyy, fxx)
-    fb = (math.cos(aa) * R * 0.22, math.sin(aa) * R * 0.22)   # mass leans the way it moves
+    # Arms follow the player on a smooth SWIVEL: ease the aim toward the
+    # facing (which points at the player, i.e. where it's heading) instead of
+    # snapping, so the reach turns fluidly and shows its direction of travel.
+    fxx, fyy = facing if facing != (0, 0) else (0, 1)
+    target = math.atan2(fyy, fxx)
+    if _YK_AIM[0] is None:
+        _YK_AIM[0] = target
+    da_ = (target - _YK_AIM[0] + math.pi) % math.tau - math.pi   # shortest turn
+    _YK_AIM[0] += da_ * min(1.0, dt * 7.0)
+    aa = _YK_AIM[0]
+    fb = (math.cos(aa) * R * 0.22, math.sin(aa) * R * 0.22)   # mass leans toward the player
     _yk_glow(layer, cx, cy, R, t)
     # Masks swirl around the core, surfacing and dissolving in the light. The
     # melted 'double' masks stay submerged most of the time and POP UP briefly.

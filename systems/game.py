@@ -355,6 +355,16 @@ class Game:
              "scene": None, "t": 55.0,
              "next_min": 25.0, "next_max": 50.0,
              "speed": 1.35},
+            # THE YELLOW KING -- the apex Hunter. Only at apex proximity
+            # (>= 0.95); `follow` pins it to the player's current scene so it
+            # is relentlessly present. It door-blocks the entry and closes via
+            # the yellow_king sprite's own `_yk_update`; contact is the
+            # closure. Hiding is the only out (the flashlight is inert at apex).
+            {"tag": "patrol_hunter", "name": "",
+             "kind": "yellow_king", "min_prox": 0.95,
+             "scene": None, "t": 3.0,
+             "next_min": 20.0, "next_max": 40.0,
+             "speed": 1.15, "follow": True},
             # Ambient hooded cultists -- always-active, restricted
             # to the forest walkways. Three slots so the player
             # usually encounters 1-2 in any forest scene at once.
@@ -583,6 +593,7 @@ class Game:
             p["t"] = {"patrol_preacher": 45.0,
                       "patrol_cultist": 70.0,
                       "patrol_hound": 55.0,
+                      "patrol_hunter": 3.0,
                       "patrol_amb_cult_a": 5.0,
                       "patrol_amb_cult_b": 14.0,
                       "patrol_amb_cult_c": 22.0}.get(p["tag"], 30.0)
@@ -1824,6 +1835,10 @@ class Game:
                 if self.scene.key in pool_src:
                     pool += [self.scene.key] * weight
                 patrol["scene"] = random.choice(pool)
+            # The apex Hunter ignores the scene re-roll and always tracks the
+            # player's current scene, so it stays relentlessly present.
+            if patrol.get("follow"):
+                patrol["scene"] = self.scene.key
             # Find existing NPC for this patrol in the current scene.
             npc = None
             for n in self.scene.npcs:
