@@ -527,8 +527,8 @@ def draw_player_sprite(surf, x, y, facing, walk_phase=0, armor=None, mud=0.0,
 # apex Pursuer proximity; contact is the closure ending.
 # ===========================================================================
 _YK_TRAIL = []                       # recent mass-centre screen positions
-_YK_T1, _YK_T2, _YK_T3, _YK_T4 = (120, 84, 28), (176, 130, 46), (224, 188, 86), (250, 234, 156)
-_YK_GOLD, _YK_HOT = (224, 198, 70), (250, 234, 156)
+_YK_T1, _YK_T2, _YK_T3, _YK_T4 = (140, 96, 22), (196, 150, 42), (236, 198, 66), (252, 226, 120)
+_YK_GOLD, _YK_HOT = (236, 204, 64), (252, 226, 120)
 _YK_DK, _YK_DK_HI = (28, 25, 34), (60, 55, 72)
 _YK_BONE = (150, 128, 70)
 _YK_FHI, _YK_FMID, _YK_FLO, _YK_PIT = (210, 202, 180), (150, 143, 120), (92, 86, 70), (10, 8, 12)
@@ -540,14 +540,19 @@ def _yk_slots():
     its own radius/speed and surfaces/dissolves on its own fade cycle."""
     r = random.Random(20240611)
     faces, eyes = [], []
-    for _ in range(12):
+    # mask designs: plain, screaming, hollow/gaunt, cracked, and a melted
+    # double (two faces fused) that only POPS UP now and then.
+    kinds = ["plain", "scream", "hollow", "plain", "crack", "double",
+             "plain", "scream", "hollow", "double"]
+    for k in kinds:
         faces.append((
-            r.uniform(0.22, 0.86),     # orbit radius (fraction of R)
+            r.uniform(0.22, 0.82),     # orbit radius (fraction of R)
             r.uniform(0, math.tau),    # base angle
             r.uniform(0.30, 0.85),     # angular speed (swirl, one direction)
-            r.randint(3, 6),           # face radius
-            r.uniform(0.6, 1.5),       # fade speed
+            r.randint(4, 8),           # mask radius (bigger -> clearer)
+            r.uniform(0.5, 1.3),       # fade speed
             r.uniform(0, 6.28),        # fade / phase offset
+            k,                         # mask design
         ))
     for _ in range(4):
         eyes.append((r.uniform(0.2, 0.7), r.uniform(0, math.tau),
@@ -575,8 +580,8 @@ def _yk_glow(layer, cx, cy, R, t):
     """The hovering clot of golden light -- soft bloom over a lumpy amber mass
     brightening to a hot core, breathing on a slow sine."""
     R = int(R * (1 + 0.06 * math.sin(t * 2.0)))
-    _yk_radial(layer, cx, cy, int(R * 1.7), _YK_GOLD, 58)
-    _yk_radial(layer, cx, cy, int(R * 1.15), _YK_GOLD, 52)
+    _yk_radial(layer, cx, cy, int(R * 1.8), _YK_GOLD, 66)
+    _yk_radial(layer, cx, cy, int(R * 1.18), _YK_GOLD, 60)
     subs = [(0, 0), (-0.4, -0.18), (0.4, -0.12), (-0.12, 0.4),
             (0.22, 0.32), (-0.3, 0.2), (0.12, -0.34)]
     sw = t * 0.6                       # the light churns -- rotate the lumps
@@ -587,31 +592,63 @@ def _yk_glow(layer, cx, cy, R, t):
             pygame.draw.circle(layer, col,
                                (int(cx + rx * R * 0.6), int(cy + ry * R * 0.9)),
                                int(R * 0.5 * scl) + grow)
-    for k in range(3):                 # orbiting bright wisps
-        a = sw * 1.6 + k * 2.1
-        _yk_radial(layer, cx + math.cos(a) * R * 0.4, cy + math.sin(a) * R * 0.4,
-                   int(R * 0.4), _YK_T4, 60)
-    _yk_radial(layer, cx, cy - 2, int(R * 0.5), _YK_T4, 70)
+    for k in range(4):                 # orbiting bright gold wisps -> churn
+        a = sw * 1.6 + k * 1.57
+        _yk_radial(layer, cx + math.cos(a) * R * 0.42, cy + math.sin(a) * R * 0.42,
+                   int(R * 0.42), _YK_T4, 76)
+    _yk_radial(layer, cx, cy - 2, int(R * 0.55), _YK_T4, 78)
 
 
-def _yk_face(layer, cx, cy, r, vis):
-    """A fused face that surfaces (vis->1, pale + sockets) and dissolves back
-    into the amber light (vis->0). The features fade with it, so faces appear
-    and disappear in the glow rather than blinking on hard."""
+def _yk_mask(layer, cx, cy, r, vis, kind):
+    """A pallid MASK surfacing in the gold light and dissolving back into it
+    as `vis` drops (so masks appear/disappear in the glow). Clearer features
+    + a contour when risen; `kind` varies the design. 'double' is two masks
+    melted into one."""
+    if vis <= 0.03:
+        return
     amber = _YK_T2
     mix = lambda c: (int(amber[0] + (c[0] - amber[0]) * vis),
                      int(amber[1] + (c[1] - amber[1]) * vis),
                      int(amber[2] + (c[2] - amber[2]) * vis))
     cx, cy, r = int(cx), int(cy), int(r)
-    pygame.draw.circle(layer, mix(_YK_FLO), (cx + 1, cy + 1), r)
-    pygame.draw.circle(layer, mix(_YK_FMID), (cx, cy), r)
-    pygame.draw.circle(layer, mix(_YK_FHI), (cx - 1, cy - 1), max(1, r - 1))
-    if vis > 0.4 and r >= 3:
-        pit = mix(_YK_PIT); ep = max(1, r // 3)
-        pygame.draw.circle(layer, pit, (cx - r // 2, cy - r // 4), ep)
-        pygame.draw.circle(layer, pit, (cx + r // 2, cy - r // 4), ep)
-        pygame.draw.ellipse(layer, pit, (cx - r // 3, cy + r // 4,
-                                         max(2, 2 * r // 3), max(2, r // 3)))
+    hi, mid, lo, pit = mix(_YK_FHI), mix(_YK_FMID), mix(_YK_FLO), mix(_YK_PIT)
+    ew = max(1, r // 4)
+    if kind == "double":
+        off = max(2, r // 2)
+        for ddx in (-off, off):
+            pygame.draw.circle(layer, lo, (cx + ddx + 1, cy + 1), r)
+            pygame.draw.circle(layer, mid, (cx + ddx, cy), r)
+            pygame.draw.circle(layer, hi, (cx + ddx - 1, cy - 1), max(1, r - 2))
+        pygame.draw.line(layer, lo, (cx, cy - r), (cx, cy + r), 1)   # fusion seam
+        if vis > 0.4:
+            for ddx in (-off, off):
+                pygame.draw.circle(layer, pit, (cx + ddx - r // 2, cy - r // 4), ew)
+                pygame.draw.circle(layer, pit, (cx + ddx + r // 2, cy - r // 4), ew)
+            pygame.draw.ellipse(layer, pit, (cx - off - r // 4, cy + r // 3,
+                                             2 * off + r // 2, max(2, r // 2)))   # merged maw
+        return
+    pygame.draw.circle(layer, lo, (cx + 1, cy + 1), r)
+    pygame.draw.circle(layer, mid, (cx, cy), r)
+    pygame.draw.circle(layer, hi, (cx - 1, cy - 1), max(1, r - 1))
+    if vis > 0.5:
+        pygame.draw.circle(layer, lo, (cx, cy), r, 1)               # contour -> clarity
+    if vis > 0.35 and r >= 3:
+        if kind == "hollow":                                       # gaunt: deep sockets, slit
+            pygame.draw.ellipse(layer, pit, (cx - r // 2 - 1, cy - r // 3, ew + 2, ew + 3))
+            pygame.draw.ellipse(layer, pit, (cx + r // 2 - 1, cy - r // 3, ew + 2, ew + 3))
+            pygame.draw.line(layer, pit, (cx - r // 4, cy + r // 3), (cx + r // 4, cy + r // 3), 1)
+        elif kind == "scream":                                     # mouth wrenched open
+            pygame.draw.circle(layer, pit, (cx - r // 2, cy - r // 4), ew)
+            pygame.draw.circle(layer, pit, (cx + r // 2, cy - r // 4), ew)
+            pygame.draw.ellipse(layer, pit, (cx - r // 3, cy, max(2, 2 * r // 3), max(3, r)))
+        else:                                                      # plain / cracked
+            pygame.draw.circle(layer, pit, (cx - r // 2, cy - r // 4), ew)
+            pygame.draw.circle(layer, pit, (cx + r // 2, cy - r // 4), ew)
+            pygame.draw.line(layer, lo, (cx, cy - r // 5), (cx, cy + r // 5), 1)   # nose ridge
+            pygame.draw.ellipse(layer, pit, (cx - r // 3, cy + r // 3,
+                                             max(2, 2 * r // 3), max(2, r // 3)))
+            if kind == "crack":
+                pygame.draw.line(layer, pit, (cx - 1, cy - r), (cx + 2, cy + r), 1)
 
 
 def _yk_arm(layer, cx, cy, ang, length, R, t, idx):
@@ -687,14 +724,18 @@ def _draw_yellow_king(surf, x, y, facing):
         aa = math.atan2(fyy, fxx)
     fb = (math.cos(aa) * R * 0.22, math.sin(aa) * R * 0.22)   # mass leans the way it moves
     _yk_glow(layer, cx, cy, R, t)
-    # Faces swirl around the core while surfacing and dissolving in the light.
-    for rn, ba, asp, fr, vsp, vph in _YK_FACES:
+    # Masks swirl around the core, surfacing and dissolving in the light. The
+    # melted 'double' masks stay submerged most of the time and POP UP briefly.
+    for rn, ba, asp, fr, vsp, vph, kind in _YK_FACES:
         ang = ba + t * asp
         rr = rn * (0.9 + 0.1 * math.sin(t * 0.8 + vph))
         fxp = cx + math.cos(ang) * R * 0.82 * rr + fb[0]
         fyp = cy + math.sin(ang) * R * 0.95 * rr + fb[1]
-        vis = max(0.0, min(1.0, 0.5 + 0.72 * math.sin(t * vsp + vph)))
-        _yk_face(layer, fxp, fyp, fr, vis)
+        if kind == "double":
+            vis = max(0.0, min(1.0, (math.sin(t * vsp + vph) - 0.55) / 0.4))
+        else:
+            vis = max(0.0, min(1.0, 0.5 + 0.72 * math.sin(t * vsp + vph)))
+        _yk_mask(layer, fxp, fyp, fr, vis, kind)
     # Hot eye-glints swirl with the faces.
     for rn, ba, asp, ph in _YK_EYES:
         if math.sin(t * 2.1 + ph) > 0.1:
