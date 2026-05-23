@@ -532,6 +532,9 @@ _YK_GOLD, _YK_HOT = (236, 204, 64), (252, 226, 120)
 _YK_DK, _YK_DK_HI = (28, 25, 34), (60, 55, 72)
 _YK_BONE = (150, 128, 70)
 _YK_FHI, _YK_FMID, _YK_FLO, _YK_PIT = (210, 202, 180), (150, 143, 120), (92, 86, 70), (10, 8, 12)
+# Warm, gold-tinted mask tones so the masks read as part of the light (drawn
+# translucent + luminous) rather than separate pale objects floating in it.
+_YK_MHI, _YK_MMID, _YK_MLO, _YK_MPIT = (238, 222, 174), (210, 178, 108), (150, 116, 52), (78, 52, 18)
 
 
 def _yk_slots():
@@ -599,56 +602,60 @@ def _yk_glow(layer, cx, cy, R, t):
     _yk_radial(layer, cx, cy - 2, int(R * 0.55), _YK_T4, 78)
 
 
-def _yk_mask(layer, cx, cy, r, vis, kind):
-    """A pallid MASK surfacing in the gold light and dissolving back into it
-    as `vis` drops (so masks appear/disappear in the glow). Clearer features
-    + a contour when risen; `kind` varies the design. 'double' is two masks
-    melted into one."""
+def _yk_mask(surf, cx, cy, r, vis, kind):
+    """A MASK made of the same light: warm gold-tinted, drawn TRANSLUCENT (so
+    the glow reads through it) and given a luminous halo, surfacing (vis->1)
+    and dissolving back into the glow (vis->0). `kind` varies the design;
+    'double' is two masks melted into one."""
     if vis <= 0.03:
         return
-    amber = _YK_T2
-    mix = lambda c: (int(amber[0] + (c[0] - amber[0]) * vis),
-                     int(amber[1] + (c[1] - amber[1]) * vis),
-                     int(amber[2] + (c[2] - amber[2]) * vis))
     cx, cy, r = int(cx), int(cy), int(r)
-    hi, mid, lo, pit = mix(_YK_FHI), mix(_YK_FMID), mix(_YK_FLO), mix(_YK_PIT)
+    # luminous: brighten the patch so the mask belongs to the light
+    _yk_radial(surf, cx, cy, r + 3, _YK_HOT, int(36 * vis))
+    pad = max(3, r // 2)
+    S = (r + pad) * 2
+    m = pygame.Surface((S, S), pygame.SRCALPHA)
+    mx = my = r + pad
+    hi, mid, lo, pit = _YK_MHI, _YK_MMID, _YK_MLO, _YK_MPIT
     ew = max(1, r // 4)
     if kind == "double":
         off = max(2, r // 2)
         for ddx in (-off, off):
-            pygame.draw.circle(layer, lo, (cx + ddx + 1, cy + 1), r)
-            pygame.draw.circle(layer, mid, (cx + ddx, cy), r)
-            pygame.draw.circle(layer, hi, (cx + ddx - 1, cy - 1), max(1, r - 2))
-        pygame.draw.line(layer, lo, (cx, cy - r), (cx, cy + r), 1)   # fusion seam
+            pygame.draw.circle(m, lo, (mx + ddx + 1, my + 1), r)
+            pygame.draw.circle(m, mid, (mx + ddx, my), r)
+            pygame.draw.circle(m, hi, (mx + ddx - 1, my - 1), max(1, r - 2))
+        pygame.draw.line(m, lo, (mx, my - r), (mx, my + r), 1)       # fusion seam
         if vis > 0.4:
             for ddx in (-off, off):
-                pygame.draw.circle(layer, pit, (cx + ddx - r // 2, cy - r // 4), ew)
-                pygame.draw.circle(layer, pit, (cx + ddx + r // 2, cy - r // 4), ew)
-            pygame.draw.ellipse(layer, pit, (cx - off - r // 4, cy + r // 3,
-                                             2 * off + r // 2, max(2, r // 2)))   # merged maw
-        return
-    pygame.draw.circle(layer, lo, (cx + 1, cy + 1), r)
-    pygame.draw.circle(layer, mid, (cx, cy), r)
-    pygame.draw.circle(layer, hi, (cx - 1, cy - 1), max(1, r - 1))
-    if vis > 0.5:
-        pygame.draw.circle(layer, lo, (cx, cy), r, 1)               # contour -> clarity
-    if vis > 0.35 and r >= 3:
-        if kind == "hollow":                                       # gaunt: deep sockets, slit
-            pygame.draw.ellipse(layer, pit, (cx - r // 2 - 1, cy - r // 3, ew + 2, ew + 3))
-            pygame.draw.ellipse(layer, pit, (cx + r // 2 - 1, cy - r // 3, ew + 2, ew + 3))
-            pygame.draw.line(layer, pit, (cx - r // 4, cy + r // 3), (cx + r // 4, cy + r // 3), 1)
-        elif kind == "scream":                                     # mouth wrenched open
-            pygame.draw.circle(layer, pit, (cx - r // 2, cy - r // 4), ew)
-            pygame.draw.circle(layer, pit, (cx + r // 2, cy - r // 4), ew)
-            pygame.draw.ellipse(layer, pit, (cx - r // 3, cy, max(2, 2 * r // 3), max(3, r)))
-        else:                                                      # plain / cracked
-            pygame.draw.circle(layer, pit, (cx - r // 2, cy - r // 4), ew)
-            pygame.draw.circle(layer, pit, (cx + r // 2, cy - r // 4), ew)
-            pygame.draw.line(layer, lo, (cx, cy - r // 5), (cx, cy + r // 5), 1)   # nose ridge
-            pygame.draw.ellipse(layer, pit, (cx - r // 3, cy + r // 3,
+                pygame.draw.circle(m, pit, (mx + ddx - r // 2, my - r // 4), ew)
+                pygame.draw.circle(m, pit, (mx + ddx + r // 2, my - r // 4), ew)
+            pygame.draw.ellipse(m, pit, (mx - off - r // 4, my + r // 3,
+                                         2 * off + r // 2, max(2, r // 2)))   # merged maw
+    else:
+        pygame.draw.circle(m, lo, (mx + 1, my + 1), r)
+        pygame.draw.circle(m, mid, (mx, my), r)
+        pygame.draw.circle(m, hi, (mx - 1, my - 1), max(1, r - 1))
+        if vis > 0.5:
+            pygame.draw.circle(m, lo, (mx, my), r, 1)               # contour -> clarity
+        if vis > 0.35 and r >= 3:
+            if kind == "hollow":                                   # gaunt: deep sockets, slit
+                pygame.draw.ellipse(m, pit, (mx - r // 2 - 1, my - r // 3, ew + 2, ew + 3))
+                pygame.draw.ellipse(m, pit, (mx + r // 2 - 1, my - r // 3, ew + 2, ew + 3))
+                pygame.draw.line(m, pit, (mx - r // 4, my + r // 3), (mx + r // 4, my + r // 3), 1)
+            elif kind == "scream":                                 # mouth wrenched open
+                pygame.draw.circle(m, pit, (mx - r // 2, my - r // 4), ew)
+                pygame.draw.circle(m, pit, (mx + r // 2, my - r // 4), ew)
+                pygame.draw.ellipse(m, pit, (mx - r // 3, my, max(2, 2 * r // 3), max(3, r)))
+            else:                                                  # plain / cracked
+                pygame.draw.circle(m, pit, (mx - r // 2, my - r // 4), ew)
+                pygame.draw.circle(m, pit, (mx + r // 2, my - r // 4), ew)
+                pygame.draw.line(m, lo, (mx, my - r // 5), (mx, my + r // 5), 1)   # nose ridge
+                pygame.draw.ellipse(m, pit, (mx - r // 3, my + r // 3,
                                              max(2, 2 * r // 3), max(2, r // 3)))
-            if kind == "crack":
-                pygame.draw.line(layer, pit, (cx - 1, cy - r), (cx + 2, cy + r), 1)
+                if kind == "crack":
+                    pygame.draw.line(m, pit, (mx - 1, my - r), (mx + 2, my + r), 1)
+    m.set_alpha(int(64 + 156 * vis))            # translucent -> the glow reads through
+    surf.blit(m, (cx - mx, cy - my))
 
 
 def _yk_arm(layer, cx, cy, ang, length, R, t, idx):
@@ -692,17 +699,29 @@ def _draw_yellow_king(surf, x, y, facing):
     if s < -0.7:
         phase *= 0.35
     # Short ghost-trail of the glow. Reset on a teleport/respawn jump.
+    WIN = 0.34
     if _YK_TRAIL:
         px, py, pt = _YK_TRAIL[-1]
-        if (mcx - px) ** 2 + (mcy - py) ** 2 > 70 ** 2 or (t - pt) > 0.4:
+        if (mcx - px) ** 2 + (mcy - py) ** 2 > 70 ** 2 or (t - pt) > 0.45:
             _YK_TRAIL = []
     _YK_TRAIL.append((mcx, mcy, t))
-    _YK_TRAIL = [e for e in _YK_TRAIL if t - e[2] < 0.28][-9:]
-    for gx, gy, gt in _YK_TRAIL[:-1]:
-        age = (t - gt) / 0.28
-        a = int(64 * (1 - age) * phase)
+    _YK_TRAIL = [e for e in _YK_TRAIL if t - e[2] < WIN][-12:]
+    # A glowing, mask-filled wake: it tears a seam of light and faces through
+    # space that seals (fades) behind it.
+    ghosts = _YK_TRAIL[:-1]
+    for i, (gx, gy, gt) in enumerate(ghosts):
+        age = (t - gt) / WIN
+        a = int(74 * (1 - age) * phase)
         if a > 0:
-            _yk_radial(surf, gx, gy, int(R * 1.2 * (1 - 0.3 * age)), _YK_GOLD, a)
+            _yk_radial(surf, gx, gy, int(R * 1.15 * (1 - 0.32 * age)), _YK_GOLD, a)
+        if i % 2 == 0:                          # faces caught in the rip
+            mv = 0.55 * (1 - age) * phase
+            if mv > 0.05:
+                kk = _YK_FACES[i % len(_YK_FACES)][6]
+                if kk == "double":
+                    kk = "plain"
+                _yk_mask(surf, gx + ((i % 3) - 1) * 3, gy + ((i % 2) * 5 - 2),
+                         4 + i % 2, mv, kk)
     # Faint floating shadow on the ground, far below the mass.
     sh = pygame.Surface((40, 12), pygame.SRCALPHA)
     pygame.draw.ellipse(sh, (0, 0, 0, int(80 * phase)), (0, 0, 40, 12))
