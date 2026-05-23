@@ -870,24 +870,22 @@ def _draw_door_leaf(surf, rx, ry, room, seed):
     door pivots. It spills past the tile (collision stays on the grid;
     the doorway tile is passable). Hinge corner, swing angle and length
     vary per door (deterministic) so no two hang alike."""
-    skew = 0.22 + (seed % 50) / 100.0           # how far it stands off the wall
-    L = 21 + (seed // 7) % 6                     # door span (spills past the tile)
-    Wd = 5                                       # door thickness, seen top-down
-    hs = (seed >> 5) & 1
+    skew = 0.22 + (seed % 50) / 100.0           # swing angle varies per door
+    L = 26 + (seed // 7) % 5                      # door span -- a touch longer; spills past tile
+    Wd = 5                                        # door thickness, seen top-down
     TL = (rx + 8, ry + 8); TR = (rx + 24, ry + 8)
     BL = (rx + 8, ry + 24); BR = (rx + 24, ry + 24)
-    if room == "N":          # swings up into the room above
-        base = -math.pi / 2
-        hx, hy, ang = (TR + (base - skew,)) if hs else (TL + (base + skew,))
-    elif room == "S":        # swings down
-        base = math.pi / 2
-        hx, hy, ang = (BR + (base + skew,)) if hs else (BL + (base - skew,))
-    elif room == "E":        # swings right
-        base = 0.0
-        hx, hy, ang = (TR + (base + skew,)) if hs else (BR + (base - skew,))
-    else:                    # W: swings left
-        base = math.pi
-        hx, hy, ang = (TL + (base - skew,)) if hs else (BL + (base + skew,))
+    # Fixed hinge corner per wall (right-handed doors); the leaf swings
+    # in toward the room. A north-wall door (room to the south) hinges
+    # at the bottom-left corner of the cell.
+    if room == "S":          # north wall -> swings down into the room below
+        hx, hy, ang = BL[0], BL[1], math.pi / 2 - skew
+    elif room == "N":        # south wall -> swings up
+        hx, hy, ang = TR[0], TR[1], -math.pi / 2 - skew
+    elif room == "E":        # west wall -> swings right
+        hx, hy, ang = BR[0], BR[1], -skew
+    else:                    # east wall -> swings left
+        hx, hy, ang = TL[0], TL[1], math.pi - skew
     dx, dy = math.cos(ang), math.sin(ang)
     px, py = -dy, dx
     face = [(int(x), int(y)) for x, y in _leaf_quad(hx, hy, ang, L, Wd)]
