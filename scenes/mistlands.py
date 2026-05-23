@@ -35,6 +35,42 @@ def _stamp_building(objects_l, left, right, top, bot,
     objects_l[bot][door_col] = door_char
 
 
+def _carve_track(floor_ll, objects_l, pts, rng):
+    """Beat a worn 1-tile dirt track between successive waypoints, with a
+    little per-step jitter so it staircases and wobbles instead of ruling
+    a straight line. Only plain grass converts (g -> d): river, corn
+    cover, trees, walls, roofs, bridge planks and doors are all left
+    alone -- so a track can never punch through water or a building, it
+    simply fades out where it runs into the corn and stops at a wall."""
+    h, w = len(floor_ll), len(floor_ll[0])
+
+    def carve(tx, ty):
+        if (0 <= ty < h and 0 <= tx < w
+                and objects_l[ty][tx] == "." and floor_ll[ty][tx] == "g"):
+            floor_ll[ty][tx] = "d"
+
+    for (x0, y0), (x1, y1) in zip(pts, pts[1:]):
+        x, y = x0, y0
+        carve(x, y)
+        guard = 0
+        while (x, y) != (x1, y1) and guard < 4 * (w + h):
+            guard += 1
+            dx = (x1 > x) - (x1 < x)
+            dy = (y1 > y) - (y1 < y)
+            if dx and (not dy or abs(x1 - x) >= abs(y1 - y)) and rng.random() < 0.85:
+                x += dx
+            elif dy:
+                y += dy
+            else:
+                x += dx
+            carve(x, y)
+            if rng.random() < 0.30:                  # perpendicular fray -> 2-wide wobble
+                if dx:
+                    carve(x, y + (1 if rng.random() < 0.5 else -1))
+                else:
+                    carve(x + (1 if rng.random() < 0.5 else -1), y)
+
+
 def build_mistlands():
     w = 100
     h = 100
@@ -162,6 +198,35 @@ def build_mistlands():
     barn_door = 83
     _stamp_building(objects_l, barn_left, barn_right,
                     barn_top, barn_bot, "n", barn_door)
+
+    # ---- Worn dirt tracks ----
+    # The townsfolk and the cult have beaten paths across the field over
+    # the years, linking the village entry and the river bridge to the
+    # scattered buildings. They give the composed emptiness leading lines
+    # to read by -- and they fade out where they run into the corn rather
+    # than cutting through the cover. Tracks meet the bridge ends (the
+    # river is the one crossing); the planks themselves stay planks.
+    floor_ll = [list(r) for r in floor_rows]
+    trk = random.Random(7)
+    # East bank: village entry (east edge) -> east end of the bridge.
+    _carve_track(floor_ll, objects_l,
+                 [(w - 2, 7), (70, 10), (52, 18), (36, 22), (35, 24)], trk)
+    # East-bank spine running south down the open lane between the
+    # west-side and east-side buildings, with short spurs to each door.
+    _carve_track(floor_ll, objects_l, [(52, 18), (58, 34), (58, 72)], trk)
+    _carve_track(floor_ll, objects_l, [(58, 58), (54, 60), (53, 61)], trk)   # -> Shop door
+    _carve_track(floor_ll, objects_l, [(58, 70), (64, 71), (68, 71)], trk)   # -> Kid's door
+    _carve_track(floor_ll, objects_l,
+                 [(58, 72), (70, 77), (80, 80), (83, 81)], trk)              # -> Barn door
+    # West bank: bridge west end -> Church (north) and Sheriff +
+    # Farmhouse (south), plus a spur toward the cauldron clearing.
+    _carve_track(floor_ll, objects_l,
+                 [(31, 24), (16, 16), (9, 11), (7, 10)], trk)                # -> Church door
+    _carve_track(floor_ll, objects_l,
+                 [(31, 24), (18, 44), (9, 58), (7, 66)], trk)                # -> Sheriff door
+    _carve_track(floor_ll, objects_l, [(7, 66), (7, 80), (7, 94)], trk)      # -> Farmhouse door
+    _carve_track(floor_ll, objects_l, [(7, 82), (11, 81), (14, 80)], trk)    # -> cauldron entrance
+    floor_rows = ["".join(r) for r in floor_ll]
 
     objects = ["".join(r) for r in objects_l]
 
