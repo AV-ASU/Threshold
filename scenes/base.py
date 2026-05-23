@@ -785,12 +785,27 @@ def _draw_wall_mass(surf, scene, cam_x, cam_y, x0, y0, x1, y1):
                 cx = rx + (hsh % (TILE - 4)) + 2
                 cy = ry + ((hsh // 5) % (TILE - 8)) + 2
                 pygame.draw.line(surf, (30, 28, 35), (cx, cy), (cx, cy + 5), 1)
+            if hsh % 7 == 0:                        # water-stain dribble
+                sx = rx + (hsh % (TILE - 6)) + 3
+                pygame.draw.line(surf, (12, 11, 15), (sx, ry + 2),
+                                 (sx + ((hsh >> 5) & 1), ry + TILE - 3), 2)
+            elif hsh % 8 == 0:                      # exposed boards where it's rotted through
+                bx = rx + (hsh % (TILE - 8)) + 3
+                for k in range(3):
+                    pygame.draw.line(surf, (46, 37, 30),
+                                     (bx + k * 3, ry + 4), (bx + k * 3, ry + TILE - 4), 1)
             j = (hsh >> 3) & 1     # 1px edge jitter -> hand-drawn wobble
             if not _is_wall(scene, tx, ty - 1):     # room above: lit cap
                 pygame.draw.rect(surf, _WALL_TOP, (rx, ry, TILE, 2))
                 pygame.draw.line(surf, _WALL_FACE, (rx, ry + 2 + j),
                                  (rx + TILE, ry + 2 + j), 1)
             if not _is_wall(scene, tx, ty + 1):     # room below: foot shadow
+                # Damp band wicking up from the ground + a little moss,
+                # only where the wall actually meets open floor.
+                pygame.draw.rect(surf, (12, 11, 15), (rx, ry + TILE - 8, TILE, 5))
+                if hsh % 3 == 0:
+                    mx = rx + (hsh % (TILE - 6)) + 2
+                    pygame.draw.circle(surf, (44, 56, 40), (mx, ry + TILE - 3), 2)
                 pygame.draw.rect(surf, _WALL_FOOT, (rx, ry + TILE - 2, TILE, 2))
                 pygame.draw.line(surf, _WALL_FACE, (rx, ry + TILE - 3 - j),
                                  (rx + TILE, ry + TILE - 3 - j), 1)
