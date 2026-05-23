@@ -256,18 +256,18 @@ def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False,
         if flicker != 5:
             pygame.draw.circle(surf, (210, 188, 70), (x, y - 34), 1)
     elif kind == "yellow_king":
-        # The King in Yellow -- a black-tar wendigo that ERUPTS from a
-        # cult member (the corpse's bones become its hooves), golden
-        # eyes and tentacles uncoiling from the tar. The full drawing,
-        # birth, and run/walk gait live in _draw_king. `birth` (0..1)
-        # and `gait` come from the live NPC; when absent (a preview)
-        # they loop off the clock so the emergence + run still show.
+        # The King in Yellow -- a floating tear-in-space: a churning clot of
+        # gold light packed with the cult's fused faces, arms reaching out to
+        # grasp, trailing a wake of glowing soul-orbs. The full drawing, rift
+        # birth, and motion live in _draw_king. `birth` (0..1) and `gait` come
+        # from the live NPC; when absent (a preview) they loop off the clock so
+        # the eruption still shows.
         import pygame as _pg
         t = _pg.time.get_ticks() / 1000.0
         if birth is None:
             cyc = t % 7.0
             b = min(1.0, cyc / 1.6)            # erupt over ~1.6s
-            g = max(0.0, cyc - 1.6) * 7.0      # then run the rest
+            g = max(0.0, cyc - 1.6) * 7.0      # then drift the rest
         else:
             b = birth
             g = gait if gait is not None else t * 7.0
@@ -613,195 +613,330 @@ def draw_player_sprite(surf, x, y, facing, walk_phase=0, armor=None, mud=0.0,
     pygame.draw.circle(surf, C_BLACK, (x + 2 + eye_dx, eye_y), 1)
 
 
+# ===========================================================================
+# THE KING IN YELLOW
+#
+# A floating tear-in-space: a churning clot of sick-gold light packed with the
+# cult's fused faces, broken arms reaching out to grasp, shedding a wake of
+# glowing soul-orbs as it drifts -- hell, chasing you. It births by tearing a
+# rift open (driven by the NPC's `birth` 0..1), floats and never phases out
+# (only the individual masks surface and dissolve), and the reaching arms
+# swivel smoothly toward the player. Drawn from draw_npc_sprite's yellow_king
+# dispatch as _draw_king(surf, x, y, facing, t, birth, gait).
+# ===========================================================================
+_YK_TRAIL = []                       # recent mass-centre screen positions
+_YK_PARTS = []                       # particle wake: dicts x,y,vx,vy,age,life,r,kind
+_YK_LAST = [0.0]                     # last draw time (for particle dt)
+_YK_ACC = [0.0]                      # distance accumulator (spaces shed orbs)
+_YK_AIM = [None]                     # smoothed arm-aim angle (swivels to player)
+_YK_PRNG = random.Random(99)         # own RNG -> never touches the game's stream
+_YK_T1, _YK_T2, _YK_T3, _YK_T4 = (140, 96, 22), (196, 150, 42), (236, 198, 66), (252, 226, 120)
+_YK_GOLD, _YK_HOT = (236, 204, 64), (252, 226, 120)
+_YK_DK, _YK_DK_HI = (28, 25, 34), (60, 55, 72)
+_YK_BONE = (150, 128, 70)
+_YK_PIT = (10, 8, 12)
+# Warm, gold-tinted mask tones so the masks read as part of the light (drawn
+# translucent + luminous) rather than separate pale objects floating in it.
+_YK_MHI, _YK_MMID, _YK_MLO, _YK_MPIT = (238, 222, 174), (210, 178, 108), (150, 116, 52), (78, 52, 18)
+
+
+def _yk_slots():
+    """Deterministic swirl params for the faces + eyes (own RNG so the global
+    stream the game relies on is never touched). Each face orbits the core at
+    its own radius/speed and surfaces/dissolves on its own fade cycle."""
+    r = random.Random(20240611)
+    faces, eyes = [], []
+    # mask designs: plain, screaming, hollow/gaunt, cracked, and a melted
+    # double (two faces fused) that only POPS UP now and then.
+    kinds = ["plain", "scream", "hollow", "plain", "crack", "double",
+             "plain", "scream", "hollow", "double"]
+    for k in kinds:
+        faces.append((
+            r.uniform(0.22, 0.82), r.uniform(0, math.tau), r.uniform(0.30, 0.85),
+            r.randint(4, 8), r.uniform(0.5, 1.3), r.uniform(0, 6.28), k))
+    for _ in range(4):
+        eyes.append((r.uniform(0.2, 0.7), r.uniform(0, math.tau),
+                     r.uniform(0.3, 0.8), r.uniform(0, 6.28)))
+    return faces, eyes
+
+
+_YK_FACES, _YK_EYES = _yk_slots()
+
+
+def _yk_radial(surf, x, y, R, color, a0, add=True):
+    """Soft glowing/fading disc built from concentric circles."""
+    R = max(2, int(R))
+    g = pygame.Surface((R * 2 + 2, R * 2 + 2), pygame.SRCALPHA)
+    c = (R + 1, R + 1); st = max(6, R // 2)
+    for i in range(st, 0, -1):
+        a = int(a0 * (1 - i / st) ** 1.7)
+        if a > 0:
+            pygame.draw.circle(g, (color[0], color[1], color[2], a), c, int(R * i / st))
+    surf.blit(g, (int(x) - R - 1, int(y) - R - 1),
+              special_flags=pygame.BLEND_RGBA_ADD if add else 0)
+
+
+def _yk_glow(layer, cx, cy, R, t):
+    """The hovering clot of golden light -- soft bloom over a lumpy amber mass
+    brightening to a hot core, churning on a slow swirl."""
+    R = int(R * (1 + 0.06 * math.sin(t * 2.0)))
+    _yk_radial(layer, cx, cy, int(R * 1.8), _YK_GOLD, 66)
+    _yk_radial(layer, cx, cy, int(R * 1.18), _YK_GOLD, 60)
+    subs = [(0, 0), (-0.4, -0.18), (0.4, -0.12), (-0.12, 0.4),
+            (0.22, 0.32), (-0.3, 0.2), (0.12, -0.34)]
+    sw = t * 0.6
+    ca, sa = math.cos(sw), math.sin(sw)
+    for col, scl, grow in [(_YK_T1, 1.0, 3), (_YK_T2, 0.74, 1), (_YK_T3, 0.5, 0), (_YK_T4, 0.28, 0)]:
+        for ox, oy in subs:
+            rx, ry = ox * ca - oy * sa, ox * sa + oy * ca
+            pygame.draw.circle(layer, col,
+                               (int(cx + rx * R * 0.6), int(cy + ry * R * 0.9)),
+                               int(R * 0.5 * scl) + grow)
+    for k in range(4):
+        a = sw * 1.6 + k * 1.57
+        _yk_radial(layer, cx + math.cos(a) * R * 0.42, cy + math.sin(a) * R * 0.42,
+                   int(R * 0.42), _YK_T4, 76)
+    _yk_radial(layer, cx, cy - 2, int(R * 0.55), _YK_T4, 78)
+
+
+def _yk_mask(surf, cx, cy, r, vis, kind):
+    """A MASK made of the same light: warm gold-tinted, translucent (the glow
+    reads through it) + a luminous halo, surfacing (vis->1) and dissolving back
+    into the glow (vis->0). 'double' is two masks melted into one."""
+    if vis <= 0.03:
+        return
+    cx, cy, r = int(cx), int(cy), int(r)
+    _yk_radial(surf, cx, cy, r + 3, _YK_HOT, int(36 * vis))
+    pad = max(3, r // 2)
+    S = (r + pad) * 2
+    m = pygame.Surface((S, S), pygame.SRCALPHA)
+    mx = my = r + pad
+    hi, mid, lo, pit = _YK_MHI, _YK_MMID, _YK_MLO, _YK_MPIT
+    ew = max(1, r // 4)
+    if kind == "double":
+        off = max(2, r // 2)
+        for ddx in (-off, off):
+            pygame.draw.circle(m, lo, (mx + ddx + 1, my + 1), r)
+            pygame.draw.circle(m, mid, (mx + ddx, my), r)
+            pygame.draw.circle(m, hi, (mx + ddx - 1, my - 1), max(1, r - 2))
+        pygame.draw.line(m, lo, (mx, my - r), (mx, my + r), 1)
+        if vis > 0.4:
+            for ddx in (-off, off):
+                pygame.draw.circle(m, pit, (mx + ddx - r // 2, my - r // 4), ew)
+                pygame.draw.circle(m, pit, (mx + ddx + r // 2, my - r // 4), ew)
+            pygame.draw.ellipse(m, pit, (mx - off - r // 4, my + r // 3,
+                                         2 * off + r // 2, max(2, r // 2)))
+    else:
+        pygame.draw.circle(m, lo, (mx + 1, my + 1), r)
+        pygame.draw.circle(m, mid, (mx, my), r)
+        pygame.draw.circle(m, hi, (mx - 1, my - 1), max(1, r - 1))
+        if vis > 0.5:
+            pygame.draw.circle(m, lo, (mx, my), r, 1)
+        if vis > 0.35 and r >= 3:
+            if kind == "hollow":
+                pygame.draw.ellipse(m, pit, (mx - r // 2 - 1, my - r // 3, ew + 2, ew + 3))
+                pygame.draw.ellipse(m, pit, (mx + r // 2 - 1, my - r // 3, ew + 2, ew + 3))
+                pygame.draw.line(m, pit, (mx - r // 4, my + r // 3), (mx + r // 4, my + r // 3), 1)
+            elif kind == "scream":
+                pygame.draw.circle(m, pit, (mx - r // 2, my - r // 4), ew)
+                pygame.draw.circle(m, pit, (mx + r // 2, my - r // 4), ew)
+                pygame.draw.ellipse(m, pit, (mx - r // 3, my, max(2, 2 * r // 3), max(3, r)))
+            else:
+                pygame.draw.circle(m, pit, (mx - r // 2, my - r // 4), ew)
+                pygame.draw.circle(m, pit, (mx + r // 2, my - r // 4), ew)
+                pygame.draw.line(m, lo, (mx, my - r // 5), (mx, my + r // 5), 1)
+                pygame.draw.ellipse(m, pit, (mx - r // 3, my + r // 3,
+                                             max(2, 2 * r // 3), max(2, r // 3)))
+                if kind == "crack":
+                    pygame.draw.line(m, pit, (mx - 1, my - r), (mx + 2, my + r), 1)
+    m.set_alpha(int(64 + 156 * vis))
+    surf.blit(m, (cx - mx, cy - my))
+
+
+def _yk_orb(surf, cx, cy, r, vis, seed, t):
+    """A shed SOUL-ORB: a small copy of the body -- a glowing gold clot with a
+    mask or two floating in it -- fading out in the wake."""
+    if vis <= 0.04:
+        return
+    _yk_radial(surf, cx, cy, int(r * 1.8), _YK_GOLD, int(46 * vis))
+    _yk_radial(surf, cx, cy, int(r * 1.05), _YK_T2, int(58 * vis))
+    _yk_radial(surf, cx, cy, int(r * 0.62), _YK_T3, int(72 * vis))
+    _yk_radial(surf, cx, cy, int(r * 0.32), _YK_T4, int(88 * vis))
+    kinds = ("plain", "scream", "hollow", "crack")
+    for k in range(2 if r >= 9 else 1):
+        ang = seed * 1.7 + k * 2.4 + t * 1.4
+        rad = r * 0.36
+        _yk_mask(surf, cx + math.cos(ang) * rad, cy + math.sin(ang) * rad,
+                 max(3, int(r * 0.44)), vis * 0.9, kinds[(seed + k) % 4])
+
+
+def _yk_birth_rift(surf, cx, cy, R, bp):
+    """The birth: space tears open. A vertical gold rift cracks wide and flares
+    white-hot early, then fattens and seals into the forming body."""
+    opening = math.sin(min(1.0, bp / 0.5) * 1.5708)
+    seal = max(0.0, (bp - 0.5) / 0.5)
+    h = R * (0.5 + 2.7 * opening) * (1 - 0.55 * seal)
+    n = max(3, int(h / 4))
+    for i in range(n):
+        f = i / (n - 1)
+        yy = cy - h + 2 * h * f
+        rr = (R * 0.14 + R * 0.55 * seal) * (0.4 + 0.6 * math.sin(f * math.pi))
+        _yk_radial(surf, cx, yy, max(2, int(rr)), _YK_T4, int(118 * (1 - 0.4 * seal)))
+    flare = max(0.0, 1.0 - abs(bp - 0.28) / 0.28)
+    if flare > 0:
+        _yk_radial(surf, cx, cy, int(R * (0.4 + 0.95 * flare)), (255, 250, 232), int(100 * flare))
+
+
+def _yk_arm(layer, cx, cy, ang, length, R, t, idx):
+    """A broken arm reaching out of the light: it extends and draws back on its
+    own cycle, reflex elbow, clawing hand."""
+    wob = math.sin(t * 1.9 + idx * 1.3) * 0.14
+    ext = 0.55 + 0.45 * max(0.0, math.sin(t * 1.5 + idx * 0.9))
+    reach = length * ext
+    root = (cx + math.cos(ang) * R * 0.5, cy + math.sin(ang) * R * 0.5)
+    hand = (cx + math.cos(ang + wob) * reach, cy + math.sin(ang + wob) * reach)
+    mx, my = (root[0] + hand[0]) / 2, (root[1] + hand[1]) / 2
+    perp = (-math.sin(ang), math.cos(ang)); k = (R * 0.5) * (1 if idx % 2 else -1)
+    elbow = (mx + perp[0] * k, my + perp[1] * k)
+    pts = [(int(a), int(b)) for a, b in (root, elbow, hand)]
+    w = max(3, int(R * 0.34))
+    pygame.draw.lines(layer, _YK_DK_HI, False, pts, w + 2)
+    pygame.draw.lines(layer, _YK_DK, False, pts, w)
+    ha = math.atan2(hand[1] - elbow[1], hand[0] - elbow[0])
+    pygame.draw.circle(layer, _YK_DK, (int(hand[0]), int(hand[1])), max(2, w // 2))
+    for fa in (-42, -14, 16, 44):
+        a2 = ha + math.radians(fa)
+        tip = (hand[0] + math.cos(a2) * R * 0.5, hand[1] + math.sin(a2) * R * 0.5)
+        pygame.draw.line(layer, _YK_DK, (int(hand[0]), int(hand[1])),
+                         (int(tip[0]), int(tip[1])), 2)
+        try:
+            layer.set_at((int(tip[0]), int(tip[1])), _YK_BONE)
+        except (IndexError, ValueError):
+            pass
+
+
 def _draw_king(surf, x, y, facing, t, birth, gait):
-    """The King in Yellow -- a black-tar wendigo.
-
-    `birth` (0..1) drives the eruption: a cult member convulses, bursts
-    in a spray of tar/gore/gold, and the corpse's bones splay out into
-    hooves while the tar mass rises, antlers branch, tentacles uncoil,
-    and golden eyes ignite. At birth >= 1.0 it runs: `gait` drives a
-    galloping leg cycle, a forward lunge, and trailing tentacles. The
-    only colour is the gold of the eyes against near-black tar.
-    """
-    import pygame as _pg
-    LW, LH = 104, 120
-    layer = _pg.Surface((LW, LH), _pg.SRCALPHA)
-    ox, oy = 52, 104                       # feet origin in the layer
-    fx, fy = facing
-    fsign = 1 if fx >= 0 else -1
-
-    tar    = (15, 14, 18)
-    tar_hi = (44, 42, 52)
-    tar_lo = (6, 6, 9)
-    gold   = (230, 184, 46)
-    goldg  = (255, 216, 90)
-    bone   = (196, 184, 162)
-    bone_lo = (120, 112, 96)
-    gore   = (126, 22, 18)
-
-    b = max(0.0, min(1.0, birth))
-
-    def ss(a):
-        a = max(0.0, min(1.0, a))
-        return a * a * (3 - 2 * a)
-
-    rise = ss(b)
-    splay = ss((b - 0.30) / 0.50)
-    teng = ss((b - 0.55) / 0.45)
-    eyeon = ss((b - 0.70) / 0.30)
-    antl = ss((b - 0.60) / 0.40)
-    born = b >= 1.0
-    lunge = int(math.sin(gait) * 3) if born else 0
-    bob = int(abs(math.sin(gait)) * 3) if born else 0
-
-    # Tar pool / shadow on the ground (widens as it rises).
-    pw = int(13 + 18 * rise)
-    _pg.draw.ellipse(layer, (8, 7, 10), (ox - pw, oy - 5, pw * 2, 12))
-
-    # ---- legs + hooves (the corpse's bones), galloping ----
-    hip_y = oy - int(26 * rise) - bob
-    for i in range(2):
-        ph = gait + i * math.pi
-        sw = math.sin(ph)
-        foot_x = ox + (i * 2 - 1) * 4 + int(sw * 9 * splay) + lunge
-        lift = max(0, int(math.cos(ph) * 5)) if born else 0
-        foot_y = oy - lift
-        hip_x = ox + (i * 2 - 1) * 5
-        knee_x = (hip_x + foot_x) // 2 + (i * 2 - 1) * 5
-        knee_y = (hip_y + foot_y) // 2 - 3
-        _pg.draw.line(layer, tar, (hip_x, hip_y), (knee_x, knee_y), 5)
-        _pg.draw.line(layer, tar, (knee_x, knee_y), (foot_x, foot_y - 6), 4)
-        _pg.draw.line(layer, tar_hi, (hip_x, hip_y), (knee_x, knee_y), 1)
-        # hoof: torn bone (gore at the break, bone shaft, splayed hoof)
-        _pg.draw.line(layer, gore, (foot_x - 2, foot_y - 7), (foot_x + 2, foot_y - 7), 3)
-        _pg.draw.line(layer, bone, (foot_x, foot_y - 6), (foot_x, foot_y - 1), 4)
-        _pg.draw.polygon(layer, bone, [(foot_x - 3, foot_y - 1), (foot_x + 3, foot_y - 1),
-                                       (foot_x + 2, foot_y + 2), (foot_x - 2, foot_y + 2)])
-        _pg.draw.line(layer, bone_lo, (foot_x, foot_y - 1), (foot_x, foot_y + 2), 1)
-
-    # ---- body: a large, lumpy TUMOUR mass (no clean deer line) ----
-    # Overlapping tar blobs of varied size give a ragged, writhing
-    # silhouette; each lump pulses a little so the mass reads cancerous
-    # and alive rather than as a clean animal. Built up from the hips
-    # and scaled in by `rise`.
-    cx = ox + lunge
-    lumps = [   # (dx, dy, radius) relative to (cx, hip_y); dy<0 is up
-        (0, -2, 12), (-8, -5, 8), (9, -7, 8),
-        (-4, -13, 10), (7, -15, 8), (-10, -17, 6),
-        (3, -22, 9), (-6, -26, 7), (8, -27, 6),
-        (-2, -32, 7), (5, -35, 5), (-7, -34, 4),
-    ]
-    drawn = []
-    for i, (dx, dy, br) in enumerate(lumps):
-        lx_ = cx + int(dx * rise)
-        ly_ = hip_y + int(dy * rise)
-        r = max(1, int((br + math.sin(t * 2.2 + i * 0.9)) * rise))
-        drawn.append((lx_, ly_, r))
-        _pg.draw.circle(layer, tar, (lx_, ly_), r)
-    for i, (lx_, ly_, r) in enumerate(drawn):   # seams + wet highlights
-        if r >= 4:
-            _pg.draw.circle(layer, tar_lo, (lx_, ly_), r, 1)
-        if i % 3 == 0 and r >= 4:
-            _pg.draw.circle(layer, tar_hi, (lx_ - r // 3, ly_ - r // 3),
-                            max(1, r // 4))
-    top_y = hip_y + int(-35 * rise)
-    mid_y = hip_y + int(-16 * rise)
-
-    # ---- antlers: asymmetric and broken, jutting from the top lumps;
-    # a short forked stub on the left, a longer crooked rack on the
-    # right, so the silhouette never settles into a clean stag. ----
-    al = int(15 * antl)
-    if al > 0:
-        lx0, ly0 = cx - 5, top_y + 2
-        _pg.draw.line(layer, bone, (lx0, ly0), (lx0 - int(5 * antl), ly0 - al), 2)
-        _pg.draw.line(layer, bone, (lx0 - int(2 * antl), ly0 - al // 2),
-                      (lx0 - int(9 * antl), ly0 - al // 2 - int(3 * antl)), 1)
-        rx0, ry0 = cx + 4, top_y
-        rtx, rty = rx0 + int(9 * antl), ry0 - int(al * 1.4)
-        _pg.draw.line(layer, bone, (rx0, ry0), (rx0 + int(3 * antl), ry0 - al), 2)
-        _pg.draw.line(layer, bone, (rx0 + int(3 * antl), ry0 - al), (rtx, rty), 2)
-        _pg.draw.line(layer, bone, (rx0 + int(3 * antl), ry0 - al),
-                      (rx0 + int(12 * antl), ry0 - al - int(2 * antl)), 1)
-        _pg.draw.line(layer, bone, (rtx, rty), (rtx + int(4 * antl), rty - int(5 * antl)), 1)
-        _pg.draw.line(layer, bone, (rtx, rty), (rtx - int(3 * antl), rty - int(4 * antl)), 1)
-
-    # ---- tentacles uncoiling from the shoulders, writhing upward ----
-    anchor = (cx - fsign * 3, mid_y)
-    for i in range(4):
-        base_ang = -math.pi / 2 + (i - 1.5) * 0.5
-        length = (13 + (i % 2) * 6) * teng
-        px, py = anchor
-        pts = [(px, py)]
-        segs = 5
-        for s in range(1, segs + 1):
-            f = s / segs
-            ang = base_ang + math.sin(t * 3.0 + i * 1.3 + f * 4) * 0.5 * f
-            px += math.cos(ang) * (length / segs)
-            py += math.sin(ang) * (length / segs)
-            pts.append((px, py))
-        if length > 2:
-            ipts = [(int(a), int(c)) for a, c in pts]
-            _pg.draw.lines(layer, tar, False, ipts, 3)
-            _pg.draw.lines(layer, tar_hi, False, ipts, 1)
-
-    # ---- a mass of golden eyes wreathing the tar (the original King's
-    # signature, merged in): the head pair anchors it, the rest scatter
-    # over the body, each blinking on its own cycle so they are never
-    # all open at once. Gold is the only colour. Pupils track the player.
-    if eyeon > 0:
-        glow = _pg.Surface((LW, LH), _pg.SRCALPHA)
-        # A pair near the top of the mass anchors the "face"; the rest
-        # open inside the larger tumours, scattered and out of sync.
-        eye_specs = [(cx - 3, top_y + 6, 2), (cx + 4, top_y + 5, 2)]
-        for i, (lx_, ly_, r) in enumerate(drawn):
-            if r >= 5 and i % 2 == 1:
-                eye_specs.append((lx_, ly_, 1))
-        for j, (gx, gy, r) in enumerate(eye_specs):
-            if (t * 1.3 + j * 0.7) % 4.0 < 0.3:
-                continue                            # this eye is shut
-            _pg.draw.circle(glow, (gold[0], gold[1], gold[2], int(70 * eyeon)),
-                            (gx, gy), r + 2)
-            _pg.draw.circle(layer, goldg, (gx, gy), max(1, int(r * eyeon)))
-            if r >= 2:                              # pupils on the head pair
-                _pg.draw.circle(layer, (10, 8, 0),
-                                (gx + int(fx), gy + int(fy)), 1)
-        layer.blit(glow, (0, 0), special_flags=_pg.BLEND_RGBA_ADD)
-
-    # ---- birth: the cult member it erupts from (fades out early) ----
-    if b < 0.42:
-        a = 1.0 - ss(b / 0.42)
-        jit = int(math.sin(t * 40) * 2 * (b * 2.4))
-        cf = _pg.Surface((LW, LH), _pg.SRCALPHA)
-        ry0 = oy - int(26 * (1.0 + b * 0.5))
-        _pg.draw.polygon(cf, (40, 36, 34, int(230 * a)),
-                         [(ox - 8 + jit, oy), (ox - 6 + jit, ry0),
-                          (ox + 6 + jit, ry0), (ox + 8 + jit, oy)])
-        _pg.draw.ellipse(cf, (12, 11, 13, int(230 * a)),
-                         (ox - 6 + jit, ry0 - 8, 12, 12))
-        layer.blit(cf, (0, 0))
-
-    # ---- rupture spray of tar, gore, and golden light ----
-    if 0.22 < b < 0.70:
-        sp = ss((b - 0.22) / 0.48)
-        cxr, cyr = ox, oy - 18
-        rad = int(6 + sp * 30)
-        for i in range(14):
-            ang = i * (math.tau / 14) + t
-            rr = rad * (0.55 + 0.45 * ((i * 7) % 5) / 5)
-            px = int(cxr + math.cos(ang) * rr)
-            py = int(cyr + math.sin(ang) * rr * 0.8)
-            _pg.draw.circle(layer, (tar, gore, gold)[i % 3], (px, py), 2)
-        gl = _pg.Surface((LW, LH), _pg.SRCALPHA)
-        _pg.draw.circle(gl, (gold[0], gold[1], gold[2], int(120 * (1 - sp))),
-                        (cxr, cyr), int(8 + sp * 10))
-        layer.blit(gl, (0, 0), special_flags=_pg.BLEND_RGBA_ADD)
-
-    # ---- phase in and out of being (the original King's apparition
-    # quality, merged in) -- only once born; the eruption stays solid.
-    # Softened from the original so a hunting King never fully vanishes.
-    if born:
-        ph = 0.6 + 0.4 * math.sin(t * 1.7)
-        if math.sin(t * 1.7) < -0.8:
-            ph *= 0.4
-        layer.set_alpha(max(45, int(255 * ph)))
-    surf.blit(layer, (x - ox, y - oy))
+    """THE KING IN YELLOW (see header). `birth` (0..1, already de-None'd by the
+    dispatch) drives the rift eruption; `t` animates; `gait` is accepted but the
+    float needs no leg cycle. It never phases out -- only masks come and go."""
+    global _YK_TRAIL
+    R = 22
+    mcx, mcy = x, int(y - 42 + math.sin(t * 1.1) * 3)        # floats above the feet
+    bp = 1.0 if birth is None else max(0.0, min(1.0, birth))
+    grow = bp * bp * (3 - 2 * bp)                            # body eases in
+    ag = max(0.0, (bp - 0.4) / 0.6)
+    agrow = ag * ag * (3 - 2 * ag)                           # arms erupt in the back half
+    valpha = 1.0 if bp >= 1.0 else 0.4 + 0.6 * grow
+    dt = t - _YK_LAST[0]
+    _YK_LAST[0] = t
+    if dt <= 0 or dt > 0.2:
+        dt = 0.016
+    # Wake reset on a teleport/respawn jump (re-seeds the swivel too).
+    if _YK_TRAIL:
+        px, py, pt = _YK_TRAIL[-1]
+        if (mcx - px) ** 2 + (mcy - py) ** 2 > 70 ** 2 or (t - pt) > 0.45:
+            _YK_TRAIL = []
+            _YK_PARTS.clear()
+            _YK_ACC[0] = 0.0
+            _YK_AIM[0] = None
+    # BIRTH: while the rift is opening, vomit a radial burst of soul-orbs.
+    if bp < 0.18:
+        for _ in range(2):
+            ang = _YK_PRNG.uniform(0, math.tau)
+            spd = _YK_PRNG.uniform(45, 120)
+            orb = _YK_PRNG.random() < 0.4
+            _YK_PARTS.append({
+                "kind": "orb" if orb else "mote", "seed": _YK_PRNG.randint(0, 999),
+                "x": mcx, "y": mcy,
+                "vx": math.cos(ang) * spd, "vy": math.sin(ang) * spd,
+                "age": 0.0, "life": _YK_PRNG.uniform(0.4, 0.8),
+                "r": _YK_PRNG.uniform(6, 12) if orb else _YK_PRNG.uniform(2, 4)})
+    disp = math.hypot(mcx - _YK_TRAIL[-1][0], mcy - _YK_TRAIL[-1][1]) if _YK_TRAIL else 0.0
+    _YK_TRAIL.append((mcx, mcy, t))
+    _YK_TRAIL = _YK_TRAIL[-5:]
+    tvx, tvy = (mcx - _YK_TRAIL[0][0], mcy - _YK_TRAIL[0][1])
+    tl = math.hypot(tvx, tvy) or 1.0
+    bvx, bvy = -tvx / tl, -tvy / tl
+    _YK_ACC[0] += disp
+    while disp > 0.4 and _YK_ACC[0] >= 8:                    # space the orbs along the path
+        _YK_ACC[0] -= 8
+        _YK_PARTS.append({
+            "kind": "orb", "seed": _YK_PRNG.randint(0, 999),
+            "x": mcx + _YK_PRNG.uniform(-5, 5), "y": mcy + _YK_PRNG.uniform(-5, 5),
+            "vx": bvx * 9 + _YK_PRNG.uniform(-8, 8),
+            "vy": bvy * 9 + _YK_PRNG.uniform(-8, 8),
+            "age": 0.0, "life": _YK_PRNG.uniform(0.8, 1.25),
+            "r": _YK_PRNG.uniform(7, 15)})
+        for _ in range(2):
+            _YK_PARTS.append({
+                "kind": "mote", "seed": 0,
+                "x": mcx + _YK_PRNG.uniform(-9, 9), "y": mcy + _YK_PRNG.uniform(-9, 9),
+                "vx": bvx * 18 + _YK_PRNG.uniform(-16, 16),
+                "vy": bvy * 18 + _YK_PRNG.uniform(-16, 16),
+                "age": 0.0, "life": _YK_PRNG.uniform(0.25, 0.5),
+                "r": _YK_PRNG.uniform(1.5, 3.0)})
+    if len(_YK_PARTS) > 90:
+        del _YK_PARTS[:len(_YK_PARTS) - 90]
+    keep = []
+    for p in _YK_PARTS:
+        p["age"] += dt
+        fr = p["age"] / p["life"]
+        if fr >= 1.0:
+            continue
+        p["x"] += p["vx"] * dt
+        p["y"] += p["vy"] * dt
+        a = 1.0 - fr
+        if p["kind"] == "orb":
+            _yk_orb(surf, p["x"], p["y"], p["r"] * (1 - 0.22 * fr), a, p["seed"], t)
+        else:
+            _yk_radial(surf, p["x"], p["y"], max(2, p["r"] * (1 - 0.4 * fr)),
+                       _YK_GOLD, int(150 * a))
+        keep.append(p)
+    _YK_PARTS[:] = keep
+    # Faint floating shadow on the ground, far below the mass.
+    sh = pygame.Surface((40, 12), pygame.SRCALPHA)
+    pygame.draw.ellipse(sh, (0, 0, 0, 80), (0, 0, 40, 12))
+    surf.blit(sh, (x - 20, y - 4))
+    # Body on its own layer.
+    L = 170
+    layer = pygame.Surface((L, L), pygame.SRCALPHA)
+    cx = cy = L // 2
+    # Arms swivel smoothly toward the player (facing).
+    fxx, fyy = facing if facing != (0, 0) else (0, 1)
+    tgt = math.atan2(fyy, fxx)
+    if _YK_AIM[0] is None:
+        _YK_AIM[0] = tgt
+    da_ = (tgt - _YK_AIM[0] + math.pi) % math.tau - math.pi
+    _YK_AIM[0] += da_ * min(1.0, dt * 7.0)
+    aa = _YK_AIM[0]
+    fb = (math.cos(aa) * R * 0.22, math.sin(aa) * R * 0.22)
+    if bp < 1.0:
+        _yk_birth_rift(surf, mcx, mcy, R, bp)                # space tears open
+    _yk_glow(layer, cx, cy, R * max(0.18, grow), t)
+    for rn, ba, asp, fr, vsp, vph, kind in _YK_FACES:
+        ang = ba + t * asp
+        rr = rn * (0.9 + 0.1 * math.sin(t * 0.8 + vph))
+        fxp = cx + math.cos(ang) * R * 0.82 * rr * grow + fb[0]
+        fyp = cy + math.sin(ang) * R * 0.95 * rr * grow + fb[1]
+        if kind == "double":
+            vis = max(0.0, min(1.0, (math.sin(t * vsp + vph) - 0.55) / 0.4))
+        else:
+            vis = max(0.0, min(1.0, 0.5 + 0.72 * math.sin(t * vsp + vph)))
+        _yk_mask(layer, fxp, fyp, fr, vis, kind)
+    for rn, ba, asp, ph in _YK_EYES:
+        if math.sin(t * 2.1 + ph) > 0.1:
+            ang = ba + t * asp
+            ex = cx + math.cos(ang) * R * 0.7 * rn * grow + fb[0]
+            ey = cy + math.sin(ang) * R * 0.7 * rn * grow + fb[1]
+            _yk_radial(layer, ex, ey, 5, _YK_HOT, 110)
+            pygame.draw.circle(layer, _YK_PIT, (int(ex), int(ey)), 1)
+    layer.set_alpha(int(255 * max(0.05, valpha)))
+    surf.blit(layer, (mcx - cx, mcy - cy))
+    # Arms LAST (own layer over the wake + glow); they erupt in the back half.
+    if agrow > 0.02:
+        arml = pygame.Surface((L, L), pygame.SRCALPHA)
+        for idx, (da, ln) in enumerate([(0.0, R * 2.05), (0.45, R * 1.7), (-0.45, R * 1.7),
+                                        (0.95, R * 1.45), (-0.95, R * 1.45)]):
+            _yk_arm(arml, cx, cy, aa + da, ln * agrow, R * max(0.4, agrow), t, idx)
+        arml.set_alpha(int(255 * max(0.05, valpha)))
+        surf.blit(arml, (mcx - cx, mcy - cy))
