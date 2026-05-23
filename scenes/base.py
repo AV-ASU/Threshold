@@ -383,24 +383,26 @@ def draw_object(surf, ch, rx, ry):
         pygame.draw.circle(surf, (10, 10, 14), (rx + 22, ry + 12), 4)
         pygame.draw.rect(surf, (10, 10, 14), (rx + 6, ry + 18, 20, 10))
     elif kind == "door":
-        # An opening CUT INTO the wall, not a panel on top of it. The
-        # tile fills with wall-dark (matching the mass) so the door is
-        # flush with the wall on every side; a heavy plank slab sits
-        # set-back in the recess, hung a crack ajar onto black. The dark
-        # margin is what keeps it from reading as a floating brown box.
-        pygame.draw.rect(surf, (18, 17, 22), (rx, ry, TILE, TILE))       # recess = wall
-        pygame.draw.rect(surf, (8, 7, 11), (rx + 5, ry + 3, 22, 27))     # deep jamb shadow
-        pygame.draw.rect(surf, (44, 32, 21), (rx + 7, ry + 5, 18, 24))   # frame
-        pygame.draw.rect(surf, (57, 42, 26), (rx + 9, ry + 6, 14, 22))   # slab, inset
-        for sx in (13, 18):                                             # planks
+        # A doorframe + slab drawn OVER the floor -- no full-tile dark
+        # fill. In a wall the jamb posts blend into the black mass; out
+        # in the open they read as frame posts. Either way the floor
+        # shows around it, so a door never becomes a black box jutting
+        # out of the floor.
+        pygame.draw.rect(surf, (10, 9, 12), (rx + 5, ry + 28, 22, 3))    # threshold shadow
+        pygame.draw.rect(surf, (15, 14, 18), (rx + 5, ry + 3, 4, 27))    # left jamb
+        pygame.draw.rect(surf, (15, 14, 18), (rx + 23, ry + 3, 4, 27))   # right jamb
+        pygame.draw.rect(surf, (15, 14, 18), (rx + 5, ry + 3, 22, 3))    # head
+        pygame.draw.rect(surf, (44, 32, 21), (rx + 9, ry + 5, 14, 24))   # frame
+        pygame.draw.rect(surf, (57, 42, 26), (rx + 10, ry + 6, 12, 22))  # slab
+        for sx in (14, 18):                                             # planks
             pygame.draw.line(surf, (37, 26, 15),
                              (rx + sx, ry + 7), (rx + sx, ry + 27), 1)
         # Ajar gap -- a real slice of black down the hinge edge.
-        pygame.draw.rect(surf, (3, 2, 5), (rx + 9, ry + 6, 3, 22))
-        pygame.draw.line(surf, (70, 53, 32), (rx + 12, ry + 6),
-                         (rx + 12, ry + 27), 1)                          # lit jamb
+        pygame.draw.rect(surf, (3, 2, 5), (rx + 10, ry + 6, 3, 22))
+        pygame.draw.line(surf, (70, 53, 32), (rx + 13, ry + 6),
+                         (rx + 13, ry + 27), 1)                          # lit jamb
         # Dim iron knob (no bright brass to draw the eye).
-        pygame.draw.circle(surf, (112, 102, 88), (rx + 21, ry + 16), 2)
+        pygame.draw.circle(surf, (112, 102, 88), (rx + 20, ry + 16), 2)
     elif kind == "ladder_down":
         # Round-7 redraw: cellar HATCH (was a ladder visual). A square
         # wood box flush to the ground, two horizontal plank seams, and

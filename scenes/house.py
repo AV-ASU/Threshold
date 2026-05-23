@@ -316,8 +316,8 @@ def build_house():
         "W................W",
         "W................W",
         "W..L.............W",
-        "W......D.........W",
-        "WWWWWWWWWWWWWWWWWW",
+        "W................W",
+        "WWWWWWWDWWWWWWWWWW",
     ]
     sc = Scene("house", floor, objects, music="home")
     # B = front door (south wall, col 13). The Innkeeper blocks this.
@@ -336,7 +336,7 @@ def build_house():
     # door.
     sc.set_spawn("from_bedroom", 13, 1)        # south of B (spare-room)
     sc.set_spawn("from_son_room", 4, 1)        # south of 1 (Innkeeper's bedroom)
-    sc.set_spawn("from_our_house_area", 7, 9)
+    sc.set_spawn("from_our_house_area", 7, 10)
     # The L cellar hatch is at (3, 9). Spawning even one tile north
     # of it (3, 8) shares the same column -- a south key press would
     # walk the player straight back onto L and re-enter the basement.
