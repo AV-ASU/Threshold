@@ -219,15 +219,8 @@ def build_mistlands():
     _stamp_building(objects_l, school_left, school_right,
                     school_top, school_bot, "B", school_door)
 
-    # Church graveyard -- two identical rows of headstones (R rocks, the
-    # same convention the standalone graveyard uses) on the open ground
-    # just south of the Church. The too-even spacing is the point:
-    # uncanny repetition, a row of the vanished. Rows 12 & 14 dodge the
-    # row-11 orb-shadow spawns; cols leave gaps so the player can walk in
-    # among them to the fresh grave at (7, 13).
-    for gy in (12, 14):
-        for gx in (4, 6, 8, 10):
-            objects_l[gy][gx] = "R"
+    # (Church graveyard headstones are placed as crooked decorations
+    # below, near the Preacher -- not grid-locked rock tiles.)
 
     # Lit windows flanking a few doors (the 'i' tile glows + a dark
     # figure passes behind the glass on its own clock). Someone's still
@@ -475,6 +468,17 @@ def build_mistlands():
     # who talk to you). Canon beat from NARRATIVE.md s4.
     preacher_x, preacher_y = 7 * TILE + 16, 13 * TILE + 16
     sc._preacher_pos = (preacher_x, preacher_y)
+    # Crooked headstones in two rows flanking the grave -- the uncanny
+    # rows-of-the-vanished read without snapping to a grid: each leans
+    # its own way and sits a few px off the lattice. Col 7 stays clear
+    # as the path in to the fresh grave.
+    hs = random.Random(91)
+    for ry_ in (12, 14):
+        for cx_ in (4, 6, 8, 10):
+            sc.add_decoration(Decoration(
+                cx_ * TILE + 16 + hs.randint(-6, 6),
+                ry_ * TILE + 16 + hs.randint(-4, 4),
+                "headstone", seed=hs.randint(0, 9999)))
     sc.add_decoration(Decoration(preacher_x, preacher_y, "body"))
     sc.add_decoration(Decoration(preacher_x - 10, preacher_y + 11, "bloodstain"))
     sc.add_decoration(Decoration(preacher_x + 7, preacher_y - 12, "candle"))

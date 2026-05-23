@@ -83,6 +83,7 @@ def _light_pool(surf, cx, cy, radius, color=(255, 170, 70), peak=70):
 _GROUNDED_DECOS = frozenset((
     "well", "creepy_tree", "pickup_truck", "player_car", "cauldron",
     "gas_pump", "payphone", "pedestal", "pillar", "wheelbarrow",
+    "headstone",
 ))
 
 
@@ -1467,6 +1468,40 @@ class Decoration:
         pygame.draw.circle(surf, (60, 58, 60), (x - 36, y + 13), 3)
         pygame.draw.ellipse(surf, tire, (x + 20, y + 13, 18, 8))         # flat tire
         pygame.draw.rect(surf, (60, 58, 60), (x + 27, y + 15, 4, 3))
+
+    def _draw_headstone(self, surf, x, y):
+        """A weathered grave marker set crooked in the dirt -- a
+        rounded slab or a cross, leaning, mossy, its inscription worn to
+        illegible scratches. Per-instance variation (seed) so a row of
+        them reads as graves, never a clean grid of identical rocks."""
+        rng = random.Random(self.seed)
+        h = rng.randint(18, 26)
+        w = rng.randint(11, 15)
+        lean = rng.randint(-4, 4)              # top shifted sideways = crooked
+        cross = rng.random() < 0.30
+        stone = (94, 92, 90)
+        stone_dk = (56, 54, 54)
+        moss = (58, 74, 50)
+        tx = x + lean
+        top = y - h
+        # Turned dirt at the foot.
+        pygame.draw.ellipse(surf, (30, 26, 23), (x - w // 2 - 2, y, w + 4, 7))
+        if cross:
+            pygame.draw.line(surf, stone, (tx, top), (x, y), 5)
+            pygame.draw.line(surf, stone, (tx - w // 2, top + h // 3),
+                             (tx + w // 2, top + h // 3), 5)
+            pygame.draw.line(surf, stone_dk, (tx, top), (x, y), 1)
+        else:
+            pts = [(x - w // 2, y), (x - w // 2 + lean, top + 5),
+                   (tx - w // 4, top), (tx + w // 4, top),
+                   (x + w // 2 + lean, top + 5), (x + w // 2, y)]
+            pygame.draw.polygon(surf, stone, pts)
+            pygame.draw.polygon(surf, stone_dk, pts, 1)
+            for i in range(2):                 # illegible inscription
+                ly = top + 9 + i * 5
+                lx = x - w // 4 + int(lean * (1 - (ly - top) / h))
+                pygame.draw.line(surf, stone_dk, (lx, ly), (lx + w // 2, ly), 1)
+        pygame.draw.circle(surf, moss, (x - w // 4, y - 2), 2)
 
     def _draw_player_car(self, surf, x, y):
         """A faded-red 1990s sedan, parked. Approx 3 tiles wide, 1.5
