@@ -14,7 +14,18 @@ under that flag stays quiet)."""
 import random
 from constants import TILE
 from entities.decoration import Decoration
+from entities.npc import NPC
 from .base import Scene
+
+
+def _brimley_voice(pages, voice="blip_mid"):
+    """NPC dialogue_fn from a fixed page list. Speaker name + portrait are
+    read off the NPC at call time so each resident speaks as themselves."""
+    def _fn(game, npc):
+        portrait = getattr(npc, "portrait", None) or npc.sprite_kind
+        game.dialog.show(pages, speaker=npc.name, voice=voice,
+                         portrait=portrait)
+    return _fn
 
 
 def _stamp_building(objects_l, left, right, top, bot,
@@ -359,6 +370,66 @@ def build_mistlands():
     for tx, ty in [(44, 68), (40, 30), (12, 74)]:
         sc.add_decoration(Decoration(tx * TILE + 16, ty * TILE + 16,
                                      "watching_wound", size="small"))
+
+    # ---- Brimley's people ----
+    # The town's residents, stranded here with everyone else. None of
+    # them are cult -- but you can't be sealed inside a folding town
+    # under the King's eye and stay whole. Innocent, and coming apart at
+    # the edges: denial, time-loop confusion, a child saying the quiet
+    # part out loud.
+    def _resident(tx, ty, name, kind, pages, movement="wander",
+                  voice="blip_mid", radius=52):
+        sc.add_npc(NPC(tx * TILE + 16, ty * TILE + 16, name, kind,
+                       dialogue_fn=_brimley_voice(pages, voice),
+                       movement=movement, radius=radius))
+
+    _resident(55, 62, "Hettie", "shopkeep", [
+        "Still open. Always open -- have you noticed the shelves don't empty anymore?",
+        "No deliveries in... a while, now. But we manage. We always manage.",
+        "[c=dim]I keep the lights on so they know someone's keeping the lights on.[/c]",
+    ], movement="idle")
+    _resident(58, 44, "Old Pell", "old", [
+        "Cold came in early this year. Came in early last year, too.",
+        "Stopped marking the calendar. The days just fold back on themselves.",
+        "[c=dim]You're new. We don't get new. Nobody gets in. Nobody gets--[/c]",
+    ], voice="blip_low")
+    _resident(70, 72, "Mrs. Calder", "mom", [
+        "My husband walked out to the highway to flag down help. Tuesday, that was.",
+        "He'll be back. I set his plate every night. Every night.",
+        "[c=dim]Some nights I hear the door. I've stopped getting up to check.[/c]",
+    ], movement="idle")
+    _resident(37, 28, "Royce", "fisherman", [
+        "Drove the river road to the county line. Two hours out. Came right back into Brimley.",
+        "Tried it on foot. Same. The corn just hands you back where you started.",
+        "[c=dim]You came IN. How did you come IN? ...Tell me how you came in.[/c]",
+    ])
+    _resident(61, 56, "the Tisdale boy", "kid", [
+        "School's still on. The teacher doesn't blink. I counted to a hundred.",
+        "There's a lady in yellow at the back of the field. She waves. You shouldn't wave back.",
+        "[c=dim]Mara waved back.[/c]",
+    ], voice="blip_kid", radius=40)
+    _resident(9, 67, "Garrick", "old", [
+        "You're asking questions. Folks who ask questions go quiet. Real quiet.",
+        "The Sheriff'll smile at you. Don't let it talk you into staying for supper.",
+        "[c=dim]Go on home, son. ...Oh. Right. None of us can.[/c]",
+    ])
+    sc.add_npc(NPC(45 * TILE + 16, 38 * TILE + 16, "A woman", "mom",
+                   dialogue_fn=_brimley_voice([
+                       "[c=dim]Hello.[/c]",
+                       "[c=dim]You'll like it here. Everyone does, eventually.[/c]",
+                       "[c=dim]It's easier once you stop trying the doors.[/c]",
+                   ], "blip_soft"),
+                   movement="watch"))
+
+    # Run-down + cult presence among the buildings: the Yellow Sign
+    # worked into the open ground, dead crows at the doorsteps, a bloody
+    # handprint by the schoolhouse. The cult doesn't hide out here.
+    sc.add_decoration(Decoration(60 * TILE + 16, 57 * TILE + 16, "yellow_sign"))
+    sc.add_decoration(Decoration(52 * TILE + 20, 52 * TILE + 16, "yellow_sign"))
+    sc.add_decoration(Decoration(54 * TILE + 16, 63 * TILE + 16, "dead_crow"))
+    sc.add_decoration(Decoration(69 * TILE + 16, 73 * TILE + 16, "dead_crow"))
+    sc.add_decoration(Decoration(63 * TILE + 16, 55 * TILE + 8, "bloody_handprint"))
+    sc.add_decoration(Decoration(72 * TILE + 16, 55 * TILE + 16, "hanging_figure"))
 
     # Hide spots colocated with VISIBLE cover so the prompt always
     # matches what the player can see. Each entry sits on top of a

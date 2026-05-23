@@ -1076,17 +1076,6 @@ def build_cornfield_maze():
 # village/farm. The church stays out in the mistlands, so the town
 # reaches it the long way, through the fields.
 # ---------------------------------------------------------------------------
-def _town_voice(pages, voice="blip_mid"):
-    """Build an NPC dialogue_fn from a fixed page list. Speaker name and
-    portrait are read off the NPC at call time so each resident speaks as
-    themselves (portrait falls back to the in-world sprite kind)."""
-    def _fn(game, npc):
-        portrait = getattr(npc, "portrait", None) or npc.sprite_kind
-        game.dialog.show(pages, speaker=npc.name, voice=voice,
-                         portrait=portrait)
-    return _fn
-
-
 def build_town():
     """Retired. The town came apart into the fog -- its street, civic
     buildings (Store, Sheriff, Schoolhouse) and residents now live in
