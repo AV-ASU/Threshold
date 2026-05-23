@@ -255,79 +255,7 @@ def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False):
         if flicker != 5:
             pygame.draw.circle(surf, (60, 130, 220), (x, y - 34), 1)
     elif kind == "yellow_king":
-        # The Yellow King avatar. A jaundiced, pulpy mass of eyes
-        # and tentacles that PHASES in and out of being on a slow
-        # sine -- some seconds you can almost not see it. Spawns
-        # only at maximum Pursuer proximity (>= 0.95) as the apex
-        # patroller; if the player isn't hidden, contact triggers
-        # the closure ending. Rendered onto a SRCALPHA layer so
-        # the whole sprite alpha-pulses together.
-        import pygame as _pg
-        t = _pg.time.get_ticks() / 1000.0
-        # Phase: 0..1, where 0 is nearly transparent, 1 is solid.
-        phase = 0.55 + 0.45 * math.sin(t * 1.7)
-        # Throw in a brief "blink-out" at the troughs so the figure
-        # genuinely vanishes for an instant -- not just a soft
-        # alpha pulse.
-        if math.sin(t * 1.7) < -0.8:
-            phase *= 0.15
-        layer = _pg.Surface((60, 76), _pg.SRCALPHA)
-        lx, ly = 30, 56     # local origin (feet)
-        body_yellow = (210, 190, 60)
-        body_dark = (130, 110, 30)
-        eye_white = (240, 230, 160)
-        eye_pupil = (20, 12, 0)
-        # Lurching, asymmetrical blob body. Two stacked ellipses
-        # so the silhouette feels "wrong-shouldered."
-        _pg.draw.ellipse(layer, body_yellow, (lx - 16, ly - 38, 32, 30))
-        _pg.draw.ellipse(layer, body_dark, (lx - 16, ly - 38, 32, 30), 1)
-        _pg.draw.ellipse(layer, body_yellow, (lx - 14, ly - 22, 28, 26))
-        _pg.draw.ellipse(layer, body_dark, (lx - 14, ly - 22, 28, 26), 1)
-        # Mass of eyes. Twelve eyes scattered across the body,
-        # blinking on staggered cycles -- never all open at once.
-        eye_pos = [
-            (-10, -32), (0, -34), (10, -32),
-            (-12, -24), (-2, -26), (8, -24),
-            (-9, -16), (1, -18), (11, -16),
-            (-6, -8), (4, -10), (-2, 0),
-        ]
-        for i, (ex, ey) in enumerate(eye_pos):
-            cycle = (t * 1.3 + i * 0.7) % 4.0
-            if cycle < 0.25:
-                continue        # this eye is shut
-            cx = lx + ex
-            cy = ly + ey
-            _pg.draw.circle(layer, eye_white, (cx, cy), 2)
-            # Pupil tracks toward the player (facing direction).
-            fx, fy = facing
-            px = cx + int(fx * 1)
-            py = cy + int(fy * 1)
-            _pg.draw.circle(layer, eye_pupil, (px, py), 1)
-        # Tentacles. Four wavering legs trailing from the bottom of
-        # the body to the ground, each on its own phase. They
-        # don't stride -- they pulse and ooze.
-        for i in range(4):
-            base_x = lx + (i - 1.5) * 6
-            base_y = ly - 4
-            tip_y = ly + 14
-            for s_step in range(0, 18, 2):
-                wob = math.sin(t * 2.4 + i * 1.1 + s_step * 0.3) * 2
-                seg_x = int(base_x + wob)
-                seg_y = base_y + s_step
-                _pg.draw.line(layer, body_dark,
-                              (seg_x, seg_y), (seg_x, seg_y + 2), 2)
-            # Curled tip
-            _pg.draw.circle(layer, body_dark,
-                            (int(base_x + math.sin(t * 2.4 + i) * 2),
-                             tip_y), 2)
-        # Sickly halo behind the body so it reads even when low-
-        # alpha. Same yellow but very translucent.
-        halo = _pg.Surface((60, 76), _pg.SRCALPHA)
-        _pg.draw.ellipse(halo, (210, 190, 60, 50),
-                         (lx - 22, ly - 42, 44, 50))
-        layer.blit(halo, (0, 0), special_flags=_pg.BLEND_RGBA_ADD)
-        layer.set_alpha(int(255 * phase))
-        surf.blit(layer, (x - lx, y - ly))
+        _draw_yellow_king(surf, x, y, facing)
     elif kind == "wolf":
         # Lean grey quadruped, low to the ground. Yellow eyes give a
         # threat read at a glance even with the small sprite size.
@@ -584,3 +512,169 @@ def draw_player_sprite(surf, x, y, facing, walk_phase=0, armor=None, mud=0.0,
     eye_dx = int(fx * 2)
     pygame.draw.circle(surf, C_BLACK, (x - 2 + eye_dx, eye_y), 1)
     pygame.draw.circle(surf, C_BLACK, (x + 2 + eye_dx, eye_y), 1)
+
+
+# ===========================================================================
+# THE YELLOW KING
+#
+# Not a body. A floating clot of sick-gold light packed with the cult's fused
+# faces, broken arms reaching out of the glow to grasp. No legs: it hovers (a
+# faint shadow far below) and PHASES like the watcher -- some seconds you can
+# almost not see it. The trapped faces surface and dissolve back into the
+# light on staggered cycles, and the whole apparition drags a short ghost-
+# trail as it drifts. Self-animated off pygame.time.get_ticks(); `facing`
+# leans the faces and points the reaching arms toward the player. Spawns at
+# apex Pursuer proximity; contact is the closure ending.
+# ===========================================================================
+_YK_TRAIL = []                       # recent mass-centre screen positions
+_YK_T1, _YK_T2, _YK_T3, _YK_T4 = (120, 84, 28), (176, 130, 46), (224, 188, 86), (250, 234, 156)
+_YK_GOLD, _YK_HOT = (224, 198, 70), (250, 234, 156)
+_YK_DK, _YK_DK_HI = (28, 25, 34), (60, 55, 72)
+_YK_BONE = (150, 128, 70)
+_YK_FHI, _YK_FMID, _YK_FLO, _YK_PIT = (210, 202, 180), (150, 143, 120), (92, 86, 70), (10, 8, 12)
+
+
+def _yk_slots():
+    """Deterministic face + eye placements (own RNG so the global stream the
+    game relies on is never touched)."""
+    r = random.Random(20240611)
+    faces, eyes = [], []
+    for _ in range(11):
+        a = r.uniform(0, math.tau); rr = r.uniform(0, 1) ** 0.5
+        faces.append((math.cos(a) * rr, math.sin(a) * rr, r.randint(3, 6),
+                      r.uniform(0.6, 1.5), r.uniform(0, 6.28)))
+    for _ in range(4):
+        a = r.uniform(0, math.tau); rr = r.uniform(0.1, 0.8)
+        eyes.append((math.cos(a) * rr, math.sin(a) * rr, r.uniform(0, 6.28)))
+    return faces, eyes
+
+
+_YK_FACES, _YK_EYES = _yk_slots()
+
+
+def _yk_radial(surf, x, y, R, color, a0, add=True):
+    """Soft glowing/fading disc built from concentric circles."""
+    R = max(2, int(R))
+    g = pygame.Surface((R * 2 + 2, R * 2 + 2), pygame.SRCALPHA)
+    c = (R + 1, R + 1); st = max(6, R // 2)
+    for i in range(st, 0, -1):
+        a = int(a0 * (1 - i / st) ** 1.7)
+        if a > 0:
+            pygame.draw.circle(g, (color[0], color[1], color[2], a), c, int(R * i / st))
+    surf.blit(g, (int(x) - R - 1, int(y) - R - 1),
+              special_flags=pygame.BLEND_RGBA_ADD if add else 0)
+
+
+def _yk_glow(layer, cx, cy, R, t):
+    """The hovering clot of golden light -- soft bloom over a lumpy amber mass
+    brightening to a hot core, breathing on a slow sine."""
+    R = int(R * (1 + 0.06 * math.sin(t * 2.0)))
+    _yk_radial(layer, cx, cy, int(R * 1.7), _YK_GOLD, 58)
+    _yk_radial(layer, cx, cy, int(R * 1.15), _YK_GOLD, 52)
+    subs = [(0, 0), (-0.4, -0.18), (0.4, -0.12), (-0.12, 0.4),
+            (0.22, 0.32), (-0.3, 0.2), (0.12, -0.34)]
+    for col, scl, grow in [(_YK_T1, 1.0, 3), (_YK_T2, 0.74, 1), (_YK_T3, 0.5, 0), (_YK_T4, 0.28, 0)]:
+        for sxr, syr in subs:
+            pygame.draw.circle(layer, col,
+                               (int(cx + sxr * R * 0.6), int(cy + syr * R * 0.9)),
+                               int(R * 0.5 * scl) + grow)
+    _yk_radial(layer, cx, cy - 2, int(R * 0.55), _YK_T4, 70)
+
+
+def _yk_face(layer, cx, cy, r, vis):
+    """A fused face that surfaces (vis->1, pale + sockets) and dissolves back
+    into the amber light (vis->0). The features fade with it, so faces appear
+    and disappear in the glow rather than blinking on hard."""
+    amber = _YK_T2
+    mix = lambda c: (int(amber[0] + (c[0] - amber[0]) * vis),
+                     int(amber[1] + (c[1] - amber[1]) * vis),
+                     int(amber[2] + (c[2] - amber[2]) * vis))
+    cx, cy, r = int(cx), int(cy), int(r)
+    pygame.draw.circle(layer, mix(_YK_FLO), (cx + 1, cy + 1), r)
+    pygame.draw.circle(layer, mix(_YK_FMID), (cx, cy), r)
+    pygame.draw.circle(layer, mix(_YK_FHI), (cx - 1, cy - 1), max(1, r - 1))
+    if vis > 0.4 and r >= 3:
+        pit = mix(_YK_PIT); ep = max(1, r // 3)
+        pygame.draw.circle(layer, pit, (cx - r // 2, cy - r // 4), ep)
+        pygame.draw.circle(layer, pit, (cx + r // 2, cy - r // 4), ep)
+        pygame.draw.ellipse(layer, pit, (cx - r // 3, cy + r // 4,
+                                         max(2, 2 * r // 3), max(2, r // 3)))
+
+
+def _yk_arm(layer, cx, cy, ang, length, R, t, idx):
+    """A broken arm reaching out of the light, reflex elbow, clawing hand;
+    writhes slightly on its own phase."""
+    wob = math.sin(t * 1.7 + idx * 1.3) * 0.16
+    reach = length * (1 + 0.08 * math.sin(t * 1.4 + idx))
+    root = (cx + math.cos(ang) * R * 0.55, cy + math.sin(ang) * R * 0.55)
+    hand = (cx + math.cos(ang + wob) * reach, cy + math.sin(ang + wob) * reach)
+    mx, my = (root[0] + hand[0]) / 2, (root[1] + hand[1]) / 2
+    perp = (-math.sin(ang), math.cos(ang)); k = (R * 0.5) * (1 if idx % 2 else -1)
+    elbow = (mx + perp[0] * k, my + perp[1] * k)
+    pts = [(int(a), int(b)) for a, b in (root, elbow, hand)]
+    w = max(3, int(R * 0.34))
+    pygame.draw.lines(layer, _YK_DK_HI, False, pts, w + 2)
+    pygame.draw.lines(layer, _YK_DK, False, pts, w)
+    ha = math.atan2(hand[1] - elbow[1], hand[0] - elbow[0])
+    pygame.draw.circle(layer, _YK_DK, (int(hand[0]), int(hand[1])), max(2, w // 2))
+    for fa in (-42, -14, 16, 44):
+        a2 = ha + math.radians(fa)
+        tip = (hand[0] + math.cos(a2) * R * 0.5, hand[1] + math.sin(a2) * R * 0.5)
+        pygame.draw.line(layer, _YK_DK, (int(hand[0]), int(hand[1])),
+                         (int(tip[0]), int(tip[1])), 2)
+        try:
+            layer.set_at((int(tip[0]), int(tip[1])), _YK_BONE)
+        except (IndexError, ValueError):
+            pass
+
+
+def _draw_yellow_king(surf, x, y, facing):
+    global _YK_TRAIL
+    t = pygame.time.get_ticks() / 1000.0
+    R = 22
+    hover = 42
+    mcx, mcy = x, int(y - hover + math.sin(t * 1.1) * 3)
+    # Phase: slow transparency pulse with a brief blink-out at the troughs.
+    s = math.sin(t * 1.5)
+    phase = 0.6 + 0.4 * s
+    if s < -0.7:
+        phase *= 0.35
+    # Short ghost-trail of the glow. Reset on a teleport/respawn jump.
+    if _YK_TRAIL:
+        px, py, pt = _YK_TRAIL[-1]
+        if (mcx - px) ** 2 + (mcy - py) ** 2 > 70 ** 2 or (t - pt) > 0.4:
+            _YK_TRAIL = []
+    _YK_TRAIL.append((mcx, mcy, t))
+    _YK_TRAIL = [e for e in _YK_TRAIL if t - e[2] < 0.28][-9:]
+    for gx, gy, gt in _YK_TRAIL[:-1]:
+        age = (t - gt) / 0.28
+        a = int(64 * (1 - age) * phase)
+        if a > 0:
+            _yk_radial(surf, gx, gy, int(R * 1.2 * (1 - 0.3 * age)), _YK_GOLD, a)
+    # Faint floating shadow on the ground, far below the mass.
+    sh = pygame.Surface((40, 12), pygame.SRCALPHA)
+    pygame.draw.ellipse(sh, (0, 0, 0, int(80 * phase)), (0, 0, 40, 12))
+    surf.blit(sh, (x - 20, y - 4))
+    # Main apparition on its own layer so the whole thing alpha-phases together.
+    L = 170
+    layer = pygame.Surface((L, L), pygame.SRCALPHA)
+    cx = cy = L // 2
+    fx, fy = facing if facing != (0, 0) else (0, 1)
+    fa = math.atan2(fy, fx)
+    fb = (math.cos(fa) * R * 0.25, math.sin(fa) * R * 0.25)   # faces lean toward player
+    _yk_glow(layer, cx, cy, R, t)
+    for nx, ny, fr, sp, ph in _YK_FACES:
+        vis = max(0.0, min(1.0, 0.5 + 0.72 * math.sin(t * sp + ph)))
+        _yk_face(layer, cx + nx * R * 0.8 + fb[0], cy + ny * R * 0.95 + fb[1], fr, vis)
+    for nx, ny, ph in _YK_EYES:
+        if math.sin(t * 2.1 + ph) > 0.1:
+            ex, ey = cx + nx * R * 0.7, cy + ny * R * 0.7
+            _yk_radial(layer, ex, ey, 5, _YK_HOT, 110)
+            pygame.draw.circle(layer, _YK_PIT, (int(ex), int(ey)), 1)
+    # Arms reach in a fan toward the player (never straight up/back, so it
+    # reads as grasping AT you rather than a radial spider). Uneven lengths.
+    for idx, (da, ln) in enumerate([(0.0, R * 2.0), (0.55, R * 1.7), (-0.5, R * 1.6),
+                                    (1.05, R * 1.45), (-1.0, R * 1.5)]):
+        _yk_arm(layer, cx, cy, fa + da, ln, R, t, idx)
+    layer.set_alpha(int(255 * max(0.05, phase)))
+    surf.blit(layer, (mcx - cx, mcy - cy))
