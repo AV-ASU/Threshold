@@ -303,6 +303,11 @@ def build_mistlands():
                  [(31, 24), (18, 44), (9, 58), (7, 66)], trk)                # -> Sheriff door
     _carve_track(floor_ll, objects_l, [(7, 66), (7, 80), (7, 94)], trk)      # -> Farmhouse door
     _carve_track(floor_ll, objects_l, [(7, 82), (11, 81), (14, 80)], trk)    # -> cauldron entrance
+    # A cult path worn off the east lane out across the empty field to
+    # the standing stones -- a leading line composing the void, fading
+    # where it crosses the corn.
+    _carve_track(floor_ll, objects_l,
+                 [(58, 40), (66, 37), (74, 35), (78, 34)], trk)              # -> standing stones
 
     # ---- Marsh ----
     # Sodden low ground churned into mud + standing water, stamped as
