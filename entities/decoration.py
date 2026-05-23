@@ -47,6 +47,45 @@ def _compass_offset(dx, dy, travel_x, travel_y):
     return (int(round(ux * travel_x)), int(round(uy * travel_y)))
 
 
+# ---- Darkwood lighting helpers (mirror of scenes.base; kept local so
+# entities/ doesn't import scenes/) ----
+_DECO_SHADOW_CACHE = {}
+
+
+def _ground_shadow(surf, cx, cy, rw, rh, alpha=80):
+    key = (rw, rh, alpha)
+    s = _DECO_SHADOW_CACHE.get(key)
+    if s is None:
+        s = pygame.Surface((rw * 2, rh * 2), pygame.SRCALPHA)
+        pygame.draw.ellipse(s, (0, 0, 0, alpha), (0, 0, rw * 2, rh * 2))
+        _DECO_SHADOW_CACHE[key] = s
+    surf.blit(s, (int(cx - rw), int(cy - rh)))
+
+
+_DECO_POOL_CACHE = {}
+
+
+def _light_pool(surf, cx, cy, radius, color=(255, 170, 70), peak=70):
+    key = (radius, color, peak)
+    s = _DECO_POOL_CACHE.get(key)
+    if s is None:
+        s = pygame.Surface((radius * 2, radius * 2), pygame.SRCALPHA)
+        steps = 10
+        for k in range(steps, 0, -1):
+            r = max(1, int(radius * k / steps))
+            a = int(peak * (1 - k / steps) ** 1.4) + 4
+            pygame.draw.circle(s, (color[0], color[1], color[2], a),
+                               (radius, radius), r)
+        _DECO_POOL_CACHE[key] = s
+    surf.blit(s, (int(cx - radius), int(cy - radius)))
+
+
+_GROUNDED_DECOS = frozenset((
+    "well", "creepy_tree", "pickup_truck", "player_car", "cauldron",
+    "gas_pump", "payphone", "pedestal", "pillar", "wheelbarrow",
+))
+
+
 class Decoration:
     # Class-level player position cache. Game updates this every step
     # so a Decoration draw can read the player's world coords without
@@ -71,12 +110,15 @@ class Decoration:
         sy = int(self.y - cam_y)
         if sx < -64 or sx > SCREEN_W + 64 or sy < -64 or sy > SCREEN_H + 64:
             return
+        if self.kind in _GROUNDED_DECOS:
+            _ground_shadow(surf, sx, sy + 16, 13, 5, 75)
         getattr(self, f"_draw_{self.kind}", self._draw_unknown)(surf, sx, sy)
 
     def _draw_unknown(self, surf, x, y):
         pygame.draw.rect(surf, (255, 0, 255), (x - 4, y - 4, 8, 8))
 
     def _draw_candle(self, surf, x, y):
+        _light_pool(surf, x, y - 2, 30, (255, 170, 80), 58)
         pygame.draw.rect(surf, (180, 180, 200), (x - 2, y, 4, 8))
         pygame.draw.rect(surf, (240, 230, 200), (x - 1, y - 4, 2, 4))
         f_h = 6 + math.sin(self.t * 18) * 1 + (random.random() - 0.5)
@@ -98,10 +140,6 @@ class Decoration:
         pygame.draw.polygon(surf, (255, 200, 80), [(x, y - 4 - f_h), (x - f_w, y - 4), (x + f_w, y - 4)])
         pygame.draw.polygon(surf, (255, 240, 180),
                             [(x, y - 4 - f_h * 0.7), (x - f_w * 0.5, y - 4), (x + f_w * 0.5, y - 4)])
-        if int(self.t * 6) % 2 == 0:
-            glow = pygame.Surface((20, 20), pygame.SRCALPHA)
-            pygame.draw.circle(glow, (255, 200, 80, 30), (10, 10), 10)
-            surf.blit(glow, (x - 10, y - 12))
 
     def _draw_mud_footprint(self, surf, x, y):
         # A single boot print -- dark muddy oval with a heel mark and
@@ -324,6 +362,7 @@ class Decoration:
         # top, lantern hangs from the arm tip. Earlier rounds drew only
         # the lantern + a stub of chain, which read as floating in the
         # corridor. The pole anchors it to the ground.
+        _light_pool(surf, x + 8, y, 40, (255, 175, 80), 72)
         ground_y = y + 18
         top_y = y - 22
         # vertical pole
@@ -982,6 +1021,35 @@ class Decoration:
             tri_t = (ly - (y - h)) / float(h * 2 - 4)
             w = max(1, int(h * tri_t))
             pygame.draw.line(surf, gold, (x - w, ly), (x + w, ly), 1)
+
+    def _draw_yellow_sign(self, surf, x, y):
+        # The Yellow Sign -- the cult's glyph, daubed on stone. An
+        # asymmetric three-armed curl in jaundiced yellow, breathing
+        # faintly. Deliberately wrong: the arms don't match, and the
+        # eye sits off-centre. This is the cosmic-horror anchor; it
+        # repeats at scale across the Scriptorium and Sign Chamber.
+        pulse = 1.0 + math.sin(self.t * 1.1 + self.seed) * 0.10
+        col = (196, 178, 72)
+        dark = (92, 80, 28)
+        R = 13 * pulse
+        arms = ((-1.5, 1.05), (1.15, 0.85), (0.25, 1.3))
+        for base_ang, lscale in arms:
+            L = R * lscale
+            pts = []
+            seg = 6
+            for i in range(seg + 1):
+                t = i / seg
+                a = base_ang + t * 1.05      # curl as the arm extends
+                rr = L * t
+                pts.append((int(x + math.cos(a) * rr),
+                            int(y + math.sin(a) * rr)))
+            pygame.draw.lines(surf, dark, False, pts, 4)
+            pygame.draw.lines(surf, col, False, pts, 2)
+        # Off-centre hooked eye at the heart of the glyph.
+        ex, ey = int(x - 1), int(y + 1)
+        pygame.draw.circle(surf, dark, (ex, ey), int(5 * pulse))
+        pygame.draw.circle(surf, col, (ex, ey), int(5 * pulse), 1)
+        pygame.draw.circle(surf, col, (ex + 2, ey - 1), 2)
 
     def _draw_chest(self, surf, x, y):
         # Wooden chest. Closed = lid down with a gold lock plate (and a

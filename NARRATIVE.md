@@ -222,3 +222,34 @@ cultists' gaze still finds you — run it on cover, timing, hides).
 
 **Note:** `symbol_portal_room` (old cult chamber) is now unreachable but
 stays registered for old saves.
+
+---
+
+## 10. Art direction — the Darkwood look
+
+Reference register: *Darkwood* (oppressive, hide-or-die, muddy
+desaturation, hard light/dark) + *Fear & Hunger* (grimdark descent).
+Built into the procedural draw layer (`scenes/base.py`,
+`entities/decoration.py`) so every scene gets it for free.
+
+**Locked rules:**
+- **Palette: muddy + desaturated.** Earthy olive grass, murky water,
+  muddy dirt, greyed stone. Saturation and brightness pulled down across
+  `FLOOR_DEFS` + the per-tile detail colors. No cheerful primaries — aged
+  props (the bed and shelves were the worst offenders, now muted/stained).
+- **Lighting is the mood.** Three cheap, cached primitives do the work:
+  soft **contact shadows** under standing props (ground them), **wall-cast
+  shadows** onto the floor south of every tall tile + a **height bevel**
+  (lit top edge, shadowed base) on walls, and warm **light pools** with
+  falloff from every emitter (candle, lantern, fireplace). Light is the
+  only relief in the dark.
+- **The Yellow Sign is the cosmic anchor.** A bespoke, asymmetric,
+  jaundiced glyph (`yellow_sign` decoration) — *not* random scratches.
+  Repeated at scale across the Scriptorium and Sign Chamber, faintly
+  breathing.
+- These compound with the runtime dread-aperture / flashlight / vignette
+  (the static look is the floor; in-game dark scenes go darker).
+
+**Still TODO (the liminal-composition pass):** composed emptiness, long
+sightlines, and uncanny repetition (identical houses, endless identical
+corn rows) — that's per-scene level design, not a global draw change.

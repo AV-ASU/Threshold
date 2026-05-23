@@ -222,10 +222,10 @@ def build_works_scriptorium():
     sc.set_spawn("from_above", 1, 4)
     sc.set_spawn("from_below", 10, 4)
 
-    # The Sign, copied a thousand times onto the walls.
+    # The Sign, copied over and over onto the walls.
     for tx, ty in [(2, 1), (5, 1), (9, 1), (10, 6)]:
         sc.add_decoration(Decoration(tx * TILE + 16, ty * TILE + 16,
-                                     "phantom_mark"))
+                                     "yellow_sign"))
     sc.add_decoration(Decoration(7 * TILE + 16, 2 * TILE + 6, "candle"))
     sc._desk_pos = (3 * TILE + 16, 2 * TILE + 16)
     sc.hide_spots = [
@@ -272,10 +272,11 @@ def build_works_sign():
     sign_x = 5 * TILE + 16
     sign_y = 1 * TILE + 16
     sc._sign_pos = (sign_x, sign_y)
-    for tx in (3, 4, 5, 6, 7):
-        sc.add_decoration(Decoration(tx * TILE + 16, 1 * TILE + 16,
-                                     "claw_marks"))
-    sc.add_decoration(Decoration(sign_x, 1 * TILE + 16, "phantom_mark"))
+    # The Sign itself -- one large glyph centred on the north wall,
+    # flanked by two smaller ones, ringed with candles.
+    sc.add_decoration(Decoration(sign_x, 1 * TILE + 18, "yellow_sign"))
+    sc.add_decoration(Decoration(3 * TILE + 16, 1 * TILE + 16, "yellow_sign"))
+    sc.add_decoration(Decoration(7 * TILE + 16, 1 * TILE + 16, "yellow_sign"))
     for tx in (2, 4, 6, 8):
         sc.add_decoration(Decoration(tx * TILE + 16, 2 * TILE + 16, "candle"))
     sc.hide_spots = [

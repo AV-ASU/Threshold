@@ -6,24 +6,91 @@ import random
 import pygame
 from constants import SCREEN_W, SCREEN_H, TILE
 
+
+# ---- Darkwood lighting / shadow helpers ----
+# Cheap, cached surfaces that turn the flat tile grid into something
+# with depth and mood: soft contact shadows ground props, warm light
+# pools relieve the dark, and a gradient strip casts wall shadows onto
+# the floor below them.
+_SHADOW_CACHE = {}
+
+
+def _ground_shadow(surf, cx, cy, rw, rh, alpha=80):
+    """Soft dark contact ellipse under a standing prop -- grounds it
+    so it stops looking like a sticker on the grid."""
+    key = (rw, rh, alpha)
+    s = _SHADOW_CACHE.get(key)
+    if s is None:
+        s = pygame.Surface((rw * 2, rh * 2), pygame.SRCALPHA)
+        pygame.draw.ellipse(s, (0, 0, 0, alpha), (0, 0, rw * 2, rh * 2))
+        _SHADOW_CACHE[key] = s
+    surf.blit(s, (int(cx - rw), int(cy - rh)))
+
+
+_POOL_CACHE = {}
+
+
+def _light_pool(surf, cx, cy, radius, color=(255, 170, 70), peak=70):
+    """Warm radial light pool with falloff. Normal-alpha overlay so it
+    reads as light spilling on the dark floor without blowing out."""
+    key = (radius, color, peak)
+    s = _POOL_CACHE.get(key)
+    if s is None:
+        s = pygame.Surface((radius * 2, radius * 2), pygame.SRCALPHA)
+        steps = 10
+        for k in range(steps, 0, -1):
+            r = max(1, int(radius * k / steps))
+            a = int(peak * (1 - k / steps) ** 1.4) + 4
+            pygame.draw.circle(s, (color[0], color[1], color[2], a),
+                               (radius, radius), r)
+        _POOL_CACHE[key] = s
+    surf.blit(s, (int(cx - radius), int(cy - radius)))
+
+
+_WALL_SHADOW = None
+
+
+def _wall_shadow_strip():
+    """A TILE-wide gradient (dark at top, fading down) blitted onto the
+    floor tile south of a wall, faking cast shadow + height."""
+    global _WALL_SHADOW
+    if _WALL_SHADOW is None:
+        h = (TILE * 3) // 4
+        s = pygame.Surface((TILE, h), pygame.SRCALPHA)
+        for yy in range(h):
+            a = int(100 * (1 - yy / h))
+            pygame.draw.line(s, (0, 0, 0, a), (0, yy), (TILE, yy))
+        _WALL_SHADOW = s
+    return _WALL_SHADOW
+
+
+# Object chars tall enough to throw a shadow onto the floor below.
+_SHADOW_CASTERS = frozenset("#WTpj%&lzqKR")
+# draw_object kinds that get a soft contact shadow at their base.
+_STANDING_KINDS = frozenset((
+    "tree", "cornstalk", "rock", "bed", "table", "chair",
+    "shelf", "stove", "crate", "debris",
+))
+
+
 FLOOR_DEFS = {
-    "g": {"color": (58, 100, 60),  "step": "step_grass"},
-    "G": {"color": (40, 80, 48),   "step": "step_grass"},
-    "_": {"color": (118, 110, 100),"step": "step_stone"},
-    "=": {"color": (132, 96, 60),  "step": "step_wood"},
-    ",": {"color": (110, 50, 70),  "step": "step_carpet"},
-    ".": {"color": (40, 36, 50),   "step": "step_stone"},
+    "g": {"color": (46, 58, 44),   "step": "step_grass"},
+    "G": {"color": (34, 46, 36),   "step": "step_grass"},
+    "_": {"color": (80, 78, 74),   "step": "step_stone"},
+    "=": {"color": (88, 66, 42),   "step": "step_wood"},
+    ",": {"color": (74, 40, 50),   "step": "step_carpet"},
+    ".": {"color": (30, 28, 38),   "step": "step_stone"},
     "@": {"color": (8, 6, 14),     "step": "step_void"},
     # Round-13: river floor is no longer universally solid. The
     # mistlands river enforces directional access via Game's
     # `_river_blocks` check (player.in_river state + designated entry
     # tile). Other scenes can still use `~` as decorative water; nothing
     # else currently does.
-    "~": {"color": (38, 80, 140),  "step": "step_stone"},
+    "~": {"color": (30, 52, 78),   "step": "step_stone"},
     # Dirt footpath -- the worn-grass walking lane that runs through every
     # outdoor scene (replaces the round-4 stone corridor). Soft ochre so
     # it reads as packed dirt next to grass without going full road.
-    "d": {"color": (132, 102, 70), "step": "step_grass"},
+    "d": {"color": (96, 76, 52),   "step": "step_grass"},
     "x": {"color": (28, 22, 30),   "step": "step_stone"},  # basement floor
     # Dense corn cover. Walkable + step_grass, but the per-tick
     # cover check in Game.update_player flips player.hidden to
@@ -32,7 +99,7 @@ FLOOR_DEFS = {
     # Visually a deeper corn-green than `g` so the patches read
     # at a glance; scenes are encouraged to layer grass_tuft
     # decorations on top for body.
-    ":": {"color": (44, 78, 46),   "step": "step_grass"},
+    ":": {"color": (38, 52, 40),   "step": "step_grass"},
 }
 
 
@@ -169,21 +236,29 @@ def draw_object(surf, ch, rx, ry):
     if not od or od["kind"] in ("invisible", "void_passage", "outdoor_passage"):
         return
     kind = od["kind"]
+    if kind in _STANDING_KINDS:
+        _ground_shadow(surf, rx + TILE // 2, ry + TILE - 5, 11, 4, 70)
     if kind == "stone_wall":
-        pygame.draw.rect(surf, (74, 70, 86), (rx, ry, TILE, TILE))
-        pygame.draw.rect(surf, (40, 36, 48), (rx, ry, TILE, TILE), 1)
-        pygame.draw.line(surf, (40, 36, 48), (rx, ry + 16), (rx + TILE, ry + 16), 1)
-        pygame.draw.line(surf, (40, 36, 48), (rx + 16, ry), (rx + 16, ry + 16), 1)
-        pygame.draw.line(surf, (40, 36, 48), (rx + 8, ry + 16), (rx + 8, ry + TILE), 1)
-        pygame.draw.line(surf, (40, 36, 48), (rx + 24, ry + 16), (rx + 24, ry + TILE), 1)
+        pygame.draw.rect(surf, (64, 62, 66), (rx, ry, TILE, TILE))
+        pygame.draw.rect(surf, (34, 32, 38), (rx, ry, TILE, TILE), 1)
+        pygame.draw.line(surf, (34, 32, 38), (rx, ry + 16), (rx + TILE, ry + 16), 1)
+        pygame.draw.line(surf, (34, 32, 38), (rx + 16, ry), (rx + 16, ry + 16), 1)
+        pygame.draw.line(surf, (34, 32, 38), (rx + 8, ry + 16), (rx + 8, ry + TILE), 1)
+        pygame.draw.line(surf, (34, 32, 38), (rx + 24, ry + 16), (rx + 24, ry + TILE), 1)
+        # Height bevel: lit top edge, shadowed base -- fakes a block
+        # with mass instead of a flat painted tile.
+        pygame.draw.line(surf, (88, 86, 92), (rx, ry), (rx + TILE - 1, ry), 1)
+        pygame.draw.rect(surf, (22, 20, 26), (rx, ry + TILE - 3, TILE, 3))
     elif kind == "wood_wall" or kind == "fake_wall":
         # fake_wall draws identically to wood_wall so the player can't
         # distinguish them visually -- the only tell is that walking
         # into a fake_wall doesn't bump.
-        pygame.draw.rect(surf, (96, 70, 50), (rx, ry, TILE, TILE))
-        pygame.draw.rect(surf, (60, 40, 25), (rx, ry, TILE, TILE), 1)
-        pygame.draw.line(surf, (60, 40, 25), (rx, ry + 10), (rx + TILE, ry + 10), 1)
-        pygame.draw.line(surf, (60, 40, 25), (rx, ry + 22), (rx + TILE, ry + 22), 1)
+        pygame.draw.rect(surf, (80, 58, 40), (rx, ry, TILE, TILE))
+        pygame.draw.rect(surf, (48, 32, 20), (rx, ry, TILE, TILE), 1)
+        pygame.draw.line(surf, (48, 32, 20), (rx, ry + 10), (rx + TILE, ry + 10), 1)
+        pygame.draw.line(surf, (48, 32, 20), (rx, ry + 22), (rx + TILE, ry + 22), 1)
+        pygame.draw.line(surf, (104, 80, 56), (rx, ry), (rx + TILE - 1, ry), 1)
+        pygame.draw.rect(surf, (40, 28, 18), (rx, ry + TILE - 3, TILE, 3))
     elif kind == "tree":
         pygame.draw.rect(surf, (60, 40, 25), (rx + 13, ry + 22, 6, 10))
         pygame.draw.circle(surf, (24, 56, 30), (rx + 16, ry + 14), 14)
@@ -206,10 +281,12 @@ def draw_object(surf, ch, rx, ry):
         pygame.draw.circle(surf, (100, 100, 110), (rx + 16, ry + 18), 12)
         pygame.draw.circle(surf, (70, 70, 80), (rx + 12, ry + 14), 4)
     elif kind == "bed":
-        pygame.draw.rect(surf, (220, 200, 220), (rx + 3, ry + 6, 26, 22))
-        pygame.draw.rect(surf, (180, 80, 100), (rx + 3, ry + 6, 26, 6))
-        pygame.draw.rect(surf, (240, 230, 240), (rx + 5, ry + 8, 8, 4))
-        pygame.draw.rect(surf, (90, 60, 40), (rx + 3, ry + 26, 26, 4))
+        pygame.draw.rect(surf, (150, 142, 138), (rx + 3, ry + 6, 26, 22))
+        pygame.draw.rect(surf, (120, 70, 78), (rx + 3, ry + 6, 26, 6))
+        pygame.draw.rect(surf, (178, 170, 162), (rx + 5, ry + 8, 8, 4))
+        pygame.draw.rect(surf, (66, 46, 32), (rx + 3, ry + 26, 26, 4))
+        # An old stain, the kind that doesn't wash out.
+        pygame.draw.rect(surf, (92, 84, 66), (rx + 17, ry + 16, 7, 7))
     elif kind == "table":
         pygame.draw.rect(surf, (160, 120, 90), (rx + 2, ry + 6, 28, 20))
         pygame.draw.rect(surf, (90, 60, 40), (rx + 2, ry + 22, 28, 6))
@@ -223,7 +300,7 @@ def draw_object(surf, ch, rx, ry):
         pygame.draw.line(surf, (60, 40, 25), (rx + 2, ry + 12), (rx + 30, ry + 12), 2)
         pygame.draw.line(surf, (60, 40, 25), (rx + 2, ry + 22), (rx + 30, ry + 22), 2)
         for i in range(3):
-            col = [(180, 60, 60), (60, 100, 180), (60, 160, 80)][i]
+            col = [(120, 60, 55), (66, 78, 110), (78, 104, 72)][i]
             pygame.draw.rect(surf, col, (rx + 4 + i * 8, ry + 4, 6, 6))
             pygame.draw.rect(surf, col, (rx + 4 + i * 8, ry + 14, 6, 6))
     elif kind == "window":
@@ -263,7 +340,8 @@ def draw_object(surf, ch, rx, ry):
         # inner flame -- the fire briefly resembles a face with two
         # hollow eyes. Held for ~80ms then the flame returns to its
         # normal taper.
-        pygame.draw.rect(surf, (74, 70, 86), (rx, ry, TILE, TILE))
+        _light_pool(surf, rx + 16, ry + 22, 44, (255, 140, 50), 92)
+        pygame.draw.rect(surf, (64, 62, 66), (rx, ry, TILE, TILE))
         pygame.draw.rect(surf, (10, 8, 12), (rx + 6, ry + 8, 20, 20))
         t = pygame.time.get_ticks() / 100.0
         f_h = 6 + int(math.sin(t) * 2)
@@ -424,14 +502,14 @@ def draw_floor(surf, ch, rx, ry, tx, ty):
         for i in range(2):
             sx = (seed * (i * 3 + 1)) % 28
             sy = (seed * (i * 5 + 7)) % 28
-            pygame.draw.rect(surf, (48, 86, 54),
+            pygame.draw.rect(surf, (40, 50, 40),
                              (rx + sx, ry + sy, 2, 2))
         if seed % 7 == 0:
-            pygame.draw.rect(surf, (40, 90, 50),
+            pygame.draw.rect(surf, (54, 64, 46),
                              (rx + (seed % 26), ry + (seed * 3 % 26), 2, 4))
         if seed % 11 == 0:
             # Dead clump
-            pygame.draw.rect(surf, (90, 78, 40),
+            pygame.draw.rect(surf, (66, 56, 34),
                              (rx + (seed * 2 % 26),
                               ry + (seed * 5 % 26), 3, 2))
         if seed % 73 == 0:
@@ -441,7 +519,7 @@ def draw_floor(surf, ch, rx, ry, tx, ty):
                              (rx + (seed * 3 % 28),
                               ry + (seed * 7 % 28), 1, 1))
     elif ch == "_":
-        pygame.draw.rect(surf, (130, 125, 120),
+        pygame.draw.rect(surf, (92, 90, 86),
                          (rx + 1, ry + 1, TILE - 2, TILE - 2), 1)
         # Scatter a few darker grout lines so stone reads as paved
         # rather than a single block.
@@ -483,13 +561,13 @@ def draw_floor(surf, ch, rx, ry, tx, ty):
     elif ch == "~":
         # Water with two phase-offset ripples and a rare foam fleck.
         t = (tx + ty + pygame.time.get_ticks() // 200) % 8
-        pygame.draw.rect(surf, (60, 100, 160),
+        pygame.draw.rect(surf, (44, 68, 96),
                          (rx + t, ry + 8, 8, 2))
-        pygame.draw.rect(surf, (60, 100, 160),
+        pygame.draw.rect(surf, (44, 68, 96),
                          (rx + (t + 4) % TILE, ry + 22, 8, 2))
         seed = tx * 11 + ty * 23
         if seed % 13 == 0:
-            pygame.draw.rect(surf, (180, 200, 230),
+            pygame.draw.rect(surf, (120, 150, 175),
                              (rx + (seed % 28), ry + (seed * 5 % 28),
                               1, 1))
     elif ch == "@":
@@ -741,6 +819,16 @@ class Scene:
                 rx = tx * TILE - cam_x
                 ry = ty * TILE - cam_y
                 draw_floor(surf, ch, rx, ry, tx, ty)
+        # Wall-cast shadows: every tall tile throws a soft shadow onto
+        # the floor tile to its south, faking height + grounding the
+        # walls. Drawn between floor and objects so the shadow lands on
+        # the floor but is covered where the southern tile is also a wall.
+        strip = _wall_shadow_strip()
+        for ty in range(y0, y1):
+            for tx in range(x0, x1):
+                if self.objects[ty][tx] in _SHADOW_CASTERS:
+                    surf.blit(strip, (tx * TILE - cam_x,
+                                      (ty + 1) * TILE - cam_y))
         for ty in range(y0, y1):
             for tx in range(x0, x1):
                 ch = self.objects[ty][tx]
