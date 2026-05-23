@@ -535,17 +535,23 @@ _YK_FHI, _YK_FMID, _YK_FLO, _YK_PIT = (210, 202, 180), (150, 143, 120), (92, 86,
 
 
 def _yk_slots():
-    """Deterministic face + eye placements (own RNG so the global stream the
-    game relies on is never touched)."""
+    """Deterministic swirl params for the faces + eyes (own RNG so the global
+    stream the game relies on is never touched). Each face orbits the core at
+    its own radius/speed and surfaces/dissolves on its own fade cycle."""
     r = random.Random(20240611)
     faces, eyes = [], []
-    for _ in range(11):
-        a = r.uniform(0, math.tau); rr = r.uniform(0, 1) ** 0.5
-        faces.append((math.cos(a) * rr, math.sin(a) * rr, r.randint(3, 6),
-                      r.uniform(0.6, 1.5), r.uniform(0, 6.28)))
+    for _ in range(12):
+        faces.append((
+            r.uniform(0.22, 0.86),     # orbit radius (fraction of R)
+            r.uniform(0, math.tau),    # base angle
+            r.uniform(0.30, 0.85),     # angular speed (swirl, one direction)
+            r.randint(3, 6),           # face radius
+            r.uniform(0.6, 1.5),       # fade speed
+            r.uniform(0, 6.28),        # fade / phase offset
+        ))
     for _ in range(4):
-        a = r.uniform(0, math.tau); rr = r.uniform(0.1, 0.8)
-        eyes.append((math.cos(a) * rr, math.sin(a) * rr, r.uniform(0, 6.28)))
+        eyes.append((r.uniform(0.2, 0.7), r.uniform(0, math.tau),
+                     r.uniform(0.3, 0.8), r.uniform(0, 6.28)))
     return faces, eyes
 
 
@@ -573,12 +579,19 @@ def _yk_glow(layer, cx, cy, R, t):
     _yk_radial(layer, cx, cy, int(R * 1.15), _YK_GOLD, 52)
     subs = [(0, 0), (-0.4, -0.18), (0.4, -0.12), (-0.12, 0.4),
             (0.22, 0.32), (-0.3, 0.2), (0.12, -0.34)]
+    sw = t * 0.6                       # the light churns -- rotate the lumps
+    ca, sa = math.cos(sw), math.sin(sw)
     for col, scl, grow in [(_YK_T1, 1.0, 3), (_YK_T2, 0.74, 1), (_YK_T3, 0.5, 0), (_YK_T4, 0.28, 0)]:
-        for sxr, syr in subs:
+        for ox, oy in subs:
+            rx, ry = ox * ca - oy * sa, ox * sa + oy * ca
             pygame.draw.circle(layer, col,
-                               (int(cx + sxr * R * 0.6), int(cy + syr * R * 0.9)),
+                               (int(cx + rx * R * 0.6), int(cy + ry * R * 0.9)),
                                int(R * 0.5 * scl) + grow)
-    _yk_radial(layer, cx, cy - 2, int(R * 0.55), _YK_T4, 70)
+    for k in range(3):                 # orbiting bright wisps
+        a = sw * 1.6 + k * 2.1
+        _yk_radial(layer, cx + math.cos(a) * R * 0.4, cy + math.sin(a) * R * 0.4,
+                   int(R * 0.4), _YK_T4, 60)
+    _yk_radial(layer, cx, cy - 2, int(R * 0.5), _YK_T4, 70)
 
 
 def _yk_face(layer, cx, cy, r, vis):
@@ -602,11 +615,13 @@ def _yk_face(layer, cx, cy, r, vis):
 
 
 def _yk_arm(layer, cx, cy, ang, length, R, t, idx):
-    """A broken arm reaching out of the light, reflex elbow, clawing hand;
-    writhes slightly on its own phase."""
-    wob = math.sin(t * 1.7 + idx * 1.3) * 0.16
-    reach = length * (1 + 0.08 * math.sin(t * 1.4 + idx))
-    root = (cx + math.cos(ang) * R * 0.55, cy + math.sin(ang) * R * 0.55)
+    """A broken arm that spawns from the body and reaches out of the light:
+    it extends outward then draws back on its own cycle, reflex elbow,
+    clawing hand."""
+    wob = math.sin(t * 1.9 + idx * 1.3) * 0.14
+    ext = 0.55 + 0.45 * max(0.0, math.sin(t * 1.5 + idx * 0.9))   # spawn + reach
+    reach = length * ext
+    root = (cx + math.cos(ang) * R * 0.5, cy + math.sin(ang) * R * 0.5)
     hand = (cx + math.cos(ang + wob) * reach, cy + math.sin(ang + wob) * reach)
     mx, my = (root[0] + hand[0]) / 2, (root[1] + hand[1]) / 2
     perp = (-math.sin(ang), math.cos(ang)); k = (R * 0.5) * (1 if idx % 2 else -1)
@@ -659,22 +674,39 @@ def _draw_yellow_king(surf, x, y, facing):
     L = 170
     layer = pygame.Surface((L, L), pygame.SRCALPHA)
     cx = cy = L // 2
-    fx, fy = facing if facing != (0, 0) else (0, 1)
-    fa = math.atan2(fy, fx)
-    fb = (math.cos(fa) * R * 0.25, math.sin(fa) * R * 0.25)   # faces lean toward player
+    # Direction of travel, read off the trail -> the arms reach the way it's
+    # heading (like it hauls itself along); fall back to facing when at rest.
+    tdx = tdy = 0.0
+    if len(_YK_TRAIL) >= 2:
+        ox, oy, _ot = _YK_TRAIL[0]
+        tdx, tdy = mcx - ox, mcy - oy
+    if tdx * tdx + tdy * tdy > 9:
+        aa = math.atan2(tdy, tdx)
+    else:
+        fxx, fyy = facing if facing != (0, 0) else (0, 1)
+        aa = math.atan2(fyy, fxx)
+    fb = (math.cos(aa) * R * 0.22, math.sin(aa) * R * 0.22)   # mass leans the way it moves
     _yk_glow(layer, cx, cy, R, t)
-    for nx, ny, fr, sp, ph in _YK_FACES:
-        vis = max(0.0, min(1.0, 0.5 + 0.72 * math.sin(t * sp + ph)))
-        _yk_face(layer, cx + nx * R * 0.8 + fb[0], cy + ny * R * 0.95 + fb[1], fr, vis)
-    for nx, ny, ph in _YK_EYES:
+    # Faces swirl around the core while surfacing and dissolving in the light.
+    for rn, ba, asp, fr, vsp, vph in _YK_FACES:
+        ang = ba + t * asp
+        rr = rn * (0.9 + 0.1 * math.sin(t * 0.8 + vph))
+        fxp = cx + math.cos(ang) * R * 0.82 * rr + fb[0]
+        fyp = cy + math.sin(ang) * R * 0.95 * rr + fb[1]
+        vis = max(0.0, min(1.0, 0.5 + 0.72 * math.sin(t * vsp + vph)))
+        _yk_face(layer, fxp, fyp, fr, vis)
+    # Hot eye-glints swirl with the faces.
+    for rn, ba, asp, ph in _YK_EYES:
         if math.sin(t * 2.1 + ph) > 0.1:
-            ex, ey = cx + nx * R * 0.7, cy + ny * R * 0.7
+            ang = ba + t * asp
+            ex = cx + math.cos(ang) * R * 0.7 * rn + fb[0]
+            ey = cy + math.sin(ang) * R * 0.7 * rn + fb[1]
             _yk_radial(layer, ex, ey, 5, _YK_HOT, 110)
             pygame.draw.circle(layer, _YK_PIT, (int(ex), int(ey)), 1)
-    # Arms reach in a fan toward the player (never straight up/back, so it
-    # reads as grasping AT you rather than a radial spider). Uneven lengths.
-    for idx, (da, ln) in enumerate([(0.0, R * 2.0), (0.55, R * 1.7), (-0.5, R * 1.6),
-                                    (1.05, R * 1.45), (-1.0, R * 1.5)]):
-        _yk_arm(layer, cx, cy, fa + da, ln, R, t, idx)
+    # Arms spawn from the body and reach toward where it's heading (aa) -- a
+    # fan led by the longest arm in the travel direction.
+    for idx, (da, ln) in enumerate([(0.0, R * 2.05), (0.45, R * 1.7), (-0.45, R * 1.7),
+                                    (0.95, R * 1.45), (-0.95, R * 1.45)]):
+        _yk_arm(layer, cx, cy, aa + da, ln, R, t, idx)
     layer.set_alpha(int(255 * max(0.05, phase)))
     surf.blit(layer, (mcx - cx, mcy - cy))
