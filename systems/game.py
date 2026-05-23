@@ -2048,6 +2048,8 @@ class Game:
                    no_prompt=True, solid=False)
         king.tag = "king"
         king.dialogue_fn = None
+        king._birth = 0.0      # 0..1 eruption progress (renderer reads it)
+        king._gait = 0.0       # run-cycle phase, advanced by movement
         self.scene.add_npc(king)
         self._king = king
         self.audio.play("void_sting", 0.7)
@@ -2406,7 +2408,9 @@ class Game:
                                   npc.facing, m, seed=id(npc) & 0xffff)
             else:
                 draw_npc_sprite(self.screen, sx, sy, npc.sprite_kind,
-                                npc.facing, blink=(i == blink_idx))
+                                npc.facing, blink=(i == blink_idx),
+                                birth=getattr(npc, "_birth", None),
+                                gait=getattr(npc, "_gait", None))
             # THRESHOLD: NPC name labels removed. They were the
             # last RPG-tell on screen -- the player should learn
             # who an NPC is by interacting with them, not by

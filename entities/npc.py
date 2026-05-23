@@ -334,11 +334,11 @@ class NPC:
         pdy = player.y - self.y
         pd = math.hypot(pdx, pdy) or 1
         self.facing = (pdx / pd, pdy / pd)
-        if not self._yk_seen_lock:
-            self._yk_seen_lock = True
-            self._yk_halt_t = 0.5
-        if self._yk_halt_t > 0:
-            self._yk_halt_t -= dt
+        # Birth: the King erupts from a cult member over ~1.2s before it
+        # can move; _birth ramps 0->1 and the renderer plays the
+        # emergence. It still turns to face the player while being born.
+        self._birth = min(1.0, getattr(self, "_birth", 0.0) + dt / 1.2)
+        if self._birth < 1.0:
             return
         if self._yk_target is None or not self._yk_path:
             self._yk_pick_target(scene, player)
@@ -368,8 +368,12 @@ class NPC:
         dx = nx - self.x
         dy = ny - self.y
         d = math.hypot(dx, dy) or 1
-        self.x += (dx / d) * self.speed * 60 * dt
-        self.y += (dy / d) * self.speed * 60 * dt
+        step = self.speed * 60 * dt
+        self.x += (dx / d) * step
+        self.y += (dy / d) * step
+        # Advance the gait phase with distance covered so the run cycle
+        # matches the King's speed and freezes when it isn't moving.
+        self._gait = getattr(self, "_gait", 0.0) + step * 0.18
 
     def _yk_pick_target(self, scene, player):
         """Pick the next path target for the Hunter. Door-block
