@@ -734,11 +734,10 @@ def _draw_yellow_king(surf, x, y, facing):
     R = 22
     hover = 42
     mcx, mcy = x, int(y - hover + math.sin(t * 1.1) * 3)
-    # Phase: slow transparency pulse with a brief blink-out at the troughs.
-    s = math.sin(t * 1.5)
-    phase = 0.6 + 0.4 * s
-    if s < -0.7:
-        phase *= 0.35
+    # Stays solid: no whole-body phasing in/out (removed per request). The
+    # birth still eases the body in by size (grow) and individual masks still
+    # surface and dissolve, but the creature itself never fades out.
+    phase = 1.0
     # Short ghost-trail of the glow. Reset on a teleport/respawn jump.
     # ---- wake of glowing SOUL-ORBS: it sheds smaller copies of itself --
     # glowing gold clots with masks floating inside -- that drift and fade
