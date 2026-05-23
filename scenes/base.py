@@ -267,6 +267,10 @@ def _draw_tree(surf, rx, ry, seed):
     cx = rx + 16 + (_vary(seed, 0) % 11) - 5            # -5..+5
     cy = ry + 12 + (_vary(seed, 1) % 9) - 5             # -5..+3 (bias up)
     R = 18 + (_vary(seed, 2) % 9)                       # 18..26 > half-tile -> overhangs
+    # Slow wind sway: the canopy leans a few px on a per-tree phase, so a
+    # run of trees ripples out of sync rather than swaying as one block.
+    cx += int(math.sin(pygame.time.get_ticks() / 1100.0
+                       + (seed & 511) * 0.0123) * 2.6)
     lean = (_vary(seed, 3) % 7) - 3
     tw = 5 + (_vary(seed, 4) % 2)
     bx = rx + 16 - tw // 2 + lean                       # short trunk, mostly hidden
@@ -1176,11 +1180,13 @@ def _draw_bank_fringe(surf, scene, tx, ty, rx, ry):
             cy = int(ey + ay * TILE * u + ndy * depth)
             pygame.draw.circle(surf, mud if (_vary(seed, 30 + k) % 3) else mud2,
                                (cx, cy), 3 + (_vary(seed, 20 + k) % 2))
-        for k in range(3):                       # reeds rising at the edge
+        wind = pygame.time.get_ticks() / 650.0
+        for k in range(3):                       # reeds rising at the edge, swaying
             u = (k + 0.5) / 3.0
             bx = int(ex + ax * TILE * u + ndx * 2)
             by = int(ey + ay * TILE * u + ndy * 2)
-            tipx = bx + (_vary(seed, 60 + k) % 3) - 1
+            tipx = bx + (_vary(seed, 60 + k) % 3) - 1 \
+                + int(math.sin(wind + seed * 0.01 + k) * 2)
             tipy = by - (6 + (_vary(seed, 70 + k) % 6))
             pygame.draw.line(surf, reed_dk, (bx, by), (tipx, tipy), 1)
             pygame.draw.line(surf, reed, (bx, by), (tipx, tipy - 1), 1)

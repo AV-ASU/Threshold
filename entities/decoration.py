@@ -689,7 +689,9 @@ class Decoration:
         as the well-passage `gore` decoration -- broken pose, dark
         underbody pool, head turned -- but the palette is drowned
         (cold blue-grey) and the figure is bound at wrists and ankles
-        with long hair fanning out into the water. Static."""
+        with long hair fanning out into the water. Bobs slowly on the
+        current."""
+        y += int(math.sin(self.t * 0.55 + self.seed) * 1.6)   # bob on the water
         # Underbody pool -- not blood here, just the dark water /
         # silt under the body. Same shape language as the well gore.
         pygame.draw.ellipse(surf, (10, 18, 36), (x - 18, y, 36, 14))
@@ -1276,31 +1278,35 @@ class Decoration:
         trunk = (38, 28, 20)
         bark = (24, 16, 12)
         knot = (10, 6, 6)
-        # Slightly leaning trunk
+        # Slow wind: the bare crown bends from a fixed base, branches
+        # creaking sideways -- a dead tree working in the wind.
+        sw = int(math.sin(self.t * 0.6 + self.seed) * 1.7)
+        xt = x + sw
+        # Leaning trunk -- base fixed at x, crown swayed to xt
         pygame.draw.polygon(surf, trunk, [
-            (x - 4, y + 12), (x - 5, y - 18),
-            (x + 4, y - 18), (x + 3, y + 12),
+            (x - 4, y + 12), (xt - 5, y - 18),
+            (xt + 4, y - 18), (x + 3, y + 12),
         ])
         pygame.draw.polygon(surf, bark, [
-            (x - 4, y + 12), (x - 5, y - 18),
-            (x + 4, y - 18), (x + 3, y + 12),
+            (x - 4, y + 12), (xt - 5, y - 18),
+            (xt + 4, y - 18), (x + 3, y + 12),
         ], 1)
         # Vertical bark cracks
-        pygame.draw.line(surf, knot, (x - 1, y - 16), (x - 2, y + 8), 1)
-        pygame.draw.line(surf, knot, (x + 1, y - 12), (x + 2, y + 4), 1)
+        pygame.draw.line(surf, knot, (xt - 1, y - 16), (x - 2, y + 8), 1)
+        pygame.draw.line(surf, knot, (xt + 1, y - 12), (x + 2, y + 4), 1)
         # Face in the bark -- eye gouges
-        pygame.draw.ellipse(surf, knot, (x - 3, y - 10, 2, 3))
-        pygame.draw.ellipse(surf, knot, (x + 1, y - 10, 2, 3))
+        pygame.draw.ellipse(surf, knot, (xt - 3, y - 10, 2, 3))
+        pygame.draw.ellipse(surf, knot, (xt + 1, y - 10, 2, 3))
         # Mouth gash (two stacked lines so it reads as torn-open)
-        pygame.draw.line(surf, knot, (x - 2, y - 4), (x + 2, y - 4), 1)
-        pygame.draw.line(surf, knot, (x - 1, y - 3), (x + 1, y - 3), 1)
+        pygame.draw.line(surf, knot, (xt - 2, y - 4), (xt + 2, y - 4), 1)
+        pygame.draw.line(surf, knot, (xt - 1, y - 3), (xt + 1, y - 3), 1)
         # Bare finger-branches
         for s, m, t in [
-            ((x, y - 16), (x - 12, y - 22), (x - 18, y - 18)),
-            ((x, y - 16), (x + 12, y - 22), (x + 18, y - 16)),
-            ((x, y - 18), (x - 6, y - 28), (x - 4, y - 36)),
-            ((x, y - 18), (x + 6, y - 28), (x + 4, y - 36)),
-            ((x, y - 18), (x, y - 32), (x + 2, y - 38)),
+            ((xt, y - 16), (xt - 12, y - 22), (xt - 18, y - 18)),
+            ((xt, y - 16), (xt + 12, y - 22), (xt + 18, y - 16)),
+            ((xt, y - 18), (xt - 6, y - 28), (xt - 4, y - 36)),
+            ((xt, y - 18), (xt + 6, y - 28), (xt + 4, y - 36)),
+            ((xt, y - 18), (xt, y - 32), (xt + 2, y - 38)),
         ]:
             pygame.draw.line(surf, bark, s, m, 2)
             pygame.draw.line(surf, bark, m, t, 1)
@@ -1308,15 +1314,15 @@ class Decoration:
         for tx_, ty_, dx_ in [(-18, -18, -1), (18, -16, 1),
                                (-4, -36, -1), (4, -36, 1), (2, -38, 1)]:
             pygame.draw.line(surf, bark,
-                             (x + tx_, y + ty_),
-                             (x + tx_ + dx_, y + ty_ - 3), 1)
+                             (xt + tx_, y + ty_),
+                             (xt + tx_ + dx_, y + ty_ - 3), 1)
 
     def _draw_hanging_figure(self, surf, x, y):
         """Vague humanoid silhouette suspended from a rope going off-
         tile upward. Slumped, no facial detail, very small slow sway.
         Used in the deep tree band of mistlands and the cornfield's
         far rows."""
-        sway = math.sin(self.t * 0.5 + self.seed) * 1.5
+        sway = math.sin(self.t * 0.45 + self.seed) * 2.6
         sx_ = int(sway)
         # Long rope going up out of frame
         pygame.draw.line(surf, (140, 110, 70),
