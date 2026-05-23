@@ -11,6 +11,7 @@ Atmosphere: black haze drawn by Game._draw_mistlands_haze, ambient
 'wind' track played by music='wind'. Both cut to silence the moment
 the player picks up the orb (handled in mistlands_on_enter so re-entry
 under that flag stays quiet)."""
+import random
 from constants import TILE
 from entities.decoration import Decoration
 from .base import Scene
@@ -51,6 +52,39 @@ def build_mistlands():
             else:
                 row.append("g")
         floor_rows.append("".join(row))
+
+    # Walkable corn-cover patches scattered across the banks. The ':'
+    # tile passively hides the player (Game flips player.hidden to
+    # "corn" while they stand on it), turning the open mistlands into a
+    # field with cover lanes to sneak between the buildings past the
+    # roaming cult -- the way the cornfields do. Stamped only on open
+    # grass, clear of the river, the buildings, the car/cauldron, and
+    # the spawn tiles.
+    corn_patches = [
+        (16, 18, 28, 30), (3, 35, 14, 47), (18, 52, 29, 64), (3, 70, 12, 78),
+        (40, 14, 52, 27), (60, 30, 74, 44), (38, 60, 49, 74), (74, 50, 86, 63),
+    ]
+    floor_rows = [list(r) for r in floor_rows]
+    for (pl, pt, pr, pb) in corn_patches:
+        cxm = (pl + pr) / 2.0
+        cym = (pt + pb) / 2.0
+        rxr = (pr - pl) / 2.0 + 1.0
+        ryr = (pb - pt) / 2.0 + 1.0
+        # Elliptical falloff + hash noise so the patch is an organic
+        # blob with a ragged edge, not a clean rectangle on the grid.
+        for ty in range(pt - 1, pb + 2):
+            for tx in range(pl - 1, pr + 2):
+                if not (0 <= ty < h and 0 <= tx < w):
+                    continue
+                if floor_rows[ty][tx] != "g":
+                    continue
+                nx = (tx - cxm) / rxr
+                ny = (ty - cym) / ryr
+                d = nx * nx + ny * ny
+                hsh = ((tx * 73856093) ^ (ty * 19349663)) % 100
+                if d <= 0.62 or (d <= 1.1 and hsh < 52):
+                    floor_rows[ty][tx] = ":"
+    floor_rows = ["".join(r) for r in floor_rows]
 
     objects_l = []
     for ty in range(h):
@@ -183,9 +217,9 @@ def build_mistlands():
     sc.set_spawn("from_kid_house",         kid_door,     kid_bot + 1)
     sc.set_spawn("from_barn",              barn_door,    barn_bot + 1)
 
-    # Sparse ambience -- a few crow decorations and grass tufts on the
-    # east side, NOTHING on the west side past the river. The empty
-    # west bank is the dread.
+    # Ambience -- crows and grass tufts. The banks once sat bare west
+    # of the river (the dread of no cover); they now carry the walkable
+    # corn-cover patches stamped above, so the player can cross hidden.
     sc.add_decoration(Decoration(60 * TILE + 16, 12 * TILE + 16, "crow"))
     sc.add_decoration(Decoration(72 * TILE + 16, 40 * TILE + 16, "crow"))
     sc.add_decoration(Decoration(85 * TILE + 16, 70 * TILE + 16, "crow"))
@@ -231,6 +265,22 @@ def build_mistlands():
                    (55, 80), (75, 20), (65, 75)]:
         sc.add_decoration(Decoration(tx * TILE + 16, ty * TILE + 16,
                                      "grass_tuft"))
+    # Body for the corn-cover patches: tufts scattered through each so
+    # the ':' floor reads as a field, plus a few creepy accents now
+    # that the banks aren't bare.
+    rng_corn = random.Random(4242)
+    for (pl, pt, pr, pb) in corn_patches:
+        for _ in range(max(5, (pr - pl) * (pb - pt) // 7)):
+            gx = rng_corn.randint(pl, pr) * TILE + rng_corn.randint(2, 28)
+            gy = rng_corn.randint(pt, pb) * TILE + rng_corn.randint(2, 28)
+            sc.add_decoration(Decoration(gx, gy, "grass_tuft"))
+    for tx, ty, kind in [(22, 25, "dead_crow"), (8, 42, "creepy_tree"),
+                         (24, 58, "hanging_figure"), (46, 20, "creepy_tree"),
+                         (66, 38, "dead_crow"), (80, 57, "creepy_tree")]:
+        sc.add_decoration(Decoration(tx * TILE + 16, ty * TILE + 16, kind))
+    for tx, ty in [(44, 68), (40, 30), (12, 74)]:
+        sc.add_decoration(Decoration(tx * TILE + 16, ty * TILE + 16,
+                                     "watching_wound", size="small"))
 
     # Hide spots colocated with VISIBLE cover so the prompt always
     # matches what the player can see. Each entry sits on top of a

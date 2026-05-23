@@ -232,6 +232,17 @@ desaturation, hard light/dark) + *Fear & Hunger* (grimdark descent).
 Built into the procedural draw layer (`scenes/base.py`,
 `entities/decoration.py`) so every scene gets it for free.
 
+> ### ⛓ CORE DESIGN PRINCIPLE — break the tile lockstep
+> A grid stops looking like a grid the moment things stop respecting
+> cell boundaries. **Everything should aim to bleed across multiple
+> squares, or occupy less than one** — never one-object-per-cell in
+> lockstep. Oversized/overhanging trees and corn that overlap their
+> neighbours, walls with irregular jutting edges, doors that swing out
+> *past* their tile, props at varied sub-tile scale and offset, grime
+> that blobs across many tiles. This is the through-line for ALL art
+> and layout work: when something reads "RimWorld," it is almost always
+> snapping cleanly to the grid. The fix is to make it spill.
+
 **Locked rules:**
 - **Break the grid — walls are a continuous mass, not blocks.** The #1
   RimWorld tell was per-tile grey wall blocks with borders/grout. Walls

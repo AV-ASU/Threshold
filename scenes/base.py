@@ -242,9 +242,10 @@ OBJECT_DEFS = {
 }
 
 
-def _door_front_closed(surf, rx, ry):
+def _door_front_closed(surf, rx, ry, hinge="L"):
     """A door seen front-on (south-facing): frame + plank slab drawn
-    over the floor, hung a crack ajar onto black."""
+    over the floor, hung a crack ajar onto black. `hinge` flips which
+    side the gap + knob sit on so doors aren't all identical."""
     pygame.draw.rect(surf, (10, 9, 12), (rx + 5, ry + 28, 22, 3))    # threshold
     pygame.draw.rect(surf, (15, 14, 18), (rx + 5, ry + 3, 4, 27))    # left jamb
     pygame.draw.rect(surf, (15, 14, 18), (rx + 23, ry + 3, 4, 27))   # right jamb
@@ -254,10 +255,12 @@ def _door_front_closed(surf, rx, ry):
     for sx in (14, 18):
         pygame.draw.line(surf, (37, 26, 15),
                          (rx + sx, ry + 7), (rx + sx, ry + 27), 1)
-    pygame.draw.rect(surf, (3, 2, 5), (rx + 10, ry + 6, 3, 22))      # ajar gap
-    pygame.draw.line(surf, (70, 53, 32), (rx + 13, ry + 6),
-                     (rx + 13, ry + 27), 1)
-    pygame.draw.circle(surf, (112, 102, 88), (rx + 20, ry + 16), 2)  # knob
+    if hinge == "L":
+        pygame.draw.rect(surf, (3, 2, 5), (rx + 10, ry + 6, 3, 22))  # ajar gap, hinge L
+        pygame.draw.circle(surf, (120, 110, 92), (rx + 19, ry + 16), 2)
+    else:
+        pygame.draw.rect(surf, (3, 2, 5), (rx + 19, ry + 6, 3, 22))  # ajar gap, hinge R
+        pygame.draw.circle(surf, (120, 110, 92), (rx + 13, ry + 16), 2)
 
 
 def _door_open(surf, rx, ry, face):
@@ -285,6 +288,8 @@ def _door_open(surf, rx, ry, face):
     pygame.draw.polygon(surf, (82, 62, 38), pts, 1)
     mx = (pts[0][0] + pts[2][0]) // 2                                # plank seam on the slab
     pygame.draw.line(surf, (37, 26, 15), (mx, ry + 11), (mx, ry + 21), 1)
+    knob_x = (rx + TILE + 3) if face == "E" else (rx - 3)            # knob near the free edge
+    pygame.draw.circle(surf, (120, 110, 92), (knob_x, ry + 16), 2)
 
 
 def draw_object(surf, ch, rx, ry):
@@ -816,14 +821,18 @@ def _draw_door(surf, rx, ry, scene, tx, ty):
         return (0 <= ay < scene.h and 0 <= ax < scene.w
                 and scene.objects[ay][ax] in _WALL_CHARS)
     wl, wr, wu, wd = w(tx - 1, ty), w(tx + 1, ty), w(tx, ty - 1), w(tx, ty + 1)
+    # Off-centre by a deterministic per-tile nudge so doors aren't all
+    # dead-centre and identical (natural variation + break the grid).
+    rx += ((tx * 17 + ty * 11) % 7) - 3
     # Vertical wall = walls above/below, the door faces sideways -- we'd
     # be seeing a side door head-on, which reads wrong, so hang it open.
     if (wu or wd) and not (wl or wr):
         floor_right = (not wr) and (tx + 1 < scene.w)
         _door_open(surf, rx, ry, "E" if floor_right else "W")
     else:
-        # Horizontal wall (or ambiguous): the standard front-on door.
-        _door_front_closed(surf, rx, ry)
+        # Horizontal wall (or ambiguous): the standard front-on door,
+        # hinged left or right by parity.
+        _door_front_closed(surf, rx, ry, "L" if (tx + ty) % 2 == 0 else "R")
 
 
 def draw_scene_terrain(surf, scene, cam_x, cam_y, x0, y0, x1, y1):
