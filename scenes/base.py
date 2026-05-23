@@ -720,6 +720,11 @@ def scene_display_name(scene):
 # faces that touch open floor -- no per-tile borders or grout, so a run
 # of wall stops reading as a row of grey blocks (the RimWorld tell).
 _WALL_CHARS = frozenset("#W%&")
+# Door tiles cast the same floor-shadow as walls so a door in a south
+# wall grounds into the building instead of leaving a lit threshold gap
+# between the shadows of its flanking walls.
+_DOOR_CHARS = frozenset(c for c, d in OBJECT_DEFS.items()
+                        if d and d.get("kind") == "door")
 _WALL_BASE = (19, 18, 23)
 _WALL_FACE = (50, 48, 56)
 _WALL_TOP = (74, 72, 82)
@@ -782,7 +787,8 @@ def draw_scene_terrain(surf, scene, cam_x, cam_y, x0, y0, x1, y1):
     strip = _wall_shadow_strip()
     for ty in range(y0, y1):
         for tx in range(x0, x1):
-            if scene.objects[ty][tx] in _SHADOW_CASTERS:
+            ch = scene.objects[ty][tx]
+            if ch in _SHADOW_CASTERS or ch in _DOOR_CHARS:
                 surf.blit(strip, (tx * TILE - cam_x,
                                   (ty + 1) * TILE - cam_y))
     _draw_wall_mass(surf, scene, cam_x, cam_y, x0, y0, x1, y1)

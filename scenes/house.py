@@ -356,6 +356,20 @@ def build_house():
     for i in range(6):
         sc.add_decoration(Decoration(40 + i * 90,
                                      80 + (i % 3) * 60, "mote"))
+    # THRESHOLD liminal dressing: the lodge common room reads
+    # wrong-empty. A wall of the vanished by the north wall of the
+    # living room (the same guests the cellar Ledger records), a meal
+    # abandoned mid-setting on the kitchen table, and a single chair
+    # knocked over in all that empty floor -- the one wrong detail in
+    # the void.
+    sc.add_decoration(Decoration(9 * TILE + 16, 0 * TILE + 22, "missing_flyer"))
+    sc.add_decoration(Decoration(11 * TILE + 16, 0 * TILE + 24, "polaroid_wall"))
+    sc.add_decoration(Decoration(14 * TILE + 16, 0 * TILE + 22, "missing_flyer"))
+    sc.add_decoration(Decoration(2 * TILE + 16, 3 * TILE + 8, "place_setting"))
+    sc.add_decoration(Decoration(13 * TILE + 16, 6 * TILE + 16, "overturned_chair"))
+    sc.add_decoration(Decoration(10 * TILE + 16, 8 * TILE + 16, "small_chair"))
+    sc.add_decoration(Decoration(15 * TILE + 16, 7 * TILE + 16, "small_chair"))
+    sc.add_decoration(Decoration(8 * TILE + 16, 9 * TILE + 16, "phantom_mark"))
 
     # The kitchen drawer position -- where 'paper' lives. Sits beside
     # the stove (col 2 after the kitchen-cluster shift, drawer at col 3).

@@ -190,6 +190,12 @@ def build_village():
                    (3, 17), (29, 17), (30, 9), (33, 13)]:
         sc.add_decoration(Decoration(sx * TILE + 16, sy * TILE + 16,
                                      "grass_tuft"))
+    # Liminal dressing: someone is hunting the vanished out here too --
+    # a flyer nailed to the shed, another by the dead payphone -- and a
+    # single chair sits in a gap in the corn where no chair belongs.
+    sc.add_decoration(Decoration(25 * TILE + 16, 13 * TILE - 4, "missing_flyer"))
+    sc.add_decoration(Decoration(6 * TILE + 16, 13 * TILE + 6, "missing_flyer"))
+    sc.add_decoration(Decoration(20 * TILE + 16, 17 * TILE + 16, "small_chair"))
 
     # Hide spots: in the corn rows themselves and behind the shed.
     sc.hide_spots = [
