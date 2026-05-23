@@ -535,22 +535,33 @@ def draw_object(surf, ch, rx, ry, tx, ty):
         pygame.draw.line(surf, (50, 32, 18), (rx, ry + 26),
                          (rx + TILE, ry + 26), 1)
     elif kind == "roof":
-        # Wood-shingle ridge stripe. Each tile draws three rows of shingles
-        # offset to suggest the ridge runs east-west; deterministic per tile
-        # via tx/ty so adjacent tiles align into a continuous roof surface.
-        pygame.draw.rect(surf, (110, 70, 50), (rx, ry, TILE, TILE))
+        # Weathered wood-shingle roof. Three offset rows read as an
+        # east-west ridge; per-tile + per-shingle hashing varies the
+        # tone, blows out the odd shingle (a dark gap) and creeps moss,
+        # so an old roof reads as decaying rather than a clean fill.
+        hsh = (tx * 73856093) ^ (ty * 19349663)
+        pygame.draw.rect(surf, (92, 58, 42) if hsh % 3 else (80, 50, 36),
+                         (rx, ry, TILE, TILE))
         for sy in range(3):
             row_y = ry + 2 + sy * 10
             offset = (sy & 1) * 4
             for sx in range(-1, 4):
                 shingle_x = rx + offset + sx * 9
-                pygame.draw.rect(surf, (140, 95, 70),
-                                 (shingle_x, row_y, 8, 8))
-                pygame.draw.line(surf, (60, 38, 24),
+                h2 = (hsh + sx * 7 + sy * 13) & 7
+                if h2 == 0:                       # blown / missing shingle
+                    pygame.draw.rect(surf, (34, 24, 18),
+                                     (shingle_x, row_y, 8, 8))
+                    continue
+                col = (130, 88, 64) if h2 > 2 else (104, 70, 50)
+                pygame.draw.rect(surf, col, (shingle_x, row_y, 8, 8))
+                pygame.draw.line(surf, (54, 34, 22),
                                  (shingle_x, row_y + 8),
                                  (shingle_x + 8, row_y + 8), 1)
-        # Central ridge highlight so the roof reads as a peaked surface
-        pygame.draw.line(surf, (60, 38, 24),
+        if hsh % 4 == 0:                          # moss creeping over
+            pygame.draw.rect(surf, (52, 66, 44),
+                             (rx + (hsh % 17) + 4, ry + ((hsh // 5) % 17) + 4,
+                              5, 4))
+        pygame.draw.line(surf, (54, 34, 22),
                          (rx, ry + TILE // 2),
                          (rx + TILE, ry + TILE // 2), 1)
 
@@ -821,6 +832,53 @@ def _draw_wall_mass(surf, scene, cam_x, cam_y, x0, y0, x1, y1):
                                  (rx + TILE - 1 - j, ry + TILE), 1)
 
 
+def _draw_building_eaves(surf, scene, cam_x, cam_y, x0, y0, x1, y1):
+    """Hang a ragged shingle eave + overhang shadow off the exterior
+    walls of roofed buildings where they meet open ground, so a building
+    reads as a structure with an overhanging roof instead of a flat
+    rectangle stamped on the grass. Keyed off roof-adjacency, so ONLY
+    roofed overworld houses get eaves -- interior room walls (no roof
+    tile behind them) are left as the clean continuous mass."""
+    objs = scene.objects
+    h, w = scene.h, scene.w
+
+    def roof(ax, ay):
+        return 0 <= ay < h and 0 <= ax < w and objs[ay][ax] == "r"
+
+    def openg(ax, ay):
+        if not (0 <= ay < h and 0 <= ax < w):
+            return False
+        ch = objs[ay][ax]
+        return ch not in _WALL_CHARS and ch != "r" and ch not in _DOOR_CHARS
+
+    eave = (90, 58, 42)
+    lip = (120, 82, 58)
+    for ty in range(y0, y1):
+        for tx in range(x0, x1):
+            if objs[ty][tx] not in _WALL_CHARS:
+                continue
+            if not (roof(tx, ty - 1) or roof(tx, ty + 1)
+                    or roof(tx - 1, ty) or roof(tx + 1, ty)):
+                continue
+            rx = tx * TILE - cam_x
+            ry = ty * TILE - cam_y
+            j = (tx * 7 + ty * 13) & 3                 # irregular overhang depth
+            if openg(tx, ty + 1):                      # south overhang (front)
+                d = 5 + j
+                _ground_shadow(surf, rx + TILE // 2, ry + TILE + d, 17, 4, 85)
+                pygame.draw.rect(surf, eave, (rx, ry + TILE - 1, TILE, d))
+                pygame.draw.rect(surf, lip, (rx, ry + TILE - 1 + d, TILE, 1))
+            if openg(tx, ty - 1):                      # north (back)
+                d = 3 + (j & 1)
+                pygame.draw.rect(surf, eave, (rx, ry - d, TILE, d))
+            if openg(tx - 1, ty):                      # west
+                d = 4 + (j & 1)
+                pygame.draw.rect(surf, eave, (rx - d, ry, d, TILE))
+            if openg(tx + 1, ty):                      # east
+                d = 4 + (j & 1)
+                pygame.draw.rect(surf, eave, (rx + TILE, ry, d, TILE))
+
+
 def _door_room_dir(scene, tx, ty):
     """Which way the door opens -- the floor (room) side its leaf swings
     into. Off-map edges don't count as wall, so a building's south-edge
@@ -969,6 +1027,7 @@ def draw_scene_terrain(surf, scene, cam_x, cam_y, x0, y0, x1, y1):
                 surf.blit(strip, (tx * TILE - cam_x,
                                   (ty + 1) * TILE - cam_y))
     _draw_wall_mass(surf, scene, cam_x, cam_y, x0, y0, x1, y1)
+    _draw_building_eaves(surf, scene, cam_x, cam_y, x0, y0, x1, y1)
     for ty in range(y0, y1):
         for tx in range(x0, x1):
             ch = scene.objects[ty][tx]
