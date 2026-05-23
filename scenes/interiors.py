@@ -523,12 +523,13 @@ def build_shop():
         "WWWWWWWWWWWW",
     ]
     sc = Scene("shop", floor, objects, music="home")
-    # General store now opens onto the town street.
-    sc.add_exit("D", "town", "from_shop")
+    # The General Store stands out on the Brimley bank now; its door
+    # opens back onto the field.
+    sc.add_exit("D", "mistlands", "from_shop")
     sc.set_spawn("default", 6, 5)
-    sc.set_spawn("from_mistlands", 5, 6)       # legacy fallback
+    sc.set_spawn("from_mistlands", 5, 6)       # arrive from Brimley
     sc.set_spawn("from_village", 5, 6)         # legacy fallback
-    sc.set_spawn("from_town", 5, 6)            # arrive from the town street
+    sc.set_spawn("from_town", 5, 6)            # legacy fallback
 
     pos = sc.consume_marker("S")
     if pos:

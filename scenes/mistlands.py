@@ -199,6 +199,15 @@ def build_mistlands():
     _stamp_building(objects_l, barn_left, barn_right,
                     barn_top, barn_bot, "n", barn_door)
 
+    # Schoolhouse (EAST middle-north). The old town street's schoolhouse,
+    # now standing on the open bank with the rest. Footprint cols 60..66
+    # rows 48..53, door at col 63.
+    school_left, school_right = 60, 66
+    school_top, school_bot = 48, 53
+    school_door = 63
+    _stamp_building(objects_l, school_left, school_right,
+                    school_top, school_bot, "B", school_door)
+
     # ---- Worn dirt tracks ----
     # The townsfolk and the cult have beaten paths across the field over
     # the years, linking the village entry and the river bridge to the
@@ -216,6 +225,7 @@ def build_mistlands():
     _carve_track(floor_ll, objects_l, [(52, 18), (58, 34), (58, 72)], trk)
     _carve_track(floor_ll, objects_l, [(58, 58), (54, 60), (53, 61)], trk)   # -> Shop door
     _carve_track(floor_ll, objects_l, [(58, 70), (64, 71), (68, 71)], trk)   # -> Kid's door
+    _carve_track(floor_ll, objects_l, [(58, 52), (61, 53), (63, 54)], trk)   # -> Schoolhouse door
     _carve_track(floor_ll, objects_l,
                  [(58, 72), (70, 77), (80, 80), (83, 81)], trk)              # -> Barn door
     # West bank: bridge west end -> Church (north) and Sheriff +
@@ -241,8 +251,12 @@ def build_mistlands():
     sc.add_exit("o", "haunted_house",     "from_mistlands")  # Farmhouse
     sc.add_exit("J", "kid_house",         "from_mistlands")  # Kid
     sc.add_exit("n", "barn",              "from_mistlands")  # Barn
-    # Sheriff (y) and Shop (D) now open onto the town street, not the
-    # mistlands. Their old field-side doors are sealed below.
+    # The town has come apart into Brimley's fog: the Sheriff's office,
+    # General Store and Schoolhouse stand out here on the bank now, all
+    # enterable, their interiors returning to this scene.
+    sc.add_exit("y", "fisherman_cottage", "from_mistlands")  # Sheriff's office
+    sc.add_exit("D", "shop",              "from_mistlands")  # General Store
+    sc.add_exit("B", "schoolhouse",       "from_mistlands")  # Schoolhouse
     cauldron_tx, cauldron_ty = 15, 80
     objects_list = [list(r) for r in objects]
     objects_list[cauldron_ty][cauldron_tx] = "j"
@@ -255,11 +269,6 @@ def build_mistlands():
     objects_list[78][14] = "K"
     objects_list[78][78] = "K"
     sc.objects = objects_list
-    # Seal the relocated Sheriff + Shop doors (their interiors are now
-    # reached from the town street). Closed facade doors, not walls, so
-    # the buildings still read as buildings out here in the fields.
-    sc.objects[65][7] = "l"     # was the Sheriff 'y' door (row 65, col 7)
-    sc.objects[60][53] = "l"    # was the Shop 'D' door (row 60, col 53)
     sc.add_exit("j", "void_boss", "from_mistlands")
     sc.set_spawn("default", w - 2, 7)
     sc.set_spawn("from_village", w - 2, 7)
@@ -281,6 +290,10 @@ def build_mistlands():
     sc.set_spawn("from_shop",              shop_door,    shop_bot + 1)
     sc.set_spawn("from_kid_house",         kid_door,     kid_bot + 1)
     sc.set_spawn("from_barn",              barn_door,    barn_bot + 1)
+    sc.set_spawn("from_school",            school_door,  school_bot + 1)
+    # The farm's old town road now drops you into the heart of Brimley,
+    # among the scattered buildings on the east bank.
+    sc.set_spawn("from_village_road",      58, 30)
 
     # Ambience -- crows and grass tufts. The banks once sat bare west
     # of the river (the dread of no cover); they now carry the walkable

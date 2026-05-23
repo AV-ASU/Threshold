@@ -71,10 +71,13 @@ def build_schoolhouse():
                             #     the door isn't blocked by a chair)
     ]
     sc = Scene("schoolhouse", floor, objects, music="home")
-    sc.add_exit("H", "town", "from_school")
+    # The schoolhouse stands on the Brimley bank now; its door opens
+    # back onto the field.
+    sc.add_exit("H", "mistlands", "from_school")
     # The original spawn at (7, 7) was inside a student desk
     # (boxed in three sides). Spawn in the centre aisle at row 8.
     sc.set_spawn("default", 6, 8)
+    sc.set_spawn("from_mistlands", 6, 8)        # arrive from Brimley
     sc.set_spawn("from_village", 6, 8)
     sc.set_spawn("from_town_crossroads", 6, 8)
     sc.set_spawn("from_town", 6, 8)
@@ -1085,129 +1088,25 @@ def _town_voice(pages, voice="blip_mid"):
 
 
 def build_town():
-    """The town main street. North side: store, sheriff's office,
-    schoolhouse, doors facing south onto an open dirt plaza. Lower down,
-    two occupied-looking houses (facade doors, not enterable). The road
-    south leaves to the village/farm. Residents wander the plaza."""
-    W, H = 26, 18
-    # Floor: grass, with a dirt plaza through the middle, short dirt
-    # paths up to each civic door, and a road south to the village.
-    floor_l = [["g"] * W for _ in range(H)]
-    for ty in range(8, 13):
-        for tx in range(3, 23):
-            floor_l[ty][tx] = "d"
-    for ty in range(7, 13):
-        for col in (6, 13, 20):
-            floor_l[ty][col] = "d"
-    for ty in range(12, H):
-        floor_l[ty][12] = "d"
-        floor_l[ty][13] = "d"
-    floor = ["".join(r) for r in floor_l]
+    """Retired. The town came apart into the fog -- its street, civic
+    buildings (Store, Sheriff, Schoolhouse) and residents now live in
+    the mistlands, displayed as Brimley. This stub survives only so a
+    save left standing in the old 'town' scene bounces straight out to
+    Brimley on load, instead of soft-locking on a missing scene."""
+    floor = ["g" * 5 for _ in range(5)]
+    objects = ["." * 5 for _ in range(5)]
+    sc = Scene("town", floor, objects, music="wind")
+    for name in ("default", "from_village", "from_shop", "from_sheriff",
+                 "from_school", "from_town_crossroads"):
+        sc.set_spawn(name, 2, 2)
 
-    obj = [["."] * W for _ in range(H)]
-    for tx in range(W):
-        obj[0][tx] = "T"
-        obj[H - 1][tx] = "T"
-    for ty in range(H):
-        obj[ty][0] = "T"
-        obj[ty][W - 1] = "T"
-    # South road gap to the village.
-    obj[H - 1][12] = "e"
-    obj[H - 1][13] = "e"
+    def _bounce(game):
+        if game.state == "transition":
+            return
+        game.begin_transition("mistlands", "from_village")
 
-    def _stamp(left, right, top, bot, door_char, door_col):
-        for cx in range(left, right + 1):
-            obj[top][cx] = "W"
-            obj[bot][cx] = "W"
-        for ry in range(top + 1, bot):
-            obj[ry][left] = "W"
-            obj[ry][right] = "W"
-            for cx in range(left + 1, right):
-                obj[ry][cx] = "r"
-        obj[bot][door_col] = door_char
-
-    # Civic buildings along the north, doors facing south onto the plaza.
-    _stamp(2, 8, 1, 6, "D", 6)      # General store
-    _stamp(10, 16, 1, 6, "y", 13)   # Sheriff's office
-    _stamp(18, 24, 1, 6, "B", 20)   # Schoolhouse
-    # Two occupied-looking houses lower down (facade doors, solid).
-    _stamp(2, 7, 13, 16, "l", 4)
-    _stamp(18, 23, 13, 16, "l", 21)
-    objects = ["".join(r) for r in obj]
-
-    sc = Scene("town", floor, objects, music="village")
-    sc.add_exit("e", "village", "from_town")
-    sc.add_exit("D", "shop", "from_town")
-    sc.add_exit("y", "fisherman_cottage", "from_town")
-    sc.add_exit("B", "schoolhouse", "from_town")
-    sc.set_spawn("default", 12, 14)
-    sc.set_spawn("from_village", 12, 14)
-    sc.set_spawn("from_shop", 6, 7)
-    sc.set_spawn("from_sheriff", 13, 7)
-    sc.set_spawn("from_school", 20, 7)
-    # Legacy alias -- the original fiction name for this hub.
-    sc.set_spawn("from_town_crossroads", 12, 14)
-
-    sc.hide_spots = [
-        (2 * TILE + 16, 9 * TILE + 16, "behind"),
-        (23 * TILE + 16, 9 * TILE + 16, "behind"),
-    ]
-
-    # ---- Dressing ----
-    # Lanterns over the three civic doors and by the houses; chimney
-    # smoke off the store; scattered grass. One dead crow in the middle
-    # of the square -- the single thing that isn't right in an otherwise
-    # ordinary evening.
-    for dx in (6, 13, 20):
-        sc.add_decoration(Decoration(dx * TILE + 16, 6 * TILE - 4, "lantern"))
-    sc.add_decoration(Decoration(4 * TILE + 16, 12 * TILE + 16, "lantern"))
-    sc.add_decoration(Decoration(21 * TILE + 16, 12 * TILE + 16, "lantern"))
-    sc.add_decoration(Decoration(3 * TILE + 16, 1 * TILE - 4, "smoke"))
-    sc.add_decoration(Decoration(11 * TILE + 16, 10 * TILE + 16, "dead_crow"))
-    rng = random.Random(2040)
-    for _ in range(18):
-        gx = rng.randint(1, W - 2) * TILE + rng.randint(0, 28)
-        gy = rng.randint(1, H - 2) * TILE + rng.randint(0, 28)
-        if 7 <= gy // TILE <= 12 and 3 <= gx // TILE <= 22:
-            continue   # keep the plaza clear
-        sc.add_decoration(Decoration(gx, gy, "grass_tuft"))
-
-    # ---- Residents ----
-    # Ordinary people going about an ordinary evening.
-    def _resident(tx, ty, name, kind, pages, movement="wander",
-                   voice="blip_mid", radius=52):
-        sc.add_npc(NPC(tx * TILE + 16, ty * TILE + 16, name, kind,
-                       dialogue_fn=_town_voice(pages, voice),
-                       movement=movement, radius=radius))
-
-    _resident(5, 9, "Hettie", "shopkeep", [
-        "Store's stocked, if you need anything.",
-        "[c=dim]...[/c]",
-    ])
-    _resident(11, 10, "Old Pell", "old", [
-        "Cold came in early this year.",
-        "[c=dim]...[/c]",
-    ], voice="blip_low")
-    _resident(4, 11, "Mrs. Calder", "mom", [
-        "Hello there.",
-        "[c=dim]...[/c]",
-    ], movement="idle")
-    _resident(19, 10, "Royce", "fisherman", [
-        "River's running high past the ford.",
-        "[c=dim]...[/c]",
-    ])
-    _resident(13, 11, "the Tisdale boy", "kid", [
-        "Hi.",
-        "[c=dim]...[/c]",
-    ], voice="blip_kid", radius=40)
-    _resident(15, 8, "Garrick", "old", [
-        "Afternoon.",
-        "[c=dim]...[/c]",
-    ])
-    sc.add_npc(NPC(17 * TILE + 16, 9 * TILE + 16, "A woman", "mom",
-                   dialogue_fn=_town_voice([
-                       "[c=dim]Hello.[/c]",
-                   ], "blip_soft"),
-                   movement="watch"))
-
+    sc.triggers.append({
+        "rect": (0, 0, 5 * TILE, 5 * TILE),
+        "fn": _bounce, "once": False, "fired": False,
+    })
     return sc

@@ -150,12 +150,13 @@ def build_fisherman_cottage():
         "WWWWWWWWWW",
     ]
     sc = Scene("fisherman_cottage", floor, objects, music="home")
-    # Sheriff's office now opens onto the town street.
-    sc.add_exit("y", "town", "from_sheriff")
+    # The Sheriff's office stands on the Brimley bank now; its door
+    # opens back onto the field.
+    sc.add_exit("y", "mistlands", "from_fisherman_cottage")
     sc.set_spawn("default", 5, 5)
-    sc.set_spawn("from_mistlands", 4, 5)       # legacy fallback
+    sc.set_spawn("from_mistlands", 4, 5)       # arrive from Brimley
     sc.set_spawn("from_village", 4, 5)         # legacy fallback
-    sc.set_spawn("from_town", 4, 5)            # arrive from the town street
+    sc.set_spawn("from_town", 4, 5)            # legacy fallback
 
     pos = sc.consume_marker("Y")
     if pos:

@@ -729,7 +729,7 @@ DISPLAY_NAMES = {
     "works_deepstair":      "the Deep Stair",
     "haunted_house":        "the Abandoned Farmhouse",
     "symbol_portal_room":   "the Stone Chamber",
-    "mistlands":            "the River",
+    "mistlands":            "Brimley",
     "schoolhouse":          "the Schoolhouse",
     "graveyard":            "the Graveyard",
     "diner_gas_station":    "the Diner",

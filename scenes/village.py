@@ -121,7 +121,7 @@ def build_village():
     sc = Scene("village", floor, objects, music="village")
     sc.add_exit("e", "country_lane",      "from_village")
     sc.add_exit("4", "mistlands",         "from_village")  # west, after debris
-    sc.add_exit("/", "town",              "from_village")
+    sc.add_exit("/", "mistlands",         "from_village_road")  # old town road, into Brimley
     sc.add_exit("a", "gravel_road_north", "from_village")
 
     sc.set_spawn("default",                17, 7)
