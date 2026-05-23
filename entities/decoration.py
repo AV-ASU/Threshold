@@ -1406,56 +1406,67 @@ class Decoration:
                          (x - 1, y - 10), (x + 1, y - 10), 1)
 
     def _draw_pickup_truck(self, surf, x, y):
-        """A faded-blue 1990s rural pickup truck, parked. ~2 tiles wide,
-        ~1.5 tiles tall -- physically a real vehicle the player can't
-        slip past on accident. Pair the decoration with a solid 'X'
-        tile under it in scene-builder so collision matches. Cab with
-        windshield, open bed, four wheels, side mirror, rust streak."""
-        body = (74, 96, 124)
-        body_dark = (40, 56, 80)
-        rust = (130, 70, 40)
-        glass = (140, 170, 200)
-        tire = (20, 18, 22)
-        chrome = (200, 200, 210)
-        # Truck bed (rear, open box). Outer 28w x 20h, inner cavity 4 px in.
-        pygame.draw.rect(surf, body, (x - 24, y - 10, 24, 20))
-        pygame.draw.rect(surf, body_dark, (x - 24, y - 10, 24, 20), 1)
-        pygame.draw.rect(surf, (50, 64, 90), (x - 22, y - 8, 20, 16))
-        # Tailgate seam
-        pygame.draw.line(surf, body_dark, (x - 24, y), (x, y), 1)
-        # Cab body
-        pygame.draw.rect(surf, body, (x, y - 16, 22, 26))
-        pygame.draw.rect(surf, body_dark, (x, y - 16, 22, 26), 1)
-        # Windshield slant
+        """A dead farm pickup, ~2.5 tiles long -- big, weathered, and
+        long abandoned: faded muddy paint eaten through with rust,
+        cracked-out windows, sagging on a flat tire, weeds growing up
+        through the bed. The truck that drove for the county line and got
+        handed back. Pair with solid 'X' tiles so the player can't walk
+        through it. Faces right (nosed east, into the tree line)."""
+        rng = random.Random(self.seed)
+        # Sunk, oversized contact shadow under the whole hulk.
+        sh = pygame.Surface((110, 34), pygame.SRCALPHA)
+        pygame.draw.ellipse(sh, (0, 0, 0, 95), (0, 0, 110, 34))
+        surf.blit(sh, (x - 52, y + 6))
+        body = (96, 88, 66)          # faded, dirtied paint -- muddy tan/olive
+        body_dark = (52, 48, 36)
+        rust = (118, 60, 32)
+        rust_dk = (78, 40, 22)
+        glass = (60, 70, 70)         # dead, grimy glass
+        tire = (24, 22, 26)
+        # ---- Bed (rear/left), a big open rusted box ----
+        pygame.draw.rect(surf, body, (x - 50, y - 16, 38, 30))
+        pygame.draw.rect(surf, body_dark, (x - 50, y - 16, 38, 30), 2)
+        pygame.draw.rect(surf, (40, 38, 30), (x - 46, y - 12, 30, 22))   # cavity
+        # Weeds growing up through the bed and the wheel wells.
+        for _ in range(9):
+            wx = x - 44 + rng.randint(0, 28)
+            wy = y - 10 + rng.randint(0, 18)
+            g = 60 + rng.randint(0, 40)
+            pygame.draw.line(surf, (44, g, 44), (wx, wy), (wx - 1, wy - 6), 1)
+        # ---- Cab ----
+        pygame.draw.rect(surf, body, (x - 12, y - 24, 34, 38))
+        pygame.draw.rect(surf, body_dark, (x - 12, y - 24, 34, 38), 2)
+        # Roof, sun-bleached + rust-blistered.
+        pygame.draw.rect(surf, (108, 100, 78), (x - 10, y - 22, 30, 12))
+        # Windshield -- cracked, mostly dark.
         pygame.draw.polygon(surf, glass, [
-            (x + 2, y - 14), (x + 14, y - 14),
-            (x + 17, y - 6), (x + 2, y - 6),
-        ])
-        pygame.draw.polygon(surf, body_dark, [
-            (x + 2, y - 14), (x + 14, y - 14),
-            (x + 17, y - 6), (x + 2, y - 6),
-        ], 1)
-        # Side window
-        pygame.draw.rect(surf, glass, (x + 14, y - 4, 6, 8))
-        pygame.draw.rect(surf, body_dark, (x + 14, y - 4, 6, 8), 1)
-        # Hood
-        pygame.draw.rect(surf, body, (x + 16, y - 4, 8, 14))
-        pygame.draw.rect(surf, body_dark, (x + 16, y - 4, 8, 14), 1)
-        # Headlights
-        pygame.draw.rect(surf, (220, 220, 180), (x + 23, y, 2, 4))
-        # Side mirror
-        pygame.draw.line(surf, body_dark, (x + 2, y - 14), (x - 1, y - 17), 1)
-        pygame.draw.rect(surf, body_dark, (x - 3, y - 19, 3, 3))
-        # Rust streak on one fender
-        pygame.draw.line(surf, rust, (x - 22, y + 6), (x - 8, y + 6), 1)
-        pygame.draw.line(surf, rust, (x - 18, y + 8), (x - 10, y + 8), 1)
-        # Bumpers (chrome)
-        pygame.draw.rect(surf, chrome, (x - 24, y + 9, 50, 2))
-        # Wheels
-        pygame.draw.circle(surf, tire, (x - 16, y + 11), 5)
-        pygame.draw.circle(surf, tire, (x + 18, y + 11), 5)
-        pygame.draw.circle(surf, chrome, (x - 16, y + 11), 2)
-        pygame.draw.circle(surf, chrome, (x + 18, y + 11), 2)
+            (x - 6, y - 20), (x + 16, y - 20), (x + 19, y - 8), (x - 6, y - 8)])
+        pygame.draw.line(surf, (150, 150, 140), (x - 2, y - 20), (x + 10, y - 9), 1)
+        pygame.draw.line(surf, (150, 150, 140), (x + 10, y - 18), (x + 4, y - 8), 1)
+        pygame.draw.rect(surf, body_dark, (x - 6, y - 20, 25, 12), 1)
+        # Side window, glass gone -- just a dark hole.
+        pygame.draw.rect(surf, (22, 22, 26), (x + 14, y - 6, 8, 12))
+        # ---- Hood / front (right) ----
+        pygame.draw.rect(surf, body, (x + 22, y - 8, 16, 22))
+        pygame.draw.rect(surf, body_dark, (x + 22, y - 8, 16, 22), 2)
+        pygame.draw.rect(surf, (150, 140, 90), (x + 37, y - 2, 3, 6))    # dead headlight
+        # Bent front bumper, hanging.
+        pygame.draw.line(surf, (96, 92, 96), (x + 38, y + 12), (x + 42, y + 16), 2)
+        # ---- Rust eating the body (deterministic blotches) ----
+        for _ in range(14):
+            bx = x - 48 + rng.randint(0, 84)
+            by = y - 22 + rng.randint(0, 34)
+            r = rng.randint(2, 5)
+            pygame.draw.circle(surf, rust if rng.random() < 0.6 else rust_dk,
+                               (bx, by), r)
+        # Long rust runs bleeding down from the seams.
+        for sx0 in (x - 44, x - 30, x - 6, x + 16, x + 30):
+            pygame.draw.line(surf, rust_dk, (sx0, y + 2), (sx0, y + 12), 1)
+        # ---- Wheels: rear sound, front flat (the hulk sags forward) ----
+        pygame.draw.circle(surf, tire, (x - 36, y + 13), 7)
+        pygame.draw.circle(surf, (60, 58, 60), (x - 36, y + 13), 3)
+        pygame.draw.ellipse(surf, tire, (x + 20, y + 13, 18, 8))         # flat tire
+        pygame.draw.rect(surf, (60, 58, 60), (x + 27, y + 15, 4, 3))
 
     def _draw_player_car(self, surf, x, y):
         """A faded-red 1990s sedan, parked. Approx 3 tiles wide, 1.5

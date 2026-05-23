@@ -549,6 +549,11 @@ def build_mistlands():
     for cx in (car_tx - 1, car_tx, car_tx + 1):
         if 0 <= cx < sc.w:
             objects_list[car_ty][cx] = "X"
+    # The dead pickup is a big hulk -- solid tiles under its length so
+    # the player can't walk through it (decoration at tile 95,55).
+    for cx in (93, 94, 95, 96):
+        if 0 <= cx < sc.w:
+            objects_list[55][cx] = "X"
     sc.objects = objects_list
     # Hide spot beside the car (cover for a brief breather between
     # village and west bank).
