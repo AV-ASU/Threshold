@@ -535,35 +535,10 @@ def draw_object(surf, ch, rx, ry, tx, ty):
         pygame.draw.line(surf, (50, 32, 18), (rx, ry + 26),
                          (rx + TILE, ry + 26), 1)
     elif kind == "roof":
-        # Weathered wood-shingle roof. Three offset rows read as an
-        # east-west ridge; per-tile + per-shingle hashing varies the
-        # tone, blows out the odd shingle (a dark gap) and creeps moss,
-        # so an old roof reads as decaying rather than a clean fill.
-        hsh = (tx * 73856093) ^ (ty * 19349663)
-        pygame.draw.rect(surf, (92, 58, 42) if hsh % 3 else (80, 50, 36),
-                         (rx, ry, TILE, TILE))
-        for sy in range(3):
-            row_y = ry + 2 + sy * 10
-            offset = (sy & 1) * 4
-            for sx in range(-1, 4):
-                shingle_x = rx + offset + sx * 9
-                h2 = (hsh + sx * 7 + sy * 13) & 7
-                if h2 == 0:                       # blown / missing shingle
-                    pygame.draw.rect(surf, (34, 24, 18),
-                                     (shingle_x, row_y, 8, 8))
-                    continue
-                col = (130, 88, 64) if h2 > 2 else (104, 70, 50)
-                pygame.draw.rect(surf, col, (shingle_x, row_y, 8, 8))
-                pygame.draw.line(surf, (54, 34, 22),
-                                 (shingle_x, row_y + 8),
-                                 (shingle_x + 8, row_y + 8), 1)
-        if hsh % 4 == 0:                          # moss creeping over
-            pygame.draw.rect(surf, (52, 66, 44),
-                             (rx + (hsh % 17) + 4, ry + ((hsh // 5) % 17) + 4,
-                              5, 4))
-        pygame.draw.line(surf, (54, 34, 22),
-                         (rx, ry + TILE // 2),
-                         (rx + TILE, ry + TILE // 2), 1)
+        # Drawn by the unified gabled-roof pass (_draw_scene_roofs), not
+        # per tile -- one overhanging roof per building instead of a flat
+        # grid of shingle tiles. Nothing to do here.
+        pass
 
 
 def draw_floor(surf, ch, rx, ry, tx, ty):
@@ -879,6 +854,98 @@ def _draw_building_eaves(surf, scene, cam_x, cam_y, x0, y0, x1, y1):
                 pygame.draw.rect(surf, eave, (rx + TILE, ry, d, TILE))
 
 
+def _build_roof_regions(scene):
+    """Flood-fill the roof ('r') tiles into one region per building and
+    cache each region's tile bounding box on the scene. Roof layout is
+    static after build, so this runs once. Each region -> one gabled
+    roof drawn over its footprint."""
+    regions = getattr(scene, "_roof_regions", None)
+    if regions is not None:
+        return regions
+    objs, h, w = scene.objects, scene.h, scene.w
+    seen = [[False] * w for _ in range(h)]
+    regions = []
+    for ty in range(h):
+        for tx in range(w):
+            if objs[ty][tx] != "r" or seen[ty][tx]:
+                continue
+            stack = [(tx, ty)]
+            seen[ty][tx] = True
+            minx = maxx = tx
+            miny = maxy = ty
+            while stack:
+                cx, cy = stack.pop()
+                minx = min(minx, cx); maxx = max(maxx, cx)
+                miny = min(miny, cy); maxy = max(maxy, cy)
+                for ax, ay in ((cx + 1, cy), (cx - 1, cy),
+                               (cx, cy + 1), (cx, cy - 1)):
+                    if (0 <= ax < w and 0 <= ay < h
+                            and not seen[ay][ax] and objs[ay][ax] == "r"):
+                        seen[ay][ax] = True
+                        stack.append((ax, ay))
+            regions.append((minx, miny, maxx, maxy))
+    scene._roof_regions = regions
+    return regions
+
+
+def _draw_gable_roof(surf, region, cam_x, cam_y):
+    """One overhanging gabled roof over a building footprint: rounded
+    corners, two pitched slopes split at a sagging ridge, deep eaves on
+    the back + sides (it spills past the walls, so the silhouette is the
+    roof, not the tile rectangle), shingle courses, blown-out holes to
+    the joists, moss, and a crooked chimney. The FRONT (south) edge
+    stops at the top of the south wall so the door stays visible under
+    the eave."""
+    minx, miny, maxx, maxy = region
+    rng = random.Random((minx * 73856093) ^ (maxy * 19349663))
+    E = 9                                            # eave overhang
+    L = (minx - 1) * TILE - cam_x - E
+    R = (maxx + 2) * TILE - cam_x + E
+    T = (miny - 1) * TILE - cam_y - E
+    Bf = (maxy + 1) * TILE - cam_y + 5               # front eave lip, door stays clear
+    Wd, Hd = R - L, Bf - T
+    if Wd < 8 or Hd < 8:
+        return
+    # Ground drop-shadow so the roof has height + overhangs onto the yard.
+    sh = pygame.Surface((Wd + 16, Hd + 18), pygame.SRCALPHA)
+    pygame.draw.rect(sh, (0, 0, 0, 96), (8, 14, Wd, Hd), border_radius=11)
+    surf.blit(sh, (L - 8, T - 7))
+    pygame.draw.rect(surf, (92, 60, 42), (L, T, Wd, Hd), border_radius=10)
+    ridge_y = T + int(Hd * 0.42)
+    pygame.draw.rect(surf, (124, 86, 58), (L + 2, T + 2, Wd - 4, ridge_y - T - 2),
+                     border_top_left_radius=9, border_top_right_radius=9)
+    pygame.draw.rect(surf, (74, 48, 33), (L + 2, ridge_y, Wd - 4, Bf - ridge_y - 2),
+                     border_bottom_left_radius=9, border_bottom_right_radius=9)
+    for yy in range(T + 5, ridge_y - 1, 5):          # shingle courses, lit slope
+        pygame.draw.line(surf, (104, 72, 48), (L + 5, yy), (R - 5, yy), 1)
+    for yy in range(ridge_y + 4, Bf - 3, 5):         # shingle courses, shaded slope
+        pygame.draw.line(surf, (60, 39, 27), (L + 5, yy), (R - 5, yy), 1)
+    sag = max(2, Wd // 22)                            # ridge beam, sagging in the middle
+    mid_x = (L + R) // 2
+    pygame.draw.lines(surf, (44, 28, 19), False,
+                      [(L + 4, ridge_y), (mid_x, ridge_y + sag), (R - 4, ridge_y)], 2)
+    for _ in range(max(1, (Wd * Hd) // 1700)):       # blown-out shingles -> joists
+        hx = L + rng.randint(5, max(6, Wd - 9))
+        hy = T + rng.randint(5, max(6, Hd - 8))
+        pygame.draw.rect(surf, (30, 23, 19), (hx, hy, rng.randint(4, 7), 4))
+    for _ in range(max(1, (Wd * Hd) // 2000)):       # moss
+        mx = L + rng.randint(4, max(5, Wd - 6))
+        my = T + rng.randint(4, max(5, Hd - 6))
+        pygame.draw.circle(surf, (56, 70, 46), (mx, my), 2)
+    chx, chy = R - 18, T + 6                          # crooked chimney
+    pygame.draw.rect(surf, (58, 40, 36), (chx, chy, 10, 13))
+    pygame.draw.rect(surf, (30, 22, 20), (chx, chy, 10, 13), 1)
+    pygame.draw.rect(surf, (40, 30, 28), (chx + 1, chy - 2, 8, 2))
+
+
+def _draw_scene_roofs(surf, scene, cam_x, cam_y, x0, y0, x1, y1):
+    for region in _build_roof_regions(scene):
+        minx, miny, maxx, maxy = region
+        if maxx + 2 < x0 or minx - 2 > x1 or maxy + 2 < y0 or miny - 2 > y1:
+            continue
+        _draw_gable_roof(surf, region, cam_x, cam_y)
+
+
 def _door_room_dir(scene, tx, ty):
     """Which way the door opens -- the floor (room) side its leaf swings
     into. Off-map edges don't count as wall, so a building's south-edge
@@ -1027,7 +1094,6 @@ def draw_scene_terrain(surf, scene, cam_x, cam_y, x0, y0, x1, y1):
                 surf.blit(strip, (tx * TILE - cam_x,
                                   (ty + 1) * TILE - cam_y))
     _draw_wall_mass(surf, scene, cam_x, cam_y, x0, y0, x1, y1)
-    _draw_building_eaves(surf, scene, cam_x, cam_y, x0, y0, x1, y1)
     for ty in range(y0, y1):
         for tx in range(x0, x1):
             ch = scene.objects[ty][tx]
@@ -1039,6 +1105,9 @@ def draw_scene_terrain(surf, scene, cam_x, cam_y, x0, y0, x1, y1):
                 _draw_door_opening(surf, rx, ry, _door_room_dir(scene, tx, ty))
             else:
                 draw_object(surf, ch, rx, ry, tx, ty)
+    # Unified gabled roofs, drawn over the walls so each building reads
+    # as one overhanging roof (door stays visible under the front eave).
+    _draw_scene_roofs(surf, scene, cam_x, cam_y, x0, y0, x1, y1)
 
 
 def draw_scene_doors(surf, scene, cam_x, cam_y, x0, y0, x1, y1):
