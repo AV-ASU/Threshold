@@ -191,18 +191,6 @@ def build_void_boss():
     # Tag the scene as the clearing for the flashback / patrol systems.
     sc.is_clearing = True
 
-    # Cauldron is only lit at dusk + night -- the cult lights the
-    # fire to signal the rite is active. During morning/afternoon
-    # the pot is cold and the clearing reads as abandoned. Pure
-    # day-phase gating; flips on every scene entry.
-    def _void_boss_on_enter(game, scene):
-        phase = game.save.arg("day_phase", "afternoon")
-        lit = phase in ("dusk", "night")
-        for d in scene.decorations:
-            if d.kind == "cauldron":
-                d.kwargs["lit"] = lit
-    sc.on_enter_fn = _void_boss_on_enter
-
     cauldron_x, cauldron_y = 9 * TILE + 16, 7 * TILE + 16
     def _void_boss_interact(game):
         px, py = game.player.x, game.player.y

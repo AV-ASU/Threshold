@@ -852,16 +852,9 @@ def build_bell_tower():
         if game.save.flag("bell_tower_seen"):
             return
         game.save.set_flag("bell_tower_seen", True)
-        phase = game.save.arg("day_phase", "afternoon")
         # First visit: a single evidence beat from the lookout.
-        # Content varies by phase -- night reveals the most.
-        beat = {
-            "morning":  "From the bell tower the town is small.",
-            "afternoon": "From the bell tower the town is small.",
-            "dusk":     "From the bell tower the town is small.",
-            "night":    "From the bell tower the town is small.",
-        }.get(phase, "From the bell tower the town is small.")
-        _evidence(game, "bell_tower_view", beat)
+        _evidence(game, "bell_tower_view",
+                  "From the bell tower the town is small.")
     sc.on_enter_fn = _bell_tower_on_enter
     return sc
 

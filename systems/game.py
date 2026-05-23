@@ -1000,8 +1000,7 @@ class Game:
         # and the player is pressed up against a facade door ('l') or a
         # locked-house door ('z'), give them a LISTEN beat -- press
         # your ear to the door and hear what's on the other side.
-        # The line varies by scene + day_phase so the world feels
-        # reactive across days. Checks the four cardinal-adjacent
+        # The line varies by scene. Checks the four cardinal-adjacent
         # tiles within ~1.5 tiles.
         sc = self.scene
         for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
@@ -1338,15 +1337,12 @@ class Game:
         return surfaces
 
     def _draw_apex_overlay(self):
-        """Apex-tier rendering: when Pursuer proximity hits >= 0.95,
+        """Apex-tier rendering: when visibility hits >= 0.95,
         the world goes wrong. Heavy red wash across the whole screen
-        (interiors and exteriors alike, unlike _draw_dusk_tint which
-        only touches OUTDOOR_SCENES); the screen edges crush in
+        (interiors and exteriors alike); the screen edges crush in
         with a hard black vignette so the player's view narrows;
         the overlay pulses on a slow sine so the dread reads as
-        active, not static. Cheap: two SRCALPHA blits per frame.
-        Always runs above the dusk tint so the apex state is
-        visually distinct from regular high-proximity unease."""
+        active, not static. Cheap: two SRCALPHA blits per frame."""
         if self.scene is None or self.player is None:
             return
         if self.visibility < 0.95:
@@ -1438,31 +1434,22 @@ class Game:
         fall back to a heavy darkness overlay with only a small
         clear circle around the player.
 
-        'Dark' is two cases: any scene in DARK_SCENES (interiors
-        always dark), OR an OUTDOOR_SCENES scene at dusk/night
-        phase. This means the flashlight is useful at night
-        anywhere outside, not just in the basement -- previously
-        the cone never drew outside DARK_SCENES, so players who
-        toggled the light outdoors saw no effect."""
+        'Dark' means any scene in DARK_SCENES (interiors and
+        underground are always dark); outdoor scenes are never
+        dark, so the overlay only draws inside DARK_SCENES."""
         if self.scene is None or self.player is None:
             return
-        # No day/night cycle: the flashlight only matters in the dark
-        # interiors / underground scenes. Outdoor scenes are never dark.
-        is_outdoor_dark = False
+        # The flashlight only matters in the dark interiors / under-
+        # ground scenes; outdoor scenes are never dark.
         if self.scene.key not in DARK_SCENES:
             return
         has_light = (self.player.inventory.has("flashlight")
                      and self.player.flashlight_on
                      and self.player.battery_charge > 0)
         # Build a dark overlay with a clear cone for the flashlight, or
-        # a small clear circle for unlit baseline. Outdoor-dusk uses
-        # a softer ceiling than full interior dark -- moonlight, not
-        # cellar.
+        # a small clear circle for unlit baseline.
         overlay = pygame.Surface((SCREEN_W, SCREEN_H), pygame.SRCALPHA)
-        if is_outdoor_dark and self.scene.key not in DARK_SCENES:
-            base_alpha = 130 if has_light else 160
-        else:
-            base_alpha = 200 if not has_light else 170
+        base_alpha = 200 if not has_light else 170
         overlay.fill((0, 0, 0, base_alpha))
         psx = int(self.player.x - self.cam_x)
         psy = int(self.player.y - self.cam_y)
