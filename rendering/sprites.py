@@ -728,16 +728,29 @@ def _draw_king(surf, x, y, facing, t, birth, gait):
             _pg.draw.lines(layer, tar, False, ipts, 3)
             _pg.draw.lines(layer, tar_hi, False, ipts, 1)
 
-    # ---- golden eyes: the only colour, igniting late ----
+    # ---- a mass of golden eyes wreathing the tar (the original King's
+    # signature, merged in): the head pair anchors it, the rest scatter
+    # over the body, each blinking on its own cycle so they are never
+    # all open at once. Gold is the only colour. Pupils track the player.
     if eyeon > 0:
         glow = _pg.Surface((LW, LH), _pg.SRCALPHA)
-        eyes = [(hx - 3, head_y - 1), (hx + 3, head_y - 1),
-                (cx - 5, sh_y + 7), (cx + 6, hip_y - 4)]
-        for j, (gx, gy) in enumerate(eyes):
-            r = 4 if j < 2 else 3
+        eyes = [
+            (hx - 3, head_y - 1, 2), (hx + 3, head_y - 1, 2),
+            (hx, head_y + 3, 1),
+            (cx - 6, sh_y + 4, 1), (cx + 5, sh_y + 6, 1),
+            (cx - 3, sh_y + 9, 1), (cx + 4, sh_y + 11, 1),
+            (cx - 7, hip_y - 6, 1), (cx + 7, hip_y - 7, 1),
+            (cx - 1, hip_y - 2, 1), (cx + 2, sh_y + 2, 1),
+        ]
+        for j, (gx, gy, r) in enumerate(eyes):
+            if (t * 1.3 + j * 0.7) % 4.0 < 0.3:
+                continue                            # this eye is shut
             _pg.draw.circle(glow, (gold[0], gold[1], gold[2], int(70 * eyeon)),
-                            (gx, gy), r)
-            _pg.draw.circle(layer, goldg, (gx, gy), max(1, int((2 if j < 2 else 1) * eyeon)))
+                            (gx, gy), r + 2)
+            _pg.draw.circle(layer, goldg, (gx, gy), max(1, int(r * eyeon)))
+            if r >= 2:                              # pupils on the head pair
+                _pg.draw.circle(layer, (10, 8, 0),
+                                (gx + int(fx), gy + int(fy)), 1)
         layer.blit(glow, (0, 0), special_flags=_pg.BLEND_RGBA_ADD)
 
     # ---- birth: the cult member it erupts from (fades out early) ----
@@ -769,4 +782,12 @@ def _draw_king(surf, x, y, facing, t, birth, gait):
                         (cxr, cyr), int(8 + sp * 10))
         layer.blit(gl, (0, 0), special_flags=_pg.BLEND_RGBA_ADD)
 
+    # ---- phase in and out of being (the original King's apparition
+    # quality, merged in) -- only once born; the eruption stays solid.
+    # Softened from the original so a hunting King never fully vanishes.
+    if born:
+        ph = 0.6 + 0.4 * math.sin(t * 1.7)
+        if math.sin(t * 1.7) < -0.8:
+            ph *= 0.4
+        layer.set_alpha(max(45, int(255 * ph)))
     surf.blit(layer, (x - ox, y - oy))
