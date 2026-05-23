@@ -679,38 +679,54 @@ def _draw_king(surf, x, y, facing, t, birth, gait):
                                        (foot_x + 2, foot_y + 2), (foot_x - 2, foot_y + 2)])
         _pg.draw.line(layer, bone_lo, (foot_x, foot_y - 1), (foot_x, foot_y + 2), 1)
 
-    # ---- torso: hunched tar mass ----
+    # ---- body: a large, lumpy TUMOUR mass (no clean deer line) ----
+    # Overlapping tar blobs of varied size give a ragged, writhing
+    # silhouette; each lump pulses a little so the mass reads cancerous
+    # and alive rather than as a clean animal. Built up from the hips
+    # and scaled in by `rise`.
     cx = ox + lunge
-    sh_y = hip_y - int(18 * rise)
-    torso = [(cx - 9, sh_y), (cx + 9, sh_y), (cx + 11, hip_y + 2), (cx - 11, hip_y + 2)]
-    _pg.draw.polygon(layer, tar, torso)
-    _pg.draw.polygon(layer, tar_lo, torso, 1)
-    _pg.draw.line(layer, tar_hi, (cx - 5, sh_y + 3), (cx - 7, hip_y - 2), 2)
-    # ribs showing through the tar
-    if rise > 0.4:
-        for r in range(3):
-            ry = sh_y + 5 + r * 5
-            _pg.draw.arc(layer, bone_lo, (cx - 8, ry - 3, 16, 9), math.pi, math.tau, 1)
+    lumps = [   # (dx, dy, radius) relative to (cx, hip_y); dy<0 is up
+        (0, -2, 12), (-8, -5, 8), (9, -7, 8),
+        (-4, -13, 10), (7, -15, 8), (-10, -17, 6),
+        (3, -22, 9), (-6, -26, 7), (8, -27, 6),
+        (-2, -32, 7), (5, -35, 5), (-7, -34, 4),
+    ]
+    drawn = []
+    for i, (dx, dy, br) in enumerate(lumps):
+        lx_ = cx + int(dx * rise)
+        ly_ = hip_y + int(dy * rise)
+        r = max(1, int((br + math.sin(t * 2.2 + i * 0.9)) * rise))
+        drawn.append((lx_, ly_, r))
+        _pg.draw.circle(layer, tar, (lx_, ly_), r)
+    for i, (lx_, ly_, r) in enumerate(drawn):   # seams + wet highlights
+        if r >= 4:
+            _pg.draw.circle(layer, tar_lo, (lx_, ly_), r, 1)
+        if i % 3 == 0 and r >= 4:
+            _pg.draw.circle(layer, tar_hi, (lx_ - r // 3, ly_ - r // 3),
+                            max(1, r // 4))
+    top_y = hip_y + int(-35 * rise)
+    mid_y = hip_y + int(-16 * rise)
 
-    # ---- head + antlers ----
-    head_y = sh_y - int(8 * ss((b - 0.5) / 0.5)) - 5
-    hx = cx + lunge // 2
-    _pg.draw.ellipse(layer, tar, (hx - 6, head_y - 7, 12, 16))
-    _pg.draw.ellipse(layer, tar_lo, (hx - 6, head_y - 7, 12, 16), 1)
-    _pg.draw.polygon(layer, tar, [(hx - 3, head_y + 7), (hx + 3, head_y + 7),
-                                  (hx + fsign * 4, head_y + 11)])
-    al = int(16 * antl)
-    for s in (-1, 1):
-        bx0, by0 = hx + s * 4, head_y - 5
-        tipx, tipy = bx0 + s * int(7 * antl), by0 - al
-        _pg.draw.line(layer, bone, (bx0, by0), (tipx, tipy), 2)
-        _pg.draw.line(layer, bone, (bx0 + s * int(4 * antl), by0 - al // 2),
-                      (bx0 + s * int(10 * antl), by0 - al // 2 - int(4 * antl)), 1)
-        _pg.draw.line(layer, bone, (tipx, tipy),
-                      (tipx + s * int(5 * antl), tipy - int(4 * antl)), 1)
+    # ---- antlers: asymmetric and broken, jutting from the top lumps;
+    # a short forked stub on the left, a longer crooked rack on the
+    # right, so the silhouette never settles into a clean stag. ----
+    al = int(15 * antl)
+    if al > 0:
+        lx0, ly0 = cx - 5, top_y + 2
+        _pg.draw.line(layer, bone, (lx0, ly0), (lx0 - int(5 * antl), ly0 - al), 2)
+        _pg.draw.line(layer, bone, (lx0 - int(2 * antl), ly0 - al // 2),
+                      (lx0 - int(9 * antl), ly0 - al // 2 - int(3 * antl)), 1)
+        rx0, ry0 = cx + 4, top_y
+        rtx, rty = rx0 + int(9 * antl), ry0 - int(al * 1.4)
+        _pg.draw.line(layer, bone, (rx0, ry0), (rx0 + int(3 * antl), ry0 - al), 2)
+        _pg.draw.line(layer, bone, (rx0 + int(3 * antl), ry0 - al), (rtx, rty), 2)
+        _pg.draw.line(layer, bone, (rx0 + int(3 * antl), ry0 - al),
+                      (rx0 + int(12 * antl), ry0 - al - int(2 * antl)), 1)
+        _pg.draw.line(layer, bone, (rtx, rty), (rtx + int(4 * antl), rty - int(5 * antl)), 1)
+        _pg.draw.line(layer, bone, (rtx, rty), (rtx - int(3 * antl), rty - int(4 * antl)), 1)
 
     # ---- tentacles uncoiling from the shoulders, writhing upward ----
-    anchor = (cx - fsign * 3, sh_y + 2)
+    anchor = (cx - fsign * 3, mid_y)
     for i in range(4):
         base_ang = -math.pi / 2 + (i - 1.5) * 0.5
         length = (13 + (i % 2) * 6) * teng
@@ -734,15 +750,13 @@ def _draw_king(surf, x, y, facing, t, birth, gait):
     # all open at once. Gold is the only colour. Pupils track the player.
     if eyeon > 0:
         glow = _pg.Surface((LW, LH), _pg.SRCALPHA)
-        eyes = [
-            (hx - 3, head_y - 1, 2), (hx + 3, head_y - 1, 2),
-            (hx, head_y + 3, 1),
-            (cx - 6, sh_y + 4, 1), (cx + 5, sh_y + 6, 1),
-            (cx - 3, sh_y + 9, 1), (cx + 4, sh_y + 11, 1),
-            (cx - 7, hip_y - 6, 1), (cx + 7, hip_y - 7, 1),
-            (cx - 1, hip_y - 2, 1), (cx + 2, sh_y + 2, 1),
-        ]
-        for j, (gx, gy, r) in enumerate(eyes):
+        # A pair near the top of the mass anchors the "face"; the rest
+        # open inside the larger tumours, scattered and out of sync.
+        eye_specs = [(cx - 3, top_y + 6, 2), (cx + 4, top_y + 5, 2)]
+        for i, (lx_, ly_, r) in enumerate(drawn):
+            if r >= 5 and i % 2 == 1:
+                eye_specs.append((lx_, ly_, 1))
+        for j, (gx, gy, r) in enumerate(eye_specs):
             if (t * 1.3 + j * 0.7) % 4.0 < 0.3:
                 continue                            # this eye is shut
             _pg.draw.circle(glow, (gold[0], gold[1], gold[2], int(70 * eyeon)),
