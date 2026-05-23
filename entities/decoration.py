@@ -513,6 +513,39 @@ class Decoration:
         except (IndexError, ValueError):
             pass
 
+    def _draw_mist(self, surf, x, y):
+        """Low ground fog -- soft translucent pools that breathe and
+        slide on the wind. Sized via kwargs w/h; laid over the water and
+        the marsh so the fog clings to the wet ground."""
+        ww = self.kwargs.get("w", 96)
+        hh = self.kwargs.get("h", 48)
+        drift = int(math.sin(self.t * 0.18 + self.seed) * 10)
+        breath = 1.0 + math.sin(self.t * 0.25 + self.seed * 0.5) * 0.12
+        pad = 30
+        fog = pygame.Surface((ww + pad * 2, hh + pad * 2), pygame.SRCALPHA)
+        rng = random.Random(self.seed)
+        for _ in range(5):
+            ew = int(rng.randint(ww // 2, ww) * breath)
+            eh = int(rng.randint(hh // 2, hh) * breath)
+            ox = pad + rng.randint(-ww // 4, ww // 4) + (ww - ew) // 2
+            oy = pad + rng.randint(-hh // 4, hh // 4) + (hh - eh) // 2
+            pygame.draw.ellipse(fog, (150, 156, 162, 22), (ox, oy, ew, eh))
+        surf.blit(fog, (x - ww // 2 - pad + drift, y - hh // 2 - pad))
+
+    def _draw_wisp(self, surf, x, y):
+        """A will-o'-the-wisp -- a small cold pale glow drifting low over
+        the bog. Marsh gas, or something out there carrying a light."""
+        cx = int(x + math.sin(self.t * 0.5 + self.seed) * 14)
+        cy = int(y + math.cos(self.t * 0.37 + self.seed * 0.6) * 8)
+        glow = pygame.Surface((22, 22), pygame.SRCALPHA)
+        pygame.draw.circle(glow, (110, 168, 146, 38), (11, 11), 10)
+        pygame.draw.circle(glow, (150, 200, 174, 70), (11, 11), 5)
+        surf.blit(glow, (cx - 11, cy - 11))
+        try:
+            surf.set_at((cx, cy), (210, 235, 220))
+        except (IndexError, ValueError):
+            pass
+
     def _draw_terminal(self, surf, x, y):
         pygame.draw.rect(surf, (10, 12, 14), (x - 12, y - 10, 24, 20))
         pygame.draw.rect(surf, (40, 40, 50), (x - 12, y - 10, 24, 20), 1)

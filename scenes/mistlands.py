@@ -620,6 +620,21 @@ def build_mistlands():
                     ex * TILE + weeds.randint(-4, 28),
                     ey * TILE + weeds.randint(-2, 28), "grass_tuft"))
 
+    # ---- Mist + marsh wisps ----
+    # Low fog clinging to the water and pooling over the marsh, and cold
+    # will-o'-wisps drifting the bog -- the "mist" the lands are named
+    # for, localized over the wet ground beneath the global haze.
+    for (mtx, mty, mw, mh) in [(33, 36, 90, 64), (33, 58, 90, 72),
+                               (33, 80, 90, 64),          # along the river
+                               (21, 52, 112, 72), (45, 36, 104, 64),
+                               (27, 89, 120, 72), (69, 87, 112, 72),
+                               (50, 65, 104, 64)]:         # over the marsh
+        sc.add_decoration(Decoration(mtx * TILE + 16, mty * TILE + 16,
+                                     "mist", w=mw, h=mh))
+    for (wtx, wty) in [(20, 53), (23, 50), (46, 37), (28, 90),
+                       (70, 88), (50, 66)]:
+        sc.add_decoration(Decoration(wtx * TILE + 16, wty * TILE + 16, "wisp"))
+
     # Hide spots colocated with VISIBLE cover so the prompt always
     # matches what the player can see. Each entry sits on top of a
     # grass-tuft / watching-eye / dead-tree decoration on the east
