@@ -392,15 +392,32 @@ class Decoration:
             pygame.draw.line(surf, col, (x - 6, y + i * 2 + wy), (x + 6, y + i * 2 + wy), 2)
 
     def _draw_well(self, surf, x, y):
-        # Stone rim
-        pygame.draw.ellipse(surf, (90, 90, 100), (x - 14, y - 4, 28, 14))
-        pygame.draw.ellipse(surf, (60, 60, 70), (x - 14, y - 4, 28, 14), 2)
-        # Dark interior shaft -- the well reads as bottomless without water.
-        pygame.draw.ellipse(surf, (8, 6, 12), (x - 10, y - 1, 20, 8))
-        # Wooden frame (posts + crossbar)
-        pygame.draw.line(surf, (90, 60, 40), (x - 12, y - 4), (x - 12, y - 18), 2)
-        pygame.draw.line(surf, (90, 60, 40), (x + 12, y - 4), (x + 12, y - 18), 2)
-        pygame.draw.line(surf, (90, 60, 40), (x - 14, y - 18), (x + 14, y - 18), 2)
+        # Redesign: a fuller, ominous wellhead -- the ONLY way down into
+        # the Works. Mossy ring of fitted stones, a bottomless black
+        # shaft, a winch frame, and the rope that descends into the dark.
+        # Outer stone ring (3/4 top-down ellipse)
+        pygame.draw.ellipse(surf, (78, 78, 88), (x - 18, y - 8, 36, 22))
+        pygame.draw.ellipse(surf, (54, 54, 64), (x - 18, y - 8, 36, 22), 2)
+        # Fitted stones around the rim
+        for i in range(8):
+            ang = i / 8 * math.tau
+            sx = x + int(math.cos(ang) * 15)
+            sy = y + 3 + int(math.sin(ang) * 8)
+            pygame.draw.rect(surf, (96, 96, 106), (sx - 2, sy - 2, 4, 4))
+            pygame.draw.rect(surf, (50, 50, 60), (sx - 2, sy - 2, 4, 4), 1)
+        # Moss creeping the near rim
+        pygame.draw.arc(surf, (54, 86, 54), (x - 16, y + 1, 32, 15), 3.5, 6.0, 2)
+        # Bottomless shaft -- no water, just dark that keeps going
+        pygame.draw.ellipse(surf, (10, 8, 14), (x - 12, y - 3, 24, 14))
+        pygame.draw.ellipse(surf, (2, 2, 4), (x - 8, y - 1, 16, 9))
+        # Winch frame: two posts + crossbar on the north side
+        pygame.draw.line(surf, (84, 56, 36), (x - 13, y - 6), (x - 13, y - 22), 3)
+        pygame.draw.line(surf, (84, 56, 36), (x + 13, y - 6), (x + 13, y - 22), 3)
+        pygame.draw.line(surf, (70, 46, 28), (x - 15, y - 22), (x + 15, y - 22), 3)
+        # Winch drum on the crossbar
+        pygame.draw.rect(surf, (60, 40, 24), (x - 6, y - 24, 12, 4))
+        # The rope -- from the drum straight down into the shaft
+        pygame.draw.line(surf, (150, 130, 90), (x, y - 22), (x, y + 3), 1)
 
     def _draw_radio(self, surf, x, y):
         pygame.draw.rect(surf, (90, 60, 40), (x - 10, y - 4, 20, 12))

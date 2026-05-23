@@ -191,20 +191,34 @@ Only display names and fiction change.
 
 ---
 
-## 9. The Basement Level (redesign — in progress)
+## 9. The Basement Level — "The Works" (built)
 
-The first underground stratum, reached *only* by the rope down the well.
-The whole layer is being redesigned from scratch.
+The cult's underground labour, reached *only* by the rope down the
+village well. A seven-room stealth gauntlet, descending. Built in
+`scenes/well.py`; all rooms are `DARK_SCENES` (flashlight works, but the
+cultists' gaze still finds you — run it on cover, timing, hides).
 
-**Locked constraints:**
-- **One entrance:** rope down the village well. No other route, no
-  secret paths.
-- **Exit deeper is orb-gated:** you need the **orb** to descend from
-  here to the Depths.
-- **No bodies** carried over from the old fiction.
-- Currently occupies the `well_bottom` / `well_passage` /
-  `symbol_portal_room` (cult chamber) scenes — all up for redesign.
+| # | Room | Key | Contents |
+|---|---|---|---|
+| 1 | The Shaft Floor | `well_bottom` | Rope landing + the ladder back up. Quiet airlock, 1 hide. |
+| 2 | The Drying Racks | `well_passage` | Rack-maze, 1 patrolling cultist, 2 hides. |
+| 3 | The Tallow Vats | `works_vats` | Steaming vats, 2 tending cultists, 2 hides. |
+| 4 | The Sorting Hall | `works_sorting` | Belongings of the vanished, 2 cultists, 3 hides (hardest crossing). |
+| 5 | The Scriptorium | `works_scriptorium` | The Sign copied endlessly, 1 oblivious scribe, 2 hides. |
+| 6 | The Sign Chamber | `works_sign` | The Sign + 3 kneelers + 1 patrol. **Rubbing → `sigil_rubbing` + evidence #5** (needs charcoal). |
+| 7 | The Deep Stair | `works_deepstair` | The **orb-gate**: place the orb → opens to `depths_antechamber`. |
 
-**TBD:** purpose and feel of the layer, layout, what's down here, the
-Sign-rubbing placement (evidence #5), enemy spawns, hiding, and exactly
-where the orb-gate sits.
+**Rules wired:**
+- **One mouth:** rope down the well only; the barn cellar hatch is now
+  sealed (`scenes/interiors.py`). The tied rope persists as a two-way
+  climb until it breaks.
+- **Point of no return:** descend carrying the **orb** and the rope
+  **snaps** (`well_bottom` on_enter sets `well_rope_broken`) — the
+  ladder up is dead; only deeper remains.
+- **Orb-gate:** Room 7 consumes the orb to open the stair to the Depths
+  (sets `deepstair_open`).
+- The well sprite was redesigned and repositioned in `village` (col 16,
+  row 11 — a landmark just off the road).
+
+**Note:** `symbol_portal_room` (old cult chamber) is now unreachable but
+stays registered for old saves.

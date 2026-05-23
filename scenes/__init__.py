@@ -13,7 +13,10 @@ from .house import (build_bedroom, build_house, build_basement,
 from .our_house_area import build_our_house_area, build_woodshed
 from .village import build_village
 from .forest_path import build_forest_path
-from .well import build_well_bottom, build_well_passage
+from .well import (build_well_bottom, build_well_passage,
+                   build_works_vats, build_works_sorting,
+                   build_works_scriptorium, build_works_sign,
+                   build_works_deepstair)
 from .depths import (build_depths_antechamber, build_depths_procession,
                      build_depths_hall, build_depths_threshing,
                      build_depths_stair, build_dark, build_threshold)
@@ -87,9 +90,15 @@ SCENE_BUILDERS = {
     "forest_path":        build_forest_path,        # -> cornfield_path
     "void_boss":          build_void_boss,          # -> clearing
     "barn":               build_barn,
-    # The well & lower chambers
-    "well_bottom":        build_well_bottom,
-    "well_passage":       build_well_passage,
+    # The Works -- the Basement Level. Seven rooms, well is the sole
+    # entrance (rope down); the orb gates the way deeper to the Depths.
+    "well_bottom":        build_well_bottom,        # the Shaft Floor
+    "well_passage":       build_well_passage,       # the Drying Racks
+    "works_vats":         build_works_vats,
+    "works_sorting":      build_works_sorting,
+    "works_scriptorium":  build_works_scriptorium,
+    "works_sign":         build_works_sign,         # the Sign (evidence #5)
+    "works_deepstair":    build_works_deepstair,    # orb-gate -> Depths
     # The depths -- five rooms, one-way fall from well_bottom
     "depths_antechamber": build_depths_antechamber,
     "depths_procession":  build_depths_procession,

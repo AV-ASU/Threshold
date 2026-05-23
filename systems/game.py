@@ -122,6 +122,8 @@ OUTDOOR_SCENES = {"our_house_area", "village", "forest_path",
 # dimmed with a small clear circle around the player. With it,
 # the dimness lifts to a wider cone in the facing direction.
 DARK_SCENES = {"basement", "well_passage", "well_bottom",
+               "works_vats", "works_sorting", "works_scriptorium",
+               "works_sign", "works_deepstair",
                "symbol_portal_room", "haunted_house",
                "depths_antechamber", "depths_procession",
                "depths_hall", "depths_threshing", "depths_stair",
