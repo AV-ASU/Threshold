@@ -531,6 +531,7 @@ _YK_PARTS = []                       # particle wake: dicts x,y,vx,vy,age,life,r
 _YK_LAST = [0.0]                     # last draw time (for particle dt)
 _YK_ACC = [0.0]                      # distance accumulator (spaces shed orbs)
 _YK_AIM = [None]                     # smoothed arm-aim angle (swivels to player)
+_YK_BORN = [None]                    # time it last tore into being (birth clock)
 _YK_PRNG = random.Random(99)         # own RNG -> never touches the game's stream
 _YK_T1, _YK_T2, _YK_T3, _YK_T4 = (140, 96, 22), (196, 150, 42), (236, 198, 66), (252, 226, 120)
 _YK_GOLD, _YK_HOT = (236, 204, 64), (252, 226, 120)
@@ -680,6 +681,24 @@ def _yk_orb(surf, cx, cy, r, vis, seed, t):
                  max(3, int(r * 0.44)), vis * 0.9, kinds[(seed + k) % 4])
 
 
+def _yk_birth_rift(surf, cx, cy, R, bp):
+    """The birth: space tears open. A vertical gold rift cracks wide and flares
+    white-hot in the first half (bp<0.5), then fattens and seals into the body
+    forming inside it in the second half."""
+    opening = math.sin(min(1.0, bp / 0.5) * 1.5708)     # 0..1, grows then holds
+    seal = max(0.0, (bp - 0.5) / 0.5)                    # 0..1 in the back half
+    h = R * (0.5 + 2.7 * opening) * (1 - 0.55 * seal)
+    n = max(3, int(h / 4))
+    for i in range(n):
+        f = i / (n - 1)
+        yy = cy - h + 2 * h * f
+        rr = (R * 0.14 + R * 0.55 * seal) * (0.4 + 0.6 * math.sin(f * math.pi))
+        _yk_radial(surf, cx, yy, max(2, int(rr)), _YK_T4, int(118 * (1 - 0.4 * seal)))
+    flare = max(0.0, 1.0 - abs(bp - 0.28) / 0.28)        # white flash peaks early
+    if flare > 0:
+        _yk_radial(surf, cx, cy, int(R * (0.4 + 0.95 * flare)), (255, 250, 232), int(100 * flare))
+
+
 def _yk_arm(layer, cx, cy, ang, length, R, t, idx):
     """A broken arm that spawns from the body and reaches out of the light:
     it extends outward then draws back on its own cycle, reflex elbow,
@@ -728,6 +747,7 @@ def _draw_yellow_king(surf, x, y, facing):
     _YK_LAST[0] = t
     if dt <= 0 or dt > 0.2:
         dt = 0.016
+    fresh = not _YK_TRAIL                         # first frame ever
     if _YK_TRAIL:
         px, py, pt = _YK_TRAIL[-1]
         if (mcx - px) ** 2 + (mcy - py) ** 2 > 70 ** 2 or (t - pt) > 0.45:
@@ -735,9 +755,32 @@ def _draw_yellow_king(surf, x, y, facing):
             _YK_PARTS.clear()
             _YK_ACC[0] = 0.0
             _YK_AIM[0] = None        # snap the swivel to the new spot on respawn
+            fresh = True             # it has torn into a new place -> re-birth
+    if fresh:
+        # BIRTH: it tears into the scene. Start the rift clock and vomit a
+        # burst of soul-orbs + sparks radially from the spawn point.
+        _YK_BORN[0] = t
+        for _ in range(14):
+            ang = _YK_PRNG.uniform(0, math.tau)
+            spd = _YK_PRNG.uniform(45, 120)
+            orb = _YK_PRNG.random() < 0.4
+            _YK_PARTS.append({
+                "kind": "orb" if orb else "mote", "seed": _YK_PRNG.randint(0, 999),
+                "x": mcx, "y": mcy,
+                "vx": math.cos(ang) * spd, "vy": math.sin(ang) * spd,
+                "age": 0.0, "life": _YK_PRNG.uniform(0.4, 0.8),
+                "r": _YK_PRNG.uniform(6, 12) if orb else _YK_PRNG.uniform(2, 4)})
     disp = math.hypot(mcx - _YK_TRAIL[-1][0], mcy - _YK_TRAIL[-1][1]) if _YK_TRAIL else 0.0
     _YK_TRAIL.append((mcx, mcy, t))
     _YK_TRAIL = _YK_TRAIL[-5:]
+    # Birth progress 0..1 (1 = fully born). The body eases in (grow); the arms
+    # hold back, then erupt in the back half (agrow); alpha ramps so the birth
+    # reads vivid rather than mid-phase.
+    bp = 1.0 if _YK_BORN[0] is None else min(1.0, (t - _YK_BORN[0]) / 0.9)
+    grow = bp * bp * (3 - 2 * bp)
+    ag = max(0.0, (bp - 0.4) / 0.6)
+    agrow = ag * ag * (3 - 2 * ag)
+    valpha = phase if bp >= 1.0 else max(phase, 0.35 + 0.65 * grow)
     tvx, tvy = (mcx - _YK_TRAIL[0][0], mcy - _YK_TRAIL[0][1])
     tl = math.hypot(tvx, tvy) or 1.0
     bvx, bvy = -tvx / tl, -tvy / tl              # backward (shed this way)
@@ -796,14 +839,16 @@ def _draw_yellow_king(surf, x, y, facing):
     _YK_AIM[0] += da_ * min(1.0, dt * 7.0)
     aa = _YK_AIM[0]
     fb = (math.cos(aa) * R * 0.22, math.sin(aa) * R * 0.22)   # mass leans toward the player
-    _yk_glow(layer, cx, cy, R, t)
+    if bp < 1.0:
+        _yk_birth_rift(surf, mcx, mcy, R, bp)     # space tears open as it's born
+    _yk_glow(layer, cx, cy, R * max(0.18, grow), t)
     # Masks swirl around the core, surfacing and dissolving in the light. The
     # melted 'double' masks stay submerged most of the time and POP UP briefly.
     for rn, ba, asp, fr, vsp, vph, kind in _YK_FACES:
         ang = ba + t * asp
         rr = rn * (0.9 + 0.1 * math.sin(t * 0.8 + vph))
-        fxp = cx + math.cos(ang) * R * 0.82 * rr + fb[0]
-        fyp = cy + math.sin(ang) * R * 0.95 * rr + fb[1]
+        fxp = cx + math.cos(ang) * R * 0.82 * rr * grow + fb[0]
+        fyp = cy + math.sin(ang) * R * 0.95 * rr * grow + fb[1]
         if kind == "double":
             vis = max(0.0, min(1.0, (math.sin(t * vsp + vph) - 0.55) / 0.4))
         else:
@@ -813,17 +858,19 @@ def _draw_yellow_king(surf, x, y, facing):
     for rn, ba, asp, ph in _YK_EYES:
         if math.sin(t * 2.1 + ph) > 0.1:
             ang = ba + t * asp
-            ex = cx + math.cos(ang) * R * 0.7 * rn + fb[0]
-            ey = cy + math.sin(ang) * R * 0.7 * rn + fb[1]
+            ex = cx + math.cos(ang) * R * 0.7 * rn * grow + fb[0]
+            ey = cy + math.sin(ang) * R * 0.7 * rn * grow + fb[1]
             _yk_radial(layer, ex, ey, 5, _YK_HOT, 110)
             pygame.draw.circle(layer, _YK_PIT, (int(ex), int(ey)), 1)
-    layer.set_alpha(int(255 * max(0.05, phase)))
+    layer.set_alpha(int(255 * max(0.05, valpha)))
     surf.blit(layer, (mcx - cx, mcy - cy))
     # Arms LAST, on their own layer blitted after the body -- so they reach out
     # on top of the wake particles and the glow alike, never washed behind them.
-    arml = pygame.Surface((L, L), pygame.SRCALPHA)
-    for idx, (da, ln) in enumerate([(0.0, R * 2.05), (0.45, R * 1.7), (-0.45, R * 1.7),
-                                    (0.95, R * 1.45), (-0.95, R * 1.45)]):
-        _yk_arm(arml, cx, cy, aa + da, ln, R, t, idx)
-    arml.set_alpha(int(255 * max(0.05, phase)))
-    surf.blit(arml, (mcx - cx, mcy - cy))
+    # During birth they hold back, then erupt outward (agrow).
+    if agrow > 0.02:
+        arml = pygame.Surface((L, L), pygame.SRCALPHA)
+        for idx, (da, ln) in enumerate([(0.0, R * 2.05), (0.45, R * 1.7), (-0.45, R * 1.7),
+                                        (0.95, R * 1.45), (-0.95, R * 1.45)]):
+            _yk_arm(arml, cx, cy, aa + da, ln * agrow, R * max(0.4, agrow), t, idx)
+        arml.set_alpha(int(255 * max(0.05, valpha)))
+        surf.blit(arml, (mcx - cx, mcy - cy))
