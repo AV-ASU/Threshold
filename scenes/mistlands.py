@@ -219,6 +219,16 @@ def build_mistlands():
     _stamp_building(objects_l, school_left, school_right,
                     school_top, school_bot, "B", school_door)
 
+    # Church graveyard -- two identical rows of headstones (R rocks, the
+    # same convention the standalone graveyard uses) on the open ground
+    # just south of the Church. The too-even spacing is the point:
+    # uncanny repetition, a row of the vanished. Rows 12 & 14 dodge the
+    # row-11 orb-shadow spawns; cols leave gaps so the player can walk in
+    # among them to the fresh grave at (7, 13).
+    for gy in (12, 14):
+        for gx in (4, 6, 8, 10):
+            objects_l[gy][gx] = "R"
+
     # ---- Worn dirt tracks ----
     # The townsfolk and the cult have beaten paths across the field over
     # the years, linking the village entry and the river bridge to the
@@ -448,6 +458,35 @@ def build_mistlands():
     sc.add_decoration(Decoration(95 * TILE + 16, 55 * TILE + 16, "pickup_truck"))
     sc.add_decoration(Decoration(72 * TILE + 16, 73 * TILE + 16, "place_setting"))
     sc.add_decoration(Decoration(73 * TILE + 16, 74 * TILE + 16, "overturned_chair"))
+
+    # ---- The Preacher -- evidence #4 ----
+    # They told you he left town. He's in the churchyard, barely under
+    # the dirt, among the too-even headstones. Walking in among the
+    # graves finds him and logs the evidence (the town murders the ones
+    # who talk to you). Canon beat from NARRATIVE.md s4.
+    preacher_x, preacher_y = 7 * TILE + 16, 13 * TILE + 16
+    sc._preacher_pos = (preacher_x, preacher_y)
+    sc.add_decoration(Decoration(preacher_x, preacher_y, "body"))
+    sc.add_decoration(Decoration(preacher_x - 10, preacher_y + 11, "bloodstain"))
+    sc.add_decoration(Decoration(preacher_x + 7, preacher_y - 12, "candle"))
+    sc.add_decoration(Decoration(6 * TILE + 16, 12 * TILE + 6, "dead_crow"))
+    sc.add_decoration(Decoration(9 * TILE + 16, 14 * TILE + 6, "crow"))
+
+    def _find_preacher(game):
+        from .dialogue import _evidence
+        game.audio.play("low_pulse", 0.5)
+        _evidence(game, "the_preacher", [
+            "The Preacher. They told you he'd left town.",
+            "He's here -- in the churchyard dirt, barely under it. The "
+            "collar's still white. Buried shallow on purpose: they wanted "
+            "him found.",
+            "[c=dim]This is what talking to you costs. The town keeps its "
+            "silence the only way it has left.[/c]",
+        ])
+    sc.triggers.append({
+        "rect": (5 * TILE, 11 * TILE, 10 * TILE, 15 * TILE),
+        "fn": _find_preacher, "once": True, "fired": False,
+    })
 
     # Hide spots colocated with VISIBLE cover so the prompt always
     # matches what the player can see. Each entry sits on top of a
