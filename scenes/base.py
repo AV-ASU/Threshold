@@ -97,7 +97,7 @@ FLOOR_DEFS = {
     # `_river_blocks` check (player.in_river state + designated entry
     # tile). Other scenes can still use `~` as decorative water; nothing
     # else currently does.
-    "~": {"color": (30, 52, 78),   "step": "step_stone"},
+    "~": {"color": (26, 40, 40),   "step": "step_stone"},
     # Dirt footpath -- the worn-grass walking lane that runs through every
     # outdoor scene (replaces the round-4 stone corridor). Soft ochre so
     # it reads as packed dirt next to grass without going full road.
@@ -611,17 +611,26 @@ def draw_floor(surf, ch, rx, ry, tx, ty):
             pygame.draw.rect(surf, (110, 50, 70),
                              (rx + 8, ry + 12, 14, 8))
     elif ch == "~":
-        # Water with two phase-offset ripples and a rare foam fleck.
-        t = (tx + ty + pygame.time.get_ticks() // 200) % 8
-        pygame.draw.rect(surf, (44, 68, 96),
-                         (rx + t, ry + 8, 8, 2))
-        pygame.draw.rect(surf, (44, 68, 96),
-                         (rx + (t + 4) % TILE, ry + 22, 8, 2))
+        # A dead, cold river -- murky and scummed over, not clean blue.
+        # Darker depths, slow dim ripples, patches of algae, and only a
+        # rare cold glint instead of bright foam.
         seed = tx * 11 + ty * 23
-        if seed % 13 == 0:
-            pygame.draw.rect(surf, (120, 150, 175),
-                             (rx + (seed % 28), ry + (seed * 5 % 28),
-                              1, 1))
+        if seed % 3 == 0:                          # darker depth mottle
+            pygame.draw.rect(surf, (17, 28, 30),
+                             (rx + (seed % 22) + 2,
+                              ry + ((seed // 5) % 22) + 2, 9, 6))
+        t = (tx + ty + pygame.time.get_ticks() // 320) % 8
+        pygame.draw.line(surf, (40, 54, 52), (rx + t, ry + 9),
+                         (rx + t + 7, ry + 9), 1)
+        pygame.draw.line(surf, (40, 54, 52), (rx + (t + 4) % TILE, ry + 23),
+                         (rx + (t + 4) % TILE + 7, ry + 23), 1)
+        if seed % 7 == 0:                          # algae scum
+            pygame.draw.ellipse(surf, (50, 62, 40),
+                                (rx + (seed % 18) + 4,
+                                 ry + ((seed // 7) % 18) + 4, 9, 5))
+        if seed % 19 == 0:                         # rare cold glint
+            pygame.draw.rect(surf, (88, 104, 100),
+                             (rx + (seed % 26), ry + (seed * 5 % 26), 1, 1))
     elif ch == "@":
         # Void floor -- animated speck drift, plus a static darker
         # mottle so the void never reads as flat black.
@@ -1088,6 +1097,43 @@ def _draw_path_fringe(surf, scene, tx, ty, rx, ry):
             pygame.draw.circle(surf, grass, (cx, cy), 2 + (_vary(seed, 50 + k) % 2))
 
 
+_BANK_LAND = frozenset(("g", "G", ":", "d"))
+
+
+def _draw_bank_fringe(surf, scene, tx, ty, rx, ry):
+    """Muddy, reedy bank where the river meets land: mud bleeding across
+    the waterline and reeds rising at the edge, so the river reads as a
+    silted marsh channel, not a clean-edged blue stripe. Only water tiles
+    fringe their land-facing sides."""
+    floor, h, w = scene.floor, scene.h, scene.w
+    mud, mud2 = (54, 44, 30), (38, 31, 21)
+    reed, reed_dk = (80, 88, 46), (50, 58, 30)
+    for si, (ndx, ndy) in enumerate(((0, -1), (0, 1), (-1, 0), (1, 0))):
+        nx, ny = tx + ndx, ty + ndy
+        if not (0 <= nx < w and 0 <= ny < h) or floor[ny][nx] not in _BANK_LAND:
+            continue
+        seed = (tx * 73856093) ^ (ty * 19349663) ^ (si * 40503)
+        if ndy:
+            ex = rx; ey = ry + (TILE if ndy > 0 else 0); ax, ay = 1, 0
+        else:
+            ex = rx + (TILE if ndx > 0 else 0); ey = ry; ax, ay = 0, 1
+        for k in range(5):                       # silt straddling the waterline
+            u = (k + (_vary(seed, k) % 3) / 3.0) / 5.0
+            depth = (_vary(seed, 10 + k) % 7) - 3
+            cx = int(ex + ax * TILE * u + ndx * depth)
+            cy = int(ey + ay * TILE * u + ndy * depth)
+            pygame.draw.circle(surf, mud if (_vary(seed, 30 + k) % 3) else mud2,
+                               (cx, cy), 3 + (_vary(seed, 20 + k) % 2))
+        for k in range(3):                       # reeds rising at the edge
+            u = (k + 0.5) / 3.0
+            bx = int(ex + ax * TILE * u + ndx * 2)
+            by = int(ey + ay * TILE * u + ndy * 2)
+            tipx = bx + (_vary(seed, 60 + k) % 3) - 1
+            tipy = by - (6 + (_vary(seed, 70 + k) % 6))
+            pygame.draw.line(surf, reed_dk, (bx, by), (tipx, tipy), 1)
+            pygame.draw.line(surf, reed, (bx, by), (tipx, tipy - 1), 1)
+
+
 def draw_scene_terrain(surf, scene, cam_x, cam_y, x0, y0, x1, y1):
     """Floor -> path fringe -> wall-cast shadows -> continuous wall mass
     -> non-wall objects, for a tile window. Shared by Scene.draw (camera
@@ -1098,8 +1144,12 @@ def draw_scene_terrain(surf, scene, cam_x, cam_y, x0, y0, x1, y1):
                        tx * TILE - cam_x, ty * TILE - cam_y, tx, ty)
     for ty in range(y0, y1):
         for tx in range(x0, x1):
-            if scene.floor[ty][tx] == "d":
+            ch = scene.floor[ty][tx]
+            if ch == "d":
                 _draw_path_fringe(surf, scene, tx, ty,
+                                  tx * TILE - cam_x, ty * TILE - cam_y)
+            elif ch == "~":
+                _draw_bank_fringe(surf, scene, tx, ty,
                                   tx * TILE - cam_x, ty * TILE - cam_y)
     strip = _wall_shadow_strip()
     for ty in range(y0, y1):
