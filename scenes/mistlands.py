@@ -431,6 +431,24 @@ def build_mistlands():
     sc.add_decoration(Decoration(63 * TILE + 16, 55 * TILE + 8, "bloody_handprint"))
     sc.add_decoration(Decoration(72 * TILE + 16, 55 * TILE + 16, "hanging_figure"))
 
+    # ---- The loop, made visible ----
+    # The residents say they can't leave; the town shows it. A payphone
+    # that won't connect; missing-person flyers (one of them Mara);
+    # a clock stopped dead and a calendar clawed with tally-marks where
+    # the days fold back; the truck that drove for the county line and
+    # was handed back, nosed dead into the east tree line; and Mrs.
+    # Calder's plate, set for a husband who walked out to the highway.
+    sc.add_decoration(Decoration(58 * TILE + 16, 62 * TILE + 16, "payphone"))
+    sc._payphone_pos = (58 * TILE + 16, 62 * TILE + 16)
+    sc.add_decoration(Decoration(61 * TILE + 16, 55 * TILE + 16, "missing_flyer"))  # Mara
+    sc.add_decoration(Decoration(52 * TILE + 16, 61 * TILE + 16, "missing_flyer"))
+    sc.add_decoration(Decoration(40 * TILE + 16, 27 * TILE + 16, "missing_flyer"))
+    sc.add_decoration(Decoration(63 * TILE + 16, 54 * TILE + 16, "clock"))
+    sc.add_decoration(Decoration(53 * TILE + 16, 61 * TILE + 16, "calendar"))
+    sc.add_decoration(Decoration(95 * TILE + 16, 55 * TILE + 16, "pickup_truck"))
+    sc.add_decoration(Decoration(72 * TILE + 16, 73 * TILE + 16, "place_setting"))
+    sc.add_decoration(Decoration(73 * TILE + 16, 74 * TILE + 16, "overturned_chair"))
+
     # Hide spots colocated with VISIBLE cover so the prompt always
     # matches what the player can see. Each entry sits on top of a
     # grass-tuft / watching-eye / dead-tree decoration on the east
@@ -477,6 +495,19 @@ def build_mistlands():
                 return
             game.audio.play("door_locked", 0.6)
             game.show_notice("Locked. The keys are with the innkeeper.")
+            return
+        # The payphone -- it won't dial out. The line is never dead,
+        # though; something is always already on it.
+        px, py = sc._payphone_pos
+        if abs(game.player.x - px) < 40 and abs(game.player.y - py) < 40:
+            game.audio.play("blip_low", 0.5)
+            line = [
+                "No dial tone. No ringing. The line is open to something.",
+                "[c=dim]Far down it, under the hiss, you hear your own "
+                "voice -- already mid-sentence.[/c]",
+            ]
+            game.dialog.show(line, speaker="", voice="blip_soft",
+                             portrait="narrator")
     sc.on_interact_fn = _mistlands_interact
     return sc
 
