@@ -83,7 +83,7 @@ def _light_pool(surf, cx, cy, radius, color=(255, 170, 70), peak=70):
 _GROUNDED_DECOS = frozenset((
     "well", "creepy_tree", "pickup_truck", "player_car", "cauldron",
     "gas_pump", "payphone", "pedestal", "pillar", "wheelbarrow",
-    "headstone",
+    "headstone", "brazier",
 ))
 
 
@@ -546,6 +546,87 @@ class Decoration:
         except (IndexError, ValueError):
             pass
 
+    def _draw_brazier(self, surf, x, y):
+        """A cult fire-bowl on an iron tripod -- a warm focal light at a
+        ritual site, the flame guttering. Pools of fire are the only
+        warmth out here, and the eye goes straight to them."""
+        _light_pool(surf, x, y - 6, 40, (255, 150, 56), 82)
+        pygame.draw.line(surf, (28, 26, 30), (x, y - 2), (x - 6, y + 11), 2)
+        pygame.draw.line(surf, (28, 26, 30), (x, y - 2), (x + 6, y + 11), 2)
+        pygame.draw.line(surf, (28, 26, 30), (x, y - 2), (x, y + 12), 2)
+        pygame.draw.ellipse(surf, (42, 40, 44), (x - 9, y - 5, 18, 8))
+        pygame.draw.ellipse(surf, (18, 16, 20), (x - 7, y - 4, 14, 5))
+        t = self.t * 6 + self.seed
+        fh = 8 + int(math.sin(t) * 3)
+        pygame.draw.polygon(surf, (208, 88, 28),
+                            [(x, y - 5 - fh), (x - 5, y - 3), (x + 5, y - 3)])
+        pygame.draw.polygon(surf, (250, 178, 68),
+                            [(x, y - 4 - int(fh * 0.6)), (x - 3, y - 3), (x + 3, y - 3)])
+
+    def _draw_steeple(self, surf, x, y):
+        """A church bell-tower, near-top-down: a tall narrow spire rising
+        up the screen from its base, a dark louvered belfry with a faint
+        bell, a pointed cap + a crooked cross, and a long shadow thrown
+        across the ground -- the one TALL thing for miles, the landmark
+        you orient by."""
+        H = 74
+        topx = x + int(math.sin(self.seed) * 4)        # leans a touch
+        top = y - H
+        sh = pygame.Surface((64, 30), pygame.SRCALPHA)  # long cast shadow, down-right
+        pygame.draw.polygon(sh, (0, 0, 0, 88), [(0, 26), (14, 26), (58, 4), (44, 0)])
+        surf.blit(sh, (x - 6, y - 6))
+        bw = 16
+        body = [(x - bw // 2, y), (topx - bw // 2 + 3, top + 14),
+                (topx + bw // 2 - 3, top + 14), (x + bw // 2, y)]
+        pygame.draw.polygon(surf, (70, 64, 54), body)
+        pygame.draw.polygon(surf, (38, 34, 28), body, 1)
+        pygame.draw.line(surf, (98, 92, 80),
+                         (x - bw // 2, y), (topx - bw // 2 + 3, top + 14), 2)
+        pygame.draw.rect(surf, (15, 13, 17), (topx - 5, top + 14, 10, 12))  # belfry
+        bell_dx = int(math.sin(self.t * 1.7 + self.seed) * 2)               # tolling
+        pygame.draw.circle(surf, (66, 58, 42), (topx + bell_dx, top + 21), 3)
+        pygame.draw.line(surf, (28, 24, 18), (topx + bell_dx, top + 18),
+                         (topx + bell_dx, top + 24), 1)                      # clapper line
+        spire = [(topx - bw // 2 + 2, top + 14), (topx, top - 8),
+                 (topx + bw // 2 - 2, top + 14)]
+        pygame.draw.polygon(surf, (54, 40, 30), spire)
+        pygame.draw.polygon(surf, (32, 24, 18), spire, 1)
+        pygame.draw.line(surf, (44, 40, 32), (topx, top - 8), (topx, top - 18), 2)
+        pygame.draw.line(surf, (44, 40, 32), (topx - 4, top - 14), (topx + 4, top - 14), 2)
+
+    def _draw_flock(self, surf, x, y):
+        """A few distant birds drifting across the grey, wings beating.
+        Loops slowly so the sky is never quite still. `span`/`speed`
+        kwargs tune the drift."""
+        span = self.kwargs.get("span", 180)
+        speed = self.kwargs.get("speed", 0.5)
+        lead = ((self.t * speed * 16 + self.seed * 7) % (span + 60)) - 30
+        n = 3 + (self.seed % 3)
+        for i in range(n):
+            bx = int(x + lead - i * (11 + (self.seed + i) % 8))
+            by = int(y + (i % 3 - 1) * 8 + math.sin(self.t * 0.6 + i) * 3)
+            flap = int(math.sin(self.t * 6 + i * 1.3) * 4)
+            # ground shadow offset below -> reads as flying above the field
+            pygame.draw.line(surf, (10, 12, 15), (bx - 4, by + 11),
+                             (bx, by + 9), 1)
+            pygame.draw.line(surf, (10, 12, 15), (bx + 4, by + 11),
+                             (bx, by + 9), 1)
+            col = (52, 52, 60)                            # lit-from-above silhouette
+            pygame.draw.line(surf, col, (bx - 5, by + flap), (bx, by), 2)
+            pygame.draw.line(surf, col, (bx + 5, by + flap), (bx, by), 2)
+
+    def _draw_leaves(self, surf, x, y):
+        """Dead leaves and grit tumbling across the ground on the wind --
+        a low, restless drift that loops near the anchor."""
+        rng = random.Random(self.seed)
+        cols = [(86, 68, 40), (70, 56, 34), (54, 60, 36), (60, 48, 30)]
+        for i in range(4 + (self.seed % 4)):
+            ph = self.t * 0.6 + i * 0.9 + self.seed
+            dx = math.sin(ph) * 16 + ((self.t * 9 + i * 19) % 74) - 37
+            dy = math.cos(ph * 1.3) * 9 + math.sin(ph * 0.5) * 4
+            sz = 1 + (i & 1)
+            pygame.draw.rect(surf, cols[i % 4], (int(x + dx), int(y + dy), sz, sz))
+
     def _draw_terminal(self, surf, x, y):
         pygame.draw.rect(surf, (10, 12, 14), (x - 12, y - 10, 24, 20))
         pygame.draw.rect(surf, (40, 40, 50), (x - 12, y - 10, 24, 20), 1)
@@ -644,7 +725,9 @@ class Decoration:
         as the well-passage `gore` decoration -- broken pose, dark
         underbody pool, head turned -- but the palette is drowned
         (cold blue-grey) and the figure is bound at wrists and ankles
-        with long hair fanning out into the water. Static."""
+        with long hair fanning out into the water. Bobs slowly on the
+        current."""
+        y += int(math.sin(self.t * 0.55 + self.seed) * 1.6)   # bob on the water
         # Underbody pool -- not blood here, just the dark water /
         # silt under the body. Same shape language as the well gore.
         pygame.draw.ellipse(surf, (10, 18, 36), (x - 18, y, 36, 14))
@@ -1063,6 +1146,10 @@ class Decoration:
         # eye sits off-centre. This is the cosmic-horror anchor; it
         # repeats at scale across the Scriptorium and Sign Chamber.
         pulse = 1.0 + math.sin(self.t * 1.1 + self.seed) * 0.10
+        # A sickly jaundiced glow behind the glyph -- the one note of
+        # real colour in the muck, and a focal point the eye catches.
+        _light_pool(surf, int(x), int(y), int(30 * pulse), (206, 188, 84),
+                    int(46 + 10 * math.sin(self.t * 1.1 + self.seed)))
         col = (196, 178, 72)
         dark = (92, 80, 28)
         R = 13 * pulse
@@ -1227,31 +1314,35 @@ class Decoration:
         trunk = (38, 28, 20)
         bark = (24, 16, 12)
         knot = (10, 6, 6)
-        # Slightly leaning trunk
+        # Slow wind: the bare crown bends from a fixed base, branches
+        # creaking sideways -- a dead tree working in the wind.
+        sw = int(math.sin(self.t * 0.6 + self.seed) * 1.7)
+        xt = x + sw
+        # Leaning trunk -- base fixed at x, crown swayed to xt
         pygame.draw.polygon(surf, trunk, [
-            (x - 4, y + 12), (x - 5, y - 18),
-            (x + 4, y - 18), (x + 3, y + 12),
+            (x - 4, y + 12), (xt - 5, y - 18),
+            (xt + 4, y - 18), (x + 3, y + 12),
         ])
         pygame.draw.polygon(surf, bark, [
-            (x - 4, y + 12), (x - 5, y - 18),
-            (x + 4, y - 18), (x + 3, y + 12),
+            (x - 4, y + 12), (xt - 5, y - 18),
+            (xt + 4, y - 18), (x + 3, y + 12),
         ], 1)
         # Vertical bark cracks
-        pygame.draw.line(surf, knot, (x - 1, y - 16), (x - 2, y + 8), 1)
-        pygame.draw.line(surf, knot, (x + 1, y - 12), (x + 2, y + 4), 1)
+        pygame.draw.line(surf, knot, (xt - 1, y - 16), (x - 2, y + 8), 1)
+        pygame.draw.line(surf, knot, (xt + 1, y - 12), (x + 2, y + 4), 1)
         # Face in the bark -- eye gouges
-        pygame.draw.ellipse(surf, knot, (x - 3, y - 10, 2, 3))
-        pygame.draw.ellipse(surf, knot, (x + 1, y - 10, 2, 3))
+        pygame.draw.ellipse(surf, knot, (xt - 3, y - 10, 2, 3))
+        pygame.draw.ellipse(surf, knot, (xt + 1, y - 10, 2, 3))
         # Mouth gash (two stacked lines so it reads as torn-open)
-        pygame.draw.line(surf, knot, (x - 2, y - 4), (x + 2, y - 4), 1)
-        pygame.draw.line(surf, knot, (x - 1, y - 3), (x + 1, y - 3), 1)
+        pygame.draw.line(surf, knot, (xt - 2, y - 4), (xt + 2, y - 4), 1)
+        pygame.draw.line(surf, knot, (xt - 1, y - 3), (xt + 1, y - 3), 1)
         # Bare finger-branches
         for s, m, t in [
-            ((x, y - 16), (x - 12, y - 22), (x - 18, y - 18)),
-            ((x, y - 16), (x + 12, y - 22), (x + 18, y - 16)),
-            ((x, y - 18), (x - 6, y - 28), (x - 4, y - 36)),
-            ((x, y - 18), (x + 6, y - 28), (x + 4, y - 36)),
-            ((x, y - 18), (x, y - 32), (x + 2, y - 38)),
+            ((xt, y - 16), (xt - 12, y - 22), (xt - 18, y - 18)),
+            ((xt, y - 16), (xt + 12, y - 22), (xt + 18, y - 16)),
+            ((xt, y - 18), (xt - 6, y - 28), (xt - 4, y - 36)),
+            ((xt, y - 18), (xt + 6, y - 28), (xt + 4, y - 36)),
+            ((xt, y - 18), (xt, y - 32), (xt + 2, y - 38)),
         ]:
             pygame.draw.line(surf, bark, s, m, 2)
             pygame.draw.line(surf, bark, m, t, 1)
@@ -1259,15 +1350,15 @@ class Decoration:
         for tx_, ty_, dx_ in [(-18, -18, -1), (18, -16, 1),
                                (-4, -36, -1), (4, -36, 1), (2, -38, 1)]:
             pygame.draw.line(surf, bark,
-                             (x + tx_, y + ty_),
-                             (x + tx_ + dx_, y + ty_ - 3), 1)
+                             (xt + tx_, y + ty_),
+                             (xt + tx_ + dx_, y + ty_ - 3), 1)
 
     def _draw_hanging_figure(self, surf, x, y):
         """Vague humanoid silhouette suspended from a rope going off-
         tile upward. Slumped, no facial detail, very small slow sway.
         Used in the deep tree band of mistlands and the cornfield's
         far rows."""
-        sway = math.sin(self.t * 0.5 + self.seed) * 1.5
+        sway = math.sin(self.t * 0.45 + self.seed) * 2.6
         sx_ = int(sway)
         # Long rope going up out of frame
         pygame.draw.line(surf, (140, 110, 70),

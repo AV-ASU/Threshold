@@ -267,6 +267,10 @@ def _draw_tree(surf, rx, ry, seed):
     cx = rx + 16 + (_vary(seed, 0) % 11) - 5            # -5..+5
     cy = ry + 12 + (_vary(seed, 1) % 9) - 5             # -5..+3 (bias up)
     R = 18 + (_vary(seed, 2) % 9)                       # 18..26 > half-tile -> overhangs
+    # Slow wind sway: the canopy leans a few px on a per-tree phase, so a
+    # run of trees ripples out of sync rather than swaying as one block.
+    cx += int(math.sin(pygame.time.get_ticks() / 1100.0
+                       + (seed & 511) * 0.0123) * 2.6)
     lean = (_vary(seed, 3) % 7) - 3
     tw = 5 + (_vary(seed, 4) % 2)
     bx = rx + 16 - tw // 2 + lean                       # short trunk, mostly hidden
@@ -957,28 +961,57 @@ def _draw_gable_roof(surf, region, cam_x, cam_y):
     sh = pygame.Surface((Wd + 16, Hd + 18), pygame.SRCALPHA)
     pygame.draw.rect(sh, (0, 0, 0, 96), (8, 14, Wd, Hd), border_radius=11)
     surf.blit(sh, (L - 8, T - 7))
-    pygame.draw.rect(surf, (92, 60, 42), (L, T, Wd, Hd), border_radius=10)
+    mat = rng.randint(0, 2)                          # roof material varies per building
+    if mat == 1:                                     # rusted corrugated tin
+        base, lit, dark = (66, 68, 70), (96, 98, 100), (48, 50, 53)
+        c_lit, c_dark, ridge_c, vertical = (118, 64, 36), (40, 42, 45), (40, 42, 44), True
+    elif mat == 2:                                   # tar-paper
+        base, lit, dark = (46, 44, 48), (62, 60, 65), (32, 30, 34)
+        c_lit, c_dark, ridge_c, vertical = (54, 52, 57), (24, 22, 26), (20, 18, 22), False
+    else:                                            # weathered cedar shingle
+        base, lit, dark = (92, 60, 42), (124, 86, 58), (74, 48, 33)
+        c_lit, c_dark, ridge_c, vertical = (104, 72, 48), (60, 39, 27), (44, 28, 19), False
+    pygame.draw.rect(surf, base, (L, T, Wd, Hd), border_radius=10)
     ridge_y = T + int(Hd * 0.42)
-    pygame.draw.rect(surf, (124, 86, 58), (L + 2, T + 2, Wd - 4, ridge_y - T - 2),
+    pygame.draw.rect(surf, lit, (L + 2, T + 2, Wd - 4, ridge_y - T - 2),
                      border_top_left_radius=9, border_top_right_radius=9)
-    pygame.draw.rect(surf, (74, 48, 33), (L + 2, ridge_y, Wd - 4, Bf - ridge_y - 2),
+    pygame.draw.rect(surf, dark, (L + 2, ridge_y, Wd - 4, Bf - ridge_y - 2),
                      border_bottom_left_radius=9, border_bottom_right_radius=9)
-    for yy in range(T + 5, ridge_y - 1, 5):          # shingle courses, lit slope
-        pygame.draw.line(surf, (104, 72, 48), (L + 5, yy), (R - 5, yy), 1)
-    for yy in range(ridge_y + 4, Bf - 3, 5):         # shingle courses, shaded slope
-        pygame.draw.line(surf, (60, 39, 27), (L + 5, yy), (R - 5, yy), 1)
+    if vertical:                                     # tin: vertical corrugation ribs
+        for xx in range(L + 6, R - 5, 5):
+            pygame.draw.line(surf, c_lit if (xx // 5) % 3 == 0 else c_dark,
+                             (xx, T + 3), (xx, Bf - 4), 1)
+    else:                                            # shingle / tar: horizontal courses
+        for yy in range(T + 5, ridge_y - 1, 5):
+            pygame.draw.line(surf, c_lit, (L + 5, yy), (R - 5, yy), 1)
+        for yy in range(ridge_y + 4, Bf - 3, 5):
+            pygame.draw.line(surf, c_dark, (L + 5, yy), (R - 5, yy), 1)
     sag = max(2, Wd // 22)                            # ridge beam, sagging in the middle
     mid_x = (L + R) // 2
-    pygame.draw.lines(surf, (44, 28, 19), False,
+    pygame.draw.lines(surf, ridge_c, False,
                       [(L + 4, ridge_y), (mid_x, ridge_y + sag), (R - 4, ridge_y)], 2)
-    for _ in range(max(1, (Wd * Hd) // 1700)):       # blown-out shingles -> joists
+    if Wd > 40 and Hd > 36 and rng.random() < 0.4:   # a caved-in section -> the rafters
+        hx = L + rng.randint(Wd // 4, max(Wd // 4 + 1, 3 * Wd // 4))
+        hy = T + rng.randint(Hd // 4, max(Hd // 4 + 1, Hd // 2))
+        hw, hh = rng.randint(10, 18), rng.randint(8, 13)
+        pygame.draw.ellipse(surf, (19, 16, 15), (hx, hy, hw, hh))
+        for jx in range(hx + 2, hx + hw - 1, 4):
+            pygame.draw.line(surf, (40, 32, 26), (jx, hy + 1), (jx, hy + hh - 1), 1)
+    for _ in range(max(1, (Wd * Hd) // 1700)):       # blown-out patches
         hx = L + rng.randint(5, max(6, Wd - 9))
         hy = T + rng.randint(5, max(6, Hd - 8))
-        pygame.draw.rect(surf, (30, 23, 19), (hx, hy, rng.randint(4, 7), 4))
-    for _ in range(max(1, (Wd * Hd) // 2000)):       # moss
-        mx = L + rng.randint(4, max(5, Wd - 6))
-        my = T + rng.randint(4, max(5, Hd - 6))
-        pygame.draw.circle(surf, (56, 70, 46), (mx, my), 2)
+        pygame.draw.rect(surf, (26, 21, 18), (hx, hy, rng.randint(4, 7), 4))
+    if mat != 1:                                     # moss (not on tin)
+        for _ in range(max(1, (Wd * Hd) // 2000)):
+            mx = L + rng.randint(4, max(5, Wd - 6))
+            my = T + rng.randint(4, max(5, Hd - 6))
+            pygame.draw.circle(surf, (56, 70, 46), (mx, my), 2)
+    else:                                            # rust streaks (tin)
+        for _ in range(max(1, (Wd * Hd) // 1500)):
+            rx2 = L + rng.randint(6, max(7, Wd - 8))
+            ry2 = T + rng.randint(4, max(5, Hd // 2))
+            pygame.draw.line(surf, (96, 52, 30), (rx2, ry2),
+                             (rx2, ry2 + rng.randint(5, 12)), 1)
     chx, chy = R - 18, T + 6                          # crooked chimney
     pygame.draw.rect(surf, (58, 40, 36), (chx, chy, 10, 13))
     pygame.draw.rect(surf, (30, 22, 20), (chx, chy, 10, 13), 1)
@@ -1147,11 +1180,13 @@ def _draw_bank_fringe(surf, scene, tx, ty, rx, ry):
             cy = int(ey + ay * TILE * u + ndy * depth)
             pygame.draw.circle(surf, mud if (_vary(seed, 30 + k) % 3) else mud2,
                                (cx, cy), 3 + (_vary(seed, 20 + k) % 2))
-        for k in range(3):                       # reeds rising at the edge
+        wind = pygame.time.get_ticks() / 650.0
+        for k in range(3):                       # reeds rising at the edge, swaying
             u = (k + 0.5) / 3.0
             bx = int(ex + ax * TILE * u + ndx * 2)
             by = int(ey + ay * TILE * u + ndy * 2)
-            tipx = bx + (_vary(seed, 60 + k) % 3) - 1
+            tipx = bx + (_vary(seed, 60 + k) % 3) - 1 \
+                + int(math.sin(wind + seed * 0.01 + k) * 2)
             tipy = by - (6 + (_vary(seed, 70 + k) % 6))
             pygame.draw.line(surf, reed_dk, (bx, by), (tipx, tipy), 1)
             pygame.draw.line(surf, reed, (bx, by), (tipx, tipy - 1), 1)

@@ -303,6 +303,11 @@ def build_mistlands():
                  [(31, 24), (18, 44), (9, 58), (7, 66)], trk)                # -> Sheriff door
     _carve_track(floor_ll, objects_l, [(7, 66), (7, 80), (7, 94)], trk)      # -> Farmhouse door
     _carve_track(floor_ll, objects_l, [(7, 82), (11, 81), (14, 80)], trk)    # -> cauldron entrance
+    # A cult path worn off the east lane out across the empty field to
+    # the standing stones -- a leading line composing the void, fading
+    # where it crosses the corn.
+    _carve_track(floor_ll, objects_l,
+                 [(58, 40), (66, 37), (74, 35), (78, 34)], trk)              # -> standing stones
 
     # ---- Marsh ----
     # Sodden low ground churned into mud + standing water, stamped as
@@ -603,33 +608,46 @@ def build_mistlands():
     sc.add_decoration(Decoration(60 * TILE + 16, 40 * TILE + 16, "gas_pump"))
     sc.add_decoration(Decoration(58 * TILE + 16, 47 * TILE + 16, "mud_footprint"))
 
-    # Weeds reclaiming the foundations -- tufts crowding up the walls and
-    # spilling over the footings of every building, so the wall never
-    # meets the ground on a clean line. The town is being taken back.
+    # Weeds reclaiming the foundations -- tufts crowding the ground just
+    # OUTSIDE the walls (south footing + the east/west bases), so the
+    # wall meets the ground in an overgrown line, never buried in the
+    # wall itself. The town is being taken back.
     weeds = random.Random(317)
+
+    def _weed(px, py):                           # only on open ground, never in a wall
+        tx, ty = int(px // TILE), int(py // TILE)
+        if 0 <= ty < h and 0 <= tx < w and sc.objects[ty][tx] == ".":
+            sc.add_decoration(Decoration(px, py, "grass_tuft"))
+
     for (bl, br, bt, bb) in [(4, 10, 4, 9), (4, 10, 60, 65), (4, 10, 88, 93),
                              (50, 56, 55, 60), (60, 66, 48, 53),
                              (65, 71, 65, 70), (80, 86, 75, 80)]:
-        for _ in range(7):                       # along the front footing
-            gx = weeds.randint(bl, br) * TILE + weeds.randint(2, 28)
-            gy = (bb + 1) * TILE + weeds.randint(-6, 10)
-            sc.add_decoration(Decoration(gx, gy, "grass_tuft"))
-        for ey in (bt, bb):                      # crowding the corners up the sides
-            for ex in (bl, br):
-                sc.add_decoration(Decoration(
-                    ex * TILE + weeds.randint(-4, 28),
-                    ey * TILE + weeds.randint(-2, 28), "grass_tuft"))
+        for _ in range(6):                       # front footing, on the ground below
+            _weed(weeds.randint(bl, br) * TILE + weeds.randint(2, 28),
+                  (bb + 1) * TILE + weeds.randint(2, 16))
+        for _ in range(4):                       # hugging the outside of the side walls
+            ry2 = weeds.randint(bt, bb) * TILE + weeds.randint(2, 28)
+            _weed((bl - 1) * TILE + weeds.randint(16, 28), ry2)
+            _weed((br + 1) * TILE + weeds.randint(2, 14), ry2)
 
     # A dead grove on the bare west bank -- a stand of leafless trees out
     # in the open emptiness, a focal dread that offers no cover.
     for (gx, gy) in [(17, 39), (19, 41), (16, 43), (20, 44), (18, 46), (15, 41)]:
         sc.add_decoration(Decoration(gx * TILE + 16, gy * TILE + 16, "creepy_tree"))
     # A cult standing-stone ring in the open north-east field, a Yellow
-    # Sign cut into the ground at its centre.
+    # Sign cut into the ground at its centre, lit by two braziers -- a
+    # warm, watched focal point out in the dark.
     for (px, py) in [(77, 31), (81, 31), (79, 30),
                      (76, 34), (82, 34), (79, 36)]:
         sc.add_decoration(Decoration(px * TILE + 16, py * TILE + 16, "pillar"))
     sc.add_decoration(Decoration(79 * TILE + 16, 33 * TILE + 16, "yellow_sign"))
+    sc.add_decoration(Decoration(77 * TILE + 16, 33 * TILE + 16, "brazier"))
+    sc.add_decoration(Decoration(81 * TILE + 16, 33 * TILE + 16, "brazier"))
+    # The church steeple -- the one tall thing for miles, a landmark to
+    # orient by, rising over the roof into the treeline.
+    sc.add_decoration(Decoration(7 * TILE + 16, 7 * TILE + 16, "steeple"))
+    # A brazier marking the cauldron-clearing threshold.
+    sc.add_decoration(Decoration(13 * TILE + 16, 80 * TILE + 16, "brazier"))
     # A murder of crows posted along the treeline, watching.
     for (cx, cy) in [(2, 22), (2, 71), (50, 2), (88, 31), (97, 60), (41, 97)]:
         sc.add_decoration(Decoration(cx * TILE + 16, cy * TILE + 16,
@@ -649,6 +667,14 @@ def build_mistlands():
     for (wtx, wty) in [(20, 53), (23, 50), (46, 37), (28, 90),
                        (70, 88), (50, 66)]:
         sc.add_decoration(Decoration(wtx * TILE + 16, wty * TILE + 16, "wisp"))
+
+    # Ambient sky + wind: distant flocks drifting over, dead leaves
+    # tumbling across the fields -- the world is never quite still.
+    for (ftx, fty) in [(40, 15), (70, 48), (24, 68)]:
+        sc.add_decoration(Decoration(ftx * TILE + 16, fty * TILE + 16, "flock"))
+    for (ltx, lty) in [(45, 40), (55, 52), (30, 60), (62, 62),
+                       (20, 40), (52, 80), (75, 42), (36, 30)]:
+        sc.add_decoration(Decoration(ltx * TILE + 16, lty * TILE + 16, "leaves"))
 
     # Hide spots colocated with VISIBLE cover so the prompt always
     # matches what the player can see. Each entry sits on top of a
