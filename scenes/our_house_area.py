@@ -197,7 +197,8 @@ def build_woodshed():
     sc._rope_pos = rope_pos
     sc._axe_pos  = axe_pos
     sc.add_decoration(Decoration(2 * TILE + 16, 0 * TILE + 22, "candle"))
-    sc.add_decoration(Decoration(4 * TILE + 16, 2 * TILE + 16, "bloodstain"))
+    sc.add_decoration(Decoration(4 * TILE + 20, 3 * TILE + 8, "bloodstain",
+                                 scale=2.6))
     sc.hide_spots = [
         (2 * TILE + 16, 3 * TILE + 16, "behind"),     # behind workbench
         (6 * TILE + 16, 1 * TILE + 24, "behind"),     # NE corner

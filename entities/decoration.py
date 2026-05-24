@@ -86,6 +86,18 @@ _GROUNDED_DECOS = frozenset((
     "headstone", "brazier",
 ))
 
+# Kinds that must NOT use the generic upscale path (they draw absolute
+# light pools, track the player, animate ambiently, or are already large
+# -- upscaling via a local canvas would misplace or clip them). The rug
+# sizes itself via w/h kwargs instead, so it opts out too.
+_NO_SCALE_DECOS = frozenset((
+    "candle", "lantern", "brazier", "smoke", "mist", "mote", "wisp",
+    "flock", "leaves", "well", "steeple", "pickup_truck", "player_car",
+    "cauldron", "watching_eye", "watching_wound", "passing_silhouette",
+    "gas_pump", "payphone", "terminal", "computer", "mirror", "rug",
+    "creepy_tree", "crow", "flock",
+))
+
 
 class Decoration:
     # Class-level player position cache. Game updates this every step
@@ -113,7 +125,20 @@ class Decoration:
             return
         if self.kind in _GROUNDED_DECOS:
             _ground_shadow(surf, sx, sy + 16, 13, 5, 75)
-        getattr(self, f"_draw_{self.kind}", self._draw_unknown)(surf, sx, sy)
+        drawfn = getattr(self, f"_draw_{self.kind}", self._draw_unknown)
+        # Scale support: small static props/stains can be enlarged to
+        # fill a room and break the tile grid. Opt-in (scale != 1.0), so
+        # every existing 1.0 placement is byte-identical. Risky kinds
+        # (lights, player-trackers, ambient, already-large) opt out.
+        if self.scale != 1.0 and self.kind not in _NO_SCALE_DECOS:
+            C = 48
+            canvas = pygame.Surface((C * 2, C * 2), pygame.SRCALPHA)
+            drawfn(canvas, C, C)
+            side = max(1, int(C * 2 * self.scale))
+            scaled = pygame.transform.scale(canvas, (side, side))
+            surf.blit(scaled, (sx - side // 2, sy - side // 2))
+        else:
+            drawfn(surf, sx, sy)
 
     def _draw_unknown(self, surf, x, y):
         pygame.draw.rect(surf, (255, 0, 255), (x - 4, y - 4, 8, 8))

@@ -362,6 +362,11 @@ def build_house():
                                  color=(140, 60, 70)))
     sc.add_decoration(Decoration(12 * TILE + 16, 4 * TILE + 14, "candle"))  # on fireplace
     sc.add_decoration(Decoration(15 * TILE + 16, 0 * TILE + 24, "photo"))
+    # A large dark stain spread across the boards near the cellar hatch
+    # -- scaled up to fill the bare kitchen floor and unsettle the
+    # wrong-empty lodge.
+    sc.add_decoration(Decoration(5 * TILE + 20, 8 * TILE + 20, "bloodstain",
+                                 scale=2.6))
     for i in range(6):
         sc.add_decoration(Decoration(40 + i * 90,
                                      80 + (i % 3) * 60, "mote"))
@@ -615,12 +620,13 @@ def build_basement():
                                  sc._workbench_pos[1] - 8, "chest",
                                  open=False))
 
-    sc.add_decoration(Decoration(5 * TILE + 16, 7 * TILE + 16,
-                                 "bloodstain"))
+    sc.add_decoration(Decoration(5 * TILE + 20, 7 * TILE + 12,
+                                 "bloodstain", scale=3.2))
     sc.add_decoration(Decoration(1 * TILE + 24, 4 * TILE + 16, "candle"))
     sc.add_decoration(Decoration(10 * TILE + 8, 4 * TILE + 16, "candle"))
     # One claw gouge etched into the cellar wall.
-    sc.add_decoration(Decoration(7 * TILE + 16, 0 * TILE + 22, "claw_marks"))
+    sc.add_decoration(Decoration(7 * TILE + 16, 1 * TILE + 8, "claw_marks",
+                                 scale=2.2))
     for mx, my in [(2, 5), (6, 6), (4, 3), (8, 7)]:
         sc.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16,
                                      "mote"))
