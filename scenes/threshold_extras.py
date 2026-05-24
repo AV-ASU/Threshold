@@ -302,6 +302,16 @@ def build_graveyard():
         gx = rng.randint(2, 11) * TILE + rng.randint(0, 30)
         gy = rng.randint(1, 8) * TILE + rng.randint(0, 30)
         sc.add_decoration(Decoration(gx, gy, "grass_tuft"))
+    # Two older graves leaning at the fence margins, off the tended
+    # rows, and dead leaves drifted over the family plots -- ageing
+    # the edges so the yard doesn't read as one fresh, regular grid.
+    sc.add_decoration(Decoration(2 * TILE + 8, 7 * TILE + 16,
+                                 "headstone", seed=5))
+    sc.add_decoration(Decoration(12 * TILE + 8, 8 * TILE + 16,
+                                 "headstone", seed=9))
+    for lx, ly in [(3, 3), (6, 5), (9, 3), (5, 7)]:
+        sc.add_decoration(Decoration(lx * TILE + 16, ly * TILE + 16,
+                                     "leaves"))
 
     sc.hide_spots = [
         (6 * TILE + 16, 6 * TILE + 24, "behind"),     # middle row stones
@@ -443,11 +453,15 @@ def build_diner_gas_station():
     payphone_x = 17 * TILE + 16
     payphone_y = 10 * TILE + 16
     sc.add_decoration(Decoration(pump_x, pump_y, "gas_pump"))
+    # A second pump completes the island, so the lot reads as a
+    # forecourt and not one lonely pump on an empty pad.
+    sc.add_decoration(Decoration(11 * TILE + 16, 8 * TILE + 16, "gas_pump"))
     sc.add_decoration(Decoration(payphone_x, payphone_y, "payphone"))
-    # Solid invisible tiles under the pump + payphone so the
+    # Solid invisible tiles under the pumps + payphone so the
     # player has to walk around them.
     objects_list = [list(r) for r in sc.objects]
     objects_list[8][9] = "X"     # gas pump
+    objects_list[8][11] = "X"    # second gas pump
     objects_list[10][17] = "X"   # payphone
     sc.objects = objects_list
     # Diner signage: a banner hung over the south wall.
@@ -470,6 +484,19 @@ def build_diner_gas_station():
     # One dead crow at the foot of the gas pump.
     sc.add_decoration(Decoration(8 * TILE + 16, 9 * TILE + 22,
                                  "dead_crow"))
+    # The forecourt's been closed long enough to start going back to
+    # weed: grass pushing up through the cracked gravel, a diner chair
+    # dragged out and left on its side, leaves blown across the pad,
+    # and a CLOSED notice still taped beside the facade door.
+    for gx, gy in [(2, 7), (3, 9), (6, 10), (14, 7), (16, 9), (13, 6)]:
+        sc.add_decoration(Decoration(gx * TILE + 12, gy * TILE + 14,
+                                     "grass_tuft"))
+    for lx, ly in [(5, 7), (12, 9), (15, 6)]:
+        sc.add_decoration(Decoration(lx * TILE + 16, ly * TILE + 16,
+                                     "leaves"))
+    sc.add_decoration(Decoration(6 * TILE + 16, 6 * TILE + 20,
+                                 "overturned_chair"))
+    sc.add_decoration(Decoration(6 * TILE + 8, 5 * TILE + 30, "paper"))
     # Hide spots beside cover (NOT on the solid pump tiles).
     sc.hide_spots = [
         (16 * TILE + 16, 10 * TILE + 16, "behind"), # beside the payphone

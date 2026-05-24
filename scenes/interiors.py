@@ -558,6 +558,12 @@ def build_shop():
                                  ang=0.0))
     sc.add_decoration(Decoration(10 * TILE + 16, 4 * TILE + 16, "mirror"))
     sc.add_decoration(Decoration(8 * TILE + 16, 1 * TILE + 22, "clock"))
+    # General-store goods: a haunch of cured meat hung in the back
+    # corner and a bowl of eggs out on the counter -- the stock that,
+    # as Hettie says, never seems to empty anymore.
+    sc.add_decoration(Decoration(11 * TILE + 8, 2 * TILE + 20, "meat"))
+    sc.add_decoration(Decoration(3 * TILE + 18, 4 * TILE + 6, "bowl",
+                                 filled=True))
     for mx, my in [(7, 4), (9, 5), (5, 5)]:
         sc.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16,
                                      "mote"))
