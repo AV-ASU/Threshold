@@ -69,8 +69,8 @@ CRATE_LOOT = {
     # holding a clear vial.
     ("forest_path",    8, 5):  "potion_clear",
     # Village (the new farm) -- a crate just west of the woodshed
-    # holding spare batteries.
-    ("village",       21, 16): "spare_batteries",
+    # holding a small stash.
+    ("village",       21, 16): "charcoal",
 }
 
 # Outdoor decay tier. Each scene gets a small list of "this is
@@ -450,45 +450,6 @@ class Game:
                 self._start_play()
             elif opt == "Quit":
                 pygame.quit(); sys.exit(0)
-
-    def _toggle_flashlight(self):
-        """F-key handler. Flips the flashlight on/off if the player
-        has it in inventory AND battery > 0. Plays a soft click. If
-        the player has no flashlight, surfaces the lack. The
-        flashlight does not work in CULT_DARK_SCENES -- the bulb
-        flickers and dies on contact with the rite."""
-        if not self.player.inventory.has("flashlight"):
-            self.show_notice("You don't have a flashlight.")
-            self.audio.play("cancel", 0.4)
-            return
-        if self.scene is not None and self.scene.key in CULT_DARK_SCENES:
-            self.player.flashlight_on = False
-            self.audio.play("static", 0.35)
-            self.show_notice("The bulb flickers. It will not light.")
-            return
-        if self.player.battery_charge <= 0 and not self.player.flashlight_on:
-            self.show_notice("The batteries are dead.")
-            self.audio.play("cancel", 0.4)
-            return
-        self.player.flashlight_on = not self.player.flashlight_on
-        self.audio.play("blip_soft", 0.45)
-
-    def _tick_flashlight(self, dt):
-        """Drain the battery while the flashlight is on. When the
-        battery hits zero, force the flashlight off and surface a
-        diegetic notice -- the player has to find / use spare
-        batteries to relight."""
-        if not self.player:
-            return
-        if not self.player.flashlight_on:
-            return
-        self.player.battery_charge = max(
-            0.0, self.player.battery_charge - dt * 1.0
-        )
-        if self.player.battery_charge <= 0:
-            self.player.flashlight_on = False
-            self.show_notice("The flashlight dies.")
-            self.audio.play("static", 0.35)
 
     def _toggle_fullscreen(self):
         try:
@@ -1487,53 +1448,34 @@ class Game:
         self._overlay_dark_used += used
         return used
 
-    def _draw_flashlight(self):
-        """When the player carries the flashlight AND has it toggled
-        on AND has battery, dark scenes get a bright cone in the
-        facing direction. Off / dead-battery / no-flashlight all
-        fall back to a heavy darkness overlay with only a small
-        clear circle around the player.
-
-        'Dark' means any scene in DARK_SCENES (interiors and
-        underground are always dark); outdoor scenes are never
-        dark, so the overlay only draws inside DARK_SCENES."""
+    def _draw_dark(self):
+        """Dark interiors/underground (DARK_SCENES) render as a
+        navigable gloom: a moderate black tint over the whole scene so
+        it reads dim-but-legible, with a soft always-on clear pool
+        around the player so the immediate surroundings stay clear. The
+        flashlight mechanic was scrapped, so the gloom depends on no
+        item -- you can always see enough to move."""
         if self.scene is None or self.player is None:
             return
-        # The flashlight only matters in the dark interiors / under-
-        # ground scenes; outdoor scenes are never dark.
         if self.scene.key not in DARK_SCENES:
             return
-        has_light = (self.player.inventory.has("flashlight")
-                     and self.player.flashlight_on
-                     and self.player.battery_charge > 0)
-        # Build a dark overlay with a clear cone for the flashlight, or
-        # a small clear circle for unlit baseline.
-        overlay = pygame.Surface((SCREEN_W, SCREEN_H), pygame.SRCALPHA)
-        base_alpha = 200 if not has_light else 170
-        overlay.fill((0, 0, 0, base_alpha))
+        from scenes.base import _light_pool
         psx = int(self.player.x - self.cam_x)
         psy = int(self.player.y - self.cam_y)
-        if has_light:
-            # Cone of light in the facing direction. We carve a clear
-            # area by blitting BLEND_RGBA_SUB with progressively
-            # smaller circles along the cone.
-            fx, fy = self.player.facing
-            # Anchor near the player's chest; project the cone forward
-            for step in range(8):
-                d = step * 22
-                cx = psx + int(fx * d)
-                cy = psy + int(fy * d) - 4
-                r = max(8, 56 - step * 5)
-                a = max(40, 220 - step * 22)
-                pygame.draw.circle(overlay, (0, 0, 0, 0),
-                                   (cx, cy), r)
-                # Soft halo around the cone interior
-                pygame.draw.circle(overlay, (0, 0, 0, max(0, base_alpha - a)),
-                                   (cx, cy), r + 8, 4)
-        else:
-            # Baseline: tiny clear circle right around the player.
-            pygame.draw.circle(overlay, (0, 0, 0, 0),
-                               (psx, psy), 22)
+        # The player has no torch now, so a soft "eyes-adjusted" pool
+        # lifts the near floor out of pure black -- enough to see by,
+        # cold and dim rather than a warm light source.
+        _light_pool(self.screen, psx, psy, 112, (118, 124, 150), 96)
+        # Ambient gloom over the rest (the film grade darkens further on
+        # top, so this stays light enough to keep the room legible),
+        # with a clear pool carved around the player. Cult-dark rooms
+        # sit a touch heavier.
+        gloom = 130 if self.scene.key in CULT_DARK_SCENES else 100
+        overlay = pygame.Surface((SCREEN_W, SCREEN_H), pygame.SRCALPHA)
+        overlay.fill((0, 0, 0, gloom))
+        rings = [(30 + i * 14, int(gloom * i / 8)) for i in range(8)]
+        for rr, aa in sorted(rings, key=lambda p: -p[0]):
+            pygame.draw.circle(overlay, (0, 0, 0, aa), (psx, psy), rr)
         self.screen.blit(overlay, (0, 0))
 
     def _draw_haze(self, base_alpha, fog_rgba, fog_n, drift_x, sway_amp,
@@ -2317,7 +2259,6 @@ class Game:
             self._tick_visibility(dt)
             self._tick_heartbeat(dt)
             self._tick_wake_muffle(dt)
-            self._tick_flashlight(dt)
             self._tick_king(dt)
             self._tick_flashback(dt)
             self._tick_ending(dt)
@@ -2450,7 +2391,7 @@ class Game:
         # when hide + apex stack.
         self._overlay_dark_used = 0
         self._draw_mistlands_haze()
-        self._draw_flashlight()
+        self._draw_dark()
         self._draw_outdoor_vignette()
         self._draw_apex_overlay()
         self._draw_hidden_overlay()
@@ -2622,28 +2563,6 @@ class Game:
                              (sx2 - 1, sy2 - 1, sw + 2, sh + 2), 1)
             pygame.draw.rect(self.screen, fill,
                              (sx2, sy2, int(sw * ratio), sh))
-        # Battery indicator -- visible only when the player has the
-        # flashlight AND it's on (or recently died). A thin bar in
-        # the lower-right with a soft glow when lit.
-        if self.player.inventory.has("flashlight"):
-            bar_w = 60
-            bar_h = 4
-            bx = SCREEN_W - 14 - bar_w
-            by = SCREEN_H - 18
-            ratio = max(0.0, min(1.0, self.player.battery_charge
-                                 / self.player.battery_max))
-            # Background frame
-            pygame.draw.rect(self.screen, (40, 36, 50),
-                             (bx - 1, by - 1, bar_w + 2, bar_h + 2), 1)
-            # Fill (warm yellow when on, dim grey when off)
-            on = self.player.flashlight_on
-            fill_col = (220, 200, 80) if on else (90, 84, 70)
-            pygame.draw.rect(self.screen, fill_col,
-                             (bx, by, int(bar_w * ratio), bar_h))
-            # Tiny "F" label
-            f_label = self.fonts["tiny"].render(
-                "F", True, (140, 130, 110))
-            self.screen.blit(f_label, (bx - 14, by - 3))
 
     def _draw_notice(self):
         s = self.fonts["sm"].render(self.notice_text, True, C_WHITE)
@@ -2779,8 +2698,6 @@ class Game:
                     self.inv_ui.toggle()
                 elif ev.key == pygame.K_n:
                     self.notebook_ui.toggle()
-                elif ev.key == pygame.K_f:
-                    self._toggle_flashlight()
                 elif ev.key == pygame.K_F5:
                     # The cot is the only save point. F5 used to
                     # write a snapshot from anywhere; that lifted

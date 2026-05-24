@@ -103,18 +103,9 @@ class InventoryUI:
             inv.equip(key)
             self.audio.play("confirm", 0.7)
         elif d["kind"] == "consumable":
-            # Only the flashlight battery recharge is in circulation;
-            # combat-era heal potions are vestigial and have heal=0,
-            # so the old hp-heal branch was dead. Removed.
-            if key == "spare_batteries":
-                if player.battery_charge >= player.battery_max:
-                    self.audio.play("cancel", 0.4)
-                    return
-                player.battery_charge = player.battery_max
-                inv.remove(key, 1)
-                self.audio.play("pickup", 0.6)
-            else:
-                self.audio.play("cancel", 0.4)
+            # No consumables remain in circulation (the flashlight and
+            # its batteries were scrapped; combat-era potions are gone).
+            self.audio.play("cancel", 0.4)
         elif d["kind"] in ("key", "lore"):
             # THRESHOLD: using mom_notebook advances the read
             # counter. Page 3 sets the flashback_pending flag the

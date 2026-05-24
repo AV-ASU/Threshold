@@ -64,14 +64,6 @@ class Player:
         # holding still).
         self.hidden = None
         self.hide_origin = None
-        # THRESHOLD flashlight state. Toggle on/off with F (the input
-        # is gated by inventory.has('flashlight') AND battery_charge>0).
-        # Battery drains at ~1 unit/sec while on; spare_batteries item
-        # restores it. Persisted to save so the player's lit/unlit
-        # state and remaining juice carry across saves.
-        self.flashlight_on = False
-        self.battery_max = 100.0
-        self.battery_charge = 100.0
         # THRESHOLD opening: how muddy the player's boots are. 1.0 on
         # wake (bedroom scene plants this), decays as they walk. Drives
         # the mud overlay in draw_player_sprite. Not persisted -- mud
@@ -160,16 +152,9 @@ class Player:
         p = data.get("player", {})
         self.hp = p.get("hp", 100)
         self.max_hp = p.get("max_hp", 100)
-        self.battery_charge = float(p.get("battery_charge", self.battery_max))
-        # Always start a session with the flashlight off so the player
-        # can choose when to burn battery. Persistence of the on/off
-        # bit creates a confusing "you load and the world is suddenly
-        # lit" moment; better to require an intentional toggle.
-        self.flashlight_on = False
         inv_data = data.get("inventory")
         if inv_data:
             self.inventory.from_save(inv_data)
 
     def to_save(self):
-        return {"hp": int(self.hp), "max_hp": int(self.max_hp),
-                "battery_charge": float(self.battery_charge)}
+        return {"hp": int(self.hp), "max_hp": int(self.max_hp)}

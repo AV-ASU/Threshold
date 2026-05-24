@@ -309,7 +309,7 @@ def build_graveyard():
     def _graveyard_on_enter(game, scene):
         if not game.save.flag("grave_cache_taken"):
             scene.add_item(
-                13 * TILE + 16, 7 * TILE + 16, "spare_batteries",
+                13 * TILE + 16, 7 * TILE + 16, "charcoal",
                 on_pickup=_grave_cache_pickup,
             )
     sc.on_enter_fn = _graveyard_on_enter
@@ -538,7 +538,7 @@ def build_gravel_road_north():
     def _gravel_on_enter(game, scene):
         if not game.save.flag("gravel_cache_taken"):
             scene.add_item(
-                13 * TILE + 16, 10 * TILE + 16, "spare_batteries",
+                13 * TILE + 16, 10 * TILE + 16, "charcoal",
                 on_pickup=lambda g: g.save.set_flag(
                     "gravel_cache_taken", True),
             )
@@ -786,7 +786,7 @@ def build_river_crossing():
     def _river_on_enter(game, scene):
         if not game.save.flag("river_cache_taken"):
             scene.add_item(
-                5 * TILE + 16, 0 * TILE + 16, "spare_batteries",
+                5 * TILE + 16, 0 * TILE + 16, "charcoal",
                 on_pickup=_river_cache_pickup,
             )
     sc.on_enter_fn = _river_on_enter
@@ -988,7 +988,7 @@ def build_cornfield_maze():
     def _cornfield_maze_on_enter(game, scene):
         if not game.save.flag("cornfield_cache_taken"):
             scene.add_item(
-                2 * TILE + 16, 1 * TILE + 16, "spare_batteries",
+                2 * TILE + 16, 1 * TILE + 16, "charcoal",
                 on_pickup=lambda g: g.save.set_flag(
                     "cornfield_cache_taken", True),
             )

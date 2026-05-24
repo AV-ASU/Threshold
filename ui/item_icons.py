@@ -25,8 +25,6 @@ _CLOTH      = (130, 105, 85)
 _CLOTH_DARK = (80, 60, 45)
 _ROBE       = (170, 155, 120)
 _ROBE_DARK  = (95, 80, 55)
-_CHAR       = (60, 100, 130)    # flashlight body cool gray-blue
-_LENS       = (220, 200, 110)
 _BORDER     = (30, 25, 30)
 
 
@@ -34,20 +32,6 @@ def _axe(s):
     pygame.draw.line(s, _WOOD, (10, 14), (4, 4), 2)
     pygame.draw.polygon(s, _STEEL, [(3, 5), (8, 2), (9, 6), (4, 8)])
     pygame.draw.polygon(s, _STEEL_DARK, [(3, 5), (8, 2), (9, 6), (4, 8)], 1)
-
-
-def _flashlight(s):
-    pygame.draw.rect(s, _CHAR, (5, 4, 6, 9))
-    pygame.draw.rect(s, _BORDER, (5, 4, 6, 9), 1)
-    pygame.draw.rect(s, _LENS, (4, 2, 8, 3))
-    pygame.draw.rect(s, _BORDER, (4, 2, 8, 3), 1)
-    pygame.draw.line(s, _STEEL_DARK, (6, 14), (10, 14), 2)
-
-
-def _batteries(s):
-    for i, x in enumerate((3, 7, 11)):
-        pygame.draw.rect(s, _STEEL_DARK, (x, 4, 3, 9))
-        pygame.draw.rect(s, _BRASS, (x, 3, 3, 1))
 
 
 def _charcoal(s):
@@ -170,8 +154,6 @@ def _unknown(s):
 
 _DISPATCH = {
     "lumber_axe":      _axe,
-    "flashlight":      _flashlight,
-    "spare_batteries": _batteries,
     "charcoal":        _charcoal,
     "paper":           _paper,
     "sigil_rubbing":   _sigil_rubbing,

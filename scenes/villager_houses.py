@@ -277,13 +277,11 @@ def build_haunted_house():
 
 def haunted_house_on_enter(game, scene):
     """THRESHOLD: glitch wall is gone -- the cult-chamber access is
-    a hatch interact. The on_enter now also drops a spare_batteries
-    pickup in the NW corner once per save -- the abandoned farmhouse
-    is dark and the player is encouraged to descend with the
-    flashlight on."""
+    a hatch interact. The on_enter also drops a small stash pickup in
+    the NW corner once per save."""
     if not game.save.flag("batteries_haunted_taken"):
         scene.add_item(
-            1 * TILE + 16, 1 * TILE + 16, "spare_batteries",
+            1 * TILE + 16, 1 * TILE + 16, "charcoal",
             on_pickup=lambda g: g.save.set_flag(
                 "batteries_haunted_taken", True),
         )

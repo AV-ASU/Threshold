@@ -37,15 +37,6 @@ ITEM_DEFS = {
     "mom_notebook":  {"name": "A Notebook",
                        "kind": "lore",
                        "desc": "A small notebook."},
-    "flashlight":    {"name": "Flashlight",
-                       "kind": "key",
-                       "desc": "A flashlight.\n\n"
-                               "Press F to toggle. Battery drains\n"
-                               "while it's on."},
-    "spare_batteries": {"name": "Spare Batteries",
-                       "kind": "consumable",
-                       "desc": "Some batteries. Use to recharge the\n"
-                               "flashlight."},
     "cellar_bottle": {"name": "Cellar Bottle",
                        "kind": "key",
                        "desc": "A dusty bottle."},

@@ -632,28 +632,15 @@ def build_basement():
 
 
 def basement_on_enter(game, scene):
-    """Place charcoal + flashlight pickups on the workbench (idempotent
-    via save flags). The notebook is gated behind the wall_panel
-    interaction in basement_interact."""
+    """Place the charcoal pickup on the workbench (idempotent via save
+    flags). The notebook is gated behind the wall_panel interaction in
+    basement_interact."""
     game._provoke_cult(0.10)
     wbx, wby = scene._workbench_pos
     if not game.save.flag("charcoal_taken"):
         scene.add_item(
             wbx + 12, wby + 4, "charcoal",
             on_pickup=lambda g: g.save.set_flag("charcoal_taken", True),
-        )
-    if not game.save.flag("flashlight_taken"):
-        scene.add_item(
-            wbx - 12, wby + 4, "flashlight",
-            on_pickup=lambda g: g.save.set_flag("flashlight_taken", True),
-        )
-    # A spare battery pack on the workbench shelf -- one freebie so
-    # the player learns the resource. More are scattered in dark
-    # sites (haunted_house, well_passage) for top-up.
-    if not game.save.flag("batteries_basement_taken"):
-        scene.add_item(
-            wbx, wby - 16, "spare_batteries",
-            on_pickup=lambda g: g.save.set_flag("batteries_basement_taken", True),
         )
     # The cellar bottle. The innkeeper holds the player's car keys
     # "until you settle your tab" -- this bottle is the settle.
@@ -683,10 +670,7 @@ def basement_on_enter(game, scene):
     # Sync workbench chest visual to whether it's been emptied.
     for deco in scene.decorations:
         if deco.kind == "chest":
-            deco.kwargs["open"] = (
-                game.save.flag("charcoal_taken")
-                and game.save.flag("flashlight_taken")
-            )
+            deco.kwargs["open"] = game.save.flag("charcoal_taken")
 
 
 def basement_interact(game):

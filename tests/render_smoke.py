@@ -51,15 +51,10 @@ def check_draw_pipeline(g):
         for prox in (0.1, 0.5, 0.9):
             g.pursuer_proximity = prox
             g.dread_aperture = 1.0 - prox
-            for flashlight in (False, True):
-                g.player.flashlight_on = flashlight
-                g.player.battery_charge = 100.0
-                try:
-                    g.draw_world()
-                except Exception as e:
-                    errors += fail(
-                        f"draw_world {key} prox={prox} "
-                        f"light={flashlight}: {e!r}")
+            try:
+                g.draw_world()
+            except Exception as e:
+                errors += fail(f"draw_world {key} prox={prox}: {e!r}")
     return errors
 
 
