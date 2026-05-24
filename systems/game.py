@@ -11,7 +11,8 @@ from constants import (
     C_BG, C_WHITE, C_BLACK, C_GOLD, C_RED, C_BLOOD,
     C_BLUE, C_GREEN, C_PURPLE, C_PANEL, C_PANEL_BORDER, C_DIM,
 )
-from rendering.sprites import draw_player_sprite, draw_npc_sprite
+from rendering.sprites import (draw_player_sprite, draw_npc_sprite,
+                               draw_axe_swing, draw_king_death)
 from rendering.transform import draw_vessel_bloom
 from ui.fonts import make_fonts
 from ui.dialog import DialogueBox
@@ -168,10 +169,12 @@ WATCHERS_PER_CURSE = 3         # Watcher cap added per curse level
 WATCHER_SPAWN_INTERVAL = 4.0   # seconds between Watcher manifestations
 CULT_REGULARS = 2              # roaming cultists kept per cult scene
 CULT_TOPUP_INTERVAL = 8.0      # seconds between cultist (re)spawns
-# Desperation melee: a non-lethal shove that stuns a cultist/shadow.
-MELEE_CD = 0.85                # seconds between shoves
+# Axe swing: the player's only attack, gated on the splitting axe. A
+# non-lethal arc that splinters barricades and STUNS a cultist/shadow.
+MELEE_CD = 0.85                # seconds between swings
 MELEE_STUN_DUR = 1.6           # seconds a target stays frozen
 MELEE_REACH = 30               # px from the swing point a target must be
+AXE_SWING_DUR = 0.34           # seconds the swing arc takes to draw
 # Visibility rates, per second. Watchers + cultist gaze push the meter
 # up; hiding pulls it down. Enough Watchers out-pace even hiding --
 # that is the spiral toward a King the player can no longer shake.
@@ -179,7 +182,7 @@ VIS_HIDE_BLEED = 0.10
 VIS_IDLE_DECAY = 0.02
 VIS_WATCHER_OPEN = 0.03
 VIS_WATCHER_HIDDEN = 0.015
-VIS_GAZE = 0.04
+VIS_GAZE = 0.12               # a cultist's gaze fills the meter fast
 
 # 80% combined-darkness cap. Full-screen black overlays
 # (visibility dip, apex wash, hide wash, YK vignette) decrement
@@ -542,7 +545,11 @@ class Game:
         self._ending_phase = 0
         self._ending_phase_t = 0.0
         self._closure_locked = False
-        self._closure_started = False
+        # Death screen: None | "cultist" | "king". The catch triggers
+        # it; _tick_death holds it (cultist ~2.0s, king ~3.5s) then
+        # respawns (cultist) or returns to title (king).
+        self._death_kind = None
+        self._death_t = 0.0
         # Opening wake state. When the bedroom_on_enter fires for
         # the first session it sets these to non-zero values; the
         # _tick_wake_muffle ticker then dampens the music channel
@@ -943,54 +950,18 @@ class Game:
         # persisted by per-coord save flag so the gap stays open
         # across re-entries.
         if self.player.inventory.has("lumber_axe"):
-            sc_ = self.scene
             for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
                 tx = int((self.player.x + dx * TILE) // TILE)
                 ty = int((self.player.y + dy * TILE) // TILE)
-                if 0 <= ty < sc_.h and 0 <= tx < sc_.w:
-                    ch = sc_.objects[ty][tx]
-                    if ch == "*":
-                        is_west_edge = (tx == 0)
-                        sc_.objects[ty][tx] = "4" if is_west_edge else "."
-                        self.audio.play("hit", 0.8)
-                        self.audio.play("bump", 0.5)
-                        self.save.set_flag(
-                            f"debris_broken_{sc_.key}_{tx}_{ty}", True)
-                        self.show_notice("The pile splinters apart.")
-                        return
-                    if ch == "q":
-                        sc_.objects[ty][tx] = "."
-                        self.audio.play("hit", 0.85)
-                        self.audio.play("bump", 0.55)
-                        self.save.set_flag(
-                            f"boards_broken_{sc_.key}_{tx}_{ty}", True)
-                        self.show_notice("The boards splinter away.")
-                        return
-                    if ch == "K":
-                        # Hand-authored loot crate. Splinter the
-                        # tile and drop the item from CRATE_LOOT
-                        # at the player's feet so they pick it up
-                        # on the next step. Persisted via
-                        # `crate_broken_<scene>_<tx>_<ty>`.
-                        sc_.objects[ty][tx] = "."
-                        self.audio.play("hit", 0.85)
-                        self.audio.play("bump", 0.6)
-                        self.save.set_flag(
-                            f"crate_broken_{sc_.key}_{tx}_{ty}", True)
-                        loot = CRATE_LOOT.get((sc_.key, tx, ty))
-                        if loot:
-                            sc_.add_item(
-                                tx * TILE + 16, ty * TILE + 16,
-                                loot,
-                            )
-                            from systems.items import ITEM_DEFS
-                            name = ITEM_DEFS.get(loot, {}).get("name", loot)
-                            self.show_notice(
-                                f"The crate splinters open. {name}.")
-                        else:
-                            self.show_notice(
-                                "The crate splinters open. Empty.")
-                        return
+                notice = self._chop_tile(tx, ty)
+                if notice:
+                    self.player.melee_swing_t = AXE_SWING_DUR
+                    self.player.melee_dir = (dx, dy)
+                    self.audio.play("swing", 0.55)
+                    self.audio.play("hit", 0.85)
+                    self.audio.play("bump", 0.55)
+                    self.show_notice(notice)
+                    return
         # Standard NPC interaction
         best = None; bd = 1e9
         for npc in self.scene.npcs:
@@ -1033,22 +1004,63 @@ class Game:
             self.show_notice(line, duration=3.0)
 
     # ---- Combat ----
-    def player_melee_stun(self):
-        """The player's only 'combat': a desperation shove. Non-lethal --
-        a cultist or shadow caught in the short arc in front is STUNNED
-        (frozen + blind) for a beat, never killed; the King stays the
-        only lethal thing. It buys the seconds to break line of sight and
-        get to cover. Cooldown-gated, and kept entirely separate from the
-        legacy swing/damage path so it can't ever deal damage."""
+    def _chop_tile(self, tx, ty):
+        """Break a single axe-eligible tile -- debris ('*'), boards
+        ('q'), or a loot crate ('K') -- and persist it by per-coord save
+        flag so the gap stays open across re-entries. Returns a notice
+        string when something broke, else None. Shared by the E-interact
+        and the axe swing so both clear barricades identically."""
+        sc_ = self.scene
+        if not (0 <= ty < sc_.h and 0 <= tx < sc_.w):
+            return None
+        ch = sc_.objects[ty][tx]
+        if ch == "*":
+            # West-edge debris becomes the '4' exit tile when cleared.
+            sc_.objects[ty][tx] = "4" if tx == 0 else "."
+            self.save.set_flag(f"debris_broken_{sc_.key}_{tx}_{ty}", True)
+            return "The pile splinters apart."
+        if ch == "q":
+            sc_.objects[ty][tx] = "."
+            self.save.set_flag(f"boards_broken_{sc_.key}_{tx}_{ty}", True)
+            return "The boards splinter away."
+        if ch == "K":
+            sc_.objects[ty][tx] = "."
+            self.save.set_flag(f"crate_broken_{sc_.key}_{tx}_{ty}", True)
+            loot = CRATE_LOOT.get((sc_.key, tx, ty))
+            if loot:
+                sc_.add_item(tx * TILE + 16, ty * TILE + 16, loot)
+                from systems.items import ITEM_DEFS
+                name = ITEM_DEFS.get(loot, {}).get("name", loot)
+                return f"The crate splinters open. {name}."
+            return "The crate splinters open. Empty."
+        return None
+
+    def player_axe_swing(self):
+        """The player's only attack -- GATED on the splitting axe. With
+        the axe in hand a swing arcs through the tile in front: it
+        splinters any barricade caught there (debris, boards, crate) and
+        STUNS a cultist or shadow in the arc (frozen + blind for a beat).
+        The swing never kills -- it buys the seconds to break line of
+        sight and reach cover. Without the axe the player has no attack."""
         p = self.player
         if (self.state != "playing" or p.hidden is not None
                 or p.melee_cd > 0 or self.dialog.active):
             return
+        if not p.inventory.has("lumber_axe"):
+            return                       # no axe -> no swing at all
         p.melee_cd = MELEE_CD
-        p.melee_swing_t = 0.2
+        p.melee_swing_t = AXE_SWING_DUR
         p.melee_dir = p.facing
-        self.audio.play("swing", 0.55)
+        self.audio.play("swing", 0.6)
         fx, fy = p.facing
+        # Splinter a barricade in the swing's reach: the facing tile.
+        bx = int((p.x + fx * TILE) // TILE)
+        by = int((p.y + fy * TILE) // TILE)
+        broke = self._chop_tile(bx, by)
+        if broke:
+            self.audio.play("hit", 0.85)
+            self.audio.play("bump", 0.55)
+            self.show_notice(broke)
         cx, cy = p.x + fx * 22, p.y + fy * 22
         hit = False
         for n in self.scene.npcs:
@@ -1742,17 +1754,15 @@ class Game:
                 self._tick_ritual(n, dt, sees)
                 continue
             # Regular cultist: one "they've seen you" beat per fresh
-            # spawn, plus a hard visibility spike if they reach you.
+            # spawn. Reaching you is now LETHAL -- the catch triggers
+            # the KILLED screen (you wake in your bed).
             if sees and not getattr(n, "_has_been_spotted", False):
                 n._has_been_spotted = True
                 self.audio.play("low_pulse", 0.5)
                 self.show_notice("They've seen you.", duration=2.4)
-            if d < 24 and not hidden:
-                n._grab_cd = getattr(n, "_grab_cd", 0.0) - dt
-                if n._grab_cd <= 0:
-                    n._grab_cd = 2.0
-                    self.visibility = min(1.0, self.visibility + 0.15)
-                    self.audio.play("low_pulse", 0.7)
+            if d < 22 and not hidden and self.player.invuln <= 0:
+                self._trigger_death("cultist")
+                return
         self._flank_cultists()
 
     def _tick_ritual(self, npc, dt, sees):
@@ -2070,7 +2080,7 @@ class Game:
         # 0->1 (~1.2s, npc._yk_update) he can't move, so he mustn't
         # kill either -- that ramp is the player's grace window.
         if d < 24 and getattr(self._king, "_birth", 1.0) >= 1.0:
-            self._trigger_closure()
+            self._trigger_death("king")
 
     def _spawn_king(self):
         """Materialise the King at the entry doorway (_king_anchor),
@@ -2176,135 +2186,82 @@ class Game:
             self.visibility = min(1.0,
                                           self.visibility + bump)
 
-    def _trigger_closure(self):
-        """The Pursuer has reached the player. Hand off to the
-        ending sequence. Implemented in _begin_threshold_closure;
-        called once when the closure countdown hits zero."""
-        # Guard so the closure can't re-trigger if proximity stays
-        # pinned at 1.0 after the ending begins.
-        if getattr(self, "_closure_started", False):
+    def _trigger_death(self, kind):
+        """A pursuer has reached the player. Hand off to the death
+        screen: `kind` is 'cultist' (a simple KILLED card, then you
+        wake in your bed) or 'king' (the King-in-Yellow furnace of
+        masks, ~3.5s, then the run ends and the title returns). Input
+        is locked for the duration via _closure_locked (the shared
+        sequence lock). Guarded so it can't re-trigger."""
+        if self._death_kind is not None:
             return
-        self._closure_started = True
-        self._begin_threshold_closure()
-
-    def _begin_threshold_closure(self):
-        """The Pursuer has reached the player. The threshold closes.
-
-        THRESHOLD rework: the closure no longer stages a kid figure
-        in the doorway. The room just goes still and dark. The
-        player stands alone in the empty bedroom while the world
-        ends. The kid arc lives entirely in the seal_threshold
-        ending now, not in death.
-
-        Sequence (driven by self._closure_phase, ticked in step):
-          0  -> snap-load the bedroom, lock input, low_pulse drone.
-          1  -> ~3 seconds of stillness on the still room.
-          2  -> a few slow lines of dim narration.
-          3  -> 8-second fade to pure black.
-          4  -> title returns; proximity holds at 0.40 (never zero).
-        """
-        self._closure_phase = 0
-        self._closure_phase_t = 0.0
-        # Force-load the bedroom right now. Bypass begin_transition
-        # so there's no fade in/out -- the world simply is the
-        # bedroom. The Pursuer doesn't open a door; it puts you here.
-        if self.scene is None or self.scene.key != "bedroom":
-            self.load_scene_now("bedroom", "default")
-        # Wipe NPCs, enemies, items, projectiles. The room reads
-        # empty except for the player. No figure in the doorway.
-        if self.scene is not None:
-            self.scene.npcs = []
-            self.scene.enemies = []
-            self.scene.items = []
-            self.scene.projectiles = []
-        # Park the player in the lower portion of the room.
-        if self.scene is not None and self.player is not None:
-            self.player.x = self.scene.w * Scene.TILE // 2
-            self.player.y = self.scene.h * Scene.TILE * 3 // 4
-            self.player.facing = (0, -1)
-        # Cut all music and start the low drone underneath.
-        self.audio.force_silence()
-        self.audio.play("low_pulse", 0.85)
-        # Lock input. handle_event short-circuits everything except
-        # advancing the dialog while _closure_locked is True.
+        self._death_kind = kind
+        self._death_t = 0.0
         self._closure_locked = True
-        self._update_camera(snap=True)
+        self.audio.force_silence()
+        if kind == "king":
+            self.audio.play("void_sting", 0.9)
+            self.audio.play("low_pulse", 0.8)
+        else:
+            self.audio.play("low_pulse", 0.7)
 
-    def _tick_closure(self, dt):
-        """Advance the closure sequence. Called from step() while
-        `_closure_locked` is True. Walks through phases described in
-        _begin_threshold_closure. No-op if the closure isn't the
-        thing holding the input lock (an active ending also locks
-        input but uses its own tick)."""
-        if not getattr(self, "_closure_locked", False):
+    def _tick_death(self, dt):
+        """Hold the death screen, then resolve. Cultist: ~2s, then
+        respawn in the bed (the run continues). King: ~3.5s of the
+        mask furnace, then the threshold has closed -- back to title,
+        visibility held at 0.40 (never zero)."""
+        if self._death_kind is None:
             return
-        if self._ending_active:
-            return
-        if not hasattr(self, "_closure_phase_t"):
-            return
-        self._closure_phase_t += dt
-        ph = self._closure_phase
-        if ph == 0:
-            # Brief pause on the still room.
-            if self._closure_phase_t >= 1.5:
-                self._closure_phase = 1
-                self._closure_phase_t = 0.0
-        elif ph == 1:
-            # Held silence beat. The dim notice that the threshold
-            # closed is already on screen from _trigger_closure.
-            if self._closure_phase_t >= 3.0:
-                # Plain, unattributed narration. No figure, no
-                # voice -- just the room going still around you.
-                self.dialog.show([
-                    "[c=dim][s=slow]the room goes still.[/s][/c]",
-                    "[c=dim][s=slow]the air won't move.[/s][/c]",
-                    "[c=dim][s=slow]you don't turn around.[/s][/c]",
-                ], speaker="", voice="blip_soft", portrait="narrator")
-                self._closure_phase = 2
-                self._closure_phase_t = 0.0
-        elif ph == 2:
-            # Wait until the dialog's been dismissed (or auto-advance
-            # after 14s if the player just sits).
-            if not self.dialog.active or self._closure_phase_t >= 14.0:
-                self.audio.play("breath", 0.85)
-                self._closure_phase = 3
-                self._closure_phase_t = 0.0
-        elif ph == 3:
-            # The slow fade. Drawn separately in draw_world via the
-            # _closure_fade_alpha read.
-            if self._closure_phase_t >= 8.0:
-                self._closure_phase = 4
-                self._closure_phase_t = 0.0
-        elif ph == 4:
-            # Hold on full black for 3s, then return to title.
-            if self._closure_phase_t >= 3.0:
+        self._death_t += dt
+        if self._death_kind == "cultist":
+            if self._death_t >= 2.0:
+                self._death_kind = None
                 self._closure_locked = False
-                self._closure_started = False
-                self._closure_phase = -1
-                self.visibility = 0.40   # not zero; never zero
+                self.visibility = max(0.0, self.visibility - 0.35)
+                self.player.hp = self.player.max_hp
+                self.show_notice("You wake up in your bed.")
+                self.load_scene_now("bedroom", "default")
+        else:  # king
+            if self._death_t >= 3.5:
+                self._death_kind = None
+                self._closure_locked = False
+                self._king = None
+                self.visibility = 0.40        # not zero; never zero
                 self.audio.music_muted = False
                 self.state = "title"
                 self.audio.play_music("threshold_drone")
 
-    def _closure_fade_alpha(self):
-        """Return the alpha [0..255] of the closure fade-to-black.
-        Returns 0 if no closure is active. Phase 3 ramps 0->255 over
-        8 seconds; phase 4 holds 255."""
-        if not getattr(self, "_closure_locked", False):
-            return 0
-        ph = getattr(self, "_closure_phase", -1)
-        if ph == 3:
-            t = self._closure_phase_t / 8.0
-            return max(0, min(255, int(t * 255)))
-        if ph == 4:
-            return 255
-        return 0
+    def _draw_death_screen(self):
+        """Render the active death card over everything. King = the
+        furnace of masks (sprites.draw_king_death); cultist = a stark
+        KILLED card over a near-black wash."""
+        if self._death_kind == "king":
+            draw_king_death(self.screen, self._death_t)
+            return
+        # Cultist: simple. Fade to near-black, then stamp KILLED.
+        w, h = self.screen.get_size()
+        fade = min(255, int(self._death_t / 0.4 * 255))
+        wash = pygame.Surface((w, h))
+        wash.fill((6, 5, 7))
+        wash.set_alpha(fade)
+        self.screen.blit(wash, (0, 0))
+        if self._death_t > 0.35:
+            ta = min(255, int((self._death_t - 0.35) / 0.4 * 255))
+            big = self.fonts["title"].render("KILLED", True, (176, 24, 24))
+            big.set_alpha(ta)
+            self.screen.blit(big, (w // 2 - big.get_width() // 2,
+                                   h // 2 - big.get_height() // 2))
 
     # ---- Step ----
     def step(self, dt):
         keys = pygame.key.get_pressed()
         self.title_t += dt
         if self.state == "playing":
+            # Death screen holds the world frozen until it resolves
+            # (respawn or title). Tick it alone and skip the sim.
+            if self._death_kind is not None:
+                self._tick_death(dt)
+                return
             self.update_player(dt, keys)
             if (not self.dialog.active and not self.inv_ui.open
                     and not self.notebook_ui.open
@@ -2365,7 +2322,6 @@ class Game:
             self._tick_wake_muffle(dt)
             self._tick_flashlight(dt)
             self._tick_king(dt)
-            self._tick_closure(dt)
             self._tick_flashback(dt)
             self._tick_ending(dt)
         elif self.state == "transition":
@@ -2483,18 +2439,13 @@ class Game:
                                    armor=self.player.inventory.equipped["armor"],
                                    mud=getattr(self.player, "mud", 0.0),
                                    prone=getattr(self.player, "prone", False))
-            # The shove telegraph: a brief bright bar thrown out in front
-            # of the player for the length of the swing. No charge ring --
-            # the only "attack" is this one desperate push.
+            # The axe swing: a wood haft + steel head arcing through the
+            # facing hemisphere, with a brief motion smear so the chop
+            # reads. Progress walks 0->1 as melee_swing_t bleeds down.
             if self.player.melee_swing_t > 0:
-                fx, fy = self.player.melee_dir
-                ax = psx + int(fx * 16)
-                ay = psy + int(fy * 16)
-                px, py = -fy, fx
-                L = 11
-                pygame.draw.line(self.screen, (225, 220, 205),
-                                 (ax + int(px * L), ay + int(py * L)),
-                                 (ax - int(px * L), ay - int(py * L)), 3)
+                prog = 1.0 - (self.player.melee_swing_t / AXE_SWING_DUR)
+                draw_axe_swing(self.screen, psx, psy,
+                               self.player.melee_dir, prog)
         # Reset the per-frame full-screen darkness budget. Each
         # whole-screen black overlay below claims a slice via
         # _claim_dark() so the combined wash never exceeds
@@ -2529,21 +2480,17 @@ class Game:
             fade.fill(C_BLACK)
             fade.set_alpha(alpha)
             self.screen.blit(fade, (0, 0))
-        # THRESHOLD: closure fade. Drawn over EVERYTHING (including
-        # dialog) so the screen darkens through the final whispered
-        # lines and settles to pure black before the title returns.
-        closure_alpha = self._closure_fade_alpha()
-        if closure_alpha > 0:
-            fade = pygame.Surface((SCREEN_W, SCREEN_H))
-            fade.fill(C_BLACK)
-            fade.set_alpha(closure_alpha)
-            self.screen.blit(fade, (0, 0))
-        # Flashback overlay -- preempts everything (including the
-        # closure fade) for the duration of the witnessing sequence.
+        # Flashback overlay -- preempts everything for the duration of
+        # the witnessing sequence.
         self._draw_flashback()
-        # Ending overlay -- preempts everything during the four-
-        # ending sequences.
+        # Ending overlay -- preempts everything during the ending
+        # sequences.
         self._draw_ending()
+        # Death screen -- the King's mask furnace or the cultist KILLED
+        # card. Drawn over EVERYTHING (HUD, dialog) so the catch takes
+        # the whole frame.
+        if self._death_kind is not None:
+            self._draw_death_screen()
 
     def _item_color(self, key):
         d = ITEM_DEFS.get(key, {})
@@ -2828,9 +2775,9 @@ class Game:
                 if ev.key in (pygame.K_e, pygame.K_SPACE, pygame.K_RETURN):
                     self.try_interact()
                 elif ev.key in (pygame.K_j, pygame.K_z):
-                    # The desperation shove -- a non-lethal stun, the
-                    # player's only answer to a cultist closing in.
-                    self.player_melee_stun()
+                    # The axe swing -- splinters barricades and stuns a
+                    # cultist closing in. Does nothing without the axe.
+                    self.player_axe_swing()
                 elif ev.key == pygame.K_i:
                     self.inv_ui.toggle()
                 elif ev.key == pygame.K_n:
@@ -2851,7 +2798,7 @@ class Game:
                     self.state = "paused"
                     self.audio.play("menu_open", 0.6)
             elif ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 1:
-                self.player_melee_stun()
+                self.player_axe_swing()
             elif ev.type == pygame.MOUSEBUTTONUP and ev.button == 1:
                 pass
 
