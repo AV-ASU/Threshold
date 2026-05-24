@@ -64,6 +64,11 @@ def build_bedroom():
         (12 * TILE + 16, 5 * TILE + 16, "under"),    # under writing table
     ]
 
+    # Worn rug over the open centre -- a multi-tile covering, set
+    # off-grid so it breaks the plank tiling. Added first so the props
+    # below draw on top of it.
+    sc.add_decoration(Decoration(7 * TILE + 24, 7 * TILE + 8, "rug",
+                                 w=120, h=76, color=(86, 42, 46), seed=17))
     # Duffel bag beside the cot.
     sc.add_decoration(Decoration(2 * TILE + 28, 5 * TILE + 16, "bowl",
                                  filled=True))
@@ -343,6 +348,11 @@ def build_house():
     # navigate back to the hatch to descend again.
     sc.set_spawn("from_basement", 4, 8)
 
+    # A large worn rug before the hearth in the living room -- off-grid
+    # and multi-tile so it breaks the plank tiling. Added first so the
+    # props below sit on top of it.
+    sc.add_decoration(Decoration(11 * TILE + 24, 7 * TILE + 12, "rug",
+                                 w=140, h=92, color=(70, 58, 40), seed=23))
     # Decorations: kitchen clutter on the left, fireplace on the
     # right, wall items on the NORTH wall (row 0).
     sc.add_decoration(Decoration(10 * TILE + 16, 0 * TILE + 18, "clock"))

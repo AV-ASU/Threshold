@@ -533,6 +533,10 @@ def build_shop():
     # silhouette in the glass is the cult tell), a clock that
     # stopped, motes for atmosphere, and a wrong_photo on the
     # back wall.
+    # Worn shop rug over the open floor -- multi-tile + off-grid to
+    # break the plank tiling. First, so props draw on top.
+    sc.add_decoration(Decoration(7 * TILE + 24, 4 * TILE + 8, "rug",
+                                 w=104, h=64, color=(58, 60, 64), seed=31))
     sc.add_decoration(Decoration(6 * TILE + 16, 2 * TILE + 16, "candle"))
     sc.add_decoration(Decoration(2 * TILE + 16, 2 * TILE + 16, "wrong_radio"))
     sc.add_decoration(Decoration(7 * TILE + 16, 6 * TILE + 22,

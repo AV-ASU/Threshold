@@ -118,6 +118,34 @@ class Decoration:
     def _draw_unknown(self, surf, x, y):
         pygame.draw.rect(surf, (255, 0, 255), (x - 4, y - 4, 8, 8))
 
+    def _draw_rug(self, surf, x, y):
+        """A worn area rug -- a multi-tile floor covering (w x h px via
+        kwargs) that breaks up the plank grid. Faded field, a woven
+        border, a centre motif, fringe at the ends, and a few worn
+        patches. Drawn flat on the floor, under furniture/props."""
+        w = int(self.kwargs.get("w", 88))
+        h = int(self.kwargs.get("h", 60))
+        base = self.kwargs.get("color", (96, 44, 46))
+        border = tuple(min(255, int(c * 1.5) + 18) for c in base)
+        dark = tuple(int(c * 0.6) for c in base)
+        rx, ry = x - w // 2, y - h // 2
+        sh = pygame.Surface((w + 10, 16), pygame.SRCALPHA)
+        pygame.draw.ellipse(sh, (0, 0, 0, 55), (0, 0, w + 10, 16))
+        surf.blit(sh, (rx - 5, ry + h - 8))
+        pygame.draw.rect(surf, base, (rx, ry, w, h), border_radius=3)
+        pygame.draw.rect(surf, dark, (rx, ry, w, h), 1, border_radius=3)
+        pygame.draw.rect(surf, border, (rx + 3, ry + 3, w - 6, h - 6), 2)
+        pygame.draw.polygon(surf, border, [
+            (x, ry + 8), (rx + w - 8, y), (x, ry + h - 8), (rx + 8, y)], 1)
+        pygame.draw.circle(surf, border, (x, y), 3, 1)
+        for fxp in range(rx + 4, rx + w - 3, 5):       # fringe at the ends
+            pygame.draw.line(surf, border, (fxp, ry - 2), (fxp, ry), 1)
+            pygame.draw.line(surf, border, (fxp, ry + h), (fxp, ry + h + 2), 1)
+        for i in range(3):                             # worn patches
+            wx = rx + 6 + (self.seed * (i + 1)) % max(1, w - 12)
+            wy = ry + 6 + (self.seed * (i + 3)) % max(1, h - 12)
+            pygame.draw.rect(surf, dark, (wx, wy, 4, 3))
+
     def _draw_candle(self, surf, x, y):
         _light_pool(surf, x, y - 2, 30, (255, 170, 80), 58)
         pygame.draw.rect(surf, (180, 180, 200), (x - 2, y, 4, 8))
