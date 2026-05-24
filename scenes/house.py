@@ -39,8 +39,8 @@ def build_bedroom():
     # wall. 'i' = window, 'D' = south door.
     objects = [
         "WWWWWWiWWWWiWWWW",   # 0  north wall, two windows
-        "W...........XX.W",   # 1  bookshelf footprint (cols 12-13)
-        "W.XX...........W",   # 2  cot footprint (cols 2-3, rows 2-3)
+        "W.XX.......XXX.W",   # 1  cot head (2-3) + long bookshelf (11-13)
+        "W.XX...........W",   # 2  cot footprint (cols 2-3, rows 1-3)
         "W.XX...........W",   # 3
         "W..............W",   # 4
         "W.........XX...W",   # 5  writing desk footprint (cols 10-11)
@@ -74,10 +74,13 @@ def build_bedroom():
     # footprints in the object map). A 2x2 cot in the corner, a long
     # shallow bookshelf on the north wall, a writing desk + chair, a
     # tall wardrobe on the west wall.
-    sc.add_decoration(Decoration(3 * TILE, 3 * TILE, "bed", w=58, h=62))
-    sc.add_decoration(Decoration(13 * TILE, 1 * TILE + 9, "bookshelf",
-                                 w=58, h=18, seed=5))
-    sc.add_decoration(Decoration(11 * TILE, 5 * TILE + 12, "table", w=52, h=36))
+    sc.add_decoration(Decoration(3 * TILE, 2 * TILE + 16, "bed", w=60, h=92))
+    # Bookshelf shoved up against the north wall so it covers the lower
+    # part of the east window -- a tall room, a long low case crowding
+    # the glass.
+    sc.add_decoration(Decoration(12 * TILE + 16, 1 * TILE - 6, "bookshelf",
+                                 w=86, h=22, seed=5))
+    sc.add_decoration(Decoration(11 * TILE, 5 * TILE + 12, "table", w=58, h=42))
     sc.add_decoration(Decoration(12 * TILE + 18, 6 * TILE + 4, "chair",
                                  w=22, h=28))
     sc.add_decoration(Decoration(2 * TILE + 16, 8 * TILE, "wardrobe",
@@ -92,19 +95,12 @@ def build_bedroom():
     sc.add_decoration(Decoration(2 * TILE + 8,  0 * TILE + 22, "candle"))
     sc.add_decoration(Decoration(13 * TILE + 16, 0 * TILE + 22, "candle"))
     sc.add_decoration(Decoration(11 * TILE + 16, 5 * TILE + 4, "candle"))
-    # A photo above the cot (north wall) and a phantom_mark scratched
-    # into the wood beside the wardrobe -- subtle, easy to miss the
+    # A framed photo on the north wall between the windows, and a
+    # phantom_mark scratched into the wood -- subtle, easy to miss the
     # first session.
-    sc.add_decoration(Decoration(3 * TILE + 16, 0 * TILE + 24, "photo"))
+    sc.add_decoration(Decoration(9 * TILE + 16, 0 * TILE + 24, "photo"))
     sc.add_decoration(Decoration(4 * TILE + 12, 9 * TILE + 16,
                                  "phantom_mark"))
-    # Wall calendar -- redesigned to MMM + day card. Day 1 = Oct 4
-    # so the prop reads "OCT 4" on the first morning.
-    sc._calendar = Decoration(
-        7 * TILE + 16, 0 * TILE + 22, "calendar",
-        today_d=4, month=10, month_days=31,
-    )
-    sc.add_decoration(sc._calendar)
     # Drifting motes through the room -- dust in old light.
     for i in range(7):
         sc.add_decoration(Decoration(3 * TILE + i * 64,
@@ -172,15 +168,6 @@ def bedroom_on_enter(game, scene):
         "wake_notice_armed":   True,    # fires on first step
         "silhouette_at":       28.0,    # passing-figure scare
         "silhouette_done":     False,
-        # Calendar anomaly. ~12s in, the wall calendar's
-        # highlighted "today" cell silently jumps to the wrong
-        # day for ~0.8s then resolves. The player who happens to
-        # be looking sees a date that can't be right; the player
-        # who isn't is unaffected. No sound, no notice -- the
-        # whole point is deniability. One-shot per session.
-        "calendar_anomaly_at":   12.0,
-        "calendar_anomaly_dur":  0.8,
-        "calendar_anomaly_state": "armed",   # armed -> firing -> done
     }
     scene._spawn_pos = scene.spawns.get("default", (0, 0))
 
@@ -231,29 +218,6 @@ def bedroom_on_update(game, scene, dt):
             scene.decorations.remove(deco)
         scene._silhouette_remove_at = None
         scene._silhouette_deco = None
-    # Calendar anomaly. Fire-and-forget: at the armed timestamp,
-    # swap the calendar's today_d to a wrong value; once the dur
-    # has elapsed, restore the saved real date. No sound. The
-    # player either sees it or doesn't.
-    cal = getattr(scene, "_calendar", None)
-    state = slots.get("calendar_anomaly_state", "done")
-    if (cal is not None and state == "armed"
-            and scene._opening_t >= slots["calendar_anomaly_at"]):
-        slots["calendar_anomaly_state"] = "firing"
-        slots["calendar_anomaly_end"] = (
-            scene._opening_t + slots["calendar_anomaly_dur"]
-        )
-        slots["calendar_real_d"] = cal.kwargs.get("today_d", 1)
-        # Pick a wrong date that is plausibly off-by-N. Halloween
-        # works as a tell here: an Oct save reading Nov 1 is the
-        # exact "I'm one day past where I should be" beat. Fall
-        # back to today + 1 if the month doesn't allow it.
-        wrong = slots["calendar_real_d"] + 1
-        cal.kwargs["today_d"] = wrong
-    elif (cal is not None and state == "firing"
-            and scene._opening_t >= slots["calendar_anomaly_end"]):
-        slots["calendar_anomaly_state"] = "done"
-        cal.kwargs["today_d"] = slots["calendar_real_d"]
     # Drain mud as the player walks. Each tick where they have
     # moved bleeds a little off the boots; standing still does
     # not. Floors clean themselves in about 25-30 seconds of
