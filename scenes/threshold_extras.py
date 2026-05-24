@@ -138,6 +138,53 @@ def build_schoolhouse():
             )
     sc.on_enter_fn = _schoolhouse_on_enter
 
+    # Atmosphere -- the crying behind the wall. Whatever the teacher
+    # boarded in is still in there. It cries while you're in earshot,
+    # goes silent the instant you put your ear to the boards, and starts
+    # again the moment you give up and step away. There is no door on
+    # this side: you can pry the cubby for her diary, but never reach
+    # what is crying behind the wall past it. No cutscene -- it just
+    # happens around you as you move.
+    def _schoolhouse_on_update(game, scene, dt):
+        p = game.player
+        bx, by = 12 * TILE + 16, 1 * TILE + 16
+        dist2 = (p.x - bx) ** 2 + (p.y - by) ** 2
+        scene._cry_t = getattr(scene, "_cry_t", 5.0) + dt
+        if dist2 < 52 * 52:                       # ear against the boards
+            if not getattr(scene, "_cry_silent", False):
+                scene._cry_silent = True
+                if not getattr(scene, "_cry_eared", False):
+                    scene._cry_eared = True
+                    game.show_notice(
+                        "You put your ear to the wood. The crying stops.", 3.0)
+            return
+        was_silent = getattr(scene, "_cry_silent", False)
+        scene._cry_silent = False
+        if dist2 >= 150 * 150:                    # out of earshot
+            return
+        if was_silent:                            # gave up, stepped away
+            scene._cry_t = 0.0
+            game.show_notice("You step back. It starts again.", 3.0)
+            game.audio.play("whisper", 0.3)
+            return
+        if not getattr(scene, "_cry_heard", False):
+            scene._cry_heard = True
+            scene._cry_t = 0.0
+            game.show_notice(
+                "Past the boarded cubby, behind the wall, a child is crying.",
+                3.5)
+            game.audio.play("whisper", 0.3)
+            return
+        if scene._cry_t >= 7.0:
+            scene._cry_t = 0.0
+            game.show_notice(random.choice([
+                "\"...I just want to go home.\"",
+                "There's no door on this side of the wall.",
+                "Small, and close, and you can't reach it.",
+            ]), 3.5)
+            game.audio.play("whisper", 0.25)
+    sc.on_update_fn = _schoolhouse_on_update
+
     def _schoolhouse_interact(game):
         if (abs(game.player.x - desk_x) < 36
                 and abs(game.player.y - desk_y) < 36):
