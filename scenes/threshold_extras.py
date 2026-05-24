@@ -99,6 +99,17 @@ def build_schoolhouse():
     for i in range(6):
         sc.add_decoration(Decoration(50 + i * 60,
                                      80 + (i % 3) * 50, "mote"))
+    # The front wall where the blackboard hung is gouged with rows of
+    # carved "I'M SORRY" -- the lines kept-after children were made to
+    # write, cut into the wall instead of chalked. Above the empty desks
+    # with the stopped clock, it's the room's loudest tell that something
+    # went wrong here after class let out.
+    sc.add_decoration(Decoration(8 * TILE + 16, 0 * TILE + 26,
+                                 "apology_wall", seed=11))
+    sc.add_decoration(Decoration(9 * TILE + 16, 0 * TILE + 26,
+                                 "apology_wall", seed=23))
+    # A child's crayon drawing still pinned to the east wall.
+    sc.add_decoration(Decoration(13 * TILE + 4, 4 * TILE + 16, "paper"))
 
     # The teacher's desk -- the player can interact with it to generate
     # an evidence beat once.

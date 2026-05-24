@@ -762,6 +762,9 @@ def build_kid_house():
     # toy radio, candle, banner. No tech.
     sc.add_decoration(Decoration(3 * TILE + 16, 2 * TILE + 8, "radio"))
     sc.add_decoration(Decoration(7 * TILE + 16,  0 * TILE + 22 , "candle"))
+    # The child's doll laid on the made bed -- pink dress, X-stitched
+    # eyes -- left behind like everything else in Brimley.
+    sc.add_decoration(Decoration(3 * TILE + 8, 5 * TILE + 20, "doll_on_bed"))
     # Lodge dressing for a hunting-family kid: the child's own trophy
     # walleye mounted on the north wall (replacing the old pennant
     # banners), a corner cobweb, and a kerosene lamp on the table. The

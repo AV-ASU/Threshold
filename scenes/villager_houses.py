@@ -204,6 +204,9 @@ def build_fisherman_cottage():
     # AM radio on the desk, a lantern by the door.
     sc.add_decoration(Decoration(4 * TILE + 16, 2 * TILE + 16, "radio"))
     sc.add_decoration(Decoration(8 * TILE + 16, 5 * TILE + 24, "lantern"))
+    # Casework left out on the desk -- the one detail that reads the
+    # repurposed cottage as the sheriff's office and not a bedroom.
+    sc.add_decoration(Decoration(7 * TILE + 8, 2 * TILE + 18, "paper"))
     for mx, my in [(4, 3), (5, 4), (3, 5)]:
         sc.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16,
                                      "mote"))
