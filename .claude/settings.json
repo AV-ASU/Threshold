@@ -6,6 +6,10 @@
           {
             "type": "command",
             "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/session-start.sh"
+          },
+          {
+            "type": "command",
+            "command": "pip install -q -r requirements.txt >/dev/null 2>&1 || true; mkdir -p ~/.claude/skills/pygame-to-png && cp -f tools/pygame-to-png/SKILL.md tools/pygame-to-png/to_png.py ~/.claude/skills/pygame-to-png/ 2>/dev/null || true"
           }
         ]
       }
