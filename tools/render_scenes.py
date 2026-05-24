@@ -37,6 +37,11 @@ try:
 except Exception:
     draw_npc_sprite = None
 
+# Full-map shots: draw every decoration, not just the screen-sized window
+# nearest the origin that the in-game per-frame cull would keep.
+from entities.decoration import Decoration
+Decoration.cull_offscreen = False
+
 TARGET = 820   # longest edge of the output image
 
 

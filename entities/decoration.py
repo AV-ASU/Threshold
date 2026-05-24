@@ -107,6 +107,13 @@ class Decoration:
     # tracking decoration.
     player_world = (0, 0)
 
+    # Per-frame off-screen cull: in-game a decoration only draws when it
+    # is within a screen of the camera, so skipping the rest is free
+    # perf. The offline full-map renderer (tools/render_scenes.py) flips
+    # this off so a whole large scene's dressing renders, not just the
+    # corner nearest the origin.
+    cull_offscreen = True
+
     def __init__(self, x, y, kind, scale=1.0, seed=None, **kwargs):
         self.x = x; self.y = y
         self.kind = kind
@@ -121,7 +128,8 @@ class Decoration:
     def draw(self, surf, cam_x, cam_y):
         sx = int(self.x - cam_x)
         sy = int(self.y - cam_y)
-        if sx < -64 or sx > SCREEN_W + 64 or sy < -64 or sy > SCREEN_H + 64:
+        if self.cull_offscreen and (sx < -64 or sx > SCREEN_W + 64
+                                    or sy < -64 or sy > SCREEN_H + 64):
             return
         if self.kind in _GROUNDED_DECOS:
             _ground_shadow(surf, sx, sy + 16, 13, 5, 75)
