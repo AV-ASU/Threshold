@@ -95,10 +95,19 @@ def build_bedroom():
     sc.add_decoration(Decoration(2 * TILE + 8,  0 * TILE + 22, "candle"))
     sc.add_decoration(Decoration(13 * TILE + 16, 0 * TILE + 22, "candle"))
     sc.add_decoration(Decoration(11 * TILE + 16, 5 * TILE + 4, "candle"))
-    # A framed photo on the north wall between the windows, and a
-    # phantom_mark scratched into the wood -- subtle, easy to miss the
-    # first session.
-    sc.add_decoration(Decoration(9 * TILE + 16, 0 * TILE + 24, "photo"))
+    # Northern-MN lodge dressing on the north wall: a mounted buck
+    # (replaces the old generic photo) between the windows, a trophy
+    # walleye to the west, and cobwebs fanning from the high corners.
+    sc.add_decoration(Decoration(9 * TILE + 16, 0 * TILE + 22, "buck_head",
+                                 wall="N"))
+    sc.add_decoration(Decoration(4 * TILE + 16, 0 * TILE + 24,
+                                 "mounted_fish"))
+    sc.add_decoration(Decoration(1 * TILE + 6, 1 * TILE + 6, "cobweb",
+                                 ang=0.0))
+    sc.add_decoration(Decoration(14 * TILE + 24, 1 * TILE + 6, "cobweb",
+                                 ang=math.pi / 2))
+    # A phantom_mark scratched into the wood near the door -- subtle,
+    # easy to miss the first session.
     sc.add_decoration(Decoration(4 * TILE + 12, 9 * TILE + 16,
                                  "phantom_mark"))
     # Drifting motes through the room -- dust in old light.
@@ -519,9 +528,19 @@ def build_son_room():
     sc.add_furniture("wardrobe", [(7, 3), (7, 4)], w=26, h=54)
     sc.add_furniture("table", [(5, 6), (6, 6)], w=54, h=32)
 
-    # Wall items mounted on the NORTH wall (row 0).
+    # Wall items mounted on the NORTH wall (row 0). Lodge dressing: a
+    # mounted buck (replaces the old generic photo) and a trophy
+    # walleye flank the window; a cobweb hangs in the NE corner and a
+    # kerosene lamp burns on the dresser.
     sc.add_decoration(Decoration(2 * TILE + 16, 0 * TILE + 22, "candle"))
-    sc.add_decoration(Decoration(7 * TILE + 16, 0 * TILE + 24, "photo"))
+    sc.add_decoration(Decoration(7 * TILE + 16, 0 * TILE + 22, "buck_head",
+                                 wall="N"))
+    sc.add_decoration(Decoration(5 * TILE + 16, 0 * TILE + 24,
+                                 "mounted_fish", flip=True))
+    sc.add_decoration(Decoration(8 * TILE + 26, 1 * TILE + 6, "cobweb",
+                                 ang=math.pi / 2))
+    sc.add_decoration(Decoration(6 * TILE + 16, 6 * TILE + 2,
+                                 "kerosene_lamp"))
     for i in range(4):
         sc.add_decoration(Decoration(40 + i * 60,
                                      60 + (i % 2) * 40, "mote"))
@@ -635,6 +654,14 @@ def build_basement():
     # One claw gouge etched into the cellar wall.
     sc.add_decoration(Decoration(7 * TILE + 16, 1 * TILE + 8, "claw_marks",
                                  scale=2.2))
+    # Cellar grime + a split-wood stack against the SE wall. Cobwebs
+    # fan from the high corners; the firewood is collision furniture
+    # tucked clear of the workbench, photo, and ladder paths.
+    sc.add_decoration(Decoration(1 * TILE + 6, 1 * TILE + 6, "cobweb",
+                                 ang=0.0))
+    sc.add_decoration(Decoration(10 * TILE + 26, 1 * TILE + 6, "cobweb",
+                                 ang=math.pi / 2))
+    sc.add_furniture("firewood", [(8, 8), (9, 8)], w=58, h=24)
     for mx, my in [(2, 5), (6, 6), (4, 3), (8, 7)]:
         sc.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16,
                                      "mote"))
