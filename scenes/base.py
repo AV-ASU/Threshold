@@ -155,13 +155,11 @@ OBJECT_DEFS = {
     # notice. The wall blocks movement so the player can't just walk
     # through an unlocked-looking door.
     "z": {"solid": True,  "kind": "door"},   # door to locked_house (red herring)
-    # Conditional doors in the player's main room. Both are placed by
-    # house_on_enter only after their gating item has been picked up:
-    # the son's-room door appears once the broken_crutch is in the
-    # player's pack, the daughter's-room door once the old_doll has
-    # been recovered. Pre-flag the wall is solid W (unrevealed).
-    "1": {"solid": False, "kind": "door"},   # door to son_room
-    "2": {"solid": False, "kind": "door"},   # door to daughter_room
+    # Generic spare door chars. Legacy: these once revealed side rooms
+    # off the player's main room. Kept as plain door tiles for any
+    # scene that needs an extra door char.
+    "1": {"solid": False, "kind": "door"},
+    "2": {"solid": False, "kind": "door"},
     # Outdoor-passage style transition tiles -- non-solid, non-drawing
     # so the underlying floor (grass / water) shows through cleanly.
     # '4' is the village <-> mistlands corridor.
@@ -823,7 +821,6 @@ def floor_step_sound(ch):
 DISPLAY_NAMES = {
     "bedroom":              "the Spare Room",
     "house":                "the Inn",
-    "son_room":              "the Innkeeper's Room",
     "basement":             "the Cellar",
     "our_house_area":       "the Yard",
     "kid_house":            "the Kid's House",

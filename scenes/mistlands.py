@@ -525,9 +525,6 @@ def build_mistlands():
     # Calder's plate, set for a husband who walked out to the highway.
     sc.add_decoration(Decoration(58 * TILE + 16, 62 * TILE + 16, "payphone"))
     sc._payphone_pos = (58 * TILE + 16, 62 * TILE + 16)
-    sc.add_decoration(Decoration(61 * TILE + 16, 55 * TILE + 16, "missing_flyer"))  # Mara
-    sc.add_decoration(Decoration(52 * TILE + 16, 61 * TILE + 16, "missing_flyer"))
-    sc.add_decoration(Decoration(40 * TILE + 16, 27 * TILE + 16, "missing_flyer"))
     # The calendar, every day crossed off the same, nailed to the
     # schoolhouse wall beside the door (Old Pell: "the days fold back").
     sc.add_decoration(Decoration(62 * TILE + 16, 53 * TILE + 16, "calendar"))

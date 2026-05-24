@@ -1,11 +1,9 @@
 """The Innkeeper's house (above the inn): spare_room (player's cot),
-main floor (kitchen + living + front door), the Innkeeper's bedroom
-(locked, holds the orb + car keys + robe), the basement (photograph,
-notebook, flashlight, bulkhead exit).
+main floor (kitchen + living + front door), the basement (notebook,
+charcoal, the orb, bulkhead exit).
 
 The bedroom KEY means the spare room above the inn. The house KEY
-means the Innkeeper's downstairs. Geometries, pickups, decorations,
-NPCs, and triggers are preserved.
+means the Innkeeper's downstairs.
 """
 import math
 import time
@@ -15,7 +13,7 @@ from constants import TILE
 from entities.npc import NPC
 from entities.decoration import Decoration
 from .base import Scene
-from .dialogue import basement_photo_dialogue, innkeeper_dialogue
+from .dialogue import innkeeper_dialogue
 
 
 # ---- spare_room (key: 'bedroom') ----
@@ -300,7 +298,7 @@ def build_house():
     # ('5' down col 7) reads as a kitchen peninsula dividing the kitchen
     # from the living room, replacing the old blank wall divider.
     objects = [
-        "WWWW1WWWWWWWWBWWWW",
+        "WWWWWWWWWWWWWBWWWW",
         "W................W",
         "W................W",
         "W.tt...5.........W",
@@ -316,20 +314,13 @@ def build_house():
     sc = Scene("house", floor, objects, music="home")
     # B = front door (south wall, col 13). The Innkeeper blocks this.
     sc.add_exit("B", "bedroom", "from_house")
-    # 1 = Innkeeper's bedroom door (col 4). Locked at first.
-    sc.add_exit("1", "son_room", "from_house")
     # D = back door, leads to the gravel yard.
     sc.add_exit("D", "our_house_area", "from_house")
     # L = cellar hatch in the kitchen.
     sc.add_exit("L", "basement", "from_house")
     sc.set_spawn("default", 9, 9)
     # The B door (spare-room) is at col 13 of the north wall.
-    # The 1 door (Innkeeper's bedroom) is at col 4. They were both
-    # set to (4, 1) which trapped the spare-room arrival south of
-    # the kitchen table at (4, 3). Each spawn is now under its own
-    # door.
     sc.set_spawn("from_bedroom", 13, 1)        # south of B (spare-room)
-    sc.set_spawn("from_son_room", 4, 1)        # south of 1 (Innkeeper's bedroom)
     sc.set_spawn("from_our_house_area", 7, 10)
     # The L cellar hatch is at (3, 9). Spawning even one tile north
     # of it (3, 8) shares the same column -- a south key press would
@@ -362,14 +353,9 @@ def build_house():
         sc.add_decoration(Decoration(40 + i * 90,
                                      80 + (i % 3) * 60, "mote"))
     # THRESHOLD liminal dressing: the lodge common room reads
-    # wrong-empty. A wall of the vanished by the north wall of the
-    # living room (the same guests the cellar Ledger records), a meal
-    # abandoned mid-setting on the kitchen table, and a single chair
-    # knocked over in all that empty floor -- the one wrong detail in
-    # the void.
-    sc.add_decoration(Decoration(9 * TILE + 16, 0 * TILE + 22, "missing_flyer"))
-    sc.add_decoration(Decoration(11 * TILE + 16, 0 * TILE + 24, "polaroid_wall"))
-    sc.add_decoration(Decoration(14 * TILE + 16, 0 * TILE + 22, "missing_flyer"))
+    # wrong-empty. A meal abandoned mid-setting on the kitchen table,
+    # and a single chair knocked over in all that empty floor -- the
+    # one wrong detail in the void.
     sc.add_decoration(Decoration(2 * TILE + 16, 3 * TILE + 8, "place_setting"))
     sc.add_decoration(Decoration(13 * TILE + 16, 6 * TILE + 16, "overturned_chair"))
     sc.add_decoration(Decoration(10 * TILE + 16, 8 * TILE + 16, "small_chair"))
@@ -475,126 +461,12 @@ def house_interact(game):
     return
 
 
-# ---- innkeeper_bedroom (key: 'son_room') ----
-
-def build_son_room():
-    """The Innkeeper's bedroom. Locked door from the kitchen. Inside:
-    a dresser (car keys), a closet (the robe + the orb behind it),
-    a window. The room reads as a stranger's bedroom -- lived in."""
-    floor = [
-        "==========",
-        "==========",
-        "==========",
-        "==========",
-        "==========",
-        "==========",
-        "==========",
-        "==========",
-    ]
-    # ONE bed and ONE closet (the original three stacked b + three
-    # stacked s read as three beds and three closets). Single
-    # tiles each. Dresser (table sprite) at row 6.
-    objects = [
-        "WWWiWWWWWW",   # 0 north wall, window col 3
-        "W........W",   # 1
-        "W........W",   # 2
-        "W........W",   # 3
-        "W..b...s.W",   # 4 bed (col 3) + closet (col 7)
-        "W........W",   # 5
-        "W.....t..W",   # 6 dresser (col 5; off the door column)
-        "WWW1WWWWWW",   # 7 south wall, door 1 at col 3
-    ]
-    sc = Scene("son_room", floor, objects, music="home")
-    sc.add_exit("1", "house", "from_son_room")
-    # Door is at (3, 7); spawn at (4, 6) is open floor and one tile
-    # off-axis so the player doesn't auto-retrigger.
-    sc.set_spawn("default", 4, 6)
-    sc.set_spawn("from_house", 4, 6)
-
-    # The dresser (table sprite) holds the car keys. Moved off col 3
-    # because col 3 is the door column -- a solid prop directly above
-    # the door previously trapped the player inside.
-    sc._dresser_pos = (5 * TILE + 16, 6 * TILE + 16)
-    # The closet (shelf sprite) holds the robe and (behind it) the orb.
-    sc._closet_pos = (7 * TILE + 16, 4 * TILE + 16)
-    # Hide spots: BESIDE the bed (col 4 is walkable; the bed is at cols 2-3).
-    sc.hide_spots = [
-        (4 * TILE + 16, 4 * TILE + 16, "under"),
-    ]
-
-    # Sized darkwood furniture: a 2x2 bed, a tall closet (the robe/orb
-    # live here -> _closet_pos), a low dresser (car keys -> _dresser_pos).
-    sc.add_furniture("bed", [(2, 3), (3, 3), (2, 4), (3, 4)], w=56, h=56)
-    sc.add_furniture("wardrobe", [(7, 3), (7, 4)], w=26, h=54)
-    sc.add_furniture("table", [(5, 6), (6, 6)], w=54, h=32)
-
-    # Wall items mounted on the NORTH wall (row 0). Lodge dressing: a
-    # mounted buck (replaces the old generic photo) and a trophy
-    # walleye flank the window; a cobweb hangs in the NE corner and a
-    # kerosene lamp burns on the dresser.
-    sc.add_decoration(Decoration(2 * TILE + 16, 0 * TILE + 22, "candle"))
-    sc.add_decoration(Decoration(7 * TILE + 16, 0 * TILE + 22, "buck_head",
-                                 wall="N"))
-    sc.add_decoration(Decoration(5 * TILE + 16, 0 * TILE + 24,
-                                 "mounted_fish", flip=True))
-    sc.add_decoration(Decoration(8 * TILE + 26, 1 * TILE + 6, "cobweb",
-                                 ang=math.pi / 2))
-    sc.add_decoration(Decoration(6 * TILE + 16, 6 * TILE + 2,
-                                 "kerosene_lamp"))
-    for i in range(4):
-        sc.add_decoration(Decoration(40 + i * 60,
-                                     60 + (i % 2) * 40, "mote"))
-
-    sc.on_enter_fn = innkeeper_bedroom_on_enter
-    sc.on_interact_fn = innkeeper_bedroom_interact
-    return sc
-
-
-def innkeeper_bedroom_on_enter(game, scene):
-    """The robe + orb are gated by closet interactions (handled
-    in innkeeper_bedroom_interact). After the orb is taken, the
-    closet becomes a hide spot. The car keys USED to spawn on
-    the dresser here, but the Innkeeper now holds them until the
-    player settles a tab (bottle quest), so the dresser is bare."""
-    if game.save.flag("orb_taken_innkeeper"):
-        # Closet is now empty -- becomes a hide spot.
-        if not any(h[2] == "in" for h in scene.hide_spots):
-            scene.hide_spots.append(
-                (scene._closet_pos[0], scene._closet_pos[1], "in")
-            )
-
-
-def innkeeper_bedroom_interact(game):
-    """E near the closet: first interaction yields the robe, second
-    interaction (after the robe) yields the orb. Both pickups set
-    save flags."""
-    sc = game.scene
-    px, py = game.player.x, game.player.y
-    cx, cy = sc._closet_pos
-    if abs(px - cx) > 40 or abs(py - cy) > 40:
-        return
-    if not game.save.flag("robe_taken"):
-        game.save.set_flag("robe_taken", True)
-        game.player.inventory.add("robe", 1)
-        game.audio.play("pickup_rare", 0.7)
-        game.show_notice("A robe, folded in the closet.")
-        return
-    if not game.save.flag("orb_taken_innkeeper"):
-        game.save.set_flag("orb_taken_innkeeper", True)
-        game.player.inventory.add("orb", 1)
-        game.audio.play("pickup_rare", 0.7)
-        game.show_notice("An orb, behind the robe.")
-        return
-    game.show_notice("The closet is empty now.")
-
-
 # ---- innkeeper_basement (key: 'basement') ----
 
 def build_basement():
     """The Innkeeper's cellar. Stone walls, packed dirt floor, a
-    single hanging bulb. A photograph stands on a shelf. A notebook
-    is hidden in a wall panel. A flashlight, charcoal, and a coil of
-    rope on a workbench.
+    single hanging bulb. A notebook is hidden in a wall panel. The
+    orb is stashed here, along with charcoal and the cellar bottle.
 
     Single entry/exit via the kitchen cellar hatch. A previous build
     had a south-wall bulkhead leading to the back yard; removed
@@ -610,25 +482,11 @@ def build_basement():
             row = ["#"] + ["."] * 10 + ["#"]
             objects_l.append(row)
     objects_l[1][10] = "U"          # ladder up to the kitchen
-    objects_l[5][8]  = "P"          # photo marker -- consumed at build
     objects = ["".join(r) for r in objects_l]
     sc = Scene("basement", floor, objects, music="basement")
     sc.add_exit("U", "house", "from_basement")
     sc.set_spawn("default", 9, 1)
     sc.set_spawn("from_house", 9, 1)
-
-    # A photograph -- placed via the P marker, with the photo
-    # NPC (basement_photo_dialogue) hosting interaction.
-    pos = sc.consume_marker("P")
-    if pos:
-        tx, ty = pos
-        photo = NPC(tx * TILE + 16, ty * TILE + 16, "Photo", "_invisible",
-                    voice="blip_soft", portrait="narrator",
-                    dialogue_fn=basement_photo_dialogue,
-                    movement="idle", solid=False, tag="basement_photo")
-        sc.add_npc(photo)
-        sc.add_decoration(Decoration(tx * TILE + 16, ty * TILE + 6,
-                                     "photo"))
 
     # Workbench in the SW corner. Pickup spots for charcoal,
     # flashlight. The notebook is hidden -- player has to interact
@@ -656,7 +514,7 @@ def build_basement():
                                  scale=2.2))
     # Cellar grime + a split-wood stack against the SE wall. Cobwebs
     # fan from the high corners; the firewood is collision furniture
-    # tucked clear of the workbench, photo, and ladder paths.
+    # tucked clear of the workbench and ladder paths.
     sc.add_decoration(Decoration(1 * TILE + 6, 1 * TILE + 6, "cobweb",
                                  ang=0.0))
     sc.add_decoration(Decoration(10 * TILE + 26, 1 * TILE + 6, "cobweb",
@@ -706,6 +564,15 @@ def basement_on_enter(game, scene):
         scene.add_item(
             wbx + 32, wby - 12, "woodshed_key",
             on_pickup=lambda g: g.save.set_flag("woodshed_key_taken", True),
+        )
+    # The orb (the way down to the Depths), stashed in the cellar
+    # (relocated from the old Innkeeper's bedroom). Gated by its flag
+    # so it stays one-shot.
+    if (not game.save.flag("orb_taken_innkeeper")
+            and not game.player.inventory.has("orb")):
+        scene.add_item(
+            8 * TILE + 16, 5 * TILE + 16, "orb",
+            on_pickup=lambda g: g.save.set_flag("orb_taken_innkeeper", True),
         )
     # Sync workbench chest visual to whether it's been emptied.
     for deco in scene.decorations:

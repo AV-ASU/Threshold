@@ -380,24 +380,3 @@ def doll_dialogue(game, npc):
 def bowl_examine(game):
     """Legacy no-op."""
     pass
-
-
-def basement_photo_dialogue(game, npc):
-    """The Photo NPC in the basement. Flow preserved (grants the
-    polaroid item); text blanked."""
-    save = game.save
-    n = save.arg("photo_reads", 0) + 1
-    save.set_arg("photo_reads", n)
-    if n == 1:
-        game.dialog.show([
-            "[c=dim](A framed photograph on a shelf.)[/c]",
-            "[c=dim]Nothing here.[/c]",
-        ], speaker="", voice="blip_soft", portrait="narrator")
-        if not save.flag("polaroid_taken"):
-            save.set_flag("polaroid_taken", True)
-            game.player.inventory.add("polaroid", 1)
-            game.show_notice("You take the photograph.")
-    else:
-        game.dialog.show([
-            "[c=dim](An empty frame.)[/c]",
-        ], speaker="", voice="blip_soft", portrait="narrator")

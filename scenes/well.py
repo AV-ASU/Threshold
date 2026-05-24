@@ -19,9 +19,8 @@ is being seen. Cultists respect hiding (player.hidden), so a hide spot
 breaks the chase.
 
 Reworks vs. the old build: the well is now the ONLY mouth down (the
-barn cellar hatch is sealed); the polaroid is no longer consumed here
-(it's evidence now); and the orb -- not the photo -- opens the way
-deeper, from the Sign Chamber's far side down into the Depths.
+barn cellar hatch is sealed), and the orb opens the way deeper, from
+the Sign Chamber's far side down into the Depths.
 """
 import math
 from constants import TILE

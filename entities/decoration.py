@@ -752,13 +752,20 @@ class Decoration:
         nx = x - 8 + int((math.sin(self.t * 0.6) + 1) * 6)
         pygame.draw.line(surf, (220, 60, 60), (nx, y - 2), (nx, y + 4), 1)
 
-    def _draw_photo(self, surf, x, y):
-        pygame.draw.rect(surf, (140, 110, 70), (x - 10, y - 8, 20, 16))
-        pygame.draw.rect(surf, (60, 40, 25), (x - 10, y - 8, 20, 16), 1)
-        pygame.draw.rect(surf, (180, 180, 200), (x - 8, y - 6, 16, 12))
-        pygame.draw.circle(surf, (220, 190, 160), (x - 4, y - 2), 1)
-        pygame.draw.circle(surf, (220, 190, 160), (x, y - 2), 1)
-        pygame.draw.circle(surf, (220, 190, 160), (x + 4, y - 2), 1)
+    def _draw_paper(self, surf, x, y):
+        # A plain sheet of paper -- a child's taped-up drawing or a note
+        # left on a surface. Off-white leaf, a curled corner, a few
+        # scribbled lines. Deliberately not a framed picture.
+        pygame.draw.rect(surf, (212, 204, 184), (x - 7, y - 9, 14, 18))
+        pygame.draw.rect(surf, (150, 142, 120), (x - 7, y - 9, 14, 18), 1)
+        pygame.draw.polygon(surf, (180, 172, 150),
+                            [(x + 7, y + 5), (x + 7, y + 9), (x + 3, y + 9)])
+        pygame.draw.line(surf, (150, 142, 120), (x + 7, y + 5),
+                         (x + 3, y + 9), 1)
+        for i, ly in enumerate((y - 5, y - 1, y + 3)):
+            w = 9 - ((self.seed >> (i + 1)) & 3)
+            pygame.draw.line(surf, (120, 110, 96), (x - 5, ly),
+                             (x - 5 + w, ly), 1)
 
     def _draw_crow(self, surf, x, y):
         hop = int(abs(math.sin(self.t * 0.8)) * 1)
@@ -1154,36 +1161,6 @@ class Decoration:
         pygame.draw.rect(surf, (60, 50, 50),
                          (glint_x, y, 1, 1))
 
-    def _draw_polaroid_wall(self, surf, x, y):
-        """The polaroid family pinned to the bedroom wall above the bed
-        after polaroid_taken flips. Reads as a photo frame containing
-        the four-figure family from the polaroid item -- tall man,
-        blonde woman, small boy, small girl. The frame is intact;
-        the figures all face out, looking at the bed."""
-        # Frame
-        pygame.draw.rect(surf, (90, 60, 40), (x - 9, y - 12, 18, 16))
-        pygame.draw.rect(surf, (40, 25, 15), (x - 9, y - 12, 18, 16), 1)
-        # Photo paper
-        pygame.draw.rect(surf, (210, 200, 180), (x - 7, y - 10, 14, 12))
-        # Tall man (centre)
-        pygame.draw.rect(surf, (60, 50, 70), (x - 1, y - 8, 2, 7))
-        pygame.draw.circle(surf, (200, 180, 160), (x, y - 9), 1)
-        # Blonde woman (right of man, leans on him)
-        pygame.draw.rect(surf, (160, 80, 100), (x + 2, y - 7, 2, 6))
-        pygame.draw.circle(surf, (220, 200, 140), (x + 3, y - 8), 1)
-        # Boy (front of man, on crutches)
-        pygame.draw.rect(surf, (200, 180, 80), (x - 3, y - 4, 1, 4))
-        pygame.draw.circle(surf, (200, 180, 160), (x - 3, y - 5), 1)
-        pygame.draw.line(surf, (90, 60, 30), (x - 4, y - 4),
-                         (x - 4, y), 1)
-        # Girl (next to boy)
-        pygame.draw.rect(surf, (200, 100, 130), (x - 5, y - 4, 1, 4))
-        pygame.draw.circle(surf, (200, 180, 160), (x - 5, y - 5), 1)
-        # All four faces have black-dot eyes that point AT the viewer.
-        for ex, ey in [(x, y - 9), (x + 3, y - 8),
-                       (x - 3, y - 5), (x - 5, y - 5)]:
-            pygame.draw.circle(surf, (10, 10, 14), (ex, ey), 1)
-
     def _draw_small_chair(self, surf, x, y):
         """A child-sized chair pulled out from the writing table after
         crutch_taken. Wood-toned, smaller proportions than the regular
@@ -1493,33 +1470,6 @@ class Decoration:
                 # Iron padlock hanging from the plate
                 pygame.draw.rect(surf, (60, 60, 70), (x - 1, y - 8, 2, 3))
                 pygame.draw.circle(surf, (90, 90, 100), (x, y - 6), 2, 1)
-
-    def _draw_missing_flyer(self, surf, x, y):
-        # Pinned paper flyer -- beige sheet with a small portrait sketch
-        # at the top, MISSING bar in red, and three text lines below.
-        # Two corner tacks sell the "pinned to wood" read; the bottom-
-        # right corner curls slightly so it doesn't look freshly
-        # printed.
-        # Paper body
-        pygame.draw.rect(surf, (220, 200, 160), (x - 7, y - 12, 14, 24))
-        pygame.draw.rect(surf, (60, 40, 25), (x - 7, y - 12, 14, 24), 1)
-        # Corner curl (bottom-right)
-        pygame.draw.polygon(surf, (180, 160, 130),
-                            [(x + 7, y + 8), (x + 7, y + 12), (x + 3, y + 12)])
-        pygame.draw.line(surf, (60, 40, 25), (x + 7, y + 8),
-                         (x + 3, y + 12), 1)
-        # MISSING bar (red) at top
-        pygame.draw.rect(surf, (160, 30, 30), (x - 5, y - 11, 10, 2))
-        # Portrait circle
-        pygame.draw.circle(surf, (40, 28, 22), (x, y - 6), 3, 1)
-        # Text lines
-        for i in range(3):
-            pygame.draw.line(surf, (60, 40, 25),
-                             (x - 5, y + i * 3),
-                             (x + 5, y + i * 3), 1)
-        # Tacks
-        pygame.draw.circle(surf, (200, 60, 60), (x - 5, y - 11), 1)
-        pygame.draw.circle(surf, (200, 60, 60), (x + 5, y - 11), 1)
 
     def _draw_phantom_mark(self, surf, x, y):
         # A small chalk symbol scratched into a wall. Static (no anim).
@@ -2037,49 +1987,3 @@ class Decoration:
         # Carry strap slumped
         pygame.draw.line(surf, (50, 32, 18), (x - 10, y - 5), (x - 14, y), 1)
 
-    def _draw_wrong_photo(self, surf, x, y):
-        """A framed photograph whose subjects degrade between visits.
-        First visit: a family of three. Subsequent visits: faces
-        progressively erased -- eyes go first, then mouths, then the
-        whole face. Driven by `stage` kwarg (0..3). When stage>=2,
-        a single fresh red dot appears in the corner of the frame
-        as if someone marked it."""
-        stage = self.kwargs.get("stage", 0)
-        # Frame
-        pygame.draw.rect(surf, (140, 110, 70), (x - 10, y - 8, 20, 16))
-        pygame.draw.rect(surf, (60, 40, 25), (x - 10, y - 8, 20, 16), 1)
-        # Photo paper
-        pygame.draw.rect(surf, (200, 190, 170), (x - 8, y - 6, 16, 12))
-        # Three figures
-        skin = (220, 190, 160)
-        clothes_a = (160, 80, 100)
-        clothes_b = (80, 100, 140)
-        clothes_c = (180, 160, 80)
-        # Adult man (centre)
-        pygame.draw.rect(surf, clothes_b, (x - 1, y - 2, 2, 6))
-        pygame.draw.circle(surf, skin, (x, y - 3), 1)
-        # Adult woman (right)
-        pygame.draw.rect(surf, clothes_a, (x + 2, y - 2, 2, 6))
-        pygame.draw.circle(surf, skin, (x + 3, y - 3), 1)
-        # Child (left)
-        pygame.draw.rect(surf, clothes_c, (x - 4, y, 2, 4))
-        pygame.draw.circle(surf, skin, (x - 3, y - 1), 1)
-        # Eye dots -- present at stage 0, gone by stage 1+.
-        if stage < 1:
-            pygame.draw.circle(surf, (10, 10, 14), (x, y - 3), 1)
-            pygame.draw.circle(surf, (10, 10, 14), (x + 3, y - 3), 1)
-            pygame.draw.circle(surf, (10, 10, 14), (x - 3, y - 1), 1)
-        # Mouth lines -- gone by stage 2+.
-        if stage < 2:
-            pygame.draw.line(surf, (90, 60, 70),
-                             (x - 1, y - 2), (x + 1, y - 2), 1)
-        # Face-erase scratches -- appear at stage 2+, oblitering each
-        # face entirely.
-        if stage >= 2:
-            for ex, ey in [(x, y - 3), (x + 3, y - 3), (x - 3, y - 1)]:
-                pygame.draw.line(surf, (200, 190, 170),
-                                 (ex - 1, ey), (ex + 1, ey), 1)
-        # Red corner dot
-        if stage >= 2:
-            pygame.draw.circle(surf, (200, 40, 40),
-                               (x + 8, y - 6), 1)

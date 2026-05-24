@@ -143,7 +143,7 @@ CULT_DARK_SCENES = {"depths_antechamber", "depths_procession",
 # rest of the world is pressing against -- standing inside should
 # feel SAFE compared to outside. Hide vignette also suppressed
 # (you are already safe; the cramped read is wrong here).
-SAFE_SCENES = {"bedroom", "house", "son_room", "kid_house"}
+SAFE_SCENES = {"bedroom", "house", "kid_house"}
 
 # Dim-but-clear interiors. The flashlight cone still draws -- the
 # cellar wants the light -- but dread / apex / dip overlays are

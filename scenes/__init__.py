@@ -9,7 +9,7 @@ for that key.
 """
 from .base import Scene, tile_footstep, OBJECT_DEFS, FLOOR_DEFS, TILE
 from .house import (build_bedroom, build_house, build_basement,
-                    build_abducted_hallway, build_son_room)
+                    build_abducted_hallway)
 from .our_house_area import build_our_house_area, build_woodshed
 from .village import build_village
 from .forest_path import build_forest_path
@@ -30,7 +30,6 @@ from .villager_houses import (
     build_old_man_house, build_fisherman_cottage,
     build_haunted_house, build_haunted_house_glitch,
     build_symbol_portal_room, build_locked_house,
-    build_daughter_room,
 )
 from .mistlands import (build_mistlands, build_mist_house,
                         build_alter_room,
@@ -50,10 +49,8 @@ from .threshold_extras import (build_schoolhouse, build_graveyard,
 # THRESHOLD scene registry. Keys map to the new fiction:
 #   bedroom            -> spare_room (player's cot in Innkeeper's house)
 #   house              -> innkeeper_house (kitchen + living + hallway)
-#   son_room           -> innkeeper_bedroom (locked; keys, orb, robe)
-#   basement           -> innkeeper_basement (Mom's photo, notebook,
-#                                             charcoal, flashlight,
-#                                             bulkhead exit)
+#   basement           -> innkeeper_basement (notebook, charcoal, the
+#                                             orb, bulkhead exit)
 #   our_house_area     -> outside_innkeeper_house (yard, pickup, shed)
 #   kid_house          -> kid_house (drawings on walls)
 #   village            -> town_crossroads (well + payphone)
@@ -75,7 +72,6 @@ SCENE_BUILDERS = {
     # Player's quarters (the Innkeeper's house, above the inn)
     "bedroom":            build_bedroom,            # -> spare_room
     "house":              build_house,              # -> innkeeper_house
-    "son_room":           build_son_room,           # -> innkeeper_bedroom
     "basement":           build_basement,           # -> innkeeper_basement
     "our_house_area":     build_our_house_area,     # -> yard
     "woodshed":           build_woodshed,           # -> Innkeeper's shed interior
@@ -129,10 +125,9 @@ SCENE_BUILDERS = {
 
 # CUT from registry (builders preserved for import safety only):
 #   void, bandit_cave, bandit_cave_west, bandit_cave_east,
-#   bandit_cave_boss, easter_egg_room, daughter_room,
-#   abducted_hallway, haunted_house_glitch, locked_house,
-#   mist_house, alter_room, void_room_1, void_room_2,
-#   underwater_room
+#   bandit_cave_boss, easter_egg_room, abducted_hallway,
+#   haunted_house_glitch, locked_house, mist_house, alter_room,
+#   void_room_1, void_room_2, underwater_room
 
 
 def load_scene(key):
@@ -140,9 +135,9 @@ def load_scene(key):
         # Fallback: any save state pointing to a cut scene routes to
         # the spare_room. The player wakes there if the world has
         # forgotten where they were. (Cut keys: void, bandit_cave*,
-        # easter_egg_room, daughter_room, abducted_hallway,
-        # haunted_house_glitch, locked_house, mist_house, alter_room,
-        # void_room_1, void_room_2.)
+        # easter_egg_room, abducted_hallway, haunted_house_glitch,
+        # locked_house, mist_house, alter_room, void_room_1,
+        # void_room_2.)
         key = "bedroom"
     return SCENE_BUILDERS[key]()
 

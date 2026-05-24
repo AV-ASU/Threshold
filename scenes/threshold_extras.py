@@ -100,8 +100,7 @@ def build_schoolhouse():
         sc.add_decoration(Decoration(50 + i * 60,
                                      80 + (i % 3) * 50, "mote"))
 
-    # The teacher's desk has the kid's report-card -- a generic
-    # "photo" decoration the player can interact with, generating
+    # The teacher's desk -- the player can interact with it to generate
     # an evidence beat once.
     desk_x = 3 * TILE + 16
     desk_y = 3 * TILE + 16
@@ -213,8 +212,6 @@ def build_country_lane():
                                  "creepy_tree"))
     sc.add_decoration(Decoration(18 * TILE + 16, 7 * TILE + 22,
                                  "dead_crow"))
-    sc.add_decoration(Decoration(11 * TILE + 16, 9 * TILE + 16,
-                                 "missing_flyer"))
     # Hide spots colocated with cover (cornstalks).
     sc.hide_spots = [
         (5 * TILE + 16, 3 * TILE + 16, "behind"),
@@ -631,7 +628,7 @@ def build_backwoods_cabin():
     notepad_x = 10 * TILE + 16
     notepad_y = 9 * TILE + 16
     sc._notepad_pos = (notepad_x, notepad_y)
-    sc.add_decoration(Decoration(notepad_x, notepad_y, "wrong_photo"))
+    sc.add_decoration(Decoration(notepad_x, notepad_y, "paper"))
     # Grass / motes
     rng = random.Random(2032)
     for _ in range(18):

@@ -190,11 +190,8 @@ def build_village():
                    (3, 17), (29, 17), (30, 9), (33, 13)]:
         sc.add_decoration(Decoration(sx * TILE + 16, sy * TILE + 16,
                                      "grass_tuft"))
-    # Liminal dressing: someone is hunting the vanished out here too --
-    # a flyer nailed to the shed, another by the dead payphone -- and a
-    # single chair sits in a gap in the corn where no chair belongs.
-    sc.add_decoration(Decoration(25 * TILE + 16, 13 * TILE - 4, "missing_flyer"))
-    sc.add_decoration(Decoration(6 * TILE + 16, 13 * TILE + 6, "missing_flyer"))
+    # Liminal dressing: a single chair sits in a gap in the corn where
+    # no chair belongs -- the one wrong detail in the empty field.
     sc.add_decoration(Decoration(20 * TILE + 16, 17 * TILE + 16, "small_chair"))
 
     # Hide spots: in the corn rows themselves and behind the shed.
@@ -210,14 +207,12 @@ def build_village():
         # Locked shed door -- requires woodshed_key (given by the
         # Innkeeper on liquor-crate turn-in). Once unlocked, the
         # door opens into the same `woodshed` interior the yard's
-        # door used to open. Anti-softlock: once the polaroid is
-        # taken, the lock forces open (anti-softlock).
+        # door used to open.
         shed_door_x = 24 * TILE + 16
         shed_door_y = shed_top * TILE + 16
         if (abs(game.player.x - shed_door_x) < 40
                 and abs(game.player.y - shed_door_y) < 40):
-            unlocked = (game.player.inventory.has("woodshed_key")
-                        or game.save.flag("polaroid_taken"))
+            unlocked = game.player.inventory.has("woodshed_key")
             if not unlocked:
                 game.audio.play("door_locked", 0.6)
                 game.show_notice(

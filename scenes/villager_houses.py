@@ -455,7 +455,7 @@ def build_locked_house():
     """Red herring: the brass_key found in bandit_cave_east opens this
     house. No NPC, no quest, no evidence file. The let-down IS the point
     -- but the room should look lived-in-then-left, not blank-canvas
-    empty. Dust, scattered furniture, a faded family photo over the bed.
+    empty. Dust, scattered furniture, a buck left on the wall.
 
     Note: village uses 'z' (solid) as the locked-from-outside door;
     inside the house we use 'D' (non-solid) so the player can walk back
@@ -480,101 +480,20 @@ def build_locked_house():
     sc.add_furniture("bookshelf", [(5, 2), (6, 2)], w=54, h=18, seed=7)
     sc.add_furniture("bed", [(2, 4), (3, 4)], w=56, h=38)
     # Atmosphere: an old single candle still burning by the table, a
-    # faded family-photo frame hung over the bed, and a smattering of
-    # floating dust motes that catch the light.
+    # mounted buck left behind on the north wall, a cobweb in the
+    # corner, and the clock the inhabitants left running -- a hunting
+    # house, lived in then walked away from. The let-down stays, but the
+    # abandonment reads as having a story behind it.
     sc.add_decoration(Decoration(2 * TILE + 16,  0 * TILE + 22 , "candle"))
-    sc.add_decoration(Decoration(2 * TILE + 16, 3 * TILE + 16, "photo"))
-    # A mounted buck left behind on the north wall (replacing the old
-    # faded banner) and a cobweb in the corner -- a hunting house, lived
-    # in then walked away from. The faded family photos + the clock the
-    # inhabitants left running stay, so the let-down still reads as
-    # having a story behind it.
     sc.add_decoration(Decoration(6 * TILE + 16, 0 * TILE + 22, "buck_head",
                                  wall="N"))
     sc.add_decoration(Decoration(1 * TILE + 6, 1 * TILE + 6, "cobweb",
                                  ang=0.0))
     sc.add_decoration(Decoration(5 * TILE + 24,  0 * TILE + 22 , "clock"))
-    sc.add_decoration(Decoration(2 * TILE + 16, 4 * TILE + 6, "photo"))
     # Dust motes scattered through the interior. Deterministic positions
     # so the room reads consistently on every entry.
     for mx, my in [(3, 2), (4, 3), (5, 1), (2, 4), (6, 3), (4, 4)]:
         sc.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16, "mote"))
     return sc
-
-
-def build_daughter_room():
-    """The daughter's bedroom -- accessed once the old_doll has been
-    taken from easter_egg_room. Pre-polaroid: a small pink-banner room
-    with dolls implied via decorations. Post-polaroid: same shape, but
-    the bright pink has faded, the dolls' presence reads as broken,
-    and bloodstains streak the floor."""
-    floor = ["=" * 8 for _ in range(6)]
-    objects = [
-        "WWWDWWWW",   # 0
-        "W......W",   # 1   <- spawn
-        "W..b...W",   # 2  small bed
-        "W......W",   # 3
-        "W..s...W",   # 4  shelf (where her dolls live)
-        "WWWWWWWW",   # 5
-    ]
-    sc = Scene("daughter_room", floor, objects, music="home")
-    sc.add_exit("D", "house", "from_daughter_room")
-    sc.set_spawn("default", 3, 1)
-    sc.set_spawn("from_house", 3, 1)
-    # Sized furniture (kept through on_enter's decoration reset below).
-    sc.add_furniture("bed", [(3, 2), (3, 3)], w=34, h=52)
-    sc.add_furniture("bookshelf", [(2, 4), (3, 4)], w=54, h=18, seed=8)
-    sc.on_enter_fn = daughter_room_on_enter
-    return sc
-
-
-_FURNITURE_KINDS = ("bed", "bookshelf", "table", "chair", "wardrobe", "stove")
-
-
-def daughter_room_on_enter(game, scene):
-    # Keep the sized furniture; clear only the dressing so the
-    # polaroid-state props can be rebuilt fresh.
-    scene.decorations = [d for d in scene.decorations
-                         if getattr(d, "kind", "") in _FURNITURE_KINDS]
-    polaroid = game.save.flag("polaroid_taken")
-    # One-shot dim popup the first time the player walks into the
-    # polaroid-altered version.
-    if polaroid and not game.save.flag("daughter_dog_line_seen"):
-        game.save.set_flag("daughter_dog_line_seen", True)
-        game.dialog.show([
-            "[c=dim]Nothing here.[/c]",
-        ], speaker="", voice="blip_soft", portrait="narrator")
-    # The pink banner stays in both states -- its warm -> faded-grey
-    # colour shift is the room's whole emotional beat, not generic
-    # filler. Lodge dressing is limited to cobwebs added here (the
-    # on_enter wipe above strips everything but the sized furniture).
-    if polaroid:
-        # Faded pink-grey banner
-        scene.add_decoration(Decoration(6 * TILE + 16,  0 * TILE + 22 , "banner",
-                                        color=(120, 90, 100)))
-        scene.add_decoration(Decoration(2 * TILE + 16, 2 * TILE + 16, "phantom_mark"))
-        scene.add_decoration(Decoration(6 * TILE + 16, 3 * TILE + 16, "phantom_mark"))
-        scene.add_decoration(Decoration(2 * TILE + 16, 4 * TILE + 16, "phantom_mark"))
-        scene.add_decoration(Decoration(4 * TILE + 16, 3 * TILE + 24, "bloodstain"))
-        scene.add_decoration(Decoration(5 * TILE + 16, 4 * TILE + 24, "bloodstain"))
-        # Cobwebs in both high corners -- the room has gone to decay.
-        scene.add_decoration(Decoration(1 * TILE + 6, 1 * TILE + 6, "cobweb",
-                                        ang=0.0))
-        scene.add_decoration(Decoration(6 * TILE + 26, 1 * TILE + 6, "cobweb",
-                                        ang=math.pi / 2))
-        # Heavy dust
-        for mx, my in [(2, 2), (3, 3), (5, 2), (4, 4), (6, 3), (5, 3), (3, 4)]:
-            scene.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16, "mote"))
-    else:
-        # Warm pink banner
-        scene.add_decoration(Decoration(2 * TILE + 16,  0 * TILE + 22 , "candle"))
-        scene.add_decoration(Decoration(6 * TILE + 16,  0 * TILE + 22 , "banner",
-                                        color=(220, 130, 170)))
-        # A single cobweb in the corner -- even the kept room is old.
-        scene.add_decoration(Decoration(6 * TILE + 26, 1 * TILE + 6, "cobweb",
-                                        ang=math.pi / 2))
-        # Light dust
-        for mx, my in [(4, 2), (5, 3)]:
-            scene.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16, "mote"))
 
 

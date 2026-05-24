@@ -528,12 +528,10 @@ def build_shop():
                        portrait="shopkeep",
                        dialogue_fn=shopkeep_dialogue, movement="idle"))
     # Shop dressing: a candle on the counter, a radio on the back
-    # shelf (use the wrong_radio variant -- it creeps the dial), a
-    # hanging sign banner over the door, two crows behind the
-    # window glass, a single mirror on the east wall (the wrong
-    # silhouette in the glass is the cult tell), a clock that
-    # stopped, motes for atmosphere, and a wrong_photo on the
-    # back wall.
+    # shelf (use the wrong_radio variant -- it creeps the dial), two
+    # crows behind the window glass, a single mirror on the east wall
+    # (the wrong silhouette in the glass is the cult tell), a clock
+    # that stopped, and motes for atmosphere.
     # Worn shop rug over the open floor -- multi-tile + off-grid to
     # break the plank tiling. First, so props draw on top.
     sc.add_decoration(Decoration(7 * TILE + 24, 4 * TILE + 8, "rug",
@@ -549,7 +547,7 @@ def build_shop():
     # Lodge dressing: a mounted buck + trophy walleye on the north wall
     # (the old hanging shop banner is gone -- this is hunting/fishing
     # country), a kerosene lamp on the counter, and a cobweb in the NW
-    # corner. The mirror + wrong_photo cult tells stay.
+    # corner. The mirror cult tell stays.
     sc.add_decoration(Decoration(6 * TILE + 16, 0 * TILE + 22, "buck_head",
                                  wall="N"))
     sc.add_decoration(Decoration(9 * TILE + 16, 0 * TILE + 24,
@@ -560,8 +558,6 @@ def build_shop():
                                  ang=0.0))
     sc.add_decoration(Decoration(10 * TILE + 16, 4 * TILE + 16, "mirror"))
     sc.add_decoration(Decoration(8 * TILE + 16, 1 * TILE + 22, "clock"))
-    sc.add_decoration(Decoration(4 * TILE + 16, 1 * TILE + 22,
-                                 "wrong_photo", stage=1))
     for mx, my in [(7, 4), (9, 5), (5, 5)]:
         sc.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16,
                                      "mote"))
@@ -631,9 +627,7 @@ def easter_egg_on_enter(game, scene):
     standard 85% drop-suppression rule (respawning=True).
 
     Round-9: dolls moved to the barn, so the named-doll loot path and
-    the polaroid-on-entry evidence drop are gone from this scene. The
-    daughter_room transformation now triggers off the barn chest
-    pickup instead."""
+    the on-entry evidence drop are gone from this scene."""
     scene.enemies = []
     first_visit = not game.save.flag("first_easter_egg")
     if first_visit:
@@ -723,12 +717,12 @@ def build_barn():
 
 
 # THRESHOLD: combat is gone, so the barn no longer hosts the
-# wolf encounter and the daughter-room doll quest doesn't surface
-# from a chest in the back. The functions that drove that flow
-# (`barn_on_enter`, `barn_interact`, `_spawn_barn_wolves`,
-# `_wolf_killed`, `_barn_go_dirty`) were dead code -- never wired
-# into the scene -- and have been removed. The barn is now just
-# the well-passage hatch room.
+# wolf encounter and the old doll quest doesn't surface from a chest
+# in the back. The functions that drove that flow (`barn_on_enter`,
+# `barn_interact`, `_spawn_barn_wolves`, `_wolf_killed`,
+# `_barn_go_dirty`) were dead code -- never wired into the scene --
+# and have been removed. The barn is now just the well-passage hatch
+# room.
 
 
 def build_kid_house():
@@ -793,11 +787,11 @@ def build_kid_house():
         (3 * TILE + 16, 5 * TILE + 24, "under"),
         (7 * TILE + 16, 2 * TILE + 24, "behind"),
     ]
-    # The kid's drawing pickup -- on the wall (visually a 'photo'
-    # decoration), takeable on first interaction.
+    # The kid's drawing pickup -- a sheet of paper taped to the wall,
+    # takeable on first interaction.
     drawing_x = 6 * TILE + 16
     drawing_y = 1 * TILE + 16
-    sc.add_decoration(Decoration(drawing_x, drawing_y, "photo"))
+    sc.add_decoration(Decoration(drawing_x, drawing_y, "paper"))
     sc._drawing_pos = (drawing_x, drawing_y)
 
     def _kid_house_interact(game):

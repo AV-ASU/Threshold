@@ -69,15 +69,6 @@ def _kid_drawing(s):
     pygame.draw.circle(s, (130, 30, 40), (8, 9), 1)
 
 
-def _robe(s):
-    pygame.draw.polygon(s, _ROBE,
-                        [(8, 2), (12, 6), (13, 14), (3, 14), (4, 6)])
-    pygame.draw.polygon(s, _ROBE_DARK,
-                        [(8, 2), (12, 6), (13, 14), (3, 14), (4, 6)], 1)
-    pygame.draw.line(s, _BLACK, (5, 13), (10, 13), 1)
-    pygame.draw.line(s, (60, 30, 20), (4, 14), (12, 14), 1)
-
-
 def _mom_notebook(s):
     pygame.draw.rect(s, (90, 60, 75), (4, 3, 9, 11))
     pygame.draw.rect(s, (50, 30, 40), (4, 3, 9, 11), 1)
@@ -89,13 +80,6 @@ def _orb(s):
     pygame.draw.circle(s, _BRUISE_LO, (8, 9), 6)
     pygame.draw.circle(s, _BRUISE, (8, 9), 5)
     pygame.draw.circle(s, _BRUISE_HI, (6, 7), 2)
-
-
-def _polaroid(s):
-    pygame.draw.rect(s, _PAPER, (3, 3, 11, 11))
-    pygame.draw.rect(s, _PAPER_DARK, (3, 3, 11, 11), 1)
-    pygame.draw.rect(s, (90, 80, 70), (5, 5, 7, 6))
-    pygame.draw.line(s, _PAPER_DARK, (4, 12), (12, 12), 1)
 
 
 def _cellar_bottle(s):
@@ -159,10 +143,8 @@ _DISPATCH = {
     "sigil_rubbing":   _sigil_rubbing,
     "car_keys":        _car_keys,
     "kid_drawing":     _kid_drawing,
-    "robe":            _robe,
     "mom_notebook":    _mom_notebook,
     "orb":             _orb,
-    "polaroid":        _polaroid,
     "cellar_bottle":   _cellar_bottle,
     "liquor_crate":    _liquor_crate,
     "diary_page_1":    _diary_page,
