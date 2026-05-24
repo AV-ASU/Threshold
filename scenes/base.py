@@ -365,50 +365,51 @@ def draw_object(surf, ch, rx, ry, tx, ty):
         pygame.draw.circle(surf, (100, 100, 110), (rx + 16, ry + 18), 12)
         pygame.draw.circle(surf, (70, 70, 80), (rx + 12, ry + 14), 4)
     elif kind == "bed":
-        # Iron-frame cot, top-down: dark frame, thin mattress with a lit
-        # top edge + foot shadow, a pillow at the head, a heavy blanket
-        # pulled up with a fold, and an old stain that never washed out.
-        pygame.draw.rect(surf, (54, 40, 30), (rx + 2, ry + 4, 28, 26))      # frame
-        pygame.draw.rect(surf, (150, 142, 134), (rx + 4, ry + 6, 24, 22))   # mattress
-        pygame.draw.rect(surf, (172, 164, 156), (rx + 4, ry + 6, 24, 2))    # lit top
-        pygame.draw.rect(surf, (94, 88, 82), (rx + 4, ry + 26, 24, 2))      # foot shadow
-        pygame.draw.rect(surf, (200, 194, 186), (rx + 6, ry + 8, 20, 6))    # pillow
-        pygame.draw.rect(surf, (170, 162, 154), (rx + 6, ry + 13, 20, 1))
-        pygame.draw.rect(surf, (116, 66, 72), (rx + 4, ry + 16, 24, 12))    # blanket
-        pygame.draw.rect(surf, (140, 84, 90), (rx + 4, ry + 16, 24, 2))     # lit edge
-        pygame.draw.line(surf, (92, 50, 56), (rx + 14, ry + 18), (rx + 14, ry + 27), 1)
-        pygame.draw.rect(surf, (84, 60, 46), (rx + 18, ry + 20, 6, 5))      # stain
+        # Iron-frame cot, top-down: dark frame, a dingy thin mattress
+        # with a lit top edge + foot shadow, a grimy pillow, a heavy
+        # dark blanket pulled up with a fold, and an old stain.
+        pygame.draw.rect(surf, (42, 30, 20), (rx + 2, ry + 4, 28, 26))      # frame
+        pygame.draw.rect(surf, (116, 108, 100), (rx + 4, ry + 6, 24, 22))   # mattress
+        pygame.draw.rect(surf, (138, 130, 122), (rx + 4, ry + 6, 24, 2))    # lit top
+        pygame.draw.rect(surf, (70, 64, 58), (rx + 4, ry + 26, 24, 2))      # foot shadow
+        pygame.draw.rect(surf, (146, 138, 130), (rx + 6, ry + 8, 20, 6))    # pillow
+        pygame.draw.rect(surf, (120, 112, 104), (rx + 6, ry + 13, 20, 1))
+        pygame.draw.rect(surf, (90, 48, 52), (rx + 4, ry + 16, 24, 12))     # blanket
+        pygame.draw.rect(surf, (110, 60, 64), (rx + 4, ry + 16, 24, 2))     # lit edge
+        pygame.draw.line(surf, (66, 36, 40), (rx + 14, ry + 18), (rx + 14, ry + 27), 1)
+        pygame.draw.rect(surf, (62, 42, 32), (rx + 18, ry + 20, 6, 5))      # stain
     elif kind == "table":
-        # Plank table: grained top with a lit back edge + shadowed front
-        # lip, two visible legs beneath.
-        pygame.draw.rect(surf, (70, 46, 30), (rx + 5, ry + 22, 4, 8))       # leg
-        pygame.draw.rect(surf, (70, 46, 30), (rx + 23, ry + 22, 4, 8))      # leg
-        pygame.draw.rect(surf, (150, 112, 78), (rx + 2, ry + 6, 28, 18))    # top
-        pygame.draw.rect(surf, (170, 130, 92), (rx + 2, ry + 6, 28, 2))     # lit back
-        pygame.draw.rect(surf, (96, 66, 42), (rx + 2, ry + 21, 28, 3))      # front lip
+        # Plank table in dark, grimy wood: grained top with a lit back
+        # edge + shadowed front lip, two visible legs beneath.
+        pygame.draw.rect(surf, (48, 32, 20), (rx + 5, ry + 22, 4, 8))       # leg
+        pygame.draw.rect(surf, (48, 32, 20), (rx + 23, ry + 22, 4, 8))      # leg
+        pygame.draw.rect(surf, (76, 54, 34), (rx + 2, ry + 6, 28, 18))      # top
+        pygame.draw.rect(surf, (98, 72, 46), (rx + 2, ry + 6, 28, 2))       # lit back
+        pygame.draw.rect(surf, (42, 28, 17), (rx + 2, ry + 21, 28, 3))      # front lip
         for gx in (9, 16, 23):                                             # grain
-            pygame.draw.line(surf, (132, 98, 66),
+            pygame.draw.line(surf, (58, 40, 24),
                              (rx + gx, ry + 9), (rx + gx, ry + 20), 1)
     elif kind == "chair":
-        # Backed wooden chair: legs, a seat with a lit edge, a slatted back.
-        pygame.draw.rect(surf, (70, 48, 32), (rx + 9, ry + 23, 3, 6))       # legs
-        pygame.draw.rect(surf, (70, 48, 32), (rx + 20, ry + 23, 3, 6))
-        pygame.draw.rect(surf, (104, 74, 50), (rx + 8, ry + 6, 16, 9))      # back
-        pygame.draw.line(surf, (76, 52, 34), (rx + 13, ry + 7), (rx + 13, ry + 14), 1)
-        pygame.draw.line(surf, (76, 52, 34), (rx + 19, ry + 7), (rx + 19, ry + 14), 1)
-        pygame.draw.rect(surf, (122, 90, 62), (rx + 8, ry + 15, 16, 9))     # seat
-        pygame.draw.rect(surf, (142, 106, 74), (rx + 8, ry + 15, 16, 2))    # lit seat
+        # Backed wooden chair in dark wood: legs, a seat with a lit
+        # edge, a slatted back.
+        pygame.draw.rect(surf, (48, 32, 20), (rx + 9, ry + 23, 3, 6))       # legs
+        pygame.draw.rect(surf, (48, 32, 20), (rx + 20, ry + 23, 3, 6))
+        pygame.draw.rect(surf, (66, 46, 28), (rx + 8, ry + 6, 16, 9))       # back
+        pygame.draw.line(surf, (44, 30, 18), (rx + 13, ry + 7), (rx + 13, ry + 14), 1)
+        pygame.draw.line(surf, (44, 30, 18), (rx + 19, ry + 7), (rx + 19, ry + 14), 1)
+        pygame.draw.rect(surf, (78, 56, 34), (rx + 8, ry + 15, 16, 9))      # seat
+        pygame.draw.rect(surf, (98, 72, 44), (rx + 8, ry + 15, 16, 2))      # lit seat
     elif kind == "shelf":
-        # Bookshelf: a framed case with a lit top + two shelf boards
-        # (under-shadowed) and rows of leaning books in varied heights
-        # and colours.
-        pygame.draw.rect(surf, (96, 70, 46), (rx + 2, ry + 2, 28, 28))      # case
-        pygame.draw.rect(surf, (60, 42, 26), (rx + 2, ry + 2, 28, 28), 1)
-        pygame.draw.rect(surf, (118, 90, 60), (rx + 2, ry + 2, 28, 2))      # lit top
-        cols = [(120, 60, 55), (66, 78, 110), (78, 104, 72),
-                (150, 120, 60), (100, 70, 110)]
+        # Bookshelf in dark, grimy wood: a framed case with a lit top +
+        # two under-shadowed shelf boards and rows of leaning books in
+        # muted, faded tones.
+        pygame.draw.rect(surf, (62, 46, 28), (rx + 2, ry + 2, 28, 28))      # case
+        pygame.draw.rect(surf, (34, 24, 15), (rx + 2, ry + 2, 28, 28), 1)
+        pygame.draw.rect(surf, (84, 62, 38), (rx + 2, ry + 2, 28, 2))       # lit top
+        cols = [(92, 46, 42), (48, 58, 74), (56, 72, 48),
+                (104, 86, 46), (74, 52, 78)]
         for row, by in enumerate((ry + 4, ry + 15)):
-            pygame.draw.rect(surf, (54, 38, 24), (rx + 3, by + 9, 26, 2))   # shelf board
+            pygame.draw.rect(surf, (36, 26, 15), (rx + 3, by + 9, 26, 2))   # shelf board
             bx = rx + 4
             i = 0
             while bx < rx + 27:
