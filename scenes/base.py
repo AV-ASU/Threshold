@@ -497,18 +497,26 @@ def draw_object(surf, ch, rx, ry, tx, ty):
         pygame.draw.rect(surf, (72, 72, 80), (rx + 9, ry + 17, 14, 2))      # handle
         pygame.draw.rect(surf, (200, 90, 30), (rx + 11, ry + 25, 10, 2))    # ember vent
     elif kind == "counter":
-        # Kitchen counter / cabinet base: a wood carcass under a pale
-        # stone worktop, with cabinet-door divisions + handles. Reads as
-        # kitchen cabinetry and tiles into a continuous run.
-        pygame.draw.rect(surf, (96, 70, 46), (rx, ry + 7, TILE, TILE - 7))   # carcass
-        pygame.draw.rect(surf, (60, 42, 26), (rx, ry + 7, TILE, TILE - 7), 1)
-        pygame.draw.rect(surf, (168, 166, 172), (rx, ry, TILE, 8))           # stone top
-        pygame.draw.rect(surf, (198, 196, 202), (rx, ry, TILE, 2))           # lit front lip
-        pygame.draw.rect(surf, (120, 118, 126), (rx, ry + 8, TILE, 1))       # under-shadow
-        pygame.draw.line(surf, (60, 42, 26),                                 # door split
-                         (rx + 16, ry + 10), (rx + 16, ry + TILE - 2), 1)
-        for hx in (rx + 12, rx + 20):                                        # handles
-            pygame.draw.rect(surf, (38, 26, 16), (hx, ry + 14, 2, 4))
+        # A dark-wood worktop seen from ABOVE (top-down, like the table
+        # and stove): a grimy butcher surface with a raised edge that
+        # catches a little light, plank grain, knife scoring and old
+        # stains. Dark + desaturated for the lodge's darkwood dread --
+        # never a clean cabinet face. Tiles into a continuous run.
+        pygame.draw.rect(surf, (52, 38, 26), (rx, ry, TILE, TILE))           # dark top
+        for gy in (ry + 8, ry + 16, ry + 24):                                # plank grain
+            pygame.draw.line(surf, (40, 28, 18), (rx, gy), (rx + TILE, gy), 1)
+        pygame.draw.line(surf, (80, 60, 40), (rx, ry + 1), (rx + TILE, ry + 1), 1)   # lit lip
+        pygame.draw.rect(surf, (26, 18, 11), (rx, ry + TILE - 3, TILE, 3))   # base shadow
+        pygame.draw.line(surf, (30, 21, 13), (rx, ry), (rx, ry + TILE), 1)   # edges
+        pygame.draw.line(surf, (30, 21, 13),
+                         (rx + TILE - 1, ry), (rx + TILE - 1, ry + TILE), 1)
+        seed = tx * 23 + ty * 47
+        for i in range(2):                                                   # knife scoring
+            sx = rx + 5 + (seed * (i + 1)) % 20
+            pygame.draw.line(surf, (38, 27, 17), (sx, ry + 6), (sx + 5, ry + 13), 1)
+        if seed % 3 == 0:                                                    # old dark stain
+            pygame.draw.ellipse(surf, (46, 18, 16),
+                                (rx + (seed % 14) + 5, ry + 11, 8, 5))
     elif kind == "ladder_down":
         # Round-7 redraw: cellar HATCH (was a ladder visual). A square
         # wood box flush to the ground, two horizontal plank seams, and
