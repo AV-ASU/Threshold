@@ -155,6 +155,59 @@ def _royce_way_out(game, npc):
     ], on_complete=_choose)
 
 
+def _hettie(game, npc):
+    """Hettie keeps the store and the lights. Unlike the others she is
+    no victim to pity: as the town's toll on you climbs she warms into
+    something possessive and glad, naming your sins back to you and
+    approving of them. The menace is that she's on the town's side and
+    pleased it's taking a shine to you. No choice -- just an encounter
+    that curdles the longer you stay marked. Breaks the all-pity register
+    of the other residents and pays off the toll in dialogue."""
+    save = game.save
+    toll = save.arg("brimley_toll", 0)
+
+    def say(pages):
+        game.dialog.show(pages, speaker="Hettie", voice="blip_mid",
+                         portrait="shopkeep")
+
+    if toll <= 0:
+        say([
+            "Still open. Always open.",
+            "Keep near the lights, a stranger out here. The dark's got opinions about strangers.",
+            "[c=dim]I keep them on so the town knows someone still is.[/c]",
+        ])
+        return
+    if toll == 1:
+        say([
+            "There you are. I left a lamp burning for you -- you, particular.",
+            "You're not so much a stranger now. The town's noticed you. I've noticed.",
+            "[c=dim]Stay near the light. It's started to take to you.[/c]",
+        ])
+        return
+    # toll >= 2: she names what you've done, and she is glad of it.
+    if save.flag("royce_told"):
+        middle = ("Royce went out to the road. You know how that ends -- "
+                  "and you pointed him at it anyway. I'm not cross. "
+                  "Somebody had to be next.")
+    elif save.flag("calder_broken"):
+        middle = ("You put the Calder woman right. Cruel thing to do. "
+                  "Needful thing. We don't say it out loud, but we're "
+                  "grateful.")
+    elif save.flag("calder_sat"):
+        middle = ("You sat down at the Calder table. Took his chair, ate "
+                  "his supper. That's the way of it -- you take a place, "
+                  "and the town makes room.")
+    else:
+        middle = ("You've been busy. The town feels lighter for it. Or you "
+                  "do. Getting hard to tell the two apart.")
+    say([
+        "There's my one.",
+        middle,
+        "[c=dim]You won't leave the way you came in. None of us did. But "
+        "I'll keep it warm. I'll keep it warm for you.[/c]",
+    ])
+
+
 def _stamp_building(objects_l, left, right, top, bot,
                      door_char, door_col):
     """Stamp a rectangular building footprint into objects_l. Outer
@@ -638,11 +691,12 @@ def build_mistlands():
                        dialogue_fn=_brimley_voice(pages, voice),
                        movement=movement, radius=radius))
 
-    _resident(55, 62, "Hettie", "shopkeep", [
-        "Still open. Always open -- have you noticed the shelves don't empty anymore?",
-        "No deliveries in... a while, now. But we manage. We always manage.",
-        "[c=dim]I keep the lights on so they know someone's keeping the lights on.[/c]",
-    ], movement="idle")
+    # Hettie runs a custom beat (see _hettie): not a victim to pity but
+    # the town's glad keeper, whose warmth curdles into menace as the
+    # toll climbs and she names your sins back to you, approving.
+    sc.add_npc(NPC(55 * TILE + 16, 62 * TILE + 16, "Hettie", "shopkeep",
+                   dialogue_fn=_hettie, portrait="shopkeep",
+                   movement="idle", radius=52))
     _resident(58, 44, "Old Pell", "old", [
         "Cold came in early this year. Came in early last year, too.",
         "Stopped marking the calendar. The days just fold back on themselves.",
