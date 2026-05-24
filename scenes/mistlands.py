@@ -28,6 +28,15 @@ def _brimley_voice(pages, voice="blip_mid"):
     return _fn
 
 
+def _brimley_toll(game, n=1):
+    """The town's tally on you. Every wound you leave in Brimley -- a
+    grief you fed, a neighbour you got killed -- raises it, and the
+    mistlands reads it on entry (more eyes in the trees, fewer lights
+    still burning, the watching pressing closer). Persists in the save
+    so the cost compounds across visits instead of resetting."""
+    game.save.set_arg("brimley_toll", game.save.arg("brimley_toll", 0) + n)
+
+
 def _calder_dinner(game, npc):
     """Mrs. Calder set a place for her husband Walt, who got up from this
     table and walked out to the highway one 'Tuesday' and never came
@@ -60,6 +69,7 @@ def _calder_dinner(game, npc):
     def _sit():
         save.set_flag("calder_sat", True)
         game.visibility = min(1.0, game.visibility + 0.25)
+        _brimley_toll(game)
         say([
             "There. That's better, isn't it.",
             "You don't have to talk. You never did, after a long shift. Just eat while it's hot.",
@@ -69,6 +79,7 @@ def _calder_dinner(game, npc):
 
     def _correct():
         save.set_flag("calder_broken", True)
+        _brimley_toll(game)
         say([
             "...Don't.",
             "Don't do that. You're tired, you don't mean it. Sit down.",
@@ -114,6 +125,7 @@ def _royce_way_out(game, npc):
 
     def _tell():
         save.set_flag("royce_told", True)
+        _brimley_toll(game)
         say([
             "...East. The east road. Okay.",
             "Two hours to the county line and it spits me back -- but not this time. This time I don't slow down, I don't turn around, I just keep going.",
@@ -913,6 +925,7 @@ def build_mistlands():
                     "[c=dim]The crows got to him before you did.[/c]",
                 ], speaker="", voice="blip_soft", portrait="narrator")
     sc.on_interact_fn = _mistlands_interact
+    sc.on_update_fn = _mistlands_ambient
     return sc
 
 
@@ -989,6 +1002,61 @@ def mistlands_on_enter(game, scene):
         for cx, cy, k in [(33, 27, "crow"), (35, 30, "dead_crow"),
                           (37, 29, "crow")]:
             scene.add_decoration(Decoration(cx * TILE + 16, cy * TILE + 16, k))
+
+    # ---- The town's toll closes in ----
+    # Every wound you've left in Brimley (a grief fed, a neighbour sent
+    # to the road) is read here on entry, so the beats compound instead
+    # of staying isolated: more eyes open in the tree line and track
+    # you, the kept lights gutter out one by one, and at the worst a
+    # figure hangs over the field. The attention clings mechanically
+    # too -- you arrive a little more seen -- but capped, so it
+    # pressures rather than executes.
+    toll = game.save.arg("brimley_toll", 0)
+    if toll > 0:
+        eye_spots = [(3, 38), (3, 62), (96, 30), (96, 55), (48, 3),
+                     (52, 96), (18, 4), (82, 4), (4, 82), (95, 82)]
+        for ex, ey in eye_spots[:min(len(eye_spots), toll * 2)]:
+            scene.add_decoration(Decoration(ex * TILE + 16, ey * TILE + 16,
+                                            "watching_eye"))
+        if toll >= 2:
+            lit = [d for d in scene.decorations if d.kind == "lantern"]
+            for d in lit[:toll - 1]:
+                scene.decorations.remove(d)
+        if toll >= 3:
+            scene.add_decoration(Decoration(58 * TILE + 16, 18 * TILE + 16,
+                                            "hanging_figure"))
+        game.visibility = max(game.visibility, min(0.55, 0.12 * toll))
+        # Legibility: name the change once per new toll level, so the
+        # player reads it as cause-and-effect rather than random dread.
+        if toll > game.save.arg("brimley_toll_seen", 0):
+            game.save.set_arg("brimley_toll_seen", toll)
+            game.show_notice(
+                "More of the trees are watching than the last time you "
+                "came through.", 3.5)
+
+
+def _mistlands_ambient(game, scene, dt):
+    """The watching made felt as you cross the open bank -- no E-press
+    needed. Scales with the town's toll, fires only while you're exposed
+    (the corn hides you from it too), on a long cooldown so it stays a
+    prickle and not a nag."""
+    toll = game.save.arg("brimley_toll", 0)
+    if toll <= 0 or game.player is None:
+        return
+    if getattr(game.player, "hidden", None):
+        return
+    scene._amb_t = getattr(scene, "_amb_t", 6.0) + dt
+    if scene._amb_t < 16.0:
+        return
+    scene._amb_t = 0.0
+    if random.random() > 0.4 + 0.12 * toll:
+        return
+    game.show_notice(random.choice([
+        "Something in the tree line turns to keep you in sight.",
+        "Every lit window you can see is facing you.",
+        "You're being watched, and the watching is glad of you.",
+    ]), 2.5)
+    game.audio.play("whisper", 0.22)
 
 
 def build_mist_house():
