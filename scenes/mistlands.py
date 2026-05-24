@@ -456,6 +456,49 @@ def build_mistlands():
         sc.add_decoration(Decoration(tx * TILE + 16, ty * TILE + 16,
                                      "watching_wound", size="small"))
 
+    # Open-bank dressing pass: the bank still read flat in the long
+    # stretches between the tracks and the buildings, so scatter it with
+    # the town's own liminal vocabulary. Isolated trees break the fog,
+    # abandoned objects sit where no object should (the village's
+    # chair-in-the-corn motif carried across the whole bank), a footprint
+    # trail walks off into the east treeline, and a couple of lanterns
+    # burn in the open. All on open grass, clear of the river, tracks,
+    # corn cover, building footprints, and the edge spawns.
+    for tx, ty in [(88, 22), (92, 52), (44, 40), (26, 34),
+                   (52, 86), (90, 88), (20, 18)]:
+        sc.add_decoration(Decoration(tx * TILE + 16, ty * TILE + 16,
+                                     "creepy_tree"))
+    for tx, ty in [(90, 30), (40, 50), (50, 92), (30, 46)]:
+        sc.add_decoration(Decoration(tx * TILE + 16, ty * TILE + 16, "crow"))
+    for tx, ty in [(84, 18), (54, 82), (94, 64)]:
+        sc.add_decoration(Decoration(tx * TILE + 16, ty * TILE + 16,
+                                     "dead_crow"))
+    sc.add_decoration(Decoration(66 * TILE + 16, 14 * TILE + 16, "flock"))
+    sc.add_decoration(Decoration(22 * TILE + 16, 28 * TILE + 16, "flock"))
+    sc.add_decoration(Decoration(86 * TILE + 16, 24 * TILE + 16,
+                                 "overturned_chair"))
+    sc.add_decoration(Decoration(42 * TILE + 16, 36 * TILE + 16, "wheelbarrow"))
+    sc.add_decoration(Decoration(90 * TILE + 16, 70 * TILE + 16, "small_chair"))
+    sc.add_decoration(Decoration(48 * TILE + 16, 80 * TILE + 16, "small_chair"))
+    # A footprint trail walking off the bank into the east treeline.
+    for tx, ty in [(76, 46), (79, 49), (82, 52), (85, 55), (88, 58)]:
+        sc.add_decoration(Decoration(tx * TILE + 16, ty * TILE + 16,
+                                     "mud_footprint"))
+    # Lanterns left burning in the fog. Under the scene's heavy night
+    # grade, light is the only dressing the player actually reads at
+    # range, so these double as waypoints: a few in the open bank and
+    # a few staked beside the worn tracks to the doors, as if the
+    # townsfolk keep them lit (Hettie: "I keep the lights on"). They
+    # make the emptiness feel tended, not dead.
+    for tx, ty in [(46, 30), (90, 60), (12, 14), (58, 40), (76, 78)]:
+        sc.add_decoration(Decoration(tx * TILE + 16, ty * TILE + 16,
+                                     "lantern"))
+    # Firewood stacked by a few buildings so the houses read as lived-in
+    # lodges, not empty shells.
+    sc.add_decoration(Decoration(4 * TILE + 16, 11 * TILE + 16, "firewood"))
+    sc.add_decoration(Decoration(11 * TILE + 16, 62 * TILE + 16, "firewood"))
+    sc.add_decoration(Decoration(78 * TILE + 16, 79 * TILE + 16, "firewood"))
+
     # ---- Brimley's people ----
     # The town's residents, stranded here with everyone else. None of
     # them are cult -- but you can't be sealed inside a folding town
