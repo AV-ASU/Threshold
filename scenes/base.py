@@ -593,16 +593,28 @@ def draw_floor(surf, ch, rx, ry, tx, ty):
                              (rx + 1, ry + 16),
                              (rx + TILE - 1, ry + 16), 1)
     elif ch == "=":
-        # Wood plank floor with seam noise -- knots scattered
-        # deterministically so old boards read as USED.
-        pygame.draw.line(surf, (90, 60, 40),
-                         (rx, ry + 10), (rx + TILE, ry + 10), 1)
-        pygame.draw.line(surf, (90, 60, 40),
-                         (rx, ry + 22), (rx + TILE, ry + 22), 1)
-        if (tx + ty) % 3 == 0:
-            pygame.draw.line(surf, (90, 60, 40),
-                             (rx + 16, ry), (rx + 16, ry + 10), 1)
-        # Dark knots
+        # Wood plank floor: three horizontal boards per tile, each a
+        # slightly different tone (keyed to its global board row) so
+        # long planks read across the room -- shadowed seams, a lit
+        # edge under each, staggered end-joints, knots.
+        boards = ((0, 10), (10, 12), (22, 10))     # (y0, height) per board
+        for b, (y0, bh) in enumerate(boards):
+            row = ty * 3 + b
+            v = ((row * 2654435761) & 0xff) / 255.0 - 0.5    # -0.5..0.5
+            shade = (max(0, min(255, int(88 + v * 26))),
+                     max(0, min(255, int(66 + v * 20))),
+                     max(0, min(255, int(42 + v * 16))))
+            pygame.draw.rect(surf, shade, (rx, ry + y0, TILE, bh))
+            pygame.draw.line(surf, (52, 36, 22),
+                             (rx, ry + y0), (rx + TILE, ry + y0), 1)
+            pygame.draw.line(surf, (104, 80, 52),
+                             (rx, ry + y0 + 1), (rx + TILE, ry + y0 + 1), 1)
+            # Staggered end-joint -- only some boards, so planks run long.
+            if (tx * 3 + row) % 5 == 0:
+                jx = rx + ((row * 11 + tx * 7) % (TILE - 6)) + 3
+                pygame.draw.line(surf, (50, 34, 20),
+                                 (jx, ry + y0 + 1), (jx, ry + y0 + bh - 1), 1)
+        # Dark knots, sparse.
         seed = tx * 31 + ty * 17
         if seed % 6 == 0:
             kx = rx + (seed % 26) + 3
@@ -653,8 +665,20 @@ def draw_floor(surf, ch, rx, ry, tx, ty):
                              (rx + (static_seed % 26),
                               ry + (static_seed * 3 % 26), 2, 2))
     elif ch == "x":
-        # Basement / interior dirt floor -- cracks + dark stains.
+        # Basement / interior stone-and-earth floor -- packed dark with
+        # faint flagstone grout + a low mottle so it isn't a flat void,
+        # then cracks, dark stains, and tally scratches over the top.
         seed = tx * 19 + ty * 41
+        for i in range(2):                          # low-contrast mottle
+            mx = rx + (seed * (i * 3 + 1)) % 26 + 2
+            my = ry + (seed * (i * 5 + 3)) % 26 + 2
+            pygame.draw.rect(surf, (36, 30, 38), (mx, my, 3, 3))
+        if seed % 3 == 0:                           # faint flagstone grout
+            pygame.draw.line(surf, (19, 15, 21),
+                             (rx + 16, ry + 1), (rx + 16, ry + TILE - 1), 1)
+        if seed % 4 == 0:
+            pygame.draw.line(surf, (19, 15, 21),
+                             (rx + 1, ry + 16), (rx + TILE - 1, ry + 16), 1)
         if seed % 11 == 0:
             pygame.draw.line(surf, (10, 8, 14),
                              (rx + 4, ry + (seed % 24)),
