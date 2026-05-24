@@ -231,6 +231,115 @@ class Decoration:
         pygame.draw.rect(surf, (200, 90, 30), (rx + w // 2 - 5, ry + h - 7, 10, 2))  # ember
 
 
+    # ---- Northern-MN lodge decor (wall mounts draw face-on like the
+    # photo/clock; floor pieces are placed via add_furniture). ----
+    def _draw_buck_head(self, surf, x, y):
+        # Mounted buck on a wood plaque: antlers, dark muzzle, glassy eyes.
+        plaque = [(x - 11, y - 11), (x + 11, y - 11), (x + 13, y + 8),
+                  (x, y + 13), (x - 13, y + 8)]
+        pygame.draw.polygon(surf, (58, 42, 26), plaque)
+        pygame.draw.polygon(surf, (34, 24, 14), plaque, 1)
+        for s in (-1, 1):
+            bx = x + s * 5
+            pygame.draw.line(surf, (118, 106, 82), (bx, y - 7), (bx + s * 8, y - 18), 2)
+            pygame.draw.line(surf, (118, 106, 82), (bx + s * 3, y - 11), (bx + s * 9, y - 14), 1)
+            pygame.draw.line(surf, (118, 106, 82), (bx + s * 5, y - 14), (bx + s * 7, y - 21), 1)
+        pygame.draw.ellipse(surf, (72, 52, 36), (x - 7, y - 8, 14, 18))   # head
+        pygame.draw.ellipse(surf, (50, 36, 24), (x - 7, y - 8, 14, 18), 1)
+        pygame.draw.ellipse(surf, (38, 27, 19), (x - 4, y + 4, 8, 6))     # snout
+        pygame.draw.circle(surf, (18, 14, 10), (x - 3, y - 1), 2)
+        pygame.draw.circle(surf, (18, 14, 10), (x + 3, y - 1), 2)
+        pygame.draw.circle(surf, (130, 118, 96), (x - 3, y - 2), 1)       # glint
+
+    def _draw_mounted_fish(self, surf, x, y):
+        # A trophy walleye on a varnished board.
+        pygame.draw.rect(surf, (66, 48, 30), (x - 16, y - 7, 32, 14), border_radius=3)
+        pygame.draw.rect(surf, (36, 26, 15), (x - 16, y - 7, 32, 14), 1)
+        pygame.draw.ellipse(surf, (96, 104, 86), (x - 12, y - 4, 22, 8))   # body
+        pygame.draw.ellipse(surf, (70, 78, 62), (x - 12, y - 4, 22, 8), 1)
+        pygame.draw.polygon(surf, (96, 104, 86), [(x + 9, y), (x + 15, y - 4), (x + 15, y + 4)])  # tail
+        pygame.draw.polygon(surf, (80, 88, 70), [(x - 2, y - 4), (x + 2, y - 8), (x + 4, y - 4)])  # dorsal fin
+        pygame.draw.line(surf, (60, 68, 54), (x - 10, y), (x + 8, y), 1)   # lateral line
+        pygame.draw.circle(surf, (216, 206, 176), (x - 9, y - 1), 2)       # eye
+        pygame.draw.circle(surf, (10, 10, 12), (x - 9, y - 1), 1)
+
+    def _draw_wrong_taxidermy(self, surf, x, y):
+        # A mounted... thing. The body reads as a stoat or grouse, but
+        # the eyes are wrong -- too many, sickly-yellow, catching light.
+        pygame.draw.rect(surf, (58, 42, 26), (x - 10, y - 9, 20, 18), border_radius=2)
+        pygame.draw.rect(surf, (34, 24, 14), (x - 10, y - 9, 20, 18), 1)
+        pygame.draw.ellipse(surf, (70, 56, 40), (x - 7, y - 6, 14, 12))
+        pygame.draw.ellipse(surf, (48, 36, 24), (x - 7, y - 6, 14, 12), 1)
+        rng = random.Random(self.seed)
+        for _ in range(6):
+            ex = x - 5 + rng.randint(0, 10)
+            ey = y - 4 + rng.randint(0, 8)
+            pygame.draw.circle(surf, (208, 196, 64), (ex, ey), 1)          # too many eyes
+
+    def _draw_cobweb(self, surf, x, y):
+        # A faint corner cobweb: radial threads + a few connecting arcs.
+        # `ang` kwarg points it into the corner it hangs from.
+        col = (118, 118, 130)
+        base = self.kwargs.get("ang", 0.0)
+        span = math.pi / 2
+        n = 5
+        R = int(self.kwargs.get("r", 17))
+        for i in range(n):
+            a = base + span * (i / (n - 1))
+            pygame.draw.line(surf, col, (x, y),
+                             (int(x + math.cos(a) * R), int(y + math.sin(a) * R)), 1)
+        for ring in (R // 3, 2 * R // 3, R - 1):
+            pts = [(int(x + math.cos(base + span * (i / (n - 1))) * ring),
+                    int(y + math.sin(base + span * (i / (n - 1))) * ring))
+                   for i in range(n)]
+            pygame.draw.lines(surf, col, False, pts, 1)
+
+    def _draw_kerosene_lamp(self, surf, x, y):
+        # A brass oil lamp: warm pool, a fuel font, a glass chimney, flame.
+        _light_pool(surf, x, y - 4, 30, (255, 168, 80), 60)
+        pygame.draw.rect(surf, (96, 74, 40), (x - 5, y + 3, 10, 4))        # base
+        pygame.draw.polygon(surf, (120, 96, 56),
+                            [(x - 4, y + 3), (x + 4, y + 3), (x + 2, y - 3), (x - 2, y - 3)])  # font
+        chim = pygame.Surface((10, 12), pygame.SRCALPHA)
+        pygame.draw.polygon(chim, (210, 196, 150, 80), [(2, 11), (8, 11), (7, 0), (3, 0)])
+        surf.blit(chim, (x - 5, y - 15))
+        fh = 5 + math.sin(self.t * 16 + self.seed) * 1.2
+        pygame.draw.polygon(surf, (255, 206, 96),
+                            [(x, int(y - 4 - fh)), (x - 2, y - 4), (x + 2, y - 4)])
+
+    def _draw_firewood(self, surf, x, y):
+        # A stack of split logs -- pale ringed ends in a dark cradle.
+        w = int(self.kwargs.get("w", 40)); h = int(self.kwargs.get("h", 24))
+        rx, ry = x - w // 2, y - h // 2
+        pygame.draw.rect(surf, (38, 27, 17), (rx, ry, w, h))
+        pygame.draw.rect(surf, (24, 17, 10), (rx, ry, w, h), 1)
+        r = 5
+        row = 0
+        oy = ry + r + 1
+        while oy < ry + h - 1:
+            cx = rx + r + 1 + (row % 2) * r
+            while cx < rx + w - 1:
+                pygame.draw.circle(surf, (92, 68, 44), (cx, oy), r)
+                pygame.draw.circle(surf, (58, 40, 24), (cx, oy), r, 1)
+                pygame.draw.circle(surf, (120, 92, 60), (cx, oy), max(1, r - 2), 1)
+                cx += r * 2
+            oy += r * 2 - 1
+            row += 1
+
+    def _draw_antler_rack(self, surf, x, y):
+        # An antler/branch coat-rack: a post on a base, antler arms up
+        # top, a dark wool coat hung from it.
+        w = int(self.kwargs.get("w", 22)); h = int(self.kwargs.get("h", 46))
+        top = y - h // 2 + 6
+        pygame.draw.ellipse(surf, (34, 24, 14), (x - 7, y + h // 2 - 8, 14, 7))  # base
+        pygame.draw.rect(surf, (48, 34, 20), (x - 2, top, 4, h - 12))            # post
+        for s in (-1, 1):
+            pygame.draw.line(surf, (118, 106, 82), (x, top), (x + s * 9, top - 7), 2)
+            pygame.draw.line(surf, (118, 106, 82), (x + s * 5, top - 3), (x + s * 8, top - 10), 1)
+        coat = [(x - 7, top + 3), (x + 7, top + 3), (x + 5, y + 8), (x - 5, y + 8)]
+        pygame.draw.polygon(surf, (46, 44, 50), coat)                           # hung coat
+        pygame.draw.polygon(surf, (28, 26, 32), coat, 1)
+
     def _draw_rug(self, surf, x, y):
         """A worn area rug -- a multi-tile floor covering (w x h px via
         kwargs) that breaks up the plank grid. Faded field, a woven

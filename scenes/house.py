@@ -368,6 +368,20 @@ def build_house():
     sc.add_decoration(Decoration(15 * TILE + 16, 7 * TILE + 16, "small_chair"))
     sc.add_decoration(Decoration(8 * TILE + 16, 9 * TILE + 16, "phantom_mark"))
 
+    # Northern-MN lodge decor. Wall mounts (no collision) along the
+    # east + west walls; an oil lamp on the kitchen counter; cobwebs in
+    # the high corners; firewood and an antler coat-rack on the floor
+    # (collision, tucked against walls so they never block a path).
+    sc.add_decoration(Decoration(16 * TILE + 12, 3 * TILE + 16, "buck_head"))
+    sc.add_decoration(Decoration(16 * TILE + 12, 6 * TILE + 16, "mounted_fish"))
+    sc.add_decoration(Decoration(1 * TILE + 12, 9 * TILE + 16, "wrong_taxidermy"))
+    sc.add_decoration(Decoration(2 * TILE + 14, 6 * TILE + 2, "kerosene_lamp"))
+    sc.add_decoration(Decoration(1 * TILE + 6, 1 * TILE + 6, "cobweb", ang=0.0))
+    sc.add_decoration(Decoration(16 * TILE + 26, 1 * TILE + 6, "cobweb",
+                                 ang=math.pi / 2))
+    sc.add_furniture("firewood", [(15, 8), (16, 8)], w=58, h=24)
+    sc.add_furniture("antler_rack", [(16, 2)], w=22, h=46)
+
     # The kitchen drawer position -- where 'paper' lives. Sits beside
     # the stove (col 2 after the kitchen-cluster shift, drawer at col 3).
     sc._drawer_pos = (3 * TILE + 16, 5 * TILE + 16)
