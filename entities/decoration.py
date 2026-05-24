@@ -470,17 +470,28 @@ class Decoration:
         pygame.draw.circle(surf, (200, 180, 60), (int(x + sw), y + 8), 2)
 
     def _draw_meat(self, surf, x, y):
+        # A haunch of meat hung on a hook: a rounded red slab with fat
+        # marbling and a pale bone nub at the base, swaying slightly,
+        # the occasional drip. Reads clearly as hung meat / a larder.
         sway = math.sin(self.t * 0.8 + self.seed) * 1.5
-        pygame.draw.line(surf, (140, 140, 150), (x, y - 16), (x, y - 8), 1)
-        pygame.draw.circle(surf, (140, 140, 150), (x, y - 8), 2)
-        for ay in range(0, 12):
-            w = int(5 + math.sin(ay / 3) * 1.5)
-            cx = x + sway
-            pygame.draw.line(surf, (130, 30, 40), (cx - w, y - 6 + ay), (cx + w, y - 6 + ay), 1)
-        drip_phase = (self.t * 0.3 + self.seed * 0.07) % 3.0
-        if drip_phase < 1.0:
-            dy = int(drip_phase * 8)
-            pygame.draw.rect(surf, (90, 20, 30), (x + sway, y + 6 + dy, 1, 2))
+        cx = int(x + sway)
+        # Hook + the line it hangs from.
+        pygame.draw.line(surf, (150, 150, 162), (x, y - 18), (x, y - 9), 2)
+        pygame.draw.line(surf, (150, 150, 162), (x, y - 9), (cx - 3, y - 7), 2)
+        # Haunch body on its own layer so the shape reads cleanly.
+        body = pygame.Surface((24, 28), pygame.SRCALPHA)
+        pygame.draw.ellipse(body, (118, 26, 34), (3, 0, 18, 22))      # meat
+        pygame.draw.ellipse(body, (150, 44, 52), (6, 3, 11, 12))      # lit side
+        pygame.draw.ellipse(body, (86, 16, 24), (3, 0, 18, 22), 1)    # rim
+        pygame.draw.line(body, (196, 152, 150), (7, 9), (16, 13), 1)  # fat
+        pygame.draw.line(body, (196, 152, 150), (6, 14), (14, 17), 1)
+        pygame.draw.rect(body, (222, 216, 198), (10, 19, 4, 6))       # bone nub
+        pygame.draw.circle(body, (236, 232, 216), (12, 25), 3)
+        surf.blit(body, (cx - 12, y - 7))
+        drip = (self.t * 0.3 + self.seed * 0.07) % 3.0
+        if drip < 1.0:
+            pygame.draw.rect(surf, (88, 16, 24),
+                             (cx, y + 19 + int(drip * 8), 1, 2))
 
     def _draw_banner(self, surf, x, y):
         col = self.kwargs.get("color", (140, 60, 70))

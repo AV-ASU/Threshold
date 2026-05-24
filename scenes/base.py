@@ -133,6 +133,7 @@ OBJECT_DEFS = {
     "i": {"solid": True, "kind": "window"},
     "f": {"solid": True, "kind": "fireplace"},
     "k": {"solid": True, "kind": "stove"},
+    "5": {"solid": True, "kind": "counter"},   # kitchen counter / cabinets
     "X": {"solid": True, "kind": "invisible"},
     "D": {"solid": False, "kind": "door"},
     "E": {"solid": False, "kind": "door"},   # depths chain east-exits
@@ -495,6 +496,19 @@ def draw_object(surf, ch, rx, ry, tx, ty):
         pygame.draw.rect(surf, (18, 18, 22), (rx + 6, ry + 18, 20, 10))     # oven door
         pygame.draw.rect(surf, (72, 72, 80), (rx + 9, ry + 17, 14, 2))      # handle
         pygame.draw.rect(surf, (200, 90, 30), (rx + 11, ry + 25, 10, 2))    # ember vent
+    elif kind == "counter":
+        # Kitchen counter / cabinet base: a wood carcass under a pale
+        # stone worktop, with cabinet-door divisions + handles. Reads as
+        # kitchen cabinetry and tiles into a continuous run.
+        pygame.draw.rect(surf, (96, 70, 46), (rx, ry + 7, TILE, TILE - 7))   # carcass
+        pygame.draw.rect(surf, (60, 42, 26), (rx, ry + 7, TILE, TILE - 7), 1)
+        pygame.draw.rect(surf, (168, 166, 172), (rx, ry, TILE, 8))           # stone top
+        pygame.draw.rect(surf, (198, 196, 202), (rx, ry, TILE, 2))           # lit front lip
+        pygame.draw.rect(surf, (120, 118, 126), (rx, ry + 8, TILE, 1))       # under-shadow
+        pygame.draw.line(surf, (60, 42, 26),                                 # door split
+                         (rx + 16, ry + 10), (rx + 16, ry + TILE - 2), 1)
+        for hx in (rx + 12, rx + 20):                                        # handles
+            pygame.draw.rect(surf, (38, 26, 16), (hx, ry + 14, 2, 4))
     elif kind == "ladder_down":
         # Round-7 redraw: cellar HATCH (was a ladder visual). A square
         # wood box flush to the ground, two horizontal plank seams, and

@@ -309,14 +309,18 @@ def build_house():
         "==================",
         "==================",
     ]
+    # Kitchen (left of the col-7 counter bar): a dining table + chairs,
+    # the stove, and a run of base cabinets ('5' = counter). The bar
+    # ('5' down col 7) reads as a kitchen peninsula dividing the kitchen
+    # from the living room, replacing the old blank wall divider.
     objects = [
         "WWWW1WWWWWWWWBWWWW",
         "W................W",
         "W................W",
-        "W.tt...W.........W",
-        "W.cc...W....f....W",
-        "W.k....W.........W",
-        "W.ss...W.........W",
+        "W.tt...5.........W",
+        "W.cc...5....f....W",
+        "W.k....5.........W",
+        "W.55...5.........W",
         "W................W",
         "W................W",
         "W..L.............W",
