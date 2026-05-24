@@ -250,13 +250,13 @@ def build_graveyard():
         "T..R..R..R...T",   # 6
         "T............T",   # 7
         "T............T",   # 8
-        "TTTTTTTTHTTTTT",   # 9  H = exit south back to town
+        "TTTTTTTaaaTTTT",   # 9  a = 3-wide gap in the back hedge to town
     ]
     sc = Scene("graveyard", floor, objects, music="village")
     # Exit back into the church (the gate is in the back of the
     # parsonage). Routes to old_man_house, which has spawn
     # 'from_graveyard' set up.
-    sc.add_exit("H", "old_man_house", "from_graveyard")
+    sc.add_exit("a", "old_man_house", "from_graveyard")
     sc.set_spawn("default", 7, 7)
     sc.set_spawn("from_church", 7, 7)
     sc.set_spawn("from_town_crossroads", 7, 7)
@@ -400,9 +400,10 @@ def build_diner_gas_station():
     for y in range(H):
         if 6 <= y <= 10:
             floor_rows.append("_" * W)            # gravel
-        elif 11 <= y <= 12:
+        elif 11 <= y <= 13:
             row = list("g" * W)
-            # Dirt path south from gas pump down to the H exit.
+            # Dirt path runs south from the pumps right out to the
+            # border, so the clearing reaches the tree line.
             for cx in range(9, 12):
                 row[cx] = "d"
             floor_rows.append("".join(row))
@@ -417,8 +418,10 @@ def build_diner_gas_station():
             row[0] = "T"
             row[W - 1] = "T"
             objects_l.append(row)
-    # H exit south to forest_path (cornfield).
-    objects_l[H - 1][10] = "H"
+    # South passage to forest_path: a 3-wide gap in the tree wall -- an
+    # open clearing that runs out to the border, not a walled doorway.
+    for cx in (9, 10, 11):
+        objects_l[H - 1][cx] = "a"
     # Diner building footprint (cols 4..11, rows 2..5). South face
     # has a 'l' (facade/locked door) at col 7 row 5 -- the diner is
     # closed; player can read but not enter. North face + roof tiles.
@@ -436,7 +439,7 @@ def build_diner_gas_station():
     objects = ["".join(r) for r in objects_l]
 
     sc = Scene("diner_gas_station", floor_rows, objects, music="outside")
-    sc.add_exit("H", "forest_path", "from_diner")
+    sc.add_exit("a", "forest_path", "from_diner")
     # Spawns: arriving from forest_path (south), spawn one row north
     # of the H exit so the player doesn't auto-retrigger.
     sc.set_spawn("default", 10, 12)
@@ -631,11 +634,13 @@ def build_backwoods_cabin():
             objects_l[ry][cx] = "r"
     objects_l[3][7] = "i"                # window on north face
     objects_l[7][7] = "D"                # door to interior (south face)
-    # South exit `H` to gravel_road_north.
-    objects_l[H - 1][7] = "H"
+    # South passage to gravel_road_north: a 3-wide gap in the tree wall
+    # so the worn path runs out to the border as an open clearing.
+    for cx in (6, 7, 8):
+        objects_l[H - 1][cx] = "a"
     objects = ["".join(r) for r in objects_l]
     sc = Scene("backwoods_cabin", floor_rows, objects, music="outside")
-    sc.add_exit("H", "gravel_road_north", "from_backwoods_cabin")
+    sc.add_exit("a", "gravel_road_north", "from_backwoods_cabin")
     sc.add_exit("D", "backwoods_cabin_interior", "from_outside")
     sc.set_spawn("default", 7, 9)
     sc.set_spawn("from_road", 7, 9)
