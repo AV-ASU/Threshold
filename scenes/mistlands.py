@@ -28,6 +28,68 @@ def _brimley_voice(pages, voice="blip_mid"):
     return _fn
 
 
+def _calder_dinner(game, npc):
+    """Mrs. Calder set a place for her husband Walt, who got up from this
+    table and walked out to the highway one 'Tuesday' and never came
+    back. She takes the player for him. There is no neutral reply: you
+    sit down in a dead man's chair and eat (you let the town keep you,
+    and being held here pushes visibility up), or you tell her the truth
+    -- which lands, and leaves her hollow on every visit after. The cost
+    is carried on return, in how she greets you."""
+    save = game.save
+
+    def say(pages, on_complete=None):
+        game.dialog.show(pages, speaker="Mrs. Calder", voice="blip_mid",
+                         portrait="mom", on_complete=on_complete)
+
+    if save.flag("calder_broken"):
+        say([
+            "...Oh. It's you.",
+            "I put the plate away. You were right to say it. Somebody had to.",
+            "[c=dim]I just don't know what to do with the evenings now.[/c]",
+        ])
+        return
+    if save.flag("calder_sat"):
+        say([
+            "There's my Walt. I heard the gate.",
+            "I don't set his plate anymore. I set yours.",
+            "[c=dim]Don't go back out tonight. The road's no good. Stay where it's warm.[/c]",
+        ])
+        return
+
+    def _sit():
+        save.set_flag("calder_sat", True)
+        game.visibility = min(1.0, game.visibility + 0.25)
+        say([
+            "There. That's better, isn't it.",
+            "You don't have to talk. You never did, after a long shift. Just eat while it's hot.",
+            "[c=dim]I'll get the coffee on for the early start. Don't let me sleep through it.[/c]",
+        ], on_complete=lambda: game.show_notice(
+            "You sit. You eat. Stopping now would only be cruel."))
+
+    def _correct():
+        save.set_flag("calder_broken", True)
+        say([
+            "...Don't.",
+            "Don't do that. You're tired, you don't mean it. Sit down.",
+            "...He's not coming back. Is he.",
+            "[c=dim]I should put the plate away. Before it stains.[/c]",
+        ], on_complete=lambda: game.show_notice("You let yourself out."))
+
+    def _choose():
+        game.dialog.show_choice(
+            "Sit down. You're letting it get cold.",
+            ["(Sit down at his place.)", "\"Mrs. Calder. I'm not Walt.\""],
+            lambda idx: _sit() if idx == 0 else _correct(),
+            speaker="Mrs. Calder", voice="blip_mid", portrait="mom")
+
+    say([
+        "Oh-- there you are.",
+        "I knew you'd come if I kept it warm, Walt. I kept telling myself that-- he'll come if it's warm.",
+        "You're soaked through. Come in, come in, before you let the cold in the house.",
+    ], on_complete=_choose)
+
+
 def _stamp_building(objects_l, left, right, top, bot,
                      door_char, door_col):
     """Stamp a rectangular building footprint into objects_l. Outer
@@ -521,11 +583,12 @@ def build_mistlands():
         "Stopped marking the calendar. The days just fold back on themselves.",
         "[c=dim]You're new. We don't get new. Nobody gets in. Nobody gets--[/c]",
     ], voice="blip_low")
-    _resident(70, 72, "Mrs. Calder", "mom", [
-        "My husband walked out to the highway to flag down help. Tuesday, that was.",
-        "He'll be back. I set his plate every night. Every night.",
-        "[c=dim]Some nights I hear the door. I've stopped getting up to check.[/c]",
-    ], movement="idle")
+    # Mrs. Calder runs a custom beat (the dinner) rather than the flat
+    # page list -- she takes the player for her missing husband Walt and
+    # forces a choice with no neutral exit. See _calder_dinner.
+    sc.add_npc(NPC(70 * TILE + 16, 72 * TILE + 16, "Mrs. Calder", "mom",
+                   dialogue_fn=_calder_dinner, portrait="mom",
+                   movement="idle", radius=52))
     _resident(37, 28, "Royce", "fisherman", [
         "Drove the river road to the county line. Two hours out. Came right back into Brimley.",
         "Tried it on foot. Same. The corn just hands you back where you started.",
