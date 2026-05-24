@@ -660,6 +660,10 @@ def build_barn():
     sc.set_spawn("from_village", 4, 1)         # legacy fallback
     sc.set_spawn("from_well_passage", 7, 6)    # one tile west of the hatch
 
+    # Sized furniture: stacked hay-bale shelves and a workbench.
+    sc.add_furniture("bookshelf", [(2, 2), (3, 2)], w=54, h=18, seed=9)
+    sc.add_furniture("bookshelf", [(5, 2), (6, 2)], w=54, h=18, seed=10)
+    sc.add_furniture("table", [(3, 5), (4, 5)], w=54, h=36)
     sc.add_decoration(Decoration(7 * TILE + 16, 5 * TILE + 16, "candle"))
     sc.add_decoration(Decoration(2 * TILE + 16, 1 * TILE + 24, "lantern"))
     sc.add_decoration(Decoration(4 * TILE + 16, 5 * TILE + 24,

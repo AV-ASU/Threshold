@@ -104,6 +104,12 @@ def build_old_man_house():
                        "Old Man", "old", voice="blip_low", portrait="old",
                        dialogue_fn=old_man_dialogue, movement="idle"))
 
+    # Sized darkwood furniture.
+    sc.add_furniture("table", [(2, 2), (3, 2)], w=54, h=36)
+    sc.add_furniture("bookshelf", [(5, 2), (6, 2)], w=58, h=18, seed=4)
+    sc.add_furniture("chair", [(3, 3)], w=22, h=28)
+    sc.add_furniture("bed", [(7, 4), (7, 5)], w=34, h=56)
+
     # Computer: a beige CRT decoration plus an invisible solid NPC at the
     # same tile so try_interact() picks it up and the [E] prompt shows.
     comp_x = comp_tx * TILE + 16
@@ -169,6 +175,12 @@ def build_fisherman_cottage():
                        voice="blip_gruff", portrait="guard",
                        dialogue_fn=fisherman_dialogue, movement="watch"))
 
+    # Sized darkwood furniture: a long shelf, a desk (radio on it), a
+    # 2x2 bed, a chair.
+    sc.add_furniture("bookshelf", [(2, 2), (3, 2)], w=54, h=18, seed=6)
+    sc.add_furniture("table", [(6, 2), (7, 2)], w=54, h=36)
+    sc.add_furniture("bed", [(2, 3), (3, 3), (2, 4), (3, 4)], w=54, h=54)
+    sc.add_furniture("chair", [(6, 3)], w=22, h=28)
     sc.add_decoration(Decoration(7 * TILE + 16,  0 * TILE + 22 , "candle"))
     sc.add_decoration(Decoration(2 * TILE + 16,  0 * TILE + 22 , "candle"))
     sc.add_decoration(Decoration(7 * TILE + 16, 4 * TILE + 16, "banner",
@@ -446,6 +458,11 @@ def build_locked_house():
     sc.set_spawn("default", 3, 1)
     sc.set_spawn("from_village", 3, 1)
 
+    # Sized darkwood furniture: a small table + chair, a shelf, a bed.
+    sc.add_furniture("table", [(2, 2)], w=30, h=34)
+    sc.add_furniture("chair", [(3, 2)], w=22, h=28)
+    sc.add_furniture("bookshelf", [(5, 2), (6, 2)], w=54, h=18, seed=7)
+    sc.add_furniture("bed", [(2, 4), (3, 4)], w=56, h=38)
     # Atmosphere: an old single candle still burning by the table, a
     # faded family-photo frame hung over the bed, and a smattering of
     # floating dust motes that catch the light.
@@ -486,12 +503,21 @@ def build_daughter_room():
     sc.add_exit("D", "house", "from_daughter_room")
     sc.set_spawn("default", 3, 1)
     sc.set_spawn("from_house", 3, 1)
+    # Sized furniture (kept through on_enter's decoration reset below).
+    sc.add_furniture("bed", [(3, 2), (3, 3)], w=34, h=52)
+    sc.add_furniture("bookshelf", [(2, 4), (3, 4)], w=54, h=18, seed=8)
     sc.on_enter_fn = daughter_room_on_enter
     return sc
 
 
+_FURNITURE_KINDS = ("bed", "bookshelf", "table", "chair", "wardrobe", "stove")
+
+
 def daughter_room_on_enter(game, scene):
-    scene.decorations = []
+    # Keep the sized furniture; clear only the dressing so the
+    # polaroid-state props can be rebuilt fresh.
+    scene.decorations = [d for d in scene.decorations
+                         if getattr(d, "kind", "") in _FURNITURE_KINDS]
     polaroid = game.save.flag("polaroid_taken")
     # One-shot dim popup the first time the player walks into the
     # polaroid-altered version.

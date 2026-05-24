@@ -196,6 +196,8 @@ def build_woodshed():
     axe_pos    = (5 * TILE + 16, 2 * TILE + 16)
     sc._rope_pos = rope_pos
     sc._axe_pos  = axe_pos
+    # Sized workbench (the rope sits on it).
+    sc.add_furniture("table", [(2, 2), (3, 2)], w=54, h=36)
     sc.add_decoration(Decoration(2 * TILE + 16, 0 * TILE + 22, "candle"))
     sc.add_decoration(Decoration(4 * TILE + 20, 3 * TILE + 8, "bloodstain",
                                  scale=2.6))
