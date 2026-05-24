@@ -15,6 +15,7 @@ Hooded chasers populate the first three rooms. The flashlight is
 force-disabled in all depths scenes. Hide spots placed liberally so
 the player has cover to recover in.
 """
+import math
 import random
 from constants import TILE
 from entities.decoration import Decoration
@@ -83,6 +84,11 @@ def build_depths_antechamber():
     sc.add_decoration(Decoration(7 * TILE + 16, 6 * TILE + 16, "candle"))
     sc.add_decoration(Decoration(4 * TILE + 16, 4 * TILE + 16, "bloodstain"))
     sc.add_decoration(Decoration(5 * TILE + 16, 7 * TILE + 16, "bloodstain"))
+    # Cobweb grime in the corners of the fall zone.
+    sc.add_decoration(Decoration(1 * TILE + 6, 1 * TILE + 6, "cobweb",
+                                 ang=0.0))
+    sc.add_decoration(Decoration(8 * TILE + 26, 8 * TILE + 26, "cobweb",
+                                 ang=math.pi))
     # Two pillar-style hide spots in opposite corners.
     sc.hide_spots = [
         (1 * TILE + 24, 8 * TILE + 16, "behind"),
@@ -119,6 +125,11 @@ def build_depths_procession():
     for cx in range(2, 13, 2):
         sc.add_decoration(Decoration(cx * TILE + 16, 4 * TILE + 16,
                                      "candle"))
+    # Cobweb grime in the high corners of the procession column.
+    sc.add_decoration(Decoration(1 * TILE + 6, 1 * TILE + 6, "cobweb",
+                                 ang=0.0))
+    sc.add_decoration(Decoration(12 * TILE + 26, 1 * TILE + 6, "cobweb",
+                                 ang=math.pi / 2))
     sc.hide_spots = [
         (3 * TILE + 16, 1 * TILE + 24, "behind"),
         (10 * TILE + 16, 6 * TILE + 16, "behind"),
@@ -156,6 +167,12 @@ def build_depths_hall():
                                  "wrong_taxidermy", wall="N", seed=21))
     sc.add_decoration(Decoration(6 * TILE + 16, 4 * TILE + 16, "candle"))
     sc.add_decoration(Decoration(6 * TILE + 16, 6 * TILE + 16, "candle"))
+    # Cobweb grime in the low corners (the kneeling grid faces the
+    # north iron door).
+    sc.add_decoration(Decoration(1 * TILE + 6, 8 * TILE + 26, "cobweb",
+                                 ang=-math.pi / 2))
+    sc.add_decoration(Decoration(12 * TILE + 26, 8 * TILE + 26, "cobweb",
+                                 ang=math.pi))
     sc.hide_spots = [
         (1 * TILE + 24, 2 * TILE + 16, "behind"),
         (1 * TILE + 24, 7 * TILE + 16, "behind"),
@@ -219,6 +236,11 @@ def build_depths_threshing():
                                      "bloodstain"))
     sc.add_decoration(Decoration(6 * TILE + 16, 5 * TILE + 16,
                                  "phantom_mark"))
+    # Cobweb grime in the high corners of the threshing floor.
+    sc.add_decoration(Decoration(1 * TILE + 6, 1 * TILE + 6, "cobweb",
+                                 ang=0.0))
+    sc.add_decoration(Decoration(10 * TILE + 26, 1 * TILE + 6, "cobweb",
+                                 ang=math.pi / 2))
     sc.hide_spots = [
         (2 * TILE + 16, 8 * TILE + 16, "behind"),
         (10 * TILE + 16, 1 * TILE + 24, "behind"),

@@ -23,6 +23,7 @@ barn cellar hatch is sealed); the polaroid is no longer consumed here
 (it's evidence now); and the orb -- not the photo -- opens the way
 deeper, from the Sign Chamber's far side down into the Depths.
 """
+import math
 from constants import TILE
 from entities.decoration import Decoration
 from .base import Scene
@@ -51,6 +52,11 @@ def build_well_bottom():
     # A "wrong" mount in the well dark -- too many eyes.
     sc.add_decoration(Decoration(6 * TILE + 16, 0 * TILE + 18,
                                  "wrong_taxidermy", wall="N", seed=31))
+    # Cobweb grime in the corners away from the ladder.
+    sc.add_decoration(Decoration(8 * TILE + 26, 1 * TILE + 6, "cobweb",
+                                 ang=math.pi / 2))
+    sc.add_decoration(Decoration(1 * TILE + 6, 6 * TILE + 26, "cobweb",
+                                 ang=-math.pi / 2))
     sc.hide_spots = [
         (8 * TILE + 16, 1 * TILE + 24, "behind"),   # collapsed-timber nook
     ]
@@ -109,6 +115,11 @@ def build_well_passage():
     sc.add_decoration(Decoration(7 * TILE + 16, 3 * TILE + 16, "bloodstain"))
     sc.add_decoration(Decoration(2 * TILE + 16, 0 * TILE + 22, "candle"))
     sc.add_decoration(Decoration(11 * TILE + 16, 0 * TILE + 22, "claw_marks"))
+    # Cobweb grime in the high corners of the drying racks.
+    sc.add_decoration(Decoration(1 * TILE + 6, 1 * TILE + 6, "cobweb",
+                                 ang=0.0))
+    sc.add_decoration(Decoration(12 * TILE + 26, 1 * TILE + 6, "cobweb",
+                                 ang=math.pi / 2))
     sc.hide_spots = [
         (4 * TILE + 16, 2 * TILE + 16, "behind"),    # between racks
         (10 * TILE + 16, 5 * TILE + 16, "behind"),
@@ -143,6 +154,11 @@ def build_works_vats():
     sc.add_decoration(Decoration(5 * TILE + 16, 4 * TILE + 16, "candle"))
     sc.add_decoration(Decoration(8 * TILE + 16, 7 * TILE + 16, "gore"))
     sc.add_decoration(Decoration(2 * TILE + 16, 5 * TILE + 16, "bloodstain"))
+    # Cobweb grime in the high corners above the vats.
+    sc.add_decoration(Decoration(1 * TILE + 6, 1 * TILE + 6, "cobweb",
+                                 ang=0.0))
+    sc.add_decoration(Decoration(10 * TILE + 26, 1 * TILE + 6, "cobweb",
+                                 ang=math.pi / 2))
     sc.hide_spots = [
         (5 * TILE + 16, 2 * TILE + 16, "behind"),
         (8 * TILE + 16, 6 * TILE + 16, "behind"),
@@ -184,6 +200,14 @@ def build_works_sorting():
                                  open=False))
     sc.add_decoration(Decoration(4 * TILE + 16, 5 * TILE + 16, "bloodstain"))
     sc.add_decoration(Decoration(10 * TILE + 16, 8 * TILE + 16, "phantom_mark"))
+    # A "wrong" mount oversees the catalogued belongings of the
+    # vanished, and cobwebs grime the high corners.
+    sc.add_decoration(Decoration(8 * TILE + 16, 0 * TILE + 18,
+                                 "wrong_taxidermy", wall="N", seed=17))
+    sc.add_decoration(Decoration(1 * TILE + 6, 1 * TILE + 6, "cobweb",
+                                 ang=0.0))
+    sc.add_decoration(Decoration(14 * TILE + 26, 1 * TILE + 6, "cobweb",
+                                 ang=math.pi / 2))
     sc._table_pos = (6 * TILE + 16, 3 * TILE + 16)
     sc.hide_spots = [
         (5 * TILE + 16, 5 * TILE + 16, "behind"),
@@ -230,6 +254,11 @@ def build_works_scriptorium():
         sc.add_decoration(Decoration(tx * TILE + 16, ty * TILE + 16,
                                      "yellow_sign"))
     sc.add_decoration(Decoration(7 * TILE + 16, 2 * TILE + 6, "candle"))
+    # Cobweb grime in the high corners of the scriptorium.
+    sc.add_decoration(Decoration(1 * TILE + 6, 1 * TILE + 6, "cobweb",
+                                 ang=0.0))
+    sc.add_decoration(Decoration(10 * TILE + 26, 1 * TILE + 6, "cobweb",
+                                 ang=math.pi / 2))
     sc._desk_pos = (3 * TILE + 16, 2 * TILE + 16)
     sc.hide_spots = [
         (5 * TILE + 16, 5 * TILE + 16, "behind"),
@@ -282,6 +311,11 @@ def build_works_sign():
     sc.add_decoration(Decoration(7 * TILE + 16, 1 * TILE + 16, "yellow_sign"))
     for tx in (2, 4, 6, 8):
         sc.add_decoration(Decoration(tx * TILE + 16, 2 * TILE + 16, "candle"))
+    # Cobweb grime in the low corners (the north wall is all Sign).
+    sc.add_decoration(Decoration(1 * TILE + 6, 8 * TILE + 26, "cobweb",
+                                 ang=-math.pi / 2))
+    sc.add_decoration(Decoration(10 * TILE + 26, 8 * TILE + 26, "cobweb",
+                                 ang=math.pi))
     sc.hide_spots = [
         (2 * TILE + 16, 7 * TILE + 16, "behind"),
         (9 * TILE + 16, 7 * TILE + 16, "behind"),
@@ -340,6 +374,11 @@ def build_works_deepstair():
     sc._gate_pos = (gate_x, gate_y)
     sc.add_decoration(Decoration(3 * TILE + 16, 2 * TILE + 6, "candle"))
     sc.add_decoration(Decoration(7 * TILE + 16, 5 * TILE + 16, "bloodstain"))
+    # Cobweb grime in the high corners by the orb-gate.
+    sc.add_decoration(Decoration(1 * TILE + 6, 1 * TILE + 6, "cobweb",
+                                 ang=0.0))
+    sc.add_decoration(Decoration(8 * TILE + 26, 1 * TILE + 6, "cobweb",
+                                 ang=math.pi / 2))
     sc.hide_spots = [
         (8 * TILE + 16, 1 * TILE + 24, "behind"),
     ]

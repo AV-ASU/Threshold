@@ -201,6 +201,16 @@ def build_woodshed():
     sc.add_decoration(Decoration(2 * TILE + 16, 0 * TILE + 22, "candle"))
     sc.add_decoration(Decoration(4 * TILE + 20, 3 * TILE + 8, "bloodstain",
                                  scale=2.6))
+    # It IS a woodshed: a split-wood stack against the west wall, a
+    # kerosene lamp on the workbench, and cobwebs in the corners. The
+    # firewood is collision furniture, set clear of the axe/rope/door.
+    sc.add_furniture("firewood", [(1, 3), (1, 4)], w=24, h=58)
+    sc.add_decoration(Decoration(3 * TILE + 16, 2 * TILE + 2,
+                                 "kerosene_lamp"))
+    sc.add_decoration(Decoration(1 * TILE + 6, 1 * TILE + 6, "cobweb",
+                                 ang=0.0))
+    sc.add_decoration(Decoration(6 * TILE + 26, 1 * TILE + 6, "cobweb",
+                                 ang=math.pi / 2))
     sc.hide_spots = [
         (2 * TILE + 16, 3 * TILE + 16, "behind"),     # behind workbench
         (6 * TILE + 16, 1 * TILE + 24, "behind"),     # NE corner
