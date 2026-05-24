@@ -90,6 +90,59 @@ def _calder_dinner(game, npc):
     ], on_complete=_choose)
 
 
+def _royce_way_out(game, npc):
+    """Royce can't leave Brimley -- he's tried the road and the fields,
+    and they hand him back. But you came IN, so he's sure you know a way
+    OUT, and he wants you to point him at it. Telling him is a death
+    sentence: the town keeps the ones who learn the way (it kept the
+    Preacher for talking to you). On the next visit he's gone -- the
+    river hands him back, drowned at the bank, the crows already on him.
+    Lying keeps him alive, pacing, certain you're holding out on him."""
+    save = game.save
+
+    def say(pages, on_complete=None):
+        game.dialog.show(pages, speaker="Royce", voice="blip_mid",
+                         portrait="fisherman", on_complete=on_complete)
+
+    if save.flag("royce_dumb"):
+        say([
+            "You remember yet? It'll come back to you. It has to.",
+            "I can wait. I'm good at waiting now -- we all got good at it.",
+            "[c=dim]You know the way. I know you know the way.[/c]",
+        ])
+        return
+
+    def _tell():
+        save.set_flag("royce_told", True)
+        say([
+            "...East. The east road. Okay.",
+            "Two hours to the county line and it spits me back -- but not this time. This time I don't slow down, I don't turn around, I just keep going.",
+            "[c=dim]Don't tell the others I went. They'll all want to come, and I can't be slowed down. Not this time.[/c]",
+        ], on_complete=lambda: game.show_notice(
+            "He's already looking east. He doesn't say goodbye."))
+
+    def _dumb():
+        save.set_flag("royce_dumb", True)
+        say([
+            "...You don't remember.",
+            "How do you not remember coming IN? You walk through a wall? Fall out of the sky?",
+            "[c=dim]No. You're lying. You know the way and you won't say. Everybody knows but me.[/c]",
+        ])
+
+    def _choose():
+        game.dialog.show_choice(
+            "Just point. Show me where you came through and I'll do the rest.",
+            ["(Tell him the way you came.)", "\"I don't remember coming in.\""],
+            lambda idx: _tell() if idx == 0 else _dumb(),
+            speaker="Royce", voice="blip_mid", portrait="fisherman")
+
+    say([
+        "You came in.",
+        "Nobody comes in. Not since the cold came down. But you did -- you're standing right here, so you did.",
+        "So there's a way in. And a way in is a way out. Where. Where'd you come through.",
+    ], on_complete=_choose)
+
+
 def _stamp_building(objects_l, left, right, top, bot,
                      door_char, door_col):
     """Stamp a rectangular building footprint into objects_l. Outer
@@ -589,11 +642,13 @@ def build_mistlands():
     sc.add_npc(NPC(70 * TILE + 16, 72 * TILE + 16, "Mrs. Calder", "mom",
                    dialogue_fn=_calder_dinner, portrait="mom",
                    movement="idle", radius=52))
-    _resident(37, 28, "Royce", "fisherman", [
-        "Drove the river road to the county line. Two hours out. Came right back into Brimley.",
-        "Tried it on foot. Same. The corn just hands you back where you started.",
-        "[c=dim]You came IN. How did you come IN? ...Tell me how you came in.[/c]",
-    ])
+    # Royce runs a custom beat (the way out) -- see _royce_way_out. He
+    # paces the bank, fixated on how the player got in; pointing him at
+    # a way out gets him killed, and you find him on the next visit.
+    sc.add_npc(NPC(37 * TILE + 16, 28 * TILE + 16, "Royce", "fisherman",
+                   dialogue_fn=_royce_way_out, portrait="fisherman",
+                   movement="wander", radius=52))
+    sc._royce_body_pos = (34 * TILE + 24, 28 * TILE + 16)
     _resident(61, 56, "the Tisdale boy", "kid", [
         "School's still on. The teacher doesn't blink. I counted to a hundred.",
         "There's a lady in yellow at the back of the field. She waves. You shouldn't wave back.",
@@ -847,6 +902,16 @@ def build_mistlands():
             ]
             game.dialog.show(line, speaker="", voice="blip_soft",
                              portrait="narrator")
+            return
+        # Royce's body, if you pointed him at the road. A quiet read --
+        # his own words about the town, turned back on him.
+        if game.save.flag("royce_told"):
+            rx, ry = sc._royce_body_pos
+            if abs(game.player.x - rx) < 46 and abs(game.player.y - ry) < 46:
+                game.dialog.show([
+                    "Royce. Face-down at the bank, where the water hands everything back.",
+                    "[c=dim]The crows got to him before you did.[/c]",
+                ], speaker="", voice="blip_soft", portrait="narrator")
     sc.on_interact_fn = _mistlands_interact
     return sc
 
@@ -906,6 +971,24 @@ def mistlands_on_enter(game, scene):
                     and abs(d.x - (tx + 28)) < 8
                     and abs(d.y - (74 * TILE + 12)) < 8):
                 d.kind = "small_chair"
+
+    # Royce took the road you pointed him to, and the town kept him --
+    # the way it kept the Preacher for talking to you. No cutscene: he's
+    # simply gone from the bank, and the river has handed him back,
+    # drowned at the waterline with the crows already on him. The player
+    # finds it.
+    if game.save.flag("royce_told"):
+        scene.npcs = [n for n in scene.npcs if n.name != "Royce"]
+        bx, by = getattr(scene, "_royce_body_pos",
+                         (34 * TILE + 24, 28 * TILE + 16))
+        scene.add_decoration(Decoration(bx, by, "drowned_body"))
+        scene.add_decoration(Decoration(36 * TILE + 16, 28 * TILE + 16,
+                                        "bloodstain"))
+        scene.add_decoration(Decoration(35 * TILE + 8, 28 * TILE + 24,
+                                        "wisp"))
+        for cx, cy, k in [(33, 27, "crow"), (35, 30, "dead_crow"),
+                          (37, 29, "crow")]:
+            scene.add_decoration(Decoration(cx * TILE + 16, cy * TILE + 16, k))
 
 
 def build_mist_house():
