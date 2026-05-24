@@ -997,9 +997,6 @@ def draw_axe_swing(surf, px, py, facing, prog):
 # ---------------------------------------------------------------------------
 # King-in-Yellow death screen -- a furnace of his masks, fire all around.
 # ---------------------------------------------------------------------------
-_YK_DEATH_FONT = [None]
-
-
 def _frand(i):
     """Cheap deterministic [0,1) noise -- no RNG state to disturb."""
     x = math.sin(i * 12.9898) * 43758.5453
@@ -1026,90 +1023,114 @@ def _flame_tongue(surf, bx, by, dx, dy, length, width, ph):
 
 
 def _yk_flames(surf, w, h, t, ramp):
-    """Ring the whole screen in fire: flame tongues on all four edges,
-    tallest along the bottom."""
+    """A wall of fire along the bottom edge plus licks up the sides --
+    the furnace burning all around. A bright base glow seats the flames
+    so they don't read as floating triangles."""
+    # Hot base glow band along the bottom (additive).
+    glow = pygame.Surface((w, int(h * 0.22)), pygame.SRCALPHA)
+    gh = glow.get_height()
+    for i in range(gh):
+        a = int(120 * (1 - i / gh) ** 1.5 * ramp)
+        pygame.draw.line(glow, (255, 120, 30, a), (0, gh - i), (w, gh - i))
+    surf.blit(glow, (0, h - gh), special_flags=pygame.BLEND_RGBA_ADD)
+    # Edges: (dir, fixed-coord, span, step, height-scale).
     edges = (
-        (0, -1, 0, w, 26, 1.55),    # bottom, pointing up   -- tallest
-        (0,  1, h, w, 30, 0.85),    # top, pointing down
-        (1,  0, 0, h, 30, 1.05),    # left, pointing right
-        (-1, 0, w, h, 30, 1.05),    # right, pointing left
+        (0, -1, h, w, 18, 2.05),    # bottom, pointing up   -- the wall
+        (1,  0, 0, h, 30, 0.95),    # left, pointing right
+        (-1, 0, w, h, 30, 0.95),    # right, pointing left
     )
     for dx, dy, fixed, span, step, scale in edges:
         horizontal = dx != 0
         for s in range(0, span + step, step):
             seed = s * 0.07 + (0 if dx >= 0 else 3.3)
-            fh = ((36 + 46 * (0.5 + 0.5 * math.sin(t * 6 + seed))
-                   + 22 * math.sin(t * 11 + seed * 2)) * scale * ramp)
+            fh = ((30 + 48 * (0.5 + 0.5 * math.sin(t * 6 + seed))
+                   + 24 * math.sin(t * 11 + seed * 2)) * scale * ramp)
             if fh < 4:
                 continue
             if horizontal:
                 bx, by = fixed, s
             else:
                 bx, by = s, fixed
-            _flame_tongue(surf, bx, by, dx, dy, fh, step * 0.95, t + seed)
+            _flame_tongue(surf, bx, by, dx, dy, fh, step * 1.05, t + seed)
 
 
 def draw_king_death(surf, t):
-    """Full-screen King-in-Yellow death: a furnace packed with his gold
-    masks, fire all around. `t` is seconds since the catch (the caller
-    holds this ~3.5s). Masks surface and loom out of the heat; flame
-    tongues lick every edge; embers stream upward."""
+    """Full-screen King-in-Yellow death: a dark furnace his gold masks
+    rise out of, fire all around, one mask looming up to take the whole
+    screen. `t` is seconds since the catch (the caller holds ~3.5s)."""
     w, h = surf.get_size()
-    ramp = max(0.0, min(1.0, t / 0.45))           # quick fade-in
-    flick = 0.85 + 0.15 * math.sin(t * 23.0)      # furnace flicker
+    ramp = max(0.0, min(1.0, t / 0.5))            # fade-in
+    flick = 0.88 + 0.12 * math.sin(t * 19.0) + 0.04 * math.sin(t * 41.0)
+    core_y = int(h * 0.56)
 
-    # 1. Fiery vertical gradient: blood-dark at top -> orange belly.
-    bands = 40
-    bh = h / bands + 2
+    # 1. Dark furnace base: near-black at the top, deepening ember-red
+    #    toward a hot belly low-centre. The darkness lets the masks pop.
+    bands = 56
+    bh = int(h / bands) + 2
     for i in range(bands):
         f = i / (bands - 1)
-        col = (min(255, int((64 + 150 * f) * flick * ramp)),
-               min(255, int((10 + 66 * f) * flick * ramp)),
-               int((8 + 14 * f) * ramp))
-        pygame.draw.rect(surf, col, (0, int(f * h), w, int(bh)))
+        col = (int((14 + 132 * f * f) * flick * ramp),
+               int((5 + 40 * f * f) * flick * ramp),
+               int((6 + 8 * f) * ramp))
+        pygame.draw.rect(surf, col, (0, int(f * h), w, bh))
 
-    # 2. Heat blooms drifting upward (additive).
-    for i in range(6):
-        bx = int((0.1 + 0.8 * _frand(i * 3 + 1)) * w
-                 + math.sin(t * 0.8 + i) * 28)
-        by = int((h * (0.95 + _frand(i * 3 + 2) * 0.4)
-                  - (t * 22 + _frand(i) * h)) % (h * 1.3))
-        _yk_radial(surf, bx, by, int(80 + 44 * math.sin(t * 2 + i)),
-                   (255, 150, 44), int(46 * ramp))
+    # 2. The furnace mouth: a pulsing hot core low-centre that the
+    #    looming mask rises out of.
+    pulse = 0.5 + 0.5 * math.sin(t * 3.0)
+    _yk_radial(surf, w // 2, core_y, int(w * (0.30 + 0.05 * pulse)),
+               (190, 64, 18), int(72 * ramp))
+    _yk_radial(surf, w // 2, core_y, int(w * 0.15),
+               (255, 132, 38), int(82 * ramp))
 
-    # 3. The masks -- fill the screen, surfacing out of the heat.
-    kinds = ("scream", "hollow", "plain", "crack", "double")
-    for i in range(13):
-        mx = int(_frand(i * 7 + 3) * w + math.sin(t * 1.1 + i * 1.7) * 12)
-        my = int(_frand(i * 7 + 5) * h + math.cos(t * 0.9 + i * 2.3) * 9)
-        r = 14 + int(38 * _frand(i * 7 + 9))
-        vis = (0.4 + 0.6 * (0.5 + 0.5 * math.sin(t * 2.2 + i * 1.3))) * ramp
+    # 3. Rising heat -- soft additive blooms drifting up and fading,
+    #    so the air reads as shimmering, not as orange discs.
+    for i in range(7):
+        hx = int((0.08 + 0.84 * _frand(i * 5 + 1)) * w
+                 + math.sin(t * 0.7 + i) * 22)
+        prog = (t * 0.32 + _frand(i * 5 + 2)) % 1.0
+        hy = int(h - prog * h * 1.05)
+        a = int(30 * ramp * (1.0 - prog))
+        if a > 0:
+            _yk_radial(surf, hx, hy, int(34 + 28 * _frand(i * 5 + 3)),
+                       (255, 124, 38), a)
+
+    # 4. Mask field -- surfacing from the heat and dissolving back, each
+    #    on its own pulse so they breathe in and out of the dark.
+    kinds = ("scream", "hollow", "crack", "plain")
+    for i in range(10):
+        mx = int(_frand(i * 7 + 3) * w + math.sin(t * 0.9 + i * 1.7) * 14)
+        my = int((0.10 + 0.78 * _frand(i * 7 + 5)) * h
+                 + math.cos(t * 0.8 + i * 2.1) * 10)
+        r = 12 + int(30 * _frand(i * 7 + 9))
+        vis = (0.5 + 0.5 * math.sin(t * 1.7 + i * 1.9)) ** 1.3 * ramp
         _yk_mask(surf, mx, my, r, vis, kinds[i % len(kinds)])
-    # Looming centre mask: grows toward the player across the duration.
-    grow = 30 + int(min(1.0, t / 3.0) * 132)
-    _yk_mask(surf, w // 2, int(h * 0.46), grow,
-             min(1.0, 0.5 + t / 3.5) * ramp, "scream")
 
-    # 4. Flame tongues licking every edge.
+    # 5. The looming mask: rises from the core and swells to fill the
+    #    screen -- the King's face closing over you.
+    grow = 36 + min(1.0, t / 3.2) ** 1.4 * 152
+    cvis = min(1.0, 0.55 + t / 3.0) * ramp
+    _yk_radial(surf, w // 2, core_y, int(grow * 1.7), _YK_HOT, int(58 * ramp))
+    _yk_mask(surf, w // 2, core_y, int(grow), cvis, "scream")
+
+    # 6. Fire all around.
     _yk_flames(surf, w, h, t, ramp)
 
-    # 5. Embers streaming upward.
-    for i in range(64):
-        ex = (_frand(i * 2 + 1) * w + math.sin(t * 1.5 + i) * 10) % w
-        span = h + 40
-        ey = (h + 20 - ((t * (38 + 64 * _frand(i)))
+    # 7. Embers streaming upward.
+    for i in range(56):
+        ex = (_frand(i * 2 + 1) * w + math.sin(t * 1.4 + i) * 11) % w
+        span = h + 50
+        ey = (h + 24 - ((t * (44 + 70 * _frand(i)))
                         + _frand(i * 2 + 2) * span) % span)
         er = 1 + int(2 * _frand(i * 3))
-        _yk_radial(surf, int(ex), int(ey), er * 3, (255, 182, 74),
-                   int(70 * ramp))
-        pygame.draw.circle(surf, (255, 228, 154), (int(ex), int(ey)), er)
+        if er >= 2:
+            _yk_radial(surf, int(ex), int(ey), er * 3, (255, 176, 70),
+                       int(56 * ramp))
+        pygame.draw.circle(surf, (255, 226, 150), (int(ex), int(ey)), er)
 
-    # 6. Title, fading in late.
-    if t > 0.8:
-        if _YK_DEATH_FONT[0] is None:
-            _YK_DEATH_FONT[0] = pygame.font.Font(None, 60)
-        ta = int(min(1.0, (t - 0.8) / 1.2) * 220)
-        txt = _YK_DEATH_FONT[0].render("THE KING IN YELLOW", True,
-                                       (252, 236, 158))
-        txt.set_alpha(ta)
-        surf.blit(txt, (w // 2 - txt.get_width() // 2, int(h * 0.82)))
+    # 8. Smoke-dark vignette at the top corners so the furnace frames in.
+    vig = pygame.Surface((w, int(h * 0.4)), pygame.SRCALPHA)
+    vh = vig.get_height()
+    for i in range(vh):
+        a = int(150 * (1 - i / vh) ** 1.4 * ramp)
+        pygame.draw.line(vig, (0, 0, 0, a), (0, i), (w, i))
+    surf.blit(vig, (0, 0))
