@@ -1017,13 +1017,13 @@ def _door_room_dir(scene, tx, ty):
     return "W"
 
 
-def _draw_door_opening(surf, rx, ry, room):
+def _draw_door_opening(surf, rx, ry, room, tx, ty):
     """The doorway itself, drawn in-tile during the terrain pass: the
     wall fills through (continuous mass) with a dark opening punched in
     it + a lit face on the room side. The swung leaf is a separate,
     unconfined sprite drawn later (draw_scene_doors)."""
     pygame.draw.rect(surf, _WALL_BASE, (rx, ry, TILE, TILE))
-    hsh = (rx * 73856093) ^ (ry * 19349663)
+    hsh = (tx * 73856093) ^ (ty * 19349663)
     if hsh % 4 == 0:
         pygame.draw.rect(surf, (11, 10, 14),
                          (rx + (hsh % 22) + 4, ry + ((hsh // 7) % 22) + 4, 3, 2))
@@ -1190,7 +1190,7 @@ def draw_scene_terrain(surf, scene, cam_x, cam_y, x0, y0, x1, y1):
             rx = tx * TILE - cam_x
             ry = ty * TILE - cam_y
             if ch in _DOOR_CHARS:
-                _draw_door_opening(surf, rx, ry, _door_room_dir(scene, tx, ty))
+                _draw_door_opening(surf, rx, ry, _door_room_dir(scene, tx, ty), tx, ty)
             else:
                 draw_object(surf, ch, rx, ry, tx, ty)
     # Unified gabled roofs, drawn over the walls so each building reads
