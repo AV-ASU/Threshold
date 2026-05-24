@@ -881,6 +881,32 @@ def mistlands_on_enter(game, scene):
             e.respawning = False
             scene.add_enemy(e)
 
+    # Mrs. Calder's table reflects how the dinner went. The scene is
+    # rebuilt fresh on every load, so re-apply the outcome on entry,
+    # matching the table props by their exact positions (so the field's
+    # other chairs/candles are left alone).
+    tx = 71 * TILE
+    if game.save.flag("calder_broken"):
+        # She put his plate away and let the vigil candle gutter out --
+        # only her single setting is left, his chair still where he
+        # knocked it over.
+        scene.decorations = [
+            d for d in scene.decorations
+            if not ((d.kind == "place_setting"
+                     and abs(d.x - (tx + 24)) < 6
+                     and abs(d.y - (72 * TILE + 12)) < 6)
+                    or (d.kind == "candle"
+                        and abs(d.x - (tx + 16)) < 6
+                        and abs(d.y - (72 * TILE + 2)) < 6))
+        ]
+    elif game.save.flag("calder_sat"):
+        # You took his seat: his overturned chair is set upright now.
+        for d in scene.decorations:
+            if (d.kind == "overturned_chair"
+                    and abs(d.x - (tx + 28)) < 8
+                    and abs(d.y - (74 * TILE + 12)) < 8):
+                d.kind = "small_chair"
+
 
 def build_mist_house():
     """Single-room interior at the NW of the mistlands. Bed, table, a
