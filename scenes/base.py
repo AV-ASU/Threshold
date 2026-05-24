@@ -364,28 +364,61 @@ def draw_object(surf, ch, rx, ry, tx, ty):
         pygame.draw.circle(surf, (100, 100, 110), (rx + 16, ry + 18), 12)
         pygame.draw.circle(surf, (70, 70, 80), (rx + 12, ry + 14), 4)
     elif kind == "bed":
-        pygame.draw.rect(surf, (150, 142, 138), (rx + 3, ry + 6, 26, 22))
-        pygame.draw.rect(surf, (120, 70, 78), (rx + 3, ry + 6, 26, 6))
-        pygame.draw.rect(surf, (178, 170, 162), (rx + 5, ry + 8, 8, 4))
-        pygame.draw.rect(surf, (66, 46, 32), (rx + 3, ry + 26, 26, 4))
-        # An old stain, the kind that doesn't wash out.
-        pygame.draw.rect(surf, (92, 84, 66), (rx + 17, ry + 16, 7, 7))
+        # Iron-frame cot, top-down: dark frame, thin mattress with a lit
+        # top edge + foot shadow, a pillow at the head, a heavy blanket
+        # pulled up with a fold, and an old stain that never washed out.
+        pygame.draw.rect(surf, (54, 40, 30), (rx + 2, ry + 4, 28, 26))      # frame
+        pygame.draw.rect(surf, (150, 142, 134), (rx + 4, ry + 6, 24, 22))   # mattress
+        pygame.draw.rect(surf, (172, 164, 156), (rx + 4, ry + 6, 24, 2))    # lit top
+        pygame.draw.rect(surf, (94, 88, 82), (rx + 4, ry + 26, 24, 2))      # foot shadow
+        pygame.draw.rect(surf, (200, 194, 186), (rx + 6, ry + 8, 20, 6))    # pillow
+        pygame.draw.rect(surf, (170, 162, 154), (rx + 6, ry + 13, 20, 1))
+        pygame.draw.rect(surf, (116, 66, 72), (rx + 4, ry + 16, 24, 12))    # blanket
+        pygame.draw.rect(surf, (140, 84, 90), (rx + 4, ry + 16, 24, 2))     # lit edge
+        pygame.draw.line(surf, (92, 50, 56), (rx + 14, ry + 18), (rx + 14, ry + 27), 1)
+        pygame.draw.rect(surf, (84, 60, 46), (rx + 18, ry + 20, 6, 5))      # stain
     elif kind == "table":
-        pygame.draw.rect(surf, (160, 120, 90), (rx + 2, ry + 6, 28, 20))
-        pygame.draw.rect(surf, (90, 60, 40), (rx + 2, ry + 22, 28, 6))
-        pygame.draw.rect(surf, (90, 60, 40), (rx + 2, ry + 24, 4, 6))
-        pygame.draw.rect(surf, (90, 60, 40), (rx + 26, ry + 24, 4, 6))
+        # Plank table: grained top with a lit back edge + shadowed front
+        # lip, two visible legs beneath.
+        pygame.draw.rect(surf, (70, 46, 30), (rx + 5, ry + 22, 4, 8))       # leg
+        pygame.draw.rect(surf, (70, 46, 30), (rx + 23, ry + 22, 4, 8))      # leg
+        pygame.draw.rect(surf, (150, 112, 78), (rx + 2, ry + 6, 28, 18))    # top
+        pygame.draw.rect(surf, (170, 130, 92), (rx + 2, ry + 6, 28, 2))     # lit back
+        pygame.draw.rect(surf, (96, 66, 42), (rx + 2, ry + 21, 28, 3))      # front lip
+        for gx in (9, 16, 23):                                             # grain
+            pygame.draw.line(surf, (132, 98, 66),
+                             (rx + gx, ry + 9), (rx + gx, ry + 20), 1)
     elif kind == "chair":
-        pygame.draw.rect(surf, (110, 80, 60), (rx + 8, ry + 14, 16, 14))
-        pygame.draw.rect(surf, (90, 60, 40), (rx + 8, ry + 6, 16, 8))
+        # Backed wooden chair: legs, a seat with a lit edge, a slatted back.
+        pygame.draw.rect(surf, (70, 48, 32), (rx + 9, ry + 23, 3, 6))       # legs
+        pygame.draw.rect(surf, (70, 48, 32), (rx + 20, ry + 23, 3, 6))
+        pygame.draw.rect(surf, (104, 74, 50), (rx + 8, ry + 6, 16, 9))      # back
+        pygame.draw.line(surf, (76, 52, 34), (rx + 13, ry + 7), (rx + 13, ry + 14), 1)
+        pygame.draw.line(surf, (76, 52, 34), (rx + 19, ry + 7), (rx + 19, ry + 14), 1)
+        pygame.draw.rect(surf, (122, 90, 62), (rx + 8, ry + 15, 16, 9))     # seat
+        pygame.draw.rect(surf, (142, 106, 74), (rx + 8, ry + 15, 16, 2))    # lit seat
     elif kind == "shelf":
-        pygame.draw.rect(surf, (130, 100, 70), (rx + 2, ry + 2, 28, 28))
-        pygame.draw.line(surf, (60, 40, 25), (rx + 2, ry + 12), (rx + 30, ry + 12), 2)
-        pygame.draw.line(surf, (60, 40, 25), (rx + 2, ry + 22), (rx + 30, ry + 22), 2)
-        for i in range(3):
-            col = [(120, 60, 55), (66, 78, 110), (78, 104, 72)][i]
-            pygame.draw.rect(surf, col, (rx + 4 + i * 8, ry + 4, 6, 6))
-            pygame.draw.rect(surf, col, (rx + 4 + i * 8, ry + 14, 6, 6))
+        # Bookshelf: a framed case with a lit top + two shelf boards
+        # (under-shadowed) and rows of leaning books in varied heights
+        # and colours.
+        pygame.draw.rect(surf, (96, 70, 46), (rx + 2, ry + 2, 28, 28))      # case
+        pygame.draw.rect(surf, (60, 42, 26), (rx + 2, ry + 2, 28, 28), 1)
+        pygame.draw.rect(surf, (118, 90, 60), (rx + 2, ry + 2, 28, 2))      # lit top
+        cols = [(120, 60, 55), (66, 78, 110), (78, 104, 72),
+                (150, 120, 60), (100, 70, 110)]
+        for row, by in enumerate((ry + 4, ry + 15)):
+            pygame.draw.rect(surf, (54, 38, 24), (rx + 3, by + 9, 26, 2))   # shelf board
+            bx = rx + 4
+            i = 0
+            while bx < rx + 27:
+                bw = 2 + ((tx * 7 + ty * 13 + row * 5 + i * 3) % 3)
+                bh = 6 + ((tx * 3 + row * 7 + i * 11) % 4)
+                col = cols[(tx + ty + row + i) % len(cols)]
+                pygame.draw.rect(surf, col, (bx, by + (9 - bh), bw, bh))
+                pygame.draw.rect(surf, (col[0] // 2, col[1] // 2, col[2] // 2),
+                                 (bx, by + (9 - bh), bw, 1))
+                bx += bw + 1
+                i += 1
     elif kind == "window":
         # Wood frame + sky-blue glass. A faint dark vertical strip
         # passes left-to-right behind the glass on a slow per-tile
@@ -449,11 +482,19 @@ def draw_object(surf, ch, rx, ry, tx, ty):
             pygame.draw.rect(surf, (10, 8, 12),
                              (rx + 18, ry + 21, 1, 2))
     elif kind == "stove":
-        pygame.draw.rect(surf, (50, 50, 56), (rx + 2, ry + 4, 28, 26))
-        pygame.draw.rect(surf, (30, 30, 36), (rx + 2, ry + 4, 28, 26), 1)
-        pygame.draw.circle(surf, (10, 10, 14), (rx + 10, ry + 12), 4)
-        pygame.draw.circle(surf, (10, 10, 14), (rx + 22, ry + 12), 4)
-        pygame.draw.rect(surf, (10, 10, 14), (rx + 6, ry + 18, 20, 10))
+        # Cast-iron range: a dark body with a lit cooktop + base shadow,
+        # two burner rings, an oven door with a handle, and a faint
+        # ember glow bleeding through the vent.
+        pygame.draw.rect(surf, (44, 44, 50), (rx + 2, ry + 4, 28, 26))      # body
+        pygame.draw.rect(surf, (62, 62, 70), (rx + 2, ry + 4, 28, 2))       # lit top
+        pygame.draw.rect(surf, (24, 24, 30), (rx + 2, ry + 28, 28, 2))      # base shadow
+        pygame.draw.rect(surf, (28, 28, 34), (rx + 2, ry + 4, 28, 26), 1)
+        for cxk in (10, 22):                                               # burners
+            pygame.draw.circle(surf, (20, 20, 26), (rx + cxk, ry + 11), 4)
+            pygame.draw.circle(surf, (12, 12, 16), (rx + cxk, ry + 11), 2)
+        pygame.draw.rect(surf, (18, 18, 22), (rx + 6, ry + 18, 20, 10))     # oven door
+        pygame.draw.rect(surf, (72, 72, 80), (rx + 9, ry + 17, 14, 2))      # handle
+        pygame.draw.rect(surf, (200, 90, 30), (rx + 11, ry + 25, 10, 2))    # ember vent
     elif kind == "ladder_down":
         # Round-7 redraw: cellar HATCH (was a ladder visual). A square
         # wood box flush to the ground, two horizontal plank seams, and
