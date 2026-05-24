@@ -334,6 +334,13 @@ def build_house():
     # props below sit on top of it.
     sc.add_decoration(Decoration(11 * TILE + 24, 7 * TILE + 12, "rug",
                                  w=140, h=92, color=(70, 58, 40), seed=23))
+    # Sized darkwood kitchen furniture (decorations over invisible
+    # collision tiles): a 2-tile dining table + two chairs, the range.
+    # The counter bar/cabinets stay as object tiles.
+    sc.add_furniture("table", [(2, 3), (3, 3)], w=58, h=40)
+    sc.add_furniture("chair", [(2, 4)], w=22, h=28)
+    sc.add_furniture("chair", [(3, 4)], w=22, h=28)
+    sc.add_furniture("stove", [(2, 5)], w=30, h=40)
     # Decorations: kitchen clutter on the left, fireplace on the
     # right, wall items on the NORTH wall (row 0).
     sc.add_decoration(Decoration(10 * TILE + 16, 0 * TILE + 18, "clock"))
@@ -485,10 +492,16 @@ def build_son_room():
     sc._dresser_pos = (5 * TILE + 16, 6 * TILE + 16)
     # The closet (shelf sprite) holds the robe and (behind it) the orb.
     sc._closet_pos = (7 * TILE + 16, 4 * TILE + 16)
-    # Hide spots: BESIDE the bed (col 4 is walkable; the bed is at col 3).
+    # Hide spots: BESIDE the bed (col 4 is walkable; the bed is at cols 2-3).
     sc.hide_spots = [
         (4 * TILE + 16, 4 * TILE + 16, "under"),
     ]
+
+    # Sized darkwood furniture: a 2x2 bed, a tall closet (the robe/orb
+    # live here -> _closet_pos), a low dresser (car keys -> _dresser_pos).
+    sc.add_furniture("bed", [(2, 3), (3, 3), (2, 4), (3, 4)], w=56, h=56)
+    sc.add_furniture("wardrobe", [(7, 3), (7, 4)], w=26, h=54)
+    sc.add_furniture("table", [(5, 6), (6, 6)], w=54, h=32)
 
     # Wall items mounted on the NORTH wall (row 0).
     sc.add_decoration(Decoration(2 * TILE + 16, 0 * TILE + 22, "candle"))

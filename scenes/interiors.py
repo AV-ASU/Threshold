@@ -537,6 +537,12 @@ def build_shop():
     # break the plank tiling. First, so props draw on top.
     sc.add_decoration(Decoration(7 * TILE + 24, 4 * TILE + 8, "rug",
                                  w=104, h=64, color=(58, 60, 64), seed=31))
+    # Sized darkwood furniture: two long shop bookshelves of goods, the
+    # counter table, a stool behind it.
+    sc.add_furniture("bookshelf", [(3, 2), (4, 2)], w=58, h=18, seed=1)
+    sc.add_furniture("bookshelf", [(7, 2), (8, 2)], w=58, h=18, seed=2)
+    sc.add_furniture("table", [(3, 4), (4, 4)], w=58, h=38)
+    sc.add_furniture("chair", [(3, 5)], w=22, h=28)
     sc.add_decoration(Decoration(6 * TILE + 16, 2 * TILE + 16, "candle"))
     sc.add_decoration(Decoration(2 * TILE + 16, 2 * TILE + 16, "wrong_radio"))
     sc.add_decoration(Decoration(7 * TILE + 16, 6 * TILE + 22,
@@ -721,6 +727,12 @@ def build_kid_house():
                        "Village Kid", "kid", voice="blip_kid",
                        portrait="kid",
                        dialogue_fn=kid_dialogue, movement="idle"))
+    # Sized darkwood furniture: a 2x2 kid's bed, a long bookshelf, a
+    # small table (toy radio sits on it) and a chair.
+    sc.add_furniture("bed", [(2, 5), (3, 5), (2, 6), (3, 6)], w=54, h=54)
+    sc.add_furniture("bookshelf", [(5, 2), (6, 2)], w=58, h=18, seed=3)
+    sc.add_furniture("table", [(2, 2), (3, 2)], w=54, h=34)
+    sc.add_furniture("chair", [(3, 3)], w=22, h=28)
     # The computer used to live here in round 3; in round 4 it migrated to
     # old_man_house. Kid's house now reads as a child's room: a small
     # toy radio, candle, banner. No tech.

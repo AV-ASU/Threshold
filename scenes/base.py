@@ -1494,6 +1494,26 @@ class Scene:
     def add_decoration(self, deco):
         self.decorations.append(deco)
 
+    def add_furniture(self, kind, tiles, **kw):
+        """Place a sized furniture decoration centred over `tiles` (a
+        list of (tx, ty)) and mark those tiles solid + invisible ('X')
+        for collision -- so furniture can span several tiles (or sit shy
+        of one) instead of reading as uniform 1-tile squares. `kw`
+        (w, h, seed, color, ...) pass through to the decoration."""
+        from entities.decoration import Decoration
+        if self.objects and isinstance(self.objects[0], str):
+            self.objects = [list(r) for r in self.objects]
+        xs = [t[0] for t in tiles]
+        ys = [t[1] for t in tiles]
+        for tx, ty in tiles:
+            if 0 <= ty < len(self.objects) and 0 <= tx < len(self.objects[ty]):
+                self.objects[ty][tx] = "X"
+        cx = (min(xs) * TILE + (max(xs) + 1) * TILE) // 2
+        cy = (min(ys) * TILE + (max(ys) + 1) * TILE) // 2
+        deco = Decoration(cx + kw.pop("dx", 0), cy + kw.pop("dy", 0), kind, **kw)
+        self.add_decoration(deco)
+        return deco
+
     def add_enemy(self, enemy):
         self.enemies.append(enemy)
 
