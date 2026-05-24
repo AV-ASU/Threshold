@@ -3,6 +3,7 @@ kid's house. Combat scenes (bandit cave, easter egg room) respawn
 their standard enemy set on every entry; respawned enemies drop
 nothing 85% of the time -- except on the very first easter_egg_room
 visit, where every kill drops (gated by the first_easter_egg flag)."""
+import math
 import random
 import pygame
 from constants import TILE
@@ -545,8 +546,18 @@ def build_shop():
     sc.add_furniture("chair", [(3, 5)], w=22, h=28)
     sc.add_decoration(Decoration(6 * TILE + 16, 2 * TILE + 16, "candle"))
     sc.add_decoration(Decoration(2 * TILE + 16, 2 * TILE + 16, "wrong_radio"))
-    sc.add_decoration(Decoration(7 * TILE + 16, 6 * TILE + 22,
-                                 "banner", color=(140, 100, 60)))
+    # Lodge dressing: a mounted buck + trophy walleye on the north wall
+    # (the old hanging shop banner is gone -- this is hunting/fishing
+    # country), a kerosene lamp on the counter, and a cobweb in the NW
+    # corner. The mirror + wrong_photo cult tells stay.
+    sc.add_decoration(Decoration(6 * TILE + 16, 0 * TILE + 22, "buck_head",
+                                 wall="N"))
+    sc.add_decoration(Decoration(9 * TILE + 16, 0 * TILE + 24,
+                                 "mounted_fish"))
+    sc.add_decoration(Decoration(4 * TILE + 16, 4 * TILE + 2,
+                                 "kerosene_lamp"))
+    sc.add_decoration(Decoration(1 * TILE + 6, 1 * TILE + 6, "cobweb",
+                                 ang=0.0))
     sc.add_decoration(Decoration(10 * TILE + 16, 4 * TILE + 16, "mirror"))
     sc.add_decoration(Decoration(8 * TILE + 16, 1 * TILE + 22, "clock"))
     sc.add_decoration(Decoration(4 * TILE + 16, 1 * TILE + 22,
@@ -668,6 +679,21 @@ def build_barn():
     sc.add_decoration(Decoration(2 * TILE + 16, 1 * TILE + 24, "lantern"))
     sc.add_decoration(Decoration(4 * TILE + 16, 5 * TILE + 24,
                                  "bloodstain"))
+    # Northern-MN lodge dressing: a mounted buck + trophy walleye on the
+    # north wall, cobwebs in the high corners, an antler coat-rack on
+    # the east wall, and a split-wood stack in the SW corner. The floor
+    # pieces are collision furniture, tucked clear of the hatch + spawn
+    # paths so the room stays passable.
+    sc.add_decoration(Decoration(6 * TILE + 16, 0 * TILE + 22, "buck_head",
+                                 wall="N"))
+    sc.add_decoration(Decoration(2 * TILE + 16, 0 * TILE + 24,
+                                 "mounted_fish"))
+    sc.add_decoration(Decoration(1 * TILE + 6, 1 * TILE + 6, "cobweb",
+                                 ang=0.0))
+    sc.add_decoration(Decoration(8 * TILE + 26, 1 * TILE + 6, "cobweb",
+                                 ang=math.pi / 2))
+    sc.add_furniture("antler_rack", [(8, 4)], w=22, h=46)
+    sc.add_furniture("firewood", [(1, 5), (1, 6)], w=24, h=58)
     # The well-passage tunnel hatch -- a proper cellar_hatch sprite,
     # NOT a chest. Drawn as a wooden floor hatch with iron pull-ring;
     # the player presses E adjacent to descend.
@@ -742,10 +768,16 @@ def build_kid_house():
     # toy radio, candle, banner. No tech.
     sc.add_decoration(Decoration(3 * TILE + 16, 2 * TILE + 8, "radio"))
     sc.add_decoration(Decoration(7 * TILE + 16,  0 * TILE + 22 , "candle"))
-    sc.add_decoration(Decoration(2 * TILE + 16, 5 * TILE + 16, "banner",
-                                 color=(140, 60, 70)))
-    sc.add_decoration(Decoration(8 * TILE + 16, 5 * TILE + 16, "banner",
-                                 color=(220, 180, 70)))
+    # Lodge dressing for a hunting-family kid: the child's own trophy
+    # walleye mounted on the north wall (replacing the old pennant
+    # banners), a corner cobweb, and a kerosene lamp on the table. The
+    # wall-mounted kid's drawing (a 'photo' pickup) stays -- it's lore.
+    sc.add_decoration(Decoration(4 * TILE + 16, 0 * TILE + 24,
+                                 "mounted_fish"))
+    sc.add_decoration(Decoration(8 * TILE + 26, 1 * TILE + 6, "cobweb",
+                                 ang=math.pi / 2))
+    sc.add_decoration(Decoration(2 * TILE + 16, 2 * TILE + 2,
+                                 "kerosene_lamp"))
     sc.add_decoration(Decoration(8 * TILE + 8, 2 * TILE + 16, "clock"))
     sc.add_decoration(Decoration(2 * TILE + 16,  0 * TILE + 22 , "candle"))
     # Chalk phantom-marks on the walls.
