@@ -48,6 +48,9 @@ def build_well_bottom():
     sc._ladder_pos = (ladder_x, ladder_y)
     sc.add_decoration(Decoration(2 * TILE + 16, 1 * TILE + 22, "candle"))
     sc.add_decoration(Decoration(8 * TILE + 16, 6 * TILE + 16, "bloodstain"))
+    # A "wrong" mount in the well dark -- too many eyes.
+    sc.add_decoration(Decoration(6 * TILE + 16, 0 * TILE + 18,
+                                 "wrong_taxidermy", wall="N", seed=31))
     sc.hide_spots = [
         (8 * TILE + 16, 1 * TILE + 24, "behind"),   # collapsed-timber nook
     ]

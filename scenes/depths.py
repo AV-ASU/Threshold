@@ -151,6 +151,9 @@ def build_depths_hall():
     # patrol. Hide spots scatter so the player can pick a route.
     sc.add_decoration(Decoration(12 * TILE + 16, 5 * TILE + 16,
                                  "phantom_mark"))
+    # A "wrong" mount watching from the wall -- belongs to the dark.
+    sc.add_decoration(Decoration(8 * TILE + 16, 0 * TILE + 18,
+                                 "wrong_taxidermy", wall="N", seed=21))
     sc.add_decoration(Decoration(6 * TILE + 16, 4 * TILE + 16, "candle"))
     sc.add_decoration(Decoration(6 * TILE + 16, 6 * TILE + 16, "candle"))
     sc.hide_spots = [

@@ -234,47 +234,68 @@ class Decoration:
     # ---- Northern-MN lodge decor (wall mounts draw face-on like the
     # photo/clock; floor pieces are placed via add_furniture). ----
     def _draw_buck_head(self, surf, x, y):
-        # Mounted buck on a wood plaque: antlers, dark muzzle, glassy eyes.
-        plaque = [(x - 11, y - 11), (x + 11, y - 11), (x + 13, y + 8),
-                  (x, y + 13), (x - 13, y + 8)]
-        pygame.draw.polygon(surf, (58, 42, 26), plaque)
-        pygame.draw.polygon(surf, (34, 24, 14), plaque, 1)
+        # Mounted buck on a wood plaque. Drawn canonically facing DOWN
+        # (mounted on a north wall, antlers toward the wall); `wall`
+        # (N/E/S/W) rotates it to face into the room off any wall.
+        lay = pygame.Surface((46, 48), pygame.SRCALPHA)
+        cx, cy = 23, 27
+        plaque = [(cx - 11, cy - 11), (cx + 11, cy - 11), (cx + 13, cy + 8),
+                  (cx, cy + 13), (cx - 13, cy + 8)]
+        pygame.draw.polygon(lay, (58, 42, 26), plaque)
+        pygame.draw.polygon(lay, (34, 24, 14), plaque, 1)
         for s in (-1, 1):
-            bx = x + s * 5
-            pygame.draw.line(surf, (118, 106, 82), (bx, y - 7), (bx + s * 8, y - 18), 2)
-            pygame.draw.line(surf, (118, 106, 82), (bx + s * 3, y - 11), (bx + s * 9, y - 14), 1)
-            pygame.draw.line(surf, (118, 106, 82), (bx + s * 5, y - 14), (bx + s * 7, y - 21), 1)
-        pygame.draw.ellipse(surf, (72, 52, 36), (x - 7, y - 8, 14, 18))   # head
-        pygame.draw.ellipse(surf, (50, 36, 24), (x - 7, y - 8, 14, 18), 1)
-        pygame.draw.ellipse(surf, (38, 27, 19), (x - 4, y + 4, 8, 6))     # snout
-        pygame.draw.circle(surf, (18, 14, 10), (x - 3, y - 1), 2)
-        pygame.draw.circle(surf, (18, 14, 10), (x + 3, y - 1), 2)
-        pygame.draw.circle(surf, (130, 118, 96), (x - 3, y - 2), 1)       # glint
+            bx = cx + s * 5
+            pygame.draw.line(lay, (118, 106, 82), (bx, cy - 7), (bx + s * 8, cy - 18), 2)
+            pygame.draw.line(lay, (118, 106, 82), (bx + s * 3, cy - 11), (bx + s * 9, cy - 14), 1)
+            pygame.draw.line(lay, (118, 106, 82), (bx + s * 5, cy - 14), (bx + s * 7, cy - 21), 1)
+        pygame.draw.ellipse(lay, (72, 52, 36), (cx - 7, cy - 8, 14, 18))
+        pygame.draw.ellipse(lay, (50, 36, 24), (cx - 7, cy - 8, 14, 18), 1)
+        pygame.draw.ellipse(lay, (38, 27, 19), (cx - 4, cy + 4, 8, 6))
+        pygame.draw.circle(lay, (18, 14, 10), (cx - 3, cy - 1), 2)
+        pygame.draw.circle(lay, (18, 14, 10), (cx + 3, cy - 1), 2)
+        pygame.draw.circle(lay, (130, 118, 96), (cx - 3, cy - 2), 1)
+        ang = {"N": 0, "E": -90, "S": 180, "W": 90}.get(self.kwargs.get("wall", "N"), 0)
+        if ang:
+            lay = pygame.transform.rotate(lay, ang)
+        surf.blit(lay, (x - lay.get_width() // 2, y - lay.get_height() // 2))
 
     def _draw_mounted_fish(self, surf, x, y):
-        # A trophy walleye on a varnished board.
-        pygame.draw.rect(surf, (66, 48, 30), (x - 16, y - 7, 32, 14), border_radius=3)
-        pygame.draw.rect(surf, (36, 26, 15), (x - 16, y - 7, 32, 14), 1)
-        pygame.draw.ellipse(surf, (96, 104, 86), (x - 12, y - 4, 22, 8))   # body
-        pygame.draw.ellipse(surf, (70, 78, 62), (x - 12, y - 4, 22, 8), 1)
-        pygame.draw.polygon(surf, (96, 104, 86), [(x + 9, y), (x + 15, y - 4), (x + 15, y + 4)])  # tail
-        pygame.draw.polygon(surf, (80, 88, 70), [(x - 2, y - 4), (x + 2, y - 8), (x + 4, y - 4)])  # dorsal fin
-        pygame.draw.line(surf, (60, 68, 54), (x - 10, y), (x + 8, y), 1)   # lateral line
-        pygame.draw.circle(surf, (216, 206, 176), (x - 9, y - 1), 2)       # eye
-        pygame.draw.circle(surf, (10, 10, 12), (x - 9, y - 1), 1)
+        # A trophy walleye on a varnished board (always horizontal on the
+        # wall). `flip` points the head the other way.
+        lay = pygame.Surface((34, 16), pygame.SRCALPHA)
+        cx, cy = 16, 8
+        pygame.draw.rect(lay, (66, 48, 30), (0, cy - 7, 32, 14), border_radius=3)
+        pygame.draw.rect(lay, (36, 26, 15), (0, cy - 7, 32, 14), 1)
+        pygame.draw.ellipse(lay, (96, 104, 86), (cx - 12, cy - 4, 22, 8))
+        pygame.draw.ellipse(lay, (70, 78, 62), (cx - 12, cy - 4, 22, 8), 1)
+        pygame.draw.polygon(lay, (96, 104, 86), [(cx + 9, cy), (cx + 15, cy - 4), (cx + 15, cy + 4)])
+        pygame.draw.polygon(lay, (80, 88, 70), [(cx - 2, cy - 4), (cx + 2, cy - 8), (cx + 4, cy - 4)])
+        pygame.draw.line(lay, (60, 68, 54), (cx - 10, cy), (cx + 8, cy), 1)
+        pygame.draw.circle(lay, (216, 206, 176), (cx - 9, cy - 1), 2)
+        pygame.draw.circle(lay, (10, 10, 12), (cx - 9, cy - 1), 1)
+        if self.kwargs.get("flip", False):
+            lay = pygame.transform.flip(lay, True, False)
+        surf.blit(lay, (x - lay.get_width() // 2, y - lay.get_height() // 2))
 
     def _draw_wrong_taxidermy(self, surf, x, y):
-        # A mounted... thing. The body reads as a stoat or grouse, but
-        # the eyes are wrong -- too many, sickly-yellow, catching light.
-        pygame.draw.rect(surf, (58, 42, 26), (x - 10, y - 9, 20, 18), border_radius=2)
-        pygame.draw.rect(surf, (34, 24, 14), (x - 10, y - 9, 20, 18), 1)
-        pygame.draw.ellipse(surf, (70, 56, 40), (x - 7, y - 6, 14, 12))
-        pygame.draw.ellipse(surf, (48, 36, 24), (x - 7, y - 6, 14, 12), 1)
+        # A mounted... thing -- a stoat or grouse, but the eyes are wrong:
+        # too many, sickly-yellow, catching the light. Underground only.
+        # `wall` rotates it to face into the room.
+        lay = pygame.Surface((22, 20), pygame.SRCALPHA)
+        cx, cy = 11, 10
+        pygame.draw.rect(lay, (58, 42, 26), (cx - 10, cy - 9, 20, 18), border_radius=2)
+        pygame.draw.rect(lay, (34, 24, 14), (cx - 10, cy - 9, 20, 18), 1)
+        pygame.draw.ellipse(lay, (70, 56, 40), (cx - 7, cy - 6, 14, 12))
+        pygame.draw.ellipse(lay, (48, 36, 24), (cx - 7, cy - 6, 14, 12), 1)
         rng = random.Random(self.seed)
         for _ in range(6):
-            ex = x - 5 + rng.randint(0, 10)
-            ey = y - 4 + rng.randint(0, 8)
-            pygame.draw.circle(surf, (208, 196, 64), (ex, ey), 1)          # too many eyes
+            ex = cx - 5 + rng.randint(0, 10)
+            ey = cy - 4 + rng.randint(0, 8)
+            pygame.draw.circle(lay, (208, 196, 64), (ex, ey), 1)
+        ang = {"N": 0, "E": -90, "S": 180, "W": 90}.get(self.kwargs.get("wall", "N"), 0)
+        if ang:
+            lay = pygame.transform.rotate(lay, ang)
+        surf.blit(lay, (x - lay.get_width() // 2, y - lay.get_height() // 2))
 
     def _draw_cobweb(self, surf, x, y):
         # A faint corner cobweb: radial threads + a few connecting arcs.

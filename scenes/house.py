@@ -349,7 +349,6 @@ def build_house():
     sc.add_decoration(Decoration(0 * TILE + 24, 5 * TILE + 16, "banner",
                                  color=(140, 60, 70)))
     sc.add_decoration(Decoration(12 * TILE + 16, 4 * TILE + 14, "candle"))  # on fireplace
-    sc.add_decoration(Decoration(15 * TILE + 16, 0 * TILE + 24, "photo"))
     for i in range(6):
         sc.add_decoration(Decoration(40 + i * 90,
                                      80 + (i % 3) * 60, "mote"))
@@ -372,9 +371,12 @@ def build_house():
     # east + west walls; an oil lamp on the kitchen counter; cobwebs in
     # the high corners; firewood and an antler coat-rack on the floor
     # (collision, tucked against walls so they never block a path).
-    sc.add_decoration(Decoration(16 * TILE + 12, 3 * TILE + 16, "buck_head"))
-    sc.add_decoration(Decoration(16 * TILE + 12, 6 * TILE + 16, "mounted_fish"))
-    sc.add_decoration(Decoration(1 * TILE + 12, 9 * TILE + 16, "wrong_taxidermy"))
+    # Trophy mounts flush on the NORTH wall (row 0), facing down into the
+    # room -- the buck replaces the old generic photo; a walleye on the
+    # kitchen-side wall. (The "wrong" taxidermy lives underground now.)
+    sc.add_decoration(Decoration(15 * TILE + 16, 0 * TILE + 22, "buck_head",
+                                 wall="N"))
+    sc.add_decoration(Decoration(6 * TILE + 16, 0 * TILE + 24, "mounted_fish"))
     sc.add_decoration(Decoration(2 * TILE + 14, 6 * TILE + 2, "kerosene_lamp"))
     sc.add_decoration(Decoration(1 * TILE + 6, 1 * TILE + 6, "cobweb", ang=0.0))
     sc.add_decoration(Decoration(16 * TILE + 26, 1 * TILE + 6, "cobweb",
@@ -627,6 +629,9 @@ def build_basement():
                                  "bloodstain", scale=3.2))
     sc.add_decoration(Decoration(1 * TILE + 24, 4 * TILE + 16, "candle"))
     sc.add_decoration(Decoration(10 * TILE + 8, 4 * TILE + 16, "candle"))
+    # A "wrong" mount on the cellar wall -- too many eyes in the dark.
+    sc.add_decoration(Decoration(4 * TILE + 16, 0 * TILE + 20,
+                                 "wrong_taxidermy", wall="N", seed=11))
     # One claw gouge etched into the cellar wall.
     sc.add_decoration(Decoration(7 * TILE + 16, 1 * TILE + 8, "claw_marks",
                                  scale=2.2))
