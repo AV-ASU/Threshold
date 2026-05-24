@@ -32,20 +32,21 @@ def build_bedroom():
     under the writing table. The cot is the save trigger, not a
     hide spot."""
     floor = ["=" * 16 for _ in range(12)]
-    # Layout legend:
-    #   b = cot           t = writing table       c = chair
-    #   s = bookshelf     i = window              D = south door
-    #   W = wood wall
+    # Furniture is drawn as sized decorations (multi-tile / sub-tile)
+    # with invisible solid 'X' tiles under their footprints for
+    # collision: a 2x2 cot in the NW corner, a long shallow bookshelf on
+    # the north wall, a writing desk, and a tall wardrobe on the west
+    # wall. 'i' = window, 'D' = south door.
     objects = [
         "WWWWWWiWWWWiWWWW",   # 0  north wall, two windows
-        "W..............W",   # 1
-        "W..............W",   # 2
-        "W..b.........s.W",   # 3  cot (col 3); bookshelf (col 13)
+        "W...........XX.W",   # 1  bookshelf footprint (cols 12-13)
+        "W.XX...........W",   # 2  cot footprint (cols 2-3, rows 2-3)
+        "W.XX...........W",   # 3
         "W..............W",   # 4
-        "W..........t.c.W",   # 5  writing table (col 11), chair (col 13)
+        "W.........XX...W",   # 5  writing desk footprint (cols 10-11)
         "W..............W",   # 6
-        "W..............W",   # 7
-        "W..s...........W",   # 8  wardrobe (s) -- a second shelf-like prop
+        "W.X............W",   # 7  wardrobe footprint (col 2, rows 7-8)
+        "W.X............W",   # 8
         "W..............W",   # 9
         "W..............W",   # 10
         "WWWWWWWDWWWWWWWW",   # 11 south wall, door D at col 7
@@ -54,14 +55,14 @@ def build_bedroom():
     sc.add_exit("D", "house", "from_bedroom")
     sc.set_spawn("default", 7, 6)
     sc.set_spawn("from_house", 7, 10)
-    # The cot's interaction position. Cot at (3, 3). Player stands
-    # one tile east at col 4 row 3.
+    # The cot fills the NW corner (cols 2-3, rows 2-3). The player
+    # stands one tile east at col 4 row 3 to sleep/save.
     sc._cot_pos = (4 * TILE + 16, 3 * TILE + 16)
-    # Hide spots: BEHIND the wardrobe (col 3 row 8) and UNDER the
-    # writing table (col 11 row 5).
+    # Hide spots: BESIDE the wardrobe (col 3 row 8) and UNDER the
+    # writing desk (col 11 row 6).
     sc.hide_spots = [
-        (4 * TILE + 16,  8 * TILE + 16, "behind"),   # behind wardrobe
-        (12 * TILE + 16, 5 * TILE + 16, "under"),    # under writing table
+        (3 * TILE + 16,  8 * TILE + 16, "behind"),   # beside wardrobe
+        (11 * TILE + 16, 6 * TILE + 16, "under"),    # under writing desk
     ]
 
     # Worn rug over the open centre -- a multi-tile covering, set
@@ -69,6 +70,18 @@ def build_bedroom():
     # below draw on top of it.
     sc.add_decoration(Decoration(7 * TILE + 24, 7 * TILE + 8, "rug",
                                  w=120, h=76, color=(86, 42, 46), seed=17))
+    # Sized darkwood furniture (decorations over the 'X' collision
+    # footprints in the object map). A 2x2 cot in the corner, a long
+    # shallow bookshelf on the north wall, a writing desk + chair, a
+    # tall wardrobe on the west wall.
+    sc.add_decoration(Decoration(3 * TILE, 3 * TILE, "bed", w=58, h=62))
+    sc.add_decoration(Decoration(13 * TILE, 1 * TILE + 9, "bookshelf",
+                                 w=58, h=18, seed=5))
+    sc.add_decoration(Decoration(11 * TILE, 5 * TILE + 12, "table", w=52, h=36))
+    sc.add_decoration(Decoration(12 * TILE + 18, 6 * TILE + 4, "chair",
+                                 w=22, h=28))
+    sc.add_decoration(Decoration(2 * TILE + 16, 8 * TILE, "wardrobe",
+                                 w=26, h=54))
     # Duffel bag beside the cot.
     sc.add_decoration(Decoration(2 * TILE + 28, 5 * TILE + 16, "bowl",
                                  filled=True))
@@ -83,7 +96,7 @@ def build_bedroom():
     # into the wood beside the wardrobe -- subtle, easy to miss the
     # first session.
     sc.add_decoration(Decoration(3 * TILE + 16, 0 * TILE + 24, "photo"))
-    sc.add_decoration(Decoration(2 * TILE + 4, 8 * TILE + 16,
+    sc.add_decoration(Decoration(4 * TILE + 12, 9 * TILE + 16,
                                  "phantom_mark"))
     # Wall calendar -- redesigned to MMM + day card. Day 1 = Oct 4
     # so the prop reads "OCT 4" on the first morning.

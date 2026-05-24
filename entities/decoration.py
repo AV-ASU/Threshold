@@ -143,6 +143,94 @@ class Decoration:
     def _draw_unknown(self, surf, x, y):
         pygame.draw.rect(surf, (255, 0, 255), (x - 4, y - 4, 8, 8))
 
+    # ---- Sized darkwood furniture (drawn centred at x,y; pixel size
+    # via w/h kwargs so a piece can span several tiles or sit shy of
+    # one, breaking the tile grid). Collision is handled separately by
+    # invisible solid 'X' tiles under the footprint. ----
+    def _draw_bed(self, surf, x, y):
+        w = int(self.kwargs.get("w", 56)); h = int(self.kwargs.get("h", 64))
+        rx, ry = x - w // 2, y - h // 2
+        pygame.draw.rect(surf, (40, 29, 19), (rx, ry, w, h))             # frame
+        pygame.draw.rect(surf, (22, 15, 9), (rx, ry, w, h), 1)
+        ix, iy, iw, ih = rx + 3, ry + 3, w - 6, h - 6
+        pygame.draw.rect(surf, (112, 104, 96), (ix, iy, iw, ih))         # mattress
+        pygame.draw.rect(surf, (132, 124, 116), (ix, iy, iw, 2))         # lit top
+        pygame.draw.rect(surf, (146, 138, 130), (ix + 3, iy + 3, iw - 6, h // 5))  # pillow
+        pygame.draw.rect(surf, (118, 110, 102), (ix + 3, iy + 3 + h // 5, iw - 6, 1))
+        by = iy + ih * 2 // 5
+        pygame.draw.rect(surf, (86, 44, 48), (ix, by, iw, iy + ih - by)) # blanket
+        pygame.draw.rect(surf, (108, 58, 62), (ix, by, iw, 2))           # lit edge
+        pygame.draw.line(surf, (62, 32, 36), (x, by + 2), (x, iy + ih - 2), 1)  # fold
+        pygame.draw.rect(surf, (58, 38, 30), (ix + iw // 2, by + ih // 4, 7, 6))  # stain
+
+    def _draw_bookshelf(self, surf, x, y):
+        # Long + shallow: sits flush to a wall, books leaning along it.
+        w = int(self.kwargs.get("w", 58)); h = int(self.kwargs.get("h", 18))
+        rx, ry = x - w // 2, y - h // 2
+        pygame.draw.rect(surf, (56, 41, 25), (rx, ry, w, h))             # case
+        pygame.draw.rect(surf, (30, 22, 12), (rx, ry, w, h), 1)
+        pygame.draw.rect(surf, (78, 58, 36), (rx, ry, w, 2))             # lit top rail
+        pygame.draw.rect(surf, (24, 17, 9), (rx, ry + h - 2, w, 2))      # base shadow
+        cols = [(92, 46, 42), (48, 58, 74), (56, 72, 48), (104, 86, 46), (74, 52, 78)]
+        bx, i = rx + 3, 0
+        while bx < rx + w - 3:
+            bw = 3 + ((self.seed + i * 7) % 3)
+            bh = (h - 6) - ((self.seed + i * 5) % 3)
+            col = cols[i % len(cols)]
+            pygame.draw.rect(surf, col, (bx, ry + h - 3 - bh, bw, bh))
+            pygame.draw.rect(surf, (col[0] // 2, col[1] // 2, col[2] // 2),
+                             (bx, ry + h - 3 - bh, bw, 1))
+            bx += bw + 1; i += 1
+
+    def _draw_table(self, surf, x, y):
+        w = int(self.kwargs.get("w", 54)); h = int(self.kwargs.get("h", 38))
+        rx, ry = x - w // 2, y - h // 2
+        pygame.draw.rect(surf, (40, 27, 16), (rx + 3, ry + h - 8, 5, 8))     # legs
+        pygame.draw.rect(surf, (40, 27, 16), (rx + w - 8, ry + h - 8, 5, 8))
+        th = h - 8
+        pygame.draw.rect(surf, (74, 52, 32), (rx, ry, w, th))                # top
+        pygame.draw.rect(surf, (96, 70, 44), (rx, ry, w, 2))                 # lit back
+        pygame.draw.rect(surf, (40, 27, 16), (rx, ry + th - 3, w, 3))        # front lip
+        for gx in range(rx + 8, rx + w - 4, 11):
+            pygame.draw.line(surf, (56, 38, 22), (gx, ry + 4), (gx, ry + th - 5), 1)
+
+    def _draw_chair(self, surf, x, y):
+        w = int(self.kwargs.get("w", 22)); h = int(self.kwargs.get("h", 28))
+        rx, ry = x - w // 2, y - h // 2
+        pygame.draw.rect(surf, (44, 30, 18), (rx + 3, ry + h - 6, 3, 6))     # legs
+        pygame.draw.rect(surf, (44, 30, 18), (rx + w - 6, ry + h - 6, 3, 6))
+        pygame.draw.rect(surf, (64, 44, 26), (rx + 2, ry, w - 4, h // 3))    # back
+        pygame.draw.rect(surf, (78, 56, 34), (rx + 2, ry + h // 3, w - 4, h // 3 + 2))  # seat
+        pygame.draw.rect(surf, (98, 72, 44), (rx + 2, ry + h // 3, w - 4, 2))
+
+    def _draw_wardrobe(self, surf, x, y):
+        # Tall + narrow: a standing cabinet against a wall, twin doors.
+        w = int(self.kwargs.get("w", 26)); h = int(self.kwargs.get("h", 52))
+        rx, ry = x - w // 2, y - h // 2
+        pygame.draw.rect(surf, (60, 44, 27), (rx, ry, w, h))                 # carcass
+        pygame.draw.rect(surf, (30, 22, 12), (rx, ry, w, h), 1)
+        pygame.draw.rect(surf, (82, 60, 38), (rx, ry, w, 2))                 # lit top
+        pygame.draw.rect(surf, (24, 17, 9), (rx, ry + h - 3, w, 3))          # base shadow
+        pygame.draw.line(surf, (32, 23, 13), (x, ry + 2), (x, ry + h - 2), 1)  # door split
+        for hy in (ry + h // 2 - 4, ry + h // 2 + 2):                        # handles
+            pygame.draw.rect(surf, (38, 27, 16), (x - 3, hy, 2, 4))
+            pygame.draw.rect(surf, (38, 27, 16), (x + 2, hy, 2, 4))
+
+    def _draw_stove(self, surf, x, y):
+        w = int(self.kwargs.get("w", 34)); h = int(self.kwargs.get("h", 40))
+        rx, ry = x - w // 2, y - h // 2
+        pygame.draw.rect(surf, (42, 42, 48), (rx, ry, w, h))                 # body
+        pygame.draw.rect(surf, (60, 60, 68), (rx, ry, w, 2))                 # lit top
+        pygame.draw.rect(surf, (22, 22, 28), (rx, ry + h - 3, w, 3))         # base shadow
+        pygame.draw.rect(surf, (28, 28, 34), (rx, ry, w, h), 1)
+        for cxk in (rx + w // 3, rx + 2 * w // 3):                           # burners
+            pygame.draw.circle(surf, (18, 18, 24), (cxk, ry + 9), 4)
+            pygame.draw.circle(surf, (10, 10, 14), (cxk, ry + 9), 2)
+        pygame.draw.rect(surf, (16, 16, 20), (rx + 4, ry + h - 16, w - 8, 11))   # oven door
+        pygame.draw.rect(surf, (70, 70, 78), (rx + 7, ry + h - 17, w - 14, 2))   # handle
+        pygame.draw.rect(surf, (200, 90, 30), (rx + w // 2 - 5, ry + h - 7, 10, 2))  # ember
+
+
     def _draw_rug(self, surf, x, y):
         """A worn area rug -- a multi-tile floor covering (w x h px via
         kwargs) that breaks up the plank grid. Faded field, a woven
