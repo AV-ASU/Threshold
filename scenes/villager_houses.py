@@ -1,6 +1,7 @@
 """Interiors for the four villager houses. Each is a small
 one-room interior with a single NPC resident and an exit back to
 the parent overworld scene."""
+import math
 import random
 import pygame
 from constants import TILE
@@ -122,13 +123,20 @@ def build_old_man_house():
 
     sc.add_decoration(Decoration(7 * TILE + 16,  0 * TILE + 22 , "candle"))
     sc.add_decoration(Decoration(8 * TILE + 16, 5 * TILE + 24, "candle"))
-    # The Preacher's parsonage. A faded banner above the desk reads
-    # like a hung tapestry. The old computer is the cult's ancient
-    # church-records terminal -- the LOGIN: prompt is unchanged.
-    sc.add_decoration(Decoration(2 * TILE + 16, 4 * TILE + 16, "banner",
-                                 color=(120, 80, 50)))
+    # The Preacher's parsonage in rural hunting country: a mounted buck
+    # + trophy walleye on the north wall (replacing the old banner and
+    # stray photo), a cobweb in the NW corner, and a kerosene lamp on
+    # the desk. The old computer is the cult's ancient church-records
+    # terminal -- the LOGIN: prompt is unchanged.
+    sc.add_decoration(Decoration(2 * TILE + 16, 0 * TILE + 22, "buck_head",
+                                 wall="N"))
+    sc.add_decoration(Decoration(6 * TILE + 16, 0 * TILE + 24,
+                                 "mounted_fish"))
+    sc.add_decoration(Decoration(1 * TILE + 6, 1 * TILE + 6, "cobweb",
+                                 ang=0.0))
+    sc.add_decoration(Decoration(2 * TILE + 16, 2 * TILE + 2,
+                                 "kerosene_lamp"))
     sc.add_decoration(Decoration(8 * TILE + 8, 2 * TILE + 16, "clock"))
-    sc.add_decoration(Decoration(5 * TILE + 16, 2 * TILE + 16, "photo"))
     # Phantom-mark chalk on the wall.
     sc.add_decoration(Decoration(8 * TILE + 4, 4 * TILE + 16,
                                  "phantom_mark"))
@@ -183,8 +191,16 @@ def build_fisherman_cottage():
     sc.add_furniture("chair", [(6, 3)], w=22, h=28)
     sc.add_decoration(Decoration(7 * TILE + 16,  0 * TILE + 22 , "candle"))
     sc.add_decoration(Decoration(2 * TILE + 16,  0 * TILE + 22 , "candle"))
-    sc.add_decoration(Decoration(7 * TILE + 16, 4 * TILE + 16, "banner",
-                                 color=(60, 100, 130)))
+    # Sheriff's office in hunting country: a mounted buck + trophy
+    # walleye on the north wall (replacing the old banner), an antler
+    # coat-rack against the west wall, and a cobweb in the NE corner.
+    sc.add_decoration(Decoration(4 * TILE + 16, 0 * TILE + 22, "buck_head",
+                                 wall="N"))
+    sc.add_decoration(Decoration(6 * TILE + 16, 0 * TILE + 24,
+                                 "mounted_fish"))
+    sc.add_decoration(Decoration(8 * TILE + 26, 1 * TILE + 6, "cobweb",
+                                 ang=math.pi / 2))
+    sc.add_furniture("antler_rack", [(1, 4)], w=22, h=46)
     # AM radio on the desk, a lantern by the door.
     sc.add_decoration(Decoration(4 * TILE + 16, 2 * TILE + 16, "radio"))
     sc.add_decoration(Decoration(8 * TILE + 16, 5 * TILE + 24, "lantern"))
@@ -468,13 +484,15 @@ def build_locked_house():
     # floating dust motes that catch the light.
     sc.add_decoration(Decoration(2 * TILE + 16,  0 * TILE + 22 , "candle"))
     sc.add_decoration(Decoration(2 * TILE + 16, 3 * TILE + 16, "photo"))
-    # Faded banner left on the wall -- desaturated brown so it reads as
-    # cloth that has lost its colour rather than a fresh hanging.
-    sc.add_decoration(Decoration(6 * TILE + 16,  0 * TILE + 22 , "banner",
-                                 color=(110, 90, 70)))
-    # A clock that the inhabitants left running, and a faded second
-    # photo over the bed. The let-down stays -- but the abandonment
-    # reads as having a story behind it now.
+    # A mounted buck left behind on the north wall (replacing the old
+    # faded banner) and a cobweb in the corner -- a hunting house, lived
+    # in then walked away from. The faded family photos + the clock the
+    # inhabitants left running stay, so the let-down still reads as
+    # having a story behind it.
+    sc.add_decoration(Decoration(6 * TILE + 16, 0 * TILE + 22, "buck_head",
+                                 wall="N"))
+    sc.add_decoration(Decoration(1 * TILE + 6, 1 * TILE + 6, "cobweb",
+                                 ang=0.0))
     sc.add_decoration(Decoration(5 * TILE + 24,  0 * TILE + 22 , "clock"))
     sc.add_decoration(Decoration(2 * TILE + 16, 4 * TILE + 6, "photo"))
     # Dust motes scattered through the interior. Deterministic positions
@@ -526,6 +544,10 @@ def daughter_room_on_enter(game, scene):
         game.dialog.show([
             "[c=dim]Nothing here.[/c]",
         ], speaker="", voice="blip_soft", portrait="narrator")
+    # The pink banner stays in both states -- its warm -> faded-grey
+    # colour shift is the room's whole emotional beat, not generic
+    # filler. Lodge dressing is limited to cobwebs added here (the
+    # on_enter wipe above strips everything but the sized furniture).
     if polaroid:
         # Faded pink-grey banner
         scene.add_decoration(Decoration(6 * TILE + 16,  0 * TILE + 22 , "banner",
@@ -535,6 +557,11 @@ def daughter_room_on_enter(game, scene):
         scene.add_decoration(Decoration(2 * TILE + 16, 4 * TILE + 16, "phantom_mark"))
         scene.add_decoration(Decoration(4 * TILE + 16, 3 * TILE + 24, "bloodstain"))
         scene.add_decoration(Decoration(5 * TILE + 16, 4 * TILE + 24, "bloodstain"))
+        # Cobwebs in both high corners -- the room has gone to decay.
+        scene.add_decoration(Decoration(1 * TILE + 6, 1 * TILE + 6, "cobweb",
+                                        ang=0.0))
+        scene.add_decoration(Decoration(6 * TILE + 26, 1 * TILE + 6, "cobweb",
+                                        ang=math.pi / 2))
         # Heavy dust
         for mx, my in [(2, 2), (3, 3), (5, 2), (4, 4), (6, 3), (5, 3), (3, 4)]:
             scene.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16, "mote"))
@@ -543,6 +570,9 @@ def daughter_room_on_enter(game, scene):
         scene.add_decoration(Decoration(2 * TILE + 16,  0 * TILE + 22 , "candle"))
         scene.add_decoration(Decoration(6 * TILE + 16,  0 * TILE + 22 , "banner",
                                         color=(220, 130, 170)))
+        # A single cobweb in the corner -- even the kept room is old.
+        scene.add_decoration(Decoration(6 * TILE + 26, 1 * TILE + 6, "cobweb",
+                                        ang=math.pi / 2))
         # Light dust
         for mx, my in [(4, 2), (5, 3)]:
             scene.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16, "mote"))
