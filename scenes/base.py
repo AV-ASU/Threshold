@@ -946,10 +946,10 @@ def _draw_gable_roof(surf, region, cam_x, cam_y):
     minx, miny, maxx, maxy = region
     rng = random.Random((minx * 73856093) ^ (maxy * 19349663))
     E = 9                                            # eave overhang
-    L = (minx - 1) * TILE - cam_x - E
-    R = (maxx + 2) * TILE - cam_x + E
-    T = (miny - 1) * TILE - cam_y - E
-    Bf = (maxy + 1) * TILE - cam_y + 5               # front eave lip, door stays clear
+    L = int((minx - 1) * TILE - cam_x - E)
+    R = int((maxx + 2) * TILE - cam_x + E)
+    T = int((miny - 1) * TILE - cam_y - E)
+    Bf = int((maxy + 1) * TILE - cam_y + 5)          # front eave lip, door stays clear
     Wd, Hd = R - L, Bf - T
     if Wd < 8 or Hd < 8:
         return
