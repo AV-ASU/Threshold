@@ -80,9 +80,7 @@ class NPC:
         # spotted-line beat fires every re-entry, not once per
         # scene per session. Read+set by Game._tick_sheriff.
         self._has_been_spotted = False
-        self._yk_path = []
-        self._yk_target = None
-        self._yk_mode = None
+        self._yk_head = None        # current heading angle (rad); steers
         self._yk_stuck_t = 0.0
         self._yk_last_pos = None
         # Round-14: NPCs are killable. They take damage from the
@@ -337,104 +335,50 @@ class NPC:
     def _yk_update(self, dt, scene, player):
         pdx = player.x - self.x
         pdy = player.y - self.y
-        pd = math.hypot(pdx, pdy) or 1
-        self.facing = (pdx / pd, pdy / pd)
+        desired = math.atan2(pdy, pdx)
         # Birth: the King erupts from a cult member over ~1.2s before it
         # can move; _birth ramps 0->1 and the renderer plays the
         # emergence. It still turns to face the player while being born.
         self._birth = min(1.0, getattr(self, "_birth", 0.0) + dt / 1.2)
+        # The King steers: its heading turns toward the player at a
+        # capped rate, so it sweeps in fluid arcs -- in ANY direction,
+        # diagonals included -- instead of snapping along the tile grid.
+        # A constant forward drift + a heading always bending toward the
+        # player traces a pursuit curve that spirals in.
+        head = self._yk_head if self._yk_head is not None else desired
+        diff = (desired - head + math.pi) % (2 * math.pi) - math.pi
+        turn = 2.6 * dt                       # ~150 deg/s
+        diff = max(-turn, min(turn, diff))
+        head = (head + diff) % (2 * math.pi)
+        self._yk_head = head
+        self.facing = (math.cos(head), math.sin(head))
         if self._birth < 1.0:
             return
-        if self._yk_target is None or not self._yk_path:
-            self._yk_pick_target(scene, player)
-            if not self._yk_path:
-                return
+        step = self.speed * 60 * dt
         if self._yk_last_pos is None:
             self._yk_last_pos = (self.x, self.y)
         moved = math.hypot(self.x - self._yk_last_pos[0],
                            self.y - self._yk_last_pos[1])
-        if moved < 0.5:
-            self._yk_stuck_t += dt
-        else:
-            self._yk_stuck_t = 0.0
+        self._yk_stuck_t = (self._yk_stuck_t + dt
+                            if moved < step * 0.4 else 0.0)
         self._yk_last_pos = (self.x, self.y)
-        if self._yk_stuck_t >= 1.5:
-            self._yk_pick_target(scene, player)
-            return
-        TILE = scene.TILE
-        nxt = self._yk_path[0]
-        nx = nxt[0] * TILE + TILE // 2
-        ny = nxt[1] * TILE + TILE // 2
-        if math.hypot(self.x - nx, self.y - ny) < 6:
-            self._yk_path.pop(0)
-            if not self._yk_path:
-                self._yk_pick_target(scene, player)
-            return
-        dx = nx - self.x
-        dy = ny - self.y
-        d = math.hypot(dx, dy) or 1
-        step = self.speed * 60 * dt
-        self.x += (dx / d) * step
-        self.y += (dy / d) * step
+        nx = self.x + math.cos(head) * step
+        ny = self.y + math.sin(head) * step
+        # It floats, but doesn't pass through walls: take the full step
+        # if clear, else slide along whichever axis is open.
+        if not scene.is_solid_at(nx, ny, ignore=self):
+            self.x, self.y = nx, ny
+        elif not scene.is_solid_at(nx, self.y, ignore=self):
+            self.x = nx
+        elif not scene.is_solid_at(self.x, ny, ignore=self):
+            self.y = ny
+        # Pressed against a wall with no progress: swing the heading so
+        # it arcs around the obstacle instead of grinding into it.
+        if self._yk_stuck_t > 0.5:
+            self._yk_head = (head + 2.2 * dt) % (2 * math.pi)
         # Advance the gait phase with distance covered so the run cycle
         # matches the King's speed and freezes when it isn't moving.
         self._gait = getattr(self, "_gait", 0.0) + step * 0.18
-
-    def _yk_pick_target(self, scene, player):
-        """Pick the next path target for the Hunter. Door-block
-        behaviour: prefers `scene._last_entry_exit_tile` (the tile
-        the player walked in through). Once the Hunter is on or
-        adjacent to that tile, the path comes back empty and he
-        holds position -- facing the player, blocking the way back.
-        Falls back to the prior chase/wander mix only when the
-        entry tile isn't tracked or isn't reachable."""
-        from collections import deque
-        from scenes.base import is_object_solid, is_floor_solid
-        TILE = scene.TILE
-        sx = int(self.x // TILE)
-        sy = int(self.y // TILE)
-        sx = max(0, min(scene.w - 1, sx))
-        sy = max(0, min(scene.h - 1, sy))
-        visited = {(sx, sy): None}
-        q = deque([(sx, sy)])
-        while q:
-            cx, cy = q.popleft()
-            for ddx, ddy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
-                nx_, ny_ = cx + ddx, cy + ddy
-                if not (0 <= nx_ < scene.w and 0 <= ny_ < scene.h):
-                    continue
-                if (nx_, ny_) in visited:
-                    continue
-                wx = nx_ * TILE + TILE // 2
-                wy = ny_ * TILE + TILE // 2
-                if is_object_solid(scene.char_object_at(wx, wy)):
-                    continue
-                if is_floor_solid(scene.char_floor_at(wx, wy)):
-                    continue
-                visited[(nx_, ny_)] = (cx, cy)
-                q.append((nx_, ny_))
-        # Relentless: always path to the player's current tile (or the
-        # nearest reachable tile to them). The King does not block or
-        # wander -- once he is here, he comes straight for you.
-        self._yk_mode = "chase"
-        target = None
-        ptx = int(player.x // TILE)
-        pty = int(player.y // TILE)
-        if (ptx, pty) in visited:
-            target = (ptx, pty)
-        else:
-            target = min(visited.keys(),
-                         key=lambda t: (t[0] - ptx) ** 2
-                                        + (t[1] - pty) ** 2)
-        path = []
-        cur = target
-        while visited.get(cur) is not None:
-            path.append(cur)
-            cur = visited[cur]
-        path.reverse()
-        self._yk_target = target
-        self._yk_path = path
-        self._yk_stuck_t = 0.0
 
     def _step_toward(self, target, dt, scene):
         tx, ty = target

@@ -657,11 +657,8 @@ class Game:
                     self.player.x, self.player.y)
                 if floor_ch == ":":
                     self.player.hidden = "corn"
-        # Capture the entry tile for the Hunter's door-block target.
-        # The player just walked in through this tile; the avatar
-        # routes here to cut off retreat. Tile coords (tx, ty) so
-        # _yk_pick_target's BFS in tile-space can target it directly.
-        # Stashed on the Scene so npc.update can read it without a
+        # Capture the entry tile (tile coords) on the Scene so NPC
+        # update() code can read where the player walked in without a
         # back-reference to the Game.
         if spawn:
             self.scene._last_entry_exit_tile = (

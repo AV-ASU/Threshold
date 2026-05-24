@@ -196,21 +196,25 @@ class Decoration:
                             [(x, y - 4 - f_h * 0.7), (x - f_w * 0.5, y - 4), (x + f_w * 0.5, y - 4)])
 
     def _draw_mud_footprint(self, surf, x, y):
-        # A single boot print -- dark muddy oval with a heel mark and
-        # three toe dabs. `dir` kwarg (0..3) rotates the print so a
-        # trail can suggest direction. `alpha` kwarg fades it.
+        # A single BOOT print -- one connected sole (rounded toe/ball, a
+        # narrow arch, a heel) with a faint tread, NOT separate toe dabs
+        # (which read as an animal paw). `dir` (0..3) rotates it so a
+        # trail suggests direction; `alpha` fades it.
         d = self.kwargs.get("dir", 0)
         a = max(20, min(220, int(self.kwargs.get("alpha", 180))))
         layer = pygame.Surface((16, 22), pygame.SRCALPHA)
         col = (32, 22, 14, a)
-        # oval body
-        pygame.draw.ellipse(layer, col, (3, 6, 10, 14))
-        # toe dabs (top of print)
-        pygame.draw.ellipse(layer, col, (4, 2, 3, 4))
-        pygame.draw.ellipse(layer, col, (8, 1, 3, 4))
-        pygame.draw.ellipse(layer, col, (11, 3, 2, 3))
-        # heel cleat
-        pygame.draw.ellipse(layer, col, (5, 16, 6, 4))
+        tread = (22, 15, 9, a)
+        # Ball of the foot (front), wide and rounded.
+        pygame.draw.ellipse(layer, col, (3, 1, 10, 12))
+        # Arch / instep -- a narrow waist linking the ball to the heel.
+        pygame.draw.rect(layer, col, (5, 9, 6, 8))
+        # Heel -- rounded, a touch narrower than the ball.
+        pygame.draw.ellipse(layer, col, (4, 14, 8, 8))
+        # Tread bars: two across the ball, one across the heel.
+        pygame.draw.line(layer, tread, (4, 5), (11, 5), 1)
+        pygame.draw.line(layer, tread, (4, 8), (11, 8), 1)
+        pygame.draw.line(layer, tread, (5, 18), (10, 18), 1)
         # rotate per direction (0=up, 1=right, 2=down, 3=left)
         if d:
             layer = pygame.transform.rotate(layer, -90 * d)

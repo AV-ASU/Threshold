@@ -362,11 +362,6 @@ def build_house():
                                  color=(140, 60, 70)))
     sc.add_decoration(Decoration(12 * TILE + 16, 4 * TILE + 14, "candle"))  # on fireplace
     sc.add_decoration(Decoration(15 * TILE + 16, 0 * TILE + 24, "photo"))
-    # A large dark stain spread across the boards near the cellar hatch
-    # -- scaled up to fill the bare kitchen floor and unsettle the
-    # wrong-empty lodge.
-    sc.add_decoration(Decoration(5 * TILE + 20, 8 * TILE + 20, "bloodstain",
-                                 scale=2.6))
     for i in range(6):
         sc.add_decoration(Decoration(40 + i * 90,
                                      80 + (i % 3) * 60, "mote"))
