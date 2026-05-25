@@ -862,10 +862,13 @@ def _yk_grab_arm(surf, cx, cy, ang, reach, t, phase, scale, lit, alpha=255, side
                 pass
 
 
-def _yk_orb(surf, cx, cy, r, vis, seed, t):
-    """A shed SOUL-ORB in the wake: a small glowing gold clot with a mask or two
-    floating in it, fading out behind the King. Quiet light -- no arms of its
-    own (the main body tells the grabbing story)."""
+# A shed SOUL-ORB in the wake is drawn in two passes (glow, then faces) so that
+# every orb's masks sit on top of every orb's glow, regardless of shed order.
+_YK_ORB_KINDS = ("plain", "scream", "hollow", "crack")
+
+
+def _yk_orb_glow(surf, cx, cy, r, vis):
+    """The orb's glowing gold clot (no faces) -- a small copy of the body."""
     if vis <= 0.04:
         return
     _yk_radial(surf, cx, cy, int(r * 2.4), _YK_T1, int(34 * vis))   # warm orange aura
@@ -873,12 +876,18 @@ def _yk_orb(surf, cx, cy, r, vis, seed, t):
     _yk_radial(surf, cx, cy, int(r * 1.05), _YK_T2, int(58 * vis))
     _yk_radial(surf, cx, cy, int(r * 0.62), _YK_T3, int(72 * vis))
     _yk_radial(surf, cx, cy, int(r * 0.32), _YK_T4, int(88 * vis))
-    kinds = ("plain", "scream", "hollow", "crack")
+
+
+def _yk_orb_faces(surf, cx, cy, r, vis, seed, t):
+    """The mask(s) floating in the orb -- drawn in the second pass so they read
+    over the whole wake of glow, not just their own orb."""
+    if vis <= 0.04:
+        return
     for k in range(2 if r >= 9 else 1):
         ang = seed * 1.7 + k * 2.4 + t * 1.4
         rad = r * 0.36
         _yk_mask(surf, cx + math.cos(ang) * rad, cy + math.sin(ang) * rad,
-                 max(3, int(r * 0.44)), vis * 0.9, kinds[(seed + k) % 4])
+                 max(3, int(r * 0.44)), vis * 0.9, _YK_ORB_KINDS[(seed + k) % 4])
 
 
 def _yk_birth_rift(surf, cx, cy, R, bp):
@@ -985,15 +994,22 @@ def _draw_king(surf, x, y, facing, t, birth, gait, threat=None):
             continue
         p["x"] += p["vx"] * dt
         p["y"] += p["vy"] * dt
-        a = (1.0 - fr) * manifest                    # no trail while it's a dark void
+        keep.append((p, fr, (1.0 - fr) * manifest))  # a: no trail while it's a dark void
+    _YK_PARTS[:] = [p for p, _, _ in keep]
+    # Pass 1: lay down ALL the glow particles first...
+    for p, fr, a in keep:
+        if a <= 0.01:
+            continue
         if p["kind"] == "orb":
-            _yk_orb(surf, p["x"], p["y"], p["r"] * (1 - 0.22 * fr), a, p["seed"], t)
+            _yk_orb_glow(surf, p["x"], p["y"], p["r"] * (1 - 0.22 * fr), a)
         else:
             mr = max(2, p["r"] * (1 - 0.4 * fr))
             _yk_radial(surf, p["x"], p["y"], int(mr * 2.6), _YK_T1, int(60 * a))  # orange glow
             _yk_radial(surf, p["x"], p["y"], mr, _YK_GOLD, int(150 * a))
-        keep.append(p)
-    _YK_PARTS[:] = keep
+    # ...Pass 2: then every orb's masks on top, so no later glow buries them.
+    for p, fr, a in keep:
+        if p["kind"] == "orb" and a > 0.04:
+            _yk_orb_faces(surf, p["x"], p["y"], p["r"] * (1 - 0.22 * fr), a, p["seed"], t)
     # Faint floating shadow on the ground, far below the mass.
     sh = pygame.Surface((40, 12), pygame.SRCALPHA)
     pygame.draw.ellipse(sh, (0, 0, 0, 80), (0, 0, 40, 12))
