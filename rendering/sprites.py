@@ -986,6 +986,50 @@ def _yk_crown(layer, hx, hy, r, R, t, m, lean):
         _yk_spire(layer, bx, byy, ang, slen, R, t, i, m, dk, gold, hot)
 
 
+def _yk_shatter_mask(surf, cx, cy, r, vis, kind, crack, t, R):
+    """THE SILHOUETTE: the mask. Intact when calm, but as the King rouses it
+    CRACKS and splits into shards that drift apart -- the grasping arms burst
+    from the splits and span the gaps, the light blazing through the cracks. A
+    broken face barely held together by the limbs inside it."""
+    if vis <= 0.03:
+        return
+    cx, cy, r = int(cx), int(cy), int(r)
+    _yk_radial(surf, cx, cy, r + 3, _YK_HOT, int(36 * vis))
+    pad = max(6, r)
+    S = (r + pad) * 2
+    m = pygame.Surface((S, S), pygame.SRCALPHA)
+    mxc = myc = r + pad
+    _yk_face(m, mxc, myc, r, _YK_EXPR.get(kind, kind), vis > 0.35)
+    alpha = int(64 + 156 * vis)
+    if crack <= 0.04:                                   # intact mask
+        m.set_alpha(alpha)
+        surf.blit(m, (cx - mxc, cy - myc))
+        return
+    n = 6
+    dk, gold, hot = (*_YK_SHADOW, 255), (*_YK_GOLD, 255), (*_YK_HOT, 255)
+    alen = r * (0.7 + 1.8 * crack)                       # arms burst from the cracks
+    for i in range(n):
+        gap = i * math.tau / n + 0.25 * math.sin(t * 0.8 + i)
+        _yk_spire(surf, cx, cy, gap, alen, R, t, i, 1.0, dk, gold, hot)
+    far = (r + pad) * 1.7
+    off = r * 0.7 * crack                                # shards drift apart
+    for i in range(n):
+        a0 = i * math.tau / n
+        bis = a0 + math.pi / n
+        a1 = (i + 1) * math.tau / n
+        poly = [(mxc, myc),
+                (mxc + math.cos(a0) * far, myc + math.sin(a0) * far),
+                (mxc + math.cos(bis) * far, myc + math.sin(bis) * far),
+                (mxc + math.cos(a1) * far, myc + math.sin(a1) * far)]
+        pm = pygame.Surface((S, S), pygame.SRCALPHA)
+        pygame.draw.polygon(pm, (255, 255, 255, 255), [(int(x), int(y)) for x, y in poly])
+        shard = m.copy()
+        shard.blit(pm, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
+        shard.set_alpha(alpha)
+        surf.blit(shard, (int(cx - mxc + math.cos(bis) * off),
+                          int(cy - myc + math.sin(bis) * off)))
+
+
 def _draw_king(surf, x, y, facing, t, birth, gait, threat=None):
     """THE KING IN YELLOW (see header). `birth` (0..1, already de-None'd by the
     dispatch) drives the rift eruption; `t` animates; `gait` is accepted but the
@@ -1144,13 +1188,9 @@ def _draw_king(surf, x, y, facing, t, birth, gait, threat=None):
             # Keep the little masks reading on top of the bright glow, not washed
             # into it -- floor their opacity up once they're surfacing.
             _yk_mask(layer, fxp, fyp, fr, min(1.0, (0.45 + 0.55 * vis) * manifest), kind)
-        _yk_mask(layer, hx, hy, pfr, 0.9, pmk)              # central mask ON TOP of the chorus
-        # THE CROWN OF ARMS: a gold circlet on the brow with bold bent arms
-        # rising as its grasping spires. Drawn last so it sits on the mask.
-        if manifest > 0.1:
-            lean = max(-0.6, min(0.6, math.atan2(math.sin(aa + math.pi / 2),
-                                                 math.cos(aa + math.pi / 2))))
-            _yk_crown(layer, hx, hy, pfr, R * max(0.3, grow), t, manifest, lean)
+        # THE MASK -- our silhouette. Intact when calm; as it rouses it cracks
+        # and splits into shards, the grasping arms bursting from the splits.
+        _yk_shatter_mask(layer, hx, hy, pfr, 0.92, pmk, manifest, t, R * max(0.3, grow))
         layer.set_alpha(int(255 * va * manifest))
         surf.blit(layer, (mcx - cx + sxo, mcy - cy + syo))
 
