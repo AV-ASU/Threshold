@@ -1017,9 +1017,15 @@ def _draw_king(surf, x, y, facing, t, birth, gait, threat=None):
     tvx, tvy = (mcx - _YK_TRAIL[0][0], mcy - _YK_TRAIL[0][1])
     tl = math.hypot(tvx, tvy) or 1.0
     bvx, bvy = -tvx / tl, -tvy / tl
-    _YK_ACC[0] += disp
-    while disp > 0.4 and _YK_ACC[0] >= 8:                    # space the orbs along the path
-        _YK_ACC[0] -= 8
+    # The wake of shed soul-orbs only trails once he has AWAKENED (the bloom has
+    # begun). While a calm void he is JUST a mask -- no trail, however he drifts.
+    awakened = manifest > 0.05
+    if awakened:
+        _YK_ACC[0] += disp
+    else:
+        _YK_ACC[0] = 0.0
+    while awakened and disp > 0.4 and _YK_ACC[0] >= 12:      # space the orbs along the path
+        _YK_ACC[0] -= 12
         _YK_PARTS.append({
             "kind": "orb", "seed": _YK_PRNG.randint(0, 999),
             "x": mcx + _YK_PRNG.uniform(-5, 5), "y": mcy + _YK_PRNG.uniform(-5, 5),
@@ -1051,19 +1057,19 @@ def _draw_king(surf, x, y, facing, t, birth, gait, threat=None):
     for p, fr, a in keep:
         if a <= 0.01:
             continue
+        wdim = 0.4 if p.get("birth") else 0.42              # wake dimmed to match the head
         if p["kind"] == "orb":
-            oa = a * 0.4 if p.get("birth") else a            # birth coalescence stays dim
-            _yk_orb_glow(surf, p["x"], p["y"], p["r"] * (1 - 0.22 * fr), oa)
+            _yk_orb_glow(surf, p["x"], p["y"], p["r"] * (1 - 0.22 * fr), a * wdim)
         else:
             mr = max(2, p["r"] * (1 - 0.4 * fr))
-            ma = a * 0.6 if p.get("birth") else a
-            _yk_radial(surf, p["x"], p["y"], int(mr * 2.6), _YK_T1, int(60 * ma))  # orange glow
-            _yk_radial(surf, p["x"], p["y"], mr, _YK_GOLD, int(150 * ma))
+            _yk_radial(surf, p["x"], p["y"], int(mr * 2.6), _YK_T1, int(60 * a * wdim))  # orange glow
+            _yk_radial(surf, p["x"], p["y"], mr, _YK_GOLD, int(150 * a * wdim))
     # ...Pass 2: then every orb's masks on top, so no later glow buries them. Birth
-    # orbs stay FACELESS -- the birth is a quiet coalescence, not a skull-storm.
+    # orbs stay FACELESS (a quiet coalescence); the wake faces are KEPT -- the
+    # implied victims -- but dimmed so the trail sits behind the head.
     for p, fr, a in keep:
         if p["kind"] == "orb" and a > 0.04 and not p.get("birth"):
-            _yk_orb_faces(surf, p["x"], p["y"], p["r"] * (1 - 0.22 * fr), a, p["seed"], t)
+            _yk_orb_faces(surf, p["x"], p["y"], p["r"] * (1 - 0.22 * fr), a * 0.8, p["seed"], t)
     # Faint floating shadow on the ground, far below the mass.
     sh = pygame.Surface((40, 12), pygame.SRCALPHA)
     pygame.draw.ellipse(sh, (0, 0, 0, 80), (0, 0, 40, 12))
