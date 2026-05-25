@@ -679,17 +679,20 @@ def _yk_radial(surf, x, y, R, color, a0, add=True):
               special_flags=pygame.BLEND_RGBA_ADD if add else 0)
 
 
+_YK_PALE, _YK_WHITE = (248, 232, 150), (255, 248, 224)
+
+
 def _yk_glow(layer, cx, cy, R, t):
-    """The hovering clot of golden light -- soft bloom over a lumpy amber mass
-    brightening to a hot core, churning on a slow swirl."""
+    """The hovering clot of pale-gold light -- a churning lumpy mass
+    brightening to a white-hot core. No warm aura: the light stays gold, never
+    orange; only a tight pale feather softens the edge."""
     R = int(R * (1 + 0.06 * math.sin(t * 2.0)))
-    _yk_radial(layer, cx, cy, int(R * 1.8), _YK_GOLD, 66)
-    _yk_radial(layer, cx, cy, int(R * 1.18), _YK_GOLD, 60)
+    _yk_radial(layer, cx, cy, int(R * 1.2), _YK_T4, 55)
     subs = [(0, 0), (-0.4, -0.18), (0.4, -0.12), (-0.12, 0.4),
             (0.22, 0.32), (-0.3, 0.2), (0.12, -0.34)]
     sw = t * 0.6
     ca, sa = math.cos(sw), math.sin(sw)
-    for col, scl, grow in [(_YK_T1, 1.0, 3), (_YK_T2, 0.74, 1), (_YK_T3, 0.5, 0), (_YK_T4, 0.28, 0)]:
+    for col, scl, grow in [(_YK_T3, 1.0, 3), (_YK_T4, 0.74, 1), (_YK_PALE, 0.5, 0), (_YK_WHITE, 0.28, 0)]:
         for ox, oy in subs:
             rx, ry = ox * ca - oy * sa, ox * sa + oy * ca
             pygame.draw.circle(layer, col,
@@ -698,8 +701,8 @@ def _yk_glow(layer, cx, cy, R, t):
     for k in range(4):
         a = sw * 1.6 + k * 1.57
         _yk_radial(layer, cx + math.cos(a) * R * 0.42, cy + math.sin(a) * R * 0.42,
-                   int(R * 0.42), _YK_T4, 76)
-    _yk_radial(layer, cx, cy - 2, int(R * 0.55), _YK_T4, 78)
+                   int(R * 0.42), _YK_WHITE, 76)
+    _yk_radial(layer, cx, cy - 2, int(R * 0.55), _YK_WHITE, 78)
 
 
 # Slot/orb kind vocabulary -> facial expression. The faces read as people:
@@ -813,22 +816,28 @@ def _yk_birth_rift(surf, cx, cy, R, bp):
 
 
 def _yk_tendril(layer, cx, cy, ang, length, R, t, idx):
-    """A wisp of gold light reaching out of the mass -- no hard limb, just a
-    curl of motes that lengthens and recoils on its own slow cycle, wavering
-    and fading to nothing at the tip."""
-    ext = 0.55 + 0.45 * (0.5 + 0.5 * math.sin(t * 1.3 + idx * 0.9))
+    """A bold tentacle of light lashing out of the mass -- no hard limb, but a
+    thick glowing rope with a traveling whip-wave running down its length and a
+    white-hot core, tapering to a point."""
+    ext = 0.6 + 0.4 * (0.5 + 0.5 * math.sin(t * 1.6 + idx * 0.9))
     length *= ext
     if length < 2:
         return
-    root = (cx + math.cos(ang) * R * 0.4, cy + math.sin(ang) * R * 0.4)
-    n = 12
+    root = (cx + math.cos(ang) * R * 0.35, cy + math.sin(ang) * R * 0.35)
+    n = 18
+    pts = []
     for i in range(n):
         f = i / (n - 1)
-        a = ang + math.sin(t * 2.1 + idx * 1.3 + f * 4.0) * 0.45 * f
-        px = root[0] + math.cos(a) * length * f
-        py = root[1] + math.sin(a) * length * f
-        rr = max(1, int(R * 0.22 * (1 - 0.7 * f)))
-        _yk_radial(layer, px, py, rr, _YK_GOLD, int(130 * (1 - f)))
+        # traveling wave (phase runs outward over time) -> a dynamic lash
+        a = ang + math.sin(t * 3.0 + idx * 1.7 - f * 5.5) * 0.8 * f
+        pts.append((root[0] + math.cos(a) * length * f,
+                    root[1] + math.sin(a) * length * f))
+    for i, (px, py) in enumerate(pts):                    # bold glowing body
+        f = i / (n - 1)
+        rr = max(2, int(R * 0.5 * (1 - 0.6 * f)))
+        _yk_radial(layer, px, py, rr, _YK_GOLD, int(190 * (1 - 0.45 * f)))
+    ipts = [(int(px), int(py)) for px, py in pts]          # white-hot core
+    pygame.draw.lines(layer, _YK_HOT, False, ipts, max(2, int(R * 0.22)))
 
 
 def _draw_king(surf, x, y, facing, t, birth, gait):
