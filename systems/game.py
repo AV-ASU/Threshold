@@ -2350,11 +2350,14 @@ class Game:
                 if npc.sprite_kind == "yellow_king" and self.player:
                     d = math.hypot(npc.x - self.player.x, npc.y - self.player.y)
                     span = KING_THREAT_FAR - KING_THREAT_NEAR
-                    prox = max(0.0, min(1.0, 1.0 - (d - KING_THREAT_NEAR) / span))
-                    # Exposure feeds existence too: a fully-seen King bleeds
-                    # toward real even at range; proximity alone still maxes it.
-                    vist = max(0.0, min(1.0, (self.visibility - 0.9) / 0.1))
-                    king_threat = max(0.15, min(1.0, max(prox, 0.5 * vist + 0.5 * prox * vist)))
+                    # Existence is purely proximity: a far void that blooms only
+                    # as he closes. Visibility is NOT mixed in here -- it's the
+                    # spawn/despawn gate (_tick_king), and while he's present it
+                    # only ever sits in [0.90, 1.0], far too narrow a band to
+                    # read as existence (it would just pin him near-real the
+                    # whole time he's on screen). The 0.15 floor keeps him a
+                    # faint watching void, never fully gone, until he nears.
+                    king_threat = max(0.15, min(1.0, 1.0 - (d - KING_THREAT_NEAR) / span))
                 draw_npc_sprite(self.screen, sx, sy, npc.sprite_kind,
                                 npc.facing, blink=(i == blink_idx),
                                 birth=getattr(npc, "_birth", None),
