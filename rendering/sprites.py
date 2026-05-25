@@ -925,6 +925,37 @@ def _yk_void(layer, cx, cy, R):
                            (int(cx + ox * R * 0.6), int(cy + oy * R * 0.9)), int(R * 0.58), 0)
 
 
+def _yk_tatters(layer, cx, cy, R, t, m):
+    """Ragged strands of light weeping DOWNWARD out of the mass -- the King's
+    tattered robe. They lengthen as it manifests, dragging the round glow into a
+    tall, ragged, dripping column (so the silhouette reads as a weeping figure,
+    not a sphere) while staying formless. Gold light over a dark torn core."""
+    if m <= 0.03:
+        return
+    drop = R * (1.1 + 1.7 * m)                           # hangs further as it manifests
+    nst = 6
+    for i in range(nst):
+        fx = (i / (nst - 1) - 0.5)
+        x0 = cx + fx * R * 1.25
+        ln = drop * (0.55 + 0.45 * abs(math.sin(i * 2.1 + 0.5)))
+        n = max(4, int(ln / 3))
+        pts = []
+        for s in range(n + 1):
+            sf = s / n
+            yy = cy + R * 0.5 + ln * sf
+            xx = x0 + math.sin(t * 1.4 + i * 1.3 + sf * 3.5) * R * 0.16 * sf
+            pts.append((xx, yy))
+        for s, (xx, yy) in enumerate(pts):               # gold glow down the strand
+            sf = s / n
+            rr = max(1, int(R * 0.24 * (1 - 0.85 * sf)))
+            _yk_radial(layer, xx, yy, rr, _YK_GOLD, int(90 * (1 - 0.7 * sf) * m))
+        ip = [(int(a), int(b)) for a, b in pts]          # dark torn core, fraying to a drip
+        for s in range(len(ip) - 1):
+            sf = s / n
+            pygame.draw.line(layer, _YK_SHADOW if sf < 0.45 else _YK_SHADOW_HI,
+                             ip[s], ip[s + 1], 2 if sf < 0.4 else 1)
+
+
 def _draw_king(surf, x, y, facing, t, birth, gait, threat=None):
     """THE KING IN YELLOW (see header). `birth` (0..1, already de-None'd by the
     dispatch) drives the rift eruption; `t` animates; `gait` is accepted but the
@@ -1078,6 +1109,7 @@ def _draw_king(surf, x, y, facing, t, birth, gait, threat=None):
     if manifest > 0.01:
         if bp < 1.0:
             _yk_birth_rift(surf, mcx, mcy, R, bp)
+        _yk_tatters(layer, cx, cy, R * max(0.18, grow), t, manifest)  # weeping column
         _yk_glow(layer, cx, cy, R * max(0.18, grow), t)
         if intensity > 0.6:                                 # roused: white-hot flare
             _yk_radial(layer, cx, cy, int(R * (0.6 + 0.5 * intensity)), _YK_WHITE,
