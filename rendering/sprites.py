@@ -676,24 +676,38 @@ def _yk_radial(surf, x, y, R, color, a0, add=True):
               special_flags=pygame.BLEND_RGBA_ADD if add else 0)
 
 
-def _yk_glow(layer, cx, cy, R, t):
-    """A clot of bright gold light. Orange lives ONLY in the soft aura behind the
-    mass, so it reads as the warm outline of the whole silhouette; the bright
-    lumpy body is drawn opaque on top, so it never goes orange between its blobs."""
+def _yk_glow(layer, cx, cy, R, t, tail=0.0):
+    """The clot of light shaped as a TEARDROP/flame column: a wide bright head
+    that tapers to a weeping point below (length grows with `tail` = how much it
+    has manifested), so the silhouette reads tall and wrong -- a hanging drop of
+    light, not a round bell. Orange lives only in the aura behind."""
     R = int(R * (1 + 0.06 * math.sin(t * 2.0)))
-    # warm orange outline: a broad aura behind everything (shows only at the rim).
-    _yk_radial(layer, cx, cy, int(R * 1.95), _YK_T1, 72)
-    _yk_radial(layer, cx, cy, int(R * 1.5), _YK_T2, 58)
-    subs = [(0, 0), (-0.4, -0.18), (0.4, -0.12), (-0.12, 0.4),
-            (0.22, 0.32), (-0.3, 0.2), (0.12, -0.34)]
     sw = t * 0.6
     ca, sa = math.cos(sw), math.sin(sw)
-    # bright gold -> white body, drawn opaque so it covers the centre.
+    # warm orange outline behind, drawn DOWN the column so the rim tapers too.
+    _yk_radial(layer, cx, cy, int(R * 1.7), _YK_T1, 70)
+    for i in range(1, 4):
+        f = i / 3.0
+        _yk_radial(layer, cx, cy + int(R * (0.7 + 1.6 * tail) * f),
+                   int(R * (1.2 - 0.55 * f)), _YK_T1, 46)
+    # tapering tail of gold lumps -> the weeping point (behind the head).
+    nt = 5
+    for i in range(1, nt + 1):
+        f = i / nt
+        yy = cy + R * (0.55 + 1.75 * tail * f)
+        jx = math.sin(sw * 1.3 + f * 4.0) * R * 0.13
+        rr = max(2, int(R * (0.52 - 0.42 * f)))
+        pygame.draw.circle(layer, _YK_T3, (int(cx + jx), int(yy)), rr)
+        if f < 0.65:
+            pygame.draw.circle(layer, _YK_PALE, (int(cx + jx), int(yy)), max(1, rr - 2))
+    # bright head cluster (a touch oval, narrower than tall) on top of the tail.
+    subs = [(0, 0), (-0.4, -0.18), (0.4, -0.12), (-0.12, 0.4),
+            (0.22, 0.32), (-0.3, 0.2), (0.12, -0.34)]
     for col, scl, grow in [(_YK_T3, 1.06, 3), (_YK_PALE, 0.78, 1), (_YK_WHITE, 0.5, 0), (_YK_WHITE, 0.28, 0)]:
         for ox, oy in subs:
             rx, ry = ox * ca - oy * sa, ox * sa + oy * ca
             pygame.draw.circle(layer, col,
-                               (int(cx + rx * R * 0.6), int(cy + ry * R * 0.9)),
+                               (int(cx + rx * R * 0.55), int(cy + ry * R * 0.92)),
                                int(R * 0.5 * scl) + grow)
     for k in range(4):
         a = sw * 1.6 + k * 1.57
@@ -926,34 +940,34 @@ def _yk_void(layer, cx, cy, R):
 
 
 def _yk_tatters(layer, cx, cy, R, t, m):
-    """Ragged strands of light weeping DOWNWARD out of the mass -- the King's
-    tattered robe. They lengthen as it manifests, dragging the round glow into a
-    tall, ragged, dripping column (so the silhouette reads as a weeping figure,
-    not a sphere) while staying formless. Gold light over a dark torn core."""
+    """A few ragged frays at the weeping POINT of the teardrop -- the torn hem
+    where the column drips away. A tight cluster (not spread tentacles), so it
+    reads as the frayed tip of one shape, never a jellyfish skirt."""
     if m <= 0.03:
         return
-    drop = R * (1.1 + 1.7 * m)                           # hangs further as it manifests
-    nst = 6
+    root_y = cy + R * (0.55 + 1.75 * m)                  # hang from the tapered tip
+    drop = R * (0.4 + 0.8 * m)
+    nst = 4
     for i in range(nst):
         fx = (i / (nst - 1) - 0.5)
-        x0 = cx + fx * R * 1.25
-        ln = drop * (0.55 + 0.45 * abs(math.sin(i * 2.1 + 0.5)))
-        n = max(4, int(ln / 3))
+        x0 = cx + fx * R * 0.42                           # tight cluster at the point
+        ln = drop * (0.6 + 0.4 * abs(math.sin(i * 2.1 + 0.5)))
+        n = max(3, int(ln / 3))
         pts = []
         for s in range(n + 1):
             sf = s / n
-            yy = cy + R * 0.5 + ln * sf
-            xx = x0 + math.sin(t * 1.4 + i * 1.3 + sf * 3.5) * R * 0.16 * sf
+            yy = root_y + ln * sf
+            xx = x0 + math.sin(t * 1.5 + i * 1.3 + sf * 3.0) * R * 0.1 * sf
             pts.append((xx, yy))
-        for s, (xx, yy) in enumerate(pts):               # gold glow down the strand
+        for s, (xx, yy) in enumerate(pts):
             sf = s / n
-            rr = max(1, int(R * 0.24 * (1 - 0.85 * sf)))
-            _yk_radial(layer, xx, yy, rr, _YK_GOLD, int(90 * (1 - 0.7 * sf) * m))
-        ip = [(int(a), int(b)) for a, b in pts]          # dark torn core, fraying to a drip
+            rr = max(1, int(R * 0.16 * (1 - 0.8 * sf)))
+            _yk_radial(layer, xx, yy, rr, _YK_GOLD, int(80 * (1 - 0.6 * sf) * m))
+        ip = [(int(a), int(b)) for a, b in pts]
         for s in range(len(ip) - 1):
             sf = s / n
-            pygame.draw.line(layer, _YK_SHADOW if sf < 0.45 else _YK_SHADOW_HI,
-                             ip[s], ip[s + 1], 2 if sf < 0.4 else 1)
+            pygame.draw.line(layer, _YK_SHADOW if sf < 0.4 else _YK_SHADOW_HI,
+                             ip[s], ip[s + 1], 1)
 
 
 def _draw_king(surf, x, y, facing, t, birth, gait, threat=None):
@@ -1109,8 +1123,8 @@ def _draw_king(surf, x, y, facing, t, birth, gait, threat=None):
     if manifest > 0.01:
         if bp < 1.0:
             _yk_birth_rift(surf, mcx, mcy, R, bp)
-        _yk_tatters(layer, cx, cy, R * max(0.18, grow), t, manifest)  # weeping column
-        _yk_glow(layer, cx, cy, R * max(0.18, grow), t)
+        _yk_glow(layer, cx, cy, R * max(0.18, grow), t, manifest)     # teardrop column
+        _yk_tatters(layer, cx, cy, R * max(0.18, grow), t, manifest)  # frayed weeping tip
         if intensity > 0.6:                                 # roused: white-hot flare
             _yk_radial(layer, cx, cy, int(R * (0.6 + 0.5 * intensity)), _YK_WHITE,
                        int(70 * (intensity - 0.6) / 0.4))
