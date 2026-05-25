@@ -887,19 +887,20 @@ def build_mistlands():
                        (20, 40), (52, 80), (75, 42), (36, 30)]:
         sc.add_decoration(Decoration(ltx * TILE + 16, lty * TILE + 16, "leaves"))
 
-    # Hide spots colocated with VISIBLE cover so the prompt always
-    # matches what the player can see. Each entry sits on top of a
-    # grass-tuft / watching-eye / dead-tree decoration on the east
-    # bank; the empty west bank deliberately offers no cover.
+    # Hide spots sit at OBVIOUS cover -- tucked against the buildings,
+    # which read clearly as "duck here" instead of stray grass tufts the
+    # player can't tell from dressing. The open field is covered by the
+    # corn patches (passive cover you can see); these handle the building
+    # rows and give the bare west bank walls to break line of sight
+    # behind. Each is one tile clear of its building's footprint.
     sc.hide_spots = [
-        (50 * TILE + 16, 50 * TILE + 16, "behind"),  # eye + tuft
-        (60 * TILE + 16, 30 * TILE + 16, "behind"),  # tuft
-        (70 * TILE + 16, 60 * TILE + 16, "behind"),  # tuft
-        (75 * TILE + 16, 75 * TILE + 16, "behind"),  # eye + tuft
-        (55 * TILE + 16, 80 * TILE + 16, "behind"),  # tuft
-        (80 * TILE + 16, 40 * TILE + 16, "behind"),  # tuft
-        (37 * TILE + 16, 21 * TILE + 16, "behind"),  # creepy_tree, bridge east pocket
-        (29 * TILE + 16, 27 * TILE + 16, "behind"),  # creepy_tree, bridge west pocket
+        (54 * TILE + 16, 61 * TILE + 16, "behind"),  # General Store
+        (61 * TILE + 16, 54 * TILE + 16, "behind"),  # schoolhouse
+        (66 * TILE + 16, 71 * TILE + 16, "behind"),  # kid's house
+        (84 * TILE + 16, 81 * TILE + 16, "behind"),  # barn
+        (5 * TILE + 16, 66 * TILE + 16, "behind"),   # sheriff's office (W bank)
+        (6 * TILE + 16, 94 * TILE + 16, "behind"),   # farmhouse (W bank)
+        (5 * TILE + 16, 10 * TILE + 16, "behind"),   # church (NW)
     ]
 
     sc.on_enter_fn = mistlands_on_enter
@@ -1077,15 +1078,43 @@ def mistlands_on_enter(game, scene):
 
 
 def _mistlands_ambient(game, scene, dt):
-    """The watching made felt as you cross the open bank -- no E-press
-    needed. Scales with the town's toll, fires only while you're exposed
-    (the corn hides you from it too), on a long cooldown so it stays a
-    prickle and not a nag."""
+    """The toll, turned into the bank's fear loop. Once you've wounded
+    Brimley, crossing the OPEN bank lets its attention climb your
+    visibility toward 1.0 -- where the King erupts at your entry point,
+    which is death. The corn breaks the gaze (in cover, _tick_visibility
+    bleeds it back down), so the open bank becomes a corn-to-corn stalk
+    that sharpens with the toll. A legible warning fires before the King
+    so a dive for cover is always possible.
+
+    EXPOSE_RATE is the one knob to playtest: visibility gained per
+    toll-point per second while exposed. At rate 0.02 it cancels the
+    idle decay (0.02) at toll 1 (bank merely tense) and climbs from toll
+    2 up -- gentle at 2, lethal by 4. Tune by feel."""
     toll = game.save.arg("brimley_toll", 0)
-    if toll <= 0 or game.player is None:
+    p = game.player
+    if p is None:
         return
-    if getattr(game.player, "hidden", None):
+    # Feed _tick_visibility the open-ground pressure. It applies this
+    # ONLY while you're exposed; in the corn the meter still bleeds down,
+    # so the bank stays a corn-to-corn stalk. Set every tick so a beat
+    # done mid-scene (Calder/Royce/Hettie) takes effect at once.
+    # EXPOSE_RATE is the one knob to playtest (per toll-point per sec;
+    # idle decay is 0.02, so toll 1 barely climbs, toll 4+ is lethal).
+    EXPOSE_RATE = 0.025
+    scene.open_exposure = EXPOSE_RATE * toll
+    if toll <= 0 or getattr(p, "hidden", None):
         return
+    # Warning band: high and still in the open -> tell them to break for
+    # the corn before he comes. King arriving is death; this is the out.
+    if game.visibility >= 0.8:
+        scene._warn_t = getattr(scene, "_warn_t", 0.0) + dt
+        if scene._warn_t >= 2.5:
+            scene._warn_t = 0.0
+            game.show_notice("The light's going yellow at the edges. Get "
+                             "to the corn.", 2.0)
+            game.audio.play("whisper", 0.4)
+        return
+    # Below the warning band: a sparse prickle of being watched.
     scene._amb_t = getattr(scene, "_amb_t", 6.0) + dt
     if scene._amb_t < 16.0:
         return

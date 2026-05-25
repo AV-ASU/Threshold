@@ -1990,8 +1990,15 @@ class Game:
             rise = n_watch * VIS_WATCHER_HIDDEN
             self.visibility += dt * (rise - VIS_HIDE_BLEED)
         else:
+            # `open_exposure` lets a scene make standing in the open
+            # raise visibility on its own (no watcher needed) -- e.g. the
+            # Brimley bank, where the town's attention fills the meter
+            # while you're exposed and the corn (hidden branch above)
+            # breaks it. Applied here, right before _tick_king, so the
+            # climb can actually reach 1.0 and summon him.
             rise = (n_watch * VIS_WATCHER_OPEN
-                    + self._gaze_count * VIS_GAZE)
+                    + self._gaze_count * VIS_GAZE
+                    + getattr(self.scene, "open_exposure", 0.0))
             self.visibility += dt * (rise - VIS_IDLE_DECAY)
         self.visibility = max(0.0, min(1.0, self.visibility))
 
