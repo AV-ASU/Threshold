@@ -2335,10 +2335,15 @@ class Game:
                 draw_vessel_bloom(self.screen, sx, sy, npc.sprite_kind,
                                   npc.facing, m, seed=id(npc) & 0xffff)
             else:
+                king_threat = None
+                if npc.sprite_kind == "yellow_king" and self.player:
+                    d = math.hypot(npc.x - self.player.x, npc.y - self.player.y)
+                    king_threat = max(0.15, min(1.0, 1.0 - (d - 48) / 292.0))
                 draw_npc_sprite(self.screen, sx, sy, npc.sprite_kind,
                                 npc.facing, blink=(i == blink_idx),
                                 birth=getattr(npc, "_birth", None),
-                                gait=getattr(npc, "_gait", None))
+                                gait=getattr(npc, "_gait", None),
+                                threat=king_threat)
             # THRESHOLD: NPC name labels removed. They were the
             # last RPG-tell on screen -- the player should learn
             # who an NPC is by interacting with them, not by

@@ -5,7 +5,7 @@ import pygame
 from constants import C_BLACK
 
 def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False,
-                    birth=None, gait=None):
+                    birth=None, gait=None, threat=None):
     """`blink=True` suppresses eye dots for NPC kinds that have human
     eyes (mom/kid/bandit/policeman). Used by Game.draw to make a single
     NPC's eyes vanish for a single frame -- a subliminal wrongness.
@@ -271,7 +271,7 @@ def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False,
         else:
             b = birth
             g = gait if gait is not None else t * 7.0
-        _draw_king(surf, x, y, facing, t, b, g)
+        _draw_king(surf, x, y, facing, t, b, g, threat)
     elif kind == "wolf":
         # Lean grey quadruped, low to the ground. Yellow eyes give a
         # threat read at a glance even with the small sprite size.
@@ -650,16 +650,16 @@ def _yk_slots():
     its own radius/speed and surfaces/dissolves on its own fade cycle."""
     r = random.Random(20240611)
     faces, eyes = [], []
-    # Dead human faces, mostly shrieking -- screaming and gaunt (hollow),
-    # with a fused 'double' (two faces melted together) that only POPS UP
-    # now and then.
-    kinds = ["scream", "hollow", "scream", "scream", "hollow", "double",
-             "scream", "hollow", "scream", "scream"]
+    # Fewer, larger, clearer dead faces. The FIRST is the dominant central
+    # screamer -- the one that surfaces even when the King is calm; the rest
+    # (gaunt, fused 'double', more screams) erupt around it as it rouses.
+    faces.append((0.16, 0.0, 0.22, 10, 0.55, 0.0, "scream"))
+    kinds = ["hollow", "double", "scream", "hollow", "scream"]
     for k in kinds:
         faces.append((
-            r.uniform(0.22, 0.82), r.uniform(0, math.tau), r.uniform(0.30, 0.85),
-            r.randint(4, 8), r.uniform(0.5, 1.3), r.uniform(0, 6.28), k))
-    for _ in range(4):
+            r.uniform(0.34, 0.82), r.uniform(0, math.tau), r.uniform(0.30, 0.80),
+            r.randint(6, 9), r.uniform(0.5, 1.2), r.uniform(0, 6.28), k))
+    for _ in range(3):
         eyes.append((r.uniform(0.2, 0.7), r.uniform(0, math.tau),
                      r.uniform(0.3, 0.8), r.uniform(0, 6.28)))
     return faces, eyes
@@ -783,12 +783,12 @@ def _yk_mask(surf, cx, cy, r, vis, kind):
     surf.blit(m, (cx - mx, cy - my))
 
 
-def _yk_grab_arm(surf, cx, cy, ang, reach, t, phase, scale, lit, alpha=255, side=1):
+def _yk_grab_arm(surf, cx, cy, ang, reach, t, phase, scale, lit, alpha=255, side=1, speed=0.62):
     """An arm that buds from nothing, stretches out ahead getting bigger as its
     hand opens to grab, then fades as a fresh arm takes its place -- the King
     hauling itself forward on handholds that dissolve behind it. `phase` offsets
-    each arm's lifecycle so there is always one reaching."""
-    life = (t * 0.62 + phase) % 1.0
+    each arm's lifecycle so there is always one reaching; `speed` sets its pace."""
+    life = (t * speed + phase) % 1.0
     if life < 0.12:                                  # born from nothing
         fade = life / 0.12
     elif life > 0.7:                                 # then it vanishes
@@ -923,12 +923,15 @@ def _yk_tendril(layer, cx, cy, ang, length, R, t, idx):
                 _yk_radial(layer, pts[i][0], pts[i][1], rr, _YK_GOLD, int(120 * (1 - f)))
 
 
-def _draw_king(surf, x, y, facing, t, birth, gait):
+def _draw_king(surf, x, y, facing, t, birth, gait, threat=None):
     """THE KING IN YELLOW (see header). `birth` (0..1, already de-None'd by the
     dispatch) drives the rift eruption; `t` animates; `gait` is accepted but the
-    float needs no leg cycle. It never phases out -- only masks come and go."""
+    float needs no leg cycle. `threat` (0..1, the player's nearness to death)
+    drives the calm->frenzy escalation: how many faces erupt, how bright it
+    flares, how far and fast the arms haul. It never phases out."""
     global _YK_TRAIL
     R = 22
+    intensity = 0.55 if threat is None else max(0.0, min(1.0, threat))
     mcx, mcy = x, int(y - 42 + math.sin(t * 1.1) * 3)        # floats above the feet
     bp = 1.0 if birth is None else max(0.0, min(1.0, birth))
     grow = bp * bp * (3 - 2 * bp)                            # body eases in
@@ -1022,7 +1025,16 @@ def _draw_king(surf, x, y, facing, t, birth, gait):
     if bp < 1.0:
         _yk_birth_rift(surf, mcx, mcy, R, bp)                # space tears open
     _yk_glow(layer, cx, cy, R * max(0.18, grow), t)
-    for rn, ba, asp, fr, vsp, vph, kind in _YK_FACES:
+    if intensity > 0.4:                                     # roused: it flares white-hot
+        _yk_radial(layer, cx, cy, int(R * (0.6 + 0.5 * intensity)), _YK_WHITE,
+                   int(90 * (intensity - 0.4) / 0.6))
+    # Faces surface with the threat: one screamer when calm, the whole chorus
+    # erupting as it closes (count + how far each rises both ramp on intensity).
+    nfaces = int(round(1 + (len(_YK_FACES) - 1) * intensity))
+    vmul = 0.32 + 0.68 * intensity
+    for fi, (rn, ba, asp, fr, vsp, vph, kind) in enumerate(_YK_FACES):
+        if fi >= nfaces:
+            continue
         ang = ba + t * asp
         rr = rn * (0.9 + 0.1 * math.sin(t * 0.8 + vph))
         fxp = cx + math.cos(ang) * R * 0.82 * rr * grow + fb[0]
@@ -1031,33 +1043,45 @@ def _draw_king(surf, x, y, facing, t, birth, gait):
             vis = max(0.0, min(1.0, (math.sin(t * vsp + vph) - 0.55) / 0.4))
         else:
             vis = max(0.0, min(1.0, 0.5 + 0.72 * math.sin(t * vsp + vph)))
-        _yk_mask(layer, fxp, fyp, fr, vis, kind)
-    for rn, ba, asp, ph in _YK_EYES:
-        if math.sin(t * 2.1 + ph) > 0.1:
+        # The central face is serene -- almost beautiful -- when the King is
+        # calm, and only contorts into a scream as it closes for the kill.
+        mk = "plain" if (fi == 0 and intensity < 0.5) else kind
+        _yk_mask(layer, fxp, fyp, fr, vis * vmul, mk)
+    for rn, ba, asp, ph in _YK_EYES:                        # more eyes open when frenzied
+        if math.sin(t * 2.1 + ph) > 0.85 - 1.2 * intensity:
             ang = ba + t * asp
             ex = cx + math.cos(ang) * R * 0.7 * rn * grow + fb[0]
             ey = cy + math.sin(ang) * R * 0.7 * rn * grow + fb[1]
             _yk_radial(layer, ex, ey, 5, _YK_HOT, 110)
             pygame.draw.circle(layer, _YK_PIT, (int(ex), int(ey)), 1)
+    # Motion sync: the body LURCHES toward the aim as an arm completes its
+    # stretch -- it visibly hauls itself along (relative to its wake) instead of
+    # just floating. The surge pulses with the arms' grab cycle.
+    arm_speed = 0.5 + 0.55 * intensity
+    surge = R * (0.16 + 0.3 * intensity) * grow * (
+        math.exp(-((((t * arm_speed) % 1.0) - 0.68) / 0.15) ** 2)
+        + math.exp(-((((t * arm_speed + 0.5) % 1.0) - 0.68) / 0.15) ** 2))
+    sxo, syo = int(math.cos(aa) * surge), int(math.sin(aa) * surge)
     layer.set_alpha(int(255 * max(0.05, valpha)))
-    surf.blit(layer, (mcx - cx, mcy - cy))
-    # Smoke tendrils (own layer over the wake + glow): faint wisps groping out.
+    surf.blit(layer, (mcx - cx + sxo, mcy - cy + syo))
+    # Smoke tendrils: faint when calm, fuller when roused (own layer).
     if agrow > 0.02:
         tend = pygame.Surface((L, L), pygame.SRCALPHA)
-        for idx, (da, ln) in enumerate([(0.0, R * 2.05), (0.45, R * 1.7), (-0.45, R * 1.7),
-                                        (0.95, R * 1.45), (-0.95, R * 1.45)]):
-            _yk_tendril(tend, cx, cy, aa + da, ln * agrow, R * max(0.4, agrow), t, idx)
-        tend.set_alpha(int(140 * max(0.05, valpha)))      # semi-transparent, like smoke
-        surf.blit(tend, (mcx - cx, mcy - cy))
-    # Two MAIN arms LAST: it hauls itself through space, reaching out in the
-    # aim direction and clawing back -- alternating phases, hand over hand.
+        for idx, (da, ln) in enumerate([(0.0, R * 2.05), (0.55, R * 1.6), (-0.55, R * 1.6)]):
+            _yk_tendril(tend, cx, cy, aa + da, ln * agrow * (0.7 + 0.5 * intensity),
+                        R * max(0.4, agrow), t, idx)
+        tend.set_alpha(int((55 + 95 * intensity) * max(0.05, valpha)))
+        surf.blit(tend, (mcx - cx + sxo, mcy - cy + syo))
+    # Two MAIN arms LAST: reach, size and pace all ramp with the threat, so it
+    # hauls itself faster and farther the closer it gets.
     if grow > 0.1:
         arms = pygame.Surface((L, L), pygame.SRCALPHA)
-        reach = R * 2.4 * grow
-        _yk_grab_arm(arms, cx, cy, aa - 0.3, reach, t, 0.0, max(1.3, grow * 1.4), True, side=-1)
-        _yk_grab_arm(arms, cx, cy, aa + 0.3, reach, t, 0.5, max(1.3, grow * 1.4), True, side=1)
+        reach = R * (1.5 + 1.5 * intensity) * grow
+        ascale = max(1.0, grow * (1.0 + 0.5 * intensity))
+        _yk_grab_arm(arms, cx, cy, aa - 0.3, reach, t, 0.0, ascale, True, side=-1, speed=arm_speed)
+        _yk_grab_arm(arms, cx, cy, aa + 0.3, reach, t, 0.5, ascale, True, side=1, speed=arm_speed)
         arms.set_alpha(int(235 * max(0.05, valpha)))
-        surf.blit(arms, (mcx - cx, mcy - cy))
+        surf.blit(arms, (mcx - cx + sxo, mcy - cy + syo))
 
 
 # ---------------------------------------------------------------------------
