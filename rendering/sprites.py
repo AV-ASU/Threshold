@@ -926,38 +926,64 @@ def _yk_void(layer, cx, cy, R):
                            (int(cx + ox * R * 0.6), int(cy + oy * R * 0.9)), int(R * 0.58), 0)
 
 
-def _yk_antler(layer, rootx, rooty, ang, length, t, R, m, side):
-    """A wispy ANTLER-arm rising from the mask: a thin black/gold beam that
-    curves outward as it climbs, sprouting a few short forking tines. Delicate,
-    branching -- a crown of antlers, not a heavy limb."""
-    if m <= 0.03 or length < 3:
+def _yk_spire(layer, bx, by, ang, length, R, t, idx, m, dk, gold, hot):
+    """One spire of the crown: a bold black/gold bent arm (shoulder -> reflex
+    elbow -> grasping claw) rising from the circlet as a crown point. Stable
+    (always present -- a crown, not a flicker), with a slow sway and grasp."""
+    a = ang + math.sin(t * 1.4 + idx * 1.1) * 0.09
+    perp = (-math.sin(a), math.cos(a))
+    bend = length * 0.22 * (1 if idx % 2 else -1)
+    mid = (bx + math.cos(a) * length * 0.55, by + math.sin(a) * length * 0.55)
+    elbow = (mid[0] + perp[0] * bend, mid[1] + perp[1] * bend)
+    hand = (bx + math.cos(a) * length, by + math.sin(a) * length)
+    ip = [(int(bx), int(by)), (int(elbow[0]), int(elbow[1])), (int(hand[0]), int(hand[1]))]
+    w = max(2, int(R * 0.14))
+    for px, py in ip:                                            # gold under-glow
+        _yk_radial(layer, px, py, w + 1, _YK_GOLD, int(85 * m))
+    pygame.draw.lines(layer, gold, False, ip, w + 1)             # gold edge
+    pygame.draw.lines(layer, dk, False, ip, w)                   # black core
+    grab = 0.4 + 0.45 * (0.5 + 0.5 * math.sin(t * 1.2 + idx * 0.8))
+    ha = math.atan2(hand[1] - elbow[1], hand[0] - elbow[0])
+    fl = length * 0.34
+    for fa in (-38, 0, 38):                                      # grasping claw at the tip
+        a2 = ha + math.radians(fa) - (1 if fa >= 0 else -1) * grab * 0.7
+        tip = (hand[0] + math.cos(a2) * fl, hand[1] + math.sin(a2) * fl)
+        pygame.draw.line(layer, dk, (int(hand[0]), int(hand[1])),
+                         (int(tip[0]), int(tip[1])), max(1, w - 1))
+        try:
+            layer.set_at((int(tip[0]), int(tip[1])), hot)
+        except (IndexError, ValueError):
+            pass
+
+
+def _yk_crown(layer, hx, hy, r, R, t, m, lean):
+    """A CROWN OF ARMS: a gold circlet across the brow of the mask, with bold
+    bent arms rising from it as the crown's grasping spires (hands = the
+    finials). The band is what makes it read as a crown; the arms are its
+    points."""
+    if m <= 0.04:
         return
-    dk = (*_YK_SHADOW, int(210 * m))
-
-    def strand(x0, y0, a0, ln, curl, wb):
-        n = max(3, int(ln / 3))
-        x, y, step = x0, y0, ln / n
-        pts = [(x, y)]
-        for s in range(n):
-            sf = (s + 1) / n
-            a = a0 + curl * sf + math.sin(t * 1.2 + side * 2.0 + sf * 2.5) * 0.06 * sf
-            x += math.cos(a) * step
-            y += math.sin(a) * step
-            pts.append((x, y))
-        for s, (px, py) in enumerate(pts):                       # gold glow, thin + tapering
-            sf = s / n
-            _yk_radial(layer, px, py, max(1, int(wb * (1 - 0.65 * sf))),
-                       _YK_GOLD, int(120 * (1 - 0.4 * sf) * m))
-        ip = [(int(px), int(py)) for px, py in pts]              # thin dark core
-        if len(ip) >= 2:
-            pygame.draw.lines(layer, dk, False, ip, 1)
-        return pts
-
-    beam = strand(rootx, rooty, ang, length, side * 0.3, max(1, int(R * 0.17)))
-    for ti, tl, tc in ((0.4, 0.5, 0.45), (0.64, 0.42, 0.32), (0.86, 0.34, 0.6)):
-        bx, by = beam[int(ti * (len(beam) - 1))]
-        strand(bx, by, ang + side * 0.3 * ti + side * tc, length * tl, side * 0.25,
-               max(1, int(R * 0.11)))
+    gold = (*_YK_GOLD, int(255 * m))
+    hot = (*_YK_HOT, int(255 * m))
+    dk = (*_YK_SHADOW, int(255 * m))
+    bandr = r * 0.95
+    by0 = hy - r * 0.5                                           # the brow
+    band = []
+    for k in range(13):
+        ba = math.radians(208 + 124 * (k / 12))                 # arc across the forehead
+        band.append((int(hx + math.cos(ba) * bandr),
+                     int(by0 + math.sin(ba) * bandr * 0.55 + r * 0.5)))
+    pygame.draw.lines(layer, dk, False, band, 3)                # dark base of the circlet
+    pygame.draw.lines(layer, gold, False, band, 2)              # gold band
+    nsp = 5
+    for i in range(nsp):
+        u = (i + 0.5) / nsp
+        ba = math.radians(212 + 116 * u)
+        bx = hx + math.cos(ba) * bandr
+        byy = by0 + math.sin(ba) * bandr * 0.55 + r * 0.5
+        ang = -math.pi / 2 + (u - 0.5) * 1.15 + lean * 0.45     # fan up + lean toward you
+        slen = r * (1.15 + 0.45 * math.sin(i * 1.7)) * (0.6 + 0.4 * m)
+        _yk_spire(layer, bx, byy, ang, slen, R, t, i, m, dk, gold, hot)
 
 
 def _draw_king(surf, x, y, facing, t, birth, gait, threat=None):
@@ -1118,15 +1144,13 @@ def _draw_king(surf, x, y, facing, t, birth, gait, threat=None):
             # Keep the little masks reading on top of the bright glow, not washed
             # into it -- floor their opacity up once they're surfacing.
             _yk_mask(layer, fxp, fyp, fr, min(1.0, (0.45 + 0.55 * vis) * manifest), kind)
-        # Wispy antler-arms rising from the top of the mask (in front of the
-        # glow, behind the mask) -- a branching black/gold crown of thin tines.
-        if manifest > 0.1:
-            alen = R * (1.6 + 0.8 * intensity) * grow
-            gr = R * max(0.3, grow)
-            topy = hy - pfr * 0.5
-            _yk_antler(layer, hx - pfr * 0.4, topy, -math.pi / 2 - 0.3, alen, t, gr, 1.0, -1)
-            _yk_antler(layer, hx + pfr * 0.4, topy, -math.pi / 2 + 0.3, alen, t, gr, 1.0, 1)
         _yk_mask(layer, hx, hy, pfr, 0.9, pmk)              # central mask ON TOP of the chorus
+        # THE CROWN OF ARMS: a gold circlet on the brow with bold bent arms
+        # rising as its grasping spires. Drawn last so it sits on the mask.
+        if manifest > 0.1:
+            lean = max(-0.6, min(0.6, math.atan2(math.sin(aa + math.pi / 2),
+                                                 math.cos(aa + math.pi / 2))))
+            _yk_crown(layer, hx, hy, pfr, R * max(0.3, grow), t, manifest, lean)
         layer.set_alpha(int(255 * va * manifest))
         surf.blit(layer, (mcx - cx + sxo, mcy - cy + syo))
 
