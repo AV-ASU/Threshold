@@ -973,17 +973,19 @@ def _draw_king(surf, x, y, facing, t, birth, gait, threat=None):
             _YK_PARTS.clear()
             _YK_ACC[0] = 0.0
             _YK_AIM[0] = None
-    # BIRTH: while the rift is opening, vomit a radial burst of soul-orbs.
-    if bp < 0.18:
+    # BIRTH: it is ASSEMBLING, so soul-orbs are pulled INWARD -- they spawn out
+    # at the perimeter and stream toward the mask to form it (not vomited out).
+    if bp < 0.55:
         for _ in range(2):
             ang = _YK_PRNG.uniform(0, math.tau)
-            spd = _YK_PRNG.uniform(45, 120)
+            dist = _YK_PRNG.uniform(R * 1.6, R * 3.0)
+            spd = _YK_PRNG.uniform(50, 130)
             orb = _YK_PRNG.random() < 0.4
             _YK_PARTS.append({
                 "kind": "orb" if orb else "mote", "seed": _YK_PRNG.randint(0, 999),
-                "x": mcx, "y": mcy,
-                "vx": math.cos(ang) * spd, "vy": math.sin(ang) * spd,
-                "age": 0.0, "life": _YK_PRNG.uniform(0.4, 0.8),
+                "x": mcx + math.cos(ang) * dist, "y": mcy + math.sin(ang) * dist,
+                "vx": -math.cos(ang) * spd, "vy": -math.sin(ang) * spd,   # toward the mask
+                "age": 0.0, "life": dist / spd,                           # arrives ~as it fades
                 "r": _YK_PRNG.uniform(6, 12) if orb else _YK_PRNG.uniform(2, 4)})
     disp = math.hypot(mcx - _YK_TRAIL[-1][0], mcy - _YK_TRAIL[-1][1]) if _YK_TRAIL else 0.0
     _YK_TRAIL.append((mcx, mcy, t))
