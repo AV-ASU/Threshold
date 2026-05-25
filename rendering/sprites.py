@@ -807,68 +807,6 @@ def _yk_mask(surf, cx, cy, r, vis, kind):
     surf.blit(m, (cx - mx, cy - my))
 
 
-def _yk_grab_arm(surf, cx, cy, ang, reach, t, phase, scale, lit, alpha=255, side=1, speed=0.62):
-    """An arm that buds from nothing, stretches out ahead getting bigger as its
-    hand opens to grab, then fades as a fresh arm takes its place -- the King
-    hauling itself forward on handholds that dissolve behind it. `phase` offsets
-    each arm's lifecycle so there is always one reaching; `speed` sets its pace."""
-    life = (t * speed + phase) % 1.0
-    if life < 0.12:                                  # born from nothing
-        fade = life / 0.12
-    elif life > 0.7:                                 # then it vanishes
-        fade = max(0.0, (1.0 - life) / 0.3)
-    else:
-        fade = 1.0
-    if fade <= 0.02:
-        return
-    armA = int(alpha * fade)
-    a = ang + math.sin(t * 1.3 + phase) * 0.07
-    ext = 0.18 + 1.05 * life                         # stretches further out over its life
-    grow = 0.4 + 0.95 * life                         # ...and gets bigger
-    grab = min(1.0, life * 1.7)                      # hand closes as it stretches to grab
-    sd, sh_hi = (*_YK_SHADOW, armA), (*_YK_GOLD, armA)   # black core, GOLD edge
-    sh = (cx + math.cos(ang) * reach * 0.1, cy + math.sin(ang) * reach * 0.1)
-    hand = (cx + math.cos(a) * reach * ext, cy + math.sin(a) * reach * ext)
-    # Smooth curved arm: a quadratic bezier that bows early and straightens as it
-    # stretches out.
-    perp = (-math.sin(a), math.cos(a))
-    bend = reach * (0.26 - 0.16 * life) * side
-    ctrl = ((sh[0] + hand[0]) / 2 + perp[0] * bend, (sh[1] + hand[1]) / 2 + perp[1] * bend)
-    m = 9
-    path = []
-    for i in range(m + 1):
-        u = i / m
-        path.append(((1 - u) ** 2 * sh[0] + 2 * (1 - u) * u * ctrl[0] + u * u * hand[0],
-                     (1 - u) ** 2 * sh[1] + 2 * (1 - u) * u * ctrl[1] + u * u * hand[1]))
-    base_w = max(1.5, scale * 3.2 * grow)
-    for i in range(m):
-        u = i / m
-        w = max(1, int(round(base_w * (1 - 0.62 * u))))   # thick shoulder -> thin wrist
-        p0 = (int(path[i][0]), int(path[i][1]))
-        p1 = (int(path[i + 1][0]), int(path[i + 1][1]))
-        _yk_radial(surf, p0[0], p0[1], w + 2, _YK_GOLD, int(armA * 0.5))  # gold under-glow
-        pygame.draw.line(surf, sh_hi, p0, p1, w + 1)      # gold edge
-        pygame.draw.line(surf, sd, p0, p1, w)             # black core
-    # Grabbing hand: three curved fingers + a thumb, curling with `grab`.
-    ha = math.atan2(hand[1] - path[-2][1], hand[0] - path[-2][0])
-    fl = reach * 0.22 * grow
-    fw = max(1, int(base_w * 0.55))
-    for fa, fr in ((-30, 0.85), (0, 1.0), (30, 0.85), (78, 0.6)):
-        sgn = 1 if fa >= 0 else -1
-        a2 = ha + math.radians(fa) - sgn * grab * 0.55
-        k1 = (hand[0] + math.cos(a2) * fl * fr * 0.55, hand[1] + math.sin(a2) * fl * fr * 0.55)
-        a3 = a2 - sgn * (0.25 + grab * 0.9)
-        tip = (k1[0] + math.cos(a3) * fl * fr * 0.5, k1[1] + math.sin(a3) * fl * fr * 0.5)
-        pygame.draw.lines(surf, sd, False,
-                          [(int(hand[0]), int(hand[1])), (int(k1[0]), int(k1[1])),
-                           (int(tip[0]), int(tip[1]))], fw)
-        if lit:
-            try:
-                surf.set_at((int(tip[0]), int(tip[1])), (*_YK_HOT, armA))   # gold claw tip
-            except (IndexError, ValueError):
-                pass
-
-
 # A shed SOUL-ORB in the wake is drawn in two passes (glow, then faces) so that
 # every orb's masks sit on top of every orb's glow, regardless of shed order.
 _YK_ORB_KINDS = ("plain", "scream", "hollow", "crack")
@@ -956,36 +894,6 @@ def _yk_spire(layer, bx, by, ang, length, R, t, idx, m, dk, gold, hot):
             pass
 
 
-def _yk_crown(layer, hx, hy, r, R, t, m, lean):
-    """A CROWN OF ARMS: a gold circlet across the brow of the mask, with bold
-    bent arms rising from it as the crown's grasping spires (hands = the
-    finials). The band is what makes it read as a crown; the arms are its
-    points."""
-    if m <= 0.04:
-        return
-    gold = (*_YK_GOLD, int(255 * m))
-    hot = (*_YK_HOT, int(255 * m))
-    dk = (*_YK_SHADOW, int(255 * m))
-    bandr = r * 0.95
-    by0 = hy - r * 0.5                                           # the brow
-    band = []
-    for k in range(13):
-        ba = math.radians(208 + 124 * (k / 12))                 # arc across the forehead
-        band.append((int(hx + math.cos(ba) * bandr),
-                     int(by0 + math.sin(ba) * bandr * 0.55 + r * 0.5)))
-    pygame.draw.lines(layer, dk, False, band, 3)                # dark base of the circlet
-    pygame.draw.lines(layer, gold, False, band, 2)              # gold band
-    nsp = 5
-    for i in range(nsp):
-        u = (i + 0.5) / nsp
-        ba = math.radians(212 + 116 * u)
-        bx = hx + math.cos(ba) * bandr
-        byy = by0 + math.sin(ba) * bandr * 0.55 + r * 0.5
-        ang = -math.pi / 2 + (u - 0.5) * 1.15 + lean * 0.45     # fan up + lean toward you
-        slen = r * (1.15 + 0.45 * math.sin(i * 1.7)) * (0.6 + 0.4 * m)
-        _yk_spire(layer, bx, byy, ang, slen, R, t, i, m, dk, gold, hot)
-
-
 def _yk_shatter_mask(surf, cx, cy, r, vis, kind, crack, t, R, aim=0.0):
     """THE SILHOUETTE: the mask. Intact when calm, but as the King rouses it
     CRACKS and splits into shards that drift apart -- the grasping arms burst
@@ -1005,13 +913,21 @@ def _yk_shatter_mask(surf, cx, cy, r, vis, kind, crack, t, R, aim=0.0):
         m.set_alpha(alpha)
         surf.blit(m, (cx - mxc, cy - myc))
         return
-    n = 6
+    n = 7
     dk, gold, hot = (*_YK_SHADOW, 255), (*_YK_GOLD, 255), (*_YK_HOT, 255)
-    alen = r * (0.7 + 1.8 * crack)                       # arms burst from the cracks
-    for i in range(n):                                   # ...and reach toward the player
-        f = i / (n - 1) - 0.5
-        ang = aim + f * 1.5 + 0.12 * math.sin(t * 0.8 + i)
-        _yk_spire(surf, cx, cy, ang, alen, R, t, i, 1.0, dk, gold, hot)
+    # Arms root ALL OVER the mass and each LURCHES toward the player on its own
+    # independent cycle -- a quick lunge out, a slow draw back. The closer it
+    # gets (crack -> 1) the harder and further each one lunges.
+    for i in range(n):
+        rho = i * math.tau / n + 0.5 * math.sin(i * 2.3)         # roots scattered around
+        rx = cx + math.cos(rho) * r * 0.55
+        ry = cy + math.sin(rho) * r * 0.55
+        spd = 0.6 + 0.22 * (i % 4)                               # independent pace
+        ph = (t * spd + i * 0.41) % 1.0
+        lunge = ph / 0.26 if ph < 0.26 else max(0.0, 1.0 - (ph - 0.26) / 0.74)
+        ln = r * (0.45 + (1.1 + 1.3 * crack) * lunge)            # lunges harder up close
+        ang = aim + math.sin(i * 1.7) * 0.45                     # each aimed near the player
+        _yk_spire(surf, rx, ry, ang, ln, R, t, i, 1.0, dk, gold, hot)
     far = (r + pad) * 1.7
     off = r * 0.7 * crack                                # shards drift apart
     for i in range(n):
