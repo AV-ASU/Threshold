@@ -728,13 +728,18 @@ def _yk_face(m, mx, my, r, expr, detail):
     pygame.draw.line(m, lo, (int(mx), int(my - r * 0.1)), (int(mx), int(my + r * 0.25)), 1)
     pygame.draw.line(m, hi, (int(mx - 1), int(my - r * 0.1)), (int(mx - 1), int(my + r * 0.2)), 1)
     if expr in ("scream", "gaunt", "vacant", "wail"):    # vacuous void sockets
-        for ex, ey in (eyl, eyr):
-            pygame.draw.ellipse(m, pit, (int(ex - ew), int(ey - ew), 2 * ew, int(2.2 * ew)))
-            if expr in ("vacant", "wail"):               # a cold glint deep in the void
+        if expr in ("vacant", "wail"):                   # deep ROUND sockets (not lenses),
+            sr = max(2, int(ew * 1.05))                  # clearly separate, each holding a
+            for ex, ey in (eyl, eyr):                    # tiny golden pinpoint of a gaze
+                pygame.draw.circle(m, pit, (int(ex), int(ey)), sr)
+                _yk_radial(m, ex, ey, 2, _YK_HOT, 140)
                 try:
-                    m.set_at((int(ex), int(ey + ew * 0.6)), (120, 126, 142))
+                    m.set_at((int(ex), int(ey)), _YK_HOT)
                 except (IndexError, ValueError):
                     pass
+        else:
+            for ex, ey in (eyl, eyr):
+                pygame.draw.ellipse(m, pit, (int(ex - ew), int(ey - ew), 2 * ew, int(2.2 * ew)))
     else:
         for ex, ey in (eyl, eyr):
             pygame.draw.line(m, pit, (int(ex - ew), int(ey)), (int(ex + ew), int(ey)), 1)
