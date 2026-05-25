@@ -926,6 +926,40 @@ def _yk_void(layer, cx, cy, R):
                            (int(cx + ox * R * 0.6), int(cy + oy * R * 0.9)), int(R * 0.58), 0)
 
 
+def _yk_antler(layer, rootx, rooty, ang, length, t, R, m, side):
+    """A wispy ANTLER-arm rising from the mask: a thin black/gold beam that
+    curves outward as it climbs, sprouting a few short forking tines. Delicate,
+    branching -- a crown of antlers, not a heavy limb."""
+    if m <= 0.03 or length < 3:
+        return
+    dk = (*_YK_SHADOW, int(210 * m))
+
+    def strand(x0, y0, a0, ln, curl, wb):
+        n = max(3, int(ln / 3))
+        x, y, step = x0, y0, ln / n
+        pts = [(x, y)]
+        for s in range(n):
+            sf = (s + 1) / n
+            a = a0 + curl * sf + math.sin(t * 1.2 + side * 2.0 + sf * 2.5) * 0.06 * sf
+            x += math.cos(a) * step
+            y += math.sin(a) * step
+            pts.append((x, y))
+        for s, (px, py) in enumerate(pts):                       # gold glow, thin + tapering
+            sf = s / n
+            _yk_radial(layer, px, py, max(1, int(wb * (1 - 0.65 * sf))),
+                       _YK_GOLD, int(120 * (1 - 0.4 * sf) * m))
+        ip = [(int(px), int(py)) for px, py in pts]              # thin dark core
+        if len(ip) >= 2:
+            pygame.draw.lines(layer, dk, False, ip, 1)
+        return pts
+
+    beam = strand(rootx, rooty, ang, length, side * 0.3, max(1, int(R * 0.17)))
+    for ti, tl, tc in ((0.4, 0.5, 0.45), (0.64, 0.42, 0.32), (0.86, 0.34, 0.6)):
+        bx, by = beam[int(ti * (len(beam) - 1))]
+        strand(bx, by, ang + side * 0.3 * ti + side * tc, length * tl, side * 0.25,
+               max(1, int(R * 0.11)))
+
+
 def _draw_king(surf, x, y, facing, t, birth, gait, threat=None):
     """THE KING IN YELLOW (see header). `birth` (0..1, already de-None'd by the
     dispatch) drives the rift eruption; `t` animates; `gait` is accepted but the
@@ -1055,24 +1089,6 @@ def _draw_king(surf, x, y, facing, t, birth, gait, threat=None):
         math.exp(-((((t * arm_speed) % 1.0) - 0.68) / 0.15) ** 2)
         + math.exp(-((((t * arm_speed + 0.5) % 1.0) - 0.68) / 0.15) ** 2))
     sxo, syo = int(math.cos(aa) * surge), int(math.sin(aa) * surge)
-    # --- Two slow MAIN arms FIRST so they sit BEHIND the rest of the sprite,
-    # rooting from offset spots low on the body (not the face) and reaching out
-    # past the glow. They grow out only as it manifests, hand over hand.
-    if manifest > 0.05 and grow > 0.1:
-        arms = pygame.Surface((L, L), pygame.SRCALPHA)
-        ascale = 2.3 + 0.5 * intensity                  # bold black/gold limbs
-        reach = R * (1.5 + 1.2 * intensity) * grow
-        up = -math.pi / 2
-        lean = math.atan2(math.sin(aa - up), math.cos(aa - up))
-        lean = max(-0.7, min(0.7, lean))                # tilt toward you, stay a crown
-        center = up + lean
-        spread = 0.85                                   # one arm per side, framing the mask
-        _yk_grab_arm(arms, cx, cy, center - spread, reach, t, 0.0,
-                     ascale, True, side=-1, speed=arm_speed)
-        _yk_grab_arm(arms, cx, cy, center + spread, reach, t, 0.5,
-                     ascale, True, side=1, speed=arm_speed)
-        arms.set_alpha(int(235 * va * manifest))
-        surf.blit(arms, (mcx - cx + sxo, mcy - cy + syo))
     # --- VOID form (dominant while far): a still dark mass + a faint pale mask.
     if dark_a > 0.02 and grow > 0.1:
         void = pygame.Surface((L, L), pygame.SRCALPHA)
@@ -1102,6 +1118,14 @@ def _draw_king(surf, x, y, facing, t, birth, gait, threat=None):
             # Keep the little masks reading on top of the bright glow, not washed
             # into it -- floor their opacity up once they're surfacing.
             _yk_mask(layer, fxp, fyp, fr, min(1.0, (0.45 + 0.55 * vis) * manifest), kind)
+        # Wispy antler-arms rising from the top of the mask (in front of the
+        # glow, behind the mask) -- a branching black/gold crown of thin tines.
+        if manifest > 0.1:
+            alen = R * (1.6 + 0.8 * intensity) * grow
+            gr = R * max(0.3, grow)
+            topy = hy - pfr * 0.5
+            _yk_antler(layer, hx - pfr * 0.4, topy, -math.pi / 2 - 0.3, alen, t, gr, 1.0, -1)
+            _yk_antler(layer, hx + pfr * 0.4, topy, -math.pi / 2 + 0.3, alen, t, gr, 1.0, 1)
         _yk_mask(layer, hx, hy, pfr, 0.9, pmk)              # central mask ON TOP of the chorus
         layer.set_alpha(int(255 * va * manifest))
         surf.blit(layer, (mcx - cx + sxo, mcy - cy + syo))
