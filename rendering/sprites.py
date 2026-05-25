@@ -877,11 +877,13 @@ def _yk_spire(layer, bx, by, ang, length, R, t, idx, m, dk, gold, hot):
             pass
 
 
-def _yk_shatter_mask(surf, cx, cy, r, vis, kind, crack, t, R, aim=0.0):
+def _yk_shatter_mask(surf, cx, cy, r, vis, kind, crack, t, R, aim=0.0, arms=True):
     """THE SILHOUETTE: the mask. Intact when calm, but as the King rouses it
     CRACKS and splits into shards that drift apart -- the grasping arms burst
     from the splits and span the gaps, the light blazing through the cracks. A
-    broken face barely held together by the limbs inside it."""
+    broken face barely held together by the limbs inside it. `crack` also runs
+    in REVERSE at birth (shards converging into the whole mask); `arms` is off
+    then, so the birth is a clean assembly with no grasping."""
     if vis <= 0.03:
         return
     cx, cy, r = int(cx), int(cy), int(r)
@@ -900,8 +902,9 @@ def _yk_shatter_mask(surf, cx, cy, r, vis, kind, crack, t, R, aim=0.0):
     dk, gold, hot = (*_YK_SHADOW, 255), (*_YK_GOLD, 255), (*_YK_HOT, 255)
     # Arms root ALL OVER the mass and each LURCHES toward the player on its own
     # independent cycle -- a quick lunge out, a slow draw back. The closer it
-    # gets (crack -> 1) the harder and further each one lunges.
-    for i in range(n):
+    # gets (crack -> 1) the harder and further each one lunges. Suppressed during
+    # the birth assembly.
+    for i in range(n if arms else 0):
         rho = i * math.tau / n + 0.5 * math.sin(i * 2.3)         # roots scattered around
         rx = cx + math.cos(rho) * r * 0.55
         ry = cy + math.sin(rho) * r * 0.55
@@ -950,9 +953,14 @@ def _draw_king(surf, x, y, facing, t, birth, gait, threat=None):
     # BIRTH: the King flashes into being mid-birth (visible regardless of how
     # near the player is), and the mask ASSEMBLES from scattered shards as it
     # forms -- the exact reverse of how it shatters when it gets mad.
-    birth_vis = grow * (1.0 - grow) * 4.0                    # a flash, peaking mid-birth
-    show = min(1.0, manifest + 0.85 * birth_vis)            # existence: threat OR birth
-    crack = min(1.6, manifest + (1.0 - grow) * 1.5)         # shards converge in as it forms
+    birth_vis = grow * (1.0 - grow) * 4.0                    # visible while it assembles
+    ignite = max(0.0, (0.26 - bp) / 0.26)                   # a quick ignition flash, up front
+    show = min(1.0, manifest + 0.9 * birth_vis + ignite)    # existence: threat OR birth
+    # Birth runs the shatter in REVERSE: shards converge into the WHOLE mask,
+    # always resolving to the calm intact face regardless of threat. Only once
+    # fully formed does the threat actually crack it (and bring out the arms).
+    crack = manifest if bp >= 1.0 else (1.0 - grow) * 2.2
+    arms_on = bp >= 1.0 and manifest > 0.06
     dt = t - _YK_LAST[0]
     _YK_LAST[0] = t
     if dt <= 0 or dt > 0.2:
@@ -1054,7 +1062,7 @@ def _draw_king(surf, x, y, facing, t, birth, gait, threat=None):
     hy = cy - R * 0.12 + fb[1] * 1.8
     # Vacuous void eyes throughout; serene mouth while calm, and a black-weeping
     # wail once it rouses to manifest.
-    pmk = "wail" if intensity >= 0.5 else "vacant"
+    pmk = ("wail" if intensity >= 0.5 else "vacant") if bp >= 1.0 else "vacant"
     pfr = max(7, int(10 * max(0.3, grow)))
     # Motion sync: it hauls itself toward the aim as an arm completes its
     # stretch -- but only once it exists; dead still while a void.
@@ -1076,10 +1084,10 @@ def _draw_king(surf, x, y, facing, t, birth, gait, threat=None):
         # light leaking FROM the mask: hidden when whole, blazing through the
         # cracks as it splits.
         _yk_glow(layer, hx, hy, max(6, int(pfr * 1.2)), t)
-        # Birth ignition: a mask-scale white flare that flashes as it forms.
-        if birth_vis > 0.02:
-            _yk_radial(layer, hx, hy, int(pfr * (1.0 + 0.6 * birth_vis)),
-                       _YK_WHITE, int(150 * birth_vis))
+        # Birth ignition: a mask-scale white flash up front, before it assembles.
+        if ignite > 0.02:
+            _yk_radial(layer, hx, hy, int(pfr * (1.0 + 0.7 * ignite)),
+                       _YK_WHITE, int(170 * ignite))
         if intensity > 0.6:                                 # roused: white-hot core
             _yk_radial(layer, hx, hy, int(pfr * (0.7 + 0.6 * intensity)), _YK_WHITE,
                        int(85 * (intensity - 0.6) / 0.4))
@@ -1089,7 +1097,7 @@ def _draw_king(surf, x, y, facing, t, birth, gait, threat=None):
         # THE MASK -- our silhouette. Assembles from shards at birth, intact when
         # calm, and splits apart as it rouses -- the grasping arms bursting from
         # the splits and reaching toward the player.
-        _yk_shatter_mask(layer, hx, hy, pfr, 0.92, pmk, crack, t, R * max(0.3, grow), aa)
+        _yk_shatter_mask(layer, hx, hy, pfr, 0.92, pmk, crack, t, R * max(0.3, grow), aa, arms_on)
         layer.set_alpha(int(255 * va * show))
         surf.blit(layer, (mcx - cx + sxo, mcy - cy + syo))
 
