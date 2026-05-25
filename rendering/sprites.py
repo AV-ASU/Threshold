@@ -637,6 +637,7 @@ _YK_PRNG = random.Random(99)         # own RNG -> never touches the game's strea
 _YK_T1, _YK_T2, _YK_T3, _YK_T4 = (140, 96, 22), (196, 150, 42), (236, 198, 66), (252, 226, 120)
 _YK_GOLD, _YK_HOT = (236, 204, 64), (252, 226, 120)
 _YK_PIT = (10, 8, 12)
+_YK_SHADOW, _YK_SHADOW_HI = (20, 16, 26), (52, 44, 64)   # dark groping tendrils
 # PALLID mask tones -- sickly bone, jaundiced, cold against the warm light, so a
 # dead face reads as it surfaces from the glow. Black voids, not warm sockets.
 _YK_MHI, _YK_MMID, _YK_MLO, _YK_MPIT = (226, 224, 196), (172, 174, 132), (98, 100, 64), (12, 12, 10)
@@ -783,6 +784,7 @@ def _yk_orb(surf, cx, cy, r, vis, seed, t):
     mask or two floating in it -- fading out in the wake."""
     if vis <= 0.04:
         return
+    _yk_radial(surf, cx, cy, int(r * 2.4), _YK_T1, int(34 * vis))   # warm orange aura
     _yk_radial(surf, cx, cy, int(r * 1.8), _YK_GOLD, int(46 * vis))
     _yk_radial(surf, cx, cy, int(r * 1.05), _YK_T2, int(58 * vis))
     _yk_radial(surf, cx, cy, int(r * 0.62), _YK_T3, int(72 * vis))
@@ -813,22 +815,37 @@ def _yk_birth_rift(surf, cx, cy, R, bp):
 
 
 def _yk_tendril(layer, cx, cy, ang, length, R, t, idx):
-    """A wisp of gold light reaching out of the mass -- no hard limb, just a
-    curl of motes that lengthens and recoils on its own slow cycle, wavering
-    and fading to nothing at the tip."""
-    ext = 0.55 + 0.45 * (0.5 + 0.5 * math.sin(t * 1.3 + idx * 0.9))
-    length *= ext
+    """A bold dark tendril groping out of the light -- a thick smoky limb with a
+    traveling lash-wave down its length, tapering from a heavy root to a point,
+    edged in a faint smoky highlight so it reads against the dark."""
+    ext = 0.6 + 0.4 * (0.5 + 0.5 * math.sin(t * 1.5 + idx * 0.9))
+    length *= ext * 1.3                                   # bigger / longer reach
     if length < 2:
         return
-    root = (cx + math.cos(ang) * R * 0.4, cy + math.sin(ang) * R * 0.4)
-    n = 12
+    root = (cx + math.cos(ang) * R * 0.45, cy + math.sin(ang) * R * 0.45)
+    n = 16
+    pts = []
     for i in range(n):
         f = i / (n - 1)
-        a = ang + math.sin(t * 2.1 + idx * 1.3 + f * 4.0) * 0.45 * f
-        px = root[0] + math.cos(a) * length * f
-        py = root[1] + math.sin(a) * length * f
-        rr = max(1, int(R * 0.22 * (1 - 0.7 * f)))
-        _yk_radial(layer, px, py, rr, _YK_GOLD, int(130 * (1 - f)))
+        a = ang + math.sin(t * 2.4 + idx * 1.5 - f * 4.5) * 0.6 * f   # lash-wave
+        pts.append((root[0] + math.cos(a) * length * f,
+                    root[1] + math.sin(a) * length * f))
+    lp, rp = [], []
+    for i, (px, py) in enumerate(pts):
+        f = i / (n - 1)
+        nx, ny = pts[min(i + 1, n - 1)]
+        bx, by = pts[max(i - 1, 0)]
+        tx, ty = nx - bx, ny - by
+        tl = math.hypot(tx, ty) or 1.0
+        perp = (-ty / tl, tx / tl)
+        w = max(1.5, R * 0.5 * (1 - 0.9 * f))             # heavy root -> fine tip
+        lp.append((px + perp[0] * w, py + perp[1] * w))
+        rp.append((px - perp[0] * w, py - perp[1] * w))
+    poly = [(int(a), int(b)) for a, b in (lp + rp[::-1])]
+    if len(poly) >= 3:
+        pygame.draw.polygon(layer, _YK_SHADOW, poly)
+        pygame.draw.lines(layer, _YK_SHADOW_HI, False,
+                          [(int(a), int(b)) for a, b in lp], 1)
 
 
 def _draw_king(surf, x, y, facing, t, birth, gait):
@@ -905,8 +922,9 @@ def _draw_king(surf, x, y, facing, t, birth, gait):
         if p["kind"] == "orb":
             _yk_orb(surf, p["x"], p["y"], p["r"] * (1 - 0.22 * fr), a, p["seed"], t)
         else:
-            _yk_radial(surf, p["x"], p["y"], max(2, p["r"] * (1 - 0.4 * fr)),
-                       _YK_GOLD, int(150 * a))
+            mr = max(2, p["r"] * (1 - 0.4 * fr))
+            _yk_radial(surf, p["x"], p["y"], int(mr * 2.6), _YK_T1, int(60 * a))  # orange glow
+            _yk_radial(surf, p["x"], p["y"], mr, _YK_GOLD, int(150 * a))
         keep.append(p)
     _YK_PARTS[:] = keep
     # Faint floating shadow on the ground, far below the mass.
