@@ -544,14 +544,11 @@ def build_shop():
     sc.add_furniture("chair", [(3, 5)], w=22, h=28)
     sc.add_decoration(Decoration(6 * TILE + 16, 2 * TILE + 16, "candle"))
     sc.add_decoration(Decoration(2 * TILE + 16, 2 * TILE + 16, "wrong_radio"))
-    # Lodge dressing: a mounted buck + trophy walleye on the north wall
-    # (the old hanging shop banner is gone -- this is hunting/fishing
-    # country), a kerosene lamp on the counter, and a cobweb in the NW
-    # corner. The mirror cult tell stays.
-    sc.add_decoration(Decoration(6 * TILE + 16, 0 * TILE + 22, "buck_head",
-                                 wall="N"))
-    sc.add_decoration(Decoration(9 * TILE + 16, 0 * TILE + 24,
-                                 "mounted_fish"))
+    # The wall used to carry the same mounted buck + trophy walleye as
+    # every other Brimley room -- a hunting-lodge cliche that read cosy.
+    # Stripped here so the closed store feels colder and barer than a
+    # den. A kerosene lamp on the counter, a cobweb in the NW corner;
+    # the mirror cult tell stays.
     sc.add_decoration(Decoration(4 * TILE + 16, 4 * TILE + 2,
                                  "kerosene_lamp"))
     sc.add_decoration(Decoration(1 * TILE + 6, 1 * TILE + 6, "cobweb",
@@ -679,15 +676,14 @@ def build_barn():
     sc.add_decoration(Decoration(2 * TILE + 16, 1 * TILE + 24, "lantern"))
     sc.add_decoration(Decoration(4 * TILE + 16, 5 * TILE + 24,
                                  "bloodstain"))
-    # Northern-MN lodge dressing: a mounted buck + trophy walleye on the
-    # north wall, cobwebs in the high corners, an antler coat-rack on
-    # the east wall, and a split-wood stack in the SW corner. The floor
-    # pieces are collision furniture, tucked clear of the hatch + spawn
-    # paths so the room stays passable.
+    # The barn is the one room where the taxidermy reads as menace and
+    # not charm: a mounted buck staring down over the bloodstain and the
+    # cellar hatch. The buck + the antler coat-rack stay here -- the
+    # trophy walleye that used to hang in every Brimley room is gone --
+    # with cobwebs in the high corners and a split-wood stack SW. Floor
+    # pieces are collision furniture, clear of the hatch + spawn paths.
     sc.add_decoration(Decoration(6 * TILE + 16, 0 * TILE + 22, "buck_head",
                                  wall="N"))
-    sc.add_decoration(Decoration(2 * TILE + 16, 0 * TILE + 24,
-                                 "mounted_fish"))
     sc.add_decoration(Decoration(1 * TILE + 6, 1 * TILE + 6, "cobweb",
                                  ang=0.0))
     sc.add_decoration(Decoration(8 * TILE + 26, 1 * TILE + 6, "cobweb",

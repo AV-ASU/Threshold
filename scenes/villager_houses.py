@@ -123,15 +123,12 @@ def build_old_man_house():
 
     sc.add_decoration(Decoration(7 * TILE + 16,  0 * TILE + 22 , "candle"))
     sc.add_decoration(Decoration(8 * TILE + 16, 5 * TILE + 24, "candle"))
-    # The Preacher's parsonage in rural hunting country: a mounted buck
-    # + trophy walleye on the north wall (replacing the old banner and
-    # stray photo), a cobweb in the NW corner, and a kerosene lamp on
-    # the desk. The old computer is the cult's ancient church-records
-    # terminal -- the LOGIN: prompt is unchanged.
-    sc.add_decoration(Decoration(2 * TILE + 16, 0 * TILE + 22, "buck_head",
-                                 wall="N"))
-    sc.add_decoration(Decoration(6 * TILE + 16, 0 * TILE + 24,
-                                 "mounted_fish"))
+    # The parsonage carried the same mounted buck + trophy walleye as
+    # every other Brimley room, which made a church read like a hunting
+    # den -- the worst of the cosy clutter. Stripped to a bare, cold
+    # wall: a cobweb in the NW corner and a kerosene lamp on the desk.
+    # The old computer is the cult's ancient church-records terminal --
+    # the LOGIN: prompt is unchanged.
     sc.add_decoration(Decoration(1 * TILE + 6, 1 * TILE + 6, "cobweb",
                                  ang=0.0))
     sc.add_decoration(Decoration(2 * TILE + 16, 2 * TILE + 2,
@@ -191,16 +188,15 @@ def build_fisherman_cottage():
     sc.add_furniture("chair", [(6, 3)], w=22, h=28)
     sc.add_decoration(Decoration(7 * TILE + 16,  0 * TILE + 22 , "candle"))
     sc.add_decoration(Decoration(2 * TILE + 16,  0 * TILE + 22 , "candle"))
-    # Sheriff's office in hunting country: a mounted buck + trophy
-    # walleye on the north wall (replacing the old banner), an antler
-    # coat-rack against the west wall, and a cobweb in the NE corner.
-    sc.add_decoration(Decoration(4 * TILE + 16, 0 * TILE + 22, "buck_head",
-                                 wall="N"))
+    # This was a fisherman's cottage before it was the sheriff's office,
+    # so the one trophy that stays is his: a mounted walleye on the north
+    # wall. The buck head and antler rack that used to clutter it (the
+    # same set hung in every Brimley room) are gone, leaving a barer wall
+    # and a cobweb in the NE corner.
     sc.add_decoration(Decoration(6 * TILE + 16, 0 * TILE + 24,
                                  "mounted_fish"))
     sc.add_decoration(Decoration(8 * TILE + 26, 1 * TILE + 6, "cobweb",
                                  ang=math.pi / 2))
-    sc.add_furniture("antler_rack", [(1, 4)], w=22, h=46)
     # AM radio on the desk, a lantern by the door.
     sc.add_decoration(Decoration(4 * TILE + 16, 2 * TILE + 16, "radio"))
     sc.add_decoration(Decoration(8 * TILE + 16, 5 * TILE + 24, "lantern"))
