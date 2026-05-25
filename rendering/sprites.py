@@ -636,6 +636,7 @@ _YK_AIM = [None]                     # smoothed arm-aim angle (swivels to player
 _YK_PRNG = random.Random(99)         # own RNG -> never touches the game's stream
 _YK_T1, _YK_T2, _YK_T3, _YK_T4 = (140, 96, 22), (196, 150, 42), (236, 198, 66), (252, 226, 120)
 _YK_GOLD, _YK_HOT = (236, 204, 64), (252, 226, 120)
+_YK_PALE, _YK_WHITE = (248, 232, 150), (255, 248, 224)   # bright gold -> white core
 _YK_PIT = (10, 8, 12)
 _YK_SHADOW, _YK_SHADOW_HI = (20, 16, 26), (52, 44, 64)   # dark groping tendrils
 # PALLID mask tones -- sickly bone, jaundiced, cold against the warm light, so a
@@ -681,16 +682,19 @@ def _yk_radial(surf, x, y, R, color, a0, add=True):
 
 
 def _yk_glow(layer, cx, cy, R, t):
-    """The hovering clot of golden light -- soft warm bloom over a lumpy amber
-    mass brightening to a hot core, churning on a slow swirl."""
+    """A clot of bright gold light. Orange lives ONLY in the soft aura behind the
+    mass, so it reads as the warm outline of the whole silhouette; the bright
+    lumpy body is drawn opaque on top, so it never goes orange between its blobs."""
     R = int(R * (1 + 0.06 * math.sin(t * 2.0)))
-    _yk_radial(layer, cx, cy, int(R * 1.8), _YK_GOLD, 66)
-    _yk_radial(layer, cx, cy, int(R * 1.18), _YK_GOLD, 60)
+    # warm orange outline: a broad aura behind everything (shows only at the rim).
+    _yk_radial(layer, cx, cy, int(R * 1.95), _YK_T1, 72)
+    _yk_radial(layer, cx, cy, int(R * 1.5), _YK_T2, 58)
     subs = [(0, 0), (-0.4, -0.18), (0.4, -0.12), (-0.12, 0.4),
             (0.22, 0.32), (-0.3, 0.2), (0.12, -0.34)]
     sw = t * 0.6
     ca, sa = math.cos(sw), math.sin(sw)
-    for col, scl, grow in [(_YK_T1, 1.0, 3), (_YK_T2, 0.74, 1), (_YK_T3, 0.5, 0), (_YK_T4, 0.28, 0)]:
+    # bright gold -> white body, drawn opaque so it covers the centre.
+    for col, scl, grow in [(_YK_T3, 1.06, 3), (_YK_PALE, 0.78, 1), (_YK_WHITE, 0.5, 0), (_YK_WHITE, 0.28, 0)]:
         for ox, oy in subs:
             rx, ry = ox * ca - oy * sa, ox * sa + oy * ca
             pygame.draw.circle(layer, col,
@@ -699,8 +703,8 @@ def _yk_glow(layer, cx, cy, R, t):
     for k in range(4):
         a = sw * 1.6 + k * 1.57
         _yk_radial(layer, cx + math.cos(a) * R * 0.42, cy + math.sin(a) * R * 0.42,
-                   int(R * 0.42), _YK_T4, 76)
-    _yk_radial(layer, cx, cy - 2, int(R * 0.55), _YK_T4, 78)
+                   int(R * 0.42), _YK_WHITE, 70)
+    _yk_radial(layer, cx, cy - 2, int(R * 0.55), _YK_WHITE, 78)
 
 
 # Slot/orb kind vocabulary -> facial expression. The faces read as people:
@@ -779,23 +783,32 @@ def _yk_mask(surf, cx, cy, r, vis, kind):
     surf.blit(m, (cx - mx, cy - my))
 
 
-def _yk_grab_arm(surf, cx, cy, ang, reach, t, phase, scale, lit, alpha=255):
-    """One sinuous arm hauling at space: a smooth tapering limb (a curved bow
-    from shoulder to grabbing hand) that flings out, anchors, and drags the mass
-    after it -- the hand clenches through the pull, straightens to reach."""
-    cyc = t * 1.3 + phase
-    ext = 0.5 + 0.5 * math.sin(cyc)                  # reach out (1) / pull in (0)
-    grab = max(0.0, -math.cos(cyc))                  # grips while pulling
-    a = ang + math.sin(t * 1.6 + phase) * 0.10
-    sd, sh_hi = (*_YK_SHADOW, alpha), (*_YK_SHADOW_HI, alpha)
-    sh = (cx + math.cos(ang) * reach * 0.12, cy + math.sin(ang) * reach * 0.12)
-    hand = (cx + math.cos(a) * reach * (0.25 + 0.75 * ext),
-            cy + math.sin(a) * reach * (0.25 + 0.75 * ext))
-    # Smooth curved arm: quadratic bezier with the elbow as a control point that
-    # bows out when pulling (bent, muscular) and straightens when reaching.
+def _yk_grab_arm(surf, cx, cy, ang, reach, t, phase, scale, lit, alpha=255, side=1):
+    """An arm that buds from nothing, stretches out ahead getting bigger as its
+    hand opens to grab, then fades as a fresh arm takes its place -- the King
+    hauling itself forward on handholds that dissolve behind it. `phase` offsets
+    each arm's lifecycle so there is always one reaching."""
+    life = (t * 0.62 + phase) % 1.0
+    if life < 0.12:                                  # born from nothing
+        fade = life / 0.12
+    elif life > 0.7:                                 # then it vanishes
+        fade = max(0.0, (1.0 - life) / 0.3)
+    else:
+        fade = 1.0
+    if fade <= 0.02:
+        return
+    armA = int(alpha * fade)
+    a = ang + math.sin(t * 1.3 + phase) * 0.07
+    ext = 0.18 + 1.05 * life                         # stretches further out over its life
+    grow = 0.4 + 0.95 * life                         # ...and gets bigger
+    grab = min(1.0, life * 1.7)                      # hand closes as it stretches to grab
+    sd, sh_hi = (*_YK_SHADOW, armA), (*_YK_SHADOW_HI, armA)
+    sh = (cx + math.cos(ang) * reach * 0.1, cy + math.sin(ang) * reach * 0.1)
+    hand = (cx + math.cos(a) * reach * ext, cy + math.sin(a) * reach * ext)
+    # Smooth curved arm: a quadratic bezier that bows early and straightens as it
+    # stretches out.
     perp = (-math.sin(a), math.cos(a))
-    side = 1 if phase >= math.pi / 2 else -1
-    bend = reach * (0.34 - 0.20 * ext) * side
+    bend = reach * (0.26 - 0.16 * life) * side
     ctrl = ((sh[0] + hand[0]) / 2 + perp[0] * bend, (sh[1] + hand[1]) / 2 + perp[1] * bend)
     m = 9
     path = []
@@ -803,7 +816,7 @@ def _yk_grab_arm(surf, cx, cy, ang, reach, t, phase, scale, lit, alpha=255):
         u = i / m
         path.append(((1 - u) ** 2 * sh[0] + 2 * (1 - u) * u * ctrl[0] + u * u * hand[0],
                      (1 - u) ** 2 * sh[1] + 2 * (1 - u) * u * ctrl[1] + u * u * hand[1]))
-    base_w = max(2.0, scale * 3.4)
+    base_w = max(1.5, scale * 3.2 * grow)
     for i in range(m):
         u = i / m
         w = max(1, int(round(base_w * (1 - 0.62 * u))))   # thick shoulder -> thin wrist
@@ -811,9 +824,9 @@ def _yk_grab_arm(surf, cx, cy, ang, reach, t, phase, scale, lit, alpha=255):
         p1 = (int(path[i + 1][0]), int(path[i + 1][1]))
         pygame.draw.line(surf, sh_hi, p0, p1, w + 1)
         pygame.draw.line(surf, sd, p0, p1, w)
-    # Smooth grabbing hand: three curved fingers + thumb, curling with `grab`.
+    # Grabbing hand: three curved fingers + a thumb, curling with `grab`.
     ha = math.atan2(hand[1] - path[-2][1], hand[0] - path[-2][0])
-    fl = reach * 0.24
+    fl = reach * 0.22 * grow
     fw = max(1, int(base_w * 0.55))
     for fa, fr in ((-30, 0.85), (0, 1.0), (30, 0.85), (78, 0.6)):
         sgn = 1 if fa >= 0 else -1
@@ -826,7 +839,7 @@ def _yk_grab_arm(surf, cx, cy, ang, reach, t, phase, scale, lit, alpha=255):
                            (int(tip[0]), int(tip[1]))], fw)
         if lit:
             try:
-                surf.set_at((int(tip[0]), int(tip[1])), (*_YK_MHI, alpha))
+                surf.set_at((int(tip[0]), int(tip[1])), (*_YK_MHI, armA))
             except (IndexError, ValueError):
                 pass
 
@@ -849,13 +862,14 @@ def _yk_orb(surf, cx, cy, r, vis, seed, t):
         _yk_mask(surf, cx + math.cos(ang) * rad, cy + math.sin(ang) * rad,
                  max(3, int(r * 0.44)), vis * 0.9, kinds[(seed + k) % 4])
     if r >= 6:                                       # the orb claws at space too
-        reach = r * 1.7
-        sz = int(reach * 2) + 4
+        reach = r * 1.6
+        sz = int(reach * 2.9) + 8
         am = pygame.Surface((sz, sz), pygame.SRCALPHA)
         c = sz // 2
         aw = seed * 1.3 + t * 1.2
-        _yk_grab_arm(am, c, c, aw, reach, t, seed % 3, r / 16.0, False)
-        _yk_grab_arm(am, c, c, aw + math.pi, reach, t, seed % 3 + math.pi, r / 16.0, False)
+        ph = (seed % 5) / 5.0
+        _yk_grab_arm(am, c, c, aw, reach, t, ph, r / 15.0, False, side=-1)
+        _yk_grab_arm(am, c, c, aw + math.pi, reach, t, (ph + 0.5) % 1.0, r / 15.0, False, side=1)
         am.set_alpha(int(210 * vis))
         surf.blit(am, (int(cx) - c, int(cy) - c))
 
@@ -1039,9 +1053,9 @@ def _draw_king(surf, x, y, facing, t, birth, gait):
     # aim direction and clawing back -- alternating phases, hand over hand.
     if grow > 0.1:
         arms = pygame.Surface((L, L), pygame.SRCALPHA)
-        reach = R * 2.7 * grow
-        _yk_grab_arm(arms, cx, cy, aa - 0.32, reach, t, 0.0, max(1.3, grow * 1.4), True)
-        _yk_grab_arm(arms, cx, cy, aa + 0.32, reach, t, math.pi, max(1.3, grow * 1.4), True)
+        reach = R * 2.4 * grow
+        _yk_grab_arm(arms, cx, cy, aa - 0.3, reach, t, 0.0, max(1.3, grow * 1.4), True, side=-1)
+        _yk_grab_arm(arms, cx, cy, aa + 0.3, reach, t, 0.5, max(1.3, grow * 1.4), True, side=1)
         arms.set_alpha(int(235 * max(0.05, valpha)))
         surf.blit(arms, (mcx - cx, mcy - cy))
 
