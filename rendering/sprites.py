@@ -709,11 +709,12 @@ def _yk_glow(layer, cx, cy, R, t):
 _YK_EXPR = {"hollow": "gaunt", "crack": "scream", "plain": "calm"}
 
 
-def _yk_face(m, mx, my, r, expr, detail):
+def _yk_face(m, mx, my, r, expr, detail, mouth=True):
     """A readable human face on mask-surface `m`: pallid oval lit upper-left,
     brow ridge, nose ridge, eyes + an expressive mouth. `detail` gates the
-    features in as the mask surfaces (so it emerges as a blank pallid shape
-    first)."""
+    eyes/brow/nose in as the mask surfaces (so it emerges as a blank pallid
+    shape first); `mouth` gates the LOUD features (mouth, tears, crack)
+    separately and later -- so a hollow, mouthless STARE precedes the scream."""
     hi, mid, lo, pit = _YK_MHI, _YK_MMID, _YK_MLO, _YK_MPIT
     rw, rh = r, int(r * 1.24)                             # a little oblong -- a head, not a ball
     pygame.draw.ellipse(m, lo, (mx - rw + 1, my - rh + 1, 2 * rw, 2 * rh))
@@ -750,6 +751,8 @@ def _yk_face(m, mx, my, r, expr, detail):
         if expr == "weep":
             for ex, ey in (eyl, eyr):
                 pygame.draw.line(m, hi, (int(ex), int(ey + 1)), (int(ex), int(my + r * 0.6)), 1)
+    if not mouth:                                        # hold on the hollow STARE:
+        return                                           # mouth/tears/crack withheld
     if expr == "wail":                                   # black tears down the mask
         for ex, ey in (eyl, eyr):
             pygame.draw.line(m, pit, (int(ex), int(ey + ew)),
@@ -786,10 +789,11 @@ def _yk_face(m, mx, my, r, expr, detail):
         pygame.draw.lines(m, pit, False, [(int(a), int(b)) for a, b in crk], 1)
 
 
-def _yk_mask(surf, cx, cy, r, vis, kind):
+def _yk_mask(surf, cx, cy, r, vis, kind, mouth=True):
     """A dead human FACE surfacing from the light: pallid, translucent (the glow
     reads through it) + a luminous halo, rising (vis->1) and dissolving back into
-    the glow (vis->0). 'double' is two faces fused, both shrieking."""
+    the glow (vis->0). 'double' is two faces fused, both shrieking. `mouth=False`
+    holds the face on a mouthless stare even after the eyes have resolved."""
     if vis <= 0.03:
         return
     cx, cy, r = int(cx), int(cy), int(r)
@@ -802,9 +806,9 @@ def _yk_mask(surf, cx, cy, r, vis, kind):
     if kind == "double":
         off = max(2, r // 2)
         for ddx in (-off, off):
-            _yk_face(m, mx + ddx, my, max(2, int(r * 0.78)), "scream", detail)
+            _yk_face(m, mx + ddx, my, max(2, int(r * 0.78)), "scream", detail, mouth)
     else:
-        _yk_face(m, mx, my, r, _YK_EXPR.get(kind, kind), detail)
+        _yk_face(m, mx, my, r, _YK_EXPR.get(kind, kind), detail, mouth)
     m.set_alpha(int(64 + 156 * vis))
     surf.blit(m, (cx - mx, cy - my))
 
@@ -894,7 +898,9 @@ def _yk_shatter_mask(surf, cx, cy, r, vis, kind, crack, t, R, aim=0.0, arms=True
     S = (r + pad) * 2
     m = pygame.Surface((S, S), pygame.SRCALPHA)
     mxc = myc = r + pad
-    _yk_face(m, mxc, myc, r, _YK_EXPR.get(kind, kind), vis > 0.35)
+    # The mouth/scream is held back until the mask is genuinely cracking open --
+    # the stare comes first, the scream is the late reveal.
+    _yk_face(m, mxc, myc, r, _YK_EXPR.get(kind, kind), vis > 0.35, crack > 0.45)
     alpha = int(64 + 156 * vis)
     if crack <= 0.04:                                   # intact mask
         m.set_alpha(alpha)
@@ -1066,7 +1072,7 @@ def _draw_king(surf, x, y, facing, t, birth, gait, threat=None):
     hy = cy - R * 0.12 + fb[1] * 1.8
     # Vacuous void eyes throughout; serene mouth while calm, and a black-weeping
     # wail once it rouses to manifest.
-    pmk = ("wail" if intensity >= 0.5 else "vacant") if bp >= 1.0 else "vacant"
+    pmk = ("wail" if intensity >= 0.82 else "vacant") if bp >= 1.0 else "vacant"
     pfr = max(7, int(10 * max(0.3, grow)))
     # Motion sync: it hauls itself toward the aim as an arm completes its
     # stretch -- but only once it exists; dead still while a void.
@@ -1084,7 +1090,7 @@ def _draw_king(surf, x, y, facing, t, birth, gait, threat=None):
         # climbs past _yk_mask's detail gate (0.35) right as the bloom begins,
         # so you spend the approach unsure whether you even saw a face.
         vmask = 0.12 + 0.42 * intensity
-        _yk_mask(void, hx, hy, pfr, vmask, pmk)             # ashen mask, watching
+        _yk_mask(void, hx, hy, pfr, vmask, pmk, mouth=False)  # ashen mask, watching
         void.set_alpha(int(235 * dark_a * va))
         surf.blit(void, (mcx - cx, mcy - cy))               # the void doesn't lurch
     # --- MANIFEST form (blooms in as it closes, and flashes in at birth).
@@ -1101,8 +1107,9 @@ def _draw_king(surf, x, y, facing, t, birth, gait, threat=None):
             _yk_radial(layer, hx, hy, int(pfr * (0.7 + 0.6 * intensity)), _YK_WHITE,
                        int(85 * (intensity - 0.6) / 0.4))
         # THE OTHER mask, directly behind -- a screaming face glimpsed through
-        # the cracks once the front one splits open.
-        _yk_mask(layer, hx, hy, pfr, min(1.0, 0.2 + 0.8 * show), "scream")
+        # the cracks once the front one splits open. Withheld until the cracks
+        # actually open, so the scream is a reveal, not an ever-present chorus.
+        _yk_mask(layer, hx, hy, pfr, min(1.0, max(0.0, crack - 0.3) * 1.5), "scream")
         # THE MASK -- our silhouette. Assembles from shards at birth, intact when
         # calm, and splits apart as it rouses -- the grasping arms bursting from
         # the splits and reaching toward the player.
