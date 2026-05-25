@@ -83,6 +83,8 @@ class NPC:
         self._yk_head = None        # current heading angle (rad); steers
         self._yk_stuck_t = 0.0
         self._yk_last_pos = None
+        self._yk_hitch_t = 0.0      # time to the next stall->lunge hitch
+        self._yk_surge_t = 0.0      # remaining duration of the current lunge
         # Round-14: NPCs are killable. They take damage from the
         # player's attacks (melee or pistol). The cult takes a
         # specific interest in this -- the kill counter feeds the
@@ -354,7 +356,18 @@ class NPC:
         self.facing = (math.cos(head), math.sin(head))
         if self._birth < 1.0:
             return
-        step = self.speed * 60 * dt
+        # Predatory hitch: it does NOT glide in serenely. It stalls --
+        # almost stopping, hanging there watching -- then LUNGES. The
+        # stutter reads as wrong/aware; the duty cycle is tuned so the
+        # average closing speed stays ~self.speed (the catch balance is
+        # unchanged, only its *delivery* is made unnerving).
+        self._yk_hitch_t -= dt
+        if self._yk_hitch_t <= 0.0:
+            self._yk_hitch_t = random.uniform(0.8, 1.4)
+            self._yk_surge_t = random.uniform(0.22, 0.34)
+        self._yk_surge_t -= dt
+        speed_mul = 2.2 if self._yk_surge_t > 0.0 else 0.62
+        step = self.speed * 60 * dt * speed_mul
         if self._yk_last_pos is None:
             self._yk_last_pos = (self.x, self.y)
         moved = math.hypot(self.x - self._yk_last_pos[0],

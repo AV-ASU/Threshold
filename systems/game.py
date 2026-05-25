@@ -2353,9 +2353,17 @@ class Game:
                     fl = math.hypot(fx, fy) or 1.0
                     if d > 1:
                         looked = (dx * fx + dy * fy) / (d * fl) > 0.5
+                # The King rations the look: proximity ramps 0->1 as he
+                # closes from ~220px to the catch range, driving his
+                # render-tremor + white-out bloom (rendering.sprites).
+                king_prox = 0.0
+                if npc is self._king and self.player:
+                    kd = math.hypot(npc.x - self.player.x,
+                                    npc.y - self.player.y)
+                    king_prox = max(0.0, min(1.0, (220.0 - kd) / 196.0))
                 draw_npc_sprite(self.screen, sx, sy, npc.sprite_kind,
                                 npc.facing, blink=(i == blink_idx),
-                                gaze=looked,
+                                gaze=looked, prox=king_prox,
                                 birth=getattr(npc, "_birth", None),
                                 gait=getattr(npc, "_gait", None))
             # THRESHOLD: NPC name labels removed. They were the

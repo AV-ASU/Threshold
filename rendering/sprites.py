@@ -5,7 +5,7 @@ import pygame
 from constants import C_BLACK
 
 def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False,
-                    birth=None, gait=None):
+                    birth=None, gait=None, prox=0.0):
     """`blink=True` suppresses eye dots for NPC kinds that have human
     eyes (mom/kid/bandit/policeman). Used by Game.draw to make a single
     NPC's eyes vanish for a single frame -- a subliminal wrongness.
@@ -271,7 +271,7 @@ def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False,
         else:
             b = birth
             g = gait if gait is not None else t * 7.0
-        _draw_king(surf, x, y, facing, t, b, g)
+        _draw_king(surf, x, y, facing, t, b, g, prox=prox)
     elif kind == "wolf":
         # Lean grey quadruped, low to the ground. Yellow eyes give a
         # threat read at a glance even with the small sprite size.
@@ -916,10 +916,14 @@ def _yk_arm(layer, cx, cy, ang, length, R, t, idx):
             pass
 
 
-def _draw_king(surf, x, y, facing, t, birth, gait):
+def _draw_king(surf, x, y, facing, t, birth, gait, prox=0.0):
     """THE KING IN YELLOW (see header). `birth` (0..1, already de-None'd by the
     dispatch) drives the rift eruption; `t` animates; `gait` is accepted but the
-    float needs no leg cycle. It never phases out -- only masks come and go."""
+    float needs no leg cycle. It never phases out -- only masks come and go.
+    `prox` (0..1, 1 = right on top of the player) rations the LOOK: the nearer
+    he is, the more he buzzes with a render-only tremor and whites out under a
+    searing bloom, so a clean look becomes impossible up close -- the mind
+    fills in worse than the sprite shows."""
     global _YK_TRAIL
     R = 22
     mcx, mcy = x, int(y - 42 + math.sin(t * 1.1) * 3)        # floats above the feet
@@ -1031,8 +1035,16 @@ def _draw_king(surf, x, y, facing, t, birth, gait):
             ey = cy + math.sin(ang) * R * 0.7 * rn * grow + fb[1]
             _yk_radial(layer, ex, ey, 5, _YK_HOT, 110)
             pygame.draw.circle(layer, _YK_PIT, (int(ex), int(ey)), 1)
+    # Render-only TREMOR: once fully born and closing in, the whole mass
+    # buzzes on a fast hash-noise offset that grows with proximity. Applied
+    # only to the body/arm blit (NOT to the wake/trail centre above) so it
+    # reads as the King vibrating with wrongness, not as a jittering path.
+    pk = max(0.0, min(1.0, prox)) if bp >= 1.0 else 0.0
+    jx = (_frand(int(t * 67)) - 0.5) * 7.0 * pk
+    jy = (_frand(int(t * 67) + 31) - 0.5) * 7.0 * pk
+    bmx, bmy = mcx + jx, mcy + jy
     layer.set_alpha(int(255 * max(0.05, valpha)))
-    surf.blit(layer, (mcx - cx, mcy - cy))
+    surf.blit(layer, (bmx - cx, bmy - cy))
     # Arms LAST (own layer over the wake + glow); they erupt in the back half.
     if agrow > 0.02:
         arml = pygame.Surface((L, L), pygame.SRCALPHA)
@@ -1040,7 +1052,17 @@ def _draw_king(surf, x, y, facing, t, birth, gait):
                                         (0.95, R * 1.45), (-0.95, R * 1.45)]):
             _yk_arm(arml, cx, cy, aa + da, ln * agrow, R * max(0.4, agrow), t, idx)
         arml.set_alpha(int(255 * max(0.05, valpha)))
-        surf.blit(arml, (mcx - cx, mcy - cy))
+        surf.blit(arml, (bmx - cx, bmy - cy))
+    # RATION THE LOOK: a searing gold-white bloom centred on the clot that
+    # swells and brightens with proximity, blowing out his edges so he can't
+    # be cleanly read up close. Additive, drawn over everything.
+    if pk > 0.02:
+        flk = 0.8 + 0.35 * _frand(int(t * 53) + 5)   # unstable glare, not a clean swell
+        _yk_radial(surf, bmx, bmy - 2, int(R * (1.3 + 1.7 * pk) * flk),
+                   _YK_HOT, min(255, int((46 + 150 * pk * pk) * flk)))
+        if pk > 0.55:                       # at point-blank, a hot white core
+            _yk_radial(surf, bmx, bmy - 2, int(R * (0.5 + 0.8 * pk) * flk),
+                       (255, 250, 226), min(255, int(120 * (pk - 0.55) / 0.45 * flk)))
 
 
 # ---------------------------------------------------------------------------
