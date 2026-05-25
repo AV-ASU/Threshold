@@ -815,37 +815,29 @@ def _yk_birth_rift(surf, cx, cy, R, bp):
 
 
 def _yk_tendril(layer, cx, cy, ang, length, R, t, idx):
-    """A bold dark tendril groping out of the light -- a thick smoky limb with a
-    traveling lash-wave down its length, tapering from a heavy root to a point,
-    edged in a faint smoky highlight so it reads against the dark."""
+    """A wispy, smoky dark tendril -- a few thin strands curling out of the mass
+    with a traveling lash-wave, splitting and fraying as they taper to nothing.
+    Thin and faintly lit so they read as drifting smoke, never thick limbs."""
     ext = 0.6 + 0.4 * (0.5 + 0.5 * math.sin(t * 1.5 + idx * 0.9))
-    length *= ext * 1.3                                   # bigger / longer reach
+    length *= ext * 1.35                                  # long, searching reach
     if length < 2:
         return
-    root = (cx + math.cos(ang) * R * 0.45, cy + math.sin(ang) * R * 0.45)
-    n = 16
-    pts = []
-    for i in range(n):
-        f = i / (n - 1)
-        a = ang + math.sin(t * 2.4 + idx * 1.5 - f * 4.5) * 0.6 * f   # lash-wave
-        pts.append((root[0] + math.cos(a) * length * f,
-                    root[1] + math.sin(a) * length * f))
-    lp, rp = [], []
-    for i, (px, py) in enumerate(pts):
-        f = i / (n - 1)
-        nx, ny = pts[min(i + 1, n - 1)]
-        bx, by = pts[max(i - 1, 0)]
-        tx, ty = nx - bx, ny - by
-        tl = math.hypot(tx, ty) or 1.0
-        perp = (-ty / tl, tx / tl)
-        w = max(1.5, R * 0.5 * (1 - 0.9 * f))             # heavy root -> fine tip
-        lp.append((px + perp[0] * w, py + perp[1] * w))
-        rp.append((px - perp[0] * w, py - perp[1] * w))
-    poly = [(int(a), int(b)) for a, b in (lp + rp[::-1])]
-    if len(poly) >= 3:
-        pygame.draw.polygon(layer, _YK_SHADOW, poly)
-        pygame.draw.lines(layer, _YK_SHADOW_HI, False,
-                          [(int(a), int(b)) for a, b in lp], 1)
+    root = (cx + math.cos(ang) * R * 0.42, cy + math.sin(ang) * R * 0.42)
+    n = 18
+    for phase, sep in [(0.0, 0.0), (0.85, 0.18), (-0.85, -0.18)]:
+        pts = []
+        for i in range(n):
+            f = i / (n - 1)
+            a = ang + math.sin(t * 2.4 + idx * 1.5 + phase - f * 4.5) * 0.6 * f
+            perp = (-math.sin(a), math.cos(a))
+            o = sep * R * (1 - f)                          # strands split near root
+            pts.append((int(root[0] + math.cos(a) * length * f + perp[0] * o),
+                        int(root[1] + math.sin(a) * length * f + perp[1] * o)))
+        for i in range(n - 1):
+            f = i / (n - 1)
+            col = _YK_SHADOW if f < 0.15 else _YK_SHADOW_HI
+            w = 2 if f < 0.18 else 1
+            pygame.draw.line(layer, col, pts[i], pts[i + 1], w)
 
 
 def _draw_king(surf, x, y, facing, t, birth, gait):
@@ -898,7 +890,7 @@ def _draw_king(surf, x, y, facing, t, birth, gait):
             "x": mcx + _YK_PRNG.uniform(-5, 5), "y": mcy + _YK_PRNG.uniform(-5, 5),
             "vx": bvx * 9 + _YK_PRNG.uniform(-8, 8),
             "vy": bvy * 9 + _YK_PRNG.uniform(-8, 8),
-            "age": 0.0, "life": _YK_PRNG.uniform(0.8, 1.25),
+            "age": 0.0, "life": _YK_PRNG.uniform(1.8, 2.8),
             "r": _YK_PRNG.uniform(7, 15)})
         for _ in range(2):
             _YK_PARTS.append({
@@ -906,10 +898,10 @@ def _draw_king(surf, x, y, facing, t, birth, gait):
                 "x": mcx + _YK_PRNG.uniform(-9, 9), "y": mcy + _YK_PRNG.uniform(-9, 9),
                 "vx": bvx * 18 + _YK_PRNG.uniform(-16, 16),
                 "vy": bvy * 18 + _YK_PRNG.uniform(-16, 16),
-                "age": 0.0, "life": _YK_PRNG.uniform(0.25, 0.5),
+                "age": 0.0, "life": _YK_PRNG.uniform(0.7, 1.2),
                 "r": _YK_PRNG.uniform(1.5, 3.0)})
-    if len(_YK_PARTS) > 90:
-        del _YK_PARTS[:len(_YK_PARTS) - 90]
+    if len(_YK_PARTS) > 160:
+        del _YK_PARTS[:len(_YK_PARTS) - 160]
     keep = []
     for p in _YK_PARTS:
         p["age"] += dt
