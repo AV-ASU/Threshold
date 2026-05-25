@@ -780,36 +780,50 @@ def _yk_mask(surf, cx, cy, r, vis, kind):
 
 
 def _yk_grab_arm(surf, cx, cy, ang, reach, t, phase, scale, lit, alpha=255):
-    """One arm hauling at space: a dark, bone-tipped limb (shoulder, reflex
-    elbow, grabbing hand) that reaches out and claws back on a grab-pull cycle
-    -- it flings open at full reach, then clenches and drags inward."""
+    """One sinuous arm hauling at space: a smooth tapering limb (a curved bow
+    from shoulder to grabbing hand) that flings out, anchors, and drags the mass
+    after it -- the hand clenches through the pull, straightens to reach."""
     cyc = t * 1.3 + phase
-    ext = 0.6 + 0.4 * math.sin(cyc)                  # reach out / pull back
-    grab = max(0.0, math.cos(cyc))                   # hand clenches as it pulls
-    a = ang + math.sin(t * 2.0 + phase) * 0.12
-    sh = (cx + math.cos(ang) * reach * 0.16, cy + math.sin(ang) * reach * 0.16)
-    hand = (cx + math.cos(a) * reach * ext, cy + math.sin(a) * reach * ext)
-    mxp, myp = (sh[0] + hand[0]) / 2, (sh[1] + hand[1]) / 2
+    ext = 0.5 + 0.5 * math.sin(cyc)                  # reach out (1) / pull in (0)
+    grab = max(0.0, -math.cos(cyc))                  # grips while pulling
+    a = ang + math.sin(t * 1.6 + phase) * 0.10
+    sd, sh_hi = (*_YK_SHADOW, alpha), (*_YK_SHADOW_HI, alpha)
+    sh = (cx + math.cos(ang) * reach * 0.12, cy + math.sin(ang) * reach * 0.12)
+    hand = (cx + math.cos(a) * reach * (0.25 + 0.75 * ext),
+            cy + math.sin(a) * reach * (0.25 + 0.75 * ext))
+    # Smooth curved arm: quadratic bezier with the elbow as a control point that
+    # bows out when pulling (bent, muscular) and straightens when reaching.
     perp = (-math.sin(a), math.cos(a))
-    k = reach * 0.22 * (1 if phase >= math.pi / 2 else -1)
-    elbow = (mxp + perp[0] * k, myp + perp[1] * k)
-    w = max(2, int(scale * 3))
-    pts = [(int(sh[0]), int(sh[1])), (int(elbow[0]), int(elbow[1])), (int(hand[0]), int(hand[1]))]
-    sd = (*_YK_SHADOW, alpha)
-    sh_hi = (*_YK_SHADOW_HI, alpha)
-    pygame.draw.lines(surf, sh_hi, False, pts, w + 1)
-    pygame.draw.lines(surf, sd, False, pts, w)
-    ha = math.atan2(hand[1] - elbow[1], hand[0] - elbow[0])
-    fl = reach * 0.2
-    for fa in (-42, -14, 14, 42):
-        side = 1 if fa > 0 else -1
-        a2 = ha + math.radians(fa) - side * grab * 0.7
-        knu = (hand[0] + math.cos(a2) * fl * 0.6, hand[1] + math.sin(a2) * fl * 0.6)
-        a3 = a2 - side * grab * 0.9
-        tip = (knu[0] + math.cos(a3) * fl * 0.6, knu[1] + math.sin(a3) * fl * 0.6)
+    side = 1 if phase >= math.pi / 2 else -1
+    bend = reach * (0.34 - 0.20 * ext) * side
+    ctrl = ((sh[0] + hand[0]) / 2 + perp[0] * bend, (sh[1] + hand[1]) / 2 + perp[1] * bend)
+    m = 9
+    path = []
+    for i in range(m + 1):
+        u = i / m
+        path.append(((1 - u) ** 2 * sh[0] + 2 * (1 - u) * u * ctrl[0] + u * u * hand[0],
+                     (1 - u) ** 2 * sh[1] + 2 * (1 - u) * u * ctrl[1] + u * u * hand[1]))
+    base_w = max(2.0, scale * 3.4)
+    for i in range(m):
+        u = i / m
+        w = max(1, int(round(base_w * (1 - 0.62 * u))))   # thick shoulder -> thin wrist
+        p0 = (int(path[i][0]), int(path[i][1]))
+        p1 = (int(path[i + 1][0]), int(path[i + 1][1]))
+        pygame.draw.line(surf, sh_hi, p0, p1, w + 1)
+        pygame.draw.line(surf, sd, p0, p1, w)
+    # Smooth grabbing hand: three curved fingers + thumb, curling with `grab`.
+    ha = math.atan2(hand[1] - path[-2][1], hand[0] - path[-2][0])
+    fl = reach * 0.24
+    fw = max(1, int(base_w * 0.55))
+    for fa, fr in ((-30, 0.85), (0, 1.0), (30, 0.85), (78, 0.6)):
+        sgn = 1 if fa >= 0 else -1
+        a2 = ha + math.radians(fa) - sgn * grab * 0.55
+        k1 = (hand[0] + math.cos(a2) * fl * fr * 0.55, hand[1] + math.sin(a2) * fl * fr * 0.55)
+        a3 = a2 - sgn * (0.25 + grab * 0.9)
+        tip = (k1[0] + math.cos(a3) * fl * fr * 0.5, k1[1] + math.sin(a3) * fl * fr * 0.5)
         pygame.draw.lines(surf, sd, False,
-                          [(int(hand[0]), int(hand[1])), (int(knu[0]), int(knu[1])),
-                           (int(tip[0]), int(tip[1]))], max(1, w - 1))
+                          [(int(hand[0]), int(hand[1])), (int(k1[0]), int(k1[1])),
+                           (int(tip[0]), int(tip[1]))], fw)
         if lit:
             try:
                 surf.set_at((int(tip[0]), int(tip[1])), (*_YK_MHI, alpha))
@@ -1025,9 +1039,9 @@ def _draw_king(surf, x, y, facing, t, birth, gait):
     # aim direction and clawing back -- alternating phases, hand over hand.
     if grow > 0.1:
         arms = pygame.Surface((L, L), pygame.SRCALPHA)
-        reach = R * 2.5 * grow
-        _yk_grab_arm(arms, cx, cy, aa - 0.5, reach, t, 0.0, max(1.2, grow * 1.3), True)
-        _yk_grab_arm(arms, cx, cy, aa + 0.5, reach, t, math.pi, max(1.2, grow * 1.3), True)
+        reach = R * 2.7 * grow
+        _yk_grab_arm(arms, cx, cy, aa - 0.32, reach, t, 0.0, max(1.3, grow * 1.4), True)
+        _yk_grab_arm(arms, cx, cy, aa + 0.32, reach, t, math.pi, max(1.3, grow * 1.4), True)
         arms.set_alpha(int(235 * max(0.05, valpha)))
         surf.blit(arms, (mcx - cx, mcy - cy))
 
