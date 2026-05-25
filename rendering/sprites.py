@@ -638,34 +638,29 @@ _YK_T1, _YK_T2, _YK_T3, _YK_T4 = (140, 96, 22), (196, 150, 42), (236, 198, 66), 
 _YK_GOLD, _YK_HOT = (236, 204, 64), (252, 226, 120)
 _YK_PALE, _YK_WHITE = (248, 232, 150), (255, 248, 224)   # bright gold -> white core
 _YK_PIT = (10, 8, 12)
-_YK_SHADOW, _YK_SHADOW_HI = (20, 16, 26), (52, 44, 64)   # dark groping tendrils
+_YK_SHADOW, _YK_SHADOW_HI = (20, 16, 26), (52, 44, 64)   # dark grabbing arms
+# Existence curve: the King stays a dark void until threat passes _LO, then the
+# light blooms in hard, fully real by _HI -- so most of the approach is dread.
+_YK_BLOOM_LO, _YK_BLOOM_HI = 0.45, 0.9
 # PALLID mask tones -- sickly bone, jaundiced, cold against the warm light, so a
 # dead face reads as it surfaces from the glow. Black voids, not warm sockets.
 _YK_MHI, _YK_MMID, _YK_MLO, _YK_MPIT = (226, 224, 196), (172, 174, 132), (98, 100, 64), (12, 12, 10)
 
 
 def _yk_slots():
-    """Deterministic swirl params for the faces + eyes (own RNG so the global
-    stream the game relies on is never touched). Each face orbits the core at
-    its own radius/speed and surfaces/dissolves on its own fade cycle."""
+    """Deterministic swirl params for the faces (own RNG so the global stream the
+    game relies on is never touched). Index 0 is the dominant central mask (drawn
+    anchored, not orbiting); the rest orbit and erupt around it as it manifests."""
     r = random.Random(20240611)
-    faces, eyes = [], []
-    # Fewer, larger, clearer dead faces. The FIRST is the dominant central
-    # screamer -- the one that surfaces even when the King is calm; the rest
-    # (gaunt, fused 'double', more screams) erupt around it as it rouses.
-    faces.append((0.16, 0.0, 0.22, 10, 0.55, 0.0, "scream"))
-    kinds = ["hollow", "double", "scream", "hollow", "scream"]
-    for k in kinds:
+    faces = [(0.16, 0.0, 0.22, 10, 0.55, 0.0, "scream")]
+    for k in ["hollow", "double", "scream", "hollow", "scream"]:
         faces.append((
             r.uniform(0.34, 0.82), r.uniform(0, math.tau), r.uniform(0.30, 0.80),
             r.randint(6, 9), r.uniform(0.5, 1.2), r.uniform(0, 6.28), k))
-    for _ in range(3):
-        eyes.append((r.uniform(0.2, 0.7), r.uniform(0, math.tau),
-                     r.uniform(0.3, 0.8), r.uniform(0, 6.28)))
-    return faces, eyes
+    return faces
 
 
-_YK_FACES, _YK_EYES = _yk_slots()
+_YK_FACES = _yk_slots()
 
 
 def _yk_radial(surf, x, y, R, color, a0, add=True):
@@ -845,9 +840,9 @@ def _yk_grab_arm(surf, cx, cy, ang, reach, t, phase, scale, lit, alpha=255, side
 
 
 def _yk_orb(surf, cx, cy, r, vis, seed, t):
-    """A shed SOUL-ORB: a small copy of the body -- a glowing gold clot with a
-    mask or two floating in it, clawing at space with its own little arms --
-    fading out in the wake."""
+    """A shed SOUL-ORB in the wake: a small glowing gold clot with a mask or two
+    floating in it, fading out behind the King. Quiet light -- no arms of its
+    own (the main body tells the grabbing story)."""
     if vis <= 0.04:
         return
     _yk_radial(surf, cx, cy, int(r * 2.4), _YK_T1, int(34 * vis))   # warm orange aura
@@ -861,17 +856,6 @@ def _yk_orb(surf, cx, cy, r, vis, seed, t):
         rad = r * 0.36
         _yk_mask(surf, cx + math.cos(ang) * rad, cy + math.sin(ang) * rad,
                  max(3, int(r * 0.44)), vis * 0.9, kinds[(seed + k) % 4])
-    if r >= 6:                                       # the orb claws at space too
-        reach = r * 1.6
-        sz = int(reach * 2.9) + 8
-        am = pygame.Surface((sz, sz), pygame.SRCALPHA)
-        c = sz // 2
-        aw = seed * 1.3 + t * 1.2
-        ph = (seed % 5) / 5.0
-        _yk_grab_arm(am, c, c, aw, reach, t, ph, r / 15.0, False, side=-1)
-        _yk_grab_arm(am, c, c, aw + math.pi, reach, t, (ph + 0.5) % 1.0, r / 15.0, False, side=1)
-        am.set_alpha(int(210 * vis))
-        surf.blit(am, (int(cx) - c, int(cy) - c))
 
 
 def _yk_birth_rift(surf, cx, cy, R, bp):
@@ -891,56 +875,16 @@ def _yk_birth_rift(surf, cx, cy, R, bp):
         _yk_radial(surf, cx, cy, int(R * (0.4 + 0.95 * flare)), (255, 250, 232), int(100 * flare))
 
 
-def _yk_tendril(layer, cx, cy, ang, length, R, t, idx):
-    """Wispy smoky strands shot through with the original gold light: a few thin
-    dark strands curl out with a traveling lash-wave, splitting and fraying,
-    while glowing gold motes drift along the core -- smoke lit from within."""
-    ext = 0.6 + 0.4 * (0.5 + 0.5 * math.sin(t * 1.5 + idx * 0.9))
-    length *= ext * 0.8                                   # short, smoke-like reach
-    if length < 2:
-        return
-    root = (cx + math.cos(ang) * R * 0.42, cy + math.sin(ang) * R * 0.42)
-    n = 14
-    for si, (phase, sep) in enumerate([(0.0, 0.0), (0.85, 0.16)]):
-        pts = []
-        for i in range(n):
-            f = i / (n - 1)
-            a = ang + math.sin(t * 2.4 + idx * 1.5 + phase - f * 4.5) * 0.6 * f
-            perp = (-math.sin(a), math.cos(a))
-            o = sep * R * (1 - f)                          # strands split near root
-            pts.append((root[0] + math.cos(a) * length * f + perp[0] * o,
-                        root[1] + math.sin(a) * length * f + perp[1] * o))
-        ip = [(int(px), int(py)) for px, py in pts]
-        for i in range(n - 1):
-            f = i / (n - 1)
-            col = _YK_SHADOW if f < 0.15 else _YK_SHADOW_HI
-            w = 2 if f < 0.18 else 1
-            pygame.draw.line(layer, col, ip[i], ip[i + 1], w)
-        if si == 0:                                        # gold light along the core
-            for i in range(n):
-                f = i / (n - 1)
-                rr = max(1, int(R * 0.2 * (1 - 0.7 * f)))
-                _yk_radial(layer, pts[i][0], pts[i][1], rr, _YK_GOLD, int(120 * (1 - f)))
-
-
-def _yk_void(layer, cx, cy, R, t, fb):
-    """The barely-existing form, seen when the King is still far: a void darker
-    than the dark, edged in a cold shimmer, with a pair of dim eyes -- the first
-    of it to bleed into the world. Everything else exists only once it closes."""
-    _yk_radial(layer, cx, cy, int(R * 1.35), (46, 48, 70), 34)   # cold shimmer rim
+def _yk_void(layer, cx, cy, R):
+    """The barely-existing form, seen while the King is still far: a void darker
+    than the dark, edged in a cold shimmer, and DEAD STILL. The only thing that
+    moves or shows a face is the pale mask, drawn over this by the caller."""
+    _yk_radial(layer, cx, cy, int(R * 1.35), (46, 48, 70), 32)   # cold shimmer rim
     subs = [(0, 0), (-0.4, -0.18), (0.4, -0.12), (-0.12, 0.4),
             (0.22, 0.32), (-0.3, 0.2), (0.12, -0.34)]
-    sw = t * 0.6
-    ca, sa = math.cos(sw), math.sin(sw)
-    for ox, oy in subs:
-        rx, ry = ox * ca - oy * sa, ox * sa + oy * ca
+    for ox, oy in subs:                                          # static lumps -- no swirl
         pygame.draw.circle(layer, (8, 7, 12),
-                           (int(cx + rx * R * 0.6), int(cy + ry * R * 0.9)), int(R * 0.58), 0)
-    for sgn in (-1, 1):                                          # dim eyes, the first to exist
-        ex = int(cx + sgn * R * 0.32 + fb[0])
-        ey = int(cy - R * 0.08 + fb[1])
-        _yk_radial(layer, ex, ey, 4, _YK_HOT, 70)
-        pygame.draw.circle(layer, _YK_PIT, (ex, ey), 1)
+                           (int(cx + ox * R * 0.6), int(cy + oy * R * 0.9)), int(R * 0.58), 0)
 
 
 def _draw_king(surf, x, y, facing, t, birth, gait, threat=None):
@@ -951,12 +895,14 @@ def _draw_king(surf, x, y, facing, t, birth, gait, threat=None):
     flares, how far and fast the arms haul. It never phases out."""
     global _YK_TRAIL
     R = 22
-    intensity = 0.55 if threat is None else max(0.0, min(1.0, threat))
+    intensity = 0.85 if threat is None else max(0.0, min(1.0, threat))
+    # How much of the King has bled into the world (0 = dark void, 1 = full
+    # blaze). Blooms late so the approach stays dreadful and the blaze is sudden.
+    mr = max(0.0, min(1.0, (intensity - _YK_BLOOM_LO) / (_YK_BLOOM_HI - _YK_BLOOM_LO)))
+    manifest = mr * mr * (3 - 2 * mr)
     mcx, mcy = x, int(y - 42 + math.sin(t * 1.1) * 3)        # floats above the feet
     bp = 1.0 if birth is None else max(0.0, min(1.0, birth))
     grow = bp * bp * (3 - 2 * bp)                            # body eases in
-    ag = max(0.0, (bp - 0.4) / 0.6)
-    agrow = ag * ag * (3 - 2 * ag)                           # arms erupt in the back half
     valpha = 1.0 if bp >= 1.0 else 0.4 + 0.6 * grow
     dt = t - _YK_LAST[0]
     _YK_LAST[0] = t
@@ -1016,7 +962,7 @@ def _draw_king(surf, x, y, facing, t, birth, gait, threat=None):
             continue
         p["x"] += p["vx"] * dt
         p["y"] += p["vy"] * dt
-        a = (1.0 - fr) * (0.3 + 0.7 * intensity)     # wake exists with the King
+        a = (1.0 - fr) * manifest                    # no trail while it's a dark void
         if p["kind"] == "orb":
             _yk_orb(surf, p["x"], p["y"], p["r"] * (1 - 0.22 * fr), a, p["seed"], t)
         else:
@@ -1044,73 +990,61 @@ def _draw_king(surf, x, y, facing, t, birth, gait, threat=None):
     fb = (math.cos(aa) * R * 0.22, math.sin(aa) * R * 0.22)
     if bp < 1.0:
         _yk_birth_rift(surf, mcx, mcy, R, bp)                # space tears open
-    _yk_glow(layer, cx, cy, R * max(0.18, grow), t)
-    if intensity > 0.4:                                     # roused: it flares white-hot
-        _yk_radial(layer, cx, cy, int(R * (0.6 + 0.5 * intensity)), _YK_WHITE,
-                   int(90 * (intensity - 0.4) / 0.6))
-    # Faces surface with the threat: one screamer when calm, the whole chorus
-    # erupting as it closes (count + how far each rises both ramp on intensity).
-    nfaces = int(round(1 + (len(_YK_FACES) - 1) * intensity))
-    vmul = 0.32 + 0.68 * intensity
-    for fi, (rn, ba, asp, fr, vsp, vph, kind) in enumerate(_YK_FACES):
-        if fi >= nfaces:
-            continue
-        ang = ba + t * asp
-        rr = rn * (0.9 + 0.1 * math.sin(t * 0.8 + vph))
-        fxp = cx + math.cos(ang) * R * 0.82 * rr * grow + fb[0]
-        fyp = cy + math.sin(ang) * R * 0.95 * rr * grow + fb[1]
-        if kind == "double":
-            vis = max(0.0, min(1.0, (math.sin(t * vsp + vph) - 0.55) / 0.4))
-        else:
-            vis = max(0.0, min(1.0, 0.5 + 0.72 * math.sin(t * vsp + vph)))
-        # The central face is serene -- almost beautiful -- when the King is
-        # calm, and only contorts into a scream as it closes for the kill.
-        mk = "plain" if (fi == 0 and intensity < 0.5) else kind
-        _yk_mask(layer, fxp, fyp, fr, vis * vmul, mk)
-    for rn, ba, asp, ph in _YK_EYES:                        # more eyes open when frenzied
-        if math.sin(t * 2.1 + ph) > 0.85 - 1.2 * intensity:
-            ang = ba + t * asp
-            ex = cx + math.cos(ang) * R * 0.7 * rn * grow + fb[0]
-            ey = cy + math.sin(ang) * R * 0.7 * rn * grow + fb[1]
-            _yk_radial(layer, ex, ey, 5, _YK_HOT, 110)
-            pygame.draw.circle(layer, _YK_PIT, (int(ex), int(ey)), 1)
-    # Motion sync: the body LURCHES toward the aim as an arm completes its
-    # stretch -- it visibly hauls itself along (relative to its wake) instead of
-    # just floating. The surge pulses with the arms' grab cycle.
-    arm_speed = 0.5 + 0.55 * intensity
-    surge = R * (0.16 + 0.3 * intensity) * grow * (
+    va = max(0.05, valpha)
+    dark_a = 1.0 - manifest
+    # The PRIMARY mask: one steady face anchored as the "head", turned to track
+    # the player. It is the first thing to exist (a pale mask in the void),
+    # serene while the King is calm, and the scream the chorus erupts around as
+    # it closes -- the same object the whole way, just becoming more real.
+    hx = cx + fb[0] * 1.8
+    hy = cy - R * 0.12 + fb[1] * 1.8
+    pmk = "scream" if intensity >= 0.5 else "plain"
+    pfr = max(7, int(10 * max(0.3, grow)))
+    # Motion sync: it hauls itself toward the aim as an arm completes its
+    # stretch -- but only once it exists; dead still while a void.
+    arm_speed = 0.32 + 0.4 * intensity                      # slow, deliberate reach
+    surge = R * (0.12 + 0.28 * intensity) * grow * manifest * (
         math.exp(-((((t * arm_speed) % 1.0) - 0.68) / 0.15) ** 2)
         + math.exp(-((((t * arm_speed + 0.5) % 1.0) - 0.68) / 0.15) ** 2))
     sxo, syo = int(math.cos(aa) * surge), int(math.sin(aa) * surge)
-    # EXISTENCE crossfade: far away the King is barely real -- a dark void with
-    # dim eyes; the closer it gets the more the screaming light bleeds in and
-    # overtakes the dark. Brightness == how much of it exists in your world.
-    light_a = intensity ** 1.4
-    dark_a = (1.0 - intensity) ** 0.85
+    # --- VOID form (dominant while far): a still dark mass + a faint pale mask.
     if dark_a > 0.02 and grow > 0.1:
         void = pygame.Surface((L, L), pygame.SRCALPHA)
-        _yk_void(void, cx, cy, int(R * max(0.4, grow)), t, fb)
-        void.set_alpha(int(225 * dark_a * max(0.05, valpha)))
-        surf.blit(void, (mcx - cx + sxo, mcy - cy + syo))
-    layer.set_alpha(int(255 * max(0.05, valpha) * light_a))
-    surf.blit(layer, (mcx - cx + sxo, mcy - cy + syo))
-    # Smoke tendrils: faint when calm, fuller when roused (own layer).
-    if agrow > 0.02:
-        tend = pygame.Surface((L, L), pygame.SRCALPHA)
-        for idx, (da, ln) in enumerate([(0.0, R * 2.05), (0.55, R * 1.6), (-0.55, R * 1.6)]):
-            _yk_tendril(tend, cx, cy, aa + da, ln * agrow * (0.7 + 0.5 * intensity),
-                        R * max(0.4, agrow), t, idx)
-        tend.set_alpha(int((55 + 95 * intensity) * max(0.05, valpha)))
-        surf.blit(tend, (mcx - cx + sxo, mcy - cy + syo))
-    # Two MAIN arms LAST: reach, size and pace all ramp with the threat, so it
-    # hauls itself faster and farther the closer it gets.
-    if grow > 0.1:
+        _yk_void(void, cx, cy, int(R * max(0.4, grow)))
+        _yk_mask(void, hx, hy, pfr, 0.55, pmk)              # ashen mask, watching
+        void.set_alpha(int(235 * dark_a * va))
+        surf.blit(void, (mcx - cx, mcy - cy))               # the void doesn't lurch
+    # --- MANIFEST form (blooms in as it closes): light, the mask, the chorus.
+    if manifest > 0.01:
+        if bp < 1.0:
+            _yk_birth_rift(surf, mcx, mcy, R, bp)
+        _yk_glow(layer, cx, cy, R * max(0.18, grow), t)
+        if intensity > 0.6:                                 # roused: white-hot flare
+            _yk_radial(layer, cx, cy, int(R * (0.6 + 0.5 * intensity)), _YK_WHITE,
+                       int(95 * (intensity - 0.6) / 0.4))
+        _yk_mask(layer, hx, hy, pfr, 0.9, pmk)              # the central mask, full
+        nfaces = int(round(manifest * (len(_YK_FACES) - 1)))  # chorus erupts around it
+        for fi in range(1, 1 + nfaces):
+            rn, ba, asp, fr, vsp, vph, kind = _YK_FACES[fi]
+            ang = ba + t * asp
+            rr = rn * (0.9 + 0.1 * math.sin(t * 0.8 + vph))
+            fxp = cx + math.cos(ang) * R * 0.82 * rr * grow + fb[0]
+            fyp = cy + math.sin(ang) * R * 0.95 * rr * grow + fb[1]
+            if kind == "double":
+                vis = max(0.0, min(1.0, (math.sin(t * vsp + vph) - 0.55) / 0.4))
+            else:
+                vis = max(0.0, min(1.0, 0.5 + 0.72 * math.sin(t * vsp + vph)))
+            _yk_mask(layer, fxp, fyp, fr, vis * manifest, kind)
+        layer.set_alpha(int(255 * va * manifest))
+        surf.blit(layer, (mcx - cx + sxo, mcy - cy + syo))
+    # --- Two slow MAIN arms: grow out only as it manifests, hand over hand.
+    if manifest > 0.05 and grow > 0.1:
         arms = pygame.Surface((L, L), pygame.SRCALPHA)
-        reach = R * (1.5 + 1.5 * intensity) * grow
-        ascale = max(1.0, grow * (1.0 + 0.5 * intensity))
+        reach = R * (1.4 + 1.4 * intensity) * grow
+        ascale = max(1.0, grow * (1.0 + 0.4 * intensity))
         _yk_grab_arm(arms, cx, cy, aa - 0.3, reach, t, 0.0, ascale, True, side=-1, speed=arm_speed)
         _yk_grab_arm(arms, cx, cy, aa + 0.3, reach, t, 0.5, ascale, True, side=1, speed=arm_speed)
-        arms.set_alpha(int(235 * max(0.05, valpha)))
+        arms.set_alpha(int(235 * va * manifest))
         surf.blit(arms, (mcx - cx + sxo, mcy - cy + syo))
 
 

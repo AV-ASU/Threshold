@@ -166,6 +166,10 @@ CURSER_SCENES = {"mistlands", "graveyard", "cornfield_maze"}
 
 CURSE_RITUAL_TIME = 3.0        # seconds of held sight to land a curse
 WATCHERS_PER_CURSE = 3         # Watcher cap added per curse level
+# King "existence" range: it's a dark void at/beyond _FAR px from the player and
+# fully manifests (blazing) by _NEAR px -- tune to slide the materialize window.
+KING_THREAT_NEAR = 48.0        # px: fully real / blazing inside this
+KING_THREAT_FAR = 340.0        # px: a dark void at/beyond this
 WATCHER_SPAWN_INTERVAL = 4.0   # seconds between Watcher manifestations
 CULT_REGULARS = 2              # roaming cultists kept per cult scene
 CULT_TOPUP_INTERVAL = 8.0      # seconds between cultist (re)spawns
@@ -2338,7 +2342,8 @@ class Game:
                 king_threat = None
                 if npc.sprite_kind == "yellow_king" and self.player:
                     d = math.hypot(npc.x - self.player.x, npc.y - self.player.y)
-                    king_threat = max(0.15, min(1.0, 1.0 - (d - 48) / 292.0))
+                    span = KING_THREAT_FAR - KING_THREAT_NEAR
+                    king_threat = max(0.15, min(1.0, 1.0 - (d - KING_THREAT_NEAR) / span))
                 draw_npc_sprite(self.screen, sx, sy, npc.sprite_kind,
                                 npc.facing, blink=(i == blink_idx),
                                 birth=getattr(npc, "_birth", None),
