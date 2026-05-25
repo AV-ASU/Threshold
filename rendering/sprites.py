@@ -986,7 +986,7 @@ def _yk_crown(layer, hx, hy, r, R, t, m, lean):
         _yk_spire(layer, bx, byy, ang, slen, R, t, i, m, dk, gold, hot)
 
 
-def _yk_shatter_mask(surf, cx, cy, r, vis, kind, crack, t, R):
+def _yk_shatter_mask(surf, cx, cy, r, vis, kind, crack, t, R, aim=0.0):
     """THE SILHOUETTE: the mask. Intact when calm, but as the King rouses it
     CRACKS and splits into shards that drift apart -- the grasping arms burst
     from the splits and span the gaps, the light blazing through the cracks. A
@@ -1008,9 +1008,10 @@ def _yk_shatter_mask(surf, cx, cy, r, vis, kind, crack, t, R):
     n = 6
     dk, gold, hot = (*_YK_SHADOW, 255), (*_YK_GOLD, 255), (*_YK_HOT, 255)
     alen = r * (0.7 + 1.8 * crack)                       # arms burst from the cracks
-    for i in range(n):
-        gap = i * math.tau / n + 0.25 * math.sin(t * 0.8 + i)
-        _yk_spire(surf, cx, cy, gap, alen, R, t, i, 1.0, dk, gold, hot)
+    for i in range(n):                                   # ...and reach toward the player
+        f = i / (n - 1) - 0.5
+        ang = aim + f * 1.5 + 0.12 * math.sin(t * 0.8 + i)
+        _yk_spire(surf, cx, cy, ang, alen, R, t, i, 1.0, dk, gold, hot)
     far = (r + pad) * 1.7
     off = r * 0.7 * crack                                # shards drift apart
     for i in range(n):
@@ -1170,27 +1171,20 @@ def _draw_king(surf, x, y, facing, t, birth, gait, threat=None):
     if manifest > 0.01:
         if bp < 1.0:
             _yk_birth_rift(surf, mcx, mcy, R, bp)
-        _yk_glow(layer, cx, cy, R * max(0.18, grow), t)
-        if intensity > 0.6:                                 # roused: white-hot flare
-            _yk_radial(layer, cx, cy, int(R * (0.6 + 0.5 * intensity)), _YK_WHITE,
-                       int(70 * (intensity - 0.6) / 0.4))
-        nfaces = int(round(manifest * (len(_YK_FACES) - 1)))  # chorus erupts around it
-        for fi in range(1, 1 + nfaces):
-            rn, ba, asp, fr, vsp, vph, kind = _YK_FACES[fi]
-            ang = ba + t * asp
-            rr = rn * (0.9 + 0.1 * math.sin(t * 0.8 + vph))
-            fxp = cx + math.cos(ang) * R * 0.82 * rr * grow + fb[0]
-            fyp = cy + math.sin(ang) * R * 0.95 * rr * grow + fb[1]
-            if kind == "double":
-                vis = max(0.0, min(1.0, (math.sin(t * vsp + vph) - 0.55) / 0.4))
-            else:
-                vis = max(0.0, min(1.0, 0.5 + 0.72 * math.sin(t * vsp + vph)))
-            # Keep the little masks reading on top of the bright glow, not washed
-            # into it -- floor their opacity up once they're surfacing.
-            _yk_mask(layer, fxp, fyp, fr, min(1.0, (0.45 + 0.55 * vis) * manifest), kind)
+        # Golden light SIZED TO THE MASK, sitting inside it -- so it reads as
+        # light leaking FROM the mask: hidden when whole, blazing through the
+        # cracks as it splits.
+        _yk_glow(layer, hx, hy, max(6, int(pfr * 1.2)), t)
+        if intensity > 0.6:                                 # roused: white-hot core
+            _yk_radial(layer, hx, hy, int(pfr * (0.7 + 0.6 * intensity)), _YK_WHITE,
+                       int(85 * (intensity - 0.6) / 0.4))
+        # THE OTHER mask, directly behind -- a screaming face glimpsed through
+        # the cracks once the front one splits open.
+        _yk_mask(layer, hx, hy, pfr, min(1.0, 0.2 + 0.8 * manifest), "scream")
         # THE MASK -- our silhouette. Intact when calm; as it rouses it cracks
-        # and splits into shards, the grasping arms bursting from the splits.
-        _yk_shatter_mask(layer, hx, hy, pfr, 0.92, pmk, manifest, t, R * max(0.3, grow))
+        # and splits into shards, the grasping arms bursting from the splits and
+        # reaching toward the player.
+        _yk_shatter_mask(layer, hx, hy, pfr, 0.92, pmk, manifest, t, R * max(0.3, grow), aa)
         layer.set_alpha(int(255 * va * manifest))
         surf.blit(layer, (mcx - cx + sxo, mcy - cy + syo))
 
