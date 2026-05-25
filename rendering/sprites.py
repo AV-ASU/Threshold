@@ -639,9 +639,9 @@ _YK_GOLD, _YK_HOT = (236, 204, 64), (252, 226, 120)
 _YK_DK, _YK_DK_HI = (28, 25, 34), (60, 55, 72)
 _YK_BONE = (150, 128, 70)
 _YK_PIT = (10, 8, 12)
-# Warm, gold-tinted mask tones so the masks read as part of the light (drawn
-# translucent + luminous) rather than separate pale objects floating in it.
-_YK_MHI, _YK_MMID, _YK_MLO, _YK_MPIT = (238, 222, 174), (210, 178, 108), (150, 116, 52), (78, 52, 18)
+# PALLID mask tones -- sickly bone, jaundiced, cold against the warm light, so a
+# dead face reads as it surfaces from the glow. Black voids, not warm sockets.
+_YK_MHI, _YK_MMID, _YK_MLO, _YK_MPIT = (226, 224, 196), (172, 174, 132), (98, 100, 64), (12, 12, 10)
 
 
 def _yk_slots():
@@ -652,8 +652,8 @@ def _yk_slots():
     faces, eyes = [], []
     # mask designs: plain, screaming, hollow/gaunt, cracked, and a melted
     # double (two faces fused) that only POPS UP now and then.
-    kinds = ["plain", "scream", "hollow", "plain", "crack", "double",
-             "plain", "scream", "hollow", "double"]
+    kinds = ["scream", "hollow", "scream", "crack", "hollow", "double",
+             "scream", "hollow", "crack", "scream"]
     for k in kinds:
         faces.append((
             r.uniform(0.22, 0.82), r.uniform(0, math.tau), r.uniform(0.30, 0.85),
@@ -738,13 +738,14 @@ def _yk_mask(surf, cx, cy, r, vis, kind):
             pygame.draw.circle(m, lo, (mx, my), r, 1)
         if vis > 0.35 and r >= 3:
             if kind == "hollow":
-                pygame.draw.ellipse(m, pit, (mx - r // 2 - 1, my - r // 3, ew + 2, ew + 3))
-                pygame.draw.ellipse(m, pit, (mx + r // 2 - 1, my - r // 3, ew + 2, ew + 3))
+                pygame.draw.ellipse(m, pit, (mx - r // 2 - 1, my - r // 3, ew + 3, ew + 5))
+                pygame.draw.ellipse(m, pit, (mx + r // 2 - 1, my - r // 3, ew + 3, ew + 5))
                 pygame.draw.line(m, pit, (mx - r // 4, my + r // 3), (mx + r // 4, my + r // 3), 1)
             elif kind == "scream":
-                pygame.draw.circle(m, pit, (mx - r // 2, my - r // 4), ew)
-                pygame.draw.circle(m, pit, (mx + r // 2, my - r // 4), ew)
-                pygame.draw.ellipse(m, pit, (mx - r // 3, my, max(2, 2 * r // 3), max(3, r)))
+                pygame.draw.ellipse(m, pit, (mx - r // 2 - 1, my - r // 3, ew + 2, ew + 4))
+                pygame.draw.ellipse(m, pit, (mx + r // 2 - 1, my - r // 3, ew + 2, ew + 4))
+                pygame.draw.ellipse(m, pit, (mx - 2 * r // 5, my - r // 8,
+                                             max(3, 4 * r // 5), max(4, 5 * r // 4)))
             else:
                 pygame.draw.circle(m, pit, (mx - r // 2, my - r // 4), ew)
                 pygame.draw.circle(m, pit, (mx + r // 2, my - r // 4), ew)
