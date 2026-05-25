@@ -636,8 +636,6 @@ _YK_AIM = [None]                     # smoothed arm-aim angle (swivels to player
 _YK_PRNG = random.Random(99)         # own RNG -> never touches the game's stream
 _YK_T1, _YK_T2, _YK_T3, _YK_T4 = (140, 96, 22), (196, 150, 42), (236, 198, 66), (252, 226, 120)
 _YK_GOLD, _YK_HOT = (236, 204, 64), (252, 226, 120)
-_YK_DK, _YK_DK_HI = (28, 25, 34), (60, 55, 72)
-_YK_BONE = (150, 128, 70)
 _YK_PIT = (10, 8, 12)
 # PALLID mask tones -- sickly bone, jaundiced, cold against the warm light, so a
 # dead face reads as it surfaces from the glow. Black voids, not warm sockets.
@@ -814,46 +812,23 @@ def _yk_birth_rift(surf, cx, cy, R, bp):
         _yk_radial(surf, cx, cy, int(R * (0.4 + 0.95 * flare)), (255, 250, 232), int(100 * flare))
 
 
-def _yk_arm(layer, cx, cy, ang, length, R, t, idx):
-    """A broken arm reaching out of the light: it extends and draws back on its
-    own cycle, reflex elbow, clawing hand."""
-    wob = math.sin(t * 1.9 + idx * 1.3) * 0.14
-    ext = 0.55 + 0.45 * max(0.0, math.sin(t * 1.5 + idx * 0.9))
-    reach = length * ext
-    root = (cx + math.cos(ang) * R * 0.5, cy + math.sin(ang) * R * 0.5)
-    hand = (cx + math.cos(ang + wob) * reach, cy + math.sin(ang + wob) * reach)
-    mx, my = (root[0] + hand[0]) / 2, (root[1] + hand[1]) / 2
-    perp = (-math.sin(ang), math.cos(ang)); k = (R * 0.5) * (1 if idx % 2 else -1)
-    elbow = (mx + perp[0] * k, my + perp[1] * k)
-    pts = [(int(a), int(b)) for a, b in (root, elbow, hand)]
-    w = max(3, int(R * 0.34))
-    pygame.draw.lines(layer, _YK_DK_HI, False, pts, w + 2)
-    pygame.draw.lines(layer, _YK_DK, False, pts, w)
-    ha = math.atan2(hand[1] - elbow[1], hand[0] - elbow[0])
-    hx, hy = hand
-    # A palm knot, then four thick fingers that bend once into a grasp (the
-    # bend tightens as the arm reaches); only a short claw juts past each tip
-    # in pale bone, so the hand reads as a deliberate talon, not scribble.
-    pygame.draw.circle(layer, _YK_DK_HI, (int(hx), int(hy)), max(2, w // 2 + 1))
-    pygame.draw.circle(layer, _YK_DK, (int(hx), int(hy)), max(2, w // 2))
-    flen = R * 0.46
-    curl = 0.30 + 0.45 * max(0.0, math.sin(t * 1.5 + idx * 0.9))   # grasp cycle
-    for fa, fl in [(-46, 0.78), (-16, 1.0), (16, 1.0), (46, 0.82)]:
-        a2 = ha + math.radians(fa)
-        knu = (hx + math.cos(a2) * flen * fl * 0.6, hy + math.sin(a2) * flen * fl * 0.6)
-        a3 = a2 + (-1 if fa < 0 else 1) * curl                    # bend the finger
-        tip = (knu[0] + math.cos(a3) * flen * fl * 0.6,
-               knu[1] + math.sin(a3) * flen * fl * 0.6)
-        pygame.draw.lines(layer, _YK_DK, False,
-                          [(int(hx), int(hy)), (int(knu[0]), int(knu[1])),
-                           (int(tip[0]), int(tip[1]))], 3)
-        claw = (tip[0] + math.cos(a3) * 3.0, tip[1] + math.sin(a3) * 3.0)
-        pygame.draw.line(layer, _YK_BONE, (int(tip[0]), int(tip[1])),
-                         (int(claw[0]), int(claw[1])), 2)
-        try:
-            layer.set_at((int(claw[0]), int(claw[1])), _YK_MHI)
-        except (IndexError, ValueError):
-            pass
+def _yk_tendril(layer, cx, cy, ang, length, R, t, idx):
+    """A wisp of gold light reaching out of the mass -- no hard limb, just a
+    curl of motes that lengthens and recoils on its own slow cycle, wavering
+    and fading to nothing at the tip."""
+    ext = 0.55 + 0.45 * (0.5 + 0.5 * math.sin(t * 1.3 + idx * 0.9))
+    length *= ext
+    if length < 2:
+        return
+    root = (cx + math.cos(ang) * R * 0.4, cy + math.sin(ang) * R * 0.4)
+    n = 12
+    for i in range(n):
+        f = i / (n - 1)
+        a = ang + math.sin(t * 2.1 + idx * 1.3 + f * 4.0) * 0.45 * f
+        px = root[0] + math.cos(a) * length * f
+        py = root[1] + math.sin(a) * length * f
+        rr = max(1, int(R * 0.22 * (1 - 0.7 * f)))
+        _yk_radial(layer, px, py, rr, _YK_GOLD, int(130 * (1 - f)))
 
 
 def _draw_king(surf, x, y, facing, t, birth, gait):
@@ -973,14 +948,15 @@ def _draw_king(surf, x, y, facing, t, birth, gait):
             pygame.draw.circle(layer, _YK_PIT, (int(ex), int(ey)), 1)
     layer.set_alpha(int(255 * max(0.05, valpha)))
     surf.blit(layer, (mcx - cx, mcy - cy))
-    # Arms LAST (own layer over the wake + glow); they erupt in the back half.
+    # Tendrils LAST (own layer over the wake + glow); they reach out in the
+    # back half. No hard limbs -- only wisps of light groping from the mass.
     if agrow > 0.02:
-        arml = pygame.Surface((L, L), pygame.SRCALPHA)
+        tend = pygame.Surface((L, L), pygame.SRCALPHA)
         for idx, (da, ln) in enumerate([(0.0, R * 2.05), (0.45, R * 1.7), (-0.45, R * 1.7),
                                         (0.95, R * 1.45), (-0.95, R * 1.45)]):
-            _yk_arm(arml, cx, cy, aa + da, ln * agrow, R * max(0.4, agrow), t, idx)
-        arml.set_alpha(int(255 * max(0.05, valpha)))
-        surf.blit(arml, (mcx - cx, mcy - cy))
+            _yk_tendril(tend, cx, cy, aa + da, ln * agrow, R * max(0.4, agrow), t, idx)
+        tend.set_alpha(int(255 * max(0.05, valpha)))
+        surf.blit(tend, (mcx - cx, mcy - cy))
 
 
 # ---------------------------------------------------------------------------
