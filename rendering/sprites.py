@@ -923,6 +923,26 @@ def _yk_tendril(layer, cx, cy, ang, length, R, t, idx):
                 _yk_radial(layer, pts[i][0], pts[i][1], rr, _YK_GOLD, int(120 * (1 - f)))
 
 
+def _yk_void(layer, cx, cy, R, t, fb):
+    """The barely-existing form, seen when the King is still far: a void darker
+    than the dark, edged in a cold shimmer, with a pair of dim eyes -- the first
+    of it to bleed into the world. Everything else exists only once it closes."""
+    _yk_radial(layer, cx, cy, int(R * 1.35), (46, 48, 70), 34)   # cold shimmer rim
+    subs = [(0, 0), (-0.4, -0.18), (0.4, -0.12), (-0.12, 0.4),
+            (0.22, 0.32), (-0.3, 0.2), (0.12, -0.34)]
+    sw = t * 0.6
+    ca, sa = math.cos(sw), math.sin(sw)
+    for ox, oy in subs:
+        rx, ry = ox * ca - oy * sa, ox * sa + oy * ca
+        pygame.draw.circle(layer, (8, 7, 12),
+                           (int(cx + rx * R * 0.6), int(cy + ry * R * 0.9)), int(R * 0.58), 0)
+    for sgn in (-1, 1):                                          # dim eyes, the first to exist
+        ex = int(cx + sgn * R * 0.32 + fb[0])
+        ey = int(cy - R * 0.08 + fb[1])
+        _yk_radial(layer, ex, ey, 4, _YK_HOT, 70)
+        pygame.draw.circle(layer, _YK_PIT, (ex, ey), 1)
+
+
 def _draw_king(surf, x, y, facing, t, birth, gait, threat=None):
     """THE KING IN YELLOW (see header). `birth` (0..1, already de-None'd by the
     dispatch) drives the rift eruption; `t` animates; `gait` is accepted but the
@@ -996,7 +1016,7 @@ def _draw_king(surf, x, y, facing, t, birth, gait, threat=None):
             continue
         p["x"] += p["vx"] * dt
         p["y"] += p["vy"] * dt
-        a = 1.0 - fr
+        a = (1.0 - fr) * (0.3 + 0.7 * intensity)     # wake exists with the King
         if p["kind"] == "orb":
             _yk_orb(surf, p["x"], p["y"], p["r"] * (1 - 0.22 * fr), a, p["seed"], t)
         else:
@@ -1062,7 +1082,17 @@ def _draw_king(surf, x, y, facing, t, birth, gait, threat=None):
         math.exp(-((((t * arm_speed) % 1.0) - 0.68) / 0.15) ** 2)
         + math.exp(-((((t * arm_speed + 0.5) % 1.0) - 0.68) / 0.15) ** 2))
     sxo, syo = int(math.cos(aa) * surge), int(math.sin(aa) * surge)
-    layer.set_alpha(int(255 * max(0.05, valpha)))
+    # EXISTENCE crossfade: far away the King is barely real -- a dark void with
+    # dim eyes; the closer it gets the more the screaming light bleeds in and
+    # overtakes the dark. Brightness == how much of it exists in your world.
+    light_a = intensity ** 1.4
+    dark_a = (1.0 - intensity) ** 0.85
+    if dark_a > 0.02 and grow > 0.1:
+        void = pygame.Surface((L, L), pygame.SRCALPHA)
+        _yk_void(void, cx, cy, int(R * max(0.4, grow)), t, fb)
+        void.set_alpha(int(225 * dark_a * max(0.05, valpha)))
+        surf.blit(void, (mcx - cx + sxo, mcy - cy + syo))
+    layer.set_alpha(int(255 * max(0.05, valpha) * light_a))
     surf.blit(layer, (mcx - cx + sxo, mcy - cy + syo))
     # Smoke tendrils: faint when calm, fuller when roused (own layer).
     if agrow > 0.02:
