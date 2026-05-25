@@ -727,7 +727,7 @@ def _yk_face(m, mx, my, r, expr, detail):
     pygame.draw.line(m, lo, (int(mx + r * 0.7), int(my - r * 0.45)), (int(mx + r * 0.05), int(my - r * 0.30)), bw)
     pygame.draw.line(m, lo, (int(mx), int(my - r * 0.1)), (int(mx), int(my + r * 0.25)), 1)
     pygame.draw.line(m, hi, (int(mx - 1), int(my - r * 0.1)), (int(mx - 1), int(my + r * 0.2)), 1)
-    if expr in ("scream", "gaunt"):
+    if expr in ("scream", "gaunt", "vacant", "wail"):    # vacuous void sockets
         for ex, ey in (eyl, eyr):
             pygame.draw.ellipse(m, pit, (int(ex - ew), int(ey - ew), 2 * ew, int(2.2 * ew)))
     else:
@@ -736,8 +736,12 @@ def _yk_face(m, mx, my, r, expr, detail):
         if expr == "weep":
             for ex, ey in (eyl, eyr):
                 pygame.draw.line(m, hi, (int(ex), int(ey + 1)), (int(ex), int(my + r * 0.6)), 1)
+    if expr == "wail":                                   # black tears down the mask
+        for ex, ey in (eyl, eyr):
+            pygame.draw.line(m, pit, (int(ex), int(ey + ew)),
+                             (int(ex + r * 0.06), int(my + r * 0.98)), max(1, r // 5))
     mym = my + r * 0.55
-    if expr == "scream":
+    if expr in ("scream", "wail"):
         pygame.draw.ellipse(m, pit, (int(mx - r * 0.32), int(mym - r * 0.1),
                                      max(2, int(r * 0.64)), max(3, int(r * 0.85))))
     elif expr == "gaunt":
@@ -998,7 +1002,9 @@ def _draw_king(surf, x, y, facing, t, birth, gait, threat=None):
     # it closes -- the same object the whole way, just becoming more real.
     hx = cx + fb[0] * 1.8
     hy = cy - R * 0.12 + fb[1] * 1.8
-    pmk = "scream" if intensity >= 0.5 else "plain"
+    # Vacuous void eyes throughout; serene mouth while calm, and a black-weeping
+    # wail once it rouses to manifest.
+    pmk = "wail" if intensity >= 0.5 else "vacant"
     pfr = max(7, int(10 * max(0.3, grow)))
     # Motion sync: it hauls itself toward the aim as an arm completes its
     # stretch -- but only once it exists; dead still while a void.

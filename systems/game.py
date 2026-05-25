@@ -2343,7 +2343,11 @@ class Game:
                 if npc.sprite_kind == "yellow_king" and self.player:
                     d = math.hypot(npc.x - self.player.x, npc.y - self.player.y)
                     span = KING_THREAT_FAR - KING_THREAT_NEAR
-                    king_threat = max(0.15, min(1.0, 1.0 - (d - KING_THREAT_NEAR) / span))
+                    prox = max(0.0, min(1.0, 1.0 - (d - KING_THREAT_NEAR) / span))
+                    # Exposure feeds existence too: a fully-seen King bleeds
+                    # toward real even at range; proximity alone still maxes it.
+                    vist = max(0.0, min(1.0, (self.visibility - 0.9) / 0.1))
+                    king_threat = max(0.15, min(1.0, max(prox, 0.5 * vist + 0.5 * prox * vist)))
                 draw_npc_sprite(self.screen, sx, sy, npc.sprite_kind,
                                 npc.facing, blink=(i == blink_idx),
                                 birth=getattr(npc, "_birth", None),
