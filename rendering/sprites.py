@@ -730,9 +730,10 @@ def _yk_face(m, mx, my, r, expr, detail):
     if expr in ("scream", "gaunt", "vacant", "wail"):    # vacuous void sockets
         if expr in ("vacant", "wail"):                   # deep ROUND sockets (not lenses),
             sr = max(2, int(ew * 1.05))                  # clearly separate, each holding a
-            for ex, ey in (eyl, eyr):                    # tiny golden pinpoint of a gaze
-                pygame.draw.circle(m, pit, (int(ex), int(ey)), sr)
-                _yk_radial(m, ex, ey, 2, _YK_HOT, 140)
+            for ex, ey in (eyl, eyr):                    # golden gaze: a single pixel while
+                pygame.draw.circle(m, pit, (int(ex), int(ey)), sr)   # calm, flaring once angry
+                if expr == "wail":
+                    _yk_radial(m, ex, ey, 2, _YK_HOT, 150)
                 try:
                     m.set_at((int(ex), int(ey)), _YK_HOT)
                 except (IndexError, ValueError):
@@ -1057,7 +1058,6 @@ def _draw_king(surf, x, y, facing, t, birth, gait, threat=None):
         if intensity > 0.6:                                 # roused: white-hot flare
             _yk_radial(layer, cx, cy, int(R * (0.6 + 0.5 * intensity)), _YK_WHITE,
                        int(95 * (intensity - 0.6) / 0.4))
-        _yk_mask(layer, hx, hy, pfr, 0.9, pmk)              # the central mask, full
         nfaces = int(round(manifest * (len(_YK_FACES) - 1)))  # chorus erupts around it
         for fi in range(1, 1 + nfaces):
             rn, ba, asp, fr, vsp, vph, kind = _YK_FACES[fi]
@@ -1070,6 +1070,7 @@ def _draw_king(surf, x, y, facing, t, birth, gait, threat=None):
             else:
                 vis = max(0.0, min(1.0, 0.5 + 0.72 * math.sin(t * vsp + vph)))
             _yk_mask(layer, fxp, fyp, fr, vis * manifest, kind)
+        _yk_mask(layer, hx, hy, pfr, 0.9, pmk)              # central mask ON TOP of the chorus
         layer.set_alpha(int(255 * va * manifest))
         surf.blit(layer, (mcx - cx + sxo, mcy - cy + syo))
 
