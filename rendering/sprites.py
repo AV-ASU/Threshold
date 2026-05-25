@@ -815,29 +815,35 @@ def _yk_birth_rift(surf, cx, cy, R, bp):
 
 
 def _yk_tendril(layer, cx, cy, ang, length, R, t, idx):
-    """A wispy, smoky dark tendril -- a few thin strands curling out of the mass
-    with a traveling lash-wave, splitting and fraying as they taper to nothing.
-    Thin and faintly lit so they read as drifting smoke, never thick limbs."""
+    """Wispy smoky strands shot through with the original gold light: a few thin
+    dark strands curl out with a traveling lash-wave, splitting and fraying,
+    while glowing gold motes drift along the core -- smoke lit from within."""
     ext = 0.6 + 0.4 * (0.5 + 0.5 * math.sin(t * 1.5 + idx * 0.9))
     length *= ext * 1.35                                  # long, searching reach
     if length < 2:
         return
     root = (cx + math.cos(ang) * R * 0.42, cy + math.sin(ang) * R * 0.42)
     n = 18
-    for phase, sep in [(0.0, 0.0), (0.85, 0.18), (-0.85, -0.18)]:
+    for si, (phase, sep) in enumerate([(0.0, 0.0), (0.85, 0.18), (-0.85, -0.18)]):
         pts = []
         for i in range(n):
             f = i / (n - 1)
             a = ang + math.sin(t * 2.4 + idx * 1.5 + phase - f * 4.5) * 0.6 * f
             perp = (-math.sin(a), math.cos(a))
             o = sep * R * (1 - f)                          # strands split near root
-            pts.append((int(root[0] + math.cos(a) * length * f + perp[0] * o),
-                        int(root[1] + math.sin(a) * length * f + perp[1] * o)))
+            pts.append((root[0] + math.cos(a) * length * f + perp[0] * o,
+                        root[1] + math.sin(a) * length * f + perp[1] * o))
+        ip = [(int(px), int(py)) for px, py in pts]
         for i in range(n - 1):
             f = i / (n - 1)
             col = _YK_SHADOW if f < 0.15 else _YK_SHADOW_HI
             w = 2 if f < 0.18 else 1
-            pygame.draw.line(layer, col, pts[i], pts[i + 1], w)
+            pygame.draw.line(layer, col, ip[i], ip[i + 1], w)
+        if si == 0:                                        # gold light along the core
+            for i in range(n):
+                f = i / (n - 1)
+                rr = max(1, int(R * 0.2 * (1 - 0.7 * f)))
+                _yk_radial(layer, pts[i][0], pts[i][1], rr, _YK_GOLD, int(120 * (1 - f)))
 
 
 def _draw_king(surf, x, y, facing, t, birth, gait):
