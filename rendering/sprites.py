@@ -690,8 +690,10 @@ def _yk_glow(layer, cx, cy, R, t):
             (0.22, 0.32), (-0.3, 0.2), (0.12, -0.34)]
     sw = t * 0.6
     ca, sa = math.cos(sw), math.sin(sw)
-    # bright gold -> white body, drawn opaque so it covers the centre.
-    for col, scl, grow in [(_YK_T3, 1.06, 3), (_YK_PALE, 0.78, 1), (_YK_WHITE, 0.5, 0), (_YK_WHITE, 0.28, 0)]:
+    # gold body, drawn opaque so it covers the centre. It SMOULDERS gold/pale
+    # rather than blazing white -- the white-hot stab is added only on the lunge
+    # (the flare punch in _draw_king), so darkness keeps the upper hand.
+    for col, scl, grow in [(_YK_T3, 1.06, 3), (_YK_T3, 0.74, 1), (_YK_PALE, 0.36, 0)]:
         for ox, oy in subs:
             rx, ry = ox * ca - oy * sa, ox * sa + oy * ca
             pygame.draw.circle(layer, col,
@@ -700,8 +702,8 @@ def _yk_glow(layer, cx, cy, R, t):
     for k in range(4):
         a = sw * 1.6 + k * 1.57
         _yk_radial(layer, cx + math.cos(a) * R * 0.42, cy + math.sin(a) * R * 0.42,
-                   int(R * 0.42), _YK_WHITE, 70)
-    _yk_radial(layer, cx, cy - 2, int(R * 0.55), _YK_WHITE, 78)
+                   int(R * 0.36), _YK_GOLD, 34)
+    _yk_radial(layer, cx, cy - 2, int(R * 0.42), _YK_PALE, 30)
 
 
 # Slot/orb kind vocabulary -> facial expression. The faces read as people:
@@ -963,7 +965,9 @@ def _draw_king(surf, x, y, facing, t, birth, gait, threat=None):
     # forms -- the exact reverse of how it shatters when it gets mad.
     birth_vis = grow * (1.0 - grow) * 4.0                    # visible while it assembles
     ignite = max(0.0, (0.26 - bp) / 0.26)                   # a quick ignition flash, up front
-    show = min(1.0, manifest + 0.9 * birth_vis + ignite)    # existence: threat OR birth
+    # Birth glow is kept low so the loud orb-cloud recedes and the quiet
+    # shard-assembly of the mask is what reads -- a coalescing, not a firework.
+    show = min(1.0, manifest + 0.5 * birth_vis + ignite)    # existence: threat OR birth
     # Birth runs the shatter in REVERSE: shards converge into the WHOLE mask,
     # always resolving to the calm intact face regardless of threat. Only once
     # fully formed does the threat actually crack it (and bring out the arms).
@@ -988,13 +992,14 @@ def _draw_king(surf, x, y, facing, t, birth, gait, threat=None):
             ang = _YK_PRNG.uniform(0, math.tau)
             dist = _YK_PRNG.uniform(R * 1.6, R * 3.0)
             spd = _YK_PRNG.uniform(50, 130)
-            orb = _YK_PRNG.random() < 0.4
+            orb = _YK_PRNG.random() < 0.10          # mostly faint motes, few orbs
             _YK_PARTS.append({
                 "kind": "orb" if orb else "mote", "seed": _YK_PRNG.randint(0, 999),
+                "birth": True,                       # coalescence -> dim, faceless
                 "x": mcx + math.cos(ang) * dist, "y": mcy + math.sin(ang) * dist,
                 "vx": -math.cos(ang) * spd, "vy": -math.sin(ang) * spd,   # toward the mask
                 "age": 0.0, "life": dist / spd,                           # arrives ~as it fades
-                "r": _YK_PRNG.uniform(6, 12) if orb else _YK_PRNG.uniform(2, 4)})
+                "r": _YK_PRNG.uniform(5, 9) if orb else _YK_PRNG.uniform(2, 4)})
     disp = math.hypot(mcx - _YK_TRAIL[-1][0], mcy - _YK_TRAIL[-1][1]) if _YK_TRAIL else 0.0
     _YK_TRAIL.append((mcx, mcy, t))
     _YK_TRAIL = _YK_TRAIL[-5:]
@@ -1036,14 +1041,17 @@ def _draw_king(surf, x, y, facing, t, birth, gait, threat=None):
         if a <= 0.01:
             continue
         if p["kind"] == "orb":
-            _yk_orb_glow(surf, p["x"], p["y"], p["r"] * (1 - 0.22 * fr), a)
+            oa = a * 0.4 if p.get("birth") else a            # birth coalescence stays dim
+            _yk_orb_glow(surf, p["x"], p["y"], p["r"] * (1 - 0.22 * fr), oa)
         else:
             mr = max(2, p["r"] * (1 - 0.4 * fr))
-            _yk_radial(surf, p["x"], p["y"], int(mr * 2.6), _YK_T1, int(60 * a))  # orange glow
-            _yk_radial(surf, p["x"], p["y"], mr, _YK_GOLD, int(150 * a))
-    # ...Pass 2: then every orb's masks on top, so no later glow buries them.
+            ma = a * 0.6 if p.get("birth") else a
+            _yk_radial(surf, p["x"], p["y"], int(mr * 2.6), _YK_T1, int(60 * ma))  # orange glow
+            _yk_radial(surf, p["x"], p["y"], mr, _YK_GOLD, int(150 * ma))
+    # ...Pass 2: then every orb's masks on top, so no later glow buries them. Birth
+    # orbs stay FACELESS -- the birth is a quiet coalescence, not a skull-storm.
     for p, fr, a in keep:
-        if p["kind"] == "orb" and a > 0.04:
+        if p["kind"] == "orb" and a > 0.04 and not p.get("birth"):
             _yk_orb_faces(surf, p["x"], p["y"], p["r"] * (1 - 0.22 * fr), a, p["seed"], t)
     # Faint floating shadow on the ground, far below the mass.
     sh = pygame.Surface((40, 12), pygame.SRCALPHA)
@@ -1077,19 +1085,24 @@ def _draw_king(surf, x, y, facing, t, birth, gait, threat=None):
     # Motion sync: it hauls itself toward the aim as an arm completes its
     # stretch -- but only once it exists; dead still while a void.
     arm_speed = 0.32 + 0.4 * intensity                      # slow, deliberate reach
-    surge = R * (0.12 + 0.28 * intensity) * grow * manifest * (
-        math.exp(-((((t * arm_speed) % 1.0) - 0.68) / 0.15) ** 2)
-        + math.exp(-((((t * arm_speed + 0.5) % 1.0) - 0.68) / 0.15) ** 2))
+    lunge_env = (math.exp(-((((t * arm_speed) % 1.0) - 0.68) / 0.15) ** 2)
+                 + math.exp(-((((t * arm_speed + 0.5) % 1.0) - 0.68) / 0.15) ** 2))
+    surge = R * (0.12 + 0.28 * intensity) * grow * manifest * lunge_env
     sxo, syo = int(math.cos(aa) * surge), int(math.sin(aa) * surge)
+    # A RARE, narrow white-hot stab -- one slow pulse, near-dark between, so full
+    # brightness is a brief punctuation rather than the resting state.
+    fph = (t * (0.16 + 0.12 * intensity)) % 1.0
+    flare = math.exp(-((fph - 0.5) / 0.045) ** 2)
     # --- VOID form (dominant while far): a still dark mass + a faint pale mask.
     if dark_a > 0.02 and grow > 0.1:
         void = pygame.Surface((L, L), pygame.SRCALPHA)
         _yk_void(void, cx, cy, int(R * max(0.4, grow)))
-        # The ashen mask is WITHHELD while far: a faint blank pale oval. Its
-        # features (sockets, mouth, crack) only resolve as he nears -- the vis
-        # climbs past _yk_mask's detail gate (0.35) right as the bloom begins,
-        # so you spend the approach unsure whether you even saw a face.
-        vmask = 0.12 + 0.42 * intensity
+        # The ashen mask is THE thing watching from the void -- present and
+        # readable the whole way (hollow eyes, no scream), just fainter far off
+        # and firmer as he nears. Its MOUTH is withheld (mouth=False): a calm,
+        # vacant, watching stare, never a shriek while he's still a void. The
+        # scream is held for the break, when the mask actually cracks open.
+        vmask = 0.6 + 0.18 * intensity
         _yk_mask(void, hx, hy, pfr, vmask, pmk, mouth=False)  # ashen mask, watching
         void.set_alpha(int(235 * dark_a * va))
         surf.blit(void, (mcx - cx, mcy - cy))               # the void doesn't lurch
@@ -1102,10 +1115,13 @@ def _draw_king(surf, x, y, facing, t, birth, gait, threat=None):
         # Birth ignition: a mask-scale white flash up front, before it assembles.
         if ignite > 0.02:
             _yk_radial(layer, hx, hy, int(pfr * (1.0 + 0.7 * ignite)),
-                       _YK_WHITE, int(170 * ignite))
-        if intensity > 0.6:                                 # roused: white-hot core
-            _yk_radial(layer, hx, hy, int(pfr * (0.7 + 0.6 * intensity)), _YK_WHITE,
-                       int(85 * (intensity - 0.6) / 0.4))
+                       _YK_WHITE, int(110 * ignite))
+        # The white-hot core is a brief PUNCTUATION, not a constant glare: it
+        # stabs only as he lunges (the same envelope that hauls the arms), so
+        # the body mostly smoulders gold and full brightness stays rare.
+        if intensity > 0.6 and flare > 0.04:
+            _yk_radial(layer, hx, hy, int(pfr * (0.55 + 0.45 * intensity)), _YK_WHITE,
+                       int(78 * (intensity - 0.6) / 0.4 * flare))
         # THE OTHER mask, directly behind -- a screaming face glimpsed through
         # the cracks once the front one splits open. Withheld until the cracks
         # actually open, so the scream is a reveal, not an ever-present chorus.
