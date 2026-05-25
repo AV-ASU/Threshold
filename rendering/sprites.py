@@ -819,12 +819,12 @@ def _yk_tendril(layer, cx, cy, ang, length, R, t, idx):
     dark strands curl out with a traveling lash-wave, splitting and fraying,
     while glowing gold motes drift along the core -- smoke lit from within."""
     ext = 0.6 + 0.4 * (0.5 + 0.5 * math.sin(t * 1.5 + idx * 0.9))
-    length *= ext * 1.35                                  # long, searching reach
+    length *= ext * 0.8                                   # short, smoke-like reach
     if length < 2:
         return
     root = (cx + math.cos(ang) * R * 0.42, cy + math.sin(ang) * R * 0.42)
-    n = 18
-    for si, (phase, sep) in enumerate([(0.0, 0.0), (0.85, 0.18), (-0.85, -0.18)]):
+    n = 14
+    for si, (phase, sep) in enumerate([(0.0, 0.0), (0.85, 0.16)]):
         pts = []
         for i in range(n):
             f = i / (n - 1)
@@ -971,7 +971,7 @@ def _draw_king(surf, x, y, facing, t, birth, gait):
         for idx, (da, ln) in enumerate([(0.0, R * 2.05), (0.45, R * 1.7), (-0.45, R * 1.7),
                                         (0.95, R * 1.45), (-0.95, R * 1.45)]):
             _yk_tendril(tend, cx, cy, aa + da, ln * agrow, R * max(0.4, agrow), t, idx)
-        tend.set_alpha(int(255 * max(0.05, valpha)))
+        tend.set_alpha(int(140 * max(0.05, valpha)))      # semi-transparent, like smoke
         surf.blit(tend, (mcx - cx, mcy - cy))
 
 
