@@ -110,14 +110,12 @@ class Audio:                        #Starting screen needs music, something simp
         # Trespass alarm: a long ringing brass-bell tone. Used by
         # eye-cameras flagged alarm=True (church, sheriff's office).
         self.sfx["alarm_bell"]  = g(420, 1200, 0.30, "sine", attack_ms=8, decay_ms=1100, vibrato=3)
-        # A high, grating shriek -- the Brimley bank's danger cue when
-        # the King is about to be drawn (it replaced the old text
-        # warning). Sawtooth in the scream register, fast vibrato + noise
-        # for the raw edge, sharp on and a hard fade. NOTE: synthesized
-        # blind (no audio device in the build env) -- tune freq / vibrato
-        # / noise_mix / duration by ear; it must read as alarm and stay
-        # distinct from the King's own yk_tone.
-        self.sfx["screech"]     = g(1500, 480, 0.40, "saw", attack_ms=4, decay_ms=420, vibrato=12, noise_mix=0.40)
+        # The Brimley bank's danger cue: a long, low, anguished man's
+        # yell -- ~5s of a gut scream of deep pain, as the King is drawn.
+        # Custom vocal synth (see _build_man_scream). NOTE: synthesized
+        # blind (no audio device here); audition + tune it with
+        # tools/render_audio.py.
+        self.sfx["scream"]      = self._build_man_scream()
         # Depths ambient layers: a low droning chant + a wet exhale.
         # Played at intervals that tighten as the dread aperture
         # closes, so the rite gets louder the closer the player is
@@ -312,6 +310,96 @@ class Audio:                        #Starting screen needs music, something simp
             v = (noise + sine) * env * tail
             smooth2 = 0.85 * smooth2 + 0.15 * v
             sample = int(smooth2 * vol * 32767)
+            sample = max(-32768, min(32767, sample))
+            buf[i * 2] = sample & 0xFF
+            buf[i * 2 + 1] = (sample >> 8) & 0xFF
+        stereo = bytearray(n * 4)
+        for i in range(n):
+            stereo[i * 4]     = buf[i * 2]
+            stereo[i * 4 + 1] = buf[i * 2 + 1]
+            stereo[i * 4 + 2] = buf[i * 2]
+            stereo[i * 4 + 3] = buf[i * 2 + 1]
+        return pygame.mixer.Sound(buffer=bytes(stereo))
+
+    def _build_man_scream(self, duration_ms=4800, vol=0.55):
+        """A long, low, anguished man's yell -- a gut scream of deep pain,
+        the Brimley bank's danger cue as the King is drawn. Subtractive
+        vocal synth: a saw 'glottal' buzz -- a low fundamental that swells
+        in, holds with a strained tremor, then cracks and sags as the
+        breath fails -- driven through two resonant formant band-passes
+        (an open 'aagh' vowel), with a sub-octave vocal-fry creak, rising
+        breath rasp, and a hard clip for grit. Subtractive rather than
+        additive so it's cheap to build at startup AND reads as a voice,
+        not a buzzer. Synthesized blind -- audition + tune with
+        tools/render_audio.py. Knobs: duration_ms, the f0 contour, and the
+        formant centres / Q below."""
+        sr = 22050
+        n = int(sr * duration_ms / 1000)
+        buf = bytearray(n * 2)
+        two_pi = 2 * math.pi
+        rng = random.Random(7)
+
+        def _bandpass(fc, q):
+            # RBJ constant-skirt band-pass coefficients (normalised by a0).
+            w0 = two_pi * fc / sr
+            alpha = math.sin(w0) / (2.0 * q)
+            a0 = 1.0 + alpha
+            return (alpha / a0, -alpha / a0,
+                    (-2.0 * math.cos(w0)) / a0, (1.0 - alpha) / a0)
+        # Two vowel formants for an open 'ah': F1 ~650, F2 ~1080 Hz.
+        f1b0, f1b2, f1a1, f1a2 = _bandpass(650.0, 5.0)
+        f2b0, f2b2, f2a1, f2a2 = _bandpass(1080.0, 7.0)
+        x1 = x2 = 0.0
+        y1a = y2a = 0.0
+        y1b = y2b = 0.0
+        phase = 0.0
+        fry_phase = 0.0
+        smooth = 0.0
+        for i in range(n):
+            t = i / sr
+            p = i / n
+            # Pitch contour (low throughout -- a man's yell, not a
+            # shriek): swell from the gut -> strained hold -> crack -> a
+            # failing sag as the breath runs out.
+            if p < 0.10:
+                f0 = 70.0 + 80.0 * (p / 0.10)
+            elif p < 0.58:
+                f0 = 165.0 + 10.0 * math.sin(two_pi * 0.7 * t)
+            elif p < 0.82:
+                f0 = 160.0 - 60.0 * ((p - 0.58) / 0.24)
+            else:
+                f0 = 100.0 - 36.0 * ((p - 0.82) / 0.18)
+            # Strained tremor, deepening + jittered so it isn't a warble.
+            f0 *= 1.0 + (0.03 + 0.05 * p) * math.sin(two_pi * 5.5 * t
+                                                     + 0.4 * smooth)
+            phase += two_pi * f0 / sr
+            # Glottal source: a saw (full harmonic spectrum, O(1)) plus a
+            # sub-octave fry creak and breath rasp that rise as it fails.
+            frac = phase / two_pi
+            saw = 2.0 * (frac - math.floor(frac)) - 1.0
+            fry_phase += two_pi * (f0 * 0.5) / sr
+            smooth = 0.9 * smooth + 0.1 * rng.uniform(-1, 1)
+            src = (saw * 0.8
+                   + math.sin(fry_phase) * (0.06 + 0.22 * p)
+                   + smooth * (0.10 + 0.5 * p * p))
+            # Two formant band-passes carve the vowel out of the buzz.
+            ya = f1b0 * src + f1b2 * x2 - f1a1 * y1a - f1a2 * y2a
+            yb = f2b0 * src + f2b2 * x2 - f2a1 * y1b - f2a2 * y2b
+            x2 = x1; x1 = src
+            y2a = y1a; y1a = ya
+            y2b = y1b; y1b = yb
+            voiced = ya + 0.7 * yb + 0.22 * src
+            # Envelope: swell in, ragged sustain, fade as the breath goes.
+            if p < 0.07:
+                env = p / 0.07
+            elif p > 0.82:
+                env = max(0.0, (1.0 - p) / 0.18)
+            else:
+                env = 1.0
+            env *= (0.82 + 0.18 * (0.5 + 0.5 * math.sin(two_pi * 7.3 * t))
+                    + 0.08 * rng.uniform(-1, 1))
+            v = max(-1.0, min(1.0, voiced * env))      # hard clip = grit
+            sample = int(v * vol * 32767)
             sample = max(-32768, min(32767, sample))
             buf[i * 2] = sample & 0xFF
             buf[i * 2 + 1] = (sample >> 8) & 0xFF

@@ -1104,17 +1104,17 @@ def _mistlands_ambient(game, scene, dt):
     scene.open_exposure = EXPOSE_RATE * toll
     if toll <= 0 or getattr(p, "hidden", None):
         return
-    # Re-arm the danger shriek once you've cooled off (hysteresis, so it
+    # Re-arm the danger cue once you've cooled off (hysteresis, so it
     # doesn't chatter on small fluctuations around the threshold).
     if game.visibility < 0.6:
-        scene._screeched = False
+        scene._screamed = False
     # Danger cue: the instant you're seen enough that the King is near,
-    # a single grating screech -- no text, the sound IS the warning.
-    # King arriving is death; the shriek is the cue to break for the corn.
+    # a long, low gut-scream -- no text, the sound IS the warning. King
+    # arriving is death; the yell is the cue to break for the corn.
     if game.visibility >= 0.8:
-        if not getattr(scene, "_screeched", False):
-            scene._screeched = True
-            game.audio.play("screech", 0.85)
+        if not getattr(scene, "_screamed", False):
+            scene._screamed = True
+            game.audio.play("scream", 0.9)
         return
     # Below the warning band: a sparse prickle of being watched.
     scene._amb_t = getattr(scene, "_amb_t", 6.0) + dt
