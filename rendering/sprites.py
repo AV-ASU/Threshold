@@ -779,9 +779,48 @@ def _yk_mask(surf, cx, cy, r, vis, kind):
     surf.blit(m, (cx - mx, cy - my))
 
 
+def _yk_grab_arm(surf, cx, cy, ang, reach, t, phase, scale, lit, alpha=255):
+    """One arm hauling at space: a dark, bone-tipped limb (shoulder, reflex
+    elbow, grabbing hand) that reaches out and claws back on a grab-pull cycle
+    -- it flings open at full reach, then clenches and drags inward."""
+    cyc = t * 1.3 + phase
+    ext = 0.6 + 0.4 * math.sin(cyc)                  # reach out / pull back
+    grab = max(0.0, math.cos(cyc))                   # hand clenches as it pulls
+    a = ang + math.sin(t * 2.0 + phase) * 0.12
+    sh = (cx + math.cos(ang) * reach * 0.16, cy + math.sin(ang) * reach * 0.16)
+    hand = (cx + math.cos(a) * reach * ext, cy + math.sin(a) * reach * ext)
+    mxp, myp = (sh[0] + hand[0]) / 2, (sh[1] + hand[1]) / 2
+    perp = (-math.sin(a), math.cos(a))
+    k = reach * 0.22 * (1 if phase >= math.pi / 2 else -1)
+    elbow = (mxp + perp[0] * k, myp + perp[1] * k)
+    w = max(2, int(scale * 3))
+    pts = [(int(sh[0]), int(sh[1])), (int(elbow[0]), int(elbow[1])), (int(hand[0]), int(hand[1]))]
+    sd = (*_YK_SHADOW, alpha)
+    sh_hi = (*_YK_SHADOW_HI, alpha)
+    pygame.draw.lines(surf, sh_hi, False, pts, w + 1)
+    pygame.draw.lines(surf, sd, False, pts, w)
+    ha = math.atan2(hand[1] - elbow[1], hand[0] - elbow[0])
+    fl = reach * 0.2
+    for fa in (-42, -14, 14, 42):
+        side = 1 if fa > 0 else -1
+        a2 = ha + math.radians(fa) - side * grab * 0.7
+        knu = (hand[0] + math.cos(a2) * fl * 0.6, hand[1] + math.sin(a2) * fl * 0.6)
+        a3 = a2 - side * grab * 0.9
+        tip = (knu[0] + math.cos(a3) * fl * 0.6, knu[1] + math.sin(a3) * fl * 0.6)
+        pygame.draw.lines(surf, sd, False,
+                          [(int(hand[0]), int(hand[1])), (int(knu[0]), int(knu[1])),
+                           (int(tip[0]), int(tip[1]))], max(1, w - 1))
+        if lit:
+            try:
+                surf.set_at((int(tip[0]), int(tip[1])), (*_YK_MHI, alpha))
+            except (IndexError, ValueError):
+                pass
+
+
 def _yk_orb(surf, cx, cy, r, vis, seed, t):
     """A shed SOUL-ORB: a small copy of the body -- a glowing gold clot with a
-    mask or two floating in it -- fading out in the wake."""
+    mask or two floating in it, clawing at space with its own little arms --
+    fading out in the wake."""
     if vis <= 0.04:
         return
     _yk_radial(surf, cx, cy, int(r * 2.4), _YK_T1, int(34 * vis))   # warm orange aura
@@ -795,6 +834,16 @@ def _yk_orb(surf, cx, cy, r, vis, seed, t):
         rad = r * 0.36
         _yk_mask(surf, cx + math.cos(ang) * rad, cy + math.sin(ang) * rad,
                  max(3, int(r * 0.44)), vis * 0.9, kinds[(seed + k) % 4])
+    if r >= 6:                                       # the orb claws at space too
+        reach = r * 1.7
+        sz = int(reach * 2) + 4
+        am = pygame.Surface((sz, sz), pygame.SRCALPHA)
+        c = sz // 2
+        aw = seed * 1.3 + t * 1.2
+        _yk_grab_arm(am, c, c, aw, reach, t, seed % 3, r / 16.0, False)
+        _yk_grab_arm(am, c, c, aw + math.pi, reach, t, seed % 3 + math.pi, r / 16.0, False)
+        am.set_alpha(int(210 * vis))
+        surf.blit(am, (int(cx) - c, int(cy) - c))
 
 
 def _yk_birth_rift(surf, cx, cy, R, bp):
@@ -964,8 +1013,7 @@ def _draw_king(surf, x, y, facing, t, birth, gait):
             pygame.draw.circle(layer, _YK_PIT, (int(ex), int(ey)), 1)
     layer.set_alpha(int(255 * max(0.05, valpha)))
     surf.blit(layer, (mcx - cx, mcy - cy))
-    # Tendrils LAST (own layer over the wake + glow); they reach out in the
-    # back half. No hard limbs -- only wisps of light groping from the mass.
+    # Smoke tendrils (own layer over the wake + glow): faint wisps groping out.
     if agrow > 0.02:
         tend = pygame.Surface((L, L), pygame.SRCALPHA)
         for idx, (da, ln) in enumerate([(0.0, R * 2.05), (0.45, R * 1.7), (-0.45, R * 1.7),
@@ -973,6 +1021,15 @@ def _draw_king(surf, x, y, facing, t, birth, gait):
             _yk_tendril(tend, cx, cy, aa + da, ln * agrow, R * max(0.4, agrow), t, idx)
         tend.set_alpha(int(140 * max(0.05, valpha)))      # semi-transparent, like smoke
         surf.blit(tend, (mcx - cx, mcy - cy))
+    # Two MAIN arms LAST: it hauls itself through space, reaching out in the
+    # aim direction and clawing back -- alternating phases, hand over hand.
+    if grow > 0.1:
+        arms = pygame.Surface((L, L), pygame.SRCALPHA)
+        reach = R * 2.5 * grow
+        _yk_grab_arm(arms, cx, cy, aa - 0.5, reach, t, 0.0, max(1.2, grow * 1.3), True)
+        _yk_grab_arm(arms, cx, cy, aa + 0.5, reach, t, math.pi, max(1.2, grow * 1.3), True)
+        arms.set_alpha(int(235 * max(0.05, valpha)))
+        surf.blit(arms, (mcx - cx, mcy - cy))
 
 
 # ---------------------------------------------------------------------------
