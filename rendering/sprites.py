@@ -713,7 +713,7 @@ def _yk_face(m, mx, my, r, expr, detail):
     features in as the mask surfaces (so it emerges as a blank pallid shape
     first)."""
     hi, mid, lo, pit = _YK_MHI, _YK_MMID, _YK_MLO, _YK_MPIT
-    rw, rh = r, int(r * 1.12)
+    rw, rh = r, int(r * 1.24)                             # a little oblong -- a head, not a ball
     pygame.draw.ellipse(m, lo, (mx - rw + 1, my - rh + 1, 2 * rw, 2 * rh))
     pygame.draw.ellipse(m, mid, (mx - rw, my - rh, 2 * rw, 2 * rh))
     pygame.draw.ellipse(m, hi, (mx - rw + 1, my - rh, max(1, 2 * rw - 2), max(1, 2 * rh - 3)))
@@ -728,10 +728,11 @@ def _yk_face(m, mx, my, r, expr, detail):
     pygame.draw.line(m, lo, (int(mx), int(my - r * 0.1)), (int(mx), int(my + r * 0.25)), 1)
     pygame.draw.line(m, hi, (int(mx - 1), int(my - r * 0.1)), (int(mx - 1), int(my + r * 0.2)), 1)
     if expr in ("scream", "gaunt", "vacant", "wail"):    # vacuous void sockets
-        if expr in ("vacant", "wail"):                   # deep ROUND sockets (not lenses),
-            sr = max(2, int(ew * 1.05))                  # clearly separate, each holding a
-            for ex, ey in (eyl, eyr):                    # golden gaze: a single pixel while
-                pygame.draw.circle(m, pit, (int(ex), int(ey)), sr)   # calm, flaring once angry
+        if expr in ("vacant", "wail"):                   # deep OBLONG sockets (eye-shaped,
+            w2 = max(2, int(ew * 1.7))                   # not round lenses), each holding a
+            h2 = max(3, int(ew * 2.5))                   # golden gaze: a single pixel while
+            for ex, ey in (eyl, eyr):                    # calm, flaring once angry
+                pygame.draw.ellipse(m, pit, (int(ex - w2 / 2), int(ey - h2 / 2), w2, h2))
                 if expr == "wail":
                     _yk_radial(m, ex, ey, 2, _YK_HOT, 150)
                 try:
@@ -771,9 +772,10 @@ def _yk_face(m, mx, my, r, expr, detail):
         pygame.draw.lines(m, pit, False, [(int(a), int(b)) for a, b in pts], 1)
     else:
         pygame.draw.line(m, pit, (int(mx - r * 0.3), int(mym)), (int(mx + r * 0.3), int(mym)), 1)
-    if expr in ("vacant", "wail"):                       # a hairline crack -- a broken mask
-        pygame.draw.line(m, pit, (int(mx + r * 0.2), int(my - rh * 0.85)),
-                         (int(mx - r * 0.06), int(my + r * 0.55)), 1)
+    if expr in ("vacant", "wail"):                       # a jagged fracture down one side --
+        crk = [(mx + r * 0.12, my - rh * 0.92), (mx + r * 0.32, my - r * 0.2),
+               (mx + r * 0.14, my + r * 0.45), (mx + r * 0.3, my + rh * 0.6)]
+        pygame.draw.lines(m, pit, False, [(int(a), int(b)) for a, b in crk], 1)
 
 
 def _yk_mask(surf, cx, cy, r, vis, kind):
@@ -1057,7 +1059,7 @@ def _draw_king(surf, x, y, facing, t, birth, gait, threat=None):
         _yk_glow(layer, cx, cy, R * max(0.18, grow), t)
         if intensity > 0.6:                                 # roused: white-hot flare
             _yk_radial(layer, cx, cy, int(R * (0.6 + 0.5 * intensity)), _YK_WHITE,
-                       int(95 * (intensity - 0.6) / 0.4))
+                       int(70 * (intensity - 0.6) / 0.4))
         nfaces = int(round(manifest * (len(_YK_FACES) - 1)))  # chorus erupts around it
         for fi in range(1, 1 + nfaces):
             rn, ba, asp, fr, vsp, vph, kind = _YK_FACES[fi]
@@ -1069,7 +1071,9 @@ def _draw_king(surf, x, y, facing, t, birth, gait, threat=None):
                 vis = max(0.0, min(1.0, (math.sin(t * vsp + vph) - 0.55) / 0.4))
             else:
                 vis = max(0.0, min(1.0, 0.5 + 0.72 * math.sin(t * vsp + vph)))
-            _yk_mask(layer, fxp, fyp, fr, vis * manifest, kind)
+            # Keep the little masks reading on top of the bright glow, not washed
+            # into it -- floor their opacity up once they're surfacing.
+            _yk_mask(layer, fxp, fyp, fr, min(1.0, (0.45 + 0.55 * vis) * manifest), kind)
         _yk_mask(layer, hx, hy, pfr, 0.9, pmk)              # central mask ON TOP of the chorus
         layer.set_alpha(int(255 * va * manifest))
         surf.blit(layer, (mcx - cx + sxo, mcy - cy + syo))
