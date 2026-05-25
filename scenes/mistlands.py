@@ -184,25 +184,12 @@ def _hettie(game, npc):
             "[c=dim]Stay near the light. It's started to take to you.[/c]",
         ])
         return
-    # toll >= 2: she names what you've done, and she is glad of it.
-    if save.flag("royce_told"):
-        middle = ("Royce went out to the road. You know how that ends -- "
-                  "and you pointed him at it anyway. I'm not cross. "
-                  "Somebody had to be next.")
-    elif save.flag("calder_broken"):
-        middle = ("You put the Calder woman right. Cruel thing to do. "
-                  "Needful thing. We don't say it out loud, but we're "
-                  "grateful.")
-    elif save.flag("calder_sat"):
-        middle = ("You sat down at the Calder table. Took his chair, ate "
-                  "his supper. That's the way of it -- you take a place, "
-                  "and the town makes room.")
-    else:
-        middle = ("You've been busy. The town feels lighter for it. Or you "
-                  "do. Getting hard to tell the two apart.")
+    # toll >= 2: possessive menace. She's claiming you and glad of it --
+    # no reciting your deeds back at you, no moral scorecard; the way she
+    # watches you is the threat.
     say([
         "There's my one.",
-        middle,
+        "You've quit looking at the doors. They all do, in the end. And then they stay.",
         "[c=dim]You won't leave the way you came in. None of us did. But "
         "I'll keep it warm. I'll keep it warm for you.[/c]",
     ])
