@@ -2,10 +2,11 @@
 import math
 import random
 import pygame
+import pygame.gfxdraw
 from constants import C_BLACK
 
 def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False,
-                    birth=None, gait=None, prox=0.0):
+                    birth=None, gait=None):
     """`blink=True` suppresses eye dots for NPC kinds that have human
     eyes (mom/kid/bandit/policeman). Used by Game.draw to make a single
     NPC's eyes vanish for a single frame -- a subliminal wrongness.
@@ -271,7 +272,7 @@ def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False,
         else:
             b = birth
             g = gait if gait is not None else t * 7.0
-        _draw_king(surf, x, y, facing, t, b, g, prox=prox)
+        _draw_king(surf, x, y, facing, t, b, g)
     elif kind == "wolf":
         # Lean grey quadruped, low to the ground. Yellow eyes give a
         # threat read at a glance even with the small sprite size.
@@ -644,10 +645,12 @@ _YK_MHI, _YK_MMID, _YK_MLO, _YK_MPIT = (238, 222, 174), (210, 178, 108), (150, 1
 # and the light differ. "His gold, the Watcher's dark."
 _KING_MASK_P = dict(lo=_YK_MLO, mid=_YK_MMID, hi=_YK_MHI, pit=_YK_MPIT,
                     milk=(246, 228, 170), tooth=(248, 236, 200),
-                    crack=(86, 58, 24), rim=_YK_MLO, glint=(255, 226, 120))
+                    crack=(86, 58, 24), rim=_YK_MLO, glint=(255, 226, 120),
+                    sheen=(255, 248, 214))
 _WATCH_MASK_P = dict(lo=(54, 51, 58), mid=(84, 80, 88), hi=(118, 114, 120),
                      pit=(12, 11, 14), milk=(158, 156, 150), tooth=(150, 146, 138),
-                     crack=(20, 18, 22), rim=(34, 32, 38), glint=(150, 110, 40))
+                     crack=(20, 18, 22), rim=(34, 32, 38), glint=(150, 110, 40),
+                     sheen=(128, 124, 130))
 
 
 def _mask_pts(cx, cy, r, seed, elong=1.12, chip=False):
@@ -686,7 +689,7 @@ def _mask_jag(s, c, x0, y0, x1, y1, seed, w=1):
     pygame.draw.lines(s, c, False, [(int(a), int(b)) for a, b in pts], w)
 
 
-def _face_mask(s, cx, cy, r, P, seed, kind, chip=False, watch=None):
+def _face_mask(s, cx, cy, r, P, seed, kind, chip=False):
     """The shared mask face. Flat 3-tone sculpt on an imperfect outline,
     with worn detail (brow / nose / teeth / hairline cracks / grime) that
     only surfaces once `r` is large enough to carry it -- below that it
@@ -699,7 +702,17 @@ def _face_mask(s, cx, cy, r, P, seed, kind, chip=False, watch=None):
     pts = _mask_pts(cx, cy, r, seed, chip=chip)
     _mask_poly(s, P['lo'], _mask_sc(pts, cx, cy, 1.0, 1, 1))
     _mask_poly(s, P['mid'], pts)
-    _mask_poly(s, P['hi'], _mask_sc(pts, cx, cy, 0.82, -1, -1))
+    # GLOSS -- smoother shading: an extra mid->hi tone band so the sculpt
+    # ramps in 4 steps instead of 3, and an anti-aliased silhouette edge so
+    # the rim isn't a hard pixel staircase.
+    midhi = ((P['mid'][0] + P['hi'][0]) // 2, (P['mid'][1] + P['hi'][1]) // 2,
+             (P['mid'][2] + P['hi'][2]) // 2)
+    _mask_poly(s, midhi, _mask_sc(pts, cx, cy, 0.91, -1, -1))
+    _mask_poly(s, P['hi'], _mask_sc(pts, cx, cy, 0.80, -2, -2))
+    try:
+        pygame.gfxdraw.aapolygon(s, [(int(a), int(b)) for a, b in pts], P['mid'])
+    except (ValueError, OverflowError):
+        pass
     detail = r >= 10
     ew = max(2, r // 3)
     lx, rx, ey = cx - r // 2, cx + r // 2, cy - r // 5
@@ -763,29 +776,31 @@ def _face_mask(s, cx, cy, r, P, seed, kind, chip=False, watch=None):
                 except (IndexError, ValueError):
                     pass
                 placed += 1
-    if watch and watch[2] > 0.05:
-        # AWARE: a pupil ignites in each empty socket, turned toward the
-        # prey -- the faces stop being decoration and notice you.
-        wi = max(0.0, min(1.0, watch[2]))
-        wl = math.hypot(watch[0], watch[1]) or 1.0
-        ox, oy = watch[0] / wl, watch[1] / wl
-        if kind == "mutated":
-            eyes = [(lx, ey), (rx, ey), (cx, cy - r // 2),
-                    (cx + r // 2, cy + r // 4), (cx - r // 3, cy + r // 2)]
-        else:
-            eyes = [(lx, ey), (rx, ey)]
-        base, hot = P['pit'], (255, 244, 200)
-        pcol = tuple(int(base[k] + (hot[k] - base[k]) * wi) for k in range(3))
-        pr = max(1, int(ew * 0.5))
-        for ex2, ey2 in eyes:
-            px, py = int(ex2 + ox * ew * 0.5), int(ey2 + oy * ew * 0.5)
-            if pr >= 2:
-                pygame.draw.circle(s, pcol, (px, py), pr)
-            else:
-                try:
-                    s.set_at((px, py), pcol)
-                except (IndexError, ValueError):
-                    pass
+    # GLOSS -- wet luminous sheen: a glossy hot spot riding the upper-left of
+    # the dome, so the gold reads as molten/lacquered (lit from within) rather
+    # than matte. Palette-driven, so the King glistens while the Watcher stays
+    # ashen.
+    shr = max(1, r // 4)
+    sgx, sgy = int(cx - r * 0.32), int(cy - r * 0.42)
+    if shr >= 2:
+        pygame.draw.circle(s, P['sheen'], (sgx, sgy), shr)
+        try:
+            pygame.gfxdraw.aacircle(s, sgx, sgy, shr, P['hi'])
+        except (ValueError, OverflowError):
+            pass
+        try:
+            s.set_at((sgx - shr // 3, sgy - shr // 3), (255, 255, 244))
+        except (IndexError, ValueError):
+            pass
+    else:
+        try:
+            s.set_at((sgx, sgy), P['sheen'])
+        except (IndexError, ValueError):
+            pass
+    try:
+        pygame.gfxdraw.aapolygon(s, [(int(a), int(b)) for a, b in pts], P['rim'])
+    except (ValueError, OverflowError):
+        pass
     _mask_poly(s, P['rim'], pts, 1)
     try:
         s.set_at((lx, ey), P['glint'])                # the one ember of his gold
@@ -802,7 +817,8 @@ def _yk_slots():
     # mask designs: plain, screaming, hollow/gaunt, cracked, and a melted
     # double (two faces fused) that only POPS UP now and then.
     kinds = ["plain", "scream", "hollow", "plain", "crack", "double",
-             "plain", "scream", "hollow", "double"]
+             "plain", "scream", "hollow", "double", "hollow", "scream",
+             "plain", "crack"]                       # GLOSS -- denser face clot
     for k in kinds:
         faces.append((
             r.uniform(0.22, 0.82), r.uniform(0, math.tau), r.uniform(0.30, 0.85),
@@ -850,14 +866,17 @@ def _yk_glow(layer, cx, cy, R, t):
         _yk_radial(layer, cx + math.cos(a) * R * 0.42, cy + math.sin(a) * R * 0.42,
                    int(R * 0.42), _YK_T4, 76)
     _yk_radial(layer, cx, cy - 2, int(R * 0.55), _YK_T4, 78)
+    # GLOSS -- wet sheen: a bright specular cap riding the upper clot so the
+    # whole mass reads as molten/lacquered light, not a matte glow.
+    _yk_radial(layer, cx - int(R * 0.16), cy - int(R * 0.34), int(R * 0.30),
+               (255, 248, 222), 92)
 
 
-def _yk_mask(surf, cx, cy, r, vis, kind, seed=0, watch=None):
+def _yk_mask(surf, cx, cy, r, vis, kind, seed=0):
     """A MASK made of the same light: warm gold-tinted, translucent (the glow
     reads through it) + a luminous halo, surfacing (vis->1) and dissolving back
     into the glow (vis->0). The face is the shared sculpt (`_face_mask`) so the
-    King and the Watcher wear the same form. 'double' is two melted into one.
-    `watch`=(dx,dy,intensity) ignites tracking pupils that turn toward prey."""
+    King and the Watcher wear the same form. 'double' is two melted into one."""
     if vis <= 0.03:
         return
     cx, cy, r = int(cx), int(cy), int(r)
@@ -870,10 +889,10 @@ def _yk_mask(surf, cx, cy, r, vis, kind, seed=0, watch=None):
         off = max(2, r // 2)
         for i, ddx in enumerate((-off, off)):
             _face_mask(m, mx + ddx, my, r, _KING_MASK_P, seed + i,
-                       "hollow" if vis > 0.4 else "plain", watch=watch)
+                       "hollow" if vis > 0.4 else "plain")
         pygame.draw.line(m, _YK_MLO, (mx, my - r), (mx, my + r), 1)
     else:
-        _face_mask(m, mx, my, r, _KING_MASK_P, seed, kind, watch=watch)
+        _face_mask(m, mx, my, r, _KING_MASK_P, seed, kind)
     m.set_alpha(int(64 + 156 * vis))
     surf.blit(m, (cx - mx, cy - my))
 
@@ -912,65 +931,46 @@ def _yk_birth_rift(surf, cx, cy, R, bp):
         _yk_radial(surf, cx, cy, int(R * (0.4 + 0.95 * flare)), (255, 250, 232), int(100 * flare))
 
 
-def _yk_arm(layer, cx, cy, ang, length, R, t, idx, prox=0.0):
-    """A reach out of the light -- NOT a clean jointed limb but a boneless,
-    wrong thing: a tapering tendril that whips on its own waver and
-    TELESCOPES unnaturally toward the prey as the King closes (it reaches
-    further than a limb should -- the hand that is always almost touching),
-    ending in a clawed face-hand whose fingers lengthen with it."""
+def _yk_arm(layer, cx, cy, ang, length, R, t, idx):
+    """A broken arm reaching out of the light: it extends and draws back on its
+    own cycle, reflex elbow, clawing hand."""
     wob = math.sin(t * 1.9 + idx * 1.3) * 0.14
     ext = 0.55 + 0.45 * max(0.0, math.sin(t * 1.5 + idx * 0.9))
-    reach = length * ext * (1.0 + 1.05 * prox)        # telescopes when close
+    reach = length * ext
     root = (cx + math.cos(ang) * R * 0.5, cy + math.sin(ang) * R * 0.5)
-    perp = (-math.sin(ang), math.cos(ang))
-    side = 1 if idx % 2 else -1
-    seg = 4
-    pts = [root]
-    for s in range(1, seg + 1):
-        f = s / seg
-        # a decaying sideways waver -> a snake/whip curve, no rigid elbow
-        sway = (math.sin(t * 2.3 + idx * 1.7 + s * 1.05) * R * 0.55
-                * (1.0 - 0.6 * f) * side)
-        bx = cx + math.cos(ang + wob) * reach * f + perp[0] * sway
-        by = cy + math.sin(ang + wob) * reach * f + perp[1] * sway
-        pts.append((bx, by))
-    ipts = [(int(a), int(b)) for a, b in pts]
-    for s in range(len(ipts) - 1):                    # taper: thick root -> thin tip
-        w = max(1, int(R * 0.36 * (1.0 - s / (seg + 1))) + 1)
-        pygame.draw.line(layer, _YK_DK_HI, ipts[s], ipts[s + 1], w + 2)
-        pygame.draw.line(layer, _YK_DK, ipts[s], ipts[s + 1], w)
-    hand = pts[-1]
-    ha = math.atan2(hand[1] - pts[-2][1], hand[0] - pts[-2][0])
-    pygame.draw.circle(layer, _YK_DK, (int(hand[0]), int(hand[1])), max(2, int(R * 0.2)))
-    flen = R * (0.5 + 0.5 * prox)                     # fingers lengthen too
-    for fa in (-50, -18, 18, 50):
+    hand = (cx + math.cos(ang + wob) * reach, cy + math.sin(ang + wob) * reach)
+    mx, my = (root[0] + hand[0]) / 2, (root[1] + hand[1]) / 2
+    perp = (-math.sin(ang), math.cos(ang)); k = (R * 0.5) * (1 if idx % 2 else -1)
+    elbow = (mx + perp[0] * k, my + perp[1] * k)
+    pts = [(int(a), int(b)) for a, b in (root, elbow, hand)]
+    w = max(3, int(R * 0.34))
+    pygame.draw.lines(layer, _YK_DK_HI, False, pts, w + 2)
+    pygame.draw.lines(layer, _YK_DK, False, pts, w)
+    ha = math.atan2(hand[1] - elbow[1], hand[0] - elbow[0])
+    pygame.draw.circle(layer, _YK_DK, (int(hand[0]), int(hand[1])), max(2, w // 2))
+    for fa in (-42, -14, 16, 44):
         a2 = ha + math.radians(fa)
-        tip = (hand[0] + math.cos(a2) * flen, hand[1] + math.sin(a2) * flen)
+        tip = (hand[0] + math.cos(a2) * R * 0.5, hand[1] + math.sin(a2) * R * 0.5)
         pygame.draw.line(layer, _YK_DK, (int(hand[0]), int(hand[1])),
                          (int(tip[0]), int(tip[1])), 2)
         try:
             layer.set_at((int(tip[0]), int(tip[1])), _YK_BONE)
         except (IndexError, ValueError):
             pass
-    # a faint pair of eye-pits on the back of the hand -- even the reaching
-    # hands have faces, and they are turned toward you.
-    for sgn in (-1, 1):
-        ex = int(hand[0] + perp[0] * R * 0.12 * sgn - math.cos(ha) * R * 0.1)
-        ey = int(hand[1] + perp[1] * R * 0.12 * sgn - math.sin(ha) * R * 0.1)
-        try:
-            layer.set_at((ex, ey), _YK_PIT)
-        except (IndexError, ValueError):
-            pass
 
 
-def _draw_king(surf, x, y, facing, t, birth, gait, prox=0.0):
+def _draw_king(surf, x, y, facing, t, birth, gait):
     """THE KING IN YELLOW (see header). `birth` (0..1, already de-None'd by the
     dispatch) drives the rift eruption; `t` animates; `gait` is accepted but the
     float needs no leg cycle. It never phases out -- only masks come and go.
-    `prox` (0..1, 1 = right on top of the player) rations the LOOK: the nearer
-    he is, the more he buzzes with a render-only tremor and whites out under a
-    searing bloom, so a clean look becomes impossible up close -- the mind
-    fills in worse than the sprite shows."""
+
+    NOTE: the King's render INCLUDES its particle wake -- the shed soul-orbs
+    and gold motes streamed along his path (module globals `_YK_PARTS` /
+    `_YK_TRAIL`, updated and drawn here every frame). The particles are an
+    INTEGRAL part of the sprite, not a separable layer: they are spawned from
+    his motion and drawn in this same call. Anything that draws, moves, or
+    re-homes the King must carry the wake with it (the trail self-resets on a
+    teleport jump, below). Do not split the particles out of `_draw_king`."""
     global _YK_TRAIL
     R = 22
     mcx, mcy = x, int(y - 42 + math.sin(t * 1.1) * 3)        # floats above the feet
@@ -1010,8 +1010,8 @@ def _draw_king(surf, x, y, facing, t, birth, gait, prox=0.0):
     tl = math.hypot(tvx, tvy) or 1.0
     bvx, bvy = -tvx / tl, -tvy / tl
     _YK_ACC[0] += disp
-    while disp > 0.4 and _YK_ACC[0] >= 8:                    # space the orbs along the path
-        _YK_ACC[0] -= 8
+    while disp > 0.4 and _YK_ACC[0] >= 6:        # GLOSS -- denser wake (was 8)
+        _YK_ACC[0] -= 6
         _YK_PARTS.append({
             "kind": "orb", "seed": _YK_PRNG.randint(0, 999),
             "x": mcx + _YK_PRNG.uniform(-5, 5), "y": mcy + _YK_PRNG.uniform(-5, 5),
@@ -1019,7 +1019,7 @@ def _draw_king(surf, x, y, facing, t, birth, gait, prox=0.0):
             "vy": bvy * 9 + _YK_PRNG.uniform(-8, 8),
             "age": 0.0, "life": _YK_PRNG.uniform(0.8, 1.25),
             "r": _YK_PRNG.uniform(7, 15)})
-        for _ in range(2):
+        for _ in range(3):
             _YK_PARTS.append({
                 "kind": "mote", "seed": 0,
                 "x": mcx + _YK_PRNG.uniform(-9, 9), "y": mcy + _YK_PRNG.uniform(-9, 9),
@@ -1027,8 +1027,8 @@ def _draw_king(surf, x, y, facing, t, birth, gait, prox=0.0):
                 "vy": bvy * 18 + _YK_PRNG.uniform(-16, 16),
                 "age": 0.0, "life": _YK_PRNG.uniform(0.25, 0.5),
                 "r": _YK_PRNG.uniform(1.5, 3.0)})
-    if len(_YK_PARTS) > 90:
-        del _YK_PARTS[:len(_YK_PARTS) - 90]
+    if len(_YK_PARTS) > 130:                     # GLOSS -- room for the denser wake
+        del _YK_PARTS[:len(_YK_PARTS) - 130]
     keep = []
     for p in _YK_PARTS:
         p["age"] += dt
@@ -1062,33 +1062,9 @@ def _draw_king(surf, x, y, facing, t, birth, gait, prox=0.0):
     _YK_AIM[0] += da_ * min(1.0, dt * 7.0)
     aa = _YK_AIM[0]
     fb = (math.cos(aa) * R * 0.22, math.sin(aa) * R * 0.22)
-    # Proximity (0..1) once born; `watch` ignites the masks' tracking pupils
-    # in the mid-close band -- you SEE the faces lock onto you before he
-    # blooms white and arrives.
-    pk = max(0.0, min(1.0, prox)) if bp >= 1.0 else 0.0
-    wp = max(0.0, min(1.0, (pk - 0.05) / 0.3))   # ignite early, while still legible
-    watch = (math.cos(aa), math.sin(aa), wp) if wp > 0.05 else None
     if bp < 1.0:
         _yk_birth_rift(surf, mcx, mcy, R, bp)                # space tears open
     _yk_glow(layer, cx, cy, R * max(0.18, grow), t)
-    # THE GOLD EXPLOSION -- on the BOTTOM (into the body layer, behind the
-    # faces): a furnace-glow that swells as he closes and BACKLIGHTS the mass.
-    # The masks / arms / eyes read AGAINST it, never washed out by it -- so up
-    # close you see MORE wrongness, a writhing furnace of faces, not a clean
-    # ball. At point-blank the gold curdles toward a bruised green. Unstable
-    # flicker, not a serene swell.
-    if pk > 0.02:
-        flk = 0.85 + 0.3 * _frand(int(t * 53) + 5)
-        _yk_radial(layer, cx, cy, int(R * (1.6 + 2.6 * pk) * flk),
-                   _YK_GOLD, int(70 + 110 * pk))
-        _yk_radial(layer, cx, cy, int(R * (1.0 + 1.5 * pk) * flk),
-                   _YK_HOT, min(255, int(60 + 130 * pk * pk)))
-        sick = max(0.0, (pk - 0.4) / 0.6)
-        if sick > 0.02:                      # bruised green-gold creeps in
-            _yk_radial(layer, cx, cy, int(R * (1.2 + 1.6 * pk)),
-                       (150, 176, 40), int(54 * sick))
-    # The faces: more SURFACE and swell as he closes -- the clot fills with
-    # masks, every dead socket lighting a pupil turned on you.
     for fi, (rn, ba, asp, fr, vsp, vph, kind) in enumerate(_YK_FACES):
         ang = ba + t * asp
         rr = rn * (0.9 + 0.1 * math.sin(t * 0.8 + vph))
@@ -1098,43 +1074,24 @@ def _draw_king(surf, x, y, facing, t, birth, gait, prox=0.0):
             vis = max(0.0, min(1.0, (math.sin(t * vsp + vph) - 0.55) / 0.4))
         else:
             vis = max(0.0, min(1.0, 0.5 + 0.72 * math.sin(t * vsp + vph)))
-        vis = min(1.0, vis + 0.5 * pk)
-        _yk_mask(layer, fxp, fyp, int(fr * (1.0 + 0.35 * pk)), vis, kind,
-                 seed=fi + 1, watch=watch)
-    if pk > 0.25:                            # extra faces pack the furnace
-        ek = ("scream", "hollow", "mutated", "plain")
-        for j in range(int(7 * pk)):
-            a2 = t * 1.4 + j * 2.39996
-            rr2 = R * (0.22 + 0.55 * _frand(j * 5 + 2)) * grow
-            _yk_mask(layer, cx + math.cos(a2) * rr2 + fb[0],
-                     cy + math.sin(a2) * rr2 + fb[1],
-                     max(3, int(R * 0.26 * (0.8 + 0.5 * _frand(j)))),
-                     min(1.0, 0.5 + pk), ek[j % 4], seed=200 + j, watch=watch)
+        _yk_mask(layer, fxp, fyp, fr, vis, kind, seed=fi + 1)
     for rn, ba, asp, ph in _YK_EYES:
-        if math.sin(t * 2.1 + ph) > 0.1 - 0.7 * pk:   # more eyes open as he nears
+        if math.sin(t * 2.1 + ph) > 0.1:
             ang = ba + t * asp
             ex = cx + math.cos(ang) * R * 0.7 * rn * grow + fb[0]
             ey = cy + math.sin(ang) * R * 0.7 * rn * grow + fb[1]
             _yk_radial(layer, ex, ey, 5, _YK_HOT, 110)
             pygame.draw.circle(layer, _YK_PIT, (int(ex), int(ey)), 1)
-    # Render-only TREMOR: once fully born and closing in, the whole mass
-    # buzzes on a fast hash-noise offset that grows with proximity. Applied
-    # only to the body/arm blit (NOT to the wake/trail centre above) so it
-    # reads as the King vibrating with wrongness, not as a jittering path.
-    jx = (_frand(int(t * 67)) - 0.5) * 7.0 * pk
-    jy = (_frand(int(t * 67) + 31) - 0.5) * 7.0 * pk
-    bmx, bmy = mcx + jx, mcy + jy
     layer.set_alpha(int(255 * max(0.05, valpha)))
-    surf.blit(layer, (bmx - cx, bmy - cy))
-    # Arms LAST (own layer over the furnace) -- dark reaches silhouetted on
-    # the gold; they erupt in the back half and telescope toward the prey.
+    surf.blit(layer, (mcx - cx, mcy - cy))
+    # Arms LAST (own layer over the wake + glow); they erupt in the back half.
     if agrow > 0.02:
         arml = pygame.Surface((L, L), pygame.SRCALPHA)
         for idx, (da, ln) in enumerate([(0.0, R * 2.05), (0.45, R * 1.7), (-0.45, R * 1.7),
                                         (0.95, R * 1.45), (-0.95, R * 1.45)]):
-            _yk_arm(arml, cx, cy, aa + da, ln * agrow, R * max(0.4, agrow), t, idx, prox=pk)
+            _yk_arm(arml, cx, cy, aa + da, ln * agrow, R * max(0.4, agrow), t, idx)
         arml.set_alpha(int(255 * max(0.05, valpha)))
-        surf.blit(arml, (bmx - cx, bmy - cy))
+        surf.blit(arml, (mcx - cx, mcy - cy))
 
 
 # ---------------------------------------------------------------------------
@@ -1301,9 +1258,7 @@ def draw_king_death(surf, t):
     grow = 36 + min(1.0, t / 3.2) ** 1.4 * 152
     cvis = min(1.0, 0.55 + t / 3.0) * ramp
     _yk_radial(surf, w // 2, core_y, int(grow * 1.7), _YK_HOT, int(58 * ramp))
-    # The looming face stares straight out -- at YOU -- as it closes over.
-    _yk_mask(surf, w // 2, core_y, int(grow), cvis, "scream", seed=7,
-             watch=(0.0, 0.12, min(1.0, t / 1.6)))
+    _yk_mask(surf, w // 2, core_y, int(grow), cvis, "scream", seed=7)
 
     # 6. Fire all around.
     _yk_flames(surf, w, h, t, ramp)
