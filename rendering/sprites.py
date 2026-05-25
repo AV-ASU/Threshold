@@ -761,9 +761,15 @@ def _yk_face(m, mx, my, r, expr, detail):
                                      max(2, int(r * 0.56)), max(2, int(r * 0.5))))
         pygame.draw.line(m, lo, (int(mx - r * 0.7), int(my)), (int(mx - r * 0.5), int(my + r * 0.4)), 1)
         pygame.draw.line(m, lo, (int(mx + r * 0.7), int(my)), (int(mx + r * 0.5), int(my + r * 0.4)), 1)
-    elif expr == "vacant":                               # a slack, dead jaw hanging ajar
-        pygame.draw.ellipse(m, pit, (int(mx - r * 0.16), int(mym + r * 0.04),
-                                     max(2, int(r * 0.32)), max(2, int(r * 0.36))))
+    elif expr == "vacant":                               # a gaping, downturned grimace -- :(
+        gw = max(3, int(r * 0.52))
+        gh = max(3, int(r * 0.5))
+        gx, gy = int(mx - gw / 2), int(mym - r * 0.04)
+        pygame.draw.ellipse(m, pit, (gx, gy, gw, gh))     # the open gape
+        pygame.draw.line(m, pit, (gx + 1, int(gy + gh * 0.2)),               # corners
+                         (int(mx - gw * 0.85), int(gy + gh * 0.95)), 1)      # pulled
+        pygame.draw.line(m, pit, (gx + gw - 1, int(gy + gh * 0.2)),          # down into
+                         (int(mx + gw * 0.85), int(gy + gh * 0.95)), 1)      # a frown
     elif expr == "smile":
         pts = [(mx - r * 0.4, mym - r * 0.1), (mx, mym + r * 0.2), (mx + r * 0.4, mym - r * 0.1)]
         pygame.draw.lines(m, pit, False, [(int(a), int(b)) for a, b in pts], 1)
