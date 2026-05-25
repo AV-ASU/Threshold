@@ -835,23 +835,6 @@ def _yk_orb_faces(surf, cx, cy, r, vis, seed, t):
                  max(3, int(r * 0.44)), vis * 0.9, _YK_ORB_KINDS[(seed + k) % 4])
 
 
-def _yk_birth_rift(surf, cx, cy, R, bp):
-    """The birth: space tears open. A vertical gold rift cracks wide and flares
-    white-hot early, then fattens and seals into the forming body."""
-    opening = math.sin(min(1.0, bp / 0.5) * 1.5708)
-    seal = max(0.0, (bp - 0.5) / 0.5)
-    h = R * (0.5 + 2.7 * opening) * (1 - 0.55 * seal)
-    n = max(3, int(h / 4))
-    for i in range(n):
-        f = i / (n - 1)
-        yy = cy - h + 2 * h * f
-        rr = (R * 0.14 + R * 0.55 * seal) * (0.4 + 0.6 * math.sin(f * math.pi))
-        _yk_radial(surf, cx, yy, max(2, int(rr)), _YK_T4, int(118 * (1 - 0.4 * seal)))
-    flare = max(0.0, 1.0 - abs(bp - 0.28) / 0.28)
-    if flare > 0:
-        _yk_radial(surf, cx, cy, int(R * (0.4 + 0.95 * flare)), (255, 250, 232), int(100 * flare))
-
-
 def _yk_void(layer, cx, cy, R):
     """The barely-existing form, seen while the King is still far: a void darker
     than the dark, edged in a cold shimmer, and DEAD STILL. The only thing that
@@ -964,6 +947,12 @@ def _draw_king(surf, x, y, facing, t, birth, gait, threat=None):
     bp = 1.0 if birth is None else max(0.0, min(1.0, birth))
     grow = bp * bp * (3 - 2 * bp)                            # body eases in
     valpha = 1.0 if bp >= 1.0 else 0.4 + 0.6 * grow
+    # BIRTH: the King flashes into being mid-birth (visible regardless of how
+    # near the player is), and the mask ASSEMBLES from scattered shards as it
+    # forms -- the exact reverse of how it shatters when it gets mad.
+    birth_vis = grow * (1.0 - grow) * 4.0                    # a flash, peaking mid-birth
+    show = min(1.0, manifest + 0.85 * birth_vis)            # existence: threat OR birth
+    crack = min(1.6, manifest + (1.0 - grow) * 1.5)         # shards converge in as it forms
     dt = t - _YK_LAST[0]
     _YK_LAST[0] = t
     if dt <= 0 or dt > 0.2:
@@ -1022,7 +1011,7 @@ def _draw_king(surf, x, y, facing, t, birth, gait, threat=None):
             continue
         p["x"] += p["vx"] * dt
         p["y"] += p["vy"] * dt
-        keep.append((p, fr, (1.0 - fr) * manifest))  # a: no trail while it's a dark void
+        keep.append((p, fr, (1.0 - fr) * show))      # a: no trail while it's a dark void
     _YK_PARTS[:] = [p for p, _, _ in keep]
     # Pass 1: lay down ALL the glow particles first...
     for p, fr, a in keep:
@@ -1055,10 +1044,8 @@ def _draw_king(surf, x, y, facing, t, birth, gait, threat=None):
     _YK_AIM[0] += da_ * min(1.0, dt * 7.0)
     aa = _YK_AIM[0]
     fb = (math.cos(aa) * R * 0.22, math.sin(aa) * R * 0.22)
-    if bp < 1.0:
-        _yk_birth_rift(surf, mcx, mcy, R, bp)                # space tears open
     va = max(0.05, valpha)
-    dark_a = 1.0 - manifest
+    dark_a = 1.0 - show
     # The PRIMARY mask: one steady face anchored as the "head", turned to track
     # the player. It is the first thing to exist (a pale mask in the void),
     # serene while the King is calm, and the scream the chorus erupts around as
@@ -1083,25 +1070,27 @@ def _draw_king(surf, x, y, facing, t, birth, gait, threat=None):
         _yk_mask(void, hx, hy, pfr, 0.72, pmk)              # ashen mask, watching
         void.set_alpha(int(235 * dark_a * va))
         surf.blit(void, (mcx - cx, mcy - cy))               # the void doesn't lurch
-    # --- MANIFEST form (blooms in as it closes): light, the mask, the chorus.
-    if manifest > 0.01:
-        if bp < 1.0:
-            _yk_birth_rift(surf, mcx, mcy, R, bp)
+    # --- MANIFEST form (blooms in as it closes, and flashes in at birth).
+    if show > 0.01:
         # Golden light SIZED TO THE MASK, sitting inside it -- so it reads as
         # light leaking FROM the mask: hidden when whole, blazing through the
         # cracks as it splits.
         _yk_glow(layer, hx, hy, max(6, int(pfr * 1.2)), t)
+        # Birth ignition: a mask-scale white flare that flashes as it forms.
+        if birth_vis > 0.02:
+            _yk_radial(layer, hx, hy, int(pfr * (1.0 + 0.6 * birth_vis)),
+                       _YK_WHITE, int(150 * birth_vis))
         if intensity > 0.6:                                 # roused: white-hot core
             _yk_radial(layer, hx, hy, int(pfr * (0.7 + 0.6 * intensity)), _YK_WHITE,
                        int(85 * (intensity - 0.6) / 0.4))
         # THE OTHER mask, directly behind -- a screaming face glimpsed through
         # the cracks once the front one splits open.
-        _yk_mask(layer, hx, hy, pfr, min(1.0, 0.2 + 0.8 * manifest), "scream")
-        # THE MASK -- our silhouette. Intact when calm; as it rouses it cracks
-        # and splits into shards, the grasping arms bursting from the splits and
-        # reaching toward the player.
-        _yk_shatter_mask(layer, hx, hy, pfr, 0.92, pmk, manifest, t, R * max(0.3, grow), aa)
-        layer.set_alpha(int(255 * va * manifest))
+        _yk_mask(layer, hx, hy, pfr, min(1.0, 0.2 + 0.8 * show), "scream")
+        # THE MASK -- our silhouette. Assembles from shards at birth, intact when
+        # calm, and splits apart as it rouses -- the grasping arms bursting from
+        # the splits and reaching toward the player.
+        _yk_shatter_mask(layer, hx, hy, pfr, 0.92, pmk, crack, t, R * max(0.3, grow), aa)
+        layer.set_alpha(int(255 * va * show))
         surf.blit(layer, (mcx - cx + sxo, mcy - cy + syo))
 
 

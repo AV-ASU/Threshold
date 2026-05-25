@@ -20,10 +20,13 @@ class Audio:                        #Starting screen needs music, something simp
         self.music_muted = False
         self.music_channel = None
         self.ambient_channel = None
+        self.king_channel = None
+        self._king_on = False
         if self.enabled:
             self._build_library()
             self.music_channel = pygame.mixer.Channel(0)
             self.ambient_channel = pygame.mixer.Channel(1)
+            self.king_channel = pygame.mixer.Channel(2)
 
     def _gen(self, freq, ms, vol=0.3, wave="sine", attack_ms=10, decay_ms=40, vibrato=0, noise_mix=0.0):
         sr = 22050
@@ -580,6 +583,21 @@ class Audio:                        #Starting screen needs music, something simp
         ch.set_volume(left, right)
         ch.play(s)
 
+    def king_tone(self, on, volume=0.5):
+        """Loop the King's signature tone on its own channel while his sprite is
+        on screen, and fade it out the instant he's gone. `volume` should swell
+        as he closes -- the air being pulled from the room, getting nearer."""
+        if not self.enabled or self.king_channel is None:
+            return
+        if on:
+            if not self._king_on or not self.king_channel.get_busy():
+                self.king_channel.play(self.sfx["yk_tone"], loops=-1)
+                self._king_on = True
+            self.king_channel.set_volume(max(0.0, min(1.0, volume)))
+        elif self._king_on:
+            self.king_channel.fadeout(450)
+            self._king_on = False
+
     def pan_for_world(self, world_x, player_x, half_width=320.0):
         """Compute a pan value (-1..+1) from a sound source's world X
         relative to the player. `half_width` is the world-x distance at
@@ -610,6 +628,7 @@ class Audio:                        #Starting screen needs music, something simp
     def force_silence(self, duration_s=None):
         self.music_muted = True
         self.stop_music(50)
+        self.king_tone(False)
         if duration_s:
             self._silence_until = time.time() + duration_s
         else:

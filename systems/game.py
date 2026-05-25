@@ -2009,6 +2009,7 @@ class Game:
             return
         in_safe = self.scene.key in SAFE_SCENES
         if self._king is None:
+            self.audio.king_tone(False)
             if self.visibility >= 1.0 and not in_safe:
                 self._spawn_king()
             return
@@ -2019,6 +2020,11 @@ class Game:
             return
         d = math.hypot(self._king.x - self.player.x,
                        self._king.y - self.player.y)
+        # His signature tone loops while he's on screen and swells the closer
+        # he gets -- the same nearness curve that cracks the mask open.
+        prox = max(0.0, min(1.0, 1.0 - (d - KING_THREAT_NEAR) /
+                            (KING_THREAT_FAR - KING_THREAT_NEAR)))
+        self.audio.king_tone(True, 0.28 + 0.6 * prox)
         # Don't let the King catch mid-eruption: while _birth ramps
         # 0->1 (~1.2s, npc._yk_update) he can't move, so he mustn't
         # kill either -- that ramp is the player's grace window.
@@ -2048,6 +2054,7 @@ class Game:
             except ValueError:
                 pass
         self._king = None
+        self.audio.king_tone(False)
 
     def _apply_curse(self):
         """Land a permanent curse. Each one deepens the Watcher cap, so
