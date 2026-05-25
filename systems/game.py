@@ -2342,8 +2342,20 @@ class Game:
                 draw_vessel_bloom(self.screen, sx, sy, npc.sprite_kind,
                                   npc.facing, m, seed=id(npc) & 0xffff)
             else:
+                # A Watcher thins toward nothing when the player looks
+                # straight at it -- compute whether it sits inside the
+                # player's facing cone (you can never quite fix on it).
+                looked = False
+                if npc.sprite_kind == "watcher" and self.player:
+                    dx = npc.x - self.player.x; dy = npc.y - self.player.y
+                    d = math.hypot(dx, dy)
+                    fx, fy = self.player.facing
+                    fl = math.hypot(fx, fy) or 1.0
+                    if d > 1:
+                        looked = (dx * fx + dy * fy) / (d * fl) > 0.5
                 draw_npc_sprite(self.screen, sx, sy, npc.sprite_kind,
                                 npc.facing, blink=(i == blink_idx),
+                                gaze=looked,
                                 birth=getattr(npc, "_birth", None),
                                 gait=getattr(npc, "_gait", None))
             # THRESHOLD: NPC name labels removed. They were the
