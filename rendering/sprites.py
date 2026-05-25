@@ -650,10 +650,11 @@ def _yk_slots():
     its own radius/speed and surfaces/dissolves on its own fade cycle."""
     r = random.Random(20240611)
     faces, eyes = [], []
-    # mask designs: plain, screaming, hollow/gaunt, cracked, and a melted
-    # double (two faces fused) that only POPS UP now and then.
-    kinds = ["scream", "hollow", "scream", "crack", "hollow", "double",
-             "scream", "hollow", "crack", "scream"]
+    # Dead human faces, mostly shrieking -- screaming and gaunt (hollow),
+    # with a fused 'double' (two faces melted together) that only POPS UP
+    # now and then.
+    kinds = ["scream", "hollow", "scream", "scream", "hollow", "double",
+             "scream", "hollow", "scream", "scream"]
     for k in kinds:
         faces.append((
             r.uniform(0.22, 0.82), r.uniform(0, math.tau), r.uniform(0.30, 0.85),
@@ -703,10 +704,63 @@ def _yk_glow(layer, cx, cy, R, t):
     _yk_radial(layer, cx, cy - 2, int(R * 0.55), _YK_T4, 78)
 
 
+# Slot/orb kind vocabulary -> facial expression. The faces read as people:
+# a dead, pallid human face surfaces from the light, mostly shrieking.
+_YK_EXPR = {"hollow": "gaunt", "crack": "scream", "plain": "calm"}
+
+
+def _yk_face(m, mx, my, r, expr, detail):
+    """A readable human face on mask-surface `m`: pallid oval lit upper-left,
+    brow ridge, nose ridge, eyes + an expressive mouth. `detail` gates the
+    features in as the mask surfaces (so it emerges as a blank pallid shape
+    first)."""
+    hi, mid, lo, pit = _YK_MHI, _YK_MMID, _YK_MLO, _YK_MPIT
+    rw, rh = r, int(r * 1.12)
+    pygame.draw.ellipse(m, lo, (mx - rw + 1, my - rh + 1, 2 * rw, 2 * rh))
+    pygame.draw.ellipse(m, mid, (mx - rw, my - rh, 2 * rw, 2 * rh))
+    pygame.draw.ellipse(m, hi, (mx - rw + 1, my - rh, max(1, 2 * rw - 2), max(1, 2 * rh - 3)))
+    if not detail or r < 3:
+        return
+    ew = max(1, r // 3)
+    eyl = (mx - r * 0.42, my - r * 0.12)
+    eyr = (mx + r * 0.42, my - r * 0.12)
+    bw = max(1, r // 4)
+    pygame.draw.line(m, lo, (int(mx - r * 0.7), int(my - r * 0.45)), (int(mx - r * 0.05), int(my - r * 0.30)), bw)
+    pygame.draw.line(m, lo, (int(mx + r * 0.7), int(my - r * 0.45)), (int(mx + r * 0.05), int(my - r * 0.30)), bw)
+    pygame.draw.line(m, lo, (int(mx), int(my - r * 0.1)), (int(mx), int(my + r * 0.25)), 1)
+    pygame.draw.line(m, hi, (int(mx - 1), int(my - r * 0.1)), (int(mx - 1), int(my + r * 0.2)), 1)
+    if expr in ("scream", "gaunt"):
+        for ex, ey in (eyl, eyr):
+            pygame.draw.ellipse(m, pit, (int(ex - ew), int(ey - ew), 2 * ew, int(2.2 * ew)))
+    else:
+        for ex, ey in (eyl, eyr):
+            pygame.draw.line(m, pit, (int(ex - ew), int(ey)), (int(ex + ew), int(ey)), 1)
+        if expr == "weep":
+            for ex, ey in (eyl, eyr):
+                pygame.draw.line(m, hi, (int(ex), int(ey + 1)), (int(ex), int(my + r * 0.6)), 1)
+    mym = my + r * 0.55
+    if expr == "scream":
+        pygame.draw.ellipse(m, pit, (int(mx - r * 0.32), int(mym - r * 0.1),
+                                     max(2, int(r * 0.64)), max(3, int(r * 0.85))))
+    elif expr == "gaunt":
+        pygame.draw.ellipse(m, pit, (int(mx - r * 0.28), int(mym - r * 0.05),
+                                     max(2, int(r * 0.56)), max(2, int(r * 0.5))))
+        pygame.draw.line(m, lo, (int(mx - r * 0.7), int(my)), (int(mx - r * 0.5), int(my + r * 0.4)), 1)
+        pygame.draw.line(m, lo, (int(mx + r * 0.7), int(my)), (int(mx + r * 0.5), int(my + r * 0.4)), 1)
+    elif expr == "smile":
+        pts = [(mx - r * 0.4, mym - r * 0.1), (mx, mym + r * 0.2), (mx + r * 0.4, mym - r * 0.1)]
+        pygame.draw.lines(m, pit, False, [(int(a), int(b)) for a, b in pts], 1)
+    elif expr == "weep":
+        pts = [(mx - r * 0.4, mym + r * 0.15), (mx, mym - r * 0.1), (mx + r * 0.4, mym + r * 0.15)]
+        pygame.draw.lines(m, pit, False, [(int(a), int(b)) for a, b in pts], 1)
+    else:
+        pygame.draw.line(m, pit, (int(mx - r * 0.3), int(mym)), (int(mx + r * 0.3), int(mym)), 1)
+
+
 def _yk_mask(surf, cx, cy, r, vis, kind):
-    """A MASK made of the same light: warm gold-tinted, translucent (the glow
-    reads through it) + a luminous halo, surfacing (vis->1) and dissolving back
-    into the glow (vis->0). 'double' is two masks melted into one."""
+    """A dead human FACE surfacing from the light: pallid, translucent (the glow
+    reads through it) + a luminous halo, rising (vis->1) and dissolving back into
+    the glow (vis->0). 'double' is two faces fused, both shrieking."""
     if vis <= 0.03:
         return
     cx, cy, r = int(cx), int(cy), int(r)
@@ -715,45 +769,13 @@ def _yk_mask(surf, cx, cy, r, vis, kind):
     S = (r + pad) * 2
     m = pygame.Surface((S, S), pygame.SRCALPHA)
     mx = my = r + pad
-    hi, mid, lo, pit = _YK_MHI, _YK_MMID, _YK_MLO, _YK_MPIT
-    ew = max(1, r // 4)
+    detail = vis > 0.35
     if kind == "double":
         off = max(2, r // 2)
         for ddx in (-off, off):
-            pygame.draw.circle(m, lo, (mx + ddx + 1, my + 1), r)
-            pygame.draw.circle(m, mid, (mx + ddx, my), r)
-            pygame.draw.circle(m, hi, (mx + ddx - 1, my - 1), max(1, r - 2))
-        pygame.draw.line(m, lo, (mx, my - r), (mx, my + r), 1)
-        if vis > 0.4:
-            for ddx in (-off, off):
-                pygame.draw.circle(m, pit, (mx + ddx - r // 2, my - r // 4), ew)
-                pygame.draw.circle(m, pit, (mx + ddx + r // 2, my - r // 4), ew)
-            pygame.draw.ellipse(m, pit, (mx - off - r // 4, my + r // 3,
-                                         2 * off + r // 2, max(2, r // 2)))
+            _yk_face(m, mx + ddx, my, max(2, int(r * 0.78)), "scream", detail)
     else:
-        pygame.draw.circle(m, lo, (mx + 1, my + 1), r)
-        pygame.draw.circle(m, mid, (mx, my), r)
-        pygame.draw.circle(m, hi, (mx - 1, my - 1), max(1, r - 1))
-        if vis > 0.5:
-            pygame.draw.circle(m, lo, (mx, my), r, 1)
-        if vis > 0.35 and r >= 3:
-            if kind == "hollow":
-                pygame.draw.ellipse(m, pit, (mx - r // 2 - 1, my - r // 3, ew + 3, ew + 5))
-                pygame.draw.ellipse(m, pit, (mx + r // 2 - 1, my - r // 3, ew + 3, ew + 5))
-                pygame.draw.line(m, pit, (mx - r // 4, my + r // 3), (mx + r // 4, my + r // 3), 1)
-            elif kind == "scream":
-                pygame.draw.ellipse(m, pit, (mx - r // 2 - 1, my - r // 3, ew + 2, ew + 4))
-                pygame.draw.ellipse(m, pit, (mx + r // 2 - 1, my - r // 3, ew + 2, ew + 4))
-                pygame.draw.ellipse(m, pit, (mx - 2 * r // 5, my - r // 8,
-                                             max(3, 4 * r // 5), max(4, 5 * r // 4)))
-            else:
-                pygame.draw.circle(m, pit, (mx - r // 2, my - r // 4), ew)
-                pygame.draw.circle(m, pit, (mx + r // 2, my - r // 4), ew)
-                pygame.draw.line(m, lo, (mx, my - r // 5), (mx, my + r // 5), 1)
-                pygame.draw.ellipse(m, pit, (mx - r // 3, my + r // 3,
-                                             max(2, 2 * r // 3), max(2, r // 3)))
-                if kind == "crack":
-                    pygame.draw.line(m, pit, (mx - 1, my - r), (mx + 2, my + r), 1)
+        _yk_face(m, mx, my, r, _YK_EXPR.get(kind, kind), detail)
     m.set_alpha(int(64 + 156 * vis))
     surf.blit(m, (cx - mx, cy - my))
 
