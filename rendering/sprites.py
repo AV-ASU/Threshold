@@ -859,7 +859,7 @@ def _yk_spire(layer, bx, by, ang, length, R, t, idx, m, dk, gold, hot):
     """One spire of the crown: a bold black/gold bent arm (shoulder -> reflex
     elbow -> grasping claw) rising from the circlet as a crown point. Stable
     (always present -- a crown, not a flicker), with a slow sway and grasp."""
-    a = ang + math.sin(t * 1.4 + idx * 1.1) * 0.09
+    a = ang + math.sin(t * 0.9 + idx * 1.1) * 0.09
     perp = (-math.sin(a), math.cos(a))
     bend = length * 0.22 * (1 if idx % 2 else -1)
     mid = (bx + math.cos(a) * length * 0.55, by + math.sin(a) * length * 0.55)
@@ -871,7 +871,7 @@ def _yk_spire(layer, bx, by, ang, length, R, t, idx, m, dk, gold, hot):
         _yk_radial(layer, px, py, w + 1, _YK_GOLD, int(85 * m))
     pygame.draw.lines(layer, gold, False, ip, w + 1)             # gold edge
     pygame.draw.lines(layer, dk, False, ip, w)                   # black core
-    grab = 0.4 + 0.45 * (0.5 + 0.5 * math.sin(t * 1.2 + idx * 0.8))
+    grab = 0.4 + 0.45 * (0.5 + 0.5 * math.sin(t * 0.7 + idx * 0.8))
     ha = math.atan2(hand[1] - elbow[1], hand[0] - elbow[0])
     fl = length * 0.34
     for fa in (-38, 0, 38):                                      # grasping claw at the tip
@@ -909,20 +909,24 @@ def _yk_shatter_mask(surf, cx, cy, r, vis, kind, crack, t, R, aim=0.0, arms=True
         surf.blit(m, (cx - mxc, cy - myc))
         return
     n = 7
+    n_arms = 4                                               # FEW arms -- deliberate, not a thicket
     dk, gold, hot = (*_YK_SHADOW, 255), (*_YK_GOLD, 255), (*_YK_HOT, 255)
-    # Arms root ALL OVER the mass and each LURCHES toward the player on its own
-    # independent cycle -- a quick lunge out, a slow draw back. The closer it
-    # gets (crack -> 1) the harder and further each one lunges. Suppressed during
-    # the birth assembly.
-    for i in range(n if arms else 0):
-        rho = i * math.tau / n + 0.5 * math.sin(i * 2.3)         # roots scattered around
+    # A FEW arms root around the mass and reach SLOWLY for the player: a long,
+    # deliberate stretch out and an equally slow draw back, each on its own
+    # unhurried cycle. The closer it gets (crack -> 1) the further each reaches.
+    # Suppressed during the birth assembly.
+    for i in range(n_arms if arms else 0):
+        rho = i * math.tau / n_arms + 0.5 * math.sin(i * 2.3)    # roots scattered around
         rx = cx + math.cos(rho) * r * 0.55
         ry = cy + math.sin(rho) * r * 0.55
-        spd = 0.6 + 0.22 * (i % 4)                               # independent pace
+        spd = 0.26 + 0.07 * (i % 3)                              # slow, each a little different
         ph = (t * spd + i * 0.41) % 1.0
-        lunge = ph / 0.26 if ph < 0.26 else max(0.0, 1.0 - (ph - 0.26) / 0.74)
-        ln = r * (0.45 + (1.1 + 1.3 * crack) * lunge)            # lunges harder up close
-        ang = aim + math.sin(i * 1.7) * 0.45                     # each aimed near the player
+        if ph < 0.5:                                             # slow, deliberate reach out
+            u = ph / 0.5; lunge = u * u * (3 - 2 * u)
+        else:                                                    # slow draw back
+            u = (ph - 0.5) / 0.5; lunge = 1.0 - u * u * (3 - 2 * u)
+        ln = r * (0.5 + (1.0 + 1.2 * crack) * lunge)             # reaches further up close
+        ang = aim + math.sin(i * 1.7) * 0.4                      # each aimed near the player
         _yk_spire(surf, rx, ry, ang, ln, R, t, i, 1.0, dk, gold, hot)
     far = (r + pad) * 1.7
     off = r * 0.7 * crack                                # shards drift apart
