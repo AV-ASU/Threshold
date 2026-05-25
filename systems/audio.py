@@ -110,12 +110,13 @@ class Audio:                        #Starting screen needs music, something simp
         # Trespass alarm: a long ringing brass-bell tone. Used by
         # eye-cameras flagged alarm=True (church, sheriff's office).
         self.sfx["alarm_bell"]  = g(420, 1200, 0.30, "sine", attack_ms=8, decay_ms=1100, vibrato=3)
-        # The Brimley bank's danger cue: a long, low, anguished man's
-        # yell -- ~5s of a gut scream of deep pain, as the King is drawn.
-        # Custom vocal synth (see _build_man_scream). NOTE: synthesized
-        # blind (no audio device here); audition + tune it with
+        # The Brimley bank's danger cue -- the King's wrongness arriving.
+        # NOT a human scream (he's eldritch): a dissonant, metallic blare
+        # that swells in and bends downward (his motif), kept distinct
+        # from his on-screen yk_tone so the player learns it as "he is
+        # coming." See _build_king_near. Synthesized blind; audition with
         # tools/render_audio.py.
-        self.sfx["scream"]      = self._build_man_scream()
+        self.sfx["king_near"]   = self._build_king_near()
         # Depths ambient layers: a low droning chant + a wet exhale.
         # Played at intervals that tighten as the dread aperture
         # closes, so the rite gets louder the closer the player is
@@ -321,81 +322,55 @@ class Audio:                        #Starting screen needs music, something simp
             stereo[i * 4 + 3] = buf[i * 2 + 1]
         return pygame.mixer.Sound(buffer=bytes(stereo))
 
-    def _build_man_scream(self, duration_ms=2600, vol=0.6):
-        """A short, raw, low man's scream of pain -- the Brimley bank's
-        danger cue as the King is drawn. Built from TURBULENCE, not a
-        tone (a saw buzzed; a shout is mostly turbulent air): white noise
-        'voiced' by a low, heavily-jittered glottal pulse -- so the pitch
-        is rough and indefinite, never a clean buzz -- shaped by three
-        wide open-vowel ('AAH') formants, with a hard onset and a ragged,
-        breaking amplitude. Synthesized blind -- audition + tune with
-        tools/render_audio.py. Knobs: duration_ms, the f0 contour, the
-        jitter depth (anti-buzz), and the formant centres / Q."""
+    def _build_king_near(self, duration_ms=2200, vol=0.5):
+        """The Brimley bank's danger cue -- NOT a human scream (the King
+        is eldritch) but his own wrongness arriving: a dissonant blare
+        that swells in and bends downward (his motif), inhuman and
+        metallic, kept distinct from his on-screen yk_tone so the player
+        learns it as 'he is coming -- get to cover.' A detuned cluster
+        (root + tritone + a beating near-unison) over a bed of reversed-
+        breath noise, with bell/gong inharmonic partials for the alien
+        edge and a slow throb. It needs to read as a clear, recognisable
+        signal, not realism. Synthesized blind -- audition + tune with
+        tools/render_audio.py. Knobs: duration_ms, the f0 bend, the
+        cluster ratios, and the mix."""
         sr = 22050
         n = int(sr * duration_ms / 1000)
         buf = bytearray(n * 2)
         two_pi = 2 * math.pi
-        rng = random.Random(11)
-
-        def _bandpass(fc, q):
-            # RBJ constant-skirt band-pass coefficients (normalised by a0).
-            w0 = two_pi * fc / sr
-            alpha = math.sin(w0) / (2.0 * q)
-            a0 = 1.0 + alpha
-            return (alpha / a0, -alpha / a0,
-                    (-2.0 * math.cos(w0)) / a0, (1.0 - alpha) / a0)
-        # Three wide formants of an open, shouted 'AAH' (low Q = airy,
-        # not a resonant whistle), with falling gains up the spectrum.
-        FORM = [(_bandpass(720.0, 3.0), 1.00),
-                (_bandpass(1150.0, 3.0), 0.70),
-                (_bandpass(2550.0, 3.5), 0.35)]
-        x1 = x2 = 0.0
-        ys = [[0.0, 0.0] for _ in FORM]      # per-formant y[n-1], y[n-2]
+        rng = random.Random(13)
         phase = 0.0
-        jit = 0.0
-        amp = 0.0
+        smooth = 0.0
         for i in range(n):
+            t = i / sr
             p = i / n
-            # Low roar contour, short: hard rise -> hold -> sag out.
-            if p < 0.05:
-                f0 = 95.0 + 75.0 * (p / 0.05)            # 95 -> 170 fast
-            elif p < 0.50:
-                f0 = 150.0
-            else:
-                f0 = 150.0 - 70.0 * ((p - 0.50) / 0.50)  # 150 -> 80
-            # Heavy random-walk jitter: the pitch never settles, so the
-            # voicing reads as a strained rasp instead of a steady buzz.
-            jit = 0.8 * jit + 0.2 * rng.uniform(-1, 1)
-            f0 *= 1.0 + 0.22 * jit
+            # Base pitch bends downward across the cue (the King's motif).
+            f0 = 175.0 - 45.0 * p
             phase += two_pi * f0 / sr
-            ph = phase / two_pi
-            ph -= math.floor(ph)
-            # Smooth glottal pulse 0..1 (no clicks); it 'voices' the noise.
-            glot = 0.5 * (1.0 - math.cos(two_pi * ph))
-            white = rng.uniform(-1, 1)
-            # Source = turbulent noise gated by the glottis (never fully
-            # off, so there's continuous breath) + a faint rough growl.
-            src = white * (0.35 + 0.65 * glot) + (2.0 * ph - 1.0) * 0.12 * glot
-            # Three parallel formant band-passes (shared input history).
-            out = 0.0
-            for k, ((b0, b2, a1, a2), gain) in enumerate(FORM):
-                yk = b0 * src + b2 * x2 - a1 * ys[k][0] - a2 * ys[k][1]
-                ys[k][1] = ys[k][0]
-                ys[k][0] = yk
-                out += gain * yk
-            x2 = x1
-            x1 = src
-            # Hard onset (a scream hits), sustain that breaks/flutters,
-            # then a quick fade as the breath goes.
-            if p < 0.03:
-                env = p / 0.03
-            elif p > 0.80:
-                env = max(0.0, (1.0 - p) / 0.20)
+            # Dissonant cluster: root, a tritone, and a near-unison that
+            # beats slowly against the root -- the 'wrongness'.
+            cluster = (math.sin(phase)
+                       + 0.8 * math.sin(1.414 * phase)
+                       + 0.7 * math.sin(1.012 * phase))
+            # Inharmonic bell/gong-ratio partials -- the alien metallic
+            # edge (non-integer ratios, so it never resolves to a note).
+            metal = (0.30 * math.sin(2.76 * phase)
+                     + 0.20 * math.sin(5.40 * phase))
+            # Reversed-breath noise bed -- shared texture with yk_tone, so
+            # the cue feels like the same entity drawing near.
+            smooth = 0.92 * smooth + 0.08 * rng.uniform(-1, 1)
+            breath = smooth * 0.55
+            # Slow dread throb.
+            throb = 0.72 + 0.28 * math.sin(two_pi * 3.2 * t)
+            # Swell in (telegraph), hold, then fade.
+            if p < 0.20:
+                env = p / 0.20
+            elif p > 0.76:
+                env = max(0.0, (1.0 - p) / 0.24)
             else:
                 env = 1.0
-            amp = 0.6 * amp + 0.4 * rng.uniform(0.0, 1.0)
-            env *= 0.6 + 0.4 * amp                 # ragged -- the voice catching
-            v = max(-1.0, min(1.0, out * 1.4 * env))   # driven into clip = raw
+            v = (cluster * 0.34 + metal + breath) * env * throb
+            v = max(-1.0, min(1.0, v))
             sample = int(v * vol * 32767)
             sample = max(-32768, min(32767, sample))
             buf[i * 2] = sample & 0xFF

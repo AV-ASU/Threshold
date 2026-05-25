@@ -1107,14 +1107,14 @@ def _mistlands_ambient(game, scene, dt):
     # Re-arm the danger cue once you've cooled off (hysteresis, so it
     # doesn't chatter on small fluctuations around the threshold).
     if game.visibility < 0.6:
-        scene._screamed = False
+        scene._king_warned = False
     # Danger cue: the instant you're seen enough that the King is near,
-    # a long, low gut-scream -- no text, the sound IS the warning. King
-    # arriving is death; the yell is the cue to break for the corn.
+    # his eldritch arriving-blare -- no text, the sound IS the warning.
+    # King arriving is death; the cue is to break for the corn.
     if game.visibility >= 0.8:
-        if not getattr(scene, "_screamed", False):
-            scene._screamed = True
-            game.audio.play("scream", 0.9)
+        if not getattr(scene, "_king_warned", False):
+            scene._king_warned = True
+            game.audio.play("king_near", 0.9)
         return
     # Below the warning band: a sparse prickle of being watched.
     scene._amb_t = getattr(scene, "_amb_t", 6.0) + dt
