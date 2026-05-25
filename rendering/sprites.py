@@ -1071,6 +1071,24 @@ def _draw_king(surf, x, y, facing, t, birth, gait, prox=0.0):
     if bp < 1.0:
         _yk_birth_rift(surf, mcx, mcy, R, bp)                # space tears open
     _yk_glow(layer, cx, cy, R * max(0.18, grow), t)
+    # THE GOLD EXPLOSION -- on the BOTTOM (into the body layer, behind the
+    # faces): a furnace-glow that swells as he closes and BACKLIGHTS the mass.
+    # The masks / arms / eyes read AGAINST it, never washed out by it -- so up
+    # close you see MORE wrongness, a writhing furnace of faces, not a clean
+    # ball. At point-blank the gold curdles toward a bruised green. Unstable
+    # flicker, not a serene swell.
+    if pk > 0.02:
+        flk = 0.85 + 0.3 * _frand(int(t * 53) + 5)
+        _yk_radial(layer, cx, cy, int(R * (1.6 + 2.6 * pk) * flk),
+                   _YK_GOLD, int(70 + 110 * pk))
+        _yk_radial(layer, cx, cy, int(R * (1.0 + 1.5 * pk) * flk),
+                   _YK_HOT, min(255, int(60 + 130 * pk * pk)))
+        sick = max(0.0, (pk - 0.4) / 0.6)
+        if sick > 0.02:                      # bruised green-gold creeps in
+            _yk_radial(layer, cx, cy, int(R * (1.2 + 1.6 * pk)),
+                       (150, 176, 40), int(54 * sick))
+    # The faces: more SURFACE and swell as he closes -- the clot fills with
+    # masks, every dead socket lighting a pupil turned on you.
     for fi, (rn, ba, asp, fr, vsp, vph, kind) in enumerate(_YK_FACES):
         ang = ba + t * asp
         rr = rn * (0.9 + 0.1 * math.sin(t * 0.8 + vph))
@@ -1080,9 +1098,20 @@ def _draw_king(surf, x, y, facing, t, birth, gait, prox=0.0):
             vis = max(0.0, min(1.0, (math.sin(t * vsp + vph) - 0.55) / 0.4))
         else:
             vis = max(0.0, min(1.0, 0.5 + 0.72 * math.sin(t * vsp + vph)))
-        _yk_mask(layer, fxp, fyp, fr, vis, kind, seed=fi + 1, watch=watch)
+        vis = min(1.0, vis + 0.5 * pk)
+        _yk_mask(layer, fxp, fyp, int(fr * (1.0 + 0.35 * pk)), vis, kind,
+                 seed=fi + 1, watch=watch)
+    if pk > 0.25:                            # extra faces pack the furnace
+        ek = ("scream", "hollow", "mutated", "plain")
+        for j in range(int(7 * pk)):
+            a2 = t * 1.4 + j * 2.39996
+            rr2 = R * (0.22 + 0.55 * _frand(j * 5 + 2)) * grow
+            _yk_mask(layer, cx + math.cos(a2) * rr2 + fb[0],
+                     cy + math.sin(a2) * rr2 + fb[1],
+                     max(3, int(R * 0.26 * (0.8 + 0.5 * _frand(j)))),
+                     min(1.0, 0.5 + pk), ek[j % 4], seed=200 + j, watch=watch)
     for rn, ba, asp, ph in _YK_EYES:
-        if math.sin(t * 2.1 + ph) > 0.1:
+        if math.sin(t * 2.1 + ph) > 0.1 - 0.7 * pk:   # more eyes open as he nears
             ang = ba + t * asp
             ex = cx + math.cos(ang) * R * 0.7 * rn * grow + fb[0]
             ey = cy + math.sin(ang) * R * 0.7 * rn * grow + fb[1]
@@ -1097,7 +1126,8 @@ def _draw_king(surf, x, y, facing, t, birth, gait, prox=0.0):
     bmx, bmy = mcx + jx, mcy + jy
     layer.set_alpha(int(255 * max(0.05, valpha)))
     surf.blit(layer, (bmx - cx, bmy - cy))
-    # Arms LAST (own layer over the wake + glow); they erupt in the back half.
+    # Arms LAST (own layer over the furnace) -- dark reaches silhouetted on
+    # the gold; they erupt in the back half and telescope toward the prey.
     if agrow > 0.02:
         arml = pygame.Surface((L, L), pygame.SRCALPHA)
         for idx, (da, ln) in enumerate([(0.0, R * 2.05), (0.45, R * 1.7), (-0.45, R * 1.7),
@@ -1105,16 +1135,6 @@ def _draw_king(surf, x, y, facing, t, birth, gait, prox=0.0):
             _yk_arm(arml, cx, cy, aa + da, ln * agrow, R * max(0.4, agrow), t, idx, prox=pk)
         arml.set_alpha(int(255 * max(0.05, valpha)))
         surf.blit(arml, (bmx - cx, bmy - cy))
-    # RATION THE LOOK: a searing gold-white bloom centred on the clot that
-    # swells and brightens with proximity, blowing out his edges so he can't
-    # be cleanly read up close. Additive, drawn over everything.
-    if pk > 0.02:
-        flk = 0.8 + 0.35 * _frand(int(t * 53) + 5)   # unstable glare, not a clean swell
-        _yk_radial(surf, bmx, bmy - 2, int(R * (1.3 + 1.7 * pk) * flk),
-                   _YK_HOT, min(255, int((46 + 150 * pk * pk) * flk)))
-        if pk > 0.55:                       # at point-blank, a hot white core
-            _yk_radial(surf, bmx, bmy - 2, int(R * (0.5 + 0.8 * pk) * flk),
-                       (255, 250, 226), min(255, int(120 * (pk - 0.55) / 0.45 * flk)))
 
 
 # ---------------------------------------------------------------------------
