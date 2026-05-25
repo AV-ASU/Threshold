@@ -677,16 +677,18 @@ def _yk_radial(surf, x, y, R, color, a0, add=True):
 
 
 def _yk_glow(layer, cx, cy, R, t):
-    """The clot of light -- a churning bright head of gold->white. No hanging
-    tail (the reaching tail-arms carry that material now). Orange lives only in
-    the soft aura behind, reading as the warm outline of the silhouette."""
+    """A clot of bright gold light. Orange lives ONLY in the soft aura behind the
+    mass, so it reads as the warm outline of the whole silhouette; the bright
+    lumpy body is drawn opaque on top, so it never goes orange between its blobs."""
     R = int(R * (1 + 0.06 * math.sin(t * 2.0)))
-    sw = t * 0.6
-    ca, sa = math.cos(sw), math.sin(sw)
-    _yk_radial(layer, cx, cy, int(R * 1.85), _YK_T1, 72)     # warm orange outline behind
-    _yk_radial(layer, cx, cy, int(R * 1.45), _YK_T1, 50)
+    # warm orange outline: a broad aura behind everything (shows only at the rim).
+    _yk_radial(layer, cx, cy, int(R * 1.95), _YK_T1, 72)
+    _yk_radial(layer, cx, cy, int(R * 1.5), _YK_T2, 58)
     subs = [(0, 0), (-0.4, -0.18), (0.4, -0.12), (-0.12, 0.4),
             (0.22, 0.32), (-0.3, 0.2), (0.12, -0.34)]
+    sw = t * 0.6
+    ca, sa = math.cos(sw), math.sin(sw)
+    # bright gold -> white body, drawn opaque so it covers the centre.
     for col, scl, grow in [(_YK_T3, 1.06, 3), (_YK_PALE, 0.78, 1), (_YK_WHITE, 0.5, 0), (_YK_WHITE, 0.28, 0)]:
         for ox, oy in subs:
             rx, ry = ox * ca - oy * sa, ox * sa + oy * ca
@@ -805,6 +807,67 @@ def _yk_mask(surf, cx, cy, r, vis, kind):
     surf.blit(m, (cx - mx, cy - my))
 
 
+def _yk_grab_arm(surf, cx, cy, ang, reach, t, phase, scale, lit, alpha=255, side=1, speed=0.62):
+    """An arm that buds from nothing, stretches out ahead getting bigger as its
+    hand opens to grab, then fades as a fresh arm takes its place -- the King
+    hauling itself forward on handholds that dissolve behind it. `phase` offsets
+    each arm's lifecycle so there is always one reaching; `speed` sets its pace."""
+    life = (t * speed + phase) % 1.0
+    if life < 0.12:                                  # born from nothing
+        fade = life / 0.12
+    elif life > 0.7:                                 # then it vanishes
+        fade = max(0.0, (1.0 - life) / 0.3)
+    else:
+        fade = 1.0
+    if fade <= 0.02:
+        return
+    armA = int(alpha * fade)
+    a = ang + math.sin(t * 1.3 + phase) * 0.07
+    ext = 0.18 + 1.05 * life                         # stretches further out over its life
+    grow = 0.4 + 0.95 * life                         # ...and gets bigger
+    grab = min(1.0, life * 1.7)                      # hand closes as it stretches to grab
+    sd, sh_hi = (*_YK_SHADOW, armA), (*_YK_SHADOW_HI, armA)
+    sh = (cx + math.cos(ang) * reach * 0.1, cy + math.sin(ang) * reach * 0.1)
+    hand = (cx + math.cos(a) * reach * ext, cy + math.sin(a) * reach * ext)
+    # Smooth curved arm: a quadratic bezier that bows early and straightens as it
+    # stretches out.
+    perp = (-math.sin(a), math.cos(a))
+    bend = reach * (0.26 - 0.16 * life) * side
+    ctrl = ((sh[0] + hand[0]) / 2 + perp[0] * bend, (sh[1] + hand[1]) / 2 + perp[1] * bend)
+    m = 9
+    path = []
+    for i in range(m + 1):
+        u = i / m
+        path.append(((1 - u) ** 2 * sh[0] + 2 * (1 - u) * u * ctrl[0] + u * u * hand[0],
+                     (1 - u) ** 2 * sh[1] + 2 * (1 - u) * u * ctrl[1] + u * u * hand[1]))
+    base_w = max(1.5, scale * 3.2 * grow)
+    for i in range(m):
+        u = i / m
+        w = max(1, int(round(base_w * (1 - 0.62 * u))))   # thick shoulder -> thin wrist
+        p0 = (int(path[i][0]), int(path[i][1]))
+        p1 = (int(path[i + 1][0]), int(path[i + 1][1]))
+        pygame.draw.line(surf, sh_hi, p0, p1, w + 1)
+        pygame.draw.line(surf, sd, p0, p1, w)
+    # Grabbing hand: three curved fingers + a thumb, curling with `grab`.
+    ha = math.atan2(hand[1] - path[-2][1], hand[0] - path[-2][0])
+    fl = reach * 0.22 * grow
+    fw = max(1, int(base_w * 0.55))
+    for fa, fr in ((-30, 0.85), (0, 1.0), (30, 0.85), (78, 0.6)):
+        sgn = 1 if fa >= 0 else -1
+        a2 = ha + math.radians(fa) - sgn * grab * 0.55
+        k1 = (hand[0] + math.cos(a2) * fl * fr * 0.55, hand[1] + math.sin(a2) * fl * fr * 0.55)
+        a3 = a2 - sgn * (0.25 + grab * 0.9)
+        tip = (k1[0] + math.cos(a3) * fl * fr * 0.5, k1[1] + math.sin(a3) * fl * fr * 0.5)
+        pygame.draw.lines(surf, sd, False,
+                          [(int(hand[0]), int(hand[1])), (int(k1[0]), int(k1[1])),
+                           (int(tip[0]), int(tip[1]))], fw)
+        if lit:
+            try:
+                surf.set_at((int(tip[0]), int(tip[1])), (*_YK_MHI, armA))
+            except (IndexError, ValueError):
+                pass
+
+
 # A shed SOUL-ORB in the wake is drawn in two passes (glow, then faces) so that
 # every orb's masks sit on top of every orb's glow, regardless of shed order.
 _YK_ORB_KINDS = ("plain", "scream", "hollow", "crack")
@@ -860,41 +923,6 @@ def _yk_void(layer, cx, cy, R):
     for ox, oy in subs:                                          # static lumps -- no swirl
         pygame.draw.circle(layer, (8, 7, 12),
                            (int(cx + ox * R * 0.6), int(cy + oy * R * 0.9)), int(R * 0.58), 0)
-
-
-def _yk_tail_arm(layer, cx, cy, ang, reach, t, phase, R, m, side=1):
-    """An arm that LOOKS like the King's drippy tail -- a tapering column of gold
-    lumps (pale-cored, orange-rimmed) that droops to a heavy drip -- but ACTS
-    like the old grabbing arm: it reaches out toward the aim and draws back on a
-    grab cycle (two of them alternate, hand over hand)."""
-    if reach < 4 or m <= 0.03:
-        return
-    cyc = t * 0.95 + phase
-    reach *= 0.5 + 0.5 * (0.5 + 0.5 * math.sin(cyc))     # reach out / pull back (grab)
-    a = ang + math.sin(t * 1.3 + phase) * 0.08
-    x, y = cx + math.cos(ang) * R * 0.15, cy + math.sin(ang) * R * 0.15
-    vx, vy = math.cos(a), math.sin(a)
-    n = 10
-    seg = reach / n
-    pts = [(x, y)]
-    for s in range(n):
-        sf = (s + 1) / n
-        dx, dy = vx, vy + 1.0 * sf * sf                  # droops downward toward the tip
-        ln = math.hypot(dx, dy) or 1.0
-        x += dx / ln * seg + math.sin(t * 1.4 + phase + sf * 3.0) * R * 0.05
-        y += dy / ln * seg
-        pts.append((x, y))
-    for s, (px, py) in enumerate(pts):                   # orange aura behind, like the body
-        u = s / n
-        _yk_radial(layer, px, py, max(2, int(R * (0.72 - 0.5 * u))), _YK_T1, int(55 * m))
-    for s, (px, py) in enumerate(pts):                   # chunky gold tail-lumps, tapering
-        u = s / n
-        rr = max(1, int(R * (0.5 - 0.4 * u)))
-        pygame.draw.circle(layer, _YK_T3, (int(px), int(py)), rr)
-        if u < 0.5:
-            pygame.draw.circle(layer, _YK_PALE, (int(px), int(py)), max(1, rr - 2))
-    _yk_radial(layer, int(pts[-1][0]), int(pts[-1][1]),   # heavy grasping drip at the tip
-               max(2, int(R * 0.22)), _YK_GOLD, int(140 * m))
 
 
 def _draw_king(surf, x, y, facing, t, birth, gait, threat=None):
@@ -1026,6 +1054,19 @@ def _draw_king(surf, x, y, facing, t, birth, gait, threat=None):
         math.exp(-((((t * arm_speed) % 1.0) - 0.68) / 0.15) ** 2)
         + math.exp(-((((t * arm_speed + 0.5) % 1.0) - 0.68) / 0.15) ** 2))
     sxo, syo = int(math.cos(aa) * surge), int(math.sin(aa) * surge)
+    # --- Two slow MAIN arms FIRST so they sit BEHIND the rest of the sprite,
+    # rooting from offset spots low on the body (not the face) and reaching out
+    # past the glow. They grow out only as it manifests, hand over hand.
+    if manifest > 0.05 and grow > 0.1:
+        arms = pygame.Surface((L, L), pygame.SRCALPHA)
+        reach = R * (1.4 + 1.4 * intensity) * grow
+        ascale = max(1.0, grow * (1.0 + 0.4 * intensity))
+        _yk_grab_arm(arms, cx - R * 0.55, cy + R * 0.32, aa - 0.42, reach, t, 0.0,
+                     ascale, True, side=-1, speed=arm_speed)
+        _yk_grab_arm(arms, cx + R * 0.5, cy + R * 0.55, aa + 0.28, reach, t, 0.5,
+                     ascale, True, side=1, speed=arm_speed)
+        arms.set_alpha(int(235 * va * manifest))
+        surf.blit(arms, (mcx - cx + sxo, mcy - cy + syo))
     # --- VOID form (dominant while far): a still dark mass + a faint pale mask.
     if dark_a > 0.02 and grow > 0.1:
         void = pygame.Surface((L, L), pygame.SRCALPHA)
@@ -1037,12 +1078,7 @@ def _draw_king(surf, x, y, facing, t, birth, gait, threat=None):
     if manifest > 0.01:
         if bp < 1.0:
             _yk_birth_rift(surf, mcx, mcy, R, bp)
-        if manifest > 0.05:                                 # reaching tail-arms, behind the head
-            ar = R * (1.7 + 1.4 * intensity) * grow
-            gr = R * max(0.18, grow)
-            _yk_tail_arm(layer, cx, cy, aa - 0.45, ar, t, 0.0, gr, manifest, side=-1)
-            _yk_tail_arm(layer, cx, cy, aa + 0.45, ar, t, math.pi, gr, manifest, side=1)
-        _yk_glow(layer, cx, cy, R * max(0.18, grow), t)     # head over the arm roots
+        _yk_glow(layer, cx, cy, R * max(0.18, grow), t)
         if intensity > 0.6:                                 # roused: white-hot flare
             _yk_radial(layer, cx, cy, int(R * (0.6 + 0.5 * intensity)), _YK_WHITE,
                        int(70 * (intensity - 0.6) / 0.4))
