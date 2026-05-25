@@ -830,14 +830,28 @@ def _yk_arm(layer, cx, cy, ang, length, R, t, idx):
     pygame.draw.lines(layer, _YK_DK_HI, False, pts, w + 2)
     pygame.draw.lines(layer, _YK_DK, False, pts, w)
     ha = math.atan2(hand[1] - elbow[1], hand[0] - elbow[0])
-    pygame.draw.circle(layer, _YK_DK, (int(hand[0]), int(hand[1])), max(2, w // 2))
-    for fa in (-42, -14, 16, 44):
+    hx, hy = hand
+    # A palm knot, then four thick fingers that bend once into a grasp (the
+    # bend tightens as the arm reaches); only a short claw juts past each tip
+    # in pale bone, so the hand reads as a deliberate talon, not scribble.
+    pygame.draw.circle(layer, _YK_DK_HI, (int(hx), int(hy)), max(2, w // 2 + 1))
+    pygame.draw.circle(layer, _YK_DK, (int(hx), int(hy)), max(2, w // 2))
+    flen = R * 0.46
+    curl = 0.30 + 0.45 * max(0.0, math.sin(t * 1.5 + idx * 0.9))   # grasp cycle
+    for fa, fl in [(-46, 0.78), (-16, 1.0), (16, 1.0), (46, 0.82)]:
         a2 = ha + math.radians(fa)
-        tip = (hand[0] + math.cos(a2) * R * 0.5, hand[1] + math.sin(a2) * R * 0.5)
-        pygame.draw.line(layer, _YK_DK, (int(hand[0]), int(hand[1])),
-                         (int(tip[0]), int(tip[1])), 2)
+        knu = (hx + math.cos(a2) * flen * fl * 0.6, hy + math.sin(a2) * flen * fl * 0.6)
+        a3 = a2 + (-1 if fa < 0 else 1) * curl                    # bend the finger
+        tip = (knu[0] + math.cos(a3) * flen * fl * 0.6,
+               knu[1] + math.sin(a3) * flen * fl * 0.6)
+        pygame.draw.lines(layer, _YK_DK, False,
+                          [(int(hx), int(hy)), (int(knu[0]), int(knu[1])),
+                           (int(tip[0]), int(tip[1]))], 3)
+        claw = (tip[0] + math.cos(a3) * 3.0, tip[1] + math.sin(a3) * 3.0)
+        pygame.draw.line(layer, _YK_BONE, (int(tip[0]), int(tip[1])),
+                         (int(claw[0]), int(claw[1])), 2)
         try:
-            layer.set_at((int(tip[0]), int(tip[1])), _YK_BONE)
+            layer.set_at((int(claw[0]), int(claw[1])), _YK_MHI)
         except (IndexError, ValueError):
             pass
 
