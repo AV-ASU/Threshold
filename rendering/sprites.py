@@ -975,8 +975,15 @@ def _draw_king(surf, x, y, facing, t, birth, gait, threat=None):
     # Birth runs the shatter in REVERSE: shards converge into the WHOLE mask,
     # always resolving to the calm intact face regardless of threat. Only once
     # fully formed does the threat actually crack it (and bring out the arms).
-    crack = manifest if bp >= 1.0 else (1.0 - grow) * 2.2
-    arms_on = bp >= 1.0 and manifest > 0.06
+    # Crack LAGS the bloom: the mask first blooms INTACT (the void face becoming
+    # real), and only shatters once it's mostly manifest -- so the calm void face
+    # has faded before the shards appear, never a whole-face-behind-shards double.
+    if bp >= 1.0:
+        cm = max(0.0, (manifest - 0.45) / 0.55)
+        crack = cm * cm * (3 - 2 * cm)
+    else:
+        crack = (1.0 - grow) * 2.2
+    arms_on = bp >= 1.0 and crack > 0.05
     dt = t - _YK_LAST[0]
     _YK_LAST[0] = t
     if dt <= 0 or dt > 0.2:
@@ -1098,7 +1105,10 @@ def _draw_king(surf, x, y, facing, t, birth, gait, threat=None):
     fph = (t * (0.16 + 0.12 * intensity)) % 1.0
     flare = math.exp(-((fph - 0.5) / 0.045) ** 2)
     # --- VOID form (dominant while far): a still dark mass + a faint pale mask.
-    if dark_a > 0.02 and grow > 0.1:
+    # Fades out by the time the bloom takes hold (show ~0.5), well before the
+    # mask cracks -- so the whole calm face is gone before the shards show.
+    void_fade = max(0.0, 1.0 - show / 0.5)
+    if void_fade > 0.02 and grow > 0.1:
         void = pygame.Surface((L, L), pygame.SRCALPHA)
         _yk_void(void, cx, cy, int(R * max(0.4, grow)))
         # The ashen mask is THE thing watching from the void -- present and
@@ -1108,8 +1118,12 @@ def _draw_king(surf, x, y, facing, t, birth, gait, threat=None):
         # scream is held for the break, when the mask actually cracks open.
         vmask = 0.6 + 0.18 * intensity
         _yk_mask(void, hx, hy, pfr, vmask, pmk, mouth=False)  # ashen mask, watching
-        void.set_alpha(int(235 * dark_a * va))
-        surf.blit(void, (mcx - cx, mcy - cy))               # the void doesn't lurch
+        void.set_alpha(int(235 * void_fade * va))
+        # Move with the SAME lurch offset as the manifest layer: the void and
+        # the manifest are one head, so they must stay aligned -- otherwise the
+        # calm void face and the manifest face read as TWO masks during the
+        # crossfade. Surge is ~0 while far (manifest 0), so it's still then.
+        surf.blit(void, (mcx - cx + sxo, mcy - cy + syo))
     # --- MANIFEST form (blooms in as it closes, and flashes in at birth).
     if show > 0.01:
         # Golden light SIZED TO THE MASK, sitting inside it -- so it reads as
