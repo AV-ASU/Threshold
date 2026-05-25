@@ -1104,15 +1104,17 @@ def _mistlands_ambient(game, scene, dt):
     scene.open_exposure = EXPOSE_RATE * toll
     if toll <= 0 or getattr(p, "hidden", None):
         return
-    # Warning band: high and still in the open -> tell them to break for
-    # the corn before he comes. King arriving is death; this is the out.
+    # Re-arm the danger shriek once you've cooled off (hysteresis, so it
+    # doesn't chatter on small fluctuations around the threshold).
+    if game.visibility < 0.6:
+        scene._screeched = False
+    # Danger cue: the instant you're seen enough that the King is near,
+    # a single grating screech -- no text, the sound IS the warning.
+    # King arriving is death; the shriek is the cue to break for the corn.
     if game.visibility >= 0.8:
-        scene._warn_t = getattr(scene, "_warn_t", 0.0) + dt
-        if scene._warn_t >= 2.5:
-            scene._warn_t = 0.0
-            game.show_notice("The light's going yellow at the edges. Get "
-                             "to the corn.", 2.0)
-            game.audio.play("whisper", 0.4)
+        if not getattr(scene, "_screeched", False):
+            scene._screeched = True
+            game.audio.play("screech", 0.85)
         return
     # Below the warning band: a sparse prickle of being watched.
     scene._amb_t = getattr(scene, "_amb_t", 6.0) + dt

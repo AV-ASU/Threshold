@@ -110,6 +110,14 @@ class Audio:                        #Starting screen needs music, something simp
         # Trespass alarm: a long ringing brass-bell tone. Used by
         # eye-cameras flagged alarm=True (church, sheriff's office).
         self.sfx["alarm_bell"]  = g(420, 1200, 0.30, "sine", attack_ms=8, decay_ms=1100, vibrato=3)
+        # A high, grating shriek -- the Brimley bank's danger cue when
+        # the King is about to be drawn (it replaced the old text
+        # warning). Sawtooth in the scream register, fast vibrato + noise
+        # for the raw edge, sharp on and a hard fade. NOTE: synthesized
+        # blind (no audio device in the build env) -- tune freq / vibrato
+        # / noise_mix / duration by ear; it must read as alarm and stay
+        # distinct from the King's own yk_tone.
+        self.sfx["screech"]     = g(1500, 480, 0.40, "saw", attack_ms=4, decay_ms=420, vibrato=12, noise_mix=0.40)
         # Depths ambient layers: a low droning chant + a wet exhale.
         # Played at intervals that tighten as the dread aperture
         # closes, so the rite gets louder the closer the player is
