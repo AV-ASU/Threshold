@@ -17,7 +17,11 @@ and was **last seen in Brimley**.
 You drove in to ask a few questions and drive out. **You can't.** The
 King in Yellow's influence has the town folded shut: the roads loop, the
 corn never ends, your engine turns over and over and never catches. The
-only way out is **down** — to the source.
+fold is **containment** — Brimley scarred over so that what festers here
+never reaches the world — and nothing leaves unless it carries a shard of
+His authority. So there are two ways out, and both damn something:
+**down** the well to the source, to *end it* — or out past the corn as
+the breach itself, the **Sign** in your hands, to *spread it*.
 
 **Tone:** *Darkwood* (oppressive hide-or-die dread, a spreading
 corruption, bleak and ambiguous) + *Fear & Hunger* (grimdark descent to
@@ -75,7 +79,7 @@ on the surface* — a fair, brutal "you dug too deep, too fast."
 | 2 | **Mara's Journal** | `mom_notebook` | Lodge cellar wall-panel | Her descent, in her own words |
 | 3 | **The Ledger** (the Lodge's guest register) | (new) | Arcadia Lodge — its cellar (`basement` scene) | Brimley's pattern — guests who check in and never out |
 | 4 | **The Preacher** | (his body) | Mistlands (farmhouse / cauldron) | The town murders witnesses |
-| 5 | **The Sign** | `charcoal` → `sigil_rubbing` | Cult chamber / well bottom | What they actually worship |
+| 5 | **The Sign** | `charcoal` → `sigil_rubbing` | Cult chamber / well bottom | What they actually worship — and a shard of His authority the fold opens for: the **escape key** (drive out with it → *SPREAD IT*) |
 | 6 | **The Congregation** | (Mara, turned) | The Depths / the hive | There was never anyone to save |
 
 ---
@@ -130,7 +134,7 @@ that fire is someone He already took. You only ever see it by losing.
 | **A cultist catches you** | The cult takes you for the ritual | Stark text card — **CAPTURED** (cult takes you alive; worse than killed, and feeds the hive) | new |
 | **The King catches you** (vis `1.0`, *3+ evidence*, He reaches you) | He takes you into Himself | Brief cutscene: fire/hell, the floating masks of His sprite drifting in it — title **Carcosa** | **net-new.** Today the catch routes to `_trigger_closure` → `_begin_threshold_closure` (a bespoke in-place sequence); the Carcosa cutscene must be authored. |
 | **Seal the threshold** — *END IT* | Contain the hunger; Brimley + you become a hole in the map | Ending sequence. *"It is done. Nothing leaves Brimley again. Not the hunger. Not you."* | `_play_ending("seal_threshold")` (exists) |
-| **Drive out with the Sign** — *SPREAD IT* | You escape; Carcosa bleeds into the world | Ending sequence. *"You got out. You're the only one who ever has. Everyone will understand why, soon."* | `_begin_car_escape()` → `_play_ending("escape_alone")` (exists) |
+| **Drive out with the Sign** — *SPREAD IT* | The Sign breaks the fold; you pass where no one else can, and Carcosa bleeds into the world through the hole you made | Ending sequence — the engine catches *for the first time*: *"You got out. You're the only one who ever has. Everyone will understand why, soon."* | `_begin_car_escape()` → `_play_ending("escape_alone")`. **REWORK:** gate the escape on possessing the **Sign** (`sigil_rubbing`), not just car keys; replace the stale `escape_alone` script ("you turn the key / the engine starts / you drive away") with the line at left. |
 
 ---
 
