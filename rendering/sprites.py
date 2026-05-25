@@ -863,36 +863,38 @@ def _yk_void(layer, cx, cy, R):
 
 
 def _yk_tail_arm(layer, cx, cy, ang, reach, t, phase, R, m, side=1):
-    """An arm made of the same dripping tail-light, but it ACTS like the old
-    grabbing arm: a tapering strand that reaches out toward the aim and draws
-    back on a grab cycle (two of them alternate, hand over hand), ending in a
-    grasping drip instead of a hand."""
+    """An arm that LOOKS like the King's drippy tail -- a tapering column of gold
+    lumps (pale-cored, orange-rimmed) that droops to a heavy drip -- but ACTS
+    like the old grabbing arm: it reaches out toward the aim and draws back on a
+    grab cycle (two of them alternate, hand over hand)."""
     if reach < 4 or m <= 0.03:
         return
     cyc = t * 0.95 + phase
-    ext = 0.45 + 0.55 * (0.5 + 0.5 * math.sin(cyc))      # reach out / pull back
-    a = ang + math.sin(t * 1.3 + phase) * 0.1
-    sh = (cx + math.cos(ang) * R * 0.25, cy + math.sin(ang) * R * 0.25)
-    tip = (cx + math.cos(a) * reach * ext, cy + math.sin(a) * reach * ext)
-    perp = (-math.sin(a), math.cos(a))
-    bend = reach * 0.2 * side * (1.0 - 0.45 * ext)        # bows when pulled, straightens to reach
-    ctrl = ((sh[0] + tip[0]) / 2 + perp[0] * bend, (sh[1] + tip[1]) / 2 + perp[1] * bend)
-    n = 12
-    pts = []
-    for i in range(n + 1):
-        u = i / n
-        pts.append(((1 - u) ** 2 * sh[0] + 2 * (1 - u) * u * ctrl[0] + u * u * tip[0],
-                    (1 - u) ** 2 * sh[1] + 2 * (1 - u) * u * ctrl[1] + u * u * tip[1]))
-    for i, (xx, yy) in enumerate(pts):                   # gold glow, tapering to the drip
-        u = i / n
-        rr = max(1, int(R * 0.28 * (1 - 0.72 * u)))
-        _yk_radial(layer, xx, yy, rr, _YK_GOLD, int(100 * (1 - 0.5 * u) * m))
-    ip = [(int(a2), int(b2)) for a2, b2 in pts]          # dark torn core
-    for i in range(len(ip) - 1):
-        u = i / n
-        pygame.draw.line(layer, _YK_SHADOW if u < 0.4 else _YK_SHADOW_HI,
-                         ip[i], ip[i + 1], 2 if u < 0.35 else 1)
-    _yk_radial(layer, ip[-1][0], ip[-1][1], max(1, int(R * 0.17)), _YK_GOLD, int(120 * m))
+    reach *= 0.5 + 0.5 * (0.5 + 0.5 * math.sin(cyc))     # reach out / pull back (grab)
+    a = ang + math.sin(t * 1.3 + phase) * 0.08
+    x, y = cx + math.cos(ang) * R * 0.15, cy + math.sin(ang) * R * 0.15
+    vx, vy = math.cos(a), math.sin(a)
+    n = 10
+    seg = reach / n
+    pts = [(x, y)]
+    for s in range(n):
+        sf = (s + 1) / n
+        dx, dy = vx, vy + 1.0 * sf * sf                  # droops downward toward the tip
+        ln = math.hypot(dx, dy) or 1.0
+        x += dx / ln * seg + math.sin(t * 1.4 + phase + sf * 3.0) * R * 0.05
+        y += dy / ln * seg
+        pts.append((x, y))
+    for s, (px, py) in enumerate(pts):                   # orange aura behind, like the body
+        u = s / n
+        _yk_radial(layer, px, py, max(2, int(R * (0.72 - 0.5 * u))), _YK_T1, int(55 * m))
+    for s, (px, py) in enumerate(pts):                   # chunky gold tail-lumps, tapering
+        u = s / n
+        rr = max(1, int(R * (0.5 - 0.4 * u)))
+        pygame.draw.circle(layer, _YK_T3, (int(px), int(py)), rr)
+        if u < 0.5:
+            pygame.draw.circle(layer, _YK_PALE, (int(px), int(py)), max(1, rr - 2))
+    _yk_radial(layer, int(pts[-1][0]), int(pts[-1][1]),   # heavy grasping drip at the tip
+               max(2, int(R * 0.22)), _YK_GOLD, int(140 * m))
 
 
 def _draw_king(surf, x, y, facing, t, birth, gait, threat=None):
