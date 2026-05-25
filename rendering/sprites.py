@@ -676,38 +676,22 @@ def _yk_radial(surf, x, y, R, color, a0, add=True):
               special_flags=pygame.BLEND_RGBA_ADD if add else 0)
 
 
-def _yk_glow(layer, cx, cy, R, t, tail=0.0):
-    """The clot of light shaped as a TEARDROP/flame column: a wide bright head
-    that tapers to a weeping point below (length grows with `tail` = how much it
-    has manifested), so the silhouette reads tall and wrong -- a hanging drop of
-    light, not a round bell. Orange lives only in the aura behind."""
+def _yk_glow(layer, cx, cy, R, t):
+    """The clot of light -- a churning bright head of gold->white. No hanging
+    tail (the reaching tail-arms carry that material now). Orange lives only in
+    the soft aura behind, reading as the warm outline of the silhouette."""
     R = int(R * (1 + 0.06 * math.sin(t * 2.0)))
     sw = t * 0.6
     ca, sa = math.cos(sw), math.sin(sw)
-    # warm orange outline behind, drawn DOWN the column so the rim tapers too.
-    _yk_radial(layer, cx, cy, int(R * 1.7), _YK_T1, 70)
-    for i in range(1, 4):
-        f = i / 3.0
-        _yk_radial(layer, cx, cy + int(R * (0.7 + 1.6 * tail) * f),
-                   int(R * (1.2 - 0.55 * f)), _YK_T1, 46)
-    # tapering tail of gold lumps -> the weeping point (behind the head).
-    nt = 5
-    for i in range(1, nt + 1):
-        f = i / nt
-        yy = cy + R * (0.55 + 1.75 * tail * f)
-        jx = math.sin(sw * 1.3 + f * 4.0) * R * 0.13
-        rr = max(2, int(R * (0.52 - 0.42 * f)))
-        pygame.draw.circle(layer, _YK_T3, (int(cx + jx), int(yy)), rr)
-        if f < 0.65:
-            pygame.draw.circle(layer, _YK_PALE, (int(cx + jx), int(yy)), max(1, rr - 2))
-    # bright head cluster (a touch oval, narrower than tall) on top of the tail.
+    _yk_radial(layer, cx, cy, int(R * 1.85), _YK_T1, 72)     # warm orange outline behind
+    _yk_radial(layer, cx, cy, int(R * 1.45), _YK_T1, 50)
     subs = [(0, 0), (-0.4, -0.18), (0.4, -0.12), (-0.12, 0.4),
             (0.22, 0.32), (-0.3, 0.2), (0.12, -0.34)]
     for col, scl, grow in [(_YK_T3, 1.06, 3), (_YK_PALE, 0.78, 1), (_YK_WHITE, 0.5, 0), (_YK_WHITE, 0.28, 0)]:
         for ox, oy in subs:
             rx, ry = ox * ca - oy * sa, ox * sa + oy * ca
             pygame.draw.circle(layer, col,
-                               (int(cx + rx * R * 0.55), int(cy + ry * R * 0.92)),
+                               (int(cx + rx * R * 0.6), int(cy + ry * R * 0.9)),
                                int(R * 0.5 * scl) + grow)
     for k in range(4):
         a = sw * 1.6 + k * 1.57
@@ -878,66 +862,37 @@ def _yk_void(layer, cx, cy, R):
                            (int(cx + ox * R * 0.6), int(cy + oy * R * 0.9)), int(R * 0.58), 0)
 
 
-def _yk_tatters(layer, cx, cy, R, t, m):
-    """A few ragged frays at the weeping POINT of the teardrop -- the torn hem
-    where the column drips away. A tight cluster (not spread tentacles), so it
-    reads as the frayed tip of one shape, never a jellyfish skirt."""
-    if m <= 0.03:
-        return
-    root_y = cy + R * (0.55 + 1.75 * m)                  # hang from the tapered tip
-    drop = R * (0.4 + 0.8 * m)
-    nst = 4
-    for i in range(nst):
-        fx = (i / (nst - 1) - 0.5)
-        x0 = cx + fx * R * 0.42                           # tight cluster at the point
-        ln = drop * (0.6 + 0.4 * abs(math.sin(i * 2.1 + 0.5)))
-        n = max(3, int(ln / 3))
-        pts = []
-        for s in range(n + 1):
-            sf = s / n
-            yy = root_y + ln * sf
-            xx = x0 + math.sin(t * 1.5 + i * 1.3 + sf * 3.0) * R * 0.1 * sf
-            pts.append((xx, yy))
-        for s, (xx, yy) in enumerate(pts):
-            sf = s / n
-            rr = max(1, int(R * 0.16 * (1 - 0.8 * sf)))
-            _yk_radial(layer, xx, yy, rr, _YK_GOLD, int(80 * (1 - 0.6 * sf) * m))
-        ip = [(int(a), int(b)) for a, b in pts]
-        for s in range(len(ip) - 1):
-            sf = s / n
-            pygame.draw.line(layer, _YK_SHADOW if sf < 0.4 else _YK_SHADOW_HI,
-                             ip[s], ip[s + 1], 1)
-
-
-def _yk_droop_limb(layer, rootx, rooty, ang, reach, t, idx, R, m):
-    """A limb of weeping light where the hands used to be: it reaches toward the
-    aim, then gravity drags it down into a frayed, dripping point. Same dripping
-    light as the body's tail -- the King has no hands, only melting strands."""
+def _yk_tail_arm(layer, cx, cy, ang, reach, t, phase, R, m, side=1):
+    """An arm made of the same dripping tail-light, but it ACTS like the old
+    grabbing arm: a tapering strand that reaches out toward the aim and draws
+    back on a grab cycle (two of them alternate, hand over hand), ending in a
+    grasping drip instead of a hand."""
     if reach < 4 or m <= 0.03:
         return
+    cyc = t * 0.95 + phase
+    ext = 0.45 + 0.55 * (0.5 + 0.5 * math.sin(cyc))      # reach out / pull back
+    a = ang + math.sin(t * 1.3 + phase) * 0.1
+    sh = (cx + math.cos(ang) * R * 0.25, cy + math.sin(ang) * R * 0.25)
+    tip = (cx + math.cos(a) * reach * ext, cy + math.sin(a) * reach * ext)
+    perp = (-math.sin(a), math.cos(a))
+    bend = reach * 0.2 * side * (1.0 - 0.45 * ext)        # bows when pulled, straightens to reach
+    ctrl = ((sh[0] + tip[0]) / 2 + perp[0] * bend, (sh[1] + tip[1]) / 2 + perp[1] * bend)
     n = 12
-    reach *= 0.7 + 0.3 * math.sin(t * 1.1 + idx * 1.7)   # slow reach / recede
-    x, y = rootx, rooty
-    vx, vy = math.cos(ang), math.sin(ang)
-    seg = reach / n
-    pts = [(x, y)]
-    for s in range(n):
-        sf = (s + 1) / n
-        dx, dy = vx, vy + 1.8 * sf * sf                  # gravity droop accelerates
-        ln = math.hypot(dx, dy) or 1.0
-        x += dx / ln * seg + math.sin(t * 1.4 + idx + sf * 3.0) * R * 0.05
-        y += dy / ln * seg
-        pts.append((x, y))
-    for s, (xx, yy) in enumerate(pts):                   # gold glow down the strand
-        sf = s / n
-        rr = max(1, int(R * 0.26 * (1 - 0.8 * sf)))
-        _yk_radial(layer, xx, yy, rr, _YK_GOLD, int(95 * (1 - 0.55 * sf) * m))
-    ip = [(int(a), int(b)) for a, b in pts]              # dark torn core
-    for s in range(len(ip) - 1):
-        sf = s / n
-        pygame.draw.line(layer, _YK_SHADOW if sf < 0.4 else _YK_SHADOW_HI,
-                         ip[s], ip[s + 1], 2 if sf < 0.3 else 1)
-    _yk_radial(layer, ip[-1][0], ip[-1][1], max(1, int(R * 0.15)), _YK_GOLD, int(115 * m))
+    pts = []
+    for i in range(n + 1):
+        u = i / n
+        pts.append(((1 - u) ** 2 * sh[0] + 2 * (1 - u) * u * ctrl[0] + u * u * tip[0],
+                    (1 - u) ** 2 * sh[1] + 2 * (1 - u) * u * ctrl[1] + u * u * tip[1]))
+    for i, (xx, yy) in enumerate(pts):                   # gold glow, tapering to the drip
+        u = i / n
+        rr = max(1, int(R * 0.28 * (1 - 0.72 * u)))
+        _yk_radial(layer, xx, yy, rr, _YK_GOLD, int(100 * (1 - 0.5 * u) * m))
+    ip = [(int(a2), int(b2)) for a2, b2 in pts]          # dark torn core
+    for i in range(len(ip) - 1):
+        u = i / n
+        pygame.draw.line(layer, _YK_SHADOW if u < 0.4 else _YK_SHADOW_HI,
+                         ip[i], ip[i + 1], 2 if u < 0.35 else 1)
+    _yk_radial(layer, ip[-1][0], ip[-1][1], max(1, int(R * 0.17)), _YK_GOLD, int(120 * m))
 
 
 def _draw_king(surf, x, y, facing, t, birth, gait, threat=None):
@@ -1080,13 +1035,12 @@ def _draw_king(surf, x, y, facing, t, birth, gait, threat=None):
     if manifest > 0.01:
         if bp < 1.0:
             _yk_birth_rift(surf, mcx, mcy, R, bp)
-        _yk_glow(layer, cx, cy, R * max(0.18, grow), t, manifest)     # teardrop column
-        _yk_tatters(layer, cx, cy, R * max(0.18, grow), t, manifest)  # frayed weeping tip
-        if manifest > 0.05:                                 # weeping limbs where hands were
-            lr = R * (1.4 + 1.2 * intensity) * grow
+        if manifest > 0.05:                                 # reaching tail-arms, behind the head
+            ar = R * (1.7 + 1.4 * intensity) * grow
             gr = R * max(0.18, grow)
-            _yk_droop_limb(layer, cx - R * 0.5, cy + R * 0.2, aa - 0.4, lr, t, 0, gr, manifest)
-            _yk_droop_limb(layer, cx + R * 0.5, cy + R * 0.42, aa + 0.3, lr, t, 1, gr, manifest)
+            _yk_tail_arm(layer, cx, cy, aa - 0.45, ar, t, 0.0, gr, manifest, side=-1)
+            _yk_tail_arm(layer, cx, cy, aa + 0.45, ar, t, math.pi, gr, manifest, side=1)
+        _yk_glow(layer, cx, cy, R * max(0.18, grow), t)     # head over the arm roots
         if intensity > 0.6:                                 # roused: white-hot flare
             _yk_radial(layer, cx, cy, int(R * (0.6 + 0.5 * intensity)), _YK_WHITE,
                        int(70 * (intensity - 0.6) / 0.4))
