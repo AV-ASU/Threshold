@@ -730,6 +730,11 @@ def _yk_face(m, mx, my, r, expr, detail):
     if expr in ("scream", "gaunt", "vacant", "wail"):    # vacuous void sockets
         for ex, ey in (eyl, eyr):
             pygame.draw.ellipse(m, pit, (int(ex - ew), int(ey - ew), 2 * ew, int(2.2 * ew)))
+            if expr in ("vacant", "wail"):               # a cold glint deep in the void
+                try:
+                    m.set_at((int(ex), int(ey + ew * 0.6)), (120, 126, 142))
+                except (IndexError, ValueError):
+                    pass
     else:
         for ex, ey in (eyl, eyr):
             pygame.draw.line(m, pit, (int(ex - ew), int(ey)), (int(ex + ew), int(ey)), 1)
@@ -749,6 +754,9 @@ def _yk_face(m, mx, my, r, expr, detail):
                                      max(2, int(r * 0.56)), max(2, int(r * 0.5))))
         pygame.draw.line(m, lo, (int(mx - r * 0.7), int(my)), (int(mx - r * 0.5), int(my + r * 0.4)), 1)
         pygame.draw.line(m, lo, (int(mx + r * 0.7), int(my)), (int(mx + r * 0.5), int(my + r * 0.4)), 1)
+    elif expr == "vacant":                               # a slack, dead jaw hanging ajar
+        pygame.draw.ellipse(m, pit, (int(mx - r * 0.16), int(mym + r * 0.04),
+                                     max(2, int(r * 0.32)), max(2, int(r * 0.36))))
     elif expr == "smile":
         pts = [(mx - r * 0.4, mym - r * 0.1), (mx, mym + r * 0.2), (mx + r * 0.4, mym - r * 0.1)]
         pygame.draw.lines(m, pit, False, [(int(a), int(b)) for a, b in pts], 1)
@@ -757,6 +765,9 @@ def _yk_face(m, mx, my, r, expr, detail):
         pygame.draw.lines(m, pit, False, [(int(a), int(b)) for a, b in pts], 1)
     else:
         pygame.draw.line(m, pit, (int(mx - r * 0.3), int(mym)), (int(mx + r * 0.3), int(mym)), 1)
+    if expr in ("vacant", "wail"):                       # a hairline crack -- a broken mask
+        pygame.draw.line(m, pit, (int(mx + r * 0.2), int(my - rh * 0.85)),
+                         (int(mx - r * 0.06), int(my + r * 0.55)), 1)
 
 
 def _yk_mask(surf, cx, cy, r, vis, kind):
@@ -883,7 +894,7 @@ def _yk_void(layer, cx, cy, R):
     """The barely-existing form, seen while the King is still far: a void darker
     than the dark, edged in a cold shimmer, and DEAD STILL. The only thing that
     moves or shows a face is the pale mask, drawn over this by the caller."""
-    _yk_radial(layer, cx, cy, int(R * 1.35), (46, 48, 70), 32)   # cold shimmer rim
+    _yk_radial(layer, cx, cy, int(R * 1.4), (58, 62, 86), 50)    # cold shimmer rim
     subs = [(0, 0), (-0.4, -0.18), (0.4, -0.12), (-0.12, 0.4),
             (0.22, 0.32), (-0.3, 0.2), (0.12, -0.34)]
     for ox, oy in subs:                                          # static lumps -- no swirl
@@ -1013,11 +1024,24 @@ def _draw_king(surf, x, y, facing, t, birth, gait, threat=None):
         math.exp(-((((t * arm_speed) % 1.0) - 0.68) / 0.15) ** 2)
         + math.exp(-((((t * arm_speed + 0.5) % 1.0) - 0.68) / 0.15) ** 2))
     sxo, syo = int(math.cos(aa) * surge), int(math.sin(aa) * surge)
+    # --- Two slow MAIN arms FIRST so they sit BEHIND the rest of the sprite,
+    # rooting from offset spots low on the body (not the face) and reaching out
+    # past the glow. They grow out only as it manifests, hand over hand.
+    if manifest > 0.05 and grow > 0.1:
+        arms = pygame.Surface((L, L), pygame.SRCALPHA)
+        reach = R * (1.4 + 1.4 * intensity) * grow
+        ascale = max(1.0, grow * (1.0 + 0.4 * intensity))
+        _yk_grab_arm(arms, cx - R * 0.55, cy + R * 0.32, aa - 0.42, reach, t, 0.0,
+                     ascale, True, side=-1, speed=arm_speed)
+        _yk_grab_arm(arms, cx + R * 0.5, cy + R * 0.55, aa + 0.28, reach, t, 0.5,
+                     ascale, True, side=1, speed=arm_speed)
+        arms.set_alpha(int(235 * va * manifest))
+        surf.blit(arms, (mcx - cx + sxo, mcy - cy + syo))
     # --- VOID form (dominant while far): a still dark mass + a faint pale mask.
     if dark_a > 0.02 and grow > 0.1:
         void = pygame.Surface((L, L), pygame.SRCALPHA)
         _yk_void(void, cx, cy, int(R * max(0.4, grow)))
-        _yk_mask(void, hx, hy, pfr, 0.55, pmk)              # ashen mask, watching
+        _yk_mask(void, hx, hy, pfr, 0.72, pmk)              # ashen mask, watching
         void.set_alpha(int(235 * dark_a * va))
         surf.blit(void, (mcx - cx, mcy - cy))               # the void doesn't lurch
     # --- MANIFEST form (blooms in as it closes): light, the mask, the chorus.
@@ -1043,15 +1067,6 @@ def _draw_king(surf, x, y, facing, t, birth, gait, threat=None):
             _yk_mask(layer, fxp, fyp, fr, vis * manifest, kind)
         layer.set_alpha(int(255 * va * manifest))
         surf.blit(layer, (mcx - cx + sxo, mcy - cy + syo))
-    # --- Two slow MAIN arms: grow out only as it manifests, hand over hand.
-    if manifest > 0.05 and grow > 0.1:
-        arms = pygame.Surface((L, L), pygame.SRCALPHA)
-        reach = R * (1.4 + 1.4 * intensity) * grow
-        ascale = max(1.0, grow * (1.0 + 0.4 * intensity))
-        _yk_grab_arm(arms, cx, cy, aa - 0.3, reach, t, 0.0, ascale, True, side=-1, speed=arm_speed)
-        _yk_grab_arm(arms, cx, cy, aa + 0.3, reach, t, 0.5, ascale, True, side=1, speed=arm_speed)
-        arms.set_alpha(int(235 * va * manifest))
-        surf.blit(arms, (mcx - cx + sxo, mcy - cy + syo))
 
 
 # ---------------------------------------------------------------------------
