@@ -641,7 +641,9 @@ _YK_PIT = (10, 8, 12)
 _YK_SHADOW, _YK_SHADOW_HI = (20, 16, 26), (52, 44, 64)   # dark grabbing arms
 # Existence curve: the King stays a dark void until threat passes _LO, then the
 # light blooms in hard, fully real by _HI -- so most of the approach is dread.
-_YK_BLOOM_LO, _YK_BLOOM_HI = 0.45, 0.9
+# Pushed late on purpose: the blaze is a brief punctuation at the kill, not the
+# bulk of the encounter. Most of the approach lives in the withheld void.
+_YK_BLOOM_LO, _YK_BLOOM_HI = 0.6, 0.92
 # PALLID mask tones -- sickly bone, jaundiced, cold against the warm light, so a
 # dead face reads as it surfaces from the glow. Black voids, not warm sockets.
 _YK_MHI, _YK_MMID, _YK_MLO, _YK_MPIT = (226, 224, 196), (172, 174, 132), (98, 100, 64), (12, 12, 10)
@@ -1077,7 +1079,12 @@ def _draw_king(surf, x, y, facing, t, birth, gait, threat=None):
     if dark_a > 0.02 and grow > 0.1:
         void = pygame.Surface((L, L), pygame.SRCALPHA)
         _yk_void(void, cx, cy, int(R * max(0.4, grow)))
-        _yk_mask(void, hx, hy, pfr, 0.72, pmk)              # ashen mask, watching
+        # The ashen mask is WITHHELD while far: a faint blank pale oval. Its
+        # features (sockets, mouth, crack) only resolve as he nears -- the vis
+        # climbs past _yk_mask's detail gate (0.35) right as the bloom begins,
+        # so you spend the approach unsure whether you even saw a face.
+        vmask = 0.12 + 0.42 * intensity
+        _yk_mask(void, hx, hy, pfr, vmask, pmk)             # ashen mask, watching
         void.set_alpha(int(235 * dark_a * va))
         surf.blit(void, (mcx - cx, mcy - cy))               # the void doesn't lurch
     # --- MANIFEST form (blooms in as it closes, and flashes in at birth).
