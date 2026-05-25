@@ -826,7 +826,7 @@ def _yk_grab_arm(surf, cx, cy, ang, reach, t, phase, scale, lit, alpha=255, side
     ext = 0.18 + 1.05 * life                         # stretches further out over its life
     grow = 0.4 + 0.95 * life                         # ...and gets bigger
     grab = min(1.0, life * 1.7)                      # hand closes as it stretches to grab
-    sd, sh_hi = (*_YK_SHADOW, armA), (*_YK_SHADOW_HI, armA)
+    sd, sh_hi = (*_YK_SHADOW, armA), (*_YK_GOLD, armA)   # black core, GOLD edge
     sh = (cx + math.cos(ang) * reach * 0.1, cy + math.sin(ang) * reach * 0.1)
     hand = (cx + math.cos(a) * reach * ext, cy + math.sin(a) * reach * ext)
     # Smooth curved arm: a quadratic bezier that bows early and straightens as it
@@ -846,8 +846,9 @@ def _yk_grab_arm(surf, cx, cy, ang, reach, t, phase, scale, lit, alpha=255, side
         w = max(1, int(round(base_w * (1 - 0.62 * u))))   # thick shoulder -> thin wrist
         p0 = (int(path[i][0]), int(path[i][1]))
         p1 = (int(path[i + 1][0]), int(path[i + 1][1]))
-        pygame.draw.line(surf, sh_hi, p0, p1, w + 1)
-        pygame.draw.line(surf, sd, p0, p1, w)
+        _yk_radial(surf, p0[0], p0[1], w + 2, _YK_GOLD, int(armA * 0.5))  # gold under-glow
+        pygame.draw.line(surf, sh_hi, p0, p1, w + 1)      # gold edge
+        pygame.draw.line(surf, sd, p0, p1, w)             # black core
     # Grabbing hand: three curved fingers + a thumb, curling with `grab`.
     ha = math.atan2(hand[1] - path[-2][1], hand[0] - path[-2][0])
     fl = reach * 0.22 * grow
@@ -863,7 +864,7 @@ def _yk_grab_arm(surf, cx, cy, ang, reach, t, phase, scale, lit, alpha=255, side
                            (int(tip[0]), int(tip[1]))], fw)
         if lit:
             try:
-                surf.set_at((int(tip[0]), int(tip[1])), (*_YK_MHI, armA))
+                surf.set_at((int(tip[0]), int(tip[1])), (*_YK_HOT, armA))   # gold claw tip
             except (IndexError, ValueError):
                 pass
 
@@ -1059,11 +1060,16 @@ def _draw_king(surf, x, y, facing, t, birth, gait, threat=None):
     # past the glow. They grow out only as it manifests, hand over hand.
     if manifest > 0.05 and grow > 0.1:
         arms = pygame.Surface((L, L), pygame.SRCALPHA)
-        reach = R * (1.4 + 1.4 * intensity) * grow
-        ascale = max(1.0, grow * (1.0 + 0.4 * intensity))
-        _yk_grab_arm(arms, cx - R * 0.55, cy + R * 0.32, aa - 0.42, reach, t, 0.0,
+        ascale = 2.3 + 0.5 * intensity                  # bold black/gold limbs
+        reach = R * (1.5 + 1.2 * intensity) * grow
+        up = -math.pi / 2
+        lean = math.atan2(math.sin(aa - up), math.cos(aa - up))
+        lean = max(-0.7, min(0.7, lean))                # tilt toward you, stay a crown
+        center = up + lean
+        spread = 0.85                                   # one arm per side, framing the mask
+        _yk_grab_arm(arms, cx, cy, center - spread, reach, t, 0.0,
                      ascale, True, side=-1, speed=arm_speed)
-        _yk_grab_arm(arms, cx + R * 0.5, cy + R * 0.55, aa + 0.28, reach, t, 0.5,
+        _yk_grab_arm(arms, cx, cy, center + spread, reach, t, 0.5,
                      ascale, True, side=1, speed=arm_speed)
         arms.set_alpha(int(235 * va * manifest))
         surf.blit(arms, (mcx - cx + sxo, mcy - cy + syo))
