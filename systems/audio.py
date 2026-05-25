@@ -321,23 +321,21 @@ class Audio:                        #Starting screen needs music, something simp
             stereo[i * 4 + 3] = buf[i * 2 + 1]
         return pygame.mixer.Sound(buffer=bytes(stereo))
 
-    def _build_man_scream(self, duration_ms=4800, vol=0.55):
-        """A long, low, anguished man's yell -- a gut scream of deep pain,
-        the Brimley bank's danger cue as the King is drawn. Subtractive
-        vocal synth: a saw 'glottal' buzz -- a low fundamental that swells
-        in, holds with a strained tremor, then cracks and sags as the
-        breath fails -- driven through two resonant formant band-passes
-        (an open 'aagh' vowel), with a sub-octave vocal-fry creak, rising
-        breath rasp, and a hard clip for grit. Subtractive rather than
-        additive so it's cheap to build at startup AND reads as a voice,
-        not a buzzer. Synthesized blind -- audition + tune with
-        tools/render_audio.py. Knobs: duration_ms, the f0 contour, and the
-        formant centres / Q below."""
+    def _build_man_scream(self, duration_ms=2600, vol=0.6):
+        """A short, raw, low man's scream of pain -- the Brimley bank's
+        danger cue as the King is drawn. Built from TURBULENCE, not a
+        tone (a saw buzzed; a shout is mostly turbulent air): white noise
+        'voiced' by a low, heavily-jittered glottal pulse -- so the pitch
+        is rough and indefinite, never a clean buzz -- shaped by three
+        wide open-vowel ('AAH') formants, with a hard onset and a ragged,
+        breaking amplitude. Synthesized blind -- audition + tune with
+        tools/render_audio.py. Knobs: duration_ms, the f0 contour, the
+        jitter depth (anti-buzz), and the formant centres / Q."""
         sr = 22050
         n = int(sr * duration_ms / 1000)
         buf = bytearray(n * 2)
         two_pi = 2 * math.pi
-        rng = random.Random(7)
+        rng = random.Random(11)
 
         def _bandpass(fc, q):
             # RBJ constant-skirt band-pass coefficients (normalised by a0).
@@ -346,59 +344,58 @@ class Audio:                        #Starting screen needs music, something simp
             a0 = 1.0 + alpha
             return (alpha / a0, -alpha / a0,
                     (-2.0 * math.cos(w0)) / a0, (1.0 - alpha) / a0)
-        # Two vowel formants for an open 'ah': F1 ~650, F2 ~1080 Hz.
-        f1b0, f1b2, f1a1, f1a2 = _bandpass(650.0, 5.0)
-        f2b0, f2b2, f2a1, f2a2 = _bandpass(1080.0, 7.0)
+        # Three wide formants of an open, shouted 'AAH' (low Q = airy,
+        # not a resonant whistle), with falling gains up the spectrum.
+        FORM = [(_bandpass(720.0, 3.0), 1.00),
+                (_bandpass(1150.0, 3.0), 0.70),
+                (_bandpass(2550.0, 3.5), 0.35)]
         x1 = x2 = 0.0
-        y1a = y2a = 0.0
-        y1b = y2b = 0.0
+        ys = [[0.0, 0.0] for _ in FORM]      # per-formant y[n-1], y[n-2]
         phase = 0.0
-        fry_phase = 0.0
-        smooth = 0.0
+        jit = 0.0
+        amp = 0.0
         for i in range(n):
-            t = i / sr
             p = i / n
-            # Pitch contour (low throughout -- a man's yell, not a
-            # shriek): swell from the gut -> strained hold -> crack -> a
-            # failing sag as the breath runs out.
-            if p < 0.10:
-                f0 = 70.0 + 80.0 * (p / 0.10)
-            elif p < 0.58:
-                f0 = 165.0 + 10.0 * math.sin(two_pi * 0.7 * t)
-            elif p < 0.82:
-                f0 = 160.0 - 60.0 * ((p - 0.58) / 0.24)
+            # Low roar contour, short: hard rise -> hold -> sag out.
+            if p < 0.05:
+                f0 = 95.0 + 75.0 * (p / 0.05)            # 95 -> 170 fast
+            elif p < 0.50:
+                f0 = 150.0
             else:
-                f0 = 100.0 - 36.0 * ((p - 0.82) / 0.18)
-            # Strained tremor, deepening + jittered so it isn't a warble.
-            f0 *= 1.0 + (0.03 + 0.05 * p) * math.sin(two_pi * 5.5 * t
-                                                     + 0.4 * smooth)
+                f0 = 150.0 - 70.0 * ((p - 0.50) / 0.50)  # 150 -> 80
+            # Heavy random-walk jitter: the pitch never settles, so the
+            # voicing reads as a strained rasp instead of a steady buzz.
+            jit = 0.8 * jit + 0.2 * rng.uniform(-1, 1)
+            f0 *= 1.0 + 0.22 * jit
             phase += two_pi * f0 / sr
-            # Glottal source: a saw (full harmonic spectrum, O(1)) plus a
-            # sub-octave fry creak and breath rasp that rise as it fails.
-            frac = phase / two_pi
-            saw = 2.0 * (frac - math.floor(frac)) - 1.0
-            fry_phase += two_pi * (f0 * 0.5) / sr
-            smooth = 0.9 * smooth + 0.1 * rng.uniform(-1, 1)
-            src = (saw * 0.8
-                   + math.sin(fry_phase) * (0.06 + 0.22 * p)
-                   + smooth * (0.10 + 0.5 * p * p))
-            # Two formant band-passes carve the vowel out of the buzz.
-            ya = f1b0 * src + f1b2 * x2 - f1a1 * y1a - f1a2 * y2a
-            yb = f2b0 * src + f2b2 * x2 - f2a1 * y1b - f2a2 * y2b
-            x2 = x1; x1 = src
-            y2a = y1a; y1a = ya
-            y2b = y1b; y1b = yb
-            voiced = ya + 0.7 * yb + 0.22 * src
-            # Envelope: swell in, ragged sustain, fade as the breath goes.
-            if p < 0.07:
-                env = p / 0.07
-            elif p > 0.82:
-                env = max(0.0, (1.0 - p) / 0.18)
+            ph = phase / two_pi
+            ph -= math.floor(ph)
+            # Smooth glottal pulse 0..1 (no clicks); it 'voices' the noise.
+            glot = 0.5 * (1.0 - math.cos(two_pi * ph))
+            white = rng.uniform(-1, 1)
+            # Source = turbulent noise gated by the glottis (never fully
+            # off, so there's continuous breath) + a faint rough growl.
+            src = white * (0.35 + 0.65 * glot) + (2.0 * ph - 1.0) * 0.12 * glot
+            # Three parallel formant band-passes (shared input history).
+            out = 0.0
+            for k, ((b0, b2, a1, a2), gain) in enumerate(FORM):
+                yk = b0 * src + b2 * x2 - a1 * ys[k][0] - a2 * ys[k][1]
+                ys[k][1] = ys[k][0]
+                ys[k][0] = yk
+                out += gain * yk
+            x2 = x1
+            x1 = src
+            # Hard onset (a scream hits), sustain that breaks/flutters,
+            # then a quick fade as the breath goes.
+            if p < 0.03:
+                env = p / 0.03
+            elif p > 0.80:
+                env = max(0.0, (1.0 - p) / 0.20)
             else:
                 env = 1.0
-            env *= (0.82 + 0.18 * (0.5 + 0.5 * math.sin(two_pi * 7.3 * t))
-                    + 0.08 * rng.uniform(-1, 1))
-            v = max(-1.0, min(1.0, voiced * env))      # hard clip = grit
+            amp = 0.6 * amp + 0.4 * rng.uniform(0.0, 1.0)
+            env *= 0.6 + 0.4 * amp                 # ragged -- the voice catching
+            v = max(-1.0, min(1.0, out * 1.4 * env))   # driven into clip = raw
             sample = int(v * vol * 32767)
             sample = max(-32768, min(32767, sample))
             buf[i * 2] = sample & 0xFF
