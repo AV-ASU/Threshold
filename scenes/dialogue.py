@@ -83,25 +83,27 @@ def old_man_dialogue(game, npc):
     save.set_arg("old_count", count)
     if count == 1:
         game.dialog.show([
-            "A stranger. We don't get many who stay -- and fewer who came "
-            "on purpose.",
-            "If you're asking after the ones out past the highway -- the "
-            "ones who 'found religion' in the corn -- don't. That is no "
-            "church out there.",
-            "A young woman came through, end of last month. Bright thing, "
-            "full of questions, same as you. Now she kneels with the rest "
-            "of them. You looking for her?",
+            "Another new face. That's all that comes to Brimley anymore -- "
+            "strangers off the highway, more every season. And not one of "
+            "them leaves.",
+            "I don't trust it. They arrive too easy, like something held "
+            "the door. Then they go quiet, drift out to the corn, and they "
+            "don't come back.",
+            "A young woman came through last month. Bright thing, full of "
+            "questions -- like you. She kneels out there now, with the "
+            "rest. You looking for her?",
         ], speaker="Preacher", voice="blip_low", portrait="old")
     elif count == 2:
         # The hubris that gets him killed. After this he's marked: the
         # church swaps him for his remains on the next entry (evidence #4).
         game.dialog.show([
             "You came back. Good -- then hear the rest of it.",
-            "I name them from my own pulpit, every Sunday. By what they "
-            "are. The sheriff sits in the back pew while I do it, and I "
-            "name them to his face.",
+            "I say it from my pulpit, plain as I'm saying it now: that's no "
+            "church in the corn. Something out there calls the strangers in "
+            "and hollows them out. I name it, and the sheriff sits in my "
+            "back pew while I do.",
             "Let them come for an old man. I've buried better than whatever "
-            "it is they kneel to out there. God's on my side of the door.",
+            "it is they kneel to. God's on my side of the door.",
         ], speaker="Preacher", voice="blip_low", portrait="old")
         save.set_flag("preacher_doomed", True)
     else:

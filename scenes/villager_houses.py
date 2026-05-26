@@ -183,8 +183,9 @@ def preacher_body_examine(game, npc):
     game.audio.play("pickup_rare", 0.7)
     game.audio.play("low_pulse", 0.5)
     _evidence(game, "the_preacher", [
-        "The Preacher. He named them from this pulpit every Sunday -- to "
-        "the sheriff's face. Said it plain: that is no church in the corn.",
+        "The Preacher. He watched the strangers drift into town and vanish "
+        "into the corn -- and he said so, every Sunday, to the sheriff's "
+        "face.",
         "They opened him for it, here on his own floor. He's gone to a "
         "slick the cold won't set.",
         "His collar's still white. His cross lies in the mess. You take it.",
