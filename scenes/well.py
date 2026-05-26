@@ -490,9 +490,12 @@ def build_works_deepstair():
                 "[c=dim](His face fits the socket. The Play fits the slot. "
                 "Both at once, and the stair opens.)[/c]",
                 "You have enough. The register, the names, the Preacher, the "
-                "girl her father sent you for -- and His face in your hands. "
-                "Climb out while the rope holds and carry the case back to "
-                "people with badges.",
+                "girl her father sent you for -- and His face in your hands.",
+                "The town belongs to Him; that is why not one of them can "
+                "leave. But you were never claimed. His Sign, carried out by "
+                "the one soul He never took -- the fold opens only for that. "
+                "Climb out while the rope holds, and let the world learn His "
+                "name.",
                 "[s=slow]Or you give them both to the stone and go down. Past "
                 "her. To the thing all of this kneels to.[/s]",
                 "[c=dim](Press again to feed it the Mask and the Play -- or "

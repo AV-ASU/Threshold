@@ -115,47 +115,66 @@ def old_man_dialogue(game, npc):
 # ---- The Kid ----
 
 def kid_dialogue(game, npc):
-    """A generic boy NPC. Placeholder lines per visit count."""
+    """The Kid -- innocent witness (NARRATIVE §2). He saw Mara walk into
+    the corn and kept the photo she gave him; he hands it over as the Case
+    Photo keepsake (one-shot, sets polaroid_taken). Children notice what
+    adults pretend not to."""
     save = game.save
     inv = game.player.inventory
-    # Playscript-recognition one-shot (kept; flow unchanged, text bland).
+    # Priority: the keepsake. First real conversation, the boy gives you
+    # the photo Mara left him -- the Case Photo (polaroid). One-shot.
+    if not save.flag("polaroid_taken"):
+        save.set_flag("polaroid_taken", True)
+        inv.add("polaroid", 1)
+        game.audio.play("pickup_rare", 0.7)
+        game.dialog.show([
+            "You're looking for the corn lady. The nice one with all the "
+            "questions.",
+            "She gave me this before she walked out into the rows. Said she "
+            "wouldn't need her own face where she was going.",
+            "[c=dim](The boy presses a faded photograph into your hand --\n"
+            "Mara Blaine, smiling, the cornfield at her back.)[/c]",
+            "The grown-ups say nobody saw her go. They saw. They always "
+            "see. They just look at their shoes.",
+        ], speaker="Boy", voice="blip_kid", portrait="kid")
+        game.show_notice("The boy gives you a photo of Mara.")
+        return
+    # Playscript-recognition one-shot (kept; flow unchanged).
     if inv.has("playscript") and not save.flag("kid_playscript_noticed"):
         save.set_flag("kid_playscript_noticed", True)
         game.dialog.show([
-            "What's that?",
-            "[c=dim]Just passing through?[/c]",
+            "That yellow book. The corn lady drew that sign too, over and "
+            "over, on everything.",
+            "[c=dim]You shouldn't have it. It looks at you back.[/c]",
         ], speaker="Boy", voice="blip_kid", portrait="kid")
         return
     count = save.arg("kid_count", 0) + 1
     save.set_arg("kid_count", count)
     if count == 1:
         game.dialog.show([
-            "Hi there.",
-            "[c=dim]Just passing through?[/c]",
+            "She went down, you know. After the corn.",
+            "[c=dim]Everybody who stays too long goes down in the end. "
+            "That's just what Brimley's for.[/c]",
         ], speaker="Boy", voice="blip_kid", portrait="kid")
     elif count == 2:
         game.dialog.show([
-            "Hello again.",
-            "[c=dim]Not much going on.[/c]",
+            "My mom and dad smile all the time now. They didn't used to.",
+            "[c=dim]I don't smile. That's how you can tell I'm still me.[/c]",
         ], speaker="Boy", voice="blip_kid", portrait="kid")
     elif count == 3:
         game.dialog.show([
-            "Hi.",
-            "[c=dim]Nothing much.[/c]",
+            "The preacher was nice to me. Now there's a new quiet where he "
+            "used to be.",
+            "[c=dim]Are you going to go quiet too?[/c]",
         ], speaker="Boy", voice="blip_kid", portrait="kid")
     elif count == 4:
         game.dialog.show([
-            "Hello.",
-            "[c=dim]...[/c]",
-        ], speaker="Boy", voice="blip_kid", portrait="kid")
-    elif count == 5:
-        game.dialog.show([
-            "Hi there.",
-            "[c=dim]Not much to say.[/c]",
+            "If you find a way out, don't tell me where.",
+            "[c=dim]They'd ask me, after. And I can't lie to them anymore.[/c]",
         ], speaker="Boy", voice="blip_kid", portrait="kid")
     else:
         game.dialog.show([
-            "[c=dim]Nothing to say.[/c]",
+            "[c=dim]The boy just watches the corn line, waiting.[/c]",
         ], speaker="", voice="blip_soft", portrait="kid")
 
 
@@ -241,29 +260,54 @@ def shopkeep_dialogue(game, npc):
 # ---- The Sheriff (legacy key: fisherman_dialogue) ----
 
 def fisherman_dialogue(game, npc):
+    """The Sheriff -- the law that keeps everyone in (NARRATIVE §2). The
+    trap's enforcer: he killed your car, and his patrols are surveillance.
+    Friendly small-town lawman with a cold floor under it; he never admits
+    the cult, only ever 'helps you settle in.' Escalates over visits from
+    welcome -> the car -> the outsider rule -> a closed door."""
     save = game.save
     _cult_tell(game, "sheriff")
     n = save.arg("fisher_count", 0) + 1
     save.set_arg("fisher_count", n)
-    plain = [
-        "Howdy.",
-        "[c=dim]Just passing through?[/c]",
-    ]
     if n == 1:
-        game.dialog.show(escalate(game, low=plain, mid=plain, high=plain),
-                         speaker="Sheriff", voice="blip_gruff", portrait="guard")
+        game.dialog.show([
+            "Sheriff Vane. You'd be the fella asking after the Blaine girl.",
+            "Word travels in a town this size. Not much else does.",
+            "[c=dim]I'd slow down if I were you. Folks who come asking tend "
+            "to forget they meant to leave.[/c]",
+        ], speaker="Sheriff", voice="blip_gruff", portrait="guard")
     elif n == 2:
-        game.dialog.show(plain,
-                         speaker="Sheriff", voice="blip_gruff", portrait="guard")
+        # He killed your car -- said in deniable lawman's terms.
+        game.dialog.show([
+            "Saw your car out by the river. Took the liberty of looking it "
+            "over -- bad spark, I'd say. Wouldn't trust it on these roads.",
+            "[c=dim]He smiles. His hands are clean, but you believe the "
+            "spark went bad the moment he wanted it to.[/c]",
+            "Don't you fret. Nobody walks out of Brimley, and nobody drives. "
+            "You'll be looked after.",
+        ], speaker="Sheriff", voice="blip_gruff", portrait="guard")
     elif n == 3:
-        game.dialog.show(plain,
-                         speaker="Sheriff", voice="blip_gruff", portrait="guard")
+        # The outsider rule, from the enforcer's side: the town claims its
+        # own; you are the one thing it hasn't claimed yet.
+        game.dialog.show([
+            "I see everyone who comes and everyone who goes. Lately it's all "
+            "coming, no going. That's the way it's meant to be.",
+            "This town belongs to something now, son, and it keeps what "
+            "belongs to it. Every soul here's been spoken for.",
+            "[c=dim]Every soul but yours. You're the one loose thread. We "
+            "don't care for loose threads.[/c]",
+        ], speaker="Sheriff", voice="blip_gruff", portrait="guard")
     elif n == 4:
-        game.dialog.show(plain,
-                         speaker="Sheriff", voice="blip_gruff", portrait="guard")
+        game.dialog.show([
+            "Still walking around. Still asking.",
+            "[c=dim]The preacher asked questions too. You won't be seeing "
+            "him at services.[/c]",
+            "Go home, son. While there's still a you to send.",
+        ], speaker="Sheriff", voice="blip_gruff", portrait="guard")
     else:
         game.dialog.show([
-            "[c=dim]He doesn't look up.[/c]",
+            "[c=dim]He watches you the whole way down the road. He does not "
+            "blink.[/c]",
         ], speaker="", voice="blip_soft", portrait="guard")
 
 
@@ -349,21 +393,23 @@ def clerk_dialogue(game, npc):
 
 
 def basement_photo_dialogue(game, npc):
-    """The Photo NPC in the basement. Flow preserved (grants the
-    polaroid item); text blanked."""
+    """The framed staff photograph on the cellar shelf -- flavor that
+    echoes the Ledger (the Arcadia's people never age, never leave). The
+    Case Photo keepsake moved to the Kid (NARRATIVE §2), so this grants
+    nothing now; it's a lore examine that reinforces evidence #3."""
     save = game.save
     n = save.arg("photo_reads", 0) + 1
     save.set_arg("photo_reads", n)
     if n == 1:
         game.dialog.show([
-            "[c=dim](A framed photograph on a shelf.)[/c]",
-            "[c=dim]Nothing here.[/c]",
+            "[c=dim](A framed staff photograph on the shelf. The Arcadia's "
+            "people lined up out front, and a date in the corner from "
+            "decades back.)[/c]",
+            "[c=dim]The Clerk stands dead centre, smiling. He has not aged "
+            "a day.[/c]",
         ], speaker="", voice="blip_soft", portrait="narrator")
-        if not save.flag("polaroid_taken"):
-            save.set_flag("polaroid_taken", True)
-            game.player.inventory.add("polaroid", 1)
-            game.show_notice("You take the photograph.")
     else:
         game.dialog.show([
-            "[c=dim](An empty frame.)[/c]",
+            "[c=dim](The same faces. The same smile. The same patient, "
+            "unmoving eyes.)[/c]",
         ], speaker="", voice="blip_soft", portrait="narrator")

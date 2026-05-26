@@ -185,6 +185,18 @@ def main():
     n = evidence_count(ge)
     check(n >= 3, f"evidence: the 3-gate is reachable (gathered {n} canonical beats)")
 
+    # --- 10. The Kid hands over the Case Photo keepsake (NARRATIVE §2) ---
+    gk = new_game()
+    gk.load_scene_now("kid_house")
+    ready(gk)
+    kid = next((nn for nn in gk.scene.npcs if nn.name == "Village Kid"), None)
+    check(kid is not None, "kid: the Kid is present in his house")
+    if kid:
+        kid.dialogue_fn(gk, kid)
+        check(gk.player.inventory.has("polaroid")
+              and gk.save.flag("polaroid_taken"),
+              "kid: talking to the Kid grants the Case Photo keepsake")
+
     print()
     if FAILS:
         print(f"{len(FAILS)} flow failure(s).")
