@@ -9,7 +9,7 @@ from entities.npc import NPC
 from entities.decoration import Decoration
 from .base import Scene
 from .dialogue import (
-    old_man_dialogue, fisherman_dialogue, innkeeper_dialogue, _evidence,
+    old_man_dialogue, fisherman_dialogue, clerk_dialogue, _evidence,
 )
 
 

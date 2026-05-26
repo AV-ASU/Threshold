@@ -144,7 +144,7 @@ def build_schoolhouse():
 
 
 def build_country_lane():
-    """A worn rural road between the Innkeeper's yard and the town
+    """A worn rural road between the Clerk's yard and the town
     crossroads. Long thin scene -- 32 wide x 12 tall -- so the
     walk feels like time passing rather than a single doorway. The
     road itself is a 3-tile dirt strip in the middle; corn / wild
@@ -992,7 +992,7 @@ def build_cornfield_maze():
                 on_pickup=lambda g: g.save.set_flag(
                     "cornfield_cache_taken", True),
             )
-        # The Innkeeper's missing crate of bottles. Stashed in the
+        # The Clerk's missing crate of bottles. Stashed in the
         # east-lane dead-end pocket -- straw-packed, six bottles,
         # heavier than it looks.
         if not game.save.flag("liquor_crate_taken"):
@@ -1031,7 +1031,7 @@ def build_cornfield_maze():
                 )
             return
         # The crate-note: a folded slip pinned to a corn stalk.
-        # Reading it once sets `crate_note_read` so the Innkeeper
+        # Reading it once sets `crate_note_read` so the Clerk
         # turn-in line shifts.
         nx, ny = sc._crate_note_pos
         if (abs(game.player.x - nx) < 36

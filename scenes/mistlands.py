@@ -1,4 +1,4 @@
-"""The mistlands -- 100x100 plain west of the Innkeeper's farm,
+"""The mistlands -- 100x100 plain west of the Clerk's farm,
 split roughly 1/3 / 2/3 by a north-south river. A planked bridge
 crosses near its north end (rows 23-26 x cols 32-34). THRESHOLD
 rework: the village's six buildings have been scattered across

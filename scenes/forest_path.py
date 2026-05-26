@@ -1,5 +1,5 @@
 """cornfield_path (key: 'forest_path') -- the dirt road east of
-the Innkeeper's house. Stubble cornfield to the north and south,
+the Clerk's house. Stubble cornfield to the north and south,
 the trees thicken at the east end where the road bends into the
 woods.
 

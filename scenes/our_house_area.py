@@ -1,10 +1,10 @@
 """outside_innkeeper_house (key: 'our_house_area') -- the gravel
-yard behind the Innkeeper's house. The pickup truck is parked here.
+yard behind the Clerk's house. The pickup truck is parked here.
 A small woodshed off to the south holds the splitting axe. The dirt
 road leaves east toward town; a path west connects to the river/
 mistlands escape route.
 
-The basement is reached from inside the Innkeeper's house (the
+The basement is reached from inside the Clerk's house (the
 kitchen cellar hatch). A previous build placed a redundant cellar
 bulkhead in this yard too -- removed because it created a one-way
 trip (basement only exits via the kitchen ladder) and a duplicate
@@ -35,7 +35,7 @@ def _yard_cache_pickup(game):
 
 
 def build_our_house_area():
-    # 24w x 18h. The Innkeeper's house occupies the upper-left quadrant
+    # 24w x 18h. The Clerk's house occupies the upper-left quadrant
     # with a back door (H) into the kitchen. A woodshed sits in the
     # lower-left with a door (h) you interact with to take the axe. The
     # bulkhead cellar entry sits behind the house at the top of the
@@ -61,17 +61,17 @@ def build_our_house_area():
         "gggggggggggggggggggggggg",   # 17
     ]
     # THRESHOLD reskin: the tree perimeter is now a cornfield wall.
-    # The yard sits inside the Innkeeper's crops; you can't see past
+    # The yard sits inside the Clerk's crops; you can't see past
     # the stalks. The legacy yard woodshed is gone -- the only shed
     # is the locked one in the village/farm scene. The yard is now
     # just the inn's back door, the pickup truck, and open ground.
     objects = [
         "CCCCCCCCCCCCCCCCCCCCCCCC",   # 0
         "C......................C",   # 1
-        "C..WWWWW...............C",   # 2  Innkeeper's house north wall
+        "C..WWWWW...............C",   # 2  Clerk's house north wall
         "C..WrrrW...............C",   # 3  roof
         "C..WrrrW...............C",   # 4  roof
-        "C..WWHWW...............C",   # 5  H = back door of the Innkeeper's house
+        "C..WWHWW...............C",   # 5  H = back door of the Clerk's house
         "a......................e",   # 6  west passage (river path)
         "a......................e",   # 7  east passage (cornfield_path)
         "a......................e",   # 8
@@ -86,7 +86,7 @@ def build_our_house_area():
         "CCCCCCCCCCCCCCCCCCCCCCCC",   # 17
     ]
     sc = Scene("our_house_area", floor, objects, music="village")
-    # H = back door of the Innkeeper's house. Returns to 'house' scene
+    # H = back door of the Clerk's house. Returns to 'house' scene
     # (the kitchen/living/hallway).
     sc.add_exit("H", "house", "from_our_house_area")
     # Outdoor passages: west to the country lane that leads to
@@ -106,7 +106,7 @@ def build_our_house_area():
 
     # The pickup truck -- a decoration the player can SEE but not
     # use. The player's car (the escape vehicle) is at the
-    # diner_gas_station; this truck is the Innkeeper's. Now drawn at
+    # diner_gas_station; this truck is the Clerk's. Now drawn at
     # vehicle scale (~2 tiles wide); a 2x1 footprint of solid 'X'
     # invisible tiles under it makes the player bump correctly.
     sc.add_decoration(Decoration(20 * TILE + 16, 12 * TILE + 16,
@@ -143,7 +143,7 @@ def build_our_house_area():
     # posts, a garden bloodstain near the woodshed (something happened
     # here), a creepy_tree at the NE corner of the yard, two dead
     # crows on the dirt road, a bloody handprint smearing the back
-    # door. The Innkeeper's window has a faint passing-figure already
+    # door. The Clerk's window has a faint passing-figure already
     # baked into the tile draw -- watch the south face of his house.
     sc.add_decoration(Decoration(10 * TILE + 16, 10 * TILE + 16,
                                  "banner", color=(220, 220, 200)))  # clothesline
@@ -170,10 +170,10 @@ def build_our_house_area():
 
 
 def build_woodshed():
-    """The Innkeeper's woodshed interior. Single room. Splitting axe
+    """The Clerk's woodshed interior. Single room. Splitting axe
     on the wall, a coil of rope on the workbench, a chopping stump in
     the centre. Locked from outside; the key is taken from the
-    Innkeeper at night."""
+    Clerk at night."""
     floor = ["=" * 8 for _ in range(6)]
     objects = [
         "WWWWWWWW",

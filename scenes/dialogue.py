@@ -276,15 +276,15 @@ def fisherman_dialogue(game, npc):
         ], speaker="", voice="blip_soft", portrait="guard")
 
 
-# ---- The Innkeeper ----
+# ---- The Clerk ----
 
-def innkeeper_dialogue(game, npc):
-    """The Innkeeper's quest chain (crate -> cellar key -> bottle ->
+def clerk_dialogue(game, npc):
+    """The Clerk's quest chain (crate -> cellar key -> bottle ->
     car keys -> orb) is preserved mechanically. All flags, item
     grants, and branch order are unchanged; only the spoken text is
     blanked."""
     save = game.save
-    _cult_tell(game, "innkeeper")
+    _cult_tell(game, "clerk")
     inv = game.player.inventory
     # PRIORITY 1: turn in the liquor crate -> grants cellar key.
     if inv.has("liquor_crate"):
@@ -300,13 +300,13 @@ def innkeeper_dialogue(game, npc):
                 "[c=dim]He sets the crate on the bar.[/c]",
                 "Thanks for that.",
                 "[c=dim]Here's the cellar key.[/c]",
-            ], speaker="Innkeeper", voice="blip_low", portrait="old")
+            ], speaker="Clerk", voice="blip_low", portrait="old")
         else:
             game.dialog.show([
                 "There it is. Thanks.",
                 "[c=dim]Here's the cellar key. Hatch is under the\n"
                 "kitchen.[/c]",
-            ], speaker="Innkeeper", voice="blip_low", portrait="old")
+            ], speaker="Clerk", voice="blip_low", portrait="old")
         return
     # Stage-2 turn-in -- the cellar bottle -> grants car keys.
     if inv.has("cellar_bottle"):
@@ -319,7 +319,7 @@ def innkeeper_dialogue(game, npc):
             "That'll do.",
             "[c=dim]Here are your car keys.[/c]",
             "If you head up north, bring me back what's there.",
-        ], speaker="Innkeeper", voice="blip_low", portrait="old")
+        ], speaker="Clerk", voice="blip_low", portrait="old")
         return
     # Stage-3 turn-in -- the orb.
     if inv.has("orb"):
@@ -329,7 +329,7 @@ def innkeeper_dialogue(game, npc):
         game.dialog.show([
             "Thanks. Set it on the table.",
             "[c=dim]...[/c]",
-        ], speaker="Innkeeper", voice="blip_low", portrait="old")
+        ], speaker="Clerk", voice="blip_low", portrait="old")
         return
     if save.flag("orb_quest_done"):
         nq = save.arg("innkeeper_post_count", 0) + 1
@@ -338,7 +338,7 @@ def innkeeper_dialogue(game, npc):
             game.dialog.show(
                 ["Coffee's on. Help yourself.",
                  "[c=dim]...[/c]"],
-                speaker="Innkeeper", voice="blip_low", portrait="old",
+                speaker="Clerk", voice="blip_low", portrait="old",
             )
         elif nq == 2:
             game.dialog.show(
@@ -355,7 +355,7 @@ def innkeeper_dialogue(game, npc):
         game.dialog.show(
             ["If you head up north, bring me back what's there.",
              "[c=dim]...[/c]"],
-            speaker="Innkeeper", voice="blip_low", portrait="old",
+            speaker="Clerk", voice="blip_low", portrait="old",
         )
         return
     if not save.flag("innkeeper_quest_started"):
@@ -367,12 +367,12 @@ def innkeeper_dialogue(game, npc):
             "Try the corn rows.",
         ]
         game.dialog.show(escalate(game, low=plain, mid=plain, high=plain),
-                         speaker="Innkeeper", voice="blip_low", portrait="old")
+                         speaker="Clerk", voice="blip_low", portrait="old")
         return
     game.dialog.show(
         ["The crate's out in the corn rows.",
          "[c=dim]...[/c]"],
-        speaker="Innkeeper", voice="blip_low", portrait="old",
+        speaker="Clerk", voice="blip_low", portrait="old",
     )
 
 

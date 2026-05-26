@@ -48,7 +48,7 @@ from .threshold_extras import (build_schoolhouse, build_graveyard,
 
 
 # THRESHOLD scene registry. Keys map to the new fiction:
-#   bedroom            -> spare_room (player's cot in Innkeeper's house)
+#   bedroom            -> spare_room (player's cot in Clerk's house)
 #   house              -> innkeeper_house (kitchen + living + hallway)
 #   son_room           -> innkeeper_bedroom (locked; keys, orb, robe)
 #   basement           -> innkeeper_basement (Mom's photo, notebook,
@@ -72,13 +72,13 @@ from .threshold_extras import (build_schoolhouse, build_graveyard,
 #   graveyard          -> NEW: behind the church
 #   diner_gas_station  -> NEW: edge of town; player's car parked here
 SCENE_BUILDERS = {
-    # Player's quarters (the Innkeeper's house, above the inn)
+    # Player's quarters (the Clerk's house, above the inn)
     "bedroom":            build_bedroom,            # -> spare_room
     "house":              build_house,              # -> innkeeper_house
     "son_room":           build_son_room,           # -> innkeeper_bedroom
     "basement":           build_basement,           # -> innkeeper_basement
     "our_house_area":     build_our_house_area,     # -> yard
-    "woodshed":           build_woodshed,           # -> Innkeeper's shed interior
+    "woodshed":           build_woodshed,           # -> Clerk's shed interior
     # Next door
     "kid_house":          build_kid_house,
     # Town crossroads

@@ -1,10 +1,10 @@
-"""The Innkeeper's house (above the inn): spare_room (player's cot),
-main floor (kitchen + living + front door), the Innkeeper's bedroom
+"""The Clerk's house (above the inn): spare_room (player's cot),
+main floor (kitchen + living + front door), the Clerk's bedroom
 (locked, holds the orb + car keys + robe), the basement (photograph,
 notebook, flashlight, bulkhead exit).
 
 The bedroom KEY means the spare room above the inn. The house KEY
-means the Innkeeper's downstairs. Geometries, pickups, decorations,
+means the Clerk's downstairs. Geometries, pickups, decorations,
 NPCs, and triggers are preserved.
 """
 import math
@@ -15,7 +15,7 @@ from constants import TILE
 from entities.npc import NPC
 from entities.decoration import Decoration
 from .base import Scene
-from .dialogue import basement_photo_dialogue, innkeeper_dialogue, _evidence
+from .dialogue import basement_photo_dialogue, clerk_dialogue, _evidence
 
 
 # ---- spare_room (key: 'bedroom') ----
@@ -221,12 +221,12 @@ def bedroom_interact(game):
 # ---- innkeeper_house (key: 'house') ----
 
 def build_house():
-    """The Innkeeper's downstairs: kitchen on the left half, living
+    """The Clerk's downstairs: kitchen on the left half, living
     room on the right half. Wall divider with a door between them.
     Front door on the south wall (B exit -- the player may be
-    blocked here by the Innkeeper). Cellar hatch in the
+    blocked here by the Clerk). Cellar hatch in the
     kitchen. Door to spare_room hallway on the north (col 13). Door
-    to the Innkeeper's bedroom on the north (col 4) -- locked
+    to the Clerk's bedroom on the north (col 4) -- locked
     initially."""
     floor = [
         "==================",
@@ -261,9 +261,9 @@ def build_house():
         "WWWWWWWDWWWWWWWWWW",
     ]
     sc = Scene("house", floor, objects, music="home")
-    # B = front door (south wall, col 13). The Innkeeper blocks this.
+    # B = front door (south wall, col 13). The Clerk blocks this.
     sc.add_exit("B", "bedroom", "from_house")
-    # 1 = Innkeeper's bedroom door (col 4). Locked at first.
+    # 1 = Clerk's bedroom door (col 4). Locked at first.
     sc.add_exit("1", "son_room", "from_house")
     # D = back door, leads to the gravel yard.
     sc.add_exit("D", "our_house_area", "from_house")
@@ -271,12 +271,12 @@ def build_house():
     sc.add_exit("L", "basement", "from_house")
     sc.set_spawn("default", 9, 9)
     # The B door (spare-room) is at col 13 of the north wall.
-    # The 1 door (Innkeeper's bedroom) is at col 4. They were both
+    # The 1 door (Clerk's bedroom) is at col 4. They were both
     # set to (4, 1) which trapped the spare-room arrival south of
     # the kitchen table at (4, 3). Each spawn is now under its own
     # door.
     sc.set_spawn("from_bedroom", 13, 1)        # south of B (spare-room)
-    sc.set_spawn("from_son_room", 4, 1)        # south of 1 (Innkeeper's bedroom)
+    sc.set_spawn("from_son_room", 4, 1)        # south of 1 (Clerk's bedroom)
     sc.set_spawn("from_our_house_area", 7, 10)
     # The L cellar hatch is at (3, 9). Spawning even one tile north
     # of it (3, 8) shares the same column -- a south key press would
@@ -358,13 +358,13 @@ def build_house():
 
 
 def house_on_enter(game, scene):
-    """Place the kitchen drawer's paper pickup, the Innkeeper NPC
+    """Place the kitchen drawer's paper pickup, the Clerk NPC
     himself (visible going about his business until the
     confrontation fires), and the blocking variant after
-    confrontation. Two states for the Innkeeper:
+    confrontation. Two states for the Clerk:
 
       pre-confrontation:  visible NPC near the fireplace, talkable
-                          (uses innkeeper_dialogue). Wanders within
+                          (uses clerk_dialogue). Wanders within
                           the living room. Solid.
       post-confrontation: planted in the front doorway, no_prompt
                           (no dialogue offered), solid. The 'sit
@@ -383,7 +383,7 @@ def house_on_enter(game, scene):
     if game.save.flag("innkeeper_confronted"):
         nx = 6 * TILE + 16
         ny = 10 * TILE + 16
-        host = NPC(nx, ny, "Innkeeper", "old",
+        host = NPC(nx, ny, "Clerk", "old",
                    solid=True, no_prompt=True,
                    voice="blip_low", portrait="old")
         host.facing = (0, -1)
@@ -391,16 +391,16 @@ def house_on_enter(game, scene):
         host.dialogue_fn = None
         scene.add_npc(host)
     else:
-        # Daytime: the Innkeeper is at the table by the fireplace on
+        # Daytime: the Clerk is at the table by the fireplace on
         # the east side of the living room. He wanders a small
         # circuit (kitchen <-> living room) so the player sees him
         # moving when they pass through.
         nx = 13 * TILE + 16
         ny = 7 * TILE + 16
-        host = NPC(nx, ny, "Innkeeper", "old",
+        host = NPC(nx, ny, "Clerk", "old",
                    solid=True, no_prompt=False,
                    voice="blip_low", portrait="old",
-                   dialogue_fn=innkeeper_dialogue,
+                   dialogue_fn=clerk_dialogue,
                    movement="patrol", speed=0.6,
                    waypoints=[
                        (13 * TILE + 16, 7 * TILE + 16),   # by fireplace
@@ -418,7 +418,7 @@ def house_interact(game):
     """Living-room interact handler. The night key-on-hook
     interaction is gone (the woodshed key lives in the cellar
     now). Function preserved as a stub so future on-interact
-    needs (sleeping-Innkeeper hint, etc.) have a place to land."""
+    needs (sleeping-Clerk hint, etc.) have a place to land."""
     return
 
 
@@ -504,7 +504,7 @@ def innkeeper_bedroom_on_enter(game, scene):
     """The robe + orb are gated by closet interactions (handled
     in innkeeper_bedroom_interact). After the orb is taken, the
     closet becomes a hide spot. The car keys USED to spawn on
-    the dresser here, but the Innkeeper now holds them until the
+    the dresser here, but the Clerk now holds them until the
     player settles a tab (bottle quest), so the dresser is bare."""
     if game.save.flag("orb_taken_innkeeper"):
         # Closet is now empty -- becomes a hide spot.
@@ -682,10 +682,10 @@ def basement_on_enter(game, scene):
     # descends with the cellar key, finds this, and now has a
     # path to the splitting axe. Trade chain spine: alc -> cellar
     # -> shed -> axe. (Was previously sitting on a hook by the
-    # sleeping Innkeeper; that interaction is removed because
+    # sleeping Clerk; that interaction is removed because
     # the new chain wants the cellar to be the gating space.)
     # The inventory check covers old saves where the player got
-    # the key from the legacy night-Innkeeper interaction or the
+    # the key from the legacy night-Clerk interaction or the
     # legacy crate-trade reward without the flag being set --
     # don't drop a duplicate on the workbench.
     if (not game.save.flag("woodshed_key_taken")

@@ -1,7 +1,7 @@
-"""village (key: 'village') -- the Innkeeper's farm.
+"""village (key: 'village') -- the Clerk's farm.
 
 This scene's six villager buildings have been scattered across the
-mistlands; what remains here is the Innkeeper's land -- cornfields,
+mistlands; what remains here is the Clerk's land -- cornfields,
 the woodshed, the well, the payphone, and a wheelbarrow of "rusted"
 tools.
 
@@ -96,7 +96,7 @@ def build_village():
     # Woodshed footprint south-east of the field. 5w x 4h, door 'h'
     # on north face. THIS is now the only woodshed -- the legacy
     # yard shed has been removed. Door is locked (gated by
-    # woodshed_key, given by the Innkeeper on the liquor-crate
+    # woodshed_key, given by the Clerk on the liquor-crate
     # turn-in).
     shed_left, shed_right = 22, 26
     shed_top, shed_bot = 13, 16
@@ -208,7 +208,7 @@ def build_village():
 
     def _village_interact(game):
         # Locked shed door -- requires woodshed_key (given by the
-        # Innkeeper on liquor-crate turn-in). Once unlocked, the
+        # Clerk on liquor-crate turn-in). Once unlocked, the
         # door opens into the same `woodshed` interior the yard's
         # door used to open. Anti-softlock: once the polaroid is
         # taken, the lock forces open (anti-softlock).
@@ -221,7 +221,7 @@ def build_village():
             if not unlocked:
                 game.audio.play("door_locked", 0.6)
                 game.show_notice(
-                    "Locked. The Innkeeper has the key.")
+                    "Locked. The Clerk has the key.")
                 return
             game.audio.play("door_open", 0.7)
             game.begin_transition("woodshed", "from_village_shed")

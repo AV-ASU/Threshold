@@ -142,7 +142,7 @@ OBJECT_DEFS = {
     "F": {"solid": False, "kind": "door"},
     "J": {"solid": False, "kind": "door"},   # door to kid_house interior
     # Per-house entry doors (each house in the new public square + the
-    # Innkeeper's place in our_house_area gets its own char so the layout
+    # Clerk's place in our_house_area gets its own char so the layout
     # is self-documenting and the scene knows which interior to load).
     "m": {"solid": False, "kind": "door"},   # door to old_man_house
     "y": {"solid": False, "kind": "door"},   # door to fisherman_cottage
@@ -823,7 +823,7 @@ def floor_step_sound(ch):
 DISPLAY_NAMES = {
     "bedroom":              "the Spare Room",
     "house":                "the Inn",
-    "son_room":              "the Innkeeper's Room",
+    "son_room":              "the Clerk's Room",
     "basement":             "the Cellar",
     "our_house_area":       "the Yard",
     "kid_house":            "the Kid's House",
