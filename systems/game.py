@@ -2489,6 +2489,22 @@ class Game:
         pygame.draw.rect(s, (140, 30, 24), (cx - 11, cy + 18, 5, 3))   # taillights
         pygame.draw.rect(s, (140, 30, 24), (cx + 6, cy + 18, 5, 3))
 
+    def _draw_road_sign(self, s, x, y, light):
+        """A weathered roadside sign reading BRIMLEY, the population scratched
+        out -- lit by the headlights as it passes. (NEW TEXT, placeholder.)"""
+        def L(c):
+            return (int(c[0] * light), int(c[1] * light), int(c[2] * light))
+        pygame.draw.rect(s, L((58, 48, 36)), (x - 2, y, 4, 44))          # post
+        bw, bh = 86, 38
+        bx, by = x - bw // 2, y - bh
+        pygame.draw.rect(s, L((52, 56, 50)), (bx, by, bw, bh), border_radius=3)
+        pygame.draw.rect(s, L((28, 32, 28)), (bx, by, bw, bh), 2, border_radius=3)
+        txt = self.fonts["sm"].render("BRIMLEY", True, L((202, 208, 198)))
+        s.blit(txt, (x - txt.get_width() // 2, by + 4))
+        pop = self.fonts["tiny"].render("POP. 412", True, L((150, 156, 148)))
+        s.blit(pop, (x - pop.get_width() // 2, by + 21))
+        pygame.draw.line(s, L((132, 44, 38)), (x - 26, by + 25), (x + 26, by + 27), 2)
+
     def _draw_opening(self):
         """The night drive: a dark northern road scrolling past, pine walls
         either side, the car at the wheel. The HEADLIGHTS are the only light
@@ -2534,6 +2550,11 @@ class Game:
         while y < H:
             pygame.draw.rect(s, dash, (cx - 2, y, 4, 26))
             y += 50
+        # The BRIMLEY sign passes once, on the right shoulder, scrolling with
+        # the road (so it pauses when the car stalls).
+        sign_y = int(scroll) - 140
+        if 0 <= sign_y <= H + 60:
+            self._draw_road_sign(s, rx0 + road_w + 26, sign_y, light)
         # The warm headlight pool ahead -- a real radial falloff (alpha rises
         # toward the centre), additive, scaled by `light`.
         glow = pygame.Surface((W, H), pygame.SRCALPHA)
@@ -2558,6 +2579,22 @@ class Game:
             a = int(150 * (1 - i / 60) ** 1.5)
             pygame.draw.rect(vig, (0, 0, 0, a), (i, i, W - 2 * i, H - 2 * i), 1)
         s.blit(vig, (0, 0))
+        # Cold-open case line, the first ~4s. (NEW TEXT, placeholder.)
+        if self._opening_t < 4.0:
+            ct = self._opening_t
+            a = 1.0
+            if ct < 0.6:
+                a = ct / 0.6
+            elif ct > 3.2:
+                a = max(0.0, (4.0 - ct) / 0.8)
+            fnt = self.fonts["sm"]
+            lines = ["Find Mara Blaine.", "Last seen in Brimley."]
+            lh = fnt.get_height() + 4
+            y0 = H // 2 - (len(lines) * lh) // 2
+            for i, ln in enumerate(lines):
+                t_s = fnt.render(ln, True, (212, 208, 200))
+                t_s.set_alpha(int(255 * a))
+                s.blit(t_s, (W // 2 - t_s.get_width() // 2, y0 + i * lh))
 
     # ---- Draw ----
     def draw_world(self):
