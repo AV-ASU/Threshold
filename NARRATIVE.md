@@ -77,14 +77,18 @@ case:
 
 ## 4. Evidence — the thread that drags you down
 
-A pool of six. **Any 3 = the point of no return** (arms the King).
-Searching the lodge thoroughly (1 + 2 + 3) arms Him while you're *still
-on the surface* — a fair, brutal "you dug too deep, too fast."
+A pool of six. **Any 3 = the point of no return** (arms the King). Three
+sit on the **surface** — the **journal** (barn, #2), the **Ledger**
+(cellar, #3), and the **Preacher** (church, #4) — so a thorough town search
+arms Him while you're *still above ground*: a fair, brutal "you dug too
+deep, too fast." The deeper truths — **Mara's cell** (#1), the **Mask**
+(#5), and the **Congregation** (#6) — wait below, in the Works and the
+hive.
 
 | # | Evidence | Item / scene key | Where | What it proves |
 |---|---|---|---|---|
-| 1 | **Mara's Room** | `son_room` (robe + `playscript`) | Lodge — her rented room | She came, and she joined *willingly* |
-| 2 | **Mara's Journal** | `mom_notebook` | Mara's Room (`son_room`) — her dresser | Her descent, in her own words (page 3 → the flashback) |
+| 1 | **Mara's Room** | `maras_room` (robe + her unsent letter) | **Underground** — a convert's cell off the Sorting Hall (`works_sorting`) | She didn't rent a room and vanish — she *moved in* down here. She joined willingly; she was already home |
+| 2 | **Mara's Journal** | `mom_notebook` | The **barn** (`barn`) — behind the workbench | Her descent, in her own words (page 3 → the flashback) |
 | 3 | **The Ledger** (the Lodge's guest register) | read in place | Arcadia cellar (`basement`) — hidden behind a loose wall panel | Guests who check in and never out — and your own name, signed in tonight, already among them |
 | 4 | **The Preacher** | his **cross** (item `cross`) taken from the viscera | The **church** (`old_man_house`) — his own floor | The town murders the ones who name them — gutted for preaching against the cult |
 | 5 | **The Sign — the Pallid Mask** | `sigil_rubbing` (reskinned to the Mask; key kept for saves) | Sign Chamber (well) | His face made an object: what they worship, the shard the fold opens for (the **escape key** → *SPREAD IT*), and the mask that seats into the Play's cover |
@@ -190,12 +194,15 @@ Only display names and fiction change.
   is the key that opens the way *deeper* (Basement Level → the Depths).
 - `dark` room bodies (`ellie / father / mother`, old family) — **remove
   them** and their evidence beats. Cleaned up, not recast.
-- The `playscript` now lives in **Mara's room** (evidence #1). Remove the
-  `mist_house` playscript chest; prune the `black_figure` shadows and the
-  alter / void-room offering chain.
+- The `playscript` is the deep-gate key, taken in the **Scriptorium**
+  (`works_scriptorium`) and spent at the Deep Stair. The `mist_house`
+  surface chest is **emptied** (no surface source → no soft-lock), so the
+  `black_figure` shadows + wind-cut stay dormant; the now-unreachable Clerk
+  turn-in and alter/void offering chain are dead code (follow-up cleanup).
 - `threshold` seal trigger item (`kid_drawing`) — re-fictionalize.
-- **Innkeeper → Lodge Clerk** across dialogue + `DISPLAY_NAMES`
-  (`son_room` → "Mara's Room", etc.).
+- **Innkeeper → Lodge Clerk** across dialogue + `DISPLAY_NAMES` (done).
+  `son_room` is now **"the Clerk's Room"** (his pressed cult robe is the
+  only tell); Mara's room is the new underground `maras_room` cell.
 - **Item renames** (display only): `polaroid` → Case Photo (Mara),
   `mom_notebook` → Mara's Journal, etc.
 - **README rewrite:** PI premise, sealed town, drop "car broke down."
@@ -223,20 +230,22 @@ cultists' gaze still finds you — run it on cover, timing, hides).
 | 1 | The Shaft Floor | `well_bottom` | Rope landing + the ladder back up. Quiet airlock, 1 hide. |
 | 2 | The Drying Racks | `well_passage` | Rack-maze, 1 patrolling cultist, 2 hides. |
 | 3 | The Tallow Vats | `works_vats` | Steaming vats, 2 tending cultists, 2 hides. |
-| 4 | The Sorting Hall | `works_sorting` | Belongings of the vanished, 2 cultists, 3 hides (hardest crossing). |
-| 5 | The Scriptorium | `works_scriptorium` | The Sign copied endlessly, 1 oblivious scribe, 2 hides. |
-| 6 | The Sign Chamber | `works_sign` | The Sign + 3 kneelers + 1 patrol. **Rubbing → `sigil_rubbing` + evidence #5** (needs charcoal). |
-| 7 | The Deep Stair | `works_deepstair` | The **playscript-gate**: place the playscript → opens to `depths_antechamber`. |
+| 4 | The Sorting Hall | `works_sorting` | Belongings of the vanished, 2 cultists, 3 hides (hardest crossing). A side door north → **Mara's room**. |
+| 4a | **Mara's Room** | `maras_room` | A convert's cell off the hall: cot, her cult robe + the unsent letter. **Evidence #1.** A quiet beat off the gauntlet, 1 hide. |
+| 5 | The Scriptorium | `works_scriptorium` | The Sign copied endlessly, 1 oblivious scribe, 2 hides. **The Playscript** — the one bound, whole Play among the flat copies — is taken here (the deep-gate key). |
+| 6 | The Sign Chamber | `works_sign` | The Sign daubed on the wall + an altar; 3 kneelers + 1 patrol. **Lift the Pallid Mask → `sigil_rubbing` + evidence #5** (no charcoal — you take the object itself). |
+| 7 | The Deep Stair | `works_deepstair` | The **playscript-gate**: spend the Playscript → opens to `depths_antechamber` **and snaps the rope** (the point of no return). |
 
 **Rules wired:**
 - **One mouth:** rope down the well only; the barn cellar hatch is now
   sealed (`scenes/interiors.py`). The tied rope persists as a two-way
   climb until it breaks.
-- **Point of no return:** descend carrying the **playscript** and the rope
-  **snaps** (`well_bottom` on_enter sets `well_rope_broken`) — the
-  ladder up is dead; only deeper remains.
-- **Playscript-gate:** Room 7 consumes the playscript to open the stair to the Depths
-  (sets `deepstair_open`).
+- **Point of no return:** the playscript now lives *in* the Works (the
+  Scriptorium), so you never carry it down. **Spending it at the Deep
+  Stair** (Room 7) snaps the rope (`well_rope_broken`) — the gauntlet stays
+  retreatable up the ladder until you commit to the Depths.
+- **Playscript-gate:** Room 7 consumes the playscript to open the stair to
+  the Depths (`deepstair_open`) and snaps the rope in the same act.
 - The well sprite was redesigned and repositioned in `village` (col 16,
   row 11 — a landmark just off the road).
 
