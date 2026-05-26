@@ -31,14 +31,14 @@ from scenes import load_scene, tile_footstep, Scene
 # THRESHOLD: scene sets keyed to the cult fiction. The cult sites
 # (cult_chamber, the cauldron clearing) bypass the standard fade --
 # crossing into them is meant to feel like a snap, not a door.
-VOID_SCENES = {"void_boss", "symbol_portal_room"}
+VOID_SCENES = {"void_boss"}
 
 
 # Day-phase cycle. Sleeping in the cot advances the phase by one
 # Scenes where dread-state effects engage: the stillness heartbeat
 # ramps up while the player stands still here, and the cult-site
 # floors get the rare delayed-footstep trick.
-CREEPY_SCENES = {"basement", "void_boss", "symbol_portal_room",
+CREEPY_SCENES = {"basement", "void_boss",
                  "haunted_house", "well_bottom", "well_passage",
                  "mistlands"}
 
@@ -93,9 +93,6 @@ OUTDOOR_DECAY = {
     ("country_lane", "mid"):  [(5, 4, "dead_crow")],
     ("country_lane", "high"): [(5, 4, "dead_crow"),
                                 (8, 7, "claw_marks")],
-    ("diner_gas_station", "mid"):  [(9, 6, "bloody_handprint")],
-    ("diner_gas_station", "high"): [(9, 6, "bloody_handprint"),
-                                     (4, 8, "phantom_mark")],
 }
 
 # Outdoor scenes -- everywhere the player is walking under sky.
@@ -104,7 +101,7 @@ OUTDOOR_DECAY = {
 # Mistlands runs its own (heavier) vignette via _draw_mistlands_haze
 # and is intentionally NOT in this set so the two don't stack.
 OUTDOOR_SCENES = {"our_house_area", "village", "forest_path",
-                  "void_boss", "graveyard", "diner_gas_station",
+                  "void_boss", "graveyard",
                   "country_lane", "cornfield_maze",
                   "gravel_road_north", "river_crossing"}
 
@@ -116,7 +113,7 @@ DARK_SCENES = {"basement", "well_passage", "well_bottom",
                "works_vats", "works_sorting", "maras_room",
                "works_scriptorium",
                "works_sign", "works_deepstair",
-               "symbol_portal_room", "haunted_house",
+               "haunted_house",
                "depths_antechamber", "depths_procession",
                "depths_hall", "depths_threshing", "depths_stair",
                "dark", "threshold"}
@@ -157,7 +154,7 @@ DIM_SAFE_SCENES = {"basement"}
 # permanent curse.
 CULTIST_SCENES = {
     "village", "forest_path", "our_house_area", "graveyard",
-    "diner_gas_station", "mistlands", "country_lane",
+    "mistlands", "country_lane",
     "gravel_road_north", "river_crossing", "backwoods_cabin",
     "cornfield_maze",
 }

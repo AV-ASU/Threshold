@@ -319,10 +319,9 @@ def build_haunted_house():
         sc.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16,
                                      "mote"))
 
-    # Cult-chamber hatch: press E in the south part of the room to
-    # descend. The hatch is the only way to reach symbol_portal_room
-    # in THRESHOLD (the void buffer + glitch trick is gone). Drawn
-    # as a cellar_hatch (wood box + iron pull-ring), NOT a chest.
+    # Cult-chamber hatch: a sealed dead end. It once dropped into the old
+    # cult chamber (now removed); pressing E just reads the nailed-shut
+    # notice. Drawn as a cellar_hatch (wood box + iron pull-ring).
     hatch_x = 4 * TILE + 16
     hatch_y = 5 * TILE + 16
     sc.add_decoration(Decoration(hatch_x, hatch_y, "cellar_hatch"))
@@ -334,7 +333,7 @@ def build_haunted_house():
     ]
 
     def _farmhouse_interact(game):
-        # Sealed. This hatch used to drop into symbol_portal_room, which
+        # Sealed. This hatch used to drop into the old cult chamber, which
         # passaged through to the Works -- a shortcut around the well +
         # rope. Closed (NARRATIVE §5/§9: the well is the only way down).
         if (abs(game.player.x - hatch_x) < 36
@@ -358,52 +357,3 @@ def haunted_house_on_enter(game, scene):
             on_pickup=lambda g: g.save.set_flag(
                 "batteries_haunted_taken", True),
         )
-def build_symbol_portal_room():
-    """Underground stone room beneath the abandoned farmhouse. A
-    short ladder up to the farmhouse on the west; a passage east to
-    the well_passage. The room is just a place.
-    """
-    floor = ["x" * 12 for _ in range(10)]
-    objects_l = []
-    for y in range(10):
-        if y == 0 or y == 9:
-            objects_l.append(list("#" * 12))
-        else:
-            row = ["#"] + ["."] * 10 + ["#"]
-            objects_l.append(row)
-    # Ladder up to the farmhouse on the west wall. The east passage to
-    # well_passage is SEALED -- it was a shortcut into the Works that
-    # bypassed the well + rope (and the point-of-no-return rope-snap).
-    # NARRATIVE §5/§9: the village well is the ONLY way down. The room
-    # stays registered (old saves) but no longer connects to the Works.
-    objects_l[5][0] = "U"
-    objects = ["".join(r) for r in objects_l]
-    sc = Scene("symbol_portal_room", floor, objects, music="void")
-    sc.add_exit("U", "haunted_house", "from_chamber")
-    sc.set_spawn("default",        2, 5)
-    sc.set_spawn("from_haunted",   1, 5)
-    sc.set_spawn("from_farmhouse", 1, 5)
-
-    sym_x = 7 * TILE + 16
-    sym_y = 5 * TILE + 16
-    sc.add_decoration(Decoration(sym_x, sym_y, "symbol"))
-    # Candles around the altar.
-    for cx, cy in [(5, 3), (9, 3), (5, 7), (9, 7)]:
-        sc.add_decoration(Decoration(cx * TILE + 16, cy * TILE + 16,
-                                     "candle"))
-    # Cult robes on a hook (banner deco).
-    sc.add_decoration(Decoration(2 * TILE + 16, 7 * TILE + 16,
-                                 "banner", color=(110, 90, 50)))
-    # Ambient bloodstains and a claw gouge on the south wall.
-    sc.add_decoration(Decoration(7 * TILE + 16, 3 * TILE + 24,
-                                 "bloodstain"))
-    sc.add_decoration(Decoration(8 * TILE + 16, 8 * TILE + 22,
-                                 "claw_marks"))
-    sc.hide_spots = [
-        # Behind the cult robes hung on the west wall hook.
-        (2 * TILE + 16, 7 * TILE + 16, "behind"),
-        # Behind the north candle row.
-        (5 * TILE + 16, 3 * TILE + 16, "behind"),
-    ]
-
-    return sc

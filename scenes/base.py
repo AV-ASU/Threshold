@@ -192,7 +192,7 @@ OBJECT_DEFS = {
     # THRESHOLD: outdoor passage chars for the new scenes.
     # "/" -> schoolhouse door (used in village south band)
     # "?" -> graveyard gate (used inside the church)
-    # "!" -> diner_gas_station (used at east end of cornfield_path)
+    # "!" -> cornfield_maze passage (north gap off the cornfield path)
     "/": {"solid": False, "kind": "outdoor_passage"},
     "?": {"solid": False, "kind": "outdoor_passage"},
     "!": {"solid": False, "kind": "outdoor_passage"},
@@ -829,11 +829,9 @@ DISPLAY_NAMES = {
     "works_sign":           "the Sign Chamber",
     "works_deepstair":      "the Deep Stair",
     "haunted_house":        "the Abandoned Farmhouse",
-    "symbol_portal_room":   "the Stone Chamber",
     "mistlands":            "Brimley",
     "schoolhouse":          "the Schoolhouse",
     "graveyard":            "the Graveyard",
-    "diner_gas_station":    "the Diner",
     "country_lane":         "the Country Lane",
     "gravel_road_north":    "the Gravel Road",
     "backwoods_cabin":      "the Hunter's Cabin",

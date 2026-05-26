@@ -90,9 +90,8 @@ def build_our_house_area():
     # (the kitchen/living/hallway).
     sc.add_exit("H", "house", "from_our_house_area")
     # Outdoor passages: west to the country lane that leads to
-    # village; east to the cornfield path that leads to the diner /
-    # car. The lane is an intermediate scene so the village isn't
-    # one step from the front yard.
+    # village; east to the cornfield path. The lane is an intermediate
+    # scene so the village isn't one step from the front yard.
     sc.add_exit("a", "country_lane", "from_our_house_area")
     sc.add_exit("e", "forest_path", "from_our_house_area")
 
@@ -105,8 +104,8 @@ def build_our_house_area():
     sc.set_spawn("from_woodshed", 12, 7)         # legacy fallback
 
     # The pickup truck -- a decoration the player can SEE but not
-    # use. The player's car (the escape vehicle) is at the
-    # diner_gas_station; this truck is the Clerk's. Now drawn at
+    # use. The player's car (the escape vehicle) is on the Mistlands
+    # east bank; this truck is the Clerk's. Now drawn at
     # vehicle scale (~2 tiles wide); a 2x1 footprint of solid 'X'
     # invisible tiles under it makes the player bump correctly.
     sc.add_decoration(Decoration(20 * TILE + 16, 12 * TILE + 16,

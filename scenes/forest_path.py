@@ -40,10 +40,8 @@ def build_forest_path():
     # West passage from outside_innkeeper_house.
     for dy in (-1, 0, 1):
         objects_l[PATH_ROW + dy][0] = "a"
-    # East passage continues into the deeper woods (kept the original
-    # 'e' exit, now leads to barn / well_passage area).
-    for dy in (-1, 0, 1):
-        objects_l[PATH_ROW + dy][W - 1] = "e"
+    # The east end is a closed tree wall (the diner spur was removed) --
+    # the road just runs into the woods and stops. Tiles stay "C".
 
     # The clearing is reached via the mistlands river bank, not via
     # a secret tree off the cornfield path.
@@ -58,10 +56,6 @@ def build_forest_path():
     sc = Scene("forest_path", floor, objects, music="outside")
 
     sc.add_exit("a", "our_house_area",  "from_forest")
-    # The east end of the cornfield path leads to the diner forecourt
-    # -- the player's car is parked there. (The cauldron clearing is
-    # reachable via the mistlands river bank, not via the cornfield.)
-    sc.add_exit("e", "diner_gas_station", "from_cornfield")
     # 2-wide passage north into the deeper cornfield (cornfield_maze).
     # Uses the `!` outdoor_passage char so it reads as a gap in the
     # corn rather than a door. Two adjacent tiles so the player walks
@@ -72,10 +66,6 @@ def build_forest_path():
     sc.set_spawn("from_our_house_area", 1, PATH_ROW)
     sc.set_spawn("from_cave", W - 2, PATH_ROW)
     sc.set_spawn("from_barn", W - 2, PATH_ROW)
-    # Coming back from the diner (which is east of the cornfield) --
-    # spawn one tile west of the east passage so the player doesn't
-    # immediately re-trigger the exit.
-    sc.set_spawn("from_diner", W - 2, PATH_ROW)
     sc.set_spawn("from_cornfield_maze", 30, PATH_ROW)
 
     # Ambient grass tufts -- here read as cornstalks. A few crows.

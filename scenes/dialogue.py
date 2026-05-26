@@ -315,26 +315,27 @@ def clerk_dialogue(game, npc):
     save = game.save
     _cult_tell(game, "clerk")
     inv = game.player.inventory
-    # PRIORITY 1: turn in the liquor crate -> grants cellar key.
+    # PRIORITY 1: turn in the liquor crate -> advances the chain. The
+    # cellar is no longer key-gated, so no key changes hands; the Clerk
+    # just points you down to the un-locked hatch.
     if inv.has("liquor_crate"):
         inv.remove("liquor_crate", 1)
         save.set_flag("innkeeper_quest_done", True)
         save.set_flag("axe_quest_started", True)
         save.set_flag("innkeeper_bottle_done", True)   # legacy alias
-        if not inv.has("cellar_key"):
-            inv.add("cellar_key", 1)
         game.audio.play("pickup_rare", 0.7)
         if save.flag("crate_note_read"):
             game.dialog.show([
                 "[c=dim]He sets the crate on the bar.[/c]",
                 "Thanks for that.",
-                "[c=dim]Here's the cellar key.[/c]",
+                "[c=dim]Cellar's open if you need it -- hatch under the\n"
+                "kitchen.[/c]",
             ], speaker="Clerk", voice="blip_low", portrait="old")
         else:
             game.dialog.show([
                 "There it is. Thanks.",
-                "[c=dim]Here's the cellar key. Hatch is under the\n"
-                "kitchen.[/c]",
+                "[c=dim]Hatch to the cellar's under the kitchen, if you're\n"
+                "curious. It's not locked.[/c]",
             ], speaker="Clerk", voice="blip_low", portrait="old")
         return
     # Stage-2 turn-in -- the cellar bottle -> grants car keys.

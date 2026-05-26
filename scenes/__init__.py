@@ -23,10 +23,9 @@ from .depths import (build_depths_antechamber, build_depths_procession,
 from .interiors import (build_shop, build_kid_house, build_barn,
                         build_void_boss)
 from .villager_houses import (build_old_man_house, build_fisherman_cottage,
-                              build_haunted_house, build_symbol_portal_room)
+                              build_haunted_house)
 from .mistlands import build_mistlands
 from .threshold_extras import (build_schoolhouse, build_graveyard,
-                                build_diner_gas_station,
                                 build_country_lane,
                                 build_gravel_road_north,
                                 build_backwoods_cabin,
@@ -54,11 +53,9 @@ from .threshold_extras import (build_schoolhouse, build_graveyard,
 #   well_bottom        -> well_bottom (sigil etched at the binding)
 #   well_passage       -> well_passage (cult tunnels)
 #   haunted_house      -> abandoned_farmhouse
-#   symbol_portal_room -> cult_chamber (altar room)
 #   mistlands          -> river_path (creek north of town)
 #   schoolhouse        -> NEW: empty since the town's children vanished
 #   graveyard          -> NEW: behind the church
-#   diner_gas_station  -> NEW: edge of town; player's car parked here
 SCENE_BUILDERS = {
     # The Arcadia Lodge (your room, the ground floor, the Clerk's room)
     "bedroom":            build_bedroom,            # the player's room
@@ -98,13 +95,11 @@ SCENE_BUILDERS = {
     "threshold":          build_threshold,
     # Cult sites
     "haunted_house":       build_haunted_house,     # -> abandoned_farmhouse
-    "symbol_portal_room":  build_symbol_portal_room, # -> cult_chamber
     # River escape
     "mistlands":          build_mistlands,          # -> river_path
     # New scenes
     "schoolhouse":        build_schoolhouse,
     "graveyard":          build_graveyard,
-    "diner_gas_station":  build_diner_gas_station,
     "country_lane":       build_country_lane,
     "gravel_road_north":  build_gravel_road_north,
     "backwoods_cabin":    build_backwoods_cabin,

@@ -2,10 +2,6 @@
 
   schoolhouse        -- one-room schoolhouse, empty for months.
   graveyard          -- behind the church. One readable headstone.
-  diner_gas_station  -- closed-up diner with a gas pump. The
-                        player's CAR is parked here. Reaching the
-                        car with the keys triggers the car-escape
-                        ending.
 """
 import math
 import random
@@ -347,138 +343,6 @@ def build_graveyard():
     return sc
 
 
-def build_diner_gas_station():
-    """An OUTDOOR forecourt: the player walks east out of the
-    cornfield path and arrives in a gravel lot, NOT inside a
-    building. The closed-up diner sits as a building footprint on
-    the north side of the lot (door faces south); a single gas
-    pump stands at centre with the player's car parked beside it;
-    a payphone at the south-east corner. Wide grass shoulder + tree
-    line wraps the lot.
-
-    Reaching the car with the car_keys in inventory triggers the
-    car-escape ending (wired in Pass H -- this scene only places
-    the geometry).
-
-    Layout (20 wide x 14 tall):
-      Row 0..1   tree wall + sky
-      Row 2..5   diner building footprint (cols 4..11), door 'l'
-                  facing south on row 5 col 7. The door is FACADE
-                  (locked / boarded over) -- the player can read
-                  the sign but not enter.
-      Row 6..10  open gravel lot. Gas pump + car at centre, payphone
-                  at SE corner.
-      Row 11..12 grass shoulder
-      Row 13     tree wall except for H exit south to forest_path.
-
-    Hide spots: behind the diner building (alley row 5/6), behind
-    the car, against the tree line east. Each spot lands on a
-    walkable tile beside cover, never on solid prop.
-    """
-    W, H = 20, 14
-    # Floor: gravel lot in centre rows, grass shoulder + dirt path
-    # leading south to the H exit.
-    floor_rows = []
-    for y in range(H):
-        if 6 <= y <= 10:
-            floor_rows.append("_" * W)            # gravel
-        elif 11 <= y <= 12:
-            row = list("g" * W)
-            # Dirt path south from gas pump down to the H exit.
-            for cx in range(9, 12):
-                row[cx] = "d"
-            floor_rows.append("".join(row))
-        else:
-            floor_rows.append("g" * W)
-    objects_l = []
-    for y in range(H):
-        if y == 0 or y == H - 1:
-            objects_l.append(list("T" * W))
-        else:
-            row = ["."] * W
-            row[0] = "T"
-            row[W - 1] = "T"
-            objects_l.append(row)
-    # H exit south to forest_path (cornfield).
-    objects_l[H - 1][10] = "H"
-    # Diner building footprint (cols 4..11, rows 2..5). South face
-    # has a 'l' (facade/locked door) at col 7 row 5 -- the diner is
-    # closed; player can read but not enter. North face + roof tiles.
-    for cx in range(4, 12):
-        objects_l[2][cx] = "W"
-        objects_l[5][cx] = "W"
-    for ry in (3, 4):
-        objects_l[ry][4] = "W"
-        objects_l[ry][11] = "W"
-        for cx in range(5, 11):
-            objects_l[ry][cx] = "r"
-    # Window in the north face + facade door in the south face.
-    objects_l[2][7] = "i"
-    objects_l[5][7] = "l"
-    objects = ["".join(r) for r in objects_l]
-
-    sc = Scene("diner_gas_station", floor_rows, objects, music="outside")
-    sc.add_exit("H", "forest_path", "from_diner")
-    # Spawns: arriving from forest_path (south), spawn one row north
-    # of the H exit so the player doesn't auto-retrigger.
-    sc.set_spawn("default", 10, 12)
-    sc.set_spawn("from_forest", 10, 12)
-    sc.set_spawn("from_cornfield", 10, 12)
-
-    # Gas pump + payphone. The player's car USED to be parked
-    # here too, but has been moved to the mistlands east bank --
-    # the diner now reads as a closed-up landmark, not a launch
-    # pad. (Old saves still load; the car decoration just no
-    # longer renders in this scene.)
-    pump_x = 9 * TILE + 16
-    pump_y = 8 * TILE + 16
-    payphone_x = 17 * TILE + 16
-    payphone_y = 10 * TILE + 16
-    sc.add_decoration(Decoration(pump_x, pump_y, "gas_pump"))
-    sc.add_decoration(Decoration(payphone_x, payphone_y, "payphone"))
-    # Solid invisible tiles under the pump + payphone so the
-    # player has to walk around them.
-    objects_list = [list(r) for r in sc.objects]
-    objects_list[8][9] = "X"     # gas pump
-    objects_list[10][17] = "X"   # payphone
-    sc.objects = objects_list
-    # Diner signage: a banner hung over the south wall.
-    sc.add_decoration(Decoration(7 * TILE + 16, 5 * TILE + 28,
-                                 "banner", color=(160, 50, 60)))
-    # Closed-for-business clock above the door.
-    sc.add_decoration(Decoration(7 * TILE + 16, 4 * TILE + 22, "clock"))
-    # Two crows on the diner roof.
-    sc.add_decoration(Decoration(5 * TILE + 8, 3 * TILE + 22, "crow"))
-    sc.add_decoration(Decoration(10 * TILE + 8, 3 * TILE + 22, "crow"))
-    # Grass tufts scattered through the shoulders.
-    rng = random.Random(2029)
-    for _ in range(20):
-        gx = rng.randint(1, W - 2) * TILE + rng.randint(0, 30)
-        gy = rng.randint(0, H - 1) * TILE + rng.randint(0, 30)
-        ty_ = gy // TILE
-        if 6 <= ty_ <= 10 or 2 <= ty_ <= 5:   # keep lot/building clear
-            continue
-        sc.add_decoration(Decoration(gx, gy, "grass_tuft"))
-    # One dead crow at the foot of the gas pump.
-    sc.add_decoration(Decoration(8 * TILE + 16, 9 * TILE + 22,
-                                 "dead_crow"))
-    # Hide spots beside cover (NOT on the solid pump tiles).
-    sc.hide_spots = [
-        (16 * TILE + 16, 10 * TILE + 16, "behind"), # beside the payphone
-        (3 * TILE + 16, 6 * TILE + 16, "behind"),   # alley west of diner
-        (8 * TILE + 16, 7 * TILE + 16, "behind"),   # beside the pump
-    ]
-
-    def _diner_interact(game):
-        if (abs(game.player.x - payphone_x) < 40
-                and abs(game.player.y - payphone_y) < 40):
-            game.audio.play("static", 0.4)
-            game.show_notice("The line is dead.")
-    sc.on_interact_fn = _diner_interact
-
-    return sc
-
-
 def build_gravel_road_north():
     """Long thin gravel road running north out of town. South exit
     `a` returns to village; north exit `e` reaches backwoods_cabin.
@@ -691,14 +555,6 @@ def build_backwoods_cabin_interior():
         (1 * TILE + 24, 1 * TILE + 24, "behind"),
         (6 * TILE + 16, 4 * TILE + 16, "behind"),
     ]
-    def _on_enter(game, scene):
-        if not game.save.flag("cellar_key_taken"):
-            scene.add_item(
-                4 * TILE + 16, 4 * TILE + 16, "cellar_key",
-                on_pickup=lambda g: g.save.set_flag(
-                    "cellar_key_taken", True),
-            )
-    sc.on_enter_fn = _on_enter
     return sc
 
 
