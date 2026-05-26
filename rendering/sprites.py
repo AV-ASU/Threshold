@@ -523,7 +523,7 @@ def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False,
         pygame.draw.rect(surf, (200, 200, 200), (x - 8, y - 8, 16, 16))
 
 
-def draw_player_sprite(surf, x, y, facing, walk_phase=0, armor=None, mud=0.0,
+def draw_player_sprite(surf, x, y, facing, walk_phase=0, armor=None,
                         prone=False):
     """THRESHOLD: the private investigator, 1994. A long dark wool
     overcoat over a pale collar, dark trousers, scuffed work boots --
@@ -592,23 +592,6 @@ def draw_player_sprite(surf, x, y, facing, walk_phase=0, armor=None, mud=0.0,
     leg_off = int(math.sin(walk_phase) * 2)
     pygame.draw.rect(surf, boots, (x - 6, y + 14, 5, 4 + max(0, -leg_off)))
     pygame.draw.rect(surf, boots, (x + 1, y + 14, 5, 4 + max(0, leg_off)))
-    # THRESHOLD wake-state mud. The player's boots are caked when the
-    # opening fires; the splatter recedes as they walk. Two flecks of
-    # darker brown on each boot + a smear up the jeans cuff that
-    # fades with `mud` (0..1).
-    if mud > 0.05:
-        m_a = max(40, min(220, int(180 * mud)))
-        mud_col = (28, 18, 10)
-        pygame.draw.rect(surf, mud_col, (x - 6, y + 14, 5, 2))
-        pygame.draw.rect(surf, mud_col, (x + 1, y + 14, 5, 2))
-        # cuff smear
-        cuff = pygame.Surface((14, 4), pygame.SRCALPHA)
-        pygame.draw.rect(cuff, (30, 22, 14, m_a), (0, 0, 14, 4))
-        surf.blit(cuff, (x - 7, y + 12))
-        # one fleck higher up the leg, only when very muddy
-        if mud > 0.5:
-            pygame.draw.rect(surf, mud_col, (x - 4, y + 9, 2, 2))
-            pygame.draw.rect(surf, mud_col, (x + 3, y + 10, 2, 2))
     # Eyes (look in facing direction)
     fx, fy = facing
     eye_y = y - 12 + int(fy * 2)

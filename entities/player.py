@@ -64,11 +64,6 @@ class Player:
         # holding still).
         self.hidden = None
         self.hide_origin = None
-        # THRESHOLD opening: how muddy the player's boots are. 1.0 on
-        # wake (bedroom scene plants this), decays as they walk. Drives
-        # the mud overlay in draw_player_sprite. Not persisted -- mud
-        # is a one-time opening cue, not a saved condition.
-        self.mud = 0.0
         # THRESHOLD save ritual: when the cot interaction starts the
         # sleep sequence the Game flips this true so draw_player_sprite
         # renders the prone variant on top of the cot. Cleared on wake.

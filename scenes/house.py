@@ -127,13 +127,13 @@ def build_bedroom():
 
 def bedroom_on_enter(game, scene):
     """Opening sequence + idempotent. The first session in this
-    scene is the game's first minute: the wake notice, muddy
-    boots, footprints leading to the cot, the candle-dip + creak
-    when the doorway watcher manifests, the suppressed sprint,
-    and a one-shot window silhouette ~30s in. Most of these
-    pieces fire from `bedroom_on_update` so they can be paced
-    over real seconds rather than crammed into entry. We seed
-    them here.
+    scene is the game's first minute: the wake notice, the
+    candle-dip + creak when the doorway watcher manifests, and the
+    suppressed sprint. (The arrival drive -- the car into Brimley,
+    the dying engine -- plays before this, in the Game's "opening"
+    state.) These pieces fire from `bedroom_on_update` so they can
+    be paced over real seconds rather than crammed into entry. We
+    seed them here.
 
     Subsequent visits (after sleeping in the cot, or returning
     later in the run) skip the opening entirely -- only the
@@ -141,42 +141,17 @@ def bedroom_on_enter(game, scene):
     if game.save.flag("wake_up"):
         return
     game.save.set_flag("wake_up", True)
-    # Boots are caked. Cleared as the player walks (Game ticks
-    # `mud` down toward 0 once the bedroom_on_update has fired
-    # the wake notice).
-    if game.player is not None:
-        game.player.mud = 1.0
     # Wake-state audio: muffled music + slow heartbeat. The
     # Game side reads `_wake_muffle_t` to drive these so audio
     # cleanup happens in one place.
     game._wake_muffle_t = 8.0
     game._wake_heartbeat_t = 0.6
-    # Lay a trail of footprints leading from the south door (col 7
-    # row 11) up to the cot (col 3 row 3). Tells the player, before
-    # any text, that they walked back here from somewhere -- and
-    # that the somewhere was muddy. Trail diagonals across the
-    # bigger redesigned room.
-    prints = [
-        (7 * TILE + 16, 10 * TILE + 16, 0, 220),
-        (6 * TILE + 28,  9 * TILE + 24, 0, 200),
-        (5 * TILE + 24,  8 * TILE + 16, 0, 180),
-        (5 * TILE + 4,   7 * TILE + 24, 0, 160),
-        (4 * TILE + 12,  6 * TILE + 16, 0, 140),
-        (4 * TILE + 28,  5 * TILE + 24, 0, 120),
-        (3 * TILE + 24,  4 * TILE + 14, 0, 100),
-    ]
-    for fx, fy, fd, fa in prints:
-        scene.add_decoration(
-            Decoration(fx, fy, "mud_footprint", dir=fd, alpha=fa)
-        )
     # Pacing slots tracked on the scene itself so each event
     # fires once per session. `_opening_t` ticks up in
     # bedroom_on_update; the slots check thresholds.
     scene._opening_t = 0.0
     scene._opening_slots = {
         "wake_notice_armed":   True,    # fires on first step
-        "silhouette_at":       28.0,    # passing-figure scare
-        "silhouette_done":     False,
     }
     scene._spawn_pos = scene.spawns.get("default", (0, 0))
 
@@ -205,34 +180,6 @@ def bedroom_on_update(game, scene, dt):
             "You wake up.",
             duration=5.0,
         )
-    # One-shot window silhouette ~28s in. The two windows are
-    # at row 0 cols 4 and 9; we pass on the EAST window (col 9)
-    # so the player has to be facing or scanning that side to
-    # catch it. Removed after dur + 1s.
-    if (not slots["silhouette_done"]
-            and scene._opening_t >= slots["silhouette_at"]):
-        slots["silhouette_done"] = True
-        wx = 9 * TILE + 16
-        wy = 0 * TILE + 18
-        deco = Decoration(wx, wy, "passing_silhouette",
-                          t0=time.time(), dur=1.8)
-        scene.add_decoration(deco)
-        scene._silhouette_deco = deco
-        scene._silhouette_remove_at = scene._opening_t + 3.0
-    # Reap the silhouette decoration once its window has closed.
-    rm_at = getattr(scene, "_silhouette_remove_at", None)
-    if rm_at is not None and scene._opening_t >= rm_at:
-        deco = getattr(scene, "_silhouette_deco", None)
-        if deco is not None and deco in scene.decorations:
-            scene.decorations.remove(deco)
-        scene._silhouette_remove_at = None
-        scene._silhouette_deco = None
-    # Drain mud as the player walks. Each tick where they have
-    # moved bleeds a little off the boots; standing still does
-    # not. Floors clean themselves in about 25-30 seconds of
-    # active walking.
-    if p.mud > 0 and moved:
-        p.mud = max(0.0, p.mud - dt * 0.04)
     # Door-stuck recoil: when begin_transition rejects the first
     # attempt to leave, it sets `_door_stuck_recoil` on the
     # scene. We dip the candle once in response so the player

@@ -2575,7 +2575,6 @@ class Game:
                 draw_player_sprite(hide_layer, 20, 30, self.player.facing,
                                    0,
                                    armor=self.player.inventory.equipped["armor"],
-                                   mud=getattr(self.player, "mud", 0.0),
                                    prone=getattr(self.player, "prone", False))
                 hide_layer.set_alpha(80)
                 self.screen.blit(hide_layer, (psx - 20, psy - 30))
@@ -2587,7 +2586,6 @@ class Game:
                 draw_player_sprite(self.screen, psx, psy, self.player.facing,
                                    self.player.walk_phase,
                                    armor=self.player.inventory.equipped["armor"],
-                                   mud=getattr(self.player, "mud", 0.0),
                                    prone=getattr(self.player, "prone", False))
             # The axe swing: a wood haft + steel head arcing through the
             # facing hemisphere, with a brief motion smear so the chop
