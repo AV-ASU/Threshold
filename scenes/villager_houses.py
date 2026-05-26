@@ -334,11 +334,14 @@ def build_haunted_house():
     ]
 
     def _farmhouse_interact(game):
+        # Sealed. This hatch used to drop into symbol_portal_room, which
+        # passaged through to the Works -- a shortcut around the well +
+        # rope. Closed (NARRATIVE §5/§9: the well is the only way down).
         if (abs(game.player.x - hatch_x) < 36
                 and abs(game.player.y - hatch_y) < 36):
-            game.audio.play("door_open", 0.6)
-            game.show_notice("You drop into the dark.")
-            game.begin_transition("symbol_portal_room", "from_farmhouse")
+            game.audio.play("door_close", 0.5)
+            game.show_notice("The hatch is nailed shut from below. Whatever's "
+                             "down there, it isn't for you to reach this way.")
     sc.on_interact_fn = _farmhouse_interact
 
     sc.on_enter_fn = haunted_house_on_enter
@@ -456,17 +459,18 @@ def build_symbol_portal_room():
         else:
             row = ["#"] + ["."] * 10 + ["#"]
             objects_l.append(row)
-    # Ladder up to the farmhouse on the west wall, passage east.
+    # Ladder up to the farmhouse on the west wall. The east passage to
+    # well_passage is SEALED -- it was a shortcut into the Works that
+    # bypassed the well + rope (and the point-of-no-return rope-snap).
+    # NARRATIVE §5/§9: the village well is the ONLY way down. The room
+    # stays registered (old saves) but no longer connects to the Works.
     objects_l[5][0] = "U"
-    objects_l[5][11] = "e"
     objects = ["".join(r) for r in objects_l]
     sc = Scene("symbol_portal_room", floor, objects, music="void")
     sc.add_exit("U", "haunted_house", "from_chamber")
-    sc.add_exit("e", "well_passage", "from_chamber")
     sc.set_spawn("default",        2, 5)
     sc.set_spawn("from_haunted",   1, 5)
     sc.set_spawn("from_farmhouse", 1, 5)
-    sc.set_spawn("from_well_passage", 10, 5)
 
     sym_x = 7 * TILE + 16
     sym_y = 5 * TILE + 16

@@ -240,8 +240,12 @@ cultists' gaze still finds you — run it on cover, timing, hides).
 - The well sprite was redesigned and repositioned in `village` (col 16,
   row 11 — a landmark just off the road).
 
-**Note:** `symbol_portal_room` (old cult chamber) is now unreachable but
-stays registered for old saves.
+**Note:** `symbol_portal_room` (old cult chamber) and its farmhouse hatch
+are **sealed off from the Works** — the `haunted_house` hatch shows a
+nailed-shut notice and the chamber's east passage to `well_passage` is
+removed, so there is no longer a shortcut down that bypasses the well +
+rope. The room stays registered for old saves; the only live link is the
+ladder back up.
 
 ---
 
