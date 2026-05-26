@@ -8,9 +8,7 @@ Kid's House, Barn). Player walks the bank to find them. The
 cauldron clearing and player's car are still here.
 
 Atmosphere: black haze drawn by Game._draw_mistlands_haze, ambient
-'wind' track played by music='wind'. Both cut to silence the moment
-the player picks up the playscript (handled in mistlands_on_enter so re-entry
-under that flag stays quiet)."""
+'wind' track played by music='wind'."""
 import random
 from constants import TILE
 from entities.decoration import Decoration
@@ -156,19 +154,14 @@ def build_mistlands():
     # ---- Scattered buildings ----
     # Same footprints (7w x 6h) for visual consistency. Each has its
     # door on the south face. Coordinates picked so:
-    #   * Church (m) is the NORTH-WEST anchor (re-uses the legacy
-    #     mist_house footprint -- the playscript-shadow spawns already pin
-    #     to this rectangle, so the cult emerging from the church
-    #     after the playscript-binding is broken stays narratively correct).
+    #   * Church (m) is the NORTH-WEST anchor.
     #   * Sheriff (y) is mid-south on the WEST bank.
     #   * Farmhouse (o) is deep south on the WEST bank.
     #   * Shop (D), Kid's House (J), Barn (n) are spread middle-to-
     #     south on the EAST bank, walking distance apart.
     # Door cols are stored so the door-side spawn in the building
     # interior maps back to the mistlands tile one south of the door.
-    # Church (NORTH-WEST). Footprint cols 4..10 rows 4..9. Door at
-    # col 7. Re-used legacy mist_house footprint so playscript_shadows
-    # spawn anchors stay valid.
+    # Church (NORTH-WEST). Footprint cols 4..10 rows 4..9. Door at col 7.
     church_left, church_right = 4, 10
     church_top, church_bot = 4, 9
     church_door = 7
@@ -666,7 +659,6 @@ def build_mistlands():
         (29 * TILE + 16, 27 * TILE + 16, "behind"),  # creepy_tree, bridge west pocket
     ]
 
-    sc.on_enter_fn = mistlands_on_enter
     # Player's car: parked on the east bank, visible from the
     # village entry. Reaching it with car_keys triggers the escape
     # ending (the car was previously at the diner; moved here so
@@ -726,37 +718,6 @@ def build_mistlands():
                              portrait="narrator")
     sc.on_interact_fn = _mistlands_interact
     return sc
-
-
-def mistlands_on_enter(game, scene):
-    """Cut the wind to silence once the playscript is in the player's pack
-    until the woodsman quest closes. Otherwise let load_scene_now's
-    normal music swap play 'wind'.
-
-    Also spawns the post-playscript shadows on the FIRST mistlands entry
-    after the playscript has been taken: five black_figures pinned around
-    the perimeter of the mist house. Once spawned, they never come
-    back -- if the player kills them they stay dead, if they leave
-    them alive they persist."""
-    if (game.save.flag("playscript_taken")
-            and not game.save.flag("playscript_quest_done")):
-        game.audio.stop_music()
-    if (game.save.flag("playscript_taken")
-            and not game.save.flag("playscript_shadows_spawned")):
-        game.save.set_flag("playscript_shadows_spawned", True)
-        from entities.enemy import Enemy
-        # Mist house footprint is cols 4..10, rows 4..9. Place the
-        # five shadows one tile out from each face -- north (above
-        # the roof), south flanking the door, west and east flanks.
-        for tx, ty in [(7, 2), (3, 6), (11, 6), (5, 11), (10, 11)]:
-            e = Enemy(tx * TILE + 16, ty * TILE + 16,
-                      kind="black_figure", hp=110, atk=22, speed=1.5,
-                      aggro=380, atk_range=22,
-                      ai="chase", drops=[],
-                      can_dash=True, dash_speed_mult=2.6,
-                      dash_dur=0.32, dash_cd=2.4)
-            e.respawning = False
-            scene.add_enemy(e)
 
 
 def build_mist_house():

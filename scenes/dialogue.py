@@ -318,43 +318,24 @@ def clerk_dialogue(game, npc):
         game.dialog.show([
             "That'll do.",
             "[c=dim]Here are your car keys.[/c]",
-            "If you head up north, bring me back what's there.",
+            "Not that they'll do you much good. The roads don't go where "
+            "they used to.",
         ], speaker="Clerk", voice="blip_low", portrait="old")
         return
-    # Stage-3 turn-in -- the playscript.
-    if inv.has("playscript"):
-        inv.remove("playscript", 1)
-        save.set_flag("playscript_quest_done", True)
-        game.audio.play("low_pulse", 0.45)
-        game.dialog.show([
-            "Thanks. Set it on the table.",
-            "[c=dim]...[/c]",
-        ], speaker="Clerk", voice="blip_low", portrait="old")
-        return
-    if save.flag("playscript_quest_done"):
-        nq = save.arg("innkeeper_post_count", 0) + 1
-        save.set_arg("innkeeper_post_count", nq)
-        if nq == 1:
-            game.dialog.show(
-                ["Coffee's on. Help yourself.",
-                 "[c=dim]...[/c]"],
-                speaker="Clerk", voice="blip_low", portrait="old",
-            )
-        elif nq == 2:
-            game.dialog.show(
-                ["[c=dim]He's not here.[/c]"],
-                speaker="", voice="blip_soft", portrait="old",
-            )
-        else:
-            game.dialog.show(
-                ["[c=dim]He nods without looking up.[/c]"],
-                speaker="", voice="blip_soft", portrait="old",
-            )
+    # Quest complete once the keys are handed over. The Playscript is NOT
+    # a Clerk turn-in -- it's the deep-gate key, found in the Works and
+    # spent at the Deep Stair (handing it over here used to soft-lock the
+    # descent). The old stage-3 turn-in + post-quest branch are removed.
+    if save.flag("cellar_bottle_done"):
+        game.dialog.show(
+            ["[c=dim]He nods without looking up. Your tab's settled.[/c]"],
+            speaker="", voice="blip_soft", portrait="old")
         return
     if save.flag("axe_quest_started"):
         game.dialog.show(
-            ["If you head up north, bring me back what's there.",
-             "[c=dim]...[/c]"],
+            ["Settle your tab and the keys are yours.",
+             "[c=dim]There's a bottle down in the cellar -- the hatch is\n"
+             "under the kitchen. Bring it up.[/c]"],
             speaker="Clerk", voice="blip_low", portrait="old",
         )
         return
