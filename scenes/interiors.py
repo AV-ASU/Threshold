@@ -10,10 +10,7 @@ from constants import TILE
 from entities.npc import NPC
 from entities.decoration import Decoration
 from .base import Scene, chest_interact
-from .dialogue import (
-    static_figure_dialogue, doll_dialogue,
-    kid_dialogue, shopkeep_dialogue, _evidence,
-)
+from .dialogue import kid_dialogue, shopkeep_dialogue, _evidence
 def build_void_boss():
     """THRESHOLD: the clearing. A small open glade in the dense
     woods at the south end of the cornfield_path's secret branch.

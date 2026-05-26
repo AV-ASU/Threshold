@@ -56,7 +56,7 @@ from .threshold_extras import (build_schoolhouse, build_graveyard,
 #   haunted_house      -> abandoned_farmhouse
 #   symbol_portal_room -> cult_chamber (altar room)
 #   mistlands          -> river_path (creek north of town)
-#   schoolhouse        -> NEW: empty since the kid's family vanished
+#   schoolhouse        -> NEW: empty since the town's children vanished
 #   graveyard          -> NEW: behind the church
 #   diner_gas_station  -> NEW: edge of town; player's car parked here
 SCENE_BUILDERS = {

@@ -155,34 +155,20 @@ OBJECT_DEFS = {
     # notice. The wall blocks movement so the player can't just walk
     # through an unlocked-looking door.
     "z": {"solid": True,  "kind": "door"},   # door to locked_house (red herring)
-    # Conditional doors in the player's main room. Both are placed by
-    # house_on_enter only after their gating item has been picked up:
-    # the son's-room door appears once the broken_crutch is in the
-    # player's pack, the daughter's-room door once the old_doll has
-    # been recovered. Pre-flag the wall is solid W (unrevealed).
-    "1": {"solid": False, "kind": "door"},   # door to son_room
-    "2": {"solid": False, "kind": "door"},   # door to daughter_room
+    # Door "1" -> the Clerk's room (key 'son_room'), an unconditional
+    # exit off the ground floor. ("2" is a vestigial tile from a cut
+    # scene; no active map places it.)
+    "1": {"solid": False, "kind": "door"},   # door to son_room (Clerk's room)
+    "2": {"solid": False, "kind": "door"},   # vestigial (cut scene)
     # Outdoor-passage style transition tiles -- non-solid, non-drawing
     # so the underlying floor (grass / water) shows through cleanly.
     # '4' is the village <-> mistlands corridor.
     "4": {"solid": False, "kind": "outdoor_passage"},
-    # Bandit-cave sub-room doors (round-5 expansion: the cave splits into
-    # a main room + 3 sub-rooms, one of which has the boss that yields
-    # the LOGIN code).
-    "u": {"solid": False, "kind": "door"},   # bandit cave -> boss room (north)
-    "v": {"solid": False, "kind": "door"},   # bandit cave -> east sub-room
-    "w": {"solid": False, "kind": "door"},   # bandit cave -> west sub-room
     # Fake wall: looks like a wood wall, passable. Used inside the
     # haunted_house red herring -- the player walks through it once to
     # find the symbol-portal room. After the portal is used, the scene
     # build replaces this with a real "W" so the route closes for good.
     "%": {"solid": False, "kind": "fake_wall"},
-    # Stone fake wall: draws identically to a "#" but is passable. Used
-    # in the bandit_cave_boss room as the conditional gate to the void
-    # boss arena -- the wall is only made non-solid (kept as &) when the
-    # player carries the broken_crutch and hasn't yet won or died at the
-    # boss; otherwise the on_enter swaps it back to "#" for solid.
-    "&": {"solid": False, "kind": "stone_wall"},
     # Facade door -- looks like a door but is solid. Used on NPC houses
     # whose interior we don't model. The closed-door visual sells the
     # building as occupied.

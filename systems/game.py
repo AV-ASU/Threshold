@@ -55,9 +55,8 @@ CRATE_LOOT = {
     # searching for the liquor crate. Holds a stick of charcoal.
     ("cornfield_maze", 5, 6):  "charcoal",
     # Country lane -- a crate against the inner corn wall, the kind
-    # of stash a runner leaves for a pickup that never came.
-    # Holds a torn diary page (the kid's family, in the player's
-    # own handwriting).
+    # of stash a runner leaves for a pickup that never came. Holds a
+    # torn page in a stranger's hand.
     ("country_lane",   8, 4):  "diary_page_2",
     # Mistlands west bank -- a crate near the cauldron path, holding
     # a sigil rubbing the cult left for a courier who never showed.

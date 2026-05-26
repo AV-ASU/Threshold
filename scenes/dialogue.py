@@ -348,36 +348,6 @@ def clerk_dialogue(game, npc):
     )
 
 
-# ---- The Guard: legacy, not wired. Falls through to the Sheriff. ----
-
-def guard_dialogue(game, npc):
-    """Legacy. Not wired. Falls through to the Sheriff line for
-    save-state compatibility."""
-    fisherman_dialogue(game, npc)
-
-
-# ---- Legacy unbound dialogues, preserved for old saves. ----
-
-def static_figure_dialogue(game, npc):
-    """Legacy unbound dialogue. Preserved for old saves."""
-    game.audio.play("whisper", 0.8)
-    game.dialog.show([
-        "[c=dim]...[/c]",
-    ], speaker="???", voice="whisper", portrait="static_figure")
-
-
-def doll_dialogue(game, npc):
-    game.audio.play("blip_glitch", 0.4)
-    game.dialog.show([
-        "[c=dim](A small cloth doll.)[/c]",
-    ], speaker="", voice="blip_soft", portrait="doll")
-
-
-def bowl_examine(game):
-    """Legacy no-op."""
-    pass
-
-
 def basement_photo_dialogue(game, npc):
     """The Photo NPC in the basement. Flow preserved (grants the
     polaroid item); text blanked."""

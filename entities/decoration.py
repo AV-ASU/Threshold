@@ -1201,28 +1201,6 @@ class Decoration:
         pygame.draw.rect(surf, (70, 50, 32), (x + 8, y, 4, 6))
         pygame.draw.rect(surf, (90, 60, 40), (x - 10, y - 8, 6, 14))
 
-    def _draw_doll_on_bed(self, surf, x, y):
-        """The old_doll laid on the bed after the player has taken the
-        item version. Pink dress, X eyes, short blond hair. Static,
-        flat -- it is on the bed. The bed beneath it is the existing
-        'b' object tile in the bedroom."""
-        # Dress
-        pygame.draw.rect(surf, (200, 100, 130), (x - 5, y - 2, 10, 12))
-        pygame.draw.rect(surf, (140, 60, 80), (x - 5, y - 2, 10, 12), 1)
-        # Head
-        pygame.draw.circle(surf, (240, 220, 200), (x, y - 8), 4)
-        pygame.draw.circle(surf, (60, 40, 30), (x - 4, y - 12), 3)
-        pygame.draw.circle(surf, (60, 40, 30), (x + 4, y - 12), 3)
-        # X eyes
-        pygame.draw.line(surf, (10, 10, 14), (x - 3, y - 9),
-                         (x - 1, y - 7), 1)
-        pygame.draw.line(surf, (10, 10, 14), (x - 1, y - 9),
-                         (x - 3, y - 7), 1)
-        pygame.draw.line(surf, (10, 10, 14), (x + 1, y - 9),
-                         (x + 3, y - 7), 1)
-        pygame.draw.line(surf, (10, 10, 14), (x + 3, y - 9),
-                         (x + 1, y - 7), 1)
-
     def _draw_place_setting(self, surf, x, y):
         """A single place setting on the writing table after the player
         carries the reservation slip back into the bedroom: one plate,

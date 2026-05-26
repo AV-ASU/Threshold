@@ -253,26 +253,26 @@ def build_graveyard():
     sc.set_spawn("from_church", 7, 7)
     sc.set_spawn("from_town_crossroads", 7, 7)
 
-    # Mom's stone -- the leftmost top row.
-    moms_stone = (3 * TILE + 16, 2 * TILE + 16)
-    sc._moms_stone = moms_stone
-    # The kid's family stones -- middle row, three crooked headstones.
-    sc._kids_family_stones = [
-        (3 * TILE + 16, 4 * TILE + 16),     # father
-        (6 * TILE + 16, 4 * TILE + 16),     # mother
-        (9 * TILE + 16, 4 * TILE + 16),     # sister
+    # A worn, anonymous headstone -- the leftmost top row.
+    worn_stone = (3 * TILE + 16, 2 * TILE + 16)
+    sc._worn_stone = worn_stone
+    # Three crooked headstones, middle row -- names long gone.
+    sc._grave_stones = [
+        (3 * TILE + 16, 4 * TILE + 16),
+        (6 * TILE + 16, 4 * TILE + 16),
+        (9 * TILE + 16, 4 * TILE + 16),
     ]
 
     # Bloodstain near the back row -- a fresh disturbance.
     sc.add_decoration(Decoration(6 * TILE + 16, 6 * TILE + 24,
                                  "bloodstain"))
-    # Crows on the fence line, plus a dead crow on Mom's plot.
+    # Crows on the fence line, plus a dead crow on the worn plot.
     sc.add_decoration(Decoration(2 * TILE + 16, 0 * TILE + 22, "crow"))
     sc.add_decoration(Decoration(11 * TILE + 16, 0 * TILE + 22, "crow"))
-    sc.add_decoration(Decoration(moms_stone[0] - 12,
-                                 moms_stone[1] + 18, "dead_crow"))
-    # A lone candle on Mom's stone -- still burning.
-    sc.add_decoration(Decoration(moms_stone[0], moms_stone[1] - 8,
+    sc.add_decoration(Decoration(worn_stone[0] - 12,
+                                 worn_stone[1] + 18, "dead_crow"))
+    # A lone candle on the worn stone -- still burning.
+    sc.add_decoration(Decoration(worn_stone[0], worn_stone[1] - 8,
                                  "candle"))
     # A leaning creepy_tree at the back of the plot, a hanging
     # figure visible behind the north tree wall (something's
@@ -315,18 +315,18 @@ def build_graveyard():
     sc.on_enter_fn = _graveyard_on_enter
 
     def _graveyard_interact(game):
-        # Mom's stone reading.
-        mx, my = sc._moms_stone
+        # The worn anonymous headstone.
+        mx, my = sc._worn_stone
         if (abs(game.player.x - mx) < 36
                 and abs(game.player.y - my) < 36):
-            if not game.save.flag("read_moms_stone"):
-                game.save.set_flag("read_moms_stone", True)
+            if not game.save.flag("read_worn_stone"):
+                game.save.set_flag("read_worn_stone", True)
                 game.audio.play("low_pulse", 0.35)
                 game.dialog.show([
                     "[c=dim](A weather-worn headstone.)[/c]",
                     "[c=dim]The name has worn away.[/c]",
                 ], speaker="", voice="blip_soft", portrait="narrator")
-                _evidence(game, "moms_stone",
+                _evidence(game, "worn_stone",
                     "A weathered headstone."
                 )
             else:
@@ -335,7 +335,7 @@ def build_graveyard():
                 ], speaker="", voice="blip_soft", portrait="narrator")
             return
         # Other stones -- any of the three.
-        for i, (sx, sy) in enumerate(sc._kids_family_stones):
+        for i, (sx, sy) in enumerate(sc._grave_stones):
             if (abs(game.player.x - sx) < 36
                     and abs(game.player.y - sy) < 36):
                 game.dialog.show([

@@ -37,10 +37,8 @@ class InventoryUI:
     def __init__(self, fonts, audio, save=None):
         self.fonts = fonts
         self.audio = audio
-        # Optional save reference -- when present, item descriptions are
-        # routed through effective_desc() so save-state overrides (e.g.
-        # broken_crutch reframing once the polaroid has been collected)
-        # surface in the description panel.
+        # Optional save reference, kept for the inventory API. Item
+        # descriptions are static now (effective_desc ignores it).
         self.save = save
         self.open = False
         self.cursor = 0
