@@ -551,15 +551,6 @@ def draw_player_sprite(surf, x, y, facing, walk_phase=0, armor=None,
     pygame.draw.line(surf, coat_lo, (x, y - 3), (x, y + 8), 1)  # front seam
     # Pale collar at the throat.
     pygame.draw.rect(surf, collar, (x - 3, y - 5, 6, 3))
-    # Vestigial armor overlay (combat is gone; if a player has
-    # equipped armor from a legacy save it still renders so the
-    # save isn't broken visually).
-    if armor == "cloth_tunic":
-        pygame.draw.rect(surf, (200, 180, 140), (x - 7, y - 2, 14, 10))
-    elif armor == "leather_armor":
-        pygame.draw.rect(surf, (110, 70, 40), (x - 8, y - 3, 16, 12))
-    elif armor == "iron_armor":
-        pygame.draw.rect(surf, (140, 145, 160), (x - 8, y - 4, 16, 14))
     # Head
     pygame.draw.circle(surf, skin, (x, y - 12), 7)
     # Hair across the top
