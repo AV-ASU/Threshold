@@ -243,7 +243,7 @@ def build_village():
             return
         # The well -- the only way down into the Works. Needs the rope
         # to rig the first descent; once tied, the rope stays as the
-        # climb route (down AND back up) until the orb breaks it on a
+        # climb route (down AND back up) until the playscript breaks it on a
         # later descent (handled in well_bottom's on_enter).
         if (abs(game.player.x - well_x) < 36
                 and abs(game.player.y - well_y) < 36):

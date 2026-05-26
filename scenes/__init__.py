@@ -50,7 +50,7 @@ from .threshold_extras import (build_schoolhouse, build_graveyard,
 # THRESHOLD scene registry. Keys map to the new fiction:
 #   bedroom            -> spare_room (player's cot in Clerk's house)
 #   house              -> innkeeper_house (kitchen + living + hallway)
-#   son_room           -> innkeeper_bedroom (locked; keys, orb, robe)
+#   son_room           -> innkeeper_bedroom (locked; keys, playscript, robe)
 #   basement           -> innkeeper_basement (Mom's photo, notebook,
 #                                             charcoal, flashlight,
 #                                             bulkhead exit)
@@ -91,14 +91,14 @@ SCENE_BUILDERS = {
     "void_boss":          build_void_boss,          # -> clearing
     "barn":               build_barn,
     # The Works -- the Basement Level. Seven rooms, well is the sole
-    # entrance (rope down); the orb gates the way deeper to the Depths.
+    # entrance (rope down); the playscript gates the way deeper to the Depths.
     "well_bottom":        build_well_bottom,        # the Shaft Floor
     "well_passage":       build_well_passage,       # the Drying Racks
     "works_vats":         build_works_vats,
     "works_sorting":      build_works_sorting,
     "works_scriptorium":  build_works_scriptorium,
     "works_sign":         build_works_sign,         # the Sign (evidence #5)
-    "works_deepstair":    build_works_deepstair,    # orb-gate -> Depths
+    "works_deepstair":    build_works_deepstair,    # playscript-gate -> Depths
     # The depths -- five rooms, one-way fall from well_bottom
     "depths_antechamber": build_depths_antechamber,
     "depths_procession":  build_depths_procession,

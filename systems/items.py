@@ -48,7 +48,7 @@ ITEM_DEFS = {
                        "kind": "key",
                        "desc": "A dusty bottle."},
     # ---- Re-meaned existing items ----
-    "orb":           {"name": "A Yellow Playscript",
+    "playscript":           {"name": "A Yellow Playscript",
                        "kind": "key",
                        "desc": "A yellow playscript that has an "
                                "indentation of a mask on the cover."},

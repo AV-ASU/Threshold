@@ -118,9 +118,9 @@ def kid_dialogue(game, npc):
     """A generic boy NPC. Placeholder lines per visit count."""
     save = game.save
     inv = game.player.inventory
-    # Orb-recognition one-shot (kept; flow unchanged, text bland).
-    if inv.has("orb") and not save.flag("kid_orb_noticed"):
-        save.set_flag("kid_orb_noticed", True)
+    # Playscript-recognition one-shot (kept; flow unchanged, text bland).
+    if inv.has("playscript") and not save.flag("kid_playscript_noticed"):
+        save.set_flag("kid_playscript_noticed", True)
         game.dialog.show([
             "What's that?",
             "[c=dim]Just passing through?[/c]",
@@ -280,7 +280,7 @@ def fisherman_dialogue(game, npc):
 
 def clerk_dialogue(game, npc):
     """The Clerk's quest chain (crate -> cellar key -> bottle ->
-    car keys -> orb) is preserved mechanically. All flags, item
+    car keys -> playscript) is preserved mechanically. All flags, item
     grants, and branch order are unchanged; only the spoken text is
     blanked."""
     save = game.save
@@ -321,17 +321,17 @@ def clerk_dialogue(game, npc):
             "If you head up north, bring me back what's there.",
         ], speaker="Clerk", voice="blip_low", portrait="old")
         return
-    # Stage-3 turn-in -- the orb.
-    if inv.has("orb"):
-        inv.remove("orb", 1)
-        save.set_flag("orb_quest_done", True)
+    # Stage-3 turn-in -- the playscript.
+    if inv.has("playscript"):
+        inv.remove("playscript", 1)
+        save.set_flag("playscript_quest_done", True)
         game.audio.play("low_pulse", 0.45)
         game.dialog.show([
             "Thanks. Set it on the table.",
             "[c=dim]...[/c]",
         ], speaker="Clerk", voice="blip_low", portrait="old")
         return
-    if save.flag("orb_quest_done"):
+    if save.flag("playscript_quest_done"):
         nq = save.arg("innkeeper_post_count", 0) + 1
         save.set_arg("innkeeper_post_count", nq)
         if nq == 1:

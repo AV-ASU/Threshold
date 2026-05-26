@@ -87,7 +87,7 @@ def _mom_notebook(s):
         pygame.draw.line(s, _BRASS, (3, yy), (5, yy), 1)
 
 
-def _orb(s):
+def _playscript(s):
     pygame.draw.circle(s, _BRUISE_LO, (8, 9), 6)
     pygame.draw.circle(s, _BRUISE, (8, 9), 5)
     pygame.draw.circle(s, _BRUISE_HI, (6, 7), 2)
@@ -173,7 +173,7 @@ _DISPATCH = {
     "kid_drawing":     _kid_drawing,
     "robe":            _robe,
     "mom_notebook":    _mom_notebook,
-    "orb":             _orb,
+    "playscript":             _playscript,
     "polaroid":        _polaroid,
     "cellar_bottle":   _cellar_bottle,
     "liquor_crate":    _liquor_crate,

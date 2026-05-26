@@ -9,7 +9,7 @@ cauldron clearing and player's car are still here.
 
 Atmosphere: black haze drawn by Game._draw_mistlands_haze, ambient
 'wind' track played by music='wind'. Both cut to silence the moment
-the player picks up the orb (handled in mistlands_on_enter so re-entry
+the player picks up the playscript (handled in mistlands_on_enter so re-entry
 under that flag stays quiet)."""
 import random
 from constants import TILE
@@ -157,9 +157,9 @@ def build_mistlands():
     # Same footprints (7w x 6h) for visual consistency. Each has its
     # door on the south face. Coordinates picked so:
     #   * Church (m) is the NORTH-WEST anchor (re-uses the legacy
-    #     mist_house footprint -- the orb-shadow spawns already pin
+    #     mist_house footprint -- the playscript-shadow spawns already pin
     #     to this rectangle, so the cult emerging from the church
-    #     after the orb-binding is broken stays narratively correct).
+    #     after the playscript-binding is broken stays narratively correct).
     #   * Sheriff (y) is mid-south on the WEST bank.
     #   * Farmhouse (o) is deep south on the WEST bank.
     #   * Shop (D), Kid's House (J), Barn (n) are spread middle-to-
@@ -167,7 +167,7 @@ def build_mistlands():
     # Door cols are stored so the door-side spawn in the building
     # interior maps back to the mistlands tile one south of the door.
     # Church (NORTH-WEST). Footprint cols 4..10 rows 4..9. Door at
-    # col 7. Re-used legacy mist_house footprint so orb_shadows
+    # col 7. Re-used legacy mist_house footprint so playscript_shadows
     # spawn anchors stay valid.
     church_left, church_right = 4, 10
     church_top, church_bot = 4, 9
@@ -729,21 +729,21 @@ def build_mistlands():
 
 
 def mistlands_on_enter(game, scene):
-    """Cut the wind to silence once the orb is in the player's pack
+    """Cut the wind to silence once the playscript is in the player's pack
     until the woodsman quest closes. Otherwise let load_scene_now's
     normal music swap play 'wind'.
 
-    Also spawns the post-orb shadows on the FIRST mistlands entry
-    after the orb has been taken: five black_figures pinned around
+    Also spawns the post-playscript shadows on the FIRST mistlands entry
+    after the playscript has been taken: five black_figures pinned around
     the perimeter of the mist house. Once spawned, they never come
     back -- if the player kills them they stay dead, if they leave
     them alive they persist."""
-    if (game.save.flag("orb_taken")
-            and not game.save.flag("orb_quest_done")):
+    if (game.save.flag("playscript_taken")
+            and not game.save.flag("playscript_quest_done")):
         game.audio.stop_music()
-    if (game.save.flag("orb_taken")
-            and not game.save.flag("orb_shadows_spawned")):
-        game.save.set_flag("orb_shadows_spawned", True)
+    if (game.save.flag("playscript_taken")
+            and not game.save.flag("playscript_shadows_spawned")):
+        game.save.set_flag("playscript_shadows_spawned", True)
         from entities.enemy import Enemy
         # Mist house footprint is cols 4..10, rows 4..9. Place the
         # five shadows one tile out from each face -- north (above
@@ -761,7 +761,7 @@ def mistlands_on_enter(game, scene):
 
 def build_mist_house():
     """Single-room interior at the NW of the mistlands. Bed, table, a
-    locked-feeling chest holding the orb. No NPC."""
+    locked-feeling chest holding the playscript. No NPC."""
     floor = ["=" * 9 for _ in range(7)]
     objects = [
         "WWWWWWWWW",
@@ -801,9 +801,9 @@ def mist_house_interact(game):
     if cx is None:
         return
     chest_interact(game, game.scene, cx, cy,
-                   "chest_mist", ["orb"])
-    if game.player.inventory.has("orb") and not game.save.flag("orb_taken"):
-        game.save.set_flag("orb_taken", True)
+                   "chest_mist", ["playscript"])
+    if game.player.inventory.has("playscript") and not game.save.flag("playscript_taken"):
+        game.save.set_flag("playscript_taken", True)
 
 
 def build_alter_room():
@@ -813,7 +813,7 @@ def build_alter_room():
     triangle. Tree perimeter, grass floor -- the structure is open
     sky, not an interior. Pillars are solid (invisible-solid object
     tile under each so the player can't walk through them) and
-    accept offerings: orb on the large pillar, big_fish on each
+    accept offerings: playscript on the large pillar, big_fish on each
     small. Once everything is placed nothing happens yet -- the
     payoff is staged for later."""
     w, h = 17, 13
@@ -876,7 +876,7 @@ def alter_on_enter(game, scene):
 
 
 def alter_interact(game):
-    """Handle E presses near a pillar. Large pillar takes the orb;
+    """Handle E presses near a pillar. Large pillar takes the playscript;
     small pillars take a big_fish each. Items are consumed, the
     pillar's filled visual flips, and a per-coord save flag persists
     the placement. Pressing E adjacent to an already-filled pillar
@@ -893,13 +893,13 @@ def alter_interact(game):
             return
         is_large = deco.kwargs.get("large", False)
         if is_large:
-            if not inv.has("orb"):
+            if not inv.has("playscript"):
                 return
-            inv.remove("orb", 1)
+            inv.remove("playscript", 1)
             save.set_flag(flag_key, True)
             deco.kwargs["filled"] = True
             game.audio.play("arg_chime", 0.7)
-            game.show_notice("The Orb settles into the pillar.")
+            game.show_notice("The Playscript settles into the pillar.")
             return
         else:
             if not inv.has("big_fish"):

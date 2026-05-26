@@ -1281,20 +1281,20 @@ class Game:
         """Atmospheric overlay. Mistlands and alter_room always run the
         outdoor haze + vignette. EVERY OTHER SCENE also runs the
         outdoor haze + vignette while the player is carrying the
-        orb -- the orb's presence is hostile, the world dims around
+        playscript -- the playscript's presence is hostile, the world dims around
         it."""
         if self.scene is None:
             return
         key = self.scene.key
-        # Safe / dim-safe interiors break the orb-haze. Walking
-        # back to the Inn (or the cellar) with the orb is meant
+        # Safe / dim-safe interiors break the playscript-haze. Walking
+        # back to the Inn (or the cellar) with the playscript is meant
         # to feel like a refuge from the hostile dim, not a
         # continuation of it.
         if key in SAFE_SCENES or key in DIM_SAFE_SCENES:
             return
-        holds_orb = (self.player is not None
-                     and self.player.inventory.has("orb"))
-        if key in ("mistlands", "alter_room") or holds_orb:
+        holds_playscript = (self.player is not None
+                     and self.player.inventory.has("playscript"))
+        if key in ("mistlands", "alter_room") or holds_playscript:
             self._draw_haze(170, (40, 40, 50, 80), 14, 24, 0.3, 30)
             self._draw_vignette()
 

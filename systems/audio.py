@@ -217,7 +217,7 @@ class Audio:                        #Starting screen needs music, something simp
             ], beat_ms=180, vol=0.11, wave="square"),
             # wind: 'music' for the mistlands -- a long noise drone
             # with a subtle pitched undertone, no melody, no rhythm.
-            # Stops entirely once the orb is picked up; the silence
+            # Stops entirely once the playscript is picked up; the silence
             # is the point.
             "wind": self._wind_loop(),
             # threshold_drone: deeper, more pitched than wind. Title

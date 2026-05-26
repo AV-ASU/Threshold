@@ -83,7 +83,7 @@ on the surface* — a fair, brutal "you dug too deep, too fast."
 
 | # | Evidence | Item / scene key | Where | What it proves |
 |---|---|---|---|---|
-| 1 | **Mara's Room** | `son_room` (robe + `orb`) | Lodge — her rented room | She came, and she joined *willingly* |
+| 1 | **Mara's Room** | `son_room` (robe + `playscript`) | Lodge — her rented room | She came, and she joined *willingly* |
 | 2 | **Mara's Journal** | `mom_notebook` | Mara's Room (`son_room`) — her dresser | Her descent, in her own words (page 3 → the flashback) |
 | 3 | **The Ledger** (the Lodge's guest register) | read in place | Arcadia cellar (`basement`) — hidden behind a loose wall panel | Guests who check in and never out — and your own name, signed in tonight, already among them |
 | 4 | **The Preacher** | his **cross** (item `cross`) taken from the viscera | The **church** (`old_man_house`) — his own floor | The town murders the ones who name them — gutted for preaching against the cult |
@@ -107,7 +107,7 @@ the village **well**. You go down it on a **rope** — there is no other
 route down and **no secret paths**. The Mistlands are *not* part of the
 descent; they're the surface **edge** (the cult's outdoor sites, the
 Preacher's body, the car). Going *deeper* than the first underground
-layer is gated by the **orb**.
+layer is gated by the **playscript**.
 
 ```
 SURFACE         Brimley — town, Arcadia Lodge, yard, cornfields, church.
@@ -120,7 +120,7 @@ SURFACE         Brimley — town, Arcadia Lodge, yard, cornfields, church.
 THE BASEMENT    The first layer of the cult's works, reached by the well.
 LEVEL              >>> being redesigned wholesale — see §9 <<<
                   │
-                  │   gated by the ORB
+                  │   gated by the Playscript
                   ▼
 DEEPER          The Depths → the Threshold (END IT / seal) → the Hive
                 (the congregation; Mara is here).   (soon)
@@ -130,7 +130,7 @@ DEEPER          The Depths → the Threshold (END IT / seal) → the Hive
 
 - **Surface:** Brimley + the **Mistlands** edge — the investigation, the cult's outdoor sites, the Preacher's body, the car. Sealed. Sole way down = the well (rope).
 - **The Basement Level:** the first underground layer, reached by the well. *Whole-layer redesign in progress (§9).*
-- **Deeper (orb-gated):** the Depths, the Threshold (**End it**), and the Hive where **Mara** is. (soon)
+- **Deeper (playscript-gated):** the Depths, the Threshold (**End it**), and the Hive where **Mara** is. (soon)
 
 > **Naming, to avoid the collision:** the **lodge cellar** is the
 > `basement` *scene* — the Arcadia's own cellar, a *surface* interior
@@ -174,7 +174,7 @@ Only display names and fiction change.
   `save.arg("evidence")` by `_evidence(game, name, ...)` (shown in the
   notebook UI). The count for the 3-gate is `len(save.arg("evidence"))` —
   it counts *log entries*, not held items. So every pickup that should
-  count (Mara's photo, journal, the orb, the Sign rubbing) must ALSO fire
+  count (Mara's photo, journal, the playscript, the Sign rubbing) must ALSO fire
   a matching `_evidence()` call, or it won't move the gate.
 - **Endings exist; deaths don't.** `_ENDING_SCRIPTS` currently holds only
   `escape_alone` (Spread it) and `seal_threshold` (End it). The
@@ -186,12 +186,12 @@ Only display names and fiction change.
   route. Close the `well_passage` → `barn` hatch (and any other
   shortcut) so there are no secret paths down.
 - `well_bottom` currently **consumes the `polaroid`** to open the floor.
-  The polaroid is now evidence (Mara's photo) — instead, the **`orb`**
+  The polaroid is now evidence (Mara's photo) — instead, the **`playscript`**
   is the key that opens the way *deeper* (Basement Level → the Depths).
 - `dark` room bodies (`ellie / father / mother`, old family) — **remove
   them** and their evidence beats. Cleaned up, not recast.
-- The `orb` now lives in **Mara's room** (evidence #1). Remove the
-  `mist_house` orb chest; prune the `black_figure` shadows and the
+- The `playscript` now lives in **Mara's room** (evidence #1). Remove the
+  `mist_house` playscript chest; prune the `black_figure` shadows and the
   alter / void-room offering chain.
 - `threshold` seal trigger item (`kid_drawing`) — re-fictionalize.
 - **Innkeeper → Lodge Clerk** across dialogue + `DISPLAY_NAMES`
@@ -226,16 +226,16 @@ cultists' gaze still finds you — run it on cover, timing, hides).
 | 4 | The Sorting Hall | `works_sorting` | Belongings of the vanished, 2 cultists, 3 hides (hardest crossing). |
 | 5 | The Scriptorium | `works_scriptorium` | The Sign copied endlessly, 1 oblivious scribe, 2 hides. |
 | 6 | The Sign Chamber | `works_sign` | The Sign + 3 kneelers + 1 patrol. **Rubbing → `sigil_rubbing` + evidence #5** (needs charcoal). |
-| 7 | The Deep Stair | `works_deepstair` | The **orb-gate**: place the orb → opens to `depths_antechamber`. |
+| 7 | The Deep Stair | `works_deepstair` | The **playscript-gate**: place the playscript → opens to `depths_antechamber`. |
 
 **Rules wired:**
 - **One mouth:** rope down the well only; the barn cellar hatch is now
   sealed (`scenes/interiors.py`). The tied rope persists as a two-way
   climb until it breaks.
-- **Point of no return:** descend carrying the **orb** and the rope
+- **Point of no return:** descend carrying the **playscript** and the rope
   **snaps** (`well_bottom` on_enter sets `well_rope_broken`) — the
   ladder up is dead; only deeper remains.
-- **Orb-gate:** Room 7 consumes the orb to open the stair to the Depths
+- **Playscript-gate:** Room 7 consumes the playscript to open the stair to the Depths
   (sets `deepstair_open`).
 - The well sprite was redesigned and repositioned in `village` (col 16,
   row 11 — a landmark just off the road).

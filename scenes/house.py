@@ -1,6 +1,6 @@
 """The Clerk's house (above the inn): spare_room (player's cot),
 main floor (kitchen + living + front door), the Clerk's bedroom
-(locked, holds the orb + car keys + robe), the basement (photograph,
+(locked, holds the playscript + car keys + robe), the basement (photograph,
 notebook, flashlight, bulkhead exit).
 
 The bedroom KEY means the spare room above the inn. The house KEY
@@ -424,11 +424,11 @@ def house_interact(game):
 
 # ---- Mara's Room (key: 'son_room') ----
 # Mara Blaine's rented room at the Arcadia. Holds evidence #1 (her room --
-# the robe + the willing-departure letter) and #2 (her journal). The orb
+# the robe + the willing-departure letter) and #2 (her journal). The playscript
 # behind the robes is the deep-gate key (load-bearing -- NARRATIVE §5/§9).
 
 def build_son_room():
-    """Mara's rented room at the lodge. A closet (her cult robe + the orb
+    """Mara's rented room at the lodge. A closet (her cult robe + the playscript
     behind it), a dresser (her journal), a window. Reads as the room of
     someone who meant to stay a while -- and then chose not to come back."""
     floor = [
@@ -465,14 +465,14 @@ def build_son_room():
     # because col 3 is the door column -- a solid prop directly above
     # the door previously trapped the player inside.
     sc._dresser_pos = (5 * TILE + 16, 6 * TILE + 16)
-    # The closet (shelf sprite) holds the robe and (behind it) the orb.
+    # The closet (shelf sprite) holds the robe and (behind it) the playscript.
     sc._closet_pos = (7 * TILE + 16, 4 * TILE + 16)
     # Hide spots: BESIDE the bed (col 4 is walkable; the bed is at cols 2-3).
     sc.hide_spots = [
         (4 * TILE + 16, 4 * TILE + 16, "under"),
     ]
 
-    # Sized darkwood furniture: a 2x2 bed, a tall closet (the robe/orb
+    # Sized darkwood furniture: a 2x2 bed, a tall closet (the robe/playscript
     # live here -> _closet_pos), a low dresser (car keys -> _dresser_pos).
     sc.add_furniture("bed", [(2, 3), (3, 3), (2, 4), (3, 4)], w=56, h=56)
     sc.add_furniture("wardrobe", [(7, 3), (7, 4)], w=26, h=54)
@@ -501,12 +501,12 @@ def build_son_room():
 
 
 def innkeeper_bedroom_on_enter(game, scene):
-    """The robe + orb are gated by closet interactions (handled
-    in innkeeper_bedroom_interact). After the orb is taken, the
+    """The robe + playscript are gated by closet interactions (handled
+    in innkeeper_bedroom_interact). After the playscript is taken, the
     closet becomes a hide spot. The car keys USED to spawn on
     the dresser here, but the Clerk now holds them until the
     player settles a tab (bottle quest), so the dresser is bare."""
-    if game.save.flag("orb_taken_innkeeper"):
+    if game.save.flag("playscript_taken_innkeeper"):
         # Closet is now empty -- becomes a hide spot.
         if not any(h[2] == "in" for h in scene.hide_spots):
             scene.hide_spots.append(
@@ -516,14 +516,14 @@ def innkeeper_bedroom_on_enter(game, scene):
 
 def innkeeper_bedroom_interact(game):
     """Mara's room. CLOSET (E): her cult robe + evidence #1 (the
-    willing-departure read), then the orb behind it (the deep-gate key).
+    willing-departure read), then the playscript behind it (the deep-gate key).
     DRESSER (E): her journal + evidence #2 (the morning entries)."""
     sc = game.scene
     px, py = game.player.x, game.player.y
     cx, cy = sc._closet_pos
     dx, dy = sc._dresser_pos
 
-    # --- the closet: her robe (+ evidence #1), then the orb ---
+    # --- the closet: her robe (+ evidence #1), then the playscript ---
     if abs(px - cx) <= 40 and abs(py - cy) <= 40:
         if not game.save.flag("robe_taken"):
             game.save.set_flag("robe_taken", True)
@@ -542,11 +542,11 @@ def innkeeper_bedroom_interact(game):
                 "left.",
             ])
             return
-        if not game.save.flag("orb_taken_innkeeper"):
-            game.save.set_flag("orb_taken_innkeeper", True)
-            game.player.inventory.add("orb", 1)
+        if not game.save.flag("playscript_taken_innkeeper"):
+            game.save.set_flag("playscript_taken_innkeeper", True)
+            game.player.inventory.add("playscript", 1)
             game.audio.play("pickup_rare", 0.7)
-            game.show_notice("A pale orb, behind the robes. Heavier than it "
+            game.show_notice("A pale playscript, behind the robes. Heavier than it "
                              "looks.")
             return
         game.show_notice("The closet is empty now.")
