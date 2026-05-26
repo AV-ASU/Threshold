@@ -61,17 +61,11 @@ ITEM_DEFS = {
     #      not dropped by anything new) ----
     "old_pistol":    {"name": "Old Pistol",    "kind": "weapon",
                        "desc": "An old pistol. No bullets.", "atk": 0},
-    "fishing_pole":  {"name": "Fishing Pole",  "kind": "weapon",
-                       "desc": "A fishing pole.", "atk": 0},
     # ---- Vestigial keys / lore ----
     "rope":          {"name": "Coil of Rope",  "kind": "key",
                        "desc": "A coil of rope."},
     "liquor_crate":  {"name": "Crate of Liquor", "kind": "key",
                        "desc": "A crate of bottles."},
-    "small_fish":    {"name": "Small Fish",    "kind": "key",
-                       "desc": "A small fish."},
-    "big_fish":      {"name": "Big Fish",      "kind": "key",
-                       "desc": "A big fish."},
     "diary_page_1":  {"name": "Torn Page",     "kind": "lore",
                        "desc": "A torn page."},
     "diary_page_2":  {"name": "Torn Page",     "kind": "lore",

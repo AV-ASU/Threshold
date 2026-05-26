@@ -1105,28 +1105,6 @@ class Game:
         if (result == "swing_charged"
                 and self.player.inventory.equipped["weapon"] == "lumber_axe"):
             self._try_break_debris()
-        if (result in ("swing", "swing_charged")
-                and self.player.inventory.equipped["weapon"] == "fishing_pole"
-                and self.player.in_river):
-            self._try_fish()
-
-    def _try_fish(self):
-        """Fishing-pole roll. 50% nothing, 35% small_fish, 15% big_fish.
-        Only fires when the player is standing in the mistlands river
-        (gated by player.in_river)."""
-        r = random.random()
-        if r < 0.50:
-            self.show_notice("Nothing on the line.")
-            return
-        if r < 0.85:
-            self.player.inventory.add("small_fish", 1)
-            self.audio.play("pickup", 0.7)
-            self.show_notice("Caught: Small Fish.")
-        else:
-            self.player.inventory.add("big_fish", 1)
-            self.audio.play("pickup_rare", 0.7)
-            self.show_notice("Caught: Big Fish.")
-
     def _try_break_debris(self):
         """If a debris ('*') tile sits in front of the player along
         their facing direction (within ~one tile), promote it to '4'
@@ -1180,9 +1158,8 @@ class Game:
                 self.audio.play("hit", 0.55)
                 if e.hp <= 0 and e.alive:
                     self._kill_enemy(e)
-        # Round-14: NPCs are also valid targets. Killing them feeds
-        # the hidden kill counter and triggers their on_kill (e.g.
-        # the fisherman drops three big_fish). The substrate notices.
+        # NPCs are also valid targets: killing one triggers its on_kill
+        # (if any) and feeds the hidden kill counter. The substrate notices.
         for n in list(self.scene.npcs):
             if not getattr(n, "alive", True):
                 continue
