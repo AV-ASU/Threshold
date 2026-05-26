@@ -58,9 +58,6 @@ CRATE_LOOT = {
     # of stash a runner leaves for a pickup that never came. Holds a
     # torn page in a stranger's hand.
     ("country_lane",   8, 4):  "diary_page_2",
-    # Mistlands west bank -- a crate near the cauldron path, holding
-    # a sigil rubbing the cult left for a courier who never showed.
-    ("mistlands",     14, 78): "sigil_rubbing",
     # Village (the new farm) -- a crate just west of the woodshed
     # holding a small stash.
     ("village",       21, 16): "charcoal",

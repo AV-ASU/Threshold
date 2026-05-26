@@ -299,7 +299,7 @@ def _mara_voice(game, npc):
         "[c=dim]The case was never a rescue. It was an invitation -- and "
         "you've answered every line of it.[/c]",
     ], speaker="", voice="blip_soft", portrait="narrator")
-    _evidence(game, "the_hive", [
+    _evidence(game, "the_congregation", [
         "Mara, kneeling with the congregation. Turned. There was never "
         "anyone to bring back -- only this, and now you're in it with her.",
     ])
