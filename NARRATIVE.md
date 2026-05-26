@@ -78,9 +78,17 @@ on the surface* — a fair, brutal "you dug too deep, too fast."
 | 1 | **Mara's Room** | `son_room` (robe + `orb`) | Lodge — her rented room | She came, and she joined *willingly* |
 | 2 | **Mara's Journal** | `mom_notebook` | Lodge cellar wall-panel | Her descent, in her own words |
 | 3 | **The Ledger** (the Lodge's guest register) | (new) | Arcadia Lodge — its cellar (`basement` scene) | Brimley's pattern — guests who check in and never out |
-| 4 | **The Preacher** | (his body) | Mistlands (farmhouse / cauldron) | The town murders witnesses |
-| 5 | **The Sign** | `charcoal` → `sigil_rubbing` | Cult chamber / well bottom | What they actually worship — and a shard of His authority the fold opens for: the **escape key** (drive out with it → *SPREAD IT*) |
+| 4 | **The Preacher** | his **cross necklace** (new item) taken from the viscera | Mistlands (farmhouse / cauldron) | The town murders witnesses — a pool of viscera, his cross the proof it was him |
+| 5 | **The Sign — the Pallid Mask** | `sigil_rubbing` (reskinned to the Mask; key kept for saves) | Sign Chamber (well) | His face made an object: what they worship, the shard the fold opens for (the **escape key** → *SPREAD IT*), and the mask that seats into the Play's cover |
 | 6 | **The Congregation** | (Mara, turned) | The Depths / the hive | There was never anyone to save |
+
+> **The Sign IS the Pallid Mask.** Not a glyph — the King's own pale
+> half-mask, made an object. The jaundiced sigil scrawled through the
+> cult's halls (the `yellow_sign` decoration) is only its 2D *brand*.
+> This one fact binds the set: the Mask seats into the Play's mask-shaped
+> cover (the unmasking — *"I wear no mask"*), carrying it breaks the fold
+> (it is *a shard of Him*), and possessing it draws Him. The escape key
+> and evidence #5 are the **Mask itself**, not a charcoal rubbing.
 
 ---
 
