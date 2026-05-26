@@ -702,10 +702,11 @@ def basement_on_enter(game, scene):
 
 def basement_interact(game):
     """E at the loose wall panel: the Clerk's hidden guest register --
-    the Ledger, evidence #3. One-shot via the evidence flag. The
-    self-incriminating line is covert lost-time payoff for the opening
-    ("home by morning" / the dead car): the fold has already eaten nights
-    the PI doesn't remember."""
+    the Ledger, evidence #3. One-shot via the evidence flag. The closing
+    beat lands the pattern on the PI: you signed in tonight like every
+    guest before you, and like them there's no check-out beside your name
+    (prospective dread -- you won't be leaving either). No time has passed;
+    the opening's cut to the room is the same night."""
     sc = game.scene
     px, py = game.player.x, game.player.y
     wpx, wpy = sc._wall_panel_pos
@@ -721,11 +722,12 @@ def basement_interact(game):
         "A panel in the stone swings loose. Behind it, a ledger -- not the "
         "one at the front desk. The real one.",
         "Guests going back years, all in the Clerk's hand. A few check-outs, "
-        "every one of them old. Then none. For a long time now, no one has "
-        "left the Arcadia.",
-        "Your own name waits near the bottom. Three nights ago.",
-        "No check-out beside it -- and you don't remember signing it. You'd "
-        "have sworn you drove in tonight.",
+        "every one of them old. Then none. No one has left the Arcadia in a "
+        "long, long time.",
+        "Your own name sits near the bottom, tonight's ink still wet. No "
+        "check-out beside it -- the same blank as every name above it.",
+        "You came to ask your questions and drive home by morning. So did "
+        "all of them.",
     ])
 
 

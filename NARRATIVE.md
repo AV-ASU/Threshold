@@ -85,7 +85,7 @@ on the surface* — a fair, brutal "you dug too deep, too fast."
 |---|---|---|---|---|
 | 1 | **Mara's Room** | `son_room` (robe + `orb`) | Lodge — her rented room | She came, and she joined *willingly* |
 | 2 | **Mara's Journal** | `mom_notebook` | Mara's Room (`son_room`) — her dresser | Her descent, in her own words (page 3 → the flashback) |
-| 3 | **The Ledger** (the Lodge's guest register) | read in place | Arcadia cellar (`basement`) — hidden behind a loose wall panel | Guests who check in and never out — and your own name, three nights you don't remember |
+| 3 | **The Ledger** (the Lodge's guest register) | read in place | Arcadia cellar (`basement`) — hidden behind a loose wall panel | Guests who check in and never out — and your own name, signed in tonight, already among them |
 | 4 | **The Preacher** | his **cross** (item `cross`) taken from the viscera | The **church** (`old_man_house`) — his own floor | The town murders the ones who name them — gutted for preaching against the cult |
 | 5 | **The Sign — the Pallid Mask** | `sigil_rubbing` (reskinned to the Mask; key kept for saves) | Sign Chamber (well) | His face made an object: what they worship, the shard the fold opens for (the **escape key** → *SPREAD IT*), and the mask that seats into the Play's cover |
 | 6 | **The Congregation** | (Mara, turned) | The Depths / the hive | There was never anyone to save |

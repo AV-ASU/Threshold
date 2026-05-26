@@ -2581,9 +2581,10 @@ class Game:
             pygame.draw.rect(vig, (0, 0, 0, a), (i, i, W - 2 * i, H - 2 * i), 1)
         s.blit(vig, (0, 0))
         # Two beats bookend the drive: the case as you roll in (~first 4s),
-        # and the arrival as the engine dies. Both diegetic -- deliberately
-        # NO "three nights later" card; the stolen time surfaces only later,
-        # through the ledger, the clerk's tab, and the car that won't start.
+        # and the arrival as the engine dies. Both diegetic. The cut from
+        # here to the room is just a cut -- same night, no time passes. The
+        # dread is prospective: you CAN'T leave (the dead car, the ledger of
+        # guests who never check out), not that nights were stolen.
         def _opening_caption(lines, a):
             fnt = self.fonts["sm"]
             lh = fnt.get_height() + 4
