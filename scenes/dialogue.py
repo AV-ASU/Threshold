@@ -153,15 +153,6 @@ def kid_dialogue(game, npc):
             "Hi there.",
             "[c=dim]Not much to say.[/c]",
         ], speaker="Boy", voice="blip_kid", portrait="kid")
-    elif count == 6:
-        game.dialog.show([
-            "Here, take this.",
-            "[c=dim](He hands you a small cloth doll.)[/c]",
-        ], speaker="Boy", voice="blip_kid", portrait="kid")
-        if not save.flag("kid_gave_doll"):
-            save.set_flag("kid_gave_doll", True)
-            game.player.inventory.add("old_doll", 1)
-            game.show_notice("The boy gives you the cloth doll.")
     else:
         game.dialog.show([
             "[c=dim]Nothing to say.[/c]",

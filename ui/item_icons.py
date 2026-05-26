@@ -63,14 +63,6 @@ def _car_keys(s):
     pygame.draw.line(s, _BRASS, (14, 8), (14, 10), 1)
 
 
-def _kid_drawing(s):
-    pygame.draw.rect(s, _PAPER, (3, 3, 11, 11))
-    pygame.draw.rect(s, _PAPER_DARK, (3, 3, 11, 11), 1)
-    pygame.draw.line(s, (130, 30, 40), (6, 7), (11, 7), 1)
-    pygame.draw.line(s, (130, 30, 40), (5, 10), (12, 10), 1)
-    pygame.draw.circle(s, (130, 30, 40), (8, 9), 1)
-
-
 def _robe(s):
     pygame.draw.polygon(s, _ROBE,
                         [(8, 2), (12, 6), (13, 14), (3, 14), (4, 6)])
@@ -136,16 +128,6 @@ def _diary_page(s):
     pygame.draw.line(s, _INK, (5, 10), (10, 10), 1)
 
 
-def _old_doll(s):
-    pygame.draw.circle(s, _CLOTH, (8, 5), 3)
-    pygame.draw.circle(s, _CLOTH_DARK, (8, 5), 3, 1)
-    pygame.draw.rect(s, _CLOTH, (5, 8, 6, 6))
-    pygame.draw.rect(s, _CLOTH_DARK, (5, 8, 6, 6), 1)
-    pygame.draw.line(s, _INK, (7, 5), (7, 5), 1)
-    pygame.draw.line(s, _INK, (9, 5), (9, 5), 1)
-    pygame.draw.line(s, _CLOTH_DARK, (5, 11), (10, 11), 1)
-
-
 def _unknown(s):
     pygame.draw.line(s, _PAPER_DARK, (6, 5), (10, 5), 1)
     pygame.draw.line(s, _PAPER_DARK, (10, 5), (10, 8), 1)
@@ -170,7 +152,6 @@ _DISPATCH = {
     "paper":           _paper,
     "sigil_rubbing":   _sigil_rubbing,
     "car_keys":        _car_keys,
-    "kid_drawing":     _kid_drawing,
     "robe":            _robe,
     "mom_notebook":    _mom_notebook,
     "playscript":             _playscript,
@@ -179,7 +160,6 @@ _DISPATCH = {
     "liquor_crate":    _liquor_crate,
     "diary_page_1":    _diary_page,
     "diary_page_2":    _diary_page,
-    "old_doll":        _old_doll,
 }
 
 

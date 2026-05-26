@@ -62,12 +62,6 @@ CRATE_LOOT = {
     # Mistlands west bank -- a crate near the cauldron path, holding
     # a sigil rubbing the cult left for a courier who never showed.
     ("mistlands",     14, 78): "sigil_rubbing",
-    # Mistlands east bank -- a crate behind the relocated barn
-    # holding a kid's drawing pinned to the inside lid.
-    ("mistlands",     78, 78): "kid_drawing",
-    # Forest path -- a crate set against an interior corn stalk,
-    # holding a clear vial.
-    ("forest_path",    8, 5):  "potion_clear",
     # Village (the new farm) -- a crate just west of the woodshed
     # holding a small stash.
     ("village",       21, 16): "charcoal",

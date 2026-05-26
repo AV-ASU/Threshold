@@ -230,13 +230,11 @@ def build_shop():
     ]
     return sc
 def build_barn():
-    """Small barn south of the village square. Three wolves prowl
-    inside on first entry; killing them all flags the guard outside
-    the player's house as dead. The first wolf carries a slobbery_key
-    that opens the locked chest at the back of the barn -- inside is
-    the old_doll (round-9 move from easter_egg_room). Two doll enemies
-    also live here now, perched among the bales. Wolves + dolls do
-    NOT respawn -- one-shot encounter."""
+    """Small barn on the mistlands east bank. Holds Mara's journal
+    (evidence #2) behind the workbench, and a boarded-over hatch where a
+    tunnel down to the Works once ran -- nailed shut now, since the well
+    is the only way underground. Lodge dressing (mounted buck, walleye,
+    antler rack, firewood) and hide spots among the hay-bale shelves."""
     floor = ["=" * 10 for _ in range(8)]
     objects = [
         "WWWWnWWWWW",   # 0  n = barn door (north face)
@@ -333,15 +331,6 @@ def build_barn():
     return sc
 
 
-# THRESHOLD: combat is gone, so the barn no longer hosts the
-# wolf encounter and the daughter-room doll quest doesn't surface
-# from a chest in the back. The functions that drove that flow
-# (`barn_on_enter`, `barn_interact`, `_spawn_barn_wolves`,
-# `_wolf_killed`, `_barn_go_dirty`) were dead code -- never wired
-# into the scene -- and have been removed. The barn is now just
-# the well-passage hatch room.
-
-
 def build_kid_house():
     floor = ["=" * 10 for _ in range(8)]
     objects = [
@@ -404,23 +393,19 @@ def build_kid_house():
         (3 * TILE + 16, 5 * TILE + 24, "under"),
         (7 * TILE + 16, 2 * TILE + 24, "behind"),
     ]
-    # The kid's drawing pickup -- on the wall (visually a 'photo'
-    # decoration), takeable on first interaction.
+    # The kid's drawing on the wall (a 'photo' decoration) -- examinable
+    # flavor, grants nothing.
     drawing_x = 6 * TILE + 16
     drawing_y = 1 * TILE + 16
     sc.add_decoration(Decoration(drawing_x, drawing_y, "photo"))
     sc._drawing_pos = (drawing_x, drawing_y)
 
     def _kid_house_interact(game):
-        # If close to the drawing and not yet taken, pick it up.
+        # The kid's drawing on the wall -- flavor lore, examinable only.
         if (abs(game.player.x - drawing_x) < 36
                 and abs(game.player.y - drawing_y) < 36):
-            if game.save.flag("kid_drawing_taken"):
-                game.show_notice("There is nothing else on the wall.")
-                return
-            game.save.set_flag("kid_drawing_taken", True)
-            game.player.inventory.add("kid_drawing", 1)
-            game.audio.play("pickup", 0.7)
-            game.show_notice("You take the drawing off the wall.")
+            game.show_notice("A child's drawing pinned to the wall: a tall "
+                             "figure in yellow, everyone around it smiling "
+                             "up.")
     sc.on_interact_fn = _kid_house_interact
     return sc
