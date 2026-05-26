@@ -1583,7 +1583,7 @@ class Game:
     # Ending scripts. Each is a list of (line, duration_seconds).
     # escape_alone is the SPREAD IT ending -- drive out with the Sign, the
     # only thing the fold opens for (NARRATIVE §1/§6). seal_threshold
-    # (END IT) is still placeholder, to be written in Track B.
+    # (END IT) closes the Threshold on Brimley and on you (NARRATIVE §6).
     _ENDING_SCRIPTS = {
         "escape_alone": [
             ("You turn the key. The engine turns over.", 2.6),
@@ -1594,9 +1594,16 @@ class Game:
             ("Everyone will understand why, soon.", 3.8),
         ],
         "seal_threshold": [
-            ("...", 2.5),
-            ("it is done.", 2.5),
-            ("...", 3.0),
+            ("The frame drinks it down -- the smoke, the sound, the long "
+             "way you came.", 3.0),
+            ("Above you the stair grinds shut. Then the Works. Then the "
+             "well.", 3.0),
+            ("Brimley folds the rest of the way closed -- around the "
+             "hunger, and around you.", 3.4),
+            ("On every map after tonight the town is a blank, a place the "
+             "roads decline to reach.", 3.6),
+            ("It is done. Nothing leaves Brimley again.", 3.4),
+            ("Not the hunger. Not you.", 4.0),
         ],
     }
 

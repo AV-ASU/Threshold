@@ -263,8 +263,21 @@ def build_village():
                 game.show_notice("You tie the rope and climb down.")
                 game.begin_transition("well_bottom", "from_well")
                 return
+            if not game.save.flag("well_examined"):
+                game.save.set_flag("well_examined", True)
+                game.audio.play("low_pulse", 0.4)
+                game.dialog.show([
+                    "[c=dim](You lean over the lip. The shaft drops past "
+                    "where any water should be -- no glint, no bottom, just "
+                    "cold air climbing up out of it.)[/c]",
+                    "[c=dim]Two grooves are worn smooth into the stone where "
+                    "a rope has run, over and over. People have been going "
+                    "down here. A great many of them.[/c]",
+                    "This is the way below the town. You just need a rope.",
+                ], speaker="", voice="blip_soft", portrait="narrator")
+                return
             game.audio.play("door_locked", 0.7)
-            game.show_notice("Too deep without a rope.")
+            game.show_notice("The way down. Too deep without a rope.")
             return
         # Payphone.
         if (abs(game.player.x - payphone_x) < 36

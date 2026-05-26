@@ -149,6 +149,11 @@ def main():
     sc.on_interact_fn(g)
     check(g._ending_active == "seal_threshold",
           "threshold: sealing fires the SEAL ending")
+    seal_text = " ".join(line for line, _ in
+                         g._ENDING_SCRIPTS["seal_threshold"])
+    check("Nothing leaves Brimley again" in seal_text
+          and "Not the hunger" in seal_text and "Not you" in seal_text,
+          "threshold: SEAL ending is authored (canonical close present)")
 
     # --- 8. The SPREAD ending: drive out with the Mask ---
     gs = new_game()
@@ -167,6 +172,11 @@ def main():
     ge = new_game()
     fire(ge, "works_sign", "_sign_pos")               # the_sign (#5)
     fire(ge, "barn", "_journal_pos")                  # maras_journal (#2)
+    jlines = next((e["lines"] for e in ge.save.arg("evidence", [])
+                   if e.get("name") == "maras_journal"), [])
+    jtext = " ".join(jlines).lower()
+    check("you go down" in jtext or "below the town" in jtext,
+          "barn: Mara's journal motivates the descent (points down/below)")
     ge.load_scene_now("dark")                          # the_congregation (#6)
     ready(ge)
     mara_e = next((n for n in ge.scene.npcs if n.name == "Mara"), None)

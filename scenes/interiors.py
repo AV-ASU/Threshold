@@ -313,10 +313,13 @@ def build_barn():
                 "hand -- it's hers, the same as the letter.",
                 "Her journal. The last entries, in a hand that gets calmer "
                 "as it goes:",
-                "\"I just had this urge to go north.\"",
-                "\"I'm a long, long way from home now. And I feel closer.\"",
-                "\"Stopped for gas in this town. Everyone smiles like I'm "
-                "already home.\"",
+                "\"I just had this urge to go north. Stopped for gas in this "
+                "town. Everyone smiles like I'm already home.\"",
+                "\"I had Him wrong. He isn't out past the corn -- He's under "
+                "it. You don't walk to Him. You go down.\"",
+                "\"There's a mouth below the town. The others went ahead of "
+                "me, down it, and not one has climbed back up. Tomorrow I "
+                "follow them down. I feel so close now.\"",
             ])
             return
         # The old tunnel down to the Works has been nailed shut: the
