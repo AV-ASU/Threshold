@@ -2637,9 +2637,20 @@ class Game:
         # Frame
         pygame.draw.rect(self.screen, (40, 36, 50),
                          (tx - 1, ty - 1, bar_w + 2, bar_h + 2), 1)
-        # Fill
-        pygame.draw.rect(self.screen, col,
-                         (tx, ty, int(bar_w * prox), bar_h))
+        # The evidence FLOOR is seared in -- a dead, locked base the meter can
+        # never bleed below. The bright live fill rides ABOVE it, so the
+        # reclaimable headroom you can still hide back into visibly shrinks the
+        # more of the case you understand. (NARRATIVE §3, made legible.)
+        floor = max(0.0, min(1.0, getattr(self, "_vis_floor", 0.0)))
+        fw = int(bar_w * floor)
+        pw = int(bar_w * prox)
+        if fw > 0:                                   # locked, seared base
+            pygame.draw.rect(self.screen, (66, 30, 28), (tx, ty, fw, bar_h))
+        if pw > fw:                                  # live reclaimable headroom
+            pygame.draw.rect(self.screen, col, (tx + fw, ty, pw - fw, bar_h))
+        if fw > 0:                                   # the locked watermark
+            pygame.draw.line(self.screen, (122, 52, 44),
+                             (tx + fw, ty), (tx + fw, ty + bar_h - 1))
         # Stamina (sprint wind) -- lower-left, just above the scene
         # label. Hidden while full + idle so the minimalist HUD stays
         # quiet; it surfaces the instant you spend wind. Cool blue while
