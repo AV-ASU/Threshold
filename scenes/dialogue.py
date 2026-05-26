@@ -31,6 +31,8 @@ def _evidence(game, name, content, weight=0.10):
                    for e in log):
             log.append({"name": name, "lines": list(lines), "weight": weight})
             game.save.set_arg("evidence", log)
+            if hasattr(game, "_flash_notebook"):
+                game._flash_notebook()    # corner scribble: you wrote it down
     game.dialog.show(lines,
                      speaker="", voice="blip_soft",
                      portrait="narrator")

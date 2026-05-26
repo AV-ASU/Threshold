@@ -201,6 +201,10 @@ EVIDENCE_FLOOR_DEFAULT = 0.10  # per-evidence floor weight if none recorded
 KING_GATE_EVIDENCE = 3
 REINFORCE_COUNT = 2            # cultists per wave
 REINFORCE_COOLDOWN = 8.0      # seconds between waves (pulses, never floods)
+# A small notebook-scribble toast flashes in a corner when a new evidence beat
+# is logged -- the PI jotting it down. Diegetic "you wrote it down (and that's
+# what doomed you)" feedback, paired with the floor seared a notch higher.
+NOTEBOOK_TOAST_DUR = 1.4
 
 # 80% combined-darkness cap. Full-screen black overlays
 # (visibility dip, apex wash, hide wash, YK vignette) decrement
@@ -533,6 +537,7 @@ class Game:
         # Carcosa furnace) then ENDS the run -- both return to title.
         self._death_kind = None
         self._death_t = 0.0
+        self._notebook_toast_t = 0.0   # evidence-scribble toast timer
         # Opening wake state. When the bedroom_on_enter fires for
         # the first session it sets these to non-zero values; the
         # _tick_wake_muffle ticker then dampens the music channel
@@ -2293,6 +2298,7 @@ class Game:
             if self._death_kind is not None:
                 self._tick_death(dt)
                 return
+            self._notebook_toast_t = max(0.0, self._notebook_toast_t - dt)
             self.update_player(dt, keys)
             if (not self.dialog.active and not self.inv_ui.open
                     and not self.notebook_ui.open
@@ -2507,6 +2513,7 @@ class Game:
         apply_grade(self.screen, pygame.time.get_ticks() / 1000.0)
         self._draw_interact_prompt()
         self._draw_hud()
+        self._draw_notebook_toast()
         self.dialog.draw(self.screen)
         self.inv_ui.draw(self.screen, self.player)
         self.notebook_ui.draw(self.screen)
@@ -2679,6 +2686,61 @@ class Game:
                              (sx2 - 1, sy2 - 1, sw + 2, sh + 2), 1)
             pygame.draw.rect(self.screen, fill,
                              (sx2, sy2, int(sw * ratio), sh))
+
+    def _flash_notebook(self):
+        """Fire the corner notebook-scribble toast -- a new evidence beat was
+        just logged (the PI jotting it down)."""
+        self._notebook_toast_t = NOTEBOOK_TOAST_DUR
+
+    def _draw_notebook_toast(self):
+        """A small page in the upper-left that the PI scribbles a beat onto,
+        then it fades -- the diegetic 'added to the notebook' tell, fired by
+        _flash_notebook when _evidence logs a new entry."""
+        tt = getattr(self, "_notebook_toast_t", 0.0)
+        if tt <= 0:
+            return
+        frac = max(0.0, min(1.0, (NOTEBOOK_TOAST_DUR - tt) / NOTEBOOK_TOAST_DUR))
+        if frac < 0.15:
+            a = frac / 0.15
+        elif frac > 0.75:
+            a = max(0.0, (1.0 - frac) / 0.25)
+        else:
+            a = 1.0
+        if a <= 0.0:
+            return
+        W, H = 34, 42
+        surf = pygame.Surface((W, H), pygame.SRCALPHA)
+
+        def C(r, g, b, al=255):
+            return (r, g, b, int(al * a))
+        # Page + edge + a dog-eared top-right corner.
+        pygame.draw.rect(surf, C(224, 218, 202), (2, 3, W - 6, H - 6))
+        pygame.draw.rect(surf, C(150, 142, 120), (2, 3, W - 6, H - 6), 1)
+        pygame.draw.polygon(surf, C(198, 190, 172),
+                            [(W - 8, 3), (W - 8, 9), (W - 4, 3)])
+        # Ink lines write on left-to-right over frac ~0.12..0.78.
+        write = max(0.0, min(1.0, (frac - 0.12) / 0.66))
+        lx0, lx1 = 6, W - 9
+        head = None
+        for i in range(4):
+            lp = max(0.0, min(1.0, write * 4 - i))
+            if lp <= 0:
+                break
+            ly = 12 + i * 7
+            x_end = lx0 + int((lx1 - lx0) * lp)
+            pts, x = [], lx0
+            while x <= x_end:
+                pts.append((x, ly + (1 if (x // 3) % 2 == 0 else 0)))
+                x += 3
+            if len(pts) >= 2:
+                pygame.draw.lines(surf, C(38, 32, 42), False, pts, 1)
+            head = (x_end, ly)
+        # Pen nib at the writing head while it's still scribbling.
+        if 0.12 < frac < 0.8 and head:
+            px, py = head
+            pygame.draw.polygon(surf, C(26, 24, 32),
+                                [(px, py - 1), (px + 3, py - 6), (px + 4, py - 1)])
+        self.screen.blit(surf, (14, 14))
 
     def _draw_notice(self):
         s = self.fonts["sm"].render(self.notice_text, True, C_WHITE)
