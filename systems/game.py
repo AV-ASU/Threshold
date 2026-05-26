@@ -1579,8 +1579,13 @@ class Game:
     # ---- Endings ----
 
     def _begin_car_escape(self):
-        """Player reached the car at the diner with car_keys."""
+        """The car at the river's edge. The fold only opens for a shard of His
+        authority, so escape requires the SIGN (sigil_rubbing), not just the
+        keys -- with it the engine catches for the first time and you drive out
+        as the breach: SPREAD IT (NARRATIVE §1/§6)."""
         if self._ending_active:
+            return
+        if not (self.player and self.player.inventory.has("sigil_rubbing")):
             return
         self._play_ending("escape_alone")
 
@@ -1604,16 +1609,17 @@ class Game:
             self.audio.play("door_close", 0.7)
 
     # Ending scripts. Each is a list of (line, duration_seconds).
-    # Placeholder text -- the narrative is a blank slate. Two
-    # structural endings remain: reaching the car (escape_alone) and
-    # acting on the doorframe (seal_threshold). Fill in the lines when
-    # the new story is written.
+    # escape_alone is the SPREAD IT ending -- drive out with the Sign, the
+    # only thing the fold opens for (NARRATIVE §1/§6). seal_threshold
+    # (END IT) is still placeholder, to be written in Track B.
     _ENDING_SCRIPTS = {
         "escape_alone": [
-            ("you turn the key.", 2.5),
-            ("the engine starts.", 2.5),
-            ("you drive away.", 3.0),
-            ("...", 3.0),
+            ("You turn the key. The engine turns over.", 2.6),
+            ("And over. The way it has every time before.", 2.6),
+            ("Then -- with the Sign beside you -- it catches.", 3.0),
+            ("You drive out, past the corn that never ended.", 3.2),
+            ("You got out. You're the only one who ever has.", 3.4),
+            ("Everyone will understand why, soon.", 3.8),
         ],
         "seal_threshold": [
             ("...", 2.5),

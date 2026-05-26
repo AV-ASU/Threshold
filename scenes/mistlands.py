@@ -723,11 +723,16 @@ def build_mistlands():
         cx, cy = sc._car_pos
         if (abs(game.player.x - cx) < 40
                 and abs(game.player.y - cy) < 40):
-            if game.player.inventory.has("car_keys"):
-                if hasattr(game, "_begin_car_escape"):
-                    game._begin_car_escape()
-                else:
-                    game.show_notice("You unlock the door. (Ending stub.)")
+            keys = game.player.inventory.has("car_keys")
+            sign = game.player.inventory.has("sigil_rubbing")
+            if keys and sign and hasattr(game, "_begin_car_escape"):
+                game._begin_car_escape()          # the Sign breaks the fold
+                return
+            if keys:
+                # The fold holds: without the Sign the engine never catches.
+                game.audio.play("door_locked", 0.6)
+                game.show_notice("The engine turns over. And over. "
+                                 "It will not catch.")
                 return
             game.audio.play("door_locked", 0.6)
             game.show_notice("Locked. The keys are with the innkeeper.")
