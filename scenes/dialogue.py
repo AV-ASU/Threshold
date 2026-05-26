@@ -81,28 +81,32 @@ def old_man_dialogue(game, npc):
     _cult_tell(game, "preacher")
     count = save.arg("old_count", 0) + 1
     save.set_arg("old_count", count)
-    plain = [
-        "Hello there.",
-        "[c=dim]Not much to say.[/c]",
-    ]
     if count == 1:
-        game.dialog.show(escalate(game, low=plain, mid=plain, high=plain),
-                         speaker="Preacher", voice="blip_low", portrait="old")
+        game.dialog.show([
+            "A stranger. We don't get many who stay -- and fewer who came "
+            "on purpose.",
+            "If you're asking after the ones out past the highway -- the "
+            "ones who 'found religion' in the corn -- don't. That is no "
+            "church out there.",
+            "A young woman came through, end of last month. Bright thing, "
+            "full of questions, same as you. Now she kneels with the rest "
+            "of them. You looking for her?",
+        ], speaker="Preacher", voice="blip_low", portrait="old")
     elif count == 2:
-        game.dialog.show(escalate(game, low=plain, mid=plain, high=plain),
-                         speaker="Preacher", voice="blip_low", portrait="old")
-    elif count == 3:
-        game.dialog.show(plain,
-                         speaker="Preacher", voice="blip_low", portrait="old")
-    elif count == 4:
-        game.dialog.show(plain,
-                         speaker="Preacher", voice="blip_low", portrait="old")
-    elif count == 5:
-        game.dialog.show(plain,
-                         speaker="Preacher", voice="blip_low", portrait="old")
+        # The hubris that gets him killed. After this he's marked: the
+        # church swaps him for his remains on the next entry (evidence #4).
+        game.dialog.show([
+            "You came back. Good -- then hear the rest of it.",
+            "I name them from my own pulpit, every Sunday. By what they "
+            "are. The sheriff sits in the back pew while I do it, and I "
+            "name them to his face.",
+            "Let them come for an old man. I've buried better than whatever "
+            "it is they kneel to out there. God's on my side of the door.",
+        ], speaker="Preacher", voice="blip_low", portrait="old")
+        save.set_flag("preacher_doomed", True)
     else:
         game.dialog.show([
-            "[c=dim]Nothing to say.[/c]",
+            "I've said my piece. Go on, now -- and watch the road.",
         ], speaker="Preacher", voice="blip_low", portrait="old")
 
 

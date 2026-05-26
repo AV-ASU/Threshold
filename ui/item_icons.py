@@ -154,8 +154,18 @@ def _unknown(s):
     pygame.draw.rect(s, _PAPER_DARK, (8, 12, 1, 1))
 
 
+def _cross(s):
+    # The Preacher's plain silver cross, with a faint drop-shadow.
+    silver, shade = (185, 189, 196), (118, 122, 130)
+    pygame.draw.rect(s, shade, (8, 3, 2, 11))
+    pygame.draw.rect(s, shade, (5, 6, 7, 2))
+    pygame.draw.rect(s, silver, (7, 2, 2, 11))
+    pygame.draw.rect(s, silver, (4, 5, 7, 2))
+
+
 _DISPATCH = {
     "lumber_axe":      _axe,
+    "cross":           _cross,
     "charcoal":        _charcoal,
     "paper":           _paper,
     "sigil_rubbing":   _sigil_rubbing,

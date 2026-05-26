@@ -50,7 +50,7 @@ investigation.
 |---|---|---|
 | **Lodge Clerk** (was "the Innkeeper") | Complicit | The smiling trap-keeper. Holds your car keys ("settle your tab"), burns your clock with errands. Same NPC + quest chain, recast. |
 | **The Sheriff** | Cult enforcer | The law that keeps everyone in. He killed your car. His outdoor patrols are surveillance. |
-| **The Preacher** | **Innocent & oblivious** | A normal small-town minister with no idea. After your **1st or 2nd** interaction he **disappears**; his body is found elsewhere. The cult silences him for talking to you — the moment the gloves come off. |
+| **The Preacher** | **Innocent dissenter** | A small-town minister who **names the cult from his own pulpit** — oblivious to *what* they truly are, but loud that they're no church. Your **2nd** conversation (his hubris — "God's on my side of the door") sets `preacher_doomed`; on the next entry he's **gutted on his own church floor**, his cross in the viscera (evidence #4). The town murders the ones who name them. |
 | **The Store-Owner** | Quiet resister | Sells the flashlight, charcoal, paper (survival + clue tools). Frightened hints, never says it outright. |
 | **The Kid** | Innocent witness | Saw Mara go into the corn. Gives you a **keepsake of hers**. Children notice what adults pretend not to. |
 | **Mara Blaine** | The quarry — **already turned** | A willing member of the congregation now. Finding her proves there was never anyone to save. She is in the **hive**. |
@@ -86,7 +86,7 @@ on the surface* — a fair, brutal "you dug too deep, too fast."
 | 1 | **Mara's Room** | `son_room` (robe + `orb`) | Lodge — her rented room | She came, and she joined *willingly* |
 | 2 | **Mara's Journal** | `mom_notebook` | Lodge cellar wall-panel | Her descent, in her own words |
 | 3 | **The Ledger** (the Lodge's guest register) | (new) | Arcadia Lodge — its cellar (`basement` scene) | Brimley's pattern — guests who check in and never out |
-| 4 | **The Preacher** | his **cross necklace** (new item) taken from the viscera | Mistlands (farmhouse / cauldron) | The town murders witnesses — a pool of viscera, his cross the proof it was him |
+| 4 | **The Preacher** | his **cross** (item `cross`) taken from the viscera | The **church** (`old_man_house`) — his own floor | The town murders the ones who name them — gutted for preaching against the cult |
 | 5 | **The Sign — the Pallid Mask** | `sigil_rubbing` (reskinned to the Mask; key kept for saves) | Sign Chamber (well) | His face made an object: what they worship, the shard the fold opens for (the **escape key** → *SPREAD IT*), and the mask that seats into the Play's cover |
 | 6 | **The Congregation** | (Mara, turned) | The Depths / the hive | There was never anyone to save |
 
@@ -203,7 +203,6 @@ Only display names and fiction change.
 
 ## 8. Still loose (design TODO)
 - **The Basement Level redesign** (active — see §9).
-- The Preacher's body location: bell-tower hanging / graveyard / mistlands farmhouse.
 - The **hive** layout (the deeper layer).
 - Mara's journal text; each NPC's dialogue arc.
 - The death-card word: **CAPTURED** (leaning) vs KILLED.

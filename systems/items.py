@@ -33,6 +33,11 @@ ITEM_DEFS = {
     "kid_drawing":   {"name": "A Drawing",
                        "kind": "lore",
                        "desc": "A child's drawing."},
+    "cross":         {"name": "The Preacher's Cross",
+                       "kind": "lore",
+                       "desc": "A plain silver cross. It was still warm "
+                               "when you took it. You try not to think "
+                               "about that."},
     "robe":          {"name": "Old Robe",
                        "kind": "lore",
                        "desc": "A coarse wool robe."},

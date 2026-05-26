@@ -102,8 +102,9 @@ def build_old_man_house():
     if pos:
         tx, ty = pos
         sc.add_npc(NPC(tx * TILE + 16, ty * TILE + 16,
-                       "Old Man", "old", voice="blip_low", portrait="old",
-                       dialogue_fn=old_man_dialogue, movement="idle"))
+                       "Preacher", "old", voice="blip_low", portrait="old",
+                       dialogue_fn=old_man_dialogue, movement="idle",
+                       tag="preacher"))
 
     # Sized darkwood furniture.
     sc.add_furniture("table", [(2, 2), (3, 2)], w=54, h=36)
@@ -148,7 +149,47 @@ def build_old_man_house():
         (3 * TILE + 16, 2 * TILE + 24, "behind"),
         (7 * TILE + 16, 2 * TILE + 24, "behind"),
     ]
+    sc.on_enter_fn = old_man_house_on_enter
     return sc
+
+
+def old_man_house_on_enter(game, scene):
+    """Once the Preacher damns himself (the 2nd conversation sets
+    `preacher_doomed`), the cult silences him for naming them. The scene is
+    rebuilt each load, so the builder re-adds the live Preacher every time;
+    here we remove him and lay out his remains + the cross (evidence #4)."""
+    if not game.save.flag("preacher_doomed"):
+        return
+    scene.npcs = [n for n in scene.npcs
+                  if getattr(n, "tag", None) != "preacher"]
+    bx, by = 5 * TILE + 16, 5 * TILE + 16
+    scene.add_decoration(Decoration(bx - 6, by + 9, "bloodstain"))
+    scene.add_decoration(Decoration(bx + 9, by - 6, "gore"))
+    scene.add_decoration(Decoration(bx, by, "body"))
+    scene.add_npc(NPC(bx, by, "The Preacher", "_invisible",
+                      voice="blip_soft", portrait="narrator",
+                      dialogue_fn=preacher_body_examine,
+                      movement="idle", solid=True, tag="preacher_body"))
+
+
+def preacher_body_examine(game, npc):
+    """E on the Preacher's remains: take his cross + log evidence #4 once."""
+    if game.save.flag("cross_taken"):
+        game.dialog.show(["What's left of him. The flies have found it."],
+                         speaker="", voice="blip_soft", portrait="narrator")
+        return
+    game.save.set_flag("cross_taken", True)
+    game.player.inventory.add("cross", 1)
+    game.audio.play("pickup_rare", 0.7)
+    game.audio.play("low_pulse", 0.5)
+    _evidence(game, "the_preacher", [
+        "The Preacher. He named them from this pulpit every Sunday -- to "
+        "the sheriff's face. Said it plain: that is no church in the corn.",
+        "They opened him for it, here on his own floor. He's gone to a "
+        "slick the cold won't set.",
+        "His collar's still white. His cross lies in the mess. You take it.",
+        "[c=dim]This is what naming them costs.[/c]",
+    ])
 
 
 def build_fisherman_cottage():
