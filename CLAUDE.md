@@ -74,8 +74,10 @@ it renders the procedural sprites to a labelled PNG strip.
 - **Curse**: a cultist ritual (`_tick_ritual`) raises the Watcher cap by
   `WATCHERS_PER_CURSE` (3) per level — repeated curses spiral toward an
   unshakeable King.
-- Reaching the player triggers the **closure** sequence
-  (`_trigger_closure` → `_begin_threshold_closure` → `_tick_closure`).
+- A pursuer reaching the player triggers the **death** sequence
+  (`_trigger_death(kind)` → `_tick_death`): `kind="cultist"` shows the
+  **CAPTURED** card (taken alive for the hive); `kind="king"` plays the
+  **Carcosa** mask-furnace cutscene. Both end the run and return to title.
 
 ## Conventions & gotchas
 

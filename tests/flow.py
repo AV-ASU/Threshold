@@ -130,6 +130,14 @@ def main():
         g.load_scene_now(k)
         g.step(1 / 60.0)
         check(g.scene.key == k, f"depths: {k} loads and ticks")
+    # The descent rooms each fire a one-shot first-visit narration beat.
+    for flag in ("first_antechamber", "first_procession", "first_hall",
+                 "first_depthstair"):
+        check(g.save.flag(flag), f"depths: {flag} narration fired on entry")
+    # The journal flashback is authored, not placeholder dots.
+    flash = " ".join(line for line, _ in g._flashback_stills)
+    check("..." not in flash and len(flash) > 60,
+          "flashback: the witnessing stills are authored")
 
     # --- 6. The hive: speaking to Mara is the #6 payoff ---
     g.load_scene_now("dark")

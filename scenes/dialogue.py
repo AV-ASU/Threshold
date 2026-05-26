@@ -213,8 +213,11 @@ def shopkeep_dialogue(game, npc):
         def _then_open():
             _shop_open_menu(game)
         plain = [
-            "Morning.",
-            "Take a look if you like.",
+            "You're the one asking after the Blaine girl. Keep your voice "
+            "down about it in here.",
+            "[c=dim]Take the charcoal and the paper. The flashlight too, if "
+            "I had one left -- you'll want light where the questions lead.[/c]",
+            "I can't say more than that. I've got a family. Look around.",
         ]
         game.dialog.show(escalate(game, low=plain, mid=plain, high=plain),
                          speaker="Store-Owner", voice="blip_high",
@@ -224,30 +227,35 @@ def shopkeep_dialogue(game, npc):
         def _then_open():
             _shop_open_menu(game)
         game.dialog.show([
-            "Back again.",
-            "[c=dim]...[/c]",
+            "Back again. Good. Means you haven't gone quiet like the "
+            "others.",
+            "[c=dim]Don't trust the smiles. The ones who smile widest "
+            "here, those went the soonest.[/c]",
         ], speaker="Store-Owner", voice="blip_high",
             portrait="shopkeep", on_complete=_then_open)
         return
     if count == 3:
         game.dialog.show([
-            "Not much left.",
-            "[c=dim]...[/c]",
+            "I sold supplies to the girl too. And the ones before her.",
+            "[c=dim]None of them came back to buy a second time. You're "
+            "the first.[/c]",
         ], speaker="Store-Owner", voice="blip_high", portrait="shopkeep")
         return
     if count == 4:
         game.dialog.show([
-            "[c=dim]He looks up.[/c]",
-            "[c=dim]Nothing to say.[/c]",
+            "[c=dim]He glances at the door before he speaks.[/c]",
+            "If you find the way out -- the real one -- you don't owe this "
+            "town a goodbye. Just go.",
         ], speaker="Store-Owner", voice="blip_high", portrait="shopkeep")
         return
     if count == 5:
         game.dialog.show([
-            "[c=dim]He doesn't look up.[/c]",
+            "[c=dim]He shakes his head, just slightly. He's said too "
+            "much already.[/c]",
         ], speaker="Store-Owner", voice="blip_high", portrait="shopkeep")
         return
     game.dialog.show([
-        "[c=dim]He sits behind the counter.[/c]",
+        "[c=dim]He sits behind the counter, watching the window.[/c]",
     ], speaker="", voice="blip_soft", portrait="shopkeep")
 
 

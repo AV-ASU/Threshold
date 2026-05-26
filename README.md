@@ -1,11 +1,14 @@
 # Threshold
 
-A 2D top-down narrative-horror game built with pygame. In 1994 your car
-dies on a backroad outside **Brimley**, and the town's only garage can't
-touch it before morning. You take a room at the **Arcadia Lodge** to wait
-out the repair -- and as the days drag on, you come to understand what
-Brimley is. There is no combat -- only walking, watching, hiding, and the
-thing that follows.
+A 2D top-down narrative-horror game built with pygame. In 1994 you drive
+into **Brimley** -- a private investigator hired by a man named Blaine to
+find his daughter Mara, who found religion out past the highway and
+vanished. You came to ask a few questions and drive home. You can't: the
+**King in Yellow** has folded the town shut, and the only way out is
+**down**, to the source. There is no combat -- only walking, watching,
+hiding, and the thing that follows. A **visibility** meter rises under the
+cult's gaze; gather enough of the truth and it arms the King, the lethal
+apex pursuer.
 
 ## Requirements
 
@@ -20,9 +23,9 @@ pip install -r requirements.txt
 python main.py
 ```
 
-The game opens on the title screen. Choose **New Save** to start a run or
-**Continue** to resume. There is no quicksave -- you save the game by
-sleeping at the cot.
+The game opens on the title screen. Choose **New Game** to start a run.
+There is no disk save: a run lives entirely in memory for a single
+session, and quitting to the title discards it.
 
 ## Controls
 
@@ -40,20 +43,24 @@ sleeping at the cot.
 ## Tests
 
 ```bash
-python tests/smoke.py
+python tests/smoke.py   # scene-build / spawn / exit checks
+python tests/flow.py    # drives the full critical path end-to-end
 ```
 
 `smoke.py` verifies that every scene builds, that spawn points are
-walkable, and that every exit resolves to a valid target spawn. It forces
-SDL to dummy drivers, so no display or audio device is required.
+walkable, and that every exit resolves to a valid target spawn. `flow.py`
+drives a headless run down the well, through the Works to the Deep-Stair
+fork, across the Depths to the hive, and into both endings, proving the
+path is completable with no soft-lock. Both force SDL to dummy drivers, so
+no display or audio device is required.
 
 ## Project layout
 
 - `main.py` — entry point
-- `constants.py` — screen geometry, colour palette, save paths
-- `systems/` — the runtime (`game.py`: main loop, input, transitions, save/load) plus `save`, `items`, `audio`, `threat`
+- `constants.py` — screen geometry and colour palette
+- `systems/` — the runtime (`game.py`: main loop, input, transitions) plus `save` (in-memory only), `items`, `audio`, `threat`
 - `scenes/` — tile-grid scene builders and the scene registry (`__init__.py`)
 - `entities/` — player, NPCs, enemies, decorations
 - `ui/` — dialogue box, inventory, notebook, text-input modal
 - `rendering/` — procedural sprite drawing
-- `tests/` — smoke test
+- `tests/` — smoke + flow harnesses

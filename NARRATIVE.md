@@ -156,8 +156,8 @@ that fire is someone He already took. You only ever see it by losing.
 
 | Trigger | Outcome | Presentation | Existing hook |
 |---|---|---|---|
-| **A cultist catches you** | The cult takes you for the ritual | Stark text card — **CAPTURED** (cult takes you alive; worse than killed, and feeds the hive) | new |
-| **The King catches you** (vis `1.0`, *3+ evidence*, He reaches you) | He takes you into Himself | Brief cutscene: fire/hell, the floating masks of His sprite drifting in it — title **Carcosa** | **net-new.** Today the catch routes to `_trigger_closure` → `_begin_threshold_closure` (a bespoke in-place sequence); the Carcosa cutscene must be authored. |
+| **A cultist catches you** | The cult takes you for the ritual | Stark text card — **CAPTURED** (cult takes you alive; worse than killed, and feeds the hive) | `_trigger_death("cultist")` → `_tick_death` (exists) |
+| **The King catches you** (vis `1.0`, *3+ evidence*, He reaches you) | He takes you into Himself | Brief cutscene: fire/hell, the floating masks of His sprite drifting in it — title **Carcosa** | `_trigger_death("king")` → `_tick_death` (exists; the bespoke `_trigger_closure` path was replaced by the shared death system) |
 | **Seal the threshold** — *END IT* | Contain the hunger; Brimley + you become a hole in the map | Ending sequence. *"It is done. Nothing leaves Brimley again. Not the hunger. Not you."* | `_play_ending("seal_threshold")` (exists) |
 | **Drive out with the Sign** — *SPREAD IT* | The Sign breaks the fold; you pass where no one else can, and Carcosa bleeds into the world through the hole you made | Ending sequence — the engine catches *for the first time*: *"You got out. You're the only one who ever has. Everyone will understand why, soon."* | `_begin_car_escape()` → `_play_ending("escape_alone")`. **REWORK:** gate the escape on possessing the **Sign** (`sigil_rubbing`), not just car keys; replace the stale `escape_alone` script ("you turn the key / the engine starts / you drive away") with the line at left. |
 

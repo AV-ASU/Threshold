@@ -376,18 +376,20 @@ class Game:
         self._cult_topup_t = 0.0       # rate-limits cultist (re)spawns per scene
 
         # ---- THRESHOLD: flashback ----
-        # Set when the player reads page 3 of Mom's notebook.
-        # _flashback_phase tracks which still is showing. None means
-        # no flashback active. Each phase shows a single line of
-        # text on a black overlay for ~1.6 seconds.
+        # Set when the player reads Mara's journal through a third time.
+        # _flashback_phase tracks which still is showing. None means no
+        # flashback active. Each phase shows a single line of text on a
+        # black overlay. The "witnessing" flashback: reading her descent
+        # in her own words pulls you a step into it (NARRATIVE §4).
         self._flashback_phase = None
         self._flashback_t = 0.0
-        # Flashback stills, in order. Placeholder text -- narrative is
-        # a blank slate; fill these in when the new story is written.
         self._flashback_stills = [
-            ("...", 1.6),
-            ("...", 1.6),
-            ("...", 2.0),
+            ("You read it a third time, and the page won't let go of you.",
+             2.6),
+            ("For a moment you are her -- walking the rows, the corn "
+             "closing behind you like water.", 3.2),
+            ("Something far under the town turns over in its sleep, and "
+             "calls you the rest of the way down.", 3.6),
         ]
 
         # ---- THRESHOLD: ending state ----

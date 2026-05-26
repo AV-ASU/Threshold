@@ -108,9 +108,20 @@ def build_depths_antechamber():
         px, py = game.player.x, game.player.y
         if abs(px - (4 * TILE + 16)) < 36 and abs(py - (4 * TILE + 16)) < 36:
             _evidence(game, "the_fall",
-                "You fell. You are not hurt."
+                "The rope is gone above you and you are not hurt -- the way "
+                "down didn't want you broken, only delivered. Cut stone, "
+                "worn smooth by years of feet that came this way before you."
             )
     sc.on_interact_fn = _interact
+
+    def _on_enter(game, scene):
+        if game.save.flag("first_antechamber"):
+            return
+        game.save.set_flag("first_antechamber", True)
+        game.show_notice("This is what the well was a throat for. The work "
+                         "of the town goes on down here, in the dark.",
+                         duration=4.0)
+    sc.on_enter_fn = _on_enter
     return sc
 
 
@@ -148,6 +159,15 @@ def build_depths_procession():
                           waypoints=[(4  * TILE + 16, 4 * TILE + 16),
                                      (10 * TILE + 16, 4 * TILE + 16)]))
     _ambient(sc, "blip_soft", 0.12, 2.5, 4.5)
+
+    def _on_enter(game, scene):
+        if game.save.flag("first_procession"):
+            return
+        game.save.set_flag("first_procession", True)
+        game.show_notice("A column of candles, walked single file. They came "
+                         "down here singing, once. Now they only walk.",
+                         duration=4.0)
+    sc.on_enter_fn = _on_enter
     return sc
 
 
@@ -220,6 +240,15 @@ def build_depths_hall():
         "fired": False,
     })
     _ambient(sc, "whisper", 0.14, 7.0, 12.0)
+
+    def _on_enter(game, scene):
+        if game.save.flag("first_hall"):
+            return
+        game.save.set_flag("first_hall", True)
+        game.show_notice("Rows worn into the floor where knees have pressed, "
+                         "all of them turned to the iron door. They are "
+                         "waiting for it to open.", duration=4.0)
+    sc.on_enter_fn = _on_enter
     return sc
 
 
@@ -253,7 +282,10 @@ def build_depths_threshing():
         px, py = game.player.x, game.player.y
         if abs(px - (6 * TILE + 16)) < 36 and abs(py - (5 * TILE + 16)) < 36:
             _evidence(game, "threshing_floor",
-                "Nothing here."
+                "The yield, raked into low heaps: grain, and threaded "
+                "through it something darker and old. This is where what "
+                "the town takes in gets broken down small enough to feed "
+                "what waits below."
             )
     sc.on_interact_fn = _interact
     return sc
@@ -275,6 +307,16 @@ def build_depths_stair():
         (6 * TILE + 16, 1 * TILE + 24, "behind"),
     ]
     _ambient(sc, "low_pulse", 0.10, 11.0, 16.0)
+
+    def _on_enter(game, scene):
+        if game.save.flag("first_depthstair"):
+            return
+        game.save.set_flag("first_depthstair", True)
+        game.show_notice("The stair spirals down past the last of the "
+                         "candlelight. No guards. Nothing down here needs "
+                         "guarding -- no one who reaches it ever turns back.",
+                         duration=4.0)
+    sc.on_enter_fn = _on_enter
     return sc
 
 
