@@ -552,14 +552,19 @@ def innkeeper_bedroom_interact(game):
         game.show_notice("The closet is empty now.")
         return
 
-    # --- the dresser: her journal (evidence #2) ---
+    # --- the dresser: her journal -- evidence #2, and you pocket it.
+    # The journal ITEM lives here now (not the cellar); examining it later
+    # in your kit reaches page 3 -> the flashback (ui/inventory_ui.py). ---
     if abs(px - dx) <= 40 and abs(py - dy) <= 40:
         if game.save.flag("evidence_maras_journal"):
-            game.show_notice("Her journal. You've read what matters.")
+            game.show_notice("You have her journal. Read it again from your "
+                             "kit.")
             return
+        game.player.inventory.add("mom_notebook", 1)
+        game.audio.play("pickup_rare", 0.7)
         _evidence(game, "maras_journal", [
-            "Her journal lies open on the dresser. The last entries, in a "
-            "hand that gets calmer as it goes:",
+            "Her journal lies open on the dresser. You pocket it. The last "
+            "entries, in a hand that gets calmer as it goes:",
             "\"I just had this urge to go north.\"",
             "\"I'm a long, long way from home now. And I feel closer.\"",
             "\"Stopped for gas in this town. Everyone smiles like I'm "
@@ -570,10 +575,12 @@ def innkeeper_bedroom_interact(game):
 # ---- innkeeper_basement (key: 'basement') ----
 
 def build_basement():
-    """The Innkeeper's cellar. Stone walls, packed dirt floor, a
-    single hanging bulb. A photograph stands on a shelf. A notebook
-    is hidden in a wall panel. A flashlight, charcoal, and a coil of
-    rope on a workbench.
+    """The Arcadia Lodge's cellar -- the Clerk's domain. Stone walls,
+    packed dirt floor, a single hanging bulb. A photograph stands on a
+    shelf; the workbench holds the tab-settling bottle, the woodshed key,
+    charcoal. Behind a loose panel in the stone the Clerk keeps the real
+    guest register -- the Ledger (evidence #3): everyone who checked into
+    the Arcadia and never checked out.
 
     Single entry/exit via the kitchen cellar hatch. A previous build
     had a south-wall bulkhead leading to the back yard; removed
@@ -609,9 +616,10 @@ def build_basement():
         sc.add_decoration(Decoration(tx * TILE + 16, ty * TILE + 6,
                                      "photo"))
 
-    # Workbench in the SW corner. Pickup spots for charcoal,
-    # flashlight. The notebook is hidden -- player has to interact
-    # with the wall panel to find it (workbench_pos area).
+    # Workbench in the SW corner (tab bottle, woodshed key, charcoal).
+    # The Clerk's real guest register -- the Ledger (evidence #3) -- is
+    # hidden behind a loose panel in the west wall; the candle beside it
+    # draws the eye. Found via the wall-panel interact (basement_interact).
     sc._workbench_pos = (2 * TILE + 16, 7 * TILE + 16)
     sc._wall_panel_pos = (1 * TILE + 16, 4 * TILE + 16)
     # Hide spots: under the workbench, behind the chest area.
@@ -693,20 +701,32 @@ def basement_on_enter(game, scene):
 
 
 def basement_interact(game):
-    """E near the wall panel finds a notebook (one-shot)."""
+    """E at the loose wall panel: the Clerk's hidden guest register --
+    the Ledger, evidence #3. One-shot via the evidence flag. The
+    self-incriminating line is covert lost-time payoff for the opening
+    ("home by morning" / the dead car): the fold has already eaten nights
+    the PI doesn't remember."""
     sc = game.scene
     px, py = game.player.x, game.player.y
     wpx, wpy = sc._wall_panel_pos
     if abs(px - wpx) > 40 or abs(py - wpy) > 40:
         return
-    if game.save.flag("notebook_taken"):
-        game.show_notice("The wall panel is empty now.")
+    if game.save.flag("evidence_the_ledger"):
+        game.show_notice("The ledger, back behind its panel. You've read "
+                         "enough.")
         return
-    game.save.set_flag("notebook_taken", True)
-    game.player.inventory.add("mom_notebook", 1)
     game.audio.play("pickup_rare", 0.7)
     game.audio.play("low_pulse", 0.45)
-    game.show_notice("A notebook, tucked in the wall.")
+    _evidence(game, "the_ledger", [
+        "A panel in the stone swings loose. Behind it, a ledger -- not the "
+        "one at the front desk. The real one.",
+        "Guests going back years, all in the Clerk's hand. A few check-outs, "
+        "every one of them old. Then none. For a long time now, no one has "
+        "left the Arcadia.",
+        "Your own name waits near the bottom. Three nights ago.",
+        "No check-out beside it -- and you don't remember signing it. You'd "
+        "have sworn you drove in tonight.",
+    ])
 
 
 # ---- abducted_hallway: cut from registry but keep stub ----

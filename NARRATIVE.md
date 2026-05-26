@@ -84,8 +84,8 @@ on the surface* — a fair, brutal "you dug too deep, too fast."
 | # | Evidence | Item / scene key | Where | What it proves |
 |---|---|---|---|---|
 | 1 | **Mara's Room** | `son_room` (robe + `orb`) | Lodge — her rented room | She came, and she joined *willingly* |
-| 2 | **Mara's Journal** | `mom_notebook` | Lodge cellar wall-panel | Her descent, in her own words |
-| 3 | **The Ledger** (the Lodge's guest register) | (new) | Arcadia Lodge — its cellar (`basement` scene) | Brimley's pattern — guests who check in and never out |
+| 2 | **Mara's Journal** | `mom_notebook` | Mara's Room (`son_room`) — her dresser | Her descent, in her own words (page 3 → the flashback) |
+| 3 | **The Ledger** (the Lodge's guest register) | read in place | Arcadia cellar (`basement`) — hidden behind a loose wall panel | Guests who check in and never out — and your own name, three nights you don't remember |
 | 4 | **The Preacher** | his **cross** (item `cross`) taken from the viscera | The **church** (`old_man_house`) — his own floor | The town murders the ones who name them — gutted for preaching against the cult |
 | 5 | **The Sign — the Pallid Mask** | `sigil_rubbing` (reskinned to the Mask; key kept for saves) | Sign Chamber (well) | His face made an object: what they worship, the shard the fold opens for (the **escape key** → *SPREAD IT*), and the mask that seats into the Play's cover |
 | 6 | **The Congregation** | (Mara, turned) | The Depths / the hive | There was never anyone to save |
@@ -134,8 +134,9 @@ DEEPER          The Depths → the Threshold (END IT / seal) → the Hive
 
 > **Naming, to avoid the collision:** the **lodge cellar** is the
 > `basement` *scene* — the Arcadia's own cellar, a *surface* interior
-> (holds the Ledger + Mara's journal). **The Basement Level** is the
-> underground stratum below the well. Different places, similar words.
+> (holds the Ledger; Mara's journal now lives in her room). **The
+> Basement Level** is the underground stratum below the well. Different
+> places, similar words.
 
 **Carcosa is not a level.** Your King sprite is the floating
 glow-of-faces, so Carcosa *is* the inside of Him: every mask drifting in
