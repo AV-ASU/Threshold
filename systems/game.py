@@ -528,9 +528,9 @@ class Game:
         self._ending_phase = 0
         self._ending_phase_t = 0.0
         self._closure_locked = False
-        # Death screen: None | "cultist" | "king". The catch triggers
-        # it; _tick_death holds it (cultist ~2.0s, king ~3.5s) then
-        # respawns (cultist) or returns to title (king).
+        # Death screen: None | "cultist" | "king". A catch triggers it;
+        # _tick_death holds it (cultist ~2.8s CAPTURED card, king ~3.5s
+        # Carcosa furnace) then ENDS the run -- both return to title.
         self._death_kind = None
         self._death_t = 0.0
         # Opening wake state. When the bedroom_on_enter fires for
@@ -1715,8 +1715,8 @@ class Game:
                 self._tick_ritual(n, dt, sees)
                 continue
             # Regular cultist: one "they've seen you" beat per fresh
-            # spawn. Reaching you is now LETHAL -- the catch triggers
-            # the KILLED screen (you wake in your bed).
+            # spawn. Reaching you is the cult TAKING you -- the CAPTURED
+            # card, then the run ends (you feed the hive). Not a kill.
             if sees and not getattr(n, "_has_been_spotted", False):
                 n._has_been_spotted = True
                 self.audio.play("low_pulse", 0.5)
@@ -2207,9 +2207,9 @@ class Game:
 
     def _trigger_death(self, kind):
         """A pursuer has reached the player. Hand off to the death
-        screen: `kind` is 'cultist' (a simple KILLED card, then you
-        wake in your bed) or 'king' (the King-in-Yellow furnace of
-        masks, ~3.5s, then the run ends and the title returns). Input
+        screen: `kind` is 'cultist' (the CAPTURED card -- the cult takes
+        you alive for the hive) or 'king' (the King-in-Yellow furnace of
+        masks / Carcosa, ~3.5s). Both end the run and return to title. Input
         is locked for the duration via _closure_locked (the shared
         sequence lock). Guarded so it can't re-trigger."""
         if self._death_kind is not None:
@@ -2225,21 +2225,20 @@ class Game:
             self.audio.play("low_pulse", 0.7)
 
     def _tick_death(self, dt):
-        """Hold the death screen, then resolve. Cultist: ~2s, then
-        respawn in the bed (the run continues). King: ~3.5s of the
-        mask furnace, then the threshold has closed -- back to title,
-        visibility held at 0.40 (never zero)."""
+        """Hold the death screen, then resolve -- both END the run.
+        Cultist: ~2.8s CAPTURED card, then back to title (the cult took
+        you for the hive). King: ~3.5s of the mask furnace (Carcosa),
+        then back to title, visibility held at 0.40 (never zero)."""
         if self._death_kind is None:
             return
         self._death_t += dt
         if self._death_kind == "cultist":
-            if self._death_t >= 2.0:
+            if self._death_t >= 2.8:
                 self._death_kind = None
                 self._closure_locked = False
-                self.visibility = max(0.0, self.visibility - 0.35)
-                self.player.hp = self.player.max_hp
-                self.show_notice("You wake up in your bed.")
-                self.load_scene_now("bedroom", "default")
+                self.audio.music_muted = False
+                self.state = "title"
+                self.audio.play_music("threshold_drone")
         else:  # king
             if self._death_t >= 3.5:
                 self._death_kind = None
@@ -2252,12 +2251,19 @@ class Game:
 
     def _draw_death_screen(self):
         """Render the active death card over everything. King = the
-        furnace of masks (sprites.draw_king_death); cultist = a stark
-        KILLED card over a near-black wash."""
+        furnace of masks (sprites.draw_king_death) stamped CARCOSA;
+        cultist = a stark CAPTURED card over a near-black wash."""
         if self._death_kind == "king":
             draw_king_death(self.screen, self._death_t)
+            if self._death_t > 2.4:                  # the name surfaces late
+                w, h = self.screen.get_size()
+                ta = min(220, int((self._death_t - 2.4) / 0.8 * 220))
+                tt = self.fonts["title"].render("CARCOSA", True, (236, 204, 64))
+                tt.set_alpha(ta)
+                self.screen.blit(tt, (w // 2 - tt.get_width() // 2,
+                                      h // 2 - tt.get_height() // 2))
             return
-        # Cultist: simple. Fade to near-black, then stamp KILLED.
+        # Cultist: the cult takes you. Fade to near-black, then CAPTURED.
         w, h = self.screen.get_size()
         fade = min(255, int(self._death_t / 0.4 * 255))
         wash = pygame.Surface((w, h))
@@ -2266,7 +2272,7 @@ class Game:
         self.screen.blit(wash, (0, 0))
         if self._death_t > 0.35:
             ta = min(255, int((self._death_t - 0.35) / 0.4 * 255))
-            big = self.fonts["title"].render("KILLED", True, (176, 24, 24))
+            big = self.fonts["title"].render("CAPTURED", True, (170, 150, 90))
             big.set_alpha(ta)
             self.screen.blit(big, (w // 2 - big.get_width() // 2,
                                    h // 2 - big.get_height() // 2))
