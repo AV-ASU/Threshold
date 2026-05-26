@@ -116,28 +116,22 @@ def old_man_dialogue(game, npc):
 
 def kid_dialogue(game, npc):
     """The Kid -- innocent witness (NARRATIVE §2). He saw Mara walk into
-    the corn and kept the photo she gave him; he hands it over as the Case
-    Photo keepsake (one-shot, sets polaroid_taken). Children notice what
-    adults pretend not to."""
+    the corn; what he gives you is what he tells you (no inventory item --
+    the old keepsake object was purged). Children notice what adults
+    pretend not to."""
     save = game.save
     inv = game.player.inventory
-    # Priority: the keepsake. First real conversation, the boy gives you
-    # the photo Mara left him -- the Case Photo (polaroid). One-shot.
-    if not save.flag("polaroid_taken"):
-        save.set_flag("polaroid_taken", True)
-        inv.add("polaroid", 1)
-        game.audio.play("pickup_rare", 0.7)
+    # The witness beat: first real conversation, he tells you what he saw.
+    if not save.flag("kid_witnessed"):
+        save.set_flag("kid_witnessed", True)
         game.dialog.show([
             "You're looking for the corn lady. The nice one with all the "
             "questions.",
-            "She gave me this before she walked out into the rows. Said she "
-            "wouldn't need her own face where she was going.",
-            "[c=dim](The boy presses a faded photograph into your hand --\n"
-            "Mara Blaine, smiling, the cornfield at her back.)[/c]",
-            "The grown-ups say nobody saw her go. They saw. They always "
-            "see. They just look at their shoes.",
+            "I watched her walk right out into the rows. She didn't come "
+            "back. The ones who go in after the corn never do.",
+            "[c=dim]The grown-ups say nobody saw her go. They saw. They "
+            "always see. They just look at their shoes.[/c]",
         ], speaker="Boy", voice="blip_kid", portrait="kid")
-        game.show_notice("The boy gives you a photo of Mara.")
         return
     # Playscript-recognition one-shot (kept; flow unchanged).
     if inv.has("playscript") and not save.flag("kid_playscript_noticed"):

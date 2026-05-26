@@ -49,10 +49,6 @@ ITEM_DEFS = {
                        "kind": "key",
                        "desc": "A yellow playscript that has an "
                                "indentation of a mask on the cover."},
-    "polaroid":      {"name": "Case Photo",
-                       "kind": "lore",
-                       "desc": "A faded photo of Mara Blaine -- the "
-                               "woman you were hired to find."},
     "lumber_axe":    {"name": "Splitting Axe",
                        "kind": "weapon",
                        "desc": "An axe for chopping wood.",

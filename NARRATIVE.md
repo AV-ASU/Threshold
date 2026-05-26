@@ -52,7 +52,7 @@ investigation.
 | **The Sheriff** | Cult enforcer | The law that keeps everyone in. He killed your car. His outdoor patrols are surveillance. |
 | **The Preacher** | **Innocent dissenter** | A small-town minister who **names the cult from his own pulpit** — oblivious to *what* they truly are, but loud that they're no church. Your **2nd** conversation (his hubris — "God's on my side of the door") sets `preacher_doomed`; on the next entry he's **gutted on his own church floor**, his cross in the viscera (evidence #4). The town murders the ones who name them. |
 | **The Store-Owner** | Quiet resister | Sells the flashlight, charcoal, paper (survival + clue tools). Frightened hints, never says it outright. |
-| **The Kid** | Innocent witness | Saw Mara go into the corn. Gives you a **keepsake of hers**. Children notice what adults pretend not to. |
+| **The Kid** | Innocent witness | Saw Mara walk into the corn and **tells you so** — the only honest account in town. What he gives you is the truth, not an object (the old keepsake item is purged; no inventory pickup). Children notice what adults pretend not to. |
 | **Mara Blaine** | The quarry — **already turned** | A willing member of the congregation now. Finding her proves there was never anyone to save. She is in the **hive**. |
 | **Cult / curse-priest / Watchers / the King in Yellow** | The corruption | Operate in the cornfields, the abandoned farmhouse, and the depths/hive below. |
 
@@ -216,7 +216,7 @@ Only display names and fiction change.
   `save.arg("evidence")` by `_evidence(game, name, ...)` (shown in the
   notebook UI). The count for the 3-gate is `len(save.arg("evidence"))` —
   it counts *log entries*, not held items. So every pickup that should
-  count (Mara's photo, journal, the playscript, the Sign rubbing) must ALSO fire
+  count (Mara's journal, the Ledger, the Sign rubbing) must ALSO fire
   a matching `_evidence()` call, or it won't move the gate.
 - **Endings exist; deaths don't.** `_ENDING_SCRIPTS` currently holds only
   `escape_alone` (Spread it) and `seal_threshold` (End it). The
@@ -227,10 +227,11 @@ Only display names and fiction change.
 - **One mouth down.** The well + rope is the *only* surface→underground
   route. Close the `well_passage` → `barn` hatch (and any other
   shortcut) so there are no secret paths down.
-- `well_bottom` currently **consumes the `polaroid`** to open the floor.
-  The polaroid is now evidence (Mara's photo) — instead, the way *deeper*
-  (the Works → the Depths) opens on the **`playscript` + the Pallid Mask
-  *together*** at the Deep Stair (§6, the Fork), never the polaroid.
+- The `polaroid` (Case Photo) item is **purged** — it was a placeholder
+  cellar pickup, not real evidence. The Kid's keepsake is now what he
+  *tells* you (§2), no inventory item. The way *deeper* (the Works → the
+  Depths) opens on the **`playscript` + the Pallid Mask *together*** at the
+  Deep Stair (§6, the Fork), and nothing is consumed to land at the well.
 - `dark` room bodies (`ellie / father / mother`, old family) — **remove
   them** and their evidence beats. Cleaned up, not recast.
 - The Deep Stair opens on the **`playscript` + the Pallid Mask together**
@@ -246,8 +247,8 @@ Only display names and fiction change.
 - **Innkeeper → Lodge Clerk** across dialogue + `DISPLAY_NAMES` (done).
   `son_room` is now **"the Clerk's Room"** (his pressed cult robe is the
   only tell); Mara's room is the new underground `maras_room` cell.
-- **Item renames** (display only): `polaroid` → Case Photo (Mara),
-  `mom_notebook` → Mara's Journal, etc.
+- **Item renames** (display only): `mom_notebook` → Mara's Journal, etc.
+  (The `polaroid` item is removed entirely, not renamed.)
 - **README rewrite:** PI premise, sealed town, drop "car broke down."
 
 ---

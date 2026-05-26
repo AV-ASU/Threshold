@@ -20,8 +20,8 @@ is being seen. Cultists respect hiding (player.hidden), so a hide spot
 breaks the chase.
 
 Reworks vs. the old build: the well is now the ONLY mouth down (the
-barn cellar hatch is sealed); the polaroid is no longer consumed here
-(it's evidence now); and the way deeper opens only when the Pallid Mask
+barn cellar hatch is sealed); nothing is consumed to land here; and the
+way deeper opens only when the Pallid Mask
 (from the Sign Chamber) and the Playscript are fed to the Deep Stair
 TOGETHER -- which spends the Mask, so it can't then be carried out
 (the Spread ending). The fork between Seal and Spread lives at that stair.

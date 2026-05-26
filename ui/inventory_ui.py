@@ -3,7 +3,7 @@
 THRESHOLD: combat is gone, so the inventory is small and reads as
 "what you carry" rather than "what you fight with." Three tabs --
 Tools (axe, flashlight, keys, charcoal), Notes (lore: notebook,
-polaroid, kid's drawing, diary pages, robe), Consumables (spare
+diary pages, robe), Consumables (spare
 batteries). The vestigial Apparel tab is gone; armor-kind items
 from the combat era fall into Tools so old saves still surface
 them. The Notebook (evidence review) lives in its own panel
@@ -43,12 +43,6 @@ class InventoryUI:
         self.open = False
         self.cursor = 0
         self.tab = 0
-        # Round-14: tracks whether the polaroid was the highlighted
-        # entry on the previous draw frame. Each fresh navigation onto
-        # the polaroid bumps `polaroid_reads`; the polaroid description
-        # devolves with each read (see effective_desc). Resets to False
-        # when the player navigates off it.
-        self._was_viewing_polaroid = False
 
     def toggle(self):
         self.open = not self.open
@@ -181,17 +175,6 @@ class InventoryUI:
         # Description panel on right of the selected item.
         if items and self.cursor < len(items):
             key = items[self.cursor][1]
-            # Polaroid read tracking -- count one read per fresh
-            # navigation onto the polaroid entry. The save's
-            # polaroid_reads counter feeds effective_desc, which
-            # progressively erases figures from the description.
-            if key == "polaroid":
-                if not self._was_viewing_polaroid and self.save:
-                    n = self.save.arg("polaroid_reads", 0) + 1
-                    self.save.set_arg("polaroid_reads", n)
-                self._was_viewing_polaroid = True
-            else:
-                self._was_viewing_polaroid = False
             d = ITEM_DEFS.get(key, {})
             dx = panel.right - 320
             dy = panel.y + 122

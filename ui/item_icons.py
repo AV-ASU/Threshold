@@ -85,13 +85,6 @@ def _playscript(s):
     pygame.draw.circle(s, _BRUISE_HI, (6, 7), 2)
 
 
-def _polaroid(s):
-    pygame.draw.rect(s, _PAPER, (3, 3, 11, 11))
-    pygame.draw.rect(s, _PAPER_DARK, (3, 3, 11, 11), 1)
-    pygame.draw.rect(s, (90, 80, 70), (5, 5, 7, 6))
-    pygame.draw.line(s, _PAPER_DARK, (4, 12), (12, 12), 1)
-
-
 def _cellar_bottle(s):
     pygame.draw.rect(s, _GLASS_HI, (7, 2, 2, 2))
     pygame.draw.rect(s, _GLASS, (6, 4, 4, 2))
@@ -155,7 +148,6 @@ _DISPATCH = {
     "robe":            _robe,
     "mom_notebook":    _mom_notebook,
     "playscript":             _playscript,
-    "polaroid":        _polaroid,
     "cellar_bottle":   _cellar_bottle,
     "liquor_crate":    _liquor_crate,
     "diary_page_1":    _diary_page,

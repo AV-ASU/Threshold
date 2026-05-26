@@ -185,7 +185,7 @@ def main():
     n = evidence_count(ge)
     check(n >= 3, f"evidence: the 3-gate is reachable (gathered {n} canonical beats)")
 
-    # --- 10. The Kid hands over the Case Photo keepsake (NARRATIVE §2) ---
+    # --- 10. The Kid is the witness (NARRATIVE §2): tells, grants no item ---
     gk = new_game()
     gk.load_scene_now("kid_house")
     ready(gk)
@@ -193,9 +193,9 @@ def main():
     check(kid is not None, "kid: the Kid is present in his house")
     if kid:
         kid.dialogue_fn(gk, kid)
-        check(gk.player.inventory.has("polaroid")
-              and gk.save.flag("polaroid_taken"),
-              "kid: talking to the Kid grants the Case Photo keepsake")
+        check(gk.save.flag("kid_witnessed")
+              and not gk.player.inventory.has("polaroid"),
+              "kid: the witness beat fires and grants no inventory item")
 
     print()
     if FAILS:

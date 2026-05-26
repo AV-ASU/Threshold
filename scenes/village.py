@@ -207,17 +207,14 @@ def build_village():
     ]
 
     def _village_interact(game):
-        # Locked shed door -- requires woodshed_key (given by the
-        # Clerk on liquor-crate turn-in). Once unlocked, the
-        # door opens into the same `woodshed` interior the yard's
-        # door used to open. Anti-softlock: once the polaroid is
-        # taken, the lock forces open (anti-softlock).
+        # Locked shed door -- requires woodshed_key. The key sits on the
+        # workbench in the Arcadia cellar, which is never key-gated, so
+        # the rope inside is always reachable (no soft-lock).
         shed_door_x = 24 * TILE + 16
         shed_door_y = shed_top * TILE + 16
         if (abs(game.player.x - shed_door_x) < 40
                 and abs(game.player.y - shed_door_y) < 40):
-            unlocked = (game.player.inventory.has("woodshed_key")
-                        or game.save.flag("polaroid_taken"))
+            unlocked = game.player.inventory.has("woodshed_key")
             if not unlocked:
                 game.audio.play("door_locked", 0.6)
                 game.show_notice(
