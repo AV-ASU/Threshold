@@ -7,7 +7,7 @@ from the shaft floor to the orb-gate that opens onto the Depths:
   works_vats         -- the Tallow Vats
   works_sorting      -- the Sorting Hall (belongings of the vanished)
   works_scriptorium  -- the Scriptorium (the Sign, copied endlessly)
-  works_sign         -- the Sign Chamber (take the rubbing; evidence #5)
+  works_sign         -- the Sign Chamber (lift the Pallid Mask; evidence #5)
   works_deepstair    -- the Deep Stair (orb-gate down to the Depths)
 
 The rope breaks the instant you descend carrying the orb -- from then
@@ -298,12 +298,13 @@ def build_works_sign():
     sc.set_spawn("from_above", 1, 5)
     sc.set_spawn("from_below", 10, 5)
 
-    # The Yellow Sign, daubed vast across the north wall. (Placeholder
-    # imagery -- claw/mark clusters + a candle ring -- until a bespoke
-    # Sign sprite exists.) The rubbing is taken at its centre.
+    # The Yellow Sign, daubed vast across the north wall -- the cult's 2D
+    # *brand* of Him. The thing itself, evidence #5, is the Pallid Mask on
+    # the altar (a pedestal) just below it. You lift it at the altar.
     sign_x = 5 * TILE + 16
     sign_y = 1 * TILE + 16
-    sc._sign_pos = (sign_x, sign_y)
+    sc._sign_pos = (5 * TILE + 16, 2 * TILE + 20)   # the altar, not the wall
+    sc.add_decoration(Decoration(5 * TILE + 16, 2 * TILE + 24, "pedestal"))
     # The Sign itself -- one large glyph centred on the north wall,
     # flanked by two smaller ones, ringed with candles.
     sc.add_decoration(Decoration(sign_x, 1 * TILE + 18, "yellow_sign"))
@@ -339,19 +340,21 @@ def build_works_sign():
         if (abs(game.player.x - sx) > 44 or abs(game.player.y - sy) > 56):
             return
         if game.save.flag("sign_rubbing_taken"):
-            game.show_notice("You already pressed your rubbing of it.")
-            return
-        if not game.player.inventory.has("charcoal"):
-            game.show_notice(
-                "The Sign, vast on the stone. You'd need charcoal and "
-                "paper to take a rubbing.", duration=4.0)
+            game.show_notice("The altar is bare. You have His face.")
             return
         game.save.set_flag("sign_rubbing_taken", True)
         game.player.inventory.add("sigil_rubbing", 1)
         game.audio.play("pickup_rare", 0.7)
         game.audio.play("low_pulse", 0.5)
-        _evidence(game, "the_sign",
-            "A charcoal rubbing of the Sign. Proof of what they kneel to.")
+        _evidence(game, "the_sign", [
+            "On the altar, beneath the daubed Sign: a mask. Pale as a "
+            "drowned face, the eyeholes black.",
+            "Every scrawl in this place is a flat copy of it. This is the "
+            "thing itself.",
+            "You lift it. Lighter than it should be, and warm. It knows "
+            "your hands.",
+            "His face. You're holding His face.",
+        ])
     sc.on_interact_fn = _interact
     return sc
 

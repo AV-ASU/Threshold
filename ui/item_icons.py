@@ -47,10 +47,12 @@ def _paper(s):
 
 
 def _sigil_rubbing(s):
-    pygame.draw.rect(s, _PAPER, (3, 3, 11, 11))
-    pygame.draw.rect(s, _PAPER_DARK, (3, 3, 11, 11), 1)
-    pygame.draw.circle(s, _INK, (8, 8), 3, 1)
-    pygame.draw.circle(s, _INK, (8, 8), 1)
+    # The Pallid Mask: a pale half-face, black eyeholes, a centre seam.
+    pygame.draw.ellipse(s, _PAPER, (4, 2, 9, 13))
+    pygame.draw.ellipse(s, _PAPER_DARK, (4, 2, 9, 13), 1)
+    pygame.draw.ellipse(s, _INK, (6, 6, 2, 3))    # left eyehole
+    pygame.draw.ellipse(s, _INK, (10, 6, 2, 3))   # right eyehole
+    pygame.draw.line(s, _PAPER_DARK, (8, 9), (8, 13), 1)  # seam
 
 
 def _car_keys(s):

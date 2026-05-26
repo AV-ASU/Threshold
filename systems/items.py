@@ -25,9 +25,11 @@ ITEM_DEFS = {
     "cellar_key":    {"name": "Cellar Key",
                        "kind": "key",
                        "desc": "A key."},
-    "sigil_rubbing": {"name": "A Rubbing",
+    "sigil_rubbing": {"name": "The Pallid Mask",
                        "kind": "lore",
-                       "desc": "Charcoal on paper."},
+                       "desc": "The King's own pale half-mask, made an "
+                               "object. His face. It seats into the "
+                               "Playscript's cover."},
     "kid_drawing":   {"name": "A Drawing",
                        "kind": "lore",
                        "desc": "A child's drawing."},
