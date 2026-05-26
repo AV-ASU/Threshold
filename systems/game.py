@@ -2490,8 +2490,9 @@ class Game:
         pygame.draw.rect(s, (140, 30, 24), (cx + 6, cy + 18, 5, 3))
 
     def _draw_road_sign(self, s, x, y, light):
-        """A weathered roadside sign reading BRIMLEY, the population scratched
-        out -- lit by the headlights as it passes. (NEW TEXT, placeholder.)"""
+        """A weathered roadside sign reading BRIMLEY, the population struck
+        through -- lit by the headlights as it passes. The struck-out count
+        is the first wrong note: a town quietly subtracting itself."""
         def L(c):
             return (int(c[0] * light), int(c[1] * light), int(c[2] * light))
         pygame.draw.rect(s, L((58, 48, 36)), (x - 2, y, 4, 44))          # post
@@ -2579,22 +2580,31 @@ class Game:
             a = int(150 * (1 - i / 60) ** 1.5)
             pygame.draw.rect(vig, (0, 0, 0, a), (i, i, W - 2 * i, H - 2 * i), 1)
         s.blit(vig, (0, 0))
-        # Cold-open case line, the first ~4s. (NEW TEXT, placeholder.)
-        if self._opening_t < 4.0:
-            ct = self._opening_t
-            a = 1.0
-            if ct < 0.6:
-                a = ct / 0.6
-            elif ct > 3.2:
-                a = max(0.0, (4.0 - ct) / 0.8)
+        # Two beats bookend the drive: the case as you roll in (~first 4s),
+        # and the arrival as the engine dies. Both diegetic -- deliberately
+        # NO "three nights later" card; the stolen time surfaces only later,
+        # through the ledger, the clerk's tab, and the car that won't start.
+        def _opening_caption(lines, a):
             fnt = self.fonts["sm"]
-            lines = ["Find Mara Blaine.", "Last seen in Brimley."]
             lh = fnt.get_height() + 4
             y0 = H // 2 - (len(lines) * lh) // 2
             for i, ln in enumerate(lines):
-                t_s = fnt.render(ln, True, (212, 208, 200))
-                t_s.set_alpha(int(255 * a))
+                t_s = fnt.render(ln, True, (206, 202, 194))
+                t_s.set_alpha(int(255 * max(0.0, min(1.0, a))))
                 s.blit(t_s, (W // 2 - t_s.get_width() // 2, y0 + i * lh))
+        if self._opening_t < 4.2:
+            ct = self._opening_t
+            a = (ct / 0.6 if ct < 0.6
+                 else (4.2 - ct) / 0.8 if ct > 3.4 else 1.0)
+            _opening_caption(["Mara Blaine. Last seen in Brimley.",
+                              "A few questions, then home by morning."], a)
+        if ph == "dead":
+            dt_ = self._opening_phase_t
+            a = (dt_ / 0.8 if dt_ < 0.8
+                 else (OPENING_DEAD_HOLD - dt_) / 0.6
+                 if dt_ > OPENING_DEAD_HOLD - 0.6 else 1.0)
+            _opening_caption(["The Arcadia Lodge.",
+                              "The engine won't turn over again."], a)
 
     # ---- Draw ----
     def draw_world(self):
