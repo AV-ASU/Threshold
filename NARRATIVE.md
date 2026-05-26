@@ -161,6 +161,40 @@ that fire is someone He already took. You only ever see it by losing.
 | **Seal the threshold** — *END IT* | Contain the hunger; Brimley + you become a hole in the map | Ending sequence. *"It is done. Nothing leaves Brimley again. Not the hunger. Not you."* | `_play_ending("seal_threshold")` (exists) |
 | **Drive out with the Sign** — *SPREAD IT* | The Sign breaks the fold; you pass where no one else can, and Carcosa bleeds into the world through the hole you made | Ending sequence — the engine catches *for the first time*: *"You got out. You're the only one who ever has. Everyone will understand why, soon."* | `_begin_car_escape()` → `_play_ending("escape_alone")`. **REWORK:** gate the escape on possessing the **Sign** (`sigil_rubbing`), not just car keys; replace the stale `escape_alone` script ("you turn the key / the engine starts / you drive away") with the line at left. |
 
+### The Fork — the Deep Stair (where Seal and Spread split)
+
+Both *chosen* endings branch from **one object in one place**: the
+**Pallid Mask** at the **Deep Stair**, at the bottom of the Works. The
+Mask *is* the Sign — pale board with the Yellow Sign burned into it — and
+there is only one. You can do exactly one thing with it:
+
+- **Feed it to the stair → go deeper (SEAL).** The Mask and the
+  **Playscript** press into the black stone *together* (the Sign and its
+  liturgy), and the way down opens; the rope behind you won't outlast it.
+  Down is the Depths, the hive (Mara), and the Threshold you *End it* at.
+  Spend the Mask here and you can never carry it out.
+- **Keep it, climb out → spread it (SPREAD).** Turn back with the Mask
+  still on you, take the rope up, and drive past the fold no one else can
+  cross. What you carry out is the Sign itself, and Carcosa bleeds through
+  the hole you made.
+
+The case ends on that one question, and the PI hears it as two pulls:
+
+> **Take it back.** *You have enough — the register, the names, the
+> Preacher, the girl her father sent you for, and the Mask in your hands.
+> A case heavy enough to drop the law on Brimley like a roof. Climb out
+> while the rope holds and carry it all back to people with badges.*
+
+> **Go deeper.** *Or you press the Mask and the Play into the stone
+> together, the stair opens, and you go down — past her, to the thing all
+> of this kneels to. Somewhere back up the rope you stopped being sure
+> whether you mean to end it, or only to stand in front of it once.*
+
+The "authorities" pull is the lie that dresses Spread as duty: carrying
+the Sign out *is* the breach. "Deeper" is the Seal — you end it at the
+source and become, with Brimley, a hole in the map. Both ways out damn
+something (§1).
+
 ---
 
 ## 7. Implementation map (code ↔ canon)
@@ -194,12 +228,17 @@ Only display names and fiction change.
   route. Close the `well_passage` → `barn` hatch (and any other
   shortcut) so there are no secret paths down.
 - `well_bottom` currently **consumes the `polaroid`** to open the floor.
-  The polaroid is now evidence (Mara's photo) — instead, the **`playscript`**
-  is the key that opens the way *deeper* (Basement Level → the Depths).
+  The polaroid is now evidence (Mara's photo) — instead, the way *deeper*
+  (the Works → the Depths) opens on the **`playscript` + the Pallid Mask
+  *together*** at the Deep Stair (§6, the Fork), never the polaroid.
 - `dark` room bodies (`ellie / father / mother`, old family) — **remove
   them** and their evidence beats. Cleaned up, not recast.
-- The `playscript` is the deep-gate key, taken in the **Scriptorium**
-  (`works_scriptorium`) and spent at the Deep Stair. The `mist_house`
+- The Deep Stair opens on the **`playscript` + the Pallid Mask together**
+  (not the Play alone — §6, the Fork): the `playscript` is taken in the
+  **Scriptorium** (`works_scriptorium`), the Mask in the **Sign Chamber**.
+  Feeding both to the stair is the Seal path; keeping the Mask is Spread,
+  so the Spread escape gates on holding the **Mask** (align the item key —
+  it supersedes the old `sigil_rubbing` gate in §6). The `mist_house`
   surface chest is **emptied** (no surface source → no soft-lock), so the
   `black_figure` shadows + wind-cut stay dormant; the now-unreachable Clerk
   turn-in and alter/void offering chain are dead code (follow-up cleanup).
