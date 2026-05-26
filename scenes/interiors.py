@@ -701,6 +701,8 @@ def build_barn():
     hatch_y = 6 * TILE + 16
     sc.add_decoration(Decoration(hatch_x, hatch_y, "cellar_hatch"))
     sc._barn_hatch_pos = (hatch_x, hatch_y)
+    # Mara's journal, stashed behind the workbench -- evidence #2.
+    sc._journal_pos = (3 * TILE + 16, 5 * TILE + 16)
     # Hide spots colocated with cover -- behind the hay-bale shelves
     # (player stands on a walkable tile beside each shelf, NOT on the
     # solid shelf tile). The under-workbench spot was previously on
@@ -712,10 +714,32 @@ def build_barn():
     ]
 
     def _barn_interact(game):
+        px, py = game.player.x, game.player.y
+        # Mara's journal behind the workbench (evidence #2). Grants the
+        # journal item so the page-3 inventory flashback still fires.
+        jx, jy = sc._journal_pos
+        if abs(px - jx) < 40 and abs(py - jy) < 40:
+            if game.save.flag("evidence_maras_journal"):
+                game.show_notice("You have her journal. Read it again from "
+                                 "your kit.")
+                return
+            game.player.inventory.add("mom_notebook", 1)
+            game.audio.play("pickup_rare", 0.7)
+            game.audio.play("low_pulse", 0.45)
+            _evidence(game, "maras_journal", [
+                "A notebook, shoved down behind the workbench. You know the "
+                "hand -- it's hers, the same as the letter.",
+                "Her journal. The last entries, in a hand that gets calmer "
+                "as it goes:",
+                "\"I just had this urge to go north.\"",
+                "\"I'm a long, long way from home now. And I feel closer.\"",
+                "\"Stopped for gas in this town. Everyone smiles like I'm "
+                "already home.\"",
+            ])
+            return
         # The old tunnel down to the Works has been nailed shut: the
         # well is the ONLY way underground now (no secret paths).
-        if (abs(game.player.x - hatch_x) < 36
-                and abs(game.player.y - hatch_y) < 36):
+        if (abs(px - hatch_x) < 36 and abs(py - hatch_y) < 36):
             game.audio.play("door_locked", 0.6)
             game.show_notice("Boarded over and nailed shut from below.")
     sc.on_interact_fn = _barn_interact
