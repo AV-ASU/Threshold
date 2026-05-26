@@ -278,8 +278,9 @@ def build_works_scriptorium():
         dx, dy = sc._desk_pos
         if (abs(game.player.x - dx) < 40 and abs(game.player.y - dy) < 40):
             game.show_notice(
-                "The Sign, copied over and over. To take your own you'd "
-                "need charcoal and paper.", duration=4.0)
+                "The Sign, copied over and over across every surface -- a "
+                "thousand flat echoes. None of them the thing itself.",
+                duration=4.0)
     sc.on_interact_fn = _interact
     return sc
 
