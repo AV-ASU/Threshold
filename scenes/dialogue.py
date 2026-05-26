@@ -8,14 +8,29 @@ import time
 import re
 
 
-def _evidence(game, name, content, weight=0.10):
-    """Surface a one-shot narrator line and record it in the save's
-    `evidence` list so the notebook UI can show it. Gated by a
-    per-name save flag so the same beat never re-fires.
+# The SIX canonical evidence beats (NARRATIVE.md §4): ONLY these count toward
+# the King-gate (3 = armed) and the visibility floor. Each name's value is the
+# floor it adds -- surface finds light, the deep truths heavy; all six sum to
+# the cap. Every other `_evidence(...)` call is now just flavor narration.
+CANONICAL_EVIDENCE = {
+    "maras_room":       0.10,
+    "maras_journal":    0.12,
+    "the_ledger":       0.10,
+    "the_preacher":     0.16,
+    "the_sign":         0.18,
+    "the_congregation": 0.24,
+}
 
-    `weight` is how much this piece raises the visibility FLOOR -- the
-    King-in-Yellow "knowing dooms you" engine. Deeper finds weigh more.
-    Signature preserved for callers (scenes + game.py)."""
+
+def _evidence(game, name, content, weight=None):
+    """Surface a one-shot narrator line. If `name` is one of the six CANONICAL
+    beats it is ALSO logged as evidence -- counting toward the King-gate and
+    raising the visibility FLOOR by its canonical weight (the "knowing dooms
+    you" engine), and firing the notebook-scribble toast. Any other name is
+    just flavor narration. Gated by a per-name flag so a beat never re-fires.
+
+    Signature preserved for callers; `weight` is accepted but ignored --
+    canonical weights above are authoritative."""
     if game is None or game.save is None:
         return
     flag = f"evidence_{name}"
@@ -23,13 +38,12 @@ def _evidence(game, name, content, weight=0.10):
         return
     game.save.set_flag(flag, True)
     lines = content.split("\n") if isinstance(content, str) else list(content)
-    log = game.save.arg("evidence", [])
-    if isinstance(log, list):
-        # Each entry: {"name": slug, "lines": [...], "weight": float}.
-        # Tolerates older bare-string entries without migrating or crashing.
-        if not any(isinstance(e, dict) and e.get("name") == name
-                   for e in log):
-            log.append({"name": name, "lines": list(lines), "weight": weight})
+    if name in CANONICAL_EVIDENCE:
+        log = game.save.arg("evidence", [])
+        if isinstance(log, list) and not any(
+                isinstance(e, dict) and e.get("name") == name for e in log):
+            log.append({"name": name, "lines": list(lines),
+                        "weight": CANONICAL_EVIDENCE[name]})
             game.save.set_arg("evidence", log)
             if hasattr(game, "_flash_notebook"):
                 game._flash_notebook()    # corner scribble: you wrote it down
