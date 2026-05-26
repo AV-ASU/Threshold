@@ -205,6 +205,12 @@ REINFORCE_COOLDOWN = 8.0      # seconds between waves (pulses, never floods)
 # is logged -- the PI jotting it down. Diegetic "you wrote it down (and that's
 # what doomed you)" feedback, paired with the floor seared a notch higher.
 NOTEBOOK_TOAST_DUR = 1.4
+# The opening drive -- a scripted, near-on-rails sequence (game state
+# "opening"): the PI's car rolling into Brimley at night, hours from anyone
+# in the northern dark, until the engine dies at the Arcadia Lodge. ESC skips
+# it silently, with no on-screen tell.
+OPENING_DUR = 7.0             # slice 1: fixed auto-drive before the hand-off
+OPENING_SCROLL_SPEED = 220.0  # px/sec the road scrolls -- the sense of speed
 
 # 80% combined-darkness cap. Full-screen black overlays
 # (visibility dip, apex wash, hide wash, YK vignette) decrement
@@ -251,7 +257,9 @@ class Game:
         self.text_input = TextInputModal(self.fonts, self.audio)
         self.player = None
         self.scene = None
-        self.state = "title"   # title, playing, paused, transition
+        self.state = "title"   # title, opening, playing, paused, transition
+        self._opening_t = 0.0
+        self._opening_scroll = 0.0
         # Title-screen ambient: the wind drone, no melody. The title
         # is meant to feel cold and unresolved -- if the player hesitates
         # on the menu, all they hear is the same wind that lives in the
@@ -471,7 +479,7 @@ class Game:
             if opt == "New Game":
                 self.save.new()
                 self.audio.play("confirm", 0.8)
-                self._start_play()
+                self._begin_opening()
             elif opt == "Quit":
                 pygame.quit(); sys.exit(0)
 
@@ -2378,6 +2386,8 @@ class Game:
             else:
                 if self.transition_t >= in_dur:
                     self.state = "playing"
+        elif self.state == "opening":
+            self._tick_opening(dt)
         if self.notice_text:
             self.notice_t -= dt
             if self.notice_t <= 0:
@@ -2403,8 +2413,99 @@ class Game:
         self.show_notice("You wake up in your bed.")
         self.load_scene_now("bedroom", "default")
 
+    # ---- The opening drive ----
+    def _begin_opening(self):
+        """Start the cold-open drive into Brimley (state "opening"). A
+        near-on-rails sequence; hands off to the normal start when it ends or
+        the player silently skips it (ESC)."""
+        self._opening_t = 0.0
+        self._opening_scroll = 0.0
+        self.state = "opening"
+
+    def _tick_opening(self, dt):
+        self._opening_t += dt
+        self._opening_scroll += OPENING_SCROLL_SPEED * dt
+        if self._opening_t >= OPENING_DUR:
+            self._end_opening()
+
+    def _end_opening(self):
+        """Hand the cold open off to the real start (reset, player, the
+        bedroom wake). Called on completion or a silent ESC skip."""
+        self._start_play()
+
+    def _draw_car(self, s, cx, cy):
+        """Top-down car, facing up the road (forward)."""
+        body = pygame.Rect(cx - 13, cy - 22, 26, 44)
+        pygame.draw.rect(s, (22, 20, 26), body, border_radius=5)
+        pygame.draw.rect(s, (10, 9, 12), body, 1, border_radius=5)
+        pygame.draw.rect(s, (30, 28, 34), (cx - 11, cy - 21, 22, 8), border_radius=2)
+        pygame.draw.rect(s, (38, 40, 48), (cx - 9, cy - 12, 18, 18), border_radius=3)
+        pygame.draw.circle(s, (235, 228, 190), (cx - 9, cy - 21), 2)   # headlights
+        pygame.draw.circle(s, (235, 228, 190), (cx + 9, cy - 21), 2)
+        pygame.draw.rect(s, (140, 30, 24), (cx - 11, cy + 18, 5, 3))   # taillights
+        pygame.draw.rect(s, (140, 30, 24), (cx + 6, cy + 18, 5, 3))
+
+    def _draw_opening(self):
+        """The night drive: a dark northern road scrolling past, pine walls
+        either side, the headlights reaching ahead, the car at the wheel.
+        Hours from anyone -- no other lights, no other cars."""
+        s = self.screen
+        W, H = s.get_size()
+        s.fill((8, 9, 14))
+        scroll = self._opening_scroll
+        road_w = int(W * 0.46)
+        rx0 = W // 2 - road_w // 2
+        # Dark pine walls flanking the road (remote, boreal, near-black).
+        pygame.draw.rect(s, (6, 8, 7), (0, 0, rx0 - 10, H))
+        pygame.draw.rect(s, (6, 8, 7), (rx0 + road_w + 10, 0, W - (rx0 + road_w + 10), H))
+        # Jagged pine tips along the inner edges, scrolling for parallax.
+        toff = int(scroll * 0.6) % 36
+        for side, ix in ((0, rx0 - 10), (1, rx0 + road_w + 10)):
+            ty = -36 + toff
+            while ty < H:
+                pts = ([(ix, ty), (ix - 11, ty + 18), (ix, ty + 36)] if side == 0
+                       else [(ix, ty), (ix + 11, ty + 18), (ix, ty + 36)])
+                pygame.draw.polygon(s, (12, 16, 13), pts)
+                ty += 30
+        # Gravel shoulders + the road.
+        pygame.draw.rect(s, (40, 38, 33), (rx0 - 10, 0, 10, H))
+        pygame.draw.rect(s, (40, 38, 33), (rx0 + road_w, 0, 10, H))
+        pygame.draw.rect(s, (26, 24, 29), (rx0, 0, road_w, H))
+        # Scrolling centre dashes -- the only sense of speed.
+        period = 50
+        y = -period + int(scroll) % period
+        while y < H:
+            pygame.draw.rect(s, (74, 70, 54), (W // 2 - 2, y, 4, 26))
+            y += period
+        # The car, low-centre, a slow idle bob.
+        cy = int(H * 0.78) + int(math.sin(self._opening_t * 5.0) * 1.5)
+        cx = W // 2
+        # Headlights: a soft warm pool fading up the road, plus two faint
+        # beams. The only light for miles.
+        glow = pygame.Surface((W, H), pygame.SRCALPHA)
+        for dx in (-8, 8):                                   # faint beams
+            pygame.draw.polygon(glow, (70, 62, 42, 24),
+                                [(cx + dx, cy - 18),
+                                 (cx + dx - 40, cy - int(H * 0.58)),
+                                 (cx + dx + 40, cy - int(H * 0.58))])
+        gx, gy = cx, cy - int(H * 0.14)                      # pool ahead of the car
+        for r in range(108, 6, -7):                          # soft radial falloff
+            pygame.draw.ellipse(glow, (130, 116, 76, 7),
+                                (gx - r, gy - int(r * 1.15), 2 * r, int(2 * r * 1.15)))
+        s.blit(glow, (0, 0), special_flags=pygame.BLEND_RGBA_ADD)
+        self._draw_car(s, cx, cy)
+        # Heavy dark vignette -- the dark presses in from every edge.
+        vig = pygame.Surface((W, H), pygame.SRCALPHA)
+        for i in range(60):
+            a = int(150 * (1 - i / 60) ** 1.5)
+            pygame.draw.rect(vig, (0, 0, 0, a), (i, i, W - 2 * i, H - 2 * i), 1)
+        s.blit(vig, (0, 0))
+
     # ---- Draw ----
     def draw_world(self):
+        if self.state == "opening":
+            self._draw_opening()
+            return
         self.screen.fill(C_BG)
         if not self.scene: return
         self.scene.draw(self.screen, self.cam_x, self.cam_y)
@@ -2802,6 +2903,11 @@ class Game:
             self.title_input(ev); return
         if self.state == "paused":
             self.pause_input(ev); return
+        if self.state == "opening":
+            # Silent skip: ESC ends the cold open, with no on-screen tell.
+            if ev.type == pygame.KEYDOWN and ev.key == pygame.K_ESCAPE:
+                self._end_opening()
+            return
         # THRESHOLD: during the closure sequence, only allow advancing
         # the dialog. Everything else (movement, interaction, save,
         # pause, inventory) is locked. The player cannot escape the
