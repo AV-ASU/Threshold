@@ -680,16 +680,3 @@ def basement_interact(game):
         "You came to ask your questions and drive home by morning. So did "
         "all of them.",
     ])
-
-
-# ---- abducted_hallway: cut from registry but keep stub ----
-
-def build_abducted_hallway():
-    """RETIRED in THRESHOLD. The function is preserved so any older
-    code that still imports it doesn't crash, but the scene is no
-    longer registered in scenes/__init__.py and is unreachable."""
-    floor = ["x" * 5 for _ in range(8)]
-    objects = (
-        ["WWWWW"] + ["W...W"] * 6 + ["WWWWW"]
-    )
-    return Scene("abducted_hallway", floor, objects, music="basement")

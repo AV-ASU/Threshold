@@ -9,7 +9,7 @@ for that key.
 """
 from .base import Scene, tile_footstep, OBJECT_DEFS, FLOOR_DEFS, TILE
 from .house import (build_bedroom, build_house, build_basement,
-                    build_abducted_hallway, build_son_room)
+                    build_son_room)
 from .our_house_area import build_our_house_area, build_woodshed
 from .village import build_village
 from .forest_path import build_forest_path
@@ -20,21 +20,11 @@ from .well import (build_well_bottom, build_well_passage,
 from .depths import (build_depths_antechamber, build_depths_procession,
                      build_depths_hall, build_depths_threshing,
                      build_depths_stair, build_dark, build_threshold)
-from .interiors import (
-    build_void, build_bandit_cave, build_shop,
-    build_easter_egg_room, build_kid_house, build_barn,
-    build_bandit_cave_west, build_bandit_cave_east, build_bandit_cave_boss,
-    build_void_boss,
-)
-from .villager_houses import (
-    build_old_man_house, build_fisherman_cottage,
-    build_haunted_house, build_haunted_house_glitch,
-    build_symbol_portal_room, build_locked_house,
-    build_daughter_room,
-)
-from .mistlands import (build_mistlands, build_mist_house,
-                        build_alter_room,
-                        build_void_room_1, build_void_room_2)
+from .interiors import (build_shop, build_kid_house, build_barn,
+                        build_void_boss)
+from .villager_houses import (build_old_man_house, build_fisherman_cottage,
+                              build_haunted_house, build_symbol_portal_room)
+from .mistlands import build_mistlands
 from .threshold_extras import (build_schoolhouse, build_graveyard,
                                 build_diner_gas_station,
                                 build_country_lane,
@@ -126,22 +116,17 @@ SCENE_BUILDERS = {
     "town":               build_town,
 }
 
-# CUT from registry (builders preserved for import safety only):
-#   void, bandit_cave, bandit_cave_west, bandit_cave_east,
-#   bandit_cave_boss, easter_egg_room, daughter_room,
-#   abducted_hallway, haunted_house_glitch, locked_house,
-#   mist_house, alter_room, void_room_1, void_room_2,
-#   underwater_room
+# DELETED (the prior bandit/combat/loot game -- removed wholesale, not just
+# unregistered): void, bandit_cave[_west/_east/_boss], easter_egg_room,
+# daughter_room, abducted_hallway, haunted_house_glitch, locked_house,
+# mist_house, alter_room, void_room_1/2. Any stale save or exit pointing at
+# one of these keys falls back to "bedroom" via load_scene below.
 
 
 def load_scene(key):
     if key not in SCENE_BUILDERS:
-        # Fallback: any save state pointing to a cut scene routes to
-        # the spare_room. The player wakes there if the world has
-        # forgotten where they were. (Cut keys: void, bandit_cave*,
-        # easter_egg_room, daughter_room, abducted_hallway,
-        # haunted_house_glitch, locked_house, mist_house, alter_room,
-        # void_room_1, void_room_2.)
+        # Any save or exit pointing at a deleted scene falls back to the
+        # player's room rather than crashing.
         key = "bedroom"
     return SCENE_BUILDERS[key]()
 

@@ -1294,7 +1294,7 @@ class Game:
             return
         holds_playscript = (self.player is not None
                      and self.player.inventory.has("playscript"))
-        if key in ("mistlands", "alter_room") or holds_playscript:
+        if key == "mistlands" or holds_playscript:
             self._draw_haze(170, (40, 40, 50, 80), 14, 24, 0.3, 30)
             self._draw_vignette()
 

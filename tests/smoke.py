@@ -1,11 +1,11 @@
-"""Smoke test for Dantes Great Adventure.
+"""Smoke test for THRESHOLD.
 
 Run from the project root with:
 
     python tests/smoke.py
 
 The test sets SDL to dummy drivers itself, so no env-var ceremony is
-needed. It verifies four invariants in order, fast-failing on the first
+needed. It verifies three invariants in order, fast-failing on the first
 broken one:
 
   1. Every scene in SCENE_BUILDERS builds without raising.
@@ -14,9 +14,8 @@ broken one:
      immediately and loop).
   3. Every exit (target_scene, spawn_id) resolves -- target exists in
      SCENE_BUILDERS and target.spawns has the named spawn id.
-  4. Statistical sample on the easter_egg_room drop suppression:
-       * first-visit (respawning=False) -> 100% drops fire,
-       * later visits (respawning=True) -> ~15% (1 - 0.85) accepted band 3-30%.
+  4. Every named spawn is reachable from its room's other spawns/exits
+     (flood-fill passability).
 """
 import os
 import random
@@ -189,62 +188,16 @@ def check_passability():
     return errors
 
 
-def check_easter_egg_drops():
-    """Replicate the gating logic from Game.apply_attack_damage. Validates
-    (1) first-entry: 100% drop rate, (2) subsequent entries: ~15%."""
-    from scenes.base import Scene
-    from scenes.interiors import _spawn_easter_egg_enemies
-    errors = 0
-    SAMPLES = 200
-
-    def simulate(respawning):
-        random.seed(12345)
-        fired = 0
-        droppers = 0
-        for _ in range(SAMPLES):
-            tmp = Scene("tmp", ["." * 4] * 4, ["." * 4] * 4)
-            _spawn_easter_egg_enemies(tmp, respawning=respawning)
-            for e in tmp.enemies:
-                if not e.drops:
-                    continue
-                droppers += 1
-                skip = (getattr(e, "respawning", False)
-                        and random.random() < 0.85)
-                if not skip:
-                    fired += 1
-        return fired, droppers
-
-    first_fired, first_total = simulate(respawning=False)
-    later_fired, later_total = simulate(respawning=True)
-    print(f"  first-visit: {first_fired}/{first_total} "
-          f"({100.0*first_fired/first_total:.1f}%)")
-    print(f"  later-visit: {later_fired}/{later_total} "
-          f"({100.0*later_fired/later_total:.1f}%)")
-    if first_fired != first_total:
-        errors += fail(
-            f"first-visit drops should be 100% ({first_total}); got {first_fired}"
-        )
-    later_pct = 100.0 * later_fired / later_total
-    if not (3.0 <= later_pct <= 30.0):
-        errors += fail(
-            f"later-visit drop pct should be ~15% (accept 3-30%); got "
-            f"{later_pct:.1f}%"
-        )
-    return errors
-
-
 def main():
     failures = 0
-    print("[1/5] scene builders ...")
+    print("[1/4] scene builders ...")
     failures += check_scene_builds()
-    print("[2/5] spawn walkability + non-overlapping with exits ...")
+    print("[2/4] spawn walkability + non-overlapping with exits ...")
     failures += check_spawns_walkable()
-    print("[3/5] exits resolve to target spawns ...")
+    print("[3/4] exits resolve to target spawns ...")
     failures += check_exits_resolve()
-    print("[4/5] room passability (flood-fill spawns -> exits/props) ...")
+    print("[4/4] room passability (flood-fill spawns -> exits/props) ...")
     failures += check_passability()
-    print("[5/5] easter_egg drop-rate (200 samples) ...")
-    failures += check_easter_egg_drops()
     if failures:
         print(f"\n{failures} failure(s).")
         sys.exit(1)
