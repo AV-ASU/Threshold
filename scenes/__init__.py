@@ -48,13 +48,11 @@ from .threshold_extras import (build_schoolhouse, build_graveyard,
 
 
 # THRESHOLD scene registry. Keys map to the new fiction:
-#   bedroom            -> spare_room (player's cot in Clerk's house)
-#   house              -> innkeeper_house (kitchen + living + hallway)
-#   son_room           -> innkeeper_bedroom (locked; keys, playscript, robe)
-#   basement           -> innkeeper_basement (Mom's photo, notebook,
-#                                             charcoal, flashlight,
-#                                             bulkhead exit)
-#   our_house_area     -> outside_innkeeper_house (yard, pickup, shed)
+#   bedroom            -> the player's room at the Arcadia (the cot)
+#   house              -> the Arcadia ground floor (Clerk's desk + floor)
+#   son_room           -> the Clerk's room (locked; flavor: his cult robe)
+#   basement           -> the Arcadia cellar (the Ledger #3; the workbench)
+#   our_house_area     -> the Arcadia yard (the dead car, the woodshed)
 #   kid_house          -> kid_house (drawings on walls)
 #   village            -> town_crossroads (well + payphone)
 #   shop               -> general_store
@@ -72,10 +70,10 @@ from .threshold_extras import (build_schoolhouse, build_graveyard,
 #   graveyard          -> NEW: behind the church
 #   diner_gas_station  -> NEW: edge of town; player's car parked here
 SCENE_BUILDERS = {
-    # Player's quarters (the Clerk's house, above the inn)
-    "bedroom":            build_bedroom,            # -> spare_room
-    "house":              build_house,              # -> innkeeper_house
-    "son_room":           build_son_room,           # -> innkeeper_bedroom
+    # The Arcadia Lodge (your room, the ground floor, the Clerk's room)
+    "bedroom":            build_bedroom,            # the player's room
+    "house":              build_house,              # the ground floor
+    "son_room":           build_son_room,           # the Clerk's room
     "basement":           build_basement,           # -> innkeeper_basement
     "our_house_area":     build_our_house_area,     # -> yard
     "woodshed":           build_woodshed,           # -> Clerk's shed interior

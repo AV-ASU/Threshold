@@ -422,15 +422,17 @@ def house_interact(game):
     return
 
 
-# ---- Mara's Room (key: 'son_room') ----
-# Mara Blaine's rented room at the Arcadia. Holds evidence #1 (her room --
-# the robe + the willing-departure letter) and #2 (her journal). The playscript
-# behind the robes is the deep-gate key (load-bearing -- NARRATIVE §5/§9).
+# ---- the Clerk's Room (key: 'son_room') ----
+# The Lodge Clerk's private room, off the main floor. No evidence lives
+# here -- Mara's room (robe + letter, #1) and the journal (#2) moved to the
+# Sorting-Hall cell and the barn, and the Playscript to the Scriptorium
+# (scenes/well.py, scenes/interiors.py). The one tell is a pressed cult
+# robe in his closet: the smiling trap-keeper is one of them.
 
 def build_son_room():
-    """Mara's rented room at the lodge. A closet (her cult robe + the playscript
-    behind it), a dresser (her journal), a window. Reads as the room of
-    someone who meant to stay a while -- and then chose not to come back."""
+    """The Lodge Clerk's private room. A bed, a closet (his pressed cult
+    robe -- the tell that he's complicit), a bare dresser (he keeps your
+    car keys downstairs, behind the tab), a window."""
     floor = [
         "==========",
         "==========",
@@ -465,15 +467,17 @@ def build_son_room():
     # because col 3 is the door column -- a solid prop directly above
     # the door previously trapped the player inside.
     sc._dresser_pos = (5 * TILE + 16, 6 * TILE + 16)
-    # The closet (shelf sprite) holds the robe and (behind it) the playscript.
+    # The closet (shelf sprite) holds the Clerk's pressed cult robe -- a
+    # flavor clue (he's complicit), not counted evidence.
     sc._closet_pos = (7 * TILE + 16, 4 * TILE + 16)
-    # Hide spots: BESIDE the bed (col 4 is walkable; the bed is at cols 2-3).
+    # Hide spots: beside the bed, and inside the Clerk's wardrobe.
     sc.hide_spots = [
         (4 * TILE + 16, 4 * TILE + 16, "under"),
+        (7 * TILE + 16, 4 * TILE + 16, "in"),
     ]
 
-    # Sized darkwood furniture: a 2x2 bed, a tall closet (the robe/playscript
-    # live here -> _closet_pos), a low dresser (car keys -> _dresser_pos).
+    # Sized darkwood furniture: a 2x2 bed, a tall closet (the Clerk's robe
+    # -> _closet_pos), a low dresser (bare -> _dresser_pos).
     sc.add_furniture("bed", [(2, 3), (3, 3), (2, 4), (3, 4)], w=56, h=56)
     sc.add_furniture("wardrobe", [(7, 3), (7, 4)], w=26, h=54)
     sc.add_furniture("table", [(5, 6), (6, 6)], w=54, h=32)
@@ -495,81 +499,28 @@ def build_son_room():
         sc.add_decoration(Decoration(40 + i * 60,
                                      60 + (i % 2) * 40, "mote"))
 
-    sc.on_enter_fn = innkeeper_bedroom_on_enter
-    sc.on_interact_fn = innkeeper_bedroom_interact
+    sc.on_interact_fn = clerk_room_interact
     return sc
 
 
-def innkeeper_bedroom_on_enter(game, scene):
-    """The robe + playscript are gated by closet interactions (handled
-    in innkeeper_bedroom_interact). After the playscript is taken, the
-    closet becomes a hide spot. The car keys USED to spawn on
-    the dresser here, but the Clerk now holds them until the
-    player settles a tab (bottle quest), so the dresser is bare."""
-    if game.save.flag("playscript_taken_innkeeper"):
-        # Closet is now empty -- becomes a hide spot.
-        if not any(h[2] == "in" for h in scene.hide_spots):
-            scene.hide_spots.append(
-                (scene._closet_pos[0], scene._closet_pos[1], "in")
-            )
-
-
-def innkeeper_bedroom_interact(game):
-    """Mara's room. CLOSET (E): her cult robe + evidence #1 (the
-    willing-departure read), then the playscript behind it (the deep-gate key).
-    DRESSER (E): her journal + evidence #2 (the morning entries)."""
+def clerk_room_interact(game):
+    """The Clerk's room. CLOSET (E): his pressed cult robe -- the tell that
+    the smiling trap-keeper is one of them. A one-shot flavor clue, NOT
+    counted evidence ('clerk_robe' is not in CANONICAL_EVIDENCE, so it
+    narrates but never moves the King-gate). DRESSER (E): bare."""
     sc = game.scene
     px, py = game.player.x, game.player.y
     cx, cy = sc._closet_pos
-    dx, dy = sc._dresser_pos
-
-    # --- the closet: her robe (+ evidence #1), then the playscript ---
     if abs(px - cx) <= 40 and abs(py - cy) <= 40:
-        if not game.save.flag("robe_taken"):
-            game.save.set_flag("robe_taken", True)
-            game.player.inventory.add("robe", 1)
-            game.audio.play("pickup_rare", 0.7)
-            _evidence(game, "maras_room", [
-                "Cult robes in her closet -- and a bare hanger where she "
-                "took hers.",
-                "On the dresser, her journal. Beside it a letter to her "
-                "father: folded, stamped, never mailed. It opens \"Dad.\"",
-                "\"...I'm sorry for how I left. The dreams aren't dreams "
-                "anymore -- they're full of answers. I'm just hunting the "
-                "questions now. Don't send anyone. I'm not lost. I've never "
-                "been this close.\"",
-                "Blaine hired you to bring her home. She wasn't taken. She "
-                "left.",
-            ])
-            return
-        if not game.save.flag("playscript_taken_innkeeper"):
-            game.save.set_flag("playscript_taken_innkeeper", True)
-            game.player.inventory.add("playscript", 1)
-            game.audio.play("pickup_rare", 0.7)
-            game.show_notice("A pale playscript, behind the robes. Heavier than it "
-                             "looks.")
-            return
-        game.show_notice("The closet is empty now.")
+        _evidence(game, "clerk_robe",
+                  "A cult robe hangs in the Clerk's closet, pressed and "
+                  "folded, ready. The smiling man at the desk is one of "
+                  "them.")
         return
-
-    # --- the dresser: her journal -- evidence #2, and you pocket it.
-    # The journal ITEM lives here now (not the cellar); examining it later
-    # in your kit reaches page 3 -> the flashback (ui/inventory_ui.py). ---
+    dx, dy = sc._dresser_pos
     if abs(px - dx) <= 40 and abs(py - dy) <= 40:
-        if game.save.flag("evidence_maras_journal"):
-            game.show_notice("You have her journal. Read it again from your "
-                             "kit.")
-            return
-        game.player.inventory.add("mom_notebook", 1)
-        game.audio.play("pickup_rare", 0.7)
-        _evidence(game, "maras_journal", [
-            "Her journal lies open on the dresser. You pocket it. The last "
-            "entries, in a hand that gets calmer as it goes:",
-            "\"I just had this urge to go north.\"",
-            "\"I'm a long, long way from home now. And I feel closer.\"",
-            "\"Stopped for gas in this town. Everyone smiles like I'm "
-            "already home.\"",
-        ])
+        game.show_notice("His dresser. Bare -- he keeps your car keys "
+                         "downstairs, behind your tab.")
 
 
 # ---- innkeeper_basement (key: 'basement') ----
