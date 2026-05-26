@@ -800,10 +800,14 @@ def mist_house_interact(game):
     cx, cy = getattr(game.scene, "_mist_chest_pos", (None, None))
     if cx is None:
         return
-    chest_interact(game, game.scene, cx, cy,
-                   "chest_mist", ["playscript"])
-    if game.player.inventory.has("playscript") and not game.save.flag("playscript_taken"):
-        game.save.set_flag("playscript_taken", True)
+    # The Playscript moved to the Scriptorium (the deep-gate key, found
+    # deep in the Works). This surface chest is empty now -- which kills
+    # the old soft-lock (you can no longer carry the gate-key to the
+    # Clerk or the altar and lose it) and leaves the post-pickup shadows +
+    # offering chain dormant, since playscript_taken is never set here.
+    # (NARRATIVE §7; the now-dead Clerk turn-in / altar / shadow code is
+    # unreachable and can be removed in a follow-up cleanup.)
+    chest_interact(game, game.scene, cx, cy, "chest_mist", [])
 
 
 def build_alter_room():
