@@ -512,4 +512,12 @@ def build_works_deepstair():
                          "snaps. Only down, now.", duration=4.5)
         game.begin_transition("depths_antechamber", "from_above")
     sc.on_interact_fn = _interact
+
+    def _on_exit(game, scene):
+        # Re-arm the two-press fork each visit: clearing this means a player
+        # who steps away to weigh the Spread road and returns gets the
+        # warning again before the irreversible commit -- never a lone-press
+        # point-of-no-return. Harmless after committing (deepstair_open wins).
+        game.save.set_flag("deepstair_fork_seen", False)
+    sc.on_exit_fn = _on_exit
     return sc

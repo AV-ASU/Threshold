@@ -143,7 +143,7 @@ class InventoryUI:
         eq = inv.equipped
         # Combat is gone, so only the Tool slot is meaningful.
         # The Worn slot is vestigial -- not shown.
-        eq_str = "Tool:  " + (ITEM_DEFS[eq["weapon"]]["name"]
+        eq_str = "Tool:  " + (ITEM_DEFS.get(eq["weapon"], {}).get("name", eq["weapon"])
                               if eq["weapon"] else "(none)")
         surf.blit(self.fonts["sm"].render(eq_str, True, C_WHITE),
                   (panel.x + 20, panel.y + 50))

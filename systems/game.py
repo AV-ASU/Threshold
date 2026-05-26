@@ -136,6 +136,14 @@ CULT_DARK_SCENES = {"depths_antechamber", "depths_procession",
 # (you are already safe; the cramped read is wrong here).
 SAFE_SCENES = {"bedroom", "house", "son_room", "kid_house"}
 
+# The King never manifests in these: the homey refuges above PLUS the two
+# narrative set-pieces whose whole work is recognition / resolution rather
+# than a chase -- the hive (dark) and the Threshold itself. Without this a
+# curse carried down from the surface keeps spawning Watchers here (they
+# ignore CULTIST_SCENES gating), drives visibility to 1.0, and lets the
+# apex erupt in the one room that must not host him.
+KING_FREE_SCENES = SAFE_SCENES | {"dark", "threshold"}
+
 # Dim-but-clear interiors. The flashlight cone still draws -- the
 # cellar wants the light -- but dread / apex / dip overlays are
 # suppressed so the navigation read stays usable. Hide vignette
@@ -1358,7 +1366,7 @@ class Game:
         # the refuge. Standing inside it lifts the apex pressure --
         # only stepping out re-engages it. Reads as a deliberate
         # sanctuary mechanic rather than a hole in the horror.
-        if (self.scene.key in SAFE_SCENES
+        if (self.scene.key in KING_FREE_SCENES
                 or self.scene.key in DIM_SAFE_SCENES):
             return
         t = pygame.time.get_ticks() / 1000.0
@@ -2024,7 +2032,7 @@ class Game:
         by hiding -- and he dissolves. Safe rooms never host him."""
         if self.scene is None or self.player is None:
             return
-        in_safe = self.scene.key in SAFE_SCENES
+        in_safe = self.scene.key in KING_FREE_SCENES
         if self._reinforce_t > 0:
             self._reinforce_t -= dt
         if self._king is None:
@@ -2119,7 +2127,7 @@ class Game:
         # Drop any that left the scene's npc list (swept on load/death).
         self._watchers = [w for w in self._watchers
                           if w in self.scene.npcs]
-        if self._curse_level <= 0 or self.scene.key in SAFE_SCENES:
+        if self._curse_level <= 0 or self.scene.key in KING_FREE_SCENES:
             if self._watchers:
                 self.scene.npcs = [n for n in self.scene.npcs
                                    if getattr(n, "tag", "") != "watcher"]
