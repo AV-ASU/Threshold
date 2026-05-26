@@ -8,11 +8,13 @@ import time
 import re
 
 
-def _evidence(game, name, content):
+def _evidence(game, name, content, weight=0.10):
     """Surface a one-shot narrator line and record it in the save's
     `evidence` list so the notebook UI can show it. Gated by a
     per-name save flag so the same beat never re-fires.
 
+    `weight` is how much this piece raises the visibility FLOOR -- the
+    King-in-Yellow "knowing dooms you" engine. Deeper finds weigh more.
     Signature preserved for callers (scenes + game.py)."""
     if game is None or game.save is None:
         return
@@ -23,11 +25,11 @@ def _evidence(game, name, content):
     lines = content.split("\n") if isinstance(content, str) else list(content)
     log = game.save.arg("evidence", [])
     if isinstance(log, list):
-        # Each entry: {"name": slug, "lines": [...]}. Tolerates older
-        # bare-string entries without migrating or crashing.
+        # Each entry: {"name": slug, "lines": [...], "weight": float}.
+        # Tolerates older bare-string entries without migrating or crashing.
         if not any(isinstance(e, dict) and e.get("name") == name
                    for e in log):
-            log.append({"name": name, "lines": list(lines)})
+            log.append({"name": name, "lines": list(lines), "weight": weight})
             game.save.set_arg("evidence", log)
     game.dialog.show(lines,
                      speaker="", voice="blip_soft",

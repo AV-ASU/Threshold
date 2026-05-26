@@ -188,6 +188,20 @@ VIS_WATCHER_OPEN = 0.03
 VIS_WATCHER_HIDDEN = 0.015
 VIS_GAZE = 0.12               # a cultist's gaze fills the meter fast
 
+# Evidence raises a VISIBILITY FLOOR: the more of the case you understand, the
+# higher your baseline exposure. You can hide back down TO the floor but never
+# below it -- so late, hiding stops saving you. The floor is summed from each
+# logged evidence's weight (scenes.dialogue._evidence); deeper finds weigh more.
+# Capped just under "unshakeable" so only the last beats pin him. (NARRATIVE §3.)
+VIS_FLOOR_CAP = 0.9
+EVIDENCE_FLOOR_DEFAULT = 0.10  # per-evidence floor weight if none recorded
+# Investigating arms the apex. Below this many evidence, a maxed meter musters a
+# cultist reinforcement wave at your entry instead of the King -- the net
+# tightening, not yet lethal. At/above it, the same trigger brings the King.
+KING_GATE_EVIDENCE = 3
+REINFORCE_COUNT = 2            # cultists per wave
+REINFORCE_COOLDOWN = 8.0      # seconds between waves (pulses, never floods)
+
 # 80% combined-darkness cap. Full-screen black overlays
 # (visibility dip, apex wash, hide wash, YK vignette) decrement
 # this budget per frame so the screen never goes opaque even when
@@ -299,6 +313,7 @@ class Game:
         # the King materialises at the doorway and hunts; drop below
         # 0.90 and he dissolves. See _tick_visibility + _tick_king.
         self.visibility = 0.0
+        self._vis_floor = 0.0        # evidence-driven minimum (NARRATIVE §3)
         # Heartbeat schedule -- time to next thump. Kicks in only at
         # proximity >= 0.70 and only while the player is unhidden.
         # Period shortens with proximity so the pulse races at apex.
@@ -328,6 +343,7 @@ class Game:
         # See _tick_king.
         self._king = None
         self._king_anchor = None
+        self._reinforce_t = 0.0      # cultist reinforcement-wave cooldown
 
         # ---- THRESHOLD: cultists, the curse, and Watchers ----
         # Regular cultists roam the outdoor scenes (chaser AI: scout,
@@ -484,12 +500,14 @@ class Game:
         in-memory run state from a previous run is cleared here."""
         # Visibility meter + the King in Yellow
         self.visibility = 0.0
+        self._vis_floor = 0.0
         self._last_pos = (0.0, 0.0)
         self._chant_t = 0.0
         self._breath_t = 0.0
         self._heartbeat_t = 0.0
         self._king = None
         self._king_anchor = None
+        self._reinforce_t = 0.0
         # Cultists, the curse, and Watchers
         self._curse_level = 0
         self._watchers = []
@@ -1808,25 +1826,33 @@ class Game:
         return n
 
     def _spawn_cultist(self, tag, kind, speed=0.85, gaze_range=180,
-                       movement="chaser", name=""):
-        """Plant a cultist at the farthest walkable scene corner from
-        the player, so they enter from the edges rather than on top of
-        you. Returns the NPC, or None if no corner is walkable."""
+                       movement="chaser", name="", at=None):
+        """Plant a cultist. If `at` (x, y) is given and walkable, they enter
+        there (the door you came in by -- for reinforcement waves); otherwise
+        at the farthest walkable scene corner from the player, so they enter
+        from the edges rather than on top of you. Returns the NPC, or None."""
         from entities.npc import NPC
         scene = self.scene
-        corners = [
-            (4 * Scene.TILE, 4 * Scene.TILE),
-            ((scene.w - 4) * Scene.TILE, 4 * Scene.TILE),
-            (4 * Scene.TILE, (scene.h - 4) * Scene.TILE),
-            ((scene.w - 4) * Scene.TILE, (scene.h - 4) * Scene.TILE),
-        ]
-        best, best_d = None, -1.0
-        for sx, sy in corners:
-            if scene.is_solid_at(sx, sy):
-                continue
-            d = math.hypot(sx - self.player.x, sy - self.player.y)
-            if d > best_d:
-                best_d, best = d, (sx, sy)
+        best = None
+        if at is not None:
+            ax = at[0] + random.uniform(-12, 12)
+            ay = at[1] + random.uniform(-12, 12)
+            if not scene.is_solid_at(ax, ay):
+                best = (ax, ay)
+        if best is None:
+            corners = [
+                (4 * Scene.TILE, 4 * Scene.TILE),
+                ((scene.w - 4) * Scene.TILE, 4 * Scene.TILE),
+                (4 * Scene.TILE, (scene.h - 4) * Scene.TILE),
+                ((scene.w - 4) * Scene.TILE, (scene.h - 4) * Scene.TILE),
+            ]
+            best_d = -1.0
+            for sx, sy in corners:
+                if scene.is_solid_at(sx, sy):
+                    continue
+                d = math.hypot(sx - self.player.x, sy - self.player.y)
+                if d > best_d:
+                    best_d, best = d, (sx, sy)
         if best is None:
             return None
         n = NPC(best[0], best[1], name, kind,
@@ -1997,7 +2023,28 @@ class Game:
             rise = (n_watch * VIS_WATCHER_OPEN
                     + self._gaze_count * VIS_GAZE)
             self.visibility += dt * (rise - VIS_IDLE_DECAY)
-        self.visibility = max(0.0, min(1.0, self.visibility))
+        # Evidence sets a FLOOR the meter can't bleed below -- the more you
+        # understand, the higher your baseline exposure to the King.
+        self._vis_floor = self._evidence_floor()
+        self.visibility = max(self._vis_floor, min(1.0, self.visibility))
+
+    def _evidence_count(self):
+        """How many distinct evidence beats have been logged -- the gate
+        that arms the King (NARRATIVE §3)."""
+        log = self.save.arg("evidence", []) if self.save else []
+        return len(log) if isinstance(log, list) else 0
+
+    def _evidence_floor(self):
+        """Visibility floor summed from each logged evidence's weight. The
+        more of the case you understand, the higher your baseline exposure;
+        capped just under unshakeable. Tolerates legacy bare-string entries."""
+        log = self.save.arg("evidence", []) if self.save else []
+        if not isinstance(log, list):
+            return 0.0
+        total = sum(e.get("weight", EVIDENCE_FLOOR_DEFAULT)
+                    if isinstance(e, dict) else EVIDENCE_FLOOR_DEFAULT
+                    for e in log)
+        return min(VIS_FLOOR_CAP, total)
 
     def _tick_king(self, dt):
         """The King in Yellow -- the lethal apex. The instant
@@ -2008,10 +2055,17 @@ class Game:
         if self.scene is None or self.player is None:
             return
         in_safe = self.scene.key in SAFE_SCENES
+        if self._reinforce_t > 0:
+            self._reinforce_t -= dt
         if self._king is None:
             self.audio.king_tone(False)
             if self.visibility >= 1.0 and not in_safe:
-                self._spawn_king()
+                # Investigating arms the apex: 3+ evidence and a maxed meter
+                # bring the King himself; below that, only a cultist wave.
+                if self._evidence_count() >= KING_GATE_EVIDENCE:
+                    self._spawn_king()
+                else:
+                    self._muster_reinforcements()
             return
         # He is here. Dissolve if visibility falls or the player
         # reaches a refuge; otherwise check for the catch.
@@ -2030,6 +2084,21 @@ class Game:
         # kill either -- that ramp is the player's grace window.
         if d < 24 and getattr(self._king, "_birth", 1.0) >= 1.0:
             self._trigger_death("king")
+
+    def _muster_reinforcements(self):
+        """Below the evidence gate, a maxed meter musters a cultist wave at the
+        entry the player came in by -- the net tightening, not yet lethal.
+        Pulsed on a cooldown so it never floods, and only where the cult can
+        actually hold (CULTIST_SCENES); elsewhere the meter just sits maxed."""
+        if self._reinforce_t > 0 or self.scene is None:
+            return
+        if self.scene.key not in CULTIST_SCENES:
+            return
+        self._reinforce_t = REINFORCE_COOLDOWN
+        for _ in range(REINFORCE_COUNT):
+            self._spawn_cultist("cult_regular", "cultist",
+                                 speed=0.85, gaze_range=180,
+                                 at=self._king_anchor)
 
     def _spawn_king(self):
         """Materialise the King at the entry doorway (_king_anchor),
