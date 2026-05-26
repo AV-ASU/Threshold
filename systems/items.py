@@ -57,10 +57,6 @@ ITEM_DEFS = {
                        "kind": "weapon",
                        "desc": "An axe for chopping wood.",
                        "atk": 0},
-    # ---- Backward-compat stubs (in DEFS so old saves don't crash;
-    #      not dropped by anything new) ----
-    "old_pistol":    {"name": "Old Pistol",    "kind": "weapon",
-                       "desc": "An old pistol. No bullets.", "atk": 0},
     # ---- Vestigial keys / lore ----
     "rope":          {"name": "Coil of Rope",  "kind": "key",
                        "desc": "A coil of rope."},

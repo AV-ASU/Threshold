@@ -87,12 +87,9 @@ class Player:
 
     def release_charge(self, audio=None):
         """End the press-and-hold. Returns one of: None (nothing fired),
-        "swing" (regular tap melee), "swing_charged" (held melee), or
-        "shoot" (pistol). Pistol fires its own ranged attack regardless
-        of how long the input was held -- charging a gun is not a
-        thing -- and the bare-fist branch never gets the charge bonus
-        either; only an equipped melee weapon can deliver a charged
-        swing."""
+        "swing" (regular tap melee), or "swing_charged" (held melee). The
+        bare-fist branch never gets the charge bonus; only an equipped
+        melee weapon can deliver a charged swing."""
         if not self.charging:
             return None
         held = self.charge_t
@@ -102,11 +99,6 @@ class Player:
             return None
         weapon = self.inventory.equipped["weapon"]
         self.swing_dir = self.facing
-        if weapon == "old_pistol":
-            self.attack_timer = 0.55
-            self.swing_t = 0.0
-            self.swing_charged = False
-            return "shoot"
         if weapon is not None and held >= CHARGE_THRESHOLD:
             self.attack_timer = CHARGE_COOLDOWN
             self.swing_t = CHARGE_SWING_T

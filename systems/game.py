@@ -1089,19 +1089,12 @@ class Game:
         self.player.start_charge()
 
     def player_release_charge(self):
-        """Release attack input. Routes to the right SFX (and spawns a
-        projectile for pistol). Pistol fires a bullet in player.facing;
-        bare-fist and melee weapons keep the swing animation. A
-        charged lumber_axe also tries to break adjacent debris in the
-        facing direction."""
+        """Release attack input. Plays the swing SFX; a charged lumber_axe
+        also tries to break adjacent debris in the facing direction."""
         result = self.player.release_charge()
         if result is None:
             return
-        if result == "shoot":
-            self.audio.play("pistol_shot", 0.6)
-            self._spawn_player_bullet()
-        else:
-            self.audio.play("swing", 0.6)
+        self.audio.play("swing", 0.6)
         if (result == "swing_charged"
                 and self.player.inventory.equipped["weapon"] == "lumber_axe"):
             self._try_break_debris()
@@ -1128,22 +1121,6 @@ class Game:
                     self.save.set_flag(f"debris_broken_{sc.key}_{tx}_{ty}", True)
                     self.show_notice("The pile splinters apart.")
                     return
-
-    def _spawn_player_bullet(self):
-        """Spawn a Projectile in the player's facing direction with the
-        equipped pistol's atk as damage. Lives in the same projectiles
-        list as enemy shots, but `friendly=True` flips collision so it
-        damages enemies instead of the player."""
-        from entities.enemy import Projectile
-        fx, fy = self.player.facing
-        dmg = self.player.inventory.weapon_atk()
-        proj = Projectile(self.player.x + fx * 14,
-                          self.player.y + fy * 14,
-                          fx, fy, dmg=dmg,
-                          color=(255, 240, 180), speed=380,
-                          lifespan=0.9)
-        proj.friendly = True
-        self.scene.projectiles.append(proj)
 
     def apply_attack_damage(self):
         rect, dmg = self.player.attack_hitbox()

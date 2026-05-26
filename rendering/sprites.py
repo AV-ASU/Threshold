@@ -272,30 +272,6 @@ def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False,
             b = birth
             g = gait if gait is not None else t * 7.0
         _draw_king(surf, x, y, facing, t, b, g, threat)
-    elif kind == "wolf":
-        # Lean grey quadruped, low to the ground. Yellow eyes give a
-        # threat read at a glance even with the small sprite size.
-        body = (90, 88, 100)
-        dark = (50, 48, 56)
-        # Torso (low horizontal oval)
-        pygame.draw.ellipse(surf, body, (x - 11, y - 4, 22, 12))
-        pygame.draw.ellipse(surf, dark, (x - 11, y - 4, 22, 12), 1)
-        # Tail
-        pygame.draw.line(surf, dark, (x - 11, y - 4), (x - 18, y - 8), 2)
-        # Legs (4 short stumps)
-        for lx in (-7, -3, 3, 7):
-            pygame.draw.rect(surf, dark, (x + lx - 1, y + 4, 2, 6))
-        # Head (right side)
-        pygame.draw.circle(surf, body, (x + 8, y - 8), 6)
-        pygame.draw.circle(surf, dark, (x + 8, y - 8), 6, 1)
-        # Snout
-        pygame.draw.polygon(surf, body, [(x + 11, y - 6), (x + 17, y - 5), (x + 11, y - 4)])
-        pygame.draw.polygon(surf, dark, [(x + 11, y - 6), (x + 17, y - 5), (x + 11, y - 4)], 1)
-        # Pointed ears (two triangles)
-        pygame.draw.polygon(surf, dark, [(x + 4, y - 12), (x + 6, y - 17), (x + 8, y - 12)])
-        pygame.draw.polygon(surf, dark, [(x + 9, y - 12), (x + 11, y - 17), (x + 13, y - 12)])
-        # Eye (yellow)
-        pygame.draw.circle(surf, (220, 200, 60), (x + 9, y - 9), 1)
     elif kind == "black_figure":
         # Pure-black humanoid silhouette, NPC proportions. No eyes, no
         # facial detail -- just the hole-shaped outline of a person.
