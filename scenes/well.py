@@ -62,18 +62,11 @@ def build_well_bottom():
     ]
     _ambient(sc, "low_pulse", 0.12, 9.0, 14.0)
 
-    def _on_enter(game, scene):
-        # The rope breaks the instant you come down carrying the playscript.
-        # From here on there is nowhere left but deeper. One-shot,
-        # persisted via the well_rope_broken flag.
-        if (game.player.inventory.has("playscript")
-                and not game.save.flag("well_rope_broken")):
-            game.save.set_flag("well_rope_broken", True)
-            game.audio.play("low_pulse", 0.7)
-            game.show_notice(
-                "The rope snaps somewhere above you. No climbing back now.",
-                duration=4.0)
-    sc.on_enter_fn = _on_enter
+    # The rope no longer snaps on the way down -- you can retreat up the
+    # ladder through the whole Works gauntlet. The point of no return is
+    # OPENING THE DEEP STAIR (committing to the Depths); that snaps it
+    # (works_deepstair, below). The playscript now lives deep in the
+    # Works (the Scriptorium), so it is never carried down from above.
 
     def _interact(game):
         px, py = game.player.x, game.player.y
@@ -333,11 +326,25 @@ def build_works_scriptorium():
 
     def _interact(game):
         dx, dy = sc._desk_pos
-        if (abs(game.player.x - dx) < 40 and abs(game.player.y - dy) < 40):
+        if (abs(game.player.x - dx) > 40 or abs(game.player.y - dy) > 40):
+            return
+        # The Playscript -- the deep-gate key -- is the one bound, whole
+        # Play among the cult's endless flat copies. Taken here, carried
+        # to the Deep Stair.
+        if not game.save.flag("scriptorium_playscript_taken"):
+            game.save.set_flag("scriptorium_playscript_taken", True)
+            game.player.inventory.add("playscript", 1)
+            game.audio.play("pickup_rare", 0.7)
+            game.audio.play("low_pulse", 0.45)
             game.show_notice(
-                "The Sign, copied over and over across every surface -- a "
-                "thousand flat echoes. None of them the thing itself.",
-                duration=4.0)
+                "Among the endless copies, one book is bound and whole -- "
+                "the Play itself, a mask pressed into its yellow cover. You "
+                "take it.", duration=4.0)
+            return
+        game.show_notice(
+            "The Sign, copied over and over across every surface -- a "
+            "thousand flat echoes. None of them the thing itself.",
+            duration=4.0)
     sc.on_interact_fn = _interact
     return sc
 
@@ -454,15 +461,19 @@ def build_works_deepstair():
             return
         if not game.player.inventory.has("playscript"):
             game.audio.play("door_locked", 0.5)
-            game.show_notice("A socket in the black stone. Something round "
-                             "belongs here.")
+            game.show_notice("A slot in the black stone, the size of a "
+                             "folded book. Something belongs here.")
             return
         game.player.inventory.remove("playscript", 1)
         game.save.set_flag("deepstair_open", True)
+        # The point of no return: committing the Play to the stair snaps
+        # the rope far above. The ladder out of the Works is dead now.
+        game.save.set_flag("well_rope_broken", True)
         game.audio.force_silence()
         game.audio.play("low_pulse", 0.95)
-        game.show_notice("The stone drinks the playscript. The stair grinds open.",
-                         duration=4.0)
+        game.show_notice("The stone drinks the Play. The stair grinds open -- "
+                         "and far above, the rope snaps. Only down, now.",
+                         duration=4.5)
         game.begin_transition("depths_antechamber", "from_above")
     sc.on_interact_fn = _interact
     return sc
