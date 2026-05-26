@@ -824,6 +824,7 @@ DISPLAY_NAMES = {
     "bedroom":              "the Spare Room",
     "house":                "the Inn",
     "son_room":              "the Clerk's Room",
+    "maras_room":           "Mara's Room",
     "basement":             "the Cellar",
     "our_house_area":       "the Yard",
     "kid_house":            "the Kid's House",

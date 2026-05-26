@@ -180,6 +180,7 @@ def build_works_sorting():
     floor, objs = _box(16, 10)
     objs[5][0] = "F"          # west -> back to the vats
     objs[5][15] = "E"         # east -> the scriptorium
+    objs[0][13] = "M"         # north -> Mara's cell (a side room)
     for tx in (3, 6, 9, 12):  # long sorting tables, two rows
         objs[3][tx] = "t"
         objs[7][tx] = "t"
@@ -187,9 +188,11 @@ def build_works_sorting():
     sc = Scene("works_sorting", floor, objects, music="basement")
     sc.add_exit("F", "works_vats", "from_below")
     sc.add_exit("E", "works_scriptorium", "from_above")
+    sc.add_exit("M", "maras_room", "from_works_sorting")
     sc.set_spawn("default",    7, 5)
     sc.set_spawn("from_above", 1, 5)
     sc.set_spawn("from_below", 14, 5)
+    sc.set_spawn("from_maras_room", 13, 1)   # back down from Mara's cell
 
     # The belongings of the vanished, sorted into piles. Closed cases
     # (chests, never opened by the player) + the stains of the work.
@@ -229,6 +232,60 @@ def build_works_sorting():
             game.show_notice(
                 "Coats. Boots. A child's shoe. All folded, all catalogued.",
                 duration=3.5)
+    sc.on_interact_fn = _interact
+    return sc
+
+
+# ---- Mara's Room (key: maras_room) -- a convert's cell off the Sorting Hall ----
+
+def build_maras_room():
+    """Mara Blaine's cell, a side room off the Sorting Hall. She didn't
+    rent a lodge room and vanish -- she moved IN, down here among the
+    cult's works. A cot, a burnt-down candle, her cult robe on a peg, and
+    folded in it the unsent letter to her father. Evidence #1: she came,
+    and she joined willingly."""
+    floor, objs = _box(8, 7)
+    objs[6][4] = "F"          # south -> back up to the Sorting Hall
+    objects = ["".join(r) for r in objs]
+    sc = Scene("maras_room", floor, objects, music="basement")
+    sc.add_exit("F", "works_sorting", "from_maras_room")
+    sc.set_spawn("default", 4, 5)
+    sc.set_spawn("from_works_sorting", 4, 5)
+
+    sc._cot_pos = (2 * TILE + 16, 2 * TILE + 16)
+    sc.add_furniture("bed", [(2, 2), (2, 3)], w=34, h=52)
+    sc.add_decoration(Decoration(4 * TILE + 16, 1 * TILE + 22, "candle"))
+    sc.add_decoration(Decoration(6 * TILE + 16, 2 * TILE + 16, "phantom_mark"))
+    sc.add_decoration(Decoration(1 * TILE + 6, 5 * TILE + 26, "cobweb",
+                                 ang=-math.pi / 2))
+    for mx, my in [(5, 4), (3, 5)]:
+        sc.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16, "mote"))
+    sc.hide_spots = [
+        (2 * TILE + 16, 3 * TILE + 24, "under"),   # under the cot
+    ]
+    _ambient(sc, "whisper", 0.10, 8.0, 13.0)
+
+    def _interact(game):
+        cx, cy = sc._cot_pos
+        if (abs(game.player.x - cx) > 44 or abs(game.player.y - cy) > 48):
+            return
+        if game.save.flag("evidence_maras_room"):
+            game.show_notice("Her cot, her robe. You've read what's here.")
+            return
+        game.player.inventory.add("robe", 1)
+        game.audio.play("pickup_rare", 0.7)
+        _evidence(game, "maras_room", [
+            "Her cell. A cot, a burnt-down candle, a cult robe on a peg -- "
+            "worn soft. Chosen.",
+            "Folded inside the robe: a letter to her father. Stamped, never "
+            "mailed. It opens \"Dad.\"",
+            "\"...I'm sorry for how I left. I couldn't explain it and have "
+            "it sound sane. The dreams aren't dreams anymore -- they're "
+            "full of answers. I'm just hunting the questions now. Don't "
+            "come after me. I'm not lost. I've never been this close.\"",
+            "This is a room someone moved into. Blaine hired you to bring "
+            "her home. She was already home.",
+        ])
     sc.on_interact_fn = _interact
     return sc
 

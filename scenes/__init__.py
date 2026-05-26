@@ -16,7 +16,7 @@ from .forest_path import build_forest_path
 from .well import (build_well_bottom, build_well_passage,
                    build_works_vats, build_works_sorting,
                    build_works_scriptorium, build_works_sign,
-                   build_works_deepstair)
+                   build_works_deepstair, build_maras_room)
 from .depths import (build_depths_antechamber, build_depths_procession,
                      build_depths_hall, build_depths_threshing,
                      build_depths_stair, build_dark, build_threshold)
@@ -96,6 +96,7 @@ SCENE_BUILDERS = {
     "well_passage":       build_well_passage,       # the Drying Racks
     "works_vats":         build_works_vats,
     "works_sorting":      build_works_sorting,
+    "maras_room":         build_maras_room,         # cell off the Sorting Hall
     "works_scriptorium":  build_works_scriptorium,
     "works_sign":         build_works_sign,         # the Sign (evidence #5)
     "works_deepstair":    build_works_deepstair,    # playscript-gate -> Depths
