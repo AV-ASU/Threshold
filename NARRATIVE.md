@@ -23,6 +23,14 @@ His authority. So there are two ways out, and both damn something:
 **down** the well to the source, to *end it* — or out past the corn as
 the breach itself, the **Sign** in your hands, to *spread it*.
 
+The fold **admits but never releases** — you drove *in* without trouble;
+it is only *out* that loops. And you are the **only outsider to enter
+since it closed**: unclaimed, not yet His. That is why the Sign can carry
+*you* out where it could never carry one of the congregation — a
+townsperson holding it still belongs to Him. You are the one thing in
+Brimley the fold doesn't own, which is exactly what makes you the only
+thing that could ever take Carcosa past the corn.
+
 **Tone:** *Darkwood* (oppressive hide-or-die dread, a spreading
 corruption, bleak and ambiguous) + *Fear & Hunger* (grimdark descent to
 the god at the bottom, ritual and body-horror, no clean win).
