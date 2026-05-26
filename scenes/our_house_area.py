@@ -170,10 +170,10 @@ def build_our_house_area():
 
 
 def build_woodshed():
-    """The Clerk's woodshed interior. Single room. Splitting axe
-    on the wall, a coil of rope on the workbench, a chopping stump in
-    the centre. Locked from outside; the key is taken from the
-    Clerk at night."""
+    """A woodshed off the village crossroads (where it actually sits --
+    not the Arcadia yard). Single room: splitting axe on the wall, a coil
+    of rope on the workbench, a chopping stump in the centre. Locked from
+    outside; the Clerk keeps the key (found in his cellar)."""
     floor = ["=" * 8 for _ in range(6)]
     objects = [
         "WWWWWWWW",

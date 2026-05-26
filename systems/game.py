@@ -566,11 +566,10 @@ class Game:
     # ---- Scene management ----
     def begin_transition(self, target_scene, spawn_id="default"):
         if self.state == "transition": return
-        if (target_scene == "basement"
-                and not self.player.inventory.has("cellar_key")):
-            self.audio.play("door_locked", 0.5)
-            self.show_notice("The hatch is padlocked.", duration=2.0)
-            return
+        # The cellar is no longer key-gated -- the Ledger (evidence #3) is a
+        # core clue and shouldn't hide behind the Clerk's fetch-quest. (The
+        # cellar_key the Clerk still hands over is now vestigial; the
+        # crate/key steps of his quest can be slimmed in a follow-up.)
         # Crossing a threshold eases the meter a touch -- you've put a
         # wall between yourself and the room behind. With hiding, this
         # is how the player claws visibility back under 0.90 to shake

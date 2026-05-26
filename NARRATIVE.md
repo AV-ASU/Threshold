@@ -108,21 +108,25 @@ hive.
 
 The descent is strictly **vertical**, and it has exactly **one mouth**:
 the village **well**. You go down it on a **rope** — there is no other
-route down and **no secret paths**. The Mistlands are *not* part of the
-descent; they're the surface **edge** (the cult's outdoor sites, the
-Preacher's body, the car). Going *deeper* than the first underground
-layer is gated by the **playscript**.
+route down and **no secret paths**. The surface is one connected sprawl:
+the **Arcadia** (lodge, yard, cornfields) ↔ the **village** crossroads
+(where the well is) ↔ the **Mistlands map, which *is* Brimley** — the
+church (Preacher), the store, the sheriff, the school, the barn, the kid's
+house, and the car all sit out there. Going *deeper* than the first
+underground layer is gated by the **playscript**.
 
 ```
-SURFACE         Brimley — town, Arcadia Lodge, yard, cornfields, church.
-                West, across the broken debris: the MISTLANDS — river,
-                fog, cult buildings, the Preacher's body, the CAR (Spread it).
+SURFACE         The ARCADIA (lodge + yard + cornfields) ─▶ the VILLAGE
+                crossroads (the WELL) ─▶ the MISTLANDS map, which IS
+                Brimley: church (Preacher), store, sheriff, school, barn,
+                kid's house, and the CAR (Spread it). One connected sprawl.
                   │
                   │   THE ONLY WAY DOWN — a rope down the village WELL.
                   │   No other route. No secret paths.
                   ▼
-THE BASEMENT    The first layer of the cult's works, reached by the well.
-LEVEL              >>> being redesigned wholesale — see §9 <<<
+THE WORKS       The cult's underground labour, reached by the well: a
+(Basement Level)   built 7-room gauntlet (§9). Mara's cell branches off it;
+                the Playscript + the Pallid Mask are found down here.
                   │
                   │   gated by the Playscript
                   ▼
@@ -132,15 +136,15 @@ DEEPER          The Depths → the Threshold (END IT / seal) → the Hive
 [not a place]   CARCOSA — the King's fire-and-masks catch-cutscene.
 ```
 
-- **Surface:** Brimley + the **Mistlands** edge — the investigation, the cult's outdoor sites, the Preacher's body, the car. Sealed. Sole way down = the well (rope).
-- **The Basement Level:** the first underground layer, reached by the well. *Whole-layer redesign in progress (§9).*
-- **Deeper (playscript-gated):** the Depths, the Threshold (**End it**), and the Hive where **Mara** is. (soon)
+- **Surface:** one connected sprawl — the Arcadia (lodge/yard/cornfields) ↔ the village crossroads (the well) ↔ the Mistlands map that *is* Brimley (church, store, sheriff, school, barn, kid's house, the Preacher's body, the car). Sealed; sole way down = the well (rope).
+- **The Works** (a.k.a. the Basement Level): the first underground layer, reached by the well — a built 7-room gauntlet (§9): Mara's cell, the Playscript, the Pallid Mask.
+- **Deeper (playscript-gated):** the Depths, the Threshold (**End it**), and the Hive where **Mara** is. (the hive is the remaining build)
 
 > **Naming, to avoid the collision:** the **lodge cellar** is the
 > `basement` *scene* — the Arcadia's own cellar, a *surface* interior
-> (holds the Ledger; Mara's journal now lives in her room). **The
-> Basement Level** is the underground stratum below the well. Different
-> places, similar words.
+> (holds the Ledger, #3; Mara's journal is in the barn). **The Works**
+> (a.k.a. the Basement Level) is the underground stratum below the well.
+> Different places, similar words.
 
 **Carcosa is not a level.** Your King sprite is the floating
 glow-of-faces, so Carcosa *is* the inside of Him: every mask drifting in
