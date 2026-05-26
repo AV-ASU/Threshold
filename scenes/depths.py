@@ -8,7 +8,8 @@ Floors, top to bottom:
   depths_hall         -- the kneeling grid
   depths_threshing    -- the threshing floor
   depths_stair        -- the empty spiral down
-  dark                -- single black room, flashlight-gated bodies
+  dark                -- the hive: the congregation + Mara, turned (scene
+                         key kept; was the old-family-bodies room)
   threshold           -- the doorframe
 
 Hooded chasers populate the first three rooms. The flashlight is
@@ -20,6 +21,7 @@ import random
 from constants import TILE
 from entities.decoration import Decoration
 from entities.enemy import Enemy
+from entities.npc import NPC
 from .base import Scene
 from .dialogue import _evidence
 
@@ -276,41 +278,68 @@ def build_depths_stair():
     return sc
 
 
+def _mara_voice(game, npc):
+    """Mara's one-shot recognition -- the #6 payoff. The case was never a
+    rescue; you went deeper and found her already gone. After it, she has
+    gone back to the kneeling."""
+    if game.save.flag("hive_seen"):
+        game.dialog.show(
+            ["[c=dim]She has gone back to the kneeling. She won't look at "
+             "you again.[/c]"],
+            speaker="", voice="blip_soft", portrait="narrator")
+        return
+    game.save.set_flag("hive_seen", True)
+    game.audio.force_silence()
+    game.audio.play("low_pulse", 0.6)
+    game.dialog.show([
+        "[c=dim](You say her name. The hooded head lifts.)[/c]",
+        "It's Mara. The robe from her cell on her shoulders, no fear left "
+        "in her. She smiles the way the saved smile at the drowning.",
+        "[s=slow]You came to take her home. She was already home.[/s]",
+        "[c=dim]The case was never a rescue. It was an invitation -- and "
+        "you've answered every line of it.[/c]",
+    ], speaker="", voice="blip_soft", portrait="narrator")
+    _evidence(game, "the_hive", [
+        "Mara, kneeling with the congregation. Turned. There was never "
+        "anyone to bring back -- only this, and now you're in it with her.",
+    ])
+
+
 def build_dark():
     floor, objs = _box(12, 10)
-    objs[8][6] = "D"   # south to threshold
+    objs[8][3] = "D"   # south-west to threshold -- off the centre aisle,
+                       # so the player never has to push through Mara
     objects = ["".join(r) for r in objs]
     sc = Scene("dark", floor, objects, music="basement")
     sc.add_exit("D", "threshold", "from_dark")
     sc.set_spawn("default",    6, 1)
     sc.set_spawn("from_stair", 6, 1)
-    # Bodies laid out where they fell. Each body is an E-press
-    # evidence beat. The flashlight is force-off here
-    # (CULT_DARK_SCENES) so the dread aperture's centre clear circle
-    # is the only light.
-    body_positions = [
-        (3, 4, "ellie",   "Nothing here."),
-        (8, 5, "father",  "Nothing here."),
-        (5, 7, "mother",  "Nothing here."),
-    ]
-    for bx, by, _, _ in body_positions:
-        sc.add_decoration(Decoration(bx * TILE + 16, by * TILE + 16,
-                                     "body"))
+    # The hive. The flashlight is force-off here (CULT_DARK_SCENES) so the
+    # dread aperture's clear circle is the only light -- you find the
+    # congregation a face at a time. They're NPCs, not enemies: no chase,
+    # no contact penalty. The room's whole work is the recognition.
+    def _murmur(game, npc):
+        game.dialog.show(
+            ["[c=dim]The kneeler doesn't stir. Its lips move, no sound.[/c]"],
+            speaker="", voice="blip_soft", portrait="narrator")
+    # The congregation: hooded, idle, facing the south doorframe they
+    # worship. Solid, so the player threads between them in the dark.
+    for kx, ky in [(3, 4), (8, 4), (4, 6), (9, 6), (8, 7)]:
+        n = NPC(kx * TILE + 16, ky * TILE + 16, "A kneeler", "cultist",
+                dialogue_fn=_murmur, movement="idle")
+        n.facing = (0, 1)
+        sc.add_npc(n)
+    # Mara, front and centre on the aisle -- the one head that lifts when
+    # you speak. Just one more hooded kneeler until you reach her.
+    mara = NPC(6 * TILE + 16, 5 * TILE + 16, "Mara", "cultist",
+               dialogue_fn=_mara_voice, movement="idle")
+    mara.facing = (0, -1)
+    sc.add_npc(mara)
     sc.hide_spots = [
-        (10 * TILE + 16, 8 * TILE + 16, "behind"),
-        (1 * TILE + 24,  3 * TILE + 16, "behind"),
+        (1 * TILE + 24, 8 * TILE + 16, "behind"),
+        (10 * TILE + 16, 1 * TILE + 24, "behind"),
     ]
     _ambient(sc, "heartbeat", 0.18, 3.5, 5.0)
-
-    def _dark_interact(game):
-        px, py = game.player.x, game.player.y
-        for bx, by, slug, lines in body_positions:
-            wx = bx * TILE + 16
-            wy = by * TILE + 16
-            if abs(px - wx) < 36 and abs(py - wy) < 36:
-                _evidence(game, f"dark_{slug}", lines)
-                return
-    sc.on_interact_fn = _dark_interact
     return sc
 
 
@@ -320,9 +349,10 @@ def build_threshold():
     sc = Scene("threshold", floor, objects, music="void")
     sc.set_spawn("default",   5, 1)
     sc.set_spawn("from_dark", 5, 1)
-    # Doorframe at the centre. Pressing E here with the kid's drawing
-    # seals the door (seal_threshold ending). Without the drawing the
-    # player can stand at it but can't act on it.
+    # Doorframe at the centre. Pressing E at it seals the door
+    # (seal_threshold ending) -- no item gate. The Mask and the Play were
+    # already spent at the Deep Stair to open the way down here, so a
+    # player who descended can always finish; nothing to soft-lock on.
     lintel_x, lintel_y = 5 * TILE + 16, 5 * TILE + 16
     sc._lintel_pos = (lintel_x, lintel_y)
     sc.add_decoration(Decoration(lintel_x, lintel_y - TILE, "smoke"))
@@ -340,21 +370,15 @@ def build_threshold():
         px, py = game.player.x, game.player.y
         if abs(px - lintel_x) > 40 or abs(py - lintel_y) > 40:
             return
-        inv = game.player.inventory
-        if not inv.has("kid_drawing"):
-            game.audio.play("low_pulse", 0.4)
-            game.show_notice("Nothing happens.")
-            return
-        inv.remove("kid_drawing", 1)
         game.audio.force_silence()
         game.audio.play("arg_chime", 0.7)
         game.dialog.show([
-            "[c=dim](You press the drawing against the stone.)[/c]",
+            "[c=dim](You set both hands to the cold frame. You spent His "
+            "face and His Play to come this far. There is nothing left to "
+            "give it but the rest of you.)[/c]",
             "[s=slow][c=dim]...the smoke stops.[/c][/s]",
         ], speaker="", voice="blip_soft", portrait="narrator")
-        _evidence(game, "the_seal",
-            "It is done."
-        )
+        _evidence(game, "the_seal", "It is done.")
         game._play_ending("seal_threshold")
     sc.on_interact_fn = _threshold_interact
     return sc

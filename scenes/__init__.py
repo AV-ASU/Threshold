@@ -89,7 +89,7 @@ SCENE_BUILDERS = {
     "void_boss":          build_void_boss,          # -> clearing
     "barn":               build_barn,
     # The Works -- the Basement Level. Seven rooms, well is the sole
-    # entrance (rope down); the playscript gates the way deeper to the Depths.
+    # entrance (rope down); Mask + Play together gate the way to the Depths.
     "well_bottom":        build_well_bottom,        # the Shaft Floor
     "well_passage":       build_well_passage,       # the Drying Racks
     "works_vats":         build_works_vats,
@@ -97,7 +97,7 @@ SCENE_BUILDERS = {
     "maras_room":         build_maras_room,         # cell off the Sorting Hall
     "works_scriptorium":  build_works_scriptorium,
     "works_sign":         build_works_sign,         # the Sign (evidence #5)
-    "works_deepstair":    build_works_deepstair,    # playscript-gate -> Depths
+    "works_deepstair":    build_works_deepstair,    # Mask+Play gate -> Depths
     # The depths -- five rooms, one-way fall from well_bottom
     "depths_antechamber": build_depths_antechamber,
     "depths_procession":  build_depths_procession,

@@ -1,6 +1,7 @@
 """THE WORKS -- the Basement Level. The cult's underground labour,
 reached ONLY by the rope down the village well. Seven rooms descend
-from the shaft floor to the playscript-gate that opens onto the Depths:
+from the shaft floor to the Deep Stair, which the Mask + Play together
+open onto the Depths:
 
   well_bottom        -- the Shaft Floor (rope landing; the way back up)
   well_passage       -- the Drying Racks (first gauntlet)
@@ -8,10 +9,10 @@ from the shaft floor to the playscript-gate that opens onto the Depths:
   works_sorting      -- the Sorting Hall (belongings of the vanished)
   works_scriptorium  -- the Scriptorium (the Sign, copied endlessly)
   works_sign         -- the Sign Chamber (lift the Pallid Mask; evidence #5)
-  works_deepstair    -- the Deep Stair (playscript-gate down to the Depths)
+  works_deepstair    -- the Deep Stair (Mask+Play gate down to the Depths)
 
-The rope breaks the instant you descend carrying the playscript -- from then
-there is no climbing back, only deeper. Cultists labour here; the
+The rope breaks the instant you feed the Mask and Play to the Deep Stair
+-- from then there is no climbing back, only deeper. Cultists labour here; the
 flashlight works (these are DARK_SCENES, not cult-dark) but their gaze
 still finds you, so the gauntlet is run on cover, timing, and the hide
 spots. Combat is gone -- contact slams the dread aperture; the danger
@@ -20,8 +21,10 @@ breaks the chase.
 
 Reworks vs. the old build: the well is now the ONLY mouth down (the
 barn cellar hatch is sealed); the polaroid is no longer consumed here
-(it's evidence now); and the playscript -- not the photo -- opens the way
-deeper, from the Sign Chamber's far side down into the Depths.
+(it's evidence now); and the way deeper opens only when the Pallid Mask
+(from the Sign Chamber) and the Playscript are fed to the Deep Stair
+TOGETHER -- which spends the Mask, so it can't then be carried out
+(the Spread ending). The fork between Seal and Spread lives at that stair.
 """
 import math
 from constants import TILE
@@ -424,12 +427,12 @@ def build_works_sign():
     return sc
 
 
-# ---- Room 7: the Deep Stair / playscript-gate (key: works_deepstair) ----
+# ---- Room 7: the Deep Stair / Mask+Play gate (key: works_deepstair) ----
 
 def build_works_deepstair():
     floor, objs = _box(10, 8)
     objs[4][0] = "F"          # west -> back to the sign chamber
-    objs[2][5] = "L"          # the stair down (visual; gated by the playscript)
+    objs[2][5] = "L"          # the stair down (visual; gated by Mask + Play)
     objects = ["".join(r) for r in objs]
     sc = Scene("works_deepstair", floor, objects, music="void")
     sc.add_exit("F", "works_sign", "from_below")
@@ -459,21 +462,54 @@ def build_works_deepstair():
         if game.save.flag("deepstair_open"):
             game.begin_transition("depths_antechamber", "from_above")
             return
-        if not game.player.inventory.has("playscript"):
+        inv = game.player.inventory
+        has_play = inv.has("playscript")
+        has_mask = inv.has("sigil_rubbing")     # the Pallid Mask
+        if not (has_play and has_mask):
             game.audio.play("door_locked", 0.5)
-            game.show_notice("A slot in the black stone, the size of a "
-                             "folded book. Something belongs here.")
+            if not has_play and not has_mask:
+                game.show_notice("A slot the size of a folded book, and "
+                                 "above it a socket the shape of a face. "
+                                 "Both empty.")
+            elif not has_play:
+                game.show_notice("His face fits the socket above. But the "
+                                 "slot below -- a folded book's size -- "
+                                 "stays empty.")
+            else:
+                game.show_notice("The Play fits the slot. But the socket "
+                                 "above -- the shape of a face -- stays "
+                                 "empty.")
             return
-        game.player.inventory.remove("playscript", 1)
+        # Both in hand: lay out the fork once, commit on the next press.
+        # Turning back keeps the Mask -- that's the Spread road (carry His
+        # face out the rope). Feeding it here spends it -- the Seal road.
+        if not game.save.flag("deepstair_fork_seen"):
+            game.save.set_flag("deepstair_fork_seen", True)
+            game.audio.play("low_pulse", 0.5)
+            game.dialog.show([
+                "[c=dim](His face fits the socket. The Play fits the slot. "
+                "Both at once, and the stair opens.)[/c]",
+                "You have enough. The register, the names, the Preacher, the "
+                "girl her father sent you for -- and His face in your hands. "
+                "Climb out while the rope holds and carry the case back to "
+                "people with badges.",
+                "[s=slow]Or you give them both to the stone and go down. Past "
+                "her. To the thing all of this kneels to.[/s]",
+                "[c=dim](Press again to feed it the Mask and the Play -- or "
+                "turn back, while the rope still holds.)[/c]",
+            ], speaker="", voice="blip_soft", portrait="narrator")
+            return
+        # Commit -- spend BOTH. The Mask is gone; you cannot carry it out
+        # now. Point of no return: the rope far above snaps.
+        inv.remove("playscript", 1)
+        inv.remove("sigil_rubbing", 1)
         game.save.set_flag("deepstair_open", True)
-        # The point of no return: committing the Play to the stair snaps
-        # the rope far above. The ladder out of the Works is dead now.
         game.save.set_flag("well_rope_broken", True)
         game.audio.force_silence()
         game.audio.play("low_pulse", 0.95)
-        game.show_notice("The stone drinks the Play. The stair grinds open -- "
-                         "and far above, the rope snaps. Only down, now.",
-                         duration=4.5)
+        game.show_notice("The stone takes the Mask and the Play together. "
+                         "The stair grinds open -- and far above, the rope "
+                         "snaps. Only down, now.", duration=4.5)
         game.begin_transition("depths_antechamber", "from_above")
     sc.on_interact_fn = _interact
     return sc
