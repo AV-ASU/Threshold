@@ -15,7 +15,7 @@ from constants import TILE
 from entities.npc import NPC
 from entities.decoration import Decoration
 from .base import Scene
-from .dialogue import basement_photo_dialogue, innkeeper_dialogue
+from .dialogue import basement_photo_dialogue, innkeeper_dialogue, _evidence
 
 
 # ---- spare_room (key: 'bedroom') ----
@@ -422,12 +422,15 @@ def house_interact(game):
     return
 
 
-# ---- innkeeper_bedroom (key: 'son_room') ----
+# ---- Mara's Room (key: 'son_room') ----
+# Mara Blaine's rented room at the Arcadia. Holds evidence #1 (her room --
+# the robe + the willing-departure letter) and #2 (her journal). The orb
+# behind the robes is the deep-gate key (load-bearing -- NARRATIVE §5/§9).
 
 def build_son_room():
-    """The Innkeeper's bedroom. Locked door from the kitchen. Inside:
-    a dresser (car keys), a closet (the robe + the orb behind it),
-    a window. The room reads as a stranger's bedroom -- lived in."""
+    """Mara's rented room at the lodge. A closet (her cult robe + the orb
+    behind it), a dresser (her journal), a window. Reads as the room of
+    someone who meant to stay a while -- and then chose not to come back."""
     floor = [
         "==========",
         "==========",
@@ -512,27 +515,56 @@ def innkeeper_bedroom_on_enter(game, scene):
 
 
 def innkeeper_bedroom_interact(game):
-    """E near the closet: first interaction yields the robe, second
-    interaction (after the robe) yields the orb. Both pickups set
-    save flags."""
+    """Mara's room. CLOSET (E): her cult robe + evidence #1 (the
+    willing-departure read), then the orb behind it (the deep-gate key).
+    DRESSER (E): her journal + evidence #2 (the morning entries)."""
     sc = game.scene
     px, py = game.player.x, game.player.y
     cx, cy = sc._closet_pos
-    if abs(px - cx) > 40 or abs(py - cy) > 40:
+    dx, dy = sc._dresser_pos
+
+    # --- the closet: her robe (+ evidence #1), then the orb ---
+    if abs(px - cx) <= 40 and abs(py - cy) <= 40:
+        if not game.save.flag("robe_taken"):
+            game.save.set_flag("robe_taken", True)
+            game.player.inventory.add("robe", 1)
+            game.audio.play("pickup_rare", 0.7)
+            _evidence(game, "maras_room", [
+                "Cult robes in her closet -- and a bare hanger where she "
+                "took hers.",
+                "On the dresser, her journal. Beside it a letter to her "
+                "father: folded, stamped, never mailed. It opens \"Dad.\"",
+                "\"...I'm sorry for how I left. The dreams aren't dreams "
+                "anymore -- they're full of answers. I'm just hunting the "
+                "questions now. Don't send anyone. I'm not lost. I've never "
+                "been this close.\"",
+                "Blaine hired you to bring her home. She wasn't taken. She "
+                "left.",
+            ])
+            return
+        if not game.save.flag("orb_taken_innkeeper"):
+            game.save.set_flag("orb_taken_innkeeper", True)
+            game.player.inventory.add("orb", 1)
+            game.audio.play("pickup_rare", 0.7)
+            game.show_notice("A pale orb, behind the robes. Heavier than it "
+                             "looks.")
+            return
+        game.show_notice("The closet is empty now.")
         return
-    if not game.save.flag("robe_taken"):
-        game.save.set_flag("robe_taken", True)
-        game.player.inventory.add("robe", 1)
-        game.audio.play("pickup_rare", 0.7)
-        game.show_notice("A robe, folded in the closet.")
-        return
-    if not game.save.flag("orb_taken_innkeeper"):
-        game.save.set_flag("orb_taken_innkeeper", True)
-        game.player.inventory.add("orb", 1)
-        game.audio.play("pickup_rare", 0.7)
-        game.show_notice("An orb, behind the robe.")
-        return
-    game.show_notice("The closet is empty now.")
+
+    # --- the dresser: her journal (evidence #2) ---
+    if abs(px - dx) <= 40 and abs(py - dy) <= 40:
+        if game.save.flag("evidence_maras_journal"):
+            game.show_notice("Her journal. You've read what matters.")
+            return
+        _evidence(game, "maras_journal", [
+            "Her journal lies open on the dresser. The last entries, in a "
+            "hand that gets calmer as it goes:",
+            "\"I just had this urge to go north.\"",
+            "\"I'm a long, long way from home now. And I feel closer.\"",
+            "\"Stopped for gas in this town. Everyone smiles like I'm "
+            "already home.\"",
+        ])
 
 
 # ---- innkeeper_basement (key: 'basement') ----
