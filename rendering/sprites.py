@@ -1336,8 +1336,10 @@ def _carcosa_branch(surf, x, y, ang, length, depth, grow, t, seed, masks):
 def _carcosa_town(surf, w, h, base_y, t, flood):
     """A drowned gothic skyline along `base_y` with a rippling reflection
     below it, the King's gold light flooding down through and over it."""
-    _yk_radial(surf, w // 2, base_y, int(w * 0.58), _YK_GOLD, int(26 * flood))
-    _yk_radial(surf, w // 2, base_y, int(w * 0.26), _YK_HOT, int(20 * flood))
+    _yk_radial(surf, w // 2, base_y + 12, int(w * 0.30), _YK_GOLD,
+               int(9 * flood))
+    _yk_radial(surf, w // 2, base_y + 16, int(w * 0.13), _YK_HOT,
+               int(7 * flood))
     roofs = []
     x, i = -6, 0
     while x < w + 6:
@@ -1370,6 +1372,61 @@ def _carcosa_town(surf, w, h, base_y, t, flood):
         surf.blit(line, (0, base_y + 5 + k * 7))
 
 
+def _carcosa_mask(surf, cx, cy, r, vis, teeth, seed):
+    """A Carcosa face in His gold: a lit gold mask carved out by VACUOUS
+    black eye-voids, a black brow + nose, a black mouth, and -- on some --
+    a bared row of human teeth. High contrast so the faces read as masks
+    (the King's pallid-mask grammar, struck in gold). Faded by `vis`."""
+    if vis <= 0.03:
+        return
+    cx, cy, r = int(cx), int(cy), int(r)
+    pad = max(3, r // 2)
+    S = (r + pad) * 2
+    m = pygame.Surface((S, S), pygame.SRCALPHA)
+    mx = my = r + pad
+    rw, rh = r, int(r * 1.22)
+    blk = (6, 5, 8)
+    # Gold face: a darker rim, a gold body, and only a SMALL upper-left
+    # highlight (filling the whole oval with hot gold read as a white blob).
+    pygame.draw.ellipse(m, (88, 70, 26), (mx - rw, my - rh, 2 * rw, 2 * rh))
+    pygame.draw.ellipse(m, _YK_GOLD, (mx - rw + 1, my - rh + 1,
+                                      2 * rw - 2, 2 * rh - 2))
+    pygame.draw.ellipse(m, _YK_HOT, (int(mx - rw * 0.85), int(my - rh * 0.85),
+                                     int(rw * 0.95), int(rh * 0.8)))
+    if r >= 4:
+        bw = max(1, r // 6)                      # black brow ridges
+        pygame.draw.line(m, blk, (int(mx - r * 0.72), int(my - r * 0.44)),
+                         (int(mx - r * 0.04), int(my - r * 0.28)), bw)
+        pygame.draw.line(m, blk, (int(mx + r * 0.72), int(my - r * 0.44)),
+                         (int(mx + r * 0.04), int(my - r * 0.28)), bw)
+        ew, eh = max(2, int(r * 0.36)), max(3, int(r * 0.52))   # vacuous voids
+        for ex in (mx - int(r * 0.42), mx + int(r * 0.42)):
+            ey = my - int(r * 0.10)
+            pygame.draw.ellipse(m, blk, (ex - ew // 2, ey - eh // 2, ew, eh))
+        pygame.draw.ellipse(m, blk, (mx - max(1, r // 8), my + int(r * 0.02),
+                                     max(2, r // 4), int(r * 0.34)))   # nose
+        mw = max(4, int(r * 0.66))
+        mh = max(3, int(r * 0.46))
+        myy = my + int(r * 0.52)
+        pygame.draw.ellipse(m, blk, (mx - mw // 2, myy - mh // 2, mw, mh))
+        if teeth and r >= 7:                     # a bared row of human teeth
+            nt = 5
+            tw = mw / nt
+            for k in range(nt):
+                tx = mx - mw // 2 + int(k * tw) + 1
+                pygame.draw.rect(m, _YK_PALE, (tx, myy - mh // 2 + 1,
+                                               max(1, int(tw) - 1), mh - 2))
+            for k in range(nt + 1):
+                gx = mx - mw // 2 + int(k * tw)
+                pygame.draw.line(m, blk, (gx, myy - mh // 2),
+                                 (gx, myy + mh // 2), 1)
+            pygame.draw.line(m, blk, (mx - mw // 2, myy),
+                             (mx + mw // 2, myy), 1)        # bite line
+    m.set_alpha(int(80 + 175 * vis))
+    surf.blit(m, (cx - mx, cy - my))
+    _yk_radial(surf, cx, cy, r + 2, _YK_GOLD, int(10 * vis))   # faint rim only
+
+
 def draw_carcosa(surf, t, mode="spread"):
     """rite_broken: the King erupts as a tree of taken faces and his taken
     pour out over the drowned town. Built in the King's own idiom (see
@@ -1388,22 +1445,23 @@ def draw_carcosa(surf, t, mode="spread"):
     #    dark branches read against it and the pale faces stay the brightest
     #    things on screen.
     surf.fill((4, 4, 7))
-    cyn = int(h * 0.46)
-    maxd = math.hypot(w * 0.62, h * 0.62)
+    cyn = int(h * 0.42)
+    maxd = math.hypot(w * 0.42, h * 0.46)        # contained -> lots of black around
     steps = 26
     for i in range(steps, 0, -1):
         f = i / steps
         rad = int(maxd * f)
-        col = (int(108 * (1 - f) * ramp * flick),
-               int(90 * (1 - f) * ramp * flick),
-               int(38 * (1 - f) * ramp))
+        # A muted olive-gold pool (filled, not additive) -- dark enough that
+        # the bright gold masks pop and the dark branches read against it.
+        col = (int(68 * (1 - f) ** 1.4 * ramp * flick),
+               int(54 * (1 - f) ** 1.4 * ramp * flick),
+               int(20 * (1 - f) ** 1.4 * ramp))
         pygame.draw.ellipse(surf, col, (kx - rad, cyn - int(rad * 0.82),
                                         rad * 2, int(rad * 1.64)))
 
-    # 2. His face dominates the core. Modest size; the mask (drawn in 4)
-    #    carries its own pale halo, so NO extra additive glow here -- that
-    #    stacking is what blew the core to white before.
-    mR = int(30 + grow * 22)
+    # 2. His face dominates the core. Modest size; the mask carries its own
+    #    features -- no big additive glow (that stacking blew it to white).
+    mR = int(28 + grow * 18)
 
     # 3. The tree of the taken -- a near-full radial burst of bold tendrils
     #    (up, sides, and roots down into the town), densely hung with faces.
@@ -1417,17 +1475,19 @@ def draw_carcosa(surf, t, mode="spread"):
         _carcosa_branch(surf, kx, ky + 8, math.pi / 2 + (i - 2) * 0.36,
                         h * 0.12, 4, grow, t, 200 + i, masks)
 
-    # 4. His face: the dark void mass + the central screaming mask, swelling.
-    _yk_void(surf, kx, ky, mR)
-    _yk_mask(surf, kx, ky, mR, min(1.0, 0.5 + grow), "wail")
+    # 4. His face: a dark backing disc + His big gold mask -- vacuous black
+    #    eyes, black brow/nose, and a bared row of teeth -- swelling.
+    pygame.draw.ellipse(surf, (9, 8, 11),
+                        (kx - mR - 6, ky - int(mR * 1.3), 2 * mR + 12,
+                         int(mR * 2.6)))
+    _carcosa_mask(surf, kx, ky, mR, min(1.0, 0.55 + grow), True, 99)
 
     # 5. The faces along the branches -- the taken, every one a person He
-    #    wears. Mostly solid (breathing a little) so they read on the gold.
-    for (mx, my, mr, seed) in masks[:64]:
+    #    wears. Gold masks with black voids; about a third bare their teeth.
+    for (mx, my, mr, seed) in masks[:80]:
         vis = min(1.0, grow * 1.4) * (0.62 + 0.38
                                       * (0.5 + 0.5 * math.sin(t * 1.2 + seed)))
-        _yk_mask(surf, mx, my, mr, min(1.0, vis),
-                 _CARCOSA_FACEKINDS[seed % 4])
+        _carcosa_mask(surf, mx, my, mr, min(1.0, vis), seed % 3 == 0, seed)
 
     # 6. The drowned town + rippling reflection, lit by the flood.
     _carcosa_town(surf, w, h, int(h * 0.82), t, flood)
@@ -1436,14 +1496,14 @@ def draw_carcosa(surf, t, mode="spread"):
     #    the town as His influence escapes (two passes: glow, then faces, so
     #    no later glow buries a face -- exactly as the King's wake is drawn).
     orbs = []
-    for i in range(16):
+    for i in range(9):
         prog = (t * 0.16 + _frand(i * 4 + 1)) % 1.0
         ang = -math.pi / 2 + (_frand(i * 4 + 2) - 0.5) * 2.6
         dist = prog * w * 0.52
         ox = kx + math.cos(ang) * dist
         oy = ky + math.sin(ang) * (dist * 0.66)
-        r = 6 + int(11 * _frand(i * 4 + 3))
-        vis = (1.0 - prog) * ramp * (0.3 + 0.7 * flood) * 0.45
+        r = 6 + int(10 * _frand(i * 4 + 3))
+        vis = (1.0 - prog) * ramp * (0.3 + 0.7 * flood) * 0.3
         # Skip the pile right at the eruption so it doesn't blow out the core;
         # the orbs read once they've streamed clear of His face.
         if vis > 0.04 and dist > mR * 1.9:
