@@ -2889,19 +2889,21 @@ class Game:
             if a > 0:
                 pygame.draw.ellipse(glow, (132, 116, 78, a),
                                     (gx - rw, gy - int(rh * 0.62), 2 * rw, rh))
-        # Headlights licking the near treeline -- warm spill on the inner
-        # edge of each forest band, beside and just ahead of the car, so the
-        # beam visibly touches the woods instead of leaving them flat.
-        for ex in (rx0 - 6, rx1 + 6):
-            for i in range(11, 0, -1):
-                f = i / 11
-                rw = int(48 * f)
-                rh = int(168 * f)
-                a = int(11 * (1 - f) * light)
-                if a > 0:
-                    pygame.draw.ellipse(glow, (124, 104, 62, a),
-                                        (ex - rw, (cy - 56) - int(rh * 0.5),
-                                         2 * rw, rh))
+        # Headlights grazing the treeline: a dim warm rim that HUGS the inner
+        # forest edge and falls off into the woods, strongest beside the car
+        # and tapering up/down. A graze, not a spotlight -- the old centred
+        # ovals read as two lamps aimed at the trees.
+        gy0 = cy - int(H * 0.06)
+        for k in range(12):
+            inset = k * 2
+            a = int(6 * (1 - k / 12) * light)
+            if a <= 0:
+                continue
+            rh = int(H * 0.46) - k * 5
+            pygame.draw.ellipse(glow, (116, 98, 58, a),
+                                (rx0 - 9 - inset - 3, gy0 - rh // 2, 6, rh))
+            pygame.draw.ellipse(glow, (116, 98, 58, a),
+                                (rx1 + 9 + inset - 3, gy0 - rh // 2, 6, rh))
         s.blit(glow, (0, 0), special_flags=pygame.BLEND_RGBA_ADD)
 
         # Dust / moths drifting up through the headlight beam -- a little
