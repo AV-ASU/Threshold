@@ -12,7 +12,7 @@ from constants import (
     C_BLUE, C_GREEN, C_PURPLE, C_PANEL, C_PANEL_BORDER, C_DIM,
 )
 from rendering.sprites import (draw_player_sprite, draw_npc_sprite,
-                               draw_axe_swing, draw_king_death)
+                               draw_axe_swing, draw_king_death, draw_carcosa)
 from rendering.transform import draw_vessel_bloom
 from ui.fonts import make_fonts
 from ui.dialog import DialogueBox
@@ -1630,21 +1630,10 @@ class Game:
             ("Not the hunger. Not you.", 4.0),
         ],
         # rite_broken is the TRAP game over (NARRATIVE §6): you tear the rite
-        # down in place, before sealing the source -- the obvious heroic move,
-        # and the catastrophic one. The pressure the rite was holding floods
-        # out uncontained.
-        "rite_broken": [
-            ("You take the altar apart -- the mask, the daubed Sign, the "
-             "kneeling at your back.", 3.2),
-            ("For one breath the chamber is just a cellar. Quiet. Free. You "
-             "did the obvious mercy.", 3.4),
-            ("Then the thing the rite was holding finds the hole you made.", 3.0),
-            ("It doesn't rise. It floods -- up the well, out through the "
-             "corn, into every road that ever left this town.", 3.8),
-            ("The kneeling was the lid. You called it the enemy and pulled "
-             "it off.", 3.8),
-            ("It was never a cage for you. It was a cage for Him.", 4.2),
-        ],
+        # down before sealing the source, and His influence floods out. This
+        # ending is PURELY VISUAL -- the Carcosa tableau (draw_carcosa), no
+        # text boxes -- so it's one timed phase the draw path special-cases.
+        "rite_broken": [("", 7.0)],
     }
 
     def _tick_ending(self, dt):
@@ -1680,8 +1669,12 @@ class Game:
 
     def _draw_ending(self):
         """Render the active ending's current still. Same overlay
-        treatment as the flashback."""
+        treatment as the flashback -- except rite_broken, which is the
+        wholly-visual Carcosa tableau (no text)."""
         if not self._ending_active:
+            return
+        if self._ending_active == "rite_broken":
+            draw_carcosa(self.screen, self._ending_phase_t, "spread")
             return
         script = self._ENDING_SCRIPTS.get(self._ending_active, [])
         if self._ending_phase >= len(script):
