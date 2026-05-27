@@ -1307,39 +1307,50 @@ def draw_king_death(surf, t):
 _CARCOSA_FACEKINDS = ("wail", "vacant", "gaunt", "hollow")
 
 
-def _carcosa_branch(surf, x, y, ang, length, depth, grow, t, seed, masks):
+def _carcosa_branch(surf, x, y, ang, length, depth, grow, t, seed, masks,
+                    cx0, cy0):
     """One recursive black tendril of the King's tree. Extends with `grow`
     (0..1) so the tree erupts over time, sways on a per-branch phase, and
-    drops mask-anchor points (x, y, r, seed) into `masks` near its tips so
-    the faces can be drawn on top of every branch afterward."""
-    if depth <= 0 or length < 7.0:
+    drops mask-anchors (x, y, r, seed) of WILDLY varied size along it (never
+    piled at the core `cx0,cy0`) for faces drawn on top afterward."""
+    if depth <= 0 or length < 6.0:
         return
     L = length * grow
-    a = ang + math.sin(t * 0.7 + seed * 0.9) * 0.10
+    a = ang + math.sin(t * 0.6 + seed * 0.9) * 0.12
     x2 = x + math.cos(a) * L
     y2 = y + math.sin(a) * L
-    pygame.draw.line(surf, (10, 8, 7), (int(x), int(y)), (int(x2), int(y2)),
+    pygame.draw.line(surf, (9, 7, 6), (int(x), int(y)), (int(x2), int(y2)),
                      max(2, depth + 1))                       # bold tendrils
-    if depth <= 3 and grow > 0.2 and len(masks) < 64 \
-            and _frand(seed + 9) > 0.18:
-        masks.append((x2, y2, 9 + depth * 5, seed))
-    branches = 2 if _frand(seed) > 0.42 else 3
-    spread = 0.42 + 0.30 * _frand(seed + 1)
+    if depth <= 4 and grow > 0.18 and len(masks) < 110 \
+            and _frand(seed + 9) > 0.28 \
+            and math.hypot(x2 - cx0, y2 - cy0) > 70:          # not at the core
+        r = int((3 + depth * 3) * (0.55 + 1.8 * _frand(seed + 11)))  # tiny..big
+        masks.append((x2, y2, max(4, r), seed))
+    branches = 2 if _frand(seed) > 0.4 else 3
+    spread = 0.40 + 0.34 * _frand(seed + 1)
     for k in range(branches):
         na = a + (k - (branches - 1) / 2.0) * spread \
-            + (_frand(seed + k + 7) - 0.5) * 0.34
+            + (_frand(seed + k + 7) - 0.5) * 0.42              # gnarlier
         _carcosa_branch(surf, x2, y2, na,
-                        length * (0.66 + 0.10 * _frand(seed + k + 3)),
-                        depth - 1, grow, t, seed * 3 + k + 5, masks)
+                        length * (0.64 + 0.12 * _frand(seed + k + 3)),
+                        depth - 1, grow, t, seed * 3 + k + 5, masks, cx0, cy0)
 
 
 def _carcosa_town(surf, w, h, base_y, t, flood):
     """A drowned gothic skyline along `base_y` with a rippling reflection
     below it, the King's gold light flooding down through and over it."""
-    _yk_radial(surf, w // 2, base_y + 12, int(w * 0.30), _YK_GOLD,
-               int(9 * flood))
-    _yk_radial(surf, w // 2, base_y + 16, int(w * 0.13), _YK_HOT,
-               int(7 * flood))
+    # A low horizon backlight so the skyline silhouettes read -- FILLED with
+    # per-pixel alpha (composited, not additive) so it can't blow out into a
+    # disc the way _yk_radial does. Brightens toward the waterline.
+    bh_ = int(h * 0.26)
+    band = pygame.Surface((w, bh_), pygame.SRCALPHA)
+    for yy in range(bh_):
+        a = int(64 * (yy / bh_) ** 1.6 * flood)
+        if a > 0:
+            pygame.draw.line(band, (96, 78, 32, a), (0, yy), (w, yy))
+    surf.blit(band, (0, base_y - bh_ + 8))
+    _yk_radial(surf, w // 2, base_y + 18, int(w * 0.08), _YK_HOT,
+               int(9 * flood))     # a small glint on the water
     roofs = []
     x, i = -6, 0
     while x < w + 6:
@@ -1390,48 +1401,52 @@ def draw_carcosa(surf, t, mode="spread"):
     #    dark branches read against it and the pale faces stay the brightest
     #    things on screen.
     surf.fill((4, 4, 7))
-    cyn = int(h * 0.42)
-    maxd = math.hypot(w * 0.42, h * 0.46)        # contained -> lots of black around
+    cyn = int(h * 0.28)                           # halo BEHIND the crown, up high
+    maxd = math.hypot(w * 0.40, h * 0.40)
     steps = 26
     for i in range(steps, 0, -1):
         f = i / steps
         rad = int(maxd * f)
-        # A muted olive-gold pool (filled, not additive) -- dark enough that
-        # the bright gold masks pop and the dark branches read against it.
-        col = (int(68 * (1 - f) ** 1.4 * ramp * flick),
-               int(54 * (1 - f) ** 1.4 * ramp * flick),
-               int(20 * (1 - f) ** 1.4 * ramp))
-        pygame.draw.ellipse(surf, col, (kx - rad, cyn - int(rad * 0.82),
-                                        rad * 2, int(rad * 1.64)))
+        # A muted olive-gold backlight (filled, not additive) centred high
+        # behind the tree, so the gold reads as a halo -- dark below toward
+        # the town, not a glowing mound His face sits on.
+        col = (int(66 * (1 - f) ** 1.5 * ramp * flick),
+               int(52 * (1 - f) ** 1.5 * ramp * flick),
+               int(20 * (1 - f) ** 1.5 * ramp))
+        pygame.draw.ellipse(surf, col, (kx - rad, cyn - int(rad * 0.7),
+                                        rad * 2, int(rad * 1.4)))
 
-    # 2. His face dominates the core. Modest size; the mask carries its own
-    #    features -- no big additive glow (that stacking blew it to white).
-    mR = int(28 + grow * 18)
+    mR = int(30 + grow * 20)
 
-    # 3. The tree of the taken -- a near-full radial burst of bold tendrils
-    #    (up, sides, and roots down into the town), densely hung with faces.
+    # 3. The tree of the taken -- a gnarled FULL-CIRCLE burst (trunks ring
+    #    out in every direction with per-trunk angle/length jitter, so the
+    #    faces distribute AROUND Him instead of piling below the core into a
+    #    glowing mound). The downward trunks are the roots clawing the town.
     masks = []
-    trunks = 12
-    for i in range(trunks):
-        ang = -math.pi / 2 + (i - (trunks - 1) / 2.0) * (math.pi / trunks) * 1.7
-        _carcosa_branch(surf, kx, ky, ang, h * 0.17, 5, grow, t, i * 17 + 1,
-                        masks)
-    for i in range(5):
-        _carcosa_branch(surf, kx, ky + 8, math.pi / 2 + (i - 2) * 0.36,
-                        h * 0.12, 4, grow, t, 200 + i, masks)
+    ntr = 20
+    for i in range(ntr):
+        # Golden-angle spacing: successive trunks land far apart around the
+        # circle, so the mask cap fills EVENLY in all directions instead of
+        # piling on one side.
+        base = (i * 2.39996) % math.tau + (_frand(i * 31 + 3) - 0.5) * 0.3
+        ln = h * (0.13 + 0.08 * _frand(i * 31 + 7))
+        _carcosa_branch(surf, kx, ky, base, ln, 5, grow, t, i * 17 + 1,
+                        masks, kx, ky)
 
-    # 4. His face: a dark backing disc + His mask -- the SAME pallid mask the
-    #    King wears in-game (_yk_mask): void oblong sockets with a golden
-    #    gaze, the wail's black tears, the crack. Swelling at the core.
+    # 4. His face at the core -- the branches ARE His body (no separate robe;
+    #    a trapezoid just muddled the gold). A dark backing disc seats the
+    #    mask so it reads on dark, then the in-game King mask (_yk_mask
+    #    "wail"): void oblong sockets + golden gaze, black tears, the crack.
     pygame.draw.ellipse(surf, (9, 8, 11),
-                        (kx - mR - 6, ky - int(mR * 1.3), 2 * mR + 12,
-                         int(mR * 2.6)))
+                        (kx - mR - 6, ky - int(mR * 1.35), 2 * mR + 12,
+                         int(mR * 2.7)))
     _yk_mask(surf, kx, ky, mR, min(1.0, 0.55 + grow), "wail")
 
     # 5. The faces along the branches -- the taken, every one a person He
-    #    wears, all in His own mask (the established forms).
-    for (mx, my, mr, seed) in masks[:80]:
-        vis = min(1.0, grow * 1.4) * (0.62 + 0.38
+    #    wears, all in His own mask; sorted big-to-small so big faces sit
+    #    behind the small (depth), scattered across the whole tree.
+    for (mx, my, mr, seed) in sorted(masks[:90], key=lambda m: -m[2]):
+        vis = min(1.0, grow * 1.4) * (0.6 + 0.4
                                       * (0.5 + 0.5 * math.sin(t * 1.2 + seed)))
         _yk_mask(surf, mx, my, mr, min(1.0, vis),
                  _CARCOSA_FACEKINDS[seed % 4])
@@ -1443,17 +1458,16 @@ def draw_carcosa(surf, t, mode="spread"):
     #    the town as His influence escapes (two passes: glow, then faces, so
     #    no later glow buries a face -- exactly as the King's wake is drawn).
     orbs = []
-    for i in range(9):
-        prog = (t * 0.16 + _frand(i * 4 + 1)) % 1.0
-        ang = -math.pi / 2 + (_frand(i * 4 + 2) - 0.5) * 2.6
-        dist = prog * w * 0.52
+    for i in range(16):
+        prog = (t * 0.14 + _frand(i * 5 + 1)) % 1.0
+        ang = _frand(i * 5 + 2) * math.tau               # ALL directions
+        dist = prog * (w * 0.5) * (0.4 + 0.6 * _frand(i * 5 + 4))
         ox = kx + math.cos(ang) * dist
-        oy = ky + math.sin(ang) * (dist * 0.66)
-        r = 6 + int(10 * _frand(i * 4 + 3))
-        vis = (1.0 - prog) * ramp * (0.3 + 0.7 * flood) * 0.3
-        # Skip the pile right at the eruption so it doesn't blow out the core;
-        # the orbs read once they've streamed clear of His face.
-        if vis > 0.04 and dist > mR * 1.9:
+        oy = ky + math.sin(ang) * dist * 0.8
+        r = 5 + int(9 * _frand(i * 5 + 3))
+        vis = (1.0 - prog) * ramp * (0.3 + 0.7 * flood) * 0.32
+        # Skip the pile at the eruption + anything that lands in the town.
+        if vis > 0.04 and dist > mR * 1.8 and oy < h * 0.84:
             orbs.append((ox, oy, r * (1 - 0.2 * prog), vis, i * 7 + 3))
     for (ox, oy, r, vis, seed) in orbs:
         _yk_orb_glow(surf, ox, oy, r, vis)
