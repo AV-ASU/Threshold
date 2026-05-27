@@ -1471,40 +1471,79 @@ def draw_mask_yank(surf, t):
     pygame.draw.lines(surf, (70, 56, 24), False,
                       [(int(a), int(b)) for a, b in glyph], 2)
     pygame.draw.ellipse(surf, (5, 4, 7), (sx - 60, sy - 78, 120, 156))
-    if sh <= 0:
-        # Mask whole, a building tremor; the axe rears back and swings in.
+    hitstop = 0.07                                 # frozen frames on contact
+    if sh <= hitstop:
+        # Mask whole. Tremor builds; the axe rears back, HOLDS, then drops.
         trem = int(math.sin(t * 36) * 2 * (t / impact))
+        # Swing timeline: enter+cock [0.55,1.05] -> anticipation HOLD
+        # [1.05,1.35] -> fast accel drop [1.35,impact].
+        cocked = (sx + 230, sy - 250)              # axe held high, off upper-right
+        contact = (sx + 24, sy - 18)
+        if t < 1.05:
+            p = max(0.0, (t - 0.55) / 0.5)
+            ax = sx + 470 - (470 - 230) * p        # slide in from off-screen
+            ay = sy - 250
+            hxx, hyy = int(ax), int(ay)
+        elif t < 1.35:
+            hxx, hyy = cocked                      # the held beat (dread)
+            hyy += int(math.sin(t * 30) * 2)       # a small quiver
+        else:
+            sw = ((t - 1.35) / (impact - 1.35)) ** 2.4   # hard accelerating drop
+            hxx = int(cocked[0] + (contact[0] - cocked[0]) * sw)
+            hyy = int(cocked[1] + (contact[1] - cocked[1]) * sw)
+        ang = math.atan2(contact[1] - cocked[1], contact[0] - cocked[0])
+        if sh <= 0:
+            ms = 130
+            msurf = pygame.Surface((ms, ms), pygame.SRCALPHA)
+            _yk_mask(msurf, ms // 2, ms // 2, 58, 1.0, "wail")
+            surf.blit(msurf, msurf.get_rect(center=(sx + trem, sy)))
+            _draw_carcosa_axe(surf, hxx, hyy, ang)
+        else:
+            # CONTACT held: axe buried, a hairline crack lights, white spark.
+            ms = 130
+            msurf = pygame.Surface((ms, ms), pygame.SRCALPHA)
+            _yk_mask(msurf, ms // 2, ms // 2, 58, 1.0, "wail")
+            surf.blit(msurf, msurf.get_rect(center=(sx, sy)))
+            crk = [(sx + (_frand(c) - 0.5) * 16, sy - 70 + c * 24)
+                   for c in range(7)]
+            pygame.draw.lines(surf, (255, 248, 224), False,
+                              [(int(a), int(b)) for a, b in crk], 2)
+            _draw_carcosa_axe(surf, contact[0], contact[1], ang)
+            _yk_radial(surf, contact[0], contact[1], 26, (255, 248, 224), 220)
+    else:
+        # SHATTERED: the mask SPLITS down the strike line into two halves that
+        # fall apart under gravity, gore bursts from the Sign, debris rains.
+        s = sh - hitstop
+        _yk_radial(surf, sx, sy, int(50 + 80 * shake), (150, 30, 22),
+                   int(28 + 46 * shake))
+        for i in range(5):                         # red bleeding rakes
+            a = (i / 5.0) * math.tau + 0.4
+            ln = 60 + 200 * min(1.0, s * 1.4)
+            pygame.draw.line(surf, (110, 26, 18), (sx, sy),
+                             (int(sx + math.cos(a) * ln), int(sy + math.sin(a) * ln)),
+                             max(1, int(3 * min(1.0, s * 2))))
+        # the two halves of the mask, cleaved down the centre
         ms = 130
         msurf = pygame.Surface((ms, ms), pygame.SRCALPHA)
         _yk_mask(msurf, ms // 2, ms // 2, 58, 1.0, "wail")
-        surf.blit(msurf, msurf.get_rect(center=(sx + trem, sy)))
-        sw = max(0.0, min(1.0, (t - 1.15) / 0.45)) ** 2   # the swing (accel)
-        sxs, sys = sx + 300, sy - 250                      # start, off upper-right
-        hxx = int(sxs + (sx + 24 - sxs) * sw)
-        hyy = int(sys + (sy - 18 - sys) * sw)
-        _draw_carcosa_axe(surf, hxx, hyy,
-                          math.atan2((sy - 18) - sys, (sx + 24) - sxs))
-    else:
-        # SHATTERED: the Sign bleeds, gore bursts, the mask flies apart.
-        _yk_radial(surf, sx, sy, int(40 + 90 * shake), (150, 30, 22),
-                   int(24 + 50 * shake))
-        for i in range(5):                         # red bleeding rakes
-            a = (i / 5.0) * math.tau + 0.4
-            ln = 60 + 200 * min(1.0, sh)
-            pygame.draw.line(surf, (110, 26, 18), (sx, sy),
-                             (int(sx + math.cos(a) * ln), int(sy + math.sin(a) * ln)),
-                             max(1, int(3 * min(1.0, sh))))
-        for i in range(13):                        # the mask in shards
-            a = (i / 13.0) * math.tau + (_frand(i * 5) - 0.5) * 0.5
-            d = sh * (320 + 230 * _frand(i * 5 + 1))
+        gap = int(s * 90)
+        drop = int(s * s * 520)                    # gravity
+        for side, srcx in ((-1, 0), (1, ms // 2)):
+            half = msurf.subsurface((srcx, 0, ms // 2, ms)).copy()
+            half = pygame.transform.rotozoom(half, -side * s * 30, 1.0)
+            surf.blit(half, half.get_rect(center=(
+                int(sx + side * (ms * 0.22 + gap)), int(sy + drop))))
+        for i in range(9):                         # secondary debris, falling
+            a = (i / 9.0) * math.tau + (_frand(i * 5) - 0.5) * 0.5
+            d = s * (180 + 180 * _frand(i * 5 + 1))
             px = sx + math.cos(a) * d
-            py = sy + math.sin(a) * d - sh * 50     # fly out + up
-            shard = pygame.Surface((46, 46), pygame.SRCALPHA)
+            py = sy + math.sin(a) * d - s * 30 + s * s * 460   # arc then fall
+            shard = pygame.Surface((40, 40), pygame.SRCALPHA)
             col = (206, 196, 156) if i % 3 else (54, 50, 36)
-            pygame.draw.polygon(shard, col, [(23, 4), (40, 34), (8, 32)])
+            pygame.draw.polygon(shard, col, [(20, 4), (34, 30), (7, 28)])
             shard = pygame.transform.rotozoom(
-                shard, sh * 420 * (1 if i % 2 else -1) + i * 29,
-                0.5 + 0.7 * _frand(i * 5 + 2))
+                shard, s * 460 * (1 if i % 2 else -1) + i * 29,
+                0.4 + 0.6 * _frand(i * 5 + 2))
             surf.blit(shard, shard.get_rect(center=(int(px), int(py))))
     vig = pygame.Surface((w, h), pygame.SRCALPHA)
     for i in range(56):
@@ -1516,6 +1555,40 @@ def draw_mask_yank(surf, t):
         fl.fill((255, 244, 212, int(255 * min(1.0, flare))))
         surf.blit(fl, (0, 0))
     _carcosa_post(surf, t)
+
+
+def _carcosa_one_rift(surf, px, py, pr, op, t, seed, reach=1.0,
+                      ha=None, hand=True):
+    """One torn rift: the gold strike that split it, a dark tear with a hot
+    red rim, and (optionally) a HAND of the taken clawing through, writhing.
+    `ha` aims the reaching arm; default is downward/outward into the world."""
+    pr = int(pr)
+    if pr < 4 or op <= 0.03:
+        return
+    px, py = int(px), int(py)
+    pygame.draw.line(surf, (184, 150, 72), (px, py - pr * 3),
+                     (int(px + _frand(seed + 5) * 14 - 7), py), max(1, int(2 * op)))
+    pygame.draw.ellipse(surf, (4, 4, 7),
+                        (px - pr, int(py - pr * 1.3), pr * 2, int(pr * 2.6)))
+    pygame.draw.ellipse(surf, (140, 36, 26),
+                        (px - pr, int(py - pr * 1.3), pr * 2, int(pr * 2.6)),
+                        max(1, int(2 * op)))
+    if not hand:
+        return
+    if ha is None:
+        ha = math.pi / 2 + math.sin(t * 2.0 + seed) * 0.5
+    else:
+        ha = ha + math.sin(t * 2.0 + seed) * 0.4
+    wl = pr * (1.4 + 0.9 * op) * reach
+    hx, hy = px + math.cos(ha) * wl, py + math.sin(ha) * wl
+    aw = max(2, pr // 4)
+    pygame.draw.line(surf, (62, 48, 22), (px, py), (int(hx), int(hy)), aw + 2)
+    pygame.draw.line(surf, (8, 7, 10), (px, py), (int(hx), int(hy)), aw)
+    for f in range(4):
+        fa = ha + (f - 1.5) * 0.34 + math.sin(t * 3 + seed + f) * 0.06
+        tx, ty = hx + math.cos(fa) * pr * 0.9, hy + math.sin(fa) * pr * 0.9
+        pygame.draw.line(surf, (8, 7, 10), (int(hx), int(hy)),
+                         (int(tx), int(ty)), max(1, aw // 2))
 
 
 def _carcosa_portal_hands(surf, w, h, cx, cy, spread, t):
@@ -1530,32 +1603,99 @@ def _carcosa_portal_hands(surf, w, h, cx, cy, spread, t):
         dist = (0.24 + 0.22 * _frand(i * 7 + 1)) * w
         px = cx + math.cos(a) * dist
         py = cy + math.sin(a) * dist * 0.6 - h * 0.04
-        pr = int((16 + 34 * _frand(i * 7 + 2)) * op)
-        if pr < 4:
-            continue
-        # the rift: the gold strike that tore it + a dark tear with a hot rim
-        pygame.draw.line(surf, (184, 150, 72), (int(px), int(py - pr * 3)),
-                         (int(px + _frand(i * 7 + 5) * 14 - 7), int(py)),
-                         max(1, int(2 * op)))
-        pygame.draw.ellipse(surf, (4, 4, 7),
-                            (int(px - pr), int(py - pr * 1.3), pr * 2, int(pr * 2.6)))
-        pygame.draw.ellipse(surf, (140, 36, 26),
-                            (int(px - pr), int(py - pr * 1.3), pr * 2, int(pr * 2.6)),
-                            max(1, int(2 * op)))
-        # a hand clawing out, reaching down/out into the world, writhing
-        ha = math.pi / 2 + math.sin(t * 2.0 + i) * 0.5
-        wl = pr * (1.4 + 0.9 * op)
-        hx, hy = px + math.cos(ha) * wl, py + math.sin(ha) * wl
-        aw = max(2, pr // 4)
-        pygame.draw.line(surf, (62, 48, 22), (int(px), int(py)),
-                         (int(hx), int(hy)), aw + 2)
-        pygame.draw.line(surf, (8, 7, 10), (int(px), int(py)),
-                         (int(hx), int(hy)), aw)
-        for f in range(4):
-            fa = ha + (f - 1.5) * 0.34 + math.sin(t * 3 + i + f) * 0.06
-            tx, ty = hx + math.cos(fa) * pr * 0.9, hy + math.sin(fa) * pr * 0.9
-            pygame.draw.line(surf, (8, 7, 10), (int(hx), int(hy)),
-                             (int(tx), int(ty)), max(1, aw // 2))
+        pr = (16 + 34 * _frand(i * 7 + 2)) * op
+        _carcosa_one_rift(surf, px, py, pr, op, t, i * 7)
+
+
+def _carcosa_facemask(surf, w, h, cx, cy, R, reveal, dilate, t):
+    """His FACE, formed from the breach itself -- not a mask that zooms in.
+    A dark head-silhouette looms over the lit cloud; its features are RIFTS:
+    two vertical eye-sockets that burn with the golden gaze, a wide mouth-gash,
+    gaunt cheek/brow hollows -- each a portal the taken claw out through. As
+    `dilate` rises He inhales: the sockets widen, the gaze swells, the hands
+    surge. The face arrives by the holes ARRANGING into Him, never by scaling."""
+    R = max(8, int(R))
+    rv = max(0.0, min(1.0, reveal))
+    dl = max(0.0, min(1.0, dilate))
+    if rv <= 0.02:
+        return
+    pulse = dl * (0.55 + 0.45 * math.sin(t * 1.7))      # the climactic inhale
+
+    # The PALLID MASK itself -- the unmistakable bone face of the King, fixed in
+    # scale (tied to the cap, never engulf), set into the smoke as His head. It
+    # is drawn solid so it COVERS the busy cloud behind it: a clean face the eye
+    # locks onto. Its eyes and mouth are the only thing that "arrives" -- the
+    # rifts open INSIDE them and the hands of the taken claw out.
+    rw, rh = int(R * 0.70), int(R * 0.92)
+    pad = max(6, rw // 3)
+    S = (rw + pad) * 2
+    mm = pygame.Surface((S, S), pygame.SRCALPHA)
+    mcx = mcy = rw + pad
+    sway = math.sin(t * 1.1) * 0.02                      # a slow living tilt
+    # bone face, shaded upper-left -> a head, not a disc
+    pygame.draw.ellipse(mm, _YK_MLO, (mcx - rw + 2, mcy - rh + 2, 2 * rw, 2 * rh))
+    pygame.draw.ellipse(mm, _YK_MMID, (mcx - rw, mcy - rh, 2 * rw, 2 * rh))
+    pygame.draw.ellipse(mm, _YK_MHI,
+                        (mcx - rw + 2, mcy - rh, max(2, 2 * rw - 5),
+                         max(2, 2 * rh - 7)))
+    # gaunt cheek shadows + nose ridge so it reads as a starved face
+    for sgn in (-1, 1):
+        pygame.draw.ellipse(mm, _YK_MLO,
+                            (int(mcx + sgn * rw * 0.34 - rw * 0.22),
+                             int(mcy + rh * 0.02),
+                             int(rw * 0.44), int(rh * 0.5)))
+    pygame.draw.line(mm, _YK_MLO, (mcx, int(mcy - rh * 0.28)),
+                     (mcx, int(mcy + rh * 0.18)), max(1, rw // 18))
+    mm.set_alpha(int(45 + 200 * rv))
+    rot = pygame.transform.rotozoom(mm, math.degrees(sway), 1.0)
+    surf.blit(rot, rot.get_rect(center=(cx, cy)))
+
+    eye_sep = R * 0.40
+    eye_y = cy - R * 0.16
+    eyes = [(cx - eye_sep, eye_y), (cx + eye_sep, eye_y)]
+    mouth = (cx, cy + R * 0.50)
+
+    # THE EYE-SOCKETS: vertical oblong rifts torn into the bone, a gold gaze
+    # burning at the back, hands clawing up/out, dilating with the inhale.
+    socket_h = R * (0.30 + 0.08 * pulse)
+    socket_w = R * (0.15 + 0.05 * pulse)
+    for ei, (ex, ey) in enumerate(eyes):
+        pygame.draw.ellipse(surf, _YK_MPIT,
+                            (int(ex - socket_w), int(ey - socket_h),
+                             int(socket_w * 2), int(socket_h * 2)))
+        gzR = R * (0.08 + 0.09 * rv + 0.07 * pulse)
+        _yk_radial(surf, ex, ey, int(gzR * 2.2), _YK_GOLD,
+                   int(70 * rv), add=False)
+        _yk_radial(surf, ex, ey, int(gzR), _YK_HOT,
+                   int(160 * min(1.0, rv * 1.4)))
+        for hsgn in (-0.5, 0.5):
+            _carcosa_one_rift(surf, ex + socket_w * hsgn, ey - socket_h * 0.3,
+                              socket_w * 1.0, rv, t, ei * 9 + int(hsgn * 4) + 3,
+                              reach=1.1 + 0.7 * dl,
+                              ha=-math.pi / 2 + hsgn * 0.6)
+
+    # THE MOUTH-GASH: the widest breach, a torn maw spilling the most hands.
+    mw = R * (0.40 + 0.12 * pulse)
+    mh = R * (0.22 + 0.08 * pulse)
+    pygame.draw.ellipse(surf, _YK_MPIT,
+                        (int(mouth[0] - mw), int(mouth[1] - mh),
+                         int(mw * 2), int(mh * 2)))
+    pygame.draw.ellipse(surf, (120, 30, 22),
+                        (int(mouth[0] - mw), int(mouth[1] - mh),
+                         int(mw * 2), int(mh * 2)), max(1, int(2 + 2 * rv)))
+    _yk_radial(surf, mouth[0], mouth[1], int(mw * 0.6), (150, 36, 24),
+               int(44 * rv), add=False)
+    # the black tears the wail-mask weeps, down from each socket
+    for ex, _ in eyes:
+        pygame.draw.line(surf, _YK_MPIT, (int(ex), int(eye_y + socket_h)),
+                         (int(ex + R * 0.04), int(cy + rh)), max(2, int(R * 0.05)))
+    nh = 5
+    for j in range(nh):
+        u = (j + 0.5) / nh
+        hx = mouth[0] + (u - 0.5) * mw * 1.6
+        _carcosa_one_rift(surf, hx, mouth[1], mw * 0.34, rv, t, 200 + j * 7,
+                          reach=1.2 + 0.8 * dl,
+                          ha=math.pi / 2 + (u - 0.5) * 0.8)
 
 
 def draw_carcosa(surf, t, mode="spread"):
@@ -1583,10 +1723,8 @@ def draw_carcosa(surf, t, mode="spread"):
     cap_y = int(h * 0.30)                         # the cap / the crown
     stem_top = int(gz_y - rise * (gz_y - cap_y))
     spread = eo((t - 1.4) / 2.8)                  # the breach WIDENING outward
-    engulf = eo((t - 4.2) / 2.6)                  # He MANIFESTS + advances
+    engulf = eo((t - 4.2) / 2.6)                  # He INHALES + the gaze ignites
     capR = w * 0.30 * capg * (1.0 + 0.35 * spread)
-    mR = int((24 + capg * 16) * (1.0 + 2.4 * engulf))  # His head swells forward
-    crown_y = cap_y - int(capR * 0.22) + int(engulf * h * 0.09)  # looms, not lunges
 
     scene = pygame.Surface((w, h))
     scene.fill((4, 4, 7))
@@ -1677,18 +1815,15 @@ def draw_carcosa(surf, t, mode="spread"):
                             s * 0.6, capR * 0.5, 4, capg, t, 400 + s,
                             masks, kx, cap_y)
 
-    # THE KING. The explosion resolves into the giant King in Yellow himself,
-    # in his own grammar (see _draw_king): the pale wailing MASK over a dark
-    # VOID mass, ringed by the soul-orbs of the taken. He LOOMS -- vast, still,
-    # beheld -- and does NOT lunge; the reaching is done by the portal-hands.
+    # THE KING. The breach RESOLVES into His face -- not a mask zooming in, but
+    # the rifts ARRANGING into His features: two eye-sockets that burn with the
+    # golden gaze, a mouth-gash, gaunt hollows, all clawing with the hands of
+    # the taken. He arrives by the holes becoming Him. He looms, fixed in scale
+    # (no swell); `engulf` only deepens the inhale and ignites the gaze.
     if capg > 0.05:
-        _yk_void(scene, kx, crown_y + int(mR * 0.45), int(mR * 1.6))  # his mass
-        head_tilt = math.sin(t * 1.3) * 3.0                # a slow, alive sway
-        ms = int(mR * 3)
-        msurf = pygame.Surface((ms, ms), pygame.SRCALPHA)
-        _yk_mask(msurf, ms // 2, ms // 2, mR, min(1.0, 0.4 + capg), "wail")
-        mm = pygame.transform.rotozoom(msurf, head_tilt, 1.0)
-        scene.blit(mm, mm.get_rect(center=(kx, crown_y)))
+        faceR = capR * 0.50                                # tied to the cap, not engulf
+        face_y = cap_y + int(capR * 0.34)                  # hung below the smoke-crown
+        _carcosa_facemask(scene, w, h, kx, face_y, faceR, spread, engulf, t)
 
     # The taken surface in the TOWN too -- it isn't destroyed, it's claimed.
     if wave > 0.5:
