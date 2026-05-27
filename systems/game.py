@@ -12,7 +12,8 @@ from constants import (
     C_BLUE, C_GREEN, C_PURPLE, C_PANEL, C_PANEL_BORDER, C_DIM,
 )
 from rendering.sprites import (draw_player_sprite, draw_npc_sprite,
-                               draw_axe_swing, draw_king_death, draw_carcosa)
+                               draw_axe_swing, draw_king_death, draw_carcosa,
+                               draw_mask_yank)
 from rendering.transform import draw_vessel_bloom
 from ui.fonts import make_fonts
 from ui.dialog import DialogueBox
@@ -209,6 +210,11 @@ OPENING_ROLL_DUR = 2.6        # seconds rolling between stalls
 OPENING_STALL_TIMEOUT = 4.5   # auto-restart if the player never taps (no softlock)
 OPENING_DEAD_HOLD = 3.0       # the final dead beat before the hand-off
 OPENING_STALLS = 2            # normal stalls; the one after is the fatal one
+
+# rite_broken ending: the mask-yank act (the culpable beat), then a HARD CUT
+# to the Carcosa blast.
+RITE_YANK_DUR = 3.0
+RITE_BLAST_DUR = 7.0
 
 # 80% combined-darkness cap. Full-screen black overlays
 # (visibility dip, apex wash, hide wash, YK vignette) decrement
@@ -1600,7 +1606,13 @@ class Game:
         if name == "seal_threshold":
             self.audio.play("arg_chime", 0.7)
         elif name == "rite_broken":
-            self.audio.play("wrong", 0.85)        # the lid comes off
+            # The dread drone for the mask-yank; the boom/roar come at the cut
+            # (see _tick_rite_audio). Runs on the idle drive_channel.
+            self._rite_cues = set()
+            if self.audio.enabled:
+                self.audio.drive_channel.play(self.audio.carcosa_drone_snd,
+                                              loops=-1)
+                self.audio.drive_channel.set_volume(0.0)
         else:
             self.audio.play("door_close", 0.7)
 
@@ -1629,11 +1641,11 @@ class Game:
             ("It is done. Nothing leaves Brimley again.", 3.4),
             ("Not the hunger. Not you.", 4.0),
         ],
-        # rite_broken is the TRAP game over (NARRATIVE §6): you tear the rite
-        # down before sealing the source, and His influence floods out. This
-        # ending is PURELY VISUAL -- the Carcosa tableau (draw_carcosa), no
-        # text boxes -- so it's one timed phase the draw path special-cases.
-        "rite_broken": [("", 7.0)],
+        # rite_broken is the TRAP game over (NARRATIVE §6). PURELY VISUAL --
+        # no text boxes -- and two beats the draw path special-cases: the
+        # mask-yank (the culpable act, RITE_YANK_DUR) cutting to the Carcosa
+        # blast (RITE_BLAST_DUR).
+        "rite_broken": [("", 3.0 + 7.0)],
     }
 
     def _tick_ending(self, dt):
@@ -1643,6 +1655,8 @@ class Game:
         if not self._ending_active:
             return
         self._ending_phase_t += dt
+        if self._ending_active == "rite_broken" and self.audio.enabled:
+            self._tick_rite_audio()
         script = self._ENDING_SCRIPTS.get(self._ending_active, [])
         if not script:
             self._end_ending()
@@ -1657,8 +1671,36 @@ class Game:
             if self._ending_phase >= len(script):
                 self._end_ending()
 
+    def _tick_rite_audio(self):
+        """rite_broken soundtrack, matched to the visual beats: a swelling
+        dread drone over the mask-yank, a boom at the cut, the unleashed roar
+        swelling then fading as His face engulfs, an apex swell near the end.
+        Runs on the (otherwise idle) drive_channel."""
+        yt = self._ending_phase_t
+        dc = self.audio.drive_channel
+        cues = getattr(self, "_rite_cues", None)
+        if cues is None:
+            cues = self._rite_cues = set()
+        if yt < RITE_YANK_DUR:
+            dc.set_volume(min(0.7, yt / 2.0))                 # drone swells
+            if yt > 1.5 and "grind" not in cues:
+                cues.add("grind"); self.audio.play("static", 0.5)
+        else:
+            bt = yt - RITE_YANK_DUR
+            if "boom" not in cues:                            # the cut
+                cues.add("boom")
+                self.audio.play("carcosa_boom", 0.9)
+                dc.play(self.audio.carcosa_roar_snd, loops=-1)
+                dc.set_volume(0.0)
+            dc.set_volume(min(0.75, bt / 1.5) if bt < 3.5
+                          else max(0.0, 0.75 * (1 - (bt - 3.5) / 3.0)))
+            if bt > 3.3 and "swell" not in cues:
+                cues.add("swell"); self.audio.play("yk_tone", 0.7)
+
     def _end_ending(self):
         """Wrap up the ending sequence and return to title."""
+        if self.audio.enabled:
+            self.audio.drive_channel.fadeout(300)
         self._ending_active = None
         self._ending_phase = 0
         self._ending_phase_t = 0.0
@@ -1674,7 +1716,11 @@ class Game:
         if not self._ending_active:
             return
         if self._ending_active == "rite_broken":
-            draw_carcosa(self.screen, self._ending_phase_t, "spread")
+            yt = self._ending_phase_t
+            if yt < RITE_YANK_DUR:                # the culpable act...
+                draw_mask_yank(self.screen, yt)
+            else:                                 # ...HARD CUT to the blast
+                draw_carcosa(self.screen, yt - RITE_YANK_DUR, "spread")
             return
         script = self._ENDING_SCRIPTS.get(self._ending_active, [])
         if self._ending_phase >= len(script):

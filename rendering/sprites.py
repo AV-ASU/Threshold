@@ -1383,6 +1383,70 @@ def _carcosa_town(surf, w, h, base_y, t, flood):
         surf.blit(line, (0, base_y + 5 + k * 7))
 
 
+def draw_mask_yank(surf, t):
+    """The act that breaks the rite (NARRATIVE §6): the Pallid Mask wrenched
+    off the daubed Sign on the chamber wall -- YOUR hands doing it. Dread
+    stillness, a building tremor, then the WRENCH: the mask tears free toward
+    you, gold cracks erupt from the emptied socket, whiting out into the
+    blast. `t` = seconds into the act (~3s)."""
+    w, h = surf.get_size()
+    cx, cy = w // 2, int(h * 0.46)
+    wrench = max(0.0, min(1.0, (t - 1.4) / 1.1))
+    ew = 1.0 - (1.0 - wrench) ** 3
+    flare = max(0.0, (t - 2.55) / 0.45)
+    shx = int(math.sin(t * 62) * (2 + 18 * wrench))
+    shy = int(math.cos(t * 71) * (1 + 12 * wrench))
+    sx, sy = cx + shx, cy + shy
+
+    surf.fill((9, 8, 11))
+    for i in range(7):                            # cellar-wall stone seams
+        yy = int(h * (0.12 + 0.12 * i)) + (i % 2) * 6
+        pygame.draw.line(surf, (16, 14, 18), (0, yy), (w, yy + 4), 1)
+    # The daubed Yellow Sign behind the mask -- an asymmetric jaundiced glyph.
+    sgn = (int(64 + 70 * ew), int(52 + 56 * ew), int(22 + 28 * ew))
+    glyph = [(sx, sy - 96), (sx - 9, sy - 32), (sx - 44, sy - 12),
+             (sx - 15, sy + 20), (sx - 28, sy + 76), (sx + 7, sy + 32),
+             (sx + 42, sy + 64), (sx + 19, sy + 9), (sx + 50, sy - 26),
+             (sx + 11, sy - 28)]
+    pygame.draw.lines(surf, sgn, False, [(int(a), int(b)) for a, b in glyph], 2)
+    # The socket the mask sits in -- a dark recess that bleeds gold once torn.
+    pygame.draw.ellipse(surf, (5, 4, 7), (sx - 60, sy - 78, 120, 156))
+    _yk_radial(surf, sx, sy, int(28 + 34 * ew), _YK_GOLD, int(8 + 34 * ew))
+    # Gold cracks erupting from behind the mask as it tears free.
+    if wrench > 0.04:
+        bril = (min(255, int(150 + 100 * flare)), min(255, int(120 + 80 * flare)),
+                min(255, int(50 + 40 * flare)))
+        for i in range(8):
+            aa = (i / 8.0) * math.tau + (_frand(i * 5 + 1) - 0.5) * 0.4
+            seg = wrench * 78
+            px, py = float(sx), float(sy)
+            cpts = [(int(px), int(py))]
+            for s2 in range(3):
+                aa += (_frand(i * 5 + s2 + 2) - 0.5) * 0.7
+                px += math.cos(aa) * seg
+                py += math.sin(aa) * seg
+                cpts.append((int(px), int(py)))
+            pygame.draw.lines(surf, bril, False, cpts, max(1, int(1 + flare * 3)))
+    # The mask itself -- rendered then wrenched (grows + jitter-tilts toward
+    # the viewer as it's pulled free).
+    mR = 60
+    msurf = pygame.Surface((mR * 3, mR * 3), pygame.SRCALPHA)
+    _yk_mask(msurf, mR * 1.5, mR * 1.5, mR, 1.0, "wail")
+    mm = pygame.transform.rotozoom(msurf, math.sin(t * 18) * ew * 9,
+                                   1.0 + ew * 0.6)
+    surf.blit(mm, mm.get_rect(center=(sx, sy - int(ew * 12))))
+    # Edge vignette + the whiteout that becomes the blast.
+    vig = pygame.Surface((w, h), pygame.SRCALPHA)
+    for i in range(56):
+        a = int(170 * (1 - i / 56) ** 1.6)
+        pygame.draw.rect(vig, (0, 0, 0, a), (i, i, w - 2 * i, h - 2 * i), 1)
+    surf.blit(vig, (0, 0))
+    if flare > 0.01:
+        fl = pygame.Surface((w, h), pygame.SRCALPHA)
+        fl.fill((255, 244, 212, int(255 * min(1.0, flare))))
+        surf.blit(fl, (0, 0))
+
+
 def draw_carcosa(surf, t, mode="spread"):
     """rite_broken: His influence DETONATES -- a mushroom cloud of the taken.
     A flash + shockwave + shake at ground zero (the town/well); a stem of

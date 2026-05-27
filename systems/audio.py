@@ -88,6 +88,7 @@ class Audio:                        #Starting screen needs music, something simp
         self.sfx["door_open"]   = g(180, 250, 0.25, "saw", attack_ms=20, decay_ms=200, noise_mix=0.2)
         self.sfx["door_close"]  = g(120, 220, 0.25, "saw", attack_ms=10, decay_ms=180, noise_mix=0.25)
         self.sfx["engine_die"]  = g(64, 900, 0.34, "saw", attack_ms=4, decay_ms=820, noise_mix=0.45, vibrato=11)
+        self.sfx["carcosa_boom"] = g(50, 1100, 0.55, "sine", attack_ms=2, decay_ms=950, noise_mix=0.45)
         self.sfx["door_locked"] = g(220, 80, 0.22, "square", attack_ms=2, decay_ms=50)
         self.sfx["transition"]  = g(280, 350, 0.18, "sine", attack_ms=40, decay_ms=300)
         self.sfx["menu_open"]   = g(440, 90, 0.20, "triangle", attack_ms=2, decay_ms=70)
@@ -240,6 +241,9 @@ class Audio:                        #Starting screen needs music, something simp
         # Opening-drive loops (played on their own channels, not "music").
         self.engine_snd = self._engine_loop()
         self.radio_snd = self._radio_loop()
+        # Carcosa ending loops: the rite's dread drone + the unleashed roar.
+        self.carcosa_drone_snd = self._carcosa_drone()
+        self.carcosa_roar_snd = self._carcosa_roar()
 
     def _engine_loop(self, duration_ms=3000, vol=0.5):
         """A low engine idle: a rumble (stacked low sines) + rough noise,
@@ -258,6 +262,45 @@ class Audio:                        #Starting screen needs music, something simp
             chug = 0.55 + 0.45 * abs(math.sin(2 * math.pi * 9 * t))
             v = (rumble + smooth * 0.5) * chug
             sample = max(-32768, min(32767, int(v * vol * 0.32 * 32767)))
+            buf[i * 2] = sample & 0xFF
+            buf[i * 2 + 1] = (sample >> 8) & 0xFF
+        stereo = bytearray(n * 4)
+        for i in range(n):
+            stereo[i * 4] = stereo[i * 4 + 2] = buf[i * 2]
+            stereo[i * 4 + 1] = stereo[i * 4 + 3] = buf[i * 2 + 1]
+        return pygame.mixer.Sound(buffer=bytes(stereo))
+
+    def _carcosa_drone(self, duration_ms=2000, vol=0.5):
+        """Low ominous drone for the mask-yank -- two detuned sub sines + a
+        thin high tension shimmer. Loop length holds whole cycles."""
+        sr = 22050
+        n = int(sr * duration_ms / 1000)
+        buf = bytearray(n * 2)
+        for i in range(n):
+            t = i / sr
+            v = math.sin(2 * math.pi * 46 * t) * 0.5 + math.sin(2 * math.pi * 69 * t) * 0.3
+            v += math.sin(2 * math.pi * 1500 * t) * 0.04 * (0.6 + 0.4 * math.sin(2 * math.pi * 7 * t))
+            env = 0.8 + 0.2 * math.sin(2 * math.pi * 0.5 * t)
+            sample = max(-32768, min(32767, int(max(-1, min(1, v)) * vol * env * 32767)))
+            buf[i * 2] = sample & 0xFF
+            buf[i * 2 + 1] = (sample >> 8) & 0xFF
+        stereo = bytearray(n * 4)
+        for i in range(n):
+            stereo[i * 4] = stereo[i * 4 + 2] = buf[i * 2]
+            stereo[i * 4 + 1] = stereo[i * 4 + 3] = buf[i * 2 + 1]
+        return pygame.mixer.Sound(buffer=bytes(stereo))
+
+    def _carcosa_roar(self, duration_ms=3000, vol=0.55):
+        """The unleashing: filtered noise roar + a low rumble undertone."""
+        sr = 22050
+        n = int(sr * duration_ms / 1000)
+        buf = bytearray(n * 2)
+        smooth = 0.0
+        for i in range(n):
+            t = i / sr
+            smooth = 0.9 * smooth + 0.1 * random.uniform(-1, 1)
+            v = smooth * 0.6 + math.sin(2 * math.pi * 40 * t) * 0.3
+            sample = max(-32768, min(32767, int(max(-1, min(1, v)) * vol * 32767)))
             buf[i * 2] = sample & 0xFF
             buf[i * 2 + 1] = (sample >> 8) & 0xFF
         stereo = bytearray(n * 4)
