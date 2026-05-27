@@ -51,16 +51,10 @@ CREEPY_SCENES = {"basement", "void_boss",
 # `crate_broken_<scene>_<tx>_<ty>` flag so a broken crate stays
 # broken across re-entries.
 CRATE_LOOT = {
-    # Cornfield maze -- a side crate the player finds while
-    # searching for the liquor crate. Holds a stick of charcoal.
-    ("cornfield_maze", 5, 6):  "charcoal",
     # Country lane -- a crate against the inner corn wall, the kind
     # of stash a runner leaves for a pickup that never came. Holds a
     # torn page in a stranger's hand.
     ("country_lane",   8, 4):  "diary_page_2",
-    # Village (the new farm) -- a crate just west of the woodshed
-    # holding a small stash.
-    ("village",       21, 16): "charcoal",
 }
 
 # Outdoor decay tier. Each scene gets a small list of "this is
@@ -564,9 +558,8 @@ class Game:
     def begin_transition(self, target_scene, spawn_id="default"):
         if self.state == "transition": return
         # The cellar is no longer key-gated -- the Ledger (evidence #3) is a
-        # core clue and shouldn't hide behind the Clerk's fetch-quest. (The
-        # cellar_key the Clerk still hands over is now vestigial; the
-        # crate/key steps of his quest can be slimmed in a follow-up.)
+        # core clue and shouldn't hide behind a fetch-quest. The Clerk's old
+        # crate/key/bottle chain has been cut entirely.
         # Crossing a threshold eases the meter a touch -- you've put a
         # wall between yourself and the room behind. With hiding, this
         # is how the player claws visibility back under 0.90 to shake

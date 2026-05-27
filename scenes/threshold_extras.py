@@ -19,19 +19,6 @@ def _backwoods_note_pickup(game):
         "A small stash.")
 
 
-def _river_cache_pickup(game):
-    game.save.set_flag("river_cache_taken", True)
-    _evidence(game, "river_cache",
-        "A small stash.")
-
-
-def _grave_cache_pickup(game):
-    game.save.set_flag("grave_cache_taken", True)
-    _evidence(game, "grave_cache",
-        "A small stash."
-    )
-
-
 def _forest_cache_pickup(game):
     game.save.set_flag("forest_cache_taken", True)
     _evidence(game, "forest_cache",
@@ -297,18 +284,10 @@ def build_graveyard():
         (1 * TILE + 28, 7 * TILE + 16, "behind"),     # west fence
     ]
 
-    # Boarded shortcut: a panel of nailed-on planks set into the east
-    # iron-fence/tree line. Behind it, the groundskeeper's emergency
-    # cache -- batteries wrapped in oilskin. Chop with the axe to open.
+    # Boarded-over panel of nailed planks set into the east iron-fence/
+    # tree line -- a chop-target for the axe that opens onto an empty,
+    # long-looted pocket. (Whatever was cached here is long gone.)
     sc.objects[7][13] = "q"
-
-    def _graveyard_on_enter(game, scene):
-        if not game.save.flag("grave_cache_taken"):
-            scene.add_item(
-                13 * TILE + 16, 7 * TILE + 16, "charcoal",
-                on_pickup=_grave_cache_pickup,
-            )
-    sc.on_enter_fn = _graveyard_on_enter
 
     def _graveyard_interact(game):
         # The worn anonymous headstone.
@@ -395,18 +374,9 @@ def build_gravel_road_north():
     sc.add_decoration(Decoration(10 * TILE + 8, 19 * TILE + 22, "crow"))
     sc.add_decoration(Decoration(7 * TILE + 16, 8 * TILE + 16,
                                  "phantom_mark"))
-    # Boarded shortcut: a panel of nailed planks set into the east
-    # tree line at midway -- a small alcove with a battery cache.
+    # Boarded-over panel of nailed planks set into the east tree line at
+    # midway -- a chop-target that opens onto an empty, long-looted alcove.
     sc.objects[10][13] = "q"
-
-    def _gravel_on_enter(game, scene):
-        if not game.save.flag("gravel_cache_taken"):
-            scene.add_item(
-                13 * TILE + 16, 10 * TILE + 16, "charcoal",
-                on_pickup=lambda g: g.save.set_flag(
-                    "gravel_cache_taken", True),
-            )
-    sc.on_enter_fn = _gravel_on_enter
 
     sc.hide_spots = [
         (3 * TILE + 16, 6 * TILE + 16, "behind"),
@@ -637,15 +607,8 @@ def build_river_crossing():
             continue
         sc.add_decoration(Decoration(gx, gy, "grass_tuft"))
 
-    # Boarded cache pocket at col 5 row 0 -- chop the q to access
-    # an oilskin packet of spare batteries.
-    def _river_on_enter(game, scene):
-        if not game.save.flag("river_cache_taken"):
-            scene.add_item(
-                5 * TILE + 16, 0 * TILE + 16, "charcoal",
-                on_pickup=_river_cache_pickup,
-            )
-    sc.on_enter_fn = _river_on_enter
+    # Boarded-over panel at col 5 row 0 -- a chop-target that opens onto
+    # an empty, long-looted pocket.
 
     sc.hide_spots = [
         (3 * TILE + 16, 5 * TILE + 16, "behind"),     # west bank trees
@@ -842,33 +805,8 @@ def build_cornfield_maze():
     sc.objects[1][2] = "q"
 
     def _cornfield_maze_on_enter(game, scene):
-        if not game.save.flag("cornfield_cache_taken"):
-            scene.add_item(
-                2 * TILE + 16, 1 * TILE + 16, "charcoal",
-                on_pickup=lambda g: g.save.set_flag(
-                    "cornfield_cache_taken", True),
-            )
-        # The Clerk's missing crate of bottles. Stashed in the
-        # east-lane dead-end pocket -- straw-packed, six bottles,
-        # heavier than it looks.
-        if not game.save.flag("liquor_crate_taken"):
-            scene.add_item(
-                17 * TILE + 16, 16 * TILE + 16, "liquor_crate",
-                on_pickup=lambda g: g.save.set_flag(
-                    "liquor_crate_taken", True),
-            )
         scene._rustle_t = random.uniform(2.0, 4.0)
     sc.on_enter_fn = _cornfield_maze_on_enter
-
-    # Hidden note tile -- a phantom_mark in the centre lane that
-    # the player can interact with to read the truth about the
-    # crate. Reveals 'religious service' euphemism for the cult
-    # rite. Sets a save flag the innkeeper dialogue checks so the
-    # turn-in line shifts when the player has read it.
-    note_x = 9 * TILE + 16
-    note_y = 8 * TILE + 16
-    sc.add_decoration(Decoration(note_x, note_y, "phantom_mark"))
-    sc._crate_note_pos = (note_x, note_y)
 
     def _cornfield_maze_on_update(game, scene, dt):
         scene._rustle_t = getattr(scene, "_rustle_t", 3.0) - dt
@@ -885,27 +823,6 @@ def build_cornfield_maze():
                 _evidence(game, "scarecrow",
                     "A scarecrow."
                 )
-            return
-        # The crate-note: a folded slip pinned to a corn stalk.
-        # Reading it once sets `crate_note_read` so the Clerk
-        # turn-in line shifts.
-        nx, ny = sc._crate_note_pos
-        if (abs(game.player.x - nx) < 36
-                and abs(game.player.y - ny) < 36):
-            if game.save.flag("crate_note_read"):
-                game.dialog.show([
-                    "[c=dim]A slip pinned to the stalk.[/c]",
-                ], speaker="", voice="blip_soft", portrait="narrator")
-                return
-            game.save.set_flag("crate_note_read", True)
-            game.audio.play("pickup", 0.5)
-            game.dialog.show([
-                "[c=dim](A folded slip pinned to a stalk.)[/c]",
-                "[c=dim]A note about the crate.[/c]",
-            ], speaker="", voice="blip_soft", portrait="narrator")
-            _evidence(game, "service_note",
-                "A note about the crate."
-            )
             return
     sc.on_interact_fn = _cornfield_maze_interact
 

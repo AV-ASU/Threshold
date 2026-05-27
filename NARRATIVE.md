@@ -48,10 +48,10 @@ investigation.
 
 | Who | Side | Their thread |
 |---|---|---|
-| **Lodge Clerk** (was "the Innkeeper") | Complicit | The smiling trap-keeper. Holds your car keys ("settle your tab"), burns your clock with errands. Same NPC + quest chain, recast. |
+| **Lodge Clerk** (was "the Innkeeper") | Complicit | The smiling trap-keeper. Too-warm host who keeps you comfortable and never admits the town won't let you leave; escalates over visits to something colder. The old fetch-quest chain (crate -> cellar bottle -> car keys) is **cut** -- the car answers only to the Sign now, so he has no keys to dangle. |
 | **The Sheriff** | Cult enforcer | The law that keeps everyone in. He killed your car. His outdoor patrols are surveillance. |
 | **The Preacher** | **Innocent dissenter** | A small-town minister who **names the cult from his own pulpit** — oblivious to *what* they truly are, but loud that they're no church. Your **2nd** conversation (his hubris — "God's on my side of the door") sets `preacher_doomed`; on the next entry he's **gutted on his own church floor**, his cross in the viscera (evidence #4). The town murders the ones who name them. |
-| **The Store-Owner** | Quiet resister | Sells the flashlight, charcoal, paper (survival + clue tools). Frightened hints, never says it outright. |
+| **The Store-Owner** | Quiet resister | The shop is gutted -- shelves bare, till empty, **nothing to sell** (the old vendor items, charcoal + paper, are purged). His value is what he risks saying out loud: frightened warnings about who to trust, never said outright. |
 | **The Kid** | Innocent witness | Saw Mara walk into the corn and **tells you so** — the only honest account in town. What he gives you is the truth, not an object (the old keepsake item is purged; no inventory pickup). Children notice what adults pretend not to. |
 | **Mara Blaine** | The quarry — **already turned** | A willing member of the congregation now. Finding her proves there was never anyone to save. She is in the **hive**. |
 | **Cult / curse-priest / Watchers / the King in Yellow** | The corruption | Operate in the cornfields, the abandoned farmhouse, and the depths/hive below. |
@@ -159,7 +159,7 @@ that fire is someone He already took. You only ever see it by losing.
 | **A cultist catches you** | The cult takes you for the ritual | Stark text card — **CAPTURED** (cult takes you alive; worse than killed, and feeds the hive) | `_trigger_death("cultist")` → `_tick_death` (exists) |
 | **The King catches you** (vis `1.0`, *3+ evidence*, He reaches you) | He takes you into Himself | Brief cutscene: fire/hell, the floating masks of His sprite drifting in it — title **Carcosa** | `_trigger_death("king")` → `_tick_death` (exists; the bespoke `_trigger_closure` path was replaced by the shared death system) |
 | **Seal the threshold** — *END IT* | Contain the hunger; Brimley + you become a hole in the map | Ending sequence. *"It is done. Nothing leaves Brimley again. Not the hunger. Not you."* | `_play_ending("seal_threshold")` (exists) |
-| **Drive out with the Sign** — *SPREAD IT* | The Sign breaks the fold; you pass where no one else can, and Carcosa bleeds into the world through the hole you made | Ending sequence — the engine catches *for the first time*: *"You got out. You're the only one who ever has. Everyone will understand why, soon."* | `_begin_car_escape()` → `_play_ending("escape_alone")`. **REWORK:** gate the escape on possessing the **Sign** (`sigil_rubbing`), not just car keys; replace the stale `escape_alone` script ("you turn the key / the engine starts / you drive away") with the line at left. |
+| **Drive out with the Sign** — *SPREAD IT* | The Sign breaks the fold; you pass where no one else can, and Carcosa bleeds into the world through the hole you made | Ending sequence — the engine catches *for the first time*: *"You got out. You're the only one who ever has. Everyone will understand why, soon."* | `_begin_car_escape()` → `_play_ending("escape_alone")` (exists). The escape gates on the **Sign** (`sigil_rubbing`) **alone** — it's your own car, so there are no keys to find; the fold is the only lock, and only a shard of Him opens it. The old `car_keys` requirement + the Clerk's key-quest are cut. |
 
 ### The Fork — the Deep Stair (where Seal and Spread split)
 
@@ -256,6 +256,11 @@ Only display names and fiction change.
 ## 8. Still loose (design TODO)
 - **The Basement Level redesign** (active — see §9).
 - The **hive** layout (the deeper layer).
+- **The flashlight needs a rework.** Today it's in a half-state: no
+  flashlight *item* exists and `inventory_ui` calls it "scrapped," yet
+  `DARK_SCENES`, the README controls row, and §9 still treat it as a live
+  light-management mechanic. Decide it deliberately (live tool vs. darkness
+  as a flat constant) and make every reference agree.
 - Mara's journal text; each NPC's dialogue arc.
 - The death-card word: **CAPTURED** (leaning) vs KILLED.
 - The client's given name (surname Blaine).

@@ -205,6 +205,20 @@ def main():
               and not gk.player.inventory.has("polaroid"),
               "kid: the witness beat fires and grants no inventory item")
 
+    # --- 11. Purged items stay purged (no defs, no icons) ---
+    from systems.items import ITEM_DEFS
+    from ui.item_icons import _DISPATCH
+    for dead in ("charcoal", "paper", "car_keys", "cellar_bottle",
+                 "liquor_crate", "cellar_key", "polaroid"):
+        check(dead not in ITEM_DEFS and dead not in _DISPATCH,
+              f"cleanup: '{dead}' has no item def or icon")
+    # --- 12. The Mistlands escape gates on the Sign alone (no car keys) ---
+    import inspect
+    from scenes import mistlands as _ml
+    src = inspect.getsource(_ml.build_mistlands)
+    check("car_keys" not in src,
+          "escape: the car no longer checks for car_keys")
+
     print()
     if FAILS:
         print(f"{len(FAILS)} flow failure(s).")

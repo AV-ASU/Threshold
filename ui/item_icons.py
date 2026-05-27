@@ -34,18 +34,6 @@ def _axe(s):
     pygame.draw.polygon(s, _STEEL_DARK, [(3, 5), (8, 2), (9, 6), (4, 8)], 1)
 
 
-def _charcoal(s):
-    pygame.draw.line(s, _BLACK, (4, 12), (12, 4), 4)
-    pygame.draw.line(s, (90, 90, 95), (5, 12), (12, 5), 1)
-
-
-def _paper(s):
-    pygame.draw.rect(s, _PAPER, (4, 3, 9, 11))
-    pygame.draw.rect(s, _PAPER_DARK, (4, 3, 9, 11), 1)
-    pygame.draw.line(s, _PAPER_DARK, (6, 7), (11, 7), 1)
-    pygame.draw.line(s, _PAPER_DARK, (6, 10), (10, 10), 1)
-
-
 def _sigil_rubbing(s):
     # The Pallid Mask: a pale half-face, black eyeholes, a centre seam.
     pygame.draw.ellipse(s, _PAPER, (4, 2, 9, 13))
@@ -53,14 +41,6 @@ def _sigil_rubbing(s):
     pygame.draw.ellipse(s, _INK, (6, 6, 2, 3))    # left eyehole
     pygame.draw.ellipse(s, _INK, (10, 6, 2, 3))   # right eyehole
     pygame.draw.line(s, _PAPER_DARK, (8, 9), (8, 13), 1)  # seam
-
-
-def _car_keys(s):
-    pygame.draw.circle(s, _BRASS, (5, 8), 3, 1)
-    pygame.draw.circle(s, _BRASS_DARK, (5, 8), 1)
-    pygame.draw.line(s, _BRASS, (8, 8), (14, 8), 1)
-    pygame.draw.line(s, _BRASS, (12, 8), (12, 11), 1)
-    pygame.draw.line(s, _BRASS, (14, 8), (14, 10), 1)
 
 
 def _robe(s):
@@ -83,33 +63,6 @@ def _playscript(s):
     pygame.draw.circle(s, _BRUISE_LO, (8, 9), 6)
     pygame.draw.circle(s, _BRUISE, (8, 9), 5)
     pygame.draw.circle(s, _BRUISE_HI, (6, 7), 2)
-
-
-def _cellar_bottle(s):
-    pygame.draw.rect(s, _GLASS_HI, (7, 2, 2, 2))
-    pygame.draw.rect(s, _GLASS, (6, 4, 4, 2))
-    pygame.draw.rect(s, _GLASS, (5, 6, 6, 8))
-    pygame.draw.rect(s, _BORDER, (5, 6, 6, 8), 1)
-    pygame.draw.rect(s, _PAPER, (5, 8, 6, 4))
-    pygame.draw.line(s, _INK, (6, 10), (9, 10), 1)
-
-
-def _liquor_crate(s):
-    # Wooden crate with three bottle necks poking out the top. Slat
-    # seams + a darker shadow on the right side so it reads as a
-    # 3D box rather than a flat rectangle.
-    pygame.draw.rect(s, _WOOD,      (2, 6, 12, 8))
-    pygame.draw.rect(s, _WOOD_DARK, (2, 6, 12, 8), 1)
-    # Slat seams (two vertical lines)
-    pygame.draw.line(s, _WOOD_DARK, (6, 6), (6, 13), 1)
-    pygame.draw.line(s, _WOOD_DARK, (10, 6), (10, 13), 1)
-    # Three bottle necks (dark green) sticking out of the crate top
-    for nx in (4, 8, 12):
-        pygame.draw.rect(s, _GLASS,    (nx - 1, 3, 2, 4))
-        pygame.draw.rect(s, _BORDER,   (nx - 1, 3, 2, 4), 1)
-        pygame.draw.rect(s, _GLASS_HI, (nx - 1, 3, 1, 1))
-    # Right-side shadow
-    pygame.draw.line(s, _WOOD_DARK, (13, 7), (13, 13), 1)
 
 
 def _diary_page(s):
@@ -141,15 +94,10 @@ def _cross(s):
 _DISPATCH = {
     "lumber_axe":      _axe,
     "cross":           _cross,
-    "charcoal":        _charcoal,
-    "paper":           _paper,
     "sigil_rubbing":   _sigil_rubbing,
-    "car_keys":        _car_keys,
     "robe":            _robe,
     "mom_notebook":    _mom_notebook,
     "playscript":             _playscript,
-    "cellar_bottle":   _cellar_bottle,
-    "liquor_crate":    _liquor_crate,
     "diary_page_1":    _diary_page,
     "diary_page_2":    _diary_page,
 }

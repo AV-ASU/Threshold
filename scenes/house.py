@@ -340,9 +340,6 @@ def build_house():
     sc.add_furniture("firewood", [(15, 8), (16, 8)], w=58, h=24)
     sc.add_furniture("antler_rack", [(16, 2)], w=22, h=46)
 
-    # The kitchen drawer position -- where 'paper' lives. Sits beside
-    # the stove (col 2 after the kitchen-cluster shift, drawer at col 3).
-    sc._drawer_pos = (3 * TILE + 16, 5 * TILE + 16)
     # Hide spots: under the kitchen table, behind the kitchen shelves,
     # beside the fireplace. Each spot lands on a walkable tile next
     # to the visible cover (not on top of a solid prop).
@@ -358,9 +355,8 @@ def build_house():
 
 
 def house_on_enter(game, scene):
-    """Place the kitchen drawer's paper pickup, the Clerk NPC
-    himself (visible going about his business until the
-    confrontation fires), and the blocking variant after
+    """Place the Clerk NPC himself (visible going about his business
+    until the confrontation fires), and the blocking variant after
     confrontation. Two states for the Clerk:
 
       pre-confrontation:  visible NPC near the fireplace, talkable
@@ -370,11 +366,6 @@ def house_on_enter(game, scene):
                           (no dialogue offered), solid. The 'sit
                           back down' line is one-shot from the
                           confrontation handler."""
-    if not game.save.flag("paper_taken"):
-        scene.add_item(
-            scene._drawer_pos[0], scene._drawer_pos[1], "paper",
-            on_pickup=lambda g: g.save.set_flag("paper_taken", True),
-        )
     # Strip any stale host instance so re-entries don't stack.
     scene.npcs = [n for n in scene.npcs
                   if getattr(n, "tag", None) not in
@@ -567,7 +558,7 @@ def build_basement():
         sc.add_decoration(Decoration(tx * TILE + 16, ty * TILE + 6,
                                      "photo"))
 
-    # Workbench in the SW corner (tab bottle, woodshed key, charcoal).
+    # Workbench in the SW corner (holds the woodshed key).
     # The Clerk's real guest register -- the Ledger (evidence #3) -- is
     # hidden behind a loose panel in the west wall; the candle beside it
     # draws the eye. Found via the wall-panel interact (basement_interact).
@@ -610,45 +601,23 @@ def build_basement():
 
 
 def basement_on_enter(game, scene):
-    """Place the charcoal pickup on the workbench (idempotent via save
-    flags). The notebook is gated behind the wall_panel interaction in
+    """Drop the woodshed key on the workbench (idempotent via save flag).
+    The Ledger (evidence #3) is gated behind the wall_panel interaction in
     basement_interact."""
     game._provoke_cult(0.10)
     wbx, wby = scene._workbench_pos
-    if not game.save.flag("charcoal_taken"):
-        scene.add_item(
-            wbx + 12, wby + 4, "charcoal",
-            on_pickup=lambda g: g.save.set_flag("charcoal_taken", True),
-        )
-    # The cellar bottle. The innkeeper holds the player's car keys
-    # "until you settle your tab" -- this bottle is the settle.
-    # Placed off to one side of the workbench so it doesn't pile
-    # on top of the other pickups.
-    if not game.save.flag("cellar_bottle_taken"):
-        scene.add_item(
-            wbx + 32, wby + 4, "cellar_bottle",
-            on_pickup=lambda g: g.save.set_flag("cellar_bottle_taken", True),
-        )
-    # Woodshed key on a hook beside the workbench. The player
-    # descends with the cellar key, finds this, and now has a
-    # path to the splitting axe. Trade chain spine: alc -> cellar
-    # -> shed -> axe. (Was previously sitting on a hook by the
-    # sleeping Clerk; that interaction is removed because
-    # the new chain wants the cellar to be the gating space.)
-    # The inventory check covers old saves where the player got
-    # the key from the legacy night-Clerk interaction or the
-    # legacy crate-trade reward without the flag being set --
-    # don't drop a duplicate on the workbench.
+    # Woodshed key on a hook beside the workbench -- the gate to the
+    # splitting axe and the rope in the shed.
     if (not game.save.flag("woodshed_key_taken")
             and not game.player.inventory.has("woodshed_key")):
         scene.add_item(
             wbx + 32, wby - 12, "woodshed_key",
             on_pickup=lambda g: g.save.set_flag("woodshed_key_taken", True),
         )
-    # Sync workbench chest visual to whether it's been emptied.
+    # Sync workbench chest visual to whether the key's been taken.
     for deco in scene.decorations:
         if deco.kind == "chest":
-            deco.kwargs["open"] = game.save.flag("charcoal_taken")
+            deco.kwargs["open"] = game.save.flag("woodshed_key_taken")
 
 
 def basement_interact(game):

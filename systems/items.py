@@ -1,8 +1,9 @@
 """Item definitions and inventory.
 
-Item TEXT (names + descriptions) is intentionally generic placeholder
-copy. The KEYS, `kind` fields, and numeric fields are load-bearing
-(game logic + old saves depend on them) and must not change.
+Saves are in-memory only (single session, no disk), so item keys are NOT
+load-bearing across runs -- unused items get deleted outright rather than
+kept as reskins. Keys only need to match the code that references them
+within a run.
 
 The Inventory class is unchanged.
 """
@@ -10,19 +11,7 @@ import time
 
 ITEM_DEFS = {
     # ---- Core items (in circulation) ----
-    "car_keys":      {"name": "Car Keys",
-                       "kind": "key",
-                       "desc": "Some keys."},
     "woodshed_key":  {"name": "Woodshed Key",
-                       "kind": "key",
-                       "desc": "A key."},
-    "charcoal":      {"name": "Charcoal Stick",
-                       "kind": "key",
-                       "desc": "A stick of charcoal."},
-    "paper":         {"name": "A Note",
-                       "kind": "lore",
-                       "desc": "A folded note."},
-    "cellar_key":    {"name": "Cellar Key",
                        "kind": "key",
                        "desc": "A key."},
     "sigil_rubbing": {"name": "The Pallid Mask",
@@ -41,9 +30,6 @@ ITEM_DEFS = {
     "mom_notebook":  {"name": "Mara's Journal",
                        "kind": "lore",
                        "desc": "Her descent, in her own words."},
-    "cellar_bottle": {"name": "Cellar Bottle",
-                       "kind": "key",
-                       "desc": "A dusty bottle."},
     # ---- Re-meaned existing items ----
     "playscript":           {"name": "A Yellow Playscript",
                        "kind": "key",
@@ -53,11 +39,8 @@ ITEM_DEFS = {
                        "kind": "weapon",
                        "desc": "An axe for chopping wood.",
                        "atk": 0},
-    # ---- Vestigial keys / lore ----
     "rope":          {"name": "Coil of Rope",  "kind": "key",
                        "desc": "A coil of rope."},
-    "liquor_crate":  {"name": "Crate of Liquor", "kind": "key",
-                       "desc": "A crate of bottles."},
     "diary_page_1":  {"name": "Torn Page",     "kind": "lore",
                        "desc": "A torn page."},
     "diary_page_2":  {"name": "Torn Page",     "kind": "lore",

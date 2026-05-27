@@ -173,36 +173,8 @@ def kid_dialogue(game, npc):
 
 
 # ---- The Store-Owner ----
-
-SHOP_STOCK = [
-    ("paper",        "Notebook Paper",   0),
-    ("charcoal",     "Charcoal Stick",   0),
-]
-
-
-def _shop_purchase(game, key, name, cost):
-    game.player.inventory.add(key, 1)
-    game.audio.play("pickup", 0.7)
-    game.show_notice(f"He hands you the {name}.")
-
-
-def _shop_open_menu(game):
-    """Open the shop menu. Item keys preserved; flavor blanked."""
-    options = [name for (_k, name, _c) in SHOP_STOCK]
-    options.append("Nothing.")
-
-    def _on_pick(idx):
-        if idx >= len(SHOP_STOCK):
-            return
-        key, name, cost = SHOP_STOCK[idx]
-        _shop_purchase(game, key, name, cost)
-        _shop_open_menu(game)
-
-    prompt = "What can I get you?"
-    game.dialog.show_choice(prompt, options, _on_pick,
-                            speaker="Store-Owner", voice="blip_high",
-                            portrait="shopkeep")
-
+# The quiet resister. He has nothing left to sell (the shop is gutted of
+# its old vendor items) -- his value is what he risks saying out loud.
 
 def shopkeep_dialogue(game, npc):
     save = game.save
@@ -210,29 +182,26 @@ def shopkeep_dialogue(game, npc):
     count = save.arg("shop_count", 0) + 1
     save.set_arg("shop_count", count)
     if count == 1:
-        def _then_open():
-            _shop_open_menu(game)
         plain = [
             "You're the one asking after the Blaine girl. Keep your voice "
             "down about it in here.",
-            "[c=dim]Take the charcoal and the paper. The flashlight too, if "
-            "I had one left -- you'll want light where the questions lead.[/c]",
-            "I can't say more than that. I've got a family. Look around.",
+            "[c=dim]I can't help you the way you want. Shelves are bare and "
+            "the till's been empty since the spring -- nobody's buying, "
+            "nobody's selling.[/c]",
+            "But I'll say this much, and then nothing: don't go where the "
+            "smiling ones tell you it's safe. I've got a family. Look around.",
         ]
         game.dialog.show(escalate(game, low=plain, mid=plain, high=plain),
                          speaker="Store-Owner", voice="blip_high",
-                         portrait="shopkeep", on_complete=_then_open)
+                         portrait="shopkeep")
         return
     if count == 2:
-        def _then_open():
-            _shop_open_menu(game)
         game.dialog.show([
             "Back again. Good. Means you haven't gone quiet like the "
             "others.",
             "[c=dim]Don't trust the smiles. The ones who smile widest "
             "here, those went the soonest.[/c]",
-        ], speaker="Store-Owner", voice="blip_high",
-            portrait="shopkeep", on_complete=_then_open)
+        ], speaker="Store-Owner", voice="blip_high", portrait="shopkeep")
         return
     if count == 3:
         game.dialog.show([
@@ -316,83 +285,53 @@ def fisherman_dialogue(game, npc):
 # ---- The Clerk ----
 
 def clerk_dialogue(game, npc):
-    """The Clerk's quest chain (crate -> cellar key -> bottle ->
-    car keys -> playscript) is preserved mechanically. All flags, item
-    grants, and branch order are unchanged; only the spoken text is
-    blanked."""
+    """The Lodge Clerk -- the smiling trap-keeper (NARRATIVE §2). Complicit:
+    he keeps you comfortable, keeps you here, and never admits the town won't
+    let you leave. The old fetch-quest chain (crate -> cellar bottle -> car
+    keys) is cut -- the car answers only to the Sign now, so he has no keys
+    to dangle. He escalates over visits from warm host to something colder,
+    and (visit 2) points you at the cellar register himself: he's certain
+    it can't help you."""
     save = game.save
     _cult_tell(game, "clerk")
-    inv = game.player.inventory
-    # PRIORITY 1: turn in the liquor crate -> advances the chain. The
-    # cellar is no longer key-gated, so no key changes hands; the Clerk
-    # just points you down to the un-locked hatch.
-    if inv.has("liquor_crate"):
-        inv.remove("liquor_crate", 1)
-        save.set_flag("innkeeper_quest_done", True)
-        save.set_flag("axe_quest_started", True)
-        save.set_flag("innkeeper_bottle_done", True)   # legacy alias
-        game.audio.play("pickup_rare", 0.7)
-        if save.flag("crate_note_read"):
-            game.dialog.show([
-                "[c=dim]He sets the crate on the bar.[/c]",
-                "Thanks for that.",
-                "[c=dim]Cellar's open if you need it -- hatch under the\n"
-                "kitchen.[/c]",
-            ], speaker="Clerk", voice="blip_low", portrait="old")
-        else:
-            game.dialog.show([
-                "There it is. Thanks.",
-                "[c=dim]Hatch to the cellar's under the kitchen, if you're\n"
-                "curious. It's not locked.[/c]",
-            ], speaker="Clerk", voice="blip_low", portrait="old")
-        return
-    # Stage-2 turn-in -- the cellar bottle -> grants car keys.
-    if inv.has("cellar_bottle"):
-        inv.remove("cellar_bottle", 1)
-        save.set_flag("cellar_bottle_done", True)
-        if not inv.has("car_keys"):
-            inv.add("car_keys", 1)
-        game.audio.play("pickup_rare", 0.7)
-        game.dialog.show([
-            "That'll do.",
-            "[c=dim]Here are your car keys.[/c]",
-            "Not that they'll do you much good. The roads don't go where "
-            "they used to.",
-        ], speaker="Clerk", voice="blip_low", portrait="old")
-        return
-    # Quest complete once the keys are handed over. The Playscript is NOT
-    # a Clerk turn-in -- it's the deep-gate key, found in the Works and
-    # spent at the Deep Stair (handing it over here used to soft-lock the
-    # descent). The old stage-3 turn-in + post-quest branch are removed.
-    if save.flag("cellar_bottle_done"):
-        game.dialog.show(
-            ["[c=dim]He nods without looking up. Your tab's settled.[/c]"],
-            speaker="", voice="blip_soft", portrait="old")
-        return
-    if save.flag("axe_quest_started"):
-        game.dialog.show(
-            ["Settle your tab and the keys are yours.",
-             "[c=dim]There's a bottle down in the cellar -- the hatch is\n"
-             "under the kitchen. Bring it up.[/c]"],
-            speaker="Clerk", voice="blip_low", portrait="old",
-        )
-        return
-    if not save.flag("innkeeper_quest_started"):
-        save.set_flag("innkeeper_quest_started", True)
+    count = save.arg("clerk_count", 0) + 1
+    save.set_arg("clerk_count", count)
+    if count == 1:
         plain = [
-            "Morning. I could use a hand.",
-            "[c=dim]I left a crate out by the field. Could you bring\n"
-            "it back? I'll square things up after.[/c]",
-            "Try the corn rows.",
+            "Evening. You'll be wanting a room -- everyone who comes asking "
+            "after that girl ends up staying a while.",
+            "[c=dim]He slides a key across the counter before you ask for "
+            "one.[/c]",
+            "Settle in. The roads aren't going anywhere. Neither are you.",
         ]
         game.dialog.show(escalate(game, low=plain, mid=plain, high=plain),
                          speaker="Clerk", voice="blip_low", portrait="old")
         return
+    if count == 2:
+        game.dialog.show([
+            "Sleep all right? People do here -- better than they expect.",
+            "[c=dim]If you're the restless sort, there's an old guest "
+            "register down in the cellar. Hatch under the kitchen.[/c]",
+            "Read it if you like. Won't change which rooms have keys.",
+        ], speaker="Clerk", voice="blip_low", portrait="old")
+        return
+    if count == 3:
+        game.dialog.show([
+            "Still asking your questions. That's fine. Ask away.",
+            "[c=dim]She asked hers too, the Blaine girl. Right up until she "
+            "stopped needing to.[/c]",
+        ], speaker="Clerk", voice="blip_low", portrait="old")
+        return
+    if count == 4:
+        game.dialog.show([
+            "[c=dim]He smiles, and it doesn't reach anything.[/c]",
+            "You're not a guest who checks out. None of my best ones are.",
+        ], speaker="Clerk", voice="blip_low", portrait="old")
+        return
     game.dialog.show(
-        ["The crate's out in the corn rows.",
-         "[c=dim]...[/c]"],
-        speaker="Clerk", voice="blip_low", portrait="old",
-    )
+        ["[c=dim]He nods you toward the stairs, patient as a man with all "
+         "the time in the world.[/c]"],
+        speaker="Clerk", voice="blip_low", portrait="old")
 
 
 def basement_photo_dialogue(game, npc):

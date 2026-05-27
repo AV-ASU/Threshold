@@ -1,14 +1,11 @@
 """Inventory menu UI.
 
 THRESHOLD: combat is gone, so the inventory is small and reads as
-"what you carry" rather than "what you fight with." Three tabs --
-Tools (axe, flashlight, keys, charcoal), Notes (lore: notebook,
-diary pages, robe), Consumables (spare
-batteries). The vestigial Apparel tab is gone; armor-kind items
-from the combat era fall into Tools so old saves still surface
-them. The Notebook (evidence review) lives in its own panel
-keyed to N -- not in inventory tabs -- because it shows text
-beats rather than carryable items.
+"what you carry" rather than "what you fight with." Two live tabs --
+Tools (axe, keys) and Notes (lore: the journal, diary pages, robe,
+the Mask). The Notebook (evidence review) lives in its own panel
+keyed to N -- not in inventory tabs -- because it shows text beats
+rather than carryable items.
 """
 import pygame
 from constants import (

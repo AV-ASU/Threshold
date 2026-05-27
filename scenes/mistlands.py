@@ -660,9 +660,9 @@ def build_mistlands():
     ]
 
     # Player's car: parked on the east bank, visible from the
-    # village entry. Reaching it with car_keys triggers the escape
-    # ending (the car was previously at the diner; moved here so
-    # the mistlands river area IS the escape geography). 3-tile
+    # village entry. It's YOUR car -- you drove in -- so there are no
+    # keys to find; the fold is the only lock. Reaching it with the
+    # Sign (the Pallid Mask) triggers the escape ending (SPREAD). 3-tile
     # footprint of solid 'X' tiles under the sprite so collision
     # matches the visual.
     car_tx, car_ty = 85, 8
@@ -690,19 +690,16 @@ def build_mistlands():
         cx, cy = sc._car_pos
         if (abs(game.player.x - cx) < 40
                 and abs(game.player.y - cy) < 40):
-            keys = game.player.inventory.has("car_keys")
             sign = game.player.inventory.has("sigil_rubbing")
-            if keys and sign and hasattr(game, "_begin_car_escape"):
+            if sign and hasattr(game, "_begin_car_escape"):
                 game._begin_car_escape()          # the Sign breaks the fold
                 return
-            if keys:
-                # The fold holds: without the Sign the engine never catches.
-                game.audio.play("door_locked", 0.6)
-                game.show_notice("The engine turns over. And over. "
-                                 "It will not catch.")
-                return
+            # The fold holds: without a shard of Him aboard, the engine
+            # turns over and over and never catches.
             game.audio.play("door_locked", 0.6)
-            game.show_notice("Locked. The keys are with the innkeeper.")
+            game.show_notice("You turn the key. The engine catches, and "
+                             "catches, and dies. The fold won't let the "
+                             "car go -- not empty-handed.")
             return
         # The payphone -- it won't dial out. The line is never dead,
         # though; something is always already on it.
