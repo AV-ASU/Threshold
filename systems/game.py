@@ -2817,21 +2817,7 @@ class Game:
         # back toward the car, and the taillights bleeding red onto the road
         # behind it. All additive over the dark asphalt.
         gy = cy - int(H * 0.20)
-        sheen = 0.30 + 0.70 * light       # the slick fades as the lights die
         wet = pygame.Surface((W, H), pygame.SRCALPHA)
-        # Thin cold reflective streaks down the wet lane (shimmer slightly),
-        # concentrated in the lit near-field so they read as reflections, not
-        # painted lines, and fade out up the dark road.
-        for sf, amp in ((0.32, 3), (0.5, 2), (0.7, 3)):
-            sx = int(rx0 + road_w * sf + math.sin(t * 0.7 + sf * 10) * 3)
-            for i in range(5, 0, -1):
-                f = i / 5
-                rw = max(1, int(3 * f))
-                a = int(amp * (1 - f) * sheen)
-                if a > 0:
-                    pygame.draw.ellipse(wet, (104, 116, 140, a),
-                                        (sx - rw, cy - int(H * 0.42), 2 * rw,
-                                         int(H * 0.62)))
         # Warm streak where the headlights mirror back toward the car.
         for i in range(7, 0, -1):
             f = i / 7
@@ -2871,39 +2857,45 @@ class Game:
             mist.blit(band, (int(math.sin(t * 0.3 + i * 2) * 30), my))
         s.blit(mist, (0, 0))
 
-        # Headlights: two beams projecting forward up the road, plus a soft
-        # warm pool elongated up-road (a teardrop, not a flat disc) so it
-        # reads as the asphalt lit ahead rather than a spotlight.
+        # The headlight beam itself: a warm cone thrown up the road from the
+        # lamps -- hot and tight at the bumper, splaying wider and cooling to
+        # amber as it fades into the dark ahead, with a bright hotspot pooling
+        # on the asphalt just in front. Built from stacked soft ellipse slices
+        # so the falloff is smooth and the sides are rounded -- not a hard
+        # trapezoid or a floating disc. (The side-spill onto the trees was
+        # dropped: top-down light on the treeline never read as anything but
+        # pasted-on glows.)
+        # NOTE: the glow layer is blitted with BLEND_RGBA_ADD, which adds the
+        # full source RGB wherever a shape is drawn (it ignores the source
+        # alpha). So the beam's falloff lives in the COLOUR brightness, scaled
+        # by distance and headlight strength -- not in alpha.
         glow = pygame.Surface((W, H), pygame.SRCALPHA)
         top_y = int(H * 0.30)
-        for dx in (-7, 7):
-            pygame.draw.polygon(glow, (80, 70, 46, int(28 * light)),
-                                [(cx + dx, cy - 20),
-                                 (cx + dx - 66, top_y), (cx + dx + 66, top_y)])
-        gx, gy = cx, cy - int(H * 0.20)
-        for i in range(26, 0, -1):
-            f = i / 26
-            rw = int(74 * f)
-            rh = int(150 * f)               # taller than wide -> up-road teardrop
-            a = int(7 * (1 - f) * light)
-            if a > 0:
-                pygame.draw.ellipse(glow, (132, 116, 78, a),
-                                    (gx - rw, gy - int(rh * 0.62), 2 * rw, rh))
-        # Headlights grazing the treeline: a dim warm rim that HUGS the inner
-        # forest edge and falls off into the woods, strongest beside the car
-        # and tapering up/down. A graze, not a spotlight -- the old centred
-        # ovals read as two lamps aimed at the trees.
-        gy0 = cy - int(H * 0.06)
-        for k in range(12):
-            inset = k * 2
-            a = int(6 * (1 - k / 12) * light)
-            if a <= 0:
-                continue
-            rh = int(H * 0.46) - k * 5
-            pygame.draw.ellipse(glow, (116, 98, 58, a),
-                                (rx0 - 9 - inset - 3, gy0 - rh // 2, 6, rh))
-            pygame.draw.ellipse(glow, (116, 98, 58, a),
-                                (rx1 + 9 + inset - 3, gy0 - rh // 2, 6, rh))
+        front = cy - 27                          # at the (1.3x) car's lamps
+        reach = int(H * 0.20)                    # how far the beam throws
+        span = max(1, front - reach)
+        slices = 60
+        eh = span // slices * 3 + 4              # tall slices -> heavy overlap
+        for i in range(slices, -1, -1):          # far+dim first, near+bright last
+            f = i / slices
+            y = front - int(f * span)
+            half = int(14 + f * f * road_w * 0.44)
+            b = (1 - f) ** 1.8 * light            # hot at the lamps, fading up
+            col = (min(255, int(176 * b)), min(255, int(150 * b)),
+                   min(255, int(104 * b)))
+            if col[0] + col[1] + col[2] > 3:
+                pygame.draw.ellipse(glow, col,
+                                    (cx - half, y - eh // 2, 2 * half, eh))
+        for i in range(13, 0, -1):               # hotspot just ahead of bumper
+            f = i / 13
+            rw, rh = int(40 * f) + 3, int(56 * f) + 3
+            hb = (1 - f) ** 1.3 * light
+            col = (min(255, int(210 * hb)), min(255, int(196 * hb)),
+                   min(255, int(150 * hb)))
+            if col[0] + col[1] + col[2] > 3:
+                pygame.draw.ellipse(glow, col,
+                                    (cx - rw, (front - 38) - rh // 2,
+                                     2 * rw, rh))
         s.blit(glow, (0, 0), special_flags=pygame.BLEND_RGBA_ADD)
 
         # Dust / moths drifting up through the headlight beam -- a little
