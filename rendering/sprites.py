@@ -1310,14 +1310,17 @@ def draw_king_death(surf, t):
     for (mx, my, mr, mvis, seed) in sorted(vmasks, key=lambda m: m[2]):
         _yk_mask(scene, mx, my, mr, min(1.0, mvis), _CARCOSA_FACEKINDS[seed % 4])
     if face > 0.03:
-        _yk_mask(scene, cx, cy, int(fr), min(1.0, 0.4 + face), "wail")
-        for sgn in (-1, 1):                        # the gaze stoked to a furnace
-            ex = cx + sgn * int(fr * 0.42)
-            ey = cy - int(fr * 0.12)
-            gz = fr * (0.12 + 0.05 * math.sin(t * 4))
-            _yk_radial(scene, ex, ey, int(gz * 2.4), _YK_GOLD,
-                       int(80 * face), add=False)
-            _yk_radial(scene, ex, ey, int(gz), _YK_HOT, int(165 * face))
+        # His AGGRESSIVE face -- the same shattered mask He wears when roused
+        # in-game: cracked into drifting shards with grasping arms bursting from
+        # the splits and the furnace-light blazing through. He caught you, so He
+        # is at full crack. The light pours from within as the face breaks open.
+        crack = 0.5 + 0.45 * face
+        _yk_radial(scene, cx, cy, int(fr * 0.58), (200, 110, 38),
+                   int(46 * face), add=False)
+        _yk_radial(scene, cx, cy, int(fr * 0.28), _YK_HOT, int(70 * face),
+                   add=False)
+        _yk_shatter_mask(scene, cx, cy, int(fr), min(1.0, 0.4 + face), "wail",
+                         crack, t, fr, aim=math.pi / 2, arms=True)
 
     # 4. Embers + heat-shimmer rising through it all.
     for i in range(46):
