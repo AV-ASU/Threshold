@@ -1310,17 +1310,42 @@ def draw_king_death(surf, t):
     for (mx, my, mr, mvis, seed) in sorted(vmasks, key=lambda m: m[2]):
         _yk_mask(scene, mx, my, mr, min(1.0, mvis), _CARCOSA_FACEKINDS[seed % 4])
     if face > 0.03:
-        # His AGGRESSIVE face -- the same shattered mask He wears when roused
-        # in-game: cracked into drifting shards with grasping arms bursting from
-        # the splits and the furnace-light blazing through. He caught you, so He
-        # is at full crack. The light pours from within as the face breaks open.
-        crack = 0.5 + 0.45 * face
-        _yk_radial(scene, cx, cy, int(fr * 0.58), (200, 110, 38),
-                   int(46 * face), add=False)
-        _yk_radial(scene, cx, cy, int(fr * 0.28), _YK_HOT, int(70 * face),
-                   add=False)
-        _yk_shatter_mask(scene, cx, cy, int(fr), min(1.0, 0.4 + face), "wail",
-                         crack, t, fr, aim=math.pi / 2, arms=True)
+        # His AGGRESSIVE face. The in-game shatter (pie-shards) reads as abstract
+        # wedges at this hero scale, so we keep the face LEGIBLE -- His burning
+        # wail-mask -- and bring the aggression with the grasping ARMS reaching
+        # from behind it and glowing FRACTURE seams cracking across it.
+        vis = min(1.0, 0.4 + face)
+        dk, gold, hot = (*_YK_SHADOW, 255), (*_YK_GOLD, 255), (*_YK_HOT, 255)
+        # the grasping arms, rooted behind the face, reaching out + writhing
+        n_arms = 6
+        for i in range(n_arms):
+            rho = i * math.tau / n_arms + 0.4 * math.sin(i * 2.3)
+            rx = cx + math.cos(rho) * fr * 0.6
+            ry = cy + math.sin(rho) * fr * 0.55
+            ph = (t * 0.3 + i * 0.41) % 1.0
+            u = ph / 0.5 if ph < 0.5 else (1.0 - ph) / 0.5
+            lunge = u * u * (3 - 2 * u)
+            lng = fr * (0.7 + (0.7 + 0.6 * face) * lunge)
+            _yk_spire(scene, rx, ry, rho, lng, fr, t, i, face, dk, gold, hot)
+        # the legible burning face
+        _yk_mask(scene, cx, cy, int(fr), vis, "wail")
+        for sgn in (-1, 1):                        # the gaze stoked to a furnace
+            ex = cx + sgn * int(fr * 0.42)
+            ey = cy - int(fr * 0.12)
+            gz = fr * (0.12 + 0.05 * math.sin(t * 4))
+            _yk_radial(scene, ex, ey, int(gz * 2.4), _YK_GOLD,
+                       int(80 * face), add=False)
+            _yk_radial(scene, ex, ey, int(gz), _YK_HOT, int(165 * face))
+        # fracture seams cracking across the face, light bleeding through
+        for k in range(5):
+            a = k * 1.27 + 0.5
+            pts = [(cx + math.cos(a) * fr * 0.12, cy + math.sin(a) * fr * 0.12),
+                   ((cx + math.cos(a) * fr * 0.55) + math.cos(a + 1.5) * fr * 0.09,
+                    (cy + math.sin(a) * fr * 0.55) + math.sin(a + 1.5) * fr * 0.09),
+                   (cx + math.cos(a) * fr * 0.96, cy + math.sin(a) * fr * 0.96)]
+            ipts = [(int(x), int(y)) for x, y in pts]
+            pygame.draw.lines(scene, (26, 18, 12), False, ipts, 3)
+            pygame.draw.lines(scene, (180, 132, 54), False, ipts, 1)
 
     # 4. Embers + heat-shimmer rising through it all.
     for i in range(46):
