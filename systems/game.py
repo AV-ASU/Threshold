@@ -2689,37 +2689,9 @@ class Game:
             c = int(140 * sb * tw)
             pygame.draw.circle(s, (c, c, int(c * 1.15)), (sx, sy), sr)
 
-        # Off-road darkness, then scrolling pine walls. Pines are indexed by a
-        # stable physical row so per-tree jitter doesn't flicker as they
-        # scroll, and they warm where the headlights reach them.
+        # Off-road darkness either side (the forest floor between trunks).
         pygame.draw.rect(s, (6, 8, 8), (0, 0, rx0 - 9, H))
         pygame.draw.rect(s, (6, 8, 8), (rx1 + 9, 0, W - (rx1 + 9), H))
-
-        def pine_wall(anchor_x, outward, spacing, mul, w, hgt, base_col):
-            base = scroll * mul
-            first = int(base // spacing)
-            nrows = H // spacing + 3
-            for ridx in range(first - nrows, first + 2):
-                y = int(base - ridx * spacing)
-                if y < -spacing or y > H + spacing:
-                    continue
-                r = random.Random(ridx * 37 + anchor_x)
-                jw = w + r.randint(-3, 4)
-                jh = hgt + r.randint(-7, 9)
-                px = anchor_x + outward * r.randint(0, 7)
-                prox = max(0.0, 1.0 - abs(y - cy) / 240.0)
-                cc = (min(255, int(base_col[0] + 30 * prox * light)),
-                      min(255, int(base_col[1] + 24 * prox * light)),
-                      min(255, int(base_col[2] + 15 * prox * light)))
-                pygame.draw.polygon(s, cc, [(px, y - jh), (px - jw, y),
-                                            (px + jw, y)])
-                pygame.draw.polygon(s, cc, [(px, y - jh + 9),
-                                            (px - jw - 2, y - 5),
-                                            (px + jw + 2, y - 5)])
-        pine_wall(rx0 - 34, -1, 58, 0.55, 8, 28, (11, 17, 13))   # far / dim / slow
-        pine_wall(rx1 + 34, 1, 58, 0.55, 8, 28, (11, 17, 13))
-        pine_wall(rx0 - 12, -1, 48, 1.0, 13, 46, (15, 23, 17))   # near / at shoulder
-        pine_wall(rx1 + 12, 1, 48, 1.0, 13, 46, (15, 23, 17))
 
         # Gravel shoulders + asphalt, lit by the headlights.
         pygame.draw.rect(s, L((48, 45, 40)), (rx0 - 10, 0, 10, H))
@@ -2743,6 +2715,37 @@ class Game:
             pygame.draw.ellipse(s, L((30, 29, 33)),
                                 (rx0 + r.randint(8, road_w - 26), py,
                                  r.randint(10, 26), r.randint(4, 8)))
+
+        # Dense roadside forest -- the game's own canopy trees
+        # (scenes.base._draw_tree), packed tight so each band reads as one
+        # thick overhanging wall rather than a row of shapes. Indexed by a
+        # stable physical row/column so the per-tree variation doesn't
+        # shimmer as it scrolls; staggered rows + jitter break the grid.
+        # Drawn to an offscreen layer, dimmed to a night shadow, then
+        # blitted so the canopies spill out over the shoulders.
+        from scenes.base import _draw_tree
+        forest = pygame.Surface((W, H), pygame.SRCALPHA)
+        f_sp = 28
+        f_first = int(scroll // f_sp)
+        f_rows = H // f_sp + 3
+        f_cols = (list(range(-8, rx0 - 6, f_sp))
+                  + list(range(rx1 + 6, W + 20, f_sp)))
+        for ridx in range(f_first - f_rows, f_first + 2):
+            yc = scroll - ridx * f_sp
+            if yc < -TILE or yc > H + TILE:
+                continue
+            stagger = (f_sp // 2) if (ridx & 1) else 0
+            for xc in f_cols:
+                seed = ((ridx * 73856093) ^ ((xc + stagger) * 19349663)) \
+                    & 0x7fffffff
+                jx = xc + stagger + (seed % 9) - 4
+                jy = int(yc) + ((seed >> 4) % 9) - 4
+                _draw_tree(forest, jx - 16, jy - 16, seed)
+        # Night shadow: a steady dim so the wall doesn't flicker with the
+        # engine, lifting only a little when the headlights are strong.
+        d = max(0, min(255, int(255 * (0.46 + 0.16 * light))))
+        forest.fill((d, d, d, 255), special_flags=pygame.BLEND_RGB_MULT)
+        s.blit(forest, (0, 0))
 
         # Reflector posts on the shoulders -- amber dots that flare as the
         # headlights sweep past them.
