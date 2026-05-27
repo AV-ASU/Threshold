@@ -2662,62 +2662,53 @@ class Game:
         s.blit(pop, (x - pop.get_width() // 2, by + 21))
         pygame.draw.line(s, L((132, 44, 38)), (x - 26, by + 25), (x + 26, by + 27), 2)
 
-    def _draw_lodge(self, s, cx, base_y, road_w, light):
-        """The Arcadia Lodge at the end of the road -- a long, low roadside
-        lodge the car coasts up to as the engine dies. Its own porch and a
-        couple of warm windows glow even as the headlights gutter (the only
-        warm life for miles), with most windows dark. Drawn so the road runs
-        up into its base. `base_y` is where the building meets the road."""
-        amb = 0.42 + 0.40 * light                 # body lit a little by the lamps
-        warm = (236, 196, 120)                    # self-lit windows / porch
+    def _draw_lodge_sign(self, s, x, ground_y, f):
+        """The Arcadia Lodge's roadside sign -- a lit motel sign the car
+        pulls up to as the engine dies. Same family as the BRIMLEY sign, but
+        SELF-LIT (warm, backlit, a flickering VACANCY) so it stays glowing as
+        the headlights gutter -- the lodge beckoning from the dark. The
+        building itself stays off the road (the Arcadia sits back in the
+        Clerk's cornfields); a sign reads as 'you've arrived' without faking
+        an exterior that contradicts the yard scene. `f` fades it in."""
+        f = max(0.0, min(1.0, f))
+        if f <= 0.0:
+            return
 
-        def A(c):
-            return (int(c[0] * amb), int(c[1] * amb), int(c[2] * amb))
-        w, h = int(road_w + 80), 78
-        x0 = cx - w // 2
-        top = base_y - h
-        # Warm light the lodge throws onto the road in front of it.
-        spill = pygame.Surface((s.get_width(), s.get_height()), pygame.SRCALPHA)
-        for i in range(14, 0, -1):
-            f = i / 14
-            rw, rh = int(w * 0.42 * f), int(70 * f)
-            pygame.draw.ellipse(spill, (int(70 * (1 - f)), int(56 * (1 - f)),
-                                        int(28 * (1 - f))),
-                                (cx - rw, base_y - rh // 2, 2 * rw, rh))
-        s.blit(spill, (0, 0), special_flags=pygame.BLEND_RGBA_ADD)
-        # Peaked roof with an overhang, then the body.
-        pygame.draw.polygon(s, A((30, 26, 30)),
-                            [(x0 - 12, top + 6), (cx, top - 24),
-                             (x0 + w + 12, top + 6)])
-        pygame.draw.rect(s, A((46, 39, 41)), (x0, top, w, h))
-        pygame.draw.rect(s, A((22, 18, 20)), (x0, top, w, h), 2)
-        pygame.draw.rect(s, A((30, 25, 27)), (x0, top, w, 9))     # eaves shadow
-        # A row of windows; a couple lit warm, the rest dark and cold.
-        n = 6
-        lit = {1, 4}
-        gap = (w - 28) // (n - 1)
-        for i in range(n):
-            wx = x0 + 14 + i * gap
-            wy = top + 24
-            if i in lit:
-                pygame.draw.rect(s, warm, (wx - 7, wy, 14, 20))
-                pygame.draw.rect(s, (150, 120, 70), (wx - 7, wy, 14, 20), 1)
-                pygame.draw.line(s, (150, 120, 70), (wx, wy), (wx, wy + 20), 1)
-            else:
-                pygame.draw.rect(s, A((20, 20, 26)), (wx - 7, wy, 14, 20))
-                pygame.draw.rect(s, A((10, 10, 14)), (wx - 7, wy, 14, 20), 1)
-        # Central entrance under a warm porch light.
-        dx0 = cx - 11
-        pygame.draw.rect(s, A((26, 20, 18)), (dx0, base_y - 30, 22, 30))   # door
-        pygame.draw.circle(s, warm, (cx, base_y - 34), 3)                  # porch lamp
-        pygame.draw.circle(s, (120, 96, 54), (cx, base_y - 34), 5, 1)
-        # Hanging "ARCADIA" sign, faintly backlit.
-        sign = self.fonts["tiny"].render("ARCADIA", True, (210, 188, 140))
-        sb = sign.get_rect()
-        bx, by = cx - sb.w // 2 - 5, top - 16
-        pygame.draw.rect(s, A((34, 28, 24)), (bx, by, sb.w + 10, sb.h + 4))
-        pygame.draw.rect(s, (96, 78, 46), (bx, by, sb.w + 10, sb.h + 4), 1)
-        s.blit(sign, (bx + 5, by + 2))
+        def C(c):
+            return (int(c[0] * f), int(c[1] * f), int(c[2] * f))
+        tt = pygame.time.get_ticks() / 1000.0
+        neon = 1.0 if (tt * 3.0) % 5.0 > 0.3 else 0.4      # dying-neon flicker
+        bw, bh = 96, 42
+        bx, by = x - bw // 2, ground_y - 132
+        # Post.
+        pygame.draw.rect(s, C((50, 44, 38)),
+                         (x - 2, by + bh, 4, ground_y - (by + bh)))
+        # Warm backlight halo behind the board (additive).
+        halo = pygame.Surface((s.get_width(), s.get_height()), pygame.SRCALPHA)
+        for i in range(10, 0, -1):
+            ff = i / 10
+            rw, rh = int(bw * 0.85 * ff), int(bh * 1.4 * ff)
+            pygame.draw.ellipse(halo, (int(64 * (1 - ff) * f),
+                                       int(48 * (1 - ff) * f),
+                                       int(20 * (1 - ff) * f)),
+                                (x - rw, by + bh // 2 - rh // 2, 2 * rw, rh))
+        s.blit(halo, (0, 0), special_flags=pygame.BLEND_RGBA_ADD)
+        # Board.
+        pygame.draw.rect(s, C((34, 30, 28)), (bx, by, bw, bh))
+        pygame.draw.rect(s, C((96, 78, 46)), (bx, by, bw, bh), 2)
+        warm = C((236, 200, 128))
+        a = self.fonts["sm"].render("ARCADIA", True, warm)
+        b = self.fonts["sm"].render("LODGE", True, warm)
+        s.blit(a, (x - a.get_width() // 2, by + 3))
+        s.blit(b, (x - b.get_width() // 2, by + 21))
+        # VACANCY panel (the neon that flickers).
+        vy = by + bh + 5
+        pygame.draw.rect(s, C((28, 24, 22)), (x - 34, vy, 68, 18))
+        pygame.draw.rect(s, C((70, 54, 30)), (x - 34, vy, 68, 18), 1)
+        vac = self.fonts["tiny"].render(
+            "VACANCY", True,
+            C((int(212 * neon), int(150 * neon), int(70 * neon))))
+        s.blit(vac, (x - vac.get_width() // 2, vy + 4))
 
     def _draw_opening(self):
         """The night drive into Brimley: a dark northern road scrolling past,
@@ -2869,16 +2860,14 @@ class Game:
         if 0 <= sign_y <= H + 60:
             self._draw_road_sign(s, rx1 + 28, sign_y, light)
 
-        # The Arcadia Lodge at the end of the road: in the dead phase the car
-        # has coasted up to it, so draw it parked across the road ahead,
-        # easing the last few feet into rest. This gives "The Arcadia Lodge"
-        # caption something to refer to -- before, the text named an arrival
-        # the visuals never showed.
+        # The Arcadia Lodge's lit roadside sign on the right shoulder: in the
+        # dead phase the car has pulled up to it as the engine dies. The
+        # building stays off the road (the Arcadia sits back in the corn);
+        # the sign gives "The Arcadia Lodge" caption a referent without
+        # faking an exterior. Fades in over the start of the dead beat.
         if ph == "dead":
-            appr = min(1.0, self._opening_phase_t / 0.8)
-            e = 1.0 - (1.0 - appr) ** 2
-            self._draw_lodge(s, cx, int(H * 0.40) - int((1.0 - e) * 46),
-                             road_w, light)
+            self._draw_lodge_sign(s, rx1 + 36, cy + 8,
+                                  min(1.0, self._opening_phase_t / 0.5))
 
         # Wet asphalt -- the road reads slick. A cool sheen reflecting the
         # night sky down the lane, a warm streak where the headlights mirror
