@@ -27,6 +27,11 @@ class Audio:                        #Starting screen needs music, something simp
             self.music_channel = pygame.mixer.Channel(0)
             self.ambient_channel = pygame.mixer.Channel(1)
             self.king_channel = pygame.mixer.Channel(2)
+            # Opening-drive channels: engine idle, car radio, and the static
+            # it dissolves into as the town folds shut around you.
+            self.drive_channel = pygame.mixer.Channel(3)
+            self.radio_channel = pygame.mixer.Channel(4)
+            self.static_channel = pygame.mixer.Channel(5)
 
     def _gen(self, freq, ms, vol=0.3, wave="sine", attack_ms=10, decay_ms=40, vibrato=0, noise_mix=0.0):
         sr = 22050
@@ -82,6 +87,7 @@ class Audio:                        #Starting screen needs music, something simp
         self.sfx["bump"]        = g(80, 100, 0.18, "square", attack_ms=2, decay_ms=70, noise_mix=0.3)
         self.sfx["door_open"]   = g(180, 250, 0.25, "saw", attack_ms=20, decay_ms=200, noise_mix=0.2)
         self.sfx["door_close"]  = g(120, 220, 0.25, "saw", attack_ms=10, decay_ms=180, noise_mix=0.25)
+        self.sfx["engine_die"]  = g(64, 900, 0.34, "saw", attack_ms=4, decay_ms=820, noise_mix=0.45, vibrato=11)
         self.sfx["door_locked"] = g(220, 80, 0.22, "square", attack_ms=2, decay_ms=50)
         self.sfx["transition"]  = g(280, 350, 0.18, "sine", attack_ms=40, decay_ms=300)
         self.sfx["menu_open"]   = g(440, 90, 0.20, "triangle", attack_ms=2, decay_ms=70)
@@ -231,6 +237,43 @@ class Audio:                        #Starting screen needs music, something simp
             "village": self._haunted_village(),
             "outside": self._wind_loop(duration_ms=8000, vol=0.07),
         }
+        # Opening-drive loops (played on their own channels, not "music").
+        self.engine_snd = self._engine_loop()
+        self.radio_snd = self._radio_loop()
+
+    def _engine_loop(self, duration_ms=3000, vol=0.5):
+        """A low engine idle: a rumble (stacked low sines) + rough noise,
+        amplitude-modulated by a ~9 Hz 'chug' so it reads as cylinders
+        firing rather than flat drone. Loop length holds whole cycles of
+        every component so it tiles seamlessly."""
+        sr = 22050
+        n = int(sr * duration_ms / 1000)
+        buf = bytearray(n * 2)
+        smooth = 0.0
+        for i in range(n):
+            t = i / sr
+            smooth = 0.7 * smooth + 0.3 * random.uniform(-1, 1)   # rough noise
+            rumble = (math.sin(2 * math.pi * 46 * t) * 0.5
+                      + math.sin(2 * math.pi * 92 * t) * 0.22)
+            chug = 0.55 + 0.45 * abs(math.sin(2 * math.pi * 9 * t))
+            v = (rumble + smooth * 0.5) * chug
+            sample = max(-32768, min(32767, int(v * vol * 0.32 * 32767)))
+            buf[i * 2] = sample & 0xFF
+            buf[i * 2 + 1] = (sample >> 8) & 0xFF
+        stereo = bytearray(n * 4)
+        for i in range(n):
+            stereo[i * 4] = stereo[i * 4 + 2] = buf[i * 2]
+            stereo[i * 4 + 1] = stereo[i * 4 + 3] = buf[i * 2 + 1]
+        return pygame.mixer.Sound(buffer=bytes(stereo))
+
+    def _radio_loop(self):
+        """A thin, somber hymn on the car radio -- tinny (square) and low,
+        the kind of late-night gospel station that's the last thing on the
+        dial out here. It dissolves into static as you cross into Brimley."""
+        return self._music_loop([
+            (196, 2), (220, 2), (174, 2), (196, 4),
+            (146, 2), (164, 2), (196, 2), (174, 4),
+        ], beat_ms=520, vol=0.13, wave="square")
 
     def _build_child_hum(self):
         """A short hummed phrase pulled from the village melody opening
@@ -624,6 +667,34 @@ class Audio:                        #Starting screen needs music, something simp
         self.current_music = None
         if self.enabled and self.music_channel:
             self.music_channel.fadeout(fade_ms)
+
+    # ---- Opening drive: engine + car radio dissolving into static ----
+    def start_drive(self):
+        """Begin the opening-drive bed: engine idle + radio + static loops,
+        all starting silent so the caller can ramp them per frame."""
+        if not self.enabled:
+            return
+        self.stop_music(150)
+        self.drive_channel.play(self.engine_snd, loops=-1)
+        self.radio_channel.play(self.radio_snd, loops=-1)
+        self.static_channel.play(self.sfx["static"], loops=-1)
+        for ch in (self.drive_channel, self.radio_channel, self.static_channel):
+            ch.set_volume(0.0)
+
+    def set_drive(self, engine=0.0, radio=0.0, static=0.0):
+        """Set the three drive-bed volumes (0..1) for this frame."""
+        if not self.enabled:
+            return
+        self.drive_channel.set_volume(max(0.0, min(1.0, engine)))
+        self.radio_channel.set_volume(max(0.0, min(1.0, radio)))
+        self.static_channel.set_volume(max(0.0, min(1.0, static)))
+
+    def stop_drive(self):
+        """Fade the whole drive bed out (engine dead, signal gone)."""
+        if not self.enabled:
+            return
+        for ch in (self.drive_channel, self.radio_channel, self.static_channel):
+            ch.fadeout(250)
 
     def force_silence(self, duration_s=None):
         self.music_muted = True

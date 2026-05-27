@@ -2456,6 +2456,7 @@ class Game:
         self._opening_phase_t = 0.0
         self._opening_stalls_left = OPENING_STALLS
         self.state = "opening"
+        self.audio.start_drive()              # engine + radio + static bed
 
     def _tick_opening(self, dt):
         self._opening_t += dt
@@ -2477,6 +2478,22 @@ class Game:
         elif ph == "dead":
             if self._opening_phase_t >= OPENING_DEAD_HOLD:
                 self._end_opening()
+        # Drive audio: the engine tracks speed and dies in the dead phase;
+        # the radio dissolves into static as you cross into Brimley, then the
+        # signal is lost entirely -- the town cutting you off from the world.
+        sp = max(0.0, min(1.0, self._opening_speed / OPENING_SCROLL_SPEED))
+        ot = self._opening_t
+        if self._opening_phase == "dead":
+            eng = max(0.0, 0.5 * (1.0 - self._opening_phase_t / 0.8))
+            rad = 0.0
+            stat = max(0.0, 0.16 * (1.0 - self._opening_phase_t / 0.5))
+        else:
+            eng = 0.20 + 0.50 * sp
+            deg = max(0.0, min(1.0, (ot - 2.5) / 3.0))    # radio -> static
+            lost = max(0.0, min(1.0, (ot - 6.5) / 2.5))   # signal lost entirely
+            rad = 0.16 * (1.0 - deg)
+            stat = 0.22 * deg * (1.0 - lost)
+        self.audio.set_drive(eng, rad, stat)
 
     def _opening_restart(self):
         """A stall resolves: the engine catches and lurches on -- or, on the
@@ -2492,11 +2509,12 @@ class Game:
         else:
             self._opening_phase = "dead"
             self._opening_phase_t = 0.0
-            self.audio.play("bump", 0.5)
+            self.audio.play("engine_die", 0.7)    # the engine that won't catch
 
     def _end_opening(self):
         """Hand the cold open off to the real start (reset, player, the
         bedroom wake). Called on completion or a silent ESC skip."""
+        self.audio.stop_drive()                   # kill the engine/radio bed
         self._start_play()
 
     def _draw_car(self, s, cx, cy, light=1.0, exhaust=0.0, scale=1.3):
