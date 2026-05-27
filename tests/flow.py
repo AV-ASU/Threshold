@@ -205,14 +205,46 @@ def main():
               and not gk.player.inventory.has("polaroid"),
               "kid: the witness beat fires and grants no inventory item")
 
-    # --- 11. Purged items stay purged (no defs, no icons) ---
+    # --- 11. The flashlight: found, toggles, double-edged in the dark ---
+    gf = new_game()
+    fire(gf, "woodshed", "_flash_pos")
+    check(gf.player.inventory.has("flashlight"),
+          "flashlight: picked up in the woodshed")
+    # In a dark, non-safe scene the beam lights and burns the meter.
+    gf.load_scene_now("well_passage")
+    ready(gf)
+    gf.flashlight_on = True
+    check(gf._flashlight_lit(),
+          "flashlight: lit once switched on in a dark scene")
+    gf.visibility, gf._gaze_count, gf._watchers = 0.30, 0, []
+    before = gf.visibility
+    for _ in range(10):
+        gf._tick_visibility(0.1)                  # ~1s of held light
+    check(gf.visibility > before,
+          "flashlight: holding the beam raises visibility (double-edged)")
+    # Switching off stops the burn -- the meter idles back down.
+    gf.flashlight_on = False
+    check(not gf._flashlight_lit(), "flashlight: off means no beam")
+    off0 = gf.visibility
+    for _ in range(10):
+        gf._tick_visibility(0.1)
+    check(gf.visibility < off0,
+          "flashlight: beam off, the meter bleeds back down")
+    # Cult-dark swallows the beam regardless of the switch.
+    gf.load_scene_now("dark")
+    ready(gf)
+    gf.flashlight_on = True
+    check(not gf._flashlight_lit(),
+          "flashlight: cult-dark scenes force the beam off")
+
+    # --- 12. Purged items stay purged (no defs, no icons) ---
     from systems.items import ITEM_DEFS
     from ui.item_icons import _DISPATCH
     for dead in ("charcoal", "paper", "car_keys", "cellar_bottle",
                  "liquor_crate", "cellar_key", "polaroid"):
         check(dead not in ITEM_DEFS and dead not in _DISPATCH,
               f"cleanup: '{dead}' has no item def or icon")
-    # --- 12. The Mistlands escape gates on the Sign alone (no car keys) ---
+    # --- 13. The Mistlands escape gates on the Sign alone (no car keys) ---
     import inspect
     from scenes import mistlands as _ml
     src = inspect.getsource(_ml.build_mistlands)

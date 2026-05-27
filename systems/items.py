@@ -14,6 +14,13 @@ ITEM_DEFS = {
     "woodshed_key":  {"name": "Woodshed Key",
                        "kind": "key",
                        "desc": "A key."},
+    "flashlight":    {"name": "Flashlight",
+                       "kind": "key",
+                       "desc": "A heavy steel flashlight. Press [F] to "
+                               "switch it on in the dark -- but a light in "
+                               "the dark is a thing that can be seen. The "
+                               "longer it burns, the more the King feels "
+                               "you."},
     "sigil_rubbing": {"name": "The Pallid Mask",
                        "kind": "lore",
                        "desc": "The King's own pale half-mask, made an "

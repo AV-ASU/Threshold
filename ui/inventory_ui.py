@@ -92,8 +92,9 @@ class InventoryUI:
             inv.equip(key)
             self.audio.play("confirm", 0.7)
         elif d["kind"] == "consumable":
-            # No consumables remain in circulation (the flashlight and
-            # its batteries were scrapped; combat-era potions are gone).
+            # No consumables remain in circulation (combat-era potions are
+            # gone; the flashlight is a key-kind Tool toggled with [F], not
+            # a consumable).
             self.audio.play("cancel", 0.4)
         elif d["kind"] in ("key", "lore"):
             # THRESHOLD: using mom_notebook advances the read

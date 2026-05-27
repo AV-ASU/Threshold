@@ -34,6 +34,18 @@ def _axe(s):
     pygame.draw.polygon(s, _STEEL_DARK, [(3, 5), (8, 2), (9, 6), (4, 8)], 1)
 
 
+def _flashlight(s):
+    # Steel barrel angled up-right, a pale lens at the head, and a short
+    # warm beam spilling from it.
+    pygame.draw.line(s, (250, 240, 180), (11, 5), (15, 1), 3)   # beam
+    pygame.draw.line(s, (250, 240, 180), (11, 7), (15, 5), 2)
+    pygame.draw.rect(s, _STEEL, (3, 8, 8, 4))                   # barrel
+    pygame.draw.rect(s, _STEEL_DARK, (3, 8, 8, 4), 1)
+    pygame.draw.rect(s, (235, 225, 170), (10, 7, 3, 6))         # lens
+    pygame.draw.rect(s, _STEEL_DARK, (10, 7, 3, 6), 1)
+    pygame.draw.rect(s, _STEEL_DARK, (2, 9, 1, 2))              # tail cap
+
+
 def _sigil_rubbing(s):
     # The Pallid Mask: a pale half-face, black eyeholes, a centre seam.
     pygame.draw.ellipse(s, _PAPER, (4, 2, 9, 13))
@@ -94,6 +106,7 @@ def _cross(s):
 _DISPATCH = {
     "lumber_axe":      _axe,
     "cross":           _cross,
+    "flashlight":      _flashlight,
     "sigil_rubbing":   _sigil_rubbing,
     "robe":            _robe,
     "mom_notebook":    _mom_notebook,

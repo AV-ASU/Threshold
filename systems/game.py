@@ -177,6 +177,11 @@ VIS_IDLE_DECAY = 0.02
 VIS_WATCHER_OPEN = 0.03
 VIS_WATCHER_HIDDEN = 0.015
 VIS_GAZE = 0.12               # a cultist's gaze fills the meter fast
+VIS_LIT_RISE = 0.045          # per second the flashlight is ON in the dark:
+                              # light marks you, so visibility climbs. Net of
+                              # idle decay this is a slow burn toward the King
+                              # (~30s of held light, alone, to erupt him) --
+                              # use the beam in bursts, not as a crutch.
 
 # Evidence raises a VISIBILITY FLOOR: the more of the case you understand, the
 # higher your baseline exposure. You can hide back down TO the floor but never
@@ -368,6 +373,7 @@ class Game:
         self._watcher_spawn_t = 0.0    # cadence to the next manifestation
         self._gaze_count = 0           # cultists watching the player this frame
         self._cult_topup_t = 0.0       # rate-limits cultist (re)spawns per scene
+        self.flashlight_on = False     # player intent; only "lit" in DARK scenes
 
         # ---- THRESHOLD: flashback ----
         # Set when the player reads Mara's journal through a third time.
@@ -525,6 +531,7 @@ class Game:
         self._watcher_spawn_t = 0.0
         self._gaze_count = 0
         self._cult_topup_t = 0.0
+        self.flashlight_on = False
         self._void_sting_played = False
         # Stillness + heartbeat
         self.stillness_t = 0.0
@@ -1435,12 +1442,16 @@ class Game:
         return used
 
     def _draw_dark(self):
-        """Dark interiors/underground (DARK_SCENES) render as a
-        navigable gloom: a moderate black tint over the whole scene so
-        it reads dim-but-legible, with a soft always-on clear pool
-        around the player so the immediate surroundings stay clear. The
-        flashlight mechanic was scrapped, so the gloom depends on no
-        item -- you can always see enough to move."""
+        """Dark interiors/underground (DARK_SCENES) render as a navigable
+        gloom: a moderate black tint over the whole scene so it reads
+        dim-but-legible, with a clear pool around the player.
+
+        With the flashlight LIT (`_flashlight_lit`) the near pool warms and
+        a long beam cone is carved out of the gloom in the player's facing
+        direction -- they can read the room far ahead. Without it, only a
+        cold "eyes-adjusted" pool lifts the near floor out of pure black.
+        Cult-dark rooms force the beam off (handled by `_flashlight_lit`)
+        and sit a touch heavier."""
         if self.scene is None or self.player is None:
             return
         if self.scene.key not in DARK_SCENES:
@@ -1448,21 +1459,40 @@ class Game:
         from scenes.base import _light_pool
         psx = int(self.player.x - self.cam_x)
         psy = int(self.player.y - self.cam_y)
-        # The player has no torch now, so a soft "eyes-adjusted" pool
-        # lifts the near floor out of pure black -- enough to see by,
-        # cold and dim rather than a warm light source.
-        _light_pool(self.screen, psx, psy, 112, (118, 124, 150), 96)
-        # Ambient gloom over the rest (the film grade darkens further on
-        # top, so this stays light enough to keep the room legible),
-        # with a clear pool carved around the player. Cult-dark rooms
-        # sit a touch heavier.
+        lit = self._flashlight_lit()
+        # Build the beam cone geometry once (apex -> left -> tip -> right).
+        cone = None
+        if lit:
+            fx, fy = getattr(self.player, "facing", (0, 1)) or (0, 1)
+            flen = math.hypot(fx, fy) or 1.0
+            ang = math.atan2(fy / flen, fx / flen)
+            reach, spread = 300, math.radians(30)
+            tip = (psx + reach * math.cos(ang), psy + reach * math.sin(ang))
+            left = (psx + reach * math.cos(ang - spread),
+                    psy + reach * math.sin(ang - spread))
+            right = (psx + reach * math.cos(ang + spread),
+                     psy + reach * math.sin(ang + spread))
+            cone = [(psx, psy), left, tip, right]
+        if lit:
+            # A warm held-light pool at the feet -- not eyes adjusting.
+            _light_pool(self.screen, psx, psy, 96, (240, 226, 165), 72)
+        else:
+            _light_pool(self.screen, psx, psy, 112, (118, 124, 150), 96)
         gloom = 130 if self.scene.key in CULT_DARK_SCENES else 100
         overlay = pygame.Surface((SCREEN_W, SCREEN_H), pygame.SRCALPHA)
         overlay.fill((0, 0, 0, gloom))
         rings = [(30 + i * 14, int(gloom * i / 8)) for i in range(8)]
         for rr, aa in sorted(rings, key=lambda p: -p[0]):
             pygame.draw.circle(overlay, (0, 0, 0, aa), (psx, psy), rr)
+        if cone:
+            # Carve the beam clear of the gloom (alpha 0 inside the cone).
+            pygame.draw.polygon(overlay, (0, 0, 0, 0), cone)
         self.screen.blit(overlay, (0, 0))
+        if cone:
+            # A faint warm wash inside the cone sells it as a light source.
+            beam = pygame.Surface((SCREEN_W, SCREEN_H), pygame.SRCALPHA)
+            pygame.draw.polygon(beam, (250, 232, 170, 26), cone)
+            self.screen.blit(beam, (0, 0))
 
     def _draw_haze(self, base_alpha, fog_rgba, fog_n, drift_x, sway_amp,
                    sway_y_amt):
@@ -1979,6 +2009,41 @@ class Game:
                 return True
         return False
 
+    def _flashlight_lit(self):
+        """Is the flashlight actually casting a beam right now? True only
+        when the player carries it, has it switched on, and stands in a
+        DARK scene that isn't cult-dark (the deep cult sites swallow any
+        ordinary light -- the dread aperture rules there instead)."""
+        if self.player is None or self.scene is None:
+            return False
+        if not self.flashlight_on:
+            return False
+        if not self.player.inventory.has("flashlight"):
+            return False
+        if self.scene.key not in DARK_SCENES:
+            return False
+        if self.scene.key in CULT_DARK_SCENES:
+            return False
+        return True
+
+    def _toggle_flashlight(self):
+        """[F]: flip the flashlight. Refuses (with feedback) if the player
+        has no light, and warns -- once -- that the deep dark eats the beam
+        in cult-dark scenes."""
+        if self.player is None:
+            return
+        if not self.player.inventory.has("flashlight"):
+            self.audio.play("bump", 0.4)
+            self.show_notice("You have no light.", duration=1.6)
+            return
+        self.flashlight_on = not self.flashlight_on
+        self.audio.play("blip_low" if self.flashlight_on else "bump", 0.6)
+        if (self.flashlight_on and self.scene is not None
+                and self.scene.key in CULT_DARK_SCENES):
+            self.show_notice("The beam dies the moment it leaves the lens. "
+                             "The dark here is not the kind light fixes.",
+                             duration=2.6)
+
     def _tick_visibility(self, dt):
         """The visibility meter [0, 1] -- how visible the player is to
         the King in Yellow. Watchers (spawned by a cultist's curse)
@@ -1992,13 +2057,21 @@ class Game:
             return
         hidden = getattr(self.player, "hidden", None) is not None
         n_watch = len(self._watchers)
+        # A burning flashlight marks you. The cost applies everywhere the
+        # beam is lit EXCEPT the safe cellar (DIM_SAFE) -- there the light
+        # is a free comfort, your one room to read by. Cover can't hide a
+        # lit torch, so the rise lands in both branches.
+        lit_rise = (VIS_LIT_RISE
+                    if (self._flashlight_lit()
+                        and self.scene.key not in DIM_SAFE_SCENES)
+                    else 0.0)
         if hidden:
             # In cover the cult's gaze breaks, but the curse seeps through.
-            rise = n_watch * VIS_WATCHER_HIDDEN
+            rise = n_watch * VIS_WATCHER_HIDDEN + lit_rise
             self.visibility += dt * (rise - VIS_HIDE_BLEED)
         else:
             rise = (n_watch * VIS_WATCHER_OPEN
-                    + self._gaze_count * VIS_GAZE)
+                    + self._gaze_count * VIS_GAZE + lit_rise)
             self.visibility += dt * (rise - VIS_IDLE_DECAY)
         # Evidence sets a FLOOR the meter can't bleed below -- the more you
         # understand, the higher your baseline exposure to the King.
@@ -2774,6 +2847,20 @@ class Game:
         scene_label = scene_display_name(self.scene)
         s = self.fonts["tiny"].render(scene_label, True, (60, 56, 70))
         self.screen.blit(s, (14, SCREEN_H - 22))
+        # Flashlight state -- only surfaces in the dark, and only once you
+        # carry a light. Warm amber when the beam's actually burning (so
+        # the cost it's adding to the meter is legible), cold and dim when
+        # off, and a dead grey in cult-dark where the beam won't catch.
+        if (self.scene.key in DARK_SCENES
+                and self.player.inventory.has("flashlight")):
+            if self._flashlight_lit():
+                lbl, col = "[F] light: on", (210, 180, 90)
+            elif self.scene.key in CULT_DARK_SCENES:
+                lbl, col = "[F] light: dead here", (70, 66, 78)
+            else:
+                lbl, col = "[F] light: off", (96, 92, 108)
+            ls = self.fonts["tiny"].render(lbl, True, col)
+            self.screen.blit(ls, (14, SCREEN_H - 36))
         # Threat meter -- thin bar upper-right. Tracks Pursuer
         # proximity (the threat fiction's spine). Stays dim and
         # quiet at low values; warms amber in the middle band; goes
@@ -3041,6 +3128,8 @@ class Game:
                     self.inv_ui.toggle()
                 elif ev.key == pygame.K_n:
                     self.notebook_ui.toggle()
+                elif ev.key == pygame.K_f:
+                    self._toggle_flashlight()
                 elif ev.key == pygame.K_F5:
                     # The cot is the only save point. F5 used to
                     # write a snapshot from anywhere; that lifted

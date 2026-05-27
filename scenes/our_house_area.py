@@ -193,8 +193,10 @@ def build_woodshed():
 
     rope_pos   = (2 * TILE + 16, 2 * TILE + 16)
     axe_pos    = (5 * TILE + 16, 2 * TILE + 16)
+    flash_pos  = (3 * TILE + 16, 4 * TILE + 16)   # on the chopping stump
     sc._rope_pos = rope_pos
     sc._axe_pos  = axe_pos
+    sc._flash_pos = flash_pos
     # Sized workbench (the rope sits on it).
     sc.add_furniture("table", [(2, 2), (3, 2)], w=54, h=36)
     sc.add_decoration(Decoration(2 * TILE + 16, 0 * TILE + 22, "candle"))
@@ -232,6 +234,15 @@ def build_woodshed():
                 game.player.inventory.add("rope", 1)
                 game.audio.play("pickup_rare", 0.7)
                 game.show_notice("Coil of rope. Long enough for the well.")
+                return
+        # Flashlight left on the chopping stump in the centre.
+        if abs(px - flash_pos[0]) < 36 and abs(py - flash_pos[1]) < 36:
+            if not game.save.flag("flashlight_taken"):
+                game.save.set_flag("flashlight_taken", True)
+                game.player.inventory.add("flashlight", 1)
+                game.audio.play("pickup_rare", 0.7)
+                game.show_notice("A flashlight. Press [F] in the dark -- "
+                                 "but light draws the eye.")
                 return
     sc.on_interact_fn = _woodshed_interact
     return sc

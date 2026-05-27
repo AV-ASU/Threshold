@@ -64,6 +64,17 @@ A single meter: **VISIBILITY** `[0, 1]` — how visible you are to the King
 right now. Cultist gaze + Watcher figures push it up; **hiding** bleeds
 it back down (`hide_spots` via E, plus passive corn-cover tiles).
 
+**The flashlight (`[F]`) is the player's hand on that meter.** Found in
+the woodshed (beside the axe and rope), it casts a long beam **cone** in
+the facing direction through `DARK_SCENES` — the only way to read a black
+room far enough ahead to navigate it. But it is **double-edged**: a light
+in the dark is a thing that can be seen, so while it burns visibility
+*climbs* (`VIS_LIT_RISE`, ~30s of held light alone is enough to erupt the
+King). See more / be seen more. The cellar (`DIM_SAFE_SCENES`) is the one
+exception — the beam is free there, your room to read by. In the deep cult
+sites (`CULT_DARK_SCENES`) the beam won't catch at all: that dark is not
+the kind light fixes, and the dread aperture rules instead.
+
 **Investigating arms the threat.** The lethal apex is gated behind the
 case:
 
@@ -256,11 +267,6 @@ Only display names and fiction change.
 ## 8. Still loose (design TODO)
 - **The Basement Level redesign** (active — see §9).
 - The **hive** layout (the deeper layer).
-- **The flashlight needs a rework.** Today it's in a half-state: no
-  flashlight *item* exists and `inventory_ui` calls it "scrapped," yet
-  `DARK_SCENES`, the README controls row, and §9 still treat it as a live
-  light-management mechanic. Decide it deliberately (live tool vs. darkness
-  as a flat constant) and make every reference agree.
 - Mara's journal text; each NPC's dialogue arc.
 - The death-card word: **CAPTURED** (leaning) vs KILLED.
 - The client's given name (surname Blaine).
