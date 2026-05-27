@@ -1217,85 +1217,97 @@ def _yk_flames(surf, w, h, t, ramp):
 
 
 def draw_king_death(surf, t):
-    """Full-screen King-in-Yellow death: a dark furnace his gold masks
-    rise out of, fire all around, one mask looming up to take the whole
-    screen. `t` is seconds since the catch (the caller holds ~3.5s)."""
+    """Full-screen King-in-Yellow death: you are dragged into Carcosa. A dark
+    ember FURNACE the gold masks of the taken surface from, fire guttering low,
+    and His pallid wail-mask rising from the coals to CLOSE over the screen --
+    His face the last thing you see. `t` = seconds since the catch (~3.5s)."""
     w, h = surf.get_size()
-    ramp = max(0.0, min(1.0, t / 0.5))            # fade-in
-    flick = 0.88 + 0.12 * math.sin(t * 19.0) + 0.04 * math.sin(t * 41.0)
-    core_y = int(h * 0.56)
+    ramp = max(0.0, min(1.0, t / 0.6))            # fade-in
+    flick = 0.86 + 0.10 * math.sin(t * 17.0) + 0.04 * math.sin(t * 39.0)
+    core_y = int(h * 0.60)
 
-    # 1. Dark furnace base: near-black at the top, deepening ember-red
-    #    toward a hot belly low-centre. The darkness lets the masks pop.
-    bands = 56
-    bh = int(h / bands) + 2
+    # 1. Furnace base: near-black up top, deepening to a DIM ember belly low-
+    #    centre. Filled (not additive) so it never blooms into a bright bullseye
+    #    -- the darkness is what lets the pale masks read.
+    bands = 80
+    bh = h // bands + 2
     for i in range(bands):
         f = i / (bands - 1)
-        col = (int((14 + 132 * f * f) * flick * ramp),
-               int((5 + 40 * f * f) * flick * ramp),
-               int((6 + 8 * f) * ramp))
+        glow = max(0.0, f - 0.33) / 0.67          # only the lower half warms
+        col = (int((6 + 80 * glow * glow) * flick * ramp),
+               int((4 + 22 * glow * glow) * flick * ramp),
+               int((7 + 6 * glow) * ramp))
         pygame.draw.rect(surf, col, (0, int(f * h), w, bh))
 
-    # 2. The furnace mouth: a pulsing hot core low-centre that the
+    # 2. The furnace mouth: a dim pulsing ember core (FILLED, never additive) the
     #    looming mask rises out of.
-    pulse = 0.5 + 0.5 * math.sin(t * 3.0)
-    _yk_radial(surf, w // 2, core_y, int(w * (0.30 + 0.05 * pulse)),
-               (190, 64, 18), int(72 * ramp))
-    _yk_radial(surf, w // 2, core_y, int(w * 0.15),
-               (255, 132, 38), int(82 * ramp))
+    pulse = 0.5 + 0.5 * math.sin(t * 2.6)
+    _yk_radial(surf, w // 2, core_y, int(w * (0.26 + 0.04 * pulse)),
+               (150, 48, 16), int(70 * ramp), add=False)
+    _yk_radial(surf, w // 2, core_y, int(w * 0.12),
+               (210, 90, 30), int(82 * ramp), add=False)
 
-    # 3. Rising heat -- soft additive blooms drifting up and fading,
-    #    so the air reads as shimmering, not as orange discs.
-    for i in range(7):
-        hx = int((0.08 + 0.84 * _frand(i * 5 + 1)) * w
-                 + math.sin(t * 0.7 + i) * 22)
-        prog = (t * 0.32 + _frand(i * 5 + 2)) % 1.0
-        hy = int(h - prog * h * 1.05)
-        a = int(30 * ramp * (1.0 - prog))
+    # 3. Fire guttering low + up the sides, dampened so it reads as a banked
+    #    furnace, not bright spikes (the grime softens it further).
+    _yk_flames(surf, w, h, t, ramp * 0.4)
+
+    # 4. Rising heat -- a few faint, small additive blooms so the air shimmers
+    #    (kept tiny + dim so they never stamp as solid discs).
+    for i in range(5):
+        hx = int((0.12 + 0.76 * _frand(i * 5 + 1)) * w + math.sin(t * 0.7 + i) * 18)
+        prog = (t * 0.30 + _frand(i * 5 + 2)) % 1.0
+        hy = int(h - prog * h * 0.85)
+        a = int(14 * ramp * (1.0 - prog))
         if a > 0:
-            _yk_radial(surf, hx, hy, int(34 + 28 * _frand(i * 5 + 3)),
-                       (255, 124, 38), a)
+            _yk_radial(surf, hx, hy, int(10 + 8 * _frand(i * 5 + 3)),
+                       (200, 86, 32), a)
 
-    # 4. Mask field -- surfacing from the heat and dissolving back, each
-    #    on its own pulse so they breathe in and out of the dark.
-    kinds = ("scream", "hollow", "crack", "plain")
-    for i in range(10):
+    # 5. Mask field -- the taken surfacing from the heat and dissolving back.
+    #    Kept small + face-forward (a vis floor) so they read as faces, not as
+    #    bare halo-orbs.
+    kinds = ("wail", "gaunt", "vacant", "hollow")
+    for i in range(9):
         mx = int(_frand(i * 7 + 3) * w + math.sin(t * 0.9 + i * 1.7) * 14)
-        my = int((0.10 + 0.78 * _frand(i * 7 + 5)) * h
+        my = int((0.12 + 0.72 * _frand(i * 7 + 5)) * h
                  + math.cos(t * 0.8 + i * 2.1) * 10)
-        r = 12 + int(30 * _frand(i * 7 + 9))
-        vis = (0.5 + 0.5 * math.sin(t * 1.7 + i * 1.9)) ** 1.3 * ramp
-        _yk_mask(surf, mx, my, r, vis, kinds[i % len(kinds)])
+        r = 10 + int(18 * _frand(i * 7 + 9))
+        vis = (0.45 + 0.55 * (0.5 + 0.5 * math.sin(t * 1.6 + i * 1.9))) * ramp
+        _yk_mask(surf, mx, my, r, vis, kinds[i % 4])
 
-    # 5. The looming mask: rises from the core and swells to fill the
-    #    screen -- the King's face closing over you.
-    grow = 36 + min(1.0, t / 3.2) ** 1.4 * 152
-    cvis = min(1.0, 0.55 + t / 3.0) * ramp
-    _yk_radial(surf, w // 2, core_y, int(grow * 1.7), _YK_HOT, int(58 * ramp))
-    _yk_mask(surf, w // 2, core_y, int(grow), cvis, "scream")
+    # 6. THE LOOMING MASK: His pallid wail-mask rises from the core and swells to
+    #    fill the screen, His gaze stoked to a burn -- the face closing over you.
+    grow = 40 + min(1.0, t / 3.2) ** 1.4 * 182
+    cvis = min(1.0, 0.5 + t / 3.0) * ramp
+    _yk_radial(surf, w // 2, core_y, int(grow * 1.4), (150, 60, 20),
+               int(48 * ramp), add=False)
+    _yk_mask(surf, w // 2, core_y, int(grow), cvis, "wail")
+    for sgn in (-1, 1):                            # burning eyes
+        ex = w // 2 + sgn * int(grow * 0.42)
+        ey = core_y - int(grow * 0.12)
+        gz = grow * 0.12
+        _yk_radial(surf, ex, ey, int(gz * 2.2), _YK_GOLD, int(70 * ramp), add=False)
+        _yk_radial(surf, ex, ey, int(gz), _YK_HOT, int(150 * ramp))
 
-    # 6. Fire all around.
-    _yk_flames(surf, w, h, t, ramp)
-
-    # 7. Embers streaming upward.
-    for i in range(56):
+    # 7. Embers streaming upward (no additive glow -> no bright discs).
+    for i in range(40):
         ex = (_frand(i * 2 + 1) * w + math.sin(t * 1.4 + i) * 11) % w
         span = h + 50
         ey = (h + 24 - ((t * (44 + 70 * _frand(i)))
                         + _frand(i * 2 + 2) * span) % span)
         er = 1 + int(2 * _frand(i * 3))
-        if er >= 2:
-            _yk_radial(surf, int(ex), int(ey), er * 3, (255, 176, 70),
-                       int(56 * ramp))
-        pygame.draw.circle(surf, (255, 226, 150), (int(ex), int(ey)), er)
+        pygame.draw.circle(surf, (236, 176, 84), (int(ex), int(ey)), er)
 
-    # 8. Smoke-dark vignette at the top corners so the furnace frames in.
-    vig = pygame.Surface((w, int(h * 0.4)), pygame.SRCALPHA)
+    # 8. Smoke-dark vignette at the top so the furnace frames in.
+    vig = pygame.Surface((w, int(h * 0.42)), pygame.SRCALPHA)
     vh = vig.get_height()
     for i in range(vh):
-        a = int(150 * (1 - i / vh) ** 1.4 * ramp)
+        a = int(160 * (1 - i / vh) ** 1.4 * ramp)
         pygame.draw.line(vig, (0, 0, 0, a), (0, i), (w, i))
     surf.blit(vig, (0, 0))
+
+    # 9. The grime grade -- a warm ember tint (keeps the fire) with a faint cold
+    #    rot in the shadows; chunky downsample + grain kill the clean vector.
+    _carcosa_post(surf, t, tint=(216, 182, 150), cold=(2, 6, 12))
 
 
 # ---- The Carcosa tableau: the rite_broken explosion ending --------------
@@ -1386,26 +1398,28 @@ def _carcosa_town(surf, w, h, base_y, t, flood):
 _CARCOSA_GRAIN = None
 
 
-def _carcosa_post(surf, t):
+def _carcosa_post(surf, t, tint=(220, 210, 164), cold=(0, 10, 14)):
     """Darkwood / Fear & Hunger grime applied to the whole cutscene frame so
-    nothing reads as clean vector: chunky downsample, a muddy bile palette,
-    animated dither-grain, a guttering flicker, and crushed edges."""
+    nothing reads as clean vector: chunky downsample, a muddy palette multiply
+    (`tint`), a cold shadow-tone (`cold`), animated dither-grain, a guttering
+    flicker, and crushed edges."""
     w, h = surf.get_size()
     # Chunky downsample -> dirty low-res pixels (F&H grit).
     dw, dh = int(w / 2.5), int(h / 2.5)
     surf.blit(pygame.transform.scale(
         pygame.transform.smoothscale(surf, (dw, dh)), (w, h)), (0, 0))
-    # Muddy the palette toward sick ochre/bile, but lightly -- keep the
-    # sickly highlights bright against the dark (high contrast, not flat mud).
-    tint = pygame.Surface((w, h))
-    tint.fill((220, 210, 164))
-    surf.blit(tint, (0, 0), special_flags=pygame.BLEND_RGB_MULT)
+    # Muddy the palette, but lightly -- keep the sickly highlights bright
+    # against the dark (high contrast, not flat mud).
+    tn = pygame.Surface((w, h))
+    tn.fill(tint)
+    surf.blit(tn, (0, 0), special_flags=pygame.BLEND_RGB_MULT)
     # Cold counter-tone: lift the shadows toward a sickly bruise-teal (added,
-    # so it shows in the darks while the gold highlights stay warm) -- the
-    # Darkwood / F&H dread split between warm light and cold rot.
-    cold = pygame.Surface((w, h))
-    cold.fill((0, 10, 14))
-    surf.blit(cold, (0, 0), special_flags=pygame.BLEND_RGB_ADD)
+    # so it shows in the darks while the highlights stay warm) -- the Darkwood
+    # / F&H dread split between warm light and cold rot.
+    if cold != (0, 0, 0):
+        cl = pygame.Surface((w, h))
+        cl.fill(cold)
+        surf.blit(cl, (0, 0), special_flags=pygame.BLEND_RGB_ADD)
     grime = pygame.Surface((w, h), pygame.SRCALPHA)
     grime.fill((30, 34, 26, 14))
     surf.blit(grime, (0, 0))
