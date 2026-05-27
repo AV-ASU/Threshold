@@ -1682,7 +1682,10 @@ class Game:
         if cues is None:
             cues = self._rite_cues = set()
         if yt < RITE_YANK_DUR:
-            dc.set_volume(min(0.7, yt / 2.0))                 # drone swells
+            if yt < 2.7:
+                dc.set_volume(min(0.7, yt / 2.0))             # drone swells
+            else:
+                dc.set_volume(max(0.0, 0.7 * (1 - (yt - 2.7) / 0.3)))  # ...dead silence
             if yt > 1.5 and "grind" not in cues:
                 cues.add("grind"); self.audio.play("static", 0.5)
         else:
@@ -1694,6 +1697,10 @@ class Game:
                 dc.set_volume(0.0)
             dc.set_volume(min(0.75, bt / 1.5) if bt < 3.5
                           else max(0.0, 0.75 * (1 - (bt - 3.5) / 3.0)))
+            if bt > 1.4 and "whisper1" not in cues:           # whispers of the taken
+                cues.add("whisper1"); self.audio.play("whisper", 0.5)
+            if bt > 3.0 and "whisper2" not in cues:
+                cues.add("whisper2"); self.audio.play("whisper", 0.6)
             if bt > 3.3 and "swell" not in cues:
                 cues.add("swell"); self.audio.play("yk_tone", 0.7)
 

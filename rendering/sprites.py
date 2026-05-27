@@ -1383,6 +1383,52 @@ def _carcosa_town(surf, w, h, base_y, t, flood):
         surf.blit(line, (0, base_y + 5 + k * 7))
 
 
+_CARCOSA_GRAIN = None
+
+
+def _carcosa_post(surf, t):
+    """Darkwood / Fear & Hunger grime applied to the whole cutscene frame so
+    nothing reads as clean vector: chunky downsample, a muddy bile palette,
+    animated dither-grain, a guttering flicker, and crushed edges."""
+    w, h = surf.get_size()
+    # Chunky downsample -> dirty low-res pixels (F&H grit).
+    dw, dh = int(w / 2.5), int(h / 2.5)
+    surf.blit(pygame.transform.scale(
+        pygame.transform.smoothscale(surf, (dw, dh)), (w, h)), (0, 0))
+    # Muddy the palette toward sick ochre/bile, but lightly -- keep the
+    # sickly highlights bright against the dark (high contrast, not flat mud).
+    tint = pygame.Surface((w, h))
+    tint.fill((220, 210, 164))
+    surf.blit(tint, (0, 0), special_flags=pygame.BLEND_RGB_MULT)
+    grime = pygame.Surface((w, h), pygame.SRCALPHA)
+    grime.fill((30, 34, 26, 14))
+    surf.blit(grime, (0, 0))
+    # Animated dither-grain (built once).
+    global _CARCOSA_GRAIN
+    if _CARCOSA_GRAIN is None:
+        g = pygame.Surface((w, h), pygame.SRCALPHA)
+        rg = random.Random(13)
+        for _ in range(int(w * h * 0.11)):
+            x, y = rg.randint(0, w - 1), rg.randint(0, h - 1)
+            if rg.random() < 0.55:
+                g.set_at((x, y), (0, 0, 0, rg.randint(40, 95)))
+            else:
+                g.set_at((x, y), (190, 168, 116, rg.randint(20, 60)))
+        _CARCOSA_GRAIN = g
+    surf.blit(_CARCOSA_GRAIN, (random.randint(-2, 2), random.randint(-2, 2)))
+    # Guttering flicker -- the light stutters (Darkwood).
+    if random.random() < 0.10:
+        d = pygame.Surface((w, h))
+        d.fill((16, 14, 10))
+        surf.blit(d, (0, 0), special_flags=pygame.BLEND_RGB_SUB)
+    # Crushed edge vignette.
+    vig = pygame.Surface((w, h), pygame.SRCALPHA)
+    for i in range(60):
+        a = int(165 * (1 - i / 60) ** 1.6)
+        pygame.draw.rect(vig, (0, 0, 0, a), (i, i, w - 2 * i, h - 2 * i), 1)
+    surf.blit(vig, (0, 0))
+
+
 def draw_mask_yank(surf, t):
     """The act that breaks the rite (NARRATIVE §6): the Pallid Mask wrenched
     off the daubed Sign on the chamber wall -- YOUR hands doing it. Dread
@@ -1416,8 +1462,10 @@ def draw_mask_yank(surf, t):
             ry = sy - 40 + i * 40 + int(_frand(i * 4) * 20)
             x0 = sx - 70 - int(40 * wrench)
             x1 = sx + 70 + int(40 * wrench)
+            pygame.draw.line(surf, (96, 24, 16), (x0, ry - 5), (x1, ry + 6),
+                             max(2, int(4 + 6 * wrench)))    # the Sign bleeds
             pygame.draw.line(surf, (5, 4, 6), (x0, ry - 5), (x1, ry + 6),
-                             max(1, int(2 + 5 * wrench)))
+                             max(1, int(2 + 5 * wrench)))     # the gouge
     # The socket the mask sits in -- a dark recess that bleeds gold once torn.
     pygame.draw.ellipse(surf, (5, 4, 7), (sx - 60, sy - 78, 120, 156))
     _yk_radial(surf, sx, sy, int(28 + 34 * ew), _YK_GOLD, int(8 + 34 * ew))
@@ -1454,6 +1502,31 @@ def draw_mask_yank(surf, t):
         fl = pygame.Surface((w, h), pygame.SRCALPHA)
         fl.fill((255, 244, 212, int(255 * min(1.0, flare))))
         surf.blit(fl, (0, 0))
+    _carcosa_post(surf, t)
+
+
+def _carcosa_hands(surf, cx, cy, capR, reach, t):
+    """Grasping clawed hands erupting from the mass and reaching out -- the
+    taken clutching at the world (F&H amalgam). Gold-rimmed so they read as
+    dark limbs; they writhe on a per-hand phase."""
+    aw = max(2, int(capR * 0.045))
+    for i in range(11):
+        a = (i / 11.0) * math.tau + (_frand(i * 9 + 1) - 0.5) * 0.35
+        wob = math.sin(t * 3.0 + i) * 7
+        bx, by = cx + math.cos(a) * capR * 0.55, cy + math.sin(a) * capR * 0.42
+        td = capR * (0.85 + 0.7 * reach) + 18
+        px = cx + math.cos(a) * td + wob
+        py = cy + math.sin(a) * (td * 0.78) + wob * 0.5
+        pygame.draw.line(surf, (66, 52, 24), (int(bx), int(by)),
+                         (int(px), int(py)), aw + 3)
+        pygame.draw.line(surf, (8, 7, 10), (int(bx), int(by)),
+                         (int(px), int(py)), aw)
+        for f in range(4):                        # splayed fingers, clutching
+            fa = a + (f - 1.5) * 0.32 + math.sin(t * 4 + i + f) * 0.08
+            tx = px + math.cos(fa) * capR * 0.18
+            ty = py + math.sin(fa) * capR * 0.18
+            pygame.draw.line(surf, (8, 7, 10), (int(px), int(py)),
+                             (int(tx), int(ty)), max(1, aw // 2))
 
 
 def draw_carcosa(surf, t, mode="spread"):
@@ -1505,20 +1578,27 @@ def draw_carcosa(surf, t, mode="spread"):
     # WIDENING as the influence pours through -- this is being unleashed, not
     # a blast that dissipates. They brighten + thicken with spread/engulf.
     if spread > 0.01:
+        wound_y = (gz_y + cap_y) // 2
+        # The wound at the rift -- a sick red-gold weeping core.
+        _yk_radial(scene, kx, wound_y, int(20 + 30 * spread), (150, 30, 22),
+                   int(10 + 26 * spread))
         bril = (min(255, int(140 + 110 * engulf)),
                 min(255, int(112 + 90 * engulf)),
                 min(255, int(46 + 50 * engulf)))
         for i in range(10):
             aa = (i / 10.0) * math.tau + (_frand(i * 9 + 1) - 0.5) * 0.4
             seg = spread * h * 0.16
-            px2, py2 = float(kx), float((gz_y + cap_y) // 2)
+            px2, py2 = float(kx), float(wound_y)
             pts = [(int(px2), int(py2))]
             for s2 in range(4):
                 aa += (_frand(i * 9 + s2 + 2) - 0.5) * 0.8
                 px2 += math.cos(aa) * seg
                 py2 += math.sin(aa) * seg
                 pts.append((int(px2), int(py2)))
-            pygame.draw.lines(scene, bril, False, pts, max(1, int(1 + engulf * 4)))
+            tw = max(1, int(1 + engulf * 4))
+            pygame.draw.lines(scene, bril, False, pts, tw + 2)
+            pygame.draw.lines(scene, (150, 36, 26), False, pts,
+                              max(1, tw - 1))      # red bleeding core
 
     # Town at ground zero + the gold wave washing over it.
     _carcosa_town(scene, w, h, int(h * 0.86), t, wave)
@@ -1583,6 +1663,8 @@ def draw_carcosa(surf, t, mode="spread"):
             _carcosa_branch(scene, kx + s * int(capR * 0.95), cap_y + 4,
                             s * 0.6, capR * 0.5, 4, capg, t, 400 + s,
                             masks, kx, cap_y)
+        # Grasping hands of the taken, clutching out of the mass.
+        _carcosa_hands(scene, kx, cap_y, capR, capg, t)
 
     # THE KING MANIFESTS. In the engulf phase He doesn't just loom larger --
     # His FORM assembles from the cloud: a dark robed body and great clawed
@@ -1590,35 +1672,49 @@ def draw_carcosa(surf, t, mode="spread"):
     # frame). A summoned creature reaching out of the screen, not a close-up
     # of a mask. Drawn behind the head.
     if capg > 0.05:
+        head_tilt = math.sin(t * 1.5) * 3.5 + engulf * 6.0   # lean / sway, alive
         if engulf > 0.02:
             bw = mR * 1.4                          # a torso, not a frame-wide blob
+            lean = int(engulf * mR * 0.45)         # hunched off-centre (asymmetric)
             body_top = crown_y + int(mR * 0.7)
             pygame.draw.polygon(scene, (7, 6, 9), [
-                (int(kx - mR * 0.8), body_top), (int(kx - bw), h + 40),
-                (int(kx + bw), h + 40), (int(kx + mR * 0.8), body_top)])
-            for s in (-1, 1):                     # two reaching, clawed arms,
-                shx2, shy2 = kx + s * mR * 0.8, crown_y + mR * 0.5   # rimmed in gold
-                ex2, ey2 = kx + s * (mR * 1.7 + engulf * w * 0.18), crown_y + mR * 0.7
-                hx2 = kx + s * (mR * 2.1 + engulf * w * 0.30)
-                hy2 = crown_y + mR * 1.3 + engulf * h * 0.24
+                (int(kx - mR * 0.8 + lean), body_top), (int(kx - bw + lean), h + 40),
+                (int(kx + bw + lean), h + 40), (int(kx + mR * 0.8 + lean), body_top)])
+            for si, s in enumerate((-1, 1)):       # ASYMMETRIC reaching arms:
+                asy = 0.82 if s < 0 else 1.16      # one shorter, one longer
+                eyo = 0.35 if s < 0 else 1.0       # one high/grabbing, one low
+                wob = math.sin(t * 2.3 + si * 2.1) * mR * 0.22   # writhe
+                shx2, shy2 = kx + s * mR * 0.8, crown_y + mR * (0.4 + 0.2 * eyo)
+                ex2 = kx + s * (mR * 1.6 + engulf * w * 0.17) * asy
+                ey2 = crown_y + mR * (0.5 + 0.5 * eyo) + wob
+                hx2 = kx + s * (mR * 2.0 + engulf * w * 0.30) * asy
+                hy2 = crown_y + mR * (1.0 + 0.8 * eyo) + engulf * h * 0.24 + wob
                 aw = max(5, int(mR * 0.34))
                 arm = [(int(shx2), int(shy2)), (int(ex2), int(ey2)),
                        (int(hx2), int(hy2))]
                 pygame.draw.lines(scene, (74, 58, 26), False, arm, aw + 5)  # rim
                 pygame.draw.lines(scene, (7, 6, 9), False, arm, aw)         # arm
+                pygame.draw.lines(scene, (120, 32, 24), False,              # wet red
+                                  [(int(ex2), int(ey2)), (int(hx2), int(hy2))],
+                                  max(1, aw // 3))
                 fang = math.atan2(hy2 - ey2, hx2 - ex2)
-                for f in range(4):                # splayed claw-fingers
-                    fa = fang + (f - 1.5) * 0.42
+                for f in range(4):                # splayed claw-fingers, clutching
+                    fa = fang + (f - 1.5) * 0.42 + math.sin(t * 3 + si + f) * 0.06
                     tx2 = hx2 + math.cos(fa) * mR * 1.0 * (0.5 + engulf)
                     ty2 = hy2 + math.sin(fa) * mR * 1.0 * (0.5 + engulf)
                     pygame.draw.line(scene, (74, 58, 26), (int(hx2), int(hy2)),
                                      (int(tx2), int(ty2)), max(3, aw // 2 + 2))
                     pygame.draw.line(scene, (7, 6, 9), (int(hx2), int(hy2)),
                                      (int(tx2), int(ty2)), max(2, aw // 2))
+        # His head: dark backing + the mask, tilted (hunched, alive).
         pygame.draw.ellipse(scene, (9, 8, 11),
                             (kx - mR - 6, crown_y - int(mR * 1.35), 2 * mR + 12,
                              int(mR * 2.7)))
-        _yk_mask(scene, kx, crown_y, mR, min(1.0, 0.4 + capg), "wail")
+        ms = int(mR * 3)
+        msurf = pygame.Surface((ms, ms), pygame.SRCALPHA)
+        _yk_mask(msurf, ms // 2, ms // 2, mR, min(1.0, 0.4 + capg), "wail")
+        mm = pygame.transform.rotozoom(msurf, head_tilt, 1.0)
+        scene.blit(mm, mm.get_rect(center=(kx, crown_y)))
 
     # The taken surface in the TOWN too -- it isn't destroyed, it's claimed.
     if wave > 0.5:
@@ -1662,3 +1758,4 @@ def draw_carcosa(surf, t, mode="spread"):
         fl = pygame.Surface((w, h), pygame.SRCALPHA)
         fl.fill((255, 244, 212, int(230 * flash)))
         surf.blit(fl, (0, 0))
+    _carcosa_post(surf, t)
