@@ -1275,10 +1275,11 @@ def _taken_face(surf, cx, cy, r, t, seed, lit, gaze=0.0):
                          (cx - mw + 1, my - 1), (cx + mw - 1, my - 1), 1)
 
 
-def _taken_crowd(scene, w, h, t, n, grow, seed0=0):
+def _taken_crowd(scene, w, h, t, n, grow, seed0=0, rmul=1.0, litmul=1.0):
     """A claustrophobic MULTITUDE of the taken, scattered (never a tidy ring) and
     receding into black: bigger faces near the front, small ones lost in the
-    dark behind, most barely lit, all watching with their wet gleam. Drawn
+    dark behind, most barely lit, all watching with their wet gleam. `rmul` /
+    `litmul` shrink + dim them to a backdrop when He should dominate. Drawn
     back-to-front so the crowd packs with depth."""
     if grow <= 0.02:
         return
@@ -1288,39 +1289,27 @@ def _taken_crowd(scene, w, h, t, n, grow, seed0=0):
         depth = _frand(s * 4 + 2)
         x = w * (0.04 + 0.92 * _frand(s * 4 + 1))
         y = h * (0.16 + 0.78 * _frand(s * 4 + 3))
-        r = (8 + 56 * depth) * (0.5 + 0.5 * grow)
-        lit = max(0.0, (0.08 + 0.42 * depth) * grow * (0.7 + 0.5 * _frand(s * 4 + 5)))
+        r = (8 + 56 * depth) * (0.5 + 0.5 * grow) * rmul
+        lit = max(0.0, (0.08 + 0.42 * depth) * grow * (0.7 + 0.5 * _frand(s * 4 + 5)) * litmul)
         items.append((x, y, r, min(0.8, lit), s))
     for (x, y, r, lit, s) in sorted(items, key=lambda m: m[2]):
         _taken_face(scene, x, y, r, t, s * 3 + 7, lit)
 
 
-def _king_death_figure(scene, cx, cy, fr, t, presence, agitate):
-    """The King at scale, composed from His own parts: the void mass, the
-    grasping arms reaching + writhing, and His face -- rendered as the same dead
-    flesh the taken wear, with the sick-gold gaze fixating. `presence` (0..1) is
-    how fully He has bled in; `agitate` (0..1) hauls the arms + flares the gaze."""
-    dk, gold, hot = (*_YK_SHADOW, 255), (*_YK_GOLD, 255), (*_YK_HOT, 255)
-    # His GOLD-GLOWING body -- the in-game King's signature blaze (the orange
-    # aura + smouldering gold clot), the pale wail-mask riding on it. Kept at a
-    # moderate scale so the glow reads as His aura, not a screen-filling ball.
-    _yk_glow(scene, cx, cy, fr * 0.82, t)
-    for i in range(6):                              # grasping arms behind the face
-        rho = i * math.tau / 6 + 0.4 * math.sin(i * 2.3)
-        rx = cx + math.cos(rho) * fr * 0.6
-        ry = cy + math.sin(rho) * fr * 0.55
-        ph = (t * 0.3 + i * 0.41) % 1.0
-        u = ph / 0.5 if ph < 0.5 else (1.0 - ph) / 0.5
-        lng = fr * (0.6 + (0.5 + 0.6 * agitate) * (u * u * (3 - 2 * u)))
-        _yk_spire(scene, rx, ry, rho, lng, fr, t, i, presence, dk, gold, hot)
-    # His face -- the canonical pallid wail-mask, surfacing from the glow.
-    _yk_mask(scene, cx, cy, int(fr), min(1.0, 0.55 + 0.4 * presence), "wail")
-    for sgn in (-1, 1):                             # the gaze, stoked to a furnace
-        ex = cx + sgn * int(fr * 0.42)
-        ey = cy - int(fr * 0.12)
-        gz = fr * (0.1 + 0.05 * agitate + 0.04 * math.sin(t * 4))
-        _yk_radial(scene, ex, ey, int(gz), _YK_HOT,
-                   int((150 + 60 * agitate) * presence))
+def _king_death_figure(scene, cx, cy, scale, t, presence, agitate):
+    """THE King -- the ACTUAL in-game sprite (`_draw_king`), rendered to its own
+    canvas and scaled up, so the death shows exactly the King the player fights:
+    His blazing gold core, the pallid mask shattered into shards, the arms
+    reaching down. Not a reinterpretation. `presence`/`agitate` (0..1) ramp His
+    threat so He blooms in and rouses to the full aggressive blaze."""
+    native = 160
+    layer = pygame.Surface((native, native), pygame.SRCALPHA)
+    threat = max(0.0, min(1.0, 0.35 + 0.6 * presence + 0.15 * agitate))
+    _draw_king(layer, native // 2, native // 2 + 38, (0, 1), t, 1.0, None,
+               threat=threat)
+    sw = max(1, int(native * scale))
+    big = pygame.transform.smoothscale(layer, (sw, sw))
+    scene.blit(big, big.get_rect(center=(cx, cy)))
 
 
 def draw_king_death(surf, t):
@@ -1352,14 +1341,13 @@ def draw_king_death(surf, t):
         #     multitude of dead faces WATCHING; He looms among them, mostly
         #     shadow, the sick gaze fixating. Held dead still -- dread by
         #     restraint, the world closing to nothing but His stare. ---
-        _taken_crowd(scene, w, h, t, 42, arrive, seed0=10)
-        fr = 64 + arrive * min(w, h) * 0.18
-        _king_death_figure(scene, cx, cy, fr, t, arrive, behold)
+        _taken_crowd(scene, w, h, t, 40, arrive, seed0=10, rmul=0.6, litmul=0.7)
+        _king_death_figure(scene, cx, cy, 2.0 + arrive * 1.7, t, arrive, behold)
     else:
         # --- THE MULTITUDE (pull back). A packed sea of the taken staring OUT
         #     of the black -- and you are among them now. ---
         _taken_crowd(scene, w, h, t, 80, 1.0, seed0=200)
-        _king_death_figure(scene, cx, int(h * 0.40), 54, t, 1.0, 0.45)
+        _king_death_figure(scene, cx, int(h * 0.38), 1.5, t, 1.0, 0.5)
 
     # YOUR face. It is pressed over the view as you are claimed, then -- as the
     # camera pulls back -- recedes to the FRONT of the multitude: the same dead
