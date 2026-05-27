@@ -1275,12 +1275,13 @@ def _taken_face(surf, cx, cy, r, t, seed, lit, gaze=0.0):
                          (cx - mw + 1, my - 1), (cx + mw - 1, my - 1), 1)
 
 
-def _taken_crowd(scene, w, h, t, n, grow, seed0=0, rmul=1.0, litmul=1.0):
+def _taken_crowd(scene, w, h, t, n, grow, seed0=0, rmul=1.0, litmul=1.0, press=0.0):
     """A claustrophobic MULTITUDE of the taken, scattered (never a tidy ring) and
     receding into black: bigger faces near the front, small ones lost in the
     dark behind, most barely lit, all watching with their wet gleam. `rmul` /
-    `litmul` shrink + dim them to a backdrop when He should dominate. Drawn
-    back-to-front so the crowd packs with depth."""
+    `litmul` shrink + dim them to a backdrop when He should dominate; `press`
+    (0..1) closes them IN toward you and makes them loom -- the walls of the
+    crowd shutting. Drawn back-to-front so the crowd packs with depth."""
     if grow <= 0.02:
         return
     items = []
@@ -1289,9 +1290,12 @@ def _taken_crowd(scene, w, h, t, n, grow, seed0=0, rmul=1.0, litmul=1.0):
         depth = _frand(s * 4 + 2)
         x = w * (0.04 + 0.92 * _frand(s * 4 + 1))
         y = h * (0.16 + 0.78 * _frand(s * 4 + 3))
-        r = (8 + 56 * depth) * (0.5 + 0.5 * grow) * rmul
-        lit = max(0.0, (0.08 + 0.42 * depth) * grow * (0.7 + 0.5 * _frand(s * 4 + 5)) * litmul)
-        items.append((x, y, r, min(0.8, lit), s))
+        x += (w * 0.5 - x) * 0.32 * press          # close in toward you...
+        y += (h * 0.5 - y) * 0.28 * press
+        r = (8 + 56 * depth) * (0.5 + 0.5 * grow) * rmul * (1.0 + 0.7 * press)  # ...and loom
+        lit = max(0.0, (0.08 + 0.42 * depth) * grow
+                  * (0.7 + 0.5 * _frand(s * 4 + 5)) * litmul * (1.0 + 0.4 * press))
+        items.append((x, y, r, min(0.85, lit), s))
     for (x, y, r, lit, s) in sorted(items, key=lambda m: m[2]):
         _taken_face(scene, x, y, r, t, s * 3 + 7, lit)
 
@@ -1313,64 +1317,65 @@ def _king_death_figure(scene, cx, cy, scale, t, presence, agitate):
 
 
 def draw_king_death(surf, t):
-    """The King takes you -- and you become one of the taken. Not a monster
-    eating you: the contagion claiming you. Three beats: ARRIVE (He blooms in
-    from the dark, drawn as Himself), BEHOLD (He holds, dead still, the gaze
-    locking -- the dread peak), and CLAIM (a pallid mask blooms over your view
-    as your face is unmade, then the camera PULLS BACK to reveal you are now one
-    mask among the congregation of the taken orbiting Him). `t` = seconds since
-    the catch (~4.3s)."""
+    """The King takes you -- and you become one of the taken. He is NOT a
+    full-screen monster (His dread is being small, close, and barely-seen): He
+    stays a small wrong blaze while the CROWD does the looming. Four beats:
+    ARRIVE (the taken surface in the dark, He nears), BEHOLD (a long, dead-still
+    hold -- the crowd presses IN, the dark collapses, His gaze fixes -- the
+    dread lives here), CLAIM (a face lunges at YOU and presses over the view --
+    a first-person violation, the masking), REVEAL (you are one face in the
+    multitude now, He a small blaze at its heart). `t` ~ 5s."""
     w, h = surf.get_size()
-    cx, cy = w // 2, int(h * 0.48)
+    cx, cy = w // 2, int(h * 0.47)
 
     def eo(x):
         x = max(0.0, min(1.0, x))
         return 1.0 - (1.0 - x) ** 2.3
 
     ramp = max(0.0, min(1.0, t / 0.4))
-    arrive = eo((t - 0.1) / 1.4)                    # He blooms in from the dark
-    behold = max(0.0, min(1.0, (t - 1.5) / 1.1))    # the held stare
-    claim = eo((t - 2.7) / 0.8)                     # your face unmade
-    reveal = eo((t - 3.5) / 0.8)                    # pull back into the multitude
+    arrive = eo((t - 0.1) / 1.1)                    # the taken + He surface
+    behold = max(0.0, min(1.0, (t - 1.2) / 1.8))    # the long held stare
+    claim = eo((t - 3.0) / 0.7)                     # a face lunges at you
+    reveal = eo((t - 3.85) / 1.0)                   # you are in the multitude
 
     scene = pygame.Surface((w, h))
     scene.fill((5, 6, 8))                            # cold near-black
 
     if reveal <= 0.02:
-        # --- ARRIVE + BEHOLD. The taken surface all around in the dark, a
-        #     multitude of dead faces WATCHING; He looms among them, mostly
-        #     shadow, the sick gaze fixating. Held dead still -- dread by
-        #     restraint, the world closing to nothing but His stare. ---
-        _taken_crowd(scene, w, h, t, 40, arrive, seed0=10, rmul=0.6, litmul=0.7)
-        _king_death_figure(scene, cx, cy, 2.0 + arrive * 1.7, t, arrive, behold)
+        # --- ARRIVE + the long BEHOLD. The taken press IN from the black as He
+        #     holds, dead still; the dark collapses to nothing but the crowd and
+        #     His small, close, wrong blaze. Restraint is the dread. ---
+        _taken_crowd(scene, w, h, t, 38 + int(34 * behold), arrive,
+                     seed0=10, rmul=0.85, litmul=0.85, press=behold)
+        # He stays SMALL (near His real size) and merely DRIFTS closer -- never a
+        # billboard. The crowd is what looms.
+        kscale = 0.85 + arrive * 0.45 + behold * 0.35
+        _king_death_figure(scene, cx, cy, kscale, t, arrive, behold)
     else:
-        # --- THE MULTITUDE (pull back). A packed sea of the taken staring OUT
-        #     of the black -- and you are among them now. ---
-        _taken_crowd(scene, w, h, t, 80, 1.0, seed0=200)
-        _king_death_figure(scene, cx, int(h * 0.38), 1.5, t, 1.0, 0.5)
+        # --- THE MULTITUDE. A packed sea of the taken staring OUT of the black
+        #     -- you are among them now -- He a small blaze at its heart. ---
+        _taken_crowd(scene, w, h, t, 96, 1.0, seed0=200, press=0.12)
+        _king_death_figure(scene, cx, int(h * 0.42), 0.95, t, 1.0, 0.5)
 
-    # YOUR face. It is pressed over the view as you are claimed, then -- as the
-    # camera pulls back -- recedes to the FRONT of the multitude: the same dead
-    # face, now one of them, watching out of the dark. One continuous move.
-    if claim > 0.02:
-        base = max(w, h) * 0.95
-        ysz = (claim * base) * (1.0 - reveal) + (min(w, h) * 0.13) * reveal
-        yy = cy * (1.0 - reveal) + h * 0.72 * reveal
-        if ysz >= 5:
-            _taken_face(scene, cx, int(yy), int(ysz), t, 0,
-                        min(0.9, 0.5 + claim * 0.4))
+    # THE CLAIM -- a dead face LUNGES from His heart straight at you and presses
+    # over the whole view: the masking, first-person. (Hidden behind the bleach
+    # before the pull-back to the multitude.)
+    if 0.02 < claim and reveal <= 0.6:
+        cs = (claim ** 2) * max(w, h) * 1.25 * (1.0 - 0.6 * reveal)
+        if cs >= 6:
+            _taken_face(scene, cx, cy, int(cs), t, 4, min(0.85, 0.5 + claim * 0.4))
 
-    # Vignette -- crushes in HARD as He beholds (the world falls away).
+    # Vignette -- crushes in HARD through the behold (the world falls away).
     vig = pygame.Surface((w, h), pygame.SRCALPHA)
-    vstr = min(255, 185 * (1.0 + 0.7 * behold * (1.0 - reveal)))
+    vstr = min(255, 175 * (1.0 + 0.9 * behold * (1.0 - reveal)))
     for i in range(64):
-        a = int(vstr * (1 - i / 64) ** 1.35 * ramp)
+        a = int(vstr * (1 - i / 64) ** 1.3 * ramp)
         pygame.draw.rect(vig, (0, 0, 0, a), (i, i, w - 2 * i, h - 2 * i), 1)
     scene.blit(vig, (0, 0))
 
-    # Compose: a slow dread push-in through the behold, easing back on the pull-out.
+    # Compose: a slow dread push-in through the behold; a hard shove on the claim.
     surf.fill((0, 0, 0))
-    z = 1.0 + 0.06 * behold * (1.0 - reveal)
+    z = 1.0 + 0.05 * behold * (1.0 - reveal) + 0.18 * claim * (1.0 - reveal)
     if z > 1.001:
         zw, zh = int(w * z), int(h * z)
         surf.blit(pygame.transform.smoothscale(scene, (zw, zh)),
@@ -1378,12 +1383,12 @@ def draw_king_death(surf, t):
     else:
         surf.blit(scene, (0, 0))
 
-    # The cold UNMAKING flash -- a sick clammy bleach as your face is taken,
-    # covering the cut from His face to the multitude.
-    cf = math.exp(-(((t - 3.5) / 0.16) ** 2))
+    # The cold UNMAKING bleach as the face presses over you -- a clammy flash
+    # that masks the cut from the violation to the multitude.
+    cf = math.exp(-(((t - 3.78) / 0.16) ** 2))
     if cf > 0.01:
         fl = pygame.Surface((w, h), pygame.SRCALPHA)
-        fl.fill((150, 162, 158, int(190 * cf)))
+        fl.fill((150, 162, 158, int(205 * cf)))
         surf.blit(fl, (0, 0))
 
     # The grime grade -- near-neutral so His GOLD blaze survives, with a cold
