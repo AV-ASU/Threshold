@@ -2499,19 +2499,139 @@ class Game:
         bedroom wake). Called on completion or a silent ESC skip."""
         self._start_play()
 
-    def _draw_car(self, s, cx, cy, light=1.0):
+    def _draw_car(self, s, cx, cy, light=1.0, exhaust=0.0):
         """Top-down car, facing up the road (forward). `light` dims the
-        headlights with the engine; the taillights stay (battery)."""
+        headlights with the engine; the taillights stay (battery). `exhaust`
+        (0..1) puffs idle smoke from the tail when the car stalls/dies."""
+        # Exhaust drifts back (down-screen) from the tail pipes.
+        if exhaust > 0.01:
+            t = pygame.time.get_ticks() / 1000.0
+            puff = pygame.Surface((40, 40), pygame.SRCALPHA)
+            for i in range(3):
+                pp = (t * 1.3 + i * 0.45) % 1.0
+                py = int(20 + pp * 22)
+                pr = int(4 + pp * 9)
+                pa = int(70 * (1 - pp) * exhaust)
+                if pa > 0:
+                    pygame.draw.circle(puff, (90, 92, 96, pa),
+                                       (20 + int(math.sin(t * 2 + i) * 3), py), pr)
+            s.blit(puff, (cx - 20, cy + 18))
+        # Drop shadow on the road.
+        sh = pygame.Surface((40, 56), pygame.SRCALPHA)
+        pygame.draw.ellipse(sh, (0, 0, 0, 110), (0, 0, 40, 56))
+        s.blit(sh, (cx - 18, cy - 22))
+        # Body: dark hull with a faint top sheen (headlight spill back-scatter).
         body = pygame.Rect(cx - 13, cy - 22, 26, 44)
-        pygame.draw.rect(s, (22, 20, 26), body, border_radius=5)
-        pygame.draw.rect(s, (10, 9, 12), body, 1, border_radius=5)
-        pygame.draw.rect(s, (30, 28, 34), (cx - 11, cy - 21, 22, 8), border_radius=2)
-        pygame.draw.rect(s, (38, 40, 48), (cx - 9, cy - 12, 18, 18), border_radius=3)
+        pygame.draw.rect(s, (26, 24, 30), body, border_radius=5)
+        pygame.draw.rect(s, (44, 42, 50), (cx - 13, cy - 22, 26, 14), border_radius=5)
+        pygame.draw.rect(s, (9, 8, 11), body, 1, border_radius=5)
+        # Hood + windshield (front), roof, rear window.
+        pygame.draw.rect(s, (30, 28, 34), (cx - 11, cy - 20, 22, 7), border_radius=2)
+        wsh = (int(70 * light + 26), int(78 * light + 28), int(92 * light + 30))
+        pygame.draw.polygon(s, wsh, [(cx - 9, cy - 13), (cx + 9, cy - 13),
+                                     (cx + 7, cy - 6), (cx - 7, cy - 6)])  # windshield
+        pygame.draw.rect(s, (40, 42, 50), (cx - 8, cy - 5, 16, 12), border_radius=2)  # roof
+        pygame.draw.rect(s, (24, 26, 32), (cx - 7, cy + 8, 14, 5), border_radius=2)   # rear glass
+        # Side mirrors.
+        pygame.draw.rect(s, (24, 22, 28), (cx - 15, cy - 9, 3, 3))
+        pygame.draw.rect(s, (24, 22, 28), (cx + 12, cy - 9, 3, 3))
+        # Headlights + a tight hot core.
         hl = (int(235 * light), int(228 * light), int(190 * light))
-        pygame.draw.circle(s, hl, (cx - 9, cy - 21), 2)                # headlights
-        pygame.draw.circle(s, hl, (cx + 9, cy - 21), 2)
-        pygame.draw.rect(s, (140, 30, 24), (cx - 11, cy + 18, 5, 3))   # taillights
-        pygame.draw.rect(s, (140, 30, 24), (cx + 6, cy + 18, 5, 3))
+        for hx in (cx - 9, cx + 9):
+            pygame.draw.circle(s, hl, (hx, cy - 21), 2)
+            pygame.draw.circle(s, (255, 250, 230), (hx, cy - 21), 1)
+        # Taillights (battery — stay lit even when the engine's dead).
+        pygame.draw.rect(s, (150, 34, 26), (cx - 11, cy + 18, 5, 3))
+        pygame.draw.rect(s, (150, 34, 26), (cx + 6, cy + 18, 5, 3))
+        pygame.draw.rect(s, (210, 70, 60), (cx - 10, cy + 19, 2, 1))
+        pygame.draw.rect(s, (210, 70, 60), (cx + 7, cy + 19, 2, 1))
+
+    def _draw_case_card(self, header, lines, stamp, cx, cy, t_local, hold,
+                        seed):
+        """One case-file index card that FLASHES in: a white pop + a slight
+        scale overshoot that settles, then holds, then fades. `t_local` is
+        seconds since this card appeared; `hold` is how long before it fades.
+        Aged paper, typed mono text, a coloured index tab, an optional red
+        stamp. `seed` jitters the rotation so a stack reads as tossed down."""
+        if t_local < 0 or t_local >= hold:
+            return
+        rng = random.Random(seed)
+        ang = rng.uniform(-3.5, 3.5)
+        appear, fade = 0.16, 0.5
+        if t_local < appear:
+            p = t_local / appear
+            scale = 1.14 - 0.14 * p
+            alpha = p
+            flash = 1.0 - p
+        elif t_local < hold - fade:
+            scale, alpha, flash = 1.0, 1.0, 0.0
+        else:
+            scale, alpha, flash = 1.0, max(0.0, (hold - t_local) / fade), 0.0
+        mono = self.fonts.get("mono", self.fonts["sm"])
+        sm = self.fonts["sm"]
+        pad = 11
+        line_h = mono.get_height() + 3
+        widths = [mono.size(ln)[0] for ln in lines]
+        if header:
+            widths.append(sm.size(header)[0])
+        tw = max(widths) if widths else 40
+        head_h = (sm.get_height() + 7) if header else 4
+        # A stamp gets its own reserved column on the right so it never
+        # lands on top of the typed text.
+        stamp_surf = None
+        if stamp:
+            stamp_surf = pygame.transform.rotozoom(
+                sm.render(stamp, True, (158, 42, 34)), 11, 1.0)
+            stamp_surf.fill((255, 255, 255, 165),
+                            special_flags=pygame.BLEND_RGBA_MULT)
+        extra_r = (stamp_surf.get_width() + 10) if stamp_surf else 0
+        w = tw + pad * 2 + 8 + extra_r
+        h = head_h + len(lines) * line_h + pad
+        card = pygame.Surface((w + 4, h + 5), pygame.SRCALPHA)
+        # Drop shadow, then aged paper, then a thin border.
+        pygame.draw.rect(card, (0, 0, 0, 95), (4, 5, w, h), border_radius=2)
+        paper = (208, 200, 178)
+        pygame.draw.rect(card, paper, (0, 0, w, h), border_radius=2)
+        pygame.draw.rect(card, (150, 142, 120), (0, 0, w, h), 1, border_radius=2)
+        # Foxing / age blotches.
+        for _ in range(5):
+            bx, by = rng.randint(4, w - 6), rng.randint(4, h - 6)
+            pygame.draw.circle(card, (180, 168, 138, 70), (bx, by),
+                               rng.randint(2, 5))
+        # Coloured index tab down the left edge.
+        tab_c = (150, 60, 48) if stamp else (74, 90, 74)
+        pygame.draw.rect(card, tab_c, (0, 7, 5, h - 16))
+        tx, ty = pad, 5
+        if header:
+            card.blit(sm.render(header, True, (58, 48, 42)), (tx, ty))
+            ty += sm.get_height() + 1
+            pygame.draw.line(card, (150, 142, 120), (tx, ty), (w - 8, ty), 1)
+            ty += 4
+        for ln in lines:
+            card.blit(mono.render(ln, True, (38, 34, 32)), (tx, ty))
+            ty += line_h
+        # Red rubber stamp, angled, in its reserved right column.
+        if stamp_surf:
+            card.blit(stamp_surf,
+                      (w - stamp_surf.get_width() - 7,
+                       (h - stamp_surf.get_height()) // 2))
+        comp = pygame.transform.rotozoom(card, ang, scale)
+        rect = comp.get_rect(center=(int(cx), int(cy)))
+        # Card-shaped white flash, taken before we fade the card. (set_alpha
+        # is ignored on per-pixel-alpha surfaces, so scale the alpha channel
+        # with a BLEND_RGBA_MULT fill instead.)
+        if flash > 0.02:
+            fl = comp.copy()
+            fl.fill((255, 250, 235), special_flags=pygame.BLEND_RGB_ADD)
+            fl.fill((255, 255, 255, int(200 * flash)),
+                    special_flags=pygame.BLEND_RGBA_MULT)
+        a = max(0.0, min(1.0, alpha))
+        if a < 0.999:
+            comp.fill((255, 255, 255, int(255 * a)),
+                      special_flags=pygame.BLEND_RGBA_MULT)
+        self.screen.blit(comp, rect)
+        if flash > 0.02:
+            self.screen.blit(fl, rect)
 
     def _draw_road_sign(self, s, x, y, light):
         """A weathered roadside sign reading BRIMLEY, the population struck
@@ -2531,105 +2651,199 @@ class Game:
         pygame.draw.line(s, L((132, 44, 38)), (x - 26, by + 25), (x + 26, by + 27), 2)
 
     def _draw_opening(self):
-        """The night drive: a dark northern road scrolling past, pine walls
-        either side, the car at the wheel. The HEADLIGHTS are the only light
-        for miles -- so the whole scene is lit by them, and dims as the engine
-        stalls, guttering to near-black when it finally dies."""
+        """The night drive into Brimley: a dark northern road scrolling past,
+        layered pine walls, drifting ground mist, reflector posts, and the
+        car's headlights as the only light for miles. The whole scene is lit
+        by those headlights and dims as the engine stalls, guttering to
+        near-black when it dies. Case-file cards flash in over it."""
         s = self.screen
         W, H = s.get_size()
         scroll = self._opening_scroll
         spd = getattr(self, "_opening_speed", OPENING_SCROLL_SPEED)
         sp_frac = max(0.0, min(1.0, spd / OPENING_SCROLL_SPEED))
         ph = getattr(self, "_opening_phase", "roll")
+        t = self._opening_t
         # Headlight strength drives the whole scene's brightness.
         light = 0.30 + 0.70 * sp_frac
         if ph == "dead":
-            light = 0.08 + 0.10 * abs(math.sin(self._opening_t * 9.0))
+            light = 0.08 + 0.10 * abs(math.sin(t * 9.0))
 
         def L(c):
             return (int(c[0] * light), int(c[1] * light), int(c[2] * light))
-        s.fill(L((10, 11, 16)))
+
         cx = W // 2
-        cy = int(H * 0.78) + int(math.sin(self._opening_t * 5.0) * 1.5 * sp_frac)
+        cy = int(H * 0.78) + int(math.sin(t * 5.0) * 1.5 * sp_frac)
         road_w = int(W * 0.46)
         rx0 = cx - road_w // 2
-        # Pine walls -- beyond the headlights, barely there even when lit.
-        pygame.draw.rect(s, (6, 8, 7), (0, 0, rx0 - 10, H))
-        pygame.draw.rect(s, (6, 8, 7), (rx0 + road_w + 10, 0, W - (rx0 + road_w + 10), H))
-        toff = int(scroll * 0.6) % 36
-        tip = L((20, 26, 21))
-        for side, ix in ((0, rx0 - 10), (1, rx0 + road_w + 10)):
-            ty = -36 + toff
-            while ty < H:
-                pts = ([(ix, ty), (ix - 11, ty + 18), (ix, ty + 36)] if side == 0
-                       else [(ix, ty), (ix + 11, ty + 18), (ix, ty + 36)])
-                pygame.draw.polygon(s, tip, pts)
-                ty += 30
-        # Road + gravel shoulders, lit by the headlights (scale with `light`).
-        pygame.draw.rect(s, L((46, 44, 38)), (rx0 - 10, 0, 10, H))
-        pygame.draw.rect(s, L((46, 44, 38)), (rx0 + road_w, 0, 10, H))
-        pygame.draw.rect(s, L((42, 39, 44)), (rx0, 0, road_w, H))
-        # Scrolling centre dashes -- the only sense of speed.
+        rx1 = rx0 + road_w
+
+        # Night sky + a faint scatter of cold, twinkling stars at the top.
+        s.fill((7, 8, 13))
+        if getattr(self, "_opening_stars", None) is None:
+            rs = random.Random(91)
+            self._opening_stars = [
+                (rs.randint(0, W), rs.randint(0, int(H * 0.25)),
+                 rs.randint(1, 2), rs.uniform(0.3, 1.0)) for _ in range(44)]
+        for sx, sy, sr, sb in self._opening_stars:
+            tw = 0.6 + 0.4 * math.sin(t * 1.6 + sx * 0.05)
+            c = int(140 * sb * tw)
+            pygame.draw.circle(s, (c, c, int(c * 1.15)), (sx, sy), sr)
+
+        # Off-road darkness, then scrolling pine walls. Pines are indexed by a
+        # stable physical row so per-tree jitter doesn't flicker as they
+        # scroll, and they warm where the headlights reach them.
+        pygame.draw.rect(s, (6, 8, 8), (0, 0, rx0 - 9, H))
+        pygame.draw.rect(s, (6, 8, 8), (rx1 + 9, 0, W - (rx1 + 9), H))
+
+        def pine_wall(anchor_x, outward, spacing, mul, w, hgt, base_col):
+            base = scroll * mul
+            first = int(base // spacing)
+            nrows = H // spacing + 3
+            for ridx in range(first - nrows, first + 2):
+                y = int(base - ridx * spacing)
+                if y < -spacing or y > H + spacing:
+                    continue
+                r = random.Random(ridx * 37 + anchor_x)
+                jw = w + r.randint(-3, 4)
+                jh = hgt + r.randint(-7, 9)
+                px = anchor_x + outward * r.randint(0, 7)
+                prox = max(0.0, 1.0 - abs(y - cy) / 240.0)
+                cc = (min(255, int(base_col[0] + 30 * prox * light)),
+                      min(255, int(base_col[1] + 24 * prox * light)),
+                      min(255, int(base_col[2] + 15 * prox * light)))
+                pygame.draw.polygon(s, cc, [(px, y - jh), (px - jw, y),
+                                            (px + jw, y)])
+                pygame.draw.polygon(s, cc, [(px, y - jh + 9),
+                                            (px - jw - 2, y - 5),
+                                            (px + jw + 2, y - 5)])
+        pine_wall(rx0 - 34, -1, 58, 0.55, 8, 28, (11, 17, 13))   # far / dim / slow
+        pine_wall(rx1 + 34, 1, 58, 0.55, 8, 28, (11, 17, 13))
+        pine_wall(rx0 - 12, -1, 48, 1.0, 13, 46, (15, 23, 17))   # near / at shoulder
+        pine_wall(rx1 + 12, 1, 48, 1.0, 13, 46, (15, 23, 17))
+
+        # Gravel shoulders + asphalt, lit by the headlights.
+        pygame.draw.rect(s, L((48, 45, 40)), (rx0 - 10, 0, 10, H))
+        pygame.draw.rect(s, L((48, 45, 40)), (rx1, 0, 10, H))
+        pygame.draw.rect(s, L((40, 38, 43)), (rx0, 0, road_w, H))
+        # Faded painted edge lines + scrolling centre dashes (the sense of speed).
+        pygame.draw.rect(s, L((118, 112, 90)), (rx0 + 4, 0, 2, H))
+        pygame.draw.rect(s, L((118, 112, 90)), (rx1 - 6, 0, 2, H))
         y = -50 + int(scroll) % 50
-        dash = L((158, 150, 104))
         while y < H:
-            pygame.draw.rect(s, dash, (cx - 2, y, 4, 26))
+            pygame.draw.rect(s, L((170, 160, 110)), (cx - 2, y, 4, 26))
             y += 50
-        # The BRIMLEY sign passes once, on the right shoulder, scrolling with
-        # the road (so it pauses when the car stalls).
+        # Dark asphalt patches scrolling by -- subtle road texture.
+        patch_sp = 130
+        pf = int(scroll // patch_sp)
+        for ridx in range(pf - H // patch_sp - 2, pf + 2):
+            py = int(scroll - ridx * patch_sp)
+            if py < -20 or py > H + 20:
+                continue
+            r = random.Random(ridx * 53 + 9)
+            pygame.draw.ellipse(s, L((30, 29, 33)),
+                                (rx0 + r.randint(8, road_w - 26), py,
+                                 r.randint(10, 26), r.randint(4, 8)))
+
+        # Reflector posts on the shoulders -- amber dots that flare as the
+        # headlights sweep past them.
+        post_sp = 150
+        pf2 = int(scroll // post_sp)
+        for ridx in range(pf2 - H // post_sp - 2, pf2 + 2):
+            py = int(scroll - ridx * post_sp)
+            if py < -10 or py > H + 10:
+                continue
+            flare = max(0.0, 1.0 - abs(py - cy) / 160.0)
+            for postx in (rx0 - 13, rx1 + 13):
+                pygame.draw.rect(s, L((58, 54, 46)), (postx - 1, py - 14, 2, 14))
+                ac = (int(110 + 145 * flare * light),
+                      int(74 + 96 * flare * light), int(18 + 30 * flare))
+                pygame.draw.circle(s, ac, (postx, py - 13), 2)
+
+        # The BRIMLEY sign passes once on the right shoulder.
         sign_y = int(scroll) - 140
         if 0 <= sign_y <= H + 60:
-            self._draw_road_sign(s, rx0 + road_w + 26, sign_y, light)
-        # The warm headlight pool ahead -- a real radial falloff (alpha rises
-        # toward the centre), additive, scaled by `light`.
+            self._draw_road_sign(s, rx1 + 28, sign_y, light)
+
+        # Drifting ground mist -- low cool bands the headlights catch. Each
+        # band's alpha feathers to nothing at its top and bottom edges (a
+        # triangular falloff) so there are no hard horizontal seams.
+        mist = pygame.Surface((W, H), pygame.SRCALPHA)
+        bh = 80
+        for i in range(4):
+            my = int(H * 0.30 + i * H * 0.16 + math.sin(t * 0.5 + i) * 12)
+            peak = (10 + 7 * i) * (0.5 + 0.5 * light)
+            band = pygame.Surface((W, bh), pygame.SRCALPHA)
+            for row in range(bh):
+                a = int(peak * math.sin(math.pi * row / bh))
+                if a > 0:
+                    pygame.draw.line(band, (150, 156, 168, a),
+                                     (0, row), (W, row))
+            mist.blit(band, (int(math.sin(t * 0.3 + i * 2) * 30), my))
+        s.blit(mist, (0, 0))
+
+        # Headlights: two beams projecting forward up the road, plus a soft
+        # warm pool elongated up-road (a teardrop, not a flat disc) so it
+        # reads as the asphalt lit ahead rather than a spotlight.
         glow = pygame.Surface((W, H), pygame.SRCALPHA)
-        for dx in (-8, 8):
-            pygame.draw.polygon(glow, (70, 62, 42, int(26 * light)),
-                                [(cx + dx, cy - 18),
-                                 (cx + dx - 40, cy - int(H * 0.58)),
-                                 (cx + dx + 40, cy - int(H * 0.58))])
-        gx, gy = cx, cy - int(H * 0.14)
-        rings = 16
-        for i in range(rings, 0, -1):
-            r = int(112 * i / rings)
-            a = int(11 * (1 - i / rings) * light)            # brighter toward centre
+        top_y = int(H * 0.30)
+        for dx in (-7, 7):
+            pygame.draw.polygon(glow, (80, 70, 46, int(28 * light)),
+                                [(cx + dx, cy - 20),
+                                 (cx + dx - 66, top_y), (cx + dx + 66, top_y)])
+        gx, gy = cx, cy - int(H * 0.20)
+        for i in range(26, 0, -1):
+            f = i / 26
+            rw = int(74 * f)
+            rh = int(150 * f)               # taller than wide -> up-road teardrop
+            a = int(7 * (1 - f) * light)
             if a > 0:
-                pygame.draw.ellipse(glow, (134, 120, 80, a),
-                                    (gx - r, gy - int(r * 1.15), 2 * r, int(2 * r * 1.15)))
+                pygame.draw.ellipse(glow, (132, 116, 78, a),
+                                    (gx - rw, gy - int(rh * 0.62), 2 * rw, rh))
         s.blit(glow, (0, 0), special_flags=pygame.BLEND_RGBA_ADD)
-        self._draw_car(s, cx, cy, light)
-        # Heavy dark vignette -- the dark presses in from every edge.
+
+        # The car. Exhaust puffs while it stalls and after it dies.
+        exhaust = (1.0 - sp_frac) if ph in ("stall", "dead") else 0.0
+        self._draw_car(s, cx, cy, light, exhaust=exhaust)
+
+        # Film grain over the whole drive, for cohesion with the graded world.
+        if getattr(self, "_opening_grain", None) is None:
+            g = pygame.Surface((W, H), pygame.SRCALPHA)
+            rg = random.Random(7)
+            for _ in range(2400):
+                v = rg.randint(0, 55)
+                g.set_at((rg.randint(0, W - 1), rg.randint(0, H - 1)),
+                         (v, v, v, rg.randint(8, 24)))
+            self._opening_grain = g
+        s.blit(self._opening_grain,
+               (random.randint(-3, 3), random.randint(-3, 3)))
+
+        # Heavy edge vignette -- the dark presses in from every edge.
         vig = pygame.Surface((W, H), pygame.SRCALPHA)
         for i in range(60):
-            a = int(150 * (1 - i / 60) ** 1.5)
+            a = int(160 * (1 - i / 60) ** 1.5)
             pygame.draw.rect(vig, (0, 0, 0, a), (i, i, W - 2 * i, H - 2 * i), 1)
         s.blit(vig, (0, 0))
-        # Two beats bookend the drive: the case as you roll in (~first 4s),
-        # and the arrival as the engine dies. Both diegetic. The cut from
-        # here to the room is just a cut -- same night, no time passes. The
-        # dread is prospective: you CAN'T leave (the dead car, the ledger of
-        # guests who never check out), not that nights were stolen.
-        def _opening_caption(lines, a):
-            fnt = self.fonts["sm"]
-            lh = fnt.get_height() + 4
-            y0 = H // 2 - (len(lines) * lh) // 2
-            for i, ln in enumerate(lines):
-                t_s = fnt.render(ln, True, (206, 202, 194))
-                t_s.set_alpha(int(255 * max(0.0, min(1.0, a))))
-                s.blit(t_s, (W // 2 - t_s.get_width() // 2, y0 + i * lh))
-        if self._opening_t < 4.2:
-            ct = self._opening_t
-            a = (ct / 0.6 if ct < 0.6
-                 else (4.2 - ct) / 0.8 if ct > 3.4 else 1.0)
-            _opening_caption(["Mara Blaine. Last seen in Brimley.",
-                              "A few questions, then home by morning."], a)
+
+        # --- Case-file cards flash in over the drive ---
+        # Two beats: the case as you roll in (~first 4s), and the arrival as
+        # the engine dies. Cards stamp down staggered, like building a file.
+        ccx, ccy = int(W * 0.40), int(H * 0.26)
+        if t < 4.4:
+            self._draw_case_card("CASE FILE  \xb7  BLAINE",
+                                 ["MISSING:  Mara Blaine, 26"],
+                                 "OPEN", ccx, ccy, t - 0.2, 4.2, 11)
+            self._draw_case_card(None, ["LAST SEEN:  Brimley"],
+                                 None, ccx + 34, ccy + 44, t - 0.9, 3.5, 23)
+            self._draw_case_card(None, ["JOB:  ask around, drive home by dawn"],
+                                 None, ccx - 12, ccy + 86, t - 1.6, 2.8, 37)
         if ph == "dead":
             dt_ = self._opening_phase_t
-            a = (dt_ / 0.8 if dt_ < 0.8
-                 else (OPENING_DEAD_HOLD - dt_) / 0.6
-                 if dt_ > OPENING_DEAD_HOLD - 0.6 else 1.0)
-            _opening_caption(["The Arcadia Lodge.",
-                              "The engine won't turn over again."], a)
+            self._draw_case_card("ARRIVAL", ["The Arcadia Lodge."], None,
+                                 ccx + 10, ccy, dt_ - 0.2,
+                                 OPENING_DEAD_HOLD - 0.2, 41)
+            self._draw_case_card(None, ["Engine won't turn over."], "STRANDED",
+                                 ccx + 34, ccy + 46, dt_ - 0.8,
+                                 OPENING_DEAD_HOLD - 0.8, 53)
 
     # ---- Draw ----
     def draw_world(self):
