@@ -99,12 +99,24 @@ def main():
     check(g.player.inventory.has("playscript"),
           "scriptorium: grants the Playscript")
 
-    # --- 3. The Pallid Mask (Sign Chamber, evidence #5) ---
+    # --- 3. The Pallid Mask (Sign Chamber, evidence #5) -- LIFT the mask ---
     fire(g, "works_sign", "_sign_pos")
+    g.dialog.choice_idx = 0
+    g.dialog.advance()                          # "Lift the mask."
     check(g.player.inventory.has("sigil_rubbing"),
-          "sign chamber: grants the Mask (now the ONLY source)")
+          "sign chamber: lifting the mask grants it (the ONLY source)")
     check(has_evidence(g, "the_sign"),
           "sign chamber: logs the_sign evidence (canonical beat)")
+    # THE TRAP (NARRATIVE §6): tearing the rite down here -- before sealing
+    # the source -- is a game over, not a victory.
+    gt = new_game()
+    fire(gt, "works_sign", "_sign_pos")
+    gt.dialog.choice_idx = 1
+    gt.dialog.advance()                         # "Tear it down -- end this."
+    check(gt._ending_active == "rite_broken",
+          "sign chamber: tearing the rite down fires the rite_broken game over")
+    check("rite_broken" in g._ENDING_SCRIPTS,
+          "ending: rite_broken script is authored")
 
     # --- 4. The Deep Stair fork (Mask + Play together) ---
     g.load_scene_now("works_deepstair")
@@ -179,6 +191,8 @@ def main():
     # --- 9. The 3-evidence King gate is reachable ---
     ge = new_game()
     fire(ge, "works_sign", "_sign_pos")               # the_sign (#5)
+    ge.dialog.choice_idx = 0
+    ge.dialog.advance()                               # "Lift the mask."
     fire(ge, "barn", "_journal_pos")                  # maras_journal (#2)
     jlines = next((e["lines"] for e in ge.save.arg("evidence", [])
                    if e.get("name") == "maras_journal"), [])

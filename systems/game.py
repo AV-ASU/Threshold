@@ -1599,6 +1599,8 @@ class Game:
         # Cue the appropriate audio.
         if name == "seal_threshold":
             self.audio.play("arg_chime", 0.7)
+        elif name == "rite_broken":
+            self.audio.play("wrong", 0.85)        # the lid comes off
         else:
             self.audio.play("door_close", 0.7)
 
@@ -1626,6 +1628,22 @@ class Game:
              "roads decline to reach.", 3.6),
             ("It is done. Nothing leaves Brimley again.", 3.4),
             ("Not the hunger. Not you.", 4.0),
+        ],
+        # rite_broken is the TRAP game over (NARRATIVE §6): you tear the rite
+        # down in place, before sealing the source -- the obvious heroic move,
+        # and the catastrophic one. The pressure the rite was holding floods
+        # out uncontained.
+        "rite_broken": [
+            ("You take the altar apart -- the mask, the daubed Sign, the "
+             "kneeling at your back.", 3.2),
+            ("For one breath the chamber is just a cellar. Quiet. Free. You "
+             "did the obvious mercy.", 3.4),
+            ("Then the thing the rite was holding finds the hole you made.", 3.0),
+            ("It doesn't rise. It floods -- up the well, out through the "
+             "corn, into every road that ever left this town.", 3.8),
+            ("The kneeling was the lid. You called it the enemy and pulled "
+             "it off.", 3.8),
+            ("It was never a cage for you. It was a cage for Him.", 4.2),
         ],
     }
 

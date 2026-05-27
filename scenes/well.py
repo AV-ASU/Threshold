@@ -403,13 +403,7 @@ def build_works_sign():
                                      (9 * TILE + 16, 8 * TILE + 16)]))
     _ambient(sc, "whisper", 0.16, 5.0, 9.0)
 
-    def _interact(game):
-        sx, sy = sc._sign_pos
-        if (abs(game.player.x - sx) > 44 or abs(game.player.y - sy) > 56):
-            return
-        if game.save.flag("sign_rubbing_taken"):
-            game.show_notice("The altar is bare. You have His face.")
-            return
+    def _take_mask(game):
         game.save.set_flag("sign_rubbing_taken", True)
         game.player.inventory.add("sigil_rubbing", 1)
         game.audio.play("pickup_rare", 0.7)
@@ -423,6 +417,30 @@ def build_works_sign():
             "your hands.",
             "His face. You're holding His face.",
         ])
+
+    def _interact(game):
+        sx, sy = sc._sign_pos
+        if (abs(game.player.x - sx) > 44 or abs(game.player.y - sy) > 56):
+            return
+        if game.save.flag("sign_rubbing_taken"):
+            game.show_notice("The altar is bare. You have His face.")
+            return
+        # Two instincts at the altar (NARRATIVE §6). Lifting the mask is the
+        # controlled keystone-removal the chosen endings need. Tearing the
+        # whole rite down here -- the obvious heroic move -- is THE TRAP:
+        # the rite is the only lid on Him, and breaking it before the source
+        # (the Threshold) is sealed lets His influence out uncontained. It is
+        # always pre-seal here, so this is always the catastrophe.
+        def _pick(idx):
+            if idx == 0:
+                _take_mask(game)
+            elif idx == 1:
+                game._play_ending("rite_broken")
+        game.dialog.show_choice(
+            "The mask on the altar. The Sign daubed above it. The kneeling "
+            "at your back. The whole sick machine of it, here in reach.",
+            ["Lift the mask.", "Tear it down -- end this."],
+            _pick, speaker="", voice="blip_soft", portrait="narrator")
     sc.on_interact_fn = _interact
     return sc
 

@@ -34,6 +34,17 @@ townsperson holding it still belongs to Him. You are the one thing in
 Brimley the fold doesn't own, which is exactly what makes you the only
 thing that could ever take Carcosa past the corn.
 
+**What the fold actually is — the rite.** Brimley isn't sealed by ambient
+weather; the **congregation's ongoing rite seals it**, and the **Sign (the
+Pallid Mask) is that rite's keystone**. The Sign's presence *passively
+pulled* people here — they "found religion," converged, became the
+congregation (Mara was a late arrival). Once the congregation was whole,
+they *bound the town shut*. Think of the rite as a **pressure vessel**: it
+holds the King's influence compressed inside Brimley, and the pressure
+only mounts. The fold is not a cage for *you* — **it is the cage for
+*Him***. That single inversion drives the endings (§6): the kneeling cult
+you'll want to stop is the only lid on the pot.
+
 **Tone:** *Darkwood* (oppressive hide-or-die dread, a spreading
 corruption, bleak and ambiguous) + *Fear & Hunger* (grimdark descent to
 the god at the bottom, ritual and body-horror, no clean win).
@@ -173,7 +184,8 @@ that fire is someone He already took. You only ever see it by losing.
 | **A cultist catches you** | The cult takes you for the ritual | Stark text card — **CAPTURED** (cult takes you alive; worse than killed, and feeds the hive) | `_trigger_death("cultist")` → `_tick_death` (exists) |
 | **The King catches you** (vis `1.0`, *3+ evidence*, He reaches you) | He takes you into Himself | Brief cutscene: fire/hell, the floating masks of His sprite drifting in it — title **Carcosa** | `_trigger_death("king")` → `_tick_death` (exists; the bespoke `_trigger_closure` path was replaced by the shared death system) |
 | **Seal the threshold** — *END IT* | Contain the hunger; Brimley + you become a hole in the map | Ending sequence. *"It is done. Nothing leaves Brimley again. Not the hunger. Not you."* | `_play_ending("seal_threshold")` (exists) |
-| **Drive out with the Sign** — *SPREAD IT* | The Sign breaks the fold; you pass where no one else can, and Carcosa bleeds into the world through the hole you made | Ending sequence — the engine catches *for the first time*: *"You got out. You're the only one who ever has. Everyone will understand why, soon."* | `_begin_car_escape()` → `_play_ending("escape_alone")` (exists). The escape gates on the **Sign** (`sigil_rubbing`) **alone** — it's your own car, so there are no keys to find; the fold is the only lock, and only a shard of Him opens it. The old `car_keys` requirement + the Clerk's key-quest are cut. |
+| **Drive out with the Sign** — *SPREAD IT* | You pull the rite's keystone and carry it out; the release rides out *with you* as a latent bomb that detonates on His timeline | Ending sequence — the engine catches *for the first time*: *"You got out. You're the only one who ever has. Everyone will understand why, soon."* | `_begin_car_escape()` → `_play_ending("escape_alone")` (exists). Gates on the **Sign** (`sigil_rubbing`) **alone** — your own car, no keys; the fold is the only lock, and only a shard of Him opens it. |
+| **Break the rite before sealing** — *YOU FUCKED UP* (a game over) | You tear down the rite *in place* — the obvious heroic move — with the source still open. The lid comes off a pressurized pot: His influence floods out, uncontained, here and now | Ending sequence: you destroy the altar/Sign/kneeling, one breath of quiet, then the flood — *"It was never a cage for you. It was a cage for Him."* | `_play_ending("rite_broken")`. Triggered at the **Sign Chamber altar** (the FIRST place you meet the active rite): a choice — *take the mask* (controlled) vs *tear it down* (the trap). |
 
 ### The Fork — the Deep Stair (where Seal and Spread split)
 
@@ -208,6 +220,36 @@ The "authorities" pull is the lie that dresses Spread as duty: carrying
 the Sign out *is* the breach. "Deeper" is the Seal — you end it at the
 source and become, with Brimley, a hole in the map. Both ways out damn
 something (§1).
+
+### The pressure model — and the trap
+
+The rite is a **pressure vessel** holding the King compressed (§1). Three
+ways to touch it, and an **order rule**:
+
+- **SEAL** — go *past* the rite and cap the **source** (the Threshold).
+  With the source capped the pressure has nowhere to go; the rite can
+  lapse safely *because you sealed first*. Brimley and you become a
+  permanent sealed hole.
+- **SPREAD** — pull the keystone (take the Sign) and carry it *out*. The
+  rite breaks, but the release is **channeled through the Sign/you** — it
+  rides out as a latent charge, a bomb that goes off later, on His clock.
+- **THE TRAP** — disrupt the rite *in place* before the source is sealed
+  and without carrying the keystone out. You uncap a still-pressurized pot:
+  **uncontained blowout, here and now.** Everyone, you included, taken
+  immediately. (`rite_broken` game over.)
+
+> **Order rule:** the rite is only safe to break *after* the Threshold is
+> sealed. Break it early → catastrophe.
+
+**Design intent — the cruel teach.** The game is sequenced so the player
+**meets the rite first** (the Sign Chamber altar, kneelers worshipping His
+face) — *before* they could possibly have sealed anything. The natural,
+heroic instinct — *destroy this evil, stop the ritual, free the girl* — is
+the **catastrophic** one. You're meant to reach for it, and to lose. The
+horror is the lesson (Fear & Hunger: you die to learn). The only safe
+moves are *seal the source first* or *carry the keystone away clean*; the
+kneeling congregation that looks like the enemy is the only lid on the
+pot.
 
 ---
 
