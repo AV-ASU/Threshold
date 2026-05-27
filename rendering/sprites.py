@@ -1409,6 +1409,15 @@ def draw_mask_yank(surf, t):
              (sx + 42, sy + 64), (sx + 19, sy + 9), (sx + 50, sy - 26),
              (sx + 11, sy - 28)]
     pygame.draw.lines(surf, sgn, False, [(int(a), int(b)) for a, b in glyph], 2)
+    # You don't lift it clean -- you TEAR THE RITE DOWN. Claw-rakes rip across
+    # the daubed Sign as the wrench begins (this is the catastrophic act).
+    if wrench > 0.04:
+        for i in range(3):
+            ry = sy - 40 + i * 40 + int(_frand(i * 4) * 20)
+            x0 = sx - 70 - int(40 * wrench)
+            x1 = sx + 70 + int(40 * wrench)
+            pygame.draw.line(surf, (5, 4, 6), (x0, ry - 5), (x1, ry + 6),
+                             max(1, int(2 + 5 * wrench)))
     # The socket the mask sits in -- a dark recess that bleeds gold once torn.
     pygame.draw.ellipse(surf, (5, 4, 7), (sx - 60, sy - 78, 120, 156))
     _yk_radial(surf, sx, sy, int(28 + 34 * ew), _YK_GOLD, int(8 + 34 * ew))
@@ -1472,9 +1481,9 @@ def draw_carcosa(surf, t, mode="spread"):
     cap_y = int(h * 0.30)                         # the cap / the crown
     stem_top = int(gz_y - rise * (gz_y - cap_y))
     spread = eo((t - 1.4) / 2.8)                  # the breach WIDENING outward
-    engulf = eo((t - 4.2) / 2.6)                  # the LUNGE toward the viewer
+    engulf = eo((t - 4.2) / 2.6)                  # He MANIFESTS + advances
     capR = w * 0.30 * capg * (1.0 + 0.35 * spread)
-    mR = int((24 + capg * 16) * (1.0 + 1.7 * engulf))  # His face swells forward
+    mR = int((24 + capg * 16) * (1.0 + 2.4 * engulf))  # His head swells forward
     crown_y = cap_y - int(capR * 0.22) + int(engulf * h * 0.18)  # advances down
 
     scene = pygame.Surface((w, h))
@@ -1575,9 +1584,37 @@ def draw_carcosa(surf, t, mode="spread"):
                             s * 0.6, capR * 0.5, 4, capg, t, 400 + s,
                             masks, kx, cap_y)
 
-    # His face on the CROWN of the cloud -- swelling and ADVANCING toward the
-    # viewer (crown_y/mR grow with engulf): He is coming, not receding.
+    # THE KING MANIFESTS. In the engulf phase He doesn't just loom larger --
+    # His FORM assembles from the cloud: a dark robed body and great clawed
+    # arms sweeping OUT and forward, reaching toward the viewer (past the
+    # frame). A summoned creature reaching out of the screen, not a close-up
+    # of a mask. Drawn behind the head.
     if capg > 0.05:
+        if engulf > 0.02:
+            bw = mR * 1.4                          # a torso, not a frame-wide blob
+            body_top = crown_y + int(mR * 0.7)
+            pygame.draw.polygon(scene, (7, 6, 9), [
+                (int(kx - mR * 0.8), body_top), (int(kx - bw), h + 40),
+                (int(kx + bw), h + 40), (int(kx + mR * 0.8), body_top)])
+            for s in (-1, 1):                     # two reaching, clawed arms,
+                shx2, shy2 = kx + s * mR * 0.8, crown_y + mR * 0.5   # rimmed in gold
+                ex2, ey2 = kx + s * (mR * 1.7 + engulf * w * 0.18), crown_y + mR * 0.7
+                hx2 = kx + s * (mR * 2.1 + engulf * w * 0.30)
+                hy2 = crown_y + mR * 1.3 + engulf * h * 0.24
+                aw = max(5, int(mR * 0.34))
+                arm = [(int(shx2), int(shy2)), (int(ex2), int(ey2)),
+                       (int(hx2), int(hy2))]
+                pygame.draw.lines(scene, (74, 58, 26), False, arm, aw + 5)  # rim
+                pygame.draw.lines(scene, (7, 6, 9), False, arm, aw)         # arm
+                fang = math.atan2(hy2 - ey2, hx2 - ex2)
+                for f in range(4):                # splayed claw-fingers
+                    fa = fang + (f - 1.5) * 0.42
+                    tx2 = hx2 + math.cos(fa) * mR * 1.0 * (0.5 + engulf)
+                    ty2 = hy2 + math.sin(fa) * mR * 1.0 * (0.5 + engulf)
+                    pygame.draw.line(scene, (74, 58, 26), (int(hx2), int(hy2)),
+                                     (int(tx2), int(ty2)), max(3, aw // 2 + 2))
+                    pygame.draw.line(scene, (7, 6, 9), (int(hx2), int(hy2)),
+                                     (int(tx2), int(ty2)), max(2, aw // 2))
         pygame.draw.ellipse(scene, (9, 8, 11),
                             (kx - mR - 6, crown_y - int(mR * 1.35), 2 * mR + 12,
                              int(mR * 2.7)))
@@ -1612,19 +1649,10 @@ def draw_carcosa(surf, t, mode="spread"):
         pygame.draw.rect(vig, (0, 0, 0, a), (i, i, w - 2 * i, h - 2 * i), 1)
     scene.blit(vig, (0, 0))
 
-    # Compose: screen-shake early; then in the engulf phase push the "camera"
-    # INTO the crown so the whole mass rushes the viewer and consumes the
-    # frame -- unleashed and coming for us, not a cloud that recedes.
-    comp = scene
-    if engulf > 0.002:
-        z = 1.0 + engulf * 2.4
-        bw, bh = max(2, int(w / z)), max(2, int(h / z))
-        fx = max(bw // 2, min(w - bw // 2, kx))
-        fy = max(bh // 2, min(h - bh // 2, crown_y))
-        sub = scene.subsurface((fx - bw // 2, fy - bh // 2, bw, bh))
-        comp = pygame.transform.smoothscale(sub, (w, h))
+    # Compose with screen-shake. (No camera zoom -- the King's FIGURE grows
+    # and advances on its own; a zoom just read as a close-up of the mask.)
     surf.fill((0, 0, 0))
-    surf.blit(comp, (shx, shy))
+    surf.blit(scene, (shx, shy))
     if engulf > 0.55:                              # the final engulf wash
         e2 = (engulf - 0.55) / 0.45
         fl = pygame.Surface((w, h), pygame.SRCALPHA)
