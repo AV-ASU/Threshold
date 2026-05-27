@@ -1310,8 +1310,17 @@ def _king_death_figure(scene, cx, cy, fr, t, presence, agitate):
         u = ph / 0.5 if ph < 0.5 else (1.0 - ph) / 0.5
         lng = fr * (0.6 + (0.5 + 0.6 * agitate) * (u * u * (3 - 2 * u)))
         _yk_spire(scene, rx, ry, rho, lng, fr, t, i, presence, dk, gold, hot)
-    _taken_face(scene, cx, cy, int(fr), t, 991,
-                min(1.0, 0.45 + 0.4 * presence), gaze=0.3 + 0.7 * agitate)
+    # His own face -- the canonical pallid wail-mask (void sockets, black tears,
+    # the fracture), kept dim so He reads from shadow, with the gaze stoked.
+    _yk_mask(scene, cx, cy, int(fr), min(1.0, 0.5 + 0.4 * presence), "wail")
+    for sgn in (-1, 1):                             # the gaze, stoked to a furnace
+        ex = cx + sgn * int(fr * 0.42)
+        ey = cy - int(fr * 0.12)
+        gz = fr * (0.1 + 0.05 * agitate + 0.04 * math.sin(t * 4))
+        _yk_radial(scene, ex, ey, int(gz * 2.4), _YK_GOLD,
+                   int((55 + 45 * agitate) * presence), add=False)
+        _yk_radial(scene, ex, ey, int(gz), _YK_HOT,
+                   int((120 + 60 * agitate) * presence))
 
 
 def draw_king_death(surf, t):
