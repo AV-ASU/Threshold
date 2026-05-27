@@ -1592,19 +1592,23 @@ def _carcosa_one_rift(surf, px, py, pr, op, t, seed, reach=1.0,
 
 
 def _carcosa_portal_hands(surf, w, h, cx, cy, spread, t):
-    """Rifts tear open across the dark -- a gold strike splits each, then a
-    HAND of the taken claws through, reaching into the world. His influence
-    pouring through holes in reality (replaces the lone reaching monster)."""
-    for i in range(9):
-        op = max(0.0, min(1.0, (spread - i * 0.045) / 0.45))   # staggered tear
+    """A few deliberate rifts FLANK the King -- a gold strike splits each, then
+    a HAND of the taken claws through, reaching toward the world. Placed to the
+    sides (never over His face) so they frame Him rather than clutter."""
+    # symmetric pairs down each flank: (x-offset frac of w, y-offset frac of h)
+    slots = [(-0.40, 0.02), (0.40, 0.02),
+             (-0.34, 0.30), (0.34, 0.30),
+             (-0.44, -0.18), (0.44, -0.18)]
+    for i, (fx, fy) in enumerate(slots):
+        op = max(0.0, min(1.0, (spread - (i // 2) * 0.10) / 0.45))
         if op <= 0.03:
             continue
-        a = (i * 0.618034) * math.tau % math.tau
-        dist = (0.24 + 0.22 * _frand(i * 7 + 1)) * w
-        px = cx + math.cos(a) * dist
-        py = cy + math.sin(a) * dist * 0.6 - h * 0.04
-        pr = (16 + 34 * _frand(i * 7 + 2)) * op
-        _carcosa_one_rift(surf, px, py, pr, op, t, i * 7)
+        px = cx + fx * w
+        py = cy + fy * h
+        pr = (34 + 20 * _frand(i * 7 + 2)) * op       # larger, clearer rifts
+        # the hand reaches inward, toward the centre (toward Him / the player)
+        ha = (math.pi if fx > 0 else 0.0) + (0.4 if fy > 0 else -0.4)
+        _carcosa_one_rift(surf, px, py, pr, op, t, i * 7, reach=1.3, ha=ha)
 
 
 def _carcosa_facemask(surf, w, h, cx, cy, R, reveal, dilate, t):
@@ -1655,28 +1659,29 @@ def _carcosa_facemask(surf, w, h, cx, cy, R, reveal, dilate, t):
     eyes = [(cx - eye_sep, eye_y), (cx + eye_sep, eye_y)]
     mouth = (cx, cy + R * 0.50)
 
-    # THE EYE-SOCKETS: vertical oblong rifts torn into the bone, a gold gaze
-    # burning at the back, hands clawing up/out, dilating with the inhale.
-    socket_h = R * (0.30 + 0.08 * pulse)
-    socket_w = R * (0.15 + 0.05 * pulse)
-    for ei, (ex, ey) in enumerate(eyes):
+    # THE EYE-SOCKETS: clean vertical oblong voids with the golden gaze burning
+    # at the back. Kept uncluttered (no hands) so the stare reads cold and the
+    # gaze swells with the inhale -- the reaching is the maw's and the portals'.
+    socket_h = R * (0.30 + 0.06 * pulse)
+    socket_w = R * (0.15 + 0.04 * pulse)
+    for ex, ey in eyes:
         pygame.draw.ellipse(surf, _YK_MPIT,
                             (int(ex - socket_w), int(ey - socket_h),
                              int(socket_w * 2), int(socket_h * 2)))
-        gzR = R * (0.08 + 0.09 * rv + 0.07 * pulse)
-        _yk_radial(surf, ex, ey, int(gzR * 2.2), _YK_GOLD,
-                   int(70 * rv), add=False)
+        gzR = R * (0.07 + 0.08 * rv + 0.06 * pulse)
+        _yk_radial(surf, ex, ey, int(gzR * 2.4), _YK_GOLD,
+                   int(80 * rv), add=False)
         _yk_radial(surf, ex, ey, int(gzR), _YK_HOT,
-                   int(160 * min(1.0, rv * 1.4)))
-        for hsgn in (-0.5, 0.5):
-            _carcosa_one_rift(surf, ex + socket_w * hsgn, ey - socket_h * 0.3,
-                              socket_w * 1.0, rv, t, ei * 9 + int(hsgn * 4) + 3,
-                              reach=1.1 + 0.7 * dl,
-                              ha=-math.pi / 2 + hsgn * 0.6)
+                   int(170 * min(1.0, rv * 1.4)))
+        # a single clean black tear, the wail-mask's weep
+        pygame.draw.line(surf, _YK_MPIT, (int(ex), int(ey + socket_h)),
+                         (int(ex), int(ey + socket_h + R * 0.45)),
+                         max(1, int(R * 0.025)))
 
-    # THE MOUTH-GASH: the widest breach, a torn maw spilling the most hands.
-    mw = R * (0.40 + 0.12 * pulse)
-    mh = R * (0.22 + 0.08 * pulse)
+    # THE MOUTH-GASH: the widest breach, a torn maw -- the throat where the
+    # hands of the taken claw out. This is where the reaching lives.
+    mw = R * (0.40 + 0.10 * pulse)
+    mh = R * (0.22 + 0.07 * pulse)
     pygame.draw.ellipse(surf, _YK_MPIT,
                         (int(mouth[0] - mw), int(mouth[1] - mh),
                          int(mw * 2), int(mh * 2)))
@@ -1685,17 +1690,12 @@ def _carcosa_facemask(surf, w, h, cx, cy, R, reveal, dilate, t):
                          int(mw * 2), int(mh * 2)), max(1, int(2 + 2 * rv)))
     _yk_radial(surf, mouth[0], mouth[1], int(mw * 0.6), (150, 36, 24),
                int(44 * rv), add=False)
-    # the black tears the wail-mask weeps, down from each socket
-    for ex, _ in eyes:
-        pygame.draw.line(surf, _YK_MPIT, (int(ex), int(eye_y + socket_h)),
-                         (int(ex + R * 0.04), int(cy + rh)), max(2, int(R * 0.05)))
-    nh = 5
-    for j in range(nh):
-        u = (j + 0.5) / nh
-        hx = mouth[0] + (u - 0.5) * mw * 1.6
-        _carcosa_one_rift(surf, hx, mouth[1], mw * 0.34, rv, t, 200 + j * 7,
-                          reach=1.2 + 0.8 * dl,
-                          ha=math.pi / 2 + (u - 0.5) * 0.8)
+    for j in range(3):
+        u = (j + 0.5) / 3.0
+        hx = mouth[0] + (u - 0.5) * mw * 1.3
+        _carcosa_one_rift(surf, hx, mouth[1] - mh * 0.2, mw * 0.4, rv, t,
+                          200 + j * 7, reach=1.3 + 0.9 * dl,
+                          ha=math.pi / 2 + (u - 0.5) * 0.7)
 
 
 def draw_carcosa(surf, t, mode="spread"):
@@ -1783,7 +1783,7 @@ def draw_carcosa(surf, t, mode="spread"):
             pts = [(int(sx + math.sin(t * 2.2 + s2 * 0.5 + j) * 7),
                     int(gz_y - (gz_y - stem_top) * s2 / 10)) for s2 in range(11)]
             pygame.draw.lines(scene, (9, 7, 6), False, pts, 3)
-        for j in range(5):                        # faces rising in the stem
+        for j in range(3):                        # faces rising in the stem
             fp = (t * 0.55 + j * 0.21) % 1.0
             fy = gz_y - fp * (gz_y - stem_top)
             if fy >= stem_top - 4:
@@ -1804,22 +1804,21 @@ def draw_carcosa(surf, t, mode="spread"):
                 pygame.draw.circle(scene, (8, 7, 10), (int(lx), int(ly)), lr)
                 pygame.draw.circle(scene, (60, 48, 22),    # faint rim -> 3D roll
                                    (int(lx), int(ly - lr * 0.16)), lr, 1)
-        ntr = 24                                  # tendrils over the dome + brim
+        ntr = 16                                  # tendrils over the dome + brim
         for i in range(ntr):
             frac = (i * 0.618034) % 1.0           # golden -> even fill, no pile
             ang = math.pi + frac * math.pi + (_frand(i * 31 + 3) - 0.5) * 0.22
-            _carcosa_branch(scene, kx, cap_y, ang, capR * 0.72, 5, capg, t,
+            _carcosa_branch(scene, kx, cap_y, ang, capR * 0.60, 5, capg, t,
                             i * 17 + 1, masks, kx, cap_y)
         for s in (-1, 1):                         # the brim curling down
             _carcosa_branch(scene, kx + s * int(capR * 0.95), cap_y + 4,
                             s * 0.6, capR * 0.5, 4, capg, t, 400 + s,
                             masks, kx, cap_y)
 
-    # THE KING. The breach RESOLVES into His face -- not a mask zooming in, but
-    # the rifts ARRANGING into His features: two eye-sockets that burn with the
-    # golden gaze, a mouth-gash, gaunt hollows, all clawing with the hands of
-    # the taken. He arrives by the holes becoming Him. He looms, fixed in scale
-    # (no swell); `engulf` only deepens the inhale and ignites the gaze.
+    # THE KING. The breach RESOLVES into His pallid face, set into the smoke as
+    # His head: clean eye-sockets burning with the golden gaze, a mouth-gash
+    # spilling the hands of the taken. Fixed in scale (no swell) -- He arrives
+    # by the gaze igniting and the maw clawing open, never by zooming.
     if capg > 0.05:
         faceR = capR * 0.50                                # tied to the cap, not engulf
         face_y = cap_y + int(capR * 0.34)                  # hung below the smoke-crown
@@ -1827,19 +1826,19 @@ def draw_carcosa(surf, t, mode="spread"):
 
     # The taken surface in the TOWN too -- it isn't destroyed, it's claimed.
     if wave > 0.5:
-        for i in range(4):
-            tx = kx + (_frand(i * 7 + 1) - 0.5) * w * 0.7
-            masks.append((tx, gz_y - 4 + _frand(i * 7 + 2) * 28,
-                          8 + int(6 * _frand(i * 7 + 3)), i * 11 + 50))
+        for i in range(2):
+            tx = kx + (_frand(i * 7 + 1) - 0.5) * w * 0.6
+            masks.append((tx, gz_y - 4 + _frand(i * 7 + 2) * 22,
+                          7 + int(5 * _frand(i * 7 + 3)), i * 11 + 50))
 
     # The taken, in His own mask -- big-to-small so they layer with depth.
-    for (mx, my, mr, seed) in sorted(masks[:130], key=lambda m: -m[2]):
+    for (mx, my, mr, seed) in sorted(masks[:48], key=lambda m: -m[2]):
         vis = min(1.0, capg * 1.4 + 0.3) * (0.62 + 0.38
                                             * (0.5 + 0.5 * math.sin(t * 1.2 + seed)))
         _yk_mask(scene, mx, my, mr, min(1.0, vis), _CARCOSA_FACEKINDS[seed % 4])
 
     # Gold embers rising through the column.
-    for i in range(30):
+    for i in range(18):
         ex = kx + (_frand(i * 2 + 1) - 0.5) * w * (0.2 + 0.5 * capg)
         span = h + 50
         ey = (gz_y - ((t * (60 + 80 * _frand(i)) + _frand(i * 2 + 2) * span)
