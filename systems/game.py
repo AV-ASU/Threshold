@@ -2812,6 +2812,48 @@ class Game:
         if 0 <= sign_y <= H + 60:
             self._draw_road_sign(s, rx1 + 28, sign_y, light)
 
+        # Wet asphalt -- the road reads slick. A cool sheen reflecting the
+        # night sky down the lane, a warm streak where the headlights mirror
+        # back toward the car, and the taillights bleeding red onto the road
+        # behind it. All additive over the dark asphalt.
+        gy = cy - int(H * 0.20)
+        sheen = 0.30 + 0.70 * light       # the slick fades as the lights die
+        wet = pygame.Surface((W, H), pygame.SRCALPHA)
+        # Thin cold reflective streaks down the wet lane (shimmer slightly),
+        # concentrated in the lit near-field so they read as reflections, not
+        # painted lines, and fade out up the dark road.
+        for sf, amp in ((0.32, 3), (0.5, 2), (0.7, 3)):
+            sx = int(rx0 + road_w * sf + math.sin(t * 0.7 + sf * 10) * 3)
+            for i in range(5, 0, -1):
+                f = i / 5
+                rw = max(1, int(3 * f))
+                a = int(amp * (1 - f) * sheen)
+                if a > 0:
+                    pygame.draw.ellipse(wet, (104, 116, 140, a),
+                                        (sx - rw, cy - int(H * 0.42), 2 * rw,
+                                         int(H * 0.62)))
+        # Warm streak where the headlights mirror back toward the car.
+        for i in range(7, 0, -1):
+            f = i / 7
+            rw = max(1, int(8 * f))
+            a = int(20 * (1 - f) * light)
+            if a > 0:
+                pygame.draw.ellipse(wet, (150, 134, 90, a),
+                                    (cx - rw, gy, 2 * rw,
+                                     max(2, int((cy - gy) * 0.95))))
+        # Taillights bleeding red onto the road behind the car (battery: they
+        # stay lit even when the engine's dead, so this persists -- subtly).
+        for txo in (-11, 11):
+            for i in range(8, 0, -1):
+                f = i / 8
+                rw = max(1, int(5 * f))
+                a = int(15 * (1 - f))
+                if a > 0:
+                    pygame.draw.ellipse(wet, (165, 40, 30, a),
+                                        (cx + txo - rw, cy + 24, 2 * rw,
+                                         int(50 * f)))
+        s.blit(wet, (0, 0), special_flags=pygame.BLEND_RGBA_ADD)
+
         # Drifting ground mist -- low cool bands the headlights catch. Each
         # band's alpha feathers to nothing at its top and bottom edges (a
         # triangular falloff) so there are no hard horizontal seams.
@@ -2847,6 +2889,19 @@ class Game:
             if a > 0:
                 pygame.draw.ellipse(glow, (132, 116, 78, a),
                                     (gx - rw, gy - int(rh * 0.62), 2 * rw, rh))
+        # Headlights licking the near treeline -- warm spill on the inner
+        # edge of each forest band, beside and just ahead of the car, so the
+        # beam visibly touches the woods instead of leaving them flat.
+        for ex in (rx0 - 6, rx1 + 6):
+            for i in range(11, 0, -1):
+                f = i / 11
+                rw = int(48 * f)
+                rh = int(168 * f)
+                a = int(11 * (1 - f) * light)
+                if a > 0:
+                    pygame.draw.ellipse(glow, (124, 104, 62, a),
+                                        (ex - rw, (cy - 56) - int(rh * 0.5),
+                                         2 * rw, rh))
         s.blit(glow, (0, 0), special_flags=pygame.BLEND_RGBA_ADD)
 
         # Dust / moths drifting up through the headlight beam -- a little
