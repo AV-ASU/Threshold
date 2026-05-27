@@ -1617,49 +1617,11 @@ def _carcosa_portal_hands(surf, w, h, cx, cy, spread, t):
         _carcosa_one_rift(surf, px, py, pr, op, t, i * 7, reach=1.3, ha=ha)
 
 
-def _carcosa_facemask(surf, w, h, cx, cy, R, reveal, dilate, t):
-    """His face in the ending is the GAME's OWN King mask -- the very same
-    pallid wail-mask drawn everywhere else (`_yk_mask`), at a fixed large scale
-    so it never zooms. We only stoke its golden gaze to a burn and let the
-    hands of the taken claw OUT of its wailing maw: the portals the player has
-    seen, now opening within His face. As `dilate` rises the gaze swells and
-    the hands surge -- His arrival, with no change in scale."""
-    R = max(8, int(R))
-    rv = max(0.0, min(1.0, reveal))
-    dl = max(0.0, min(1.0, dilate))
-    if rv <= 0.02:
-        return
-    pulse = dl * (0.55 + 0.45 * math.sin(t * 1.7))      # the climactic inhale
-
-    # THE canonical King mask -- identical to every other in the game.
-    _yk_mask(surf, cx, cy, R, min(1.0, 0.4 + rv), "wail")
-
-    # Its feature anchors (matching _yk_face's layout).
-    eyes = [(cx - R * 0.42, cy - R * 0.12), (cx + R * 0.42, cy - R * 0.12)]
-    mouth = (cx, cy + R * 0.55)
-
-    # Stoke the gaze: the canonical 1px gaze is lost at this scale, so burn a
-    # gold ember in each socket (filled aura + a hot core), swelling with dilate.
-    for ex, ey in eyes:
-        gzR = R * (0.07 + 0.07 * rv + 0.06 * pulse)
-        _yk_radial(surf, ex, ey, int(gzR * 2.4), _YK_GOLD, int(70 * rv), add=False)
-        _yk_radial(surf, ex, ey, int(gzR), _YK_HOT, int(170 * min(1.0, rv * 1.4)))
-
-    # The hands of the taken claw out of the wailing maw -- the throat of Him.
-    mw = R * 0.32
-    for j in range(3):
-        u = (j + 0.5) / 3.0
-        hx = mouth[0] + (u - 0.5) * mw * 1.4
-        _carcosa_claw(surf, hx, mouth[1], R * (0.07 + 0.03 * pulse), t,
-                      200 + j * 7, math.pi / 2 + (u - 0.5) * 0.7,
-                      reach=1.2 + 0.9 * dl)
-
-
 def draw_carcosa(surf, t, mode="spread"):
     """rite_broken: His influence DETONATES -- a mushroom cloud of the taken.
     A flash + shockwave + shake at ground zero (the town/well); a stem of
     tendrils and faces PUNCHES upward; it billows into a cap of branching
-    tendrils studded with the King's masks, His face riding the crown. Reads
+    tendrils studded with the King's masks, the taken rising through it. Reads
     as both a dead tree and a blast. `t` = seconds since the break."""
     w, h = surf.get_size()
 
@@ -1680,7 +1642,7 @@ def draw_carcosa(surf, t, mode="spread"):
     cap_y = int(h * 0.30)                         # the cap / the crown
     stem_top = int(gz_y - rise * (gz_y - cap_y))
     spread = eo((t - 1.4) / 2.8)                  # the breach WIDENING outward
-    engulf = eo((t - 4.2) / 2.6)                  # He INHALES + the gaze ignites
+    engulf = eo((t - 4.2) / 2.6)                  # the final gold wash drowns the frame
     capR = w * 0.30 * capg * (1.0 + 0.35 * spread)
 
     scene = pygame.Surface((w, h))
@@ -1772,15 +1734,6 @@ def draw_carcosa(surf, t, mode="spread"):
                             s * 0.6, capR * 0.5, 4, capg, t, 400 + s,
                             masks, kx, cap_y)
 
-    # THE KING. The breach RESOLVES into His pallid face, set into the smoke as
-    # His head: clean eye-sockets burning with the golden gaze, a mouth-gash
-    # spilling the hands of the taken. Fixed in scale (no swell) -- He arrives
-    # by the gaze igniting and the maw clawing open, never by zooming.
-    if capg > 0.05:
-        faceR = capR * 0.42                                # tied to the cap, not engulf
-        face_y = cap_y + int(capR * 0.30)                  # hung below the smoke-crown
-        _carcosa_facemask(scene, w, h, kx, face_y, faceR, spread, engulf, t)
-
     # The taken surface in the TOWN too -- it isn't destroyed, it's claimed.
     if wave > 0.5:
         for i in range(2):
@@ -1810,14 +1763,13 @@ def draw_carcosa(surf, t, mode="spread"):
         pygame.draw.rect(vig, (0, 0, 0, a), (i, i, w - 2 * i, h - 2 * i), 1)
     scene.blit(vig, (0, 0))
 
-    # Compose with screen-shake. (No camera zoom -- the King's FIGURE grows
-    # and advances on its own; a zoom just read as a close-up of the mask.)
+    # Compose with screen-shake (no camera zoom).
     surf.fill((0, 0, 0))
     surf.blit(scene, (shx, shy))
-    if engulf > 0.55:                              # the final engulf wash
+    if engulf > 0.55:                              # a faint warm settle, not a wash
         e2 = (engulf - 0.55) / 0.45
         fl = pygame.Surface((w, h), pygame.SRCALPHA)
-        fl.fill((172, 142, 66, int(120 * e2)))
+        fl.fill((172, 142, 66, int(45 * e2)))
         surf.blit(fl, (0, 0))
     if flash > 0.01:                               # the detonation flash
         fl = pygame.Surface((w, h), pygame.SRCALPHA)
