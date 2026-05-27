@@ -1301,7 +1301,10 @@ def _king_death_figure(scene, cx, cy, fr, t, presence, agitate):
     flesh the taken wear, with the sick-gold gaze fixating. `presence` (0..1) is
     how fully He has bled in; `agitate` (0..1) hauls the arms + flares the gaze."""
     dk, gold, hot = (*_YK_SHADOW, 255), (*_YK_GOLD, 255), (*_YK_HOT, 255)
-    _yk_void(scene, cx, cy + int(fr * 0.2), int(fr * 0.92))
+    # His GOLD-GLOWING body -- the in-game King's signature blaze (the orange
+    # aura + smouldering gold clot), the pale wail-mask riding on it. Kept at a
+    # moderate scale so the glow reads as His aura, not a screen-filling ball.
+    _yk_glow(scene, cx, cy, fr * 0.82, t)
     for i in range(6):                              # grasping arms behind the face
         rho = i * math.tau / 6 + 0.4 * math.sin(i * 2.3)
         rx = cx + math.cos(rho) * fr * 0.6
@@ -1310,17 +1313,14 @@ def _king_death_figure(scene, cx, cy, fr, t, presence, agitate):
         u = ph / 0.5 if ph < 0.5 else (1.0 - ph) / 0.5
         lng = fr * (0.6 + (0.5 + 0.6 * agitate) * (u * u * (3 - 2 * u)))
         _yk_spire(scene, rx, ry, rho, lng, fr, t, i, presence, dk, gold, hot)
-    # His own face -- the canonical pallid wail-mask (void sockets, black tears,
-    # the fracture), kept dim so He reads from shadow, with the gaze stoked.
-    _yk_mask(scene, cx, cy, int(fr), min(1.0, 0.5 + 0.4 * presence), "wail")
+    # His face -- the canonical pallid wail-mask, surfacing from the glow.
+    _yk_mask(scene, cx, cy, int(fr), min(1.0, 0.55 + 0.4 * presence), "wail")
     for sgn in (-1, 1):                             # the gaze, stoked to a furnace
         ex = cx + sgn * int(fr * 0.42)
         ey = cy - int(fr * 0.12)
         gz = fr * (0.1 + 0.05 * agitate + 0.04 * math.sin(t * 4))
-        _yk_radial(scene, ex, ey, int(gz * 2.4), _YK_GOLD,
-                   int((55 + 45 * agitate) * presence), add=False)
         _yk_radial(scene, ex, ey, int(gz), _YK_HOT,
-                   int((120 + 60 * agitate) * presence))
+                   int((150 + 60 * agitate) * presence))
 
 
 def draw_king_death(surf, t):
@@ -1353,13 +1353,13 @@ def draw_king_death(surf, t):
         #     shadow, the sick gaze fixating. Held dead still -- dread by
         #     restraint, the world closing to nothing but His stare. ---
         _taken_crowd(scene, w, h, t, 42, arrive, seed0=10)
-        fr = 56 + arrive * min(w, h) * 0.30
+        fr = 64 + arrive * min(w, h) * 0.18
         _king_death_figure(scene, cx, cy, fr, t, arrive, behold)
     else:
         # --- THE MULTITUDE (pull back). A packed sea of the taken staring OUT
         #     of the black -- and you are among them now. ---
         _taken_crowd(scene, w, h, t, 80, 1.0, seed0=200)
-        _king_death_figure(scene, cx, int(h * 0.40), 52, t, 1.0, 0.45)
+        _king_death_figure(scene, cx, int(h * 0.40), 54, t, 1.0, 0.45)
 
     # YOUR face. It is pressed over the view as you are claimed, then -- as the
     # camera pulls back -- recedes to the FRONT of the multitude: the same dead
@@ -1398,9 +1398,9 @@ def draw_king_death(surf, t):
         fl.fill((150, 162, 158, int(190 * cf)))
         surf.blit(fl, (0, 0))
 
-    # The grime grade -- a COLD, clammy morgue tint; the only warmth left is His
-    # gaze. Chunky downsample + grain kill the clean vector.
-    _carcosa_post(surf, t, tint=(150, 168, 168), cold=(2, 8, 12))
+    # The grime grade -- near-neutral so His GOLD blaze survives, with a cold
+    # rot lifted into the shadows (warm dangerous King vs cold dead crowd).
+    _carcosa_post(surf, t, tint=(206, 198, 178), cold=(3, 9, 13))
 
 
 # ---- The Carcosa tableau: the rite_broken explosion ending --------------
