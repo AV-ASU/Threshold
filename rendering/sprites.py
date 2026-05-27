@@ -1216,14 +1216,90 @@ def _yk_flames(surf, w, h, t, ramp):
             _flame_tongue(surf, bx, by, dx, dy, fh, step * 1.05, t + seed)
 
 
+def _taken_face(surf, cx, cy, r, t, seed, lit, gaze=0.0):
+    """A DEAD HUMAN FACE of the taken -- the unsettling unit the death is built
+    from (the clean pictogram mask reads as cartoonish at scale). Gaunt, clammy,
+    asymmetric, sunken sockets holding a WET GLEAM (it is watching you), a slack
+    open mouth. `lit` (0..1) sinks it into shadow -- most of the crowd is barely
+    seen. `gaze` lights the sockets sick-gold (His look). A slow tremor with the
+    odd twitch keeps it from sitting dead-still."""
+    r = int(r)
+    if r < 5 or lit <= 0.03:
+        return
+    f = _frand
+    twitch = (f(seed * 7 + int(t * 3.0)) < 0.07)
+    tx = math.sin(t * 5 + seed) * 0.5 + (f(seed + int(t * 3)) * 5 - 2.5 if twitch else 0)
+    ty = math.cos(t * 4 + seed) * 0.4
+    cx, cy = int(cx + tx), int(cy + ty)
+    L = max(0.0, min(1.0, lit))
+    hi = (int(196 * L), int(200 * L), int(190 * L))      # clammy pallid-grey flesh
+    mid = (int(116 * L), int(122 * L), int(114 * L))
+    lo = (int(48 * L), int(54 * L), int(52 * L))
+    pit = (5, 6, 7)
+    rw, rh = int(r * 0.76), int(r * 1.04)
+    pygame.draw.ellipse(surf, lo, (cx - rw, cy - rh, 2 * rw, 2 * rh))
+    pygame.draw.ellipse(surf, mid, (cx - rw + 1, cy - rh + 1, 2 * rw - 2, 2 * rh - 3))
+    pygame.draw.ellipse(surf, hi, (cx - rw + 2, cy - rh,         # lit upper-left
+                                   max(2, int(rw * 1.5)), max(2, int(rh * 1.4))))
+    for s in (-1, 1):                                    # gaunt cheek hollows
+        pygame.draw.ellipse(surf, lo, (int(cx + s * r * 0.34 - r * 0.2),
+                                       int(cy + r * 0.06), int(r * 0.4), int(r * 0.56)))
+    asx = (f(seed + 2) - 0.5) * r * 0.08                 # the face sits a little crooked
+    detail = r >= 10
+    for s in (-1, 1):                                    # sunken sockets + wet gleam
+        ex = int(cx + s * r * 0.36 + asx)
+        ey = int(cy - r * 0.08)
+        ew = max(2, int(r * 0.2))
+        eh = max(2, int(r * 0.27))
+        pygame.draw.ellipse(surf, lo, (ex - ew - 1, ey - eh - 1, 2 * ew + 2, 2 * eh + 2))
+        pygame.draw.ellipse(surf, pit, (ex - ew, ey - eh, 2 * ew, 2 * eh))
+        if gaze > 0:
+            _yk_radial(surf, ex, ey, int(ew * 1.5), _YK_GOLD, int(120 * gaze), add=False)
+            _yk_radial(surf, ex, ey, max(2, int(ew * 0.5)), _YK_HOT, int(150 * gaze))
+        gx = ex + int(s * ew * 0.18 + (f(seed + 5) - 0.5) * ew * 0.5)
+        gy = ey - int(eh * 0.32)
+        gl = int(150 * (0.45 + 0.55 * L))                # wet catchlight -> it watches
+        pygame.draw.circle(surf, (gl, gl + 8, gl + 4), (gx, gy), max(1, r // 20))
+    if detail:                                           # nose ridge + nostrils
+        pygame.draw.line(surf, lo, (cx, int(cy - r * 0.04)),
+                         (cx - int(r * 0.05), int(cy + r * 0.22)), max(1, r // 16))
+        for s in (-1, 1):
+            pygame.draw.circle(surf, pit, (int(cx + s * r * 0.1), int(cy + r * 0.25)),
+                               max(1, r // 18))
+    mw = int(r * (0.16 + 0.2 * f(seed + 8)))             # slack open mouth, varied
+    mh = int(r * (0.1 + 0.26 * f(seed + 9)))
+    my = int(cy + r * 0.52)
+    pygame.draw.ellipse(surf, pit, (cx - mw, my - mh, 2 * mw, 2 * mh))
+    if detail and f(seed + 10) > 0.5:                    # the odd jaw hangs, a tooth-line
+        pygame.draw.line(surf, (int(150 * L), int(150 * L), int(140 * L)),
+                         (cx - mw + 1, my - 1), (cx + mw - 1, my - 1), 1)
+
+
+def _taken_crowd(scene, w, h, t, n, grow, seed0=0):
+    """A claustrophobic MULTITUDE of the taken, scattered (never a tidy ring) and
+    receding into black: bigger faces near the front, small ones lost in the
+    dark behind, most barely lit, all watching with their wet gleam. Drawn
+    back-to-front so the crowd packs with depth."""
+    if grow <= 0.02:
+        return
+    items = []
+    for i in range(n):
+        s = seed0 + i
+        depth = _frand(s * 4 + 2)
+        x = w * (0.04 + 0.92 * _frand(s * 4 + 1))
+        y = h * (0.16 + 0.78 * _frand(s * 4 + 3))
+        r = (8 + 56 * depth) * (0.5 + 0.5 * grow)
+        lit = max(0.0, (0.08 + 0.42 * depth) * grow * (0.7 + 0.5 * _frand(s * 4 + 5)))
+        items.append((x, y, r, min(0.8, lit), s))
+    for (x, y, r, lit, s) in sorted(items, key=lambda m: m[2]):
+        _taken_face(scene, x, y, r, t, s * 3 + 7, lit)
+
+
 def _king_death_figure(scene, cx, cy, fr, t, presence, agitate):
-    """The King, composed from His OWN parts at scale: the void mass, the
-    grasping arms reaching + writhing, His legible burning wail-mask, the stoked
-    gaze, and fracture seams cracking across the face. `presence` (0..1) is how
-    fully He has bled in; `agitate` (0..1) hauls the arms further + flares the
-    gaze. Drawn this way (not by upscaling the tiny in-game sprite) so He stays
-    sharp and reads as Himself."""
-    vis = min(1.0, 0.4 + presence)
+    """The King at scale, composed from His own parts: the void mass, the
+    grasping arms reaching + writhing, and His face -- rendered as the same dead
+    flesh the taken wear, with the sick-gold gaze fixating. `presence` (0..1) is
+    how fully He has bled in; `agitate` (0..1) hauls the arms + flares the gaze."""
     dk, gold, hot = (*_YK_SHADOW, 255), (*_YK_GOLD, 255), (*_YK_HOT, 255)
     _yk_void(scene, cx, cy + int(fr * 0.2), int(fr * 0.92))
     for i in range(6):                              # grasping arms behind the face
@@ -1232,25 +1308,10 @@ def _king_death_figure(scene, cx, cy, fr, t, presence, agitate):
         ry = cy + math.sin(rho) * fr * 0.55
         ph = (t * 0.3 + i * 0.41) % 1.0
         u = ph / 0.5 if ph < 0.5 else (1.0 - ph) / 0.5
-        lng = fr * (0.65 + (0.6 + 0.6 * agitate) * (u * u * (3 - 2 * u)))
+        lng = fr * (0.6 + (0.5 + 0.6 * agitate) * (u * u * (3 - 2 * u)))
         _yk_spire(scene, rx, ry, rho, lng, fr, t, i, presence, dk, gold, hot)
-    _yk_mask(scene, cx, cy, int(fr), vis, "wail")
-    for sgn in (-1, 1):                             # the gaze, stoked to a furnace
-        ex = cx + sgn * int(fr * 0.42)
-        ey = cy - int(fr * 0.12)
-        gz = fr * (0.1 + 0.05 * agitate + 0.04 * math.sin(t * 4))
-        _yk_radial(scene, ex, ey, int(gz * 2.4), _YK_GOLD,
-                   int((50 + 45 * agitate) * presence), add=False)
-        _yk_radial(scene, ex, ey, int(gz), _YK_HOT, int((120 + 60 * agitate) * presence))
-    for k in range(5):                              # fracture seams, light bleeding
-        a = k * 1.27 + 0.5
-        pts = [(cx + math.cos(a) * fr * 0.12, cy + math.sin(a) * fr * 0.12),
-               ((cx + math.cos(a) * fr * 0.55) + math.cos(a + 1.5) * fr * 0.09,
-                (cy + math.sin(a) * fr * 0.55) + math.sin(a + 1.5) * fr * 0.09),
-               (cx + math.cos(a) * fr * 0.96, cy + math.sin(a) * fr * 0.96)]
-        ip = [(int(x), int(y)) for x, y in pts]
-        pygame.draw.lines(scene, (26, 18, 12), False, ip, 3)
-        pygame.draw.lines(scene, (180, 132, 54), False, ip, 1)
+    _taken_face(scene, cx, cy, int(fr), t, 991,
+                min(1.0, 0.45 + 0.4 * presence), gaze=0.3 + 0.7 * agitate)
 
 
 def draw_king_death(surf, t):
@@ -1271,66 +1332,48 @@ def draw_king_death(surf, t):
     ramp = max(0.0, min(1.0, t / 0.4))
     arrive = eo((t - 0.1) / 1.4)                    # He blooms in from the dark
     behold = max(0.0, min(1.0, (t - 1.5) / 1.1))    # the held stare
-    claim = eo((t - 2.7) / 0.8)                     # your face unmade into a mask
-    reveal = eo((t - 3.5) / 0.8)                    # pull back to the congregation
-    ring_rad = min(w, h) * 0.36
+    claim = eo((t - 2.7) / 0.8)                     # your face unmade
+    reveal = eo((t - 3.5) / 0.8)                    # pull back into the multitude
 
     scene = pygame.Surface((w, h))
-    scene.fill((4, 3, 7))
-
-    # The abyss: a cold dark that closes in as He beholds you (the world falls
-    # away until only His face is left).
-    throat = (0.5 + 0.5 * math.sin(t * 2.2))
-    _yk_radial(scene, cx, cy, int(w * (0.30 - 0.12 * behold)),
-               (70, 30, 18), int((40 + 20 * throat) * ramp), add=False)
+    scene.fill((5, 6, 8))                            # cold near-black
 
     if reveal <= 0.02:
-        # --- BEAT 1+2: ARRIVE + BEHOLD. He looms, composed from His own parts,
-        #     growing in and then holding dead still as the gaze locks. ---
-        fr = 46 + arrive * min(w, h) * 0.34
-        # His wake -- the taken drift faintly around Him, foreshadowing the ring.
-        for i in range(10):
-            a = i * 0.63 + t * 0.2
-            rad = fr * (1.5 + 0.5 * math.sin(i * 1.7 + t * 0.3))
-            mvis = 0.34 * arrive * (0.4 + 0.4 * math.sin(t + i)) * (1.0 - 0.7 * behold)
-            _yk_mask(scene, cx + math.cos(a) * rad, cy + math.sin(a) * rad * 0.7,
-                     fr * 0.13, max(0.0, mvis), _CARCOSA_FACEKINDS[i % 4])
+        # --- ARRIVE + BEHOLD. The taken surface all around in the dark, a
+        #     multitude of dead faces WATCHING; He looms among them, mostly
+        #     shadow, the sick gaze fixating. Held dead still -- dread by
+        #     restraint, the world closing to nothing but His stare. ---
+        _taken_crowd(scene, w, h, t, 42, arrive, seed0=10)
+        fr = 56 + arrive * min(w, h) * 0.30
         _king_death_figure(scene, cx, cy, fr, t, arrive, behold)
+    else:
+        # --- THE MULTITUDE (pull back). A packed sea of the taken staring OUT
+        #     of the black -- and you are among them now. ---
+        _taken_crowd(scene, w, h, t, 80, 1.0, seed0=200)
+        _king_death_figure(scene, cx, int(h * 0.40), 52, t, 1.0, 0.45)
 
-    if reveal > 0.02:
-        # --- BEAT 3b: THE CONGREGATION (pull back). He sits small at centre,
-        #     ringed by the taken; your fresh mask is one of them now. ---
-        kfr = 58
-        _king_death_figure(scene, cx, cy, kfr, t, 1.0, 0.5)
-        nring = 15
-        for i in range(nring):
-            a = i * math.tau / nring + t * 0.12
-            mx = cx + math.cos(a) * ring_rad
-            my = cy + math.sin(a) * ring_rad * 0.82
-            _yk_mask(scene, mx, my, 24, min(1.0, 0.2 + reveal),
-                     _CARCOSA_FACEKINDS[i % 4])
-
-    # BEAT 3a/continuity: YOUR mask. It blooms over the view as you are claimed,
-    # then (as the camera pulls back) shrinks down into a slot in the ring -- the
-    # same face, now one of His. One continuous move bridges claim -> reveal.
+    # YOUR face. It is pressed over the view as you are claimed, then -- as the
+    # camera pulls back -- recedes to the FRONT of the multitude: the same dead
+    # face, now one of them, watching out of the dark. One continuous move.
     if claim > 0.02:
         base = max(w, h) * 0.95
-        ysz = (claim * base) * (1.0 - reveal) + 34 * reveal
-        yy = cy + ring_rad * 0.82 * reveal
-        if ysz >= 4:
-            _yk_mask(scene, cx, yy, int(ysz), min(1.0, claim * 1.3), "wail")
+        ysz = (claim * base) * (1.0 - reveal) + (min(w, h) * 0.13) * reveal
+        yy = cy * (1.0 - reveal) + h * 0.72 * reveal
+        if ysz >= 5:
+            _taken_face(scene, cx, int(yy), int(ysz), t, 0,
+                        min(0.9, 0.5 + claim * 0.4))
 
-    # Edge vignette.
+    # Vignette -- crushes in HARD as He beholds (the world falls away).
     vig = pygame.Surface((w, h), pygame.SRCALPHA)
+    vstr = min(255, 185 * (1.0 + 0.7 * behold * (1.0 - reveal)))
     for i in range(64):
-        a = int(190 * (1 - i / 64) ** 1.4 * ramp)
+        a = int(vstr * (1 - i / 64) ** 1.35 * ramp)
         pygame.draw.rect(vig, (0, 0, 0, a), (i, i, w - 2 * i, h - 2 * i), 1)
     scene.blit(vig, (0, 0))
 
-    # Compose: a slow dread push-in through the behold, easing back as we pull
-    # out to the congregation.
+    # Compose: a slow dread push-in through the behold, easing back on the pull-out.
     surf.fill((0, 0, 0))
-    z = 1.0 + 0.07 * behold * (1.0 - reveal)
+    z = 1.0 + 0.06 * behold * (1.0 - reveal)
     if z > 1.001:
         zw, zh = int(w * z), int(h * z)
         surf.blit(pygame.transform.smoothscale(scene, (zw, zh)),
@@ -1338,16 +1381,17 @@ def draw_king_death(surf, t):
     else:
         surf.blit(scene, (0, 0))
 
-    # The pale UNMAKING flash -- a quick bleach as your face is taken, covering
-    # the cut from the looming face to the congregation.
+    # The cold UNMAKING flash -- a sick clammy bleach as your face is taken,
+    # covering the cut from His face to the multitude.
     cf = math.exp(-(((t - 3.5) / 0.16) ** 2))
     if cf > 0.01:
         fl = pygame.Surface((w, h), pygame.SRCALPHA)
-        fl.fill((238, 226, 198, int(180 * cf)))
+        fl.fill((150, 162, 158, int(190 * cf)))
         surf.blit(fl, (0, 0))
 
-    # The grime grade -- warm ember tint, faint cold rot in the shadows.
-    _carcosa_post(surf, t, tint=(214, 180, 150), cold=(3, 6, 13))
+    # The grime grade -- a COLD, clammy morgue tint; the only warmth left is His
+    # gaze. Chunky downsample + grain kill the clean vector.
+    _carcosa_post(surf, t, tint=(150, 168, 168), cold=(2, 8, 12))
 
 
 # ---- The Carcosa tableau: the rite_broken explosion ending --------------
