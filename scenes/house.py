@@ -194,9 +194,11 @@ def bedroom_on_update(game, scene, dt):
 
 def bedroom_interact(game):
     """E near the cot: a furniture-only save point in this build.
-    E near the writing table: read a short notebook. The notebook
-    is diegetic (no inventory pickup); re-reading is allowed. First
-    read sets `read_journal` so other systems can react."""
+    E near the writing table: read the PI's own case notebook -- the
+    persistent, re-readable statement of the premise (who hired you, who
+    you're after, the job), complementing the skippable opening drive.
+    Diegetic (no inventory pickup); re-reading is allowed. First read sets
+    `read_journal` so other systems can react."""
     sc = game.scene
     px, py = game.player.x, game.player.y
     # Writing table -- col 8 row 6. Range 40 matches the cot's.
@@ -204,8 +206,16 @@ def bedroom_interact(game):
     ty = 6 * TILE + 16
     if abs(px - tx) <= 40 and abs(py - ty) <= 40:
         game.dialog.show([
-            "[c=dim](A lined notebook on the writing table.)[/c]",
-            "[c=dim]The pages are blank.[/c]",
+            "[c=dim](Your case notebook, open on the table where you left "
+            "it.)[/c]",
+            "CLIENT: Walter Blaine. Wants his daughter found and brought "
+            "home.",
+            "MARA BLAINE, 26. Cut the family off two years ago -- 'found "
+            "religion' out past the highway. Last seen here, in Brimley.",
+            "The job: ask my questions, find the girl, drive home by "
+            "morning.",
+            "[c=dim]The drive in was easy. Then the engine died at the lodge "
+            "steps and wouldn't catch again. First wrong note.[/c]",
         ], speaker="", voice="blip_soft", portrait="narrator")
         if not game.save.flag("read_journal"):
             game.save.set_flag("read_journal", True)

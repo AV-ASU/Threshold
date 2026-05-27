@@ -10,9 +10,12 @@
 ## 1. Premise
 
 Brimley, 1994. You are an unnamed **private investigator**. A man — the
-client, surname **Blaine** — hired you to find his adult daughter,
+client, **Walter Blaine** — hired you to find his adult daughter,
 **Mara Blaine**, who cut ties, "found religion" out past the highway,
-and was **last seen in Brimley**.
+and was **last seen in Brimley**. (The premise is delivered twice: the
+skippable opening drive carries the hook; the PI's **case notebook** on
+the spare-room writing table is the persistent, re-readable version —
+client, quarry, the job.)
 
 You drove in to ask a few questions and drive out. **You can't.** The
 King in Yellow's influence has the town folded shut: the roads loop, the
@@ -142,14 +145,14 @@ THE WORKS       The cult's underground labour, reached by the well: a
                   │   gated by the Playscript
                   ▼
 DEEPER          The Depths → the Threshold (END IT / seal) → the Hive
-                (the congregation; Mara is here).   (soon)
+                (the congregation; Mara is here).   (built)
                   ┊  lose to the King anywhere →
 [not a place]   CARCOSA — the King's fire-and-masks catch-cutscene.
 ```
 
 - **Surface:** one connected sprawl — the Arcadia (lodge/yard/cornfields) ↔ the village crossroads (the well) ↔ the Mistlands map that *is* Brimley (church, store, sheriff, school, barn, kid's house, the Preacher's body, the car). Sealed; sole way down = the well (rope).
 - **The Works** (a.k.a. the Basement Level): the first underground layer, reached by the well — a built 7-room gauntlet (§9): Mara's cell, the Playscript, the Pallid Mask.
-- **Deeper (playscript-gated):** the Depths, the Threshold (**End it**), and the Hive where **Mara** is. (the hive is the remaining build)
+- **Deeper (playscript-gated):** the Depths, the Threshold (**End it**), and the Hive where **Mara** is — all built: the `dark` scene holds the kneeling congregation and Mara's one-shot recognition (evidence #6).
 
 > **Naming, to avoid the collision:** the **lodge cellar** is the
 > `basement` *scene* — the Arcadia's own cellar, a *surface* interior
@@ -229,10 +232,11 @@ Only display names and fiction change.
   it counts *log entries*, not held items. So every pickup that should
   count (Mara's journal, the Ledger, the Sign rubbing) must ALSO fire
   a matching `_evidence()` call, or it won't move the gate.
-- **Endings exist; deaths don't.** `_ENDING_SCRIPTS` currently holds only
-  `escape_alone` (Spread it) and `seal_threshold` (End it). The
-  **CAPTURED card** (cultist catch) and the **Carcosa cutscene** (King
-  catch) are both net-new — there is no death-card system today.
+- **Endings and deaths both exist (built).** `_ENDING_SCRIPTS` holds
+  `escape_alone` (Spread it) and `seal_threshold` (End it). The death
+  system is wired too: `_trigger_death(kind)` → `_tick_death` renders the
+  **CAPTURED card** (`kind="cultist"`, ~2.8s) and the **Carcosa** furnace
+  cutscene (`kind="king"`, ~3.5s); both end the run and return to title.
 
 ### Reworks the new fiction forces
 - **One mouth down.** The well + rope is the *only* surface→underground
@@ -265,11 +269,18 @@ Only display names and fiction change.
 ---
 
 ## 8. Still loose (design TODO)
-- **The Basement Level redesign** (active — see §9).
-- The **hive** layout (the deeper layer).
-- Mara's journal text; each NPC's dialogue arc.
-- The death-card word: **CAPTURED** (leaning) vs KILLED.
-- The client's given name (surname Blaine).
+- **The liminal-composition pass** (§10): per-scene level design —
+  composed emptiness, long sightlines, uncanny repetition.
+- Each NPC's dialogue arc — the principals (Clerk, Sheriff Vane, Preacher,
+  Store-Owner, the Kid) are written; the bit-part villagers are thinner.
+
+**Resolved (kept here as a record):**
+- ~~The hive layout~~ — built (§5, §9; the `dark` scene + Mara's
+  recognition).
+- ~~Mara's journal text~~ — written (her last entries, `interiors.py` barn
+  pickup), and the page-3 flashback stills are authored.
+- ~~The death-card word~~ — **CAPTURED** (shipped; see §6/§7).
+- ~~The client's given name~~ — **Walter Blaine** (§1).
 
 ---
 
