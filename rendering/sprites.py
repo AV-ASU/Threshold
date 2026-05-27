@@ -1407,8 +1407,11 @@ def draw_carcosa(surf, t, mode="spread"):
     gz_y = int(h * 0.82)                          # ground zero (the town/well)
     cap_y = int(h * 0.30)                         # the cap / the crown
     stem_top = int(gz_y - rise * (gz_y - cap_y))
-    capR = w * 0.30 * capg
-    mR = int(24 + capg * 16)
+    spread = eo((t - 1.4) / 2.8)                  # the breach WIDENING outward
+    engulf = eo((t - 4.2) / 2.6)                  # the LUNGE toward the viewer
+    capR = w * 0.30 * capg * (1.0 + 0.35 * spread)
+    mR = int((24 + capg * 16) * (1.0 + 1.7 * engulf))  # His face swells forward
+    crown_y = cap_y - int(capR * 0.22) + int(engulf * h * 0.18)  # advances down
 
     scene = pygame.Surface((w, h))
     scene.fill((4, 4, 7))
@@ -1424,6 +1427,25 @@ def draw_carcosa(surf, t, mode="spread"):
                int(18 * (1 - f) ** 1.6 * ramp))
         pygame.draw.ellipse(scene, col, (kx - rad, cap_y - int(rad * 0.7),
                                          rad * 2, int(rad * 1.4)))
+
+    # The fold TEARING: gold breach-cracks forking out from the rift and
+    # WIDENING as the influence pours through -- this is being unleashed, not
+    # a blast that dissipates. They brighten + thicken with spread/engulf.
+    if spread > 0.01:
+        bril = (min(255, int(140 + 110 * engulf)),
+                min(255, int(112 + 90 * engulf)),
+                min(255, int(46 + 50 * engulf)))
+        for i in range(10):
+            aa = (i / 10.0) * math.tau + (_frand(i * 9 + 1) - 0.5) * 0.4
+            seg = spread * h * 0.16
+            px2, py2 = float(kx), float((gz_y + cap_y) // 2)
+            pts = [(int(px2), int(py2))]
+            for s2 in range(4):
+                aa += (_frand(i * 9 + s2 + 2) - 0.5) * 0.8
+                px2 += math.cos(aa) * seg
+                py2 += math.sin(aa) * seg
+                pts.append((int(px2), int(py2)))
+            pygame.draw.lines(scene, bril, False, pts, max(1, int(1 + engulf * 4)))
 
     # Town at ground zero + the gold wave washing over it.
     _carcosa_town(scene, w, h, int(h * 0.86), t, wave)
@@ -1489,13 +1511,20 @@ def draw_carcosa(surf, t, mode="spread"):
                             s * 0.6, capR * 0.5, 4, capg, t, 400 + s,
                             masks, kx, cap_y)
 
-    # His face on the CROWN of the cloud (top-centre), swelling.
+    # His face on the CROWN of the cloud -- swelling and ADVANCING toward the
+    # viewer (crown_y/mR grow with engulf): He is coming, not receding.
     if capg > 0.05:
-        crown_y = cap_y - int(capR * 0.22)
         pygame.draw.ellipse(scene, (9, 8, 11),
                             (kx - mR - 6, crown_y - int(mR * 1.35), 2 * mR + 12,
                              int(mR * 2.7)))
         _yk_mask(scene, kx, crown_y, mR, min(1.0, 0.4 + capg), "wail")
+
+    # The taken surface in the TOWN too -- it isn't destroyed, it's claimed.
+    if wave > 0.5:
+        for i in range(4):
+            tx = kx + (_frand(i * 7 + 1) - 0.5) * w * 0.7
+            masks.append((tx, gz_y - 4 + _frand(i * 7 + 2) * 28,
+                          8 + int(6 * _frand(i * 7 + 3)), i * 11 + 50))
 
     # The taken, in His own mask -- big-to-small so they layer with depth.
     for (mx, my, mr, seed) in sorted(masks[:130], key=lambda m: -m[2]):
@@ -1519,10 +1548,25 @@ def draw_carcosa(surf, t, mode="spread"):
         pygame.draw.rect(vig, (0, 0, 0, a), (i, i, w - 2 * i, h - 2 * i), 1)
     scene.blit(vig, (0, 0))
 
-    # Compose with screen-shake, then the white detonation flash on top.
+    # Compose: screen-shake early; then in the engulf phase push the "camera"
+    # INTO the crown so the whole mass rushes the viewer and consumes the
+    # frame -- unleashed and coming for us, not a cloud that recedes.
+    comp = scene
+    if engulf > 0.002:
+        z = 1.0 + engulf * 2.4
+        bw, bh = max(2, int(w / z)), max(2, int(h / z))
+        fx = max(bw // 2, min(w - bw // 2, kx))
+        fy = max(bh // 2, min(h - bh // 2, crown_y))
+        sub = scene.subsurface((fx - bw // 2, fy - bh // 2, bw, bh))
+        comp = pygame.transform.smoothscale(sub, (w, h))
     surf.fill((0, 0, 0))
-    surf.blit(scene, (shx, shy))
-    if flash > 0.01:
+    surf.blit(comp, (shx, shy))
+    if engulf > 0.55:                              # the final engulf wash
+        e2 = (engulf - 0.55) / 0.45
+        fl = pygame.Surface((w, h), pygame.SRCALPHA)
+        fl.fill((172, 142, 66, int(120 * e2)))
+        surf.blit(fl, (0, 0))
+    if flash > 0.01:                               # the detonation flash
         fl = pygame.Surface((w, h), pygame.SRCALPHA)
         fl.fill((255, 244, 212, int(230 * flash)))
         surf.blit(fl, (0, 0))
