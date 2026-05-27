@@ -2499,52 +2499,64 @@ class Game:
         bedroom wake). Called on completion or a silent ESC skip."""
         self._start_play()
 
-    def _draw_car(self, s, cx, cy, light=1.0, exhaust=0.0):
+    def _draw_car(self, s, cx, cy, light=1.0, exhaust=0.0, scale=1.3):
         """Top-down car, facing up the road (forward). `light` dims the
         headlights with the engine; the taillights stay (battery). `exhaust`
-        (0..1) puffs idle smoke from the tail when the car stalls/dies."""
+        (0..1) puffs idle smoke from the tail when the car stalls/dies.
+        `scale` sizes the whole car (1.0 = the original footprint)."""
+        k = scale
+
+        def R(x, y, w, h):                       # rect in car-local units
+            return pygame.Rect(int(cx + x * k), int(cy + y * k),
+                               max(1, int(w * k)), max(1, int(h * k)))
+
+        def P(x, y):                             # point in car-local units
+            return (int(cx + x * k), int(cy + y * k))
+        rad = lambda v: max(2, int(v * k))       # noqa: E731
         # Exhaust drifts back (down-screen) from the tail pipes.
         if exhaust > 0.01:
             t = pygame.time.get_ticks() / 1000.0
-            puff = pygame.Surface((40, 40), pygame.SRCALPHA)
+            pw = int(48 * k)
+            puff = pygame.Surface((pw, pw), pygame.SRCALPHA)
             for i in range(3):
                 pp = (t * 1.3 + i * 0.45) % 1.0
-                py = int(20 + pp * 22)
-                pr = int(4 + pp * 9)
+                pr = int((4 + pp * 9) * k)
                 pa = int(70 * (1 - pp) * exhaust)
                 if pa > 0:
-                    pygame.draw.circle(puff, (90, 92, 96, pa),
-                                       (20 + int(math.sin(t * 2 + i) * 3), py), pr)
-            s.blit(puff, (cx - 20, cy + 18))
+                    pygame.draw.circle(
+                        puff, (90, 92, 96, pa),
+                        (pw // 2 + int(math.sin(t * 2 + i) * 3),
+                         int((4 + pp * 28) * k)), pr)
+            s.blit(puff, (int(cx - 24 * k), int(cy + 18 * k)))
         # Drop shadow on the road.
-        sh = pygame.Surface((40, 56), pygame.SRCALPHA)
-        pygame.draw.ellipse(sh, (0, 0, 0, 110), (0, 0, 40, 56))
-        s.blit(sh, (cx - 18, cy - 22))
+        shw, shh = int(46 * k), int(64 * k)
+        sh = pygame.Surface((shw, shh), pygame.SRCALPHA)
+        pygame.draw.ellipse(sh, (0, 0, 0, 110), (0, 0, shw, shh))
+        s.blit(sh, (int(cx - 23 * k), int(cy - 24 * k)))
         # Body: dark hull with a faint top sheen (headlight spill back-scatter).
-        body = pygame.Rect(cx - 13, cy - 22, 26, 44)
-        pygame.draw.rect(s, (26, 24, 30), body, border_radius=5)
-        pygame.draw.rect(s, (44, 42, 50), (cx - 13, cy - 22, 26, 14), border_radius=5)
-        pygame.draw.rect(s, (9, 8, 11), body, 1, border_radius=5)
+        body = R(-13, -22, 26, 44)
+        pygame.draw.rect(s, (26, 24, 30), body, border_radius=rad(5))
+        pygame.draw.rect(s, (44, 42, 50), R(-13, -22, 26, 14), border_radius=rad(5))
+        pygame.draw.rect(s, (9, 8, 11), body, 1, border_radius=rad(5))
         # Hood + windshield (front), roof, rear window.
-        pygame.draw.rect(s, (30, 28, 34), (cx - 11, cy - 20, 22, 7), border_radius=2)
+        pygame.draw.rect(s, (30, 28, 34), R(-11, -20, 22, 7), border_radius=rad(2))
         wsh = (int(70 * light + 26), int(78 * light + 28), int(92 * light + 30))
-        pygame.draw.polygon(s, wsh, [(cx - 9, cy - 13), (cx + 9, cy - 13),
-                                     (cx + 7, cy - 6), (cx - 7, cy - 6)])  # windshield
-        pygame.draw.rect(s, (40, 42, 50), (cx - 8, cy - 5, 16, 12), border_radius=2)  # roof
-        pygame.draw.rect(s, (24, 26, 32), (cx - 7, cy + 8, 14, 5), border_radius=2)   # rear glass
+        pygame.draw.polygon(s, wsh, [P(-9, -13), P(9, -13), P(7, -6), P(-7, -6)])
+        pygame.draw.rect(s, (40, 42, 50), R(-8, -5, 16, 12), border_radius=rad(2))
+        pygame.draw.rect(s, (24, 26, 32), R(-7, 8, 14, 5), border_radius=rad(2))
         # Side mirrors.
-        pygame.draw.rect(s, (24, 22, 28), (cx - 15, cy - 9, 3, 3))
-        pygame.draw.rect(s, (24, 22, 28), (cx + 12, cy - 9, 3, 3))
+        pygame.draw.rect(s, (24, 22, 28), R(-15, -9, 3, 3))
+        pygame.draw.rect(s, (24, 22, 28), R(12, -9, 3, 3))
         # Headlights + a tight hot core.
         hl = (int(235 * light), int(228 * light), int(190 * light))
-        for hx in (cx - 9, cx + 9):
-            pygame.draw.circle(s, hl, (hx, cy - 21), 2)
-            pygame.draw.circle(s, (255, 250, 230), (hx, cy - 21), 1)
+        for hx in (-9, 9):
+            pygame.draw.circle(s, hl, P(hx, -21), max(2, int(2 * k)))
+            pygame.draw.circle(s, (255, 250, 230), P(hx, -21), max(1, int(k)))
         # Taillights (battery — stay lit even when the engine's dead).
-        pygame.draw.rect(s, (150, 34, 26), (cx - 11, cy + 18, 5, 3))
-        pygame.draw.rect(s, (150, 34, 26), (cx + 6, cy + 18, 5, 3))
-        pygame.draw.rect(s, (210, 70, 60), (cx - 10, cy + 19, 2, 1))
-        pygame.draw.rect(s, (210, 70, 60), (cx + 7, cy + 19, 2, 1))
+        pygame.draw.rect(s, (150, 34, 26), R(-11, 18, 5, 3))
+        pygame.draw.rect(s, (150, 34, 26), R(6, 18, 5, 3))
+        pygame.draw.rect(s, (210, 70, 60), R(-10, 19, 2, 1))
+        pygame.draw.rect(s, (210, 70, 60), R(7, 19, 2, 1))
 
     def _draw_case_card(self, header, lines, stamp, cx, cy, t_local, hold,
                         seed):
@@ -2747,6 +2759,39 @@ class Game:
         forest.fill((d, d, d, 255), special_flags=pygame.BLEND_RGB_MULT)
         s.blit(forest, (0, 0))
 
+        # A lonely power line down the left shoulder: poles standing above the
+        # canopy with a wire sagging from pole to pole. (The right shoulder
+        # carries the BRIMLEY sign.) Draws over the trees so it reads as
+        # roadside, not lost in the forest.
+        pole_sp, pole_x, ph_h = 240, rx0 - 24, 58
+
+        def _attach(idx):
+            return (pole_x + 12, int(scroll - idx * pole_sp) - ph_h + 9)
+        lo = int(scroll // pole_sp) - H // pole_sp - 2
+        hi = int(scroll // pole_sp) + 2
+        wire_c = L((48, 50, 54))
+        for idx in range(lo, hi):
+            ax, ay = _attach(idx)
+            bx, by = _attach(idx + 1)
+            if max(ay, by) < -60 or min(ay, by) > H + 60:
+                continue
+            pygame.draw.lines(s, wire_c, False,
+                              [(ax, ay), ((ax + bx) // 2 + 7,
+                                          (ay + by) // 2 + 9), (bx, by)], 1)
+        for idx in range(lo, hi):
+            yb = int(scroll - idx * pole_sp)
+            tp = yb - ph_h
+            if tp > H + 20 or yb < -20:
+                continue
+            flare = max(0.0, 1.0 - abs(yb - cy) / 200.0)
+            pc = (int(40 + 42 * flare * light), int(36 + 34 * flare * light),
+                  int(30 + 24 * flare * light))
+            pygame.draw.rect(s, pc, (pole_x - 2, tp, 4, ph_h))      # post
+            pygame.draw.rect(s, pc, (pole_x - 11, tp + 6, 23, 3))   # crossarm
+            pygame.draw.rect(s, pc, (pole_x - 2, tp - 4, 4, 6))     # cap
+            pygame.draw.circle(s, pc, (pole_x - 9, tp + 5), 1)      # insulators
+            pygame.draw.circle(s, pc, (pole_x + 9, tp + 5), 1)
+
         # Reflector posts on the shoulders -- amber dots that flare as the
         # headlights sweep past them.
         post_sp = 150
@@ -2804,9 +2849,21 @@ class Game:
                                     (gx - rw, gy - int(rh * 0.62), 2 * rw, rh))
         s.blit(glow, (0, 0), special_flags=pygame.BLEND_RGBA_ADD)
 
+        # Dust / moths drifting up through the headlight beam -- a little
+        # life in the only light for miles. They rise toward the beam's
+        # reach and fade out, swaying side to side.
+        for i in range(7):
+            mt = (t * 0.55 + i * 0.37) % 1.0
+            my = int(cy - 24 - mt * (cy - top_y - 24))
+            mx = cx + int(math.sin(t * 1.3 + i * 2.1) * (16 + mt * 34))
+            mc = int(210 * (1 - mt) * min(1.0, light + 0.1))
+            if mc > 6:
+                pygame.draw.circle(s, (mc, int(mc * 0.94), int(mc * 0.74)),
+                                   (mx, my), 1)
+
         # The car. Exhaust puffs while it stalls and after it dies.
         exhaust = (1.0 - sp_frac) if ph in ("stall", "dead") else 0.0
-        self._draw_car(s, cx, cy, light, exhaust=exhaust)
+        self._draw_car(s, cx, cy, light, exhaust=exhaust, scale=1.3)
 
         # Film grain over the whole drive, for cohesion with the graded world.
         if getattr(self, "_opening_grain", None) is None:
