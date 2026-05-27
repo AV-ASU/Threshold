@@ -1281,23 +1281,34 @@ def draw_king_death(surf, t):
     _yk_radial(scene, cx, mouth_y, int(w * (0.22 + 0.05 * math.sin(t * 2.6))),
                (120, 40, 16), int(64 * ramp), add=False)
 
-    # 1. THE PULL: the gullet of the taken, spiralling inward. (Drawn small-to-
-    #    big with the looming face, below.)
+    # 1. THE SEIZE: black-gold tendrils snap in from every edge and grip toward
+    #    centre -- He has you. They land hard at the catch, then RETRACT to the
+    #    rim as His face rises (so they frame Him, never scribble over Him).
+    if seize > 0.02:
+        gr = seize if t < 1.3 else 1.0
+        reach = math.hypot(w, h) * 0.46 * gr * (1.0 - 0.5 * face)
+        edges = [(0.0, 0.5), (1.0, 0.5), (0.5, 0.0), (0.5, 1.0),
+                 (0.0, 0.0), (1.0, 0.0), (0.0, 1.0), (1.0, 1.0)]
+        for k, (fx, fy) in enumerate(edges):
+            px, py = fx * w, fy * h
+            ang = math.atan2(cy - py, cx - px)
+            _carcosa_tentacle(scene, int(px), int(py), ang, reach, t, k * 7 + 2,
+                              wobble=0.9, base_w=int(34 * (0.5 + 0.5 * gr)),
+                              taper=0.3, dark=(4, 4, 6), gold=(70, 56, 26))
+
+    # 2. THE PULL: the gullet of the taken, spiralling inward toward the throat.
     vmasks = []
     if pull > 0.02:
         _king_death_vortex(scene, w, h, cx, mouth_y, t, pull, vmasks)
 
-    # 2. THE FACE: His void mass + pallid wail-mask resolving from the throat,
-    #    rising out of the vanishing point and looming. (Drawn after the vortex
-    #    so it sits at the centre of the spiral.)
+    # 3. THE FACE: His void mass + pallid wail-mask resolving from the throat,
+    #    rising out of the vanishing point and looming. The void + the looming
+    #    face are drawn LAST among the figures so the spiral funnels INTO Him
+    #    and the seize tendrils sit behind His face, framing it.
     if face > 0.03:
         _yk_void(scene, cx, mouth_y + int(fr * 0.2), int(fr * 0.95))
-
-    # Layer the vortex faces big-to-small over the void, then the looming face
-    # on top so the spiral funnels INTO Him.
     for (mx, my, mr, mvis, seed) in sorted(vmasks, key=lambda m: m[2]):
         _yk_mask(scene, mx, my, mr, min(1.0, mvis), _CARCOSA_FACEKINDS[seed % 4])
-
     if face > 0.03:
         _yk_mask(scene, cx, cy, int(fr), min(1.0, 0.4 + face), "wail")
         for sgn in (-1, 1):                        # the gaze stoked to a furnace
@@ -1307,20 +1318,6 @@ def draw_king_death(surf, t):
             _yk_radial(scene, ex, ey, int(gz * 2.4), _YK_GOLD,
                        int(80 * face), add=False)
             _yk_radial(scene, ex, ey, int(gz), _YK_HOT, int(165 * face))
-
-    # 3. THE SEIZE: black-gold tendrils snap in from every edge and grip toward
-    #    centre -- He has you. They land hard at the catch, then writhe.
-    if seize > 0.02:
-        gr = seize if t < 1.3 else 1.0
-        edges = [(0.0, 0.5), (1.0, 0.5), (0.5, 0.0), (0.5, 1.0),
-                 (0.0, 0.0), (1.0, 0.0), (0.0, 1.0), (1.0, 1.0)]
-        for k, (fx, fy) in enumerate(edges):
-            px, py = fx * w, fy * h
-            ang = math.atan2(cy - py, cx - px)
-            _carcosa_tentacle(scene, int(px), int(py), ang,
-                              math.hypot(w, h) * 0.46 * gr, t, k * 7 + 2,
-                              wobble=0.9, base_w=int(34 * (0.5 + 0.5 * gr)),
-                              taper=0.3, dark=(4, 4, 6), gold=(70, 56, 26))
 
     # 4. Embers + heat-shimmer rising through it all.
     for i in range(46):
