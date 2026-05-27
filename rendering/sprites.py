@@ -1557,6 +1557,24 @@ def draw_mask_yank(surf, t):
     _carcosa_post(surf, t)
 
 
+def _carcosa_claw(surf, px, py, pr, t, seed, ha, reach=1.0):
+    """A HAND of the taken clawing out from (px, py), writhing as it reaches.
+    `ha` aims the arm; `pr` sets its scale."""
+    pr = max(2, int(pr))
+    px, py = int(px), int(py)
+    ha = ha + math.sin(t * 2.0 + seed) * 0.4
+    wl = pr * 2.3 * reach
+    hx, hy = px + math.cos(ha) * wl, py + math.sin(ha) * wl
+    aw = max(2, pr // 2)
+    pygame.draw.line(surf, (62, 48, 22), (px, py), (int(hx), int(hy)), aw + 2)
+    pygame.draw.line(surf, (8, 7, 10), (px, py), (int(hx), int(hy)), aw)
+    for f in range(4):
+        fa = ha + (f - 1.5) * 0.34 + math.sin(t * 3 + seed + f) * 0.06
+        tx, ty = hx + math.cos(fa) * pr * 1.6, hy + math.sin(fa) * pr * 1.6
+        pygame.draw.line(surf, (8, 7, 10), (int(hx), int(hy)),
+                         (int(tx), int(ty)), max(1, aw // 2))
+
+
 def _carcosa_one_rift(surf, px, py, pr, op, t, seed, reach=1.0,
                       ha=None, hand=True):
     """One torn rift: the gold strike that split it, a dark tear with a hot
@@ -1575,20 +1593,8 @@ def _carcosa_one_rift(surf, px, py, pr, op, t, seed, reach=1.0,
                         max(1, int(2 * op)))
     if not hand:
         return
-    if ha is None:
-        ha = math.pi / 2 + math.sin(t * 2.0 + seed) * 0.5
-    else:
-        ha = ha + math.sin(t * 2.0 + seed) * 0.4
-    wl = pr * (1.4 + 0.9 * op) * reach
-    hx, hy = px + math.cos(ha) * wl, py + math.sin(ha) * wl
-    aw = max(2, pr // 4)
-    pygame.draw.line(surf, (62, 48, 22), (px, py), (int(hx), int(hy)), aw + 2)
-    pygame.draw.line(surf, (8, 7, 10), (px, py), (int(hx), int(hy)), aw)
-    for f in range(4):
-        fa = ha + (f - 1.5) * 0.34 + math.sin(t * 3 + seed + f) * 0.06
-        tx, ty = hx + math.cos(fa) * pr * 0.9, hy + math.sin(fa) * pr * 0.9
-        pygame.draw.line(surf, (8, 7, 10), (int(hx), int(hy)),
-                         (int(tx), int(ty)), max(1, aw // 2))
+    base = math.pi / 2 if ha is None else ha
+    _carcosa_claw(surf, px, py, pr * (0.7 + 0.4 * op) * reach, t, seed, base)
 
 
 def _carcosa_portal_hands(surf, w, h, cx, cy, spread, t):
@@ -1612,12 +1618,12 @@ def _carcosa_portal_hands(surf, w, h, cx, cy, spread, t):
 
 
 def _carcosa_facemask(surf, w, h, cx, cy, R, reveal, dilate, t):
-    """His FACE, formed from the breach itself -- not a mask that zooms in.
-    A dark head-silhouette looms over the lit cloud; its features are RIFTS:
-    two vertical eye-sockets that burn with the golden gaze, a wide mouth-gash,
-    gaunt cheek/brow hollows -- each a portal the taken claw out through. As
-    `dilate` rises He inhales: the sockets widen, the gaze swells, the hands
-    surge. The face arrives by the holes ARRANGING into Him, never by scaling."""
+    """His face in the ending is the GAME's OWN King mask -- the very same
+    pallid wail-mask drawn everywhere else (`_yk_mask`), at a fixed large scale
+    so it never zooms. We only stoke its golden gaze to a burn and let the
+    hands of the taken claw OUT of its wailing maw: the portals the player has
+    seen, now opening within His face. As `dilate` rises the gaze swells and
+    the hands surge -- His arrival, with no change in scale."""
     R = max(8, int(R))
     rv = max(0.0, min(1.0, reveal))
     dl = max(0.0, min(1.0, dilate))
@@ -1625,77 +1631,28 @@ def _carcosa_facemask(surf, w, h, cx, cy, R, reveal, dilate, t):
         return
     pulse = dl * (0.55 + 0.45 * math.sin(t * 1.7))      # the climactic inhale
 
-    # The PALLID MASK itself -- the unmistakable bone face of the King, fixed in
-    # scale (tied to the cap, never engulf), set into the smoke as His head. It
-    # is drawn solid so it COVERS the busy cloud behind it: a clean face the eye
-    # locks onto. Its eyes and mouth are the only thing that "arrives" -- the
-    # rifts open INSIDE them and the hands of the taken claw out.
-    rw, rh = int(R * 0.70), int(R * 0.92)
-    pad = max(6, rw // 3)
-    S = (rw + pad) * 2
-    mm = pygame.Surface((S, S), pygame.SRCALPHA)
-    mcx = mcy = rw + pad
-    sway = math.sin(t * 1.1) * 0.02                      # a slow living tilt
-    # bone face, shaded upper-left -> a head, not a disc
-    pygame.draw.ellipse(mm, _YK_MLO, (mcx - rw + 2, mcy - rh + 2, 2 * rw, 2 * rh))
-    pygame.draw.ellipse(mm, _YK_MMID, (mcx - rw, mcy - rh, 2 * rw, 2 * rh))
-    pygame.draw.ellipse(mm, _YK_MHI,
-                        (mcx - rw + 2, mcy - rh, max(2, 2 * rw - 5),
-                         max(2, 2 * rh - 7)))
-    # gaunt cheek shadows + nose ridge so it reads as a starved face
-    for sgn in (-1, 1):
-        pygame.draw.ellipse(mm, _YK_MLO,
-                            (int(mcx + sgn * rw * 0.34 - rw * 0.22),
-                             int(mcy + rh * 0.02),
-                             int(rw * 0.44), int(rh * 0.5)))
-    pygame.draw.line(mm, _YK_MLO, (mcx, int(mcy - rh * 0.28)),
-                     (mcx, int(mcy + rh * 0.18)), max(1, rw // 18))
-    mm.set_alpha(int(45 + 200 * rv))
-    rot = pygame.transform.rotozoom(mm, math.degrees(sway), 1.0)
-    surf.blit(rot, rot.get_rect(center=(cx, cy)))
+    # THE canonical King mask -- identical to every other in the game.
+    _yk_mask(surf, cx, cy, R, min(1.0, 0.4 + rv), "wail")
 
-    eye_sep = R * 0.40
-    eye_y = cy - R * 0.16
-    eyes = [(cx - eye_sep, eye_y), (cx + eye_sep, eye_y)]
-    mouth = (cx, cy + R * 0.50)
+    # Its feature anchors (matching _yk_face's layout).
+    eyes = [(cx - R * 0.42, cy - R * 0.12), (cx + R * 0.42, cy - R * 0.12)]
+    mouth = (cx, cy + R * 0.55)
 
-    # THE EYE-SOCKETS: clean vertical oblong voids with the golden gaze burning
-    # at the back. Kept uncluttered (no hands) so the stare reads cold and the
-    # gaze swells with the inhale -- the reaching is the maw's and the portals'.
-    socket_h = R * (0.30 + 0.06 * pulse)
-    socket_w = R * (0.15 + 0.04 * pulse)
+    # Stoke the gaze: the canonical 1px gaze is lost at this scale, so burn a
+    # gold ember in each socket (filled aura + a hot core), swelling with dilate.
     for ex, ey in eyes:
-        pygame.draw.ellipse(surf, _YK_MPIT,
-                            (int(ex - socket_w), int(ey - socket_h),
-                             int(socket_w * 2), int(socket_h * 2)))
-        gzR = R * (0.07 + 0.08 * rv + 0.06 * pulse)
-        _yk_radial(surf, ex, ey, int(gzR * 2.4), _YK_GOLD,
-                   int(80 * rv), add=False)
-        _yk_radial(surf, ex, ey, int(gzR), _YK_HOT,
-                   int(170 * min(1.0, rv * 1.4)))
-        # a single clean black tear, the wail-mask's weep
-        pygame.draw.line(surf, _YK_MPIT, (int(ex), int(ey + socket_h)),
-                         (int(ex), int(ey + socket_h + R * 0.45)),
-                         max(1, int(R * 0.025)))
+        gzR = R * (0.07 + 0.07 * rv + 0.06 * pulse)
+        _yk_radial(surf, ex, ey, int(gzR * 2.4), _YK_GOLD, int(70 * rv), add=False)
+        _yk_radial(surf, ex, ey, int(gzR), _YK_HOT, int(170 * min(1.0, rv * 1.4)))
 
-    # THE MOUTH-GASH: the widest breach, a torn maw -- the throat where the
-    # hands of the taken claw out. This is where the reaching lives.
-    mw = R * (0.40 + 0.10 * pulse)
-    mh = R * (0.22 + 0.07 * pulse)
-    pygame.draw.ellipse(surf, _YK_MPIT,
-                        (int(mouth[0] - mw), int(mouth[1] - mh),
-                         int(mw * 2), int(mh * 2)))
-    pygame.draw.ellipse(surf, (120, 30, 22),
-                        (int(mouth[0] - mw), int(mouth[1] - mh),
-                         int(mw * 2), int(mh * 2)), max(1, int(2 + 2 * rv)))
-    _yk_radial(surf, mouth[0], mouth[1], int(mw * 0.6), (150, 36, 24),
-               int(44 * rv), add=False)
+    # The hands of the taken claw out of the wailing maw -- the throat of Him.
+    mw = R * 0.32
     for j in range(3):
         u = (j + 0.5) / 3.0
-        hx = mouth[0] + (u - 0.5) * mw * 1.3
-        _carcosa_one_rift(surf, hx, mouth[1] - mh * 0.2, mw * 0.4, rv, t,
-                          200 + j * 7, reach=1.3 + 0.9 * dl,
-                          ha=math.pi / 2 + (u - 0.5) * 0.7)
+        hx = mouth[0] + (u - 0.5) * mw * 1.4
+        _carcosa_claw(surf, hx, mouth[1], R * (0.07 + 0.03 * pulse), t,
+                      200 + j * 7, math.pi / 2 + (u - 0.5) * 0.7,
+                      reach=1.2 + 0.9 * dl)
 
 
 def draw_carcosa(surf, t, mode="spread"):
@@ -1820,8 +1777,8 @@ def draw_carcosa(surf, t, mode="spread"):
     # spilling the hands of the taken. Fixed in scale (no swell) -- He arrives
     # by the gaze igniting and the maw clawing open, never by zooming.
     if capg > 0.05:
-        faceR = capR * 0.50                                # tied to the cap, not engulf
-        face_y = cap_y + int(capR * 0.34)                  # hung below the smoke-crown
+        faceR = capR * 0.42                                # tied to the cap, not engulf
+        face_y = cap_y + int(capR * 0.30)                  # hung below the smoke-crown
         _carcosa_facemask(scene, w, h, kx, face_y, faceR, spread, engulf, t)
 
     # The taken surface in the TOWN too -- it isn't destroyed, it's claimed.
