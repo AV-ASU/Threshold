@@ -1564,11 +1564,13 @@ def draw_mask_yank(surf, t):
 
 
 def _carcosa_tentacle(surf, px, py, ang, length, t, seed, wobble=1.0,
-                      base_w=8, dark=(9, 8, 11), gold=(150, 120, 50)):
+                      base_w=8, taper=0.0, dark=(9, 8, 11), gold=(150, 120, 50)):
     """A writhing BLACK-GOLD tendril from (px, py): a dark tapering body with a
     gold edge, curling and lashing as it reaches. `base_w` sets its girth at the
-    root (big for foreground limbs); pass darker colours for out-of-focus depth."""
-    n = 10
+    root (big for foreground limbs); `taper` (0..1) keeps a minimum width along
+    its length so it reads as a thick limb, not a thread; pass darker colours
+    for out-of-focus depth."""
+    n = 12
     seg = max(2.0, length / n)
     x, y, a = float(px), float(py), ang
     pts = [(x, y)]
@@ -1579,10 +1581,11 @@ def _carcosa_tentacle(surf, px, py, ang, length, t, seed, wobble=1.0,
         pts.append((x, y))
     ip = [(int(a_), int(b_)) for a_, b_ in pts]
     for i in range(n):
-        wdt = max(1, int((n - i) / n * base_w))
+        f = (n - i) / n
+        wdt = max(1, int(base_w * (f * (1.0 - taper) + taper)))
         pygame.draw.line(surf, gold, ip[i], ip[i + 1], wdt + 2)   # gold edge
         pygame.draw.line(surf, dark, ip[i], ip[i + 1], wdt)       # black core
-    pygame.draw.circle(surf, dark, ip[-1], max(1, base_w // 4))   # the curling tip
+    pygame.draw.circle(surf, dark, ip[-1], max(1, int(base_w * (0.1 + taper * 0.4))))
 
 
 def _carcosa_one_rift(surf, px, py, pr, op, t, seed, spread_ang=0.0,
@@ -1631,36 +1634,42 @@ def _carcosa_portal_hands(surf, w, h, cx, cy, spread, surge, t):
 
 
 def _carcosa_wound(surf, cx, y, wd, t, inten):
-    """The TEAR at ground zero -- a torn horizontal gash bleeding red-gold light,
-    the source the column pours out of (replaces the old floating red dot)."""
+    """The TEAR at ground zero -- a torn horizontal gash blazing red-gold, the
+    source the column pours out of (replaces the old floating red dot). It
+    pulses, a furnace at the foot of the column."""
     wd = max(6, int(wd))
-    ht = max(4, int(wd * 0.26))
-    _yk_radial(surf, cx, y, int(wd * 1.1), (150, 40, 24), int(70 * inten), add=False)
-    _yk_radial(surf, cx, y, int(wd * 0.55), _YK_HOT, int(95 * inten), add=False)
-    pygame.draw.ellipse(surf, (7, 4, 6), (cx - wd, y - ht, wd * 2, ht * 2))
-    pygame.draw.ellipse(surf, (214, 152, 60),
-                        (cx - wd, y - ht, wd * 2, ht * 2), max(1, int(2 * inten)))
-    for k in range(6):                              # gold fissures forking out
-        a = (k / 6.0) * math.tau + 0.3
-        pygame.draw.line(surf, (150, 110, 44), (cx, y),
-                         (int(cx + math.cos(a) * wd * (1.2 + 0.6 * inten)),
-                          int(y + math.sin(a) * wd * 0.5)), 1)
+    ht = max(4, int(wd * 0.30))
+    pulse = 0.82 + 0.18 * math.sin(t * 5.0)
+    _yk_radial(surf, cx, y, int(wd * 1.6 * pulse), (160, 46, 26),
+               int(95 * inten), add=False)
+    _yk_radial(surf, cx, y, int(wd * 0.85 * pulse), (210, 90, 40),
+               int(110 * inten), add=False)
+    _yk_radial(surf, cx, y, int(wd * 0.45), _YK_HOT, int(130 * inten), add=False)
+    pygame.draw.ellipse(surf, (8, 4, 6), (cx - wd, y - ht, wd * 2, ht * 2))
+    pygame.draw.ellipse(surf, (224, 160, 64),
+                        (cx - wd, y - ht, wd * 2, ht * 2), max(1, int(2 + 2 * inten)))
+    for k in range(7):                              # gold fissures forking out
+        a = (k / 7.0) * math.tau + 0.3
+        pygame.draw.line(surf, (160, 116, 46), (cx, y),
+                         (int(cx + math.cos(a) * wd * (1.3 + 0.7 * inten)),
+                          int(y + math.sin(a) * wd * 0.55)), 1)
 
 
 def _carcosa_fg_tentacles(surf, w, h, t, grow):
-    """Huge, near-black FOREGROUND tentacles sweeping in from the bottom corners
-    -- out of focus, they give the catastrophe parallax and scale. `grow` (the
-    surge) drives them lashing further across the frame."""
+    """Huge, near-black FOREGROUND tentacles sweeping in from the bottom edges
+    -- out of focus, they give the catastrophe parallax and scale. `grow` drives
+    them reaching further up across the frame."""
     if grow <= 0.02:
         return
     g = max(0.0, min(1.0, grow))
-    fg = [((-0.05, 1.08), -math.pi * 0.36, 1),     # bottom-left, sweeping up-right
-          ((1.05, 1.05), -math.pi * 0.66, 7)]      # bottom-right, sweeping up-left
-    for (fx, fy), ang, seed in fg:
+    fg = [((-0.02, 1.00), -math.pi * 0.40, 1, 1.15),    # bottom-left, up-right
+          ((1.02, 0.98), -math.pi * 0.62, 7, 1.05),     # bottom-right, up-left
+          ((0.50, 1.06), -math.pi * 0.52, 13, 0.85)]    # bottom-centre, up
+    for (fx, fy), ang, seed, scl in fg:
         _carcosa_tentacle(surf, int(fx * w), int(fy * h), ang,
-                          h * (0.55 + 0.45 * g), t, seed, wobble=0.7,
-                          base_w=int(34 * (0.6 + 0.4 * g)),
-                          dark=(4, 4, 6), gold=(40, 33, 16))
+                          h * (0.55 + 0.45 * g) * scl, t, seed, wobble=0.5,
+                          base_w=int(70 * scl * (0.6 + 0.4 * g)), taper=0.34,
+                          dark=(3, 3, 5), gold=(48, 39, 18))
 
 
 def draw_carcosa(surf, t, mode="spread"):
@@ -1685,7 +1694,7 @@ def draw_carcosa(surf, t, mode="spread"):
     capg = eo((t - 0.45) / 1.9)                   # the swarm billows
     spread = eo((t - 1.1) / 2.4)                  # breach + tentacles widen
     surge = eo((t - 4.3) / 1.9)                   # the climactic lurch
-    endflash = max(0.0, (t - 6.55) / 0.45)        # the final whiteout cut
+    endflash = max(0.0, (t - 6.6) / 0.40)         # the final whiteout cut
     wave = max(0.0, min(1.0, (t - 0.30) / 2.4))   # gold wash over the town
     flick = 0.92 + 0.06 * math.sin(t * 9.0)
     shake = (max(0.0, 1.0 - t / 0.85)             # the initial jolt...
@@ -1723,7 +1732,7 @@ def draw_carcosa(surf, t, mode="spread"):
 
     # THE WOUND at ground zero -- the torn gash the column pours out of.
     if spread > 0.01:
-        _carcosa_wound(scene, kx, gz_y, 18 + 40 * spread, t,
+        _carcosa_wound(scene, kx, gz_y, 24 + 52 * spread, t,
                        min(1.0, spread + 0.4 * surge))
 
     # Detonation fireball + an expanding shockwave ring.
@@ -1776,16 +1785,25 @@ def draw_carcosa(surf, t, mode="spread"):
             ang = math.pi + frac * math.pi + (_frand(i * 31 + 3) - 0.5) * 0.22
             _carcosa_branch(scene, kx, cap_y, ang, capR * 0.55, 4, capg, t,
                             i * 17 + 1, masks, kx, cap_y)
+        # billowing LOBES so the swarm BOILS like smoke (dense cores, wispy
+        # edges) instead of an even scatter of polka-dot faces.
+        nlobe = 7
+        lobes = []
+        for L in range(nlobe):
+            u = (L + 0.5) / nlobe
+            dome = 1.0 - (2 * u - 1) ** 2
+            lcx = kx + (u - 0.5) * capR * 1.7
+            lcy = cap_y - capR * (0.10 + 0.34 * dome) + math.sin(t * 0.6 + L) * 5
+            lobes.append((lcx, lcy, 0.55 + 0.45 * _frand(L * 3 + 1)))
         nm = 150                                  # a dense swarm of LITTLE masks
         for i in range(nm):
-            u = (i * 0.618034) % 1.0
-            ang = u * math.tau
-            rr2 = _frand(i * 9 + 4) ** 0.6
-            lx = kx + math.cos(ang) * rr2 * capR * 0.94 \
-                + (_frand(i * 9 + 1) - 0.5) * capR * 0.10
-            ly = (cap_y + math.sin(ang) * rr2 * capR * 0.52 - capR * 0.18
-                  + math.sin(t * 0.7 + i) * 3)
-            mr = int(capR * (0.022 + 0.05 * _frand(i * 9 + 5) ** 2))  # skewed small
+            lcx, lcy, scl = lobes[i % nlobe]
+            a = _frand(i * 9 + 6) * math.tau
+            rr2 = _frand(i * 9 + 4) ** 0.7        # denser toward each lobe's core
+            lx = lcx + math.cos(a) * rr2 * capR * 0.40 * scl
+            ly = (lcy + math.sin(a) * rr2 * capR * 0.30 * scl
+                  + math.sin(t * 0.8 + i) * 2)
+            mr = int(capR * (0.02 + 0.05 * _frand(i * 9 + 5) ** 2) * (0.7 + 0.5 * scl))
             if mr >= 3:
                 masks.append((lx, ly, mr, i * 7 + 3))
 
@@ -1824,15 +1842,16 @@ def draw_carcosa(surf, t, mode="spread"):
     # Compose: a gentle zoom-IN at the surge sells the lurch toward the camera.
     surf.fill((0, 0, 0))
     if surge > 0.01:
-        z = 1.0 + 0.09 * surge
+        z = 1.0 + 0.13 * surge
         zw, zh = int(w * z), int(h * z)
         surf.blit(pygame.transform.smoothscale(scene, (zw, zh)),
                   (shx - (zw - w) // 2, shy - (zh - h) // 2))
     else:
         surf.blit(scene, (shx, shy))
 
-    # FOREGROUND tentacles sweep in for parallax/scale (true foreground plane).
-    _carcosa_fg_tentacles(surf, w, h, t, surge)
+    # FOREGROUND tentacles sweep in for parallax/scale (true foreground plane);
+    # present through the bloom, lashing further at the surge.
+    _carcosa_fg_tentacles(surf, w, h, t, max(spread * 0.7, surge))
 
     if det > 0.01:                                 # the detonation flash
         fl = pygame.Surface((w, h), pygame.SRCALPHA)
@@ -1840,6 +1859,6 @@ def draw_carcosa(surf, t, mode="spread"):
         surf.blit(fl, (0, 0))
     if endflash > 0.01:                            # the final whiteout cut
         fl = pygame.Surface((w, h), pygame.SRCALPHA)
-        fl.fill((255, 248, 230, int(255 * min(1.0, endflash))))
+        fl.fill((255, 248, 230, int(255 * min(1.0, endflash * 1.3))))
         surf.blit(fl, (0, 0))
     _carcosa_post(surf, t)
