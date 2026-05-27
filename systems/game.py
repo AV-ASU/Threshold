@@ -1686,8 +1686,10 @@ class Game:
                 dc.set_volume(min(0.7, yt / 2.0))             # drone swells
             else:
                 dc.set_volume(max(0.0, 0.7 * (1 - (yt - 2.7) / 0.3)))  # ...dead silence
-            if yt > 1.5 and "grind" not in cues:
-                cues.add("grind"); self.audio.play("static", 0.5)
+            if yt > 1.55 and "shatter" not in cues:       # the axe-blow lands
+                cues.add("shatter")
+                self.audio.play("hit", 0.7)
+                self.audio.play("static", 0.4)
         else:
             bt = yt - RITE_YANK_DUR
             if "boom" not in cues:                            # the cut
