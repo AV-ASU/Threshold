@@ -1557,29 +1557,31 @@ def draw_mask_yank(surf, t):
     _carcosa_post(surf, t)
 
 
-def _carcosa_claw(surf, px, py, pr, t, seed, ha, reach=1.0):
-    """A HAND of the taken clawing out from (px, py), writhing as it reaches.
-    `ha` aims the arm; `pr` sets its scale."""
-    pr = max(2, int(pr))
-    px, py = int(px), int(py)
-    ha = ha + math.sin(t * 2.0 + seed) * 0.4
-    wl = pr * 2.3 * reach
-    hx, hy = px + math.cos(ha) * wl, py + math.sin(ha) * wl
-    aw = max(2, pr // 2)
-    pygame.draw.line(surf, (62, 48, 22), (px, py), (int(hx), int(hy)), aw + 2)
-    pygame.draw.line(surf, (8, 7, 10), (px, py), (int(hx), int(hy)), aw)
-    for f in range(4):
-        fa = ha + (f - 1.5) * 0.34 + math.sin(t * 3 + seed + f) * 0.06
-        tx, ty = hx + math.cos(fa) * pr * 1.6, hy + math.sin(fa) * pr * 1.6
-        pygame.draw.line(surf, (8, 7, 10), (int(hx), int(hy)),
-                         (int(tx), int(ty)), max(1, aw // 2))
+def _carcosa_tentacle(surf, px, py, ang, length, t, seed, wobble=1.0):
+    """A writhing BLACK-GOLD tendril from (px, py): a dark tapering body with a
+    gold edge, curling and lashing as it reaches out of a rift."""
+    n = 8
+    seg = max(2.0, length / n)
+    x, y, a = float(px), float(py), ang
+    pts = [(x, y)]
+    for i in range(n):
+        a += math.sin(t * 2.4 + seed + i * 0.7) * 0.22 * wobble * (0.3 + i / n)
+        x += math.cos(a) * seg
+        y += math.sin(a) * seg
+        pts.append((x, y))
+    ip = [(int(a_), int(b_)) for a_, b_ in pts]
+    for i in range(n):
+        wdt = max(1, int((n - i) / n * 8))
+        pygame.draw.line(surf, (150, 120, 50), ip[i], ip[i + 1], wdt + 2)  # gold edge
+        pygame.draw.line(surf, (9, 8, 11), ip[i], ip[i + 1], wdt)          # black core
+    pygame.draw.circle(surf, (9, 8, 11), ip[-1], 2)                         # the tip
 
 
-def _carcosa_one_rift(surf, px, py, pr, op, t, seed, reach=1.0,
-                      ha=None, hand=True):
-    """One torn rift: the gold strike that split it, a dark tear with a hot
-    red rim, and (optionally) a HAND of the taken clawing through, writhing.
-    `ha` aims the reaching arm; default is downward/outward into the world."""
+def _carcosa_one_rift(surf, px, py, pr, op, t, seed, spread_ang=0.0,
+                      ntent=5, tent=True):
+    """One torn rift: the gold strike that split it, a dark tear with a hot red
+    rim, and (optionally) a fan of BLACK-GOLD TENTACLES lashing out, aimed along
+    `spread_ang` (the direction into the world)."""
     pr = int(pr)
     if pr < 4 or op <= 0.03:
         return
@@ -1591,16 +1593,18 @@ def _carcosa_one_rift(surf, px, py, pr, op, t, seed, reach=1.0,
     pygame.draw.ellipse(surf, (140, 36, 26),
                         (px - pr, int(py - pr * 1.3), pr * 2, int(pr * 2.6)),
                         max(1, int(2 * op)))
-    if not hand:
+    if not tent:
         return
-    base = math.pi / 2 if ha is None else ha
-    _carcosa_claw(surf, px, py, pr * (0.7 + 0.4 * op) * reach, t, seed, base)
+    for k in range(ntent):
+        a = spread_ang + (k - (ntent - 1) / 2.0) * 0.42
+        _carcosa_tentacle(surf, px, py, a, pr * (2.2 + 1.4 * op), t,
+                          seed + k * 3)
 
 
 def _carcosa_portal_hands(surf, w, h, cx, cy, spread, t):
-    """A few deliberate rifts FLANK the King -- a gold strike splits each, then
-    a HAND of the taken claws through, reaching toward the world. Placed to the
-    sides (never over His face) so they frame Him rather than clutter."""
+    """A few deliberate rifts tear open across the dark -- a gold strike splits
+    each, then a fan of BLACK-GOLD TENTACLES lashes through, reaching into the
+    world. Placed symmetrically down each flank so they frame the blast."""
     # symmetric pairs down each flank: (x-offset frac of w, y-offset frac of h)
     slots = [(-0.40, 0.02), (0.40, 0.02),
              (-0.34, 0.30), (0.34, 0.30),
@@ -1612,9 +1616,9 @@ def _carcosa_portal_hands(surf, w, h, cx, cy, spread, t):
         px = cx + fx * w
         py = cy + fy * h
         pr = (34 + 20 * _frand(i * 7 + 2)) * op       # larger, clearer rifts
-        # the hand reaches inward, toward the centre (toward Him / the player)
-        ha = (math.pi if fx > 0 else 0.0) + (0.4 if fy > 0 else -0.4)
-        _carcosa_one_rift(surf, px, py, pr, op, t, i * 7, reach=1.3, ha=ha)
+        # the tentacles lash inward, toward the centre (toward the player)
+        sa = (math.pi if fx > 0 else 0.0) + (0.4 if fy > 0 else -0.4)
+        _carcosa_one_rift(surf, px, py, pr, op, t, i * 7, spread_ang=sa)
 
 
 def draw_carcosa(surf, t, mode="spread"):
@@ -1709,30 +1713,33 @@ def draw_carcosa(surf, t, mode="spread"):
                 masks.append((kx + (j - 2) * col_w * 0.5 + math.sin(t + j) * 7,
                               fy, 7 + int(7 * _frand(j * 3)), j * 5 + 2))
 
-    # THE CAP: billowing cloud-lobes (lit from below by the fireball) +
-    # branching tendrils + the taken.
+    # THE CAP: no longer one dark mass -- it is a SWARM of the taken's little
+    # masks, billowing into a dome, held up by dark branching tendrils.
     if capg > 0.02:
-        nlobe = 11                                # dark cloud mass, domed
-        for i in range(nlobe):
-            u = i / (nlobe - 1)
-            dome = 1.0 - (2 * u - 1) ** 2
-            lx = kx + (u - 0.5) * capR * 2.1
-            ly = cap_y - dome * capR * 0.48 + math.sin(t * 0.7 + i) * 4
-            lr = int(capR * (0.30 + 0.15 * _frand(i * 5)) * (0.55 + 0.45 * dome))
-            if lr > 3:
-                pygame.draw.circle(scene, (8, 7, 10), (int(lx), int(ly)), lr)
-                pygame.draw.circle(scene, (60, 48, 22),    # faint rim -> 3D roll
-                                   (int(lx), int(ly - lr * 0.16)), lr, 1)
-        ntr = 16                                  # tendrils over the dome + brim
+        # a faint dark shadow grounds the swarm against the gold backdrop
+        dome_bg = pygame.Surface((w, h), pygame.SRCALPHA)
+        pygame.draw.ellipse(dome_bg, (6, 5, 9, int(110 * capg)),
+                            (int(kx - capR * 1.1), int(cap_y - capR * 0.6),
+                             int(capR * 2.2), int(capR * 1.1)))
+        scene.blit(dome_bg, (0, 0))
+        ntr = 8                                   # a few dark tendrils, holding it
         for i in range(ntr):
             frac = (i * 0.618034) % 1.0           # golden -> even fill, no pile
             ang = math.pi + frac * math.pi + (_frand(i * 31 + 3) - 0.5) * 0.22
-            _carcosa_branch(scene, kx, cap_y, ang, capR * 0.60, 5, capg, t,
+            _carcosa_branch(scene, kx, cap_y, ang, capR * 0.50, 4, capg, t,
                             i * 17 + 1, masks, kx, cap_y)
-        for s in (-1, 1):                         # the brim curling down
-            _carcosa_branch(scene, kx + s * int(capR * 0.95), cap_y + 4,
-                            s * 0.6, capR * 0.5, 4, capg, t, 400 + s,
-                            masks, kx, cap_y)
+        nm = 72                                   # the SWARM filling the dome
+        for i in range(nm):
+            u = (i * 0.618034) % 1.0
+            dome = 1.0 - (2 * u - 1) ** 2
+            v = _frand(i * 9 + 2)
+            lx = kx + (u - 0.5) * capR * 2.0 + (_frand(i * 9 + 1) - 0.5) * capR * 0.28
+            ly = (cap_y - dome * capR * 0.52 * (0.2 + 0.8 * v)
+                  + (_frand(i * 9 + 3) - 0.5) * capR * 0.24
+                  + math.sin(t * 0.7 + i) * 3)
+            mr = int(capR * (0.06 + 0.08 * _frand(i * 9 + 4)) * (0.6 + 0.4 * dome))
+            if mr >= 3:
+                masks.append((lx, ly, mr, i * 7 + 3))
 
     # The taken surface in the TOWN too -- it isn't destroyed, it's claimed.
     if wave > 0.5:
@@ -1742,7 +1749,7 @@ def draw_carcosa(surf, t, mode="spread"):
                           7 + int(5 * _frand(i * 7 + 3)), i * 11 + 50))
 
     # The taken, in His own mask -- big-to-small so they layer with depth.
-    for (mx, my, mr, seed) in sorted(masks[:48], key=lambda m: -m[2]):
+    for (mx, my, mr, seed) in sorted(masks[:140], key=lambda m: -m[2]):
         vis = min(1.0, capg * 1.4 + 0.3) * (0.62 + 0.38
                                             * (0.5 + 0.5 * math.sin(t * 1.2 + seed)))
         _yk_mask(scene, mx, my, mr, min(1.0, vis), _CARCOSA_FACEKINDS[seed % 4])
