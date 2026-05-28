@@ -650,6 +650,16 @@ def basement_on_enter(game, scene):
     for deco in scene.decorations:
         if deco.kind == "chest":
             deco.kwargs["open"] = game.save.flag("woodshed_key_taken")
+    # Lodge-candle callback: once the player has seen the rendering at
+    # the Works, the candles in the Lodge mean something they didn't
+    # before. One-shot, fires the next descent to the cellar after the
+    # vats beat (non-canonical evidence -- doesn't move the King-gate).
+    if (game.save.flag("evidence_works_vats_seen")
+            and not game.save.flag("evidence_lodge_candle_callback")):
+        _evidence(game, "lodge_candle_callback", [
+            "[c=dim]The candle on the workbench. You know now what it "
+            "is made from. You know now what the lodge smells of.[/c]",
+        ])
 
 
 def basement_interact(game):

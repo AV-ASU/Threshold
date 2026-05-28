@@ -167,6 +167,25 @@ def build_works_vats():
                           waypoints=[(9 * TILE + 16, 6 * TILE + 16),
                                      (9 * TILE + 16, 2 * TILE + 16)]))
     _ambient(sc, "low_pulse", 0.14, 6.0, 10.0)
+
+    def _vats_on_enter(game, scene):
+        # First entry: surface what the work actually is. This is the
+        # body-horror centerpiece -- everywhere else in Brimley implies
+        # it; here it's named. Gated by the evidence flag (non-canonical,
+        # so it doesn't move the King-gate).
+        if game.save.flag("evidence_works_vats_seen"):
+            return
+        _evidence(game, "works_vats_seen", [
+            "[c=dim]The smell. It is the smell that gets you first. "
+            "Long sweet, then sour underneath. Like meat left in a "
+            "covered pot.[/c]",
+            "[c=dim]Something pale-yellow runs down the inside of each "
+            "vat in slow rope. The cultists work the paddles without "
+            "looking at what they're stirring.[/c]",
+            "[c=dim]This is where the candles come from. Every one in "
+            "Brimley.[/c]",
+        ])
+    sc.on_enter_fn = _vats_on_enter
     return sc
 
 
@@ -225,9 +244,19 @@ def build_works_sorting():
     def _interact(game):
         tx, ty = sc._table_pos
         if (abs(game.player.x - tx) < 40 and abs(game.player.y - ty) < 40):
-            game.show_notice(
-                "Coats. Boots. A child's shoe. All folded, all catalogued.",
-                duration=3.5)
+            if not game.save.flag("sorting_recognized"):
+                game.save.set_flag("sorting_recognized", True)
+                game.dialog.show([
+                    "[c=dim]Coats. Boots. A child's shoe. All folded, "
+                    "all catalogued.[/c]",
+                    "[c=dim]Some of the coats you have seen before. In "
+                    "the Lodge halls. In the polaroids on the kitchen "
+                    "wall.[/c]",
+                ], speaker="", voice="blip_soft", portrait="narrator")
+            else:
+                game.show_notice(
+                    "Coats. Boots. A child's shoe. All folded, all "
+                    "catalogued.", duration=3.5)
     sc.on_interact_fn = _interact
     return sc
 
@@ -342,10 +371,13 @@ def build_works_scriptorium():
             game.player.inventory.add("playscript", 1)
             game.audio.play("pickup_rare", 0.7)
             game.audio.play("low_pulse", 0.45)
-            game.show_notice(
-                "Among the endless copies, one book is bound and whole -- "
-                "the Play itself, a mask pressed into its yellow cover. You "
-                "take it.", duration=4.0)
+            game.dialog.show([
+                "[c=dim]Among the endless copies, one book is bound and "
+                "whole -- the Play itself, a mask pressed into its "
+                "yellow cover. You take it.[/c]",
+                "[c=dim]The kneeling scribe's robe is dark to the knee. "
+                "It is not water.[/c]",
+            ], speaker="", voice="blip_soft", portrait="narrator")
             return
         game.show_notice(
             "The Sign, copied over and over across every surface -- a "
