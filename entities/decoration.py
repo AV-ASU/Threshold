@@ -83,7 +83,7 @@ def _light_pool(surf, cx, cy, radius, color=(255, 170, 70), peak=70):
 _GROUNDED_DECOS = frozenset((
     "well", "creepy_tree", "pickup_truck", "player_car", "cauldron",
     "gas_pump", "payphone", "pedestal", "pillar", "wheelbarrow",
-    "headstone", "brazier",
+    "headstone", "brazier", "town_sign", "flagpole",
 ))
 
 # Kinds that must NOT use the generic upscale path (they draw absolute
@@ -95,7 +95,7 @@ _NO_SCALE_DECOS = frozenset((
     "flock", "leaves", "well", "steeple", "pickup_truck", "player_car",
     "cauldron", "watching_eye", "watching_wound", "passing_silhouette",
     "gas_pump", "payphone", "terminal", "computer", "mirror", "rug",
-    "creepy_tree", "crow", "flock",
+    "creepy_tree", "crow", "flock", "town_sign", "flagpole",
 ))
 
 
@@ -795,8 +795,6 @@ class Decoration:
         The clump's exact shape varies by `seed` so a meadow of these
         doesn't read as a stamped pattern."""
         rng = random.Random(self.seed)
-        # Two colour bands so the clump has depth (back stalks slightly
-        # darker / cooler than front).
         col_back = (38, 78, 46)
         col_front = (62, 118, 70)
         n = rng.randint(5, 8)
@@ -810,6 +808,70 @@ class Decoration:
             pygame.draw.line(surf, stalk_col,
                              (x + ox, y + 4),
                              (x + ox + tip_sway, y + 4 - height), 1)
+
+    def _draw_town_sign(self, surf, x, y):
+        """A wooden signpost with two crossbeams reading the town's
+        name. Weathered, the paint mostly gone. The text is the
+        decoration's `text` kwarg ('BRIMLEY' by default). Two posts
+        with the boards nailed across them, edge highlights so the
+        sign reads as raised."""
+        text = self.kwargs.get("text", "BRIMLEY")
+        post_col = (62, 44, 28)
+        post_lit = (88, 64, 40)
+        board_col = (96, 70, 44)
+        board_lit = (124, 92, 58)
+        board_dark = (60, 42, 22)
+        # Two posts, 4px wide, 26px tall
+        for px in (x - 10, x + 10):
+            pygame.draw.rect(surf, post_col, (px - 2, y - 18, 4, 26))
+            pygame.draw.line(surf, post_lit, (px - 2, y - 18),
+                             (px - 2, y + 8), 1)
+        # Board: 28px wide, 12px tall, centred at (x, y-10)
+        bw, bh = 28, 14
+        bx, by = x - bw // 2, y - 18
+        pygame.draw.rect(surf, board_col, (bx, by, bw, bh))
+        pygame.draw.rect(surf, board_dark, (bx, by, bw, bh), 1)
+        pygame.draw.line(surf, board_lit, (bx + 1, by + 1),
+                         (bx + bw - 1, by + 1), 1)
+        # Text rendered tiny.
+        font = pygame.font.SysFont(None, 12, bold=True)
+        txt = font.render(text, True, (30, 20, 10))
+        txt_x = bx + (bw - txt.get_width()) // 2
+        txt_y = by + (bh - txt.get_height()) // 2
+        surf.blit(txt, (txt_x, txt_y))
+
+    def _draw_flagpole(self, surf, x, y):
+        """A weathered metal flagpole with a tattered flag. The flag
+        is half-mast; the rope is frayed. Used in front of the
+        schoolhouse. Sway driven by self.t so the flag flutters."""
+        pole_col = (130, 132, 138)
+        pole_lit = (172, 174, 180)
+        # Pole: 28px tall, 2px wide
+        ph = 28
+        pygame.draw.line(surf, pole_col, (x, y + 4), (x, y - ph), 2)
+        pygame.draw.line(surf, pole_lit, (x - 1, y + 4), (x - 1, y - ph), 1)
+        # Knob at top
+        pygame.draw.circle(surf, (180, 180, 188), (x, y - ph), 2)
+        # Half-mast flag -- a frayed strip 8x12. The trailing edge
+        # ripples with self.t.
+        sway = math.sin(self.t * 2.2 + self.seed * 0.1) * 1.4
+        fy = y - ph + 8
+        # Faded dark cloth (former colour, now near-black).
+        cloth = (66, 50, 50)
+        cloth_dark = (40, 28, 28)
+        pts = [
+            (x + 1, fy),
+            (x + 12 + sway, fy + 1),
+            (x + 11 + sway, fy + 10),
+            (x + 1, fy + 9),
+        ]
+        pygame.draw.polygon(surf, cloth, pts)
+        pygame.draw.line(surf, cloth_dark, (x + 1, fy), (x + 11 + sway, fy + 9), 1)
+        # Frayed trailing edge
+        for i in range(3):
+            tx = int(x + 10 + sway - i)
+            ty = fy + 2 + i * 3
+            pygame.draw.line(surf, cloth_dark, (tx, ty), (tx + 3, ty + 1), 1)
 
     def _draw_mote(self, surf, x, y):
         dx = math.sin(self.t * 0.4 + self.seed) * 8

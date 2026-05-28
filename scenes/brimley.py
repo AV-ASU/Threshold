@@ -275,6 +275,48 @@ def build_brimley():
                 tx = edge_tx + step * dd
                 if objects_l[ty][tx] == "." and not _border_protected(tx, ty):
                     objects_l[ty][tx] = "T"
+
+    # Forest LOBES -- the rectangle treeline pushed inward at a few
+    # places so the playable space isn't a clean box. Each lobe is an
+    # organic blob of trees nudged some distance off the edge. The
+    # blob is elliptical with hash noise on the edge so the inner
+    # line reads ragged rather than ruled. Skips buildings, exit
+    # tiles, the river, and the corn cover.
+    lobes = [
+        # (cx, cy, rx, ry, seed) -- centre, x/y radius, RNG seed.
+        # Eastern lobe pushing in between the well and the bridge --
+        # narrows the corridor coming in from the Lodge.
+        (88, 32, 6, 5, 11),
+        # Southeast lobe between the kid's house and the barn --
+        # breaks the long eastern bank up.
+        (95, 72, 5, 8, 19),
+        # Western lobe pushing in below the church -- creates a
+        # natural clearing the player has to step around.
+        (8,  28, 5, 6, 23),
+        # Western lobe between the sheriff and the farm.
+        (12, 78, 4, 5, 29),
+        # Northern lobe between the cornfield-maze exit and the
+        # river crossing.
+        (44, 6,  6, 4, 31),
+        # Southern lobe between the cauldron clearing and the barn.
+        (60, 95, 9, 4, 37),
+    ]
+    for (lx, ly, rx, ry, seed) in lobes:
+        lr = random.Random(seed)
+        for ty in range(ly - ry - 1, ly + ry + 2):
+            for tx in range(lx - rx - 1, lx + rx + 2):
+                if not (0 <= ty < h and 0 <= tx < w):
+                    continue
+                if objects_l[ty][tx] != ".":
+                    continue
+                if _border_protected(tx, ty):
+                    continue
+                nx = (tx - lx) / float(rx + 1)
+                ny = (ty - ly) / float(ry + 1)
+                d = nx * nx + ny * ny
+                hsh = lr.random()
+                if d <= 0.55 or (d <= 1.0 and hsh < 0.55):
+                    objects_l[ty][tx] = "T"
     for tx in range(2, w - 2):                           # north + south ranks
         for edge_ty, step in ((1, 1), (h - 2, -1)):
             for dd in range(forest.randint(0, 2)):
@@ -534,37 +576,56 @@ def build_brimley():
                        dialogue_fn=_brimley_voice(pages, voice),
                        movement=movement, radius=radius))
 
-    _resident(55, 62, "Hettie", "shopkeep", [
+    # The locals anchored to their houses -- not patrolling random
+    # waypoints. Each one stands within sight of where they actually
+    # live, so the town reads as inhabited rather than as NPCs in a
+    # field. Bible §2: locals were born here; they cope by staying put.
+    # Hettie keeps the shop open. Standing right out front, sweeping
+    # a step that doesn't get dirty.
+    _resident(53, 61, "Hettie", "shopkeep", [
         "Still open. Always open. The shelves don't empty anymore. Have you noticed.",
         "No deliveries. In a while now. But we manage. We always.",
         "[c=dim]I keep the lights on. So they know. Someone's keeping them on.[/c]",
     ], movement="idle")
-    _resident(58, 44, "Old Pell", "old", [
+    # Old Pell -- on the schoolhouse step, the calendar nailed to the
+    # wall behind him. He stopped marking it.
+    _resident(63, 54, "Old Pell", "old", [
         "Cold came in early this year. Came in early last year, too.",
         "Stopped marking the calendar. The days just fold back on themselves.",
         "[c=dim]You're new. We don't get new. Nobody gets in. Nobody gets--[/c]",
-    ], voice="blip_low")
-    _resident(70, 72, "Mrs. Calder", "mom", [
+    ], voice="blip_low", movement="idle")
+    # Mrs. Calder is by the east-edge road -- the road her husband
+    # walked out on. She watches the road. She does not wave.
+    _resident(96, 8, "Mrs. Calder", "mom", [
         "My husband walked to the highway. Tuesday. To flag down help.",
         "He'll be back. I set his plate. Every night. Every night.",
         "[c=dim]Some nights I hear the door. I don't get up. Not anymore.[/c]",
     ], movement="idle")
-    _resident(37, 28, "Royce", "fisherman", [
+    # Royce -- by the river bridge, where he keeps trying to drive
+    # out and being handed back. His truck is up the road; he comes
+    # to the bridge to look at the water, then goes again.
+    _resident(29, 24, "Royce", "fisherman", [
         "Drove the river road to the county line. Two hours out. Came right back into Brimley.",
         "Tried it on foot. Same. The corn just hands you back where you started.",
         "[c=dim]You came IN. How did you come IN? ...Tell me how you came in.[/c]",
     ])
-    _resident(61, 56, "the Tisdale boy", "kid", [
+    # The Tisdale boy -- on his own front step.
+    _resident(68, 71, "the Tisdale boy", "kid", [
         "I'm not allowed past the third row. I counted to a hundred and then I counted again.",
         "There's a lady in yellow at the back of the field. She waves. You shouldn't wave back.",
         "[c=dim]Mara waved back.[/c]",
-    ], voice="blip_kid", radius=40)
-    _resident(9, 67, "Garrick", "old", [
+    ], voice="blip_kid", radius=40, movement="idle")
+    # Garrick -- the old man at the well. Town centre, watching
+    # everyone come and go. He gives you the warning about the
+    # sheriff because he sees everyone the sheriff sees.
+    _resident(91, 12, "Garrick", "old", [
         "You're asking questions. Folks who ask questions go quiet. Real quiet.",
         "The Sheriff'll come at you friendly. Don't let it talk you into staying for supper.",
         "[c=dim]Go on home, son. ...Oh. Right. None of us can.[/c]",
     ])
-    sc.add_npc(NPC(45 * TILE + 16, 38 * TILE + 16, "A woman", "mom",
+    # The newcomer -- standing on the path to the haunted_house
+    # (their house now). She is here to welcome you. She is patient.
+    sc.add_npc(NPC(8 * TILE + 16, 95 * TILE + 16, "A woman", "mom",
                    dialogue_fn=_brimley_voice([
                        "[c=dim]Hello.[/c]",
                        "[c=dim]You'll like it here. Everyone does, eventually.[/c]",
@@ -736,6 +797,52 @@ def build_brimley():
     for (cx, cy) in [(2, 22), (2, 71), (50, 2), (88, 31), (97, 60), (41, 97)]:
         sc.add_decoration(Decoration(cx * TILE + 16, cy * TILE + 16,
                                      "dead_crow" if (cx + cy) % 2 else "crow"))
+
+    # ---- Lived-in town dressing ----
+    # The "Welcome to Brimley" sign just north of the east-edge road,
+    # right beside the entry the PI drives in on. Weathered, paint
+    # mostly gone. First lived-in detail the player sees.
+    sc.add_decoration(Decoration(95 * TILE + 16, 5 * TILE + 16,
+                                 "town_sign", text="BRIMLEY"))
+    # Schoolhouse flagpole -- flag at half-mast, faded, frayed at the
+    # trailing edge. Nobody lowered it; it's been there since.
+    sc.add_decoration(Decoration(63 * TILE + 16, 55 * TILE + 16,
+                                 "flagpole"))
+    # The community noticeboard at the well -- three missing-person
+    # flyers tacked tight together with a hooded lantern above them so
+    # the cluster reads as "someone used to read these." Phantom mark
+    # below for the dread layer.
+    sc.add_decoration(Decoration(92 * TILE + 16, 14 * TILE + 16, "lantern"))
+    for (fx, fy) in [(92 * TILE + 4, 14 * TILE + 22),
+                     (92 * TILE + 16, 14 * TILE + 22),
+                     (92 * TILE + 28, 14 * TILE + 22)]:
+        sc.add_decoration(Decoration(fx, fy, "missing_flyer"))
+
+    # ---- Cult-taken territory: the south-west farmhouse ----
+    # Bible §2: newcomers ARE the cult, and one or two contiguous lots
+    # would be "their" houses. The haunted_house already reads as the
+    # creep house; mark it as the newcomers' explicit territory. Yellow
+    # sigils on the south wall, candles in the front yard (lit nightly
+    # by no one anyone has met), brazier at the path -- the rest of
+    # Brimley has no such "kept" attention paid to it.
+    farm_door_x = farm_door * TILE + 16
+    # Two yellow sigils in the FRONT YARD flanking the approach to the
+    # door -- painted on the ground (or planted on stakes; whichever
+    # the player wants to read). Drawn beneath the door tile so the
+    # wall mass doesn't clip them.
+    sc.add_decoration(Decoration((farm_door - 2) * TILE + 16,
+                                 (farm_bot + 2) * TILE + 16, "yellow_sign"))
+    sc.add_decoration(Decoration((farm_door + 2) * TILE + 16,
+                                 (farm_bot + 2) * TILE + 16, "yellow_sign"))
+    # Front-yard candles -- lit, kept burning. The newcomers tend them.
+    for (cx, cy) in [(farm_door - 1, farm_bot + 3),
+                     (farm_door,       farm_bot + 4),
+                     (farm_door + 1, farm_bot + 3)]:
+        sc.add_decoration(Decoration(cx * TILE + 16, cy * TILE + 16,
+                                     "candle"))
+    # A brazier on the approach path -- the newcomers light the way in.
+    sc.add_decoration(Decoration(farm_door_x, (farm_bot + 5) * TILE + 16,
+                                 "brazier"))
 
     # ---- Mist + marsh wisps ----
     # Low fog clinging to the water and pooling over the marsh, and cold
