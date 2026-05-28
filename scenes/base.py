@@ -585,13 +585,42 @@ def draw_object(surf, ch, rx, ry, tx, ty):
         pygame.draw.circle(surf, (40, 70, 36), (rx + 8, ry + 26), 2)
         pygame.draw.circle(surf, (40, 70, 36), (rx + 22, ry + 26), 2)
     elif kind == "bridge":
-        pygame.draw.rect(surf, (96, 70, 40), (rx, ry, TILE, TILE))
-        pygame.draw.line(surf, (50, 32, 18), (rx, ry + 6),
-                         (rx + TILE, ry + 6), 1)
-        pygame.draw.line(surf, (50, 32, 18), (rx, ry + 16),
-                         (rx + TILE, ry + 16), 1)
-        pygame.draw.line(surf, (50, 32, 18), (rx, ry + 26),
-                         (rx + TILE, ry + 26), 1)
+        # Weathered wood plank deck. Per-tile seed makes plank widths
+        # and knot positions vary so the bridge doesn't read as a
+        # repeated stamp.
+        seed = (tx * 73856093) ^ (ty * 19349663)
+        rng = random.Random(seed)
+        base = (96, 70, 40)
+        lit = (124, 92, 58)
+        dark = (60, 42, 22)
+        grain = (50, 32, 18)
+        # Base
+        pygame.draw.rect(surf, base, (rx, ry, TILE, TILE))
+        # Plank divisions running with the flow of the river (N-S
+        # lines) so the player walks ACROSS the planks. 3-4 planks
+        # per tile, widths jittered.
+        x = 0
+        while x < TILE - 1:
+            step = rng.randint(7, 10)
+            x += step
+            if x < TILE - 1:
+                pygame.draw.line(surf, grain,
+                                 (rx + x, ry), (rx + x, ry + TILE - 1), 1)
+        # Knot blobs -- 0-2 per tile.
+        for _ in range(rng.randint(0, 2)):
+            kx = rx + rng.randint(3, TILE - 4)
+            ky = ry + rng.randint(3, TILE - 4)
+            pygame.draw.circle(surf, dark, (kx, ky), 2)
+            pygame.draw.circle(surf, grain, (kx, ky), 1)
+        # Lit top edge + shadowed bottom edge so each plank tile reads
+        # as a slightly raised deck. Lit on the north (top) row only
+        # if the tile north of us isn't bridge; shadowed on the south
+        # row similarly. Cheap proxy: always draw a thin top highlight
+        # and bottom shadow so adjacent tiles seam together.
+        pygame.draw.line(surf, lit, (rx, ry), (rx + TILE - 1, ry), 1)
+        pygame.draw.line(surf, (40, 26, 14),
+                         (rx, ry + TILE - 1),
+                         (rx + TILE - 1, ry + TILE - 1), 1)
     elif kind == "roof":
         # Drawn by the unified gabled-roof pass (_draw_scene_roofs), not
         # per tile -- one overhanging roof per building instead of a flat
@@ -1025,7 +1054,11 @@ def _draw_gable_roof(surf, region, cam_x, cam_y):
     L = int((minx - 1) * TILE - cam_x - E)
     R = int((maxx + 2) * TILE - cam_x + E)
     T = int((miny - 1) * TILE - cam_y - E)
-    Bf = int((maxy + 1) * TILE - cam_y + 5)          # front eave lip, door stays clear
+    # Stop the front (south) edge of the roof at the TOP of the
+    # south-wall row, plus 8 px for a shallow eave lip. Previously
+    # Bf extended a full row past maxy, which buried the door tile
+    # under the eave and made doors invisible on most buildings.
+    Bf = int(maxy * TILE - cam_y + 8)
     Wd, Hd = R - L, Bf - T
     if Wd < 8 or Hd < 8:
         return
