@@ -146,9 +146,6 @@ def build_forest_path():
     sc._fp_PATH_ROW = PATH_ROW
     sc._fp_SECRET_COL = SECRET_COL
 
-    # Loot crate against an interior corn stalk -- chop with the
-    # axe to drop the item from CRATE_LOOT for this coord.
-    sc.objects[5][8] = "K"
     # Two-wide gap north into the deeper cornfield. The break in
     # the corn wall reads as a footpath worn through the rows, not
     # a door.

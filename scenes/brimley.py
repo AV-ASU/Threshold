@@ -518,11 +518,6 @@ def build_brimley():
     # 'M' tile. Walking south long enough through cornfield_maze ->
     # forest_path -> here brings you back to Brimley north.
     objects_list[h - 1][48] = "M"
-    # Hand-authored loot crates. Both inside the playable area; the
-    # west-bank crate sits near the cauldron path, the east-bank
-    # crate sits just west of the relocated barn footprint.
-    objects_list[78][14] = "K"
-    objects_list[78][78] = "K"
     sc.objects = objects_list
     sc.add_exit("j", "void_boss", "from_brimley")
     sc.set_spawn("default", w - 2, 7)
@@ -732,8 +727,6 @@ def build_brimley():
     sc._barrow_pos = (barrow_x, barrow_y)
     # Woodshed door coords (for the locked-door interact).
     sc._shed_door_pos = (91 * TILE + 16, 16 * TILE + 16)
-    # A loot crate just west of the shed -- spare batteries inside.
-    objects_list[18][88] = "K"
     sc.add_decoration(Decoration(52 * TILE + 16, 61 * TILE + 16, "missing_flyer"))
     sc.add_decoration(Decoration(40 * TILE + 16, 27 * TILE + 16, "missing_flyer"))
     # The calendar, every day crossed off the same, nailed to the

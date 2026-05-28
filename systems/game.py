@@ -43,19 +43,6 @@ CREEPY_SCENES = {"basement", "void_boss",
                  "haunted_house", "well_bottom", "well_passage",
                  "brimley"}
 
-# Hand-authored crate loot. Keyed by (scene_key, tile_x, tile_y);
-# value is the item key dropped when the player chops the crate
-# open with the splitting axe. Crates are placed inside the
-# playable area (never on the edge -- the gateway role belongs
-# to '*' debris). Every entry here corresponds to a `K` tile in
-# that scene's object map. Saves persist a per-coord
-# `crate_broken_<scene>_<tx>_<ty>` flag so a broken crate stays
-# broken across re-entries.
-CRATE_LOOT = {
-    # No crates currently drop loot. The country_lane crate at (8, 4)
-    # still exists in geometry; breaking it now yields the "empty"
-    # message, which reads fine as a runner's abandoned stash.
-}
 
 # Outdoor decay tier. Each scene gets a small list of "this is
 # what's been added" decorations as Pursuer proximity climbs.
@@ -752,11 +739,9 @@ class Game:
                 self.scene.add_decoration(
                     Decoration(tx * TILE + 16, ty * TILE + 16, kind)
                 )
-        # Persist axe chops across re-entries: any '*' debris, 'q'
-        # boarded panel, or 'K' loot crate that was chopped in a
-        # previous session has its tile opened. Crates do NOT re-
-        # drop their loot on subsequent loads -- the broken-flag
-        # gates both the tile state AND the loot spawn.
+        # Persist axe chops across re-entries: any '*' debris or 'q'
+        # boarded panel chopped in a previous session has its tile
+        # opened.
         for ty in range(self.scene.h):
             for tx in range(self.scene.w):
                 ch = self.scene.objects[ty][tx]
@@ -769,10 +754,6 @@ class Game:
                 elif ch == "q":
                     if self.save.flag(
                             f"boards_broken_{self.scene.key}_{tx}_{ty}"):
-                        self.scene.objects[ty][tx] = "."
-                elif ch == "K":
-                    if self.save.flag(
-                            f"crate_broken_{self.scene.key}_{tx}_{ty}"):
                         self.scene.objects[ty][tx] = "."
         # Round-9: dying to the Yellow King empties the world. Every
         # scene loaded after `world_emptied` is set has its NPC list
@@ -1087,11 +1068,11 @@ class Game:
 
     # ---- Combat ----
     def _chop_tile(self, tx, ty):
-        """Break a single axe-eligible tile -- debris ('*'), boards
-        ('q'), or a loot crate ('K') -- and persist it by per-coord save
-        flag so the gap stays open across re-entries. Returns a notice
-        string when something broke, else None. Shared by the E-interact
-        and the axe swing so both clear barricades identically."""
+        """Break a single axe-eligible tile -- debris ('*') or boards
+        ('q') -- and persist it by per-coord save flag so the gap stays
+        open across re-entries. Returns a notice string when something
+        broke, else None. Shared by the E-interact and the axe swing so
+        both clear barricades identically."""
         sc_ = self.scene
         if not (0 <= ty < sc_.h and 0 <= tx < sc_.w):
             return None
@@ -1105,22 +1086,12 @@ class Game:
             sc_.objects[ty][tx] = "."
             self.save.set_flag(f"boards_broken_{sc_.key}_{tx}_{ty}", True)
             return "The boards splinter away."
-        if ch == "K":
-            sc_.objects[ty][tx] = "."
-            self.save.set_flag(f"crate_broken_{sc_.key}_{tx}_{ty}", True)
-            loot = CRATE_LOOT.get((sc_.key, tx, ty))
-            if loot:
-                sc_.add_item(tx * TILE + 16, ty * TILE + 16, loot)
-                from systems.items import ITEM_DEFS
-                name = ITEM_DEFS.get(loot, {}).get("name", loot)
-                return f"The crate splinters open. {name}."
-            return "The crate splinters open. Empty."
         return None
 
     def player_axe_swing(self):
         """The player's only attack -- GATED on the splitting axe. With
         the axe in hand a swing arcs through the tile in front: it
-        splinters any barricade caught there (debris, boards, crate) and
+        splinters any barricade caught there (debris, boards) and
         STUNS a cultist or shadow in the arc (frozen + blind for a beat).
         The swing never kills -- it buys the seconds to break line of
         sight and reach cover. Without the axe the player has no attack."""
@@ -3443,7 +3414,7 @@ class Game:
             if math.hypot(hx - px, hy - py) < 36:
                 target = (hx, hy)
                 break
-        # 2. Axe-chop target on an adjacent tile (debris / boards / crate).
+        # 2. Axe-chop target on an adjacent tile (debris / boards).
         if target is None and self.player.inventory.has("lumber_axe"):
             for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
                 tx = int((px + dx * TILE) // TILE)

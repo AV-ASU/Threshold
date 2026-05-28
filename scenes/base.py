@@ -214,14 +214,9 @@ OBJECT_DEFS = {
     # the axe genuinely opens up the map. Pressing E adjacent with
     # the axe converts the tile to ".".
     "q": {"solid": True,  "kind": "boarded"},
-    # THRESHOLD: hand-authored loot crate. Solid until the player
-    # swings a charged lumber_axe at it; on break, drops the item
-    # registered in CRATE_LOOT for this (scene_key, tx, ty) and the
-    # tile becomes walkable. Persistence via per-coord save flag so
-    # broken crates stay broken across re-entries. Crates are
-    # ALWAYS placed inside the playable area, never on the edge --
-    # the gateway role is reserved for `*`.
-    "K": {"solid": True,  "kind": "crate"},
+    # (The 'K' loot-crate object was removed -- all crates were empty
+    # and 'K' is now solely the kid-spawn marker below. The crate draw
+    # kind in _draw_object is left in place but unreferenced.)
     # Round-12: planked footbridge tile -- non-solid, drawn over a
     # river. Used in the brimley to gap the N-S river at the bridge
     # rows.

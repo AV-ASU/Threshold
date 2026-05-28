@@ -113,10 +113,6 @@ def build_country_lane():
     # East passage (e) -- to our_house_area
     for dy in (-1, 0, 1):
         objects_l[6 + dy][W - 1] = "e"
-    # Loot crate against the south corn band -- a stash someone
-    # left for an arranged pickup that never came. Holds a
-    # diary page (per CRATE_LOOT).
-    objects_l[4][8] = "K"
     objects = ["".join(r) for r in objects_l]
     sc = Scene("country_lane", floor_rows, objects, music="outside")
     sc.add_exit("a", "brimley", "from_country_lane")
