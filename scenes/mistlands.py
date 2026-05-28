@@ -481,11 +481,28 @@ def build_mistlands():
         "Tried it on foot. Same. The corn just hands you back where you started.",
         "[c=dim]You came IN. How did you come IN? ...Tell me how you came in.[/c]",
     ])
-    _resident(61, 56, "the Tisdale boy", "kid", [
-        "School's still on. The teacher doesn't blink. I counted to a hundred.",
-        "There's a lady in yellow at the back of the field. She waves. You shouldn't wave back.",
-        "[c=dim]Mara waved back.[/c]",
-    ], voice="blip_kid", radius=40)
+    # The Tisdale boy has the same denial cycle as the other residents,
+    # plus one gated extra: once the player has read Miss's last hidden
+    # page (evidence_school_cache), he admits one more line, naming his
+    # relationship to her without naming her.
+    def _tisdale_dialogue(game, npc):
+        pages = [
+            "School's still on. The teacher doesn't blink. I counted to a hundred.",
+            "There's a lady in yellow at the back of the field. She waves. You shouldn't wave back.",
+            "[c=dim]Mara waved back.[/c]",
+        ]
+        if game.save.flag("evidence_school_cache"):
+            pages.append(
+                "[c=dim]Miss never told me she was leaving. She told me "
+                "to keep counting. So I'm counting.[/c]"
+            )
+        portrait = getattr(npc, "portrait", None) or npc.sprite_kind
+        game.dialog.show(pages, speaker=npc.name, voice="blip_kid",
+                         portrait=portrait)
+    sc.add_npc(NPC(61 * TILE + 16, 56 * TILE + 16,
+                   "the Tisdale boy", "kid",
+                   dialogue_fn=_tisdale_dialogue,
+                   movement="wander", radius=40))
     _resident(9, 67, "Garrick", "old", [
         "You're asking questions. Folks who ask questions go quiet. Real quiet.",
         "The Sheriff'll smile at you. Don't let it talk you into staying for supper.",

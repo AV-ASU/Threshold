@@ -205,6 +205,22 @@ def bedroom_interact(game):
     tx = 8 * TILE + 16
     ty = 6 * TILE + 16
     if abs(px - tx) <= 40 and abs(py - ty) <= 40:
+        # After the Dark, the case has rewritten itself. The notebook
+        # the player opens the game on is the same one that closes it.
+        if game.save.flag("hive_seen"):
+            game.dialog.show([
+                "[c=dim](Your case notebook. You re-open it. The first "
+                "page you wrote in is still there, but the hand on the "
+                "later pages has gone unsteady.)[/c]",
+                "CASE FILE -- BLAINE. Subject: located. Recovery: declined.",
+                "MARA BLAINE was not lost. She wasn't taken. She knelt. "
+                "There is no version of this where you bring her home.",
+                "Client: Walter Blaine. Notify only if you make it back "
+                "to a phone with a line on the other end.",
+                "[c=dim]You drew a single line under the last entry. "
+                "You don't remember doing it.[/c]",
+            ], speaker="", voice="blip_soft", portrait="narrator")
+            return
         game.dialog.show([
             "[c=dim](Your case notebook, open on the table where you left "
             "it.)[/c]",
@@ -520,8 +536,8 @@ def clerk_room_interact(game):
         return
     dx, dy = sc._dresser_pos
     if abs(px - dx) <= 40 and abs(py - dy) <= 40:
-        game.show_notice("His dresser. Bare -- he keeps your car keys "
-                         "downstairs, behind your tab.")
+        game.show_notice("His dresser. Bare. He doesn't live like a man "
+                         "who plans to stay -- and yet he never leaves.")
 
 
 # ---- innkeeper_basement (key: 'basement') ----

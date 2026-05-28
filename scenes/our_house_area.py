@@ -127,11 +127,27 @@ def build_our_house_area():
     ]
 
     def _outside_interact(game):
+        px, py = game.player.x, game.player.y
+        # Bloody handprint on the back door -- one of the loudest props in
+        # the yard, finally with a voice. One-shot evidence so the player
+        # gets the full read once; subsequent presses are short.
+        hx, hy = sc._handprint_pos
+        if abs(px - hx) < 48 and abs(py - hy) < 48:
+            if not game.save.flag("evidence_back_door_handprint"):
+                _evidence(game, "back_door_handprint", [
+                    "[c=dim]A handprint smeared into the back door, "
+                    "palm-out. Old, dried brown.[/c]",
+                    "[c=dim]Whoever made it was leaving, not coming "
+                    "in. Their fingers were splayed.[/c]",
+                ])
+            else:
+                game.show_notice(
+                    "The handprint. Palm-out. Someone leaving.")
+            return
         # The Clerk's pickup is visible-but-useless. Examining it turns
         # the noun into worldbuilding: he doesn't drive it because there
         # is nowhere in Brimley for him to go.
         tx, ty = 20 * TILE + 16, 12 * TILE + 16
-        px, py = game.player.x, game.player.y
         if abs(px - tx) < 56 and abs(py - ty) < 56:
             game.show_notice(
                 "The Clerk's truck. He doesn't drive it. None of them do.")
@@ -156,6 +172,15 @@ def build_our_house_area():
     sc.add_decoration(Decoration(21 * TILE + 16, 2 * TILE + 16,
                                  "creepy_tree"))
     sc.add_decoration(Decoration(17 * TILE + 16, 7 * TILE + 16, "dead_crow"))
+    # Bloody handprint smearing the south face of the Clerk's house,
+    # right by the back door (col 5, row 5). The comment above this
+    # block has long promised one; the prop is finally placed, and the
+    # yard's interact gives it a voice.
+    handprint_x = 6 * TILE + 16
+    handprint_y = 5 * TILE + 28
+    sc.add_decoration(Decoration(handprint_x, handprint_y, "bloodstain",
+                                 scale=0.9))
+    sc._handprint_pos = (handprint_x, handprint_y)
     # Small mailbox on the road shoulder (use a gas_pump deco -- close
     # enough silhouette; future polish could carve a true mailbox).
     sc.add_decoration(Decoration(11 * TILE + 16, 9 * TILE + 16,
