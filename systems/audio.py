@@ -4,6 +4,18 @@ import math
 import random
 import pygame
 
+# DSP toolkit (numpy/scipy biquad filters + Schroeder reverb). Optional:
+# if numpy/scipy aren't installed the import fails and the SFX library
+# falls back to the raw generators with no post-processing, so the game
+# still runs (just dryer). See systems/dsp.py.
+try:
+    from systems import dsp
+    _HAVE_DSP = True
+except Exception:
+    dsp = None
+    _HAVE_DSP = False
+
+
 class Audio:                        #Starting screen needs music, something simple
     def __init__(self):
         self.enabled = True
@@ -73,6 +85,31 @@ class Audio:                        #Starting screen needs music, something simp
             stereo[i*4+2] = buf[i*2]
             stereo[i*4+3] = buf[i*2+1]
         return pygame.mixer.Sound(buffer=bytes(stereo))
+
+    def _post(self, sound, *, reverb=None, lowpass=None, highpass=None,
+              vol=1.0):
+        """Run a finished Sound through the DSP toolkit -- a Schroeder
+        reverb in one of dsp's named spaces (room/cellar/chapel/
+        outdoor/void) plus optional biquad low/high-pass -- and return
+        the processed Sound. This is how the raw procedural foley gets
+        seated into a real acoustic space (a heartbeat in a stone
+        cellar, the King's tone in the void). No-op fallback to the
+        original Sound if the DSP toolkit isn't available or anything
+        goes wrong, so audio never hard-fails on a synthesis edge."""
+        if not (_HAVE_DSP and self.enabled):
+            return sound
+        try:
+            arr = pygame.sndarray.array(sound).astype("float32") / 32768.0
+            sig = arr.mean(axis=1) if arr.ndim == 2 else arr
+            if highpass:
+                sig = dsp.highpass(sig, highpass)
+            if lowpass:
+                sig = dsp.lowpass(sig, lowpass)
+            if reverb:
+                sig = dsp.reverb(sig, reverb)
+            return dsp.to_sound(sig, vol)
+        except Exception:
+            return sound
 
     def _build_library(self):
         g = self._gen
@@ -178,6 +215,31 @@ class Audio:                        #Starting screen needs music, something simp
         self.sfx["threshold_chime"] = g(207, 380, 0.20, "sine",
                                          attack_ms=20, decay_ms=350,
                                          vibrato=1)
+
+        # ---- DSP atmosphere pass --------------------------------------
+        # Route the horror SFX through the dsp reverb + filter toolkit so
+        # they sit in a real acoustic space instead of ringing dry. The
+        # SFX library is built ONCE and shared across every scene, so a
+        # space can only be baked into a sound that always plays in that
+        # same space -- otherwise a cellar tail would follow it outdoors.
+        # Only context-fixed cues qualify: the underground rite (cellar),
+        # the void / Carcosa set-pieces (void), and the opening-drive
+        # radio static. Footsteps, blips, breaths and pulses that play
+        # everywhere stay dry. No-ops cleanly if the toolkit is missing.
+        _atmos = {
+            # Underground rite -- only ever heard in the Works / Depths.
+            "cult_chant":   dict(reverb="cellar"),
+            "cult_breath":  dict(reverb="cellar", lowpass=2600),
+            "step_void":    dict(reverb="cellar"),
+            # Void / Carcosa set-pieces.
+            "carcosa_boom": dict(reverb="void"),
+            "void_sting":   dict(reverb="void"),
+            # Opening drive -- the radio dissolving into static.
+            "static":       dict(highpass=500),
+        }
+        for key, kw in _atmos.items():
+            if key in self.sfx:
+                self.sfx[key] = self._post(self.sfx[key], **kw)
 
         # MUSIC. THRESHOLD's tracks are intentionally not melodies --
         # most are drones, two are haunted-with-pings versions of the
