@@ -9,6 +9,7 @@ cauldron clearing and player's car are still here.
 
 Atmosphere: black haze drawn by Game._draw_brimley_haze, ambient
 'wind' track played by music='wind'."""
+import math
 import random
 from constants import TILE
 from entities.decoration import Decoration
@@ -84,13 +85,32 @@ def _carve_track(floor_ll, objects_l, pts, rng):
 def build_brimley():
     w = 100
     h = 100
-    river_cols = (32, 33, 34)
+    river_center_x = 33
     bridge_rows = (23, 24, 25, 26)
+    # The river bends gently as it runs N-S. At each row the centre
+    # offsets by a sine of the row index -- amplitude 2, two full cycles
+    # over the 100 rows. The bridge rows are pinned to centre=33 so the
+    # crossing stays where the original bridge planks were laid; the
+    # bend interpolates back to centre across the rows on either side
+    # of the bridge so there's no kink.
+    def _river_cols(ty):
+        if ty in bridge_rows:
+            cx = river_center_x
+        else:
+            # Smooth blend back to centre within 4 rows of the bridge.
+            dist_to_bridge = min(abs(ty - bridge_rows[0]),
+                                  abs(ty - bridge_rows[-1]))
+            sine = math.sin(ty * 0.13) * 2.0
+            if dist_to_bridge < 4:
+                sine *= dist_to_bridge / 4.0
+            cx = int(round(river_center_x + sine))
+        return (cx - 1, cx, cx + 1)
     floor_rows = []
     for ty in range(h):
+        rc = _river_cols(ty)
         row = []
         for tx in range(w):
-            if tx in river_cols:
+            if tx in rc:
                 if ty in bridge_rows:
                     row.append("g")        # walkable grass under bridge
                 else:
@@ -98,6 +118,9 @@ def build_brimley():
             else:
                 row.append("g")
         floor_rows.append("".join(row))
+    # Keep the broader river_cols tuple for downstream code that needs a
+    # max-span set (corn-patch protection, border-protection, etc.).
+    river_cols = tuple(range(river_center_x - 3, river_center_x + 4))
 
     # Walkable corn-cover patches scattered across the banks. The ':'
     # tile passively hides the player (Game flips player.hidden to
@@ -328,6 +351,18 @@ def build_brimley():
                 hsh = ((tx2 * 73856093) ^ (ty2 * 19349663)) % 100
                 if dd <= 0.6 or (dd <= 1.1 and hsh < 48):
                     floor_ll[ty2][tx2] = ";"
+    # Eastern village-square footpaths: lead the eye from the
+    # country-lane entry (98, 7) S/W to the well (94, 13), then on to
+    # the woodshed door (91, 16). Without these the merged content
+    # reads as lost in the meadow.
+    for ftx in range(94, 99):
+        floor_ll[7][ftx] = "d"
+    for fty in range(8, 14):
+        floor_ll[fty][94] = "d"
+    floor_ll[14][93] = "d"
+    floor_ll[14][92] = "d"
+    for fty in range(15, 17):
+        floor_ll[fty][91] = "d"
     floor_rows = ["".join(r) for r in floor_ll]
 
     objects = ["".join(r) for r in objects_l]
@@ -357,6 +392,7 @@ def build_brimley():
     # ---- Eastern village square (merged from the old `village` scene) ----
     # The town's well + woodshed sit just inside the east edge so the
     # player walks in from the Lodge and sees the landmark immediately.
+    # Footpaths to the well + shed are carved earlier in the floor pass.
     # The well at col 94, row 13 -- the only mouth down into the Works.
     # Surrounding floor was already grass; the well is a decoration.
     # The woodshed footprint (5w x 4h) south-east of the well, door
@@ -648,6 +684,35 @@ def build_brimley():
             ry2 = weeds.randint(bt, bb) * TILE + weeds.randint(2, 28)
             _weed((bl - 1) * TILE + weeds.randint(16, 28), ry2)
             _weed((br + 1) * TILE + weeds.randint(2, 14), ry2)
+
+    # Tall-grass meadows scattered across the open ground. Pure
+    # decoration -- the player walks through them. They give the bare
+    # banks somewhere for the eye to settle and the wind something to
+    # move that isn't a dread mark. Seeded from a fixed RNG so the
+    # pattern is stable across loads.
+    meadow_rng = random.Random(8419)
+    # ~120 clumps placed on open object-tiles that aren't on the road
+    # tracks, not in the river, not under a building. Reject samples
+    # that land on a non-"." object tile.
+    placed = 0
+    attempts = 0
+    while placed < 120 and attempts < 1200:
+        attempts += 1
+        tx = meadow_rng.randint(2, w - 3)
+        ty = meadow_rng.randint(2, h - 3)
+        if sc.objects[ty][tx] != ".":
+            continue
+        # Avoid the immediate east-village square so it doesn't crowd
+        # the well/shed read.
+        if tx >= 88 and 6 <= ty <= 18:
+            continue
+        # Avoid the river corridor (the bent river spans cols ~30-36).
+        if 29 <= tx <= 37:
+            continue
+        px = tx * TILE + meadow_rng.randint(4, 28)
+        py = ty * TILE + meadow_rng.randint(4, 28)
+        sc.add_decoration(Decoration(px, py, "tall_grass"))
+        placed += 1
 
     # A dead grove on the bare west bank -- a stand of leafless trees out
     # in the open emptiness, a focal dread that offers no cover.

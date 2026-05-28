@@ -789,6 +789,28 @@ class Decoration:
                              (x - 2 + i * 2, y + 4),
                              (x - 2 + i * 2 + sway, y - 2 - i), 1)
 
+    def _draw_tall_grass(self, surf, x, y):
+        """Knee-high grass clump -- decoration only, no gameplay effect.
+        Five to seven stalks that sway out of phase, each ~14px tall.
+        The clump's exact shape varies by `seed` so a meadow of these
+        doesn't read as a stamped pattern."""
+        rng = random.Random(self.seed)
+        # Two colour bands so the clump has depth (back stalks slightly
+        # darker / cooler than front).
+        col_back = (38, 78, 46)
+        col_front = (62, 118, 70)
+        n = rng.randint(5, 8)
+        base_sway = math.sin(self.t * 1.3 + self.seed) * 1.5
+        for i in range(n):
+            ox = rng.randint(-5, 5)
+            height = rng.randint(10, 16)
+            phase = self.seed * 0.13 + i * 0.7
+            tip_sway = base_sway + math.sin(self.t * 1.8 + phase) * 1.2
+            stalk_col = col_back if i < n // 2 else col_front
+            pygame.draw.line(surf, stalk_col,
+                             (x + ox, y + 4),
+                             (x + ox + tip_sway, y + 4 - height), 1)
+
     def _draw_mote(self, surf, x, y):
         dx = math.sin(self.t * 0.4 + self.seed) * 8
         dy = math.cos(self.t * 0.3 + self.seed * 0.7) * 4
