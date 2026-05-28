@@ -1630,6 +1630,12 @@ class Scene:
         self.on_enter_fn = None
         self.on_exit_fn = None
         self.on_interact_fn = None    # called when E pressed and no NPC nearby
+        # Points the [E] prompt should hover over for on_interact_fn-driven
+        # readables/pickups (the case notebook, the cellar Ledger, the Mask
+        # altar...). Without these, scene interactions handled in
+        # on_interact_fn had no cue at all and players walked past them.
+        # Each entry is (x, y, radius). See Game._draw_interact_prompt.
+        self.interactables = []
         self.on_update_fn = None      # called every tick if set: fn(game, scene, dt)
         self.combat = False
         # Optional human-readable name for HUD display. When None,
@@ -1777,6 +1783,12 @@ class Scene:
 
     def add_item(self, x, y, key, qty=1, on_pickup=None):
         self.items.append({"x": x, "y": y, "key": key, "qty": qty, "on_pickup": on_pickup})
+
+    def add_interactable(self, x, y, radius=40):
+        """Register a point the [E] prompt should hover over -- for
+        readables/pickups resolved in on_interact_fn (which the prompt
+        system otherwise can't see)."""
+        self.interactables.append((x, y, radius))
 
     def find_marker(self, ch):
         for ty, r in enumerate(self.objects):

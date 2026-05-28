@@ -393,6 +393,9 @@ def build_works_sign():
     sign_y = 1 * TILE + 16
     sc._sign_pos = (5 * TILE + 16, 2 * TILE + 20)   # the altar, not the wall
     sc.add_decoration(Decoration(5 * TILE + 16, 2 * TILE + 24, "pedestal"))
+    # [E] cue at the altar -- the Mask / rite choice is the key decision
+    # of the run and must read as interactable.
+    sc.add_interactable(sc._sign_pos[0], sc._sign_pos[1], 50)
     # The Sign itself -- one large glyph centred on the north wall,
     # flanked by two smaller ones, ringed with candles.
     sc.add_decoration(Decoration(sign_x, 1 * TILE + 18, "yellow_sign"))

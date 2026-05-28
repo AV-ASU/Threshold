@@ -119,6 +119,10 @@ def build_bedroom():
     sc.add_decoration(Decoration(8 * TILE + 8, 10 * TILE + 16,
                                  "bloodstain"))
 
+    # The case notebook is read at the writing desk -- flag it for the
+    # [E] prompt so the player knows the desk is interactable.
+    sc.add_interactable(11 * TILE, 5 * TILE + 16, 44)
+
     sc.on_enter_fn = bedroom_on_enter
     sc.on_interact_fn = bedroom_interact
     sc.on_update_fn = bedroom_on_update
@@ -595,6 +599,9 @@ def build_basement():
     sc._workbench_pos = (2 * TILE + 16, 7 * TILE + 16)
     sc._wall_panel_pos = (1 * TILE + 16, 4 * TILE + 16)
     sc._chest_pos = (sc._workbench_pos[0], sc._workbench_pos[1] - 8)
+    # [E] cue for the hidden wall-panel Ledger (the chest gets its own
+    # chest prompt) so the player knows the panel is interactable.
+    sc.add_interactable(sc._wall_panel_pos[0], sc._wall_panel_pos[1], 40)
     # Hide spots: behind the firewood stack (SE) and behind a second
     # woodpile by the south wall. (Neither sits on the workbench chest --
     # which is its own E-interaction now -- nor on the bloodstain, which

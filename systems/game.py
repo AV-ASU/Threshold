@@ -102,6 +102,12 @@ SEAMLESS_WORLD_SCENES = OUTDOOR_SCENES | {
     "husk_grove", "scarecrow_ring",
 }
 
+# How far (px) the camera leads the player in their facing direction so
+# they can see where a path/fold is taking them before they walk into it.
+# ~3 tiles -- enough lead to read a bend or a wrap-seam, small enough that
+# the player stays comfortably on screen.
+CAM_LOOKAHEAD = 96
+
 # Dark scenes -- underground / interior cult sites where the
 # flashlight matters. Without the flashlight the screen is heavily
 # dimmed with a small clear circle around the player. With it,
@@ -786,6 +792,16 @@ class Game:
     def _update_camera(self, snap=False):
         target_x = self.player.x - SCREEN_W // 2
         target_y = self.player.y - SCREEN_H // 2
+        # Lead the camera in the way the player is walking so they can see
+        # where a path is taking them BEFORE they commit -- vital where the
+        # road bends or folds back on itself. In a torus (wrap) scene the
+        # far side is already drawn as edge-clones, so leading toward a seam
+        # actually shows what's waiting across the fold. Eased by the lerp
+        # below so changing direction doesn't snap the view.
+        fx, fy = self.player.facing
+        flen = math.hypot(fx, fy) or 1.0
+        target_x += (fx / flen) * CAM_LOOKAHEAD
+        target_y += (fy / flen) * CAM_LOOKAHEAD
         scene_w = self.scene.w * Scene.TILE
         scene_h = self.scene.h * Scene.TILE
         if not self.scene.wrap_x:
@@ -3422,6 +3438,14 @@ class Game:
                     continue
                 if math.hypot(npc.x - px, npc.y - py) < 40:
                     target = (npc.x, npc.y)
+                    break
+        # 5. A scene interactable (on_interact_fn readable/pickup -- the
+        # case notebook, the cellar Ledger, the Mask altar). Last, to
+        # mirror try_interact running on_interact_fn after NPCs.
+        if target is None:
+            for ix, iy, irad in getattr(self.scene, "interactables", ()):
+                if math.hypot(ix - px, iy - py) < irad:
+                    target = (ix, iy)
                     break
         if target is None:
             return

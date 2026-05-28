@@ -285,6 +285,8 @@ def build_barn():
     sc._barn_hatch_pos = (hatch_x, hatch_y)
     # Mara's journal, stashed behind the workbench -- evidence #2.
     sc._journal_pos = (3 * TILE + 16, 5 * TILE + 16)
+    # [E] cue so the player knows there's something behind the workbench.
+    sc.add_interactable(sc._journal_pos[0], sc._journal_pos[1], 40)
     # Hide spots colocated with cover -- behind the hay-bale shelves
     # (player stands on a walkable tile beside each shelf, NOT on the
     # solid shelf tile). The under-workbench spot was previously on
