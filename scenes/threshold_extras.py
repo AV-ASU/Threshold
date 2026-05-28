@@ -748,35 +748,38 @@ def build_cornfield_maze():
     # Walking through one in the matching direction snaps you to the
     # destination tile with the camera adjusted so the swap is
     # seamless. Handled in _maze_on_update below. The chars 'I' and
-    # 'X' mark them in the objects layer (rendered as floor).
+    # 'Q' mark them in the objects layer (rendered as floor).
     # 'I' at (8, 6) walked SOUTH -> teleport to (16, 19) (top of
     # lane 2 -> bottom of lane 4).
     objects_l[6][8] = "I"
-    # 'X' at (16, 11) walked NORTH -> teleport to (3, 19) (mid of
-    # lane 4 -> bottom of lane 1).  Wait, X is solid; use 'F' instead
-    # (also a door char though). Better: use the existing marker
-    # slots. 'Q' is a guard marker (renders as floor).
+    # 'Q' at (16, 11) walked NORTH -> teleport to (3, 19) (mid of
+    # lane 4 -> bottom of lane 1). 'Q' renders as floor (it is a
+    # guard marker char), so the relocation tile is invisible.
     objects_l[11][16] = "Q"
 
     # ---- Visible perimeter side passages ----
     # Carve clear dirt lanes through the perimeter band on the west
-    # and east edges. Each is 1-2 tiles wide, looks like an obvious
-    # way out of the maze. The wrap fires when the player walks off
-    # the map and they appear on the opposite edge. Multiple passages
-    # so the maze visibly has many "exits" and all of them loop.
-    SIDE_PASSAGES = [
-        # (col, row) of the passage tile on the perimeter
-        (0, 5),   (0, 13),     # west-side passages
-        (W - 1, 8), (W - 1, 16),   # east-side passages
-    ]
-    for px, py in SIDE_PASSAGES:
-        objects_l[py][px] = "."
-        floor_rows_l[py][px] = "d"
-        # Carve the adjacent inland tile too so the passage has depth.
-        nx = px + (1 if px == 0 else -1)
-        if 0 < nx < W:
-            objects_l[py][nx] = "."
-            floor_rows_l[py][nx] = "d"
+    # and east edges. Each is 2 tiles deep, looks like an obvious way
+    # out of the maze. The wrap (wrap_x) fires when the player walks
+    # off the edge and they appear on the OPPOSITE edge -- so the
+    # passage loops instead of escaping.
+    #
+    # CRITICAL: a passage only loops if the SAME row is open on BOTH
+    # edges. Walking west off (0, row) lands the player on (W-1, row);
+    # if that tile is solid corn the move is blocked and the "exit"
+    # dead-ends against an invisible wall. So passages are carved in
+    # MATCHED PAIRS -- both col 0 and col W-1 open at each row. Rows
+    # chosen so the adjacent inland tile (lane 1 / lane 5) is already
+    # clear, keeping the passage reachable from inside the maze.
+    SIDE_PASSAGE_ROWS = [2, 8, 14, 20]
+    for row in SIDE_PASSAGE_ROWS:
+        for px in (0, W - 1):
+            objects_l[row][px] = "."
+            floor_rows_l[row][px] = "d"
+            # Carve the adjacent inland tile too so the passage has depth.
+            nx = px + (1 if px == 0 else -1)
+            objects_l[row][nx] = "."
+            floor_rows_l[row][nx] = "d"
     # No loot crates in the corn maze. A wooden crate sitting in a
     # cornfield reads as game-y, and an "empty crate" reward is
     # anti-payoff. The maze rewards exploration with discovery of
@@ -832,8 +835,10 @@ def build_cornfield_maze():
         if (tx, ty) in ((11, 1), (12, 1), (11, H - 2), (12, H - 2)):
             return True
         # Visible perimeter side-passage tiles (clear lanes through
-        # the band, not corn).
-        if (tx == 0 or tx == W - 1) and ty in (5, 8, 13, 16):
+        # the band, not corn). References SIDE_PASSAGE_ROWS directly so
+        # the two can't drift -- if the band re-walls a passage row its
+        # wrap dead-ends against invisible corn on the opposite edge.
+        if (tx == 0 or tx == W - 1) and ty in SIDE_PASSAGE_ROWS:
             return True
         return False
     _maze_bushes = []

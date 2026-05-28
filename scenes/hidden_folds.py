@@ -227,26 +227,44 @@ def build_highway_walk():
             else:
                 row.append("g")
         floor_rows.append("".join(row))
+    # Tree shoulders top and bottom. The road rows (3-5) stay OPEN at
+    # the left and right columns so the east-west wrap actually
+    # connects -- walking off the east edge of the road lands you on
+    # the west edge of the road and you keep going. (If the edge
+    # columns were solid here, wrap_x would be a no-op and the road
+    # would just dead-end against an invisible wall.)
     objects_l = []
     for ty in range(H):
         row = []
+        on_road = 3 <= ty <= 5
         for tx in range(W):
-            if ty == 0 or ty == H - 1 or tx == 0 or tx == W - 1:
+            if ty == 0 or ty == H - 1:
                 row.append("T")
+            elif (tx == 0 or tx == W - 1) and not on_road:
+                row.append("T")     # tree shoulders pinch the grass
             else:
                 row.append(".")
         objects_l.append(row)
-    # Return tile on the WEST wall at row 4. The player walked east to
-    # arrive; walking west takes them back to country_lane.
-    objects_l[4][0] = "G"
+    # Return barrier on the road, one tile IN from the west seam,
+    # spanning all three road rows. It's direction-sensitive (fires
+    # only when walked WEST), so heading back the way you came drops
+    # you to country_lane -- but walking EAST and wrapping across the
+    # seam runs straight over it (facing east, no trigger) and the
+    # road keeps going forever. Inland of the seam so the wrap itself
+    # never lands the player on the exit tile.
+    for ry in (3, 4, 5):
+        objects_l[ry][1] = "G"
     objects = ["".join(r) for r in objects_l]
     sc = Scene("highway_walk", floor_rows, objects, music="outside")
     # The road wraps east-west. Walking east never gets anywhere.
     sc.wrap_x = True
     sc.wrap_y = False
-    sc.add_exit("G", "country_lane", "from_highway_walk")
-    sc.set_spawn("default", 1, 4)
-    sc.set_spawn("from_country_lane", 1, 4)
+    sc.add_exit("G", "country_lane", "from_highway_walk", direction="west")
+    # Spawn a few tiles east of the G barrier, facing east (carried
+    # from the eastward walk into the fold) so arrival doesn't instantly
+    # bounce back out.
+    sc.set_spawn("default", 4, 4)
+    sc.set_spawn("from_country_lane", 4, 4)
     # ---- The two figures ----
     # Both walk east on the road, ahead of the player. Their facing
     # is east. Movement is a slow patrol on a long eastward stretch;
