@@ -99,6 +99,16 @@ OUTDOOR_SCENES = {"our_house_area", "forest_path",
                   "country_lane", "cornfield_maze",
                   "gravel_road_north", "river_crossing"}
 
+# The continuous outside world. Crossing between any two of these is
+# a seamless transition: no fade, no door sound, the player position
+# is carried as a relative offset on the matching edge so they appear
+# at the same lateral fraction of the destination's entry edge. The
+# scenes are different sizes (intentionally -- they have different
+# design jobs), but the EDGE BETWEEN them is continuous. Brimley is
+# in this set even though it isn't in OUTDOOR_SCENES (it has its own
+# vignette and doesn't want the outdoor one stacked on top).
+SEAMLESS_WORLD_SCENES = OUTDOOR_SCENES | {"brimley"}
+
 # Dark scenes -- underground / interior cult sites where the
 # flashlight matters. Without the flashlight the screen is heavily
 # dimmed with a small clear circle around the player. With it,
@@ -579,6 +589,30 @@ class Game:
     # ---- Scene management ----
     def begin_transition(self, target_scene, spawn_id="default"):
         if self.state == "transition": return
+        # Seamless outdoor-to-outdoor crossing. Both scenes are part of
+        # the continuous outside world (SEAMLESS_WORLD_SCENES). No
+        # fade, no level-load semantic. Use the destination's canonical
+        # spawn (because the spawn already accounts for the destination's
+        # road position) and then shift the camera so the player stays
+        # at the SAME SCREEN POSITION before and after the swap. From
+        # their point of view nothing jumped -- the tiles around them
+        # changed.
+        current_key = self.scene.key if self.scene else None
+        if (current_key is not None
+                and current_key in SEAMLESS_WORLD_SCENES
+                and target_scene in SEAMLESS_WORLD_SCENES
+                and current_key != target_scene):
+            screen_dx = self.player.x - self.cam_x
+            screen_dy = self.player.y - self.cam_y
+            self.load_scene_now(target_scene, spawn_id)
+            # load_scene_now snapped the camera; override so the
+            # player stays at the same screen position. For non-wrap
+            # destination scenes the camera may immediately drift on
+            # the next frame due to clamping; that's fine -- the
+            # transition moment itself is continuous.
+            self.cam_x = self.player.x - screen_dx
+            self.cam_y = self.player.y - screen_dy
+            return
         # The cellar is no longer key-gated -- the Ledger (evidence #3) is a
         # core clue and shouldn't hide behind a fetch-quest. The Clerk's old
         # crate/key/bottle chain has been cut entirely.
