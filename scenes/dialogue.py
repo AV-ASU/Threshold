@@ -149,8 +149,8 @@ def kid_dialogue(game, npc):
         ], speaker="Boy", voice="blip_kid", portrait="kid")
     elif count == 3:
         game.dialog.show([
-            "The preacher's coat is in the church.",
-            "[c=dim]There's nobody in it.[/c]",
+            "I don't walk past the church anymore.",
+            "[c=dim]The door is open. They left it open.[/c]",
         ], speaker="Boy", voice="blip_kid", portrait="kid")
     elif count == 4:
         game.dialog.show([

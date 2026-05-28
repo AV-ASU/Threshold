@@ -335,10 +335,8 @@ def _mara_voice(game, npc):
     game.audio.play("low_pulse", 0.6)
     game.dialog.show([
         "[c=dim](You say her name. The hooded head lifts.)[/c]",
-        "It is Mara. She has been waiting a long time. She has the "
-        "patience for it now.",
-        "[s=slow]She says your name back. She uses your first name. "
-        "Your client never told her your first name.[/s]",
+        "It is Mara.",
+        "[s=slow]\"I'm not lost. I've never been this close.\"[/s]",
     ], speaker="", voice="blip_soft", portrait="narrator")
     _evidence(game, "the_congregation", [
         "Mara, kneeling with the congregation. Turned. There was never "

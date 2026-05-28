@@ -216,8 +216,9 @@ def bedroom_interact(game):
                 return
             game.save.set_flag("case_closed_read", True)
             game.dialog.show([
-                "[c=dim](Your case notebook. The last page is in your "
-                "handwriting. You haven't written it yet.)[/c]",
+                "[c=dim]Subject: located. Recovery: declined.[/c]",
+                "[c=dim]The handwriting is yours. You don't remember "
+                "writing it.[/c]",
             ], speaker="", voice="blip_soft", portrait="narrator")
             return
         game.dialog.show([
