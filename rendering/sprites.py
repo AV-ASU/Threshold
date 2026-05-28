@@ -1260,66 +1260,88 @@ def draw_king_death(surf, t):
         return 1.0 - (1.0 - x) ** 2.3
 
     ramp = max(0.0, min(1.0, t / 0.4))
-    kindle = eo((t - 0.1) / 1.3)                    # the void ignites into the furnace
-    behold = max(0.0, min(1.0, (t - 1.4) / 1.5))    # He commands the frame + reaches
-    take = eo((t - 3.0) / 1.4)                      # He surges forward to take you
-    # The mask OPENING, choreographed in two phases: the cracks spread + LINGER
-    # (anticipation), then the shards PULL APART and the pit blooms (release).
-    op = max(0.0, min(1.0, (t - 3.05) / 1.45))      # raw opening progress
-    crack_form = op ** 2.4                           # slow to spread, then quickens
-    pit_open = (max(0.0, (op - 0.34) / 0.66)) ** 1.25   # pit waits, then blooms open
-    engulf = eo((t - 4.05) / 0.75)                  # the depth swallows you
+    kindle = eo((t - 0.1) / 1.1)                    # the void ignites into the furnace
+    behold = max(0.0, min(1.0, (t - 1.1) / 0.9))    # He commands the frame + reaches
+    take = eo((t - 2.0) / 2.2)                      # the general surge (scale/grade)
+    # The mask breaks open SOON: cracks spread (brief), the shards pull apart...
+    op = max(0.0, min(1.0, (t - 2.0) / 1.0))        # raw opening progress
+    crack_form = op ** 1.7
+    # ...to reveal a SECOND FACE beneath -- a screaming raw visage under the calm
+    # pallid mask -- and only THEN does its heart yawn into the cold-fire pit.
+    second = max(0.0, min(1.0, (t - 2.5) / 0.8))    # the face under the mask
+    pit_open = (max(0.0, (t - 3.75) / 0.95)) ** 1.2  # the pit blooms from it
+    engulf = eo((t - 4.35) / 0.55)                  # the depth swallows you
     flick = 0.85 + 0.12 * math.sin(t * 16.0) + 0.05 * math.sin(t * 37.0)
     fr = 50 + kindle * 140 + behold * 48 + take * 150    # His mask radius: looms + surges
-    reach = 0.6 + behold * 0.5 + take * 1.0
-    pres = min(1.0, 0.45 + 0.55 * behold + 0.4 * take)
+    pres = min(1.0, 0.5 + 0.5 * behold + 0.4 * take)
 
     scene = pygame.Surface((w, h))
     scene.fill((4, 3, 5))                            # the dark He arrives out of
 
     # 1. THE CARCOSA FURNACE -- a vast warm realm-glow flooding the frame (FILLED,
-    #    never additive, so it stays a furnace, not a flat gold disc). It kindles
-    #    from the void and flares as He surges.
-    fg = (0.30 + 0.70 * kindle) * (1.0 + 0.55 * take) * flick
+    #    never additive, so it stays a furnace, not a flat gold disc).
+    fg = (0.30 + 0.70 * kindle) * (1.0 + 0.55 * take) * flick * (1.0 - 0.8 * second)
     _yk_radial(scene, cx, cy + int(fr * 0.1),
                int(min(w, h) * (0.55 + 0.5 * kindle + 0.35 * take)),
                (150, 66, 22), int(74 * fg * ramp), add=False)
     _yk_radial(scene, cx, cy, int(fr * 1.25), (208, 116, 40),
                int(80 * fg * ramp), add=False)
 
-    # 2. His grasping ARMS reaching OUT to take you -- bold, rooted behind the
-    #    mask, hauling further as He closes.
+    # 2. His arms LURCH and GRAB at you -- fanned down toward the player, snatching
+    #    out in sharp lunges (a quick grab-and-recoil), reaching past the frame.
     dk, gold, hot = (*_YK_SHADOW, 255), (*_YK_GOLD, 255), (*_YK_HOT, 255)
-    for i in range(7):
-        rho = i * math.tau / 7 + 0.3 * math.sin(i * 2.3)
-        rx = cx + math.cos(rho) * fr * 0.5
-        ry = cy + math.sin(rho) * fr * 0.5
-        ph = (t * 0.35 + i * 0.4) % 1.0
-        u = ph / 0.5 if ph < 0.5 else (1.0 - ph) / 0.5
-        lng = fr * (0.7 + reach * (0.8 + 0.8 * (u * u * (3 - 2 * u))))
-        _yk_spire(scene, rx, ry, rho, lng, fr, t, i, pres, dk, gold, hot)
+    narm = 8
+    for i in range(narm):
+        root = i * math.tau / narm
+        rx = cx + math.cos(root) * fr * 0.5
+        ry = cy + math.sin(root) * fr * 0.5
+        aim = root * 0.3 + (math.pi * 0.5) * 0.7 + 0.1 * math.sin(t * 1.5 + i)  # toward you
+        ph = (t * 0.7 + i * 0.6) % 1.0
+        grab = math.exp(-(((ph - 0.35) / 0.14) ** 2))       # a sharp snatch
+        lng = fr * (0.7 + (0.9 + 1.3 * take) * grab)
+        _yk_spire(scene, rx, ry, aim, lng, fr, t, i, pres, dk, gold, hot)
 
-    # 3. The taken, glimpsed as soul-orbs adrift in His blaze (secondary -- His
-    #    wake, not the subject).
-    for i in range(6):
+    # 3. The taken, glimpsed faintly as soul-orbs adrift in His blaze.
+    for i in range(5):
         a = i * 1.4 + t * 0.5
         rad = fr * (1.35 + 0.3 * math.sin(i * 2 + t))
         ox, oy = cx + math.cos(a) * rad, cy + math.sin(a) * rad * 0.7
-        _yk_orb_glow(scene, ox, oy, fr * 0.14, 0.3 * behold)
-        _yk_orb_faces(scene, ox, oy, fr * 0.14, 0.3 * behold, i, t)
+        _yk_orb_glow(scene, ox, oy, fr * 0.13, 0.28 * behold)
+        _yk_orb_faces(scene, ox, oy, fr * 0.13, 0.28 * behold, i, t)
 
-    # 4. The hot core -- the light that blazes THROUGH the cracks of His mask.
-    _yk_radial(scene, cx, cy, int(fr * 0.55), _YK_HOT,
-               int(90 * (0.4 + 0.6 * take)), add=False)
+    # 4. Light bleeding through the early cracks (fades as the face beneath shows).
+    _yk_radial(scene, cx, cy, int(fr * 0.5), _YK_HOT,
+               int(70 * crack_form * (1.0 - second)), add=False)
 
-    # 5. His shattered pallid MASK, commanding the centre, the gaze fixed on you.
-    #    It holds whole through the behold; then the cracks SPREAD and linger,
-    #    and finally the shards PULL APART -- flung aside like doors on the pit.
+    # 5. THE SECOND FACE beneath the mask -- a screaming RAW visage (wet red
+    #    flesh, not pallid bone, so it reads as something WORSE under the calm
+    #    mask), the gaze blazing. Drawn UNDER the pallid mask so it surfaces as
+    #    the shards part.
+    if second > 0.02:
+        fr2 = int(fr * 0.92)
+        # a low, dark-red flesh halo only (no bright glow -- bright glow bleeds
+        # through the translucent mask and erases the face).
+        _yk_radial(scene, cx, cy, int(fr2 * 0.85), (70, 16, 14), int(70 * second), add=False)
+        face2 = pygame.Surface((w, h), pygame.SRCALPHA)   # _yk_face: the bare face, NO hot halo
+        pad = fr2 // 2
+        _yk_face(face2, cx, cy, fr2, "scream", True, True)
+        red = pygame.Surface((w, h))
+        red.fill((230, 70, 50))
+        face2.blit(red, (0, 0), special_flags=pygame.BLEND_RGB_MULT)
+        scene.blit(face2, (0, 0))                          # revealed AS the mask parts
+        for sgn in (-1, 1):                          # small hot pupils -- keep the scream readable
+            ex = cx + sgn * int(fr2 * 0.42)
+            ey = cy - int(fr2 * 0.12)
+            _yk_radial(scene, ex, ey, int(fr2 * 0.06), _YK_HOT, int(190 * second))
+
+    # 6. The pallid wail-MASK on top. The cracks spread, then the shards PULL
+    #    APART -- flung aside like doors -- baring the face beneath.
     crack = 0.06 + 0.86 * crack_form
-    _yk_shatter_mask(scene, cx, cy, int(fr), min(1.0, 0.5 + 0.5 * kindle),
+    mvis = min(1.0, 0.5 + 0.5 * kindle) * (1.0 - 0.8 * second)   # fades as it opens away
+    _yk_shatter_mask(scene, cx, cy, int(fr), mvis,
                      "wail", crack, t, int(fr), aim=math.pi / 2, arms=False)
-    if pit_open <= 0.02:
-        for sgn in (-1, 1):                          # the gaze, fixed (until it opens)
+    if second <= 0.05:
+        for sgn in (-1, 1):                          # the pallid mask's gaze (until it opens)
             ex = cx + sgn * int(fr * 0.42)
             ey = cy - int(fr * 0.12)
             gz = fr * (0.1 + 0.04 * math.sin(t * 4))
@@ -1327,11 +1349,11 @@ def draw_king_death(surf, t):
                        int(70 * (0.4 + 0.6 * behold)), add=False)
             _yk_radial(scene, ex, ey, int(gz), _YK_HOT, int(155 * (0.4 + 0.6 * behold)))
 
-    # 5b. THE PIT. Once the shards pull apart, a shaft of COLD FIRE yawns open at
-    #     the mask's heart -- it blooms wider as you are dragged down it.
+    # 7. THE PIT. The second face's heart yawns into a shaft of COLD FIRE, the
+    #    hell of Carcosa, that you are dragged down.
     if pit_open > 0.01:
-        pit_r = fr * 0.12 + pit_open * min(w, h) * 0.5   # capped so its cold-fire
-        _cold_fire_pit(scene, cx, cy, pit_r, t)           # walls stay in frame as you dive
+        pit_r = fr * 0.12 + pit_open * min(w, h) * 0.5
+        _cold_fire_pit(scene, cx, cy, pit_r, t)
 
     # 6. Embers of the furnace streaming up.
     for i in range(40):
