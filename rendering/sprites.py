@@ -1261,16 +1261,16 @@ def draw_king_death(surf, t):
 
     ramp = max(0.0, min(1.0, t / 0.4))
     kindle = eo((t - 0.1) / 1.1)                    # the void ignites into the furnace
-    behold = max(0.0, min(1.0, (t - 1.1) / 0.9))    # He commands the frame + reaches
-    take = eo((t - 2.0) / 2.2)                      # the general surge (scale/grade)
+    behold = max(0.0, min(1.0, (t - 1.1) / 1.2))    # He commands the frame + reaches
+    take = eo((t - 2.3) / 2.0)                      # the general surge (scale/grade)
     # The mask breaks open SOON: cracks spread (brief), the shards pull apart...
-    op = max(0.0, min(1.0, (t - 2.0) / 1.0))        # raw opening progress
+    op = max(0.0, min(1.0, (t - 2.3) / 0.85))       # raw opening progress
     crack_form = op ** 1.7
     # ...to reveal a SECOND FACE beneath -- a screaming raw visage under the calm
     # pallid mask -- and only THEN does its heart yawn into the cold-fire pit.
-    second = max(0.0, min(1.0, (t - 2.5) / 0.8))    # the face under the mask
-    pit_open = (max(0.0, (t - 3.75) / 0.95)) ** 1.2  # the pit blooms from it
-    engulf = eo((t - 4.35) / 0.55)                  # the depth swallows you
+    second = max(0.0, min(1.0, (t - 2.75) / 0.75))  # the face under the mask
+    pit_open = (max(0.0, (t - 3.55) / 0.9)) ** 1.2  # the pit blooms from it
+    engulf = eo((t - 4.25) / 0.6)                   # the depth swallows you
     flick = 0.85 + 0.12 * math.sin(t * 16.0) + 0.05 * math.sin(t * 37.0)
     fr = 50 + kindle * 140 + behold * 48 + take * 150    # His mask radius: looms + surges
     pres = min(1.0, 0.5 + 0.5 * behold + 0.4 * take)
@@ -1336,7 +1336,7 @@ def draw_king_death(surf, t):
 
     # 6. The pallid wail-MASK on top. The cracks spread, then the shards PULL
     #    APART -- flung aside like doors -- baring the face beneath.
-    crack = 0.06 + 0.86 * crack_form
+    crack = 0.92 * crack_form                                  # 0 -> intact during the behold
     mvis = min(1.0, 0.5 + 0.5 * kindle) * (1.0 - 0.8 * second)   # fades as it opens away
     _yk_shatter_mask(scene, cx, cy, int(fr), mvis,
                      "wail", crack, t, int(fr), aim=math.pi / 2, arms=False)
