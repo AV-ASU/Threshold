@@ -1,16 +1,7 @@
-"""Player character: movement, attack (tap + charge), save/load."""
+"""Player character: movement, desperation melee (stun), save/load."""
 import math
 import pygame
-from systems.items import Inventory, ITEM_DEFS
-
-# Charge mechanic: hold the attack input for >= CHARGE_THRESHOLD seconds
-# to release a charged swing dealing CHARGE_MULT * weapon damage with a
-# bigger hitbox + longer cooldown. Tap-release fires the regular swing.
-CHARGE_THRESHOLD = 0.55
-CHARGE_MULT = 2.0
-CHARGE_HITBOX = 44     # px (regular = 30)
-CHARGE_COOLDOWN = 0.65
-CHARGE_SWING_T = 0.30
+from systems.items import Inventory
 
 
 class Player:
@@ -25,15 +16,6 @@ class Player:
         self.hp = 100
         self.max_hp = 100
         self.invuln = 0.0
-        self.attack_timer = 0.0     # cooldown after swing
-        self.swing_t = 0.0          # active swing animation time
-        self.swing_dir = (0, 1)
-        self.swing_charged = False  # true while the active swing is a charge
-        # Charge state: held while attack input is down. charge_t ticks
-        # up while charging. Released swing reads charge_t and either
-        # fires a regular tap or a charged swing.
-        self.charging = False
-        self.charge_t = 0.0
         # Round-13: tracks whether the player is currently standing in
         # the brimley river. Toggled in Game.update_player based on
         # the floor under their feet. Walking out (onto bridge or land)
@@ -51,9 +33,8 @@ class Player:
         self.sprint_cd_max = 6.0
         # THRESHOLD desperation melee. A non-lethal shove that STUNS a
         # cultist/shadow for a beat -- never a kill (the King is still
-        # the only lethal thing). Kept fully separate from the legacy
-        # swing_t/attack system so it can't deal damage. melee_swing_t
-        # drives a brief visual; melee_cd gates the next swing.
+        # the only lethal thing). melee_swing_t drives a brief visual;
+        # melee_cd gates the next swing.
         self.melee_cd = 0.0
         self.melee_swing_t = 0.0
         self.melee_dir = (0, 1)
@@ -72,59 +53,6 @@ class Player:
         # The knife now lives on the kitchen table in the house scene.
         # The player has to pick it up before they can attack effectively
         # (unequipped weapon = atk 1).
-
-    def can_attack(self):
-        return self.attack_timer <= 0 and self.swing_t <= 0
-
-    def start_charge(self):
-        """Begin a press-and-hold attack input. No swing yet; the swing
-        fires on release_charge. If we can't attack right now, ignore."""
-        if not self.can_attack():
-            return False
-        self.charging = True
-        self.charge_t = 0.0
-        return True
-
-    def release_charge(self, audio=None):
-        """End the press-and-hold. Returns one of: None (nothing fired),
-        "swing" (regular tap melee), or "swing_charged" (held melee). The
-        bare-fist branch never gets the charge bonus; only an equipped
-        melee weapon can deliver a charged swing."""
-        if not self.charging:
-            return None
-        held = self.charge_t
-        self.charging = False
-        self.charge_t = 0.0
-        if not self.can_attack():
-            return None
-        weapon = self.inventory.equipped["weapon"]
-        self.swing_dir = self.facing
-        if weapon is not None and held >= CHARGE_THRESHOLD:
-            self.attack_timer = CHARGE_COOLDOWN
-            self.swing_t = CHARGE_SWING_T
-            self.swing_charged = True
-            return "swing_charged"
-        self.attack_timer = 0.45
-        self.swing_t = 0.18
-        self.swing_charged = False
-        return "swing"
-
-    def attack_hitbox(self):
-        """Returns (rect, damage) if currently in active swing window, else (None, 0).
-        Charged swings get a bigger box and 2x weapon damage."""
-        if self.swing_t <= 0:
-            return None, 0
-        fx, fy = self.swing_dir
-        cx = self.x + fx * 22
-        cy = self.y + fy * 22
-        if self.swing_charged:
-            rect = pygame.Rect(0, 0, CHARGE_HITBOX, CHARGE_HITBOX)
-            dmg = int(self.inventory.weapon_atk() * CHARGE_MULT)
-        else:
-            rect = pygame.Rect(0, 0, 30, 30)
-            dmg = self.inventory.weapon_atk()
-        rect.center = (cx, cy)
-        return rect, dmg
 
     def take_damage(self, amt):
         # THRESHOLD: nothing in the world can harm the player. HP is

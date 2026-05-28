@@ -954,13 +954,9 @@ class Game:
         else:
             self.player.walk_phase = 0
             self.stillness_t += dt
-        self.player.attack_timer = max(0, self.player.attack_timer - dt)
-        self.player.swing_t = max(0, self.player.swing_t - dt)
         self.player.melee_cd = max(0, self.player.melee_cd - dt)
         self.player.melee_swing_t = max(0, self.player.melee_swing_t - dt)
         self.player.invuln = max(0, self.player.invuln - dt)
-        if self.player.charging:
-            self.player.charge_t = min(2.0, self.player.charge_t + dt)
         for it in list(self.scene.items):
             if math.hypot(self.player.x - it["x"], self.player.y - it["y"]) < 18:
                 key = it["key"]
@@ -1140,78 +1136,6 @@ class Game:
                 self.save.set_flag("stun_taught", True)
                 self.show_notice("You knock it back -- it won't stay "
                                  "down. Run.", duration=2.6)
-
-    def player_start_charge(self):
-        """Press attack input. Begins a charge; the actual swing fires
-        on release (release_charge). No SFX here -- the swing sound
-        plays at release so a tap and a charged release both feel like
-        single discrete attacks."""
-        self.player.start_charge()
-
-    def player_release_charge(self):
-        """Release attack input. Plays the swing SFX; a charged lumber_axe
-        also tries to break adjacent debris in the facing direction."""
-        result = self.player.release_charge()
-        if result is None:
-            return
-        self.audio.play("swing", 0.6)
-        if (result == "swing_charged"
-                and self.player.inventory.equipped["weapon"] == "lumber_axe"):
-            self._try_break_debris()
-    def _try_break_debris(self):
-        """If a debris ('*') tile sits in front of the player along
-        their facing direction (within ~one tile), promote it to '4'
-        (the village->brimley exit char) and play a chunky impact.
-        Persisted via per-coord save flag so the gap stays open
-        across re-entries. Edge-of-map debris doubles as the exit
-        tile once broken; debris elsewhere just becomes walkable."""
-        sc = self.scene
-        if sc is None:
-            return
-        fx, fy = self.player.facing
-        for r in (TILE, TILE * 1.5):
-            tx = int((self.player.x + fx * r) // TILE)
-            ty = int((self.player.y + fy * r) // TILE)
-            if 0 <= ty < sc.h and 0 <= tx < sc.w:
-                if sc.objects[ty][tx] == "*":
-                    is_west_edge = (tx == 0)
-                    sc.objects[ty][tx] = "4" if is_west_edge else "."
-                    self.audio.play("hit", 0.8)
-                    self.audio.play("bump", 0.5)
-                    self.save.set_flag(f"debris_broken_{sc.key}_{tx}_{ty}", True)
-                    self.show_notice("The pile splinters apart.")
-                    return
-
-    def apply_attack_damage(self):
-        rect, dmg = self.player.attack_hitbox()
-        if rect is None: return
-        for e in self.scene.enemies:
-            if not e.alive: continue
-            er = pygame.Rect(0, 0, 22, 22)
-            er.center = (int(e.x), int(e.y))
-            if rect.colliderect(er):
-                e.hp -= dmg
-                e.flash = 0.12
-                # Pan the hit from the enemy's world-x so a strike on
-                # a cultist to your left lands in your left ear.
-                pan = self.audio.pan_for_world(e.x, self.player.x)
-                self.audio.play("hit", 0.55, pan=pan)
-                if e.hp <= 0 and e.alive:
-                    self._kill_enemy(e)
-        # NPCs are also valid targets: killing one triggers its on_kill
-        # (if any) and feeds the hidden kill counter. The substrate notices.
-        for n in list(self.scene.npcs):
-            if not getattr(n, "alive", True):
-                continue
-            nr = pygame.Rect(0, 0, 22, 22)
-            nr.center = (int(n.x), int(n.y))
-            if rect.colliderect(nr):
-                n.take_damage(dmg)
-                pan = self.audio.pan_for_world(n.x, self.player.x)
-                self.audio.play("hit", 0.55, pan=pan)
-                if not n.alive and not getattr(n, "_kill_processed", False):
-                    n._kill_processed = True
-                    self._kill_npc(n)
 
     def _kill_npc(self, npc):
         """Side-effects of an NPC kill: increment the hidden non-hostile
@@ -2552,15 +2476,15 @@ class Game:
                         self.audio.play("hit", 0.55, pan=pan)
                     if not p.alive:
                         self.scene.projectiles.remove(p)
-                # Resolve friendly-projectile kills (pistol). Melee kills
-                # are handled inline in apply_attack_damage; this sweeps
-                # any enemies a bullet just flagged.
+                # Sweep any enemy a projectile flagged dead. (The melee
+                # swing only STUNS -- it never deals damage -- so this is
+                # the sole kill path.)
                 for e in self.scene.enemies:
                     if e.alive and e.hp <= 0:
                         self._kill_enemy(e)
-                # Sweep dead NPCs (killed by player melee or bullet).
-                # Fire kill side-effects exactly once per NPC, then
-                # remove them so they stop drawing and being patrolled.
+                # Sweep dead NPCs. Fire kill side-effects exactly once per
+                # NPC, then remove them so they stop drawing and being
+                # patrolled.
                 for n in list(self.scene.npcs):
                     if getattr(n, "alive", True):
                         continue
@@ -2568,7 +2492,6 @@ class Game:
                         n._kill_processed = True
                         self._kill_npc(n)
                     self.scene.npcs.remove(n)
-            self.apply_attack_damage()
             if self.player.hp <= 0:
                 self._on_player_death()
             self._update_camera()
