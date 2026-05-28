@@ -110,7 +110,7 @@ ordered and nobody can refuse.
 | **The Preacher** | **Local — innocent dissenter** | A small-town minister who **names the cult from his own pulpit** — oblivious to *what* they truly are, but loud that they're no church. Your **2nd** conversation (his hubris) sets `preacher_doomed`; on the next entry he's **gutted on his own church floor**, his cross in the viscera (evidence #4). The town murders the ones who name them. |
 | **The Store-Owner** | **Local — quiet resister** | The shop is gutted -- shelves bare, till empty, **nothing to sell** (deliveries stopped when the fold closed). His value is what he risks saying out loud: frightened warnings about who to trust, never said outright. He has a one-shot reaction to the Preacher's death. **He does not know Walter Blaine.** No local does — Walter is a voice in Minneapolis and Brimley locals would have no reason to recognize the name. |
 | **The Kid** | **Local — innocent witness** | Saw Mara go to the well with the procession and **tells you so** — the only honest account in town. What he gives you is the truth, not an object (the old keepsake item is purged; no inventory pickup). Children notice what adults pretend not to. |
-| **The Mistlands chorus** (Hettie, Old Pell, Mrs. Calder, Royce, Garrick, the Tisdale boy) | **Locals** | The town still tries to live. Hettie keeps the store open. Mrs. Calder sets her husband's plate every night for a man who walked out to the highway. Old Pell stopped marking the calendar. Royce drives the river road out every week and comes back into Brimley every time. They all know the fold is real; none of them understand it. **Naming the principal locals** (the Sheriff, the Preacher, the Kid, the Store-Owner) is **still TODO** — see §8. |
+| **The Brimley chorus** (Hettie, Old Pell, Mrs. Calder, Royce, Garrick, the Tisdale boy) | **Locals** | The town still tries to live. Hettie keeps the store open. Mrs. Calder sets her husband's plate every night for a man who walked out to the highway. Old Pell stopped marking the calendar. Royce drives the river road out every week and comes back into Brimley every time. They all know the fold is real; none of them understand it. **Naming the principal locals** (the Sheriff, the Preacher, the Kid, the Store-Owner) is **still TODO** — see §8. |
 | **Mara Blaine** | **Newcomer** — the quarry, **already turned** | Arrived in Brimley a few months ago, "found religion," joined the cult, **went down the well** (not into the corn — she is not a "corn lady"). A willing member of the congregation now. Finding her proves there was never anyone to save. She is in the **hive**. |
 | **Walter Blaine** | **Outsider, off-screen** | The client. A Minneapolis voice on a phone that no longer connects. **No one in Brimley has ever met him.** He exists only through the PI's case notebook and (optionally — see §8) the polaroid he sent with the case. |
 | **Cult / curse-priest / Watchers / the King in Yellow** | **Newcomers + Their god** | The congregation are the newcomers. The Watchers and the King are the corruption they're channelling. |
@@ -191,12 +191,12 @@ office, the school, the barn, the kid's house, and the car). Going
 *deeper* than the first underground layer is gated by the
 **playscript**.
 
-> **Brimley is one place.** The old code had two scenes — `mistlands`
-> (the big town map) and `village` (the well-crossroads sub-area).
-> They are being merged into a single `brimley` scene so the world
-> reads as one continuous town: walk west to find the well, east to
-> find the church, north to find the car. The "Mistlands" name is
-> retired — there was no separate Mistlands; that was always Brimley.
+> **Brimley is one place.** The old code had two scenes (`mistlands`
+> and `village`); they were merged into a single `brimley` scene so
+> the world reads as one continuous town: walk west to find the well,
+> east to find the church, north to find the car. The "Mistlands"
+> name is retired — there was no separate Mistlands; that was always
+> Brimley.
 
 ```
 SURFACE         The ARCADIA LODGE (lodge + yard + cornfields) ─▶ BRIMLEY
@@ -363,31 +363,18 @@ The reworks the new fiction forced are all shipped. What must stay true:
 ---
 
 ## 8. Still loose (design TODO)
-- **Merge `mistlands` + `village` into one `brimley` scene.** §5's
-  geography is now a single town map. The two-scene split is a code
-  artefact that the fiction has retired. Real refactor: merge maps,
-  reconcile exits + spawns, move the well into the village square of
-  the unified map.
 - **Name the principal locals.** The Sheriff, the Preacher, the
   Store-Owner, the Kid are role-tags. Locals in a small town know
   each other by name. The wax-museum quality of the cast is partly
-  this. (The Mistlands chorus is already named: Hettie, Old Pell,
+  this. (The Brimley chorus is already named: Hettie, Old Pell,
   Mrs. Calder, Royce, Garrick, the Tisdale boy.)
-- **Sheriff dialogue rework.** Bible §2 now says he's a *local*,
-  broken, not a believer, did not kill the car. Current dialogue
-  still has him talking like a cult enforcer. Rewrite to match.
-- **Cut Walter from local mouths.** Store-Owner's "Walter came
-  through years back with Mara's mother" line is no longer canon
-  (§1, §2). No local knows him.
-- **Kid's witness, retargeted.** Mara went down the well, not
-  into the corn (§2, §5). Re-write the kid's first beat
-  accordingly.
 - **The liminal-composition pass** (§10): per-scene level design —
   composed emptiness, long sightlines, uncanny repetition.
-- ~~**The curse-priest is silent in the fiction.**~~ Closed by the
-  `curse_grove` hidden fold scene (§11) -- the priest now has a
-  visible workshop and a clear thing he's doing. (Bringing him into
-  dialog or evidence beats is still open.)
+- **Curse-priest in dialog / evidence beats.** The `curse_grove`
+  hidden fold (§11) gave him a visible workshop and a clear thing
+  he's doing — but he's still mute. Wire him into a beat (a line
+  if you catch him at the brazier, or evidence pulled from the
+  workshop).
 - **Food scarcity as setting fact.** The bible now says the cult eats
   and deliveries stopped when the fold closed (§2). Surface this in
   the world: bare store shelves the player can see, gardens visible
@@ -424,15 +411,15 @@ cultists' gaze still finds you — run it on cover, timing, hides).
   retreatable up the ladder until you commit to the Depths.
 - **Playscript-gate:** Room 7 consumes the playscript to open the stair to
   the Depths (`deepstair_open`) and snaps the rope in the same act.
-- The well sprite was redesigned and repositioned in `village` (col 16,
-  row 11 — a landmark just off the road).
+- The well sprite was redesigned and repositioned in `brimley` (the
+  east village square — a landmark just off the road).
 
 **Note:** the old cult chamber (`symbol_portal_room`) has been **removed
 entirely** — its only entrance was the `haunted_house` hatch, which is now
 a nailed-shut dead end (a deliberate in-fiction seal: the well + rope is
 the sole way down). Saves are in-memory only, so there were no persistent
 saves to keep it registered for. The `diner_gas_station` spur off the
-cornfield was likewise removed (the car moved to the Mistlands); the
+cornfield was likewise removed (the car lives in the lodge yard); the
 cornfield's east end is now a closed tree wall.
 
 ---

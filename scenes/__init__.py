@@ -45,7 +45,7 @@ from .threshold_extras import (build_schoolhouse, build_graveyard,
 #   basement           -> the Arcadia cellar (the Ledger #3; the workbench)
 #   our_house_area     -> the Arcadia yard (the dead car, the woodshed)
 #   kid_house          -> kid_house (drawings on walls)
-#   village            -> town_crossroads (well + payphone)
+#   brimley            -> the unified town map (was mistlands + village)
 #   shop               -> general_store
 #   old_man_house      -> church (with belfry; Preacher)
 #   fisherman_cottage  -> sheriffs_office (Sheriff's wooden box)

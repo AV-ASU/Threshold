@@ -6,9 +6,7 @@ woods.
 The Preacher walks this road as part of his patrol route. The
 cornstalks and dense trees are perfect hide cover.
 """
-import re
 import random
-import pygame
 from constants import TILE
 from entities.decoration import Decoration
 from .base import Scene

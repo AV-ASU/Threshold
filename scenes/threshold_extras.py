@@ -3,9 +3,7 @@
   schoolhouse        -- one-room schoolhouse, empty for months.
   graveyard          -- behind the church. One readable headstone.
 """
-import math
 import random
-import pygame
 from constants import TILE
 from entities.npc import NPC
 from entities.decoration import Decoration

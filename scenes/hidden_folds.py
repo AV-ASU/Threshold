@@ -17,7 +17,6 @@ All three are in SEAMLESS_WORLD_SCENES so crossing into them carries no
 fade -- the player walks into the fold without realising they crossed
 a boundary.
 """
-import math
 import random
 from constants import TILE
 from entities.decoration import Decoration
