@@ -228,12 +228,14 @@ OPENING_STALLS = 2            # normal stalls; the one after is the fatal one
 RITE_YANK_DUR = 3.0
 RITE_BLAST_DUR = 7.0
 
-# 80% combined-darkness cap. Full-screen black overlays
-# (visibility dip, apex wash, hide wash, YK vignette) decrement
-# this budget per frame so the screen never goes opaque even when
-# every overlay fires together. Player-centred radial vignettes
-# don't participate -- their clear hole already protects the
-# player's feet.
+# ~80% combined-darkness cap. The two full-screen black washes that
+# can stack -- the apex/King wash (_draw_apex_overlay, claims twice:
+# wash + edge) and the hide wash (_draw_hidden_overlay) -- route their
+# alpha through _claim_dark, which decrements this budget per frame so
+# the screen never goes fully opaque when both fire together. The
+# player-centred radial vignettes, the scene gloom (_draw_dark) and the
+# brimley haze draw directly and don't participate -- their clear
+# centre already protects the player's feet.
 MAX_FULLSCREEN_DARK = 204
 
 # Brimley river entry tile (col 34 = east edge of the river, row 60).
@@ -2347,18 +2349,21 @@ class Game:
         self.visibility = min(1.0, self.visibility + 0.03)
         self.audio.play("breath", 0.4)
 
-    # Until the cult is provoked, passive/stillness/sprint Pursuer
-    # ramps stay dormant -- proximity holds at 0 even on long idle.
-    # Provocation = doing something the cult notices: entering the
-    # cult basement, picking up evidence, tripping a trespass camera,
-    # being captured, the flashback hitting, the Innkeeper's
-    # confrontation. Each transgression site calls _provoke_cult.
+    # A transgression the cult notices -- entering the cult basement,
+    # picking up evidence, tripping a trespass camera, being captured,
+    # the flashback, the Clerk's confrontation. Spikes visibility by
+    # `bump` (a one-off step toward being seen) and latches the
+    # `cult_provoked` save flag.
+    # NOTE: the flag is currently only a RECORD that provocation
+    # happened -- nothing reads it to gate behaviour (cultist gaze
+    # already drives visibility in CULTIST_SCENES from the start). It's
+    # left as a hook for a future "dormant until provoked" gate; the
+    # visibility bump is the live effect.
     def _provoke_cult(self, bump=0.0):
         if not self.save.flag("cult_provoked"):
             self.save.set_flag("cult_provoked", True)
         if bump > 0:
-            self.visibility = min(1.0,
-                                          self.visibility + bump)
+            self.visibility = min(1.0, self.visibility + bump)
 
     def _trigger_death(self, kind):
         """A pursuer has reached the player. Hand off to the death
