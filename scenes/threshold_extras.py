@@ -694,17 +694,36 @@ def build_cornfield_maze():
     for col in (3, 7, 11, 15):
         for y in range(1, H - 1):
             objects_l[y][col] = "C"
-    # Two horizontal break rows so the lanes connect. Each break
-    # opens the corn at every wall col on that row -- the player
-    # can swap lanes there and only there.
-    for y in (5, 11):
-        for col in (3, 7, 11, 15):
+    # Per-wall pass-throughs at DIFFERENT rows so the maze isn't a
+    # ladder of fully-aligned breaks. Each wall opens at its own
+    # set of rows; the player swaps lanes by finding the gap.
+    pass_throughs = {
+        3:  [3, 9, 14],
+        7:  [5, 11, 14],   # row 14 keeps the existing south slip
+        11: [4, 10, 15],
+        15: [6, 12],
+    }
+    for col, rows in pass_throughs.items():
+        for y in rows:
             objects_l[y][col] = "."
-    # One extra single-cell cut so the maze isn't a perfect grid:
-    # between the south spawn and the central break, opening just
-    # the col-7 wall at row 14 lets the player slip into the
-    # mid-east lane without first walking all the way north.
-    objects_l[14][7] = "."
+    # Horizontal corn-wall segments INSIDE lanes -- real dead-ends.
+    # The player walking a lane will hit these and have to back out
+    # to a pass-through. Tuned so each lane has at least one
+    # dead-end but none of them isolates an exit or the curse-grove
+    # fold tile (Z) at (5, 8).
+    dead_ends = [
+        # (row, col_start, col_end)
+        (7,  1, 2),     # lane 1 dead-end (upper)
+        (10, 4, 6),     # lane 2 dead-end (mid)
+        (6,  12, 14),   # lane 4 dead-end (upper)
+        (13, 12, 14),   # lane 4 dead-end (lower)
+        (8,  16, 18),   # lane 5 dead-end (mid)
+        (3,  16, 18),   # lane 5 dead-end (upper)
+        (14, 4, 6),     # lane 2 dead-end (lower)
+    ]
+    for row, c0, c1 in dead_ends:
+        for col in range(c0, c1 + 1):
+            objects_l[row][col] = "C"
     # Fix the south exit: clear the row-16 corn at col 11 so both
     # `!` tiles below are actually reachable. (Was blocked by the
     # lane-wall loop above.) Also clear row-1 col 9 so both north
