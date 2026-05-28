@@ -1708,7 +1708,11 @@ class Scene:
         if is_floor_solid(self.char_floor_at(x_px, y_px)): return True
         for npc in self.npcs:
             if npc is ignore or not npc.solid: continue
-            if abs(npc.x - x_px) < 12 and abs(npc.y - y_px) < 12:
+            # Wrap-aware proximity so NPC blocking still works across a
+            # fold seam (raw abs() would miss a body one tile away on
+            # the other side of the wrap).
+            if (abs(self.world_dx(x_px, npc.x)) < 12
+                    and abs(self.world_dy(y_px, npc.y)) < 12):
                 return True
         return False
 

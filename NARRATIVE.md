@@ -375,11 +375,12 @@ The reworks the new fiction forced are all shipped. What must stay true:
   he's doing — but he's still mute. Wire him into a beat (a line
   if you catch him at the brazier, or evidence pulled from the
   workshop).
-- **Food scarcity as setting fact.** The bible now says the cult eats
-  and deliveries stopped when the fold closed (§2). Surface this in
-  the world: bare store shelves the player can see, gardens visible
-  on some lots and not others, a cultist eating at the diner counter.
-  Not a player-facing mechanic — wallpaper.
+- **Food scarcity — the VISUAL pass.** The dialogue side is done
+  (Hettie: "The shelves don't empty anymore... No deliveries."; the
+  Store-Owner: "Shelves are bare. Till's been empty since the spring").
+  What's left is the world art: visibly bare store shelves, gardens on
+  some lots and not others, a cultist eating at a counter. Wallpaper,
+  not a mechanic.
 
 ---
 
@@ -571,7 +572,7 @@ stumbles into the fold without realising they crossed a boundary.
 
 | Scene key | Where it lives | Access | What it shows |
 |---|---|---|---|
-| `curse_grove` | new scene | `cornfield_maze` tile (6, 10), walked WEST | The curse-priest at his fire pit -- effigies in a circle (one per local being cursed), polaroid board of faces, hanging figures at the corners. Closes the bible §8 TODO: the priest finally has a home and a thing he's doing. |
+| `curse_grove` | new scene | `cornfield_maze` tile (6, 10), walked WEST | The curse-priest at his fire pit -- effigies in a circle (one per local being cursed), polaroid board of faces, hanging figures at the corners. Gives the priest a home and a visible thing he's doing (§8) — but he is still mute here; wiring him into dialog / an evidence drop is **still open** (§8). |
 | `lodge_arrival` | new scene | `our_house_area` tile (5, 12), walked NORTH | The Lodge porch at the moment Mara walked up to it. Mara with a suitcase, the Clerk smiling in the doorway. Neither sees the PI. Makes the bible's "she chose this" concrete -- the player *witnesses* the choice. |
 | `highway_walk` | new scene | `country_lane` tile (28, 6), walked EAST | A stretch of empty highway. Two figures walk east, their backs to the PI -- the locals who walked out to flag down help. The road wraps; they stay ahead; nobody arrives anywhere. |
 | `husk_grove` | new scene | `cornfield_maze` tile (21, 8), walked EAST | A small clearing where the cult assembles its corn-dolls. Two altars used as workbenches, unfinished dolls scattered, a stalk-marker, a candle still lit. No NPC -- the work is here, the worker isn't. |

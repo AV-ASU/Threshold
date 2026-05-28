@@ -408,10 +408,10 @@ def house_on_enter(game, scene):
         host.dialogue_fn = None
         scene.add_npc(host)
     else:
-        # Daytime: the Clerk is at the table by the fireplace on
-        # the east side of the living room. He wanders a small
-        # circuit (kitchen <-> living room) so the player sees him
-        # moving when they pass through.
+        # The Clerk is at the table by the fireplace on the east side
+        # of the living room. He wanders a small circuit (kitchen <->
+        # living room) so the player sees him moving when they pass
+        # through.
         nx = 13 * TILE + 16
         ny = 7 * TILE + 16
         host = NPC(nx, ny, "Clerk", "old",

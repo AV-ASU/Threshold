@@ -389,10 +389,18 @@ class NPC:
         dy = scene.world_dy(self.y, ty)
         d = math.hypot(dx, dy)
         if d < 1: return
-        nx = self.x + (dx / d) * self.speed * 60 * dt
-        ny = self.y + (dy / d) * self.speed * 60 * dt
-        if not scene.is_solid_at(nx, ny, ignore=self):
-            self.x = nx; self.y = ny
+        step_x = (dx / d) * self.speed * 60 * dt
+        step_y = (dy / d) * self.speed * 60 * dt
+        # Per-axis slide: if the full diagonal is blocked, still move
+        # along whichever axis is clear so the chaser hugs walls and
+        # corners instead of freezing dead against them (matches the
+        # Enemy cult-step behaviour).
+        moved = False
+        if not scene.is_solid_at(self.x + step_x, self.y, ignore=self):
+            self.x += step_x; moved = True
+        if not scene.is_solid_at(self.x, self.y + step_y, ignore=self):
+            self.y += step_y; moved = True
+        if moved:
             self.facing = (dx / d, dy / d)
         # Keep coords in the canonical wrapped range.
         from constants import TILE as _T

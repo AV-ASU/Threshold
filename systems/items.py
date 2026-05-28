@@ -1,9 +1,11 @@
 """Item definitions and inventory.
 
-Saves are in-memory only (single session, no disk), so item keys are NOT
-load-bearing across runs -- unused items get deleted outright rather than
-kept as reskins. Keys only need to match the code that references them
-within a run.
+Saves are in-memory only (single session, no disk), so there is no
+save-migration concern across runs -- a cut item can be deleted outright
+rather than kept as a reskin for old saves. WITHIN the codebase, though,
+the surviving item keys ARE load-bearing (Bible §7): dialogue gates and
+scene logic reference them by name, so a key may not be renamed without
+updating every reference.
 
 The Inventory class is unchanged.
 """

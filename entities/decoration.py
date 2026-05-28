@@ -144,6 +144,52 @@ class Decoration:
     def _draw_unknown(self, surf, x, y):
         pygame.draw.rect(surf, (255, 0, 255), (x - 4, y - 4, 8, 8))
 
+    def _draw_doll(self, surf, x, y):
+        """A small bound effigy -- cloth body, twine waist, stick arms,
+        two dark X-marks for eyes. The cult's watching-charm, set on the
+        charred edges around the cauldron clearing. ~14px tall."""
+        # Drop shadow.
+        sh = pygame.Surface((12, 5), pygame.SRCALPHA)
+        pygame.draw.ellipse(sh, (0, 0, 0, 90), (0, 0, 12, 5))
+        surf.blit(sh, (x - 6, y + 5))
+        cloth = (122, 96, 70)
+        cloth_dk = (84, 64, 46)
+        twine = (70, 48, 28)
+        # Body wedge (skirt wider at the base).
+        pygame.draw.polygon(surf, cloth_dk,
+                            [(x - 4, y + 5), (x + 4, y + 5),
+                             (x + 3, y - 4), (x - 3, y - 4)])
+        pygame.draw.polygon(surf, cloth,
+                            [(x - 3, y + 4), (x + 3, y + 4),
+                             (x + 2, y - 3), (x - 2, y - 3)])
+        # Stick arms + twine waist.
+        pygame.draw.line(surf, twine, (x - 3, y - 1), (x - 6, y + 1), 1)
+        pygame.draw.line(surf, twine, (x + 3, y - 1), (x + 6, y + 1), 1)
+        pygame.draw.line(surf, twine, (x - 3, y + 1), (x + 3, y + 1), 1)
+        # Head + two tiny X eyes.
+        pygame.draw.circle(surf, cloth, (x, y - 6), 3)
+        pygame.draw.circle(surf, cloth_dk, (x, y - 6), 3, 1)
+        for ex in (x - 1, x + 2):
+            pygame.draw.line(surf, (20, 16, 14), (ex - 1, y - 7), (ex, y - 6), 1)
+            pygame.draw.line(surf, (20, 16, 14), (ex - 1, y - 6), (ex, y - 7), 1)
+
+    def _draw_rope(self, surf, x, y):
+        """A hanging cord -- a bell-pull / hoist line. A slightly kinked
+        vertical rope with a frayed knot at the bottom; hangs from the
+        prop placed above it. ~22px tall."""
+        cord = (132, 110, 70)
+        cord_dk = (92, 74, 44)
+        top, bot = y - 11, y + 11
+        midx = x + 1
+        pygame.draw.line(surf, cord_dk, (x, top), (midx, y), 2)
+        pygame.draw.line(surf, cord_dk, (midx, y), (x, bot), 2)
+        pygame.draw.line(surf, cord, (x, top), (midx, y), 1)
+        pygame.draw.line(surf, cord, (midx, y), (x, bot), 1)
+        # Frayed knot.
+        pygame.draw.circle(surf, cord_dk, (x, bot), 2)
+        pygame.draw.line(surf, cord, (x - 2, bot + 2), (x, bot), 1)
+        pygame.draw.line(surf, cord, (x + 2, bot + 3), (x, bot), 1)
+
     # ---- Sized darkwood furniture (drawn centred at x,y; pixel size
     # via w/h kwargs so a piece can span several tiles or sit shy of
     # one, breaking the tile grid). Collision is handled separately by

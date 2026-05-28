@@ -117,7 +117,7 @@ def build_curse_grove():
     # behavior stays in CURSER_SCENES where the canon already places
     # it.
     priest = NPC(7 * TILE + 16, 6 * TILE + 16, "Curse-Priest",
-                 "robed", movement="idle", radius=24)
+                 "curse_priest", movement="idle", radius=24)
     sc.add_npc(priest)
     # Hide spots so a player who stumbles in can retreat in cover.
     sc.hide_spots = [

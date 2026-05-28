@@ -988,7 +988,10 @@ def build_cornfield_maze():
         game.cam_x = p.x - screen_dx
         game.cam_y = p.y - screen_dy
         scene._reloc_armed = False
-    sc.on_update_fn = _maze_on_update
+    # NOTE: on_update_fn is assigned ONCE, further down, to a combined
+    # handler that runs both this relocation logic and the corn-rustle
+    # ambient. Assigning it here would be overwritten by that later
+    # assignment (it was -- the relocation feature was silently dead).
 
     # Scarecrow at the centre dead-end. Hanging-figure deco is
     # close enough to a scarecrow silhouette -- placed just south
@@ -1025,6 +1028,11 @@ def build_cornfield_maze():
     sc.on_enter_fn = _cornfield_maze_on_enter
 
     def _cornfield_maze_on_update(game, scene, dt):
+        # In-maze direction-fold relocations ('I'/'Q' tiles) first --
+        # this used to live in its own on_update_fn that this handler
+        # silently overwrote, so the feature never ran.
+        _maze_on_update(game, scene, dt)
+        # Corn-rustle ambient.
         scene._rustle_t = getattr(scene, "_rustle_t", 3.0) - dt
         if scene._rustle_t <= 0:
             scene._rustle_t = random.uniform(2.5, 6.0)

@@ -354,7 +354,7 @@ def build_kid_house():
     if pos:
         tx, ty = pos
         sc.add_npc(NPC(tx * TILE + 16, ty * TILE + 16,
-                       "Village Kid", "kid", voice="blip_kid",
+                       "Boy", "kid", voice="blip_kid",
                        portrait="kid",
                        dialogue_fn=kid_dialogue, movement="idle"))
     # Sized darkwood furniture: a 2x2 kid's bed, a long bookshelf, a

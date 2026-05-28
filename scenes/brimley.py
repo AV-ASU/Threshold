@@ -474,10 +474,8 @@ def build_brimley():
     sc.add_exit("B", "schoolhouse",       "from_brimley")  # Schoolhouse
     sc.add_exit("R", "gravel_road_north", "from_brimley")  # North gravel road
     sc.add_exit("M", "cornfield_maze",    "from_brimley_south")  # South: macro-loop
-    # The fold-loop exit -- walking off the west edge of the cross-town
-    # road at row 24 wraps the player onto the east end of the same
-    # road. Same scene, opposite edge.
-    sc.add_exit("L", "brimley", "from_west_wrap")
+    # (The east-west road wrap is handled by the engine via wrap_x --
+    # no exit tile, no spawn. See the gaps carved at row 24 below.)
     cauldron_tx, cauldron_ty = 15, 80
     objects_list = [list(r) for r in objects]
     objects_list[cauldron_ty][cauldron_tx] = "j"
@@ -509,8 +507,10 @@ def build_brimley():
     objects_list[0][96] = "R"
     # The fold road -- gaps in both tree walls at row 24 so the road
     # can be walked across the whole map east-to-west. There's no exit
-    # tile here; the wrap is handled in _brimley_on_update by direct
-    # teleport so the player never sees a scene-fade.
+    # tile and no fade: walking off the edge is caught by the engine's
+    # wrap_x (player coord + camera shift) so the road simply continues
+    # onto the opposite edge. Both edges open at the same row, so the
+    # wrap lands on road, not a tree.
     objects_list[24][0] = "."
     objects_list[24][99] = "."
     # South exit to cornfield_maze (the bottom of the loop). The road
@@ -540,9 +540,6 @@ def build_brimley():
     sc.set_spawn("from_woodshed", 91, 15)
     # The north passage to the gravel road (cult-priest territory).
     sc.set_spawn("from_gravel_road", 96, 2)
-    # The west-edge fold wrap: the player walked off the road at the
-    # west edge; they reappear on the east end of the same road.
-    sc.set_spawn("from_west_wrap", 98, 24)
     sc.set_spawn("from_mist_house", 7, church_bot + 1)
     sc.set_spawn("from_alter", 1, 85)
     sc.set_spawn("from_river_crossing", 50, 1)
@@ -683,14 +680,13 @@ def build_brimley():
     _resident(68, 71, "the Tisdale boy", "kid", [
         "I'm not allowed past the third row. I counted to a hundred and then I counted again.",
         "There's a lady in yellow at the back of the field. She waves. You shouldn't wave back.",
-        "[c=dim]Mara waved back.[/c]",
+        "[c=dim]Somebody waved back, last spring. They don't live here anymore.[/c]",
     ], voice="blip_kid", radius=40, movement="idle")
     # Garrick -- the old man at the well. Town centre, watching
-    # everyone come and go. He gives you the warning about the
-    # sheriff because he sees everyone the sheriff sees.
+    # everyone come and go. The law is hollow now; he says so plainly.
     _resident(91, 12, "Garrick", "old", [
         "You're asking questions. Folks who ask questions go quiet. Real quiet.",
-        "The Sheriff'll come at you friendly. Don't let it talk you into staying for supper.",
+        "The Sheriff'll tell you to leave. He knows you can't. He can't either.",
         "Stay on the roads. People who go off the roads come out wrong-side.",
         "[c=dim]Go on home, son. ...Oh. Right. None of us can.[/c]",
     ])

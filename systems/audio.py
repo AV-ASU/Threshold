@@ -1,10 +1,8 @@
 """Audio playback + procedurally generated SFX/music library."""
 import time
-import os
 import math
 import random
 import pygame
-from constants import HERE
 
 class Audio:                        #Starting screen needs music, something simple
     def __init__(self):

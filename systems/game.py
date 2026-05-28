@@ -331,8 +331,6 @@ class Game:
         # player is still inside a CREEPY_SCENES key (or anywhere after
         # world_emptied).
         self.stillness_t = 0.0
-        self._next_heartbeat_t = 0.0
-        self._heartbeat_count = 0
         # Delayed-audio queue: list of [seconds_left, sfx_name, volume].
         # Used by the void/basement footstep "out of body" effect that
         # fires the step SFX a fraction of a second after the visual
@@ -377,7 +375,6 @@ class Game:
         # only have access to `scene` in update()) can read them
         # without a back-reference to the Game. Set in the step
         # block + load_scene_now respectively.
-        self._last_pos = (0.0, 0.0)  # for "standing still" detection
         self._chant_t = 0.0          # depths cult-chant ambient timer
         self._breath_t = 0.0         # depths cult-breath ambient timer
         # ---- THRESHOLD: the King in Yellow ----
@@ -549,7 +546,6 @@ class Game:
         # Visibility meter + the King in Yellow
         self.visibility = 0.0
         self._vis_floor = 0.0
-        self._last_pos = (0.0, 0.0)
         self._chant_t = 0.0
         self._breath_t = 0.0
         self._heartbeat_t = 0.0
@@ -564,10 +560,14 @@ class Game:
         self._cult_topup_t = 0.0
         self.flashlight_on = False
         self._void_sting_played = False
+        # The opening "door won't open the first time" beat is a
+        # once-per-run latch. The Game instance is reused across
+        # quit-to-title, so without this reset a second New Game in the
+        # same session skips the scripted recoil. (Pairs with the save
+        # flag `bedroom_door_passed`, which the fresh save clears.)
+        self._bedroom_door_stuck_done = False
         # Stillness + heartbeat
         self.stillness_t = 0.0
-        self._next_heartbeat_t = 0.0
-        self._heartbeat_count = 0
         self._delayed_audio = []
         self._creepy_step_count = 0
         # Flashback / ending state

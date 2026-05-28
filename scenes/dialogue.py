@@ -231,11 +231,13 @@ def shopkeep_dialogue(game, npc):
 # ---- The Sheriff (legacy key: fisherman_dialogue) ----
 
 def fisherman_dialogue(game, npc):
-    """The Sheriff -- the law that keeps everyone in (NARRATIVE §2). The
-    trap's enforcer: he killed your car, and his patrols are surveillance.
-    Friendly small-town lawman with a cold floor under it; he never admits
-    the cult, only ever 'helps you settle in.' Escalates over visits from
-    welcome -> the car -> the outsider rule -> a closed door."""
+    """The Sheriff -- a LOCAL, born here, broken (NARRATIVE §2). Not a
+    believer, not a cultist. He did NOT kill the car -- the fold did;
+    he's watched it happen before. He tells outsiders to leave out of
+    muscle memory, knowing they can't and he can't either. A witness who
+    can't help; the badge is just clothing now. Escalates over visits:
+    weary warning -> the car (not his doing) -> the town's history ->
+    the preacher he couldn't save."""
     save = game.save
     _cult_tell(game, "sheriff")
     n = save.arg("fisher_count", 0) + 1
