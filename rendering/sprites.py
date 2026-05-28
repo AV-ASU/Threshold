@@ -1243,6 +1243,34 @@ def _cold_fire_pit(surf, cx, cy, R, t):
         col = (150, 214, 184) if k % 2 else (206, 204, 130)
         pygame.draw.line(surf, col, (int(bx), int(by)), (int(tx), int(ty)),
                          max(1, int(R * 0.02)))
+    # WRITHING FORMS in the deep -- the taken glimpsed in the cold fire,
+    # distorted faces winding through the shaft.
+    for k in range(6):
+        a = k * 1.4 + t * 0.45
+        rad = R * (0.45 + 0.18 * math.sin(t * 0.8 + k * 1.7))
+        fx = cx + math.cos(a) * rad
+        fy = cy + math.sin(a) * rad * 0.86
+        rs = max(2, int(R * (0.05 + 0.03 * _frand(k * 3))))
+        pygame.draw.ellipse(surf, (52, 92, 78),
+                            (int(fx - rs), int(fy - int(rs * 1.1)), rs * 2, int(rs * 2.2)))
+        pygame.draw.circle(surf, (4, 6, 7), (int(fx - rs * 0.32), int(fy - rs * 0.2)),
+                           max(1, int(rs * 0.25)))
+        pygame.draw.circle(surf, (4, 6, 7), (int(fx + rs * 0.32), int(fy - rs * 0.2)),
+                           max(1, int(rs * 0.25)))
+        # a thin slack mouth, sometimes open
+        pygame.draw.line(surf, (4, 6, 7),
+                         (int(fx - rs * 0.3), int(fy + rs * 0.45)),
+                         (int(fx + rs * 0.3), int(fy + rs * 0.45)),
+                         max(1, int(rs * 0.2)))
+    # WET SWIRLING streaks -- bright cold-fire lines winding around the shaft,
+    # so the flame reads as flowing/wet, not a smooth gradient.
+    for k in range(7):
+        a0 = k * math.tau / 7 + t * 0.9
+        pts = [(int(cx + math.cos(a0 + s * 0.32) * R * (0.85 - s * 0.13)),
+                int(cy + math.sin(a0 + s * 0.32) * R * (0.85 - s * 0.13) * 0.88))
+               for s in range(6)]
+        col = (188, 220, 188) if k % 2 else (220, 212, 140)
+        pygame.draw.lines(surf, col, False, pts, max(1, int(R * 0.012)))
 
 
 def draw_king_death(surf, t):
@@ -1333,10 +1361,59 @@ def draw_king_death(surf, t):
         red.fill((230, 70, 50))
         face2.blit(red, (0, 0), special_flags=pygame.BLEND_RGB_MULT)
         scene.blit(face2, (0, 0))                          # revealed AS the mask parts
-        for sgn in (-1, 1):                          # small hot pupils -- keep the scream readable
+
+        # VEINS across the raw flesh -- thin wavy dark-red lines, asymmetric.
+        for vi in range(9):
+            a = vi * 0.82 + (_frand(vi * 3) - 0.5) * 0.4
+            x0 = cx + (_frand(vi * 5) - 0.5) * fr2 * 0.6
+            y0 = cy + (_frand(vi * 7) - 0.5) * fr2 * 0.5
+            pts = [(x0, y0)]
+            for s in range(5):
+                a2 = a + math.sin(s * 0.8 + vi) * 0.6
+                x0 += math.cos(a2) * fr2 * 0.07
+                y0 += math.sin(a2) * fr2 * 0.07
+                pts.append((x0, y0))
+            pygame.draw.lines(scene, (94, 18, 14), False,
+                              [(int(x), int(y)) for x, y in pts], 1)
+        # BLEEDING TEARS from the eye sockets -- thick black runs sliding down.
+        for sgn in (-1, 1):
+            ex = cx + sgn * int(fr2 * 0.42)
+            ey = cy - int(fr2 * 0.12)
+            dlen = int(fr2 * (0.42 + 0.08 * math.sin(t * 3 + sgn)))
+            pygame.draw.line(scene, (8, 6, 6),
+                             (int(ex), int(ey + fr2 * 0.04)),
+                             (int(ex + sgn * fr2 * 0.04), int(ey + fr2 * 0.04) + dlen),
+                             max(2, int(fr2 * 0.03)))
+        # small hot pupils, slightly washed by the tears
+        for sgn in (-1, 1):
             ex = cx + sgn * int(fr2 * 0.42)
             ey = cy - int(fr2 * 0.12)
             _yk_radial(scene, ex, ey, int(fr2 * 0.06), _YK_HOT, int(190 * second))
+        # BONE TEETH ringing the screaming maw -- pale wedges pointing inward.
+        mw = fr2 * 0.32
+        mh = fr2 * 0.42
+        mxx, myy = cx, int(cy + fr2 * 0.55)
+        nt = 12
+        for k in range(nt):
+            ang = math.pi + (k + 0.5) * (math.tau / nt)
+            tx = mxx + math.cos(ang) * mw * 0.92
+            ty = myy + math.sin(ang) * mh * 0.92
+            dx, dy = (mxx - tx), (myy - ty)
+            tl = math.hypot(dx, dy) or 1
+            tip = (int(tx + dx / tl * mh * 0.18), int(ty + dy / tl * mh * 0.18))
+            px, py = -dy / tl, dx / tl
+            tb1 = (int(tx + px * mh * 0.06), int(ty + py * mh * 0.06))
+            tb2 = (int(tx - px * mh * 0.06), int(ty - py * mh * 0.06))
+            pygame.draw.polygon(scene, (208, 196, 168), [tb1, tip, tb2])
+        # WET DROOL strings sagging from the maw -- thin black strands, swaying.
+        for k in range(3):
+            dx0 = mxx + (k - 1) * mw * 0.5
+            dy0 = myy + mh * 0.55
+            sag = fr2 * (0.18 + 0.05 * math.sin(t * 2.2 + k * 1.7))
+            mid = (int(dx0 + (k - 1) * 3), int(dy0 + sag * 0.5))
+            end = (int(dx0 + (k - 1) * 5), int(dy0 + sag))
+            pygame.draw.lines(scene, (10, 7, 8), False,
+                              [(int(dx0), int(dy0)), mid, end], 2)
 
     # THE SNAP -- a hard punctuation when the mask explodes open: blood spatter
     # flying out from the centre, and a brief black-and-red flash.
@@ -1357,6 +1434,32 @@ def draw_king_death(surf, t):
     mvis = min(1.0, 0.5 + 0.5 * kindle) * (1.0 - 0.85 * second)  # fades as it opens away
     _yk_shatter_mask(scene, cx, cy, int(fr), mvis,
                      "wail", crack, t, int(fr), aim=math.pi / 2, arms=False)
+    # WET SHEEN on the pallid mask -- a thin highlight arc, the bone slick with
+    # His blaze (only while the mask is still mostly intact).
+    if mvis > 0.55 and crack < 0.25:
+        sh = pygame.Surface((w, h), pygame.SRCALPHA)
+        pygame.draw.arc(sh, (255, 248, 222, int(72 * mvis)),
+                        (cx - int(fr * 0.7), cy - int(fr * 0.96),
+                         int(fr * 1.4), int(fr * 1.92)),
+                        math.pi * 0.92, math.pi * 1.20, max(1, int(fr * 0.025)))
+        scene.blit(sh, (0, 0))
+    # FRACTURE LINES spreading from the centre during the linger -- thin gold
+    # seams of His blaze bleeding through, accumulating just before the snap.
+    if 0.02 < linger and t < 2.0:
+        n_cracks = 2 + int(7 * linger)
+        for c in range(n_cracks):
+            a = c * 1.27 + 0.4 + _frand(c * 5) * 0.3
+            x0, y0 = float(cx), float(cy)
+            pts = [(x0, y0)]
+            for s in range(5):
+                step = fr * 0.16 * linger
+                a2 = a + (_frand(c * 11 + s) - 0.5) * 0.7
+                x0 += math.cos(a2) * step
+                y0 += math.sin(a2) * step
+                pts.append((x0, y0))
+            ip = [(int(x), int(y)) for x, y in pts]
+            pygame.draw.lines(scene, (30, 22, 14), False, ip, 2)
+            pygame.draw.lines(scene, (236, 200, 110), False, ip, 1)
     if second <= 0.05:
         for sgn in (-1, 1):                          # the pallid mask's gaze (until it opens)
             ex = cx + sgn * int(fr * 0.42)
@@ -1406,6 +1509,19 @@ def draw_king_death(surf, t):
         fl = pygame.Surface((w, h), pygame.SRCALPHA)
         fl.fill((30, 6, 6, int(230 * snap)))
         surf.blit(fl, (0, 0))
+
+    # SUBLIMINAL FLASH -- for a couple of frames at the snap, a giant distorted
+    # screaming face stamps over everything. The eye barely catches it; the
+    # animal brain does.
+    if 1.985 < t < 2.045:
+        big = pygame.Surface((w, h), pygame.SRCALPHA)
+        fr3 = int(min(w, h) * 0.46)
+        _yk_face(big, cx, cy, fr3, "scream", True, True)
+        rd = pygame.Surface((w, h))
+        rd.fill((220, 40, 26))
+        big.blit(rd, (0, 0), special_flags=pygame.BLEND_RGB_MULT)
+        big = pygame.transform.smoothscale(big, (int(w * 1.18), int(h * 0.82)))
+        surf.blit(big, ((w - big.get_width()) // 2, (h - big.get_height()) // 2))
 
     # Down the pit -- a cold-fire flicker floods as you are hauled in, then the
     # depth swallows it toward dark (you are inside Carcosa now).
