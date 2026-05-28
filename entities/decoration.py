@@ -84,6 +84,7 @@ _GROUNDED_DECOS = frozenset((
     "well", "creepy_tree", "pickup_truck", "player_car", "cauldron",
     "gas_pump", "payphone", "pedestal", "pillar", "wheelbarrow",
     "headstone", "brazier", "town_sign", "flagpole", "bush",
+    "corn_doll", "corn_altar", "stalk_marker",
 ))
 
 # Kinds that must NOT use the generic upscale path (they draw absolute
@@ -824,6 +825,128 @@ class Decoration:
             oy = rng.randint(-7, -3)
             pygame.draw.ellipse(surf, leaf_lit,
                                 (x + ox - 4, y + oy - 2, 8, 4))
+
+    def _draw_corn_doll(self, surf, x, y):
+        """A small corn-husk effigy -- bundled stalks tied at the
+        waist with twine, vaguely humanoid. The cult's curse-work
+        tool. Specific to the cornfield maze; doesn't appear
+        anywhere else. ~16px tall on the ground."""
+        rng = random.Random(self.seed)
+        # Drop shadow.
+        sh = pygame.Surface((14, 6), pygame.SRCALPHA)
+        pygame.draw.ellipse(sh, (0, 0, 0, 90), (0, 0, 14, 6))
+        surf.blit(sh, (x - 7, y + 4))
+        husk = (162, 138, 84)
+        husk_dark = (108, 86, 48)
+        twine = (74, 50, 28)
+        # Body: a wedge of husks, wider at the bottom (skirt).
+        pygame.draw.polygon(surf, husk_dark, [
+            (x - 5, y + 4), (x + 5, y + 4),
+            (x + 3, y - 6), (x - 3, y - 6)])
+        pygame.draw.polygon(surf, husk, [
+            (x - 4, y + 4), (x + 4, y + 4),
+            (x + 2, y - 5), (x - 2, y - 5)])
+        # Husk strands at the base
+        for i in (-3, 0, 3):
+            pygame.draw.line(surf, husk_dark,
+                             (x + i, y + 4), (x + i + rng.randint(-1, 1),
+                                              y + 8), 1)
+        # Waist twine
+        pygame.draw.line(surf, twine,
+                         (x - 4, y), (x + 4, y), 1)
+        # Head -- a tied bundle, small.
+        pygame.draw.circle(surf, husk_dark, (x, y - 8), 3)
+        pygame.draw.circle(surf, husk, (x - 1, y - 9), 2)
+        # Crooked stick arms
+        pygame.draw.line(surf, husk_dark,
+                         (x - 4, y - 3), (x - 7, y), 1)
+        pygame.draw.line(surf, husk_dark,
+                         (x + 4, y - 3), (x + 7, y - 2), 1)
+        # Tiny dark eye -- not always present.
+        if rng.random() < 0.6:
+            ex = x + rng.choice((-1, 1))
+            pygame.draw.line(surf, (10, 8, 4),
+                             (ex, y - 8), (ex, y - 7), 1)
+
+    def _draw_corn_altar(self, surf, x, y):
+        """A small ritual mound -- cobs stacked on a base of crossed
+        husk-stalks, with a half-burned candle stub on top. The
+        cult's offering. Maze-specific."""
+        rng = random.Random(self.seed)
+        # Drop shadow
+        sh = pygame.Surface((22, 8), pygame.SRCALPHA)
+        pygame.draw.ellipse(sh, (0, 0, 0, 100), (0, 0, 22, 8))
+        surf.blit(sh, (x - 11, y + 4))
+        stalk = (96, 80, 44)
+        stalk_lit = (130, 110, 64)
+        cob = (218, 192, 88)
+        cob_dark = (160, 130, 56)
+        kernel = (250, 226, 130)
+        # Two crossed stalks at the base
+        pygame.draw.line(surf, stalk, (x - 9, y + 6), (x + 9, y - 2), 2)
+        pygame.draw.line(surf, stalk, (x + 9, y + 6), (x - 9, y - 2), 2)
+        pygame.draw.line(surf, stalk_lit, (x - 9, y + 5),
+                         (x + 9, y - 3), 1)
+        # Three cobs stacked
+        for i, (ox, oy, rx, ry) in enumerate(
+                [(-3, 0, 4, 2), (3, -1, 4, 2), (0, -4, 4, 2)]):
+            pygame.draw.ellipse(surf, cob_dark,
+                                (x + ox - rx, y + oy - ry,
+                                 rx * 2, ry * 2))
+            pygame.draw.ellipse(surf, cob,
+                                (x + ox - rx + 1, y + oy - ry,
+                                 rx * 2 - 2, ry * 2 - 1))
+            # Kernel highlights
+            for kx in (-1, 1):
+                pygame.draw.line(surf, kernel,
+                                 (x + ox + kx, y + oy - 1),
+                                 (x + ox + kx, y + oy), 1)
+        # Candle stub on top with a tiny flame
+        pygame.draw.rect(surf, (208, 200, 178),
+                         (x - 1, y - 8, 2, 4))
+        # Flame
+        flick = math.sin(self.t * 6 + self.seed) * 0.5
+        pygame.draw.line(surf, (240, 184, 80),
+                         (x, y - 9), (x + int(flick), y - 11), 1)
+
+    def _draw_stalk_marker(self, surf, x, y):
+        """A single corn stalk standing taller than the rest with a
+        strip of cloth tied around it and a small dark token hung
+        from the cloth. The cult marks the next to be taken. Maze-
+        specific. Sways slightly."""
+        rng = random.Random(self.seed)
+        sway = math.sin(self.t * 1.4 + self.seed * 0.13) * 1.6
+        # Drop shadow
+        sh = pygame.Surface((10, 4), pygame.SRCALPHA)
+        pygame.draw.ellipse(sh, (0, 0, 0, 80), (0, 0, 10, 4))
+        surf.blit(sh, (x - 5, y + 4))
+        # Tall stalk
+        stalk = (74, 102, 50)
+        stalk_dark = (44, 64, 30)
+        tip_x = x + int(sway)
+        pygame.draw.line(surf, stalk_dark, (x, y + 4), (tip_x, y - 18), 2)
+        pygame.draw.line(surf, stalk, (x - 1, y + 4),
+                         (tip_x - 1, y - 18), 1)
+        # A frayed husk leaf at mid-height
+        leaf_x = x + int(sway * 0.5) - 4
+        leaf_y = y - 6
+        pygame.draw.line(surf, stalk_dark, (x - 1, y - 4),
+                         (leaf_x, leaf_y), 1)
+        pygame.draw.line(surf, stalk_dark, (x + 1, y - 4),
+                         (leaf_x + 8, leaf_y - 1), 1)
+        # Cloth strip around the upper third, sun-bleached red
+        cloth = (164, 80, 60)
+        cloth_dark = (100, 44, 36)
+        pygame.draw.rect(surf, cloth_dark,
+                         (tip_x - 4, y - 14, 8, 4))
+        pygame.draw.rect(surf, cloth,
+                         (tip_x - 3, y - 14, 7, 3))
+        # A small dark token dangling from the cloth -- could be a
+        # locket, a key, a tooth. Player fills in.
+        pygame.draw.line(surf, (40, 32, 24),
+                         (tip_x + 1, y - 10), (tip_x + 1, y - 6), 1)
+        pygame.draw.circle(surf, (32, 26, 20),
+                           (tip_x + 1, y - 5), 1)
 
     def _draw_tall_grass(self, surf, x, y):
         """Knee-high grass clump -- decoration only, no gameplay effect.

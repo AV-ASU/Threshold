@@ -658,10 +658,10 @@ def build_cornfield_maze():
     into the brimley -- the maze led you somewhere wrong.
     Lanes are dotted with `:` corn patches: walk into one and
     you're hidden, but only as long as you stay in the patch."""
-    W, H = 20, 18
-    # Floor: dirt by default. Specific tiles flipped to `:` (dense
-    # corn cover) further down so the maze has tactical hide
-    # patches mixed into the lanes.
+    # Larger maze (was 20x18) -- more room for the new dead-end pocket
+    # clusters and the secret pass-through. Wall cols 4, 9, 14, 19;
+    # lanes between are 3-4 tiles wide (1-3, 5-8, 10-13, 15-18, 20-22).
+    W, H = 24, 22
     floor_rows_l = [list("d" * W) for _ in range(H)]
     objects_l = []
     for y in range(H):
@@ -670,66 +670,66 @@ def build_cornfield_maze():
             row[0] = "C"
             row[W - 1] = "C"
         objects_l.append(row)
-    # 2-wide passage south back to the forest_path. Two adjacent
-    # `!` tiles in the south corn wall so the player walks straight
-    # out through a footpath worn through the rows. Row 16 col 11
-    # is cleared from the lane-wall pass below so the second exit
-    # tile is actually reachable (was a one-tile exit before).
-    objects_l[H - 1][10] = "!"
+    # South exit (back to forest_path) in lane 3 (cols 11-12).
     objects_l[H - 1][11] = "!"
-    # 2-wide passage north into the brimley. The maze has a
-    # second exit; the player who pushes through the field comes
-    # out into the fog instead of back to the road. Frees the
-    # cornfield from being a dead-end detour.
-    objects_l[0][9]  = "^"
-    objects_l[0][10] = "^"
-    # The fold-grove access. Tile (5, 8) is on a regular lane between
-    # corn walls -- looks like nothing. Walking WEST across it opens
-    # the curse-priest's grove; from any other angle it's just floor.
-    objects_l[8][5] = "Z"
-    # Real cornfield rows: corn walls at cols 3, 7, 11, 15 running
-    # N-S. Lanes between are 3 tiles wide (cols 1-2, 4-6, 8-10,
-    # 12-14, 16-18). The player loses sightline immediately --
-    # over the stalks there is only sky.
-    for col in (3, 7, 11, 15):
+    objects_l[H - 1][12] = "!"
+    # North exit (into brimley) in lane 3 (cols 11-12).
+    objects_l[0][11] = "^"
+    objects_l[0][12] = "^"
+    # The fold-grove access -- a regular-looking lane tile in lane 2.
+    # Walking WEST across it opens the curse-priest's grove.
+    objects_l[10][6] = "Z"
+    # Internal corn walls at cols 4, 9, 14, 19 running N-S. Lanes
+    # between: 1-3, 5-8, 10-13, 15-18, 20-22. The player loses
+    # sightline immediately -- over the stalks there is only sky.
+    WALL_COLS = (4, 9, 14, 19)
+    for col in WALL_COLS:
         for y in range(1, H - 1):
             objects_l[y][col] = "C"
     # Per-wall pass-throughs at DIFFERENT rows so the maze isn't a
     # ladder of fully-aligned breaks. Each wall opens at its own
     # set of rows; the player swaps lanes by finding the gap.
     pass_throughs = {
-        3:  [3, 9, 14],
-        7:  [5, 11, 14],   # row 14 keeps the existing south slip
-        11: [4, 10, 15],
-        15: [6, 12],
+        4:  [3, 9, 15, 19],
+        9:  [5, 12, 17, 20],
+        14: [4, 11, 16, 20],
+        19: [6, 13, 18],
     }
     for col, rows in pass_throughs.items():
         for y in rows:
             objects_l[y][col] = "."
     # Horizontal corn-wall segments INSIDE lanes -- real dead-ends.
-    # The player walking a lane will hit these and have to back out
-    # to a pass-through. Tuned so each lane has at least one
-    # dead-end but none of them isolates an exit or the curse-grove
-    # fold tile (Z) at (5, 8).
+    # The player walking a lane hits these and has to back out to a
+    # pass-through. Layout tuned so each cluster pocket is reachable
+    # via exactly one route + the wrap.
     dead_ends = [
         # (row, col_start, col_end)
-        (7,  1, 2),     # lane 1 dead-end (upper)
-        (10, 4, 6),     # lane 2 dead-end (mid)
-        (6,  12, 14),   # lane 4 dead-end (upper)
-        (13, 12, 14),   # lane 4 dead-end (lower)
-        (8,  16, 18),   # lane 5 dead-end (mid)
-        (3,  16, 18),   # lane 5 dead-end (upper)
-        (14, 4, 6),     # lane 2 dead-end (lower)
+        (7,  1, 3),       # lane 1 dead-end (upper) -- creates the OFFERING pocket below
+        (16, 1, 3),       # lane 1 dead-end (lower)
+        (12, 5, 8),       # lane 2 dead-end (mid)
+        (18, 5, 8),       # lane 2 dead-end (lower)
+        (7,  15, 18),     # lane 4 dead-end (upper)
+        (17, 15, 18),     # lane 4 dead-end (lower) -- CURSE-WORK pocket above
+        (4,  20, 22),     # lane 5 dead-end (upper) -- WATCHING pocket below
+        (11, 20, 22),     # lane 5 dead-end (mid)
+        (18, 20, 22),     # lane 5 dead-end (lower)
     ]
     for row, c0, c1 in dead_ends:
         for col in range(c0, c1 + 1):
             objects_l[row][col] = "C"
-    # Fix the south exit: clear the row-16 corn at col 11 so both
-    # `!` tiles below are actually reachable. (Was blocked by the
-    # lane-wall loop above.) Also clear row-1 col 9 so both north
-    # exits are reachable.
+    # SECRET PASS-THROUGH. The CURSE-WORK pocket's south dead-end wall
+    # at row 17 cols 15-18 looks solid like the others -- but one tile
+    # (col 17) is passable 'A'. Player walks the pocket, sees the
+    # ritual, pushes south against what looks like another wall, and
+    # gets through into the south end of lane 4. Hide is the whole
+    # point: it reads as a dead-end from above.
+    objects_l[17][17] = "A"
+    # Fix the exits: clear the row near the corner walls so the
+    # 2-wide exit tiles are actually reachable.
     objects_l[H - 2][11] = "."
-    objects_l[1][9]      = "."
+    objects_l[H - 2][12] = "."
+    objects_l[1][11]     = "."
+    objects_l[1][12]     = "."
     # No loot crates in the corn maze. A wooden crate sitting in a
     # cornfield reads as game-y, and an "empty crate" reward is
     # anti-payoff. The maze rewards exploration with discovery of
@@ -745,16 +745,16 @@ def build_cornfield_maze():
     # the perimeter walls (rows 0, 17) or the inner wall cols
     # (3, 7, 11, 15).
     cover_patches = [
-        (1, 3),  (2, 7),  (2, 13), (5, 4),
-        (8, 1),  (8, 9),  (8, 14), (10, 6),
-        (12, 13),(13, 2), (16, 8), (17, 12),
+        (1, 4),  (3, 9),  (2, 14), (3, 18),    # lane 1
+        (6, 3),  (7, 10), (5, 14), (8, 19),    # lane 2
+        (10, 5), (12, 9), (11, 14),(13, 19),   # lane 3
+        (16, 5), (17, 11),(15, 14),(18, 19),   # lane 4
+        (21, 7), (20, 14),(22, 19),            # lane 5
     ]
     for cx, cy in cover_patches:
-        # Sanity gate -- skip if (cx, cy) lands on a wall col/row
-        # so a future re-tune can't silently bury the patch.
         if not (0 <= cx < W and 0 <= cy < H):
             continue
-        if cy in (0, H - 1) or cx in (0, W - 1, 3, 7, 11, 15):
+        if cy in (0, H - 1) or cx in (0, W - 1) + WALL_COLS:
             continue
         floor_rows_l[cy][cx] = ":"
     # ---- Permeable corn band around the perimeter ----
@@ -767,19 +767,19 @@ def build_cornfield_maze():
     # patches are also preserved.
     def _maze_protected(tx, ty):
         # Interior corn-wall columns -- the maze structure itself.
-        if tx in (3, 7, 11, 15):
+        if tx in WALL_COLS:
             return True
-        # North brimley exit (cols 9, 10 at row 0).
-        if tx in (9, 10) and ty == 0:
+        # North brimley exit (cols 11, 12 at row 0).
+        if tx in (11, 12) and ty == 0:
             return True
-        # South forest_path exit (cols 10, 11 at row H-1).
-        if tx in (10, 11) and ty == H - 1:
+        # South forest_path exit (cols 11, 12 at row H-1).
+        if tx in (11, 12) and ty == H - 1:
             return True
-        # Curse-grove fold tile and a small lane around it.
-        if tx == 5 and ty == 8:
+        # Curse-grove fold tile.
+        if tx == 6 and ty == 10:
             return True
-        # Lane rows surrounding the spawn (10, H-2) and (10, 1).
-        if (tx, ty) in ((10, 1), (10, H - 2)):
+        # Lane rows surrounding the spawn.
+        if (tx, ty) in ((11, 1), (12, 1), (11, H - 2), (12, H - 2)):
             return True
         return False
     _maze_bushes = []
@@ -814,45 +814,47 @@ def build_cornfield_maze():
     # pass-through and hit the dead-end wall. The reward IS the
     # recognition -- no loot, no inventory pickup.
 
-    # Lane 1 dead-end (cols 1-2, below the row-7 wall) -- an OFFERING.
-    # Someone sits here at night: chair facing the corn, a candle
-    # burning low, a small bowl with something dark in it. The
-    # candle wasn't lit by anyone you've met.
+    # ---- Lane 1 OFFERING POCKET ----
+    # Below the row-7 dead-end wall, above the row-16 dead-end.
+    # A corn altar (cobs + husks + a candle stub) and a single
+    # corn-doll at its foot. Someone has been here recently.
+    sc.add_decoration(Decoration(2 * TILE + 16, 12 * TILE + 16,
+                                 "corn_altar"))
     sc.add_decoration(Decoration(1 * TILE + 16, 13 * TILE + 16,
-                                 "small_chair"))
-    sc.add_decoration(Decoration(2 * TILE + 16, 13 * TILE + 8,
-                                 "candle"))
-    sc.add_decoration(Decoration(1 * TILE + 16, 14 * TILE + 16,
-                                 "bowl", filled=True))
-    sc.add_decoration(Decoration(2 * TILE + 16, 14 * TILE + 22,
+                                 "corn_doll"))
+    sc.add_decoration(Decoration(3 * TILE + 16, 14 * TILE + 22,
                                  "phantom_mark"))
 
-    # Lane 4 dead-end (cols 12-14, mid-pocket between rows 6 and 13)
-    # -- a CURSE-WORK SITE. A small version of the curse-priest's
-    # grove: three effigies in a tight circle around a yellow_sign
-    # painted on the ground, two candles. The cult does this work in
-    # the corn too, not just behind the fold.
-    sc.add_decoration(Decoration(13 * TILE + 16, 9 * TILE + 16,
+    # ---- Lane 4 CURSE-WORK POCKET ----
+    # Between the row-7 and row-17 dead-end walls. The cult's curse
+    # circle: a yellow sign worked into the ground at the centre,
+    # four corn-dolls placed at the cardinal points, two candles.
+    # The south wall hides the secret pass-through at col 17.
+    sc.add_decoration(Decoration(16 * TILE + 16, 12 * TILE + 16,
                                  "yellow_sign"))
-    sc.add_decoration(Decoration(12 * TILE + 16, 8 * TILE + 16,
-                                 "small_chair"))
-    sc.add_decoration(Decoration(14 * TILE + 16, 8 * TILE + 16,
-                                 "small_chair"))
-    sc.add_decoration(Decoration(13 * TILE + 16, 10 * TILE + 16,
-                                 "small_chair"))
-    sc.add_decoration(Decoration(12 * TILE + 16, 10 * TILE + 8,
+    # Four corn-dolls at the cardinal points around the sign.
+    sc.add_decoration(Decoration(16 * TILE + 16, 10 * TILE + 16,
+                                 "corn_doll"))   # north
+    sc.add_decoration(Decoration(16 * TILE + 16, 14 * TILE + 16,
+                                 "corn_doll"))   # south
+    sc.add_decoration(Decoration(15 * TILE + 16, 12 * TILE + 16,
+                                 "corn_doll"))   # west
+    sc.add_decoration(Decoration(17 * TILE + 16, 12 * TILE + 16,
+                                 "corn_doll"))   # east
+    sc.add_decoration(Decoration(15 * TILE + 16, 11 * TILE + 8,
                                  "candle"))
-    sc.add_decoration(Decoration(14 * TILE + 16, 10 * TILE + 8,
+    sc.add_decoration(Decoration(17 * TILE + 16, 13 * TILE + 8,
                                  "candle"))
 
-    # Lane 5 dead-end (cols 16-18, between rows 3 and 8 walls) --
-    # a WATCHING SITE. A missing-person flyer nailed to a stalk and
-    # a dead crow at its foot. The cult marks who they're tracking.
-    sc.add_decoration(Decoration(17 * TILE + 16, 5 * TILE + 16,
-                                 "missing_flyer"))
-    sc.add_decoration(Decoration(17 * TILE + 16, 6 * TILE + 22,
+    # ---- Lane 5 WATCHING POCKET ----
+    # Between the row-4 and row-11 dead-end walls. A taller stalk
+    # marker -- the cult's flag: the next to be taken. A dead crow
+    # at its foot.
+    sc.add_decoration(Decoration(21 * TILE + 16, 7 * TILE + 16,
+                                 "stalk_marker"))
+    sc.add_decoration(Decoration(22 * TILE + 16, 8 * TILE + 22,
                                  "dead_crow"))
-    sc.add_decoration(Decoration(18 * TILE + 16, 5 * TILE + 8,
+    sc.add_decoration(Decoration(20 * TILE + 16, 9 * TILE + 16,
                                  "phantom_mark"))
     # The corn never ends (bible §1). The maze wraps on BOTH axes so
     # walking any direction long enough brings you back to where you
@@ -870,16 +872,14 @@ def build_cornfield_maze():
     # tile char and would conflict.
     sc.add_exit("Z", "curse_grove", "from_cornfield_maze",
                 direction="west")
-    sc.set_spawn("default", 10, H - 2)
-    sc.set_spawn("from_forest_path", 10, H - 2)
-    sc.set_spawn("from_cornfield", 10, H - 2)
-    sc.set_spawn("from_brimley", 10, 1)
-    # Macro-loop south chain: arriving from brimley's south exit
-    # drops the player on the maze's north edge.
-    sc.set_spawn("from_brimley_south", 10, 1)
-    # Return spawn from curse_grove -- one west of the C tile so the
-    # player doesn't immediately re-trigger.
-    sc.set_spawn("from_curse_grove", 4, 8)
+    sc.set_spawn("default", 11, H - 2)
+    sc.set_spawn("from_forest_path", 11, H - 2)
+    sc.set_spawn("from_cornfield", 11, H - 2)
+    sc.set_spawn("from_brimley", 11, 1)
+    sc.set_spawn("from_brimley_south", 11, 1)
+    # Return from curse_grove -- one east of the Z tile so the player
+    # doesn't immediately re-trigger walking west.
+    sc.set_spawn("from_curse_grove", 7, 10)
 
     # Scarecrow at the centre dead-end. Hanging-figure deco is
     # close enough to a scarecrow silhouette -- placed just south
