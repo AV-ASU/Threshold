@@ -155,16 +155,14 @@ def build_brimley():
                     floor_rows[ty][tx] = ":"
     floor_rows = ["".join(r) for r in floor_rows]
 
+    # No hard perimeter wall any more. Brimley wraps on both axes, and
+    # the border is treated below as a scattered, semi-permeable forest
+    # band -- the player can walk into it, the wrap fires somewhere in
+    # the middle, and the visual sameness across edges hides the
+    # transition. Bridge planks at the river still get set explicitly.
     objects_l = []
     for ty in range(h):
         row = ["."] * w
-        if ty == 0 or ty == h - 1:
-            row = ["T"] * w
-            for cx in river_cols:
-                row[cx] = "."
-        else:
-            row[0] = "T"
-            row[-1] = "T"
         if ty in bridge_rows:
             for cx in river_cols:
                 row[cx] = "$"
@@ -254,33 +252,64 @@ def build_brimley():
     # can't see out, and you can't tell how deep it goes). Skips the exit
     # gaps + border spawns, and never overwrites a building.
     def _border_protected(tx, ty):
-        if ty in (6, 7, 8) and tx >= w - 4:
-            return True                                  # east road exit + spawn
-        if tx in (49, 50, 51) and ty <= 3:
-            return True                                  # north passage + river_crossing spawn
-        if tx in (39, 40, 41) and ty <= 3:
-            return True                                  # cornfield_maze spawn
-        if tx in (95, 96, 97) and ty <= 3:
-            return True                                  # gravel-road north passage
-        if ty in (23, 24, 25) and (tx <= 3 or tx >= w - 3):
+        # Road corridors poke through the 6-tile band cleanly so the
+        # scattered forest doesn't tree over them. Each protected
+        # range extends from the edge inward by BAND_DEPTH (6 tiles)
+        # so the road keeps a clear visual line from the band into
+        # the playable interior.
+        if ty in (6, 7, 8) and tx >= w - 7:
+            return True                                  # east road corridor
+        if tx in (49, 50, 51) and ty <= 6:
+            return True                                  # north river_crossing corridor
+        if tx in (39, 40, 41) and ty <= 11:
+            return True                                  # cornfield_maze corridor (clear through the northern lobe too)
+        if tx in (95, 96, 97) and ty <= 6:
+            return True                                  # gravel-road corridor
+        if ty in (23, 24, 25) and (tx <= 6 or tx >= w - 7):
             return True                                  # fold-loop road both ends
-        if tx in (47, 48, 49) and ty >= h - 3:
+        if tx in (47, 48, 49) and ty >= h - 7:
             return True                                  # south macro-loop exit
-        if tx in (47, 48, 49) and ty <= 3:
+        if tx in (47, 48, 49) and ty <= 6:
             return True                                  # north macro-loop arrival
-        if tx <= 2 and 83 <= ty <= 87:
-            return True                                  # alter spawn
-        if tx in river_cols and (ty <= 3 or ty >= h - 4):
+        if tx <= 6 and 83 <= ty <= 87:
+            return True                                  # alter corridor
+        if tx in river_cols and (ty <= 6 or ty >= h - 7):
             return True                                  # river mouths
         return False
 
+    # Scattered forest BAND, not a wall. A 6-tile-deep zone around the
+    # whole perimeter where trees are seeded probabilistically: high
+    # density at the very edge, fading toward the interior. The player
+    # can walk into the band, gets lost in the visual sameness, and
+    # the wrap mechanic carries them to the opposite side (which looks
+    # the same). Roads + building approaches stay clean via
+    # _border_protected.
+    BAND_DEPTH = 7
     forest = random.Random(53)
-    for ty in range(2, h - 2):                           # west + east ranks
-        for edge_tx, step in ((1, 1), (w - 2, -1)):
-            for dd in range(forest.randint(0, 2)):
-                tx = edge_tx + step * dd
-                if objects_l[ty][tx] == "." and not _border_protected(tx, ty):
-                    objects_l[ty][tx] = "T"
+    # Mix in passable trees ('p' looks identical to T but walkable) so
+    # the player can push through the woods without bumping a wall in
+    # every direction. Bias toward 'p' so navigation through the band
+    # is forgiving -- the visual sameness is what hides the wrap, not
+    # collision.
+    def _tree_char():
+        return "p" if forest.random() < 0.6 else "T"
+    for ty in range(h):
+        for tx in range(w):
+            edge_dist = min(tx, w - 1 - tx, ty, h - 1 - ty)
+            if edge_dist >= BAND_DEPTH:
+                continue                              # interior, untouched
+            if objects_l[ty][tx] != ".":
+                continue                              # building/road/etc.
+            if _border_protected(tx, ty):
+                continue
+            # Density: ~0.48 at the outermost ring, fading to ~0.04 at
+            # the inner edge of the band. Linear falloff for a soft
+            # fade -- denser-than-this stacks too many wall-shadow
+            # strips and the band reads as a dark mottled mass.
+            t = edge_dist / BAND_DEPTH                # 0..1 inward
+            density = 0.48 * (1 - t) + 0.04
+            if forest.random() < density:
+                objects_l[ty][tx] = _tree_char()
 
     # Forest LOBES -- the rectangle treeline pushed inward at a few
     # places so the playable space isn't a clean box. Each lobe is an
@@ -430,6 +459,27 @@ def build_brimley():
     floor_ll[14][92] = "d"
     for fty in range(15, 17):
         floor_ll[fty][91] = "d"
+    # Ground blotch pass in the same border band as the scattered
+    # forest. Mix dim-grass ';' (~22%) and corn-cover ':' (~9%) into
+    # the open grass so the forest floor reads as patchy underfoot,
+    # not a uniform green. Same fade as the trees -- denser at the
+    # outer edge, fading toward the interior. Skips dirt roads, river
+    # tiles, and the corn-cover patches that are already there.
+    blotch = random.Random(101)
+    for ty in range(h):
+        for tx in range(w):
+            edge_dist = min(tx, w - 1 - tx, ty, h - 1 - ty)
+            if edge_dist >= BAND_DEPTH:
+                continue
+            if floor_ll[ty][tx] != "g":
+                continue
+            t = edge_dist / BAND_DEPTH
+            falloff = (1 - t)
+            roll = blotch.random()
+            if roll < 0.22 * falloff:
+                floor_ll[ty][tx] = ";"
+            elif roll < (0.22 + 0.09) * falloff:
+                floor_ll[ty][tx] = ":"
     floor_rows = ["".join(r) for r in floor_ll]
 
     objects = ["".join(r) for r in objects_l]
@@ -675,6 +725,7 @@ def build_brimley():
     _resident(91, 12, "Garrick", "old", [
         "You're asking questions. Folks who ask questions go quiet. Real quiet.",
         "The Sheriff'll come at you friendly. Don't let it talk you into staying for supper.",
+        "Stay on the roads. People who go off the roads come out wrong-side.",
         "[c=dim]Go on home, son. ...Oh. Right. None of us can.[/c]",
     ])
     # The newcomer -- standing on the path to the haunted_house

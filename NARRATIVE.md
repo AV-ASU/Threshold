@@ -498,6 +498,25 @@ has mechanical existence beyond the dread aperture. The outside world
 is built as a torus, with hidden direction-sensitive folds layered on
 top.
 
+### Permeable forest border
+
+The wrap is the transition; the forest is the camouflage. Instead of a
+hard tree-wall perimeter, every outdoor scene gets a **scattered
+forest band** ~6-7 tiles deep around its edge. Trees are seeded
+probabilistically (densest at the very edge, fading to ~0 at the
+band's inner edge), mixed solid/passable so the player can push
+through, with a blotchy ground variation (grass, dim grass, corn
+cover) underfoot. The visual sameness across all four edges is what
+hides the wrap: the player walks into the trees, the wrap fires
+somewhere in the middle of the band, and they emerge into the same
+forest on the other side.
+
+Roads cut through the band as clean dirt corridors -- they're the only
+*predictable* navigation. Garrick (an old local at the well) drops the
+warning offhand: *"Stay on the roads. People who go off the roads
+come out wrong-side."* Locals don't theorise about the fold; they
+just know don't go off the path.
+
 ### Per-scene torus
 
 `brimley`, `cornfield_maze`, `forest_path`, and the Lodge yard
