@@ -370,9 +370,10 @@ class Enemy:
         """Move toward (tx, ty) with the chase-style step. Mirrors
         the inline movement used elsewhere in this class but
         usable from the state-machine helper. Returns True if any
-        movement happened."""
-        dx = tx - self.x
-        dy = ty - self.y
+        movement happened. Direction is wrap-aware so chasers take
+        the shortest path through the fold."""
+        dx = scene.world_dx(self.x, tx)
+        dy = scene.world_dy(self.y, ty)
         d = math.hypot(dx, dy)
         if d < 0.5:
             return False
@@ -385,6 +386,13 @@ class Enemy:
         if not scene.is_solid_at(self.x, self.y + step_y):
             self.y += step_y
             moved = True
+        # Keep enemy coords in the canonical wrapped range so
+        # subsequent ticks compute distances correctly.
+        from constants import TILE as _T
+        if scene.wrap_x:
+            self.x %= scene.w * _T
+        if scene.wrap_y:
+            self.y %= scene.h * _T
         if not getattr(self, "lock_facing", False) and moved:
             self.facing = (dx / d, dy / d)
         return moved
@@ -398,8 +406,13 @@ class Enemy:
         straight at the player; SEARCH walks to last-seen and
         mills; INVESTIGATE walks to step source and mills."""
         import pygame
-        dx = player.x - self.x
-        dy = player.y - self.y
+        # Wrap-aware distance so cultists in wrap scenes follow the
+        # shortest path through the fold. If the player is at the
+        # west edge and the cultist is at the east edge of a wrap_x
+        # scene, they read each other as adjacent, not as the full
+        # map width apart.
+        dx = scene.world_dx(self.x, player.x)
+        dy = scene.world_dy(self.y, player.y)
         d = math.hypot(dx, dy)
         # Hidden players are invisible to cultists that respect
         # hiding. Forces has_los False without leaking 1e9 into

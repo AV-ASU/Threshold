@@ -195,8 +195,10 @@ class NPC:
         every tick -- the apex avatar doesn't search or
         investigate, it closes."""
         import pygame
-        dx = player.x - self.x
-        dy = player.y - self.y
+        # Wrap-aware: chasers compute the shortest distance through
+        # the fold so the player can't escape by wrapping.
+        dx = scene.world_dx(self.x, player.x)
+        dy = scene.world_dy(self.y, player.y)
         d = math.hypot(dx, dy)
         has_los = (d < 180
                    and getattr(player, "hidden", None) is None)
@@ -382,7 +384,9 @@ class NPC:
 
     def _step_toward(self, target, dt, scene):
         tx, ty = target
-        dx = tx - self.x; dy = ty - self.y
+        # Wrap-aware so chasers take the shortest path through the fold.
+        dx = scene.world_dx(self.x, tx)
+        dy = scene.world_dy(self.y, ty)
         d = math.hypot(dx, dy)
         if d < 1: return
         nx = self.x + (dx / d) * self.speed * 60 * dt
@@ -390,6 +394,12 @@ class NPC:
         if not scene.is_solid_at(nx, ny, ignore=self):
             self.x = nx; self.y = ny
             self.facing = (dx / d, dy / d)
+        # Keep coords in the canonical wrapped range.
+        from constants import TILE as _T
+        if scene.wrap_x:
+            self.x %= scene.w * _T
+        if scene.wrap_y:
+            self.y %= scene.h * _T
 
     def interact(self, game):
         if self.dialogue_fn:

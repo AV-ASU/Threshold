@@ -1519,6 +1519,37 @@ class Scene:
         # list currently.)
         self.eye_cameras = []
 
+    def world_dx(self, from_x, to_x):
+        """Shortest signed x-delta from from_x to to_x respecting
+        the scene's wrap_x. Without wrap this is just to_x - from_x;
+        with wrap it can be the opposite sign if the wrap is shorter."""
+        dx = to_x - from_x
+        if self.wrap_x:
+            w_px = self.w * TILE
+            if dx > w_px / 2:
+                dx -= w_px
+            elif dx < -w_px / 2:
+                dx += w_px
+        return dx
+
+    def world_dy(self, from_y, to_y):
+        """Shortest signed y-delta respecting wrap_y."""
+        dy = to_y - from_y
+        if self.wrap_y:
+            h_px = self.h * TILE
+            if dy > h_px / 2:
+                dy -= h_px
+            elif dy < -h_px / 2:
+                dy += h_px
+        return dy
+
+    def world_dist(self, from_x, from_y, to_x, to_y):
+        """Shortest world distance respecting wrap on both axes."""
+        import math as _math
+        dx = self.world_dx(from_x, to_x)
+        dy = self.world_dy(from_y, to_y)
+        return _math.hypot(dx, dy)
+
     def char_floor_at(self, x_px, y_px):
         tx = int(x_px // TILE); ty = int(y_px // TILE)
         if self.wrap_y:
