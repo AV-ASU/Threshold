@@ -604,7 +604,7 @@ class Game:
                 and current_key != target_scene):
             screen_dx = self.player.x - self.cam_x
             screen_dy = self.player.y - self.cam_y
-            self.load_scene_now(target_scene, spawn_id)
+            self.load_scene_now(target_scene, spawn_id, keep_music=True)
             # load_scene_now snapped the camera; override so the
             # player stays at the same screen position. For non-wrap
             # destination scenes the camera may immediately drift on
@@ -667,7 +667,7 @@ class Game:
         self.state = "transition"
         self.audio.play("door_open", 0.7)
 
-    def load_scene_now(self, key, spawn_id="default"):
+    def load_scene_now(self, key, spawn_id="default", *, keep_music=False):
         if self.scene and self.scene.on_exit_fn:
             self.scene.on_exit_fn(self, self.scene)
         self.scene = load_scene(key)
@@ -720,10 +720,17 @@ class Game:
         # one scene shouldn't bleed into the next.
         self.scene._last_step_event = None
         self._update_camera(snap=True)
-        if not self.audio.music_muted:
-            self.audio.play_music(self.scene.music)
-        else:
-            self.audio.stop_music()
+        # Seamless transitions in the outside world (handled in
+        # begin_transition) ask for keep_music so the track doesn't
+        # restart at the scene boundary. The reactive cult-ambient
+        # timers (_chant_t, _breath_t, heartbeat) already live on the
+        # Game instance, not on the scene, so they carry through
+        # automatically.
+        if not keep_music:
+            if not self.audio.music_muted:
+                self.audio.play_music(self.scene.music)
+            else:
+                self.audio.stop_music()
         if self.scene.on_enter_fn:
             self.scene.on_enter_fn(self, self.scene)
         from entities.decoration import Decoration

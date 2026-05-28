@@ -54,6 +54,12 @@ def build_forest_path():
 
     objects = ["".join(r) for r in objects_l]
     sc = Scene("forest_path", floor, objects, music="outside")
+    # Walk through the woods only to be spit out where you walked in.
+    # Both axes wrap so the trees become a trap, not a wall. The
+    # explicit exits (back to the yard / on to cornfield_maze) stay
+    # as specific tiles; everything else just folds.
+    sc.wrap_x = True
+    sc.wrap_y = True
 
     sc.add_exit("a", "our_house_area",  "from_forest")
     # 2-wide passage north into the deeper cornfield (cornfield_maze).
