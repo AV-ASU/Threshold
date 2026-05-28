@@ -264,18 +264,28 @@ class Decoration:
             pygame.draw.rect(surf, (38, 27, 16), (x + 2, hy, 2, 4))
 
     def _draw_stove(self, surf, x, y):
+        # Cast-iron range drawn canonically facing DOWN (cooktop at top,
+        # oven door + ember toward the bottom = the front). `wall` (N/E/S/W
+        # = the wall it stands against) rotates it so the oven door faces
+        # INTO the room off any wall -- e.g. wall="W" turns the front to
+        # the east. Default "N" keeps the original south-facing look.
         w = int(self.kwargs.get("w", 34)); h = int(self.kwargs.get("h", 40))
-        rx, ry = x - w // 2, y - h // 2
-        pygame.draw.rect(surf, (42, 42, 48), (rx, ry, w, h))                 # body
-        pygame.draw.rect(surf, (60, 60, 68), (rx, ry, w, 2))                 # lit top
-        pygame.draw.rect(surf, (22, 22, 28), (rx, ry + h - 3, w, 3))         # base shadow
-        pygame.draw.rect(surf, (28, 28, 34), (rx, ry, w, h), 1)
-        for cxk in (rx + w // 3, rx + 2 * w // 3):                           # burners
-            pygame.draw.circle(surf, (18, 18, 24), (cxk, ry + 9), 4)
-            pygame.draw.circle(surf, (10, 10, 14), (cxk, ry + 9), 2)
-        pygame.draw.rect(surf, (16, 16, 20), (rx + 4, ry + h - 16, w - 8, 11))   # oven door
-        pygame.draw.rect(surf, (70, 70, 78), (rx + 7, ry + h - 17, w - 14, 2))   # handle
-        pygame.draw.rect(surf, (200, 90, 30), (rx + w // 2 - 5, ry + h - 7, 10, 2))  # ember
+        lay = pygame.Surface((w, h), pygame.SRCALPHA)
+        pygame.draw.rect(lay, (42, 42, 48), (0, 0, w, h))                    # body
+        pygame.draw.rect(lay, (60, 60, 68), (0, 0, w, 2))                    # lit top
+        pygame.draw.rect(lay, (22, 22, 28), (0, h - 3, w, 3))                # base shadow
+        pygame.draw.rect(lay, (28, 28, 34), (0, 0, w, h), 1)
+        for cxk in (w // 3, 2 * w // 3):                                     # burners
+            pygame.draw.circle(lay, (18, 18, 24), (cxk, 9), 4)
+            pygame.draw.circle(lay, (10, 10, 14), (cxk, 9), 2)
+        pygame.draw.rect(lay, (16, 16, 20), (4, h - 16, w - 8, 11))          # oven door
+        pygame.draw.rect(lay, (70, 70, 78), (7, h - 17, w - 14, 2))          # handle
+        pygame.draw.rect(lay, (200, 90, 30), (w // 2 - 5, h - 7, 10, 2))     # ember
+        ang = {"N": 0, "E": -90, "S": 180, "W": 90}.get(
+            self.kwargs.get("wall", "N"), 0)
+        if ang:
+            lay = pygame.transform.rotate(lay, ang)
+        surf.blit(lay, (x - lay.get_width() // 2, y - lay.get_height() // 2))
 
 
     # ---- Northern-MN lodge decor (wall mounts draw face-on like the

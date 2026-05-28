@@ -2455,31 +2455,56 @@ class Game:
                 return
             self._notebook_toast_t = max(0.0, self._notebook_toast_t - dt)
             self.update_player(dt, keys)
-            if (not self.dialog.active and not self.inv_ui.open
-                    and not self.notebook_ui.open
-                    and not self.text_input.active):
+            # Any open modal (dialogue, inventory, notebook, text prompt)
+            # FREEZES the world sim: NPC patrols, enemies, projectiles and
+            # the whole threat model hold still. Otherwise a dialogue box
+            # turned the player into a sitting duck -- cultists kept closing
+            # in and visibility kept rising while they could only read.
+            world_frozen = (self.dialog.active or self.inv_ui.open
+                            or self.notebook_ui.open
+                            or self.text_input.active)
+            if not world_frozen:
                 exit_data = self.scene.find_exit_at(
                     self.player.x, self.player.y,
                     facing=self.player.facing)
                 if exit_data:
                     self.begin_transition(*exit_data)
             # Suspend scene update (NPC patrols, decoration anims, triggers)
-            # while the text-input modal is active so the world freezes
-            # behind the prompt.
-            if not self.text_input.active:
+            # while any modal is up so the world freezes behind it.
+            if not world_frozen:
                 self.scene.update(dt, self)
             self.text_input.update(dt)
             for e in list(self.scene.enemies):
-                if not self.text_input.active:
+                if not world_frozen:
                     e.update(dt, self.scene, self.player)
                     if e.just_shot and e.shoot_sfx:
                         pan = self.audio.pan_for_world(e.x, self.player.x)
                         self.audio.play(e.shoot_sfx, 0.55, pan=pan)
                 if not e.alive:
                     self.scene.enemies.remove(e)
+            # A scene-placed cultist (the Works gauntlet uses Enemy-class
+            # cultists, not the threat-system NPCs) reaching the player
+            # TAKES them -- the same CAPTURED end the town cultists trigger.
+            # Without this those cultists just chased and did nothing, so
+            # capture felt random ("some take me, some don't"). Hidden /
+            # invuln / mid-death are exempt, matching _tick_cultists.
+            if (not world_frozen and self._death_kind is None
+                    and self.player.hidden is None
+                    and self.player.invuln <= 0):
+                for e in self.scene.enemies:
+                    # Only an AWARE cultist (actively chasing) takes you --
+                    # the oblivious kneelers at the Sign Chamber altar
+                    # (aggro 0) never enter "chase", so you can still sneak
+                    # past them to lift the Mask.
+                    if (e.alive and e.kind == "cultist"
+                            and getattr(e, "_cult_state", "") == "chase"
+                            and math.hypot(e.x - self.player.x,
+                                           e.y - self.player.y) < 22):
+                        self._trigger_death("cultist")
+                        break
             # Tick projectiles AFTER enemies so a brand-new shot doesn't
             # also move on the same frame it was fired (cleaner travel).
-            if not self.text_input.active:
+            if not world_frozen:
                 for p in list(self.scene.projectiles):
                     p.update(dt, self.scene, self.player)
                     if p.hit:
@@ -2510,13 +2535,17 @@ class Game:
             self.audio.update_duck()
             self.dialog.update(dt)
             self._tick_delayed_audio(dt)
-            self._tick_cultists(dt)
-            self._tick_watchers(dt)
-            self._tick_visibility(dt)
-            self._tick_heartbeat(dt)
-            self._tick_cult_ambient(dt)
+            # The threat model is part of the world sim -- it freezes behind
+            # a modal too, so visibility can't climb and the King can't close
+            # while a box is up. Cutscene/audio drivers keep running.
+            if not world_frozen:
+                self._tick_cultists(dt)
+                self._tick_watchers(dt)
+                self._tick_visibility(dt)
+                self._tick_heartbeat(dt)
+                self._tick_cult_ambient(dt)
+                self._tick_king(dt)
             self._tick_wake_muffle(dt)
-            self._tick_king(dt)
             self._tick_flashback(dt)
             self._tick_ending(dt)
         elif self.state == "transition":

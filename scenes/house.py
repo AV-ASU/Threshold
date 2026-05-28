@@ -325,7 +325,8 @@ def build_house():
     sc.add_furniture("table", [(2, 3), (3, 3)], w=58, h=40)
     sc.add_furniture("chair", [(2, 4)], w=22, h=28)
     sc.add_furniture("chair", [(3, 4)], w=22, h=28)
-    sc.add_furniture("stove", [(2, 5)], w=30, h=40)
+    # Against the west wall -- the oven door faces east, into the kitchen.
+    sc.add_furniture("stove", [(2, 5)], w=30, h=40, wall="W")
     # Decorations: kitchen clutter on the left, fireplace on the
     # right, wall items on the NORTH wall (row 0).
     sc.add_decoration(Decoration(10 * TILE + 16, 0 * TILE + 18, "clock"))
