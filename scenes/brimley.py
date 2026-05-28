@@ -999,4 +999,22 @@ def build_brimley():
             game.dialog.show(line, speaker="", voice="blip_soft",
                              portrait="narrator")
     sc.on_interact_fn = _brimley_interact
+
+    def _brimley_on_enter(game, scene):
+        # The fold-loop beat. Fires exactly once, the first time the
+        # player walks east on country_lane expecting the Lodge and
+        # instead arrives back here. The redirect was set in
+        # begin_transition; the narrator beat lands here on arrival.
+        # Gated on a private flag so it only plays the one time, even
+        # if the player visits brimley again later.
+        if (game.save.flag("fold_lane_witnessed")
+                and not game.save.flag("fold_lane_played")):
+            game.save.set_flag("fold_lane_played", True)
+            game.audio.play("low_pulse", 0.5)
+            game.dialog.show([
+                "[c=dim]You walked east for a long time. You did not "
+                "turn around.[/c]",
+                "[c=dim]You are at the welcome sign.[/c]",
+            ], speaker="", voice="blip_soft", portrait="narrator")
+    sc.on_enter_fn = _brimley_on_enter
     return sc
