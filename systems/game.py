@@ -3273,37 +3273,63 @@ class Game:
                           if n.sprite_kind in human_kinds]
             if human_npcs:
                 blink_idx = random.choice(human_npcs)
+        # Wrap-clone offsets. In a toroidal scene an actor near one seam
+        # must also be drawn at the opposite edge, or it pops out of
+        # existence when the player straddles the fold (decorations are
+        # already cloned this way in Scene.draw). For non-wrap scenes
+        # this is exactly [(0, 0)] -- identical to the old single draw.
+        sc = self.scene
+        _offsets = [(0, 0)]
+        if sc.wrap_x:
+            _ww = sc.w * TILE
+            _offsets += [(-_ww, 0), (_ww, 0)]
+        if sc.wrap_y:
+            _wh = sc.h * TILE
+            _offsets += [(0, -_wh), (0, _wh)]
+        if sc.wrap_x and sc.wrap_y:
+            _offsets += [(-_ww, -_wh), (-_ww, _wh), (_ww, -_wh), (_ww, _wh)]
+
+        def _on_screen(sx, sy):
+            return -64 <= sx <= SCREEN_W + 64 and -64 <= sy <= SCREEN_H + 64
+
         for i, npc in enumerate(self.scene.npcs):
-            sx = int(npc.x - self.cam_x); sy = int(npc.y - self.cam_y)
             m = getattr(npc, "morph", 0.0)
-            if m > 0.0:
-                draw_vessel_bloom(self.screen, sx, sy, npc.sprite_kind,
-                                  npc.facing, m, seed=id(npc) & 0xffff)
-            else:
-                king_threat = None
-                if npc.sprite_kind == "yellow_king" and self.player:
-                    d = math.hypot(npc.x - self.player.x, npc.y - self.player.y)
-                    span = KING_THREAT_FAR - KING_THREAT_NEAR
-                    # Existence is purely proximity: a far void that blooms only
-                    # as he closes. Visibility is NOT mixed in here -- it's the
-                    # spawn/despawn gate (_tick_king), and while he's present it
-                    # only ever sits in [0.90, 1.0], far too narrow a band to
-                    # read as existence (it would just pin him near-real the
-                    # whole time he's on screen). The 0.15 floor keeps him a
-                    # faint watching void, never fully gone, until he nears.
-                    king_threat = max(0.15, min(1.0, 1.0 - (d - KING_THREAT_NEAR) / span))
-                draw_npc_sprite(self.screen, sx, sy, npc.sprite_kind,
-                                npc.facing, blink=(i == blink_idx),
-                                birth=getattr(npc, "_birth", None),
-                                gait=getattr(npc, "_gait", None),
-                                threat=king_threat)
+            king_threat = None
+            if npc.sprite_kind == "yellow_king" and self.player:
+                d = math.hypot(npc.x - self.player.x, npc.y - self.player.y)
+                span = KING_THREAT_FAR - KING_THREAT_NEAR
+                # Existence is purely proximity: a far void that blooms only
+                # as he closes. Visibility is NOT mixed in here -- it's the
+                # spawn/despawn gate (_tick_king), and while he's present it
+                # only ever sits in [0.90, 1.0], far too narrow a band to
+                # read as existence (it would just pin him near-real the
+                # whole time he's on screen). The 0.15 floor keeps him a
+                # faint watching void, never fully gone, until he nears.
+                king_threat = max(0.15, min(1.0, 1.0 - (d - KING_THREAT_NEAR) / span))
+            for ox, oy in _offsets:
+                sx = int(npc.x + ox - self.cam_x); sy = int(npc.y + oy - self.cam_y)
+                if not _on_screen(sx, sy):
+                    continue
+                if m > 0.0:
+                    draw_vessel_bloom(self.screen, sx, sy, npc.sprite_kind,
+                                      npc.facing, m, seed=id(npc) & 0xffff)
+                else:
+                    draw_npc_sprite(self.screen, sx, sy, npc.sprite_kind,
+                                    npc.facing, blink=(i == blink_idx),
+                                    birth=getattr(npc, "_birth", None),
+                                    gait=getattr(npc, "_gait", None),
+                                    threat=king_threat)
             # THRESHOLD: NPC name labels removed. They were the
             # last RPG-tell on screen -- the player should learn
             # who an NPC is by interacting with them, not by
             # reading a tag floating over their head. Strangers
             # on the road read as STRANGERS until they speak.
         for e in self.scene.enemies:
-            e.draw(self.screen, self.cam_x, self.cam_y)
+            for ox, oy in _offsets:
+                sx = int(e.x + ox - self.cam_x); sy = int(e.y + oy - self.cam_y)
+                if not _on_screen(sx, sy):
+                    continue
+                e.draw(self.screen, self.cam_x - ox, self.cam_y - oy)
         for p in self.scene.projectiles:
             p.draw(self.screen, self.cam_x, self.cam_y)
         if self.player:
