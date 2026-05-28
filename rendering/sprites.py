@@ -1259,18 +1259,24 @@ def draw_king_death(surf, t):
         x = max(0.0, min(1.0, x))
         return 1.0 - (1.0 - x) ** 2.3
 
-    ramp = max(0.0, min(1.0, t / 0.4))
-    kindle = eo((t - 0.1) / 1.1)                    # the void ignites into the furnace
-    behold = max(0.0, min(1.0, (t - 1.1) / 1.2))    # He commands the frame + reaches
-    take = eo((t - 2.3) / 2.0)                      # the general surge (scale/grade)
-    # The mask breaks open SOON: cracks spread (brief), the shards pull apart...
-    op = max(0.0, min(1.0, (t - 2.3) / 0.85))       # raw opening progress
-    crack_form = op ** 1.7
-    # ...to reveal a SECOND FACE beneath -- a screaming raw visage under the calm
-    # pallid mask -- and only THEN does its heart yawn into the cold-fire pit.
-    second = max(0.0, min(1.0, (t - 2.75) / 0.75))  # the face under the mask
-    pit_open = (max(0.0, (t - 3.55) / 0.9)) ** 1.2  # the pit blooms from it
-    engulf = eo((t - 4.25) / 0.6)                   # the depth swallows you
+    ramp = max(0.0, min(1.0, t / 0.3))
+    kindle = eo((t - 0.05) / 0.75)                  # the void ignites into the furnace
+    behold = max(0.0, min(1.0, (t - 0.8) / 0.9))    # He commands + arms lurch + gaze locks
+    take = eo((t - 1.7) / 2.0)                      # the general surge (scale/grade)
+    # The cracks SPREAD briefly, then -- at t=2.0 -- the mask SNAPS open hard:
+    # the shards explode outward, a jolt + spatter + black-flash punctuate it.
+    linger = max(0.0, min(1.0, (t - 1.7) / 0.3))    # 1.7-2.0 hairlines spread
+    if t < 2.0:
+        crack = 0.35 * linger
+    else:
+        crack = 0.55 + 0.40 * min(1.0, (t - 2.0) / 0.4)   # SNAP at 2.0
+    snap = math.exp(-(((t - 2.0) / 0.07) ** 2))     # the snap punctuation
+    # The second face beneath -- a screaming raw visage -- LUNGES at you the
+    # instant the mask snaps, then settles for a beat.
+    second = max(0.0, min(1.0, (t - 2.0) / 0.45))
+    lunge = math.exp(-(((t - 2.15) / 0.10) ** 2))    # face scale-spike toward camera
+    pit_open = (max(0.0, (t - 2.6) / 0.75)) ** 1.15  # the pit blooms from it (sooner)
+    engulf = eo((t - 3.3) / 0.55)                   # the depth swallows you
     flick = 0.85 + 0.12 * math.sin(t * 16.0) + 0.05 * math.sin(t * 37.0)
     fr = 50 + kindle * 140 + behold * 48 + take * 150    # His mask radius: looms + surges
     pres = min(1.0, 0.5 + 0.5 * behold + 0.4 * take)
@@ -1311,19 +1317,17 @@ def draw_king_death(surf, t):
 
     # 4. Light bleeding through the early cracks (fades as the face beneath shows).
     _yk_radial(scene, cx, cy, int(fr * 0.5), _YK_HOT,
-               int(70 * crack_form * (1.0 - second)), add=False)
+               int(70 * linger * (1.0 - second)), add=False)
 
     # 5. THE SECOND FACE beneath the mask -- a screaming RAW visage (wet red
     #    flesh, not pallid bone, so it reads as something WORSE under the calm
     #    mask), the gaze blazing. Drawn UNDER the pallid mask so it surfaces as
     #    the shards part.
     if second > 0.02:
-        fr2 = int(fr * 0.92)
-        # a low, dark-red flesh halo only (no bright glow -- bright glow bleeds
-        # through the translucent mask and erases the face).
+        # the LUNGE -- it scale-spikes toward the camera the instant it's bared
+        fr2 = int(fr * 0.92 * (1.0 + 0.35 * lunge))
         _yk_radial(scene, cx, cy, int(fr2 * 0.85), (70, 16, 14), int(70 * second), add=False)
         face2 = pygame.Surface((w, h), pygame.SRCALPHA)   # _yk_face: the bare face, NO hot halo
-        pad = fr2 // 2
         _yk_face(face2, cx, cy, fr2, "scream", True, True)
         red = pygame.Surface((w, h))
         red.fill((230, 70, 50))
@@ -1334,10 +1338,23 @@ def draw_king_death(surf, t):
             ey = cy - int(fr2 * 0.12)
             _yk_radial(scene, ex, ey, int(fr2 * 0.06), _YK_HOT, int(190 * second))
 
+    # THE SNAP -- a hard punctuation when the mask explodes open: blood spatter
+    # flying out from the centre, and a brief black-and-red flash.
+    if 0.01 < snap or (2.0 <= t <= 2.6):
+        sp_age = max(0.0, t - 2.0)
+        for k in range(28):
+            ang = k * (math.tau / 28) + _frand(k * 5) * 0.4
+            v = 360 + 240 * _frand(k * 7 + 1)
+            sx = cx + math.cos(ang) * v * sp_age
+            sy = cy + math.sin(ang) * v * sp_age + 220 * sp_age * sp_age   # a touch of gravity
+            sr = max(1, 3 - int(sp_age * 4))
+            if 0 <= sx < w and 0 <= sy < h and sp_age < 0.7:
+                pygame.draw.circle(scene, (170, 28, 22), (int(sx), int(sy)), sr + 1)
+                pygame.draw.circle(scene, (240, 70, 50), (int(sx), int(sy)), sr)
+
     # 6. The pallid wail-MASK on top. The cracks spread, then the shards PULL
     #    APART -- flung aside like doors -- baring the face beneath.
-    crack = 0.92 * crack_form                                  # 0 -> intact during the behold
-    mvis = min(1.0, 0.5 + 0.5 * kindle) * (1.0 - 0.8 * second)   # fades as it opens away
+    mvis = min(1.0, 0.5 + 0.5 * kindle) * (1.0 - 0.85 * second)  # fades as it opens away
     _yk_shatter_mask(scene, cx, cy, int(fr), mvis,
                      "wail", crack, t, int(fr), aim=math.pi / 2, arms=False)
     if second <= 0.05:
@@ -1370,16 +1387,25 @@ def draw_king_death(surf, t):
         pygame.draw.rect(vig, (0, 0, 0, a), (i, i, w - 2 * i, h - 2 * i), 1)
     scene.blit(vig, (0, 0))
 
-    # Compose: He ADVANCES through the behold, then the camera DIVES into the
-    # pit only once it pulls open (so the crack-linger holds before the plunge).
+    # Compose: He advances through the behold, the SNAP jolts hard, then the
+    # camera dives down the cold-fire pit.
     surf.fill((0, 0, 0))
-    z = 1.0 + 0.12 * behold + 1.05 * pit_open
+    z = 1.0 + 0.12 * behold + 1.25 * pit_open + 0.10 * lunge
+    shx = int((math.sin(t * 71) * 18 + math.cos(t * 53) * 12) * snap)
+    shy = int((math.cos(t * 67) * 14 + math.sin(t * 47) * 10) * snap)
     if z > 1.001:
         zw, zh = int(w * z), int(h * z)
         surf.blit(pygame.transform.smoothscale(scene, (zw, zh)),
-                  (-(zw - w) // 2, -(zh - h) // 2))
+                  (-(zw - w) // 2 + shx, -(zh - h) // 2 + shy))
     else:
-        surf.blit(scene, (0, 0))
+        surf.blit(scene, (shx, shy))
+
+    # The black-flash on the SNAP: a 1-frame dark-red punctuation as the mask
+    # explodes open.
+    if snap > 0.4:
+        fl = pygame.Surface((w, h), pygame.SRCALPHA)
+        fl.fill((30, 6, 6, int(230 * snap)))
+        surf.blit(fl, (0, 0))
 
     # Down the pit -- a cold-fire flicker floods as you are hauled in, then the
     # depth swallows it toward dark (you are inside Carcosa now).
