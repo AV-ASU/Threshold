@@ -730,9 +730,11 @@ def build_cornfield_maze():
     # exits are reachable.
     objects_l[H - 2][11] = "."
     objects_l[1][9]      = "."
-    # Loot crate at (5, 6) -- chopped with the axe yields its item
-    # from CRATE_LOOT (spare_batteries).
-    objects_l[6][5] = "K"
+    # No loot crates in the corn maze. A wooden crate sitting in a
+    # cornfield reads as game-y, and an "empty crate" reward is
+    # anti-payoff. The maze rewards exploration with discovery of
+    # cult-adjacent atmospheric clusters instead (added as
+    # decorations after Scene construction below).
     # Corn cover patches scattered through the lanes. The `:`
     # floor tile flips player.hidden to "corn" while the player
     # stands on it; cultist sight cones can't lock through them.
@@ -803,6 +805,55 @@ def build_cornfield_maze():
     sc = Scene("cornfield_maze", floor_rows, objects, music="outside")
     for bx, by in _maze_bushes:
         sc.add_decoration(Decoration(bx, by, "bush"))
+
+    # ---- Dead-end cult clusters ----
+    # The maze's three new dead-end pockets each hold a cluster of
+    # props that tell the player something specific about what the
+    # cult does in the corn. Each cluster is small (3-5 decorations),
+    # placed so it's only visible to a player who pushed past a
+    # pass-through and hit the dead-end wall. The reward IS the
+    # recognition -- no loot, no inventory pickup.
+
+    # Lane 1 dead-end (cols 1-2, below the row-7 wall) -- an OFFERING.
+    # Someone sits here at night: chair facing the corn, a candle
+    # burning low, a small bowl with something dark in it. The
+    # candle wasn't lit by anyone you've met.
+    sc.add_decoration(Decoration(1 * TILE + 16, 13 * TILE + 16,
+                                 "small_chair"))
+    sc.add_decoration(Decoration(2 * TILE + 16, 13 * TILE + 8,
+                                 "candle"))
+    sc.add_decoration(Decoration(1 * TILE + 16, 14 * TILE + 16,
+                                 "bowl", filled=True))
+    sc.add_decoration(Decoration(2 * TILE + 16, 14 * TILE + 22,
+                                 "phantom_mark"))
+
+    # Lane 4 dead-end (cols 12-14, mid-pocket between rows 6 and 13)
+    # -- a CURSE-WORK SITE. A small version of the curse-priest's
+    # grove: three effigies in a tight circle around a yellow_sign
+    # painted on the ground, two candles. The cult does this work in
+    # the corn too, not just behind the fold.
+    sc.add_decoration(Decoration(13 * TILE + 16, 9 * TILE + 16,
+                                 "yellow_sign"))
+    sc.add_decoration(Decoration(12 * TILE + 16, 8 * TILE + 16,
+                                 "small_chair"))
+    sc.add_decoration(Decoration(14 * TILE + 16, 8 * TILE + 16,
+                                 "small_chair"))
+    sc.add_decoration(Decoration(13 * TILE + 16, 10 * TILE + 16,
+                                 "small_chair"))
+    sc.add_decoration(Decoration(12 * TILE + 16, 10 * TILE + 8,
+                                 "candle"))
+    sc.add_decoration(Decoration(14 * TILE + 16, 10 * TILE + 8,
+                                 "candle"))
+
+    # Lane 5 dead-end (cols 16-18, between rows 3 and 8 walls) --
+    # a WATCHING SITE. A missing-person flyer nailed to a stalk and
+    # a dead crow at its foot. The cult marks who they're tracking.
+    sc.add_decoration(Decoration(17 * TILE + 16, 5 * TILE + 16,
+                                 "missing_flyer"))
+    sc.add_decoration(Decoration(17 * TILE + 16, 6 * TILE + 22,
+                                 "dead_crow"))
+    sc.add_decoration(Decoration(18 * TILE + 16, 5 * TILE + 8,
+                                 "phantom_mark"))
     # The corn never ends (bible §1). The maze wraps on BOTH axes so
     # walking any direction long enough brings you back to where you
     # started -- corn looks the same in every direction, so the loop
