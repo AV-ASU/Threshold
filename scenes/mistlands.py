@@ -482,13 +482,13 @@ def build_mistlands():
         "[c=dim]You came IN. How did you come IN? ...Tell me how you came in.[/c]",
     ])
     _resident(61, 56, "the Tisdale boy", "kid", [
-        "School's still on. The teacher doesn't blink. I counted to a hundred.",
+        "I'm not allowed past the third row. I counted to a hundred and then I counted again.",
         "There's a lady in yellow at the back of the field. She waves. You shouldn't wave back.",
         "[c=dim]Mara waved back.[/c]",
     ], voice="blip_kid", radius=40)
     _resident(9, 67, "Garrick", "old", [
         "You're asking questions. Folks who ask questions go quiet. Real quiet.",
-        "The Sheriff'll smile at you. Don't let it talk you into staying for supper.",
+        "The Sheriff'll come at you friendly. Don't let it talk you into staying for supper.",
         "[c=dim]Go on home, son. ...Oh. Right. None of us can.[/c]",
     ])
     sc.add_npc(NPC(45 * TILE + 16, 38 * TILE + 16, "A woman", "mom",
@@ -518,7 +518,6 @@ def build_mistlands():
     # Calder's plate, set for a husband who walked out to the highway.
     sc.add_decoration(Decoration(58 * TILE + 16, 62 * TILE + 16, "payphone"))
     sc._payphone_pos = (58 * TILE + 16, 62 * TILE + 16)
-    sc.add_decoration(Decoration(61 * TILE + 16, 55 * TILE + 16, "missing_flyer"))  # Mara
     sc.add_decoration(Decoration(52 * TILE + 16, 61 * TILE + 16, "missing_flyer"))
     sc.add_decoration(Decoration(40 * TILE + 16, 27 * TILE + 16, "missing_flyer"))
     # The calendar, every day crossed off the same, nailed to the

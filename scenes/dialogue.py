@@ -203,8 +203,8 @@ def shopkeep_dialogue(game, npc):
             "[c=dim]I can't help you the way you want. Shelves are bare and "
             "the till's been empty since the spring -- nobody's buying, "
             "nobody's selling.[/c]",
-            "But I'll say this much, and then nothing: don't go where the "
-            "smiling ones tell you it's safe. I've got a family. Look around.",
+            "But I'll say this much, and then nothing: don't go where they "
+            "tell you it's safe. I've got a family. Look around.",
         ]
         game.dialog.show(escalate(game, low=plain, mid=plain, high=plain),
                          speaker="Store-Owner", voice="blip_high",
@@ -214,8 +214,8 @@ def shopkeep_dialogue(game, npc):
         game.dialog.show([
             "Back again. Good. Means you haven't gone quiet like the "
             "others.",
-            "[c=dim]Don't trust the smiles. The ones who smile widest "
-            "here, those went the soonest.[/c]",
+            "[c=dim]Don't trust the easy ones. The first to make peace "
+            "with it went the soonest.[/c]",
         ], speaker="Store-Owner", voice="blip_high", portrait="shopkeep")
         return
     if count == 3:
@@ -370,6 +370,5 @@ def basement_photo_dialogue(game, npc):
         ], speaker="", voice="blip_soft", portrait="narrator")
     else:
         game.dialog.show([
-            "[c=dim](The same faces. The same smile. The same patient, "
-            "unmoving eyes.)[/c]",
+            "[c=dim](The same faces. The same patient, unmoving eyes.)[/c]",
         ], speaker="", voice="blip_soft", portrait="narrator")

@@ -405,7 +405,6 @@ def build_kid_house():
         if (abs(game.player.x - drawing_x) < 36
                 and abs(game.player.y - drawing_y) < 36):
             game.show_notice("A child's drawing pinned to the wall: a tall "
-                             "figure in yellow, everyone around it smiling "
-                             "up.")
+                             "figure in yellow, the people lifted toward it.")
     sc.on_interact_fn = _kid_house_interact
     return sc
