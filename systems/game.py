@@ -1986,13 +1986,13 @@ class Game:
                 p.sprint_active = False
             return
         shift_held = keys[pygame.K_LSHIFT] or keys[pygame.K_RSHIFT]
-        # Cooldown drain
+        # Winded lockout drain (only entered on a FULL depletion). Counts
+        # down regardless of input; clearing it restores full wind.
         if p.sprint_cd > 0:
             p.sprint_cd -= dt
             if p.sprint_cd <= 0:
                 p.sprint_cd = 0.0
-                # Cooldown done -- refresh the sprint window.
-                p.sprint_t = p.sprint_t_max
+                p.sprint_t = p.sprint_t_max   # caught your breath
         # Sprint logic
         if shift_held and p.sprint_cd <= 0 and p.sprint_t > 0:
             if not p.sprint_active:
@@ -2006,10 +2006,16 @@ class Game:
             if p.sprint_t <= 0:
                 p.sprint_t = 0.0
                 p.sprint_active = False
-                p.sprint_cd = p.sprint_cd_max
+                p.sprint_cd = p.sprint_cd_max   # blown -> winded lockout
         else:
             if p.sprint_active:
                 p.sprint_active = False
+            # Regenerate wind whenever not actively sprinting and not in
+            # the winded lockout -- the meter recovers on its own, so a
+            # short burst no longer costs a full cooldown wait.
+            if p.sprint_cd <= 0 and p.sprint_t < p.sprint_t_max:
+                p.sprint_t = min(p.sprint_t_max,
+                                 p.sprint_t + dt * p.sprint_regen)
 
     def _tick_heartbeat(self, dt):
         """Player-state heartbeat. Above proximity 0.70 and while the

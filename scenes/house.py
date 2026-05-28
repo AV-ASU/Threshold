@@ -14,7 +14,7 @@ import pygame
 from constants import TILE
 from entities.npc import NPC
 from entities.decoration import Decoration
-from .base import Scene
+from .base import Scene, chest_interact
 from .dialogue import basement_photo_dialogue, clerk_dialogue, _evidence
 
 
@@ -201,10 +201,13 @@ def bedroom_interact(game):
     `read_journal` so other systems can react."""
     sc = game.scene
     px, py = game.player.x, game.player.y
-    # Writing table -- col 8 row 6. Range 40 matches the cot's.
-    tx = 8 * TILE + 16
-    ty = 6 * TILE + 16
-    if abs(px - tx) <= 40 and abs(py - ty) <= 40:
+    # Writing desk -- the sized "table" decoration over the cols 10-11,
+    # row 5 footprint (see build_bedroom). Anchor on the desk itself so
+    # the case-notebook prompt sits ON the table, not out on the open rug.
+    # Range 44 lets the player read it from the south/sides.
+    tx = 11 * TILE
+    ty = 5 * TILE + 16
+    if abs(px - tx) <= 44 and abs(py - ty) <= 44:
         # After the Dark, the case has rewritten itself. The notebook
         # the player opens the game on is the same one that closes it.
         # First read is the gut-punch; subsequent reads collapse so
@@ -590,16 +593,24 @@ def build_basement():
     # draws the eye. Found via the wall-panel interact (basement_interact).
     sc._workbench_pos = (2 * TILE + 16, 7 * TILE + 16)
     sc._wall_panel_pos = (1 * TILE + 16, 4 * TILE + 16)
-    # Hide spots: under the workbench, behind the chest area.
+    sc._chest_pos = (sc._workbench_pos[0], sc._workbench_pos[1] - 8)
+    # Hide spots: behind the firewood stack (SE) and behind a second
+    # woodpile by the south wall. (Neither sits on the workbench chest --
+    # which is its own E-interaction now -- nor on the bloodstain, which
+    # is not something you can hide in.)
     sc.hide_spots = [
-        (sc._workbench_pos[0], sc._workbench_pos[1] + 8, "under"),
-        (5 * TILE + 16, 7 * TILE + 24, "behind"),
+        (8 * TILE + 16, 7 * TILE + 16, "behind"),   # behind the SE firewood
+        (5 * TILE + 16, 7 * TILE + 16, "behind"),   # behind the south woodpile
     ]
-    sc.add_decoration(Decoration(sc._workbench_pos[0],
-                                 sc._workbench_pos[1] - 8, "chest",
-                                 open=False))
+    sc.add_decoration(Decoration(sc._chest_pos[0], sc._chest_pos[1],
+                                 "chest", open=False))
 
-    sc.add_decoration(Decoration(5 * TILE + 20, 7 * TILE + 12,
+    # A second split-wood stack by the south wall -- cover, and what the
+    # second hide spot crouches behind (replacing the bloodstain it used
+    # to sit on; you can't hide inside a bloodstain).
+    sc.add_decoration(Decoration(5 * TILE + 16, 8 * TILE + 6, "firewood",
+                                 w=44, h=24))
+    sc.add_decoration(Decoration(5 * TILE + 20, 6 * TILE + 20,
                                  "bloodstain", scale=3.2))
     sc.add_decoration(Decoration(1 * TILE + 24, 4 * TILE + 16, "candle"))
     sc.add_decoration(Decoration(10 * TILE + 8, 4 * TILE + 16, "candle"))
@@ -631,16 +642,9 @@ def basement_on_enter(game, scene):
     The Ledger (evidence #3) is gated behind the wall_panel interaction in
     basement_interact."""
     game._provoke_cult(0.10)
-    wbx, wby = scene._workbench_pos
-    # Woodshed key on a hook beside the workbench -- the gate to the
-    # splitting axe and the rope in the shed.
-    if (not game.save.flag("woodshed_key_taken")
-            and not game.player.inventory.has("woodshed_key")):
-        scene.add_item(
-            wbx + 32, wby - 12, "woodshed_key",
-            on_pickup=lambda g: g.save.set_flag("woodshed_key_taken", True),
-        )
-    # Sync workbench chest visual to whether the key's been taken.
+    # The woodshed key lives in the workbench chest -- taken by opening it
+    # (E) in basement_interact, not auto-grabbed off the floor. Sync the
+    # chest's open/closed visual to whether it's been emptied.
     for deco in scene.decorations:
         if deco.kind == "chest":
             deco.kwargs["open"] = game.save.flag("woodshed_key_taken")
@@ -665,6 +669,14 @@ def basement_interact(game):
     the opening's cut to the room is the same night."""
     sc = game.scene
     px, py = game.player.x, game.player.y
+    # The workbench chest -- holds the woodshed key (gate to the axe + rope
+    # in the shed). chest_interact does its own range check and flips the
+    # chest's open visual; the `woodshed_key_taken` flag keeps it emptied
+    # across re-entries.
+    cx, cy = sc._chest_pos
+    if chest_interact(game, sc, cx, cy, "woodshed_key_taken",
+                      ["woodshed_key"]):
+        return
     wpx, wpy = sc._wall_panel_pos
     if abs(px - wpx) > 40 or abs(py - wpy) > 40:
         return

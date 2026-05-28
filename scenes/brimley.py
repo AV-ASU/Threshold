@@ -671,12 +671,12 @@ def build_brimley():
         "Tried it on foot. Same. The corn just hands you back where you started.",
         "[c=dim]You came IN. How did you come IN? ...Tell me how you came in.[/c]",
     ])
-    # The Tisdale boy -- on his own front step.
-    _resident(68, 71, "the Tisdale boy", "kid", [
-        "I'm not allowed past the third row. I counted to a hundred and then I counted again.",
-        "There's a lady in yellow at the back of the field. She waves. You shouldn't wave back.",
-        "[c=dim]Somebody waved back, last spring. They don't live here anymore.[/c]",
-    ], voice="blip_kid", radius=40, movement="idle")
+    # The Tisdale boy lives INSIDE the kid's house (the `kid_house`
+    # scene, kid_dialogue). He used to also stand here on the front step,
+    # but that put a solid NPC right on the `from_kid_house` doorway
+    # spawn (col 68, row 71) -- so leaving the house wedged the player
+    # against him -- and split one child into two. He's now a single NPC,
+    # indoors; nothing stands on the step.
     # Garrick -- the old man at the well. Town centre, watching
     # everyone come and go. The law is hollow now; he says so plainly.
     _resident(91, 12, "Garrick", "old", [

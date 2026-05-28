@@ -2159,26 +2159,30 @@ class Decoration:
         stone = (94, 92, 90)
         stone_dk = (56, 54, 54)
         moss = (58, 74, 50)
+        # Sit the marker's foot down on its ground shadow (drawn at y+16).
+        # Without this the stone's base rested at the tile centre while the
+        # shadow sat a half-tile lower, so the graves read as floating.
+        b = y + 14
         tx = x + lean
-        top = y - h
+        top = b - h
         # Turned dirt at the foot.
-        pygame.draw.ellipse(surf, (30, 26, 23), (x - w // 2 - 2, y, w + 4, 7))
+        pygame.draw.ellipse(surf, (30, 26, 23), (x - w // 2 - 2, b, w + 4, 7))
         if cross:
-            pygame.draw.line(surf, stone, (tx, top), (x, y), 5)
+            pygame.draw.line(surf, stone, (tx, top), (x, b), 5)
             pygame.draw.line(surf, stone, (tx - w // 2, top + h // 3),
                              (tx + w // 2, top + h // 3), 5)
-            pygame.draw.line(surf, stone_dk, (tx, top), (x, y), 1)
+            pygame.draw.line(surf, stone_dk, (tx, top), (x, b), 1)
         else:
-            pts = [(x - w // 2, y), (x - w // 2 + lean, top + 5),
+            pts = [(x - w // 2, b), (x - w // 2 + lean, top + 5),
                    (tx - w // 4, top), (tx + w // 4, top),
-                   (x + w // 2 + lean, top + 5), (x + w // 2, y)]
+                   (x + w // 2 + lean, top + 5), (x + w // 2, b)]
             pygame.draw.polygon(surf, stone, pts)
             pygame.draw.polygon(surf, stone_dk, pts, 1)
             for i in range(2):                 # illegible inscription
                 ly = top + 9 + i * 5
                 lx = x - w // 4 + int(lean * (1 - (ly - top) / h))
                 pygame.draw.line(surf, stone_dk, (lx, ly), (lx + w // 2, ly), 1)
-        pygame.draw.circle(surf, moss, (x - w // 4, y - 2), 2)
+        pygame.draw.circle(surf, moss, (x - w // 4, b - 2), 2)
 
     def _draw_player_car(self, surf, x, y):
         """A faded-red 1990s sedan, parked. Approx 3 tiles wide, 1.5

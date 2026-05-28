@@ -92,7 +92,7 @@ def old_man_dialogue(game, npc):
             "A young woman came through last month. Bright thing, full of "
             "questions -- like you. She kneels out there now, with the "
             "rest. You looking for her?",
-        ], speaker="Preacher", voice="blip_low", portrait="old")
+        ], speaker="Preacher", voice="blip_low", portrait="preacher")
     elif count == 2:
         # The hubris that gets him killed. After this he's marked: the
         # church swaps him for his remains on the next entry (evidence #4).
@@ -104,12 +104,12 @@ def old_man_dialogue(game, npc):
             "whole sermon. He's never taken communion.",
             "Let them come for an old man. I've buried better than "
             "whatever it is they kneel to.",
-        ], speaker="Preacher", voice="blip_low", portrait="old")
+        ], speaker="Preacher", voice="blip_low", portrait="preacher")
         save.set_flag("preacher_doomed", True)
     else:
         game.dialog.show([
             "I've said my piece. Go on, now -- and watch the road.",
-        ], speaker="Preacher", voice="blip_low", portrait="old")
+        ], speaker="Preacher", voice="blip_low", portrait="preacher")
 
 
 # ---- The Kid ----
@@ -127,36 +127,36 @@ def kid_dialogue(game, npc):
         game.dialog.show([
             "You're looking for the lady from the lodge.",
             "She walked to the well. She climbed down. I saw her.",
-        ], speaker="Boy", voice="blip_kid", portrait="kid")
+        ], speaker="Tisdale boy", voice="blip_kid", portrait="kid")
         return
     if inv.has("playscript") and not save.flag("kid_playscript_noticed"):
         save.set_flag("kid_playscript_noticed", True)
         game.dialog.show([
             "That yellow book.",
             "[c=dim]Don't open it where I can see.[/c]",
-        ], speaker="Boy", voice="blip_kid", portrait="kid")
+        ], speaker="Tisdale boy", voice="blip_kid", portrait="kid")
         return
     count = save.arg("kid_count", 0) + 1
     save.set_arg("kid_count", count)
     if count == 1:
         game.dialog.show([
             "My dad went down too. He still comes home for dinner.",
-        ], speaker="Boy", voice="blip_kid", portrait="kid")
+        ], speaker="Tisdale boy", voice="blip_kid", portrait="kid")
     elif count == 2:
         game.dialog.show([
             "I keep biting my tongue. To check.",
             "[c=dim]It still bleeds right.[/c]",
-        ], speaker="Boy", voice="blip_kid", portrait="kid")
+        ], speaker="Tisdale boy", voice="blip_kid", portrait="kid")
     elif count == 3:
         game.dialog.show([
             "I don't walk past the church anymore.",
             "[c=dim]The door is open. They left it open.[/c]",
-        ], speaker="Boy", voice="blip_kid", portrait="kid")
+        ], speaker="Tisdale boy", voice="blip_kid", portrait="kid")
     elif count == 4:
         game.dialog.show([
             "If you find a way out, don't tell me.",
             "[c=dim]I tried to lie yesterday. My mouth wouldn't.[/c]",
-        ], speaker="Boy", voice="blip_kid", portrait="kid")
+        ], speaker="Tisdale boy", voice="blip_kid", portrait="kid")
     else:
         game.dialog.show([
             "[c=dim]The boy is watching the corn line.[/c]",
@@ -296,40 +296,41 @@ def clerk_dialogue(game, npc):
     save.set_arg("clerk_count", count)
     if count == 1:
         plain = [
-            "Evening. You'll be wanting a room -- everyone who comes asking "
-            "after that girl ends up staying a while.",
-            "[c=dim]He slides a key across the counter before you ask for "
-            "one.[/c]",
-            "Settle in. The roads aren't going anywhere. Neither are you.",
+            "Settling in all right? Good. Most folks do, once they stop "
+            "fighting it.",
+            "[c=dim]He doesn't ask what brought you. He just smiles, like "
+            "he's glad you'll be staying.[/c]",
+            "The roads aren't going anywhere tonight. Neither are you. Get "
+            "some rest.",
         ]
         game.dialog.show(escalate(game, low=plain, mid=plain, high=plain),
-                         speaker="Clerk", voice="blip_low", portrait="old")
+                         speaker="Clerk", voice="blip_low", portrait="clerk")
         return
     if count == 2:
         game.dialog.show([
             "Sleep all right? People do here -- better than they expect.",
             "[c=dim]If you're the restless sort, there's an old guest "
             "register down in the cellar. Hatch under the kitchen.[/c]",
-            "Read it if you like. Won't change which rooms have keys.",
-        ], speaker="Clerk", voice="blip_low", portrait="old")
+            "Read it if you like. Won't change a thing.",
+        ], speaker="Clerk", voice="blip_low", portrait="clerk")
         return
     if count == 3:
         game.dialog.show([
             "Still asking your questions. That's fine. Ask away.",
             "[c=dim]She asked hers too, the Blaine girl. Right up until she "
             "stopped needing to.[/c]",
-        ], speaker="Clerk", voice="blip_low", portrait="old")
+        ], speaker="Clerk", voice="blip_low", portrait="clerk")
         return
     if count == 4:
         game.dialog.show([
             "[c=dim]He smiles, and it doesn't reach anything.[/c]",
             "You're not a guest who checks out. None of my best ones are.",
-        ], speaker="Clerk", voice="blip_low", portrait="old")
+        ], speaker="Clerk", voice="blip_low", portrait="clerk")
         return
     game.dialog.show(
         ["[c=dim]He nods you toward the stairs, patient as a man with all "
          "the time in the world.[/c]"],
-        speaker="Clerk", voice="blip_low", portrait="old")
+        speaker="Clerk", voice="blip_low", portrait="clerk")
 
 
 def basement_photo_dialogue(game, npc):
