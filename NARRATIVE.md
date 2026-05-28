@@ -51,25 +51,75 @@ corruption, bleak and ambiguous) + *Fear & Hunger* (grimdark descent to
 the god at the bottom, ritual and body-horror, no clean win).
 
 **Setting note:** The **Arcadia Lodge** is a hotel the PI is staying at —
-*not* the Innkeeper's home. The README's "car broke down" framing is
-retired: the PI came on purpose, and the town strands them.
+*not* the Innkeeper's home. The PI came on purpose, and the town strands
+them. **The car breaks because the fold breaks it** — the engine turns
+over and never catches. No one in Brimley sabotaged it; the eldritch
+seal won't let machines leave any more than it lets feet leave. The
+Sheriff did *not* kill the car (cf. §2). It's the same wrongness that
+loops the roads.
+
+**Setting note 2 — where this is.** Brimley is a small town in
+northern Minnesota, bumfuck nowhere. Walter Blaine is in Minneapolis.
+**No local in Brimley has ever met Walter** — there is no reason any
+of them would know an outsider from a city a long way south. The PI
+is the only one who knows the client. Mara was an outsider too: she
+came north to Brimley a few months ago, was passively pulled by the
+Sign, "found religion," and joined the cult. She is one of the
+newcomers (§2).
 
 ---
 
-## 2. The Cast — a split town
+## 2. The Cast — locals and newcomers
 
-Some townsfolk are cult, some aren't. Reading who's who *is* the
-investigation.
+Brimley has a **population split**, and reading it *is* the
+investigation:
 
-| Who | Side | Their thread |
+- **Locals** — born here, lived here, watched their town fall in on
+  itself over the last few months. They don't understand what's
+  happening. They haven't mapped the fold. They've just learned the
+  lesson of futility — you can't drive out, the roads come back, the
+  store doesn't get deliveries anymore, your husband walked out to
+  flag down help and didn't come back. They cope by surrender, not
+  by knowledge. They still try (Royce drives out again every week)
+  but they expect nothing.
+- **Newcomers** — arrived in the last weeks and months, drawn here
+  by the Sign's passive pull. They "found religion." Mara was one
+  of the latest. Once the congregation was whole they bound the
+  town shut — the fold closed AROUND the locals, who didn't ask for
+  any of this. The newcomers smile and act like they belong here.
+  They do not. They are the cult.
+- **The PI** — the only outsider to enter since the fold closed.
+  Unclaimed; not yet His; the one thing the fold doesn't own.
+
+The locals are TRAPPED WITH the newcomers. That's the specific dread.
+Not "everyone is infected" — *some* people, *recently*, that nobody
+ordered and nobody can refuse.
+
+> **The cultists have to eat.** They have bodies. They sleep. They
+> buy food. The Lodge is newcomer-run and supplied; the store's
+> shelves are bare because the deliveries stopped when the fold
+> closed; some locals can grow their own and some can't, and the
+> ones who can't are sliding cult-ward by attrition. The horror is
+> domestic — a cultist at the diner counter eating a sandwich,
+> returning a borrowed shovel, picking up the Tisdale boy's mail.
+
+| Who | Origin | Their thread |
 |---|---|---|
-| **Lodge Clerk** (was "the Innkeeper") | Complicit | The smiling trap-keeper. Too-warm host who keeps you comfortable and never admits the town won't let you leave; escalates over visits to something colder. The old fetch-quest chain (crate -> cellar bottle -> car keys) is **cut** -- the car answers only to the Sign now, so he has no keys to dangle. |
-| **The Sheriff** | Cult enforcer | The law that keeps everyone in. He killed your car. His outdoor patrols are surveillance. |
-| **The Preacher** | **Innocent dissenter** | A small-town minister who **names the cult from his own pulpit** — oblivious to *what* they truly are, but loud that they're no church. Your **2nd** conversation (his hubris — "God's on my side of the door") sets `preacher_doomed`; on the next entry he's **gutted on his own church floor**, his cross in the viscera (evidence #4). The town murders the ones who name them. |
-| **The Store-Owner** | Quiet resister | The shop is gutted -- shelves bare, till empty, **nothing to sell** (the old vendor items, charcoal + paper, are purged). His value is what he risks saying out loud: frightened warnings about who to trust, never said outright. He names **Walter Blaine** on visit 3 — Walter came through years back with Mara's mother, *before things turned* — and has a one-shot reaction to the Preacher's death. |
-| **The Kid** | Innocent witness | Saw Mara walk into the corn and **tells you so** — the only honest account in town. What he gives you is the truth, not an object (the old keepsake item is purged; no inventory pickup). Children notice what adults pretend not to. |
-| **Mara Blaine** | The quarry — **already turned** | A willing member of the congregation now. Finding her proves there was never anyone to save. She is in the **hive**. |
-| **Cult / curse-priest / Watchers / the King in Yellow** | The corruption | Operate in the cornfields, the abandoned farmhouse, and the depths/hive below. |
+| **Lodge Clerk** | **Newcomer** (early arrival, became recruiter) | The smiling trap-keeper. Runs the only inn in town, the only place an outsider would naturally stay. Too-warm host who keeps you comfortable and never admits the town won't let you leave; escalates over visits to something colder. The old fetch-quest chain (crate -> cellar bottle -> car keys) is **cut** -- the car answers only to the Sign now, so he has no keys to dangle. |
+| **The Sheriff** | **Local** | Born here. Has stood at the rim of the well. Knows the fold is real and that none of his deputies will be coming back. **He did not kill your car — the fold did.** He patrols because patrolling is what he did before; he tells outsiders "leave, son" out of muscle memory, even though he knows you can't and he can't either. Not a believer, not a cultist. A witness who can't help. The badge is just clothing now. |
+| **The Preacher** | **Local — innocent dissenter** | A small-town minister who **names the cult from his own pulpit** — oblivious to *what* they truly are, but loud that they're no church. Your **2nd** conversation (his hubris) sets `preacher_doomed`; on the next entry he's **gutted on his own church floor**, his cross in the viscera (evidence #4). The town murders the ones who name them. |
+| **The Store-Owner** | **Local — quiet resister** | The shop is gutted -- shelves bare, till empty, **nothing to sell** (deliveries stopped when the fold closed). His value is what he risks saying out loud: frightened warnings about who to trust, never said outright. He has a one-shot reaction to the Preacher's death. **He does not know Walter Blaine.** No local does — Walter is a voice in Minneapolis and Brimley locals would have no reason to recognize the name. |
+| **The Kid** | **Local — innocent witness** | Saw Mara go to the well with the procession and **tells you so** — the only honest account in town. What he gives you is the truth, not an object (the old keepsake item is purged; no inventory pickup). Children notice what adults pretend not to. |
+| **The Mistlands chorus** (Hettie, Old Pell, Mrs. Calder, Royce, Garrick, the Tisdale boy) | **Locals** | The town still tries to live. Hettie keeps the store open. Mrs. Calder sets her husband's plate every night for a man who walked out to the highway. Old Pell stopped marking the calendar. Royce drives the river road out every week and comes back into Brimley every time. They all know the fold is real; none of them understand it. **Naming the principal locals** (the Sheriff, the Preacher, the Kid, the Store-Owner) is **still TODO** — see §8. |
+| **Mara Blaine** | **Newcomer** — the quarry, **already turned** | Arrived in Brimley a few months ago, "found religion," joined the cult, **went down the well** (not into the corn — she is not a "corn lady"). A willing member of the congregation now. Finding her proves there was never anyone to save. She is in the **hive**. |
+| **Walter Blaine** | **Outsider, off-screen** | The client. A Minneapolis voice on a phone that no longer connects. **No one in Brimley has ever met him.** He exists only through the PI's case notebook and (optionally — see §8) the polaroid he sent with the case. |
+| **Cult / curse-priest / Watchers / the King in Yellow** | **Newcomers + Their god** | The congregation are the newcomers. The Watchers and the King are the corruption they're channelling. |
+
+> **The fold is incomprehensible, not predictable.** Locals haven't
+> "figured out" which roads still work. They've learned that *none*
+> of them do. There is no workaround until the Sign. When a local
+> talks about the fold, they describe failure, not pattern: *"I've
+> tried them all. They all bring you back."*
 
 ---
 
@@ -133,21 +183,28 @@ hive.
 ## 5. The Descent — "how deep does this go"
 
 The descent is strictly **vertical**, and it has exactly **one mouth**:
-the village **well**. You go down it on a **rope** — there is no other
-route down and **no secret paths**. The surface is one connected sprawl:
-the **Arcadia** (lodge, yard, cornfields) ↔ the **village** crossroads
-(where the well is) ↔ the **Mistlands map, which *is* Brimley** — the
-church (Preacher), the store, the sheriff, the school, the barn, the kid's
-house, and the car all sit out there. Going *deeper* than the first
-underground layer is gated by the **playscript**.
+the **well in Brimley**. You go down it on a **rope** — there is no
+other route down and **no secret paths**. The surface is one connected
+sprawl: the **Arcadia Lodge** (lodge, yard, cornfields) ↔ **Brimley**
+(the town itself — the well, the church, the store, the sheriff's
+office, the school, the barn, the kid's house, and the car). Going
+*deeper* than the first underground layer is gated by the
+**playscript**.
+
+> **Brimley is one place.** The old code had two scenes — `mistlands`
+> (the big town map) and `village` (the well-crossroads sub-area).
+> They are being merged into a single `brimley` scene so the world
+> reads as one continuous town: walk west to find the well, east to
+> find the church, north to find the car. The "Mistlands" name is
+> retired — there was no separate Mistlands; that was always Brimley.
 
 ```
-SURFACE         The ARCADIA (lodge + yard + cornfields) ─▶ the VILLAGE
-                crossroads (the WELL) ─▶ the MISTLANDS map, which IS
-                Brimley: church (Preacher), store, sheriff, school, barn,
-                kid's house, and the CAR (Spread it). One connected sprawl.
+SURFACE         The ARCADIA LODGE (lodge + yard + cornfields) ─▶ BRIMLEY
+                (one map: well at the centre, church, store, sheriff,
+                school, barn, kid's house, named locals on their stoops,
+                the CAR parked at the edge of town).
                   │
-                  │   THE ONLY WAY DOWN — a rope down the village WELL.
+                  │   THE ONLY WAY DOWN — a rope down the well in Brimley.
                   │   No other route. No secret paths.
                   ▼
 THE WORKS       The cult's underground labour, reached by the well: a
@@ -162,7 +219,7 @@ DEEPER          The Depths → the Threshold (END IT / seal) → the Hive
 [not a place]   CARCOSA — the King's fire-and-masks catch-cutscene.
 ```
 
-- **Surface:** one connected sprawl — the Arcadia (lodge/yard/cornfields) ↔ the village crossroads (the well) ↔ the Mistlands map that *is* Brimley (church, store, sheriff, school, barn, kid's house, the Preacher's body, the car). Sealed; sole way down = the well (rope).
+- **Surface:** the Arcadia (lodge/yard/cornfields) ↔ Brimley (one map: the well, the church, the store, the sheriff's office, the school, the barn, the kid's house, the locals, the car). Sealed; sole way down = the well (rope).
 - **The Works** (a.k.a. the Basement Level): the first underground layer, reached by the well — a built 7-room gauntlet (§9): Mara's cell, the Playscript, the Pallid Mask.
 - **Deeper (playscript-gated):** the Depths, the Threshold (**End it**), and the Hive where **Mara** is — all built: the `dark` scene holds the kneeling congregation and Mara's one-shot recognition (evidence #6).
 
@@ -306,6 +363,25 @@ The reworks the new fiction forced are all shipped. What must stay true:
 ---
 
 ## 8. Still loose (design TODO)
+- **Merge `mistlands` + `village` into one `brimley` scene.** §5's
+  geography is now a single town map. The two-scene split is a code
+  artefact that the fiction has retired. Real refactor: merge maps,
+  reconcile exits + spawns, move the well into the village square of
+  the unified map.
+- **Name the principal locals.** The Sheriff, the Preacher, the
+  Store-Owner, the Kid are role-tags. Locals in a small town know
+  each other by name. The wax-museum quality of the cast is partly
+  this. (The Mistlands chorus is already named: Hettie, Old Pell,
+  Mrs. Calder, Royce, Garrick, the Tisdale boy.)
+- **Sheriff dialogue rework.** Bible §2 now says he's a *local*,
+  broken, not a believer, did not kill the car. Current dialogue
+  still has him talking like a cult enforcer. Rewrite to match.
+- **Cut Walter from local mouths.** Store-Owner's "Walter came
+  through years back with Mara's mother" line is no longer canon
+  (§1, §2). No local knows him.
+- **Kid's witness, retargeted.** Mara went down the well, not
+  into the corn (§2, §5). Re-write the kid's first beat
+  accordingly.
 - **The liminal-composition pass** (§10): per-scene level design —
   composed emptiness, long sightlines, uncanny repetition.
 - **The curse-priest is silent in the fiction.** A stalker NPC roams
@@ -313,6 +389,11 @@ The reworks the new fiction forced are all shipped. What must stay true:
   NPC dialogue or evidence beat references him. A player can be cursed
   without ever understanding what's happening. System in search of a
   story.
+- **Food scarcity as setting fact.** The bible now says the cult eats
+  and deliveries stopped when the fold closed (§2). Surface this in
+  the world: bare store shelves the player can see, gardens visible
+  on some lots and not others, a cultist eating at the diner counter.
+  Not a player-facing mechanic — wallpaper.
 
 ---
 
