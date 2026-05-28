@@ -1217,13 +1217,41 @@ def _yk_flames(surf, w, h, t, ramp):
 
 
 
+def _cold_fire_pit(surf, cx, cy, R, t):
+    """A pit of COLD FIRE -- a shaft of sickly pale-teal/gold flame receding to a
+    black throat, that the King's mask opens into. You are dragged down it. The
+    'hell' of Carcosa: fire, but wrong and cold."""
+    R = int(R)
+    if R < 6:
+        return
+    cx, cy = int(cx), int(cy)
+    # the receding shaft: bright cold flame at the rim, darkening into the depth
+    for i in range(14, 0, -1):
+        f = i / 14.0
+        rr = max(2, int(R * f))
+        fl = 0.55 + 0.45 * math.sin(t * 8 + i * 0.8)
+        c = (int((18 + 66 * f) * fl), int((54 + 150 * f) * fl), int((50 + 120 * f) * fl))
+        pygame.draw.ellipse(surf, c, (cx - rr, cy - int(rr * 0.92), 2 * rr, int(rr * 1.84)))
+    pygame.draw.ellipse(surf, (3, 5, 6), (cx - int(R * 0.3), cy - int(R * 0.28),
+                                          int(R * 0.6), int(R * 0.56)))
+    # cold flame tongues licking up around the rim
+    for k in range(18):
+        a = k * math.tau / 18 + math.sin(t * 2 + k) * 0.05
+        bx, by = cx + math.cos(a) * R * 0.92, cy + math.sin(a) * R * 0.84
+        fl = R * (0.12 + 0.12 * (0.5 + 0.5 * math.sin(t * 7 + k * 1.6)))
+        tx, ty = bx + math.cos(a) * fl, by + math.sin(a) * fl * 0.9
+        col = (150, 214, 184) if k % 2 else (206, 204, 130)
+        pygame.draw.line(surf, col, (int(bx), int(by)), (int(tx), int(ty)),
+                         max(1, int(R * 0.02)))
+
+
 def draw_king_death(surf, t):
     """THE KING REVEALED. The distant void you have fled all game finally
     ARRIVES in full: His blazing Carcosa furnace floods the frame, His shattered
     pallid mask commands the centre with the gaze fixed on you, His arms reach
-    out to take you -- then He SURGES forward and the furnace engulfs all. The
-    dread is recognition: the thing that hunted you is here, and it has you.
-    `t` ~ 4.5s (the caller holds 5s)."""
+    out and DRAG you into the mask -- which cracks open into a pit of COLD FIRE,
+    the hell of Carcosa, that you are hauled down. The dread is recognition: the
+    thing that hunted you is here, and it has you. `t` ~ 4.5s (caller holds 5s)."""
     w, h = surf.get_size()
     cx, cy = w // 2, int(h * 0.46)
 
@@ -1280,16 +1308,25 @@ def draw_king_death(surf, t):
                int(90 * (0.4 + 0.6 * take)), add=False)
 
     # 5. His shattered pallid MASK, commanding the centre, the gaze fixed on you.
-    crack = 0.16 + 0.32 * take                       # holds together, breaks open as He takes you
+    #    It holds whole through the behold, then CRACKS WIDE OPEN as He takes you
+    #    -- the shards flung aside like doors onto the pit beyond.
+    crack = 0.16 + 0.74 * take
     _yk_shatter_mask(scene, cx, cy, int(fr), min(1.0, 0.5 + 0.5 * kindle),
                      "wail", crack, t, int(fr), aim=math.pi / 2, arms=False)
-    for sgn in (-1, 1):                              # the gaze, fixed
-        ex = cx + sgn * int(fr * 0.42)
-        ey = cy - int(fr * 0.12)
-        gz = fr * (0.1 + 0.04 * math.sin(t * 4))
-        _yk_radial(scene, ex, ey, int(gz * 2.2), _YK_GOLD,
-                   int(70 * (0.4 + 0.6 * behold)), add=False)
-        _yk_radial(scene, ex, ey, int(gz), _YK_HOT, int(155 * (0.4 + 0.6 * behold)))
+    if take <= 0.05:
+        for sgn in (-1, 1):                          # the gaze, fixed (until it opens)
+            ex = cx + sgn * int(fr * 0.42)
+            ey = cy - int(fr * 0.12)
+            gz = fr * (0.1 + 0.04 * math.sin(t * 4))
+            _yk_radial(scene, ex, ey, int(gz * 2.2), _YK_GOLD,
+                       int(70 * (0.4 + 0.6 * behold)), add=False)
+            _yk_radial(scene, ex, ey, int(gz), _YK_HOT, int(155 * (0.4 + 0.6 * behold)))
+
+    # 5b. THE PIT. As the mask opens, a shaft of COLD FIRE yawns at its heart and
+    #     you are dragged down it -- the arms hauling, the camera diving in.
+    if take > 0.02:
+        pit_r = fr * 0.25 + take * min(w, h) * 0.46   # capped so its cold-fire
+        _cold_fire_pit(scene, cx, cy, pit_r, t)        # walls stay in frame as you dive
 
     # 6. Embers of the furnace streaming up.
     for i in range(40):
@@ -1306,10 +1343,10 @@ def draw_king_death(surf, t):
         pygame.draw.rect(vig, (0, 0, 0, a), (i, i, w - 2 * i, h - 2 * i), 1)
     scene.blit(vig, (0, 0))
 
-    # Compose: He ADVANCES on you -- a push-in that builds through the behold and
-    # surges as He takes you.
+    # Compose: He ADVANCES through the behold, then the camera DIVES into the
+    # opening pit as you are dragged down.
     surf.fill((0, 0, 0))
-    z = 1.0 + 0.12 * behold + 0.55 * take
+    z = 1.0 + 0.12 * behold + 1.05 * take
     if z > 1.001:
         zw, zh = int(w * z), int(h * z)
         surf.blit(pygame.transform.smoothscale(scene, (zw, zh)),
@@ -1317,14 +1354,27 @@ def draw_king_death(surf, t):
     else:
         surf.blit(scene, (0, 0))
 
-    # The TAKE -- the furnace floods white-gold over you (consumed into Carcosa).
+    # Down the pit -- a cold-fire flicker floods as you are hauled in, then the
+    # depth swallows it toward dark (you are inside Carcosa now).
     if engulf > 0.01:
+        e = min(1.0, engulf)
+        cfl = 0.6 + 0.4 * math.sin(t * 12)
         fl = pygame.Surface((w, h), pygame.SRCALPHA)
-        fl.fill((255, 226, 150, int(255 * min(1.0, engulf * 1.15))))
+        fl.fill((int(120 * cfl), int(180 * cfl), int(150 * cfl),
+                 int(150 * e)))                      # cold-fire wash
         surf.blit(fl, (0, 0))
+        if engulf > 0.6:                             # the depth closes over you
+            d = (engulf - 0.6) / 0.4
+            bl = pygame.Surface((w, h), pygame.SRCALPHA)
+            bl.fill((3, 7, 8, int(165 * min(1.0, d))))
+            surf.blit(bl, (0, 0))
 
-    # The grime grade -- warm (His furnace) with a cold rot in the shadows.
-    _carcosa_post(surf, t, tint=(214, 184, 150), cold=(3, 7, 12))
+    # The grime grade -- warm (His furnace) cooling toward cold-fire as the pit
+    # opens and takes you, a cold rot always in the shadows.
+    warm = (214, 184, 150)
+    cold = (150, 184, 178)
+    tint = tuple(int(warm[k] + (cold[k] - warm[k]) * take) for k in range(3))
+    _carcosa_post(surf, t, tint=tint, cold=(3, 8, 13))
 
 
 # ---- The Carcosa tableau: the rite_broken explosion ending --------------
