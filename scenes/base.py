@@ -125,6 +125,7 @@ OBJECT_DEFS = {
     "T": {"solid": True, "kind": "tree"},
     "p": {"solid": False, "kind": "tree"},   # passable secret tree -- looks identical to T
     "C": {"solid": True, "kind": "cornstalk"},
+    "A": {"solid": False, "kind": "cornstalk"},   # passable corn -- looks like C
     "R": {"solid": True, "kind": "rock"},
     "b": {"solid": True, "kind": "bed"},
     "t": {"solid": True, "kind": "table"},
@@ -1477,32 +1478,35 @@ def scatter_forest_band(floor_ll, objects_l, w, h, *,
                          passable_ratio=0.6,
                          blotch_dim=0.22, blotch_corn=0.09,
                          bush_density=0.10,
+                         solid_char="T", passable_char="p",
                          protected=None, place_bush=None):
-    """Stamp a permeable scattered-forest band around the perimeter of
-    an outdoor scene. The wrap mechanic moves the player; this is the
+    """Stamp a permeable scattered band around the perimeter of an
+    outdoor scene. The wrap mechanic moves the player; this is the
     visual camouflage that hides the transition. Both floor_ll and
     objects_l are mutated in place.
 
-    - Trees ('T' solid / 'p' passable) seeded at decreasing density
-      from the outer edge inward across `depth` tiles. `passable_ratio`
-      of trees are 'p' so navigation is forgiving.
+    - Walls (default 'T' solid / 'p' passable trees; pass solid_char +
+      passable_char to use corn 'C'/'A' or whatever else) seeded at
+      decreasing density from the outer edge inward across `depth`
+      tiles. `passable_ratio` of placements are passable so navigation
+      is forgiving.
     - Ground blotch: ';' dim grass + ':' corn cover (which hides the
       player) mixed into the open grass in the same band.
-    - De-clump pass: any 2x2 block of solid 'T's gets one corner
-      converted to 'p' so the player is never stopped by a wall.
+    - De-clump pass: any 2x2 block of solid chars gets one corner
+      converted to passable so the player is never stopped by a wall.
     - Bushes: `place_bush(x_px, y_px)` is called for each chosen
       decoration position; the floor under each bush is forced to ':'
       so stepping into it hides. Pass a callback that adds the bush
       Decoration to the scene.
 
-    `protected(tx, ty) -> bool` exempts tiles from EVERY pass (trees,
+    `protected(tx, ty) -> bool` exempts tiles from EVERY pass (walls,
     blotch, bushes). Used for road corridors and spawn approaches.
     """
     rng = random.Random(seed)
     prot = protected or (lambda tx, ty: False)
-    # Pass 1 -- trees in objects.
-    def _tree_char():
-        return "p" if rng.random() < passable_ratio else "T"
+    # Pass 1 -- walls in objects.
+    def _wall_char():
+        return passable_char if rng.random() < passable_ratio else solid_char
     for ty in range(h):
         for tx in range(w):
             edge_dist = min(tx, w - 1 - tx, ty, h - 1 - ty)
@@ -1515,38 +1519,34 @@ def scatter_forest_band(floor_ll, objects_l, w, h, *,
             t = edge_dist / depth
             density = tree_density * (1 - t) + tree_floor
             if rng.random() < density:
-                objects_l[ty][tx] = _tree_char()
-    # Pass 2 -- de-clump: break any 2x2 block of solid T's.
+                objects_l[ty][tx] = _wall_char()
+    # Pass 2 -- de-clump: break any 2x2 block of solid walls.
     for ty in range(h - 1):
         for tx in range(w - 1):
             quad = [objects_l[ty][tx], objects_l[ty][tx + 1],
                     objects_l[ty + 1][tx], objects_l[ty + 1][tx + 1]]
-            if quad.count("T") == 4:
-                # Convert the corner whose flood-toward-interior would
-                # be the most useful -- the one closest to map centre.
+            if quad.count(solid_char) == 4:
                 cands = [(tx, ty), (tx + 1, ty),
                          (tx, ty + 1), (tx + 1, ty + 1)]
                 cx, cy = min(cands,
                              key=lambda p: (p[0] - w / 2) ** 2 +
                                            (p[1] - h / 2) ** 2)
                 if not prot(cx, cy):
-                    objects_l[cy][cx] = "p"
-    # Pass 3 -- de-clump again on the 3x3 around each T. If a solid T
-    # has zero non-solid orthogonal neighbours in the band, swap to p.
+                    objects_l[cy][cx] = passable_char
+    # Pass 3 -- ensure every solid wall has at least one passable
+    # orthogonal neighbour; otherwise it's a dead-end clump and gets
+    # swapped to passable.
+    open_set = (".", passable_char)
     for ty in range(1, h - 1):
         for tx in range(1, w - 1):
-            if objects_l[ty][tx] != "T":
+            if objects_l[ty][tx] != solid_char:
                 continue
             if prot(tx, ty):
                 continue
             neighbors = [objects_l[ty - 1][tx], objects_l[ty + 1][tx],
                          objects_l[ty][tx - 1], objects_l[ty][tx + 1]]
-            # Count passable orthogonal neighbours ('.', 'p', floor
-            # passages). Solid neighbours include 'T' and walls.
-            passable_n = sum(1 for n in neighbors
-                              if n in (".", "p"))
-            if passable_n == 0:
-                objects_l[ty][tx] = "p"
+            if not any(n in open_set for n in neighbors):
+                objects_l[ty][tx] = passable_char
     # Pass 4 -- ground blotch in the same band.
     blotch_rng = random.Random(seed + 1)
     for ty in range(h):

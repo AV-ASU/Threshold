@@ -517,6 +517,18 @@ warning offhand: *"Stay on the roads. People who go off the roads
 come out wrong-side."* Locals don't theorise about the fold; they
 just know don't go off the path.
 
+The helper (`scenes/base.scatter_forest_band`) is char-parameterised:
+the outdoor scenes get trees ('T' solid / 'p' passable); the
+`cornfield_maze` gets corn ('C' solid / 'A' passable) so the maze's
+endless-corn identity is preserved while the outer wall still wraps
+seamlessly. Two de-clump passes guarantee no impassable cluster --
+every solid wall in the band has at least one walkable neighbour.
+
+Hideable bushes are scattered through every band. A bush is a walkable
+decoration; the floor under each one is forced to ':' corn cover, which
+the existing `player.hidden = "corn"` system reads, so stepping into a
+bush hides you immediately.
+
 ### Per-scene torus
 
 `brimley`, `cornfield_maze`, `forest_path`, and the Lodge yard

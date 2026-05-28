@@ -736,9 +736,54 @@ def build_cornfield_maze():
         if cy in (0, H - 1) or cx in (0, W - 1, 3, 7, 11, 15):
             continue
         floor_rows_l[cy][cx] = ":"
+    # ---- Permeable corn band around the perimeter ----
+    # The maze identity is endless corn -- but the OUTER wall was a
+    # hard ring of solid C. Soften it with the shared scatter helper
+    # using corn chars ('C' solid + 'A' passable) so the wrap is
+    # camouflaged the same way brimley / forest_path are. Interior
+    # corn-wall cols (3, 7, 11, 15) stay untouched -- that's the maze
+    # design and must not be perforated. The existing :-corn-cover
+    # patches are also preserved.
+    def _maze_protected(tx, ty):
+        # Interior corn-wall columns -- the maze structure itself.
+        if tx in (3, 7, 11, 15):
+            return True
+        # North brimley exit (cols 9, 10 at row 0).
+        if tx in (9, 10) and ty == 0:
+            return True
+        # South forest_path exit (cols 10, 11 at row H-1).
+        if tx in (10, 11) and ty == H - 1:
+            return True
+        # Curse-grove fold tile and a small lane around it.
+        if tx == 5 and ty == 8:
+            return True
+        # Lane rows surrounding the spawn (10, H-2) and (10, 1).
+        if (tx, ty) in ((10, 1), (10, H - 2)):
+            return True
+        return False
+    _maze_bushes = []
+    from .base import scatter_forest_band
+    scatter_forest_band(floor_rows_l, objects_l, W, H,
+                        depth=2, seed=131,
+                        # Use corn chars instead of trees -- the maze
+                        # camouflage is corn, not woods.
+                        solid_char="C", passable_char="A",
+                        # The maze is small and dense; bigger band
+                        # density would make the perimeter impassable.
+                        tree_density=0.62, passable_ratio=0.55,
+                        bush_density=0.14,
+                        # Skip the dim-grass blotch -- the maze floor
+                        # is dirt 'd' not grass 'g' so it'd no-op anyway,
+                        # but keep the corn-cover :-cover blotch.
+                        blotch_dim=0.0, blotch_corn=0.0,
+                        protected=_maze_protected,
+                        place_bush=lambda px, py:
+                            _maze_bushes.append((px, py)))
     floor_rows = ["".join(r) for r in floor_rows_l]
     objects = ["".join(r) for r in objects_l]
     sc = Scene("cornfield_maze", floor_rows, objects, music="outside")
+    for bx, by in _maze_bushes:
+        sc.add_decoration(Decoration(bx, by, "bush"))
     # The corn never ends (bible §1). The maze wraps on BOTH axes so
     # walking any direction long enough brings you back to where you
     # started -- corn looks the same in every direction, so the loop
