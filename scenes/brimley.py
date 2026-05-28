@@ -839,22 +839,6 @@ def build_brimley():
         sc.add_decoration(Decoration(cx * TILE + 16, cy * TILE + 16,
                                      "dead_crow" if (cx + cy) % 2 else "crow"))
 
-    # ---- Fold-road thresholds ----
-    # Two identical stone pillars flank the road at each wrap zone --
-    # an old roadside gate, the kind locals leave standing because
-    # nobody remembers who put them there. The west pair and the east
-    # pair are the SAME pair (the fold says so). A player walking the
-    # road sees the gate, passes through it, walks a long way, and
-    # arrives at "another" gate that looks identical. Eventually they
-    # realise. No narrator does the work.
-    # Place them just inside each wrap zone so they sit cleanly in the
-    # camera view rather than half-clipped by the edge.
-    for tx in (2, 97):
-        sc.add_decoration(Decoration(tx * TILE + 16, 23 * TILE + 16,
-                                     "pillar"))
-        sc.add_decoration(Decoration(tx * TILE + 16, 25 * TILE + 16,
-                                     "pillar"))
-
     # ---- Lived-in town dressing ----
     # The "Welcome to Brimley" sign just north of the east-edge road,
     # right beside the entry the PI drives in on. Weathered, paint
