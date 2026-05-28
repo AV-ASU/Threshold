@@ -462,9 +462,9 @@ def build_mistlands():
                        movement=movement, radius=radius))
 
     _resident(55, 62, "Hettie", "shopkeep", [
-        "Still open. Always open -- have you noticed the shelves don't empty anymore?",
-        "No deliveries in... a while, now. But we manage. We always manage.",
-        "[c=dim]I keep the lights on so they know someone's keeping the lights on.[/c]",
+        "Still open. Always open. The shelves don't empty anymore. Have you noticed.",
+        "No deliveries. In a while now. But we manage. We always.",
+        "[c=dim]I keep the lights on. So they know. Someone's keeping them on.[/c]",
     ], movement="idle")
     _resident(58, 44, "Old Pell", "old", [
         "Cold came in early this year. Came in early last year, too.",
@@ -472,9 +472,9 @@ def build_mistlands():
         "[c=dim]You're new. We don't get new. Nobody gets in. Nobody gets--[/c]",
     ], voice="blip_low")
     _resident(70, 72, "Mrs. Calder", "mom", [
-        "My husband walked out to the highway to flag down help. Tuesday, that was.",
-        "He'll be back. I set his plate every night. Every night.",
-        "[c=dim]Some nights I hear the door. I've stopped getting up to check.[/c]",
+        "My husband walked to the highway. Tuesday. To flag down help.",
+        "He'll be back. I set his plate. Every night. Every night.",
+        "[c=dim]Some nights I hear the door. I don't get up. Not anymore.[/c]",
     ], movement="idle")
     _resident(37, 28, "Royce", "fisherman", [
         "Drove the river road to the county line. Two hours out. Came right back into Brimley.",

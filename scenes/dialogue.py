@@ -127,21 +127,20 @@ def kid_dialogue(game, npc):
     if not save.flag("kid_witnessed"):
         save.set_flag("kid_witnessed", True)
         game.dialog.show([
-            "You're looking for the corn lady. The nice one with all the "
+            "You're looking for the corn lady. The nice one. With all the "
             "questions.",
-            "I watched her cut through the rows, toward the old barn. "
-            "She didn't come back. The ones who go in after the corn never "
-            "do.",
-            "[c=dim]The grown-ups say nobody saw her go. They saw. They "
-            "always see. They just look at their shoes.[/c]",
+            "I saw her go. Through the rows. Toward the old barn. She did "
+            "not come back. They don't. After the corn.",
+            "[c=dim]The grown-ups say nobody saw. They saw. They saw and "
+            "they looked at their shoes.[/c]",
         ], speaker="Boy", voice="blip_kid", portrait="kid")
         return
     # Playscript-recognition one-shot (kept; flow unchanged).
     if inv.has("playscript") and not save.flag("kid_playscript_noticed"):
         save.set_flag("kid_playscript_noticed", True)
         game.dialog.show([
-            "That yellow book. The corn lady drew that sign too, over and "
-            "over, on everything.",
+            "That yellow book. The corn lady drew that. Over and over. "
+            "On everything.",
             "[c=dim]You shouldn't have it. It looks at you back.[/c]",
         ], speaker="Boy", voice="blip_kid", portrait="kid")
         return
@@ -149,25 +148,25 @@ def kid_dialogue(game, npc):
     save.set_arg("kid_count", count)
     if count == 1:
         game.dialog.show([
-            "She went down, you know. After the corn.",
-            "[c=dim]Everybody who stays too long goes down in the end. "
-            "That's just what Brimley's for.[/c]",
+            "She went down. After the corn. They all do.",
+            "[c=dim]Everybody who stays goes down. It's what Brimley's "
+            "for. The going down.[/c]",
         ], speaker="Boy", voice="blip_kid", portrait="kid")
     elif count == 2:
         game.dialog.show([
-            "My mom and dad smile all the time now. They didn't used to.",
-            "[c=dim]I don't smile. That's how you can tell I'm still me.[/c]",
+            "My mom. And my dad. They smile all the time now. They didn't "
+            "used to.",
+            "[c=dim]I don't smile. That's how I can tell I'm still me.[/c]",
         ], speaker="Boy", voice="blip_kid", portrait="kid")
     elif count == 3:
         game.dialog.show([
-            "The preacher was nice to me. Now there's a new quiet where he "
-            "used to be.",
+            "The preacher was nice to me. Now there's a quiet where he was.",
             "[c=dim]Are you going to go quiet too?[/c]",
         ], speaker="Boy", voice="blip_kid", portrait="kid")
     elif count == 4:
         game.dialog.show([
-            "If you find a way out, don't tell me where.",
-            "[c=dim]They'd ask me, after. And I can't lie to them anymore.[/c]",
+            "If you find a way out. Don't tell me where it is.",
+            "[c=dim]They'd ask me after. I can't lie to them anymore.[/c]",
         ], speaker="Boy", voice="blip_kid", portrait="kid")
     else:
         game.dialog.show([
@@ -199,12 +198,11 @@ def shopkeep_dialogue(game, npc):
     if count == 1:
         plain = [
             "You're the one asking after the Blaine girl. Keep your voice "
-            "down about it in here.",
-            "[c=dim]I can't help you the way you want. Shelves are bare and "
-            "the till's been empty since the spring -- nobody's buying, "
-            "nobody's selling.[/c]",
-            "But I'll say this much, and then nothing: don't go where they "
-            "tell you it's safe. I've got a family. Look around.",
+            "down. In here.",
+            "[c=dim]Can't help you. Not the way you want. Shelves are bare. "
+            "Till's been empty since the spring. Nobody buys. Nobody sells.[/c]",
+            "I'll say this much. Then nothing. Don't go where they tell you "
+            "it's safe. I've got a family. Look around.",
         ]
         game.dialog.show(escalate(game, low=plain, mid=plain, high=plain),
                          speaker="Store-Owner", voice="blip_high",
@@ -212,26 +210,25 @@ def shopkeep_dialogue(game, npc):
         return
     if count == 2:
         game.dialog.show([
-            "Back again. Good. Means you haven't gone quiet like the "
-            "others.",
-            "[c=dim]Don't trust the easy ones. The first to make peace "
-            "with it went the soonest.[/c]",
+            "Back again. Good. You haven't gone quiet. Like the others.",
+            "[c=dim]Don't trust the easy ones. The first to make peace -- "
+            "they went the soonest.[/c]",
         ], speaker="Store-Owner", voice="blip_high", portrait="shopkeep")
         return
     if count == 3:
         game.dialog.show([
-            "I sold supplies to the girl too. And the ones before her.",
-            "[c=dim]None of them came back to buy a second time. You're "
-            "the first.[/c]",
-            "Your old man's the one paying you, ain't he. Walter. He came "
-            "through with her mother, years back, before things turned. "
-            "Tell him I'm sorry. Don't tell him from where.",
+            "I sold to the girl too. And the ones before.",
+            "[c=dim]None of them came back. To buy again. You're the "
+            "first.[/c]",
+            "Your old man's the one paying you. Walter. He came through "
+            "with her mother. Years back. Before things turned. Tell him "
+            "I'm sorry. Don't tell him from where.",
         ], speaker="Store-Owner", voice="blip_high", portrait="shopkeep")
         return
     if count == 4:
         game.dialog.show([
             "[c=dim]He glances at the door before he speaks.[/c]",
-            "If you find the way out -- the real one -- you don't owe this "
+            "If you find the way out. The real one. You don't owe this "
             "town a goodbye. Just go.",
         ], speaker="Store-Owner", voice="blip_high", portrait="shopkeep")
         return
