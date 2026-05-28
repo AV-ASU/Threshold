@@ -21,16 +21,30 @@ def _backwoods_note_pickup(game):
 
 def _forest_cache_pickup(game):
     game.save.set_flag("forest_cache_taken", True)
-    _evidence(game, "forest_cache",
-        "A small stash."
-    )
+    _evidence(game, "forest_cache", [
+        "Tucked under a stone off the road: a torn page in a teacher's "
+        "hand, careful loops gone uneven.",
+        "\"Three weeks since the last child came to my room. The Tisdale "
+        "boy still does. His mother thanks me for keeping him -- the way "
+        "you thank someone for holding a door you wish would close.\"",
+        "\"The Clerk knocked yesterday. Asked if I'd thought about closing "
+        "the school for the season. I haven't told anyone what I teach the "
+        "boy now. We read aloud. The reading is what they hate.\"",
+    ])
 
 
 def _school_cache_pickup(game):
     game.save.set_flag("school_cache_taken", True)
-    _evidence(game, "school_cache",
-        "A small stash."
-    )
+    _evidence(game, "school_cache", [
+        "Behind the boarded panel, in her own handwriting -- the last "
+        "page she hid before she went.",
+        "\"Last night I read the playscript through to the end. Stupid. "
+        "I know it now and I cannot un-know it.\"",
+        "\"I am boarding the cupboard. Anything written they will copy "
+        "below and lift it up to Him -- He learns us from a page.\"",
+        "\"If the boy still comes, tell him I went the way the corn lady "
+        "went. Don't tell him from where.\"",
+    ])
 
 
 def build_schoolhouse():
@@ -116,11 +130,17 @@ def build_schoolhouse():
                 and abs(game.player.y - desk_y) < 36):
             if not game.save.flag("school_desk_searched"):
                 game.save.set_flag("school_desk_searched", True)
-                _evidence(game, "school_desk",
-                    "Just papers."
-                )
+                _evidence(game, "school_desk", [
+                    "The class roster, neatly kept until it wasn't. "
+                    "Twelve names, and beside eleven of them she's drawn "
+                    "a single straight line.",
+                    "Only one name is unmarked. TISDALE.",
+                    "She'd started the twelfth line, halfway through, "
+                    "and stopped.",
+                ])
             else:
-                game.show_notice("Just papers.")
+                game.show_notice(
+                    "Eleven lines. One name left, unmarked.")
     sc.on_interact_fn = _schoolhouse_interact
 
     return sc

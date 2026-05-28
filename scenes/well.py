@@ -269,6 +269,9 @@ def build_maras_room():
             game.show_notice("Her cot, her robe. You've read what's here.")
             return
         game.player.inventory.add("robe", 1)
+        # The unsent letter is its own item so the player still carries
+        # her last sane line into the Dark -- re-readable from inventory.
+        game.player.inventory.add("unsent_letter", 1)
         game.audio.play("pickup_rare", 0.7)
         _evidence(game, "maras_room", [
             "Her cell. A cot, a burnt-down candle, a cult robe on a peg -- "

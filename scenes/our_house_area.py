@@ -127,9 +127,14 @@ def build_our_house_area():
     ]
 
     def _outside_interact(game):
-        # No interactable shed in the yard anymore. The user-facing
-        # shed lives in the village/farm scene. Yard is open ground.
-        return
+        # The Clerk's pickup is visible-but-useless. Examining it turns
+        # the noun into worldbuilding: he doesn't drive it because there
+        # is nowhere in Brimley for him to go.
+        tx, ty = 20 * TILE + 16, 12 * TILE + 16
+        px, py = game.player.x, game.player.y
+        if abs(px - tx) < 56 and abs(py - ty) < 56:
+            game.show_notice(
+                "The Clerk's truck. He doesn't drive it. None of them do.")
     sc.on_interact_fn = _outside_interact
 
     # Atmosphere -- chimney smoke from the house, a couple of crows,

@@ -37,6 +37,11 @@ ITEM_DEFS = {
     "mom_notebook":  {"name": "Mara's Journal",
                        "kind": "lore",
                        "desc": "Her descent, in her own words."},
+    "unsent_letter": {"name": "Mara's Letter",
+                       "kind": "lore",
+                       "desc": "Stamped, never mailed. Opens \"Dad.\" "
+                               "Closes: \"I'm not lost. I've never been "
+                               "this close.\""},
     # ---- Re-meaned existing items ----
     "playscript":           {"name": "A Yellow Playscript",
                        "kind": "key",
@@ -48,10 +53,17 @@ ITEM_DEFS = {
                        "atk": 0},
     "rope":          {"name": "Coil of Rope",  "kind": "key",
                        "desc": "A coil of rope."},
-    "diary_page_1":  {"name": "Torn Page",     "kind": "lore",
-                       "desc": "A torn page."},
-    "diary_page_2":  {"name": "Torn Page",     "kind": "lore",
-                       "desc": "A torn page."},
+    "diary_page_1":  {"name": "Teacher's Page",  "kind": "lore",
+                       "desc": "\"Three weeks since the last child came to "
+                               "my room. The Tisdale boy still does. His "
+                               "mother thanks me for keeping him -- the way "
+                               "you thank someone for holding a door you "
+                               "wish would close.\""},
+    "diary_page_2":  {"name": "Teacher's Page",  "kind": "lore",
+                       "desc": "\"I read the playscript through to the end. "
+                               "Stupid. Anything written, they copy down "
+                               "there and lift it up to Him. He learns us "
+                               "from a page.\""},
 }
 
 

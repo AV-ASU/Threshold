@@ -221,6 +221,9 @@ def shopkeep_dialogue(game, npc):
             "I sold supplies to the girl too. And the ones before her.",
             "[c=dim]None of them came back to buy a second time. You're "
             "the first.[/c]",
+            "Your old man's the one paying you, ain't he. Walter. He came "
+            "through with her mother, years back, before things turned. "
+            "Tell him I'm sorry. Don't tell him from where.",
         ], speaker="Store-Owner", voice="blip_high", portrait="shopkeep")
         return
     if count == 4:
