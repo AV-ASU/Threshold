@@ -220,7 +220,7 @@ class NPC:
                 ex, ey, loud, et = evt
                 now = pygame.time.get_ticks() / 1000.0
                 if (now - et < 0.4
-                        and math.hypot(ex - self.x, ey - self.y) < 180
+                        and scene.world_dist(self.x, self.y, ex, ey) < 180
                         and loud >= 0.7):
                     self._cult_state = "investigate"
                     self._cult_state_t = 4.0
@@ -257,7 +257,7 @@ class NPC:
                 self.morph_target = 0.0
                 return
             tx, ty = self._last_seen_pos
-            d_target = math.hypot(self.x - tx, self.y - ty)
+            d_target = scene.world_dist(self.x, self.y, tx, ty)
             if d_target > 30:
                 self._step_toward((tx, ty), dt, scene)
             else:
@@ -274,7 +274,7 @@ class NPC:
                 self.morph_target = 0.0
                 return
             tx, ty = self._last_seen_pos
-            d_target = math.hypot(self.x - tx, self.y - ty)
+            d_target = scene.world_dist(self.x, self.y, tx, ty)
             if d_target > 14:
                 self._step_toward((tx, ty), dt, scene)
             else:
@@ -305,8 +305,9 @@ class NPC:
             return
         # No target or arrived: roll a new one.
         if (self._scout_target is None
-                or math.hypot(self.x - self._scout_target[0],
-                               self.y - self._scout_target[1]) < 8):
+                or scene.world_dist(self.x, self.y,
+                                     self._scout_target[0],
+                                     self._scout_target[1]) < 8):
             if self._scout_target is not None:
                 # Just arrived -- pause to look.
                 self._scout_pause_t = random.uniform(1.2, 2.4)

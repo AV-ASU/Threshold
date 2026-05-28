@@ -430,7 +430,7 @@ class Enemy:
                 ex, ey, loud, et = evt
                 now = pygame.time.get_ticks() / 1000.0
                 if (now - et < 0.4
-                        and math.hypot(ex - self.x, ey - self.y) < 180
+                        and scene.world_dist(self.x, self.y, ex, ey) < 180
                         and loud >= 0.7):
                     self._cult_state = "investigate"
                     self._cult_state_t = 4.0
@@ -460,7 +460,7 @@ class Enemy:
                 self.morph_target = 0.0
                 return
             tx, ty = self._last_seen_pos
-            d_target = math.hypot(self.x - tx, self.y - ty)
+            d_target = scene.world_dist(self.x, self.y, tx, ty)
             if d_target > 30:
                 self._cult_step(tx, ty, dt, scene)
             else:
@@ -486,7 +486,7 @@ class Enemy:
                 self.morph_target = 0.0
                 return
             tx, ty = self._last_seen_pos
-            d_target = math.hypot(self.x - tx, self.y - ty)
+            d_target = scene.world_dist(self.x, self.y, tx, ty)
             if d_target > 14:
                 self._cult_step(tx, ty, dt, scene)
             else:
