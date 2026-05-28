@@ -2400,7 +2400,7 @@ class Game:
                 self.state = "title"
                 self.audio.play_music("threshold_drone")
         else:  # king
-            if self._death_t >= 3.5:
+            if self._death_t >= 3.8:
                 self._death_kind = None
                 self._closure_locked = False
                 self._king = None
@@ -2415,9 +2415,9 @@ class Game:
         cultist = a stark CAPTURED card over a near-black wash."""
         if self._death_kind == "king":
             draw_king_death(self.screen, self._death_t)
-            if self._death_t > 2.4:                  # the name surfaces late
+            if self._death_t > 3.0:                  # the name surfaces over the descent
                 w, h = self.screen.get_size()
-                ta = min(220, int((self._death_t - 2.4) / 0.8 * 220))
+                ta = min(235, int((self._death_t - 3.0) / 0.55 * 235))
                 tt = self.fonts["title"].render("CARCOSA", True, (236, 204, 64))
                 tt.set_alpha(ta)
                 self.screen.blit(tt, (w // 2 - tt.get_width() // 2,
@@ -3103,22 +3103,44 @@ class Game:
         exhaust = (1.0 - sp_frac) if ph in ("stall", "dead") else 0.0
         self._draw_car(s, cx, cy, light, exhaust=exhaust, scale=1.3)
 
-        # Film grain over the whole drive, for cohesion with the graded world.
+        # --- Film grade: unify the drive with the cutscene look. Applied to the
+        #     WORLD only -- the case cards stamp on top, crisp + legible. ---
+        # Chunky downsample -> lo-fi film texture (kills the clean vector edges).
+        ds = 1.5
+        dw, dh = int(W / ds), int(H / ds)
+        s.blit(pygame.transform.scale(
+            pygame.transform.smoothscale(s, (dw, dh)), (W, H)), (0, 0))
+        # Cold night grade: a cool multiply pulls the whole frame toward blue-
+        # grey rot, so the only warmth left is the headlights.
+        tint = pygame.Surface((W, H))
+        tint.fill((202, 212, 230))
+        s.blit(tint, (0, 0), special_flags=pygame.BLEND_RGB_MULT)
+        # Film grain (animated), denser now for a proper emulsion crawl.
         if getattr(self, "_opening_grain", None) is None:
             g = pygame.Surface((W, H), pygame.SRCALPHA)
             rg = random.Random(7)
-            for _ in range(2400):
-                v = rg.randint(0, 55)
-                g.set_at((rg.randint(0, W - 1), rg.randint(0, H - 1)),
-                         (v, v, v, rg.randint(8, 24)))
+            for _ in range(int(W * H * 0.06)):
+                if rg.random() < 0.6:
+                    v = rg.randint(0, 30)
+                    g.set_at((rg.randint(0, W - 1), rg.randint(0, H - 1)),
+                             (v, v, v, rg.randint(30, 70)))
+                else:
+                    v = rg.randint(120, 190)
+                    g.set_at((rg.randint(0, W - 1), rg.randint(0, H - 1)),
+                             (v, v, int(v * 0.9), rg.randint(10, 28)))
             self._opening_grain = g
         s.blit(self._opening_grain,
                (random.randint(-3, 3), random.randint(-3, 3)))
+        # Gate flicker -- the projector light stutters (Darkwood).
+        if random.random() < 0.07:
+            d = pygame.Surface((W, H))
+            d.fill((7, 8, 11))
+            s.blit(d, (0, 0), special_flags=pygame.BLEND_RGB_SUB)
 
         # Heavy edge vignette -- the dark presses in from every edge.
         vig = pygame.Surface((W, H), pygame.SRCALPHA)
-        for i in range(60):
-            a = int(160 * (1 - i / 60) ** 1.5)
+        for i in range(64):
+            a = int(175 * (1 - i / 64) ** 1.5)
             pygame.draw.rect(vig, (0, 0, 0, a), (i, i, W - 2 * i, H - 2 * i), 1)
         s.blit(vig, (0, 0))
 
