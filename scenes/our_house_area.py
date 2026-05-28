@@ -138,7 +138,7 @@ def build_our_house_area():
                     "[c=dim]A handprint smeared into the back door, "
                     "palm-out. Old, dried brown.[/c]",
                     "[c=dim]Whoever made it was leaving, not coming "
-                    "in. Their fingers were splayed.[/c]",
+                    "in.[/c]",
                 ])
             else:
                 game.show_notice(

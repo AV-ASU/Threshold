@@ -100,8 +100,8 @@ def old_man_dialogue(game, npc):
             "You came back. Good -- then hear the rest of it.",
             "I say it from my pulpit, plain as I'm saying it now: it isn't "
             "the corn. The corn is just the path. The mouth is under the "
-            "well, and the well sits in the Clerk's yard. I name them both, "
-            "and the sheriff sits in my back pew while I do.",
+            "well, and the well sits in the Clerk's yard. The sheriff sits "
+            "in my back pew while I say it.",
             "Let them come for an old man. I've buried better than whatever "
             "it is they kneel to. God's on my side of the door.",
         ], speaker="Preacher", voice="blip_low", portrait="old")
@@ -127,7 +127,7 @@ def kid_dialogue(game, npc):
         game.dialog.show([
             "You're looking for the corn lady. The nice one with all the "
             "questions.",
-            "I watched her cut east through the rows, toward the old barn. "
+            "I watched her cut through the rows, toward the old barn. "
             "She didn't come back. The ones who go in after the corn never "
             "do.",
             "[c=dim]The grown-ups say nobody saw her go. They saw. They "
@@ -268,8 +268,8 @@ def fisherman_dialogue(game, npc):
         game.dialog.show([
             "Saw your car out by the river. Took the liberty of looking it "
             "over -- bad spark, I'd say. Wouldn't trust it on these roads.",
-            "[c=dim]His hands are clean. They were always going to be -- "
-            "the cars here forget how to start, and he just knows when.[/c]",
+            "[c=dim]His hands are clean. They were always going to be. "
+            "The cars in Brimley forget how to start.[/c]",
             "Don't you fret. Nobody walks out of Brimley, and nobody drives. "
             "You'll be looked after.",
         ], speaker="Sheriff", voice="blip_gruff", portrait="guard")

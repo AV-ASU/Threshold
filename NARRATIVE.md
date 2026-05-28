@@ -15,10 +15,8 @@ client, **Walter Blaine** — hired you to find his adult daughter,
 and was **last seen in Brimley**. (The premise is delivered twice: the
 skippable opening drive carries the hook; the PI's **case notebook** on
 the spare-room writing table is the persistent, re-readable version —
-client, quarry, the job. The notebook also **closes on itself**: once
-the player has met Mara in the hive (`hive_seen`), re-reading the
-case-board rewrites the entry — *"Subject: located. Recovery: declined."*
-The book the game opens on is the book it closes on.)
+client, quarry, the job. After the hive (`hive_seen`), re-reading the
+case-board rewrites the entry — *"Subject: located. Recovery: declined."*)
 
 You drove in to ask a few questions and drive out. **You can't.** The
 King in Yellow's influence has the town folded shut: the roads loop, the
@@ -68,7 +66,7 @@ investigation.
 | **Lodge Clerk** (was "the Innkeeper") | Complicit | The smiling trap-keeper. Too-warm host who keeps you comfortable and never admits the town won't let you leave; escalates over visits to something colder. The old fetch-quest chain (crate -> cellar bottle -> car keys) is **cut** -- the car answers only to the Sign now, so he has no keys to dangle. |
 | **The Sheriff** | Cult enforcer | The law that keeps everyone in. He killed your car. His outdoor patrols are surveillance. |
 | **The Preacher** | **Innocent dissenter** | A small-town minister who **names the cult from his own pulpit** — oblivious to *what* they truly are, but loud that they're no church. Your **2nd** conversation (his hubris — "God's on my side of the door") sets `preacher_doomed`; on the next entry he's **gutted on his own church floor**, his cross in the viscera (evidence #4). The town murders the ones who name them. |
-| **The Store-Owner** | Quiet resister | The shop is gutted -- shelves bare, till empty, **nothing to sell** (the old vendor items, charcoal + paper, are purged). His value is what he risks saying out loud: frightened warnings about who to trust, never said outright. He is the one NPC who **names Walter Blaine on-page** (visit 3) and ties the family to Brimley as *history* — Walter came through years back with Mara's mother, "before things turned." He also reacts once to the Preacher's death (one-shot, gated on `preacher_doomed`). |
+| **The Store-Owner** | Quiet resister | The shop is gutted -- shelves bare, till empty, **nothing to sell** (the old vendor items, charcoal + paper, are purged). His value is what he risks saying out loud: frightened warnings about who to trust, never said outright. He names **Walter Blaine** on visit 3 — Walter came through years back with Mara's mother, *before things turned* — and has a one-shot reaction to the Preacher's death. |
 | **The Kid** | Innocent witness | Saw Mara walk into the corn and **tells you so** — the only honest account in town. What he gives you is the truth, not an object (the old keepsake item is purged; no inventory pickup). Children notice what adults pretend not to. |
 | **Mara Blaine** | The quarry — **already turned** | A willing member of the congregation now. Finding her proves there was never anyone to save. She is in the **hive**. |
 | **Cult / curse-priest / Watchers / the King in Yellow** | The corruption | Operate in the cornfields, the abandoned farmhouse, and the depths/hive below. |
@@ -115,7 +113,7 @@ hive.
 
 | # | Evidence | Item / scene key | Where | What it proves |
 |---|---|---|---|---|
-| 1 | **Mara's Room** | `maras_room` (`robe` + `unsent_letter`, both pickups) | **Underground** — a convert's cell off the Sorting Hall (`works_sorting`) | She didn't rent a room and vanish — she *moved in* down here. She joined willingly; she was already home. The letter is its own re-readable inventory item so her last sane line — *"I'm not lost. I've never been this close."* — is still in the player's hand when she turns in the Dark |
+| 1 | **Mara's Room** | `maras_room` (robe + unsent letter) | **Underground** — a convert's cell off the Sorting Hall (`works_sorting`) | She didn't rent a room and vanish — she *moved in* down here. She joined willingly; she was already home. Her last sane line — *"I'm not lost. I've never been this close."* — stays in your hand all the way to the Dark |
 | 2 | **Mara's Journal** | `mom_notebook` | The **barn** (`barn`) — behind the workbench | Her descent, in her own words (page 3 → the flashback) |
 | 3 | **The Ledger** (the Lodge's guest register) | read in place | Arcadia cellar (`basement`) — hidden behind a loose wall panel | Guests who check in and never out — and your own name, signed in tonight, already among them |
 | 4 | **The Preacher** | his **cross** (item `cross`) taken from the viscera | The **church** (`old_man_house`) — his own floor | The town murders the ones who name them — gutted for preaching against the cult |

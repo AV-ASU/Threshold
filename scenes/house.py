@@ -213,8 +213,7 @@ def bedroom_interact(game):
                 "page you wrote in is still there, but the hand on the "
                 "later pages has gone unsteady.)[/c]",
                 "CASE FILE -- BLAINE. Subject: located. Recovery: declined.",
-                "MARA BLAINE was not lost. She wasn't taken. She knelt. "
-                "There is no version of this where you bring her home.",
+                "MARA BLAINE was not lost. She wasn't taken. She knelt.",
                 "Client: Walter Blaine. Notify only if you make it back "
                 "to a phone with a line on the other end.",
                 "[c=dim]You drew a single line under the last entry. "
@@ -537,7 +536,7 @@ def clerk_room_interact(game):
     dx, dy = sc._dresser_pos
     if abs(px - dx) <= 40 and abs(py - dy) <= 40:
         game.show_notice("His dresser. Bare. He doesn't live like a man "
-                         "who plans to stay -- and yet he never leaves.")
+                         "who plans to stay.")
 
 
 # ---- innkeeper_basement (key: 'basement') ----
