@@ -103,10 +103,10 @@ def build_well_passage():
     sc.set_spawn("from_above", 1, 4)      # arriving from the shaft
     sc.set_spawn("from_below", 12, 4)     # back from the vats
     # Legacy spawns kept so old saves + the (now unreachable) cult
-    # chamber's exit still resolve.
+    # chamber's exit still resolve. The barn tunnel is nailed shut from
+    # below now -- the well is the only way underground.
     sc.set_spawn("from_well",    1, 4)
     sc.set_spawn("from_chamber", 12, 4)
-    sc.set_spawn("from_barn",    6, 3)
 
     sc.add_decoration(Decoration(7 * TILE + 16, 3 * TILE + 16, "bloodstain"))
     sc.add_decoration(Decoration(2 * TILE + 16, 0 * TILE + 22, "candle"))

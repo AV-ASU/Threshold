@@ -98,10 +98,10 @@ def old_man_dialogue(game, npc):
         # church swaps him for his remains on the next entry (evidence #4).
         game.dialog.show([
             "You came back. Good -- then hear the rest of it.",
-            "I say it from my pulpit, plain as I'm saying it now: that's no "
-            "church in the corn. Something out there calls the strangers in "
-            "and hollows them out. I name it, and the sheriff sits in my "
-            "back pew while I do.",
+            "I say it from my pulpit, plain as I'm saying it now: it isn't "
+            "the corn. The corn is just the path. The mouth is under the "
+            "well, and the well sits in the Clerk's yard. I name them both, "
+            "and the sheriff sits in my back pew while I do.",
             "Let them come for an old man. I've buried better than whatever "
             "it is they kneel to. God's on my side of the door.",
         ], speaker="Preacher", voice="blip_low", portrait="old")
@@ -127,8 +127,9 @@ def kid_dialogue(game, npc):
         game.dialog.show([
             "You're looking for the corn lady. The nice one with all the "
             "questions.",
-            "I watched her walk right out into the rows. She didn't come "
-            "back. The ones who go in after the corn never do.",
+            "I watched her cut east through the rows, toward the old barn. "
+            "She didn't come back. The ones who go in after the corn never "
+            "do.",
             "[c=dim]The grown-ups say nobody saw her go. They saw. They "
             "always see. They just look at their shoes.[/c]",
         ], speaker="Boy", voice="blip_kid", portrait="kid")
@@ -179,6 +180,18 @@ def kid_dialogue(game, npc):
 def shopkeep_dialogue(game, npc):
     save = game.save
     _cult_tell(game, "store_owner")
+    # The resister registers the resister-who-spoke being killed. Fires
+    # once, on the first visit after the Preacher is doomed, but only if
+    # we've already met him -- it would be too personal for first contact.
+    if (save.flag("preacher_doomed")
+            and not save.flag("shop_preacher_noticed")
+            and save.arg("shop_count", 0) >= 1):
+        save.set_flag("shop_preacher_noticed", True)
+        game.dialog.show([
+            "Heard about the preacher. I won't be saying his prayers in "
+            "here. Don't ask me to.",
+        ], speaker="Store-Owner", voice="blip_high", portrait="shopkeep")
+        return
     count = save.arg("shop_count", 0) + 1
     save.set_arg("shop_count", count)
     if count == 1:
@@ -252,8 +265,8 @@ def fisherman_dialogue(game, npc):
         game.dialog.show([
             "Saw your car out by the river. Took the liberty of looking it "
             "over -- bad spark, I'd say. Wouldn't trust it on these roads.",
-            "[c=dim]He smiles. His hands are clean, but you believe the "
-            "spark went bad the moment he wanted it to.[/c]",
+            "[c=dim]His hands are clean. They were always going to be -- "
+            "the cars here forget how to start, and he just knows when.[/c]",
             "Don't you fret. Nobody walks out of Brimley, and nobody drives. "
             "You'll be looked after.",
         ], speaker="Sheriff", voice="blip_gruff", portrait="guard")
