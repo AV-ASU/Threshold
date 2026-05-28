@@ -1141,7 +1141,10 @@ class Game:
             if rect.colliderect(er):
                 e.hp -= dmg
                 e.flash = 0.12
-                self.audio.play("hit", 0.55)
+                # Pan the hit from the enemy's world-x so a strike on
+                # a cultist to your left lands in your left ear.
+                pan = self.audio.pan_for_world(e.x, self.player.x)
+                self.audio.play("hit", 0.55, pan=pan)
                 if e.hp <= 0 and e.alive:
                     self._kill_enemy(e)
         # NPCs are also valid targets: killing one triggers its on_kill
@@ -1153,7 +1156,8 @@ class Game:
             nr.center = (int(n.x), int(n.y))
             if rect.colliderect(nr):
                 n.take_damage(dmg)
-                self.audio.play("hit", 0.55)
+                pan = self.audio.pan_for_world(n.x, self.player.x)
+                self.audio.play("hit", 0.55, pan=pan)
                 if not n.alive and not getattr(n, "_kill_processed", False):
                     n._kill_processed = True
                     self._kill_npc(n)
@@ -1163,7 +1167,8 @@ class Game:
         counter (the substrate watches this), play the death SFX, drop
         any items the NPC was carrying, and fire on_kill if present.
         The NPC is removed from the scene's list on the next step."""
-        self.audio.play("enemy_die", 0.55)
+        pan = self.audio.pan_for_world(npc.x, self.player.x)
+        self.audio.play("enemy_die", 0.55, pan=pan)
         n = self.save.arg("nonhostile_kills", 0) + 1
         self.save.set_arg("nonhostile_kills", n)
         for drop in getattr(npc, "drops", []):
@@ -1187,7 +1192,8 @@ class Game:
         sword kill does. Increments the kill counter, which the
         substrate references in late-game evidence files."""
         e.alive = False
-        self.audio.play("enemy_die", 0.6)
+        pan = self.audio.pan_for_world(e.x, self.player.x)
+        self.audio.play("enemy_die", 0.6, pan=pan)
         kind = getattr(e, "kind", "")
         if kind == "wolf":
             arg = "animal_kills"
@@ -2420,7 +2426,8 @@ class Game:
                 if not self.text_input.active:
                     e.update(dt, self.scene, self.player)
                     if e.just_shot and e.shoot_sfx:
-                        self.audio.play(e.shoot_sfx, 0.55)
+                        pan = self.audio.pan_for_world(e.x, self.player.x)
+                        self.audio.play(e.shoot_sfx, 0.55, pan=pan)
                 if not e.alive:
                     self.scene.enemies.remove(e)
             # Tick projectiles AFTER enemies so a brand-new shot doesn't
@@ -2429,7 +2436,8 @@ class Game:
                 for p in list(self.scene.projectiles):
                     p.update(dt, self.scene, self.player)
                     if p.hit:
-                        self.audio.play("hit", 0.55)
+                        pan = self.audio.pan_for_world(p.x, self.player.x)
+                        self.audio.play("hit", 0.55, pan=pan)
                     if not p.alive:
                         self.scene.projectiles.remove(p)
                 # Resolve friendly-projectile kills (pistol). Melee kills
