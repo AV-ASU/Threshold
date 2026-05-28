@@ -431,13 +431,13 @@ def build_brimley():
     objects = ["".join(r) for r in objects_l]
 
     sc = Scene("brimley", floor_rows, objects, music="wind")
-    # Brimley's world is toroidal on the x axis -- the fold-road at
-    # row 24 has no west or east edge in fiction; the floor keeps
-    # rendering and the player's x wraps mod world_w. Walking west off
-    # the visible map seamlessly continues into the east side of the
-    # same map. No transition, no teleport, no fade -- the world is
-    # just looped under their feet.
+    # Brimley's world is toroidal on both axes -- the fold-road at
+    # row 24 wraps east-west; the perimeter forest wraps north-south.
+    # Walking off any side of the map seamlessly continues from the
+    # opposite side. No transition, no teleport, no fade -- the town
+    # is a closed loop, exactly as the bible describes the fold.
     sc.wrap_x = True
+    sc.wrap_y = True
     # The east edge of Brimley is the road back to the Lodge via the
     # country lane. The other building doors wire into their interiors.
     sc.add_exit("4", "country_lane",      "from_brimley")

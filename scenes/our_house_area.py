@@ -86,6 +86,12 @@ def build_our_house_area():
         "CCCCCCCCCCCCCCCCCCCCCCCC",   # 17
     ]
     sc = Scene("our_house_area", floor, objects, music="village")
+    # The Lodge yard wraps on the x axis. The country lane comes in
+    # from the west; walking east through or past the yard wraps back
+    # to its west side. The road past the Lodge to the highway doesn't
+    # exist in fiction -- there is no past-the-Lodge; the fold makes
+    # sure of it.
+    sc.wrap_x = True
     # H = back door of the Clerk's house. Returns to 'house' scene
     # (the kitchen/living/hallway).
     sc.add_exit("H", "house", "from_our_house_area")

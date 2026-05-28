@@ -721,6 +721,12 @@ def build_cornfield_maze():
     floor_rows = ["".join(r) for r in floor_rows_l]
     objects = ["".join(r) for r in objects_l]
     sc = Scene("cornfield_maze", floor_rows, objects, music="outside")
+    # The corn never ends (bible §1). The maze wraps on BOTH axes so
+    # walking any direction long enough brings you back to where you
+    # started -- corn looks the same in every direction, so the loop
+    # feels natural until the player realises no direction escapes it.
+    sc.wrap_x = True
+    sc.wrap_y = True
     sc.add_exit("!", "forest_path", "from_cornfield_maze")
     sc.add_exit("^", "brimley",   "from_cornfield_maze")
     sc.set_spawn("default", 10, H - 2)

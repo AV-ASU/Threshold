@@ -762,9 +762,10 @@ class Game:
             target_x = max(0, min(scene_w - SCREEN_W, target_x))
             if scene_w < SCREEN_W:
                 target_x = (scene_w - SCREEN_W) // 2
-        target_y = max(0, min(scene_h - SCREEN_H, target_y))
-        if scene_h < SCREEN_H:
-            target_y = (scene_h - SCREEN_H) // 2
+        if not self.scene.wrap_y:
+            target_y = max(0, min(scene_h - SCREEN_H, target_y))
+            if scene_h < SCREEN_H:
+                target_y = (scene_h - SCREEN_H) // 2
         if snap:
             self.cam_x = target_x; self.cam_y = target_y
         else:
@@ -829,10 +830,11 @@ class Game:
             moved = False
             if not blocked_x: self.player.x = new_x; moved = True
             if not blocked_y: self.player.y = new_y; moved = True
-            # Toroidal x-wrap. When the scene is wrap_x, the player's x
-            # cycles mod world width and the camera is shifted by the
-            # same amount so the world appears to keep extending under
-            # them -- no jump, no transition. The fold made felt.
+            # Toroidal wrap. When the scene is wrap_x / wrap_y, the
+            # player's coord cycles mod world width / height and the
+            # camera is shifted by the same amount so the world
+            # appears to keep extending under them -- no jump, no
+            # transition. The fold made felt.
             if self.scene.wrap_x:
                 world_w = self.scene.w * Scene.TILE
                 if self.player.x < 0:
@@ -841,6 +843,14 @@ class Game:
                 elif self.player.x >= world_w:
                     self.player.x -= world_w
                     self.cam_x -= world_w
+            if self.scene.wrap_y:
+                world_h = self.scene.h * Scene.TILE
+                if self.player.y < 0:
+                    self.player.y += world_h
+                    self.cam_y += world_h
+                elif self.player.y >= world_h:
+                    self.player.y -= world_h
+                    self.cam_y -= world_h
             if not moved:
                 self.player.bump_timer -= dt
                 if self.player.bump_timer <= 0:
