@@ -262,6 +262,8 @@ def build_brimley():
             return True                                  # cornfield_maze spawn
         if tx in (95, 96, 97) and ty <= 3:
             return True                                  # gravel-road north passage
+        if ty in (23, 24, 25) and (tx <= 3 or tx >= w - 3):
+            return True                                  # fold-loop road both ends
         if tx <= 2 and 83 <= ty <= 87:
             return True                                  # alter spawn
         if tx in river_cols and (ty <= 3 or ty >= h - 4):
@@ -364,6 +366,15 @@ def build_brimley():
                  [(31, 24), (18, 44), (9, 58), (7, 66)], trk)                # -> Sheriff door
     _carve_track(floor_ll, objects_l, [(7, 66), (7, 80), (7, 94)], trk)      # -> Farmhouse door
     _carve_track(floor_ll, objects_l, [(7, 82), (11, 81), (14, 80)], trk)    # -> cauldron entrance
+    # ---- THE FOLD ROAD ----
+    # A dirt road that runs east-west across Brimley at row 24, passing
+    # right over the bridge. Walking west off the map at (0, 24) wraps
+    # the player back onto the east end of this same road at (98, 24).
+    # The road is just a road; the fold is a property of the map. No
+    # narrator, no warning -- the player walks west, the screen does
+    # its normal scene-fade, and they come back in on the east side.
+    _carve_track(floor_ll, objects_l, [(98, 24), (62, 24), (35, 24)], trk)
+    _carve_track(floor_ll, objects_l, [(31, 24), (16, 24), (1, 24)], trk)
     # A cult path worn off the east lane out across the empty field to
     # the standing stones -- a leading line composing the void, fading
     # where it crosses the corn.
@@ -425,6 +436,10 @@ def build_brimley():
     sc.add_exit("D", "shop",              "from_brimley")  # General Store
     sc.add_exit("B", "schoolhouse",       "from_brimley")  # Schoolhouse
     sc.add_exit("R", "gravel_road_north", "from_brimley")  # North gravel road
+    # The fold-loop exit -- walking off the west edge of the cross-town
+    # road at row 24 wraps the player onto the east end of the same
+    # road. Same scene, opposite edge.
+    sc.add_exit("L", "brimley", "from_west_wrap")
     cauldron_tx, cauldron_ty = 15, 80
     objects_list = [list(r) for r in objects]
     objects_list[cauldron_ty][cauldron_tx] = "j"
@@ -454,6 +469,16 @@ def build_brimley():
     # 'R' rather than 'a' to avoid collision with the river-crossing
     # 'a' exit (exit chars are scene-global, not per-tile).
     objects_list[0][96] = "R"
+    # West-edge fold-loop exit -- the dirt road at row 24 ends in a
+    # gap in the west tree wall. Stepping on it transitions back to
+    # brimley with the from_west_wrap spawn, which lands the player
+    # at the EAST end of the same row. The road folded under them.
+    objects_list[24][0] = "L"
+    # And the east end of the fold road -- a gap in the east tree
+    # wall so the road looks like it continues out. Just a visual
+    # decoration; there is no exit here. The player coming in from
+    # the west wrap arrives one tile inside this gap.
+    objects_list[24][99] = "."
     # Hand-authored loot crates. Both inside the playable area; the
     # west-bank crate sits near the cauldron path, the east-bank
     # crate sits just west of the relocated barn footprint.
@@ -476,6 +501,9 @@ def build_brimley():
     sc.set_spawn("from_woodshed", 91, 15)
     # The north passage to the gravel road (cult-priest territory).
     sc.set_spawn("from_gravel_road", 96, 2)
+    # The west-edge fold wrap: the player walked off the road at the
+    # west edge; they reappear on the east end of the same road.
+    sc.set_spawn("from_west_wrap", 98, 24)
     sc.set_spawn("from_mist_house", 7, church_bot + 1)
     sc.set_spawn("from_alter", 1, 85)
     sc.set_spawn("from_river_crossing", 50, 1)
@@ -999,22 +1027,4 @@ def build_brimley():
             game.dialog.show(line, speaker="", voice="blip_soft",
                              portrait="narrator")
     sc.on_interact_fn = _brimley_interact
-
-    def _brimley_on_enter(game, scene):
-        # The fold-loop beat. Fires exactly once, the first time the
-        # player walks east on country_lane expecting the Lodge and
-        # instead arrives back here. The redirect was set in
-        # begin_transition; the narrator beat lands here on arrival.
-        # Gated on a private flag so it only plays the one time, even
-        # if the player visits brimley again later.
-        if (game.save.flag("fold_lane_witnessed")
-                and not game.save.flag("fold_lane_played")):
-            game.save.set_flag("fold_lane_played", True)
-            game.audio.play("low_pulse", 0.5)
-            game.dialog.show([
-                "[c=dim]You walked east for a long time. You did not "
-                "turn around.[/c]",
-                "[c=dim]You are at the welcome sign.[/c]",
-            ], speaker="", voice="blip_soft", portrait="narrator")
-    sc.on_enter_fn = _brimley_on_enter
     return sc

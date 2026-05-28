@@ -621,29 +621,6 @@ class Game:
         if (current == "bedroom" and target_scene != "bedroom"
                 and not self.save.flag("left_bedroom")):
             self.save.set_flag("left_bedroom", True)
-        # The fold, made felt. The player has walked the country lane
-        # before and knows it goes to the Lodge. Once during the run --
-        # on a later traversal -- they walk east, they don't turn
-        # around, and they come out of the Lodge road... back in
-        # Brimley. The road folded under them while they were walking.
-        # Gated on:
-        #   - they're heading east from country_lane to our_house_area
-        #     (the trip that's supposed to take them OUT of town)
-        #   - they have done this trip at least once successfully
-        #     before, so the fold is a surprise, not the first read
-        #   - the beat hasn't fired yet this run
-        if (current == "country_lane"
-                and target_scene == "our_house_area"
-                and not self.save.flag("fold_lane_witnessed")
-                and self.save.flag("left_bedroom")
-                and self.save.visits("brimley") >= 1):
-            self.save.set_flag("fold_lane_witnessed", True)
-            # Redirect: instead of arriving at the Lodge, you arrive
-            # back at Brimley from the east-edge road -- exactly where
-            # you set out from. The narrator beat fires on arrival via
-            # the brimley on_enter hook (gated by the same flag).
-            target_scene = "brimley"
-            spawn_id = "from_country_lane"
         if target_scene in VOID_SCENES or current in VOID_SCENES:
             if target_scene in VOID_SCENES and not self._void_sting_played:
                 self.audio.play("void_sting", 0.55)
