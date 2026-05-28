@@ -50,6 +50,7 @@ def build_well_bottom():
     ladder_x = 1 * TILE + 16
     ladder_y = 1 * TILE + 16
     sc._ladder_pos = (ladder_x, ladder_y)
+    sc.add_interactable(ladder_x, ladder_y, 40)   # [E] cue: climb the rope/ladder up
     sc.add_decoration(Decoration(2 * TILE + 16, 1 * TILE + 22, "candle"))
     sc.add_decoration(Decoration(8 * TILE + 16, 6 * TILE + 16, "bloodstain"))
     # A "wrong" mount in the well dark -- too many eyes.

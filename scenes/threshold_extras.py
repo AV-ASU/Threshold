@@ -1039,6 +1039,7 @@ def build_cornfield_maze():
             scene._rustle_t = random.uniform(2.5, 6.0)
             game.audio.play("breath", 0.18)
     sc.on_update_fn = _cornfield_maze_on_update
+    sc.add_interactable(sc._scarecrow_pos[0], sc._scarecrow_pos[1], 40)  # [E] cue
 
     def _cornfield_maze_interact(game):
         sx, sy = sc._scarecrow_pos

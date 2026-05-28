@@ -495,11 +495,16 @@ def build_son_room():
     # The closet (shelf sprite) holds the Clerk's pressed cult robe -- a
     # flavor clue (he's complicit), not counted evidence.
     sc._closet_pos = (7 * TILE + 16, 4 * TILE + 16)
-    # Hide spots: beside the bed, and inside the Clerk's wardrobe.
+    # Hide spot under the bed. The wardrobe is NOT a hide spot: it's the
+    # Clerk's-robe tell (clerk_room_interact), and a hide here took E
+    # priority and made the only "the Clerk is one of them" clue
+    # unreachable. (son_room is a SAFE scene -- the hide was cosmetic.)
     sc.hide_spots = [
         (4 * TILE + 16, 4 * TILE + 16, "under"),
-        (7 * TILE + 16, 4 * TILE + 16, "in"),
     ]
+    # [E] cues for the robe closet (the tell) and the bare dresser.
+    sc.add_interactable(sc._closet_pos[0], sc._closet_pos[1], 40)
+    sc.add_interactable(sc._dresser_pos[0], sc._dresser_pos[1], 40)
 
     # Sized darkwood furniture: a 2x2 bed, a tall closet (the Clerk's robe
     # -> _closet_pos), a low dresser (bare -> _dresser_pos).

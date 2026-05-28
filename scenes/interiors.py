@@ -144,6 +144,7 @@ def build_void_boss():
     sc.is_clearing = True
 
     cauldron_x, cauldron_y = 9 * TILE + 16, 7 * TILE + 16
+    sc.add_interactable(cauldron_x, cauldron_y, 40)   # [E] cue for the cauldron
     def _void_boss_interact(game):
         px, py = game.player.x, game.player.y
         if abs(px - cauldron_x) > 40 or abs(py - cauldron_y) > 40:
