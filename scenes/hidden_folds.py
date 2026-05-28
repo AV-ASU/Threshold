@@ -283,3 +283,136 @@ def build_highway_walk():
     sc.add_decoration(Decoration(5 * TILE + 16, 5 * TILE + 16,
                                  "small_chair"))
     return sc
+
+
+# ----- The Husk Grove -- where the corn-dolls are made --------------
+
+def build_husk_grove():
+    """A small clearing in the corn where the cult assembles the
+    corn-dolls. Accessed by walking EAST off a specific tile in
+    lane 5 of the cornfield maze. Workbenches with unfinished dolls,
+    bundles of husks, twine wound on a stake. No NPC -- the work is
+    here, the worker is somewhere else. Walking west off the west
+    edge returns to the maze."""
+    W, H = 12, 9
+    floor_rows = []
+    for ty in range(H):
+        row = []
+        for tx in range(W):
+            row.append("d" if 1 <= tx <= W - 2 and 1 <= ty <= H - 2 else "g")
+        floor_rows.append("".join(row))
+    objects_l = []
+    for ty in range(H):
+        row = []
+        for tx in range(W):
+            if ty == 0 or ty == H - 1 or tx == 0 or tx == W - 1:
+                row.append("C")    # corn-wall perimeter
+            else:
+                row.append(".")
+        objects_l.append(row)
+    # Return tile on the west wall at row 4. Player walked east to
+    # get in; walking west takes them back to the maze.
+    objects_l[4][0] = "G"
+    objects = ["".join(r) for r in objects_l]
+    sc = Scene("husk_grove", floor_rows, objects, music="outside")
+    sc.wrap_x = False
+    sc.wrap_y = False
+    sc.add_exit("G", "cornfield_maze", "from_husk_grove")
+    sc.set_spawn("default", W - 2, 4)
+    sc.set_spawn("from_cornfield_maze", W - 2, 4)
+    # Two corn_altars used here as workbenches (visually they read
+    # as ritual mounds) with unfinished dolls scattered around.
+    sc.add_decoration(Decoration(4 * TILE + 16, 3 * TILE + 16, "corn_altar"))
+    sc.add_decoration(Decoration(7 * TILE + 16, 5 * TILE + 16, "corn_altar"))
+    # Unfinished dolls in two rows near the altars.
+    for dx, dy in [(3, 4), (5, 4), (6, 6), (8, 6),
+                   (4, 6), (3, 2), (5, 2)]:
+        sc.add_decoration(Decoration(dx * TILE + 16, dy * TILE + 16,
+                                     "corn_doll"))
+    # A stalk-marker stake -- the cult mark, the next to be tracked.
+    sc.add_decoration(Decoration(9 * TILE + 16, 4 * TILE + 16,
+                                 "stalk_marker"))
+    # A single candle still lit -- someone was just here.
+    sc.add_decoration(Decoration(7 * TILE + 16, 4 * TILE + 16, "candle"))
+    # Phantom marks scattered.
+    sc.add_decoration(Decoration(6 * TILE + 16, 3 * TILE + 16,
+                                 "phantom_mark"))
+    sc.add_decoration(Decoration(8 * TILE + 16, 7 * TILE + 16,
+                                 "phantom_mark"))
+    sc.hide_spots = [
+        (2 * TILE + 16, 4 * TILE + 16, "behind"),
+        (10 * TILE + 16, 4 * TILE + 16, "behind"),
+    ]
+    return sc
+
+
+# ----- The Scarecrow Ring -------------------------------------------
+
+def build_scarecrow_ring():
+    """A ring of scarecrows facing inward around a Yellow Sign
+    carved into the dirt. Accessed by walking WEST off a specific
+    tile in lane 1 of the cornfield maze. Six scarecrows in a tight
+    ring; one of them is wearing clothes the player has seen on a
+    local. The Sign at the centre is bigger here than anywhere
+    above-ground. Walking east off the east edge returns to the
+    maze."""
+    W, H = 12, 10
+    floor_rows = []
+    for ty in range(H):
+        row = []
+        for tx in range(W):
+            # Charred dirt inside the ring, regular dirt outside.
+            if 3 <= tx <= 8 and 3 <= ty <= 7:
+                row.append("x")
+            elif 1 <= tx <= W - 2 and 1 <= ty <= H - 2:
+                row.append("d")
+            else:
+                row.append("g")
+        floor_rows.append("".join(row))
+    objects_l = []
+    for ty in range(H):
+        row = []
+        for tx in range(W):
+            if ty == 0 or ty == H - 1 or tx == 0 or tx == W - 1:
+                row.append("C")
+            else:
+                row.append(".")
+        objects_l.append(row)
+    # Return tile on the east wall at row 5.
+    objects_l[5][W - 1] = "G"
+    objects = ["".join(r) for r in objects_l]
+    sc = Scene("scarecrow_ring", floor_rows, objects, music="outside")
+    sc.wrap_x = False
+    sc.wrap_y = False
+    sc.add_exit("G", "cornfield_maze", "from_scarecrow_ring")
+    sc.set_spawn("default", 1, 5)
+    sc.set_spawn("from_cornfield_maze", 1, 5)
+    # The Sign at the centre -- much bigger / more obvious than the
+    # versions in the curse circles. The cult is centred here.
+    sc.add_decoration(Decoration(5 * TILE + 16, 5 * TILE + 16,
+                                 "yellow_sign"))
+    sc.add_decoration(Decoration(6 * TILE + 16, 5 * TILE + 16,
+                                 "yellow_sign"))
+    # Six scarecrows in a ring around the Sign, facing inward.
+    # Implemented as hanging_figure decorations (the closest
+    # available sprite to a scarecrow on a post).
+    ring = [(3, 3), (6, 3), (8, 4), (8, 6), (5, 7), (3, 6)]
+    for tx, ty in ring:
+        sc.add_decoration(Decoration(tx * TILE + 16, ty * TILE + 16,
+                                     "hanging_figure"))
+    # Two braziers flanking the Sign, lit.
+    sc.add_decoration(Decoration(4 * TILE + 16, 4 * TILE + 16, "brazier"))
+    sc.add_decoration(Decoration(7 * TILE + 16, 6 * TILE + 16, "brazier"))
+    # Bloodstains under the central Sign.
+    sc.add_decoration(Decoration(5 * TILE + 16, 6 * TILE + 16, "bloodstain"))
+    sc.add_decoration(Decoration(6 * TILE + 16, 4 * TILE + 16, "bloodstain"))
+    # Watching wounds at the corners.
+    sc.add_decoration(Decoration(0 * TILE + 16, 1 * TILE + 16,
+                                 "watching_wound", size="small"))
+    sc.add_decoration(Decoration(W * TILE - 16, H * TILE - 16,
+                                 "watching_wound", size="small"))
+    sc.hide_spots = [
+        (2 * TILE + 16, 8 * TILE + 16, "behind"),
+        ((W - 2) * TILE + 16, 2 * TILE + 16, "behind"),
+    ]
+    return sc

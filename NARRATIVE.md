@@ -584,9 +584,24 @@ stumbles into the fold without realising they crossed a boundary.
 
 | Scene key | Where it lives | Access | What it shows |
 |---|---|---|---|
-| `curse_grove` | new scene | `cornfield_maze` tile (5, 8), walked WEST | The curse-priest at his fire pit -- effigies in a circle (one per local being cursed), polaroid board of faces, hanging figures at the corners. Closes the bible §8 TODO: the priest finally has a home and a thing he's doing. |
+| `curse_grove` | new scene | `cornfield_maze` tile (6, 10), walked WEST | The curse-priest at his fire pit -- effigies in a circle (one per local being cursed), polaroid board of faces, hanging figures at the corners. Closes the bible §8 TODO: the priest finally has a home and a thing he's doing. |
 | `lodge_arrival` | new scene | `our_house_area` tile (5, 12), walked NORTH | The Lodge porch at the moment Mara walked up to it. Mara with a suitcase, the Clerk smiling in the doorway. Neither sees the PI. Makes the bible's "she chose this" concrete -- the player *witnesses* the choice. |
 | `highway_walk` | new scene | `country_lane` tile (28, 6), walked EAST | A stretch of empty highway. Two figures walk east, their backs to the PI -- the locals who walked out to flag down help. The road wraps; they stay ahead; nobody arrives anywhere. |
+| `husk_grove` | new scene | `cornfield_maze` tile (21, 8), walked EAST | A small clearing where the cult assembles its corn-dolls. Two altars used as workbenches, unfinished dolls scattered, a stalk-marker, a candle still lit. No NPC -- the work is here, the worker isn't. |
+| `scarecrow_ring` | new scene | `cornfield_maze` tile (2, 14), walked WEST | A ring of six scarecrows facing inward around a doubled Yellow Sign in charred dirt. Two braziers, bloodstains underfoot. The cult's central mark in the corn. |
+
+**In-maze fold relocations.** Two additional tiles inside the
+`cornfield_maze` (one at (8, 6) walked SOUTH, one at (16, 11) walked
+NORTH) don't open a new scene -- they teleport the player to another
+spot in the same maze, camera offset preserved so the swap is
+invisible at the moment of crossing. The player notices when their
+surroundings stop matching.
+
+**Visible perimeter side passages.** The maze's outer wall has four
+clear dirt-lane gaps (west edge at rows 5 + 13, east edge at rows 8 +
+16) that look like ways out. Walking through one wraps the player to
+the opposite edge -- the maze visibly has many exits and all of them
+loop.
 
 The framework (`Scene.add_exit(direction=...)` + `find_exit_at(facing=)`)
 is general -- more direction-sensitive folds can be added as wanted.

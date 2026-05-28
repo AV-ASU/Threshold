@@ -730,6 +730,55 @@ def build_cornfield_maze():
     objects_l[H - 2][12] = "."
     objects_l[1][11]     = "."
     objects_l[1][12]     = "."
+
+    # ---- Direction-sensitive hidden-scene folds (more secret areas) ----
+    # Same mechanic as the Z curse-grove tile, just opening onto two
+    # other small clearings. Each is a lane tile that looks like
+    # nothing; walking through it in the matching direction opens the
+    # hidden scene. From any other angle the tile is just floor.
+    # Lane 5 (cols 20-22): walking EAST through (21, 8) opens the
+    # husk_grove -- where the cult assembles the corn-dolls.
+    objects_l[8][21] = "P"
+    # Lane 1 (cols 1-3): walking WEST through (2, 14) opens the
+    # scarecrow_ring -- a ring of scarecrows facing inward around a
+    # Sign.
+    objects_l[14][2] = "S"
+
+    # ---- In-maze direction-fold RELOCATION tiles ----
+    # Different from the scene-fold tiles above: these don't open a
+    # new scene; they teleport you to ELSEWHERE IN THE SAME MAZE.
+    # Walking through one in the matching direction snaps you to the
+    # destination tile with the camera adjusted so the swap is
+    # seamless. Handled in _maze_on_update below. The chars 'I' and
+    # 'X' mark them in the objects layer (rendered as floor).
+    # 'I' at (8, 6) walked SOUTH -> teleport to (16, 19) (top of
+    # lane 2 -> bottom of lane 4).
+    objects_l[6][8] = "I"
+    # 'X' at (16, 11) walked NORTH -> teleport to (3, 19) (mid of
+    # lane 4 -> bottom of lane 1).  Wait, X is solid; use 'F' instead
+    # (also a door char though). Better: use the existing marker
+    # slots. 'Q' is a guard marker (renders as floor).
+    objects_l[11][16] = "Q"
+
+    # ---- Visible perimeter side passages ----
+    # Carve clear dirt lanes through the perimeter band on the west
+    # and east edges. Each is 1-2 tiles wide, looks like an obvious
+    # way out of the maze. The wrap fires when the player walks off
+    # the map and they appear on the opposite edge. Multiple passages
+    # so the maze visibly has many "exits" and all of them loop.
+    SIDE_PASSAGES = [
+        # (col, row) of the passage tile on the perimeter
+        (0, 5),   (0, 13),     # west-side passages
+        (W - 1, 8), (W - 1, 16),   # east-side passages
+    ]
+    for px, py in SIDE_PASSAGES:
+        objects_l[py][px] = "."
+        floor_rows_l[py][px] = "d"
+        # Carve the adjacent inland tile too so the passage has depth.
+        nx = px + (1 if px == 0 else -1)
+        if 0 < nx < W:
+            objects_l[py][nx] = "."
+            floor_rows_l[py][nx] = "d"
     # No loot crates in the corn maze. A wooden crate sitting in a
     # cornfield reads as game-y, and an "empty crate" reward is
     # anti-payoff. The maze rewards exploration with discovery of
@@ -775,11 +824,18 @@ def build_cornfield_maze():
         # South forest_path exit (cols 11, 12 at row H-1).
         if tx in (11, 12) and ty == H - 1:
             return True
-        # Curse-grove fold tile.
-        if tx == 6 and ty == 10:
+        # Direction-sensitive fold tiles.
+        if (tx, ty) in ((6, 10), (21, 8), (2, 14)):
             return True
-        # Lane rows surrounding the spawn.
+        # In-maze relocation tiles.
+        if (tx, ty) in ((8, 6), (16, 11)):
+            return True
+        # Spawn-row tiles.
         if (tx, ty) in ((11, 1), (12, 1), (11, H - 2), (12, H - 2)):
+            return True
+        # Visible perimeter side-passage tiles (clear lanes through
+        # the band, not corn).
+        if (tx == 0 or tx == W - 1) and ty in (5, 8, 13, 16):
             return True
         return False
     _maze_bushes = []
@@ -872,6 +928,11 @@ def build_cornfield_maze():
     # tile char and would conflict.
     sc.add_exit("Z", "curse_grove", "from_cornfield_maze",
                 direction="west")
+    # Additional direction-sensitive secret-area folds.
+    sc.add_exit("P", "husk_grove", "from_cornfield_maze",
+                direction="east")
+    sc.add_exit("S", "scarecrow_ring", "from_cornfield_maze",
+                direction="west")
     sc.set_spawn("default", 11, H - 2)
     sc.set_spawn("from_forest_path", 11, H - 2)
     sc.set_spawn("from_cornfield", 11, H - 2)
@@ -880,6 +941,51 @@ def build_cornfield_maze():
     # Return from curse_grove -- one east of the Z tile so the player
     # doesn't immediately re-trigger walking west.
     sc.set_spawn("from_curse_grove", 7, 10)
+    # Return from the additional hidden-scene folds. One tile inland
+    # from each fold tile in the direction the player came back from.
+    sc.set_spawn("from_husk_grove", 20, 8)        # west of (21, 8)
+    sc.set_spawn("from_scarecrow_ring", 3, 14)    # east of (2, 14)
+
+    # ---- In-maze relocation handler ----
+    # The 'I' and 'Q' tiles teleport the player elsewhere in the maze
+    # when crossed in the matching direction. No fade, no scene
+    # reload -- the camera is offset to keep the player at the same
+    # screen position so the swap is invisible at the moment of the
+    # crossing. They notice when their surroundings stop matching.
+    _RELOCATIONS = {
+        # src (tx, ty): (required_dir, dst_tx, dst_ty)
+        (8, 6):   ("south", 16, 19),    # top lane 2 -> bottom lane 4
+        (16, 11): ("north", 3, 19),     # mid lane 4 -> bottom lane 1
+    }
+    _DIR_VEC = {"north": (0, -1), "south": (0, 1),
+                "east": (1, 0), "west": (-1, 0)}
+    def _maze_on_update(game, scene, dt):
+        p = game.player
+        ptx = int(p.x // TILE); pty = int(p.y // TILE)
+        info = _RELOCATIONS.get((ptx, pty))
+        if info is None:
+            scene._reloc_armed = True
+            return
+        # Only fire once per tile entry -- if the player is standing
+        # on the tile from a prior frame, don't re-trigger.
+        if not getattr(scene, "_reloc_armed", True):
+            return
+        req_dir, dx_tx, dx_ty = info
+        vec = _DIR_VEC[req_dir]
+        fx, fy = p.facing
+        dot = vec[0] * fx + vec[1] * fy
+        if dot < 0.6:
+            return
+        # Match -- teleport. Preserve screen position so the camera
+        # doesn't jump.
+        screen_dx = p.x - game.cam_x
+        screen_dy = p.y - game.cam_y
+        p.x = dx_tx * TILE + 16
+        p.y = dx_ty * TILE + 16
+        game.cam_x = p.x - screen_dx
+        game.cam_y = p.y - screen_dy
+        scene._reloc_armed = False
+    sc.on_update_fn = _maze_on_update
 
     # Scarecrow at the centre dead-end. Hanging-figure deco is
     # close enough to a scarecrow silhouette -- placed just south

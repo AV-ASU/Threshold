@@ -25,7 +25,8 @@ from .villager_houses import (build_old_man_house, build_fisherman_cottage,
                               build_haunted_house)
 from .brimley import build_brimley
 from .hidden_folds import (build_curse_grove, build_lodge_arrival,
-                            build_highway_walk)
+                            build_highway_walk, build_husk_grove,
+                            build_scarecrow_ring)
 from .threshold_extras import (build_schoolhouse, build_graveyard,
                                 build_country_lane,
                                 build_gravel_road_north,
@@ -110,6 +111,8 @@ SCENE_BUILDERS = {
     "curse_grove":        build_curse_grove,
     "lodge_arrival":      build_lodge_arrival,
     "highway_walk":       build_highway_walk,
+    "husk_grove":         build_husk_grove,
+    "scarecrow_ring":     build_scarecrow_ring,
     # The populated town hub -- store, sheriff, school open onto it.
     "town":               build_town,
 }

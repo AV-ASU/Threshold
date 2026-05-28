@@ -112,6 +112,7 @@ SEAMLESS_WORLD_SCENES = OUTDOOR_SCENES | {
     # Hidden fold scenes -- the player stumbles into them through
     # direction-sensitive exits and shouldn't feel a transition.
     "curse_grove", "lodge_arrival", "highway_walk",
+    "husk_grove", "scarecrow_ring",
 }
 
 # Dark scenes -- underground / interior cult sites where the
