@@ -52,6 +52,12 @@ def build_forest_path():
         if 2 <= ry < H - 2 and ry != PATH_ROW:
             objects_l[ry][rx] = "R"
 
+    # South-edge exit to brimley (macro-loop closer). Punch a gap in
+    # the south corn wall at col 30 and add the 'S' exit tile on the
+    # last row. Players walking south off the path reach it.
+    SOUTH_EXIT_COL = 30
+    objects_l[H - 2][SOUTH_EXIT_COL] = "."
+    objects_l[H - 1][SOUTH_EXIT_COL] = "S"
     objects = ["".join(r) for r in objects_l]
     sc = Scene("forest_path", floor, objects, music="outside")
     # Walk through the woods only to be spit out where you walked in.
@@ -67,6 +73,10 @@ def build_forest_path():
     # corn rather than a door. Two adjacent tiles so the player walks
     # straight through without having to centre on a single door.
     sc.add_exit("!", "cornfield_maze", "from_forest_path")
+    # South exit to brimley -- closes the macro-loop. Walking south long
+    # enough through brimley -> cornfield_maze -> forest_path -> here
+    # brings you back to brimley north.
+    sc.add_exit("S", "brimley", "from_forest_path")
 
     sc.set_spawn("default", 1, PATH_ROW)
     sc.set_spawn("from_our_house_area", 1, PATH_ROW)

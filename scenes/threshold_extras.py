@@ -733,6 +733,9 @@ def build_cornfield_maze():
     sc.set_spawn("from_forest_path", 10, H - 2)
     sc.set_spawn("from_cornfield", 10, H - 2)
     sc.set_spawn("from_brimley", 10, 1)
+    # Macro-loop south chain: arriving from brimley's south exit
+    # drops the player on the maze's north edge.
+    sc.set_spawn("from_brimley_south", 10, 1)
 
     # Scarecrow at the centre dead-end. Hanging-figure deco is
     # close enough to a scarecrow silhouette -- placed just south

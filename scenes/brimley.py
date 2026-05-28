@@ -264,6 +264,10 @@ def build_brimley():
             return True                                  # gravel-road north passage
         if ty in (23, 24, 25) and (tx <= 3 or tx >= w - 3):
             return True                                  # fold-loop road both ends
+        if tx in (47, 48, 49) and ty >= h - 3:
+            return True                                  # south macro-loop exit
+        if tx in (47, 48, 49) and ty <= 3:
+            return True                                  # north macro-loop arrival
         if tx <= 2 and 83 <= ty <= 87:
             return True                                  # alter spawn
         if tx in river_cols and (ty <= 3 or ty >= h - 4):
@@ -453,6 +457,7 @@ def build_brimley():
     sc.add_exit("D", "shop",              "from_brimley")  # General Store
     sc.add_exit("B", "schoolhouse",       "from_brimley")  # Schoolhouse
     sc.add_exit("R", "gravel_road_north", "from_brimley")  # North gravel road
+    sc.add_exit("M", "cornfield_maze",    "from_brimley_south")  # South: macro-loop
     # The fold-loop exit -- walking off the west edge of the cross-town
     # road at row 24 wraps the player onto the east end of the same
     # road. Same scene, opposite edge.
@@ -492,6 +497,11 @@ def build_brimley():
     # teleport so the player never sees a scene-fade.
     objects_list[24][0] = "."
     objects_list[24][99] = "."
+    # South exit to cornfield_maze (the bottom of the loop). The road
+    # at col 50 cuts down through the southern tree wall via a single
+    # 'M' tile. Walking south long enough through cornfield_maze ->
+    # forest_path -> here brings you back to Brimley north.
+    objects_list[h - 1][48] = "M"
     # Hand-authored loot crates. Both inside the playable area; the
     # west-bank crate sits near the cauldron path, the east-bank
     # crate sits just west of the relocated barn footprint.
@@ -524,6 +534,9 @@ def build_brimley():
     # a few tiles west of the river crossing -- the maze led you
     # somewhere wrong. Spawn point on the open north band.
     sc.set_spawn("from_cornfield_maze", 40, 1)
+    # The macro-loop return spawn: arriving from forest_path's south
+    # exit drops the player on Brimley's north edge.
+    sc.set_spawn("from_forest_path", 48, 1)
     # Returning from the clearing -- spawn one tile EAST of the j
     # tile so the player doesn't auto-retrigger.
     sc.set_spawn("from_clearing", cauldron_tx + 1, cauldron_ty)
