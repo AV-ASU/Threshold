@@ -1287,24 +1287,24 @@ def draw_king_death(surf, t):
         x = max(0.0, min(1.0, x))
         return 1.0 - (1.0 - x) ** 2.3
 
-    ramp = max(0.0, min(1.0, t / 0.3))
-    kindle = eo((t - 0.05) / 0.75)                  # the void ignites into the furnace
-    behold = max(0.0, min(1.0, (t - 0.8) / 0.9))    # He commands + arms lurch + gaze locks
-    take = eo((t - 1.7) / 2.0)                      # the general surge (scale/grade)
-    # The cracks SPREAD briefly, then -- at t=2.0 -- the mask SNAPS open hard:
-    # the shards explode outward, a jolt + spatter + black-flash punctuate it.
-    linger = max(0.0, min(1.0, (t - 1.7) / 0.3))    # 1.7-2.0 hairlines spread
-    if t < 2.0:
+    ramp = max(0.0, min(1.0, t / 0.2))
+    kindle = eo((t - 0.05) / 0.3)                   # He arrives FAST (~0.05-0.35s)
+    behold = max(0.0, min(1.0, (t - 0.05) / 0.55))  # arms grab + gaze locks from the start
+    take = eo((t - 1.0) / 1.8)                      # the general surge (scale/grade)
+    # Cracks appear EARLY (within ~0.5s of arrival) and spread through the
+    # whole approach, then at t~1.45 the mask SNAPS open hard.
+    linger = max(0.0, min(1.0, (t - 0.3) / 1.1))    # cracks spread 0.3-1.4
+    if t < 1.45:
         crack = 0.35 * linger
     else:
-        crack = 0.55 + 0.40 * min(1.0, (t - 2.0) / 0.4)   # SNAP at 2.0
-    snap = math.exp(-(((t - 2.0) / 0.07) ** 2))     # the snap punctuation
-    # The second face beneath -- a screaming raw visage -- LUNGES at you the
-    # instant the mask snaps, then settles for a beat.
-    second = max(0.0, min(1.0, (t - 2.0) / 0.45))
-    lunge = math.exp(-(((t - 2.15) / 0.10) ** 2))    # face scale-spike toward camera
-    pit_open = (max(0.0, (t - 2.6) / 0.75)) ** 1.15  # the pit blooms from it (sooner)
-    engulf = eo((t - 3.3) / 0.55)                   # the depth swallows you
+        crack = 0.55 + 0.40 * min(1.0, (t - 1.45) / 0.35)  # SNAP at 1.45
+    snap = math.exp(-(((t - 1.45) / 0.07) ** 2))
+    # the second face beneath -- a screaming raw visage -- LUNGES the moment
+    # the mask snaps, then settles for a beat.
+    second = max(0.0, min(1.0, (t - 1.45) / 0.45))
+    lunge = math.exp(-(((t - 1.6) / 0.10) ** 2))
+    pit_open = (max(0.0, (t - 2.0) / 0.75)) ** 1.15  # the pit blooms from it
+    engulf = eo((t - 2.7) / 0.55)                   # the depth swallows you
     flick = 0.85 + 0.12 * math.sin(t * 16.0) + 0.05 * math.sin(t * 37.0)
     fr = 50 + kindle * 140 + behold * 48 + take * 150    # His mask radius: looms + surges
     pres = min(1.0, 0.5 + 0.5 * behold + 0.4 * take)
@@ -1513,7 +1513,7 @@ def draw_king_death(surf, t):
     # SUBLIMINAL FLASH -- for a couple of frames at the snap, a giant distorted
     # screaming face stamps over everything. The eye barely catches it; the
     # animal brain does.
-    if 1.985 < t < 2.045:
+    if 1.435 < t < 1.495:
         big = pygame.Surface((w, h), pygame.SRCALPHA)
         fr3 = int(min(w, h) * 0.46)
         _yk_face(big, cx, cy, fr3, "scream", True, True)

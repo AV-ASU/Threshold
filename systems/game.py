@@ -2356,7 +2356,7 @@ class Game:
                 self.state = "title"
                 self.audio.play_music("threshold_drone")
         else:  # king
-            if self._death_t >= 4.0:
+            if self._death_t >= 3.8:
                 self._death_kind = None
                 self._closure_locked = False
                 self._king = None
@@ -2371,9 +2371,9 @@ class Game:
         cultist = a stark CAPTURED card over a near-black wash."""
         if self._death_kind == "king":
             draw_king_death(self.screen, self._death_t)
-            if self._death_t > 3.2:                  # the name surfaces over the descent
+            if self._death_t > 3.0:                  # the name surfaces over the descent
                 w, h = self.screen.get_size()
-                ta = min(235, int((self._death_t - 3.2) / 0.55 * 235))
+                ta = min(235, int((self._death_t - 3.0) / 0.55 * 235))
                 tt = self.fonts["title"].render("CARCOSA", True, (236, 204, 64))
                 tt.set_alpha(ta)
                 self.screen.blit(tt, (w // 2 - tt.get_width() // 2,
