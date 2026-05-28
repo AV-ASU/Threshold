@@ -1,4 +1,4 @@
-"""The mistlands -- 100x100 plain west of the Clerk's farm,
+"""The brimley -- 100x100 plain west of the Clerk's farm,
 split roughly 1/3 / 2/3 by a north-south river. A planked bridge
 crosses near its north end (rows 23-26 x cols 32-34). THRESHOLD
 rework: the village's six buildings have been scattered across
@@ -7,7 +7,7 @@ Farmhouse south); three sit middle-south on the east bank (Shop,
 Kid's House, Barn). Player walks the bank to find them. The
 cauldron clearing and player's car are still here.
 
-Atmosphere: black haze drawn by Game._draw_mistlands_haze, ambient
+Atmosphere: black haze drawn by Game._draw_brimley_haze, ambient
 'wind' track played by music='wind'."""
 import random
 from constants import TILE
@@ -31,7 +31,7 @@ def _stamp_building(objects_l, left, right, top, bot,
     """Stamp a rectangular building footprint into objects_l. Outer
     perimeter is wall (W); interior is roof (r); a single door tile
     (door_char) is punched through the south face at door_col. Used
-    by build_mistlands for each scattered village building."""
+    by build_brimley for each scattered village building."""
     for cx in range(left, right + 1):
         objects_l[top][cx] = "W"
         objects_l[bot][cx] = "W"
@@ -80,7 +80,7 @@ def _carve_track(floor_ll, objects_l, pts, rng):
                     carve(x + (1 if rng.random() < 0.5 else -1), y)
 
 
-def build_mistlands():
+def build_brimley():
     w = 100
     h = 100
     river_cols = (32, 33, 34)
@@ -100,7 +100,7 @@ def build_mistlands():
 
     # Walkable corn-cover patches scattered across the banks. The ':'
     # tile passively hides the player (Game flips player.hidden to
-    # "corn" while they stand on it), turning the open mistlands into a
+    # "corn" while they stand on it), turning the open brimley into a
     # field with cover lanes to sneak between the buildings past the
     # roaming cult -- the way the cornfields do. Stamped only on open
     # grass, clear of the river, the buildings, the car/cauldron, and
@@ -160,7 +160,7 @@ def build_mistlands():
     #   * Shop (D), Kid's House (J), Barn (n) are spread middle-to-
     #     south on the EAST bank, walking distance apart.
     # Door cols are stored so the door-side spawn in the building
-    # interior maps back to the mistlands tile one south of the door.
+    # interior maps back to the brimley tile one south of the door.
     # Church (NORTH-WEST). Footprint cols 4..10 rows 4..9. Door at col 7.
     church_left, church_right = 4, 10
     church_top, church_bot = 4, 9
@@ -307,7 +307,7 @@ def build_mistlands():
     # organic blobs across the open fields (elliptical falloff + hash
     # noise so the edges are ragged). Only plain grass converts, so the
     # river, corn cover, worn tracks and buildings are left intact -- the
-    # marsh just fills the open plain so it reads as wet mistlands.
+    # marsh just fills the open plain so it reads as wet brimley.
     for (pl, pt, pr, pb) in [(16, 46, 26, 58), (40, 30, 50, 42),
                              (20, 84, 34, 94), (62, 82, 76, 92),
                              (44, 60, 56, 70)]:
@@ -329,23 +329,23 @@ def build_mistlands():
 
     objects = ["".join(r) for r in objects_l]
 
-    sc = Scene("mistlands", floor_rows, objects, music="wind")
+    sc = Scene("brimley", floor_rows, objects, music="wind")
     # Village re-entry, the cauldron-clearing entrance, and the six
     # scattered building exits. Each building's door tile (m, y, o,
     # D, J, n) wires straight into its old interior scene -- the
     # buildings moved, but their interiors didn't.
-    sc.add_exit("4", "village", "from_mistlands")
-    sc.add_exit("a", "river_crossing", "from_mistlands")
-    sc.add_exit("m", "old_man_house",     "from_mistlands")  # Church
-    sc.add_exit("o", "haunted_house",     "from_mistlands")  # Farmhouse
-    sc.add_exit("J", "kid_house",         "from_mistlands")  # Kid
-    sc.add_exit("n", "barn",              "from_mistlands")  # Barn
+    sc.add_exit("4", "village", "from_brimley")
+    sc.add_exit("a", "river_crossing", "from_brimley")
+    sc.add_exit("m", "old_man_house",     "from_brimley")  # Church
+    sc.add_exit("o", "haunted_house",     "from_brimley")  # Farmhouse
+    sc.add_exit("J", "kid_house",         "from_brimley")  # Kid
+    sc.add_exit("n", "barn",              "from_brimley")  # Barn
     # The town has come apart into Brimley's fog: the Sheriff's office,
     # General Store and Schoolhouse stand out here on the bank now, all
     # enterable, their interiors returning to this scene.
-    sc.add_exit("y", "fisherman_cottage", "from_mistlands")  # Sheriff's office
-    sc.add_exit("D", "shop",              "from_mistlands")  # General Store
-    sc.add_exit("B", "schoolhouse",       "from_mistlands")  # Schoolhouse
+    sc.add_exit("y", "fisherman_cottage", "from_brimley")  # Sheriff's office
+    sc.add_exit("D", "shop",              "from_brimley")  # General Store
+    sc.add_exit("B", "schoolhouse",       "from_brimley")  # Schoolhouse
     cauldron_tx, cauldron_ty = 15, 80
     objects_list = [list(r) for r in objects]
     objects_list[cauldron_ty][cauldron_tx] = "j"
@@ -358,13 +358,13 @@ def build_mistlands():
     objects_list[78][14] = "K"
     objects_list[78][78] = "K"
     sc.objects = objects_list
-    sc.add_exit("j", "void_boss", "from_mistlands")
+    sc.add_exit("j", "void_boss", "from_brimley")
     sc.set_spawn("default", w - 2, 7)
     sc.set_spawn("from_village", w - 2, 7)
     sc.set_spawn("from_mist_house", 7, church_bot + 1)
     sc.set_spawn("from_alter", 1, 85)
     sc.set_spawn("from_river_crossing", 50, 1)
-    # Cornfield maze pushes north and emerges into the mistlands
+    # Cornfield maze pushes north and emerges into the brimley
     # a few tiles west of the river crossing -- the maze led you
     # somewhere wrong. Spawn point on the open north band.
     sc.set_spawn("from_cornfield_maze", 40, 1)
@@ -685,7 +685,7 @@ def build_mistlands():
     # village and west bank).
     sc.hide_spots.append((car_x, (car_ty + 1) * TILE + 16, "behind"))
 
-    def _mistlands_interact(game):
+    def _brimley_interact(game):
         cx, cy = sc._car_pos
         if (abs(game.player.x - cx) < 40
                 and abs(game.player.y - cy) < 40):
@@ -712,5 +712,5 @@ def build_mistlands():
             ]
             game.dialog.show(line, speaker="", voice="blip_soft",
                              portrait="narrator")
-    sc.on_interact_fn = _mistlands_interact
+    sc.on_interact_fn = _brimley_interact
     return sc

@@ -31,7 +31,7 @@ commit and push there as you go.
 
 ## What's already done (this is built + pushed)
 - Narrative bible locked (PI hunting **Mara Blaine**; split town; descent
-  Brimley → Mistlands → the Works → the Depths → the Hive; End-it vs
+  Brimley → Brimley → the Works → the Depths → the Hive; End-it vs
   Spread-it; cultist-catch = CAPTURED, King-catch = Carcosa).
 - **The Works** (7-room Basement Level) built in `scenes/well.py`; well is
   the sole way down, orb gates the deeper stair, rope snaps if you descend
@@ -45,14 +45,14 @@ commit and push there as you go.
   in-tile, the leaf an overflowing late-pass sprite (`draw_scene_doors`)
   that swings from a CORNER out into the room; collision stays on the grid;
   swing varies per door.
-- **Mistlands** seeded with organic walkable corn-cover (`:`) hide patches.
+- **Brimley** seeded with organic walkable corn-cover (`:`) hide patches.
 
 ## Goals (roughly prioritized)
 **A. Finish the look (break-the-grid principle):**
 - Oversized, OVERLAPPING trees + corn — drawn larger than their tile,
   overhanging neighbours so the canopy/field line is organic. Biggest
   remaining outdoor win; do it in the draw layer so all scenes benefit.
-- Continue per-scene **liminal composition** (mistlands, then town, cult
+- Continue per-scene **liminal composition** (brimley, then town, cult
   sites, depths): composed emptiness, uncanny repetition, non-orthogonal
   dressing.
 - Housekeeping: delete the now-dead door helpers in `scenes/base.py`

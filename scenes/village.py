@@ -1,7 +1,7 @@
 """village (key: 'village') -- the Clerk's farm.
 
 This scene's six villager buildings have been scattered across the
-mistlands; what remains here is the Clerk's land -- cornfields,
+brimley; what remains here is the Clerk's land -- cornfields,
 the woodshed, the well, the payphone, and a wheelbarrow of "rusted"
 tools.
 
@@ -58,7 +58,7 @@ def build_village():
 
     rows = [list(r) for r in rows]
     # West-side debris piles -- still need the axe to clear at least
-    # one to reach the mistlands.
+    # one to reach the brimley.
     rows[6][0] = "*"
     rows[7][0] = "*"
     rows[8][0] = "*"
@@ -120,14 +120,14 @@ def build_village():
 
     sc = Scene("village", floor, objects, music="village")
     sc.add_exit("e", "country_lane",      "from_village")
-    sc.add_exit("4", "mistlands",         "from_village")  # west, after debris
-    sc.add_exit("/", "mistlands",         "from_village_road")  # old town road, into Brimley
+    sc.add_exit("4", "brimley",         "from_village")  # west, after debris
+    sc.add_exit("/", "brimley",         "from_village_road")  # old town road, into Brimley
     sc.add_exit("a", "gravel_road_north", "from_village")
 
     sc.set_spawn("default",                17, 7)
     sc.set_spawn("from_country_lane",      34, 7)
     sc.set_spawn("from_our_house_area",    34, 7)   # legacy save alias
-    sc.set_spawn("from_mistlands",         2, 7)
+    sc.set_spawn("from_brimley",         2, 7)
     sc.set_spawn("from_well",              16, 9)    # climb out beside the well
     sc.set_spawn("from_woodshed",          24, 12)
     sc.set_spawn("from_schoolhouse",       14, 15)
@@ -295,7 +295,7 @@ def build_village():
 
     def _village_on_enter(game, scene):
         # Persist any debris the player has chopped through. West-edge
-        # debris (col 0) promotes to "4" (the mistlands exit char).
+        # debris (col 0) promotes to "4" (the brimley exit char).
         for ty in range(scene.h):
             for tx in range(scene.w):
                 if scene.objects[ty][tx] == "*":

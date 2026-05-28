@@ -1620,7 +1620,7 @@ class Decoration:
     def _draw_hanging_figure(self, surf, x, y):
         """Vague humanoid silhouette suspended from a rope going off-
         tile upward. Slumped, no facial detail, very small slow sway.
-        Used in the deep tree band of mistlands and the cornfield's
+        Used in the deep tree band of brimley and the cornfield's
         far rows."""
         sway = math.sin(self.t * 0.45 + self.seed) * 2.6
         sx_ = int(sway)

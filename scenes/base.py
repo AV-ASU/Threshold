@@ -93,7 +93,7 @@ FLOOR_DEFS = {
     ".": {"color": (30, 28, 38),   "step": "step_stone"},
     "@": {"color": (8, 6, 14),     "step": "step_void"},
     # Round-13: river floor is no longer universally solid. The
-    # mistlands river enforces directional access via Game's
+    # brimley river enforces directional access via Game's
     # `_river_blocks` check (player.in_river state + designated entry
     # tile). Other scenes can still use `~` as decorative water; nothing
     # else currently does.
@@ -113,7 +113,7 @@ FLOOR_DEFS = {
     ":": {"color": (38, 52, 40),   "step": "step_grass"},
     # Marsh mud -- wet churned low ground, walkable. Stamped in organic
     # patches across the Brimley fields so the plain reads as a sodden
-    # mistlands marsh, not a flat lawn.
+    # brimley marsh, not a flat lawn.
     ";": {"color": (40, 37, 30),   "step": "step_grass"},
 }
 
@@ -162,7 +162,7 @@ OBJECT_DEFS = {
     "2": {"solid": False, "kind": "door"},   # vestigial (cut scene)
     # Outdoor-passage style transition tiles -- non-solid, non-drawing
     # so the underlying floor (grass / water) shows through cleanly.
-    # '4' is the village <-> mistlands corridor.
+    # '4' is the village <-> brimley corridor.
     "4": {"solid": False, "kind": "outdoor_passage"},
     # Fake wall: looks like a wood wall, passable. Used inside the
     # haunted_house red herring -- the player walks through it once to
@@ -202,9 +202,9 @@ OBJECT_DEFS = {
     # from "!".
     "^": {"solid": False, "kind": "outdoor_passage"},
     # Round-12: breakable debris pile blocking the village's west exit
-    # to the mistlands. Solid until the player swings a charged
+    # to the brimley. Solid until the player swings a charged
     # lumber_axe at it, at which point Game._try_break_debris swaps
-    # this tile to "4" (so the gap becomes a passage to mistlands).
+    # this tile to "4" (so the gap becomes a passage to brimley).
     "*": {"solid": True,  "kind": "debris"},
     # Boarded panel -- a passage covered with cross-nailed wooden
     # boards. Visually distinct from a regular wood wall (X-cross
@@ -222,7 +222,7 @@ OBJECT_DEFS = {
     # the gateway role is reserved for `*`.
     "K": {"solid": True,  "kind": "crate"},
     # Round-12: planked footbridge tile -- non-solid, drawn over a
-    # river. Used in the mistlands to gap the N-S river at the bridge
+    # river. Used in the brimley to gap the N-S river at the bridge
     # rows.
     "$": {"solid": False, "kind": "bridge"},
     # Markers (consumed at scene-build time; never drawn)
@@ -829,7 +829,7 @@ DISPLAY_NAMES = {
     "works_sign":           "the Sign Chamber",
     "works_deepstair":      "the Deep Stair",
     "haunted_house":        "the Abandoned Farmhouse",
-    "mistlands":            "Brimley",
+    "brimley":            "Brimley",
     "schoolhouse":          "the Schoolhouse",
     "graveyard":            "the Graveyard",
     "country_lane":         "the Country Lane",

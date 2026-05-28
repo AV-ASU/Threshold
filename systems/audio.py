@@ -222,7 +222,7 @@ class Audio:                        #Starting screen needs music, something simp
                 (784,0.5),(659,0.5),(523,1.0),
                 (587,0.5),(659,0.5),(587,1.0),(0,0.5),
             ], beat_ms=180, vol=0.11, wave="square"),
-            # wind: 'music' for the mistlands -- a long noise drone
+            # wind: 'music' for the brimley -- a long noise drone
             # with a subtle pitched undertone, no melody, no rhythm.
             # Stops entirely once the playscript is picked up; the silence
             # is the point.

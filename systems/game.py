@@ -41,7 +41,7 @@ VOID_SCENES = {"void_boss"}
 # floors get the rare delayed-footstep trick.
 CREEPY_SCENES = {"basement", "void_boss",
                  "haunted_house", "well_bottom", "well_passage",
-                 "mistlands"}
+                 "brimley"}
 
 # Hand-authored crate loot. Keyed by (scene_key, tile_x, tile_y);
 # value is the item key dropped when the player chops the crate
@@ -66,7 +66,7 @@ CRATE_LOOT = {
 # player coming back through after the line has tightened sees a
 # changed world even though no NPC mentioned it.
 #
-# The mistlands is intentionally absent: it's already heavily
+# The brimley is intentionally absent: it's already heavily
 # dressed, and a rework is in flight.
 OUTDOOR_DECAY = {
     ("village", "mid"):       [(8, 7, "bloody_handprint")],
@@ -92,7 +92,7 @@ OUTDOOR_DECAY = {
 # Outdoor scenes -- everywhere the player is walking under sky.
 # A soft always-on player-centred vignette darkens the world edges
 # in these scenes so the world never feels safe between buildings.
-# Mistlands runs its own (heavier) vignette via _draw_mistlands_haze
+# Brimley runs its own (heavier) vignette via _draw_brimley_haze
 # and is intentionally NOT in this set so the two don't stack.
 OUTDOOR_SCENES = {"our_house_area", "village", "forest_path",
                   "void_boss", "graveyard",
@@ -158,11 +158,11 @@ DIM_SAFE_SCENES = {"basement"}
 # permanent curse.
 CULTIST_SCENES = {
     "village", "forest_path", "our_house_area", "graveyard",
-    "mistlands", "country_lane",
+    "brimley", "country_lane",
     "gravel_road_north", "river_crossing", "backwoods_cabin",
     "cornfield_maze",
 }
-CURSER_SCENES = {"mistlands", "graveyard", "cornfield_maze"}
+CURSER_SCENES = {"brimley", "graveyard", "cornfield_maze"}
 
 CURSE_RITUAL_TIME = 3.0        # seconds of held sight to land a curse
 WATCHERS_PER_CURSE = 3         # Watcher cap added per curse level
@@ -233,7 +233,7 @@ RITE_BLAST_DUR = 7.0
 # player's feet.
 MAX_FULLSCREEN_DARK = 204
 
-# Mistlands river entry tile (col 34 = east edge of the river, row 60).
+# Brimley river entry tile (col 34 = east edge of the river, row 60).
 # Walking from land onto this tile is the only way to enter the river.
 # Once in the river, the player can move freely between river tiles
 # until they step onto land or bridge, which flips in_river False.
@@ -280,7 +280,7 @@ class Game:
         # Title-screen ambient: the wind drone, no melody. The title
         # is meant to feel cold and unresolved -- if the player hesitates
         # on the menu, all they hear is the same wind that lives in the
-        # mistlands. Scene music takes over the moment they continue.
+        # brimley. Scene music takes over the moment they continue.
         self.audio.play_music("threshold_drone")
         self.transition_t = 0.0
         self.transition_target = None
@@ -325,13 +325,13 @@ class Game:
         # Counter used to space the void/basement delayed-step trick;
         # every Nth eligible step plays late.
         self._creepy_step_count = 0
-        # Cached vignette surface for the mistlands / alter scenes.
+        # Cached vignette surface for the brimley / alter scenes.
         # Built once on first need; blitted at the player's screen
         # position each frame so it "closes around" them.
         self._vignette_surf = None
         # Soft outdoor vignette. Always-on radial darkness centred on
         # the player whenever they're in an OUTDOOR_SCENES key. Less
-        # intense than the mistlands vignette but never goes away --
+        # intense than the brimley vignette but never goes away --
         # the world edges are always pressing in. Cached on first need.
         self._outdoor_vignette_surf = None
 
@@ -737,13 +737,13 @@ class Game:
             self.scene.npcs = []
 
     def _river_blocks(self, target_x, target_y):
-        """Custom passability for the mistlands river. The `~` floor is
+        """Custom passability for the brimley river. The `~` floor is
         non-solid by default, so this is the gate: in any other scene
-        it's a no-op, and in the mistlands a `~` tile is walkable only
+        it's a no-op, and in the brimley a `~` tile is walkable only
         if (a) the player is already in the river, OR (b) the target
         tile is the designated entry tile. Falling-back-into-the-river
         from land or bridge is blocked everywhere else."""
-        if self.scene is None or self.scene.key != "mistlands":
+        if self.scene is None or self.scene.key != "brimley":
             return False
         if self.scene.char_floor_at(target_x, target_y) != "~":
             return False
@@ -1120,7 +1120,7 @@ class Game:
     def _try_break_debris(self):
         """If a debris ('*') tile sits in front of the player along
         their facing direction (within ~one tile), promote it to '4'
-        (the village->mistlands exit char) and play a chunky impact.
+        (the village->brimley exit char) and play a chunky impact.
         Persisted via per-coord save flag so the gap stays open
         across re-entries. Edge-of-map debris doubles as the exit
         tile once broken; debris elsewhere just becomes walkable."""
@@ -1249,8 +1249,8 @@ class Game:
                 survivors.append(entry)
         self._delayed_audio = survivors
 
-    def _draw_mistlands_haze(self):
-        """Atmospheric overlay. Mistlands and alter_room always run the
+    def _draw_brimley_haze(self):
+        """Atmospheric overlay. Brimley and alter_room always run the
         outdoor haze + vignette. EVERY OTHER SCENE also runs the
         outdoor haze + vignette while the player is carrying the
         playscript -- the playscript's presence is hostile, the world dims around
@@ -1266,7 +1266,7 @@ class Game:
             return
         holds_playscript = (self.player is not None
                      and self.player.inventory.has("playscript"))
-        if key == "mistlands" or holds_playscript:
+        if key == "brimley" or holds_playscript:
             self._draw_haze(170, (40, 40, 50, 80), 14, 24, 0.3, 30)
             self._draw_vignette()
 
@@ -1325,7 +1325,7 @@ class Game:
 
     def _draw_outdoor_vignette(self):
         """Soft, always-on player-centred vignette for OUTDOOR_SCENES.
-        Wider clear hole and lower peak alpha than the mistlands
+        Wider clear hole and lower peak alpha than the brimley
         vignette -- doesn't oppress, just keeps the corners of the
         screen unsafe. Pursuer proximity tightens the hole over time:
         the world literally narrows as the threshold closes."""
@@ -1519,7 +1519,7 @@ class Game:
                    sway_y_amt):
         """Reusable haze helper: a flat black tint at `base_alpha` plus
         `fog_n` drifting translucent SQUARE patches tinted `fog_rgba`.
-        Used by the mistlands overlay with different parameters."""
+        Used by the brimley overlay with different parameters."""
         if base_alpha:
             dim = pygame.Surface((SCREEN_W, SCREEN_H))
             dim.fill((0, 0, 0))
@@ -3274,7 +3274,7 @@ class Game:
         # MAX_FULLSCREEN_DARK. The player's feet stay readable even
         # when hide + apex stack.
         self._overlay_dark_used = 0
-        self._draw_mistlands_haze()
+        self._draw_brimley_haze()
         self._draw_dark()
         self._draw_outdoor_vignette()
         self._draw_apex_overlay()

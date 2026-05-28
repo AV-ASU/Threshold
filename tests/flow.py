@@ -258,10 +258,10 @@ def main():
                  "liquor_crate", "cellar_key", "polaroid"):
         check(dead not in ITEM_DEFS and dead not in _DISPATCH,
               f"cleanup: '{dead}' has no item def or icon")
-    # --- 13. The Mistlands escape gates on the Sign alone (no car keys) ---
+    # --- 13. The Brimley escape gates on the Sign alone (no car keys) ---
     import inspect
-    from scenes import mistlands as _ml
-    src = inspect.getsource(_ml.build_mistlands)
+    from scenes import brimley as _ml
+    src = inspect.getsource(_ml.build_brimley)
     check("car_keys" not in src,
           "escape: the car no longer checks for car_keys")
 

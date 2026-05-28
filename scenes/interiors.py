@@ -69,13 +69,13 @@ def build_void_boss():
     objects_l[6][15] = "t"
     objects = ["".join(r) for r in objects_l]
     sc = Scene("void_boss", floor, objects, music="wrong")
-    # The clearing's south threshold now leads back to the mistlands
+    # The clearing's south threshold now leads back to the brimley
     # river bank (where the new entrance is). Old saves' from_forest
     # / from_cornfield spawns still resolve to the same in-scene
     # position so loading is non-destructive.
-    sc.add_exit("j", "mistlands", "from_clearing")
+    sc.add_exit("j", "brimley", "from_clearing")
     sc.set_spawn("default",        9, 11)
-    sc.set_spawn("from_mistlands", 9, 11)
+    sc.set_spawn("from_brimley", 9, 11)
     sc.set_spawn("from_forest",    9, 11)   # legacy alias
     sc.set_spawn("from_cornfield", 9, 11)   # legacy alias
 
@@ -168,9 +168,9 @@ def build_shop():
     sc = Scene("shop", floor, objects, music="home")
     # The General Store stands out on the Brimley bank now; its door
     # opens back onto the field.
-    sc.add_exit("D", "mistlands", "from_shop")
+    sc.add_exit("D", "brimley", "from_shop")
     sc.set_spawn("default", 6, 5)
-    sc.set_spawn("from_mistlands", 5, 6)       # arrive from Brimley
+    sc.set_spawn("from_brimley", 5, 6)       # arrive from Brimley
     sc.set_spawn("from_village", 5, 6)         # legacy fallback
     sc.set_spawn("from_town", 5, 6)            # legacy fallback
 
@@ -227,7 +227,7 @@ def build_shop():
     ]
     return sc
 def build_barn():
-    """Small barn on the mistlands east bank. Holds Mara's journal
+    """Small barn on the brimley east bank. Holds Mara's journal
     (evidence #2) behind the workbench, and a boarded-over hatch where a
     tunnel down to the Works once ran -- nailed shut now, since the well
     is the only way underground. Lodge dressing (mounted buck, walleye,
@@ -244,12 +244,12 @@ def build_barn():
         "WWWWWWWWWW",   # 7
     ]
     sc = Scene("barn", floor, objects, music="home")
-    # Barn now sits deep south-east on the mistlands east bank.
-    sc.add_exit("n", "mistlands", "from_barn")
+    # Barn now sits deep south-east on the brimley east bank.
+    sc.add_exit("n", "brimley", "from_barn")
     # Round-13: tunnel from the barn down to the well_passage. A
     # ladder hatch tile in the back of the barn (col 8, row 6).
     sc.set_spawn("default", 5, 5)
-    sc.set_spawn("from_mistlands", 4, 1)       # one tile south of n door
+    sc.set_spawn("from_brimley", 4, 1)       # one tile south of n door
     sc.set_spawn("from_village", 4, 1)         # legacy fallback
     sc.set_spawn("from_well_passage", 7, 6)    # one tile west of the hatch
 
@@ -344,10 +344,10 @@ def build_kid_house():
         "WWWWWWWWWW",
     ]
     sc = Scene("kid_house", floor, objects, music="home")
-    # Kid's house now sits middle-south on the mistlands east bank.
-    sc.add_exit("J", "mistlands", "from_kid_house")
+    # Kid's house now sits middle-south on the brimley east bank.
+    sc.add_exit("J", "brimley", "from_kid_house")
     sc.set_spawn("default", 5, 5)
-    sc.set_spawn("from_mistlands", 4, 6)
+    sc.set_spawn("from_brimley", 4, 6)
     sc.set_spawn("from_village", 4, 6)         # legacy fallback
 
     pos = sc.consume_marker("K")

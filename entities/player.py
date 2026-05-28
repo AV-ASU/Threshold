@@ -35,7 +35,7 @@ class Player:
         self.charging = False
         self.charge_t = 0.0
         # Round-13: tracks whether the player is currently standing in
-        # the mistlands river. Toggled in Game.update_player based on
+        # the brimley river. Toggled in Game.update_player based on
         # the floor under their feet. Walking out (onto bridge or land)
         # flips this to False; re-entering requires stepping onto the
         # designated river entry tile.

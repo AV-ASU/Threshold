@@ -86,14 +86,14 @@ def build_old_man_house():
     objects = ["".join(r) for r in rows]
 
     sc = Scene("old_man_house", floor, objects, music="home")
-    # Church now sits on the mistlands west bank. The `m` exit routes
-    # to the mistlands; the legacy `from_village` spawn stays as a
+    # Church now sits on the brimley west bank. The `m` exit routes
+    # to the brimley; the legacy `from_village` spawn stays as a
     # save-state fallback.
-    sc.add_exit("m", "mistlands", "from_old_man_house")
+    sc.add_exit("m", "brimley", "from_old_man_house")
     sc.add_exit("?", "graveyard", "from_church")
     sc.add_exit("U", "bell_tower", "from_church")
     sc.set_spawn("default", 5, 5)
-    sc.set_spawn("from_mistlands", 4, 5)       # one tile north of m door
+    sc.set_spawn("from_brimley", 4, 5)       # one tile north of m door
     sc.set_spawn("from_village", 4, 5)         # legacy fallback
     sc.set_spawn("from_graveyard", 4, 1)       # one tile south of ? door
     sc.set_spawn("from_bell_tower", 7, 1)      # one tile west of U stairs
@@ -208,9 +208,9 @@ def build_fisherman_cottage():
     sc = Scene("fisherman_cottage", floor, objects, music="home")
     # The Sheriff's office stands on the Brimley bank now; its door
     # opens back onto the field.
-    sc.add_exit("y", "mistlands", "from_fisherman_cottage")
+    sc.add_exit("y", "brimley", "from_fisherman_cottage")
     sc.set_spawn("default", 5, 5)
-    sc.set_spawn("from_mistlands", 4, 5)       # arrive from Brimley
+    sc.set_spawn("from_brimley", 4, 5)       # arrive from Brimley
     sc.set_spawn("from_village", 4, 5)         # legacy fallback
     sc.set_spawn("from_town", 4, 5)            # legacy fallback
 
@@ -290,11 +290,11 @@ def build_haunted_house():
         "WWWWWWWW",   # 7  sealed south wall
     ]
     sc = Scene("haunted_house", floor, objects, music="home")
-    # Abandoned farmhouse now sits deep south on the mistlands
+    # Abandoned farmhouse now sits deep south on the brimley
     # west bank.
-    sc.add_exit("o", "mistlands", "from_haunted_house")
+    sc.add_exit("o", "brimley", "from_haunted_house")
     sc.set_spawn("default",     3, 1)
-    sc.set_spawn("from_mistlands", 3, 1)
+    sc.set_spawn("from_brimley", 3, 1)
     sc.set_spawn("from_village", 3, 1)         # legacy fallback
     # When the player climbs back up from the cult chamber, they
     # come up through the hatch in the south of the room, not the

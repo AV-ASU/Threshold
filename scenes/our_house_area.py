@@ -2,7 +2,7 @@
 yard behind the Clerk's house. The pickup truck is parked here.
 A small woodshed off to the south holds the splitting axe. The dirt
 road leaves east toward town; a path west connects to the river/
-mistlands escape route.
+brimley escape route.
 
 The basement is reached from inside the Clerk's house (the
 kitchen cellar hatch). A previous build placed a redundant cellar
@@ -104,7 +104,7 @@ def build_our_house_area():
     sc.set_spawn("from_woodshed", 12, 7)         # legacy fallback
 
     # The pickup truck -- a decoration the player can SEE but not
-    # use. The player's car (the escape vehicle) is on the Mistlands
+    # use. The player's car (the escape vehicle) is on the Brimley
     # east bank; this truck is the Clerk's. Now drawn at
     # vehicle scale (~2 tiles wide); a 2x1 footprint of solid 'X'
     # invisible tiles under it makes the player bump correctly.

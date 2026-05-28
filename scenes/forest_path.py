@@ -43,7 +43,7 @@ def build_forest_path():
     # The east end is a closed tree wall (the diner spur was removed) --
     # the road just runs into the woods and stops. Tiles stay "C".
 
-    # The clearing is reached via the mistlands river bank, not via
+    # The clearing is reached via the brimley river bank, not via
     # a secret tree off the cornfield path.
 
     # Scattered rocks in the open patches.
@@ -87,7 +87,7 @@ def build_forest_path():
     sc.add_decoration(Decoration(20 * TILE + 16, 9 * TILE + 22, "dead_crow"))
 
     # (The secret-clearing branch dressing was removed when the
-    # cauldron entrance moved to the mistlands river bank.)
+    # cauldron entrance moved to the brimley river bank.)
 
     # Hide spots: cornstalks along the south fence, behind the rocks,
     # behind the decoy passable trees. The player can melt into the

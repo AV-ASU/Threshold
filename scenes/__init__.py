@@ -24,7 +24,7 @@ from .interiors import (build_shop, build_kid_house, build_barn,
                         build_void_boss)
 from .villager_houses import (build_old_man_house, build_fisherman_cottage,
                               build_haunted_house)
-from .mistlands import build_mistlands
+from .brimley import build_brimley
 from .threshold_extras import (build_schoolhouse, build_graveyard,
                                 build_country_lane,
                                 build_gravel_road_north,
@@ -53,7 +53,7 @@ from .threshold_extras import (build_schoolhouse, build_graveyard,
 #   well_bottom        -> well_bottom (sigil etched at the binding)
 #   well_passage       -> well_passage (cult tunnels)
 #   haunted_house      -> abandoned_farmhouse
-#   mistlands          -> river_path (creek north of town)
+#   brimley          -> river_path (creek north of town)
 #   schoolhouse        -> NEW: empty since the town's children vanished
 #   graveyard          -> NEW: behind the church
 SCENE_BUILDERS = {
@@ -96,7 +96,7 @@ SCENE_BUILDERS = {
     # Cult sites
     "haunted_house":       build_haunted_house,     # -> abandoned_farmhouse
     # River escape
-    "mistlands":          build_mistlands,          # -> river_path
+    "brimley":          build_brimley,          # -> river_path
     # New scenes
     "schoolhouse":        build_schoolhouse,
     "graveyard":          build_graveyard,

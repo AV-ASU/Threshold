@@ -42,11 +42,11 @@ def build_schoolhouse():
     sc = Scene("schoolhouse", floor, objects, music="home")
     # The schoolhouse stands on the Brimley bank now; its door opens
     # back onto the field.
-    sc.add_exit("H", "mistlands", "from_school")
+    sc.add_exit("H", "brimley", "from_school")
     # The original spawn at (7, 7) was inside a student desk
     # (boxed in three sides). Spawn in the centre aisle at row 8.
     sc.set_spawn("default", 6, 8)
-    sc.set_spawn("from_mistlands", 6, 8)        # arrive from Brimley
+    sc.set_spawn("from_brimley", 6, 8)        # arrive from Brimley
     sc.set_spawn("from_village", 6, 8)
     sc.set_spawn("from_town_crossroads", 6, 8)
     sc.set_spawn("from_town", 6, 8)
@@ -481,8 +481,8 @@ def build_backwoods_cabin_interior():
 
 
 def build_river_crossing():
-    """Plank footbridge across the mistlands river. South exit `a`
-    returns to mistlands; north end of the scene is a small bank
+    """Plank footbridge across the brimley river. South exit `a`
+    returns to brimley; north end of the scene is a small bank
     with a boarded cache pocket gated by `q`. Atmospheric: rotted
     boards, dead crows on the rails, fog. Sheriff patrols here too
     (the bridge is a bottleneck that suits a roving deputy).
@@ -520,7 +520,7 @@ def build_river_crossing():
             for cx in river_cols:
                 row[cx] = "$"             # bridge plank
         objects_l.append(row)
-    # South exit (back to mistlands) -- one passage tile at the
+    # South exit (back to brimley) -- one passage tile at the
     # south river opening.
     objects_l[H - 1][12] = "a"
     # North-bank cache: a `q` boarded panel set into the north
@@ -529,9 +529,9 @@ def build_river_crossing():
     # Sigil on the bridge midway.
     objects = ["".join(r) for r in objects_l]
     sc = Scene("river_crossing", floor_rows, objects, music="wind")
-    sc.add_exit("a", "mistlands", "from_river_crossing")
+    sc.add_exit("a", "brimley", "from_river_crossing")
     sc.set_spawn("default", 12, H - 2)
-    sc.set_spawn("from_mistlands", 12, H - 2)
+    sc.set_spawn("from_brimley", 12, H - 2)
 
     # Decorations: dead crow on the rail, fog motes, a hanging
     # figure visible in the north trees, a creepy_tree on the
@@ -639,7 +639,7 @@ def build_cornfield_maze():
     sky is the only thing you can see over the stalks. A scarecrow
     at the centre that isn't quite where it was a moment ago.
     Two exits: south `!` back to forest_path; north `^` continues
-    into the mistlands -- the maze led you somewhere wrong.
+    into the brimley -- the maze led you somewhere wrong.
     Lanes are dotted with `:` corn patches: walk into one and
     you're hidden, but only as long as you stay in the patch."""
     W, H = 20, 18
@@ -661,7 +661,7 @@ def build_cornfield_maze():
     # tile is actually reachable (was a one-tile exit before).
     objects_l[H - 1][10] = "!"
     objects_l[H - 1][11] = "!"
-    # 2-wide passage north into the mistlands. The maze has a
+    # 2-wide passage north into the brimley. The maze has a
     # second exit; the player who pushes through the field comes
     # out into the fog instead of back to the road. Frees the
     # cornfield from being a dead-end detour.
@@ -720,11 +720,11 @@ def build_cornfield_maze():
     objects = ["".join(r) for r in objects_l]
     sc = Scene("cornfield_maze", floor_rows, objects, music="outside")
     sc.add_exit("!", "forest_path", "from_cornfield_maze")
-    sc.add_exit("^", "mistlands",   "from_cornfield_maze")
+    sc.add_exit("^", "brimley",   "from_cornfield_maze")
     sc.set_spawn("default", 10, H - 2)
     sc.set_spawn("from_forest_path", 10, H - 2)
     sc.set_spawn("from_cornfield", 10, H - 2)
-    sc.set_spawn("from_mistlands", 10, 1)
+    sc.set_spawn("from_brimley", 10, 1)
 
     # Scarecrow at the centre dead-end. Hanging-figure deco is
     # close enough to a scarecrow silhouette -- placed just south
@@ -791,13 +791,13 @@ def build_cornfield_maze():
 #
 # Wired to: the general store (shop), the sheriff's office
 # (fisherman_cottage), the schoolhouse, and the road south back to the
-# village/farm. The church stays out in the mistlands, so the town
+# village/farm. The church stays out in the brimley, so the town
 # reaches it the long way, through the fields.
 # ---------------------------------------------------------------------------
 def build_town():
     """Retired. The town came apart into the fog -- its street, civic
     buildings (Store, Sheriff, Schoolhouse) and residents now live in
-    the mistlands, displayed as Brimley. This stub survives only so a
+    the brimley, displayed as Brimley. This stub survives only so a
     save left standing in the old 'town' scene bounces straight out to
     Brimley on load, instead of soft-locking on a missing scene."""
     floor = ["g" * 5 for _ in range(5)]
@@ -810,7 +810,7 @@ def build_town():
     def _bounce(game):
         if game.state == "transition":
             return
-        game.begin_transition("mistlands", "from_village")
+        game.begin_transition("brimley", "from_village")
 
     sc.triggers.append({
         "rect": (0, 0, 5 * TILE, 5 * TILE),
