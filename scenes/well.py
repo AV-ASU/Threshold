@@ -176,10 +176,7 @@ def build_works_vats():
         if game.save.flag("evidence_works_vats_seen"):
             return
         _evidence(game, "works_vats_seen", [
-            "[c=dim]The smell is your father's hat. From when you were "
-            "small.[/c]",
-            "[c=dim]The cultist beside you laughs, like he heard you "
-            "say something.[/c]",
+            "[c=dim]The smell is your room at the Lodge.[/c]",
         ])
     sc.on_enter_fn = _vats_on_enter
     return sc

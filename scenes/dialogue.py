@@ -126,7 +126,7 @@ def kid_dialogue(game, npc):
         save.set_flag("kid_witnessed", True)
         game.dialog.show([
             "You're looking for the corn lady.",
-            "She went in past the barn. Sometimes I still see her hands.",
+            "She went in past the barn. The corn doesn't grow on her row.",
         ], speaker="Boy", voice="blip_kid", portrait="kid")
         return
     if inv.has("playscript") and not save.flag("kid_playscript_noticed"):
