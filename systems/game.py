@@ -120,6 +120,16 @@ CULT_DARK_SCENES = {"depths_antechamber", "depths_procession",
                     "depths_hall", "depths_threshing",
                     "depths_stair", "dark", "threshold"}
 
+# Scenes where the reactive cult-ambient layer (proximity-driven
+# cult_breath + cult_chant) runs. These are the rite spaces -- the
+# Works rooms and the Depths corridors. The fire-and-forget per-scene
+# _ambient hooks are scene colour; this layer is a SECOND layer that
+# swells with cultist proximity and pans from the closest cultist.
+CULT_AMBIENT_SCENES = {"works_vats", "works_sorting", "works_scriptorium",
+                       "works_sign", "works_deepstair",
+                       "depths_antechamber", "depths_procession",
+                       "depths_hall", "depths_threshing", "depths_stair"}
+
 # Safe interiors. Heavy overlays short-circuit here so the room
 # reads cleanly. The Inn (bedroom + house) is the refuge that the
 # rest of the world is pressing against -- standing inside should
@@ -2056,6 +2066,65 @@ class Game:
         self._heartbeat_t = 5.0 - t * 3.8
         self.audio.play("heartbeat", 0.40 + prox * 0.30)
 
+    def _tick_cult_ambient(self, dt):
+        """Reactive cult-rite audio bed. In CULT_AMBIENT_SCENES, the
+        closest cultist's distance drives a swelling layer of
+        cult_breath + cult_chant. The breath layer engages from ~280px
+        in; the chant layer only kicks in when a cultist is within
+        ~140px (close enough that you hear the work itself, not just
+        the room). Both pan from the closest cultist's world-x. Silent
+        when no cultist is in earshot -- the layer should never compete
+        with the existing fire-and-forget _ambient cues, only ride
+        underneath them when a cultist is nearby.
+
+        Uses _breath_t and _chant_t, which were declared in __init__
+        and reset by _reset_run_state but never actually wired."""
+        if (self.scene is None or self.player is None
+                or self.scene.key not in CULT_AMBIENT_SCENES):
+            return
+        closest = None
+        cd = 1e9
+        for e in self.scene.enemies:
+            if not e.alive:
+                continue
+            d = math.hypot(e.x - self.player.x, e.y - self.player.y)
+            if d < cd:
+                cd = d
+                closest = e
+        if closest is None:
+            return
+        # Breath: audible from BREATH_FAR (~280px) down to BREATH_NEAR
+        # (~60px). Closer = louder + more frequent.
+        BREATH_FAR = 280.0
+        BREATH_NEAR = 60.0
+        if cd >= BREATH_FAR:
+            self._breath_t = 5.0
+            self._chant_t = 9.0
+            return
+        nearness = max(0.0, min(1.0,
+                                (BREATH_FAR - cd) / (BREATH_FAR - BREATH_NEAR)))
+        self._breath_t -= dt
+        if self._breath_t <= 0:
+            # Period: 5.0s far -> 1.2s near (with +/- 20% jitter so the
+            # bed never feels metronomic).
+            period = (5.0 - 3.8 * nearness) * random.uniform(0.8, 1.2)
+            self._breath_t = period
+            pan = self.audio.pan_for_world(closest.x, self.player.x)
+            self.audio.play("cult_breath", 0.10 + 0.20 * nearness, pan=pan)
+        # Chant only at close range -- the player is standing next to
+        # someone doing the work.
+        CHANT_NEAR = 140.0
+        if cd > CHANT_NEAR:
+            self._chant_t = 9.0
+            return
+        chant_t = max(0.0, min(1.0,
+                               (CHANT_NEAR - cd) / (CHANT_NEAR - BREATH_NEAR)))
+        self._chant_t -= dt
+        if self._chant_t <= 0:
+            self._chant_t = (9.0 - 5.5 * chant_t) * random.uniform(0.8, 1.2)
+            pan = self.audio.pan_for_world(closest.x, self.player.x)
+            self.audio.play("cult_chant", 0.12 + 0.16 * chant_t, pan=pan)
+
     def _enemy_sees_player(self):
         """True if any hostile currently has line of sight on the
         player. Hostiles are the patrol/chaser NPCs; their sight
@@ -2468,6 +2537,7 @@ class Game:
             self._tick_watchers(dt)
             self._tick_visibility(dt)
             self._tick_heartbeat(dt)
+            self._tick_cult_ambient(dt)
             self._tick_wake_muffle(dt)
             self._tick_king(dt)
             self._tick_flashback(dt)
