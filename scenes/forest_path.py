@@ -27,24 +27,16 @@ def build_forest_path():
         else:
             floor.append("g" * W)
 
+    # No hard corn-wall perimeter -- the scattered forest band is
+    # stamped below. Floor pre-built; objects start fully open.
     objects_l = []
     for y in range(H):
-        if y < 2 or y >= H - 2:
-            row = ["C"] * W
-        else:
-            row = ["."] * W
-            row[0] = "C"
-            row[W - 1] = "C"
+        row = ["."] * W
         objects_l.append(row)
 
-    # West passage from outside_innkeeper_house.
+    # West passage from our_house_area.
     for dy in (-1, 0, 1):
         objects_l[PATH_ROW + dy][0] = "a"
-    # The east end is a closed tree wall (the diner spur was removed) --
-    # the road just runs into the woods and stops. Tiles stay "C".
-
-    # The clearing is reached via the brimley river bank, not via
-    # a secret tree off the cornfield path.
 
     # Scattered rocks in the open patches.
     rock_positions = [(6, 4), (12, 9), (22, 3), (32, 8), (45, 4), (52, 10)]
@@ -52,14 +44,48 @@ def build_forest_path():
         if 2 <= ry < H - 2 and ry != PATH_ROW:
             objects_l[ry][rx] = "R"
 
-    # South-edge exit to brimley (macro-loop closer). Punch a gap in
-    # the south corn wall at col 30 and add the 'S' exit tile on the
-    # last row. Players walking south off the path reach it.
+    # South-edge exit to brimley (macro-loop closer). 'S' on the last
+    # row at col 30; players walking south off the path reach it.
     SOUTH_EXIT_COL = 30
-    objects_l[H - 2][SOUTH_EXIT_COL] = "."
     objects_l[H - 1][SOUTH_EXIT_COL] = "S"
+
+    # ---- Permeable forest band ----
+    # Replaces the old hard corn-wall north/south perimeter. Same helper
+    # as brimley so the visual treatment of the wrap is consistent.
+    floor_ll_fp = [list(r) for r in floor]
+    def _fp_protected(tx, ty):
+        # West passage corridor (3 rows by 5 cols).
+        if tx <= 4 and PATH_ROW - 1 <= ty <= PATH_ROW + 1:
+            return True
+        # East end -- keep the road tile visible coming in.
+        if tx >= W - 5 and PATH_ROW - 1 <= ty <= PATH_ROW + 1:
+            return True
+        # North maze exit corridor (col 30-31, rows 0-2).
+        if tx in (29, 30, 31) and ty <= 2:
+            return True
+        # South brimley exit corridor (col 30, rows H-3..H-1).
+        if tx in (29, 30, 31) and ty >= H - 3:
+            return True
+        # The path row itself is always clear.
+        if ty == PATH_ROW:
+            return True
+        return False
+    _fp_bushes = []
+    from .base import scatter_forest_band
+    scatter_forest_band(floor_ll_fp, objects_l, W, H,
+                        depth=3, seed=71,
+                        # Forest_path is thin -- depth 3 covers the full
+                        # north + south corn rows.
+                        tree_density=0.55, passable_ratio=0.55,
+                        bush_density=0.16,
+                        protected=_fp_protected,
+                        place_bush=lambda px, py:
+                            _fp_bushes.append((px, py)))
+    floor = ["".join(r) for r in floor_ll_fp]
     objects = ["".join(r) for r in objects_l]
     sc = Scene("forest_path", floor, objects, music="outside")
+    for bx, by in _fp_bushes:
+        sc.add_decoration(Decoration(bx, by, "bush"))
     # Walk through the woods only to be spit out where you walked in.
     # Both axes wrap so the trees become a trap, not a wall. The
     # explicit exits (back to the yard / on to cornfield_maze) stay

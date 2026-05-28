@@ -285,31 +285,8 @@ def build_brimley():
     # the same). Roads + building approaches stay clean via
     # _border_protected.
     BAND_DEPTH = 7
-    forest = random.Random(53)
-    # Mix in passable trees ('p' looks identical to T but walkable) so
-    # the player can push through the woods without bumping a wall in
-    # every direction. Bias toward 'p' so navigation through the band
-    # is forgiving -- the visual sameness is what hides the wrap, not
-    # collision.
-    def _tree_char():
-        return "p" if forest.random() < 0.6 else "T"
-    for ty in range(h):
-        for tx in range(w):
-            edge_dist = min(tx, w - 1 - tx, ty, h - 1 - ty)
-            if edge_dist >= BAND_DEPTH:
-                continue                              # interior, untouched
-            if objects_l[ty][tx] != ".":
-                continue                              # building/road/etc.
-            if _border_protected(tx, ty):
-                continue
-            # Density: ~0.48 at the outermost ring, fading to ~0.04 at
-            # the inner edge of the band. Linear falloff for a soft
-            # fade -- denser-than-this stacks too many wall-shadow
-            # strips and the band reads as a dark mottled mass.
-            t = edge_dist / BAND_DEPTH                # 0..1 inward
-            density = 0.48 * (1 - t) + 0.04
-            if forest.random() < density:
-                objects_l[ty][tx] = _tree_char()
+    # The scattered forest band is built later (after floor_ll has been
+    # finalised) so the helper can stamp both layers atomically.
 
     # Forest LOBES -- the rectangle treeline pushed inward at a few
     # places so the playable space isn't a clean box. Each lobe is an
@@ -352,12 +329,8 @@ def build_brimley():
                 hsh = lr.random()
                 if d <= 0.55 or (d <= 1.0 and hsh < 0.55):
                     objects_l[ty][tx] = "T"
-    for tx in range(2, w - 2):                           # north + south ranks
-        for edge_ty, step in ((1, 1), (h - 2, -1)):
-            for dd in range(forest.randint(0, 2)):
-                ty = edge_ty + step * dd
-                if objects_l[ty][tx] == "." and not _border_protected(tx, ty):
-                    objects_l[ty][tx] = "T"
+    # (north + south thin-rank pass removed -- the full scatter band
+    # below now stamps all four edges via scatter_forest_band.)
 
     # (Church graveyard headstones are placed as crooked decorations
     # below, near the Preacher -- not grid-locked rock tiles.)
@@ -459,32 +432,25 @@ def build_brimley():
     floor_ll[14][92] = "d"
     for fty in range(15, 17):
         floor_ll[fty][91] = "d"
-    # Ground blotch pass in the same border band as the scattered
-    # forest. Mix dim-grass ';' (~22%) and corn-cover ':' (~9%) into
-    # the open grass so the forest floor reads as patchy underfoot,
-    # not a uniform green. Same fade as the trees -- denser at the
-    # outer edge, fading toward the interior. Skips dirt roads, river
-    # tiles, and the corn-cover patches that are already there.
-    blotch = random.Random(101)
-    for ty in range(h):
-        for tx in range(w):
-            edge_dist = min(tx, w - 1 - tx, ty, h - 1 - ty)
-            if edge_dist >= BAND_DEPTH:
-                continue
-            if floor_ll[ty][tx] != "g":
-                continue
-            t = edge_dist / BAND_DEPTH
-            falloff = (1 - t)
-            roll = blotch.random()
-            if roll < 0.22 * falloff:
-                floor_ll[ty][tx] = ";"
-            elif roll < (0.22 + 0.09) * falloff:
-                floor_ll[ty][tx] = ":"
+    # Stamp the permeable forest band on top of everything else -- trees,
+    # ground blotch, de-clump, and hideable bushes -- using the shared
+    # helper so every outdoor scene gets the same treatment.
+    _band_bushes = []
+    from .base import scatter_forest_band
+    scatter_forest_band(floor_ll, objects_l, w, h,
+                        depth=BAND_DEPTH, seed=53,
+                        protected=_border_protected,
+                        place_bush=lambda px, py:
+                            _band_bushes.append((px, py)))
     floor_rows = ["".join(r) for r in floor_ll]
 
     objects = ["".join(r) for r in objects_l]
 
     sc = Scene("brimley", floor_rows, objects, music="wind")
+    # Hideable bushes the band helper queued -- each sits on a corn-
+    # cover (':') tile so stepping into one hides the player.
+    for bx, by in _band_bushes:
+        sc.add_decoration(Decoration(bx, by, "bush"))
     # Brimley's world is toroidal on both axes -- the fold-road at
     # row 24 wraps east-west; the perimeter forest wraps north-south.
     # Walking off any side of the map seamlessly continues from the

@@ -1471,6 +1471,127 @@ _DIRECTION_VECTORS = {
 }
 
 
+def scatter_forest_band(floor_ll, objects_l, w, h, *,
+                         depth=7, seed=53,
+                         tree_density=0.48, tree_floor=0.04,
+                         passable_ratio=0.6,
+                         blotch_dim=0.22, blotch_corn=0.09,
+                         bush_density=0.10,
+                         protected=None, place_bush=None):
+    """Stamp a permeable scattered-forest band around the perimeter of
+    an outdoor scene. The wrap mechanic moves the player; this is the
+    visual camouflage that hides the transition. Both floor_ll and
+    objects_l are mutated in place.
+
+    - Trees ('T' solid / 'p' passable) seeded at decreasing density
+      from the outer edge inward across `depth` tiles. `passable_ratio`
+      of trees are 'p' so navigation is forgiving.
+    - Ground blotch: ';' dim grass + ':' corn cover (which hides the
+      player) mixed into the open grass in the same band.
+    - De-clump pass: any 2x2 block of solid 'T's gets one corner
+      converted to 'p' so the player is never stopped by a wall.
+    - Bushes: `place_bush(x_px, y_px)` is called for each chosen
+      decoration position; the floor under each bush is forced to ':'
+      so stepping into it hides. Pass a callback that adds the bush
+      Decoration to the scene.
+
+    `protected(tx, ty) -> bool` exempts tiles from EVERY pass (trees,
+    blotch, bushes). Used for road corridors and spawn approaches.
+    """
+    rng = random.Random(seed)
+    prot = protected or (lambda tx, ty: False)
+    # Pass 1 -- trees in objects.
+    def _tree_char():
+        return "p" if rng.random() < passable_ratio else "T"
+    for ty in range(h):
+        for tx in range(w):
+            edge_dist = min(tx, w - 1 - tx, ty, h - 1 - ty)
+            if edge_dist >= depth:
+                continue
+            if objects_l[ty][tx] != ".":
+                continue
+            if prot(tx, ty):
+                continue
+            t = edge_dist / depth
+            density = tree_density * (1 - t) + tree_floor
+            if rng.random() < density:
+                objects_l[ty][tx] = _tree_char()
+    # Pass 2 -- de-clump: break any 2x2 block of solid T's.
+    for ty in range(h - 1):
+        for tx in range(w - 1):
+            quad = [objects_l[ty][tx], objects_l[ty][tx + 1],
+                    objects_l[ty + 1][tx], objects_l[ty + 1][tx + 1]]
+            if quad.count("T") == 4:
+                # Convert the corner whose flood-toward-interior would
+                # be the most useful -- the one closest to map centre.
+                cands = [(tx, ty), (tx + 1, ty),
+                         (tx, ty + 1), (tx + 1, ty + 1)]
+                cx, cy = min(cands,
+                             key=lambda p: (p[0] - w / 2) ** 2 +
+                                           (p[1] - h / 2) ** 2)
+                if not prot(cx, cy):
+                    objects_l[cy][cx] = "p"
+    # Pass 3 -- de-clump again on the 3x3 around each T. If a solid T
+    # has zero non-solid orthogonal neighbours in the band, swap to p.
+    for ty in range(1, h - 1):
+        for tx in range(1, w - 1):
+            if objects_l[ty][tx] != "T":
+                continue
+            if prot(tx, ty):
+                continue
+            neighbors = [objects_l[ty - 1][tx], objects_l[ty + 1][tx],
+                         objects_l[ty][tx - 1], objects_l[ty][tx + 1]]
+            # Count passable orthogonal neighbours ('.', 'p', floor
+            # passages). Solid neighbours include 'T' and walls.
+            passable_n = sum(1 for n in neighbors
+                              if n in (".", "p"))
+            if passable_n == 0:
+                objects_l[ty][tx] = "p"
+    # Pass 4 -- ground blotch in the same band.
+    blotch_rng = random.Random(seed + 1)
+    for ty in range(h):
+        for tx in range(w):
+            edge_dist = min(tx, w - 1 - tx, ty, h - 1 - ty)
+            if edge_dist >= depth:
+                continue
+            if floor_ll[ty][tx] != "g":
+                continue
+            if prot(tx, ty):
+                continue
+            t = edge_dist / depth
+            falloff = (1 - t)
+            roll = blotch_rng.random()
+            if roll < blotch_dim * falloff:
+                floor_ll[ty][tx] = ";"
+            elif roll < (blotch_dim + blotch_corn) * falloff:
+                floor_ll[ty][tx] = ":"
+    # Pass 5 -- bushes. Scatter them on open ('.') tiles in the band,
+    # set the floor under each to ':' (corn cover, hides the player),
+    # and call back to add the Decoration.
+    if place_bush is not None:
+        bush_rng = random.Random(seed + 2)
+        for ty in range(h):
+            for tx in range(w):
+                edge_dist = min(tx, w - 1 - tx, ty, h - 1 - ty)
+                if edge_dist >= depth:
+                    continue
+                if objects_l[ty][tx] != ".":
+                    continue
+                if prot(tx, ty):
+                    continue
+                t = edge_dist / depth
+                # Lighter falloff than trees -- bushes spread further
+                # in so the band has hideable spots even on its inner
+                # rim.
+                density = bush_density * (1 - 0.5 * t)
+                if bush_rng.random() < density:
+                    floor_ll[ty][tx] = ":"
+                    px = tx * TILE + 16 + bush_rng.randint(-6, 6)
+                    py = ty * TILE + 16 + bush_rng.randint(-6, 6)
+                    place_bush(px, py)
+    return floor_ll, objects_l
+
+
 class Scene:
     TILE = TILE
 

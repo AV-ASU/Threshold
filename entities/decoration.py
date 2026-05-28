@@ -83,7 +83,7 @@ def _light_pool(surf, cx, cy, radius, color=(255, 170, 70), peak=70):
 _GROUNDED_DECOS = frozenset((
     "well", "creepy_tree", "pickup_truck", "player_car", "cauldron",
     "gas_pump", "payphone", "pedestal", "pillar", "wheelbarrow",
-    "headstone", "brazier", "town_sign", "flagpole",
+    "headstone", "brazier", "town_sign", "flagpole", "bush",
 ))
 
 # Kinds that must NOT use the generic upscale path (they draw absolute
@@ -788,6 +788,42 @@ class Decoration:
             pygame.draw.line(surf, col,
                              (x - 2 + i * 2, y + 4),
                              (x - 2 + i * 2 + sway, y - 2 - i), 1)
+
+    def _draw_bush(self, surf, x, y):
+        """A dense leafy bush -- walkable, but if the floor under it
+        is corn-cover (':') the player hides in it. Used in the
+        permeable forest band so the player can duck off a road and
+        break sightlines. Rendered as a cluster of overlapping leafy
+        blobs with edge highlights so it reads as foliage and not a
+        small tree."""
+        rng = random.Random(self.seed)
+        # 4-7 overlapping ovals form the bush mass. Per-bush palette
+        # variation so a band of these doesn't read as stamped.
+        base_g = 70 + (rng.randint(-12, 12))
+        leaf = (28, max(40, base_g - 12), 38)
+        leaf_lit = (54, base_g + 10, 60)
+        leaf_dark = (16, max(28, base_g - 24), 24)
+        n = rng.randint(4, 7)
+        # Drop shadow on the ground.
+        shadow = pygame.Surface((28, 14), pygame.SRCALPHA)
+        pygame.draw.ellipse(shadow, (0, 0, 0, 70), (0, 0, 28, 14))
+        surf.blit(shadow, (x - 14, y + 4))
+        # Leafy blobs, layered back-to-front.
+        for i in range(n):
+            ox = rng.randint(-9, 9)
+            oy = rng.randint(-3, 1) - i // 2
+            rx = rng.randint(7, 11)
+            ry = rng.randint(5, 8)
+            col = leaf_dark if i < n // 3 else leaf
+            pygame.draw.ellipse(surf, col,
+                                (x + ox - rx, y - 2 + oy - ry,
+                                 rx * 2, ry * 2))
+        # Upper-left highlights -- a few small lit ovals.
+        for _ in range(2):
+            ox = rng.randint(-6, 0)
+            oy = rng.randint(-7, -3)
+            pygame.draw.ellipse(surf, leaf_lit,
+                                (x + ox - 4, y + oy - 2, 8, 4))
 
     def _draw_tall_grass(self, surf, x, y):
         """Knee-high grass clump -- decoration only, no gameplay effect.

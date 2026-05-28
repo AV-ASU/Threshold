@@ -23,6 +23,7 @@ import pygame
 from constants import TILE
 from entities.npc import NPC
 from entities.decoration import Decoration
+from entities.decoration import Decoration
 from .base import Scene
 from .dialogue import _evidence
 
@@ -60,30 +61,28 @@ def build_our_house_area():
         "gggggggggggggggggggggggg",   # 16
         "gggggggggggggggggggggggg",   # 17
     ]
-    # THRESHOLD reskin: the tree perimeter is now a cornfield wall.
-    # The yard sits inside the Clerk's crops; you can't see past
-    # the stalks. The legacy yard woodshed is gone -- the only shed
-    # is the locked one in the village/farm scene. The yard is now
-    # just the inn's back door, the pickup truck, and open ground.
+    # The yard's open ground -- the permeable forest band is stamped
+    # below. Lodge structure (W roof walls, H back door) preserved in
+    # the protected ring; west/east passages stay clear.
     objects = [
-        "CCCCCCCCCCCCCCCCCCCCCCCC",   # 0
-        "C......................C",   # 1
-        "C..WWWWW...............C",   # 2  Clerk's house north wall
-        "C..WrrrW...............C",   # 3  roof
-        "C..WrrrW...............C",   # 4  roof
-        "C..WWHWW...............C",   # 5  H = back door of the Clerk's house
+        "........................",   # 0
+        "........................",   # 1
+        "...WWWWW................",   # 2  Clerk's house north wall
+        "...WrrrW................",   # 3  roof
+        "...WrrrW................",   # 4  roof
+        "...WWHWW................",   # 5  H = back door of the Clerk's house
         "a......................e",   # 6  west passage (river path)
         "a......................e",   # 7  east passage (cornfield_path)
         "a......................e",   # 8
-        "C......................C",   # 9
-        "C......................C",   # 10
-        "C......................C",   # 11
-        "C......................C",   # 12
-        "C......................C",   # 13
-        "C......................C",   # 14
-        "C......................C",   # 15
-        "C......................C",   # 16
-        "CCCCCCCCCCCCCCCCCCCCCCCC",   # 17
+        "........................",   # 9
+        "........................",   # 10
+        "........................",   # 11
+        "........................",   # 12
+        "........................",   # 13
+        "........................",   # 14
+        "........................",   # 15
+        "........................",   # 16
+        "........................",   # 17
     ]
     sc = Scene("our_house_area", floor, objects, music="village")
     # The Lodge yard wraps on the x axis. The country lane comes in
@@ -110,7 +109,39 @@ def build_our_house_area():
     # back door so the player passes it walking up to the porch.
     yard_obj = [list(r) for r in sc.objects]
     yard_obj[12][5] = "M"
+    # ---- Permeable forest band ----
+    # Replaces the old hard corn-wall perimeter. Same helper as brimley
+    # so the visual treatment of the wrap is consistent. Lodge structure
+    # + door passages stay protected.
+    floor_ll_yd = [list(r) for r in sc.floor]
+    YARD_W = len(yard_obj[0]); YARD_H = len(yard_obj)
+    def _yd_protected(tx, ty):
+        # West + east passage corridors (rows 6-8 deep into the band).
+        if 6 <= ty <= 8:
+            return True
+        # Lodge structure footprint + porch approach.
+        if 2 <= tx <= 7 and 2 <= ty <= 6:
+            return True
+        # The road row stub (5-9 north + south stubs of road).
+        if 5 <= ty <= 9 and tx >= 5:
+            return True
+        # The 'M' directional tile + path to it.
+        if tx == 5 and 9 <= ty <= 12:
+            return True
+        return False
+    _yd_bushes = []
+    from .base import scatter_forest_band
+    scatter_forest_band(floor_ll_yd, yard_obj, YARD_W, YARD_H,
+                        depth=3, seed=83,
+                        tree_density=0.50, passable_ratio=0.65,
+                        bush_density=0.18,
+                        protected=_yd_protected,
+                        place_bush=lambda px, py:
+                            _yd_bushes.append((px, py)))
+    sc.floor = floor_ll_yd
     sc.objects = yard_obj
+    for bx, by in _yd_bushes:
+        sc.add_decoration(Decoration(bx, by, "bush"))
 
     sc.set_spawn("default", 12, 7)
     sc.set_spawn("from_house", 5, 6)             # one south of back door
