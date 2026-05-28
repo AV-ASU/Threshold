@@ -216,15 +216,8 @@ def bedroom_interact(game):
                 return
             game.save.set_flag("case_closed_read", True)
             game.dialog.show([
-                "[c=dim](Your case notebook. You re-open it. The first "
-                "page you wrote in is still there, but the hand on the "
-                "later pages has gone unsteady.)[/c]",
-                "CASE FILE -- BLAINE. Subject: located. Recovery: declined.",
-                "MARA BLAINE was not lost. She wasn't taken. She knelt.",
-                "Client: Walter Blaine. Notify only if you make it back "
-                "to a phone with a line on the other end.",
-                "[c=dim]You drew a single line under the last entry. "
-                "You don't remember doing it.[/c]",
+                "[c=dim](Your case notebook. The last page is in your "
+                "handwriting. You haven't written it yet.)[/c]",
             ], speaker="", voice="blip_soft", portrait="narrator")
             return
         game.dialog.show([
@@ -657,8 +650,8 @@ def basement_on_enter(game, scene):
     if (game.save.flag("evidence_works_vats_seen")
             and not game.save.flag("evidence_lodge_candle_callback")):
         _evidence(game, "lodge_candle_callback", [
-            "[c=dim]The candle on the workbench. You know now what it "
-            "is made from. You know now what the lodge smells of.[/c]",
+            "[c=dim]There's wax on your thumb. You don't remember "
+            "tasting it.[/c]",
         ])
 
 

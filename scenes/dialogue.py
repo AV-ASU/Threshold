@@ -97,15 +97,13 @@ def old_man_dialogue(game, npc):
         # The hubris that gets him killed. After this he's marked: the
         # church swaps him for his remains on the next entry (evidence #4).
         game.dialog.show([
-            "You came back. Good -- then hear the rest of it.",
-            "From my pulpit, plain as I'm saying it now. It isn't the "
-            "corn. The corn is just the path.",
-            "The mouth is under the well. The well is in the Clerk's "
-            "yard. I name them both.",
-            "The sheriff sits in my back pew while I do. He listens. "
-            "He does not move.",
+            "You came back. Good.",
+            "It isn't the corn. The mouth is under the well. The well "
+            "is in the Clerk's yard. I name them from my pulpit.",
+            "The sheriff comes to hear me say it. He stays for the "
+            "whole sermon. He's never taken communion.",
             "Let them come for an old man. I've buried better than "
-            "whatever it is they kneel to. God's on my side of the door.",
+            "whatever it is they kneel to.",
         ], speaker="Preacher", voice="blip_low", portrait="old")
         save.set_flag("preacher_doomed", True)
     else:
@@ -127,50 +125,41 @@ def kid_dialogue(game, npc):
     if not save.flag("kid_witnessed"):
         save.set_flag("kid_witnessed", True)
         game.dialog.show([
-            "You're looking for the corn lady. The nice one. With all the "
-            "questions.",
-            "I saw her go. Through the rows. Toward the old barn. She did "
-            "not come back. They don't. After the corn.",
-            "[c=dim]The grown-ups say nobody saw. They saw. They saw and "
-            "they looked at their shoes.[/c]",
+            "You're looking for the corn lady.",
+            "She went in past the barn. Sometimes I still see her hands.",
         ], speaker="Boy", voice="blip_kid", portrait="kid")
         return
-    # Playscript-recognition one-shot (kept; flow unchanged).
     if inv.has("playscript") and not save.flag("kid_playscript_noticed"):
         save.set_flag("kid_playscript_noticed", True)
         game.dialog.show([
-            "That yellow book. The corn lady drew that. Over and over. "
-            "On everything.",
-            "[c=dim]You shouldn't have it. It looks at you back.[/c]",
+            "That yellow book.",
+            "[c=dim]Don't open it where I can see.[/c]",
         ], speaker="Boy", voice="blip_kid", portrait="kid")
         return
     count = save.arg("kid_count", 0) + 1
     save.set_arg("kid_count", count)
     if count == 1:
         game.dialog.show([
-            "She went down. After the corn. They all do.",
-            "[c=dim]Everybody who stays goes down. It's what Brimley's "
-            "for. The going down.[/c]",
+            "My dad went down too. He still comes home for dinner.",
         ], speaker="Boy", voice="blip_kid", portrait="kid")
     elif count == 2:
         game.dialog.show([
-            "My mom. And my dad. They smile all the time now. They didn't "
-            "used to.",
-            "[c=dim]I don't smile. That's how I can tell I'm still me.[/c]",
+            "I keep biting my tongue. To check.",
+            "[c=dim]It still bleeds right.[/c]",
         ], speaker="Boy", voice="blip_kid", portrait="kid")
     elif count == 3:
         game.dialog.show([
-            "The preacher was nice to me. Now there's a quiet where he was.",
-            "[c=dim]Are you going to go quiet too?[/c]",
+            "The preacher's coat is in the church.",
+            "[c=dim]There's nobody in it.[/c]",
         ], speaker="Boy", voice="blip_kid", portrait="kid")
     elif count == 4:
         game.dialog.show([
-            "If you find a way out. Don't tell me where it is.",
-            "[c=dim]They'd ask me after. I can't lie to them anymore.[/c]",
+            "If you find a way out, don't tell me.",
+            "[c=dim]I tried to lie yesterday. My mouth wouldn't.[/c]",
         ], speaker="Boy", voice="blip_kid", portrait="kid")
     else:
         game.dialog.show([
-            "[c=dim]The boy just watches the corn line, waiting.[/c]",
+            "[c=dim]The boy is watching the corn line.[/c]",
         ], speaker="", voice="blip_soft", portrait="kid")
 
 

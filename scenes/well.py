@@ -176,14 +176,10 @@ def build_works_vats():
         if game.save.flag("evidence_works_vats_seen"):
             return
         _evidence(game, "works_vats_seen", [
-            "[c=dim]The smell. It is the smell that gets you first. "
-            "Long sweet, then sour underneath. Like meat left in a "
-            "covered pot.[/c]",
-            "[c=dim]Something pale-yellow runs down the inside of each "
-            "vat in slow rope. The cultists work the paddles without "
-            "looking at what they're stirring.[/c]",
-            "[c=dim]This is where the candles come from. Every one in "
-            "Brimley.[/c]",
+            "[c=dim]The smell is your father's hat. From when you were "
+            "small.[/c]",
+            "[c=dim]The cultist beside you laughs, like he heard you "
+            "say something.[/c]",
         ])
     sc.on_enter_fn = _vats_on_enter
     return sc
@@ -247,16 +243,10 @@ def build_works_sorting():
             if not game.save.flag("sorting_recognized"):
                 game.save.set_flag("sorting_recognized", True)
                 game.dialog.show([
-                    "[c=dim]Coats. Boots. A child's shoe. All folded, "
-                    "all catalogued.[/c]",
-                    "[c=dim]Some of the coats you have seen before. In "
-                    "the Lodge halls. In the polaroids on the kitchen "
-                    "wall.[/c]",
+                    "[c=dim]A child's shoe. Folded.[/c]",
                 ], speaker="", voice="blip_soft", portrait="narrator")
             else:
-                game.show_notice(
-                    "Coats. Boots. A child's shoe. All folded, all "
-                    "catalogued.", duration=3.5)
+                game.show_notice("A child's shoe. Folded.", duration=3.0)
     sc.on_interact_fn = _interact
     return sc
 
@@ -372,11 +362,9 @@ def build_works_scriptorium():
             game.audio.play("pickup_rare", 0.7)
             game.audio.play("low_pulse", 0.45)
             game.dialog.show([
-                "[c=dim]Among the endless copies, one book is bound and "
-                "whole -- the Play itself, a mask pressed into its "
-                "yellow cover. You take it.[/c]",
-                "[c=dim]The kneeling scribe's robe is dark to the knee. "
-                "It is not water.[/c]",
+                "[c=dim]One book is bound and whole. A mask pressed "
+                "into the cover. You take it.[/c]",
+                "[c=dim]The scribe is wet to the knee.[/c]",
             ], speaker="", voice="blip_soft", portrait="narrator")
             return
         game.show_notice(

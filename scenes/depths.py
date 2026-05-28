@@ -335,11 +335,10 @@ def _mara_voice(game, npc):
     game.audio.play("low_pulse", 0.6)
     game.dialog.show([
         "[c=dim](You say her name. The hooded head lifts.)[/c]",
-        "It's Mara. The robe from her cell on her shoulders, no fear left "
-        "in her. She smiles the way the saved smile at the drowning.",
-        "[s=slow]You came to take her home. She was already home.[/s]",
-        "[c=dim]The case was never a rescue. It was an invitation -- and "
-        "you've answered every line of it.[/c]",
+        "It is Mara. She has been waiting a long time. She has the "
+        "patience for it now.",
+        "[s=slow]She says your name back. She uses your first name. "
+        "Your client never told her your first name.[/s]",
     ], speaker="", voice="blip_soft", portrait="narrator")
     _evidence(game, "the_congregation", [
         "Mara, kneeling with the congregation. Turned. There was never "
