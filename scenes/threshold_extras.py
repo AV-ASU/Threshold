@@ -121,15 +121,16 @@ def build_country_lane():
     objects_l[4][8] = "K"
     objects = ["".join(r) for r in objects_l]
     sc = Scene("country_lane", floor_rows, objects, music="outside")
-    sc.add_exit("a", "village", "from_country_lane")
+    sc.add_exit("a", "brimley", "from_country_lane")
     sc.add_exit("e", "our_house_area", "from_country_lane")
     sc.set_spawn("default", 1, 6)
     # Player walked WEST out of our_house_area: lands at the east
     # end of the lane, facing west toward town.
     sc.set_spawn("from_our_house_area", W - 2, 6)
-    # Player walked EAST out of village: lands at the west end of
+    # Player walked EAST out of Brimley: lands at the west end of
     # the lane, facing east toward home.
-    sc.set_spawn("from_village", 1, 6)
+    sc.set_spawn("from_brimley", 1, 6)
+    sc.set_spawn("from_village", 1, 6)   # legacy alias
 
     # Atmosphere -- corn tufts on both sides of the road, a few
     # crows, a leaning fence post deco, one creepy_tree, a dead
@@ -306,9 +307,10 @@ def build_gravel_road_north():
     objects = ["".join(r) for r in objects_l]
     sc = Scene("gravel_road_north", floor_rows, objects, music="outside")
     sc.add_exit("e", "backwoods_cabin", "from_road")
-    sc.add_exit("a", "village", "from_gravel_road")
+    sc.add_exit("a", "brimley", "from_gravel_road")
     sc.set_spawn("default", 7, H - 2)
-    sc.set_spawn("from_village", 7, H - 2)
+    sc.set_spawn("from_brimley", 7, H - 2)
+    sc.set_spawn("from_village", 7, H - 2)   # legacy alias
     sc.set_spawn("from_backwoods_cabin", 7, 1)
 
     rng = random.Random(2031)

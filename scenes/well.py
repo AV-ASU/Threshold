@@ -79,7 +79,7 @@ def build_well_bottom():
                 game.show_notice("The rope is gone. Only the dark below.")
                 return
             game.audio.play("door_open", 0.6)
-            game.begin_transition("village", "from_well")
+            game.begin_transition("brimley", "from_well")
     sc.on_interact_fn = _interact
     return sc
 

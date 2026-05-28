@@ -11,7 +11,6 @@ from .base import Scene, tile_footstep, OBJECT_DEFS, FLOOR_DEFS, TILE
 from .house import (build_bedroom, build_house, build_basement,
                     build_son_room)
 from .our_house_area import build_our_house_area, build_woodshed
-from .village import build_village
 from .forest_path import build_forest_path
 from .well import (build_well_bottom, build_well_passage,
                    build_works_vats, build_works_sorting,
@@ -66,8 +65,6 @@ SCENE_BUILDERS = {
     "woodshed":           build_woodshed,           # -> Clerk's shed interior
     # Next door
     "kid_house":          build_kid_house,
-    # Town crossroads
-    "village":            build_village,            # -> town_crossroads
     "shop":               build_shop,               # -> general_store
     "old_man_house":      build_old_man_house,      # -> church
     "fisherman_cottage":  build_fisherman_cottage,  # -> sheriffs_office

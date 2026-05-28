@@ -28,7 +28,7 @@ from systems.game import Game
 
 # One scene per overlay category: outdoor vignette, safe interior,
 # dim-safe/dark cellar, brimley haze/eye, cult-dark dread, creepy well.
-SCENES = ["village", "bedroom", "basement", "brimley",
+SCENES = ["bedroom", "basement", "brimley",
           "depths_hall", "well_bottom"]
 
 
@@ -63,7 +63,7 @@ def check_vignette_paints(g):
     actually draw. Fill the screen with a sentinel colour, invoke each
     method, and confirm pixels changed."""
     errors = 0
-    g.load_scene_now("village", "default")   # an OUTDOOR_SCENES key
+    g.load_scene_now("brimley", "default")   # an OUTDOOR_SCENES key
     g.pursuer_proximity = 0.95               # high proximity -> overlays fire
     g.stillness_t = 10.0                     # tightest vignette level
     sentinel = (123, 45, 67)

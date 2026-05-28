@@ -208,9 +208,10 @@ def build_woodshed():
     # `h` exit always returns the player to the village/farm scene
     # now -- the yard shed has been removed, the village shed is
     # the only entry/exit.
-    sc.add_exit("h", "village", "from_woodshed")
+    sc.add_exit("h", "brimley", "from_woodshed")
     sc.set_spawn("default",            4, 3)
-    sc.set_spawn("from_village_shed",  4, 3)
+    sc.set_spawn("from_brimley_shed",  4, 3)
+    sc.set_spawn("from_village_shed",  4, 3)   # legacy fallback
     sc.set_spawn("from_yard",          4, 3)   # legacy fallback
 
     rope_pos   = (2 * TILE + 16, 2 * TILE + 16)

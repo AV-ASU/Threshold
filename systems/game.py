@@ -69,8 +69,8 @@ CRATE_LOOT = {
 # The brimley is intentionally absent: it's already heavily
 # dressed, and a rework is in flight.
 OUTDOOR_DECAY = {
-    ("village", "mid"):       [(8, 7, "bloody_handprint")],
-    ("village", "high"):      [(8, 7, "bloody_handprint"),
+    ("brimley", "mid"):       [(8, 7, "bloody_handprint")],
+    ("brimley", "high"):      [(8, 7, "bloody_handprint"),
                                 (12, 9, "dead_crow"),
                                 (4, 11, "claw_marks")],
     ("our_house_area", "mid"):  [(5, 11, "claw_marks")],
@@ -94,7 +94,7 @@ OUTDOOR_DECAY = {
 # in these scenes so the world never feels safe between buildings.
 # Brimley runs its own (heavier) vignette via _draw_brimley_haze
 # and is intentionally NOT in this set so the two don't stack.
-OUTDOOR_SCENES = {"our_house_area", "village", "forest_path",
+OUTDOOR_SCENES = {"our_house_area", "forest_path",
                   "void_boss", "graveyard",
                   "country_lane", "cornfield_maze",
                   "gravel_road_north", "river_crossing"}
@@ -157,7 +157,7 @@ DIM_SAFE_SCENES = {"basement"}
 # haunts the deep cult sites -- venturing there is what risks the
 # permanent curse.
 CULTIST_SCENES = {
-    "village", "forest_path", "our_house_area", "graveyard",
+    "forest_path", "our_house_area", "graveyard",
     "brimley", "country_lane",
     "gravel_road_north", "river_crossing", "backwoods_cabin",
     "cornfield_maze",
@@ -2581,7 +2581,7 @@ class Game:
             self.save.set_flag("world_emptied", True)
             self.player.hp = self.player.max_hp
             self.show_notice("You wake on the village green. It is silent.")
-            self.load_scene_now("village", "default")
+            self.load_scene_now("brimley", "default")
             return
         self.player.hp = self.player.max_hp
         self.show_notice("You wake up in your bed.")

@@ -14,6 +14,7 @@ from constants import TILE
 from entities.decoration import Decoration
 from entities.npc import NPC
 from .base import Scene
+from .dialogue import _evidence
 
 
 def _brimley_voice(pages, voice="blip_mid"):
@@ -236,6 +237,8 @@ def build_brimley():
             return True                                  # north passage + river_crossing spawn
         if tx in (39, 40, 41) and ty <= 3:
             return True                                  # cornfield_maze spawn
+        if tx in (95, 96, 97) and ty <= 3:
+            return True                                  # gravel-road north passage
         if tx <= 2 and 83 <= ty <= 87:
             return True                                  # alter spawn
         if tx in river_cols and (ty <= 3 or ty >= h - 4):
@@ -330,11 +333,9 @@ def build_brimley():
     objects = ["".join(r) for r in objects_l]
 
     sc = Scene("brimley", floor_rows, objects, music="wind")
-    # Village re-entry, the cauldron-clearing entrance, and the six
-    # scattered building exits. Each building's door tile (m, y, o,
-    # D, J, n) wires straight into its old interior scene -- the
-    # buildings moved, but their interiors didn't.
-    sc.add_exit("4", "village", "from_brimley")
+    # The east edge of Brimley is the road back to the Lodge via the
+    # country lane. The other building doors wire into their interiors.
+    sc.add_exit("4", "country_lane",      "from_brimley")
     sc.add_exit("a", "river_crossing", "from_brimley")
     sc.add_exit("m", "old_man_house",     "from_brimley")  # Church
     sc.add_exit("o", "haunted_house",     "from_brimley")  # Farmhouse
@@ -346,12 +347,35 @@ def build_brimley():
     sc.add_exit("y", "fisherman_cottage", "from_brimley")  # Sheriff's office
     sc.add_exit("D", "shop",              "from_brimley")  # General Store
     sc.add_exit("B", "schoolhouse",       "from_brimley")  # Schoolhouse
+    sc.add_exit("R", "gravel_road_north", "from_brimley")  # North gravel road
     cauldron_tx, cauldron_ty = 15, 80
     objects_list = [list(r) for r in objects]
     objects_list[cauldron_ty][cauldron_tx] = "j"
     # North passage to the river_crossing -- a single tile carved
     # into the north tree line, west of the river.
     objects_list[0][50] = "a"
+    # ---- Eastern village square (merged from the old `village` scene) ----
+    # The town's well + woodshed sit just inside the east edge so the
+    # player walks in from the Lodge and sees the landmark immediately.
+    # The well at col 94, row 13 -- the only mouth down into the Works.
+    # Surrounding floor was already grass; the well is a decoration.
+    # The woodshed footprint (5w x 4h) south-east of the well, door
+    # 'z' on north face at col 91.
+    shed_left, shed_right = 89, 93
+    shed_top, shed_bot = 16, 19
+    for cx in range(shed_left, shed_right + 1):
+        objects_list[shed_top][cx] = "W"
+        objects_list[shed_bot][cx] = "W"
+    objects_list[shed_top][91] = "z"   # locked door
+    for ry in (shed_top + 1, shed_top + 2):
+        objects_list[ry][shed_left] = "W"
+        objects_list[ry][shed_right] = "W"
+        for cx in range(shed_left + 1, shed_right):
+            objects_list[ry][cx] = "r"
+    # Gravel road passage (north) -- single 'R' tile at col 96. Uses
+    # 'R' rather than 'a' to avoid collision with the river-crossing
+    # 'a' exit (exit chars are scene-global, not per-tile).
+    objects_list[0][96] = "R"
     # Hand-authored loot crates. Both inside the playable area; the
     # west-bank crate sits near the cauldron path, the east-bank
     # crate sits just west of the relocated barn footprint.
@@ -360,7 +384,20 @@ def build_brimley():
     sc.objects = objects_list
     sc.add_exit("j", "void_boss", "from_brimley")
     sc.set_spawn("default", w - 2, 7)
+    # Coming in from the Lodge via the country lane (east edge).
+    sc.set_spawn("from_country_lane", w - 2, 7)
+    # Legacy alias for any old "from_village" save references; resolves
+    # to the same east-edge entry now that village is merged.
     sc.set_spawn("from_village", w - 2, 7)
+    sc.set_spawn("from_our_house_area", w - 2, 7)
+    # Climbing back out of the well lands beside it.
+    sc.set_spawn("from_well", 94, 13)
+    # Coming out of the woodshed door (the lumber axe + rope shed).
+    # Spawn ONE TILE NORTH of the door so the player doesn't immediately
+    # re-trigger and isn't stuck inside the shed walls.
+    sc.set_spawn("from_woodshed", 91, 15)
+    # The north passage to the gravel road (cult-priest territory).
+    sc.set_spawn("from_gravel_road", 96, 2)
     sc.set_spawn("from_mist_house", 7, church_bot + 1)
     sc.set_spawn("from_alter", 1, 85)
     sc.set_spawn("from_river_crossing", 50, 1)
@@ -518,6 +555,21 @@ def build_brimley():
     # Calder's plate, set for a husband who walked out to the highway.
     sc.add_decoration(Decoration(58 * TILE + 16, 62 * TILE + 16, "payphone"))
     sc._payphone_pos = (58 * TILE + 16, 62 * TILE + 16)
+    # The well -- only mouth into the Works. Sits in the eastern
+    # village-square area, south of the country-lane entry.
+    well_x = 94 * TILE + 16
+    well_y = 13 * TILE + 16
+    sc.add_decoration(Decoration(well_x, well_y, "well"))
+    sc._well_pos = (well_x, well_y)
+    # The wheelbarrow of "rusted" tools just outside the woodshed door.
+    barrow_x = 93 * TILE + 16
+    barrow_y = 15 * TILE + 16
+    sc.add_decoration(Decoration(barrow_x, barrow_y, "wheelbarrow"))
+    sc._barrow_pos = (barrow_x, barrow_y)
+    # Woodshed door coords (for the locked-door interact).
+    sc._shed_door_pos = (91 * TILE + 16, 16 * TILE + 16)
+    # A loot crate just west of the shed -- spare batteries inside.
+    objects_list[18][88] = "K"
     sc.add_decoration(Decoration(52 * TILE + 16, 61 * TILE + 16, "missing_flyer"))
     sc.add_decoration(Decoration(40 * TILE + 16, 27 * TILE + 16, "missing_flyer"))
     # The calendar, every day crossed off the same, nailed to the
@@ -699,6 +751,68 @@ def build_brimley():
             game.show_notice("You turn the key. The engine catches, and "
                              "catches, and dies. The fold won't let the "
                              "car go -- not empty-handed.")
+            return
+        # The well -- the only mouth into the Works. Needs the rope to
+        # rig the first descent; once tied, the rope stays as the climb
+        # route until the playscript snaps it on a later descent
+        # (handled in well_bottom's on_enter).
+        wx, wy = sc._well_pos
+        if abs(game.player.x - wx) < 36 and abs(game.player.y - wy) < 36:
+            if game.save.flag("well_rope_broken"):
+                game.audio.play("door_locked", 0.6)
+                game.show_notice("The rope's gone. There's no climbing "
+                                 "back down.")
+                return
+            if game.save.flag("well_rope_tied"):
+                game.audio.play("door_open", 0.7)
+                game.begin_transition("well_bottom", "from_well")
+                return
+            if game.player.inventory.has("rope"):
+                game.player.inventory.remove("rope", 1)
+                game.save.set_flag("well_rope_tied", True)
+                game.audio.play("door_open", 0.7)
+                game.show_notice("You tie the rope and climb down.")
+                game.begin_transition("well_bottom", "from_well")
+                return
+            if not game.save.flag("well_examined"):
+                game.save.set_flag("well_examined", True)
+                game.audio.play("low_pulse", 0.4)
+                game.dialog.show([
+                    "[c=dim](You lean over the lip. The shaft drops "
+                    "past where any water should be -- no glint, no "
+                    "bottom, just cold air climbing up out of it.)[/c]",
+                    "[c=dim]Two grooves are worn smooth into the "
+                    "stone where a rope has run, over and over.[/c]",
+                    "This is the way below the town. You just need "
+                    "a rope.",
+                ], speaker="", voice="blip_soft", portrait="narrator")
+                return
+            game.audio.play("door_locked", 0.7)
+            game.show_notice("The way down. Too deep without a rope.")
+            return
+        # The woodshed -- locked door. Needs woodshed_key from the
+        # Lodge cellar workbench. Opens to the woodshed interior
+        # (axe, rope, batteries).
+        sdx, sdy = sc._shed_door_pos
+        if abs(game.player.x - sdx) < 40 and abs(game.player.y - sdy) < 40:
+            if not game.player.inventory.has("woodshed_key"):
+                game.audio.play("door_locked", 0.6)
+                game.show_notice("Locked. The Clerk has the key.")
+                return
+            game.audio.play("door_open", 0.7)
+            game.begin_transition("woodshed", "from_brimley_shed")
+            return
+        # Wheelbarrow of "rusted" tools -- the visible state contradicts
+        # the notice. The contradiction is the point.
+        bx, by = sc._barrow_pos
+        if abs(game.player.x - bx) < 36 and abs(game.player.y - by) < 36:
+            game.show_notice(
+                "All of these rusted tools have been recently cleaned.",
+                duration=4.0,
+            )
+            if not game.save.flag("barrow_inspected"):
+                game.save.set_flag("barrow_inspected", True)
+                _evidence(game, "barrow_tools", "Some old tools.")
             return
         # The payphone -- it won't dial out. The line is never dead,
         # though; something is always already on it.

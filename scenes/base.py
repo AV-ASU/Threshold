@@ -814,7 +814,6 @@ DISPLAY_NAMES = {
     "basement":             "the Cellar",
     "our_house_area":       "the Yard",
     "kid_house":            "the Kid's House",
-    "village":              "Town Crossroads",
     "shop":                 "General Store",
     "old_man_house":        "the Church",
     "fisherman_cottage":    "Sheriff's Office",

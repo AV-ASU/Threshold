@@ -86,7 +86,7 @@ def main():
           "new game boots into a playable state")
 
     # --- 1. Descend the well (needs the rope) ---
-    g.load_scene_now("village")
+    g.load_scene_now("brimley")
     ready(g)
     g.player.inventory.add("rope", 1)
     g.player.x, g.player.y = 16 * TILE + 16, 11 * TILE + 16   # the well tile
