@@ -73,35 +73,6 @@ investigation.
 | **Mara Blaine** | The quarry — **already turned** | A willing member of the congregation now. Finding her proves there was never anyone to save. She is in the **hive**. |
 | **Cult / curse-priest / Watchers / the King in Yellow** | The corruption | Operate in the cornfields, the abandoned farmhouse, and the depths/hive below. |
 
-### Side thread — the Schoolteacher (unnamed; "Miss")
-
-A small parallel arc that runs alongside Mara's, told entirely in
-artefacts. The Brimley schoolteacher — referred to in dialogue only as
-**"Miss"** — vanished before the player arrived. The schoolhouse is
-abandoned; one of her last students, the **Tisdale boy**, wanders the
-mistlands in denial (*"School's still on. The teacher doesn't blink."*).
-Three artefacts tell her story, in this rough chronological order:
-
-1. **Page 1** — `diary_page_1`, hidden under a stone on the
-   **forest-path** road. Her early voice: the children stopped coming,
-   the Clerk knocked asking her to "close the school for the season,"
-   she's still reading aloud with the Tisdale boy — *"the reading is
-   what they hate."*
-2. **Page 2** — `diary_page_2`, behind the **boarded NE alcove of the
-   schoolhouse**. Her last hidden page: she read the Playscript through,
-   she's boarding the cupboard, and *"He learns us from a page."* She
-   went the way the corn lady went. Reading this flips a flag that
-   gates one extra dim line from the Tisdale boy.
-3. **Class roster** — the schoolhouse desk. Twelve names; eleven
-   crossed with a single straight line; one name (TISDALE) unmarked;
-   the twelfth line is started, halfway, and stopped.
-
-These are **flavor evidence** — they fire `_evidence(...)` for the
-notebook UI but are **NOT** in `CANONICAL_EVIDENCE`, so they don't
-move the King-gate. The thread exists to ground the schoolhouse, give
-the Tisdale boy a referent, and lay one more brick in the Scriptorium's
-literal meaning (*"He learns us from a page"*).
-
 ---
 
 ## 3. The Threat Model

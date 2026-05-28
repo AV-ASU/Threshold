@@ -77,13 +77,12 @@ def _playscript(s):
     pygame.draw.circle(s, _BRUISE_HI, (6, 7), 2)
 
 
-def _diary_page(s):
-    pygame.draw.polygon(s, _PAPER,
-                        [(3, 3), (12, 3), (13, 8), (12, 14), (4, 14), (3, 8)])
-    pygame.draw.polygon(s, _PAPER_DARK,
-                        [(3, 3), (12, 3), (13, 8), (12, 14), (4, 14), (3, 8)], 1)
-    pygame.draw.line(s, _INK, (5, 7), (11, 7), 1)
-    pygame.draw.line(s, _INK, (5, 10), (10, 10), 1)
+def _letter(s):
+    # Mara's unsent letter: a folded sheet with an envelope crease.
+    pygame.draw.rect(s, _PAPER, (3, 4, 11, 9))
+    pygame.draw.rect(s, _PAPER_DARK, (3, 4, 11, 9), 1)
+    pygame.draw.line(s, _PAPER_DARK, (3, 4), (8, 9), 1)
+    pygame.draw.line(s, _PAPER_DARK, (14, 4), (8, 9), 1)
 
 
 def _unknown(s):
@@ -110,9 +109,8 @@ _DISPATCH = {
     "sigil_rubbing":   _sigil_rubbing,
     "robe":            _robe,
     "mom_notebook":    _mom_notebook,
+    "unsent_letter":   _letter,
     "playscript":             _playscript,
-    "diary_page_1":    _diary_page,
-    "diary_page_2":    _diary_page,
 }
 
 

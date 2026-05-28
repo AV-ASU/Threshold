@@ -52,10 +52,9 @@ CREEPY_SCENES = {"basement", "void_boss",
 # `crate_broken_<scene>_<tx>_<ty>` flag so a broken crate stays
 # broken across re-entries.
 CRATE_LOOT = {
-    # Country lane -- a crate against the inner corn wall, the kind
-    # of stash a runner leaves for a pickup that never came. Holds a
-    # torn page in a stranger's hand.
-    ("country_lane",   8, 4):  "diary_page_2",
+    # No crates currently drop loot. The country_lane crate at (8, 4)
+    # still exists in geometry; breaking it now yields the "empty"
+    # message, which reads fine as a runner's abandoned stash.
 }
 
 # Outdoor decay tier. Each scene gets a small list of "this is

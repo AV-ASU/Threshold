@@ -53,17 +53,6 @@ ITEM_DEFS = {
                        "atk": 0},
     "rope":          {"name": "Coil of Rope",  "kind": "key",
                        "desc": "A coil of rope."},
-    "diary_page_1":  {"name": "Teacher's Page",  "kind": "lore",
-                       "desc": "\"Three weeks since the last child came to "
-                               "my room. The Tisdale boy still does. His "
-                               "mother thanks me for keeping him -- the way "
-                               "you thank someone for holding a door you "
-                               "wish would close.\""},
-    "diary_page_2":  {"name": "Teacher's Page",  "kind": "lore",
-                       "desc": "\"I read the playscript through to the end. "
-                               "Stupid. Anything written, they copy down "
-                               "there and lift it up to Him. He learns us "
-                               "from a page.\""},
 }
 
 

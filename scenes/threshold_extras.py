@@ -19,34 +19,6 @@ def _backwoods_note_pickup(game):
         "A small stash.")
 
 
-def _forest_cache_pickup(game):
-    game.save.set_flag("forest_cache_taken", True)
-    _evidence(game, "forest_cache", [
-        "Tucked under a stone off the road: a torn page in a teacher's "
-        "hand, careful loops gone uneven.",
-        "\"Three weeks since the last child came to my room. The Tisdale "
-        "boy still does. His mother thanks me for keeping him -- the way "
-        "you thank someone for holding a door you wish would close.\"",
-        "\"The Clerk knocked yesterday. Asked if I'd thought about closing "
-        "the school for the season. I haven't told anyone what I teach the "
-        "boy now. We read aloud. The reading is what they hate.\"",
-    ])
-
-
-def _school_cache_pickup(game):
-    game.save.set_flag("school_cache_taken", True)
-    _evidence(game, "school_cache", [
-        "Behind the boarded panel, in her own handwriting -- the last "
-        "page she hid before she went.",
-        "\"Last night I read the playscript through to the end. Stupid. "
-        "I know it now and I cannot un-know it.\"",
-        "\"I am boarding the cupboard. Anything written they will copy "
-        "below and lift it up to Him -- He learns us from a page.\"",
-        "\"If the boy still comes, tell him I went the way the corn lady "
-        "went. Don't tell him from where.\"",
-    ])
-
-
 def build_schoolhouse():
     """One-room rural schoolhouse on the edge of town. Closed for
     months. A small desk at the front of the room. Hide spots: in
@@ -97,51 +69,11 @@ def build_schoolhouse():
         sc.add_decoration(Decoration(50 + i * 60,
                                      80 + (i % 3) * 50, "mote"))
 
-    # The teacher's desk has the kid's report-card -- a generic
-    # "photo" decoration the player can interact with, generating
-    # an evidence beat once.
-    desk_x = 3 * TILE + 16
-    desk_y = 3 * TILE + 16
-    sc._teacher_desk = (desk_x, desk_y)
-
     sc.hide_spots = [
-        (3 * TILE + 16, 3 * TILE + 24, "under"),     # teacher's desk
+        (3 * TILE + 16, 3 * TILE + 24, "under"),     # under a desk
         (11 * TILE + 16, 8 * TILE + 24, "behind"),   # storage shelf
         (1 * TILE + 28, 5 * TILE + 16, "behind"),    # against the west wall
     ]
-
-    # Boarded NE alcove: the teacher boarded over a corner cubby
-    # before she vanished. (12,1) is the boarded panel; (12,2) is
-    # newly walled so the alcove is a true 1-tile pocket. Behind it,
-    # a torn diary page in her handwriting.
-    sc.objects[1][12] = "q"
-    sc.objects[2][12] = "W"
-
-    def _schoolhouse_on_enter(game, scene):
-        if not game.save.flag("school_cache_taken"):
-            scene.add_item(
-                12 * TILE + 16, 1 * TILE + 16, "diary_page_2",
-                on_pickup=_school_cache_pickup,
-            )
-    sc.on_enter_fn = _schoolhouse_on_enter
-
-    def _schoolhouse_interact(game):
-        if (abs(game.player.x - desk_x) < 36
-                and abs(game.player.y - desk_y) < 36):
-            if not game.save.flag("school_desk_searched"):
-                game.save.set_flag("school_desk_searched", True)
-                _evidence(game, "school_desk", [
-                    "The class roster, neatly kept until it wasn't. "
-                    "Twelve names, and beside eleven of them she's drawn "
-                    "a single straight line.",
-                    "Only one name is unmarked. TISDALE.",
-                    "She'd started the twelfth line, halfway through, "
-                    "and stopped.",
-                ])
-            else:
-                game.show_notice(
-                    "Eleven lines. One name left, unmarked.")
-    sc.on_interact_fn = _schoolhouse_interact
 
     return sc
 

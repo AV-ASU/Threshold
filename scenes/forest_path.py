@@ -122,12 +122,6 @@ def build_forest_path():
         (3 * TILE + 16, 11 * TILE + 16, "behind"))
 
     def _forest_on_enter(game, scene):
-        from .threshold_extras import _forest_cache_pickup
-        if not game.save.flag("forest_cache_taken"):
-            scene.add_item(
-                25 * TILE + 16, 1 * TILE + 16, "diary_page_1",
-                on_pickup=_forest_cache_pickup,
-            )
         # First-visit: arm the wind-dies beat. The music silence
         # is restored automatically; we just track the schedule.
         scene._fp_silence_state = "armed" if not game.save.flag(
