@@ -1114,5 +1114,15 @@ def build_brimley():
             ]
             game.dialog.show(line, speaker="", voice="blip_soft",
                              portrait="narrator")
+    # [E] cues for the interactions resolved in _brimley_interact -- the
+    # car (escape), the well (the only way down), the woodshed door, the
+    # tool barrow and the payphone all had NO prompt before, so the player
+    # had to guess where to press E. Radii match the handler's checks.
+    sc.add_interactable(sc._car_pos[0], sc._car_pos[1], 40)
+    sc.add_interactable(sc._well_pos[0], sc._well_pos[1], 36)
+    sc.add_interactable(sc._shed_door_pos[0], sc._shed_door_pos[1], 40)
+    sc.add_interactable(sc._barrow_pos[0], sc._barrow_pos[1], 36)
+    sc.add_interactable(sc._payphone_pos[0], sc._payphone_pos[1], 40)
+
     sc.on_interact_fn = _brimley_interact
     return sc

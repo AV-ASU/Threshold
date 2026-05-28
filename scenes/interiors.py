@@ -283,6 +283,7 @@ def build_barn():
     hatch_y = 6 * TILE + 16
     sc.add_decoration(Decoration(hatch_x, hatch_y, "cellar_hatch"))
     sc._barn_hatch_pos = (hatch_x, hatch_y)
+    sc.add_interactable(hatch_x, hatch_y, 36)   # [E] cue for the sealed hatch
     # Mara's journal, stashed behind the workbench -- evidence #2.
     sc._journal_pos = (3 * TILE + 16, 5 * TILE + 16)
     # [E] cue so the player knows there's something behind the workbench.
@@ -294,7 +295,9 @@ def build_barn():
     sc.hide_spots = [
         (4 * TILE + 16, 2 * TILE + 16, "behind"),   # beside W shelf
         (7 * TILE + 16, 2 * TILE + 16, "behind"),   # beside E shelf
-        (4 * TILE + 16, 5 * TILE + 16, "under"),    # beside workbench
+        (2 * TILE + 16, 6 * TILE + 16, "behind"),   # behind the SW woodpile
+                                                    # (was on the bloodstain
+                                                    # + the journal prompt)
     ]
 
     def _barn_interact(game):

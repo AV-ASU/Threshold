@@ -121,7 +121,8 @@ def build_curse_grove():
     sc.add_npc(priest)
     # Hide spots so a player who stumbles in can retreat in cover.
     sc.hide_spots = [
-        (3 * TILE + 16, 5 * TILE + 16, "behind"),    # behind west tree
+        (2 * TILE + 16, 6 * TILE + 16, "behind"),    # behind west tree
+                                                     # (was on the bloodstain)
         (11 * TILE + 16, 5 * TILE + 16, "behind"),   # behind east tree
         (1 * TILE + 16, 5 * TILE + 16, "behind"),    # by the wall
     ]

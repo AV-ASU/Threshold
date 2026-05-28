@@ -326,6 +326,7 @@ def build_haunted_house():
     hatch_y = 5 * TILE + 16
     sc.add_decoration(Decoration(hatch_x, hatch_y, "cellar_hatch"))
     sc._farmhouse_hatch = (hatch_x, hatch_y)
+    sc.add_interactable(hatch_x, hatch_y, 36)   # [E] cue for the sealed hatch
 
     sc.hide_spots = [
         (2 * TILE + 16, 4 * TILE + 24, "behind"),

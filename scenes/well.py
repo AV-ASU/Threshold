@@ -203,12 +203,13 @@ def build_works_sorting():
     sc.set_spawn("from_maras_room", 13, 1)   # back down from Mara's cell
 
     # The belongings of the vanished, sorted into piles. Closed cases
-    # (chests, never opened by the player) + the stains of the work.
+    # (chests, never opened by the player -- interactive=False so they
+    # don't show a dead [E] prompt) + the stains of the work.
     for tx, ty in [(6, 3), (12, 7)]:
         sc.add_decoration(Decoration(tx * TILE + 16, ty * TILE - 4,
-                                     "chest", open=False))
+                                     "chest", open=False, interactive=False))
     sc.add_decoration(Decoration(9 * TILE + 16, 3 * TILE - 4, "chest",
-                                 open=False))
+                                 open=False, interactive=False))
     sc.add_decoration(Decoration(4 * TILE + 16, 5 * TILE + 16, "bloodstain"))
     sc.add_decoration(Decoration(10 * TILE + 16, 8 * TILE + 16, "phantom_mark"))
     # A "wrong" mount oversees the catalogued belongings of the
@@ -265,6 +266,7 @@ def build_maras_room():
     sc.set_spawn("from_works_sorting", 4, 5)
 
     sc._cot_pos = (2 * TILE + 16, 2 * TILE + 16)
+    sc.add_interactable(sc._cot_pos[0], sc._cot_pos[1], 46)  # [E] cue: robe + letter (evidence #1)
     sc.add_furniture("bed", [(2, 2), (2, 3)], w=34, h=52)
     sc.add_decoration(Decoration(4 * TILE + 16, 1 * TILE + 22, "candle"))
     sc.add_decoration(Decoration(6 * TILE + 16, 2 * TILE + 16, "phantom_mark"))
@@ -332,6 +334,7 @@ def build_works_scriptorium():
     sc.add_decoration(Decoration(10 * TILE + 26, 1 * TILE + 6, "cobweb",
                                  ang=math.pi / 2))
     sc._desk_pos = (3 * TILE + 16, 2 * TILE + 16)
+    sc.add_interactable(sc._desk_pos[0], sc._desk_pos[1], 40)  # [E] cue: the Playscript
     sc.hide_spots = [
         (5 * TILE + 16, 5 * TILE + 16, "behind"),
         (9 * TILE + 16, 5 * TILE + 16, "behind"),
@@ -484,6 +487,7 @@ def build_works_deepstair():
     gate_x = 5 * TILE + 16
     gate_y = 2 * TILE + 16
     sc._gate_pos = (gate_x, gate_y)
+    sc.add_interactable(gate_x, gate_y, 40)   # [E] cue: the Deep Stair (Mask + Play gate)
     sc.add_decoration(Decoration(3 * TILE + 16, 2 * TILE + 6, "candle"))
     sc.add_decoration(Decoration(7 * TILE + 16, 5 * TILE + 16, "bloodstain"))
     # Cobweb grime in the high corners by the playscript-gate.

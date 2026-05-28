@@ -3424,10 +3424,13 @@ class Game:
                         and self.scene.objects[ty][tx] in ("*", "q", "K")):
                     target = (tx * TILE + 16, ty * TILE + 16)
                     break
-        # 3. A chest within reach.
+        # 3. A chest within reach -- but only if it's actually openable.
+        # Decorative chests (e.g. the Sorting Hall's sealed cases) pass
+        # interactive=False so they don't advertise a dead [E].
         if target is None:
             for d in self.scene.decorations:
                 if (getattr(d, "kind", "") == "chest"
+                        and d.kwargs.get("interactive", True)
                         and math.hypot(d.x - px, d.y - py) < 40):
                     target = (d.x, d.y - 8)
                     break

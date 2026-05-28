@@ -90,8 +90,8 @@ def old_man_dialogue(game, npc):
             "the door. Then they go quiet, drift out to the corn, and they "
             "don't come back.",
             "A young woman came through last month. Bright thing, full of "
-            "questions -- like you. She kneels out there now, with the "
-            "rest. You looking for her?",
+            "questions -- like you. She's one of them now, whatever they "
+            "are. You looking for her?",
         ], speaker="Preacher", voice="blip_low", portrait="preacher")
     elif count == 2:
         # The hubris that gets him killed. After this he's marked: the
@@ -255,7 +255,7 @@ def fisherman_dialogue(game, npc):
         # happen before. He's seen it many times.
         game.dialog.show([
             "Saw your car out by the lodge.",
-            "Won't start. Won't ever, while you're holding the keys.",
+            "Won't start. Won't ever. Nothing with an engine leaves Brimley.",
             "[c=dim]I didn't touch it. None of us did. It's the town.[/c]",
         ], speaker="Sheriff", voice="blip_gruff", portrait="guard")
     elif n == 3:
