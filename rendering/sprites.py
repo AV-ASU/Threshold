@@ -1262,8 +1262,13 @@ def draw_king_death(surf, t):
     ramp = max(0.0, min(1.0, t / 0.4))
     kindle = eo((t - 0.1) / 1.3)                    # the void ignites into the furnace
     behold = max(0.0, min(1.0, (t - 1.4) / 1.5))    # He commands the frame + reaches
-    take = eo((t - 3.0) / 1.2)                      # He surges forward to take you
-    engulf = eo((t - 3.7) / 0.85)                   # the furnace floods over you
+    take = eo((t - 3.0) / 1.4)                      # He surges forward to take you
+    # The mask OPENING, choreographed in two phases: the cracks spread + LINGER
+    # (anticipation), then the shards PULL APART and the pit blooms (release).
+    op = max(0.0, min(1.0, (t - 3.05) / 1.45))      # raw opening progress
+    crack_form = op ** 2.4                           # slow to spread, then quickens
+    pit_open = (max(0.0, (op - 0.34) / 0.66)) ** 1.25   # pit waits, then blooms open
+    engulf = eo((t - 4.05) / 0.75)                  # the depth swallows you
     flick = 0.85 + 0.12 * math.sin(t * 16.0) + 0.05 * math.sin(t * 37.0)
     fr = 50 + kindle * 140 + behold * 48 + take * 150    # His mask radius: looms + surges
     reach = 0.6 + behold * 0.5 + take * 1.0
@@ -1308,12 +1313,12 @@ def draw_king_death(surf, t):
                int(90 * (0.4 + 0.6 * take)), add=False)
 
     # 5. His shattered pallid MASK, commanding the centre, the gaze fixed on you.
-    #    It holds whole through the behold, then CRACKS WIDE OPEN as He takes you
-    #    -- the shards flung aside like doors onto the pit beyond.
-    crack = 0.16 + 0.74 * take
+    #    It holds whole through the behold; then the cracks SPREAD and linger,
+    #    and finally the shards PULL APART -- flung aside like doors on the pit.
+    crack = 0.06 + 0.86 * crack_form
     _yk_shatter_mask(scene, cx, cy, int(fr), min(1.0, 0.5 + 0.5 * kindle),
                      "wail", crack, t, int(fr), aim=math.pi / 2, arms=False)
-    if take <= 0.05:
+    if pit_open <= 0.02:
         for sgn in (-1, 1):                          # the gaze, fixed (until it opens)
             ex = cx + sgn * int(fr * 0.42)
             ey = cy - int(fr * 0.12)
@@ -1322,11 +1327,11 @@ def draw_king_death(surf, t):
                        int(70 * (0.4 + 0.6 * behold)), add=False)
             _yk_radial(scene, ex, ey, int(gz), _YK_HOT, int(155 * (0.4 + 0.6 * behold)))
 
-    # 5b. THE PIT. As the mask opens, a shaft of COLD FIRE yawns at its heart and
-    #     you are dragged down it -- the arms hauling, the camera diving in.
-    if take > 0.02:
-        pit_r = fr * 0.25 + take * min(w, h) * 0.46   # capped so its cold-fire
-        _cold_fire_pit(scene, cx, cy, pit_r, t)        # walls stay in frame as you dive
+    # 5b. THE PIT. Once the shards pull apart, a shaft of COLD FIRE yawns open at
+    #     the mask's heart -- it blooms wider as you are dragged down it.
+    if pit_open > 0.01:
+        pit_r = fr * 0.12 + pit_open * min(w, h) * 0.5   # capped so its cold-fire
+        _cold_fire_pit(scene, cx, cy, pit_r, t)           # walls stay in frame as you dive
 
     # 6. Embers of the furnace streaming up.
     for i in range(40):
@@ -1344,9 +1349,9 @@ def draw_king_death(surf, t):
     scene.blit(vig, (0, 0))
 
     # Compose: He ADVANCES through the behold, then the camera DIVES into the
-    # opening pit as you are dragged down.
+    # pit only once it pulls open (so the crack-linger holds before the plunge).
     surf.fill((0, 0, 0))
-    z = 1.0 + 0.12 * behold + 1.05 * take
+    z = 1.0 + 0.12 * behold + 1.05 * pit_open
     if z > 1.001:
         zw, zh = int(w * z), int(h * z)
         surf.blit(pygame.transform.smoothscale(scene, (zw, zh)),
@@ -1373,7 +1378,7 @@ def draw_king_death(surf, t):
     # opens and takes you, a cold rot always in the shadows.
     warm = (214, 184, 150)
     cold = (150, 184, 178)
-    tint = tuple(int(warm[k] + (cold[k] - warm[k]) * take) for k in range(3))
+    tint = tuple(int(warm[k] + (cold[k] - warm[k]) * pit_open) for k in range(3))
     _carcosa_post(surf, t, tint=tint, cold=(3, 8, 13))
 
 
