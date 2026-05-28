@@ -281,49 +281,38 @@ Only display names and fiction change.
   **CAPTURED card** (`kind="cultist"`, ~2.8s) and the **Carcosa** furnace
   cutscene (`kind="king"`, ~3.5s); both end the run and return to title.
 
-### Reworks the new fiction forces
+### Load-bearing invariants (do not regress)
+
+The reworks the new fiction forced are all shipped. What must stay true:
+
 - **One mouth down.** The well + rope is the *only* surface→underground
-  route. Close the `well_passage` → `barn` hatch (and any other
-  shortcut) so there are no secret paths down.
-- The `polaroid` (Case Photo) item is **purged** — it was a placeholder
-  cellar pickup, not real evidence. The Kid's keepsake is now what he
-  *tells* you (§2), no inventory item. The way *deeper* (the Works → the
-  Depths) opens on the **`playscript` + the Pallid Mask *together*** at the
-  Deep Stair (§6, the Fork), and nothing is consumed to land at the well.
-- `dark` room bodies (`ellie / father / mother`, old family) — **remove
-  them** and their evidence beats. Cleaned up, not recast.
-- The Deep Stair opens on the **`playscript` + the Pallid Mask together**
-  (not the Play alone — §6, the Fork): the `playscript` is taken in the
-  **Scriptorium** (`works_scriptorium`), the Mask in the **Sign Chamber**.
-  Feeding both to the stair is the Seal path; keeping the Mask is Spread,
-  so the Spread escape gates on holding the **Mask** (align the item key —
-  it supersedes the old `sigil_rubbing` gate in §6). The `mist_house`
-  surface chest is **emptied** (no surface source → no soft-lock), so the
-  `black_figure` shadows + wind-cut stay dormant; the now-unreachable Clerk
-  turn-in and alter/void offering chain are dead code (follow-up cleanup).
-- `threshold` seal trigger item (`kid_drawing`) — re-fictionalize.
-- **Innkeeper → Lodge Clerk** across dialogue + `DISPLAY_NAMES` (done).
-  `son_room` is now **"the Clerk's Room"** (his pressed cult robe is the
-  only tell); Mara's room is the new underground `maras_room` cell.
-- **Item renames** (display only): `mom_notebook` → Mara's Journal, etc.
-  (The `polaroid` item is removed entirely, not renamed.)
-- **README rewrite:** PI premise, sealed town, drop "car broke down."
+  route. The barn→well_passage hatch is nailed shut from below; no
+  secret paths.
+- **Deep Stair gate.** Both the **Playscript** (taken in the Scriptorium)
+  and the **Pallid Mask** (taken in the Sign Chamber) are required to
+  open the stair to the Depths. Spending both is Seal; keeping the Mask
+  is Spread; tearing the Mask down at the Sign Chamber altar is the
+  Trap (§6).
+- **The car answers only to the Sign.** No keys, no tab, no fetch chain
+  — Brimley itself is the lock and only a shard of Him opens it.
+- **Innkeeper → Lodge Clerk** throughout. `son_room` is the Clerk's
+  Room (his pressed cult robe is the only tell). Mara's room is the
+  underground `maras_room` cell off the Sorting Hall.
+- **Item keys are load-bearing** (saves and game logic depend on them):
+  `mom_notebook`, `sigil_rubbing`, `playscript`, `cross`, `robe`,
+  `unsent_letter`, `flashlight`, `rope`, `lumber_axe`, `woodshed_key`.
+  Display names and fiction may change; keys may not.
 
 ---
 
 ## 8. Still loose (design TODO)
 - **The liminal-composition pass** (§10): per-scene level design —
   composed emptiness, long sightlines, uncanny repetition.
-- Each NPC's dialogue arc — the principals (Clerk, Sheriff Vane, Preacher,
-  Store-Owner, the Kid) are written; the bit-part villagers are thinner.
-
-**Resolved (kept here as a record):**
-- ~~The hive layout~~ — built (§5, §9; the `dark` scene + Mara's
-  recognition).
-- ~~Mara's journal text~~ — written (her last entries, `interiors.py` barn
-  pickup), and the page-3 flashback stills are authored.
-- ~~The death-card word~~ — **CAPTURED** (shipped; see §6/§7).
-- ~~The client's given name~~ — **Walter Blaine** (§1).
+- **The curse-priest is silent in the fiction.** A stalker NPC roams
+  `CURSER_SCENES` and lays a permanent curse that spawns Watchers; no
+  NPC dialogue or evidence beat references him. A player can be cursed
+  without ever understanding what's happening. System in search of a
+  story.
 
 ---
 
