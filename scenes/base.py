@@ -900,15 +900,20 @@ _WALL_FOOT = (8, 7, 11)
 
 
 def _is_wall(scene, tx, ty):
+    if scene.wrap_x and 0 <= ty < scene.h:
+        return scene.objects[ty][tx % scene.w] in _WALL_CHARS
     if 0 <= ty < scene.h and 0 <= tx < scene.w:
         return scene.objects[ty][tx] in _WALL_CHARS
     return True   # off-map reads as wall so the mass closes at edges
 
 
 def _draw_wall_mass(surf, scene, cam_x, cam_y, x0, y0, x1, y1):
+    W = scene.w
+    wrap = scene.wrap_x
     for ty in range(y0, y1):
         for tx in range(x0, x1):
-            if scene.objects[ty][tx] not in _WALL_CHARS:
+            obj = scene.objects[ty][tx % W] if wrap else scene.objects[ty][tx]
+            if obj not in _WALL_CHARS:
                 continue
             rx = tx * TILE - cam_x
             ry = ty * TILE - cam_y
@@ -1300,14 +1305,22 @@ def _draw_bank_fringe(surf, scene, tx, ty, rx, ry):
 def draw_scene_terrain(surf, scene, cam_x, cam_y, x0, y0, x1, y1):
     """Floor -> path fringe -> wall-cast shadows -> continuous wall mass
     -> non-wall objects, for a tile window. Shared by Scene.draw (camera
-    window) and the offline full-map renderer."""
+    window) and the offline full-map renderer. When scene.wrap_x is
+    True, tile lookups wrap mod self.w so x0/x1 may extend past the
+    map bounds and the render stays seamless across the wrap line."""
+    W = scene.w
+    wrap = scene.wrap_x
+    def _lookup_floor(ty, tx):
+        return scene.floor[ty][tx % W] if wrap else scene.floor[ty][tx]
+    def _lookup_obj(ty, tx):
+        return scene.objects[ty][tx % W] if wrap else scene.objects[ty][tx]
     for ty in range(y0, y1):
         for tx in range(x0, x1):
-            draw_floor(surf, scene.floor[ty][tx],
+            draw_floor(surf, _lookup_floor(ty, tx),
                        tx * TILE - cam_x, ty * TILE - cam_y, tx, ty)
     for ty in range(y0, y1):
         for tx in range(x0, x1):
-            ch = scene.floor[ty][tx]
+            ch = _lookup_floor(ty, tx)
             if ch == "d":
                 _draw_path_fringe(surf, scene, tx, ty,
                                   tx * TILE - cam_x, ty * TILE - cam_y)
@@ -1317,14 +1330,14 @@ def draw_scene_terrain(surf, scene, cam_x, cam_y, x0, y0, x1, y1):
     strip = _wall_shadow_strip()
     for ty in range(y0, y1):
         for tx in range(x0, x1):
-            ch = scene.objects[ty][tx]
+            ch = _lookup_obj(ty, tx)
             if ch in _SHADOW_CASTERS or ch in _DOOR_CHARS:
                 surf.blit(strip, (tx * TILE - cam_x,
                                   (ty + 1) * TILE - cam_y))
     _draw_wall_mass(surf, scene, cam_x, cam_y, x0, y0, x1, y1)
     for ty in range(y0, y1):
         for tx in range(x0, x1):
-            ch = scene.objects[ty][tx]
+            ch = _lookup_obj(ty, tx)
             if ch == "." or ch in _WALL_CHARS:
                 continue
             rx = tx * TILE - cam_x
@@ -1343,9 +1356,11 @@ def draw_scene_doors(surf, scene, cam_x, cam_y, x0, y0, x1, y1):
     out of its tile into the room. Called after terrain + decorations
     and before entities, so a leaf sits over the floor but under anyone
     walking through the doorway."""
+    W = scene.w
+    wrap = scene.wrap_x
     for ty in range(y0, y1):
         for tx in range(x0, x1):
-            ch = scene.objects[ty][tx]
+            ch = scene.objects[ty][tx % W] if wrap else scene.objects[ty][tx]
             if ch not in _DOOR_CHARS:
                 continue
             seed = (tx * 73856093) ^ (ty * 19349663)
@@ -1446,6 +1461,12 @@ class Scene:
             while len(self.objects) < self.h:
                 self.objects.append(["."] * self.w)
         self.music = music
+        # If True, the world is toroidal on the x axis: tile lookups
+        # wrap mod self.w, the camera doesn't clamp at the east/west
+        # edges, and the player's x wraps as well. Used to make a road
+        # that cuts through the scene loop back on itself with no
+        # visible transition (the fold). Off by default.
+        self.wrap_x = False
         self.exits = {}
         self.spawns = {"default": (self.w * 16, self.h * 16)}
         self.npcs = []
@@ -1476,12 +1497,16 @@ class Scene:
 
     def char_floor_at(self, x_px, y_px):
         tx = int(x_px // TILE); ty = int(y_px // TILE)
+        if self.wrap_x and 0 <= ty < self.h:
+            return self.floor[ty][tx % self.w]
         if 0 <= ty < self.h and 0 <= tx < self.w:
             return self.floor[ty][tx]
         return "#"
 
     def char_object_at(self, x_px, y_px):
         tx = int(x_px // TILE); ty = int(y_px // TILE)
+        if self.wrap_x and 0 <= ty < self.h:
+            return self.objects[ty][tx % self.w]
         if 0 <= ty < self.h and 0 <= tx < self.w:
             return self.objects[ty][tx]
         return "#"
@@ -1568,13 +1593,27 @@ class Scene:
             self.on_update_fn(game, self, dt)
 
     def draw(self, surf, cam_x, cam_y):
-        x0 = max(0, int(cam_x // TILE) - 1)
         y0 = max(0, int(cam_y // TILE) - 1)
-        x1 = min(self.w, int((cam_x + SCREEN_W) // TILE) + 2)
         y1 = min(self.h, int((cam_y + SCREEN_H) // TILE) + 2)
+        if self.wrap_x:
+            # No clamp -- the renderer wraps tile lookups mod self.w
+            # so it can render past either edge. Camera + player x can
+            # be anywhere; the floor draw stays seamless.
+            x0 = int(cam_x // TILE) - 1
+            x1 = int((cam_x + SCREEN_W) // TILE) + 2
+        else:
+            x0 = max(0, int(cam_x // TILE) - 1)
+            x1 = min(self.w, int((cam_x + SCREEN_W) // TILE) + 2)
         draw_scene_terrain(surf, self, cam_x, cam_y, x0, y0, x1, y1)
         for d in self.decorations:
             d.draw(surf, cam_x, cam_y)
+            if self.wrap_x:
+                # Also draw each decoration at the +/- world_w wrap
+                # positions so visible-tile decorations don't disappear
+                # when the camera crosses the wrap line.
+                world_w_px = self.w * TILE
+                d.draw(surf, cam_x - world_w_px, cam_y)
+                d.draw(surf, cam_x + world_w_px, cam_y)
         draw_scene_doors(surf, self, cam_x, cam_y, x0, y0, x1, y1)
 
 

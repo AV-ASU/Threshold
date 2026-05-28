@@ -421,6 +421,13 @@ def build_brimley():
     objects = ["".join(r) for r in objects_l]
 
     sc = Scene("brimley", floor_rows, objects, music="wind")
+    # Brimley's world is toroidal on the x axis -- the fold-road at
+    # row 24 has no west or east edge in fiction; the floor keeps
+    # rendering and the player's x wraps mod world_w. Walking west off
+    # the visible map seamlessly continues into the east side of the
+    # same map. No transition, no teleport, no fade -- the world is
+    # just looped under their feet.
+    sc.wrap_x = True
     # The east edge of Brimley is the road back to the Lodge via the
     # country lane. The other building doors wire into their interiors.
     sc.add_exit("4", "country_lane",      "from_brimley")
@@ -469,15 +476,11 @@ def build_brimley():
     # 'R' rather than 'a' to avoid collision with the river-crossing
     # 'a' exit (exit chars are scene-global, not per-tile).
     objects_list[0][96] = "R"
-    # West-edge fold-loop exit -- the dirt road at row 24 ends in a
-    # gap in the west tree wall. Stepping on it transitions back to
-    # brimley with the from_west_wrap spawn, which lands the player
-    # at the EAST end of the same row. The road folded under them.
-    objects_list[24][0] = "L"
-    # And the east end of the fold road -- a gap in the east tree
-    # wall so the road looks like it continues out. Just a visual
-    # decoration; there is no exit here. The player coming in from
-    # the west wrap arrives one tile inside this gap.
+    # The fold road -- gaps in both tree walls at row 24 so the road
+    # can be walked across the whole map east-to-west. There's no exit
+    # tile here; the wrap is handled in _brimley_on_update by direct
+    # teleport so the player never sees a scene-fade.
+    objects_list[24][0] = "."
     objects_list[24][99] = "."
     # Hand-authored loot crates. Both inside the playable area; the
     # west-bank crate sits near the cauldron path, the east-bank

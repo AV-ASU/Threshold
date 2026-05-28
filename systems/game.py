@@ -758,10 +758,11 @@ class Game:
         target_y = self.player.y - SCREEN_H // 2
         scene_w = self.scene.w * Scene.TILE
         scene_h = self.scene.h * Scene.TILE
-        target_x = max(0, min(scene_w - SCREEN_W, target_x))
+        if not self.scene.wrap_x:
+            target_x = max(0, min(scene_w - SCREEN_W, target_x))
+            if scene_w < SCREEN_W:
+                target_x = (scene_w - SCREEN_W) // 2
         target_y = max(0, min(scene_h - SCREEN_H, target_y))
-        if scene_w < SCREEN_W:
-            target_x = (scene_w - SCREEN_W) // 2
         if scene_h < SCREEN_H:
             target_y = (scene_h - SCREEN_H) // 2
         if snap:
@@ -828,6 +829,18 @@ class Game:
             moved = False
             if not blocked_x: self.player.x = new_x; moved = True
             if not blocked_y: self.player.y = new_y; moved = True
+            # Toroidal x-wrap. When the scene is wrap_x, the player's x
+            # cycles mod world width and the camera is shifted by the
+            # same amount so the world appears to keep extending under
+            # them -- no jump, no transition. The fold made felt.
+            if self.scene.wrap_x:
+                world_w = self.scene.w * Scene.TILE
+                if self.player.x < 0:
+                    self.player.x += world_w
+                    self.cam_x += world_w
+                elif self.player.x >= world_w:
+                    self.player.x -= world_w
+                    self.cam_x -= world_w
             if not moved:
                 self.player.bump_timer -= dt
                 if self.player.bump_timer <= 0:
