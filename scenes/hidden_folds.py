@@ -1,0 +1,285 @@
+"""Hidden fold scenes -- direction-sensitive warps off the main outdoor
+world. Accessed by walking a specific tile in a specific direction;
+from any other angle the tile reads as floor and the player walks
+over it without consequence.
+
+Each scene is small, atmospheric, and read-only -- the player witnesses
+something they're not supposed to see, can leave the way they came, and
+the scene exists to close a thread in the canon:
+
+  curse_grove     -- the curse-priest's workshop (closes bible §8 TODO)
+  lodge_arrival   -- Mara's arrival at the Lodge, witnessed (makes the
+                     "she chose this" beat concrete)
+  highway_walk    -- the road the missing locals walked out on, where it
+                     stretches and never ends
+
+All three are in SEAMLESS_WORLD_SCENES so crossing into them carries no
+fade -- the player walks into the fold without realising they crossed
+a boundary.
+"""
+import math
+import random
+from constants import TILE
+from entities.decoration import Decoration
+from entities.npc import NPC
+from .base import Scene
+
+
+# ----- #2: The Curse-Priest's Grove ---------------------------------
+
+def build_curse_grove():
+    """A small clearing the curse-priest uses for his work. Accessed
+    only by walking east-to-west through a specific cornstalk gap in
+    cornfield_maze. Fire pit at centre, effigy-dolls in a circle (one
+    per local being cursed), a polaroid board with faces nailed to it,
+    the priest at the fire. The player can leave the way they came --
+    walking east off the west bank returns to the maze."""
+    W, H = 14, 10
+    # Floor: charred dirt at the centre, grass at the edges.
+    floor_rows = []
+    for ty in range(H):
+        row = []
+        for tx in range(W):
+            if 4 <= tx <= 9 and 3 <= ty <= 6:
+                row.append("x")     # charred ground around the fire
+            else:
+                row.append("g")
+        floor_rows.append("".join(row))
+    # Objects: tree-wall perimeter, "G" return tile on the EAST face
+    # (the player walked west to get in; walking east back out returns
+    # to the maze). The west face stays solid trees -- there is no
+    # "further" from here.
+    objects_l = []
+    for ty in range(H):
+        row = []
+        for tx in range(W):
+            if ty == 0 or ty == H - 1 or tx == 0 or tx == W - 1:
+                row.append("T")
+            else:
+                row.append(".")
+        objects_l.append(row)
+    # Return exit on the east wall at row 5 (centre).
+    objects_l[5][W - 1] = "G"
+    objects = ["".join(r) for r in objects_l]
+    sc = Scene("curse_grove", floor_rows, objects, music="outside")
+    # Part of the continuous outside world -- transitions in and out
+    # are fade-less.
+    sc.wrap_x = False
+    sc.wrap_y = False
+    sc.add_exit("G", "cornfield_maze", "from_curse_grove")
+    sc.set_spawn("default", 1, 5)
+    # The player walked WEST onto the entry tile in the maze; they
+    # arrive on the west bank of the grove facing west, so they see
+    # the fire ahead of them.
+    sc.set_spawn("from_cornfield_maze", 1, 5)
+    # ---- Decorations ----
+    # Fire pit + cauldron at the centre.
+    sc.add_decoration(Decoration(7 * TILE + 16, 5 * TILE + 16, "brazier"))
+    sc.add_decoration(Decoration(7 * TILE + 16, 5 * TILE + 16, "cauldron"))
+    sc.add_decoration(Decoration(7 * TILE + 16, 4 * TILE + 8, "smoke"))
+    # Effigy circle around the fire -- six small chairs/effigies on
+    # the charred ring. Each represents a local the priest is working
+    # against. Visible cue: a yellow_sign painted at the centre.
+    sc.add_decoration(Decoration(7 * TILE + 16, 5 * TILE + 16,
+                                 "yellow_sign"))
+    effigy_ring = [
+        (5, 3), (9, 3), (5, 6), (9, 6), (4, 5), (10, 5),
+    ]
+    for tx, ty in effigy_ring:
+        sc.add_decoration(Decoration(tx * TILE + 16, ty * TILE + 16,
+                                     "small_chair"))
+    # Polaroid board on the north wall -- faces nailed up.
+    sc.add_decoration(Decoration(7 * TILE + 16, 1 * TILE + 22,
+                                 "polaroid_wall"))
+    # Two leafless trees flanking the fire -- focal dread.
+    sc.add_decoration(Decoration(3 * TILE + 16, 5 * TILE + 16,
+                                 "creepy_tree"))
+    sc.add_decoration(Decoration(11 * TILE + 16, 5 * TILE + 16,
+                                 "creepy_tree"))
+    # Hanging figures in the deep canopy at the corners.
+    sc.add_decoration(Decoration(2 * TILE + 16, 1 * TILE + 24,
+                                 "hanging_figure"))
+    sc.add_decoration(Decoration(11 * TILE + 16, 1 * TILE + 24,
+                                 "hanging_figure"))
+    # Bloodstains on the approach.
+    sc.add_decoration(Decoration(3 * TILE + 16, 5 * TILE + 16,
+                                 "bloodstain"))
+    sc.add_decoration(Decoration(6 * TILE + 16, 7 * TILE + 16,
+                                 "phantom_mark"))
+    # Watching-wounds in the surrounding tree-mass.
+    sc.add_decoration(Decoration(0 * TILE + 24, 4 * TILE + 16,
+                                 "watching_wound", size="small"))
+    sc.add_decoration(Decoration(13 * TILE + 8, 6 * TILE + 16,
+                                 "watching_wound", size="small"))
+    # ---- The curse-priest ----
+    # A robed figure stationed at the fire. The bible's stalker NPC
+    # finally has a home and a thing he's doing. He doesn't chase
+    # here -- inside the grove he is at work, not hunting; the chase
+    # behavior stays in CURSER_SCENES where the canon already places
+    # it.
+    priest = NPC(7 * TILE + 16, 6 * TILE + 16, "Curse-Priest",
+                 "robed", movement="idle", radius=24)
+    sc.add_npc(priest)
+    # Hide spots so a player who stumbles in can retreat in cover.
+    sc.hide_spots = [
+        (3 * TILE + 16, 5 * TILE + 16, "behind"),    # behind west tree
+        (11 * TILE + 16, 5 * TILE + 16, "behind"),   # behind east tree
+        (1 * TILE + 16, 5 * TILE + 16, "behind"),    # by the wall
+    ]
+    return sc
+
+
+# ----- #3: Mara's Arrival -------------------------------------------
+
+def build_lodge_arrival():
+    """The Lodge yard at a different moment -- Mara on the porch with
+    her suitcase, the Clerk welcoming her in. Both are frozen-feeling.
+    They do not see the PI. The PI can walk around them, see her face,
+    and leave the way they came. Makes 'she chose this' concrete."""
+    W, H = 18, 12
+    floor_rows = []
+    for ty in range(H):
+        row = []
+        for tx in range(W):
+            if 4 <= tx <= 13 and 4 <= ty <= 8:
+                row.append("d")     # the yard's worn dirt
+            else:
+                row.append("g")
+        floor_rows.append("".join(row))
+    objects_l = []
+    for ty in range(H):
+        row = []
+        for tx in range(W):
+            if ty == 0 or ty == H - 1 or tx == 0 or tx == W - 1:
+                row.append("T")
+            else:
+                row.append(".")
+        objects_l.append(row)
+    # Return tile on the SOUTH wall at col 9. The player walked north
+    # to get here; walking south returns them to our_house_area.
+    objects_l[H - 1][9] = "G"
+    # The Lodge's south face -- one row of wall + a door at col 9.
+    for tx in range(5, 14):
+        objects_l[3][tx] = "W"
+    objects_l[3][9] = "d"   # leave the doorway as floor so it reads
+                            # as the Lodge's open front door
+    objects = ["".join(r) for r in objects_l]
+    sc = Scene("lodge_arrival", floor_rows, objects, music="village")
+    sc.wrap_x = False
+    sc.wrap_y = False
+    sc.add_exit("G", "our_house_area", "from_lodge_arrival")
+    sc.set_spawn("default", 9, H - 2)
+    # The player walked north onto the entry tile in our_house_area;
+    # they arrive at the south edge of the yard facing the porch.
+    sc.set_spawn("from_our_house_area", 9, H - 2)
+    # ---- Decorations ----
+    # Lit windows flanking the Lodge door.
+    sc.add_decoration(Decoration(7 * TILE + 16, 3 * TILE + 16, "candle"))
+    sc.add_decoration(Decoration(11 * TILE + 16, 3 * TILE + 16, "candle"))
+    # Mara's suitcase on the porch step.
+    sc.add_decoration(Decoration(10 * TILE + 16, 4 * TILE + 16, "table"))
+    # A single lantern over the door.
+    sc.add_decoration(Decoration(9 * TILE + 16, 2 * TILE + 22, "lantern"))
+    # Grass tufts and crows in the yard.
+    rng = random.Random(411)
+    for _ in range(18):
+        gx = rng.randint(2, W - 3) * TILE + rng.randint(2, 28)
+        gy = rng.randint(8, H - 2) * TILE + rng.randint(2, 28)
+        sc.add_decoration(Decoration(gx, gy, "grass_tuft"))
+    sc.add_decoration(Decoration(2 * TILE + 16, 9 * TILE + 16, "crow"))
+    sc.add_decoration(Decoration(15 * TILE + 16, 9 * TILE + 16, "crow"))
+    # The "this happened" mark -- one phantom_mark on the path.
+    sc.add_decoration(Decoration(9 * TILE + 16, 7 * TILE + 16,
+                                 "phantom_mark"))
+    # ---- The figures ----
+    # Mara on the porch, with her back partly to the PI (facing the
+    # door, which is north). She does not see the PI.
+    mara = NPC(9 * TILE + 16, 4 * TILE + 22, "Mara",
+               "mom", movement="idle", radius=20)
+    mara.facing = (0, -1)
+    mara.lock_facing = True
+    sc.add_npc(mara)
+    # The Clerk just inside the doorway, leaning out. He smiles. He
+    # does not see the PI either.
+    clerk = NPC(9 * TILE + 16, 3 * TILE + 8, "the Clerk",
+                "old", movement="idle", radius=18)
+    clerk.facing = (0, 1)   # facing Mara, south
+    clerk.lock_facing = True
+    sc.add_npc(clerk)
+    return sc
+
+
+# ----- #4: The Highway That Doesn't End -----------------------------
+
+def build_highway_walk():
+    """A short stretch of empty highway that wraps east-west forever.
+    Two figures walk east, their backs to the PI -- the locals who
+    walked out to flag down help and never came back. The PI can
+    follow as far as they want; the figures stay ahead. Walking west
+    returns to country_lane. The road never reaches anywhere."""
+    W, H = 60, 9
+    # Floor: a paved road through the middle, grass shoulders.
+    floor_rows = []
+    for ty in range(H):
+        row = []
+        for tx in range(W):
+            if 3 <= ty <= 5:
+                row.append("d")    # dirt-road tiles -- the highway
+            else:
+                row.append("g")
+        floor_rows.append("".join(row))
+    objects_l = []
+    for ty in range(H):
+        row = []
+        for tx in range(W):
+            if ty == 0 or ty == H - 1 or tx == 0 or tx == W - 1:
+                row.append("T")
+            else:
+                row.append(".")
+        objects_l.append(row)
+    # Return tile on the WEST wall at row 4. The player walked east to
+    # arrive; walking west takes them back to country_lane.
+    objects_l[4][0] = "G"
+    objects = ["".join(r) for r in objects_l]
+    sc = Scene("highway_walk", floor_rows, objects, music="outside")
+    # The road wraps east-west. Walking east never gets anywhere.
+    sc.wrap_x = True
+    sc.wrap_y = False
+    sc.add_exit("G", "country_lane", "from_highway_walk")
+    sc.set_spawn("default", 1, 4)
+    sc.set_spawn("from_country_lane", 1, 4)
+    # ---- The two figures ----
+    # Both walk east on the road, ahead of the player. Their facing
+    # is east. Movement is a slow patrol on a long eastward stretch;
+    # because the world wraps, they appear to walk forever. The
+    # waypoint loops them along row 4 from col 30 -> 58 -> 30 (the
+    # wrap eats the seam). They do not stop, do not turn.
+    walker_a = NPC(30 * TILE + 16, 4 * TILE + 16, "A man",
+                   "old", movement="patrol",
+                   waypoints=[(30 * TILE + 16, 4 * TILE + 16),
+                              (58 * TILE + 16, 4 * TILE + 16)])
+    walker_a.facing = (1, 0)
+    walker_a.lock_facing = True
+    sc.add_npc(walker_a)
+    walker_b = NPC(35 * TILE + 16, 4 * TILE + 16, "A man",
+                   "old", movement="patrol",
+                   waypoints=[(35 * TILE + 16, 4 * TILE + 16),
+                              (58 * TILE + 16, 4 * TILE + 16)])
+    walker_b.facing = (1, 0)
+    walker_b.lock_facing = True
+    sc.add_npc(walker_b)
+    # Dressing -- some grass tufts, a couple of distant crows, a
+    # single dropped item on the shoulder.
+    rng = random.Random(719)
+    for _ in range(50):
+        gx = rng.randint(2, W - 3) * TILE + rng.randint(2, 28)
+        gy_choice = rng.choice([1, 2, 6, 7])
+        gy = gy_choice * TILE + rng.randint(2, 28)
+        sc.add_decoration(Decoration(gx, gy, "grass_tuft"))
+    sc.add_decoration(Decoration(10 * TILE + 16, 2 * TILE + 16, "crow"))
+    sc.add_decoration(Decoration(48 * TILE + 16, 7 * TILE + 16, "crow"))
+    # One dropped object -- a hat or a small bag -- on the shoulder
+    # where someone began the walk.
+    sc.add_decoration(Decoration(5 * TILE + 16, 5 * TILE + 16,
+                                 "small_chair"))
+    return sc

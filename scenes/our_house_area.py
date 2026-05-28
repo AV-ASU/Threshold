@@ -100,6 +100,17 @@ def build_our_house_area():
     # scene so the village isn't one step from the front yard.
     sc.add_exit("a", "country_lane", "from_our_house_area")
     sc.add_exit("e", "forest_path", "from_our_house_area")
+    # Direction-sensitive hidden fold: walking NORTH across the 'M'
+    # tile (one of the yard's path tiles south of the Lodge) opens
+    # onto Mara's arrival -- the night she walked up onto this porch
+    # with a suitcase. From any other angle it's just yard floor.
+    sc.add_exit("M", "lodge_arrival", "from_our_house_area",
+                direction="north")
+    # Carve the M tile into the yard at (5, 12), south of the Lodge
+    # back door so the player passes it walking up to the porch.
+    yard_obj = [list(r) for r in sc.objects]
+    yard_obj[12][5] = "M"
+    sc.objects = yard_obj
 
     sc.set_spawn("default", 12, 7)
     sc.set_spawn("from_house", 5, 6)             # one south of back door
@@ -108,6 +119,10 @@ def build_our_house_area():
     sc.set_spawn("from_forest", 22, 7)           # one west of east passage
     sc.set_spawn("from_river", 1, 7)             # west passage spawn alias
     sc.set_spawn("from_woodshed", 12, 7)         # legacy fallback
+    # Return spawn from the lodge_arrival fold -- lands the player
+    # one tile south of the directional M tile so they don't
+    # immediately re-trigger the fold.
+    sc.set_spawn("from_lodge_arrival", 5, 13)
 
     # The pickup truck -- a decoration the player can SEE but not
     # use. The player's car (the escape vehicle) is on the Brimley

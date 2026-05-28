@@ -24,6 +24,8 @@ from .interiors import (build_shop, build_kid_house, build_barn,
 from .villager_houses import (build_old_man_house, build_fisherman_cottage,
                               build_haunted_house)
 from .brimley import build_brimley
+from .hidden_folds import (build_curse_grove, build_lodge_arrival,
+                            build_highway_walk)
 from .threshold_extras import (build_schoolhouse, build_graveyard,
                                 build_country_lane,
                                 build_gravel_road_north,
@@ -104,6 +106,10 @@ SCENE_BUILDERS = {
     "river_crossing":     build_river_crossing,
     "bell_tower":         build_bell_tower,
     "cornfield_maze":     build_cornfield_maze,
+    # Hidden fold scenes (direction-sensitive warps off the main world).
+    "curse_grove":        build_curse_grove,
+    "lodge_arrival":      build_lodge_arrival,
+    "highway_walk":       build_highway_walk,
     # The populated town hub -- store, sheriff, school open onto it.
     "town":               build_town,
 }

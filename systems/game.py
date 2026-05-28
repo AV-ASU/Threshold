@@ -107,7 +107,12 @@ OUTDOOR_SCENES = {"our_house_area", "forest_path",
 # design jobs), but the EDGE BETWEEN them is continuous. Brimley is
 # in this set even though it isn't in OUTDOOR_SCENES (it has its own
 # vignette and doesn't want the outdoor one stacked on top).
-SEAMLESS_WORLD_SCENES = OUTDOOR_SCENES | {"brimley"}
+SEAMLESS_WORLD_SCENES = OUTDOOR_SCENES | {
+    "brimley",
+    # Hidden fold scenes -- the player stumbles into them through
+    # direction-sensitive exits and shouldn't feel a transition.
+    "curse_grove", "lodge_arrival", "highway_walk",
+}
 
 # Dark scenes -- underground / interior cult sites where the
 # flashlight matters. Without the flashlight the screen is heavily
@@ -2546,7 +2551,9 @@ class Game:
             if (not self.dialog.active and not self.inv_ui.open
                     and not self.notebook_ui.open
                     and not self.text_input.active):
-                exit_data = self.scene.find_exit_at(self.player.x, self.player.y)
+                exit_data = self.scene.find_exit_at(
+                    self.player.x, self.player.y,
+                    facing=self.player.facing)
                 if exit_data:
                     self.begin_transition(*exit_data)
             # Suspend scene update (NPC patrols, decoration anims, triggers)

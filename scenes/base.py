@@ -1463,6 +1463,14 @@ def apply_grade(surf, t=0.0, desat=82):
         yy += gh
 
 
+_DIRECTION_VECTORS = {
+    "north": (0, -1),
+    "south": (0, 1),
+    "east":  (1, 0),
+    "west":  (-1, 0),
+}
+
+
 class Scene:
     TILE = TILE
 
@@ -1492,6 +1500,10 @@ class Scene:
         self.wrap_x = False
         self.wrap_y = False
         self.exits = {}
+        # Direction-sensitive exit chars: char -> "north"/"south"/etc.
+        # If a char is in this dict, find_exit_at only fires the exit
+        # when the player's facing matches that compass direction.
+        self.exit_directions = {}
         self.spawns = {"default": (self.w * 16, self.h * 16)}
         self.npcs = []
         self.decorations = []
@@ -1579,12 +1591,37 @@ class Scene:
                 return True
         return False
 
-    def find_exit_at(self, x_px, y_px):
+    def find_exit_at(self, x_px, y_px, facing=None):
+        """Return the (target_scene, spawn) for the tile at the player
+        position, or None. If the exit has a direction requirement and
+        the player's facing doesn't match (dot product < 0.6), return
+        None -- the tile reads as floor and the player walks over it.
+        Used for fold-stitched hidden scenes that only open if you
+        approach them from a specific direction."""
         ch = self.char_object_at(x_px, y_px)
-        return self.exits.get(ch)
+        data = self.exits.get(ch)
+        if data is None:
+            return None
+        required_dir = self.exit_directions.get(ch)
+        if required_dir and facing is not None:
+            vec = _DIRECTION_VECTORS.get(required_dir)
+            if vec is not None:
+                fx, fy = facing
+                dx, dy = vec
+                if (dx * fx + dy * fy) < 0.6:
+                    return None
+        return data
 
-    def add_exit(self, char, target_scene, spawn_id="default"):
+    def add_exit(self, char, target_scene, spawn_id="default",
+                 direction=None):
+        """Register an exit. `direction` (optional) is one of
+        'north', 'south', 'east', 'west' -- the exit fires only when
+        the player crosses the tile heading that way. Used for hidden
+        fold scenes the player has to stumble into from a specific
+        approach."""
         self.exits[char] = (target_scene, spawn_id)
+        if direction:
+            self.exit_directions[char] = direction
 
     def set_spawn(self, name, tx, ty):
         self.spawns[name] = (tx * TILE + TILE // 2, ty * TILE + TILE // 2)

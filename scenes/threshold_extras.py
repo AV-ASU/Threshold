@@ -123,6 +123,17 @@ def build_country_lane():
     sc = Scene("country_lane", floor_rows, objects, music="outside")
     sc.add_exit("a", "brimley", "from_country_lane")
     sc.add_exit("e", "our_house_area", "from_country_lane")
+    # Direction-sensitive hidden fold: walking EAST across the 'M2'
+    # tile (a piece of road past the lodge gate, late on the lane)
+    # opens onto the highway that doesn't end -- where the locals
+    # who walked out to flag down help are still walking. From any
+    # other angle the tile reads as floor.
+    sc.add_exit("Q", "highway_walk", "from_country_lane",
+                direction="east")
+    objects_ll = [list(r) for r in objects]
+    if 0 <= 6 < len(objects_ll) and W - 4 < len(objects_ll[6]):
+        objects_ll[6][W - 4] = "Q"
+    sc.objects = objects_ll
     sc.set_spawn("default", 1, 6)
     # Player walked WEST out of our_house_area: lands at the east
     # end of the lane, facing west toward town.
@@ -131,6 +142,9 @@ def build_country_lane():
     # the lane, facing east toward home.
     sc.set_spawn("from_brimley", 1, 6)
     sc.set_spawn("from_village", 1, 6)   # legacy alias
+    # Return spawn from the highway_walk fold -- lands one west of
+    # the U tile so the player doesn't immediately re-trigger.
+    sc.set_spawn("from_highway_walk", W - 5, 6)
 
     # Atmosphere -- corn tufts on both sides of the road, a few
     # crows, a leaning fence post deco, one creepy_tree, a dead
@@ -669,6 +683,10 @@ def build_cornfield_maze():
     # cornfield from being a dead-end detour.
     objects_l[0][9]  = "^"
     objects_l[0][10] = "^"
+    # The fold-grove access. Tile (5, 8) is on a regular lane between
+    # corn walls -- looks like nothing. Walking WEST across it opens
+    # the curse-priest's grove; from any other angle it's just floor.
+    objects_l[8][5] = "Z"
     # Real cornfield rows: corn walls at cols 3, 7, 11, 15 running
     # N-S. Lanes between are 3 tiles wide (cols 1-2, 4-6, 8-10,
     # 12-14, 16-18). The player loses sightline immediately --
@@ -729,6 +747,14 @@ def build_cornfield_maze():
     sc.wrap_y = True
     sc.add_exit("!", "forest_path", "from_cornfield_maze")
     sc.add_exit("^", "brimley",   "from_cornfield_maze")
+    # Direction-sensitive hidden fold: walking WEST across the 'Z'
+    # tile (a regular-looking lane tile in the middle of the maze)
+    # opens onto the curse-priest's grove. From any other angle the
+    # tile reads as floor. Bible §8: the curse-priest finally has a
+    # home and a fiction. Char 'Z' chosen because 'C' is the cornstalk
+    # tile char and would conflict.
+    sc.add_exit("Z", "curse_grove", "from_cornfield_maze",
+                direction="west")
     sc.set_spawn("default", 10, H - 2)
     sc.set_spawn("from_forest_path", 10, H - 2)
     sc.set_spawn("from_cornfield", 10, H - 2)
@@ -736,6 +762,9 @@ def build_cornfield_maze():
     # Macro-loop south chain: arriving from brimley's south exit
     # drops the player on the maze's north edge.
     sc.set_spawn("from_brimley_south", 10, 1)
+    # Return spawn from curse_grove -- one west of the C tile so the
+    # player doesn't immediately re-trigger.
+    sc.set_spawn("from_curse_grove", 4, 8)
 
     # Scarecrow at the centre dead-end. Hanging-figure deco is
     # close enough to a scarecrow silhouette -- placed just south

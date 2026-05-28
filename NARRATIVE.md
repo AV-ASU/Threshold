@@ -384,11 +384,10 @@ The reworks the new fiction forced are all shipped. What must stay true:
   accordingly.
 - **The liminal-composition pass** (§10): per-scene level design —
   composed emptiness, long sightlines, uncanny repetition.
-- **The curse-priest is silent in the fiction.** A stalker NPC roams
-  `CURSER_SCENES` and lays a permanent curse that spawns Watchers; no
-  NPC dialogue or evidence beat references him. A player can be cursed
-  without ever understanding what's happening. System in search of a
-  story.
+- ~~**The curse-priest is silent in the fiction.**~~ Closed by the
+  `curse_grove` hidden fold scene (§11) -- the priest now has a
+  visible workshop and a clear thing he's doing. (Bringing him into
+  dialog or evidence beats is still open.)
 - **Food scarcity as setting fact.** The bible now says the cult eats
   and deliveries stopped when the fold closed (§2). Surface this in
   the world: bare store shelves the player can see, gardens visible
@@ -488,3 +487,75 @@ Built into the procedural draw layer (`scenes/base.py`,
 **Still TODO (the liminal-composition pass):** composed emptiness, long
 sightlines, and uncanny repetition (identical houses, endless identical
 corn rows) — that's per-scene level design, not a global draw change.
+
+---
+
+## 11. The Fold, made mechanical
+
+The bible's central image -- *the roads loop, the corn never ends, you
+walk through the woods only to be spit out where you walked in* -- now
+has mechanical existence beyond the dread aperture. The outside world
+is built as a torus, with hidden direction-sensitive folds layered on
+top.
+
+### Per-scene torus
+
+`brimley`, `cornfield_maze`, `forest_path`, and the Lodge yard
+(`our_house_area`) all wrap on the relevant axes:
+
+- **brimley.wrap_x** -- the cross-town road at row 24 loops
+  east-west. Walking off either side carries you back in on the
+  other.
+- **brimley.wrap_y** -- the perimeter forest loops north-south.
+- **cornfield_maze.wrap_x = wrap_y = True** -- corn never ends in
+  any direction. The exit tiles (^ to brimley, ! to forest_path, Z
+  to the curse-grove) are the only escape, and finding them is the
+  whole point.
+- **forest_path.wrap_x = wrap_y = True** -- the woods spit you out
+  where you walked in.
+- **our_house_area.wrap_x** -- walking east past the Lodge wraps you
+  back to the west. There is no past-the-Lodge highway.
+
+### Cross-scene macro-loop
+
+Three direct south-chain exits close the outdoor world into one
+closed system:
+
+- **brimley** south edge ('M' tile, col 48 row 99) → cornfield_maze
+- **cornfield_maze** south ('!' tile) → forest_path
+- **forest_path** south ('S' tile) → brimley north
+
+Walking south through any of the three eventually returns the player
+to brimley north. No direction escapes.
+
+### Seamless outdoor crossings
+
+Transitions between any two of the `SEAMLESS_WORLD_SCENES` skip the
+fade, keep the music playing, and preserve the player's screen
+position. The outside world reads as one continuous wrapped space.
+Indoor doorways (Lodge interior, the Works, cellar) still fade --
+they *are* doorways, and the player should feel that.
+
+### Wrap-aware NPC AI
+
+Cultists in wrap scenes compute distance and chase direction modulo
+the world dimensions. A cultist on the east edge reads a player on
+the west edge as one tile away (through the wrap) and pursues that
+way. The fold stops being an escape.
+
+### Direction-sensitive hidden folds
+
+Three hidden scenes are accessed only by walking a specific tile in a
+specific direction. From any other angle the tile reads as floor and
+the player walks over it without consequence. All three are in
+`SEAMLESS_WORLD_SCENES` so the crossing has no fade -- the player
+stumbles into the fold without realising they crossed a boundary.
+
+| Scene key | Where it lives | Access | What it shows |
+|---|---|---|---|
+| `curse_grove` | new scene | `cornfield_maze` tile (5, 8), walked WEST | The curse-priest at his fire pit -- effigies in a circle (one per local being cursed), polaroid board of faces, hanging figures at the corners. Closes the bible §8 TODO: the priest finally has a home and a thing he's doing. |
+| `lodge_arrival` | new scene | `our_house_area` tile (5, 12), walked NORTH | The Lodge porch at the moment Mara walked up to it. Mara with a suitcase, the Clerk smiling in the doorway. Neither sees the PI. Makes the bible's "she chose this" concrete -- the player *witnesses* the choice. |
+| `highway_walk` | new scene | `country_lane` tile (28, 6), walked EAST | A stretch of empty highway. Two figures walk east, their backs to the PI -- the locals who walked out to flag down help. The road wraps; they stay ahead; nobody arrives anywhere. |
+
+The framework (`Scene.add_exit(direction=...)` + `find_exit_at(facing=)`)
+is general -- more direction-sensitive folds can be added as wanted.
