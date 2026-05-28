@@ -368,13 +368,23 @@ def build_brimley():
     _carve_track(floor_ll, objects_l, [(7, 82), (11, 81), (14, 80)], trk)    # -> cauldron entrance
     # ---- THE FOLD ROAD ----
     # A dirt road that runs east-west across Brimley at row 24, passing
-    # right over the bridge. Walking west off the map at (0, 24) wraps
-    # the player back onto the east end of this same road at (98, 24).
-    # The road is just a road; the fold is a property of the map. No
-    # narrator, no warning -- the player walks west, the screen does
-    # its normal scene-fade, and they come back in on the east side.
+    # right over the bridge. The brimley scene wraps on its x axis (see
+    # sc.wrap_x below), so the road has no west or east edge in fiction
+    # -- walking west off the map seamlessly continues from the east
+    # side of the same map. No narrator, no fade, no transition. The
+    # fold is a property of the world.
     _carve_track(floor_ll, objects_l, [(98, 24), (62, 24), (35, 24)], trk)
     _carve_track(floor_ll, objects_l, [(31, 24), (16, 24), (1, 24)], trk)
+    # Pin the road exactly at row 24 across the wrap zones so the seam
+    # between west-edge cols and east-edge cols is invisible. The
+    # adjacent rows (23 + 25) are forced back to grass so the carved
+    # wobble doesn't kink across the wrap line.
+    for tx in list(range(0, 5)) + list(range(95, 100)):
+        floor_ll[24][tx] = "d"
+        if floor_ll[23][tx] == "d":
+            floor_ll[23][tx] = "g"
+        if floor_ll[25][tx] == "d":
+            floor_ll[25][tx] = "g"
     # A cult path worn off the east lane out across the empty field to
     # the standing stones -- a leading line composing the void, fading
     # where it crosses the corn.
@@ -828,6 +838,22 @@ def build_brimley():
     for (cx, cy) in [(2, 22), (2, 71), (50, 2), (88, 31), (97, 60), (41, 97)]:
         sc.add_decoration(Decoration(cx * TILE + 16, cy * TILE + 16,
                                      "dead_crow" if (cx + cy) % 2 else "crow"))
+
+    # ---- Fold-road thresholds ----
+    # Two identical stone pillars flank the road at each wrap zone --
+    # an old roadside gate, the kind locals leave standing because
+    # nobody remembers who put them there. The west pair and the east
+    # pair are the SAME pair (the fold says so). A player walking the
+    # road sees the gate, passes through it, walks a long way, and
+    # arrives at "another" gate that looks identical. Eventually they
+    # realise. No narrator does the work.
+    # Place them just inside each wrap zone so they sit cleanly in the
+    # camera view rather than half-clipped by the edge.
+    for tx in (2, 97):
+        sc.add_decoration(Decoration(tx * TILE + 16, 23 * TILE + 16,
+                                     "pillar"))
+        sc.add_decoration(Decoration(tx * TILE + 16, 25 * TILE + 16,
+                                     "pillar"))
 
     # ---- Lived-in town dressing ----
     # The "Welcome to Brimley" sign just north of the east-edge road,
