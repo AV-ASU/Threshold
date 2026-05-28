@@ -125,8 +125,8 @@ def kid_dialogue(game, npc):
     if not save.flag("kid_witnessed"):
         save.set_flag("kid_witnessed", True)
         game.dialog.show([
-            "You're looking for the corn lady.",
-            "She went in past the barn. The corn doesn't grow on her row.",
+            "You're looking for the lady from the lodge.",
+            "She walked to the well. She climbed down. I saw her.",
         ], speaker="Boy", voice="blip_kid", portrait="kid")
         return
     if inv.has("playscript") and not save.flag("kid_playscript_noticed"):
@@ -206,12 +206,8 @@ def shopkeep_dialogue(game, npc):
         return
     if count == 3:
         game.dialog.show([
-            "I sold to the girl too. And the ones before.",
-            "[c=dim]None of them came back. To buy again. You're the "
-            "first.[/c]",
-            "Your old man's the one paying you. Walter. He came through "
-            "with her mother. Years back. Before things turned. Tell him "
-            "I'm sorry. Don't tell him from where.",
+            "I sold to the girl too. And the ones before her.",
+            "[c=dim]None of them came back to buy again. You're the first.[/c]",
         ], speaker="Store-Owner", voice="blip_high", portrait="shopkeep")
         return
     if count == 4:
@@ -245,44 +241,40 @@ def fisherman_dialogue(game, npc):
     n = save.arg("fisher_count", 0) + 1
     save.set_arg("fisher_count", n)
     if n == 1:
+        # Local, born here, weary. Not a believer. The line "head home"
+        # is muscle memory of the job he used to do.
         game.dialog.show([
-            "Sheriff Vane. You'd be the fella asking after the Blaine girl.",
-            "Word travels in a town this size. Not much else does.",
-            "[c=dim]I'd slow down if I were you. Folks who come asking tend "
-            "to forget they meant to leave.[/c]",
+            "Sheriff Vane.",
+            "You're the one asking after the Blaine girl.",
+            "[c=dim]I'd head home if I were you. I'm supposed to say that.[/c]",
         ], speaker="Sheriff", voice="blip_gruff", portrait="guard")
     elif n == 2:
-        # He killed your car -- said in deniable lawman's terms.
+        # The car. He did NOT kill it -- the fold did. He's seen it
+        # happen before. He's seen it many times.
         game.dialog.show([
-            "Saw your car out by the river. Took the liberty of looking it "
-            "over -- bad spark, I'd say. Wouldn't trust it on these roads.",
-            "[c=dim]His hands are clean. They were always going to be. "
-            "The cars in Brimley forget how to start.[/c]",
-            "Don't you fret. Nobody walks out of Brimley, and nobody drives. "
-            "You'll be looked after.",
+            "Saw your car out by the lodge.",
+            "Won't start. Won't ever, while you're holding the keys.",
+            "[c=dim]I didn't touch it. None of us did. It's the town.[/c]",
         ], speaker="Sheriff", voice="blip_gruff", portrait="guard")
     elif n == 3:
-        # The outsider rule, from the enforcer's side: the town claims its
-        # own; you are the one thing it hasn't claimed yet.
+        # The town is gone. He's local. He watched it happen.
         game.dialog.show([
-            "I see everyone who comes and everyone who goes. Lately it's all "
-            "coming, no going. That's the way it's meant to be.",
-            "This town belongs to something now, son, and it keeps what "
-            "belongs to it. Every soul here's been spoken for.",
-            "[c=dim]Every soul but yours. You're the one loose thread. We "
-            "don't care for loose threads.[/c]",
+            "I was born here. So was my dad.",
+            "They started showing up in the summer. The new ones. "
+            "Polite folks. After a while the road stopped going anywhere.",
+            "[c=dim]I tell people to leave. I haven't been able to in months.[/c]",
         ], speaker="Sheriff", voice="blip_gruff", portrait="guard")
     elif n == 4:
+        # The preacher. He couldn't stop it.
         game.dialog.show([
-            "Still walking around. Still asking.",
-            "[c=dim]The preacher asked questions too. You won't be seeing "
-            "him at services.[/c]",
-            "Go home, son. While there's still a you to send.",
+            "They killed the preacher.",
+            "He named them from his pulpit. They came in the night.",
+            "[c=dim]I went over Tuesday morning. I didn't write a report. "
+            "Who would I send it to.[/c]",
         ], speaker="Sheriff", voice="blip_gruff", portrait="guard")
     else:
         game.dialog.show([
-            "[c=dim]He watches you the whole way down the road. He does not "
-            "blink.[/c]",
+            "[c=dim]The badge is just clothing now. He keeps wearing it.[/c]",
         ], speaker="", voice="blip_soft", portrait="guard")
 
 
