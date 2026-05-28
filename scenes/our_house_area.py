@@ -128,21 +128,13 @@ def build_our_house_area():
 
     def _outside_interact(game):
         px, py = game.player.x, game.player.y
-        # Bloody handprint on the back door -- one of the loudest props in
-        # the yard, finally with a voice. One-shot evidence so the player
-        # gets the full read once; subsequent presses are short.
+        # Bloody handprint on the back door -- atmosphere, not a clue.
+        # show_notice keeps it as a corner-line that doesn't interrupt
+        # play with a full dialog pop.
         hx, hy = sc._handprint_pos
         if abs(px - hx) < 48 and abs(py - hy) < 48:
-            if not game.save.flag("evidence_back_door_handprint"):
-                _evidence(game, "back_door_handprint", [
-                    "[c=dim]A handprint smeared into the back door, "
-                    "palm-out. Old, dried brown.[/c]",
-                    "[c=dim]Whoever made it was leaving, not coming "
-                    "in.[/c]",
-                ])
-            else:
-                game.show_notice(
-                    "The handprint. Palm-out. Someone leaving.")
+            game.show_notice(
+                "Handprint on the back door. Palm-out. Someone leaving.")
             return
         # The Clerk's pickup is visible-but-useless. Examining it turns
         # the noun into worldbuilding: he doesn't drive it because there

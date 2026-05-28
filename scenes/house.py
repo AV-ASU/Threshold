@@ -207,7 +207,14 @@ def bedroom_interact(game):
     if abs(px - tx) <= 40 and abs(py - ty) <= 40:
         # After the Dark, the case has rewritten itself. The notebook
         # the player opens the game on is the same one that closes it.
+        # First read is the gut-punch; subsequent reads collapse so
+        # repetition doesn't dilute it.
         if game.save.flag("hive_seen"):
+            if game.save.flag("case_closed_read"):
+                game.show_notice(
+                    "The case is closed. You wrote it.")
+                return
+            game.save.set_flag("case_closed_read", True)
             game.dialog.show([
                 "[c=dim](Your case notebook. You re-open it. The first "
                 "page you wrote in is still there, but the hand on the "

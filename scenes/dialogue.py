@@ -98,12 +98,14 @@ def old_man_dialogue(game, npc):
         # church swaps him for his remains on the next entry (evidence #4).
         game.dialog.show([
             "You came back. Good -- then hear the rest of it.",
-            "I say it from my pulpit, plain as I'm saying it now: it isn't "
-            "the corn. The corn is just the path. The mouth is under the "
-            "well, and the well sits in the Clerk's yard. The sheriff sits "
-            "in my back pew while I say it.",
-            "Let them come for an old man. I've buried better than whatever "
-            "it is they kneel to. God's on my side of the door.",
+            "From my pulpit, plain as I'm saying it now. It isn't the "
+            "corn. The corn is just the path.",
+            "The mouth is under the well. The well is in the Clerk's "
+            "yard. I name them both.",
+            "The sheriff sits in my back pew while I do. He listens. "
+            "He does not move.",
+            "Let them come for an old man. I've buried better than "
+            "whatever it is they kneel to. God's on my side of the door.",
         ], speaker="Preacher", voice="blip_low", portrait="old")
         save.set_flag("preacher_doomed", True)
     else:
