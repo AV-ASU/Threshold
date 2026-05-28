@@ -1,2 +1,7 @@
-# Threshold runtime dependency.
+# Threshold runtime dependencies.
 pygame>=2.5
+# Procedural audio DSP: filters, reverb, granular synthesis,
+# formant-based whisper synthesis. The game ships zero audio
+# assets -- every sound is generated at startup.
+numpy>=1.24
+scipy>=1.10
