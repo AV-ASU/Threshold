@@ -982,60 +982,89 @@ _CORPSE_ECHO = {
 }
 
 
-# ---- Per-character corpse "claim" forms -------------------------------
-# When the fold claims a NAMED resister's corpse (mold >= 1) it opens the
-# body into THAT person's bespoke horror lying dead -- the same form as their
-# living mutation (rendering._infest_*), laid horizontal down the length of
-# the fallen body. So a claimed Toby is a teeth-gullet, a claimed Hettie a
-# flayed petal-flower, a claimed Garrick a body crawling with faces -- not
-# the same generic husk for everyone. Unnamed kinds fall back to the generic
-# mold stages. Each takes the body tints and the mold (intensity 1..3).
+# ---- Corpse infection overlays ----------------------------------------
+# When the fold claims a corpse (mold >= 1) it spreads INFECTION through the
+# flesh -- gold rot welling up from INSIDE the body, sickly discolour, the
+# Yellow Sign branded at full claim. The corruption is warm gold light from
+# within (the body still reads as a body); it is NEVER a black void. Each
+# overlay is drawn OVER the already-drawn slumped body. NAMED resisters get
+# the wound shaped like their living mutation (a gold maw for Toby, a peeled
+# Sign-seam for Hettie, gold faces for Garrick); unnamed kinds get the
+# generic gold rot. mold is the intensity (1..3).
+
+def _corpse_rot(surf, x, y, mold):
+    """Sickly discoloured patches creeping over the flesh -- the meat going
+    wrong before the gold breaks through."""
+    rot = (92, 96, 44)
+    pygame.draw.rect(surf, rot, (x - 9, y + 4, 6, 3))
+    if mold >= 2:
+        pygame.draw.rect(surf, rot, (x + 3, y - 1, 6, 2))
+        pygame.draw.rect(surf, rot, (x - 4, y - 2, 4, 2))
+
+
+def _corpse_sign(surf, x, y):
+    """The Yellow Sign branded into the body at full claim."""
+    pygame.draw.line(surf, (252, 222, 112), (x - 3, y + 2), (x + 3, y + 2), 1)
+    pygame.draw.line(surf, (252, 222, 112), (x, y - 1), (x, y + 5), 1)
+    pygame.draw.line(surf, (252, 222, 112), (x, y + 2), (x - 2, y), 1)
+    pygame.draw.line(surf, (252, 222, 112), (x, y + 2), (x + 2, y), 1)
+
+
+def _corpse_infect_generic(surf, x, y, body, body_lo, mold):
+    _corpse_rot(surf, x, y, mold)
+    _gold_in_wound(surf, x, y + 2, 3 + mold, 48 + 20 * mold)     # gold welling up a wound
+    for vx in (-8, -4, 5, 9)[:1 + mold]:                        # gold veins branching out
+        pygame.draw.line(surf, (208, 166, 58),
+                         (x, y + 2), (x + vx, y + 2 + (vx % 3) - 1), 1)
+    if mold >= 3:
+        _corpse_sign(surf, x, y)
+
 
 def _corpse_claim_tisdale_boy(surf, x, y, body, body_lo, mold):
-    # Toby opened into the maw he became: a dark gullet runs the LENGTH of
-    # the fallen body, bone teeth bridging it the whole way, a gold thread in
-    # the throat. The gullet gapes wider as the fold takes him -- at the husk
-    # stage the body is mostly mouth.
-    h = 1 + mold                                            # gullet half-height 2..4
-    pygame.draw.rect(surf, body, (x - 11, y - 2, 24, 9))    # what flesh is left
-    pygame.draw.rect(surf, body_lo, (x - 11, y - 2, 24, 9), 1)
-    pygame.draw.rect(surf, (8, 4, 6), (x - 11, y + 2 - h, 23, h * 2))   # the gullet
-    for tx in range(-10, 12, 3):                            # teeth bridging it the whole way
-        pygame.draw.line(surf, (224, 216, 198),
-                         (x + tx, y + 2 - h), (x + tx, y + 1 + h), 1)
-    pygame.draw.line(surf, (196, 152, 42), (x - 9, y + 1), (x + 10, y + 1), 1)  # gold throat
+    # Toby's wound is the maw he became -- but it GLOWS: the fold's gold burns
+    # up out of the split flesh, dark meat lips and a few pale teeth framing
+    # it. An infected mouth opening down the body, not a black hole.
+    _corpse_rot(surf, x, y, mold)
+    h = 1 + mold
+    _gold_in_wound(surf, x, y + 2, 4 + mold, 78 + 18 * mold)     # gold up the throat
+    pygame.draw.rect(surf, (96, 30, 26), (x - 11, y + 1 - h, 23, 1))   # upper meat lip
+    pygame.draw.rect(surf, (96, 30, 26), (x - 11, y + 2 + h, 23, 1))   # lower meat lip
+    for tx in range(-9, 11, 4):                                  # pale teeth along the lips
+        pygame.draw.line(surf, (230, 222, 202),
+                         (x + tx, y + 1 - h), (x + tx, y + 2 + h), 1)
 
 
 def _corpse_claim_hettie(surf, x, y, body, body_lo, mold):
-    # Hettie unzipped into the flayed flower she became: a dark seam runs the
-    # length of the body with skin-petals curling off both long edges, gold
-    # welling in the seam. Splays wider with the mold. (Her reaching-arm echo
-    # still lays over the top.)
-    pygame.draw.rect(surf, body, (x - 11, y - 2, 24, 9))
-    pygame.draw.rect(surf, body_lo, (x - 11, y - 2, 24, 9), 1)
-    pygame.draw.rect(surf, (10, 5, 8), (x - 10, y + 1, 22, mold))        # the seam
-    pet = (206, 176, 150)
-    for px in range(-9, 11, 5):                             # petals peeling off both edges
+    # Hettie peels open down her length: skin-flaps curl back off a seam that
+    # wells gold, the Yellow Sign branded in it. Her reaching-arm echo still
+    # lays over the top. Infected glow, not a slit.
+    _corpse_rot(surf, x, y, mold)
+    _gold_in_wound(surf, x, y + 2, 4 + mold, 60 + 16 * mold)     # gold up the seam
+    skin = (212, 182, 156)
+    for px in range(-9, 11, 6):                                  # skin-flaps peeling back
         d = 1 + mold
-        pygame.draw.polygon(surf, pet, [(x + px, y - 2), (x + px + 3, y - 2),
-                                        (x + px + 1, y - 2 - d)])
-        pygame.draw.polygon(surf, pet, [(x + px, y + 7), (x + px + 3, y + 7),
-                                        (x + px + 1, y + 7 + d)])
-    pygame.draw.line(surf, (202, 158, 46), (x - 9, y + 2), (x + 10, y + 2), 1)  # gold seam
+        pygame.draw.polygon(surf, skin, [(x + px, y - 1), (x + px + 4, y - 1),
+                                         (x + px + 2, y - 1 - d)])
+        pygame.draw.polygon(surf, skin, [(x + px, y + 6), (x + px + 4, y + 6),
+                                         (x + px + 2, y + 6 + d)])
+    if mold >= 2:
+        _corpse_sign(surf, x, y)
+    else:
+        pygame.draw.line(surf, (250, 210, 92), (x - 7, y + 2), (x + 8, y + 2), 1)
 
 
 def _corpse_claim_old_townsman(surf, x, y, body, body_lo, mold):
-    # Garrick crawling with faces: dark screaming faces surface through the
-    # flesh all down the fallen body, gold burning behind each. More of them
-    # push through as the fold works him.
-    pygame.draw.rect(surf, body, (x - 11, y - 2, 24, 9))
-    pygame.draw.rect(surf, body_lo, (x - 11, y - 2, 24, 9), 1)
-    spots = [(-8, 0), (-1, 4), (5, -1), (10, 2), (2, 5), (-5, -1)][:1 + mold * 2]
+    # Faces strain up through Garrick's flesh, each lit GOLD from within --
+    # gold faces surfacing across the body with dark sunken features, more of
+    # them as the fold works him. Not black pits.
+    _corpse_rot(surf, x, y, mold)
+    spots = [(-7, 1), (0, 4), (6, 0), (10, 3), (3, 6), (-4, -1)][:1 + mold * 2]
     for fx, fy in spots:
-        cx, cy = x + fx, y + 2 + fy
-        pygame.draw.circle(surf, (10, 5, 8), (cx - 1, cy - 1), 1)   # eye-pit
-        pygame.draw.circle(surf, (10, 5, 8), (cx + 1, cy - 1), 1)   # eye-pit
-        pygame.draw.line(surf, (196, 152, 42), (cx, cy + 1), (cx, cy + 2), 1)  # gold mouth
+        cx, cy = x + fx, y + 1 + fy
+        _gold_in_wound(surf, cx, cy, 3, 66)                     # the face glows gold
+        pygame.draw.circle(surf, (74, 26, 22), (cx - 1, cy - 1), 1)   # sunken eyes
+        pygame.draw.circle(surf, (74, 26, 22), (cx + 1, cy - 1), 1)
+        pygame.draw.line(surf, (44, 16, 14), (cx - 1, cy + 1), (cx + 1, cy + 1), 1)  # mouth
 
 
 _CORPSE_CLAIM = {
@@ -1052,12 +1081,14 @@ def draw_npc_corpse(surf, x, y, kind, seed=0, mold=0):
     seeded so a row of bodies doesn't all face the same way.
 
     `mold` (0..3) is the infestation stage -- the fold claiming the dead.
-    It is not decoration: the body OPENS. Stage 1 cracks gold seams
-    through the flesh; stage 2 splits the torso with gold welling out of
-    it; stage 3 is a hollow HUSK -- the torso cracked wide into a gold-lit
-    cavity with the Sign at its lip, a chrysalis the person came out of.
-    Where a character's compulsion should outlast them (`_CORPSE_ECHO`)
-    that is drawn too -- their dying act still happening on the floor."""
+    The body stays a recognisable body; the fold's INFECTION spreads over
+    it as warm gold rot welling up from inside the flesh (never a black
+    void): stage 1 a gold wound and sickly discolour, escalating through
+    stage 3 where the Yellow Sign is branded into it. Named resisters are
+    infected in the shape of their living mutation (`_CORPSE_CLAIM`); others
+    get the generic gold rot. Where a character's compulsion should outlast
+    them (`_CORPSE_ECHO`) that lays over the top -- their dying act still
+    happening on the floor."""
     rng = random.Random(seed)
     body = _CORPSE_TINT.get(kind, (70, 64, 60))
     body_lo = tuple(int(c * 0.65) for c in body)
@@ -1070,67 +1101,20 @@ def draw_npc_corpse(surf, x, y, kind, seed=0, mold=0):
     pygame.draw.ellipse(pool, (84, 12, 14, 140), (0, 0, 44, 26))
     pygame.draw.ellipse(pool, (58, 6, 8, 185), (10, 7, 24, 12))
     surf.blit(pool, (x - 22 + (4 if head_left else -4), y - 2))
-    # Torso silhouette. The fold doesn't just crack the body open -- it
-    # WRENCHES it out of human shape. Each stage deforms the outline more,
-    # so the contour itself reads as wrong before any gold does: a slumped
-    # slab (0), a lopsided buckled hunch (1), rib-flaps peeling up off a
-    # black gulf (2), a torn-open hollow ribcage husk (3). Negative space
-    # and a broken contour carry it; gold is only ever a thin seam.
-    #
-    # NAMED resisters, once claimed (mold >= 1), open into THEIR bespoke
-    # horror instead of the generic husk -- the dead read as who they were
-    # (see _CORPSE_CLAIM). mold 0 is still the clean fresh kill for everyone.
-    claim = _CORPSE_CLAIM.get(kind)
-    if claim is not None and mold >= 1:
-        claim(surf, x, y, body, body_lo, mold)
-    elif mold == 0:
-        pygame.draw.rect(surf, body, (x - 11, y - 2, 24, 9))
-        pygame.draw.rect(surf, body_lo, (x - 11, y - 2, 24, 9), 1)
-        pygame.draw.rect(surf, body_lo, (x - 3, y + 6, 9, 3))   # outflung arm
-    elif mold == 1:
-        # The body has buckled: the spine arches and one flank swells where
-        # something is pushing up under the skin -- a lopsided hunch, no
-        # longer a rectangle, with a dark fissure splitting it.
-        hunch = [(x - 11, y + 6), (x - 10, y - 2), (x - 2, y - 5),
-                 (x + 5, y - 3), (x + 12, y), (x + 11, y + 6)]
-        pygame.draw.polygon(surf, body, hunch)
-        pygame.draw.polygon(surf, body_lo, hunch, 1)
-        pygame.draw.rect(surf, body_lo, (x - 3, y + 6, 9, 3))   # outflung arm
-        pygame.draw.line(surf, (8, 5, 9), (x - 2, y - 4), (x + 1, y + 5), 2)
-        pygame.draw.line(surf, (150, 118, 30), (x - 1, y - 2), (x, y + 3), 1)
-    elif mold == 2:
-        # The torso has split along the spine and the two halves PEEL UP and
-        # back like a beetle's wing-cases -- curled flaps over a black gulf,
-        # not parallel slabs. A limb is wrenched up out of its line.
-        pygame.draw.ellipse(surf, (0, 0, 0), (x - 12, y - 4, 26, 13))   # the gulf
-        near = [(x - 11, y + 7), (x - 10, y + 1), (x - 1, y + 2),
-                (x + 1, y + 8), (x - 5, y + 9)]                 # flap curling down
-        far = [(x - 1, y - 1), (x + 4, y - 6), (x + 11, y - 5),
-               (x + 12, y + 1), (x + 5, y + 1)]                 # flap curling up
-        pygame.draw.polygon(surf, body, near)
-        pygame.draw.polygon(surf, body, far)
-        pygame.draw.polygon(surf, body_lo, near, 1)
-        pygame.draw.polygon(surf, body_lo, far, 1)
-        pygame.draw.line(surf, body_lo, (x - 4, y + 3), (x - 10, y - 4), 2)  # wrenched arm
-        pygame.draw.line(surf, (150, 118, 30), (x - 1, y - 1), (x + 1, y + 5), 1)
-    elif mold >= 3:
-        # The HUSK: the body has caved into a thin shell around a hollow.
-        # One BIG idea that reads at corpse scale, not a texture of spikes:
-        # a black void eaten clean through the middle (the negative space IS
-        # the horror) inside a collapsed rind of flesh, one gold glint at the
-        # rim. Flatter and emptier than the split body of stage 2.
-        pygame.draw.ellipse(surf, body_lo, (x - 12, y - 1, 25, 10))    # caved shell
-        pygame.draw.ellipse(surf, (3, 2, 5), (x - 9, y + 1, 18, 7))    # the hollow void
-        # two torn tabs of rind break the rim (just enough wrongness)
-        pygame.draw.polygon(surf, body, [(x - 12, y + 2), (x - 8, y - 2), (x - 6, y + 3)])
-        pygame.draw.polygon(surf, body, [(x + 11, y + 2), (x + 7, y - 2), (x + 5, y + 4)])
-        # gold seam glinting at the rim of the emptiness
-        pygame.draw.line(surf, (170, 130, 36), (x - 5, y + 2), (x + 4, y + 2), 1)
-        try:
-            surf.set_at((x, y + 2), (236, 204, 64))
-        except (IndexError, ValueError):
-            pass
-    # Head lolled to one end (on top of the wreck of the body).
+    # The body always reads as a BODY first -- a slumped flesh torso with an
+    # outflung arm. mold 0 is a clean fresh kill. Then, once the fold claims
+    # it (mold >= 1), INFECTION spreads OVER the body: gold rot welling up
+    # from within the flesh, the Sign branded at full claim -- warm light, not
+    # a black void. NAMED resisters get a wound shaped like their living
+    # mutation (gold maw / peeled Sign-seam / gold faces); others get the
+    # generic gold rot. The dying-compulsion echo lays over the top.
+    pygame.draw.rect(surf, body, (x - 11, y - 2, 24, 9))
+    pygame.draw.rect(surf, body_lo, (x - 11, y - 2, 24, 9), 1)
+    pygame.draw.rect(surf, body_lo, (x - 3, y + 6, 9, 3))   # outflung arm
+    if mold >= 1:
+        infect = _CORPSE_CLAIM.get(kind, _corpse_infect_generic)
+        infect(surf, x, y, body, body_lo, mold)
+    # Head lolled to one end.
     pygame.draw.circle(surf, skin, (hx, y + 2), 4)
     pygame.draw.circle(surf, body_lo, (hx, y - 1), 4, 1)   # hair/hat smudge
     # A character's dying compulsion, still acting on the floor.
