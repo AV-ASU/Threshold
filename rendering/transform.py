@@ -28,20 +28,22 @@ import pygame
 
 from rendering.sprites import draw_npc_sprite
 
-# --- Jaundiced & eyed palette ------------------------------------------
-_THROAT    = (22, 16, 6)        # deepest cavity
-_FLESH     = (156, 124, 42)     # inner wall
-_FLESH_LO  = (96, 74, 22)       # wall shadow / outer rim
-_TORN      = (132, 34, 26)      # torn-flesh edge (a little blood)
-_GORE      = (88, 18, 16)       # darker rip / drips
-_TEETH     = (228, 222, 188)
-_TEETH_LO  = (176, 168, 132)
-_ICHOR     = (214, 194, 70)     # wet yellow strands
-_ICHOR_HI  = (244, 230, 138)
-_EYE_WHITE = (240, 230, 168)
-_EYE_PUPIL = (14, 9, 0)
-_HALO      = (210, 188, 60)
-_SICK_TINT = (206, 182, 86)     # multiply target for sickening skin
+# --- Muddy, desaturated maw (matches the cult's body-horror register) ---
+# His light is a faint seep, not a jaundiced lightbulb; gore is dark
+# red-brown, not bright blood; bone/eyes stay muted.
+_THROAT    = (20, 15, 12)       # deepest cavity
+_FLESH     = (120, 98, 62)      # inner wall (muddy ochre flesh)
+_FLESH_LO  = (74, 60, 40)       # wall shadow / outer rim
+_TORN      = (96, 46, 38)       # torn-flesh edge (muddy, not bright)
+_GORE      = (60, 30, 26)       # darker rip / drips
+_TEETH     = (176, 168, 142)
+_TEETH_LO  = (126, 120, 100)
+_ICHOR     = (150, 128, 62)     # dim wet strands
+_ICHOR_HI  = (190, 170, 96)
+_EYE_WHITE = (182, 172, 132)
+_EYE_PUPIL = (10, 7, 4)
+_HALO      = (150, 128, 58)     # faint sick underglow
+_SICK_TINT = (168, 148, 98)     # multiply target for sickening skin
 
 # Local cell geometry. (lx, ly) is the local anchor that maps to the
 # caller's (x, y), matching draw_npc_sprite's torso-ish origin.
@@ -113,12 +115,13 @@ def draw_vessel_bloom(surf, x, y, base_kind, facing, morph, t=None, seed=0):
 
     cell = pygame.Surface((_CW, _CH), pygame.SRCALPHA)
 
-    # Sickly halo behind everything (additive), grows with eyemass.
+    # A faint sick underglow behind the cavity (additive) -- a seep welling
+    # from within, not a jaundiced lightbulb. Kept low and tight.
     if eyemass > 0.0:
         halo = pygame.Surface((_CW, _CH), pygame.SRCALPHA)
         pygame.draw.ellipse(halo, (_HALO[0], _HALO[1], _HALO[2],
-                                   int(60 * eyemass)),
-                            (_LX - 22, _CCY - 28, 44, 56))
+                                   int(20 * eyemass)),
+                            (_LX - 16, _CCY - 22, 32, 44))
         cell.blit(halo, (0, 0), special_flags=pygame.BLEND_RGBA_ADD)
 
     # Base body, sickened.

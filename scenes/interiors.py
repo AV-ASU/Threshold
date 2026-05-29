@@ -144,6 +144,7 @@ def build_void_boss():
     sc.is_clearing = True
 
     cauldron_x, cauldron_y = 9 * TILE + 16, 7 * TILE + 16
+    sc.add_interactable(cauldron_x, cauldron_y, 40)   # [E] cue for the cauldron
     def _void_boss_interact(game):
         px, py = game.player.x, game.player.y
         if abs(px - cauldron_x) > 40 or abs(py - cauldron_y) > 40:
@@ -283,8 +284,11 @@ def build_barn():
     hatch_y = 6 * TILE + 16
     sc.add_decoration(Decoration(hatch_x, hatch_y, "cellar_hatch"))
     sc._barn_hatch_pos = (hatch_x, hatch_y)
+    sc.add_interactable(hatch_x, hatch_y, 36)   # [E] cue for the sealed hatch
     # Mara's journal, stashed behind the workbench -- evidence #2.
     sc._journal_pos = (3 * TILE + 16, 5 * TILE + 16)
+    # [E] cue so the player knows there's something behind the workbench.
+    sc.add_interactable(sc._journal_pos[0], sc._journal_pos[1], 40)
     # Hide spots colocated with cover -- behind the hay-bale shelves
     # (player stands on a walkable tile beside each shelf, NOT on the
     # solid shelf tile). The under-workbench spot was previously on
@@ -292,7 +296,9 @@ def build_barn():
     sc.hide_spots = [
         (4 * TILE + 16, 2 * TILE + 16, "behind"),   # beside W shelf
         (7 * TILE + 16, 2 * TILE + 16, "behind"),   # beside E shelf
-        (4 * TILE + 16, 5 * TILE + 16, "under"),    # beside workbench
+        (2 * TILE + 16, 6 * TILE + 16, "behind"),   # behind the SW woodpile
+                                                    # (was on the bloodstain
+                                                    # + the journal prompt)
     ]
 
     def _barn_interact(game):
@@ -354,7 +360,7 @@ def build_kid_house():
     if pos:
         tx, ty = pos
         sc.add_npc(NPC(tx * TILE + 16, ty * TILE + 16,
-                       "Boy", "kid", voice="blip_kid",
+                       "the Tisdale boy", "kid", voice="blip_kid",
                        portrait="kid",
                        dialogue_fn=kid_dialogue, movement="idle"))
     # Sized darkwood furniture: a 2x2 kid's bed, a long bookshelf, a

@@ -4,8 +4,395 @@ import random
 import pygame
 from constants import C_BLACK
 
+# ---- Cultist: a stitched animal-hide coat + a carved wooden mask, one of
+# six chosen per individual (by seed) so the congregation reads as "everyone
+# carved their own." Directional: the mask shows front/side; from behind you
+# see only the fur hood + the Sign on the hide (no face), so you can read a
+# cultist's gaze and slip behind it. Near-black hide, restrained gold (only
+# an eye-glint). Static detail is seeded (stable per cultist); the trudge
+# rock/bob is time-driven. ----
+_HIDE = (74, 56, 40); _HIDE_LO = (48, 36, 26); _HIDE2 = (92, 72, 50)
+_HIDE3 = (40, 33, 28); _FUR = (122, 102, 72); _FUR_LO = (80, 64, 44)
+_STITCH = (156, 144, 118); _ANTLER = (150, 138, 112)
+_WOOD = (150, 128, 96); _WOOD_LO = (96, 80, 58); _CGRAIN = (70, 58, 42)
+_CVOID = (12, 11, 13); _CGOLD = (255, 218, 96)
+
+
+def _cult_glow(surf, x, y, r=2, a=46):
+    g = pygame.Surface((r * 2 + 2, r * 2 + 2), pygame.SRCALPHA)
+    pygame.draw.circle(g, (230, 186, 48, a), (r + 1, r + 1), r)
+    surf.blit(g, (int(x) - r - 1, int(y) - r - 1),
+              special_flags=pygame.BLEND_RGBA_ADD)
+
+
+def _cult_sign(surf, cx, cy, dim=False, u=1.0):
+    col = (120, 104, 44) if dim else (158, 134, 54)
+    cx, cy = int(cx), int(cy)
+    pygame.draw.line(surf, col, (cx, int(cy - 6 * u)), (cx, int(cy + 5 * u)), 1)
+    pygame.draw.line(surf, col, (int(cx - 5 * u), int(cy - 2 * u)),
+                     (int(cx + 4 * u), int(cy - 4 * u)), 1)
+    pygame.draw.line(surf, col, (int(cx - 4 * u), int(cy + 3 * u)),
+                     (int(cx + 5 * u), int(cy + 1 * u)), 1)
+
+
+def _cult_eye(surf, x, y):
+    pygame.draw.circle(surf, _CVOID, (int(x), int(y)), 1)
+    _cult_glow(surf, x, y, 2, 46)
+    pygame.draw.circle(surf, _CGOLD, (int(x), int(y)), 1)
+
+
+def _cult_hide_coat(surf, x, y, top, rng, lean=0, sway=0):
+    """Stitched-hide coat: a near-black trapezoid of pelt patches with
+    bone-thread seams, a fur collar and a ragged fur hem. `sway` swings the
+    hem (cloth lag) opposite the shoulder `lean` for a lurching gait."""
+    body = [(x - 9 + sway, y + 16), (x - 6 + lean, top),
+            (x + 6 + lean, top), (x + 9 + sway, y + 16)]
+    pygame.draw.polygon(surf, _HIDE, body)
+    pygame.draw.polygon(surf, _HIDE_LO, body, 1)
+    # two pelt patches in varied tone (deer tan / bear dark)
+    pygame.draw.polygon(surf, _HIDE3, [(x - 6 + lean, top + 1), (x + 1, top),
+                                       (x - 2, top + 9), (x - 7, top + 8)])
+    pygame.draw.polygon(surf, _HIDE2, [(x + 1, top + 2), (x + 6 + lean, top + 3),
+                                       (x + 8, y + 4), (x, y + 2)])
+    # bone-thread seam down the front
+    span = max(1, (y + 12 - top))
+    for i in range(6):
+        sy0 = top + 2 + i * span // 6
+        pygame.draw.line(surf, _STITCH, (x - 1, sy0 - 1), (x + 1, sy0 + 1), 1)
+    pygame.draw.line(surf, _HIDE2, (x - 4 + lean, top + 2), (x - 7, y + 12), 1)
+    # fur collar
+    for fx in range(-7, 8, 2):
+        pygame.draw.line(surf, _FUR, (x + fx, top + 1), (x + fx, top - 2), 1)
+    # ragged fur hem + sparse fur ticks (seeded -> stable); swings with sway
+    for hx in range(-8, 9, 3):
+        bx = x + hx + sway
+        h = rng.randint(2, 5)
+        pygame.draw.line(surf, _HIDE_LO, (bx, y + 16), (bx, y + 16 + h), 2)
+        pygame.draw.line(surf, _FUR_LO, (bx, y + 16),
+                         (bx, y + 16 + rng.randint(1, 2)), 1)
+    for _ in range(7):
+        tx = x + rng.randint(-7, 7); ty = rng.randint(top + 5, y + 10)
+        pygame.draw.line(surf, _FUR_LO, (tx, ty), (tx, ty - 2), 1)
+
+
+def _cult_mask(surf, cx, cy, variant, view, mdir):
+    """A carved WOODEN mask -- one of six unique shapes -- GRAFTED into the
+    fleshy face under the cultist's hood, in the same body-horror register as
+    the curse-priest: carved dark eye-voids with a faint His-glint, and a
+    dark gore seam where the wood meets flesh. Only the SHAPE is the
+    cultist's own (PALLID/ANTLERED/LONGFACE/SPLIT/GRIMACE/PLANK)."""
+    mx = cx + mdir * 2
+    eyes = (-2, 2) if view == "front" else (mdir if mdir else 1,)
+
+    def void_eye(ex, ey):                       # carved void + a faint His-glint
+        ex, ey = int(ex), int(ey)
+        pygame.draw.circle(surf, _VP_PIT, (ex, ey), 2)
+        pygame.draw.circle(surf, (4, 3, 6), (ex, ey), 1)
+        _cult_glow(surf, ex, ey, 2, 22)
+        pygame.draw.circle(surf, (150, 120, 50), (ex, ey), 1)
+
+    def graft_seam():                           # gore where the mask meets flesh
+        gx = mx + (4 if view == "front" else mdir * 4)
+        pygame.draw.line(surf, _VP_GOR, (gx, cy - 4), (gx - 1, cy + 5), 1)
+
+    if variant == 2:        # LONGFACE -- an elongated wedge
+        pts = [(mx - 4, cy - 6), (mx + 4, cy - 6), (mx + 2, cy + 4),
+               (mx, cy + 8), (mx - 2, cy + 4)]
+        pygame.draw.polygon(surf, _WOOD, pts)
+        pygame.draw.polygon(surf, _WOOD_LO, pts, 1)
+        pygame.draw.line(surf, _CGRAIN, (mx, cy - 5), (mx, cy + 6), 1)
+        for ex in eyes:
+            void_eye(mx + ex, cy - 2)
+        graft_seam()
+        return
+    if variant == 5:        # PLANK -- a crude rectangle with an eye-slot
+        pygame.draw.rect(surf, _WOOD, (mx - 5, cy - 6, 10, 13))
+        pygame.draw.rect(surf, _WOOD_LO, (mx - 5, cy - 6, 10, 13), 1)
+        pygame.draw.line(surf, _CGRAIN, (mx - 3, cy - 2), (mx + 3, cy - 2), 1)
+        for ex in eyes:
+            void_eye(mx + ex, cy)
+        graft_seam()
+        return
+    # ovals: PALLID(0), ANTLERED(1), SPLIT(3), GRIMACE(4)
+    if variant == 1:        # deer antlers above the mask
+        for sgn in (-1, 1):
+            pygame.draw.line(surf, _ANTLER, (mx + sgn * 3, cy - 6),
+                             (mx + sgn * 6, cy - 13), 1)
+            pygame.draw.line(surf, _ANTLER, (mx + sgn * 4, cy - 9),
+                             (mx + sgn * 8, cy - 10), 1)
+    mw = 5 if view == "front" else 4
+    pygame.draw.ellipse(surf, _WOOD, (mx - mw, cy - 6, mw * 2, 13))
+    pygame.draw.ellipse(surf, _WOOD_LO, (mx - mw, cy - 6, mw * 2, 13), 1)
+    pygame.draw.line(surf, _CGRAIN, (mx - mw + 1, cy + 1), (mx + mw - 1, cy + 1), 1)
+    if variant == 3:        # SPLIT -- a shatter-crack
+        pygame.draw.line(surf, _CVOID, (mx, cy - 6), (mx, cy + 6), 1)
+    for ex in eyes:
+        if variant == 3 and ex == 0:
+            continue
+        void_eye(mx + ex, cy)
+    if variant == 4:        # GRIMACE -- a carved frown
+        pygame.draw.arc(surf, _CVOID, (mx - 3, cy + 2, 6, 5), 0.2, 2.9, 1)
+    if variant == 0:        # PALLID -- the Sign on the brow
+        _cult_sign(surf, mx, cy - 4, u=0.5)
+    graft_seam()
+
+
+_DW_MULT = {}
+
+
+def _darkwood_pass(lay, seed, strength=1.0):
+    """A grimy Darkwood 'brush over' for a sprite drawn on its own SRCALPHA
+    layer: a touch of desaturation, a muddy multiply that crushes the lower
+    body into shadow, and seeded grime speckle on the sprite's own pixels
+    (stable per individual). Compounds with the frame-wide film grade.
+    All passes respect the sprite's alpha, so there's no dark halo.
+    `strength` (<1 = gentler) eases the desat/crush for larger sprites whose
+    own form needs to stay legible (the curse-priest)."""
+    w, h = lay.get_size()
+    try:
+        g = pygame.transform.grayscale(lay)
+        g.set_alpha(int(46 * strength))
+        lay.blit(g, (0, 0))
+    except Exception:
+        pass
+    key = (w, h, round(strength, 2))
+    mult = _DW_MULT.get(key)
+    if mult is None:
+        mult = pygame.Surface((w, h))           # opaque -> alpha preserved
+        for yy in range(h):
+            f = yy / max(1, h)
+            b = 255 - int((41 + 122 * f * f) * strength)   # gentle top -> crushed bottom
+            mult.fill((max(0, b - 6), max(0, b - 8), b), (0, yy, w, 1))
+        _DW_MULT[key] = mult
+    lay.blit(mult, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
+    rng = random.Random((seed ^ 0x9e37) & 0xffff)
+    for _ in range(int(26 * strength)):
+        gx, gy = rng.randint(0, w - 1), rng.randint(0, h - 1)
+        px = lay.get_at((gx, gy))
+        if px.a > 40:
+            d = [(14, 12, 14), (34, 30, 28), (74, 66, 52)][rng.randint(0, 2)]
+            lay.set_at((gx, gy), (d[0], d[1], d[2], px.a))
+
+
+def _draw_cultist(surf, x, y, facing, seed, t):
+    """Draw the cultist on a private layer, brush it with the Darkwood
+    grime pass, then blit it down -- so the grime/shadow read at sprite
+    level, not just from the frame grade."""
+    LX, LY = 22, 40
+    lay = pygame.Surface((44, 66), pygame.SRCALPHA)
+    _draw_cultist_raw(lay, LX, LY, facing, seed, t)
+    _darkwood_pass(lay, seed)
+    surf.blit(lay, (int(x) - LX, int(y) - LY))
+
+
+def _draw_cultist_raw(surf, x, y, facing, seed, t):
+    """Assemble a hide-coat cultist with a seeded carved mask + directional
+    facing. Drawn at the game's ~32px sprite scale."""
+    rng = random.Random(seed & 0xffff)
+    variant = (seed >> 3) % 6
+    # A wrong, limping lurch: shoulders rock (lean), the body rises each step
+    # (bob) and DRAGS lower on the off-step (hitch), and the ragged hem swings
+    # opposite with cloth-lag (sway). Reads as a taken body shambling.
+    ph = t * 3.0 + x * 0.02
+    step = math.sin(ph)
+    lean = int(step * 2)
+    bob = int(abs(step) * 2)
+    hitch = int(max(0.0, -step) * 2)
+    sway = int(math.sin(ph - 0.8) * 2)
+    top = y - 10 - bob + hitch
+    fx, fy = facing
+    if abs(fx) > abs(fy):
+        view, mdir = "side", (1 if fx > 0 else -1)
+    elif fy < 0:
+        view, mdir = "back", 0
+    else:
+        view, mdir = "front", 0
+    _cult_hide_coat(surf, x, y, top, rng, lean, sway)
+    # the masked head LEADS the lurch (tips a touch past the shoulders)
+    hcx, hcy = x + lean + int(step * 1), top - 1
+    pygame.draw.ellipse(surf, (32, 26, 20), (hcx - 7, hcy - 7, 14, 15))   # fur hood
+    pygame.draw.arc(surf, _HIDE_LO, (hcx - 7, hcy - 7, 14, 15), 0.3, 2.9, 1)
+    for a in range(20, 161, 28):                                          # fur ruff
+        r = math.radians(a)
+        ex, ey = hcx + math.cos(r) * 7, hcy + math.sin(r) * 7
+        pygame.draw.line(surf, _FUR, (ex, ey),
+                         (ex + math.cos(r) * 2, ey + math.sin(r) * 2), 1)
+    if view == "back":
+        # No face: a mask-tie strap across the hood + the Sign on the hide.
+        pygame.draw.line(surf, _STITCH, (hcx - 5, hcy), (hcx + 5, hcy + 1), 1)
+        _cult_sign(surf, x, top + 14, dim=True, u=0.7)
+        if variant == 1:                                                  # antlers from behind
+            for sgn in (-1, 1):
+                pygame.draw.line(surf, _ANTLER, (hcx + sgn * 3, hcy - 5),
+                                 (hcx + sgn * 7, hcy - 13), 1)
+        return
+    # A fleshy face under the hood -- the mask grafts INTO it (same as the
+    # curse-priest), so the cultist reads as a person He's taken, not a void.
+    pygame.draw.ellipse(surf, _VP_FLESH, (hcx - 5, hcy - 6, 10, 13))
+    pygame.draw.ellipse(surf, _VP_FLESH_LO, (hcx - 5, hcy - 6, 10, 13), 1)
+    _cult_mask(surf, hcx, hcy, variant, view, mdir)
+
+
+_VP_HIDE = (58, 50, 42); _VP_LO = (30, 26, 23); _VP_HI = (92, 82, 64)
+_VP_PALE = (222, 212, 186); _VP_PALE_LO = (150, 142, 120); _VP_PIT = (18, 14, 16)
+_VP_GT = (196, 150, 42); _VP_GHI = (236, 204, 64)
+# Muddy, desaturated -- gore is a dark red-brown (implied, never bright).
+_VP_FLESH = (150, 134, 124); _VP_FLESH_LO = (104, 92, 84)
+_VP_MOUTH = (28, 16, 16); _VP_TEETH = (150, 142, 124)
+_VP_GOR = (84, 46, 40); _VP_GOR_LO = (54, 30, 28)
+
+
+def _scream_face(surf, cx, cy, r=3, gold=False):
+    """A small fused, screaming face -- one of the people He took, crying out
+    from inside the torn body."""
+    cx, cy = int(cx), int(cy)
+    pygame.draw.ellipse(surf, _VP_FLESH, (cx - r, cy - r, 2 * r, 2 * r + 1))
+    pygame.draw.ellipse(surf, _VP_FLESH_LO, (cx - r, cy - r, 2 * r, 2 * r + 1), 1)
+    pygame.draw.circle(surf, _VP_PIT, (cx - r // 2 - 1, cy - 1), 1)
+    pygame.draw.circle(surf, _VP_PIT, (cx + r // 2, cy - 1), 1)
+    pygame.draw.ellipse(surf, _VP_MOUTH, (cx - 1, cy + 1, 3, 3))   # open mouth
+    if gold:
+        _cult_glow(surf, cx, cy + 1, 2, 44)
+
+
+def _curse_bloom(lay, bx, by, t, curse):
+    """His light is only a faint UNDERLIGHT now -- the flesh leads. A dim glow
+    welling deep in the wound, no bright seam, no sparks. Drawn after the
+    grime pass so the hint survives, but kept very low so the gore/flesh of
+    the writhing wound is what reads, not the gold."""
+    bx, by = int(bx), int(by)
+    for gy in range(by - 4, by + 8, 4):
+        _cult_glow(lay, bx, gy, 2, int(6 + curse * 16))
+
+
+def _pallid_mask(surf, sx, mcy, view, mdir, bloom):
+    """His Pallid Mask -- a clear, carved pale face -- grafted onto the
+    priest's head. Reads as a mask first: a defined pale oval, two sunken
+    eye-voids, a carved bone-lit edge, a hairline shatter-crack, a blank
+    mouth. The graft (the wound where it meets flesh) is the secondary note:
+    a dark gore seam down one side and the human socket gone dark. One void
+    kindles dim gold from behind as the curse casts."""
+    # The flesh/bone head it's grafted onto (shows at the jaw + one side).
+    pygame.draw.ellipse(surf, _VP_FLESH, (sx - 7, mcy - 8, 14, 17))
+    pygame.draw.ellipse(surf, _VP_FLESH_LO, (sx - 7, mcy - 8, 14, 17), 1)
+    # The mask plate -- a clear pale carved face.
+    if view == "front":
+        mr = pygame.Rect(sx - 6, mcy - 7, 12, 15)
+        evs = [(sx - 3, mcy - 1), (sx + 3, mcy - 1)]
+    else:                                            # profile: narrower, shifted
+        mr = pygame.Rect(sx - 5 + mdir * 2, mcy - 7, 10, 15)
+        evs = [(sx + mdir * 2, mcy - 1)]
+    pygame.draw.ellipse(surf, _VP_PALE, mr)
+    pygame.draw.ellipse(surf, _VP_PALE_LO, mr, 1)
+    pygame.draw.line(surf, (236, 228, 208),          # carved bone-lit edge
+                     (mr.left + 1, mr.top + 3), (mr.left + 1, mr.bottom - 3), 1)
+    pygame.draw.line(surf, _VP_PALE_LO, (sx, mcy - 7), (sx - 1, mcy + 6), 1)  # shatter-crack
+    for (ex, ey) in evs:                             # sunken eye-voids
+        pygame.draw.circle(surf, _VP_FLESH_LO, (ex, ey + 1), 2)
+        pygame.draw.circle(surf, _VP_PIT, (ex, ey), 2)
+        pygame.draw.circle(surf, (4, 3, 6), (ex, ey), 1)
+    pygame.draw.line(surf, _VP_MOUTH, (sx - 2, mcy + 5), (sx + 2, mcy + 5), 1)  # blank mouth
+    # The graft: a gore seam down the right edge + the human socket gone dark.
+    pygame.draw.line(surf, _VP_GOR, (mr.right - 1, mcy - 4), (mr.right, mcy + 5), 1)
+    pygame.draw.line(surf, _VP_GOR_LO, (mr.left, mcy + 4), (mr.left - 1, mcy + 8), 1)
+    if bloom > 0.4 and evs:                           # His light behind the face (faint)
+        _cult_glow(surf, evs[0][0], evs[0][1], 2, 10 + int(bloom * 16))
+
+
+def _draw_curse_priest_raw(surf, x, y, t, facing=(0, 1), curse=0.0):
+    """The curse-priest -- a cultist His King has opened and is wearing,
+    rendered as SUGGESTION in our muddy register (not a gory totem). ONE
+    bold wrong note: the Pallid Mask grafted into a fleshy face (a dark
+    graft-seam, the human eye gone to a socket), and a single torn seam down
+    the torso with ONE half-submerged face surfacing from the dark. Gore is
+    implied by dark torn edges, never bright red; His light is a dim seep
+    that wells up the seam as it casts (`curse`). Arms raised in the binding
+    cast. Directional: from behind, the split spine + one surfacing face, no
+    front face -- so you can read its gaze and break the rite."""
+    fx, fy = facing
+    if abs(fx) > abs(fy):
+        view, mdir = "side", (1 if fx > 0 else -1)
+    elif fy < 0:
+        view, mdir = "back", 0
+    else:
+        view, mdir = "front", 0
+    lean = int(math.sin(t * 1.2 + x * 0.02))
+    rite = math.sin(t * 1.3) * 0.5 + 0.5
+    ah = int((0.45 * rite + 0.55 * curse) * 9)
+    bloom = curse
+    top = y - 17
+    sx = x + lean
+    # Hunched hide body: lit shoulder rim, fur collar, ragged hem.
+    body = [(x - 13, y + 22), (x - 9 + lean, top), (x + 9 + lean, top), (x + 13, y + 22)]
+    pygame.draw.polygon(surf, _VP_HIDE, body)
+    pygame.draw.polygon(surf, _VP_LO, body, 1)
+    pygame.draw.line(surf, _VP_HI, (x - 9 + lean, top + 1), (x - 12, y + 16), 1)
+    for fc in range(-9, 10, 2):
+        pygame.draw.line(surf, (104, 92, 72), (x + fc, top + 1), (x + fc, top - 2), 1)
+    for hx in range(-12, 13, 3):
+        pygame.draw.line(surf, _VP_LO, (x + hx, y + 22),
+                         (x + hx, y + 22 + random.Random(hx).randint(2, 6)), 2)
+    # Arms raised in the binding cast.
+    for s in (-1, 1):
+        if view == "side" and mdir and s != mdir:
+            pygame.draw.line(surf, _VP_HIDE, (x + s * 6, top + 5),
+                             (x + s * 10, top - 3 - ah), 2)
+            continue
+        e1 = (x + s * 8, top + 5); e2 = (x + s * 15, top - 5 - ah)
+        hh = (x + s * 17, top - 14 - ah)
+        pygame.draw.line(surf, _VP_HIDE, e1, e2, 3)
+        pygame.draw.line(surf, _VP_HIDE, e2, hh, 2)
+        pygame.draw.line(surf, _VP_LO, e1, e2, 1)
+    # A face surfacing from the wound -- `gape` is its mouth, `r` its size.
+    def _surface_face(cx, cy, gape=3, r=4):
+        cx, cy = int(cx), int(cy)
+        pygame.draw.ellipse(surf, _VP_FLESH, (cx - r, cy - r - 1, 2 * r, 2 * r + 2))
+        pygame.draw.ellipse(surf, _VP_FLESH_LO, (cx - r, cy - r - 1, 2 * r, 2 * r + 2), 1)
+        ex = max(1, r // 2)
+        pygame.draw.circle(surf, _VP_PIT, (cx - ex, cy - 2), 1)
+        pygame.draw.circle(surf, _VP_PIT, (cx + ex, cy - 2), 1)
+        pygame.draw.ellipse(surf, _VP_MOUTH, (cx - 2, cy + 1, 5, max(2, gape)))
+        pygame.draw.line(surf, _VP_TEETH, (cx - 2, cy + 2), (cx + 2, cy + 2), 1)
+    if view == "back":
+        # Back of the masked head: a bone dome + the mask's tie-strap, no face.
+        pygame.draw.ellipse(surf, _VP_FLESH_LO, (sx - 6, top - 12, 12, 14))
+        pygame.draw.line(surf, (140, 130, 110), (sx - 5, top - 6), (sx + 5, top - 5), 1)
+        pygame.draw.line(surf, _VP_GOR, (sx, top + 4), (sx, y + 12), 2)
+        _surface_face(sx, top + 16, 3 + int(bloom * 3))
+        _cult_glow(surf, sx, top + 14, 2, 14 + int(bloom * 22))
+        return
+    # The body PEELS open as the curse casts -- the FLESH leads, gold is only
+    # a hint. Raw flesh fills the torso; the trapped face strains up out of
+    # it; and the hide is pulled back into gore-torn flaps that gape wider as
+    # it casts (sp grows). The skin flaps re-cover the sides, so the face is
+    # only revealed as the wound opens.
+    wob = int(math.sin(t * 4.5) * bloom * 1.6)
+    sp = 3 + int(bloom * 5)
+    pygame.draw.polygon(surf, _VP_FLESH_LO,                       # raw flesh inside
+                        [(sx - 9, top + 6), (sx + 9, top + 6),
+                         (sx + 8, y + 12), (sx - 8, y + 12)])
+    rise = int(bloom * 5)
+    gape = 3 + int(bloom * 5) + (1 if math.sin(t * 5.0) > 0 else 0)
+    _surface_face(sx + wob, top + 19 - rise, gape, r=5)          # bigger, straining
+    if bloom > 0.35:                                             # gore weeps from the wound
+        dl = 4 + int((math.sin(t * 3.0) * 0.5 + 0.5) * 7)
+        pygame.draw.line(surf, _VP_GOR, (sx - 1, y + 9), (sx - 1, y + 9 + dl), 2)
+        pygame.draw.line(surf, _VP_GOR_LO, (sx + 2, y + 9), (sx + 2, y + 9 + dl - 2), 1)
+    for s in (-1, 1):                                           # peeled-back skin flaps
+        inner = sx + s * sp + wob
+        pygame.draw.polygon(surf, _VP_HIDE,
+                            [(inner, top + 6), (sx + s * 13, top + 5),
+                             (sx + s * 12, y + 12), (inner, y + 12)])
+        for ny in range(top + 8, y + 10, 3):                   # gore-torn jagged edge
+            pygame.draw.line(surf, _VP_GOR,
+                             (inner - s * random.Random(ny).randint(0, 2), ny),
+                             (inner, ny + 1), 1)
+    # The Pallid Mask grafted into the head (clear carved face; see helper).
+    _pallid_mask(surf, sx, top - 4, view, mdir, bloom)
+
+
 def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False,
-                    birth=None, gait=None, threat=None):
+                    birth=None, gait=None, threat=None, seed=0, curse=0.0):
     """`blink=True` suppresses eye dots for NPC kinds that have human
     eyes (mom/kid/bandit/policeman). Used by Game.draw to make a single
     NPC's eyes vanish for a single frame -- a subliminal wrongness.
@@ -292,96 +679,25 @@ def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False,
         pygame.draw.rect(surf, outline, (x - 6, y + 14, 5, 8))
         pygame.draw.rect(surf, outline, (x + 1, y + 14, 5, 8))
     elif kind == "cultist":
-        # Hooded cultist -- a grim, near-black robe and a deep cowl that
-        # is simply a void; the cult has taken his face. He trudges: the
-        # whole body rocks and rises on each step so he reads as
-        # advancing on you, not idling. Two cold, recessed pinpricks of
-        # sick light sit far back in the cowl -- menace, not glow.
+        # Stitched animal-hide coat + a carved wooden mask (one of six,
+        # chosen per individual by `seed`). Directional: mask front/side,
+        # bare fur hood + Sign from behind so you can read its gaze. See
+        # _draw_cultist + the mask helpers at the top of this module.
         t = pygame.time.get_ticks() / 1000.0
-        gait = math.sin(t * 3.0 + x * 0.02)
-        lean = int(gait * 2)                      # rock the body
-        bob = int(abs(math.sin(t * 3.0)) * 2)     # rise on each step
-        robe = (50, 45, 42)                       # grim charcoal
-        robe_lo = (28, 25, 24)
-        cowl = (12, 11, 13)                       # black void
-        top = y - 10 - bob
-        pygame.draw.polygon(surf, robe,
-                            [(x - 9, y + 16), (x - 7 + lean, top),
-                             (x + 7 + lean, top), (x + 9, y + 16)])
-        pygame.draw.polygon(surf, robe_lo,
-                            [(x - 9, y + 16), (x - 7 + lean, top),
-                             (x + 7 + lean, top), (x + 9, y + 16)], 1)
-        # Deep cowl -- a black hood, the face a hole.
-        head_cy = top - 1
-        pygame.draw.ellipse(surf, cowl, (x - 7 + lean, head_cy - 7, 14, 14))
-        # Two cold recessed eyes (dim sick amber), blinking on a cycle.
-        if (t + x * 0.05) % 4.0 > 0.2:
-            pygame.draw.circle(surf, (116, 100, 50), (x - 3 + lean, head_cy), 1)
-            pygame.draw.circle(surf, (116, 100, 50), (x + 3 + lean, head_cy), 1)
-        # Dried blood down the robe + a black hem.
-        pygame.draw.line(surf, (64, 16, 14), (x, y + 2), (x + 1, y + 15), 2)
-        pygame.draw.line(surf, (16, 12, 12),
-                         (x - 8, y + 16), (x + 8, y + 16), 2)
+        _draw_cultist(surf, x, y, facing, seed, t)
     elif kind == "curse_priest":
-        # The cult's curse-priest -- the special cultist that binds the
-        # Watchers to you. Taller and gaunter than the rank-and-file:
-        # a blood-dark robe, a low hood over a pale ruined face with a
-        # stitched-shut mouth and hollow sockets, hands raised mid-rite
-        # with ichor dripping from the fingertips. A vertical row of
-        # small yellow curse-eyes opens down its chest -- the curse,
-        # looking out. Sways, twitches, and drips.
+        # The cult's curse-priest -- binds the Watchers to you. Drawn on a
+        # private layer and run through the same Darkwood grime brush as the
+        # rank-and-file cultist so the whole cult reads in one register.
         t = pygame.time.get_ticks() / 1000.0
-        sway = math.sin(t * 1.2 + x * 0.02)
-        lean = int(sway)
-        robe = (54, 40, 44)
-        robe_lo = (32, 22, 26)
-        blood = (122, 24, 22)
-        face = (190, 180, 165)
-        face_lo = (120, 110, 100)
-        # Tall robe body.
-        pygame.draw.polygon(surf, robe,
-                            [(x - 10, y + 18), (x - 7 + lean, y - 18),
-                             (x + 7 + lean, y - 18), (x + 10, y + 18)])
-        pygame.draw.polygon(surf, robe_lo,
-                            [(x - 10, y + 18), (x - 7 + lean, y - 18),
-                             (x + 7 + lean, y - 18), (x + 10, y + 18)], 1)
-        # Blood down the robe front.
-        pygame.draw.line(surf, blood, (x + lean, y - 14), (x, y + 16), 2)
-        pygame.draw.line(surf, (70, 14, 12), (x - 3, y + 2), (x - 2, y + 16), 1)
-        # A slow rite: the arms rise and fall together, ichor beading
-        # off the fingertips. They lift highest as the curse-eyes flare
-        # (below) -- that upswing is the moment it binds you.
-        rite = math.sin(t * 1.3) * 0.5 + 0.5          # 0..1, arms down..up
-        hy = y - 4 - int(rite * 9)
-        for s in (-1, 1):
-            hx = x + s * (9 + int(rite * 3))
-            pygame.draw.line(surf, robe, (x + s * 5, y - 8), (hx, hy), 3)
-            pygame.draw.circle(surf, face, (hx, hy), 2)
-            drip = (t * 0.9 + (s + 1) * 0.4) % 1.0
-            pygame.draw.circle(surf, blood, (hx, hy + 2 + int(drip * 10)), 1)
-        # Hood + ruined pale face.
-        pygame.draw.ellipse(surf, robe_lo, (x - 7 + lean, y - 26, 14, 16))
-        pygame.draw.ellipse(surf, face, (x - 4 + lean, y - 23, 8, 11))
-        pygame.draw.ellipse(surf, face_lo, (x - 4 + lean, y - 23, 8, 11), 1)
-        # Hollow sockets -- no light there.
-        pygame.draw.circle(surf, (12, 8, 10), (x - 2 + lean, y - 19), 1)
-        pygame.draw.circle(surf, (12, 8, 10), (x + 2 + lean, y - 19), 1)
-        # Stitched-shut mouth.
-        my = y - 14
-        pygame.draw.line(surf, (60, 20, 22),
-                         (x - 3 + lean, my), (x + 3 + lean, my), 1)
-        for sx in range(-3, 4, 2):
-            pygame.draw.line(surf, (40, 12, 14),
-                             (x + lean + sx, my - 1), (x + lean + sx, my + 1), 1)
-        # A vertical row of small curse-eyes down the chest, flaring
-        # sick-bright on the rite's upswing -- the curse, looking out.
-        ecol = (150 + int(rite * 55), 120 + int(rite * 50), 56)
-        for i in range(3):
-            if (t * 1.1 + i * 0.8) % 3.0 > 0.3:
-                pygame.draw.circle(surf, ecol, (x + lean, y - 6 + i * 6), 1)
-        # Dark hem.
-        pygame.draw.line(surf, (24, 14, 16),
-                         (x - 9, y + 18), (x + 9, y + 18), 2)
+        LX, LY = 26, 48
+        lay = pygame.Surface((52, 76), pygame.SRCALPHA)
+        _draw_curse_priest_raw(lay, LX, LY, t, facing, curse)
+        _darkwood_pass(lay, seed or 7, strength=0.72)  # muddy, but the form reads
+        if curse > 0.05:
+            lean = int(math.sin(t * 1.2 + LX * 0.02))
+            _curse_bloom(lay, LX + lean, LY, t, curse)
+        surf.blit(lay, (int(x) - LX, int(y) - LY))
     elif kind == "vessel_avatar":
         # A towering Yellow-King vessel with reaching tentacles. Body is
         # the tall_shadow silhouette enlarged + four wiggling tentacles
@@ -443,52 +759,81 @@ def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False,
         pygame.draw.line(surf, (180, 130, 140),
                          (x + 3, y - 7), (x + 3, y - 4), 1)
     elif kind == "watcher":
-        # A Watcher -- the curse made visible. NOT an eye: a tall,
-        # ragged, faceless figure that stands at the edge of sight and
-        # watches. Only the cursed see them. It is half-there -- it
-        # phases on a slow sine, an apparition you can never quite fix
-        # on -- and it looms a little nearer over its cycle. Two faint
-        # sick pinpricks deep in the cowl are the only colour: the gaze.
-        # Look straight at it (gaze=True) and the pinpricks go dark.
+        # A Watcher -- the curse made visible. NOT an eye and NOT a vessel:
+        # a tall, too-thin, ragged faceless apparition that stands at the
+        # edge of sight. Only the cursed see it. It is half-there -- it
+        # phases on a slow sine and leaves a faint after-image you can never
+        # fix on -- and it looms a little nearer over its cycle. A deep VOID
+        # cowl where a face should be; two dim sick pinpricks deep inside are
+        # the only colour (His gaze). Look straight at it (gaze=True) and the
+        # pinpricks go dark.
         import pygame as _pg
         t = _pg.time.get_ticks() / 1000.0
-        phase = 0.35 + 0.5 * (math.sin(t * 1.1 + x * 0.01) * 0.5 + 0.5)
+        rng = random.Random(int(x) & 0xffff)
+        phase = 0.32 + 0.5 * (math.sin(t * 1.1 + x * 0.01) * 0.5 + 0.5)
         loom = math.sin(t * 0.5 + x * 0.02) * 0.5 + 0.5      # 0..1, creeps in
-        sway = int(math.sin(t * 0.8 + x * 0.03))
-        layer = _pg.Surface((40, 64), _pg.SRCALPHA)
+        sway = int(math.sin(t * 0.8 + x * 0.03) * 2)
+        layer = _pg.Surface((40, 72), _pg.SRCALPHA)
         bx = 20 + sway
-        base_y = 60
-        h = 38 + int(loom * 8)            # looms taller as it nears
+        base_y = 66
+        h = 48 + int(loom * 10)           # looms taller as it nears
         top = base_y - h
+        shoulders = top + 9
         shroud = (24, 22, 28, 255)
-        shroud_lo = (11, 10, 14, 255)
-        # Tapered shroud -- narrow shoulders to a wide, torn hem.
-        body = [(bx - 4, top + 7), (bx + 4, top + 7),
-                (bx + 10, base_y), (bx - 10, base_y)]
-        _pg.draw.polygon(layer, shroud, body)
-        _pg.draw.polygon(layer, shroud_lo, body, 1)
-        # Ragged hem -- torn strips trailing into the dark.
-        for hx in range(-9, 10, 3):
+        shroud_lo = (12, 11, 15, 255)
+        void = (6, 6, 9, 255)
+        # Ragged, wind-torn shroud: a too-thin tapered silhouette built from
+        # jittered edges (seeded -> stable, doesn't boil), peaked into a hood.
+        steps = 7
+        left, right = [], []
+        for i in range(steps + 1):
+            fr = i / steps
+            yy = shoulders + int(fr * (base_y - shoulders))
+            hw = 2 + fr * 6.5 + rng.uniform(-1.4, 1.4) * (0.3 + fr)
+            left.append((bx - hw, yy))
+            right.append((bx + hw, yy))
+        _pg.draw.polygon(layer, shroud, [(bx, top)] + right + left[::-1])
+        _pg.draw.polygon(layer, shroud_lo, [(bx, top)] + right + left[::-1], 1)
+        # Torn hem: strips trailing into the dark, stirred by the sway.
+        for hx in range(-9, 10, 2):
+            ln = rng.randint(3, 8)
+            dr = int(sway * (hx / 9.0))
             _pg.draw.line(layer, shroud, (bx + hx, base_y - 3),
-                          (bx + hx + 1, base_y + 3 + (hx % 3)), 2)
-        # Drawn-up hood / faceless head.
-        _pg.draw.circle(layer, shroud, (bx, top + 6), 6)
-        _pg.draw.circle(layer, shroud_lo, (bx, top + 7), 5)
-        # Thin reaching arms hinted down the body.
-        _pg.draw.line(layer, shroud_lo, (bx - 4, top + 12), (bx - 8, top + 24), 2)
-        _pg.draw.line(layer, shroud_lo, (bx + 4, top + 12), (bx + 8, top + 24), 2)
-        # The gaze: two faint sick pinpricks (yellow used ONLY here, a
-        # dim light in the dark), unless the player looks straight at it.
+                          (bx + hx + dr, base_y - 3 + ln), 2)
+        # Long, thin, uneven reaching arms hinted down the shroud.
+        _pg.draw.line(layer, shroud_lo, (bx - 3, shoulders + 2),
+                      (bx - 9 + sway, shoulders + 20), 2)
+        _pg.draw.line(layer, shroud_lo, (bx + 3, shoulders + 2),
+                      (bx + 8 - sway, shoulders + 25), 2)
+        # A faint cold rim down one side so the wrong silhouette reads against
+        # the dark without lifting the body out of near-black.
+        _pg.draw.line(layer, (46, 46, 60, 255), (int(left[1][0]) + 1, shoulders + 2),
+                      (int(left[-2][0]) + 1, base_y - 4), 1)
+        # The void cowl: a deep hollow where a face should be, hood-rimmed.
+        _pg.draw.ellipse(layer, void, (bx - 5, top + 1, 11, 14))
+        _pg.draw.arc(layer, shroud_lo, (bx - 6, top - 1, 13, 17), 0.2, 2.95, 2)
+        # The gaze: a faint CONSTELLATION of sick eyes deep in the cowl (His
+        # mass-of-eyes, restrained), blinking on staggered phases -- they all
+        # wink out if the player looks straight at it.
         if not gaze:
-            g = 110 + int(math.sin(t * 2.0 + x) * 25)
-            eye = (g, int(g * 0.85), 38, 255)
-            _pg.draw.circle(layer, eye, (bx - 2, top + 6), 1)
-            _pg.draw.circle(layer, eye, (bx + 2, top + 6), 1)
-            halo = _pg.Surface((40, 64), _pg.SRCALPHA)
-            _pg.draw.circle(halo, (60, 52, 22), (bx, top + 6), 7)
-            layer.blit(halo, (0, 0), special_flags=_pg.BLEND_RGBA_ADD)
-        layer.set_alpha(int(255 * phase))
-        surf.blit(layer, (x - 20, y - base_y))
+            erng = random.Random((int(x) * 7 + 3) & 0xffff)
+            for i in range(6):
+                ex = bx + erng.randint(-3, 3)
+                ey = top + 7 + erng.randint(-4, 4)
+                bl = 0.5 + 0.5 * math.sin(t * 1.6 + i * 1.5 + x)
+                if bl < 0.32:
+                    continue
+                g = int(70 + 48 * bl)
+                _pg.draw.circle(layer, (54, 46, 20, 60), (ex, ey), 2)
+                _pg.draw.circle(layer, (g, int(g * 0.8), 28, 255), (ex, ey), 1)
+        # Half-there: a clear offset after-image, then the figure -- both kept
+        # translucent so the background bleeds through (an apparition).
+        ox = int(x - 20)
+        oy = int(y - base_y)
+        layer.set_alpha(int(230 * phase * 0.5))
+        surf.blit(layer, (ox - sway * 3 - 1, oy - 2))
+        layer.set_alpha(int(230 * phase))
+        surf.blit(layer, (ox, oy))
     elif kind == "glitch_npc":
         for _ in range(30):
             ox = random.randint(-9, 9); oy = random.randint(-12, 8)

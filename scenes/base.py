@@ -1630,6 +1630,12 @@ class Scene:
         self.on_enter_fn = None
         self.on_exit_fn = None
         self.on_interact_fn = None    # called when E pressed and no NPC nearby
+        # Points the [E] prompt should hover over for on_interact_fn-driven
+        # readables/pickups (the case notebook, the cellar Ledger, the Mask
+        # altar...). Without these, scene interactions handled in
+        # on_interact_fn had no cue at all and players walked past them.
+        # Each entry is (x, y, radius). See Game._draw_interact_prompt.
+        self.interactables = []
         self.on_update_fn = None      # called every tick if set: fn(game, scene, dt)
         self.combat = False
         # Optional human-readable name for HUD display. When None,
@@ -1778,6 +1784,12 @@ class Scene:
     def add_item(self, x, y, key, qty=1, on_pickup=None):
         self.items.append({"x": x, "y": y, "key": key, "qty": qty, "on_pickup": on_pickup})
 
+    def add_interactable(self, x, y, radius=40):
+        """Register a point the [E] prompt should hover over -- for
+        readables/pickups resolved in on_interact_fn (which the prompt
+        system otherwise can't see)."""
+        self.interactables.append((x, y, radius))
+
     def find_marker(self, ch):
         for ty, r in enumerate(self.objects):
             for tx, c in enumerate(r):
@@ -1844,6 +1856,16 @@ class Scene:
 
 def tile_footstep(ch):
     return floor_step_sound(ch)
+
+
+def drop_ammo_cache(game, scene, tx, ty, qty, flag):
+    """Place a one-time pistol_ammo pickup at tile (tx, ty), gated by a
+    save flag so re-entering the scene can't farm infinite rounds. Called
+    from a scene's on_enter_fn (needs game.save). Auto-picked on contact."""
+    if game.save.flag(flag):
+        return
+    scene.add_item(tx * TILE + 16, ty * TILE + 16, "pistol_ammo", qty,
+                   on_pickup=lambda g: g.save.set_flag(flag, True))
 
 
 def chest_interact(game, scene, chest_x, chest_y, flag_key, loot,

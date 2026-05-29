@@ -22,15 +22,17 @@ class Player:
         # flips this to False; re-entering requires stepping onto the
         # designated river entry tile.
         self.in_river = False
-        # THRESHOLD sprint state. Held SHIFT pumps speed by 1.7x for
-        # up to sprint_t_max seconds, then enters a sprint_cd_max
-        # cooldown during which sprint cannot fire. Spent state is
-        # reset when the cooldown clears.
+        # THRESHOLD sprint state. Held SHIFT pumps speed by 1.7x and
+        # drains the wind meter. Wind regenerates (sprint_regen) whenever
+        # you are NOT sprinting; only running the meter fully to empty
+        # trips the hard winded lockout (sprint_cd_max) during which
+        # sprint cannot fire.
         self.sprint_active = False
-        self.sprint_t = 3.0          # seconds remaining in current sprint
+        self.sprint_t = 3.0          # seconds of wind remaining
         self.sprint_t_max = 3.0
-        self.sprint_cd = 0.0         # seconds remaining in cooldown
+        self.sprint_cd = 0.0         # winded lockout remaining (full depletion)
         self.sprint_cd_max = 6.0
+        self.sprint_regen = 0.75     # wind recovered per second while not sprinting
         # THRESHOLD desperation melee. A non-lethal shove that STUNS a
         # cultist/shadow for a beat -- never a kill (the King is still
         # the only lethal thing). melee_swing_t drives a brief visual;

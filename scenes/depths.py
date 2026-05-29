@@ -104,6 +104,8 @@ def build_depths_antechamber():
                                      (5 * TILE + 16, 8 * TILE + 16)]))
     _ambient(sc, "cult_breath", 0.18, 6.0, 10.0)
 
+    sc.add_interactable(4 * TILE + 16, 4 * TILE + 16, 36)   # [E] cue for the landing
+
     def _interact(game):
         px, py = game.player.x, game.player.y
         if abs(px - (4 * TILE + 16)) < 36 and abs(py - (4 * TILE + 16)) < 36:
@@ -277,6 +279,7 @@ def build_depths_threshing():
         (10 * TILE + 16, 1 * TILE + 24, "behind"),
     ]
     _ambient(sc, "step_grass", 0.22, 3.5, 6.0)
+    sc.add_interactable(6 * TILE + 16, 5 * TILE + 16, 36)   # [E] cue: the threshing heaps
 
     def _interact(game):
         px, py = game.player.x, game.player.y
@@ -394,6 +397,7 @@ def build_threshold():
     # player who descended can always finish; nothing to soft-lock on.
     lintel_x, lintel_y = 5 * TILE + 16, 5 * TILE + 16
     sc._lintel_pos = (lintel_x, lintel_y)
+    sc.add_interactable(lintel_x, lintel_y, 40)   # [E] cue: seal the Threshold (END IT)
     sc.add_decoration(Decoration(lintel_x, lintel_y - TILE, "smoke"))
 
     def _threshold_on_enter(game, scene):

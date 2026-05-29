@@ -232,10 +232,12 @@ class NPC:
                 self._cult_state = "chase"
                 self._cult_state_t = 0.0
                 self._scout_target = None
-                # PROTOTYPE trigger: a cultist that locks onto the
-                # player blooms into the vessel as it closes.
-                if self.sprite_kind in ("bandit", "cultist"):
-                    self.morph_target = 1.0
+            # A cultist that locks on blooms into His maw -- but ONLY once
+            # the world is corrupt enough (3+ evidence; flagged on the scene
+            # by Game each frame). Below that they stay mundane.
+            if self.sprite_kind in ("bandit", "cultist"):
+                self.morph_target = (1.0 if getattr(scene, "_bloom_enabled",
+                                                    False) else 0.0)
             self._last_seen_pos = (player.x, player.y)
             target = (self._flank_target if self._flank_target
                       else (player.x, player.y))

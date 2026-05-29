@@ -264,18 +264,28 @@ class Decoration:
             pygame.draw.rect(surf, (38, 27, 16), (x + 2, hy, 2, 4))
 
     def _draw_stove(self, surf, x, y):
+        # Cast-iron range drawn canonically facing DOWN (cooktop at top,
+        # oven door + ember toward the bottom = the front). `wall` (N/E/S/W
+        # = the wall it stands against) rotates it so the oven door faces
+        # INTO the room off any wall -- e.g. wall="W" turns the front to
+        # the east. Default "N" keeps the original south-facing look.
         w = int(self.kwargs.get("w", 34)); h = int(self.kwargs.get("h", 40))
-        rx, ry = x - w // 2, y - h // 2
-        pygame.draw.rect(surf, (42, 42, 48), (rx, ry, w, h))                 # body
-        pygame.draw.rect(surf, (60, 60, 68), (rx, ry, w, 2))                 # lit top
-        pygame.draw.rect(surf, (22, 22, 28), (rx, ry + h - 3, w, 3))         # base shadow
-        pygame.draw.rect(surf, (28, 28, 34), (rx, ry, w, h), 1)
-        for cxk in (rx + w // 3, rx + 2 * w // 3):                           # burners
-            pygame.draw.circle(surf, (18, 18, 24), (cxk, ry + 9), 4)
-            pygame.draw.circle(surf, (10, 10, 14), (cxk, ry + 9), 2)
-        pygame.draw.rect(surf, (16, 16, 20), (rx + 4, ry + h - 16, w - 8, 11))   # oven door
-        pygame.draw.rect(surf, (70, 70, 78), (rx + 7, ry + h - 17, w - 14, 2))   # handle
-        pygame.draw.rect(surf, (200, 90, 30), (rx + w // 2 - 5, ry + h - 7, 10, 2))  # ember
+        lay = pygame.Surface((w, h), pygame.SRCALPHA)
+        pygame.draw.rect(lay, (42, 42, 48), (0, 0, w, h))                    # body
+        pygame.draw.rect(lay, (60, 60, 68), (0, 0, w, 2))                    # lit top
+        pygame.draw.rect(lay, (22, 22, 28), (0, h - 3, w, 3))                # base shadow
+        pygame.draw.rect(lay, (28, 28, 34), (0, 0, w, h), 1)
+        for cxk in (w // 3, 2 * w // 3):                                     # burners
+            pygame.draw.circle(lay, (18, 18, 24), (cxk, 9), 4)
+            pygame.draw.circle(lay, (10, 10, 14), (cxk, 9), 2)
+        pygame.draw.rect(lay, (16, 16, 20), (4, h - 16, w - 8, 11))          # oven door
+        pygame.draw.rect(lay, (70, 70, 78), (7, h - 17, w - 14, 2))          # handle
+        pygame.draw.rect(lay, (200, 90, 30), (w // 2 - 5, h - 7, 10, 2))     # ember
+        ang = {"N": 0, "E": -90, "S": 180, "W": 90}.get(
+            self.kwargs.get("wall", "N"), 0)
+        if ang:
+            lay = pygame.transform.rotate(lay, ang)
+        surf.blit(lay, (x - lay.get_width() // 2, y - lay.get_height() // 2))
 
 
     # ---- Northern-MN lodge decor (wall mounts draw face-on like the
@@ -2159,26 +2169,30 @@ class Decoration:
         stone = (94, 92, 90)
         stone_dk = (56, 54, 54)
         moss = (58, 74, 50)
+        # Sit the marker's foot down on its ground shadow (drawn at y+16).
+        # Without this the stone's base rested at the tile centre while the
+        # shadow sat a half-tile lower, so the graves read as floating.
+        b = y + 14
         tx = x + lean
-        top = y - h
+        top = b - h
         # Turned dirt at the foot.
-        pygame.draw.ellipse(surf, (30, 26, 23), (x - w // 2 - 2, y, w + 4, 7))
+        pygame.draw.ellipse(surf, (30, 26, 23), (x - w // 2 - 2, b, w + 4, 7))
         if cross:
-            pygame.draw.line(surf, stone, (tx, top), (x, y), 5)
+            pygame.draw.line(surf, stone, (tx, top), (x, b), 5)
             pygame.draw.line(surf, stone, (tx - w // 2, top + h // 3),
                              (tx + w // 2, top + h // 3), 5)
-            pygame.draw.line(surf, stone_dk, (tx, top), (x, y), 1)
+            pygame.draw.line(surf, stone_dk, (tx, top), (x, b), 1)
         else:
-            pts = [(x - w // 2, y), (x - w // 2 + lean, top + 5),
+            pts = [(x - w // 2, b), (x - w // 2 + lean, top + 5),
                    (tx - w // 4, top), (tx + w // 4, top),
-                   (x + w // 2 + lean, top + 5), (x + w // 2, y)]
+                   (x + w // 2 + lean, top + 5), (x + w // 2, b)]
             pygame.draw.polygon(surf, stone, pts)
             pygame.draw.polygon(surf, stone_dk, pts, 1)
             for i in range(2):                 # illegible inscription
                 ly = top + 9 + i * 5
                 lx = x - w // 4 + int(lean * (1 - (ly - top) / h))
                 pygame.draw.line(surf, stone_dk, (lx, ly), (lx + w // 2, ly), 1)
-        pygame.draw.circle(surf, moss, (x - w // 4, y - 2), 2)
+        pygame.draw.circle(surf, moss, (x - w // 4, b - 2), 2)
 
     def _draw_player_car(self, surf, x, y):
         """A faded-red 1990s sedan, parked. Approx 3 tiles wide, 1.5

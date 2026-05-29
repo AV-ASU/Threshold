@@ -239,9 +239,11 @@ def build_graveyard():
         gy = rng.randint(1, 8) * TILE + rng.randint(0, 30)
         sc.add_decoration(Decoration(gx, gy, "grass_tuft"))
 
+    # Hide beside the headstones (on walkable tiles, not ON the rock 'R'
+    # tiles or the bloodstain the middle spot used to sit on).
     sc.hide_spots = [
-        (6 * TILE + 16, 6 * TILE + 24, "behind"),     # middle row stones
-        (9 * TILE + 16, 2 * TILE + 24, "behind"),     # rear row stones
+        (5 * TILE + 16, 6 * TILE + 16, "behind"),     # beside middle-row stone
+        (8 * TILE + 16, 2 * TILE + 16, "behind"),     # beside rear-row stone
         (1 * TILE + 28, 7 * TILE + 16, "behind"),     # west fence
     ]
 
@@ -249,6 +251,8 @@ def build_graveyard():
     # tree line -- a chop-target for the axe that opens onto an empty,
     # long-looted pocket. (Whatever was cached here is long gone.)
     sc.objects[7][13] = "q"
+
+    sc.add_interactable(sc._worn_stone[0], sc._worn_stone[1], 36)  # [E] cue
 
     def _graveyard_interact(game):
         # The worn anonymous headstone.
@@ -428,6 +432,7 @@ def build_backwoods_cabin():
     notepad_y = 9 * TILE + 16
     sc._notepad_pos = (notepad_x, notepad_y)
     sc.add_decoration(Decoration(notepad_x, notepad_y, "wrong_photo"))
+    sc.add_interactable(notepad_x, notepad_y, 40)   # [E] cue for the note
     # Grass / motes
     rng = random.Random(2032)
     for _ in range(18):
@@ -1034,6 +1039,7 @@ def build_cornfield_maze():
             scene._rustle_t = random.uniform(2.5, 6.0)
             game.audio.play("breath", 0.18)
     sc.on_update_fn = _cornfield_maze_on_update
+    sc.add_interactable(sc._scarecrow_pos[0], sc._scarecrow_pos[1], 40)  # [E] cue
 
     def _cornfield_maze_interact(game):
         sx, sy = sc._scarecrow_pos

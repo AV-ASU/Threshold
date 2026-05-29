@@ -318,4 +318,20 @@ def build_woodshed():
                                  "but light draws the eye.")
                 return
     sc.on_interact_fn = _woodshed_interact
+
+    def _woodshed_on_enter(game, scene):
+        # The axe, rope and flashlight had no world object AND no [E] cue
+        # -- three critical items you'd walk right past. Glimmer-mark each
+        # one still on offer and register it for the [E] prompt; drop the
+        # marker once it's been taken.
+        for pos, flag in ((axe_pos, "axe_taken"),
+                          (rope_pos, "rope_taken"),
+                          (flash_pos, "flashlight_taken")):
+            if not game.save.flag(flag):
+                scene.add_decoration(Decoration(pos[0], pos[1], "item_drop"))
+                scene.add_interactable(pos[0], pos[1], 36)
+        # A box of cartridges by the hunting gear (this is a hunting town).
+        from .base import drop_ammo_cache
+        drop_ammo_cache(game, scene, 4, 3, 6, "ammo_woodshed")
+    sc.on_enter_fn = _woodshed_on_enter
     return sc

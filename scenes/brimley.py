@@ -267,6 +267,8 @@ def build_brimley():
             return True                                  # gravel-road corridor
         if ty in (23, 24, 25) and (tx <= 6 or tx >= w - 7):
             return True                                  # fold-loop road both ends
+        if tx in (93, 94, 95) and ty <= 25:
+            return True                                  # entry + well -> main-road connector
         if tx in (47, 48, 49) and ty >= h - 7:
             return True                                  # south macro-loop exit
         if tx in (47, 48, 49) and ty <= 6:
@@ -432,6 +434,41 @@ def build_brimley():
     floor_ll[14][92] = "d"
     for fty in range(15, 17):
         floor_ll[fty][91] = "d"
+
+    # ---- THE MAIN ROAD (navigability pass) ----
+    # The carved tracks above read as faint, wandering footpaths -- easy to
+    # lose in the wrapped meadow. This lays ONE obvious, wide dirt spine the
+    # player can always pick up and follow: a 3-wide E-W road across town
+    # (over the bridge, wrapping at both edges), a connector from the Lodge
+    # entry past the WELL (the central landmark) down to it, and an
+    # east-bank branch to the store/school/kid/barn cluster. Walls, roofs,
+    # bridge planks and open water are never paved; band trees sitting on a
+    # new road tile are cleared so the line stays clean.
+    def _pave(tx, ty):
+        if not (0 <= tx < w and 0 <= ty < h):
+            return
+        if objects_l[ty][tx] in ("W", "r", "$"):
+            return                                   # walls / roofs / bridge planks
+        if floor_ll[ty][tx] == "~":
+            return                                   # open water
+        floor_ll[ty][tx] = "d"
+        if objects_l[ty][tx] in ("T", "p"):
+            objects_l[ty][tx] = "."                  # clear trees off the road
+    # E-W spine: rows 23-25, full width (wraps east-west at the edges).
+    for ry in (23, 24, 25):
+        for tx in range(w):
+            _pave(tx, ry)
+    # Entry square + well -> spine: a 3-wide vertical run on the east side.
+    for tx in (93, 94, 95):
+        for ty in range(7, 26):
+            _pave(tx, ty)
+    for tx in range(94, 99):                          # entry stub to the map edge
+        _pave(tx, 7)
+    # East-bank branch: spine -> the store/school/kid/barn cluster.
+    for tx in (57, 58, 59):
+        for ty in range(25, 74):
+            _pave(tx, ty)
+
     # Stamp the permeable forest band on top of everything else -- trees,
     # ground blotch, de-clump, and hideable bushes -- using the shared
     # helper so every outdoor scene gets the same treatment.
@@ -671,12 +708,12 @@ def build_brimley():
         "Tried it on foot. Same. The corn just hands you back where you started.",
         "[c=dim]You came IN. How did you come IN? ...Tell me how you came in.[/c]",
     ])
-    # The Tisdale boy -- on his own front step.
-    _resident(68, 71, "the Tisdale boy", "kid", [
-        "I'm not allowed past the third row. I counted to a hundred and then I counted again.",
-        "There's a lady in yellow at the back of the field. She waves. You shouldn't wave back.",
-        "[c=dim]Somebody waved back, last spring. They don't live here anymore.[/c]",
-    ], voice="blip_kid", radius=40, movement="idle")
+    # The Tisdale boy lives INSIDE the kid's house (the `kid_house`
+    # scene, kid_dialogue). He used to also stand here on the front step,
+    # but that put a solid NPC right on the `from_kid_house` doorway
+    # spawn (col 68, row 71) -- so leaving the house wedged the player
+    # against him -- and split one child into two. He's now a single NPC,
+    # indoors; nothing stands on the step.
     # Garrick -- the old man at the well. Town centre, watching
     # everyone come and go. The law is hollow now; he says so plainly.
     _resident(91, 12, "Garrick", "old", [
@@ -777,6 +814,25 @@ def build_brimley():
     sc.add_decoration(Decoration(33 * TILE + 16, 25 * TILE + 16, "lantern"))
     sc.add_decoration(Decoration(37 * TILE + 16, 21 * TILE + 16, "creepy_tree"))
     sc.add_decoration(Decoration(29 * TILE + 16, 27 * TILE + 16, "creepy_tree"))
+
+    # ---- Main-road waymarks: signs + a lamp thread to follow ----
+    # A welcome sign where the Lodge road comes in, directional signs at the
+    # spine's junctions (the well, the town cluster, the church over the
+    # bridge), and a run of lamps along the main road -- the lit thread the
+    # player can always pick up and follow across the wrapped town.
+    sc.add_decoration(Decoration(97 * TILE + 16, 8 * TILE + 16, "town_sign",
+                                 text="BRIMLEY"))
+    sc.add_decoration(Decoration(92 * TILE + 16, 22 * TILE + 16, "town_sign",
+                                 text="WELL"))
+    sc.add_decoration(Decoration(60 * TILE + 16, 26 * TILE + 16, "town_sign",
+                                 text="TOWN"))
+    sc.add_decoration(Decoration(37 * TILE + 16, 22 * TILE + 16, "town_sign",
+                                 text="CHURCH"))
+    for lx in (12, 24, 46, 70, 88):                  # lamps along the E-W spine
+        sc.add_decoration(Decoration(lx * TILE + 16, 22 * TILE + 16, "lantern"))
+    sc.add_decoration(Decoration(95 * TILE + 16, 16 * TILE + 16, "lantern"))
+    sc.add_decoration(Decoration(60 * TILE + 16, 45 * TILE + 16, "lantern"))
+    sc.add_decoration(Decoration(60 * TILE + 16, 64 * TILE + 16, "lantern"))
 
     # Break the tidy boxes: a tipped wheelbarrow by the store, a dead
     # filling-station pump stranded on the lane, mud tracked off the path.
@@ -1058,5 +1114,15 @@ def build_brimley():
             ]
             game.dialog.show(line, speaker="", voice="blip_soft",
                              portrait="narrator")
+    # [E] cues for the interactions resolved in _brimley_interact -- the
+    # car (escape), the well (the only way down), the woodshed door, the
+    # tool barrow and the payphone all had NO prompt before, so the player
+    # had to guess where to press E. Radii match the handler's checks.
+    sc.add_interactable(sc._car_pos[0], sc._car_pos[1], 40)
+    sc.add_interactable(sc._well_pos[0], sc._well_pos[1], 36)
+    sc.add_interactable(sc._shed_door_pos[0], sc._shed_door_pos[1], 40)
+    sc.add_interactable(sc._barrow_pos[0], sc._barrow_pos[1], 36)
+    sc.add_interactable(sc._payphone_pos[0], sc._payphone_pos[1], 40)
+
     sc.on_interact_fn = _brimley_interact
     return sc

@@ -121,7 +121,8 @@ def build_curse_grove():
     sc.add_npc(priest)
     # Hide spots so a player who stumbles in can retreat in cover.
     sc.hide_spots = [
-        (3 * TILE + 16, 5 * TILE + 16, "behind"),    # behind west tree
+        (2 * TILE + 16, 6 * TILE + 16, "behind"),    # behind west tree
+                                                     # (was on the bloodstain)
         (11 * TILE + 16, 5 * TILE + 16, "behind"),   # behind east tree
         (1 * TILE + 16, 5 * TILE + 16, "behind"),    # by the wall
     ]
@@ -271,15 +272,20 @@ def build_highway_walk():
     # because the world wraps, they appear to walk forever. The
     # waypoint loops them along row 4 from col 30 -> 58 -> 30 (the
     # wrap eats the seam). They do not stop, do not turn.
-    walker_a = NPC(30 * TILE + 16, 4 * TILE + 16, "A man",
-                   "old", movement="patrol",
+    # They are not here to be met -- they're the locals who already walked
+    # out and never arrived. Non-solid (you pass through them; they're
+    # ahead of you, not blocking) and no_prompt (no [E] over them, or they
+    # read as ordinary random NPCs you can talk to). The road just keeps
+    # them ahead of you forever.
+    walker_a = NPC(30 * TILE + 16, 4 * TILE + 16, "A figure on the road",
+                   "old", movement="patrol", solid=False, no_prompt=True,
                    waypoints=[(30 * TILE + 16, 4 * TILE + 16),
                               (58 * TILE + 16, 4 * TILE + 16)])
     walker_a.facing = (1, 0)
     walker_a.lock_facing = True
     sc.add_npc(walker_a)
-    walker_b = NPC(35 * TILE + 16, 4 * TILE + 16, "A man",
-                   "old", movement="patrol",
+    walker_b = NPC(35 * TILE + 16, 4 * TILE + 16, "A figure on the road",
+                   "old", movement="patrol", solid=False, no_prompt=True,
                    waypoints=[(35 * TILE + 16, 4 * TILE + 16),
                               (58 * TILE + 16, 4 * TILE + 16)])
     walker_b.facing = (1, 0)

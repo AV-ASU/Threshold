@@ -13,6 +13,17 @@ import time
 
 ITEM_DEFS = {
     # ---- Core items (in circulation) ----
+    "pistol":        {"name": "Revolver",
+                       "kind": "key",
+                       "desc": "Your sidearm. Left-click fires it in "
+                               "the way you're facing. While the case is "
+                               "still shallow a clean shot drops a cultist; "
+                               "once you understand too much (3+ evidence) the "
+                               "rounds only stagger them -- the deeper you "
+                               "see, the less the world lets you kill."},
+    "pistol_ammo":   {"name": "Cartridges",
+                       "kind": "key",
+                       "desc": "Pistol rounds. Never as many as you'd like."},
     "woodshed_key":  {"name": "Woodshed Key",
                        "kind": "key",
                        "desc": "A key."},
@@ -91,6 +102,13 @@ class Inventory:
 
     def has(self, key):
         return any(k == key for k, _ in self.items)
+
+    def count(self, key):
+        """How many of `key` are stacked (0 if none) -- used for ammo."""
+        for k, q in self.items:
+            if k == key:
+                return q
+        return 0
 
     def equip(self, key):
         d = ITEM_DEFS.get(key)

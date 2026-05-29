@@ -254,6 +254,12 @@ def build_fisherman_cottage():
         (3 * TILE + 16, 2 * TILE + 24, "behind"),
         (7 * TILE + 16, 2 * TILE + 24, "under"),
     ]
+
+    def _fc_on_enter(game, scene):
+        # The lawman's cartridges -- the best ammo source in town (one-time).
+        from .base import drop_ammo_cache
+        drop_ammo_cache(game, scene, 8, 4, 6, "ammo_sheriff")
+    sc.on_enter_fn = _fc_on_enter
     return sc
 
 
@@ -326,6 +332,7 @@ def build_haunted_house():
     hatch_y = 5 * TILE + 16
     sc.add_decoration(Decoration(hatch_x, hatch_y, "cellar_hatch"))
     sc._farmhouse_hatch = (hatch_x, hatch_y)
+    sc.add_interactable(hatch_x, hatch_y, 36)   # [E] cue for the sealed hatch
 
     sc.hide_spots = [
         (2 * TILE + 16, 4 * TILE + 24, "behind"),

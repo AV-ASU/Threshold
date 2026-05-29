@@ -63,8 +63,8 @@ def check_vignette_paints(g):
     actually draw. Fill the screen with a sentinel colour, invoke each
     method, and confirm pixels changed."""
     errors = 0
-    g.load_scene_now("brimley", "default")   # an OUTDOOR_SCENES key
-    g.pursuer_proximity = 0.95               # high proximity -> overlays fire
+    g.load_scene_now("our_house_area", "default")   # an OUTDOOR_SCENES key
+    g.visibility = 0.95                      # late-game -> tighter overlay fires
     g.stillness_t = 10.0                     # tightest vignette level
     sentinel = (123, 45, 67)
     for meth in ("_draw_vignette", "_draw_outdoor_vignette"):

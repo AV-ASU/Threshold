@@ -341,6 +341,44 @@ class DialogueBox:
             pygame.draw.rect(surf, (40, 40, 50), (cx + 2, cy - 6, 6, 5), 1)
             pygame.draw.line(surf, (40, 40, 50), (cx - 2, cy - 4), (cx + 2, cy - 4), 1)
             pygame.draw.line(surf, C_BLACK, (cx - 5, cy + 4), (cx + 5, cy + 4), 1)
+        elif kind == "clerk":
+            # The Lodge Clerk: pale, neat side-parted dark hair, a thin
+            # host's smile that never warms. Distinct from the Preacher.
+            pygame.draw.circle(surf, (236, 216, 196), (cx, cy - 6), 16)
+            pygame.draw.rect(surf, (40, 34, 30), (cx - 16, cy - 22, 32, 8))   # hair mass
+            pygame.draw.rect(surf, (40, 34, 30), (cx - 16, cy - 14, 5, 6))    # side fall
+            pygame.draw.line(surf, (60, 52, 46), (cx + 3, cy - 22),
+                             (cx + 3, cy - 15), 1)                            # part
+            pygame.draw.circle(surf, C_BLACK, (cx - 5, cy - 5), 2)
+            pygame.draw.circle(surf, C_BLACK, (cx + 5, cy - 5), 2)
+            pygame.draw.arc(surf, C_BLACK, (cx - 6, cy + 1, 12, 7),
+                            math.pi, 2 * math.pi, 1)  # thin upturned smile
+        elif kind == "preacher":
+            # The Preacher: gaunt, grey, a white clerical collar, solemn.
+            pygame.draw.circle(surf, (214, 198, 182), (cx, cy - 6), 16)
+            pygame.draw.rect(surf, (150, 150, 156), (cx - 15, cy - 21, 30, 7))  # grey hair
+            pygame.draw.circle(surf, C_BLACK, (cx - 5, cy - 5), 2)
+            pygame.draw.circle(surf, C_BLACK, (cx + 5, cy - 5), 2)
+            pygame.draw.line(surf, (70, 50, 50), (cx - 8, cy - 9), (cx - 2, cy - 8), 1)  # brow
+            pygame.draw.line(surf, (70, 50, 50), (cx + 2, cy - 8), (cx + 8, cy - 9), 1)
+            pygame.draw.arc(surf, C_BLACK, (cx - 5, cy + 4, 10, 7), math.pi, 2 * math.pi, 1)  # frown
+            pygame.draw.rect(surf, (20, 20, 26), (cx - 14, cy + 8, 28, 6))    # black vestment
+            pygame.draw.rect(surf, (235, 235, 235), (cx - 4, cy + 8, 8, 4))   # white collar
+        elif kind in ("sheriff", "guard"):
+            # The Sheriff: brimmed hat, stubble, a hint of a star. Was
+            # falling through to a blank box before ("guard" had no case).
+            pygame.draw.circle(surf, (208, 182, 156), (cx, cy - 4), 16)
+            pygame.draw.rect(surf, (74, 58, 40), (cx - 18, cy - 18, 36, 4))   # hat brim
+            pygame.draw.rect(surf, (88, 70, 48), (cx - 11, cy - 26, 22, 9))   # hat crown
+            pygame.draw.line(surf, (60, 46, 32), (cx - 11, cy - 19),
+                             (cx + 11, cy - 19), 1)
+            pygame.draw.circle(surf, C_BLACK, (cx - 5, cy - 3), 2)
+            pygame.draw.circle(surf, C_BLACK, (cx + 5, cy - 3), 2)
+            pygame.draw.line(surf, C_BLACK, (cx - 5, cy + 6), (cx + 5, cy + 6), 1)
+            # stubble
+            for sx2, sy2 in [(-6, 9), (0, 11), (6, 9), (-3, 10), (3, 10)]:
+                pygame.draw.circle(surf, (120, 100, 84), (cx + sx2, cy + sy2), 1)
+            pygame.draw.circle(surf, (200, 180, 70), (cx + 11, cy + 8), 2)    # badge glint
         elif kind == "bandit":
             # bandanna face cover, dark hood
             pygame.draw.rect(surf, (40, 60, 40), (cx - 18, cy - 22, 36, 16))
@@ -378,3 +416,17 @@ class DialogueBox:
                 py = rect.y + random.randint(2, rect.h - 4)
                 col = (random.randint(0,255), random.randint(0,80), random.randint(0,80))
                 pygame.draw.rect(surf, col, (px, py, 2, 2))
+        else:
+            # Neutral fallback face -- a plain head, so an unmapped portrait
+            # kind (cultist, newcomer, etc.) shows *a* face instead of an
+            # empty box that reads as "everyone has the same blank face".
+            # Tint the skin off the kind's name so unmapped speakers differ
+            # from one another rather than collapsing to one look.
+            seed = sum(ord(c) for c in str(kind))
+            skin = (190 + seed % 40, 170 + (seed // 3) % 40, 150 + (seed // 7) % 40)
+            pygame.draw.circle(surf, skin, (cx, cy - 4), 16)
+            pygame.draw.rect(surf, (40 + seed % 30, 34, 30),
+                             (cx - 16, cy - 20, 32, 7))       # hair
+            pygame.draw.circle(surf, C_BLACK, (cx - 5, cy - 4), 2)
+            pygame.draw.circle(surf, C_BLACK, (cx + 5, cy - 4), 2)
+            pygame.draw.line(surf, C_BLACK, (cx - 4, cy + 5), (cx + 4, cy + 5), 1)

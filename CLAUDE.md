@@ -71,9 +71,18 @@ it renders the procedural sprites to a labelled PNG strip.
   `_king_anchor` (the player's scene-entry point); below `0.90` he
   dissolves; he catches at distance `< 24` **only once `_birth >= 1.0`**
   (the eruption is the grace window). `SAFE_SCENES` never host him.
-- **Curse**: a cultist ritual (`_tick_ritual`) raises the Watcher cap by
-  `WATCHERS_PER_CURSE` (3) per level — repeated curses spiral toward an
-  unshakeable King.
+- **Curse** (the watcher-curse): a cultist ritual (`_tick_ritual` →
+  `_apply_curse`) binds a **Watcher** to you (`_cursed`). It **clones** —
+  up to `WATCHER_MAX` (5) — while you stay **exposed** (in the open;
+  cloning pauses in cover), and **each live Watcher raises the visibility
+  floor** by `WATCHER_FLOOR` (summed, capped at `VIS_FLOOR_TOTAL_CAP`
+  0.92 — just under the King, so it's survivable). You **cure** it by
+  clearing them all (`_tick_watchers`/`_dispel_watcher`): hold one in
+  your **gaze** for `WATCHER_GAZE_DISPEL` s (its eyes go dark, then it
+  dissolves), or put one down instantly with the **axe** arc or a
+  **round**. `SAFE_SCENES` only *suppress* Watchers; they re-form on the
+  way out. The gun and axe **share one weapon slot** (left-click / `K` to
+  use, `Q` to swap).
 - A pursuer reaching the player triggers the **death** sequence
   (`_trigger_death(kind)` → `_tick_death`): `kind="cultist"` shows the
   **CAPTURED** card (taken alive for the hive); `kind="king"` plays the

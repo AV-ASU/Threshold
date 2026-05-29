@@ -24,7 +24,7 @@ from systems.audio import Audio
 from systems.save import Save
 from systems.items import Inventory, ITEM_DEFS
 from entities.player import Player
-from entities.enemy import Enemy
+from entities.enemy import Enemy, Projectile
 from entities.npc import NPC
 from entities.decoration import Decoration
 from scenes import load_scene, tile_footstep, Scene
@@ -102,6 +102,12 @@ SEAMLESS_WORLD_SCENES = OUTDOOR_SCENES | {
     "husk_grove", "scarecrow_ring",
 }
 
+# How far (px) the camera leads the player in their facing direction so
+# they can see where a path/fold is taking them before they walk into it.
+# ~3 tiles -- enough lead to read a bend or a wrap-seam, small enough that
+# the player stays comfortably on screen.
+CAM_LOOKAHEAD = 96
+
 # Dark scenes -- underground / interior cult sites where the
 # flashlight matters. Without the flashlight the screen is heavily
 # dimmed with a small clear circle around the player. With it,
@@ -174,6 +180,16 @@ WATCHERS_PER_CURSE = 3         # Watcher cap added per curse level
 KING_THREAT_NEAR = 48.0        # px: fully real / blazing inside this
 KING_THREAT_FAR = 340.0        # px: a dark void at/beyond this
 WATCHER_SPAWN_INTERVAL = 4.0   # seconds between Watcher manifestations
+# The watcher-curse (replaces the old permanent curse-level spiral): being
+# cursed binds ONE Watcher to you; it clones (up to WATCHER_MAX) while you
+# stay EXPOSED (in the open), and each live Watcher raises the visibility
+# FLOOR. Clear them all -- stare each down for WATCHER_GAZE_DISPEL seconds,
+# or put one down instantly with the axe or a round -- and the curse lifts.
+WATCHER_MAX = 5                # the curse-swarm clones up to this many
+WATCHER_FLOOR = 0.12           # each live Watcher raises the visibility floor
+WATCHER_CLONE_INTERVAL = 7.0   # seconds of EXPOSURE between clones
+WATCHER_GAZE_DISPEL = 2.0      # seconds holding one in your gaze to dissolve it
+VIS_FLOOR_TOTAL_CAP = 0.92     # summed floor stays just under the King (1.0)
 CULT_REGULARS = 2              # roaming cultists kept per cult scene
 CULT_TOPUP_INTERVAL = 8.0      # seconds between cultist (re)spawns
 # Axe swing: the player's only attack, gated on the splitting axe. A
@@ -182,6 +198,15 @@ MELEE_CD = 0.85                # seconds between swings
 MELEE_STUN_DUR = 1.6           # seconds a target stays frozen
 MELEE_REACH = 30               # px from the swing point a target must be
 AXE_SWING_DUR = 0.34           # seconds the swing arc takes to draw
+# The PI's pistol. Tied to the evidence count (NARRATIVE: the more you
+# understand, the less the world lets you kill): below KING_GATE_EVIDENCE a
+# clean shot KILLS a cultist; at/above it the round only STAGGERS. Limited
+# ammo (pistol_ammo); starts with 8.
+GUN_CD = 0.45                  # seconds between shots
+GUN_DMG = 100                  # one clean shot kills any cultist (hp 1 or 30)
+GUN_STUN_DUR = 1.4             # stagger time at 3+ evidence
+GUN_PROJECTILE_SPEED = 340
+GUN_PROJECTILE_COLOR = (236, 232, 214)   # pale lead, distinct from cult amber
 # Visibility rates, per second. Watchers + cultist gaze push the meter
 # up; hiding pulls it down. Enough Watchers out-pace even hiding --
 # that is the spiral toward a King the player can no longer shake.
@@ -375,6 +400,7 @@ class Game:
         self._king = None
         self._king_anchor = None
         self._reinforce_t = 0.0      # cultist reinforcement-wave cooldown
+        self._gun_cd = 0.0           # seconds until the pistol can fire again
 
         # ---- THRESHOLD: cultists, the curse, and Watchers ----
         # Regular cultists roam the outdoor scenes (chaser AI: scout,
@@ -385,9 +411,9 @@ class Game:
         # curse. Each curse manifests Watchers -- staring figures only
         # the cursed sees -- and every Watcher pushes visibility up,
         # marching the player toward a King they can no longer shake.
-        self._curse_level = 0          # permanent within a run; resets on New Game
+        self._cursed = False           # the watcher-curse: active until cleared
         self._watchers = []            # Watcher NPCs currently manifested
-        self._watcher_spawn_t = 0.0    # cadence to the next manifestation
+        self._watcher_clone_t = 0.0    # exposure-gated timer between clones
         self._gaze_count = 0           # cultists watching the player this frame
         self._cult_topup_t = 0.0       # rate-limits cultist (re)spawns per scene
         self.flashlight_on = False     # player intent; only "lit" in DARK scenes
@@ -541,10 +567,11 @@ class Game:
         self._king = None
         self._king_anchor = None
         self._reinforce_t = 0.0
+        self._gun_cd = 0.0
         # Cultists, the curse, and Watchers
-        self._curse_level = 0
+        self._cursed = False
         self._watchers = []
-        self._watcher_spawn_t = 0.0
+        self._watcher_clone_t = 0.0
         self._gaze_count = 0
         self._cult_topup_t = 0.0
         self.flashlight_on = False
@@ -786,6 +813,16 @@ class Game:
     def _update_camera(self, snap=False):
         target_x = self.player.x - SCREEN_W // 2
         target_y = self.player.y - SCREEN_H // 2
+        # Lead the camera in the way the player is walking so they can see
+        # where a path is taking them BEFORE they commit -- vital where the
+        # road bends or folds back on itself. In a torus (wrap) scene the
+        # far side is already drawn as edge-clones, so leading toward a seam
+        # actually shows what's waiting across the fold. Eased by the lerp
+        # below so changing direction doesn't snap the view.
+        fx, fy = self.player.facing
+        flen = math.hypot(fx, fy) or 1.0
+        target_x += (fx / flen) * CAM_LOOKAHEAD
+        target_y += (fy / flen) * CAM_LOOKAHEAD
         scene_w = self.scene.w * Scene.TILE
         scene_h = self.scene.h * Scene.TILE
         if not self.scene.wrap_x:
@@ -957,6 +994,7 @@ class Game:
             self.player.walk_phase = 0
             self.stillness_t += dt
         self.player.melee_cd = max(0, self.player.melee_cd - dt)
+        self._gun_cd = max(0.0, self._gun_cd - dt)
         self.player.melee_swing_t = max(0, self.player.melee_swing_t - dt)
         self.player.invuln = max(0, self.player.invuln - dt)
         for it in list(self.scene.items):
@@ -1132,12 +1170,89 @@ class Game:
                 e._stun_t = MELEE_STUN_DUR
                 e.flash = 0.12
                 hit = True
+        # The axe also instantly dissolves a Watcher of the curse caught in
+        # the arc (silent, free, but you must close to it).
+        for w in list(self._watchers):
+            if math.hypot(w.x - cx, w.y - cy) < MELEE_REACH * 1.4:
+                self._dispel_watcher(w, reason="axe")
+                hit = True
+                break
         if hit:
             self.audio.play("hit", 0.5)
             if not self.save.flag("stun_taught"):
                 self.save.set_flag("stun_taught", True)
                 self.show_notice("You knock it back -- it won't stay "
                                  "down. Run.", duration=2.6)
+
+    def player_fire_gun(self):
+        """Fire the pistol in the facing direction. The evidence count
+        gates the effect (NARRATIVE -- the more you understand, the less
+        the world lets you kill): below KING_GATE_EVIDENCE a clean shot
+        KILLS a cultist; at/above it the round only STAGGERS. Costs one
+        round; only cultists are valid targets (never innocent locals).
+        The report is loud -- the cult hears it and investigates."""
+        p = self.player
+        if (self.state != "playing" or p.hidden is not None
+                or self.dialog.active or self.inv_ui.open
+                or self.notebook_ui.open or self.text_input.active):
+            return
+        if not p.inventory.has("pistol") or self._gun_cd > 0:
+            return
+        if p.inventory.count("pistol_ammo") <= 0:
+            self.audio.play("door_locked", 0.45)        # dry click
+            self.show_notice("Empty. You need cartridges.", duration=1.4)
+            self._gun_cd = GUN_CD
+            return
+        self._gun_cd = GUN_CD
+        p.inventory.remove("pistol_ammo", 1)
+        fx, fy = p.facing
+        proj = Projectile(p.x + fx * 16, p.y + fy * 16, fx, fy,
+                          dmg=GUN_DMG, color=GUN_PROJECTILE_COLOR,
+                          speed=GUN_PROJECTILE_SPEED)
+        proj.friendly = True
+        proj.cult_only = True
+        # A round also puts down a Watcher of the curse in the line of fire
+        # (they're real to the cursed). Fast + loud + costs the round.
+        if self._cursed and self._watchers:
+            self._dispel_watcher_in_line(p, fx, fy)
+        proj.stun_only = (self._evidence_count() >= KING_GATE_EVIDENCE)
+        proj.stun_dur = GUN_STUN_DUR
+        self.scene.projectiles.append(proj)
+        p.melee_swing_t = AXE_SWING_DUR             # brief recoil/muzzle tell
+        p.melee_dir = p.facing
+        self.audio.play("swing", 0.4)
+        self.audio.play("bump", 0.5)               # the report
+        # A gunshot is loud -- feed the cult's investigate AI like a sprint.
+        if self.scene is not None:
+            self.scene._last_step_event = (p.x, p.y, 1.0,
+                                           pygame.time.get_ticks() / 1000.0)
+        # One-time teach about the evidence gate the first time it staggers.
+        if proj.stun_only and not self.save.flag("gun_stun_taught"):
+            self.save.set_flag("gun_stun_taught", True)
+            self.show_notice("The shot barely staggers it now. You know too "
+                             "much -- they won't die for you anymore.",
+                             duration=3.0)
+
+    def _active_weapon(self):
+        """The single slot the gun and axe SHARE. Returns the equipped weapon
+        key if still carried, else auto-latches one the player owns (gun
+        preferred). None if unarmed."""
+        inv = self.player.inventory
+        w = inv.equipped.get("weapon")
+        if w and inv.has(w):
+            return w
+        w = ("pistol" if inv.has("pistol")
+             else "lumber_axe" if inv.has("lumber_axe") else None)
+        inv.equipped["weapon"] = w
+        return w
+
+    def _use_weapon(self):
+        """The main action button (left-click): use the equipped weapon."""
+        w = self._active_weapon()
+        if w == "pistol":
+            self.player_fire_gun()
+        elif w == "lumber_axe":
+            self.player_axe_swing()
 
     def _kill_npc(self, npc):
         """Side-effects of an NPC kill: increment the hidden non-hostile
@@ -1146,8 +1261,14 @@ class Game:
         The NPC is removed from the scene's list on the next step."""
         pan = self.audio.pan_for_world(npc.x, self.player.x)
         self.audio.play("enemy_die", 0.55, pan=pan)
-        n = self.save.arg("nonhostile_kills", 0) + 1
-        self.save.set_arg("nonhostile_kills", n)
+        # Cultist NPCs (the gun's only valid NPC targets) count as hostile
+        # kills; a genuinely non-hostile local would count separately.
+        tag = getattr(npc, "tag", None)
+        is_cult = ((isinstance(tag, str) and tag.startswith("cult_"))
+                   or getattr(npc, "sprite_kind", None)
+                   in ("cultist", "curse_priest"))
+        arg = "enemy_kills" if is_cult else "nonhostile_kills"
+        self.save.set_arg(arg, self.save.arg(arg, 0) + 1)
         for drop in getattr(npc, "drops", []):
             self.scene.items.append({
                 "x": npc.x + random.uniform(-8, 8),
@@ -1986,13 +2107,13 @@ class Game:
                 p.sprint_active = False
             return
         shift_held = keys[pygame.K_LSHIFT] or keys[pygame.K_RSHIFT]
-        # Cooldown drain
+        # Winded lockout drain (only entered on a FULL depletion). Counts
+        # down regardless of input; clearing it restores full wind.
         if p.sprint_cd > 0:
             p.sprint_cd -= dt
             if p.sprint_cd <= 0:
                 p.sprint_cd = 0.0
-                # Cooldown done -- refresh the sprint window.
-                p.sprint_t = p.sprint_t_max
+                p.sprint_t = p.sprint_t_max   # caught your breath
         # Sprint logic
         if shift_held and p.sprint_cd <= 0 and p.sprint_t > 0:
             if not p.sprint_active:
@@ -2006,10 +2127,16 @@ class Game:
             if p.sprint_t <= 0:
                 p.sprint_t = 0.0
                 p.sprint_active = False
-                p.sprint_cd = p.sprint_cd_max
+                p.sprint_cd = p.sprint_cd_max   # blown -> winded lockout
         else:
             if p.sprint_active:
                 p.sprint_active = False
+            # Regenerate wind whenever not actively sprinting and not in
+            # the winded lockout -- the meter recovers on its own, so a
+            # short burst no longer costs a full cooldown wait.
+            if p.sprint_cd <= 0 and p.sprint_t < p.sprint_t_max:
+                p.sprint_t = min(p.sprint_t_max,
+                                 p.sprint_t + dt * p.sprint_regen)
 
     def _tick_heartbeat(self, dt):
         """Player-state heartbeat. Above proximity 0.70 and while the
@@ -2173,16 +2300,18 @@ class Game:
                         and self.scene.key not in DIM_SAFE_SCENES)
                     else 0.0)
         if hidden:
-            # In cover the cult's gaze breaks, but the curse seeps through.
-            rise = n_watch * VIS_WATCHER_HIDDEN + lit_rise
-            self.visibility += dt * (rise - VIS_HIDE_BLEED)
+            # In cover the cult's gaze breaks; only a lit torch still leaks.
+            self.visibility += dt * (lit_rise - VIS_HIDE_BLEED)
         else:
-            rise = (n_watch * VIS_WATCHER_OPEN
-                    + self._gaze_count * VIS_GAZE + lit_rise)
+            rise = self._gaze_count * VIS_GAZE + lit_rise
             self.visibility += dt * (rise - VIS_IDLE_DECAY)
-        # Evidence sets a FLOOR the meter can't bleed below -- the more you
-        # understand, the higher your baseline exposure to the King.
-        self._vis_floor = self._evidence_floor()
+        # FLOORS the meter can't bleed below: evidence (the more you
+        # understand, the higher your baseline) PLUS each live Watcher of the
+        # curse. Capped just under the King so the curse presses you to the
+        # edge but stays survivable -- and thus curable by clearing them.
+        watcher_floor = n_watch * WATCHER_FLOOR
+        self._vis_floor = min(VIS_FLOOR_TOTAL_CAP,
+                              self._evidence_floor() + watcher_floor)
         self.visibility = max(self._vis_floor, min(1.0, self.visibility))
 
     def _evidence_count(self):
@@ -2283,40 +2412,57 @@ class Game:
         self.audio.king_tone(False)
 
     def _apply_curse(self):
-        """Land a permanent curse. Each one deepens the Watcher cap, so
-        repeated rituals march the player toward an unshakeable King."""
-        self._curse_level += 1
-        self.visibility = min(1.0, self.visibility + 0.12)
+        """Land the watcher-curse. Rather than a permanent escalation it
+        BINDS a Watcher to you; it clones (up to WATCHER_MAX) while you stay
+        exposed, and each live Watcher raises the visibility FLOOR. Clear
+        them all -- stare each down, or put one down with the axe or a round
+        -- and the curse lifts. Safe interiors only suppress them."""
         self.audio.play("void_sting", 0.8)
-        if self._curse_level == 1:
-            self.show_notice("Something has been bound to you. You feel "
-                             "watched.", duration=3.5)
+        if not self._cursed:
+            self._cursed = True
+            self._watcher_clone_t = WATCHER_CLONE_INTERVAL
+            self.show_notice("Something has been bound to you. It will not "
+                             "stop watching until you make it.", duration=3.8)
+            self._spawn_watcher()
         else:
-            self.show_notice("The curse deepens. More eyes open.",
-                             duration=3.5)
+            self.visibility = min(1.0, self.visibility + 0.1)
+            self.show_notice("The binding tightens. More will open.",
+                             duration=3.0)
 
     def _tick_watchers(self, dt):
-        """Manifest Watchers from the curse. Each curse level raises the
-        cap by WATCHERS_PER_CURSE; they appear one at a time at the edge
-        of view and stare. Their presence drives visibility up in
-        _tick_visibility. Safe interiors hold them off -- they re-form
-        the instant the player steps back out."""
+        """The watcher-curse. While cursed a Watcher is bound to the player
+        and CLONES (up to WATCHER_MAX) while the player is EXPOSED (in the
+        open); each live Watcher raises the visibility floor (in
+        _tick_visibility). Safe interiors only suppress them -- they re-form
+        on the way out. The curse lifts only when the player clears them all
+        (gaze / axe / shot), handled in _dispel_watcher."""
         if self.scene is None or self.player is None:
             return
-        # Drop any that left the scene's npc list (swept on load/death).
-        self._watchers = [w for w in self._watchers
-                          if w in self.scene.npcs]
-        if self._curse_level <= 0 or self.scene.key in KING_FREE_SCENES:
+        # Drop any swept on load/death.
+        self._watchers = [w for w in self._watchers if w in self.scene.npcs]
+        if not self._cursed:
             if self._watchers:
                 self.scene.npcs = [n for n in self.scene.npcs
                                    if getattr(n, "tag", "") != "watcher"]
                 self._watchers = []
             return
-        cap = self._curse_level * WATCHERS_PER_CURSE
-        self._watcher_spawn_t -= dt
-        if self._watcher_spawn_t <= 0 and len(self._watchers) < cap:
-            self._watcher_spawn_t = WATCHER_SPAWN_INTERVAL
+        if self.scene.key in KING_FREE_SCENES:      # safe room: suppress only
+            if self._watchers:
+                self.scene.npcs = [n for n in self.scene.npcs
+                                   if getattr(n, "tag", "") != "watcher"]
+                self._watchers = []
+            return
+        if not self._watchers:                      # re-form the seed on exit
             self._spawn_watcher()
+            self._watcher_clone_t = WATCHER_CLONE_INTERVAL
+        # Cloning is EXPOSURE-gated: advances in the open, pauses in cover.
+        if self.player.hidden is None and len(self._watchers) < WATCHER_MAX:
+            self._watcher_clone_t -= dt
+            if self._watcher_clone_t <= 0:
+                self._watcher_clone_t = WATCHER_CLONE_INTERVAL
+                self._spawn_watcher()
+        # Staring one down dissolves it (the cure).
+        self._tick_watcher_gaze(dt)
 
     def _spawn_watcher(self):
         """Manifest one Watcher at a walkable tile a little way off, in a
@@ -2348,6 +2494,59 @@ class Game:
         self._watchers.append(w)
         self.visibility = min(1.0, self.visibility + 0.03)
         self.audio.play("breath", 0.4)
+
+    def _tick_watcher_gaze(self, dt):
+        """Holding a Watcher in your gaze (facing it, within range) dissolves
+        it over WATCHER_GAZE_DISPEL seconds -- its eyes are already dark while
+        looked at. Look away and the progress bleeds back. This is the free
+        (but slow, and exposed) way to clear them."""
+        p = self.player
+        fdx, fdy = p.facing
+        for w in list(self._watchers):
+            pdx, pdy = w.x - p.x, w.y - p.y
+            d = math.hypot(pdx, pdy) or 1.0
+            looking = ((pdx / d) * fdx + (pdy / d) * fdy) > 0.55 and d < 360
+            gt = getattr(w, "_gaze_dispel_t", 0.0)
+            if looking:
+                gt += dt
+                if gt >= WATCHER_GAZE_DISPEL:
+                    self._dispel_watcher(w, reason="gaze")
+                    continue
+            else:
+                gt = max(0.0, gt - dt * 1.5)
+            w._gaze_dispel_t = gt
+
+    def _dispel_watcher(self, w, reason="gaze"):
+        """Dissolve one Watcher. If it was the last one and we're not merely
+        being suppressed by a safe room, the curse lifts (you're cured)."""
+        if w in self._watchers:
+            self._watchers.remove(w)
+        if self.scene is not None and w in self.scene.npcs:
+            self.scene.npcs.remove(w)
+        self.audio.play("breath" if reason == "gaze" else "void_sting", 0.45)
+        if (self._cursed and not self._watchers and self.scene is not None
+                and self.scene.key not in KING_FREE_SCENES):
+            self._cursed = False
+            self.show_notice("The last of the eyes closes. The curse lifts "
+                             "-- for now.", duration=3.2)
+
+    def _dispel_watcher_in_line(self, p, fx, fy):
+        """A round (or the axe arc) puts a Watcher down instantly. The gun
+        version: dissolve the nearest Watcher roughly along the facing line.
+        Costs the same scarce round the shot already spent, and the report
+        still draws the cult -- so it's the fast, loud, costly clear."""
+        best, bestd = None, 1e9
+        for w in self._watchers:
+            pdx, pdy = w.x - p.x, w.y - p.y
+            d = math.hypot(pdx, pdy) or 1.0
+            if d > 520:
+                continue
+            if ((pdx / d) * fx + (pdy / d) * fy) < 0.82:   # must be ~in front
+                continue
+            if d < bestd:
+                bestd, best = d, w
+        if best is not None:
+            self._dispel_watcher(best, reason="shot")
 
     # A transgression the cult notices -- entering the cult basement,
     # picking up evidence, tripping a trespass camera, being captured,
@@ -2449,31 +2648,62 @@ class Game:
                 return
             self._notebook_toast_t = max(0.0, self._notebook_toast_t - dt)
             self.update_player(dt, keys)
-            if (not self.dialog.active and not self.inv_ui.open
-                    and not self.notebook_ui.open
-                    and not self.text_input.active):
+            # Any open modal (dialogue, inventory, notebook, text prompt)
+            # FREEZES the world sim: NPC patrols, enemies, projectiles and
+            # the whole threat model hold still. Otherwise a dialogue box
+            # turned the player into a sitting duck -- cultists kept closing
+            # in and visibility kept rising while they could only read.
+            world_frozen = (self.dialog.active or self.inv_ui.open
+                            or self.notebook_ui.open
+                            or self.text_input.active)
+            # Evidence-gated corruption: cultists only bloom into His maw
+            # once you understand too much (3+ evidence). Read by the
+            # cultist AI when it locks on (enemy._cult_tick / npc chaser).
+            if self.scene is not None:
+                self.scene._bloom_enabled = (
+                    self._evidence_count() >= KING_GATE_EVIDENCE)
+            if not world_frozen:
                 exit_data = self.scene.find_exit_at(
                     self.player.x, self.player.y,
                     facing=self.player.facing)
                 if exit_data:
                     self.begin_transition(*exit_data)
             # Suspend scene update (NPC patrols, decoration anims, triggers)
-            # while the text-input modal is active so the world freezes
-            # behind the prompt.
-            if not self.text_input.active:
+            # while any modal is up so the world freezes behind it.
+            if not world_frozen:
                 self.scene.update(dt, self)
             self.text_input.update(dt)
             for e in list(self.scene.enemies):
-                if not self.text_input.active:
+                if not world_frozen:
                     e.update(dt, self.scene, self.player)
                     if e.just_shot and e.shoot_sfx:
                         pan = self.audio.pan_for_world(e.x, self.player.x)
                         self.audio.play(e.shoot_sfx, 0.55, pan=pan)
                 if not e.alive:
                     self.scene.enemies.remove(e)
+            # A scene-placed cultist (the Works gauntlet uses Enemy-class
+            # cultists, not the threat-system NPCs) reaching the player
+            # TAKES them -- the same CAPTURED end the town cultists trigger.
+            # Without this those cultists just chased and did nothing, so
+            # capture felt random ("some take me, some don't"). Hidden /
+            # invuln / mid-death are exempt, matching _tick_cultists.
+            if (not world_frozen and self._death_kind is None
+                    and self.player.hidden is None
+                    and self.player.invuln <= 0):
+                for e in self.scene.enemies:
+                    # Only an AWARE cultist (actively chasing) takes you --
+                    # the oblivious kneelers at the Sign Chamber altar
+                    # (aggro 0) never enter "chase", so you can still sneak
+                    # past them to lift the Mask.
+                    if (e.alive and e.kind == "cultist"
+                            and getattr(e, "_cult_state", "") == "chase"
+                            and math.hypot(e.x - self.player.x,
+                                           e.y - self.player.y) < 22):
+                        self._trigger_death("cultist")
+                        break
             # Tick projectiles AFTER enemies so a brand-new shot doesn't
             # also move on the same frame it was fired (cleaner travel).
-            if not self.text_input.active:
+            if not world_frozen:
                 for p in list(self.scene.projectiles):
                     p.update(dt, self.scene, self.player)
                     if p.hit:
@@ -2504,13 +2734,17 @@ class Game:
             self.audio.update_duck()
             self.dialog.update(dt)
             self._tick_delayed_audio(dt)
-            self._tick_cultists(dt)
-            self._tick_watchers(dt)
-            self._tick_visibility(dt)
-            self._tick_heartbeat(dt)
-            self._tick_cult_ambient(dt)
+            # The threat model is part of the world sim -- it freezes behind
+            # a modal too, so visibility can't climb and the King can't close
+            # while a box is up. Cutscene/audio drivers keep running.
+            if not world_frozen:
+                self._tick_cultists(dt)
+                self._tick_watchers(dt)
+                self._tick_visibility(dt)
+                self._tick_heartbeat(dt)
+                self._tick_cult_ambient(dt)
+                self._tick_king(dt)
             self._tick_wake_muffle(dt)
-            self._tick_king(dt)
             self._tick_flashback(dt)
             self._tick_ending(dt)
         elif self.state == "transition":
@@ -3235,11 +3469,25 @@ class Game:
                     draw_vessel_bloom(self.screen, sx, sy, npc.sprite_kind,
                                       npc.facing, m, seed=id(npc) & 0xffff)
                 else:
+                    # Curse-priest: bloom on the actual rite -- ramps as it
+                    # holds you in its gaze, peaks/flashes as it binds you.
+                    curse_v = 0.0
+                    if npc.sprite_kind == "curse_priest":
+                        rt = getattr(npc, "_ritual_t", 0.0)
+                        cd = getattr(npc, "_curse_cd", 0.0)
+                        ramp = min(1.0, rt / CURSE_RITUAL_TIME)
+                        flash = max(0.0, (cd - (CURSE_RITUAL_TIME - 0.7)) / 0.7)
+                        curse_v = max(ramp, flash)
+                    # A Watcher being stared down: its eyes go dark (gaze) and
+                    # it fades as the dispel timer fills, so the cure reads.
+                    w_gaze = (npc.sprite_kind == "watcher"
+                              and getattr(npc, "_gaze_dispel_t", 0.0) > 0.05)
                     draw_npc_sprite(self.screen, sx, sy, npc.sprite_kind,
                                     npc.facing, blink=(i == blink_idx),
                                     birth=getattr(npc, "_birth", None),
                                     gait=getattr(npc, "_gait", None),
-                                    threat=king_threat)
+                                    threat=king_threat, seed=id(npc) & 0xffff,
+                                    curse=curse_v, gaze=w_gaze)
             # THRESHOLD: NPC name labels removed. They were the
             # last RPG-tell on screen -- the player should learn
             # who an NPC is by interacting with them, not by
@@ -3373,10 +3621,13 @@ class Game:
                         and self.scene.objects[ty][tx] in ("*", "q", "K")):
                     target = (tx * TILE + 16, ty * TILE + 16)
                     break
-        # 3. A chest within reach.
+        # 3. A chest within reach -- but only if it's actually openable.
+        # Decorative chests (e.g. the Sorting Hall's sealed cases) pass
+        # interactive=False so they don't advertise a dead [E].
         if target is None:
             for d in self.scene.decorations:
                 if (getattr(d, "kind", "") == "chest"
+                        and d.kwargs.get("interactive", True)
                         and math.hypot(d.x - px, d.y - py) < 40):
                     target = (d.x, d.y - 8)
                     break
@@ -3387,6 +3638,14 @@ class Game:
                     continue
                 if math.hypot(npc.x - px, npc.y - py) < 40:
                     target = (npc.x, npc.y)
+                    break
+        # 5. A scene interactable (on_interact_fn readable/pickup -- the
+        # case notebook, the cellar Ledger, the Mask altar). Last, to
+        # mirror try_interact running on_interact_fn after NPCs.
+        if target is None:
+            for ix, iy, irad in getattr(self.scene, "interactables", ()):
+                if math.hypot(ix - px, iy - py) < irad:
+                    target = (ix, iy)
                     break
         if target is None:
             return
@@ -3410,6 +3669,14 @@ class Game:
         scene_label = scene_display_name(self.scene)
         s = self.fonts["tiny"].render(scene_label, True, (60, 56, 70))
         self.screen.blit(s, (14, SCREEN_H - 22))
+        # Ammo readout, lower-right -- only while carrying the pistol. Red
+        # when empty. Dim, like the rest of the HUD.
+        if self.player.inventory.has("pistol"):
+            ammo = self.player.inventory.count("pistol_ammo")
+            col = (200, 70, 60) if ammo <= 0 else (140, 136, 112)
+            a = self.fonts["tiny"].render(f"rounds  {ammo}", True, col)
+            self.screen.blit(a, (SCREEN_W - a.get_width() - 14,
+                                 SCREEN_H - 22))
         # Flashlight state -- only surfaces in the dark, and only once you
         # carry a light. Warm amber when the beam's actually burning (so
         # the cost it's adding to the meter is legible), cold and dim when
@@ -3683,10 +3950,6 @@ class Game:
                     return
                 if ev.key in (pygame.K_e, pygame.K_SPACE, pygame.K_RETURN):
                     self.try_interact()
-                elif ev.key in (pygame.K_j, pygame.K_z):
-                    # The axe swing -- splinters barricades and stuns a
-                    # cultist closing in. Does nothing without the axe.
-                    self.player_axe_swing()
                 elif ev.key == pygame.K_i:
                     self.inv_ui.toggle()
                 elif ev.key == pygame.K_n:
@@ -3707,7 +3970,9 @@ class Game:
                     self.state = "paused"
                     self.audio.play("menu_open", 0.6)
             elif ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 1:
-                self.player_axe_swing()
+                # Left-click is the only action button: use whatever weapon
+                # is in hand -- fire the revolver or swing the axe.
+                self._use_weapon()
             elif ev.type == pygame.MOUSEBUTTONUP and ev.button == 1:
                 pass
 
