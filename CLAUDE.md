@@ -119,10 +119,16 @@ it renders the procedural sprites to a labelled PNG strip.
   the Sheriff's office into a **unique threat**: `_spawn_hunting_sheriff`
   (`sheriff_hollow` sprite) holds for an intro beat then force-chases
   (`_tick_sheriff`); contact → `_trigger_death("sheriff")`. Corpses are claimed by the fold in `draw_npc_corpse` (`mold` = the
-  stage): the body OPENS — gold seams → a split torso → a hollow
-  gold-lit HUSK with the Sign at its lip (a chrysalis). Per-character
-  compulsion echoes (`_CORPSE_ECHO`: Toby's cleaved maw, Hettie's
-  reaching arm) keep their dying act happening on the floor.
+  stage): the body stays a **recognisable body** and the fold's
+  **infection** spreads OVER it — warm **gold rot welling up through the
+  flesh** (gold wound + sickly discolour, escalating to the **Yellow Sign**
+  branded in at stage 3), never a black void. **Named** resisters are
+  infected in the shape of their living mutation (`_CORPSE_CLAIM`: Toby a
+  glowing gold maw, Hettie a gold bloom with peeling skin-flaps + Sign,
+  Garrick gold faces surfacing); other kinds get the generic gold rot.
+  `mold` 0 is a clean fresh kill. Per-character compulsion echoes
+  (`_CORPSE_ECHO`: Toby's gaping head-maw, Hettie's reaching arm) lay over
+  the top — their dying act still happening on the floor.
 - A pursuer reaching the player triggers the **death** sequence
   (`_trigger_death(kind)` → `_tick_death`): `kind="cultist"` shows the
   **CAPTURED** card (taken alive for the hive); `kind="sheriff"` the
