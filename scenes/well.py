@@ -174,6 +174,14 @@ def build_works_vats():
     sc.add_enemy(_cultist(9 * TILE + 16, 5 * TILE + 16, speed=0.8,
                           waypoints=[(9 * TILE + 16, 6 * TILE + 16),
                                      (9 * TILE + 16, 2 * TILE + 16)]))
+    # A third tender sweeps the CENTRE crossing vertically across y=4 at
+    # x=5 -- the gap between the west patrol (x=2) and the new mould-stack
+    # at (6,4). Previously the y=4 corridor was a 7-tile free walk; now a
+    # body cuts across it, so the player must time the sweep and use the
+    # table at (6,4) to break the look. Clear of all solid tiles.
+    sc.add_enemy(_cultist(5 * TILE + 16, 4 * TILE + 16, speed=0.85,
+                          waypoints=[(5 * TILE + 16, 3 * TILE + 16),
+                                     (5 * TILE + 16, 5 * TILE + 16)]))
     _ambient(sc, "low_pulse", 0.14, 6.0, 10.0)
 
     def _vats_on_enter(game, scene):
@@ -364,6 +372,24 @@ def build_works_scriptorium():
     scribe.facing = (-1, 0)
     scribe.lock_facing = True
     sc.add_enemy(scribe)
+
+    # The scribe's comment promised it wakes "unless you cross into its
+    # lane" -- but nothing fired it, so the player walked the room
+    # untouched. Wire the trigger (mirrors depths_hall): stepping into
+    # the central column (cols 5..7) snaps the scribe alert -- it stands,
+    # unlocks its facing, and gives chase. Crossing wide (hugging the
+    # north or south wall, breaking sight on the desks) slips past it.
+    def _wake_scribe(game):
+        scribe.aggro = 600
+        scribe.lock_facing = False
+        scribe.waypoints = None
+        game.audio.play("low_pulse", 0.5)
+    sc.triggers.append({
+        "rect": (5 * TILE, 1 * TILE, 7 * TILE, 7 * TILE),
+        "fn": _wake_scribe,
+        "once": True,
+        "fired": False,
+    })
     _ambient(sc, "blip_soft", 0.11, 3.0, 5.0)
 
     def _interact(game):
