@@ -118,8 +118,11 @@ it renders the procedural sprites to a labelled PNG strip.
   And (c) at stage 3 turns
   the Sheriff's office into a **unique threat**: `_spawn_hunting_sheriff`
   (`sheriff_hollow` sprite) holds for an intro beat then force-chases
-  (`_tick_sheriff`); contact → `_trigger_death("sheriff")`. Corpses gain
-  `mold` (the stage) in `draw_npc_corpse` — the fold claims the dead.
+  (`_tick_sheriff`); contact → `_trigger_death("sheriff")`. Corpses are claimed by the fold in `draw_npc_corpse` (`mold` = the
+  stage): the body OPENS — gold seams → a split torso → a hollow
+  gold-lit HUSK with the Sign at its lip (a chrysalis). Per-character
+  compulsion echoes (`_CORPSE_ECHO`: Toby's cleaved maw, Hettie's
+  reaching arm) keep their dying act happening on the floor.
 - A pursuer reaching the player triggers the **death** sequence
   (`_trigger_death(kind)` → `_tick_death`): `kind="cultist"` shows the
   **CAPTURED** card (taken alive for the hive); `kind="sheriff"` the

@@ -945,20 +945,65 @@ _CORPSE_TINT = {
 }
 
 
+def _corpse_echo_tisdale_boy(surf, hx, hy, x, y, mold):
+    """The lying child's mouth wouldn't stop, even dropped: the head is
+    cleaved open into a maw -- a black gash down the lolled head with
+    teeth, gold guttering up the throat as the fold rises through it."""
+    # widen the head into a split, drawn over the lolled head
+    pygame.draw.polygon(surf, (96, 22, 26),
+                        [(hx - 1, hy - 4), (hx + 1, hy - 4),
+                         (hx + 2, hy + 4), (hx - 2, hy + 4)])
+    _gold_in_wound(surf, hx, hy, 4, 50 + mold * 14)
+    pygame.draw.line(surf, (8, 5, 9), (hx, hy - 3), (hx, hy + 3), 1)   # the gash
+    pygame.draw.line(surf, (236, 204, 64), (hx, hy - 1), (hx, hy + 2), 1)  # gold throat
+    for ty in (-3, 0, 3):                        # teeth down both lips
+        try:
+            surf.set_at((hx - 2, hy + ty), (222, 214, 196))
+            surf.set_at((hx + 2, hy + ty), (222, 214, 196))
+        except (IndexError, ValueError):
+            pass
+
+
+def _corpse_echo_hettie(surf, hx, hy, x, y, mold):
+    """Hettie kept the lights on. Dropped, the arm is still flung out too
+    far -- reaching, fingers grown long -- toward a switch that isn't
+    there. The fold lights the reach for her."""
+    sgn = -1 if hx < x else 1                   # reach AWAY from the head
+    ax = x + sgn * 14
+    pygame.draw.line(surf, (198, 170, 146), (x + sgn * 4, y + 5),
+                     (ax, y + 8), 3)            # pale arm, brighter than body
+    for fdy in (-3, 0, 3):                       # too-long fingers splayed
+        pygame.draw.line(surf, (198, 170, 146),
+                         (ax, y + 8), (ax + sgn * 4, y + 8 + fdy), 1)
+    if mold >= 1:
+        _gold_in_wound(surf, ax + sgn * 3, y + 8, 4, 30 + mold * 12)
+
+
+_CORPSE_ECHO = {
+    "tisdale_boy": _corpse_echo_tisdale_boy,
+    "hettie": _corpse_echo_hettie,
+}
+
+
 def draw_npc_corpse(surf, x, y, kind, seed=0, mold=0):
     """A local, put down. A horizontal slumped body over a dark blood
     pool -- read as a person on the floor, not a sprite standing. Tinted
     off the kind so the corpse still says who it was. Orientation is
     seeded so a row of bodies doesn't all face the same way.
 
-    `mold` (0..3) is the infestation stage: the fold claims the dead like
-    mould claims fruit -- first a grey-green discolour, then pale fungal
-    threads, then a corn-stalk and the Sign growing up out of it."""
+    `mold` (0..3) is the infestation stage -- the fold claiming the dead.
+    It is not decoration: the body OPENS. Stage 1 cracks gold seams
+    through the flesh; stage 2 splits the torso with gold welling out of
+    it; stage 3 is a hollow HUSK -- the torso cracked wide into a gold-lit
+    cavity with the Sign at its lip, a chrysalis the person came out of.
+    Where a character's compulsion should outlast them (`_CORPSE_ECHO`)
+    that is drawn too -- their dying act still happening on the floor."""
     rng = random.Random(seed)
     body = _CORPSE_TINT.get(kind, (70, 64, 60))
     body_lo = tuple(int(c * 0.65) for c in body)
     skin = (172, 146, 126)
     head_left = rng.random() < 0.5
+    hx = x - 13 if head_left else x + 13
     # Blood pool, drawn first so the body lies in it. Offset slightly
     # toward the head end (the wound that dropped them).
     pool = pygame.Surface((44, 26), pygame.SRCALPHA)
@@ -971,39 +1016,38 @@ def draw_npc_corpse(surf, x, y, kind, seed=0, mold=0):
     # An outflung arm.
     pygame.draw.rect(surf, body_lo, (x - 3, y + 6, 9, 3))
     # Head lolled to one end.
-    hx = x - 13 if head_left else x + 13
     pygame.draw.circle(surf, skin, (hx, y + 2), 4)
     pygame.draw.circle(surf, body_lo, (hx, y - 1), 4, 1)   # hair/hat smudge
-    if mold <= 0:
-        return
-    # Stage 1: grey-green discolour blooming across the torso.
+    # The fold claiming the body -- the flesh opens around gold.
     if mold >= 1:
-        for _ in range(3 + mold):
-            px = x + rng.randint(-10, 11)
-            py = y + rng.randint(-2, 6)
-            pygame.draw.circle(surf, (70, 84, 52), (px, py), rng.randint(1, 2))
-    # Stage 2: pale fungal threads creeping out of the body.
-    if mold >= 2:
-        for _ in range(4):
-            ox = x + rng.randint(-11, 12)
-            oy = y + rng.randint(-2, 7)
-            ang = rng.uniform(0, math.tau)
-            ln = rng.randint(3, 6)
-            pygame.draw.line(surf, (176, 182, 150),
-                             (ox, oy),
-                             (int(ox + math.cos(ang) * ln),
-                              int(oy + math.sin(ang) * ln)), 1)
-    # Stage 3: a corn-stalk and the Sign grow up out of it -- claimed.
+        # Gold seams crack along the torso.
+        for sx0 in (-7, -1, 5):
+            pygame.draw.line(surf, (150, 118, 30),
+                             (x + sx0, y - 1), (x + sx0 + 2, y + 6), 1)
+    if mold == 2:
+        # Split: the torso parts along the midline, gold welling up.
+        _gold_in_wound(surf, x, y + 2, 6, 48)
+        pygame.draw.rect(surf, (6, 4, 8), (x - 2, y - 2, 4, 9))
+        pygame.draw.line(surf, (236, 204, 64), (x, y - 1), (x, y + 6), 1)
     if mold >= 3:
-        sx = x + (6 if head_left else -6)
-        pygame.draw.line(surf, (120, 116, 70), (sx, y + 4), (sx, y - 10), 2)
-        pygame.draw.line(surf, (150, 146, 88), (sx, y - 4),
-                         (sx + 4, y - 8), 1)
-        pygame.draw.line(surf, (150, 146, 88), (sx, y - 7),
-                         (sx - 4, y - 11), 1)
-        # the small sick-gold Sign at the tip
-        pygame.draw.circle(surf, (210, 188, 70), (sx, y - 12), 2)
-        pygame.draw.circle(surf, (40, 30, 10), (sx, y - 12), 2, 1)
+        # The husk: torso cracked wide into a hollow gold-lit cavity, the
+        # ribs splayed, the Sign at the lip. Something came out.
+        _gold_in_wound(surf, x, y + 2, 9, 70)
+        pygame.draw.polygon(surf, (6, 4, 8),
+                            [(x - 8, y - 2), (x + 9, y - 2),
+                             (x + 6, y + 7), (x - 6, y + 7)])
+        for rdx in (-6, -3, 3, 6):              # splayed ribs / cracked flesh
+            pygame.draw.line(surf, body_lo,
+                             (x + rdx, y - 2), (x + int(rdx * 0.6), y + 6), 1)
+        pygame.draw.circle(surf, (170, 120, 28), (x, y + 2), 2)   # gold deep inside
+        # the Sign at the lip of the cavity
+        pygame.draw.line(surf, (236, 204, 64), (x, y - 5), (x, y - 1), 1)
+        pygame.draw.line(surf, (236, 204, 64), (x, y - 4), (x - 2, y - 5), 1)
+        pygame.draw.line(surf, (236, 204, 64), (x, y - 4), (x + 2, y - 5), 1)
+    # A character's dying compulsion, still acting on the floor.
+    echo = _CORPSE_ECHO.get(kind)
+    if echo is not None:
+        echo(surf, hx, y + 2, x, y, mold)
 
 
 # ---- Infested resisters (NARRATIVE infestation) -----------------------
