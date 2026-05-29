@@ -137,6 +137,13 @@ def build_works_vats():
     objs[4][11] = "E"         # east -> the sorting hall
     for tx, ty in [(3, 2), (7, 2), (3, 6), (7, 6)]:   # rendering vats
         objs[ty][tx] = "t"
+    # A stack of moulds in the open centre corridor (y=4), breaking the
+    # straight east-west sightline that otherwise let a looker see clear
+    # across the room. Sits at x=6 -- between the vertical vat-tender
+    # patrols at x=2 and x=9, on neither route -- so it blocks sight
+    # without snagging a cultist. The crossing routes around it via
+    # y=3 / y=5, and it gives a duck-behind once a centre patrol exists.
+    objs[4][6] = "t"
     objects = ["".join(r) for r in objs]
     sc = Scene("works_vats", floor, objects, music="basement")
     sc.add_exit("F", "well_passage", "from_below")
@@ -193,6 +200,15 @@ def build_works_sorting():
     for tx in (3, 6, 9, 12):  # long sorting tables, two rows
         objs[3][tx] = "t"
         objs[7][tx] = "t"
+    # A lone sorting table jutting into the open centre aisle (y=5),
+    # just east of the centreline hide spot at (5,5). It breaks the
+    # long west-facing sightline down the aisle: a cultist on the east
+    # half can no longer see clear across to the entry, and the player
+    # can duck behind it (relative to the patrol) to break the lock.
+    # Placed at x=6 -- west of C2's y=5 patrol (x>=7.5) and clear of
+    # C1's vertical lane (x=4.5) -- so it blocks sight without ever
+    # snagging a cultist's route. The player rounds it via y=4 / y=6.
+    objs[5][6] = "t"
     objects = ["".join(r) for r in objs]
     sc = Scene("works_sorting", floor, objects, music="basement")
     sc.add_exit("F", "works_vats", "from_below")
