@@ -202,6 +202,50 @@ def _draw_cultist_raw(surf, x, y, facing, seed, t):
         return
     _cult_mask(surf, hcx, hcy, variant, view, mdir)
 
+
+def _draw_curse_priest_raw(surf, x, y, t):
+    """The curse-priest -- taller, gaunter cult officiant: blood-dark robe,
+    a ruined pale face with hollow sockets + a stitched mouth, arms raised
+    mid-rite with ichor dripping, and a vertical row of curse-eyes down the
+    chest that flare on the upswing. Drawn raw; the Darkwood pass + the
+    frame grade grime it down."""
+    sway = math.sin(t * 1.2 + x * 0.02)
+    lean = int(sway)
+    robe = (54, 40, 44); robe_lo = (32, 22, 26); blood = (122, 24, 22)
+    face = (190, 180, 165); face_lo = (120, 110, 100)
+    pygame.draw.polygon(surf, robe,
+                        [(x - 10, y + 18), (x - 7 + lean, y - 18),
+                         (x + 7 + lean, y - 18), (x + 10, y + 18)])
+    pygame.draw.polygon(surf, robe_lo,
+                        [(x - 10, y + 18), (x - 7 + lean, y - 18),
+                         (x + 7 + lean, y - 18), (x + 10, y + 18)], 1)
+    pygame.draw.line(surf, blood, (x + lean, y - 14), (x, y + 16), 2)
+    pygame.draw.line(surf, (70, 14, 12), (x - 3, y + 2), (x - 2, y + 16), 1)
+    rite = math.sin(t * 1.3) * 0.5 + 0.5
+    hy = y - 4 - int(rite * 9)
+    for s in (-1, 1):
+        hx = x + s * (9 + int(rite * 3))
+        pygame.draw.line(surf, robe, (x + s * 5, y - 8), (hx, hy), 3)
+        pygame.draw.circle(surf, face, (hx, hy), 2)
+        drip = (t * 0.9 + (s + 1) * 0.4) % 1.0
+        pygame.draw.circle(surf, blood, (hx, hy + 2 + int(drip * 10)), 1)
+    pygame.draw.ellipse(surf, robe_lo, (x - 7 + lean, y - 26, 14, 16))
+    pygame.draw.ellipse(surf, face, (x - 4 + lean, y - 23, 8, 11))
+    pygame.draw.ellipse(surf, face_lo, (x - 4 + lean, y - 23, 8, 11), 1)
+    pygame.draw.circle(surf, (12, 8, 10), (x - 2 + lean, y - 19), 1)
+    pygame.draw.circle(surf, (12, 8, 10), (x + 2 + lean, y - 19), 1)
+    my = y - 14
+    pygame.draw.line(surf, (60, 20, 22), (x - 3 + lean, my), (x + 3 + lean, my), 1)
+    for sx in range(-3, 4, 2):
+        pygame.draw.line(surf, (40, 12, 14),
+                         (x + lean + sx, my - 1), (x + lean + sx, my + 1), 1)
+    ecol = (150 + int(rite * 55), 120 + int(rite * 50), 56)
+    for i in range(3):
+        if (t * 1.1 + i * 0.8) % 3.0 > 0.3:
+            pygame.draw.circle(surf, ecol, (x + lean, y - 6 + i * 6), 1)
+    pygame.draw.line(surf, (24, 14, 16), (x - 9, y + 18), (x + 9, y + 18), 2)
+
+
 def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False,
                     birth=None, gait=None, threat=None, seed=0):
     """`blink=True` suppresses eye dots for NPC kinds that have human
@@ -497,65 +541,15 @@ def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False,
         t = pygame.time.get_ticks() / 1000.0
         _draw_cultist(surf, x, y, facing, seed, t)
     elif kind == "curse_priest":
-        # The cult's curse-priest -- the special cultist that binds the
-        # Watchers to you. Taller and gaunter than the rank-and-file:
-        # a blood-dark robe, a low hood over a pale ruined face with a
-        # stitched-shut mouth and hollow sockets, hands raised mid-rite
-        # with ichor dripping from the fingertips. A vertical row of
-        # small yellow curse-eyes opens down its chest -- the curse,
-        # looking out. Sways, twitches, and drips.
+        # The cult's curse-priest -- binds the Watchers to you. Drawn on a
+        # private layer and run through the same Darkwood grime brush as the
+        # rank-and-file cultist so the whole cult reads in one register.
         t = pygame.time.get_ticks() / 1000.0
-        sway = math.sin(t * 1.2 + x * 0.02)
-        lean = int(sway)
-        robe = (54, 40, 44)
-        robe_lo = (32, 22, 26)
-        blood = (122, 24, 22)
-        face = (190, 180, 165)
-        face_lo = (120, 110, 100)
-        # Tall robe body.
-        pygame.draw.polygon(surf, robe,
-                            [(x - 10, y + 18), (x - 7 + lean, y - 18),
-                             (x + 7 + lean, y - 18), (x + 10, y + 18)])
-        pygame.draw.polygon(surf, robe_lo,
-                            [(x - 10, y + 18), (x - 7 + lean, y - 18),
-                             (x + 7 + lean, y - 18), (x + 10, y + 18)], 1)
-        # Blood down the robe front.
-        pygame.draw.line(surf, blood, (x + lean, y - 14), (x, y + 16), 2)
-        pygame.draw.line(surf, (70, 14, 12), (x - 3, y + 2), (x - 2, y + 16), 1)
-        # A slow rite: the arms rise and fall together, ichor beading
-        # off the fingertips. They lift highest as the curse-eyes flare
-        # (below) -- that upswing is the moment it binds you.
-        rite = math.sin(t * 1.3) * 0.5 + 0.5          # 0..1, arms down..up
-        hy = y - 4 - int(rite * 9)
-        for s in (-1, 1):
-            hx = x + s * (9 + int(rite * 3))
-            pygame.draw.line(surf, robe, (x + s * 5, y - 8), (hx, hy), 3)
-            pygame.draw.circle(surf, face, (hx, hy), 2)
-            drip = (t * 0.9 + (s + 1) * 0.4) % 1.0
-            pygame.draw.circle(surf, blood, (hx, hy + 2 + int(drip * 10)), 1)
-        # Hood + ruined pale face.
-        pygame.draw.ellipse(surf, robe_lo, (x - 7 + lean, y - 26, 14, 16))
-        pygame.draw.ellipse(surf, face, (x - 4 + lean, y - 23, 8, 11))
-        pygame.draw.ellipse(surf, face_lo, (x - 4 + lean, y - 23, 8, 11), 1)
-        # Hollow sockets -- no light there.
-        pygame.draw.circle(surf, (12, 8, 10), (x - 2 + lean, y - 19), 1)
-        pygame.draw.circle(surf, (12, 8, 10), (x + 2 + lean, y - 19), 1)
-        # Stitched-shut mouth.
-        my = y - 14
-        pygame.draw.line(surf, (60, 20, 22),
-                         (x - 3 + lean, my), (x + 3 + lean, my), 1)
-        for sx in range(-3, 4, 2):
-            pygame.draw.line(surf, (40, 12, 14),
-                             (x + lean + sx, my - 1), (x + lean + sx, my + 1), 1)
-        # A vertical row of small curse-eyes down the chest, flaring
-        # sick-bright on the rite's upswing -- the curse, looking out.
-        ecol = (150 + int(rite * 55), 120 + int(rite * 50), 56)
-        for i in range(3):
-            if (t * 1.1 + i * 0.8) % 3.0 > 0.3:
-                pygame.draw.circle(surf, ecol, (x + lean, y - 6 + i * 6), 1)
-        # Dark hem.
-        pygame.draw.line(surf, (24, 14, 16),
-                         (x - 9, y + 18), (x + 9, y + 18), 2)
+        LX, LY = 22, 40
+        lay = pygame.Surface((44, 62), pygame.SRCALPHA)
+        _draw_curse_priest_raw(lay, LX, LY, t)
+        _darkwood_pass(lay, seed or 7)
+        surf.blit(lay, (int(x) - LX, int(y) - LY))
     elif kind == "vessel_avatar":
         # A towering Yellow-King vessel with reaching tentacles. Body is
         # the tall_shadow silhouette enlarged + four wiggling tentacles
