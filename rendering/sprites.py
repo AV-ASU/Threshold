@@ -74,10 +74,25 @@ def _cult_hide_coat(surf, x, y, top, rng, lean=0):
 
 
 def _cult_mask(surf, cx, cy, variant, view, mdir):
-    """A carved wooden mask centred at (cx, cy) for the in-game ~14px head.
-    `variant` 0..5 picks the carving; `view` front/side; `mdir` mirrors side."""
+    """A carved WOODEN mask -- one of six unique shapes -- GRAFTED into the
+    fleshy face under the cultist's hood, in the same body-horror register as
+    the curse-priest: carved dark eye-voids with a faint His-glint, and a
+    dark gore seam where the wood meets flesh. Only the SHAPE is the
+    cultist's own (PALLID/ANTLERED/LONGFACE/SPLIT/GRIMACE/PLANK)."""
     mx = cx + mdir * 2
     eyes = (-2, 2) if view == "front" else (mdir if mdir else 1,)
+
+    def void_eye(ex, ey):                       # carved void + a faint His-glint
+        ex, ey = int(ex), int(ey)
+        pygame.draw.circle(surf, _VP_PIT, (ex, ey), 2)
+        pygame.draw.circle(surf, (4, 3, 6), (ex, ey), 1)
+        _cult_glow(surf, ex, ey, 2, 22)
+        pygame.draw.circle(surf, (150, 120, 50), (ex, ey), 1)
+
+    def graft_seam():                           # gore where the mask meets flesh
+        gx = mx + (4 if view == "front" else mdir * 4)
+        pygame.draw.line(surf, _VP_GOR, (gx, cy - 4), (gx - 1, cy + 5), 1)
+
     if variant == 2:        # LONGFACE -- an elongated wedge
         pts = [(mx - 4, cy - 6), (mx + 4, cy - 6), (mx + 2, cy + 4),
                (mx, cy + 8), (mx - 2, cy + 4)]
@@ -85,16 +100,16 @@ def _cult_mask(surf, cx, cy, variant, view, mdir):
         pygame.draw.polygon(surf, _WOOD_LO, pts, 1)
         pygame.draw.line(surf, _CGRAIN, (mx, cy - 5), (mx, cy + 6), 1)
         for ex in eyes:
-            _cult_eye(surf, mx + ex, cy - 2)
+            void_eye(mx + ex, cy - 2)
+        graft_seam()
         return
     if variant == 5:        # PLANK -- a crude rectangle with an eye-slot
         pygame.draw.rect(surf, _WOOD, (mx - 5, cy - 6, 10, 13))
         pygame.draw.rect(surf, _WOOD_LO, (mx - 5, cy - 6, 10, 13), 1)
         pygame.draw.line(surf, _CGRAIN, (mx - 3, cy - 2), (mx + 3, cy - 2), 1)
-        pygame.draw.rect(surf, _CVOID, (mx - 4, cy - 1, 8, 2))
         for ex in eyes:
-            pygame.draw.circle(surf, _CGOLD, (int(mx + ex), cy), 1)
-            _cult_glow(surf, mx + ex, cy, 2, 40)
+            void_eye(mx + ex, cy)
+        graft_seam()
         return
     # ovals: PALLID(0), ANTLERED(1), SPLIT(3), GRIMACE(4)
     if variant == 1:        # deer antlers above the mask
@@ -107,18 +122,17 @@ def _cult_mask(surf, cx, cy, variant, view, mdir):
     pygame.draw.ellipse(surf, _WOOD, (mx - mw, cy - 6, mw * 2, 13))
     pygame.draw.ellipse(surf, _WOOD_LO, (mx - mw, cy - 6, mw * 2, 13), 1)
     pygame.draw.line(surf, _CGRAIN, (mx - mw + 1, cy + 1), (mx + mw - 1, cy + 1), 1)
-    if variant == 3:        # SPLIT -- crack + gold seam beneath
+    if variant == 3:        # SPLIT -- a shatter-crack
         pygame.draw.line(surf, _CVOID, (mx, cy - 6), (mx, cy + 6), 1)
-        _cult_glow(surf, mx, cy, 2, 42)
-        pygame.draw.line(surf, _CGOLD, (mx, cy - 2), (mx, cy + 2), 1)
     for ex in eyes:
         if variant == 3 and ex == 0:
             continue
-        _cult_eye(surf, mx + ex, cy)
+        void_eye(mx + ex, cy)
     if variant == 4:        # GRIMACE -- a carved frown
         pygame.draw.arc(surf, _CVOID, (mx - 3, cy + 2, 6, 5), 0.2, 2.9, 1)
     if variant == 0:        # PALLID -- the Sign on the brow
         _cult_sign(surf, mx, cy - 4, u=0.5)
+    graft_seam()
 
 
 _DW_MULT = {}
@@ -203,6 +217,10 @@ def _draw_cultist_raw(surf, x, y, facing, seed, t):
                 pygame.draw.line(surf, _ANTLER, (hcx + sgn * 3, hcy - 5),
                                  (hcx + sgn * 7, hcy - 13), 1)
         return
+    # A fleshy face under the hood -- the mask grafts INTO it (same as the
+    # curse-priest), so the cultist reads as a person He's taken, not a void.
+    pygame.draw.ellipse(surf, _VP_FLESH, (hcx - 5, hcy - 6, 10, 13))
+    pygame.draw.ellipse(surf, _VP_FLESH_LO, (hcx - 5, hcy - 6, 10, 13), 1)
     _cult_mask(surf, hcx, hcy, variant, view, mdir)
 
 
