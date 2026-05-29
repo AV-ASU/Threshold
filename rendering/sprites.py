@@ -686,9 +686,9 @@ def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False,
         pygame.draw.line(surf, (210, 188, 70), (x - 4, cy - 2), (x - 4, cy + 2), 1)
         pygame.draw.line(surf, (210, 188, 70), (x - 4, cy), (x - 6, cy - 1), 1)
         pygame.draw.line(surf, (210, 188, 70), (x - 4, cy), (x - 2, cy - 1), 1)
-        # Jaundice cling.
+        # Jaundice cling -- the fold's sick gold, matching the cult/King.
         wash = _pg.Surface((26, 36), _pg.SRCALPHA)
-        wash.fill((128, 150, 64, 40))
+        wash.fill((168, 142, 56, 46))
         surf.blit(wash, (x - 13, y - 22))
     elif kind == "shadow":
         pygame.draw.rect(surf, (8, 4, 12), (x - 8, y - 4, 16, 18))
@@ -1017,9 +1017,11 @@ def draw_mutation_overlay(surf, x, y, kind):
     person -- just lays wrongness on top: a jaundiced wash, two permanent
     black eye-voids, and a faint Yellow Sign etched into the chest."""
     hy = y + _MUTATE_HEAD_Y.get(kind, -12)
-    # Sickly jaundice wash over the whole body.
+    # Jaundiced wash over the whole body -- tuned to the fold's sick GOLD
+    # (the cult/King palette) so the infection reads as the same thing
+    # creeping into them, not a separate green sickness.
     wash = pygame.Surface((26, 36), pygame.SRCALPHA)
-    wash.fill((128, 150, 64, 34))
+    wash.fill((168, 142, 56, 42))
     surf.blit(wash, (x - 13, y - 22))
     # Permanent eye-voids -- the lights have gone out and stayed out.
     pygame.draw.rect(surf, (2, 0, 4), (x - 3, hy - 1, 2, 2))

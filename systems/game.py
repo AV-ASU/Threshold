@@ -328,6 +328,44 @@ def _converted_local_dialogue(game, npc):
     game.dialog.show(lines, speaker="", voice="blip_soft", portrait="narrator")
 
 
+# Mutated resisters keep their voice and their face -- but the body has
+# started speaking for the fold, and they have to fight it back mid-
+# sentence. Keyed by name; falls back to a generic curdle.
+INFEST_MUTATE_LINES = {
+    "Hettie": [
+        "Still open. Still— [c=dim]the lights. I keep them on so they—[/c]",
+        "Don't look at my hands. I told them no.",
+        "[c=dim]My mouth keeps saying yes. It isn't me. It isn't--[/c]",
+    ],
+    "Old Pell": [
+        "The days fold back. I fold back with them.",
+        "[c=dim]I'm standing on a morning I already spent. I can feel the "
+        "old one underneath.[/c]",
+        "You're new. We don't get-- [c=dim]something's wearing the cold I "
+        "walked in with.[/c]",
+    ],
+    "the Tisdale boy": [
+        "I bit my tongue again. To check.",
+        "[c=dim]It doesn't bleed right anymore.[/c]",
+        "Don't tell me the way out. My mouth belongs to them now.",
+        "[c=dim]But I don't. I don't. I don't.[/c]",
+    ],
+}
+
+
+def _mutated_local_dialogue(game, npc):
+    """A resister whose body is turning. Still themselves -- same face,
+    same voice -- but the words curdle and they fight to finish them."""
+    name = getattr(npc, "name", "")
+    lines = INFEST_MUTATE_LINES.get(name, [
+        "[c=dim]They open their mouth to speak. Something else nearly "
+        "speaks first. They win, this time.[/c]",
+    ])
+    game.dialog.show(lines, speaker=name,
+                     voice=getattr(npc, "voice", "blip_low"),
+                     portrait=getattr(npc, "portrait", None))
+
+
 class Game:
     def __init__(self):
         pygame.init()
@@ -1506,6 +1544,9 @@ class Game:
                 self._convert_local(n)
             elif ms is not None and stage >= ms:
                 n._mutated = True
+                # Their body has started speaking for the fold; the
+                # dialogue curdles to match the overlay.
+                n.dialogue_fn = _mutated_local_dialogue
 
     def _convert_local(self, n):
         """A peace-maker, joined. Becomes a masked cultist that watches
