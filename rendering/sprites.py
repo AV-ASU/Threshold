@@ -239,6 +239,40 @@ def _curse_bloom(lay, bx, by, t, curse):
     pygame.draw.line(lay, (170, 142, 70), (bx, by - 6), (bx, by + 7), 1)
 
 
+def _pallid_mask(surf, sx, mcy, view, mdir, bloom):
+    """His Pallid Mask -- a clear, carved pale face -- grafted onto the
+    priest's head. Reads as a mask first: a defined pale oval, two sunken
+    eye-voids, a carved bone-lit edge, a hairline shatter-crack, a blank
+    mouth. The graft (the wound where it meets flesh) is the secondary note:
+    a dark gore seam down one side and the human socket gone dark. One void
+    kindles dim gold from behind as the curse casts."""
+    # The flesh/bone head it's grafted onto (shows at the jaw + one side).
+    pygame.draw.ellipse(surf, _VP_FLESH, (sx - 7, mcy - 8, 14, 17))
+    pygame.draw.ellipse(surf, _VP_FLESH_LO, (sx - 7, mcy - 8, 14, 17), 1)
+    # The mask plate -- a clear pale carved face.
+    if view == "front":
+        mr = pygame.Rect(sx - 6, mcy - 7, 12, 15)
+        evs = [(sx - 3, mcy - 1), (sx + 3, mcy - 1)]
+    else:                                            # profile: narrower, shifted
+        mr = pygame.Rect(sx - 5 + mdir * 2, mcy - 7, 10, 15)
+        evs = [(sx + mdir * 2, mcy - 1)]
+    pygame.draw.ellipse(surf, _VP_PALE, mr)
+    pygame.draw.ellipse(surf, _VP_PALE_LO, mr, 1)
+    pygame.draw.line(surf, (236, 228, 208),          # carved bone-lit edge
+                     (mr.left + 1, mr.top + 3), (mr.left + 1, mr.bottom - 3), 1)
+    pygame.draw.line(surf, _VP_PALE_LO, (sx, mcy - 7), (sx - 1, mcy + 6), 1)  # shatter-crack
+    for (ex, ey) in evs:                             # sunken eye-voids
+        pygame.draw.circle(surf, _VP_FLESH_LO, (ex, ey + 1), 2)
+        pygame.draw.circle(surf, _VP_PIT, (ex, ey), 2)
+        pygame.draw.circle(surf, (4, 3, 6), (ex, ey), 1)
+    pygame.draw.line(surf, _VP_MOUTH, (sx - 2, mcy + 5), (sx + 2, mcy + 5), 1)  # blank mouth
+    # The graft: a gore seam down the right edge + the human socket gone dark.
+    pygame.draw.line(surf, _VP_GOR, (mr.right - 1, mcy - 4), (mr.right, mcy + 5), 1)
+    pygame.draw.line(surf, _VP_GOR_LO, (mr.left, mcy + 4), (mr.left - 1, mcy + 8), 1)
+    if bloom > 0.3 and evs:                           # His light behind the face
+        _cult_glow(surf, evs[0][0], evs[0][1], 2, 18 + int(bloom * 30))
+
+
 def _draw_curse_priest_raw(surf, x, y, t, facing=(0, 1), curse=0.0):
     """The curse-priest -- a cultist His King has opened and is wearing,
     rendered as SUGGESTION in our muddy register (not a gory totem). ONE
@@ -294,6 +328,9 @@ def _draw_curse_priest_raw(surf, x, y, t, facing=(0, 1), curse=0.0):
                             [(cx - 4, cy + 4), (cx + 4, cy + 4),
                              (cx + 3, cy + 9), (cx - 3, cy + 9)])
     if view == "back":
+        # Back of the masked head: a bone dome + the mask's tie-strap, no face.
+        pygame.draw.ellipse(surf, _VP_FLESH_LO, (sx - 6, top - 12, 12, 14))
+        pygame.draw.line(surf, (140, 130, 110), (sx - 5, top - 6), (sx + 5, top - 5), 1)
         pygame.draw.line(surf, _VP_GOR, (sx, top + 4), (sx, y + 12), 2)
         _surface_face(sx, top + 16)
         _cult_glow(surf, sx, top + 14, 2, 14 + int(bloom * 22))
@@ -306,21 +343,8 @@ def _draw_curse_priest_raw(surf, x, y, t, facing=(0, 1), curse=0.0):
     for gx in (-sp, sp):
         pygame.draw.line(surf, _VP_GOR, (sx + gx, top + 6), (sx + gx, y + 12), 1)
     _surface_face(sx, top + 17)
-    # GRAFT head: the Pallid Mask sunk into a fleshy face (restrained).
-    mcy = top - 4
-    pygame.draw.ellipse(surf, _VP_FLESH, (sx - 6, mcy - 7, 12, 15))
-    pygame.draw.ellipse(surf, _VP_FLESH_LO, (sx - 6, mcy - 7, 12, 15), 1)
-    if view == "front":
-        mask_pts = [(sx - 6, mcy - 6), (sx + 2, mcy - 5), (sx + 1, mcy + 7), (sx - 6, mcy + 6)]
-    else:
-        mask_pts = [(sx - mdir * 6, mcy - 6), (sx, mcy - 5),
-                    (sx, mcy + 7), (sx - mdir * 6, mcy + 6)]
-    pygame.draw.polygon(surf, _VP_PALE, mask_pts)
-    pygame.draw.polygon(surf, _VP_PALE_LO, mask_pts, 1)
-    pygame.draw.circle(surf, _VP_PIT, (sx - 3, mcy - 1), 1)        # mask void eye
-    pygame.draw.line(surf, _VP_GOR, (sx + 1, mcy - 5), (sx + 1, mcy + 6), 1)   # graft seam
-    pygame.draw.circle(surf, _VP_PIT, (sx + 4, mcy - 1), 1)        # the human socket, gone
-    pygame.draw.line(surf, _VP_MOUTH, (sx - 2, mcy + 9), (sx + 2, mcy + 9), 1)  # a grim line
+    # The Pallid Mask grafted into the head (clear carved face; see helper).
+    _pallid_mask(surf, sx, top - 4, view, mdir, bloom)
 
 
 def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False,
