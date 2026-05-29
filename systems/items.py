@@ -15,7 +15,7 @@ ITEM_DEFS = {
     # ---- Core items (in circulation) ----
     "pistol":        {"name": "Revolver",
                        "kind": "key",
-                       "desc": "Your sidearm. Left-mouse or [K] fires it in "
+                       "desc": "Your sidearm. Left-click fires it in "
                                "the way you're facing. While the case is "
                                "still shallow a clean shot drops a cultist; "
                                "once you understand too much (3+ evidence) the "
