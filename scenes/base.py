@@ -1858,6 +1858,16 @@ def tile_footstep(ch):
     return floor_step_sound(ch)
 
 
+def drop_ammo_cache(game, scene, tx, ty, qty, flag):
+    """Place a one-time pistol_ammo pickup at tile (tx, ty), gated by a
+    save flag so re-entering the scene can't farm infinite rounds. Called
+    from a scene's on_enter_fn (needs game.save). Auto-picked on contact."""
+    if game.save.flag(flag):
+        return
+    scene.add_item(tx * TILE + 16, ty * TILE + 16, "pistol_ammo", qty,
+                   on_pickup=lambda g: g.save.set_flag(flag, True))
+
+
 def chest_interact(game, scene, chest_x, chest_y, flag_key, loot,
                    key_required=None, range_px=44):
     """Generic chest interaction. Call from a scene's on_interact_fn

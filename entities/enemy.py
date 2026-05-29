@@ -8,6 +8,16 @@ from rendering.sprites import draw_npc_sprite
 from rendering.transform import draw_vessel_bloom
 
 
+def _is_cultist(obj):
+    """A cultist target for the player's gun: a cult-tagged NPC, or a
+    cultist / curse-priest Enemy. Innocent locals are never valid."""
+    tag = getattr(obj, "tag", None)
+    if isinstance(tag, str) and tag.startswith("cult_"):
+        return True
+    return getattr(obj, "kind", None) in ("cultist", "curse_priest") \
+        or getattr(obj, "sprite_kind", None) in ("cultist", "curse_priest")
+
+
 class Projectile:
     """Linear-motion projectile spawned by ranged enemies. Travels in
     its initial direction at `speed` px/s; deals `dmg` to the player
@@ -27,6 +37,13 @@ class Projectile:
         self.lifespan = lifespan
         self.t = 0.0
         self.friendly = False
+        # Player-gun flags. `stun_only` staggers the target (sets _stun_t)
+        # instead of killing -- the gun's behaviour above 3 evidence.
+        # `cult_only` restricts a friendly shot to cultists so the player
+        # can't accidentally gun down innocent locals.
+        self.stun_only = False
+        self.stun_dur = 1.6
+        self.cult_only = False
         # Set to True for one frame on the tick we hit something. Read
         # by Game so it can play the impact SFX without coupling audio
         # into Projectile.
@@ -48,20 +65,20 @@ class Projectile:
         if self.friendly:
             for e in scene.enemies:
                 if not e.alive: continue
+                if self.cult_only and not _is_cultist(e):
+                    continue
                 if abs(self.x - e.x) < 14 and abs(self.y - e.y) < 14:
-                    e.hp -= self.dmg
-                    e.flash = 0.12
+                    self._strike(e)
                     self.alive = False
                     self.hit = True
                     return
-            # Round-14: friendly bullets hit NPCs too. Any village
-            # NPC -- the kid, the fisherman, the shopkeep -- can be
-            # shot. The kill counter tracks it.
             for n in scene.npcs:
                 if not getattr(n, "alive", True):
                     continue
+                if self.cult_only and not _is_cultist(n):
+                    continue
                 if abs(self.x - n.x) < 14 and abs(self.y - n.y) < 14:
-                    n.take_damage(self.dmg)
+                    self._strike(n)
                     self.alive = False
                     self.hit = True
                     return
@@ -70,6 +87,23 @@ class Projectile:
                 player.take_damage(self.dmg)
                 self.alive = False
                 self.hit = True
+
+    def _strike(self, target):
+        """Apply a friendly-bullet hit: stagger (stun_only) or wound/kill.
+        Works on both Enemy (hp) and NPC (take_damage) targets."""
+        target.flash = 0.12
+        if self.stun_only:
+            target._stun_t = max(getattr(target, "_stun_t", 0.0), self.stun_dur)
+            # They lose their lock on the player when staggered.
+            if hasattr(target, "_has_been_spotted"):
+                target._has_been_spotted = False
+            return
+        if hasattr(target, "take_damage"):
+            target.take_damage(self.dmg)        # NPC path
+        else:
+            target.hp -= self.dmg               # Enemy path
+            if target.hp <= 0:
+                target.alive = False
 
     def draw(self, surf, cam_x, cam_y):
         if not self.alive: return
@@ -442,7 +476,9 @@ class Enemy:
                 self._cult_state = "chase"
                 self._cult_state_t = 0.0
                 self.move_target = None
-                self.morph_target = 1.0
+            # Bloom into His maw only once the world is corrupt enough
+            # (3+ evidence -- set on the scene by Game each frame).
+            self.morph_target = 1.0 if getattr(scene, "_bloom_enabled", False) else 0.0
             self._last_seen_pos = (player.x, player.y)
             if d > self.atk_range:
                 self._cult_step(player.x, player.y, dt, scene)

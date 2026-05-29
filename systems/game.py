@@ -24,7 +24,7 @@ from systems.audio import Audio
 from systems.save import Save
 from systems.items import Inventory, ITEM_DEFS
 from entities.player import Player
-from entities.enemy import Enemy
+from entities.enemy import Enemy, Projectile
 from entities.npc import NPC
 from entities.decoration import Decoration
 from scenes import load_scene, tile_footstep, Scene
@@ -188,6 +188,15 @@ MELEE_CD = 0.85                # seconds between swings
 MELEE_STUN_DUR = 1.6           # seconds a target stays frozen
 MELEE_REACH = 30               # px from the swing point a target must be
 AXE_SWING_DUR = 0.34           # seconds the swing arc takes to draw
+# The PI's pistol. Tied to the evidence count (NARRATIVE: the more you
+# understand, the less the world lets you kill): below KING_GATE_EVIDENCE a
+# clean shot KILLS a cultist; at/above it the round only STAGGERS. Limited
+# ammo (pistol_ammo); starts with 8.
+GUN_CD = 0.45                  # seconds between shots
+GUN_DMG = 100                  # one clean shot kills any cultist (hp 1 or 30)
+GUN_STUN_DUR = 1.4             # stagger time at 3+ evidence
+GUN_PROJECTILE_SPEED = 340
+GUN_PROJECTILE_COLOR = (236, 232, 214)   # pale lead, distinct from cult amber
 # Visibility rates, per second. Watchers + cultist gaze push the meter
 # up; hiding pulls it down. Enough Watchers out-pace even hiding --
 # that is the spiral toward a King the player can no longer shake.
@@ -381,6 +390,7 @@ class Game:
         self._king = None
         self._king_anchor = None
         self._reinforce_t = 0.0      # cultist reinforcement-wave cooldown
+        self._gun_cd = 0.0           # seconds until the pistol can fire again
 
         # ---- THRESHOLD: cultists, the curse, and Watchers ----
         # Regular cultists roam the outdoor scenes (chaser AI: scout,
@@ -547,6 +557,7 @@ class Game:
         self._king = None
         self._king_anchor = None
         self._reinforce_t = 0.0
+        self._gun_cd = 0.0
         # Cultists, the curse, and Watchers
         self._curse_level = 0
         self._watchers = []
@@ -973,6 +984,7 @@ class Game:
             self.player.walk_phase = 0
             self.stillness_t += dt
         self.player.melee_cd = max(0, self.player.melee_cd - dt)
+        self._gun_cd = max(0.0, self._gun_cd - dt)
         self.player.melee_swing_t = max(0, self.player.melee_swing_t - dt)
         self.player.invuln = max(0, self.player.invuln - dt)
         for it in list(self.scene.items):
@@ -1155,6 +1167,51 @@ class Game:
                 self.show_notice("You knock it back -- it won't stay "
                                  "down. Run.", duration=2.6)
 
+    def player_fire_gun(self):
+        """Fire the pistol in the facing direction. The evidence count
+        gates the effect (NARRATIVE -- the more you understand, the less
+        the world lets you kill): below KING_GATE_EVIDENCE a clean shot
+        KILLS a cultist; at/above it the round only STAGGERS. Costs one
+        round; only cultists are valid targets (never innocent locals).
+        The report is loud -- the cult hears it and investigates."""
+        p = self.player
+        if (self.state != "playing" or p.hidden is not None
+                or self.dialog.active or self.inv_ui.open
+                or self.notebook_ui.open or self.text_input.active):
+            return
+        if not p.inventory.has("pistol") or self._gun_cd > 0:
+            return
+        if p.inventory.count("pistol_ammo") <= 0:
+            self.audio.play("door_locked", 0.45)        # dry click
+            self.show_notice("Empty. You need cartridges.", duration=1.4)
+            self._gun_cd = GUN_CD
+            return
+        self._gun_cd = GUN_CD
+        p.inventory.remove("pistol_ammo", 1)
+        fx, fy = p.facing
+        proj = Projectile(p.x + fx * 16, p.y + fy * 16, fx, fy,
+                          dmg=GUN_DMG, color=GUN_PROJECTILE_COLOR,
+                          speed=GUN_PROJECTILE_SPEED)
+        proj.friendly = True
+        proj.cult_only = True
+        proj.stun_only = (self._evidence_count() >= KING_GATE_EVIDENCE)
+        proj.stun_dur = GUN_STUN_DUR
+        self.scene.projectiles.append(proj)
+        p.melee_swing_t = AXE_SWING_DUR             # brief recoil/muzzle tell
+        p.melee_dir = p.facing
+        self.audio.play("swing", 0.4)
+        self.audio.play("bump", 0.5)               # the report
+        # A gunshot is loud -- feed the cult's investigate AI like a sprint.
+        if self.scene is not None:
+            self.scene._last_step_event = (p.x, p.y, 1.0,
+                                           pygame.time.get_ticks() / 1000.0)
+        # One-time teach about the evidence gate the first time it staggers.
+        if proj.stun_only and not self.save.flag("gun_stun_taught"):
+            self.save.set_flag("gun_stun_taught", True)
+            self.show_notice("The shot barely staggers it now. You know too "
+                             "much -- they won't die for you anymore.",
+                             duration=3.0)
+
     def _kill_npc(self, npc):
         """Side-effects of an NPC kill: increment the hidden non-hostile
         counter (the substrate watches this), play the death SFX, drop
@@ -1162,8 +1219,14 @@ class Game:
         The NPC is removed from the scene's list on the next step."""
         pan = self.audio.pan_for_world(npc.x, self.player.x)
         self.audio.play("enemy_die", 0.55, pan=pan)
-        n = self.save.arg("nonhostile_kills", 0) + 1
-        self.save.set_arg("nonhostile_kills", n)
+        # Cultist NPCs (the gun's only valid NPC targets) count as hostile
+        # kills; a genuinely non-hostile local would count separately.
+        tag = getattr(npc, "tag", None)
+        is_cult = ((isinstance(tag, str) and tag.startswith("cult_"))
+                   or getattr(npc, "sprite_kind", None)
+                   in ("cultist", "curse_priest"))
+        arg = "enemy_kills" if is_cult else "nonhostile_kills"
+        self.save.set_arg(arg, self.save.arg(arg, 0) + 1)
         for drop in getattr(npc, "drops", []):
             self.scene.items.append({
                 "x": npc.x + random.uniform(-8, 8),
@@ -2479,6 +2542,12 @@ class Game:
             world_frozen = (self.dialog.active or self.inv_ui.open
                             or self.notebook_ui.open
                             or self.text_input.active)
+            # Evidence-gated corruption: cultists only bloom into His maw
+            # once you understand too much (3+ evidence). Read by the
+            # cultist AI when it locks on (enemy._cult_tick / npc chaser).
+            if self.scene is not None:
+                self.scene._bloom_enabled = (
+                    self._evidence_count() >= KING_GATE_EVIDENCE)
             if not world_frozen:
                 exit_data = self.scene.find_exit_at(
                     self.player.x, self.player.y,
@@ -3472,6 +3541,14 @@ class Game:
         scene_label = scene_display_name(self.scene)
         s = self.fonts["tiny"].render(scene_label, True, (60, 56, 70))
         self.screen.blit(s, (14, SCREEN_H - 22))
+        # Ammo readout, lower-right -- only while carrying the pistol. Red
+        # when empty. Dim, like the rest of the HUD.
+        if self.player.inventory.has("pistol"):
+            ammo = self.player.inventory.count("pistol_ammo")
+            col = (200, 70, 60) if ammo <= 0 else (140, 136, 112)
+            a = self.fonts["tiny"].render(f"rounds  {ammo}", True, col)
+            self.screen.blit(a, (SCREEN_W - a.get_width() - 14,
+                                 SCREEN_H - 22))
         # Flashlight state -- only surfaces in the dark, and only once you
         # carry a light. Warm amber when the beam's actually burning (so
         # the cost it's adding to the meter is legible), cold and dim when
@@ -3749,6 +3826,9 @@ class Game:
                     # The axe swing -- splinters barricades and stuns a
                     # cultist closing in. Does nothing without the axe.
                     self.player_axe_swing()
+                elif ev.key == pygame.K_k:
+                    # The pistol -- fires in the facing direction.
+                    self.player_fire_gun()
                 elif ev.key == pygame.K_i:
                     self.inv_ui.toggle()
                 elif ev.key == pygame.K_n:
@@ -3769,7 +3849,12 @@ class Game:
                     self.state = "paused"
                     self.audio.play("menu_open", 0.6)
             elif ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 1:
-                self.player_axe_swing()
+                # Left-click fires the pistol; falls back to the axe only
+                # if the player somehow has no pistol.
+                if self.player and self.player.inventory.has("pistol"):
+                    self.player_fire_gun()
+                else:
+                    self.player_axe_swing()
             elif ev.type == pygame.MOUSEBUTTONUP and ev.button == 1:
                 pass
 

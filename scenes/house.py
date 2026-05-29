@@ -661,6 +661,9 @@ def basement_on_enter(game, scene):
     for deco in scene.decorations:
         if deco.kind == "chest":
             deco.kwargs["open"] = game.save.flag("woodshed_key_taken")
+    # A few cartridges stashed in the cellar (one-time, flag-gated).
+    from .base import drop_ammo_cache
+    drop_ammo_cache(game, scene, 6, 3, 4, "ammo_cellar")
     # Lodge-candle callback: once the player has seen the rendering at
     # the Works, the candles in the Lodge mean something they didn't
     # before. One-shot, fires the next descent to the cellar after the

@@ -254,6 +254,12 @@ def build_fisherman_cottage():
         (3 * TILE + 16, 2 * TILE + 24, "behind"),
         (7 * TILE + 16, 2 * TILE + 24, "under"),
     ]
+
+    def _fc_on_enter(game, scene):
+        # The lawman's cartridges -- the best ammo source in town (one-time).
+        from .base import drop_ammo_cache
+        drop_ammo_cache(game, scene, 8, 4, 6, "ammo_sheriff")
+    sc.on_enter_fn = _fc_on_enter
     return sc
 
 

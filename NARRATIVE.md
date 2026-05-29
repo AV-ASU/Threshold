@@ -149,6 +149,23 @@ case:
 - **At 3+ evidence:** that same trigger spawns **the King** — the lethal
   apex. *You make Brimley deadly by understanding it.*
 
+**The pistol — agency the world takes back.** The PI carries a sidearm from
+the start (limited rounds; caches in the woodshed, the cellar, the Sheriff's
+office). It is hung on the **same 3-evidence line** as everything else, so
+crossing that line turns the world against you on every axis at once:
+
+- **Below 3 evidence:** a clean shot **kills** a cultist (they fall and
+  later respawn), and cultists stay **mundane** — no bloom. You have agency.
+- **At 3+ evidence:** the shot only **staggers** them (a brief stun), and a
+  cultist that locks on **blooms into His maw** (the vessel transform). *The
+  deeper you see, the less the world lets you kill.*
+
+The gun never makes you safe: **capture-on-contact is still the fail state**
+(a cultist that reaches you takes you — CAPTURED), and the gun is *cult-only*
+(it can't be turned on innocent locals). A shot is **loud** — the cult hears
+it and investigates. The flashlight, the splitting axe (chop + stun), and
+hide-spots remain; the pistol sits alongside them, not over them.
+
 ---
 
 ## 4. Evidence — the thread that drags you down

@@ -292,34 +292,66 @@ def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False,
         pygame.draw.rect(surf, outline, (x - 6, y + 14, 5, 8))
         pygame.draw.rect(surf, outline, (x + 1, y + 14, 5, 8))
     elif kind == "cultist":
-        # Hooded cultist -- a grim, near-black robe and a deep cowl that
-        # is simply a void; the cult has taken his face. He trudges: the
-        # whole body rocks and rises on each step so he reads as
-        # advancing on you, not idling. Two cold, recessed pinpricks of
-        # sick light sit far back in the cowl -- menace, not glow.
+        # Hooded cultist -- a grim, near-black robe over a deep cowl that
+        # is simply a void; the cult has taken his face. He trudges (the
+        # body rocks and rises on each step). DIRECTIONAL: the cowl and the
+        # two cold amber eyes track `facing`, so you can read his gaze and
+        # slip behind him -- facing AWAY (up) shows only the smooth back of
+        # the hood, no eyes. A rope cincture and the jaundiced Yellow Sign
+        # daubed on the chest mark him as the cult, not a generic hood.
         t = pygame.time.get_ticks() / 1000.0
         gait = math.sin(t * 3.0 + x * 0.02)
         lean = int(gait * 2)                      # rock the body
         bob = int(abs(math.sin(t * 3.0)) * 2)     # rise on each step
         robe = (50, 45, 42)                       # grim charcoal
         robe_lo = (28, 25, 24)
+        robe_hi = (72, 64, 58)
         cowl = (12, 11, 13)                       # black void
+        sign_col = (150, 134, 58)                 # jaundiced Yellow Sign
+        eye = (150, 120, 40)
+        fx, fy = facing
+        if abs(fx) > abs(fy):
+            face = "right" if fx > 0 else "left"
+        else:
+            face = "down" if fy >= 0 else "up"
         top = y - 10 - bob
+        # Robe body -- a trapezoid, wider at the hem.
         pygame.draw.polygon(surf, robe,
-                            [(x - 9, y + 16), (x - 7 + lean, top),
-                             (x + 7 + lean, top), (x + 9, y + 16)])
+                            [(x - 9, y + 16), (x - 6 + lean, top),
+                             (x + 6 + lean, top), (x + 9, y + 16)])
         pygame.draw.polygon(surf, robe_lo,
-                            [(x - 9, y + 16), (x - 7 + lean, top),
-                             (x + 7 + lean, top), (x + 9, y + 16)], 1)
-        # Deep cowl -- a black hood, the face a hole.
+                            [(x - 9, y + 16), (x - 6 + lean, top),
+                             (x + 6 + lean, top), (x + 9, y + 16)], 1)
+        pygame.draw.line(surf, robe_hi, (x - 3 + lean, top + 2),
+                         (x - 5, y + 13), 1)          # a lit fold
+        # Rope cincture at the waist.
+        pygame.draw.line(surf, (96, 80, 50), (x - 8, y + 5), (x + 8, y + 5), 1)
+        # The Yellow Sign daubed on the chest -- only when he's turned
+        # toward you (not on his back).
+        if face != "up":
+            sgx = x + (3 if face == "right" else -3 if face == "left" else 0)
+            sgy = y + 9
+            pygame.draw.line(surf, sign_col, (sgx, sgy - 2), (sgx, sgy + 3), 1)
+            pygame.draw.line(surf, sign_col, (sgx - 2, sgy),
+                             (sgx + 2, sgy - 1), 1)
+        # Deep cowl.
         head_cy = top - 1
         pygame.draw.ellipse(surf, cowl, (x - 7 + lean, head_cy - 7, 14, 14))
-        # Two cold recessed eyes (dim sick amber), blinking on a cycle.
-        if (t + x * 0.05) % 4.0 > 0.2:
-            pygame.draw.circle(surf, (116, 100, 50), (x - 3 + lean, head_cy), 1)
-            pygame.draw.circle(surf, (116, 100, 50), (x + 3 + lean, head_cy), 1)
+        pygame.draw.arc(surf, robe_lo, (x - 7 + lean, head_cy - 7, 14, 14),
+                        0.4, 2.7, 1)                  # hood rim
+        # Eyes track the gaze; none when facing away (up).
+        blinking = ((t + x * 0.05) % 4.0) < 0.18
+        if not blinking and face != "up":
+            if face == "down":
+                ex1, ex2 = x - 3 + lean, x + 3 + lean
+            elif face == "left":
+                ex1, ex2 = x - 5 + lean, x - 1 + lean
+            else:  # right
+                ex1, ex2 = x + 1 + lean, x + 5 + lean
+            pygame.draw.circle(surf, eye, (ex1, head_cy + 1), 1)
+            pygame.draw.circle(surf, eye, (ex2, head_cy + 1), 1)
         # Dried blood down the robe + a black hem.
-        pygame.draw.line(surf, (64, 16, 14), (x, y + 2), (x + 1, y + 15), 2)
+        pygame.draw.line(surf, (64, 16, 14), (x, y + 6), (x + 1, y + 15), 2)
         pygame.draw.line(surf, (16, 12, 12),
                          (x - 8, y + 16), (x + 8, y + 16), 2)
     elif kind == "curse_priest":

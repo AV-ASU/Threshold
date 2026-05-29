@@ -13,7 +13,9 @@ DEFAULT_SAVE = {
     "scene": "bedroom",
     "spawn": "default",
     "player": {"hp": 100, "max_hp": 100},
-    "inventory": {"items": [], "equipped": {"weapon": None, "armor": None}},
+    # The PI starts with their sidearm and a handful of rounds (1994 noir).
+    "inventory": {"items": [["pistol", 1], ["pistol_ammo", 8]],
+                  "equipped": {"weapon": None, "armor": None}},
     "flags": {},
     "arg": {
         "evidence": [],

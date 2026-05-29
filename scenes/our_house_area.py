@@ -330,5 +330,8 @@ def build_woodshed():
             if not game.save.flag(flag):
                 scene.add_decoration(Decoration(pos[0], pos[1], "item_drop"))
                 scene.add_interactable(pos[0], pos[1], 36)
+        # A box of cartridges by the hunting gear (this is a hunting town).
+        from .base import drop_ammo_cache
+        drop_ammo_cache(game, scene, 4, 3, 6, "ammo_woodshed")
     sc.on_enter_fn = _woodshed_on_enter
     return sc
