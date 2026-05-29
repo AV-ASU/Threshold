@@ -1094,59 +1094,76 @@ def _gold_in_wound(surf, cx, cy, R, peak=64):
 
 
 def _infest_tisdale_boy(surf, x, y, t):
-    # The lying boy's mouth won't stop: his whole HEAD has cloven top-to-
-    # bottom into a vertical maw. One bold gross shape -- a tall dark gape
-    # down the centre of the head, gold burning in the throat, a few teeth
-    # bridging it, his eyes shoved to the outer corners. (Distinct at game
-    # scale: a VERTICAL SLOT, not Hettie's radial bloom.)
+    # The lying boy's mouth won't stop -- and now his whole BODY is the
+    # mouth. A maw splits him head to hem: a dark gullet runs the length of
+    # him, teeth bridging it the whole way, gold burning in the throat, his
+    # eyes shoved to the corners of the cloven head. (Child geometry: head
+    # ~y-8, body y..y+14 -- NOT the adult slot.)
     thr = 0.5 + 0.5 * math.sin(t * 2.6)
-    hy = y - 12
+    hy = y - 8
     gap = 2 + int(2 * thr)                          # the maw flexes open
-    _gold_in_wound(surf, x, hy, 3, 34 + int(16 * thr))   # glow UNDER, just a halo
-    pygame.draw.ellipse(surf, (8, 4, 6), (x - gap, hy - 7, gap * 2, 16))  # dark gape on top
-    pygame.draw.line(surf, _WGOLD, (x, hy - 3), (x, hy + 4), 1)           # gold throat glint
-    for ty in (-4, 0, 4):                            # bold teeth bridging the gape
+    _gold_in_wound(surf, x, hy + 3, 3, 30 + int(16 * thr))    # glow under, a halo
+    pygame.draw.polygon(surf, (8, 4, 6), [           # the gullet, head to hem
+        (x - gap, hy - 5), (x + gap, hy - 5),
+        (x + gap + 1, y + 13), (x - gap - 1, y + 13)])
+    pygame.draw.line(surf, _WGOLD, (x, hy - 3), (x, y + 11), 1)   # gold throat
+    for ty in range(-4, 14, 3):                      # teeth bridging it all the way down
         pygame.draw.line(surf, _WBONE, (x - gap, hy + ty), (x + gap, hy + ty), 1)
-    pygame.draw.circle(surf, (236, 232, 226), (x - 5, hy - 3), 1)   # eyes shoved out
-    pygame.draw.circle(surf, (236, 232, 226), (x + 5, hy - 3), 1)
+    pygame.draw.circle(surf, (236, 232, 226), (x - 4, hy - 2), 1)  # eyes shoved out
+    pygame.draw.circle(surf, (236, 232, 226), (x + 4, hy - 2), 1)
 
 
 def _infest_hettie(surf, x, y, t):
-    # Her face has BLOOMED open: the head splits into a radial star of skin-
-    # petals splayed back off a dark socket, the Yellow Sign's gold burning
-    # at the centre -- a flower of flayed skin where her face was. One bold
-    # gross shape: a RADIAL STAR, distinct from Toby's vertical slot.
+    # Her face bloomed open -- and the bloom runs down her. The head splits
+    # into a radial petal-star and the torso unzips into a vertical seam with
+    # skin-petals curling out along both sides, gold burning up the opening:
+    # a flayed flower the length of her. (Adult geometry: head ~y-11, body
+    # y-2..y+16. Distinct from Toby's single slot -- this one SPLAYS.)
     thr = 0.5 + 0.5 * math.sin(t * 2.0)
     hy = y - 11
-    _gold_in_wound(surf, x, hy, 3, 30 + int(16 * thr))         # glow UNDER, just a halo
-    span = 6 + 2 * thr
-    for k in range(5):                                          # five splayed petals
+    _gold_in_wound(surf, x, hy, 3, 26 + int(14 * thr))        # glow under, a halo
+    span = 5 + 2 * thr
+    for k in range(5):                                        # head bloom: five petals
         a = -math.pi / 2 + k * (2 * math.pi / 5)
         tip = (int(x + math.cos(a) * span), int(hy + math.sin(a) * span))
         bx, by = -math.sin(a) * 2, math.cos(a) * 2
         pygame.draw.polygon(surf, _WSKIN,
                             [(int(x + bx), int(hy + by)),
                              (int(x - bx), int(hy - by)), tip])
-    pygame.draw.circle(surf, (10, 5, 8), (x, hy), 3)            # dark socket on top
+    pygame.draw.circle(surf, (10, 5, 8), (x, hy), 3)          # dark socket
+    pygame.draw.polygon(surf, (10, 5, 8),                     # the body seam unzips
+                        [(x - 2, y - 1), (x + 2, y - 1), (x + 1, y + 14), (x - 1, y + 14)])
+    for sy in range(2, 15, 4):                                # skin-petals peeling off both sides
+        pygame.draw.polygon(surf, _WSKIN, [(x - 2, y + sy), (x - 2, y + sy + 3), (x - 6, y + sy + 1)])
+        pygame.draw.polygon(surf, _WSKIN, [(x + 2, y + sy), (x + 2, y + sy + 3), (x + 6, y + sy + 1)])
+    pygame.draw.line(surf, _WGOLD, (x, y - 1), (x, y + 13), 1)  # gold up the seam
     pygame.draw.line(surf, _WGOLD, (x, hy - 2), (x, hy + 2), 1)  # the Sign glint
     pygame.draw.line(surf, _WGOLD, (x, hy), (x - 2, hy - 1), 1)
     pygame.draw.line(surf, _WGOLD, (x, hy), (x + 2, hy - 1), 1)
 
 
 def _infest_old_townsman(surf, x, y, t):
-    # (Garrick) skinned featureless -- and a second SCREAMING face strains up
-    # through the skin from beneath: dark hollow eye-pits and a stretched open
-    # mouth pushing out of the smooth dome, gold burning behind it. One bold
-    # gross shape: a FACE-IN-A-FACE, distinct from the others.
+    # (Garrick) skinned featureless -- and faces strain up through the skin
+    # all OVER him: the screaming face on the smooth head, and more surfacing
+    # through the coat -- eye-pits and open mouths pushing out across the
+    # torso, gold burning behind each. The whole man is crawling with faces.
+    # (Adult geometry: head ~y-12, body y-2..y+16. Distinct: a CROWD of faces.)
     thr = 0.5 + 0.5 * math.sin(t * 2.2)
+
+    def face(cx, cy, push):
+        _gold_in_wound(surf, cx, cy, 2, 20 + int(12 * thr))
+        pygame.draw.circle(surf, (10, 5, 8), (cx - 2, cy - 1 - push), 1)   # eye-pits
+        pygame.draw.circle(surf, (10, 5, 8), (cx + 2, cy - 1 - push), 1)
+        pygame.draw.ellipse(surf, (10, 5, 8), (cx - 1, cy + 1, 3, 3 + push))  # open mouth
+        pygame.draw.line(surf, _WGOLD, (cx, cy + 1), (cx, cy + 2 + push), 1)
+
     hy = y - 12
-    pygame.draw.circle(surf, _WSKIN, (x, hy), 6)                # the blank skinned dome
-    _gold_in_wound(surf, x, hy, 3, 26 + int(14 * thr))         # faint glow behind the face
-    push = int(2 * thr)                                         # it strains outward
-    pygame.draw.circle(surf, (10, 5, 8), (x - 2, hy - 2 - push), 1)  # eye-pits (dark, on top)
-    pygame.draw.circle(surf, (10, 5, 8), (x + 2, hy - 2 - push), 1)
-    pygame.draw.ellipse(surf, (10, 5, 8), (x - 2, hy + 1, 4, 4 + push))  # screaming mouth
-    pygame.draw.line(surf, _WGOLD, (x, hy + 2), (x, hy + 3 + push), 1)   # gold throat glint
+    push = int(2 * thr)
+    pygame.draw.circle(surf, _WSKIN, (x, hy), 6)              # the blank skinned dome
+    face(x, hy, push)                                         # the head's screaming face
+    face(x - 4, y + 3, push)                                  # more straining through the coat
+    face(x + 4, y + 8, 0)
+    face(x - 2, y + 13, push)
 
 
 _INFEST_WORLD = {
