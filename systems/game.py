@@ -12,6 +12,7 @@ from constants import (
     C_BLUE, C_GREEN, C_PURPLE, C_PANEL, C_PANEL_BORDER, C_DIM,
 )
 from rendering.sprites import (draw_player_sprite, draw_npc_sprite,
+                               draw_npc_corpse,
                                draw_axe_swing, draw_king_death, draw_carcosa,
                                draw_mask_yank)
 from rendering.transform import draw_vessel_bloom
@@ -205,6 +206,12 @@ AXE_SWING_DUR = 0.34           # seconds the swing arc takes to draw
 GUN_CD = 0.45                  # seconds between shots
 GUN_DMG = 100                  # one clean shot kills any cultist (hp 1 or 30)
 GUN_STUN_DUR = 1.4             # stagger time at 3+ evidence
+# Shooting an innocent local is loud AND wrong: it ratchets visibility
+# hard (the town turns its head) but is capped just under 1.0 so a single
+# murder can't itself summon the King -- the meter still has to climb the
+# last sliver on its own.
+LOCAL_KILL_VIS_SPIKE = 0.35
+LOCAL_KILL_VIS_CAP = 0.96
 GUN_PROJECTILE_SPEED = 340
 GUN_PROJECTILE_COLOR = (236, 232, 214)   # pale lead, distinct from cult amber
 # Visibility rates, per second. Watchers + cultist gaze push the meter
@@ -268,6 +275,21 @@ MAX_FULLSCREEN_DARK = 204
 # Once in the river, the player can move freely between river tiles
 # until they step onto land or bridge, which flips in_river False.
 RIVER_ENTRY_TILE = (34, 60)
+
+
+def _corpse_examine(game, npc):
+    """E on a local you killed. A flat, dim line -- no absolution, just
+    the fact of it lying there. Varies a little on repeat reads."""
+    n = game.save.arg("corpse_reads", 0) + 1
+    game.save.set_arg("corpse_reads", n)
+    name = getattr(npc, "name", "A body")
+    if n == 1:
+        lines = [f"[c=dim]{name}. Face-down where the round put them. "
+                 f"You did this.[/c]"]
+    else:
+        lines = ["[c=dim]Still here. The cold won't let it keep, and won't "
+                 "let it go.[/c]"]
+    game.dialog.show(lines, speaker="", voice="blip_soft", portrait="narrator")
 
 
 class Game:
@@ -792,6 +814,11 @@ class Game:
         # world keeps its layouts and items, just no people.
         if self.save.flag("world_emptied"):
             self.scene.npcs = []
+        else:
+            # Re-instate any local the player killed here on a prior visit:
+            # the builder re-spawns them live every load, so swap them for
+            # persistent corpses.
+            self._replay_dead_locals()
 
     def _river_blocks(self, target_x, target_y):
         """Custom passability for the brimley river. The `~` floor is
@@ -1189,8 +1216,10 @@ class Game:
         gates the effect (NARRATIVE -- the more you understand, the less
         the world lets you kill): below KING_GATE_EVIDENCE a clean shot
         KILLS a cultist; at/above it the round only STAGGERS. Costs one
-        round; only cultists are valid targets (never innocent locals).
-        The report is loud -- the cult hears it and investigates."""
+        round. A round also drops any innocent LOCAL it hits -- always
+        lethal, regardless of the evidence gate (the gate only ever
+        protected the cult). The report is loud -- the cult hears it and
+        investigates -- and a local kill spikes visibility besides."""
         p = self.player
         if (self.state != "playing" or p.hidden is not None
                 or self.dialog.active or self.inv_ui.open
@@ -1210,7 +1239,11 @@ class Game:
                           dmg=GUN_DMG, color=GUN_PROJECTILE_COLOR,
                           speed=GUN_PROJECTILE_SPEED)
         proj.friendly = True
-        proj.cult_only = True
+        # The gun is no longer cult-only: a round drops any living person
+        # in its path, cultist or innocent local. Putting a local down is
+        # lethal and loud, and the cult takes a hard interest (handled in
+        # _kill_npc: a visibility spike + an investigate ping at the body).
+        proj.cult_only = False
         # A round also puts down a Watcher of the curse in the line of fire
         # (they're real to the cursed). Fast + loud + costs the round.
         if self._cursed and self._watchers:
@@ -1255,14 +1288,17 @@ class Game:
             self.player_axe_swing()
 
     def _kill_npc(self, npc):
-        """Side-effects of an NPC kill: increment the hidden non-hostile
-        counter (the substrate watches this), play the death SFX, drop
-        any items the NPC was carrying, and fire on_kill if present.
-        The NPC is removed from the scene's list on the next step."""
+        """Side-effects of an NPC kill: increment the kill counter (the
+        substrate watches this), play the death SFX, drop any items the
+        NPC was carrying, and fire on_kill if present.
+
+        Returns True if the body should PERSIST as a corpse (an innocent
+        local you put down), False if it should be swept away as before
+        (a cultist -- the cult reclaims its own). A local kill also drops
+        an investigate ping at the body and spikes visibility: the town
+        turns its head toward what you just did."""
         pan = self.audio.pan_for_world(npc.x, self.player.x)
         self.audio.play("enemy_die", 0.55, pan=pan)
-        # Cultist NPCs (the gun's only valid NPC targets) count as hostile
-        # kills; a genuinely non-hostile local would count separately.
         tag = getattr(npc, "tag", None)
         is_cult = ((isinstance(tag, str) and tag.startswith("cult_"))
                    or getattr(npc, "sprite_kind", None)
@@ -1281,6 +1317,69 @@ class Game:
                 ok(self)
             except Exception:
                 pass
+        if is_cult:
+            return False        # cultist: swept away, may re-form later
+        # An innocent local. The cult reaction: a loud investigate ping at
+        # the body, a hard visibility spike, and a body that stays down.
+        self.visibility = min(LOCAL_KILL_VIS_CAP,
+                              max(self.visibility,
+                                  self.visibility + LOCAL_KILL_VIS_SPIKE))
+        if self.scene is not None:
+            self.scene._last_step_event = (
+                npc.x, npc.y, 1.0, pygame.time.get_ticks() / 1000.0)
+        self._record_corpse(npc)
+        return True
+
+    def _corpse_id(self, npc):
+        """Stable per-scene identity for a downed local. Tag if it has
+        one, else the display name -- both are unique within a scene."""
+        return getattr(npc, "tag", None) or getattr(npc, "name", "?")
+
+    def _make_corpse(self, npc):
+        """Convert a just-killed local NPC into a persistent corpse: it
+        stops moving (alive=False already), stops blocking, and answers
+        E with a one-shot examine instead of its old dialogue."""
+        npc._is_corpse = True
+        npc._kill_processed = True
+        npc.solid = False
+        npc.movement = "idle"
+        npc.dialogue_fn = _corpse_examine
+        npc.no_prompt = False
+
+    def _record_corpse(self, npc):
+        """Persist a local's death so the body is still there on re-entry.
+        Keyed by scene -> list of {id, x, y, kind, name}."""
+        dead = self.save.arg("dead_locals", {})
+        key = self.scene.key
+        recs = dead.get(key, [])
+        cid = self._corpse_id(npc)
+        if any(r.get("id") == cid for r in recs):
+            return
+        recs.append({"id": cid, "x": npc.x, "y": npc.y,
+                     "kind": npc.sprite_kind, "name": npc.name})
+        dead[key] = recs
+        self.save.set_arg("dead_locals", dead)
+
+    def _replay_dead_locals(self):
+        """On scene load, re-instate any local the player killed here on a
+        previous visit. Removes the live (re-spawned) version and drops a
+        corpse in its place so the body persists across re-entries."""
+        dead = self.save.arg("dead_locals", {})
+        recs = dead.get(self.scene.key, [])
+        if not recs:
+            return
+        ids = {r["id"] for r in recs}
+        self.scene.npcs = [n for n in self.scene.npcs
+                           if self._corpse_id(n) not in ids]
+        from entities.npc import NPC
+        for r in recs:
+            body = NPC(r["x"], r["y"], r.get("name", "A body"), r["kind"],
+                       movement="idle", solid=False,
+                       dialogue_fn=_corpse_examine, tag="corpse")
+            body.alive = False
+            body._is_corpse = True
+            body._kill_processed = True
+            self.scene.add_npc(body)
 
     def _kill_enemy(self, e):
         """Run the death side-effects for `e`: marks dead, plays the
@@ -2718,14 +2817,18 @@ class Game:
                     if e.alive and e.hp <= 0:
                         self._kill_enemy(e)
                 # Sweep dead NPCs. Fire kill side-effects exactly once per
-                # NPC, then remove them so they stop drawing and being
-                # patrolled.
+                # NPC. A cultist is removed (the cult reclaims its own); an
+                # innocent local is left as a persistent corpse on the floor.
                 for n in list(self.scene.npcs):
                     if getattr(n, "alive", True):
                         continue
+                    if getattr(n, "_is_corpse", False):
+                        continue        # already a settled corpse
                     if not getattr(n, "_kill_processed", False):
                         n._kill_processed = True
-                        self._kill_npc(n)
+                        if self._kill_npc(n):
+                            self._make_corpse(n)
+                            continue     # keep the body in the scene
                     self.scene.npcs.remove(n)
             if self.player.hp <= 0:
                 self._on_player_death()
@@ -3448,6 +3551,17 @@ class Game:
             return -64 <= sx <= SCREEN_W + 64 and -64 <= sy <= SCREEN_H + 64
 
         for i, npc in enumerate(self.scene.npcs):
+            # A persisted corpse: draw it prone in its blood and skip all
+            # the living-NPC logic (morph, blink, king-threat, gaze).
+            if not getattr(npc, "alive", True):
+                for ox, oy in _offsets:
+                    sx = int(npc.x + ox - self.cam_x)
+                    sy = int(npc.y + oy - self.cam_y)
+                    if not _on_screen(sx, sy):
+                        continue
+                    draw_npc_corpse(self.screen, sx, sy, npc.sprite_kind,
+                                    seed=id(npc) & 0xffff)
+                continue
             m = getattr(npc, "morph", 0.0)
             king_threat = None
             if npc.sprite_kind == "yellow_king" and self.player:

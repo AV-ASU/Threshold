@@ -161,10 +161,17 @@ crossing that line turns the world against you on every axis at once:
   deeper you see, the less the world lets you kill.*
 
 The gun never makes you safe: **capture-on-contact is still the fail state**
-(a cultist that reaches you takes you — CAPTURED), and the gun is *cult-only*
-(it can't be turned on innocent locals). A shot is **loud** — the cult hears
-it and investigates. The flashlight, the splitting axe (chop + stun), and
-hide-spots remain; the pistol sits alongside them, not over them.
+(a cultist that reaches you takes you — CAPTURED). A shot is **loud** — the
+cult hears it and investigates. The flashlight, the splitting axe (chop +
+stun), and hide-spots remain; the pistol sits alongside them, not over them.
+
+**The gun can be turned on the innocent.** A clean round drops any
+**local** instantly — Hettie, the Sheriff, the Tisdale boy — *regardless*
+of the evidence gate (that gate only ever protected the cult). It is never
+without cost: a local kill **spikes visibility** hard (the town turns its
+head) and pings the cult to **investigate the body**, and the corpse
+**stays where it fell** — it is there, in its blood, every time you walk
+back through. The bodies persist for the rest of the run.
 
 ---
 

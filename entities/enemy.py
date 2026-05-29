@@ -10,12 +10,27 @@ from rendering.transform import draw_vessel_bloom
 
 def _is_cultist(obj):
     """A cultist target for the player's gun: a cult-tagged NPC, or a
-    cultist / curse-priest Enemy. Innocent locals are never valid."""
+    cultist / curse-priest Enemy."""
     tag = getattr(obj, "tag", None)
     if isinstance(tag, str) and tag.startswith("cult_"):
         return True
     return getattr(obj, "kind", None) in ("cultist", "curse_priest") \
         or getattr(obj, "sprite_kind", None) in ("cultist", "curse_priest")
+
+
+# Sprite kinds a bullet passes straight through: the King, the Watchers
+# (the curse handles those on its own line-of-fire path), invisible
+# interact-markers, and the various non-corporeal apparitions. Everything
+# NOT in this set -- the human locals and the cult -- is flesh and can be
+# shot. The player CAN now gun down innocent locals; the cult reacts.
+_BULLET_PHANTOM = frozenset({
+    "_invisible", "yellow_king", "watcher", "tall_shadow", "vessel_avatar",
+    "black_figure", "static_figure", "doll", "glitch_npc", "shadow",
+})
+
+
+def _is_shootable(obj):
+    return getattr(obj, "sprite_kind", None) not in _BULLET_PHANTOM
 
 
 class Projectile:
@@ -77,6 +92,10 @@ class Projectile:
                     continue
                 if self.cult_only and not _is_cultist(n):
                     continue
+                # Phantoms (the King, Watchers, invisible markers) are
+                # never struck by a round even with cult_only off.
+                if not _is_shootable(n):
+                    continue
                 if abs(self.x - n.x) < 14 and abs(self.y - n.y) < 14:
                     self._strike(n)
                     self.alive = False
@@ -90,9 +109,14 @@ class Projectile:
 
     def _strike(self, target):
         """Apply a friendly-bullet hit: stagger (stun_only) or wound/kill.
-        Works on both Enemy (hp) and NPC (take_damage) targets."""
+        Works on both Enemy (hp) and NPC (take_damage) targets.
+
+        The stun_only gate is the world's growing refusal to let you kill
+        the CULT once you know too much (3+ evidence). It never protected
+        a living person: a clean shot always drops an innocent local. So
+        the stagger applies only to cultists -- a local takes the round."""
         target.flash = 0.12
-        if self.stun_only:
+        if self.stun_only and _is_cultist(target):
             target._stun_t = max(getattr(target, "_stun_t", 0.0), self.stun_dur)
             # They lose their lock on the player when staggered.
             if hasattr(target, "_has_been_spotted"):

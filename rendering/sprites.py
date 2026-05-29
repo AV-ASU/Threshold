@@ -844,6 +844,49 @@ def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False,
         pygame.draw.rect(surf, (200, 200, 200), (x - 8, y - 8, 16, 16))
 
 
+# Dominant garment tint per local sprite kind, so a downed local still
+# reads as *who* they were (the Sheriff's navy, Hettie's plum) rather
+# than an anonymous heap. Falls back to a drab brown.
+_CORPSE_TINT = {
+    "sheriff":      (32, 50, 100),
+    "royce":        (118, 92, 60),
+    "hettie":       (118, 70, 92),
+    "townswoman":   (150, 56, 70),
+    "tisdale_boy":  (172, 156, 70),
+    "old_townsman": (78, 60, 42),
+    "preacher":     (34, 32, 40),
+    "clerk":        (60, 54, 60),
+    "cultist":      (150, 140, 120),
+}
+
+
+def draw_npc_corpse(surf, x, y, kind, seed=0):
+    """A local, put down. A horizontal slumped body over a dark blood
+    pool -- read as a person on the floor, not a sprite standing. Tinted
+    off the kind so the corpse still says who it was. Orientation is
+    seeded so a row of bodies doesn't all face the same way."""
+    rng = random.Random(seed)
+    body = _CORPSE_TINT.get(kind, (70, 64, 60))
+    body_lo = tuple(int(c * 0.65) for c in body)
+    skin = (172, 146, 126)
+    head_left = rng.random() < 0.5
+    # Blood pool, drawn first so the body lies in it. Offset slightly
+    # toward the head end (the wound that dropped them).
+    pool = pygame.Surface((44, 26), pygame.SRCALPHA)
+    pygame.draw.ellipse(pool, (84, 12, 14, 140), (0, 0, 44, 26))
+    pygame.draw.ellipse(pool, (58, 6, 8, 185), (10, 7, 24, 12))
+    surf.blit(pool, (x - 22 + (4 if head_left else -4), y - 2))
+    # Torso: a horizontal slab.
+    pygame.draw.rect(surf, body, (x - 11, y - 2, 24, 9))
+    pygame.draw.rect(surf, body_lo, (x - 11, y - 2, 24, 9), 1)
+    # An outflung arm.
+    pygame.draw.rect(surf, body_lo, (x - 3, y + 6, 9, 3))
+    # Head lolled to one end.
+    hx = x - 13 if head_left else x + 13
+    pygame.draw.circle(surf, skin, (hx, y + 2), 4)
+    pygame.draw.circle(surf, body_lo, (hx, y - 1), 4, 1)   # hair/hat smudge
+
+
 def draw_player_sprite(surf, x, y, facing, walk_phase=0, armor=None,
                         prone=False):
     """THRESHOLD: the private investigator, 1994. A long dark wool
