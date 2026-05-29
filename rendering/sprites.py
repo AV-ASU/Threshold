@@ -982,6 +982,69 @@ _CORPSE_ECHO = {
 }
 
 
+# ---- Per-character corpse "claim" forms -------------------------------
+# When the fold claims a NAMED resister's corpse (mold >= 1) it opens the
+# body into THAT person's bespoke horror lying dead -- the same form as their
+# living mutation (rendering._infest_*), laid horizontal down the length of
+# the fallen body. So a claimed Toby is a teeth-gullet, a claimed Hettie a
+# flayed petal-flower, a claimed Garrick a body crawling with faces -- not
+# the same generic husk for everyone. Unnamed kinds fall back to the generic
+# mold stages. Each takes the body tints and the mold (intensity 1..3).
+
+def _corpse_claim_tisdale_boy(surf, x, y, body, body_lo, mold):
+    # Toby opened into the maw he became: a dark gullet runs the LENGTH of
+    # the fallen body, bone teeth bridging it the whole way, a gold thread in
+    # the throat. The gullet gapes wider as the fold takes him -- at the husk
+    # stage the body is mostly mouth.
+    h = 1 + mold                                            # gullet half-height 2..4
+    pygame.draw.rect(surf, body, (x - 11, y - 2, 24, 9))    # what flesh is left
+    pygame.draw.rect(surf, body_lo, (x - 11, y - 2, 24, 9), 1)
+    pygame.draw.rect(surf, (8, 4, 6), (x - 11, y + 2 - h, 23, h * 2))   # the gullet
+    for tx in range(-10, 12, 3):                            # teeth bridging it the whole way
+        pygame.draw.line(surf, (224, 216, 198),
+                         (x + tx, y + 2 - h), (x + tx, y + 1 + h), 1)
+    pygame.draw.line(surf, (196, 152, 42), (x - 9, y + 1), (x + 10, y + 1), 1)  # gold throat
+
+
+def _corpse_claim_hettie(surf, x, y, body, body_lo, mold):
+    # Hettie unzipped into the flayed flower she became: a dark seam runs the
+    # length of the body with skin-petals curling off both long edges, gold
+    # welling in the seam. Splays wider with the mold. (Her reaching-arm echo
+    # still lays over the top.)
+    pygame.draw.rect(surf, body, (x - 11, y - 2, 24, 9))
+    pygame.draw.rect(surf, body_lo, (x - 11, y - 2, 24, 9), 1)
+    pygame.draw.rect(surf, (10, 5, 8), (x - 10, y + 1, 22, mold))        # the seam
+    pet = (206, 176, 150)
+    for px in range(-9, 11, 5):                             # petals peeling off both edges
+        d = 1 + mold
+        pygame.draw.polygon(surf, pet, [(x + px, y - 2), (x + px + 3, y - 2),
+                                        (x + px + 1, y - 2 - d)])
+        pygame.draw.polygon(surf, pet, [(x + px, y + 7), (x + px + 3, y + 7),
+                                        (x + px + 1, y + 7 + d)])
+    pygame.draw.line(surf, (202, 158, 46), (x - 9, y + 2), (x + 10, y + 2), 1)  # gold seam
+
+
+def _corpse_claim_old_townsman(surf, x, y, body, body_lo, mold):
+    # Garrick crawling with faces: dark screaming faces surface through the
+    # flesh all down the fallen body, gold burning behind each. More of them
+    # push through as the fold works him.
+    pygame.draw.rect(surf, body, (x - 11, y - 2, 24, 9))
+    pygame.draw.rect(surf, body_lo, (x - 11, y - 2, 24, 9), 1)
+    spots = [(-8, 0), (-1, 4), (5, -1), (10, 2), (2, 5), (-5, -1)][:1 + mold * 2]
+    for fx, fy in spots:
+        cx, cy = x + fx, y + 2 + fy
+        pygame.draw.circle(surf, (10, 5, 8), (cx - 1, cy - 1), 1)   # eye-pit
+        pygame.draw.circle(surf, (10, 5, 8), (cx + 1, cy - 1), 1)   # eye-pit
+        pygame.draw.line(surf, (196, 152, 42), (cx, cy + 1), (cx, cy + 2), 1)  # gold mouth
+
+
+_CORPSE_CLAIM = {
+    "tisdale_boy": _corpse_claim_tisdale_boy,
+    "hettie": _corpse_claim_hettie,
+    "old_townsman": _corpse_claim_old_townsman,
+}
+
+
 def draw_npc_corpse(surf, x, y, kind, seed=0, mold=0):
     """A local, put down. A horizontal slumped body over a dark blood
     pool -- read as a person on the floor, not a sprite standing. Tinted
@@ -1013,7 +1076,14 @@ def draw_npc_corpse(surf, x, y, kind, seed=0, mold=0):
     # slab (0), a lopsided buckled hunch (1), rib-flaps peeling up off a
     # black gulf (2), a torn-open hollow ribcage husk (3). Negative space
     # and a broken contour carry it; gold is only ever a thin seam.
-    if mold == 0:
+    #
+    # NAMED resisters, once claimed (mold >= 1), open into THEIR bespoke
+    # horror instead of the generic husk -- the dead read as who they were
+    # (see _CORPSE_CLAIM). mold 0 is still the clean fresh kill for everyone.
+    claim = _CORPSE_CLAIM.get(kind)
+    if claim is not None and mold >= 1:
+        claim(surf, x, y, body, body_lo, mold)
+    elif mold == 0:
         pygame.draw.rect(surf, body, (x - 11, y - 2, 24, 9))
         pygame.draw.rect(surf, body_lo, (x - 11, y - 2, 24, 9), 1)
         pygame.draw.rect(surf, body_lo, (x - 3, y + 6, 9, 3))   # outflung arm
