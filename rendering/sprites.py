@@ -317,32 +317,47 @@ def _draw_curse_priest_raw(surf, x, y, t, facing=(0, 1), curse=0.0):
         pygame.draw.line(surf, _VP_HIDE, e1, e2, 3)
         pygame.draw.line(surf, _VP_HIDE, e2, hh, 2)
         pygame.draw.line(surf, _VP_LO, e1, e2, 1)
-    # A single half-submerged face surfacing from a torn seam.
-    def _surface_face(cx, cy):
+    # A half-submerged face surfacing from a torn seam -- `gape` is its mouth.
+    def _surface_face(cx, cy, gape=3):
+        cx, cy = int(cx), int(cy)
         pygame.draw.ellipse(surf, _VP_FLESH, (cx - 4, cy - 5, 8, 10))
         pygame.draw.ellipse(surf, _VP_FLESH_LO, (cx - 4, cy - 5, 8, 10), 1)
         pygame.draw.circle(surf, _VP_PIT, (cx - 2, cy - 2), 1)
         pygame.draw.circle(surf, _VP_PIT, (cx + 2, cy - 2), 1)
-        pygame.draw.ellipse(surf, _VP_MOUTH, (cx - 2, cy + 1, 4, 3 + int(bloom * 2)))
+        pygame.draw.ellipse(surf, _VP_MOUTH, (cx - 2, cy + 1, 4, max(2, gape)))
         pygame.draw.polygon(surf, _VP_PIT,                       # lower half submerged
                             [(cx - 4, cy + 4), (cx + 4, cy + 4),
-                             (cx + 3, cy + 9), (cx - 3, cy + 9)])
+                             (cx + 3, cy + 10), (cx - 3, cy + 10)])
     if view == "back":
         # Back of the masked head: a bone dome + the mask's tie-strap, no face.
         pygame.draw.ellipse(surf, _VP_FLESH_LO, (sx - 6, top - 12, 12, 14))
         pygame.draw.line(surf, (140, 130, 110), (sx - 5, top - 6), (sx + 5, top - 5), 1)
         pygame.draw.line(surf, _VP_GOR, (sx, top + 4), (sx, y + 12), 2)
-        _surface_face(sx, top + 16)
+        _surface_face(sx, top + 16, 3 + int(bloom * 3))
         _cult_glow(surf, sx, top + 14, 2, 14 + int(bloom * 22))
         return
-    # ONE torn seam down the torso (muddy dark edges), dark interior.
+    # ONE torn seam down the torso -- it WRITHES open as the curse casts.
+    wob = int(math.sin(t * 4.5) * bloom * 1.5)
     sp = 2 + int(bloom * 3)
     pygame.draw.polygon(surf, _VP_PIT,
                         [(sx - sp, top + 6), (sx + sp, top + 6),
-                         (sx + sp - 1, y + 12), (sx - sp + 1, y + 12)])
-    for gx in (-sp, sp):
-        pygame.draw.line(surf, _VP_GOR, (sx + gx, top + 6), (sx + gx, y + 12), 1)
-    _surface_face(sx, top + 17)
+                         (sx + sp + wob - 1, y + 12), (sx - sp + wob + 1, y + 12)])
+    for gx in (-sp, sp):                          # gore-torn edges, flexing
+        pygame.draw.line(surf, _VP_GOR, (sx + gx, top + 6), (sx + gx + wob, y + 12), 1)
+    # the trapped face STRAINS up and its mouth gapes as it casts
+    rise = int(bloom * 4)
+    gape = 3 + int(bloom * 4) + (1 if math.sin(t * 5.0) > 0 else 0)
+    _surface_face(sx + wob, top + 17 - rise, gape)
+    # dark gore weeps from the wound at the bind (muddy, pulsing -- never bright)
+    if bloom > 0.5:
+        dl = 3 + int((math.sin(t * 3.0) * 0.5 + 0.5) * 5)
+        pygame.draw.line(surf, _VP_GOR, (sx - 1, y + 11), (sx - 1, y + 11 + dl), 1)
+        pygame.draw.line(surf, _VP_GOR_LO, (sx + 2, y + 11), (sx + 2, y + 11 + dl // 2), 1)
+    # a SECOND face surfaces, then sinks, at the bind
+    if bloom > 0.7:
+        s2 = math.sin(t * 2.2) * 0.5 + 0.5
+        if s2 > 0.45:
+            _surface_face(sx - wob, top + 26 - int(s2 * 3), 1 + int(s2 * 3))
     # The Pallid Mask grafted into the head (clear carved face; see helper).
     _pallid_mask(surf, sx, top - 4, view, mdir, bloom)
 
