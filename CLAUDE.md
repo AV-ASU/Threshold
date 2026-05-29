@@ -107,8 +107,15 @@ it renders the procedural sprites to a labelled PNG strip.
   transforms surface locals by name: **converts** the peace-makers
   (`INFEST_CONVERT` → `_convert_local`: sprite→`cultist`, tag
   `cult_convert` = *passive* cult, gaze-only via `_tick_cultists`, never
-  grabs) and **mutates** the resisters (`INFEST_MUTATE` → `_mutated` flag
-  → `draw_mutation_overlay`, still themselves), and (c) at stage 3 turns
+  grabs) and **mutates** the resisters (`INFEST_MUTATE` → `_mutated` flag):
+  their flesh deforms into a **bespoke body-horror form** with the fold's
+  gold/Sign in the wound — Toby (head cleaves to a maw), Hettie (face
+  peels, Sign carved in), Garrick (skinned, a face straining through),
+  others use a generic fallback. Authored at BOTH scales that must agree:
+  the world sprite (`draw_infested_overlay` in `sprites.py`, `_INFEST_WORLD`)
+  and the dialog portrait (`Dialogue._draw_infested_portrait`, shown via
+  the `infested=True` flag on `show()` from `_mutated_local_dialogue`).
+  And (c) at stage 3 turns
   the Sheriff's office into a **unique threat**: `_spawn_hunting_sheriff`
   (`sheriff_hollow` sprite) holds for an intro beat then force-chases
   (`_tick_sheriff`); contact → `_trigger_death("sheriff")`. Corpses gain

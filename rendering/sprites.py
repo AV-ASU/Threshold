@@ -1006,31 +1006,108 @@ def draw_npc_corpse(surf, x, y, kind, seed=0, mold=0):
         pygame.draw.circle(surf, (40, 30, 10), (sx, y - 12), 2, 1)
 
 
-# Per-kind head height for the mutation overlay (most locals carry their
-# face at ~y-12; the boy is shorter).
-_MUTATE_HEAD_Y = {"tisdale_boy": -8}
+# ---- Infested resisters (NARRATIVE infestation) -----------------------
+# Each MUTATED resister has a bespoke body-horror form -- their flesh
+# deforms AND the fold's gold/Sign shows in the wound ("both, fused").
+# Authored as a discrete state (no crossfade), drawn OVER the base sprite
+# so the person stays recognisable under the wrongness. The SAME
+# transformation is authored at portrait scale in ui/dialog.py so the two
+# always agree. Keyed by sprite_kind. A slow time throb keeps it alive.
+_MEAT = (96, 22, 26); _MEAT_LO = (58, 12, 16); _MEAT_HI = (150, 44, 46)
+_WBONE = (222, 214, 196); _WSKIN = (214, 182, 150)
+_WGOLD = (236, 204, 64); _WGOLD_HI = (252, 232, 150)
 
 
-def draw_mutation_overlay(surf, x, y, kind):
-    """Drawn OVER a still-recognisable local who is mutating (a resister
-    whose body is betraying them, NARRATIVE infestation). Keeps the
-    person -- just lays wrongness on top: a jaundiced wash, two permanent
-    black eye-voids, and a faint Yellow Sign etched into the chest."""
-    hy = y + _MUTATE_HEAD_Y.get(kind, -12)
-    # Jaundiced wash over the whole body -- tuned to the fold's sick GOLD
-    # (the cult/King palette) so the infection reads as the same thing
-    # creeping into them, not a separate green sickness.
+def _gold_in_wound(surf, cx, cy, R, peak=64):
+    """Additive gold glow welling up from inside an opened wound."""
+    R = max(2, int(R))
+    g = pygame.Surface((R * 2 + 2, R * 2 + 2), pygame.SRCALPHA)
+    for i in range(R, 0, -1):
+        a = int(peak * (1 - i / R))
+        if a > 0:
+            pygame.draw.circle(g, (_WGOLD[0], _WGOLD[1], _WGOLD[2], a),
+                               (R + 1, R + 1), i)
+    surf.blit(g, (cx - R - 1, cy - R - 1), special_flags=pygame.BLEND_RGBA_ADD)
+
+
+def _infest_tisdale_boy(surf, x, y, t):
+    # The lying child's head cleaves top-to-bottom into a vertical maw,
+    # gold burning up the throat, teeth down both edges, his own eyes
+    # shoved out to the corners.
+    thr = 0.5 + 0.5 * math.sin(t * 2.6)
+    _gold_in_wound(surf, x, y - 4, 5, 48 + int(28 * thr))
+    pygame.draw.polygon(surf, _MEAT,
+                        [(x - 1, y - 13), (x + 1, y - 13), (x + 3, y + 5),
+                         (x - 3, y + 5)])
+    pygame.draw.line(surf, _WGOLD, (x, y - 2), (x, y + 4), 1)
+    try:
+        surf.set_at((x, y), _WGOLD_HI)
+    except (IndexError, ValueError):
+        pass
+    for ty in range(-10, 5, 3):
+        try:
+            surf.set_at((x - 2, y + ty), _WBONE)
+            surf.set_at((x + 2, y + ty), _WBONE)
+        except (IndexError, ValueError):
+            pass
+    pygame.draw.circle(surf, (230, 228, 224), (x - 5, y - 9), 1)
+    pygame.draw.circle(surf, (230, 228, 224), (x + 5, y - 9), 1)
+
+
+def _infest_hettie(surf, x, y, t):
+    # Her face peels open in four petals of skin; the Yellow Sign is
+    # carved into the exposed meat, gold bleeding from the opening.
+    thr = 0.5 + 0.5 * math.sin(t * 2.0)
+    fx, fy = x, y - 12
+    _gold_in_wound(surf, fx, fy, 5, 42 + int(24 * thr))
+    pygame.draw.circle(surf, _MEAT, (fx, fy), 4)
+    for dx, dy in [(0, -1), (0, 1), (-1, 0), (1, 0)]:
+        nx, ny = -dy, dx
+        pygame.draw.polygon(surf, _WSKIN,
+                            [(fx + nx * 2, fy + ny * 2),
+                             (fx - nx * 2, fy - ny * 2),
+                             (fx + dx * 6, fy + dy * 6)])
+    pygame.draw.line(surf, _WGOLD, (fx, fy - 2), (fx, fy + 2), 1)
+    pygame.draw.line(surf, _WGOLD, (fx, fy), (fx - 2, fy - 1), 1)
+    pygame.draw.line(surf, _WGOLD, (fx, fy), (fx + 2, fy - 1), 1)
+
+
+def _infest_old_townsman(surf, x, y, t):
+    # (Garrick) the face is skinned smooth -- featureless -- and a
+    # screaming gold face strains up through the skin from beneath.
+    thr = 0.5 + 0.5 * math.sin(t * 2.2)
+    pygame.draw.circle(surf, _WSKIN, (x, y - 12), 6)
+    _gold_in_wound(surf, x, y - 12, 5, 34 + int(22 * thr))
+    pygame.draw.line(surf, _WGOLD, (x - 3, y - 9), (x + 2, y - 8), 1)
+    try:
+        surf.set_at((x - 2, y - 13), _WGOLD)
+        surf.set_at((x + 2, y - 13), _WGOLD)
+    except (IndexError, ValueError):
+        pass
+
+
+_INFEST_WORLD = {
+    "tisdale_boy": _infest_tisdale_boy,
+    "hettie": _infest_hettie,
+    "old_townsman": _infest_old_townsman,
+}
+
+
+def draw_infested_overlay(surf, x, y, kind):
+    """Drawn OVER a mutated resister's base sprite: their bespoke flesh-
+    horror form. Falls back to a generic jaundice + eye-void wash for any
+    kind without a dedicated incident."""
+    fn = _INFEST_WORLD.get(kind)
+    t = pygame.time.get_ticks() / 1000.0
+    if fn is not None:
+        fn(surf, x, y, t)
+        return
+    # Generic fallback (unchanged from the old overlay).
     wash = pygame.Surface((26, 36), pygame.SRCALPHA)
     wash.fill((168, 142, 56, 42))
     surf.blit(wash, (x - 13, y - 22))
-    # Permanent eye-voids -- the lights have gone out and stayed out.
-    pygame.draw.rect(surf, (2, 0, 4), (x - 3, hy - 1, 2, 2))
-    pygame.draw.rect(surf, (2, 0, 4), (x + 1, hy - 1, 2, 2))
-    # A faint Yellow Sign etched into the chest.
-    cy = y + 4
-    pygame.draw.line(surf, (190, 168, 64), (x, cy - 3), (x, cy + 3), 1)
-    pygame.draw.line(surf, (190, 168, 64), (x, cy), (x - 3, cy - 2), 1)
-    pygame.draw.line(surf, (190, 168, 64), (x, cy), (x + 3, cy - 2), 1)
+    pygame.draw.rect(surf, (2, 0, 4), (x - 3, y - 13, 2, 2))
+    pygame.draw.rect(surf, (2, 0, 4), (x + 1, y - 13, 2, 2))
 
 
 def draw_player_sprite(surf, x, y, facing, walk_phase=0, armor=None,

@@ -116,8 +116,9 @@ class DialogueBox:
         self.choice_idx = 0
         self.choice_callback = None
         self.portrait_kind = None
+        self.portrait_infested = False
 
-    def show(self, pages, speaker="", voice="blip_mid", color=C_WHITE, portrait=None, on_complete=None):
+    def show(self, pages, speaker="", voice="blip_mid", color=C_WHITE, portrait=None, on_complete=None, infested=False):
         if isinstance(pages, str):
             pages = [pages]
         self.pages = [parse_dialogue(p, default_color=color, default_voice=voice) for p in pages]
@@ -129,6 +130,10 @@ class DialogueBox:
         self.voice = voice
         self.color = color
         self.portrait_kind = portrait
+        # When True, _draw_portrait lays the speaker's bespoke infested
+        # flesh-horror form over their normal portrait (a mutated
+        # resister speaking up close -- NARRATIVE infestation).
+        self.portrait_infested = infested
         self.active = True
         self.on_complete = on_complete
         self.choices = None
@@ -213,6 +218,8 @@ class DialogueBox:
         pygame.draw.rect(surf, (24, 22, 32), prect)
         pygame.draw.rect(surf, C_PANEL_BORDER, prect, 1)
         self._draw_portrait(surf, prect, self.portrait_kind)
+        if getattr(self, "portrait_infested", False):
+            self._draw_infested_portrait(surf, prect, self.portrait_kind)
         if self.speaker_name:
             name_surf = self.fonts["sm"].render(self.speaker_name, True, C_GOLD)
             surf.blit(name_surf, (portrait_x, portrait_y + portrait_size + 6))
@@ -301,6 +308,80 @@ class DialogueBox:
             prefix = ">" if i == self.choice_idx else " "
             txt = self.fonts["md"].render(f"{prefix} {opt}", True, color)
             surf.blit(txt, (crect.x + 14, crect.y + 12 + i * 28))
+
+    def _draw_infested_portrait(self, surf, rect, kind):
+        """Lay a mutated resister's bespoke flesh-horror over their normal
+        portrait -- the same transformation authored on their world sprite
+        (rendering.sprites), at portrait scale. The flesh deforms AND the
+        fold's gold/Sign shows in the wound."""
+        cx, cy = rect.centerx, rect.centery
+        MEAT = (96, 22, 26); MEAT_LO = (58, 12, 16)
+        SKIN = (214, 182, 150); BONE = (222, 214, 196)
+        GOLD = (236, 204, 64); GOLD_HI = (252, 232, 150)
+        t = pygame.time.get_ticks() / 1000.0
+        thr = 0.5 + 0.5 * math.sin(t * 2.4)
+
+        def gold_in(gx, gy, R, peak):
+            g = pygame.Surface((R * 2 + 2, R * 2 + 2), pygame.SRCALPHA)
+            for i in range(R, 0, -1):
+                a = int(peak * (1 - i / R))
+                if a > 0:
+                    pygame.draw.circle(g, (GOLD[0], GOLD[1], GOLD[2], a),
+                                       (R + 1, R + 1), i)
+            surf.blit(g, (gx - R - 1, gy - R - 1),
+                      special_flags=pygame.BLEND_RGBA_ADD)
+
+        if kind == "tisdale_boy":
+            # Head cleaved into a vertical maw, gold up the throat.
+            gold_in(cx, cy + 4, 12, 48 + int(24 * thr))
+            pygame.draw.polygon(surf, MEAT,
+                                [(cx - 3, cy - 20), (cx + 3, cy - 20),
+                                 (cx + 7, cy + 20), (cx - 7, cy + 20)])
+            pygame.draw.polygon(surf, MEAT_LO,
+                                [(cx - 1, cy - 18), (cx + 1, cy - 18),
+                                 (cx + 3, cy + 18), (cx - 3, cy + 18)])
+            pygame.draw.line(surf, GOLD, (cx, cy - 6), (cx, cy + 14), 2)
+            pygame.draw.circle(surf, GOLD_HI, (cx, cy + 4), 2)
+            for ty in range(-16, 18, 4):
+                w = 2 + abs(ty) // 8
+                pygame.draw.polygon(surf, BONE, [(cx - 7 - w, cy + ty),
+                                    (cx - 7, cy + ty - 1), (cx - 7, cy + ty + 1)])
+                pygame.draw.polygon(surf, BONE, [(cx + 7 + w, cy + ty),
+                                    (cx + 7, cy + ty - 1), (cx + 7, cy + ty + 1)])
+            for ex in (-11, 11):
+                pygame.draw.circle(surf, (232, 230, 226), (cx + ex, cy - 8), 4)
+                pygame.draw.circle(surf, C_BLACK, (cx + ex, cy - 8), 2)
+        elif kind == "hettie":
+            # Face peeled into petals; the Yellow Sign carved in the meat.
+            fx, fy = cx, cy - 2
+            gold_in(fx, fy, 13, 44 + int(20 * thr))
+            pygame.draw.circle(surf, MEAT, (fx, fy), 10)
+            for dx, dy in [(-0.7, -0.7), (0.7, -0.7), (-0.7, 0.7), (0.7, 0.7)]:
+                nx, ny = -dy, dx
+                pygame.draw.polygon(surf, SKIN,
+                                    [(fx + nx * 6, fy + ny * 6),
+                                     (fx - nx * 6, fy - ny * 6),
+                                     (fx + dx * 18, fy + dy * 18)])
+            pygame.draw.circle(surf, MEAT_LO, (fx, fy), 6)
+            pygame.draw.line(surf, GOLD, (fx, fy - 6), (fx, fy + 6), 2)
+            pygame.draw.line(surf, GOLD, (fx, fy - 1), (fx - 5, fy - 4), 2)
+            pygame.draw.line(surf, GOLD, (fx, fy - 1), (fx + 5, fy - 4), 2)
+            pygame.draw.line(surf, GOLD, (fx, fy + 2), (fx - 4, fy + 6), 2)
+            pygame.draw.line(surf, GOLD, (fx, fy + 2), (fx + 4, fy + 6), 2)
+            pygame.draw.circle(surf, GOLD_HI, (fx, fy), 1)
+        elif kind == "old_townsman":
+            # (Garrick) face skinned smooth; a screaming gold face
+            # straining up through the skin from beneath.
+            pygame.draw.circle(surf, SKIN, (cx, cy - 4), 16)
+            gold_in(cx, cy - 4, 13, 40 + int(20 * thr))
+            pygame.draw.line(surf, GOLD, (cx - 7, cy - 7), (cx - 2, cy - 6), 2)
+            pygame.draw.line(surf, GOLD, (cx + 2, cy - 6), (cx + 7, cy - 7), 2)
+            pygame.draw.ellipse(surf, GOLD, (cx - 3, cy + 2, 6, 8))
+            pygame.draw.ellipse(surf, (120, 96, 20), (cx - 2, cy + 4, 4, 5))
+            pygame.draw.circle(surf, GOLD_HI, (cx - 4, cy - 6), 1)
+            pygame.draw.circle(surf, GOLD_HI, (cx + 4, cy - 6), 1)
+            pygame.draw.arc(surf, (196, 164, 134),
+                            (cx - 9, cy - 2, 18, 16), 0.2, 2.9, 1)
 
     def _draw_portrait(self, surf, rect, kind):
         cx = rect.centerx; cy = rect.centery

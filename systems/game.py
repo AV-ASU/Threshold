@@ -12,7 +12,7 @@ from constants import (
     C_BLUE, C_GREEN, C_PURPLE, C_PANEL, C_PANEL_BORDER, C_DIM,
 )
 from rendering.sprites import (draw_player_sprite, draw_npc_sprite,
-                               draw_npc_corpse, draw_mutation_overlay,
+                               draw_npc_corpse, draw_infested_overlay,
                                draw_axe_swing, draw_king_death, draw_carcosa,
                                draw_mask_yank)
 from rendering.transform import draw_vessel_bloom
@@ -288,8 +288,14 @@ RIVER_ENTRY_TILE = (34, 60)
 #              their bodies betray them (a render overlay of wrongness).
 # Sheriff Vane is neither: at stage 3 he becomes a unique threat encounter
 # in his own office (_spawn_hunting_sheriff).
-INFEST_CONVERT = {"A woman": 1, "Mrs. Calder": 2, "Garrick": 3, "Royce": 3}
-INFEST_MUTATE = {"Hettie": 2, "Old Pell": 3, "the Tisdale boy": 3}
+# CONVERT -- peace-makers cleanly join the cult (passive). MUTATE -- the
+# resisters whose flesh deforms into a bespoke fold-horror (Toby, Hettie,
+# Garrick each have a dedicated incident in rendering.sprites /
+# ui.dialog; Old Pell + Royce use the generic fallback). Values are the
+# evidence stage at which they turn.
+INFEST_CONVERT = {"A woman": 1, "Mrs. Calder": 2, "Royce": 3}
+INFEST_MUTATE = {"Hettie": 2, "Garrick": 3, "Old Pell": 3,
+                 "the Tisdale boy": 3}
 # Underground is wrong from the first rung -- a baseline infestation even
 # at 0 evidence, deepening on the full evidence count (not capped at 3).
 UNDERGROUND_SCENES = {
@@ -328,42 +334,51 @@ def _converted_local_dialogue(game, npc):
     game.dialog.show(lines, speaker="", voice="blip_soft", portrait="narrator")
 
 
-# Mutated resisters keep their voice and their face -- but the body has
-# started speaking for the fold, and they have to fight it back mid-
-# sentence. Keyed by name; falls back to a generic curdle.
+# Mutated resisters: their flesh has turned, but they talk to you as if
+# nothing has. The horror is the GAP -- a flat, mundane, domestic line
+# delivered from a face that is now a wound. No cosmic-poetry; they report
+# small specifics and don't acknowledge what they've become.
 INFEST_MUTATE_LINES = {
     "Hettie": [
-        "Still open. Still— [c=dim]the lights. I keep them on so they—[/c]",
-        "Don't look at my hands. I told them no.",
-        "[c=dim]My mouth keeps saying yes. It isn't me. It isn't--[/c]",
-    ],
-    "Old Pell": [
-        "The days fold back. I fold back with them.",
-        "[c=dim]I'm standing on a morning I already spent. I can feel the "
-        "old one underneath.[/c]",
-        "You're new. We don't get-- [c=dim]something's wearing the cold I "
-        "walked in with.[/c]",
+        "Truck still comes Thursdays. I unload it myself now.",
+        "The driver won't get out of the cab anymore. That's all right. I "
+        "manage the crates.",
+        "[c=dim]Don't mind me. I've a customer face on. You get used to "
+        "putting it on.[/c]",
     ],
     "the Tisdale boy": [
-        "I bit my tongue again. To check.",
-        "[c=dim]It doesn't bleed right anymore.[/c]",
-        "Don't tell me the way out. My mouth belongs to them now.",
-        "[c=dim]But I don't. I don't. I don't.[/c]",
+        "Mom set my place at supper. I sat down for it.",
+        "[c=dim]It falls right through. I keep trying. She doesn't say "
+        "anything.[/c]",
+        "I can still talk. Listen. I sound just the same.",
+    ],
+    "Garrick": [
+        "I still know everyone comes up this road. Don't need to look.",
+        "[c=dim]Saw you coming a long way off. Didn't need eyes for it.[/c]",
+        "You'll want to keep moving, son. I'd point you the way, but my "
+        "arm doesn't.",
+    ],
+    "Old Pell": [
+        "Crossed off the 14th this morning. It was already crossed.",
+        "[c=dim]So I did it again, over the top. Mine's the heavier line. "
+        "You can tell.[/c]",
     ],
 }
 
 
 def _mutated_local_dialogue(game, npc):
-    """A resister whose body is turning. Still themselves -- same face,
-    same voice -- but the words curdle and they fight to finish them."""
+    """A resister whose flesh has turned. They speak to you flatly, about
+    small ordinary things, from a face that is now a wound -- and never
+    acknowledge it. The portrait shows their bespoke infested form."""
     name = getattr(npc, "name", "")
     lines = INFEST_MUTATE_LINES.get(name, [
-        "[c=dim]They open their mouth to speak. Something else nearly "
-        "speaks first. They win, this time.[/c]",
+        "[c=dim]They answer something ordinary, in their own voice. They "
+        "do not seem to know what has happened to their face.[/c]",
     ])
     game.dialog.show(lines, speaker=name,
                      voice=getattr(npc, "voice", "blip_low"),
-                     portrait=getattr(npc, "portrait", None))
+                     portrait=getattr(npc, "portrait", None),
+                     infested=True)
 
 
 class Game:
@@ -3851,10 +3866,10 @@ class Game:
                                     gait=getattr(npc, "_gait", None),
                                     threat=king_threat, seed=id(npc) & 0xffff,
                                     curse=curse_v, gaze=w_gaze)
-                    # A resister whose body is betraying them: wrongness
-                    # laid over the person they still are.
+                    # A resister whose flesh has turned: their bespoke
+                    # fold-horror form, laid over the person they were.
                     if getattr(npc, "_mutated", False):
-                        draw_mutation_overlay(self.screen, sx, sy,
+                        draw_infested_overlay(self.screen, sx, sy,
                                               npc.sprite_kind)
             # THRESHOLD: NPC name labels removed. They were the
             # last RPG-tell on screen -- the player should learn
