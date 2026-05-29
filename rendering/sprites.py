@@ -1023,54 +1023,69 @@ def draw_npc_corpse(surf, x, y, kind, seed=0, mold=0):
     pygame.draw.ellipse(pool, (84, 12, 14, 140), (0, 0, 44, 26))
     pygame.draw.ellipse(pool, (58, 6, 8, 185), (10, 7, 24, 12))
     surf.blit(pool, (x - 22 + (4 if head_left else -4), y - 2))
-    # Torso. Below mold 3 it's an intact slab; at the husk stage the
-    # torso geometry itself is REPLACED by a split body (drawn further
-    # down) so the silhouette comes apart rather than getting gold dabbed
-    # on top.
-    if mold < 3:
+    # Torso silhouette. The fold doesn't just crack the body open -- it
+    # WRENCHES it out of human shape. Each stage deforms the outline more,
+    # so the contour itself reads as wrong before any gold does: a slumped
+    # slab (0), a lopsided buckled hunch (1), rib-flaps peeling up off a
+    # black gulf (2), a torn-open hollow ribcage husk (3). Negative space
+    # and a broken contour carry it; gold is only ever a thin seam.
+    if mold == 0:
         pygame.draw.rect(surf, body, (x - 11, y - 2, 24, 9))
         pygame.draw.rect(surf, body_lo, (x - 11, y - 2, 24, 9), 1)
-        # An outflung arm.
-        pygame.draw.rect(surf, body_lo, (x - 3, y + 6, 9, 3))
-    # Head lolled to one end.
-    pygame.draw.circle(surf, skin, (hx, y + 2), 4)
-    pygame.draw.circle(surf, body_lo, (hx, y - 1), 4, 1)   # hair/hat smudge
-    # The fold claiming the body -- the flesh OPENS. Each stage changes the
-    # silhouette (negative space does the work), not a glow laid on top.
-    if mold == 1:
-        # A single dark fissure has opened down the torso, a thread of
-        # gold deep in it.
-        pygame.draw.rect(surf, (8, 5, 9), (x - 1, y - 2, 3, 9))
-        pygame.draw.line(surf, (150, 118, 30), (x, y), (x, y + 5), 1)
+        pygame.draw.rect(surf, body_lo, (x - 3, y + 6, 9, 3))   # outflung arm
+    elif mold == 1:
+        # The body has buckled: the spine arches and one flank swells where
+        # something is pushing up under the skin -- a lopsided hunch, no
+        # longer a rectangle, with a dark fissure splitting it.
+        hunch = [(x - 11, y + 6), (x - 10, y - 2), (x - 2, y - 5),
+                 (x + 5, y - 3), (x + 12, y), (x + 11, y + 6)]
+        pygame.draw.polygon(surf, body, hunch)
+        pygame.draw.polygon(surf, body_lo, hunch, 1)
+        pygame.draw.rect(surf, body_lo, (x - 3, y + 6, 9, 3))   # outflung arm
+        pygame.draw.line(surf, (8, 5, 9), (x - 2, y - 4), (x + 1, y + 5), 2)
+        pygame.draw.line(surf, (150, 118, 30), (x - 1, y - 2), (x, y + 3), 1)
     elif mold == 2:
-        # The torso has cracked into two slabs pulling apart -- a wide
-        # dark trench between them, the body visibly coming open.
-        pygame.draw.rect(surf, (0, 0, 0), (x - 11, y - 2, 24, 9))   # carve the gap
-        pygame.draw.rect(surf, body, (x - 11, y - 2, 8, 9))         # left slab
-        pygame.draw.rect(surf, body, (x + 4, y - 2, 8, 9))          # right slab
-        pygame.draw.rect(surf, body_lo, (x - 11, y - 2, 8, 9), 1)
-        pygame.draw.rect(surf, body_lo, (x + 4, y - 2, 8, 9), 1)
-        pygame.draw.line(surf, (150, 118, 30), (x, y - 1), (x, y + 6), 1)
+        # The torso has split along the spine and the two halves PEEL UP and
+        # back like a beetle's wing-cases -- curled flaps over a black gulf,
+        # not parallel slabs. A limb is wrenched up out of its line.
+        pygame.draw.ellipse(surf, (0, 0, 0), (x - 12, y - 4, 26, 13))   # the gulf
+        near = [(x - 11, y + 7), (x - 10, y + 1), (x - 1, y + 2),
+                (x + 1, y + 8), (x - 5, y + 9)]                 # flap curling down
+        far = [(x - 1, y - 1), (x + 4, y - 6), (x + 11, y - 5),
+               (x + 12, y + 1), (x + 5, y + 1)]                 # flap curling up
+        pygame.draw.polygon(surf, body, near)
+        pygame.draw.polygon(surf, body, far)
+        pygame.draw.polygon(surf, body_lo, near, 1)
+        pygame.draw.polygon(surf, body_lo, far, 1)
+        pygame.draw.line(surf, body_lo, (x - 4, y + 3), (x - 10, y - 4), 2)  # wrenched arm
+        pygame.draw.line(surf, (150, 118, 30), (x - 1, y - 1), (x + 1, y + 5), 1)
     elif mold >= 3:
-        # The HUSK: the body emptied into a hollow shell. The torso is now
-        # a thin curved rind around a black cavity -- a person-shaped hole.
-        # Negative space is the horror; gold is only the deep seam at the
-        # bottom of the emptiness.
-        pygame.draw.ellipse(surf, (4, 3, 6), (x - 12, y - 3, 26, 12))   # the cavity
-        # the rind: two thin crescents of leftover flesh at the ends
-        pygame.draw.arc(surf, body, (x - 13, y - 3, 12, 12),
-                        math.pi * 0.4, math.pi * 1.6, 2)
-        pygame.draw.arc(surf, body, (x + 1, y - 3, 12, 12),
-                        -math.pi * 0.6, math.pi * 0.6, 2)
-        # a peeled flap of skin hanging off one edge
-        pygame.draw.polygon(surf, body_lo,
-                            [(x - 9, y + 6), (x - 4, y + 5), (x - 6, y + 11)])
+        # The HUSK: the ribcage pried fully open, the body scooped hollow.
+        # Ragged rib-spurs splay from a black cavity and the contour is torn
+        # -- a person-shaped hole something climbed out of. The head has been
+        # dragged back on a stretched neck.
+        pygame.draw.ellipse(surf, (4, 3, 6), (x - 12, y - 5, 26, 15))   # the cavity
+        # splayed ribs prying outward from the spine line
+        for i, (dx, dy) in enumerate([(-11, -7), (-6, -9), (0, -10),
+                                       (6, -9), (11, -6), (12, 1),
+                                       (-12, 1), (-9, 9), (-2, 10),
+                                       (6, 9), (11, 7)]):
+            pygame.draw.line(surf, body if i % 2 else body_lo,
+                             (x + dx // 3, y + 2), (x + dx, y + 2 + dy), 2)
+        pygame.draw.arc(surf, body, (x - 12, y - 5, 26, 15),
+                        0.25, math.pi - 0.25, 1)               # ragged lip
+        # stretched neck dragging the head back off the cavity
+        pygame.draw.line(surf, skin, (x + (-9 if head_left else 9), y + 2),
+                         (hx, y + 2), 2)
         # gold seam at the bottom of the hollow -- a line, not a blob
-        pygame.draw.line(surf, (170, 130, 36), (x - 6, y + 5), (x + 6, y + 5), 1)
+        pygame.draw.line(surf, (170, 130, 36), (x - 5, y + 4), (x + 5, y + 4), 1)
         try:
-            surf.set_at((x, y + 4), (236, 204, 64))
+            surf.set_at((x, y + 3), (236, 204, 64))
         except (IndexError, ValueError):
             pass
+    # Head lolled to one end (on top of the wreck of the body).
+    pygame.draw.circle(surf, skin, (hx, y + 2), 4)
+    pygame.draw.circle(surf, body_lo, (hx, y - 1), 4, 1)   # hair/hat smudge
     # A character's dying compulsion, still acting on the floor.
     echo = _CORPSE_ECHO.get(kind)
     if echo is not None:
