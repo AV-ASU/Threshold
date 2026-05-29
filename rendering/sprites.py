@@ -1157,7 +1157,7 @@ def _infest_tisdale_boy(surf, x, y, t):
     hy = y - 8
     gap = 2 + int(2 * thr)                          # the maw flexes open
     _gold_in_wound(surf, x, hy + 3, 3, 30 + int(16 * thr))    # glow under, a halo
-    pygame.draw.polygon(surf, (8, 4, 6), [           # the gullet, head to hem
+    pygame.draw.polygon(surf, _MEAT, [               # the gullet (red flesh, not a void)
         (x - gap, hy - 5), (x + gap, hy - 5),
         (x + gap + 1, y + 13), (x - gap - 1, y + 13)])
     pygame.draw.line(surf, _WGOLD, (x, hy - 3), (x, y + 11), 1)   # gold throat
@@ -1184,8 +1184,8 @@ def _infest_hettie(surf, x, y, t):
         pygame.draw.polygon(surf, _WSKIN,
                             [(int(x + bx), int(hy + by)),
                              (int(x - bx), int(hy - by)), tip])
-    pygame.draw.circle(surf, (10, 5, 8), (x, hy), 3)          # dark socket
-    pygame.draw.polygon(surf, (10, 5, 8),                     # the body seam unzips
+    pygame.draw.circle(surf, _MEAT, (x, hy), 3)               # raw flesh socket
+    pygame.draw.polygon(surf, _MEAT,                          # the body seam unzips
                         [(x - 2, y - 1), (x + 2, y - 1), (x + 1, y + 14), (x - 1, y + 14)])
     for sy in range(2, 15, 4):                                # skin-petals peeling off both sides
         pygame.draw.polygon(surf, _WSKIN, [(x - 2, y + sy), (x - 2, y + sy + 3), (x - 6, y + sy + 1)])
@@ -1206,9 +1206,9 @@ def _infest_old_townsman(surf, x, y, t):
 
     def face(cx, cy, push):
         _gold_in_wound(surf, cx, cy, 2, 20 + int(12 * thr))
-        pygame.draw.circle(surf, (10, 5, 8), (cx - 2, cy - 1 - push), 1)   # eye-pits
-        pygame.draw.circle(surf, (10, 5, 8), (cx + 2, cy - 1 - push), 1)
-        pygame.draw.ellipse(surf, (10, 5, 8), (cx - 1, cy + 1, 3, 3 + push))  # open mouth
+        pygame.draw.circle(surf, _MEAT_LO, (cx - 2, cy - 1 - push), 1)   # sunken eye-pits
+        pygame.draw.circle(surf, _MEAT_LO, (cx + 2, cy - 1 - push), 1)   # (dark flesh, not void)
+        pygame.draw.ellipse(surf, _MEAT_LO, (cx - 1, cy + 1, 3, 3 + push))  # open mouth
         pygame.draw.line(surf, _WGOLD, (cx, cy + 1), (cx, cy + 2 + push), 1)
 
     hy = y - 12
