@@ -3355,11 +3355,21 @@ class Game:
                     draw_vessel_bloom(self.screen, sx, sy, npc.sprite_kind,
                                       npc.facing, m, seed=id(npc) & 0xffff)
                 else:
+                    # Curse-priest: bloom on the actual rite -- ramps as it
+                    # holds you in its gaze, peaks/flashes as it binds you.
+                    curse_v = 0.0
+                    if npc.sprite_kind == "curse_priest":
+                        rt = getattr(npc, "_ritual_t", 0.0)
+                        cd = getattr(npc, "_curse_cd", 0.0)
+                        ramp = min(1.0, rt / CURSE_RITUAL_TIME)
+                        flash = max(0.0, (cd - (CURSE_RITUAL_TIME - 0.7)) / 0.7)
+                        curse_v = max(ramp, flash)
                     draw_npc_sprite(self.screen, sx, sy, npc.sprite_kind,
                                     npc.facing, blink=(i == blink_idx),
                                     birth=getattr(npc, "_birth", None),
                                     gait=getattr(npc, "_gait", None),
-                                    threat=king_threat, seed=id(npc) & 0xffff)
+                                    threat=king_threat, seed=id(npc) & 0xffff,
+                                    curse=curse_v)
             # THRESHOLD: NPC name labels removed. They were the
             # last RPG-tell on screen -- the player should learn
             # who an NPC is by interacting with them, not by
