@@ -204,6 +204,45 @@ hive.
 
 ---
 
+## 4b. Infestation — the world rotting as you understand it
+
+Knowing dooms you, and it **shows**. Surface corruption is a pure,
+monotonic function of the evidence count — `_infest_stage = min(3,
+evidence)` — and it is deliberately **front-loaded** to peak exactly as
+you commit underground at 3. (The hard lock is *opening the Deep Stair*,
+not crossing 3; you can still resurface — and a fully-rotted town greets
+you when you do.) The underground is the asymmetry: it is **already
+wrong from the first rung** (a baseline at 0 evidence) and **deepens on
+the full count**, so the well is a wound the rest of the world only
+catches up to.
+
+What rises with the stage:
+
+- **The ground curdles.** Escalating rot decals spread across the
+  surface — phantom marks and dead crows, then claw-marks, the Sign, and
+  gore, then hanging figures by stage 3. The **safe rooms** (your cot,
+  the kid's house) stay clean until stage 3, then turn too: *even here.*
+- **The people go — and *how* they go means something.** The
+  **peace-makers convert** — the welcoming newcomer (first, at stage 1),
+  Mrs. Calder who "hears the door" (2), Garrick and Royce (3). A convert
+  is **passive cult**: they turn toward you and their watching raises
+  visibility, but they never chase or grab. The **resisters mutate** —
+  Hettie (2), Old Pell and the Tisdale boy (3): they keep their identity
+  and their defiance, but their bodies betray them (eye-voids, the Sign
+  etched into the chest, a jaundiced cast). Still themselves, rotting.
+- **Sheriff Vane is neither.** The last holdout. At stage 3 his office is
+  no longer a place you visit — he has gone **hollow**, a unique threat
+  encounter: he stands, says the line he can't say anymore ("leave,
+  son… I can't say it"), then comes for you, slow and unrelenting. He
+  catches you → **TAKEN INTO CUSTODY**. You escape by getting back out
+  his door (a run outpaces him). The best ammo cache in town is now his.
+- **The dead don't rest.** A persisted **corpse** you left grows `mold`
+  with the stage — grey-green discolour, then pale fungal threads, then a
+  corn-stalk and the Sign growing up out of the body. Claimed, never
+  risen.
+
+---
+
 ## 5. The Descent — "how deep does this go"
 
 The descent is strictly **vertical**, and it has exactly **one mouth**:

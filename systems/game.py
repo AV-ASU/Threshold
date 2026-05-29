@@ -12,7 +12,7 @@ from constants import (
     C_BLUE, C_GREEN, C_PURPLE, C_PANEL, C_PANEL_BORDER, C_DIM,
 )
 from rendering.sprites import (draw_player_sprite, draw_npc_sprite,
-                               draw_npc_corpse,
+                               draw_npc_corpse, draw_mutation_overlay,
                                draw_axe_swing, draw_king_death, draw_carcosa,
                                draw_mask_yank)
 from rendering.transform import draw_vessel_bloom
@@ -276,6 +276,30 @@ MAX_FULLSCREEN_DARK = 204
 # until they step onto land or bridge, which flips in_river False.
 RIVER_ENTRY_TILE = (34, 60)
 
+# ---- Infestation (NARRATIVE §infestation) -----------------------------
+# As the case is understood the surface rots, front-loaded to peak as the
+# player commits underground at 3 evidence. The stage is min(3, evidence)
+# for the surface (monotonic; the underground deepens past that on its own
+# evidence clock). Two ways a local goes:
+#   CONVERT -- the peace-makers cleanly join the cult (passive: they watch
+#              and raise visibility, but never chase or grab). Keyed by
+#              name -> the stage at which they turn.
+#   MUTATE  -- the resisters keep their identity and their defiance, but
+#              their bodies betray them (a render overlay of wrongness).
+# Sheriff Vane is neither: at stage 3 he becomes a unique threat encounter
+# in his own office (_spawn_hunting_sheriff).
+INFEST_CONVERT = {"A woman": 1, "Mrs. Calder": 2, "Garrick": 3, "Royce": 3}
+INFEST_MUTATE = {"Hettie": 2, "Old Pell": 3, "the Tisdale boy": 3}
+# Underground is wrong from the first rung -- a baseline infestation even
+# at 0 evidence, deepening on the full evidence count (not capped at 3).
+UNDERGROUND_SCENES = {
+    "well_bottom", "well_passage",
+    "works_vats", "works_sorting", "works_scriptorium", "works_sign",
+    "works_deepstair",
+    "depths_antechamber", "depths_procession", "depths_hall",
+    "depths_threshing", "depths_stair",
+}
+
 
 def _corpse_examine(game, npc):
     """E on a local you killed. A flat, dim line -- no absolution, just
@@ -289,6 +313,18 @@ def _corpse_examine(game, npc):
     else:
         lines = ["[c=dim]Still here. The cold won't let it keep, and won't "
                  "let it go.[/c]"]
+    game.dialog.show(lines, speaker="", voice="blip_soft", portrait="narrator")
+
+
+def _converted_local_dialogue(game, npc):
+    """A local who has made their peace and joined. They no longer answer
+    as themselves -- they turn toward you and speak with the others'
+    mouth. A flat, patient line; no name."""
+    lines = [
+        "[c=dim]They turn toward you, unhurried. The face is the one you "
+        "knew. The voice underneath it is not.[/c]",
+        "[c=dim]\"It's easier once you stop trying the doors.\"[/c]",
+    ]
     game.dialog.show(lines, speaker="", voice="blip_soft", portrait="narrator")
 
 
@@ -819,6 +855,10 @@ class Game:
             # the builder re-spawns them live every load, so swap them for
             # persistent corpses.
             self._replay_dead_locals()
+            # Re-derive the world's infestation for this scene from the
+            # evidence count (rot decals, turned/mutated locals, the
+            # stage-3 Sheriff encounter).
+            self._apply_infestation()
 
     def _river_blocks(self, target_x, target_y):
         """Custom passability for the brimley river. The `~` floor is
@@ -1382,6 +1422,148 @@ class Game:
             body._is_corpse = True
             body._kill_processed = True
             self.scene.add_npc(body)
+
+    # ---- Infestation -------------------------------------------------
+    def _infest_stage(self):
+        """Surface infestation stage 0..3, front-loaded to peak as the
+        player commits underground at 3 evidence. Monotonic with the
+        evidence count (knowing rots the world, and you can't un-know)."""
+        return min(3, self._evidence_count())
+
+    def _apply_infestation(self):
+        """Re-derive the world's rot for the freshly-loaded scene from the
+        evidence count. Scenes rebuild every load, so this is deterministic
+        and additive each time -- never accumulates. Runs after on_enter +
+        _replay_dead_locals so it can transform the live locals in place."""
+        if self.scene is None:
+            return
+        key = self.scene.key
+        surface_stage = self._infest_stage()
+        underground = key in UNDERGROUND_SCENES
+        if underground:
+            # Wrong from the first rung: a baseline even at 0 evidence,
+            # deepening on the FULL evidence count.
+            self._infest_decals(max(1, self._evidence_count()), underground=True)
+        elif surface_stage > 0:
+            self._infest_decals(surface_stage, underground=False)
+        # Locals turn (convert) or rot (mutate) on the surface.
+        if surface_stage > 0:
+            self._infest_locals(surface_stage)
+        # Sheriff Vane's office becomes a unique threat at stage 3.
+        if surface_stage >= 3 and key == "fisherman_cottage":
+            self._spawn_hunting_sheriff()
+
+    def _infest_decals(self, stage, underground=False):
+        """Scatter escalating infestation decorations on walkable tiles,
+        seeded by (scene, stage) so the spread is stable per load. Surface
+        scenes (outdoor + the safe rooms at stage 3) and underground
+        scenes only -- ordinary interiors are left to their own dressing."""
+        key = self.scene.key
+        surface = key in OUTDOOR_SCENES or key == "brimley"
+        safe = key in SAFE_SCENES
+        if not underground and not surface and not (safe and stage >= 3):
+            return
+        from entities.decoration import Decoration
+        rng = random.Random((hash(key) ^ (stage * 2654435761)) & 0xffffffff)
+        pool = ["phantom_mark", "dead_crow", "watching_wound"]
+        if stage >= 2:
+            pool += ["claw_marks", "yellow_sign", "gore", "bloodstain"]
+        if stage >= 3 and not underground:
+            pool += ["hanging_figure", "corn_doll", "watching_eye"]
+        if underground:
+            # Tight corridors: signs and wounds only, never a hanging body.
+            pool = ["phantom_mark", "watching_wound", "yellow_sign",
+                    "binding_sigil", "gore"]
+        # Surface scenes get a heavier spread than the small safe rooms.
+        per = 3 if (surface or underground) else 1
+        count = stage * per
+        spawns = list(self.scene.spawns.values())
+        placed = tries = 0
+        while placed < count and tries < count * 10:
+            tries += 1
+            tx = rng.randint(1, max(1, self.scene.w - 2))
+            ty = rng.randint(1, max(1, self.scene.h - 2))
+            wx, wy = tx * TILE + 16, ty * TILE + 16
+            if self.scene.is_solid_at(wx, wy):
+                continue
+            if any(abs(wx - sx) < 28 and abs(wy - sy) < 28
+                   for sx, sy in spawns):
+                continue
+            self.scene.add_decoration(Decoration(wx, wy, rng.choice(pool)))
+            placed += 1
+
+    def _infest_locals(self, stage):
+        """Turn or rot the surface locals by name. Converts become passive
+        cult (a 'cult_convert' tag -- _tick_cultists counts their gaze but
+        they never grab); mutates keep themselves under a wrongness overlay."""
+        for n in self.scene.npcs:
+            if not getattr(n, "alive", True) or getattr(n, "_is_corpse", False):
+                continue
+            nm = getattr(n, "name", "")
+            cs = INFEST_CONVERT.get(nm)
+            ms = INFEST_MUTATE.get(nm)
+            if cs is not None and stage >= cs:
+                self._convert_local(n)
+            elif ms is not None and stage >= ms:
+                n._mutated = True
+
+    def _convert_local(self, n):
+        """A peace-maker, joined. Becomes a masked cultist that watches
+        you (raising visibility via the gaze count) but never chases or
+        grabs -- passive cult. Their old dialogue is gone."""
+        n.sprite_kind = "cultist"
+        n.portrait = None
+        n.tag = "cult_convert"
+        n.movement = "watch"
+        n.dialogue_fn = _converted_local_dialogue
+        n.no_prompt = False
+        n.solid = True
+        n._gaze_range = 150
+        n._mutated = False
+
+    def _spawn_hunting_sheriff(self):
+        """Stage 3: Sheriff Vane's office is no longer a place you visit.
+        Replace the watching Sheriff with the hollow thing he became -- a
+        unique, relentless pursuer. He holds for a beat (his last words),
+        then comes for you. Reaching you ends the run (the 'sheriff' card).
+        You escape by getting back out the door; he's slower than a run."""
+        from entities.npc import NPC
+        self.scene.npcs = [n for n in self.scene.npcs
+                           if getattr(n, "name", "") != "Sheriff"]
+        hx, hy = 8 * TILE + 16, 2 * TILE + 16
+        s = NPC(hx, hy, "Sheriff Vane", "sheriff_hollow",
+                movement="idle", solid=True, speed=0.78, tag="sheriff_hunt")
+        s.dialogue_fn = None
+        s.facing = (0, 1)
+        self.scene.add_npc(s)
+        self._sheriff_intro_t = 2.0
+        self.show_notice("Sheriff Vane stands. \"I'm supposed to tell you "
+                         "to leave, son. I can't say it anymore.\"",
+                         duration=3.2)
+        self.audio.play("low_pulse", 0.6)
+
+    def _tick_sheriff(self, dt):
+        """Drive the stage-3 Sheriff encounter: hold for the intro beat,
+        then set him hunting (force-chase), and end the run if he reaches
+        the player. No-op in any scene without a sheriff_hunt NPC."""
+        if self.scene is None or self.player is None:
+            return
+        s = next((n for n in self.scene.npcs
+                  if getattr(n, "tag", "") == "sheriff_hunt"
+                  and getattr(n, "alive", True)), None)
+        if s is None:
+            return
+        intro = getattr(self, "_sheriff_intro_t", 0.0)
+        if intro > 0:
+            self._sheriff_intro_t = intro - dt
+            if self._sheriff_intro_t <= 0:
+                s.movement = "chaser"
+                s._force_chase = True
+                self.audio.play("void_sting", 0.6)
+            return
+        d = math.hypot(s.x - self.player.x, s.y - self.player.y)
+        if d < 24 and self.player.invuln <= 0:
+            self._trigger_death("sheriff")
 
     def _kill_enemy(self, e):
         """Run the death side-effects for `e`: marks dead, plays the
@@ -1988,6 +2170,11 @@ class Game:
             sees = (d < getattr(n, "_gaze_range", 180)) and not hidden
             if sees:
                 self._gaze_count += 1
+            if tag == "cult_convert":
+                # A turned local: passive cult. Their watching raises
+                # visibility (counted above) but they never chase, spot,
+                # grab, or flank. The fallen town just stares.
+                continue
             if tag == "cult_curser":
                 self._tick_ritual(n, dt, sees)
                 continue
@@ -2692,7 +2879,7 @@ class Game:
         if self._death_kind is None:
             return
         self._death_t += dt
-        if self._death_kind == "cultist":
+        if self._death_kind in ("cultist", "sheriff"):
             if self._death_t >= 2.8:
                 self._death_kind = None
                 self._closure_locked = False
@@ -2723,19 +2910,32 @@ class Game:
                 self.screen.blit(tt, (w // 2 - tt.get_width() // 2,
                                       h // 2 - tt.get_height() // 2))
             return
-        # Cultist: the cult takes you. Fade to near-black, then CAPTURED.
+        # Cultist: the cult takes you (CAPTURED). Sheriff: the hollow
+        # lawman takes you in (TAKEN INTO CUSTODY). Fade to near-black,
+        # then the card. The Sheriff card is tinted his dull tin-star gold.
         w, h = self.screen.get_size()
         fade = min(255, int(self._death_t / 0.4 * 255))
         wash = pygame.Surface((w, h))
         wash.fill((6, 5, 7))
         wash.set_alpha(fade)
         self.screen.blit(wash, (0, 0))
+        if self._death_kind == "sheriff":
+            label, col, sub = ("TAKEN INTO CUSTODY", (188, 172, 96),
+                               "The badge was just clothing. The hold is not.")
+        else:
+            label, col, sub = ("CAPTURED", (170, 150, 90), None)
         if self._death_t > 0.35:
             ta = min(255, int((self._death_t - 0.35) / 0.4 * 255))
-            big = self.fonts["title"].render("CAPTURED", True, (170, 150, 90))
+            big = self.fonts["title"].render(label, True, col)
             big.set_alpha(ta)
             self.screen.blit(big, (w // 2 - big.get_width() // 2,
                                    h // 2 - big.get_height() // 2))
+            if sub and self._death_t > 0.9:
+                sa = min(210, int((self._death_t - 0.9) / 0.5 * 210))
+                st = self.fonts["sm"].render(sub, True, (150, 140, 110))
+                st.set_alpha(sa)
+                self.screen.blit(st, (w // 2 - st.get_width() // 2,
+                                      h // 2 + big.get_height()))
 
     # ---- Step ----
     def step(self, dt):
@@ -2844,6 +3044,7 @@ class Game:
             # while a box is up. Cutscene/audio drivers keep running.
             if not world_frozen:
                 self._tick_cultists(dt)
+                self._tick_sheriff(dt)
                 self._tick_watchers(dt)
                 self._tick_visibility(dt)
                 self._tick_heartbeat(dt)
@@ -3566,7 +3767,8 @@ class Game:
                     if not _on_screen(sx, sy):
                         continue
                     draw_npc_corpse(self.screen, sx, sy, npc.sprite_kind,
-                                    seed=id(npc) & 0xffff)
+                                    seed=id(npc) & 0xffff,
+                                    mold=self._infest_stage())
                 continue
             m = getattr(npc, "morph", 0.0)
             king_threat = None
@@ -3608,6 +3810,11 @@ class Game:
                                     gait=getattr(npc, "_gait", None),
                                     threat=king_threat, seed=id(npc) & 0xffff,
                                     curse=curse_v, gaze=w_gaze)
+                    # A resister whose body is betraying them: wrongness
+                    # laid over the person they still are.
+                    if getattr(npc, "_mutated", False):
+                        draw_mutation_overlay(self.screen, sx, sy,
+                                              npc.sprite_kind)
             # THRESHOLD: NPC name labels removed. They were the
             # last RPG-tell on screen -- the player should learn
             # who an NPC is by interacting with them, not by

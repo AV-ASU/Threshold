@@ -97,10 +97,27 @@ it renders the procedural sprites to a labelled PNG strip.
   (`LOCAL_KILL_VIS_SPIKE`, capped just under the King), pings the cult to
   investigate the body, and leaves a **persistent corpse** (`_kill_npc`
   returns keep → `_make_corpse`; cultists are still swept/removed).
+- **Infestation** (`_apply_infestation`, called from `load_scene_now`):
+  the world rots as a pure, monotonic function of evidence —
+  `_infest_stage()` = `min(3, evidence)`, **front-loaded** so the surface
+  peaks as the player commits underground at 3. Scenes rebuild each load,
+  so the pass is deterministic + additive (never accumulates). It (a)
+  scatters escalating rot decals (`_infest_decals`, seeded; surface +
+  safe-rooms-at-3 + underground, which is baseline-rotted from ev0), (b)
+  transforms surface locals by name: **converts** the peace-makers
+  (`INFEST_CONVERT` → `_convert_local`: sprite→`cultist`, tag
+  `cult_convert` = *passive* cult, gaze-only via `_tick_cultists`, never
+  grabs) and **mutates** the resisters (`INFEST_MUTATE` → `_mutated` flag
+  → `draw_mutation_overlay`, still themselves), and (c) at stage 3 turns
+  the Sheriff's office into a **unique threat**: `_spawn_hunting_sheriff`
+  (`sheriff_hollow` sprite) holds for an intro beat then force-chases
+  (`_tick_sheriff`); contact → `_trigger_death("sheriff")`. Corpses gain
+  `mold` (the stage) in `draw_npc_corpse` — the fold claims the dead.
 - A pursuer reaching the player triggers the **death** sequence
   (`_trigger_death(kind)` → `_tick_death`): `kind="cultist"` shows the
-  **CAPTURED** card (taken alive for the hive); `kind="king"` plays the
-  **Carcosa** mask-furnace cutscene. Both end the run and return to title.
+  **CAPTURED** card (taken alive for the hive); `kind="sheriff"` the
+  **TAKEN INTO CUSTODY** card (the hollow lawman); `kind="king"` plays the
+  **Carcosa** mask-furnace cutscene. All end the run and return to title.
 
 ## Conventions & gotchas
 

@@ -662,6 +662,34 @@ def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False,
         pygame.draw.line(surf, (60, 40, 25), (x + 12, y - 18), (x + 12, y + 16), 2)
         pygame.draw.polygon(surf, (200, 200, 220),
                             [(x + 12, y - 18), (x + 9, y - 22), (x + 15, y - 22)])
+    elif kind == "sheriff_hollow":
+        # Sheriff Vane, gone hollow -- the stage-3 unique threat. The
+        # lawman's shape is still there (tan shirt, brimmed hat) but the
+        # man isn't: the face is a void band with two sick-gold pinpricks,
+        # the tin star has curdled into a small Yellow Sign, and a faint
+        # jaundice clings to him. He doesn't blink; he doesn't stop.
+        import pygame as _pg
+        t = _pg.time.get_ticks() / 1000.0
+        pygame.draw.rect(surf, (96, 86, 62), (x - 9, y - 2, 18, 18))    # dimmed tan shirt
+        pygame.draw.rect(surf, (74, 66, 46), (x - 9, y + 9, 18, 5))     # belt line
+        pygame.draw.circle(surf, (150, 146, 110), (x, y - 12), 7)       # sallow face
+        pygame.draw.rect(surf, (54, 40, 28), (x - 11, y - 19, 22, 3))   # hat brim
+        pygame.draw.rect(surf, (64, 50, 34), (x - 6, y - 25, 12, 7))    # hat crown
+        # Pure-void eye band, two sick-gold pinpricks deep inside.
+        pygame.draw.rect(surf, (4, 3, 6), (x - 6, y - 14, 12, 4))
+        gl = 0.5 + 0.5 * math.sin(t * 2.2)
+        g = int(150 + 80 * gl)
+        pygame.draw.circle(surf, (g, int(g * 0.8), 40), (x - 2, y - 12), 1)
+        pygame.draw.circle(surf, (g, int(g * 0.8), 40), (x + 2, y - 12), 1)
+        # The star curdled into a small Yellow Sign.
+        cy = y + 2
+        pygame.draw.line(surf, (210, 188, 70), (x - 4, cy - 2), (x - 4, cy + 2), 1)
+        pygame.draw.line(surf, (210, 188, 70), (x - 4, cy), (x - 6, cy - 1), 1)
+        pygame.draw.line(surf, (210, 188, 70), (x - 4, cy), (x - 2, cy - 1), 1)
+        # Jaundice cling.
+        wash = _pg.Surface((26, 36), _pg.SRCALPHA)
+        wash.fill((128, 150, 64, 40))
+        surf.blit(wash, (x - 13, y - 22))
     elif kind == "shadow":
         pygame.draw.rect(surf, (8, 4, 12), (x - 8, y - 4, 16, 18))
         pygame.draw.circle(surf, (8, 4, 12), (x, y - 10), 8)
@@ -917,11 +945,15 @@ _CORPSE_TINT = {
 }
 
 
-def draw_npc_corpse(surf, x, y, kind, seed=0):
+def draw_npc_corpse(surf, x, y, kind, seed=0, mold=0):
     """A local, put down. A horizontal slumped body over a dark blood
     pool -- read as a person on the floor, not a sprite standing. Tinted
     off the kind so the corpse still says who it was. Orientation is
-    seeded so a row of bodies doesn't all face the same way."""
+    seeded so a row of bodies doesn't all face the same way.
+
+    `mold` (0..3) is the infestation stage: the fold claims the dead like
+    mould claims fruit -- first a grey-green discolour, then pale fungal
+    threads, then a corn-stalk and the Sign growing up out of it."""
     rng = random.Random(seed)
     body = _CORPSE_TINT.get(kind, (70, 64, 60))
     body_lo = tuple(int(c * 0.65) for c in body)
@@ -942,6 +974,61 @@ def draw_npc_corpse(surf, x, y, kind, seed=0):
     hx = x - 13 if head_left else x + 13
     pygame.draw.circle(surf, skin, (hx, y + 2), 4)
     pygame.draw.circle(surf, body_lo, (hx, y - 1), 4, 1)   # hair/hat smudge
+    if mold <= 0:
+        return
+    # Stage 1: grey-green discolour blooming across the torso.
+    if mold >= 1:
+        for _ in range(3 + mold):
+            px = x + rng.randint(-10, 11)
+            py = y + rng.randint(-2, 6)
+            pygame.draw.circle(surf, (70, 84, 52), (px, py), rng.randint(1, 2))
+    # Stage 2: pale fungal threads creeping out of the body.
+    if mold >= 2:
+        for _ in range(4):
+            ox = x + rng.randint(-11, 12)
+            oy = y + rng.randint(-2, 7)
+            ang = rng.uniform(0, math.tau)
+            ln = rng.randint(3, 6)
+            pygame.draw.line(surf, (176, 182, 150),
+                             (ox, oy),
+                             (int(ox + math.cos(ang) * ln),
+                              int(oy + math.sin(ang) * ln)), 1)
+    # Stage 3: a corn-stalk and the Sign grow up out of it -- claimed.
+    if mold >= 3:
+        sx = x + (6 if head_left else -6)
+        pygame.draw.line(surf, (120, 116, 70), (sx, y + 4), (sx, y - 10), 2)
+        pygame.draw.line(surf, (150, 146, 88), (sx, y - 4),
+                         (sx + 4, y - 8), 1)
+        pygame.draw.line(surf, (150, 146, 88), (sx, y - 7),
+                         (sx - 4, y - 11), 1)
+        # the small sick-gold Sign at the tip
+        pygame.draw.circle(surf, (210, 188, 70), (sx, y - 12), 2)
+        pygame.draw.circle(surf, (40, 30, 10), (sx, y - 12), 2, 1)
+
+
+# Per-kind head height for the mutation overlay (most locals carry their
+# face at ~y-12; the boy is shorter).
+_MUTATE_HEAD_Y = {"tisdale_boy": -8}
+
+
+def draw_mutation_overlay(surf, x, y, kind):
+    """Drawn OVER a still-recognisable local who is mutating (a resister
+    whose body is betraying them, NARRATIVE infestation). Keeps the
+    person -- just lays wrongness on top: a jaundiced wash, two permanent
+    black eye-voids, and a faint Yellow Sign etched into the chest."""
+    hy = y + _MUTATE_HEAD_Y.get(kind, -12)
+    # Sickly jaundice wash over the whole body.
+    wash = pygame.Surface((26, 36), pygame.SRCALPHA)
+    wash.fill((128, 150, 64, 34))
+    surf.blit(wash, (x - 13, y - 22))
+    # Permanent eye-voids -- the lights have gone out and stayed out.
+    pygame.draw.rect(surf, (2, 0, 4), (x - 3, hy - 1, 2, 2))
+    pygame.draw.rect(surf, (2, 0, 4), (x + 1, hy - 1, 2, 2))
+    # A faint Yellow Sign etched into the chest.
+    cy = y + 4
+    pygame.draw.line(surf, (190, 168, 64), (x, cy - 3), (x, cy + 3), 1)
+    pygame.draw.line(surf, (190, 168, 64), (x, cy), (x - 3, cy - 2), 1)
+    pygame.draw.line(surf, (190, 168, 64), (x, cy), (x + 3, cy - 2), 1)
 
 
 def draw_player_sprite(surf, x, y, facing, walk_phase=0, armor=None,
