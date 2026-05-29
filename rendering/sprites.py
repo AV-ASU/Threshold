@@ -124,30 +124,33 @@ def _cult_mask(surf, cx, cy, variant, view, mdir):
 _DW_MULT = {}
 
 
-def _darkwood_pass(lay, seed):
+def _darkwood_pass(lay, seed, strength=1.0):
     """A grimy Darkwood 'brush over' for a sprite drawn on its own SRCALPHA
     layer: a touch of desaturation, a muddy multiply that crushes the lower
     body into shadow, and seeded grime speckle on the sprite's own pixels
     (stable per individual). Compounds with the frame-wide film grade.
-    All passes respect the sprite's alpha, so there's no dark halo."""
+    All passes respect the sprite's alpha, so there's no dark halo.
+    `strength` (<1 = gentler) eases the desat/crush for larger sprites whose
+    own form needs to stay legible (the curse-priest)."""
     w, h = lay.get_size()
     try:
         g = pygame.transform.grayscale(lay)
-        g.set_alpha(46)
+        g.set_alpha(int(46 * strength))
         lay.blit(g, (0, 0))
     except Exception:
         pass
-    mult = _DW_MULT.get((w, h))
+    key = (w, h, round(strength, 2))
+    mult = _DW_MULT.get(key)
     if mult is None:
         mult = pygame.Surface((w, h))           # opaque -> alpha preserved
         for yy in range(h):
             f = yy / max(1, h)
-            b = 214 - int(122 * f * f)           # bright top -> crushed bottom
+            b = 255 - int((41 + 122 * f * f) * strength)   # gentle top -> crushed bottom
             mult.fill((max(0, b - 6), max(0, b - 8), b), (0, yy, w, 1))
-        _DW_MULT[(w, h)] = mult
+        _DW_MULT[key] = mult
     lay.blit(mult, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
     rng = random.Random((seed ^ 0x9e37) & 0xffff)
-    for _ in range(26):
+    for _ in range(int(26 * strength)):
         gx, gy = rng.randint(0, w - 1), rng.randint(0, h - 1)
         px = lay.get_at((gx, gy))
         if px.a > 40:
@@ -208,6 +211,36 @@ _VP_PALE = (222, 212, 186); _VP_PALE_LO = (150, 142, 120); _VP_PIT = (18, 14, 16
 _VP_GT = (196, 150, 42); _VP_GHI = (236, 204, 64)
 
 
+def _curse_bloom(lay, bx, by, t, curse):
+    """His light blooming from the split as the curse casts -- a shaped
+    vertical WOUND (not a flat disc): a soft halo, a tall gold lens, a few
+    short rays, and shard-sparks at the bind. Drawn after the grime pass so
+    the gold reads against the muck; brightness is capped so it stays a
+    sinister flare, never a lightbulb."""
+    bx, by = int(bx), int(by)
+    halo_r = int(6 + curse * 8)
+    _cult_glow(lay, bx, by, halo_r, int(26 + curse * 40))
+    # rays
+    rl = int(6 + curse * 9)
+    for ang in (-1.15, -0.5, 0.5, 1.15):
+        ex = bx + int(math.sin(ang) * rl)
+        ey = by + int(-math.cos(ang) * rl)
+        pygame.draw.line(lay, (200, 162, 56), (bx, by), (ex, ey), 1)
+    # the wound: a tall thin gold lens, additive so it glows but stays gold
+    wh = int(8 + curse * 16); ww = max(2, int(2 + curse * 3))
+    lens = pygame.Surface((ww * 2 + 2, wh + 2), pygame.SRCALPHA)
+    pygame.draw.ellipse(lens, (236, 204, 64, 150), (1, 1, ww * 2, wh))
+    pygame.draw.ellipse(lens, (252, 230, 150, 220), (ww - 1, wh // 4, 3, wh // 2))
+    lay.blit(lens, (bx - ww - 1, by - wh // 2 - 1),
+             special_flags=pygame.BLEND_RGBA_ADD)
+    if curse > 0.6:                               # shard-sparks erupt at the bind
+        for i in range(4):
+            a = t * 4.0 + i * 1.6
+            ex = bx + int(math.cos(a) * (halo_r + 2))
+            ey = by + int(math.sin(a) * (halo_r + 2) * 0.7)
+            pygame.draw.circle(lay, (252, 226, 120), (ex, ey), 1)
+
+
 def _draw_curse_priest_raw(surf, x, y, t, facing=(0, 1), curse=0.0):
     """The curse-priest -- a cultist taken FURTHER by Him: His Pallid Mask
     emerging for a face (shedding gold-tipped shards as the King's own face
@@ -229,12 +262,21 @@ def _draw_curse_priest_raw(surf, x, y, t, facing=(0, 1), curse=0.0):
     bloom = curse                                 # 0..1
     top = y - 17
     sx = x + lean
-    # Hunched hide body (bigger).
+    # Hunched hide body (bigger). Stitched pelt: a darker patch, a bone-thread
+    # seam, a lit shoulder rim + fur collar so it reads as hide, not a blob.
     body = [(x - 13, y + 22), (x - 9 + lean, top), (x + 9 + lean, top), (x + 13, y + 22)]
     pygame.draw.polygon(surf, _VP_HIDE, body)
     pygame.draw.polygon(surf, _VP_LO, body, 1)
-    pygame.draw.line(surf, _VP_HI, (x - 9 + lean, top), (x - 13, y + 20), 1)
-    for hx in range(-12, 13, 3):
+    pygame.draw.polygon(surf, (44, 37, 31),                       # a darker pelt patch
+                        [(x + 1, top + 3), (x + 10, top + 5),
+                         (x + 12, y + 6), (x + 2, y + 2)])
+    pygame.draw.line(surf, _VP_HI, (x - 9 + lean, top + 1), (x - 12, y + 16), 1)
+    for i in range(6):                                           # bone-thread seam
+        sy0 = top + 4 + i * (y + 14 - top) // 6
+        pygame.draw.line(surf, (140, 130, 110), (x - 1, sy0 - 1), (x + 1, sy0 + 1), 1)
+    for fx in range(-9, 10, 2):                                  # fur collar
+        pygame.draw.line(surf, (104, 92, 72), (x + fx, top + 1), (x + fx, top - 2), 1)
+    for hx in range(-12, 13, 3):                                 # ragged fur hem
         pygame.draw.line(surf, _VP_LO, (x + hx, y + 22),
                          (x + hx, y + 22 + random.Random(hx).randint(2, 6)), 2)
     # Arms raised in the binding cast.
@@ -592,21 +634,10 @@ def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False,
         LX, LY = 26, 48
         lay = pygame.Surface((52, 76), pygame.SRCALPHA)
         _draw_curse_priest_raw(lay, LX, LY, t, facing, curse)
-        _darkwood_pass(lay, seed or 7)
+        _darkwood_pass(lay, seed or 7, strength=0.6)   # ease so the hide reads
         if curse > 0.05:
-            # His light BLOOMS as the curse casts -- drawn AFTER the grime
-            # pass so the gold flare reads against the Darkwood muck.
             lean = int(math.sin(t * 1.2 + LX * 0.02))
-            bx, by = LX + lean, LY - 11
-            r = int(5 + curse * 12)
-            _cult_glow(lay, bx, by, r, int(36 + curse * 58))
-            pygame.draw.line(lay, (236, 204, 64), (bx, LY - 15), (bx, LY + 6), 1)
-            if curse > 0.6:                       # shard-sparks erupt at the bind
-                for i in range(3):
-                    a = t * 4.0 + i * 2.1
-                    ex = bx + int(math.cos(a) * r)
-                    ey = by + int(math.sin(a) * r * 0.7)
-                    pygame.draw.circle(lay, (252, 226, 120), (ex, ey), 1)
+            _curse_bloom(lay, LX + lean, LY - 12, t, curse)
         surf.blit(lay, (int(x) - LX, int(y) - LY))
     elif kind == "vessel_avatar":
         # A towering Yellow-King vessel with reaching tentacles. Body is
