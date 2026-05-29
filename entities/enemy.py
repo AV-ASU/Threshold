@@ -6,6 +6,7 @@ import random
 import pygame
 from rendering.sprites import draw_npc_sprite
 from rendering.transform import draw_vessel_bloom
+from entities.perception import perceives_player
 
 
 def _is_cultist(obj):
@@ -448,14 +449,9 @@ class Enemy:
         dx = scene.world_dx(self.x, player.x)
         dy = scene.world_dy(self.y, player.y)
         d = math.hypot(dx, dy)
-        # Hidden players are invisible to cultists that respect
-        # hiding. Forces has_los False without leaking 1e9 into
-        # downstream math.
-        is_hidden = (getattr(self, "respects_hide", False)
-                     and getattr(player, "hidden", None) is not None)
-        has_los = (not is_hidden
-                   and d < self.aggro
-                   and getattr(player, "hidden", None) is None)
+        # Real perception: range + facing cone + line-of-sight, with
+        # cover throttling rather than zeroing it (entities/perception.py).
+        has_los = perceives_player(self, player, scene, self.aggro)
         # Audio reaction. Only in SCOUT (existing target intent
         # would otherwise rubber-band on every step).
         if self._cult_state == "scout":

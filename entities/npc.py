@@ -3,6 +3,7 @@ import math
 import random
 
 from constants import C_WHITE
+from entities.perception import perceives_player
 
 class NPC:
     def __init__(self, x, y, name, sprite_kind, voice="blip_mid",
@@ -200,8 +201,10 @@ class NPC:
         dx = scene.world_dx(self.x, player.x)
         dy = scene.world_dy(self.y, player.y)
         d = math.hypot(dx, dy)
-        has_los = (d < 180
-                   and getattr(player, "hidden", None) is None)
+        # Real perception: range + facing cone + line-of-sight, with
+        # cover throttling rather than zeroing it (entities/perception.py).
+        has_los = perceives_player(self, player, scene,
+                                   getattr(self, "_gaze_range", 180))
         # Hunter override: ignore the machine, ignore flanking.
         # The avatar's behaviour is dictated by _yk_update for the
         # YK sprite kind; non-YK NPCs with _force_chase set still
