@@ -1717,6 +1717,35 @@ class Scene:
                 return True
         return False
 
+    def sight_blocked(self, x0, y0, x1, y1, step=12):
+        """True if a sight-line from (x0,y0) to (x1,y1) crosses solid
+        static geometry (walls, furniture, sight-blocking objects).
+
+        Walks the segment at `step`-px increments and tests the floor +
+        object tile at each sample. NPC bodies are deliberately ignored
+        -- a sight-line is blocked by architecture, not by the crowd in
+        the room. Wrap-aware via the scene's fold deltas so a line that
+        crosses a seam still tests the right tiles. The endpoints
+        themselves are skipped (the looker and target tiles).
+
+        This is the occlusion primitive behind enemy line-of-sight: it
+        is what stops a cultist seeing the player through a wall."""
+        dx = self.world_dx(x0, x1)        # delta from start toward end, fold-aware
+        dy = self.world_dy(y0, y1)
+        dist = math.hypot(dx, dy)
+        if dist < step:
+            return False
+        n = int(dist // step)
+        ux, uy = dx / dist, dy / dist
+        for i in range(1, n):              # skip both endpoints
+            sx = x0 + ux * step * i
+            sy = y0 + uy * step * i
+            if is_object_solid(self.char_object_at(sx, sy)):
+                return True
+            if is_floor_solid(self.char_floor_at(sx, sy)):
+                return True
+        return False
+
     def find_exit_at(self, x_px, y_px, facing=None):
         """Return the (target_scene, spawn) for the tile at the player
         position, or None. If the exit has a direction requirement and
