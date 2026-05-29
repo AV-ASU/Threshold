@@ -946,37 +946,21 @@ _CORPSE_TINT = {
 
 
 def _corpse_echo_tisdale_boy(surf, hx, hy, x, y, mold):
-    """The lying child's mouth wouldn't stop, even dropped. His whole
-    opened body became the mouth: teeth line the cracked trench of the
-    torso, so the split reads as a maw gaping at the ceiling. (The head
-    is too small on a floored corpse to carry it; the torso has the room.)"""
-    if mold == 1:
-        # the single fissure already drawn -- line its edges with a few teeth
-        for ty in (y - 1, y + 2, y + 5):
-            try:
-                surf.set_at((x - 2, ty), (222, 214, 196))
-                surf.set_at((x + 3, ty), (222, 214, 196))
-            except (IndexError, ValueError):
-                pass
-    elif mold == 2:
-        # the trench between the two slabs -- teeth down both inner walls
-        for ty in range(-1, 7, 2):
-            try:
-                surf.set_at((x - 3, y + ty), (224, 216, 198))
-                surf.set_at((x + 3, y + ty), (224, 216, 198))
-            except (IndexError, ValueError):
-                pass
-    elif mold >= 3:
-        # the hollow husk reads as an open maw: teeth ring the cavity lip,
-        # a thicker pair of fangs at the ends like a jaw hinged wide.
-        for tx in range(-7, 9, 2):
-            try:
-                surf.set_at((x + tx, y - 2), (226, 218, 200))
-                surf.set_at((x + tx, y + 6), (226, 218, 200))
-            except (IndexError, ValueError):
-                pass
-        pygame.draw.line(surf, (226, 218, 200), (x - 8, y - 1), (x - 7, y + 3), 1)
-        pygame.draw.line(surf, (226, 218, 200), (x + 9, y - 1), (x + 8, y + 3), 1)
+    """The lying boy's mouth never stopped -- dropped, his head still hangs
+    open as one big gaping maw. At corpse scale this has to be a BOLD shape,
+    not teeth: the head end is overdrawn as an oversized dark open mouth with
+    a pale jaw rim and gold burning in the throat, gaping wider as the fold
+    works him. Distinct at a glance from Hettie's reach."""
+    w = 4 + mold                                # the gape widens with the mold
+    pygame.draw.ellipse(surf, (236, 230, 220),
+                        (hx - w, hy - w // 2 - 1, w * 2, w + 2))   # pale jaw rim
+    pygame.draw.ellipse(surf, (6, 3, 4),
+                        (hx - w + 1, hy - w // 2, w * 2 - 2, w))   # the dark gape
+    pygame.draw.line(surf, (210, 158, 44), (hx, hy - 1), (hx, hy + 1), 1)  # gold throat
+    if mold >= 2:                               # a few bold teeth bridge the gape
+        for tx in (-w + 2, 0, w - 2):
+            pygame.draw.line(surf, (236, 230, 220),
+                             (hx + tx, hy - w // 2), (hx + tx, hy + w // 2 - 1), 1)
 
 
 def _corpse_echo_hettie(surf, hx, hy, x, y, mold):
@@ -1060,27 +1044,20 @@ def draw_npc_corpse(surf, x, y, kind, seed=0, mold=0):
         pygame.draw.line(surf, body_lo, (x - 4, y + 3), (x - 10, y - 4), 2)  # wrenched arm
         pygame.draw.line(surf, (150, 118, 30), (x - 1, y - 1), (x + 1, y + 5), 1)
     elif mold >= 3:
-        # The HUSK: the ribcage pried fully open, the body scooped hollow.
-        # Ragged rib-spurs splay from a black cavity and the contour is torn
-        # -- a person-shaped hole something climbed out of. The head has been
-        # dragged back on a stretched neck.
-        pygame.draw.ellipse(surf, (4, 3, 6), (x - 12, y - 5, 26, 15))   # the cavity
-        # splayed ribs prying outward from the spine line
-        for i, (dx, dy) in enumerate([(-11, -7), (-6, -9), (0, -10),
-                                       (6, -9), (11, -6), (12, 1),
-                                       (-12, 1), (-9, 9), (-2, 10),
-                                       (6, 9), (11, 7)]):
-            pygame.draw.line(surf, body if i % 2 else body_lo,
-                             (x + dx // 3, y + 2), (x + dx, y + 2 + dy), 2)
-        pygame.draw.arc(surf, body, (x - 12, y - 5, 26, 15),
-                        0.25, math.pi - 0.25, 1)               # ragged lip
-        # stretched neck dragging the head back off the cavity
-        pygame.draw.line(surf, skin, (x + (-9 if head_left else 9), y + 2),
-                         (hx, y + 2), 2)
-        # gold seam at the bottom of the hollow -- a line, not a blob
-        pygame.draw.line(surf, (170, 130, 36), (x - 5, y + 4), (x + 5, y + 4), 1)
+        # The HUSK: the body has caved into a thin shell around a hollow.
+        # One BIG idea that reads at corpse scale, not a texture of spikes:
+        # a black void eaten clean through the middle (the negative space IS
+        # the horror) inside a collapsed rind of flesh, one gold glint at the
+        # rim. Flatter and emptier than the split body of stage 2.
+        pygame.draw.ellipse(surf, body_lo, (x - 12, y - 1, 25, 10))    # caved shell
+        pygame.draw.ellipse(surf, (3, 2, 5), (x - 9, y + 1, 18, 7))    # the hollow void
+        # two torn tabs of rind break the rim (just enough wrongness)
+        pygame.draw.polygon(surf, body, [(x - 12, y + 2), (x - 8, y - 2), (x - 6, y + 3)])
+        pygame.draw.polygon(surf, body, [(x + 11, y + 2), (x + 7, y - 2), (x + 5, y + 4)])
+        # gold seam glinting at the rim of the emptiness
+        pygame.draw.line(surf, (170, 130, 36), (x - 5, y + 2), (x + 4, y + 2), 1)
         try:
-            surf.set_at((x, y + 3), (236, 204, 64))
+            surf.set_at((x, y + 2), (236, 204, 64))
         except (IndexError, ValueError):
             pass
     # Head lolled to one end (on top of the wreck of the body).
