@@ -27,12 +27,34 @@ import math
 SIGHT_CONE_DOT = 0.574
 # While the player is hidden (in cover), perception is throttled rather
 # than disabled: the sight range is multiplied down so only a near,
-# facing, line-of-sight looker can pin them. ~0.28 * a 180px range ~= 50px,
-# about a tile and a half -- point-blank only.
-HIDE_RANGE_MULT = 0.28
+# facing, line-of-sight looker can pin them.
+# The multiplier depends on the KIND of cover (player.hidden's value), so
+# the spot types are no longer cosmetic:
+#   under / in -- full-body concealment ("hold your breath": tucked under a
+#                 cot, inside a crate). Hardest to spot -- a looker must be
+#                 almost on top of you. The trade is commitment: it's a
+#                 hold, not a peek.
+#   behind / corn -- partial cover you crouch behind / in. Looser: you're
+#                 leaning on the geometry and the looker's facing as much as
+#                 the cover itself.
+# ~0.16 * 180px ~= 29px (a tile) for under/in; ~0.30 * 180 ~= 54px for
+# behind/corn. Default (unknown kind) takes the looser value.
+HIDE_RANGE_MULT = {
+    "under": 0.16,
+    "in":    0.16,
+    "behind": 0.30,
+    "corn":   0.30,
+}
+HIDE_RANGE_MULT_DEFAULT = 0.30
 # Hidden players also demand a tighter cone (the looker must be staring
-# more directly at the spot). cos(~40 deg).
-HIDE_CONE_DOT = 0.77
+# more directly at the spot). Full-body cover tightens it further.
+HIDE_CONE_DOT = {
+    "under": 0.90,
+    "in":    0.90,
+    "behind": 0.77,
+    "corn":   0.77,
+}
+HIDE_CONE_DOT_DEFAULT = 0.77
 
 
 def perceives_player(looker, player, scene, sight_range):
@@ -49,8 +71,11 @@ def perceives_player(looker, player, scene, sight_range):
     if d < 1e-6:
         return True                      # on top of each other
 
-    hidden = getattr(player, "hidden", None) is not None
-    rng = sight_range * (HIDE_RANGE_MULT if hidden else 1.0)
+    hide_kind = getattr(player, "hidden", None)
+    hidden = hide_kind is not None
+    rng = sight_range
+    if hidden:
+        rng *= HIDE_RANGE_MULT.get(hide_kind, HIDE_RANGE_MULT_DEFAULT)
     if d > rng:
         return False
 
@@ -58,7 +83,8 @@ def perceives_player(looker, player, scene, sight_range):
     # (dx,dy)/d points looker->player. Dot >= threshold => in front.
     fx, fy = getattr(looker, "facing", (0.0, 1.0))
     fmag = math.hypot(fx, fy) or 1.0
-    cone = HIDE_CONE_DOT if hidden else SIGHT_CONE_DOT
+    cone = (HIDE_CONE_DOT.get(hide_kind, HIDE_CONE_DOT_DEFAULT)
+            if hidden else SIGHT_CONE_DOT)
     if ((fx * dx + fy * dy) / (fmag * d)) < cone:
         return False
 
