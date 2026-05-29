@@ -23,8 +23,8 @@ position, which is the actual cat-and-mouse.
 import math
 
 # Forward cone: the player must be within this half-angle of the looker's
-# facing to be seen. cos(60 deg) = 0.5 -> a 120-degree total cone.
-SIGHT_CONE_DOT = 0.5
+# facing to be seen. cos(55 deg) ~= 0.574 -> a 110-degree total cone.
+SIGHT_CONE_DOT = 0.574
 # While the player is hidden (in cover), perception is throttled rather
 # than disabled: the sight range is multiplied down so only a near,
 # facing, line-of-sight looker can pin them. ~0.28 * a 180px range ~= 50px,
