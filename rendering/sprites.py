@@ -776,7 +776,7 @@ def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False,
         layer = _pg.Surface((40, 72), _pg.SRCALPHA)
         bx = 20 + sway
         base_y = 66
-        h = 44 + int(loom * 10)           # looms taller as it nears
+        h = 48 + int(loom * 10)           # looms taller as it nears
         top = base_y - h
         shoulders = top + 9
         shroud = (24, 22, 28, 255)
@@ -789,7 +789,7 @@ def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False,
         for i in range(steps + 1):
             fr = i / steps
             yy = shoulders + int(fr * (base_y - shoulders))
-            hw = 3 + fr * 7 + rng.uniform(-1.4, 1.4) * (0.3 + fr)
+            hw = 2 + fr * 6.5 + rng.uniform(-1.4, 1.4) * (0.3 + fr)
             left.append((bx - hw, yy))
             right.append((bx + hw, yy))
         _pg.draw.polygon(layer, shroud, [(bx, top)] + right + left[::-1])
@@ -805,24 +805,34 @@ def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False,
                       (bx - 9 + sway, shoulders + 20), 2)
         _pg.draw.line(layer, shroud_lo, (bx + 3, shoulders + 2),
                       (bx + 8 - sway, shoulders + 25), 2)
-        # The void cowl: a deep black hollow where the face should be, framed
-        # by the hood rim.
-        _pg.draw.ellipse(layer, void, (bx - 4, top + 2, 8, 11))
-        _pg.draw.arc(layer, shroud_lo, (bx - 5, top, 10, 14), 0.25, 2.9, 2)
-        # The gaze: two dim sick pinpricks DEEP in the cowl (the only colour),
-        # with a faint tight glint -- gone if the player looks straight at it.
+        # A faint cold rim down one side so the wrong silhouette reads against
+        # the dark without lifting the body out of near-black.
+        _pg.draw.line(layer, (46, 46, 60, 255), (int(left[1][0]) + 1, shoulders + 2),
+                      (int(left[-2][0]) + 1, base_y - 4), 1)
+        # The void cowl: a deep hollow where a face should be, hood-rimmed.
+        _pg.draw.ellipse(layer, void, (bx - 5, top + 1, 11, 14))
+        _pg.draw.arc(layer, shroud_lo, (bx - 6, top - 1, 13, 17), 0.2, 2.95, 2)
+        # The gaze: a faint CONSTELLATION of sick eyes deep in the cowl (His
+        # mass-of-eyes, restrained), blinking on staggered phases -- they all
+        # wink out if the player looks straight at it.
         if not gaze:
-            g = 96 + int(math.sin(t * 2.0 + x) * 22)
-            eye = (g, int(g * 0.82), 34, 255)
-            for ex in (-2, 2):
-                _pg.draw.circle(layer, (58, 50, 22, 70), (bx + ex, top + 7), 2)
-                _pg.draw.circle(layer, eye, (bx + ex, top + 7), 1)
-        # Half-there: a faint, offset after-image first, then the figure.
+            erng = random.Random((int(x) * 7 + 3) & 0xffff)
+            for i in range(6):
+                ex = bx + erng.randint(-3, 3)
+                ey = top + 7 + erng.randint(-4, 4)
+                bl = 0.5 + 0.5 * math.sin(t * 1.6 + i * 1.5 + x)
+                if bl < 0.32:
+                    continue
+                g = int(70 + 48 * bl)
+                _pg.draw.circle(layer, (54, 46, 20, 60), (ex, ey), 2)
+                _pg.draw.circle(layer, (g, int(g * 0.8), 28, 255), (ex, ey), 1)
+        # Half-there: a clear offset after-image, then the figure -- both kept
+        # translucent so the background bleeds through (an apparition).
         ox = int(x - 20)
         oy = int(y - base_y)
-        layer.set_alpha(int(255 * phase * 0.35))
-        surf.blit(layer, (ox - sway * 2 - 1, oy - 1))
-        layer.set_alpha(int(255 * phase))
+        layer.set_alpha(int(230 * phase * 0.5))
+        surf.blit(layer, (ox - sway * 3 - 1, oy - 2))
+        layer.set_alpha(int(230 * phase))
         surf.blit(layer, (ox, oy))
     elif kind == "glitch_npc":
         for _ in range(30):
