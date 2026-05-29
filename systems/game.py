@@ -1254,21 +1254,6 @@ class Game:
         elif w == "lumber_axe":
             self.player_axe_swing()
 
-    def _swap_weapon(self):
-        """Cycle the shared weapon slot through the weapons the player owns."""
-        inv = self.player.inventory
-        owned = [k for k in ("pistol", "lumber_axe") if inv.has(k)]
-        if len(owned) < 2:
-            return
-        cur = self._active_weapon()
-        nxt = owned[(owned.index(cur) + 1) % len(owned)] if cur in owned \
-            else owned[0]
-        inv.equipped["weapon"] = nxt
-        self.show_notice("Equipped: "
-                         + ITEM_DEFS.get(nxt, {}).get("name", nxt),
-                         duration=1.2)
-        self.audio.play("cursor", 0.4)
-
     def _kill_npc(self, npc):
         """Side-effects of an NPC kill: increment the hidden non-hostile
         counter (the substrate watches this), play the death SFX, drop
@@ -3965,16 +3950,6 @@ class Game:
                     return
                 if ev.key in (pygame.K_e, pygame.K_SPACE, pygame.K_RETURN):
                     self.try_interact()
-                elif ev.key in (pygame.K_j, pygame.K_z):
-                    # The axe swing -- splinters barricades and stuns a
-                    # cultist closing in. Does nothing without the axe.
-                    self.player_axe_swing()
-                elif ev.key == pygame.K_k:
-                    # The pistol -- fires in the facing direction.
-                    self.player_fire_gun()
-                elif ev.key == pygame.K_q:
-                    # Swap the shared weapon slot (gun <-> axe).
-                    self._swap_weapon()
                 elif ev.key == pygame.K_i:
                     self.inv_ui.toggle()
                 elif ev.key == pygame.K_n:
@@ -3995,8 +3970,8 @@ class Game:
                     self.state = "paused"
                     self.audio.play("menu_open", 0.6)
             elif ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 1:
-                # Left-click is the main action: use whatever is in the
-                # shared weapon slot (gun and axe share one slot; Q swaps).
+                # Left-click is the only action button: use whatever weapon
+                # is in hand -- fire the revolver or swing the axe.
                 self._use_weapon()
             elif ev.type == pygame.MOUSEBUTTONUP and ev.button == 1:
                 pass
