@@ -121,7 +121,52 @@ def _cult_mask(surf, cx, cy, variant, view, mdir):
         _cult_sign(surf, mx, cy - 4, u=0.5)
 
 
+_DW_MULT = {}
+
+
+def _darkwood_pass(lay, seed):
+    """A grimy Darkwood 'brush over' for a sprite drawn on its own SRCALPHA
+    layer: a touch of desaturation, a muddy multiply that crushes the lower
+    body into shadow, and seeded grime speckle on the sprite's own pixels
+    (stable per individual). Compounds with the frame-wide film grade.
+    All passes respect the sprite's alpha, so there's no dark halo."""
+    w, h = lay.get_size()
+    try:
+        g = pygame.transform.grayscale(lay)
+        g.set_alpha(46)
+        lay.blit(g, (0, 0))
+    except Exception:
+        pass
+    mult = _DW_MULT.get((w, h))
+    if mult is None:
+        mult = pygame.Surface((w, h))           # opaque -> alpha preserved
+        for yy in range(h):
+            f = yy / max(1, h)
+            b = 214 - int(122 * f * f)           # bright top -> crushed bottom
+            mult.fill((max(0, b - 6), max(0, b - 8), b), (0, yy, w, 1))
+        _DW_MULT[(w, h)] = mult
+    lay.blit(mult, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
+    rng = random.Random((seed ^ 0x9e37) & 0xffff)
+    for _ in range(26):
+        gx, gy = rng.randint(0, w - 1), rng.randint(0, h - 1)
+        px = lay.get_at((gx, gy))
+        if px.a > 40:
+            d = [(14, 12, 14), (34, 30, 28), (74, 66, 52)][rng.randint(0, 2)]
+            lay.set_at((gx, gy), (d[0], d[1], d[2], px.a))
+
+
 def _draw_cultist(surf, x, y, facing, seed, t):
+    """Draw the cultist on a private layer, brush it with the Darkwood
+    grime pass, then blit it down -- so the grime/shadow read at sprite
+    level, not just from the frame grade."""
+    LX, LY = 22, 40
+    lay = pygame.Surface((44, 66), pygame.SRCALPHA)
+    _draw_cultist_raw(lay, LX, LY, facing, seed, t)
+    _darkwood_pass(lay, seed)
+    surf.blit(lay, (int(x) - LX, int(y) - LY))
+
+
+def _draw_cultist_raw(surf, x, y, facing, seed, t):
     """Assemble a hide-coat cultist with a seeded carved mask + directional
     facing. Drawn at the game's ~32px sprite scale."""
     rng = random.Random(seed & 0xffff)
