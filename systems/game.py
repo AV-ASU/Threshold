@@ -2131,7 +2131,7 @@ class Game:
         if best is None:
             return None
         n = NPC(best[0], best[1], name, kind,
-                voice="blip_low", portrait="guard",
+                voice="blip_low", portrait=None,
                 movement=movement, speed=speed,
                 no_prompt=True, solid=False)
         n.tag = tag
@@ -3526,7 +3526,8 @@ class Game:
         # don't blink, except, very rarely, one does.
         blink_idx = -1
         if self.stillness_t > 1.5 and random.random() < 1 / 300:
-            human_kinds = ("mom", "kid", "bandit", "policeman")
+            human_kinds = ("townswoman", "tisdale_boy", "old_townsman",
+                           "hettie", "sheriff", "royce", "preacher", "clerk")
             human_npcs = [i for i, n in enumerate(self.scene.npcs)
                           if n.sprite_kind in human_kinds]
             if human_npcs:

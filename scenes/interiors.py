@@ -10,7 +10,7 @@ from constants import TILE
 from entities.npc import NPC
 from entities.decoration import Decoration
 from .base import Scene, chest_interact
-from .dialogue import kid_dialogue, shopkeep_dialogue, _evidence
+from .dialogue import tisdale_boy_dialogue, hettie_dialogue, _evidence
 def build_void_boss():
     """THRESHOLD: the clearing. A small open glade in the dense
     woods at the south end of the cornfield_path's secret branch.
@@ -179,9 +179,9 @@ def build_shop():
     if pos:
         tx, ty = pos
         sc.add_npc(NPC(tx * TILE + 16, ty * TILE + 16,
-                       "Store-Owner", "shopkeep", voice="blip_high",
-                       portrait="shopkeep",
-                       dialogue_fn=shopkeep_dialogue, movement="idle"))
+                       "Hettie", "hettie", voice="blip_high",
+                       portrait="hettie",
+                       dialogue_fn=hettie_dialogue, movement="idle"))
     # Shop dressing: a candle on the counter, a radio on the back
     # shelf (use the wrong_radio variant -- it creeps the dial), a
     # hanging sign banner over the door, two crows behind the
@@ -360,9 +360,9 @@ def build_kid_house():
     if pos:
         tx, ty = pos
         sc.add_npc(NPC(tx * TILE + 16, ty * TILE + 16,
-                       "the Tisdale boy", "kid", voice="blip_kid",
-                       portrait="kid",
-                       dialogue_fn=kid_dialogue, movement="idle"))
+                       "the Tisdale boy", "tisdale_boy", voice="blip_kid",
+                       portrait="tisdale_boy",
+                       dialogue_fn=tisdale_boy_dialogue, movement="idle"))
     # Sized darkwood furniture: a 2x2 kid's bed, a long bookshelf, a
     # small table (toy radio sits on it) and a chair.
     sc.add_furniture("bed", [(2, 5), (3, 5), (2, 6), (3, 6)], w=54, h=54)

@@ -195,14 +195,14 @@ def build_lodge_arrival():
     # Mara on the porch, with her back partly to the PI (facing the
     # door, which is north). She does not see the PI.
     mara = NPC(9 * TILE + 16, 4 * TILE + 22, "Mara",
-               "mom", movement="idle", radius=20)
+               "townswoman", movement="idle", radius=20)
     mara.facing = (0, -1)
     mara.lock_facing = True
     sc.add_npc(mara)
     # The Clerk just inside the doorway, leaning out. He smiles. He
     # does not see the PI either.
     clerk = NPC(9 * TILE + 16, 3 * TILE + 8, "the Clerk",
-                "old", movement="idle", radius=18)
+                "clerk", movement="idle", radius=18)
     clerk.facing = (0, 1)   # facing Mara, south
     clerk.lock_facing = True
     sc.add_npc(clerk)
@@ -278,14 +278,14 @@ def build_highway_walk():
     # read as ordinary random NPCs you can talk to). The road just keeps
     # them ahead of you forever.
     walker_a = NPC(30 * TILE + 16, 4 * TILE + 16, "A figure on the road",
-                   "old", movement="patrol", solid=False, no_prompt=True,
+                   "old_townsman", movement="patrol", solid=False, no_prompt=True,
                    waypoints=[(30 * TILE + 16, 4 * TILE + 16),
                               (58 * TILE + 16, 4 * TILE + 16)])
     walker_a.facing = (1, 0)
     walker_a.lock_facing = True
     sc.add_npc(walker_a)
     walker_b = NPC(35 * TILE + 16, 4 * TILE + 16, "A figure on the road",
-                   "old", movement="patrol", solid=False, no_prompt=True,
+                   "old_townsman", movement="patrol", solid=False, no_prompt=True,
                    waypoints=[(35 * TILE + 16, 4 * TILE + 16),
                               (58 * TILE + 16, 4 * TILE + 16)])
     walker_b.facing = (1, 0)

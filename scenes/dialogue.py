@@ -74,9 +74,9 @@ def _cult_tell(game, npc_key):
     return
 
 
-# ---- The Preacher (key: old_man_dialogue) ----
+# ---- The Preacher: Reverend Asa Crane ----
 
-def old_man_dialogue(game, npc):
+def preacher_dialogue(game, npc):
     save = game.save
     _cult_tell(game, "preacher")
     count = save.arg("old_count", 0) + 1
@@ -92,7 +92,7 @@ def old_man_dialogue(game, npc):
             "A young woman came through last month. Bright thing, full of "
             "questions -- like you. She's one of them now, whatever they "
             "are. You looking for her?",
-        ], speaker="Preacher", voice="blip_low", portrait="preacher")
+        ], speaker="Rev. Crane", voice="blip_low", portrait="preacher")
     elif count == 2:
         # The hubris that gets him killed. After this he's marked: the
         # church swaps him for his remains on the next entry (evidence #4).
@@ -104,18 +104,18 @@ def old_man_dialogue(game, npc):
             "whole sermon. He's never taken communion.",
             "Let them come for an old man. I've buried better than "
             "whatever it is they kneel to.",
-        ], speaker="Preacher", voice="blip_low", portrait="preacher")
+        ], speaker="Rev. Crane", voice="blip_low", portrait="preacher")
         save.set_flag("preacher_doomed", True)
     else:
         game.dialog.show([
             "I've said my piece. Go on, now -- and watch the road.",
-        ], speaker="Preacher", voice="blip_low", portrait="preacher")
+        ], speaker="Rev. Crane", voice="blip_low", portrait="preacher")
 
 
-# ---- The Kid ----
+# ---- The Kid: Toby Tisdale ----
 
-def kid_dialogue(game, npc):
-    """The Kid -- innocent witness (NARRATIVE §2). He saw Mara walk into
+def tisdale_boy_dialogue(game, npc):
+    """Toby Tisdale -- innocent witness (NARRATIVE §2). He saw Mara walk into
     the corn; what he gives you is what he tells you (no inventory item --
     the old keepsake object was purged). Children notice what adults
     pretend not to."""
@@ -127,52 +127,53 @@ def kid_dialogue(game, npc):
         game.dialog.show([
             "You're looking for the lady from the lodge.",
             "She walked to the well. She climbed down. I saw her.",
-        ], speaker="Tisdale boy", voice="blip_kid", portrait="kid")
+        ], speaker="Toby Tisdale", voice="blip_kid", portrait="tisdale_boy")
         return
     if inv.has("playscript") and not save.flag("kid_playscript_noticed"):
         save.set_flag("kid_playscript_noticed", True)
         game.dialog.show([
             "That yellow book.",
             "[c=dim]Don't open it where I can see.[/c]",
-        ], speaker="Tisdale boy", voice="blip_kid", portrait="kid")
+        ], speaker="Toby Tisdale", voice="blip_kid", portrait="tisdale_boy")
         return
     count = save.arg("kid_count", 0) + 1
     save.set_arg("kid_count", count)
     if count == 1:
         game.dialog.show([
             "My dad went down too. He still comes home for dinner.",
-        ], speaker="Tisdale boy", voice="blip_kid", portrait="kid")
+        ], speaker="Toby Tisdale", voice="blip_kid", portrait="tisdale_boy")
     elif count == 2:
         game.dialog.show([
             "I keep biting my tongue. To check.",
             "[c=dim]It still bleeds right.[/c]",
-        ], speaker="Tisdale boy", voice="blip_kid", portrait="kid")
+        ], speaker="Toby Tisdale", voice="blip_kid", portrait="tisdale_boy")
     elif count == 3:
         game.dialog.show([
             "I don't walk past the church anymore.",
             "[c=dim]The door is open. They left it open.[/c]",
-        ], speaker="Tisdale boy", voice="blip_kid", portrait="kid")
+        ], speaker="Toby Tisdale", voice="blip_kid", portrait="tisdale_boy")
     elif count == 4:
         game.dialog.show([
             "If you find a way out, don't tell me.",
             "[c=dim]I tried to lie yesterday. My mouth wouldn't.[/c]",
-        ], speaker="Tisdale boy", voice="blip_kid", portrait="kid")
+        ], speaker="Toby Tisdale", voice="blip_kid", portrait="tisdale_boy")
     else:
         game.dialog.show([
             "[c=dim]The boy is watching the corn line.[/c]",
-        ], speaker="", voice="blip_soft", portrait="kid")
+        ], speaker="", voice="blip_soft", portrait="tisdale_boy")
 
 
-# ---- The Store-Owner ----
-# The quiet resister. He has nothing left to sell (the shop is gutted of
-# its old vendor items) -- his value is what he risks saying out loud.
+# ---- Hettie (the store) ----
+# The quiet resister behind the counter -- the same Hettie who keeps the
+# shop open out in town. She has nothing left to sell (the shop is gutted
+# of its old vendor items) -- her value is what she risks saying out loud.
 
-def shopkeep_dialogue(game, npc):
+def hettie_dialogue(game, npc):
     save = game.save
     _cult_tell(game, "store_owner")
     # The resister registers the resister-who-spoke being killed. Fires
     # once, on the first visit after the Preacher is doomed, but only if
-    # we've already met him -- it would be too personal for first contact.
+    # we've already met her -- it would be too personal for first contact.
     if (save.flag("preacher_doomed")
             and not save.flag("shop_preacher_noticed")
             and save.arg("shop_count", 0) >= 1):
@@ -180,7 +181,7 @@ def shopkeep_dialogue(game, npc):
         game.dialog.show([
             "Heard about the preacher. I won't be saying his prayers in "
             "here. Don't ask me to.",
-        ], speaker="Store-Owner", voice="blip_high", portrait="shopkeep")
+        ], speaker="Hettie", voice="blip_high", portrait="hettie")
         return
     count = save.arg("shop_count", 0) + 1
     save.set_arg("shop_count", count)
@@ -194,43 +195,43 @@ def shopkeep_dialogue(game, npc):
             "it's safe. I've got a family. Look around.",
         ]
         game.dialog.show(escalate(game, low=plain, mid=plain, high=plain),
-                         speaker="Store-Owner", voice="blip_high",
-                         portrait="shopkeep")
+                         speaker="Hettie", voice="blip_high",
+                         portrait="hettie")
         return
     if count == 2:
         game.dialog.show([
             "Back again. Good. You haven't gone quiet. Like the others.",
             "[c=dim]Don't trust the easy ones. The first to make peace -- "
             "they went the soonest.[/c]",
-        ], speaker="Store-Owner", voice="blip_high", portrait="shopkeep")
+        ], speaker="Hettie", voice="blip_high", portrait="hettie")
         return
     if count == 3:
         game.dialog.show([
             "I sold to the girl too. And the ones before her.",
             "[c=dim]None of them came back to buy again. You're the first.[/c]",
-        ], speaker="Store-Owner", voice="blip_high", portrait="shopkeep")
+        ], speaker="Hettie", voice="blip_high", portrait="hettie")
         return
     if count == 4:
         game.dialog.show([
-            "[c=dim]He glances at the door before he speaks.[/c]",
+            "[c=dim]She glances at the door before she speaks.[/c]",
             "If you find the way out. The real one. You don't owe this "
             "town a goodbye. Just go.",
-        ], speaker="Store-Owner", voice="blip_high", portrait="shopkeep")
+        ], speaker="Hettie", voice="blip_high", portrait="hettie")
         return
     if count == 5:
         game.dialog.show([
-            "[c=dim]He shakes his head, just slightly. He's said too "
+            "[c=dim]She shakes her head, just slightly. She's said too "
             "much already.[/c]",
-        ], speaker="Store-Owner", voice="blip_high", portrait="shopkeep")
+        ], speaker="Hettie", voice="blip_high", portrait="hettie")
         return
     game.dialog.show([
-        "[c=dim]He sits behind the counter, watching the window.[/c]",
-    ], speaker="", voice="blip_soft", portrait="shopkeep")
+        "[c=dim]She sits behind the counter, watching the window.[/c]",
+    ], speaker="", voice="blip_soft", portrait="hettie")
 
 
-# ---- The Sheriff (legacy key: fisherman_dialogue) ----
+# ---- The Sheriff: Hollis Vane ----
 
-def fisherman_dialogue(game, npc):
+def sheriff_dialogue(game, npc):
     """The Sheriff -- a LOCAL, born here, broken (NARRATIVE §2). Not a
     believer, not a cultist. He did NOT kill the car -- the fold did;
     he's watched it happen before. He tells outsiders to leave out of
@@ -249,7 +250,7 @@ def fisherman_dialogue(game, npc):
             "Sheriff Vane.",
             "You're the one asking after the Blaine girl.",
             "[c=dim]I'd head home if I were you. I'm supposed to say that.[/c]",
-        ], speaker="Sheriff", voice="blip_gruff", portrait="guard")
+        ], speaker="Sheriff Vane", voice="blip_gruff", portrait="sheriff")
     elif n == 2:
         # The car. He did NOT kill it -- the fold did. He's seen it
         # happen before. He's seen it many times.
@@ -257,7 +258,7 @@ def fisherman_dialogue(game, npc):
             "Saw your car out by the lodge.",
             "Won't start. Won't ever. Nothing with an engine leaves Brimley.",
             "[c=dim]I didn't touch it. None of us did. It's the town.[/c]",
-        ], speaker="Sheriff", voice="blip_gruff", portrait="guard")
+        ], speaker="Sheriff Vane", voice="blip_gruff", portrait="sheriff")
     elif n == 3:
         # The town is gone. He's local. He watched it happen.
         game.dialog.show([
@@ -265,7 +266,7 @@ def fisherman_dialogue(game, npc):
             "They started showing up in the summer. The new ones. "
             "Polite folks. After a while the road stopped going anywhere.",
             "[c=dim]I tell people to leave. I haven't been able to in months.[/c]",
-        ], speaker="Sheriff", voice="blip_gruff", portrait="guard")
+        ], speaker="Sheriff Vane", voice="blip_gruff", portrait="sheriff")
     elif n == 4:
         # The preacher. He couldn't stop it.
         game.dialog.show([
@@ -273,11 +274,11 @@ def fisherman_dialogue(game, npc):
             "He named them from his pulpit. They came in the night.",
             "[c=dim]I went over Tuesday morning. I didn't write a report. "
             "Who would I send it to.[/c]",
-        ], speaker="Sheriff", voice="blip_gruff", portrait="guard")
+        ], speaker="Sheriff Vane", voice="blip_gruff", portrait="sheriff")
     else:
         game.dialog.show([
             "[c=dim]The badge is just clothing now. He keeps wearing it.[/c]",
-        ], speaker="", voice="blip_soft", portrait="guard")
+        ], speaker="", voice="blip_soft", portrait="sheriff")
 
 
 # ---- The Clerk ----

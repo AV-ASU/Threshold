@@ -681,21 +681,21 @@ def build_brimley():
     # field. Bible §2: locals were born here; they cope by staying put.
     # Hettie keeps the shop open. Standing right out front, sweeping
     # a step that doesn't get dirty.
-    _resident(53, 61, "Hettie", "shopkeep", [
+    _resident(53, 61, "Hettie", "hettie", [
         "Still open. Always open. The shelves don't empty anymore. Have you noticed.",
         "No deliveries. In a while now. But we manage. We always.",
         "[c=dim]I keep the lights on. So they know. Someone's keeping them on.[/c]",
     ], movement="idle")
     # Old Pell -- on the schoolhouse step, the calendar nailed to the
     # wall behind him. He stopped marking it.
-    _resident(63, 54, "Old Pell", "old", [
+    _resident(63, 54, "Old Pell", "old_townsman", [
         "Cold came in early this year. Came in early last year, too.",
         "Stopped marking the calendar. The days just fold back on themselves.",
         "[c=dim]You're new. We don't get new. Nobody gets in. Nobody gets--[/c]",
     ], voice="blip_low", movement="idle")
     # Mrs. Calder is by the east-edge road -- the road her husband
     # walked out on. She watches the road. She does not wave.
-    _resident(96, 8, "Mrs. Calder", "mom", [
+    _resident(96, 8, "Mrs. Calder", "townswoman", [
         "My husband walked to the highway. Tuesday. To flag down help.",
         "He'll be back. I set his plate. Every night. Every night.",
         "[c=dim]Some nights I hear the door. I don't get up. Not anymore.[/c]",
@@ -703,7 +703,7 @@ def build_brimley():
     # Royce -- by the river bridge, where he keeps trying to drive
     # out and being handed back. His truck is up the road; he comes
     # to the bridge to look at the water, then goes again.
-    _resident(29, 24, "Royce", "fisherman", [
+    _resident(29, 24, "Royce", "royce", [
         "Drove the river road to the county line. Two hours out. Came right back into Brimley.",
         "Tried it on foot. Same. The corn just hands you back where you started.",
         "[c=dim]You came IN. How did you come IN? ...Tell me how you came in.[/c]",
@@ -716,7 +716,7 @@ def build_brimley():
     # indoors; nothing stands on the step.
     # Garrick -- the old man at the well. Town centre, watching
     # everyone come and go. The law is hollow now; he says so plainly.
-    _resident(91, 12, "Garrick", "old", [
+    _resident(91, 12, "Garrick", "old_townsman", [
         "You're asking questions. Folks who ask questions go quiet. Real quiet.",
         "The Sheriff'll tell you to leave. He knows you can't. He can't either.",
         "Stay on the roads. People who go off the roads come out wrong-side.",
@@ -724,7 +724,7 @@ def build_brimley():
     ])
     # The newcomer -- standing on the path to the haunted_house
     # (their house now). She is here to welcome you. She is patient.
-    sc.add_npc(NPC(8 * TILE + 16, 95 * TILE + 16, "A woman", "mom",
+    sc.add_npc(NPC(8 * TILE + 16, 95 * TILE + 16, "A woman", "townswoman",
                    dialogue_fn=_brimley_voice([
                        "[c=dim]Hello.[/c]",
                        "[c=dim]You'll like it here. Everyone does, eventually.[/c]",

@@ -9,7 +9,7 @@ from entities.npc import NPC
 from entities.decoration import Decoration
 from .base import Scene
 from .dialogue import (
-    old_man_dialogue, fisherman_dialogue, clerk_dialogue, _evidence,
+    preacher_dialogue, sheriff_dialogue, clerk_dialogue, _evidence,
 )
 
 
@@ -102,8 +102,9 @@ def build_old_man_house():
     if pos:
         tx, ty = pos
         sc.add_npc(NPC(tx * TILE + 16, ty * TILE + 16,
-                       "Preacher", "old", voice="blip_low", portrait="old",
-                       dialogue_fn=old_man_dialogue, movement="idle",
+                       "Preacher", "preacher", voice="blip_low",
+                       portrait="preacher",
+                       dialogue_fn=preacher_dialogue, movement="idle",
                        tag="preacher"))
 
     # Sized darkwood furniture.
@@ -221,9 +222,9 @@ def build_fisherman_cottage():
         # cult walks the roads. He just watches the player from the
         # chair. The first read is friendly; later visits dim him.
         sc.add_npc(NPC(tx * TILE + 16, ty * TILE + 16,
-                       "Sheriff", "policeman",
-                       voice="blip_gruff", portrait="guard",
-                       dialogue_fn=fisherman_dialogue, movement="watch"))
+                       "Sheriff", "sheriff",
+                       voice="blip_gruff", portrait="sheriff",
+                       dialogue_fn=sheriff_dialogue, movement="watch"))
 
     # Sized darkwood furniture: a long shelf, a desk (radio on it), a
     # 2x2 bed, a chair.

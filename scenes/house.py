@@ -408,9 +408,9 @@ def house_on_enter(game, scene):
     if game.save.flag("innkeeper_confronted"):
         nx = 6 * TILE + 16
         ny = 10 * TILE + 16
-        host = NPC(nx, ny, "Clerk", "old",
+        host = NPC(nx, ny, "Clerk", "clerk",
                    solid=True, no_prompt=True,
-                   voice="blip_low", portrait="old")
+                   voice="blip_low", portrait="clerk")
         host.facing = (0, -1)
         host.tag = "blocking_innkeeper"
         host.dialogue_fn = None
@@ -422,9 +422,9 @@ def house_on_enter(game, scene):
         # through.
         nx = 13 * TILE + 16
         ny = 7 * TILE + 16
-        host = NPC(nx, ny, "Clerk", "old",
+        host = NPC(nx, ny, "Clerk", "clerk",
                    solid=True, no_prompt=False,
-                   voice="blip_low", portrait="old",
+                   voice="blip_low", portrait="clerk",
                    dialogue_fn=clerk_dialogue,
                    movement="patrol", speed=0.6,
                    waypoints=[

@@ -306,7 +306,7 @@ class DialogueBox:
         cx = rect.centerx; cy = rect.centery
         if kind is None or kind == "narrator":
             return
-        if kind == "kid":
+        if kind == "tisdale_boy":
             pygame.draw.circle(surf, (240, 210, 180), (cx, cy - 6), 16)
             pygame.draw.rect(surf, (110, 70, 40), (cx - 16, cy - 22, 32, 12))
             pygame.draw.circle(surf, C_BLACK, (cx - 5, cy - 6), 2)
@@ -315,7 +315,7 @@ class DialogueBox:
             # freckles
             for fx, fy in [(-3, 0), (3, 0), (-7, 1), (7, 1)]:
                 pygame.draw.circle(surf, (180, 140, 100), (cx + fx, cy + fy), 1)
-        elif kind == "mom":
+        elif kind == "townswoman":
             pygame.draw.circle(surf, (240, 210, 180), (cx, cy - 6), 16)
             pygame.draw.rect(surf, (200, 80, 90), (cx - 18, cy - 22, 36, 14))
             # bun hair
@@ -323,7 +323,7 @@ class DialogueBox:
             pygame.draw.circle(surf, C_BLACK, (cx - 5, cy - 5), 2)
             pygame.draw.circle(surf, C_BLACK, (cx + 5, cy - 5), 2)
             pygame.draw.arc(surf, C_BLACK, (cx - 6, cy - 2, 12, 8), math.pi, 2*math.pi, 1)
-        elif kind == "old":
+        elif kind == "old_townsman":
             pygame.draw.circle(surf, (220, 200, 180), (cx, cy - 6), 16)
             # hat
             pygame.draw.rect(surf, (60, 40, 25), (cx - 18, cy - 22, 36, 4))
@@ -332,14 +332,17 @@ class DialogueBox:
             pygame.draw.rect(surf, (220, 220, 220), (cx - 12, cy + 4, 24, 8))
             pygame.draw.circle(surf, C_BLACK, (cx - 5, cy - 4), 2)
             pygame.draw.circle(surf, C_BLACK, (cx + 5, cy - 4), 2)
-        elif kind == "shopkeep":
-            pygame.draw.circle(surf, (210, 180, 150), (cx, cy - 6), 16)
-            # bald top
-            pygame.draw.arc(surf, (60, 40, 30), (cx - 16, cy - 20, 32, 12), 0, math.pi, 2)
-            # glasses
-            pygame.draw.rect(surf, (40, 40, 50), (cx - 8, cy - 6, 6, 5), 1)
-            pygame.draw.rect(surf, (40, 40, 50), (cx + 2, cy - 6, 6, 5), 1)
-            pygame.draw.line(surf, (40, 40, 50), (cx - 2, cy - 4), (cx + 2, cy - 4), 1)
+        elif kind == "hettie":
+            # Hettie: grey bun under a kerchief, spectacles whose lenses
+            # are filled black -- you can't find her eyes behind them.
+            pygame.draw.circle(surf, (212, 184, 156), (cx, cy - 6), 16)
+            pygame.draw.rect(surf, (150, 146, 150), (cx - 16, cy - 22, 32, 8))  # grey hair
+            pygame.draw.rect(surf, (150, 70, 88), (cx - 16, cy - 23, 32, 4))    # kerchief band
+            pygame.draw.circle(surf, (150, 146, 150), (cx, cy - 24), 5)         # bun
+            # filled-black lenses (no eyes)
+            pygame.draw.rect(surf, (12, 12, 16), (cx - 8, cy - 7, 6, 5))
+            pygame.draw.rect(surf, (12, 12, 16), (cx + 2, cy - 7, 6, 5))
+            pygame.draw.line(surf, (40, 40, 50), (cx - 2, cy - 5), (cx + 2, cy - 5), 1)
             pygame.draw.line(surf, C_BLACK, (cx - 5, cy + 4), (cx + 5, cy + 4), 1)
         elif kind == "clerk":
             # The Lodge Clerk: pale, neat side-parted dark hair, a thin
@@ -386,14 +389,17 @@ class DialogueBox:
             pygame.draw.rect(surf, (180, 60, 60), (cx - 14, cy + 2, 28, 6))
             pygame.draw.circle(surf, C_BLACK, (cx - 5, cy - 6), 2)
             pygame.draw.circle(surf, C_BLACK, (cx + 5, cy - 6), 2)
-        elif kind == "fisherman":
-            # sou'wester hat + beard
-            pygame.draw.rect(surf, (220, 200, 80), (cx - 16, cy - 24, 32, 6))
-            pygame.draw.rect(surf, (220, 200, 80), (cx - 18, cy - 20, 36, 4))
-            pygame.draw.circle(surf, (220, 200, 180), (cx, cy - 6), 16)
-            pygame.draw.rect(surf, (160, 130, 90), (cx - 10, cy + 4, 20, 8))
-            pygame.draw.circle(surf, C_BLACK, (cx - 5, cy - 4), 2)
-            pygame.draw.circle(surf, C_BLACK, (cx + 5, cy - 4), 2)
+        elif kind == "royce":
+            # Royce: a faded feed cap and a few days' stubble. A tired,
+            # cornered working man.
+            pygame.draw.circle(surf, (212, 184, 156), (cx, cy - 4), 16)
+            pygame.draw.rect(surf, (150, 60, 50), (cx - 15, cy - 24, 30, 7))   # cap crown
+            pygame.draw.rect(surf, (120, 48, 40), (cx - 18, cy - 18, 22, 4))   # cap brim
+            pygame.draw.circle(surf, C_BLACK, (cx - 5, cy - 3), 2)
+            pygame.draw.circle(surf, C_BLACK, (cx + 5, cy - 3), 2)
+            pygame.draw.line(surf, C_BLACK, (cx - 4, cy + 6), (cx + 4, cy + 6), 1)
+            for sx2, sy2 in [(-6, 9), (0, 11), (6, 9), (-3, 10), (3, 10)]:
+                pygame.draw.circle(surf, (150, 124, 104), (cx + sx2, cy + sy2), 1)
         elif kind == "shadow":
             pygame.draw.rect(surf, (8, 6, 14), rect.inflate(-4, -4))
             pygame.draw.circle(surf, (10, 8, 16), (cx, cy), 18)
