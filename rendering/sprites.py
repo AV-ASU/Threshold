@@ -759,52 +759,71 @@ def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False,
         pygame.draw.line(surf, (180, 130, 140),
                          (x + 3, y - 7), (x + 3, y - 4), 1)
     elif kind == "watcher":
-        # A Watcher -- the curse made visible. NOT an eye: a tall,
-        # ragged, faceless figure that stands at the edge of sight and
-        # watches. Only the cursed see them. It is half-there -- it
-        # phases on a slow sine, an apparition you can never quite fix
-        # on -- and it looms a little nearer over its cycle. Two faint
-        # sick pinpricks deep in the cowl are the only colour: the gaze.
-        # Look straight at it (gaze=True) and the pinpricks go dark.
+        # A Watcher -- the curse made visible. NOT an eye and NOT a vessel:
+        # a tall, too-thin, ragged faceless apparition that stands at the
+        # edge of sight. Only the cursed see it. It is half-there -- it
+        # phases on a slow sine and leaves a faint after-image you can never
+        # fix on -- and it looms a little nearer over its cycle. A deep VOID
+        # cowl where a face should be; two dim sick pinpricks deep inside are
+        # the only colour (His gaze). Look straight at it (gaze=True) and the
+        # pinpricks go dark.
         import pygame as _pg
         t = _pg.time.get_ticks() / 1000.0
-        phase = 0.35 + 0.5 * (math.sin(t * 1.1 + x * 0.01) * 0.5 + 0.5)
+        rng = random.Random(int(x) & 0xffff)
+        phase = 0.32 + 0.5 * (math.sin(t * 1.1 + x * 0.01) * 0.5 + 0.5)
         loom = math.sin(t * 0.5 + x * 0.02) * 0.5 + 0.5      # 0..1, creeps in
-        sway = int(math.sin(t * 0.8 + x * 0.03))
-        layer = _pg.Surface((40, 64), _pg.SRCALPHA)
+        sway = int(math.sin(t * 0.8 + x * 0.03) * 2)
+        layer = _pg.Surface((40, 72), _pg.SRCALPHA)
         bx = 20 + sway
-        base_y = 60
-        h = 38 + int(loom * 8)            # looms taller as it nears
+        base_y = 66
+        h = 44 + int(loom * 10)           # looms taller as it nears
         top = base_y - h
+        shoulders = top + 9
         shroud = (24, 22, 28, 255)
-        shroud_lo = (11, 10, 14, 255)
-        # Tapered shroud -- narrow shoulders to a wide, torn hem.
-        body = [(bx - 4, top + 7), (bx + 4, top + 7),
-                (bx + 10, base_y), (bx - 10, base_y)]
-        _pg.draw.polygon(layer, shroud, body)
-        _pg.draw.polygon(layer, shroud_lo, body, 1)
-        # Ragged hem -- torn strips trailing into the dark.
-        for hx in range(-9, 10, 3):
+        shroud_lo = (12, 11, 15, 255)
+        void = (6, 6, 9, 255)
+        # Ragged, wind-torn shroud: a too-thin tapered silhouette built from
+        # jittered edges (seeded -> stable, doesn't boil), peaked into a hood.
+        steps = 7
+        left, right = [], []
+        for i in range(steps + 1):
+            fr = i / steps
+            yy = shoulders + int(fr * (base_y - shoulders))
+            hw = 3 + fr * 7 + rng.uniform(-1.4, 1.4) * (0.3 + fr)
+            left.append((bx - hw, yy))
+            right.append((bx + hw, yy))
+        _pg.draw.polygon(layer, shroud, [(bx, top)] + right + left[::-1])
+        _pg.draw.polygon(layer, shroud_lo, [(bx, top)] + right + left[::-1], 1)
+        # Torn hem: strips trailing into the dark, stirred by the sway.
+        for hx in range(-9, 10, 2):
+            ln = rng.randint(3, 8)
+            dr = int(sway * (hx / 9.0))
             _pg.draw.line(layer, shroud, (bx + hx, base_y - 3),
-                          (bx + hx + 1, base_y + 3 + (hx % 3)), 2)
-        # Drawn-up hood / faceless head.
-        _pg.draw.circle(layer, shroud, (bx, top + 6), 6)
-        _pg.draw.circle(layer, shroud_lo, (bx, top + 7), 5)
-        # Thin reaching arms hinted down the body.
-        _pg.draw.line(layer, shroud_lo, (bx - 4, top + 12), (bx - 8, top + 24), 2)
-        _pg.draw.line(layer, shroud_lo, (bx + 4, top + 12), (bx + 8, top + 24), 2)
-        # The gaze: two faint sick pinpricks (yellow used ONLY here, a
-        # dim light in the dark), unless the player looks straight at it.
+                          (bx + hx + dr, base_y - 3 + ln), 2)
+        # Long, thin, uneven reaching arms hinted down the shroud.
+        _pg.draw.line(layer, shroud_lo, (bx - 3, shoulders + 2),
+                      (bx - 9 + sway, shoulders + 20), 2)
+        _pg.draw.line(layer, shroud_lo, (bx + 3, shoulders + 2),
+                      (bx + 8 - sway, shoulders + 25), 2)
+        # The void cowl: a deep black hollow where the face should be, framed
+        # by the hood rim.
+        _pg.draw.ellipse(layer, void, (bx - 4, top + 2, 8, 11))
+        _pg.draw.arc(layer, shroud_lo, (bx - 5, top, 10, 14), 0.25, 2.9, 2)
+        # The gaze: two dim sick pinpricks DEEP in the cowl (the only colour),
+        # with a faint tight glint -- gone if the player looks straight at it.
         if not gaze:
-            g = 110 + int(math.sin(t * 2.0 + x) * 25)
-            eye = (g, int(g * 0.85), 38, 255)
-            _pg.draw.circle(layer, eye, (bx - 2, top + 6), 1)
-            _pg.draw.circle(layer, eye, (bx + 2, top + 6), 1)
-            halo = _pg.Surface((40, 64), _pg.SRCALPHA)
-            _pg.draw.circle(halo, (60, 52, 22), (bx, top + 6), 7)
-            layer.blit(halo, (0, 0), special_flags=_pg.BLEND_RGBA_ADD)
+            g = 96 + int(math.sin(t * 2.0 + x) * 22)
+            eye = (g, int(g * 0.82), 34, 255)
+            for ex in (-2, 2):
+                _pg.draw.circle(layer, (58, 50, 22, 70), (bx + ex, top + 7), 2)
+                _pg.draw.circle(layer, eye, (bx + ex, top + 7), 1)
+        # Half-there: a faint, offset after-image first, then the figure.
+        ox = int(x - 20)
+        oy = int(y - base_y)
+        layer.set_alpha(int(255 * phase * 0.35))
+        surf.blit(layer, (ox - sway * 2 - 1, oy - 1))
         layer.set_alpha(int(255 * phase))
-        surf.blit(layer, (x - 20, y - base_y))
+        surf.blit(layer, (ox, oy))
     elif kind == "glitch_npc":
         for _ in range(30):
             ox = random.randint(-9, 9); oy = random.randint(-12, 8)
