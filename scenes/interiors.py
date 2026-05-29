@@ -215,6 +215,9 @@ def build_shop():
                                  ang=0.0))
     sc.add_decoration(Decoration(10 * TILE + 16, 4 * TILE + 16, "mirror"))
     sc.add_decoration(Decoration(8 * TILE + 16, 1 * TILE + 22, "clock"))
+    # Hettie's calendar -- "no deliveries in a while now," the days
+    # folding back on themselves.
+    sc.add_decoration(Decoration(1 * TILE + 16, 0 * TILE + 24, "calendar"))
     sc.add_decoration(Decoration(4 * TILE + 16, 1 * TILE + 22,
                                  "wrong_photo", stage=1))
     for mx, my in [(7, 4), (9, 5), (5, 5)]:
@@ -386,6 +389,13 @@ def build_kid_house():
                                  "kerosene_lamp"))
     sc.add_decoration(Decoration(8 * TILE + 8, 2 * TILE + 16, "clock"))
     sc.add_decoration(Decoration(2 * TILE + 16,  0 * TILE + 22 , "candle"))
+    # Toby's own things: two corn dolls on the floor where he plays them
+    # through the procession he saw, and the MISSING flyer for the dad
+    # who "still comes home for dinner."
+    sc.add_decoration(Decoration(5 * TILE + 16, 4 * TILE + 16, "corn_doll"))
+    sc.add_decoration(Decoration(6 * TILE + 22, 5 * TILE + 16, "corn_doll"))
+    sc.add_decoration(Decoration(8 * TILE + 16, 0 * TILE + 24,
+                                 "missing_flyer"))
     # Chalk phantom-marks on the walls.
     sc.add_decoration(Decoration(1 * TILE + 28, 2 * TILE + 16,
                                  "phantom_mark"))

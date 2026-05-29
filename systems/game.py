@@ -1091,6 +1091,8 @@ class Game:
         # Standard NPC interaction
         best = None; bd = 1e9
         for npc in self.scene.npcs:
+            if getattr(npc, "_inside", False):
+                continue        # homebody is behind their door
             d = math.hypot(npc.x - self.player.x, npc.y - self.player.y)
             if d < bd and d < 40:
                 bd = d; best = npc
@@ -3552,6 +3554,9 @@ class Game:
             return -64 <= sx <= SCREEN_W + 64 and -64 <= sy <= SCREEN_H + 64
 
         for i, npc in enumerate(self.scene.npcs):
+            # A homebody currently inside their door: not drawn at all.
+            if getattr(npc, "_inside", False):
+                continue
             # A persisted corpse: draw it prone in its blood and skip all
             # the living-NPC logic (morph, blink, king-threat, gaze).
             if not getattr(npc, "alive", True):

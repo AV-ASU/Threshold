@@ -679,20 +679,22 @@ def build_brimley():
     # waypoints. Each one stands within sight of where they actually
     # live, so the town reads as inhabited rather than as NPCs in a
     # field. Bible §2: locals were born here; they cope by staying put.
-    # Hettie keeps the shop open. Standing right out front, sweeping
-    # a step that doesn't get dirty.
+    # Hettie keeps the shop open. A homebody: she steps out front to
+    # sweep a step that doesn't get dirty, then ducks back inside the
+    # shop for a spell -- the only time you catch her is at her own door.
     _resident(53, 61, "Hettie", "hettie", [
         "Still open. Always open. The shelves don't empty anymore. Have you noticed.",
         "No deliveries. In a while now. But we manage. We always.",
         "[c=dim]I keep the lights on. So they know. Someone's keeping them on.[/c]",
-    ], movement="idle")
-    # Old Pell -- on the schoolhouse step, the calendar nailed to the
-    # wall behind him. He stopped marking it.
+    ], movement="homebody", radius=34)
+    # Old Pell -- the schoolhouse step, the calendar nailed to the wall
+    # behind him. He stopped marking it. Another homebody: out on the
+    # step a while, then back indoors out of the cold that came early.
     _resident(63, 54, "Old Pell", "old_townsman", [
         "Cold came in early this year. Came in early last year, too.",
         "Stopped marking the calendar. The days just fold back on themselves.",
         "[c=dim]You're new. We don't get new. Nobody gets in. Nobody gets--[/c]",
-    ], voice="blip_low", movement="idle")
+    ], voice="blip_low", movement="homebody", radius=34)
     # Mrs. Calder is by the east-edge road -- the road her husband
     # walked out on. She watches the road. She does not wave.
     _resident(96, 8, "Mrs. Calder", "townswoman", [

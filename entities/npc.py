@@ -183,8 +183,54 @@ class NPC:
             else:
                 # Within comfort range. Just match the player's facing.
                 self.facing = player.facing
+        elif self.movement == "homebody":
+            self._homebody_tick(dt, scene)
         elif self.movement == "chaser":
             self._cult_tick(dt, scene, player)
+
+    def _homebody_tick(self, dt, scene):
+        """A stay-at-home local. Loiters near their own doorstep (the
+        NPC's `home`), then steps inside -- vanishing -- for a spell,
+        then comes back out and loiters again. The only time you see
+        them is going in or out their door. While 'inside' the NPC sets
+        `_inside` True and drops `solid`; Game skips drawing it and won't
+        let the player talk to it."""
+        st = getattr(self, "_hb_state", None)
+        if st is None:
+            self._hb_state = st = "loiter"
+            self._hb_t = random.uniform(3.0, 8.0)
+            self._inside = False
+            self.move_target = None
+        self._hb_t -= dt
+        if st == "loiter":
+            self.move_timer -= dt
+            if self.move_timer <= 0 or self.move_target is None:
+                self.move_timer = random.uniform(1.4, 3.0)
+                ang = random.uniform(0, math.tau)
+                r = random.uniform(self.radius * 0.25, max(8, self.radius))
+                self.move_target = (self.home[0] + math.cos(ang) * r,
+                                    self.home[1] + math.sin(ang) * r)
+            self._step_toward(self.move_target, dt, scene)
+            if self._hb_t <= 0:
+                self._hb_state = "returning"
+                self.move_target = self.home
+        elif st == "returning":
+            if scene.world_dist(self.x, self.y,
+                                self.home[0], self.home[1]) < 8:
+                self._hb_state = "inside"
+                self._hb_t = random.uniform(4.0, 9.0)
+                self._inside = True
+                self.solid = False
+                self.x, self.y = self.home      # park on the doorstep
+            else:
+                self._step_toward(self.home, dt, scene)
+        elif st == "inside":
+            if self._hb_t <= 0:
+                self._hb_state = "loiter"
+                self._hb_t = random.uniform(5.0, 12.0)
+                self._inside = False
+                self.solid = True
+                self.move_target = None
 
     def _cult_tick(self, dt, scene, player):
         """Cultist behaviour state machine. Replaces the prior

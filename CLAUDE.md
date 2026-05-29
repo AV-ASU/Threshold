@@ -44,7 +44,11 @@ it renders the procedural sprites to a labelled PNG strip.
 - `entities/`
   - `player.py`
   - `npc.py` — movement modes (`idle`, `watch`, `wander`, `patrol`,
-    `stalker`, `follower`, `chaser`). `chaser` runs the cultist state
+    `stalker`, `follower`, `homebody`, `chaser`). `homebody` loiters
+    near the NPC's doorstep (`home`), then steps inside — sets
+    `_inside` True, drops `solid`, and Game skips drawing/talking to it
+    — for a spell, then re-emerges (the door-anchored Brimley locals).
+    `chaser` runs the cultist state
     machine (`_cult_tick`: scout→chase→search→investigate). The
     `yellow_king` sprite short-circuits to `_yk_update` (the `_birth`
     eruption ramp, 0→1 over ~1.2s, during which he cannot move).
@@ -58,6 +62,9 @@ it renders the procedural sprites to a labelled PNG strip.
 - `systems/`
   - `save.py` — **in-memory only, no disk**. `Save.new()` builds from
     `DEFAULT_SAVE`; quitting to title throws it away (single-session).
+    Killed innocent **locals** persist via the `dead_locals` arg (scene
+    → list of `{id,x,y,kind,name}`); `load_scene_now` → `_replay_dead_locals`
+    swaps the re-spawned live NPC for a persistent corpse on re-entry.
   - `items.py` — `ITEM_DEFS`, `Inventory`.
   - `threat.py` — `proximity_tier` + `PROX_TIER_*` helpers.
 - `ui/` — dialog, inventory, notebook, fonts, text input.
@@ -83,6 +90,13 @@ it renders the procedural sprites to a labelled PNG strip.
   **round**. `SAFE_SCENES` only *suppress* Watchers; they re-form on the
   way out. The gun and axe **share one weapon slot** (left-click / `K` to
   use, `Q` to swap).
+- **Killing locals**: the gun is *not* cult-only. A clean round drops any
+  living **local** instantly (lethal regardless of the evidence stagger
+  gate, which only ever protected the cult — see `Projectile._strike` /
+  `_BULLET_PHANTOM`). A local kill spikes `visibility`
+  (`LOCAL_KILL_VIS_SPIKE`, capped just under the King), pings the cult to
+  investigate the body, and leaves a **persistent corpse** (`_kill_npc`
+  returns keep → `_make_corpse`; cultists are still swept/removed).
 - A pursuer reaching the player triggers the **death** sequence
   (`_trigger_death(kind)` → `_tick_death`): `kind="cultist"` shows the
   **CAPTURED** card (taken alive for the hive); `kind="king"` plays the

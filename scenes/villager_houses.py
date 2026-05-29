@@ -142,6 +142,14 @@ def build_old_man_house():
     # Phantom-mark chalk on the wall.
     sc.add_decoration(Decoration(8 * TILE + 4, 4 * TILE + 16,
                                  "phantom_mark"))
+    # The Preacher's own hand: the MISSING flyer for the bright young
+    # woman he watched go quiet (he warns about her from the pulpit), and
+    # the polaroid wall of faces he keeps -- the ones who drifted into the
+    # corn and never came back.
+    sc.add_decoration(Decoration(0 * TILE + 26, 3 * TILE + 16,
+                                 "missing_flyer"))
+    sc.add_decoration(Decoration(4 * TILE + 16, 0 * TILE + 24,
+                                 "polaroid_wall"))
     for mx, my in [(4, 4), (6, 3), (5, 4)]:
         sc.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16,
                                      "mote"))
@@ -247,6 +255,16 @@ def build_fisherman_cottage():
     # AM radio on the desk, a lantern by the door.
     sc.add_decoration(Decoration(4 * TILE + 16, 2 * TILE + 16, "radio"))
     sc.add_decoration(Decoration(8 * TILE + 16, 5 * TILE + 24, "lantern"))
+    # Sheriff Vane's office made specific to the man: the case board of
+    # the disappeared he can't file on (polaroid wall), the Blaine girl's
+    # MISSING flyer beside it, a payphone he still lifts to a dead line,
+    # and a calendar of months he stopped reporting.
+    sc.add_decoration(Decoration(7 * TILE + 16, 0 * TILE + 24,
+                                 "polaroid_wall"))
+    sc.add_decoration(Decoration(5 * TILE + 16, 0 * TILE + 24,
+                                 "missing_flyer"))
+    sc.add_decoration(Decoration(8 * TILE + 16, 3 * TILE + 16, "payphone"))
+    sc.add_decoration(Decoration(1 * TILE + 16, 0 * TILE + 24, "calendar"))
     for mx, my in [(4, 3), (5, 4), (3, 5)]:
         sc.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16,
                                      "mote"))
