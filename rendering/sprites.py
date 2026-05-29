@@ -41,11 +41,12 @@ def _cult_eye(surf, x, y):
     pygame.draw.circle(surf, _CGOLD, (int(x), int(y)), 1)
 
 
-def _cult_hide_coat(surf, x, y, top, rng, lean=0):
+def _cult_hide_coat(surf, x, y, top, rng, lean=0, sway=0):
     """Stitched-hide coat: a near-black trapezoid of pelt patches with
-    bone-thread seams, a fur collar and a ragged fur hem."""
-    body = [(x - 9, y + 16), (x - 6 + lean, top),
-            (x + 6 + lean, top), (x + 9, y + 16)]
+    bone-thread seams, a fur collar and a ragged fur hem. `sway` swings the
+    hem (cloth lag) opposite the shoulder `lean` for a lurching gait."""
+    body = [(x - 9 + sway, y + 16), (x - 6 + lean, top),
+            (x + 6 + lean, top), (x + 9 + sway, y + 16)]
     pygame.draw.polygon(surf, _HIDE, body)
     pygame.draw.polygon(surf, _HIDE_LO, body, 1)
     # two pelt patches in varied tone (deer tan / bear dark)
@@ -62,12 +63,13 @@ def _cult_hide_coat(surf, x, y, top, rng, lean=0):
     # fur collar
     for fx in range(-7, 8, 2):
         pygame.draw.line(surf, _FUR, (x + fx, top + 1), (x + fx, top - 2), 1)
-    # ragged fur hem + sparse fur ticks (seeded -> stable)
+    # ragged fur hem + sparse fur ticks (seeded -> stable); swings with sway
     for hx in range(-8, 9, 3):
+        bx = x + hx + sway
         h = rng.randint(2, 5)
-        pygame.draw.line(surf, _HIDE_LO, (x + hx, y + 16), (x + hx, y + 16 + h), 2)
-        pygame.draw.line(surf, _FUR_LO, (x + hx, y + 16),
-                         (x + hx, y + 16 + rng.randint(1, 2)), 1)
+        pygame.draw.line(surf, _HIDE_LO, (bx, y + 16), (bx, y + 16 + h), 2)
+        pygame.draw.line(surf, _FUR_LO, (bx, y + 16),
+                         (bx, y + 16 + rng.randint(1, 2)), 1)
     for _ in range(7):
         tx = x + rng.randint(-7, 7); ty = rng.randint(top + 5, y + 10)
         pygame.draw.line(surf, _FUR_LO, (tx, ty), (tx, ty - 2), 1)
@@ -188,10 +190,16 @@ def _draw_cultist_raw(surf, x, y, facing, seed, t):
     facing. Drawn at the game's ~32px sprite scale."""
     rng = random.Random(seed & 0xffff)
     variant = (seed >> 3) % 6
-    gait = math.sin(t * 3.0 + x * 0.02)
-    lean = int(gait * 2)
-    bob = int(abs(math.sin(t * 3.0)) * 2)
-    top = y - 10 - bob
+    # A wrong, limping lurch: shoulders rock (lean), the body rises each step
+    # (bob) and DRAGS lower on the off-step (hitch), and the ragged hem swings
+    # opposite with cloth-lag (sway). Reads as a taken body shambling.
+    ph = t * 3.0 + x * 0.02
+    step = math.sin(ph)
+    lean = int(step * 2)
+    bob = int(abs(step) * 2)
+    hitch = int(max(0.0, -step) * 2)
+    sway = int(math.sin(ph - 0.8) * 2)
+    top = y - 10 - bob + hitch
     fx, fy = facing
     if abs(fx) > abs(fy):
         view, mdir = "side", (1 if fx > 0 else -1)
@@ -199,8 +207,9 @@ def _draw_cultist_raw(surf, x, y, facing, seed, t):
         view, mdir = "back", 0
     else:
         view, mdir = "front", 0
-    _cult_hide_coat(surf, x, y, top, rng, lean)
-    hcx, hcy = x + lean, top - 1
+    _cult_hide_coat(surf, x, y, top, rng, lean, sway)
+    # the masked head LEADS the lurch (tips a touch past the shoulders)
+    hcx, hcy = x + lean + int(step * 1), top - 1
     pygame.draw.ellipse(surf, (32, 26, 20), (hcx - 7, hcy - 7, 14, 15))   # fur hood
     pygame.draw.arc(surf, _HIDE_LO, (hcx - 7, hcy - 7, 14, 15), 0.3, 2.9, 1)
     for a in range(20, 161, 28):                                          # fur ruff
