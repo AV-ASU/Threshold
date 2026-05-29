@@ -4,8 +4,161 @@ import random
 import pygame
 from constants import C_BLACK
 
+# ---- Cultist: a stitched animal-hide coat + a carved wooden mask, one of
+# six chosen per individual (by seed) so the congregation reads as "everyone
+# carved their own." Directional: the mask shows front/side; from behind you
+# see only the fur hood + the Sign on the hide (no face), so you can read a
+# cultist's gaze and slip behind it. Near-black hide, restrained gold (only
+# an eye-glint). Static detail is seeded (stable per cultist); the trudge
+# rock/bob is time-driven. ----
+_HIDE = (74, 56, 40); _HIDE_LO = (48, 36, 26); _HIDE2 = (92, 72, 50)
+_HIDE3 = (40, 33, 28); _FUR = (122, 102, 72); _FUR_LO = (80, 64, 44)
+_STITCH = (156, 144, 118); _ANTLER = (150, 138, 112)
+_WOOD = (150, 128, 96); _WOOD_LO = (96, 80, 58); _CGRAIN = (70, 58, 42)
+_CVOID = (12, 11, 13); _CGOLD = (255, 218, 96)
+
+
+def _cult_glow(surf, x, y, r=2, a=46):
+    g = pygame.Surface((r * 2 + 2, r * 2 + 2), pygame.SRCALPHA)
+    pygame.draw.circle(g, (230, 186, 48, a), (r + 1, r + 1), r)
+    surf.blit(g, (int(x) - r - 1, int(y) - r - 1),
+              special_flags=pygame.BLEND_RGBA_ADD)
+
+
+def _cult_sign(surf, cx, cy, dim=False, u=1.0):
+    col = (120, 104, 44) if dim else (158, 134, 54)
+    cx, cy = int(cx), int(cy)
+    pygame.draw.line(surf, col, (cx, int(cy - 6 * u)), (cx, int(cy + 5 * u)), 1)
+    pygame.draw.line(surf, col, (int(cx - 5 * u), int(cy - 2 * u)),
+                     (int(cx + 4 * u), int(cy - 4 * u)), 1)
+    pygame.draw.line(surf, col, (int(cx - 4 * u), int(cy + 3 * u)),
+                     (int(cx + 5 * u), int(cy + 1 * u)), 1)
+
+
+def _cult_eye(surf, x, y):
+    pygame.draw.circle(surf, _CVOID, (int(x), int(y)), 1)
+    _cult_glow(surf, x, y, 2, 46)
+    pygame.draw.circle(surf, _CGOLD, (int(x), int(y)), 1)
+
+
+def _cult_hide_coat(surf, x, y, top, rng, lean=0):
+    """Stitched-hide coat: a near-black trapezoid of pelt patches with
+    bone-thread seams, a fur collar and a ragged fur hem."""
+    body = [(x - 9, y + 16), (x - 6 + lean, top),
+            (x + 6 + lean, top), (x + 9, y + 16)]
+    pygame.draw.polygon(surf, _HIDE, body)
+    pygame.draw.polygon(surf, _HIDE_LO, body, 1)
+    # two pelt patches in varied tone (deer tan / bear dark)
+    pygame.draw.polygon(surf, _HIDE3, [(x - 6 + lean, top + 1), (x + 1, top),
+                                       (x - 2, top + 9), (x - 7, top + 8)])
+    pygame.draw.polygon(surf, _HIDE2, [(x + 1, top + 2), (x + 6 + lean, top + 3),
+                                       (x + 8, y + 4), (x, y + 2)])
+    # bone-thread seam down the front
+    span = max(1, (y + 12 - top))
+    for i in range(6):
+        sy0 = top + 2 + i * span // 6
+        pygame.draw.line(surf, _STITCH, (x - 1, sy0 - 1), (x + 1, sy0 + 1), 1)
+    pygame.draw.line(surf, _HIDE2, (x - 4 + lean, top + 2), (x - 7, y + 12), 1)
+    # fur collar
+    for fx in range(-7, 8, 2):
+        pygame.draw.line(surf, _FUR, (x + fx, top + 1), (x + fx, top - 2), 1)
+    # ragged fur hem + sparse fur ticks (seeded -> stable)
+    for hx in range(-8, 9, 3):
+        h = rng.randint(2, 5)
+        pygame.draw.line(surf, _HIDE_LO, (x + hx, y + 16), (x + hx, y + 16 + h), 2)
+        pygame.draw.line(surf, _FUR_LO, (x + hx, y + 16),
+                         (x + hx, y + 16 + rng.randint(1, 2)), 1)
+    for _ in range(7):
+        tx = x + rng.randint(-7, 7); ty = rng.randint(top + 5, y + 10)
+        pygame.draw.line(surf, _FUR_LO, (tx, ty), (tx, ty - 2), 1)
+
+
+def _cult_mask(surf, cx, cy, variant, view, mdir):
+    """A carved wooden mask centred at (cx, cy) for the in-game ~14px head.
+    `variant` 0..5 picks the carving; `view` front/side; `mdir` mirrors side."""
+    mx = cx + mdir * 2
+    eyes = (-2, 2) if view == "front" else (mdir if mdir else 1,)
+    if variant == 2:        # LONGFACE -- an elongated wedge
+        pts = [(mx - 4, cy - 6), (mx + 4, cy - 6), (mx + 2, cy + 4),
+               (mx, cy + 8), (mx - 2, cy + 4)]
+        pygame.draw.polygon(surf, _WOOD, pts)
+        pygame.draw.polygon(surf, _WOOD_LO, pts, 1)
+        pygame.draw.line(surf, _CGRAIN, (mx, cy - 5), (mx, cy + 6), 1)
+        for ex in eyes:
+            _cult_eye(surf, mx + ex, cy - 2)
+        return
+    if variant == 5:        # PLANK -- a crude rectangle with an eye-slot
+        pygame.draw.rect(surf, _WOOD, (mx - 5, cy - 6, 10, 13))
+        pygame.draw.rect(surf, _WOOD_LO, (mx - 5, cy - 6, 10, 13), 1)
+        pygame.draw.line(surf, _CGRAIN, (mx - 3, cy - 2), (mx + 3, cy - 2), 1)
+        pygame.draw.rect(surf, _CVOID, (mx - 4, cy - 1, 8, 2))
+        for ex in eyes:
+            pygame.draw.circle(surf, _CGOLD, (int(mx + ex), cy), 1)
+            _cult_glow(surf, mx + ex, cy, 2, 40)
+        return
+    # ovals: PALLID(0), ANTLERED(1), SPLIT(3), GRIMACE(4)
+    if variant == 1:        # deer antlers above the mask
+        for sgn in (-1, 1):
+            pygame.draw.line(surf, _ANTLER, (mx + sgn * 3, cy - 6),
+                             (mx + sgn * 6, cy - 13), 1)
+            pygame.draw.line(surf, _ANTLER, (mx + sgn * 4, cy - 9),
+                             (mx + sgn * 8, cy - 10), 1)
+    mw = 5 if view == "front" else 4
+    pygame.draw.ellipse(surf, _WOOD, (mx - mw, cy - 6, mw * 2, 13))
+    pygame.draw.ellipse(surf, _WOOD_LO, (mx - mw, cy - 6, mw * 2, 13), 1)
+    pygame.draw.line(surf, _CGRAIN, (mx - mw + 1, cy + 1), (mx + mw - 1, cy + 1), 1)
+    if variant == 3:        # SPLIT -- crack + gold seam beneath
+        pygame.draw.line(surf, _CVOID, (mx, cy - 6), (mx, cy + 6), 1)
+        _cult_glow(surf, mx, cy, 2, 42)
+        pygame.draw.line(surf, _CGOLD, (mx, cy - 2), (mx, cy + 2), 1)
+    for ex in eyes:
+        if variant == 3 and ex == 0:
+            continue
+        _cult_eye(surf, mx + ex, cy)
+    if variant == 4:        # GRIMACE -- a carved frown
+        pygame.draw.arc(surf, _CVOID, (mx - 3, cy + 2, 6, 5), 0.2, 2.9, 1)
+    if variant == 0:        # PALLID -- the Sign on the brow
+        _cult_sign(surf, mx, cy - 4, u=0.5)
+
+
+def _draw_cultist(surf, x, y, facing, seed, t):
+    """Assemble a hide-coat cultist with a seeded carved mask + directional
+    facing. Drawn at the game's ~32px sprite scale."""
+    rng = random.Random(seed & 0xffff)
+    variant = (seed >> 3) % 6
+    gait = math.sin(t * 3.0 + x * 0.02)
+    lean = int(gait * 2)
+    bob = int(abs(math.sin(t * 3.0)) * 2)
+    top = y - 10 - bob
+    fx, fy = facing
+    if abs(fx) > abs(fy):
+        view, mdir = "side", (1 if fx > 0 else -1)
+    elif fy < 0:
+        view, mdir = "back", 0
+    else:
+        view, mdir = "front", 0
+    _cult_hide_coat(surf, x, y, top, rng, lean)
+    hcx, hcy = x + lean, top - 1
+    pygame.draw.ellipse(surf, (32, 26, 20), (hcx - 7, hcy - 7, 14, 15))   # fur hood
+    pygame.draw.arc(surf, _HIDE_LO, (hcx - 7, hcy - 7, 14, 15), 0.3, 2.9, 1)
+    for a in range(20, 161, 28):                                          # fur ruff
+        r = math.radians(a)
+        ex, ey = hcx + math.cos(r) * 7, hcy + math.sin(r) * 7
+        pygame.draw.line(surf, _FUR, (ex, ey),
+                         (ex + math.cos(r) * 2, ey + math.sin(r) * 2), 1)
+    if view == "back":
+        # No face: a mask-tie strap across the hood + the Sign on the hide.
+        pygame.draw.line(surf, _STITCH, (hcx - 5, hcy), (hcx + 5, hcy + 1), 1)
+        _cult_sign(surf, x, top + 14, dim=True, u=0.7)
+        if variant == 1:                                                  # antlers from behind
+            for sgn in (-1, 1):
+                pygame.draw.line(surf, _ANTLER, (hcx + sgn * 3, hcy - 5),
+                                 (hcx + sgn * 7, hcy - 13), 1)
+        return
+    _cult_mask(surf, hcx, hcy, variant, view, mdir)
+
 def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False,
-                    birth=None, gait=None, threat=None):
+                    birth=None, gait=None, threat=None, seed=0):
     """`blink=True` suppresses eye dots for NPC kinds that have human
     eyes (mom/kid/bandit/policeman). Used by Game.draw to make a single
     NPC's eyes vanish for a single frame -- a subliminal wrongness.
@@ -292,68 +445,12 @@ def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False,
         pygame.draw.rect(surf, outline, (x - 6, y + 14, 5, 8))
         pygame.draw.rect(surf, outline, (x + 1, y + 14, 5, 8))
     elif kind == "cultist":
-        # Hooded cultist -- a grim, near-black robe over a deep cowl that
-        # is simply a void; the cult has taken his face. He trudges (the
-        # body rocks and rises on each step). DIRECTIONAL: the cowl and the
-        # two cold amber eyes track `facing`, so you can read his gaze and
-        # slip behind him -- facing AWAY (up) shows only the smooth back of
-        # the hood, no eyes. A rope cincture and the jaundiced Yellow Sign
-        # daubed on the chest mark him as the cult, not a generic hood.
+        # Stitched animal-hide coat + a carved wooden mask (one of six,
+        # chosen per individual by `seed`). Directional: mask front/side,
+        # bare fur hood + Sign from behind so you can read its gaze. See
+        # _draw_cultist + the mask helpers at the top of this module.
         t = pygame.time.get_ticks() / 1000.0
-        gait = math.sin(t * 3.0 + x * 0.02)
-        lean = int(gait * 2)                      # rock the body
-        bob = int(abs(math.sin(t * 3.0)) * 2)     # rise on each step
-        robe = (50, 45, 42)                       # grim charcoal
-        robe_lo = (28, 25, 24)
-        robe_hi = (72, 64, 58)
-        cowl = (12, 11, 13)                       # black void
-        sign_col = (150, 134, 58)                 # jaundiced Yellow Sign
-        eye = (150, 120, 40)
-        fx, fy = facing
-        if abs(fx) > abs(fy):
-            face = "right" if fx > 0 else "left"
-        else:
-            face = "down" if fy >= 0 else "up"
-        top = y - 10 - bob
-        # Robe body -- a trapezoid, wider at the hem.
-        pygame.draw.polygon(surf, robe,
-                            [(x - 9, y + 16), (x - 6 + lean, top),
-                             (x + 6 + lean, top), (x + 9, y + 16)])
-        pygame.draw.polygon(surf, robe_lo,
-                            [(x - 9, y + 16), (x - 6 + lean, top),
-                             (x + 6 + lean, top), (x + 9, y + 16)], 1)
-        pygame.draw.line(surf, robe_hi, (x - 3 + lean, top + 2),
-                         (x - 5, y + 13), 1)          # a lit fold
-        # Rope cincture at the waist.
-        pygame.draw.line(surf, (96, 80, 50), (x - 8, y + 5), (x + 8, y + 5), 1)
-        # The Yellow Sign daubed on the chest -- only when he's turned
-        # toward you (not on his back).
-        if face != "up":
-            sgx = x + (3 if face == "right" else -3 if face == "left" else 0)
-            sgy = y + 9
-            pygame.draw.line(surf, sign_col, (sgx, sgy - 2), (sgx, sgy + 3), 1)
-            pygame.draw.line(surf, sign_col, (sgx - 2, sgy),
-                             (sgx + 2, sgy - 1), 1)
-        # Deep cowl.
-        head_cy = top - 1
-        pygame.draw.ellipse(surf, cowl, (x - 7 + lean, head_cy - 7, 14, 14))
-        pygame.draw.arc(surf, robe_lo, (x - 7 + lean, head_cy - 7, 14, 14),
-                        0.4, 2.7, 1)                  # hood rim
-        # Eyes track the gaze; none when facing away (up).
-        blinking = ((t + x * 0.05) % 4.0) < 0.18
-        if not blinking and face != "up":
-            if face == "down":
-                ex1, ex2 = x - 3 + lean, x + 3 + lean
-            elif face == "left":
-                ex1, ex2 = x - 5 + lean, x - 1 + lean
-            else:  # right
-                ex1, ex2 = x + 1 + lean, x + 5 + lean
-            pygame.draw.circle(surf, eye, (ex1, head_cy + 1), 1)
-            pygame.draw.circle(surf, eye, (ex2, head_cy + 1), 1)
-        # Dried blood down the robe + a black hem.
-        pygame.draw.line(surf, (64, 16, 14), (x, y + 6), (x + 1, y + 15), 2)
-        pygame.draw.line(surf, (16, 12, 12),
-                         (x - 8, y + 16), (x + 8, y + 16), 2)
+        _draw_cultist(surf, x, y, facing, seed, t)
     elif kind == "curse_priest":
         # The cult's curse-priest -- the special cultist that binds the
         # Watchers to you. Taller and gaunter than the rank-and-file:

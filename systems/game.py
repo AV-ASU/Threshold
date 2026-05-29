@@ -3359,7 +3359,7 @@ class Game:
                                     npc.facing, blink=(i == blink_idx),
                                     birth=getattr(npc, "_birth", None),
                                     gait=getattr(npc, "_gait", None),
-                                    threat=king_threat)
+                                    threat=king_threat, seed=id(npc) & 0xffff)
             # THRESHOLD: NPC name labels removed. They were the
             # last RPG-tell on screen -- the player should learn
             # who an NPC is by interacting with them, not by

@@ -583,7 +583,8 @@ class Enemy:
             draw_vessel_bloom(surf, sx, sy, kind, self.facing, m,
                               seed=id(self) & 0xffff)
         else:
-            draw_npc_sprite(surf, sx, sy, kind, self.facing)
+            draw_npc_sprite(surf, sx, sy, kind, self.facing,
+                            seed=id(self) & 0xffff)
         # THRESHOLD: enemies can no longer hurt the player (atk is
         # zeroed every tick in update). Suppress the gold-ring
         # "charge incoming" telegraph in that case -- a wind-up
