@@ -1552,42 +1552,46 @@ def door_mask_surface(height=120, vis=0.62):
     _jag_blob(base, mx, my, rw + 1, rh + 1, (*lo, pa), 4, n=30, jit=0.055)
     _jag_blob(base, mx, my, rw, rh - 1, (*mid, pa), 4, n=30, jit=0.055)
     _jag_blob(base, mx - 1, my - 2, rw - 2, rh - 3, (*hi, pa), 4, n=30, jit=0.055)
-    # EYES: near-opaque BLACK voids (darker than the glow) with a pinpoint
-    # gold gaze. Irregular but not jagged -- asymmetric in size + height.
+    # EYES -- the whole event. Near-opaque BLACK voids (darker than the glow)
+    # with a forward-LOCKED gold gaze: it looks back AT you. Near-symmetric so
+    # the stare is direct (not wandering), only slightly irregular in shape.
     void = (3, 3, 6, 244)
-    eyes = [(-0.44, -0.30, 0.33, 0.46, 11),   # (dx, dy, rx, ry, seed) -- left
-            (0.43, -0.35, 0.28, 0.40, 27)]    # right: smaller, set higher
+    eyes = [(-0.42, -0.29, 0.32, 0.44, 11),   # (dx, dy, rx, ry, seed) -- left
+            (0.42, -0.30, 0.30, 0.42, 27)]    # right: a touch smaller
     for dx, dy, erx, ery, sd in eyes:
         ex, ey = int(mx + r * dx), int(my + r * dy)
-        _jag_blob(base, ex, ey, r * erx, r * ery, void, sd, n=12, jit=0.28)
-        gx, gy = ex + (1 if dx > 0 else -1), ey + 1     # gaze nudged off-centre
-        _yk_radial(base, gx, gy, 2, _YK_HOT, int(150 * vis))
+        _jag_blob(base, ex, ey, r * erx, r * ery, void, sd, n=12, jit=0.24)
+        # gaze CENTRED in the void -> both eyes meet yours; a hot core in a
+        # soft gold bloom, so it reads as a live, looking pupil.
+        _yk_radial(base, ex, ey, 4, _YK_HOT, int(150 * vis))
         try:
-            base.set_at((gx, gy), _YK_HOT)
+            pygame.draw.circle(base, _YK_HOT, (ex, ey), 1)
+            base.set_at((ex, ey), (255, 250, 232))
         except (IndexError, ValueError):
             pass
-    # BROWS: a thin bone ridge over each eye, angled DOWN toward the nose (a
-    # severe, wrong furrow), asymmetric to match the eyes.
+    # BROWS: a faint bone ridge over each eye, nearly level (only a slight
+    # inward tilt) -- it FRAMES the stare rather than furrowing it angry.
     pygame.draw.line(base, (*lo, pa),
-                     (int(mx - r * 0.72), int(my - r * 0.66)),
-                     (int(mx - r * 0.14), int(my - r * 0.50)), 2)
+                     (int(mx - r * 0.66), int(my - r * 0.55)),
+                     (int(mx - r * 0.20), int(my - r * 0.52)), 2)
     pygame.draw.line(base, (*lo, pa),
-                     (int(mx + r * 0.70), int(my - r * 0.72)),
-                     (int(mx + r * 0.12), int(my - r * 0.54)), 2)
+                     (int(mx + r * 0.64), int(my - r * 0.57)),
+                     (int(mx + r * 0.18), int(my - r * 0.54)), 2)
     # a faint nose ridge down the empty mid-face
-    pygame.draw.line(base, (*lo, pa), (mx, int(my - r * 0.10)),
-                     (int(mx - 1), int(my + r * 0.36)), 1)
-    # MOUTH: an irregular, lopsided black gape (not an ellipse), set LOW with
-    # chin-room beneath it.
-    _jag_blob(base, mx, int(my + r * 0.70), r * 0.31, r * 0.27,
-              (3, 3, 6, 232), 53, n=12, jit=0.36)
-    # one fracture from the forehead down through the empty mid-face to the
-    # chin, skirting the right eye.
-    crk = [(int(mx + r * 0.06), int(my - rh * 0.82)),
-           (int(mx + r * 0.28), int(my - r * 0.24)),
-           (int(mx + r * 0.12), int(my + r * 0.22)),
-           (int(mx + r * 0.30), int(my + r * 0.66)),
-           (int(mx + r * 0.14), int(my + rh * 0.74))]
+    pygame.draw.line(base, (*lo, pa), (mx, int(my - r * 0.06)),
+                     (int(mx - 1), int(my + r * 0.34)), 1)
+    # MOUTH: a thin, closed, slightly uneven seam set LOW -- present but quiet,
+    # so nothing competes with the eyes. No gape.
+    mpts = [(mx - r * 0.22, my + r * 0.70), (mx - r * 0.04, my + r * 0.74),
+            (mx + r * 0.13, my + r * 0.70), (mx + r * 0.24, my + r * 0.73)]
+    pygame.draw.lines(base, (3, 3, 6, 226), False,
+                      [(int(a), int(b)) for a, b in mpts], 2)
+    # a fracture bowed OUT around the right eye to the cheek -- clear of the
+    # eyes/centre so the gaze owns the face -- from temple down to the jaw.
+    crk = [(int(mx + r * 0.58), int(my - rh * 0.50)),
+           (int(mx + r * 0.80), int(my - r * 0.10)),
+           (int(mx + r * 0.66), int(my + r * 0.42)),
+           (int(mx + r * 0.46), int(my + rh * 0.58))]
     pygame.draw.lines(base, (*lo, pa), False, crk, 1)
     # Scale to the target HEIGHT, preserving the tall aspect (don't squash).
     h = max(1, int(height))
