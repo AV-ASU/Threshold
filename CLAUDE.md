@@ -62,9 +62,10 @@ it renders the procedural sprites to a labelled PNG strip.
 - `systems/`
   - `save.py` — **in-memory only, no disk**. `Save.new()` builds from
     `DEFAULT_SAVE`; quitting to title throws it away (single-session).
-    Killed innocent **locals** persist via the `dead_locals` arg (scene
-    → list of `{id,x,y,kind,name}`); `load_scene_now` → `_replay_dead_locals`
-    swaps the re-spawned live NPC for a persistent corpse on re-entry.
+    Killed innocent **locals** lie where they fell **only while the player
+    is in that room** (`_make_corpse`); the body is *not* persisted across
+    scene loads — the scene rebuilds the local live on re-entry (the act
+    costs in the moment, not a ledger; NARRATIVE 1b/3).
   - `items.py` — `ITEM_DEFS`, `Inventory`.
   - `threat.py` — `proximity_tier` + `PROX_TIER_*` helpers.
 - `ui/` — dialog, inventory, notebook, fonts, text input.
@@ -95,8 +96,10 @@ it renders the procedural sprites to a labelled PNG strip.
   gate, which only ever protected the cult — see `Projectile._strike` /
   `_BULLET_PHANTOM`). A local kill spikes `visibility`
   (`LOCAL_KILL_VIS_SPIKE`, capped just under the King), pings the cult to
-  investigate the body, and leaves a **persistent corpse** (`_kill_npc`
-  returns keep → `_make_corpse`; cultists are still swept/removed).
+  investigate the body, and leaves a corpse **for as long as the player is
+  in that room** (`_kill_npc` returns keep → `_make_corpse`; cultists are
+  still swept/removed). The body is **not** persisted across scene loads
+  (no `dead_locals` ledger) — the scene rebuilds the local live on re-entry.
 - **Infestation** (`_apply_infestation`, called from `load_scene_now`):
   the world rots as a pure, monotonic function of evidence —
   `_infest_stage()` = `min(3, evidence)`, **front-loaded** so the surface
@@ -118,17 +121,13 @@ it renders the procedural sprites to a labelled PNG strip.
   And (c) at stage 3 turns
   the Sheriff's office into a **unique threat**: `_spawn_hunting_sheriff`
   (`sheriff_hollow` sprite) holds for an intro beat then force-chases
-  (`_tick_sheriff`); contact → `_trigger_death("sheriff")`. Corpses are claimed by the fold in `draw_npc_corpse` (`mold` = the
-  stage): the body stays a **recognisable body** and the fold's
-  **infection** spreads OVER it — warm **gold rot welling up through the
-  flesh** (gold wound + sickly discolour, escalating to the **Yellow Sign**
-  branded in at stage 3), never a black void. **Named** resisters are
-  infected in the shape of their living mutation (`_CORPSE_CLAIM`: Toby a
-  glowing gold maw, Hettie a gold bloom with peeling skin-flaps + Sign,
-  Garrick gold faces surfacing); other kinds get the generic gold rot.
-  `mold` 0 is a clean fresh kill. Per-character compulsion echoes
-  (`_CORPSE_ECHO`: Toby's gaping head-maw, Hettie's reaching arm) lay over
-  the top — their dying act still happening on the floor.
+  (`_tick_sheriff`); contact → `_trigger_death("sheriff")`. Player-killed
+  locals are drawn by `draw_npc_corpse` at **`mold=0`** (a clean fresh
+  kill) — since corpses no longer persist across loads, there's no growing
+  rot stage to track. (`draw_npc_corpse` still *accepts* a `mold` 0..3 and
+  the fold-claim art — `_CORPSE_CLAIM` for named resisters, `_CORPSE_ECHO`
+  compulsion echoes — survives in `sprites.py` as reusable art, just no
+  longer driven by an accumulating stage.)
 - A pursuer reaching the player triggers the **death** sequence
   (`_trigger_death(kind)` → `_tick_death`): `kind="cultist"` shows the
   **CAPTURED** card (taken alive for the hive); `kind="sheriff"` the

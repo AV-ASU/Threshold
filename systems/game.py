@@ -911,13 +911,12 @@ class Game:
         if self.save.flag("world_emptied"):
             self.scene.npcs = []
         else:
-            # Re-instate any local the player killed here on a prior visit:
-            # the builder re-spawns them live every load, so swap them for
-            # persistent corpses.
-            self._replay_dead_locals()
             # Re-derive the world's infestation for this scene from the
             # evidence count (rot decals, turned/mutated locals, the
-            # stage-3 Sheriff encounter).
+            # stage-3 Sheriff encounter). Corpses are NOT persisted across
+            # scene loads (NARRATIVE 1b/3: the act costs in the moment, no
+            # cross-scene ledger) -- a killed local lies there only while
+            # you're in the room.
             self._apply_infestation()
 
     def _river_blocks(self, target_x, target_y):
@@ -1422,66 +1421,30 @@ class Game:
         if is_cult:
             return False        # cultist: swept away, may re-form later
         # An innocent local. The cult reaction: a loud investigate ping at
-        # the body, a hard visibility spike, and a body that stays down.
+        # the body and a hard visibility spike. The body stays down for as
+        # long as you're in the room (_make_corpse), but is NOT persisted
+        # across scene loads -- the act costs in the moment, not a ledger
+        # (NARRATIVE 1b/3).
         self.visibility = min(LOCAL_KILL_VIS_CAP,
                               max(self.visibility,
                                   self.visibility + LOCAL_KILL_VIS_SPIKE))
         if self.scene is not None:
             self.scene._last_step_event = (
                 npc.x, npc.y, 1.0, pygame.time.get_ticks() / 1000.0)
-        self._record_corpse(npc)
         return True
 
-    def _corpse_id(self, npc):
-        """Stable per-scene identity for a downed local. Tag if it has
-        one, else the display name -- both are unique within a scene."""
-        return getattr(npc, "tag", None) or getattr(npc, "name", "?")
-
     def _make_corpse(self, npc):
-        """Convert a just-killed local NPC into a persistent corpse: it
-        stops moving (alive=False already), stops blocking, and answers
-        E with a one-shot examine instead of its old dialogue."""
+        """Convert a just-killed local NPC into a corpse for the rest of the
+        time the player is in this room: it stops moving (alive=False
+        already), stops blocking, and answers E with a one-shot examine
+        instead of its old dialogue. Not persisted across scene loads
+        (NARRATIVE 1b/3) -- the scene rebuilds the local live on re-entry."""
         npc._is_corpse = True
         npc._kill_processed = True
         npc.solid = False
         npc.movement = "idle"
         npc.dialogue_fn = _corpse_examine
         npc.no_prompt = False
-
-    def _record_corpse(self, npc):
-        """Persist a local's death so the body is still there on re-entry.
-        Keyed by scene -> list of {id, x, y, kind, name}."""
-        dead = self.save.arg("dead_locals", {})
-        key = self.scene.key
-        recs = dead.get(key, [])
-        cid = self._corpse_id(npc)
-        if any(r.get("id") == cid for r in recs):
-            return
-        recs.append({"id": cid, "x": npc.x, "y": npc.y,
-                     "kind": npc.sprite_kind, "name": npc.name})
-        dead[key] = recs
-        self.save.set_arg("dead_locals", dead)
-
-    def _replay_dead_locals(self):
-        """On scene load, re-instate any local the player killed here on a
-        previous visit. Removes the live (re-spawned) version and drops a
-        corpse in its place so the body persists across re-entries."""
-        dead = self.save.arg("dead_locals", {})
-        recs = dead.get(self.scene.key, [])
-        if not recs:
-            return
-        ids = {r["id"] for r in recs}
-        self.scene.npcs = [n for n in self.scene.npcs
-                           if self._corpse_id(n) not in ids]
-        from entities.npc import NPC
-        for r in recs:
-            body = NPC(r["x"], r["y"], r.get("name", "A body"), r["kind"],
-                       movement="idle", solid=False,
-                       dialogue_fn=_corpse_examine, tag="corpse")
-            body.alive = False
-            body._is_corpse = True
-            body._kill_processed = True
-            self.scene.add_npc(body)
 
     # ---- Infestation -------------------------------------------------
     def _infest_stage(self):
@@ -1493,8 +1456,8 @@ class Game:
     def _apply_infestation(self):
         """Re-derive the world's rot for the freshly-loaded scene from the
         evidence count. Scenes rebuild every load, so this is deterministic
-        and additive each time -- never accumulates. Runs after on_enter +
-        _replay_dead_locals so it can transform the live locals in place."""
+        and additive each time -- never accumulates. Runs after on_enter so
+        it can transform the live locals in place."""
         if self.scene is None:
             return
         key = self.scene.key
@@ -3817,8 +3780,10 @@ class Game:
             # A homebody currently inside their door: not drawn at all.
             if getattr(npc, "_inside", False):
                 continue
-            # A persisted corpse: draw it prone in its blood and skip all
-            # the living-NPC logic (morph, blink, king-threat, gaze).
+            # A corpse: draw it prone in its blood and skip all the
+            # living-NPC logic (morph, blink, king-threat, gaze). A fresh
+            # kill (mold=0) -- corpses don't persist across loads anymore, so
+            # there's no growing rot stage to track (NARRATIVE 1b/3).
             if not getattr(npc, "alive", True):
                 for ox, oy in _offsets:
                     sx = int(npc.x + ox - self.cam_x)
@@ -3826,8 +3791,7 @@ class Game:
                     if not _on_screen(sx, sy):
                         continue
                     draw_npc_corpse(self.screen, sx, sy, npc.sprite_kind,
-                                    seed=id(npc) & 0xffff,
-                                    mold=self._infest_stage())
+                                    seed=id(npc) & 0xffff, mold=0)
                 continue
             m = getattr(npc, "morph", 0.0)
             king_threat = None
