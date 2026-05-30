@@ -1542,7 +1542,9 @@ def door_mask_surface(height=120, vis=0.62):
     Sh = (rh + pad) * 2
     base = pygame.Surface((S, Sh), pygame.SRCALPHA)
     mx, my = S // 2, Sh // 2
-    pa = min(244, int(150 * vis + 110))       # darkwood -> mostly opaque
+    pa = 252                                   # darkwood -> OPAQUE, so the wood
+    #                                          # reads dark over the bright glow
+    #                                          # (no need to dim the glow itself)
     # luminous gold halo behind the wood
     _yk_radial(base, mx, my, int(rh * 0.84), _YK_HOT, int(42 * vis))
     # rounded carved-wood plate (subtle imperfect edge), lit upper-left
