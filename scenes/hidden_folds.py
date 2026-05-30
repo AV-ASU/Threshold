@@ -27,12 +27,13 @@ from .base import Scene
 # ----- #2: The Curse-Priest's Grove ---------------------------------
 
 def build_curse_grove():
-    """A small clearing the curse-priest uses for his work. Accessed
-    only by walking east-to-west through a specific cornstalk gap in
-    cornfield_maze. Fire pit at centre, effigy-dolls in a circle (one
-    per local being cursed), a polaroid board with faces nailed to it,
-    the priest at the fire. The player can leave the way they came --
-    walking east off the west bank returns to the maze."""
+    """A small clearing the cult once worked, found only by walking
+    east-to-west through a specific cornstalk gap in cornfield_maze. A
+    dead fire pit at centre, effigy-dolls in a ring, a polaroid board with
+    faces nailed to it -- the work without the worker (there is no
+    curse-priest; the closing rite claimed the town at once, NARRATIVE
+    1b/3). The player can leave the way they came -- walking east off the
+    west bank returns to the maze."""
     W, H = 14, 10
     # Floor: charred dirt at the centre, grass at the edges.
     floor_rows = []

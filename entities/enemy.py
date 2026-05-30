@@ -10,12 +10,12 @@ from rendering.transform import draw_vessel_bloom
 
 def _is_cultist(obj):
     """A cultist target for the player's gun: a cult-tagged NPC, or a
-    cultist / curse-priest Enemy."""
+    cultist Enemy. (The curse-priest is cut -- NARRATIVE 1b/3.)"""
     tag = getattr(obj, "tag", None)
     if isinstance(tag, str) and tag.startswith("cult_"):
         return True
-    return getattr(obj, "kind", None) in ("cultist", "curse_priest") \
-        or getattr(obj, "sprite_kind", None) in ("cultist", "curse_priest")
+    return getattr(obj, "kind", None) == "cultist" \
+        or getattr(obj, "sprite_kind", None) == "cultist"
 
 
 # Sprite kinds a bullet passes straight through: the King, the Watchers
