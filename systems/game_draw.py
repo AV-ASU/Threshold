@@ -986,15 +986,7 @@ class GameDrawMixin:
         # already cloned this way in Scene.draw). For non-wrap scenes
         # this is exactly [(0, 0)] -- identical to the old single draw.
         sc = self.scene
-        _offsets = [(0, 0)]
-        if sc.wrap_x:
-            _ww = sc.w * TILE
-            _offsets += [(-_ww, 0), (_ww, 0)]
-        if sc.wrap_y:
-            _wh = sc.h * TILE
-            _offsets += [(0, -_wh), (0, _wh)]
-        if sc.wrap_x and sc.wrap_y:
-            _offsets += [(-_ww, -_wh), (-_ww, _wh), (_ww, -_wh), (_ww, _wh)]
+        _offsets = sc.wrap_offsets()
 
         def _on_screen(sx, sy):
             return -64 <= sx <= SCREEN_W + 64 and -64 <= sy <= SCREEN_H + 64

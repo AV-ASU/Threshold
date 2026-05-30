@@ -1652,6 +1652,36 @@ class Scene:
         # of sight and the timer decays. (No scenes populate this
         # list currently.)
         self.eye_cameras = []
+        # Per-tile metadata, keyed by (tx, ty). A scene builder populates
+        # this for tiles that need behaviour beyond their char -- notably
+        # FOLD tiles (mirror / seamless-transition: same primitive), e.g.
+        #   scene.tile_meta[(tx, ty)] = {
+        #       "fold": True, "dir": (1, 0),      # reveal/cross facing east
+        #       "to_scene": "country_lane",        # peek + transition target
+        #       "to_tile": (3, 19),                # where it lands / mirrors
+        #   }
+        # Read by the fold sight-reveal (draw the other side when the tile
+        # is in the player's view cone) and the crossing trigger. Empty by
+        # default, so scenes that don't use folds pay nothing.
+        self.tile_meta = {}
+
+    def wrap_offsets(self):
+        """Pixel offsets at which a thing must be re-drawn so it stays
+        visible across a toroidal seam. For a non-wrap scene this is just
+        [(0, 0)] (a single draw); with wrap_x/wrap_y it adds the opposite
+        edge(s) and the four corners. Shared by Scene.draw (decorations)
+        and the actor draw in game_draw, and reused by the fold/mirror
+        peek (drawing another region at an offset is the same operation)."""
+        offsets = [(0, 0)]
+        ww = self.w * TILE
+        wh = self.h * TILE
+        if self.wrap_x:
+            offsets += [(-ww, 0), (ww, 0)]
+        if self.wrap_y:
+            offsets += [(0, -wh), (0, wh)]
+        if self.wrap_x and self.wrap_y:
+            offsets += [(-ww, -wh), (-ww, wh), (ww, -wh), (ww, wh)]
+        return offsets
 
     def world_dx(self, from_x, to_x):
         """Shortest signed x-delta from from_x to to_x respecting
@@ -1679,10 +1709,29 @@ class Scene:
 
     def world_dist(self, from_x, from_y, to_x, to_y):
         """Shortest world distance respecting wrap on both axes."""
-        import math as _math
         dx = self.world_dx(from_x, to_x)
         dy = self.world_dy(from_y, to_y)
-        return _math.hypot(dx, dy)
+        return math.hypot(dx, dy)
+
+    def in_sight_cone(self, from_x, from_y, fx, fy, to_x, to_y,
+                      cos_thresh=0.55, max_dist=360.0):
+        """True if (to) lies within a view cone cast from (from) along the
+        unit facing (fx, fy): i.e. roughly in front and within range. The
+        cone half-angle is set by cos_thresh (the min normalized dot
+        product; 0.55 ~ 57 deg, 0.82 ~ 35 deg). Wrap-aware via world_dx/dy.
+
+        This is the sight test the watcher gaze/dispel already do inline;
+        sharing it here lets the fold sight-reveal use the exact same
+        geometry (a fold shows its other side only when looked at from the
+        allowed direction)."""
+        dx = self.world_dx(from_x, to_x)
+        dy = self.world_dy(from_y, to_y)
+        d = math.hypot(dx, dy)
+        if d > max_dist:
+            return False
+        if d < 1e-6:
+            return True
+        return ((dx / d) * fx + (dy / d) * fy) >= cos_thresh
 
     def char_floor_at(self, x_px, y_px):
         tx = int(x_px // TILE); ty = int(y_px // TILE)
@@ -1834,21 +1883,10 @@ class Scene:
             y0 = max(0, int(cam_y // TILE) - 1)
             y1 = min(self.h, int((cam_y + SCREEN_H) // TILE) + 2)
         draw_scene_terrain(surf, self, cam_x, cam_y, x0, y0, x1, y1)
-        world_w_px = self.w * TILE
-        world_h_px = self.h * TILE
+        # Wrap-clones so decorations stay in view across the seam.
+        offsets = self.wrap_offsets()
         for d in self.decorations:
             d.draw(surf, cam_x, cam_y)
-            # Wrap-clones so decorations stay in view across the seam.
-            offsets = [(0, 0)]
-            if self.wrap_x:
-                offsets += [(-world_w_px, 0), (world_w_px, 0)]
-            if self.wrap_y:
-                offsets += [(0, -world_h_px), (0, world_h_px)]
-            if self.wrap_x and self.wrap_y:
-                offsets += [(-world_w_px, -world_h_px),
-                            (-world_w_px, world_h_px),
-                            (world_w_px, -world_h_px),
-                            (world_w_px, world_h_px)]
             for dx_off, dy_off in offsets[1:]:
                 d.draw(surf, cam_x - dx_off, cam_y - dy_off)
         draw_scene_doors(surf, self, cam_x, cam_y, x0, y0, x1, y1)
