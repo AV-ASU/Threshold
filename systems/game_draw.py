@@ -125,7 +125,10 @@ class GameDrawMixin:
         holds_playscript = (self.player is not None
                      and self.player.inventory.has("playscript"))
         if key == "brimley" or holds_playscript:
-            self._draw_haze(170, (40, 40, 50, 80), 14, 24, 0.3, 30)
+            # Lighter than the old crushing flat-170: the map should read as
+            # a dim, lantern-lit town, not a blackout. Lights carve both the
+            # haze (inside _draw_haze) and the stillness vignette below.
+            self._draw_haze(96, (40, 40, 50, 64), 14, 24, 0.3, 30)
             self._draw_vignette()
     def _draw_vignette(self):
         """Player-centred radial darkness. Stillness ENCROACHES: the
@@ -156,6 +159,23 @@ class GameDrawMixin:
         psy = int(self.player.y - self.cam_y)
         size = surf.get_width()
         self.screen.blit(surf, (psx - size // 2, psy - size // 2))
+    def _restamp_lights(self):
+        """Re-assert world lights (lanterns, braziers, candles -- every pool
+        that registered in decoration.LIGHT_SOURCES this frame) ON TOP of
+        the haze + vignettes. Decorations draw before the dark-overlays, so
+        without this the dim buries them; here the warm pools punch back
+        through, reading as lit refuges in the gloom. A handful of cached
+        blits -- no masks, no per-pixel work. Skipped under the King's apex
+        (you can't out-glow Him) so the re-stamp runs BEFORE _draw_apex."""
+        from entities.decoration import LIGHT_SOURCES, restamp_light
+        for cx, cy, radius, color, peak in LIGHT_SOURCES:
+            if (cx < -radius * 2 or cx > SCREEN_W + radius * 2
+                    or cy < -radius * 2 or cy > SCREEN_H + radius * 2):
+                continue
+            # Two stamps: a wider, softer reach to lift the dim, then the
+            # original tight pool to keep the warm hotspot.
+            restamp_light(self.screen, cx, cy, radius, color, peak, boost=1.7)
+            restamp_light(self.screen, cx, cy, radius, color, peak)
     def _draw_outdoor_vignette(self):
         """Soft, always-on player-centred vignette for OUTDOOR_SCENES.
         Wider clear hole and lower peak alpha than the brimley
@@ -306,26 +326,71 @@ class GameDrawMixin:
             beam = pygame.Surface((SCREEN_W, SCREEN_H), pygame.SRCALPHA)
             pygame.draw.polygon(beam, (250, 232, 170, 26), cone)
             self.screen.blit(beam, (0, 0))
+    def _soft_fog_blob(self, size):
+        """A cached SOFT round fog patch (radial alpha falloff, white so it
+        can be tinted by fill). Replaces the old hard 160px squares that
+        read as a blocky patchwork. Keyed by size."""
+        cache = getattr(self, "_fog_blob_cache", None)
+        if cache is None:
+            cache = self._fog_blob_cache = {}
+        s = cache.get(size)
+        if s is None:
+            s = pygame.Surface((size, size), pygame.SRCALPHA)
+            r = size // 2
+            steps = 12
+            for k in range(steps, 0, -1):
+                rr = max(1, int(r * k / steps))
+                a = int(255 * (1 - k / steps) ** 1.6)
+                pygame.draw.circle(s, (255, 255, 255, a), (r, r), rr)
+            cache[size] = s
+        return s
+
+    def _tinted_fog_blob(self, size, fog_rgba):
+        """A cached soft fog blob pre-tinted with `fog_rgba` -- the haze
+        re-blits this one surface at drifting positions, so the only
+        per-frame work is the blits, not rebuilding the patch each time."""
+        cache = getattr(self, "_tinted_fog_cache", None)
+        if cache is None:
+            cache = self._tinted_fog_cache = {}
+        key = (size, fog_rgba)
+        s = cache.get(key)
+        if s is None:
+            s = pygame.Surface((size, size), pygame.SRCALPHA)
+            s.fill(fog_rgba)
+            s.blit(self._soft_fog_blob(size), (0, 0),
+                   special_flags=pygame.BLEND_RGBA_MULT)
+            cache[key] = s
+        return s
+
     def _draw_haze(self, base_alpha, fog_rgba, fog_n, drift_x, sway_amp,
                    sway_y_amt):
-        """Reusable haze helper: a flat black tint at `base_alpha` plus
-        `fog_n` drifting translucent SQUARE patches tinted `fog_rgba`.
-        Used by the brimley overlay with different parameters."""
+        """Reusable haze helper: a soft dim plus drifting SOFT fog blobs.
+        World lights are re-stamped OVER this afterward (_restamp_lights),
+        so lanterns/braziers read through it. Brimley is tuned lighter than
+        the old crushing flat-170 with hard squares: the beautiful map
+        should read as a dim lantern-lit town, the dark as mood not a
+        blackout. The fog blobs are soft rounds now, not 160px squares."""
         if base_alpha:
-            dim = pygame.Surface((SCREEN_W, SCREEN_H))
-            dim.fill((0, 0, 0))
+            # Plain (non-SRCALPHA) surface + set_alpha is markedly faster to
+            # blit than a full-screen SRCALPHA fill, and the result is
+            # identical for a flat black dim.
+            dim = self._haze_dim_surf
+            if dim is None:
+                dim = self._haze_dim_surf = pygame.Surface((SCREEN_W, SCREEN_H))
+                dim.fill((0, 0, 0))
             dim.set_alpha(base_alpha)
             self.screen.blit(dim, (0, 0))
         t = pygame.time.get_ticks() / 1000.0
-        size = 160
+        size = 200
+        # The tinted soft blob is identical every frame for a given
+        # fog_rgba, so build it ONCE (cached) -- only its position drifts.
+        tinted = self._tinted_fog_blob(size, fog_rgba)
         for i in range(fog_n):
             fx = ((i * 137 + int(t * drift_x + i * 50))
-                  % (SCREEN_W + 240) - 120)
+                  % (SCREEN_W + 280) - 140)
             fy = ((i * 73) % SCREEN_H
                   + int(math.sin(t * sway_amp + i * 0.7) * sway_y_amt))
-            fog = pygame.Surface((size, size), pygame.SRCALPHA)
-            fog.fill(fog_rgba)
-            self.screen.blit(fog, (fx, fy))
+            self.screen.blit(tinted, (fx, fy))
     def _draw_flashback(self):
         """Render the flashback overlay if active. Black field, large
         white text in the centre, no other UI."""
@@ -960,6 +1025,11 @@ class GameDrawMixin:
             return
         self.screen.fill(C_BG)
         if not self.scene: return
+        # Clear the per-frame world-light registry before any decoration
+        # draws its pool -- the lanterns/braziers/candles repopulate it as
+        # scene.draw runs, and the overlay pass reads it to carve the dark.
+        from entities.decoration import reset_lights
+        reset_lights()
         self.scene.draw(self.screen, self.cam_x, self.cam_y)
         # Fold reveals: the far side of any in-sight fold shows through,
         # drawn over terrain but under items/actors so the player walks
@@ -1113,6 +1183,11 @@ class GameDrawMixin:
         self._draw_brimley_haze()
         self._draw_dark()
         self._draw_outdoor_vignette()
+        # Re-stamp world lights (lanterns/braziers/candles) OVER the haze +
+        # vignettes so they read through the dim -- but BEFORE the apex and
+        # hide overlays, which fully override (you can't out-glow the King,
+        # or light your way out of cover).
+        self._restamp_lights()
         self._draw_apex_overlay()
         self._draw_hidden_overlay()
         # Film grade over the whole world layer (desaturate, cool tint,

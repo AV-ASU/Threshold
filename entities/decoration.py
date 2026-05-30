@@ -64,6 +64,20 @@ def _ground_shadow(surf, cx, cy, rw, rh, alpha=80):
 
 _DECO_POOL_CACHE = {}
 
+# World-space light registry. Every light pool a decoration draws this frame
+# records its SCREEN-space footprint here (cx, cy, radius, peak). The
+# overlay pass (game_draw) reads it to carve the haze / outdoor vignette
+# back around lights -- so the lanterns, braziers and candles that were
+# being painted over by the dim now punch warm, readable holes in it.
+# Cleared by the renderer at the start of each world draw. Screen-space
+# because pools are blitted in screen-space; the overlays are too.
+LIGHT_SOURCES = []
+
+
+def reset_lights():
+    """Drop the per-frame light footprints (call before the world draw)."""
+    LIGHT_SOURCES.clear()
+
 
 def _light_pool(surf, cx, cy, radius, color=(255, 170, 70), peak=70):
     key = (radius, color, peak)
@@ -78,6 +92,33 @@ def _light_pool(surf, cx, cy, radius, color=(255, 170, 70), peak=70):
                                (radius, radius), r)
         _DECO_POOL_CACHE[key] = s
     surf.blit(s, (int(cx - radius), int(cy - radius)))
+    # Register this pool so the renderer can RE-STAMP it on top of the dark
+    # overlays (the haze/vignette are drawn after decorations and would
+    # otherwise bury the glow). Storing the params lets the re-stamp reuse
+    # the very same cached surface -- a couple of extra blits, no masks.
+    LIGHT_SOURCES.append((int(cx), int(cy), int(radius), tuple(color),
+                          int(peak)))
+
+
+def restamp_light(surf, cx, cy, radius, color, peak, boost=1.0):
+    """Blit the cached light-pool surface for these params (building it if
+    needed). Used to re-assert lanterns/braziers OVER the dark overlays so
+    they read through the dim. `boost` scales the pool's reach a touch so
+    the re-stamp lifts a slightly wider ring than the original warm tint --
+    light spills past where its colour is still legible."""
+    rr = max(1, int(radius * boost))
+    key = (rr, color, peak)
+    s = _DECO_POOL_CACHE.get(key)
+    if s is None:
+        s = pygame.Surface((rr * 2, rr * 2), pygame.SRCALPHA)
+        steps = 10
+        for k in range(steps, 0, -1):
+            r = max(1, int(rr * k / steps))
+            a = int(peak * (1 - k / steps) ** 1.4) + 4
+            pygame.draw.circle(s, (color[0], color[1], color[2], a),
+                               (rr, rr), r)
+        _DECO_POOL_CACHE[key] = s
+    surf.blit(s, (int(cx - rr), int(cy - rr)))
 
 
 _GROUNDED_DECOS = frozenset((

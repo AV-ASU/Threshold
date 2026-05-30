@@ -482,6 +482,8 @@ class Game(GameDrawMixin):
         # intense than the brimley vignette but never goes away --
         # the world edges are always pressing in. Cached on first need.
         self._outdoor_vignette_surf = None
+        # Cached flat-black dim for the haze base tint (set_alpha each use).
+        self._haze_dim_surf = None
 
         # ---- THRESHOLD: the visibility meter ----
         # `visibility` is a float in [0, 1]: how visible the player is
