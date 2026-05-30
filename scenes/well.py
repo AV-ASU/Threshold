@@ -5,8 +5,8 @@ open onto the Depths:
 
   well_bottom        -- the Shaft Floor (rope landing; the way back up)
   well_passage       -- the Drying Racks (first gauntlet)
-  works_vats         -- the Tallow Vats
-  works_sorting      -- the Sorting Hall (belongings of the vanished)
+  works_vats         -- the Cistern (the dig broke into the river)
+  works_sorting      -- the Sorting Hall (shed lives of the claimed)
   works_scriptorium  -- the Scriptorium (the Sign, copied endlessly)
   works_sign         -- the Sign Chamber (lift the Pallid Mask; evidence #5)
   works_deepstair    -- the Deep Stair (Mask+Play gate down to the Depths)
@@ -90,7 +90,7 @@ def build_well_bottom():
 def build_well_passage():
     floor, objs = _box(14, 8)
     objs[4][0] = "F"          # west -> back to the shaft
-    objs[4][13] = "E"         # east -> the tallow vats (deeper)
+    objs[4][13] = "E"         # east -> the cistern (deeper)
     # Drying racks (solid shelves) in two rows, gaps to weave through.
     for cx in (3, 5, 8, 10):
         objs[2][cx] = "s"
@@ -213,8 +213,8 @@ def build_works_sorting():
                                  open=False, interactive=False))
     sc.add_decoration(Decoration(4 * TILE + 16, 5 * TILE + 16, "bloodstain"))
     sc.add_decoration(Decoration(10 * TILE + 16, 8 * TILE + 16, "phantom_mark"))
-    # A "wrong" mount oversees the catalogued belongings of the
-    # vanished, and cobwebs grime the high corners.
+    # A "wrong" mount oversees the catalogued lives the claimed shed,
+    # and cobwebs grime the high corners.
     sc.add_decoration(Decoration(8 * TILE + 16, 0 * TILE + 18,
                                  "wrong_taxidermy", wall="N", seed=17))
     sc.add_decoration(Decoration(1 * TILE + 6, 1 * TILE + 6, "cobweb",
