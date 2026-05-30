@@ -1510,22 +1510,77 @@ def _yk_mask(surf, cx, cy, r, vis, kind, mouth=True):
     surf.blit(m, (cx - mx, cy - my))
 
 
-def door_mask_surface(height=120, vis=0.66):
+def _jag_blob(surf, cx, cy, rx, ry, col, seed, n=10, jit=0.36):
+    """An irregular dark void -- an ellipse-ish polygon with jittered radii so
+    it never reads as a clean oblong or circle. Seeded for a stable shape."""
+    rng = random.Random(seed)
+    pts = []
+    for i in range(n):
+        a = (i / n) * math.tau
+        jx = rx * (1.0 - jit + 2 * jit * rng.random())
+        jy = ry * (1.0 - jit + 2 * jit * rng.random())
+        pts.append((int(cx + math.cos(a) * jx), int(cy + math.sin(a) * jy)))
+    pygame.draw.polygon(surf, col, pts)
+
+
+def door_mask_surface(height=120, vis=0.62):
     """The wrong face the threshold wears, for the journal door-dream's
-    one-frame flash. NOT the trap-ending scream and NOT the apex mask that
-    shatters, but rendered with the SAME pallid-face art as the King
-    (_yk_mask) so it matches them -- here the 'vacant' face: deep OBLONG eye-
-    voids each holding a pinpoint gold gaze, a downturned gaping grimace, and
-    a jagged fracture down one side. Sickly jaundiced bone, a luminous halo,
-    semi-translucent so the doorway glow reads through it. Drawn SMALL on
-    purpose so it surfaces from deep in the light rather than filling the
-    door -- a little wrong thing far back in the glow. `height` is the target
-    surface size in px (keep it well under the opening height)."""
+    one-frame flash. Authored to match the King's pallid-face family (gaunt
+    oblong bone plate, brow/nose ridges, a jagged fracture down one side) --
+    NOT the trap scream, NOT the apex mask that shatters -- but with two
+    deliberate notes the shared art can't give: the bone is held TRANSLUCENT
+    (the doorway glow reads through it) while the eye-voids are near-OPAQUE
+    pure black, far darker than the glow (a hard juxtaposition), each still
+    holding its pinpoint gold gaze; and the eyes + mouth are IRREGULAR
+    (jagged, lopsided), never clean oblongs or circles. Built small and
+    smooth-scaled up so it surfaces soft and half-seen from deep in the
+    light. `vis` drives the bone translucency + gaze brightness."""
+    hi, mid, lo = _YK_MHI, _YK_MMID, _YK_MLO
     r = 22
-    pad = max(4, r // 2 + 4)
+    pad = max(5, r // 2 + 5)
     S = (r + pad) * 2
     base = pygame.Surface((S, S), pygame.SRCALPHA)
-    _yk_mask(base, S // 2, S // 2, r, vis, "vacant", mouth=True)
+    mx = my = S // 2
+    pa = int(150 * vis + 40)                 # bone-plate alpha (translucent)
+    # luminous gold halo behind the face
+    _yk_radial(base, mx, my, r + 4, _YK_HOT, int(40 * vis))
+    # gaunt oblong bone plate, lit upper-left (translucent)
+    rw, rh = r, int(r * 1.26)
+    pygame.draw.ellipse(base, (*lo, pa), (mx - rw + 1, my - rh + 1, 2 * rw, 2 * rh))
+    pygame.draw.ellipse(base, (*mid, pa), (mx - rw, my - rh, 2 * rw, 2 * rh))
+    pygame.draw.ellipse(base, (*hi, pa), (mx - rw + 1, my - rh,
+                                          max(1, 2 * rw - 3), max(1, 2 * rh - 4)))
+    # brow + nose ridges
+    bw = max(1, r // 4)
+    pygame.draw.line(base, (*lo, pa), (int(mx - r * 0.66), int(my - r * 0.42)),
+                     (int(mx - r * 0.06), int(my - r * 0.26)), bw)
+    pygame.draw.line(base, (*lo, pa), (int(mx + r * 0.66), int(my - r * 0.42)),
+                     (int(mx + r * 0.04), int(my - r * 0.28)), bw)
+    pygame.draw.line(base, (*lo, pa), (mx, int(my - r * 0.05)),
+                     (int(mx - 1), int(my + r * 0.22)), 1)
+    # EYES: near-opaque jagged BLACK voids (darker than the glow), each with a
+    # pinpoint gold gaze. Asymmetric -- different size/seed per side.
+    void = (3, 3, 6, 244)
+    gaze = (*_YK_HOT, 255)
+    eyes = [(-0.44, -0.04, 0.32, 0.46, 11),       # (dx, dy, rx, ry, seed) -- left
+            (0.42, -0.07, 0.27, 0.40, 27)]         # right: smaller, set higher
+    for dx, dy, erx, ery, sd in eyes:
+        ex, ey = int(mx + r * dx), int(my + r * dy)
+        _jag_blob(base, ex, ey, r * erx, r * ery, void, sd)
+        gx = ex + (1 if dx > 0 else -1)            # gaze nudged off-centre
+        gy = ey + 1
+        _yk_radial(base, gx, gy, 2, _YK_HOT, int(150 * vis))
+        try:
+            base.set_at((gx, gy), gaze[:3])
+        except (IndexError, ValueError):
+            pass
+    # MOUTH: an irregular, lopsided black gape (not an ellipse), pulled down.
+    _jag_blob(base, mx, int(my + r * 0.56), r * 0.30, r * 0.26,
+              (3, 3, 6, 232), 53, n=11, jit=0.46)
+    # one jagged fracture down the right side
+    crk = [(mx + r * 0.10, my - rh * 0.86), (mx + r * 0.30, my - r * 0.18),
+           (mx + r * 0.12, my + r * 0.42), (mx + r * 0.28, my + rh * 0.62)]
+    pygame.draw.lines(base, (*lo, pa), False, [(int(a), int(b)) for a, b in crk], 1)
     if height != S:
         h = max(1, int(height))
         base = pygame.transform.smoothscale(base, (h, h))
