@@ -45,6 +45,15 @@ thing that could ever take Carcosa past the corn.
 > for the soul He never took* — and that soul looked Him in the face and
 > walked out of the dream.
 
+> **You were lured — the case is the bait.** Your arrival is **not
+> coincidence.** A year ago He marked the one that got away; then a *case*
+> appeared — a grieving father in Minneapolis, a lost girl who happens to
+> be in *Brimley*, a job sitting on His door — and walked the marked soul
+> back to the frame. The door answers desire, and He found a numb man's one
+> remaining appetite: **an unsolved thing.** Walter and Mara are the hook
+> (Walter an *unwitting* one — his grief is real; the King only used it);
+> the PI is the catch. You didn't stumble into Brimley. You were *reeled.*
+
 **What the fold actually is — the rite.** Brimley isn't sealed by ambient
 weather; the **congregation's ongoing rite seals it**, and the **Sign (the
 Pallid Mask) is that rite's keystone**. What *gathered* the congregation
@@ -87,6 +96,12 @@ cult. She is one of the newcomers (§2).
 > else in Brimley is ordinary cause-and-effect downstream of it. Folk
 > horror reads as real because it keeps the impossible count at one. Keep
 > it there.
+>
+> **The spine, in one line:** *every threshold in Brimley is a higher thing
+> reaching down to lift a flat soul out of its plane — and it works by
+> offering you the one door you most want to walk through.* The case, the
+> gun, the investigation, the looping roads, the two endings, the dream:
+> all the same hand, all the same lift.
 
 **The Threshold.** Deep under Brimley, where the underground river runs,
 the cave floor lies **impossibly, perfectly level** — flatter than water
@@ -132,6 +147,27 @@ they dug down (following the water) to the frame. **The unattuned never
 dream and never know it exists** — which is exactly why locals can be
 wholly, innocently unaware of the thing under their town.
 
+**What the door offers — your own answer.** The dream is not generic. The
+door whispers **the answer to the hardest thing in your life** — the dead
+returned, the guilt lifted, the question that's eaten you finally solved —
+and tells you it is *just on the other side.* **Attunement is the size of
+the hole you carry:** the grieving, the guilty, the searching hear it
+loudest; the settled and the shallow barely at all. Nobody is seduced into
+something foreign — each person is offered *the one thing they already
+ache for*, which is why they go **gladly**, and why it never reads as a
+trick. (Despair is attunement — which is how the spent locals slide
+cult-ward by attrition.) This is the engine of the whole game and the key
+to its darkest beat: **Mara was not deceived. She was answered.** There was
+never anyone to save because she was never taken against her will — she was
+offered the one thing she needed and walked toward it.
+
+> **Why the PI is immune — he is a numb man.** A hard case who long ago
+> walled off whatever he most wants. The door can't answer a desire you
+> refuse to feel, so its dream barely touched him (once, a year ago — it
+> never took). **His armor is his immunity** — and the cruelty of the lure
+> (§1) is that He found the one appetite a numb investigator can't refuse:
+> *an unsolved case.* That is a character, not a convenience.
+
 > **Where the PI sits on the spectrum.** At the far, rare edge: attuned
 > exactly **once**, a year ago — a single dream that never took. He
 > walked up to the frame in it, looked in, and *met His eye* before it
@@ -167,6 +203,31 @@ squares with the visible body-horror of §4b: the rot is **the veil
 thinning for the PI specifically** as He turns His eye on *you* — the mask
 slipping off a town that was *always already* His, not the townsfolk
 changing.)
+
+**What it actually is — and why you must NEVER say it.** Beneath every
+image above sits one truth — the author's model and the player's dread,
+**never spoken in the game**: the door is an **aperture to a higher
+dimension**, and the King is a thing that lives *above* our plane. To us —
+flat beings — He is unperceivable except as a shifting **cross-section**
+(the drifting masks in fire are a *slice* of Him, the way a flat creature
+would perceive a hand pushed through its world). The Yellow Sign is His
+**shadow** — a flattened projection, which is exactly why every copy is
+"never the thing itself." The dream's distance never closes because the way
+*through* is **perpendicular to your plane**: a direction you cannot point
+at or walk toward. To be **claimed** is to be gripped by something
+*orthogonal to all your senses* (so you never feel it). To be **taken** is
+the single sensation the whole game is built to deliver — **a 2D being
+picked up**, lifted out of the only space it has ever known by a hand it
+cannot comprehend. The level floor, the impossible frame, the looping
+roads, the inert doorway: all of it is that higher geometry bruising
+through the flat one.
+
+> **The discipline — this is where "too far" lives.** The dimensional
+> truth must arrive **only as sensation**: the dream you can't finish, the
+> wrongness, the slice-glimpse of Him, the lifting feeling. The instant any
+> line, note, or card says *"dimension,"* it stops being folk horror and
+> becomes sci-fi, and the spell dies. Keep Brimley a dull, real town with
+> one unexplained door. **Never explain the door.**
 
 **Time is not looping — space is.** Hold this line in every line of
 dialogue and every decal: the binding is **spatial**. Roads loop, the road
@@ -229,9 +290,9 @@ ordered and nobody can refuse.
 | **The Store-Owner** | **Local — quiet resister** | The shop is gutted -- shelves bare, till empty, **nothing to sell** (deliveries stopped when the fold closed). His value is what he risks saying out loud: frightened warnings about who to trust, never said outright. He has a one-shot reaction to the Preacher's death. **He does not know Walter Blaine.** No local does — Walter is a voice in Minneapolis and Brimley locals would have no reason to recognize the name. |
 | **The Kid** | **Local — innocent witness** | Saw Mara go to the well with the procession and **tells you so** — the only honest account in town. What he gives you is the truth, not an object (the old keepsake item is purged; no inventory pickup). Children notice what adults pretend not to. |
 | **The Brimley chorus** (Hettie, Old Pell, Mrs. Calder, Royce, Garrick, the Tisdale boy) | **Locals** | The town still tries to live. Hettie keeps the store open. Mrs. Calder sets her husband's plate every night for a man who walked out to the highway. Old Pell stopped marking the calendar. Royce drives the river road out every week and comes back into Brimley every time. They all know the fold is real; none of them understand it. **Naming the principal locals** (the Sheriff, the Preacher, the Kid, the Store-Owner) is **still TODO** — see §8. |
-| **Mara Blaine** | **Newcomer** — the quarry, **already turned** | Arrived in Brimley a few months ago, "found religion," joined the cult, **went down the well** (not into the corn — she is not a "corn lady"). A willing member of the congregation now. Finding her proves there was never anyone to save. She is in the **hive**. |
-| **Walter Blaine** | **Outsider, off-screen** | The client. A Minneapolis voice on a phone that no longer connects. **No one in Brimley has ever met him.** He exists only through the PI's case notebook and (optionally — see §8) the polaroid he sent with the case. |
-| **Cult / curse-priest / Watchers / the King in Yellow** | **Newcomers + Their god** | The congregation are the newcomers. The Watchers and the King are the corruption they're channelling. |
+| **Mara Blaine** | **Newcomer** — the quarry, **already turned** | Attuned and aching for something; the door whispered her answer (§1b). She came north, "found religion," **went down the well** (not into the corn). **She was not deceived — she was answered**, and went gladly. Finding her proves there was never anyone to save: not because she was killed, but because she was *offered the one thing she needed.* In the **hive**. Reading her journal to the end drops the player into a **flashback of the burning doorframe** — the dream that took her, the game's clearest look at the lure. |
+| **Walter Blaine** | **Outsider, off-screen — the unwitting bait** | The client. A Minneapolis voice on a phone that no longer connects. His grief is **real** — he genuinely lost his daughter — but the *case itself is the King's hook* (§1, *"You were lured"*): the one appetite a numb investigator can't refuse, used to walk the marked soul back to the door. **No one in Brimley has ever met him.** He exists only through the PI's case notebook and (optionally — §8) the polaroid he sent. He gets no resolution — the call never connects again, and that silence is the point. |
+| **Cult / Watchers / the King in Yellow** | **Newcomers + Their god** | The congregation are the attuned newcomers. **The Watchers are His gaze made local** — the higher-dimensional eye reaching into the flat plane wherever His attention falls (§3), *not* a side-cult's spell. The King is the thing above the door. *(The old **curse-priest** is **cut** — individual cursing is redundant once the closing rite claims the whole town at once; see §8.)* |
 
 > **The fold is incomprehensible, not predictable.** Locals haven't
 > "figured out" which roads still work. They've learned that *none*
@@ -272,10 +333,14 @@ case:
 > far you've re-entered His attention*; at `1.0`, the one soul that got
 > close and walked away is worth coming for in person.
 
-**The pistol — agency the world takes back.** The PI carries a sidearm from
-the start (limited rounds; caches in the woodshed, the cellar, the Sheriff's
-office). It is hung on the **same 3-evidence line** as everything else, so
-crossing that line turns the world against you on every axis at once:
+**The pistol — the false-power threshold (it exists to fail).** The PI
+carries a sidearm **from the start**, and that is deliberate: power has to
+be *believed in* before it can be *taken away*. The gun is the player's
+first answer to fear — *I can fight this* — and the whole game is the slow
+proof that the real thing **cannot be shot**. It is hung on the **same
+3-evidence line** as everything else (limited rounds; caches in the
+woodshed, the cellar, the Sheriff's office), so crossing that line strips
+your agency on the exact line that arms the King:
 
 - **Below 3 evidence:** a clean shot **kills** a cultist (they fall and
   later respawn), and cultists stay **mundane** — no bloom. You have agency.
@@ -284,17 +349,27 @@ crossing that line turns the world against you on every axis at once:
   deeper you see, the less the world lets you kill.*
 
 The gun never makes you safe: **capture-on-contact is still the fail state**
-(a cultist that reaches you takes you — CAPTURED). A shot is **loud** — the
-cult hears it and investigates. The flashlight, the splitting axe (chop +
-stun), and hide-spots remain; the pistol sits alongside them, not over them.
+(a cultist that reaches you takes you — CAPTURED), and **the King cannot be
+shot at all** — you can't fire down a direction you can't point at (§1b).
+A shot is **loud** — His gaze hears it. The flashlight, the splitting axe
+(chop + stun), and hide-spots remain; the pistol sits alongside them, not
+over them.
 
-**The gun can be turned on the innocent.** A clean round drops any
-**local** instantly — Hettie, the Sheriff, the Tisdale boy — *regardless*
-of the evidence gate (that gate only ever protected the cult). It is never
-without cost: a local kill **spikes visibility** hard (the town turns its
-head) and pings the cult to **investigate the body**, and the corpse
-**stays where it fell** — it is there, in its blood, every time you walk
-back through. The bodies persist for the rest of the run.
+**The cruelest truth of the gun: it only ever works on the victims.** A
+clean round drops any **local** instantly — Hettie, the Sheriff, the
+Tisdale boy — *regardless* of the evidence gate (that gate only ever
+protected the cult). So the one thing your weapon reliably kills is the
+**claimed innocents you came to help and can't save** — your instrument of
+control, lethal only in the most useless, self-damning direction. It is
+never without cost: a local kill **spikes visibility** hard (the town turns
+its head) and pings the cult to **investigate the body**, and the body
+**lies there for as long as you're in that room**.
+
+> **Corpse persistence is cut (was overbuilt).** Keep the *moment's*
+> weight — the visibility spike, the town's turned head, the body on the
+> floor while you're present — but drop the cross-scene `dead_locals`
+> replay/`mold` bookkeeping (§4b, §8). The horror is the act, not a
+> database.
 
 ---
 
@@ -366,10 +441,11 @@ What rises with the stage:
   son… I can't say it"), then comes for you, slow and unrelenting. He
   catches you → **TAKEN INTO CUSTODY**. You escape by getting back out
   his door (a run outpaces him). The best ammo cache in town is now his.
-- **The dead don't rest.** A persisted **corpse** you left grows `mold`
-  with the stage — grey-green discolour, then pale fungal threads, then a
-  corn-stalk and the Sign growing up out of the body. Claimed, never
-  risen.
+- **The dead.** A local you shoot lies where they fell **for as long as
+  you're in that room** — the immediate weight of what you did. *The
+  cross-scene corpse-persistence + `mold` system is cut* (overbuilt; §3,
+  §8): no `dead_locals` replay, no growing rot on bodies. The act costs in
+  the moment; it doesn't need a ledger.
 
 ---
 
@@ -579,6 +655,29 @@ The reworks the new fiction forced are all shipped. What must stay true:
   half-remembers a door-dream, the PI's own single dream surfaced in the
   case notebook, the *step-toward-the-door-that-won't-close* echoed in
   `highway_walk`.
+- **Cut the curse-priest; repurpose/retire `curse_grove`.** Individual
+  cursing is redundant now the closing rite claims the whole town at once
+  (§1b). Remove the NPC; the `curse_grove` hidden fold either goes or is
+  reskinned to a non-priest dread tableau (effigies without a maker).
+- **Rehome the Watchers as His gaze (§3).** Keep the mechanic exactly
+  (they raise visibility; dispel by breaking the gaze / axe / round) but
+  change the *meaning and trigger*: they are **His eye reaching into the
+  plane**, not a curse-priest's spell. Re-point the fiction (and any
+  `_tick_ritual`/`_apply_curse` flavor) at His attention.
+- **Gun = false-power threshold (§3).** Verify the mechanic matches canon:
+  **< 3 evidence kills cultists**, **3+ only stuns**, the **King is
+  unshootable**, and a **clean round always kills a local**. The framing
+  ("it exists to fail; lethal only on victims") is the intent.
+- **Scrap corpse persistence (§3, §4b).** Drop the cross-scene
+  `dead_locals` replay and the corpse `mold` system. Keep the in-room
+  body + the visibility spike + the cult body-investigate ping.
+- **Mara's journal → the door.** Reading `mom_notebook` to the end drops a
+  **flashback of the burning doorframe** (the lure that took her) — the
+  game's clearest, wordless look at §1b. Mara is *answered, not deceived*.
+- **Surface "He knows you" where it can land (NOT the lethal King).** The
+  PI's single dream in the **case notebook**; a recognition beat when he
+  finally stands at the **real Threshold** (*"you've stood here before, in
+  sleep"*); the **lure** (the case is bait) seeded across the notebook.
 - **Name the principal locals.** The Sheriff, the Preacher, the
   Store-Owner, the Kid are role-tags. Locals in a small town know
   each other by name. The wax-museum quality of the cast is partly
@@ -586,11 +685,9 @@ The reworks the new fiction forced are all shipped. What must stay true:
   Mrs. Calder, Royce, Garrick, the Tisdale boy.)
 - **The liminal-composition pass** (§10): per-scene level design —
   composed emptiness, long sightlines, uncanny repetition.
-- **Curse-priest in dialog / evidence beats.** The `curse_grove`
-  hidden fold (§11) gave him a visible workshop and a clear thing
-  he's doing — but he's still mute. Wire him into a beat (a line
-  if you catch him at the brazier, or evidence pulled from the
-  workshop).
+- ~~Curse-priest in dialog / evidence beats.~~ **Superseded:** the
+  curse-priest is **cut** (see the build-order above) — the closing rite
+  makes an individual curser redundant.
 - **Food scarcity — the VISUAL pass.** The dialogue side is done
   (Hettie: "The shelves don't empty anymore... No deliveries."; the
   Store-Owner: "Shelves are bare. Till's been empty since the spring").
@@ -792,7 +889,7 @@ stumbles into the fold without realising they crossed a boundary.
 
 | Scene key | Where it lives | Access | What it shows |
 |---|---|---|---|
-| `curse_grove` | new scene | `cornfield_maze` tile (6, 10), walked WEST | The curse-priest at his fire pit -- effigies in a circle (one per local being cursed), polaroid board of faces, hanging figures at the corners. Gives the priest a home and a visible thing he's doing (§8) — but he is still mute here; wiring him into dialog / an evidence drop is **still open** (§8). |
+| `curse_grove` | new scene | `cornfield_maze` tile (6, 10), walked WEST | ⚠ **The curse-priest is cut (§8).** Retire or reskin this fold: keep the dread tableau if you want it (effigies, a polaroid board of faces, hanging figures) but **without a maker** — a workshop with no worker, the corn-doll work of the congregation, not one priest's spell. The effigies-as-individual-curses reading is dropped. |
 | `lodge_arrival` | new scene | `our_house_area` tile (5, 12), walked NORTH | The Lodge porch at the moment Mara walked up to it. Mara with a suitcase, the Clerk smiling in the doorway. Neither sees the PI. Makes the bible's "she chose this" concrete -- the player *witnesses* the choice. |
 | `highway_walk` | new scene | `country_lane` tile (28, 6), walked EAST | A stretch of empty highway. Two figures walk east, their backs to the PI -- the locals who walked out to flag down help. The road wraps; they stay ahead; nobody arrives anywhere. |
 | `husk_grove` | new scene | `cornfield_maze` tile (21, 8), walked EAST | A small clearing where the cult assembles its corn-dolls. Two altars used as workbenches, unfinished dolls scattered, a stalk-marker, a candle still lit. No NPC -- the work is here, the worker isn't. |
