@@ -39,17 +39,22 @@ class NotebookUI:
         if self.save is None:
             return []
         log = self.save.arg("evidence", [])
-        if not isinstance(log, list):
-            return []
+        notes = self.save.arg("notes", [])
         out = []
-        for e in log:
-            if isinstance(e, dict):
-                name = e.get("name", "?")
-                lines = e.get("lines", [])
-            else:
-                name = str(e)
-                lines = []
-            out.append((name, lines))
+        # Clues first (canonical evidence), then personal notes (the
+        # door-dream). Notes live in their own save list so they never
+        # count toward the evidence/King-gate -- see Game._log_dream_entry.
+        for src in (log, notes):
+            if not isinstance(src, list):
+                continue
+            for e in src:
+                if isinstance(e, dict):
+                    name = e.get("name", "?")
+                    lines = e.get("lines", [])
+                else:
+                    name = str(e)
+                    lines = []
+                out.append((name, lines))
         return out
 
     def move(self, dy):

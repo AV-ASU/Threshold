@@ -404,9 +404,21 @@ def build_threshold():
         if game.save.flag("first_threshold"):
             return
         game.save.set_flag("first_threshold", True)
-        _evidence(game, "the_doorframe",
-            "A doorframe with no wall."
-        )
+
+        def _log_doorframe():
+            _evidence(game, "the_doorframe",
+                "A doorframe with no wall."
+            )
+        # 'He knows you': if the PI dreamed this doorway (read Mara's
+        # journal through), recognition lands as ONE quiet line first,
+        # then the doorframe logs. Otherwise just the doorframe.
+        if game.save.flag("flashback_seen"):
+            game.dialog.show(
+                ["[c=dim]You have stood here before. In sleep.[/c]"],
+                speaker="", voice="blip_soft", portrait="narrator",
+                on_complete=_log_doorframe)
+        else:
+            _log_doorframe()
     sc.on_enter_fn = _threshold_on_enter
 
     def _threshold_interact(game):

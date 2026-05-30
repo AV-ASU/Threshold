@@ -1987,6 +1987,7 @@ class Game:
                     self.audio.play_music(self.scene.music)
                 # Bump proximity hard -- the player KNOWS now.
                 self._provoke_cult(0.20)
+                self._log_dream_entry()
 
     _FB_GAZE = [(math.cos(a * math.tau / 8), math.sin(a * math.tau / 8))
                 for a in range(8)] + [(0.0, 0.0)]
@@ -2037,6 +2038,37 @@ class Game:
                 gi = round(math.atan2(vy, vx) / (math.tau / 8)) % 8
             self._flashback_masks.append(
                 [xf, yf, scale, gi, random.randint(0, 3), FLASHBACK_MASK_FRAMES])
+
+    def _log_dream_entry(self):
+        """Write the recurring door-dream into the case notebook as a NOTE
+        (NARRATIVE: 'He knows you' -- the PI has been dreaming the Threshold
+        without knowing it's a real place). Stored in save arg 'notes', NOT
+        'evidence': the evidence log is canonical-clues-only and its length
+        is _evidence_count (the King-gate + infestation driver), so a note
+        must never land there. The notebook UI shows notes alongside clues.
+        Idempotent via name-dedup."""
+        if self.save is None:
+            return
+        notes = self.save.arg("notes", [])
+        if not isinstance(notes, list):
+            notes = []
+        if any(isinstance(e, dict) and e.get("name") == "the_dream"
+               for e in notes):
+            return
+        notes.append({"name": "the_dream", "lines": [
+            "The same dream again. The fourth night, or the fifth.",
+            "A door standing open in the dark -- no wall around it, just"
+            " the frame, old dry wood.",
+            "Light behind it the colour of old gold, breathing in and out"
+            " like something asleep.",
+            "And faces in the light. Turned toward me. All of them,"
+            " looking out.",
+            "I have never been to this place. I know it the way you know"
+            " your own front door.",
+        ]})
+        self.save.set_arg("notes", notes)
+        if hasattr(self, "_flash_notebook"):
+            self._flash_notebook()
 
     def _draw_flashback(self):
         """Render the journal door-dream (NARRATIVE 1b): an OPEN doorway of
