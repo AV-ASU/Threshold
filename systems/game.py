@@ -14,7 +14,7 @@ from constants import (
 from rendering.sprites import (draw_player_sprite, draw_npc_sprite,
                                draw_npc_corpse, draw_infested_overlay,
                                draw_axe_swing, draw_king_death, draw_carcosa,
-                               draw_mask_yank)
+                               draw_mask_yank, king_mask_surface)
 from rendering.transform import draw_vessel_bloom
 from ui.fonts import make_fonts
 from ui.dialog import DialogueBox
@@ -210,6 +210,7 @@ GUN_CD = 0.45                  # seconds between shots
 GUN_DMG = 100                  # one clean shot kills any cultist (hp 1 or 30)
 GUN_STUN_DUR = 1.4             # stagger time at 3+ evidence
 FLASHBACK_DUR = 7.0            # seconds the journal door-dream still holds
+FLASHBACK_MASK_T = 3.6         # when His mask flashes (one frame), mid-dream
 # Shooting an innocent local is loud AND wrong: it ratchets visibility
 # hard (the town turns its head) but is capped just under 1.0 so a single
 # murder can't itself summon the King -- the meter still has to climb the
@@ -540,14 +541,18 @@ class Game:
         # ---- THRESHOLD: flashback ----
         # Fires when the player reads Mara's journal through a third time.
         # Not text -- a single wordless still of the dream itself (NARRATIVE
-        # 1b): a plain doorframe suspended in black, gold burning from the
-        # seam, and a field of motes streaming INTO the crack -- the pull of
-        # being drawn in, while the door never comes any closer. The "you
-        # can never arrive" of the whole game, at the scale of one dream.
+        # 1b): an open doorway of dried wood suspended in black, a pulsing
+        # yellow glow radiating from it (cut off by the frame), eyes peeking
+        # in the light, and -- for ONE frame -- His Pallid Mask. The "you can
+        # never arrive" of the whole game, at the scale of one dream.
         # _flashback_phase is None (inactive) or 0 (the one held phase).
         self._flashback_phase = None
         self._flashback_t = 0.0
         self._flashback_stills = [(None, FLASHBACK_DUR)]
+        # Subliminal mask flash: tick arms it once when _flashback_t crosses
+        # FLASHBACK_MASK_T; draw consumes it the same frame -> a 1-frame flash.
+        self._flashback_mask_flash = False
+        self._flashback_mask_done = False
 
         # ---- THRESHOLD: ending state ----
         # _ending_active is the name of the ending currently
@@ -703,6 +708,8 @@ class Game:
         # Flashback / ending state
         self._flashback_phase = None
         self._flashback_t = 0.0
+        self._flashback_mask_flash = False
+        self._flashback_mask_done = False
         self._ending_active = None
         self._ending_phase = 0
         self._ending_phase_t = 0.0
@@ -1940,12 +1947,21 @@ class Game:
             self.save.set_flag("flashback_seen", True)
             self._flashback_phase = 0
             self._flashback_t = 0.0
+            self._flashback_mask_flash = False
+            self._flashback_mask_done = False
             self.audio.force_silence()
             self.audio.play("low_pulse", 0.85)
             self.audio.flashback_air(True)        # wind + falling bed
         if self._flashback_phase is None:
             return
         self._flashback_t += dt
+        # Arm the one-frame mask flash the moment we cross its time; draw
+        # consumes the flag this same frame, so His face shows for ~1 frame.
+        if (not self._flashback_mask_done
+                and self._flashback_t >= FLASHBACK_MASK_T):
+            self._flashback_mask_flash = True
+            self._flashback_mask_done = True
+            self.audio.play("wrong", 0.5)         # a stab under the flash
         _, dur = self._flashback_stills[self._flashback_phase]
         if self._flashback_t >= dur:
             self._flashback_phase += 1
@@ -1998,102 +2014,80 @@ class Game:
         left = cx - dw // 2
         top = cy - dh // 2
         bot = top + dh
-        pulse = 0.84 + 0.16 * math.sin(now * 0.9)
-
-        # ---- The opening: light from inside, cut off by the frame ----
+        # The doorway PULSES -- a slow heartbeat the glow rides on, so the
+        # light visibly swells and ebbs (the thing inside, breathing).
+        pulse = 0.45 + 0.55 * (0.5 + 0.5 * math.sin(now * 1.7))   # ~0.0..1.0
         ox, oy = left + post, top + post        # inside-jamb top-left
         ow, oh = dw - 2 * post, dh - post       # opening size (no sill)
+
+        # ---- Radiating, pulsing yellow glow from the doorway ----
+        # A radial yellow glow centred on the opening that RADIATES out past
+        # the frame into the black, breathing on the pulse. Drawn straight to
+        # the veil; the solid wood frame (drawn after) cuts it off where the
+        # wood is, so light only escapes through the opening and bleeds around
+        # the frame -- the doorway reaching out for you.
+        gcx, gcy = cx, (top + bot) // 2
+        glow = pygame.Surface((SCREEN_W, SCREEN_H), pygame.SRCALPHA)
+        steps = 40
+        maxr = dh * 0.66 * (0.88 + 0.18 * pulse)    # radius breathes
+        for s in range(steps):
+            f = s / (steps - 1)                     # 0 outer -> 1 inner
+            rr = maxr * (1.0 - f)
+            a = int((5 + 165 * f * f) * (0.40 + 0.60 * pulse) * fade)
+            # yellow-gold: warmer/paler toward the core
+            col = (246, 200 + int(38 * f), 70 + int(46 * f), min(255, a))
+            rect = pygame.Rect(0, 0, int(rr * 1.28), int(rr * 1.62))
+            rect.center = (gcx, gcy)
+            pygame.draw.ellipse(glow, col, rect)
+        veil.blit(glow, (0, 0))
+
+        # ---- Eyes peeking from the light (clipped to the opening) ----
+        # A few small, faint eye-pairs that surface in the glow, hold, blink
+        # under -- staggered so they don't pulse together. They peek; they do
+        # not resolve into faces.
         if ow > 6 and oh > 6:
-            inner = pygame.Surface((ow, oh), pygame.SRCALPHA)
-            icx, icy = ow / 2, oh * 0.46        # glow centre, a touch high
+            peek = pygame.Surface((ow, oh), pygame.SRCALPHA)
+            eyes = [(0.36, 0.40, 0.0), (0.62, 0.54, 1.9),
+                    (0.50, 0.30, 3.7)]
+            for ex, ey, off in eyes:
+                cyc = ((now + off) % 4.4) / 4.4
+                pres = max(0.0, min(1.0, math.sin(math.pi * cyc) ** 2.0))
+                if pres < 0.04:
+                    continue
+                openness = max(0.12, 0.5 + 0.5 * math.sin(now * 2.6 + off * 3))
+                crackle = 0.62 + 0.38 * math.sin(now * 15 + off * 7)
+                a = int(150 * pres * crackle * fade)
+                if a <= 0:
+                    continue
+                exx = ex * ow + math.sin(now * 0.5 + off) * ow * 0.02
+                eyy = ey * oh
+                ew = max(2, int(0.045 * ow))
+                eh = max(1, int(ew * 0.62 * openness))
+                gap = ew * 1.5
+                for sgn in (-1, 1):
+                    er = pygame.Rect(0, 0, ew, eh)
+                    er.center = (int(exx + sgn * gap), int(eyy))
+                    pygame.draw.ellipse(peek, (230, 222, 190, a), er)
+                    if eh >= 4:                     # a dark pupil when open
+                        pygame.draw.ellipse(peek, (26, 18, 12, a),
+                                            (er.centerx - 1, er.top + 1,
+                                             2, max(1, eh - 2)))
+            veil.blit(peek, (ox, oy))
 
-            # Radial glow: nested ellipses, large+dim -> small+bright, so the
-            # light is strongest deep in the middle and falls to dark at the
-            # edges where the jamb occludes it. Warm amber, never white. Kept
-            # dim -- the interior stays murky; the light hides more than it
-            # shows.
-            steps = 36
-            maxr = max(ow, oh) * 0.62
-            for s in range(steps):
-                f = s / (steps - 1)             # 0 outer -> 1 inner
-                rr = maxr * (1.0 - f)
-                a = int(10 + 150 * f * f * pulse * fade)
-                col = (232, 164 + int(50 * f), 62 + int(44 * f), min(255, a))
-                rect = pygame.Rect(0, 0, int(rr * 1.7), int(rr * 1.6))
-                rect.center = (int(icx), int(icy))
-                pygame.draw.ellipse(inner, col, rect)
-
-            # Things move in the light, but you never get to SEE them -- only
-            # the suggestion: a slow dark shape easing across, the faintest
-            # ghost of a pale mask that never resolves a face, a single pair
-            # of eyes that barely surface before sinking. All deliberately
-            # low-contrast; the dread is in almost-seeing, not seeing.
-
-            # One slow dark shape passing -- a body behind the doorway, half a
-            # shade darker than the glow, no edges.
-            sp = 0.045
-            xx = (((0.2 + now * sp) % 1.5) - 0.25) * ow
-            bw, bh = 0.16 * ow, 0.6 * oh
-            shade = pygame.Surface((max(2, int(bw)), max(2, int(bh))),
-                                   pygame.SRCALPHA)
-            pygame.draw.ellipse(shade, (18, 11, 7, int(70 * fade)),
-                                shade.get_rect())
-            inner.blit(shade, (int(xx - bw / 2), int(oh * 0.5 - bh / 2)))
-
-            # The pale mask -- only a ghost. A faint ovoid that rises and
-            # sinks once, with the barest hollows where a face would be. Never
-            # bright enough to read as a mask outright; you're left unsure.
-            mwin = max(0.0, 1.0 - abs(t - 0.55) / 0.16)     # narrow bump
-            if mwin > 0.02:
-                flick = 0.65 + 0.35 * abs(math.sin(now * 6.0))
-                ma = int(72 * mwin * flick * fade)
-                mh = int(oh * 0.40)
-                mw = int(mh * 0.60)
-                rise = (1.0 - mwin) * oh * 0.16             # sinks as it fades
-                mcx, mcy = int(ow * 0.5), int(oh * 0.52 + rise)
-                mask = pygame.Surface((mw, mh), pygame.SRCALPHA)
-                pygame.draw.ellipse(mask, (226, 222, 200, ma), mask.get_rect())
-                # hollows only just darker than the face -- barely there
-                eh = max(2, mh // 9)
-                ew = max(2, mw // 7)
-                hol = (120, 96, 74, int(ma * 0.7))
-                pygame.draw.ellipse(mask, hol,
-                                    (mw * 0.26 - ew / 2, mh * 0.42, ew, eh))
-                pygame.draw.ellipse(mask, hol,
-                                    (mw * 0.74 - ew / 2, mh * 0.42, ew, eh))
-                inner.blit(mask, (mcx - mw // 2, mcy - mh // 2))
-
-            # A single pair of eyes that barely surfaces, holds a beat, blinks
-            # under -- faint, flickering, never the dark socket that made them
-            # pop before. Mostly you catch them only at the peak of the cycle.
-            cyc = (now % 5.0) / 5.0
-            pres = max(0.0, min(1.0, math.sin(math.pi * cyc) ** 2.2))
-            if pres > 0.04:
-                openness = max(0.12, 0.5 + 0.5 * math.sin(now * 2.6))
-                crackle = 0.6 + 0.4 * math.sin(now * 15)
-                a = int(120 * pres * crackle * fade)
-                if a > 0:
-                    exx = 0.42 * ow + math.sin(now * 0.5) * ow * 0.03
-                    eyy = 0.44 * oh
-                    ew = max(2, int(0.045 * ow))
-                    eh = max(1, int(ew * 0.6 * openness))
-                    gap = ew * 1.5
-                    for sgn in (-1, 1):
-                        er = pygame.Rect(0, 0, ew, eh)
-                        er.center = (int(exx + sgn * gap), int(eyy))
-                        pygame.draw.ellipse(inner, (228, 220, 188, a), er)
-
-            # A breath of bright haze right at the core, drawn LAST -- the
-            # light glares back at you and veils whatever just moved through
-            # it, so nothing in there ever fully resolves.
-            haze = pygame.Surface((ow, oh), pygame.SRCALPHA)
-            hr = pygame.Rect(0, 0, int(ow * 0.5), int(oh * 0.34))
-            hr.center = (int(icx), int(icy))
-            pygame.draw.ellipse(haze, (240, 200, 120,
-                                       int(70 * pulse * fade)), hr)
-            inner.blit(haze, (0, 0))
-
-            veil.blit(inner, (ox, oy))
+        # ---- His mask, for ONE frame ----
+        # The subliminal flash (armed in _tick_flashback). The SAME Pallid
+        # Mask the King wears, scaled to fill the doorway -- gone before the
+        # eye is sure it saw it. Clipped to the opening (drawn before the
+        # frame), so He's behind the door.
+        if self._flashback_mask_flash and ow > 6 and oh > 6:
+            self._flashback_mask_flash = False
+            mh = int(oh * 0.74)
+            msurf = king_mask_surface(height=mh, bloom=1.0)
+            mrect = msurf.get_rect(center=(cx, oy + oh // 2))
+            clip = veil.get_clip()
+            veil.set_clip(pygame.Rect(ox, oy, ow, oh))
+            veil.blit(msurf, mrect)
+            veil.set_clip(clip)
 
         # ---- The dried wood frame, drawn ON TOP (occludes the glow/shapes
         # at the threshold -- that IS the 'cut off by the frame') ----
