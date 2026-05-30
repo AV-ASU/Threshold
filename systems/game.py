@@ -2072,13 +2072,14 @@ class Game:
                                              2, max(1, eh - 2)))
 
             # ---- The mask, for ONE frame ----
-            # The subliminal flash (armed in _tick_flashback): a bespoke
-            # pallid mask in His family -- calm, watching, the Sign on its
-            # brow -- gone before the eye is sure. Translucent, so the doorway
-            # glow reads through it just as it does around Him.
+            # The subliminal flash (armed in _tick_flashback): a small, wrong
+            # pallid face (His 'vacant' mask) that surfaces DEEP in the glow
+            # for a single frame -- gone before the eye is sure. Drawn small
+            # so it reads as a little wrong thing far back in the light, not a
+            # face filling the door; translucent, so the glow reads through.
             if self._flashback_mask_flash:
                 self._flashback_mask_flash = False
-                fsurf = door_mask_surface(height=int(oh * 0.82), vis=0.92)
+                fsurf = door_mask_surface(height=int(oh * 0.40), vis=0.66)
                 inner.blit(fsurf, fsurf.get_rect(center=(int(icx), int(icy))))
 
             veil.blit(inner, (ox, oy))
