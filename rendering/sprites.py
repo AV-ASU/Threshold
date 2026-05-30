@@ -1525,7 +1525,7 @@ def _jag_blob(surf, cx, cy, rx, ry, col, seed, n=10, jit=0.36):
 
 def door_mask_surface(height=120, vis=0.62, gaze=(0.0, 0.0), seed=0):
     """The wrong face the threshold wears, for the journal door-dream's
-    one-frame flash: a carved DARK-WOOD mask (matches the dried doorframe +
+    mask swarm: a carved DARK-WOOD mask (matches the dried doorframe +
     the cult's own carved masks). Rounded, slightly-imperfect oval with wood
     grain; deep RECESSED eye-sockets -- carved hollows with the gold gaze
     sitting far back in shadow (it looks back at you from inside the wood) --

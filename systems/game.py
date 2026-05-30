@@ -548,10 +548,11 @@ class Game:
 
         # ---- THRESHOLD: flashback ----
         # Fires when the player reads Mara's journal through a third time.
-        # Not text -- a single wordless still of the dream itself (NARRATIVE
-        # 1b): an open doorway of dried wood suspended in black, a pulsing
-        # yellow glow radiating from it (cut off by the frame), eyes peeking
-        # in the light, and -- for ONE frame -- His Pallid Mask. The "you can
+        # Not text -- a single wordless held shot of the dream itself
+        # (NARRATIVE 1b): an open doorway of dried wood suspended in black, a
+        # pulsing yellow glow radiating from it (cut off by the frame), faint
+        # eyes peeking in the light, and -- building from one face to a swarm
+        # that all stare back -- a crowd of His dark-wood masks. The "you can
         # never arrive" of the whole game, at the scale of one dream.
         # _flashback_phase is None (inactive) or 0 (the one held phase).
         self._flashback_phase = None
@@ -2075,11 +2076,12 @@ class Game:
         dried, sun-bleached wood suspended in black. Light pours from
         INSIDE it -- a warm glow the frame's own jamb cuts off at the
         edges, so it reads as a door standing open onto somewhere too
-        bright. Things move in that light: eyes that surface and blink, the
-        pale curve of a mask rising and sinking, slow shapes drifting past
-        -- but all of it is CLIPPED to the opening; nothing ever crosses
-        the threshold out into the dark. Wordless but for one opening line.
-        The wind-and-falling audio bed (flashback_air) carries the fall."""
+        bright. Things move in that light: faint eyes that surface and blink,
+        and -- accelerating from one face to a staring swarm (_spawn_flashback
+        _masks) -- His dark-wood masks, all gazing back at you. All of it is
+        CLIPPED to the opening; nothing ever crosses the threshold out into
+        the dark. Wordless but for one opening line. The wind-and-falling
+        audio bed (flashback_air) carries the fall."""
         if self._flashback_phase is None:
             return
         t = self._flashback_t / max(0.01, FLASHBACK_DUR)   # 0..1 over the hold
