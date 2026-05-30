@@ -89,7 +89,8 @@ def main():
     g.load_scene_now("brimley")
     ready(g)
     g.player.inventory.add("rope", 1)
-    g.player.x, g.player.y = 16 * TILE + 16, 11 * TILE + 16   # the well tile
+    wx, wy = g.scene._well_pos              # the well moved in the brimley merge
+    g.player.x, g.player.y = wx, wy
     g.scene.on_interact_fn(g)
     check(g.save.flag("well_rope_tied"), "well: rope ties on first descent")
     check(not g.player.inventory.has("rope"), "well: rope consumed into the rig")
@@ -217,7 +218,8 @@ def main():
     gk = new_game()
     gk.load_scene_now("kid_house")
     ready(gk)
-    kid = next((nn for nn in gk.scene.npcs if nn.name == "Village Kid"), None)
+    kid = next((nn for nn in gk.scene.npcs
+                if nn.name == "the Tisdale boy"), None)   # renamed in the merge
     check(kid is not None, "kid: the Kid is present in his house")
     if kid:
         kid.dialogue_fn(gk, kid)
