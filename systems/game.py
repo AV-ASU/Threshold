@@ -163,18 +163,23 @@ DIM_SAFE_SCENES = {"basement"}
 
 # ---- THRESHOLD: cult geography + threat tuning ----
 # Regular cultists roam every outdoor scene; the safe lodge interiors
-# (SAFE_SCENES) are the only refuge. The special curse-priest only
-# haunts the deep cult sites -- venturing there is what risks the
-# permanent curse.
+# (SAFE_SCENES) are the only refuge.
 CULTIST_SCENES = {
     "forest_path", "our_house_area", "graveyard",
     "brimley", "country_lane",
     "gravel_road_north", "river_crossing", "backwoods_cabin",
     "cornfield_maze",
 }
-CURSER_SCENES = {"brimley", "graveyard", "cornfield_maze"}
+# Scenes open enough for His gaze to fix on you and bind a Watcher -- the
+# claimed town under open sky (NARRATIVE.md 1b/3). There is NO curse-priest;
+# the curse is His own attention. Safe rooms are exempt via KING_FREE_SCENES.
+GAZE_BIND_SCENES = {"brimley", "graveyard", "cornfield_maze"}
+# Sustained exposure (seconds) at high visibility before His eye fixes and the
+# first Watcher opens; hiding / dropping visibility bleeds the timer back.
+GAZE_BIND_TIME = 6.0
+GAZE_BIND_VIS = 0.45          # visibility below which His gaze can't fix
 
-CURSE_RITUAL_TIME = 3.0        # seconds of held sight to land a curse
+CURSE_RITUAL_TIME = 3.0        # (legacy) held-sight constant; kept for compat
 WATCHERS_PER_CURSE = 3         # Watcher cap added per curse level
 # King "existence" range: it's a dark void at/beyond _FAR px from the player and
 # fully manifests (blazing) by _NEAR px -- tune to slide the materialize window.
@@ -2235,9 +2240,6 @@ class Game:
                 # visibility (counted above) but they never chase, spot,
                 # grab, or flank. The fallen town just stares.
                 continue
-            if tag == "cult_curser":
-                self._tick_ritual(n, dt, sees)
-                continue
             # Regular cultist: one "they've seen you" beat per fresh
             # spawn. Reaching you is the cult TAKING you -- the CAPTURED
             # card, then the run ends (you feed the hive). Not a kill.
@@ -2250,36 +2252,43 @@ class Game:
                 return
         self._flank_cultists()
 
-    def _tick_ritual(self, npc, dt, sees):
-        """The curse-priest's ritual. While it holds the player in
-        sight the timer climbs; cross CURSE_RITUAL_TIME and a permanent
-        curse lands. Breaking sight -- cover, a corner, distance --
-        bleeds the timer back down. The only way out is to not be seen."""
-        cd = getattr(npc, "_curse_cd", 0.0)
-        if cd > 0:
-            # Respite after a curse: it can't re-bind for a beat.
-            npc._curse_cd = max(0.0, cd - dt)
-            npc._ritual_t = 0.0
+    def _tick_gaze_bind(self, dt):
+        """His gaze, binding the curse (NARRATIVE 1b/3) -- replaces the old
+        curse-priest ritual. In a GAZE_BIND_SCENES scene, staying EXPOSED (not
+        hidden) while visibility is high lets His eye fix on you: a timer
+        climbs, and crossing GAZE_BIND_TIME binds the first Watcher. Hiding,
+        or dropping below GAZE_BIND_VIS, bleeds the timer back -- cover and
+        keeping your head down are the only way out. Once cursed, the Watcher
+        system (_tick_watchers) owns the swarm; this only lands the seed."""
+        if self._cursed:
+            self._gaze_bind_t = 0.0
             return
-        t = getattr(npc, "_ritual_t", 0.0)
-        if sees:
+        if (self.scene is None or self.player is None
+                or self.scene.key not in GAZE_BIND_SCENES
+                or self.scene.key in KING_FREE_SCENES):
+            self._gaze_bind_t = 0.0
+            return
+        exposed = (self.player.hidden is None
+                   and self.visibility >= GAZE_BIND_VIS)
+        t = getattr(self, "_gaze_bind_t", 0.0)
+        if exposed:
             if t == 0.0:
                 self.audio.play("low_pulse", 0.6)
-                self.show_notice("It fixes you with its gaze. Break its "
-                                 "sight.", duration=3.0)
+                self.show_notice("You feel it find you. Get out of the open.",
+                                 duration=3.0)
             t += dt
-            if t >= CURSE_RITUAL_TIME:
+            if t >= GAZE_BIND_TIME:
                 self._apply_curse()
                 t = 0.0
-                npc._curse_cd = CURSE_RITUAL_TIME
         else:
             t = max(0.0, t - dt * 1.5)
-        npc._ritual_t = t
+        self._gaze_bind_t = t
 
     def _ensure_cultists(self, key, dt):
-        """Keep the current cult scene topped up: CULT_REGULARS roaming
-        cultists, plus the curse-priest in the deep cult sites. Rate-
-        limited so killing one buys a breather, not an instant respawn."""
+        """Keep the current cult scene topped up with CULT_REGULARS roaming
+        cultists. Rate-limited so killing one buys a breather, not an instant
+        respawn. (No curse-priest -- the watcher-curse is now His own gaze,
+        bound in _tick_gaze_bind, not a priest's ritual; NARRATIVE 1b/3.)"""
         self._cult_topup_t -= dt
         if self._cult_topup_t > 0:
             return
@@ -2290,14 +2299,6 @@ class Game:
         if len(regulars) < CULT_REGULARS:
             self._spawn_cultist("cult_regular", "cultist",
                                  speed=0.85, gaze_range=180)
-        if key in CURSER_SCENES:
-            curser = [n for n in self.scene.npcs
-                      if getattr(n, "tag", "") == "cult_curser"
-                      and getattr(n, "alive", True)]
-            if not curser:
-                self._spawn_cultist("cult_curser", "curse_priest",
-                                     speed=0.6, gaze_range=210,
-                                     movement="stalker", name="The Preacher")
 
     def _flank_cultists(self):
         """When 2+ regular cultists are chasing in an open scene, the
@@ -2386,7 +2387,6 @@ class Game:
         n.tag = tag
         n.dialogue_fn = None
         n._gaze_range = gaze_range
-        n._ritual_t = 0.0
         n._has_been_spotted = False
         self.scene.add_npc(n)
         return n
@@ -3105,6 +3105,7 @@ class Game:
             if not world_frozen:
                 self._tick_cultists(dt)
                 self._tick_sheriff(dt)
+                self._tick_gaze_bind(dt)
                 self._tick_watchers(dt)
                 self._tick_visibility(dt)
                 self._tick_heartbeat(dt)
