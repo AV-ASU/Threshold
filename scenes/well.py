@@ -129,13 +129,13 @@ def build_well_passage():
     return sc
 
 
-# ---- Room 3: the Tallow Vats (key: works_vats) ----
+# ---- Room 3: the Cistern (key: works_vats) ----
 
 def build_works_vats():
     floor, objs = _box(12, 9)
     objs[4][0] = "F"          # west -> back to the racks
     objs[4][11] = "E"         # east -> the sorting hall
-    for tx, ty in [(3, 2), (7, 2), (3, 6), (7, 6)]:   # rendering vats
+    for tx, ty in [(3, 2), (7, 2), (3, 6), (7, 6)]:   # stone cistern basins
         objs[ty][tx] = "t"
     objects = ["".join(r) for r in objs]
     sc = Scene("works_vats", floor, objects, music="basement")
@@ -145,12 +145,12 @@ def build_works_vats():
     sc.set_spawn("from_above", 1, 4)
     sc.set_spawn("from_below", 10, 4)
 
-    # Steam off the vats, tallow-light, and the residue of the work.
+    # Cold mist rising off the basins where the dig broke into the river
+    # (NARRATIVE 1b: the underground artery to the door). Wet stone, no
+    # bodies -- the claiming cult renders no one.
     for tx, ty in [(3, 2), (7, 2), (3, 6), (7, 6)]:
         sc.add_decoration(Decoration(tx * TILE + 16, ty * TILE + 6, "smoke"))
     sc.add_decoration(Decoration(5 * TILE + 16, 4 * TILE + 16, "candle"))
-    sc.add_decoration(Decoration(8 * TILE + 16, 7 * TILE + 16, "gore"))
-    sc.add_decoration(Decoration(2 * TILE + 16, 5 * TILE + 16, "bloodstain"))
     # Cobweb grime in the high corners above the vats.
     sc.add_decoration(Decoration(1 * TILE + 6, 1 * TILE + 6, "cobweb",
                                  ang=0.0))
@@ -160,7 +160,7 @@ def build_works_vats():
         (5 * TILE + 16, 2 * TILE + 16, "behind"),
         (8 * TILE + 16, 6 * TILE + 16, "behind"),
     ]
-    # Two cultists tending the vats on small loops.
+    # Two cultists working the basins on small loops.
     sc.add_enemy(_cultist(2 * TILE + 16, 4 * TILE + 16, speed=0.8,
                           waypoints=[(2 * TILE + 16, 2 * TILE + 16),
                                      (2 * TILE + 16, 6 * TILE + 16)]))
@@ -170,14 +170,14 @@ def build_works_vats():
     _ambient(sc, "low_pulse", 0.14, 6.0, 10.0)
 
     def _vats_on_enter(game, scene):
-        # First entry: surface what the work actually is. This is the
-        # body-horror centerpiece -- everywhere else in Brimley implies
-        # it; here it's named. Gated by the evidence flag (non-canonical,
-        # so it doesn't move the King-gate).
+        # First entry: the dig hit water. This is the river (NARRATIVE 1b) --
+        # the artery the cult followed down toward the door. Gated by the
+        # evidence flag (non-canonical, so it doesn't move the King-gate).
+        # Flag key kept (works_vats_seen) for save compat.
         if game.save.flag("evidence_works_vats_seen"):
             return
         _evidence(game, "works_vats_seen", [
-            "[c=dim]The smell is your room at the Lodge.[/c]",
+            "[c=dim]The water runs on, downward, and does not echo back.[/c]",
         ])
     sc.on_enter_fn = _vats_on_enter
     return sc

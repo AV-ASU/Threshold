@@ -285,10 +285,10 @@ def build_depths_threshing():
         px, py = game.player.x, game.player.y
         if abs(px - (6 * TILE + 16)) < 36 and abs(py - (5 * TILE + 16)) < 36:
             _evidence(game, "threshing_floor",
-                "The yield, raked into low heaps: grain, and threaded "
-                "through it something darker and old. This is where what "
-                "the town takes in gets broken down small enough to feed "
-                "what waits below."
+                "The yield, raked into low heaps: grain, all of it, tithed "
+                "down from the fields above. This is where the town's harvest "
+                "is given to the dark -- fed, season on season, to what waits "
+                "below."
             )
     sc.on_interact_fn = _interact
     return sc
