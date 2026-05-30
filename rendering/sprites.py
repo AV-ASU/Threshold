@@ -1580,12 +1580,22 @@ def door_mask_surface(height=120, vis=0.62):
     # a faint nose ridge down the empty mid-face
     pygame.draw.line(base, (*lo, pa), (mx, int(my - r * 0.06)),
                      (int(mx - 1), int(my + r * 0.34)), 1)
-    # MOUTH: a thin, closed, slightly uneven seam set LOW -- present but quiet,
-    # so nothing competes with the eyes. No gape.
-    mpts = [(mx - r * 0.22, my + r * 0.70), (mx - r * 0.04, my + r * 0.74),
-            (mx + r * 0.13, my + r * 0.70), (mx + r * 0.24, my + r * 0.73)]
-    pygame.draw.lines(base, (3, 3, 6, 226), False,
-                      [(int(a), int(b)) for a, b in mpts], 2)
+    # MOUTH: SEWN SHUT -- a wide dark lip-seam laced with crude, uneven
+    # stitches (the cult's bone-thread motif). Quiet at a glance, deeply wrong
+    # up close; it unsettles without the scream-gape stealing the stare.
+    mym = my + r * 0.66
+    seam = [(mx - r * 0.38, mym + 1), (mx - r * 0.12, mym - 1),
+            (mx + r * 0.10, mym), (mx + r * 0.36, mym - 2)]
+    seam = [(int(a), int(b)) for a, b in seam]
+    pygame.draw.lines(base, (3, 3, 6, 238), False, seam, 2)
+    thread = (66, 56, 36, 235)
+    st = max(2, int(r * 0.13))
+    for k, fx in enumerate((-0.30, -0.15, 0.0, 0.16, 0.30)):
+        sxs = int(mx + r * fx)
+        sky = int(mym + (1 if k % 2 else -1))    # ride the wavy seam
+        tilt = 1 if k % 2 else -1                # crude, alternating slant
+        pygame.draw.line(base, thread, (sxs - tilt, sky - st),
+                         (sxs + tilt, sky + st), 1)
     # a fracture bowed OUT around the right eye to the cheek -- clear of the
     # eyes/centre so the gaze owns the face -- from temple down to the jaw.
     crk = [(int(mx + r * 0.58), int(my - rh * 0.50)),
