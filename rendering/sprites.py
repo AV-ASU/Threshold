@@ -1537,53 +1537,62 @@ def door_mask_surface(height=120, vis=0.62):
     light. `vis` drives the bone translucency + gaze brightness."""
     hi, mid, lo = _YK_MHI, _YK_MMID, _YK_MLO
     r = 22
-    pad = max(5, r // 2 + 5)
-    S = (r + pad) * 2
-    base = pygame.Surface((S, S), pygame.SRCALPHA)
-    mx = my = S // 2
-    pa = int(150 * vis + 40)                 # bone-plate alpha (translucent)
+    rw, rh = r, int(r * 1.62)                 # TALLER plate -- room above/below
+    pad = max(6, r // 2 + 8)
+    S = (rw + pad) * 2
+    Sh = (rh + pad) * 2                       # canvas tall enough for the plate
+    base = pygame.Surface((S, Sh), pygame.SRCALPHA)
+    mx, my = S // 2, Sh // 2
+    pa = int(150 * vis + 40)                  # bone-plate alpha (translucent)
     # luminous gold halo behind the face
-    _yk_radial(base, mx, my, r + 4, _YK_HOT, int(40 * vis))
-    # gaunt oblong bone plate, lit upper-left (translucent)
-    rw, rh = r, int(r * 1.26)
-    pygame.draw.ellipse(base, (*lo, pa), (mx - rw + 1, my - rh + 1, 2 * rw, 2 * rh))
-    pygame.draw.ellipse(base, (*mid, pa), (mx - rw, my - rh, 2 * rw, 2 * rh))
-    pygame.draw.ellipse(base, (*hi, pa), (mx - rw + 1, my - rh,
-                                          max(1, 2 * rw - 3), max(1, 2 * rh - 4)))
-    # brow + nose ridges
-    bw = max(1, r // 4)
-    pygame.draw.line(base, (*lo, pa), (int(mx - r * 0.66), int(my - r * 0.42)),
-                     (int(mx - r * 0.06), int(my - r * 0.26)), bw)
-    pygame.draw.line(base, (*lo, pa), (int(mx + r * 0.66), int(my - r * 0.42)),
-                     (int(mx + r * 0.04), int(my - r * 0.28)), bw)
-    pygame.draw.line(base, (*lo, pa), (mx, int(my - r * 0.05)),
-                     (int(mx - 1), int(my + r * 0.22)), 1)
+    _yk_radial(base, mx, my, int(rh * 0.8), _YK_HOT, int(40 * vis))
+    # gaunt, IMPERFECT bone plate (jagged edge, not a clean oval), lit
+    # upper-left. Same seed across layers -> a coherent irregular silhouette.
+    _jag_blob(base, mx, my, rw + 1, rh + 1, (*lo, pa), 2, n=18, jit=0.13)
+    _jag_blob(base, mx, my, rw, rh - 1, (*mid, pa), 2, n=18, jit=0.13)
+    _jag_blob(base, mx - 1, my - 2, rw - 2, rh - 3, (*hi, pa), 2, n=18, jit=0.13)
     # EYES: near-opaque jagged BLACK voids (darker than the glow), each with a
-    # pinpoint gold gaze. Asymmetric -- different size/seed per side.
+    # pinpoint gold gaze. Set in the UPPER third, asymmetric in size + height.
     void = (3, 3, 6, 244)
-    gaze = (*_YK_HOT, 255)
-    eyes = [(-0.44, -0.04, 0.32, 0.46, 11),       # (dx, dy, rx, ry, seed) -- left
-            (0.42, -0.07, 0.27, 0.40, 27)]         # right: smaller, set higher
+    eyes = [(-0.46, -0.40, 0.34, 0.50, 11),   # (dx, dy, rx, ry, seed) -- left
+            (0.44, -0.46, 0.28, 0.42, 27)]    # right: smaller, set higher
     for dx, dy, erx, ery, sd in eyes:
         ex, ey = int(mx + r * dx), int(my + r * dy)
-        _jag_blob(base, ex, ey, r * erx, r * ery, void, sd)
-        gx = ex + (1 if dx > 0 else -1)            # gaze nudged off-centre
-        gy = ey + 1
+        _jag_blob(base, ex, ey, r * erx, r * ery, void, sd, n=11, jit=0.40)
+        gx, gy = ex + (1 if dx > 0 else -1), ey + 1     # gaze nudged off-centre
         _yk_radial(base, gx, gy, 2, _YK_HOT, int(150 * vis))
         try:
-            base.set_at((gx, gy), gaze[:3])
+            base.set_at((gx, gy), _YK_HOT)
         except (IndexError, ValueError):
             pass
-    # MOUTH: an irregular, lopsided black gape (not an ellipse), pulled down.
-    _jag_blob(base, mx, int(my + r * 0.56), r * 0.30, r * 0.26,
-              (3, 3, 6, 232), 53, n=11, jit=0.46)
-    # one jagged fracture down the right side
-    crk = [(mx + r * 0.10, my - rh * 0.86), (mx + r * 0.30, my - r * 0.18),
-           (mx + r * 0.12, my + r * 0.42), (mx + r * 0.28, my + rh * 0.62)]
-    pygame.draw.lines(base, (*lo, pa), False, [(int(a), int(b)) for a, b in crk], 1)
-    if height != S:
-        h = max(1, int(height))
-        base = pygame.transform.smoothscale(base, (h, h))
+    # BROWS: a thin bone ridge over each eye, angled DOWN toward the nose (a
+    # severe, wrong furrow), asymmetric to match the eyes.
+    pygame.draw.line(base, (*lo, pa),
+                     (int(mx - r * 0.74), int(my - r * 0.78)),
+                     (int(mx - r * 0.14), int(my - r * 0.60)), 2)
+    pygame.draw.line(base, (*lo, pa),
+                     (int(mx + r * 0.72), int(my - r * 0.86)),
+                     (int(mx + r * 0.12), int(my - r * 0.66)), 2)
+    # a faint nose ridge down the empty mid-face
+    pygame.draw.line(base, (*lo, pa), (mx, int(my - r * 0.18)),
+                     (int(mx - 1), int(my + r * 0.34)), 1)
+    # MOUTH: an irregular, lopsided black gape (not an ellipse), set LOW with
+    # chin-room beneath it.
+    _jag_blob(base, mx, int(my + r * 0.78), r * 0.32, r * 0.30,
+              (3, 3, 6, 232), 53, n=12, jit=0.48)
+    # one jagged fracture, re-routed for the taller plate: from the forehead
+    # down through the empty mid-face to the chin, skirting the right eye.
+    crk = [(int(mx + r * 0.06), int(my - rh * 0.84)),
+           (int(mx + r * 0.30), int(my - r * 0.30)),
+           (int(mx + r * 0.12), int(my + r * 0.20)),
+           (int(mx + r * 0.32), int(my + r * 0.72)),
+           (int(mx + r * 0.14), int(my + rh * 0.78))]
+    pygame.draw.lines(base, (*lo, pa), False, crk, 1)
+    # Scale to the target HEIGHT, preserving the tall aspect (don't squash).
+    h = max(1, int(height))
+    if h != Sh:
+        w = max(1, int(S * h / Sh))
+        base = pygame.transform.smoothscale(base, (w, h))
     return base
 
 
