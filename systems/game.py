@@ -1942,6 +1942,7 @@ class Game:
             self._flashback_t = 0.0
             self.audio.force_silence()
             self.audio.play("low_pulse", 0.85)
+            self.audio.flashback_air(True)        # wind + falling bed
         if self._flashback_phase is None:
             return
         self._flashback_t += dt
@@ -1952,6 +1953,7 @@ class Game:
             if self._flashback_phase >= len(self._flashback_stills):
                 # Done -- restore music, play a final chord.
                 self._flashback_phase = None
+                self.audio.flashback_air(False)   # fade the falling bed out
                 self.audio.music_muted = False
                 self.audio.play("breath", 0.7)
                 if self.scene and self.scene.music:
@@ -1960,13 +1962,15 @@ class Game:
                 self._provoke_cult(0.20)
 
     def _draw_flashback(self):
-        """Render the journal door-dream (NARRATIVE 1b): a plain doorframe
-        suspended in black, gold burning from the seam, a field of motes
-        streaming INTO the crack -- the pull of being drawn in while the
-        door never comes any closer. Wordless. The frame is held dead-centre
-        at a fixed size (you can never arrive); the inward-rushing motes are
-        the only motion, so the eye reads 'falling in' against a door that
-        won't grow."""
+        """Render the journal door-dream (NARRATIVE 1b): an OPEN doorway of
+        dried, sun-bleached wood suspended in black. Light pours from
+        INSIDE it -- a warm glow the frame's own jamb cuts off at the
+        edges, so it reads as a door standing open onto somewhere too
+        bright. Things move in that light: eyes that surface and blink, the
+        pale curve of a mask rising and sinking, slow shapes drifting past
+        -- but all of it is CLIPPED to the opening; nothing ever crosses
+        the threshold out into the dark. Wordless but for one opening line.
+        The wind-and-falling audio bed (flashback_air) carries the fall."""
         if self._flashback_phase is None:
             return
         t = self._flashback_t / max(0.01, FLASHBACK_DUR)   # 0..1 over the hold
@@ -1984,96 +1988,171 @@ class Game:
 
         cx, cy = SCREEN_W // 2, SCREEN_H // 2
         now = self._flashback_t
-        # The doorframe: tall, plain, blank, uprights a touch too thin to
-        # hold the lintel up -- the wrongness (1b). Fixed size: it never
-        # nears. Size relative to screen so it reads big but suspended.
-        dh = int(SCREEN_H * 0.46)
-        dw = int(dh * 0.46)
-        post = max(3, dw // 10)                 # too-slight uprights
-        breathe = 1.0 + 0.012 * math.sin(now * 1.3)
+        # The doorframe -- tall, the uprights a touch too slight to carry the
+        # lintel (the wrongness, 1b). Fixed size: it never nears.
+        dh = int(SCREEN_H * 0.52)
+        dw = int(dh * 0.48)
+        post = max(5, dw // 8)                  # the dried, too-slight jamb
+        breathe = 1.0 + 0.009 * math.sin(now * 1.1)
         dh = int(dh * breathe)
         left = cx - dw // 2
-        right = cx + dw // 2
         top = cy - dh // 2
-        bot = cy + dh // 2
+        bot = top + dh
+        pulse = 0.84 + 0.16 * math.sin(now * 0.9)
 
-        # --- Motes streaming INTO the seam (the inward pull) ---
-        # Each mote rides a fixed angle in toward the crack, looping; closer
-        # to the seam it accelerates and brightens, then resets far out. The
-        # door itself never moves -- only the field falls in.
-        seam_x = cx
-        rng = random.Random(1337)
-        for i in range(120):
-            ang = rng.uniform(0, math.tau)
-            r0 = rng.uniform(0.18, 1.0)
-            speed = rng.uniform(0.05, 0.14)
-            # phase loops 1 (far) -> 0 (at seam)
-            ph = (r0 - (now * speed)) % 1.0
-            rad = ph * (SCREEN_W * 0.55)
-            mx = int(seam_x + math.cos(ang) * rad)
-            my = int(cy + math.sin(ang) * rad * 0.85)
-            if not (0 <= mx < SCREEN_W and 0 <= my < SCREEN_H):
-                continue
-            near = 1.0 - ph                      # brighter as it nears seam
-            a = int(150 * near * near * fade)
-            if a <= 0:
-                continue
-            g = (int(150 + 90 * near), int(120 + 80 * near), int(40 + 30 * near))
-            veil.set_at((mx, my), g)
-            if near > 0.6:                        # a short inward streak
-                veil.set_at((int(mx + math.cos(ang) * 2),
-                             int(my + math.sin(ang) * 2 * 0.85)),
-                            (g[0] // 2, g[1] // 2, g[2] // 3))
+        # ---- The opening: light from inside, cut off by the frame ----
+        ox, oy = left + post, top + post        # inside-jamb top-left
+        ow, oh = dw - 2 * post, dh - post       # opening size (no sill)
+        if ow > 6 and oh > 6:
+            inner = pygame.Surface((ow, oh), pygame.SRCALPHA)
+            icx, icy = ow / 2, oh * 0.46        # glow centre, a touch high
 
-        # --- The gold seam: a thin CRACK of light down the dark opening,
-        # bleeding softly outward, breathing like a furnace left open in
-        # another room. Deliberately narrow so the door reads as a dark
-        # frame with light leaking from the seam -- never a solid slab. ---
-        pulse = 0.6 + 0.4 * abs(math.sin(now * 1.1))
-        # The interior of the opening stays DARK; the light is only a thin
-        # crack down the middle that bleeds a short way out. Widths are in
-        # FIXED pixels (not scaled to the door) so the door can never read
-        # as a solid gold slab -- it's a black frame with a glowing seam.
-        gh = dh - 6
-        halo = 14                                 # px of bright bleed each side
-        glow = pygame.Surface((halo * 2, gh), pygame.SRCALPHA)
-        gw = glow.get_width()
-        cxg = gw / 2
-        for gx in range(gw):
-            d = abs(gx - cxg) / halo              # 0 centre -> 1 edge
-            av = int(165 * pulse * fade * (1.0 - d) ** 2.2)
-            if av > 0:
-                pygame.draw.line(glow, (250, 214, 90, min(255, av)),
-                                 (gx, 0), (gx, gh))
-        veil.blit(glow, (int(seam_x - cxg), top + 3),
-                  special_flags=pygame.BLEND_RGBA_ADD)
-        # Hard bright core of the crack -- a 1-2px fissure.
-        pygame.draw.line(veil, (255, 244, 190),
-                         (seam_x, top + 5), (seam_x, bot - 5),
-                         1 + int(pulse > 0.85))
+            # Radial glow: nested ellipses, large+dim -> small+bright, so the
+            # light is strongest deep in the middle and falls to dark at the
+            # edges where the jamb occludes it. Warm amber, never white.
+            steps = 36
+            maxr = max(ow, oh) * 0.62
+            for s in range(steps):
+                f = s / (steps - 1)             # 0 outer -> 1 inner
+                rr = maxr * (1.0 - f)
+                a = int(12 + 200 * f * f * pulse * fade)
+                col = (238, 168 + int(50 * f), 64 + int(46 * f), min(255, a))
+                rect = pygame.Rect(0, 0, int(rr * 1.7), int(rr * 1.6))
+                rect.center = (int(icx), int(icy))
+                pygame.draw.ellipse(inner, col, rect)
 
-        # --- The frame itself: near-black, faint lit inner edge ---
-        fr = int(26 * fade)
-        frame_col = (fr, fr - 4 if fr > 4 else 0, fr - 8 if fr > 8 else 0)
-        edge = (int(60 * fade), int(52 * fade), int(44 * fade))
-        # two uprights + lintel (no sill -- it stands on the level floor)
-        pygame.draw.rect(veil, frame_col, (left, top, post, dh))
-        pygame.draw.rect(veil, frame_col, (right - post, top, post, dh))
-        pygame.draw.rect(veil, frame_col, (left, top, dw, post))
-        # faint inner-edge catchlight from the seam
-        pygame.draw.line(veil, edge, (left + post, top), (left + post, bot), 1)
-        pygame.draw.line(veil, edge, (right - post, top), (right - post, bot), 1)
+            # Slow dark shapes drifting across the glow -- bodies passing a
+            # lit doorway, never resolving. Seeded so they're deterministic.
+            rng = random.Random(91)
+            for _ in range(3):
+                p0 = rng.uniform(0, 1)
+                sp = rng.uniform(0.035, 0.06)
+                yy = rng.uniform(0.30, 0.78) * oh
+                xx = (((p0 + now * sp) % 1.4) - 0.2) * ow
+                bw = rng.uniform(0.12, 0.20) * ow
+                bh = rng.uniform(0.42, 0.72) * oh
+                shade = pygame.Surface((max(2, int(bw)), max(2, int(bh))),
+                                       pygame.SRCALPHA)
+                pygame.draw.ellipse(shade, (16, 9, 6, int(120 * fade)),
+                                    shade.get_rect())
+                inner.blit(shade, (int(xx - bw / 2), int(yy - bh / 2)))
 
-        # Opening narrator line -- a single quiet title that names the dream,
-        # then fades out and leaves the wordless door. Lives in the first
-        # ~2.2s; gone for the rest of the hold so the image carries it.
-        intro = max(0.0, min(1.0, 1.0 - (now - 1.4) / 0.8))  # 1 until 1.4s, out by 2.2s
+            # The pale mask, rising and sinking once through the dream -- a
+            # smooth bump centred near mid-flashback so it surfaces, holds,
+            # and dissolves back into the light. Two dark hollows, a seam of
+            # mouth: the Pallid Mask, half-seen.
+            mwin = max(0.0, 1.0 - abs(t - 0.55) / 0.24)     # 0..1 bump
+            if mwin > 0.02:
+                mph = (math.sin(now * 9.0) * 0.5 + math.sin(now * 21.0) * 0.5)
+                flick = 0.7 + 0.3 * (mph * 0.5 + 0.5)        # crackle
+                ma = int(150 * mwin * flick * fade)
+                mh = int(oh * 0.42)
+                mw = int(mh * 0.62)
+                rise = (1.0 - mwin) * oh * 0.18              # sinks as it fades
+                mcx, mcy = int(ow * 0.5), int(oh * 0.5 + rise)
+                mask = pygame.Surface((mw, mh), pygame.SRCALPHA)
+                pygame.draw.ellipse(mask, (236, 230, 206, ma), mask.get_rect())
+                # two hollow eyes + a thin mouth, scooped darker
+                eh = max(2, mh // 9)
+                ew = max(2, mw // 6)
+                pygame.draw.ellipse(mask, (40, 30, 22, ma),
+                                    (mw * 0.24 - ew / 2, mh * 0.40, ew, eh))
+                pygame.draw.ellipse(mask, (40, 30, 22, ma),
+                                    (mw * 0.76 - ew / 2, mh * 0.40, ew, eh))
+                pygame.draw.line(mask, (40, 30, 22, ma),
+                                 (int(mw * 0.36), int(mh * 0.70)),
+                                 (int(mw * 0.64), int(mh * 0.70)), 2)
+                inner.blit(mask, (mcx - mw // 2, mcy - mh // 2))
+
+            # Eyes that surface in the glow, hold, and blink under -- pale,
+            # flickering ('crackle'), drifting a little. Each on its own
+            # phase so they don't pulse together.
+            eyes = [(0.30, 0.38, 0.0, 0.070),
+                    (0.68, 0.55, 1.7, 0.060),
+                    (0.52, 0.26, 3.1, 0.054),
+                    (0.40, 0.70, 4.4, 0.064)]
+            for ex, ey, off, sz in eyes:
+                cyc = ((now + off) % 3.6) / 3.6              # 0..1 life cycle
+                # present for the middle of the cycle; fade in/out at ends
+                pres = max(0.0, min(1.0, math.sin(math.pi * cyc) ** 0.8))
+                if pres < 0.02:
+                    continue
+                # blink: openness dips briefly mid-life
+                openness = 0.5 + 0.5 * math.sin(now * 3.0 + off * 5)
+                openness = max(0.14, openness)
+                crackle = 0.7 + 0.3 * math.sin(now * 17 + off * 9)
+                a = int(230 * pres * crackle * fade)
+                if a <= 0:
+                    continue
+                drift = math.sin(now * 0.6 + off) * ow * 0.02
+                exx = ex * ow + drift
+                eyy = ey * oh
+                ew = max(3, int(sz * ow))
+                eh = max(2, int(ew * 0.66 * openness))
+                gap = ew * 1.4
+                for sgn in (-1, 1):
+                    er = pygame.Rect(0, 0, ew, eh)
+                    er.center = (int(exx + sgn * gap), int(eyy))
+                    # dark socket behind the eye so it reads against the glow
+                    sock = er.inflate(ew, eh)
+                    pygame.draw.ellipse(inner, (18, 11, 6, int(a * 0.7)), sock)
+                    pygame.draw.ellipse(inner, (240, 232, 198, a), er)
+                    # a dark vertical pupil when open enough
+                    if eh >= 4:
+                        pygame.draw.ellipse(inner, (24, 16, 10, a),
+                                            (er.centerx - 1, er.top + 1,
+                                             3, max(2, eh - 2)))
+
+            veil.blit(inner, (ox, oy))
+
+        # ---- The dried wood frame, drawn ON TOP (occludes the glow/shapes
+        # at the threshold -- that IS the 'cut off by the frame') ----
+        def fc(c):
+            return (int(c[0] * fade), int(c[1] * fade), int(c[2] * fade))
+        base = (104, 74, 46)        # dried oak
+        grain = (78, 52, 30)        # darker streak
+        bleach = (138, 110, 74)     # sun-bleached highlight
+        split = (44, 28, 16)        # a dry crack
+        rng2 = random.Random(7)
+        # two uprights + lintel (no sill -- it stands on level ground)
+        for rx, rw, rh, ry in ((left, post, dh, top),
+                               (left + dw - post, post, dh, top)):
+            pygame.draw.rect(veil, fc(base), (rx, ry, rw, rh))
+            # vertical grain streaks
+            for gi in range(3):
+                gx = rx + int((gi + 0.5) / 3 * rw) + rng2.randint(-1, 1)
+                col = fc(grain if gi % 2 == 0 else bleach)
+                pygame.draw.line(veil, col, (gx, ry + 2), (gx, ry + rh - 2), 1)
+            # a couple of dry cracks
+            for _ in range(2):
+                cxx = rx + rng2.randint(1, max(1, rw - 1))
+                y0 = ry + rng2.randint(4, max(5, rh // 2))
+                y1 = min(ry + rh - 2, y0 + rng2.randint(rh // 5, rh // 2))
+                pygame.draw.line(veil, fc(split), (cxx, y0),
+                                 (cxx + rng2.randint(-1, 1), y1), 1)
+        # lintel across the top
+        pygame.draw.rect(veil, fc(base), (left, top, dw, post))
+        for gi in range(int(dw / 14)):
+            gx = left + gi * 14 + 6
+            pygame.draw.line(veil, fc(grain), (gx, top + 2),
+                             (gx, top + post - 2), 1)
+        # warm lit rim where the inside light catches the jamb edges
+        rim = (int(250 * pulse * fade), int(206 * pulse * fade),
+               int(120 * pulse * fade))
+        pygame.draw.line(veil, rim, (ox, oy), (ox, bot - 1), 1)
+        pygame.draw.line(veil, rim, (ox + ow - 1, oy),
+                         (ox + ow - 1, bot - 1), 1)
+        pygame.draw.line(veil, rim, (ox, oy), (ox + ow - 1, oy), 1)
+
+        # Opening narrator line -- names the dream, then fades and leaves the
+        # image to carry it. Lives in the first ~2.2s only.
+        intro = max(0.0, min(1.0, 1.0 - (now - 1.4) / 0.8))
         intro *= fade
         if intro > 0.01:
             txt = self.fonts["lg"].render("You dream of a doorway.", True,
                                           (210, 206, 214))
             txt.set_alpha(int(255 * intro))
-            veil.blit(txt, (cx - txt.get_width() // 2, int(SCREEN_H * 0.16)))
+            veil.blit(txt, (cx - txt.get_width() // 2, int(SCREEN_H * 0.15)))
 
         self.screen.blit(veil, (0, 0))
 

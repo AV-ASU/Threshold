@@ -223,6 +223,10 @@ class Audio:                        #Starting screen needs music, something simp
         self.sfx["threshold_chime"] = g(207, 380, 0.20, "sine",
                                          attack_ms=20, decay_ms=350,
                                          vibrato=1)
+        # `falling_air`: the bed under the journal door-dream (NARRATIVE
+        # 1b). Not a melody -- the rush of air past you as you fall, plus
+        # a low howl that sinks and never lands. Looped under the cutscene.
+        self.sfx["falling_air"] = self._build_falling_air()
 
         # ---- DSP atmosphere pass --------------------------------------
         # Route the horror SFX through the dsp reverb + filter toolkit so
@@ -627,6 +631,59 @@ class Audio:                        #Starting screen needs music, something simp
             stereo[i * 4 + 2] = buf[i * 2]
             stereo[i * 4 + 3] = buf[i * 2 + 1]
         return pygame.mixer.Sound(buffer=bytes(stereo))
+
+    def _build_falling_air(self, duration_ms=4000, vol=0.20):
+        """Wind-and-falling bed for the journal door-dream. Three layers:
+        a broadband AIR RUSH (smoothed noise, the wind past your ears), a
+        thin HISS on top (the high edge of speed), and a low HOWL whose
+        pitch slowly sinks and rises like wind down a shaft -- phase is
+        integrated sample-by-sample so the bend is a true glide, not an
+        artefact. A slow swell makes the fall feel bottomless. Loop length
+        holds whole cycles of the swell so it tiles under the cutscene."""
+        sr = 22050
+        n = int(sr * duration_ms / 1000)
+        buf = bytearray(n * 2)
+        smooth = 0.0
+        hiss = 0.0
+        phase = 0.0
+        for i in range(n):
+            t = i / sr
+            # Air rush: one-pole smoothed noise (the body of the wind).
+            smooth = 0.90 * smooth + 0.10 * random.uniform(-1, 1)
+            # Thin hiss: barely-smoothed noise, quiet, the speed's high edge.
+            hiss = 0.55 * hiss + 0.45 * random.uniform(-1, 1)
+            rush = smooth * 0.80 + hiss * 0.16
+            # Howl: low pitch wandering 58..120 Hz on a slow LFO, integrated.
+            fhz = 88.0 + 30.0 * math.sin(2 * math.pi * 0.25 * t)
+            phase += 2 * math.pi * fhz / sr
+            howl = math.sin(phase) * 0.22
+            # Bottomless swell -- one whole cycle across the loop.
+            swell = 0.72 + 0.28 * math.sin(2 * math.pi * 0.25 * t - 1.2)
+            v = (rush + howl) * swell
+            sample = int(max(-1.0, min(1.0, v)) * vol * 32767)
+            sample = max(-32768, min(32767, sample))
+            buf[i * 2] = sample & 0xFF
+            buf[i * 2 + 1] = (sample >> 8) & 0xFF
+        stereo = bytearray(n * 4)
+        for i in range(n):
+            stereo[i * 4]     = buf[i * 2]
+            stereo[i * 4 + 1] = buf[i * 2 + 1]
+            stereo[i * 4 + 2] = buf[i * 2]
+            stereo[i * 4 + 3] = buf[i * 2 + 1]
+        return pygame.mixer.Sound(buffer=bytes(stereo))
+
+    def flashback_air(self, on, volume=0.9):
+        """Loop / stop the falling-air bed on the ambient channel for the
+        journal door-dream. Mirrors king_tone's pattern (own channel, clean
+        fade-out) so the cutscene owns the soundscape end to end."""
+        if not self.enabled or self.ambient_channel is None:
+            return
+        if on:
+            self.ambient_channel.play(self.sfx["falling_air"], loops=-1)
+            self.ambient_channel.set_volume(
+                max(0.0, min(1.0, volume)) * self._sfx_gain())
+        else:
+            self.ambient_channel.fadeout(600)
 
     def _wind_loop(self, duration_ms=8000, vol=0.08):
         """Build a long noise-based ambient loop that reads as wind --
