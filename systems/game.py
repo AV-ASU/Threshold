@@ -179,8 +179,6 @@ GAZE_BIND_SCENES = {"brimley", "graveyard", "cornfield_maze"}
 GAZE_BIND_TIME = 6.0
 GAZE_BIND_VIS = 0.45          # visibility below which His gaze can't fix
 
-CURSE_RITUAL_TIME = 3.0        # (legacy) held-sight constant; kept for compat
-WATCHERS_PER_CURSE = 3         # Watcher cap added per curse level
 # King "existence" range: it's a dark void at/beyond _FAR px from the player and
 # fully manifests (blazing) by _NEAR px -- tune to slide the materialize window.
 KING_THREAT_NEAR = 48.0        # px: fully real / blazing inside this
@@ -3852,15 +3850,9 @@ class Game:
                     draw_vessel_bloom(self.screen, sx, sy, npc.sprite_kind,
                                       npc.facing, m, seed=id(npc) & 0xffff)
                 else:
-                    # Curse-priest: bloom on the actual rite -- ramps as it
-                    # holds you in its gaze, peaks/flashes as it binds you.
+                    # (No curse-priest -- the curse is His own gaze now;
+                    # NARRATIVE 1b/3. curse_v stays 0 for all normal NPCs.)
                     curse_v = 0.0
-                    if npc.sprite_kind == "curse_priest":
-                        rt = getattr(npc, "_ritual_t", 0.0)
-                        cd = getattr(npc, "_curse_cd", 0.0)
-                        ramp = min(1.0, rt / CURSE_RITUAL_TIME)
-                        flash = max(0.0, (cd - (CURSE_RITUAL_TIME - 0.7)) / 0.7)
-                        curse_v = max(ramp, flash)
                     # A Watcher being stared down: its eyes go dark (gaze) and
                     # it fades as the dispel timer fills, so the cure reads.
                     w_gaze = (npc.sprite_kind == "watcher"
