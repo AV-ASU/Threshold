@@ -439,7 +439,11 @@ class Game:
         # state. Quitting without sleeping = lose progress to the
         # last sleep. The bed is the save point. Resident-Evil-
         # typewriter rule, weighted by horror.
-        self.pause_options = ["Resume", "Quit to Title"]
+        self.pause_options = ["Resume", "Controls", "Settings", "Quit to Title"]
+        # Pause sub-screens: "menu" (the options above), "controls" (a
+        # read-only key reference), "settings" (the three mix sliders).
+        self.pause_view = "menu"
+        self.settings_choice = 0
         self.notice_text = None
         self.notice_t = 0
         self.frame_count = 0
@@ -4211,10 +4215,34 @@ class Game:
         self.notice_text = text
         self.notice_t = duration
 
+    # The control reference shown on the pause "Controls" screen. Mirrors
+    # the live bindings in handle_event / _tick_sprint / try_interact. The
+    # weapon is used with left-click and SWITCHED from the inventory (the
+    # gun and axe share one slot) -- there are no K/Q keys.
+    CONTROLS_REFERENCE = [
+        ("Move",                "WASD / Arrow keys"),
+        ("Sprint",              "Hold Shift"),
+        ("Interact / Hide",     "E  (or Space)"),
+        ("Use weapon",          "Left-click"),
+        ("Switch weapon",       "Equip it in the Inventory"),
+        ("Flashlight",          "F  (in the dark)"),
+        ("Inventory",           "I"),
+        ("Notebook",            "N"),
+        ("Pause / Back",        "Esc"),
+        ("Fullscreen",          "F11"),
+        ("Save",                "Sleep at the cot"),
+    ]
+
     def draw_pause(self):
         s = pygame.Surface((SCREEN_W, SCREEN_H), pygame.SRCALPHA)
         s.fill((0, 0, 0, 180))
         self.screen.blit(s, (0, 0))
+        if self.pause_view == "controls":
+            self._draw_controls_screen()
+            return
+        if self.pause_view == "settings":
+            self._draw_settings_screen()
+            return
         title = self.fonts["xl"].render("PAUSED", True, C_WHITE)
         self.screen.blit(title, (SCREEN_W//2 - title.get_width()//2, 160))
         for i, opt in enumerate(self.pause_options):
@@ -4223,8 +4251,63 @@ class Game:
             txt = self.fonts["lg"].render(label, True, color)
             self.screen.blit(txt, (SCREEN_W//2 - 90, 260 + i * 50))
 
+    def _draw_controls_screen(self):
+        title = self.fonts["xl"].render("CONTROLS", True, C_WHITE)
+        self.screen.blit(title, (SCREEN_W//2 - title.get_width()//2, 90))
+        x_label = SCREEN_W//2 - 230
+        x_key = SCREEN_W//2 + 20
+        y0 = 180
+        for i, (action, keys) in enumerate(self.CONTROLS_REFERENCE):
+            y = y0 + i * 34
+            a = self.fonts["md"].render(action, True, (200, 196, 210))
+            k = self.fonts["md"].render(keys, True, C_GOLD)
+            self.screen.blit(a, (x_label, y))
+            self.screen.blit(k, (x_key, y))
+        hint = self.fonts["sm"].render("Esc / Enter . back", True, (120, 116, 132))
+        self.screen.blit(hint, (SCREEN_W//2 - hint.get_width()//2, SCREEN_H - 60))
+
+    def _draw_settings_screen(self):
+        title = self.fonts["xl"].render("SETTINGS", True, C_WHITE)
+        self.screen.blit(title, (SCREEN_W//2 - title.get_width()//2, 130))
+        rows = [
+            ("Master volume", self.audio.master_vol),
+            ("Music volume",  self.audio.music_vol),
+            ("Sound volume",  self.audio.sfx_vol),
+        ]
+        x_label = SCREEN_W//2 - 200
+        bar_x = SCREEN_W//2 + 10
+        bar_w = 180
+        for i, (name, val) in enumerate(rows):
+            y = 240 + i * 56
+            sel = (i == self.settings_choice)
+            color = C_GOLD if sel else C_WHITE
+            label = f"> {name}" if sel else f"  {name}"
+            self.screen.blit(self.fonts["lg"].render(label, True, color),
+                             (x_label, y))
+            # Slider track + fill + percent.
+            pygame.draw.rect(self.screen, (60, 56, 70),
+                             (bar_x, y + 14, bar_w, 6), 1)
+            pygame.draw.rect(self.screen, color,
+                             (bar_x, y + 14, int(bar_w * val), 6))
+            pct = self.fonts["sm"].render(f"{int(round(val * 100))}%", True, color)
+            self.screen.blit(pct, (bar_x + bar_w + 12, y + 8))
+        hint = self.fonts["sm"].render(
+            "Up/Down . select    Left/Right . adjust    Esc . back",
+            True, (120, 116, 132))
+        self.screen.blit(hint, (SCREEN_W//2 - hint.get_width()//2, SCREEN_H - 60))
+
     def pause_input(self, ev):
-        if ev.type != pygame.KEYDOWN: return
+        if ev.type != pygame.KEYDOWN:
+            return
+        if self.pause_view == "controls":
+            if ev.key in (pygame.K_ESCAPE, pygame.K_RETURN, pygame.K_e,
+                          pygame.K_SPACE):
+                self.pause_view = "menu"
+                self.audio.play("menu_close", 0.6)
+            return
+        if self.pause_view == "settings":
+            self._settings_input(ev)
+            return
         if ev.key in (pygame.K_UP, pygame.K_w):
             self.pause_choice = (self.pause_choice - 1) % len(self.pause_options)
             self.audio.play("cursor", 0.6)
@@ -4239,6 +4322,13 @@ class Game:
             if opt == "Resume":
                 self.state = "playing"
                 self.audio.play("menu_close", 0.6)
+            elif opt == "Controls":
+                self.pause_view = "controls"
+                self.audio.play("menu_open", 0.6)
+            elif opt == "Settings":
+                self.pause_view = "settings"
+                self.settings_choice = 0
+                self.audio.play("menu_open", 0.6)
             elif opt == "Quit to Title":
                 # No autosave: the cot is the only save point.
                 # Anything done since the last sleep is lost when
@@ -4248,6 +4338,26 @@ class Game:
                 # Back to the title drone -- the same wind-and-tritone
                 # the player heard on launch.
                 self.audio.play_music("threshold_drone")
+
+    def _settings_input(self, ev):
+        if ev.key == pygame.K_ESCAPE:
+            self.pause_view = "menu"
+            self.audio.play("menu_close", 0.6)
+            return
+        if ev.key in (pygame.K_UP, pygame.K_w):
+            self.settings_choice = (self.settings_choice - 1) % 3
+            self.audio.play("cursor", 0.6)
+        elif ev.key in (pygame.K_DOWN, pygame.K_s):
+            self.settings_choice = (self.settings_choice + 1) % 3
+            self.audio.play("cursor", 0.6)
+        elif ev.key in (pygame.K_LEFT, pygame.K_a, pygame.K_RIGHT, pygame.K_d):
+            step = 0.1 if ev.key in (pygame.K_RIGHT, pygame.K_d) else -0.1
+            which = ("master", "music", "sfx")[self.settings_choice]
+            cur = (self.audio.master_vol, self.audio.music_vol,
+                   self.audio.sfx_vol)[self.settings_choice]
+            self.audio.set_volumes(**{which: cur + step})
+            # A quiet blip so the SFX/master change is audible at the new level.
+            self.audio.play("cursor", 0.6)
 
     # ---- Events / main loop ----
     def handle_event(self, ev):
@@ -4351,6 +4461,8 @@ class Game:
                     self._toggle_fullscreen()
                 elif ev.key == pygame.K_ESCAPE:
                     self.state = "paused"
+                    self.pause_view = "menu"
+                    self.pause_choice = 0
                     self.audio.play("menu_open", 0.6)
             elif ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 1:
                 # Left-click is the only action button: use whatever weapon

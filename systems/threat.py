@@ -21,9 +21,10 @@ The live tick logic lives on the Game class (`_tick_visibility`,
 documents the model and exposes the tier constants other modules
 import without dragging in the full Game class.
 
-NOTE: the Watcher / curse / cultist *input* side is being built in a
-following pass. `_tick_visibility` currently carries a placeholder
-raiser so the King is reachable and the lethal core is playable.
+The full input side is built: `_tick_visibility` is driven by the live
+Watcher count and cultist gaze (plus the lit-flashlight cost), bled by
+hiding and idle decay, with an evidence + per-Watcher floor it can't sink
+below. See `Game._tick_visibility` / `_tick_watchers` / `_tick_king`.
 """
 
 

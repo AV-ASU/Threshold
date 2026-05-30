@@ -188,16 +188,45 @@ def check_passability():
     return errors
 
 
+def check_canonical_evidence_wired():
+    """Each of the six CANONICAL_EVIDENCE beats drives the King-gate and the
+    visibility floor. If a beat's only `_evidence(...)` call site is renamed
+    or deleted, the threat tuning silently changes and the King may become
+    unreachable -- with no test to catch it. Statically scan the scene source
+    tree for `_evidence(game, "<name>"` call sites and assert every canonical
+    name is still wired into at least one scene."""
+    import glob
+    import re
+    from scenes.dialogue import CANONICAL_EVIDENCE
+
+    surfaced = set()
+    call_re = re.compile(r"""_evidence\(\s*game\s*,\s*['"]([a-z_]+)['"]""")
+    for path in glob.glob(os.path.join(PROJECT_ROOT, "scenes", "*.py")):
+        with open(path, encoding="utf-8") as f:
+            surfaced.update(call_re.findall(f.read()))
+
+    errors = 0
+    for name in CANONICAL_EVIDENCE:
+        if name not in surfaced:
+            errors += fail(
+                f"canonical evidence '{name}' has no _evidence(game, ...) "
+                f"call site in scenes/ -- the King-gate beat is unreachable"
+            )
+    return errors
+
+
 def main():
     failures = 0
-    print("[1/4] scene builders ...")
+    print("[1/5] scene builders ...")
     failures += check_scene_builds()
-    print("[2/4] spawn walkability + non-overlapping with exits ...")
+    print("[2/5] spawn walkability + non-overlapping with exits ...")
     failures += check_spawns_walkable()
-    print("[3/4] exits resolve to target spawns ...")
+    print("[3/5] exits resolve to target spawns ...")
     failures += check_exits_resolve()
-    print("[4/4] room passability (flood-fill spawns -> exits/props) ...")
+    print("[4/5] room passability (flood-fill spawns -> exits/props) ...")
     failures += check_passability()
+    print("[5/5] canonical evidence beats wired to scenes ...")
+    failures += check_canonical_evidence_wired()
     if failures:
         print(f"\n{failures} failure(s).")
         sys.exit(1)

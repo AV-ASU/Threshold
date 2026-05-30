@@ -26,6 +26,14 @@ class Audio:                        #Starting screen needs music, something simp
         except Exception:
             self.enabled = False
         self.sfx = {}
+        # Mix gains [0, 1], settable live from the pause menu. master scales
+        # everything; music/sfx scale their group. Single-session (no disk),
+        # so they reset to default each launch -- consistent with the save
+        # model. Applied at every final volume stage (play / king_tone /
+        # play_music / set_drive / duck restore).
+        self.master_vol = 1.0
+        self.music_vol = 0.8
+        self.sfx_vol = 1.0
         self.current_music = None
         self.music_muted = False
         self.music_channel = None
@@ -698,6 +706,27 @@ class Audio:                        #Starting screen needs music, something simp
             stereo[i*4+3] = flat[i*2+1]
         return pygame.mixer.Sound(buffer=bytes(stereo))
 
+    def _sfx_gain(self):
+        return self.master_vol * self.sfx_vol
+
+    def _music_gain(self):
+        return self.master_vol * self.music_vol
+
+    def set_volumes(self, master=None, music=None, sfx=None):
+        """Update mix gains live (pause-menu sliders). Re-applies the music
+        channel volume immediately so a change is heard at once; in-flight
+        SFX finish at their old gain, new ones pick up the change."""
+        if master is not None:
+            self.master_vol = max(0.0, min(1.0, master))
+        if music is not None:
+            self.music_vol = max(0.0, min(1.0, music))
+        if sfx is not None:
+            self.sfx_vol = max(0.0, min(1.0, sfx))
+        if self.enabled and self.music_channel is not None:
+            depth = getattr(self, "_duck_depth", 1.0) if getattr(
+                self, "_duck_until", 0.0) else 1.0
+            self.music_channel.set_volume(self._music_gain() * depth)
+
     def play(self, name, volume=1.0, pan=None):
         """Play a built SFX. When `pan` is provided (-1.0 = full left,
         0.0 = centred, +1.0 = full right), allocate a free channel and
@@ -709,6 +738,7 @@ class Audio:                        #Starting screen needs music, something simp
         listeners from missing a hard-panned phantom_step entirely."""
         if not self.enabled or name not in self.sfx:
             return
+        volume *= self._sfx_gain()
         s = self.sfx[name]
         if pan is None:
             s.set_volume(volume)
@@ -739,7 +769,8 @@ class Audio:                        #Starting screen needs music, something simp
             if not self._king_on or not self.king_channel.get_busy():
                 self.king_channel.play(self.sfx["yk_tone"], loops=-1)
                 self._king_on = True
-            self.king_channel.set_volume(max(0.0, min(1.0, volume)))
+            self.king_channel.set_volume(
+                max(0.0, min(1.0, volume)) * self._sfx_gain())
         elif self._king_on:
             self.king_channel.fadeout(450)
             self._king_on = False
@@ -765,6 +796,7 @@ class Audio:                        #Starting screen needs music, something simp
             return
         self.music_channel.fadeout(150)
         self.music_channel.play(self.music[track_name], loops=-1, fade_ms=fade_in_ms)
+        self.music_channel.set_volume(self._music_gain())
 
     def stop_music(self, fade_ms=200):
         self.current_music = None
@@ -788,9 +820,10 @@ class Audio:                        #Starting screen needs music, something simp
         """Set the three drive-bed volumes (0..1) for this frame."""
         if not self.enabled:
             return
-        self.drive_channel.set_volume(max(0.0, min(1.0, engine)))
-        self.radio_channel.set_volume(max(0.0, min(1.0, radio)))
-        self.static_channel.set_volume(max(0.0, min(1.0, static)))
+        g = self.master_vol
+        self.drive_channel.set_volume(max(0.0, min(1.0, engine)) * g)
+        self.radio_channel.set_volume(max(0.0, min(1.0, radio)) * g)
+        self.static_channel.set_volume(max(0.0, min(1.0, static)) * g)
 
     def stop_drive(self):
         """Fade the whole drive bed out (engine dead, signal gone)."""
@@ -825,7 +858,7 @@ class Audio:                        #Starting screen needs music, something simp
         prev_depth = getattr(self, "_duck_depth", 1.0)
         self._duck_until = max(prev_until, until)
         self._duck_depth = min(prev_depth, depth) if prev_until else depth
-        self.music_channel.set_volume(self._duck_depth)
+        self.music_channel.set_volume(self._music_gain() * self._duck_depth)
 
     def update_duck(self):
         if not self.enabled or self.music_channel is None:
@@ -834,4 +867,4 @@ class Audio:                        #Starting screen needs music, something simp
         if until and time.time() >= until:
             self._duck_until = 0.0
             self._duck_depth = 1.0
-            self.music_channel.set_volume(1.0)
+            self.music_channel.set_volume(self._music_gain())

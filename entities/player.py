@@ -52,9 +52,6 @@ class Player:
         # renders the prone variant on top of the cot. Cleared on wake.
         self.prone = False
         self.inventory = Inventory()
-        # The knife now lives on the kitchen table in the house scene.
-        # The player has to pick it up before they can attack effectively
-        # (unequipped weapon = atk 1).
 
     def take_damage(self, amt):
         # THRESHOLD: nothing in the world can harm the player. HP is

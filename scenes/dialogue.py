@@ -1,8 +1,10 @@
 """All NPC dialogue functions.
 
-The story text here is intentionally generic placeholder copy. Every
-function, signature, and helper is preserved (game.py and the scenes
-import them), but the spoken lines carry no lore.
+The spoken lines are final, lore-bearing copy: each NPC reacts to the
+case (the Blaine girl, the well, the cult) and many escalate with the
+visibility tier via `escalate`. Evidence beats are surfaced through
+`_evidence`; only the six in `CANONICAL_EVIDENCE` count toward the
+King-gate and the visibility floor.
 """
 import time
 import re

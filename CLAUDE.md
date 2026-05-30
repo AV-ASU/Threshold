@@ -88,8 +88,8 @@ it renders the procedural sprites to a labelled PNG strip.
   your **gaze** for `WATCHER_GAZE_DISPEL` s (its eyes go dark, then it
   dissolves), or put one down instantly with the **axe** arc or a
   **round**. `SAFE_SCENES` only *suppress* Watchers; they re-form on the
-  way out. The gun and axe **share one weapon slot** (left-click / `K` to
-  use, `Q` to swap).
+  way out. The gun and axe **share one weapon slot** (left-click to use;
+  switch which one is equipped from the inventory screen).
 - **Killing locals**: the gun is *not* cult-only. A clean round drops any
   living **local** instantly (lethal regardless of the evidence stagger
   gate, which only ever protected the cult — see `Projectile._strike` /

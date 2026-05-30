@@ -203,9 +203,9 @@ OBJECT_DEFS = {
     # from "!".
     "^": {"solid": False, "kind": "outdoor_passage"},
     # Round-12: breakable debris pile blocking the village's west exit
-    # to the brimley. Solid until the player swings a charged
-    # lumber_axe at it, at which point Game._try_break_debris swaps
-    # this tile to "4" (so the gap becomes a passage to brimley).
+    # to the brimley. Solid until the player presses E adjacent with the
+    # lumber_axe, at which point Game._chop_tile swaps this tile to "4"
+    # at the west edge (so the gap becomes a passage to brimley), else ".".
     "*": {"solid": True,  "kind": "debris"},
     # Boarded panel -- a passage covered with cross-nailed wooden
     # boards. Visually distinct from a regular wood wall (X-cross
@@ -568,9 +568,9 @@ def draw_object(surf, ch, rx, ry, tx, ty):
             pygame.draw.rect(surf, (180, 175, 180),
                              (rx + nx, ry + ny, 1, 1))
     elif kind == "debris":
-        # Tangled pile of fallen branches + planks. Solid until a
-        # charged lumber_axe swing breaks it. Draw as a few crossed
-        # logs over a low pile of leaves.
+        # Tangled pile of fallen branches + planks. Solid until the
+        # player presses E adjacent with the lumber_axe. Draw as a few
+        # crossed logs over a low pile of leaves.
         pygame.draw.rect(surf, (50, 40, 26), (rx + 2, ry + 18, TILE - 4, 12))
         pygame.draw.rect(surf, (90, 60, 36), (rx + 2, ry + 12, TILE - 4, 8))
         pygame.draw.rect(surf, (60, 40, 24), (rx + 2, ry + 12, TILE - 4, 8), 1)

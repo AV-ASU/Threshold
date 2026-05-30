@@ -158,6 +158,14 @@ def bedroom_on_enter(game, scene):
         "wake_notice_armed":   True,    # fires on first step
     }
     scene._spawn_pos = scene.spawns.get("default", (0, 0))
+    # First-session onboarding: the only place the game teaches its
+    # controls. A gentle one-liner shown before the player moves; the
+    # wake notice replaces it the moment they do. The full reference is
+    # one Esc away (pause -> Controls).
+    game.show_notice(
+        "Move: WASD / arrows    Interact: E    Esc: controls & options",
+        duration=7.0,
+    )
 
 
 def bedroom_on_update(game, scene, dt):

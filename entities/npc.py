@@ -68,7 +68,7 @@ class NPC:
         # is set on chase ticks (player position) and on
         # investigate triggers (step source); used as the walk
         # target during search/investigate. _flank_target is set
-        # externally by Game._tick_sheriff when group flanking is
+        # externally by Game._flank_cultists when group flanking is
         # active; non-leader cultists walk to it instead of the
         # player while in chase.
         self._cult_state = "scout"
@@ -78,7 +78,7 @@ class NPC:
         # Per-NPC spotted flag. Each fresh spawn (re-entering a
         # scene) creates a new NPC and resets this -- so the
         # spotted-line beat fires every re-entry, not once per
-        # scene per session. Read+set by Game._tick_sheriff.
+        # scene per session. Read+set by Game._tick_cultists.
         self._has_been_spotted = False
         self._yk_head = None        # current heading angle (rad); steers
         self._yk_stuck_t = 0.0
@@ -97,9 +97,10 @@ class NPC:
         self.on_kill = on_kill
         # Vessel-bloom transform. `morph` (0..1) ramps toward
         # `morph_target`; the renderer (rendering.transform) turns the
-        # human sprite into the Yellow-King maw as it rises. PROTOTYPE:
-        # the trigger is wired to the chase state below, but the final
-        # trigger is still open -- one assignment to change.
+        # human sprite into the Yellow-King maw as it rises. The trigger
+        # is the chase state below: a cultist that locks on sets
+        # morph_target to 1.0, but only once the scene is `_bloom_enabled`
+        # (3+ evidence, flagged by Game each frame).
         self.morph = 0.0
         self.morph_target = 0.0
         # Stun timer (player's desperation shove). While > 0 the NPC is
