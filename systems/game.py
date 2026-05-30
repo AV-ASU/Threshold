@@ -218,6 +218,7 @@ FLASHBACK_SWARM_START = 2.0
 FLASHBACK_SWARM_PEAK = 5.5
 FLASHBACK_RATE_MIN = 1.5
 FLASHBACK_RATE_MAX = 420.0
+FLASHBACK_FOCAL_Y = 0.80       # focal point: base of the doorway (slightly above)
 # Shooting an innocent local is loud AND wrong: it ratchets visibility
 # hard (the town turns its head) but is capped just under 1.0 so a single
 # murder can't itself summon the King -- the meter still has to climb the
@@ -2025,11 +2026,11 @@ class Game:
         self._flashback_spawn_acc -= n
         for _ in range(n):
             xf = random.uniform(-0.14, 1.14)      # edge overrun -> clipped
-            yf = random.uniform(-0.08, 1.08)
+            yf = random.triangular(-0.08, 1.08, FLASHBACK_FOCAL_Y)
             scale = random.uniform(0.16, 0.30)
             if random.random() < 0.18:
                 scale = random.uniform(0.34, 0.52)
-            vx, vy = 0.5 - xf, 0.5 - yf
+            vx, vy = 0.5 - xf, FLASHBACK_FOCAL_Y - yf
             if abs(vx) < 0.10 and abs(vy) < 0.10:
                 gi = 8
             else:
@@ -2086,7 +2087,10 @@ class Game:
         # the black rectangle around it; the dream happens through the hole.
         if ow > 6 and oh > 6:
             inner = pygame.Surface((ow, oh), pygame.SRCALPHA)
-            icx, icy = ow / 2, oh * 0.5
+            # Focal point: the BASE of the doorway (slightly above it), not
+            # the geometric centre -- the perspective converges there, as if
+            # looking down into the threshold.
+            icx, icy = ow / 2, oh * FLASHBACK_FOCAL_Y
 
             # ---- Radiating, pulsing yellow glow ----
             # Radial yellow glow centred in the opening, breathing on the
