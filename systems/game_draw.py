@@ -326,39 +326,35 @@ class GameDrawMixin:
             beam = pygame.Surface((SCREEN_W, SCREEN_H), pygame.SRCALPHA)
             pygame.draw.polygon(beam, (250, 232, 170, 26), cone)
             self.screen.blit(beam, (0, 0))
-    def _soft_fog_blob(self, size):
-        """A cached SOFT round fog patch (radial alpha falloff, white so it
-        can be tinted by fill). Replaces the old hard 160px squares that
-        read as a blocky patchwork. Keyed by size."""
-        cache = getattr(self, "_fog_blob_cache", None)
-        if cache is None:
-            cache = self._fog_blob_cache = {}
-        s = cache.get(size)
-        if s is None:
-            s = pygame.Surface((size, size), pygame.SRCALPHA)
-            r = size // 2
-            steps = 12
-            for k in range(steps, 0, -1):
-                rr = max(1, int(r * k / steps))
-                a = int(255 * (1 - k / steps) ** 1.6)
-                pygame.draw.circle(s, (255, 255, 255, a), (r, r), rr)
-            cache[size] = s
-        return s
-
     def _tinted_fog_blob(self, size, fog_rgba):
-        """A cached soft fog blob pre-tinted with `fog_rgba` -- the haze
-        re-blits this one surface at drifting positions, so the only
-        per-frame work is the blits, not rebuilding the patch each time."""
+        """A cached soft fog patch tinted with `fog_rgba`, built in ONE
+        numpy pass: the colour is constant and the alpha is the smooth
+        radial falloff scaled by the tint's own alpha. Doing tint+falloff
+        together at float precision avoids the double-quantization (uniform
+        fill, then BLEND_MULT) that left faint concentric rings. The haze
+        re-blits this single cached surface at drifting positions."""
         cache = getattr(self, "_tinted_fog_cache", None)
         if cache is None:
             cache = self._tinted_fog_cache = {}
         key = (size, fog_rgba)
         s = cache.get(key)
         if s is None:
+            import numpy as np
+            r = size / 2.0
+            yy, xx = np.ogrid[0:size, 0:size]
+            d = np.clip(np.sqrt((xx - r) ** 2 + (yy - r) ** 2) / r, 0.0, 1.0)
+            falloff = 1.0 - (3 * d * d - 2 * d * d * d)      # smoothstep
+            cr, cg, cb, ca = fog_rgba
+            alpha = (falloff * ca).astype(np.uint8)
             s = pygame.Surface((size, size), pygame.SRCALPHA)
-            s.fill(fog_rgba)
-            s.blit(self._soft_fog_blob(size), (0, 0),
-                   special_flags=pygame.BLEND_RGBA_MULT)
+            rgb = pygame.surfarray.pixels3d(s)
+            rgb[:, :, 0] = cr
+            rgb[:, :, 1] = cg
+            rgb[:, :, 2] = cb
+            del rgb
+            a = pygame.surfarray.pixels_alpha(s)
+            a[:, :] = alpha.T
+            del a
             cache[key] = s
         return s
 
@@ -381,14 +377,22 @@ class GameDrawMixin:
             dim.set_alpha(base_alpha)
             self.screen.blit(dim, (0, 0))
         t = pygame.time.get_ticks() / 1000.0
-        size = 200
-        # The tinted soft blob is identical every frame for a given
-        # fog_rgba, so build it ONCE (cached) -- only its position drifts.
-        tinted = self._tinted_fog_blob(size, fog_rgba)
-        for i in range(fog_n):
-            fx = ((i * 137 + int(t * drift_x + i * 50))
-                  % (SCREEN_W + 280) - 140)
-            fy = ((i * 73) % SCREEN_H
+        # Scatter patches at VARIED sizes (cached per size) so they overlap
+        # and merge into a continuous fog field instead of reading as a
+        # regular grid of same-size polka-dots. Each patch keeps a stable
+        # size from its index; positions drift/sway as before. Roughly
+        # double the count so the field fills in. Larger patches are
+        # blitted additively-soft (normal alpha) and just pile up where
+        # they overlap, which is what makes it read as formless fog.
+        sizes = (280, 360, 220, 320, 200, 300)
+        n = fog_n * 2
+        for i in range(n):
+            size = sizes[i % len(sizes)]
+            tinted = self._tinted_fog_blob(size, fog_rgba)
+            half = size // 2
+            fx = ((i * 167 + int(t * drift_x + i * 50))
+                  % (SCREEN_W + size + 160) - (half + 80))
+            fy = (((i * 233) % (SCREEN_H + size) - half)
                   + int(math.sin(t * sway_amp + i * 0.7) * sway_y_amt))
             self.screen.blit(tinted, (fx, fy))
     def _draw_flashback(self):
