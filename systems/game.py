@@ -550,8 +550,9 @@ class Game:
         self._flashback_phase = None
         self._flashback_t = 0.0
         self._flashback_stills = [(None, FLASHBACK_DUR)]
-        # Subliminal mask flash: tick arms it once when _flashback_t crosses
-        # FLASHBACK_MASK_T; draw consumes it the same frame -> a 1-frame flash.
+        # Mask flash: tick arms a short frame countdown when _flashback_t
+        # crosses FLASHBACK_MASK_T; draw counts it down, drawing His face for
+        # FLASHBACK_MASK_FRAMES frames.
         self._flashback_mask_flash = 0
         self._flashback_mask_done = False
 
@@ -1960,7 +1961,7 @@ class Game:
         # consumes the flag this same frame, so His face shows for ~1 frame.
         if (not self._flashback_mask_done
                 and self._flashback_t >= FLASHBACK_MASK_T):
-            self._flashback_mask_flash = True
+            self._flashback_mask_flash = FLASHBACK_MASK_FRAMES
             self._flashback_mask_done = True
             self.audio.play("wrong", 0.5)         # a stab under the flash
         _, dur = self._flashback_stills[self._flashback_phase]
@@ -2079,10 +2080,11 @@ class Game:
             # wood reads on top of the (still bright, still gold, still
             # pulsing) glow rather than washing out -- no dimming of the glow,
             # so its colour and pulse are untouched.
-            if self._flashback_mask_flash:
-                self._flashback_mask_flash = 0
+            if self._flashback_mask_flash > 0:
+                self._flashback_mask_flash -= 1
                 fsurf = door_mask_surface(height=int(oh * 0.46), vis=0.66)
-                inner.blit(fsurf, fsurf.get_rect(center=(int(icx), int(icy))))
+                mcy = int(oh * 0.44)          # just above the opening's middle
+                inner.blit(fsurf, fsurf.get_rect(center=(int(icx), mcy)))
 
             veil.blit(inner, (ox, oy))
 
