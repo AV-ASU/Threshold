@@ -681,6 +681,7 @@ class Game:
         # would re-spawn into the new save's scenes if `_kid_follower_
         # active` carried over.
         self._reset_run_state()
+        self._log_case_entry()        # the PI starts with the case in hand
         self.player = Player(0, 0)
         self.player.from_save(self.save.data)
         self.load_scene_now(self.save.data.get("scene", "bedroom"),
@@ -2077,6 +2078,41 @@ class Game:
         if hasattr(self, "_flash_notebook"):
             self._flash_notebook()
 
+    def _log_case_entry(self):
+        """Seed the case notebook with the PI's intake the moment a run
+        begins. CANON (NARRATIVE 1/1b): the case is the LURE -- the King
+        found the one appetite a numb investigator can't refuse, an
+        unsolved thing, and walked the marked soul back to His door. This
+        note must NEVER name that (truth arrives only as sensation): it
+        reads as a hard man's grudging case summary, and the hook sits in
+        the one line he can't account for -- why he took a grief job he'd
+        normally wave off. Together with the_dream ('why do I know this
+        place') and the_congregation ('there was never anyone to bring
+        back'), it lets the lure surface ACROSS the notebook without a
+        word of explanation. A NOTE, not evidence -- it must not arm the
+        King-gate. Idempotent via name-dedup."""
+        if self.save is None:
+            return
+        notes = self.save.arg("notes", [])
+        if not isinstance(notes, list):
+            notes = []
+        if any(isinstance(e, dict) and e.get("name") == "the_case"
+               for e in notes):
+            return
+        notes.insert(0, {"name": "the_case", "lines": [
+            "Walter Blaine, Minneapolis. The client. Grief in the voice"
+            " you could lean a ladder on.",
+            "His girl -- Mara, 26. Drove north in the spring. Stopped"
+            " calling home by the thaw.",
+            "Last address: Brimley. Had to find it on a map. North woods,"
+            " near nothing.",
+            "Skip-trace. A weekend's work -- ask around, turn up the girl,"
+            " drive back by dawn.",
+            "I don't take grief jobs. Took this one. Couldn't tell you why"
+            " -- only that the not-knowing itched, and I wanted it gone.",
+        ]})
+        self.save.set_arg("notes", notes)
+
     def _draw_flashback(self):
         """Render the journal door-dream (NARRATIVE 1b): an OPEN doorway of
         dried, sun-bleached wood suspended in black. Light pours from
@@ -3370,14 +3406,14 @@ class Game:
                 self.save.set_flag("well_rope_broken", True)
         # Death in the void boss arena seals the secret path forever,
         # empties the world of NPCs, and respawns the player on the
-        # village green rather than their bed. The world_emptied flag
+        # town square rather than their bed. The world_emptied flag
         # is checked in load_scene_now so every scene from now on has
         # its npc list zeroed -- the layouts persist, the people don't.
         if self.scene and self.scene.key == "void_boss":
             self.save.set_flag("void_path_closed", True)
             self.save.set_flag("world_emptied", True)
             self.player.hp = self.player.max_hp
-            self.show_notice("You wake on the village green. It is silent.")
+            self.show_notice("You wake on the town square. It is silent.")
             self.load_scene_now("brimley", "default")
             return
         self.player.hp = self.player.max_hp

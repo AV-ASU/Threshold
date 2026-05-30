@@ -337,6 +337,104 @@ def main():
     check(seen2 and "in sleep" not in seen2[0].lower(),
           "heknows: never dreamed -> no recognition line (doorframe only)")
 
+    # --- 15. The gun: the false-power threshold (NARRATIVE §3) ---
+    # "It exists to fail; lethal only on the victims." Lock the four canon
+    # facts: below 3 evidence a clean round KILLS a cultist; at 3+ it only
+    # STAGGERS; the King (and the Watchers) are unshootable; and a clean
+    # round ALWAYS kills a local -- the gate only ever protected the cult.
+    from entities.enemy import (Projectile, _is_cultist, _is_shootable,
+                                _BULLET_PHANTOM)
+    from systems.game import KING_GATE_EVIDENCE
+
+    class _Tgt:
+        """Minimal stand-in carrying just what _strike touches."""
+        def __init__(self, **kw):
+            self.alive = True; self.flash = 0.0; self._stun_t = 0.0
+            self.hp = 100; self._has_been_spotted = True
+            self.__dict__.update(kw)
+        def take_damage(self, d):
+            self.hp -= d
+            if self.hp <= 0:
+                self.alive = False
+
+    # Below 3 evidence (stun_only False): a clean round drops a cultist.
+    cult = _Tgt(kind="cultist")
+    pk = Projectile(0, 0, 1, 0, dmg=100); pk.stun_only = False
+    pk._strike(cult)
+    check(not cult.alive and cult._stun_t == 0,
+          "gun: below 3 evidence, a clean round KILLS a cultist")
+
+    # At 3+ evidence (stun_only True): the same round only staggers a cultist.
+    cult2 = _Tgt(kind="cultist")
+    ps = Projectile(0, 0, 1, 0, dmg=100); ps.stun_only = True; ps.stun_dur = 1.4
+    ps._strike(cult2)
+    check(cult2.alive and cult2._stun_t > 0,
+          "gun: at 3+ evidence, the round only STAGGERS a cultist")
+
+    # A local is never a cult target, so the stagger gate can't shield it:
+    # a clean round ALWAYS kills a local, even with stun_only set (3+ ev).
+    local = _Tgt(kind="local", sprite_kind="townsfolk")
+    check(not _is_cultist(local), "gun: a living local is not a cult target")
+    pl = Projectile(0, 0, 1, 0, dmg=100); pl.stun_only = True
+    pl._strike(local)
+    check(not local.alive,
+          "gun: a clean round ALWAYS kills a local (even past the 3-gate)")
+
+    # The King and the Watchers are bullet-phantom -- you can't fire down a
+    # direction you can't point at (§1b). The round passes straight through.
+    check("yellow_king" in _BULLET_PHANTOM and "watcher" in _BULLET_PHANTOM,
+          "gun: the King and the Watchers are bullet-phantom (unshootable)")
+    check(not _is_shootable(_Tgt(sprite_kind="yellow_king")),
+          "gun: a round passes straight through the King")
+
+    # The fire path itself: the round is friendly, NOT cult-only (so it can
+    # reach a local), and its stun_only flag tracks the evidence gate live.
+    gg = new_game()
+    gg.load_scene_now("brimley")
+    ready(gg)
+    gg.player.inventory.add("pistol", 1)
+    gg.player.inventory.add("pistol_ammo", 9)
+    gg._gun_cd = 0.0
+    gg.player_fire_gun()
+    shot = gg.scene.projectiles[-1]
+    check(shot.friendly and not shot.cult_only,
+          "gun: the player's round is friendly and NOT cult-only (reaches locals)")
+    check(shot.stun_only is False,
+          "gun: with no evidence, the round is lethal (stun_only False)")
+    for i in range(KING_GATE_EVIDENCE):
+        gg.save.arg("evidence", []).append({"name": f"_gun_gate_{i}"})
+    gg._gun_cd = 0.0
+    gg.player_fire_gun()
+    shot2 = gg.scene.projectiles[-1]
+    check(shot2.stun_only is True,
+          "gun: at 3+ evidence, the fire path arms stun_only (cult goes unkillable)")
+
+    # --- 16. The lure, seeded across the notebook (NARRATIVE §1/§1b) ---
+    # The PI starts a run with the case already in his notebook -- a NOTE,
+    # never a clue, so it can't arm the King-gate. The case IS the bait, but
+    # that truth must arrive only as sensation: the note reads as a grudging
+    # summary, and the hook is the one line he can't account for.
+    gc = new_game()
+    notes_c = gc.save.arg("notes", [])
+    case = next((e for e in notes_c if isinstance(e, dict)
+                 and e.get("name") == "the_case"), None)
+    check(case is not None, "lure: a new run seeds the_case note in the notebook")
+    case_text = " ".join(case["lines"]).lower() if case else ""
+    check("mara" in case_text and "brimley" in case_text,
+          "lure: the case note carries the canon hook (Mara / Brimley)")
+    # The hook lands as sensation -- a numb man who can't say why he took it --
+    # and NEVER as exposition. Guard the discipline (§1b: never explain).
+    check(not any(w in case_text for w in
+                  ("lure", "bait", "trap", "hook", "dimension", "the king",
+                   "reeled", "marked")),
+          "lure: the case note never NAMES the lure (truth as sensation only)")
+    check(gc._evidence_count() == 0,
+          "lure: the case note is a NOTE, not evidence (never arms the King-gate)")
+    gc._log_case_entry()                      # idempotent: no duplicate
+    check(sum(1 for e in gc.save.arg("notes", [])
+              if isinstance(e, dict) and e.get("name") == "the_case") == 1,
+          "lure: re-logging the case does not duplicate the note")
+
     print()
     if FAILS:
         print(f"{len(FAILS)} flow failure(s).")
