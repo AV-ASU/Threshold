@@ -35,16 +35,28 @@ townsperson holding it still belongs to Him. You are the one thing in
 Brimley the fold doesn't own, which is exactly what makes you the only
 thing that could ever take Carcosa past the corn.
 
+> **Why you, and why He knows you.** A year ago the PI dreamed of the door
+> **once** — walked up, looked in, and for a blip *met His eye*. One dream;
+> it never took root, so the pull never had you. But you got **closer than
+> almost anyone does**, and a stone soul that walks up to the glass and
+> *doesn't fall* is the thing He remembers. You are unclaimed — and
+> **marked**. When the King hunts you at the end (§3) it isn't a predator
+> finding prey; it's the one that got away, come back. *The fold opens only
+> for the soul He never took* — and that soul looked Him in the face and
+> walked out of the dream.
+
 **What the fold actually is — the rite.** Brimley isn't sealed by ambient
 weather; the **congregation's ongoing rite seals it**, and the **Sign (the
-Pallid Mask) is that rite's keystone**. The Sign's presence *passively
-pulled* people here — they "found religion," converged, became the
-congregation (Mara was a late arrival). Once the congregation was whole,
-they *bound the town shut*. Think of the rite as a **pressure vessel**: it
-holds the King's influence compressed inside Brimley, and the pressure
-only mounts. The fold is not a cage for *you* — **it is the cage for
-*Him***. That single inversion drives the endings (§6): the kneeling cult
-you'll want to stop is the only lid on the pot.
+Pallid Mask) is that rite's keystone**. What *gathered* the congregation
+was the **door's dream** (§1b): the **attuned** "found religion,"
+converged on Brimley, and dug down toward the door (Mara was a late
+arrival). Once the congregation was whole they performed the **closing
+rite** — it **claimed every soul inside the town line at once** (cultist,
+local, child alike) and *bound the town shut*. Think of the rite as a
+**pressure vessel**: it holds the King's influence compressed inside
+Brimley, and the pressure only mounts. The fold is not a cage for *you* —
+**it is the cage for *Him***. That single inversion drives the endings
+(§6): the kneeling cult you'll want to stop is the only lid on the pot.
 
 **Tone:** *Darkwood* (oppressive hide-or-die dread, a spreading
 corruption, bleak and ambiguous) + *Fear & Hunger* (grimdark descent to
@@ -63,9 +75,112 @@ northern Minnesota, bumfuck nowhere. Walter Blaine is in Minneapolis.
 **No local in Brimley has ever met Walter** — there is no reason any
 of them would know an outsider from a city a long way south. The PI
 is the only one who knows the client. Mara was an outsider too: she
-came north to Brimley a few months ago, was passively pulled by the
-Sign, "found religion," and joined the cult. She is one of the
-newcomers (§2).
+came north to Brimley a few months ago, was **attuned** — passively
+pulled by the door's dream (§1b) — "found religion," and joined the
+cult. She is one of the newcomers (§2).
+
+---
+
+## 1b. The Door, the River, and the Dream — where this starts
+
+> The single source of all of it. **One impossible thing**; everything
+> else in Brimley is ordinary cause-and-effect downstream of it. Folk
+> horror reads as real because it keeps the impossible count at one. Keep
+> it there.
+
+**The Threshold.** Deep under Brimley, where the underground river runs,
+the cave floor lies **impossibly, perfectly level** — flatter than water
+or stone has any right to leave it. On that plane stands a **doorframe**:
+plain, **blank, unmarked**, about the size of a car stood on its nose, and
+**too slight to hold itself upright** — yet it stands dead straight. Near
+the door, *geometry serves the door*. (That one fact is the seed of the
+whole spatial fold: the level floor, the impossible uprightness, and the
+looping roads above are the **same wrongness at different sizes**.) The
+frame is the **threshold to Carcosa, the King's dead city** — but it is
+**not a portal you cross**. Walk through it and you stand in the same room,
+on the far side of an empty frame. It is a **one-way window He looks *out*
+of**, not a door you go *in*. **It never opens. Carcosa is never shown** —
+the not-knowing is the flame, and the player's curiosity is the engine.
+Do not spend it.
+
+**The river woke it — and the river is to blame, which means no one is.**
+Carcosa always touched the world here, faintly, forever; Brimley was
+always a little wrong, a place hard to leave, a river that "keeps what it
+takes." The door made the lowest, flattest floor in the earth, and **water
+finds the lowest place.** For centuries the underground river crept toward
+it, and **about a year ago the first thread of water reached the frame and
+crossed its plane.** The world finally *touched the glass* — and on the
+far side, He **looked out.** No malice, no culprit, nobody's fault:
+gravity did it. **The river is patient zero, and it isn't even a person.**
+This makes the river the **artery** of the whole nightmare — why the water
+keeps what it takes, why the drowned go down, and the path the diggers
+followed to find the door.
+
+**The dream is the lure — and it is the fold in miniature.** Once awake,
+the door **broadcasts a dream**: you stand on the level floor and take
+**step after step toward the frame, and the distance never closes**, a
+burning curiosity pulling you on. That dream *is* the curse at the scale
+of one skull — the same "you can never arrive" the whole town will live
+once it's bound. The broadcast is **weak, wide, and rarely caught**: it
+whispers for miles, but only the few highly **attuned** receive it,
+scattered anywhere, and they **follow it to the source** — their waking
+drive to Brimley is the dream-steps made real, finally closing the
+distance the dream never would. **Attunement is a susceptibility, not a
+choice:** some never dream of the door at all, others dream of nothing
+else. The attuned who gathered over the past year are the **congregation**;
+they dug down (following the water) to the frame. **The unattuned never
+dream and never know it exists** — which is exactly why locals can be
+wholly, innocently unaware of the thing under their town.
+
+> **Where the PI sits on the spectrum.** At the far, rare edge: attuned
+> exactly **once**, a year ago — a single dream that never took. He
+> walked up to the frame in it, looked in, and *met His eye* before it
+> broke. Enough that the King **marked** him (§1, *"Why you, and why He
+> knows you"*); **not** enough to be pulled here by the dream, and —
+> having arrived *after* the closing rite — **never claimed**. That exact
+> profile — *unclaimed, barely-attuned, and known to Him* — is what lets
+> the fold open for the PI alone, makes him the only hand that can act at
+> the door without falling moth-to-flame, and makes the King's hunt
+> personal rather than reflexive. The case notebook should carry the dream
+> as a half-dismissed memory: *"one odd dream, a year back. A door. I
+> never reached it."*
+
+**Two stages — and this part must not leak.** The door and the rite do
+**different jobs**:
+
+- **The door recruits *individuals*** — the attuned, by dream. That is how
+  the cult gathered.
+- **The closing rite claims the *collective*** — at one stroke it bound
+  **every soul inside the town line**: attuned or stone, willing or
+  oblivious, adults and children. Nobody was claimed one at a time and
+  nobody chose it; the rite closed the net over everyone present.
+
+The dream alone can't claim a man who never dreams — so the **rite** is
+what nets the oblivious locals, and it *had* to, or they'd walk free.
+
+**Being claimed is invisible — even to the claimed.** A claimed person
+does not glow, kneel, or know. They farm, eat dinner, make small talk, and
+belong utterly to Him with no awareness of it whatsoever. **The whole town
+reads normal and is entirely His.** The only soul who can feel the seam is
+the lone outsider who wasn't in the net when it closed — you. (How this
+squares with the visible body-horror of §4b: the rot is **the veil
+thinning for the PI specifically** as He turns His eye on *you* — the mask
+slipping off a town that was *always already* His, not the townsfolk
+changing.)
+
+**Time is not looping — space is.** Hold this line in every line of
+dialogue and every decal: the binding is **spatial**. Roads loop, the road
+home folds back on itself, walk for the town line and you walk back in. But
+**time runs normally** — crops grow, the season turns, three months have
+passed since the seal. The dread of time here is **stasis** (nothing
+changes, nowhere to go), **never recurrence** (the days do *not* repeat).
+The word *fold* belongs to the **road**, never the **calendar**. (Code
+still carries day-loop lines to scrub — see §8.)
+
+**The name.** *THRESHOLD.* The door in the deep is a frame that looks like
+the **way out of the maze** and is only ever the **way further in** — the
+exit that is a descent. That is the town, the case, and the player's two
+endings in one image.
 
 ---
 
@@ -82,8 +197,8 @@ investigation:
   flag down help and didn't come back. They cope by surrender, not
   by knowledge. They still try (Royce drives out again every week)
   but they expect nothing.
-- **Newcomers** — arrived in the last weeks and months, drawn here
-  by the Sign's passive pull. They "found religion." Mara was one
+- **Newcomers** — the **attuned**, arrived over the last year, drawn
+  here by the door's dream (§1b). They "found religion." Mara was one
   of the latest. Once the congregation was whole they bound the
   town shut — the fold closed AROUND the locals, who didn't ask for
   any of this. The newcomers smile and act like they belong here.
@@ -95,13 +210,16 @@ The locals are TRAPPED WITH the newcomers. That's the specific dread.
 Not "everyone is infected" — *some* people, *recently*, that nobody
 ordered and nobody can refuse.
 
-> **The cultists have to eat.** They have bodies. They sleep. They
-> buy food. The Lodge is newcomer-run and supplied; the store's
-> shelves are bare because the deliveries stopped when the fold
-> closed; some locals can grow their own and some can't, and the
-> ones who can't are sliding cult-ward by attrition. The horror is
-> domestic — a cultist at the diner counter eating a sandwich,
-> returning a borrowed shovel, picking up the Tisdale boy's mail.
+> **They are ordinary people. This is NOT a cult that eats anyone.**
+> They have bodies. They sleep. They buy food and eat it — *normal*
+> food. The Lodge is newcomer-run and supplied; the store's shelves are
+> bare because the deliveries stopped when the fold closed; some locals
+> grow their own and some can't, and the ones who can't slide cult-ward
+> by attrition. The horror is **domestic** — a cultist at the diner
+> counter eating a sandwich, returning a borrowed shovel, picking up the
+> Tisdale boy's mail. No rendering, no vats, no cannibalism: the cult
+> **claims** souls (§1b), it does not consume bodies. (Code still
+> carries eat-cult fiction to scrub — see §8.)
 
 | Who | Origin | Their thread |
 |---|---|---|
@@ -148,6 +266,11 @@ case:
   pulses, not floods). The net tightens, but it isn't lethal yet.
 - **At 3+ evidence:** that same trigger spawns **the King** — the lethal
   apex. *You make Brimley deadly by understanding it.*
+
+> **The King's pursuit is personal.** He isn't drawn to noise — he's drawn
+> back to the **face he met in the dream** (§1b). Read visibility as *how
+> far you've re-entered His attention*; at `1.0`, the one soul that got
+> close and walked away is worth coming for in person.
 
 **The pistol — agency the world takes back.** The PI carries a sidearm from
 the start (limited rounds; caches in the woodshed, the cellar, the Sheriff's
@@ -205,6 +328,13 @@ hive.
 ---
 
 ## 4b. Infestation — the world rotting as you understand it
+
+> **Reconciles with §1b.** The town was *already* wholly claimed,
+> invisibly, before you arrived — nobody here is mid-conversion. The
+> infestation is **not the townsfolk changing**; it is the **veil thinning
+> for the PI** as he learns too much and He turns His eye back on the face
+> from the dream. "Convert" and "mutate" are how the truth **surfaces to
+> you**, not allegiances being switched. Underneath, they were always His.
 
 Knowing dooms you, and it **shows**. Surface corruption is a pure,
 monotonic function of the evidence count — `_infest_stage = min(3,
@@ -426,6 +556,29 @@ The reworks the new fiction forced are all shipped. What must stay true:
 ---
 
 ## 8. Still loose (design TODO)
+- **Scrub the eat-cult fiction (code ↔ §1b).** Canon is a **claiming**
+  cult that consumes no one. Code still carries cannibal framing to
+  redress: the `works_vats` "Tallow Vats" → **the Cistern** (the dig
+  hitting the river); the *"the smell is your room at the Lodge"* vat
+  line; the `depths_threshing` *"feed what waits below" / "grain threaded
+  through with something darker"* (make it a literal grain **tithe**, no
+  bodies); and any "belongings of the vanished" phrasing that implies
+  murder (it's **shed lives** + the fold's lost, not victims).
+- **Scrub time-loop language (code ↔ §1b).** The fold is **spatial, not
+  temporal**. Lines/decals that say the **days repeat / fold back on
+  themselves** (Old Pell's *"the days just fold back on themselves,"* the
+  identical-calendar prop) must read as **stasis** (nowhere to go), never
+  **recurrence**. Move the word *fold* onto the **road**.
+- **Cut the Tisdale-boy "dad" line.** *"My dad went down too. He still
+  comes home for dinner."* leaks two things canon forbids: that claiming
+  is *perceptible*, and that it happens by *individual descent* (§1b — it
+  is invisible and collective). Keep his unnameable-wrongness lines
+  (*"I keep biting my tongue. To check."*); cut this one.
+- **Seed the door's dream (optional).** The origin (§1b) is currently
+  only in the bible. Consider one or two diegetic touches: a local who
+  half-remembers a door-dream, the PI's own single dream surfaced in the
+  case notebook, the *step-toward-the-door-that-won't-close* echoed in
+  `highway_walk`.
 - **Name the principal locals.** The Sheriff, the Preacher, the
   Store-Owner, the Kid are role-tags. Locals in a small town know
   each other by name. The wax-museum quality of the cast is partly
@@ -449,19 +602,23 @@ The reworks the new fiction forced are all shipped. What must stay true:
 
 ## 9. The Basement Level — "The Works" (built)
 
-The cult's underground labour, reached *only* by the rope down the
-village well. A seven-room stealth gauntlet, descending. Built in
-`scenes/well.py`; all rooms are `DARK_SCENES` (flashlight works, but the
-cultists' gaze still finds you — run it on cover, timing, hides).
+The cult's **year-long excavation**, reached *only* by the rope down the
+village well. The attuned didn't build a temple — they **dug**, following
+the water down toward the door the dream promised (§1b). The seven rooms
+are the **dig** at successive depths; partway down it broke into the
+underground river (Room 3), the diggers' proof they were close. A
+seven-room stealth gauntlet, descending. Built in `scenes/well.py`; all
+rooms are `DARK_SCENES` (flashlight works, but the cultists' gaze still
+finds you — run it on cover, timing, hides).
 
 | # | Room | Key | Contents |
 |---|---|---|---|
 | 1 | The Shaft Floor | `well_bottom` | Rope landing + the ladder back up. Quiet airlock, 1 hide. |
 | 2 | The Drying Racks | `well_passage` | Rack-maze, 1 patrolling cultist, 2 hides. |
-| 3 | The Tallow Vats | `works_vats` | Steaming vats, 2 tending cultists, 2 hides. |
-| 4 | The Sorting Hall | `works_sorting` | Belongings of the vanished, 2 cultists, 3 hides (hardest crossing). A side door north → **Mara's room**. |
+| 3 | **The Cistern** (was "Tallow Vats" — cut) | `works_vats` | Where the dig **broke into the underground river** — the artery to the door (§1b), and the diggers' proof they were close. Wet stone, rising damp, 2 tending cultists, 2 hides. *No rendering, no tallow, no bodies — the claiming cult eats no one. Fiction redress is a code TODO (§8); the scene key stays `works_vats`.* |
+| 4 | The Sorting Hall | `works_sorting` | The **worldly lives the congregation shed** when they were claimed — and the effects of the few the fold took — sorted and catalogued. 2 cultists, 3 hides (hardest crossing). A side door north → **Mara's room**. |
 | 4a | **Mara's Room** | `maras_room` | A convert's cell off the hall: cot, her cult robe + the unsent letter. **Evidence #1.** A quiet beat off the gauntlet, 1 hide. |
-| 5 | The Scriptorium | `works_scriptorium` | The Sign copied endlessly, 1 oblivious scribe, 2 hides. **The Playscript** — the one bound, whole Play among the flat copies — is taken here (the deep-gate key). |
+| 5 | The Scriptorium | `works_scriptorium` | The Sign copied endlessly — the **attuned compulsively bleeding the dream-image out** onto every surface, none of them the door itself (§1b). 1 oblivious scribe, 2 hides. **The Playscript** — the one bound, whole Play among the flat copies — is taken here (the deep-gate key). |
 | 6 | The Sign Chamber | `works_sign` | The Sign daubed on the wall + an altar; 3 kneelers + 1 patrol. **Lift the Pallid Mask → `sigil_rubbing` + evidence #5** (no charcoal — you take the object itself). |
 | 7 | The Deep Stair | `works_deepstair` | The **playscript-gate**: spend the Playscript → opens to `depths_antechamber` **and snaps the rope** (the point of no return). |
 

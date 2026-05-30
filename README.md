@@ -5,10 +5,11 @@ into **Brimley** -- a private investigator hired by a man named Blaine to
 find his daughter Mara, who found religion out past the highway and
 vanished. You came to ask a few questions and drive home. You can't: the
 **King in Yellow** has folded the town shut, and the only way out is
-**down**, to the source. There is no combat -- only walking, watching,
-hiding, and the thing that follows. A **visibility** meter rises under the
-cult's gaze; gather enough of the truth and it arms the King, the lethal
-apex pursuer.
+**down**, to the source. It isn't a combat game -- you walk, watch, and
+hide while a thing follows. You carry a sidearm, but using it is a choice
+the world makes you pay for. A **visibility** meter rises under the cult's
+gaze; gather enough of the truth and it arms the King, the lethal apex
+pursuer.
 
 ## Requirements
 
