@@ -97,6 +97,12 @@ OUTDOOR_SCENES = {"our_house_area", "forest_path",
 # vignette and doesn't want the outdoor one stacked on top).
 SEAMLESS_WORLD_SCENES = OUTDOOR_SCENES | {
     "brimley",
+    # The cabin CLEARING at the end of the gravel road -- an outdoor
+    # arrival, so the road runs continuous into it (no fade, previews
+    # where it wraps). Its INTERIOR (backwoods_cabin_interior) is a
+    # separate scene behind a door 'D' and stays a fade, like any
+    # building -- indoor scenes don't fold.
+    "backwoods_cabin",
     # Hidden fold scenes -- the player stumbles into them through
     # direction-sensitive exits and shouldn't feel a transition.
     "curse_grove", "lodge_arrival", "highway_walk",
