@@ -209,6 +209,7 @@ AXE_SWING_DUR = 0.34           # seconds the swing arc takes to draw
 GUN_CD = 0.45                  # seconds between shots
 GUN_DMG = 100                  # one clean shot kills any cultist (hp 1 or 30)
 GUN_STUN_DUR = 1.4             # stagger time at 3+ evidence
+FLASHBACK_DUR = 7.0            # seconds the journal door-dream still holds
 # Shooting an innocent local is loud AND wrong: it ratchets visibility
 # hard (the town turns its head) but is capped just under 1.0 so a single
 # murder can't itself summon the King -- the meter still has to climb the
@@ -537,21 +538,16 @@ class Game:
         self.flashlight_on = False     # player intent; only "lit" in DARK scenes
 
         # ---- THRESHOLD: flashback ----
-        # Set when the player reads Mara's journal through a third time.
-        # _flashback_phase tracks which still is showing. None means no
-        # flashback active. Each phase shows a single line of text on a
-        # black overlay. The "witnessing" flashback: reading her descent
-        # in her own words pulls you a step into it (NARRATIVE §4).
+        # Fires when the player reads Mara's journal through a third time.
+        # Not text -- a single wordless still of the dream itself (NARRATIVE
+        # 1b): a plain doorframe suspended in black, gold burning from the
+        # seam, and a field of motes streaming INTO the crack -- the pull of
+        # being drawn in, while the door never comes any closer. The "you
+        # can never arrive" of the whole game, at the scale of one dream.
+        # _flashback_phase is None (inactive) or 0 (the one held phase).
         self._flashback_phase = None
         self._flashback_t = 0.0
-        self._flashback_stills = [
-            ("You read it a third time, and the page won't let go of you.",
-             2.6),
-            ("For a moment you are her -- walking the rows, the corn "
-             "closing behind you like water.", 3.2),
-            ("Something far under the town turns over in its sleep, and "
-             "calls you the rest of the way down.", 3.6),
-        ]
+        self._flashback_stills = [(None, FLASHBACK_DUR)]
 
         # ---- THRESHOLD: ending state ----
         # _ending_active is the name of the ending currently
@@ -1964,29 +1960,122 @@ class Game:
                 self._provoke_cult(0.20)
 
     def _draw_flashback(self):
-        """Render the flashback overlay if active. Black field, large
-        white text in the centre, no other UI."""
+        """Render the journal door-dream (NARRATIVE 1b): a plain doorframe
+        suspended in black, gold burning from the seam, a field of motes
+        streaming INTO the crack -- the pull of being drawn in while the
+        door never comes any closer. Wordless. The frame is held dead-centre
+        at a fixed size (you can never arrive); the inward-rushing motes are
+        the only motion, so the eye reads 'falling in' against a door that
+        won't grow."""
         if self._flashback_phase is None:
             return
-        line, dur = self._flashback_stills[self._flashback_phase]
-        # Fade in over first 0.3s, hold, fade out over last 0.3s.
-        t = self._flashback_t / max(0.01, dur)
-        if t < 0.15:
-            alpha = int((t / 0.15) * 255)
-        elif t > 0.85:
-            alpha = int(((1.0 - t) / 0.15) * 255)
+        t = self._flashback_t / max(0.01, FLASHBACK_DUR)   # 0..1 over the hold
+        # Whole-still fade: in over first 12%, out over last 18%.
+        if t < 0.12:
+            fade = t / 0.12
+        elif t > 0.82:
+            fade = max(0.0, (1.0 - t) / 0.18)
         else:
-            alpha = 255
-        alpha = max(0, min(255, alpha))
-        # Black field underneath.
+            fade = 1.0
+        fade = max(0.0, min(1.0, fade))
+
         veil = pygame.Surface((SCREEN_W, SCREEN_H))
         veil.fill((0, 0, 0))
+
+        cx, cy = SCREEN_W // 2, SCREEN_H // 2
+        now = self._flashback_t
+        # The doorframe: tall, plain, blank, uprights a touch too thin to
+        # hold the lintel up -- the wrongness (1b). Fixed size: it never
+        # nears. Size relative to screen so it reads big but suspended.
+        dh = int(SCREEN_H * 0.46)
+        dw = int(dh * 0.46)
+        post = max(3, dw // 10)                 # too-slight uprights
+        breathe = 1.0 + 0.012 * math.sin(now * 1.3)
+        dh = int(dh * breathe)
+        left = cx - dw // 2
+        right = cx + dw // 2
+        top = cy - dh // 2
+        bot = cy + dh // 2
+
+        # --- Motes streaming INTO the seam (the inward pull) ---
+        # Each mote rides a fixed angle in toward the crack, looping; closer
+        # to the seam it accelerates and brightens, then resets far out. The
+        # door itself never moves -- only the field falls in.
+        seam_x = cx
+        rng = random.Random(1337)
+        for i in range(120):
+            ang = rng.uniform(0, math.tau)
+            r0 = rng.uniform(0.18, 1.0)
+            speed = rng.uniform(0.05, 0.14)
+            # phase loops 1 (far) -> 0 (at seam)
+            ph = (r0 - (now * speed)) % 1.0
+            rad = ph * (SCREEN_W * 0.55)
+            mx = int(seam_x + math.cos(ang) * rad)
+            my = int(cy + math.sin(ang) * rad * 0.85)
+            if not (0 <= mx < SCREEN_W and 0 <= my < SCREEN_H):
+                continue
+            near = 1.0 - ph                      # brighter as it nears seam
+            a = int(150 * near * near * fade)
+            if a <= 0:
+                continue
+            g = (int(150 + 90 * near), int(120 + 80 * near), int(40 + 30 * near))
+            veil.set_at((mx, my), g)
+            if near > 0.6:                        # a short inward streak
+                veil.set_at((int(mx + math.cos(ang) * 2),
+                             int(my + math.sin(ang) * 2 * 0.85)),
+                            (g[0] // 2, g[1] // 2, g[2] // 3))
+
+        # --- The gold seam: a thin CRACK of light down the dark opening,
+        # bleeding softly outward, breathing like a furnace left open in
+        # another room. Deliberately narrow so the door reads as a dark
+        # frame with light leaking from the seam -- never a solid slab. ---
+        pulse = 0.6 + 0.4 * abs(math.sin(now * 1.1))
+        # The interior of the opening stays DARK; the light is only a thin
+        # crack down the middle that bleeds a short way out. Widths are in
+        # FIXED pixels (not scaled to the door) so the door can never read
+        # as a solid gold slab -- it's a black frame with a glowing seam.
+        gh = dh - 6
+        halo = 14                                 # px of bright bleed each side
+        glow = pygame.Surface((halo * 2, gh), pygame.SRCALPHA)
+        gw = glow.get_width()
+        cxg = gw / 2
+        for gx in range(gw):
+            d = abs(gx - cxg) / halo              # 0 centre -> 1 edge
+            av = int(165 * pulse * fade * (1.0 - d) ** 2.2)
+            if av > 0:
+                pygame.draw.line(glow, (250, 214, 90, min(255, av)),
+                                 (gx, 0), (gx, gh))
+        veil.blit(glow, (int(seam_x - cxg), top + 3),
+                  special_flags=pygame.BLEND_RGBA_ADD)
+        # Hard bright core of the crack -- a 1-2px fissure.
+        pygame.draw.line(veil, (255, 244, 190),
+                         (seam_x, top + 5), (seam_x, bot - 5),
+                         1 + int(pulse > 0.85))
+
+        # --- The frame itself: near-black, faint lit inner edge ---
+        fr = int(26 * fade)
+        frame_col = (fr, fr - 4 if fr > 4 else 0, fr - 8 if fr > 8 else 0)
+        edge = (int(60 * fade), int(52 * fade), int(44 * fade))
+        # two uprights + lintel (no sill -- it stands on the level floor)
+        pygame.draw.rect(veil, frame_col, (left, top, post, dh))
+        pygame.draw.rect(veil, frame_col, (right - post, top, post, dh))
+        pygame.draw.rect(veil, frame_col, (left, top, dw, post))
+        # faint inner-edge catchlight from the seam
+        pygame.draw.line(veil, edge, (left + post, top), (left + post, bot), 1)
+        pygame.draw.line(veil, edge, (right - post, top), (right - post, bot), 1)
+
+        # Opening narrator line -- a single quiet title that names the dream,
+        # then fades out and leaves the wordless door. Lives in the first
+        # ~2.2s; gone for the rest of the hold so the image carries it.
+        intro = max(0.0, min(1.0, 1.0 - (now - 1.4) / 0.8))  # 1 until 1.4s, out by 2.2s
+        intro *= fade
+        if intro > 0.01:
+            txt = self.fonts["lg"].render("You dream of a doorway.", True,
+                                          (210, 206, 214))
+            txt.set_alpha(int(255 * intro))
+            veil.blit(txt, (cx - txt.get_width() // 2, int(SCREEN_H * 0.16)))
+
         self.screen.blit(veil, (0, 0))
-        # Text -- white, fading.
-        s = self.fonts["lg"].render(line, True, (220, 218, 226))
-        s.set_alpha(alpha)
-        self.screen.blit(s, (SCREEN_W // 2 - s.get_width() // 2,
-                             SCREEN_H // 2 - s.get_height() // 2))
 
     # ---- Endings ----
 
