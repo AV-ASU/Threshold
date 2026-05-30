@@ -650,11 +650,14 @@ The reworks the new fiction forced are all shipped. What must stay true:
   is *perceptible*, and that it happens by *individual descent* (§1b — it
   is invisible and collective). Keep his unnameable-wrongness lines
   (*"I keep biting my tongue. To check."*); cut this one.
-- **Seed the door's dream (optional).** The origin (§1b) is currently
-  only in the bible. Consider one or two diegetic touches: a local who
-  half-remembers a door-dream, the PI's own single dream surfaced in the
-  case notebook, the *step-toward-the-door-that-won't-close* echoed in
-  `highway_walk`.
+- **Seed the door's dream (DONE).** The origin (§1b) is now diegetic: reading
+  Mara's journal through a third time triggers a wordless **door-dream
+  cutscene** (`_tick_flashback`/`_draw_flashback` in `systems/game.py`), and
+  living it writes a half-dismissed memory to the **case notebook**
+  (`_log_dream_entry`, stored in save arg `notes`, NOT `evidence`). Canon:
+  the PI dreamed the door **once, a year ago, never reached it** — the note
+  must read that way (a flow.py canon-guard enforces "a year" + no recurrence
+  language).
 - **Cut the curse-priest; repurpose/retire `curse_grove`.** Individual
   cursing is redundant now the closing rite claims the whole town at once
   (§1b). Remove the NPC; the `curse_grove` hidden fold either goes or is
@@ -671,13 +674,19 @@ The reworks the new fiction forced are all shipped. What must stay true:
 - **Scrap corpse persistence (§3, §4b).** Drop the cross-scene
   `dead_locals` replay and the corpse `mold` system. Keep the in-room
   body + the visibility spike + the cult body-investigate ping.
-- **Mara's journal → the door.** Reading `mom_notebook` to the end drops a
-  **flashback of the burning doorframe** (the lure that took her) — the
-  game's clearest, wordless look at §1b. Mara is *answered, not deceived*.
-- **Surface "He knows you" where it can land (NOT the lethal King).** The
-  PI's single dream in the **case notebook**; a recognition beat when he
-  finally stands at the **real Threshold** (*"you've stood here before, in
-  sleep"*); the **lure** (the case is bait) seeded across the notebook.
+- **Mara's journal → the door (DONE).** Reading `mom_notebook` to the end
+  drops the **door-dream cutscene** (the lure that took her) — the game's
+  clearest, wordless look at §1b: a dried-wood doorframe in black, a pulsing
+  gold glow pooled at the door's base, eyes peeking, and an **accelerating
+  swarm of His dark-wood masks** whose gold gazes all converge on the player,
+  over a wind/falling audio bed (`falling_air`). Mara is *answered, not
+  deceived*.
+- **Surface "He knows you" where it can land (DONE — NOT the lethal King).**
+  The PI's single year-ago dream sits in the **case notebook** (`the_dream`
+  note). When he first reaches the **real Threshold** (`scenes/depths.py
+  build_threshold`), having dreamed it (`flashback_seen`), one quiet line
+  lands before the doorframe beat: *"You have stood here before. In sleep."*
+  (canon-accurate: he did stand at the door, once, in the dream).
 - **Name the principal locals.** The Sheriff, the Preacher, the
   Store-Owner, the Kid are role-tags. Locals in a small town know
   each other by name. The wax-museum quality of the cast is partly

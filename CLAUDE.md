@@ -145,3 +145,57 @@ it renders the procedural sprites to a labelled PNG strip.
   `load_scene_now`.
 - Sprites are 100% procedural — no art assets to edit.
 - `__pycache__/` is gitignored; never commit `.pyc`.
+
+## The journal door-dream + "He knows you" (NARRATIVE §1b / §0)
+
+- **Trigger:** reading `mom_notebook` (Mara's journal) a third time sets
+  `flashback_pending` (`ui/inventory_ui.py`); `Game._tick_flashback` polls it,
+  sets `flashback_seen`, and runs a ~7s wordless cutscene
+  (`_draw_flashback`). Tuning constants are the `FLASHBACK_*` block in
+  `systems/game.py` (`_DUR`, `_MASK_FRAMES`, `_SWARM_START/_PEAK`,
+  `_RATE_MIN/_MAX`, `_FOCAL_Y`).
+- **Visuals:** dried-wood doorframe in black; a pulsing gold glow pooled at
+  the door's **base** (`FLASHBACK_FOCAL_Y`), contained by the frame; faint
+  peeking eyes; and an **accelerating swarm** of carved dark-wood masks
+  (`_spawn_flashback_masks` → pre-rendered `_build_flashback_pool`) that clip
+  on the jamb and whose gold gazes all aim back at the player. Mask art is
+  `door_mask_surface(height, vis, gaze, seed)` in `rendering/sprites.py`
+  (recessed sockets, no mouth; `gaze=(gx,gy)` points the pupils; `_jag_blob`
+  gives irregular shapes). Audio bed: `Audio.flashback_air()` +
+  `falling_air` SFX in `systems/audio.py`.
+- **CANON — do not break:** the PI dreamed the door **exactly once, a year
+  ago, and never reached it** (it never took root). The journal *reminds* him
+  of that single dream — it is **not** recurring. The case note
+  (`Game._log_dream_entry`) must read as that half-dismissed memory.
+- **"He knows you":** `_log_dream_entry` writes the dream to save arg
+  **`notes`** (shown by `NotebookUI` after the clues). It must NOT go in
+  `evidence` — `_evidence_count` is `len(save.arg("evidence"))` and drives the
+  King-gate + infestation; only the six `CANONICAL_EVIDENCE` beats belong
+  there. At the real Threshold (`scenes/depths.py build_threshold`
+  `on_enter`), if `flashback_seen`, a recognition line lands before the
+  doorframe beat: *"You have stood here before. In sleep."*
+
+## Working agreements (process — learned the hard way)
+
+- **Verify before you commit.** Run compile + `tests/smoke.py` + (for
+  narrative/scene work) `tests/flow.py` and confirm green BEFORE
+  `git commit`/`push`. A commit was pushed twice this project with a
+  `NameError` because edits were batched and not re-verified.
+- **One edit at a time on a shifting file.** Don't batch many `Edit`s against
+  the same file in one turn; an early edit moves line context and later ones
+  silently mis-apply. For multi-site mechanical changes, write a small Python
+  patch script with `assert count == 1` per replacement, then run + verify.
+- **Check narrative text against `NARRATIVE.md` BEFORE writing it**, not
+  after. The bible is the source of truth; quote its intended voice.
+- **`tests/flow.py`** is the integration harness (separate from `smoke.py`):
+  boots a game, drives scene hooks, asserts story beats. It also carries
+  **canon-guards** (e.g. the dream note must say "a year" and contain no
+  recurrence language). Keep it green; add a guard when you lock a canon fact.
+- **Watch for stale refs from the village→brimley merge.** Scene keys, the
+  well position (`scene._well_pos`, col 94/row 13), and NPC names changed —
+  the Kid is **"the Tisdale boy"** (Toby Tisdale), not "Village Kid".
+- **Previewing visuals headlessly:** render to PNG/GIF with
+  `SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy` + Pillow (installable) and
+  send with the file tool. For whole-screen cutscenes, step
+  `_tick_flashback` / `_draw_flashback` in a loop and capture
+  `pygame.image.tostring`.
