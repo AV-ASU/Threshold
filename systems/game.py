@@ -548,12 +548,14 @@ class Game:
 
         # ---- THRESHOLD: flashback ----
         # Fires when the player reads Mara's journal through a third time.
-        # Not text -- a single wordless held shot of the dream itself
-        # (NARRATIVE 1b): an open doorway of dried wood suspended in black, a
-        # pulsing yellow glow radiating from it (cut off by the frame), faint
-        # eyes peeking in the light, and -- building from one face to a swarm
-        # that all stare back -- a crowd of His dark-wood masks. The "you can
-        # never arrive" of the whole game, at the scale of one dream.
+        # Reading her words puts the PI back inside the ONE dream he had a
+        # year ago, before Brimley (NARRATIVE 1b / §0: attuned exactly once,
+        # it never took) -- the same door her journal describes. Not text -- a
+        # wordless held shot: an open doorway of dried wood suspended in
+        # black, a pulsing yellow glow radiating from it (cut off by the
+        # frame), faint eyes peeking, and -- building from one face to a
+        # swarm that all stare back -- a crowd of His dark-wood masks. The
+        # "you can never arrive" of the whole game, at the scale of one dream.
         # _flashback_phase is None (inactive) or 0 (the one held phase).
         self._flashback_phase = None
         self._flashback_t = 0.0
@@ -2041,13 +2043,16 @@ class Game:
                 [xf, yf, scale, gi, random.randint(0, 3), FLASHBACK_MASK_FRAMES])
 
     def _log_dream_entry(self):
-        """Write the recurring door-dream into the case notebook as a NOTE
-        (NARRATIVE: 'He knows you' -- the PI has been dreaming the Threshold
-        without knowing it's a real place). Stored in save arg 'notes', NOT
-        'evidence': the evidence log is canonical-clues-only and its length
-        is _evidence_count (the King-gate + infestation driver), so a note
-        must never land there. The notebook UI shows notes alongside clues.
-        Idempotent via name-dedup."""
+        """Write the door-dream into the case notebook as a NOTE. CANON
+        (NARRATIVE 1b / spectrum note): the PI dreamed of the door exactly
+        ONCE, a year ago -- walked up, looked in, met His eye for a blip, and
+        never reached it; it never took root. Reading Mara's journal through
+        REMINDS him of that single dream (what the flashback renders), and he
+        sets it down as a half-dismissed memory -- NOT a recurring dream.
+        Stored in save arg 'notes', NOT 'evidence': the evidence log is
+        canonical-clues-only and its length is _evidence_count (the King-gate
+        + infestation driver), so a note must never land there. The notebook
+        UI shows notes alongside clues. Idempotent via name-dedup."""
         if self.save is None:
             return
         notes = self.save.arg("notes", [])
@@ -2057,15 +2062,16 @@ class Game:
                for e in notes):
             return
         notes.append({"name": "the_dream", "lines": [
-            "The same dream again. The fourth night, or the fifth.",
+            "Her journal put me back inside the one odd dream. A year"
+            " back, before any of this. I'd forgotten I had it.",
             "A door standing open in the dark -- no wall around it, just"
             " the frame, old dry wood.",
             "Light behind it the colour of old gold, breathing in and out"
             " like something asleep.",
-            "And faces in the light. Turned toward me. All of them,"
-            " looking out.",
-            "I have never been to this place. I know it the way you know"
-            " your own front door.",
+            "I walked up. I looked in. For a blip something looked back --"
+            " met my eye -- and then it broke.",
+            "I never reached it. One dream, a year ago, and it never came"
+            " again. So why do I know this place.",
         ]})
         self.save.set_arg("notes", notes)
         if hasattr(self, "_flash_notebook"):

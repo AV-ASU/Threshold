@@ -288,9 +288,21 @@ def main():
         gd._tick_flashback(1 / 60.0)
         guard += 1
     notes = gd.save.arg("notes", [])
-    check(any(isinstance(e, dict) and e.get("name") == "the_dream"
-              for e in notes),
+    dream_note = next((e for e in notes if isinstance(e, dict)
+                       and e.get("name") == "the_dream"), None)
+    check(dream_note is not None,
           "heknows: the dream logs a case-notebook NOTE")
+    # CANON (NARRATIVE 1b / spectrum note): the PI dreamed of the door
+    # exactly ONCE, a year ago -- it never took and never came again. The
+    # note must read as that single, half-dismissed memory, NOT a recurring
+    # dream. Guard against the recurrence regression.
+    dream_text = " ".join(dream_note["lines"]).lower() if dream_note else ""
+    check("year" in dream_text,
+          "heknows: the dream note places it a year ago (single, not recurring)")
+    check(not any(w in dream_text for w in
+                  ("again the", "same dream", "every night", "each night",
+                   "fourth night", "fifth", "the dreams", "keeps coming")),
+          "heknows: the dream note does NOT imply a recurring dream")
     check(gd._evidence_count() == ev_pre,
           "heknows: the dream note never inflates the evidence/King gate")
     gd._log_dream_entry()                     # idempotent: no duplicate
