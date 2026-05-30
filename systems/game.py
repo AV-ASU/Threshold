@@ -2009,99 +2009,89 @@ class Game:
 
             # Radial glow: nested ellipses, large+dim -> small+bright, so the
             # light is strongest deep in the middle and falls to dark at the
-            # edges where the jamb occludes it. Warm amber, never white.
+            # edges where the jamb occludes it. Warm amber, never white. Kept
+            # dim -- the interior stays murky; the light hides more than it
+            # shows.
             steps = 36
             maxr = max(ow, oh) * 0.62
             for s in range(steps):
                 f = s / (steps - 1)             # 0 outer -> 1 inner
                 rr = maxr * (1.0 - f)
-                a = int(12 + 200 * f * f * pulse * fade)
-                col = (238, 168 + int(50 * f), 64 + int(46 * f), min(255, a))
+                a = int(10 + 150 * f * f * pulse * fade)
+                col = (232, 164 + int(50 * f), 62 + int(44 * f), min(255, a))
                 rect = pygame.Rect(0, 0, int(rr * 1.7), int(rr * 1.6))
                 rect.center = (int(icx), int(icy))
                 pygame.draw.ellipse(inner, col, rect)
 
-            # Slow dark shapes drifting across the glow -- bodies passing a
-            # lit doorway, never resolving. Seeded so they're deterministic.
-            rng = random.Random(91)
-            for _ in range(3):
-                p0 = rng.uniform(0, 1)
-                sp = rng.uniform(0.035, 0.06)
-                yy = rng.uniform(0.30, 0.78) * oh
-                xx = (((p0 + now * sp) % 1.4) - 0.2) * ow
-                bw = rng.uniform(0.12, 0.20) * ow
-                bh = rng.uniform(0.42, 0.72) * oh
-                shade = pygame.Surface((max(2, int(bw)), max(2, int(bh))),
-                                       pygame.SRCALPHA)
-                pygame.draw.ellipse(shade, (16, 9, 6, int(120 * fade)),
-                                    shade.get_rect())
-                inner.blit(shade, (int(xx - bw / 2), int(yy - bh / 2)))
+            # Things move in the light, but you never get to SEE them -- only
+            # the suggestion: a slow dark shape easing across, the faintest
+            # ghost of a pale mask that never resolves a face, a single pair
+            # of eyes that barely surface before sinking. All deliberately
+            # low-contrast; the dread is in almost-seeing, not seeing.
 
-            # The pale mask, rising and sinking once through the dream -- a
-            # smooth bump centred near mid-flashback so it surfaces, holds,
-            # and dissolves back into the light. Two dark hollows, a seam of
-            # mouth: the Pallid Mask, half-seen.
-            mwin = max(0.0, 1.0 - abs(t - 0.55) / 0.24)     # 0..1 bump
+            # One slow dark shape passing -- a body behind the doorway, half a
+            # shade darker than the glow, no edges.
+            sp = 0.045
+            xx = (((0.2 + now * sp) % 1.5) - 0.25) * ow
+            bw, bh = 0.16 * ow, 0.6 * oh
+            shade = pygame.Surface((max(2, int(bw)), max(2, int(bh))),
+                                   pygame.SRCALPHA)
+            pygame.draw.ellipse(shade, (18, 11, 7, int(70 * fade)),
+                                shade.get_rect())
+            inner.blit(shade, (int(xx - bw / 2), int(oh * 0.5 - bh / 2)))
+
+            # The pale mask -- only a ghost. A faint ovoid that rises and
+            # sinks once, with the barest hollows where a face would be. Never
+            # bright enough to read as a mask outright; you're left unsure.
+            mwin = max(0.0, 1.0 - abs(t - 0.55) / 0.16)     # narrow bump
             if mwin > 0.02:
-                mph = (math.sin(now * 9.0) * 0.5 + math.sin(now * 21.0) * 0.5)
-                flick = 0.7 + 0.3 * (mph * 0.5 + 0.5)        # crackle
-                ma = int(150 * mwin * flick * fade)
-                mh = int(oh * 0.42)
-                mw = int(mh * 0.62)
-                rise = (1.0 - mwin) * oh * 0.18              # sinks as it fades
-                mcx, mcy = int(ow * 0.5), int(oh * 0.5 + rise)
+                flick = 0.65 + 0.35 * abs(math.sin(now * 6.0))
+                ma = int(72 * mwin * flick * fade)
+                mh = int(oh * 0.40)
+                mw = int(mh * 0.60)
+                rise = (1.0 - mwin) * oh * 0.16             # sinks as it fades
+                mcx, mcy = int(ow * 0.5), int(oh * 0.52 + rise)
                 mask = pygame.Surface((mw, mh), pygame.SRCALPHA)
-                pygame.draw.ellipse(mask, (236, 230, 206, ma), mask.get_rect())
-                # two hollow eyes + a thin mouth, scooped darker
+                pygame.draw.ellipse(mask, (226, 222, 200, ma), mask.get_rect())
+                # hollows only just darker than the face -- barely there
                 eh = max(2, mh // 9)
-                ew = max(2, mw // 6)
-                pygame.draw.ellipse(mask, (40, 30, 22, ma),
-                                    (mw * 0.24 - ew / 2, mh * 0.40, ew, eh))
-                pygame.draw.ellipse(mask, (40, 30, 22, ma),
-                                    (mw * 0.76 - ew / 2, mh * 0.40, ew, eh))
-                pygame.draw.line(mask, (40, 30, 22, ma),
-                                 (int(mw * 0.36), int(mh * 0.70)),
-                                 (int(mw * 0.64), int(mh * 0.70)), 2)
+                ew = max(2, mw // 7)
+                hol = (120, 96, 74, int(ma * 0.7))
+                pygame.draw.ellipse(mask, hol,
+                                    (mw * 0.26 - ew / 2, mh * 0.42, ew, eh))
+                pygame.draw.ellipse(mask, hol,
+                                    (mw * 0.74 - ew / 2, mh * 0.42, ew, eh))
                 inner.blit(mask, (mcx - mw // 2, mcy - mh // 2))
 
-            # Eyes that surface in the glow, hold, and blink under -- pale,
-            # flickering ('crackle'), drifting a little. Each on its own
-            # phase so they don't pulse together.
-            eyes = [(0.30, 0.38, 0.0, 0.070),
-                    (0.68, 0.55, 1.7, 0.060),
-                    (0.52, 0.26, 3.1, 0.054),
-                    (0.40, 0.70, 4.4, 0.064)]
-            for ex, ey, off, sz in eyes:
-                cyc = ((now + off) % 3.6) / 3.6              # 0..1 life cycle
-                # present for the middle of the cycle; fade in/out at ends
-                pres = max(0.0, min(1.0, math.sin(math.pi * cyc) ** 0.8))
-                if pres < 0.02:
-                    continue
-                # blink: openness dips briefly mid-life
-                openness = 0.5 + 0.5 * math.sin(now * 3.0 + off * 5)
-                openness = max(0.14, openness)
-                crackle = 0.7 + 0.3 * math.sin(now * 17 + off * 9)
-                a = int(230 * pres * crackle * fade)
-                if a <= 0:
-                    continue
-                drift = math.sin(now * 0.6 + off) * ow * 0.02
-                exx = ex * ow + drift
-                eyy = ey * oh
-                ew = max(3, int(sz * ow))
-                eh = max(2, int(ew * 0.66 * openness))
-                gap = ew * 1.4
-                for sgn in (-1, 1):
-                    er = pygame.Rect(0, 0, ew, eh)
-                    er.center = (int(exx + sgn * gap), int(eyy))
-                    # dark socket behind the eye so it reads against the glow
-                    sock = er.inflate(ew, eh)
-                    pygame.draw.ellipse(inner, (18, 11, 6, int(a * 0.7)), sock)
-                    pygame.draw.ellipse(inner, (240, 232, 198, a), er)
-                    # a dark vertical pupil when open enough
-                    if eh >= 4:
-                        pygame.draw.ellipse(inner, (24, 16, 10, a),
-                                            (er.centerx - 1, er.top + 1,
-                                             3, max(2, eh - 2)))
+            # A single pair of eyes that barely surfaces, holds a beat, blinks
+            # under -- faint, flickering, never the dark socket that made them
+            # pop before. Mostly you catch them only at the peak of the cycle.
+            cyc = (now % 5.0) / 5.0
+            pres = max(0.0, min(1.0, math.sin(math.pi * cyc) ** 2.2))
+            if pres > 0.04:
+                openness = max(0.12, 0.5 + 0.5 * math.sin(now * 2.6))
+                crackle = 0.6 + 0.4 * math.sin(now * 15)
+                a = int(120 * pres * crackle * fade)
+                if a > 0:
+                    exx = 0.42 * ow + math.sin(now * 0.5) * ow * 0.03
+                    eyy = 0.44 * oh
+                    ew = max(2, int(0.045 * ow))
+                    eh = max(1, int(ew * 0.6 * openness))
+                    gap = ew * 1.5
+                    for sgn in (-1, 1):
+                        er = pygame.Rect(0, 0, ew, eh)
+                        er.center = (int(exx + sgn * gap), int(eyy))
+                        pygame.draw.ellipse(inner, (228, 220, 188, a), er)
+
+            # A breath of bright haze right at the core, drawn LAST -- the
+            # light glares back at you and veils whatever just moved through
+            # it, so nothing in there ever fully resolves.
+            haze = pygame.Surface((ow, oh), pygame.SRCALPHA)
+            hr = pygame.Rect(0, 0, int(ow * 0.5), int(oh * 0.34))
+            hr.center = (int(icx), int(icy))
+            pygame.draw.ellipse(haze, (240, 200, 120,
+                                       int(70 * pulse * fade)), hr)
+            inner.blit(haze, (0, 0))
 
             veil.blit(inner, (ox, oy))
 
