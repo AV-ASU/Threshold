@@ -860,6 +860,11 @@ class Game(GameDrawMixin):
             # evidence count (rot decals, turned/mutated locals, the
             # stage-3 Sheriff encounter).
             self._apply_infestation()
+        # Promote the main-road edge exits into folds: the arteries the
+        # player relies on become see-through + fade-free. Runs every load
+        # (after the builder/on_enter so the exits exist); idempotent.
+        from systems.folds import apply_road_folds
+        apply_road_folds(self.scene)
 
     def _river_blocks(self, target_x, target_y):
         """Custom passability for the brimley river. The `~` floor is

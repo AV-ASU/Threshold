@@ -63,6 +63,98 @@ def _iter_folds(scene):
             yield tx, ty, m
 
 
+# The main-road network: the arteries the player can rely on for
+# continuous, see-through, fade-free travel. Each entry promotes the named
+# edge exits of a scene into folds. Deliberately EXCLUDES:
+#   - building doors (H/D/M etc.): a fade reads as "stepping inside".
+#   - trap loops (highway_walk 'G', cornfield_maze warps): the fade/disorient
+#     IS the horror; making them seamless would defeat them.
+# Keyed by scene -> the exit chars on that scene that are main road.
+ROAD_SEAMS = {
+    "brimley":           ["4", "R"],         # -> country_lane, gravel_road_north
+    "country_lane":      ["a", "e"],         # -> brimley, our_house_area
+    "our_house_area":    ["a", "e"],         # -> country_lane, forest_path
+    "forest_path":       ["a"],              # -> our_house_area
+    "gravel_road_north": ["a", "e"],         # -> brimley, backwoods_cabin
+    "backwoods_cabin":   ["H"],              # -> gravel_road_north
+}
+
+
+def apply_road_folds(scene):
+    """Promote this scene's main-road edge exits into folds (see-through,
+    seamless). Called once per load from load_scene_now, after the builder
+    + on_enter. Idempotent: rebuilds tile_meta fold entries each load, and
+    only touches chars listed in ROAD_SEAMS for this scene."""
+    chars = ROAD_SEAMS.get(scene.key)
+    if not chars:
+        return 0
+    n = 0
+    for ch in chars:
+        n += promote_exit(scene, ch)
+    return n
+
+
+def promote_exit(scene, char, *, reveal_range=320.0, cone=0.45, window=2):
+    """Turn an existing edge exit into a fold: every tile carrying ``char``
+    becomes a seamless, see-through seam to the same target/spawn the plain
+    exit already names. The approach direction is inferred from which edge
+    the tiles sit on (left edge -> answers a westward walk, etc.), so a
+    main road reads as continuous travel -- the neighbour shows through and
+    you cross without a fade -- while building doors and trap exits keep
+    their plain (fading) behaviour.
+
+    The plain exit is left registered too: it's the fallback if the player
+    somehow lands on the tile without satisfying the fold's direction (the
+    fold check runs first in step() and wins when it fires)."""
+    data = scene.exits.get(char)
+    if data is None:
+        return 0
+    to_scene, to_spawn = data
+    tiles = [(tx, ty) for ty, row in enumerate(scene.objects)
+             for tx, ch in enumerate(row) if ch == char]
+    if not tiles:
+        return 0
+    # Infer approach dir from the tiles' position on the map edge.
+    xs = [t[0] for t in tiles]
+    ys = [t[1] for t in tiles]
+    on_left = min(xs) == 0
+    on_right = max(xs) == scene.w - 1
+    on_top = min(ys) == 0
+    on_bottom = max(ys) == scene.h - 1
+    if on_left:
+        d = (-1, 0)
+    elif on_right:
+        d = (1, 0)
+    elif on_top:
+        d = (0, -1)
+    elif on_bottom:
+        d = (0, 1)
+    else:
+        # Interior exit (not an edge): no obvious approach -- skip, leave
+        # it as a plain exit.
+        return 0
+    for (tx, ty) in tiles:
+        scene.tile_meta[(tx, ty)] = {
+            "fold": True, "dir": d,
+            "to_scene": to_scene, "to_spawn": to_spawn,
+            "reveal_range": reveal_range, "cone": cone, "window": window,
+        }
+    return len(tiles)
+
+
+def _far_tile(m, far):
+    """The tile in the far scene the peek is centred on. Explicit
+    ``to_tile`` wins; otherwise derive it from the landing spawn so a
+    promoted road exit needs no hand-typed coordinates."""
+    if "to_tile" in m:
+        return m["to_tile"]
+    spawn = m.get("to_spawn", "default")
+    sp = far.spawns.get(spawn) or far.spawns.get("default")
+    if sp:
+        return int(sp[0] // TILE), int(sp[1] // TILE)
+    return far.w // 2, far.h // 2
+
+
 def player_tile(game):
     return int(game.player.x // TILE), int(game.player.y // TILE)
 
@@ -93,7 +185,7 @@ def draw_reveals(game, surf):
                                    cos_thresh=cone, max_dist=rng):
             continue
         far = _far_scene(m["to_scene"])
-        ftx, fty = m["to_tile"]
+        ftx, fty = _far_tile(m, far)
         # Build the far window centred on the target tile, the same size as
         # a small patch around the fold (a single-tile "mirror"): a 5x5 tile
         # window reads as a doorway-sized peek without ballooning cost.
@@ -129,15 +221,15 @@ def try_cross(game):
     # Heading roughly the fold's way? (same cone test, tight.)
     if (dx * fx + dy * fy) < m.get("cross_dot", 0.6):
         return False
-    # Seamless: load far scene at the target tile, no transition fade.
-    ftx, fty = m["to_tile"]
+    # Seamless: load far scene at the landing, no transition fade.
     spawn = m.get("to_spawn")
     if spawn:
         game.load_scene_now(m["to_scene"], spawn, keep_music=True)
     else:
-        # No named spawn: land on the target tile directly. load_scene_now
-        # needs a spawn id; use 'default' then override the coords so the
-        # landing is exactly the mirrored tile.
+        # No named spawn: land on the explicit target tile directly.
+        # load_scene_now needs a spawn id; use 'default' then override the
+        # coords so the landing is exactly the mirrored tile.
+        ftx, fty = m["to_tile"]
         game.load_scene_now(m["to_scene"], "default", keep_music=True)
         game.player.x = ftx * TILE + TILE // 2
         game.player.y = fty * TILE + TILE // 2
