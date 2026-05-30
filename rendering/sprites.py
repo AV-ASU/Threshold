@@ -1523,7 +1523,7 @@ def _jag_blob(surf, cx, cy, rx, ry, col, seed, n=10, jit=0.36):
     pygame.draw.polygon(surf, col, pts)
 
 
-def door_mask_surface(height=120, vis=0.62):
+def door_mask_surface(height=120, vis=0.62, gaze=(0.0, 0.0), seed=0):
     """The wrong face the threshold wears, for the journal door-dream's
     one-frame flash: a carved DARK-WOOD mask (matches the dried doorframe +
     the cult's own carved masks). Rounded, slightly-imperfect oval with wood
@@ -1532,7 +1532,10 @@ def door_mask_surface(height=120, vis=0.62):
     and NO MOUTH at all, a blank lower face (the most alien, unsettling
     read). Kept fairly opaque so the wood reads dark even against the doorway
     glow, with a luminous halo around it. Built small + smooth-scaled up so
-    it surfaces half-seen. `vis` drives gaze brightness + a little opacity."""
+    it surfaces half-seen. `vis` drives gaze brightness + a little opacity.
+    `gaze` (gx, gy in -1..1) shifts the gold pupil within each socket so the
+    eyes can POINT -- e.g. toward the camera/player from anywhere on the
+    door, so a throng of them all turn to look at you."""
     # dark walnut: (highlight grain, base, shadow, deep split)
     WHI, WMID, WLO, WDK = (124, 90, 52), (84, 58, 34), (50, 34, 20), (26, 17, 10)
     r = 22
@@ -1562,14 +1565,28 @@ def door_mask_surface(height=120, vis=0.62):
     # RECESSED sockets: deep carved hollows (dark -> near-black gradient) with
     # the gold gaze deep at the bottom -- looking back from inside the wood.
     # NO MOUTH (blank lower face).
-    for dx, dy, sd in ((-0.40, -0.29, 11), (0.40, -0.30, 27)):
+    gx = max(-1.0, min(1.0, gaze[0]))
+    gy = max(-1.0, min(1.0, gaze[1]))
+    for dx, dy, sd in ((-0.40, -0.29, 11 + seed), (0.40, -0.30, 27 + seed)):
         ex, ey = int(mx + r * dx), int(my + r * dy)
         for i, (rr, a, c) in enumerate([(0.52, 185, (40, 30, 20)),
                                         (0.40, 215, (24, 18, 12)),
                                         (0.28, 240, (8, 6, 5))]):
             _jag_blob(base, ex, ey, r * rr, r * rr * 1.2, (*c, a),
                       sd + i, n=12, jit=0.22)
-        _yk_radial(base, ex, ey + 2, 2, _YK_HOT, int(95 * vis))   # deep spark
+        # the gold pupil sits in the socket, shifted by `gaze` so it POINTS --
+        # toward the camera from wherever this mask is. Drawn legibly: a soft
+        # bloom, a solid gold disc, and a white-hot centre so the aim reads
+        # even in a throng of small faces.
+        px = int(ex + gx * r * 0.22)
+        py = int(ey + 1 + gy * r * 0.22)
+        _yk_radial(base, px, py, 4, _YK_HOT, int(150 * vis))   # bloom
+        pygame.draw.circle(base, _YK_GOLD, (px, py), max(2, int(r * 0.13)))
+        pygame.draw.circle(base, _YK_HOT, (px, py), max(1, int(r * 0.07)))
+        try:
+            base.set_at((px, py), (255, 252, 236))            # white-hot core
+        except (IndexError, ValueError):
+            pass
     # one subtle wood split for carved character, clear of the sockets
     crk = [(int(mx + r * 0.54), int(my + r * 0.06)),
            (int(mx + r * 0.72), int(my + r * 0.50)),

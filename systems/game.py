@@ -210,8 +210,14 @@ GUN_CD = 0.45                  # seconds between shots
 GUN_DMG = 100                  # one clean shot kills any cultist (hp 1 or 30)
 GUN_STUN_DUR = 1.4             # stagger time at 3+ evidence
 FLASHBACK_DUR = 7.0            # seconds the journal door-dream still holds
-FLASHBACK_MASK_T = 3.6         # when His mask flashes, mid-dream
-FLASHBACK_MASK_FRAMES = 3      # how many frames His mask holds on screen
+FLASHBACK_MASK_FRAMES = 3      # frames each individual mask holds on screen
+# Mask SWARM: dark-wood faces flash all over the inside of the doorframe
+# (some clipped by it), starting slow ~START s in and accelerating to a
+# crowd that all stare back, then fading with the dream. RATE_* = masks/sec.
+FLASHBACK_SWARM_START = 2.0
+FLASHBACK_SWARM_PEAK = 5.5
+FLASHBACK_RATE_MIN = 1.5
+FLASHBACK_RATE_MAX = 420.0
 # Shooting an innocent local is loud AND wrong: it ratchets visibility
 # hard (the town turns its head) but is capped just under 1.0 so a single
 # murder can't itself summon the King -- the meter still has to climb the
@@ -550,11 +556,13 @@ class Game:
         self._flashback_phase = None
         self._flashback_t = 0.0
         self._flashback_stills = [(None, FLASHBACK_DUR)]
-        # Mask flash: tick arms a short frame countdown when _flashback_t
-        # crosses FLASHBACK_MASK_T; draw counts it down, drawing His face for
-        # FLASHBACK_MASK_FRAMES frames.
-        self._flashback_mask_flash = 0
-        self._flashback_mask_done = False
+        # Mask swarm: tick spawns dark-wood faces (accelerating) into
+        # _flashback_masks; draw blits + ages them. _flashback_pool caches
+        # pre-rendered masks (gaze x seed) so the climax is cheap.
+        self._flashback_masks = []
+        self._flashback_pool = None
+        self._flashback_spawn_acc = 0.0
+        self._flashback_stab_done = False
 
         # ---- THRESHOLD: ending state ----
         # _ending_active is the name of the ending currently
@@ -710,8 +718,10 @@ class Game:
         # Flashback / ending state
         self._flashback_phase = None
         self._flashback_t = 0.0
-        self._flashback_mask_flash = 0
-        self._flashback_mask_done = False
+        self._flashback_masks = []
+        self._flashback_pool = None
+        self._flashback_spawn_acc = 0.0
+        self._flashback_stab_done = False
         self._ending_active = None
         self._ending_phase = 0
         self._ending_phase_t = 0.0
@@ -1949,21 +1959,17 @@ class Game:
             self.save.set_flag("flashback_seen", True)
             self._flashback_phase = 0
             self._flashback_t = 0.0
-            self._flashback_mask_flash = 0
-            self._flashback_mask_done = False
+            self._flashback_masks = []
+            self._flashback_pool = None
+            self._flashback_spawn_acc = 0.0
+            self._flashback_stab_done = False
             self.audio.force_silence()
             self.audio.play("low_pulse", 0.85)
             self.audio.flashback_air(True)        # wind + falling bed
         if self._flashback_phase is None:
             return
         self._flashback_t += dt
-        # Arm the one-frame mask flash the moment we cross its time; draw
-        # consumes the flag this same frame, so His face shows for ~1 frame.
-        if (not self._flashback_mask_done
-                and self._flashback_t >= FLASHBACK_MASK_T):
-            self._flashback_mask_flash = FLASHBACK_MASK_FRAMES
-            self._flashback_mask_done = True
-            self.audio.play("wrong", 0.5)         # a stab under the flash
+        self._spawn_flashback_masks(dt)
         _, dur = self._flashback_stills[self._flashback_phase]
         if self._flashback_t >= dur:
             self._flashback_phase += 1
@@ -1971,6 +1977,8 @@ class Game:
             if self._flashback_phase >= len(self._flashback_stills):
                 # Done -- restore music, play a final chord.
                 self._flashback_phase = None
+                self._flashback_masks = []
+                self._flashback_pool = None
                 self.audio.flashback_air(False)   # fade the falling bed out
                 self.audio.music_muted = False
                 self.audio.play("breath", 0.7)
@@ -1978,6 +1986,56 @@ class Game:
                     self.audio.play_music(self.scene.music)
                 # Bump proximity hard -- the player KNOWS now.
                 self._provoke_cult(0.20)
+
+    _FB_GAZE = [(math.cos(a * math.tau / 8), math.sin(a * math.tau / 8))
+                for a in range(8)] + [(0.0, 0.0)]
+
+    def _build_flashback_pool(self):
+        """Pre-render the mask pool (gaze-direction x seed) so the swarm
+        climax blits dozens of faces per frame without re-rendering."""
+        from rendering.sprites import door_mask_surface
+        base = max(40, int(SCREEN_H * 0.22))
+        pool = {}
+        for gi, gz in enumerate(self._FB_GAZE):
+            for sd in range(4):
+                pool[(gi, sd)] = door_mask_surface(height=base, vis=0.66,
+                                                   gaze=gz, seed=sd)
+        self._flashback_pool = pool
+
+    def _spawn_flashback_masks(self, dt):
+        """Spawn dark-wood faces into the opening at an ACCELERATING rate --
+        slow at first, a crowd by the climax. Each gets a random spot (may
+        overrun the edges so the jamb clips it), a random size, and the gaze
+        variant aimed back at the player (opening centre)."""
+        if self._flashback_phase is None:
+            return
+        t = self._flashback_t
+        if t < FLASHBACK_SWARM_START:
+            return
+        if self._flashback_pool is None:
+            self._build_flashback_pool()
+        p = min(1.0, (t - FLASHBACK_SWARM_START)
+                / max(0.01, FLASHBACK_SWARM_PEAK - FLASHBACK_SWARM_START))
+        rate = FLASHBACK_RATE_MIN + (FLASHBACK_RATE_MAX - FLASHBACK_RATE_MIN) * p ** 2.4
+        if not self._flashback_stab_done:         # one stab as faces begin
+            self.audio.play("wrong", 0.5)
+            self._flashback_stab_done = True
+        self._flashback_spawn_acc += rate * dt
+        n = int(self._flashback_spawn_acc)
+        self._flashback_spawn_acc -= n
+        for _ in range(n):
+            xf = random.uniform(-0.14, 1.14)      # edge overrun -> clipped
+            yf = random.uniform(-0.08, 1.08)
+            scale = random.uniform(0.16, 0.30)
+            if random.random() < 0.18:
+                scale = random.uniform(0.34, 0.52)
+            vx, vy = 0.5 - xf, 0.5 - yf
+            if abs(vx) < 0.10 and abs(vy) < 0.10:
+                gi = 8
+            else:
+                gi = round(math.atan2(vy, vx) / (math.tau / 8)) % 8
+            self._flashback_masks.append(
+                [xf, yf, scale, gi, random.randint(0, 3), FLASHBACK_MASK_FRAMES])
 
     def _draw_flashback(self):
         """Render the journal door-dream (NARRATIVE 1b): an OPEN doorway of
@@ -2073,18 +2131,29 @@ class Game:
                                             (er.centerx - 1, er.top + 1,
                                              2, max(1, eh - 2)))
 
-            # ---- The mask, for ONE frame ----
-            # The subliminal flash (armed in _tick_flashback): a small carved
-            # DARK-WOOD face that surfaces in the glow for a single frame --
-            # gone before the eye is sure. The mask is OPAQUE, so the dark
-            # wood reads on top of the (still bright, still gold, still
-            # pulsing) glow rather than washing out -- no dimming of the glow,
-            # so its colour and pulse are untouched.
-            if self._flashback_mask_flash > 0:
-                self._flashback_mask_flash -= 1
-                fsurf = door_mask_surface(height=int(oh * 0.46), vis=0.66)
-                mcy = int(oh * 0.44)          # just above the opening's middle
-                inner.blit(fsurf, fsurf.get_rect(center=(int(icx), mcy)))
+            # ---- The mask swarm ----
+            # Spawned (accelerating) in _tick_flashback. Each face lives a
+            # few frames: blit its cached dark-wood mask (scaled to its size,
+            # at its spot -- some overrun so the jamb CLIPS them) and age it.
+            # Faces are OPAQUE (dark wood over the bright pulsing glow); their
+            # gold gaze aims back at the player.
+            pool = self._flashback_pool
+            if pool:
+                survivors = []
+                for m in self._flashback_masks:
+                    xf, yf, scale, gi, sd, life = m
+                    surf = pool.get((gi, sd))
+                    if surf is not None:
+                        th = max(2, int(oh * scale))
+                        tw = max(2, int(surf.get_width() * th
+                                        / surf.get_height()))
+                        scd = pygame.transform.smoothscale(surf, (tw, th))
+                        inner.blit(scd, scd.get_rect(
+                            center=(int(xf * ow), int(yf * oh))))
+                    m[5] = life - 1
+                    if m[5] > 0:
+                        survivors.append(m)
+                self._flashback_masks = survivors
 
             veil.blit(inner, (ox, oy))
 
