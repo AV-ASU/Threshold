@@ -1510,22 +1510,60 @@ def _yk_mask(surf, cx, cy, r, vis, kind, mouth=True):
     surf.blit(m, (cx - mx, cy - my))
 
 
-def king_face_surface(height=180, vis=0.9):
-    """HIS face, rendered alone for the journal door-dream's one-frame
-    subliminal flash: the SAME pallid, translucent screaming face that
-    surfaces from the King's light (_yk_mask, the dominant 'scream' mask) --
-    not the cult priest's carved mask. It's translucent by construction (the
-    glow reads through it), so it sits in the doorway glow exactly as it does
-    around Him. Built small and smooth-scaled up so the features stay soft --
-    dream-blurred, half-seen. `height` is the target surface size in px."""
-    r = 24
-    pad = r // 2 + 2
-    S = (r + pad) * 2 + 8
+def door_mask_surface(height=180, vis=0.9):
+    """A bespoke pallid mask for the journal door-dream's one-frame flash --
+    its OWN face, NOT the trap-ending scream (_yk_mask) nor the apex mask
+    that shatters (_yk_shatter_mask), but cut from the same cloth: sickly
+    bone tones, hollow eye-voids that kindle a faint gold gaze, the Yellow
+    Sign on the brow, a luminous halo, and translucent so the doorway glow
+    reads through it. CALM and watching -- the patient face the threshold
+    wears, the lure rather than the attack. Built small and smooth-scaled up
+    so the features stay soft, dream-blurred, half-seen. `height` is the
+    target surface size in px; `vis` drives translucency + gaze."""
+    hi, mid, lo, pit = _YK_MHI, _YK_MMID, _YK_MLO, _YK_MPIT
+    r = 26
+    pad = r // 2 + 5
+    S = (r + pad) * 2
     base = pygame.Surface((S, S), pygame.SRCALPHA)
-    _yk_mask(base, S // 2, S // 2, r, vis, "scream", True)
+    mx = my = S // 2
+    # luminous gold halo behind the face
+    _yk_radial(base, mx, my, r + 5, _YK_HOT, int(42 * vis))
+    # pallid oval head, lit upper-left (same build as _yk_face's plate)
+    rw, rh = r, int(r * 1.22)
+    pygame.draw.ellipse(base, lo, (mx - rw + 1, my - rh + 1, 2 * rw, 2 * rh))
+    pygame.draw.ellipse(base, mid, (mx - rw, my - rh, 2 * rw, 2 * rh))
+    pygame.draw.ellipse(base, hi, (mx - rw + 1, my - rh,
+                                   max(1, 2 * rw - 3), max(1, 2 * rh - 4)))
+    # brow + nose ridges, subtle
+    bw = max(1, r // 4)
+    pygame.draw.line(base, lo, (int(mx - r * 0.66), int(my - r * 0.40)),
+                     (int(mx - r * 0.08), int(my - r * 0.28)), bw)
+    pygame.draw.line(base, lo, (int(mx + r * 0.66), int(my - r * 0.40)),
+                     (int(mx + r * 0.08), int(my - r * 0.28)), bw)
+    pygame.draw.line(base, lo, (mx, int(my - r * 0.06)), (mx, int(my + r * 0.22)), 1)
+    pygame.draw.line(base, hi, (mx - 1, int(my - r * 0.06)), (mx - 1, int(my + r * 0.18)), 1)
+    # hollow oblong eye-voids, each kindling a faint gold gaze (not sockets)
+    ew = max(2, int(r * 0.30)); eh = max(3, int(r * 0.44))
+    for sgn in (-1, 1):
+        ex = int(mx + sgn * r * 0.42); ey = int(my - r * 0.04)
+        pygame.draw.ellipse(base, pit, (ex - ew // 2, ey - eh // 2, ew, eh))
+        _yk_radial(base, ex, ey, 2, _YK_HOT, int(120 * vis))
+        try:
+            base.set_at((ex, ey), _YK_HOT)
+        except (IndexError, ValueError):
+            pass
+    # a calm, barely-parted mouth -- a thin line, NOT a scream
+    pygame.draw.line(base, pit, (int(mx - r * 0.24), int(my + r * 0.58)),
+                     (int(mx + r * 0.24), int(my + r * 0.58)), 1)
+    # the Yellow Sign on the brow
+    _cult_sign(base, mx, int(my - r * 0.62), u=r / 13.0)
+    # one faint hairline -- a quiet nod to the mask that shatters, never the act
+    pygame.draw.line(base, lo, (int(mx + r * 0.10), int(my - rh * 0.82)),
+                     (int(mx + r * 0.18), int(my + r * 0.40)), 1)
     if height != S:
         h = max(1, int(height))
         base = pygame.transform.smoothscale(base, (h, h))
+    base.set_alpha(int(72 + 150 * vis))         # translucent: glow reads through
     return base
 
 

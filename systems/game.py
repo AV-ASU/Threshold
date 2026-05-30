@@ -14,7 +14,7 @@ from constants import (
 from rendering.sprites import (draw_player_sprite, draw_npc_sprite,
                                draw_npc_corpse, draw_infested_overlay,
                                draw_axe_swing, draw_king_death, draw_carcosa,
-                               draw_mask_yank, king_face_surface)
+                               draw_mask_yank, door_mask_surface)
 from rendering.transform import draw_vessel_bloom
 from ui.fonts import make_fonts
 from ui.dialog import DialogueBox
@@ -2071,14 +2071,14 @@ class Game:
                                             (er.centerx - 1, er.top + 1,
                                              2, max(1, eh - 2)))
 
-            # ---- His face, for ONE frame ----
-            # The subliminal flash (armed in _tick_flashback): the SAME
-            # pallid, translucent screaming face that surfaces from the King's
-            # light -- gone before the eye is sure. Translucent, so the
-            # doorway glow reads through it just as it does around Him.
+            # ---- The mask, for ONE frame ----
+            # The subliminal flash (armed in _tick_flashback): a bespoke
+            # pallid mask in His family -- calm, watching, the Sign on its
+            # brow -- gone before the eye is sure. Translucent, so the doorway
+            # glow reads through it just as it does around Him.
             if self._flashback_mask_flash:
                 self._flashback_mask_flash = False
-                fsurf = king_face_surface(height=int(oh * 0.82), vis=0.92)
+                fsurf = door_mask_surface(height=int(oh * 0.82), vis=0.92)
                 inner.blit(fsurf, fsurf.get_rect(center=(int(icx), int(icy))))
 
             veil.blit(inner, (ox, oy))
