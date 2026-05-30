@@ -237,6 +237,24 @@ def build_our_house_area():
         if 6 <= ty_ <= 8: continue
         sc.add_decoration(Decoration(gx, gy, "grass_tuft"))
 
+    # --- Spatial fold (demo) -------------------------------------------
+    # The lower yard holds a fold: look south across the grass and the
+    # country lane shows through where there should only be more yard;
+    # walk into it heading south and you cross to the lane seamlessly
+    # (no fade), landing where the lane meets the yard. Mirror + transition
+    # are one tile -- see systems/folds.py. Sits on open grass (12,13),
+    # clear of every exit and structure.
+    sc.tile_meta[(12, 13)] = {
+        "fold": True,
+        "dir": (0, 1),                  # answers a southward approach
+        "to_scene": "country_lane",
+        "to_tile": (15, 2),             # peek aimed at the lane's corn wall
+        "to_spawn": "from_our_house_area",  # crossing lands at the mouth
+        "reveal_range": 340.0,
+        "cone": 0.45,
+        "window": 2,
+    }
+
     return sc
 
 

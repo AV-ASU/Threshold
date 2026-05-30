@@ -961,6 +961,11 @@ class GameDrawMixin:
         self.screen.fill(C_BG)
         if not self.scene: return
         self.scene.draw(self.screen, self.cam_x, self.cam_y)
+        # Fold reveals: the far side of any in-sight fold shows through,
+        # drawn over terrain but under items/actors so the player walks
+        # "in front of" the peek. Pure presentation.
+        from systems.folds import draw_reveals
+        draw_reveals(self, self.screen)
         for it in self.scene.items:
             sx = int(it["x"] - self.cam_x); sy = int(it["y"] - self.cam_y)
             t = pygame.time.get_ticks() / 200.0

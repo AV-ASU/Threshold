@@ -613,6 +613,10 @@ class Game(GameDrawMixin):
         """Wipe all per-run state so a New Game starts clean. The
         Game instance is reused across Quit-to-Title -> New Game, so
         in-memory run state from a previous run is cleared here."""
+        # Cached far-side scenes for spatial folds -- drop so a New Game
+        # doesn't peek into a previous run's mutated world.
+        from systems.folds import reset_cache
+        reset_cache()
         # Visibility meter + the King in Yellow
         self.visibility = 0.0
         self._vis_floor = 0.0
@@ -2649,11 +2653,15 @@ class Game(GameDrawMixin):
                 self.scene._bloom_enabled = (
                     self._evidence_count() >= KING_GATE_EVIDENCE)
             if not world_frozen:
-                exit_data = self.scene.find_exit_at(
-                    self.player.x, self.player.y,
-                    facing=self.player.facing)
-                if exit_data:
-                    self.begin_transition(*exit_data)
+                # Folds first: a seamless cross takes precedence over a
+                # plain (fading) exit if they share a tile.
+                from systems.folds import try_cross
+                if not try_cross(self):
+                    exit_data = self.scene.find_exit_at(
+                        self.player.x, self.player.y,
+                        facing=self.player.facing)
+                    if exit_data:
+                        self.begin_transition(*exit_data)
             # Suspend scene update (NPC patrols, decoration anims, triggers)
             # while any modal is up so the world freezes behind it.
             if not world_frozen:
