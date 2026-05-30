@@ -142,7 +142,8 @@ def tisdale_boy_dialogue(game, npc):
     save.set_arg("kid_count", count)
     if count == 1:
         game.dialog.show([
-            "My dad went down too. He still comes home for dinner.",
+            "My mom hums a song that doesn't stop. She doesn't know "
+            "she's doing it.",
         ], speaker="Toby Tisdale", voice="blip_kid", portrait="tisdale_boy")
     elif count == 2:
         game.dialog.show([

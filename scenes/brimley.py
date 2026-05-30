@@ -692,7 +692,7 @@ def build_brimley():
     # step a while, then back indoors out of the cold that came early.
     _resident(63, 54, "Old Pell", "old_townsman", [
         "Cold came in early this year. Came in early last year, too.",
-        "Stopped marking the calendar. The days just fold back on themselves.",
+        "Stopped marking the calendar. Not the days -- where would I be counting toward?",
         "[c=dim]You're new. We don't get new. Nobody gets in. Nobody gets--[/c]",
     ], voice="blip_low", movement="homebody", radius=34)
     # Mrs. Calder is by the east-edge road -- the road her husband
@@ -747,8 +747,9 @@ def build_brimley():
     # ---- The loop, made visible ----
     # The residents say they can't leave; the town shows it. A payphone
     # that won't connect; missing-person flyers (one of them Mara);
-    # a clock stopped dead and a calendar clawed with tally-marks where
-    # the days fold back; the truck that drove for the county line and
+    # a clock stopped dead and a calendar marked up to a day months back
+    # and then stopped -- the season kept turning, the marking didn't (the
+    # fold is spatial, NARRATIVE 1b); the truck that drove for the county line and
     # was handed back, nosed dead into the east tree line; and Mrs.
     # Calder's plate, set for a husband who walked out to the highway.
     sc.add_decoration(Decoration(58 * TILE + 16, 62 * TILE + 16, "payphone"))
@@ -768,8 +769,10 @@ def build_brimley():
     sc._shed_door_pos = (91 * TILE + 16, 16 * TILE + 16)
     sc.add_decoration(Decoration(52 * TILE + 16, 61 * TILE + 16, "missing_flyer"))
     sc.add_decoration(Decoration(40 * TILE + 16, 27 * TILE + 16, "missing_flyer"))
-    # The calendar, every day crossed off the same, nailed to the
-    # schoolhouse wall beside the door (Old Pell: "the days fold back").
+    # The calendar, marked up to a day a few months back and then just
+    # stopped -- the season kept turning, the marking didn't (NARRATIVE
+    # 1b: time runs normally; it's space that folds). Nailed to the
+    # schoolhouse wall beside the door.
     sc.add_decoration(Decoration(62 * TILE + 16, 53 * TILE + 16, "calendar"))
     sc.add_decoration(Decoration(95 * TILE + 16, 55 * TILE + 16, "pickup_truck"))
     # A body face-down in the river, well south of the bridge -- the
