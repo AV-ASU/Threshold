@@ -860,11 +860,6 @@ class Game(GameDrawMixin):
             # evidence count (rot decals, turned/mutated locals, the
             # stage-3 Sheriff encounter).
             self._apply_infestation()
-        # Promote the main-road edge exits into folds: the arteries the
-        # player relies on become see-through + fade-free. Runs every load
-        # (after the builder/on_enter so the exits exist); idempotent.
-        from systems.folds import apply_road_folds
-        apply_road_folds(self.scene)
 
     def _river_blocks(self, target_x, target_y):
         """Custom passability for the brimley river. The `~` floor is
@@ -2658,15 +2653,11 @@ class Game(GameDrawMixin):
                 self.scene._bloom_enabled = (
                     self._evidence_count() >= KING_GATE_EVIDENCE)
             if not world_frozen:
-                # Folds first: a seamless cross takes precedence over a
-                # plain (fading) exit if they share a tile.
-                from systems.folds import try_cross
-                if not try_cross(self):
-                    exit_data = self.scene.find_exit_at(
-                        self.player.x, self.player.y,
-                        facing=self.player.facing)
-                    if exit_data:
-                        self.begin_transition(*exit_data)
+                exit_data = self.scene.find_exit_at(
+                    self.player.x, self.player.y,
+                    facing=self.player.facing)
+                if exit_data:
+                    self.begin_transition(*exit_data)
             # Suspend scene update (NPC patrols, decoration anims, triggers)
             # while any modal is up so the world freezes behind it.
             if not world_frozen:

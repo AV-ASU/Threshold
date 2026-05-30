@@ -1,34 +1,23 @@
-"""Spatial folds -- one tile type that both *reveals* and *connects*
-another region of the world (mirror and seamless-transition are the same
-primitive). A fold lives in ``scene.tile_meta[(tx, ty)]`` as::
+"""Seam previews -- the see-through half of the world's seamless
+transitions. The game already CROSSES outdoor scenes without a fade
+(``Game.begin_transition`` swaps the scene and preserves screen position
+whenever both scenes are in ``SEAMLESS_WORLD_SCENES``). This module adds
+the matching *visual*: as you near such a seam, the neighbouring scene is
+rendered THROUGH the map edge -- the road runs continuously across the
+threshold instead of cutting to the next screen.
 
-    {"fold": True,
-     "dir": (-1, 0),              # the approach the fold answers to (unit)
-     "to_scene": "country_lane",  # which scene the other side is
-     "to_spawn": "from_...",      # spawn there the crossing lands on
-     "to_tile": (tx, ty),         # OPTIONAL peek centre (else derived
-     "reveal_range": 320.0,       #   from the spawn)
-     "cone": 0.45, "window": 2}
+One rule, derived from the game's own classifier: a seam previews iff the
+crossing is seamless. That is exactly "every transition that isn't a door
+/ rope / ladder" -- ``SEAMLESS_WORLD_SCENES`` is the continuous outside
+world, so indoor scenes (house, bedroom, shops...) and underground scenes
+(the works, the well, the depths) are excluded automatically. They keep
+their fade; nothing folds into them.
 
-Two behaviours, both off the same tile:
-
-* **Reveal** (draw): a fold sits on a map edge (the road's seam). The far
-  scene is rendered into the *road band beyond that edge*, aligned so the
-  road runs continuously across the seam -- the neighbour shows THROUGH
-  the threshold instead of a fade. Only the fold tiles' own lateral band
-  is filled, so off-road tiles still show their wrap-clone: the road
-  crosses to the neighbour, the wilderness loops -- exactly the map's
-  fiction. Far scenes are built once and cached.
-
-* **Cross** (step): standing on a fold tile while heading along its
-  ``dir`` moves the player to the far side seamlessly -- no fade. Camera
-  re-snaps. Checked before the plain exit so the fold wins a shared tile.
-
-Built on existing primitives (draw_scene_terrain -- the wrap-aware region
-renderer, load_scene_now -- the landing). No new tile char, no new
-collision rule: a fold tile is whatever floor it was; tile_meta gives it
-meaning. Most folds are created by promote_exit (turning an edge exit into
-a seam); see ROAD_SEAMS for the main-road network.
+Mechanically the preview is pure presentation: it reads the scene's live
+edge exits, keeps only the ones whose target is also seamless-world, and
+fills the band beyond that edge with the neighbour (via the wrap-aware
+``draw_scene_terrain``), aligned on the landing spawn so the road lines
+up. It touches no game state and adds no tile char or collision rule.
 """
 
 import pygame
@@ -37,13 +26,13 @@ from constants import SCREEN_W, SCREEN_H, TILE
 from scenes.base import draw_scene_terrain
 
 
-# Far scenes are built lazily and cached so the reveal doesn't rebuild a
-# whole Scene every frame. Keyed by scene key. Cleared on run reset.
+# Neighbour scenes are built lazily and cached so a preview doesn't rebuild
+# a whole Scene every frame. Keyed by scene key. Cleared on run reset.
 _FAR_CACHE = {}
 
 
 def reset_cache():
-    """Drop cached far-side scenes (call on New Game / run reset)."""
+    """Drop cached neighbour scenes (call on New Game / run reset)."""
     _FAR_CACHE.clear()
 
 
@@ -56,132 +45,90 @@ def _far_scene(key):
     return sc
 
 
-def _iter_folds(scene):
-    """Yield (tx, ty, meta) for every fold tile in the scene."""
-    meta = getattr(scene, "tile_meta", None)
-    if not meta:
-        return
-    for (tx, ty), m in meta.items():
-        if m.get("fold"):
-            yield tx, ty, m
+def _seamless_set():
+    # Local import to avoid a module-load cycle (game imports scenes which
+    # ... eventually imports this). The set is the single source of truth
+    # for "continuous outside world": indoor + underground scenes are not
+    # in it, so they never preview.
+    from systems.game import SEAMLESS_WORLD_SCENES
+    return SEAMLESS_WORLD_SCENES
 
 
-# ---------------------------------------------------------------------------
-# The main-road network: the arteries the player relies on for continuous,
-# see-through, fade-free travel. Each entry promotes a scene's named edge
-# exits into folds. Deliberately EXCLUDES building doors (a fade reads as
-# "stepping inside") and the trap loops (highway_walk 'G', cornfield_maze
-# warps -- the disorient IS the horror).
-ROAD_SEAMS = {
-    "brimley":           ["4", "R"],     # -> country_lane, gravel_road_north
-    "country_lane":      ["a", "e"],     # -> brimley, our_house_area
-    "our_house_area":    ["a", "e"],     # -> country_lane, forest_path
-    "forest_path":       ["a"],          # -> our_house_area
-    "gravel_road_north": ["a", "e"],     # -> brimley, backwoods_cabin
-    "backwoods_cabin":   ["H"],          # -> gravel_road_north
-}
+_DIR_FROM_EDGE = {"W": (-1, 0), "E": (1, 0), "N": (0, -1), "S": (0, 1)}
 
 
-def apply_road_folds(scene):
-    """Promote this scene's main-road edge exits into folds. Called once per
-    load from load_scene_now (after builder + on_enter, so the exits
-    exist). Idempotent; only touches chars listed in ROAD_SEAMS."""
-    chars = ROAD_SEAMS.get(scene.key)
-    if not chars:
-        return 0
-    n = 0
-    for ch in chars:
-        n += promote_exit(scene, ch)
-    return n
-
-
-def promote_exit(scene, char, *, reveal_range=320.0, cone=0.45, window=2):
-    """Turn an existing edge exit into a fold: every tile carrying ``char``
-    becomes a seamless, see-through seam to the same target/spawn the plain
-    exit already names. The approach direction is inferred from which edge
-    the tiles sit on. Interior (non-edge) exits are left alone. The plain
-    exit stays registered as a fallback (the fold check runs first in step
-    and wins when it fires)."""
-    data = scene.exits.get(char)
-    if data is None:
-        return 0
-    to_scene, to_spawn = data
-    tiles = [(tx, ty) for ty, row in enumerate(scene.objects)
-             for tx, ch in enumerate(row) if ch == char]
-    if not tiles:
-        return 0
+def _edge_of(scene, tiles):
+    """Which map edge a run of exit tiles sits on, or None if interior.
+    Interior exits (warps, e.g. the cornfield groves' inward mouths) have
+    no edge band to spill a preview into."""
     xs = [t[0] for t in tiles]
     ys = [t[1] for t in tiles]
     if min(xs) == 0:
-        d = (-1, 0)
-    elif max(xs) == scene.w - 1:
-        d = (1, 0)
-    elif min(ys) == 0:
-        d = (0, -1)
-    elif max(ys) == scene.h - 1:
-        d = (0, 1)
-    else:
-        return 0                           # interior exit: no edge to fold
-    for (tx, ty) in tiles:
-        scene.tile_meta[(tx, ty)] = {
-            "fold": True, "dir": d,
-            "to_scene": to_scene, "to_spawn": to_spawn,
-            "reveal_range": reveal_range, "cone": cone, "window": window,
-        }
-    return len(tiles)
+        return "W"
+    if max(xs) == scene.w - 1:
+        return "E"
+    if min(ys) == 0:
+        return "N"
+    if max(ys) == scene.h - 1:
+        return "S"
+    return None
 
 
-def _far_tile(m, far):
-    """The tile in the far scene the seam aligns on. Explicit ``to_tile``
-    wins; else derive it from the landing spawn so a promoted road exit
-    needs no hand-typed coordinates."""
-    if "to_tile" in m:
-        return m["to_tile"]
-    sp = far.spawns.get(m.get("to_spawn", "default")) or far.spawns.get("default")
+def _seams(scene):
+    """Yield (to_scene, dir, tiles, spawn) for every previewable seam: an
+    EDGE exit whose target is also seamless-world. Derived live from the
+    scene's exits each call -- no registry, no tile_meta."""
+    if scene.key not in _seamless_set():
+        return
+    seamless = _seamless_set()
+    # Group exit tiles by char so a 3-tile-wide road mouth is one seam.
+    by_char = {}
+    for ty, row in enumerate(scene.objects):
+        for tx, ch in enumerate(row):
+            if ch in scene.exits:
+                by_char.setdefault(ch, []).append((tx, ty))
+    for ch, tiles in by_char.items():
+        to_scene, spawn = scene.exits[ch]
+        if to_scene not in seamless:
+            continue                          # door / underground / indoor: fade
+        edge = _edge_of(scene, tiles)
+        if edge is None:
+            continue                          # interior warp: nothing to spill
+        yield to_scene, _DIR_FROM_EDGE[edge], tiles, spawn
+
+
+def _far_align_tile(far, spawn):
+    """The neighbour tile the seam aligns on: its landing spawn, so the
+    road lines up across the threshold."""
+    sp = far.spawns.get(spawn) or far.spawns.get("default")
     if sp:
         return int(sp[0] // TILE), int(sp[1] // TILE)
     return far.w // 2, far.h // 2
 
 
-def player_tile(game):
-    return int(game.player.x // TILE), int(game.player.y // TILE)
-
-
-def fold_at(scene, tx, ty):
-    """The fold meta at a tile, or None."""
-    m = getattr(scene, "tile_meta", None)
-    if not m:
-        return None
-    d = m.get((tx, ty))
-    return d if (d and d.get("fold")) else None
-
-
 # ---------------------------------------------------------------------------
-# Reveal
+# Preview
 
 def draw_reveals(game, surf):
-    """Render the far side of each road seam THROUGH its edge: the
-    neighbour fills the road band beyond the map edge, aligned so the road
-    runs continuously across it. Drawn after terrain, under actors. Pure
-    presentation -- touches no game state."""
+    """Render the neighbour of each previewable seam THROUGH its edge: the
+    far scene fills the band beyond the map edge, aligned so the road runs
+    continuously across it. Drawn after terrain, under actors. Pure
+    presentation -- touches no game state. No-op in indoor/underground
+    scenes (they aren't seamless-world, so ``_seams`` yields nothing)."""
     scene = game.scene
-    # Group a scene's fold tiles into seams: same target + approach dir.
-    seams = {}
-    for tx, ty, m in _iter_folds(scene):
-        seams.setdefault((m["to_scene"], m["dir"]), []).append((tx, ty, m))
-    for (to_scene, d), tiles in seams.items():
-        _draw_seam(game, surf, to_scene, d, tiles)
+    for to_scene, d, tiles, spawn in _seams(scene):
+        _draw_seam(game, surf, to_scene, d, tiles, spawn)
 
 
-def _draw_seam(game, surf, to_scene, d, tiles):
+def _draw_seam(game, surf, to_scene, d, tiles, spawn):
     cam_x, cam_y = game.cam_x, game.cam_y
     dx, dy = d
     far = _far_scene(to_scene)
-    ftx, fty = _far_tile(tiles[0][2], far)
+    ftx, fty = _far_align_tile(far, spawn)
     txs = [t[0] for t in tiles]
     tys = [t[1] for t in tiles]
     tx0, tx1, ty0, ty1 = min(txs), max(txs), min(tys), max(tys)
-    # The band centre maps onto the far landing tile, so the far scene is
+    # The band centre maps onto the far landing tile, so the neighbour is
     # aligned for a continuous road across the seam.
     rtx, rty = (tx0 + tx1) // 2, (ty0 + ty1) // 2
     far_cam_x = (ftx - rtx) * TILE + cam_x
@@ -215,32 +162,3 @@ def _draw_seam(game, surf, to_scene, d, tiles):
     fy1 = int((tcy + cl.height) // TILE) + 2
     draw_scene_terrain(tmp, far, tcx, tcy, fx0, fy0, fx1, fy1)
     surf.blit(tmp, (cl.left, cl.top))
-
-
-# ---------------------------------------------------------------------------
-# Cross
-
-def try_cross(game):
-    """If the player is on a fold tile and heading along its ``dir``, move
-    them to the far side seamlessly (no fade). Returns True if a crossing
-    happened. Called from step() before the normal exit check so the fold
-    takes precedence over any plain exit sharing the tile."""
-    scene = game.scene
-    tx, ty = player_tile(game)
-    m = fold_at(scene, tx, ty)
-    if m is None:
-        return False
-    dx, dy = m.get("dir", (0, 0))
-    fx, fy = game.player.facing
-    if (dx * fx + dy * fy) < m.get("cross_dot", 0.6):
-        return False                        # not heading the fold's way
-    spawn = m.get("to_spawn")
-    if spawn:
-        game.load_scene_now(m["to_scene"], spawn, keep_music=True)
-    else:
-        ftx, fty = m["to_tile"]
-        game.load_scene_now(m["to_scene"], "default", keep_music=True)
-        game.player.x = ftx * TILE + TILE // 2
-        game.player.y = fty * TILE + TILE // 2
-        game._update_camera(snap=True)
-    return True
