@@ -203,7 +203,10 @@ def build_works_sorting():
     sc.set_spawn("from_below", 14, 5)
     sc.set_spawn("from_maras_room", 13, 1)   # back down from Mara's cell
 
-    # The belongings of the vanished, sorted into piles. Closed cases
+    # The worldly lives the congregation shed when they were claimed --
+    # and the effects of the few the fold took -- sorted into piles
+    # (NARRATIVE 1b/4: shed lives + the fold's lost, not murder victims).
+    # Closed cases
     # (chests, never opened by the player -- interactive=False so they
     # don't show a dead [E] prompt) + the stains of the work.
     for tx, ty in [(6, 3), (12, 7)]:
