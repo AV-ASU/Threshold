@@ -210,7 +210,8 @@ GUN_CD = 0.45                  # seconds between shots
 GUN_DMG = 100                  # one clean shot kills any cultist (hp 1 or 30)
 GUN_STUN_DUR = 1.4             # stagger time at 3+ evidence
 FLASHBACK_DUR = 7.0            # seconds the journal door-dream still holds
-FLASHBACK_MASK_T = 3.6         # when His mask flashes (one frame), mid-dream
+FLASHBACK_MASK_T = 3.6         # when His mask flashes, mid-dream
+FLASHBACK_MASK_FRAMES = 3      # how many frames His mask holds on screen
 # Shooting an innocent local is loud AND wrong: it ratchets visibility
 # hard (the town turns its head) but is capped just under 1.0 so a single
 # murder can't itself summon the King -- the meter still has to climb the
@@ -551,7 +552,7 @@ class Game:
         self._flashback_stills = [(None, FLASHBACK_DUR)]
         # Subliminal mask flash: tick arms it once when _flashback_t crosses
         # FLASHBACK_MASK_T; draw consumes it the same frame -> a 1-frame flash.
-        self._flashback_mask_flash = False
+        self._flashback_mask_flash = 0
         self._flashback_mask_done = False
 
         # ---- THRESHOLD: ending state ----
@@ -708,7 +709,7 @@ class Game:
         # Flashback / ending state
         self._flashback_phase = None
         self._flashback_t = 0.0
-        self._flashback_mask_flash = False
+        self._flashback_mask_flash = 0
         self._flashback_mask_done = False
         self._ending_active = None
         self._ending_phase = 0
@@ -1947,7 +1948,7 @@ class Game:
             self.save.set_flag("flashback_seen", True)
             self._flashback_phase = 0
             self._flashback_t = 0.0
-            self._flashback_mask_flash = False
+            self._flashback_mask_flash = 0
             self._flashback_mask_done = False
             self.audio.force_silence()
             self.audio.play("low_pulse", 0.85)
@@ -2079,7 +2080,7 @@ class Game:
             # pulsing) glow rather than washing out -- no dimming of the glow,
             # so its colour and pulse are untouched.
             if self._flashback_mask_flash:
-                self._flashback_mask_flash = False
+                self._flashback_mask_flash = 0
                 fsurf = door_mask_surface(height=int(oh * 0.46), vis=0.66)
                 inner.blit(fsurf, fsurf.get_rect(center=(int(icx), int(icy))))
 
