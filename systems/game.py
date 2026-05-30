@@ -14,7 +14,7 @@ from constants import (
 from rendering.sprites import (draw_player_sprite, draw_npc_sprite,
                                draw_npc_corpse, draw_infested_overlay,
                                draw_axe_swing, draw_king_death, draw_carcosa,
-                               draw_mask_yank, king_mask_surface)
+                               draw_mask_yank, king_face_surface)
 from rendering.transform import draw_vessel_bloom
 from ui.fonts import make_fonts
 from ui.dialog import DialogueBox
@@ -2020,35 +2020,33 @@ class Game:
         ox, oy = left + post, top + post        # inside-jamb top-left
         ow, oh = dw - 2 * post, dh - post       # opening size (no sill)
 
-        # ---- Radiating, pulsing yellow glow from the doorway ----
-        # A radial yellow glow centred on the opening that RADIATES out past
-        # the frame into the black, breathing on the pulse. Drawn straight to
-        # the veil; the solid wood frame (drawn after) cuts it off where the
-        # wood is, so light only escapes through the opening and bleeds around
-        # the frame -- the doorway reaching out for you.
-        gcx, gcy = cx, (top + bot) // 2
-        glow = pygame.Surface((SCREEN_W, SCREEN_H), pygame.SRCALPHA)
-        steps = 40
-        maxr = dh * 0.66 * (0.88 + 0.18 * pulse)    # radius breathes
-        for s in range(steps):
-            f = s / (steps - 1)                     # 0 outer -> 1 inner
-            rr = maxr * (1.0 - f)
-            a = int((5 + 165 * f * f) * (0.40 + 0.60 * pulse) * fade)
-            # yellow-gold: warmer/paler toward the core
-            col = (246, 200 + int(38 * f), 70 + int(46 * f), min(255, a))
-            rect = pygame.Rect(0, 0, int(rr * 1.28), int(rr * 1.62))
-            rect.center = (gcx, gcy)
-            pygame.draw.ellipse(glow, col, rect)
-        veil.blit(glow, (0, 0))
-
-        # ---- Eyes peeking from the light (clipped to the opening) ----
-        # A few small, faint eye-pairs that surface in the glow, hold, blink
-        # under -- staggered so they don't pulse together. They peek; they do
-        # not resolve into faces.
+        # Everything inside the doorway is drawn on one opening-sized surface
+        # and blitted into the opening only -- so the glow is CONTAINED by the
+        # frame and never leaks out past the wood into the black. The frame is
+        # the black rectangle around it; the dream happens through the hole.
         if ow > 6 and oh > 6:
-            peek = pygame.Surface((ow, oh), pygame.SRCALPHA)
-            eyes = [(0.36, 0.40, 0.0), (0.62, 0.54, 1.9),
-                    (0.50, 0.30, 3.7)]
+            inner = pygame.Surface((ow, oh), pygame.SRCALPHA)
+            icx, icy = ow / 2, oh * 0.5
+
+            # ---- Radiating, pulsing yellow glow ----
+            # Radial yellow glow centred in the opening, breathing on the
+            # pulse, falling to dark at the edges where the jamb cuts it off.
+            steps = 38
+            maxr = max(ow, oh) * 0.62
+            for s in range(steps):
+                f = s / (steps - 1)                 # 0 outer -> 1 inner
+                rr = maxr * (1.0 - f)
+                a = int((6 + 168 * f * f) * (0.40 + 0.60 * pulse) * fade)
+                col = (246, 200 + int(38 * f), 70 + int(46 * f), min(255, a))
+                rect = pygame.Rect(0, 0, int(rr * 1.5), int(rr * 1.62))
+                rect.center = (int(icx), int(icy))
+                pygame.draw.ellipse(inner, col, rect)
+
+            # ---- Eyes peeking from the light ----
+            # A few small, faint eye-pairs that surface, hold, blink under --
+            # staggered so they don't pulse together. They peek; they never
+            # resolve into faces.
+            eyes = [(0.36, 0.40, 0.0), (0.62, 0.54, 1.9), (0.50, 0.30, 3.7)]
             for ex, ey, off in eyes:
                 cyc = ((now + off) % 4.4) / 4.4
                 pres = max(0.0, min(1.0, math.sin(math.pi * cyc) ** 2.0))
@@ -2067,27 +2065,23 @@ class Game:
                 for sgn in (-1, 1):
                     er = pygame.Rect(0, 0, ew, eh)
                     er.center = (int(exx + sgn * gap), int(eyy))
-                    pygame.draw.ellipse(peek, (230, 222, 190, a), er)
+                    pygame.draw.ellipse(inner, (230, 222, 190, a), er)
                     if eh >= 4:                     # a dark pupil when open
-                        pygame.draw.ellipse(peek, (26, 18, 12, a),
+                        pygame.draw.ellipse(inner, (26, 18, 12, a),
                                             (er.centerx - 1, er.top + 1,
                                              2, max(1, eh - 2)))
-            veil.blit(peek, (ox, oy))
 
-        # ---- His mask, for ONE frame ----
-        # The subliminal flash (armed in _tick_flashback). The SAME Pallid
-        # Mask the King wears, scaled to fill the doorway -- gone before the
-        # eye is sure it saw it. Clipped to the opening (drawn before the
-        # frame), so He's behind the door.
-        if self._flashback_mask_flash and ow > 6 and oh > 6:
-            self._flashback_mask_flash = False
-            mh = int(oh * 0.74)
-            msurf = king_mask_surface(height=mh, bloom=1.0)
-            mrect = msurf.get_rect(center=(cx, oy + oh // 2))
-            clip = veil.get_clip()
-            veil.set_clip(pygame.Rect(ox, oy, ow, oh))
-            veil.blit(msurf, mrect)
-            veil.set_clip(clip)
+            # ---- His face, for ONE frame ----
+            # The subliminal flash (armed in _tick_flashback): the SAME
+            # pallid, translucent screaming face that surfaces from the King's
+            # light -- gone before the eye is sure. Translucent, so the
+            # doorway glow reads through it just as it does around Him.
+            if self._flashback_mask_flash:
+                self._flashback_mask_flash = False
+                fsurf = king_face_surface(height=int(oh * 0.82), vis=0.92)
+                inner.blit(fsurf, fsurf.get_rect(center=(int(icx), int(icy))))
+
+            veil.blit(inner, (ox, oy))
 
         # ---- The dried wood frame, drawn ON TOP (occludes the glow/shapes
         # at the threshold -- that IS the 'cut off by the frame') ----

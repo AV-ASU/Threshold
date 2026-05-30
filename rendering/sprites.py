@@ -299,20 +299,6 @@ def _pallid_mask(surf, sx, mcy, view, mdir, bloom):
         _cult_glow(surf, evs[0][0], evs[0][1], 2, 10 + int(bloom * 16))
 
 
-def king_mask_surface(height=34, bloom=1.0):
-    """His Pallid Mask, rendered ALONE on a transparent surface, for the
-    journal door-dream's single-frame subliminal flash. Reuses _pallid_mask
-    so the dream shows the EXACT face the King wears -- naming what's behind
-    the door without a word. `height` scales the result; `bloom` kindles the
-    gold behind the eye-void."""
-    base = pygame.Surface((28, 36), pygame.SRCALPHA)
-    _pallid_mask(base, 14, 16, "front", 0, bloom)
-    if height != 36:
-        w = max(1, int(28 * height / 36))
-        base = pygame.transform.smoothscale(base, (w, height))
-    return base
-
-
 def _draw_curse_priest_raw(surf, x, y, t, facing=(0, 1), curse=0.0):
     """The curse-priest -- a cultist His King has opened and is wearing,
     rendered as SUGGESTION in our muddy register (not a gory totem). ONE
@@ -1522,6 +1508,25 @@ def _yk_mask(surf, cx, cy, r, vis, kind, mouth=True):
         _yk_face(m, mx, my, r, _YK_EXPR.get(kind, kind), detail, mouth)
     m.set_alpha(int(64 + 156 * vis))
     surf.blit(m, (cx - mx, cy - my))
+
+
+def king_face_surface(height=180, vis=0.9):
+    """HIS face, rendered alone for the journal door-dream's one-frame
+    subliminal flash: the SAME pallid, translucent screaming face that
+    surfaces from the King's light (_yk_mask, the dominant 'scream' mask) --
+    not the cult priest's carved mask. It's translucent by construction (the
+    glow reads through it), so it sits in the doorway glow exactly as it does
+    around Him. Built small and smooth-scaled up so the features stay soft --
+    dream-blurred, half-seen. `height` is the target surface size in px."""
+    r = 24
+    pad = r // 2 + 2
+    S = (r + pad) * 2 + 8
+    base = pygame.Surface((S, S), pygame.SRCALPHA)
+    _yk_mask(base, S // 2, S // 2, r, vis, "scream", True)
+    if height != S:
+        h = max(1, int(height))
+        base = pygame.transform.smoothscale(base, (h, h))
+    return base
 
 
 # A shed SOUL-ORB in the wake is drawn in two passes (glow, then faces) so that
