@@ -146,10 +146,16 @@ def main():
     for flag in ("first_antechamber", "first_procession", "first_hall",
                  "first_depthstair"):
         check(g.save.flag(flag), f"depths: {flag} narration fired on entry")
-    # The journal flashback is authored, not placeholder dots.
-    flash = " ".join(line for line, _ in g._flashback_stills)
-    check("..." not in flash and len(flash) > 60,
-          "flashback: the witnessing stills are authored")
+    # The journal flashback is now a WORDLESS visual dream (the burning
+    # doorway + the accelerating mask swarm), not text stills: a single
+    # None-line phase held for FLASHBACK_DUR. Assert the visual mechanics
+    # exist rather than authored prose.
+    check(g._flashback_stills == [(None, __import__("systems.game",
+          fromlist=["FLASHBACK_DUR"]).FLASHBACK_DUR)],
+          "flashback: the dream is a single wordless visual phase")
+    check(hasattr(g, "_spawn_flashback_masks")
+          and hasattr(g, "_build_flashback_pool"),
+          "flashback: the mask-swarm system is wired")
 
     # --- 6. The hive: speaking to Mara is the #6 payoff ---
     g.load_scene_now("dark")
@@ -264,6 +270,58 @@ def main():
     src = inspect.getsource(_ml.build_brimley)
     check("car_keys" not in src,
           "escape: the car no longer checks for car_keys")
+
+    # --- 14. "He knows you": the dream note + Threshold recognition ---
+    # Living the journal door-dream writes a personal NOTE (not a clue), and
+    # arriving at the real Threshold having dreamed it lands a recognition
+    # line before the doorframe beat.
+    gd = new_game()
+    gd.load_scene_now("bedroom", "default")
+    gd.state = "playing"
+    ev_pre = gd._evidence_count()
+    gd.save.set_flag("flashback_pending", True)
+    gd._tick_flashback(1 / 60.0)
+    guard = 0
+    while gd._flashback_phase is not None and guard < 2000:
+        gd.screen.fill((0, 0, 0))
+        gd._draw_flashback()
+        gd._tick_flashback(1 / 60.0)
+        guard += 1
+    notes = gd.save.arg("notes", [])
+    check(any(isinstance(e, dict) and e.get("name") == "the_dream"
+              for e in notes),
+          "heknows: the dream logs a case-notebook NOTE")
+    check(gd._evidence_count() == ev_pre,
+          "heknows: the dream note never inflates the evidence/King gate")
+    gd._log_dream_entry()                     # idempotent: no duplicate
+    check(sum(1 for e in gd.save.arg("notes", [])
+              if isinstance(e, dict) and e.get("name") == "the_dream") == 1,
+          "heknows: re-logging the dream does not duplicate the note")
+    # Recognition line at the real Threshold (only when dreamed).
+    from scenes import load_scene as _load
+    seen = []
+    gd2 = new_game(); gd2.save.set_flag("flashback_seen", True)
+    gd2.dialog.show = (lambda real: (lambda p, **k: (
+        seen.append((p if isinstance(p, list) else [p])[0]), real(p, **k))[1]
+    ))(gd2.dialog.show)
+    sct = _load("threshold")
+    sct.on_enter_fn(gd2, sct)
+    guard = 0
+    while gd2.dialog.active and guard < 50:
+        gd2.dialog.advance(); guard += 1
+    check(seen and "in sleep" in seen[0].lower(),
+          "heknows: dreamed -> recognition line lands at the Threshold")
+    check(any("doorframe" in s.lower() for s in seen),
+          "heknows: the doorframe beat still follows the recognition")
+    seen2 = []
+    gd3 = new_game()                          # never dreamed
+    gd3.dialog.show = (lambda real: (lambda p, **k: (
+        seen2.append((p if isinstance(p, list) else [p])[0]), real(p, **k))[1]
+    ))(gd3.dialog.show)
+    sct3 = _load("threshold")
+    sct3.on_enter_fn(gd3, sct3)
+    check(seen2 and "in sleep" not in seen2[0].lower(),
+          "heknows: never dreamed -> no recognition line (doorframe only)")
 
     print()
     if FAILS:
