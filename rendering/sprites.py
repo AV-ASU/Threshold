@@ -1525,84 +1525,54 @@ def _jag_blob(surf, cx, cy, rx, ry, col, seed, n=10, jit=0.36):
 
 def door_mask_surface(height=120, vis=0.62):
     """The wrong face the threshold wears, for the journal door-dream's
-    one-frame flash. Authored to match the King's pallid-face family (gaunt
-    oblong bone plate, brow/nose ridges, a jagged fracture down one side) --
-    NOT the trap scream, NOT the apex mask that shatters -- but with two
-    deliberate notes the shared art can't give: the bone is held TRANSLUCENT
-    (the doorway glow reads through it) while the eye-voids are near-OPAQUE
-    pure black, far darker than the glow (a hard juxtaposition), each still
-    holding its pinpoint gold gaze; and the eyes + mouth are IRREGULAR
-    (jagged, lopsided), never clean oblongs or circles. Built small and
-    smooth-scaled up so it surfaces soft and half-seen from deep in the
-    light. `vis` drives the bone translucency + gaze brightness."""
-    hi, mid, lo = _YK_MHI, _YK_MMID, _YK_MLO
+    one-frame flash: a carved DARK-WOOD mask (matches the dried doorframe +
+    the cult's own carved masks). Rounded, slightly-imperfect oval with wood
+    grain; deep RECESSED eye-sockets -- carved hollows with the gold gaze
+    sitting far back in shadow (it looks back at you from inside the wood) --
+    and NO MOUTH at all, a blank lower face (the most alien, unsettling
+    read). Kept fairly opaque so the wood reads dark even against the doorway
+    glow, with a luminous halo around it. Built small + smooth-scaled up so
+    it surfaces half-seen. `vis` drives gaze brightness + a little opacity."""
+    # dark walnut: (highlight grain, base, shadow, deep split)
+    WHI, WMID, WLO, WDK = (124, 90, 52), (84, 58, 34), (50, 34, 20), (26, 17, 10)
     r = 22
-    rw, rh = r, int(r * 1.42)                 # taller than wide, but still an
-    pad = max(6, r // 2 + 8)                   # OVAL -- not elongated/melted
+    rw, rh = r, int(r * 1.42)                 # rounded oval, taller than wide
+    pad = max(6, r // 2 + 8)
     S = (rw + pad) * 2
-    Sh = (rh + pad) * 2                       # canvas tall enough for the plate
+    Sh = (rh + pad) * 2
     base = pygame.Surface((S, Sh), pygame.SRCALPHA)
     mx, my = S // 2, Sh // 2
-    pa = int(150 * vis + 40)                  # bone-plate alpha (translucent)
-    # luminous gold halo behind the face
-    _yk_radial(base, mx, my, int(rh * 0.82), _YK_HOT, int(40 * vis))
-    # ROUNDED bone plate, lit upper-left -- a smooth oval with only a SUBTLE
-    # imperfection in the edge (many points, low jitter), never jagged/melted.
-    # Same seed across layers -> a coherent silhouette.
-    _jag_blob(base, mx, my, rw + 1, rh + 1, (*lo, pa), 4, n=30, jit=0.055)
-    _jag_blob(base, mx, my, rw, rh - 1, (*mid, pa), 4, n=30, jit=0.055)
-    _jag_blob(base, mx - 1, my - 2, rw - 2, rh - 3, (*hi, pa), 4, n=30, jit=0.055)
-    # EYES -- the whole event. Near-opaque BLACK voids (darker than the glow)
-    # with a forward-LOCKED gold gaze: it looks back AT you. Near-symmetric so
-    # the stare is direct (not wandering), only slightly irregular in shape.
-    void = (3, 3, 6, 244)
-    eyes = [(-0.42, -0.29, 0.32, 0.44, 11),   # (dx, dy, rx, ry, seed) -- left
-            (0.42, -0.30, 0.30, 0.42, 27)]    # right: a touch smaller
-    for dx, dy, erx, ery, sd in eyes:
+    pa = min(244, int(150 * vis + 110))       # darkwood -> mostly opaque
+    # luminous gold halo behind the wood
+    _yk_radial(base, mx, my, int(rh * 0.84), _YK_HOT, int(42 * vis))
+    # rounded carved-wood plate (subtle imperfect edge), lit upper-left
+    _jag_blob(base, mx, my, rw + 1, rh + 1, (*WDK, pa), 4, n=30, jit=0.06)
+    _jag_blob(base, mx, my, rw, rh - 1, (*WMID, pa), 4, n=30, jit=0.06)
+    _jag_blob(base, mx - 1, my - 2, int(rw * 0.86), int((rh - 3) * 0.9),
+              (*WHI, int(pa * 0.5)), 4, n=30, jit=0.06)
+    # vertical wood grain (kept inside the oval so it never pokes out)
+    for gi in range(7):
+        gx = int(mx + (gi - 3) / 3.4 * rw * 0.78)
+        col = WHI if gi in (2, 5) else WLO
+        pts = [(int(gx + math.sin(s * 0.9 + gi) * 1.4),
+                int(my - rh * 0.58 + (rh * 1.16) * s / 9)) for s in range(10)]
+        pygame.draw.lines(base, (*col, int(pa * 0.55)), False, pts, 1)
+    # RECESSED sockets: deep carved hollows (dark -> near-black gradient) with
+    # the gold gaze deep at the bottom -- looking back from inside the wood.
+    # NO MOUTH (blank lower face).
+    for dx, dy, sd in ((-0.40, -0.29, 11), (0.40, -0.30, 27)):
         ex, ey = int(mx + r * dx), int(my + r * dy)
-        _jag_blob(base, ex, ey, r * erx, r * ery, void, sd, n=12, jit=0.24)
-        # gaze CENTRED in the void -> both eyes meet yours; a hot core in a
-        # soft gold bloom, so it reads as a live, looking pupil.
-        _yk_radial(base, ex, ey, 4, _YK_HOT, int(150 * vis))
-        try:
-            pygame.draw.circle(base, _YK_HOT, (ex, ey), 1)
-            base.set_at((ex, ey), (255, 250, 232))
-        except (IndexError, ValueError):
-            pass
-    # BROWS: a faint bone ridge over each eye, nearly level (only a slight
-    # inward tilt) -- it FRAMES the stare rather than furrowing it angry.
-    pygame.draw.line(base, (*lo, pa),
-                     (int(mx - r * 0.66), int(my - r * 0.55)),
-                     (int(mx - r * 0.20), int(my - r * 0.52)), 2)
-    pygame.draw.line(base, (*lo, pa),
-                     (int(mx + r * 0.64), int(my - r * 0.57)),
-                     (int(mx + r * 0.18), int(my - r * 0.54)), 2)
-    # a faint nose ridge down the empty mid-face
-    pygame.draw.line(base, (*lo, pa), (mx, int(my - r * 0.06)),
-                     (int(mx - 1), int(my + r * 0.34)), 1)
-    # MOUTH: SEWN SHUT -- a wide dark lip-seam laced with crude, uneven
-    # stitches (the cult's bone-thread motif). Quiet at a glance, deeply wrong
-    # up close; it unsettles without the scream-gape stealing the stare.
-    mym = my + r * 0.66
-    seam = [(mx - r * 0.38, mym + 1), (mx - r * 0.12, mym - 1),
-            (mx + r * 0.10, mym), (mx + r * 0.36, mym - 2)]
-    seam = [(int(a), int(b)) for a, b in seam]
-    pygame.draw.lines(base, (3, 3, 6, 238), False, seam, 2)
-    thread = (66, 56, 36, 235)
-    st = max(2, int(r * 0.13))
-    for k, fx in enumerate((-0.30, -0.15, 0.0, 0.16, 0.30)):
-        sxs = int(mx + r * fx)
-        sky = int(mym + (1 if k % 2 else -1))    # ride the wavy seam
-        tilt = 1 if k % 2 else -1                # crude, alternating slant
-        pygame.draw.line(base, thread, (sxs - tilt, sky - st),
-                         (sxs + tilt, sky + st), 1)
-    # a fracture bowed OUT around the right eye to the cheek -- clear of the
-    # eyes/centre so the gaze owns the face -- from temple down to the jaw.
-    crk = [(int(mx + r * 0.58), int(my - rh * 0.50)),
-           (int(mx + r * 0.80), int(my - r * 0.10)),
-           (int(mx + r * 0.66), int(my + r * 0.42)),
-           (int(mx + r * 0.46), int(my + rh * 0.58))]
-    pygame.draw.lines(base, (*lo, pa), False, crk, 1)
+        for i, (rr, a, c) in enumerate([(0.52, 185, (40, 30, 20)),
+                                        (0.40, 215, (24, 18, 12)),
+                                        (0.28, 240, (8, 6, 5))]):
+            _jag_blob(base, ex, ey, r * rr, r * rr * 1.2, (*c, a),
+                      sd + i, n=12, jit=0.22)
+        _yk_radial(base, ex, ey + 2, 2, _YK_HOT, int(95 * vis))   # deep spark
+    # one subtle wood split for carved character, clear of the sockets
+    crk = [(int(mx + r * 0.54), int(my + r * 0.06)),
+           (int(mx + r * 0.72), int(my + r * 0.50)),
+           (int(mx + r * 0.52), int(my + rh * 0.60))]
+    pygame.draw.lines(base, (*WDK, pa), False, crk, 1)
     # Scale to the target HEIGHT, preserving the tall aspect (don't squash).
     h = max(1, int(height))
     if h != Sh:

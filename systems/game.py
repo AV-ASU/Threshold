@@ -2072,14 +2072,24 @@ class Game:
                                              2, max(1, eh - 2)))
 
             # ---- The mask, for ONE frame ----
-            # The subliminal flash (armed in _tick_flashback): a small, wrong
-            # pallid face (His 'vacant' mask) that surfaces DEEP in the glow
-            # for a single frame -- gone before the eye is sure. Drawn small
-            # so it reads as a little wrong thing far back in the light, not a
-            # face filling the door; translucent, so the glow reads through.
+            # The subliminal flash (armed in _tick_flashback): a small carved
+            # DARK-WOOD face that surfaces deep in the glow for a single frame
+            # -- gone before the eye is sure. The glow is knocked DOWN this
+            # one frame (a soft dark pocket) so the dark wood + deep gold eyes
+            # punch instead of washing out against the bright light.
             if self._flashback_mask_flash:
                 self._flashback_mask_flash = False
-                fsurf = door_mask_surface(height=int(oh * 0.40), vis=0.66)
+                dim = pygame.Surface((ow, oh), pygame.SRCALPHA)
+                for k in range(10):               # soft dark vignette, darkest
+                    f = k / 9.0                    # at the centre where the
+                    drx = int(ow * 0.56 * (1.0 - 0.66 * f))   # glow is brightest
+                    dry = int(oh * 0.50 * (1.0 - 0.66 * f))
+                    da = int(46 + 150 * f)
+                    rect = pygame.Rect(0, 0, drx * 2, dry * 2)
+                    rect.center = (int(icx), int(icy))
+                    pygame.draw.ellipse(dim, (6, 5, 4, da), rect)
+                inner.blit(dim, (0, 0))
+                fsurf = door_mask_surface(height=int(oh * 0.46), vis=0.66)
                 inner.blit(fsurf, fsurf.get_rect(center=(int(icx), int(icy))))
 
             veil.blit(inner, (ox, oy))
