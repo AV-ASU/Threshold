@@ -1422,8 +1422,7 @@ class Game:
         self.audio.play("enemy_die", 0.55, pan=pan)
         tag = getattr(npc, "tag", None)
         is_cult = ((isinstance(tag, str) and tag.startswith("cult_"))
-                   or getattr(npc, "sprite_kind", None)
-                   in ("cultist", "curse_priest"))
+                   or getattr(npc, "sprite_kind", None) == "cultist")
         arg = "enemy_kills" if is_cult else "nonhostile_kills"
         self.save.set_arg(arg, self.save.arg(arg, 0) + 1)
         for drop in getattr(npc, "drops", []):

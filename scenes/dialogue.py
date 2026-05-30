@@ -284,10 +284,11 @@ def sheriff_dialogue(game, npc):
         ], speaker="", voice="blip_soft", portrait="sheriff")
 
 
-# ---- The Clerk ----
+# ---- The Clerk: Mr. Sable ----
 
 def clerk_dialogue(game, npc):
-    """The Lodge Clerk -- the smiling trap-keeper (NARRATIVE §2). Complicit:
+    """The Lodge Clerk, Mr. Sable -- the smiling trap-keeper (NARRATIVE §2).
+    A newcomer who came early and stayed to keep the door. Complicit:
     he keeps you comfortable, keeps you here, and never admits the town won't
     let you leave. The old fetch-quest chain (crate -> cellar bottle -> car
     keys) is cut -- the car answers only to the Sign now, so he has no keys
@@ -300,6 +301,8 @@ def clerk_dialogue(game, npc):
     save.set_arg("clerk_count", count)
     if count == 1:
         plain = [
+            "Sable -- I keep the desk here. Anything you need, you ask me. "
+            "Anything at all.",
             "Settling in all right? Good. Most folks do, once they stop "
             "fighting it.",
             "[c=dim]He doesn't ask what brought you. He just smiles, like "
@@ -308,7 +311,8 @@ def clerk_dialogue(game, npc):
             "some rest.",
         ]
         game.dialog.show(escalate(game, low=plain, mid=plain, high=plain),
-                         speaker="Clerk", voice="blip_low", portrait="clerk")
+                         speaker="Mr. Sable", voice="blip_low",
+                         portrait="clerk")
         return
     if count == 2:
         game.dialog.show([
@@ -316,25 +320,25 @@ def clerk_dialogue(game, npc):
             "[c=dim]If you're the restless sort, there's an old guest "
             "register down in the cellar. Hatch under the kitchen.[/c]",
             "Read it if you like. Won't change a thing.",
-        ], speaker="Clerk", voice="blip_low", portrait="clerk")
+        ], speaker="Mr. Sable", voice="blip_low", portrait="clerk")
         return
     if count == 3:
         game.dialog.show([
             "Still asking your questions. That's fine. Ask away.",
             "[c=dim]She asked hers too, the Blaine girl. Right up until she "
             "stopped needing to.[/c]",
-        ], speaker="Clerk", voice="blip_low", portrait="clerk")
+        ], speaker="Mr. Sable", voice="blip_low", portrait="clerk")
         return
     if count == 4:
         game.dialog.show([
             "[c=dim]He smiles, and it doesn't reach anything.[/c]",
             "You're not a guest who checks out. None of my best ones are.",
-        ], speaker="Clerk", voice="blip_low", portrait="clerk")
+        ], speaker="Mr. Sable", voice="blip_low", portrait="clerk")
         return
     game.dialog.show(
         ["[c=dim]He nods you toward the stairs, patient as a man with all "
          "the time in the world.[/c]"],
-        speaker="Clerk", voice="blip_low", portrait="clerk")
+        speaker="Mr. Sable", voice="blip_low", portrait="clerk")
 
 
 def basement_photo_dialogue(game, npc):

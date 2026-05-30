@@ -7,7 +7,9 @@ Each scene is small, atmospheric, and read-only -- the player witnesses
 something they're not supposed to see, can leave the way they came, and
 the scene exists to close a thread in the canon:
 
-  curse_grove     -- the curse-priest's workshop (closes bible §8 TODO)
+  curse_grove     -- a cult work-clearing tended by no one: the dead fire,
+                     the effigy ring, the nailed-up faces, no worker (the
+                     curse-priest is cut -- the rite claimed the town at once)
   lodge_arrival   -- Mara's arrival at the Lodge, witnessed (makes the
                      "she chose this" beat concrete)
   highway_walk    -- the road the missing locals walked out on, where it
@@ -24,7 +26,7 @@ from entities.npc import NPC
 from .base import Scene
 
 
-# ----- #2: The Curse-Priest's Grove ---------------------------------
+# ----- #2: The Work-Clearing (no worker) ----------------------------
 
 def build_curse_grove():
     """A small clearing the cult once worked, found only by walking
@@ -111,15 +113,13 @@ def build_curse_grove():
                                  "watching_wound", size="small"))
     sc.add_decoration(Decoration(13 * TILE + 8, 6 * TILE + 16,
                                  "watching_wound", size="small"))
-    # ---- The curse-priest ----
-    # A robed figure stationed at the fire. The bible's stalker NPC
-    # finally has a home and a thing he's doing. He doesn't chase
-    # here -- inside the grove he is at work, not hunting; the chase
-    # behavior stays in CURSER_SCENES where the canon already places
-    # it.
-    priest = NPC(7 * TILE + 16, 6 * TILE + 16, "Curse-Priest",
-                 "curse_priest", movement="idle", radius=24)
-    sc.add_npc(priest)
+    # ---- No worker ----
+    # There is NO curse-priest. The closing rite claimed the whole town
+    # at once (NARRATIVE 1b/3), so individual cursing -- and the figure
+    # who'd do it -- is cut. The grove is left as the work without the
+    # worker: the dead fire, the effigy ring, the nailed-up faces, all
+    # tended by no one you'll ever see. It reads like its siblings
+    # (husk_grove, scarecrow_ring): a maker-less dread tableau.
     # Hide spots so a player who stumbles in can retreat in cover.
     sc.hide_spots = [
         (2 * TILE + 16, 6 * TILE + 16, "behind"),    # behind west tree

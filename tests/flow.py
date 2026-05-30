@@ -435,6 +435,42 @@ def main():
               if isinstance(e, dict) and e.get("name") == "the_case") == 1,
           "lure: re-logging the case does not duplicate the note")
 
+    # --- 17. The principal locals are named (NARRATIVE §2/§8) ---
+    # A small town knows its people by name. Each principal surfaces a
+    # proper-name speaker label, not a role-tag. (The Clerk, Mr. Sable, is
+    # a newcomer who finally introduces himself.)
+    from scenes.dialogue import (sheriff_dialogue, preacher_dialogue,
+                                 hettie_dialogue, clerk_dialogue)
+
+    def first_speaker(dialogue_fn):
+        g = new_game()
+        cap = []
+        g.dialog.show = (lambda real: (lambda p, **k: (
+            cap.append(k.get("speaker", "")), real(p, **k))[1]))(g.dialog.show)
+        dialogue_fn(g, type("N", (), {"name": "x", "x": 0, "y": 0})())
+        return cap[0] if cap else None
+
+    roster = [("Sheriff Vane", sheriff_dialogue), ("Rev. Crane", preacher_dialogue),
+              ("Hettie", hettie_dialogue), ("Mr. Sable", clerk_dialogue)]
+    for expected, fn in roster:
+        check(first_speaker(fn) == expected,
+              f"naming: a principal local speaks as '{expected}' (not a role-tag)")
+
+    # --- 18. The curse-priest is cut; curse_grove is maker-less (§1b/§8) ---
+    # Individual cursing is redundant -- the closing rite claimed the town at
+    # once -- so the priest is removed and the grove is left as the work
+    # without the worker, like its siblings husk_grove / scarecrow_ring.
+    from scenes import load_scene as _load2
+    grove = _load2("curse_grove")
+    kinds = [getattr(n, "sprite_kind", None) for n in grove.npcs]
+    check("curse_priest" not in kinds,
+          "cut: curse_grove builds no curse-priest")
+    check(len(grove.npcs) == 0,
+          "cut: curse_grove is a maker-less tableau (no NPC, like its siblings)")
+    for sib in ("husk_grove", "scarecrow_ring"):
+        sk = [getattr(n, "sprite_kind", None) for n in _load2(sib).npcs]
+        check("curse_priest" not in sk, f"cut: {sib} hosts no curse-priest")
+
     print()
     if FAILS:
         print(f"{len(FAILS)} flow failure(s).")

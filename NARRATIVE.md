@@ -284,12 +284,12 @@ ordered and nobody can refuse.
 
 | Who | Origin | Their thread |
 |---|---|---|
-| **Lodge Clerk** | **Newcomer** (early arrival, became recruiter) | The smiling trap-keeper. Runs the only inn in town, the only place an outsider would naturally stay. Too-warm host who keeps you comfortable and never admits the town won't let you leave; escalates over visits to something colder. The old fetch-quest chain (crate -> cellar bottle -> car keys) is **cut** -- the car answers only to the Sign now, so he has no keys to dangle. |
-| **The Sheriff** | **Local** | Born here. Has stood at the rim of the well. Knows the fold is real and that none of his deputies will be coming back. **He did not kill your car — the fold did.** He patrols because patrolling is what he did before; he tells outsiders "leave, son" out of muscle memory, even though he knows you can't and he can't either. Not a believer, not a cultist. A witness who can't help. The badge is just clothing now. |
-| **The Preacher** | **Local — innocent dissenter** | A small-town minister who **names the cult from his own pulpit** — oblivious to *what* they truly are, but loud that they're no church. Your **2nd** conversation (his hubris) sets `preacher_doomed`; on the next entry he's **gutted on his own church floor**, his cross in the viscera (evidence #4). The town murders the ones who name them. |
-| **The Store-Owner** | **Local — quiet resister** | The shop is gutted -- shelves bare, till empty, **nothing to sell** (deliveries stopped when the fold closed). His value is what he risks saying out loud: frightened warnings about who to trust, never said outright. He has a one-shot reaction to the Preacher's death. **He does not know Walter Blaine.** No local does — Walter is a voice in Minneapolis and Brimley locals would have no reason to recognize the name. |
-| **The Kid** | **Local — innocent witness** | Saw Mara go to the well with the procession and **tells you so** — the only honest account in town. What he gives you is the truth, not an object (the old keepsake item is purged; no inventory pickup). Children notice what adults pretend not to. |
-| **The Brimley chorus** (Hettie, Old Pell, Mrs. Calder, Royce, Garrick, the Tisdale boy) | **Locals** | The town still tries to live. Hettie keeps the store open. Mrs. Calder sets her husband's plate every night for a man who walked out to the highway. Old Pell stopped marking the calendar. Royce drives the river road out every week and comes back into Brimley every time. They all know the fold is real; none of them understand it. **Naming the principal locals** (the Sheriff, the Preacher, the Kid, the Store-Owner) is **still TODO** — see §8. |
+| **Lodge Clerk — Mr. Sable** | **Newcomer** (early arrival, became recruiter) | The smiling trap-keeper. Introduces himself first thing (*"Sable -- I keep the desk here. Anything you need, you ask me. Anything at all."*); the name is genteel and hospitable with a faint funereal undertow that pays off as he turns colder. Runs the only inn in town, the only place an outsider would naturally stay. Too-warm host who keeps you comfortable and never admits the town won't let you leave; escalates over visits to something colder. The old fetch-quest chain (crate -> cellar bottle -> car keys) is **cut** -- the car answers only to the Sign now, so he has no keys to dangle. |
+| **The Sheriff — Hollis Vane** | **Local** | Born here. Has stood at the rim of the well. Knows the fold is real and that none of his deputies will be coming back. **He did not kill your car — the fold did.** He patrols because patrolling is what he did before; he tells outsiders "leave, son" out of muscle memory, even though he knows you can't and he can't either. Not a believer, not a cultist. A witness who can't help. The badge is just clothing now. |
+| **The Preacher — Rev. Asa Crane** | **Local — innocent dissenter** | A small-town minister who **names the cult from his own pulpit** — oblivious to *what* they truly are, but loud that they're no church. Your **2nd** conversation (his hubris) sets `preacher_doomed`; on the next entry he's **gutted on his own church floor**, his cross in the viscera (evidence #4). The town murders the ones who name them. |
+| **The Store-Owner — Hettie** | **Local — quiet resister** | *(In-game this role is **Hettie** from the chorus — one person, not two; the counter-keeper and the quiet resister merged.)* The shop is gutted -- shelves bare, till empty, **nothing to sell** (deliveries stopped when the fold closed). Her value is what she risks saying out loud: frightened warnings about who to trust, never said outright. She has a one-shot reaction to the Preacher's death. **She does not know Walter Blaine.** No local does — Walter is a voice in Minneapolis and Brimley locals would have no reason to recognize the name. |
+| **The Kid — Toby Tisdale** | **Local — innocent witness** | Saw Mara go to the well with the procession and **tells you so** — the only honest account in town. What he gives you is the truth, not an object (the old keepsake item is purged; no inventory pickup). Children notice what adults pretend not to. |
+| **The Brimley chorus** (Hettie, Old Pell, Mrs. Calder, Royce, Garrick, the Tisdale boy) | **Locals** | The town still tries to live. Hettie keeps the store open. Mrs. Calder sets her husband's plate every night for a man who walked out to the highway. Old Pell stopped marking the calendar. Royce drives the river road out every week and comes back into Brimley every time. They all know the fold is real; none of them understand it. **Naming the principal locals is DONE** — the Sheriff is **Hollis Vane**, the Preacher **Rev. Asa Crane**, the Store-Owner/quiet-resister is **Hettie**, the Kid **Toby Tisdale**, and the Lodge Clerk **Mr. Sable**; the names surface as the dialogue speaker (locked in `tests/flow.py`). |
 | **Mara Blaine** | **Newcomer** — the quarry, **already turned** | Attuned and aching for something; the door whispered her answer (§1b). She came north, "found religion," **went down the well** (not into the corn). **She was not deceived — she was answered**, and went gladly. Finding her proves there was never anyone to save: not because she was killed, but because she was *offered the one thing she needed.* In the **hive**. Reading her journal to the end drops the player into a **flashback of the burning doorframe** — the dream that took her, the game's clearest look at the lure. |
 | **Walter Blaine** | **Outsider, off-screen — the unwitting bait** | The client. A Minneapolis voice on a phone that no longer connects. His grief is **real** — he genuinely lost his daughter — but the *case itself is the King's hook* (§1, *"You were lured"*): the one appetite a numb investigator can't refuse, used to walk the marked soul back to the door. **No one in Brimley has ever met him.** He exists only through the PI's case notebook and (optionally — §8) the polaroid he sent. He gets no resolution — the call never connects again, and that silence is the point. |
 | **Cult / Watchers / the King in Yellow** | **Newcomers + Their god** | The congregation are the attuned newcomers. **The Watchers are His gaze made local** — the higher-dimensional eye reaching into the flat plane wherever His attention falls (§3), *not* a side-cult's spell. The King is the thing above the door. *(The old **curse-priest** is **cut** — individual cursing is redundant once the closing rite claims the whole town at once; see §8.)* |
@@ -658,10 +658,14 @@ The reworks the new fiction forced are all shipped. What must stay true:
   the PI dreamed the door **once, a year ago, never reached it** — the note
   must read that way (a flow.py canon-guard enforces "a year" + no recurrence
   language).
-- **Cut the curse-priest; repurpose/retire `curse_grove`.** Individual
-  cursing is redundant now the closing rite claims the whole town at once
-  (§1b). Remove the NPC; the `curse_grove` hidden fold either goes or is
-  reskinned to a non-priest dread tableau (effigies without a maker).
+- ~~**Cut the curse-priest; repurpose/retire `curse_grove`.**~~ **DONE.**
+  Individual cursing is redundant now the closing rite claims the whole town
+  at once (§1b), so the priest NPC is **removed**. `curse_grove` is kept and
+  **reskinned to a maker-less dread tableau** — the dead fire, the effigy
+  ring, the nailed-up faces, all tended by no one you'll ever see — matching
+  its siblings `husk_grove` / `scarecrow_ring` (the work, no worker). The
+  orphaned `curse_priest` sprite art survives in `sprites.py` (reusable, no
+  longer spawned). Locked in `tests/flow.py`.
 - **Rehome the Watchers as His gaze (§3).** Keep the mechanic exactly
   (they raise visibility; dispel by breaking the gaze / axe / round) but
   change the *meaning and trigger*: they are **His eye reaching into the
@@ -687,11 +691,15 @@ The reworks the new fiction forced are all shipped. What must stay true:
   build_threshold`), having dreamed it (`flashback_seen`), one quiet line
   lands before the doorframe beat: *"You have stood here before. In sleep."*
   (canon-accurate: he did stand at the door, once, in the dream).
-- **Name the principal locals.** The Sheriff, the Preacher, the
-  Store-Owner, the Kid are role-tags. Locals in a small town know
-  each other by name. The wax-museum quality of the cast is partly
-  this. (The Brimley chorus is already named: Hettie, Old Pell,
-  Mrs. Calder, Royce, Garrick, the Tisdale boy.)
+- ~~**Name the principal locals.**~~ **DONE.** Locals in a small town know
+  each other by name; the wax-museum quality is partly the old role-tags.
+  Now named, surfaced as the dialogue speaker: the Sheriff is **Hollis
+  Vane**, the Preacher **Rev. Asa Crane**, the Store-Owner/quiet-resister
+  is **Hettie** (one person, not two — merged with the chorus Hettie), the
+  Kid **Toby Tisdale**, and the Lodge Clerk **Mr. Sable** (a newcomer, so a
+  smoother name than the plain local surnames). The rest of the Brimley
+  chorus was already named: Old Pell, Mrs. Calder, Royce, Garrick. Locked in
+  `tests/flow.py`.
 - **The liminal-composition pass** (§10): per-scene level design —
   composed emptiness, long sightlines, uncanny repetition.
 - ~~Curse-priest in dialog / evidence beats.~~ **Superseded:** the
