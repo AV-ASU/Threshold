@@ -1873,7 +1873,6 @@ def _draw_king(surf, x, y, facing, t, birth, gait, threat=None):
     aa = _YK_AIM[0]
     fb = (math.cos(aa) * R * 0.22, math.sin(aa) * R * 0.22)
     va = max(0.05, valpha)
-    dark_a = 1.0 - show
     # The PRIMARY mask: one steady face anchored as the "head", turned to track
     # the player. It is the first thing to exist (a pale mask in the void),
     # serene while the King is calm, and the scream the chorus erupts around as

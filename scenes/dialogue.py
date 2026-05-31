@@ -6,8 +6,6 @@ visibility tier via `escalate`. Evidence beats are surfaced through
 `_evidence`; only the six in `CANONICAL_EVIDENCE` count toward the
 King-gate and the visibility floor.
 """
-import time
-import re
 
 
 # The SIX canonical evidence beats (NARRATIVE.md §4): ONLY these count toward

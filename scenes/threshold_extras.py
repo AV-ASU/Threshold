@@ -5,7 +5,6 @@
 """
 import random
 from constants import TILE
-from entities.npc import NPC
 from entities.decoration import Decoration
 from .base import Scene
 from .dialogue import _evidence

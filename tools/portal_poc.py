@@ -54,7 +54,6 @@ Run (headless, writes PNGs to /tmp):
 Nothing here is wired into the game.
 """
 import os
-import sys
 import math
 import random
 

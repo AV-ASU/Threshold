@@ -8,7 +8,6 @@ underneath, with a blinking cursor."""
 import pygame
 from constants import (
     SCREEN_W, SCREEN_H,
-    C_WHITE, C_GOLD, C_DIM, C_PANEL, C_PANEL_BORDER, C_BLACK,
 )
 
 

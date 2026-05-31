@@ -9,7 +9,6 @@ updating every reference.
 
 The Inventory class is unchanged.
 """
-import time
 
 ITEM_DEFS = {
     # ---- Core items (in circulation) ----

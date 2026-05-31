@@ -10,7 +10,7 @@ rather than carryable items.
 import pygame
 from constants import (
     SCREEN_W, SCREEN_H,
-    C_WHITE, C_GOLD, C_RED, C_DIM, C_PANEL, C_PANEL_BORDER,
+    C_WHITE, C_GOLD, C_DIM, C_PANEL, C_PANEL_BORDER,
 )
 from systems.items import ITEM_DEFS, effective_desc
 from ui.item_icons import draw_item_icon

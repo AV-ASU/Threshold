@@ -18,7 +18,6 @@ broken one:
      (flood-fill passability).
 """
 import os
-import random
 import sys
 
 os.environ.setdefault("SDL_VIDEODRIVER", "dummy")

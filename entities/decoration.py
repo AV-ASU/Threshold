@@ -1,13 +1,12 @@
 """Animated decorative props (candles, smoke, the well, gore...).
 Pure draw functions, no game logic."""
-import re
 import time
 import math
 import random
 import pygame
 from constants import (
     SCREEN_W, SCREEN_H,
-    C_BLACK, C_WHITE, C_GOLD, C_RED, C_DIM, C_PANEL, C_PANEL_BORDER,
+    C_BLACK, C_GOLD, C_RED,
 )
 
 # Compass-octant lookup. Index = 0..7 starting from EAST and walking
@@ -407,7 +406,7 @@ class Decoration:
     def _draw_antler_rack(self, surf, x, y):
         # An antler/branch coat-rack: a post on a base, antler arms up
         # top, a dark wool coat hung from it.
-        w = int(self.kwargs.get("w", 22)); h = int(self.kwargs.get("h", 46))
+        h = int(self.kwargs.get("h", 46))
         top = y - h // 2 + 6
         pygame.draw.ellipse(surf, (34, 24, 14), (x - 7, y + h // 2 - 8, 14, 7))  # base
         pygame.draw.rect(surf, (48, 34, 20), (x - 2, top, 4, h - 12))            # post
@@ -928,7 +927,6 @@ class Decoration:
         """A small ritual mound -- cobs stacked on a base of crossed
         husk-stalks, with a half-burned candle stub on top. The
         cult's offering. Maze-specific."""
-        rng = random.Random(self.seed)
         # Drop shadow
         sh = pygame.Surface((22, 8), pygame.SRCALPHA)
         pygame.draw.ellipse(sh, (0, 0, 0, 100), (0, 0, 22, 8))
@@ -970,7 +968,6 @@ class Decoration:
         strip of cloth tied around it and a small dark token hung
         from the cloth. The cult marks the next to be taken. Maze-
         specific. Sways slightly."""
-        rng = random.Random(self.seed)
         sway = math.sin(self.t * 1.4 + self.seed * 0.13) * 1.6
         # Drop shadow
         sh = pygame.Surface((10, 4), pygame.SRCALPHA)
@@ -1203,7 +1200,6 @@ class Decoration:
     def _draw_leaves(self, surf, x, y):
         """Dead leaves and grit tumbling across the ground on the wind --
         a low, restless drift that loops near the anchor."""
-        rng = random.Random(self.seed)
         cols = [(86, 68, 40), (70, 56, 34), (54, 60, 36), (60, 48, 30)]
         for i in range(4 + (self.seed % 4)):
             ph = self.t * 0.6 + i * 0.9 + self.seed
@@ -1559,7 +1555,6 @@ class Decoration:
         apology-wall patch. Tiny 4x6 characters drawn with short
         line strokes -- only the letters used by I'M SORRY are
         defined."""
-        j = lambda: rng.randint(-1, 1)
         if ch == "I":
             pygame.draw.line(surf, col, (x + 1, y), (x + 1, y + 5), 1)
         elif ch == "M":

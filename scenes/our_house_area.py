@@ -20,7 +20,6 @@ Sheriff patrols this scene as part of his random outdoor route
 import math
 import random
 from constants import TILE
-from entities.npc import NPC
 from entities.decoration import Decoration
 from .base import Scene
 from .dialogue import _evidence

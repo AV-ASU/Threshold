@@ -1,5 +1,4 @@
 """Animated, multi-style dialogue box."""
-import time
 import math
 import random
 import pygame

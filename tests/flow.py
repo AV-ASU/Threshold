@@ -28,7 +28,6 @@ import pygame
 pygame.init()
 pygame.display.set_mode((960, 540))
 
-from constants import TILE
 from systems.game import Game
 
 FAILS = []

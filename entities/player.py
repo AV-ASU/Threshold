@@ -1,6 +1,4 @@
 """Player character: movement, desperation melee (stun), save/load."""
-import math
-import pygame
 from systems.items import Inventory
 
 

@@ -24,7 +24,7 @@ import random
 import pygame
 import numpy as np
 
-from constants import TILE, SCREEN_W, SCREEN_H
+from constants import TILE
 from scenes.base import apply_grade
 from rendering.sprites import draw_npc_sprite
 

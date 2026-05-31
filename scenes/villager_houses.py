@@ -2,14 +2,12 @@
 one-room interior with a single NPC resident and an exit back to
 the parent overworld scene."""
 import math
-import random
-import pygame
 from constants import TILE
 from entities.npc import NPC
 from entities.decoration import Decoration
 from .base import Scene
 from .dialogue import (
-    preacher_dialogue, sheriff_dialogue, clerk_dialogue, _evidence,
+    preacher_dialogue, sheriff_dialogue, _evidence,
 )
 
 

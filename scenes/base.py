@@ -1,6 +1,5 @@
 """Scene primitives: tile definitions, tile-drawing helpers, the Scene
 class itself. All scene builders consume these to define areas."""
-import time
 import math
 import random
 import pygame

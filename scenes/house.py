@@ -9,8 +9,6 @@ NPCs, and triggers are preserved.
 """
 import math
 import time
-import random
-import pygame
 from constants import TILE
 from entities.npc import NPC
 from entities.decoration import Decoration

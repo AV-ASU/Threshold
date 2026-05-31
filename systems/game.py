@@ -1,6 +1,5 @@
 """The top-level Game runtime: title screen, scene transitions, input,
 combat, save/load, the main loop."""
-import time
 import math
 import random
 import sys
@@ -8,8 +7,7 @@ import pygame
 
 from constants import (
     SCREEN_W, SCREEN_H, TILE,
-    C_BG, C_WHITE, C_BLACK, C_GOLD, C_RED, C_BLOOD,
-    C_BLUE, C_GREEN, C_PURPLE, C_PANEL, C_PANEL_BORDER, C_DIM,
+    C_BG, C_WHITE, C_BLACK, C_GOLD, C_BLOOD,
 )
 from rendering.sprites import (draw_player_sprite, draw_npc_sprite,
                                draw_npc_corpse, draw_infested_overlay,
@@ -23,9 +21,9 @@ from ui.notebook_ui import NotebookUI
 from ui.text_input import TextInputModal
 from systems.audio import Audio
 from systems.save import Save
-from systems.items import Inventory, ITEM_DEFS
+from systems.items import ITEM_DEFS
 from entities.player import Player
-from entities.enemy import Enemy, Projectile
+from entities.enemy import Projectile
 from entities.npc import NPC
 from entities.decoration import Decoration
 from scenes import load_scene, tile_footstep, Scene
@@ -920,7 +918,6 @@ class Game:
                 self.audio.stop_music()
         if self.scene.on_enter_fn:
             self.scene.on_enter_fn(self, self.scene)
-        from entities.decoration import Decoration
         # Outdoor decay: re-apply tier-additive decorations every
         # load so a scene visibly worsens as the line tightens.
         # Pulls from OUTDOOR_DECAY by (scene_key, tier).
@@ -1532,7 +1529,6 @@ class Game:
         safe = key in SAFE_SCENES
         if not underground and not surface and not (safe and stage >= 3):
             return
-        from entities.decoration import Decoration
         rng = random.Random((hash(key) ^ (stage * 2654435761)) & 0xffffffff)
         pool = ["phantom_mark", "dead_crow", "watching_wound"]
         if stage >= 2:
@@ -1599,7 +1595,6 @@ class Game:
         unique, relentless pursuer. He holds for a beat (his last words),
         then comes for you. Reaching you ends the run (the 'sheriff' card).
         You escape by getting back out the door; he's slower than a run."""
-        from entities.npc import NPC
         self.scene.npcs = [n for n in self.scene.npcs
                            if getattr(n, "name", "") != "Sheriff"]
         hx, hy = 8 * TILE + 16, 2 * TILE + 16
@@ -2025,7 +2020,6 @@ class Game:
     def _build_flashback_pool(self):
         """Pre-render the mask pool (gaze-direction x seed) so the swarm
         climax blits dozens of faces per frame without re-rendering."""
-        from rendering.sprites import door_mask_surface
         base = max(40, int(SCREEN_H * 0.22))
         pool = {}
         for gi, gz in enumerate(self._FB_GAZE):
@@ -2779,7 +2773,6 @@ class Game:
         there (the door you came in by -- for reinforcement waves); otherwise
         at the farthest walkable scene corner from the player, so they enter
         from the edges rather than on top of you. Returns the NPC, or None."""
-        from entities.npc import NPC
         scene = self.scene
         best = None
         if at is not None:
@@ -3160,7 +3153,6 @@ class Game:
     def _spawn_king(self):
         """Materialise the King at the entry doorway (_king_anchor),
         falling back to the player's position if no anchor was set."""
-        from entities.npc import NPC
         ax, ay = self._king_anchor or (self.player.x, self.player.y)
         king = NPC(ax, ay, "", "yellow_king",
                    movement="chaser", speed=2.4,
@@ -3240,7 +3232,6 @@ class Game:
         random direction around the player. It stands and stares (the
         'watch' movement). A faint breath and a small visibility nudge
         mark the moment it opens its eyes."""
-        from entities.npc import NPC
         scene = self.scene
         spot = None
         for _ in range(12):

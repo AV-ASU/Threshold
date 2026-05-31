@@ -4,12 +4,10 @@ their standard enemy set on every entry; respawned enemies drop
 nothing 85% of the time -- except on the very first easter_egg_room
 visit, where every kill drops (gated by the first_easter_egg flag)."""
 import math
-import random
-import pygame
 from constants import TILE
 from entities.npc import NPC
 from entities.decoration import Decoration
-from .base import Scene, chest_interact
+from .base import Scene
 from .dialogue import tisdale_boy_dialogue, hettie_dialogue, _evidence
 def build_void_boss():
     """THRESHOLD: the clearing. A small open glade in the dense

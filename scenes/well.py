@@ -397,7 +397,6 @@ def build_works_sign():
     # *brand* of Him. The thing itself, evidence #5, is the Pallid Mask on
     # the altar (a pedestal) just below it. You lift it at the altar.
     sign_x = 5 * TILE + 16
-    sign_y = 1 * TILE + 16
     sc._sign_pos = (5 * TILE + 16, 2 * TILE + 20)   # the altar, not the wall
     sc.add_decoration(Decoration(5 * TILE + 16, 2 * TILE + 24, "pedestal"))
     # [E] cue at the altar -- the Mask / rite choice is the key decision
