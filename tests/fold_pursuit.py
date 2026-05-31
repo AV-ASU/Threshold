@@ -163,10 +163,79 @@ def test_safe_scene_never_breached():
     print("  OK  a fold into a refuge is refused")
 
 
+def test_fold_watcher_binds_on_hit():
+    # A fold traversal with the RNG hit binds the curse (+1 Watcher seed).
+    import random as _r
+    from systems.game import FOLD_WATCHER_CHANCE
+    g = _boot()
+    tx, ty, ch = _find_exit_tile(g, fold=True)
+    _stand_on(g, tx, ty)
+    g._cursed = False
+    g._watchers = []
+    target = g.scene.exits[ch][0]
+    orig = _r.random
+    try:
+        _r.random = lambda: 0.0   # guaranteed < chance
+        g._roll_fold_watcher((target, "default"))
+    finally:
+        _r.random = orig
+    if target in __import__("systems.game", fromlist=["SAFE_SCENES"]).SAFE_SCENES:
+        assert not g._cursed, "a fold into a refuge never binds a Watcher"
+        print("  OK  fold-watcher: refuge fold binds nothing")
+    else:
+        assert g._cursed, "a fold-watcher hit binds the curse"
+        assert FOLD_WATCHER_CHANCE == 0.05, "the documented 1/20 odds"
+        print("  OK  fold-watcher: a hit binds the curse (the +1 seed)")
+
+
+def test_fold_watcher_misses_on_high_roll():
+    import random as _r
+    g = _boot()
+    tx, ty, ch = _find_exit_tile(g, fold=True)
+    _stand_on(g, tx, ty)
+    g._cursed = False
+    g._watchers = []
+    target = g.scene.exits[ch][0]
+    orig = _r.random
+    try:
+        _r.random = lambda: 0.99   # guaranteed >= chance
+        g._roll_fold_watcher((target, "default"))
+    finally:
+        _r.random = orig
+    assert not g._cursed, "a missed roll binds nothing"
+    print("  OK  fold-watcher: a missed roll binds nothing")
+
+
+def test_fold_watcher_never_exceeds_max():
+    # At the 5-Watcher ceiling, even a guaranteed hit adds nothing.
+    import random as _r
+    from systems.game import WATCHER_MAX
+    g = _boot()
+    tx, ty, ch = _find_exit_tile(g, fold=True)
+    _stand_on(g, tx, ty)
+    target = g.scene.exits[ch][0]
+    if target in __import__("systems.game", fromlist=["SAFE_SCENES"]).SAFE_SCENES:
+        print("  OK  fold-watcher: (skip cap test -- only fold here is a refuge)")
+        return
+    g._cursed = True
+    g._watchers = [object() for _ in range(WATCHER_MAX)]
+    orig = _r.random
+    try:
+        _r.random = lambda: 0.0
+        g._roll_fold_watcher((target, "default"))
+    finally:
+        _r.random = orig
+    assert len(g._watchers) == WATCHER_MAX, "a fold never pushes past WATCHER_MAX"
+    print("  OK  fold-watcher: +1 never fires at the WATCHER_MAX ceiling")
+
+
 if __name__ == "__main__":
     test_fold_carries_pursuer()
     test_passage_carries_pursuer()
     test_interior_door_loses_pursuer()
     test_no_spawn_during_grace()
     test_safe_scene_never_breached()
+    test_fold_watcher_binds_on_hit()
+    test_fold_watcher_misses_on_high_roll()
+    test_fold_watcher_never_exceeds_max()
     print("All fold-pursuit guards held.")

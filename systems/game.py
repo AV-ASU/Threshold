@@ -188,6 +188,11 @@ WATCHER_SPAWN_INTERVAL = 4.0   # seconds between Watcher manifestations
 # FLOOR. Clear them all -- stare each down for WATCHER_GAZE_DISPEL seconds,
 # or put one down instantly with the axe or a round -- and the curse lifts.
 WATCHER_MAX = 5                # the curse-swarm clones up to this many
+# Walking through a FOLD or a seamless world-passage has this chance to
+# manifest +1 Watcher on the far side. The first one BINDS the curse (it's
+# what starts the cloning); later rolls add to the swarm. Never fires once
+# the player already carries the max (WATCHER_MAX) -- that's the ceiling.
+FOLD_WATCHER_CHANCE = 0.05     # 1 in 20 per fold/portal traversal
 WATCHER_FLOOR = 0.12           # each live Watcher raises the visibility floor
 WATCHER_CLONE_INTERVAL = 7.0   # seconds of EXPOSURE between clones
 WATCHER_GAZE_DISPEL = 2.0      # seconds holding one in your gaze to dissolve it
@@ -2708,6 +2713,40 @@ class Game:
             draw_fold(self.screen, face, self.cam_x, self.cam_y,
                       self.player, t)
 
+    def _exit_is_fold(self, exit_data):
+        """True if taking this exit is a FOLD or a seamless world-passage --
+        the world's wrongness (a direction-gated fold) or its open ground (an
+        outdoor-to-outdoor crossing). A mundane fade -- a door, ladder, or
+        rope into an interior -- is NOT a fold. Shared by the fold-pursuit
+        stash and the fold-watcher roll so both read 'fold' the same way."""
+        if self.scene is None or self.player is None:
+            return False
+        target_scene = exit_data[0]
+        ch = self.scene.char_object_at(self.player.x, self.player.y)
+        is_fold = ch in self.scene.exit_directions
+        cur = self.scene.key
+        is_passage = (cur in SEAMLESS_WORLD_SCENES
+                      and target_scene in SEAMLESS_WORLD_SCENES)
+        return is_fold or is_passage
+
+    def _roll_fold_watcher(self, exit_data):
+        """Walking through a fold/portal has a FOLD_WATCHER_CHANCE (1/20) to
+        manifest +1 Watcher -- the seed that STARTS the curse cloning. Called
+        the instant an exit fires (before the swap); it BINDS the curse, and
+        the destination's _tick_watchers then manifests the seed Watcher on
+        arrival and begins cloning it. Never fires when the player already
+        carries WATCHER_MAX -- that's the ceiling a fold can't push past. A
+        SAFE destination is exempt (Watchers are only suppressed there)."""
+        if not self._exit_is_fold(exit_data):
+            return
+        if exit_data[0] in SAFE_SCENES:
+            return
+        if len(self._watchers) >= WATCHER_MAX:   # already at the ceiling -- no +1
+            return
+        if random.random() >= FOLD_WATCHER_CHANCE:
+            return
+        self._cursed = True
+
     def _note_fold_pursuit(self, exit_data):
         """Called the instant an exit fires, BEFORE the scene swaps. If the
         exit is a hidden FOLD (a direction-gated exit) and a cultist is in
@@ -2720,12 +2759,7 @@ class Game:
         # a hidden fold (direction-gated) or a seamless outdoor passage both
         # carry the chase. Only a fade transition into an interior -- a door,
         # ladder, or rope -- shakes them. The refuge is never breached.
-        ch = self.scene.char_object_at(self.player.x, self.player.y)
-        is_fold = ch in self.scene.exit_directions
-        cur = self.scene.key if self.scene else None
-        is_passage = (cur in SEAMLESS_WORLD_SCENES
-                      and target_scene in SEAMLESS_WORLD_SCENES)
-        if (not (is_fold or is_passage)) or target_scene in SAFE_SCENES:
+        if (not self._exit_is_fold(exit_data)) or target_scene in SAFE_SCENES:
             self._fold_pursuer = None
             return
         hot, hot_d = None, FOLD_PURSUE_RANGE
@@ -3483,6 +3517,10 @@ class Game:
                     # Stash a hot pursuer iff this exit is a FOLD; a mundane
                     # exit clears the stash (architecture shakes the chase).
                     self._note_fold_pursuit(exit_data)
+                    # A fold/portal traversal has a 1/20 chance to bind +1
+                    # Watcher (the seed that starts the curse cloning), unless
+                    # already at the 5-Watcher ceiling.
+                    self._roll_fold_watcher(exit_data)
                     self.begin_transition(*exit_data)
             # Suspend scene update (NPC patrols, decoration anims, triggers)
             # while any modal is up so the world freezes behind it.
