@@ -3206,8 +3206,9 @@ class Game:
         if not self._cursed:
             self._cursed = True
             self._watcher_clone_t = WATCHER_CLONE_INTERVAL
-            self.show_notice("Something has been bound to you. It will not "
-                             "stop watching until you make it.", duration=3.8)
+            self.show_notice("Something is bound to you, watching. Stare it "
+                             "down -- hold it in your gaze -- or put it down "
+                             "with the axe or a round.", duration=4.6)
             self._spawn_watcher()
         else:
             self.visibility = min(1.0, self.visibility + 0.1)
@@ -3405,6 +3406,17 @@ class Game:
                 tt.set_alpha(ta)
                 self.screen.blit(tt, (w // 2 - tt.get_width() // 2,
                                       h // 2 - tt.get_height() // 2))
+                # A quiet teaching line under the name: the King takes you
+                # when you stay seen. Diegetic, but it tells the player the
+                # one verb that saves them (break sight, hide).
+                if self._death_t > 3.4:
+                    sa = min(180, int((self._death_t - 3.4) / 0.5 * 180))
+                    st = self.fonts["sm"].render(
+                        "You were seen too long. Break His sight -- hide -- "
+                        "before the line fills.", True, (150, 130, 70))
+                    st.set_alpha(sa)
+                    self.screen.blit(st, (w // 2 - st.get_width() // 2,
+                                          h // 2 + tt.get_height()))
             return
         # Cultist: the cult takes you (CAPTURED). Sheriff: the hollow
         # lawman takes you in (TAKEN INTO CUSTODY). Fade to near-black,
@@ -3419,7 +3431,11 @@ class Game:
             label, col, sub = ("TAKEN INTO CUSTODY", (188, 172, 96),
                                "The badge was just clothing. The hold is not.")
         else:
-            label, col, sub = ("CAPTURED", (170, 150, 90), None)
+            # A teaching sub-line: cultists close on you in the open. Cover
+            # breaks their gaze -- the one thing that would have saved you.
+            label, col, sub = ("CAPTURED", (170, 150, 90),
+                               "They closed the distance. Stay in cover -- "
+                               "it breaks their gaze.")
         if self._death_t > 0.35:
             ta = min(255, int((self._death_t - 0.35) / 0.4 * 255))
             big = self.fonts["title"].render(label, True, col)
