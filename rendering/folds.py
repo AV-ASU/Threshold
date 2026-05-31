@@ -31,6 +31,8 @@ from rendering.sprites import draw_npc_sprite
 SIGHT_DEPTH = 3 * TILE          # how far the peek reaches before fogging out
 SEAM_DOT = 0.6                  # facing dot below which the fold is invisible
 SEAM_TILES = 3                  # breadth of the slit, in tiles
+SHEAR_GAIN = 0.9                # far-layer slide per px of along-seam offset
+SHEAR_CAP = 2 * TILE            # max along-seam offset that shears the view
 _DIRV = {"north": (0, -1), "south": (0, 1), "east": (1, 0), "west": (-1, 0)}
 
 _MASK_CACHE = {}
@@ -116,20 +118,62 @@ def draw_fold(screen, face, host_cam_x, host_cam_y, player, t):
     cam_x = ax * TILE + 16 - w // 2 + bias_x
     cam_y = ay * TILE + 16 - h // 2 + bias_y
 
-    surf = pygame.Surface((w, h))
-    surf.fill((8, 8, 11))
-    target.draw(surf, cam_x, cam_y)
-    apply_grade(surf, 1.0)
-    # Live actors in the target -- fogged by the same mask, so a pursuer
-    # resolves out of the murk as it nears the seam.
+    # Oblique parallax: the player's offset ALONG the seam shears the peek
+    # by depth -- content at the seam stays pinned, deep content slides, so
+    # standing off-axis lets you peek AROUND the tear's edge. The shear axis
+    # is perpendicular to the fold normal.
+    if nx != 0:
+        along_off = (player.y - fold_y)           # vertical seam: shear in y
+    else:
+        along_off = (player.x - fold_x)           # horizontal seam: shear in x
+    along_off = max(-SHEAR_CAP, min(SHEAR_CAP, along_off))
+    margin = int(abs(along_off) * SHEAR_GAIN) + 2
+
+    if nx != 0:
+        big = pygame.Surface((w, h + 2 * margin))
+    else:
+        big = pygame.Surface((w + 2 * margin, h))
+    big.fill((8, 8, 11))
+    bw, bh = big.get_size()
+    bcam_x = cam_x - (margin if nx == 0 else 0)
+    bcam_y = cam_y - (margin if nx != 0 else 0)
+    target.draw(big, bcam_x, bcam_y)
+    apply_grade(big, 1.0)
+    # Live actors -- drawn into the (sheared) view so a pursuer resolves out
+    # of the murk as it nears the seam, sliding with the depth it sits at.
     for npc in target.npcs:
         if not getattr(npc, "alive", True) or getattr(npc, "_inside", False):
             continue
-        sx = int(npc.x - cam_x)
-        sy = int(npc.y - cam_y)
-        if -32 <= sx <= w + 32 and -32 <= sy <= h + 32:
-            draw_npc_sprite(surf, sx, sy, npc.sprite_kind, npc.facing,
+        sx = int(npc.x - bcam_x)
+        sy = int(npc.y - bcam_y)
+        if -32 <= sx <= bw + 32 and -32 <= sy <= bh + 32:
+            draw_npc_sprite(big, sx, sy, npc.sprite_kind, npc.facing,
                             seed=id(npc) & 0xffff)
+
+    if abs(along_off) < 0.5:
+        if nx != 0:                               # crop the margin back off
+            surf = big.subsurface((0, margin, w, h)).copy()
+        else:
+            surf = big.subsurface((margin, 0, w, h)).copy()
+    else:
+        arr = pygame.surfarray.array3d(big)
+        out = np.empty((w, h, 3), dtype=arr.dtype)
+        if nx != 0:                               # roll columns in y by depth
+            seam_local = 0 if nx > 0 else (w - 1)
+            for x in range(w):
+                df = abs(x - seam_local) / max(1, SIGHT_DEPTH)
+                shift = int(round(along_off * df * SHEAR_GAIN))
+                y0 = margin + shift
+                out[x] = arr[x, y0:y0 + h]
+        else:                                     # roll rows in x by depth
+            seam_local = 0 if ny > 0 else (h - 1)
+            for y in range(h):
+                df = abs(y - seam_local) / max(1, SIGHT_DEPTH)
+                shift = int(round(along_off * df * SHEAR_GAIN))
+                x0 = margin + shift
+                out[:, y] = arr[x0:x0 + w, y]
+        surf = pygame.Surface((w, h))
+        pygame.surfarray.blit_array(surf, out)
 
     surf = surf.convert_alpha()
     mask = _fog_mask(w, h, face["normal"])
