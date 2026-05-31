@@ -425,6 +425,11 @@ class Game:
         pygame.mouse.set_visible(False)
         self.clock = pygame.time.Clock()
         self.fonts = make_fonts()
+        # Audio() synthesises the entire SFX + music library at startup (the
+        # game ships zero audio assets) -- several seconds of pure-Python DSP
+        # during which nothing else runs. Paint a quiet loading frame FIRST so
+        # the window isn't a dead/"Not Responding" black rect on every launch.
+        self._draw_boot_screen()
         self.audio = Audio()
         self.save = Save(slot=1)
         self.dialog = DialogueBox(self.audio, self.fonts)
@@ -587,6 +592,23 @@ class Game:
         self._ending_active = None
         self._ending_phase = 0
         self._ending_phase_t = 0.0
+
+    def _draw_boot_screen(self):
+        """A single quiet frame shown while Audio() synthesises the sound
+        library at startup (a few seconds of blocking DSP). Keeps the window
+        from reading as hung/black on launch. Drawn once, before the audio
+        build -- no clock, no animation, just the title word and a hint."""
+        self.screen.fill((4, 3, 7))
+        word = self.fonts["title"].render("THRESHOLD", True, (60, 56, 70))
+        self.screen.blit(word, (SCREEN_W // 2 - word.get_width() // 2,
+                                SCREEN_H // 2 - word.get_height() // 2 - 10))
+        sub = self.fonts["sm"].render("waking the dark .", True, (40, 38, 50))
+        self.screen.blit(sub, (SCREEN_W // 2 - sub.get_width() // 2,
+                               SCREEN_H // 2 + 26))
+        pygame.display.flip()
+        # Pump the event queue once so the OS marks the window as responsive
+        # rather than "Not Responding" during the synth that follows.
+        pygame.event.pump()
 
     # ---- TITLE ----
     def draw_title(self):
