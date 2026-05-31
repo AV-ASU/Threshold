@@ -13,6 +13,14 @@ from constants import SCREEN_W, SCREEN_H, TILE
 # the floor below them.
 _SHADOW_CACHE = {}
 
+# Per-tile floor cache (see draw_scene_terrain). Floor rasterisation is a
+# pure function of (ch, tx, ty) except the animated river/void tiles, so we
+# render each tile once and blit it. Keyed by (ch, tx, ty); dropped wholesale
+# when the active scene changes so it never grows past one scene's tiles.
+_FLOOR_CACHE = {}
+_FLOOR_CACHE_SCENE = None
+_ANIM_FLOOR = frozenset({"~", "@"})   # floor chars that animate per frame
+
 
 def _ground_shadow(surf, cx, cy, rw, rh, alpha=80):
     """Soft dark contact ellipse under a standing prop -- grounds it
@@ -1326,10 +1334,33 @@ def draw_scene_terrain(surf, scene, cam_x, cam_y, x0, y0, x1, y1):
         if not (0 <= ty < H and 0 <= tx < W):
             return "."
         return scene.objects[ty][tx]
+    # Floor tiles are a pure deterministic function of (ch, tx, ty) -- the
+    # grass mottle, plank shading, stone grout etc. are all seeded from
+    # tx/ty and never change -- so render each tile ONCE into a cached
+    # surface and blit it thereafter. Only the animated river/void tiles
+    # (~/@, which key off get_ticks) are drawn live every frame. This turns
+    # ~5ms of per-frame floor rasterisation into a handful of blits on the
+    # heavy outdoor scenes. The cache is dropped when the scene changes so
+    # it never holds more than one scene's worth of tiles.
+    global _FLOOR_CACHE_SCENE
+    if _FLOOR_CACHE_SCENE is not scene:
+        _FLOOR_CACHE.clear()
+        _FLOOR_CACHE_SCENE = scene   # hold the ref so its identity can't be reused
     for ty in range(y0, y1):
         for tx in range(x0, x1):
-            draw_floor(surf, _lookup_floor(ty, tx),
-                       tx * TILE - cam_x, ty * TILE - cam_y, tx, ty)
+            ch = _lookup_floor(ty, tx)
+            rx = tx * TILE - cam_x
+            ry = ty * TILE - cam_y
+            if ch in _ANIM_FLOOR:
+                draw_floor(surf, ch, rx, ry, tx, ty)
+                continue
+            key = (ch, tx, ty)
+            tile = _FLOOR_CACHE.get(key)
+            if tile is None:
+                tile = pygame.Surface((TILE, TILE)).convert()
+                draw_floor(tile, ch, 0, 0, tx, ty)
+                _FLOOR_CACHE[key] = tile
+            surf.blit(tile, (rx, ry))
     for ty in range(y0, y1):
         for tx in range(x0, x1):
             ch = _lookup_floor(ty, tx)
@@ -1435,8 +1466,16 @@ def apply_grade(surf, t=0.0, desat=82):
     """Grade a finished frame in place: partial desaturation, a cool
     tint, a radial vignette, and animated film grain."""
     w, h = surf.get_size()
+    # Desaturate via a HALF-RESOLUTION grayscale pass. The grey is blended
+    # back at ~32% alpha, so the downscale is imperceptible, but grayscaling
+    # a quarter of the pixels (then scaling the result back up) is ~2x
+    # cheaper than a full-frame grayscale every frame -- the single largest
+    # per-frame cost otherwise. smoothscale DOWN (clean average), plain
+    # scale UP (cheap; the soft grey hides the blockiness).
     try:
-        grey = pygame.transform.grayscale(surf)
+        small = pygame.transform.smoothscale(surf, (w // 2, h // 2))
+        grey = pygame.transform.grayscale(small)
+        grey = pygame.transform.scale(grey, (w, h))
         grey.set_alpha(desat)
         surf.blit(grey, (0, 0))
     except Exception:
