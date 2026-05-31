@@ -1328,6 +1328,7 @@ _YK_PARTS = []                       # particle wake: dicts x,y,vx,vy,age,life,r
 _YK_LAST = [0.0]                     # last draw time (for particle dt)
 _YK_ACC = [0.0]                      # distance accumulator (spaces shed orbs)
 _YK_AIM = [None]                     # smoothed arm-aim angle (swivels to player)
+_YK_PREV = [None]                    # last mass-centre, for the movement wake
 
 
 def reset_king_fx():
@@ -1342,6 +1343,7 @@ def reset_king_fx():
     _YK_LAST[0] = 0.0
     _YK_ACC[0] = 0.0
     _YK_AIM[0] = None
+    _YK_PREV[0] = None
 _YK_PRNG = random.Random(99)         # own RNG -> never touches the game's stream
 _YK_T1, _YK_T2, _YK_T3, _YK_T4 = (140, 96, 22), (196, 150, 42), (236, 198, 66), (252, 226, 120)
 _YK_GOLD, _YK_HOT = (236, 204, 64), (252, 226, 120)
@@ -1372,6 +1374,139 @@ def _yk_slots():
 
 
 _YK_FACES = _yk_slots()
+
+# --- THE PALLID MASK (the worn face) ---------------------------------------
+# The King's silhouette is a serene, weeping porcelain mask: a clean ovoid,
+# big black vacuous voids for eyes, black tear-streaks, no mouth. The YELLOW
+# does not glow from a warm body any more -- it lives BEHIND the mask, and only
+# erupts (gold blazing through the cracks, dark arms reaching) once he rouses.
+# Pallid bone tones; the eyes/tears are one pure black so the void reads.
+_YK_PORC    = (210, 202, 184)
+_YK_PORC_MD = (174, 166, 148)
+_YK_PORC_LO = (126, 120, 106)
+_YK_PORC_DK = (84, 80, 70)
+_YK_HOLLOW  = (4, 4, 6)              # eyes + tears: one pure black void
+_YK_DEEP    = (140, 96, 22)         # the Yellow, deepest amber (== _YK_T1)
+# How large the King draws relative to the body art (he should loom over the
+# player but leave the particle wake room to read). Tuned in-scene against the
+# player sprite. The body LAYER is rendered at full internal res then scaled
+# down on blit, so geometry stays crisp and the world-space wake reads larger.
+_YK_SCALE = 0.75
+_YK_SHARDS = None                   # cached fracture geometry (lazy)
+
+
+def _yk_glow_disc(surf, x, y, r, col, a):
+    """Additive soft disc (own helper so the mask FX never disturb the death
+    cutscene's _yk_radial tuning). Alpha falls off as the square of radius."""
+    r = int(r)
+    if r < 1 or a <= 0:
+        return
+    g = pygame.Surface((r * 2, r * 2), pygame.SRCALPHA)
+    for i in range(r, 0, -1):
+        pygame.draw.circle(g, (*col, int(a * (i / r) ** 2)), (r, r), i)
+    surf.blit(g, (int(x) - r, int(y) - r), special_flags=pygame.BLEND_RGBA_ADD)
+
+
+def _yk_fracture(F, n_ang=13, rings=(0.0, 0.46, 1.0)):
+    """Radial cracked-plate shards tiling the FxF mask. Each shard: a polygon in
+    surface coords + an outward unit vector from the mask centre + a spin sign.
+    Cached -- the break pattern is fixed, only how far the shards fly varies."""
+    global _YK_SHARDS
+    if _YK_SHARDS is not None:
+        return _YK_SHARDS
+    cx = cy = F / 2
+    rng = random.Random(7)           # own RNG -> never touches the game stream
+    angs = [i / n_ang * math.tau + rng.uniform(-0.12, 0.12) for i in range(n_ang + 1)]
+    rad = F * 0.5
+    shards = []
+    for i in range(n_ang):
+        a0, a1 = angs[i], angs[i + 1]
+        for j in range(len(rings) - 1):
+            r0 = rings[j] * rad * (1 + rng.uniform(-0.06, 0.06) if j else 0)
+            r1 = rings[j + 1] * rad * (1 + rng.uniform(-0.08, 0.08)
+                                       if j + 1 < len(rings) - 1 else 1)
+            poly = [
+                (cx + math.cos(a0) * r0, cy + math.sin(a0) * r0 * 1.12),
+                (cx + math.cos(a1) * r0, cy + math.sin(a1) * r0 * 1.12),
+                (cx + math.cos(a1) * r1, cy + math.sin(a1) * r1 * 1.12),
+                (cx + math.cos(a0) * r1, cy + math.sin(a0) * r1 * 1.12),
+            ]
+            mx = sum(p[0] for p in poly) / 4 - cx
+            my = sum(p[1] for p in poly) / 4 - cy
+            ml = math.hypot(mx, my) or 1
+            shards.append((poly, (mx / ml, my / ml), rng.choice((-1, 1)) * rng.uniform(0.6, 1.6)))
+    _YK_SHARDS = shards
+    return shards
+
+
+def _yk_pallid_face(F, weep, void_deep, gold_seep):
+    """The calm pallid mask on an FxF RGBA surface, centred. `weep` lengthens the
+    tears, `void_deep` deepens the eye-voids, `gold_seep` leaks the Yellow from
+    the eyes and hairline seams as he rouses (0 while serene)."""
+    s = pygame.Surface((F, F), pygame.SRCALPHA)
+    cx = cy = F // 2
+    w, h = int(F * 0.62), int(F * 0.74)
+    # ovoid body + soft form shading (light upper-left, shadow lower-right)
+    pygame.draw.ellipse(s, _YK_PORC_MD, (cx - w // 2, cy - h // 2, w, h))
+    hl = pygame.Surface((w, h), pygame.SRCALPHA)
+    pygame.draw.ellipse(hl, (*_YK_PORC, 165), (int(-w * 0.16), int(-h * 0.08), w, h))
+    s.blit(hl, (cx - w // 2, cy - h // 2))
+    sh = pygame.Surface((w, h), pygame.SRCALPHA)
+    pygame.draw.ellipse(sh, (*_YK_PORC_LO, 130), (int(w * 0.16), int(h * 0.10), w, h))
+    s.blit(sh, (cx - w // 2, cy - h // 2))
+    pygame.draw.ellipse(s, _YK_PORC_DK, (cx - w // 2, cy - h // 2, w, h), 1)
+    g = pygame.Surface((w, h), pygame.SRCALPHA)
+    pygame.draw.ellipse(g, (40, 36, 28, 70), (4, int(h * 0.5), w - 8, int(h * 0.5)))
+    s.blit(g, (cx - w // 2, cy - h // 2))
+    # hairline seams glow as he rouses (the Yellow seeping up through the cracks)
+    if gold_seep > 0.01:
+        rng = random.Random(3)
+        for _ in range(int(6 * gold_seep) + 1):
+            a = rng.uniform(0, math.tau); r0 = rng.uniform(2, 5)
+            x0 = cx + math.cos(a) * r0; y0 = cy + math.sin(a) * r0
+            x1 = cx + math.cos(a) * (w * 0.42); y1 = cy + math.sin(a) * (h * 0.42)
+            pygame.draw.line(s, (*_YK_GOLD, int(150 * gold_seep)), (x0, y0), (x1, y1), 1)
+    ew, eh = int(8 + 3 * void_deep), int(9 + 4 * void_deep)
+    ex = int(w * 0.27)
+
+    def eye(sx):
+        if gold_seep > 0.01:
+            _yk_glow_disc(s, cx + sx, cy - 3, ew * (1 + gold_seep), _YK_GOLD, int(120 * gold_seep))
+        pygame.draw.ellipse(s, _YK_HOLLOW, (cx + sx - ew, cy - 3 - eh, ew * 2, eh * 2))
+        pygame.draw.ellipse(s, (0, 0, 0), (cx + sx - ew + 2, cy - 1 - eh, ew * 2 - 4, eh * 2 - 2))
+        pygame.draw.ellipse(s, _YK_PORC_DK, (cx + sx - ew, cy - 3 - eh, ew * 2, eh * 2), 1)
+
+    def tear(sx):
+        rng = random.Random(sx + 7)
+        bx, by = cx + sx, cy - 3 + eh
+        x2, y2 = bx, by
+        for _ in range(int(10 + 14 * weep)):
+            y2 += 1; x2 += rng.randint(-1, 1)
+            pygame.draw.line(s, _YK_HOLLOW, (bx, by), (x2, y2), 2)
+    eye(-ex); eye(ex); tear(-ex); tear(ex)
+    return s
+
+
+def _yk_reach(surf, ox, oy, ang, length, grab, alpha):
+    """One dark grasping limb bursting from behind the mask toward `ang`, with a
+    faint gold-lit tip and a clawed end that splays as `grab` rises."""
+    seg = 7
+    pts = []
+    for i in range(seg + 1):
+        f = i / seg
+        a = ang + math.sin(f * 3.1 + grab * 2) * 0.3 * (1 - f)
+        r = length * f
+        pts.append((ox + math.cos(a) * r, oy + math.sin(a) * r))
+    for wdt, col in ((9, (*_YK_SHADOW, alpha)), (4, (*_YK_SHADOW_HI, int(alpha * 0.7)))):
+        for i in range(len(pts) - 1):
+            pygame.draw.line(surf, col, pts[i], pts[i + 1], max(1, int(wdt * (1 - i / seg))))
+    tx, ty = pts[-1]
+    _yk_glow_disc(surf, tx, ty, 5, _YK_DEEP, int(60 * grab))
+    for k in range(3):                          # claw splay
+        ca = ang + (k - 1) * 0.5
+        cl = 6 + 5 * grab
+        pygame.draw.line(surf, (*_YK_SHADOW, alpha),
+                         (tx, ty), (tx + math.cos(ca) * cl, ty + math.sin(ca) * cl), 2)
 
 
 def _yk_radial(surf, x, y, R, color, a0, add=True):
@@ -1747,213 +1882,181 @@ def _yk_shatter_mask(surf, cx, cy, r, vis, kind, crack, t, R, aim=0.0, arms=True
 
 
 def _draw_king(surf, x, y, facing, t, birth, gait, threat=None):
-    """THE KING IN YELLOW (see header). `birth` (0..1, already de-None'd by the
-    dispatch) drives the rift eruption; `t` animates; `gait` is accepted but the
-    float needs no leg cycle. `threat` (0..1, the player's nearness to death)
-    drives the calm->frenzy escalation: how many faces erupt, how bright it
-    flares, how far and fast the arms haul. It never phases out."""
-    global _YK_TRAIL
-    R = 22
-    intensity = 0.85 if threat is None else max(0.0, min(1.0, threat))
-    # How much of the King has bled into the world (0 = dark void, 1 = full
-    # blaze). Blooms late so the approach stays dreadful and the blaze is sudden.
-    mr = max(0.0, min(1.0, (intensity - _YK_BLOOM_LO) / (_YK_BLOOM_HI - _YK_BLOOM_LO)))
-    manifest = mr * mr * (3 - 2 * mr)
-    mcx, mcy = x, int(y - 42 + math.sin(t * 1.1) * 3)        # floats above the feet
+    """THE KING IN YELLOW (see header). His silhouette is the serene PALLID MASK
+    (a weeping porcelain face, black vacuous voids, no mouth); the Yellow lives
+    BEHIND it and only erupts when he rouses. `birth` (0..1) assembles the mask
+    from converging shards; `gait` is accepted but unused (the float needs no leg
+    cycle); `threat` (0..1, the player's nearness to death) drives the
+    calm->frenzy escalation -- the voids deepen and the seams seep gold, then the
+    mask SHATTERS and the Yellow blazes through the cracks with dark arms
+    reaching. It never phases out. Body art is drawn at full internal resolution
+    and scaled by _YK_SCALE on blit, so the world-space particle wake reads large
+    against him."""
+    sc = _YK_SCALE
+    R = 22 * sc
     bp = 1.0 if birth is None else max(0.0, min(1.0, birth))
-    grow = bp * bp * (3 - 2 * bp)                            # body eases in
-    valpha = 1.0 if bp >= 1.0 else 0.4 + 0.6 * grow
-    # BIRTH: the King flashes into being mid-birth (visible regardless of how
-    # near the player is), and the mask ASSEMBLES from scattered shards as it
-    # forms -- the exact reverse of how it shatters when it gets mad.
-    birth_vis = grow * (1.0 - grow) * 4.0                    # visible while it assembles
-    ignite = max(0.0, (0.26 - bp) / 0.26)                   # a quick ignition flash, up front
-    # Birth glow is kept low so the loud orb-cloud recedes and the quiet
-    # shard-assembly of the mask is what reads -- a coalescing, not a firework.
-    show = min(1.0, manifest + 0.5 * birth_vis + ignite)    # existence: threat OR birth
-    # Birth runs the shatter in REVERSE: shards converge into the WHOLE mask,
-    # always resolving to the calm intact face regardless of threat. Only once
-    # fully formed does the threat actually crack it (and bring out the arms).
-    # Crack LAGS the bloom: the mask first blooms INTACT (the void face becoming
-    # real), and only shatters once it's mostly manifest -- so the calm void face
-    # has faded before the shards appear, never a whole-face-behind-shards double.
-    if bp >= 1.0:
-        cm = max(0.0, (manifest - 0.45) / 0.55)
-        crack = cm * cm * (3 - 2 * cm)
-    else:
-        crack = (1.0 - grow) * 2.2
-    arms_on = bp >= 1.0 and crack > 0.05
+    grow = bp * bp * (3 - 2 * bp)                          # mask assembles in
+    intensity = 0.0 if threat is None else max(0.0, min(1.0, threat))
+    mcx, mcy = x, int(y - 42 * sc + math.sin(t * 1.1) * 3 * sc)   # floats, gentle bob
     dt = t - _YK_LAST[0]
     _YK_LAST[0] = t
     if dt <= 0 or dt > 0.2:
         dt = 0.016
-    # Wake reset on a teleport/respawn jump (re-seeds the swivel too).
-    if _YK_TRAIL:
-        px, py, pt = _YK_TRAIL[-1]
-        if (mcx - px) ** 2 + (mcy - py) ** 2 > 70 ** 2 or (t - pt) > 0.45:
-            _YK_TRAIL = []
+    # crack: 0 while assembling / calm; opens once fully born and threat climbs
+    # past the midpoint, so the calm weeping mask reads before it ever splits.
+    if bp >= 1.0:
+        cm = max(0.0, (intensity - 0.5) / 0.5)
+        crack = cm * cm * (3 - 2 * cm)
+    else:
+        crack = 0.0
+    void_deep = min(1.0, intensity / 0.5)
+    weep = 0.3 + 0.7 * intensity
+    gold_seep = max(0.0, (intensity - 0.32) / 0.4) * (1 - crack)   # seam-glow pre-break
+
+    # --- particles (world space): pale-ash + gold sparks, drawn straight to surf
+    # so they sit at true scale around the smaller King and read with weight.
+    # BIRTH pulls motes INWARD (coalescence); the break vomits sparks outward.
+    if bp < 0.6:
+        for _ in range(3):
+            a = _YK_PRNG.uniform(0, math.tau); d = _YK_PRNG.uniform(R * 1.6, R * 3.2)
+            spd = _YK_PRNG.uniform(60, 150)
+            _YK_PARTS.append({"kind": "ash", "x": mcx + math.cos(a) * d, "y": mcy + math.sin(a) * d,
+                              "vx": -math.cos(a) * spd, "vy": -math.sin(a) * spd,
+                              "age": 0.0, "life": d / spd, "r": _YK_PRNG.uniform(2, 4)})
+    if crack > 0.1 and _YK_PRNG.random() < crack:
+        for _ in range(2):
+            a = _YK_PRNG.uniform(0, math.tau); spd = _YK_PRNG.uniform(30, 90) * crack
+            gold = _YK_PRNG.random() < 0.5
+            _YK_PARTS.append({"kind": "spark" if gold else "ash",
+                              "x": mcx + _YK_PRNG.uniform(-6, 6), "y": mcy + _YK_PRNG.uniform(-6, 6),
+                              "vx": math.cos(a) * spd, "vy": math.sin(a) * spd - 12,
+                              "age": 0.0, "life": _YK_PRNG.uniform(0.6, 1.4), "r": _YK_PRNG.uniform(2, 5)})
+    # movement wake: a pale-ash trail drifts off behind him as he moves (always),
+    # with gold sparks shaken loose once he has roused.
+    if _YK_PREV[0] is not None:
+        dx_, dy_ = mcx - _YK_PREV[0][0], mcy - _YK_PREV[0][1]
+        disp = math.hypot(dx_, dy_)
+        if 0.1 < disp < 60:                       # ignore teleports / respawn jumps
+            bvx, bvy = -dx_ / disp, -dy_ / disp
+            _YK_ACC[0] += disp
+            while _YK_ACC[0] >= 8:
+                _YK_ACC[0] -= 8
+                _YK_PARTS.append({"kind": "ash",
+                                  "x": mcx + _YK_PRNG.uniform(-6, 6), "y": mcy + _YK_PRNG.uniform(-4, 8),
+                                  "vx": bvx * 13 + _YK_PRNG.uniform(-7, 7),
+                                  "vy": bvy * 13 + _YK_PRNG.uniform(-7, 7) - 5,
+                                  "age": 0.0, "life": _YK_PRNG.uniform(0.9, 1.7), "r": _YK_PRNG.uniform(2, 4)})
+                if crack > 0.2 and _YK_PRNG.random() < crack:
+                    _YK_PARTS.append({"kind": "spark",
+                                      "x": mcx + _YK_PRNG.uniform(-5, 5), "y": mcy + _YK_PRNG.uniform(-5, 5),
+                                      "vx": bvx * 10 + _YK_PRNG.uniform(-9, 9),
+                                      "vy": bvy * 10 + _YK_PRNG.uniform(-9, 9),
+                                      "age": 0.0, "life": _YK_PRNG.uniform(0.7, 1.3), "r": _YK_PRNG.uniform(2, 4)})
+    else:
+        # first frame (or post-reset): seed the wake anchor without a teleport burst.
+        pass
+    # teleport guard: a big jump (respawn at a new anchor) resets the wake anchor.
+    if _YK_PREV[0] is not None:
+        if (mcx - _YK_PREV[0][0]) ** 2 + (mcy - _YK_PREV[0][1]) ** 2 > 70 ** 2:
             _YK_PARTS.clear()
             _YK_ACC[0] = 0.0
-            _YK_AIM[0] = None
-    # BIRTH: it is ASSEMBLING, so soul-orbs are pulled INWARD -- they spawn out
-    # at the perimeter and stream toward the mask to form it (not vomited out).
-    if bp < 0.55:
-        for _ in range(2):
-            ang = _YK_PRNG.uniform(0, math.tau)
-            dist = _YK_PRNG.uniform(R * 1.6, R * 3.0)
-            spd = _YK_PRNG.uniform(50, 130)
-            orb = _YK_PRNG.random() < 0.10          # mostly faint motes, few orbs
-            _YK_PARTS.append({
-                "kind": "orb" if orb else "mote", "seed": _YK_PRNG.randint(0, 999),
-                "birth": True,                       # coalescence -> dim, faceless
-                "x": mcx + math.cos(ang) * dist, "y": mcy + math.sin(ang) * dist,
-                "vx": -math.cos(ang) * spd, "vy": -math.sin(ang) * spd,   # toward the mask
-                "age": 0.0, "life": dist / spd,                           # arrives ~as it fades
-                "r": _YK_PRNG.uniform(5, 9) if orb else _YK_PRNG.uniform(2, 4)})
-    disp = math.hypot(mcx - _YK_TRAIL[-1][0], mcy - _YK_TRAIL[-1][1]) if _YK_TRAIL else 0.0
-    _YK_TRAIL.append((mcx, mcy, t))
-    _YK_TRAIL = _YK_TRAIL[-5:]
-    tvx, tvy = (mcx - _YK_TRAIL[0][0], mcy - _YK_TRAIL[0][1])
-    tl = math.hypot(tvx, tvy) or 1.0
-    bvx, bvy = -tvx / tl, -tvy / tl
-    # The wake of shed soul-orbs only trails once he has AWAKENED (the bloom has
-    # begun). While a calm void he is JUST a mask -- no trail, however he drifts.
-    awakened = manifest > 0.05
-    if awakened:
-        _YK_ACC[0] += disp
-    else:
-        _YK_ACC[0] = 0.0
-    while awakened and disp > 0.4 and _YK_ACC[0] >= 12:      # space the orbs along the path
-        _YK_ACC[0] -= 12
-        _YK_PARTS.append({
-            "kind": "orb", "seed": _YK_PRNG.randint(0, 999),
-            "x": mcx + _YK_PRNG.uniform(-5, 5), "y": mcy + _YK_PRNG.uniform(-5, 5),
-            "vx": bvx * 9 + _YK_PRNG.uniform(-8, 8),
-            "vy": bvy * 9 + _YK_PRNG.uniform(-8, 8),
-            "age": 0.0, "life": _YK_PRNG.uniform(1.8, 2.8),
-            "r": _YK_PRNG.uniform(7, 15)})
-        for _ in range(2):
-            _YK_PARTS.append({
-                "kind": "mote", "seed": 0,
-                "x": mcx + _YK_PRNG.uniform(-9, 9), "y": mcy + _YK_PRNG.uniform(-9, 9),
-                "vx": bvx * 18 + _YK_PRNG.uniform(-16, 16),
-                "vy": bvy * 18 + _YK_PRNG.uniform(-16, 16),
-                "age": 0.0, "life": _YK_PRNG.uniform(0.7, 1.2),
-                "r": _YK_PRNG.uniform(1.5, 3.0)})
-    if len(_YK_PARTS) > 160:
-        del _YK_PARTS[:len(_YK_PARTS) - 160]
+    _YK_PREV[0] = (mcx, mcy)
+    if len(_YK_PARTS) > 220:
+        del _YK_PARTS[:len(_YK_PARTS) - 220]
     keep = []
     for p in _YK_PARTS:
         p["age"] += dt
         fr = p["age"] / p["life"]
         if fr >= 1.0:
             continue
-        p["x"] += p["vx"] * dt
-        p["y"] += p["vy"] * dt
-        keep.append((p, fr, (1.0 - fr) * show))      # a: no trail while it's a dark void
-    _YK_PARTS[:] = [p for p, _, _ in keep]
-    # Pass 1: lay down ALL the glow particles first...
-    for p, fr, a in keep:
-        if a <= 0.01:
-            continue
-        wdim = 0.4 if p.get("birth") else 0.42              # wake dimmed to match the head
-        if p["kind"] == "orb":
-            _yk_orb_glow(surf, p["x"], p["y"], p["r"] * (1 - 0.22 * fr), a * wdim)
+        p["x"] += p["vx"] * dt; p["y"] += p["vy"] * dt
+        keep.append((p, fr))
+    _YK_PARTS[:] = [p for p, _ in keep]
+    for p, fr in keep:
+        a = 1 - fr
+        if p["kind"] == "spark":
+            _yk_glow_disc(surf, p["x"], p["y"], p["r"] * 2.4, _YK_HOT, int(150 * a))
         else:
-            mr = max(2, p["r"] * (1 - 0.4 * fr))
-            _yk_radial(surf, p["x"], p["y"], int(mr * 2.6), _YK_T1, int(60 * a * wdim))  # orange glow
-            _yk_radial(surf, p["x"], p["y"], mr, _YK_GOLD, int(150 * a * wdim))
-    # ...Pass 2: then every orb's masks on top, so no later glow buries them. Birth
-    # orbs stay FACELESS (a quiet coalescence); the wake faces are KEPT -- the
-    # implied victims -- but dimmed so the trail sits behind the head.
-    for p, fr, a in keep:
-        if p["kind"] == "orb" and a > 0.04 and not p.get("birth"):
-            _yk_orb_faces(surf, p["x"], p["y"], p["r"] * (1 - 0.22 * fr), a * 0.8, p["seed"], t)
-    # Faint floating shadow on the ground, far below the mass.
+            r = max(1, int(p["r"] * (1 - 0.4 * fr)))
+            pygame.draw.circle(surf, (*_YK_PORC, int(150 * a)), (int(p["x"]), int(p["y"])), r)
+
+    # faint floating ground shadow
     sh = pygame.Surface((40, 12), pygame.SRCALPHA)
-    pygame.draw.ellipse(sh, (0, 0, 0, 80), (0, 0, 40, 12))
+    pygame.draw.ellipse(sh, (0, 0, 0, 90), (0, 0, 40, 12))
     surf.blit(sh, (x - 20, y - 4))
-    # Body on its own layer.
-    L = 170
-    layer = pygame.Surface((L, L), pygame.SRCALPHA)
-    cx = cy = L // 2
-    # Arms swivel smoothly toward the player (facing).
+
+    # arms swivel smoothly toward the player (facing)
     fxx, fyy = facing if facing != (0, 0) else (0, 1)
     tgt = math.atan2(fyy, fxx)
     if _YK_AIM[0] is None:
         _YK_AIM[0] = tgt
-    da_ = (tgt - _YK_AIM[0] + math.pi) % math.tau - math.pi
-    _YK_AIM[0] += da_ * min(1.0, dt * 7.0)
+    _YK_AIM[0] += ((tgt - _YK_AIM[0] + math.pi) % math.tau - math.pi) * min(1.0, dt * 7.0)
     aa = _YK_AIM[0]
-    fb = (math.cos(aa) * R * 0.22, math.sin(aa) * R * 0.22)
-    va = max(0.05, valpha)
-    # The PRIMARY mask: one steady face anchored as the "head", turned to track
-    # the player. It is the first thing to exist (a pale mask in the void),
-    # serene while the King is calm, and the scream the chorus erupts around as
-    # it closes -- the same object the whole way, just becoming more real.
-    hx = cx + fb[0] * 1.8
-    hy = cy - R * 0.12 + fb[1] * 1.8
-    # Vacuous void eyes throughout; serene mouth while calm, and a black-weeping
-    # wail once it rouses to manifest.
-    pmk = ("wail" if intensity >= 0.82 else "vacant") if bp >= 1.0 else "vacant"
-    pfr = max(7, int(10 * max(0.3, grow)))
-    # Motion sync: it hauls itself toward the aim as an arm completes its
-    # stretch -- but only once it exists; dead still while a void.
-    arm_speed = 0.32 + 0.4 * intensity                      # slow, deliberate reach
-    lunge_env = (math.exp(-((((t * arm_speed) % 1.0) - 0.68) / 0.15) ** 2)
-                 + math.exp(-((((t * arm_speed + 0.5) % 1.0) - 0.68) / 0.15) ** 2))
-    surge = R * (0.12 + 0.28 * intensity) * grow * manifest * lunge_env
-    sxo, syo = int(math.cos(aa) * surge), int(math.sin(aa) * surge)
-    # A RARE, narrow white-hot stab -- one slow pulse, near-dark between, so full
-    # brightness is a brief punctuation rather than the resting state.
-    fph = (t * (0.16 + 0.12 * intensity)) % 1.0
-    flare = math.exp(-((fph - 0.5) / 0.045) ** 2)
-    # --- VOID form (dominant while far): a still dark mass + a faint pale mask.
-    # Fades out by the time the bloom takes hold (show ~0.5), well before the
-    # mask cracks -- so the whole calm face is gone before the shards show.
-    void_fade = max(0.0, 1.0 - show / 0.5)
-    if void_fade > 0.02 and grow > 0.1:
-        void = pygame.Surface((L, L), pygame.SRCALPHA)
-        _yk_void(void, cx, cy, int(R * max(0.4, grow)))
-        # The ashen mask is THE thing watching from the void -- present and
-        # readable the whole way (hollow eyes, no scream), just fainter far off
-        # and firmer as he nears. Its MOUTH is withheld (mouth=False): a calm,
-        # vacant, watching stare, never a shriek while he's still a void. The
-        # scream is held for the break, when the mask actually cracks open.
-        vmask = 0.6 + 0.18 * intensity
-        _yk_mask(void, hx, hy, pfr, vmask, pmk, mouth=False)  # ashen mask, watching
-        void.set_alpha(int(235 * void_fade * va))
-        # Move with the SAME lurch offset as the manifest layer: the void and
-        # the manifest are one head, so they must stay aligned -- otherwise the
-        # calm void face and the manifest face read as TWO masks during the
-        # crossfade. Surge is ~0 while far (manifest 0), so it's still then.
-        surf.blit(void, (mcx - cx + sxo, mcy - cy + syo))
-    # --- MANIFEST form (blooms in as it closes, and flashes in at birth).
-    if show > 0.01:
-        # Golden light SIZED TO THE MASK, sitting inside it -- so it reads as
-        # light leaking FROM the mask: hidden when whole, blazing through the
-        # cracks as it splits.
-        _yk_glow(layer, hx, hy, max(6, int(pfr * 1.2)), t)
-        # Birth ignition: a mask-scale white flash up front, before it assembles.
-        if ignite > 0.02:
-            _yk_radial(layer, hx, hy, int(pfr * (1.0 + 0.7 * ignite)),
-                       _YK_WHITE, int(110 * ignite))
-        # The white-hot core is a brief PUNCTUATION, not a constant glare: it
-        # stabs only as he lunges (the same envelope that hauls the arms), so
-        # the body mostly smoulders gold and full brightness stays rare.
-        if intensity > 0.6 and flare > 0.04:
-            _yk_radial(layer, hx, hy, int(pfr * (0.55 + 0.45 * intensity)), _YK_WHITE,
-                       int(78 * (intensity - 0.6) / 0.4 * flare))
-        # THE OTHER mask, directly behind -- a screaming face glimpsed through
-        # the cracks once the front one splits open. Withheld until the cracks
-        # actually open, so the scream is a reveal, not an ever-present chorus.
-        _yk_mask(layer, hx, hy, pfr, min(1.0, max(0.0, crack - 0.3) * 1.5), "scream")
-        # THE MASK -- our silhouette. Assembles from shards at birth, intact when
-        # calm, and splits apart as it rouses -- the grasping arms bursting from
-        # the splits and reaching toward the player.
-        _yk_shatter_mask(layer, hx, hy, pfr, 0.92, pmk, crack, t, R * max(0.3, grow), aa, arms_on)
-        layer.set_alpha(int(255 * va * show))
-        surf.blit(layer, (mcx - cx + sxo, mcy - cy + syo))
+
+    # The body LAYER is rendered at full internal resolution (RI), then scaled by
+    # _YK_SCALE on the final blit -- crisp geometry, and the wake reads larger.
+    RI = 22
+    F = 180
+    cxL = F // 2
+    layer = pygame.Surface((F, F), pygame.SRCALPHA)
+
+    if grow < 0.05 and bp < 1.0:
+        return
+
+    # YELLOW blaze behind the mask, revealed by the crack -- moody amber/gold,
+    # white only as a brief stab (a rare punctuation, not the resting glare).
+    if crack > 0.02:
+        for r, col, al in ((int(RI * 1.7), _YK_DEEP, 78), (int(RI * 1.05), _YK_GOLD, 95),
+                           (int(RI * 0.6), _YK_GOLD, 110)):
+            _yk_glow_disc(layer, cxL, cxL, r * (0.5 + crack), col, int(al * crack))
+        flare = math.exp(-(((t * 0.5) % 1.0 - 0.5) / 0.06) ** 2)   # one slow white stab
+        if flare > 0.05:
+            _yk_glow_disc(layer, cxL, cxL, RI * 0.5, _YK_HOT, int(120 * crack * flare))
+        if crack > 0.4:                            # a screaming maw through the gap
+            pygame.draw.ellipse(layer, (*_YK_HOT, int(200 * (crack - 0.4))),
+                                (cxL - 5, cxL + 2, 10, int(6 + 10 * crack)))
+
+    # arms BURST from the shatter seams and reach for the player.
+    if crack > 0.05:
+        al = int(245 * crack)
+        length = RI * (1.8 + 2.0 * crack) * (0.55 + 0.45 * intensity)
+        for offa in (-0.95, -0.5, 0.0, 0.5, 0.95):
+            ax = cxL + math.cos(aa + offa) * RI * 0.5 * crack
+            ay = cxL + 2 + math.sin(aa + offa) * RI * 0.5 * crack
+            _yk_reach(layer, ax, ay, aa + offa, length * (1.0 - 0.22 * abs(offa)), crack, al)
+
+    # THE MASK: assemble (birth) / whole (calm) / shatter (frenzy). Rendered at a
+    # fixed size MF, centred into the larger arm-holding layer.
+    MF = 120
+    moff = (F - MF) // 2
+    face = _yk_pallid_face(MF, weep, void_deep, gold_seep)
+
+    def blit_shards(spread, spin_amt, alpha):
+        for poly, (ux, uy), spin in _yk_fracture(MF):
+            shard = face.copy()
+            mask = pygame.Surface((MF, MF), pygame.SRCALPHA)
+            pygame.draw.polygon(mask, (255, 255, 255, 255), poly)
+            shard.blit(mask, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
+            rot = pygame.transform.rotate(shard, math.degrees(spin) * spin_amt)
+            rot.set_alpha(int(alpha))
+            layer.blit(rot, (moff + ux * spread - (rot.get_width() - MF) / 2,
+                             moff + uy * spread - (rot.get_height() - MF) / 2))
+
+    if bp < 1.0:
+        # ASSEMBLY: the shatter run in REVERSE -- shards converge into the whole.
+        d = 1.0 - grow
+        blit_shards(d * RI * 2.4, d * 0.5, 255 * grow)
+    elif crack <= 0.02:
+        layer.blit(face, (moff, moff))             # CALM: the whole weeping mask
+    else:
+        # SHATTER: shards fly out, fading; the Yellow blazes through behind.
+        blit_shards(crack * RI * 2.6, crack * 0.55, 255 * (1 - 0.55 * crack))
+
+    if sc != 1.0:
+        sw = max(1, int(F * sc))
+        layer = pygame.transform.smoothscale(layer, (sw, sw))
+        cxL = sw // 2
+    surf.blit(layer, (mcx - cxL, mcy - cxL))
 
 
 # ---------------------------------------------------------------------------
