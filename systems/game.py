@@ -2649,10 +2649,10 @@ class Game:
         from scenes import load_scene
         cache = {}
         for ch, direction in scene.exit_directions.items():
-            target_key = scene.exits.get(ch)
-            if not target_key:
+            exit_data = scene.exits.get(ch)
+            if not exit_data:
                 continue
-            target_key = target_key[0]
+            target_key, spawn_id = exit_data
             pos = scene.find_marker(ch)
             if pos is None:
                 continue
@@ -2663,13 +2663,20 @@ class Game:
                 except Exception:
                     continue
             target = cache[target_key]
-            # Aim the peek at the target's centre (its lit content reads
-            # there for the maker-less groves; a per-fold anchor can refine
-            # this later).
+            # Look through the actual EXIT: aim the peek at the tile the
+            # player will arrive on (the target's spawn for this exit's
+            # spawn_id), so the peek frames where you'd emerge -- not some
+            # arbitrary scene centre. Falls back to the centre if the spawn
+            # is missing.
+            spawn = target.spawns.get(spawn_id) or target.spawns.get("default")
+            if spawn:
+                anchor_tile = (int(spawn[0] // TILE), int(spawn[1] // TILE))
+            else:
+                anchor_tile = (target.w // 2, target.h // 2)
             self._folds.append({
                 "normal": _DIRV.get(direction, (0, -1)),
                 "target": target,
-                "anchor_tile": (target.w // 2, target.h // 2),
+                "anchor_tile": anchor_tile,
                 "fold_px": (tx * TILE + TILE // 2, ty * TILE + TILE // 2),
             })
 
