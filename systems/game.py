@@ -196,6 +196,20 @@ WATCHER_GAZE_DISPEL = 2.0      # seconds holding one in your gaze to dissolve it
 VIS_FLOOR_TOTAL_CAP = 0.92     # summed floor stays just under the King (1.0)
 CULT_REGULARS = 2              # roaming cultists kept per cult scene
 CULT_TOPUP_INTERVAL = 8.0      # seconds between cultist (re)spawns
+
+# Fold pursuit (Stage 3): a cultist hot on the player's heels follows them
+# through a hidden FOLD (a direction-gated exit) "a beat behind" -- it
+# re-emerges at the entry seam shortly after the player. Mundane exits
+# (doors / ladders / ropes) are NOT folds: fleeing through ordinary
+# architecture shakes the chase (the cult moves through the world's
+# wrongness, not your ladders). Only the single nearest active chaser
+# within FOLD_PURSUE_RANGE carries; it appears after FOLD_PURSUE_DELAY but
+# never within FOLD_PURSUE_MIN_GAP of the player, and is forced in
+# FOLD_PURSUE_FORCE seconds later so a dawdling player can't stall it.
+FOLD_PURSUE_RANGE = 180.0    # px; pursuer must be this close to follow through
+FOLD_PURSUE_DELAY = 0.7      # s; the beat-behind before it emerges
+FOLD_PURSUE_MIN_GAP = 56.0   # px; never spawn on top of the player
+FOLD_PURSUE_FORCE = 2.5      # s after the delay; emerge even if player lingers
 # Axe swing: the player's only attack, gated on the splitting axe. A
 # non-lethal arc that splinters barricades and STUNS a cultist/shadow.
 MELEE_CD = 0.85                # seconds between swings
@@ -716,6 +730,9 @@ class Game:
         # same session skips the scripted recoil. (Pairs with the save
         # flag `bedroom_door_passed`, which the fresh save clears.)
         self._bedroom_door_stuck_done = False
+        # Fold pursuit (Stage 3) -- see _note_fold_pursuit / _tick_fold_pursuit.
+        self._fold_pursuer = None
+        self._fold_pursuer_grace = 0.0
         # Stillness + heartbeat
         self.stillness_t = 0.0
         self._delayed_audio = []
@@ -879,6 +896,15 @@ class Game:
         # Reset the step-event buffer on each scene load. A step in
         # one scene shouldn't bleed into the next.
         self.scene._last_step_event = None
+        # Fold pursuit hand-off: if the player fled here through a fold with
+        # a hot cultist (stashed by _note_fold_pursuit), arm the beat-behind
+        # spawn at the entry seam. Consume-once; the refuge is never breached.
+        if self._fold_pursuer is not None and key not in SAFE_SCENES:
+            self._fold_pursuer["entry_tile"] = self.scene._last_entry_exit_tile
+            self._fold_pursuer_grace = FOLD_PURSUE_DELAY
+        else:
+            self._fold_pursuer = None
+            self._fold_pursuer_grace = 0.0
         self._update_camera(snap=True)
         # Seamless transitions in the outside world (handled in
         # begin_transition) ask for keep_music so the track doesn't
@@ -2610,6 +2636,80 @@ class Game:
                 n += 1
         return n
 
+    def _note_fold_pursuit(self, exit_data):
+        """Called the instant an exit fires, BEFORE the scene swaps. If the
+        exit is a hidden FOLD (a direction-gated exit) and a cultist is in
+        active chase within FOLD_PURSUE_RANGE, stash that one pursuer so it
+        can follow a beat behind. Any other exit -- door, ladder, rope --
+        clears the stash: ordinary architecture shakes the chase. The
+        refuge (SAFE_SCENES) is never breached."""
+        target_scene, _spawn_id = exit_data
+        ch = self.scene.char_object_at(self.player.x, self.player.y)
+        is_fold = ch in self.scene.exit_directions
+        if not is_fold or target_scene in SAFE_SCENES:
+            self._fold_pursuer = None
+            return
+        hot, hot_d = None, FOLD_PURSUE_RANGE
+        for n in self.scene.npcs:
+            if getattr(n, "movement", "") != "chaser":
+                continue
+            if getattr(n, "_cult_state", "") != "chase":
+                continue
+            if not getattr(n, "alive", True):
+                continue
+            d = math.hypot(n.x - self.player.x, n.y - self.player.y)
+            if d <= hot_d:
+                hot, hot_d = n, d
+        if hot is None:
+            self._fold_pursuer = None
+            return
+        # Just enough to rebuild it on the far side of the fold.
+        self._fold_pursuer = {
+            "kind": hot.sprite_kind,
+            "speed": getattr(hot, "speed", 0.85),
+            "gaze_range": getattr(hot, "_gaze_range", 180),
+            "tag": getattr(hot, "tag", "cult_regular"),
+        }
+
+    def _tick_fold_pursuit(self, dt):
+        """Spawn the stashed fold-pursuer a beat behind the player, at the
+        seam they entered through -- never on top of them. It resumes the
+        chase already knowing where the player is (it came through after
+        them). Consumed once it fires."""
+        if self._fold_pursuer is None or self.player is None:
+            return
+        info = self._fold_pursuer
+        if "entry_tile" not in info:      # stashed but not yet armed by a load
+            return
+        self._fold_pursuer_grace -= dt
+        if self._fold_pursuer_grace > 0:
+            return
+        et = info.get("entry_tile")
+        if not et:
+            self._fold_pursuer = None
+            return
+        sx = et[0] * TILE + TILE // 2
+        sy = et[1] * TILE + TILE // 2
+        gap = math.hypot(sx - self.player.x, sy - self.player.y)
+        # Hold until the player steps off the seam -- unless they dawdle past
+        # the force window, in which case the lunge lands anyway.
+        if (gap < FOLD_PURSUE_MIN_GAP
+                and self._fold_pursuer_grace > -FOLD_PURSUE_FORCE):
+            return
+        if self.scene.is_solid_at(sx, sy):
+            self._fold_pursuer = None
+            self._fold_pursuer_grace = 0.0
+            return
+        npc = self._spawn_cultist(info["tag"], info["kind"],
+                                  speed=info["speed"],
+                                  gaze_range=info["gaze_range"],
+                                  at=(sx, sy))
+        if npc is not None:
+            npc._cult_state = "chase"
+            npc._last_seen_pos = (self.player.x, self.player.y)
+        self._fold_pursuer = None
+        self._fold_pursuer_grace = 0.0
+
     def _spawn_cultist(self, tag, kind, speed=0.85, gaze_range=180,
                        movement="chaser", name="", at=None):
         """Plant a cultist. If `at` (x, y) is given and walkable, they enter
@@ -3288,6 +3388,9 @@ class Game:
                     self.player.x, self.player.y,
                     facing=self.player.facing)
                 if exit_data:
+                    # Stash a hot pursuer iff this exit is a FOLD; a mundane
+                    # exit clears the stash (architecture shakes the chase).
+                    self._note_fold_pursuit(exit_data)
                     self.begin_transition(*exit_data)
             # Suspend scene update (NPC patrols, decoration anims, triggers)
             # while any modal is up so the world freezes behind it.
@@ -3364,6 +3467,7 @@ class Game:
             # while a box is up. Cutscene/audio drivers keep running.
             if not world_frozen:
                 self._tick_cultists(dt)
+                self._tick_fold_pursuit(dt)
                 self._tick_sheriff(dt)
                 self._tick_gaze_bind(dt)
                 self._tick_watchers(dt)

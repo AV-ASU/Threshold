@@ -32,7 +32,8 @@ from entities.npc import NPC
 
 def _boot():
     g = Game()
-    g.start_new_game()
+    g.save.new()
+    g._start_play()
     g.load_scene_now("cornfield_maze", "default")
     return g
 
@@ -57,7 +58,8 @@ def _find_exit_tile(g, *, fold):
 
 
 def _add_hot_cultist(g, offset=40):
-    npc = NPC(g.player.x + offset, g.player.y, "cultist", movement="chaser")
+    npc = NPC(g.player.x + offset, g.player.y, "", "cultist",
+              movement="chaser")
     npc.tag = "cult_regular"
     npc._cult_state = "chase"
     npc._last_seen_pos = (g.player.x, g.player.y)
@@ -67,7 +69,7 @@ def _add_hot_cultist(g, offset=40):
 
 def _chasers(g):
     return sum(1 for n in g.scene.npcs
-               if getattr(n, "move_mode", "") == "chaser"
+               if getattr(n, "movement", "") == "chaser"
                and getattr(n, "alive", True))
 
 
