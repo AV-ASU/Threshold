@@ -90,20 +90,49 @@ def test_fold_carries_pursuer():
     print("  OK  a hot pursuer follows through a fold")
 
 
-def test_mundane_exit_loses_pursuer():
+def test_passage_carries_pursuer():
+    # A seamless outdoor PASSAGE (both scenes in the open world) is the
+    # cult's ground too -- they follow across it, just like a fold.
     g = _boot()
-    tx, ty, ch = _find_exit_tile(g, fold=False)
-    target, spawn = g.scene.exits[ch]
-    _stand_on(g, tx, ty)
+    g.load_scene_now("brimley", "default")    # an outdoor town, full of passages
+    target, spawn, ch = None, None, None
+    for c, (tgt, sp) in g.scene.exits.items():
+        from systems.game import SEAMLESS_WORLD_SCENES
+        if tgt in SEAMLESS_WORLD_SCENES and c not in g.scene.exit_directions:
+            target, spawn, ch = tgt, sp, c
+            break
+    assert ch is not None, "brimley should have a seamless passage exit"
+    pos = g.scene.find_marker(ch)
+    _stand_on(g, pos[0], pos[1])
     _add_hot_cultist(g)
     g._note_fold_pursuit((target, spawn))
-    assert g._fold_pursuer is None, "a mundane exit must clear the stash"
+    assert g._fold_pursuer is not None, "a seamless passage must carry a pursuer"
+    print("  OK  a hot pursuer follows through an outdoor passage")
+
+
+def test_interior_door_loses_pursuer():
+    # A fade transition into an INTERIOR (door / ladder / rope) shakes the
+    # chase -- ordinary architecture is the player-only escape.
+    g = _boot()
+    g.load_scene_now("brimley", "default")
+    from systems.game import SEAMLESS_WORLD_SCENES
+    target, spawn, ch = None, None, None
+    for c, (tgt, sp) in g.scene.exits.items():
+        if tgt not in SEAMLESS_WORLD_SCENES and c not in g.scene.exit_directions:
+            target, spawn, ch = tgt, sp, c       # e.g. brimley -> shop (a door)
+            break
+    assert ch is not None, "brimley should have an interior-door exit"
+    pos = g.scene.find_marker(ch)
+    _stand_on(g, pos[0], pos[1])
+    _add_hot_cultist(g)
+    g._note_fold_pursuit((target, spawn))
+    assert g._fold_pursuer is None, "an interior door must clear the stash"
     g.load_scene_now(target, spawn)
     before = _chasers(g)
     for _ in range(120):
         g._tick_fold_pursuit(0.05)
-    assert _chasers(g) == before, "a mundane exit must NOT carry a pursuer"
-    print("  OK  a mundane exit (door/ladder/rope) shakes the chase")
+    assert _chasers(g) == before, "an interior door must NOT carry a pursuer"
+    print("  OK  an interior door (door/ladder/rope) shakes the chase")
 
 
 def test_no_spawn_during_grace():
@@ -136,7 +165,8 @@ def test_safe_scene_never_breached():
 
 if __name__ == "__main__":
     test_fold_carries_pursuer()
-    test_mundane_exit_loses_pursuer()
+    test_passage_carries_pursuer()
+    test_interior_door_loses_pursuer()
     test_no_spawn_during_grace()
     test_safe_scene_never_breached()
     print("All fold-pursuit guards held.")

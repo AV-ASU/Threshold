@@ -896,6 +896,7 @@ class Game:
         # Reset the step-event buffer on each scene load. A step in
         # one scene shouldn't bleed into the next.
         self.scene._last_step_event = None
+        self._build_fold_cache()
         # Fold pursuit hand-off: if the player fled here through a fold with
         # a hot cultist (stashed by _note_fold_pursuit), arm the beat-behind
         # spawn at the entry seam. Consume-once; the refuge is never breached.
@@ -2636,6 +2637,54 @@ class Game:
                 n += 1
         return n
 
+    def _build_fold_cache(self):
+        """After a scene load, find every SEEN fold in it (direction-gated
+        exits) and pre-load the small set of target scenes once. A seen fold
+        is drawn as a peek into its target (rendering.folds.draw_fold)."""
+        self._folds = []
+        scene = self.scene
+        if scene is None:
+            return
+        from rendering.folds import _DIRV
+        from scenes import load_scene
+        cache = {}
+        for ch, direction in scene.exit_directions.items():
+            target_key = scene.exits.get(ch)
+            if not target_key:
+                continue
+            target_key = target_key[0]
+            pos = scene.find_marker(ch)
+            if pos is None:
+                continue
+            tx, ty = pos
+            if target_key not in cache:
+                try:
+                    cache[target_key] = load_scene(target_key)
+                except Exception:
+                    continue
+            target = cache[target_key]
+            # Aim the peek at the target's centre (its lit content reads
+            # there for the maker-less groves; a per-fold anchor can refine
+            # this later).
+            self._folds.append({
+                "normal": _DIRV.get(direction, (0, -1)),
+                "target": target,
+                "anchor_tile": (target.w // 2, target.h // 2),
+                "fold_px": (tx * TILE + TILE // 2, ty * TILE + TILE // 2),
+            })
+
+    def _draw_folds(self):
+        """Composite every seen fold in the current scene -- a one-sided peek
+        into its target, only visible when the player faces into it."""
+        folds = getattr(self, "_folds", None)
+        if not folds or self.player is None:
+            return
+        from rendering.folds import draw_fold
+        t = pygame.time.get_ticks() / 1000.0
+        for face in folds:
+            draw_fold(self.screen, face, self.cam_x, self.cam_y,
+                      self.player, t)
+
     def _note_fold_pursuit(self, exit_data):
         """Called the instant an exit fires, BEFORE the scene swaps. If the
         exit is a hidden FOLD (a direction-gated exit) and a cultist is in
@@ -2644,9 +2693,16 @@ class Game:
         clears the stash: ordinary architecture shakes the chase. The
         refuge (SAFE_SCENES) is never breached."""
         target_scene, _spawn_id = exit_data
+        # The cult moves through the world's wrongness AND its open ground:
+        # a hidden fold (direction-gated) or a seamless outdoor passage both
+        # carry the chase. Only a fade transition into an interior -- a door,
+        # ladder, or rope -- shakes them. The refuge is never breached.
         ch = self.scene.char_object_at(self.player.x, self.player.y)
         is_fold = ch in self.scene.exit_directions
-        if not is_fold or target_scene in SAFE_SCENES:
+        cur = self.scene.key if self.scene else None
+        is_passage = (cur in SEAMLESS_WORLD_SCENES
+                      and target_scene in SEAMLESS_WORLD_SCENES)
+        if (not (is_fold or is_passage)) or target_scene in SAFE_SCENES:
             self._fold_pursuer = None
             return
         hot, hot_d = None, FOLD_PURSUE_RANGE
@@ -4141,6 +4197,7 @@ class Game:
         self.screen.fill(C_BG)
         if not self.scene: return
         self.scene.draw(self.screen, self.cam_x, self.cam_y)
+        self._draw_folds()
         for it in self.scene.items:
             sx = int(it["x"] - self.cam_x); sy = int(it["y"] - self.cam_y)
             t = pygame.time.get_ticks() / 200.0
