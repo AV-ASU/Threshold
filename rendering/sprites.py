@@ -2022,10 +2022,10 @@ def _flame_tongue(surf, bx, by, dx, dy, length, width, ph):
     def tongue(frac_len, frac_w, col):
         tip = (bx + dx * length * frac_len + pdx * sway * width * frac_w,
                by + dy * length * frac_len + pdy * sway * width * frac_w)
-        l = (bx + pdx * frac_w * width * 0.5, by + pdy * frac_w * width * 0.5)
-        r = (bx - pdx * frac_w * width * 0.5, by - pdy * frac_w * width * 0.5)
+        lf = (bx + pdx * frac_w * width * 0.5, by + pdy * frac_w * width * 0.5)
+        rt = (bx - pdx * frac_w * width * 0.5, by - pdy * frac_w * width * 0.5)
         pygame.draw.polygon(surf, col,
-                            [(int(l[0]), int(l[1])), (int(r[0]), int(r[1])),
+                            [(int(lf[0]), int(lf[1])), (int(rt[0]), int(rt[1])),
                              (int(tip[0]), int(tip[1]))])
     tongue(1.0, 1.0, (196, 58, 16))
     tongue(0.72, 0.62, (252, 146, 30))
