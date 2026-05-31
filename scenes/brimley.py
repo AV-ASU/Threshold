@@ -691,7 +691,7 @@ def build_brimley():
     # behind him. He stopped marking it. Another homebody: out on the
     # step a while, then back indoors out of the cold that came early.
     _resident(63, 54, "Old Pell", "old_townsman", [
-        "Cold came in early this year. Came in early last year, too.",
+        "Cold came in early this year. And it never lifted. Just sat down on the town and stayed.",
         "Stopped marking the calendar. Not the days -- where would I be counting toward?",
         "[c=dim]You're new. We don't get new. Nobody gets in. Nobody gets--[/c]",
     ], voice="blip_low", movement="homebody", radius=34)

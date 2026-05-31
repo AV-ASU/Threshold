@@ -388,8 +388,8 @@ def build_kid_house():
     sc.add_decoration(Decoration(8 * TILE + 8, 2 * TILE + 16, "clock"))
     sc.add_decoration(Decoration(2 * TILE + 16,  0 * TILE + 22 , "candle"))
     # Toby's own things: two corn dolls on the floor where he plays them
-    # through the procession he saw, and the MISSING flyer for the dad
-    # who "still comes home for dinner."
+    # through the procession he saw, and a MISSING flyer for his dad --
+    # who walked the road out for help and never came back up it.
     sc.add_decoration(Decoration(5 * TILE + 16, 4 * TILE + 16, "corn_doll"))
     sc.add_decoration(Decoration(6 * TILE + 22, 5 * TILE + 16, "corn_doll"))
     sc.add_decoration(Decoration(8 * TILE + 16, 0 * TILE + 24,

@@ -846,7 +846,7 @@ DISPLAY_NAMES = {
     "barn":                 "the Barn",
     "well_bottom":          "the Shaft Floor",
     "well_passage":         "the Drying Racks",
-    "works_vats":           "the Tallow Vats",
+    "works_vats":           "the Cistern",
     "works_sorting":        "the Sorting Hall",
     "works_scriptorium":    "the Scriptorium",
     "works_sign":           "the Sign Chamber",
