@@ -214,18 +214,95 @@ def check_canonical_evidence_wired():
     return errors
 
 
+# Per-run `self._x` attributes that are deliberately NOT cleared in
+# _reset_run_state, with the reason. The guard below allows exactly these;
+# any NEW per-run attr assigned outside __init__ must be reset or added here
+# (with a reason), so a missed reset becomes a test failure, not a cross-run
+# bug. Keep this list tight -- it is the audited set of legitimate exceptions.
+_RESET_EXEMPT = {
+    # Opening-drive state: (re)initialised wholesale by _begin_opening each
+    # time the opening runs; never carries between play sessions.
+    "_opening_t", "_opening_scroll", "_opening_speed", "_opening_phase",
+    "_opening_phase_t", "_opening_stalls_left", "_opening_grain",
+    "_opening_stars",
+    # Pure render caches -- rebuilt on demand, hold no run state.
+    "_vignette_surf", "_outdoor_vignette_surf",
+    # Per-frame scratch, reset at the top of each draw_world.
+    "_overlay_dark_used",
+}
+
+
+def check_reset_coverage():
+    """Every per-run `self._x` assigned OUTSIDE __init__ must be cleared in
+    _reset_run_state (so a New Game starts clean) OR be on the audited
+    _RESET_EXEMPT allowlist. This kills the missed-reset bug class: adding a
+    new per-run field without resetting it fails here instead of leaking from
+    one run into the next."""
+    import re
+    path = os.path.join(PROJECT_ROOT, "systems", "game.py")
+    with open(path, encoding="utf-8") as f:
+        src = f.read().splitlines()
+
+    def method_span(name):
+        start = end = None
+        indent = None
+        for i, line in enumerate(src):
+            if re.match(rf"\s*def {name}\(", line):
+                start = i
+                indent = len(line) - len(line.lstrip())
+                continue
+            if start is not None and i > start and line.strip():
+                cur = len(line) - len(line.lstrip())
+                if cur <= indent:
+                    end = i
+                    break
+        return start, (end if end is not None else len(src))
+
+    def assigns(lo, hi):
+        out = set()
+        for line in src[lo:hi]:
+            for m in re.finditer(r"self\.(_[a-zA-Z]\w*)\s*=", line):
+                out.add(m.group(1))
+        return out
+
+    i0, i1 = method_span("__init__")
+    r0, r1 = method_span("_reset_run_state")
+    reset_attrs = assigns(r0, r1)
+    # All per-run attrs assigned somewhere outside __init__ and reset.
+    outside = set()
+    for i, line in enumerate(src):
+        if (i0 <= i < i1) or (r0 <= i < r1):
+            continue
+        for m in re.finditer(r"self\.(_[a-zA-Z]\w*)\s*=", line):
+            outside.add(m.group(1))
+
+    errors = 0
+    for attr in sorted(outside):
+        if attr in reset_attrs or attr in _RESET_EXEMPT:
+            continue
+        errors += fail(
+            f"per-run attribute '{attr}' is assigned outside __init__ but is "
+            f"neither reset in _reset_run_state nor in _RESET_EXEMPT -- it will "
+            f"leak from one run into the next. Reset it, or allowlist it with a "
+            f"reason in tests/smoke.py:_RESET_EXEMPT."
+        )
+    return errors
+
+
 def main():
     failures = 0
-    print("[1/5] scene builders ...")
+    print("[1/6] scene builders ...")
     failures += check_scene_builds()
-    print("[2/5] spawn walkability + non-overlapping with exits ...")
+    print("[2/6] spawn walkability + non-overlapping with exits ...")
     failures += check_spawns_walkable()
-    print("[3/5] exits resolve to target spawns ...")
+    print("[3/6] exits resolve to target spawns ...")
     failures += check_exits_resolve()
-    print("[4/5] room passability (flood-fill spawns -> exits/props) ...")
+    print("[4/6] room passability (flood-fill spawns -> exits/props) ...")
     failures += check_passability()
-    print("[5/5] canonical evidence beats wired to scenes ...")
+    print("[5/6] canonical evidence beats wired to scenes ...")
     failures += check_canonical_evidence_wired()
+    print("[6/6] per-run state reset coverage ...")
+    failures += check_reset_coverage()
     if failures:
         print(f"\n{failures} failure(s).")
         sys.exit(1)

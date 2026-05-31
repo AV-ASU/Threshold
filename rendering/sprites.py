@@ -1328,6 +1328,20 @@ _YK_PARTS = []                       # particle wake: dicts x,y,vx,vy,age,life,r
 _YK_LAST = [0.0]                     # last draw time (for particle dt)
 _YK_ACC = [0.0]                      # distance accumulator (spaces shed orbs)
 _YK_AIM = [None]                     # smoothed arm-aim angle (swivels to player)
+
+
+def reset_king_fx():
+    """Clear the King's per-manifestation render state (trail, particle
+    wake, aim/accumulators). These are module globals so a single King can
+    keep frame-to-frame state cheaply -- but they outlive the King NPC, so
+    his trail/particles would otherwise bleed from one manifestation (or
+    one run) into the next. Game calls this on despawn and on New Game.
+    The colour/curve constants below are NOT touched -- they're immutable."""
+    _YK_TRAIL.clear()
+    _YK_PARTS.clear()
+    _YK_LAST[0] = 0.0
+    _YK_ACC[0] = 0.0
+    _YK_AIM[0] = None
 _YK_PRNG = random.Random(99)         # own RNG -> never touches the game's stream
 _YK_T1, _YK_T2, _YK_T3, _YK_T4 = (140, 96, 22), (196, 150, 42), (236, 198, 66), (252, 226, 120)
 _YK_GOLD, _YK_HOT = (236, 204, 64), (252, 226, 120)

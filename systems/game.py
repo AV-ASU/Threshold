@@ -12,7 +12,8 @@ from constants import (
 from rendering.sprites import (draw_player_sprite, draw_npc_sprite,
                                draw_npc_corpse, draw_infested_overlay,
                                draw_axe_swing, draw_king_death, draw_carcosa,
-                               draw_mask_yank, door_mask_surface)
+                               draw_mask_yank, door_mask_surface,
+                               reset_king_fx)
 from rendering.transform import draw_vessel_bloom
 from ui.fonts import make_fonts
 from ui.dialog import DialogueBox
@@ -739,6 +740,7 @@ class Game:
         self._heartbeat_t = 0.0
         self._king = None
         self._king_anchor = None
+        reset_king_fx()        # clear his render trail/particles across runs
         self._reinforce_t = 0.0
         self._gun_cd = 0.0
         # Cultists, the curse, and Watchers
@@ -787,6 +789,17 @@ class Game:
         self._wake_muffle_t = 0.0
         self._wake_muffle_max = 8.0
         self._wake_heartbeat_t = 0.0
+        # Misc per-run timers/sets that various tickers lazily (re)create.
+        # Reset them explicitly so a New Game starts clean rather than
+        # inheriting the previous run's value -- and so they don't rely on
+        # scattered getattr(self, ..., default) guards at each use site.
+        # (_folds is also rebuilt every load by _build_fold_cache; cleared
+        # here too so the title/opening state carries nothing stale.)
+        self._sheriff_intro_t = 0.0    # hunting-Sheriff intro hold (_tick_sheriff)
+        self._gaze_bind_t = 0.0        # cultist gaze-bind dwell (_tick_gaze_bind)
+        self._sprint_step_t = 0.0      # sprint footstep cadence (_tick_sprint)
+        self._rite_cues = set()        # one-shot rite cue latches (ending)
+        self._folds = []               # seen-fold peek cache (_build_fold_cache)
 
     # ---- Scene management ----
     def begin_transition(self, target_scene, spawn_id="default"):
@@ -882,6 +895,7 @@ class Game:
         # He stays behind on a scene change (cleared here) and re-forms
         # at the new entry if visibility is still pinned at the top.
         self._king = None
+        reset_king_fx()        # his trail/particles don't follow across scenes
         self._king_anchor = (self.player.x, self.player.y)
         # Watchers are tied to YOU, not the room -- they re-manifest in
         # the new scene from the persistent curse. Clear the old set and
@@ -3228,6 +3242,7 @@ class Game:
             except ValueError:
                 pass
         self._king = None
+        reset_king_fx()        # drop his trail/particles so they don't bleed on
         self.audio.king_tone(False)
 
     def _apply_curse(self):
