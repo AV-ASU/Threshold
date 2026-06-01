@@ -101,7 +101,7 @@ the world about the vertical axis (the head-turn).
 | Phase | Work | Risk | Visual change |
 | --- | --- | --- | --- |
 | 0 ✅ | Pseudo-3D + camera + solids + skybox + occlusion scaffolding (this file) | — | none (isolated demos) |
-| **1** | **Camera seam (live):** route `systems/game.py` / `entities/decoration.py` / `scenes/base.py` world→screen through `Camera` at **pitch 0**; add an explicit **depth-sorted drawable list**. | low | **none** (pure refactor; verifies pixel-identical) |
+| **1** 🟧 | **Camera seam (live):** route world→screen through `Camera` at **pitch 0**. **DONE:** `Game.camera` synced each frame; items, corpses, NPCs, enemies, player, the five player-centred overlays, and decorations (incl. wrap-clones) all go through `camera.project()`. Gated pixel-identical by `tools/capture_world.py`. **REMAINING:** terrain / walls / roofs / doors are area/quad-based (`scenes/base.py`) and need real per-tile **quad** projection — moved to Phase 2 (it's geometry, not a 1:1 point swap). The fold pass (`rendering/folds.py`) and `enemy.draw` internals still take raw offsets. | low | **none** (pixel-identical) |
 | 2 | Convert hero objects (player, Watcher, King, cultist, well, truck) to `solids`; everything else falls back to **billboards**. | med | top-down still; subtle |
 | 3 | Turn on **pitch ~55°** + the **head-turn arc** (input clamp + ease) + **skybox**; enable **occlusion** for the player. | med | the tilt lands (toggle-gated) |
 | 4 | **Blind-spot vision** layer: terrain reveals on peek; NPCs/items/map-changes gated to line-of-sight. | high | the horror mechanic |
