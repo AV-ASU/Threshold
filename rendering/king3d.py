@@ -13,6 +13,7 @@ This proves build steps (1) calm shell + Yellow back and (2) wrapping features.
 Shards / arms / world-space particles / threat states come next.
 """
 import math
+import random
 import pygame
 
 # Object-space ovoid head: (height, half_width_x, half_depth_z), chin(-) -> crown(+).
@@ -75,6 +76,54 @@ def _surface(theta, h, yaw, push=1.0):
     rx = ox * math.cos(yaw) + oz * math.sin(yaw)
     rz = -ox * math.sin(yaw) + oz * math.cos(yaw)
     return rx, h, rz
+
+
+_CRACKS = None
+
+
+def _crack_net():
+    """Porcelain craquelure authored in object (theta, h) space: a central
+    mold seam + scattered branching hairlines. This is the SAME network the
+    shatter will fracture along, so the calm detail carries onto the shards.
+    Seeded -> stable (never boils). Cached. Returns list of polylines, each a
+    list of (theta, h); the first entries are the 'deep' cracks that seep gold."""
+    global _CRACKS
+    if _CRACKS is not None:
+        return _CRACKS
+    rng = random.Random(7)
+    cracks = []
+    # the mold seam down the centre (jagged a touch), and two long meridians
+    for base in (0.0, -0.62, 0.62):
+        seam = []
+        for h in range(13, -15, -2):
+            seam.append((base + rng.uniform(-0.06, 0.06), h))
+        cracks.append(seam)
+    # scattered craquelure: short branching hairlines across the face
+    for _ in range(12):
+        th0 = rng.uniform(-1.2, 1.2); h0 = rng.uniform(-12, 12)
+        n = rng.randint(2, 4); pl = [(th0, h0)]; th, h = th0, h0
+        ad = rng.uniform(0, math.tau)
+        for _ in range(n):
+            ad += rng.uniform(-0.8, 0.8)
+            th += math.cos(ad) * rng.uniform(0.12, 0.30)
+            h += math.sin(ad) * rng.uniform(2.0, 4.0)
+            pl.append((th, h))
+        cracks.append(pl)
+    _CRACKS = cracks
+    return cracks
+
+
+def _draw_runs(surf, pts_or_none, col, width):
+    """Draw a polyline that may dip behind the form: break it into contiguous
+    runs of on-screen (facing) points and stroke each run."""
+    run = []
+    for p in list(pts_or_none) + [None]:
+        if p is None:
+            if len(run) >= 2:
+                pygame.draw.lines(surf, col, False, run, width)
+            run = []
+        else:
+            run.append(p)
 
 
 def draw_king3d(surf, cx, cy, yaw, t, threat=0.0, scale=2.4, light=-0.6):
@@ -169,10 +218,38 @@ def draw_king3d(surf, cx, cy, yaw, t, threat=0.0, scale=2.4, light=-0.6):
         if len(ridge) >= 2:
             pygame.draw.lines(surf, _PORC_HI, False, ridge, 1)
 
-    # --- 3) surface features: the two void eyes + tear streaks, pinned in
-    # object space so they wrap and self-occlude with the plate. -------------
     eye_th = 0.62
     eye_h = 2.0
+
+    # --- 2b) porcelain surface DETAIL, all pinned in object space so it wraps
+    # on the turn AND carries onto the shards when it shatters: a brow ridge, a
+    # nose ridge, and the craquelure (whose deep cracks already seep gold). ---
+    if len(plate_l) >= 2:
+        def proj(th, hh):
+            rx, _h, rz = _surface(th, hh, yaw)
+            return ((P(rx, hh)) if rz > 0.3 else None)
+        # nose ridge: a soft highlight down the centre + a shadow just off it
+        _draw_runs(surf, [proj(0.0, hh) for hh in (eye_h + 1.5, eye_h - 1, eye_h - 4, eye_h - 6.5)],
+                   _PORC_HI, 1)
+        _draw_runs(surf, [proj(0.10, hh) for hh in (eye_h - 1, eye_h - 4, eye_h - 6.5)],
+                   _PORC_DK, 1)
+        # brow ridges arching over each socket
+        for sgn in (-1, 1):
+            _draw_runs(surf, [proj(sgn * th, eye_h + 2.6) for th in (0.95, 0.6, 0.28)],
+                       _PORC_DK, 1)
+        # craquelure: hairline cracks; the deep ones (first 3) carry a gold
+        # thread that brightens with threat (calm = the faintest warm hint).
+        gold_layer = pygame.Surface(surf.get_size(), pygame.SRCALPHA)
+        ga = int(26 + 170 * threat)
+        for ci, pl in enumerate(_crack_net()):
+            scr = [proj(th, hh) for (th, hh) in pl]
+            _draw_runs(surf, scr, _PORC_DK, 1)
+            if ci < 3 and ga > 0:
+                _draw_runs(gold_layer, scr, (_GOLD[0], _GOLD[1], _GOLD[2], ga), 1)
+        surf.blit(gold_layer, (0, 0))
+
+    # --- 3) surface features: the two void eyes + tear streaks, pinned in
+    # object space so they wrap and self-occlude with the plate. -------------
     for sgn in (-1, 1):
         rx, h, rz = _surface(sgn * eye_th, eye_h, yaw)
         if rz <= 0.5:
@@ -181,6 +258,11 @@ def draw_king3d(surf, cx, cy, yaw, t, threat=0.0, scale=2.4, light=-0.6):
         ex, ey = P(rx, h)
         ew = max(1, int((2.4 + 3.0 * vis) * scale))   # big vacuous void; foreshortens
         eh = int((5.4 + 0.8 * threat) * scale)
+        # recessed socket: a darker porcelain rim dipping into the void
+        pygame.draw.ellipse(surf, _PORC_DK,
+                            (int(ex - ew / 2 - 2), int(ey - eh / 2 - 2), ew + 4, eh + 4))
+        pygame.draw.ellipse(surf, _PORC_LO,
+                            (int(ex - ew / 2 - 2), int(ey - eh / 2 - 2), ew + 4, eh + 4), 1)
         pygame.draw.ellipse(surf, _HOLLOW, (int(ex - ew / 2), int(ey - eh / 2), ew, eh))
         # the recessed Yellow glimpsed deep in the void -- a small glow with the
         # black void all around it (brightens as he rouses).
