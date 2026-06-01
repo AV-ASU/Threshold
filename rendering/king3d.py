@@ -109,16 +109,20 @@ def draw_king3d(surf, cx, cy, yaw, t, threat=0.0, scale=2.4, light=-0.6):
     if len(body_poly) >= 3:
         pygame.draw.polygon(surf, _VOIDC, body_poly)        # the dark void interior
         pygame.draw.polygon(surf, _BODY_LO, body_poly, 1)
+    # ONE glow, drawn BEHIND the plate (the mask occludes it; it haloes out as
+    # it grows). It starts as the small dim calm core and GROWS in size +
+    # brightness with threat -- same gold character, just bigger/brighter.
     recess = 5.0
     gcx = cx - recess * math.sin(yaw) * scale               # recedes to the back on the turn
     gcy = cy - bob * scale
-    gr = (3.0 + 4.0 * threat) * scale                       # small + contained when calm
+    gr = (3.2 + 13.0 * threat) * scale                      # calm core -> max bloom
+    peak = int(170 + 80 * threat)                           # dim calm -> brighter roused
     gl = pygame.Surface((int(gr * 4) + 2, int(gr * 4) + 2), pygame.SRCALPHA)
     g0 = int(gr * 2)
-    for i in range(int(gr * 1.7), 0, -1):
-        f = 1 - i / (gr * 1.7)
-        a = int(180 * (f ** 1.4))
-        col = _GOLD_HI if i < gr * 0.55 else _GOLD
+    for i in range(int(gr * 2), 0, -1):
+        f = 1 - i / (gr * 2)
+        a = int(peak * (f ** 1.5))
+        col = _GOLD_HI if i < gr * 0.5 else _GOLD
         if a > 0:
             pygame.draw.circle(gl, (col[0], col[1], col[2], a), (g0, g0), i)
     surf.blit(gl, (int(gcx - g0), int(gcy - g0)))
@@ -183,33 +187,18 @@ def draw_king3d(surf, cx, cy, yaw, t, threat=0.0, scale=2.4, light=-0.6):
         gd = _GOLD if threat > 0.3 else _GOLD_DK
         pygame.draw.circle(surf, gd, (int(ex), int(ey + eh * 0.12)),
                            max(1, int((0.5 + 0.8 * threat) * scale)))
-        # weep: a tear-streak running down the cheek, pinned to the surface.
+        # weep: a tear-streak running down the cheek, pinned to the surface --
+        # a touch thicker and a tad shorter than before.
         pts = []
-        for k in range(5):
-            ty = eye_h - 1 - k * 3.2
+        for k in range(4):
+            ty = eye_h - 2 - k * 2.6
             trx, th2, trz = _surface(sgn * eye_th * (1.0 - 0.05 * k), ty, yaw)
             if trz <= 0.3:
                 break
             pts.append(P(trx, th2))
         if len(pts) >= 2:
-            pygame.draw.lines(surf, _HOLLOW, False, pts, 1)
+            pygame.draw.lines(surf, _HOLLOW, False, pts, 2)
         if threat > 0.3 and vis > 0.4:            # a wet gold glint when roused
             pygame.draw.circle(surf, _GOLD_HI, (int(ex), int(ey + eh * 0.3)),
                                max(1, int(0.5 * scale)))
-
-    # --- ESCAPING bloom: once he rouses, the contained gold breaks past the
-    # mask (calm = none, so the glow stays trapped behind the porcelain). ----
-    if threat > 0.05:
-        cr = int(14 * scale)
-        glow = pygame.Surface((cr * 4, cr * 4), pygame.SRCALPHA)
-        g0 = cr * 2
-        core_a = int(170 * threat)
-        for i in range(cr * 2, 0, -1):
-            f = 1 - i / (cr * 2)
-            a = int(core_a * (f ** 1.6))
-            col = _GOLD_HI if i < cr else _GOLD
-            if a > 0:
-                pygame.draw.circle(glow, (col[0], col[1], col[2], a), (g0, g0), i)
-        surf.blit(glow, (int(cx - g0), int(cy - bob * scale - g0)),
-                  special_flags=pygame.BLEND_RGBA_ADD)
 
