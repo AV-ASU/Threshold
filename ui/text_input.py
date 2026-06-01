@@ -28,8 +28,7 @@ class TextInputModal:
         # buffer preserves the user's original casing so what they type
         # is what they see; the on_submit caller is responsible for
         # case-folding before comparing against any saved credential.
-        # Dash is allowed because the bandit-foreman credential format
-        # is "User-D###".
+        # Dash is allowed because the credential format is "User-D###".
         self._allowed = set("abcdefghijklmnopqrstuvwxyz0123456789 -")
 
     def open(self, prompt="LOGIN:", on_submit=None, on_cancel=None):

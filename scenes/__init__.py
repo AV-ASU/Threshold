@@ -117,8 +117,8 @@ SCENE_BUILDERS = {
     "town":               build_town,
 }
 
-# DELETED (the prior bandit/combat/loot game -- removed wholesale, not just
-# unregistered): void, bandit_cave[_west/_east/_boss], easter_egg_room,
+# DELETED (the prior combat/loot game -- removed wholesale, not just
+# unregistered): void, the cave arenas (_west/_east/_boss), easter_egg_room,
 # daughter_room, abducted_hallway, haunted_house_glitch, locked_house,
 # mist_house, alter_room, void_room_1/2. Any stale save or exit pointing at
 # one of these keys falls back to "bedroom" via load_scene below.

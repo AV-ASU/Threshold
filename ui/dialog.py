@@ -511,13 +511,6 @@ class DialogueBox:
             for sx2, sy2 in [(-6, 9), (0, 11), (6, 9), (-3, 10), (3, 10)]:
                 pygame.draw.circle(surf, (120, 100, 84), (cx + sx2, cy + sy2), 1)
             pygame.draw.circle(surf, (200, 180, 70), (cx + 11, cy + 8), 2)    # badge glint
-        elif kind == "bandit":
-            # bandanna face cover, dark hood
-            pygame.draw.rect(surf, (40, 60, 40), (cx - 18, cy - 22, 36, 16))
-            pygame.draw.circle(surf, (210, 180, 150), (cx, cy - 6), 16)
-            pygame.draw.rect(surf, (180, 60, 60), (cx - 14, cy + 2, 28, 6))
-            pygame.draw.circle(surf, C_BLACK, (cx - 5, cy - 6), 2)
-            pygame.draw.circle(surf, C_BLACK, (cx + 5, cy - 6), 2)
         elif kind == "royce":
             # Royce: a faded feed cap and a few days' stubble. A tired,
             # cornered working man.

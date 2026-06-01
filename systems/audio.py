@@ -261,14 +261,14 @@ class Audio:                        #Starting screen needs music, something simp
         self.music = {
             # encounter: pulsing bass + 2 stabs + rests. Used by
             # combat-bearing scenes; THRESHOLD doesn't need it for
-            # the player but the legacy bandit cave still references
+            # the player but a legacy cave scene still references
             # it via the scene registry.
             "encounter": self._music_loop([
                 (220,0.5),(294,0.5),(330,0.5),(294,0.5),
                 (220,0.5),(196,0.5),(220,1.0),(196,1.0),
                 (165,1.0),(0,0.5),(220,0.5),(0,0.5),
             ], beat_ms=240, vol=0.12, wave="square"),
-            # cave: low slow drone for the bandit cave family.
+            # cave: low slow drone for the cave-scene family.
             "cave": self._music_loop([
                 (165,2.0),(0,1.5),(196,1.0),(165,2.0),
                 (0,2.5),(220,1.0),(196,1.5),(0,3.0),

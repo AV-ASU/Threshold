@@ -282,7 +282,7 @@ class NPC:
             # A cultist that locks on blooms into His maw -- but ONLY once
             # the world is corrupt enough (3+ evidence; flagged on the scene
             # by Game each frame). Below that they stay mundane.
-            if self.sprite_kind in ("bandit", "cultist"):
+            if self.sprite_kind == "cultist":
                 self.morph_target = (1.0 if getattr(scene, "_bloom_enabled",
                                                     False) else 0.0)
             self._last_seen_pos = (player.x, player.y)

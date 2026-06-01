@@ -859,7 +859,7 @@ class Game(CutsceneMixin):
         # Round-9: the forest secret-tree -> void_boss redirect was
         # removed. The forest j-tile now leads to the original empty
         # void (easter_egg + rust_key). The void_boss arena is reached
-        # via a conditional fake stone wall in the bandit_cave_boss
+        # via a conditional fake stone wall in the old cave-boss
         # room -- gating logic lives there, not here.
         current = self.scene.key if self.scene else None
         # Opening: the FIRST attempt to leave the spare room is
@@ -1753,8 +1753,8 @@ class Game(CutsceneMixin):
         else:
             arg = "enemy_kills"
         self.save.set_arg(arg, self.save.arg(arg, 0) + 1)
-        # Respawning combat enemies (forest_path bandits, cave bandits,
-        # easter_egg_room mob set) drop nothing 85% of the time.
+        # Respawning combat enemies (forest_path, cave, and
+        # easter_egg_room mob sets) drop nothing 85% of the time.
         # First-spawn / boss / shadow drops bypass this rule -- they're
         # set respawning=False.
         skip_drops = (
@@ -3720,6 +3720,10 @@ class Game(CutsceneMixin):
             # reading a tag floating over their head. Strangers
             # on the road read as STRANGERS until they speak.
         for e in self.scene.enemies:
+            eview = "front"
+            if self._tilt_on():
+                eview = view_from_facing(e.facing[0], e.facing[1],
+                                         self.camera.yaw)
             for ox, oy in _offsets:
                 sx, sy = self.camera.project(e.x + ox, e.y + oy)
                 if not _on_screen(sx, sy):
@@ -3727,7 +3731,7 @@ class Game(CutsceneMixin):
                 # Feed e.draw an offset that lands its internal `x - cam`
                 # exactly on the (lifted) projected point. At pitch 0 this is
                 # arithmetically the legacy (cam_x - ox) call -> identical.
-                e.draw(self.screen, e.x - sx, e.y - (sy - actor_lift))
+                e.draw(self.screen, e.x - sx, e.y - (sy - actor_lift), view=eview)
         for p in self.scene.projectiles:
             psx, psy = self.camera.project(p.x, p.y)
             p.draw(self.screen, p.x - psx, p.y - (psy - actor_lift))

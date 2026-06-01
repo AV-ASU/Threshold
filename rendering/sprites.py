@@ -607,49 +607,6 @@ def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False,
             pygame.draw.rect(surf, hair, (x - 5, hcy - 3, 10, 2))              # low fringe over brow
             pygame.draw.line(surf, (122, 118, 98), (x - 4, hcy + 2), (x - 4, hcy + 5), 1)  # tear-track
             pygame.draw.line(surf, (118, 112, 94), (x + 4, hcy + 3), (x + 4, hcy + 6), 1)
-    elif kind == "bandit":
-        # THRESHOLD: re-skinned as a hooded cultist. Coarse undyed-
-        # wool robe (dirty cream) over a dark inner shirt; deep hood
-        # casts a shadow across the eyes; faint ash on the hem from
-        # the cauldron fire. Used by the patrol_cultist NPCs that
-        # appear at higher Pursuer proximity.
-        robe       = (170, 156, 130)     # undyed wool
-        robe_dark  = (110, 100, 84)      # shadow seam
-        inner      = (40, 36, 40)        # shirt under the robe
-        skin_dim   = (180, 156, 130)     # face in hood-shadow
-        ash        = (60, 54, 50)        # scorched hem
-        # Body / robe
-        pygame.draw.rect(surf, robe, (x - 9, y - 4, 18, 20))
-        pygame.draw.rect(surf, robe_dark, (x - 9, y - 4, 18, 20), 1)
-        # Vertical seam
-        pygame.draw.line(surf, robe_dark, (x, y - 4), (x, y + 14), 1)
-        # Inner shirt peek at the collar
-        pygame.draw.rect(surf, inner, (x - 4, y - 4, 8, 3))
-        # Head (in hood shadow)
-        pygame.draw.circle(surf, skin_dim, (x, y - 12), 7)
-        # Hood drape over the head and shoulders
-        pygame.draw.rect(surf, robe, (x - 10, y - 22, 20, 10))
-        pygame.draw.rect(surf, robe_dark, (x - 10, y - 22, 20, 10), 1)
-        # Hood shadow across the eyes -- pure-black band, slightly
-        # deeper than skin. The shadow now extends a row lower so it
-        # darkens the cheekbones too, killing any "person" read.
-        pygame.draw.rect(surf, (4, 2, 6), (x - 7, y - 14, 14, 5))
-        if blink:
-            # Void blink: yellow pinpricks vanish and a faint pale jaw
-            # shape ghosts through the shadow -- the suggestion of teeth
-            # / skull where a face ought to be. The mouth-row sits below
-            # the shadow band, never visible at rest.
-            pygame.draw.line(surf, (180, 168, 152), (x - 4, y - 9), (x + 4, y - 9), 1)
-            pygame.draw.line(surf, (140, 128, 112), (x - 3, y - 8), (x + 3, y - 8), 1)
-            # Two faint nose-cavity pricks in the shadow band
-            pygame.draw.rect(surf, (12, 10, 14), (x - 1, y - 11, 1, 1))
-            pygame.draw.rect(surf, (12, 10, 14), (x + 1, y - 11, 1, 1))
-        else:
-            # Eyes -- two faint pinpricks in the hood shadow
-            pygame.draw.circle(surf, (200, 180, 60), (x - 2, y - 12), 1)
-            pygame.draw.circle(surf, (200, 180, 60), (x + 2, y - 12), 1)
-        # Scorched hem
-        pygame.draw.rect(surf, ash, (x - 9, y + 14, 18, 2))
     elif kind == "sheriff":
         # Sheriff Hollis Vane -- a local, born here, broken. A tan duty
         # shirt, a brown brimmed hat (not a city cop's peaked cap), a tin
@@ -818,32 +775,92 @@ def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False,
             pygame.draw.line(surf, (132, 98, 98), (x - 3, y - 5), (x + 3, y - 5), 1)  # host smile
     elif kind == "sheriff_hollow":
         # Sheriff Vane, gone hollow -- the stage-3 unique threat. The
-        # lawman's shape is still there (tan shirt, brimmed hat) but the
-        # man isn't: the face is a void band with two sick-gold pinpricks,
-        # the tin star has curdled into a small Yellow Sign, and a faint
-        # jaundice clings to him. He doesn't blink; he doesn't stop.
+        # lawman's shape is still there (the sheriff's GigaChad build, tan
+        # shirt, brimmed hat) but the man isn't: the face is a void band
+        # with two sick-gold pinpricks, the tin star has curdled into a
+        # small Yellow Sign, and a faint jaundice clings to him. He doesn't
+        # blink; he doesn't stop.
+        # HANDCRAFTED per camera view (front / back / profile), built on the
+        # sheriff's frame -- the hollow face shows only on front/profile;
+        # the back is the back of a hatted skull.
         import pygame as _pg
         t = _pg.time.get_ticks() / 1000.0
-        pygame.draw.rect(surf, (96, 86, 62), (x - 9, y - 2, 18, 18))    # dimmed tan shirt
-        pygame.draw.rect(surf, (74, 66, 46), (x - 9, y + 9, 18, 5))     # belt line
-        pygame.draw.circle(surf, (150, 146, 110), (x, y - 12), 7)       # sallow face
-        pygame.draw.rect(surf, (54, 40, 28), (x - 11, y - 19, 22, 3))   # hat brim
-        pygame.draw.rect(surf, (64, 50, 34), (x - 6, y - 25, 12, 7))    # hat crown
-        # Pure-void eye band, two sick-gold pinpricks deep inside.
-        pygame.draw.rect(surf, (4, 3, 6), (x - 6, y - 14, 12, 4))
+        shirt = (96, 86, 62); shirt_drk = (52, 46, 32)
+        skin = (150, 146, 110); sk_lo = (70, 66, 46)   # jaundiced, sallow
+        hair = (70, 60, 42); hcy = y - 12; HN, HT = 6, 16
+        hc = (60, 46, 32); hc_lo = (34, 26, 18); hc_hi = (92, 74, 50)
+        hb = (48, 36, 24); hb_lo = (28, 21, 14)
         gl = 0.5 + 0.5 * math.sin(t * 2.2)
         g = int(150 + 80 * gl)
-        pygame.draw.circle(surf, (g, int(g * 0.8), 40), (x - 2, y - 12), 1)
-        pygame.draw.circle(surf, (g, int(g * 0.8), 40), (x + 2, y - 12), 1)
-        # The star curdled into a small Yellow Sign.
-        cy = y + 2
-        pygame.draw.line(surf, (210, 188, 70), (x - 4, cy - 2), (x - 4, cy + 2), 1)
-        pygame.draw.line(surf, (210, 188, 70), (x - 4, cy), (x - 6, cy - 1), 1)
-        pygame.draw.line(surf, (210, 188, 70), (x - 4, cy), (x - 2, cy - 1), 1)
-        # Jaundice cling -- the fold's sick gold, matching the cult/King.
-        wash = _pg.Surface((26, 36), _pg.SRCALPHA)
-        wash.fill((168, 142, 56, 46))
-        surf.blit(wash, (x - 13, y - 22))
+        gold = (g, int(g * 0.8), 40)
+
+        def _delts():                                                     # broad deltoid shoulders
+            pygame.draw.ellipse(surf, shirt, (x - 12, y - 2, 7, 8))
+            pygame.draw.ellipse(surf, shirt, (x + 5, y - 2, 7, 8))
+            pygame.draw.ellipse(surf, shirt_drk, (x - 12, y - 2, 7, 8), 1)
+            pygame.draw.ellipse(surf, shirt_drk, (x + 5, y - 2, 7, 8), 1)
+            pygame.draw.polygon(surf, shirt_drk, [(x - 9, y + 8), (x - 9, y + 17), (x - 6, y + 17)])
+            pygame.draw.polygon(surf, shirt_drk, [(x + 9, y + 8), (x + 9, y + 17), (x + 6, y + 17)])
+
+        def _sign(sx):                                                    # tin star, curdled to the Sign
+            pygame.draw.line(surf, (210, 188, 70), (sx, y), (sx, y + 4), 1)
+            pygame.draw.line(surf, (210, 188, 70), (sx, y + 1), (sx - 2, y), 1)
+            pygame.draw.line(surf, (210, 188, 70), (sx, y + 1), (sx + 2, y), 1)
+
+        def _voidface(s):                                                 # void band + sick-gold pricks
+            if s == 0:
+                pygame.draw.rect(surf, (4, 3, 6), (x - 6, hcy - 2, 12, 4))
+                pygame.draw.circle(surf, gold, (x - 2, hcy), 1)
+                pygame.draw.circle(surf, gold, (x + 2, hcy), 1)
+            else:
+                pygame.draw.rect(surf, (4, 3, 6), (x + s * 2 - 3, hcy - 2, 6, 4))
+                pygame.draw.circle(surf, gold, (x + s * 2, hcy), 1)
+        if view == "back":
+            _grim_body(surf, x, y, shirt, w=18, view=view)
+            _delts()
+            pygame.draw.rect(surf, (62, 54, 38), (x - 9, y + 10, 18, 4))   # belt
+            pygame.draw.ellipse(surf, skin, (x - HN, hcy - 7, HN * 2, HT))
+            pygame.draw.ellipse(surf, sk_lo, (x - HN, hcy - 7, HN * 2, HT), 1)
+            pygame.draw.rect(surf, hair, (x - HN, hcy, HN * 2, 4))         # hair at nape
+            _oldhat(surf, x, y, hc, hc_lo, hc_hi, hb, hb_lo)
+        elif view in ("left", "right"):
+            s = 1 if view == "right" else -1
+            _grim_body(surf, x, y, shirt, w=18, view=view)
+            pygame.draw.ellipse(surf, shirt, (x - 4, y - 2, 9, 9))         # heavy shoulder/chest
+            pygame.draw.ellipse(surf, shirt_drk, (x - 4, y - 2, 9, 9), 1)
+            bulge = (x + 1, y + 2, 6, 7) if s > 0 else (x - 7, y + 2, 6, 7)
+            pygame.draw.ellipse(surf, shirt, bulge)                        # forward chest bulge
+            pygame.draw.rect(surf, (62, 54, 38), (x - 7, y + 10, 14, 4))   # belt
+            _gaunt_head(surf, x, y, skin, narrow=HN, tall=HT, blink=False,
+                        glint=gold, view=view)
+            pygame.draw.polygon(surf, skin, [(x - 3 * s, y - 10), (x + 6 * s, y - 9),
+                                             (x + 8 * s, y - 6), (x + 5 * s, y - 3),
+                                             (x - 2 * s, y - 4)])          # jutting GigaChad jaw
+            pygame.draw.line(surf, sk_lo, (x + 6 * s, y - 9), (x + 8 * s, y - 6), 1)
+            pygame.draw.line(surf, sk_lo, (x + 8 * s, y - 6), (x + 5 * s, y - 3), 1)
+            _voidface(s)
+            _oldhat(surf, x, y, hc, hc_lo, hc_hi, hb, hb_lo, s=s)
+            _sign(x + 3 * s)                                               # Sign edge-on
+        else:
+            _grim_body(surf, x, y, shirt, w=18, view=view)
+            _delts()
+            pygame.draw.line(surf, shirt_drk, (x, y - 1), (x, y + 9), 1)   # placket
+            pygame.draw.rect(surf, (62, 54, 38), (x - 9, y + 10, 18, 4))   # belt
+            _gaunt_head(surf, x, y, skin, narrow=HN, tall=HT, blink=False,
+                        glint=gold, view=view)
+            jpts = [(x - 6, y - 10), (x + 6, y - 10), (x + 5, y - 5),
+                    (x + 2, y - 2), (x - 2, y - 2), (x - 5, y - 5)]
+            pygame.draw.polygon(surf, skin, jpts)                          # heavy GigaChad jaw
+            pygame.draw.line(surf, sk_lo, (x - 6, y - 10), (x - 5, y - 5), 1)
+            pygame.draw.line(surf, sk_lo, (x + 6, y - 10), (x + 5, y - 5), 1)
+            pygame.draw.line(surf, sk_lo, (x, y - 4), (x, y - 2), 1)       # chin cleft
+            _voidface(0)
+            _oldhat(surf, x, y, hc, hc_lo, hc_hi, hb, hb_lo)
+            _sign(x - 5)                                                   # Sign on the chest
+        # Jaundice cling -- the fold's sick gold, washed over every view.
+        wash = _pg.Surface((30, 44), _pg.SRCALPHA)
+        wash.fill((168, 142, 56, 40))
+        surf.blit(wash, (x - 15, y - 26))
     elif kind == "shadow":
         pygame.draw.rect(surf, (8, 4, 12), (x - 8, y - 4, 16, 18))
         pygame.draw.circle(surf, (8, 4, 12), (x, y - 10), 8)
