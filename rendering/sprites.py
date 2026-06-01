@@ -502,9 +502,9 @@ def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False,
             s = 1 if view == "right" else -1
             _grim_body(surf, x, y, coat, view=view)
             _gaunt_head(surf, x, y, skin, narrow=HN, tall=HT, blink=blink, view=view)
-            pygame.draw.polygon(surf, beard,                                  # beard juts off the jaw
-                                [(x, hcy + 4), (x + 7 * s, hcy + 5),
-                                 (x + 6 * s, hcy + 10), (x + s, hcy + 8)])
+            pygame.draw.polygon(surf, beard,                                  # thin wispy beard off the jaw
+                                [(x, hcy + 5), (x + 5 * s, hcy + 5),
+                                 (x + 3 * s, hcy + 9), (x + s, hcy + 8)])
             _oldhat(surf, x, y, hatc, hatc_lo, hatc_hi, hatb, hatb_lo, s=s)
             pygame.draw.line(surf, cane, (x + 7 * s, y - 2), (x + 7 * s, y + 15), 2)  # near-side cane
         else:
@@ -518,8 +518,13 @@ def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False,
             for by in (y + 6, y + 10, y + 14):
                 pygame.draw.circle(surf, (94, 78, 52), (x + 1, by), 1)        # buttons
             _gaunt_head(surf, x, y, skin, narrow=HN, tall=HT, blink=blink, view=view)
-            pygame.draw.rect(surf, beard, (x - 6, y - 5, 12, 6))             # ash beard
-            pygame.draw.rect(surf, beard, (x - 4, y - 1, 8, 3))              # beard point
+            # scraggly thin ash beard tapering to a point -- a frail old-timer,
+            # NOT a strong jaw
+            bpts = [(x - 4, y - 6), (x + 4, y - 6), (x + 2, y - 1),
+                    (x, y + 4), (x - 2, y - 1)]
+            pygame.draw.polygon(surf, beard, bpts)
+            pygame.draw.polygon(surf, (96, 94, 80), bpts, 1)
+            pygame.draw.line(surf, (96, 94, 80), (x - 1, y - 4), (x, y + 2), 1)  # wispy strand
             _oldhat(surf, x, y, hatc, hatc_lo, hatc_hi, hatb, hatb_lo)        # hat
             pygame.draw.line(surf, cane, (x + 9, y - 4), (x + 9, y + 14), 2)  # cane
     elif kind == "hettie":
@@ -687,7 +692,11 @@ def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False,
             pygame.draw.ellipse(surf, shirt, bulge)                            # forward chest bulge
             pygame.draw.rect(surf, (62, 54, 38), (x - 7, y + 10, 14, 4))       # belt
             _gaunt_head(surf, x, y, skin, narrow=HN, tall=HT, blink=blink, view=view)
-            pygame.draw.circle(surf, (96, 92, 76), (x + 3 * s, hcy + 6), 1)    # stubble jaw
+            # strong forward GigaChad jaw in profile
+            pygame.draw.polygon(surf, skin, [(x - 3 * s, y - 10), (x + 5 * s, y - 9),
+                                             (x + 5 * s, y - 5), (x + s, y - 2), (x - 3 * s, y - 4)])
+            pygame.draw.line(surf, sk_lo, (x + 5 * s, y - 9), (x + s, y - 2), 1)  # jaw front edge
+            pygame.draw.circle(surf, (96, 92, 76), (x + 3 * s, y - 5), 1)      # stubble jaw
             _oldhat(surf, x, y, hc, hc_lo, hc_hi, hb, hb_lo, s=s)
             _star(x + 3 * s)                                                   # star edge-on
         else:
@@ -699,8 +708,17 @@ def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False,
             pygame.draw.rect(surf, (62, 54, 38), (x - 9, y + 10, 18, 4))       # belt
             pygame.draw.rect(surf, (96, 84, 52), (x - 2, y + 10, 4, 4), 1)     # buckle
             _gaunt_head(surf, x, y, skin, narrow=HN, tall=HT, blink=blink, view=view)
+            # heavy GigaChad jaw -- square the gaunt skull off into a broad,
+            # cleft-chinned jaw
+            jpts = [(x - 6, y - 10), (x + 6, y - 10), (x + 5, y - 5),
+                    (x + 2, y - 2), (x - 2, y - 2), (x - 5, y - 5)]
+            pygame.draw.polygon(surf, skin, jpts)
+            pygame.draw.line(surf, sk_lo, (x - 6, y - 10), (x - 5, y - 5), 1)  # jaw angle L
+            pygame.draw.line(surf, sk_lo, (x + 6, y - 10), (x + 5, y - 5), 1)  # jaw angle R
+            pygame.draw.line(surf, sk_lo, (x, y - 4), (x, y - 2), 1)           # chin cleft
+            pygame.draw.line(surf, sk_lo, (x - 2, y - 6), (x + 2, y - 6), 1)   # set mouth
             for sx2 in (-3, 1):
-                pygame.draw.circle(surf, (96, 92, 76), (x + sx2, y - 5), 1)    # stubble
+                pygame.draw.circle(surf, (96, 92, 76), (x + sx2, y - 4), 1)    # stubble on the jaw
             _oldhat(surf, x, y, hc, hc_lo, hc_hi, hb, hb_lo)
             _star(x - 5)                                                       # star on the chest
     elif kind == "royce":
