@@ -264,52 +264,58 @@ def draw_king3d(surf, cx, cy, yaw, t, threat=0.0, scale=2.4, light=-0.6):
         surf.blit(crack_layer, (0, 0))
         surf.blit(gold_layer, (0, 0))
 
-    # --- 3) surface features: the two void eyes + tear streaks, pinned in
-    # object space so they wrap with the plate. The void FORESHORTENS with the
-    # local surface facing -- as that part of the mask turns edge-on the eye
-    # squashes to a slit and then turns away, so it never keeps staring at the
-    # camera from the side; and the recessed glow rides to the void's deep
-    # (receding) edge rather than sitting centred like a pupil. ----------------
+    # --- 3) surface features: the two void eyes + tear streaks. Each eye is a
+    # PATCH ON THE SURFACE -- its rim is sampled in object (theta, h) space and
+    # projected, so the void genuinely CURVES with the mask: it tilts on the
+    # cheek, bows with the face, foreshortens on the turn and slits/hides as it
+    # goes edge-on, instead of being a flat ellipse stuck on a card. ----------
+    def _eye_rim(a0, h0, dth, dh, segs=16):
+        """Project a ring around the eye centre, sampled on the surface."""
+        ring = []
+        for k in range(segs):
+            ang = math.tau * k / segs
+            th = a0 + math.cos(ang) * dth
+            hh = h0 + math.sin(ang) * dh
+            rx, _h, _rz = _surface(th, hh, yaw)
+            ring.append(P(rx, hh))
+        return ring
     for sgn in (-1, 1):
         a = sgn * eye_th
         c = math.cos(a + yaw)                      # this eye's surface facing
         if c <= 0.16:
             continue                               # turned edge-on / around the back
         fn = min(1.0, c / math.cos(eye_th))        # 1 face-on -> 0 as it turns edge-on
-        rx, h, rz = _surface(a, eye_h, yaw)
-        ex, ey = P(rx, h)
-        # the voids DEEPEN with threat AND foreshorten (squash) with the turn.
-        ew = max(1, int((1.1 + 3.7 * fn + 1.2 * threat) * scale))
-        eh = int((5.0 + 3.2 * threat) * scale)
-        rimw = 2 + int(2.5 * threat)
-        # recessed socket: a darker porcelain rim dipping into the void
-        pygame.draw.ellipse(surf, _PORC_DK,
-                            (int(ex - ew / 2 - rimw), int(ey - eh / 2 - rimw),
-                             ew + 2 * rimw, eh + 2 * rimw))
-        pygame.draw.ellipse(surf, _PORC_LO,
-                            (int(ex - ew / 2 - rimw), int(ey - eh / 2 - rimw),
-                             ew + 2 * rimw, eh + 2 * rimw), 1)
-        pygame.draw.ellipse(surf, _HOLLOW, (int(ex - ew / 2), int(ey - eh / 2), ew, eh))
+        dth = 0.30                                 # eye half-extent in azimuth
+        dh = 3.0 + 1.8 * threat                    # taller (deeper) as he rouses
+        # recessed socket: a slightly larger porcelain ring dipping into the void
+        socket = _eye_rim(a, eye_h, dth + 0.10, dh + 1.4)
+        if len(socket) >= 3:
+            pygame.draw.polygon(surf, _PORC_DK, socket)
+            pygame.draw.polygon(surf, _PORC_LO, socket, 1)
+        void = _eye_rim(a, eye_h, dth, dh)
+        if len(void) >= 3:
+            pygame.draw.polygon(surf, _HOLLOW, void)
         # the recessed Yellow glimpsed deep in the void: it rides to the
         # receding (deep) edge as the eye turns, so it reads as set INTO the
-        # socket, not aimed out at the camera.
-        trail = -1 if math.sin(a + yaw) > 0 else 1
-        goff = (1.0 - fn) * (ew * 0.42) * trail
+        # socket, not aimed out at the camera. Sampled ON the surface.
+        deep_th = a - sgn * (1.0 - fn) * 0.34      # toward the receding edge
+        drx, dhh, _rz = _surface(deep_th, eye_h - 0.4, yaw)
+        gdx, gdy = P(drx, dhh)
         gd = _GOLD if threat > 0.3 else _GOLD_DK
-        pygame.draw.circle(surf, gd, (int(ex + goff), int(ey + eh * 0.12)),
+        pygame.draw.circle(surf, gd, (int(gdx), int(gdy)),
                            max(1, int((0.5 + 0.8 * threat) * scale)))
+        if threat > 0.3 and fn > 0.4:             # a wet gold glint when roused
+            pygame.draw.circle(surf, _GOLD_HI, (int(gdx), int(gdy + scale)),
+                               max(1, int(0.5 * scale)))
         # weep: a tear-streak running down the cheek, pinned to the surface --
         # a touch thicker and a tad shorter than before.
         pts = []
         for k in range(4):
-            ty = eye_h - 2 - k * 2.6
+            ty = eye_h - 3 - k * 2.6
             trx, th2, trz = _surface(a * (1.0 - 0.05 * k), ty, yaw)
             if trz <= 0.3:
                 break
             pts.append(P(trx, th2))
         if len(pts) >= 2:
             pygame.draw.lines(surf, _HOLLOW, False, pts, 2)
-        if threat > 0.3 and fn > 0.4:             # a wet gold glint when roused
-            pygame.draw.circle(surf, _GOLD_HI, (int(ex + goff), int(ey + eh * 0.3)),
-                               max(1, int(0.5 * scale)))
 
