@@ -814,19 +814,25 @@ def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False,
                                                 HN * 2 - 2 - 2 * i, HT - 2 - 2 * i))
 
         def _void_eyes(s):
-            # The gold eyes DON'T sit at fixed sockets -- they pop up all over
-            # the void, exactly like the WATCHER's mass-of-eyes: a seeded
-            # CONSTELLATION of sick pinpricks scattered deep in the cavity,
-            # each winking on its own staggered phase (faint halo + bright
-            # dot). Same math/colour as the 'watcher' kind.
-            ox = s * 2
+            # The gold eyes pop up all over the void like the WATCHER's
+            # mass-of-eyes: a seeded CONSTELLATION, each winking on its own
+            # staggered phase (faint halo + bright dot, same colour as the
+            # 'watcher' kind). Placed parametrically INSIDE the void ellipse
+            # so every eye fits the cavity -- including the narrower,
+            # lead-shifted profile void.
+            cx = x + s * 2
+            cy = hcy + 1
+            ax = 2.0 if s else 3.2                # tighter in profile so they fit
+            ay = 4.4 if s else 4.6
             erng = random.Random((int(x) * 7 + 5) & 0xffff)
-            for i in range(7):
-                ex = x + ox + erng.randint(-4, 4)
-                ey = hcy + erng.randint(-5, 5)
+            for i in range(9):
+                ang = erng.uniform(0, math.tau)
+                rad = math.sqrt(erng.uniform(0, 1))    # uniform over the ellipse
+                ex = int(cx + math.cos(ang) * ax * rad)
+                ey = int(cy + math.sin(ang) * ay * rad)
                 bl = 0.5 + 0.5 * math.sin(t * 1.6 + i * 1.5 + x)
-                if bl < 0.32:
-                    continue                              # winked out
+                if bl < 0.30:
+                    continue                          # winked out
                 gv = int(70 + 48 * bl)
                 pygame.draw.circle(surf, (54, 46, 20), (ex, ey), 2)         # faint halo
                 pygame.draw.circle(surf, (gv, int(gv * 0.8), 28), (ex, ey), 1)  # the eye
