@@ -19,14 +19,13 @@ import pygame
 # A face is taller than wide and a touch deeper than broad (it protrudes), so the
 # silhouette stays round-ish from any yaw while the FEATURES do the turning.
 _SEC = [
-    (-20, 4.4, 4.0),     # chin
-    (-15, 6.8, 6.4),     # jaw
-    (-9,  8.4, 8.2),     # cheeks
-    (-2,  8.8, 8.9),     # widest, just under the eyes
-    (4,   8.4, 8.7),     # eye line
-    (10,  7.4, 7.9),     # brow
-    (16,  5.4, 6.1),
-    (20,  2.8, 3.4),     # crown
+    (-14, 5.0, 4.6),     # chin
+    (-10, 7.6, 7.2),     # jaw
+    (-5,  9.3, 9.1),     # cheeks
+    (0,   9.7, 9.7),     # widest, the eye line
+    (5,   9.0, 9.2),     # brow
+    (10,  7.2, 7.8),
+    (14,  4.4, 5.0),     # crown
 ]
 _PORC    = (212, 204, 186)
 _PORC_LO = (150, 144, 128)
@@ -91,31 +90,48 @@ def draw_king3d(surf, cx, cy, yaw, t, threat=0.0, scale=2.4, light=-0.6):
 
     heights = [h * 0.5 for h in range(int(_SEC[0][0] * 2), int(_SEC[-1][0] * 2) + 1)]
 
-    # --- 1) the YELLOW body: the full ovoid silhouette behind the plate ------
-    body_l, body_r = [], []
+    # --- 1) the YELLOW body: an ovoid mass behind the plate, drawn a touch
+    # SMALLER than the head so the porcelain plate fully covers it face-on
+    # (the glow stays CONTAINED inside the mask when calm). Its glow is filled
+    # inside its own silhouette -- no halo spilling past the mask.
+    body_l, body_r, body_cx = [], [], []
     for h in heights:
         hw, hd = _hwd(h)
-        half = math.hypot(hw * math.cos(yaw), hd * math.sin(yaw))
+        half = math.hypot(hw * math.cos(yaw), hd * math.sin(yaw)) * 0.9
         x0, y0 = P(0, h)
         body_l.append((x0 - half * scale, y0))
         body_r.append((x0 + half * scale, y0))
+        body_cx.append((x0, y0, half * scale))
     body_poly = body_r + body_l[::-1]
     if len(body_poly) >= 3:
         pygame.draw.polygon(surf, _BODY, body_poly)
+        # contained radial core: brighter ellipses nested inside the body
+        # silhouette (centred on the body), so the gold never exceeds it.
+        n = len(body_cx)
+        midx, midy, _ = body_cx[n // 2]
+        for frac, col in ((0.74, _BODY_LO), (0.52, _GOLD_DK), (0.30, _GOLD),
+                          (0.14, _GOLD_HI)):
+            rr = int(max(b[2] for b in body_cx) * frac)
+            hh = int((heights[-1] - heights[0]) * scale * 0.5 * frac)
+            if rr > 0 and hh > 0:
+                pygame.draw.ellipse(surf, col, (int(midx - rr), int(midy - hh),
+                                                rr * 2, hh * 2))
         pygame.draw.polygon(surf, _BODY_LO, body_poly, 1)
-    # additive gold core blaze, bright in the middle of the body
-    cr = int(13 * scale)
-    glow = pygame.Surface((cr * 4, cr * 4), pygame.SRCALPHA)
-    g0 = cr * 2
-    core_a = 110 + int(70 * threat)
-    for i in range(cr * 2, 0, -1):
-        f = 1 - i / (cr * 2)
-        a = int(core_a * (f ** 1.6))
-        col = _GOLD_HI if i < cr else _GOLD
-        if a > 0:
-            pygame.draw.circle(glow, (col[0], col[1], col[2], a), (g0, g0), i)
-    surf.blit(glow, (int(cx - g0), int(cy - bob * scale - g0)),
-              special_flags=pygame.BLEND_RGBA_ADD)
+    # The ESCAPING bloom only once he rouses: an additive halo that grows with
+    # threat (calm = none, so the glow reads as trapped behind the porcelain).
+    if threat > 0.05:
+        cr = int(13 * scale)
+        glow = pygame.Surface((cr * 4, cr * 4), pygame.SRCALPHA)
+        g0 = cr * 2
+        core_a = int(150 * threat)
+        for i in range(cr * 2, 0, -1):
+            f = 1 - i / (cr * 2)
+            a = int(core_a * (f ** 1.6))
+            col = _GOLD_HI if i < cr else _GOLD
+            if a > 0:
+                pygame.draw.circle(glow, (col[0], col[1], col[2], a), (g0, g0), i)
+        surf.blit(glow, (int(cx - g0), int(cy - bob * scale - g0)),
+                  special_flags=pygame.BLEND_RGBA_ADD)
 
     # --- 2) the porcelain PLATE: only the front-facing arc of the face -------
     # For each height, sweep the plate arc and keep the part whose surface
@@ -161,16 +177,16 @@ def draw_king3d(surf, cx, cy, yaw, t, threat=0.0, scale=2.4, light=-0.6):
 
     # --- 3) surface features: the two void eyes + tear streaks, pinned in
     # object space so they wrap and self-occlude with the plate. -------------
-    eye_th = 0.5
-    eye_h = 3.5
+    eye_th = 0.62
+    eye_h = 2.0
     for sgn in (-1, 1):
         rx, h, rz = _surface(sgn * eye_th, eye_h, yaw)
         if rz <= 0.5:
             continue                              # around the side/back -> hidden
         vis = min(1.0, rz / _hwd(eye_h)[1])        # 1 face-on, ->0 at the edge
         ex, ey = P(rx, h)
-        ew = max(1, int((1.4 + 1.8 * vis) * scale))   # foreshortens toward the edge
-        eh = int((3.2 + 0.7 * threat) * scale)
+        ew = max(1, int((2.4 + 3.0 * vis) * scale))   # big vacuous void; foreshortens
+        eh = int((5.4 + 0.8 * threat) * scale)
         pygame.draw.ellipse(surf, _HOLLOW, (int(ex - ew / 2), int(ey - eh / 2), ew, eh))
         # weep: a tear-streak running down the cheek, pinned to the surface.
         pts = []
