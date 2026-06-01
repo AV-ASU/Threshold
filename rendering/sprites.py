@@ -3,6 +3,7 @@ import math
 import random
 import pygame
 from constants import C_BLACK
+from rendering import king3d
 
 # ---- Cultist: a stitched animal-hide coat + a carved wooden mask, one of
 # six chosen per individual (by seed) so the congregation reads as "everyone
@@ -438,7 +439,7 @@ def _cap(surf, x, y, crown, crown_lo, bill, s=0):
 
 def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False,
                     birth=None, gait=None, threat=None, seed=0, curse=0.0,
-                    view="front"):
+                    view="front", king3d_yaw=None):
     """`blink=True` suppresses eye dots for NPC kinds that have human
     eyes (the named locals -- townswoman, tisdale_boy, sheriff, royce,
     preacher, clerk, hettie, old_townsman). Used by Game.draw to make a
@@ -935,7 +936,7 @@ def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False,
         else:
             b = birth
             g = gait if gait is not None else t * 7.0
-        _draw_king(surf, x, y, facing, t, b, g, threat)
+        _draw_king(surf, x, y, facing, t, b, g, threat, king3d_yaw=king3d_yaw)
     elif kind == "black_figure":
         # Pure-black humanoid silhouette, NPC proportions. No eyes, no
         # facial detail -- just the hole-shaped outline of a person.
@@ -1684,6 +1685,7 @@ def reset_king_fx():
     _YK_ACC[0] = 0.0
     _YK_AIM[0] = None
     _YK_PREV[0] = None
+    king3d.reset_king3d_fx()         # the tilt-path King keeps its own wake
 _YK_PRNG = random.Random(99)         # own RNG -> never touches the game's stream
 _YK_T1, _YK_T2, _YK_T3, _YK_T4 = (140, 96, 22), (196, 150, 42), (236, 198, 66), (252, 226, 120)
 _YK_GOLD, _YK_HOT = (236, 204, 64), (252, 226, 120)
@@ -2221,7 +2223,7 @@ def _yk_shatter_mask(surf, cx, cy, r, vis, kind, crack, t, R, aim=0.0, arms=True
                           int(cy - myc + math.sin(bis) * off)))
 
 
-def _draw_king(surf, x, y, facing, t, birth, gait, threat=None):
+def _draw_king(surf, x, y, facing, t, birth, gait, threat=None, king3d_yaw=None):
     """THE KING IN YELLOW (see header). His silhouette is the serene PALLID MASK
     (a weeping porcelain face, black vacuous voids, no mouth); the Yellow lives
     BEHIND it and only erupts when he rouses. `birth` (0..1) assembles the mask
@@ -2231,7 +2233,22 @@ def _draw_king(surf, x, y, facing, t, birth, gait, threat=None):
     mask SHATTERS and the Yellow blazes through the cracks with dark arms
     reaching. It never phases out. Body art is drawn at full internal resolution
     and scaled by _YK_SCALE on blit, so the world-space particle wake reads large
-    against him."""
+    against him.
+
+    TILT PATH (`king3d_yaw` not None): under the oblique camera (CAMERA.md
+    tier 3) the King is the true VOLUMETRIC mask -- `rendering.king3d` -- a
+    camera-facing billboard turned `king3d_yaw` off face-on (the mask always
+    points at the player; the camera's yaw decides what we see). birth/threat
+    feed exactly as below. At pitch 0 (`king3d_yaw` None) the flat shipping
+    King below is untouched / pixel-identical."""
+    if king3d_yaw is not None:
+        bp = 1.0 if birth is None else max(0.0, min(1.0, birth))
+        intensity = 0.0 if threat is None else max(0.0, min(1.0, threat))
+        # float the mask above the feet, sized to read like the flat King.
+        ky = int(y - 46 + math.sin(t * 1.1) * 3)
+        king3d.draw_king3d(surf, x, ky, king3d_yaw, t, threat=intensity,
+                           scale=2.1, birth=bp)
+        return
     sc = _YK_SCALE
     R = 22 * sc
     bp = 1.0 if birth is None else max(0.0, min(1.0, birth))

@@ -3681,6 +3681,15 @@ class Game(CutsceneMixin):
                 # whole time he's on screen). The 0.15 floor keeps him a
                 # faint watching void, never fully gone, until he nears.
                 king_threat = max(0.15, min(1.0, 1.0 - (d - KING_THREAT_NEAR) / span))
+            # The volumetric King (tilt path) is a mask that always faces the
+            # player; the camera's yaw decides the view. king3d's yaw is 0 when
+            # the mask is face-on to the camera, which (per view_from_facing's
+            # convention) is when the king->player heading sits at +pi/2 off the
+            # camera yaw. So feed the offset from that face-on heading.
+            king3d_yaw = None
+            if npc.sprite_kind == "yellow_king" and self.player and self._tilt_on():
+                phi = math.atan2(self.player.y - npc.y, self.player.x - npc.x)
+                king3d_yaw = (phi - self.camera.yaw - math.pi / 2 + math.pi) % math.tau - math.pi
             npc_lift = int(TILT_LIFT.get(npc.sprite_kind, TILT_ACTOR_STAND)
                            * math.sin(self.camera.pitch))
             for ox, oy in _offsets:
@@ -3708,7 +3717,8 @@ class Game(CutsceneMixin):
                                     birth=getattr(npc, "_birth", None),
                                     gait=getattr(npc, "_gait", None),
                                     threat=king_threat, seed=id(npc) & 0xffff,
-                                    curse=curse_v, gaze=w_gaze, view=nview)
+                                    curse=curse_v, gaze=w_gaze, view=nview,
+                                    king3d_yaw=king3d_yaw)
                     # A resister whose flesh has turned: their bespoke
                     # fold-horror form, laid over the person they were.
                     if getattr(npc, "_mutated", False):
