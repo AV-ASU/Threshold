@@ -753,8 +753,8 @@ def build_cornfield_maze():
     # lane 2 -> bottom of lane 4).
     objects_l[6][8] = "I"
     # 'Q' at (16, 11) walked NORTH -> teleport to (3, 19) (mid of
-    # lane 4 -> bottom of lane 1). 'Q' renders as floor (it is a
-    # guard marker char), so the relocation tile is invisible.
+    # lane 4 -> bottom of lane 1). 'Q' renders as floor (it maps to
+    # None), so the relocation tile is invisible.
     objects_l[11][16] = "Q"
 
     # ---- Visible perimeter side passages ----

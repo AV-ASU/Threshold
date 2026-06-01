@@ -497,9 +497,8 @@ class DialogueBox:
             pygame.draw.arc(surf, C_BLACK, (cx - 5, cy + 4, 10, 7), math.pi, 2 * math.pi, 1)  # frown
             pygame.draw.rect(surf, (20, 20, 26), (cx - 14, cy + 8, 28, 6))    # black vestment
             pygame.draw.rect(surf, (235, 235, 235), (cx - 4, cy + 8, 8, 4))   # white collar
-        elif kind in ("sheriff", "guard"):
-            # The Sheriff: brimmed hat, stubble, a hint of a star. Was
-            # falling through to a blank box before ("guard" had no case).
+        elif kind == "sheriff":
+            # The Sheriff: brimmed hat, stubble, a hint of a star.
             pygame.draw.circle(surf, (208, 182, 156), (cx, cy - 4), 16)
             pygame.draw.rect(surf, (74, 58, 40), (cx - 18, cy - 18, 36, 4))   # hat brim
             pygame.draw.rect(surf, (88, 70, 48), (cx - 11, cy - 26, 22, 9))   # hat crown

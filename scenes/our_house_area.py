@@ -10,9 +10,8 @@ bulkhead in this yard too -- removed because it created a one-way
 trip (basement only exits via the kitchen ladder) and a duplicate
 "door to the basement" two tiles outside the same building.
 
-THRESHOLD reskin: original 'our_house_area' had two houses, a guard
-patrol, a rust-key cellar gate, and bandit respawns after a guard
-death. All cut. The second house is now a woodshed (no interior
+THRESHOLD reskin: original 'our_house_area' had two houses, a patrol,
+a rust-key cellar gate, and bandit respawns. All cut. The second house is now a woodshed (no interior
 scene, just an interactable door that yields the splitting axe).
 Sheriff patrols this scene as part of his random outdoor route
 (wired in Pass F).
@@ -195,7 +194,7 @@ def build_our_house_area():
     sc.on_interact_fn = _outside_interact
 
     # Atmosphere -- chimney smoke from the house, a couple of crows,
-    # scattered grass. No guard NPC. No bandit spawn.
+    # scattered grass. No patrol NPC. No bandit spawn.
     sc.add_decoration(Decoration(5 * TILE + 16, 2 * TILE - 6, "smoke"))
     sc.add_decoration(Decoration(7 * TILE + 16, 6 * TILE - 4, "lantern"))
     sc.add_decoration(Decoration(2 * TILE + 8, 0 * TILE + 22, "crow"))

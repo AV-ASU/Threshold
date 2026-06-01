@@ -1010,7 +1010,7 @@ class Game(CutsceneMixin):
         # Round-9: dying to the Yellow King empties the world. Every
         # scene loaded after `world_emptied` is set has its NPC list
         # cleared post-on_enter, so any villagers / shopkeep / kid /
-        # innkeeper / guard / terminal handler placed by the builder or
+        # innkeeper / terminal handler placed by the builder or
         # on_enter fn is removed before the player sees the scene. The
         # world keeps its layouts and items, just no people.
         if self.save.flag("world_emptied"):

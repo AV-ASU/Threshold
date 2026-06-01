@@ -1811,14 +1811,14 @@ class Decoration:
         pygame.draw.circle(surf, (220, 220, 230), (x, y), 1)
 
     def _draw_body(self, surf, x, y):
-        # Slumped guard body. The kit reads at a glance: helmet beside the
+        # A slumped, fallen body. The kit reads at a glance: helmet beside the
         # head, spear on the ground, blood pool. Static -- this is a
         # decoration, not an NPC. Disappears after 2 re-entries via the
         # scene's on_enter logic.
         # Blood pool
         pygame.draw.ellipse(surf, (60, 6, 10), (x - 14, y + 2, 28, 8))
         pygame.draw.ellipse(surf, (90, 10, 14), (x - 11, y + 1, 22, 6))
-        # Slumped torso (tabard-grey like the guard)
+        # Slumped torso (tabard-grey)
         pygame.draw.rect(surf, (110, 110, 130), (x - 9, y - 6, 18, 10))
         pygame.draw.rect(surf, (50, 50, 70), (x - 9, y - 6, 18, 10), 1)
         # Helmet, fallen sideways to the left of the body

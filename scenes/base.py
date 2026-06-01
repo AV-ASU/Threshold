@@ -230,7 +230,7 @@ OBJECT_DEFS = {
     "$": {"solid": False, "kind": "bridge"},
     # Markers (consumed at scene-build time; never drawn)
     # P=basement photo, K=kid, S=shopkeep, O=oldman, M=mom, Z=basement note,
-    # Q=guard, Y=fisherman, N=innkeeper (quest)
+    # Q=relocation marker (threshold_extras), Y=fisherman, N=innkeeper (quest)
     "P": None, "K": None, "S": None, "O": None, "M": None, "Z": None,
     "Q": None, "Y": None, "N": None,
 }

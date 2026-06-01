@@ -816,21 +816,6 @@ def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False,
             pygame.draw.ellipse(surf, hair, (x - HN, y - 21, HN * 2, 7))       # neat dark hair
             pygame.draw.line(surf, part, (x + 2, y - 20), (x + 2, y - 15), 1)  # side part
             pygame.draw.line(surf, (132, 98, 98), (x - 3, y - 5), (x + 3, y - 5), 1)  # host smile
-    elif kind == "guard":
-        # Iron helmet + spear. The visor slit is now a deeper, pitch-
-        # black void with two faint red glints inside -- you don't see
-        # eyes, you see something looking out from inside the helm.
-        pygame.draw.rect(surf, (96, 96, 116), (x - 9, y - 2, 18, 18))
-        pygame.draw.circle(surf, (200, 170, 140), (x, y - 12), 7)
-        pygame.draw.rect(surf, (130, 130, 150), (x - 9, y - 22, 18, 12))  # helmet
-        # Visor slit -- pitch black with two pinprick reds
-        pygame.draw.rect(surf, (4, 2, 4), (x - 4, y - 14, 8, 4))
-        if not blink:
-            pygame.draw.circle(surf, (180, 30, 30), (x - 2, y - 12), 1)
-            pygame.draw.circle(surf, (180, 30, 30), (x + 2, y - 12), 1)
-        pygame.draw.line(surf, (60, 40, 25), (x + 12, y - 18), (x + 12, y + 16), 2)
-        pygame.draw.polygon(surf, (200, 200, 220),
-                            [(x + 12, y - 18), (x + 9, y - 22), (x + 15, y - 22)])
     elif kind == "sheriff_hollow":
         # Sheriff Vane, gone hollow -- the stage-3 unique threat. The
         # lawman's shape is still there (tan shirt, brimmed hat) but the
