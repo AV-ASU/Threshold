@@ -612,10 +612,33 @@ def _yaw_vec(v, yaw):
     return (rx, v[1], rz)
 
 
+def _thick_strip(pts, widths):
+    """A tapered ribbon polygon around a screen-space polyline: offset each
+    vertex by +-half-width along the segment normal, then walk one side out and
+    the other back. Gives the limb mass instead of a flat stroke."""
+    n = len(pts)
+    if n < 2:
+        return None
+    left, right = [], []
+    for i in range(n):
+        a = pts[max(0, i - 1)]; b = pts[min(n - 1, i + 1)]
+        dx, dy = b[0] - a[0], b[1] - a[1]
+        dl = math.hypot(dx, dy) or 1.0
+        nx, ny = -dy / dl, dx / dl                  # left normal
+        hw = widths[i] * 0.5
+        left.append((pts[i][0] + nx * hw, pts[i][1] + ny * hw))
+        right.append((pts[i][0] - nx * hw, pts[i][1] - ny * hw))
+    return left + right[::-1]
+
+
 def _draw_arms(surf, cx, cy, yaw, bob, scale, shat, threat, which,
-               reach_local=(0.0, -0.45, 1.0), t=0.0):
-    """Stroke the reaching arms whose side (toward/away from camera) matches
-    `which` ('front' = drawn after the shards, 'back' = before + dimmer)."""
+               reach_local=(0.0, -0.5, 1.0), t=0.0):
+    """The reaching limbs: dark tendrils that ERUPT from the mask seams, splay
+    outward, then curl toward the player, ending in a clawed grasping hand.
+    Each is a tapered ribbon (a wide near-black body + a lighter rim-lit core)
+    so it reads as a limb, not a stroke. 3D: ones lunging AT the camera read
+    long + near (drawn over the shards), trailing ones foreshorten + occlude
+    (drawn behind, dim). `which` selects the side that matches this pass."""
     if shat <= 0.04:
         return
     D = _yaw_vec(_norm3(reach_local), yaw)          # reach direction, camera space
@@ -623,39 +646,66 @@ def _draw_arms(surf, cx, cy, yaw, bob, scale, shat, threat, which,
     side = "front" if toward else "back"
     if side != which:
         return
-    dim = 1.0 if toward else 0.46                   # trailing arms read dim/short
-    L = (9.0 + 30.0 * shat) * (0.8 + 0.4 * threat)  # object-space reach length
-    segs = 7
-    # a perpendicular for the waver (in the projection plane)
+    dim = 1.0 if toward else 0.5                    # trailing arms read dim/short
+    L = (10.0 + 26.0 * shat) * (0.85 + 0.3 * threat)
+    segs = 9
+    # screen-plane perpendicular to the reach dir -- the axis the limbs fan along
     plen = math.hypot(D[0], D[1]) or 1.0
     perp = (-D[1] / plen, D[0] / plen, 0.0)
+    n_arms = len(_ARM_ANCHORS)
     for ai, (ath, ah) in enumerate(_ARM_ANCHORS):
         ax, _h, az = _surface(ath, ah, yaw)
         A = (ax, ah, az)
-        # near (reaching at the camera) read long; trailing arms foreshorten.
-        ll = L * (1.0 - 0.18 * abs(ai - 2)) * (1.0 + 0.5 * D[2])
-        phase = ai * 1.7 + t * 1.6
-        pts, depths = [], []
+        radial = _norm3((ax, ah * 0.5, az + 1.2))   # the seam's outward normal
+        fan = (ai - (n_arms - 1) / 2.0)             # lateral fan index, centred
+        ll = L * (0.82 + 0.26 * ((ai * 37) % 5) / 4.0) * (1.0 + 0.45 * D[2])
+        curl = (0.6 + 0.4 * shat) * (1.0 if ai % 2 == 0 else -1.0)
+        phase = ai * 2.1 + t * 1.7
+        pts, widths, depths = [], [], []
         for k in range(segs + 1):
             fr = k / segs
-            w = math.sin(phase + fr * 3.0) * (1.6 + 2.4 * fr) * (0.4 + shat)
-            p = (A[0] + D[0] * ll * fr + perp[0] * w,
-                 A[1] + D[1] * ll * fr + perp[1] * w - fr * fr * 2.0,
-                 A[2] + D[2] * ll * fr)
+            ease = fr * fr * (3 - 2 * fr)
+            # spine reaches along D; emerge radially out of the seam at the base
+            base = (A[0] + D[0] * ll * fr + radial[0] * ll * 0.16 * (1 - ease),
+                    A[1] + D[1] * ll * fr + radial[1] * ll * 0.16 * (1 - ease),
+                    A[2] + D[2] * ll * fr)
+            # fan the limbs apart laterally (a spread hand), + writhe + a hand
+            # curl that tightens over the last third (the grasp).
+            spread = fan * ll * 0.24 * ease
+            wob = math.sin(phase + fr * 3.2) * (0.8 + 2.0 * fr) * (0.5 + shat)
+            bend = curl * max(0.0, fr - 0.55) * 16.0
+            off = spread + wob + bend
+            p = (base[0] + perp[0] * off,
+                 base[1] + perp[1] * off - fr * fr * 2.0,
+                 base[2])
             pts.append((cx + p[0] * scale, cy - (p[1] + bob) * scale))
             depths.append(p[2])
-        # width tapers toward the tip; a tendril coming AT the camera is fat,
-        # one trailing away is thin (foreshortened).
-        base_w = max(2, int((3.2 + 2.2 * shat) * (0.6 + 0.6 * dim) * scale * 0.45))
-        for k in range(segs):
-            w = max(1, int(base_w * (1.0 - 0.82 * k / segs)))
-            col = _shade(_ARM_HI if k == 0 else _ARM_DK, 0.5 + 0.5 * dim)
-            pygame.draw.line(surf, col, pts[k], pts[k + 1], w)
-        # a gold ember at the grasping tip once truly roused
-        if toward and threat > 0.6:
-            tx, ty = pts[-1]
+            widths.append(max(1.5, (4.8 - 3.6 * fr) * (0.55 + 0.5 * dim) * scale * 0.5))
+        # the dark limb body, then a lighter rim-lit core ribbon over it
+        body = _thick_strip(pts, widths)
+        if body and len(body) >= 3:
+            pygame.draw.polygon(surf, _shade(_ARM_DK, 0.55 + 0.45 * dim), body)
+        core = _thick_strip(pts, [w * 0.42 for w in widths])
+        if core and len(core) >= 3:
+            pygame.draw.polygon(surf, _shade(_ARM_HI, 0.5 + 0.5 * dim), core)
+        # the clawed grasping hand: 3 finger-spikes splaying off the wrist,
+        # along the tip tangent, curling in as he grasps (shat).
+        tx, ty = pts[-1]
+        px, py = pts[-2]
+        tang = math.atan2(ty - py, tx - px)
+        claw_l = (5.0 + 5.0 * shat) * (0.6 + 0.5 * dim) * scale * 0.5
+        for fgr in (-0.6, 0.0, 0.6):
+            fa = tang + fgr - curl * 0.3            # fingers curl toward the grasp
+            fx, fy = tx + math.cos(fa) * claw_l, ty + math.sin(fa) * claw_l
+            kx, ky = tx + math.cos(fa) * claw_l * 0.5, ty + math.sin(fa) * claw_l * 0.5
+            pygame.draw.line(surf, _shade(_ARM_DK, 0.55 + 0.45 * dim),
+                             (tx, ty), (kx, ky), max(2, int(scale)))
+            pygame.draw.line(surf, _shade(_ARM_DK, 0.55 + 0.45 * dim),
+                             (kx, ky), (fx, fy), max(1, int(scale * 0.7)))
+        # a gold ember catching the wrist once truly roused
+        if toward and threat > 0.55:
             pygame.draw.circle(surf, _GOLD_DK, (int(tx), int(ty)),
-                               max(1, int(0.9 * scale)))
+                               max(1, int(0.8 * scale)))
 
 
 # ===========================================================================
