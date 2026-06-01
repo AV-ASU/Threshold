@@ -1343,29 +1343,43 @@ def _gold_in_wound(surf, cx, cy, R, peak=64):
 
 def _infest_tisdale_boy(surf, x, y, t, view="front"):
     # The lying boy's mouth won't stop -- and now his whole BODY is the
-    # mouth. A maw splits him head to hem: a dark gullet runs the length of
-    # him, teeth bridging it the whole way, gold burning in the throat, his
-    # eyes shoved to the corners of the cloven head. (Child geometry: head
-    # ~y-8, body y..y+14 -- NOT the adult slot.)
-    # View-aware: the body-spanning maw holds from every angle; only the
-    # eyes change -- front shows the pair shoved to the corners, a profile
-    # shows just the near eye, the back of the cloven head shows none.
+    # mouth. A vertical MAW splits him head to hem: raw-flesh lips bow open
+    # around a deep dark throat (gold burning down in the gullet), and rows
+    # of fangs interlock down both lips. His eyes are shoved to the corners
+    # of the cloven head. (Child geometry: head ~y-8, body y..y+14.)
+    # View-aware: the maw holds from every angle (it leans toward the lead in
+    # profile); only the eyes change -- front shows the pair, a profile the
+    # near eye, the back of the cloven head none.
     thr = 0.5 + 0.5 * math.sin(t * 2.6)
     hy = y - 8
-    gap = 2 + int(2 * thr)                          # the maw flexes open
     s = 1 if view == "right" else (-1 if view == "left" else 0)
-    _gold_in_wound(surf, x, hy + 3, 3, 30 + int(16 * thr))    # glow under, a halo
-    pygame.draw.polygon(surf, _MEAT, [               # the gullet (red flesh, not a void)
-        (x - gap, hy - 5), (x + gap, hy - 5),
-        (x + gap + 1, y + 13), (x - gap - 1, y + 13)])
-    pygame.draw.line(surf, _WGOLD, (x, hy - 3), (x, y + 11), 1)   # gold throat
-    for ty in range(-4, 14, 3):                      # teeth bridging it all the way down
-        pygame.draw.line(surf, _WBONE, (x - gap, hy + ty), (x + gap, hy + ty), 1)
+    cx = x + s                                       # the maw leans toward the lead
+    top = hy - 5; bot = y + 13; mid = (top + bot) // 2; half = (bot - top) / 2
+    gap = 3 + int(1.5 * thr)                         # half-width at the widest (it flexes)
+
+    def _edge(yy):                                   # maw half-width at row yy (a vertical lens)
+        return gap * max(0.22, 1.0 - abs(yy - mid) / half)
+    _gold_in_wound(surf, cx, mid, 4, 30 + int(16 * thr))         # glow deep in the throat
+    pygame.draw.polygon(surf, _MEAT,                 # raw-flesh lips (outer lens)
+                        [(cx, top), (cx + gap + 1, mid), (cx, bot), (cx - gap - 1, mid)])
+    pygame.draw.polygon(surf, (14, 7, 9),            # the dark throat (a deep gullet, not flat red)
+                        [(cx, top + 1), (cx + gap - 1, mid), (cx, bot - 1), (cx - gap + 1, mid)])
+    pygame.draw.line(surf, _WGOLD, (cx, top + 2), (cx, bot - 2), 1)   # gold burning down the gullet
+    for i, yy in enumerate(range(top + 1, bot, 2)):  # fangs interlocking down both lips
+        w = _edge(yy)
+        if w < 1:
+            continue
+        if i % 2 == 0:
+            lx = int(cx - w)
+            pygame.draw.polygon(surf, _WBONE, [(lx, yy - 1), (lx, yy + 2), (lx + 2, yy)])
+        else:
+            rx = int(cx + w)
+            pygame.draw.polygon(surf, _WBONE, [(rx, yy - 1), (rx, yy + 2), (rx - 2, yy)])
     if view == "front":
-        pygame.draw.circle(surf, (236, 232, 226), (x - 4, hy - 2), 1)  # eyes shoved out
-        pygame.draw.circle(surf, (236, 232, 226), (x + 4, hy - 2), 1)
+        pygame.draw.circle(surf, (236, 232, 226), (cx - gap - 2, top + 1), 1)  # eyes shoved out
+        pygame.draw.circle(surf, (236, 232, 226), (cx + gap + 2, top + 1), 1)
     elif s:                                          # profile -- only the near eye
-        pygame.draw.circle(surf, (236, 232, 226), (x + 4 * s, hy - 2), 1)
+        pygame.draw.circle(surf, (236, 232, 226), (cx + (gap + 2) * s, top + 1), 1)
     # back: the back of the cloven head -- no eyes.
 
 
@@ -1459,31 +1473,38 @@ def _infest_old_townsman(surf, x, y, t, view="front"):
     # crown with molten gold light cracking out of their fissures. The man is
     # being eaten from inside by the fold's gold. (Adult geometry: head ~y-12,
     # body y-2..y+16. Distinct: a few large pop-out tumors on flayed flesh.)
-    # View-aware: the torso silhouette is the same from every angle (the base
-    # Tier-2 sprite only re-caps the head per view), so the body tumors hold;
-    # the HEAD changes -- no face on the back, one socket + a rear-shifted
-    # skull tumor in profile.
+    # View-aware in BODY and head: the flayed torso narrows to match the
+    # base silhouette in profile, the tumor cluster is laid out per facing
+    # (so the sides/back are NOT the front pasted on), and the head loses its
+    # face on the back / leads one socket + a rear skull-tumor in profile.
     thr = 0.5 + 0.5 * math.sin(t * 2.2)
     rng = random.Random(11)
     hy = y - 12
-    pygame.draw.circle(surf, _SALLOW, (x, hy), 6)                 # flayed sallow head
-    pygame.draw.circle(surf, _SALLOW_LO, (x, hy), 6, 1)
-    pygame.draw.rect(surf, _SALLOW, (x - 6, y - 1, 12, 17))       # flayed sallow torso
-    pygame.draw.rect(surf, _SALLOW_LO, (x - 6, y - 1, 12, 17), 1)
-    # Sunken eye-pits + the head tumor, placed for the facing. Front shows the
-    # pair; profile shows the leading socket and pushes the skull tumor to the
-    # rear; the back shows no face, just a tumor crowning the skull.
-    if view == "front":
-        eyes = [(x - 2, hy - 1), (x + 2, hy - 1)]; head_tumor = (x + 2, hy + 1, 3)
-    elif view == "right":
-        eyes = [(x + 2, hy - 1)]; head_tumor = (x - 3, hy, 3)
-    elif view == "left":
-        eyes = [(x - 2, hy - 1)]; head_tumor = (x + 3, hy, 3)
-    else:  # back -- the back of the skinned skull, no face
-        eyes = []; head_tumor = (x, hy - 2, 3)
+    s = 1 if view == "right" else (-1 if view == "left" else 0)
+    if s:                                                        # PROFILE -- narrow flayed body, head leads
+        hx = x + s
+        pygame.draw.circle(surf, _SALLOW, (hx, hy), 5)
+        pygame.draw.circle(surf, _SALLOW_LO, (hx, hy), 5, 1)
+        pygame.draw.rect(surf, _SALLOW, (x - 4, y - 1, 8, 17))
+        pygame.draw.rect(surf, _SALLOW_LO, (x - 4, y - 1, 8, 17), 1)
+        eyes = [(hx + s, hy - 1)]                               # the near socket
+        head_tumor = (hx - 3 * s, hy, 3)                       # skull tumor to the rear
+        sites = [head_tumor, (x + s, y + 5, 4), (x - s, y + 11, 4)]  # stacked on the narrow body
+    else:
+        pygame.draw.circle(surf, _SALLOW, (x, hy), 6)            # flayed sallow head
+        pygame.draw.circle(surf, _SALLOW_LO, (x, hy), 6, 1)
+        pygame.draw.rect(surf, _SALLOW, (x - 6, y - 1, 12, 17))  # flayed sallow torso
+        pygame.draw.rect(surf, _SALLOW_LO, (x - 6, y - 1, 12, 17), 1)
+        if view == "back":                                      # back of the skinned skull -- no face
+            eyes = []
+            head_tumor = (x - 2, hy - 2, 3)
+            sites = [head_tumor, (x + 3, y + 6, 5), (x - 4, y + 12, 4)]  # rearranged vs the front
+        else:                                                   # FRONT
+            eyes = [(x - 2, hy - 1), (x + 2, hy - 1)]
+            head_tumor = (x + 2, hy + 1, 3)
+            sites = [head_tumor, (x - 3, y + 5, 6), (x + 4, y + 12, 4)]
     for ex, ey in eyes:
         pygame.draw.circle(surf, (44, 30, 28), (ex, ey), 1)
-    sites = [head_tumor, (x - 3, y + 5, 6), (x + 4, y + 12, 4)]
     for sx, sy, _r in sites:                                     # vessels first, under the masses
         _tumor_veins(surf, sx, sy, 3, 8, rng)
     for sx, sy, r in sites:                                       # then the pop-out tumors
