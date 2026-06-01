@@ -23,6 +23,19 @@ def _shade(col, f):
             max(0, min(255, int(col[2] * f))))
 
 
+def draw_with_alpha(surf, alpha, fn):
+    """Run draw callable `fn(target)` at the given alpha. Opaque draws go
+    straight to `surf`; faded ones render to a scratch layer then blit, so
+    an occluding wall can be made see-through without touching its art."""
+    if alpha >= 255:
+        fn(surf)
+        return
+    tmp = pygame.Surface(surf.get_size(), pygame.SRCALPHA)
+    fn(tmp)
+    tmp.set_alpha(alpha)
+    surf.blit(tmp, (0, 0))
+
+
 def draw_solid(surf, cam, wx, wy, sections, palette, t=0.0, yaw=0.0,
                bob=0.0):
     """Body of revolution at ground point (wx, wy).
