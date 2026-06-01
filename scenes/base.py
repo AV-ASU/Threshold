@@ -1454,10 +1454,15 @@ def _tilt_wall_box(surf, camera, scene, tx, ty):
     pygame.draw.polygon(surf, tuple(int(c * 0.5) for c in _WALL_TOP), t, 1)
 
 
-def draw_terrain_tilted(surf, scene, camera):
+def draw_terrain_tilted(surf, scene, camera, focus=None):
     """Floor warp + wall extrusion for the oblique camera. Skybox is the
     caller's job (drawn first); actors are drawn after by the game, already
-    projected through the same camera so they stand on this floor."""
+    projected through the same camera so they stand on this floor.
+
+    `focus` (wx, wy) is the player: walls NEARER the camera than the focus are
+    held back and RETURNED so the caller can draw them after the actors (so
+    they correctly occlude/fade in front of the player). Walls behind the
+    focus are drawn now. Returns the list of (tx, ty) front walls."""
     cx, cy = camera.cam_x, camera.cam_y
     half = _tilt_window_half(camera)
     span = int(half * 2)
@@ -1487,13 +1492,36 @@ def draw_terrain_tilted(surf, scene, camera):
     walls.sort(key=lambda c: camera.depth(c[0] * TILE + TILE / 2,
                                           c[1] * TILE + TILE / 2,
                                           _TILT_WALL_RISE))
-    for tx, ty, wtx, wty in walls:
-        _tilt_wall_box(surf, camera, scene, tx, ty)
-    # Ground props (decorations) project through the same camera, so they
-    # sit on the warped floor. Primary copy only for now (wrap-clones +
-    # depth-interleave with walls are a fine-tune).
+    # Ground props (decorations) project through the same camera, so they sit
+    # on the warped floor. Drawn before walls so a wall in front overdraws a
+    # prop behind it. (Primary copy only; wrap-clones are a fine-tune.)
     for d in scene.decorations:
         d.draw(surf, 0, 0, camera)
+    # Split walls on the focus (player) depth: behind -> draw now; in front ->
+    # return for the caller to draw after the actors.
+    fdepth = camera.depth(focus[0], focus[1]) if focus else float("inf")
+    front = []
+    for tx, ty, wtx, wty in walls:
+        wcx, wcy = tx * TILE + TILE / 2, ty * TILE + TILE / 2
+        if camera.depth(wcx, wcy, _TILT_WALL_RISE) > fdepth:
+            front.append((tx, ty))
+        else:
+            _tilt_wall_box(surf, camera, scene, tx, ty)
+    return front
+
+
+def draw_walls_front(surf, scene, camera, front, focus):
+    """Second wall pass: the walls nearer the camera than the player, drawn
+    AFTER the actors and faded where they'd hide the player (occlusion.py)."""
+    from rendering.occlusion import occluder_alpha
+    from rendering.solids import draw_with_alpha
+    fx, fy = focus
+    for tx, ty in front:
+        wcx, wcy = tx * TILE + TILE / 2, ty * TILE + TILE / 2
+        a = occluder_alpha(camera, wcx, wcy, _TILT_WALL_RISE, fx, fy, 30,
+                           o_halfw=TILE * 0.5 * camera.scale)
+        draw_with_alpha(surf, a,
+                        lambda s, tx=tx, ty=ty: _tilt_wall_box(s, camera, scene, tx, ty))
 
 
 def draw_scene_doors(surf, scene, cam_x, cam_y, x0, y0, x1, y1):

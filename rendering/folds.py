@@ -91,7 +91,23 @@ def _draw_seam(frame, p0, p1, t, alpha=1.0):
         pygame.draw.lines(frame, (226, 200, 88), False, pts, 1)
 
 
-def draw_fold(screen, face, host_cam_x, host_cam_y, player, t):
+def _blit_tear(out, peek, s0, s1, rise):
+    """Stand `peek` up as a vertical panel whose base edge is the screen
+    segment s0->s1 and whose top edge is that segment lifted `rise` px up the
+    screen. Per-column vertical strips give the base its floor-seam slant while
+    keeping the sides vertical (world height projects straight up)."""
+    pw, ph = peek.get_size()
+    (x0, y0), (x1, y1) = s0, s1
+    cols = max(2, int(math.hypot(x1 - x0, y1 - y0)))
+    for i in range(cols):
+        f = i / (cols - 1)
+        bx = x0 + (x1 - x0) * f
+        by = y0 + (y1 - y0) * f
+        strip = peek.subsurface((min(pw - 1, int(f * pw)), 0, 1, ph))
+        out.blit(pygame.transform.scale(strip, (2, rise)), (int(bx), int(by - rise)))
+
+
+def draw_fold(screen, face, host_cam_x, host_cam_y, player, t, camera=None):
     """Composite one seen fold onto `screen` (already showing the host).
 
     face: dict with keys
@@ -180,6 +196,27 @@ def draw_fold(screen, face, host_cam_x, host_cam_y, player, t):
     pa = pygame.surfarray.pixels_alpha(surf)
     pa[:, :] = (mask * 255).astype(np.uint8)
     del pa
+
+    # Tilted placement (CAMERA.md Phase 2): stand the tear up from the
+    # projected floor seam so it reads anchored to the ground. Only when the
+    # camera is actually pitched -- at pitch 0 we fall through to the
+    # byte-identical legacy blit below.
+    if camera is not None and camera.pitch > 0.02:
+        seam_len = SEAM_TILES * TILE
+        if nx != 0:                                # vertical seam runs along y
+            w0 = (fold_x, fold_y - seam_len / 2)
+            w1 = (fold_x, fold_y + seam_len / 2)
+            peek = pygame.transform.rotate(surf, 90)   # along-seam -> width
+        else:                                      # horizontal seam along x
+            w0 = (fold_x - seam_len / 2, fold_y)
+            w1 = (fold_x + seam_len / 2, fold_y)
+            peek = surf
+        s0 = camera.project(*w0)
+        s1 = camera.project(*w1)
+        rise = int(seam_len * (0.5 + 0.7 * camera.ground_squash()))
+        _blit_tear(screen, peek, s0, s1, rise)
+        _draw_seam(screen, s0, s1, t)
+        return True
 
     # On-screen placement: the seam sits on the host fold tile, the peek
     # extends the way the normal points.
