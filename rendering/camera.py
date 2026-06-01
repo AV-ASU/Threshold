@@ -49,6 +49,20 @@ class Camera:
         """Back-compat alias for ground-plane points (z = 0)."""
         return self.project(wx, wy, 0.0)
 
+    def unproject(self, sx, sy):
+        """Inverse of project() for the ground plane (z = 0): screen pixel ->
+        world (wx, wy). The seam in the other direction -- needed to size the
+        render window to exactly cover the tilted screen, and for mouse->world
+        picking once the live view tilts."""
+        rx = (sx - self.origin[0]) / self.scale
+        cp = math.cos(self.pitch) or 1e-6
+        ry = (sy - self.origin[1]) / (self.scale * cp)
+        if self.yaw:
+            c, s = math.cos(self.yaw), math.sin(self.yaw)
+            # inverse of the forward rotation [[c, s], [-s, c]]
+            rx, ry = rx * c - ry * s, rx * s + ry * c
+        return self.cam_x + rx, self.cam_y + ry
+
     def depth(self, wx, wy, wz=0.0):
         """Painter's-algorithm key: bigger = nearer the camera (draw later).
         Uses ground depth primarily; height nudges so a tall thing on a tile

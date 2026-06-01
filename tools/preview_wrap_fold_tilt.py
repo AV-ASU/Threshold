@@ -35,7 +35,7 @@ from rendering.skybox import draw_skybox
 from rendering.sprites import draw_player_sprite, draw_npc_sprite
 
 PITCH = 55
-WIN_TILES = 34          # flat window span (tiles) -- > screen so yaw covers it
+WALL_RISE = 30          # world height that can poke into view above the floor
 
 
 class _P:
@@ -44,17 +44,33 @@ class _P:
         self.x = x; self.y = y; self.facing = facing
 
 
-def render_flat_window(scene, cx, cy, span_px):
-    """Flat raster of the world window centered on world (cx, cy), span_px
-    wide/tall, wrapping past map bounds (seamless across wrap seams)."""
-    surf = pygame.Surface((span_px, span_px))
+def window_half_span(cam, cell):
+    """Smallest centered (on cam_x/cam_y) square half-span, in world px, that
+    still covers the whole tilted screen. Unproject the four screen corners
+    (plus an upward margin so tall walls at the top edge are included) and
+    take the farthest world offset from center."""
+    W, H = cell
+    corners = [(0, 0), (W, 0), (0, H), (W, H),
+               (W // 2, -WALL_RISE)]   # top-edge wall headroom
+    half = 0.0
+    for sx, sy in corners:
+        wx, wy = cam.unproject(sx, sy)
+        half = max(half, abs(wx - cam.cam_x), abs(wy - cam.cam_y))
+    return half + TILE                 # one tile of slack
+
+
+def render_flat_window(scene, cx, cy, half_span):
+    """Flat raster of the world window centered on world (cx, cy), wrapping
+    past map bounds (seamless across wrap seams)."""
+    span = int(half_span * 2)
+    surf = pygame.Surface((span, span))
     surf.fill((10, 10, 14))
-    wx0 = cx - span_px / 2.0
-    wy0 = cy - span_px / 2.0
+    wx0 = cx - half_span
+    wy0 = cy - half_span
     x0 = int(math.floor(wx0 / TILE))
     y0 = int(math.floor(wy0 / TILE))
-    x1 = int(math.ceil((wx0 + span_px) / TILE))
-    y1 = int(math.ceil((wy0 + span_px) / TILE))
+    x1 = int(math.ceil((wx0 + span) / TILE))
+    y1 = int(math.ceil((wy0 + span) / TILE))
     draw_scene_terrain(surf, scene, wx0, wy0, x0, y0, x1, y1)
     return surf, wx0, wy0
 
@@ -76,8 +92,10 @@ def make_cam(yaw_deg, px, py, S):
 
 
 def draw_fold_tilted(out, cam, face, player):
-    """A trimmed draw_fold: build the target peek, fog-mask it, place it on
-    the tilted floor at cam.project(fold_px). Read-only proof of placement."""
+    """A trimmed draw_fold proving placement under tilt: build the target
+    peek, fog-mask it, and stand it up as a tear whose BASE follows the
+    projected floor seam (s0->s1) and whose sides rise straight up (world-z
+    projects vertically). Anchored to the seam, not floating."""
     from rendering.folds import _fog_mask, SIGHT_DEPTH, SEAM_TILES
     nx, ny = face["normal"]
     if player.facing[0] * nx + player.facing[1] * ny < 0.2:
@@ -89,33 +107,53 @@ def draw_fold_tilted(out, cam, face, player):
         w, h = SIGHT_DEPTH, SEAM_TILES * TILE
     else:
         w, h = SEAM_TILES * TILE, SIGHT_DEPTH
-    cam_x = ax * TILE + 16 - w // 2
-    cam_y = ay * TILE + 16 - h // 2
     big = pygame.Surface((w, h))
     big.fill((8, 8, 11))
-    target.draw(big, cam_x, cam_y)
+    target.draw(big, ax * TILE + 16 - w // 2, ay * TILE + 16 - h // 2)
     apply_grade(big, 1.0)
-    surf = big.convert_alpha()
+    peek = big.convert_alpha()
     import numpy as np
     mask = _fog_mask(w, h, face["normal"])
-    pa = pygame.surfarray.pixels_alpha(surf)
+    pa = pygame.surfarray.pixels_alpha(peek)
     pa[:, :] = (mask * 255).astype(np.uint8)
     del pa
-    # placement: seam at cam.project(fold_px); panel faces camera (billboard),
-    # rising off the floor so the tear stands like a doorway.
-    sx, sy = cam.project(fold_x, fold_y)
-    rise = int(h * (0.4 + 0.6 * cam.ground_squash()))
-    if nx < 0:
-        rx, ry = sx - w, sy - rise
-    elif nx > 0:
-        rx, ry = sx, sy - rise
-    elif ny < 0:
-        rx, ry = sx - w // 2, sy - rise
-    else:
-        rx, ry = sx - w // 2, sy - rise
-    out.blit(surf, (rx, ry))
-    pygame.draw.line(out, (210, 180, 70), (sx, sy - rise), (sx, sy), 2)
+
+    # The seam is a short floor segment perpendicular to the normal at fold_px.
+    seam_len = SEAM_TILES * TILE
+    if nx != 0:                                   # vertical seam runs along y
+        w0 = (fold_x, fold_y - seam_len / 2)
+        w1 = (fold_x, fold_y + seam_len / 2)
+    else:                                         # horizontal seam runs along x
+        w0 = (fold_x - seam_len / 2, fold_y)
+        w1 = (fold_x + seam_len / 2, fold_y)
+    s0 = cam.project(*w0)
+    s1 = cam.project(*w1)
+    rise = int(seam_len * (0.5 + 0.7 * cam.ground_squash()))
+    # Stand the (rotated-to-seam-direction) peek up from the seam base. The
+    # base edge follows s0->s1; the height rises straight up the screen.
+    _blit_tear(out, peek, s0, s1, rise)
+    # the gold tear-seam, along the actual floor seam line
+    pygame.draw.line(out, (214, 180, 74), s0, s1, 2)
     return True
+
+
+def _blit_tear(out, peek, s0, s1, rise):
+    """Stand `peek` up as a vertical panel whose base edge is the screen
+    segment s0->s1 and whose top edge is that segment lifted `rise` px up
+    the screen. Per-column vertical strips give the base its floor-seam slant
+    while keeping the sides vertical (correct for projected world height)."""
+    import pygame as pg
+    pw, ph = peek.get_size()
+    (x0, y0), (x1, y1) = s0, s1
+    cols = max(2, int(math.hypot(x1 - x0, y1 - y0)))
+    for i in range(cols):
+        f = i / (cols - 1)
+        bx = x0 + (x1 - x0) * f
+        by = y0 + (y1 - y0) * f
+        src_x = min(pw - 1, int(f * pw))
+        strip = peek.subsurface((src_x, 0, 1, ph))
+        strip = pg.transform.scale(strip, (2, rise))
+        out.blit(strip, (int(bx), int(by - rise)))
 
 
 def render(scene, yaw_deg, px, py, facing, fold=None, cell=(440, 380)):
@@ -124,8 +162,8 @@ def render(scene, yaw_deg, px, py, facing, fold=None, cell=(440, 380)):
     out = pygame.Surface(cell)
     draw_skybox(out, (0, 0, cell[0], cell[1]), yaw=cam.yaw, kind="overcast",
                 horizon_frac=0.40)
-    span = WIN_TILES * TILE
-    flat, wx0, wy0 = render_flat_window(scene, px, py, span)
+    half = window_half_span(cam, cell)
+    flat, wx0, wy0 = render_flat_window(scene, px, py, half)
     warped = warp(flat, cam)
     # the window is centered on the player -> blit centered on S
     out.blit(warped, (S[0] - warped.get_width() // 2,
