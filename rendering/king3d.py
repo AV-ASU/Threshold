@@ -82,24 +82,29 @@ _CRACKS = None
 
 
 def _crack_net():
-    """Porcelain craquelure authored in object (theta, h) space: a central
-    mold seam + scattered branching hairlines. This is the SAME network the
-    shatter will fracture along, so the calm detail carries onto the shards.
-    Seeded -> stable (never boils). Cached. Returns list of polylines, each a
-    list of (theta, h); the first entries are the 'deep' cracks that seep gold."""
+    """The crack network, authored in object (theta, h) space and cached.
+
+    CALM STATE = a SINGLE crack from the mask's right eye out toward the right
+    corner, where it forks into two. As threat rises the rest reveals -- the
+    seam, meridians and craquelure the mask finally SHATTERS along, so the
+    cracks become exactly the shard lines.
+
+    Returns a list of (polyline, appear): polyline is [(theta, h), ...]; appear
+    is the threat at which it reveals (appear < 0 => the calm crack, always on)."""
     global _CRACKS
     if _CRACKS is not None:
         return _CRACKS
     rng = random.Random(7)
-    cracks = []
-    # the mold seam down the centre (jagged a touch), and two long meridians
-    for base in (0.0, -0.62, 0.62):
-        seam = []
-        for h in range(13, -15, -2):
-            seam.append((base + rng.uniform(-0.06, 0.06), h))
-        cracks.append(seam)
-    # scattered craquelure: short branching hairlines across the face
-    for _ in range(12):
+    out = []
+    # the calm forking crack: right eye -> right corner, then a two-way split
+    out.append(([(0.66, 1.0), (0.86, -3.0), (1.06, -8.0)], -1.0))   # stem
+    out.append(([(1.06, -8.0), (1.30, -11.0)], -1.0))               # fork A
+    out.append(([(1.06, -8.0), (0.94, -12.5)], -1.0))               # fork B
+    # everything below reveals with threat, toward the full shatter network.
+    extra = []
+    for base in (0.0, -0.62, 0.62):                                 # seam + meridians
+        extra.append([(base + rng.uniform(-0.06, 0.06), h) for h in range(13, -15, -2)])
+    for _ in range(11):                                             # scattered craquelure
         th0 = rng.uniform(-1.2, 1.2); h0 = rng.uniform(-12, 12)
         n = rng.randint(2, 4); pl = [(th0, h0)]; th, h = th0, h0
         ad = rng.uniform(0, math.tau)
@@ -108,9 +113,11 @@ def _crack_net():
             th += math.cos(ad) * rng.uniform(0.12, 0.30)
             h += math.sin(ad) * rng.uniform(2.0, 4.0)
             pl.append((th, h))
-        cracks.append(pl)
-    _CRACKS = cracks
-    return cracks
+        extra.append(pl)
+    for i, pl in enumerate(extra):
+        out.append((pl, 0.08 + i / max(1, len(extra) - 1) * 0.78))
+    _CRACKS = out
+    return _CRACKS
 
 
 def _draw_runs(surf, pts_or_none, col, width):
@@ -234,29 +241,24 @@ def draw_king3d(surf, cx, cy, yaw, t, threat=0.0, scale=2.4, light=-0.6):
                    _PORC_HI, 1)
         _draw_runs(surf, [proj(0.10, hh) for hh in (eye_h - 1, eye_h - 4, eye_h - 6.5)],
                    _PORC_DK, 1)
-        # brow ridges arching over each socket
-        for sgn in (-1, 1):
-            _draw_runs(surf, [proj(sgn * th, eye_h + 2.6) for th in (0.95, 0.6, 0.28)],
-                       _PORC_DK, 1)
-        # craquelure: at CALM only a few faint deep cracks show; as threat
-        # rises more cracks appear and darken, progressing to the full network
-        # the mask SHATTERS along (so the cracks become exactly the shard
-        # lines). The deep cracks seep gold first; the gold spreads with threat.
+        # cracks: CALM shows only the single forking crack (right eye -> right
+        # corner, splitting in two). As threat rises the rest of the network
+        # reveals + darkens, reaching the full set of shard lines at threat 1.
+        # The gold seeps the cracks, the calm crack first.
         crack_layer = pygame.Surface(surf.get_size(), pygame.SRCALPHA)
         gold_layer = pygame.Surface(surf.get_size(), pygame.SRCALPHA)
-        cracks = _crack_net(); N = len(cracks)
-        for ci, pl in enumerate(cracks):
-            # the 3 deep cracks (seam + meridians) are present (faint) at calm;
-            # the rest reveal across the threat range toward the full network.
-            appear = 0.0 if ci < 3 else 0.08 + (ci - 3) / max(1, N - 4) * 0.78
-            ramp = max(0.0, min(1.0, (threat - appear) / 0.18))
-            vis = max(0.30 if ci < 3 else 0.0, ramp)
-            if vis <= 0.03:
-                continue
+        for pl, appear in _crack_net():
+            if appear < 0:                          # the calm forking crack -- always on
+                vis, gmul = 0.85, 1.0
+            else:
+                vis = max(0.0, min(1.0, (threat - appear) / 0.18))
+                if vis <= 0.03:
+                    continue
+                gmul = 0.7
             scr = [proj(th, hh) for (th, hh) in pl]
             _draw_runs(crack_layer, scr,
                        (_PORC_DK[0], _PORC_DK[1], _PORC_DK[2], int(70 + 170 * vis)), 1)
-            ga = int((24 + 180 * threat) * vis * (1.0 if ci < 3 else 0.7))
+            ga = int((24 + 180 * threat) * vis * gmul)
             if ga > 8:
                 _draw_runs(gold_layer, scr, (_GOLD[0], _GOLD[1], _GOLD[2], ga), 1)
         surf.blit(crack_layer, (0, 0))
