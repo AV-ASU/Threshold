@@ -692,11 +692,13 @@ def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False,
             pygame.draw.ellipse(surf, shirt, bulge)                            # forward chest bulge
             pygame.draw.rect(surf, (62, 54, 38), (x - 7, y + 10, 14, 4))       # belt
             _gaunt_head(surf, x, y, skin, narrow=HN, tall=HT, blink=blink, view=view)
-            # strong forward GigaChad jaw in profile
-            pygame.draw.polygon(surf, skin, [(x - 3 * s, y - 10), (x + 5 * s, y - 9),
-                                             (x + 5 * s, y - 5), (x + s, y - 2), (x - 3 * s, y - 4)])
-            pygame.draw.line(surf, sk_lo, (x + 5 * s, y - 9), (x + s, y - 2), 1)  # jaw front edge
-            pygame.draw.circle(surf, (96, 92, 76), (x + 3 * s, y - 5), 1)      # stubble jaw
+            # strong forward GigaChad jaw in profile -- the chin JUTS forward
+            pygame.draw.polygon(surf, skin, [(x - 3 * s, y - 10), (x + 6 * s, y - 9),
+                                             (x + 8 * s, y - 6), (x + 5 * s, y - 3),
+                                             (x - 2 * s, y - 4)])
+            pygame.draw.line(surf, sk_lo, (x + 6 * s, y - 9), (x + 8 * s, y - 6), 1)  # jaw front
+            pygame.draw.line(surf, sk_lo, (x + 8 * s, y - 6), (x + 5 * s, y - 3), 1)  # jutting chin
+            pygame.draw.circle(surf, (96, 92, 76), (x + 4 * s, y - 5), 1)      # stubble jaw
             _oldhat(surf, x, y, hc, hc_lo, hc_hi, hb, hb_lo, s=s)
             _star(x + 3 * s)                                                   # star edge-on
         else:
