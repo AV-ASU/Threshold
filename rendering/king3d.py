@@ -18,20 +18,23 @@ import pygame
 # Object-space ovoid head: (height, half_width_x, half_depth_z), chin(-) -> crown(+).
 # A face is taller than wide and a touch deeper than broad (it protrudes), so the
 # silhouette stays round-ish from any yaw while the FEATURES do the turning.
+# Depth (hd) is deliberately SHALLOW vs width (hw): this is a flat-ish MASK,
+# not a round head, so edge-on (yaw 90) it reads as a flat plate.
 _SEC = [
-    (-14, 5.0, 4.6),     # chin
-    (-10, 7.6, 7.2),     # jaw
-    (-5,  9.3, 9.1),     # cheeks
-    (0,   9.7, 9.7),     # widest, the eye line
-    (5,   9.0, 9.2),     # brow
-    (10,  7.2, 7.8),
-    (14,  4.4, 5.0),     # crown
+    (-14, 5.0, 2.4),     # chin
+    (-10, 7.6, 3.0),     # jaw
+    (-5,  9.3, 3.6),     # cheeks
+    (0,   9.7, 3.9),     # widest, the eye line
+    (5,   9.0, 3.6),     # brow
+    (10,  7.2, 3.0),
+    (14,  4.4, 2.2),     # crown
 ]
 _PORC    = (212, 204, 186)
 _PORC_LO = (150, 144, 128)
 _PORC_DK = (86, 82, 74)
 _PORC_HI = (240, 234, 216)
 _HOLLOW  = (6, 5, 8)               # the void eyes / tear: pure black
+_VOIDC   = (9, 8, 12)              # the dark void INTERIOR of the mask
 _BODY    = (120, 92, 30)           # the Yellow body mass behind the plate
 _BODY_LO = (70, 52, 18)
 _GOLD    = (210, 172, 56)
@@ -90,48 +93,35 @@ def draw_king3d(surf, cx, cy, yaw, t, threat=0.0, scale=2.4, light=-0.6):
 
     heights = [h * 0.5 for h in range(int(_SEC[0][0] * 2), int(_SEC[-1][0] * 2) + 1)]
 
-    # --- 1) the YELLOW body: an ovoid mass behind the plate, drawn a touch
-    # SMALLER than the head so the porcelain plate fully covers it face-on
-    # (the glow stays CONTAINED inside the mask when calm). Its glow is filled
-    # inside its own silhouette -- no halo spilling past the mask.
-    body_l, body_r, body_cx = [], [], []
+    # --- 1) the mask INTERIOR is a dark VOID, and a small glow sits RECESSED
+    # at its centre with void all around it. The glow rides toward the BACK as
+    # he turns (-recess*sin yaw), so at profile it reads as recessed INTO the
+    # flat mask. Drawn BEFORE the plate: face-on the porcelain contains it; it
+    # is revealed as the plate foreshortens on the turn.
+    body_l, body_r = [], []
     for h in heights:
         hw, hd = _hwd(h)
-        half = math.hypot(hw * math.cos(yaw), hd * math.sin(yaw)) * 0.9
+        half = math.hypot(hw * math.cos(yaw), hd * math.sin(yaw)) * scale
         x0, y0 = P(0, h)
-        body_l.append((x0 - half * scale, y0))
-        body_r.append((x0 + half * scale, y0))
-        body_cx.append((x0, y0, half * scale))
+        body_l.append((x0 - half, y0))
+        body_r.append((x0 + half, y0))
     body_poly = body_r + body_l[::-1]
     if len(body_poly) >= 3:
-        pygame.draw.polygon(surf, _BODY, body_poly)
-        # contained radial core: brighter ellipses nested inside the body
-        # silhouette (centred on the body), so the gold never exceeds it.
-        n = len(body_cx)
-        midx, midy, _ = body_cx[n // 2]
-        for frac, col in ((0.74, _BODY_LO), (0.52, _GOLD_DK), (0.30, _GOLD),
-                          (0.14, _GOLD_HI)):
-            rr = int(max(b[2] for b in body_cx) * frac)
-            hh = int((heights[-1] - heights[0]) * scale * 0.5 * frac)
-            if rr > 0 and hh > 0:
-                pygame.draw.ellipse(surf, col, (int(midx - rr), int(midy - hh),
-                                                rr * 2, hh * 2))
+        pygame.draw.polygon(surf, _VOIDC, body_poly)        # the dark void interior
         pygame.draw.polygon(surf, _BODY_LO, body_poly, 1)
-    # The ESCAPING bloom only once he rouses: an additive halo that grows with
-    # threat (calm = none, so the glow reads as trapped behind the porcelain).
-    if threat > 0.05:
-        cr = int(13 * scale)
-        glow = pygame.Surface((cr * 4, cr * 4), pygame.SRCALPHA)
-        g0 = cr * 2
-        core_a = int(150 * threat)
-        for i in range(cr * 2, 0, -1):
-            f = 1 - i / (cr * 2)
-            a = int(core_a * (f ** 1.6))
-            col = _GOLD_HI if i < cr else _GOLD
-            if a > 0:
-                pygame.draw.circle(glow, (col[0], col[1], col[2], a), (g0, g0), i)
-        surf.blit(glow, (int(cx - g0), int(cy - bob * scale - g0)),
-                  special_flags=pygame.BLEND_RGBA_ADD)
+    recess = 5.0
+    gcx = cx - recess * math.sin(yaw) * scale               # recedes to the back on the turn
+    gcy = cy - bob * scale
+    gr = (3.0 + 4.0 * threat) * scale                       # small + contained when calm
+    gl = pygame.Surface((int(gr * 4) + 2, int(gr * 4) + 2), pygame.SRCALPHA)
+    g0 = int(gr * 2)
+    for i in range(int(gr * 1.7), 0, -1):
+        f = 1 - i / (gr * 1.7)
+        a = int(180 * (f ** 1.4))
+        col = _GOLD_HI if i < gr * 0.55 else _GOLD
+        if a > 0:
+            pygame.draw.circle(gl, (col[0], col[1], col[2], a), (g0, g0), i)
+    surf.blit(gl, (int(gcx - g0), int(gcy - g0)))
 
     # --- 2) the porcelain PLATE: only the front-facing arc of the face -------
     # For each height, sweep the plate arc and keep the part whose surface
@@ -188,6 +178,11 @@ def draw_king3d(surf, cx, cy, yaw, t, threat=0.0, scale=2.4, light=-0.6):
         ew = max(1, int((2.4 + 3.0 * vis) * scale))   # big vacuous void; foreshortens
         eh = int((5.4 + 0.8 * threat) * scale)
         pygame.draw.ellipse(surf, _HOLLOW, (int(ex - ew / 2), int(ey - eh / 2), ew, eh))
+        # the recessed Yellow glimpsed deep in the void -- a small glow with the
+        # black void all around it (brightens as he rouses).
+        gd = _GOLD if threat > 0.3 else _GOLD_DK
+        pygame.draw.circle(surf, gd, (int(ex), int(ey + eh * 0.12)),
+                           max(1, int((0.5 + 0.8 * threat) * scale)))
         # weep: a tear-streak running down the cheek, pinned to the surface.
         pts = []
         for k in range(5):
@@ -201,4 +196,20 @@ def draw_king3d(surf, cx, cy, yaw, t, threat=0.0, scale=2.4, light=-0.6):
         if threat > 0.3 and vis > 0.4:            # a wet gold glint when roused
             pygame.draw.circle(surf, _GOLD_HI, (int(ex), int(ey + eh * 0.3)),
                                max(1, int(0.5 * scale)))
+
+    # --- ESCAPING bloom: once he rouses, the contained gold breaks past the
+    # mask (calm = none, so the glow stays trapped behind the porcelain). ----
+    if threat > 0.05:
+        cr = int(14 * scale)
+        glow = pygame.Surface((cr * 4, cr * 4), pygame.SRCALPHA)
+        g0 = cr * 2
+        core_a = int(170 * threat)
+        for i in range(cr * 2, 0, -1):
+            f = 1 - i / (cr * 2)
+            a = int(core_a * (f ** 1.6))
+            col = _GOLD_HI if i < cr else _GOLD
+            if a > 0:
+                pygame.draw.circle(glow, (col[0], col[1], col[2], a), (g0, g0), i)
+        surf.blit(glow, (int(cx - g0), int(cy - bob * scale - g0)),
+                  special_flags=pygame.BLEND_RGBA_ADD)
 
