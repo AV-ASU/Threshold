@@ -20,7 +20,7 @@ Examples:
         --frames 10 --span 4 --out /tmp/king.png
 
 Kinds are whatever rendering.sprites.draw_npc_sprite understands
-(e.g. yellow_king, curse_priest, cultist, watcher, wolf, doll, ...).
+(e.g. yellow_king, cultist, watcher, wolf, doll, ...).
 """
 import os
 import sys
@@ -41,7 +41,7 @@ pygame.init()
 pygame.display.set_mode((1, 1))
 from rendering.sprites import draw_npc_sprite
 
-DEFAULT_KINDS = ["curse_priest", "cultist", "watcher", "yellow_king"]
+DEFAULT_KINDS = ["cultist", "watcher", "yellow_king"]
 
 
 def parse_args():

@@ -113,7 +113,7 @@ SEAMLESS_WORLD_SCENES = OUTDOOR_SCENES | {
     "brimley",
     # Hidden fold scenes -- the player stumbles into them through
     # direction-sensitive exits and shouldn't feel a transition.
-    "curse_grove", "lodge_arrival", "highway_walk",
+    "effigy_grove", "lodge_arrival", "highway_walk",
     "husk_grove", "scarecrow_ring",
 }
 
@@ -195,8 +195,8 @@ CULTIST_SCENES = {
     "cornfield_maze",
 }
 # Scenes open enough for His gaze to fix on you and bind a Watcher -- the
-# claimed town under open sky (NARRATIVE.md 1b/3). There is NO curse-priest;
-# the curse is His own attention. Safe rooms are exempt via KING_FREE_SCENES.
+# claimed town under open sky (NARRATIVE.md 1b/3). The curse is His own
+# attention. Safe rooms are exempt via KING_FREE_SCENES.
 GAZE_BIND_SCENES = {"brimley", "graveyard", "cornfield_maze"}
 # Sustained exposure (seconds) at high visibility before His eye fixes and the
 # first Watcher opens; hiding / dropping visibility bleeds the timer back.
@@ -570,10 +570,10 @@ class Game(CutsceneMixin):
         # Regular cultists roam the outdoor scenes (chaser AI: scout,
         # chase on sight, search, investigate). Their gaze raises
         # visibility while they hold line of sight; contact spikes it.
-        # The special curse-priest (a stalker) runs a ritual: hold the
-        # player in its sightline long enough and it lands a *permanent*
-        # curse. Each curse manifests Watchers -- staring figures only
-        # the cursed sees -- and every Watcher pushes visibility up,
+        # His gaze itself binds the curse: stay exposed in its sightline
+        # long enough and a *permanent* curse lands. Each curse manifests
+        # Watchers -- staring figures only the cursed sees -- and every
+        # Watcher pushes visibility up,
         # marching the player toward a King they can no longer shake.
         self._cursed = False           # the watcher-curse: active until cleared
         self._watchers = []            # Watcher NPCs currently manifested
@@ -2379,9 +2379,9 @@ class Game(CutsceneMixin):
         """Regular cultists roam every outdoor scene (chaser AI: scout,
         chase on sight, search, investigate). Their gaze raises
         visibility while they hold line of sight, and contact spikes it
-        -- but they never kill (the King is the only kill). The special
-        curse-priest runs a ritual: hold the player in its sightline
-        long enough and a permanent curse lands. Safe interiors are
+        -- but they never kill (the King is the only kill). His gaze
+        binds the curse: stay exposed in its sightline long enough and a
+        permanent curse lands. Safe interiors are
         refuges -- no cultists, and the gaze-pressure lifts."""
         self._gaze_count = 0
         if self.scene is None or self.player is None:
@@ -2426,8 +2426,8 @@ class Game(CutsceneMixin):
         self._flank_cultists()
 
     def _tick_gaze_bind(self, dt):
-        """His gaze, binding the curse (NARRATIVE 1b/3) -- replaces the old
-        curse-priest ritual. In a GAZE_BIND_SCENES scene, staying EXPOSED (not
+        """His gaze, binding the curse (NARRATIVE 1b/3). In a GAZE_BIND_SCENES
+        scene, staying EXPOSED (not
         hidden) while visibility is high lets His eye fix on you: a timer
         climbs, and crossing GAZE_BIND_TIME binds the first Watcher. Hiding,
         or dropping below GAZE_BIND_VIS, bleeds the timer back -- cover and
@@ -2460,8 +2460,8 @@ class Game(CutsceneMixin):
     def _ensure_cultists(self, key, dt):
         """Keep the current cult scene topped up with CULT_REGULARS roaming
         cultists. Rate-limited so killing one buys a breather, not an instant
-        respawn. (No curse-priest -- the watcher-curse is now His own gaze,
-        bound in _tick_gaze_bind, not a priest's ritual; NARRATIVE 1b/3.)"""
+        respawn. (The watcher-curse is His own gaze, bound in
+        _tick_gaze_bind; NARRATIVE 1b/3.)"""
         self._cult_topup_t -= dt
         if self._cult_topup_t > 0:
             return
@@ -3692,8 +3692,8 @@ class Game(CutsceneMixin):
                     draw_vessel_bloom(self.screen, sx, sy, npc.sprite_kind,
                                       npc.facing, m, seed=id(npc) & 0xffff)
                 else:
-                    # (No curse-priest -- the curse is His own gaze now;
-                    # NARRATIVE 1b/3. curse_v stays 0 for all normal NPCs.)
+                    # (The curse is His own gaze now; NARRATIVE 1b/3.
+                    # curse_v stays 0 for all normal NPCs.)
                     curse_v = 0.0
                     # A Watcher being stared down: its eyes go dark (gaze) and
                     # it fades as the dispel timer fills, so the cure reads.

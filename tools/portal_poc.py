@@ -232,8 +232,8 @@ def _selftest():
     from rendering.sprites import draw_npc_sprite
 
     host = load_scene("cornfield_maze")
-    grove = load_scene("curse_grove")
-    face = PortalFace(normal=(-1, 0), target_key="curse_grove",
+    grove = load_scene("effigy_grove")
+    face = PortalFace(normal=(-1, 0), target_key="effigy_grove",
                       anchor_tile=(7, 5), fold_tile=(6, 10))
     fx, fy = face.fold_tile[0] * TILE + 16, face.fold_tile[1] * TILE + 16
     cam_x = (fx + TILE) - SCREEN_W // 2

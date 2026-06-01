@@ -675,7 +675,7 @@ def build_cornfield_maze():
     objects_l[0][11] = "^"
     objects_l[0][12] = "^"
     # The fold-grove access -- a regular-looking lane tile in lane 2.
-    # Walking WEST across it opens the curse-priest's grove.
+    # Walking WEST across it opens the fold-grove (effigy_grove).
     objects_l[10][6] = "Z"
     # Internal corn walls at cols 4, 9, 14, 19 running N-S. Lanes
     # between: 1-3, 5-8, 10-13, 15-18, 20-22. The player loses
@@ -925,11 +925,11 @@ def build_cornfield_maze():
     sc.add_exit("^", "brimley",   "from_cornfield_maze")
     # Direction-sensitive hidden fold: walking WEST across the 'Z'
     # tile (a regular-looking lane tile in the middle of the maze)
-    # opens onto the curse-priest's grove. From any other angle the
-    # tile reads as floor. Bible §8: the curse-priest finally has a
-    # home and a fiction. Char 'Z' chosen because 'C' is the cornstalk
+    # opens onto the fold-grove (effigy_grove). From any other angle the
+    # tile reads as floor. Bible §8: the cult's work-clearing, tended by
+    # no one. Char 'Z' chosen because 'C' is the cornstalk
     # tile char and would conflict.
-    sc.add_exit("Z", "curse_grove", "from_cornfield_maze",
+    sc.add_exit("Z", "effigy_grove", "from_cornfield_maze",
                 direction="west")
     # Additional direction-sensitive secret-area folds.
     sc.add_exit("P", "husk_grove", "from_cornfield_maze",
@@ -941,9 +941,9 @@ def build_cornfield_maze():
     sc.set_spawn("from_cornfield", 11, H - 2)
     sc.set_spawn("from_brimley", 11, 1)
     sc.set_spawn("from_brimley_south", 11, 1)
-    # Return from curse_grove -- one east of the Z tile so the player
+    # Return from effigy_grove -- one east of the Z tile so the player
     # doesn't immediately re-trigger walking west.
-    sc.set_spawn("from_curse_grove", 7, 10)
+    sc.set_spawn("from_effigy_grove", 7, 10)
     # Return from the additional hidden-scene folds. One tile inland
     # from each fold tile in the direction the player came back from.
     sc.set_spawn("from_husk_grove", 20, 8)        # west of (21, 8)

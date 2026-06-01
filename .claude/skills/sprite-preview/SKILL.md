@@ -32,7 +32,7 @@ step — attach the saved file in your reply.)
 Run from the repo root:
 
 ```bash
-# Default: the threat creatures (curse_priest, cultist, watcher, yellow_king)
+# Default: the threat creatures (cultist, watcher, yellow_king)
 python .claude/skills/sprite-preview/render_sprites.py
 
 # Specific kinds
@@ -51,7 +51,7 @@ Flags: `--out PATH` (default `/tmp/sprite_preview.png`), `--frames N`,
 `--facing dx,dy`, `--gaze`, `--bg R,G,B` (cell background).
 
 `kind` can be any value `draw_npc_sprite` handles (yellow_king,
-curse_priest, cultist, watcher, wolf, doll, black_figure, ...). Unknown
+cultist, watcher, wolf, doll, black_figure, ...). Unknown
 kinds render an `ERR` cell rather than crashing the sheet.
 
 ## Workflow

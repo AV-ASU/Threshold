@@ -10,7 +10,7 @@ from rendering.transform import draw_vessel_bloom
 
 def _is_cultist(obj):
     """A cultist target for the player's gun: a cult-tagged NPC, or a
-    cultist Enemy. (The curse-priest is cut -- NARRATIVE 1b/3.)"""
+    cultist Enemy."""
     tag = getattr(obj, "tag", None)
     if isinstance(tag, str) and tag.startswith("cult_"):
         return True
