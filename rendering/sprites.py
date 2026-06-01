@@ -1139,6 +1139,17 @@ def draw_npc_corpse(surf, x, y, kind, seed=0, mold=0):
 _MEAT = (96, 22, 26); _MEAT_LO = (58, 12, 16); _MEAT_HI = (150, 44, 46)
 _WBONE = (222, 214, 196); _WSKIN = (214, 182, 150)
 _WGOLD = (236, 204, 64); _WGOLD_HI = (252, 232, 150)
+# Garrick's cancer: sallow flayed flesh, engorged vessels, and black-gold
+# tumors that BULGE out of the body (a shaded dome lit cold at the crown,
+# gold molten light leaking from the fissures cracking it open).
+_SALLOW = (170, 162, 130); _SALLOW_LO = (104, 98, 78)
+_INFLAME = (150, 70, 62); _INFLAME_LO = (90, 42, 37); _VEIN = (120, 34, 36)
+_TUMOR_DK = (9, 8, 12); _TUMOR_LIT = (60, 54, 66); _TUMOR_SPEC = (94, 88, 100)
+
+
+def _lerp_rgb(a, b, f):
+    f = max(0.0, min(1.0, f))
+    return tuple(int(a[i] + (b[i] - a[i]) * f) for i in range(3))
 
 
 def _gold_in_wound(surf, cx, cy, R, peak=64):
@@ -1202,28 +1213,72 @@ def _infest_hettie(surf, x, y, t):
     pygame.draw.line(surf, _WGOLD, (x, hy), (x + 2, hy - 1), 1)
 
 
+def _tumor_veins(surf, cx, cy, n, length, rng, col=_VEIN):
+    """Engorged vessels branching out from a feeder point across the flesh."""
+    for _ in range(n):
+        a = rng.uniform(0, 6.28); x0, y0 = float(cx), float(cy)
+        steps = rng.randint(2, 4); seg = length / steps; pts = [(x0, y0)]
+        for _ in range(steps):
+            a += rng.uniform(-0.7, 0.7)
+            x0 += math.cos(a) * seg; y0 += math.sin(a) * seg
+            pts.append((x0, y0))
+        for i in range(len(pts) - 1):
+            pygame.draw.line(surf, col, pts[i], pts[i + 1], 1)
+
+
+def _popout_tumor(surf, cx, cy, r, thr, rng):
+    """A black-gold tumor BULGING out of the flesh -- not a flat disc drawn on
+    it: a contact shadow grounds it, the raw skin puckers in a ring at its
+    base, the silhouette is irregular (under-lobes), the mass is a shaded dome
+    (dark base -> cold-lit crown, shifted up for volume), and molten gold
+    light leaks from the fissures cracking it open."""
+    R = r + int(thr * 1.5)
+    sc = pygame.Surface((R * 3, R * 2), pygame.SRCALPHA)            # contact shadow
+    pygame.draw.ellipse(sc, (0, 0, 0, 90), (0, 0, R * 3, R * 2))
+    surf.blit(sc, (cx - R - 1, cy + R - 4))
+    pygame.draw.circle(surf, _INFLAME, (cx, cy + 1), R + 2)        # puckered raw-skin ring
+    pygame.draw.circle(surf, _INFLAME_LO, (cx, cy + 2), R + 2, 1)
+    for _ in range(3):                                            # irregular under-lobes
+        a = rng.uniform(0, 6.28); d = rng.uniform(0.5, 0.9) * R
+        pygame.draw.circle(surf, _TUMOR_DK,
+                           (int(cx + math.cos(a) * d), int(cy + math.sin(a) * d)),
+                           max(1, int(rng.uniform(0.4, 0.6) * R)))
+    for i in range(R, 0, -1):                                     # shaded bulging dome
+        f = (R - i) / R; oy = -int((R - i) * 0.55)
+        pygame.draw.circle(surf, _lerp_rgb(_TUMOR_DK, _TUMOR_LIT, f ** 1.4), (cx, cy + oy), i)
+    pygame.draw.circle(surf, _TUMOR_SPEC, (cx - R // 3, cy - R // 2), max(1, R // 4))  # specular
+    crown = (cx, cy - R // 2)                                     # gold molten fissures
+    _gold_in_wound(surf, crown[0], crown[1], max(2, R // 2), 34 + int(20 * thr))
+    rng2 = random.Random(cx * 7 + cy)
+    for _ in range(3):
+        a = rng2.uniform(-2.2, 2.2)
+        ex = crown[0] + math.cos(a + 1.57) * R; ey = crown[1] + math.sin(a + 1.57) * R * 0.95
+        mx = (crown[0] + ex) / 2 + rng2.uniform(-2, 2); my = (crown[1] + ey) / 2
+        pygame.draw.lines(surf, _WGOLD, False, [crown, (mx, my), (ex, ey)], 1)
+    pygame.draw.circle(surf, _WGOLD_HI, crown, 1)
+
+
 def _infest_old_townsman(surf, x, y, t):
-    # (Garrick) skinned featureless -- and faces strain up through the skin
-    # all OVER him: the screaming face on the smooth head, and more surfacing
-    # through the coat -- eye-pits and open mouths pushing out across the
-    # torso, gold burning behind each. The whole man is crawling with faces.
-    # (Adult geometry: head ~y-12, body y-2..y+16. Distinct: a CROWD of faces.)
+    # (Garrick) skinned to sallow raw flesh, and a black-gold CANCER erupts
+    # all over him: engorged vessels creep across the flayed skin and feed
+    # tumors that bulge out of the body -- shaded black masses lit cold at the
+    # crown with molten gold light cracking out of their fissures. The man is
+    # being eaten from inside by the fold's gold. (Adult geometry: head ~y-12,
+    # body y-2..y+16. Distinct: a few large pop-out tumors on flayed flesh.)
     thr = 0.5 + 0.5 * math.sin(t * 2.2)
-
-    def face(cx, cy, push):
-        _gold_in_wound(surf, cx, cy, 2, 20 + int(12 * thr))
-        pygame.draw.circle(surf, _MEAT_LO, (cx - 2, cy - 1 - push), 1)   # sunken eye-pits
-        pygame.draw.circle(surf, _MEAT_LO, (cx + 2, cy - 1 - push), 1)   # (dark flesh, not void)
-        pygame.draw.ellipse(surf, _MEAT_LO, (cx - 1, cy + 1, 3, 3 + push))  # open mouth
-        pygame.draw.line(surf, _WGOLD, (cx, cy + 1), (cx, cy + 2 + push), 1)
-
+    rng = random.Random(11)
     hy = y - 12
-    push = int(2 * thr)
-    pygame.draw.circle(surf, _WSKIN, (x, hy), 6)              # the blank skinned dome
-    face(x, hy, push)                                         # the head's screaming face
-    face(x - 4, y + 3, push)                                  # more straining through the coat
-    face(x + 4, y + 8, 0)
-    face(x - 2, y + 13, push)
+    pygame.draw.circle(surf, _SALLOW, (x, hy), 6)                 # flayed sallow head
+    pygame.draw.circle(surf, _SALLOW_LO, (x, hy), 6, 1)
+    pygame.draw.rect(surf, _SALLOW, (x - 6, y - 1, 12, 17))       # flayed sallow torso
+    pygame.draw.rect(surf, _SALLOW_LO, (x - 6, y - 1, 12, 17), 1)
+    pygame.draw.circle(surf, (44, 30, 28), (x - 2, hy - 1), 1)    # sunken eye-pits in the meat
+    pygame.draw.circle(surf, (44, 30, 28), (x + 2, hy - 1), 1)
+    sites = [(x + 2, hy + 1, 3), (x - 3, y + 5, 6), (x + 4, y + 12, 4)]
+    for sx, sy, _r in sites:                                     # vessels first, under the masses
+        _tumor_veins(surf, sx, sy, 3, 8, rng)
+    for sx, sy, r in sites:                                       # then the pop-out tumors
+        _popout_tumor(surf, sx, sy, r, thr, rng)
 
 
 _INFEST_WORLD = {

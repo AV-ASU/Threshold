@@ -369,18 +369,68 @@ class DialogueBox:
             pygame.draw.line(surf, GOLD, (fx, fy + 2), (fx + 4, fy + 6), 2)
             pygame.draw.circle(surf, GOLD_HI, (fx, fy), 1)
         elif kind == "old_townsman":
-            # (Garrick) face skinned smooth; a screaming gold face
-            # straining up through the skin from beneath.
-            pygame.draw.circle(surf, SKIN, (cx, cy - 4), 16)
-            gold_in(cx, cy - 4, 13, 40 + int(20 * thr))
-            pygame.draw.line(surf, GOLD, (cx - 7, cy - 7), (cx - 2, cy - 6), 2)
-            pygame.draw.line(surf, GOLD, (cx + 2, cy - 6), (cx + 7, cy - 7), 2)
-            pygame.draw.ellipse(surf, GOLD, (cx - 3, cy + 2, 6, 8))
-            pygame.draw.ellipse(surf, (120, 96, 20), (cx - 2, cy + 4, 4, 5))
-            pygame.draw.circle(surf, GOLD_HI, (cx - 4, cy - 6), 1)
-            pygame.draw.circle(surf, GOLD_HI, (cx + 4, cy - 6), 1)
-            pygame.draw.arc(surf, (196, 164, 134),
-                            (cx - 9, cy - 2, 18, 16), 0.2, 2.9, 1)
+            # (Garrick) face skinned to sallow raw flesh, crawling with a
+            # black-gold CANCER: engorged vessels feed tumors that BULGE out
+            # of the meat -- shaded black domes lit cold at the crown, molten
+            # gold cracking out of their fissures. The same form as the world
+            # sprite, at portrait scale.
+            import random as _r
+            rng = _r.Random(11)
+            SALLOW = (170, 162, 130); SALLOW_LO = (104, 98, 78)
+            INFLAME = (150, 70, 62); INFLAME_LO = (90, 42, 37); VEIN = (120, 34, 36)
+            TDK = (9, 8, 12); TLIT = (60, 54, 66); TSPEC = (94, 88, 100)
+
+            def lerp(a, b, f):
+                f = max(0.0, min(1.0, f))
+                return tuple(int(a[i] + (b[i] - a[i]) * f) for i in range(3))
+
+            def veins(vx, vy, n, length):
+                for _ in range(n):
+                    a = rng.uniform(0, 6.28); x0, y0 = float(vx), float(vy)
+                    steps = rng.randint(2, 4); seg = length / steps; pts = [(x0, y0)]
+                    for _ in range(steps):
+                        a += rng.uniform(-0.7, 0.7)
+                        x0 += math.cos(a) * seg; y0 += math.sin(a) * seg
+                        pts.append((x0, y0))
+                    for i in range(len(pts) - 1):
+                        pygame.draw.line(surf, VEIN, pts[i], pts[i + 1], 2)
+
+            def tumor(tx, ty, r):
+                R = r + int(thr * 3)
+                shc = pygame.Surface((R * 3, R * 2), pygame.SRCALPHA)
+                pygame.draw.ellipse(shc, (0, 0, 0, 90), (0, 0, R * 3, R * 2))
+                surf.blit(shc, (tx - R - 1, ty + R - 6))
+                pygame.draw.circle(surf, INFLAME, (tx, ty + 2), R + 3)
+                pygame.draw.circle(surf, INFLAME_LO, (tx, ty + 3), R + 3, 1)
+                for _ in range(3):
+                    a = rng.uniform(0, 6.28); d = rng.uniform(0.5, 0.9) * R
+                    pygame.draw.circle(surf, TDK,
+                                       (int(tx + math.cos(a) * d), int(ty + math.sin(a) * d)),
+                                       max(1, int(rng.uniform(0.4, 0.6) * R)))
+                for i in range(R, 0, -1):
+                    f = (R - i) / R; oy = -int((R - i) * 0.55)
+                    pygame.draw.circle(surf, lerp(TDK, TLIT, f ** 1.4), (tx, ty + oy), i)
+                pygame.draw.circle(surf, TSPEC, (tx - R // 3, ty - R // 2), max(1, R // 4))
+                crown = (tx, ty - R // 2)
+                gold_in(crown[0], crown[1], max(3, R // 2), 40 + int(24 * thr))
+                rng2 = _r.Random(tx * 7 + ty)
+                for _ in range(3):
+                    a = rng2.uniform(-2.2, 2.2)
+                    ex = crown[0] + math.cos(a + 1.57) * R
+                    ey = crown[1] + math.sin(a + 1.57) * R * 0.95
+                    mx = (crown[0] + ex) / 2 + rng2.uniform(-3, 3); my = (crown[1] + ey) / 2
+                    pygame.draw.lines(surf, GOLD, False, [crown, (mx, my), (ex, ey)], 2)
+                pygame.draw.circle(surf, GOLD_HI, crown, 2)
+
+            pygame.draw.circle(surf, SALLOW, (cx, cy - 4), 16)         # flayed sallow head
+            pygame.draw.circle(surf, SALLOW_LO, (cx, cy - 4), 16, 1)
+            pygame.draw.circle(surf, (44, 30, 28), (cx - 6, cy - 6), 2)  # sunken eye-pits
+            pygame.draw.circle(surf, (44, 30, 28), (cx + 6, cy - 6), 2)
+            sites = [(cx - 6, cy + 4, 6), (cx + 7, cy - 1, 7), (cx, cy - 11, 5)]
+            for sx, sy, _r2 in sites:
+                veins(sx, sy, 3, 11)
+            for sx, sy, r in sites:
+                tumor(sx, sy, r)
 
     def _draw_portrait(self, surf, rect, kind):
         cx = rect.centerx; cy = rect.centery
