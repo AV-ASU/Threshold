@@ -201,7 +201,12 @@ def draw_king3d(surf, cx, cy, yaw, t, threat=0.0, scale=2.4, light=-0.6,
     spread = max(birth_spread, shat)
     if spread > 0.02:
         fade = grow if birth_spread >= shat else (1.0 - 0.45 * shat)
+        # arms only burst from the SHATTER (not the calm birth-assembly): the
+        # ones reaching away from the camera trail behind the shards (occluded),
+        # the ones lunging at it are drawn over the top.
+        _draw_arms(surf, cx, cy, yaw, bob, scale, shat, threat, "back", t=t)
         _draw_shards(surf, cx, cy, yaw, bob, scale, spread, threat, fade)
+        _draw_arms(surf, cx, cy, yaw, bob, scale, shat, threat, "front", t=t)
         return
 
     # --- 2) the porcelain PLATE: only the front-facing arc of the face -------
@@ -553,3 +558,72 @@ def _draw_shards(surf, cx, cy, yaw, bob, scale, spread, threat, fade):
                     pts.append((cx + p[0] * scale, cy - (p[1] + bob) * scale))
                 if len(pts) >= 2:
                     pygame.draw.lines(surf, _HOLLOW, False, pts, 2)
+
+
+# ===========================================================================
+# STEP 3 -- 3D REACHING ARMS.  Dark tendrils anchored at object-space seam
+# points, reaching toward the PLAYER.  The mask always faces the player, so in
+# the mask's local frame the player lies in the +front (+Z) direction (plus a
+# downward bias -- he stands on the ground): when we see the face the arms
+# lunge AT the camera (read long + near), and when the mask is turned away the
+# same reach foreshortens and is occluded behind the shards.
+# ===========================================================================
+_ARM_DK = (16, 13, 20)              # the grabbing tendrils: near-black
+_ARM_HI = (44, 38, 54)
+_ARM_ANCHORS = [(-1.30, 1.0), (-0.66, -8.0), (0.0, 9.5),
+                (0.70, -8.0), (1.30, 1.5)]     # seam points around the plate
+
+
+def _yaw_vec(v, yaw):
+    """Rotate a local vector (x, y_up, z_depth) about the vertical axis by yaw,
+    matching _surface's ox/oz rotation (y is untouched)."""
+    rx = v[0] * math.cos(yaw) + v[2] * math.sin(yaw)
+    rz = -v[0] * math.sin(yaw) + v[2] * math.cos(yaw)
+    return (rx, v[1], rz)
+
+
+def _draw_arms(surf, cx, cy, yaw, bob, scale, shat, threat, which,
+               reach_local=(0.0, -0.45, 1.0), t=0.0):
+    """Stroke the reaching arms whose side (toward/away from camera) matches
+    `which` ('front' = drawn after the shards, 'back' = before + dimmer)."""
+    if shat <= 0.04:
+        return
+    rng = random.Random(101)
+    D = _yaw_vec(_norm3(reach_local), yaw)          # reach direction, camera space
+    toward = D[2] > 0.0                             # tendrils point at the camera?
+    side = "front" if toward else "back"
+    if side != which:
+        return
+    dim = 1.0 if toward else 0.46                   # trailing arms read dim/short
+    L = (9.0 + 30.0 * shat) * (0.8 + 0.4 * threat)  # object-space reach length
+    segs = 7
+    # a perpendicular for the waver (in the projection plane)
+    plen = math.hypot(D[0], D[1]) or 1.0
+    perp = (-D[1] / plen, D[0] / plen, 0.0)
+    for ai, (ath, ah) in enumerate(_ARM_ANCHORS):
+        ax, _h, az = _surface(ath, ah, yaw)
+        A = (ax, ah, az)
+        # near (reaching at the camera) read long; trailing arms foreshorten.
+        ll = L * (1.0 - 0.18 * abs(ai - 2)) * (1.0 + 0.5 * D[2])
+        phase = ai * 1.7 + t * 1.6
+        pts, depths = [], []
+        for k in range(segs + 1):
+            fr = k / segs
+            w = math.sin(phase + fr * 3.0) * (1.6 + 2.4 * fr) * (0.4 + shat)
+            p = (A[0] + D[0] * ll * fr + perp[0] * w,
+                 A[1] + D[1] * ll * fr + perp[1] * w - fr * fr * 2.0,
+                 A[2] + D[2] * ll * fr)
+            pts.append((cx + p[0] * scale, cy - (p[1] + bob) * scale))
+            depths.append(p[2])
+        # width tapers toward the tip; a tendril coming AT the camera is fat,
+        # one trailing away is thin (foreshortened).
+        base_w = max(2, int((3.2 + 2.2 * shat) * (0.6 + 0.6 * dim) * scale * 0.45))
+        for k in range(segs):
+            w = max(1, int(base_w * (1.0 - 0.82 * k / segs)))
+            col = _shade(_ARM_HI if k == 0 else _ARM_DK, 0.5 + 0.5 * dim)
+            pygame.draw.line(surf, col, pts[k], pts[k + 1], w)
+        # a gold ember at the grasping tip once truly roused
+        if toward and threat > 0.6:
+            tx, ty = pts[-1]
+            pygame.draw.circle(surf, _GOLD_DK, (int(tx), int(ty)),
+                               max(1, int(0.9 * scale)))
