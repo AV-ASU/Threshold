@@ -1,5 +1,5 @@
-"""Smaller interior areas: void, bandit cave, shop, easter egg room,
-kid's house. Combat scenes (bandit cave, easter egg room) respawn
+"""Smaller interior areas: void, cave, shop, easter egg room,
+kid's house. Combat scenes (cave, easter egg room) respawn
 their standard enemy set on every entry; respawned enemies drop
 nothing 85% of the time -- except on the very first easter_egg_room
 visit, where every kill drops (gated by the first_easter_egg flag)."""

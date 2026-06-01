@@ -7,9 +7,9 @@ Each scene is small, atmospheric, and read-only -- the player witnesses
 something they're not supposed to see, can leave the way they came, and
 the scene exists to close a thread in the canon:
 
-  curse_grove     -- a cult work-clearing tended by no one: the dead fire,
+  effigy_grove     -- a cult work-clearing tended by no one: the dead fire,
                      the effigy ring, the nailed-up faces, no worker (the
-                     curse-priest is cut -- the rite claimed the town at once)
+                     rite claimed the whole town at once)
   lodge_arrival   -- Mara's arrival at the Lodge, witnessed (makes the
                      "she chose this" beat concrete)
   highway_walk    -- the road the missing locals walked out on, where it
@@ -28,13 +28,12 @@ from .base import Scene
 
 # ----- #2: The Work-Clearing (no worker) ----------------------------
 
-def build_curse_grove():
+def build_effigy_grove():
     """A small clearing the cult once worked, found only by walking
     east-to-west through a specific cornstalk gap in cornfield_maze. A
     dead fire pit at centre, effigy-dolls in a ring, a polaroid board with
-    faces nailed to it -- the work without the worker (there is no
-    curse-priest; the closing rite claimed the town at once, NARRATIVE
-    1b/3). The player can leave the way they came -- walking east off the
+    faces nailed to it -- the work without the worker (the closing rite
+    claimed the town at once, NARRATIVE 1b/3). The player can leave the way they came -- walking east off the
     west bank returns to the maze."""
     W, H = 14, 10
     # Floor: charred dirt at the centre, grass at the edges.
@@ -63,12 +62,12 @@ def build_curse_grove():
     # Return exit on the east wall at row 5 (centre).
     objects_l[5][W - 1] = "G"
     objects = ["".join(r) for r in objects_l]
-    sc = Scene("curse_grove", floor_rows, objects, music="outside")
+    sc = Scene("effigy_grove", floor_rows, objects, music="outside")
     # Part of the continuous outside world -- transitions in and out
     # are fade-less.
     sc.wrap_x = False
     sc.wrap_y = False
-    sc.add_exit("G", "cornfield_maze", "from_curse_grove")
+    sc.add_exit("G", "cornfield_maze", "from_effigy_grove")
     sc.set_spawn("default", 1, 5)
     # The player walked WEST onto the entry tile in the maze; they
     # arrive on the west bank of the grove facing west, so they see
@@ -114,9 +113,9 @@ def build_curse_grove():
     sc.add_decoration(Decoration(13 * TILE + 8, 6 * TILE + 16,
                                  "watching_wound", size="small"))
     # ---- No worker ----
-    # There is NO curse-priest. The closing rite claimed the whole town
+    # There is no worker here. The closing rite claimed the whole town
     # at once (NARRATIVE 1b/3), so individual cursing -- and the figure
-    # who'd do it -- is cut. The grove is left as the work without the
+    # who'd do it -- is gone. The grove is left as the work without the
     # worker: the dead fire, the effigy ring, the nailed-up faces, all
     # tended by no one you'll ever see. It reads like its siblings
     # (husk_grove, scarecrow_ring): a maker-less dread tableau.

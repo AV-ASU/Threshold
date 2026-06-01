@@ -292,7 +292,7 @@ ordered and nobody can refuse.
 | **The Brimley chorus** (Hettie, Old Pell, Mrs. Calder, Royce, Garrick, the Tisdale boy) | **Locals** | The town still tries to live. Hettie keeps the store open. Mrs. Calder sets her husband's plate every night for a man who walked out to the highway. Old Pell stopped marking the calendar. Royce drives the river road out every week and comes back into Brimley every time. They all know the fold is real; none of them understand it. **Naming the principal locals is DONE** — the Sheriff is **Hollis Vane**, the Preacher **Rev. Asa Crane**, the Store-Owner/quiet-resister is **Hettie**, the Kid **Toby Tisdale**, and the Lodge Clerk **Mr. Sable**; the names surface as the dialogue speaker (locked in `tests/flow.py`). |
 | **Mara Blaine** | **Newcomer** — the quarry, **already turned** | Attuned and aching for something; the door whispered her answer (§1b). She came north, "found religion," **went down the well** (not into the corn). **She was not deceived — she was answered**, and went gladly. Finding her proves there was never anyone to save: not because she was killed, but because she was *offered the one thing she needed.* In the **hive**. Reading her journal to the end drops the player into a **flashback of the burning doorframe** — the dream that took her, the game's clearest look at the lure. |
 | **Walter Blaine** | **Outsider, off-screen — the unwitting bait** | The client. A Minneapolis voice on a phone that no longer connects. His grief is **real** — he genuinely lost his daughter — but the *case itself is the King's hook* (§1, *"You were lured"*): the one appetite a numb investigator can't refuse, used to walk the marked soul back to the door. **No one in Brimley has ever met him.** He exists only through the PI's case notebook and (optionally — §8) the polaroid he sent. He gets no resolution — the call never connects again, and that silence is the point. |
-| **Cult / Watchers / the King in Yellow** | **Newcomers + Their god** | The congregation are the attuned newcomers. **The Watchers are His gaze made local** — the higher-dimensional eye reaching into the flat plane wherever His attention falls (§3), *not* a side-cult's spell. The King is the thing above the door. *(The old **curse-priest** is **cut** — individual cursing is redundant once the closing rite claims the whole town at once; see §8.)* |
+| **Cult / Watchers / the King in Yellow** | **Newcomers + Their god** | The congregation are the attuned newcomers. **The Watchers are His gaze made local** — the higher-dimensional eye reaching into the flat plane wherever His attention falls (§3), *not* a side-cult's spell. The King is the thing above the door. *(Individual cursing is redundant once the closing rite claims the whole town at once; see §8.)* |
 
 > **The fold is incomprehensible, not predictable.** Locals haven't
 > "figured out" which roads still work. They've learned that *none*
@@ -658,18 +658,16 @@ The reworks the new fiction forced are all shipped. What must stay true:
   the PI dreamed the door **once, a year ago, never reached it** — the note
   must read that way (a flow.py canon-guard enforces "a year" + no recurrence
   language).
-- ~~**Cut the curse-priest; repurpose/retire `curse_grove`.**~~ **DONE.**
+- ~~**Reskin `effigy_grove` as a maker-less dread tableau.**~~ **DONE.**
   Individual cursing is redundant now the closing rite claims the whole town
-  at once (§1b), so the priest NPC is **removed**. `curse_grove` is kept and
-  **reskinned to a maker-less dread tableau** — the dead fire, the effigy
-  ring, the nailed-up faces, all tended by no one you'll ever see — matching
-  its siblings `husk_grove` / `scarecrow_ring` (the work, no worker). The
-  orphaned `curse_priest` sprite art survives in `sprites.py` (reusable, no
-  longer spawned). Locked in `tests/flow.py`.
+  at once (§1b), so there is no maker. `effigy_grove` is a maker-less dread
+  tableau — the dead fire, the effigy ring, the nailed-up faces, all tended
+  by no one you'll ever see — matching its siblings `husk_grove` /
+  `scarecrow_ring` (the work, no worker). Locked in `tests/flow.py`.
 - **Rehome the Watchers as His gaze (§3).** Keep the mechanic exactly
   (they raise visibility; dispel by breaking the gaze / axe / round) but
   change the *meaning and trigger*: they are **His eye reaching into the
-  plane**, not a curse-priest's spell. Re-point the fiction (and any
+  plane**, not a side-cult's spell. Re-point the fiction (and any
   `_tick_ritual`/`_apply_curse` flavor) at His attention.
 - **Gun = false-power threshold (§3).** Verify the mechanic matches canon:
   **< 3 evidence kills cultists**, **3+ only stuns**, the **King is
@@ -702,9 +700,9 @@ The reworks the new fiction forced are all shipped. What must stay true:
   `tests/flow.py`.
 - **The liminal-composition pass** (§10): per-scene level design —
   composed emptiness, long sightlines, uncanny repetition.
-- ~~Curse-priest in dialog / evidence beats.~~ **Superseded:** the
-  curse-priest is **cut** (see the build-order above) — the closing rite
-  makes an individual curser redundant.
+- ~~Individual-curser in dialog / evidence beats.~~ **Superseded:** the
+  closing rite makes an individual curser redundant (see the build-order
+  above).
 - **Food scarcity — the VISUAL pass.** The dialogue side is done
   (Hettie: "The shelves don't empty anymore... No deliveries."; the
   Store-Owner: "Shelves are bare. Till's been empty since the spring").
@@ -906,7 +904,7 @@ stumbles into the fold without realising they crossed a boundary.
 
 | Scene key | Where it lives | Access | What it shows |
 |---|---|---|---|
-| `curse_grove` | new scene | `cornfield_maze` tile (6, 10), walked WEST | ⚠ **The curse-priest is cut (§8).** Retire or reskin this fold: keep the dread tableau if you want it (effigies, a polaroid board of faces, hanging figures) but **without a maker** — a workshop with no worker, the corn-doll work of the congregation, not one priest's spell. The effigies-as-individual-curses reading is dropped. |
+| `effigy_grove` | new scene | `cornfield_maze` tile (6, 10), walked WEST | A maker-less dread tableau (§8): the dread set kept (effigies, a polaroid board of faces, hanging figures) but **without a maker** — a workshop with no worker, the corn-doll work of the congregation. The effigies-as-individual-curses reading is dropped. |
 | `lodge_arrival` | new scene | `our_house_area` tile (5, 12), walked NORTH | The Lodge porch at the moment Mara walked up to it. Mara with a suitcase, the Clerk smiling in the doorway. Neither sees the PI. Makes the bible's "she chose this" concrete -- the player *witnesses* the choice. |
 | `highway_walk` | new scene | `country_lane` tile (28, 6), walked EAST | A stretch of empty highway. Two figures walk east, their backs to the PI -- the locals who walked out to flag down help. The road wraps; they stay ahead; nobody arrives anywhere. |
 | `husk_grove` | new scene | `cornfield_maze` tile (21, 8), walked EAST | A small clearing where the cult assembles its corn-dolls. Two altars used as workbenches, unfinished dolls scattered, a stalk-marker, a candle still lit. No NPC -- the work is here, the worker isn't. |

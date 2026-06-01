@@ -230,7 +230,7 @@ OBJECT_DEFS = {
     "$": {"solid": False, "kind": "bridge"},
     # Markers (consumed at scene-build time; never drawn)
     # P=basement photo, K=kid, S=shopkeep, O=oldman, M=mom, Z=basement note,
-    # Q=guard, Y=fisherman, N=innkeeper (quest)
+    # Q=relocation marker (threshold_extras), Y=fisherman, N=innkeeper (quest)
     "P": None, "K": None, "S": None, "O": None, "M": None, "Z": None,
     "Q": None, "Y": None, "N": None,
 }
@@ -896,6 +896,8 @@ _WALL_CHARS = frozenset("#W%&")
 # between the shadows of its flanking walls.
 _DOOR_CHARS = frozenset(c for c, d in OBJECT_DEFS.items()
                         if d and d.get("kind") == "door")
+_WINDOW_CHARS = frozenset(c for c, d in OBJECT_DEFS.items()
+                          if d and d.get("kind") == "window")
 _WALL_BASE = (19, 18, 23)
 _WALL_FACE = (50, 48, 56)
 _WALL_TOP = (74, 72, 82)
@@ -1394,6 +1396,325 @@ def draw_scene_terrain(surf, scene, cam_x, cam_y, x0, y0, x1, y1):
     _draw_scene_roofs(surf, scene, cam_x, cam_y, x0, y0, x1, y1)
 
 
+# --- Tilted (oblique-camera) terrain (CAMERA.md Phase 2) -------------------
+# Active only when camera.pitch > 0. The floor is a flat z=0 plane, so we
+# render the visible window flat (exactly the legacy raster, wrap-aware) and
+# warp the whole image to the oblique plane -- preserving every procedural
+# floor detail -- then extrude wall tiles as upright quads on top.
+_TILT_WALL_RISE = 26
+
+
+def _tilt_window_half(camera):
+    """Smallest centred half-span (world px) whose flat window still covers
+    the tilted screen. Unproject the screen corners (+ upward wall headroom)
+    and take the farthest world offset from the view centre."""
+    corners = [(0, 0), (SCREEN_W, 0), (0, SCREEN_H), (SCREEN_W, SCREEN_H),
+               (SCREEN_W // 2, -_TILT_WALL_RISE)]
+    half = 0.0
+    for sx, sy in corners:
+        wx, wy = camera.unproject(sx, sy)
+        half = max(half, abs(wx - camera.cam_x), abs(wy - camera.cam_y))
+    return half + TILE
+
+
+def _tilt_warp(flat, camera):
+    """Affine warp of the flat floor to match camera.project() for z=0:
+    world-rotate by yaw, then scale x by scale and y by scale*cos(pitch)."""
+    rotated = pygame.transform.rotate(flat, math.degrees(camera.yaw))
+    cp = max(0.05, math.cos(camera.pitch))
+    w, h = rotated.get_size()
+    return pygame.transform.smoothscale(
+        rotated, (max(1, int(w * camera.scale)),
+                  max(1, int(h * camera.scale * cp))))
+
+
+_DOOR_HEAD = 19      # doorway opening height; the lintel beam runs head->rise
+
+
+def _extrude_box(surf, camera, scene, tx, ty, z0, z1, neigh=_WALL_CHARS):
+    """One tile extruded between heights z0..z1. Rotation-correct: every
+    EXPOSED side face (neighbour char not in `neigh`) is drawn, depth-sorted
+    far->near so near faces overdraw far, capped with a flat shaded top quad
+    (no axis-aligned texture that would overflow once the camera yaws)."""
+    wx, wy = tx * TILE + TILE / 2, ty * TILE + TILE / 2
+    hw = TILE / 2
+
+    def P(dx, dy, dz):
+        return camera.project(wx + dx, wy + dy, dz)
+    g = [P(-hw, -hw, z0), P(hw, -hw, z0), P(hw, hw, z0), P(-hw, hw, z0)]
+    t = [P(-hw, -hw, z1), P(hw, -hw, z1), P(hw, hw, z1), P(-hw, hw, z1)]
+    near = tuple(int(c * 0.5) for c in _WALL_FACE)   # N/S faces
+    side = tuple(int(c * 0.7) for c in _WALL_FACE)   # E/W faces
+
+    def is_n(ax, ay):
+        if scene.wrap_y: ay %= scene.h
+        if scene.wrap_x: ax %= scene.w
+        if 0 <= ay < scene.h and 0 <= ax < scene.w:
+            return scene.objects[ay][ax] in neigh
+        return True
+    # (neighbour dx, dy, face centroid offset, quad corners, colour) per side
+    faces = (
+        (0, 1, (0, hw), (g[3], g[2], t[2], t[3]), near),    # south
+        (0, -1, (0, -hw), (g[0], g[1], t[1], t[0]), near),  # north
+        (-1, 0, (-hw, 0), (g[0], g[3], t[3], t[0]), side),  # west
+        (1, 0, (hw, 0), (g[1], g[2], t[2], t[1]), side),    # east
+    )
+    vis = [(camera.depth(wx + ox, wy + oy, (z0 + z1) / 2), quad, col)
+           for ndx, ndy, (ox, oy), quad, col in faces
+           if not is_n(tx + ndx, ty + ndy)]
+    vis.sort(key=lambda f: f[0])                      # far first
+    for _, quad, col in vis:
+        pygame.draw.polygon(surf, col, quad)
+    # flat shaded top cap: lit but kept dark to read as the game's near-black
+    # walls -- top clearly lighter than the sides for form, darker grout edge.
+    pygame.draw.polygon(surf, tuple(int(c * 0.72) for c in _WALL_TOP), t)
+    pygame.draw.polygon(surf, tuple(int(c * 0.4) for c in _WALL_TOP), t, 1)
+
+
+def _tilt_wall_box(surf, camera, scene, tx, ty):
+    _extrude_box(surf, camera, scene, tx, ty, 0, _TILT_WALL_RISE)
+
+
+def _tilt_door_box(surf, camera, scene, tx, ty):
+    """A doorway in the extruded wall: a lintel BEAM spanning the top of the
+    tile (head->rise) with the passage open below. The flanking wall tiles
+    supply the jambs; a swung leaf hangs in the opening. Faces abutting walls
+    OR other doors are culled so a multi-tile gate reads as one clean opening."""
+    _extrude_box(surf, camera, scene, tx, ty, _DOOR_HEAD, _TILT_WALL_RISE,
+                 neigh=_WALL_CHARS | _DOOR_CHARS)
+    _draw_doorway(surf, camera, scene, tx, ty)
+
+
+def _draw_doorway(surf, camera, scene, tx, ty):
+    """A framed doorway: a dark recess set into the wall, a wood frame (jambs +
+    lintel) around the opening, and a leaf hung on one jamb -- ajar for passable
+    doors, shut (filling the opening) for facade/locked ones. Everything is
+    projected on the doorway plane so it leans correctly under the camera."""
+    wtx = tx % scene.w if scene.wrap_x else tx
+    wty = ty % scene.h if scene.wrap_y else ty
+    if not (0 <= wty < scene.h and 0 <= wtx < scene.w):
+        return
+    ch = scene.objects[wty][wtx]
+    solid = bool(OBJECT_DEFS.get(ch, {}).get("solid"))
+    r = {"N": (0, -1), "S": (0, 1), "E": (1, 0),
+         "W": (-1, 0)}[_door_room_dir(scene, wtx, wty)]
+    wv = (-r[1], r[0])                       # wall axis (perp to room dir)
+    wx, wy = tx * TILE + TILE / 2, ty * TILE + TILE / 2
+    hw = TILE / 2
+    head = _DOOR_HEAD
+    wood, wood_lo, wood_hi = (84, 59, 36), (52, 36, 22), (108, 80, 50)
+
+    def Q(u, z, off=0.0):
+        # u: along the wall axis [-hw, hw]; z: height; off: depth into room (-)
+        return camera.project(wx + wv[0] * u + r[0] * off,
+                              wy + wv[1] * u + r[1] * off, z)
+    # 1. dark recess, set slightly INTO the wall (off +)
+    rec = [Q(-hw + 1, 0, 3), Q(hw - 1, 0, 3), Q(hw - 1, head, 3), Q(-hw + 1, head, 3)]
+    pygame.draw.polygon(surf, (7, 6, 9), rec)
+    # 2. wood frame on the room face (off -), a "n" around the opening
+    tw, th, off = 4.0, 3.0, -1.0
+
+    def face(u0, u1, z0, z1, col):
+        pygame.draw.polygon(surf, col, [Q(u0, z0, off), Q(u1, z0, off),
+                                        Q(u1, z1, off), Q(u0, z1, off)])
+    face(-hw, -hw + tw, 0, head, wood)            # left jamb
+    face(hw - tw, hw, 0, head, wood)              # right jamb
+    face(-hw, hw, head - th, head, wood_hi)       # lintel
+    # 3. the leaf, hinged at the left jamb
+    a = 0.0 if solid else math.radians(26)        # shut vs ajar
+    ca, sa = math.cos(a), math.sin(a)
+    hu = -hw + tw                                  # hinge at inner left jamb
+    L = (2 * hw - 2 * tw)                          # spans the clear opening
+    hx, hy = wx + wv[0] * hu, wy + wv[1] * hu
+    fdx = wv[0] * ca + r[0] * sa
+    fdy = wv[1] * ca + r[1] * sa
+    fx, fy = hx + fdx * L, hy + fdy * L
+    bH0, bH1 = camera.project(hx, hy, 0), camera.project(hx, hy, head - 1)
+    bF0, bF1 = camera.project(fx, fy, 0), camera.project(fx, fy, head - 1)
+    leaf = [bH0, bF0, bF1, bH1]
+    pygame.draw.polygon(surf, wood, leaf)
+    pygame.draw.polygon(surf, wood_lo, leaf, 1)
+    for f in (0.5,):                               # a plank seam
+        s0 = (bH0[0] + (bF0[0] - bH0[0]) * f, bH0[1] + (bF0[1] - bH0[1]) * f)
+        s1 = (bH1[0] + (bF1[0] - bH1[0]) * f, bH1[1] + (bF1[1] - bH1[1]) * f)
+        pygame.draw.line(surf, wood_lo, s0, s1, 1)
+    hh = (bF0[0] * 0.82 + bH0[0] * 0.18, bF0[1] * 0.82 + bH0[1] * 0.18)
+    hh1 = (bF1[0] * 0.82 + bH1[0] * 0.18, bF1[1] * 0.82 + bH1[1] * 0.18)
+    handle = ((hh[0] + hh1[0]) / 2, (hh[1] + hh1[1]) / 2)
+    pygame.draw.circle(surf, (212, 192, 124), (int(handle[0]), int(handle[1])), 2)
+
+
+# Decals that LIE on the floor -- they must warp onto the oblique floor plane
+# (rotate with yaw, squash with pitch) like the terrain raster, not paste as a
+# screen-aligned sprite that ignores the camera.
+_FLOOR_DECAL_KINDS = frozenset((
+    "rug", "bloodstain", "gore", "yellow_sign", "bloody_handprint", "bloody_pile",
+))
+
+
+def _draw_floor_decal(surf, camera, deco):
+    """Render a flat decal to a canvas, then warp it onto the floor plane (same
+    rotate+squash as _tilt_warp) and blit at the projected anchor, so a rug or
+    bloodstain lies on the ground and turns with the room instead of standing up
+    as a billboard."""
+    drawfn = getattr(deco, f"_draw_{deco.kind}", None)
+    if drawfn is None:
+        return
+    if deco.kind == "rug":
+        w = int(deco.kwargs.get("w", 88)); h = int(deco.kwargs.get("h", 60))
+        bound = max(w, h) + 18
+    else:
+        bound = 60
+    canvas = pygame.Surface((bound, bound), pygame.SRCALPHA)
+    drawfn(canvas, bound // 2, bound // 2)
+    rot = pygame.transform.rotate(canvas, math.degrees(camera.yaw))
+    cp = max(0.05, math.cos(camera.pitch))
+    sw = max(1, int(rot.get_width() * camera.scale))
+    sh = max(1, int(rot.get_height() * camera.scale * cp))
+    scaled = pygame.transform.smoothscale(rot, (sw, sh))
+    sx, sy = camera.project(deco.x, deco.y, 0)
+    surf.blit(scaled, (sx - sw // 2, sy - sh // 2))
+
+
+def _draw_window_pane(surf, camera, wx, wy, ndx, ndy):
+    """A lit amber pane set into one wall face: wood frame, sickly glass, a warm
+    core and a muntin cross. `(ndx, ndy)` is the exposed face direction."""
+    hw = TILE / 2
+    pv = (-ndy, ndx)                 # along-wall axis on this face
+    ph = hw * 0.60                   # half pane width
+    z0, z1 = 7.0, 19.0
+    off = hw * 0.99                  # sit just proud of the face
+
+    def Q(u, z):
+        return camera.project(wx + ndx * off + pv[0] * u,
+                              wy + ndy * off + pv[1] * u, z)
+    frame = [Q(-ph - 2, z0 - 2), Q(ph + 2, z0 - 2), Q(ph + 2, z1 + 2), Q(-ph - 2, z1 + 2)]
+    glass = [Q(-ph, z0), Q(ph, z0), Q(ph, z1), Q(-ph, z1)]
+    core = [Q(-ph * 0.5, z0 + 3), Q(ph * 0.5, z0 + 3),
+            Q(ph * 0.5, z1 - 3), Q(-ph * 0.5, z1 - 3)]
+    pygame.draw.polygon(surf, (96, 70, 50), frame)
+    pygame.draw.polygon(surf, (60, 40, 25), frame, 1)
+    pygame.draw.polygon(surf, (138, 104, 50), glass)
+    pygame.draw.polygon(surf, (170, 138, 78), core)
+    pygame.draw.line(surf, (74, 54, 34), Q(0, z0), Q(0, z1), 1)               # mullion
+    pygame.draw.line(surf, (74, 54, 34), Q(-ph, (z0 + z1) / 2), Q(ph, (z0 + z1) / 2), 1)
+    pygame.draw.polygon(surf, (60, 40, 25), glass, 1)
+
+
+def _tilt_window_box(surf, camera, scene, tx, ty):
+    """A window is a SOLID wall tile, so it extrudes as a full wall box; a lit
+    pane is then set into each camera-facing exposed face."""
+    _tilt_wall_box(surf, camera, scene, tx, ty)
+    wx, wy = tx * TILE + TILE / 2, ty * TILE + TILE / 2
+    hw = TILE / 2
+    cd = camera.depth(wx, wy, _TILT_WALL_RISE / 2)
+    for ndx, ndy in ((0, 1), (0, -1), (-1, 0), (1, 0)):
+        if _is_wall(scene, tx + ndx, ty + ndy):
+            continue                                     # buried face
+        if camera.depth(wx + ndx * hw, wy + ndy * hw, _TILT_WALL_RISE / 2) <= cd:
+            continue                                     # faces away from camera
+        _draw_window_pane(surf, camera, wx, wy, ndx, ndy)
+
+
+def _tilt_tile_box(surf, camera, scene, tx, ty):
+    """Dispatch a wall-mass tile to the wall box, the doorway (lintel + swung
+    leaf), or the window (solid box + lit pane)."""
+    wtx = tx % scene.w if scene.wrap_x else tx
+    wty = ty % scene.h if scene.wrap_y else ty
+    ch = (scene.objects[wty][wtx]
+          if 0 <= wty < scene.h and 0 <= wtx < scene.w else "")
+    if ch in _DOOR_CHARS:
+        _tilt_door_box(surf, camera, scene, tx, ty)
+    elif ch in _WINDOW_CHARS:
+        _tilt_window_box(surf, camera, scene, tx, ty)
+    else:
+        _tilt_wall_box(surf, camera, scene, tx, ty)
+
+
+def draw_terrain_tilted(surf, scene, camera, focus=None):
+    """Floor warp + wall extrusion for the oblique camera. Skybox is the
+    caller's job (drawn first); actors are drawn after by the game, already
+    projected through the same camera so they stand on this floor.
+
+    `focus` (wx, wy) is the player: walls NEARER the camera than the focus are
+    held back and RETURNED so the caller can draw them after the actors (so
+    they correctly occlude/fade in front of the player). Walls behind the
+    focus are drawn now. Returns the list of (tx, ty) front walls."""
+    cx, cy = camera.cam_x, camera.cam_y
+    half = _tilt_window_half(camera)
+    span = int(half * 2)
+    flat = pygame.Surface((span, span))
+    flat.fill((10, 10, 14))
+    wx0, wy0 = cx - half, cy - half
+    x0 = int(math.floor(wx0 / TILE)); y0 = int(math.floor(wy0 / TILE))
+    x1 = int(math.ceil((wx0 + span) / TILE)); y1 = int(math.ceil((wy0 + span) / TILE))
+    draw_scene_terrain(flat, scene, wx0, wy0, x0, y0, x1, y1)
+    warped = _tilt_warp(flat, camera)
+    ox, oy = camera.origin
+    surf.blit(warped, (ox - warped.get_width() // 2,
+                       oy - warped.get_height() // 2))
+    # extrude walls in the visible window, depth-sorted (far first)
+    walls = []
+    W, H = scene.w, scene.h
+    for ty in range(y0, y1):
+        wty = ty % H if scene.wrap_y else ty
+        if not (0 <= wty < H):
+            continue
+        for tx in range(x0, x1):
+            wtx = tx % W if scene.wrap_x else tx
+            if not (0 <= wtx < W):
+                continue
+            if scene.objects[wty][wtx] in _WALL_CHARS or \
+                    scene.objects[wty][wtx] in _DOOR_CHARS or \
+                    scene.objects[wty][wtx] in _WINDOW_CHARS:
+                walls.append((tx, ty, wtx, wty))
+    walls.sort(key=lambda c: camera.depth(c[0] * TILE + TILE / 2,
+                                          c[1] * TILE + TILE / 2,
+                                          _TILT_WALL_RISE))
+    # Props. Ground decals (rugs, stains, blood) stay flat on the warped floor;
+    # curated upright furniture becomes a projected box VOLUME (depth + correct
+    # rotation under the camera). Flat decals first so a box behind a rug still
+    # reads; boxes depth-sorted far->near so they overlap correctly. Walls draw
+    # after, so a wall in front still overdraws a prop behind it.
+    from rendering.furniture import is_solid_furniture, draw_furniture_solid
+    solid_decos = []
+    for d in scene.decorations:
+        if is_solid_furniture(d.kind):
+            solid_decos.append(d)
+        elif d.kind in _FLOOR_DECAL_KINDS:
+            _draw_floor_decal(surf, camera, d)
+        else:
+            d.draw(surf, 0, 0, camera)
+    solid_decos.sort(key=lambda d: camera.depth(d.x, d.y))
+    for d in solid_decos:
+        draw_furniture_solid(surf, camera, d)
+    # Split walls on the focus (player) depth: behind -> draw now; in front ->
+    # return for the caller to draw after the actors.
+    fdepth = camera.depth(focus[0], focus[1]) if focus else float("inf")
+    front = []
+    for tx, ty, wtx, wty in walls:
+        wcx, wcy = tx * TILE + TILE / 2, ty * TILE + TILE / 2
+        if camera.depth(wcx, wcy, _TILT_WALL_RISE) > fdepth:
+            front.append((tx, ty))
+        else:
+            _tilt_tile_box(surf, camera, scene, tx, ty)
+    return front
+
+
+def draw_walls_front(surf, scene, camera, front, focus):
+    """Second wall pass: the walls nearer the camera than the player, drawn
+    AFTER the actors and faded where they'd hide the player (occlusion.py)."""
+    from rendering.occlusion import occluder_alpha
+    from rendering.solids import draw_with_alpha
+    fx, fy = focus
+    for tx, ty in front:
+        wcx, wcy = tx * TILE + TILE / 2, ty * TILE + TILE / 2
+        a = occluder_alpha(camera, wcx, wcy, _TILT_WALL_RISE, fx, fy, 30,
+                           o_halfw=TILE * 0.5 * camera.scale)
+        draw_with_alpha(surf, a,
+                        lambda s, tx=tx, ty=ty: _tilt_tile_box(s, camera, scene, tx, ty))
+
+
 def draw_scene_doors(surf, scene, cam_x, cam_y, x0, y0, x1, y1):
     """Late pass: the swung door leaves, drawn unconfined so each spills
     out of its tile into the room. Called after terrain + decorations
@@ -1858,7 +2179,7 @@ class Scene:
         if self.on_update_fn is not None:
             self.on_update_fn(game, self, dt)
 
-    def draw(self, surf, cam_x, cam_y):
+    def draw(self, surf, cam_x, cam_y, camera=None):
         if self.wrap_x:
             x0 = int(cam_x // TILE) - 1
             x1 = int((cam_x + SCREEN_W) // TILE) + 2
@@ -1875,7 +2196,7 @@ class Scene:
         world_w_px = self.w * TILE
         world_h_px = self.h * TILE
         for d in self.decorations:
-            d.draw(surf, cam_x, cam_y)
+            d.draw(surf, cam_x, cam_y, camera)
             # Wrap-clones so decorations stay in view across the seam.
             offsets = [(0, 0)]
             if self.wrap_x:
@@ -1888,7 +2209,10 @@ class Scene:
                             (world_w_px, -world_h_px),
                             (world_w_px, world_h_px)]
             for dx_off, dy_off in offsets[1:]:
-                d.draw(surf, cam_x - dx_off, cam_y - dy_off)
+                # legacy path uses the shifted cam; camera path uses the
+                # explicit world offset (the clone sits at self.pos + off).
+                d.draw(surf, cam_x - dx_off, cam_y - dy_off, camera,
+                       wox=dx_off, woy=dy_off)
         draw_scene_doors(surf, self, cam_x, cam_y, x0, y0, x1, y1)
 
 

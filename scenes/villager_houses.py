@@ -14,8 +14,8 @@ from .dialogue import (
 def _open_login_terminal(game, npc):
     """Invisible-NPC dialogue handler bolted onto the computer's tile.
     Pressing E next to the computer opens the LOGIN: text-input modal.
-    The modal accepts the User-D### credential dropped by the bandit
-    boss. Anything else returns ACCESS DENIED. The credential is stored
+    The modal accepts the User-D### credential. Anything else returns
+    ACCESS DENIED. The credential is stored
     lowercase ('user-d###') so the case-insensitive compare just lowers
     the input."""
     def _on_submit(s):

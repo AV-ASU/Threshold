@@ -10,7 +10,7 @@ from rendering.transform import draw_vessel_bloom
 
 def _is_cultist(obj):
     """A cultist target for the player's gun: a cult-tagged NPC, or a
-    cultist Enemy. (The curse-priest is cut -- NARRATIVE 1b/3.)"""
+    cultist Enemy."""
     tag = getattr(obj, "tag", None)
     if isinstance(tag, str) and tag.startswith("cult_"):
         return True
@@ -143,7 +143,7 @@ class Projectile:
         pygame.draw.circle(surf, (220, 240, 255), (sx, sy), 3)
 
 class Enemy:
-    def __init__(self, x, y, kind="bandit", hp=20, atk=6, speed=1.6,
+    def __init__(self, x, y, kind="cultist", hp=20, atk=6, speed=1.6,
                  aggro=140, atk_range=22, color=(160, 80, 80), drops=None,
                  ai="chase", flee_dir=(1, 0), despawn_x=None, despawn_y=None,
                  drift_speed=None, on_kill=None, respawning=False,
@@ -223,16 +223,14 @@ class Enemy:
         # a hardcoded 1.1s; some enemies (the bosses, scaled to
         # 35 dmg/s) need a different rate. Default keeps prior behavior.
         self.attack_cd = attack_cd
-        # Mirror of the player's tap/charge attack model. `can_charge`
-        # bandits (and the well kid-boss) wind up before swinging --
-        # the gold-ring telegraph fires during the final
-        # `charge_windup` seconds of the attack cooldown, then the next
-        # melee tick lands a `charge_mult` x normal hit and resets to
-        # `charge_cd` (longer than the regular 1.1s rhythm). Defaulting
-        # `can_charge` to None means: bandits get it for free, anything
-        # else opts in explicitly.
+        # Mirror of the player's tap/charge attack model. A `can_charge`
+        # enemy winds up before swinging -- the gold-ring telegraph fires
+        # during the final `charge_windup` seconds of the attack cooldown,
+        # then the next melee tick lands a `charge_mult` x normal hit and
+        # resets to `charge_cd` (longer than the regular 1.1s rhythm).
+        # Defaulting `can_charge` to None means: opt in explicitly.
         if can_charge is None:
-            can_charge = (kind == "bandit")
+            can_charge = False
         self.can_charge = can_charge
         self.charge_mult = charge_mult
         self.charge_windup = charge_windup
@@ -265,7 +263,7 @@ class Enemy:
         # that does is never on screen. Force every enemy's damage to
         # zero at the start of every tick so any code path that still
         # triggers a hit lands as a soft tap. The AI keeps moving --
-        # the wolves still slope toward you, the bandits still fall in
+        # the wolves still slope toward you, the cult still falls in
         # behind -- but they don't strike. They only watch.
         self.atk = 0
         self.shoot_dmg = 0
@@ -320,9 +318,8 @@ class Enemy:
             return
 
         # Cultists run the SCOUT/CHASE/SEARCH/INVESTIGATE state
-        # machine. Other chase-AI enemies (wolves, bandits, etc.)
-        # keep the prior straight-line chase + waypoint/wander
-        # branch unchanged.
+        # machine. Other chase-AI enemies (wolves, etc.) keep the prior
+        # straight-line chase + waypoint/wander branch unchanged.
         if self.kind == "cultist":
             self._cult_tick(dt, scene, player)
             return
@@ -358,9 +355,9 @@ class Enemy:
             # Charge buildup runs across the WHOLE aggro range, not just
             # in atk_range. Once cooldown clears, attack_timer keeps
             # ticking negative; -attack_timer is "time spent charging".
-            # Gold ring shows the entire time the bandit is charging.
+            # Gold ring shows the entire time the enemy is charging.
             # The swing lands the moment -attack_timer >= charge_windup
-            # AND the player is in atk_range -- so a bandit can finish
+            # AND the player is in atk_range -- so a charger can finish
             # charging mid-chase and hit on the very first contact.
             if self.can_charge and self.attack_timer <= 0:
                 self.telegraph = True
@@ -598,7 +595,7 @@ class Enemy:
                 if not getattr(self, "lock_facing", False):
                     self.facing = (ddx / dd, ddy / dd)
 
-    def draw(self, surf, cam_x, cam_y):
+    def draw(self, surf, cam_x, cam_y, view="front"):
         if not self.alive: return
         sx = int(self.x - cam_x); sy = int(self.y - cam_y)
         kind = "glitch_npc" if self.kind == "_glitch" else self.kind
@@ -608,7 +605,7 @@ class Enemy:
                               seed=id(self) & 0xffff)
         else:
             draw_npc_sprite(surf, sx, sy, kind, self.facing,
-                            seed=id(self) & 0xffff)
+                            seed=id(self) & 0xffff, view=view)
         # THRESHOLD: enemies can no longer hurt the player (atk is
         # zeroed every tick in update). Suppress the gold-ring
         # "charge incoming" telegraph in that case -- a wind-up
@@ -621,5 +618,5 @@ class Enemy:
         # Round-14: HP bars removed entirely. Combat is meant to feel
         # opaque -- the player swings, the enemy flashes white on hit
         # (`self.flash`), and at some point it dies. No progress meter,
-        # no math. The cult and the bandits and the wolves are all
-        # threats whose state the player cannot read.
+        # no math. The cult and the wolves are all threats whose state
+        # the player cannot read.

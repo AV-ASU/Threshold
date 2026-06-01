@@ -12,8 +12,11 @@ from constants import (
 from rendering.sprites import (draw_player_sprite, draw_npc_sprite,
                                draw_npc_corpse, draw_infested_overlay,
                                draw_axe_swing, draw_king_death,
-                               door_mask_surface, reset_king_fx)
+                               door_mask_surface, reset_king_fx,
+                               view_from_facing)
 from rendering.transform import draw_vessel_bloom
+from rendering.camera import Camera
+from systems.look_control import LookController
 from ui.fonts import make_fonts
 from ui.dialog import DialogueBox
 from ui.inventory_ui import InventoryUI
@@ -110,7 +113,7 @@ SEAMLESS_WORLD_SCENES = OUTDOOR_SCENES | {
     "brimley",
     # Hidden fold scenes -- the player stumbles into them through
     # direction-sensitive exits and shouldn't feel a transition.
-    "curse_grove", "lodge_arrival", "highway_walk",
+    "effigy_grove", "lodge_arrival", "highway_walk",
     "husk_grove", "scarecrow_ring",
 }
 
@@ -119,6 +122,16 @@ SEAMLESS_WORLD_SCENES = OUTDOOR_SCENES | {
 # ~3 tiles -- enough lead to read a bend or a wrap-seam, small enough that
 # the player stays comfortably on screen.
 CAM_LOOKAHEAD = 96
+
+# Oblique-camera tilt (CAMERA.md Phase 2). DEBUG-toggled with F3; eases in.
+# pitch 0 = the shipping top-down view. TILT_PITCH_DEG is the locked ~55deg.
+TILT_PITCH_DEG = 55
+TILT_EASE = 0.12             # per-frame lerp of pitch toward its target
+TILT_ZOOM = 0.72             # camera scale at full tilt (1.0 = top-down)
+TILT_ACTOR_STAND = 15        # default px a sprite centre rises to stand
+# Taller sprites need their centre lifted further so their feet meet the
+# floor (foot-offset in sprite px); falls back to TILT_ACTOR_STAND.
+TILT_LIFT = {"yellow_king": 30, "sheriff_hollow": 22, "watcher": 20}
 
 # Dark scenes -- underground / interior cult sites where the
 # flashlight matters. Without the flashlight the screen is heavily
@@ -182,8 +195,8 @@ CULTIST_SCENES = {
     "cornfield_maze",
 }
 # Scenes open enough for His gaze to fix on you and bind a Watcher -- the
-# claimed town under open sky (NARRATIVE.md 1b/3). There is NO curse-priest;
-# the curse is His own attention. Safe rooms are exempt via KING_FREE_SCENES.
+# claimed town under open sky (NARRATIVE.md 1b/3). The curse is His own
+# attention. Safe rooms are exempt via KING_FREE_SCENES.
 GAZE_BIND_SCENES = {"brimley", "graveyard", "cornfield_maze"}
 # Sustained exposure (seconds) at high visibility before His eye fixes and the
 # first Watcher opens; hiding / dropping visibility bleeds the timer back.
@@ -453,6 +466,17 @@ class Game(CutsceneMixin):
         self.transition_dir = "out"
         self.cam_x = 0
         self.cam_y = 0
+        # The single world->screen projection (CAMERA.md). At pitch 0 this is
+        # exactly the legacy `int(x - cam_x)` top-down view; keeping every
+        # render conversion behind it is what makes a future tilt a parameter
+        # change rather than a 37-scene rewrite. `cam_x/cam_y` remain the
+        # source of truth for the offset (camera update + input still use
+        # them); the camera is re-synced to them each frame in draw_world.
+        self.camera = Camera()
+        self._cam_pitch_target = 0.0      # DEBUG F3 tilt target (radians)
+        self._tilt_front_walls = None     # walls held back to draw over actors
+        self.look = LookController()       # mouse-look heading model (tilt mode)
+        self._rmb_last_x = None            # right-drag scene-rotate anchor
         self.title_choice = 0
         # title_options is computed each render via _title_menu_options
         # so the middle slot can flip between "Delete Save" (when a
@@ -546,10 +570,10 @@ class Game(CutsceneMixin):
         # Regular cultists roam the outdoor scenes (chaser AI: scout,
         # chase on sight, search, investigate). Their gaze raises
         # visibility while they hold line of sight; contact spikes it.
-        # The special curse-priest (a stalker) runs a ritual: hold the
-        # player in its sightline long enough and it lands a *permanent*
-        # curse. Each curse manifests Watchers -- staring figures only
-        # the cursed sees -- and every Watcher pushes visibility up,
+        # His gaze itself binds the curse: stay exposed in its sightline
+        # long enough and a *permanent* curse lands. Each curse manifests
+        # Watchers -- staring figures only the cursed sees -- and every
+        # Watcher pushes visibility up,
         # marching the player toward a King they can no longer shake.
         self._cursed = False           # the watcher-curse: active until cleared
         self._watchers = []            # Watcher NPCs currently manifested
@@ -721,6 +745,13 @@ class Game(CutsceneMixin):
         """Wipe all per-run state so a New Game starts clean. The
         Game instance is reused across Quit-to-Title -> New Game, so
         in-memory run state from a previous run is cleared here."""
+        # Debug oblique tilt (F3) starts off each run.
+        self._cam_pitch_target = 0.0
+        self.camera.pitch = 0.0
+        self.camera.yaw = 0.0
+        self._tilt_front_walls = None
+        self.look = LookController()
+        self._rmb_last_x = None
         # Visibility meter + the King in Yellow
         self.visibility = 0.0
         self._vis_floor = 0.0
@@ -828,7 +859,7 @@ class Game(CutsceneMixin):
         # Round-9: the forest secret-tree -> void_boss redirect was
         # removed. The forest j-tile now leads to the original empty
         # void (easter_egg + rust_key). The void_boss arena is reached
-        # via a conditional fake stone wall in the bandit_cave_boss
+        # via a conditional fake stone wall in the old cave-boss
         # room -- gating logic lives there, not here.
         current = self.scene.key if self.scene else None
         # Opening: the FIRST attempt to leave the spare room is
@@ -979,7 +1010,7 @@ class Game(CutsceneMixin):
         # Round-9: dying to the Yellow King empties the world. Every
         # scene loaded after `world_emptied` is set has its NPC list
         # cleared post-on_enter, so any villagers / shopkeep / kid /
-        # innkeeper / guard / terminal handler placed by the builder or
+        # innkeeper / terminal handler placed by the builder or
         # on_enter fn is removed before the player sees the scene. The
         # world keeps its layouts and items, just no people.
         if self.save.flag("world_emptied"):
@@ -1038,8 +1069,45 @@ class Game(CutsceneMixin):
         else:
             self.cam_x += (target_x - self.cam_x) * 0.18
             self.cam_y += (target_y - self.cam_y) * 0.18
+        # Ease the debug tilt pitch toward its target (F3). Zoom out slightly
+        # as it tilts so more of the room reads; both are exactly the shipping
+        # values at pitch 0 (scale 1.0), keeping that view untouched.
+        self.camera.pitch += (self._cam_pitch_target - self.camera.pitch) * TILT_EASE
+        pf = self.camera.pitch / math.radians(TILT_PITCH_DEG)
+        self.camera.scale = 1.0 - (1.0 - TILT_ZOOM) * pf
+        # Keep the camera's spatial pivot in sync here (was only in draw_world)
+        # so mouse->world (unproject) in _update_look reads the live frame.
+        self.camera.origin = (SCREEN_W // 2, SCREEN_H // 2)
+        self.camera.cam_x = self.cam_x + SCREEN_W // 2
+        self.camera.cam_y = self.cam_y + SCREEN_H // 2
 
-    # ---- Player update ----
+    def _tilt_on(self):
+        """The oblique 'look' mode is engaged (F3). Mouse-look + camera-relative
+        movement + cursor-aimed gun apply ONLY here; pitch 0 stays the shipping
+        top-down game untouched."""
+        return self._cam_pitch_target > 0.0
+
+    def _update_look(self, dt):
+        """Drive the LookController from the mouse and steer the camera yaw +
+        player facing. Runs only in tilt mode and only during play."""
+        if not (self._tilt_on() and self.state == "playing" and self.player):
+            self._rmb_last_x = None
+            return
+        mx, my = pygame.mouse.get_pos()
+        rmb_held = pygame.mouse.get_pressed()[2]
+        rmb_dx = 0.0
+        if rmb_held and self._rmb_last_x is not None:
+            rmb_dx = mx - self._rmb_last_x
+        self._rmb_last_x = mx if rmb_held else None
+        # world heading from the player to the point under the cursor
+        wx, wy = self.camera.unproject(mx, my)
+        aim = math.atan2(wy - self.player.y, wx - self.player.x)
+        self.look.update(aim, rmb_dx, rmb_held)
+        self.camera.yaw = self.look.cam_yaw
+        # the gun + sprite face where you aim (head); body governs movement
+        ax, ay = self.look.aim_vec()
+        self.player.facing = (ax, ay)
+
     def update_player(self, dt, keys):
         if (self.dialog.active or self.inv_ui.open or self.notebook_ui.open
                 or self.text_input.active):
@@ -1079,7 +1147,14 @@ class Game(CutsceneMixin):
         if dx or dy:
             mag = math.hypot(dx, dy) or 1
             dx /= mag; dy /= mag
-            self.player.facing = (dx, dy)
+            if self._tilt_on():
+                # Camera-relative: W = forward (into the screen / facing),
+                # A/D strafe. Facing is owned by _update_look (the mouse), so
+                # don't overwrite it from the movement keys here.
+                (fwx, fwy), (rgx, rgy) = self.look.move_basis()
+                dx, dy = rgx * dx + fwx * (-dy), rgy * dx + fwy * (-dy)
+            else:
+                self.player.facing = (dx, dy)
             self.player.walk_phase += dt * 12
             # Base speed is reduced by the threat meter (spatial
             # compression -- the closer you are to being caught, the
@@ -1678,8 +1753,8 @@ class Game(CutsceneMixin):
         else:
             arg = "enemy_kills"
         self.save.set_arg(arg, self.save.arg(arg, 0) + 1)
-        # Respawning combat enemies (forest_path bandits, cave bandits,
-        # easter_egg_room mob set) drop nothing 85% of the time.
+        # Respawning combat enemies (forest_path, cave, and
+        # easter_egg_room mob sets) drop nothing 85% of the time.
         # First-spawn / boss / shadow drops bypass this rule -- they're
         # set respawning=False.
         skip_drops = (
@@ -1763,8 +1838,7 @@ class Game(CutsceneMixin):
         else:
             level = 3
         surf = self._vignette_surf[level]
-        psx = int(self.player.x - self.cam_x)
-        psy = int(self.player.y - self.cam_y)
+        psx, psy = self.camera.project(self.player.x, self.player.y)
         size = surf.get_width()
         self.screen.blit(surf, (psx - size // 2, psy - size // 2))
 
@@ -1808,8 +1882,7 @@ class Game(CutsceneMixin):
         # rebuilding the gradient every frame.
         level = 1 if self.visibility > 0.55 else 0
         surf = self._outdoor_vignette_surf[level]
-        psx = int(self.player.x - self.cam_x)
-        psy = int(self.player.y - self.cam_y)
+        psx, psy = self.camera.project(self.player.x, self.player.y)
         size = surf.get_width()
         self.screen.blit(surf, (psx - size // 2, psy - size // 2))
 
@@ -1875,8 +1948,7 @@ class Game(CutsceneMixin):
         edge_a = self._claim_dark(int(180 * pulse))
         edge = pygame.Surface((SCREEN_W, SCREEN_H), pygame.SRCALPHA)
         edge.fill((0, 0, 0, edge_a))
-        psx = int(self.player.x - self.cam_x)
-        psy = int(self.player.y - self.cam_y)
+        psx, psy = self.camera.project(self.player.x, self.player.y)
         clear_r = int(110 + 6 * math.sin(t * 1.4))
         pygame.draw.circle(edge, (0, 0, 0, 0), (psx, psy), clear_r)
         self.screen.blit(edge, (0, 0))
@@ -1905,8 +1977,7 @@ class Game(CutsceneMixin):
         # hide spots are still meaningful cover.
         if self.scene.key in SAFE_SCENES:
             return
-        psx = int(self.player.x - self.cam_x)
-        psy = int(self.player.y - self.cam_y)
+        psx, psy = self.camera.project(self.player.x, self.player.y)
         # 60% wash (153 alpha) routed through the darkness cap so
         # hide stacked with apex/dip never blots the whole screen.
         wash_a = self._claim_dark(153)
@@ -1946,8 +2017,7 @@ class Game(CutsceneMixin):
         if self.scene.key not in DARK_SCENES:
             return
         from scenes.base import _light_pool
-        psx = int(self.player.x - self.cam_x)
-        psy = int(self.player.y - self.cam_y)
+        psx, psy = self.camera.project(self.player.x, self.player.y)
         lit = self._flashlight_lit()
         # Build the beam cone geometry once (apex -> left -> tip -> right).
         cone = None
@@ -2309,9 +2379,9 @@ class Game(CutsceneMixin):
         """Regular cultists roam every outdoor scene (chaser AI: scout,
         chase on sight, search, investigate). Their gaze raises
         visibility while they hold line of sight, and contact spikes it
-        -- but they never kill (the King is the only kill). The special
-        curse-priest runs a ritual: hold the player in its sightline
-        long enough and a permanent curse lands. Safe interiors are
+        -- but they never kill (the King is the only kill). His gaze
+        binds the curse: stay exposed in its sightline long enough and a
+        permanent curse lands. Safe interiors are
         refuges -- no cultists, and the gaze-pressure lifts."""
         self._gaze_count = 0
         if self.scene is None or self.player is None:
@@ -2356,8 +2426,8 @@ class Game(CutsceneMixin):
         self._flank_cultists()
 
     def _tick_gaze_bind(self, dt):
-        """His gaze, binding the curse (NARRATIVE 1b/3) -- replaces the old
-        curse-priest ritual. In a GAZE_BIND_SCENES scene, staying EXPOSED (not
+        """His gaze, binding the curse (NARRATIVE 1b/3). In a GAZE_BIND_SCENES
+        scene, staying EXPOSED (not
         hidden) while visibility is high lets His eye fix on you: a timer
         climbs, and crossing GAZE_BIND_TIME binds the first Watcher. Hiding,
         or dropping below GAZE_BIND_VIS, bleeds the timer back -- cover and
@@ -2390,8 +2460,8 @@ class Game(CutsceneMixin):
     def _ensure_cultists(self, key, dt):
         """Keep the current cult scene topped up with CULT_REGULARS roaming
         cultists. Rate-limited so killing one buys a breather, not an instant
-        respawn. (No curse-priest -- the watcher-curse is now His own gaze,
-        bound in _tick_gaze_bind, not a priest's ritual; NARRATIVE 1b/3.)"""
+        respawn. (The watcher-curse is His own gaze, bound in
+        _tick_gaze_bind; NARRATIVE 1b/3.)"""
         self._cult_topup_t -= dt
         if self._cult_topup_t > 0:
             return
@@ -2506,7 +2576,7 @@ class Game(CutsceneMixin):
         t = pygame.time.get_ticks() / 1000.0
         for face in folds:
             draw_fold(self.screen, face, self.cam_x, self.cam_y,
-                      self.player, t)
+                      self.player, t, self.camera)
 
     def _exit_is_fold(self, exit_data):
         """True if taking this exit is a FOLD or a seamless world-passage --
@@ -3368,6 +3438,7 @@ class Game(CutsceneMixin):
             if self.player.hp <= 0:
                 self._on_player_death()
             self._update_camera()
+            self._update_look(dt)
             self.audio.update_silence()
             self.audio.update_duck()
             self.dialog.update(dt)
@@ -3513,10 +3584,34 @@ class Game(CutsceneMixin):
             return
         self.screen.fill(C_BG)
         if not self.scene: return
-        self.scene.draw(self.screen, self.cam_x, self.cam_y)
+        # Re-sync the projection to the live camera offset for this frame.
+        # Pivot about the SCREEN CENTRE (the view centre world point) so any
+        # pitch/yaw rotates about the middle of the view, not the corner. At
+        # pitch 0 this is arithmetically identical to the legacy view:
+        #   project(x) = (SCREEN/2) + (x - (cam + SCREEN/2)) = x - cam.
+        self.camera.origin = (SCREEN_W // 2, SCREEN_H // 2)
+        self.camera.cam_x = self.cam_x + SCREEN_W // 2
+        self.camera.cam_y = self.cam_y + SCREEN_H // 2
+        self._tilt_front_walls = None
+        if self.camera.pitch > 0.02:
+            # DEBUG oblique view (CAMERA.md Phase 2): skybox fills the void,
+            # the floor warps to the tilted plane, walls extrude. Actors below
+            # already project through self.camera so they stand on this floor.
+            # Walls in front of the player are held back (returned) and drawn
+            # after the actors so they occlude/fade correctly.
+            from scenes.base import draw_terrain_tilted
+            from rendering.skybox import draw_skybox
+            sky = "overcast" if self.scene.key in OUTDOOR_SCENES else "void"
+            draw_skybox(self.screen, (0, 0, SCREEN_W, SCREEN_H),
+                        yaw=self.camera.yaw, kind=sky, horizon_frac=0.40)
+            focus = (self.player.x, self.player.y) if self.player else None
+            self._tilt_front_walls = draw_terrain_tilted(
+                self.screen, self.scene, self.camera, focus)
+        else:
+            self.scene.draw(self.screen, self.cam_x, self.cam_y, self.camera)
         self._draw_folds()
         for it in self.scene.items:
-            sx = int(it["x"] - self.cam_x); sy = int(it["y"] - self.cam_y)
+            sx, sy = self.camera.project(it["x"], it["y"])
             t = pygame.time.get_ticks() / 200.0
             bob = int(math.sin(t + (it["x"] + it["y"]) * 0.01) * 1)
             color = self._item_color(it["key"])
@@ -3550,6 +3645,10 @@ class Game(CutsceneMixin):
         if sc.wrap_x and sc.wrap_y:
             _offsets += [(-_ww, -_wh), (-_ww, _wh), (_ww, -_wh), (_ww, _wh)]
 
+        # Under tilt a sprite's centre rises so its feet sit on the floor
+        # point; 0 at top-down so the shipping view is untouched.
+        actor_lift = int(TILT_ACTOR_STAND * math.sin(self.camera.pitch))
+
         def _on_screen(sx, sy):
             return -64 <= sx <= SCREEN_W + 64 and -64 <= sy <= SCREEN_H + 64
 
@@ -3563,8 +3662,7 @@ class Game(CutsceneMixin):
             # there's no growing rot stage to track (NARRATIVE 1b/3).
             if not getattr(npc, "alive", True):
                 for ox, oy in _offsets:
-                    sx = int(npc.x + ox - self.cam_x)
-                    sy = int(npc.y + oy - self.cam_y)
+                    sx, sy = self.camera.project(npc.x + ox, npc.y + oy)
                     if not _on_screen(sx, sy):
                         continue
                     draw_npc_corpse(self.screen, sx, sy, npc.sprite_kind,
@@ -3583,48 +3681,63 @@ class Game(CutsceneMixin):
                 # whole time he's on screen). The 0.15 floor keeps him a
                 # faint watching void, never fully gone, until he nears.
                 king_threat = max(0.15, min(1.0, 1.0 - (d - KING_THREAT_NEAR) / span))
+            npc_lift = int(TILT_LIFT.get(npc.sprite_kind, TILT_ACTOR_STAND)
+                           * math.sin(self.camera.pitch))
             for ox, oy in _offsets:
-                sx = int(npc.x + ox - self.cam_x); sy = int(npc.y + oy - self.cam_y)
+                sx, sy = self.camera.project(npc.x + ox, npc.y + oy)
                 if not _on_screen(sx, sy):
                     continue
+                sy -= npc_lift            # stand on the floor under tilt
                 if m > 0.0:
                     draw_vessel_bloom(self.screen, sx, sy, npc.sprite_kind,
                                       npc.facing, m, seed=id(npc) & 0xffff)
                 else:
-                    # (No curse-priest -- the curse is His own gaze now;
-                    # NARRATIVE 1b/3. curse_v stays 0 for all normal NPCs.)
+                    # (The curse is His own gaze now; NARRATIVE 1b/3.
+                    # curse_v stays 0 for all normal NPCs.)
                     curse_v = 0.0
                     # A Watcher being stared down: its eyes go dark (gaze) and
                     # it fades as the dispel timer fills, so the cure reads.
                     w_gaze = (npc.sprite_kind == "watcher"
                               and getattr(npc, "_gaze_dispel_t", 0.0) > 0.05)
+                    nview = "front"
+                    if self._tilt_on():
+                        nview = view_from_facing(npc.facing[0], npc.facing[1],
+                                                 self.camera.yaw)
                     draw_npc_sprite(self.screen, sx, sy, npc.sprite_kind,
                                     npc.facing, blink=(i == blink_idx),
                                     birth=getattr(npc, "_birth", None),
                                     gait=getattr(npc, "_gait", None),
                                     threat=king_threat, seed=id(npc) & 0xffff,
-                                    curse=curse_v, gaze=w_gaze)
+                                    curse=curse_v, gaze=w_gaze, view=nview)
                     # A resister whose flesh has turned: their bespoke
                     # fold-horror form, laid over the person they were.
                     if getattr(npc, "_mutated", False):
                         draw_infested_overlay(self.screen, sx, sy,
-                                              npc.sprite_kind)
+                                              npc.sprite_kind, view=nview)
             # THRESHOLD: NPC name labels removed. They were the
             # last RPG-tell on screen -- the player should learn
             # who an NPC is by interacting with them, not by
             # reading a tag floating over their head. Strangers
             # on the road read as STRANGERS until they speak.
         for e in self.scene.enemies:
+            eview = "front"
+            if self._tilt_on():
+                eview = view_from_facing(e.facing[0], e.facing[1],
+                                         self.camera.yaw)
             for ox, oy in _offsets:
-                sx = int(e.x + ox - self.cam_x); sy = int(e.y + oy - self.cam_y)
+                sx, sy = self.camera.project(e.x + ox, e.y + oy)
                 if not _on_screen(sx, sy):
                     continue
-                e.draw(self.screen, self.cam_x - ox, self.cam_y - oy)
+                # Feed e.draw an offset that lands its internal `x - cam`
+                # exactly on the (lifted) projected point. At pitch 0 this is
+                # arithmetically the legacy (cam_x - ox) call -> identical.
+                e.draw(self.screen, e.x - sx, e.y - (sy - actor_lift), view=eview)
         for p in self.scene.projectiles:
-            p.draw(self.screen, self.cam_x, self.cam_y)
+            psx, psy = self.camera.project(p.x, p.y)
+            p.draw(self.screen, p.x - psx, p.y - (psy - actor_lift))
         if self.player:
-            psx = int(self.player.x - self.cam_x)
-            psy = int(self.player.y - self.cam_y)
+            psx, psy = self.camera.project(self.player.x, self.player.y)
+            psy -= actor_lift             # stand on the floor under tilt
             if self.player.invuln > 0 and int(self.player.invuln * 12) % 2 == 0:
                 pass
             elif self.player.hidden is not None:
@@ -3645,10 +3758,16 @@ class Game(CutsceneMixin):
                 self.screen.blit(tag, (psx - tag.get_width() // 2,
                                        psy - 40))
             else:
+                pview = "front"
+                if self._tilt_on():
+                    pview = view_from_facing(self.player.facing[0],
+                                             self.player.facing[1],
+                                             self.camera.yaw)
                 draw_player_sprite(self.screen, psx, psy, self.player.facing,
                                    self.player.walk_phase,
                                    armor=self.player.inventory.equipped["armor"],
-                                   prone=getattr(self.player, "prone", False))
+                                   prone=getattr(self.player, "prone", False),
+                                   view=pview)
             # The axe swing: a wood haft + steel head arcing through the
             # facing hemisphere, with a brief motion smear so the chop
             # reads. Progress walks 0->1 as melee_swing_t bleeds down.
@@ -3656,6 +3775,22 @@ class Game(CutsceneMixin):
                 prog = 1.0 - (self.player.melee_swing_t / AXE_SWING_DUR)
                 draw_axe_swing(self.screen, psx, psy,
                                self.player.melee_dir, prog)
+        # Tilt: walls nearer the camera than the player, drawn over the actors
+        # and faded where they'd hide the player (occlusion).
+        if self._tilt_front_walls and self.player:
+            from scenes.base import draw_walls_front
+            draw_walls_front(self.screen, self.scene, self.camera,
+                             self._tilt_front_walls,
+                             (self.player.x, self.player.y))
+        # Cursor reticle in look mode (the mouse is otherwise hidden) -- shows
+        # where the gun aims. A thin ring + tick marks, gold to read as 'aim'.
+        if self._tilt_on() and self.state == "playing":
+            mx, my = pygame.mouse.get_pos()
+            pygame.draw.circle(self.screen, (228, 198, 96), (mx, my), 7, 1)
+            for ddx, ddy in ((10, 0), (-10, 0), (0, 10), (0, -10)):
+                pygame.draw.line(self.screen, (228, 198, 96),
+                                 (mx + ddx // 2, my + ddy // 2),
+                                 (mx + ddx, my + ddy), 1)
         # Reset the per-frame full-screen darkness budget. Each
         # whole-screen black overlay below claims a slice via
         # _claim_dark() so the combined wash never exceeds
@@ -4193,6 +4328,21 @@ class Game(CutsceneMixin):
                                       duration=2.0)
                 elif ev.key == pygame.K_F11:
                     self._toggle_fullscreen()
+                elif ev.key == pygame.K_F3:
+                    # DEBUG (CAMERA.md Phase 2/3): toggle the oblique look mode.
+                    # Pitch eases in _update_camera; pitch 0 is the shipping
+                    # top-down view, untouched. On enable, seed the look heading
+                    # from the player's current facing so the camera settles
+                    # behind them with no rotation jump.
+                    if self._cam_pitch_target:
+                        self._cam_pitch_target = 0.0
+                    else:
+                        self._cam_pitch_target = math.radians(TILT_PITCH_DEG)
+                        if self.player:
+                            fx, fy = self.player.facing
+                            self.look = LookController(math.atan2(fy, fx))
+                            self.camera.yaw = self.look.cam_yaw
+                        self._rmb_last_x = None
                 elif ev.key == pygame.K_ESCAPE:
                     self.state = "paused"
                     self.pause_view = "menu"

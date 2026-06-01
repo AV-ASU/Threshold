@@ -118,9 +118,18 @@ class Decoration:
     def update(self, dt):
         self.t += dt
 
-    def draw(self, surf, cam_x, cam_y):
-        sx = int(self.x - cam_x)
-        sy = int(self.y - cam_y)
+    def draw(self, surf, cam_x, cam_y, camera=None, wox=0.0, woy=0.0):
+        # Route the point anchor through the shared projection when the live
+        # game supplies a camera (CAMERA.md); fall back to the legacy
+        # top-down conversion for headless tools that pass raw offsets. At
+        # pitch 0 the two are arithmetically identical. `wox/woy` is the
+        # wrap-clone world offset (0 for the primary draw), passed explicitly
+        # so projection doesn't depend on the camera's pivot convention.
+        if camera is not None:
+            sx, sy = camera.project(self.x + wox, self.y + woy)
+        else:
+            sx = int(self.x - cam_x)
+            sy = int(self.y - cam_y)
         if sx < -64 or sx > SCREEN_W + 64 or sy < -64 or sy > SCREEN_H + 64:
             return
         if self.kind in _GROUNDED_DECOS:
@@ -1802,14 +1811,14 @@ class Decoration:
         pygame.draw.circle(surf, (220, 220, 230), (x, y), 1)
 
     def _draw_body(self, surf, x, y):
-        # Slumped guard body. The kit reads at a glance: helmet beside the
+        # A slumped, fallen body. The kit reads at a glance: helmet beside the
         # head, spear on the ground, blood pool. Static -- this is a
         # decoration, not an NPC. Disappears after 2 re-entries via the
         # scene's on_enter logic.
         # Blood pool
         pygame.draw.ellipse(surf, (60, 6, 10), (x - 14, y + 2, 28, 8))
         pygame.draw.ellipse(surf, (90, 10, 14), (x - 11, y + 1, 22, 6))
-        # Slumped torso (tabard-grey like the guard)
+        # Slumped torso (tabard-grey)
         pygame.draw.rect(surf, (110, 110, 130), (x - 9, y - 6, 18, 10))
         pygame.draw.rect(surf, (50, 50, 70), (x - 9, y - 6, 18, 10), 1)
         # Helmet, fallen sideways to the left of the body

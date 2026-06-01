@@ -455,20 +455,14 @@ def main():
         check(first_speaker(fn) == expected,
               f"naming: a principal local speaks as '{expected}' (not a role-tag)")
 
-    # --- 18. The curse-priest is cut; curse_grove is maker-less (§1b/§8) ---
+    # --- 18. effigy_grove is a maker-less tableau (§1b/§8) ---------------
     # Individual cursing is redundant -- the closing rite claimed the town at
-    # once -- so the priest is removed and the grove is left as the work
-    # without the worker, like its siblings husk_grove / scarecrow_ring.
+    # once -- so the grove is left as the work without the worker, with no
+    # NPC tending it, like its siblings husk_grove / scarecrow_ring.
     from scenes import load_scene as _load2
-    grove = _load2("curse_grove")
-    kinds = [getattr(n, "sprite_kind", None) for n in grove.npcs]
-    check("curse_priest" not in kinds,
-          "cut: curse_grove builds no curse-priest")
+    grove = _load2("effigy_grove")
     check(len(grove.npcs) == 0,
-          "cut: curse_grove is a maker-less tableau (no NPC, like its siblings)")
-    for sib in ("husk_grove", "scarecrow_ring"):
-        sk = [getattr(n, "sprite_kind", None) for n in _load2(sib).npcs]
-        check("curse_priest" not in sk, f"cut: {sib} hosts no curse-priest")
+          "effigy_grove is a maker-less tableau (no NPC, like its siblings)")
 
     print()
     if FAILS:
