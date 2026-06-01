@@ -509,6 +509,14 @@ def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False,
             pygame.draw.line(surf, cane, (x + 7 * s, y - 2), (x + 7 * s, y + 15), 2)  # near-side cane
         else:
             _grim_body(surf, x, y, coat, view=view)
+            # Break up the flat coat front: an open seam down the middle, two
+            # lapels off the collar, and a row of dull buttons.
+            pygame.draw.line(surf, (40, 32, 22), (x, y + 1), (x, y + 15), 1)   # coat opening
+            pygame.draw.line(surf, (88, 70, 48), (x - 1, y + 1), (x - 1, y + 15), 1)  # lit edge
+            pygame.draw.line(surf, (52, 41, 28), (x - 5, y - 1), (x - 1, y + 4), 2)  # left lapel
+            pygame.draw.line(surf, (52, 41, 28), (x + 5, y - 1), (x + 1, y + 4), 2)  # right lapel
+            for by in (y + 6, y + 10, y + 14):
+                pygame.draw.circle(surf, (94, 78, 52), (x + 1, by), 1)        # buttons
             _gaunt_head(surf, x, y, skin, narrow=HN, tall=HT, blink=blink, view=view)
             pygame.draw.rect(surf, beard, (x - 6, y - 5, 12, 6))             # ash beard
             pygame.draw.rect(surf, beard, (x - 4, y - 1, 8, 3))              # beard point
@@ -649,32 +657,52 @@ def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False,
         hc = (60, 46, 32); hc_lo = (34, 26, 18); hc_hi = (92, 74, 50)
         hb = (48, 36, 24); hb_lo = (28, 21, 14)
 
+        shirt_drk = (38, 33, 23)
+
         def _star(sx):
             pygame.draw.circle(surf, (150, 140, 84), (sx, y + 2), 2)
             pygame.draw.circle(surf, (96, 88, 50), (sx, y + 2), 2, 1)
+
+        def _delts():                                                         # broad deltoid shoulders
+            pygame.draw.ellipse(surf, shirt, (x - 12, y - 2, 7, 8))
+            pygame.draw.ellipse(surf, shirt, (x + 5, y - 2, 7, 8))
+            pygame.draw.ellipse(surf, shirt_drk, (x - 12, y - 2, 7, 8), 1)
+            pygame.draw.ellipse(surf, shirt_drk, (x + 5, y - 2, 7, 8), 1)
+            pygame.draw.polygon(surf, shirt_drk, [(x - 9, y + 8), (x - 9, y + 17), (x - 6, y + 17)])
+            pygame.draw.polygon(surf, shirt_drk, [(x + 9, y + 8), (x + 9, y + 17), (x + 6, y + 17)])
         if view == "back":
-            _grim_body(surf, x, y, shirt, view=view)
-            pygame.draw.rect(surf, (62, 54, 38), (x - 7, y + 9, 14, 4))        # belt
+            _grim_body(surf, x, y, shirt, w=18, view=view)                    # GigaChad frame
+            _delts()
+            pygame.draw.rect(surf, (62, 54, 38), (x - 9, y + 10, 18, 4))       # belt
             pygame.draw.ellipse(surf, skin, (x - HN, hcy - 7, HN * 2, HT))
             pygame.draw.ellipse(surf, sk_lo, (x - HN, hcy - 7, HN * 2, HT), 1)
             pygame.draw.rect(surf, hair, (x - HN, hcy, HN * 2, 4))             # hair at nape
             _oldhat(surf, x, y, hc, hc_lo, hc_hi, hb, hb_lo)
         elif view in ("left", "right"):
             s = 1 if view == "right" else -1
-            _grim_body(surf, x, y, shirt, view=view)
-            pygame.draw.rect(surf, (62, 54, 38), (x - 6, y + 9, 12, 4))        # belt
+            _grim_body(surf, x, y, shirt, w=18, view=view)
+            pygame.draw.ellipse(surf, shirt, (x - 4, y - 2, 9, 9))             # heavy shoulder/chest
+            pygame.draw.ellipse(surf, shirt_drk, (x - 4, y - 2, 9, 9), 1)
+            bulge = (x + 1, y + 2, 6, 7) if s > 0 else (x - 7, y + 2, 6, 7)
+            pygame.draw.ellipse(surf, shirt, bulge)                            # forward chest bulge
+            pygame.draw.rect(surf, (62, 54, 38), (x - 7, y + 10, 14, 4))       # belt
             _gaunt_head(surf, x, y, skin, narrow=HN, tall=HT, blink=blink, view=view)
             pygame.draw.circle(surf, (96, 92, 76), (x + 3 * s, hcy + 6), 1)    # stubble jaw
             _oldhat(surf, x, y, hc, hc_lo, hc_hi, hb, hb_lo, s=s)
             _star(x + 3 * s)                                                   # star edge-on
         else:
-            _grim_body(surf, x, y, shirt, view=view)
-            pygame.draw.rect(surf, (62, 54, 38), (x - 7, y + 9, 14, 4))        # belt
+            _grim_body(surf, x, y, shirt, w=18, view=view)
+            _delts()
+            pygame.draw.line(surf, shirt_drk, (x, y - 1), (x, y + 9), 1)       # shirt placket
+            pygame.draw.rect(surf, (74, 64, 44), (x - 7, y + 1, 5, 4), 1)      # L breast pocket
+            pygame.draw.rect(surf, (74, 64, 44), (x + 3, y + 1, 5, 4), 1)      # R breast pocket
+            pygame.draw.rect(surf, (62, 54, 38), (x - 9, y + 10, 18, 4))       # belt
+            pygame.draw.rect(surf, (96, 84, 52), (x - 2, y + 10, 4, 4), 1)     # buckle
             _gaunt_head(surf, x, y, skin, narrow=HN, tall=HT, blink=blink, view=view)
             for sx2 in (-3, 1):
                 pygame.draw.circle(surf, (96, 92, 76), (x + sx2, y - 5), 1)    # stubble
             _oldhat(surf, x, y, hc, hc_lo, hc_hi, hb, hb_lo)
-            _star(x - 4)
+            _star(x - 5)                                                       # star on the chest
     elif kind == "royce":
         # Royce -- drives the river road to the county line and gets handed
         # back into Brimley every time. A working man, no fisherman: a
