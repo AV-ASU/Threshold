@@ -1427,6 +1427,10 @@ def _tilt_warp(flat, camera):
 
 
 def _tilt_wall_box(surf, camera, scene, tx, ty):
+    """One wall tile as an extruded box. Rotation-correct: every EXPOSED side
+    face (neighbour not a wall) is drawn, the faces are depth-sorted far->near
+    so the near ones overdraw the far, and the top is a flat shaded quad (no
+    axis-aligned texture blit that would overflow once the camera yaws)."""
     wx, wy = tx * TILE + TILE / 2, ty * TILE + TILE / 2
     hw = TILE / 2
 
@@ -1435,23 +1439,26 @@ def _tilt_wall_box(surf, camera, scene, tx, ty):
     g = [P(-hw, -hw, 0), P(hw, -hw, 0), P(hw, hw, 0), P(-hw, hw, 0)]
     t = [P(-hw, -hw, _TILT_WALL_RISE), P(hw, -hw, _TILT_WALL_RISE),
          P(hw, hw, _TILT_WALL_RISE), P(-hw, hw, _TILT_WALL_RISE)]
-    near = tuple(int(c * 0.5) for c in _WALL_FACE)
-    side = tuple(int(c * 0.7) for c in _WALL_FACE)
-    if not _is_wall(scene, tx, ty + 1):
-        pygame.draw.polygon(surf, near, [g[3], g[2], t[2], t[3]])
-    if not _is_wall(scene, tx - 1, ty):
-        pygame.draw.polygon(surf, side, [g[0], g[3], t[3], t[0]])
-    if not _is_wall(scene, tx + 1, ty):
-        pygame.draw.polygon(surf, side, [g[1], g[2], t[2], t[1]])
-    # top face: the real per-tile wall raster, scaled into the quad bbox
-    tex = pygame.Surface((TILE, TILE)).convert()
-    tex.fill(_WALL_BASE)
-    _draw_wall_mass(tex, scene, -tx * TILE, -ty * TILE, tx, ty, tx + 1, ty + 1)
-    xs = [p[0] for p in t]; ys = [p[1] for p in t]
-    bx, by = int(min(xs)), int(min(ys))
-    bw = max(1, int(max(xs) - bx)); bh = max(1, int(max(ys) - by))
-    surf.blit(pygame.transform.smoothscale(tex, (bw, bh)), (bx, by))
-    pygame.draw.polygon(surf, tuple(int(c * 0.5) for c in _WALL_TOP), t, 1)
+    near = tuple(int(c * 0.5) for c in _WALL_FACE)   # N/S faces
+    side = tuple(int(c * 0.7) for c in _WALL_FACE)   # E/W faces
+    # (neighbour dx, dy, face centroid offset, quad corners, colour) per side
+    faces = (
+        (0, 1, (0, hw), (g[3], g[2], t[2], t[3]), near),    # south
+        (0, -1, (0, -hw), (g[0], g[1], t[1], t[0]), near),  # north
+        (-1, 0, (-hw, 0), (g[0], g[3], t[3], t[0]), side),  # west
+        (1, 0, (hw, 0), (g[1], g[2], t[2], t[1]), side),    # east
+    )
+    vis = [(camera.depth(wx + ox, wy + oy, _TILT_WALL_RISE / 2), quad, col)
+           for ndx, ndy, (ox, oy), quad, col in faces
+           if not _is_wall(scene, tx + ndx, ty + ndy)]
+    vis.sort(key=lambda f: f[0])                      # far first
+    for _, quad, col in vis:
+        pygame.draw.polygon(surf, col, quad)
+    # flat shaded top quad (correct under any yaw): the lit cap, but kept dark
+    # to read as the game's near-black walls -- top clearly lighter than the
+    # sides for form, with a darker grout outline.
+    pygame.draw.polygon(surf, tuple(int(c * 0.72) for c in _WALL_TOP), t)
+    pygame.draw.polygon(surf, tuple(int(c * 0.4) for c in _WALL_TOP), t, 1)
 
 
 def draw_terrain_tilted(surf, scene, camera, focus=None):
