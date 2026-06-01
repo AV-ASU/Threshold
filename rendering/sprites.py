@@ -801,31 +801,35 @@ def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False,
                 pygame.draw.circle(halo, (150, 132, 44, aa), (13, 13), rr)
             surf.blit(halo, (x - 13, hcy - 11))
 
-        def _void_head():
+        def _void_head(s=0):
             # The face collapsed inward: a dim head-rim around a cavity that
-            # sinks ring by ring to true black.
+            # sinks ring by ring to true black. For a profile the cavity
+            # shifts toward the lead side, so the back of the skull (rim)
+            # trails behind -- reads as a head turned.
             pygame.draw.ellipse(surf, rim, (x - HN, hcy - 7, HN * 2, HT))
             pygame.draw.ellipse(surf, rim_lo, (x - HN, hcy - 7, HN * 2, HT), 1)
+            ox = s * 2
             for i, col in enumerate(VOID_RINGS):
-                pygame.draw.ellipse(surf, col, (x - HN + 1 + i, hcy - 6 + i,
+                pygame.draw.ellipse(surf, col, (x - HN + 1 + i + ox, hcy - 6 + i,
                                                 HN * 2 - 2 - 2 * i, HT - 2 - 2 * i))
 
-        def _void_eye(ex, ey, phase):
-            # A dim gold eye that blinks IN AND OUT of existence inside the
-            # void. Two out-of-phase sines multiply, so it irregularly winks
-            # away to nothing and swells back -- never a steady pair.
-            on = ((0.5 + 0.5 * math.sin(t * 2.4 + phase))
-                  * (0.5 + 0.5 * math.sin(t * 5.9 + phase * 2.7)))
-            if on < 0.16:
-                return                                   # gone -- blinked out
-            gv = int(120 + 110 * on)                      # dim->present gold
-            glow = pygame.Surface((11, 11), pygame.SRCALPHA)
-            for rr, aa in ((5, int(20 * on)), (4, int(46 * on)),
-                           (3, int(95 * on)), (2, int(165 * on))):
-                pygame.draw.circle(glow, (gv, int(gv * 0.64), 24, aa), (5, 5), rr)
-            surf.blit(glow, (ex - 5, ey - 5))
-            if on > 0.45:
-                surf.set_at((ex, ey), (min(255, gv + 60), int(gv * 0.82), 70))
+        def _void_eyes(s):
+            # The gold eyes DON'T sit at fixed sockets -- they pop up all over
+            # the void, exactly like the WATCHER's mass-of-eyes: a seeded
+            # CONSTELLATION of sick pinpricks scattered deep in the cavity,
+            # each winking on its own staggered phase (faint halo + bright
+            # dot). Same math/colour as the 'watcher' kind.
+            ox = s * 2
+            erng = random.Random((int(x) * 7 + 5) & 0xffff)
+            for i in range(7):
+                ex = x + ox + erng.randint(-4, 4)
+                ey = hcy + erng.randint(-5, 5)
+                bl = 0.5 + 0.5 * math.sin(t * 1.6 + i * 1.5 + x)
+                if bl < 0.32:
+                    continue                              # winked out
+                gv = int(70 + 48 * bl)
+                pygame.draw.circle(surf, (54, 46, 20), (ex, ey), 2)         # faint halo
+                pygame.draw.circle(surf, (gv, int(gv * 0.8), 28), (ex, ey), 1)  # the eye
 
         def _delts():                                                     # broad deltoid shoulders
             pygame.draw.ellipse(surf, shirt, (x - 12, y - 2, 7, 8))
@@ -856,8 +860,8 @@ def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False,
             pygame.draw.ellipse(surf, shirt, bulge)                        # forward chest bulge
             pygame.draw.rect(surf, (54, 48, 32), (x - 7, y + 10, 14, 4))   # belt
             _aura()
-            _void_head()                                                   # collapsed-face cavity
-            _void_eye(x + 2 * s, hcy - 1, 0.0)                             # the eye into the void
+            _void_head(s)                                                  # collapsed-face cavity (turned)
+            _void_eyes(s)                                                  # eyes pop up all over the void
             _oldhat(surf, x, y, hc, hc_lo, hc_hi, hb, hb_lo, s=s)
             _sign(x + 3 * s)                                               # Sign edge-on
         else:
@@ -867,8 +871,7 @@ def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False,
             pygame.draw.rect(surf, (54, 48, 32), (x - 9, y + 10, 18, 4))   # belt
             _aura()
             _void_head()                                                   # the face, collapsed to a cavity
-            _void_eye(x - 3, hcy - 1, 0.0)                                 # two dim gold eyes, each
-            _void_eye(x + 3, hcy - 1, 2.3)                                 # winking in and out down inside
+            _void_eyes(0)                                                  # gold eyes pop up all over the void
             _oldhat(surf, x, y, hc, hc_lo, hc_hi, hb, hb_lo)
             _sign(x - 5)                                                   # Sign on the chest
     elif kind == "shadow":
