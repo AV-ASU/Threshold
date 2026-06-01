@@ -618,7 +618,6 @@ def _draw_arms(surf, cx, cy, yaw, bob, scale, shat, threat, which,
     `which` ('front' = drawn after the shards, 'back' = before + dimmer)."""
     if shat <= 0.04:
         return
-    rng = random.Random(101)
     D = _yaw_vec(_norm3(reach_local), yaw)          # reach direction, camera space
     toward = D[2] > 0.0                             # tendrils point at the camera?
     side = "front" if toward else "back"
