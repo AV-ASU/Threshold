@@ -1164,7 +1164,7 @@ def _gold_in_wound(surf, cx, cy, R, peak=64):
     surf.blit(g, (cx - R - 1, cy - R - 1), special_flags=pygame.BLEND_RGBA_ADD)
 
 
-def _infest_tisdale_boy(surf, x, y, t):
+def _infest_tisdale_boy(surf, x, y, t, view="front"):
     # The lying boy's mouth won't stop -- and now his whole BODY is the
     # mouth. A maw splits him head to hem: a dark gullet runs the length of
     # him, teeth bridging it the whole way, gold burning in the throat, his
@@ -1184,7 +1184,7 @@ def _infest_tisdale_boy(surf, x, y, t):
     pygame.draw.circle(surf, (236, 232, 226), (x + 4, hy - 2), 1)
 
 
-def _infest_hettie(surf, x, y, t):
+def _infest_hettie(surf, x, y, t, view="front"):
     # Her face bloomed open -- and the bloom runs down her. The head splits
     # into a radial petal-star and the torso unzips into a vertical seam with
     # skin-petals curling out along both sides, gold burning up the opening:
@@ -1258,13 +1258,17 @@ def _popout_tumor(surf, cx, cy, r, thr, rng):
     pygame.draw.circle(surf, _WGOLD_HI, crown, 1)
 
 
-def _infest_old_townsman(surf, x, y, t):
+def _infest_old_townsman(surf, x, y, t, view="front"):
     # (Garrick) skinned to sallow raw flesh, and a black-gold CANCER erupts
     # all over him: engorged vessels creep across the flayed skin and feed
     # tumors that bulge out of the body -- shaded black masses lit cold at the
     # crown with molten gold light cracking out of their fissures. The man is
     # being eaten from inside by the fold's gold. (Adult geometry: head ~y-12,
     # body y-2..y+16. Distinct: a few large pop-out tumors on flayed flesh.)
+    # View-aware: the torso silhouette is the same from every angle (the base
+    # Tier-2 sprite only re-caps the head per view), so the body tumors hold;
+    # the HEAD changes -- no face on the back, one socket + a rear-shifted
+    # skull tumor in profile.
     thr = 0.5 + 0.5 * math.sin(t * 2.2)
     rng = random.Random(11)
     hy = y - 12
@@ -1272,9 +1276,20 @@ def _infest_old_townsman(surf, x, y, t):
     pygame.draw.circle(surf, _SALLOW_LO, (x, hy), 6, 1)
     pygame.draw.rect(surf, _SALLOW, (x - 6, y - 1, 12, 17))       # flayed sallow torso
     pygame.draw.rect(surf, _SALLOW_LO, (x - 6, y - 1, 12, 17), 1)
-    pygame.draw.circle(surf, (44, 30, 28), (x - 2, hy - 1), 1)    # sunken eye-pits in the meat
-    pygame.draw.circle(surf, (44, 30, 28), (x + 2, hy - 1), 1)
-    sites = [(x + 2, hy + 1, 3), (x - 3, y + 5, 6), (x + 4, y + 12, 4)]
+    # Sunken eye-pits + the head tumor, placed for the facing. Front shows the
+    # pair; profile shows the leading socket and pushes the skull tumor to the
+    # rear; the back shows no face, just a tumor crowning the skull.
+    if view == "front":
+        eyes = [(x - 2, hy - 1), (x + 2, hy - 1)]; head_tumor = (x + 2, hy + 1, 3)
+    elif view == "right":
+        eyes = [(x + 2, hy - 1)]; head_tumor = (x - 3, hy, 3)
+    elif view == "left":
+        eyes = [(x - 2, hy - 1)]; head_tumor = (x + 3, hy, 3)
+    else:  # back -- the back of the skinned skull, no face
+        eyes = []; head_tumor = (x, hy - 2, 3)
+    for ex, ey in eyes:
+        pygame.draw.circle(surf, (44, 30, 28), (ex, ey), 1)
+    sites = [head_tumor, (x - 3, y + 5, 6), (x + 4, y + 12, 4)]
     for sx, sy, _r in sites:                                     # vessels first, under the masses
         _tumor_veins(surf, sx, sy, 3, 8, rng)
     for sx, sy, r in sites:                                       # then the pop-out tumors
@@ -1288,14 +1303,17 @@ _INFEST_WORLD = {
 }
 
 
-def draw_infested_overlay(surf, x, y, kind):
+def draw_infested_overlay(surf, x, y, kind, view="front"):
     """Drawn OVER a mutated resister's base sprite: their bespoke flesh-
-    horror form. Falls back to a generic jaundice + eye-void wash for any
-    kind without a dedicated incident."""
+    horror form. `view` ('front'/'back'/'left'/'right') matches the base
+    sprite's camera-relative facing so the horror reads from every angle
+    (no face on the back of the head, profile in the sides). Falls back to a
+    generic jaundice + eye-void wash for any kind without a dedicated
+    incident."""
     fn = _INFEST_WORLD.get(kind)
     t = pygame.time.get_ticks() / 1000.0
     if fn is not None:
-        fn(surf, x, y, t)
+        fn(surf, x, y, t, view)
         return
     # Generic fallback (unchanged from the old overlay).
     wash = pygame.Surface((26, 36), pygame.SRCALPHA)

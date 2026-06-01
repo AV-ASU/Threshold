@@ -3713,7 +3713,7 @@ class Game(CutsceneMixin):
                     # fold-horror form, laid over the person they were.
                     if getattr(npc, "_mutated", False):
                         draw_infested_overlay(self.screen, sx, sy,
-                                              npc.sprite_kind)
+                                              npc.sprite_kind, view=nview)
             # THRESHOLD: NPC name labels removed. They were the
             # last RPG-tell on screen -- the player should learn
             # who an NPC is by interacting with them, not by
