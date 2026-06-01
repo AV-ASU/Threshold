@@ -1858,7 +1858,7 @@ class Scene:
         if self.on_update_fn is not None:
             self.on_update_fn(game, self, dt)
 
-    def draw(self, surf, cam_x, cam_y):
+    def draw(self, surf, cam_x, cam_y, camera=None):
         if self.wrap_x:
             x0 = int(cam_x // TILE) - 1
             x1 = int((cam_x + SCREEN_W) // TILE) + 2
@@ -1875,7 +1875,7 @@ class Scene:
         world_w_px = self.w * TILE
         world_h_px = self.h * TILE
         for d in self.decorations:
-            d.draw(surf, cam_x, cam_y)
+            d.draw(surf, cam_x, cam_y, camera)
             # Wrap-clones so decorations stay in view across the seam.
             offsets = [(0, 0)]
             if self.wrap_x:
@@ -1888,7 +1888,7 @@ class Scene:
                             (world_w_px, -world_h_px),
                             (world_w_px, world_h_px)]
             for dx_off, dy_off in offsets[1:]:
-                d.draw(surf, cam_x - dx_off, cam_y - dy_off)
+                d.draw(surf, cam_x - dx_off, cam_y - dy_off, camera)
         draw_scene_doors(surf, self, cam_x, cam_y, x0, y0, x1, y1)
 
 

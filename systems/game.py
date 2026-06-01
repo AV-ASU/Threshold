@@ -1771,8 +1771,7 @@ class Game(CutsceneMixin):
         else:
             level = 3
         surf = self._vignette_surf[level]
-        psx = int(self.player.x - self.cam_x)
-        psy = int(self.player.y - self.cam_y)
+        psx, psy = self.camera.project(self.player.x, self.player.y)
         size = surf.get_width()
         self.screen.blit(surf, (psx - size // 2, psy - size // 2))
 
@@ -1816,8 +1815,7 @@ class Game(CutsceneMixin):
         # rebuilding the gradient every frame.
         level = 1 if self.visibility > 0.55 else 0
         surf = self._outdoor_vignette_surf[level]
-        psx = int(self.player.x - self.cam_x)
-        psy = int(self.player.y - self.cam_y)
+        psx, psy = self.camera.project(self.player.x, self.player.y)
         size = surf.get_width()
         self.screen.blit(surf, (psx - size // 2, psy - size // 2))
 
@@ -1883,8 +1881,7 @@ class Game(CutsceneMixin):
         edge_a = self._claim_dark(int(180 * pulse))
         edge = pygame.Surface((SCREEN_W, SCREEN_H), pygame.SRCALPHA)
         edge.fill((0, 0, 0, edge_a))
-        psx = int(self.player.x - self.cam_x)
-        psy = int(self.player.y - self.cam_y)
+        psx, psy = self.camera.project(self.player.x, self.player.y)
         clear_r = int(110 + 6 * math.sin(t * 1.4))
         pygame.draw.circle(edge, (0, 0, 0, 0), (psx, psy), clear_r)
         self.screen.blit(edge, (0, 0))
@@ -1913,8 +1910,7 @@ class Game(CutsceneMixin):
         # hide spots are still meaningful cover.
         if self.scene.key in SAFE_SCENES:
             return
-        psx = int(self.player.x - self.cam_x)
-        psy = int(self.player.y - self.cam_y)
+        psx, psy = self.camera.project(self.player.x, self.player.y)
         # 60% wash (153 alpha) routed through the darkness cap so
         # hide stacked with apex/dip never blots the whole screen.
         wash_a = self._claim_dark(153)
@@ -1954,8 +1950,7 @@ class Game(CutsceneMixin):
         if self.scene.key not in DARK_SCENES:
             return
         from scenes.base import _light_pool
-        psx = int(self.player.x - self.cam_x)
-        psy = int(self.player.y - self.cam_y)
+        psx, psy = self.camera.project(self.player.x, self.player.y)
         lit = self._flashlight_lit()
         # Build the beam cone geometry once (apex -> left -> tip -> right).
         cone = None
@@ -3525,7 +3520,7 @@ class Game(CutsceneMixin):
         # (pitch/yaw stay 0 in Phase 1 -> identical to the legacy view.)
         self.camera.cam_x = self.cam_x
         self.camera.cam_y = self.cam_y
-        self.scene.draw(self.screen, self.cam_x, self.cam_y)
+        self.scene.draw(self.screen, self.cam_x, self.cam_y, self.camera)
         self._draw_folds()
         for it in self.scene.items:
             sx, sy = self.camera.project(it["x"], it["y"])
