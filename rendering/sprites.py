@@ -1473,36 +1473,52 @@ def _infest_old_townsman(surf, x, y, t, view="front"):
     # crown with molten gold light cracking out of their fissures. The man is
     # being eaten from inside by the fold's gold. (Adult geometry: head ~y-12,
     # body y-2..y+16. Distinct: a few large pop-out tumors on flayed flesh.)
-    # View-aware in BODY and head: the flayed torso narrows to match the
-    # base silhouette in profile, the tumor cluster is laid out per facing
-    # (so the sides/back are NOT the front pasted on), and the head loses its
-    # face on the back / leads one socket + a rear skull-tumor in profile.
+    # View-aware in BODY and head, and the cancer is ASYMMETRIC: front,
+    # right, left and back each get their OWN tumor layout + rng seed -- the
+    # profiles are NOT mirrors of each other, and the back is its own sprite.
+    # The flayed torso narrows to match the base silhouette in profile; the
+    # head loses its face on the back / leads one socket + a rear skull-tumor
+    # in profile.
     thr = 0.5 + 0.5 * math.sin(t * 2.2)
-    rng = random.Random(11)
     hy = y - 12
-    s = 1 if view == "right" else (-1 if view == "left" else 0)
-    if s:                                                        # PROFILE -- narrow flayed body, head leads
-        hx = x + s
+    if view == "right":                                          # PROFILE R -- unique layout
+        rng = random.Random(23)
+        hx = x + 1
         pygame.draw.circle(surf, _SALLOW, (hx, hy), 5)
         pygame.draw.circle(surf, _SALLOW_LO, (hx, hy), 5, 1)
         pygame.draw.rect(surf, _SALLOW, (x - 4, y - 1, 8, 17))
         pygame.draw.rect(surf, _SALLOW_LO, (x - 4, y - 1, 8, 17), 1)
-        eyes = [(hx + s, hy - 1)]                               # the near socket
-        head_tumor = (hx - 3 * s, hy, 3)                       # skull tumor to the rear
-        sites = [head_tumor, (x + s, y + 5, 4), (x - s, y + 11, 4)]  # stacked on the narrow body
-    else:
+        eyes = [(hx + 1, hy - 1)]                               # near socket leads right
+        head_tumor = (hx - 3, hy - 1, 3)                       # skull tumor to the rear (left)
+        sites = [head_tumor, (x + 1, y + 4, 4), (x - 1, y + 9, 3), (x + 2, y + 13, 4)]
+    elif view == "left":                                         # PROFILE L -- DIFFERENT, not a mirror
+        rng = random.Random(37)
+        hx = x - 1
+        pygame.draw.circle(surf, _SALLOW, (hx, hy), 5)
+        pygame.draw.circle(surf, _SALLOW_LO, (hx, hy), 5, 1)
+        pygame.draw.rect(surf, _SALLOW, (x - 4, y - 1, 8, 17))
+        pygame.draw.rect(surf, _SALLOW_LO, (x - 4, y - 1, 8, 17), 1)
+        eyes = [(hx - 1, hy - 1)]                               # near socket leads left
+        head_tumor = (hx + 3, hy + 1, 3)                       # skull tumor to the rear (right)
+        sites = [head_tumor, (x - 2, y + 6, 5), (x + 1, y + 11, 3)]   # one big mid + a low one
+    elif view == "back":                                         # BACK -- its own layout, no face
+        rng = random.Random(51)
+        pygame.draw.circle(surf, _SALLOW, (x, hy), 6)
+        pygame.draw.circle(surf, _SALLOW_LO, (x, hy), 6, 1)
+        pygame.draw.rect(surf, _SALLOW, (x - 6, y - 1, 12, 17))
+        pygame.draw.rect(surf, _SALLOW_LO, (x - 6, y - 1, 12, 17), 1)
+        eyes = []
+        head_tumor = (x - 2, hy - 2, 3)
+        sites = [head_tumor, (x + 3, y + 6, 5), (x - 3, y + 11, 4), (x + 1, y + 15, 3)]
+    else:                                                        # FRONT
+        rng = random.Random(11)
         pygame.draw.circle(surf, _SALLOW, (x, hy), 6)            # flayed sallow head
         pygame.draw.circle(surf, _SALLOW_LO, (x, hy), 6, 1)
         pygame.draw.rect(surf, _SALLOW, (x - 6, y - 1, 12, 17))  # flayed sallow torso
         pygame.draw.rect(surf, _SALLOW_LO, (x - 6, y - 1, 12, 17), 1)
-        if view == "back":                                      # back of the skinned skull -- no face
-            eyes = []
-            head_tumor = (x - 2, hy - 2, 3)
-            sites = [head_tumor, (x + 3, y + 6, 5), (x - 4, y + 12, 4)]  # rearranged vs the front
-        else:                                                   # FRONT
-            eyes = [(x - 2, hy - 1), (x + 2, hy - 1)]
-            head_tumor = (x + 2, hy + 1, 3)
-            sites = [head_tumor, (x - 3, y + 5, 6), (x + 4, y + 12, 4)]
+        eyes = [(x - 2, hy - 1), (x + 2, hy - 1)]
+        head_tumor = (x + 2, hy + 1, 3)
+        sites = [head_tumor, (x - 3, y + 5, 6), (x + 4, y + 12, 4)]
     for ex, ey in eyes:
         pygame.draw.circle(surf, (44, 30, 28), (ex, ey), 1)
     for sx, sy, _r in sites:                                     # vessels first, under the masses
