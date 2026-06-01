@@ -14,6 +14,7 @@ from rendering.sprites import (draw_player_sprite, draw_npc_sprite,
                                draw_axe_swing, draw_king_death,
                                door_mask_surface, reset_king_fx)
 from rendering.transform import draw_vessel_bloom
+from rendering.camera import Camera
 from ui.fonts import make_fonts
 from ui.dialog import DialogueBox
 from ui.inventory_ui import InventoryUI
@@ -453,6 +454,13 @@ class Game(CutsceneMixin):
         self.transition_dir = "out"
         self.cam_x = 0
         self.cam_y = 0
+        # The single world->screen projection (CAMERA.md). At pitch 0 this is
+        # exactly the legacy `int(x - cam_x)` top-down view; keeping every
+        # render conversion behind it is what makes a future tilt a parameter
+        # change rather than a 37-scene rewrite. `cam_x/cam_y` remain the
+        # source of truth for the offset (camera update + input still use
+        # them); the camera is re-synced to them each frame in draw_world.
+        self.camera = Camera()
         self.title_choice = 0
         # title_options is computed each render via _title_menu_options
         # so the middle slot can flip between "Delete Save" (when a
@@ -3513,10 +3521,14 @@ class Game(CutsceneMixin):
             return
         self.screen.fill(C_BG)
         if not self.scene: return
+        # Re-sync the projection to the live camera offset for this frame.
+        # (pitch/yaw stay 0 in Phase 1 -> identical to the legacy view.)
+        self.camera.cam_x = self.cam_x
+        self.camera.cam_y = self.cam_y
         self.scene.draw(self.screen, self.cam_x, self.cam_y)
         self._draw_folds()
         for it in self.scene.items:
-            sx = int(it["x"] - self.cam_x); sy = int(it["y"] - self.cam_y)
+            sx, sy = self.camera.project(it["x"], it["y"])
             t = pygame.time.get_ticks() / 200.0
             bob = int(math.sin(t + (it["x"] + it["y"]) * 0.01) * 1)
             color = self._item_color(it["key"])
@@ -3563,8 +3575,7 @@ class Game(CutsceneMixin):
             # there's no growing rot stage to track (NARRATIVE 1b/3).
             if not getattr(npc, "alive", True):
                 for ox, oy in _offsets:
-                    sx = int(npc.x + ox - self.cam_x)
-                    sy = int(npc.y + oy - self.cam_y)
+                    sx, sy = self.camera.project(npc.x + ox, npc.y + oy)
                     if not _on_screen(sx, sy):
                         continue
                     draw_npc_corpse(self.screen, sx, sy, npc.sprite_kind,
@@ -3584,7 +3595,7 @@ class Game(CutsceneMixin):
                 # faint watching void, never fully gone, until he nears.
                 king_threat = max(0.15, min(1.0, 1.0 - (d - KING_THREAT_NEAR) / span))
             for ox, oy in _offsets:
-                sx = int(npc.x + ox - self.cam_x); sy = int(npc.y + oy - self.cam_y)
+                sx, sy = self.camera.project(npc.x + ox, npc.y + oy)
                 if not _on_screen(sx, sy):
                     continue
                 if m > 0.0:
@@ -3616,15 +3627,14 @@ class Game(CutsceneMixin):
             # on the road read as STRANGERS until they speak.
         for e in self.scene.enemies:
             for ox, oy in _offsets:
-                sx = int(e.x + ox - self.cam_x); sy = int(e.y + oy - self.cam_y)
+                sx, sy = self.camera.project(e.x + ox, e.y + oy)
                 if not _on_screen(sx, sy):
                     continue
                 e.draw(self.screen, self.cam_x - ox, self.cam_y - oy)
         for p in self.scene.projectiles:
             p.draw(self.screen, self.cam_x, self.cam_y)
         if self.player:
-            psx = int(self.player.x - self.cam_x)
-            psy = int(self.player.y - self.cam_y)
+            psx, psy = self.camera.project(self.player.x, self.player.y)
             if self.player.invuln > 0 and int(self.player.invuln * 12) % 2 == 0:
                 pass
             elif self.player.hidden is not None:
