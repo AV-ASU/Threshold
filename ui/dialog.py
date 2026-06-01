@@ -331,25 +331,35 @@ class DialogueBox:
                       special_flags=pygame.BLEND_RGBA_ADD)
 
         if kind == "tisdale_boy":
-            # Head cleaved into a vertical maw, gold up the throat.
-            gold_in(cx, cy + 4, 12, 48 + int(24 * thr))
-            pygame.draw.polygon(surf, MEAT,
-                                [(cx - 3, cy - 20), (cx + 3, cy - 20),
-                                 (cx + 7, cy + 20), (cx - 7, cy + 20)])
-            pygame.draw.polygon(surf, MEAT_LO,
-                                [(cx - 1, cy - 18), (cx + 1, cy - 18),
-                                 (cx + 3, cy + 18), (cx - 3, cy + 18)])
-            pygame.draw.line(surf, GOLD, (cx, cy - 6), (cx, cy + 14), 2)
-            pygame.draw.circle(surf, GOLD_HI, (cx, cy + 4), 2)
-            for ty in range(-16, 18, 4):
-                w = 2 + abs(ty) // 8
-                pygame.draw.polygon(surf, BONE, [(cx - 7 - w, cy + ty),
-                                    (cx - 7, cy + ty - 1), (cx - 7, cy + ty + 1)])
-                pygame.draw.polygon(surf, BONE, [(cx + 7 + w, cy + ty),
-                                    (cx + 7, cy + ty - 1), (cx + 7, cy + ty + 1)])
-            for ex in (-11, 11):
-                pygame.draw.circle(surf, (232, 230, 226), (cx + ex, cy - 8), 4)
-                pygame.draw.circle(surf, C_BLACK, (cx + ex, cy - 8), 2)
+            # Head cleaved into a vertical MAW (matches the world sprite):
+            # raw-flesh lips bow open around a deep dark throat, interlocking
+            # fangs run down both lips, gold burns in the gullet, eyes shoved
+            # to the corners of the cloven head.
+            top = cy - 20; bot = cy + 20; mid = cy; half = 20.0
+            gap = 7 + int(2 * thr)
+
+            def _edge(yy):
+                return gap * max(0.22, 1.0 - abs(yy - mid) / half)
+            gold_in(cx, mid, 12, 48 + int(24 * thr))
+            pygame.draw.polygon(surf, MEAT,                  # raw-flesh lips (outer lens)
+                                [(cx, top), (cx + gap + 2, mid), (cx, bot), (cx - gap - 2, mid)])
+            pygame.draw.polygon(surf, (30, 12, 14),          # the deep dark throat
+                                [(cx, top + 3), (cx + gap - 1, mid), (cx, bot - 3), (cx - gap + 1, mid)])
+            pygame.draw.line(surf, GOLD, (cx, top + 5), (cx, bot - 5), 2)   # gold down the gullet
+            pygame.draw.circle(surf, GOLD_HI, (cx, mid), 2)
+            for i, yy in enumerate(range(top + 3, bot - 1, 4)):  # interlocking fangs
+                w = _edge(yy)
+                if w < 2:
+                    continue
+                if i % 2 == 0:
+                    lx = int(cx - w)
+                    pygame.draw.polygon(surf, BONE, [(lx, yy - 2), (lx, yy + 3), (lx + 4, yy)])
+                else:
+                    rx = int(cx + w)
+                    pygame.draw.polygon(surf, BONE, [(rx, yy - 2), (rx, yy + 3), (rx - 4, yy)])
+            for ex in (-gap - 4, gap + 4):                   # eyes shoved to the corners
+                pygame.draw.circle(surf, (232, 230, 226), (cx + ex, top + 5), 4)
+                pygame.draw.circle(surf, C_BLACK, (cx + ex, top + 5), 2)
         elif kind == "hettie":
             # Face peeled into petals; the Yellow Sign carved in the meat.
             fx, fy = cx, cy - 2
@@ -396,12 +406,12 @@ class DialogueBox:
                         pygame.draw.line(surf, VEIN, pts[i], pts[i + 1], 2)
 
             def tumor(tx, ty, r):
-                R = r + int(thr * 3)
+                R = r + int(thr * 1.5)
                 shc = pygame.Surface((R * 3, R * 2), pygame.SRCALPHA)
                 pygame.draw.ellipse(shc, (0, 0, 0, 90), (0, 0, R * 3, R * 2))
                 surf.blit(shc, (tx - R - 1, ty + R - 6))
-                pygame.draw.circle(surf, INFLAME, (tx, ty + 2), R + 3)
-                pygame.draw.circle(surf, INFLAME_LO, (tx, ty + 3), R + 3, 1)
+                pygame.draw.circle(surf, INFLAME, (tx, ty + 2), R + 2)
+                pygame.draw.circle(surf, INFLAME_LO, (tx, ty + 3), R + 2, 1)
                 for _ in range(3):
                     a = rng.uniform(0, 6.28); d = rng.uniform(0.5, 0.9) * R
                     pygame.draw.circle(surf, TDK,
@@ -426,7 +436,14 @@ class DialogueBox:
             pygame.draw.circle(surf, SALLOW_LO, (cx, cy - 4), 16, 1)
             pygame.draw.circle(surf, (44, 30, 28), (cx - 6, cy - 6), 2)  # sunken eye-pits
             pygame.draw.circle(surf, (44, 30, 28), (cx + 6, cy - 6), 2)
-            sites = [(cx - 6, cy + 4, 6), (cx + 7, cy - 1, 7), (cx, cy - 11, 5)]
+            # The spread: a vein network creeping across the flayed flesh
+            # (feeders + vessels off every nodule) carries the cancer; then
+            # SMALL nodules bulge from the meat -- matches the world sprite,
+            # not a few oversized blobs.
+            sites = [(cx - 7, cy + 3, 4), (cx + 6, cy, 3), (cx - 1, cy + 9, 4),
+                     (cx + 8, cy + 8, 3), (cx + 1, cy - 10, 3)]
+            for fx, fy in [(cx, cy - 2), (cx - 9, cy + 4), (cx + 9, cy + 5)]:
+                veins(fx, fy, 4, 16)
             for sx, sy, _r2 in sites:
                 veins(sx, sy, 3, 11)
             for sx, sy, r in sites:
