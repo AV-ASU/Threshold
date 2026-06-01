@@ -157,7 +157,8 @@ def draw_king3d(surf, cx, cy, yaw, t, threat=0.0, scale=2.4, light=-0.6):
     body_poly = body_r + body_l[::-1]
     if len(body_poly) >= 3:
         pygame.draw.polygon(surf, _VOIDC, body_poly)        # the dark void interior
-        pygame.draw.polygon(surf, _BODY_LO, body_poly, 1)
+        # NOTE: no outline here -- the void interior should have no rim; the
+        # only outline belongs to the porcelain plate (drawn below).
     # ONE glow, drawn BEHIND the plate (the mask occludes it; it haloes out as
     # it grows). It starts as the small dim calm core and GROWS in size +
     # brightness with threat -- same gold character, just bigger/brighter.
@@ -237,15 +238,28 @@ def draw_king3d(surf, cx, cy, yaw, t, threat=0.0, scale=2.4, light=-0.6):
         for sgn in (-1, 1):
             _draw_runs(surf, [proj(sgn * th, eye_h + 2.6) for th in (0.95, 0.6, 0.28)],
                        _PORC_DK, 1)
-        # craquelure: hairline cracks; the deep ones (first 3) carry a gold
-        # thread that brightens with threat (calm = the faintest warm hint).
+        # craquelure: at CALM only a few faint deep cracks show; as threat
+        # rises more cracks appear and darken, progressing to the full network
+        # the mask SHATTERS along (so the cracks become exactly the shard
+        # lines). The deep cracks seep gold first; the gold spreads with threat.
+        crack_layer = pygame.Surface(surf.get_size(), pygame.SRCALPHA)
         gold_layer = pygame.Surface(surf.get_size(), pygame.SRCALPHA)
-        ga = int(26 + 170 * threat)
-        for ci, pl in enumerate(_crack_net()):
+        cracks = _crack_net(); N = len(cracks)
+        for ci, pl in enumerate(cracks):
+            # the 3 deep cracks (seam + meridians) are present (faint) at calm;
+            # the rest reveal across the threat range toward the full network.
+            appear = 0.0 if ci < 3 else 0.08 + (ci - 3) / max(1, N - 4) * 0.78
+            ramp = max(0.0, min(1.0, (threat - appear) / 0.18))
+            vis = max(0.30 if ci < 3 else 0.0, ramp)
+            if vis <= 0.03:
+                continue
             scr = [proj(th, hh) for (th, hh) in pl]
-            _draw_runs(surf, scr, _PORC_DK, 1)
-            if ci < 3 and ga > 0:
+            _draw_runs(crack_layer, scr,
+                       (_PORC_DK[0], _PORC_DK[1], _PORC_DK[2], int(70 + 170 * vis)), 1)
+            ga = int((24 + 180 * threat) * vis * (1.0 if ci < 3 else 0.7))
+            if ga > 8:
                 _draw_runs(gold_layer, scr, (_GOLD[0], _GOLD[1], _GOLD[2], ga), 1)
+        surf.blit(crack_layer, (0, 0))
         surf.blit(gold_layer, (0, 0))
 
     # --- 3) surface features: the two void eyes + tear streaks, pinned in
@@ -256,13 +270,17 @@ def draw_king3d(surf, cx, cy, yaw, t, threat=0.0, scale=2.4, light=-0.6):
             continue                              # around the side/back -> hidden
         vis = min(1.0, rz / _hwd(eye_h)[1])        # 1 face-on, ->0 at the edge
         ex, ey = P(rx, h)
-        ew = max(1, int((2.4 + 3.0 * vis) * scale))   # big vacuous void; foreshortens
-        eh = int((5.4 + 0.8 * threat) * scale)
+        # the voids DEEPEN as he rouses: bigger, with a wider/darker socket rim.
+        ew = max(1, int((2.4 + 3.0 * vis + 1.2 * threat) * scale))
+        eh = int((5.0 + 3.2 * threat) * scale)
+        rimw = 2 + int(2.5 * threat)
         # recessed socket: a darker porcelain rim dipping into the void
         pygame.draw.ellipse(surf, _PORC_DK,
-                            (int(ex - ew / 2 - 2), int(ey - eh / 2 - 2), ew + 4, eh + 4))
+                            (int(ex - ew / 2 - rimw), int(ey - eh / 2 - rimw),
+                             ew + 2 * rimw, eh + 2 * rimw))
         pygame.draw.ellipse(surf, _PORC_LO,
-                            (int(ex - ew / 2 - 2), int(ey - eh / 2 - 2), ew + 4, eh + 4), 1)
+                            (int(ex - ew / 2 - rimw), int(ey - eh / 2 - rimw),
+                             ew + 2 * rimw, eh + 2 * rimw), 1)
         pygame.draw.ellipse(surf, _HOLLOW, (int(ex - ew / 2), int(ey - eh / 2), ew, eh))
         # the recessed Yellow glimpsed deep in the void -- a small glow with the
         # black void all around it (brightens as he rouses).
