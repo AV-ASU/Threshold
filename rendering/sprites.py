@@ -391,8 +391,43 @@ def _draw_curse_priest_raw(surf, x, y, t, facing=(0, 1), curse=0.0):
     _pallid_mask(surf, sx, top - 4, view, mdir, bloom)
 
 
+# Tier-2 (2.5D) head config for the bare human NPC kinds: the front body draws
+# as authored, then _npc_view_overlay re-orients the HEAD to the camera view.
+# kind -> (head y-offset from y, radius, rear cap/hair colour).
+_NPC_HEAD = {
+    "townswoman":   (-12, 7, (50, 32, 24)),
+    "tisdale_boy":  (-8, 6, (80, 50, 30)),
+    "old_townsman": (-12, 7, (40, 28, 16)),
+    "hettie":       (-12, 7, (20, 18, 20)),
+    "sheriff":      (-12, 7, (70, 52, 36)),
+    "royce":        (-12, 7, (130, 52, 44)),
+    "preacher":     (-12, 7, (150, 150, 156)),
+    "clerk":        (-12, 7, (40, 34, 30)),
+}
+
+
+def _npc_view_overlay(surf, x, y, kind, view):
+    """Tier-2 post-pass over a human NPC's front body: 'back' covers the face
+    (and eyes) with the rear cap so you see the back of the head; 'left'/'right'
+    sweep the cap over the far half for a profile. Only kinds in _NPC_HEAD are
+    touched -- masked/hooded/non-human kinds are left alone."""
+    cfg = _NPC_HEAD.get(kind)
+    if cfg is None:
+        return
+    hy, r, cap = cfg
+    cy = y + hy
+    if view == "back":
+        pygame.draw.circle(surf, cap, (x, cy), r)
+        cap_lo = tuple(int(c * 0.7) for c in cap)
+        pygame.draw.rect(surf, cap_lo, (x - 2, cy + r - 2, 4, 2))   # nape
+    elif view in ("left", "right"):
+        s = 1 if view == "right" else -1
+        pygame.draw.circle(surf, cap, (x - (r - 2) * s, cy), r - 1)  # rear covers far eye
+
+
 def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False,
-                    birth=None, gait=None, threat=None, seed=0, curse=0.0):
+                    birth=None, gait=None, threat=None, seed=0, curse=0.0,
+                    view="front"):
     """`blink=True` suppresses eye dots for NPC kinds that have human
     eyes (the named locals -- townswoman, tisdale_boy, sheriff, royce,
     preacher, clerk, hettie, old_townsman). Used by Game.draw to make a
@@ -927,6 +962,10 @@ def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False,
     else:
         # generic placeholder
         pygame.draw.rect(surf, (200, 200, 200), (x - 8, y - 8, 16, 16))
+    # Tier-2: re-orient the head to the camera view (no-op for front + for any
+    # kind not in _NPC_HEAD; flat top-down never passes a view).
+    if view != "front":
+        _npc_view_overlay(surf, x, y, kind, view)
 
 
 # Dominant garment tint per local sprite kind, so a downed local still

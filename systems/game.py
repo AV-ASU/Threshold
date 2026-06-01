@@ -3699,12 +3699,16 @@ class Game(CutsceneMixin):
                     # it fades as the dispel timer fills, so the cure reads.
                     w_gaze = (npc.sprite_kind == "watcher"
                               and getattr(npc, "_gaze_dispel_t", 0.0) > 0.05)
+                    nview = "front"
+                    if self._tilt_on():
+                        nview = view_from_facing(npc.facing[0], npc.facing[1],
+                                                 self.camera.yaw)
                     draw_npc_sprite(self.screen, sx, sy, npc.sprite_kind,
                                     npc.facing, blink=(i == blink_idx),
                                     birth=getattr(npc, "_birth", None),
                                     gait=getattr(npc, "_gait", None),
                                     threat=king_threat, seed=id(npc) & 0xffff,
-                                    curse=curse_v, gaze=w_gaze)
+                                    curse=curse_v, gaze=w_gaze, view=nview)
                     # A resister whose flesh has turned: their bespoke
                     # fold-horror form, laid over the person they were.
                     if getattr(npc, "_mutated", False):
