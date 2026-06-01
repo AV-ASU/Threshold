@@ -126,7 +126,10 @@ CAM_LOOKAHEAD = 96
 TILT_PITCH_DEG = 55
 TILT_EASE = 0.12             # per-frame lerp of pitch toward its target
 TILT_ZOOM = 0.72             # camera scale at full tilt (1.0 = top-down)
-TILT_ACTOR_STAND = 15        # px a sprite centre rises to stand on the floor
+TILT_ACTOR_STAND = 15        # default px a sprite centre rises to stand
+# Taller sprites need their centre lifted further so their feet meet the
+# floor (foot-offset in sprite px); falls back to TILT_ACTOR_STAND.
+TILT_LIFT = {"yellow_king": 30, "sheriff_hollow": 22, "watcher": 20}
 
 # Dark scenes -- underground / interior cult sites where the
 # flashlight matters. Without the flashlight the screen is heavily
@@ -3632,11 +3635,13 @@ class Game(CutsceneMixin):
                 # whole time he's on screen). The 0.15 floor keeps him a
                 # faint watching void, never fully gone, until he nears.
                 king_threat = max(0.15, min(1.0, 1.0 - (d - KING_THREAT_NEAR) / span))
+            npc_lift = int(TILT_LIFT.get(npc.sprite_kind, TILT_ACTOR_STAND)
+                           * math.sin(self.camera.pitch))
             for ox, oy in _offsets:
                 sx, sy = self.camera.project(npc.x + ox, npc.y + oy)
                 if not _on_screen(sx, sy):
                     continue
-                sy -= actor_lift          # stand on the floor under tilt
+                sy -= npc_lift            # stand on the floor under tilt
                 if m > 0.0:
                     draw_vessel_bloom(self.screen, sx, sy, npc.sprite_kind,
                                       npc.facing, m, seed=id(npc) & 0xffff)
