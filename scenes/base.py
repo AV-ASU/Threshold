@@ -1492,11 +1492,21 @@ def draw_terrain_tilted(surf, scene, camera, focus=None):
     walls.sort(key=lambda c: camera.depth(c[0] * TILE + TILE / 2,
                                           c[1] * TILE + TILE / 2,
                                           _TILT_WALL_RISE))
-    # Ground props (decorations) project through the same camera, so they sit
-    # on the warped floor. Drawn before walls so a wall in front overdraws a
-    # prop behind it. (Primary copy only; wrap-clones are a fine-tune.)
+    # Props. Ground decals (rugs, stains, blood) stay flat on the warped floor;
+    # curated upright furniture becomes a projected box VOLUME (depth + correct
+    # rotation under the camera). Flat decals first so a box behind a rug still
+    # reads; boxes depth-sorted far->near so they overlap correctly. Walls draw
+    # after, so a wall in front still overdraws a prop behind it.
+    from rendering.furniture import is_solid_furniture, draw_furniture_solid
+    solid_decos = []
     for d in scene.decorations:
-        d.draw(surf, 0, 0, camera)
+        if is_solid_furniture(d.kind):
+            solid_decos.append(d)
+        else:
+            d.draw(surf, 0, 0, camera)
+    solid_decos.sort(key=lambda d: camera.depth(d.x, d.y))
+    for d in solid_decos:
+        draw_furniture_solid(surf, camera, d)
     # Split walls on the focus (player) depth: behind -> draw now; in front ->
     # return for the caller to draw after the actors.
     fdepth = camera.depth(focus[0], focus[1]) if focus else float("inf")
