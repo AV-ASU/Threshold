@@ -258,16 +258,10 @@ def _scream_face(surf, cx, cy, r=3, gold=False):
 # Tier-2 (2.5D) head config for the bare human NPC kinds: the front body draws
 # as authored, then _npc_view_overlay re-orients the HEAD to the camera view.
 # kind -> (head y-offset from y, radius, rear cap/hair colour).
-_NPC_HEAD = {
-    "townswoman":   (-12, 6, (34, 26, 22)),
-    "tisdale_boy":  (-8, 5, (58, 44, 26)),
-    "old_townsman": (-12, 6, (26, 18, 12)),
-    "hettie":       (-12, 6, (108, 104, 108)),
-    "sheriff":      (-12, 6, (48, 36, 24)),
-    "royce":        (-12, 6, (104, 44, 38)),
-    "preacher":     (-12, 6, (120, 120, 126)),
-    "clerk":        (-12, 6, (30, 26, 24)),
-}
+# Every human NPC kind is now HANDCRAFTED per camera view (front / back /
+# profile) inside draw_npc_sprite -- the old head-cap post-pass is retired,
+# so this stays empty (kept only so _npc_view_overlay no-ops cleanly).
+_NPC_HEAD = {}
 
 # Darkwood / Fear&Hunger grim-human base, shared by the local NPC kinds. The
 # locals cast NO contact shadow -- canon: "the player is the only thing here
@@ -276,11 +270,42 @@ _NPC_HEAD = {
 _GLINT_COLD = (118, 122, 126)
 
 
-def _grim_body(surf, x, y, base, w=14, h=19, ragged=True, grime=True):
+def _grim_body(surf, x, y, base, w=14, h=19, ragged=True, grime=True, view="front"):
     """A near-black clothed torso: a hard shadow side, a thin rim light, a
-    frayed hem and a grime smudge -- the gaunt, oppressed-villager silhouette."""
+    frayed hem and a grime smudge -- the gaunt, oppressed-villager silhouette.
+
+    Handcrafted per camera view (no head-cap trick): 'back' trades the front
+    grime smudge for a spine seam + shoulder yoke; the profiles narrow the
+    torso, lead with the near shoulder and carry the rim light on the leading
+    edge."""
     drk = tuple(int(c * 0.42) for c in base)
     lit = tuple(min(255, int(c * 1.22)) for c in base)
+    top = tuple(int(c * 0.7) for c in base)
+    if view in ("left", "right"):
+        s = 1 if view == "right" else -1
+        nw = w - 4                                          # the body turned edge-on
+        pygame.draw.rect(surf, base, (x - nw // 2, y - 2, nw, h))
+        pygame.draw.rect(surf, drk, (x - nw // 2 - s, y - 2, nw, h), 1)
+        pygame.draw.rect(surf, top, (x - nw // 2, y - 2, nw, 2))            # collar
+        pygame.draw.rect(surf, drk, (x - (nw // 2) * s, y - 2, 3, h))       # trailing back in shadow
+        pygame.draw.rect(surf, lit, (x + (nw // 2 - 1) * s, y - 1, 2, h - 1))  # lead-edge rim
+        sh = x + (nw // 2 - 1) if s > 0 else x - (nw // 2 + 1)
+        pygame.draw.rect(surf, base, (sh, y - 2, 3, 6))                     # lead shoulder
+        pygame.draw.rect(surf, lit, (sh + (2 if s > 0 else 0), y - 2, 1, 6))
+        if ragged:
+            for i in range(-nw // 2, nw // 2 - 1, 3):
+                pygame.draw.rect(surf, C_BLACK, (x + i + 1, y + h - 3, 2, 3))
+        return
+    if view == "back":
+        pygame.draw.rect(surf, base, (x - w // 2, y - 2, w, h))
+        pygame.draw.rect(surf, drk, (x - w // 2 + (w * 3) // 5, y - 2, (w * 2) // 5, h))
+        pygame.draw.rect(surf, top, (x - w // 2, y - 2, w, 3))             # shoulder yoke
+        pygame.draw.rect(surf, lit, (x - w // 2, y - 1, 2, h - 1))         # rim
+        pygame.draw.line(surf, drk, (x, y + 1), (x, y + h - 2), 1)          # spine seam
+        if ragged:
+            for i in range(-w // 2, w // 2 - 1, 3):
+                pygame.draw.rect(surf, C_BLACK, (x + i + 1, y + h - 3, 2, 3))
+        return
     pygame.draw.rect(surf, base, (x - w // 2, y - 2, w, h))
     pygame.draw.rect(surf, drk, (x - w // 2 + (w * 3) // 5, y - 2, (w * 2) // 5, h))
     pygame.draw.rect(surf, tuple(int(c * 0.7) for c in base), (x - w // 2, y - 2, w, 2))
@@ -372,6 +397,45 @@ def _npc_view_overlay(surf, x, y, kind, view):
         pygame.draw.circle(surf, cap, (x - (r - 2) * s, cy), r - 1)  # rear covers far eye
 
 
+def _oldhat(surf, x, y, crown, crown_lo, crown_hi, brim, brim_lo, s=0):
+    """A battered slouch hat: a dented, rounded crown with a band over a
+    DROOPING OVAL brim (not stacked rectangles). `s` (-1/0/+1) shifts the
+    crown + brim forward for a profile view."""
+    cx = x + s * 2                                       # crown leans to the face in profile
+    if s > 0:
+        brim_rect = (x - 6, y - 21, 21, 6)
+    elif s < 0:
+        brim_rect = (x - 15, y - 21, 21, 6)
+    else:
+        brim_rect = (x - 11, y - 21, 22, 6)
+    pygame.draw.ellipse(surf, brim, brim_rect)                       # oval brim
+    pygame.draw.ellipse(surf, brim_lo, brim_rect, 1)
+    pygame.draw.arc(surf, brim_lo, (brim_rect[0], brim_rect[1],      # drooping front lip
+                    brim_rect[2], brim_rect[3] + 3), 3.4, 6.0, 1)
+    cw, ch = 12, 13                                                  # rounded crown dome
+    pygame.draw.ellipse(surf, crown, (cx - cw // 2, y - 28, cw, ch))
+    pygame.draw.ellipse(surf, crown_lo, (cx - cw // 2, y - 28, cw, ch), 1)
+    pygame.draw.line(surf, crown_lo, (cx - 3, y - 26), (cx + 3, y - 26), 1)   # battered dent
+    pygame.draw.line(surf, crown_hi, (cx - 4, y - 25), (cx - 4, y - 21), 1)   # top-left sheen
+    pygame.draw.rect(surf, crown_lo, (cx - cw // 2 + 1, y - 21, cw - 2, 2))   # hat band
+
+
+def _cap(surf, x, y, crown, crown_lo, bill, s=0):
+    """A soft feed cap: a rounded crown over the head + a forward bill that
+    shadows the brow. `s` (-1/0/+1) juts the bill forward for a profile."""
+    cx = x + s
+    pygame.draw.ellipse(surf, crown, (cx - 7, y - 25, 14, 11))               # rounded crown
+    pygame.draw.ellipse(surf, crown_lo, (cx - 7, y - 25, 14, 11), 1)
+    pygame.draw.line(surf, crown_lo, (cx - 5, y - 23), (cx + 5, y - 23), 1)  # seam
+    if s == 0:
+        pygame.draw.ellipse(surf, bill, (x - 8, y - 16, 16, 4))             # bill faces viewer
+        pygame.draw.ellipse(surf, crown_lo, (x - 8, y - 16, 16, 4), 1)
+    else:
+        bx = x + 1 if s > 0 else x - 12
+        pygame.draw.ellipse(surf, bill, (bx, y - 16, 12, 3))               # bill juts forward
+        pygame.draw.ellipse(surf, crown_lo, (bx, y - 16, 12, 3), 1)
+
+
 def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False,
                     birth=None, gait=None, threat=None, seed=0, curse=0.0,
                     view="front"):
@@ -388,27 +452,68 @@ def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False,
         # Mrs. Calder & the Brimley women. F&H-gaunt: a crushed-dark red dress
         # over a grubby apron, lank dark hair in a bun, a sallow hollow-eyed
         # face. The welcome never reaches her eyes; void pits on blink.
-        _grim_body(surf, x, y, (96, 44, 52))
-        if view != "back":
-            pygame.draw.rect(surf, (118, 112, 100), (x - 5, y + 2, 10, 13))   # grubby apron
-            pygame.draw.rect(surf, (70, 60, 52), (x - 5, y + 12, 10, 3))      # hem stain
-        _gaunt_head(surf, x, y, (150, 148, 122), blink=blink, view=view)
-        pygame.draw.rect(surf, (38, 28, 24), (x - 6, y - 19, 12, 5))      # dark hair
-        pygame.draw.circle(surf, (38, 28, 24), (x, y - 20), 3)            # bun
-        if view != "back":
-            pygame.draw.line(surf, (30, 22, 20), (x - 5, y - 14), (x - 6, y - 9), 2)  # lank strand
+        # HANDCRAFTED per camera view -- no head-cap trick.
+        dress = (96, 44, 52); skin = (150, 148, 122); sk_lo = (63, 62, 51)
+        hair = (38, 28, 24); hair_lo = (30, 22, 20); apron = (118, 112, 100)
+        hcy = y - 12; HN, HT = 6, 16
+        if view == "back":
+            _grim_body(surf, x, y, dress, view=view)
+            pygame.draw.ellipse(surf, skin, (x - HN, hcy - 7, HN * 2, HT))
+            pygame.draw.ellipse(surf, sk_lo, (x - HN, hcy - 7, HN * 2, HT), 1)
+            pygame.draw.ellipse(surf, hair, (x - HN, hcy - 8, HN * 2, 13))      # hair sweep
+            pygame.draw.line(surf, hair_lo, (x, hcy - 4), (x, hcy + 6), 1)      # part
+            pygame.draw.circle(surf, hair, (x, hcy - 7), 3)                     # bun
+        elif view in ("left", "right"):
+            s = 1 if view == "right" else -1
+            _grim_body(surf, x, y, dress, view=view)
+            pygame.draw.rect(surf, apron, (x - 4, y + 2, 8, 13))               # apron edge-on
+            _gaunt_head(surf, x, y, skin, narrow=HN, tall=HT, blink=blink, view=view)
+            pygame.draw.ellipse(surf, hair, (x - HN, hcy - 8, HN * 2, 8))       # hair over crown
+            pygame.draw.rect(surf, hair, (x - HN if s < 0 else x + HN - 3, hcy - 6, 3, 9))  # back fall
+            pygame.draw.circle(surf, hair, (x - 4 * s, hcy - 6), 3)            # bun at back
+            pygame.draw.line(surf, hair_lo, (x + 2 * s, hcy - 1), (x + 2 * s, hcy + 4), 1)  # strand
+        else:
+            _grim_body(surf, x, y, dress, view=view)
+            pygame.draw.rect(surf, apron, (x - 5, y + 2, 10, 13))              # grubby apron
+            pygame.draw.rect(surf, (70, 60, 52), (x - 5, y + 12, 10, 3))       # hem stain
+            _gaunt_head(surf, x, y, skin, narrow=HN, tall=HT, blink=blink, view=view)
+            pygame.draw.ellipse(surf, hair, (x - HN, y - 21, HN * 2, 7))       # dark hair sweep
+            pygame.draw.circle(surf, hair, (x, y - 20), 3)                     # bun
+            pygame.draw.line(surf, hair_lo, (x - 5, y - 14), (x - 6, y - 9), 2)  # lank strand
     elif kind == "old_townsman":
         # The interchangeable old-timers (Old Pell, Garrick, the road pilgrims).
         # A dark brown coat, a battered hat low over a sallow gaunt face, a
         # kept-too-long ash-yellow beard, a cane. Void pits on blink.
-        _grim_body(surf, x, y, (66, 52, 36))
-        _gaunt_head(surf, x, y, (146, 142, 116), blink=blink, view=view)
-        if view != "back":
-            pygame.draw.rect(surf, (150, 148, 128), (x - 6, y - 6, 12, 6))    # ash beard
-            pygame.draw.rect(surf, (150, 148, 128), (x - 4, y - 2, 8, 3))     # beard point
-        pygame.draw.rect(surf, (22, 16, 10), (x - 9, y - 20, 18, 3))      # hat brim
-        pygame.draw.rect(surf, (26, 18, 12), (x - 6, y - 26, 12, 7))      # crown
-        pygame.draw.line(surf, (74, 50, 26), (x + 9, y - 4), (x + 9, y + 14), 2)  # cane
+        # HANDCRAFTED per camera view (front / back / profile) -- no head-cap.
+        coat = (66, 52, 36); skin = (146, 142, 116); sk_lo = (61, 59, 48)
+        beard = (150, 148, 128); cane = (74, 50, 26)
+        hatc = (30, 22, 14); hatc_lo = (16, 11, 7); hatc_hi = (52, 40, 26)
+        hatb = (22, 16, 10); hatb_lo = (12, 9, 5)
+        hcy = y - 12; HN, HT = 6, 16
+        if view == "back":
+            _grim_body(surf, x, y, coat, view=view)
+            pygame.draw.ellipse(surf, skin, (x - HN, hcy - 7, HN * 2, HT))      # back of skull
+            pygame.draw.ellipse(surf, sk_lo, (x - HN, hcy - 7, HN * 2, HT), 1)
+            pygame.draw.rect(surf, beard, (x - HN, hcy, HN * 2, 8))            # ash hair down the nape
+            pygame.draw.line(surf, (120, 116, 96), (x, hcy), (x, hcy + 7), 1)   # part
+            _oldhat(surf, x, y, hatc, hatc_lo, hatc_hi, hatb, hatb_lo)         # hat (rings the head)
+            pygame.draw.line(surf, cane, (x + 9, y - 4), (x + 9, y + 14), 2)   # cane
+        elif view in ("left", "right"):
+            s = 1 if view == "right" else -1
+            _grim_body(surf, x, y, coat, view=view)
+            _gaunt_head(surf, x, y, skin, narrow=HN, tall=HT, blink=blink, view=view)
+            pygame.draw.polygon(surf, beard,                                  # beard juts off the jaw
+                                [(x, hcy + 4), (x + 7 * s, hcy + 5),
+                                 (x + 6 * s, hcy + 10), (x + s, hcy + 8)])
+            _oldhat(surf, x, y, hatc, hatc_lo, hatc_hi, hatb, hatb_lo, s=s)
+            pygame.draw.line(surf, cane, (x + 7 * s, y - 2), (x + 7 * s, y + 15), 2)  # near-side cane
+        else:
+            _grim_body(surf, x, y, coat, view=view)
+            _gaunt_head(surf, x, y, skin, narrow=HN, tall=HT, blink=blink, view=view)
+            pygame.draw.rect(surf, beard, (x - 6, y - 5, 12, 6))             # ash beard
+            pygame.draw.rect(surf, beard, (x - 4, y - 1, 8, 3))              # beard point
+            _oldhat(surf, x, y, hatc, hatc_lo, hatc_hi, hatb, hatb_lo)        # hat
+            pygame.draw.line(surf, cane, (x + 9, y - 4), (x + 9, y + 14), 2)  # cane
     elif kind == "hettie":
         # Hettie -- keeps the shop open, sweeping a step that won't get
         # dirty. A plum housedress under a worn white apron, grey hair
@@ -417,41 +522,78 @@ def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False,
         # FILLED black -- you can never quite find her eyes behind them --
         # with a reflection-glint on the WRONG (same) side of both lenses,
         # impossible under a single overhead light.
-        _grim_body(surf, x, y, (84, 50, 64))                              # plum dress
-        if view != "back":
-            pygame.draw.rect(surf, (124, 120, 108), (x - 5, y + 1, 10, 14))    # worn apron
-            pygame.draw.rect(surf, (88, 78, 70), (x - 5, y + 12, 10, 2))       # apron hem
-        _gaunt_head(surf, x, y, (146, 142, 118), blink=blink, view=view)
-        pygame.draw.rect(surf, (120, 118, 122), (x - 6, y - 19, 12, 4))    # grey hair
-        pygame.draw.circle(surf, (120, 118, 122), (x, y - 20), 3)          # bun
-        pygame.draw.rect(surf, (96, 56, 70), (x - 6, y - 20, 12, 3))       # kerchief band
-        # Black-lens spectacles over the sockets -- the uncanny tell.
-        if blink:
-            pygame.draw.rect(surf, (4, 2, 6), (x - 5, y - 14, 4, 4))
-            pygame.draw.rect(surf, (4, 2, 6), (x + 1, y - 14, 4, 4))
+        # HANDCRAFTED per camera view -- no head-cap trick.
+        dress = (84, 50, 64); skin = (146, 142, 118); sk_lo = (61, 60, 49)
+        hair = (120, 118, 122); kerch = (96, 56, 70); apron = (124, 120, 108)
+        hcy = y - 12; HN, HT = 6, 16
+        if view == "back":
+            _grim_body(surf, x, y, dress, view=view)
+            pygame.draw.ellipse(surf, skin, (x - HN, hcy - 7, HN * 2, HT))
+            pygame.draw.ellipse(surf, sk_lo, (x - HN, hcy - 7, HN * 2, HT), 1)
+            pygame.draw.ellipse(surf, hair, (x - HN, hcy - 8, HN * 2, 12))      # grey hair
+            pygame.draw.circle(surf, hair, (x, hcy - 6), 3)                     # bun
+            pygame.draw.ellipse(surf, kerch, (x - HN, hcy - 9, HN * 2, 5))      # kerchief crown
+        elif view in ("left", "right"):
+            s = 1 if view == "right" else -1
+            _grim_body(surf, x, y, dress, view=view)
+            pygame.draw.rect(surf, apron, (x - 4, y + 1, 8, 14))               # apron edge-on
+            _gaunt_head(surf, x, y, skin, narrow=HN, tall=HT, blink=blink, view=view)
+            pygame.draw.ellipse(surf, hair, (x - HN, hcy - 8, HN * 2, 7))       # hair crown
+            pygame.draw.rect(surf, hair, (x - HN if s < 0 else x + HN - 3, hcy - 6, 3, 8))  # back fall
+            pygame.draw.circle(surf, hair, (x - 4 * s, hcy - 6), 3)            # bun at back
+            pygame.draw.rect(surf, kerch, (x - HN, hcy - 9, HN * 2, 3))         # kerchief band
+            if not blink:
+                pygame.draw.rect(surf, (12, 12, 16), (x + s * 2 - 1, hcy - 2, 4, 3))  # lead lens
         else:
-            pygame.draw.rect(surf, (12, 12, 16), (x - 5, y - 14, 4, 3))    # L lens
-            pygame.draw.rect(surf, (12, 12, 16), (x + 1, y - 14, 4, 3))    # R lens
-            pygame.draw.line(surf, (40, 40, 50), (x - 1, y - 13), (x + 1, y - 13), 1)  # bridge
-            try:
-                surf.set_at((x - 3, y - 14), (140, 150, 160))
-                surf.set_at((x + 3, y - 14), (140, 150, 160))   # wrong-side glint
-            except (IndexError, ValueError):
-                pass
+            _grim_body(surf, x, y, dress, view=view)
+            pygame.draw.rect(surf, apron, (x - 5, y + 1, 10, 14))              # worn apron
+            pygame.draw.rect(surf, (88, 78, 70), (x - 5, y + 12, 10, 2))       # apron hem
+            _gaunt_head(surf, x, y, skin, narrow=HN, tall=HT, blink=blink, view=view)
+            pygame.draw.ellipse(surf, hair, (x - HN, y - 21, HN * 2, 7))       # grey hair
+            pygame.draw.circle(surf, hair, (x, y - 20), 3)                     # bun
+            pygame.draw.rect(surf, kerch, (x - HN, y - 21, HN * 2, 3))         # kerchief band
+            # Black-lens spectacles over the sockets -- the uncanny tell.
+            if blink:
+                pygame.draw.rect(surf, (4, 2, 6), (x - 5, y - 14, 4, 4))
+                pygame.draw.rect(surf, (4, 2, 6), (x + 1, y - 14, 4, 4))
+            else:
+                pygame.draw.rect(surf, (12, 12, 16), (x - 5, y - 14, 4, 3))    # L lens
+                pygame.draw.rect(surf, (12, 12, 16), (x + 1, y - 14, 4, 3))    # R lens
+                pygame.draw.line(surf, (40, 40, 50), (x - 1, y - 13), (x + 1, y - 13), 1)  # bridge
+                try:
+                    surf.set_at((x - 3, y - 14), (140, 150, 160))
+                    surf.set_at((x + 3, y - 14), (140, 150, 160))   # wrong-side glint
+                except (IndexError, ValueError):
+                    pass
     elif kind == "tisdale_boy":
         # Toby Tisdale. Desaturated yellow tunic; the original bright
         # primary made the kid read as cheerful, which fights the use.
         # Hair hangs lower over the brow; the cheek dots used to be
         # freckles, now they sit slightly low and asymmetric so they
         # read as old tear-streaks when you look twice.
-        _grim_body(surf, x, y + 2, (150, 138, 64), w=13, h=14)
-        _gaunt_head(surf, x, y, (154, 150, 124), hy=-8, narrow=5, tall=13, blink=blink, view=view)
-        pygame.draw.rect(surf, (58, 40, 24), (x - 6, y - 15, 12, 5))      # hair cap
-        if view != "back":
-            pygame.draw.rect(surf, (58, 40, 24), (x - 5, y - 11, 10, 2))      # low fringe over brow
-            # Old tear-tracks down sallow cheeks -- low, asymmetric.
-            pygame.draw.line(surf, (122, 118, 98), (x - 4, y - 6), (x - 4, y - 3), 1)
-            pygame.draw.line(surf, (118, 112, 94), (x + 4, y - 5), (x + 4, y - 2), 1)
+        # HANDCRAFTED per camera view (child proportions) -- no head-cap.
+        tunic = (150, 138, 64); skin = (154, 150, 124); sk_lo = (64, 63, 52)
+        hair = (58, 40, 24); hcy = y - 8; HN, HT = 6, 14
+        if view == "back":
+            _grim_body(surf, x, y + 2, tunic, w=13, h=14, view=view)
+            pygame.draw.ellipse(surf, skin, (x - HN, hcy - 7, HN * 2, HT))
+            pygame.draw.ellipse(surf, sk_lo, (x - HN, hcy - 7, HN * 2, HT), 1)
+            pygame.draw.ellipse(surf, hair, (x - HN, hcy - 8, HN * 2, 10))      # mop from behind
+            pygame.draw.line(surf, (40, 28, 16), (x, hcy - 3), (x, hcy + 3), 1)  # cowlick
+        elif view in ("left", "right"):
+            s = 1 if view == "right" else -1
+            _grim_body(surf, x, y + 2, tunic, w=13, h=14, view=view)
+            _gaunt_head(surf, x, y, skin, hy=-8, narrow=HN, tall=HT, blink=blink, view=view)
+            pygame.draw.ellipse(surf, hair, (x - HN, hcy - 8, HN * 2, 6))       # mop over crown
+            pygame.draw.rect(surf, hair, (x - HN if s < 0 else x + HN - 3, hcy - 7, 3, 5))  # back fall
+            pygame.draw.line(surf, (122, 118, 98), (x + 3 * s, hcy + 2), (x + 3 * s, hcy + 5), 1)  # tear
+        else:
+            _grim_body(surf, x, y + 2, tunic, w=13, h=14, view=view)
+            _gaunt_head(surf, x, y, skin, hy=-8, narrow=HN, tall=HT, blink=blink, view=view)
+            pygame.draw.ellipse(surf, hair, (x - HN, hcy - 8, HN * 2, 6))       # hair mop
+            pygame.draw.rect(surf, hair, (x - 5, hcy - 3, 10, 2))              # low fringe over brow
+            pygame.draw.line(surf, (122, 118, 98), (x - 4, hcy + 2), (x - 4, hcy + 5), 1)  # tear-track
+            pygame.draw.line(surf, (118, 112, 94), (x + 4, hcy + 3), (x + 4, hcy + 6), 1)
     elif kind == "bandit":
         # THRESHOLD: re-skinned as a hooded cultist. Coarse undyed-
         # wool robe (dirty cream) over a dark inner shirt; deep hood
@@ -501,45 +643,98 @@ def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False,
         # star going dull on the chest. The hat brim keeps the eyes in a
         # permanent dark band; stubble along the jaw; a man who hasn't
         # slept since the road stopped going anywhere. Void blink.
-        _grim_body(surf, x, y, (92, 80, 56))                             # grimy tan shirt
-        pygame.draw.rect(surf, (62, 54, 38), (x - 7, y + 9, 14, 4))       # belt line
-        _gaunt_head(surf, x, y, (148, 142, 116), blink=blink, view=view)
-        if view != "back":
+        # HANDCRAFTED per camera view -- no head-cap trick.
+        shirt = (92, 80, 56); skin = (148, 142, 116); sk_lo = (62, 60, 49)
+        hair = (74, 62, 44); hcy = y - 12; HN, HT = 6, 16
+        hc = (60, 46, 32); hc_lo = (34, 26, 18); hc_hi = (92, 74, 50)
+        hb = (48, 36, 24); hb_lo = (28, 21, 14)
+
+        def _star(sx):
+            pygame.draw.circle(surf, (150, 140, 84), (sx, y + 2), 2)
+            pygame.draw.circle(surf, (96, 88, 50), (sx, y + 2), 2, 1)
+        if view == "back":
+            _grim_body(surf, x, y, shirt, view=view)
+            pygame.draw.rect(surf, (62, 54, 38), (x - 7, y + 9, 14, 4))        # belt
+            pygame.draw.ellipse(surf, skin, (x - HN, hcy - 7, HN * 2, HT))
+            pygame.draw.ellipse(surf, sk_lo, (x - HN, hcy - 7, HN * 2, HT), 1)
+            pygame.draw.rect(surf, hair, (x - HN, hcy, HN * 2, 4))             # hair at nape
+            _oldhat(surf, x, y, hc, hc_lo, hc_hi, hb, hb_lo)
+        elif view in ("left", "right"):
+            s = 1 if view == "right" else -1
+            _grim_body(surf, x, y, shirt, view=view)
+            pygame.draw.rect(surf, (62, 54, 38), (x - 6, y + 9, 12, 4))        # belt
+            _gaunt_head(surf, x, y, skin, narrow=HN, tall=HT, blink=blink, view=view)
+            pygame.draw.circle(surf, (96, 92, 76), (x + 3 * s, hcy + 6), 1)    # stubble jaw
+            _oldhat(surf, x, y, hc, hc_lo, hc_hi, hb, hb_lo, s=s)
+            _star(x + 3 * s)                                                   # star edge-on
+        else:
+            _grim_body(surf, x, y, shirt, view=view)
+            pygame.draw.rect(surf, (62, 54, 38), (x - 7, y + 9, 14, 4))        # belt
+            _gaunt_head(surf, x, y, skin, narrow=HN, tall=HT, blink=blink, view=view)
             for sx2 in (-3, 1):
-                pygame.draw.circle(surf, (96, 92, 76), (x + sx2, y - 6), 1)   # stubble
-        pygame.draw.rect(surf, (48, 36, 24), (x - 10, y - 19, 20, 3))     # wide hat brim
-        pygame.draw.rect(surf, (60, 46, 32), (x - 6, y - 25, 12, 7))      # hat crown
-        if view != "back":
-            # Dull tin star going to rust.
-            pygame.draw.circle(surf, (150, 140, 84), (x - 4, y + 2), 2)
-            pygame.draw.circle(surf, (96, 88, 50), (x - 4, y + 2), 2, 1)
+                pygame.draw.circle(surf, (96, 92, 76), (x + sx2, y - 5), 1)    # stubble
+            _oldhat(surf, x, y, hc, hc_lo, hc_hi, hb, hb_lo)
+            _star(x - 4)
     elif kind == "royce":
         # Royce -- drives the river road to the county line and gets handed
         # back into Brimley every time. A working man, no fisherman: a
         # quilted flannel jacket over a pale tee, a faded feed cap, three
         # days of stubble. Cap brim shadows the tired eyes; void blink.
-        _grim_body(surf, x, y, (84, 56, 46))                            # grimy flannel
-        if view != "back":
-            pygame.draw.rect(surf, (120, 116, 108), (x - 3, y - 2, 6, 7))    # dull tee at collar
-        _gaunt_head(surf, x, y, (146, 140, 114), blink=blink, view=view)
-        if view != "back":
+        # HANDCRAFTED per camera view -- no head-cap trick.
+        flannel = (84, 56, 46); skin = (146, 140, 114); sk_lo = (61, 59, 48)
+        cap_c = (104, 44, 38); cap_lo = (62, 26, 22); cap_bill = (78, 32, 28)
+        hcy = y - 12; HN, HT = 6, 16
+        if view == "back":
+            _grim_body(surf, x, y, flannel, view=view)
+            pygame.draw.ellipse(surf, skin, (x - HN, hcy - 7, HN * 2, HT))
+            pygame.draw.ellipse(surf, sk_lo, (x - HN, hcy - 7, HN * 2, HT), 1)
+            pygame.draw.rect(surf, (60, 46, 34), (x - HN, hcy, HN * 2, 4))     # hair at nape
+            _cap(surf, x, y, cap_c, cap_lo, cap_bill)
+            pygame.draw.rect(surf, cap_lo, (x - 4, y - 23, 8, 2))             # adjuster strap
+        elif view in ("left", "right"):
+            s = 1 if view == "right" else -1
+            _grim_body(surf, x, y, flannel, view=view)
+            pygame.draw.rect(surf, (120, 116, 108), (x - 2, y - 2, 5, 7))      # tee collar edge
+            _gaunt_head(surf, x, y, skin, narrow=HN, tall=HT, blink=blink, view=view)
+            pygame.draw.circle(surf, (104, 98, 82), (x + 3 * s, hcy + 6), 1)   # stubble
+            _cap(surf, x, y, cap_c, cap_lo, cap_bill, s=s)
+        else:
+            _grim_body(surf, x, y, flannel, view=view)
+            pygame.draw.rect(surf, (120, 116, 108), (x - 3, y - 2, 6, 7))      # tee at collar
+            _gaunt_head(surf, x, y, skin, narrow=HN, tall=HT, blink=blink, view=view)
             for sx2 in (-3, 1):
-                pygame.draw.circle(surf, (104, 98, 82), (x + sx2, y - 6), 1)  # stubble
-        pygame.draw.rect(surf, (104, 44, 38), (x - 7, y - 18, 14, 4))    # cap crown (faded red)
-        pygame.draw.rect(surf, (78, 32, 28), (x - 8, y - 15, 12, 2))     # cap brim
+                pygame.draw.circle(surf, (104, 98, 82), (x + sx2, y - 5), 1)   # stubble
+            _cap(surf, x, y, cap_c, cap_lo, cap_bill)
     elif kind == "preacher":
         # Reverend Asa Crane -- gaunt, grey, the one who named them from
         # the pulpit. A black cassock, a white clerical collar at the
         # throat, thin grey hair, deep solemn hollows. He reads as already
         # half a ghost. A small pale cross at the breast. Void blink.
-        _grim_body(surf, x, y, (28, 26, 32))                            # black cassock
-        if view != "back":
-            pygame.draw.rect(surf, (210, 210, 214), (x - 3, y - 2, 6, 3))    # white clerical collar
-        _gaunt_head(surf, x, y, (156, 158, 140), blink=blink, view=view)           # palest -- half a ghost
-        pygame.draw.rect(surf, (120, 120, 126), (x - 6, y - 19, 12, 4))  # thin grey hair
-        if view != "back":
-            pygame.draw.line(surf, (150, 144, 120), (x + 5, y + 2), (x + 5, y + 8), 1)  # cross
-            pygame.draw.line(surf, (150, 144, 120), (x + 3, y + 4), (x + 7, y + 4), 1)
+        # HANDCRAFTED per camera view -- no head-cap trick.
+        cassock = (28, 26, 32); skin = (156, 158, 140); sk_lo = (65, 66, 58)
+        hair = (120, 120, 126); cross = (150, 144, 120); hcy = y - 12; HN, HT = 6, 16
+        if view == "back":
+            _grim_body(surf, x, y, cassock, view=view)
+            pygame.draw.ellipse(surf, skin, (x - HN, hcy - 7, HN * 2, HT))
+            pygame.draw.ellipse(surf, sk_lo, (x - HN, hcy - 7, HN * 2, HT), 1)
+            pygame.draw.ellipse(surf, hair, (x - HN, hcy - 8, HN * 2, 8))       # thin grey hair
+            pygame.draw.ellipse(surf, skin, (x - 3, hcy - 7, 6, 5))            # balding crown peeks
+        elif view in ("left", "right"):
+            s = 1 if view == "right" else -1
+            _grim_body(surf, x, y, cassock, view=view)
+            pygame.draw.rect(surf, (210, 210, 214), (x - 2, y - 2, 5, 3))      # collar edge
+            _gaunt_head(surf, x, y, skin, narrow=HN, tall=HT, blink=blink, view=view)
+            pygame.draw.ellipse(surf, hair, (x - HN, hcy - 8, HN * 2, 6))       # thin hair crown
+            pygame.draw.rect(surf, hair, (x - HN if s < 0 else x + HN - 3, hcy - 6, 3, 6))  # back fall
+            pygame.draw.line(surf, cross, (x + 5 * s, y + 2), (x + 5 * s, y + 8), 1)  # cross edge-on
+        else:
+            _grim_body(surf, x, y, cassock, view=view)
+            pygame.draw.rect(surf, (210, 210, 214), (x - 3, y - 2, 6, 3))      # clerical collar
+            _gaunt_head(surf, x, y, skin, narrow=HN, tall=HT, blink=blink, view=view)
+            pygame.draw.ellipse(surf, hair, (x - HN, y - 21, HN * 2, 6))       # thin grey hair
+            pygame.draw.ellipse(surf, skin, (x - 3, y - 21, 6, 4))            # high balding brow
+            pygame.draw.line(surf, cross, (x + 5, y + 2), (x + 5, y + 8), 1)   # cross
+            pygame.draw.line(surf, cross, (x + 3, y + 4), (x + 7, y + 4), 1)
     elif kind == "clerk":
         # The Lodge Clerk -- the smiling trap-keeper who never ages. A
         # pressed dark waistcoat over a white shirt, a thin tie, neat
@@ -547,16 +742,32 @@ def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False,
         # level smile that never reaches the eyes, and on blink the smile
         # stays while the eyes drop to voids -- the host's face running
         # without him in it.
-        _grim_body(surf, x, y, (40, 36, 44))                            # dark waistcoat
-        if view != "back":
-            pygame.draw.rect(surf, (198, 196, 194), (x - 3, y - 2, 6, 16))   # white shirt placket
-            pygame.draw.line(surf, (110, 28, 34), (x, y - 2), (x, y + 4), 1)  # thin red tie
-        _gaunt_head(surf, x, y, (160, 156, 142), blink=blink, mouth=False, view=view)  # pale, unbothered
-        pygame.draw.rect(surf, (30, 26, 24), (x - 6, y - 19, 12, 4))     # neat dark hair
-        pygame.draw.line(surf, (54, 48, 44), (x + 2, y - 19), (x + 2, y - 15), 1)  # side part
-        if view != "back":
-            # The level host's smile -- always on, even over the hollow eyes.
-            pygame.draw.line(surf, (132, 98, 98), (x - 3, y - 6), (x + 3, y - 6), 1)
+        # HANDCRAFTED per camera view -- no head-cap trick.
+        vest = (40, 36, 44); skin = (160, 156, 142); sk_lo = (67, 65, 59)
+        hair = (30, 26, 24); part = (54, 48, 44); hcy = y - 12; HN, HT = 6, 16
+        if view == "back":
+            _grim_body(surf, x, y, vest, view=view)
+            pygame.draw.ellipse(surf, skin, (x - HN, hcy - 7, HN * 2, HT))
+            pygame.draw.ellipse(surf, sk_lo, (x - HN, hcy - 7, HN * 2, HT), 1)
+            pygame.draw.ellipse(surf, hair, (x - HN, hcy - 8, HN * 2, 9))       # neat hair
+            pygame.draw.line(surf, part, (x + 2, hcy - 7), (x + 2, hcy + 1), 1)  # part
+        elif view in ("left", "right"):
+            s = 1 if view == "right" else -1
+            _grim_body(surf, x, y, vest, view=view)
+            pygame.draw.rect(surf, (198, 196, 194), (x - 2, y - 2, 4, 16))     # placket edge
+            pygame.draw.line(surf, (110, 28, 34), (x + s, y - 2), (x + s, y + 4), 1)  # tie
+            _gaunt_head(surf, x, y, skin, narrow=HN, tall=HT, blink=blink, mouth=False, view=view)
+            pygame.draw.ellipse(surf, hair, (x - HN, hcy - 8, HN * 2, 7))       # neat hair crown
+            pygame.draw.rect(surf, hair, (x - HN if s < 0 else x + HN - 3, hcy - 6, 3, 7))  # back fall
+            pygame.draw.line(surf, (132, 98, 98), (x + s, hcy + 6), (x + 3 * s, hcy + 6), 1)  # smile
+        else:
+            _grim_body(surf, x, y, vest, view=view)
+            pygame.draw.rect(surf, (198, 196, 194), (x - 3, y - 2, 6, 16))     # placket
+            pygame.draw.line(surf, (110, 28, 34), (x, y - 2), (x, y + 4), 1)   # red tie
+            _gaunt_head(surf, x, y, skin, narrow=HN, tall=HT, blink=blink, mouth=False, view=view)
+            pygame.draw.ellipse(surf, hair, (x - HN, y - 21, HN * 2, 7))       # neat dark hair
+            pygame.draw.line(surf, part, (x + 2, y - 20), (x + 2, y - 15), 1)  # side part
+            pygame.draw.line(surf, (132, 98, 98), (x - 3, y - 5), (x + 3, y - 5), 1)  # host smile
     elif kind == "guard":
         # Iron helmet + spear. The visor slit is now a deeper, pitch-
         # black void with two faint red glints inside -- you don't see
