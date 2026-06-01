@@ -1244,8 +1244,26 @@ def draw_infested_overlay(surf, x, y, kind):
     pygame.draw.rect(surf, (2, 0, 4), (x + 1, y - 13, 2, 2))
 
 
+def view_from_facing(fx, fy, yaw):
+    """Camera-relative sprite view -- 'front' / 'back' / 'left' / 'right' -- for
+    an actor facing world (fx, fy) under a camera yawed by `yaw` (Tier-2 / 2.5D
+    sprites). The viewer sits below the screen, so an actor facing toward
+    screen-bottom shows its FRONT, screen-top its BACK, the sides a profile.
+    Four equal 90deg quadrants. At pitch 0 the live game never asks for a view
+    (stays flat/front), so this only drives the oblique look mode."""
+    th = math.degrees(math.atan2(fy, fx) - yaw)
+    th = (th + 180) % 360 - 180
+    if 45 <= th < 135:
+        return "front"
+    if -135 <= th < -45:
+        return "back"
+    if -45 <= th < 45:
+        return "right"
+    return "left"
+
+
 def draw_player_sprite(surf, x, y, facing, walk_phase=0, armor=None,
-                        prone=False):
+                        prone=False, view="front"):
     """THRESHOLD: the private investigator, 1994. A long dark wool
     overcoat over a pale collar, dark trousers, scuffed work boots --
     the silhouette of a man who drove here on a case, not a tourist.
@@ -1294,22 +1312,44 @@ def draw_player_sprite(surf, x, y, facing, walk_phase=0, armor=None,
     pygame.draw.rect(surf, coat_lo, (x + 3, y - 5, 5, 17))   # right shadow side
     pygame.draw.rect(surf, coat_lo, (x - 8, y + 9, 16, 3))   # hem shadow
     pygame.draw.line(surf, coat_lo, (x, y - 3), (x, y + 8), 1)  # front seam
-    # Pale collar at the throat.
-    pygame.draw.rect(surf, collar, (x - 3, y - 5, 6, 3))
-    # Head
-    pygame.draw.circle(surf, skin, (x, y - 12), 7)
-    # Hair across the top
-    pygame.draw.rect(surf, hair, (x - 7, y - 18, 14, 6))
+    # Head + hair + collar, oriented to the camera-relative VIEW so the PI
+    # reads from any angle -- in the follow-cam he's usually seen from BEHIND.
+    if view == "back":
+        pygame.draw.rect(surf, coat_lo, (x - 3, y - 5, 6, 2))    # dark nape collar
+        pygame.draw.circle(surf, skin, (x, y - 12), 7)
+        pygame.draw.circle(surf, hair, (x, y - 13), 7)           # back of the skull
+        pygame.draw.rect(surf, skin, (x - 2, y - 7, 4, 2))       # neck sliver
+    elif view in ("left", "right"):
+        s = 1 if view == "right" else -1
+        pygame.draw.rect(surf, collar, (x - 3 + s, y - 5, 6, 3))
+        pygame.draw.circle(surf, skin, (x + s, y - 12), 7)
+        pygame.draw.rect(surf, hair, (x - 7, y - 18, 14, 6))     # top hair
+        pygame.draw.circle(surf, hair, (x - 4 * s, y - 13), 5)   # hair swept rearward
+        pygame.draw.rect(surf, skin, (x + 6 * s, y - 12, 2, 2))  # nose bump
+    else:
+        # Pale collar at the throat.
+        pygame.draw.rect(surf, collar, (x - 3, y - 5, 6, 3))
+        # Head
+        pygame.draw.circle(surf, skin, (x, y - 12), 7)
+        # Hair across the top
+        pygame.draw.rect(surf, hair, (x - 7, y - 18, 14, 6))
     # Boots: walking animation
     leg_off = int(math.sin(walk_phase) * 2)
     pygame.draw.rect(surf, boots, (x - 6, y + 14, 5, 4 + max(0, -leg_off)))
     pygame.draw.rect(surf, boots, (x + 1, y + 14, 5, 4 + max(0, leg_off)))
-    # Eyes (look in facing direction)
-    fx, fy = facing
-    eye_y = y - 12 + int(fy * 2)
-    eye_dx = int(fx * 2)
-    pygame.draw.circle(surf, C_BLACK, (x - 2 + eye_dx, eye_y), 1)
-    pygame.draw.circle(surf, C_BLACK, (x + 2 + eye_dx, eye_y), 1)
+    # Eyes -- only when the face is toward the camera.
+    if view == "back":
+        pass
+    elif view in ("left", "right"):
+        s = 1 if view == "right" else -1
+        pygame.draw.circle(surf, C_BLACK, (x + 2 * s, y - 12), 1)   # one eye, profile
+    else:
+        # Eyes (look in facing direction)
+        fx, fy = facing
+        eye_y = y - 12 + int(fy * 2)
+        eye_dx = int(fx * 2)
+        pygame.draw.circle(surf, C_BLACK, (x - 2 + eye_dx, eye_y), 1)
+        pygame.draw.circle(surf, C_BLACK, (x + 2 + eye_dx, eye_y), 1)
 
 
 # ===========================================================================

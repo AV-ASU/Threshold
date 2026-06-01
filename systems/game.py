@@ -12,7 +12,8 @@ from constants import (
 from rendering.sprites import (draw_player_sprite, draw_npc_sprite,
                                draw_npc_corpse, draw_infested_overlay,
                                draw_axe_swing, draw_king_death,
-                               door_mask_surface, reset_king_fx)
+                               door_mask_surface, reset_king_fx,
+                               view_from_facing)
 from rendering.transform import draw_vessel_bloom
 from rendering.camera import Camera
 from systems.look_control import LookController
@@ -3749,10 +3750,16 @@ class Game(CutsceneMixin):
                 self.screen.blit(tag, (psx - tag.get_width() // 2,
                                        psy - 40))
             else:
+                pview = "front"
+                if self._tilt_on():
+                    pview = view_from_facing(self.player.facing[0],
+                                             self.player.facing[1],
+                                             self.camera.yaw)
                 draw_player_sprite(self.screen, psx, psy, self.player.facing,
                                    self.player.walk_phase,
                                    armor=self.player.inventory.equipped["armor"],
-                                   prone=getattr(self.player, "prone", False))
+                                   prone=getattr(self.player, "prone", False),
+                                   view=pview)
             # The axe swing: a wood haft + steel head arcing through the
             # facing hemisphere, with a brief motion smear so the chop
             # reads. Progress walks 0->1 as melee_swing_t bleeds down.
