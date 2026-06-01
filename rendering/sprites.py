@@ -1467,64 +1467,54 @@ def _popout_tumor(surf, cx, cy, r, thr, rng):
 
 
 def _infest_old_townsman(surf, x, y, t, view="front"):
-    # (Garrick) skinned to sallow raw flesh, and a black-gold CANCER erupts
-    # all over him: engorged vessels creep across the flayed skin and feed
-    # tumors that bulge out of the body -- shaded black masses lit cold at the
-    # crown with molten gold light cracking out of their fissures. The man is
-    # being eaten from inside by the fold's gold. (Adult geometry: head ~y-12,
-    # body y-2..y+16. Distinct: a few large pop-out tumors on flayed flesh.)
-    # View-aware in BODY and head, and the cancer is ASYMMETRIC: front,
-    # right, left and back each get their OWN tumor layout + rng seed -- the
-    # profiles are NOT mirrors of each other, and the back is its own sprite.
-    # The flayed torso narrows to match the base silhouette in profile; the
-    # head loses its face on the back / leads one socket + a rear skull-tumor
-    # in profile.
+    # (Garrick) skinned to sallow raw flesh, and a black-gold CANCER eats
+    # him: engorged vessels CREEP all over the flayed skin (this carries the
+    # spread) and erupt in SMALL tumors that bulge from the flesh -- shaded
+    # black nodules lit cold at the crown with gold cracking from the bigger
+    # ones. Kept small and within the silhouette so they read as growths
+    # through him, not blobs stuck on. (Adult geometry: head ~y-12, body
+    # y-1..y+16.)
+    # View-aware AND asymmetric: front/right/left/back each get their own
+    # nodule+vein layout and rng seed -- the profiles are NOT mirrors and the
+    # back is its own sprite. The torso narrows in profile; the head leads a
+    # socket in profile and loses its face on the back.
     thr = 0.5 + 0.5 * math.sin(t * 2.2)
     hy = y - 12
-    if view == "right":                                          # PROFILE R -- unique layout
-        rng = random.Random(23)
-        hx = x + 1
-        pygame.draw.circle(surf, _SALLOW, (hx, hy), 5)
-        pygame.draw.circle(surf, _SALLOW_LO, (hx, hy), 5, 1)
-        pygame.draw.rect(surf, _SALLOW, (x - 4, y - 1, 8, 17))
-        pygame.draw.rect(surf, _SALLOW_LO, (x - 4, y - 1, 8, 17), 1)
-        eyes = [(hx + 1, hy - 1)]                               # near socket leads right
-        head_tumor = (hx - 3, hy - 1, 3)                       # skull tumor to the rear (left)
-        sites = [head_tumor, (x + 1, y + 4, 4), (x - 1, y + 9, 3), (x + 2, y + 13, 4)]
-    elif view == "left":                                         # PROFILE L -- DIFFERENT, not a mirror
-        rng = random.Random(37)
-        hx = x - 1
-        pygame.draw.circle(surf, _SALLOW, (hx, hy), 5)
-        pygame.draw.circle(surf, _SALLOW_LO, (hx, hy), 5, 1)
-        pygame.draw.rect(surf, _SALLOW, (x - 4, y - 1, 8, 17))
-        pygame.draw.rect(surf, _SALLOW_LO, (x - 4, y - 1, 8, 17), 1)
-        eyes = [(hx - 1, hy - 1)]                               # near socket leads left
-        head_tumor = (hx + 3, hy + 1, 3)                       # skull tumor to the rear (right)
-        sites = [head_tumor, (x - 2, y + 6, 5), (x + 1, y + 11, 3)]   # one big mid + a low one
-    elif view == "back":                                         # BACK -- its own layout, no face
-        rng = random.Random(51)
-        pygame.draw.circle(surf, _SALLOW, (x, hy), 6)
-        pygame.draw.circle(surf, _SALLOW_LO, (x, hy), 6, 1)
-        pygame.draw.rect(surf, _SALLOW, (x - 6, y - 1, 12, 17))
-        pygame.draw.rect(surf, _SALLOW_LO, (x - 6, y - 1, 12, 17), 1)
-        eyes = []
-        head_tumor = (x - 2, hy - 2, 3)
-        sites = [head_tumor, (x + 3, y + 6, 5), (x - 3, y + 11, 4), (x + 1, y + 15, 3)]
-    else:                                                        # FRONT
-        rng = random.Random(11)
-        pygame.draw.circle(surf, _SALLOW, (x, hy), 6)            # flayed sallow head
-        pygame.draw.circle(surf, _SALLOW_LO, (x, hy), 6, 1)
-        pygame.draw.rect(surf, _SALLOW, (x - 6, y - 1, 12, 17))  # flayed sallow torso
-        pygame.draw.rect(surf, _SALLOW_LO, (x - 6, y - 1, 12, 17), 1)
-        eyes = [(x - 2, hy - 1), (x + 2, hy - 1)]
-        head_tumor = (x + 2, hy + 1, 3)
-        sites = [head_tumor, (x - 3, y + 5, 6), (x + 4, y + 12, 4)]
-    for ex, ey in eyes:
+    profile = view in ("left", "right")
+    s = 1 if view == "right" else (-1 if view == "left" else 0)
+    hw = 4 if profile else 6
+    hr = 5 if profile else 6
+    hx = x + s                                                   # head leads toward the facing
+    pygame.draw.circle(surf, _SALLOW, (hx, hy), hr)              # flayed raw-flesh head
+    pygame.draw.circle(surf, _SALLOW_LO, (hx, hy), hr, 1)
+    pygame.draw.rect(surf, _SALLOW, (x - hw, y - 1, hw * 2, 17))  # flayed raw-flesh torso
+    pygame.draw.rect(surf, _SALLOW_LO, (x - hw, y - 1, hw * 2, 17), 1)
+    # Per-view sunken sockets + a SMALL nodule layout (r 2-3), each unique.
+    if view == "right":
+        seed = 23; pits = [(hx + 1, hy - 1)]
+        nodes = [(hx - 2, hy - 1, 2), (x + 1, y + 3, 3), (x - 1, y + 7, 2), (x + 1, y + 11, 2)]
+    elif view == "left":
+        seed = 37; pits = [(hx - 1, hy - 1)]
+        nodes = [(hx + 2, hy, 2), (x - 2, y + 5, 3), (x + 1, y + 9, 2), (x - 1, y + 12, 2)]
+    elif view == "back":
+        seed = 51; pits = []
+        nodes = [(x - 2, hy - 2, 2), (x + 2, y + 4, 2), (x - 3, y + 8, 3), (x + 1, y + 12, 2)]
+    else:                                                        # front
+        seed = 11; pits = [(x - 2, hy - 1), (x + 2, hy - 1)]
+        nodes = [(x + 2, hy + 1, 2), (x - 3, y + 4, 3), (x + 2, y + 8, 2), (x - 1, y + 12, 3)]
+    for ex, ey in pits:
         pygame.draw.circle(surf, (44, 30, 28), (ex, ey), 1)
-    for sx, sy, _r in sites:                                     # vessels first, under the masses
-        _tumor_veins(surf, sx, sy, 3, 8, rng)
-    for sx, sy, r in sites:                                       # then the pop-out tumors
-        _popout_tumor(surf, sx, sy, r, thr, rng)
+    rng = random.Random(seed)
+    vrng = random.Random(seed ^ 0x55)
+    # The spread: a vein network creeping across the flayed flesh (feeders
+    # spanning the torso + vessels off every nodule). This does the work.
+    for fx, fy in [(x, y + 2), (x - hw + 1, y + 8), (x + hw - 1, y + 11)]:
+        _tumor_veins(surf, fx, fy, 4, 10, vrng)
+    for nx, ny, _r in nodes:
+        _tumor_veins(surf, nx, ny, 3, 7, vrng)
+    # Then the small pop-out nodules bulging from the flesh.
+    for nx, ny, r in nodes:
+        _popout_tumor(surf, nx, ny, r, thr, rng)
 
 
 _INFEST_WORLD = {
