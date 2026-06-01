@@ -775,46 +775,57 @@ def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False,
             pygame.draw.line(surf, (132, 98, 98), (x - 3, y - 5), (x + 3, y - 5), 1)  # host smile
     elif kind == "sheriff_hollow":
         # Sheriff Vane, gone hollow -- the stage-3 unique threat. The
-        # lawman's shape is still there (the sheriff's GigaChad build, tan
-        # shirt, brimmed hat) but the man isn't: the face is a void band
-        # with two sick-gold pinpricks, the tin star has curdled into a
-        # small Yellow Sign, and a faint jaundice clings to him. He doesn't
-        # blink; he doesn't stop.
-        # HANDCRAFTED per camera view (front / back / profile), built on the
-        # sheriff's frame -- the hollow face shows only on front/profile;
-        # the back is the back of a hatted skull.
-        # Jaundice is baked into the PALETTE (sallow green-gold skin, dim
-        # shirt) -- no bounding-box wash. The face is a sunken HOLLOW, not a
-        # band: an irregular dark eye-recess under the brim with two soft,
-        # deep-set GLOWING gold eyes, gouged-out cheeks and a slack dark
-        # mouth. A small gold aura behind the head fades to nothing.
+        # lawman's shape is still there (the sheriff's broad build, tan
+        # shirt, brimmed hat) but the man isn't: his FACE HAS COLLAPSED
+        # into a deep dark void -- a head-shaped cavity that sinks through
+        # nested rings to true black -- and two dim gold eyes blink in and
+        # out of existence somewhere down inside it. The tin star has
+        # curdled into a small Yellow Sign. He doesn't stop.
+        # HANDCRAFTED per camera view (front / back / profile): the void
+        # face shows on front/profile; the back is a faceless hatted skull.
+        # Jaundice is baked into the PALETTE (no bounding-box wash).
         t = pygame.time.get_ticks() / 1000.0
         shirt = (84, 78, 50); shirt_drk = (46, 42, 26)
-        skin = (140, 142, 92); sk_lo = (60, 62, 38)    # jaundiced, sallow green-gold
-        cheek = (66, 68, 40)                            # gouged hollow-cheek shadow
-        void = (5, 4, 8)
+        skin = (140, 142, 92); sk_lo = (60, 62, 38)    # sallow nape (back of head)
         hair = (62, 56, 36); hcy = y - 12; HN, HT = 6, 16
+        rim = (74, 76, 48); rim_lo = (40, 42, 26)      # dim skull rim around the void
+        VOID_RINGS = [(30, 30, 22), (17, 17, 13), (7, 7, 9), (2, 2, 4)]  # sinks to black
         hc = (54, 42, 28); hc_lo = (30, 23, 15); hc_hi = (84, 68, 44)
         hb = (42, 32, 21); hb_lo = (24, 18, 12)
-        g = int(150 + 80 * (0.5 + 0.5 * math.sin(t * 2.2)))
-        gold = (g, int(g * 0.78), 36)
 
         def _aura():
-            # Soft sick halo behind the head -- concentric fading rings, so it
-            # blends to nothing at the edge (NEVER a rectangle).
+            # Soft sick halo leaking around the collapsed head -- concentric
+            # fading rings, so it blends to nothing at the edge (no rectangle).
             halo = pygame.Surface((26, 26), pygame.SRCALPHA)
-            for rr, aa in ((12, 16), (9, 26), (6, 40)):
+            for rr, aa in ((12, 14), (9, 24), (6, 36)):
                 pygame.draw.circle(halo, (150, 132, 44, aa), (13, 13), rr)
             surf.blit(halo, (x - 13, hcy - 11))
 
-        def _eye(ex, ey):
-            # A deep-set eye: a soft gold glow (radial alpha falloff) with a
-            # hot pinprick core -- reads as light welling from an empty socket.
-            glow = pygame.Surface((9, 9), pygame.SRCALPHA)
-            for rr, aa in ((4, 40), (3, 80), (2, 150)):
-                pygame.draw.circle(glow, (g, int(g * 0.7), 30, aa), (4, 4), rr)
-            surf.blit(glow, (ex - 4, ey - 4))
-            surf.set_at((ex, ey), (255, 240, 180))
+        def _void_head():
+            # The face collapsed inward: a dim head-rim around a cavity that
+            # sinks ring by ring to true black.
+            pygame.draw.ellipse(surf, rim, (x - HN, hcy - 7, HN * 2, HT))
+            pygame.draw.ellipse(surf, rim_lo, (x - HN, hcy - 7, HN * 2, HT), 1)
+            for i, col in enumerate(VOID_RINGS):
+                pygame.draw.ellipse(surf, col, (x - HN + 1 + i, hcy - 6 + i,
+                                                HN * 2 - 2 - 2 * i, HT - 2 - 2 * i))
+
+        def _void_eye(ex, ey, phase):
+            # A dim gold eye that blinks IN AND OUT of existence inside the
+            # void. Two out-of-phase sines multiply, so it irregularly winks
+            # away to nothing and swells back -- never a steady pair.
+            on = ((0.5 + 0.5 * math.sin(t * 2.4 + phase))
+                  * (0.5 + 0.5 * math.sin(t * 5.9 + phase * 2.7)))
+            if on < 0.16:
+                return                                   # gone -- blinked out
+            gv = int(120 + 110 * on)                      # dim->present gold
+            glow = pygame.Surface((11, 11), pygame.SRCALPHA)
+            for rr, aa in ((5, int(20 * on)), (4, int(46 * on)),
+                           (3, int(95 * on)), (2, int(165 * on))):
+                pygame.draw.circle(glow, (gv, int(gv * 0.64), 24, aa), (5, 5), rr)
+            surf.blit(glow, (ex - 5, ey - 5))
+            if on > 0.45:
+                surf.set_at((ex, ey), (min(255, gv + 60), int(gv * 0.82), 70))
 
         def _delts():                                                     # broad deltoid shoulders
             pygame.draw.ellipse(surf, shirt, (x - 12, y - 2, 7, 8))
@@ -845,20 +856,8 @@ def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False,
             pygame.draw.ellipse(surf, shirt, bulge)                        # forward chest bulge
             pygame.draw.rect(surf, (54, 48, 32), (x - 7, y + 10, 14, 4))   # belt
             _aura()
-            # Gaunt sallow skull + a jutting (but hollowed) jaw.
-            pygame.draw.ellipse(surf, skin, (x - HN, hcy - 7, HN * 2, HT))
-            pygame.draw.ellipse(surf, sk_lo, (x - HN, hcy - 7, HN * 2, HT), 1)
-            pygame.draw.polygon(surf, skin, [(x - 3 * s, y - 10), (x + 6 * s, y - 9),
-                                             (x + 8 * s, y - 6), (x + 5 * s, y - 3),
-                                             (x - 2 * s, y - 4)])          # jutting jaw
-            pygame.draw.line(surf, sk_lo, (x + 6 * s, y - 9), (x + 8 * s, y - 6), 1)
-            pygame.draw.line(surf, sk_lo, (x + 8 * s, y - 6), (x + 5 * s, y - 3), 1)
-            pygame.draw.line(surf, cheek, (x + 3 * s, hcy + 1), (x + 2 * s, hcy + 5), 2)  # gouged hollow cheek
-            # hollow eye-recess + one glowing deep-set eye on the lead side
-            pygame.draw.ellipse(surf, void, (x + s - 1, hcy - 4, 7, 6))
-            pygame.draw.rect(surf, void, (x + s - 1, hcy - 3, 6, 3))
-            pygame.draw.rect(surf, (18, 14, 12), (x + 2 * s, hcy + 4, 3, 2))  # slack mouth
-            _eye(x + 3 * s, hcy - 1)
+            _void_head()                                                   # collapsed-face cavity
+            _void_eye(x + 2 * s, hcy - 1, 0.0)                             # the eye into the void
             _oldhat(surf, x, y, hc, hc_lo, hc_hi, hb, hb_lo, s=s)
             _sign(x + 3 * s)                                               # Sign edge-on
         else:
@@ -867,26 +866,9 @@ def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False,
             pygame.draw.line(surf, shirt_drk, (x, y - 1), (x, y + 9), 1)   # placket
             pygame.draw.rect(surf, (54, 48, 32), (x - 9, y + 10, 18, 4))   # belt
             _aura()
-            # Gaunt sallow skull -- narrower than the living sheriff (wasting),
-            # with a still-heavy jaw squared off below.
-            pygame.draw.ellipse(surf, skin, (x - HN, hcy - 7, HN * 2, HT))
-            pygame.draw.ellipse(surf, sk_lo, (x - HN, hcy - 7, HN * 2, HT), 1)
-            jpts = [(x - 6, y - 10), (x + 6, y - 10), (x + 5, y - 5),
-                    (x + 2, y - 2), (x - 2, y - 2), (x - 5, y - 5)]
-            pygame.draw.polygon(surf, skin, jpts)                          # heavy jaw
-            pygame.draw.line(surf, sk_lo, (x - 6, y - 10), (x - 5, y - 5), 1)
-            pygame.draw.line(surf, sk_lo, (x + 6, y - 10), (x + 5, y - 5), 1)
-            pygame.draw.line(surf, sk_lo, (x, y - 4), (x, y - 2), 1)       # chin cleft
-            pygame.draw.line(surf, cheek, (x - 5, hcy + 1), (x - 3, hcy + 5), 2)  # gouged hollow cheeks
-            pygame.draw.line(surf, cheek, (x + 5, hcy + 1), (x + 3, hcy + 5), 2)
-            # irregular hollow eye-recess under the brow -- not a neat band
-            pygame.draw.ellipse(surf, void, (x - 6, hcy - 4, 12, 6))
-            pygame.draw.rect(surf, void, (x - 6, hcy - 3, 12, 3))
-            pygame.draw.line(surf, sk_lo, (x, hcy + 1), (x, hcy + 3), 1)   # nose ridge shadow
-            pygame.draw.line(surf, cheek, (x - 2, hcy + 3), (x, hcy + 3), 1)  # nostril hollow
-            pygame.draw.rect(surf, (18, 14, 12), (x - 2, hcy + 4, 4, 2))   # slack, dark mouth
-            _eye(x - 3, hcy - 1)
-            _eye(x + 3, hcy - 1)
+            _void_head()                                                   # the face, collapsed to a cavity
+            _void_eye(x - 3, hcy - 1, 0.0)                                 # two dim gold eyes, each
+            _void_eye(x + 3, hcy - 1, 2.3)                                 # winking in and out down inside
             _oldhat(surf, x, y, hc, hc_lo, hc_hi, hb, hb_lo)
             _sign(x - 5)                                                   # Sign on the chest
     elif kind == "shadow":
