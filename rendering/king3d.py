@@ -515,6 +515,13 @@ def _draw_shards(surf, cx, cy, yaw, bob, scale, spread, threat, fade):
             f = 0.74 + 0.26 * max(0.0, min(1.0, (zc + 6) / 12.0))
             col = _shade(_PORC, f)
             pygame.draw.polygon(surf, col, scr)
+            # the lit crack network BECOMES the fracture: the seam glows gold as
+            # the shards first part (the seep escaping the break) and goes dark
+            # once they fly wide. Drawn under the dark seam so the edge reads.
+            seam_gold = max(0.0, 1.0 - spread / 0.32)
+            if seam_gold > 0.04 and threat > 0.45:
+                pygame.draw.polygon(surf, _shade(_GOLD, 0.55 + 0.45 * threat),
+                                    scr, 2)
             pygame.draw.polygon(surf, _PORC_DK, scr, 1)   # the crack seam
         else:
             # the dark concave INNER face of the mask; a faint gold rim where
