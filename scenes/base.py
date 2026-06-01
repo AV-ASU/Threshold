@@ -896,6 +896,8 @@ _WALL_CHARS = frozenset("#W%&")
 # between the shadows of its flanking walls.
 _DOOR_CHARS = frozenset(c for c, d in OBJECT_DEFS.items()
                         if d and d.get("kind") == "door")
+_WINDOW_CHARS = frozenset(c for c, d in OBJECT_DEFS.items()
+                          if d and d.get("kind") == "window")
 _WALL_BASE = (19, 18, 23)
 _WALL_FACE = (50, 48, 56)
 _WALL_TOP = (74, 72, 82)
@@ -1574,14 +1576,57 @@ def _draw_floor_decal(surf, camera, deco):
     surf.blit(scaled, (sx - sw // 2, sy - sh // 2))
 
 
+def _draw_window_pane(surf, camera, wx, wy, ndx, ndy):
+    """A lit amber pane set into one wall face: wood frame, sickly glass, a warm
+    core and a muntin cross. `(ndx, ndy)` is the exposed face direction."""
+    hw = TILE / 2
+    pv = (-ndy, ndx)                 # along-wall axis on this face
+    ph = hw * 0.60                   # half pane width
+    z0, z1 = 7.0, 19.0
+    off = hw * 0.99                  # sit just proud of the face
+
+    def Q(u, z):
+        return camera.project(wx + ndx * off + pv[0] * u,
+                              wy + ndy * off + pv[1] * u, z)
+    frame = [Q(-ph - 2, z0 - 2), Q(ph + 2, z0 - 2), Q(ph + 2, z1 + 2), Q(-ph - 2, z1 + 2)]
+    glass = [Q(-ph, z0), Q(ph, z0), Q(ph, z1), Q(-ph, z1)]
+    core = [Q(-ph * 0.5, z0 + 3), Q(ph * 0.5, z0 + 3),
+            Q(ph * 0.5, z1 - 3), Q(-ph * 0.5, z1 - 3)]
+    pygame.draw.polygon(surf, (96, 70, 50), frame)
+    pygame.draw.polygon(surf, (60, 40, 25), frame, 1)
+    pygame.draw.polygon(surf, (138, 104, 50), glass)
+    pygame.draw.polygon(surf, (170, 138, 78), core)
+    pygame.draw.line(surf, (74, 54, 34), Q(0, z0), Q(0, z1), 1)               # mullion
+    pygame.draw.line(surf, (74, 54, 34), Q(-ph, (z0 + z1) / 2), Q(ph, (z0 + z1) / 2), 1)
+    pygame.draw.polygon(surf, (60, 40, 25), glass, 1)
+
+
+def _tilt_window_box(surf, camera, scene, tx, ty):
+    """A window is a SOLID wall tile, so it extrudes as a full wall box; a lit
+    pane is then set into each camera-facing exposed face."""
+    _tilt_wall_box(surf, camera, scene, tx, ty)
+    wx, wy = tx * TILE + TILE / 2, ty * TILE + TILE / 2
+    hw = TILE / 2
+    cd = camera.depth(wx, wy, _TILT_WALL_RISE / 2)
+    for ndx, ndy in ((0, 1), (0, -1), (-1, 0), (1, 0)):
+        if _is_wall(scene, tx + ndx, ty + ndy):
+            continue                                     # buried face
+        if camera.depth(wx + ndx * hw, wy + ndy * hw, _TILT_WALL_RISE / 2) <= cd:
+            continue                                     # faces away from camera
+        _draw_window_pane(surf, camera, wx, wy, ndx, ndy)
+
+
 def _tilt_tile_box(surf, camera, scene, tx, ty):
-    """Dispatch a wall-mass tile to the wall box or, for door chars, the
-    doorway (lintel + swung leaf)."""
+    """Dispatch a wall-mass tile to the wall box, the doorway (lintel + swung
+    leaf), or the window (solid box + lit pane)."""
     wtx = tx % scene.w if scene.wrap_x else tx
     wty = ty % scene.h if scene.wrap_y else ty
-    if (0 <= wty < scene.h and 0 <= wtx < scene.w
-            and scene.objects[wty][wtx] in _DOOR_CHARS):
+    ch = (scene.objects[wty][wtx]
+          if 0 <= wty < scene.h and 0 <= wtx < scene.w else "")
+    if ch in _DOOR_CHARS:
         _tilt_door_box(surf, camera, scene, tx, ty)
+    elif ch in _WINDOW_CHARS:
+        _tilt_window_box(surf, camera, scene, tx, ty)
     else:
         _tilt_wall_box(surf, camera, scene, tx, ty)
 
@@ -1620,7 +1665,8 @@ def draw_terrain_tilted(surf, scene, camera, focus=None):
             if not (0 <= wtx < W):
                 continue
             if scene.objects[wty][wtx] in _WALL_CHARS or \
-                    scene.objects[wty][wtx] in _DOOR_CHARS:
+                    scene.objects[wty][wtx] in _DOOR_CHARS or \
+                    scene.objects[wty][wtx] in _WINDOW_CHARS:
                 walls.append((tx, ty, wtx, wty))
     walls.sort(key=lambda c: camera.depth(c[0] * TILE + TILE / 2,
                                           c[1] * TILE + TILE / 2,
