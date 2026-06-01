@@ -825,17 +825,19 @@ def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False,
             ax = 2.0 if s else 3.2                # tighter in profile so they fit
             ay = 4.4 if s else 4.6
             erng = random.Random((int(x) * 7 + 5) & 0xffff)
-            for i in range(9):
+            for i in range(7):
                 ang = erng.uniform(0, math.tau)
                 rad = math.sqrt(erng.uniform(0, 1))    # uniform over the ellipse
                 ex = int(cx + math.cos(ang) * ax * rad)
                 ey = int(cy + math.sin(ang) * ay * rad)
                 bl = 0.5 + 0.5 * math.sin(t * 1.6 + i * 1.5 + x)
-                if bl < 0.30:
-                    continue                          # winked out
+                if bl < 0.42:
+                    continue                          # winked out (sparser now)
                 gv = int(70 + 48 * bl)
-                pygame.draw.circle(surf, (54, 46, 20), (ex, ey), 2)         # faint halo
-                pygame.draw.circle(surf, (gv, int(gv * 0.8), 28), (ex, ey), 1)  # the eye
+                pygame.draw.circle(surf, (54, 46, 20), (ex, ey), 2)         # faint dark socket
+                # The bright pupil sits toward the lead side, so in profile the
+                # gaze reads as looking the way the body faces (centred front).
+                pygame.draw.circle(surf, (gv, int(gv * 0.8), 28), (ex + s, ey), 1)
 
         def _delts():                                                     # broad deltoid shoulders
             pygame.draw.ellipse(surf, shirt, (x - 12, y - 2, 7, 8))
