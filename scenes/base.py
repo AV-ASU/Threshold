@@ -1394,6 +1394,108 @@ def draw_scene_terrain(surf, scene, cam_x, cam_y, x0, y0, x1, y1):
     _draw_scene_roofs(surf, scene, cam_x, cam_y, x0, y0, x1, y1)
 
 
+# --- Tilted (oblique-camera) terrain (CAMERA.md Phase 2) -------------------
+# Active only when camera.pitch > 0. The floor is a flat z=0 plane, so we
+# render the visible window flat (exactly the legacy raster, wrap-aware) and
+# warp the whole image to the oblique plane -- preserving every procedural
+# floor detail -- then extrude wall tiles as upright quads on top.
+_TILT_WALL_RISE = 26
+
+
+def _tilt_window_half(camera):
+    """Smallest centred half-span (world px) whose flat window still covers
+    the tilted screen. Unproject the screen corners (+ upward wall headroom)
+    and take the farthest world offset from the view centre."""
+    corners = [(0, 0), (SCREEN_W, 0), (0, SCREEN_H), (SCREEN_W, SCREEN_H),
+               (SCREEN_W // 2, -_TILT_WALL_RISE)]
+    half = 0.0
+    for sx, sy in corners:
+        wx, wy = camera.unproject(sx, sy)
+        half = max(half, abs(wx - camera.cam_x), abs(wy - camera.cam_y))
+    return half + TILE
+
+
+def _tilt_warp(flat, camera):
+    """Affine warp of the flat floor to match camera.project() for z=0:
+    world-rotate by yaw, then scale x by scale and y by scale*cos(pitch)."""
+    rotated = pygame.transform.rotate(flat, math.degrees(camera.yaw))
+    cp = max(0.05, math.cos(camera.pitch))
+    w, h = rotated.get_size()
+    return pygame.transform.smoothscale(
+        rotated, (max(1, int(w * camera.scale)),
+                  max(1, int(h * camera.scale * cp))))
+
+
+def _tilt_wall_box(surf, camera, scene, tx, ty):
+    wx, wy = tx * TILE + TILE / 2, ty * TILE + TILE / 2
+    hw = TILE / 2
+
+    def P(dx, dy, dz):
+        return camera.project(wx + dx, wy + dy, dz)
+    g = [P(-hw, -hw, 0), P(hw, -hw, 0), P(hw, hw, 0), P(-hw, hw, 0)]
+    t = [P(-hw, -hw, _TILT_WALL_RISE), P(hw, -hw, _TILT_WALL_RISE),
+         P(hw, hw, _TILT_WALL_RISE), P(-hw, hw, _TILT_WALL_RISE)]
+    near = tuple(int(c * 0.5) for c in _WALL_FACE)
+    side = tuple(int(c * 0.7) for c in _WALL_FACE)
+    if not _is_wall(scene, tx, ty + 1):
+        pygame.draw.polygon(surf, near, [g[3], g[2], t[2], t[3]])
+    if not _is_wall(scene, tx - 1, ty):
+        pygame.draw.polygon(surf, side, [g[0], g[3], t[3], t[0]])
+    if not _is_wall(scene, tx + 1, ty):
+        pygame.draw.polygon(surf, side, [g[1], g[2], t[2], t[1]])
+    # top face: the real per-tile wall raster, scaled into the quad bbox
+    tex = pygame.Surface((TILE, TILE)).convert()
+    tex.fill(_WALL_BASE)
+    _draw_wall_mass(tex, scene, -tx * TILE, -ty * TILE, tx, ty, tx + 1, ty + 1)
+    xs = [p[0] for p in t]; ys = [p[1] for p in t]
+    bx, by = int(min(xs)), int(min(ys))
+    bw = max(1, int(max(xs) - bx)); bh = max(1, int(max(ys) - by))
+    surf.blit(pygame.transform.smoothscale(tex, (bw, bh)), (bx, by))
+    pygame.draw.polygon(surf, tuple(int(c * 0.5) for c in _WALL_TOP), t, 1)
+
+
+def draw_terrain_tilted(surf, scene, camera):
+    """Floor warp + wall extrusion for the oblique camera. Skybox is the
+    caller's job (drawn first); actors are drawn after by the game, already
+    projected through the same camera so they stand on this floor."""
+    cx, cy = camera.cam_x, camera.cam_y
+    half = _tilt_window_half(camera)
+    span = int(half * 2)
+    flat = pygame.Surface((span, span))
+    flat.fill((10, 10, 14))
+    wx0, wy0 = cx - half, cy - half
+    x0 = int(math.floor(wx0 / TILE)); y0 = int(math.floor(wy0 / TILE))
+    x1 = int(math.ceil((wx0 + span) / TILE)); y1 = int(math.ceil((wy0 + span) / TILE))
+    draw_scene_terrain(flat, scene, wx0, wy0, x0, y0, x1, y1)
+    warped = _tilt_warp(flat, camera)
+    ox, oy = camera.origin
+    surf.blit(warped, (ox - warped.get_width() // 2,
+                       oy - warped.get_height() // 2))
+    # extrude walls in the visible window, depth-sorted (far first)
+    walls = []
+    W, H = scene.w, scene.h
+    for ty in range(y0, y1):
+        wty = ty % H if scene.wrap_y else ty
+        if not (0 <= wty < H):
+            continue
+        for tx in range(x0, x1):
+            wtx = tx % W if scene.wrap_x else tx
+            if not (0 <= wtx < W):
+                continue
+            if scene.objects[wty][wtx] in _WALL_CHARS:
+                walls.append((tx, ty, wtx, wty))
+    walls.sort(key=lambda c: camera.depth(c[0] * TILE + TILE / 2,
+                                          c[1] * TILE + TILE / 2,
+                                          _TILT_WALL_RISE))
+    for tx, ty, wtx, wty in walls:
+        _tilt_wall_box(surf, camera, scene, tx, ty)
+    # Ground props (decorations) project through the same camera, so they
+    # sit on the warped floor. Primary copy only for now (wrap-clones +
+    # depth-interleave with walls are a fine-tune).
+    for d in scene.decorations:
+        d.draw(surf, 0, 0, camera)
+
+
 def draw_scene_doors(surf, scene, cam_x, cam_y, x0, y0, x1, y1):
     """Late pass: the swung door leaves, drawn unconfined so each spills
     out of its tile into the room. Called after terrain + decorations
@@ -1888,7 +1990,10 @@ class Scene:
                             (world_w_px, -world_h_px),
                             (world_w_px, world_h_px)]
             for dx_off, dy_off in offsets[1:]:
-                d.draw(surf, cam_x - dx_off, cam_y - dy_off, camera)
+                # legacy path uses the shifted cam; camera path uses the
+                # explicit world offset (the clone sits at self.pos + off).
+                d.draw(surf, cam_x - dx_off, cam_y - dy_off, camera,
+                       wox=dx_off, woy=dy_off)
         draw_scene_doors(surf, self, cam_x, cam_y, x0, y0, x1, y1)
 
 

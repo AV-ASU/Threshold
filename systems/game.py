@@ -121,6 +121,12 @@ SEAMLESS_WORLD_SCENES = OUTDOOR_SCENES | {
 # the player stays comfortably on screen.
 CAM_LOOKAHEAD = 96
 
+# Oblique-camera tilt (CAMERA.md Phase 2). DEBUG-toggled with F3; eases in.
+# pitch 0 = the shipping top-down view. TILT_PITCH_DEG is the locked ~55deg.
+TILT_PITCH_DEG = 55
+TILT_EASE = 0.12             # per-frame lerp of pitch toward its target
+TILT_ACTOR_STAND = 15        # px a sprite centre rises to stand on the floor
+
 # Dark scenes -- underground / interior cult sites where the
 # flashlight matters. Without the flashlight the screen is heavily
 # dimmed with a small clear circle around the player. With it,
@@ -461,6 +467,7 @@ class Game(CutsceneMixin):
         # source of truth for the offset (camera update + input still use
         # them); the camera is re-synced to them each frame in draw_world.
         self.camera = Camera()
+        self._cam_pitch_target = 0.0      # DEBUG F3 tilt target (radians)
         self.title_choice = 0
         # title_options is computed each render via _title_menu_options
         # so the middle slot can flip between "Delete Save" (when a
@@ -729,6 +736,9 @@ class Game(CutsceneMixin):
         """Wipe all per-run state so a New Game starts clean. The
         Game instance is reused across Quit-to-Title -> New Game, so
         in-memory run state from a previous run is cleared here."""
+        # Debug oblique tilt (F3) starts off each run.
+        self._cam_pitch_target = 0.0
+        self.camera.pitch = 0.0
         # Visibility meter + the King in Yellow
         self.visibility = 0.0
         self._vis_floor = 0.0
@@ -1046,6 +1056,8 @@ class Game(CutsceneMixin):
         else:
             self.cam_x += (target_x - self.cam_x) * 0.18
             self.cam_y += (target_y - self.cam_y) * 0.18
+        # Ease the debug tilt pitch toward its target (F3).
+        self.camera.pitch += (self._cam_pitch_target - self.camera.pitch) * TILT_EASE
 
     # ---- Player update ----
     def update_player(self, dt, keys):
@@ -3517,10 +3529,25 @@ class Game(CutsceneMixin):
         self.screen.fill(C_BG)
         if not self.scene: return
         # Re-sync the projection to the live camera offset for this frame.
-        # (pitch/yaw stay 0 in Phase 1 -> identical to the legacy view.)
-        self.camera.cam_x = self.cam_x
-        self.camera.cam_y = self.cam_y
-        self.scene.draw(self.screen, self.cam_x, self.cam_y, self.camera)
+        # Pivot about the SCREEN CENTRE (the view centre world point) so any
+        # pitch/yaw rotates about the middle of the view, not the corner. At
+        # pitch 0 this is arithmetically identical to the legacy view:
+        #   project(x) = (SCREEN/2) + (x - (cam + SCREEN/2)) = x - cam.
+        self.camera.origin = (SCREEN_W // 2, SCREEN_H // 2)
+        self.camera.cam_x = self.cam_x + SCREEN_W // 2
+        self.camera.cam_y = self.cam_y + SCREEN_H // 2
+        if self.camera.pitch > 0.02:
+            # DEBUG oblique view (CAMERA.md Phase 2): skybox fills the void,
+            # the floor warps to the tilted plane, walls extrude. Actors below
+            # already project through self.camera so they stand on this floor.
+            from scenes.base import draw_terrain_tilted
+            from rendering.skybox import draw_skybox
+            sky = "overcast" if self.scene.key in OUTDOOR_SCENES else "void"
+            draw_skybox(self.screen, (0, 0, SCREEN_W, SCREEN_H),
+                        yaw=self.camera.yaw, kind=sky, horizon_frac=0.40)
+            draw_terrain_tilted(self.screen, self.scene, self.camera)
+        else:
+            self.scene.draw(self.screen, self.cam_x, self.cam_y, self.camera)
         self._draw_folds()
         for it in self.scene.items:
             sx, sy = self.camera.project(it["x"], it["y"])
@@ -3556,6 +3583,10 @@ class Game(CutsceneMixin):
             _offsets += [(0, -_wh), (0, _wh)]
         if sc.wrap_x and sc.wrap_y:
             _offsets += [(-_ww, -_wh), (-_ww, _wh), (_ww, -_wh), (_ww, _wh)]
+
+        # Under tilt a sprite's centre rises so its feet sit on the floor
+        # point; 0 at top-down so the shipping view is untouched.
+        actor_lift = int(TILT_ACTOR_STAND * math.sin(self.camera.pitch))
 
         def _on_screen(sx, sy):
             return -64 <= sx <= SCREEN_W + 64 and -64 <= sy <= SCREEN_H + 64
@@ -3593,6 +3624,7 @@ class Game(CutsceneMixin):
                 sx, sy = self.camera.project(npc.x + ox, npc.y + oy)
                 if not _on_screen(sx, sy):
                     continue
+                sy -= actor_lift          # stand on the floor under tilt
                 if m > 0.0:
                     draw_vessel_bloom(self.screen, sx, sy, npc.sprite_kind,
                                       npc.facing, m, seed=id(npc) & 0xffff)
@@ -3630,6 +3662,7 @@ class Game(CutsceneMixin):
             p.draw(self.screen, self.cam_x, self.cam_y)
         if self.player:
             psx, psy = self.camera.project(self.player.x, self.player.y)
+            psy -= actor_lift             # stand on the floor under tilt
             if self.player.invuln > 0 and int(self.player.invuln * 12) % 2 == 0:
                 pass
             elif self.player.hidden is not None:
@@ -4198,6 +4231,12 @@ class Game(CutsceneMixin):
                                       duration=2.0)
                 elif ev.key == pygame.K_F11:
                     self._toggle_fullscreen()
+                elif ev.key == pygame.K_F3:
+                    # DEBUG (CAMERA.md Phase 2): toggle the oblique tilt. The
+                    # pitch eases to the target in _update_camera; pitch 0 is
+                    # the shipping top-down view, untouched.
+                    self._cam_pitch_target = (0.0 if self._cam_pitch_target
+                                              else math.radians(TILT_PITCH_DEG))
                 elif ev.key == pygame.K_ESCAPE:
                     self.state = "paused"
                     self.pause_view = "menu"
