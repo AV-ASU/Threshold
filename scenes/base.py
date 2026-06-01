@@ -1426,7 +1426,7 @@ def _tilt_warp(flat, camera):
                   max(1, int(h * camera.scale * cp))))
 
 
-_DOOR_HEAD = 15      # doorway opening height; the lintel beam runs head->rise
+_DOOR_HEAD = 19      # doorway opening height; the lintel beam runs head->rise
 
 
 def _extrude_box(surf, camera, scene, tx, ty, z0, z1, neigh=_WALL_CHARS):
@@ -1480,13 +1480,14 @@ def _tilt_door_box(surf, camera, scene, tx, ty):
     OR other doors are culled so a multi-tile gate reads as one clean opening."""
     _extrude_box(surf, camera, scene, tx, ty, _DOOR_HEAD, _TILT_WALL_RISE,
                  neigh=_WALL_CHARS | _DOOR_CHARS)
-    _tilt_door_leaf(surf, camera, scene, tx, ty)
+    _draw_doorway(surf, camera, scene, tx, ty)
 
 
-def _tilt_door_leaf(surf, camera, scene, tx, ty):
-    """A vertical wood leaf hinged at one jamb. Passable doors hang OPEN (swung
-    ~72 deg into the room); facade/locked doors (solid) hang CLOSED, filling the
-    opening. Projected so it leans correctly under the camera."""
+def _draw_doorway(surf, camera, scene, tx, ty):
+    """A framed doorway: a dark recess set into the wall, a wood frame (jambs +
+    lintel) around the opening, and a leaf hung on one jamb -- ajar for passable
+    doors, shut (filling the opening) for facade/locked ones. Everything is
+    projected on the doorway plane so it leans correctly under the camera."""
     wtx = tx % scene.w if scene.wrap_x else tx
     wty = ty % scene.h if scene.wrap_y else ty
     if not (0 <= wty < scene.h and 0 <= wtx < scene.w):
@@ -1498,27 +1499,79 @@ def _tilt_door_leaf(surf, camera, scene, tx, ty):
     wv = (-r[1], r[0])                       # wall axis (perp to room dir)
     wx, wy = tx * TILE + TILE / 2, ty * TILE + TILE / 2
     hw = TILE / 2
-    a = 0.0 if solid else math.radians(72)   # closed leaf lies flat in the wall
-    ca, sa = math.cos(a), math.sin(a)
-    L = TILE * 0.92
-    hx, hy = wx + wv[0] * hw * 0.96, wy + wv[1] * hw * 0.96   # hinge at a jamb
-    fdx, fdy = -wv[0] * ca + r[0] * sa, -wv[1] * ca + r[1] * sa
-    fx, fy = hx + fdx * L, hy + fdy * L                       # free edge
+    head = _DOOR_HEAD
+    wood, wood_lo, wood_hi = (84, 59, 36), (52, 36, 22), (108, 80, 50)
 
-    def P(px, py, pz):
-        return camera.project(px, py, pz)
-    bH0, bH1 = P(hx, hy, 0), P(hx, hy, _DOOR_HEAD)
-    bF0, bF1 = P(fx, fy, 0), P(fx, fy, _DOOR_HEAD)
-    quad = [bH0, bF0, bF1, bH1]
-    wood, wood_lo = (78, 54, 33), (52, 36, 22)
-    pygame.draw.polygon(surf, wood, quad)
-    pygame.draw.polygon(surf, wood_lo, quad, 1)
-    for f in (0.34, 0.67):                                    # plank seams
-        a0 = (bH0[0] + (bF0[0] - bH0[0]) * f, bH0[1] + (bF0[1] - bH0[1]) * f)
-        a1 = (bH1[0] + (bF1[0] - bH1[0]) * f, bH1[1] + (bF1[1] - bH1[1]) * f)
-        pygame.draw.line(surf, wood_lo, a0, a1, 1)
-    hh = ((bF0[0] + bF1[0]) // 2, (bF0[1] + bF1[1]) // 2)     # handle
-    pygame.draw.circle(surf, (206, 186, 120), (int(hh[0]), int(hh[1])), 2)
+    def Q(u, z, off=0.0):
+        # u: along the wall axis [-hw, hw]; z: height; off: depth into room (-)
+        return camera.project(wx + wv[0] * u + r[0] * off,
+                              wy + wv[1] * u + r[1] * off, z)
+    # 1. dark recess, set slightly INTO the wall (off +)
+    rec = [Q(-hw + 1, 0, 3), Q(hw - 1, 0, 3), Q(hw - 1, head, 3), Q(-hw + 1, head, 3)]
+    pygame.draw.polygon(surf, (7, 6, 9), rec)
+    # 2. wood frame on the room face (off -), a "n" around the opening
+    tw, th, off = 4.0, 3.0, -1.0
+
+    def face(u0, u1, z0, z1, col):
+        pygame.draw.polygon(surf, col, [Q(u0, z0, off), Q(u1, z0, off),
+                                        Q(u1, z1, off), Q(u0, z1, off)])
+    face(-hw, -hw + tw, 0, head, wood)            # left jamb
+    face(hw - tw, hw, 0, head, wood)              # right jamb
+    face(-hw, hw, head - th, head, wood_hi)       # lintel
+    # 3. the leaf, hinged at the left jamb
+    a = 0.0 if solid else math.radians(26)        # shut vs ajar
+    ca, sa = math.cos(a), math.sin(a)
+    hu = -hw + tw                                  # hinge at inner left jamb
+    L = (2 * hw - 2 * tw)                          # spans the clear opening
+    hx, hy = wx + wv[0] * hu, wy + wv[1] * hu
+    fdx = wv[0] * ca + r[0] * sa
+    fdy = wv[1] * ca + r[1] * sa
+    fx, fy = hx + fdx * L, hy + fdy * L
+    bH0, bH1 = camera.project(hx, hy, 0), camera.project(hx, hy, head - 1)
+    bF0, bF1 = camera.project(fx, fy, 0), camera.project(fx, fy, head - 1)
+    leaf = [bH0, bF0, bF1, bH1]
+    pygame.draw.polygon(surf, wood, leaf)
+    pygame.draw.polygon(surf, wood_lo, leaf, 1)
+    for f in (0.5,):                               # a plank seam
+        s0 = (bH0[0] + (bF0[0] - bH0[0]) * f, bH0[1] + (bF0[1] - bH0[1]) * f)
+        s1 = (bH1[0] + (bF1[0] - bH1[0]) * f, bH1[1] + (bF1[1] - bH1[1]) * f)
+        pygame.draw.line(surf, wood_lo, s0, s1, 1)
+    hh = (bF0[0] * 0.82 + bH0[0] * 0.18, bF0[1] * 0.82 + bH0[1] * 0.18)
+    hh1 = (bF1[0] * 0.82 + bH1[0] * 0.18, bF1[1] * 0.82 + bH1[1] * 0.18)
+    handle = ((hh[0] + hh1[0]) / 2, (hh[1] + hh1[1]) / 2)
+    pygame.draw.circle(surf, (212, 192, 124), (int(handle[0]), int(handle[1])), 2)
+
+
+# Decals that LIE on the floor -- they must warp onto the oblique floor plane
+# (rotate with yaw, squash with pitch) like the terrain raster, not paste as a
+# screen-aligned sprite that ignores the camera.
+_FLOOR_DECAL_KINDS = frozenset((
+    "rug", "bloodstain", "gore", "yellow_sign", "bloody_handprint", "bloody_pile",
+))
+
+
+def _draw_floor_decal(surf, camera, deco):
+    """Render a flat decal to a canvas, then warp it onto the floor plane (same
+    rotate+squash as _tilt_warp) and blit at the projected anchor, so a rug or
+    bloodstain lies on the ground and turns with the room instead of standing up
+    as a billboard."""
+    drawfn = getattr(deco, f"_draw_{deco.kind}", None)
+    if drawfn is None:
+        return
+    if deco.kind == "rug":
+        w = int(deco.kwargs.get("w", 88)); h = int(deco.kwargs.get("h", 60))
+        bound = max(w, h) + 18
+    else:
+        bound = 60
+    canvas = pygame.Surface((bound, bound), pygame.SRCALPHA)
+    drawfn(canvas, bound // 2, bound // 2)
+    rot = pygame.transform.rotate(canvas, math.degrees(camera.yaw))
+    cp = max(0.05, math.cos(camera.pitch))
+    sw = max(1, int(rot.get_width() * camera.scale))
+    sh = max(1, int(rot.get_height() * camera.scale * cp))
+    scaled = pygame.transform.smoothscale(rot, (sw, sh))
+    sx, sy = camera.project(deco.x, deco.y, 0)
+    surf.blit(scaled, (sx - sw // 2, sy - sh // 2))
 
 
 def _tilt_tile_box(surf, camera, scene, tx, ty):
@@ -1582,6 +1635,8 @@ def draw_terrain_tilted(surf, scene, camera, focus=None):
     for d in scene.decorations:
         if is_solid_furniture(d.kind):
             solid_decos.append(d)
+        elif d.kind in _FLOOR_DECAL_KINDS:
+            _draw_floor_decal(surf, camera, d)
         else:
             d.draw(surf, 0, 0, camera)
     solid_decos.sort(key=lambda d: camera.depth(d.x, d.y))
