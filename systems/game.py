@@ -15,6 +15,7 @@ from rendering.sprites import (draw_player_sprite, draw_npc_sprite,
                                door_mask_surface, reset_king_fx)
 from rendering.transform import draw_vessel_bloom
 from rendering.camera import Camera
+from systems.look_control import LookController
 from ui.fonts import make_fonts
 from ui.dialog import DialogueBox
 from ui.inventory_ui import InventoryUI
@@ -473,6 +474,8 @@ class Game(CutsceneMixin):
         self.camera = Camera()
         self._cam_pitch_target = 0.0      # DEBUG F3 tilt target (radians)
         self._tilt_front_walls = None     # walls held back to draw over actors
+        self.look = LookController()       # mouse-look heading model (tilt mode)
+        self._rmb_last_x = None            # right-drag scene-rotate anchor
         self.title_choice = 0
         # title_options is computed each render via _title_menu_options
         # so the middle slot can flip between "Delete Save" (when a
@@ -744,7 +747,10 @@ class Game(CutsceneMixin):
         # Debug oblique tilt (F3) starts off each run.
         self._cam_pitch_target = 0.0
         self.camera.pitch = 0.0
+        self.camera.yaw = 0.0
         self._tilt_front_walls = None
+        self.look = LookController()
+        self._rmb_last_x = None
         # Visibility meter + the King in Yellow
         self.visibility = 0.0
         self._vis_floor = 0.0
@@ -1068,8 +1074,39 @@ class Game(CutsceneMixin):
         self.camera.pitch += (self._cam_pitch_target - self.camera.pitch) * TILT_EASE
         pf = self.camera.pitch / math.radians(TILT_PITCH_DEG)
         self.camera.scale = 1.0 - (1.0 - TILT_ZOOM) * pf
+        # Keep the camera's spatial pivot in sync here (was only in draw_world)
+        # so mouse->world (unproject) in _update_look reads the live frame.
+        self.camera.origin = (SCREEN_W // 2, SCREEN_H // 2)
+        self.camera.cam_x = self.cam_x + SCREEN_W // 2
+        self.camera.cam_y = self.cam_y + SCREEN_H // 2
 
-    # ---- Player update ----
+    def _tilt_on(self):
+        """The oblique 'look' mode is engaged (F3). Mouse-look + camera-relative
+        movement + cursor-aimed gun apply ONLY here; pitch 0 stays the shipping
+        top-down game untouched."""
+        return self._cam_pitch_target > 0.0
+
+    def _update_look(self, dt):
+        """Drive the LookController from the mouse and steer the camera yaw +
+        player facing. Runs only in tilt mode and only during play."""
+        if not (self._tilt_on() and self.state == "playing" and self.player):
+            self._rmb_last_x = None
+            return
+        mx, my = pygame.mouse.get_pos()
+        rmb_held = pygame.mouse.get_pressed()[2]
+        rmb_dx = 0.0
+        if rmb_held and self._rmb_last_x is not None:
+            rmb_dx = mx - self._rmb_last_x
+        self._rmb_last_x = mx if rmb_held else None
+        # world heading from the player to the point under the cursor
+        wx, wy = self.camera.unproject(mx, my)
+        aim = math.atan2(wy - self.player.y, wx - self.player.x)
+        self.look.update(aim, rmb_dx, rmb_held)
+        self.camera.yaw = self.look.cam_yaw
+        # the gun + sprite face where you aim (head); body governs movement
+        ax, ay = self.look.aim_vec()
+        self.player.facing = (ax, ay)
+
     def update_player(self, dt, keys):
         if (self.dialog.active or self.inv_ui.open or self.notebook_ui.open
                 or self.text_input.active):
@@ -1109,7 +1146,14 @@ class Game(CutsceneMixin):
         if dx or dy:
             mag = math.hypot(dx, dy) or 1
             dx /= mag; dy /= mag
-            self.player.facing = (dx, dy)
+            if self._tilt_on():
+                # Camera-relative: W = forward (into the screen / facing),
+                # A/D strafe. Facing is owned by _update_look (the mouse), so
+                # don't overwrite it from the movement keys here.
+                (fwx, fwy), (rgx, rgy) = self.look.move_basis()
+                dx, dy = rgx * dx + fwx * (-dy), rgy * dx + fwy * (-dy)
+            else:
+                self.player.facing = (dx, dy)
             self.player.walk_phase += dt * 12
             # Base speed is reduced by the threat meter (spatial
             # compression -- the closer you are to being caught, the
@@ -3393,6 +3437,7 @@ class Game(CutsceneMixin):
             if self.player.hp <= 0:
                 self._on_player_death()
             self._update_camera()
+            self._update_look(dt)
             self.audio.update_silence()
             self.audio.update_duck()
             self.dialog.update(dt)
@@ -3722,6 +3767,15 @@ class Game(CutsceneMixin):
             draw_walls_front(self.screen, self.scene, self.camera,
                              self._tilt_front_walls,
                              (self.player.x, self.player.y))
+        # Cursor reticle in look mode (the mouse is otherwise hidden) -- shows
+        # where the gun aims. A thin ring + tick marks, gold to read as 'aim'.
+        if self._tilt_on() and self.state == "playing":
+            mx, my = pygame.mouse.get_pos()
+            pygame.draw.circle(self.screen, (228, 198, 96), (mx, my), 7, 1)
+            for ddx, ddy in ((10, 0), (-10, 0), (0, 10), (0, -10)):
+                pygame.draw.line(self.screen, (228, 198, 96),
+                                 (mx + ddx // 2, my + ddy // 2),
+                                 (mx + ddx, my + ddy), 1)
         # Reset the per-frame full-screen darkness budget. Each
         # whole-screen black overlay below claims a slice via
         # _claim_dark() so the combined wash never exceeds
@@ -4260,11 +4314,20 @@ class Game(CutsceneMixin):
                 elif ev.key == pygame.K_F11:
                     self._toggle_fullscreen()
                 elif ev.key == pygame.K_F3:
-                    # DEBUG (CAMERA.md Phase 2): toggle the oblique tilt. The
-                    # pitch eases to the target in _update_camera; pitch 0 is
-                    # the shipping top-down view, untouched.
-                    self._cam_pitch_target = (0.0 if self._cam_pitch_target
-                                              else math.radians(TILT_PITCH_DEG))
+                    # DEBUG (CAMERA.md Phase 2/3): toggle the oblique look mode.
+                    # Pitch eases in _update_camera; pitch 0 is the shipping
+                    # top-down view, untouched. On enable, seed the look heading
+                    # from the player's current facing so the camera settles
+                    # behind them with no rotation jump.
+                    if self._cam_pitch_target:
+                        self._cam_pitch_target = 0.0
+                    else:
+                        self._cam_pitch_target = math.radians(TILT_PITCH_DEG)
+                        if self.player:
+                            fx, fy = self.player.facing
+                            self.look = LookController(math.atan2(fy, fx))
+                            self.camera.yaw = self.look.cam_yaw
+                        self._rmb_last_x = None
                 elif ev.key == pygame.K_ESCAPE:
                     self.state = "paused"
                     self.pause_view = "menu"
