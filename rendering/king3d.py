@@ -8,9 +8,27 @@ thin profile crescent, or the Yellow back when he turns away. Surface features
 (the two void eyes, the tear-streaks) are pinned at object `(theta, h)` so they
 slide around and self-occlude on the turn, exactly like the pseudo3d Watcher.
 
-Isolated + previewable (`tools/preview_king3d.py`); NOT wired into the live game.
-This proves build steps (1) calm shell + Yellow back and (2) wrapping features.
-Shards / arms / world-space particles / threat states come next.
+Previewable in isolation (`tools/preview_king3d.py` -- turntable, threat ramp,
+birth->shatter MP4s), AND now LIVE: `sprites._draw_king` routes here on the
+tilt path (`Game._tilt_on()`), passing `king3d_yaw` (the mask faces the player,
+camera.yaw gives the view) + birth/threat exactly as the flat King. At pitch 0
+the flat shipping King is untouched / pixel-identical -- see CAMERA.md tier 3.
+
+The full build, all driven by one `threat` 0..1 + `birth` 0..1:
+  (1) 3D SHARDS -- `_crack_net` -> a convex-cell fracture (`_build_shards`):
+      each shard a slice of the detailed surface with a 3D centroid, explode/
+      converge push + spin axis; depth-sorted, flipping to its dark concave
+      inner face on the turn (`_draw_shards`). BIRTH converges them into the
+      whole; SHATTER flings them apart, the Yellow blazing through the gaps.
+  (2) THREAT CONTINUITY -- calm (whole plate) -> seep/crack (the lit network,
+      glow growing behind) -> SHATTER; the gold seam-glow carries the lit
+      cracks onto the breaking shards so the network IS the fracture.
+  (3) REACHING ARMS -- `_draw_arms`: tendrils anchored at object-space seams,
+      reaching toward the player (the mask's local front); near ones read long,
+      trailing ones foreshorten + occlude behind the shards.
+  (4) WORLD-SPACE PARTICLES -- `_particles`: the wake promoted to a 3D frame
+      (coalesce on birth, drift when calm, vomit gold sparks on shatter); a
+      `proj` hook lets a caller push them through a real camera.
 """
 import math
 import random
