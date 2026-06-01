@@ -1347,9 +1347,13 @@ def _infest_tisdale_boy(surf, x, y, t, view="front"):
     # him, teeth bridging it the whole way, gold burning in the throat, his
     # eyes shoved to the corners of the cloven head. (Child geometry: head
     # ~y-8, body y..y+14 -- NOT the adult slot.)
+    # View-aware: the body-spanning maw holds from every angle; only the
+    # eyes change -- front shows the pair shoved to the corners, a profile
+    # shows just the near eye, the back of the cloven head shows none.
     thr = 0.5 + 0.5 * math.sin(t * 2.6)
     hy = y - 8
     gap = 2 + int(2 * thr)                          # the maw flexes open
+    s = 1 if view == "right" else (-1 if view == "left" else 0)
     _gold_in_wound(surf, x, hy + 3, 3, 30 + int(16 * thr))    # glow under, a halo
     pygame.draw.polygon(surf, _MEAT, [               # the gullet (red flesh, not a void)
         (x - gap, hy - 5), (x + gap, hy - 5),
@@ -1357,8 +1361,12 @@ def _infest_tisdale_boy(surf, x, y, t, view="front"):
     pygame.draw.line(surf, _WGOLD, (x, hy - 3), (x, y + 11), 1)   # gold throat
     for ty in range(-4, 14, 3):                      # teeth bridging it all the way down
         pygame.draw.line(surf, _WBONE, (x - gap, hy + ty), (x + gap, hy + ty), 1)
-    pygame.draw.circle(surf, (236, 232, 226), (x - 4, hy - 2), 1)  # eyes shoved out
-    pygame.draw.circle(surf, (236, 232, 226), (x + 4, hy - 2), 1)
+    if view == "front":
+        pygame.draw.circle(surf, (236, 232, 226), (x - 4, hy - 2), 1)  # eyes shoved out
+        pygame.draw.circle(surf, (236, 232, 226), (x + 4, hy - 2), 1)
+    elif s:                                          # profile -- only the near eye
+        pygame.draw.circle(surf, (236, 232, 226), (x + 4 * s, hy - 2), 1)
+    # back: the back of the cloven head -- no eyes.
 
 
 def _infest_hettie(surf, x, y, t, view="front"):
@@ -1367,8 +1375,13 @@ def _infest_hettie(surf, x, y, t, view="front"):
     # skin-petals curling out along both sides, gold burning up the opening:
     # a flayed flower the length of her. (Adult geometry: head ~y-11, body
     # y-2..y+16. Distinct from Toby's single slot -- this one SPLAYS.)
+    # View-aware: the petal-star + body seam hold from every angle; the
+    # face-front detail (raw socket + the carved Sign) follows the facing --
+    # front-centred, shifted to the lead side in profile, and gone on the
+    # back (just a dark hollow at the heart of the bloomed skull).
     thr = 0.5 + 0.5 * math.sin(t * 2.0)
     hy = y - 11
+    s = 1 if view == "right" else (-1 if view == "left" else 0)
     _gold_in_wound(surf, x, hy, 3, 26 + int(14 * thr))        # glow under, a halo
     span = 5 + 2 * thr
     for k in range(5):                                        # head bloom: five petals
@@ -1378,16 +1391,20 @@ def _infest_hettie(surf, x, y, t, view="front"):
         pygame.draw.polygon(surf, _WSKIN,
                             [(int(x + bx), int(hy + by)),
                              (int(x - bx), int(hy - by)), tip])
-    pygame.draw.circle(surf, _MEAT, (x, hy), 3)               # raw flesh socket
     pygame.draw.polygon(surf, _MEAT,                          # the body seam unzips
                         [(x - 2, y - 1), (x + 2, y - 1), (x + 1, y + 14), (x - 1, y + 14)])
     for sy in range(2, 15, 4):                                # skin-petals peeling off both sides
         pygame.draw.polygon(surf, _WSKIN, [(x - 2, y + sy), (x - 2, y + sy + 3), (x - 6, y + sy + 1)])
         pygame.draw.polygon(surf, _WSKIN, [(x + 2, y + sy), (x + 2, y + sy + 3), (x + 6, y + sy + 1)])
     pygame.draw.line(surf, _WGOLD, (x, y - 1), (x, y + 13), 1)  # gold up the seam
-    pygame.draw.line(surf, _WGOLD, (x, hy - 2), (x, hy + 2), 1)  # the Sign glint
-    pygame.draw.line(surf, _WGOLD, (x, hy), (x - 2, hy - 1), 1)
-    pygame.draw.line(surf, _WGOLD, (x, hy), (x + 2, hy - 1), 1)
+    if view == "back":
+        pygame.draw.circle(surf, (20, 12, 16), (x, hy), 2)    # dark hollow -- back of the bloom
+    else:
+        sx = x + 2 * s                                        # face detail leads in profile
+        pygame.draw.circle(surf, _MEAT, (sx, hy), 3)          # raw flesh socket
+        pygame.draw.line(surf, _WGOLD, (sx, hy - 2), (sx, hy + 2), 1)  # the Sign glint
+        pygame.draw.line(surf, _WGOLD, (sx, hy), (sx - 2, hy - 1), 1)
+        pygame.draw.line(surf, _WGOLD, (sx, hy), (sx + 2, hy - 1), 1)
 
 
 def _tumor_veins(surf, cx, cy, n, length, rng, col=_VEIN):
