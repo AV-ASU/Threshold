@@ -134,7 +134,7 @@ def _draw_runs(surf, pts_or_none, col, width):
 
 
 def draw_king3d(surf, cx, cy, yaw, t, threat=0.0, scale=2.4, light=-0.6,
-                birth=1.0):
+                birth=1.0, proj=None):
     """Draw the volumetric King mask centred at (cx, cy), turned `yaw`
     radians off face-on (0 = looking at the camera, pi = turned away), animated
     by `t`. `threat` 0..1 deepens the voids + seeps gold (calm preview = 0).
@@ -150,6 +150,15 @@ def draw_king3d(surf, cx, cy, yaw, t, threat=0.0, scale=2.4, light=-0.6,
 
     def P(rx, h):
         return (cx + rx * scale, cy - (h + bob) * scale)
+
+    # particle projection: default is the prototype's orthographic front view
+    # (depth grows the mote); the live game passes a `proj` that maps each mote
+    # local->world and pushes it through camera.project (true scale under tilt).
+    if proj is None:
+        def proj(lx, ly, lz):
+            # size_mul is foreshorten only (motes are sized in screen px); the
+            # live camera proj returns its own depth-scaled size_mul.
+            return (cx + lx * scale, cy - (ly + bob) * scale, 1.0 + lz * 0.018)
 
     heights = [h * 0.5 for h in range(int(_SEC[0][0] * 2), int(_SEC[-1][0] * 2) + 1)]
 
@@ -207,6 +216,7 @@ def draw_king3d(surf, cx, cy, yaw, t, threat=0.0, scale=2.4, light=-0.6,
         _draw_arms(surf, cx, cy, yaw, bob, scale, shat, threat, "back", t=t)
         _draw_shards(surf, cx, cy, yaw, bob, scale, spread, threat, fade)
         _draw_arms(surf, cx, cy, yaw, bob, scale, shat, threat, "front", t=t)
+        _particles(surf, t, threat, birth_spread, shat, proj)
         return
 
     # --- 2) the porcelain PLATE: only the front-facing arc of the face -------
@@ -258,13 +268,13 @@ def draw_king3d(surf, cx, cy, yaw, t, threat=0.0, scale=2.4, light=-0.6,
     # on the turn AND carries onto the shards when it shatters: a brow ridge, a
     # nose ridge, and the craquelure (whose deep cracks already seep gold). ---
     if len(plate_l) >= 2:
-        def proj(th, hh):
+        def projd(th, hh):
             rx, _h, rz = _surface(th, hh, yaw)
             return ((P(rx, hh)) if rz > 0.3 else None)
         # nose ridge: a soft highlight down the centre + a shadow just off it
-        _draw_runs(surf, [proj(0.0, hh) for hh in (eye_h + 1.5, eye_h - 1, eye_h - 4, eye_h - 6.5)],
+        _draw_runs(surf, [projd(0.0, hh) for hh in (eye_h + 1.5, eye_h - 1, eye_h - 4, eye_h - 6.5)],
                    _PORC_HI, 1)
-        _draw_runs(surf, [proj(0.10, hh) for hh in (eye_h - 1, eye_h - 4, eye_h - 6.5)],
+        _draw_runs(surf, [projd(0.10, hh) for hh in (eye_h - 1, eye_h - 4, eye_h - 6.5)],
                    _PORC_DK, 1)
         # cracks: CALM shows only the single forking crack (right eye -> right
         # corner, splitting in two). As threat rises the rest of the network
@@ -280,7 +290,7 @@ def draw_king3d(surf, cx, cy, yaw, t, threat=0.0, scale=2.4, light=-0.6,
                 if vis <= 0.03:
                     continue
                 gmul = 0.7
-            scr = [proj(th, hh) for (th, hh) in pl]
+            scr = [projd(th, hh) for (th, hh) in pl]
             _draw_runs(crack_layer, scr,
                        (_PORC_DK[0], _PORC_DK[1], _PORC_DK[2], int(70 + 170 * vis)), 1)
             ga = int((24 + 180 * threat) * vis * gmul)
@@ -344,6 +354,8 @@ def draw_king3d(surf, cx, cy, yaw, t, threat=0.0, scale=2.4, light=-0.6,
         if len(pts) >= 2:
             pygame.draw.lines(surf, _HOLLOW, False, pts, 2)
 
+    # the calm wake: only the faint ambient ash drifts off the whole mask.
+    _particles(surf, t, threat, 0.0, 0.0, proj)
 
 
 # ===========================================================================
@@ -627,3 +639,92 @@ def _draw_arms(surf, cx, cy, yaw, bob, scale, shat, threat, which,
             tx, ty = pts[-1]
             pygame.draw.circle(surf, _GOLD_DK, (int(tx), int(ty)),
                                max(1, int(0.9 * scale)))
+
+
+# ===========================================================================
+# STEP 4 -- WORLD-SPACE PARTICLES.  The wake (pale-ash + gold sparks) lives in
+# a 3D frame (lx, ly_up, lz_depth) around the mask, not as flat screen sprites,
+# so it foreshortens + scales with depth.  BIRTH pulls motes INWARD (the mask
+# coalescing); SHATTER vomits sparks OUTWARD; a faint ash always drifts.  A
+# `proj` hook lets the live game map each mote local->world and push it through
+# camera.project (true world scale under tilt); the default is the prototype's
+# orthographic-front projection, matching the mask volume.
+# ===========================================================================
+_K3_PARTS = []                      # [{x,y,z, vx,vy,vz, age, life, r, kind}]
+_K3_PT_LAST = [0.0]
+
+
+def reset_king3d_fx():
+    """Clear the volumetric King's particle wake (call on scene/run change so
+    the trail never leaps across a teleport)."""
+    _K3_PARTS.clear()
+    _K3_PT_LAST[0] = 0.0
+
+
+def _particles(surf, t, threat, birth_spread, shat, proj):
+    """Emit + integrate + draw the 3D wake.  `proj(lx, ly_up, lz_depth)` ->
+    (screen_x, screen_y, size_mul)."""
+    dt = t - _K3_PT_LAST[0]
+    _K3_PT_LAST[0] = t
+    if dt <= 0 or dt > 0.2:
+        dt = 0.016
+    rng = _K3_RNG
+    # BIRTH coalescence: motes stream IN from out of the void toward the mask.
+    if birth_spread > 0.35 and len(_K3_PARTS) < 200:
+        for _ in range(3):
+            a = rng.uniform(0, math.tau); el = rng.uniform(-1.0, 1.0)
+            d = rng.uniform(20, 42); spd = rng.uniform(34, 70)
+            x = math.cos(a) * d; y = el * d * 0.7; z = math.sin(a) * d * 0.5
+            _K3_PARTS.append({"kind": "ash", "x": x, "y": y, "z": z,
+                              "vx": -x / d * spd, "vy": -y / max(1, d) * spd,
+                              "vz": -z / max(1, d) * spd, "age": 0.0,
+                              "life": d / spd, "r": rng.uniform(1.5, 3.2)})
+    # SHATTER: the break vomits sparks + ash outward (gold once truly roused).
+    if shat > 0.08 and rng.random() < shat:
+        for _ in range(2):
+            a = rng.uniform(0, math.tau); el = rng.uniform(-0.8, 0.8)
+            spd = rng.uniform(22, 60) * shat
+            gold = rng.random() < 0.5 + 0.3 * threat
+            _K3_PARTS.append({"kind": "spark" if gold else "ash",
+                              "x": rng.uniform(-3, 3), "y": rng.uniform(-3, 3),
+                              "z": rng.uniform(-3, 3),
+                              "vx": math.cos(a) * spd, "vy": el * spd + 6,
+                              "vz": math.sin(a) * spd, "age": 0.0,
+                              "life": rng.uniform(0.6, 1.4), "r": rng.uniform(2, 5)})
+    # ambient ash always drifting down off the floating form (a faint few)
+    if rng.random() < 0.16:
+        a = rng.uniform(0, math.tau); d = rng.uniform(8, 17)
+        _K3_PARTS.append({"kind": "ash", "x": math.cos(a) * d,
+                          "y": rng.uniform(4, 12), "z": math.sin(a) * d * 0.6,
+                          "vx": rng.uniform(-3, 3), "vy": rng.uniform(-10, -4),
+                          "vz": rng.uniform(-3, 3), "age": 0.0,
+                          "life": rng.uniform(1.0, 2.0), "r": rng.uniform(1.2, 2.4)})
+    if len(_K3_PARTS) > 240:
+        del _K3_PARTS[:len(_K3_PARTS) - 240]
+    keep = []
+    for p in _K3_PARTS:
+        p["age"] += dt
+        fr = p["age"] / p["life"]
+        if fr >= 1.0:
+            continue
+        p["x"] += p["vx"] * dt; p["y"] += p["vy"] * dt; p["z"] += p["vz"] * dt
+        keep.append((p, fr))
+    _K3_PARTS[:] = [p for p, _ in keep]
+    # depth-sort so nearer motes draw last
+    keep.sort(key=lambda pf: pf[0]["z"])
+    for p, fr in keep:
+        sx, sy, sm = proj(p["x"], p["y"], p["z"])
+        a = 1 - fr
+        if p["kind"] == "spark":
+            rr = max(1, int(p["r"] * sm))
+            gl = pygame.Surface((rr * 5 + 2, rr * 5 + 2), pygame.SRCALPHA)
+            c = (rr * 5 + 2) // 2
+            pygame.draw.circle(gl, (_GOLD[0], _GOLD[1], _GOLD[2], int(60 * a)), (c, c), int(rr * 2.2))
+            pygame.draw.circle(gl, (_GOLD_HI[0], _GOLD_HI[1], _GOLD_HI[2], int(170 * a)), (c, c), rr)
+            surf.blit(gl, (int(sx - c), int(sy - c)))
+        else:
+            rr = max(1, int(p["r"] * sm * (1 - 0.4 * fr)))
+            ps = pygame.Surface((rr * 2 + 2, rr * 2 + 2), pygame.SRCALPHA)
+            pygame.draw.circle(ps, (_PORC[0], _PORC[1], _PORC[2], int(120 * a)),
+                               (rr + 1, rr + 1), rr)
+            surf.blit(ps, (int(sx - rr - 1), int(sy - rr - 1)))

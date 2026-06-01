@@ -22,7 +22,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import pygame
 pygame.init()
-from rendering.king3d import draw_king3d
+from rendering.king3d import draw_king3d, reset_king3d_fx
 
 BG = (12, 11, 16)
 CELL = (150, 170)
@@ -44,6 +44,7 @@ def cell(yaw, t, threat, birth=1.0):
 
 
 def strip(path, items, label):
+    reset_king3d_fx()
     font = pygame.font.SysFont("monospace", 11)
     n = len(items)
     out = pygame.Surface((CELL[0] * n, CELL[1] + 18))
@@ -107,18 +108,21 @@ def _frame(yaw, t, threat, birth=1.0, w=320, h=340):
 
 
 def turntable_mp4():
+    reset_king3d_fx()
     fr = 90
     frames = [_frame((i / fr) * math.tau, i * 0.1, 0.0) for i in range(fr)]
     _mp4("/tmp/king3d_turntable.mp4", frames)
 
 
 def threat_mp4():
+    reset_king3d_fx()
     fr = 90
     frames = [_frame(0.0, i * 0.1, i / (fr - 1)) for i in range(fr)]
     _mp4("/tmp/king3d_threat.mp4", frames)
 
 
 def birth_mp4():
+    reset_king3d_fx()
     # birth (shards converge) -> hold calm -> shatter (fling apart again).
     fr = 150
     frames = []
