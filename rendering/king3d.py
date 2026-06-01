@@ -232,15 +232,27 @@ def draw_king3d(surf, cx, cy, yaw, t, threat=0.0, scale=2.4, light=-0.6,
         # ones reaching away from the camera trail behind the shards (occluded),
         # the ones lunging at it are drawn over the top.
         _draw_arms(surf, cx, cy, yaw, bob, scale, shat, threat, "back", t=t)
-        _draw_shards(surf, cx, cy, yaw, bob, scale, spread, threat, fade)
+        # shards build on their own layer so the eye / tear HOLES punch clean
+        # through to the void + glow already on `surf` (they turn black when the
+        # shards lock together, and break apart with them).
+        porc = pygame.Surface(surf.get_size(), pygame.SRCALPHA)
+        _draw_shards(porc, cx, cy, yaw, bob, scale, spread, threat, fade)
+        surf.blit(porc, (0, 0))
         _draw_arms(surf, cx, cy, yaw, bob, scale, shat, threat, "front", t=t)
         _particles(surf, t, threat, birth_spread, shat, proj)
         return
 
-    # --- 2) the porcelain PLATE: only the front-facing arc of the face -------
-    # For each height, sweep the plate arc and keep the part whose surface
-    # faces the camera (rz>0); the porcelain spans those projected x's, so it
-    # narrows to a crescent on the turn. Track the front ridge for shading.
+    # --- CALM PLATE.  The porcelain is built on its OWN layer so the eyes and
+    # tears can be PUNCHED clean THROUGH it (true holes, no painted void, no
+    # socket outline). The dark void + the behind-mask glow already sit on
+    # `surf`, so each hole reads black when calm and lets the Yellow show
+    # through as he rouses -- the mask is genuinely perforated. ---------------
+    porc = pygame.Surface(surf.get_size(), pygame.SRCALPHA)
+
+    # --- 2) the plate: only the front-facing arc of the face. For each height,
+    # sweep the arc and keep the part whose surface faces the camera (rz>0); the
+    # porcelain spans those projected x's, so it narrows to a crescent on the
+    # turn. Track the front ridge for shading.
     plate_l, plate_r, ridge = [], [], []
     for h in heights:
         hw, hd = _hwd(h)
@@ -261,43 +273,38 @@ def draw_king3d(surf, cx, cy, yaw, t, threat=0.0, scale=2.4, light=-0.6,
             ridge.append((best_x, yy))
     if len(plate_l) >= 2:
         plate_poly = plate_r + plate_l[::-1]
-        pygame.draw.polygon(surf, _PORC, plate_poly)
-        pygame.draw.polygon(surf, _PORC_LO, plate_poly, 1)
+        pygame.draw.polygon(porc, _PORC, plate_poly)
         # curvature shade: darken the receding lateral half (toward whichever
         # plate edge is FARther from the front ridge), a soft band.
         if len(ridge) == len(plate_l):
-            # which side recedes: the edge whose x is farther from the ridge x
             far_left = (abs(plate_l[len(plate_l)//2][0] - ridge[len(ridge)//2][0])
                         > abs(plate_r[len(plate_r)//2][0] - ridge[len(ridge)//2][0]))
             edge = plate_l if far_left else plate_r
-            sh = pygame.Surface(surf.get_size(), pygame.SRCALPHA)
             shp = [(e[0], e[1]) for e in edge] + ridge[::-1]
             if len(shp) >= 3:
+                sh = pygame.Surface(surf.get_size(), pygame.SRCALPHA)
                 pygame.draw.polygon(sh, (0, 0, 0, 64), shp)
-            surf.blit(sh, (0, 0))
+                porc.blit(sh, (0, 0))
         # specular ridge highlight down the front of the plate
         if len(ridge) >= 2:
-            pygame.draw.lines(surf, _PORC_HI, False, ridge, 1)
+            pygame.draw.lines(porc, _PORC_HI, False, ridge, 1)
 
     eye_th = 0.62
     eye_h = 2.0
 
     # --- 2b) porcelain surface DETAIL, all pinned in object space so it wraps
-    # on the turn AND carries onto the shards when it shatters: a brow ridge, a
-    # nose ridge, and the craquelure (whose deep cracks already seep gold). ---
+    # on the turn: a nose ridge + the craquelure (whose deep cracks seep gold).
     if len(plate_l) >= 2:
         def projd(th, hh):
             rx, _h, rz = _surface(th, hh, yaw)
             return ((P(rx, hh)) if rz > 0.3 else None)
         # nose ridge: a soft highlight down the centre + a shadow just off it
-        _draw_runs(surf, [projd(0.0, hh) for hh in (eye_h + 1.5, eye_h - 1, eye_h - 4, eye_h - 6.5)],
+        _draw_runs(porc, [projd(0.0, hh) for hh in (eye_h + 1.5, eye_h - 1, eye_h - 4, eye_h - 6.5)],
                    _PORC_HI, 1)
-        _draw_runs(surf, [projd(0.10, hh) for hh in (eye_h - 1, eye_h - 4, eye_h - 6.5)],
+        _draw_runs(porc, [projd(0.10, hh) for hh in (eye_h - 1, eye_h - 4, eye_h - 6.5)],
                    _PORC_DK, 1)
-        # cracks: CALM shows only the single forking crack (right eye -> right
-        # corner, splitting in two). As threat rises the rest of the network
-        # reveals + darkens, reaching the full set of shard lines at threat 1.
-        # The gold seeps the cracks, the calm crack first.
+        # cracks: CALM shows only the single forking crack; as threat rises the
+        # rest reveals + the gold seeps the seams, the calm crack first.
         crack_layer = pygame.Surface(surf.get_size(), pygame.SRCALPHA)
         gold_layer = pygame.Surface(surf.get_size(), pygame.SRCALPHA)
         for pl, appear in _crack_net():
@@ -314,16 +321,16 @@ def draw_king3d(surf, cx, cy, yaw, t, threat=0.0, scale=2.4, light=-0.6,
             ga = int((24 + 180 * threat) * vis * gmul)
             if ga > 8:
                 _draw_runs(gold_layer, scr, (_GOLD[0], _GOLD[1], _GOLD[2], ga), 1)
-        surf.blit(crack_layer, (0, 0))
-        surf.blit(gold_layer, (0, 0))
+        porc.blit(crack_layer, (0, 0))
+        porc.blit(gold_layer, (0, 0))
 
-    # --- 3) surface features: the two void eyes + tear streaks. Each eye is a
-    # PATCH ON THE SURFACE -- its rim is sampled in object (theta, h) space and
-    # projected, so the void genuinely CURVES with the mask: it tilts on the
-    # cheek, bows with the face, foreshortens on the turn and slits/hides as it
-    # goes edge-on, instead of being a flat ellipse stuck on a card. ----------
+    # --- 3) the eyes + tears are HOLES punched clean through the porcelain.
+    # The rim is sampled in object (theta, h) space and projected, so the hole
+    # genuinely CURVES with the mask -- it tilts on the cheek, bows with the
+    # face and foreshortens / slits shut as it turns edge-on. No outline, no
+    # painted void: the hole reveals the dark void (black) + the growing glow
+    # behind it on `surf`.
     def _eye_rim(a0, h0, dth, dh, segs=16):
-        """Project a ring around the eye centre, sampled on the surface."""
         ring = []
         for k in range(segs):
             ang = math.tau * k / segs
@@ -332,46 +339,29 @@ def draw_king3d(surf, cx, cy, yaw, t, threat=0.0, scale=2.4, light=-0.6,
             rx, _h, _rz = _surface(th, hh, yaw)
             ring.append(P(rx, hh))
         return ring
-    for sgn in (-1, 1):
-        a = sgn * eye_th
-        c = math.cos(a + yaw)                      # this eye's surface facing
-        if c <= 0.16:
-            continue                               # turned edge-on / around the back
-        fn = min(1.0, c / math.cos(eye_th))        # 1 face-on -> 0 as it turns edge-on
-        dth = 0.30                                 # eye half-extent in azimuth
-        dh = 3.0 + 1.8 * threat                    # taller (deeper) as he rouses
-        # recessed socket: a slightly larger porcelain ring dipping into the void
-        socket = _eye_rim(a, eye_h, dth + 0.10, dh + 1.4)
-        if len(socket) >= 3:
-            pygame.draw.polygon(surf, _PORC_DK, socket)
-            pygame.draw.polygon(surf, _PORC_LO, socket, 1)
-        void = _eye_rim(a, eye_h, dth, dh)
-        if len(void) >= 3:
-            pygame.draw.polygon(surf, _HOLLOW, void)
-        # the recessed Yellow glimpsed deep in the void: it rides to the
-        # receding (deep) edge as the eye turns, so it reads as set INTO the
-        # socket, not aimed out at the camera. Sampled ON the surface.
-        deep_th = a - sgn * (1.0 - fn) * 0.34      # toward the receding edge
-        drx, dhh, _rz = _surface(deep_th, eye_h - 0.4, yaw)
-        gdx, gdy = P(drx, dhh)
-        gd = _GOLD if threat > 0.3 else _GOLD_DK
-        pygame.draw.circle(surf, gd, (int(gdx), int(gdy)),
-                           max(1, int((0.5 + 0.8 * threat) * scale)))
-        if threat > 0.3 and fn > 0.4:             # a wet gold glint when roused
-            pygame.draw.circle(surf, _GOLD_HI, (int(gdx), int(gdy + scale)),
-                               max(1, int(0.5 * scale)))
-        # weep: a tear-streak running down the cheek, pinned to the surface --
-        # a touch thicker and a tad shorter than before.
-        pts = []
-        for k in range(4):
-            ty = eye_h - 3 - k * 2.6
-            trx, th2, trz = _surface(a * (1.0 - 0.05 * k), ty, yaw)
-            if trz <= 0.3:
-                break
-            pts.append(P(trx, th2))
-        if len(pts) >= 2:
-            pygame.draw.lines(surf, _HOLLOW, False, pts, 2)
+    if len(plate_l) >= 2:
+        for sgn in (-1, 1):
+            a = sgn * eye_th
+            c = math.cos(a + yaw)                  # this eye's surface facing
+            if c <= 0.16:
+                continue                           # turned edge-on / around the back
+            dth = 0.30                             # eye half-extent in azimuth
+            dh = 3.0 + 1.8 * threat                # taller (deeper) as he rouses
+            void = _eye_rim(a, eye_h, dth, dh)
+            if len(void) >= 3:
+                pygame.draw.polygon(porc, (0, 0, 0, 0), void)   # PUNCH the eye
+            # weep: a tear-channel punched down the cheek, pinned to the surface
+            pts = []
+            for k in range(4):
+                ty = eye_h - 3 - k * 2.6
+                trx, th2, trz = _surface(a * (1.0 - 0.05 * k), ty, yaw)
+                if trz <= 0.3:
+                    break
+                pts.append(P(trx, th2))
+            if len(pts) >= 2:
+                pygame.draw.lines(porc, (0, 0, 0, 0), False, pts, 2)
 
+    surf.blit(porc, (0, 0))
     # the calm wake: only the faint ambient ash drifts off the whole mask.
     _particles(surf, t, threat, 0.0, 0.0, proj)
 
@@ -543,6 +533,8 @@ def _draw_shards(surf, cx, cy, yaw, bob, scale, spread, threat, fade):
             area += x0 * y1 - x1 * y0
         drawn.append((zc, sh, pts3, scr, area, C, E, amt))
     drawn.sort(key=lambda d: d[0])                  # painter: far (low z) first
+    holes = []                                      # punched LAST so no nearer
+    tears = []                                      # shard refills a lined-up eye
     for zc, sh, pts3, scr, area, C, E, amt in drawn:
         front = area < 0                            # screen-space winding (y down)
         if front:
@@ -564,8 +556,11 @@ def _draw_shards(surf, cx, cy, yaw, bob, scale, spread, threat, fade):
             pygame.draw.polygon(surf, _VOIDC, scr)
             rimc = _shade(_GOLD_DK, 0.5 + 0.5 * threat)
             pygame.draw.polygon(surf, rimc, scr, 1)
-        # --- carry the calm surface detail onto the front-facing shards ------
-        if front and fade > 0.4:
+        # the eyes / tears are HOLES owned by a shard; collect them to punch
+        # after every shard is laid down (so a nearer shard can't refill a
+        # lined-up eye). They ride with their shard: the holes line up into the
+        # eyes as the pieces lock on birth, and break apart again on shatter.
+        if front:
             ja = sh["feat"]
             if ja["eye"] is not None:
                 sgn = ja["eye"]
@@ -577,7 +572,7 @@ def _draw_shards(surf, cx, cy, yaw, bob, scale, spread, threat, fade):
                     p = _shard_xform(th, hh, yaw, C, sh["axis"], ang, E, amt)
                     rim.append((cx + p[0] * scale, cy - (p[1] + bob) * scale))
                 if len(rim) >= 3:
-                    pygame.draw.polygon(surf, _HOLLOW, rim)
+                    holes.append(rim)
             if ja["tear"]:
                 sgn = ja["tear"]
                 pts = []
@@ -587,7 +582,12 @@ def _draw_shards(surf, cx, cy, yaw, bob, scale, spread, threat, fade):
                                      C, sh["axis"], ang, E, amt)
                     pts.append((cx + p[0] * scale, cy - (p[1] + bob) * scale))
                 if len(pts) >= 2:
-                    pygame.draw.lines(surf, _HOLLOW, False, pts, 2)
+                    tears.append(pts)
+    # PUNCH the eyes + tears clean through the assembled porcelain (last).
+    for rim in holes:
+        pygame.draw.polygon(surf, (0, 0, 0, 0), rim)
+    for pts in tears:
+        pygame.draw.lines(surf, (0, 0, 0, 0), False, pts, 2)
 
 
 # ===========================================================================
