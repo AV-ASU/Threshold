@@ -76,10 +76,13 @@ it renders the procedural sprites to a labelled PNG strip.
     **Under tilt** `draw_world` also (a) **depth-scales** him via a `scale_mul`
     on `draw_npc_sprite` — a perspective divide about the player's depth plane
     (`KING_TILT_DEPTH_*`), so he looms as he closes the view-depth gap and
-    shrinks as he hangs back (pitch 0 untouched); and (b) **occludes him as a
-    standard actor (decided: hybrid)** — front walls (`draw_walls_front`) draw
-    over his base, he draws over back/far walls; his billboard towering into a
-    far wall is intentional. Don't promote him to an always-on-top pass.
+    shrinks as he hangs back (pitch 0 untouched); and (b) **occludes him by his
+    OWN depth (decided: hybrid)** — he's DEFERRED out of the actor pass and
+    composited against the walls after the wall passes (`_composite_tilt_king`):
+    walls nearer the camera than him occlude his base, he draws over walls
+    farther than him (the shared player-depth split mis-orders a tall actor).
+    His billboard towering into a *far* wall is intentional; don't make him
+    always-on-top. `draw_terrain_tilted` returns `(front, all_walls)` for this.
   - `transform.py` — `draw_vessel_bloom`, the human→vessel morph.
   - **Tilted-camera track (LIVE — the oblique view is the default now):**
     `camera.py` (`Camera.project(wx,wy,wz)`, the single world→screen seam +

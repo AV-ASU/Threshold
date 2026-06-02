@@ -1639,7 +1639,13 @@ def draw_terrain_tilted(surf, scene, camera, focus=None):
     `focus` (wx, wy) is the player: walls NEARER the camera than the focus are
     held back and RETURNED so the caller can draw them after the actors (so
     they correctly occlude/fade in front of the player). Walls behind the
-    focus are drawn now. Returns the list of (tx, ty) front walls."""
+    focus are drawn now.
+
+    Returns `(front, all_walls)`: `front` is the list of (tx, ty) front walls;
+    `all_walls` is every visible wall as (depth, tx, ty), far→near. `all_walls`
+    lets the caller composite a TALL actor (the King) against walls by ITS own
+    depth -- the single player-depth split mis-orders a tall actor standing well
+    in front of or behind the player (see Game.draw_world's King pass)."""
     cx, cy = camera.cam_x, camera.cam_y
     half = _tilt_window_half(camera)
     span = int(half * 2)
@@ -1692,13 +1698,23 @@ def draw_terrain_tilted(surf, scene, camera, focus=None):
     # return for the caller to draw after the actors.
     fdepth = camera.depth(focus[0], focus[1]) if focus else float("inf")
     front = []
+    all_walls = []
     for tx, ty, wtx, wty in walls:
         wcx, wcy = tx * TILE + TILE / 2, ty * TILE + TILE / 2
-        if camera.depth(wcx, wcy, _TILT_WALL_RISE) > fdepth:
+        wd = camera.depth(wcx, wcy, _TILT_WALL_RISE)
+        all_walls.append((wd, tx, ty))
+        if wd > fdepth:
             front.append((tx, ty))
         else:
             _tilt_tile_box(surf, camera, scene, tx, ty)
-    return front
+    return front, all_walls
+
+
+def draw_wall_box(surf, scene, camera, tx, ty):
+    """Redraw a single extruded wall/door/window tile -- the public handle for
+    compositing a tall actor against walls by depth (Game.draw_world's King
+    pass). Thin wrapper over the internal tile-box dispatch."""
+    _tilt_tile_box(surf, camera, scene, tx, ty)
 
 
 def draw_walls_front(surf, scene, camera, front, focus):

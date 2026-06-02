@@ -13,7 +13,8 @@ from rendering.sprites import (draw_player_sprite, draw_npc_sprite,
                                draw_npc_corpse, draw_infested_overlay,
                                draw_axe_swing, draw_king_death,
                                door_mask_surface, reset_king_fx,
-                               view_from_facing, KING_UNFOLD)
+                               view_from_facing, KING_UNFOLD,
+                               KING_UNFOLD_SCALE)
 from rendering.king_unfold import draw_unfold_catch
 from rendering.transform import draw_vessel_bloom
 from rendering.camera import Camera
@@ -489,6 +490,8 @@ class Game(CutsceneMixin):
         self._cam_pitch_target = math.radians(TILT_PITCH_DEG)
         self.camera.pitch = self._cam_pitch_target
         self._tilt_front_walls = None     # walls held back to draw over actors
+        self._tilt_all_walls = None       # (depth,tx,ty) all walls, for the King
+        self._deferred_king = None        # King draw deferred for depth composite
         self.look = LookController()       # mouse-look heading model (tilt mode)
         self._rmb_last_x = None            # right-drag scene-rotate anchor
         self.title_choice = 0
@@ -773,6 +776,8 @@ class Game(CutsceneMixin):
         self._cam_pitch_target = math.radians(TILT_PITCH_DEG)
         self.camera.pitch = self._cam_pitch_target
         self._tilt_front_walls = None
+        self._tilt_all_walls = None
+        self._deferred_king = None
         self.look = LookController()
         self.camera.yaw = self.look.cam_yaw
         self._rmb_last_x = None
@@ -1110,6 +1115,56 @@ class Game(CutsceneMixin):
         movement + cursor-aimed gun apply ONLY here; pitch 0 stays the shipping
         top-down game untouched."""
         return self._cam_pitch_target > 0.0
+
+    def _player_screen_center(self):
+        """The player SPRITE's screen anchor -- the projected floor point lifted
+        by the same sin(pitch) actor-lift the sprite draw uses, so player-centred
+        overlays (vignettes, flashlight, edge-crush) sit on the body and not
+        ~15px below its feet under tilt. At pitch 0 the lift is 0 -> unchanged."""
+        psx, psy = self.camera.project(self.player.x, self.player.y)
+        return psx, psy - int(TILT_ACTOR_STAND * math.sin(self.camera.pitch))
+
+    def _composite_tilt_king(self, dk):
+        """Draw the deferred King (under tilt) composited against the walls by
+        its OWN depth. The shared wall pass splits front/back at the PLAYER's
+        depth, which mis-orders a tall actor standing well in front of / behind
+        the player. So here, after all wall passes: (1) draw the King -- it lands
+        over the floor and every wall FARTHER than it; (2) redraw the walls
+        NEARER the camera than it over its base, so a wall genuinely between it
+        and the camera occludes it. The near-wall redraw is clipped to the
+        King's screen box so it can't clobber distant actors."""
+        from scenes.base import draw_wall_box
+        npc = dk["npc"]
+        lift = dk["lift"]
+        drawn = []
+        for ox, oy in dk["offsets"]:
+            sx, sy = self.camera.project(npc.x + ox, npc.y + oy)
+            if not (-64 <= sx <= SCREEN_W + 64 and -64 <= sy <= SCREEN_H + 64):
+                continue
+            sy -= lift
+            draw_npc_sprite(self.screen, sx, sy, "yellow_king", npc.facing,
+                            birth=dk["birth"], gait=dk["gait"],
+                            threat=dk["threat"], seed=dk["seed"],
+                            view=dk["view"], to_player=dk["to_player"],
+                            lean=dk["lean"], scale_mul=dk["scale_mul"])
+            drawn.append((sx, sy))
+        if not drawn or not self._tilt_all_walls:
+            return
+        # Walls nearer the camera than the King's footprint (its ground depth)
+        # must occlude it; redraw them (far->near order preserved) over its box.
+        kd = self.camera.depth(npc.x, npc.y)
+        near = [(tx, ty) for d, tx, ty in self._tilt_all_walls if d > kd]
+        if not near:
+            return
+        eff = KING_UNFOLD_SCALE * dk["scale_mul"]
+        prev = self.screen.get_clip()
+        for sx, sy in drawn:
+            self.screen.set_clip(pygame.Rect(int(sx - 3.2 * eff),
+                                             int(sy - 5.0 * eff),
+                                             int(6.4 * eff), int(7.0 * eff)))
+            for tx, ty in near:
+                draw_wall_box(self.screen, self.scene, self.camera, tx, ty)
+        self.screen.set_clip(prev)
 
     def _update_look(self, dt):
         """Drive the LookController from the mouse and steer the camera yaw +
@@ -1862,7 +1917,7 @@ class Game(CutsceneMixin):
         else:
             level = 3
         surf = self._vignette_surf[level]
-        psx, psy = self.camera.project(self.player.x, self.player.y)
+        psx, psy = self._player_screen_center()
         size = surf.get_width()
         self.screen.blit(surf, (psx - size // 2, psy - size // 2))
 
@@ -1906,7 +1961,7 @@ class Game(CutsceneMixin):
         # rebuilding the gradient every frame.
         level = 1 if self.visibility > 0.55 else 0
         surf = self._outdoor_vignette_surf[level]
-        psx, psy = self.camera.project(self.player.x, self.player.y)
+        psx, psy = self._player_screen_center()
         size = surf.get_width()
         self.screen.blit(surf, (psx - size // 2, psy - size // 2))
 
@@ -1972,7 +2027,7 @@ class Game(CutsceneMixin):
         edge_a = self._claim_dark(int(180 * pulse))
         edge = pygame.Surface((SCREEN_W, SCREEN_H), pygame.SRCALPHA)
         edge.fill((0, 0, 0, edge_a))
-        psx, psy = self.camera.project(self.player.x, self.player.y)
+        psx, psy = self._player_screen_center()
         clear_r = int(110 + 6 * math.sin(t * 1.4))
         pygame.draw.circle(edge, (0, 0, 0, 0), (psx, psy), clear_r)
         self.screen.blit(edge, (0, 0))
@@ -2001,7 +2056,7 @@ class Game(CutsceneMixin):
         # hide spots are still meaningful cover.
         if self.scene.key in SAFE_SCENES:
             return
-        psx, psy = self.camera.project(self.player.x, self.player.y)
+        psx, psy = self._player_screen_center()
         # 60% wash (153 alpha) routed through the darkness cap so
         # hide stacked with apex/dip never blots the whole screen.
         wash_a = self._claim_dark(153)
@@ -2041,7 +2096,7 @@ class Game(CutsceneMixin):
         if self.scene.key not in DARK_SCENES:
             return
         from scenes.base import _light_pool
-        psx, psy = self.camera.project(self.player.x, self.player.y)
+        psx, psy = self._player_screen_center()
         lit = self._flashlight_lit()
         # Build the beam cone geometry once (apex -> left -> tip -> right).
         cone = None
@@ -3621,6 +3676,7 @@ class Game(CutsceneMixin):
         self.camera.cam_x = self.cam_x + SCREEN_W // 2
         self.camera.cam_y = self.cam_y + SCREEN_H // 2
         self._tilt_front_walls = None
+        self._tilt_all_walls = None
         if self.camera.pitch > 0.02:
             # DEBUG oblique view (CAMERA.md Phase 2): skybox fills the void,
             # the floor warps to the tilted plane, walls extrude. Actors below
@@ -3633,9 +3689,10 @@ class Game(CutsceneMixin):
             draw_skybox(self.screen, (0, 0, SCREEN_W, SCREEN_H),
                         yaw=self.camera.yaw, kind=sky, horizon_frac=0.40)
             focus = (self.player.x, self.player.y) if self.player else None
-            self._tilt_front_walls = draw_terrain_tilted(
+            self._tilt_front_walls, self._tilt_all_walls = draw_terrain_tilted(
                 self.screen, self.scene, self.camera, focus)
         else:
+            self._tilt_all_walls = None
             self.scene.draw(self.screen, self.cam_x, self.cam_y, self.camera)
         self._draw_folds()
         for it in self.scene.items:
@@ -3680,6 +3737,9 @@ class Game(CutsceneMixin):
         def _on_screen(sx, sy):
             return -64 <= sx <= SCREEN_W + 64 and -64 <= sy <= SCREEN_H + 64
 
+        # The King is deferred under tilt (composited against walls by its own
+        # depth after the front-wall pass); reset the slot each frame.
+        self._deferred_king = None
         for i, npc in enumerate(self.scene.npcs):
             # A homebody currently inside their door: not drawn at all.
             if getattr(npc, "_inside", False):
@@ -3714,14 +3774,15 @@ class Game(CutsceneMixin):
             # the mask is face-on to the camera, which (per view_from_facing's
             # convention) is when the king->player heading sits at +pi/2 off the
             # camera yaw. So feed the offset from that face-on heading.
-            # OCCLUSION (decided: hybrid). The King draws here in the standard
-            # actor pass, so it is occluded by FRONT walls (those nearer the
-            # camera than the player, held back to draw_walls_front AFTER the
-            # actors) and draws OVER back/far walls -- exactly like every other
-            # actor. Its tall billboard towering up into a far wall (the bedroom
-            # back wall) is intentional: never clipped by what is behind it,
-            # hidden only by what is genuinely between it and the camera. Do NOT
-            # promote the King to an always-on-top pass -- that breaks the hybrid.
+            # OCCLUSION (decided: hybrid). Under tilt the King is DEFERRED out of
+            # this actor pass and composited against the walls by its OWN depth
+            # after the wall passes (_composite_tilt_king): walls genuinely nearer
+            # the camera than it occlude its base, it draws over walls farther
+            # than it. (The shared player-depth wall split can't do this for a
+            # tall actor that stands well in front of / behind the player.) Its
+            # billboard towering up into a FAR wall stays intentional -- hidden
+            # only by what is between it and the camera. Don't make it always-on-
+            # top. At pitch 0 (no tilt) it just draws here like any other actor.
             king3d_yaw = None
             king_to_player = None
             king_lean = None
@@ -3762,6 +3823,22 @@ class Game(CutsceneMixin):
                     king_lean = (ldx / dl * lean_mag, ldy / dl * lean_mag)
             npc_lift = int(TILT_LIFT.get(npc.sprite_kind, TILT_ACTOR_STAND)
                            * math.sin(self.camera.pitch))
+            # Defer the King under tilt: stash its draw and composite it against
+            # the walls by ITS OWN depth after the front-wall pass, so a wall
+            # genuinely between it and the camera occludes it. The single
+            # player-depth wall split mis-orders a tall actor that stands well
+            # in front of / behind the player (see _composite_tilt_king).
+            if (npc.sprite_kind == "yellow_king" and m <= 0.0
+                    and self._tilt_on() and self._tilt_all_walls is not None):
+                kview = view_from_facing(npc.facing[0], npc.facing[1],
+                                         self.camera.yaw)
+                self._deferred_king = dict(
+                    npc=npc, threat=king_threat, to_player=king_to_player,
+                    lean=king_lean, scale_mul=king_scale_mul, lift=npc_lift,
+                    view=kview, offsets=list(_offsets),
+                    birth=getattr(npc, "_birth", None),
+                    gait=getattr(npc, "_gait", None), seed=id(npc) & 0xffff)
+                continue
             for ox, oy in _offsets:
                 sx, sy = self.camera.project(npc.x + ox, npc.y + oy)
                 if not _on_screen(sx, sy):
@@ -3865,6 +3942,11 @@ class Game(CutsceneMixin):
             draw_walls_front(self.screen, self.scene, self.camera,
                              self._tilt_front_walls,
                              (self.player.x, self.player.y))
+        # The King, composited against the walls by its own depth (deferred from
+        # the actor pass) -- drawn over the floor + walls farther than it, then
+        # the walls nearer the camera than it are redrawn over its base.
+        if self._deferred_king is not None:
+            self._composite_tilt_king(self._deferred_king)
         # Cursor reticle in look mode (the mouse is otherwise hidden) -- shows
         # where the gun aims. A thin ring + tick marks, gold to read as 'aim'.
         if self._tilt_on() and self.state == "playing":
