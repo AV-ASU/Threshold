@@ -189,7 +189,7 @@ def _build():
     # the eyes (mouths are bigger), each gnashing on its own phase. Plural and
     # wrong: it is all watching AND all hungry; never one face-with-a-mouth.
     maw_sites = [(fi, r.uniform(0, 6.283))
-                 for fi in r.sample(range(len(ofaces)), 6)]
+                 for fi in r.sample(range(len(ofaces)), 5)]
 
     # arm roots: a POOL of candidate vertices spread over the mass. Each frame
     # _draw_arms extrudes only the ones whose 4D w has everted FORWARD past a
@@ -363,26 +363,42 @@ def _draw_maw3d(lay, sample, N, em, openf, cx, cy, sz, zmin, zr, seed, a):
     k3 = _FOCAL / (_Z_EYE - bottom[2])
     _heart_glow(lay, bx, by, max(2, int(hole * em * 0.8 * k3 * sz)),
                 int(55 + 150 * openf))
-    # 3D bone teeth: rooted on the warped rim, leaning inward + raised out toward
-    # the camera. Irregular lengths, a few missing. Shaded + depth-sorted on top.
+    # ROWS of sharp teeth lining the throat ALL THE WAY DOWN -- concentric rings
+    # receding into the gullet, each smaller, deeper, and darker than the last
+    # (a lamprey/anglerfish throat), not one ring of buck teeth at the lip.
     teeth = []
-    for k in range(K):
-        if math.sin(seed * 3.1 + k * 2.7) < -0.5:         # missing teeth
-            continue
-        mid = math.tau * (k + 0.5) / K
-        dA = (math.tau / K) * 0.42
-        ln = em * (0.16 + 0.26 * (0.5 + 0.5 * math.sin(seed * 0.7 + k * 1.9)))
-        tipin = hole * (0.42 + 0.28 * math.sin(seed * 1.3 + k))
-        t0 = onring(mid - dA, hole * 1.04, 0.0)
-        t1 = onring(mid + dA, hole * 1.04, 0.0)
-        tip = onring(mid, tipin, ln)                       # +ln out along N
-        Nt = _norm(_cross(_sub(t1, t0), _sub(tip, t0)))
-        if Nt[2] < 0:
-            Nt = (-Nt[0], -Nt[1], -Nt[2])
-        lit = max(0.0, _dot(Nt, _L))
-        col = _ci(_cmix(_TOOTH_DK, _TOOTH, 0.22 + 0.78 * lit))
-        zc = (t0[2] + t1[2] + 2 * tip[2]) * 0.25           # bias to the near tip
-        teeth.append((zc, [pr(t0), pr(t1), pr(tip)], (*col, a)))
+    # LOD: full rows of teeth only when the maw is big on screen (close / the
+    # catch); at game scale you can't resolve them, so draw fewer rings -> the
+    # per-maw cost (and the worst-case spike) collapses where it matters.
+    k3c = _FOCAL / (_Z_EYE - cP[2])
+    rpix = hole * em * k3c * sz
+    NRINGS = 3 if rpix > 16 else (2 if rpix > 8 else 1)
+    for rr in range(NRINGS):
+        df = rr / NRINGS                          # 0 at the lip, deeper inward
+        nt = 12 - 3 * rr                          # throat narrows -> fewer teeth
+        wallR = hole * (1.0 - 0.62 * df)          # throat narrows going down
+        dz = -depth * (df * 0.92 + 0.05)          # how far down the gullet
+        shade = 1.0 - 0.62 * df                   # deeper teeth fall into shadow
+        ln_in = wallR * 0.66                       # reach toward the throat axis
+        up = depth * (0.18 - 0.16 * df)            # lip teeth overhang out; deep ones don't
+        jit = rr * 1.7
+        for k in range(nt):
+            if rr == 0 and math.sin(seed * 3.1 + k * 2.7) < -0.66:   # a few lip gaps
+                continue
+            ang = math.tau * k / nt + 0.09 * math.sin(seed + k + jit)
+            dA = (math.tau / nt) * 0.34            # narrow base -> sharp tooth
+            lv = 0.7 + 0.55 * (0.5 + 0.5 * math.sin(seed * 0.7 + k * 1.9 + jit))
+            t0 = onring(ang - dA, wallR, dz)
+            t1 = onring(ang + dA, wallR, dz)
+            tipP = onring(ang, max(0.015, wallR - ln_in * lv), dz)   # toward the axis
+            tip = (tipP[0] + N[0] * up, tipP[1] + N[1] * up, tipP[2] + N[2] * up)
+            Nt = _norm(_cross(_sub(t1, t0), _sub(tip, t0)))
+            if Nt[2] < 0:
+                Nt = (-Nt[0], -Nt[1], -Nt[2])
+            lit = max(0.0, _dot(Nt, _L)) * shade
+            col = _ci(_cmix(_TOOTH_DK, _TOOTH, 0.16 + 0.84 * lit))
+            zc = (t0[2] + t1[2] + 2 * tip[2]) * 0.25
+            teeth.append((zc, [pr(t0), pr(t1), pr(tip)], (*col, a)))
     teeth.sort(key=lambda r: r[0])
     for _z, pts, col in teeth:
         pygame.draw.polygon(lay, col, pts)
