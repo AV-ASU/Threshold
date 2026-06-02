@@ -95,7 +95,13 @@ it renders the procedural sprites to a labelled PNG strip.
     `tools/preview_{tilt,skybox,occlusion,pseudo3d}.py`. **The camera is
     locked at `TILT_PITCH_DEG` (~55°) by default** (`_reset_run_state` /
     `_start_play` seed it; look heading seeded from the player's facing);
-    **F3 toggles back to flat top-down (pitch 0) for debugging.**
+    **F3 toggles back to flat top-down (pitch 0) for debugging.** Under tilt,
+    **trees + cornstalks stand up as 3D billboards** (`_tilt_standee`, cached
+    cards) and join the wall/occluder set (`_TILT_BILLBOARD_CHARS` in the
+    `draw_terrain_tilted` collection + `_tilt_tile_box` dispatch), so they
+    depth-sort, split front/back, and hide the King like walls do. Collision is
+    unchanged (passable `j`/`p`/`A` still passable). Flat top-down draws them
+    flat as before (`draw_scene_terrain(..., skip_billboard=False)`).
 - `systems/`
   - `save.py` — **in-memory only, no disk**. `Save.new()` builds from
     `DEFAULT_SAVE`; quitting to title throws it away (single-session).

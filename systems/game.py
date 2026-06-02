@@ -1150,20 +1150,28 @@ class Game(CutsceneMixin):
             drawn.append((sx, sy))
         if not drawn or not self._tilt_all_walls:
             return
-        # Walls nearer the camera than the King's footprint (its ground depth)
-        # must occlude it; redraw them (far->near order preserved) over its box.
+        # Occluders nearer the camera than the King's footprint (its ground
+        # depth) must hide its base; redraw them (far->near order preserved)
+        # over its screen box. "walls" here is the FULL extruded set from
+        # draw_terrain_tilted -- wall masses, doors, windows AND trees/corn --
+        # not just _WALL_CHARS; keep it that union so every occluder hides the
+        # King (don't narrow it). Only the occluders that actually PROJECT into
+        # the King's box are redrawn, so a cornfield's hundreds of stalks cost a
+        # handful of redraws, not all of them.
         kd = self.camera.depth(npc.x, npc.y)
-        near = [(tx, ty) for d, tx, ty in self._tilt_all_walls if d > kd]
-        if not near:
-            return
         eff = KING_UNFOLD_SCALE * dk["scale_mul"]
         prev = self.screen.get_clip()
         for sx, sy in drawn:
-            self.screen.set_clip(pygame.Rect(int(sx - 3.2 * eff),
-                                             int(sy - 5.0 * eff),
-                                             int(6.4 * eff), int(7.0 * eff)))
-            for tx, ty in near:
-                draw_wall_box(self.screen, self.scene, self.camera, tx, ty)
+            box = pygame.Rect(int(sx - 3.2 * eff), int(sy - 5.0 * eff),
+                              int(6.4 * eff), int(7.0 * eff))
+            self.screen.set_clip(box)
+            reach = box.inflate(TILE * 2, TILE * 3)   # tile art overhangs centre
+            for d, tx, ty in self._tilt_all_walls:    # far->near
+                if d <= kd:
+                    continue
+                bx, by = self.camera.project(tx * TILE + 16, ty * TILE + 16)
+                if reach.collidepoint(bx, by):
+                    draw_wall_box(self.screen, self.scene, self.camera, tx, ty)
         self.screen.set_clip(prev)
 
     def _update_look(self, dt):

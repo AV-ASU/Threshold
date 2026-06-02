@@ -898,6 +898,13 @@ _DOOR_CHARS = frozenset(c for c, d in OBJECT_DEFS.items()
                         if d and d.get("kind") == "door")
 _WINDOW_CHARS = frozenset(c for c, d in OBJECT_DEFS.items()
                           if d and d.get("kind") == "window")
+# Trees and cornstalks: under tilt they're 3D STANDEES (camera-facing billboards
+# stood up off the floor), not flat decals warped onto the ground, and they join
+# the wall set as occluders (depth-sorted, front/back split, King composite) --
+# so a tree or a stalk in the maze hides what's behind it like a wall. Collision
+# is unchanged (passable 'j'/'p'/'A' still are; 'T'/'C' still solid).
+_TILT_BILLBOARD_CHARS = frozenset(c for c, d in OBJECT_DEFS.items()
+                                  if d and d.get("kind") in ("tree", "cornstalk"))
 _WALL_BASE = (19, 18, 23)
 _WALL_FACE = (50, 48, 56)
 _WALL_TOP = (74, 72, 82)
@@ -1315,13 +1322,18 @@ def _draw_bank_fringe(surf, scene, tx, ty, rx, ry):
             pygame.draw.line(surf, reed, (bx, by), (tipx, tipy - 1), 1)
 
 
-def draw_scene_terrain(surf, scene, cam_x, cam_y, x0, y0, x1, y1):
+def draw_scene_terrain(surf, scene, cam_x, cam_y, x0, y0, x1, y1,
+                       skip_billboard=False):
     """Floor -> path fringe -> wall-cast shadows -> continuous wall mass
     -> non-wall objects, for a tile window. Shared by Scene.draw (camera
     window) and the offline full-map renderer. When scene.wrap_x or
     .wrap_y is True, tile lookups wrap mod self.w / self.h so x0/x1 /
     y0/y1 may extend past the map bounds and the render stays seamless
-    across the wrap line."""
+    across the wrap line.
+
+    `skip_billboard` (the tilt floor pass) omits trees/cornstalks here so they
+    aren't painted flat on the warped floor -- draw_terrain_tilted stands them
+    up as billboards instead."""
     W, H = scene.w, scene.h
     wx, wy = scene.wrap_x, scene.wrap_y
     def _lookup_floor(ty, tx):
@@ -1347,6 +1359,7 @@ def draw_scene_terrain(surf, scene, cam_x, cam_y, x0, y0, x1, y1):
     global _FLOOR_CACHE_SCENE
     if _FLOOR_CACHE_SCENE is not scene:
         _FLOOR_CACHE.clear()
+        _TILT_STANDEE_CACHE.clear()  # tree/corn billboard cards are scene-keyed
         _FLOOR_CACHE_SCENE = scene   # hold the ref so its identity can't be reused
     for ty in range(y0, y1):
         for tx in range(x0, x1):
@@ -1385,6 +1398,8 @@ def draw_scene_terrain(surf, scene, cam_x, cam_y, x0, y0, x1, y1):
             ch = _lookup_obj(ty, tx)
             if ch == "." or ch in _WALL_CHARS:
                 continue
+            if skip_billboard and ch in _TILT_BILLBOARD_CHARS:
+                continue                     # stood up as a billboard under tilt
             rx = tx * TILE - cam_x
             ry = ty * TILE - cam_y
             if ch in _DOOR_CHARS:
@@ -1616,14 +1631,60 @@ def _tilt_window_box(surf, camera, scene, tx, ty):
         _draw_window_pane(surf, camera, wx, wy, ndx, ndy)
 
 
+_TILT_STANDEE_CACHE = {}
+
+
+def _tilt_standee(surf, camera, scene, tx, ty, ch):
+    """Stand a tree / cornstalk up as a camera-facing billboard whose base sits
+    on the floor at the tile centre. The flat tile art (_draw_tree/_draw_corn)
+    is rendered onto a card with its trunk/stalk base at the bottom-centre, then
+    draw_billboard foreshortens it consistently with the wall solids. A soft
+    contact shadow grounds it (the flat raster's own shadow is skipped under
+    tilt). The card is CACHED by (kind, seed) -- a dense maze re-blits hundreds
+    of stalks per frame, so the per-frame surface render is the cost; this bakes
+    a fixed sway pose (cleared on scene change with the floor cache)."""
+    from rendering.solids import draw_billboard
+    kind = OBJECT_DEFS.get(ch, {}).get("kind")
+    seed = (tx * 73856093) ^ (ty * 19349663)
+    key = (kind, seed)
+    card = _TILT_STANDEE_CACHE.get(key)
+    if card is None:
+        CW, CH = 72, 60
+        card = pygame.Surface((CW, CH), pygame.SRCALPHA)
+        rx, ry = CW // 2 - 16, CH - TILE   # tile (16, TILE) lands at card base
+        if kind == "cornstalk":
+            _draw_corn(card, rx, ry, seed)
+        else:
+            _draw_tree(card, rx, ry, seed)
+        card = card.convert_alpha()        # fast per-pixel-alpha blits
+        _TILT_STANDEE_CACHE[key] = card
+    wx, wy = tx * TILE + 16, ty * TILE + 16
+    if kind != "cornstalk":                # trees grounded; corn is too dense
+        bx, by = camera.project(wx, wy, 0.0)
+        _ground_shadow(surf, bx, by, 12, 5, 70)
+    draw_billboard(surf, camera, wx, wy, card, h_anchor=1.0)
+
+
 def _tilt_tile_box(surf, camera, scene, tx, ty):
-    """Dispatch a wall-mass tile to the wall box, the doorway (lintel + swung
-    leaf), or the window (solid box + lit pane)."""
+    """Dispatch a tile to its tilt solid: a wall-mass box, a doorway (lintel +
+    swung leaf), a window (box + lit pane), or a tree/cornstalk STANDEE."""
+    # Cull tiles whose extruded/standee footprint can't touch the screen -- the
+    # visible window is oversized (esp. on big maps), and a dense maze has
+    # hundreds of stalks, so skipping the clearly off-screen ones helps. Margins
+    # are generous so an edge box/billboard (which rises toward -y off its base)
+    # is never clipped: wide on x, and tall below (a tall billboard rooted just
+    # under the screen still rises into view).
+    bx, by = camera.project(tx * TILE + 16, ty * TILE + 16)
+    if not (-64 <= bx <= SCREEN_W + 64
+            and -64 <= by <= SCREEN_H + 96):
+        return
     wtx = tx % scene.w if scene.wrap_x else tx
     wty = ty % scene.h if scene.wrap_y else ty
     ch = (scene.objects[wty][wtx]
           if 0 <= wty < scene.h and 0 <= wtx < scene.w else "")
-    if ch in _DOOR_CHARS:
+    if ch in _TILT_BILLBOARD_CHARS:
+        _tilt_standee(surf, camera, scene, tx, ty, ch)
+    elif ch in _DOOR_CHARS:
         _tilt_door_box(surf, camera, scene, tx, ty)
     elif ch in _WINDOW_CHARS:
         _tilt_window_box(surf, camera, scene, tx, ty)
@@ -1654,12 +1715,15 @@ def draw_terrain_tilted(surf, scene, camera, focus=None):
     wx0, wy0 = cx - half, cy - half
     x0 = int(math.floor(wx0 / TILE)); y0 = int(math.floor(wy0 / TILE))
     x1 = int(math.ceil((wx0 + span) / TILE)); y1 = int(math.ceil((wy0 + span) / TILE))
-    draw_scene_terrain(flat, scene, wx0, wy0, x0, y0, x1, y1)
+    draw_scene_terrain(flat, scene, wx0, wy0, x0, y0, x1, y1,
+                       skip_billboard=True)
     warped = _tilt_warp(flat, camera)
     ox, oy = camera.origin
     surf.blit(warped, (ox - warped.get_width() // 2,
                        oy - warped.get_height() // 2))
-    # extrude walls in the visible window, depth-sorted (far first)
+    # extrude walls + stand up tree/corn billboards in the visible window,
+    # depth-sorted (far first). All are "occluders": one list so a tree/stalk
+    # depth-interleaves with walls and the actors exactly like a wall.
     walls = []
     W, H = scene.w, scene.h
     for ty in range(y0, y1):
@@ -1670,9 +1734,9 @@ def draw_terrain_tilted(surf, scene, camera, focus=None):
             wtx = tx % W if scene.wrap_x else tx
             if not (0 <= wtx < W):
                 continue
-            if scene.objects[wty][wtx] in _WALL_CHARS or \
-                    scene.objects[wty][wtx] in _DOOR_CHARS or \
-                    scene.objects[wty][wtx] in _WINDOW_CHARS:
+            ch = scene.objects[wty][wtx]
+            if ch in _WALL_CHARS or ch in _DOOR_CHARS or \
+                    ch in _WINDOW_CHARS or ch in _TILT_BILLBOARD_CHARS:
                 walls.append((tx, ty, wtx, wty))
     walls.sort(key=lambda c: camera.depth(c[0] * TILE + TILE / 2,
                                           c[1] * TILE + TILE / 2,
