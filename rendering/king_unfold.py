@@ -402,26 +402,42 @@ def _draw_arms(lay, o3, op, ocenter, sz, cx, cy, t, threat, arm_roots,
         return
     gate = min(1.0, (threat - 0.18) / 0.45)
     # which roots are everting forward right now -> those are the live limbs
-    live = []
+    cand = []
     for ai, (idx, ph) in enumerate(arm_roots):
         if idx >= len(o3):
             continue
+        outward = _norm(_sub(o3[idx], ocenter))
         emerge = max(0.0, min(1.0, (_everted_w(overts[idx], body_ang) - 0.48) / 0.55))
-        if emerge > 0.06:
-            live.append((emerge, ai, idx, ph))
-    live.sort(reverse=True)
-    live = live[:_ARM_MAX]
+        cand.append((emerge, ai, idx, ph, outward))
+    live = [c for c in cand if c[0] > 0.06]
+    # above threat 0.8 the thing is fully roused: GUARANTEE at least two limbs
+    # are out and reaching for the player -- force the two most player-facing
+    # roots (outward toward the camera) even if eversion hasn't pushed them yet.
+    forced = set()
+    if threat > 0.8:
+        for c in sorted(cand, key=lambda c: c[4][2], reverse=True):
+            if len(forced) >= 2 or c[4][2] <= 0.0:
+                break
+            forced.add(c[1])
+            live.append((max(c[0], 0.62), c[1], c[2], c[3], c[4]))
+    # de-dup per root (keep the higher emerge), strongest first, cap the count
+    best = {}
+    for c in live:
+        if c[1] not in best or c[0] > best[c[1]][0]:
+            best[c[1]] = c
+    live = sorted(best.values(), key=lambda c: c[0], reverse=True)[:_ARM_MAX]
     # the player: below and toward the camera (screen-down, +z toward viewer)
     tgt0 = (ocenter[0], ocenter[1] - 1.9, ocenter[2] + 1.4)
     N = 10
     rad3 = 0.54                                  # thicker -> survives game scale
-    for emerge, ai, idx, ph in live:
+    for emerge, ai, idx, ph, outward in live:
         root = o3[idx]
-        outward = _norm(_sub(root, ocenter))
         # near-side limbs reach hard at the player; far-side ones barely stir
         nearness = 0.5 + 0.5 * (1 if outward[2] > 0 else -1) * min(1.0, abs(outward[2]) * 2)
         lunge = 0.5 + 0.5 * math.sin(t * (0.5 + 0.07 * ai) + ph)
         reach = (0.12 + 0.95 * lunge) * gate * emerge * (0.35 + 0.65 * nearness)
+        if ai in forced:                         # a forced limb always reaches
+            reach = max(reach, 0.55 * gate)
         if reach < 0.12:
             continue
         tgt = (tgt0[0] + 1.3 * math.sin(ai * 2.1 + t * 0.25),
