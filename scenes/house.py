@@ -568,14 +568,19 @@ def build_basement():
     because it created the impression of a duplicate basement door
     on the same building footprint. The cellar is now strictly a
     one-way-down room with the ladder back as the only return."""
-    floor = ["x" * 12 for _ in range(10)]
+    floor = ["x" * 14 for _ in range(12)]
     objects_l = []
-    for y in range(10):
-        if y == 0 or y == 9:
-            objects_l.append(list("#" * 12))
+    for y in range(12):
+        if y == 0 or y == 11:
+            objects_l.append(list("#" * 14))
         else:
-            row = ["#"] + ["."] * 10 + ["#"]
+            row = ["#"] + ["."] * 12 + ["#"]
             objects_l.append(row)
+    # L-shaped cellar: the SE corner is solid stone (the dig was never
+    # squared off), so the room bends instead of reading as a plain box.
+    for yy in range(7, 11):
+        for xx in range(9, 13):
+            objects_l[yy][xx] = "#"
     objects_l[1][10] = "U"          # ladder up to the kitchen
     objects_l[5][8]  = "P"          # photo marker -- consumed at build
     objects = ["".join(r) for r in objects_l]
@@ -640,7 +645,7 @@ def build_basement():
                                  ang=0.0))
     sc.add_decoration(Decoration(10 * TILE + 26, 1 * TILE + 6, "cobweb",
                                  ang=math.pi / 2))
-    sc.add_furniture("firewood", [(8, 8), (9, 8)], w=58, h=24)
+    sc.add_furniture("firewood", [(3, 10), (4, 10)], w=58, h=24)
     for mx, my in [(2, 5), (6, 6), (4, 3), (8, 7)]:
         sc.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16,
                                      "mote"))

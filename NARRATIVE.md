@@ -632,6 +632,13 @@ The reworks the new fiction forced are all shipped. What must stay true:
 ---
 
 ## 8. Still loose (design TODO)
+- **Cultist movement → dynamic AI, not preset patrol coordinates.** The
+  cultist (`enemy.py` cult state machine + the `_cultist(... waypoints=[...])`
+  helper in the underground scenes) currently walks **hard-coded tile
+  waypoints**. Replace those scripted loops with **dynamic, emergent AI
+  movement** (wander/seek/patrol driven by perception + state, not a fixed
+  path) so the cultists feel alive rather than on rails. Scope: the
+  `_cultist` spawns across `scenes/well.py` + `scenes/depths.py`.
 - **Scrub the eat-cult fiction (code ↔ §1b).** Canon is a **claiming**
   cult that consumes no one. Code still carries cannibal framing to
   redress: the `works_vats` "Tallow Vats" → **the Cistern** (the dig
