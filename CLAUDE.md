@@ -73,6 +73,13 @@ it renders the procedural sprites to a labelled PNG strip.
     **Wired as `yellow_king`:** `draw_npc_sprite` routes there when
     `sprites.KING_UNFOLD` is True (False → the old flat King); death routes from
     `_draw_death_screen`. Stateless except a one-time cached `_FORM`.
+    **Under tilt** `draw_world` also (a) **depth-scales** him via a `scale_mul`
+    on `draw_npc_sprite` — a perspective divide about the player's depth plane
+    (`KING_TILT_DEPTH_*`), so he looms as he closes the view-depth gap and
+    shrinks as he hangs back (pitch 0 untouched); and (b) **occludes him as a
+    standard actor (decided: hybrid)** — front walls (`draw_walls_front`) draw
+    over his base, he draws over back/far walls; his billboard towering into a
+    far wall is intentional. Don't promote him to an always-on-top pass.
   - `transform.py` — `draw_vessel_bloom`, the human→vessel morph.
   - **Tilted-camera track (scaffolding — NOT wired into the live game
     yet):** `camera.py` (`Camera.project(wx,wy,wz)`, the single

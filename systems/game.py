@@ -3700,6 +3700,14 @@ class Game(CutsceneMixin):
             # the mask is face-on to the camera, which (per view_from_facing's
             # convention) is when the king->player heading sits at +pi/2 off the
             # camera yaw. So feed the offset from that face-on heading.
+            # OCCLUSION (decided: hybrid). The King draws here in the standard
+            # actor pass, so it is occluded by FRONT walls (those nearer the
+            # camera than the player, held back to draw_walls_front AFTER the
+            # actors) and draws OVER back/far walls -- exactly like every other
+            # actor. Its tall billboard towering up into a far wall (the bedroom
+            # back wall) is intentional: never clipped by what is behind it,
+            # hidden only by what is genuinely between it and the camera. Do NOT
+            # promote the King to an always-on-top pass -- that breaks the hybrid.
             king3d_yaw = None
             king_to_player = None
             king_lean = None
