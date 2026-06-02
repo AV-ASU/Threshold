@@ -221,8 +221,8 @@ def build_shop():
     sc.add_decoration(Decoration(4 * TILE + 16, 1 * TILE + 22,
                                  "wrong_photo", stage=1))
     sc.add_decoration(Decoration(14 * TILE + 16, 1 * TILE + 22, "clock"))
-    # Hettie's calendar -- "no deliveries in a while now," the days
-    # folding back on themselves.
+    # Hettie's calendar -- "no deliveries in a while now," the days with
+    # nowhere left to count toward (stasis, not a loop -- NARRATIVE 1b).
     sc.add_decoration(Decoration(7 * TILE + 16, 0 * TILE + 24, "calendar"))
     for mx, my in [(8, 7), (12, 8), (10, 10)]:
         sc.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16,

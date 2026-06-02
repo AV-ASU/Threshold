@@ -673,15 +673,18 @@ def basement_on_enter(game, scene):
     # A few cartridges stashed in the cellar (one-time, flag-gated).
     from .base import drop_ammo_cache
     drop_ammo_cache(game, scene, 6, 3, 4, "ammo_cellar")
-    # Lodge-candle callback: once the player has seen the rendering at
-    # the Works, the candles in the Lodge mean something they didn't
-    # before. One-shot, fires the next descent to the cellar after the
-    # vats beat (non-canonical evidence -- doesn't move the King-gate).
+    # Lodge-candle callback: once the player has seen the Cistern at the
+    # Works (the dig that broke into the river), the candles in the Lodge
+    # mean something they didn't before -- the Lodge has been part of the
+    # cult's devotion the whole time. One-shot, fires the next descent to
+    # the cellar after the Cistern beat (non-canonical evidence -- doesn't
+    # move the King-gate, and the claiming cult renders no bodies at all).
     if (game.save.flag("evidence_works_vats_seen")
             and not game.save.flag("evidence_lodge_candle_callback")):
         _evidence(game, "lodge_candle_callback", [
-            "[c=dim]There's wax on your thumb. You don't remember "
-            "tasting it.[/c]",
+            "[c=dim]The same guttering candles as the dark below, kept "
+            "burning up here too. The Lodge has been part of it the whole "
+            "time.[/c]",
         ])
 
 

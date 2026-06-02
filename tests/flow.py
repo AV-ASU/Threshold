@@ -464,6 +464,31 @@ def main():
     check(len(grove.npcs) == 0,
           "effigy_grove is a maker-less tableau (no NPC, like its siblings)")
 
+    # --- 19. Eat-cult + time-loop fiction stays scrubbed (NARRATIVE §1b/§8) -
+    # Canon: a CLAIMING cult that renders no bodies (no cannibalism, no
+    # tallow), and a SPATIAL fold -- stasis, nowhere to go -- never a TEMPORAL
+    # loop. Those phrasings were scrubbed; lock them out of the scene source so
+    # the fiction can't quietly regress.
+    import os
+    _scene_dir = os.path.join(os.path.dirname(__file__), "..", "scenes")
+    _forbidden = [
+        "tasting it", "tallow", "the rendering at", "feed what waits",
+        "grain threaded through", "fold back on themselves",
+        "comes home for dinner",
+    ]
+    _hits = []
+    for fn in sorted(os.listdir(_scene_dir)):
+        if not fn.endswith(".py"):
+            continue
+        with open(os.path.join(_scene_dir, fn), encoding="utf-8") as fh:
+            low = fh.read().lower()
+        for phrase in _forbidden:
+            if phrase in low:
+                _hits.append(f"{fn}:{phrase!r}")
+    check(not _hits,
+          "scrub: no eat-cult/time-loop fiction in scene source"
+          + (f" (found {_hits})" if _hits else ""))
+
     print()
     if FAILS:
         print(f"{len(FAILS)} flow failure(s).")

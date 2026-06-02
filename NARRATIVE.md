@@ -639,24 +639,25 @@ The reworks the new fiction forced are all shipped. What must stay true:
   movement** (wander/seek/patrol driven by perception + state, not a fixed
   path) so the cultists feel alive rather than on rails. Scope: the
   `_cultist` spawns across `scenes/well.py` + `scenes/depths.py`.
-- **Scrub the eat-cult fiction (code ↔ §1b).** Canon is a **claiming**
-  cult that consumes no one. Code still carries cannibal framing to
-  redress: the `works_vats` "Tallow Vats" → **the Cistern** (the dig
-  hitting the river); the *"the smell is your room at the Lodge"* vat
-  line; the `depths_threshing` *"feed what waits below" / "grain threaded
-  through with something darker"* (make it a literal grain **tithe**, no
-  bodies); and any "belongings of the vanished" phrasing that implies
-  murder (it's **shed lives** + the fold's lost, not victims).
-- **Scrub time-loop language (code ↔ §1b).** The fold is **spatial, not
-  temporal**. Lines/decals that say the **days repeat / fold back on
-  themselves** (Old Pell's *"the days just fold back on themselves,"* the
-  identical-calendar prop) must read as **stasis** (nowhere to go), never
-  **recurrence**. Move the word *fold* onto the **road**.
-- **Cut the Tisdale-boy "dad" line.** *"My dad went down too. He still
-  comes home for dinner."* leaks two things canon forbids: that claiming
-  is *perceptible*, and that it happens by *individual descent* (§1b — it
-  is invisible and collective). Keep his unnameable-wrongness lines
-  (*"I keep biting my tongue. To check."*); cut this one.
+- ~~**Scrub the eat-cult fiction (code ↔ §1b).**~~ **DONE.** Canon is a
+  **claiming** cult that renders no bodies (no cannibalism). The `works_vats`
+  is **the Cistern** (the dig hitting the river — *"the water runs on,
+  downward, and does not echo back"*); `depths_threshing` is a literal grain
+  **tithe** (*"An offering. Not a stockpile."*); and the last tallow leak —
+  the basement lodge-candle callback (*"wax on your thumb… tasting it"*) — is
+  re-cut to candle **devotion** (*"the same guttering candles as the dark
+  below… the Lodge has been part of it the whole time"*). A flow.py guard
+  (§19) locks the fiction out of the scene source.
+- ~~**Scrub time-loop language (code ↔ §1b).**~~ **DONE.** The fold is
+  **spatial, not temporal**. Old Pell reads as **stasis** (*"where would I be
+  counting toward?"*); the road carries the **fold** (Royce: *"the corn just
+  hands you back where you started"*). No line says the days repeat / fold
+  back on themselves. Locked by the flow.py §19 guard.
+- ~~**Cut the Tisdale-boy "dad" line.**~~ **DONE.** *"My dad went down too. He
+  still comes home for dinner."* is gone (it leaked that claiming is
+  *perceptible* + happens by *individual descent*, both forbidden by §1b). His
+  unnameable-wrongness lines stay (*"I keep biting my tongue. To check."*).
+  Locked by the flow.py §19 guard.
 - **Seed the door's dream (DONE).** The origin (§1b) is now diegetic: reading
   Mara's journal through a third time triggers a wordless **door-dream
   cutscene** (`_tick_flashback`/`_draw_flashback` in `systems/game.py`), and
