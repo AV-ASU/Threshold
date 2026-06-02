@@ -426,7 +426,10 @@ class Enemy:
         the inline movement used elsewhere in this class but
         usable from the state-machine helper. Returns True if any
         movement happened. Direction is wrap-aware so chasers take
-        the shortest path through the fold."""
+        the shortest path through the fold. The target is first routed
+        through scene.nav_toward, so the step bends AROUND cover (and
+        through folds) instead of grinding straight into a pillar."""
+        tx, ty = scene.nav_toward(self.x, self.y, tx, ty)
         dx = scene.world_dx(self.x, tx)
         dy = scene.world_dy(self.y, ty)
         d = math.hypot(dx, dy)
@@ -552,48 +555,51 @@ class Enemy:
                 ang = (pygame.time.get_ticks() / 1000.0) % math.tau
                 self.facing = (math.cos(ang), math.sin(ang))
             return
-        # Default SCOUT: fall through to the prior waypoint /
-        # wander branch. Mirrors the original code path so depths
-        # corridor routes keep working.
-        wps = getattr(self, "waypoints", None)
-        if wps:
-            wi = getattr(self, "_wp_i", 0) % len(wps)
-            tx, ty = wps[wi]
-            ddx = tx - self.x; ddy = ty - self.y
-            dd = math.hypot(ddx, ddy)
-            if dd <= 4:
-                self._wp_i = (wi + 1) % len(wps)
-                self.move_timer = getattr(self, "wp_pause", 1.2)
-            elif self.move_timer > 0:
-                self.move_timer -= dt
-            else:
-                step_x = (ddx / dd) * self.speed * 30 * dt
-                step_y = (ddy / dd) * self.speed * 30 * dt
-                if not scene.is_solid_at(self.x + step_x, self.y):
-                    self.x += step_x
-                if not scene.is_solid_at(self.x, self.y + step_y):
-                    self.y += step_y
-                self.facing = (ddx / dd, ddy / dd)
-        else:
+        # Default SCOUT: pure roam (NARRATIVE §8 -- no preset waypoints).
+        # The cultist picks its own reachable goals and wanders the room,
+        # pausing to scan, then rolls another -- emergent patrol that routes
+        # around cover via _cult_step's nav. lock_facing kneelers are the one
+        # exception: they hold their post (a deliberate stationary set-piece),
+        # moving only once a trigger flips their aggro and LOS promotes them
+        # to CHASE above.
+        if getattr(self, "lock_facing", False):
+            return
+        # Pause-and-scan on arrival: rotate facing slowly, no movement.
+        if self.move_timer > 0:
             self.move_timer -= dt
-            if self.move_timer <= 0 or self.move_target is None:
-                self.move_timer = random.uniform(2, 4)
+            self._roam_look = getattr(self, "_roam_look", 0.0) - dt
+            if self._roam_look <= 0:
+                self._roam_look = 0.4
                 ang = random.uniform(0, math.tau)
-                r = random.uniform(20, 80)
-                self.move_target = (self.home[0] + math.cos(ang) * r,
-                                     self.home[1] + math.sin(ang) * r)
-            tx, ty = self.move_target
-            ddx = tx - self.x; ddy = ty - self.y
-            dd = math.hypot(ddx, ddy)
-            if dd > 2:
-                step_x = (ddx / dd) * self.speed * 30 * dt
-                step_y = (ddy / dd) * self.speed * 30 * dt
-                if not scene.is_solid_at(self.x + step_x, self.y):
-                    self.x += step_x
-                if not scene.is_solid_at(self.x, self.y + step_y):
-                    self.y += step_y
-                if not getattr(self, "lock_facing", False):
-                    self.facing = (ddx / dd, ddy / dd)
+                self.facing = (math.cos(ang), math.sin(ang))
+            return
+        # Arrived (or no goal): roll a fresh reachable walkable tile within
+        # ~8 blocks. nav_toward (inside _cult_step) routes the actual step
+        # around cover; we only need the destination to be reachable.
+        if (self.move_target is None
+                or scene.world_dist(self.x, self.y, self.move_target[0],
+                                    self.move_target[1]) < 10):
+            if self.move_target is not None:
+                self.move_timer = random.uniform(1.0, 2.2)   # arrived: scan
+                self._roam_look = 0.0
+                self.move_target = None
+                return
+            from constants import TILE as _T
+            for _ in range(12):
+                gx = int(self.x // _T) + random.randint(-8, 8)
+                gy = int(self.y // _T) + random.randint(-8, 8)
+                wx = gx * _T + _T // 2
+                wy = gy * _T + _T // 2
+                if scene._nav_solid_at(wx, wy):
+                    continue
+                if not (scene.nav_clear_line(self.x, self.y, wx, wy)
+                        or scene.nav_path(self.x, self.y, wx, wy)):
+                    continue
+                self.move_target = (wx, wy)
+                break
+            else:
+                return
+        self._cult_step(self.move_target[0], self.move_target[1], dt, scene)
 
     def draw(self, surf, cam_x, cam_y, view="front"):
         if not self.alive: return

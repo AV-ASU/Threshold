@@ -489,6 +489,45 @@ def main():
           "scrub: no eat-cult/time-loop fiction in scene source"
           + (f" (found {_hits})" if _hits else ""))
 
+    # --- 20. Cultists use dynamic AI, not preset coordinates (NARRATIVE §8) -
+    # Pure-roam SCOUT + cover-aware pursuit. Guard the two canon facts: no
+    # roaming cultist carries a baked patrol route, and the nav routes a
+    # pursuer AROUND a blocked line instead of straight through it.
+    from constants import TILE as _TILE
+    from scenes import load_scene as _ld, SCENE_BUILDERS as _SB
+    no_wp = routed = False
+    for _key in _SB:
+        try:
+            _sc = _ld(_key)
+        except Exception:
+            continue
+        for _e in _sc.enemies:
+            if getattr(_e, "kind", None) == "cultist":
+                check(not getattr(_e, "waypoints", None),
+                      f"ai: cultist in {_key} has no preset waypoint route")
+                no_wp = True
+        # Probe one blocked-line pair and confirm nav bends around it.
+        if not routed:
+            _wt = [(tx, ty) for ty in range(_sc.h) for tx in range(_sc.w)
+                   if not _sc._nav_solid_at(tx * _TILE + 16, ty * _TILE + 16)]
+            for _i in range(0, len(_wt), 7):
+                for _j in range(len(_wt) - 1, 0, -11):
+                    if _i >= _j:
+                        continue
+                    (ax, ay), (bx, by) = _wt[_i], _wt[_j]
+                    x0, y0 = ax * _TILE + 16, ay * _TILE + 16
+                    x1, y1 = bx * _TILE + 16, by * _TILE + 16
+                    if (not _sc.nav_clear_line(x0, y0, x1, y1)
+                            and _sc.nav_path(x0, y0, x1, y1)):
+                        check(_sc.nav_toward(x0, y0, x1, y1) != (x1, y1),
+                              "ai: nav routes a pursuer around blocking cover")
+                        routed = True
+                        break
+                if routed:
+                    break
+    check(no_wp, "ai: cultist spawns were exercised by the waypoint guard")
+    check(routed, "ai: a blocked-line route was found to exercise the nav guard")
+
     print()
     if FAILS:
         print(f"{len(FAILS)} flow failure(s).")

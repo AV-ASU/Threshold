@@ -2079,6 +2079,119 @@ class Scene:
             return self.objects[ty][tx]
         return "#"
 
+    # --- Cover-aware navigation (cultist pursuit, NARRATIVE §8) ----------
+    # The cult AI (entities/enemy.py + npc.py) routes AROUND the volumetric
+    # cover now standing mid-floor (pillars, pews, cots, basins) via a
+    # wrap-aware BFS over a walkable tile grid, while staying a straight shot
+    # in the open. Folds are first-class: the grid wraps and the line test
+    # crosses the seam, so a chase carries seamlessly THROUGH a fold.
+    def _nav_solid_at(self, x_px, y_px):
+        """STATIC blocker test for navigation -- walls + furniture only, NOT
+        the (moving) NPCs that is_solid_at also counts. Baking live bodies
+        into the path grid would leave phantom walls where someone briefly
+        stood. Wrap-aware via the char_*_at lookups."""
+        return (is_object_solid(self.char_object_at(x_px, y_px))
+                or is_floor_solid(self.char_floor_at(x_px, y_px)))
+
+    def nav_grid(self):
+        """Cached [h][w] bool grid -- True where a tile centre is walkable.
+        Built once per scene instance (objects/floor are static after the
+        build pass; infestation only adds non-solid decals + swaps NPCs)."""
+        g = getattr(self, "_nav_grid", None)
+        if g is None:
+            half = TILE // 2
+            g = [[not self._nav_solid_at(tx * TILE + half, ty * TILE + half)
+                  for tx in range(self.w)] for ty in range(self.h)]
+            self._nav_grid = g
+        return g
+
+    def nav_clear_line(self, x0, y0, x1, y1, step=10):
+        """True if the straight (wrap-aware) segment from (x0,y0) to (x1,y1)
+        crosses no static blocker -- the cheap shortcut that keeps motion
+        straight in the open and only pays for BFS when cover intervenes."""
+        dx = self.world_dx(x0, x1)
+        dy = self.world_dy(y0, y1)
+        n = int(math.hypot(dx, dy) // step)
+        for i in range(1, n + 1):
+            if self._nav_solid_at(x0 + dx * i / n, y0 + dy * i / n):
+                return False
+        return True
+
+    def nav_path(self, fx, fy, tx, ty, max_visit=1500):
+        """Wrap-aware BFS over the walkable grid. Returns a list of world-
+        centre points from the step AFTER the start up to the goal tile, or
+        None if unreachable (caller falls back to a straight step).
+        8-connected, with no diagonal corner-cutting through a solid."""
+        from collections import deque
+        g = self.nav_grid()
+        w, h = self.w, self.h
+
+        def norm(i, j):
+            if self.wrap_x:
+                i %= w
+            if self.wrap_y:
+                j %= h
+            return i, j
+
+        def ok(i, j):
+            i, j = norm(i, j)
+            return 0 <= i < w and 0 <= j < h and g[j][i]
+
+        si, sj = norm(int(fx // TILE), int(fy // TILE))
+        gi, gj = norm(int(tx // TILE), int(ty // TILE))
+        if (si, sj) == (gi, gj) or not ok(gi, gj):
+            return None
+        came = {(si, sj): None}
+        q = deque([(si, sj)])
+        found = False
+        while q:
+            ci, cj = q.popleft()
+            if (ci, cj) == (gi, gj):
+                found = True
+                break
+            if len(came) > max_visit:
+                break
+            for di, dj in ((1, 0), (-1, 0), (0, 1), (0, -1),
+                           (1, 1), (1, -1), (-1, 1), (-1, -1)):
+                nij = norm(ci + di, cj + dj)
+                if nij in came or not ok(*nij):
+                    continue
+                if di and dj and not (ok(ci + di, cj) and ok(ci, cj + dj)):
+                    continue                      # don't cut a solid corner
+                came[nij] = (ci, cj)
+                q.append(nij)
+        if not found:
+            return None
+        path = []
+        cur = (gi, gj)
+        half = TILE // 2
+        while cur is not None and cur != (si, sj):
+            ci, cj = cur
+            path.append((ci * TILE + half, cj * TILE + half))
+            cur = came[cur]
+        path.reverse()
+        return path
+
+    def nav_toward(self, fx, fy, tx, ty):
+        """Immediate (sx, sy) a pursuer at (fx,fy) should step toward to reach
+        (tx,ty) while routing around cover. Straight to the target when the
+        line is clear; otherwise the FARTHEST path node still on a clear line
+        (string-pulling, so motion arcs smoothly around corners rather than
+        zig-zagging tile-to-tile). Returns the target unchanged when no route
+        exists -- the caller's per-axis slide then nudges along the wall."""
+        if self.nav_clear_line(fx, fy, tx, ty):
+            return tx, ty
+        path = self.nav_path(fx, fy, tx, ty)
+        if not path:
+            return tx, ty
+        nxt = path[0]
+        for p in path:
+            if self.nav_clear_line(fx, fy, p[0], p[1]):
+                nxt = p
+            else:
+                break
+        return nxt
+
     def blocks_sight(self, x_px, y_px):
         """True where the tile occludes the player's LINE OF SIGHT (Phase 4
         blind-spot vision, rendering/sight.py). Walls and solid props block;

@@ -39,24 +39,22 @@ def _ambient(scene, sfx, vol, lo, hi):
     scene.on_update_fn = _tick
 
 
-def _cultist(x, y, speed=1.0, waypoints=None):
+def _cultist(x, y, speed=1.0):
     """Hooded chaser. Combat is gone, so atk is forced to 0 every
     tick by Enemy.update; the danger is contact -- the dread
     aperture slams to 0 if a cultist touches the player. Slightly
     slower than the player's walk so cover-running works. Aggro
     is short (~180px line of sight) and respects player.hidden, so
     the player can sneak past in cover and stand still in a hide
-    spot to break the chase. Optional waypoints walk a fixed route
-    while the player is out of aggro range."""
+    spot to break the chase. In SCOUT it PURE-ROAMS (NARRATIVE §8) --
+    no preset route; it picks its own reachable goals and paths around
+    cover. Pin a stationary set-piece (a kneeler) by setting aggro=0 +
+    lock_facing on the returned enemy instead of a one-point route."""
     e = Enemy(x, y, kind="cultist", hp=1, atk=0, speed=speed,
               aggro=180, atk_range=22, ai="chase",
               drops=[], can_charge=False)
     e.respawning = False
     e.respects_hide = True
-    if waypoints:
-        e.waypoints = list(waypoints)
-        e._wp_i = 0
-        e.wp_pause = 0.8
     return e
 
 
@@ -81,7 +79,7 @@ def _box(w, h):
 # hide or get cornered, so these carve distinct footprints out of a `_box`:
 # octagons, L-bends, crosses, T's, apses, ragged caverns. Each just stamps
 # '#' (solid wall) onto the interior; callers keep exits on open edges and
-# place props/spawns/waypoints in the remaining floor.
+# place props/spawns in the remaining floor.
 
 def _wall(objs, x0, y0, x1, y1, ch="#"):
     """Fill an inclusive tile rectangle with solid wall (clamped in-bounds)."""
@@ -163,11 +161,7 @@ def build_depths_antechamber():
         (6 * TILE + 16, 2 * TILE + 16, "behind"),
     ]
     # One cultist patrolling a small loop around the landing.
-    sc.add_enemy(_cultist(7 * TILE + 16, 6 * TILE + 16, speed=0.85,
-                          waypoints=[(7 * TILE + 16, 6 * TILE + 16),
-                                     (7 * TILE + 16, 4 * TILE + 16),
-                                     (4 * TILE + 16, 4 * TILE + 16),
-                                     (4 * TILE + 16, 6 * TILE + 16)]))
+    sc.add_enemy(_cultist(7 * TILE + 16, 6 * TILE + 16, speed=0.85))
     _ambient(sc, "cult_breath", 0.18, 6.0, 10.0)
 
     sc.add_interactable(5 * TILE + 16, 5 * TILE + 16, 36)   # [E] cue for the landing
@@ -239,12 +233,8 @@ def build_depths_procession():
     # so they meet between (5..12) and pass each other. Endpoints
     # held away from the west-edge spawn (col 1) so the player
     # arrives with breathing room.
-    sc.add_enemy(_cultist(5 * TILE + 16, 4 * TILE + 16, speed=0.9,
-                          waypoints=[(13 * TILE + 16, 4 * TILE + 16),
-                                     (5  * TILE + 16, 4 * TILE + 16)]))
-    sc.add_enemy(_cultist(11 * TILE + 16, 4 * TILE + 16, speed=0.9,
-                          waypoints=[(4  * TILE + 16, 4 * TILE + 16),
-                                     (11 * TILE + 16, 4 * TILE + 16)]))
+    sc.add_enemy(_cultist(5 * TILE + 16, 4 * TILE + 16, speed=0.9))
+    sc.add_enemy(_cultist(11 * TILE + 16, 4 * TILE + 16, speed=0.9))
     _ambient(sc, "blip_soft", 0.12, 2.5, 4.5)
 
     def _on_enter(game, scene):
@@ -301,23 +291,19 @@ def build_depths_hall():
     ]
     # Two stationary cultists kneel at the iron door, facing east.
     # Aggro starts at 0 (oblivious) so they don't react until the
-    # crossing trigger flips them. Single-point waypoint pins them in
-    # place; lock_facing keeps them turned toward the door. The third
-    # cultist patrols the transept, regardless.
-    kneel_a = _cultist(12 * TILE + 16, 4 * TILE + 16, speed=0.8,
-                       waypoints=[(12 * TILE + 16, 4 * TILE + 16)])
-    kneel_b = _cultist(12 * TILE + 16, 6 * TILE + 16, speed=0.8,
-                       waypoints=[(12 * TILE + 16, 6 * TILE + 16)])
+    # crossing trigger flips them. aggro=0 + lock_facing pins them in
+    # place (a stationary set-piece, exempt from the SCOUT roam) and keeps
+    # them turned toward the door. The third cultist roams, regardless.
+    kneel_a = _cultist(12 * TILE + 16, 4 * TILE + 16, speed=0.8)
+    kneel_b = _cultist(12 * TILE + 16, 6 * TILE + 16, speed=0.8)
     for k in (kneel_a, kneel_b):
         k.aggro = 0
         k.facing = (1, 0)
         k.lock_facing = True
     sc.add_enemy(kneel_a)
     sc.add_enemy(kneel_b)
-    # Patrol walks the transept arms, north to south.
-    sc.add_enemy(_cultist(9 * TILE + 16, 8 * TILE + 16, speed=0.95,
-                          waypoints=[(9 * TILE + 16, 2 * TILE + 16),
-                                     (9 * TILE + 16, 8 * TILE + 16)]))
+    # A third cultist roams the transept freely (pure-roam SCOUT).
+    sc.add_enemy(_cultist(9 * TILE + 16, 8 * TILE + 16, speed=0.95))
 
     # Crossing trigger: stepping into the transept crossing on the way to
     # the door wakes the kneelers.
@@ -326,7 +312,6 @@ def build_depths_hall():
             if e.kind == "cultist" and getattr(e, "aggro", 0) == 0:
                 e.aggro = 600
                 e.lock_facing = False
-                e.waypoints = None
         game.audio.play("low_pulse", 0.55)
     sc.triggers.append({
         "rect": (8 * TILE, 1 * TILE, 11 * TILE, 10 * TILE),

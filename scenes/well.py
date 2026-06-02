@@ -136,9 +136,7 @@ def build_well_passage():
         (11 * TILE + 16, 7 * TILE + 16, "behind"),
     ]
     # One cultist working the corridor, end to end.
-    sc.add_enemy(_cultist(3 * TILE + 16, 5 * TILE + 16, speed=0.85,
-                          waypoints=[(13 * TILE + 16, 5 * TILE + 16),
-                                     (3 * TILE + 16, 5 * TILE + 16)]))
+    sc.add_enemy(_cultist(3 * TILE + 16, 5 * TILE + 16, speed=0.85))
     _ambient(sc, "cult_breath", 0.16, 5.0, 9.0)
     return sc
 
@@ -185,12 +183,8 @@ def build_works_vats():
     ]
     # Two cultists working the basins -- one walks the N-S arms, one the
     # E-W crossing.
-    sc.add_enemy(_cultist(6 * TILE + 16, 5 * TILE + 16, speed=0.8,
-                          waypoints=[(6 * TILE + 16, 2 * TILE + 16),
-                                     (6 * TILE + 16, 8 * TILE + 16)]))
-    sc.add_enemy(_cultist(9 * TILE + 16, 5 * TILE + 16, speed=0.8,
-                          waypoints=[(10 * TILE + 16, 5 * TILE + 16),
-                                     (2 * TILE + 16, 5 * TILE + 16)]))
+    sc.add_enemy(_cultist(6 * TILE + 16, 5 * TILE + 16, speed=0.8))
+    sc.add_enemy(_cultist(9 * TILE + 16, 5 * TILE + 16, speed=0.8))
     _ambient(sc, "low_pulse", 0.14, 6.0, 10.0)
 
     def _vats_on_enter(game, scene):
@@ -264,12 +258,8 @@ def build_works_sorting():
         (13 * TILE + 16, 2 * TILE + 16, "behind"),   # up in the stem (blind)
     ]
     # Two cultists sorting/patrolling -- the hardest crossing.
-    sc.add_enemy(_cultist(4 * TILE + 16, 6 * TILE + 16, speed=0.9,
-                          waypoints=[(4 * TILE + 16, 4 * TILE + 16),
-                                     (4 * TILE + 16, 9 * TILE + 16)]))
-    sc.add_enemy(_cultist(11 * TILE + 16, 6 * TILE + 16, speed=0.9,
-                          waypoints=[(13 * TILE + 16, 6 * TILE + 16),
-                                     (7 * TILE + 16, 6 * TILE + 16)]))
+    sc.add_enemy(_cultist(4 * TILE + 16, 6 * TILE + 16, speed=0.9))
+    sc.add_enemy(_cultist(11 * TILE + 16, 6 * TILE + 16, speed=0.9))
     _ambient(sc, "whisper", 0.13, 7.0, 12.0)
 
     def _interact(game):
@@ -392,8 +382,7 @@ def build_works_scriptorium():
     ]
     # One scribe, kneeling at a desk, oblivious (aggro 0) -- unless you
     # cross into its lane. Locked facing toward its work.
-    scribe = _cultist(5 * TILE + 16, 2 * TILE + 16, speed=0.8,
-                      waypoints=[(5 * TILE + 16, 2 * TILE + 16)])
+    scribe = _cultist(5 * TILE + 16, 2 * TILE + 16, speed=0.8)
     scribe.aggro = 0
     scribe.facing = (-1, 0)
     scribe.lock_facing = True
@@ -474,15 +463,12 @@ def build_works_sign():
     # The congregation: three kneelers facing the Sign (north), plus one
     # patrol on the east flank. Kneelers start oblivious (aggro 0).
     for kx in (4, 6, 8):
-        k = _cultist(kx * TILE + 16, 5 * TILE + 16, speed=0.8,
-                     waypoints=[(kx * TILE + 16, 5 * TILE + 16)])
+        k = _cultist(kx * TILE + 16, 5 * TILE + 16, speed=0.8)
         k.aggro = 0
         k.facing = (0, -1)
         k.lock_facing = True
         sc.add_enemy(k)
-    sc.add_enemy(_cultist(10 * TILE + 16, 7 * TILE + 16, speed=0.9,
-                          waypoints=[(10 * TILE + 16, 4 * TILE + 16),
-                                     (10 * TILE + 16, 8 * TILE + 16)]))
+    sc.add_enemy(_cultist(10 * TILE + 16, 7 * TILE + 16, speed=0.9))
     _ambient(sc, "whisper", 0.16, 5.0, 9.0)
 
     def _take_mask(game):
