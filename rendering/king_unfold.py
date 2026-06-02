@@ -96,49 +96,6 @@ def _ci(c):
 
 
 # --------------------------------------------------------------------------- #
-# THE PALLID MASK -- used ONLY by the catch cutscene (draw_unfold_catch). In
-# life the Unfolding never wears a nameable face; at the KILL it finally settles
-# head-on and the mass resolves into the serene mask the King wore. This relief
-# is sculpted into the rest mesh along _FACE_DIR (which in rest points at the
-# camera), so when the catch rotation damps to zero the face is head-on for
-# free. Kept out of the live _build so the in-world creature stays faceless.
-# --------------------------------------------------------------------------- #
-_FACE_DIR = _norm((0.0, 0.12, 1.0))
-_FACE_R = _norm(_cross((0.0, 1.0, 0.0), _FACE_DIR))
-_FACE_UP = _cross(_FACE_DIR, _FACE_R)
-_FACE_CAP = 0.98
-_FACE_COSCAP = math.cos(_FACE_CAP)
-_EYE_UV = ((-0.42, 0.16), (0.42, 0.16))
-_BROW_UV = (0.0, 0.46)
-
-
-def _face_uv_dir(u, v):
-    s = math.sin(_FACE_CAP)
-    return _norm(_cadd(_cadd(_FACE_DIR, _FACE_R, u * s), _FACE_UP, v * s))
-
-
-def _face_relief(d):
-    a = _dot(d, _FACE_DIR)
-    if a <= _FACE_COSCAP:
-        return 0.0
-    cw = (a - _FACE_COSCAP) / (1.0 - _FACE_COSCAP)
-    capwin = cw * cw * (3.0 - 2.0 * cw)
-    s = math.sin(_FACE_CAP)
-    u = _dot(d, _FACE_R) / s
-    v = _dot(d, _FACE_UP) / s
-    h = 0.0
-    for ex, ey in _EYE_UV:                               # deep recessed sockets
-        h -= 0.46 * math.exp(-(((u - ex) ** 2 + (v - ey) ** 2) / 0.12))
-    h += 0.22 * math.exp(-((v - 0.46) ** 2 / 0.045)) * math.exp(-(u * u) / 0.6)
-    h += 0.13 * math.exp(-(u * u) / 0.02) * math.exp(-((v + 0.02) ** 2) / 0.22)
-    for cx in (-0.62, 0.62):
-        h += 0.12 * math.exp(-(((u - cx) ** 2 + (v + 0.16) ** 2) / 0.11))
-    h -= 0.16 * math.exp(-((v + 0.40) ** 2) / 0.018) * math.exp(-(u * u) / 0.30)
-    h += 0.13 * math.exp(-((v + 0.66) ** 2) / 0.045) * math.exp(-(u * u) / 0.45)
-    return h * capwin
-
-
-# --------------------------------------------------------------------------- #
 # geometry
 # --------------------------------------------------------------------------- #
 def _sphere_mesh(nlat, nlon, radial_fn):
@@ -789,114 +746,82 @@ def draw_king_unfold(surf, cx, cy, t, threat=0.0, scale=96.0,
 
 
 # --------------------------------------------------------------------------- #
-# THE CATCH -- the death cutscene. The Unfolding rushes the camera, the tumble
-# damps, and the mass settles head-on into the PALLID MASK (the face the King
-# wore) staring at the player, eyes + Sign blazing, before the gold furnace
-# takes the screen. The one moment a clean face is earned.
+# THE CATCH -- the death. No flat face: one eversion-maw yawns wide and the
+# camera goes DOWN THE THROAT. Rings of sharp teeth rush past in perspective
+# toward the gold gullet (the LOD's full rows finally pay off), then the furnace
+# floods to white. The most 4D death we can give it: the inside-out turn engulfs
+# the player rather than resolving into a picture.
 # --------------------------------------------------------------------------- #
-_CATCH_FORM = None
-
-
-def _build_catch():
-    global _CATCH_FORM
-    if _CATCH_FORM is not None:
-        return _CATCH_FORM
-
-    def noise(d, s):
-        return (math.sin(3.1 * d[0] + 1.3 * s) * math.sin(2.3 * d[1] + 2.1) *
-                math.cos(2.7 * d[2] + 0.7) +
-                0.5 * math.sin(4.2 * d[1] + 1.1) * math.cos(3.3 * d[2] + 2.4 + s))
-
-    def outer_rf(d):
-        a = _dot(d, _FACE_DIR)
-        capwin = 0.0
-        if a > _FACE_COSCAP:
-            cw = (a - _FACE_COSCAP) / (1.0 - _FACE_COSCAP)
-            capwin = cw * cw * (3.0 - 2.0 * cw)
-        n = noise(d, 0.0)
-        rad = 0.92 * (1.0 + 0.40 * n * (1.0 - 0.78 * capwin))   # flatten under face
-        rad += _face_relief(d)
-        return (d[0] * rad, d[1] * rad, d[2] * rad, 0.62 * noise(d, 2.0))
-    NLAT, NLON = 18, 26
-    overts, ofaces = _sphere_mesh(NLAT, NLON, outer_rf)
-
-    def nearest(target):
-        best, bi = -2.0, 0
-        for i, p in enumerate(overts):
-            dd = _dot(_norm((p[0], p[1], p[2])), target)
-            if dd > best:
-                best, bi = dd, i
-        return bi
-    eyes = [nearest(_face_uv_dir(u, v)) for (u, v) in _EYE_UV]
-    brow = nearest(_face_uv_dir(*_BROW_UV))
-    _CATCH_FORM = dict(overts=overts, ofaces=ofaces, eyes=eyes, brow=brow)
-    return _CATCH_FORM
-
-
 def draw_unfold_catch(surf, t):
-    """The catch cutscene, t 0..1. Rush in -> the tumble damps to rest so the
-    baked face lands head-on -> the Pallid Mask resolves, eyes + Sign blazing
-    -> the gold furnace floods the screen."""
-    form = _build_catch()
+    """The catch, t 0..1: the maw opens and swallows the camera. Concentric
+    rings of teeth scroll past in perspective down a dark throat toward the
+    gold gullet, which swells and floods the screen white-gold."""
     W, H = surf.get_size()
-    cx, cy = W // 2, int(H * 0.46)
+    cx, cy = W * 0.5, H * 0.5
+    surf.fill((5, 4, 6))
 
     def sstep(x):
         x = 0.0 if x < 0 else 1.0 if x > 1 else x
         return x * x * (3.0 - 2.0 * x)
-    rush = sstep(t / 0.5)                         # screen-fill rush
-    resolve = sstep((t - 0.3) / 0.45)             # mass -> mask
-    flare = sstep((t - 0.78) / 0.22)              # gold furnace flood
-    sz = (0.9 + 2.6 * rush) * (min(W, H) * 0.30)
+    opening = sstep(t / 0.22)                 # the maw yawns open
+    dive = sstep((t - 0.12) / 0.74)           # plunge down the gullet
+    flare = sstep((t - 0.82) / 0.18)          # the furnace floods
 
-    # the tumble damps to zero as it resolves -> rest pose -> face head-on
-    spd = 0.9 * (1.0 - resolve)
-    ang = (t * spd * 0.6, t * spd * 0.5 + 1.3, t * spd * 0.3, t * spd * 0.2)
-    o3 = _xform(form["overts"], ang, 0.05 * (1.0 - resolve), t)
-    op = [_proj(p, cx, cy, sz) for p in o3]
-    oc = (sum(p[0] for p in o3) / len(o3), sum(p[1] for p in o3) / len(o3),
-          sum(p[2] for p in o3) / len(o3))
-    zs = [p[2] for p in o3]
-    zmin, zr = min(zs), (max(zs) - min(zs)) or 1.0
-
-    _eat_light(surf, cx, cy, sz * 2.2, 110 + 120 * rush)
+    base = max(W, H)
     lay = pygame.Surface((W, H), pygame.SRCALPHA)
-    recs = []
-    for fi, face in enumerate(form["ofaces"]):
-        v0, v1, v2 = o3[face[0]], o3[face[1]], o3[face[2]]
-        N = _norm(_cross(_sub(v1, v0), _sub(v2, v0)))
-        cen = ((v0[0] + v1[0] + v2[0] + o3[face[3]][0]) / 4,
-               (v0[1] + v1[1] + v2[1] + o3[face[3]][1]) / 4,
-               (v0[2] + v1[2] + v2[2] + o3[face[3]][2]) / 4)
-        if _dot(N, _sub(cen, oc)) < 0:
-            N = (-N[0], -N[1], -N[2])
-        recs.append((cen[2], face, N))
-    recs.sort(key=lambda r: r[0])
-    for zc, face, N in recs:
-        dn = (zc - zmin) / zr
-        col = _shade_face(N, dn, 1.0)
-        pygame.draw.polygon(lay, (*col, 255), [op[i] for i in face])
 
-    # the Pallid Mask resolves: blazing eyes in the sockets + the Sign on the brow
-    if resolve > 0.02:
-        a = int(255 * resolve)
-        for ei in form["eyes"]:
-            ex, ey = op[ei]
-            er = sz * 0.14
-            pygame.draw.circle(lay, (3, 2, 4, a), (int(ex), int(ey)),
-                               max(2, int(er * 1.3)))
-            _eye(lay, ex, ey, er, resolve, 0.0, a)
-        bx, by = op[form["brow"]]
-        _yellow_sign(lay, bx, by, sz * 0.13, int(230 * resolve))
+    # a tunnel of tooth-rings receding to the gullet; they scroll OUTWARD past
+    # the camera as we dive (near rings swell off-screen, new ones emerge deep)
+    NR = 11
+    phase = dive * NR * 1.6
+    rings = []
+    for i in range(NR):
+        p = ((i - phase) % NR) / NR           # 0 = at the camera (near), ~1 = far
+        depth = 0.14 + p * 1.25
+        rad = (0.62 * base * (0.45 + 0.55 * opening)) / depth
+        rings.append((depth, rad, p))
+    rings.sort(reverse=True)                  # far first
+    for depth, rad, p in rings:
+        if rad < 5 or rad > base * 1.7:
+            continue
+        far_in = min(1.0, (1.0 - p) * 2.2 + 0.15)         # fade deep rings in
+        near_out = (1.0 if rad < base * 0.85 else
+                    max(0.0, 1.0 - (rad - base * 0.85) / (base * 0.6)))
+        a = int(255 * near_out)
+        if a < 8:
+            continue
+        bright = (0.25 + 0.75 * (1.0 - p)) * far_in        # darker toward the gullet
+        nt = 18
+        rot = depth * 5.3                                  # interleave the rings
+        tlen = rad * (0.17 + 0.10 * math.sin(depth * 3.1))
+        for k in range(nt):
+            ang = math.tau * k / nt + rot
+            dA = (math.tau / nt) * 0.40
+            lv = 0.7 + 0.5 * (0.5 + 0.5 * math.sin(depth * 7.0 + k * 1.9))
+            b0 = (cx + math.cos(ang - dA) * rad, cy + math.sin(ang - dA) * rad)
+            b1 = (cx + math.cos(ang + dA) * rad, cy + math.sin(ang + dA) * rad)
+            tipr = rad - tlen * lv
+            tip = (cx + math.cos(ang) * tipr, cy + math.sin(ang) * tipr)
+            shade = bright * (0.55 + 0.45 * math.sin(ang * 2 + depth))
+            col = _ci(_cmix(_TOOTH_DK, _TOOTH, 0.16 + 0.84 * max(0.0, shade)))
+            pygame.draw.polygon(lay, (*col, a), [b0, b1, tip])
     surf.blit(lay, (0, 0))
 
-    # the gold furnace floods out from the face -> white-gold
+    # the throat closes dark around the edges -> we are inside it
+    _eat_light(surf, cx, cy, base * 1.45, int(45 + 130 * opening))
+
+    # the gold gullet at the end of the throat (drawn on the opaque surface so it
+    # glows in the dark centre), swelling as we plunge toward it
+    _heart_glow(surf, cx, cy, int(base * (0.10 + 0.22 * dive + 0.55 * flare)),
+                int(110 + 150 * dive))
+
+    # the furnace floods from the gullet -> white-gold
     if flare > 0.0:
-        r = int(max(W, H) * (0.2 + 1.1 * flare))
+        r = int(base * (0.25 + 1.35 * flare))
         g = pygame.Surface((r * 2, r * 2), pygame.SRCALPHA)
-        for i in range(r, 0, -max(1, r // 40)):
+        for i in range(r, 0, -max(1, r // 44)):
             f = 1 - i / r
-            v = int(255 * (f ** 1.6) * flare)
-            col = (255, min(255, 210 + int(45 * f)), int(120 + 135 * f))
+            v = int(255 * (f ** 1.5) * flare)
+            col = (255, min(255, 205 + int(50 * f)), int(110 + 145 * f))
             pygame.draw.circle(g, (*col, v), (r, r), i)
-        surf.blit(g, (cx - r, cy - r), special_flags=pygame.BLEND_RGBA_ADD)
+        surf.blit(g, (int(cx - r), int(cy - r)), special_flags=pygame.BLEND_RGBA_ADD)
