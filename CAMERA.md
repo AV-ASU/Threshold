@@ -32,9 +32,9 @@ top-down view for debugging. Remaining work is polish (Phases 4–5).
 - **Blind-spot vision (ambitious, on-theme).** When the head turns, the
   **terrain** behind/around the player may be revealed, but **NPCs, items, and
   map changes stay hidden until actually looked at** — the world is allowed to
-  rearrange in the blind spot (Weeping-Angels / SCP-173 dread). Depends on
-  Phase 1 landing first (needs the live game routed through the camera + a
-  heading-keyed visibility buffer). Not built yet.
+  rearrange in the blind spot (Weeping-Angels / SCP-173 dread). Phases 1-3 have
+  landed (camera seam, tilt, head-turn), so this is the next build — it now just
+  needs a heading-keyed visibility buffer. Not built yet (Phase 4).
 - **UI stays flat / screen-space.** HUD, dialog, notebook, vignettes,
   full-screen overlays (transition fade, apex wash, death cards, the Carcosa
   cutscenes) are unaffected by the tilt and keep drawing in screen space.
@@ -58,10 +58,10 @@ parameter change instead of a 37-scene rewrite.
 
 ---
 
-## Modules (built, isolated, pushed)
+## Modules
 
-All live under `rendering/`, with headless previews under `tools/`. None are
-imported by the live game yet.
+All live under `rendering/`, with headless previews under `tools/`. These are
+now wired into the live game (the oblique view is the default).
 
 | Module | Role |
 | --- | --- |
@@ -70,7 +70,8 @@ imported by the live game yet.
 | `rendering/skybox.py` | **Backdrop.** `draw_skybox(surf, rect, yaw, kind)` — sky gradient + sallow Sign-band + fog horizon + a wrapping near-black treeline/rooftop silhouette that parallaxes on yaw. `kind ∈ {overcast, void}`. |
 | `rendering/occlusion.py` | **Don't-hide-the-player.** `occluder_alpha(...)` fades any solid that is nearer the camera than the focus actor AND covers it on screen (screen-space bbox overlap of base..top, feathered so walls ease rather than pop). |
 | `rendering/pseudo3d.py` | The original proof: a volumetric Watcher (`draw_pseudo3d_watcher`) — self-occluding features (the gold eyes wrap around the back), travelling rim light. Superseded by `solids.py` for general use; kept as the worked reference. |
-| `rendering/king3d.py` | **The volumetric King in Yellow (tier 3 — DONE + LIVE).** A porcelain MASK-PLATE pinned in object space (`_surface`) over a recessed Yellow void; it FRACTURES into 3D shards (`_build_shards`/`_draw_shards`) that converge on **birth** and explode on **shatter**, with reaching arms (`_draw_arms`) and a 3D particle wake (`_particles`), all driven by one `threat` 0..1 + `birth` 0..1. **Wired live**: `sprites._draw_king` routes here on the tilt path (`Game._tilt_on()`) with `king3d_yaw` (mask faces the player, camera.yaw gives the view); pitch 0 stays the flat shipping King, pixel-identical. Preview: `tools/preview_king3d.py`. |
+| `rendering/king_unfold.py` | **THE UNFOLDING — the live King** (see `CLAUDE.md`). A real 4D everting mass projected 4D→3D→2D, faceless, with eyes/maws/limbs, a birth ramp, locomotion lean, depth-scale and per-depth wall occlusion. Routed from `sprites.draw_npc_sprite` when `KING_UNFOLD` is True. Preview: `tools/preview_king_unfold.py`. |
+| `rendering/king3d.py` | The earlier porcelain MASK-PLATE King (3D shards + reaching arms + particle wake, driven by `threat`/`birth`). **Superseded by THE UNFOLDING** — now only the fallback when `sprites.KING_UNFOLD` is False. Preview: `tools/preview_king3d.py`. |
 
 ### Previews (headless; self-configure SDL dummy drivers)
 
@@ -103,33 +104,31 @@ the world about the vertical axis (the head-turn).
 | Phase | Work | Risk | Visual change |
 | --- | --- | --- | --- |
 | 0 ✅ | Pseudo-3D + camera + solids + skybox + occlusion scaffolding (this file) | — | none (isolated demos) |
-| **1** 🟧 | **Camera seam (live):** route world→screen through `Camera` at **pitch 0**. **DONE:** `Game.camera` synced each frame; items, corpses, NPCs, enemies, player, the five player-centred overlays, and decorations (incl. wrap-clones) all go through `camera.project()`. Gated pixel-identical by `tools/capture_world.py`. **REMAINING:** terrain / walls / roofs / doors are area/quad-based (`scenes/base.py`) and need real per-tile **quad** projection — moved to Phase 2 (it's geometry, not a 1:1 point swap). The fold pass (`rendering/folds.py`) and `enemy.draw` internals still take raw offsets. | low | **none** (pixel-identical) |
-| **2** ✅ | **Tilt the floor/walls (live).** `scenes/base.draw_terrain_tilted` warps the visible floor window (wrap-aware) + extrudes wall boxes; `draw_world` branches at pitch>0 with skybox + decorations; actors stand via Phase-1 projection + a sin(pitch) lift (per-kind for tall sprites); camera pivots about screen centre + eases a zoom-out (scale→0.72); **F3** debug-toggles pitch 0↔55. **Depth/occlusion:** walls split on the player's depth — behind drawn before actors, in-front drawn after + faded by `occluder_alpha`. **Enemies/projectiles** routed through the camera; **folds** stand up anchored to the projected floor seam. Gated pixel-identical at pitch 0; smoke+flow green. **Deferred (imperceptible/secondary):** overlay vignettes re-center ~15px off under tilt; per-ACTOR (vs player-only) wall depth interleave. | med | the tilt lands (F3) |
-| **3** ✅ | The **head-turn arc** (input clamp + ease, ±45°) — **live** via `systems/look_control.py` (`LookController`: mouse → aim/body/`cam_yaw`, eased, clamped) + `Game._update_look`. **Volumetric King (tier 3) DONE + live** (`rendering/king3d.py`, gated on `_tilt_on()`; pitch 0 pixel-identical). Remaining: per-actor occlusion + depth-correct wall/actor interleave. | med | head-turn + the 3D King |
-| 4 | **Blind-spot vision** layer: terrain reveals on peek; NPCs/items/map-changes gated to line-of-sight. | high | the horror mechanic |
-| 5 | Reconcile top-down assumptions: wrap-clone seams re-project; per-scene `skybox kind`; tune dread framing. | low | polish |
+| **1** ✅ | **Camera seam (live):** world→screen through `Camera`. `Game.camera` synced each frame; items, corpses, NPCs, enemies, player, the five player-centred overlays, decorations (incl. wrap-clones), terrain/walls/roofs/doors, folds — all go through `camera.project()`. Gated pixel-identical at pitch 0 by `tools/capture_world.py`. | low | **none** (pixel-identical) |
+| **2** ✅ | **Tilt the floor/walls (live + DEFAULT).** `scenes/base.draw_terrain_tilted` warps the visible floor window (wrap-aware) + extrudes wall boxes + stands trees/corn up as billboard occluders (`_tilt_standee`, corn-run LOD); `draw_world` branches at pitch>0 with skybox + decorations; actors stand via Phase-1 projection + a sin(pitch) lift (per-kind for tall sprites); camera pivots about screen centre + eases a zoom-out (scale→0.72). **The oblique ~55° view is the DEFAULT; F3 toggles back to flat top-down.** **Depth/occlusion:** walls split on the player's depth (behind before actors, in-front after + faded by `occluder_alpha`); **tall actors** (King/sheriff/watcher) deferred + composited by their OWN depth (`_composite_tilt_actors`); player-centred overlays re-centred on the lifted sprite anchor. Gated pixel-identical at pitch 0; smoke+flow green. | med | the tilt (default) |
+| **3** ✅ | The **head-turn arc** (input clamp + ease, ±45°) — **live** via `systems/look_control.py` (`LookController`: mouse → aim/body/`cam_yaw`, eased, clamped) + `Game._update_look`. The non-humanoid **King is THE UNFOLDING** now (`rendering/king_unfold.py`, gated on `KING_UNFOLD`); the old `king3d.py` mask is the fallback. Lean + depth-scale + per-depth wall occlusion all live. | med | head-turn + the 3D King |
+| 4 | **Blind-spot vision** layer: terrain reveals on peek; NPCs/items/map-changes gated to line-of-sight. **← next.** | high | the horror mechanic |
+| 5 | Reconcile remaining top-down assumptions: wrap-clone seams re-project; per-scene `skybox kind`; tune dread framing. | low | polish |
 
 ### Things that will need care (known top-down assumptions)
 
 - **Wrap-around (toroidal) scenes** clone decorations/NPCs at `±world` offsets;
   the clone offsets must be recomputed through the projection, not added in
   screen space.
-- **Depth order** is currently *implicit* (draw order = list order). Phase 1
-  must make it explicit (`Camera.depth`) or tall things will sort wrong on tilt.
-- **Vignettes** (`_draw_brimley_haze`, `_draw_outdoor_vignette`) are radial and
-  player-centred; fine as screen-space passes, but re-center on the player's
-  *projected* position.
 - **HUD / overlays** stay screen-space (intended) — do **not** route them
-  through the camera.
+  through the camera. (Player-centred *world* overlays — vignettes, flashlight —
+  DO re-center on the player's lifted projected anchor; done via
+  `_player_screen_center`.)
 
 ---
 
 ## Working agreements for this track
 
-- **Phase 1 must be visually identical.** The win condition is "the diff is a
-  refactor; the game looks pixel-for-pixel the same at pitch 0." Verify with a
-  before/after capture, not just smoke.
+- **Pitch 0 must stay visually identical.** The flat top-down view (F3) is the
+  refactor baseline — keep it pixel-for-pixel the same so the tilt is purely
+  additive. Verify with a capture, not just smoke.
 - **Keep it asset-free.** No PNGs, no bake step. Solids are math.
 - **Previews before live wiring.** Same loop that built this: render to PNG/GIF
   headless, eyeball it, *then* touch `game.py`.
-- **Tilt ships behind a toggle** until it's good, so `main` stays playable.
+- **The tilt is the DEFAULT now** (locked ~55°); F3 drops to flat top-down for
+  debugging. Keep that escape hatch working.
