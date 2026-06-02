@@ -51,7 +51,10 @@ it renders the procedural sprites to a labelled PNG strip.
     `chaser` runs the cultist state
     machine (`_cult_tick`: scout→chase→search→investigate). The
     `yellow_king` sprite short-circuits to `_yk_update` (the `_birth`
-    eruption ramp, 0→1 over ~1.2s, during which he cannot move).
+    eruption ramp, 0→1 over ~1.2s, during which he cannot move). It also
+    eases `_yk_lean` 0→1 (smoothed locomotion magnitude) while actually
+    travelling — the Unfolding everts forward along `self.facing` by this
+    much (a travel tell; 0 while born/stalled).
   - `enemy.py` — only `kind == "cultist"` runs the cult state machine;
     other kinds use a straight-line chase.
 - `rendering/`
@@ -64,7 +67,9 @@ it renders the procedural sprites to a labelled PNG strip.
     across the skin, 3D limbs that erupt where the body everts forward and reach
     the player (≥2 above threat 0.8), and 3D toothed eversion-maws that warp with
     the flesh (patch-bound). `draw_king_unfold(surf,x,y,t,threat,scale,to_player,
-    birth)` and the death `draw_unfold_catch(surf,t)` (the throat-swallow).
+    birth,lean)` — `lean` is the screen-space travel dir × speed; the mass everts
+    FORWARD along it (leading hemisphere surges+swells, tail tapers) as the
+    locomotion tell — and the death `draw_unfold_catch(surf,t)` (the throat-swallow).
     **Wired as `yellow_king`:** `draw_npc_sprite` routes there when
     `sprites.KING_UNFOLD` is True (False → the old flat King); death routes from
     `_draw_death_screen`. Stateless except a one-time cached `_FORM`.

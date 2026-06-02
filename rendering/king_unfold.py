@@ -558,7 +558,7 @@ def _draw_arms(lay, o3, op, ocenter, sz, cx, cy, t, threat, arm_roots,
 
 
 def draw_king_unfold(surf, cx, cy, t, threat=0.0, scale=96.0,
-                     to_player=(0.0, 1.0), birth=1.0):
+                     to_player=(0.0, 1.0), birth=1.0, lean=(0.0, 0.0)):
     """THE UNFOLDING, centred at (cx, cy). `threat` 0..1: a small dark fold ->
     larger, faster eversion, the heart kindling, eyes opening, the Sign
     resolving, more light eaten.
@@ -567,6 +567,12 @@ def draw_king_unfold(surf, cx, cy, t, threat=0.0, scale=96.0,
     (+x right, +y down); the reaching limbs lunge that way and the eyes gaze
     along it, so it tracks the player wherever they are. Defaults to
     down-screen.
+
+    `lean` is the SCREEN-space travel direction (+x right, +y down) scaled by a
+    0..1 locomotion magnitude -- the LOCOMOTION TELL. The mass everts FORWARD
+    along it: the leading hemisphere surges ahead and swells while the trailing
+    side tapers, so the clot lunges in its direction of travel instead of
+    rigidly sliding to its next position. Zero = at rest (no surge).
 
     `birth` 0..1 is the ARRIVAL: a gold wound opens and leads, the dark mass
     blooms out of it, and the limbs come in last -- so 0->1 is the grace window
@@ -587,6 +593,42 @@ def draw_king_unfold(surf, cx, cy, t, threat=0.0, scale=96.0,
 
     o3 = _xform(form["overts"], body_ang, 0.05, t)
     c3 = _xform(form["cverts"], heart_ang, 0.0, t)
+
+    # LOCOMOTION LEAN -- evert the mass forward in its travel direction. Map the
+    # screen-space `lean` to the model frame (screen +x->+x, screen +y(down)->-y,
+    # plus a push toward the camera so the surge reads as lunging forward, not
+    # just sliding sideways). The leading hemisphere is shoved ahead and swells
+    # (the everting bulge) while the trailing side is pulled back, so the whole
+    # clot stretches into a forward surge that turns inside-out as it goes. Gated
+    # by body_b so a half-born mass doesn't lunge.
+    lx, ly = lean
+    lmag = min(1.0, math.hypot(lx, ly)) * body_b
+    if lmag > 0.01:
+        dm = math.hypot(lx, ly) or 1.0
+        Lm = _norm((lx / dm, -ly / dm, 0.55))    # unit travel dir, model frame
+        amp = 0.46 * lmag
+        oc0 = (sum(p[0] for p in o3) / len(o3),
+               sum(p[1] for p in o3) / len(o3),
+               sum(p[2] for p in o3) / len(o3))
+        for i, p in enumerate(o3):
+            rel = (p[0] - oc0[0], p[1] - oc0[1], p[2] - oc0[2])
+            fwd = _dot(rel, Lm)                   # signed reach along travel
+            if fwd >= 0.0:                        # leading hemisphere: swell out
+                sw = 1.0 + 0.30 * amp * fwd
+                rel = (rel[0] * sw, rel[1] * sw, rel[2] * sw)
+            else:                                 # trailing tail: narrow it in
+                al = (Lm[0] * fwd, Lm[1] * fwd, Lm[2] * fwd)
+                pe = (rel[0] - al[0], rel[1] - al[1], rel[2] - al[2])
+                nw = 1.0 - 0.5 * amp * (-fwd)
+                rel = (al[0] + pe[0] * nw, al[1] + pe[1] * nw, al[2] + pe[2] * nw)
+            o3[i] = (oc0[0] + rel[0] + Lm[0] * amp * fwd,
+                     oc0[1] + rel[1] + Lm[1] * amp * fwd,
+                     oc0[2] + rel[2] + Lm[2] * amp * fwd)
+        # the molten heart leads the lunge -- it surges ahead inside the body
+        hs = amp * 0.6
+        c3 = [(p[0] + Lm[0] * hs, p[1] + Lm[1] * hs, p[2] + Lm[2] * hs)
+              for p in c3]
+
     op = [_proj(p, cx, cy, sz) for p in o3]
     cp = [_proj(p, cx, cy, sz) for p in c3]
 

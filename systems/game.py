@@ -3693,6 +3693,7 @@ class Game(CutsceneMixin):
             # camera yaw. So feed the offset from that face-on heading.
             king3d_yaw = None
             king_to_player = None
+            king_lean = None
             if npc.sprite_kind == "yellow_king" and self.player and self._tilt_on():
                 phi = math.atan2(self.player.y - npc.y, self.player.x - npc.x)
                 king3d_yaw = (phi - self.camera.yaw - math.pi / 2 + math.pi) % math.tau - math.pi
@@ -3702,6 +3703,19 @@ class Game(CutsceneMixin):
                 kxs, kys = self.camera.project(npc.x, npc.y)
                 pxs, pys = self.camera.project(self.player.x, self.player.y)
                 king_to_player = (pxs - kxs, pys - kys)
+                # screen-space LEAN: project the King's heading (self.facing) a
+                # short way ahead and take the screen delta -- so the mass everts
+                # forward the way it is actually travelling, correct under any
+                # camera yaw/pitch. Scaled by the smoothed locomotion magnitude
+                # (0 while born/stalled), so it only surges when it moves.
+                lean_mag = getattr(npc, "_yk_lean", 0.0)
+                if lean_mag > 0.01:
+                    fx, fy = npc.facing
+                    axs, ays = self.camera.project(npc.x + fx * TILE,
+                                                   npc.y + fy * TILE)
+                    ldx, ldy = axs - kxs, ays - kys
+                    dl = math.hypot(ldx, ldy) or 1.0
+                    king_lean = (ldx / dl * lean_mag, ldy / dl * lean_mag)
             npc_lift = int(TILT_LIFT.get(npc.sprite_kind, TILT_ACTOR_STAND)
                            * math.sin(self.camera.pitch))
             for ox, oy in _offsets:
@@ -3731,7 +3745,8 @@ class Game(CutsceneMixin):
                                     threat=king_threat, seed=id(npc) & 0xffff,
                                     curse=curse_v, gaze=w_gaze, view=nview,
                                     king3d_yaw=king3d_yaw,
-                                    to_player=king_to_player)
+                                    to_player=king_to_player,
+                                    lean=king_lean)
                     # A resister whose flesh has turned: their bespoke
                     # fold-horror form, laid over the person they were.
                     if getattr(npc, "_mutated", False):
