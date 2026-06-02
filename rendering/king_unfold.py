@@ -174,7 +174,7 @@ def _build():
         rad = 0.92 * (1.0 + 0.40 * n)
         w = 0.62 * noise(d, 2.0)
         return (d[0] * rad, d[1] * rad, d[2] * rad, w)
-    NLAT, NLON = 18, 26                       # subdivided -> smoother wet surface
+    NLAT, NLON = 14, 20                       # tuned for ~90px: fewer facets
     overts, ofaces = _sphere_mesh(NLAT, NLON, outer_rf)
     r = random.Random(23)
     # EYE SITES: facets where eyes open across the skin -- wrong faces that
@@ -400,8 +400,8 @@ def _draw_arms(lay, o3, op, ocenter, sz, cx, cy, t, threat, arm_roots,
     # the player, in the model's own space: screen +x -> +x, screen +y(down) ->
     # -y, plus a touch toward the camera so the reach reads as looming forward
     tgt0 = (ocenter[0] + pdx * 1.9, ocenter[1] - pdy * 1.9, ocenter[2] + 1.4)
-    M = 9          # rings of mesh along the limb
-    K = 7          # verts per ring -> a round, lit cross-section
+    M = 8          # rings of mesh along the limb
+    K = 6          # verts per ring -> a round, lit cross-section
     quads = []     # (depth, poly2d, color, alpha) gathered across all limbs
     tips = []      # tip eyes, drawn on top after the flesh
     for emerge, ai, idx, ph, outward in live:
