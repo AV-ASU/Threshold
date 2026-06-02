@@ -310,7 +310,7 @@ _ARM_MAX = 5
 
 
 def _draw_arms(lay, o3, op, ocenter, sz, cx, cy, t, threat, arm_roots,
-               overts, body_ang, zmin, zr):
+               overts, body_ang, zmin, zr, pdx=0.0, pdy=1.0):
     """Limbs are the body UNFOLDING, not appendages bolted on. A root extrudes
     only while its 4D w has everted FORWARD past a threshold -- so the eversion
     itself pushes the limb out, the live count varies (2-5), and the silhouette
@@ -349,8 +349,9 @@ def _draw_arms(lay, o3, op, ocenter, sz, cx, cy, t, threat, arm_roots,
         if c[1] not in best or c[0] > best[c[1]][0]:
             best[c[1]] = c
     live = sorted(best.values(), key=lambda c: c[0], reverse=True)[:_ARM_MAX]
-    # the player: below and toward the camera (screen-down, +z toward viewer)
-    tgt0 = (ocenter[0], ocenter[1] - 1.9, ocenter[2] + 1.4)
+    # the player, in the model's own space: screen +x -> +x, screen +y(down) ->
+    # -y, plus a touch toward the camera so the reach reads as looming forward
+    tgt0 = (ocenter[0] + pdx * 1.9, ocenter[1] - pdy * 1.9, ocenter[2] + 1.4)
     M = 9          # rings of mesh along the limb
     K = 7          # verts per ring -> a round, lit cross-section
     quads = []     # (depth, poly2d, color, alpha) gathered across all limbs
@@ -452,7 +453,7 @@ def _draw_arms(lay, o3, op, ocenter, sz, cx, cy, t, threat, arm_roots,
         (tx, ty) = _proj(ptip, cx, cy, sz)
         k3 = _FOCAL / (_Z_EYE - ptip[2])
         ter = max(2.0, rtip * k3 * sz * 1.5)
-        tgx = -max(-1.0, min(1.0, (tx - cx) / (sz * 0.9))) * 0.8
+        tgx = max(-1.0, min(1.0, pdx)) * 0.85               # pupils track the player
         tips.append((tx, ty, ter, tgx, gate * emerge * (0.4 + 0.6 * threat),
                      int(235 * gate * emerge)))
     # painter's sort all limb flesh together, then the eyes on top
@@ -463,10 +464,19 @@ def _draw_arms(lay, o3, op, ocenter, sz, cx, cy, t, threat, arm_roots,
         _eye(lay, tx, ty, ter, openf, tgx, a)
 
 
-def draw_king_unfold(surf, cx, cy, t, threat=0.0, scale=96.0):
+def draw_king_unfold(surf, cx, cy, t, threat=0.0, scale=96.0,
+                     to_player=(0.0, 1.0)):
     """THE UNFOLDING, centred at (cx, cy). `threat` 0..1: a small dark fold ->
     larger, faster eversion, the heart kindling, eyes opening, the Sign
-    resolving, more light eaten."""
+    resolving, more light eaten.
+
+    `to_player` is the SCREEN-space direction from the creature to the player
+    (+x right, +y down); the reaching limbs lunge that way and the eyes gaze
+    along it, so it tracks the player wherever they are. Defaults to
+    down-screen."""
+    pdx, pdy = to_player
+    pdl = math.hypot(pdx, pdy) or 1.0
+    pdx, pdy = pdx / pdl, pdy / pdl
     form = _build()
     sz = scale * (0.7 + 0.5 * threat)
     spd = 0.16 + 0.42 * threat
@@ -543,7 +553,7 @@ def draw_king_unfold(surf, cx, cy, t, threat=0.0, scale=96.0):
     # 4) ARMS: limbs erupt from the geometry and stretch toward the player (on
     # top of the body -- they reach out past its silhouette, toward the camera)
     _draw_arms(lay, o3, op, ocenter, sz, cx, cy, t, threat, form["arm_roots"],
-               form["overts"], body_ang, zmin, zr)
+               form["overts"], body_ang, zmin, zr, pdx, pdy)
 
     # 5) EYES open across the skin -- wrong faces that surface and gaze, never
     # assembling into one. Each rides a facet, so it slides / scales / winks
@@ -572,7 +582,7 @@ def draw_king_unfold(surf, cx, cy, t, threat=0.0, scale=96.0):
                 continue
             blink = 0.5 + 0.5 * math.sin(t * 0.7 + ph)
             openf = appear * facing * (0.35 + 0.65 * blink)
-            gx = -max(-1.0, min(1.0, (ex - cx) / (sz * 0.9))) * 0.8   # gaze at you
+            gx = max(-1.0, min(1.0, pdx)) * 0.85             # pupils gaze at the player
             _eye(lay, ex, ey, er, openf, gx, int(235 * facing * appear))
             if openf > 0.25:
                 open_eyes.append((ex, ey, er))
