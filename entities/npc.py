@@ -288,7 +288,7 @@ class NPC:
             self._last_seen_pos = (player.x, player.y)
             target = (self._flank_target if self._flank_target
                       else (player.x, player.y))
-            self._step_toward(target, dt, scene)
+            self._step_toward(target, dt, scene, navigate=True)
             return
         # No LOS. Drop flank intent; the leader/follower roles
         # only mean anything when at least one cultist has LOS.
@@ -308,7 +308,7 @@ class NPC:
             tx, ty = self._last_seen_pos
             d_target = scene.world_dist(self.x, self.y, tx, ty)
             if d_target > 30:
-                self._step_toward((tx, ty), dt, scene)
+                self._step_toward((tx, ty), dt, scene, navigate=True)
             else:
                 # Arrived at last-known. Mill within ~80 px using
                 # the existing scout pick-and-look loop. Cultist
@@ -325,7 +325,7 @@ class NPC:
             tx, ty = self._last_seen_pos
             d_target = scene.world_dist(self.x, self.y, tx, ty)
             if d_target > 14:
-                self._step_toward((tx, ty), dt, scene)
+                self._step_toward((tx, ty), dt, scene, navigate=True)
             else:
                 # At the source. Rotate facing on a slow sweep so
                 # the cultist visibly scans before giving up.
@@ -382,7 +382,7 @@ class NPC:
                 # No walkable tile found in 12 tries -- give up
                 # this tick, retry next.
                 return
-        self._step_toward(self._scout_target, dt, scene)
+        self._step_toward(self._scout_target, dt, scene, navigate=True)
 
     def _yk_update(self, dt, scene, player):
         pdx = player.x - self.x
@@ -432,8 +432,13 @@ class NPC:
         # matches the King's speed and freezes when it isn't moving.
         self._gait = getattr(self, "_gait", 0.0) + step * 0.18
 
-    def _step_toward(self, target, dt, scene):
+    def _step_toward(self, target, dt, scene, navigate=False):
         tx, ty = target
+        # Cover-aware routing (NARRATIVE §8): the cult states bend the target
+        # around walls/props (and through folds) via scene.nav_toward. The
+        # apex hunter (_force_chase) opts OUT -- it closes in a straight line.
+        if navigate:
+            tx, ty = scene.nav_toward(self.x, self.y, tx, ty)
         # Wrap-aware so chasers take the shortest path through the fold.
         dx = scene.world_dx(self.x, tx)
         dy = scene.world_dy(self.y, ty)

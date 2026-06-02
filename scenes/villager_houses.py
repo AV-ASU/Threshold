@@ -60,26 +60,34 @@ def _open_login_terminal(game, npc):
 
 
 def build_old_man_house():
-    """THRESHOLD: the church and parsonage. Single combined room.
-    Door 'm' on the south wall back to the town crossroads. Door
-    '?' on the north wall to the graveyard behind the church."""
-    floor = ["=" * 10 for _ in range(8)]
+    """THRESHOLD: the church and parsonage. A long nave with a partitioned
+    back VESTRY reached through an interior doorway -- the dividing wall blocks
+    line of sight, so the vestry is a real indoor blind spot (you can't see who
+    or what is back there until you come around to the doorway and look in).
+    Door 'm' on the south wall back to the town crossroads; door '?' on the
+    north wall to the graveyard behind the church; stairs 'U' up the bell
+    tower from the vestry."""
+    floor = ["=" * 16 for _ in range(12)]
     objects = [
-        "WWWW?WWWWW",   # ? = graveyard gate (north)
-        "W..C....UW",   # C = computer placeholder; U = stairs to bell tower
-        "W..t..s..W",
-        "W..c.....W",
-        "W........W",
-        "W.O....b.W",   # O = preacher (still old_man_dialogue)
-        "W....m...W",   # m = exit south to crossroads
-        "WWWWWWWWWW",
+        "WWWWWWWWWW?WWWWW",   # 0  ? = graveyard gate (north, over the nave)
+        "W.U...W........W",   # 1  U = stairs up the bell tower (in the vestry)
+        "W...C.W........W",   # 2  C = church-records terminal (placeholder)
+        "W.....W........W",   # 3   vestry (cols 1-5) | nave (cols 7-14)
+        "W.....W..O.....W",   # 4  O = preacher, out in the nave
+        "W.....W........W",   # 5
+        "WWW.WWW........W",   # 6  vestry south wall; doorway gap at col 3
+        "W..............W",   # 7   the nave opens out under the vestry
+        "W..............W",   # 8
+        "W..............W",   # 9
+        "W..............W",   # 10
+        "WWWWWWWWmWWWWWWW",   # 11  m = exit south to the crossroads
     ]
     # Replace the placeholder C with '.' so it doesn't draw as anything,
     # and remember its tile -- the invisible interact NPC + the computer
     # decoration both go there. (We can't put a marker into OBJECT_DEFS
     # for "computer" without polluting the global table.)
     rows = [list(r) for r in objects]
-    comp_tx, comp_ty = 3, 1
+    comp_tx, comp_ty = 4, 2
     rows[comp_ty][comp_tx] = "."
     objects = ["".join(r) for r in rows]
 
@@ -90,11 +98,11 @@ def build_old_man_house():
     sc.add_exit("m", "brimley", "from_old_man_house")
     sc.add_exit("?", "graveyard", "from_church")
     sc.add_exit("U", "bell_tower", "from_church")
-    sc.set_spawn("default", 5, 5)
-    sc.set_spawn("from_brimley", 4, 5)       # one tile north of m door
-    sc.set_spawn("from_village", 4, 5)         # legacy fallback
-    sc.set_spawn("from_graveyard", 4, 1)       # one tile south of ? door
-    sc.set_spawn("from_bell_tower", 7, 1)      # one tile west of U stairs
+    sc.set_spawn("default", 8, 8)
+    sc.set_spawn("from_brimley", 8, 10)        # one tile north of the m door
+    sc.set_spawn("from_village", 8, 10)        # legacy fallback
+    sc.set_spawn("from_graveyard", 10, 1)      # one tile south of the ? door
+    sc.set_spawn("from_bell_tower", 2, 2)      # at the foot of the U stairs
 
     pos = sc.consume_marker("O")
     if pos:
@@ -105,11 +113,12 @@ def build_old_man_house():
                        dialogue_fn=preacher_dialogue, movement="idle",
                        tag="preacher"))
 
-    # Sized darkwood furniture.
-    sc.add_furniture("table", [(2, 2), (3, 2)], w=54, h=36)
-    sc.add_furniture("bookshelf", [(5, 2), (6, 2)], w=58, h=18, seed=4)
-    sc.add_furniture("chair", [(3, 3)], w=22, h=28)
-    sc.add_furniture("bed", [(7, 4), (7, 5)], w=34, h=56)
+    # Sized darkwood furniture. The altar + lectern stand at the head of the
+    # nave; the preacher's cot is tucked in the vestry.
+    sc.add_furniture("table", [(8, 1), (9, 1)], w=54, h=36)
+    sc.add_furniture("bookshelf", [(12, 1), (13, 1)], w=58, h=18, seed=4)
+    sc.add_furniture("chair", [(9, 2)], w=22, h=28)
+    sc.add_furniture("bed", [(1, 4), (1, 5)], w=34, h=56)
 
     # Computer: a beige CRT decoration plus an invisible solid NPC at the
     # same tile so try_interact() picks it up and the [E] prompt shows.
@@ -121,40 +130,40 @@ def build_old_man_house():
                    dialogue_fn=_open_login_terminal,
                    movement="idle", solid=True, tag="computer"))
 
-    sc.add_decoration(Decoration(7 * TILE + 16,  0 * TILE + 22 , "candle"))
-    sc.add_decoration(Decoration(8 * TILE + 16, 5 * TILE + 24, "candle"))
+    sc.add_decoration(Decoration(13 * TILE + 16, 0 * TILE + 22, "candle"))
+    sc.add_decoration(Decoration(8 * TILE + 16, 0 * TILE + 22, "candle"))
     # The Preacher's parsonage in rural hunting country: a mounted buck
     # + trophy walleye on the north wall (replacing the old banner and
-    # stray photo), a cobweb in the NW corner, and a kerosene lamp on
+    # stray photo), a cobweb in the vestry corner, and a kerosene lamp on
     # the desk. The old computer is the cult's ancient church-records
     # terminal -- the LOGIN: prompt is unchanged.
-    sc.add_decoration(Decoration(2 * TILE + 16, 0 * TILE + 22, "buck_head",
+    sc.add_decoration(Decoration(11 * TILE + 16, 0 * TILE + 22, "buck_head",
                                  wall="N"))
-    sc.add_decoration(Decoration(6 * TILE + 16, 0 * TILE + 24,
+    sc.add_decoration(Decoration(12 * TILE + 16, 0 * TILE + 24,
                                  "mounted_fish"))
     sc.add_decoration(Decoration(1 * TILE + 6, 1 * TILE + 6, "cobweb",
                                  ang=0.0))
-    sc.add_decoration(Decoration(2 * TILE + 16, 2 * TILE + 2,
+    sc.add_decoration(Decoration(4 * TILE + 16, 2 * TILE + 2,
                                  "kerosene_lamp"))
-    sc.add_decoration(Decoration(8 * TILE + 8, 2 * TILE + 16, "clock"))
-    # Phantom-mark chalk on the wall.
-    sc.add_decoration(Decoration(8 * TILE + 4, 4 * TILE + 16,
+    sc.add_decoration(Decoration(14 * TILE + 8, 2 * TILE + 16, "clock"))
+    # Phantom-mark chalk on the nave's east wall.
+    sc.add_decoration(Decoration(14 * TILE + 4, 6 * TILE + 16,
                                  "phantom_mark"))
     # The Preacher's own hand: the MISSING flyer for the bright young
     # woman he watched go quiet (he warns about her from the pulpit), and
     # the polaroid wall of faces he keeps -- the ones who drifted into the
     # corn and never came back.
-    sc.add_decoration(Decoration(0 * TILE + 26, 3 * TILE + 16,
+    sc.add_decoration(Decoration(0 * TILE + 26, 8 * TILE + 16,
                                  "missing_flyer"))
-    sc.add_decoration(Decoration(4 * TILE + 16, 0 * TILE + 24,
+    sc.add_decoration(Decoration(7 * TILE + 16, 0 * TILE + 24,
                                  "polaroid_wall"))
-    for mx, my in [(4, 4), (6, 3), (5, 4)]:
+    for mx, my in [(10, 7), (12, 8), (9, 9)]:
         sc.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16,
                                      "mote"))
-    # Hide spots: behind the desk, behind the shelf.
+    # Hide spots: in the vestry (the blind back room) and behind the altar.
     sc.hide_spots = [
-        (3 * TILE + 16, 2 * TILE + 24, "behind"),
-        (7 * TILE + 16, 2 * TILE + 24, "behind"),
+        (2 * TILE + 16, 4 * TILE + 24, "behind"),
+        (8 * TILE + 16, 1 * TILE + 24, "behind"),
     ]
     sc.on_enter_fn = old_man_house_on_enter
     return sc
@@ -169,7 +178,7 @@ def old_man_house_on_enter(game, scene):
         return
     scene.npcs = [n for n in scene.npcs
                   if getattr(n, "tag", None) != "preacher"]
-    bx, by = 5 * TILE + 16, 5 * TILE + 16
+    bx, by = 9 * TILE + 16, 4 * TILE + 16
     scene.add_decoration(Decoration(bx - 6, by + 9, "bloodstain"))
     scene.add_decoration(Decoration(bx + 9, by - 6, "gore"))
     scene.add_decoration(Decoration(bx, by, "body"))
@@ -201,25 +210,33 @@ def preacher_body_examine(game, npc):
 
 
 def build_fisherman_cottage():
-    floor = ["=" * 10 for _ in range(8)]
+    """The Sheriff's office. A main room where Vane watches from his desk, and
+    a partitioned back RECORDS room (the case board he can't file on, the dead
+    payphone, his cartridges) reached through an interior doorway -- the
+    dividing wall makes the back room an indoor blind spot."""
+    floor = ["=" * 16 for _ in range(12)]
     objects = [
-        "WWWWWWWWWW",
-        "W........W",
-        "W..s..t..W",
-        "W..b..c..W",
-        "W........W",
-        "W..Y.....W",   # Y = fisherman marker
-        "W....y...W",   # y = exit door
-        "WWWWWWWWWW",
+        "WWWWWWWWWWWWWWWW",   # 0
+        "W........W.....W",   # 1   main office (cols 1-8) | records (cols 10-14)
+        "W........W.....W",   # 2
+        "W..............W",   # 3   doorway gap in the partition (col 9)
+        "W....Y...W.....W",   # 4   Y = Sheriff, at his desk
+        "W........W.....W",   # 5
+        "W........WWWWWWW",   # 6   records room sealed off below
+        "W..............W",   # 7   the office opens out under the records room
+        "W..............W",   # 8
+        "W..............W",   # 9
+        "W..............W",   # 10
+        "WWWWWyWWWWWWWWWW",   # 11  y = exit door back to the field
     ]
     sc = Scene("fisherman_cottage", floor, objects, music="home")
     # The Sheriff's office stands on the Brimley bank now; its door
     # opens back onto the field.
     sc.add_exit("y", "brimley", "from_fisherman_cottage")
-    sc.set_spawn("default", 5, 5)
-    sc.set_spawn("from_brimley", 4, 5)       # arrive from Brimley
-    sc.set_spawn("from_village", 4, 5)         # legacy fallback
-    sc.set_spawn("from_town", 4, 5)            # legacy fallback
+    sc.set_spawn("default", 4, 8)
+    sc.set_spawn("from_brimley", 5, 10)      # one tile north of the y door
+    sc.set_spawn("from_village", 5, 10)      # legacy fallback
+    sc.set_spawn("from_town", 5, 10)         # legacy fallback
 
     pos = sc.consume_marker("Y")
     if pos:
@@ -232,50 +249,53 @@ def build_fisherman_cottage():
                        voice="blip_gruff", portrait="sheriff",
                        dialogue_fn=sheriff_dialogue, movement="watch"))
 
-    # Sized darkwood furniture: a long shelf, a desk (radio on it), a
-    # 2x2 bed, a chair.
-    sc.add_furniture("bookshelf", [(2, 2), (3, 2)], w=54, h=18, seed=6)
-    sc.add_furniture("table", [(6, 2), (7, 2)], w=54, h=36)
-    sc.add_furniture("bed", [(2, 3), (3, 3), (2, 4), (3, 4)], w=54, h=54)
-    sc.add_furniture("chair", [(6, 3)], w=22, h=28)
-    sc.add_decoration(Decoration(7 * TILE + 16,  0 * TILE + 22 , "candle"))
-    sc.add_decoration(Decoration(2 * TILE + 16,  0 * TILE + 22 , "candle"))
+    # Sized darkwood furniture: a long shelf, the desk (radio on it), a 2x2
+    # bed in the corner, a chair, and a filing table in the back records room.
+    sc.add_furniture("bookshelf", [(1, 1), (2, 1)], w=58, h=18, seed=6)
+    sc.add_furniture("table", [(4, 5), (5, 5)], w=54, h=36)
+    sc.add_furniture("chair", [(6, 4)], w=22, h=28)
+    sc.add_furniture("bed", [(1, 8), (2, 8), (1, 9), (2, 9)], w=54, h=54)
+    sc.add_furniture("antler_rack", [(1, 4)], w=22, h=46)
+    sc.add_furniture("table", [(11, 4), (12, 4)], w=54, h=36)
+    sc.add_decoration(Decoration(7 * TILE + 16,  0 * TILE + 22, "candle"))
+    sc.add_decoration(Decoration(2 * TILE + 16,  0 * TILE + 22, "candle"))
     # Sheriff's office in hunting country: a mounted buck + trophy
     # walleye on the north wall (replacing the old banner), an antler
-    # coat-rack against the west wall, and a cobweb in the NE corner.
+    # coat-rack against the west wall, and a cobweb in the records corner.
     sc.add_decoration(Decoration(4 * TILE + 16, 0 * TILE + 22, "buck_head",
                                  wall="N"))
     sc.add_decoration(Decoration(6 * TILE + 16, 0 * TILE + 24,
                                  "mounted_fish"))
-    sc.add_decoration(Decoration(8 * TILE + 26, 1 * TILE + 6, "cobweb",
+    sc.add_decoration(Decoration(14 * TILE + 26, 1 * TILE + 6, "cobweb",
                                  ang=math.pi / 2))
-    sc.add_furniture("antler_rack", [(1, 4)], w=22, h=46)
     # AM radio on the desk, a lantern by the door.
-    sc.add_decoration(Decoration(4 * TILE + 16, 2 * TILE + 16, "radio"))
-    sc.add_decoration(Decoration(8 * TILE + 16, 5 * TILE + 24, "lantern"))
-    # Sheriff Vane's office made specific to the man: the case board of
-    # the disappeared he can't file on (polaroid wall), the Blaine girl's
-    # MISSING flyer beside it, a payphone he still lifts to a dead line,
-    # and a calendar of months he stopped reporting.
-    sc.add_decoration(Decoration(7 * TILE + 16, 0 * TILE + 24,
+    sc.add_decoration(Decoration(4 * TILE + 16, 5 * TILE + 8, "radio"))
+    sc.add_decoration(Decoration(5 * TILE + 16, 9 * TILE + 24, "lantern"))
+    # Sheriff Vane's office made specific to the man, with the worst of it
+    # tucked into the back room the public never sees: the case board of the
+    # disappeared he can't file on (polaroid wall), the Blaine girl's MISSING
+    # flyer beside it, the payphone he still lifts to a dead line. A calendar
+    # of months he stopped reporting hangs by the front desk.
+    sc.add_decoration(Decoration(12 * TILE + 16, 0 * TILE + 24,
                                  "polaroid_wall"))
-    sc.add_decoration(Decoration(5 * TILE + 16, 0 * TILE + 24,
+    sc.add_decoration(Decoration(13 * TILE + 16, 0 * TILE + 24,
                                  "missing_flyer"))
-    sc.add_decoration(Decoration(8 * TILE + 16, 3 * TILE + 16, "payphone"))
+    sc.add_decoration(Decoration(14 * TILE + 16, 3 * TILE + 16, "payphone"))
     sc.add_decoration(Decoration(1 * TILE + 16, 0 * TILE + 24, "calendar"))
-    for mx, my in [(4, 3), (5, 4), (3, 5)]:
+    for mx, my in [(4, 7), (6, 8), (3, 9)]:
         sc.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16,
                                      "mote"))
-    # Hide spots: behind the desk, under the table.
+    # Hide spots: behind the front desk, and in the back records room (blind).
     sc.hide_spots = [
-        (3 * TILE + 16, 2 * TILE + 24, "behind"),
-        (7 * TILE + 16, 2 * TILE + 24, "under"),
+        (4 * TILE + 16, 5 * TILE + 24, "behind"),
+        (12 * TILE + 16, 4 * TILE + 24, "behind"),
     ]
 
     def _fc_on_enter(game, scene):
-        # The lawman's cartridges -- the best ammo source in town (one-time).
+        # The lawman's cartridges -- the best ammo source in town (one-time),
+        # kept in the back records room.
         from .base import drop_ammo_cache
-        drop_ammo_cache(game, scene, 8, 4, 6, "ammo_sheriff")
+        drop_ammo_cache(game, scene, 13, 4, 6, "ammo_sheriff")
     sc.on_enter_fn = _fc_on_enter
     return sc
 
@@ -301,16 +321,18 @@ def build_haunted_house():
     # haunted version. South face is now solid; row 7 was an open
     # void buffer and is now a sealed wall row so the player can't
     # walk into nothing.
-    floor = ["=" * 8 for _ in range(8)]
+    floor = ["=" * 12 for _ in range(10)]
     objects = [
-        "WWWoWWWW",   # 0  o = exit back to village (north face)
-        "W......W",   # 1
-        "W......W",   # 2
-        "W......W",   # 3
-        "W......W",   # 4
-        "W......W",   # 5
-        "W......W",   # 6
-        "WWWWWWWW",   # 7  sealed south wall
+        "WWWoWWWWWWWW",   # 0  o = exit back to village (north face)
+        "W.....W....W",   # 1  main room (cols 1-5) | back room (cols 7-10)
+        "W.....W....W",   # 2
+        "W..........W",   # 3  doorway gap in the partition (col 6)
+        "W.....W....W",   # 4
+        "WWWWWWW....W",   # 5  back room sealed off below
+        "W..........W",   # 6
+        "W..........W",   # 7
+        "W..........W",   # 8
+        "WWWWWWWWWWWW",   # 9  sealed south wall
     ]
     sc = Scene("haunted_house", floor, objects, music="home")
     # Abandoned farmhouse now sits deep south on the brimley
@@ -319,41 +341,39 @@ def build_haunted_house():
     sc.set_spawn("default",     3, 1)
     sc.set_spawn("from_brimley", 3, 1)
     sc.set_spawn("from_village", 3, 1)         # legacy fallback
-    # When the player climbs back up from the cult chamber, they
-    # come up through the hatch in the south of the room, not the
-    # village door at the north. Spawn one tile north of the hatch
-    # so they don't auto-trigger it.
-    sc.set_spawn("from_chamber", 4, 4)
-    # The abandoned farmhouse. Phantom marks on the walls. There's
-    # a hatch in the back that drops down to the well_passage.
-    sc.add_decoration(Decoration(6 * TILE + 16,  0 * TILE + 22 , "candle"))
+    # When the player climbs back up from the cult chamber, they come up
+    # through the hatch in the back room. Spawn beside it.
+    sc.set_spawn("from_chamber", 9, 4)
+    # The abandoned farmhouse. Phantom marks on the walls -- thick in the
+    # back room. There's a (sealed) hatch back there too.
     sc.add_decoration(Decoration(2 * TILE + 16,  0 * TILE + 22 , "candle"))
-    sc.add_decoration(Decoration(2 * TILE + 16, 5 * TILE + 16,
+    sc.add_decoration(Decoration(5 * TILE + 16,  0 * TILE + 22 , "candle"))
+    sc.add_decoration(Decoration(2 * TILE + 16, 7 * TILE + 16,
                                  "phantom_mark"))
-    sc.add_decoration(Decoration(5 * TILE + 16, 4 * TILE + 16,
+    sc.add_decoration(Decoration(8 * TILE + 16, 1 * TILE + 16,
+                                 "phantom_mark"))
+    sc.add_decoration(Decoration(9 * TILE + 28, 2 * TILE + 16,
                                  "phantom_mark"))
     sc.add_decoration(Decoration(1 * TILE + 28, 3 * TILE + 16,
                                  "phantom_mark"))
-    sc.add_decoration(Decoration(6 * TILE + 4, 5 * TILE + 16,
-                                 "phantom_mark"))
-    sc.add_decoration(Decoration(4 * TILE + 16, 3 * TILE + 24,
+    sc.add_decoration(Decoration(4 * TILE + 16, 7 * TILE + 24,
                                  "bloodstain"))
-    for mx, my in [(2, 2), (5, 3), (3, 4)]:
+    for mx, my in [(3, 2), (4, 6), (8, 7)]:
         sc.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16,
                                      "mote"))
 
-    # Cult-chamber hatch: a sealed dead end. It once dropped into the old
-    # cult chamber (now removed); pressing E just reads the nailed-shut
-    # notice. Drawn as a cellar_hatch (wood box + iron pull-ring).
-    hatch_x = 4 * TILE + 16
-    hatch_y = 5 * TILE + 16
+    # Cult-chamber hatch: a sealed dead end, back in the rear room (the
+    # blind spot). It once dropped into the old cult chamber (now removed);
+    # pressing E just reads the nailed-shut notice. Drawn as a cellar_hatch.
+    hatch_x = 8 * TILE + 16
+    hatch_y = 3 * TILE + 16
     sc.add_decoration(Decoration(hatch_x, hatch_y, "cellar_hatch"))
     sc._farmhouse_hatch = (hatch_x, hatch_y)
     sc.add_interactable(hatch_x, hatch_y, 36)   # [E] cue for the sealed hatch
 
     sc.hide_spots = [
         (2 * TILE + 16, 4 * TILE + 24, "behind"),
-        (6 * TILE + 16, 4 * TILE + 24, "behind"),
+        (9 * TILE + 16, 4 * TILE + 24, "behind"),   # in the back room (blind)
     ]
 
     def _farmhouse_interact(game):

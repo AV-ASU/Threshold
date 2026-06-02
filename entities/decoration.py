@@ -152,6 +152,40 @@ class Decoration:
     def _draw_unknown(self, surf, x, y):
         pygame.draw.rect(surf, (255, 0, 255), (x - 4, y - 4, 8, 8))
 
+    # -- Flat (pitch-0 / F3) fallbacks for the volumetric props in
+    #    rendering/props.py + the new box furniture. The tilt camera draws
+    #    these as real solids; the flat top-down view uses these 2D sprites.
+    def _draw_pillar(self, surf, x, y):
+        pygame.draw.circle(surf, (104, 101, 106), (x, y), 9)
+        pygame.draw.circle(surf, (56, 54, 58), (x, y), 9, 1)
+        pygame.draw.circle(surf, (150, 148, 154), (x - 2, y - 2), 3)
+
+    def _draw_cistern_basin(self, surf, x, y):
+        pygame.draw.ellipse(surf, (92, 96, 98), (x - 13, y - 9, 26, 18))
+        pygame.draw.ellipse(surf, (50, 54, 56), (x - 13, y - 9, 26, 18), 1)
+        pygame.draw.ellipse(surf, (14, 22, 26), (x - 9, y - 6, 18, 12))
+
+    def _draw_grain_heap(self, surf, x, y):
+        pygame.draw.circle(surf, (150, 126, 70), (x, y), 13)
+        pygame.draw.circle(surf, (80, 64, 35), (x, y), 13, 1)
+        pygame.draw.circle(surf, (198, 174, 110), (x - 3, y - 3), 5)
+
+    def _draw_cot(self, surf, x, y):
+        pygame.draw.rect(surf, (94, 65, 41), (x - 14, y - 7, 28, 14))
+        pygame.draw.rect(surf, (52, 35, 22), (x - 14, y - 7, 28, 14), 1)
+        pygame.draw.rect(surf, (150, 142, 128), (x - 12, y - 5, 24, 7))
+
+    def _draw_bone_rack(self, surf, x, y):
+        pygame.draw.rect(surf, (150, 144, 126), (x - 13, y - 6, 26, 12))
+        pygame.draw.rect(surf, (104, 99, 86), (x - 13, y - 6, 26, 12), 1)
+        for ox in (-7, 0, 7):
+            pygame.draw.line(surf, (196, 190, 170),
+                             (x + ox, y - 6), (x + ox, y + 6), 2)
+
+    def _draw_pew(self, surf, x, y):
+        pygame.draw.rect(surf, (72, 49, 31), (x - 20, y - 5, 40, 10))
+        pygame.draw.rect(surf, (52, 35, 22), (x - 20, y - 5, 40, 10), 1)
+
     def _draw_doll(self, surf, x, y):
         """A small bound effigy -- cloth body, twine waist, stick arms,
         two dark X-marks for eyes. The cult's watching-charm, set on the

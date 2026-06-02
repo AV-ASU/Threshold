@@ -21,55 +21,54 @@ def build_schoolhouse():
     months. A small desk at the front of the room. Hide spots: in
     the coat closet, under the teacher's desk, behind the storage
     shelf at the back."""
-    floor = ["=" * 14 for _ in range(10)]
+    floor = ["=" * 16 for _ in range(12)]
     objects = [
-        "WWWWiWWWWWWWWW",   # 0  window
-        "W............W",   # 1
-        "W..t.........W",   # 2  teacher's desk (table sprite)
-        "W..c.........W",   # 3  teacher's chair
-        "W............W",   # 4
-        "W..tt..tt....W",   # 5  student desks
-        "W..cc..cc....W",   # 6
-        "W..tt..tt....W",   # 7
-        "W..cc..cc..s.W",   # 8  storage shelf at back
-        "WWWWWWHWWWWWWW",   # 9  H = exit south back to town (col 6,
-                            #     aligned with the central aisle so
-                            #     the door isn't blocked by a chair)
+        "WWWWWWWWiWWWWWWWW",   # 0  window
+        "W...W..........W",    # 1  cloakroom (cols 1-3) | the hall (cols 5-14)
+        "W.s.W...t......W",    # 2  storage shelf (cloak) + teacher's desk
+        "W...W...c......W",    # 3  teacher's chair
+        "W..............W",    # 4  doorway gap in the partition (col 4)
+        "WWWWW..........W",    # 5  cloakroom sealed off below
+        "W..............W",    # 6
+        "W...tt...tt....W",    # 7  student desks
+        "W...cc...cc....W",    # 8
+        "W...tt...tt....W",    # 9
+        "W...cc...cc....W",    # 10
+        "WWWWWWWHWWWWWWWW",    # 11  H = exit south (col 7, on the aisle)
     ]
     sc = Scene("schoolhouse", floor, objects, music="home")
     # The schoolhouse stands on the Brimley bank now; its door opens
     # back onto the field.
     sc.add_exit("H", "brimley", "from_school")
-    # The original spawn at (7, 7) was inside a student desk
-    # (boxed in three sides). Spawn in the centre aisle at row 8.
-    sc.set_spawn("default", 6, 8)
-    sc.set_spawn("from_brimley", 6, 8)        # arrive from Brimley
-    sc.set_spawn("from_village", 6, 8)
-    sc.set_spawn("from_town_crossroads", 6, 8)
-    sc.set_spawn("from_town", 6, 8)
+    # Spawn in the centre aisle, clear of the desks and the door.
+    sc.set_spawn("default", 7, 9)
+    sc.set_spawn("from_brimley", 7, 10)       # one tile north of the H door
+    sc.set_spawn("from_village", 7, 10)
+    sc.set_spawn("from_town_crossroads", 7, 10)
+    sc.set_spawn("from_town", 7, 10)
 
-    # Chalk marks on the walls.
-    sc.add_decoration(Decoration(13 * TILE + 4, 2 * TILE + 16,
+    # Chalk marks on the walls -- the worst of it back in the cloakroom.
+    sc.add_decoration(Decoration(1 * TILE + 28, 2 * TILE + 16,
                                  "phantom_mark"))
-    sc.add_decoration(Decoration(0 * TILE + 28, 7 * TILE + 16,
+    sc.add_decoration(Decoration(2 * TILE + 16, 3 * TILE + 28,
                                  "phantom_mark"))
-    sc.add_decoration(Decoration(4 * TILE + 16, 0 * TILE + 28,
+    sc.add_decoration(Decoration(13 * TILE + 4, 7 * TILE + 16,
                                  "phantom_mark"))
-    sc.add_decoration(Decoration(10 * TILE + 16, 0 * TILE + 28,
+    sc.add_decoration(Decoration(14 * TILE + 16, 0 * TILE + 28,
                                  "phantom_mark"))
 
     # A clock that's stopped, a candle, motes.
-    sc.add_decoration(Decoration(7 * TILE + 16, 1 * TILE + 22, "clock"))
-    sc.add_decoration(Decoration(2 * TILE + 16,  0 * TILE + 22 , "candle"))
-    sc.add_decoration(Decoration(11 * TILE + 16,  0 * TILE + 22 , "candle"))
+    sc.add_decoration(Decoration(9 * TILE + 16, 1 * TILE + 22, "clock"))
+    sc.add_decoration(Decoration(6 * TILE + 16,  0 * TILE + 22 , "candle"))
+    sc.add_decoration(Decoration(13 * TILE + 16,  0 * TILE + 22 , "candle"))
     for i in range(6):
-        sc.add_decoration(Decoration(50 + i * 60,
-                                     80 + (i % 3) * 50, "mote"))
+        sc.add_decoration(Decoration(180 + i * 60,
+                                     220 + (i % 3) * 50, "mote"))
 
     sc.hide_spots = [
-        (3 * TILE + 16, 3 * TILE + 24, "under"),     # under a desk
-        (11 * TILE + 16, 8 * TILE + 24, "behind"),   # storage shelf
-        (1 * TILE + 28, 5 * TILE + 16, "behind"),    # against the west wall
+        (8 * TILE + 16, 3 * TILE + 24, "under"),     # under the teacher's desk
+        (2 * TILE + 16, 3 * TILE + 24, "behind"),    # in the cloakroom (blind)
+        (4 * TILE + 16, 8 * TILE + 16, "behind"),    # beside a student desk
     ]
 
     return sc
@@ -464,32 +463,36 @@ def build_backwoods_cabin_interior():
     """A cabin interior. Chair tipped, cup on the floor, a smear on
     the boards. The cellar key is on the floor. The door was left
     open."""
-    floor = ["=" * 8 for _ in range(7)]
+    floor = ["=" * 12 for _ in range(9)]
     objects = [
-        "WWWWWWWW",
-        "W..t...W",
-        "W......W",
-        "W......W",
-        "W......W",
-        "W...D..W",
-        "WWWWWWWW",
+        "WWWWWWWWWWWW",   # 0
+        "W.....W....W",   # 1  main room (cols 1-5) | back nook (cols 7-10)
+        "W..........W",   # 2  doorway gap in the partition (col 6)
+        "W..t..W....W",   # 3  table
+        "WWWWWWW....W",   # 4  nook sealed off below
+        "W..........W",   # 5
+        "W..........W",   # 6
+        "W...D......W",   # 7  D = exit door
+        "WWWWWWWWWWWW",   # 8
     ]
     sc = Scene("backwoods_cabin_interior", floor, objects, music="home")
     sc.add_exit("D", "backwoods_cabin", "from_interior")
-    sc.set_spawn("default",     4, 4)
-    sc.set_spawn("from_outside", 4, 4)
-    sc.add_decoration(Decoration(3 * TILE + 16, 1 * TILE + 6, "candle"))
-    sc.add_decoration(Decoration(2 * TILE + 16, 3 * TILE + 16,
+    sc.set_spawn("default",     4, 5)
+    sc.set_spawn("from_outside", 4, 6)
+    sc.add_decoration(Decoration(3 * TILE + 16, 3 * TILE + 6, "candle"))
+    sc.add_decoration(Decoration(2 * TILE + 16, 5 * TILE + 16,
                                  "overturned_chair"))
-    sc.add_decoration(Decoration(5 * TILE + 16, 3 * TILE + 22,
+    sc.add_decoration(Decoration(4 * TILE + 16, 5 * TILE + 22,
                                  "bowl", filled=False))
-    sc.add_decoration(Decoration(4 * TILE + 16, 4 * TILE + 16,
+    sc.add_decoration(Decoration(5 * TILE + 16, 6 * TILE + 16,
                                  "bloodstain"))
-    sc.add_decoration(Decoration(6 * TILE + 16, 1 * TILE + 24,
+    # The claw-marks are gouged into the back nook -- out of sight from the
+    # door until the player comes around the partition.
+    sc.add_decoration(Decoration(8 * TILE + 16, 1 * TILE + 24,
                                  "claw_marks"))
     sc.hide_spots = [
         (1 * TILE + 24, 1 * TILE + 24, "behind"),
-        (6 * TILE + 16, 4 * TILE + 16, "behind"),
+        (8 * TILE + 16, 3 * TILE + 16, "behind"),   # in the back nook (blind)
     ]
     return sc
 
@@ -594,46 +597,37 @@ def build_bell_tower():
 
     Layout (10 wide x 8 tall): all wall border. Bell decoration
     at (5, 3). Hide spot behind the bell hoist."""
-    W, H = 10, 8
-    floor_rows = ["=" * W for _ in range(H)]
-    objects_l = []
-    for y in range(H):
-        if y == 0 or y == H - 1:
-            row = ["W"] * W
-        else:
-            row = ["."] * W
-            row[0] = "W"
-            row[W - 1] = "W"
-        objects_l.append(row)
-    # Window slits in the four cardinal walls.
-    objects_l[0][2] = "i"
-    objects_l[0][7] = "i"
-    objects_l[H - 1][2] = "i"
-    objects_l[H - 1][7] = "i"
-    objects_l[3][0] = "i"
-    objects_l[3][W - 1] = "i"
-    # Stairs back down to the church.
-    objects_l[H - 1][7] = "L"        # overrides the south slit at (7, H-1)
-    objects = ["".join(r) for r in objects_l]
+    # A 12x10 lookout with a solid 2x2 bell housing dead centre: a column
+    # you circle, so whatever is on its far side is an indoor blind spot.
+    floor_rows = ["=" * 12 for _ in range(10)]
+    objects = [
+        "WWWWiWWWiWWWW",   # 0  north-wall window slits
+        "W..........W",    # 1
+        "W..........W",    # 2
+        "i..........i",    # 3  east/west window slits
+        "W....tt....W",    # 4  the bell housing (solid) at centre
+        "W....tt....W",    # 5
+        "W..........W",    # 6
+        "W..........W",    # 7
+        "W..........W",    # 8
+        "WWWWiWWLWWWW",    # 9  south-wall slit + L = stairs down to the church
+    ]
     sc = Scene("bell_tower", floor_rows, objects, music="home")
     sc.add_exit("L", "old_man_house", "from_bell_tower")
-    sc.set_spawn("default", 5, H - 2)
-    sc.set_spawn("from_church", 6, H - 2)
-    # The bell at centre. Use a heavy table sprite plus a chair
-    # underneath as a stand-in -- we don't have a `bell` deco.
-    bell_x = 5 * TILE + 16
-    bell_y = 3 * TILE + 16
-    sc.add_decoration(Decoration(bell_x, bell_y, "lantern"))
-    sc.add_decoration(Decoration(bell_x, bell_y + 18, "rope"))
-    sc.objects[3][5] = "t"           # bell hoist (solid prop)
+    sc.set_spawn("default", 5, 8)
+    sc.set_spawn("from_church", 7, 8)        # at the foot of the L stairs
+    # The bell hangs in the central housing. Use a lantern + rope as a
+    # stand-in -- we don't have a `bell` deco.
+    sc.add_decoration(Decoration(5 * TILE + 32, 4 * TILE + 16, "lantern"))
+    sc.add_decoration(Decoration(5 * TILE + 32, 4 * TILE + 34, "rope"))
     sc.add_decoration(Decoration(2 * TILE + 16, 2 * TILE + 16,
                                  "phantom_mark"))
     for i in range(8):
-        sc.add_decoration(Decoration(40 + i * 30,
-                                     50 + (i % 3) * 40, "mote"))
+        sc.add_decoration(Decoration(40 + i * 36,
+                                     60 + (i % 3) * 50, "mote"))
     sc.hide_spots = [
-        (4 * TILE + 16, 3 * TILE + 16, "behind"),    # behind the hoist
-        (6 * TILE + 16, 3 * TILE + 16, "behind"),    # other side of hoist
+        (3 * TILE + 16, 4 * TILE + 16, "behind"),    # one side of the housing
+        (8 * TILE + 16, 5 * TILE + 16, "behind"),    # the far (blind) side
     ]
 
     def _bell_tower_on_enter(game, scene):

@@ -464,6 +464,105 @@ def main():
     check(len(grove.npcs) == 0,
           "effigy_grove is a maker-less tableau (no NPC, like its siblings)")
 
+    # --- 19. Eat-cult + time-loop fiction stays scrubbed (NARRATIVE §1b/§8) -
+    # Canon: a CLAIMING cult that renders no bodies (no cannibalism, no
+    # tallow), and a SPATIAL fold -- stasis, nowhere to go -- never a TEMPORAL
+    # loop. Those phrasings were scrubbed; lock them out of the scene source so
+    # the fiction can't quietly regress.
+    import os
+    _scene_dir = os.path.join(os.path.dirname(__file__), "..", "scenes")
+    _forbidden = [
+        "tasting it", "tallow", "the rendering at", "feed what waits",
+        "grain threaded through", "fold back on themselves",
+        "comes home for dinner",
+    ]
+    _hits = []
+    for fn in sorted(os.listdir(_scene_dir)):
+        if not fn.endswith(".py"):
+            continue
+        with open(os.path.join(_scene_dir, fn), encoding="utf-8") as fh:
+            low = fh.read().lower()
+        for phrase in _forbidden:
+            if phrase in low:
+                _hits.append(f"{fn}:{phrase!r}")
+    check(not _hits,
+          "scrub: no eat-cult/time-loop fiction in scene source"
+          + (f" (found {_hits})" if _hits else ""))
+
+    # --- 20. Cultists use dynamic AI, not preset coordinates (NARRATIVE §8) -
+    # Pure-roam SCOUT + cover-aware pursuit. Guard the two canon facts: no
+    # roaming cultist carries a baked patrol route, and the nav routes a
+    # pursuer AROUND a blocked line instead of straight through it.
+    from constants import TILE as _TILE
+    from scenes import load_scene as _ld, SCENE_BUILDERS as _SB
+    no_wp = routed = False
+    for _key in _SB:
+        try:
+            _sc = _ld(_key)
+        except Exception:
+            continue
+        for _e in _sc.enemies:
+            if getattr(_e, "kind", None) == "cultist":
+                check(not getattr(_e, "waypoints", None),
+                      f"ai: cultist in {_key} has no preset waypoint route")
+                no_wp = True
+        # Probe one blocked-line pair and confirm nav bends around it.
+        if not routed:
+            _wt = [(tx, ty) for ty in range(_sc.h) for tx in range(_sc.w)
+                   if not _sc._nav_solid_at(tx * _TILE + 16, ty * _TILE + 16)]
+            for _i in range(0, len(_wt), 7):
+                for _j in range(len(_wt) - 1, 0, -11):
+                    if _i >= _j:
+                        continue
+                    (ax, ay), (bx, by) = _wt[_i], _wt[_j]
+                    x0, y0 = ax * _TILE + 16, ay * _TILE + 16
+                    x1, y1 = bx * _TILE + 16, by * _TILE + 16
+                    if (not _sc.nav_clear_line(x0, y0, x1, y1)
+                            and _sc.nav_path(x0, y0, x1, y1)):
+                        check(_sc.nav_toward(x0, y0, x1, y1) != (x1, y1),
+                              "ai: nav routes a pursuer around blocking cover")
+                        routed = True
+                        break
+                if routed:
+                    break
+    check(no_wp, "ai: cultist spawns were exercised by the waypoint guard")
+    check(routed, "ai: a blocked-line route was found to exercise the nav guard")
+
+    # --- 21. A chase carries through PORTALS and folds (NARRATIVE §8) -------
+    # The only thing that shakes a hot pursuer is a SAFE room. Guard both: a
+    # plain portal (non-fold) exit to a non-safe scene stashes the pursuer; a
+    # SAFE destination clears it (the refuge is never breached).
+    from systems.game import (CULTIST_SCENES as _CS, UNDERGROUND_SCENES as _UG,
+                              SAFE_SCENES as _SAFE)
+    gp = new_game()
+    gp.load_scene_now(next(iter(_CS)))
+    _ch = gp._spawn_cultist("cult_regular", "cultist",
+                            at=(gp.player.x + 30, gp.player.y))
+    check(_ch is not None, "portal: a surface chaser could be planted")
+    if _ch is not None:
+        _ch.x, _ch.y = gp.player.x + 30, gp.player.y
+        _ch._cult_state = "chase"
+        gp._note_fold_pursuit((next(iter(_UG)), "default"))   # plain portal
+        check(gp._fold_pursuer is not None,
+              "portal: an active chase carries through a portal exit")
+        _ch._cult_state = "chase"
+        gp._note_fold_pursuit((next(iter(_SAFE)), "default"))
+        check(gp._fold_pursuer is None,
+              "portal: a SAFE room shakes the chase (refuge never breached)")
+        # Mara's cell is a deliberate refuge: it hosts no cultists, so a chase
+        # fled into it does NOT carry (no spawn-then-sweep). Locked by choice.
+        _ch._cult_state = "chase"
+        gp._note_fold_pursuit(("maras_room", "default"))
+        check(gp._fold_pursuer is None,
+              "portal: maras_room is a refuge -- the chase does not follow in")
+    # The dead-end branch rooms must be registered underground, or a pursuer
+    # fled into them spawns as a surface NPC that _tick_cultists sweeps (the
+    # chase silently evaporates). They also need the dark/flashlight gate.
+    from systems.game import DARK_SCENES as _DK
+    for _br in ("the_sump", "the_cells", "the_ossuary"):
+        check(_br in _UG, f"portal: branch room {_br} is registered underground")
+        check(_br in _DK, f"dark: branch room {_br} gets the underground gloom")
+
     print()
     if FAILS:
         print(f"{len(FAILS)} flow failure(s).")

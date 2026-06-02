@@ -464,49 +464,43 @@ def build_son_room():
     """The Lodge Clerk's private room. A bed, a closet (his pressed cult
     robe -- the tell that he's complicit), a bare dresser (he keeps your
     car keys downstairs, behind the tab), a window."""
-    floor = [
-        "==========",
-        "==========",
-        "==========",
-        "==========",
-        "==========",
-        "==========",
-        "==========",
-        "==========",
-    ]
-    # ONE bed and ONE closet (the original three stacked b + three
-    # stacked s read as three beds and three closets). Single
-    # tiles each. Dresser (table sprite) at row 6.
+    floor = ["=" * 14 for _ in range(10)]
+    # A main room plus a partitioned CLOSET alcove (cols 9-12) reached
+    # through an interior doorway. The Clerk's pressed cult robe hangs in
+    # that alcove -- the dividing wall makes it an indoor blind spot, so the
+    # tell that the smiling man is one of them isn't visible from the room
+    # until the player steps into the closet and looks.
     objects = [
-        "WWWiWWWWWW",   # 0 north wall, window col 3
-        "W........W",   # 1
-        "W........W",   # 2
-        "W........W",   # 3
-        "W..b...s.W",   # 4 bed (col 3) + closet (col 7)
-        "W........W",   # 5
-        "W.....t..W",   # 6 dresser (col 5; off the door column)
-        "WWW1WWWWWW",   # 7 south wall, door 1 at col 3
+        "WWWiWWWWWWWWWW",   # 0  north wall, window col 3
+        "W.......W....W",   # 1  the room (cols 1-7) | closet alcove (cols 9-12)
+        "W.......W....W",   # 2
+        "W............W",   # 3  doorway gap in the partition (col 8)
+        "W.......W....W",   # 4
+        "WWWWWWWWW....W",   # 5  closet sealed off below
+        "W............W",   # 6
+        "W............W",   # 7
+        "W............W",   # 8
+        "WWW1WWWWWWWWWW",   # 9  south wall, door 1 at col 3
     ]
     sc = Scene("son_room", floor, objects, music="home")
     sc.add_exit("1", "house", "from_son_room")
-    # Door is at (3, 7); spawn at (4, 6) is open floor and one tile
+    # Door is at (3, 9); spawn at (4, 8) is open floor and one tile
     # off-axis so the player doesn't auto-retrigger.
-    sc.set_spawn("default", 4, 6)
-    sc.set_spawn("from_house", 4, 6)
+    sc.set_spawn("default", 8, 7)
+    sc.set_spawn("from_house", 4, 8)
 
-    # The dresser (table sprite) holds the car keys. Moved off col 3
-    # because col 3 is the door column -- a solid prop directly above
-    # the door previously trapped the player inside.
-    sc._dresser_pos = (5 * TILE + 16, 6 * TILE + 16)
-    # The closet (shelf sprite) holds the Clerk's pressed cult robe -- a
-    # flavor clue (he's complicit), not counted evidence.
-    sc._closet_pos = (7 * TILE + 16, 4 * TILE + 16)
+    # The dresser (table sprite) holds the car keys. Out in the main room,
+    # off the door column so a solid prop never traps the player inside.
+    sc._dresser_pos = (5 * TILE + 16, 7 * TILE + 16)
+    # The closet (wardrobe sprite) holds the Clerk's pressed cult robe -- a
+    # flavor clue (he's complicit), not counted evidence. In the blind alcove.
+    sc._closet_pos = (10 * TILE + 16, 2 * TILE + 16)
     # Hide spot under the bed. The wardrobe is NOT a hide spot: it's the
     # Clerk's-robe tell (clerk_room_interact), and a hide here took E
     # priority and made the only "the Clerk is one of them" clue
     # unreachable. (son_room is a SAFE scene -- the hide was cosmetic.)
     sc.hide_spots = [
-        (4 * TILE + 16, 4 * TILE + 16, "under"),
+        (2 * TILE + 16, 6 * TILE + 24, "under"),
     ]
     # [E] cues for the robe closet (the tell) and the bare dresser.
     sc.add_interactable(sc._closet_pos[0], sc._closet_pos[1], 40)
@@ -514,26 +508,26 @@ def build_son_room():
 
     # Sized darkwood furniture: a 2x2 bed, a tall closet (the Clerk's robe
     # -> _closet_pos), a low dresser (bare -> _dresser_pos).
-    sc.add_furniture("bed", [(2, 3), (3, 3), (2, 4), (3, 4)], w=56, h=56)
-    sc.add_furniture("wardrobe", [(7, 3), (7, 4)], w=26, h=54)
-    sc.add_furniture("table", [(5, 6), (6, 6)], w=54, h=32)
+    sc.add_furniture("bed", [(2, 6), (3, 6), (2, 7), (3, 7)], w=56, h=56)
+    sc.add_furniture("wardrobe", [(10, 2), (10, 3)], w=26, h=54)
+    sc.add_furniture("table", [(5, 7), (6, 7)], w=54, h=32)
 
     # Wall items mounted on the NORTH wall (row 0). Lodge dressing: a
     # mounted buck (replaces the old generic photo) and a trophy
-    # walleye flank the window; a cobweb hangs in the NE corner and a
+    # walleye flank the window; a cobweb hangs in the closet corner and a
     # kerosene lamp burns on the dresser.
     sc.add_decoration(Decoration(2 * TILE + 16, 0 * TILE + 22, "candle"))
-    sc.add_decoration(Decoration(7 * TILE + 16, 0 * TILE + 22, "buck_head",
+    sc.add_decoration(Decoration(6 * TILE + 16, 0 * TILE + 22, "buck_head",
                                  wall="N"))
-    sc.add_decoration(Decoration(5 * TILE + 16, 0 * TILE + 24,
+    sc.add_decoration(Decoration(1 * TILE + 16, 0 * TILE + 24,
                                  "mounted_fish", flip=True))
-    sc.add_decoration(Decoration(8 * TILE + 26, 1 * TILE + 6, "cobweb",
+    sc.add_decoration(Decoration(12 * TILE + 26, 1 * TILE + 6, "cobweb",
                                  ang=math.pi / 2))
-    sc.add_decoration(Decoration(6 * TILE + 16, 6 * TILE + 2,
+    sc.add_decoration(Decoration(6 * TILE + 16, 7 * TILE + 2,
                                  "kerosene_lamp"))
     for i in range(4):
         sc.add_decoration(Decoration(40 + i * 60,
-                                     60 + (i % 2) * 40, "mote"))
+                                     200 + (i % 2) * 40, "mote"))
 
     sc.on_interact_fn = clerk_room_interact
     return sc
@@ -574,14 +568,19 @@ def build_basement():
     because it created the impression of a duplicate basement door
     on the same building footprint. The cellar is now strictly a
     one-way-down room with the ladder back as the only return."""
-    floor = ["x" * 12 for _ in range(10)]
+    floor = ["x" * 14 for _ in range(12)]
     objects_l = []
-    for y in range(10):
-        if y == 0 or y == 9:
-            objects_l.append(list("#" * 12))
+    for y in range(12):
+        if y == 0 or y == 11:
+            objects_l.append(list("#" * 14))
         else:
-            row = ["#"] + ["."] * 10 + ["#"]
+            row = ["#"] + ["."] * 12 + ["#"]
             objects_l.append(row)
+    # L-shaped cellar: the SE corner is solid stone (the dig was never
+    # squared off), so the room bends instead of reading as a plain box.
+    for yy in range(7, 11):
+        for xx in range(9, 13):
+            objects_l[yy][xx] = "#"
     objects_l[1][10] = "U"          # ladder up to the kitchen
     objects_l[5][8]  = "P"          # photo marker -- consumed at build
     objects = ["".join(r) for r in objects_l]
@@ -646,7 +645,11 @@ def build_basement():
                                  ang=0.0))
     sc.add_decoration(Decoration(10 * TILE + 26, 1 * TILE + 6, "cobweb",
                                  ang=math.pi / 2))
-    sc.add_furniture("firewood", [(8, 8), (9, 8)], w=58, h=24)
+    sc.add_furniture("firewood", [(3, 10), (4, 10)], w=58, h=24)
+    # Crates of stored goods filling out the cellar's east end.
+    sc.add_furniture("crate", [(10, 4)])
+    sc.add_furniture("crate", [(11, 4)])
+    sc.add_furniture("barrel", [(11, 2)])
     for mx, my in [(2, 5), (6, 6), (4, 3), (8, 7)]:
         sc.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16,
                                      "mote"))
@@ -670,15 +673,18 @@ def basement_on_enter(game, scene):
     # A few cartridges stashed in the cellar (one-time, flag-gated).
     from .base import drop_ammo_cache
     drop_ammo_cache(game, scene, 6, 3, 4, "ammo_cellar")
-    # Lodge-candle callback: once the player has seen the rendering at
-    # the Works, the candles in the Lodge mean something they didn't
-    # before. One-shot, fires the next descent to the cellar after the
-    # vats beat (non-canonical evidence -- doesn't move the King-gate).
+    # Lodge-candle callback: once the player has seen the Cistern at the
+    # Works (the dig that broke into the river), the candles in the Lodge
+    # mean something they didn't before -- the Lodge has been part of the
+    # cult's devotion the whole time. One-shot, fires the next descent to
+    # the cellar after the Cistern beat (non-canonical evidence -- doesn't
+    # move the King-gate, and the claiming cult renders no bodies at all).
     if (game.save.flag("evidence_works_vats_seen")
             and not game.save.flag("evidence_lodge_candle_callback")):
         _evidence(game, "lodge_candle_callback", [
-            "[c=dim]There's wax on your thumb. You don't remember "
-            "tasting it.[/c]",
+            "[c=dim]The same guttering candles as the dark below, kept "
+            "burning up here too. The Lodge has been part of it the whole "
+            "time.[/c]",
         ])
 
 

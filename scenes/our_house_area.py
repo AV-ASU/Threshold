@@ -243,49 +243,54 @@ def build_woodshed():
     not the Arcadia yard). Single room: splitting axe on the wall, a coil
     of rope on the workbench, a chopping stump in the centre. Locked from
     outside; the Clerk keeps the key (found in his cellar)."""
-    floor = ["=" * 8 for _ in range(6)]
+    floor = ["=" * 12 for _ in range(9)]
     objects = [
-        "WWWWWWWW",
-        "W......W",
-        "W.t....W",   # workbench (rope sits on this)
-        "W......W",
-        "W...h..W",   # h = exit door (back to the yard)
-        "WWWWWWWW",
+        "WWWWWWWWWWWW",   # 0
+        "W.....W....W",   # 1  main shed (cols 1-5) | tool nook (cols 7-10)
+        "W.....W....W",   # 2  workbench (rope) out front
+        "W..........W",   # 3  doorway gap in the partition (col 6)
+        "W.....W....W",   # 4
+        "W.....WWWWWW",   # 5  tool nook sealed off below
+        "W..........W",   # 6
+        "W...h......W",   # 7  h = exit door (back to the yard)
+        "WWWWWWWWWWWW",   # 8
     ]
     sc = Scene("woodshed", floor, objects, music="home")
     # `h` exit always returns the player to the village/farm scene
     # now -- the yard shed has been removed, the village shed is
     # the only entry/exit.
     sc.add_exit("h", "brimley", "from_woodshed")
-    sc.set_spawn("default",            4, 3)
-    sc.set_spawn("from_brimley_shed",  4, 3)
-    sc.set_spawn("from_village_shed",  4, 3)   # legacy fallback
-    sc.set_spawn("from_yard",          4, 3)   # legacy fallback
+    sc.set_spawn("default",            5, 6)
+    sc.set_spawn("from_brimley_shed",  4, 6)
+    sc.set_spawn("from_village_shed",  4, 6)   # legacy fallback
+    sc.set_spawn("from_yard",          4, 6)   # legacy fallback
 
     rope_pos   = (2 * TILE + 16, 2 * TILE + 16)
-    axe_pos    = (5 * TILE + 16, 2 * TILE + 16)
-    flash_pos  = (3 * TILE + 16, 4 * TILE + 16)   # on the chopping stump
+    # The splitting axe hangs in the back tool nook -- behind the partition,
+    # so the weapon is an indoor blind spot you have to round the wall for.
+    axe_pos    = (8 * TILE + 16, 1 * TILE + 16)
+    flash_pos  = (4 * TILE + 16, 5 * TILE + 16)   # on the chopping stump
     sc._rope_pos = rope_pos
     sc._axe_pos  = axe_pos
     sc._flash_pos = flash_pos
     # Sized workbench (the rope sits on it).
-    sc.add_furniture("table", [(2, 2), (3, 2)], w=54, h=36)
+    sc.add_furniture("table", [(2, 2)], w=54, h=36)
     sc.add_decoration(Decoration(2 * TILE + 16, 0 * TILE + 22, "candle"))
-    sc.add_decoration(Decoration(4 * TILE + 20, 3 * TILE + 8, "bloodstain",
+    sc.add_decoration(Decoration(3 * TILE + 20, 6 * TILE + 8, "bloodstain",
                                  scale=2.6))
     # It IS a woodshed: a split-wood stack against the west wall, a
     # kerosene lamp on the workbench, and cobwebs in the corners. The
     # firewood is collision furniture, set clear of the axe/rope/door.
-    sc.add_furniture("firewood", [(1, 3), (1, 4)], w=24, h=58)
-    sc.add_decoration(Decoration(3 * TILE + 16, 2 * TILE + 2,
+    sc.add_furniture("firewood", [(1, 5), (1, 6)], w=24, h=58)
+    sc.add_decoration(Decoration(2 * TILE + 16, 2 * TILE + 2,
                                  "kerosene_lamp"))
     sc.add_decoration(Decoration(1 * TILE + 6, 1 * TILE + 6, "cobweb",
                                  ang=0.0))
-    sc.add_decoration(Decoration(6 * TILE + 26, 1 * TILE + 6, "cobweb",
+    sc.add_decoration(Decoration(10 * TILE + 26, 1 * TILE + 6, "cobweb",
                                  ang=math.pi / 2))
     sc.hide_spots = [
         (2 * TILE + 16, 3 * TILE + 16, "behind"),     # behind workbench
-        (6 * TILE + 16, 1 * TILE + 24, "behind"),     # NE corner
+        (8 * TILE + 16, 3 * TILE + 16, "behind"),     # in the tool nook (blind)
     ]
 
     def _woodshed_interact(game):

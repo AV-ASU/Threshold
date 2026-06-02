@@ -144,6 +144,7 @@ DARK_SCENES = {"basement", "well_passage", "well_bottom",
                "haunted_house",
                "depths_antechamber", "depths_procession",
                "depths_hall", "depths_threshing", "depths_stair",
+               "the_sump", "the_cells", "the_ossuary",
                "dark", "threshold"}
 
 # Cult-dark: a subset of DARK_SCENES where the flashlight is
@@ -152,7 +153,8 @@ DARK_SCENES = {"basement", "well_passage", "well_bottom",
 # normal physics.
 CULT_DARK_SCENES = {"depths_antechamber", "depths_procession",
                     "depths_hall", "depths_threshing",
-                    "depths_stair", "dark", "threshold"}
+                    "depths_stair", "the_ossuary",
+                    "dark", "threshold"}
 
 # Scenes where the reactive cult-ambient layer (proximity-driven
 # cult_breath + cult_chant) runs. These are the rite spaces -- the
@@ -337,6 +339,9 @@ UNDERGROUND_SCENES = {
     "works_deepstair",
     "depths_antechamber", "depths_procession", "depths_hall",
     "depths_threshing", "depths_stair",
+    # the dead-end branch rooms hang off their parent corridors and share
+    # its underground treatment (baseline rot + Enemy-cultist pursuit).
+    "the_sump", "the_cells", "the_ossuary",
 }
 
 
@@ -1659,7 +1664,12 @@ class Game(CutsceneMixin):
             if any(abs(wx - sx) < 28 and abs(wy - sy) < 28
                    for sx, sy in spawns):
                 continue
-            self.scene.add_decoration(Decoration(wx, wy, rng.choice(pool)))
+            deco = Decoration(wx, wy, rng.choice(pool))
+            # Phase 4: the rot is a WORLD CHANGE — gated to line of sight under
+            # tilt so it reveals only where the player actually looks (the
+            # infection 'updates in memory' when seen; CAMERA.md Phase 4).
+            deco._sight_gated = True
+            self.scene.add_decoration(deco)
             placed += 1
 
     def _infest_locals(self, stage):
@@ -2613,37 +2623,48 @@ class Game(CutsceneMixin):
         self._cursed = True
 
     def _note_fold_pursuit(self, exit_data):
-        """Called the instant an exit fires, BEFORE the scene swaps. If the
-        exit is a hidden FOLD (a direction-gated exit) and a cultist is in
-        active chase within FOLD_PURSUE_RANGE, stash that one pursuer so it
-        can follow a beat behind. Any other exit -- door, ladder, rope --
-        clears the stash: ordinary architecture shakes the chase. The
-        refuge (SAFE_SCENES) is never breached."""
+        """Called the instant an exit fires, BEFORE the scene swaps. A chase
+        carries through PORTALS and FOLDS alike (NARRATIVE §8): if a cultist
+        is in active chase within FOLD_PURSUE_RANGE when the player crosses an
+        exit, stash that one pursuer so it follows a beat behind, whether the
+        exit is a door, ladder, rope, seamless passage, or a hidden fold. Both
+        cultist classes count -- the surface NPC chasers AND the underground
+        Enemy cultists. A destination shakes the chase when it can't host a
+        pursuer: a SAFE_SCENES refuge, or any room that doesn't tick cultists
+        at all -- an underground room (Enemy) or a CULTIST_SCENE (NPC) is the
+        only place one can materialize, so e.g. Mara's cell stays a refuge."""
         target_scene, _spawn_id = exit_data
-        # The cult moves through the world's wrongness AND its open ground:
-        # a hidden fold (direction-gated) or a seamless outdoor passage both
-        # carry the chase. Only a fade transition into an interior -- a door,
-        # ladder, or rope -- shakes them. The refuge is never breached.
-        if (not self._exit_is_fold(exit_data)) or target_scene in SAFE_SCENES:
+        if target_scene in SAFE_SCENES:
+            self._fold_pursuer = None
+            return
+        if (target_scene not in UNDERGROUND_SCENES
+                and target_scene not in CULTIST_SCENES):
             self._fold_pursuer = None
             return
         hot, hot_d = None, FOLD_PURSUE_RANGE
-        for n in self.scene.npcs:
-            if getattr(n, "movement", "") != "chaser":
-                continue
-            if getattr(n, "_cult_state", "") != "chase":
-                continue
-            if not getattr(n, "alive", True):
-                continue
-            d = math.hypot(n.x - self.player.x, n.y - self.player.y)
-            if d <= hot_d:
-                hot, hot_d = n, d
+
+        def _consider(c):
+            nonlocal hot, hot_d
+            if (getattr(c, "_cult_state", "") == "chase"
+                    and getattr(c, "alive", True)):
+                d = math.hypot(c.x - self.player.x, c.y - self.player.y)
+                if d <= hot_d:
+                    hot, hot_d = c, d
+
+        for n in self.scene.npcs:               # surface NPC chasers
+            if getattr(n, "movement", "") == "chaser":
+                _consider(n)
+        for e in self.scene.enemies:            # underground Enemy cultists
+            if getattr(e, "kind", "") == "cultist":
+                _consider(e)
         if hot is None:
             self._fold_pursuer = None
             return
-        # Just enough to rebuild it on the far side of the fold.
+        # Just enough to rebuild it on the far side (its TYPE is chosen by the
+        # destination in _tick_fold_pursuit, so an underground portal lands an
+        # Enemy cultist and a surface one an NPC chaser, each scene's native).
         self._fold_pursuer = {
-            "kind": hot.sprite_kind,
+            "kind": getattr(hot, "sprite_kind", "cultist"),
             "speed": getattr(hot, "speed", 0.85),
             "gaze_range": getattr(hot, "_gaze_range", 180),
             "tag": getattr(hot, "tag", "cult_regular"),
@@ -2678,13 +2699,23 @@ class Game(CutsceneMixin):
             self._fold_pursuer = None
             self._fold_pursuer_grace = 0.0
             return
-        npc = self._spawn_cultist(info["tag"], info["kind"],
-                                  speed=info["speed"],
-                                  gaze_range=info["gaze_range"],
-                                  at=(sx, sy))
-        if npc is not None:
-            npc._cult_state = "chase"
-            npc._last_seen_pos = (self.player.x, self.player.y)
+        if self.scene.key in UNDERGROUND_SCENES:
+            # Underground rooms run Enemy cultists (the death-gate keys on
+            # Enemy kind=='cultist' in chase) -- so the pursuer that came down
+            # after you must be one too, not a surface NPC chaser.
+            from scenes.depths import _cultist
+            e = _cultist(sx, sy, speed=info["speed"])
+            e._cult_state = "chase"
+            e._last_seen_pos = (self.player.x, self.player.y)
+            self.scene.enemies.append(e)
+        else:
+            npc = self._spawn_cultist(info["tag"], info["kind"],
+                                      speed=info["speed"],
+                                      gaze_range=info["gaze_range"],
+                                      at=(sx, sy))
+            if npc is not None:
+                npc._cult_state = "chase"
+                npc._last_seen_pos = (self.player.x, self.player.y)
         self._fold_pursuer = None
         self._fold_pursuer_grace = 0.0
 
@@ -3364,8 +3395,9 @@ class Game(CutsceneMixin):
                     self.player.x, self.player.y,
                     facing=self.player.facing)
                 if exit_data:
-                    # Stash a hot pursuer iff this exit is a FOLD; a mundane
-                    # exit clears the stash (architecture shakes the chase).
+                    # Stash a hot pursuer so an active chase carries through
+                    # this exit -- portal or fold alike (only a SAFE room
+                    # shakes it). The far side rebuilds it a beat behind.
                     self._note_fold_pursuit(exit_data)
                     # A fold/portal traversal has a 1/20 chance to bind +1
                     # Watcher (the seed that starts the curse cloning), unless
@@ -3592,6 +3624,35 @@ class Game(CutsceneMixin):
         self.camera.origin = (SCREEN_W // 2, SCREEN_H // 2)
         self.camera.cam_x = self.cam_x + SCREEN_W // 2
         self.camera.cam_y = self.cam_y + SCREEN_H // 2
+        # Phase 4 blind-spot vision (CAMERA.md Phase 4). Under tilt, gate WHAT
+        # IS DRAWN to a forward sight cone keyed to the look heading + walls
+        # (rendering/sight.py). The world keeps simulating off-camera (the
+        # update path is untouched) -- only RENDERING is gated, so unseen
+        # actors / items / rot simply aren't shown and re-hide when the head
+        # turns away (the SCP-173 dread). The King is exempt (a relentless
+        # apex you must be able to track) and the player is never gated. At
+        # pitch 0 `_sight` stays None -> every alpha is 255 and the frame is
+        # byte-identical to the shipping top-down view.
+        _sight = None
+        if self._tilt_on() and self.player:
+            from rendering.sight import visible_factor
+            _spx, _spy, _shead = self.player.x, self.player.y, self.look.aim
+            _blk = self.scene.blocks_sight
+            def _sight(wx, wy):
+                return visible_factor(_spx, _spy, _shead, wx, wy, _blk)
+        from rendering.solids import draw_with_alpha
+
+        def _vis_alpha(wx, wy, exempt=False):
+            """0..255 alpha to draw a world thing at (wx, wy) under the sight
+            gate, or None to skip it (fully in the blind spot). 255 when the
+            gate is off (pitch 0) or the thing is exempt (the King)."""
+            if _sight is None or exempt:
+                return 255
+            f = _sight(wx, wy)
+            if f <= 0.03:
+                return None
+            return 255 if f >= 0.99 else int(255 * f)
+
         self._tilt_front_walls = None
         if self.camera.pitch > 0.02:
             # DEBUG oblique view (CAMERA.md Phase 2): skybox fills the void,
@@ -3606,17 +3667,23 @@ class Game(CutsceneMixin):
                         yaw=self.camera.yaw, kind=sky, horizon_frac=0.40)
             focus = (self.player.x, self.player.y) if self.player else None
             self._tilt_front_walls = draw_terrain_tilted(
-                self.screen, self.scene, self.camera, focus)
+                self.screen, self.scene, self.camera, focus, sight=_sight)
         else:
             self.scene.draw(self.screen, self.cam_x, self.cam_y, self.camera)
         self._draw_folds()
         for it in self.scene.items:
+            a = _vis_alpha(it["x"], it["y"])
+            if a is None:
+                continue
             sx, sy = self.camera.project(it["x"], it["y"])
             t = pygame.time.get_ticks() / 200.0
             bob = int(math.sin(t + (it["x"] + it["y"]) * 0.01) * 1)
             color = self._item_color(it["key"])
-            pygame.draw.rect(self.screen, color, (sx - 4, sy - 4 + bob, 8, 8))
-            pygame.draw.rect(self.screen, C_BLACK, (sx - 4, sy - 4 + bob, 8, 8), 1)
+
+            def _draw_item(s, sx=sx, sy=sy, bob=bob, color=color):
+                pygame.draw.rect(s, color, (sx - 4, sy - 4 + bob, 8, 8))
+                pygame.draw.rect(s, C_BLACK, (sx - 4, sy - 4 + bob, 8, 8), 1)
+            draw_with_alpha(self.screen, a, _draw_item)
         # Pick at most one NPC to "blink" this frame -- their eye dots
         # will skip drawing for a single frame. Only fires while the
         # player is standing still, and only rarely. The villagers
@@ -3665,8 +3732,13 @@ class Game(CutsceneMixin):
                     sx, sy = self.camera.project(npc.x + ox, npc.y + oy)
                     if not _on_screen(sx, sy):
                         continue
-                    draw_npc_corpse(self.screen, sx, sy, npc.sprite_kind,
-                                    seed=id(npc) & 0xffff, mold=0)
+                    a = _vis_alpha(npc.x + ox, npc.y + oy)
+                    if a is None:
+                        continue
+                    draw_with_alpha(self.screen, a,
+                                    lambda s, sx=sx, sy=sy, npc=npc:
+                                    draw_npc_corpse(s, sx, sy, npc.sprite_kind,
+                                                    seed=id(npc) & 0xffff, mold=0))
                 continue
             m = getattr(npc, "morph", 0.0)
             king_threat = None
@@ -3683,37 +3755,49 @@ class Game(CutsceneMixin):
                 king_threat = max(0.15, min(1.0, 1.0 - (d - KING_THREAT_NEAR) / span))
             npc_lift = int(TILT_LIFT.get(npc.sprite_kind, TILT_ACTOR_STAND)
                            * math.sin(self.camera.pitch))
+            # The King is the relentless apex -- never gated to sight; you must
+            # be able to track him as he closes. Everyone else obeys the blind
+            # spot (idle locals, converts, watchers, mutated resisters).
+            exempt = npc.sprite_kind == "yellow_king"
             for ox, oy in _offsets:
                 sx, sy = self.camera.project(npc.x + ox, npc.y + oy)
                 if not _on_screen(sx, sy):
                     continue
+                a = _vis_alpha(npc.x + ox, npc.y + oy, exempt=exempt)
+                if a is None:
+                    continue
                 sy -= npc_lift            # stand on the floor under tilt
-                if m > 0.0:
-                    draw_vessel_bloom(self.screen, sx, sy, npc.sprite_kind,
-                                      npc.facing, m, seed=id(npc) & 0xffff)
-                else:
-                    # (The curse is His own gaze now; NARRATIVE 1b/3.
-                    # curse_v stays 0 for all normal NPCs.)
-                    curse_v = 0.0
-                    # A Watcher being stared down: its eyes go dark (gaze) and
-                    # it fades as the dispel timer fills, so the cure reads.
-                    w_gaze = (npc.sprite_kind == "watcher"
-                              and getattr(npc, "_gaze_dispel_t", 0.0) > 0.05)
-                    nview = "front"
-                    if self._tilt_on():
-                        nview = view_from_facing(npc.facing[0], npc.facing[1],
-                                                 self.camera.yaw)
-                    draw_npc_sprite(self.screen, sx, sy, npc.sprite_kind,
-                                    npc.facing, blink=(i == blink_idx),
-                                    birth=getattr(npc, "_birth", None),
-                                    gait=getattr(npc, "_gait", None),
-                                    threat=king_threat, seed=id(npc) & 0xffff,
-                                    curse=curse_v, gaze=w_gaze, view=nview)
-                    # A resister whose flesh has turned: their bespoke
-                    # fold-horror form, laid over the person they were.
-                    if getattr(npc, "_mutated", False):
-                        draw_infested_overlay(self.screen, sx, sy,
-                                              npc.sprite_kind, view=nview)
+
+                def _draw_npc(target, sx=sx, sy=sy):
+                    if m > 0.0:
+                        draw_vessel_bloom(target, sx, sy, npc.sprite_kind,
+                                          npc.facing, m, seed=id(npc) & 0xffff)
+                    else:
+                        # (The curse is His own gaze now; NARRATIVE 1b/3.
+                        # curse_v stays 0 for all normal NPCs.)
+                        curse_v = 0.0
+                        # A Watcher being stared down: its eyes go dark (gaze)
+                        # and it fades as the dispel timer fills, so the cure
+                        # reads.
+                        w_gaze = (npc.sprite_kind == "watcher"
+                                  and getattr(npc, "_gaze_dispel_t", 0.0) > 0.05)
+                        nview = "front"
+                        if self._tilt_on():
+                            nview = view_from_facing(npc.facing[0],
+                                                     npc.facing[1],
+                                                     self.camera.yaw)
+                        draw_npc_sprite(target, sx, sy, npc.sprite_kind,
+                                        npc.facing, blink=(i == blink_idx),
+                                        birth=getattr(npc, "_birth", None),
+                                        gait=getattr(npc, "_gait", None),
+                                        threat=king_threat, seed=id(npc) & 0xffff,
+                                        curse=curse_v, gaze=w_gaze, view=nview)
+                        # A resister whose flesh has turned: their bespoke
+                        # fold-horror form, laid over the person they were.
+                        if getattr(npc, "_mutated", False):
+                            draw_infested_overlay(target, sx, sy,
+                                                  npc.sprite_kind, view=nview)
+                draw_with_alpha(self.screen, a, _draw_npc)
             # THRESHOLD: NPC name labels removed. They were the
             # last RPG-tell on screen -- the player should learn
             # who an NPC is by interacting with them, not by
@@ -3728,10 +3812,16 @@ class Game(CutsceneMixin):
                 sx, sy = self.camera.project(e.x + ox, e.y + oy)
                 if not _on_screen(sx, sy):
                     continue
+                a = _vis_alpha(e.x + ox, e.y + oy)
+                if a is None:
+                    continue
                 # Feed e.draw an offset that lands its internal `x - cam`
                 # exactly on the (lifted) projected point. At pitch 0 this is
                 # arithmetically the legacy (cam_x - ox) call -> identical.
-                e.draw(self.screen, e.x - sx, e.y - (sy - actor_lift), view=eview)
+                draw_with_alpha(self.screen, a,
+                                lambda s, sx=sx, sy=sy, e=e, eview=eview:
+                                e.draw(s, e.x - sx, e.y - (sy - actor_lift),
+                                       view=eview))
         for p in self.scene.projectiles:
             psx, psy = self.camera.project(p.x, p.y)
             p.draw(self.screen, p.x - psx, p.y - (psy - actor_lift))

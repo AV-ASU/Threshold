@@ -1631,7 +1631,7 @@ def _tilt_tile_box(surf, camera, scene, tx, ty):
         _tilt_wall_box(surf, camera, scene, tx, ty)
 
 
-def draw_terrain_tilted(surf, scene, camera, focus=None):
+def draw_terrain_tilted(surf, scene, camera, focus=None, sight=None):
     """Floor warp + wall extrusion for the oblique camera. Skybox is the
     caller's job (drawn first); actors are drawn after by the game, already
     projected through the same camera so they stand on this floor.
@@ -1639,7 +1639,12 @@ def draw_terrain_tilted(surf, scene, camera, focus=None):
     `focus` (wx, wy) is the player: walls NEARER the camera than the focus are
     held back and RETURNED so the caller can draw them after the actors (so
     they correctly occlude/fade in front of the player). Walls behind the
-    focus are drawn now. Returns the list of (tx, ty) front walls."""
+    focus are drawn now. Returns the list of (tx, ty) front walls.
+
+    `sight` is the optional Phase 4 blind-spot factor fn(wx, wy) -> 0..1
+    (rendering/sight.py). When given, decorations flagged `_sight_gated`
+    (the infestation rot) only draw where the player actually looks -- the
+    world's rot reveals on a peek and re-hides off-camera."""
     cx, cy = camera.cam_x, camera.cam_y
     half = _tilt_window_half(camera)
     span = int(half * 2)
@@ -1677,17 +1682,28 @@ def draw_terrain_tilted(surf, scene, camera, focus=None):
     # reads; boxes depth-sorted far->near so they overlap correctly. Walls draw
     # after, so a wall in front still overdraws a prop behind it.
     from rendering.furniture import is_solid_furniture, draw_furniture_solid
+    from rendering.props import is_solid_prop, draw_prop_solid
+    from rendering.solids import draw_with_alpha
     solid_decos = []
     for d in scene.decorations:
-        if is_solid_furniture(d.kind):
+        if is_solid_furniture(d.kind) or is_solid_prop(d.kind):
             solid_decos.append(d)
-        elif d.kind in _FLOOR_DECAL_KINDS:
-            _draw_floor_decal(surf, camera, d)
+            continue
+        # Phase 4: rot decals are a world change -- gated to line of sight.
+        a = 255
+        if sight is not None and getattr(d, "_sight_gated", False):
+            f = sight(d.x, d.y)
+            if f <= 0.03:
+                continue
+            a = 255 if f >= 0.99 else int(255 * f)
+        if d.kind in _FLOOR_DECAL_KINDS:
+            draw_with_alpha(surf, a, lambda s, d=d: _draw_floor_decal(s, camera, d))
         else:
-            d.draw(surf, 0, 0, camera)
+            draw_with_alpha(surf, a, lambda s, d=d: d.draw(s, 0, 0, camera))
     solid_decos.sort(key=lambda d: camera.depth(d.x, d.y))
     for d in solid_decos:
-        draw_furniture_solid(surf, camera, d)
+        if not draw_furniture_solid(surf, camera, d):
+            draw_prop_solid(surf, camera, d)
     # Split walls on the focus (player) depth: behind -> draw now; in front ->
     # return for the caller to draw after the actors.
     fdepth = camera.depth(focus[0], focus[1]) if focus else float("inf")
@@ -2062,6 +2078,139 @@ class Scene:
         if 0 <= ty < self.h and 0 <= tx < self.w:
             return self.objects[ty][tx]
         return "#"
+
+    # --- Cover-aware navigation (cultist pursuit, NARRATIVE §8) ----------
+    # The cult AI (entities/enemy.py + npc.py) routes AROUND the volumetric
+    # cover now standing mid-floor (pillars, pews, cots, basins) via a
+    # wrap-aware BFS over a walkable tile grid, while staying a straight shot
+    # in the open. Folds are first-class: the grid wraps and the line test
+    # crosses the seam, so a chase carries seamlessly THROUGH a fold.
+    def _nav_solid_at(self, x_px, y_px):
+        """STATIC blocker test for navigation -- walls + furniture only, NOT
+        the (moving) NPCs that is_solid_at also counts. Baking live bodies
+        into the path grid would leave phantom walls where someone briefly
+        stood. Wrap-aware via the char_*_at lookups."""
+        return (is_object_solid(self.char_object_at(x_px, y_px))
+                or is_floor_solid(self.char_floor_at(x_px, y_px)))
+
+    def nav_grid(self):
+        """Cached [h][w] bool grid -- True where a tile centre is walkable.
+        Built once per scene instance (objects/floor are static after the
+        build pass; infestation only adds non-solid decals + swaps NPCs)."""
+        g = getattr(self, "_nav_grid", None)
+        if g is None:
+            half = TILE // 2
+            g = [[not self._nav_solid_at(tx * TILE + half, ty * TILE + half)
+                  for tx in range(self.w)] for ty in range(self.h)]
+            self._nav_grid = g
+        return g
+
+    def nav_clear_line(self, x0, y0, x1, y1, step=10):
+        """True if the straight (wrap-aware) segment from (x0,y0) to (x1,y1)
+        crosses no static blocker -- the cheap shortcut that keeps motion
+        straight in the open and only pays for BFS when cover intervenes."""
+        dx = self.world_dx(x0, x1)
+        dy = self.world_dy(y0, y1)
+        # max(1, ...) so a target within one `step` still samples the
+        # endpoint -- otherwise n==0 skips the loop and reports a clear line
+        # to a solid tile a few px away.
+        n = max(1, int(math.hypot(dx, dy) // step))
+        for i in range(1, n + 1):
+            if self._nav_solid_at(x0 + dx * i / n, y0 + dy * i / n):
+                return False
+        return True
+
+    def nav_path(self, fx, fy, tx, ty, max_visit=None):
+        """Wrap-aware BFS over the walkable grid. Returns a list of world-
+        centre points from the step AFTER the start up to the goal tile, or
+        None if unreachable (caller falls back to a straight step).
+        8-connected, with no diagonal corner-cutting through a solid."""
+        from collections import deque
+        g = self.nav_grid()
+        w, h = self.w, self.h
+        # Explore the whole (small) underground rooms fully; only the big
+        # surface maps hit a bound -- there a far blocked goal is rare and a
+        # straight fallback is fine. Sized so a reachable goal is never missed
+        # in the rooms that actually have mid-floor cover.
+        if max_visit is None:
+            max_visit = min(w * h, 4000)
+
+        def norm(i, j):
+            if self.wrap_x:
+                i %= w
+            if self.wrap_y:
+                j %= h
+            return i, j
+
+        def ok(i, j):
+            i, j = norm(i, j)
+            return 0 <= i < w and 0 <= j < h and g[j][i]
+
+        si, sj = norm(int(fx // TILE), int(fy // TILE))
+        gi, gj = norm(int(tx // TILE), int(ty // TILE))
+        if (si, sj) == (gi, gj) or not ok(gi, gj):
+            return None
+        came = {(si, sj): None}
+        q = deque([(si, sj)])
+        found = False
+        while q:
+            ci, cj = q.popleft()
+            if (ci, cj) == (gi, gj):
+                found = True
+                break
+            if len(came) > max_visit:
+                break
+            for di, dj in ((1, 0), (-1, 0), (0, 1), (0, -1),
+                           (1, 1), (1, -1), (-1, 1), (-1, -1)):
+                nij = norm(ci + di, cj + dj)
+                if nij in came or not ok(*nij):
+                    continue
+                if di and dj and not (ok(ci + di, cj) and ok(ci, cj + dj)):
+                    continue                      # don't cut a solid corner
+                came[nij] = (ci, cj)
+                q.append(nij)
+        if not found:
+            return None
+        path = []
+        cur = (gi, gj)
+        half = TILE // 2
+        while cur is not None and cur != (si, sj):
+            ci, cj = cur
+            path.append((ci * TILE + half, cj * TILE + half))
+            cur = came[cur]
+        path.reverse()
+        return path
+
+    def nav_toward(self, fx, fy, tx, ty):
+        """Immediate (sx, sy) a pursuer at (fx,fy) should step toward to reach
+        (tx,ty) while routing around cover. Straight to the target when the
+        line is clear; otherwise the FARTHEST path node still on a clear line
+        (string-pulling, so motion arcs smoothly around corners rather than
+        zig-zagging tile-to-tile). Returns the target unchanged when no route
+        exists -- the caller's per-axis slide then nudges along the wall."""
+        if self.nav_clear_line(fx, fy, tx, ty):
+            return tx, ty
+        path = self.nav_path(fx, fy, tx, ty)
+        if not path:
+            return tx, ty
+        nxt = path[0]
+        for p in path:
+            if self.nav_clear_line(fx, fy, p[0], p[1]):
+                nxt = p
+            else:
+                break
+        return nxt
+
+    def blocks_sight(self, x_px, y_px):
+        """True where the tile occludes the player's LINE OF SIGHT (Phase 4
+        blind-spot vision, rendering/sight.py). Walls and solid props block;
+        windows do NOT (you see through glass), and the floor never blocks
+        (water/pits don't hide what's beyond them). Wrap-aware via the
+        char_*_at lookups."""
+        ch = self.char_object_at(x_px, y_px)
+        if ch in _WINDOW_CHARS:
+            return False
+        return ch in _WALL_CHARS or is_object_solid(ch)
 
     def is_solid_at(self, x_px, y_px, ignore=None):
         if is_object_solid(self.char_object_at(x_px, y_px)): return True

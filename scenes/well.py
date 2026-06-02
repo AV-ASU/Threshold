@@ -31,38 +31,42 @@ from constants import TILE
 from entities.decoration import Decoration
 from .base import Scene
 from .dialogue import _evidence
-from .depths import _box, _cultist, _ambient
+from .depths import _box, _cultist, _ambient, _wall, _bevel
 
 
 # ---- Room 1: the Shaft Floor (key: well_bottom) ----
 
 def build_well_bottom():
-    floor, objs = _box(10, 8)
-    objs[4][9] = "E"          # east -> the drying racks (deeper)
-    objs[1][1] = "U"          # ladder up -- climb is interact-gated below
+    # The shaft floor: a round (octagonal) stone pit at the bottom of the
+    # well, the rope/ladder dangling at one beveled edge.
+    floor, objs = _box(12, 10)
+    _bevel(objs, 3)
+    objs[5][11] = "E"         # east -> the drying racks (deeper)
+    objs[2][3]  = "U"         # ladder up -- climb is interact-gated below
     objects = ["".join(r) for r in objs]
     sc = Scene("well_bottom", floor, objects, music="basement")
     sc.add_exit("E", "well_passage", "from_above")
-    sc.set_spawn("default",   4, 4)
-    sc.set_spawn("from_well", 2, 2)       # land here on the descent
-    sc.set_spawn("from_below", 8, 4)      # back up from the racks
+    sc.set_spawn("default",   5, 5)
+    sc.set_spawn("from_well", 4, 3)       # land here on the descent
+    sc.set_spawn("from_below", 9, 5)      # back up from the racks
 
-    ladder_x = 1 * TILE + 16
-    ladder_y = 1 * TILE + 16
+    ladder_x = 3 * TILE + 16
+    ladder_y = 2 * TILE + 16
     sc._ladder_pos = (ladder_x, ladder_y)
     sc.add_interactable(ladder_x, ladder_y, 40)   # [E] cue: climb the rope/ladder up
-    sc.add_decoration(Decoration(2 * TILE + 16, 1 * TILE + 22, "candle"))
-    sc.add_decoration(Decoration(8 * TILE + 16, 6 * TILE + 16, "bloodstain"))
+    sc.add_decoration(Decoration(4 * TILE + 16, 2 * TILE + 22, "candle"))
+    sc.add_decoration(Decoration(7 * TILE + 16, 6 * TILE + 16, "bloodstain"))
     # A "wrong" mount in the well dark -- too many eyes.
     sc.add_decoration(Decoration(6 * TILE + 16, 0 * TILE + 18,
                                  "wrong_taxidermy", wall="N", seed=31))
-    # Cobweb grime in the corners away from the ladder.
-    sc.add_decoration(Decoration(8 * TILE + 26, 1 * TILE + 6, "cobweb",
+    # Cobweb grime in the beveled corners away from the ladder.
+    sc.add_decoration(Decoration(9 * TILE + 26, 1 * TILE + 6, "cobweb",
                                  ang=math.pi / 2))
-    sc.add_decoration(Decoration(1 * TILE + 6, 6 * TILE + 26, "cobweb",
+    sc.add_decoration(Decoration(1 * TILE + 6, 8 * TILE + 26, "cobweb",
                                  ang=-math.pi / 2))
     sc.hide_spots = [
-        (8 * TILE + 16, 1 * TILE + 24, "behind"),   # collapsed-timber nook
+        (8 * TILE + 16, 6 * TILE + 16, "behind"),   # collapsed-timber nook
+        (3 * TILE + 16, 6 * TILE + 16, "behind"),
     ]
     _ambient(sc, "low_pulse", 0.12, 9.0, 14.0)
 
@@ -88,43 +92,51 @@ def build_well_bottom():
 # ---- Room 2: the Drying Racks (key: well_passage) ----
 
 def build_well_passage():
-    floor, objs = _box(14, 8)
-    objs[4][0] = "F"          # west -> back to the shaft
-    objs[4][13] = "E"         # east -> the cistern (deeper)
-    # Drying racks (solid shelves) in two rows, gaps to weave through.
-    for cx in (3, 5, 8, 10):
-        objs[2][cx] = "s"
-    for cx in (4, 6, 9, 11):
-        objs[5][cx] = "s"
+    # A T-shaped drying corridor: a long E-W run with a central north bay
+    # jutting up off it (a pocket of racks you have to step into).
+    floor, objs = _box(16, 9)
+    _wall(objs, 1, 1, 5, 3)        # seal the upper-left
+    _wall(objs, 10, 1, 14, 3)      # seal the upper-right -> central bay at cols 6-9
+    objs[5][0] = "F"          # west -> back to the shaft
+    objs[5][15] = "E"         # east -> the cistern (deeper)
+    # Drying racks (solid shelves) staggered in the corridor + bay, gaps
+    # to weave through.
+    for cx in (3, 6, 9, 12):
+        objs[4][cx] = "s"
+    for cx in (4, 7, 10, 13):
+        objs[6][cx] = "s"
+    objs[2][7] = "s"
     objects = ["".join(r) for r in objs]
     sc = Scene("well_passage", floor, objects, music="basement")
     sc.add_exit("F", "well_bottom", "from_below")
     sc.add_exit("E", "works_vats",  "from_above")
-    sc.set_spawn("default",    6, 4)
-    sc.set_spawn("from_above", 1, 4)      # arriving from the shaft
-    sc.set_spawn("from_below", 12, 4)     # back from the vats
+    sc.set_spawn("default",    6, 5)
+    sc.set_spawn("from_above", 1, 5)      # arriving from the shaft
+    sc.set_spawn("from_below", 14, 5)     # back from the vats
     # Legacy spawns kept so old saves + the (now unreachable) cult
     # chamber's exit still resolve. The barn tunnel is nailed shut from
     # below now -- the well is the only way underground.
-    sc.set_spawn("from_well",    1, 4)
-    sc.set_spawn("from_chamber", 12, 4)
+    sc.set_spawn("from_well",    1, 5)
+    sc.set_spawn("from_chamber", 14, 5)
 
-    sc.add_decoration(Decoration(7 * TILE + 16, 3 * TILE + 16, "bloodstain"))
-    sc.add_decoration(Decoration(2 * TILE + 16, 0 * TILE + 22, "candle"))
-    sc.add_decoration(Decoration(11 * TILE + 16, 0 * TILE + 22, "claw_marks"))
-    # Cobweb grime in the high corners of the drying racks.
-    sc.add_decoration(Decoration(1 * TILE + 6, 1 * TILE + 6, "cobweb",
+    # Stores stacked up in the north bay -- a barrel and a crate.
+    sc.add_furniture("barrel", [(8, 2)])
+    sc.add_furniture("crate", [(6, 1)])
+    sc.add_decoration(Decoration(8 * TILE + 16, 5 * TILE + 16, "bloodstain"))
+    sc.add_decoration(Decoration(7 * TILE + 16, 0 * TILE + 22, "candle"))
+    sc.add_decoration(Decoration(13 * TILE + 16, 7 * TILE + 22, "claw_marks"))
+    # Cobweb grime in the high corners of the bay.
+    sc.add_decoration(Decoration(6 * TILE + 6, 1 * TILE + 6, "cobweb",
                                  ang=0.0))
-    sc.add_decoration(Decoration(12 * TILE + 26, 1 * TILE + 6, "cobweb",
+    sc.add_decoration(Decoration(9 * TILE + 26, 1 * TILE + 6, "cobweb",
                                  ang=math.pi / 2))
     sc.hide_spots = [
-        (4 * TILE + 16, 2 * TILE + 16, "behind"),    # between racks
-        (10 * TILE + 16, 5 * TILE + 16, "behind"),
+        (8 * TILE + 16, 1 * TILE + 24, "behind"),    # up in the bay (blind)
+        (4 * TILE + 16, 7 * TILE + 16, "behind"),    # between racks
+        (11 * TILE + 16, 7 * TILE + 16, "behind"),
     ]
     # One cultist working the corridor, end to end.
-    sc.add_enemy(_cultist(3 * TILE + 16, 4 * TILE + 16, speed=0.85,
-                          waypoints=[(11 * TILE + 16, 4 * TILE + 16),
-                                     (3 * TILE + 16, 4 * TILE + 16)]))
+    sc.add_enemy(_cultist(3 * TILE + 16, 5 * TILE + 16, speed=0.85))
     _ambient(sc, "cult_breath", 0.16, 5.0, 9.0)
     return sc
 
@@ -132,41 +144,47 @@ def build_well_passage():
 # ---- Room 3: the Cistern (key: works_vats) ----
 
 def build_works_vats():
-    floor, objs = _box(12, 9)
-    objs[4][0] = "F"          # west -> back to the racks
-    objs[4][11] = "E"         # east -> the sorting hall
-    for tx, ty in [(3, 2), (7, 2), (3, 6), (7, 6)]:   # stone cistern basins
-        objs[ty][tx] = "t"
+    # A cruciform cistern: four flooded arms off a central crossing, the
+    # corners walled off into solid stone, a basin sunk in each arm.
+    floor, objs = _box(13, 11)
+    _wall(objs, 1, 1, 3, 3)        # NW
+    _wall(objs, 9, 1, 11, 3)       # NE
+    _wall(objs, 1, 7, 3, 9)        # SW
+    _wall(objs, 9, 7, 11, 9)       # SE
+    objs[5][0] = "F"          # west -> back to the racks
+    objs[5][12] = "E"         # east -> the sorting hall
+    objs[10][6] = "D"         # south arm -> the overflow sump (dead-end branch)
     objects = ["".join(r) for r in objs]
     sc = Scene("works_vats", floor, objects, music="basement")
     sc.add_exit("F", "well_passage", "from_below")
     sc.add_exit("E", "works_sorting", "from_above")
-    sc.set_spawn("default",    5, 4)
-    sc.set_spawn("from_above", 1, 4)
-    sc.set_spawn("from_below", 10, 4)
+    sc.add_exit("D", "the_sump", "from_vats")
+    sc.set_spawn("default",    6, 5)
+    sc.set_spawn("from_above", 1, 5)
+    sc.set_spawn("from_below", 11, 5)
+    sc.set_spawn("from_the_sump", 6, 8)   # back up from the sump branch
 
-    # Cold mist rising off the basins where the dig broke into the river
-    # (NARRATIVE 1b: the underground artery to the door). Wet stone, no
-    # bodies -- the claiming cult renders no one.
-    for tx, ty in [(3, 2), (7, 2), (3, 6), (7, 6)]:
+    # Stone cistern basins brimming with black water -- volumetric props now
+    # (round 3D basins), one sunk in each arm, with cold mist rising off them
+    # (NARRATIVE 1b: the dig broke into the underground river, the artery to
+    # the door). Wet stone, no bodies -- the claiming cult renders no one.
+    for tx, ty in [(5, 2), (7, 2), (5, 8), (7, 8)]:
+        sc.add_furniture("cistern_basin", [(tx, ty)])
         sc.add_decoration(Decoration(tx * TILE + 16, ty * TILE + 6, "smoke"))
-    sc.add_decoration(Decoration(5 * TILE + 16, 4 * TILE + 16, "candle"))
+    sc.add_decoration(Decoration(6 * TILE + 16, 5 * TILE + 16, "candle"))
     # Cobweb grime in the high corners above the vats.
-    sc.add_decoration(Decoration(1 * TILE + 6, 1 * TILE + 6, "cobweb",
+    sc.add_decoration(Decoration(4 * TILE + 6, 1 * TILE + 6, "cobweb",
                                  ang=0.0))
-    sc.add_decoration(Decoration(10 * TILE + 26, 1 * TILE + 6, "cobweb",
+    sc.add_decoration(Decoration(8 * TILE + 26, 1 * TILE + 6, "cobweb",
                                  ang=math.pi / 2))
     sc.hide_spots = [
-        (5 * TILE + 16, 2 * TILE + 16, "behind"),
-        (8 * TILE + 16, 6 * TILE + 16, "behind"),
+        (6 * TILE + 16, 2 * TILE + 16, "behind"),   # in the north arm (blind)
+        (6 * TILE + 16, 8 * TILE + 16, "behind"),   # in the south arm (blind)
     ]
-    # Two cultists working the basins on small loops.
-    sc.add_enemy(_cultist(2 * TILE + 16, 4 * TILE + 16, speed=0.8,
-                          waypoints=[(2 * TILE + 16, 2 * TILE + 16),
-                                     (2 * TILE + 16, 6 * TILE + 16)]))
-    sc.add_enemy(_cultist(9 * TILE + 16, 5 * TILE + 16, speed=0.8,
-                          waypoints=[(9 * TILE + 16, 6 * TILE + 16),
-                                     (9 * TILE + 16, 2 * TILE + 16)]))
+    # Two cultists working the basins -- one walks the N-S arms, one the
+    # E-W crossing.
+    sc.add_enemy(_cultist(6 * TILE + 16, 5 * TILE + 16, speed=0.8))
+    sc.add_enemy(_cultist(9 * TILE + 16, 5 * TILE + 16, speed=0.8))
     _ambient(sc, "low_pulse", 0.14, 6.0, 10.0)
 
     def _vats_on_enter(game, scene):
@@ -186,22 +204,28 @@ def build_works_vats():
 # ---- Room 4: the Sorting Hall (key: works_sorting) ----
 
 def build_works_sorting():
-    floor, objs = _box(16, 10)
-    objs[5][0] = "F"          # west -> back to the vats
-    objs[5][15] = "E"         # east -> the scriptorium
-    objs[0][13] = "M"         # north -> Mara's cell (a side room)
-    for tx in (3, 6, 9, 12):  # long sorting tables, two rows
-        objs[3][tx] = "t"
-        objs[7][tx] = "t"
+    # A T-shaped hall: a wide sorting floor with a short north stem in the
+    # NE that rises to Mara's cell door.
+    floor, objs = _box(16, 11)
+    _wall(objs, 1, 1, 10, 3)      # seal the upper hall -> leaves a NE stem (cols 11-14)
+    objs[6][0] = "F"          # west -> back to the vats
+    objs[6][15] = "E"         # east -> the scriptorium
+    objs[0][13] = "M"         # north (top of the stem) -> Mara's cell
+    objs[10][4] = "D"         # south -> the holding cells (dead-end branch)
+    for tx in (3, 6, 9, 12):  # long sorting tables, two rows on the hall floor
+        objs[5][tx] = "t"
+        objs[8][tx] = "t"
     objects = ["".join(r) for r in objs]
     sc = Scene("works_sorting", floor, objects, music="basement")
     sc.add_exit("F", "works_vats", "from_below")
     sc.add_exit("E", "works_scriptorium", "from_above")
+    sc.add_exit("D", "the_cells", "from_sorting")
     sc.add_exit("M", "maras_room", "from_works_sorting")
-    sc.set_spawn("default",    7, 5)
-    sc.set_spawn("from_above", 1, 5)
-    sc.set_spawn("from_below", 14, 5)
-    sc.set_spawn("from_maras_room", 13, 1)   # back down from Mara's cell
+    sc.set_spawn("default",    7, 6)
+    sc.set_spawn("from_above", 1, 6)
+    sc.set_spawn("from_below", 14, 6)
+    sc.set_spawn("from_maras_room", 13, 3)   # back down through the stem
+    sc.set_spawn("from_the_cells",  4, 9)    # back up from the cells branch
 
     # The worldly lives the congregation shed when they were claimed --
     # and the effects of the few the fold took -- sorted into piles
@@ -209,34 +233,33 @@ def build_works_sorting():
     # Closed cases
     # (chests, never opened by the player -- interactive=False so they
     # don't show a dead [E] prompt) + the stains of the work.
-    for tx, ty in [(6, 3), (12, 7)]:
+    for tx, ty in [(5, 7), (12, 9)]:
         sc.add_decoration(Decoration(tx * TILE + 16, ty * TILE - 4,
                                      "chest", open=False, interactive=False))
-    sc.add_decoration(Decoration(9 * TILE + 16, 3 * TILE - 4, "chest",
+    sc.add_decoration(Decoration(9 * TILE + 16, 7 * TILE - 4, "chest",
                                  open=False, interactive=False))
-    sc.add_decoration(Decoration(4 * TILE + 16, 5 * TILE + 16, "bloodstain"))
-    sc.add_decoration(Decoration(10 * TILE + 16, 8 * TILE + 16, "phantom_mark"))
+    sc.add_decoration(Decoration(4 * TILE + 16, 6 * TILE + 16, "bloodstain"))
+    sc.add_decoration(Decoration(10 * TILE + 16, 9 * TILE + 16, "phantom_mark"))
     # A "wrong" mount oversees the catalogued lives the claimed shed,
     # and cobwebs grime the high corners.
-    sc.add_decoration(Decoration(8 * TILE + 16, 0 * TILE + 18,
+    sc.add_decoration(Decoration(8 * TILE + 16, 3 * TILE + 18,
                                  "wrong_taxidermy", wall="N", seed=17))
-    sc.add_decoration(Decoration(1 * TILE + 6, 1 * TILE + 6, "cobweb",
+    sc.add_decoration(Decoration(1 * TILE + 6, 4 * TILE + 6, "cobweb",
                                  ang=0.0))
-    sc.add_decoration(Decoration(14 * TILE + 26, 1 * TILE + 6, "cobweb",
+    sc.add_decoration(Decoration(14 * TILE + 26, 4 * TILE + 6, "cobweb",
                                  ang=math.pi / 2))
-    sc._table_pos = (6 * TILE + 16, 3 * TILE + 16)
+    # Crates of catalogued effects stacked up in the north stem.
+    sc.add_furniture("crate", [(11, 2)])
+    sc.add_furniture("crate", [(12, 2)])
+    sc._table_pos = (6 * TILE + 16, 5 * TILE + 16)
     sc.hide_spots = [
-        (5 * TILE + 16, 5 * TILE + 16, "behind"),
-        (10 * TILE + 16, 3 * TILE + 16, "behind"),
-        (10 * TILE + 16, 7 * TILE + 16, "behind"),
+        (5 * TILE + 16, 6 * TILE + 16, "behind"),
+        (11 * TILE + 16, 6 * TILE + 16, "behind"),
+        (13 * TILE + 16, 2 * TILE + 16, "behind"),   # up in the stem (blind)
     ]
     # Two cultists sorting/patrolling -- the hardest crossing.
-    sc.add_enemy(_cultist(4 * TILE + 16, 5 * TILE + 16, speed=0.9,
-                          waypoints=[(4 * TILE + 16, 2 * TILE + 16),
-                                     (4 * TILE + 16, 8 * TILE + 16)]))
-    sc.add_enemy(_cultist(11 * TILE + 16, 5 * TILE + 16, speed=0.9,
-                          waypoints=[(13 * TILE + 16, 5 * TILE + 16),
-                                     (7 * TILE + 16, 5 * TILE + 16)]))
+    sc.add_enemy(_cultist(4 * TILE + 16, 6 * TILE + 16, speed=0.9))
+    sc.add_enemy(_cultist(11 * TILE + 16, 6 * TILE + 16, speed=0.9))
     _ambient(sc, "whisper", 0.13, 7.0, 12.0)
 
     def _interact(game):
@@ -261,25 +284,34 @@ def build_maras_room():
     cult's works. A cot, a burnt-down candle, her cult robe on a peg, and
     folded in it the unsent letter to her father. Evidence #1: she came,
     and she joined willingly."""
-    floor, objs = _box(8, 7)
-    objs[6][4] = "F"          # south -> back up to the Sorting Hall
+    floor, objs = _box(10, 9)
+    # A cramped cell with the cot walled off in a back alcove behind an
+    # interior partition + doorway -- so the robe + letter (evidence #1) sit
+    # in an indoor blind spot, unseen from the cell until the player rounds
+    # the wall.
+    for y in range(1, 5):
+        objs[y][4] = "#"          # east wall of the alcove
+    objs[3][4] = "."              # ...with a doorway gap
+    for x in range(1, 4):
+        objs[4][x] = "#"          # south wall of the alcove
+    objs[8][5] = "F"              # south -> back up to the Sorting Hall
     objects = ["".join(r) for r in objs]
     sc = Scene("maras_room", floor, objects, music="basement")
     sc.add_exit("F", "works_sorting", "from_maras_room")
-    sc.set_spawn("default", 4, 5)
-    sc.set_spawn("from_works_sorting", 4, 5)
+    sc.set_spawn("default", 5, 7)
+    sc.set_spawn("from_works_sorting", 5, 7)
 
     sc._cot_pos = (2 * TILE + 16, 2 * TILE + 16)
     sc.add_interactable(sc._cot_pos[0], sc._cot_pos[1], 46)  # [E] cue: robe + letter (evidence #1)
-    sc.add_furniture("bed", [(2, 2), (2, 3)], w=34, h=52)
-    sc.add_decoration(Decoration(4 * TILE + 16, 1 * TILE + 22, "candle"))
-    sc.add_decoration(Decoration(6 * TILE + 16, 2 * TILE + 16, "phantom_mark"))
-    sc.add_decoration(Decoration(1 * TILE + 6, 5 * TILE + 26, "cobweb",
+    sc.add_furniture("bed", [(1, 1), (1, 2)], w=34, h=52)
+    sc.add_decoration(Decoration(6 * TILE + 16, 1 * TILE + 22, "candle"))
+    sc.add_decoration(Decoration(8 * TILE + 16, 6 * TILE + 16, "phantom_mark"))
+    sc.add_decoration(Decoration(1 * TILE + 6, 7 * TILE + 26, "cobweb",
                                  ang=-math.pi / 2))
-    for mx, my in [(5, 4), (3, 5)]:
+    for mx, my in [(6, 5), (4, 7)]:
         sc.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16, "mote"))
     sc.hide_spots = [
-        (2 * TILE + 16, 3 * TILE + 24, "under"),   # under the cot
+        (2 * TILE + 16, 3 * TILE + 16, "under"),   # under the cot (in the alcove)
     ]
     _ambient(sc, "whisper", 0.10, 8.0, 13.0)
 
@@ -314,39 +346,43 @@ def build_maras_room():
 # ---- Room 5: the Scriptorium (key: works_scriptorium) ----
 
 def build_works_scriptorium():
-    floor, objs = _box(12, 8)
+    # An octagonal vaulted scriptorium, copying desks ringed under the dome.
+    floor, objs = _box(14, 9)
+    _bevel(objs, 2)
     objs[4][0] = "F"          # west -> back to the sorting hall
-    objs[4][11] = "E"         # east -> the sign chamber
-    for tx, ty in [(3, 2), (7, 2), (5, 5)]:   # copying desks
+    objs[4][13] = "E"         # east -> the sign chamber
+    for tx, ty in [(4, 2), (8, 2), (6, 5)]:   # copying desks
         objs[ty][tx] = "t"
     objects = ["".join(r) for r in objs]
     sc = Scene("works_scriptorium", floor, objects, music="basement")
     sc.add_exit("F", "works_sorting", "from_below")
     sc.add_exit("E", "works_sign", "from_above")
-    sc.set_spawn("default",    6, 4)
-    sc.set_spawn("from_above", 1, 4)
-    sc.set_spawn("from_below", 10, 4)
+    sc.set_spawn("default",    7, 4)
+    sc.set_spawn("from_above", 2, 4)
+    sc.set_spawn("from_below", 11, 4)
 
     # The Sign, copied over and over onto the walls.
-    for tx, ty in [(2, 1), (5, 1), (9, 1), (10, 6)]:
+    for tx, ty in [(3, 1), (6, 1), (10, 1), (10, 6)]:
         sc.add_decoration(Decoration(tx * TILE + 16, ty * TILE + 16,
                                      "yellow_sign"))
-    sc.add_decoration(Decoration(7 * TILE + 16, 2 * TILE + 6, "candle"))
-    # Cobweb grime in the high corners of the scriptorium.
-    sc.add_decoration(Decoration(1 * TILE + 6, 1 * TILE + 6, "cobweb",
+    sc.add_decoration(Decoration(8 * TILE + 16, 2 * TILE + 6, "candle"))
+    # Two stone columns hold up the vault.
+    sc.add_furniture("pillar", [(4, 6)])
+    sc.add_furniture("pillar", [(9, 6)])
+    # Cobweb grime in the beveled corners of the scriptorium.
+    sc.add_decoration(Decoration(2 * TILE + 6, 1 * TILE + 6, "cobweb",
                                  ang=0.0))
-    sc.add_decoration(Decoration(10 * TILE + 26, 1 * TILE + 6, "cobweb",
+    sc.add_decoration(Decoration(11 * TILE + 26, 1 * TILE + 6, "cobweb",
                                  ang=math.pi / 2))
-    sc._desk_pos = (3 * TILE + 16, 2 * TILE + 16)
+    sc._desk_pos = (4 * TILE + 16, 2 * TILE + 16)
     sc.add_interactable(sc._desk_pos[0], sc._desk_pos[1], 40)  # [E] cue: the Playscript
     sc.hide_spots = [
-        (5 * TILE + 16, 5 * TILE + 16, "behind"),
-        (9 * TILE + 16, 5 * TILE + 16, "behind"),
+        (6 * TILE + 16, 6 * TILE + 16, "behind"),
+        (10 * TILE + 16, 6 * TILE + 16, "behind"),
     ]
     # One scribe, kneeling at a desk, oblivious (aggro 0) -- unless you
     # cross into its lane. Locked facing toward its work.
-    scribe = _cultist(4 * TILE + 16, 2 * TILE + 16, speed=0.8,
-                      waypoints=[(4 * TILE + 16, 2 * TILE + 16)])
+    scribe = _cultist(5 * TILE + 16, 2 * TILE + 16, speed=0.8)
     scribe.aggro = 0
     scribe.facing = (-1, 0)
     scribe.lock_facing = True
@@ -382,54 +418,57 @@ def build_works_scriptorium():
 # ---- Room 6: the Sign Chamber (key: works_sign) ----
 
 def build_works_sign():
-    floor, objs = _box(12, 10)
+    # An apse: the north end rounded (beveled) around the altar, the
+    # congregation floor opening out square to the south.
+    floor, objs = _box(13, 11)
+    _bevel(objs, 3, corners=("NW", "NE"))
     objs[5][0] = "F"          # west -> back to the scriptorium
-    objs[5][11] = "E"         # east -> the deep stair
+    objs[5][12] = "E"         # east -> the deep stair
     objects = ["".join(r) for r in objs]
     sc = Scene("works_sign", floor, objects, music="void")
     sc.add_exit("F", "works_scriptorium", "from_below")
     sc.add_exit("E", "works_deepstair", "from_above")
-    sc.set_spawn("default",    5, 8)      # enter from the south, away from it
+    sc.set_spawn("default",    6, 9)      # enter from the south, away from it
     sc.set_spawn("from_above", 1, 5)
-    sc.set_spawn("from_below", 10, 5)
+    sc.set_spawn("from_below", 11, 5)
 
-    # The Yellow Sign, daubed vast across the north wall -- the cult's 2D
+    # The Yellow Sign, daubed vast across the apse -- the cult's 2D
     # *brand* of Him. The thing itself, evidence #5, is the Pallid Mask on
-    # the altar (a pedestal) just below it. You lift it at the altar.
-    sign_x = 5 * TILE + 16
-    sc._sign_pos = (5 * TILE + 16, 2 * TILE + 20)   # the altar, not the wall
-    sc.add_decoration(Decoration(5 * TILE + 16, 2 * TILE + 24, "pedestal"))
+    # the altar (a pedestal) in the apse. You lift it at the altar.
+    sign_x = 6 * TILE + 16
+    sc._sign_pos = (6 * TILE + 16, 2 * TILE + 20)   # the altar, not the wall
+    sc.add_decoration(Decoration(6 * TILE + 16, 2 * TILE + 24, "pedestal"))
     # [E] cue at the altar -- the Mask / rite choice is the key decision
     # of the run and must read as interactable.
     sc.add_interactable(sc._sign_pos[0], sc._sign_pos[1], 50)
-    # The Sign itself -- one large glyph centred on the north wall,
-    # flanked by two smaller ones, ringed with candles.
+    # The Sign itself -- one large glyph centred in the apse, flanked by
+    # two smaller ones, ringed with candles.
     sc.add_decoration(Decoration(sign_x, 1 * TILE + 18, "yellow_sign"))
-    sc.add_decoration(Decoration(3 * TILE + 16, 1 * TILE + 16, "yellow_sign"))
-    sc.add_decoration(Decoration(7 * TILE + 16, 1 * TILE + 16, "yellow_sign"))
-    for tx in (2, 4, 6, 8):
-        sc.add_decoration(Decoration(tx * TILE + 16, 2 * TILE + 16, "candle"))
-    # Cobweb grime in the low corners (the north wall is all Sign).
-    sc.add_decoration(Decoration(1 * TILE + 6, 8 * TILE + 26, "cobweb",
+    sc.add_decoration(Decoration(4 * TILE + 16, 1 * TILE + 16, "yellow_sign"))
+    sc.add_decoration(Decoration(8 * TILE + 16, 1 * TILE + 16, "yellow_sign"))
+    for tx in (4, 5, 7, 8):
+        sc.add_decoration(Decoration(tx * TILE + 16, 3 * TILE + 16, "candle"))
+    # Pews behind the kneeling congregation.
+    for px in (4, 6, 8):
+        sc.add_furniture("pew", [(px, 7)])
+    # Cobweb grime in the square south corners.
+    sc.add_decoration(Decoration(1 * TILE + 6, 9 * TILE + 26, "cobweb",
                                  ang=-math.pi / 2))
-    sc.add_decoration(Decoration(10 * TILE + 26, 8 * TILE + 26, "cobweb",
+    sc.add_decoration(Decoration(11 * TILE + 26, 9 * TILE + 26, "cobweb",
                                  ang=math.pi))
     sc.hide_spots = [
-        (2 * TILE + 16, 7 * TILE + 16, "behind"),
-        (9 * TILE + 16, 7 * TILE + 16, "behind"),
+        (2 * TILE + 16, 8 * TILE + 16, "behind"),
+        (10 * TILE + 16, 8 * TILE + 16, "behind"),
     ]
     # The congregation: three kneelers facing the Sign (north), plus one
     # patrol on the east flank. Kneelers start oblivious (aggro 0).
-    for kx in (3, 5, 7):
-        k = _cultist(kx * TILE + 16, 4 * TILE + 16, speed=0.8,
-                     waypoints=[(kx * TILE + 16, 4 * TILE + 16)])
+    for kx in (4, 6, 8):
+        k = _cultist(kx * TILE + 16, 5 * TILE + 16, speed=0.8)
         k.aggro = 0
         k.facing = (0, -1)
         k.lock_facing = True
         sc.add_enemy(k)
-    sc.add_enemy(_cultist(9 * TILE + 16, 7 * TILE + 16, speed=0.9,
-                          waypoints=[(9 * TILE + 16, 3 * TILE + 16),
-                                     (9 * TILE + 16, 8 * TILE + 16)]))
+    sc.add_enemy(_cultist(10 * TILE + 16, 7 * TILE + 16, speed=0.9))
     _ambient(sc, "whisper", 0.16, 5.0, 9.0)
 
     def _take_mask(game):
@@ -477,14 +516,16 @@ def build_works_sign():
 # ---- Room 7: the Deep Stair / Mask+Play gate (key: works_deepstair) ----
 
 def build_works_deepstair():
-    floor, objs = _box(10, 8)
+    # An octagonal gate chamber, the Deep Stair sunk in the north face.
+    floor, objs = _box(11, 9)
+    _bevel(objs, 2)
     objs[4][0] = "F"          # west -> back to the sign chamber
     objs[2][5] = "L"          # the stair down (visual; gated by Mask + Play)
     objects = ["".join(r) for r in objs]
     sc = Scene("works_deepstair", floor, objects, music="void")
     sc.add_exit("F", "works_sign", "from_below")
-    sc.set_spawn("default",    4, 5)
-    sc.set_spawn("from_above", 1, 4)
+    sc.set_spawn("default",    5, 5)
+    sc.set_spawn("from_above", 2, 4)
     sc.set_spawn("from_below", 8, 4)
 
     gate_x = 5 * TILE + 16
@@ -492,14 +533,15 @@ def build_works_deepstair():
     sc._gate_pos = (gate_x, gate_y)
     sc.add_interactable(gate_x, gate_y, 40)   # [E] cue: the Deep Stair (Mask + Play gate)
     sc.add_decoration(Decoration(3 * TILE + 16, 2 * TILE + 6, "candle"))
-    sc.add_decoration(Decoration(7 * TILE + 16, 5 * TILE + 16, "bloodstain"))
-    # Cobweb grime in the high corners by the playscript-gate.
-    sc.add_decoration(Decoration(1 * TILE + 6, 1 * TILE + 6, "cobweb",
+    sc.add_decoration(Decoration(7 * TILE + 16, 6 * TILE + 16, "bloodstain"))
+    # Cobweb grime in the beveled corners by the playscript-gate.
+    sc.add_decoration(Decoration(2 * TILE + 6, 1 * TILE + 6, "cobweb",
                                  ang=0.0))
     sc.add_decoration(Decoration(8 * TILE + 26, 1 * TILE + 6, "cobweb",
                                  ang=math.pi / 2))
     sc.hide_spots = [
-        (8 * TILE + 16, 1 * TILE + 24, "behind"),
+        (8 * TILE + 16, 6 * TILE + 16, "behind"),
+        (2 * TILE + 16, 6 * TILE + 16, "behind"),
     ]
     _ambient(sc, "low_pulse", 0.12, 10.0, 15.0)
 
@@ -571,4 +613,96 @@ def build_works_deepstair():
         # point-of-no-return. Harmless after committing (deepstair_open wins).
         game.save.set_flag("deepstair_fork_seen", False)
     sc.on_exit_fn = _on_exit
+    return sc
+
+
+# ---- Side branch: the Overflow Sump (key: the_sump) off the Cistern ----
+
+def build_the_sump():
+    """A round overflow sump off the Cistern -- a dead-end pocket where the
+    dug-into river pools and goes nowhere. Octagonal, flooded, cold. The
+    diggers left a stash of cartridges on the dry ledge (one-time)."""
+    floor, objs = _box(10, 9)
+    _bevel(objs, 3)
+    objs[0][5] = "F"          # north -> back up to the Cistern
+    objects = ["".join(r) for r in objs]
+    sc = Scene("the_sump", floor, objects, music="basement")
+    sc.add_exit("F", "works_vats", "from_the_sump")
+    sc.set_spawn("default",   5, 5)
+    sc.set_spawn("from_vats", 5, 2)
+    # Black water pooled in two stone basins, a barrel + crate of the diggers'
+    # supplies on the dry ledge, cold mist rising, a candle.
+    sc.add_furniture("cistern_basin", [(4, 6)])
+    sc.add_furniture("cistern_basin", [(6, 6)])
+    sc.add_furniture("barrel", [(7, 4)])
+    sc.add_furniture("crate", [(3, 4)])
+    for tx, ty in [(3, 5), (6, 6), (4, 7)]:
+        sc.add_decoration(Decoration(tx * TILE + 16, ty * TILE + 6, "smoke"))
+    sc.add_decoration(Decoration(5 * TILE + 16, 3 * TILE + 16, "candle"))
+    sc.add_decoration(Decoration(2 * TILE + 6, 5 * TILE + 26, "cobweb",
+                                 ang=-math.pi / 2))
+    sc.add_decoration(Decoration(7 * TILE + 26, 5 * TILE + 6, "cobweb",
+                                 ang=math.pi / 2))
+    sc.hide_spots = [
+        (3 * TILE + 16, 6 * TILE + 16, "behind"),
+        (7 * TILE + 16, 6 * TILE + 16, "behind"),
+    ]
+    _ambient(sc, "low_pulse", 0.12, 8.0, 13.0)
+
+    def _on_enter(game, scene):
+        from .base import drop_ammo_cache
+        drop_ammo_cache(game, scene, 5, 6, 4, "ammo_sump")
+    sc.on_enter_fn = _on_enter
+    return sc
+
+
+# ---- Side branch: the Holding Cells (key: the_cells) off the Sorting Hall ----
+
+def build_the_cells():
+    """A short corridor of holding cells off the Sorting Hall -- a comb of
+    narrow stalls where the claimed were kept the first night, before they
+    stopped needing keeping. Empty now, doors hanging. A dead-end branch:
+    cover, dread, and the cult's whisper."""
+    floor, objs = _box(12, 11)
+    # A central corridor with cell stalls combed off the east and west walls.
+    _wall(objs, 1, 1, 10, 1)            # seal the top...
+    objs[1][5] = "."
+    objs[1][6] = "."                    # ...leaving the entry throat to the hall
+    for cy in (3, 5, 7):                # cell dividers reaching in from each side
+        _wall(objs, 1, cy, 3, cy)
+        _wall(objs, 8, cy, 10, cy)
+    objs[0][5] = "F"          # north -> back to the Sorting Hall
+    objects = ["".join(r) for r in objs]
+    sc = Scene("the_cells", floor, objects, music="basement")
+    sc.add_exit("F", "works_sorting", "from_the_cells")
+    sc.set_spawn("default",     5, 2)
+    sc.set_spawn("from_sorting", 5, 2)
+    # The leavings of the kept: bare cots in the stalls, old stains, a corn
+    # doll left behind. Phantom marks scratched at child height.
+    sc.add_furniture("cot", [(2, 4)])           # west cell
+    sc.add_furniture("cot", [(9, 6)])           # east cell
+    sc.add_furniture("cot", [(2, 8)])           # west cell
+    sc.add_decoration(Decoration(9 * TILE + 16, 4 * TILE + 16, "bloodstain"))
+    sc.add_decoration(Decoration(2 * TILE + 16, 6 * TILE + 16, "bloodstain"))
+    sc.add_decoration(Decoration(9 * TILE + 16, 8 * TILE + 16, "corn_doll"))
+    sc.add_decoration(Decoration(9 * TILE + 28, 4 * TILE + 16, "phantom_mark"))
+    sc.add_decoration(Decoration(2 * TILE + 28, 6 * TILE + 16, "phantom_mark"))
+    sc.add_decoration(Decoration(6 * TILE + 16, 9 * TILE + 16, "candle"))
+    sc.add_decoration(Decoration(1 * TILE + 6, 9 * TILE + 26, "cobweb",
+                                 ang=-math.pi / 2))
+    sc.hide_spots = [
+        (3 * TILE + 16, 4 * TILE + 16, "behind"),   # beside a west cot
+        (8 * TILE + 16, 6 * TILE + 16, "behind"),   # beside an east cot
+        (6 * TILE + 16, 6 * TILE + 16, "behind"),   # in the corridor
+    ]
+    _ambient(sc, "whisper", 0.13, 6.0, 11.0)
+
+    def _on_enter(game, scene):
+        if game.save.flag("first_cells"):
+            return
+        game.save.set_flag("first_cells", True)
+        game.show_notice("A row of stalls, the doors standing open. They only "
+                         "needed locks the first night. After that, no one "
+                         "wanted to leave.", duration=4.0)
+    sc.on_enter_fn = _on_enter
     return sc
