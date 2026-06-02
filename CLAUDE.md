@@ -80,21 +80,19 @@ it renders the procedural sprites to a labelled PNG strip.
     standard actor (decided: hybrid)** — front walls (`draw_walls_front`) draw
     over his base, he draws over back/far walls; his billboard towering into a
     far wall is intentional. Don't promote him to an always-on-top pass.
-    A **deferred** enhancement (the Flatland CROSS-SECTION — silhouette splits
-    into disconnected lumps that are one 4D object) is spec'd in the file's
-    header (documented, not built).
   - `transform.py` — `draw_vessel_bloom`, the human→vessel morph.
-  - **Tilted-camera track (scaffolding — NOT wired into the live game
-    yet):** `camera.py` (`Camera.project(wx,wy,wz)`, the single
-    world→screen seam + `depth()` sort key), `solids.py` (volumetric
+  - **Tilted-camera track (LIVE — the oblique view is the default now):**
+    `camera.py` (`Camera.project(wx,wy,wz)`, the single world→screen seam +
+    `depth()` sort key), `solids.py` (volumetric
     `draw_solid`/`draw_box`/`draw_billboard`), `skybox.py` (procedural
     void-fill backdrop), `occlusion.py` (fade walls that hide the player),
     `pseudo3d.py` (the Watcher proof). The plan — render most objects as
     3D solids projected to 2D, lock pitch ~55°, head-turn ±45°, skybox in
     the voids — lives in **`CAMERA.md`**. Previews:
-    `tools/preview_{tilt,skybox,occlusion,pseudo3d}.py`. The live game
-    still draws flat top-down; Phase 1 is routing it through `Camera` at
-    pitch 0 (no visual change).
+    `tools/preview_{tilt,skybox,occlusion,pseudo3d}.py`. **The camera is
+    locked at `TILT_PITCH_DEG` (~55°) by default** (`_reset_run_state` /
+    `_start_play` seed it; look heading seeded from the player's facing);
+    **F3 toggles back to flat top-down (pitch 0) for debugging.**
 - `systems/`
   - `save.py` — **in-memory only, no disk**. `Save.new()` builds from
     `DEFAULT_SAVE`; quitting to title throws it away (single-session).

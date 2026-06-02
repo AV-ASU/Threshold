@@ -7,10 +7,11 @@ to peek around the world. The void around each scene is filled with a
 procedural **skybox**, not black. A horror **blind-spot vision** layer is the
 ambitious payoff (terrain reveals on a peek; threats do not).
 
-This file is the source of truth for that track. It is **scaffolding so
-far** — the modules below are built, previewable, and pushed, but **not yet
-wired into the live game** (`systems/game.py` still renders the flat top-down
-view). Phase 1 (the camera seam) is the next live step.
+This file is the source of truth for that track. It is **LIVE** — Phases 1–3
+landed (see the phase table) and **the oblique ~55° view is now the game's
+default** (`TILT_PITCH_DEG`; `Game._start_play`/`_reset_run_state` lock it in
+and seed the look heading behind the player). **F3** toggles back to the flat
+top-down view for debugging. Remaining work is polish (Phases 4–5).
 
 ---
 

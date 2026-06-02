@@ -124,8 +124,8 @@ SEAMLESS_WORLD_SCENES = OUTDOOR_SCENES | {
 # the player stays comfortably on screen.
 CAM_LOOKAHEAD = 96
 
-# Oblique-camera tilt (CAMERA.md Phase 2). DEBUG-toggled with F3; eases in.
-# pitch 0 = the shipping top-down view. TILT_PITCH_DEG is the locked ~55deg.
+# Oblique-camera tilt (CAMERA.md Phase 2). TILT_PITCH_DEG is the DEFAULT,
+# locked ~55deg view; F3 toggles back to flat top-down (pitch 0) for debugging.
 TILT_PITCH_DEG = 55
 TILT_EASE = 0.12             # per-frame lerp of pitch toward its target
 TILT_ZOOM = 0.72             # camera scale at full tilt (1.0 = top-down)
@@ -483,7 +483,11 @@ class Game(CutsceneMixin):
         # source of truth for the offset (camera update + input still use
         # them); the camera is re-synced to them each frame in draw_world.
         self.camera = Camera()
-        self._cam_pitch_target = 0.0      # DEBUG F3 tilt target (radians)
+        # The oblique view is the DEFAULT now: the camera is locked at ~55deg.
+        # F3 still toggles back to the flat top-down view for debugging. Pitch
+        # eases toward this target in _update_camera; per-run state reseeds it.
+        self._cam_pitch_target = math.radians(TILT_PITCH_DEG)
+        self.camera.pitch = self._cam_pitch_target
         self._tilt_front_walls = None     # walls held back to draw over actors
         self.look = LookController()       # mouse-look heading model (tilt mode)
         self._rmb_last_x = None            # right-drag scene-rotate anchor
@@ -749,18 +753,28 @@ class Game(CutsceneMixin):
         self.player.from_save(self.save.data)
         self.load_scene_now(self.save.data.get("scene", "bedroom"),
                              self.save.data.get("spawn", "default"))
+        # Camera defaults to the locked ~55deg oblique view: seed the look
+        # heading from the player's spawn facing so it settles behind them
+        # with no rotation jump (mirrors the F3-enable path).
+        if self.player:
+            fx, fy = self.player.facing
+            self.look = LookController(math.atan2(fy, fx))
+            self.camera.yaw = self.look.cam_yaw
         self.state = "playing"
 
     def _reset_run_state(self):
         """Wipe all per-run state so a New Game starts clean. The
         Game instance is reused across Quit-to-Title -> New Game, so
         in-memory run state from a previous run is cleared here."""
-        # Debug oblique tilt (F3) starts off each run.
-        self._cam_pitch_target = 0.0
-        self.camera.pitch = 0.0
-        self.camera.yaw = 0.0
+        # The oblique view is the default: the camera is locked at ~55deg each
+        # run (F3 toggles back to flat top-down for debugging). The look heading
+        # is reseeded from the player's facing in _start_play, once the player
+        # exists, so the camera settles behind them with no rotation jump.
+        self._cam_pitch_target = math.radians(TILT_PITCH_DEG)
+        self.camera.pitch = self._cam_pitch_target
         self._tilt_front_walls = None
         self.look = LookController()
+        self.camera.yaw = self.look.cam_yaw
         self._rmb_last_x = None
         # Visibility meter + the King in Yellow
         self.visibility = 0.0
@@ -4399,10 +4413,11 @@ class Game(CutsceneMixin):
                     self._toggle_fullscreen()
                 elif ev.key == pygame.K_F3:
                     # DEBUG (CAMERA.md Phase 2/3): toggle the oblique look mode.
-                    # Pitch eases in _update_camera; pitch 0 is the shipping
-                    # top-down view, untouched. On enable, seed the look heading
-                    # from the player's current facing so the camera settles
-                    # behind them with no rotation jump.
+                    # The oblique ~55deg view is the DEFAULT now; F3 drops back
+                    # to the flat top-down view for debugging. Pitch eases in
+                    # _update_camera. On re-enable, seed the look heading from the
+                    # player's current facing so the camera settles behind them
+                    # with no rotation jump.
                     if self._cam_pitch_target:
                         self._cam_pitch_target = 0.0
                     else:
