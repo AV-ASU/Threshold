@@ -317,27 +317,26 @@ def _eye(surf, x, y, r, openf, gaze, a):
                            (gx - ir // 3, int(y) - ir // 3), max(1, ir // 4))
 
 
-def _draw_maw3d(lay, center, N, rw, openf, cx, cy, sz, zmin, zr, seed, a):
-    """An EVERSION-MAW as REAL geometry, not a flat decal. Built in the facet's
-    local tangent frame: the throat is a ring pushed INTO the body along -N to
-    a gullet at the bottom (a real pit, with gold light pooling down it), and
-    the teeth are 3D bone spikes rooted on the rim, angled inward and raised out
-    along +N so they overhang toward the camera. Everything is projected and
-    depth-sorted, so near teeth occlude far ones, the maw foreshortens to a slit
-    as its facet turns edge-on, and it turns inside-out with the eversion --
-    because the facet it sits on is part of the everting mesh. NOT a jaw."""
-    if rw <= 0.0 or a < 12 or openf <= 0.03:
+def _draw_maw3d(lay, center, N, b1, b2, em, openf, cx, cy, sz, zmin, zr, seed, a):
+    """An EVERSION-MAW as REAL geometry that WARPS with the flesh. b1, b2 are the
+    facet's actual deformed tangent vectors (carrying its stretch + shear), so
+    the rim is an ellipse/gash matching how the surface is being pulled right
+    there -- not a rigid circle. The throat is pushed INTO the body along -N to a
+    gullet at the bottom (a real pit, gold light pooling down it); the teeth are
+    3D bone spikes rooted on the warped rim, leaning in + raised out along +N so
+    they overhang and crowd/splay as the mouth distorts. Everything projects +
+    depth-sorts, so it foreshortens to a slit edge-on and everts with the mesh.
+    `em` is the world scale (mean basis length) for throat depth + tooth length."""
+    if em <= 0.0 or a < 12 or openf <= 0.03:
         return
-    ref = (0.0, 1.0, 0.0) if abs(N[1]) < 0.9 else (1.0, 0.0, 0.0)
-    T1 = _norm(_cross(N, ref)); T2 = _cross(N, T1)
-    hole = rw * (0.34 + 0.50 * openf)            # opening radius
-    depth = rw * (0.50 + 0.70 * openf)           # how far the throat sinks in
+    hole = 0.34 + 0.50 * openf                   # opening, as a fraction of basis
+    depth = em * (0.50 + 0.70 * openf)           # how far the throat sinks in
 
-    def onring(ang, radius, dz):
+    def onring(ang, rf, dz):
         c, s = math.cos(ang), math.sin(ang)
-        return (center[0] + (T1[0] * c + T2[0] * s) * radius + N[0] * dz,
-                center[1] + (T1[1] * c + T2[1] * s) * radius + N[1] * dz,
-                center[2] + (T1[2] * c + T2[2] * s) * radius + N[2] * dz)
+        return (center[0] + (b1[0] * c + b2[0] * s) * rf + N[0] * dz,
+                center[1] + (b1[1] * c + b2[1] * s) * rf + N[1] * dz,
+                center[2] + (b1[2] * c + b2[2] * s) * rf + N[2] * dz)
 
     def pr(p):
         return _proj(p, cx, cy, sz)
@@ -364,27 +363,28 @@ def _draw_maw3d(lay, center, N, rw, openf, cx, cy, sz, zmin, zr, seed, a):
     # the gullet -- gold light pooling at the bottom of the throat
     bx, by = pr(bottom)
     k3 = _FOCAL / (_Z_EYE - bottom[2])
-    _heart_glow(lay, bx, by, max(2, int(hole * 0.8 * k3 * sz)), int(55 + 150 * openf))
-    # 3D bone teeth: rooted on the rim, leaning inward + raised out toward the
-    # camera. Irregular lengths, a few missing. Shaded + depth-sorted on top.
+    _heart_glow(lay, bx, by, max(2, int(hole * em * 0.8 * k3 * sz)),
+                int(55 + 150 * openf))
+    # 3D bone teeth: rooted on the warped rim, leaning inward + raised out toward
+    # the camera. Irregular lengths, a few missing. Shaded + depth-sorted on top.
     teeth = []
     for k in range(K):
         if math.sin(seed * 3.1 + k * 2.7) < -0.5:         # missing teeth
             continue
         mid = math.tau * (k + 0.5) / K
         dA = (math.tau / K) * 0.42
-        ln = rw * (0.16 + 0.26 * (0.5 + 0.5 * math.sin(seed * 0.7 + k * 1.9)))
+        ln = em * (0.16 + 0.26 * (0.5 + 0.5 * math.sin(seed * 0.7 + k * 1.9)))
         tipin = hole * (0.42 + 0.28 * math.sin(seed * 1.3 + k))
-        b0 = onring(mid - dA, hole * 1.04, 0.0)
-        b1 = onring(mid + dA, hole * 1.04, 0.0)
+        t0 = onring(mid - dA, hole * 1.04, 0.0)
+        t1 = onring(mid + dA, hole * 1.04, 0.0)
         tip = onring(mid, tipin, ln)                       # +ln out along N
-        Nt = _norm(_cross(_sub(b1, b0), _sub(tip, b0)))
+        Nt = _norm(_cross(_sub(t1, t0), _sub(tip, t0)))
         if Nt[2] < 0:
             Nt = (-Nt[0], -Nt[1], -Nt[2])
         lit = max(0.0, _dot(Nt, _L))
         col = _ci(_cmix(_TOOTH_DK, _TOOTH, 0.22 + 0.78 * lit))
-        zc = (b0[2] + b1[2] + 2 * tip[2]) * 0.25           # bias to the near tip
-        teeth.append((zc, [pr(b0), pr(b1), pr(tip)], (*col, a)))
+        zc = (t0[2] + t1[2] + 2 * tip[2]) * 0.25           # bias to the near tip
+        teeth.append((zc, [pr(t0), pr(t1), pr(tip)], (*col, a)))
     teeth.sort(key=lambda r: r[0])
     for _z, pts, col in teeth:
         pygame.draw.polygon(lay, col, pts)
@@ -727,16 +727,23 @@ def draw_king_unfold(surf, cx, cy, t, threat=0.0, scale=96.0,
             facing = max(0.0, N[2])
             if facing < 0.18:
                 continue
-            # the maw is built in 3D on the facet: its centre + world radius
+            # the maw is built on the facet's ACTUAL deformed edges, so it warps
+            # with the flesh: centre, and two tangent vectors carrying the
+            # facet's live stretch + shear (scaled to a consistent maw size).
             c3 = (sum(o3[i][0] for i in face) / len(face),
                   sum(o3[i][1] for i in face) / len(face),
                   sum(o3[i][2] for i in face) / len(face))
-            fr = sum(math.sqrt((o3[i][0] - c3[0]) ** 2 + (o3[i][1] - c3[1]) ** 2 +
-                               (o3[i][2] - c3[2]) ** 2) for i in face) / len(face)
-            rw = fr * 2.6                            # maw bigger than its facet
+            v0, v1, v3 = o3[face[0]], o3[face[1]], o3[face[3]]
+            e1 = _sub(v1, v0); e2 = _sub(v3, v0)
+            m1 = math.sqrt(_dot(e1, e1)); m2 = math.sqrt(_dot(e2, e2))
+            mean = (m1 + m2) * 0.5 or 1e-6
+            rw = mean * 1.9                          # maw bigger than its facet
+            sc = rw / mean                           # keep aspect/shear, set size
+            b1 = (e1[0] * sc, e1[1] * sc, e1[2] * sc)
+            b2 = (e2[0] * sc, e2[1] * sc, e2[2] * sc)
             breath = 0.5 + 0.5 * math.sin(t * 0.8 + ph * 1.7)
             openf = appear * facing * (0.22 + 0.78 * breath)
-            _draw_maw3d(lay, c3, N, rw, openf, cx, cy, sz, zmin, zr,
+            _draw_maw3d(lay, c3, N, b1, b2, rw, openf, cx, cy, sz, zmin, zr,
                         fi + int(ph * 7), int(235 * facing * appear))
 
     # 6) the Sign resolves for a beat on the most head-on facet
