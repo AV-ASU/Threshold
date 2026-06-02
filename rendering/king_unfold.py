@@ -23,8 +23,6 @@ import random
 
 import pygame
 
-from rendering.sprites import door_mask_surface
-
 # --- palette ---------------------------------------------------------------
 _MEM = (22, 15, 17)                 # membrane base (warm near-black flesh)
 _MEM_HI = (68, 50, 52)              # lit membrane (dark wet flesh)
@@ -50,25 +48,10 @@ _HMAG = math.sqrt(sum(c * c for c in _H)) or 1.0
 _H = tuple(c / _HMAG for c in _H)
 
 _FORM = None
-_MASK_CACHE = {}
 
 
 def reset_king_unfold_fx():
     pass
-
-
-def _mask(height, vis, gx, gy, seed):
-    """A carved dark-wood mask (rendering.sprites.door_mask_surface) surfacing on
-    the skin -- canon: the wrong face the threshold wears. Cached on quantized
-    keys so we don't re-render per facet per frame."""
-    hb = max(10, int(round(height / 8.0)) * 8)
-    key = (hb, round(vis, 1), round(gx, 1), round(gy, 1), seed % 5)
-    s = _MASK_CACHE.get(key)
-    if s is None:
-        s = door_mask_surface(height=hb, vis=max(0.25, vis),
-                              gaze=(round(gx, 1), round(gy, 1)), seed=seed % 5)
-        _MASK_CACHE[key] = s
-    return s
 
 
 # --------------------------------------------------------------------------- #
@@ -111,54 +94,6 @@ def _ci(c):
 
 
 # --------------------------------------------------------------------------- #
-# THE BAKED MASK -- a face-relief sculpted INTO the rest mesh along one
-# canonical direction (sockets recessed, brow/nose/cheek/chin raised, mouth
-# slotted). It is genuinely part of the 4D object, so as the mass tumbles the
-# face only resolves when this direction swings head-on -- and the same lumpy
-# noise that warps everything else leaves it MISSHAPEN. The recessed sockets
-# self-shadow under the membrane shader for free; draw_king_unfold ignites the
-# eyes / Sign in the tracked socket+brow vertices only during that line-up.
-# --------------------------------------------------------------------------- #
-_FACE_DIR = _norm((0.0, 0.12, 1.0))                 # where the face is buried
-_FACE_R = _norm(_cross((0.0, 1.0, 0.0), _FACE_DIR))  # right, in the face plane
-_FACE_UP = _cross(_FACE_DIR, _FACE_R)                # up, in the face plane
-_FACE_CAP = 0.98                                     # half-angle of the relief
-_FACE_COSCAP = math.cos(_FACE_CAP)
-_EYE_UV = ((-0.42, 0.16), (0.42, 0.16))              # socket centres (face uv)
-_BROW_UV = (0.0, 0.46)                               # where the Sign resolves
-
-
-def _face_uv_dir(u, v):
-    """A face-plane (u, v) -> a unit world direction on the rest sphere."""
-    s = math.sin(_FACE_CAP)
-    return _norm(_cadd(_cadd(_FACE_DIR, _FACE_R, u * s), _FACE_UP, v * s))
-
-
-def _face_relief(d):
-    """Radius offset that carves the mask into the mass at direction d. Zero
-    outside the cap, smoothly windowed so it melts back into the lumpy body at
-    the rim (no hard seam)."""
-    a = _dot(d, _FACE_DIR)
-    if a <= _FACE_COSCAP:
-        return 0.0
-    cw = (a - _FACE_COSCAP) / (1.0 - _FACE_COSCAP)
-    capwin = cw * cw * (3.0 - 2.0 * cw)
-    s = math.sin(_FACE_CAP)
-    u = _dot(d, _FACE_R) / s
-    v = _dot(d, _FACE_UP) / s
-    h = 0.0
-    for ex, ey in _EYE_UV:                               # deep recessed sockets
-        h -= 0.46 * math.exp(-(((u - ex) ** 2 + (v - ey) ** 2) / 0.12))
-    h += 0.22 * math.exp(-((v - 0.46) ** 2 / 0.045)) * math.exp(-(u * u) / 0.6)  # brow
-    h += 0.13 * math.exp(-(u * u) / 0.02) * math.exp(-((v + 0.02) ** 2) / 0.22)  # nose
-    for cx in (-0.62, 0.62):                             # cheekbones
-        h += 0.12 * math.exp(-(((u - cx) ** 2 + (v + 0.16) ** 2) / 0.11))
-    h -= 0.16 * math.exp(-((v + 0.40) ** 2) / 0.018) * math.exp(-(u * u) / 0.30)  # mouth
-    h += 0.13 * math.exp(-((v + 0.66) ** 2) / 0.045) * math.exp(-(u * u) / 0.45)  # chin
-    return h * capwin
-
-
-# --------------------------------------------------------------------------- #
 # geometry
 # --------------------------------------------------------------------------- #
 def _sphere_mesh(nlat, nlon, radial_fn):
@@ -192,49 +127,29 @@ def _build():
                 0.5 * math.sin(4.2 * d[1] + 1.1) * math.cos(3.3 * d[2] + 2.4 + s))
 
     def outer_rf(d):
-        a = _dot(d, _FACE_DIR)                # flatten the lumpy noise where the
-        if a > _FACE_COSCAP:                  # face is buried so the relief reads
-            cw = (a - _FACE_COSCAP) / (1.0 - _FACE_COSCAP)
-            capwin = cw * cw * (3.0 - 2.0 * cw)
-        else:
-            capwin = 0.0
         n = noise(d, 0.0)
-        rad = 0.92 * (1.0 + 0.40 * n * (1.0 - 0.78 * capwin))
-        rad += _face_relief(d)                # carve the baked mask into the mass
+        rad = 0.92 * (1.0 + 0.40 * n)
         w = 0.62 * noise(d, 2.0)
         return (d[0] * rad, d[1] * rad, d[2] * rad, w)
     NLAT, NLON = 18, 26                       # subdivided -> smoother wet surface
     overts, ofaces = _sphere_mesh(NLAT, NLON, outer_rf)
     r = random.Random(23)
-    # secondary "lesser faces" stickered on random facets (the baked mask is the
-    # primary one) -- kept few so they don't clutter the resolved face.
-    mask_faces = {fi: r.uniform(0, 9) for fi in r.sample(range(len(ofaces)), 5)}
+    # EYE SITES: facets where eyes open across the skin -- wrong faces that
+    # surface and gaze, never assembling into one. Each rides a facet, so it
+    # slides / scales / winks with the eversion. Each carries its own blink
+    # phase. (No carved mask sprites: the creature never wears a nameable face.)
+    eye_sites = [(fi, r.uniform(0, 6.283))
+                 for fi in r.sample(range(len(ofaces)), 16)]
 
-    # track the rest vertices nearest the socket / brow / face-centre directions
-    # so draw_king_unfold can ignite the eyes + Sign exactly where the relief is.
-    def _nearest_vert(target):
-        best, bi = -2.0, 0
-        for i, p in enumerate(overts):
-            vd = _norm((p[0], p[1], p[2]))
-            dd = _dot(vd, target)
-            if dd > best:
-                best, bi = dd, i
-        return bi
-    eye_anchors = [_nearest_vert(_face_uv_dir(u, v)) for (u, v) in _EYE_UV]
-    brow_anchor = _nearest_vert(_face_uv_dir(*_BROW_UV))
-    face_anchor = _nearest_vert(_FACE_DIR)
     # arm roots: a POOL of candidate vertices spread over the mass. Each frame
     # _draw_arms extrudes only the ones whose 4D w has everted FORWARD past a
     # threshold (the eversion pushes the limb out), so the live count varies and
-    # is never the same twice. A few roots sit on the baked face's jaw/cheeks so
-    # that when the face resolves, its own limbs frame it.
+    # is never the same twice.
     arm_roots = []
-    for a in range(14):
-        i = int(NLAT * (0.34 + 0.46 * ((a * 5) % 7) / 6.0))   # scatter in lat
-        j = int((a / 14.0) * NLON + 0.5) % NLON
+    for a in range(18):
+        i = int(NLAT * (0.30 + 0.50 * ((a * 5) % 7) / 6.0))   # scatter in lat
+        j = int((a / 18.0) * NLON + 0.5) % NLON
         arm_roots.append((i * NLON + j, r.uniform(0, 6)))
-    for (u, v) in ((-0.72, -0.5), (0.72, -0.5), (-0.9, 0.04), (0.9, 0.04)):
-        arm_roots.append((_nearest_vert(_face_uv_dir(u, v)), r.uniform(0, 6)))
 
     # the heart: two nested smooth shells -> everts inside the body
     cverts, cfaces = [], []
@@ -246,10 +161,8 @@ def _build():
         cverts += v
         cfaces += [[i + off for i in face] for face in f]
 
-    _FORM = dict(overts=overts, ofaces=ofaces, mask_faces=mask_faces,
-                 arm_roots=arm_roots, cverts=cverts, cfaces=cfaces,
-                 eye_anchors=eye_anchors, brow_anchor=brow_anchor,
-                 face_anchor=face_anchor)
+    _FORM = dict(overts=overts, ofaces=ofaces, eye_sites=eye_sites,
+                 arm_roots=arm_roots, cverts=cverts, cfaces=cfaces)
     return _FORM
 
 
@@ -353,6 +266,18 @@ def _eye(surf, x, y, r, openf, gaze, a):
                            (gx - ir // 3, int(y) - ir // 3), max(1, ir // 4))
 
 
+def _mouth_gash(surf, x, y, w, a):
+    """A short dark, slightly-curved slit -- drawn between two open skin-eyes
+    for a beat so they read as a partial WRONG face, before the tumble pulls
+    them apart. Never a full mouth, never paired with a resolved face."""
+    if w < 4 or a < 10:
+        return
+    pts = [(x + (k / 6 - 0.5) * w, y + math.sin(k / 6 * math.pi) * w * 0.16)
+           for k in range(7)]
+    pygame.draw.lines(surf, (4, 3, 5, a), False, pts, max(2, int(w * 0.16)))
+    pygame.draw.lines(surf, (*_GOLD, int(a * 0.45)), False, pts, 1)
+
+
 # --------------------------------------------------------------------------- #
 def _shade_face(N, dn, threat):
     """Oily membrane shading from a 3D normal: lit dark flesh + wet sheen +
@@ -366,14 +291,6 @@ def _shade_face(N, dn, threat):
     col = _cadd(col, _SHEEN, spec * 0.38)                   # wet (not metallic) glint
     col = _cadd(col, _GOLD_RIM, rim * (0.45 + 0.55 * threat) * (0.4 + 0.6 * dn))
     return _ci(col)
-
-
-def _blit_mask(lay, x, y, height, rise, gx, gy, seed):
-    m = _mask(height * rise, 0.5 + 0.5 * rise, gx, gy, seed)
-    if rise < 0.99:
-        m = m.copy()
-        m.fill((255, 255, 255, int(255 * rise)), special_flags=pygame.BLEND_RGBA_MULT)
-    lay.blit(m, (int(x - m.get_width() / 2), int(y - m.get_height() / 2)))
 
 
 def _everted_w(v4, angs):
@@ -494,10 +411,12 @@ def _draw_arms(lay, o3, op, ocenter, sz, cx, cy, t, threat, arm_roots,
         left = [(px + ux * r, py + uy * r) for (px, py, ux, uy, r) in base]
         grim = int(26 + 56 * threat)
         pygame.draw.lines(lay, (*_GOLD_RIM, grim), False, left, 1)
-        # the hand is a mask, gazing at you (fades up with the limb's emergence)
+        # the tip opens an EYE, gazing at you (fades up with the limb's emergence)
         (tx, ty), _tz = pts[N]
-        _blit_mask(lay, tx, ty, rads[N - 1] * 4.0, gate * emerge,
-                   -max(-1.0, min(1.0, (tx - cx) / (sz * 0.9))) * 0.7, 0.4, ai + 2)
+        ter = max(2.0, rads[N - 1] * 1.35)
+        tgx = -max(-1.0, min(1.0, (tx - cx) / (sz * 0.9))) * 0.8
+        _eye(lay, tx, ty, ter, gate * emerge * (0.4 + 0.6 * threat), tgx,
+             int(235 * gate * emerge))
 
 
 def draw_king_unfold(surf, cx, cy, t, threat=0.0, scale=96.0):
@@ -573,70 +492,61 @@ def draw_king_unfold(surf, cx, cy, t, threat=0.0, scale=96.0):
     # 3) near wall of the mass (occludes/veils the heart -> flesh)
     draw_membrane(front, True)
 
-    # 3b) THE BAKED MASK lines up. The relief self-shadows on its own, but when
-    # its buried direction swings head-on (face_anchor pointing at the camera)
-    # the recognition lands: deepen the wet sockets, open the gold eyes (scaled
-    # by threat), and let the Sign resolve on the brow -- then it rotates on and
-    # dissolves back into lumpy mass.
-    fa = form["face_anchor"]
-    ea = form["eye_anchors"]
-    if fa < len(o3) and all(i < len(op) for i in (*ea, form["brow_anchor"])):
-        fc_out = _norm(_sub(o3[fa], ocenter))
-        rw = max(0.0, (fc_out[2] - 0.42) / 0.5)
-        reson = min(1.0, rw * rw * (3.0 - 2.0 * rw))
-        # only a face if it's also UPRIGHT: eyes roughly level, brow above them.
-        # (free 4D tumble lands the relief at a random roll; gate it so we only
-        # ignite when it actually reads -- rarer line-ups, but always a face.)
-        elx, ely = op[ea[0]]; erx, ery = op[ea[1]]
-        bx0, by0 = op[form["brow_anchor"]]
-        span = math.hypot(erx - elx, ery - ely) or 1.0
-        level = max(0.0, 1.0 - abs(ery - ely) / span * 1.4)        # eyes level
-        upright = max(0.0, min(1.0, ((ely + ery) * 0.5 - by0) / (span * 0.5)))
-        reson *= level * upright
-        if reson > 0.04:
-            eye_ig = reson * (0.28 + 0.72 * threat)
-            for ai in form["eye_anchors"]:
-                if ai >= len(op):
-                    continue
-                ex, ey = op[ai]
-                er = sz * 0.115
-                pygame.draw.circle(lay, (4, 3, 5, int(235 * reson)),
-                                   (int(ex), int(ey)), max(2, int(er * 1.25)))
-                _eye(lay, ex, ey, er, eye_ig, 0.0, int(235 * reson))
-            if threat > 0.40 and reson > 0.30:
-                bx, by = op[form["brow_anchor"]]
-                pulse = max(0.0, math.sin(t * 0.5)) ** 2
-                _yellow_sign(lay, bx, by, sz * 0.16,
-                             int(150 * reson * pulse *
-                                 min(1.0, (threat - 0.40) / 0.3)))
-
     # 4) ARMS: limbs erupt from the geometry and stretch toward the player (on
     # top of the body -- they reach out past its silhouette, toward the camera)
     _draw_arms(lay, o3, op, ocenter, sz, cx, cy, t, threat, form["arm_roots"],
                form["overts"], body_ang)
 
-    # 5) MASKS surface on the near skin -- the wrong faces, all gazing at you
-    if threat > 0.28:
-        appear = min(1.0, (threat - 0.28) / 0.4)
+    # 5) EYES open across the skin -- wrong faces that surface and gaze, never
+    # assembling into one. Each rides a facet, so it slides / scales / winks
+    # with the eversion for free; threat opens more of them, wider.
+    open_eyes = []
+    if threat > 0.12:
+        appear = min(1.0, (threat - 0.12) / 0.5)
         fmap = {fi: (face, N) for zc, fi, face, N in front}
-        for fi, ph in form["mask_faces"].items():
-            if fi not in fmap:
+        for fi, ph in form["eye_sites"]:
+            rec = fmap.get(fi)
+            if rec is None:
                 continue
-            face, N = fmap[fi]
+            face, N = rec
+            facing = max(0.0, N[2])                  # 1 head-on, 0 edge/back
+            if facing < 0.14:
+                continue
             poly = [op[i] for i in face]
-            area = 0.0
+            ex = sum(p[0] for p in poly) / len(poly)
+            ey = sum(p[1] for p in poly) / len(poly)
+            ar = 0.0
             for k in range(len(poly)):
                 x0, y0 = poly[k]; x1, y1 = poly[(k + 1) % len(poly)]
-                area += x0 * y1 - x1 * y0
-            mcx = sum(p[0] for p in poly) / len(poly)
-            mcy = sum(p[1] for p in poly) / len(poly)
-            mh = math.sqrt(abs(area)) * 1.5
-            surf_ph = (t * 0.5 + ph) % 6.0                 # masks surface + sink
-            rise = (1.0 if surf_ph > 0.5 else surf_ph / 0.5) * appear
-            if rise < 0.12:
+                ar += x0 * y1 - x1 * y0
+            er = math.sqrt(abs(ar)) * 0.26           # eye sized to the facet
+            if er < 1.8:
                 continue
-            gx = -max(-1.0, min(1.0, (mcx - cx) / (sz * 0.9))) * 0.7   # turn to you
-            _blit_mask(lay, mcx, mcy, mh, rise, gx, 0.45, int(ph))
+            blink = 0.5 + 0.5 * math.sin(t * 0.7 + ph)
+            openf = appear * facing * (0.35 + 0.65 * blink)
+            gx = -max(-1.0, min(1.0, (ex - cx) / (sz * 0.9))) * 0.8   # gaze at you
+            _eye(lay, ex, ey, er, openf, gx, int(235 * facing * appear))
+            if openf > 0.25:
+                open_eyes.append((ex, ey, er))
+        # the broken-face beat: for a beat a mouth-gash joins two near eyes ->
+        # a partial WRONG face, which the tumble pulls apart before it completes
+        if threat > 0.5 and len(open_eyes) >= 2:
+            gash = max(0.0, math.sin(t * 0.23)) ** 4
+            if gash > 0.25:
+                pair = None
+                for i in range(len(open_eyes)):
+                    for j in range(i + 1, len(open_eyes)):
+                        e0, e1 = open_eyes[i], open_eyes[j]
+                        d = math.hypot(e0[0] - e1[0], e0[1] - e1[1])
+                        rr = e0[2] + e1[2]
+                        if rr < d < rr * 3.0 and (pair is None or d < pair[0]):
+                            pair = (d, e0, e1)
+                if pair:
+                    _, e0, e1 = pair
+                    mx = (e0[0] + e1[0]) * 0.5
+                    my = (e0[1] + e1[1]) * 0.5 + (e0[2] + e1[2]) * 0.9
+                    _mouth_gash(lay, mx, my, (e0[2] + e1[2]) * 1.4,
+                                int(180 * gash * appear))
 
     # 6) the Sign resolves for a beat on the most head-on facet
     if front and threat > 0.45:
