@@ -308,13 +308,17 @@ _ARM_MAX = 5
 
 
 def _draw_arms(lay, o3, op, ocenter, sz, cx, cy, t, threat, arm_roots,
-               overts, body_ang):
+               overts, body_ang, zmin, zr):
     """Limbs are the body UNFOLDING, not appendages bolted on. A root extrudes
     only while its 4D w has everted FORWARD past a threshold -- so the eversion
     itself pushes the limb out, the live count varies (2-5), and the silhouette
     is never the same twice. As the thing rouses (threat) the emerged limbs
-    lunge at the player below/in front of the camera, tapering to a mask 'hand'.
-    Roots near the baked face's jaw/cheeks frame it when it resolves."""
+    lunge at the player below/in front of the camera, tapering to an eye.
+
+    Each limb is REAL extruded geometry: a swept tube of mesh quads grown from
+    the root, projected and shaded with _shade_face against the SAME light and
+    depth range as the body -- so it reads as the same lit flesh continuing out
+    of the mass, not a ribbon pasted on top."""
     if threat < 0.18:
         return
     gate = min(1.0, (threat - 0.18) / 0.45)
@@ -345,8 +349,10 @@ def _draw_arms(lay, o3, op, ocenter, sz, cx, cy, t, threat, arm_roots,
     live = sorted(best.values(), key=lambda c: c[0], reverse=True)[:_ARM_MAX]
     # the player: below and toward the camera (screen-down, +z toward viewer)
     tgt0 = (ocenter[0], ocenter[1] - 1.9, ocenter[2] + 1.4)
-    N = 10
-    rad3 = 0.54                                  # thicker -> survives game scale
+    M = 9          # rings of mesh along the limb
+    K = 7          # verts per ring -> a round, lit cross-section
+    quads = []     # (depth, poly2d, color, alpha) gathered across all limbs
+    tips = []      # tip eyes, drawn on top after the flesh
     for emerge, ai, idx, ph, outward in live:
         root = o3[idx]
         # near-side limbs reach hard at the player; far-side ones barely stir
@@ -370,53 +376,70 @@ def _draw_arms(lay, o3, op, ocenter, sz, cx, cy, t, threat, arm_roots,
         ctrl = (root[0] + outward[0] * 0.9 + side[0] * wig,
                 root[1] + outward[1] * 0.9 + side[1] * wig,
                 root[2] + outward[2] * 0.9 + side[2] * wig)
-        pts, rads = [], []
-        for k in range(N + 1):
-            s = k / N
+        # sample the centreline + a tapering WORLD-space radius (root matches the
+        # local body radius so the tube grows straight out of the skin)
+        rad0 = 0.25 * (0.55 + 0.45 * emerge)
+        cen = []
+        for k in range(M + 1):
+            s = k / M
             mt = 1 - s
             P = (mt * mt * root[0] + 2 * mt * s * ctrl[0] + s * s * end[0],
                  mt * mt * root[1] + 2 * mt * s * ctrl[1] + s * s * end[1],
                  mt * mt * root[2] + 2 * mt * s * ctrl[2] + s * s * end[2])
-            pts.append((_proj(P, cx, cy, sz), P[2]))
-            k3 = _FOCAL / (_Z_EYE - P[2])
-            rads.append(max(1.0, rad3 * (0.55 + 0.45 * emerge) *
-                              ((1 - s) ** 0.9 + 0.10) * k3 * sz))
-        # per-point unit-perpendicular + pixel radius
-        base = []
-        for k in range(N + 1):
-            (px, py), _z = pts[k]
-            if k < N:
-                (nx, ny), _ = pts[k + 1]
-            else:
-                (nx, ny), _ = pts[k - 1]
-                nx, ny = 2 * px - nx, 2 * py - ny
-            dx, dy = nx - px, ny - py
-            dl = math.hypot(dx, dy) or 1.0
-            base.append((px, py, -dy / dl, dx / dl, rads[k]))
-
-        def ribbon(sc):
-            l = [(px + ux * r * sc, py + uy * r * sc) for (px, py, ux, uy, r) in base]
-            rt = [(px - ux * r * sc, py - uy * r * sc) for (px, py, ux, uy, r) in base]
-            return l + rt[::-1]
-        # nested ribbons fake a ROUND cross-section: dark rim -> mid -> a sheen
-        # ridge down the middle (so the limb reads volumetric, not a flat blade)
-        lit = 0.4 + 0.6 * max(0.0, outward[2])           # near-side limbs catch more
-        edge = _ci(_cmix(_MEM_SHADOW, _MEM, 0.62))
-        midc = _ci(_cmix(_MEM_SHADOW, _MEM_HI, 0.30 + 0.30 * lit))
-        ridge = _ci(_cadd(_cmix(_MEM_SHADOW, _MEM_HI, 0.55), _SHEEN, 0.26 * lit))
-        pygame.draw.polygon(lay, (*edge, 248), ribbon(1.0))
-        pygame.draw.polygon(lay, (*midc, 248), ribbon(0.62))
-        pygame.draw.polygon(lay, (*ridge, 170), ribbon(0.26))
-        # a faint gold accent on the silhouette only -- an accent, not a wire
-        left = [(px + ux * r, py + uy * r) for (px, py, ux, uy, r) in base]
-        grim = int(26 + 56 * threat)
-        pygame.draw.lines(lay, (*_GOLD_RIM, grim), False, left, 1)
-        # the tip opens an EYE, gazing at you (fades up with the limb's emergence)
-        (tx, ty), _tz = pts[N]
-        ter = max(2.0, rads[N - 1] * 1.35)
+            rw = rad0 * ((1 - s) ** 0.85 + 0.10)
+            cen.append((P, rw))
+        # build rings of geometry with a stable frame along the path
+        rings = []
+        for k in range(M + 1):
+            P, rw = cen[k]
+            a = cen[max(0, k - 1)][0]
+            b = cen[min(M, k + 1)][0]
+            T = _norm((b[0] - a[0], b[1] - a[1], b[2] - a[2]))
+            ref = (0.0, 1.0, 0.0) if abs(T[1]) < 0.9 else (1.0, 0.0, 0.0)
+            u = _norm(_cross(T, ref))
+            v = _cross(T, u)
+            ring = []
+            for m in range(K):
+                ang = math.tau * m / K
+                cu, sv = math.cos(ang) * rw, math.sin(ang) * rw
+                ring.append((P[0] + u[0] * cu + v[0] * sv,
+                             P[1] + u[1] * cu + v[1] * sv,
+                             P[2] + u[2] * cu + v[2] * sv))
+            rings.append((ring, P))
+        # quads between consecutive rings, shaded as the same membrane flesh
+        al = int(150 + 98 * emerge)
+        for k in range(M):
+            ring0, c0 = rings[k]
+            ring1, c1 = rings[k + 1]
+            for m in range(K):
+                m2 = (m + 1) % K
+                q = (ring0[m], ring0[m2], ring1[m2], ring1[m])
+                Nf = _norm(_cross(_sub(q[1], q[0]), _sub(q[3], q[0])))
+                cenq = ((q[0][0] + q[1][0] + q[2][0] + q[3][0]) * 0.25,
+                        (q[0][1] + q[1][1] + q[2][1] + q[3][1]) * 0.25,
+                        (q[0][2] + q[1][2] + q[2][2] + q[3][2]) * 0.25)
+                if _dot(Nf, _sub(cenq, c0)) < 0:           # face outward
+                    Nf = (-Nf[0], -Nf[1], -Nf[2])
+                if Nf[2] < -0.15:                          # cull the far side
+                    continue
+                dn = max(0.0, min(1.0, (cenq[2] - zmin) / zr))
+                col = _shade_face(Nf, dn, threat)
+                poly = [_proj(p, cx, cy, sz) for p in q]
+                quads.append((cenq[2], poly, col, al))
+        # the tip opens an EYE, gazing at you
+        ptip, rtip = cen[M]
+        (tx, ty) = _proj(ptip, cx, cy, sz)
+        k3 = _FOCAL / (_Z_EYE - ptip[2])
+        ter = max(2.0, rtip * k3 * sz * 1.5)
         tgx = -max(-1.0, min(1.0, (tx - cx) / (sz * 0.9))) * 0.8
-        _eye(lay, tx, ty, ter, gate * emerge * (0.4 + 0.6 * threat), tgx,
-             int(235 * gate * emerge))
+        tips.append((tx, ty, ter, tgx, gate * emerge * (0.4 + 0.6 * threat),
+                     int(235 * gate * emerge)))
+    # painter's sort all limb flesh together, then the eyes on top
+    quads.sort(key=lambda q: q[0])
+    for _z, poly, col, al in quads:
+        pygame.draw.polygon(lay, (*col, al), poly)
+    for tx, ty, ter, tgx, openf, a in tips:
+        _eye(lay, tx, ty, ter, openf, tgx, a)
 
 
 def draw_king_unfold(surf, cx, cy, t, threat=0.0, scale=96.0):
@@ -495,7 +518,7 @@ def draw_king_unfold(surf, cx, cy, t, threat=0.0, scale=96.0):
     # 4) ARMS: limbs erupt from the geometry and stretch toward the player (on
     # top of the body -- they reach out past its silhouette, toward the camera)
     _draw_arms(lay, o3, op, ocenter, sz, cx, cy, t, threat, form["arm_roots"],
-               form["overts"], body_ang)
+               form["overts"], body_ang, zmin, zr)
 
     # 5) EYES open across the skin -- wrong faces that surface and gaze, never
     # assembling into one. Each rides a facet, so it slides / scales / winks
