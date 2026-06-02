@@ -23,6 +23,8 @@ import random
 
 import pygame
 
+from rendering.sprites import door_mask_surface
+
 # --- palette ---------------------------------------------------------------
 _MEM = (22, 15, 17)                 # membrane base (warm near-black flesh)
 _MEM_HI = (68, 50, 52)              # lit membrane (dark wet flesh)
@@ -48,10 +50,25 @@ _HMAG = math.sqrt(sum(c * c for c in _H)) or 1.0
 _H = tuple(c / _HMAG for c in _H)
 
 _FORM = None
+_MASK_CACHE = {}
 
 
 def reset_king_unfold_fx():
     pass
+
+
+def _mask(height, vis, gx, gy, seed):
+    """A carved dark-wood mask (rendering.sprites.door_mask_surface) surfacing on
+    the skin -- canon: the wrong face the threshold wears. Cached on quantized
+    keys so we don't re-render per facet per frame."""
+    hb = max(10, int(round(height / 8.0)) * 8)
+    key = (hb, round(vis, 1), round(gx, 1), round(gy, 1), seed % 5)
+    s = _MASK_CACHE.get(key)
+    if s is None:
+        s = door_mask_surface(height=hb, vis=max(0.25, vis),
+                              gaze=(round(gx, 1), round(gy, 1)), seed=seed % 5)
+        _MASK_CACHE[key] = s
+    return s
 
 
 # --------------------------------------------------------------------------- #
@@ -131,9 +148,16 @@ def _build():
         rad = 0.92 * (1.0 + 0.40 * n)
         w = 0.62 * noise(d, 2.0)
         return (d[0] * rad, d[1] * rad, d[2] * rad, w)
-    overts, ofaces = _sphere_mesh(11, 16, outer_rf)
+    NLAT, NLON = 18, 26                       # subdivided -> smoother wet surface
+    overts, ofaces = _sphere_mesh(NLAT, NLON, outer_rf)
     r = random.Random(23)
-    eye_faces = {fi: r.uniform(0, 9) for fi in r.sample(range(len(ofaces)), 18)}
+    mask_faces = {fi: r.uniform(0, 9) for fi in r.sample(range(len(ofaces)), 11)}
+    # arm roots: a ring of vertices around the lower-front, where limbs erupt
+    arm_roots = []
+    for a in range(6):
+        i = int(NLAT * 0.60)
+        j = int((a / 6.0) * NLON + 0.5) % NLON
+        arm_roots.append((i * NLON + j, r.uniform(0, 6)))
 
     # the heart: two nested smooth shells -> everts inside the body
     cverts, cfaces = [], []
@@ -145,8 +169,8 @@ def _build():
         cverts += v
         cfaces += [[i + off for i in face] for face in f]
 
-    _FORM = dict(overts=overts, ofaces=ofaces, eye_faces=eye_faces,
-                 cverts=cverts, cfaces=cfaces)
+    _FORM = dict(overts=overts, ofaces=ofaces, mask_faces=mask_faces,
+                 arm_roots=arm_roots, cverts=cverts, cfaces=cfaces)
     return _FORM
 
 
@@ -265,7 +289,97 @@ def _shade_face(N, dn, threat):
     return _ci(col)
 
 
-def draw_king_unfold(surf, cx, cy, t, threat=0.0, scale=82.0):
+def _blit_mask(lay, x, y, height, rise, gx, gy, seed):
+    m = _mask(height * rise, 0.5 + 0.5 * rise, gx, gy, seed)
+    if rise < 0.99:
+        m = m.copy()
+        m.fill((255, 255, 255, int(255 * rise)), special_flags=pygame.BLEND_RGBA_MULT)
+    lay.blit(m, (int(x - m.get_width() / 2), int(y - m.get_height() / 2)))
+
+
+def _draw_arms(lay, o3, op, ocenter, sz, cx, cy, t, threat, arm_roots):
+    """Limbs that erupt from the body's own geometry and STRETCH toward the
+    player -- rooted at surface vertices, curving out then lunging at a target
+    below/in front of the camera, tapering to a mask 'hand'. They reach only as
+    the thing rouses (threat), and each pulses on its own phase."""
+    if threat < 0.18:
+        return
+    gate = min(1.0, (threat - 0.18) / 0.45)
+    # the player: below and toward the camera (screen-down, +z toward viewer)
+    tgt0 = (ocenter[0], ocenter[1] - 1.9, ocenter[2] + 1.4)
+    N = 10
+    rad3 = 0.30
+    for ai, (idx, ph) in enumerate(arm_roots):
+        if idx >= len(o3):
+            continue
+        root = o3[idx]
+        outward = _norm(_sub(root, ocenter))
+        # near-side limbs reach hard at the player; far-side ones barely stir
+        nearness = 0.5 + 0.5 * (1 if outward[2] > 0 else -1) * min(1.0, abs(outward[2]) * 2)
+        lunge = 0.5 + 0.5 * math.sin(t * (0.5 + 0.07 * ai) + ph)
+        reach = (0.12 + 0.95 * lunge) * gate * (0.35 + 0.65 * nearness)
+        if reach < 0.14:
+            continue
+        tgt = (tgt0[0] + 1.3 * math.sin(ai * 2.1 + t * 0.25),
+               tgt0[1] + 0.5 * math.sin(ai * 1.3),
+               tgt0[2] + 0.5 * math.cos(ai * 1.7))
+        end = (root[0] + (tgt[0] - root[0]) * reach,
+               root[1] + (tgt[1] - root[1]) * reach,
+               root[2] + (tgt[2] - root[2]) * reach)
+        # control bulges OUT along the surface normal AND sideways -> an organic
+        # curve, not a straight stick
+        side = _norm(_cross(outward, (0, 0, 1)))
+        wig = 0.6 * math.sin(t * 1.4 + ph)
+        ctrl = (root[0] + outward[0] * 0.9 + side[0] * wig,
+                root[1] + outward[1] * 0.9 + side[1] * wig,
+                root[2] + outward[2] * 0.9 + side[2] * wig)
+        pts, rads = [], []
+        for k in range(N + 1):
+            s = k / N
+            mt = 1 - s
+            P = (mt * mt * root[0] + 2 * mt * s * ctrl[0] + s * s * end[0],
+                 mt * mt * root[1] + 2 * mt * s * ctrl[1] + s * s * end[1],
+                 mt * mt * root[2] + 2 * mt * s * ctrl[2] + s * s * end[2])
+            pts.append((_proj(P, cx, cy, sz), P[2]))
+            k3 = _FOCAL / (_Z_EYE - P[2])
+            rads.append(max(1.0, rad3 * ((1 - s) ** 1.2 + 0.04) * k3 * sz))
+        # per-point unit-perpendicular + pixel radius
+        base = []
+        for k in range(N + 1):
+            (px, py), _z = pts[k]
+            if k < N:
+                (nx, ny), _ = pts[k + 1]
+            else:
+                (nx, ny), _ = pts[k - 1]
+                nx, ny = 2 * px - nx, 2 * py - ny
+            dx, dy = nx - px, ny - py
+            dl = math.hypot(dx, dy) or 1.0
+            base.append((px, py, -dy / dl, dx / dl, rads[k]))
+
+        def ribbon(sc):
+            l = [(px + ux * r * sc, py + uy * r * sc) for (px, py, ux, uy, r) in base]
+            rt = [(px - ux * r * sc, py - uy * r * sc) for (px, py, ux, uy, r) in base]
+            return l + rt[::-1]
+        # nested ribbons fake a ROUND cross-section: dark rim -> mid -> a sheen
+        # ridge down the middle (so the limb reads volumetric, not a flat blade)
+        lit = 0.4 + 0.6 * max(0.0, outward[2])           # near-side limbs catch more
+        edge = _ci(_cmix(_MEM_SHADOW, _MEM, 0.5))
+        midc = _ci(_cmix(_MEM_SHADOW, _MEM_HI, 0.18 + 0.22 * lit))
+        ridge = _ci(_cadd(_cmix(_MEM_SHADOW, _MEM_HI, 0.5), _SHEEN, 0.22 * lit))
+        pygame.draw.polygon(lay, (*edge, 244), ribbon(1.0))
+        pygame.draw.polygon(lay, (*midc, 244), ribbon(0.60))
+        pygame.draw.polygon(lay, (*ridge, 150), ribbon(0.24))
+        left = [(px + ux * r, py + uy * r) for (px, py, ux, uy, r) in base]
+        right = [(px - ux * r, py - uy * r) for (px, py, ux, uy, r) in base]
+        pygame.draw.lines(lay, (*_GOLD_RIM, 64), False, left, 1)
+        pygame.draw.lines(lay, (*_GOLD_RIM, 64), False, right, 1)
+        # the hand is a mask, gazing at you
+        (tx, ty), _tz = pts[N]
+        _blit_mask(lay, tx, ty, rads[N - 1] * 4.2, gate,
+                   -max(-1.0, min(1.0, (tx - cx) / (sz * 0.9))) * 0.7, 0.4, ai + 2)
+
+
+def draw_king_unfold(surf, cx, cy, t, threat=0.0, scale=96.0):
     """THE UNFOLDING, centred at (cx, cy). `threat` 0..1: a small dark fold ->
     larger, faster eversion, the heart kindling, eyes opening, the Sign
     resolving, more light eaten."""
@@ -313,7 +427,9 @@ def draw_king_unfold(surf, cx, cy, t, threat=0.0, scale=82.0):
             col = _shade_face(N, dn, threat)
             al = (196 if front_side else 232)
             pygame.draw.polygon(lay, (*col, al), poly)
-            pygame.draw.polygon(lay, (*_MEM_SHADOW, al), poly, 1)   # crease seam
+            # anti-alias the silhouette only (no per-facet seam -> smoother skin)
+            if front_side and abs(N[2]) < 0.30:
+                pygame.draw.polygon(lay, (*col, al), poly, 1)
 
     # 1) far wall of the mass (inside of the back)
     draw_membrane(back, False)
@@ -336,11 +452,15 @@ def draw_king_unfold(surf, cx, cy, t, threat=0.0, scale=82.0):
     # 3) near wall of the mass (occludes/veils the heart -> flesh)
     draw_membrane(front, True)
 
-    # 4) eyes opening wetly on the near skin
-    if threat > 0.3:
-        appear = min(1.0, (threat - 0.3) / 0.4)
+    # 4) ARMS: limbs erupt from the geometry and stretch toward the player (on
+    # top of the body -- they reach out past its silhouette, toward the camera)
+    _draw_arms(lay, o3, op, ocenter, sz, cx, cy, t, threat, form["arm_roots"])
+
+    # 5) MASKS surface on the near skin -- the wrong faces, all gazing at you
+    if threat > 0.28:
+        appear = min(1.0, (threat - 0.28) / 0.4)
         fmap = {fi: (face, N) for zc, fi, face, N in front}
-        for fi, ph in form["eye_faces"].items():
+        for fi, ph in form["mask_faces"].items():
             if fi not in fmap:
                 continue
             face, N = fmap[fi]
@@ -349,15 +469,17 @@ def draw_king_unfold(surf, cx, cy, t, threat=0.0, scale=82.0):
             for k in range(len(poly)):
                 x0, y0 = poly[k]; x1, y1 = poly[(k + 1) % len(poly)]
                 area += x0 * y1 - x1 * y0
-            ex = sum(p[0] for p in poly) / len(poly)
-            ey = sum(p[1] for p in poly) / len(poly)
-            er = math.sqrt(abs(area)) * 0.34
-            bz = (t * 0.7 + ph) % 5.0
-            openf = (1.0 if bz > 0.25 else abs(bz - 0.12) / 0.12) * appear
-            _eye(lay, ex, ey, er, openf, math.sin(t * 0.3 + ph) * 0.6,
-                 int(225 * appear))
+            mcx = sum(p[0] for p in poly) / len(poly)
+            mcy = sum(p[1] for p in poly) / len(poly)
+            mh = math.sqrt(abs(area)) * 1.5
+            surf_ph = (t * 0.5 + ph) % 6.0                 # masks surface + sink
+            rise = (1.0 if surf_ph > 0.5 else surf_ph / 0.5) * appear
+            if rise < 0.12:
+                continue
+            gx = -max(-1.0, min(1.0, (mcx - cx) / (sz * 0.9))) * 0.7   # turn to you
+            _blit_mask(lay, mcx, mcy, mh, rise, gx, 0.45, int(ph))
 
-    # 5) the Sign resolves for a beat on the most head-on facet
+    # 6) the Sign resolves for a beat on the most head-on facet
     if front and threat > 0.45:
         zc, fi, face, N = max(front, key=lambda r: r[3][2])
         poly = [op[i] for i in face]
