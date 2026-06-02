@@ -59,17 +59,26 @@ it renders the procedural sprites to a labelled PNG strip.
     `_draw_king`). The King keeps per-frame state in module globals
     (`_YK_*`); fine for the single King in play.
   - `transform.py` — `draw_vessel_bloom`, the human→vessel morph.
-  - **Tilted-camera track (scaffolding — NOT wired into the live game
-    yet):** `camera.py` (`Camera.project(wx,wy,wz)`, the single
-    world→screen seam + `depth()` sort key), `solids.py` (volumetric
-    `draw_solid`/`draw_box`/`draw_billboard`), `skybox.py` (procedural
-    void-fill backdrop), `occlusion.py` (fade walls that hide the player),
-    `pseudo3d.py` (the Watcher proof). The plan — render most objects as
-    3D solids projected to 2D, lock pitch ~55°, head-turn ±45°, skybox in
-    the voids — lives in **`CAMERA.md`**. Previews:
-    `tools/preview_{tilt,skybox,occlusion,pseudo3d}.py`. The live game
-    still draws flat top-down; Phase 1 is routing it through `Camera` at
-    pitch 0 (no visual change).
+  - **Tilted-camera track (LIVE — the oblique view is the default; F3
+    toggles back to flat pitch-0):** `camera.py` (`Camera.project(wx,wy,wz)`,
+    the single world→screen seam + `depth()` sort key), `solids.py`
+    (volumetric `draw_solid`/`draw_box`/`draw_billboard`), `skybox.py`
+    (procedural void-fill backdrop), `occlusion.py` (fade walls that hide the
+    player), `pseudo3d.py` (the Watcher proof), `sight.py` (the **Phase 4
+    blind-spot vision** buffer). The plan — render most objects as 3D solids
+    projected to 2D, lock pitch ~55°, head-turn ±45°, skybox in the voids —
+    lives in **`CAMERA.md`**. Previews:
+    `tools/preview_{tilt,skybox,occlusion,pseudo3d,sight,blindspot_live}.py`.
+  - **Blind-spot vision (`sight.py`, CAMERA.md Phase 4):** under tilt,
+    `draw_world` gates what is **drawn** (NPCs, enemies, corpses, items, and
+    the infestation rot decals — flagged `_sight_gated`) to a forward sight
+    cone keyed to `look.aim` and clipped by `Scene.blocks_sight`, via
+    `visible_factor(...)` → a soft-alpha fade (`draw_with_alpha`). The world
+    keeps **simulating** off-camera (the update path is untouched); unseen
+    things simply aren't rendered and **re-hide** when you look away (no
+    last-seen memory). The **King is exempt** (relentless apex); the player is
+    never gated. All gating sits behind `_sight is not None` (set only when
+    `_tilt_on()`), so **pitch 0 is byte-identical** (`tools/capture_world.py`).
 - `systems/`
   - `save.py` — **in-memory only, no disk**. `Save.new()` builds from
     `DEFAULT_SAVE`; quitting to title throws it away (single-session).

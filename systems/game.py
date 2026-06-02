@@ -1659,7 +1659,12 @@ class Game(CutsceneMixin):
             if any(abs(wx - sx) < 28 and abs(wy - sy) < 28
                    for sx, sy in spawns):
                 continue
-            self.scene.add_decoration(Decoration(wx, wy, rng.choice(pool)))
+            deco = Decoration(wx, wy, rng.choice(pool))
+            # Phase 4: the rot is a WORLD CHANGE — gated to line of sight under
+            # tilt so it reveals only where the player actually looks (the
+            # infection 'updates in memory' when seen; CAMERA.md Phase 4).
+            deco._sight_gated = True
+            self.scene.add_decoration(deco)
             placed += 1
 
     def _infest_locals(self, stage):
@@ -3592,6 +3597,35 @@ class Game(CutsceneMixin):
         self.camera.origin = (SCREEN_W // 2, SCREEN_H // 2)
         self.camera.cam_x = self.cam_x + SCREEN_W // 2
         self.camera.cam_y = self.cam_y + SCREEN_H // 2
+        # Phase 4 blind-spot vision (CAMERA.md Phase 4). Under tilt, gate WHAT
+        # IS DRAWN to a forward sight cone keyed to the look heading + walls
+        # (rendering/sight.py). The world keeps simulating off-camera (the
+        # update path is untouched) -- only RENDERING is gated, so unseen
+        # actors / items / rot simply aren't shown and re-hide when the head
+        # turns away (the SCP-173 dread). The King is exempt (a relentless
+        # apex you must be able to track) and the player is never gated. At
+        # pitch 0 `_sight` stays None -> every alpha is 255 and the frame is
+        # byte-identical to the shipping top-down view.
+        _sight = None
+        if self._tilt_on() and self.player:
+            from rendering.sight import visible_factor
+            _spx, _spy, _shead = self.player.x, self.player.y, self.look.aim
+            _blk = self.scene.blocks_sight
+            def _sight(wx, wy):
+                return visible_factor(_spx, _spy, _shead, wx, wy, _blk)
+        from rendering.solids import draw_with_alpha
+
+        def _vis_alpha(wx, wy, exempt=False):
+            """0..255 alpha to draw a world thing at (wx, wy) under the sight
+            gate, or None to skip it (fully in the blind spot). 255 when the
+            gate is off (pitch 0) or the thing is exempt (the King)."""
+            if _sight is None or exempt:
+                return 255
+            f = _sight(wx, wy)
+            if f <= 0.03:
+                return None
+            return 255 if f >= 0.99 else int(255 * f)
+
         self._tilt_front_walls = None
         if self.camera.pitch > 0.02:
             # DEBUG oblique view (CAMERA.md Phase 2): skybox fills the void,
@@ -3606,17 +3640,23 @@ class Game(CutsceneMixin):
                         yaw=self.camera.yaw, kind=sky, horizon_frac=0.40)
             focus = (self.player.x, self.player.y) if self.player else None
             self._tilt_front_walls = draw_terrain_tilted(
-                self.screen, self.scene, self.camera, focus)
+                self.screen, self.scene, self.camera, focus, sight=_sight)
         else:
             self.scene.draw(self.screen, self.cam_x, self.cam_y, self.camera)
         self._draw_folds()
         for it in self.scene.items:
+            a = _vis_alpha(it["x"], it["y"])
+            if a is None:
+                continue
             sx, sy = self.camera.project(it["x"], it["y"])
             t = pygame.time.get_ticks() / 200.0
             bob = int(math.sin(t + (it["x"] + it["y"]) * 0.01) * 1)
             color = self._item_color(it["key"])
-            pygame.draw.rect(self.screen, color, (sx - 4, sy - 4 + bob, 8, 8))
-            pygame.draw.rect(self.screen, C_BLACK, (sx - 4, sy - 4 + bob, 8, 8), 1)
+
+            def _draw_item(s, sx=sx, sy=sy, bob=bob, color=color):
+                pygame.draw.rect(s, color, (sx - 4, sy - 4 + bob, 8, 8))
+                pygame.draw.rect(s, C_BLACK, (sx - 4, sy - 4 + bob, 8, 8), 1)
+            draw_with_alpha(self.screen, a, _draw_item)
         # Pick at most one NPC to "blink" this frame -- their eye dots
         # will skip drawing for a single frame. Only fires while the
         # player is standing still, and only rarely. The villagers
@@ -3665,8 +3705,13 @@ class Game(CutsceneMixin):
                     sx, sy = self.camera.project(npc.x + ox, npc.y + oy)
                     if not _on_screen(sx, sy):
                         continue
-                    draw_npc_corpse(self.screen, sx, sy, npc.sprite_kind,
-                                    seed=id(npc) & 0xffff, mold=0)
+                    a = _vis_alpha(npc.x + ox, npc.y + oy)
+                    if a is None:
+                        continue
+                    draw_with_alpha(self.screen, a,
+                                    lambda s, sx=sx, sy=sy, npc=npc:
+                                    draw_npc_corpse(s, sx, sy, npc.sprite_kind,
+                                                    seed=id(npc) & 0xffff, mold=0))
                 continue
             m = getattr(npc, "morph", 0.0)
             king_threat = None
@@ -3683,37 +3728,49 @@ class Game(CutsceneMixin):
                 king_threat = max(0.15, min(1.0, 1.0 - (d - KING_THREAT_NEAR) / span))
             npc_lift = int(TILT_LIFT.get(npc.sprite_kind, TILT_ACTOR_STAND)
                            * math.sin(self.camera.pitch))
+            # The King is the relentless apex -- never gated to sight; you must
+            # be able to track him as he closes. Everyone else obeys the blind
+            # spot (idle locals, converts, watchers, mutated resisters).
+            exempt = npc.sprite_kind == "yellow_king"
             for ox, oy in _offsets:
                 sx, sy = self.camera.project(npc.x + ox, npc.y + oy)
                 if not _on_screen(sx, sy):
                     continue
+                a = _vis_alpha(npc.x + ox, npc.y + oy, exempt=exempt)
+                if a is None:
+                    continue
                 sy -= npc_lift            # stand on the floor under tilt
-                if m > 0.0:
-                    draw_vessel_bloom(self.screen, sx, sy, npc.sprite_kind,
-                                      npc.facing, m, seed=id(npc) & 0xffff)
-                else:
-                    # (The curse is His own gaze now; NARRATIVE 1b/3.
-                    # curse_v stays 0 for all normal NPCs.)
-                    curse_v = 0.0
-                    # A Watcher being stared down: its eyes go dark (gaze) and
-                    # it fades as the dispel timer fills, so the cure reads.
-                    w_gaze = (npc.sprite_kind == "watcher"
-                              and getattr(npc, "_gaze_dispel_t", 0.0) > 0.05)
-                    nview = "front"
-                    if self._tilt_on():
-                        nview = view_from_facing(npc.facing[0], npc.facing[1],
-                                                 self.camera.yaw)
-                    draw_npc_sprite(self.screen, sx, sy, npc.sprite_kind,
-                                    npc.facing, blink=(i == blink_idx),
-                                    birth=getattr(npc, "_birth", None),
-                                    gait=getattr(npc, "_gait", None),
-                                    threat=king_threat, seed=id(npc) & 0xffff,
-                                    curse=curse_v, gaze=w_gaze, view=nview)
-                    # A resister whose flesh has turned: their bespoke
-                    # fold-horror form, laid over the person they were.
-                    if getattr(npc, "_mutated", False):
-                        draw_infested_overlay(self.screen, sx, sy,
-                                              npc.sprite_kind, view=nview)
+
+                def _draw_npc(target, sx=sx, sy=sy):
+                    if m > 0.0:
+                        draw_vessel_bloom(target, sx, sy, npc.sprite_kind,
+                                          npc.facing, m, seed=id(npc) & 0xffff)
+                    else:
+                        # (The curse is His own gaze now; NARRATIVE 1b/3.
+                        # curse_v stays 0 for all normal NPCs.)
+                        curse_v = 0.0
+                        # A Watcher being stared down: its eyes go dark (gaze)
+                        # and it fades as the dispel timer fills, so the cure
+                        # reads.
+                        w_gaze = (npc.sprite_kind == "watcher"
+                                  and getattr(npc, "_gaze_dispel_t", 0.0) > 0.05)
+                        nview = "front"
+                        if self._tilt_on():
+                            nview = view_from_facing(npc.facing[0],
+                                                     npc.facing[1],
+                                                     self.camera.yaw)
+                        draw_npc_sprite(target, sx, sy, npc.sprite_kind,
+                                        npc.facing, blink=(i == blink_idx),
+                                        birth=getattr(npc, "_birth", None),
+                                        gait=getattr(npc, "_gait", None),
+                                        threat=king_threat, seed=id(npc) & 0xffff,
+                                        curse=curse_v, gaze=w_gaze, view=nview)
+                        # A resister whose flesh has turned: their bespoke
+                        # fold-horror form, laid over the person they were.
+                        if getattr(npc, "_mutated", False):
+                            draw_infested_overlay(target, sx, sy,
+                                                  npc.sprite_kind, view=nview)
+                draw_with_alpha(self.screen, a, _draw_npc)
             # THRESHOLD: NPC name labels removed. They were the
             # last RPG-tell on screen -- the player should learn
             # who an NPC is by interacting with them, not by
@@ -3728,10 +3785,16 @@ class Game(CutsceneMixin):
                 sx, sy = self.camera.project(e.x + ox, e.y + oy)
                 if not _on_screen(sx, sy):
                     continue
+                a = _vis_alpha(e.x + ox, e.y + oy)
+                if a is None:
+                    continue
                 # Feed e.draw an offset that lands its internal `x - cam`
                 # exactly on the (lifted) projected point. At pitch 0 this is
                 # arithmetically the legacy (cam_x - ox) call -> identical.
-                e.draw(self.screen, e.x - sx, e.y - (sy - actor_lift), view=eview)
+                draw_with_alpha(self.screen, a,
+                                lambda s, sx=sx, sy=sy, e=e, eview=eview:
+                                e.draw(s, e.x - sx, e.y - (sy - actor_lift),
+                                       view=eview))
         for p in self.scene.projectiles:
             psx, psy = self.camera.project(p.x, p.y)
             p.draw(self.screen, p.x - psx, p.y - (psy - actor_lift))

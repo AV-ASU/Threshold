@@ -1631,7 +1631,7 @@ def _tilt_tile_box(surf, camera, scene, tx, ty):
         _tilt_wall_box(surf, camera, scene, tx, ty)
 
 
-def draw_terrain_tilted(surf, scene, camera, focus=None):
+def draw_terrain_tilted(surf, scene, camera, focus=None, sight=None):
     """Floor warp + wall extrusion for the oblique camera. Skybox is the
     caller's job (drawn first); actors are drawn after by the game, already
     projected through the same camera so they stand on this floor.
@@ -1639,7 +1639,12 @@ def draw_terrain_tilted(surf, scene, camera, focus=None):
     `focus` (wx, wy) is the player: walls NEARER the camera than the focus are
     held back and RETURNED so the caller can draw them after the actors (so
     they correctly occlude/fade in front of the player). Walls behind the
-    focus are drawn now. Returns the list of (tx, ty) front walls."""
+    focus are drawn now. Returns the list of (tx, ty) front walls.
+
+    `sight` is the optional Phase 4 blind-spot factor fn(wx, wy) -> 0..1
+    (rendering/sight.py). When given, decorations flagged `_sight_gated`
+    (the infestation rot) only draw where the player actually looks -- the
+    world's rot reveals on a peek and re-hides off-camera."""
     cx, cy = camera.cam_x, camera.cam_y
     half = _tilt_window_half(camera)
     span = int(half * 2)
@@ -1677,14 +1682,23 @@ def draw_terrain_tilted(surf, scene, camera, focus=None):
     # reads; boxes depth-sorted far->near so they overlap correctly. Walls draw
     # after, so a wall in front still overdraws a prop behind it.
     from rendering.furniture import is_solid_furniture, draw_furniture_solid
+    from rendering.solids import draw_with_alpha
     solid_decos = []
     for d in scene.decorations:
         if is_solid_furniture(d.kind):
             solid_decos.append(d)
-        elif d.kind in _FLOOR_DECAL_KINDS:
-            _draw_floor_decal(surf, camera, d)
+            continue
+        # Phase 4: rot decals are a world change -- gated to line of sight.
+        a = 255
+        if sight is not None and getattr(d, "_sight_gated", False):
+            f = sight(d.x, d.y)
+            if f <= 0.03:
+                continue
+            a = 255 if f >= 0.99 else int(255 * f)
+        if d.kind in _FLOOR_DECAL_KINDS:
+            draw_with_alpha(surf, a, lambda s, d=d: _draw_floor_decal(s, camera, d))
         else:
-            d.draw(surf, 0, 0, camera)
+            draw_with_alpha(surf, a, lambda s, d=d: d.draw(s, 0, 0, camera))
     solid_decos.sort(key=lambda d: camera.depth(d.x, d.y))
     for d in solid_decos:
         draw_furniture_solid(surf, camera, d)
@@ -2062,6 +2076,17 @@ class Scene:
         if 0 <= ty < self.h and 0 <= tx < self.w:
             return self.objects[ty][tx]
         return "#"
+
+    def blocks_sight(self, x_px, y_px):
+        """True where the tile occludes the player's LINE OF SIGHT (Phase 4
+        blind-spot vision, rendering/sight.py). Walls and solid props block;
+        windows do NOT (you see through glass), and the floor never blocks
+        (water/pits don't hide what's beyond them). Wrap-aware via the
+        char_*_at lookups."""
+        ch = self.char_object_at(x_px, y_px)
+        if ch in _WINDOW_CHARS:
+            return False
+        return ch in _WALL_CHARS or is_object_solid(ch)
 
     def is_solid_at(self, x_px, y_px, ignore=None):
         if is_object_solid(self.char_object_at(x_px, y_px)): return True
