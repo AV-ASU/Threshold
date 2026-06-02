@@ -29,11 +29,13 @@ import random
 import pygame
 
 from rendering.king3d import (_surface, _build_shards, _shade, _norm3,
-                              _rodrigues, _PORC, _PORC_DK, _PORC_HI, _HOLLOW,
-                              _VOIDC, _GOLD, _GOLD_DK, _GOLD_HI)
+                              _rodrigues, _draw_arms, _PORC, _PORC_DK, _PORC_HI,
+                              _HOLLOW, _VOIDC, _GOLD, _GOLD_DK, _GOLD_HI)
 
 _HALO = None
 _FACE_TRAILS = None         # per-face screen-position history (the smear)
+_HALO_PARTS = []            # the wake: porcelain ash + MASK FLECKS + gold sparks
+_HALO_PT_LAST = [0.0]
 _HALO_RNG = random.Random(91)
 
 # A SICKLY, jaundiced palette -- the Yellow is diseased, not holy. Most of the
@@ -55,6 +57,88 @@ def _stut(t, q=9.0, blend=0.26):
 def reset_king_halo_fx():
     global _FACE_TRAILS
     _FACE_TRAILS = None
+    _HALO_PARTS.clear()
+    _HALO_PT_LAST[0] = 0.0
+
+
+def _soul_orb(surf, x, y, r, al, seed):
+    """One wake mote: a glowing gold ORB with a tiny pale MASK trapped inside its
+    glow (a screaming little face) -- the original King's soul-orbs."""
+    R = max(3, int(r))
+    d = R * 2 + 4
+    orb = pygame.Surface((d, d), pygame.SRCALPHA)
+    c = d // 2
+    # the orb's gold glow (soft, additive feel via layered alpha)
+    for i in range(R, 0, -1):
+        f = 1 - i / R
+        a = int(al * (f ** 1.6))
+        if a <= 0:
+            continue
+        col = _GOLD_HI if i < R * 0.45 else _GOLD
+        pygame.draw.circle(orb, (col[0], col[1], col[2], a), (c, c), i)
+    # the trapped face: a small pale visage, dark hollow eyes + a thin maw
+    fw = max(1, int(R * 0.42)); fh = max(1, int(R * 0.6))
+    fa = min(255, al + 40)
+    pygame.draw.ellipse(orb, (_PORC[0], _PORC[1], _PORC[2], fa),
+                        (c - fw, c - fh, fw * 2, fh * 2))
+    er = max(1, R // 6)
+    for sgn in (-1, 1):
+        pygame.draw.circle(orb, (_HOLLOW[0], _HOLLOW[1], _HOLLOW[2], fa),
+                           (c + sgn * max(1, fw // 2), c - er), er)
+    pygame.draw.line(orb, (_HOLLOW[0], _HOLLOW[1], _HOLLOW[2], fa),
+                     (c - fw // 2, c + fh // 2), (c + fw // 2, c + fh // 2),
+                     max(1, R // 6))
+    surf.blit(orb, (int(x - c), int(y - c)), special_flags=pygame.BLEND_RGBA_ADD)
+
+
+def _halo_particles(surf, cx, cy, t, threat, scale):
+    """The wake -- glowing SOUL-ORBS, each with a little screaming MASK trapped
+    in its glow (the original King's wake), plus a few bare gold sparks. Drifts
+    off the floating mass; denser as he rouses."""
+    dt = t - _HALO_PT_LAST[0]
+    _HALO_PT_LAST[0] = t
+    if dt <= 0 or dt > 0.2:
+        dt = 0.016
+    rng = _HALO_RNG
+    rate = 0.18 + 0.7 * threat
+    while rate > 0:
+        if rng.random() < min(1.0, rate):
+            a = rng.uniform(0, math.tau)
+            d = rng.uniform(4, 14) * scale
+            spd = rng.uniform(7, 22)
+            spark = rng.random() < 0.3                # a few bare sparks
+            _HALO_PARTS.append({"kind": "spark" if spark else "orb",
+                                "x": cx + math.cos(a) * d, "y": cy + math.sin(a) * d,
+                                "vx": math.cos(a) * spd + rng.uniform(-5, 5),
+                                "vy": math.sin(a) * spd - rng.uniform(2, 10),
+                                "age": 0.0, "life": rng.uniform(1.1, 2.4),
+                                "r": (rng.uniform(2.0, 4.2) if spark
+                                      else rng.uniform(3.2, 6.0)) * scale * 0.5,
+                                "seed": rng.randint(0, 999)})
+        rate -= 1.0
+    if len(_HALO_PARTS) > 180:
+        del _HALO_PARTS[:len(_HALO_PARTS) - 180]
+    keep = []
+    for p in _HALO_PARTS:
+        p["age"] += dt
+        fr = p["age"] / p["life"]
+        if fr >= 1.0:
+            continue
+        p["x"] += p["vx"] * dt; p["y"] += p["vy"] * dt
+        p["vy"] += 8 * dt                             # a little gravity drift
+        keep.append((p, fr))
+    _HALO_PARTS[:] = [p for p, _ in keep]
+    for p, fr in keep:
+        al = int(160 * (1 - fr))
+        if p["kind"] == "spark":
+            sr = max(1, int(p["r"]))
+            gl = pygame.Surface((sr * 4 + 2, sr * 4 + 2), pygame.SRCALPHA)
+            cc = (sr * 4 + 2) // 2
+            pygame.draw.circle(gl, (_GOLD_HI[0], _GOLD_HI[1], _GOLD_HI[2], al), (cc, cc), sr)
+            surf.blit(gl, (int(p["x"] - cc), int(p["y"] - cc)),
+                      special_flags=pygame.BLEND_RGBA_ADD)
+        else:
+            _soul_orb(surf, p["x"], p["y"], p["r"], al, p["seed"])
 
 
 def _cross(a, b):
@@ -157,7 +241,20 @@ def _shard_screen(p, orbit, t, ts, iris, crown, cx, cy, yaw, bob, scale):
             wp = _yawrot((cen[0] + rel[0], cen[1] + rel[1], cen[2] + rel[2]), yaw)
             rim.append((cx + wp[0] * scale, cy - (wp[1] + bob) * scale))
         eye_pts = rim
-    return scr, zc, front, eye_pts
+    # the tear-channel (this shard owns one): a thin streak down the cheek
+    tear_pts = None
+    if p["feat"]["tear"]:
+        sgn = p["feat"]["tear"]
+        tp = []
+        for k in range(4):
+            th = sgn * _EYE_TH * (1 - 0.05 * k)
+            hh = _EYE_H - 3 - k * 2.4
+            rx, _hh, rz = _surface(th, hh, 0.0)
+            rel = _rodrigues((rx - C0[0], hh - C0[1], rz - C0[2]), p["axis"], tumble)
+            wp = _yawrot((cen[0] + rel[0], cen[1] + rel[1], cen[2] + rel[2]), yaw)
+            tp.append((cx + wp[0] * scale, cy - (wp[1] + bob) * scale))
+        tear_pts = tp
+    return scr, zc, front, eye_pts, tear_pts
 
 
 def _core_glow(surf, cx, cy, t, threat, scale, breath):
@@ -293,21 +390,27 @@ def draw_king_halo(surf, cx, cy, yaw, t, threat=0.0, scale=3.0, beat=0.0):
     behind.sort(key=lambda it: it[1][1])
     front.sort(key=lambda it: it[1][1])
 
+    # 0) the WAKE: porcelain ash + tumbling mask-flecks + gold sparks, behind
+    _halo_particles(surf, cx, cy - bob * scale, t, threat, scale)
+
     # 1) BEHIND shards: backlit silhouettes / dark inner faces, warm gold rim
-    for p, (scr, zc, fr, eye) in behind:
+    for p, (scr, zc, fr, eye, tear) in behind:
         pygame.draw.polygon(surf, _VOIDC, scr)
         pygame.draw.polygon(surf, _shade(_GOLD_DK, 0.45 + 0.55 * threat), scr, 1)
 
-    # 2) the breathing core + the Sign corona
+    # 2) reaching ARMS that trail away from the camera (occluded, drawn deep)
+    _draw_arms(surf, cx, cy - bob * scale, yaw, 0.0, scale, orbit, threat, "back", t=t)
+
+    # 3) the breathing core + the Sign corona
     _core_glow(surf, cx, cy - bob * scale, t, threat, scale, breath)
 
-    # 3) faces surfacing in the light (with trails)
+    # 4) faces surfacing in the light (with trails)
     _draw_faces(surf, cx, cy - bob * scale, t, threat, scale, gaze, crown)
 
-    # 4) FRONT shards on a layer so the eye holes punch THROUGH to the core
+    # 5) FRONT shards on a layer so the eye holes + tears punch THROUGH to core
     porc = pygame.Surface(surf.get_size(), pygame.SRCALPHA)
-    holes, pupils = [], []
-    for p, (scr, zc, fr, eye) in front:
+    holes, tears, pupils = [], [], []
+    for p, (scr, zc, fr, eye, tear) in front:
         # porcelain, depth-shaded (receded shards darker) -- the King's pallid
         # mask, just broken into the halo.
         f = 0.66 + 0.30 * max(0.0, min(1.0, (zc + 6) / 12.0))
@@ -322,9 +425,16 @@ def draw_king_halo(surf, cx, cy, yaw, t, threat=0.0, scale=3.0, beat=0.0):
             ex = sum(q[0] for q in eye) / len(eye)
             ey = sum(q[1] for q in eye) / len(eye)
             pupils.append((ex, ey))
+        if tear is not None and len(tear) >= 2:
+            tears.append(tear)
     for eye in holes:
         pygame.draw.polygon(porc, (0, 0, 0, 0), eye)            # PUNCH the eye
+    for tp in tears:
+        pygame.draw.lines(porc, (0, 0, 0, 0), False, tp, 2)    # PUNCH the tear
     surf.blit(porc, (0, 0))
+
+    # 6) reaching ARMS that lunge AT the camera (over the shards)
+    _draw_arms(surf, cx, cy - bob * scale, yaw, 0.0, scale, orbit, threat, "front", t=t)
 
     # 5) the watching: each eye holds a wet, sick-gold pupil that HOLDS the
     # player (drifts slowly, locks on the beat) with a cold gleam -- the dread

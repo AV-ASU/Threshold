@@ -19,8 +19,8 @@ pygame.init()
 from rendering.king_halo import draw_king_halo, reset_king_halo_fx
 
 BG = (14, 13, 18)
-W, H = 340, 360
-SCALE = 3.4
+W, H = 420, 440
+SCALE = 4.2
 
 
 def _vignette():
