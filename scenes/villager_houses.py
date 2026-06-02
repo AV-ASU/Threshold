@@ -60,26 +60,34 @@ def _open_login_terminal(game, npc):
 
 
 def build_old_man_house():
-    """THRESHOLD: the church and parsonage. Single combined room.
-    Door 'm' on the south wall back to the town crossroads. Door
-    '?' on the north wall to the graveyard behind the church."""
-    floor = ["=" * 10 for _ in range(8)]
+    """THRESHOLD: the church and parsonage. A long nave with a partitioned
+    back VESTRY reached through an interior doorway -- the dividing wall blocks
+    line of sight, so the vestry is a real indoor blind spot (you can't see who
+    or what is back there until you come around to the doorway and look in).
+    Door 'm' on the south wall back to the town crossroads; door '?' on the
+    north wall to the graveyard behind the church; stairs 'U' up the bell
+    tower from the vestry."""
+    floor = ["=" * 16 for _ in range(12)]
     objects = [
-        "WWWW?WWWWW",   # ? = graveyard gate (north)
-        "W..C....UW",   # C = computer placeholder; U = stairs to bell tower
-        "W..t..s..W",
-        "W..c.....W",
-        "W........W",
-        "W.O....b.W",   # O = preacher (still old_man_dialogue)
-        "W....m...W",   # m = exit south to crossroads
-        "WWWWWWWWWW",
+        "WWWWWWWWWW?WWWWW",   # 0  ? = graveyard gate (north, over the nave)
+        "W.U...W........W",   # 1  U = stairs up the bell tower (in the vestry)
+        "W...C.W........W",   # 2  C = church-records terminal (placeholder)
+        "W.....W........W",   # 3   vestry (cols 1-5) | nave (cols 7-14)
+        "W.....W..O.....W",   # 4  O = preacher, out in the nave
+        "W.....W........W",   # 5
+        "WWW.WWW........W",   # 6  vestry south wall; doorway gap at col 3
+        "W..............W",   # 7   the nave opens out under the vestry
+        "W..............W",   # 8
+        "W..............W",   # 9
+        "W..............W",   # 10
+        "WWWWWWWWmWWWWWWW",   # 11  m = exit south to the crossroads
     ]
     # Replace the placeholder C with '.' so it doesn't draw as anything,
     # and remember its tile -- the invisible interact NPC + the computer
     # decoration both go there. (We can't put a marker into OBJECT_DEFS
     # for "computer" without polluting the global table.)
     rows = [list(r) for r in objects]
-    comp_tx, comp_ty = 3, 1
+    comp_tx, comp_ty = 4, 2
     rows[comp_ty][comp_tx] = "."
     objects = ["".join(r) for r in rows]
 
@@ -90,11 +98,11 @@ def build_old_man_house():
     sc.add_exit("m", "brimley", "from_old_man_house")
     sc.add_exit("?", "graveyard", "from_church")
     sc.add_exit("U", "bell_tower", "from_church")
-    sc.set_spawn("default", 5, 5)
-    sc.set_spawn("from_brimley", 4, 5)       # one tile north of m door
-    sc.set_spawn("from_village", 4, 5)         # legacy fallback
-    sc.set_spawn("from_graveyard", 4, 1)       # one tile south of ? door
-    sc.set_spawn("from_bell_tower", 7, 1)      # one tile west of U stairs
+    sc.set_spawn("default", 8, 8)
+    sc.set_spawn("from_brimley", 8, 10)        # one tile north of the m door
+    sc.set_spawn("from_village", 8, 10)        # legacy fallback
+    sc.set_spawn("from_graveyard", 10, 1)      # one tile south of the ? door
+    sc.set_spawn("from_bell_tower", 2, 2)      # at the foot of the U stairs
 
     pos = sc.consume_marker("O")
     if pos:
@@ -105,11 +113,12 @@ def build_old_man_house():
                        dialogue_fn=preacher_dialogue, movement="idle",
                        tag="preacher"))
 
-    # Sized darkwood furniture.
-    sc.add_furniture("table", [(2, 2), (3, 2)], w=54, h=36)
-    sc.add_furniture("bookshelf", [(5, 2), (6, 2)], w=58, h=18, seed=4)
-    sc.add_furniture("chair", [(3, 3)], w=22, h=28)
-    sc.add_furniture("bed", [(7, 4), (7, 5)], w=34, h=56)
+    # Sized darkwood furniture. The altar + lectern stand at the head of the
+    # nave; the preacher's cot is tucked in the vestry.
+    sc.add_furniture("table", [(8, 1), (9, 1)], w=54, h=36)
+    sc.add_furniture("bookshelf", [(12, 1), (13, 1)], w=58, h=18, seed=4)
+    sc.add_furniture("chair", [(9, 2)], w=22, h=28)
+    sc.add_furniture("bed", [(1, 4), (1, 5)], w=34, h=56)
 
     # Computer: a beige CRT decoration plus an invisible solid NPC at the
     # same tile so try_interact() picks it up and the [E] prompt shows.
@@ -121,40 +130,40 @@ def build_old_man_house():
                    dialogue_fn=_open_login_terminal,
                    movement="idle", solid=True, tag="computer"))
 
-    sc.add_decoration(Decoration(7 * TILE + 16,  0 * TILE + 22 , "candle"))
-    sc.add_decoration(Decoration(8 * TILE + 16, 5 * TILE + 24, "candle"))
+    sc.add_decoration(Decoration(13 * TILE + 16, 0 * TILE + 22, "candle"))
+    sc.add_decoration(Decoration(8 * TILE + 16, 0 * TILE + 22, "candle"))
     # The Preacher's parsonage in rural hunting country: a mounted buck
     # + trophy walleye on the north wall (replacing the old banner and
-    # stray photo), a cobweb in the NW corner, and a kerosene lamp on
+    # stray photo), a cobweb in the vestry corner, and a kerosene lamp on
     # the desk. The old computer is the cult's ancient church-records
     # terminal -- the LOGIN: prompt is unchanged.
-    sc.add_decoration(Decoration(2 * TILE + 16, 0 * TILE + 22, "buck_head",
+    sc.add_decoration(Decoration(11 * TILE + 16, 0 * TILE + 22, "buck_head",
                                  wall="N"))
-    sc.add_decoration(Decoration(6 * TILE + 16, 0 * TILE + 24,
+    sc.add_decoration(Decoration(12 * TILE + 16, 0 * TILE + 24,
                                  "mounted_fish"))
     sc.add_decoration(Decoration(1 * TILE + 6, 1 * TILE + 6, "cobweb",
                                  ang=0.0))
-    sc.add_decoration(Decoration(2 * TILE + 16, 2 * TILE + 2,
+    sc.add_decoration(Decoration(4 * TILE + 16, 2 * TILE + 2,
                                  "kerosene_lamp"))
-    sc.add_decoration(Decoration(8 * TILE + 8, 2 * TILE + 16, "clock"))
-    # Phantom-mark chalk on the wall.
-    sc.add_decoration(Decoration(8 * TILE + 4, 4 * TILE + 16,
+    sc.add_decoration(Decoration(14 * TILE + 8, 2 * TILE + 16, "clock"))
+    # Phantom-mark chalk on the nave's east wall.
+    sc.add_decoration(Decoration(14 * TILE + 4, 6 * TILE + 16,
                                  "phantom_mark"))
     # The Preacher's own hand: the MISSING flyer for the bright young
     # woman he watched go quiet (he warns about her from the pulpit), and
     # the polaroid wall of faces he keeps -- the ones who drifted into the
     # corn and never came back.
-    sc.add_decoration(Decoration(0 * TILE + 26, 3 * TILE + 16,
+    sc.add_decoration(Decoration(0 * TILE + 26, 8 * TILE + 16,
                                  "missing_flyer"))
-    sc.add_decoration(Decoration(4 * TILE + 16, 0 * TILE + 24,
+    sc.add_decoration(Decoration(7 * TILE + 16, 0 * TILE + 24,
                                  "polaroid_wall"))
-    for mx, my in [(4, 4), (6, 3), (5, 4)]:
+    for mx, my in [(10, 7), (12, 8), (9, 9)]:
         sc.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16,
                                      "mote"))
-    # Hide spots: behind the desk, behind the shelf.
+    # Hide spots: in the vestry (the blind back room) and behind the altar.
     sc.hide_spots = [
-        (3 * TILE + 16, 2 * TILE + 24, "behind"),
-        (7 * TILE + 16, 2 * TILE + 24, "behind"),
+        (2 * TILE + 16, 4 * TILE + 24, "behind"),
+        (8 * TILE + 16, 1 * TILE + 24, "behind"),
     ]
     sc.on_enter_fn = old_man_house_on_enter
     return sc
@@ -169,7 +178,7 @@ def old_man_house_on_enter(game, scene):
         return
     scene.npcs = [n for n in scene.npcs
                   if getattr(n, "tag", None) != "preacher"]
-    bx, by = 5 * TILE + 16, 5 * TILE + 16
+    bx, by = 9 * TILE + 16, 4 * TILE + 16
     scene.add_decoration(Decoration(bx - 6, by + 9, "bloodstain"))
     scene.add_decoration(Decoration(bx + 9, by - 6, "gore"))
     scene.add_decoration(Decoration(bx, by, "body"))
