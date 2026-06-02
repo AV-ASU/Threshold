@@ -549,6 +549,12 @@ def main():
         gp._note_fold_pursuit((next(iter(_SAFE)), "default"))
         check(gp._fold_pursuer is None,
               "portal: a SAFE room shakes the chase (refuge never breached)")
+        # Mara's cell is a deliberate refuge: it hosts no cultists, so a chase
+        # fled into it does NOT carry (no spawn-then-sweep). Locked by choice.
+        _ch._cult_state = "chase"
+        gp._note_fold_pursuit(("maras_room", "default"))
+        check(gp._fold_pursuer is None,
+              "portal: maras_room is a refuge -- the chase does not follow in")
     # The dead-end branch rooms must be registered underground, or a pursuer
     # fled into them spawns as a surface NPC that _tick_cultists sweeps (the
     # chase silently evaporates). They also need the dark/flashlight gate.

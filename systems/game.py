@@ -2629,10 +2629,16 @@ class Game(CutsceneMixin):
         exit, stash that one pursuer so it follows a beat behind, whether the
         exit is a door, ladder, rope, seamless passage, or a hidden fold. Both
         cultist classes count -- the surface NPC chasers AND the underground
-        Enemy cultists. The refuge (SAFE_SCENES) is the one thing they can't
-        cross: a safe room always shakes them."""
+        Enemy cultists. A destination shakes the chase when it can't host a
+        pursuer: a SAFE_SCENES refuge, or any room that doesn't tick cultists
+        at all -- an underground room (Enemy) or a CULTIST_SCENE (NPC) is the
+        only place one can materialize, so e.g. Mara's cell stays a refuge."""
         target_scene, _spawn_id = exit_data
         if target_scene in SAFE_SCENES:
+            self._fold_pursuer = None
+            return
+        if (target_scene not in UNDERGROUND_SCENES
+                and target_scene not in CULTIST_SCENES):
             self._fold_pursuer = None
             return
         hot, hot_d = None, FOLD_PURSUE_RANGE
