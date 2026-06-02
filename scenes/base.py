@@ -2111,13 +2111,16 @@ class Scene:
         straight in the open and only pays for BFS when cover intervenes."""
         dx = self.world_dx(x0, x1)
         dy = self.world_dy(y0, y1)
-        n = int(math.hypot(dx, dy) // step)
+        # max(1, ...) so a target within one `step` still samples the
+        # endpoint -- otherwise n==0 skips the loop and reports a clear line
+        # to a solid tile a few px away.
+        n = max(1, int(math.hypot(dx, dy) // step))
         for i in range(1, n + 1):
             if self._nav_solid_at(x0 + dx * i / n, y0 + dy * i / n):
                 return False
         return True
 
-    def nav_path(self, fx, fy, tx, ty, max_visit=1500):
+    def nav_path(self, fx, fy, tx, ty, max_visit=None):
         """Wrap-aware BFS over the walkable grid. Returns a list of world-
         centre points from the step AFTER the start up to the goal tile, or
         None if unreachable (caller falls back to a straight step).
@@ -2125,6 +2128,12 @@ class Scene:
         from collections import deque
         g = self.nav_grid()
         w, h = self.w, self.h
+        # Explore the whole (small) underground rooms fully; only the big
+        # surface maps hit a bound -- there a far blocked goal is rare and a
+        # straight fallback is fine. Sized so a reachable goal is never missed
+        # in the rooms that actually have mid-floor cover.
+        if max_visit is None:
+            max_visit = min(w * h, 4000)
 
         def norm(i, j):
             if self.wrap_x:

@@ -549,6 +549,13 @@ def main():
         gp._note_fold_pursuit((next(iter(_SAFE)), "default"))
         check(gp._fold_pursuer is None,
               "portal: a SAFE room shakes the chase (refuge never breached)")
+    # The dead-end branch rooms must be registered underground, or a pursuer
+    # fled into them spawns as a surface NPC that _tick_cultists sweeps (the
+    # chase silently evaporates). They also need the dark/flashlight gate.
+    from systems.game import DARK_SCENES as _DK
+    for _br in ("the_sump", "the_cells", "the_ossuary"):
+        check(_br in _UG, f"portal: branch room {_br} is registered underground")
+        check(_br in _DK, f"dark: branch room {_br} gets the underground gloom")
 
     print()
     if FAILS:

@@ -144,6 +144,7 @@ DARK_SCENES = {"basement", "well_passage", "well_bottom",
                "haunted_house",
                "depths_antechamber", "depths_procession",
                "depths_hall", "depths_threshing", "depths_stair",
+               "the_sump", "the_cells", "the_ossuary",
                "dark", "threshold"}
 
 # Cult-dark: a subset of DARK_SCENES where the flashlight is
@@ -152,7 +153,8 @@ DARK_SCENES = {"basement", "well_passage", "well_bottom",
 # normal physics.
 CULT_DARK_SCENES = {"depths_antechamber", "depths_procession",
                     "depths_hall", "depths_threshing",
-                    "depths_stair", "dark", "threshold"}
+                    "depths_stair", "the_ossuary",
+                    "dark", "threshold"}
 
 # Scenes where the reactive cult-ambient layer (proximity-driven
 # cult_breath + cult_chant) runs. These are the rite spaces -- the
@@ -337,6 +339,9 @@ UNDERGROUND_SCENES = {
     "works_deepstair",
     "depths_antechamber", "depths_procession", "depths_hall",
     "depths_threshing", "depths_stair",
+    # the dead-end branch rooms hang off their parent corridors and share
+    # its underground treatment (baseline rot + Enemy-cultist pursuit).
+    "the_sump", "the_cells", "the_ossuary",
 }
 
 

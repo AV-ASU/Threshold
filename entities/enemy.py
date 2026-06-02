@@ -564,6 +564,7 @@ class Enemy:
         # to CHASE above.
         if getattr(self, "lock_facing", False):
             return
+        T = scene.TILE
         # Pause-and-scan on arrival: rotate facing slowly, no movement.
         if self.move_timer > 0:
             self.move_timer -= dt
@@ -573,31 +574,31 @@ class Enemy:
                 ang = random.uniform(0, math.tau)
                 self.facing = (math.cos(ang), math.sin(ang))
             return
-        # Arrived (or no goal): roll a fresh reachable walkable tile within
-        # ~8 blocks. nav_toward (inside _cult_step) routes the actual step
-        # around cover; we only need the destination to be reachable.
-        if (self.move_target is None
-                or scene.world_dist(self.x, self.y, self.move_target[0],
-                                    self.move_target[1]) < 10):
-            if self.move_target is not None:
-                self.move_timer = random.uniform(1.0, 2.2)   # arrived: scan
-                self._roam_look = 0.0
-                self.move_target = None
-                return
-            from constants import TILE as _T
+        # Roll a fresh goal when we have none, just arrived, or a travel
+        # budget expired (the goal turned out unreachable -- e.g. boxed off
+        # by cover). Picking is cheap (a walkable tile within ~8 blocks); the
+        # nav in _cult_step does the routing and the budget re-rolls if it
+        # can't get there. ALWAYS pause-scan when arriving or finding nothing,
+        # so a boxed-in cultist never busy-loops a re-roll every frame.
+        self._roam_travel = getattr(self, "_roam_travel", 0.0) - dt
+        arrived = (self.move_target is not None
+                   and scene.world_dist(self.x, self.y, self.move_target[0],
+                                        self.move_target[1]) < 10)
+        if self.move_target is None or arrived or self._roam_travel <= 0:
+            had_goal = self.move_target is not None
+            self.move_target = None
             for _ in range(12):
-                gx = int(self.x // _T) + random.randint(-8, 8)
-                gy = int(self.y // _T) + random.randint(-8, 8)
-                wx = gx * _T + _T // 2
-                wy = gy * _T + _T // 2
+                gx = int(self.x // T) + random.randint(-8, 8)
+                gy = int(self.y // T) + random.randint(-8, 8)
+                wx, wy = gx * T + T // 2, gy * T + T // 2
                 if scene._nav_solid_at(wx, wy):
                     continue
-                if not (scene.nav_clear_line(self.x, self.y, wx, wy)
-                        or scene.nav_path(self.x, self.y, wx, wy)):
-                    continue
                 self.move_target = (wx, wy)
+                self._roam_travel = 5.0
                 break
-            else:
+            if had_goal or self.move_target is None:
+                self.move_timer = random.uniform(1.0, 2.2)
+                self._roam_look = 0.0
                 return
         self._cult_step(self.move_target[0], self.move_target[1], dt, scene)
 
