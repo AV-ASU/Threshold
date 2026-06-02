@@ -29,7 +29,7 @@ import random
 import pygame
 
 from rendering.king3d import (_surface, _build_shards, _shade, _norm3,
-                              _rodrigues, _draw_arms, _ARM_ANCHORS, _PORC,
+                              _rodrigues, _thick_strip, _ARM_ANCHORS, _PORC,
                               _PORC_DK, _PORC_HI, _HOLLOW, _VOIDC, _GOLD,
                               _GOLD_DK, _GOLD_HI)
 
@@ -104,7 +104,7 @@ def _halo_particles(surf, cx, cy, t, threat, scale):
     if dt <= 0 or dt > 0.2:
         dt = 0.016
     rng = _HALO_RNG
-    rate = 0.18 + 0.7 * threat
+    rate = 0.1 + 0.38 * threat
     while rate > 0:
         if rng.random() < min(1.0, rate):
             a = rng.uniform(0, math.tau)
@@ -120,8 +120,8 @@ def _halo_particles(surf, cx, cy, t, threat, scale):
                                       else rng.uniform(3.2, 6.0)) * scale * 0.5,
                                 "seed": rng.randint(0, 999)})
         rate -= 1.0
-    if len(_HALO_PARTS) > 180:
-        del _HALO_PARTS[:len(_HALO_PARTS) - 180]
+    if len(_HALO_PARTS) > 90:
+        del _HALO_PARTS[:len(_HALO_PARTS) - 90]
     keep = []
     for p in _HALO_PARTS:
         p["age"] += dt
@@ -176,10 +176,13 @@ def _eye_sprite(surf, x, y, r, ang, openf, gaze, bright):
                                max(1, ir // 4))
 
 
-def _draw_shard_eyes(surf, scr, seed, t, threat, gaze, bright):
-    """Cover a shard in small blinking eyes (front AND back faces) -- the
-    biblically-accurate, full-of-eyes angel. Seeded so each eye keeps its place
-    and its own blink phase as the shard tumbles."""
+def _draw_shard_eyes(surf, scr, seed, t, threat, gaze, bright, appear):
+    """Eyes that open across a shard once the mask has SHATTERED (gated by
+    `appear` 0..1, so the intact calm face has none) -- front AND back faces,
+    the biblically-accurate, full-of-eyes angel. Seeded so each eye keeps its
+    place and blink phase as the shard tumbles. Kept sparse to avoid clutter."""
+    if appear < 0.25:
+        return
     n = len(scr)
     if n < 3:
         return
@@ -187,10 +190,10 @@ def _draw_shard_eyes(surf, scr, seed, t, threat, gaze, bright):
     cys = sum(q[1] for q in scr) / n
     xs = [q[0] for q in scr]; ys = [q[1] for q in scr]
     rad = min(max(xs) - min(xs), max(ys) - min(ys))
-    if rad < 6:
+    if rad < 8:
         return
     rng = random.Random(seed)
-    count = max(1, min(4, int(rad / 9)))
+    count = max(1, min(2, int(rad / 13)))
     for i in range(count):
         vx, vy = scr[rng.randrange(n)]
         f = rng.uniform(0.18, 0.62)
@@ -201,36 +204,71 @@ def _draw_shard_eyes(surf, scr, seed, t, threat, gaze, bright):
         rate = rng.uniform(0.5, 0.9)
         bz = (t * rate + ph) % rng.uniform(3.0, 6.0)
         openf = 1.0 if bz > 0.16 else abs(bz - 0.08) / 0.08
+        openf *= max(0.0, min(1.0, (appear - 0.25) / 0.35))   # ease open as it shatters
         ang = rng.uniform(-0.5, 0.5)
         _eye_sprite(surf, ex, ey, er, ang, openf, gaze, bright)
 
 
-def _arm_portals(surf, cx, cy, yaw, bob, scale, amt, t):
-    """A rift at the BASE of each arm -- a BLACK void mouth ringed with crisp
-    gold (a Sign-lit hole), so each limb reads as reaching OUT of a portal, not
-    sprouting from the mass. Distinct from the soft soul-orbs by design."""
-    if amt <= 0.04:
+def _draw_portal(surf, px, py, rr, amt, scale):
+    """A small, TRANSLUCENT rift -- a dim black mouth with a thin gold rim. Kept
+    faint so it frames the arm root without dominating; drawn OVER the arm base
+    so the limb reads as emerging from it."""
+    w = max(1, int(rr * 1.1)); h = max(1, int(rr * 1.4))
+    d = max(w, h) * 2 + 6
+    ps = pygame.Surface((d, d), pygame.SRCALPHA)
+    c = d // 2
+    rect = (c - w, c - h, w * 2, h * 2)
+    pygame.draw.ellipse(ps, (5, 4, 1, int(120 * amt)), rect)        # translucent mouth
+    pygame.draw.ellipse(ps, (*_shade(_GOLD, 0.5 + 0.4 * amt), int(175 * amt)),
+                        rect, max(1, int(scale * 0.35)))            # thin gold rim
+    surf.blit(ps, (int(px - c), int(py - c)))
+
+
+def _halo_arm(surf, ccx, ccy, px, py, depth, orbit, scale, t, ai):
+    """One slow tendril reaching OUTWARD from its portal (never lunging at the
+    camera). A tapered near-black ribbon with a thin gold core seam + a small
+    gold ember tip -- black + gold, restrained."""
+    ang = math.atan2(py - ccy, px - ccx)
+    segs = 8
+    seglen = (1.1 + 1.2 * orbit) * scale
+    curl = (0.09 + 0.09 * orbit) * (1.0 if ai % 2 == 0 else -1.0)
+    dim = 0.5 + 0.5 * depth
+    x, y = px, py
+    pts = [(x, y)]
+    widths = [max(1.5, 3.0 * scale * 0.5 * dim)]
+    for k in range(1, segs + 1):
+        fr = k / segs
+        ang += curl + math.sin(t * 1.0 + ai * 1.3 + fr * 3.0) * 0.05 * (0.4 + orbit)
+        x += math.cos(ang) * seglen
+        y += math.sin(ang) * seglen + fr * 0.45 * scale            # a little droop
+        pts.append((x, y))
+        widths.append(max(1.0, (3.0 - 2.4 * fr) * scale * 0.5 * dim))
+    body = _thick_strip(pts, widths)
+    if body and len(body) >= 3:
+        pygame.draw.polygon(surf, _shade(_SHARD_DK2, 0.5 + 0.5 * dim), body)
+    core = _thick_strip(pts, [w * 0.4 for w in widths])
+    if core and len(core) >= 3:
+        pygame.draw.polygon(surf, _shade(_GOLD_DK, 0.5 + 0.4 * dim), core)
+    pygame.draw.circle(surf, _shade(_GOLD, 0.5 + 0.4 * dim),
+                       (int(pts[-1][0]), int(pts[-1][1])), max(1, int(scale * 0.4)))
+
+
+def _portals_arms(surf, cx, cy, yaw, bob, scale, orbit, t, layer):
+    """Draw each arm reaching out of its portal, for the requested depth layer
+    ('back' behind the core, 'front' over the shards). Arm first, portal over
+    its root, so the two read as CONNECTED."""
+    if orbit <= 0.05:
         return
+    ccx, ccy = cx, cy - bob * scale
     for ai, (ath, ah) in enumerate(_ARM_ANCHORS):
         ax, _h, az = _surface(ath, ah, yaw)
-        x = cx + ax * scale
-        y = cy - (ah + bob) * scale
-        depth = 0.55 + 0.45 * max(0.0, min(1.0, (az + 6) / 12))
-        pulse = 0.85 + 0.15 * math.sin(t * 1.6 + ai * 1.7)
-        rr = max(3.0, 4.4 * scale * amt * depth * pulse)
-        w, h = int(rr * 1.5), int(rr * 1.9)
-        d = max(w, h) * 2 + 8
-        pr = pygame.Surface((d, d), pygame.SRCALPHA)
-        c = d // 2
-        rect = (c - w, c - h, w * 2, h * 2)
-        # the black void mouth, then concentric gold rims (outer crisp, inner dim)
-        pygame.draw.ellipse(pr, (4, 3, 1, int(235 * amt)), rect)
-        pygame.draw.ellipse(pr, (*_shade(_GOLD, 0.55 + 0.4 * amt), int(255 * amt)),
-                            rect, max(2, int(scale * 0.55)))
-        ir = (c - int(w * 0.6), c - int(h * 0.6), int(w * 1.2), int(h * 1.2))
-        pygame.draw.ellipse(pr, (*_GOLD_HI, int(150 * amt * pulse)), ir,
-                            max(1, int(scale * 0.3)))
-        surf.blit(pr, (int(x - c), int(y - c)))
+        if (layer == "front") != (az >= 0):
+            continue
+        px = cx + ax * scale
+        py = cy - (ah + bob) * scale
+        depth = 0.5 + 0.5 * max(0.0, min(1.0, (az + 6) / 12))
+        _halo_arm(surf, ccx, ccy, px, py, depth, orbit, scale, t, ai)
+        _draw_portal(surf, px, py, (1.7 + 1.5 * orbit) * scale * depth, orbit, scale)
 
 
 def _cross(a, b):
@@ -485,24 +523,20 @@ def draw_king_halo(surf, cx, cy, yaw, t, threat=0.0, scale=3.0, beat=0.0):
     # 0) the WAKE: porcelain ash + tumbling mask-flecks + gold sparks, behind
     _halo_particles(surf, cx, cy - bob * scale, t, threat, scale)
 
-    # 1) BEHIND shards: black bodies, warm gold rim -- and their BACKSIDES are
-    # full of eyes too (the angel is eyed within and without).
+    # 1) BEHIND shards: black bodies, warm gold rim -- backsides eyed too (the
+    # angel is full of eyes within and without), but only once shattered.
     for p, (scr, zc, fr, eye, tear) in behind:
         pygame.draw.polygon(surf, _SHARD_DK2, scr)
         pygame.draw.polygon(surf, _shade(_GOLD_DK, 0.45 + 0.55 * threat), scr, 1)
-        _draw_shard_eyes(surf, scr, int(p["ph"] * 997) + 1, t, threat, gaze, 0.4)
+        _draw_shard_eyes(surf, scr, int(p["ph"] * 997) + 1, t, threat, gaze, 0.4, orbit)
 
-    # 2) the portals + the reaching ARMS that trail away from the camera (deep)
-    _arm_portals(surf, cx, cy - bob * scale, yaw, 0.0, scale, orbit, t)
-    _draw_arms(surf, cx, cy - bob * scale, yaw, 0.0, scale, orbit, threat, "back", t=t)
+    # 2) the reaching ARMS out of their portals, trailing away from the camera
+    _portals_arms(surf, cx, cy, yaw, bob, scale, orbit, t, "back")
 
     # 3) the breathing core + the Sign corona
     _core_glow(surf, cx, cy - bob * scale, t, threat, scale, breath)
 
-    # 4) faces surfacing in the light (with trails)
-    _draw_faces(surf, cx, cy - bob * scale, t, threat, scale, gaze, crown)
-
-    # 5) FRONT shards on a layer so the big eye holes + tears punch THROUGH to
+    # 4) FRONT shards on a layer so the big eye holes + tears punch THROUGH to
     # the gold core (black bodies, gold-leaf rim). Small eyes are layered ON
     # AFTER the blit so the hole-punch can't erase them.
     porc = pygame.Surface(surf.get_size(), pygame.SRCALPHA)
@@ -533,13 +567,12 @@ def draw_king_halo(surf, cx, cy, yaw, t, threat=0.0, scale=3.0, beat=0.0):
         pygame.draw.lines(porc, (0, 0, 0, 0), False, tp, 2)    # PUNCH the tear
     surf.blit(porc, (0, 0))
 
-    # the small blinking eyes that cover the front shards
+    # the small blinking eyes across the front shards (only after shatter)
     for scr, seed in eyed:
-        _draw_shard_eyes(surf, scr, seed, t, threat, gaze, 0.55 + 0.45 * threat)
+        _draw_shard_eyes(surf, scr, seed, t, threat, gaze, 0.55 + 0.45 * threat, orbit)
 
-    # 6) the portals + reaching ARMS that lunge AT the camera (over the shards)
-    _arm_portals(surf, cx, cy - bob * scale, yaw, 0.0, scale, orbit, t)
-    _draw_arms(surf, cx, cy - bob * scale, yaw, 0.0, scale, orbit, threat, "front", t=t)
+    # 6) the reaching ARMS out of their portals, over the shards (no lunge)
+    _portals_arms(surf, cx, cy, yaw, bob, scale, orbit, t, "front")
 
     # 5) the watching: each eye holds a wet, sick-gold pupil that HOLDS the
     # player (drifts slowly, locks on the beat) with a cold gleam -- the dread
