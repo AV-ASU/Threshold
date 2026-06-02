@@ -7,10 +7,12 @@ to peek around the world. The void around each scene is filled with a
 procedural **skybox**, not black. A horror **blind-spot vision** layer is the
 ambitious payoff (terrain reveals on a peek; threats do not).
 
-This file is the source of truth for that track. It is **scaffolding so
-far** — the modules below are built, previewable, and pushed, but **not yet
-wired into the live game** (`systems/game.py` still renders the flat top-down
-view). Phase 1 (the camera seam) is the next live step.
+This file is the source of truth for that track. The camera seam, the oblique
+tilt, the skybox, occlusion, and the **blind-spot vision** are **all live and
+wired** — **F3** toggles pitch 0↔55, and pitch 0 stays the byte-identical
+shipping flat view. **One phase remains: Phase 5**, the finish/polish pass
+described below (it also absorbs the old head-turn + per-actor-depth work).
+Everything before it is built and pushed.
 
 ---
 
@@ -56,15 +58,15 @@ explicitly off-ethos).
 
 The whole game converts world→screen today with an ad-hoc
 `sx = x - cam_x; sy = y - cam_y` at every draw site. That single conversion
-is the only real chokepoint. Centralizing it (Phase 1) makes tilt + rotate a
-parameter change instead of a 37-scene rewrite.
+is the only real chokepoint. Centralizing it (the `Camera` seam) makes tilt +
+rotate a parameter change instead of a 37-scene rewrite.
 
 ---
 
 ## Modules (built, isolated, pushed)
 
-All live under `rendering/`, with headless previews under `tools/`. None are
-imported by the live game yet.
+All live under `rendering/`, with headless previews under `tools/`. These are
+now wired into the live game; the tilt ships behind the **F3** toggle.
 
 | Module | Role |
 | --- | --- |
@@ -103,36 +105,47 @@ the world about the vertical axis (the head-turn).
 
 ## Roadmap
 
-| Phase | Work | Risk | Visual change |
-| --- | --- | --- | --- |
-| 0 ✅ | Pseudo-3D + camera + solids + skybox + occlusion scaffolding (this file) | — | none (isolated demos) |
-| **1** 🟧 | **Camera seam (live):** route world→screen through `Camera` at **pitch 0**. **DONE:** `Game.camera` synced each frame; items, corpses, NPCs, enemies, player, the five player-centred overlays, and decorations (incl. wrap-clones) all go through `camera.project()`. Gated pixel-identical by `tools/capture_world.py`. **REMAINING:** terrain / walls / roofs / doors are area/quad-based (`scenes/base.py`) and need real per-tile **quad** projection — moved to Phase 2 (it's geometry, not a 1:1 point swap). The fold pass (`rendering/folds.py`) and `enemy.draw` internals still take raw offsets. | low | **none** (pixel-identical) |
-| **2** ✅ | **Tilt the floor/walls (live).** `scenes/base.draw_terrain_tilted` warps the visible floor window (wrap-aware) + extrudes wall boxes; `draw_world` branches at pitch>0 with skybox + decorations; actors stand via Phase-1 projection + a sin(pitch) lift (per-kind for tall sprites); camera pivots about screen centre + eases a zoom-out (scale→0.72); **F3** debug-toggles pitch 0↔55. **Depth/occlusion:** walls split on the player's depth — behind drawn before actors, in-front drawn after + faded by `occluder_alpha`. **Enemies/projectiles** routed through the camera; **folds** stand up anchored to the projected floor seam. Gated pixel-identical at pitch 0; smoke+flow green. **Deferred (imperceptible/secondary):** overlay vignettes re-center ~15px off under tilt; per-ACTOR (vs player-only) wall depth interleave. | med | the tilt lands (F3) |
-| 3 | The **head-turn arc** (input clamp + ease, ±45°) + per-actor occlusion + depth-correct wall/actor interleave. | med | head-turn + clean depth |
-| **4** ✅ | **Blind-spot vision (live).** `rendering/sight.py` is the heading-keyed visibility buffer; `draw_world` gates the DRAW of NPCs, enemies, corpses, items, and the infestation rot decals to `visible_factor` (soft-alpha fade at the cone lip via `draw_with_alpha`), keyed to `look.aim` and clipped by `Scene.blocks_sight`. The world keeps **simulating** off-camera (the update path is untouched) — only rendering is gated, so unseen things aren't shown and **re-hide** when the head turns away (SCP-173 dread; no last-seen memory). The **King is exempt** (relentless apex); the player is never gated. Previews: `tools/preview_sight.py` (schematic) + `tools/preview_blindspot_live.py` (live tilt). Gated pixel-identical at pitch 0 (`tools/capture_world.py`); smoke + flow green. | high | the horror mechanic |
-| 5 | Reconcile top-down assumptions: wrap-clone seams re-project; per-scene `skybox kind`; tune dread framing. | low | polish |
+**Phases 0–4 are done and live** — the camera seam (pitch-0 byte-identical),
+the oblique tilt of floor/walls, the skybox in the voids, occlusion, and the
+**blind-spot vision**. F3 toggles the tilt; smoke + flow are green. **Phase 5
+is the only remaining phase.** It now also absorbs the old Phase 3 (the
+head-turn arc + per-actor depth), so it is the single push that takes the tilt
+track from "lands behind a toggle" to **finished**.
 
-### Things that will need care (known top-down assumptions)
+## Phase 5 — finish the oblique view (the only open phase)
 
-- **Wrap-around (toroidal) scenes** clone decorations/NPCs at `±world` offsets;
-  the clone offsets must be recomputed through the projection, not added in
-  screen space.
-- **Depth order** is currently *implicit* (draw order = list order). Phase 1
-  must make it explicit (`Camera.depth`) or tall things will sort wrong on tilt.
-- **Vignettes** (`_draw_brimley_haze`, `_draw_outdoor_vignette`) are radial and
-  player-centred; fine as screen-space passes, but re-center on the player's
-  *projected* position.
-- **HUD / overlays** stay screen-space (intended) — do **not** route them
-  through the camera.
+The work, in rough order of payoff:
 
----
+1. **Per-actor occlusion + depth-correct interleave.** Today walls split and
+   fade on the **player's** depth only (`occluder_alpha` keyed to the player) —
+   fine when rooms were near-empty, *wrong* now that every interior is full of
+   mid-floor props and partition walls (the reshaped/furnished world merged in
+   PR #12). Make the wall/actor interleave **per-actor**: each actor and prop
+   sorts against each wall by `Camera.depth`, and an occluding wall fades for
+   whichever actor it actually covers, not just the player. This is the
+   correctness fix the furnished rooms now need.
+2. **The head-turn arc (±45°).** Free-smooth yaw clamped to a 90° total arc off
+   forward, easing back to center on release (the locked decision above). Drive
+   `Camera.yaw` from the look input so the **view swings** with the peek —
+   today the blind-spot cone (`look.aim`) moves but the camera does not, so the
+   mechanic reads as disembodied. `tools/preview_occlusion.py` already
+   exercises the arc against fading walls.
+3. **Reconcile the remaining top-down assumptions** (the original Phase 5):
+   - **Wrap-clone seams** — toroidal scenes clone decor/NPCs at `±world`
+     offsets; recompute those offsets **through** the projection, not in screen
+     space, or the seam tears under tilt/yaw.
+   - **Per-scene `skybox kind`** — wire each scene to `overcast` vs `void`
+     (interiors/underground keep the near-black surround).
+   - **Tune the dread framing** — zoom/pitch/cone, and re-center the radial
+     vignettes (`_draw_brimley_haze`, `_draw_outdoor_vignette`) on the player's
+     **projected** position (they sit ~15px off under tilt today).
 
-## Working agreements for this track
+### Guardrails (non-negotiable for this phase)
 
-- **Phase 1 must be visually identical.** The win condition is "the diff is a
-  refactor; the game looks pixel-for-pixel the same at pitch 0." Verify with a
-  before/after capture, not just smoke.
-- **Keep it asset-free.** No PNGs, no bake step. Solids are math.
-- **Previews before live wiring.** Same loop that built this: render to PNG/GIF
-  headless, eyeball it, *then* touch `game.py`.
-- **Tilt ships behind a toggle** until it's good, so `main` stays playable.
+- **Pitch 0 stays byte-identical.** Gate every change with
+  `tools/capture_world.py`; the flat (F3-off) view must not move a pixel.
+- **Keep smoke + flow green** (`tests/smoke.py`, `tests/flow.py`).
+- **Asset-free** — solids are math, no PNGs, no bake step.
+- **Preview headless first.** Render to PNG/GIF with the SDL dummy drivers and
+  eyeball it *before* wiring `game.py`; ship behind the **F3** toggle until it's
+  good so `main` stays playable.
