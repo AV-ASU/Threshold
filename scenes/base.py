@@ -1682,10 +1682,11 @@ def draw_terrain_tilted(surf, scene, camera, focus=None, sight=None):
     # reads; boxes depth-sorted far->near so they overlap correctly. Walls draw
     # after, so a wall in front still overdraws a prop behind it.
     from rendering.furniture import is_solid_furniture, draw_furniture_solid
+    from rendering.props import is_solid_prop, draw_prop_solid
     from rendering.solids import draw_with_alpha
     solid_decos = []
     for d in scene.decorations:
-        if is_solid_furniture(d.kind):
+        if is_solid_furniture(d.kind) or is_solid_prop(d.kind):
             solid_decos.append(d)
             continue
         # Phase 4: rot decals are a world change -- gated to line of sight.
@@ -1701,7 +1702,8 @@ def draw_terrain_tilted(surf, scene, camera, focus=None, sight=None):
             draw_with_alpha(surf, a, lambda s, d=d: d.draw(s, 0, 0, camera))
     solid_decos.sort(key=lambda d: camera.depth(d.x, d.y))
     for d in solid_decos:
-        draw_furniture_solid(surf, camera, d)
+        if not draw_furniture_solid(surf, camera, d):
+            draw_prop_solid(surf, camera, d)
     # Split walls on the focus (player) depth: behind -> draw now; in front ->
     # return for the caller to draw after the actors.
     fdepth = camera.depth(focus[0], focus[1]) if focus else float("inf")

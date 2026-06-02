@@ -119,6 +119,9 @@ def build_well_passage():
     sc.set_spawn("from_well",    1, 5)
     sc.set_spawn("from_chamber", 14, 5)
 
+    # Stores stacked up in the north bay -- a barrel and a crate.
+    sc.add_furniture("barrel", [(8, 2)])
+    sc.add_furniture("crate", [(6, 1)])
     sc.add_decoration(Decoration(8 * TILE + 16, 5 * TILE + 16, "bloodstain"))
     sc.add_decoration(Decoration(7 * TILE + 16, 0 * TILE + 22, "candle"))
     sc.add_decoration(Decoration(13 * TILE + 16, 7 * TILE + 22, "claw_marks"))
@@ -153,8 +156,6 @@ def build_works_vats():
     objs[5][0] = "F"          # west -> back to the racks
     objs[5][12] = "E"         # east -> the sorting hall
     objs[10][6] = "D"         # south arm -> the overflow sump (dead-end branch)
-    for tx, ty in [(5, 2), (7, 2), (5, 8), (7, 8)]:   # stone cistern basins
-        objs[ty][tx] = "t"
     objects = ["".join(r) for r in objs]
     sc = Scene("works_vats", floor, objects, music="basement")
     sc.add_exit("F", "well_passage", "from_below")
@@ -165,10 +166,12 @@ def build_works_vats():
     sc.set_spawn("from_below", 11, 5)
     sc.set_spawn("from_the_sump", 6, 8)   # back up from the sump branch
 
-    # Cold mist rising off the basins where the dig broke into the river
-    # (NARRATIVE 1b: the underground artery to the door). Wet stone, no
-    # bodies -- the claiming cult renders no one.
+    # Stone cistern basins brimming with black water -- volumetric props now
+    # (round 3D basins), one sunk in each arm, with cold mist rising off them
+    # (NARRATIVE 1b: the dig broke into the underground river, the artery to
+    # the door). Wet stone, no bodies -- the claiming cult renders no one.
     for tx, ty in [(5, 2), (7, 2), (5, 8), (7, 8)]:
+        sc.add_furniture("cistern_basin", [(tx, ty)])
         sc.add_decoration(Decoration(tx * TILE + 16, ty * TILE + 6, "smoke"))
     sc.add_decoration(Decoration(6 * TILE + 16, 5 * TILE + 16, "candle"))
     # Cobweb grime in the high corners above the vats.
@@ -251,6 +254,9 @@ def build_works_sorting():
                                  ang=0.0))
     sc.add_decoration(Decoration(14 * TILE + 26, 4 * TILE + 6, "cobweb",
                                  ang=math.pi / 2))
+    # Crates of catalogued effects stacked up in the north stem.
+    sc.add_furniture("crate", [(11, 2)])
+    sc.add_furniture("crate", [(12, 2)])
     sc._table_pos = (6 * TILE + 16, 5 * TILE + 16)
     sc.hide_spots = [
         (5 * TILE + 16, 6 * TILE + 16, "behind"),
@@ -370,6 +376,9 @@ def build_works_scriptorium():
         sc.add_decoration(Decoration(tx * TILE + 16, ty * TILE + 16,
                                      "yellow_sign"))
     sc.add_decoration(Decoration(8 * TILE + 16, 2 * TILE + 6, "candle"))
+    # Two stone columns hold up the vault.
+    sc.add_furniture("pillar", [(4, 6)])
+    sc.add_furniture("pillar", [(9, 6)])
     # Cobweb grime in the beveled corners of the scriptorium.
     sc.add_decoration(Decoration(2 * TILE + 6, 1 * TILE + 6, "cobweb",
                                  ang=0.0))
@@ -450,6 +459,9 @@ def build_works_sign():
     sc.add_decoration(Decoration(8 * TILE + 16, 1 * TILE + 16, "yellow_sign"))
     for tx in (4, 5, 7, 8):
         sc.add_decoration(Decoration(tx * TILE + 16, 3 * TILE + 16, "candle"))
+    # Pews behind the kneeling congregation.
+    for px in (4, 6, 8):
+        sc.add_furniture("pew", [(px, 7)])
     # Cobweb grime in the square south corners.
     sc.add_decoration(Decoration(1 * TILE + 6, 9 * TILE + 26, "cobweb",
                                  ang=-math.pi / 2))
@@ -632,7 +644,12 @@ def build_the_sump():
     sc.add_exit("F", "works_vats", "from_the_sump")
     sc.set_spawn("default",   5, 5)
     sc.set_spawn("from_vats", 5, 2)
-    # Cold mist off the standing water, a candle on the dry ledge.
+    # Black water pooled in two stone basins, a barrel + crate of the diggers'
+    # supplies on the dry ledge, cold mist rising, a candle.
+    sc.add_furniture("cistern_basin", [(4, 6)])
+    sc.add_furniture("cistern_basin", [(6, 6)])
+    sc.add_furniture("barrel", [(7, 4)])
+    sc.add_furniture("crate", [(3, 4)])
     for tx, ty in [(3, 5), (6, 6), (4, 7)]:
         sc.add_decoration(Decoration(tx * TILE + 16, ty * TILE + 6, "smoke"))
     sc.add_decoration(Decoration(5 * TILE + 16, 3 * TILE + 16, "candle"))
@@ -674,19 +691,22 @@ def build_the_cells():
     sc.add_exit("F", "works_sorting", "from_the_cells")
     sc.set_spawn("default",     5, 2)
     sc.set_spawn("from_sorting", 5, 2)
-    # The leavings of the kept: a cot scrap, old stains, a corn doll left
-    # in a cell. Phantom marks scratched at child height.
-    sc.add_decoration(Decoration(2 * TILE + 16, 4 * TILE + 16, "bloodstain"))
-    sc.add_decoration(Decoration(9 * TILE + 16, 6 * TILE + 16, "bloodstain"))
-    sc.add_decoration(Decoration(2 * TILE + 16, 8 * TILE + 16, "corn_doll"))
+    # The leavings of the kept: bare cots in the stalls, old stains, a corn
+    # doll left behind. Phantom marks scratched at child height.
+    sc.add_furniture("cot", [(2, 4)])           # west cell
+    sc.add_furniture("cot", [(9, 6)])           # east cell
+    sc.add_furniture("cot", [(2, 8)])           # west cell
+    sc.add_decoration(Decoration(9 * TILE + 16, 4 * TILE + 16, "bloodstain"))
+    sc.add_decoration(Decoration(2 * TILE + 16, 6 * TILE + 16, "bloodstain"))
+    sc.add_decoration(Decoration(9 * TILE + 16, 8 * TILE + 16, "corn_doll"))
     sc.add_decoration(Decoration(9 * TILE + 28, 4 * TILE + 16, "phantom_mark"))
     sc.add_decoration(Decoration(2 * TILE + 28, 6 * TILE + 16, "phantom_mark"))
     sc.add_decoration(Decoration(6 * TILE + 16, 9 * TILE + 16, "candle"))
     sc.add_decoration(Decoration(1 * TILE + 6, 9 * TILE + 26, "cobweb",
                                  ang=-math.pi / 2))
     sc.hide_spots = [
-        (2 * TILE + 16, 4 * TILE + 16, "behind"),   # inside a west cell
-        (9 * TILE + 16, 8 * TILE + 16, "behind"),   # inside an east cell
+        (3 * TILE + 16, 4 * TILE + 16, "behind"),   # beside a west cot
+        (8 * TILE + 16, 6 * TILE + 16, "behind"),   # beside an east cot
         (6 * TILE + 16, 6 * TILE + 16, "behind"),   # in the corridor
     ]
     _ambient(sc, "whisper", 0.13, 6.0, 11.0)

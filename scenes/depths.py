@@ -146,6 +146,10 @@ def build_depths_antechamber():
     sc.set_spawn("from_above", 5, 5)
     sc.add_decoration(Decoration(3 * TILE + 16, 3 * TILE + 16, "candle"))
     sc.add_decoration(Decoration(7 * TILE + 16, 7 * TILE + 16, "candle"))
+    # Two stone pillars flank the landing on the diagonal (clear of the
+    # mid-row passage to the east exit and the cultist's loop).
+    sc.add_furniture("pillar", [(7, 3)])
+    sc.add_furniture("pillar", [(3, 7)])
     sc.add_decoration(Decoration(5 * TILE + 16, 5 * TILE + 16, "bloodstain"))
     sc.add_decoration(Decoration(6 * TILE + 16, 7 * TILE + 16, "bloodstain"))
     # Cobweb grime in the beveled corners of the fall zone.
@@ -216,6 +220,11 @@ def build_depths_procession():
     for cx in range(2, 14, 2):
         sc.add_decoration(Decoration(cx * TILE + 16, 4 * TILE + 16,
                                      "candle"))
+    # A colonnade of stone pillars flanking the central walk (clear of the
+    # bays and the walking line).
+    for px in (5, 10):
+        sc.add_furniture("pillar", [(px, 3)])
+        sc.add_furniture("pillar", [(px, 5)])
     # Cobweb grime in the high corners of the procession column.
     sc.add_decoration(Decoration(1 * TILE + 6, 3 * TILE + 6, "cobweb",
                                  ang=0.0))
@@ -274,6 +283,11 @@ def build_depths_hall():
                                  "wrong_taxidermy", wall="N", seed=21))
     sc.add_decoration(Decoration(5 * TILE + 16, 4 * TILE + 16, "candle"))
     sc.add_decoration(Decoration(5 * TILE + 16, 6 * TILE + 16, "candle"))
+    # Pews in two rows down the nave, a clear central aisle (row 5) between
+    # them up to the iron door.
+    for px in (2, 4, 6):
+        sc.add_furniture("pew", [(px, 4)])
+        sc.add_furniture("pew", [(px, 6)])
     # Cobweb grime in the transept ends.
     sc.add_decoration(Decoration(8 * TILE + 6, 1 * TILE + 6, "cobweb",
                                  ang=0.0))
@@ -282,8 +296,8 @@ def build_depths_hall():
     sc.hide_spots = [
         (9 * TILE + 16, 1 * TILE + 24, "behind"),    # north transept arm
         (9 * TILE + 16, 8 * TILE + 16, "behind"),    # south transept arm
-        (2 * TILE + 16, 5 * TILE + 16, "behind"),    # west nave
-        (7 * TILE + 16, 6 * TILE + 16, "behind"),
+        (2 * TILE + 16, 5 * TILE + 16, "behind"),    # west nave aisle
+        (8 * TILE + 16, 6 * TILE + 16, "behind"),    # at the crossing
     ]
     # Two stationary cultists kneel at the iron door, facing east.
     # Aggro starts at 0 (oblivious) so they don't react until the
@@ -349,6 +363,10 @@ def build_depths_threshing():
     for bx, by in [(4, 4), (6, 5), (8, 6), (5, 7), (7, 4)]:
         sc.add_decoration(Decoration(bx * TILE + 16, by * TILE + 16,
                                      "bloodstain"))
+    # The yield itself: raked cones of tithed grain (3D heaps), clear of the
+    # central walk (row 5) and the heap the player reads (6, 5).
+    for gx, gy in [(4, 4), (8, 4), (4, 7), (8, 7)]:
+        sc.add_furniture("grain_heap", [(gx, gy)])
     sc.add_decoration(Decoration(6 * TILE + 16, 5 * TILE + 16,
                                  "phantom_mark"))
     # Cobweb grime in the cavern's bitten corners.
@@ -421,8 +439,10 @@ def build_the_ossuary():
     sc.add_exit("F", "depths_procession", "from_the_ossuary")
     sc.set_spawn("default",         4, 6)
     sc.set_spawn("from_procession", 4, 2)
-    # Shelved leavings + old stains; candles gutter in the niches.
+    # Racks of shelved bones (3D) line the niches, old stains beneath them;
+    # candles gutter between.
     for sx, sy in [(2, 4), (6, 4), (2, 8), (6, 8)]:
+        sc.add_furniture("bone_rack", [(sx, sy)])
         sc.add_decoration(Decoration(sx * TILE + 16, sy * TILE + 16,
                                      "bloodstain"))
     sc.add_decoration(Decoration(4 * TILE + 16, 3 * TILE + 16, "phantom_mark"))

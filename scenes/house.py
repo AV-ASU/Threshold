@@ -646,6 +646,10 @@ def build_basement():
     sc.add_decoration(Decoration(10 * TILE + 26, 1 * TILE + 6, "cobweb",
                                  ang=math.pi / 2))
     sc.add_furniture("firewood", [(3, 10), (4, 10)], w=58, h=24)
+    # Crates of stored goods filling out the cellar's east end.
+    sc.add_furniture("crate", [(10, 4)])
+    sc.add_furniture("crate", [(11, 4)])
+    sc.add_furniture("barrel", [(11, 2)])
     for mx, my in [(2, 5), (6, 6), (4, 3), (8, 7)]:
         sc.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16,
                                      "mote"))
