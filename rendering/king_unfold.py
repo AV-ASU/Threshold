@@ -33,6 +33,8 @@ _GOLD = (204, 164, 64)
 _GOLD_HI = (244, 216, 124)
 _GOLD_RIM = (196, 156, 58)          # light trapped at the silhouette
 _HEART = (168, 126, 44)             # the everting core, glowing through flesh
+_TOOTH = (198, 188, 168)            # bone (desaturated, sickly), high-contrast
+_TOOTH_DK = (92, 82, 72)            # tooth in shadow / at the gum
 _EDGE_HI = (206, 172, 78)
 _EDGE_DK = (84, 68, 30)             # (kept for tools/explore_4d_shapes.py)
 
@@ -183,6 +185,11 @@ def _build():
     # phase. (No carved mask sprites: the creature never wears a nameable face.)
     eye_sites = [(fi, r.uniform(0, 6.283))
                  for fi in r.sample(range(len(ofaces)), 16)]
+    # MAW SITES: facets where eversion-maws tear open -- scattered, fewer than
+    # the eyes (mouths are bigger), each gnashing on its own phase. Plural and
+    # wrong: it is all watching AND all hungry; never one face-with-a-mouth.
+    maw_sites = [(fi, r.uniform(0, 6.283))
+                 for fi in r.sample(range(len(ofaces)), 7)]
 
     # arm roots: a POOL of candidate vertices spread over the mass. Each frame
     # _draw_arms extrudes only the ones whose 4D w has everted FORWARD past a
@@ -205,6 +212,7 @@ def _build():
         cfaces += [[i + off for i in face] for face in f]
 
     _FORM = dict(overts=overts, ofaces=ofaces, eye_sites=eye_sites,
+                 maw_sites=maw_sites,
                  arm_roots=arm_roots, cverts=cverts, cfaces=cfaces)
     return _FORM
 
@@ -309,16 +317,42 @@ def _eye(surf, x, y, r, openf, gaze, a):
                            (gx - ir // 3, int(y) - ir // 3), max(1, ir // 4))
 
 
-def _mouth_gash(surf, x, y, w, a):
-    """A short dark, slightly-curved slit -- drawn between two open skin-eyes
-    for a beat so they read as a partial WRONG face, before the tumble pulls
-    them apart. Never a full mouth, never paired with a resolved face."""
-    if w < 4 or a < 10:
+def _maw(surf, x, y, r, openf, a, seed):
+    """An EVERSION-MAW: a radial, lamprey-like toothed hole the body tears open
+    where it turns inside-out -- NOT a hinged jaw. A dark throat with the gold
+    gullet glowing down it, rimmed by irregular bone teeth that overhang the
+    opening. `openf` 0..1 gnashes it from a clenched toothed slit to a gape."""
+    if r < 3 or a < 12 or openf <= 0.03:
         return
-    pts = [(x + (k / 6 - 0.5) * w, y + math.sin(k / 6 * math.pi) * w * 0.16)
-           for k in range(7)]
-    pygame.draw.lines(surf, (4, 3, 5, a), False, pts, max(2, int(w * 0.16)))
-    pygame.draw.lines(surf, (*_GOLD, int(a * 0.45)), False, pts, 1)
+    x, y = int(x), int(y)
+    throat_r = max(2, int(r * (0.20 + 0.62 * openf)))
+    # the dark, irregular throat
+    tp = [(x + math.cos(math.tau * k / 11) *
+           throat_r * (0.78 + 0.36 * math.sin(seed * 1.7 + k * 2.1)),
+           y + math.sin(math.tau * k / 11) *
+           throat_r * 0.92 * (0.78 + 0.36 * math.cos(seed * 1.3 + k * 1.7)))
+          for k in range(11)]
+    pygame.draw.polygon(surf, (4, 3, 5, a), tp)
+    # the gullet -- gold light pooling DOWN the throat (additive, over the dark)
+    _heart_glow(surf, x, y, max(2, int(throat_r * 0.95)), int(55 + 150 * openf))
+    # irregular bone teeth ringing the rim, tips overhanging into the gullet.
+    # Wildly uneven lengths + a few gaps so it reads as a wrong lamprey maw,
+    # never a tidy ring.
+    nt = 11 + (seed % 6)
+    for k in range(nt):
+        if math.sin(seed * 3.1 + k * 2.7) < -0.55:        # a few missing teeth
+            continue
+        ang = math.tau * k / nt + 0.26 * math.sin(seed * 2.3 + k)
+        bw = 0.10 + 0.07 * abs(math.sin(seed + k * 1.3))
+        baseR = r * (0.96 + 0.12 * math.sin(seed * 1.1 + k * 0.7))
+        tipR = baseR * (0.18 + 0.55 * (0.5 + 0.5 * math.sin(seed * 0.7 + k * 1.9)))
+        b0 = (x + math.cos(ang - bw) * baseR, y + math.sin(ang - bw) * baseR * 0.92)
+        b1 = (x + math.cos(ang + bw) * baseR, y + math.sin(ang + bw) * baseR * 0.92)
+        tip = (x + math.cos(ang) * tipR, y + math.sin(ang) * tipR * 0.92)
+        pygame.draw.polygon(surf, (*_TOOTH_DK, a), [b0, b1, tip])     # shadowed
+        hi = [(b0[0] * 0.35 + tip[0] * 0.65, b0[1] * 0.35 + tip[1] * 0.65),
+              (b1[0] * 0.35 + tip[0] * 0.65, b1[1] * 0.35 + tip[1] * 0.65), tip]
+        pygame.draw.polygon(surf, (*_TOOTH, a), hi)                   # lit tip
 
 
 # --------------------------------------------------------------------------- #
@@ -622,7 +656,6 @@ def draw_king_unfold(surf, cx, cy, t, threat=0.0, scale=96.0,
     # 5) EYES open across the skin -- wrong faces that surface and gaze, never
     # assembling into one. Each rides a facet, so it slides / scales / winks
     # with the eversion for free; threat opens more of them, wider.
-    open_eyes = []
     if threat > 0.12:
         appear = min(1.0, (threat - 0.12) / 0.5)
         fmap = {fi: (face, N) for zc, fi, face, N in front}
@@ -648,27 +681,31 @@ def draw_king_unfold(surf, cx, cy, t, threat=0.0, scale=96.0,
             openf = appear * facing * (0.35 + 0.65 * blink)
             gx = max(-1.0, min(1.0, pdx)) * 0.85             # pupils gaze at the player
             _eye(lay, ex, ey, er, openf, gx, int(235 * facing * appear))
-            if openf > 0.25:
-                open_eyes.append((ex, ey, er))
-        # the broken-face beat: for a beat a mouth-gash joins two near eyes ->
-        # a partial WRONG face, which the tumble pulls apart before it completes
-        if threat > 0.5 and len(open_eyes) >= 2:
-            gash = max(0.0, math.sin(t * 0.23)) ** 4
-            if gash > 0.25:
-                pair = None
-                for i in range(len(open_eyes)):
-                    for j in range(i + 1, len(open_eyes)):
-                        e0, e1 = open_eyes[i], open_eyes[j]
-                        d = math.hypot(e0[0] - e1[0], e0[1] - e1[1])
-                        rr = e0[2] + e1[2]
-                        if rr < d < rr * 3.0 and (pair is None or d < pair[0]):
-                            pair = (d, e0, e1)
-                if pair:
-                    _, e0, e1 = pair
-                    mx = (e0[0] + e1[0]) * 0.5
-                    my = (e0[1] + e1[1]) * 0.5 + (e0[2] + e1[2]) * 0.9
-                    _mouth_gash(lay, mx, my, (e0[2] + e1[2]) * 1.4,
-                                int(180 * gash * appear))
+        # MAWS tear open where the body everts -- scattered toothed throats that
+        # gnash and breathe, riding their facets like the eyes. The eversion
+        # turning inside-out IS the mouth: dark gullet, gold light down it.
+        for fi, ph in form["maw_sites"]:
+            rec = fmap.get(fi)
+            if rec is None:
+                continue
+            face, N = rec
+            facing = max(0.0, N[2])
+            if facing < 0.18:
+                continue
+            poly = [op[i] for i in face]
+            mx = sum(p[0] for p in poly) / len(poly)
+            my = sum(p[1] for p in poly) / len(poly)
+            ar = 0.0
+            for k in range(len(poly)):
+                x0, y0 = poly[k]; x1, y1 = poly[(k + 1) % len(poly)]
+                ar += x0 * y1 - x1 * y0
+            mr = math.sqrt(abs(ar)) * 0.72           # maw sized to the facet
+            if mr < 3.0:
+                continue
+            breath = 0.5 + 0.5 * math.sin(t * 0.8 + ph * 1.7)
+            openf = appear * facing * (0.22 + 0.78 * breath)
+            _maw(lay, mx, my, mr, openf, int(235 * facing * appear),
+                 fi + int(ph * 7))
 
     # 6) the Sign resolves for a beat on the most head-on facet
     if front and threat > 0.45:
