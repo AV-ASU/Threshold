@@ -29,8 +29,9 @@ import random
 import pygame
 
 from rendering.king3d import (_surface, _build_shards, _shade, _norm3,
-                              _rodrigues, _draw_arms, _PORC, _PORC_DK, _PORC_HI,
-                              _HOLLOW, _VOIDC, _GOLD, _GOLD_DK, _GOLD_HI)
+                              _rodrigues, _draw_arms, _ARM_ANCHORS, _PORC,
+                              _PORC_DK, _PORC_HI, _HOLLOW, _VOIDC, _GOLD,
+                              _GOLD_DK, _GOLD_HI)
 
 _HALO = None
 _FACE_TRAILS = None         # per-face screen-position history (the smear)
@@ -45,6 +46,9 @@ _SICK_DK = (58, 48, 16)             # its murk
 _SICK_HI = (196, 172, 84)           # the most it brightens (rarely)
 _SALLOW = (150, 145, 118)           # dingy, grave-pale porcelain (not clean bone)
 _SALLOW_DK = (70, 66, 54)
+_SHARD_DK = (40, 34, 19)            # dark warm shard body (the BLACK in black+gold)
+_SHARD_DK2 = (24, 20, 11)           # deeper, for receded shards
+_EYE_BLACK = (8, 7, 3)              # the sclera/pupil black
 
 
 def _stut(t, q=9.0, blend=0.26):
@@ -139,6 +143,94 @@ def _halo_particles(surf, cx, cy, t, threat, scale):
                       special_flags=pygame.BLEND_RGBA_ADD)
         else:
             _soul_orb(surf, p["x"], p["y"], p["r"], al, p["seed"])
+
+
+def _eye_sprite(surf, x, y, r, ang, openf, gaze, bright):
+    """One angelic eye: a black almond, a gold-leaf rim, a gold iris on a black
+    pupil with a cold gleam -- it BLINKS (openf 0..1). Black + gold only."""
+    ca, sa = math.cos(ang), math.sin(ang)
+    rim = _shade(_GOLD, 0.4 + 0.55 * bright)
+    if openf <= 0.06:                                 # shut -- a thin gold seam
+        dx, dy = ca * r, sa * r
+        pygame.draw.line(surf, _shade(_GOLD_DK, 0.6 + 0.4 * bright),
+                         (x - dx, y - dy), (x + dx, y + dy), max(1, int(r * 0.45)))
+        return
+    hw = r
+    hh = max(0.8, r * 0.66 * openf)
+    pts = []
+    for k in range(12):
+        a = math.tau * k / 12
+        ex, ey = math.cos(a) * hw, math.sin(a) * hh
+        pts.append((x + ex * ca - ey * sa, y + ex * sa + ey * ca))
+    pygame.draw.polygon(surf, _EYE_BLACK, pts)        # the black sclera
+    pygame.draw.polygon(surf, rim, pts, max(1, int(r * 0.22)))   # gold-leaf rim
+    if openf > 0.4:
+        ir = max(1, int(hh * 0.82))
+        gx = int(x + gaze * r * 0.45)
+        pygame.draw.circle(surf, _shade(_GOLD if bright > 0.4 else _GOLD_DK,
+                                        0.55 + 0.45 * bright), (gx, int(y)), ir)
+        pygame.draw.circle(surf, _EYE_BLACK, (gx, int(y)), max(1, int(ir * 0.5)))
+        if ir >= 3:
+            pygame.draw.circle(surf, _GOLD_HI,
+                               (gx - max(1, ir // 3), int(y) - max(1, ir // 3)),
+                               max(1, ir // 4))
+
+
+def _draw_shard_eyes(surf, scr, seed, t, threat, gaze, bright):
+    """Cover a shard in small blinking eyes (front AND back faces) -- the
+    biblically-accurate, full-of-eyes angel. Seeded so each eye keeps its place
+    and its own blink phase as the shard tumbles."""
+    n = len(scr)
+    if n < 3:
+        return
+    cxs = sum(q[0] for q in scr) / n
+    cys = sum(q[1] for q in scr) / n
+    xs = [q[0] for q in scr]; ys = [q[1] for q in scr]
+    rad = min(max(xs) - min(xs), max(ys) - min(ys))
+    if rad < 6:
+        return
+    rng = random.Random(seed)
+    count = max(1, min(4, int(rad / 9)))
+    for i in range(count):
+        vx, vy = scr[rng.randrange(n)]
+        f = rng.uniform(0.18, 0.62)
+        ex = cxs + (vx - cxs) * f
+        ey = cys + (vy - cys) * f
+        er = rad * rng.uniform(0.11, 0.19)
+        ph = rng.uniform(0, 10)
+        rate = rng.uniform(0.5, 0.9)
+        bz = (t * rate + ph) % rng.uniform(3.0, 6.0)
+        openf = 1.0 if bz > 0.16 else abs(bz - 0.08) / 0.08
+        ang = rng.uniform(-0.5, 0.5)
+        _eye_sprite(surf, ex, ey, er, ang, openf, gaze, bright)
+
+
+def _arm_portals(surf, cx, cy, yaw, bob, scale, amt, t):
+    """A rift at the BASE of each arm -- a BLACK void mouth ringed with crisp
+    gold (a Sign-lit hole), so each limb reads as reaching OUT of a portal, not
+    sprouting from the mass. Distinct from the soft soul-orbs by design."""
+    if amt <= 0.04:
+        return
+    for ai, (ath, ah) in enumerate(_ARM_ANCHORS):
+        ax, _h, az = _surface(ath, ah, yaw)
+        x = cx + ax * scale
+        y = cy - (ah + bob) * scale
+        depth = 0.55 + 0.45 * max(0.0, min(1.0, (az + 6) / 12))
+        pulse = 0.85 + 0.15 * math.sin(t * 1.6 + ai * 1.7)
+        rr = max(3.0, 4.4 * scale * amt * depth * pulse)
+        w, h = int(rr * 1.5), int(rr * 1.9)
+        d = max(w, h) * 2 + 8
+        pr = pygame.Surface((d, d), pygame.SRCALPHA)
+        c = d // 2
+        rect = (c - w, c - h, w * 2, h * 2)
+        # the black void mouth, then concentric gold rims (outer crisp, inner dim)
+        pygame.draw.ellipse(pr, (4, 3, 1, int(235 * amt)), rect)
+        pygame.draw.ellipse(pr, (*_shade(_GOLD, 0.55 + 0.4 * amt), int(255 * amt)),
+                            rect, max(2, int(scale * 0.55)))
+        ir = (c - int(w * 0.6), c - int(h * 0.6), int(w * 1.2), int(h * 1.2))
+        pygame.draw.ellipse(pr, (*_GOLD_HI, int(150 * amt * pulse)), ir,
+                            max(1, int(scale * 0.3)))
+        surf.blit(pr, (int(x - c), int(y - c)))
 
 
 def _cross(a, b):
@@ -393,12 +485,15 @@ def draw_king_halo(surf, cx, cy, yaw, t, threat=0.0, scale=3.0, beat=0.0):
     # 0) the WAKE: porcelain ash + tumbling mask-flecks + gold sparks, behind
     _halo_particles(surf, cx, cy - bob * scale, t, threat, scale)
 
-    # 1) BEHIND shards: backlit silhouettes / dark inner faces, warm gold rim
+    # 1) BEHIND shards: black bodies, warm gold rim -- and their BACKSIDES are
+    # full of eyes too (the angel is eyed within and without).
     for p, (scr, zc, fr, eye, tear) in behind:
-        pygame.draw.polygon(surf, _VOIDC, scr)
+        pygame.draw.polygon(surf, _SHARD_DK2, scr)
         pygame.draw.polygon(surf, _shade(_GOLD_DK, 0.45 + 0.55 * threat), scr, 1)
+        _draw_shard_eyes(surf, scr, int(p["ph"] * 997) + 1, t, threat, gaze, 0.4)
 
-    # 2) reaching ARMS that trail away from the camera (occluded, drawn deep)
+    # 2) the portals + the reaching ARMS that trail away from the camera (deep)
+    _arm_portals(surf, cx, cy - bob * scale, yaw, 0.0, scale, orbit, t)
     _draw_arms(surf, cx, cy - bob * scale, yaw, 0.0, scale, orbit, threat, "back", t=t)
 
     # 3) the breathing core + the Sign corona
@@ -407,19 +502,24 @@ def draw_king_halo(surf, cx, cy, yaw, t, threat=0.0, scale=3.0, beat=0.0):
     # 4) faces surfacing in the light (with trails)
     _draw_faces(surf, cx, cy - bob * scale, t, threat, scale, gaze, crown)
 
-    # 5) FRONT shards on a layer so the eye holes + tears punch THROUGH to core
+    # 5) FRONT shards on a layer so the big eye holes + tears punch THROUGH to
+    # the gold core (black bodies, gold-leaf rim). Small eyes are layered ON
+    # AFTER the blit so the hole-punch can't erase them.
     porc = pygame.Surface(surf.get_size(), pygame.SRCALPHA)
-    holes, tears, pupils = [], [], []
+    holes, tears, pupils, eyed = [], [], [], []
     for p, (scr, zc, fr, eye, tear) in front:
-        # porcelain, depth-shaded (receded shards darker) -- the King's pallid
-        # mask, just broken into the halo.
-        f = 0.66 + 0.30 * max(0.0, min(1.0, (zc + 6) / 12.0))
+        f = max(0.0, min(1.0, (zc + 6) / 12.0))      # depth: near shards lit gold
+        body = _shade(_SHARD_DK, 0.7 + 0.3 * f)
         if not fr:
-            pygame.draw.polygon(porc, _VOIDC, scr)
+            pygame.draw.polygon(porc, _SHARD_DK2, scr)
             pygame.draw.polygon(porc, _shade(_GOLD_DK, 0.45 + 0.55 * threat), scr, 1)
             continue
-        pygame.draw.polygon(porc, _shade(_PORC, f), scr)
-        pygame.draw.polygon(porc, _PORC_DK, scr, 1)
+        pygame.draw.polygon(porc, body, scr)
+        pygame.draw.polygon(porc, _shade(_GOLD_DK, 0.5 + 0.5 * f), scr, 1)
+        # a gold-leaf glint along the lit edge
+        pygame.draw.line(porc, _shade(_GOLD, 0.4 + 0.5 * f), scr[0], scr[1],
+                         max(1, int(scale * 0.4)))
+        eyed.append((scr, int(p["ph"] * 997)))
         if eye is not None and len(eye) >= 3:
             holes.append(eye)
             ex = sum(q[0] for q in eye) / len(eye)
@@ -433,7 +533,12 @@ def draw_king_halo(surf, cx, cy, yaw, t, threat=0.0, scale=3.0, beat=0.0):
         pygame.draw.lines(porc, (0, 0, 0, 0), False, tp, 2)    # PUNCH the tear
     surf.blit(porc, (0, 0))
 
-    # 6) reaching ARMS that lunge AT the camera (over the shards)
+    # the small blinking eyes that cover the front shards
+    for scr, seed in eyed:
+        _draw_shard_eyes(surf, scr, seed, t, threat, gaze, 0.55 + 0.45 * threat)
+
+    # 6) the portals + reaching ARMS that lunge AT the camera (over the shards)
+    _arm_portals(surf, cx, cy - bob * scale, yaw, 0.0, scale, orbit, t)
     _draw_arms(surf, cx, cy - bob * scale, yaw, 0.0, scale, orbit, threat, "front", t=t)
 
     # 5) the watching: each eye holds a wet, sick-gold pupil that HOLDS the
@@ -456,17 +561,17 @@ def draw_king_halo(surf, cx, cy, yaw, t, threat=0.0, scale=3.0, beat=0.0):
                                (int(ex + gx - pr * 0.4), int(ey + scale * 0.15)),
                                max(1, pr // 3))
 
-    # 6) the crown-beat FLARE: the Yellow surges bright through the snapped ring
-    # -- a warm gold bloom (no inversion), echoing the original King's flare.
+    # 7) the crown-beat WHEEL: the shards have snapped to an even ring (the
+    # ophanim wheel). No flare/lunge -- just a quiet gold halo-ring tracing it
+    # and a soft lift of the core, so it READS as forming, not detonating.
     if crown > 0.2:
         fr2 = (crown - 0.2) / 0.8
-        fl = int(34 * scale * fr2)
-        fg = pygame.Surface((fl * 2 + 2, fl * 2 + 2), pygame.SRCALPHA)
-        for i in range(fl, 0, -1):
-            f = 1 - i / fl
-            al = int(150 * fr2 * (f ** 1.8))
-            if al > 0:
-                col = _GOLD_HI if i < fl * 0.4 else _GOLD
-                pygame.draw.circle(fg, (col[0], col[1], col[2], al), (fl, fl), i)
-        surf.blit(fg, (int(cx - fl), int(cy - bob * scale - fl)),
+        rad = int(16 * scale)
+        ring = pygame.Surface((rad * 2 + 6, rad * 2 + 6), pygame.SRCALPHA)
+        c = rad + 3
+        pygame.draw.circle(ring, (_GOLD[0], _GOLD[1], _GOLD[2], int(120 * fr2)),
+                           (c, c), rad, max(1, int(scale * 0.5)))
+        pygame.draw.circle(ring, (_GOLD_HI[0], _GOLD_HI[1], _GOLD_HI[2], int(70 * fr2)),
+                           (c, c), int(rad * 0.62), max(1, int(scale * 0.3)))
+        surf.blit(ring, (int(cx - c), int(cy - bob * scale - c)),
                   special_flags=pygame.BLEND_RGBA_ADD)
