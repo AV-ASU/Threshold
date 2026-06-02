@@ -18,7 +18,7 @@ import pygame
 pygame.init()
 from rendering.king_halo import draw_king_halo, reset_king_halo_fx
 
-BG = (7, 6, 9)
+BG = (14, 13, 18)
 W, H = 340, 360
 SCALE = 3.4
 
@@ -29,8 +29,8 @@ def _vignette():
     maxr = math.hypot(cx, cy)
     for i in range(24):
         r = int(maxr * (1 - i / 24))
-        a = int(8 * i)
-        pygame.draw.circle(v, (0, 0, 0, min(255, a)), (cx, cy), r)
+        a = int(3.5 * i)                 # gentle: frame the dark, don't smother it
+        pygame.draw.circle(v, (0, 0, 0, min(160, a)), (cx, cy), r)
     return v
 
 

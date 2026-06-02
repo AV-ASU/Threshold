@@ -45,10 +45,10 @@ _SALLOW = (150, 145, 118)           # dingy, grave-pale porcelain (not clean bon
 _SALLOW_DK = (70, 66, 54)
 
 
-def _stut(t, q=5.0, blend=0.62):
-    """Stop-motion wrongness: bias time toward discrete steps so the swarm
-    JERKS rather than glides -- it moves like something that doesn't quite
-    obey time (Weeping-Angel / cosmic-wrong)."""
+def _stut(t, q=9.0, blend=0.26):
+    """A faint stop-motion bias -- the swarm moves *mostly* smoothly with just a
+    touch of wrongness, rather than gliding perfectly (kept light so it stays
+    close to the original King's feel)."""
     return (1 - blend) * t + blend * (math.floor(t * q) / q)
 
 
@@ -90,7 +90,7 @@ def _halo_params():
         band = i % 2                                  # 0 inner, 1 outer
         R = (22.0 if band == 0 else 33.0) + rng.uniform(-2.0, 2.0)
         d = 1.0 if band == 0 else -1.0                # counter-rotation
-        w = (0.34 if band == 0 else 0.24) * rng.uniform(0.9, 1.1)   # SLOW
+        w = (0.5 if band == 0 else 0.36) * rng.uniform(0.9, 1.1)    # slow, not glacial
         ph = rng.uniform(0, math.tau)
         prec = _norm3((rng.uniform(-1, 1), rng.uniform(-1, 1), rng.uniform(-1, 1)))
         out.append(dict(C0=C0, u=u, v=v, R=R, d=d, w=w, ph=ph, prec=prec,
@@ -169,28 +169,24 @@ def _core_glow(surf, cx, cy, t, threat, scale, breath):
     g0 = int(Rmax) + 1
     gl = pygame.Surface((g0 * 2 + 2, g0 * 2 + 2), pygame.SRCALPHA)
     steps = max(4, int(Rmax))
-    # a sullen, diseased ember -- dim, sickly amber; it only brightens to a wan
-    # gold at its very heart, and only when truly roused. Mostly dark.
+    # the warm Yellow core: a contained bloom -- bright wan-gold heart, amber
+    # body, fading out. Brighter than the sickly pass, but still CONTAINED (the
+    # shards orbit outside it), never a flat disc.
     for i in range(steps, 0, -1):
         f = 1 - i / steps                            # 0 edge -> 1 centre
-        al = int((30 + 26 * threat) * (f ** 2.6))    # dim: the dark keeps the upper hand
+        al = int((48 + 46 * threat) * (f ** 2.2))
         if al <= 0:
             continue
-        if i < Rc * 0.35 and threat > 0.75:
-            col = _SICK_HI                           # a wan flicker, rarely
-        elif i < Rc:
-            col = _SICK
-        else:
-            col = _SICK_DK
+        col = _GOLD_HI if i < Rc * 0.5 else (_GOLD if i < Rc else _GOLD_DK)
         pygame.draw.circle(gl, (col[0], col[1], col[2], al), (g0, g0), i)
-    # the Yellow Sign: three slow spokes that only barely resolve as he rouses
-    if threat > 0.55:
-        sa = int(46 * (threat - 0.55) / 0.45)
+    # the Yellow Sign: three slow spokes that resolve as he rouses
+    if threat > 0.45:
+        sa = int(80 * (threat - 0.45) / 0.55)
         for k in range(3):
-            ang = t * 0.3 + k * math.tau / 3
-            x2 = g0 + math.cos(ang) * Rc * 2.0
-            y2 = g0 + math.sin(ang) * Rc * 2.0
-            pygame.draw.line(gl, (_SICK[0], _SICK[1], _SICK[2], sa),
+            ang = t * 0.4 + k * math.tau / 3
+            x2 = g0 + math.cos(ang) * Rc * 2.1
+            y2 = g0 + math.sin(ang) * Rc * 2.1
+            pygame.draw.line(gl, (_GOLD_HI[0], _GOLD_HI[1], _GOLD_HI[2], sa),
                              (g0, g0), (x2, y2), 2)
     surf.blit(gl, (int(cx - g0), int(cy - g0)), special_flags=pygame.BLEND_RGBA_ADD)
 
@@ -212,7 +208,7 @@ def _draw_faces(surf, cx, cy, t, threat, scale, gaze, crown):
         fs = (5.0 + 2.0 * math.sin(t * 0.5 + seed)) * scale * 0.5
         # most of the time SUNK (invisible); each rises briefly, half-glimpsed
         surfacing = max(0.0, math.sin(t * 0.5 + seed * 2)) ** 2
-        a = int((70 * surfacing) * min(1.0, 0.25 + threat))   # dim: barely there
+        a = int((118 * surfacing) * min(1.0, 0.3 + threat))   # half-seen, warm-lit
         if a < 6:
             continue
         tr = _FACE_TRAILS[fi]
@@ -229,19 +225,19 @@ def _draw_faces(surf, cx, cy, t, threat, scale, gaze, crown):
 
 
 def _one_face(surf, x, y, s, a, gaze, crown):
-    """A pale, sallow visage half-risen in the murk -- NOT a glowing blob. Drawn
-    with a normal blend so it sits in the light rather than blowing it out, with
-    only a faint sick rim catching the core."""
+    """A pale gold-lit visage surfacing in the core -- the cult's fused faces.
+    Porcelain, lit warm, with deep hollow eyes; sits in the light without
+    blowing out to a white blob."""
     w = int(s * 1.2); h = int(s * 1.7)
     if w < 2 or h < 2:
         return
     fc = pygame.Surface((w * 2 + 2, h * 2 + 2), pygame.SRCALPHA)
     cx2, cy2 = w + 1, h + 1
-    # the face itself: dingy sallow flesh, low alpha (sits IN the light)
-    pygame.draw.ellipse(fc, (_SALLOW[0], _SALLOW[1], _SALLOW[2], a),
+    # the face: porcelain flesh, warm-lit
+    pygame.draw.ellipse(fc, (_PORC[0], _PORC[1], _PORC[2], a),
                         (cx2 - w, cy2 - h, w * 2, h * 2))
     # gaunt cheek shadow so it reads as a face, not an egg
-    pygame.draw.ellipse(fc, (_SALLOW_DK[0], _SALLOW_DK[1], _SALLOW_DK[2], int(a * 0.6)),
+    pygame.draw.ellipse(fc, (_PORC_DK[0], _PORC_DK[1], _PORC_DK[2], int(a * 0.55)),
                         (cx2 - int(w * 0.55), cy2 - int(h * 0.2),
                          int(w * 1.1), int(h * 1.0)))
     # two deep hollow eyes (clear + dark) -- the read of a face
@@ -256,10 +252,10 @@ def _one_face(surf, x, y, s, a, gaze, crown):
     pygame.draw.line(fc, (_HOLLOW[0], _HOLLOW[1], _HOLLOW[2], min(255, a + 40)),
                      (cx2 - mw, cy2 + int(h * 0.5)), (cx2 + mw, cy2 + int(h * 0.5)),
                      max(1, int(s * (0.15 + 0.3 * crown))))
-    surf.blit(fc, (int(x - cx2), int(y - cy2)))      # NORMAL blend: in the murk
-    # a faint sick rim-light catching the core, added subtly
+    surf.blit(fc, (int(x - cx2), int(y - cy2)))
+    # a warm gold rim catching the core light
     rim = pygame.Surface((w * 2 + 2, h * 2 + 2), pygame.SRCALPHA)
-    pygame.draw.ellipse(rim, (_SICK[0], _SICK[1], _SICK[2], int(a * 0.4)),
+    pygame.draw.ellipse(rim, (_GOLD[0], _GOLD[1], _GOLD[2], int(a * 0.5)),
                         (cx2 - w, cy2 - h, w * 2, h * 2), max(1, int(s * 0.12)))
     surf.blit(rim, (int(x - cx2), int(y - cy2)), special_flags=pygame.BLEND_RGBA_ADD)
 
@@ -297,10 +293,10 @@ def draw_king_halo(surf, cx, cy, yaw, t, threat=0.0, scale=3.0, beat=0.0):
     behind.sort(key=lambda it: it[1][1])
     front.sort(key=lambda it: it[1][1])
 
-    # 1) BEHIND shards: near-black backlit silhouettes, the faintest sick rim
+    # 1) BEHIND shards: backlit silhouettes / dark inner faces, warm gold rim
     for p, (scr, zc, fr, eye) in behind:
         pygame.draw.polygon(surf, _VOIDC, scr)
-        pygame.draw.polygon(surf, _shade(_SICK_DK, 0.5 + 0.5 * threat), scr, 1)
+        pygame.draw.polygon(surf, _shade(_GOLD_DK, 0.45 + 0.55 * threat), scr, 1)
 
     # 2) the breathing core + the Sign corona
     _core_glow(surf, cx, cy - bob * scale, t, threat, scale, breath)
@@ -312,15 +308,15 @@ def draw_king_halo(surf, cx, cy, yaw, t, threat=0.0, scale=3.0, beat=0.0):
     porc = pygame.Surface(surf.get_size(), pygame.SRCALPHA)
     holes, pupils = [], []
     for p, (scr, zc, fr, eye) in front:
-        # dingy, grave-pale porcelain -- depth-dimmed and kept murky (never
-        # clean white); the front pieces catch only a little wan light.
-        f = 0.46 + 0.30 * max(0.0, min(1.0, (zc + 6) / 12.0))
+        # porcelain, depth-shaded (receded shards darker) -- the King's pallid
+        # mask, just broken into the halo.
+        f = 0.66 + 0.30 * max(0.0, min(1.0, (zc + 6) / 12.0))
         if not fr:
             pygame.draw.polygon(porc, _VOIDC, scr)
-            pygame.draw.polygon(porc, _shade(_SICK_DK, 0.5 + 0.5 * threat), scr, 1)
+            pygame.draw.polygon(porc, _shade(_GOLD_DK, 0.45 + 0.55 * threat), scr, 1)
             continue
-        pygame.draw.polygon(porc, _shade(_SALLOW, f), scr)
-        pygame.draw.polygon(porc, _SALLOW_DK, scr, 1)
+        pygame.draw.polygon(porc, _shade(_PORC, f), scr)
+        pygame.draw.polygon(porc, _PORC_DK, scr, 1)
         if eye is not None and len(eye) >= 3:
             holes.append(eye)
             ex = sum(q[0] for q in eye) / len(eye)
@@ -342,20 +338,25 @@ def draw_king_halo(surf, cx, cy, yaw, t, threat=0.0, scale=3.0, beat=0.0):
         pr = max(1, int((0.9 + 0.7 * threat) * scale * 0.5))
         if blink < 0.5:
             continue
-        col = _shade(_SICK if threat > 0.4 else _SICK_DK, blink)
+        col = _shade(_GOLD if threat > 0.4 else _GOLD_DK, blink)
         pygame.draw.circle(surf, col, (int(ex + gx), int(ey + scale * 0.35)), pr)
-        # a single cold wet gleam, offset -- it makes the eye read as watching
+        # a wet gold gleam, offset -- it makes the eye read as watching
         if threat > 0.45 and blink > 0.7:
-            pygame.draw.circle(surf, _shade(_SICK_HI, blink),
+            pygame.draw.circle(surf, _shade(_GOLD_HI, blink),
                                (int(ex + gx - pr * 0.4), int(ey + scale * 0.15)),
                                max(1, pr // 3))
 
-    # 6) the crown-beat INVERSION FLASH: a true one-frame photo-negative
-    # (255 - colour) at the very peak -- porcelain goes black, the Yellow goes
-    # cold. Gated narrow so it's a jolt, not a fade.
-    if crown > 0.86:
-        neg = pygame.Surface(surf.get_size())
-        neg.fill((255, 255, 255))
-        neg.blit(surf, (0, 0), special_flags=pygame.BLEND_RGB_SUB)   # 255 - surf
-        neg.set_alpha(int(255 * (crown - 0.86) / 0.14))
-        surf.blit(neg, (0, 0))
+    # 6) the crown-beat FLARE: the Yellow surges bright through the snapped ring
+    # -- a warm gold bloom (no inversion), echoing the original King's flare.
+    if crown > 0.2:
+        fr2 = (crown - 0.2) / 0.8
+        fl = int(34 * scale * fr2)
+        fg = pygame.Surface((fl * 2 + 2, fl * 2 + 2), pygame.SRCALPHA)
+        for i in range(fl, 0, -1):
+            f = 1 - i / fl
+            al = int(150 * fr2 * (f ** 1.8))
+            if al > 0:
+                col = _GOLD_HI if i < fl * 0.4 else _GOLD
+                pygame.draw.circle(fg, (col[0], col[1], col[2], al), (fl, fl), i)
+        surf.blit(fg, (int(cx - fl), int(cy - bob * scale - fl)),
+                  special_flags=pygame.BLEND_RGBA_ADD)
