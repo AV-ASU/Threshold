@@ -78,9 +78,10 @@ it renders the procedural sprites to a labelled PNG strip.
     (`KING_TILT_DEPTH_*`), so he looms as he closes the view-depth gap and
     shrinks as he hangs back (pitch 0 untouched); and (b) **occludes him by his
     OWN depth (decided: hybrid)** — he's DEFERRED out of the actor pass and
-    composited against the walls after the wall passes (`_composite_tilt_king`):
-    walls nearer the camera than him occlude his base, he draws over walls
-    farther than him (the shared player-depth split mis-orders a tall actor).
+    composited against the walls after the wall passes (`_composite_tilt_actors`,
+    shared by all `TILT_TALL_ACTORS` — King / sheriff_hollow / watcher): walls
+    nearer the camera than the actor occlude its base, it draws over walls
+    farther than it (the shared player-depth split mis-orders a tall actor).
     His billboard towering into a *far* wall is intentional; don't make him
     always-on-top. `draw_terrain_tilted` returns `(front, all_walls)` for this.
   - `transform.py` — `draw_vessel_bloom`, the human→vessel morph.

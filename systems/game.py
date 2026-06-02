@@ -134,6 +134,11 @@ TILT_ACTOR_STAND = 15        # default px a sprite centre rises to stand
 # Taller sprites need their centre lifted further so their feet meet the
 # floor (foot-offset in sprite px); falls back to TILT_ACTOR_STAND.
 TILT_LIFT = {"yellow_king": 30, "sheriff_hollow": 22, "watcher": 20}
+# The TALL actors -- the ones whose billboard rises far enough that the shared
+# player-depth wall split mis-orders them. Under tilt they're DEFERRED out of
+# the actor pass and composited against the walls by their OWN depth (see
+# _composite_tilt_actors), exactly the keys that need a custom foot-lift above.
+TILT_TALL_ACTORS = frozenset(TILT_LIFT)
 # The world projection is orthographic (no natural perspective), so the King --
 # the apex -- is the one actor given a deliberate perspective-style depth scale
 # under tilt: he LOOMS larger as he closes the view-depth gap toward the camera
@@ -491,7 +496,7 @@ class Game(CutsceneMixin):
         self.camera.pitch = self._cam_pitch_target
         self._tilt_front_walls = None     # walls held back to draw over actors
         self._tilt_all_walls = None       # (depth,tx,ty) all walls, for the King
-        self._deferred_king = None        # King draw deferred for depth composite
+        self._deferred_tall = []          # tall actors deferred for depth composite
         self.look = LookController()       # mouse-look heading model (tilt mode)
         self._rmb_last_x = None            # right-drag scene-rotate anchor
         self.title_choice = 0
@@ -777,7 +782,7 @@ class Game(CutsceneMixin):
         self.camera.pitch = self._cam_pitch_target
         self._tilt_front_walls = None
         self._tilt_all_walls = None
-        self._deferred_king = None
+        self._deferred_tall = []
         self.look = LookController()
         self.camera.yaw = self.look.cam_yaw
         self._rmb_last_x = None
@@ -1124,54 +1129,63 @@ class Game(CutsceneMixin):
         psx, psy = self.camera.project(self.player.x, self.player.y)
         return psx, psy - int(TILT_ACTOR_STAND * math.sin(self.camera.pitch))
 
-    def _composite_tilt_king(self, dk):
-        """Draw the deferred King (under tilt) composited against the walls by
-        its OWN depth. The shared wall pass splits front/back at the PLAYER's
-        depth, which mis-orders a tall actor standing well in front of / behind
-        the player. So here, after all wall passes: (1) draw the King -- it lands
-        over the floor and every wall FARTHER than it; (2) redraw the walls
-        NEARER the camera than it over its base, so a wall genuinely between it
-        and the camera occludes it. The near-wall redraw is clipped to the
-        King's screen box so it can't clobber distant actors."""
+    def _composite_tilt_actors(self):
+        """Composite the deferred TALL actors (King, sheriff_hollow, watcher)
+        against the walls by their OWN depth. The shared wall pass splits
+        front/back at the PLAYER's depth, which mis-orders a tall actor standing
+        well in front of / behind the player. So here, after all wall passes,
+        far->near: (1) draw the actor -- it lands over the floor and every wall
+        FARTHER than it; (2) redraw the walls NEARER the camera than it over its
+        base, so a wall genuinely between it and the camera occludes it. The
+        redraw is clipped to the actor's screen box so it can't clobber distant
+        actors, and only occluders that PROJECT into that box are touched -- so a
+        cornfield's hundreds of stalks cost a handful of redraws, not all."""
         from scenes.base import draw_wall_box
-        npc = dk["npc"]
-        lift = dk["lift"]
-        drawn = []
-        for ox, oy in dk["offsets"]:
-            sx, sy = self.camera.project(npc.x + ox, npc.y + oy)
-            if not (-64 <= sx <= SCREEN_W + 64 and -64 <= sy <= SCREEN_H + 64):
-                continue
-            sy -= lift
-            draw_npc_sprite(self.screen, sx, sy, "yellow_king", npc.facing,
-                            birth=dk["birth"], gait=dk["gait"],
-                            threat=dk["threat"], seed=dk["seed"],
-                            view=dk["view"], to_player=dk["to_player"],
-                            lean=dk["lean"], scale_mul=dk["scale_mul"])
-            drawn.append((sx, sy))
-        if not drawn or not self._tilt_all_walls:
-            return
-        # Occluders nearer the camera than the King's footprint (its ground
-        # depth) must hide its base; redraw them (far->near order preserved)
-        # over its screen box. "walls" here is the FULL extruded set from
-        # draw_terrain_tilted -- wall masses, doors, windows AND trees/corn --
-        # not just _WALL_CHARS; keep it that union so every occluder hides the
-        # King (don't narrow it). Only the occluders that actually PROJECT into
-        # the King's box are redrawn, so a cornfield's hundreds of stalks cost a
-        # handful of redraws, not all of them.
-        kd = self.camera.depth(npc.x, npc.y)
-        eff = KING_UNFOLD_SCALE * dk["scale_mul"]
+        # Far->near so a nearer tall actor draws over a farther one.
+        order = sorted(self._deferred_tall,
+                       key=lambda e: self.camera.depth(e["npc"].x, e["npc"].y))
         prev = self.screen.get_clip()
-        for sx, sy in drawn:
-            box = pygame.Rect(int(sx - 3.2 * eff), int(sy - 5.0 * eff),
-                              int(6.4 * eff), int(7.0 * eff))
-            self.screen.set_clip(box)
-            reach = box.inflate(TILE * 2, TILE * 3)   # tile art overhangs centre
-            for d, tx, ty in self._tilt_all_walls:    # far->near
-                if d <= kd:
+        for e in order:
+            npc = e["npc"]
+            lift = e["lift"]
+            drawn = []
+            for ox, oy in e["offsets"]:
+                sx, sy = self.camera.project(npc.x + ox, npc.y + oy)
+                if not (-64 <= sx <= SCREEN_W + 64
+                        and -64 <= sy <= SCREEN_H + 64):
                     continue
-                bx, by = self.camera.project(tx * TILE + 16, ty * TILE + 16)
-                if reach.collidepoint(bx, by):
-                    draw_wall_box(self.screen, self.scene, self.camera, tx, ty)
+                sy -= lift
+                draw_npc_sprite(self.screen, sx, sy, npc.sprite_kind, npc.facing,
+                                blink=e["blink"], birth=e["birth"],
+                                gait=e["gait"], threat=e["threat"],
+                                seed=e["seed"], gaze=e["gaze"], view=e["view"],
+                                to_player=e["to_player"], lean=e["lean"],
+                                scale_mul=e["scale_mul"])
+                if e["mutated"]:
+                    draw_infested_overlay(self.screen, sx, sy, npc.sprite_kind,
+                                          view=e["view"])
+                drawn.append((sx, sy))
+            if not drawn or not self._tilt_all_walls:
+                continue
+            # The actor's screen box: the King's billboard is huge (scale-driven);
+            # the others are normal sprites a touch over a tile.
+            if e["is_king"]:
+                eff = KING_UNFOLD_SCALE * e["scale_mul"]
+                hw, up, dn = 3.2 * eff, 5.0 * eff, 2.0 * eff
+            else:
+                hw, up, dn = 26.0, 44.0, 16.0
+            kd = self.camera.depth(npc.x, npc.y)
+            for sx, sy in drawn:
+                box = pygame.Rect(int(sx - hw), int(sy - up),
+                                  int(2 * hw), int(up + dn))
+                self.screen.set_clip(box)
+                reach = box.inflate(TILE * 2, TILE * 3)   # art overhangs centre
+                for d, tx, ty in self._tilt_all_walls:    # far->near
+                    if d <= kd:
+                        continue
+                    bx, by = self.camera.project(tx * TILE + 16, ty * TILE + 16)
+                    if reach.collidepoint(bx, by):
+                        draw_wall_box(self.screen, self.scene, self.camera, tx, ty)
         self.screen.set_clip(prev)
 
     def _update_look(self, dt):
@@ -3745,9 +3759,9 @@ class Game(CutsceneMixin):
         def _on_screen(sx, sy):
             return -64 <= sx <= SCREEN_W + 64 and -64 <= sy <= SCREEN_H + 64
 
-        # The King is deferred under tilt (composited against walls by its own
-        # depth after the front-wall pass); reset the slot each frame.
-        self._deferred_king = None
+        # Tall actors are deferred under tilt (composited against walls by their
+        # own depth after the front-wall pass); reset the list each frame.
+        self._deferred_tall = []
         for i, npc in enumerate(self.scene.npcs):
             # A homebody currently inside their door: not drawn at all.
             if getattr(npc, "_inside", False):
@@ -3784,7 +3798,7 @@ class Game(CutsceneMixin):
             # camera yaw. So feed the offset from that face-on heading.
             # OCCLUSION (decided: hybrid). Under tilt the King is DEFERRED out of
             # this actor pass and composited against the walls by its OWN depth
-            # after the wall passes (_composite_tilt_king): walls genuinely nearer
+            # after the wall passes (_composite_tilt_actors): walls genuinely nearer
             # the camera than it occlude its base, it draws over walls farther
             # than it. (The shared player-depth wall split can't do this for a
             # tall actor that stands well in front of / behind the player.) Its
@@ -3831,21 +3845,26 @@ class Game(CutsceneMixin):
                     king_lean = (ldx / dl * lean_mag, ldy / dl * lean_mag)
             npc_lift = int(TILT_LIFT.get(npc.sprite_kind, TILT_ACTOR_STAND)
                            * math.sin(self.camera.pitch))
-            # Defer the King under tilt: stash its draw and composite it against
-            # the walls by ITS OWN depth after the front-wall pass, so a wall
-            # genuinely between it and the camera occludes it. The single
+            # Defer a TALL actor under tilt: stash its draw and composite it
+            # against the walls by ITS OWN depth after the front-wall pass, so a
+            # wall genuinely between it and the camera occludes it. The single
             # player-depth wall split mis-orders a tall actor that stands well
-            # in front of / behind the player (see _composite_tilt_king).
-            if (npc.sprite_kind == "yellow_king" and m <= 0.0
+            # in front of / behind the player (see _composite_tilt_actors).
+            if (npc.sprite_kind in TILT_TALL_ACTORS and m <= 0.0
                     and self._tilt_on() and self._tilt_all_walls is not None):
-                kview = view_from_facing(npc.facing[0], npc.facing[1],
+                aview = view_from_facing(npc.facing[0], npc.facing[1],
                                          self.camera.yaw)
-                self._deferred_king = dict(
+                self._deferred_tall.append(dict(
                     npc=npc, threat=king_threat, to_player=king_to_player,
                     lean=king_lean, scale_mul=king_scale_mul, lift=npc_lift,
-                    view=kview, offsets=list(_offsets),
+                    view=aview, offsets=list(_offsets),
                     birth=getattr(npc, "_birth", None),
-                    gait=getattr(npc, "_gait", None), seed=id(npc) & 0xffff)
+                    gait=getattr(npc, "_gait", None), seed=id(npc) & 0xffff,
+                    blink=(i == blink_idx),
+                    gaze=(npc.sprite_kind == "watcher"
+                          and getattr(npc, "_gaze_dispel_t", 0.0) > 0.05),
+                    mutated=getattr(npc, "_mutated", False),
+                    is_king=(npc.sprite_kind == "yellow_king")))
                 continue
             for ox, oy in _offsets:
                 sx, sy = self.camera.project(npc.x + ox, npc.y + oy)
@@ -3950,11 +3969,11 @@ class Game(CutsceneMixin):
             draw_walls_front(self.screen, self.scene, self.camera,
                              self._tilt_front_walls,
                              (self.player.x, self.player.y))
-        # The King, composited against the walls by its own depth (deferred from
-        # the actor pass) -- drawn over the floor + walls farther than it, then
-        # the walls nearer the camera than it are redrawn over its base.
-        if self._deferred_king is not None:
-            self._composite_tilt_king(self._deferred_king)
+        # Tall actors (King / sheriff / watcher), composited against the walls by
+        # their own depth (deferred from the actor pass) -- drawn over the floor +
+        # walls farther than them, then walls nearer the camera redrawn over them.
+        if self._deferred_tall:
+            self._composite_tilt_actors()
         # Cursor reticle in look mode (the mouse is otherwise hidden) -- shows
         # where the gun aims. A thin ring + tick marks, gold to read as 'aim'.
         if self._tilt_on() and self.state == "playing":
