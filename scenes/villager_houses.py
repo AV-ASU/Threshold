@@ -321,16 +321,18 @@ def build_haunted_house():
     # haunted version. South face is now solid; row 7 was an open
     # void buffer and is now a sealed wall row so the player can't
     # walk into nothing.
-    floor = ["=" * 8 for _ in range(8)]
+    floor = ["=" * 12 for _ in range(10)]
     objects = [
-        "WWWoWWWW",   # 0  o = exit back to village (north face)
-        "W......W",   # 1
-        "W......W",   # 2
-        "W......W",   # 3
-        "W......W",   # 4
-        "W......W",   # 5
-        "W......W",   # 6
-        "WWWWWWWW",   # 7  sealed south wall
+        "WWWoWWWWWWWW",   # 0  o = exit back to village (north face)
+        "W.....W....W",   # 1  main room (cols 1-5) | back room (cols 7-10)
+        "W.....W....W",   # 2
+        "W..........W",   # 3  doorway gap in the partition (col 6)
+        "W.....W....W",   # 4
+        "WWWWWWW....W",   # 5  back room sealed off below
+        "W..........W",   # 6
+        "W..........W",   # 7
+        "W..........W",   # 8
+        "WWWWWWWWWWWW",   # 9  sealed south wall
     ]
     sc = Scene("haunted_house", floor, objects, music="home")
     # Abandoned farmhouse now sits deep south on the brimley
@@ -339,41 +341,39 @@ def build_haunted_house():
     sc.set_spawn("default",     3, 1)
     sc.set_spawn("from_brimley", 3, 1)
     sc.set_spawn("from_village", 3, 1)         # legacy fallback
-    # When the player climbs back up from the cult chamber, they
-    # come up through the hatch in the south of the room, not the
-    # village door at the north. Spawn one tile north of the hatch
-    # so they don't auto-trigger it.
-    sc.set_spawn("from_chamber", 4, 4)
-    # The abandoned farmhouse. Phantom marks on the walls. There's
-    # a hatch in the back that drops down to the well_passage.
-    sc.add_decoration(Decoration(6 * TILE + 16,  0 * TILE + 22 , "candle"))
+    # When the player climbs back up from the cult chamber, they come up
+    # through the hatch in the back room. Spawn beside it.
+    sc.set_spawn("from_chamber", 9, 4)
+    # The abandoned farmhouse. Phantom marks on the walls -- thick in the
+    # back room. There's a (sealed) hatch back there too.
     sc.add_decoration(Decoration(2 * TILE + 16,  0 * TILE + 22 , "candle"))
-    sc.add_decoration(Decoration(2 * TILE + 16, 5 * TILE + 16,
+    sc.add_decoration(Decoration(5 * TILE + 16,  0 * TILE + 22 , "candle"))
+    sc.add_decoration(Decoration(2 * TILE + 16, 7 * TILE + 16,
                                  "phantom_mark"))
-    sc.add_decoration(Decoration(5 * TILE + 16, 4 * TILE + 16,
+    sc.add_decoration(Decoration(8 * TILE + 16, 1 * TILE + 16,
+                                 "phantom_mark"))
+    sc.add_decoration(Decoration(9 * TILE + 28, 2 * TILE + 16,
                                  "phantom_mark"))
     sc.add_decoration(Decoration(1 * TILE + 28, 3 * TILE + 16,
                                  "phantom_mark"))
-    sc.add_decoration(Decoration(6 * TILE + 4, 5 * TILE + 16,
-                                 "phantom_mark"))
-    sc.add_decoration(Decoration(4 * TILE + 16, 3 * TILE + 24,
+    sc.add_decoration(Decoration(4 * TILE + 16, 7 * TILE + 24,
                                  "bloodstain"))
-    for mx, my in [(2, 2), (5, 3), (3, 4)]:
+    for mx, my in [(3, 2), (4, 6), (8, 7)]:
         sc.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16,
                                      "mote"))
 
-    # Cult-chamber hatch: a sealed dead end. It once dropped into the old
-    # cult chamber (now removed); pressing E just reads the nailed-shut
-    # notice. Drawn as a cellar_hatch (wood box + iron pull-ring).
-    hatch_x = 4 * TILE + 16
-    hatch_y = 5 * TILE + 16
+    # Cult-chamber hatch: a sealed dead end, back in the rear room (the
+    # blind spot). It once dropped into the old cult chamber (now removed);
+    # pressing E just reads the nailed-shut notice. Drawn as a cellar_hatch.
+    hatch_x = 8 * TILE + 16
+    hatch_y = 3 * TILE + 16
     sc.add_decoration(Decoration(hatch_x, hatch_y, "cellar_hatch"))
     sc._farmhouse_hatch = (hatch_x, hatch_y)
     sc.add_interactable(hatch_x, hatch_y, 36)   # [E] cue for the sealed hatch
 
     sc.hide_spots = [
         (2 * TILE + 16, 4 * TILE + 24, "behind"),
-        (6 * TILE + 16, 4 * TILE + 24, "behind"),
+        (9 * TILE + 16, 4 * TILE + 24, "behind"),   # in the back room (blind)
     ]
 
     def _farmhouse_interact(game):

@@ -261,25 +261,34 @@ def build_maras_room():
     cult's works. A cot, a burnt-down candle, her cult robe on a peg, and
     folded in it the unsent letter to her father. Evidence #1: she came,
     and she joined willingly."""
-    floor, objs = _box(8, 7)
-    objs[6][4] = "F"          # south -> back up to the Sorting Hall
+    floor, objs = _box(10, 9)
+    # A cramped cell with the cot walled off in a back alcove behind an
+    # interior partition + doorway -- so the robe + letter (evidence #1) sit
+    # in an indoor blind spot, unseen from the cell until the player rounds
+    # the wall.
+    for y in range(1, 5):
+        objs[y][4] = "#"          # east wall of the alcove
+    objs[3][4] = "."              # ...with a doorway gap
+    for x in range(1, 4):
+        objs[4][x] = "#"          # south wall of the alcove
+    objs[8][5] = "F"              # south -> back up to the Sorting Hall
     objects = ["".join(r) for r in objs]
     sc = Scene("maras_room", floor, objects, music="basement")
     sc.add_exit("F", "works_sorting", "from_maras_room")
-    sc.set_spawn("default", 4, 5)
-    sc.set_spawn("from_works_sorting", 4, 5)
+    sc.set_spawn("default", 5, 7)
+    sc.set_spawn("from_works_sorting", 5, 7)
 
     sc._cot_pos = (2 * TILE + 16, 2 * TILE + 16)
     sc.add_interactable(sc._cot_pos[0], sc._cot_pos[1], 46)  # [E] cue: robe + letter (evidence #1)
-    sc.add_furniture("bed", [(2, 2), (2, 3)], w=34, h=52)
-    sc.add_decoration(Decoration(4 * TILE + 16, 1 * TILE + 22, "candle"))
-    sc.add_decoration(Decoration(6 * TILE + 16, 2 * TILE + 16, "phantom_mark"))
-    sc.add_decoration(Decoration(1 * TILE + 6, 5 * TILE + 26, "cobweb",
+    sc.add_furniture("bed", [(1, 1), (1, 2)], w=34, h=52)
+    sc.add_decoration(Decoration(6 * TILE + 16, 1 * TILE + 22, "candle"))
+    sc.add_decoration(Decoration(8 * TILE + 16, 6 * TILE + 16, "phantom_mark"))
+    sc.add_decoration(Decoration(1 * TILE + 6, 7 * TILE + 26, "cobweb",
                                  ang=-math.pi / 2))
-    for mx, my in [(5, 4), (3, 5)]:
+    for mx, my in [(6, 5), (4, 7)]:
         sc.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16, "mote"))
     sc.hide_spots = [
-        (2 * TILE + 16, 3 * TILE + 24, "under"),   # under the cot
+        (2 * TILE + 16, 3 * TILE + 16, "under"),   # under the cot (in the alcove)
     ]
     _ambient(sc, "whisper", 0.10, 8.0, 13.0)
 
