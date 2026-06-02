@@ -284,12 +284,14 @@ def _shade_face(N, dn, threat):
     gold rim trapped on the grazing silhouette."""
     diff = max(0.0, _dot(N, _L))
     spec = max(0.0, _dot(N, _H)) ** 18
-    rim = (1.0 - abs(N[2])) ** 3
+    rim = (1.0 - abs(N[2])) ** 2.7                          # gold edge band
     col = _cmix(_MEM_SHADOW, _MEM_HI, 0.12 + 0.85 * diff)
     col = _cmix(col, _MEM, 0.25)                            # keep it dark/oily
     col = _cadd(col, _SUBSURF, (1.0 - diff) * 0.18 * dn)    # blood under the skin
     col = _cadd(col, _SHEEN, spec * 0.38)                   # wet (not metallic) glint
-    col = _cadd(col, _GOLD_RIM, rim * (0.45 + 0.55 * threat) * (0.4 + 0.6 * dn))
+    # a gold rim trapped on the grazing silhouette -- present even when calm, so
+    # the dark flesh keeps a glowing edge against a near-black scene
+    col = _cadd(col, _GOLD_RIM, rim * (0.50 + 0.5 * threat) * (0.45 + 0.55 * dn))
     return _ci(col)
 
 
@@ -363,9 +365,18 @@ def _draw_arms(lay, o3, op, ocenter, sz, cx, cy, t, threat, arm_roots,
             reach = max(reach, 0.55 * gate)
         if reach < 0.12:
             continue
-        tgt = (tgt0[0] + 1.3 * math.sin(ai * 2.1 + t * 0.25),
-               tgt0[1] + 0.5 * math.sin(ai * 1.3),
-               tgt0[2] + 0.5 * math.cos(ai * 1.7))
+        # forced limbs lunge straight at the player; the rest SPLAY outward along
+        # their own root direction (up / out / across), so the thing never reads
+        # as a spider with every leg converging on the floor.
+        if ai in forced:
+            aim = tgt0
+        else:
+            aim = (ocenter[0] + outward[0] * 3.0 * 0.7 + tgt0[0] * 0.3,
+                   ocenter[1] + (outward[1] * 3.0 + 0.7) * 0.7 + tgt0[1] * 0.3,
+                   ocenter[2] + outward[2] * 3.0 * 0.7 + tgt0[2] * 0.3)
+        tgt = (aim[0] + 1.0 * math.sin(ai * 2.1 + t * 0.25),
+               aim[1] + 0.6 * math.sin(ai * 1.3),
+               aim[2] + 0.5 * math.cos(ai * 1.7))
         end = (root[0] + (tgt[0] - root[0]) * reach,
                root[1] + (tgt[1] - root[1]) * reach,
                root[2] + (tgt[2] - root[2]) * reach)
@@ -507,9 +518,13 @@ def draw_king_unfold(surf, cx, cy, t, threat=0.0, scale=96.0):
     # 1) far wall of the mass (inside of the back)
     draw_membrane(back, False)
 
-    # 2) the heart: glow + emissive everting shells, glimpsed through the flesh
+    # 2) the heart: glow + emissive everting shells, glimpsed through the flesh.
+    # It is the creature's FOCAL CORE -- a pulsing molten centre the eye locks
+    # onto, brightest at its heart so the dread has a centre of gravity.
     hc = (sum(p[0] for p in cp) / len(cp), sum(p[1] for p in cp) / len(cp))
-    _heart_glow(lay, hc[0], hc[1], sz * 0.7, 70 + 150 * threat)
+    pulse = 0.82 + 0.18 * math.sin(t * 1.6)
+    _heart_glow(lay, hc[0], hc[1], sz * 0.82, (80 + 165 * threat) * pulse)
+    _heart_glow(lay, hc[0], hc[1], sz * 0.34, (70 + 130 * threat) * pulse)  # hot core
     czs = [p[2] for p in c3]
     czmin, czr = min(czs), (max(czs) - min(czs)) or 1.0
     crecs = sorted(range(len(form["cfaces"])),
