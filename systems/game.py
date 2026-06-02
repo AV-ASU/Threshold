@@ -133,6 +133,15 @@ TILT_ACTOR_STAND = 15        # default px a sprite centre rises to stand
 # Taller sprites need their centre lifted further so their feet meet the
 # floor (foot-offset in sprite px); falls back to TILT_ACTOR_STAND.
 TILT_LIFT = {"yellow_king": 30, "sheriff_hollow": 22, "watcher": 20}
+# The world projection is orthographic (no natural perspective), so the King --
+# the apex -- is the one actor given a deliberate perspective-style depth scale
+# under tilt: he LOOMS larger as he closes the view-depth gap toward the camera
+# and shrinks as he hangs back, so a charge reads as bulk rushing the lens. Pure
+# visual (catch is still distance-gated). KING_TILT_DEPTH_CAM is the effective
+# camera->player-plane distance (world px) feeding the perspective divide.
+KING_TILT_DEPTH_CAM = 360.0
+KING_TILT_DEPTH_MIN = 0.7    # scale-mul clamp (far / behind the player)
+KING_TILT_DEPTH_MAX = 1.7    # scale-mul clamp (near / in front, looming)
 
 # Dark scenes -- underground / interior cult sites where the
 # flashlight matters. Without the flashlight the screen is heavily
@@ -3694,9 +3703,22 @@ class Game(CutsceneMixin):
             king3d_yaw = None
             king_to_player = None
             king_lean = None
+            king_scale_mul = 1.0
             if npc.sprite_kind == "yellow_king" and self.player and self._tilt_on():
                 phi = math.atan2(self.player.y - npc.y, self.player.x - npc.x)
                 king3d_yaw = (phi - self.camera.yaw - math.pi / 2 + math.pi) % math.tau - math.pi
+                # DEPTH-SCALE: loom larger as he closes the view-depth gap toward
+                # the camera (camera.depth is bigger = nearer), shrink as he hangs
+                # back. A perspective divide about the player's depth plane, faded
+                # in with the tilt amount so pitch 0 (shipped) is untouched.
+                C = KING_TILT_DEPTH_CAM
+                dz = (self.camera.depth(npc.x, npc.y)
+                      - self.camera.depth(self.player.x, self.player.y))
+                dz = max(-0.45 * C, min(0.45 * C, dz))
+                f = C / (C - dz)
+                pf = max(0.0, min(1.0, self.camera.pitch / math.radians(TILT_PITCH_DEG)))
+                king_scale_mul = max(KING_TILT_DEPTH_MIN, min(KING_TILT_DEPTH_MAX,
+                                     1.0 + (f - 1.0) * pf))
             if npc.sprite_kind == "yellow_king" and self.player:
                 # screen-space direction King->player so the Unfolding's limbs
                 # reach + eyes gaze the right way under any camera / approach
@@ -3746,7 +3768,8 @@ class Game(CutsceneMixin):
                                     curse=curse_v, gaze=w_gaze, view=nview,
                                     king3d_yaw=king3d_yaw,
                                     to_player=king_to_player,
-                                    lean=king_lean)
+                                    lean=king_lean,
+                                    scale_mul=king_scale_mul)
                     # A resister whose flesh has turned: their bespoke
                     # fold-horror form, laid over the person they were.
                     if getattr(npc, "_mutated", False):
