@@ -763,8 +763,9 @@ def draw_unfold_catch(surf, t):
     def sstep(x):
         x = 0.0 if x < 0 else 1.0 if x > 1 else x
         return x * x * (3.0 - 2.0 * x)
-    opening = sstep(t / 0.22)                 # the maw yawns open
-    dive = sstep((t - 0.12) / 0.74)           # plunge down the gullet
+    mouth = sstep(t / 0.20)                   # the maw irises open from shut
+    opening = sstep(t / 0.26)                 # throat scales up
+    dive = sstep((t - 0.20) / 0.66)           # plunge down the gullet
     flare = sstep((t - 0.82) / 0.18)          # the furnace floods
 
     base = max(W, H)
@@ -814,6 +815,27 @@ def draw_unfold_catch(surf, t):
     # glows in the dark centre), swelling as we plunge toward it
     _heart_glow(surf, cx, cy, int(base * (0.10 + 0.22 * dive + 0.55 * flare)),
                 int(110 + 150 * dive))
+
+    # THE MOUTH OPENING: a foreground lip of big teeth that starts CLENCHED SHUT
+    # (tips meeting at the centre, hiding the throat + gullet) and irises open to
+    # a gape, then recedes as we plunge in. This is the beat that reads as a
+    # mouth opening rather than starting mid-throat.
+    lipf = 1.0 - dive                          # present at the start, gone inside
+    if lipf > 0.02:
+        lipR = base * 0.66
+        nt = 22
+        la = int(255 * min(1.0, lipf * 1.5))
+        for k in range(nt):
+            ang = math.tau * k / nt + 0.05 * math.sin(k * 1.7)
+            dA = (math.tau / nt) * 0.46
+            b0 = (cx + math.cos(ang - dA) * lipR, cy + math.sin(ang - dA) * lipR)
+            b1 = (cx + math.cos(ang + dA) * lipR, cy + math.sin(ang + dA) * lipR)
+            # tips retract from the centre (shut) out toward the rim (open)
+            tipr = lipR * (0.03 + 0.93 * mouth) * (0.82 + 0.32 * math.sin(k * 1.9))
+            tip = (cx + math.cos(ang) * tipr, cy + math.sin(ang) * tipr)
+            shade = 0.45 + 0.4 * math.sin(ang * 2.0)
+            col = _ci(_cmix(_TOOTH_DK, _TOOTH, 0.20 + 0.80 * shade))
+            pygame.draw.polygon(surf, col, [b0, b1, tip])
 
     # the furnace floods from the gullet -> white-gold
     if flare > 0.0:
