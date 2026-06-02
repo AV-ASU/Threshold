@@ -1179,7 +1179,9 @@ class Game(CutsceneMixin):
                 box = pygame.Rect(int(sx - hw), int(sy - up),
                                   int(2 * hw), int(up + dn))
                 self.screen.set_clip(box)
-                reach = box.inflate(TILE * 2, TILE * 3)   # art overhangs centre
+                # generous on x so a wide corn RUN (anchored at its left tile,
+                # up to _CORN_RUN_CAP wide) still registers when it overlaps.
+                reach = box.inflate(TILE * 6, TILE * 3)
                 for d, tx, ty in self._tilt_all_walls:    # far->near
                     if d <= kd:
                         continue

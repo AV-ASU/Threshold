@@ -905,6 +905,47 @@ _WINDOW_CHARS = frozenset(c for c, d in OBJECT_DEFS.items()
 # is unchanged (passable 'j'/'p'/'A' still are; 'T'/'C' still solid).
 _TILT_BILLBOARD_CHARS = frozenset(c for c, d in OBJECT_DEFS.items()
                                   if d and d.get("kind") in ("tree", "cornstalk"))
+_CORN_CHARS = frozenset(c for c, d in OBJECT_DEFS.items()
+                        if d and d.get("kind") == "cornstalk")
+# Corn LOD: a field/maze is hundreds of stalks. Merge each maximal HORIZONTAL
+# run of cornstalks (capped at _CORN_RUN_CAP wide) into ONE wide billboard +
+# occluder -- a thin maze wall or a dense block becomes a handful of cards, not
+# one per tile (~40-70% fewer). Trees never merge (sparse).
+_CORN_RUN_CAP = 4
+_CORN_RUN_CACHE = {}
+
+
+def _corn_runs(scene):
+    """Per-scene LOD decomposition -> (anchors {(tx,ty): width}, suppressed
+    {(tx,ty)}). A run's LEFT tile is its anchor (draws a width-wide card); the
+    rest are suppressed (skipped, drawn by the anchor). Cached per scene id,
+    cleared with the floor cache so a freed scene's id can't be reused stale."""
+    c = _CORN_RUN_CACHE.get(id(scene))
+    if c is not None:
+        return c
+    o = scene.objects
+    W, H = scene.w, scene.h
+    anchors, suppressed = {}, set()
+    for y in range(H):
+        x = 0
+        while x < W:
+            if o[y][x] in _CORN_CHARS:
+                n = 1
+                while (n < _CORN_RUN_CAP and x + n < W
+                       and o[y][x + n] in _CORN_CHARS):
+                    n += 1
+                if n > 1:
+                    anchors[(x, y)] = n
+                    for i in range(1, n):
+                        suppressed.add((x + i, y))
+                x += n
+            else:
+                x += 1
+    c = (anchors, suppressed)
+    _CORN_RUN_CACHE[id(scene)] = c
+    return c
+
+
 _WALL_BASE = (19, 18, 23)
 _WALL_FACE = (50, 48, 56)
 _WALL_TOP = (74, 72, 82)
@@ -1360,6 +1401,7 @@ def draw_scene_terrain(surf, scene, cam_x, cam_y, x0, y0, x1, y1,
     if _FLOOR_CACHE_SCENE is not scene:
         _FLOOR_CACHE.clear()
         _TILT_STANDEE_CACHE.clear()  # tree/corn billboard cards are scene-keyed
+        _CORN_RUN_CACHE.clear()      # corn-run LOD decomposition is per scene
         _FLOOR_CACHE_SCENE = scene   # hold the ref so its identity can't be reused
     for ty in range(y0, y1):
         for tx in range(x0, x1):
@@ -1645,20 +1687,33 @@ def _tilt_standee(surf, camera, scene, tx, ty, ch):
     a fixed sway pose (cleared on scene change with the floor cache)."""
     from rendering.solids import draw_billboard
     kind = OBJECT_DEFS.get(ch, {}).get("kind")
-    seed = (tx * 73856093) ^ (ty * 19349663)
-    key = (kind, seed)
+    width = 1
+    if kind == "cornstalk":                # LOD: this tile may anchor a run
+        wtx = tx % scene.w if scene.wrap_x else tx
+        wty = ty % scene.h if scene.wrap_y else ty
+        width = _corn_runs(scene)[0].get((wtx, wty), 1)
+        key = (kind, wtx, wty, width)
+    else:
+        key = (kind, (tx * 73856093) ^ (ty * 19349663))
     card = _TILT_STANDEE_CACHE.get(key)
     if card is None:
-        CW, CH = 72, 60
-        card = pygame.Surface((CW, CH), pygame.SRCALPHA)
-        rx, ry = CW // 2 - 16, CH - TILE   # tile (16, TILE) lands at card base
+        CH = 60
         if kind == "cornstalk":
-            _draw_corn(card, rx, ry, seed)
+            CW = width * TILE + 16         # one row of `width` stalk clumps
+            card = pygame.Surface((CW, CH), pygame.SRCALPHA)
+            for i in range(width):
+                s = ((wtx + i) * 73856093) ^ (wty * 19349663)
+                _draw_corn(card, 8 + i * TILE, CH - TILE, s)
         else:
-            _draw_tree(card, rx, ry, seed)
+            CW = 72                        # canopy spills past the tile
+            card = pygame.Surface((CW, CH), pygame.SRCALPHA)
+            _draw_tree(card, CW // 2 - 16, CH - TILE,
+                       (tx * 73856093) ^ (ty * 19349663))
         card = card.convert_alpha()        # fast per-pixel-alpha blits
         _TILT_STANDEE_CACHE[key] = card
-    wx, wy = tx * TILE + 16, ty * TILE + 16
+    # base at the run's centre (single tile -> tile centre), at the row centre
+    wx = tx * TILE + (width * TILE) // 2
+    wy = ty * TILE + 16
     if kind != "cornstalk":                # trees grounded; corn is too dense
         bx, by = camera.project(wx, wy, 0.0)
         _ground_shadow(surf, bx, by, 12, 5, 70)
@@ -1667,17 +1722,10 @@ def _tilt_standee(surf, camera, scene, tx, ty, ch):
 
 def _tilt_tile_box(surf, camera, scene, tx, ty):
     """Dispatch a tile to its tilt solid: a wall-mass box, a doorway (lintel +
-    swung leaf), a window (box + lit pane), or a tree/cornstalk STANDEE."""
-    # Cull tiles whose extruded/standee footprint can't touch the screen -- the
-    # visible window is oversized (esp. on big maps), and a dense maze has
-    # hundreds of stalks, so skipping the clearly off-screen ones helps. Margins
-    # are generous so an edge box/billboard (which rises toward -y off its base)
-    # is never clipped: wide on x, and tall below (a tall billboard rooted just
-    # under the screen still rises into view).
-    bx, by = camera.project(tx * TILE + 16, ty * TILE + 16)
-    if not (-64 <= bx <= SCREEN_W + 64
-            and -64 <= by <= SCREEN_H + 96):
-        return
+    swung leaf), a window (box + lit pane), or a tree/cornstalk STANDEE. The
+    visible window is sized to the screen, so off-screen over-draw is bounded;
+    each draw self-clips, so an explicit cull here only added a projection per
+    tile without paying for itself."""
     wtx = tx % scene.w if scene.wrap_x else tx
     wty = ty % scene.h if scene.wrap_y else ty
     ch = (scene.objects[wty][wtx]
@@ -1726,6 +1774,7 @@ def draw_terrain_tilted(surf, scene, camera, focus=None):
     # depth-interleaves with walls and the actors exactly like a wall.
     walls = []
     W, H = scene.w, scene.h
+    corn_suppressed = _corn_runs(scene)[1]   # LOD: tiles drawn by a run anchor
     for ty in range(y0, y1):
         wty = ty % H if scene.wrap_y else ty
         if not (0 <= wty < H):
@@ -1735,6 +1784,8 @@ def draw_terrain_tilted(surf, scene, camera, focus=None):
             if not (0 <= wtx < W):
                 continue
             ch = scene.objects[wty][wtx]
+            if ch in _CORN_CHARS and (wtx, wty) in corn_suppressed:
+                continue                         # part of a run; its anchor draws it
             if ch in _WALL_CHARS or ch in _DOOR_CHARS or \
                     ch in _WINDOW_CHARS or ch in _TILT_BILLBOARD_CHARS:
                 walls.append((tx, ty, wtx, wty))
