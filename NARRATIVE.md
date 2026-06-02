@@ -632,13 +632,20 @@ The reworks the new fiction forced are all shipped. What must stay true:
 ---
 
 ## 8. Still loose (design TODO)
-- **Cultist movement → dynamic AI, not preset patrol coordinates.** The
-  cultist (`enemy.py` cult state machine + the `_cultist(... waypoints=[...])`
-  helper in the underground scenes) currently walks **hard-coded tile
-  waypoints**. Replace those scripted loops with **dynamic, emergent AI
-  movement** (wander/seek/patrol driven by perception + state, not a fixed
-  path) so the cultists feel alive rather than on rails. Scope: the
-  `_cultist` spawns across `scenes/well.py` + `scenes/depths.py`.
+- ~~**Cultist movement → dynamic AI, not preset patrol coordinates.**~~
+  **DONE.** The hard-coded `waypoints=[...]` are gone from `_cultist` and all
+  14 spawns. SCOUT now **pure-roams** — each cultist picks its own reachable
+  goals, wanders, pauses to scan — and pursuit is **cover-aware**: a wrap-aware
+  BFS nav layer (`Scene.nav_grid`/`nav_clear_line`/`nav_path`/`nav_toward` in
+  `scenes/base.py`) routes pursuers **around** the volumetric props (pillars,
+  pews, cots, basins) while staying a straight shot in the open. Wired into
+  both cult paths (`enemy.py` underground + `npc.py` surface chasers); the
+  `_force_chase` apex stays straight (relentless). A chase carries **through
+  portals and folds** alike (`_note_fold_pursuit`/`_tick_fold_pursuit` —
+  surface NPC chasers AND underground Enemy cultists, the latter spawned native
+  to the destination), with **SAFE_SCENES the one refuge** that always shakes
+  it. Guards: flow.py §20 (no preset routes + nav routes around cover) and §21
+  (portals carry the chase; the refuge is never breached).
 - ~~**Scrub the eat-cult fiction (code ↔ §1b).**~~ **DONE.** Canon is a
   **claiming** cult that renders no bodies (no cannibalism). The `works_vats`
   is **the Cistern** (the dig hitting the river — *"the water runs on,

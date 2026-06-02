@@ -528,6 +528,28 @@ def main():
     check(no_wp, "ai: cultist spawns were exercised by the waypoint guard")
     check(routed, "ai: a blocked-line route was found to exercise the nav guard")
 
+    # --- 21. A chase carries through PORTALS and folds (NARRATIVE §8) -------
+    # The only thing that shakes a hot pursuer is a SAFE room. Guard both: a
+    # plain portal (non-fold) exit to a non-safe scene stashes the pursuer; a
+    # SAFE destination clears it (the refuge is never breached).
+    from systems.game import (CULTIST_SCENES as _CS, UNDERGROUND_SCENES as _UG,
+                              SAFE_SCENES as _SAFE)
+    gp = new_game()
+    gp.load_scene_now(next(iter(_CS)))
+    _ch = gp._spawn_cultist("cult_regular", "cultist",
+                            at=(gp.player.x + 30, gp.player.y))
+    check(_ch is not None, "portal: a surface chaser could be planted")
+    if _ch is not None:
+        _ch.x, _ch.y = gp.player.x + 30, gp.player.y
+        _ch._cult_state = "chase"
+        gp._note_fold_pursuit((next(iter(_UG)), "default"))   # plain portal
+        check(gp._fold_pursuer is not None,
+              "portal: an active chase carries through a portal exit")
+        _ch._cult_state = "chase"
+        gp._note_fold_pursuit((next(iter(_SAFE)), "default"))
+        check(gp._fold_pursuer is None,
+              "portal: a SAFE room shakes the chase (refuge never breached)")
+
     print()
     if FAILS:
         print(f"{len(FAILS)} flow failure(s).")

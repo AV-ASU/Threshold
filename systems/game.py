@@ -2618,37 +2618,42 @@ class Game(CutsceneMixin):
         self._cursed = True
 
     def _note_fold_pursuit(self, exit_data):
-        """Called the instant an exit fires, BEFORE the scene swaps. If the
-        exit is a hidden FOLD (a direction-gated exit) and a cultist is in
-        active chase within FOLD_PURSUE_RANGE, stash that one pursuer so it
-        can follow a beat behind. Any other exit -- door, ladder, rope --
-        clears the stash: ordinary architecture shakes the chase. The
-        refuge (SAFE_SCENES) is never breached."""
+        """Called the instant an exit fires, BEFORE the scene swaps. A chase
+        carries through PORTALS and FOLDS alike (NARRATIVE §8): if a cultist
+        is in active chase within FOLD_PURSUE_RANGE when the player crosses an
+        exit, stash that one pursuer so it follows a beat behind, whether the
+        exit is a door, ladder, rope, seamless passage, or a hidden fold. Both
+        cultist classes count -- the surface NPC chasers AND the underground
+        Enemy cultists. The refuge (SAFE_SCENES) is the one thing they can't
+        cross: a safe room always shakes them."""
         target_scene, _spawn_id = exit_data
-        # The cult moves through the world's wrongness AND its open ground:
-        # a hidden fold (direction-gated) or a seamless outdoor passage both
-        # carry the chase. Only a fade transition into an interior -- a door,
-        # ladder, or rope -- shakes them. The refuge is never breached.
-        if (not self._exit_is_fold(exit_data)) or target_scene in SAFE_SCENES:
+        if target_scene in SAFE_SCENES:
             self._fold_pursuer = None
             return
         hot, hot_d = None, FOLD_PURSUE_RANGE
-        for n in self.scene.npcs:
-            if getattr(n, "movement", "") != "chaser":
-                continue
-            if getattr(n, "_cult_state", "") != "chase":
-                continue
-            if not getattr(n, "alive", True):
-                continue
-            d = math.hypot(n.x - self.player.x, n.y - self.player.y)
-            if d <= hot_d:
-                hot, hot_d = n, d
+
+        def _consider(c):
+            nonlocal hot, hot_d
+            if (getattr(c, "_cult_state", "") == "chase"
+                    and getattr(c, "alive", True)):
+                d = math.hypot(c.x - self.player.x, c.y - self.player.y)
+                if d <= hot_d:
+                    hot, hot_d = c, d
+
+        for n in self.scene.npcs:               # surface NPC chasers
+            if getattr(n, "movement", "") == "chaser":
+                _consider(n)
+        for e in self.scene.enemies:            # underground Enemy cultists
+            if getattr(e, "kind", "") == "cultist":
+                _consider(e)
         if hot is None:
             self._fold_pursuer = None
             return
-        # Just enough to rebuild it on the far side of the fold.
+        # Just enough to rebuild it on the far side (its TYPE is chosen by the
+        # destination in _tick_fold_pursuit, so an underground portal lands an
+        # Enemy cultist and a surface one an NPC chaser, each scene's native).
         self._fold_pursuer = {
-            "kind": hot.sprite_kind,
+            "kind": getattr(hot, "sprite_kind", "cultist"),
             "speed": getattr(hot, "speed", 0.85),
             "gaze_range": getattr(hot, "_gaze_range", 180),
             "tag": getattr(hot, "tag", "cult_regular"),
@@ -2683,13 +2688,23 @@ class Game(CutsceneMixin):
             self._fold_pursuer = None
             self._fold_pursuer_grace = 0.0
             return
-        npc = self._spawn_cultist(info["tag"], info["kind"],
-                                  speed=info["speed"],
-                                  gaze_range=info["gaze_range"],
-                                  at=(sx, sy))
-        if npc is not None:
-            npc._cult_state = "chase"
-            npc._last_seen_pos = (self.player.x, self.player.y)
+        if self.scene.key in UNDERGROUND_SCENES:
+            # Underground rooms run Enemy cultists (the death-gate keys on
+            # Enemy kind=='cultist' in chase) -- so the pursuer that came down
+            # after you must be one too, not a surface NPC chaser.
+            from scenes.depths import _cultist
+            e = _cultist(sx, sy, speed=info["speed"])
+            e._cult_state = "chase"
+            e._last_seen_pos = (self.player.x, self.player.y)
+            self.scene.enemies.append(e)
+        else:
+            npc = self._spawn_cultist(info["tag"], info["kind"],
+                                      speed=info["speed"],
+                                      gaze_range=info["gaze_range"],
+                                      at=(sx, sy))
+            if npc is not None:
+                npc._cult_state = "chase"
+                npc._last_seen_pos = (self.player.x, self.player.y)
         self._fold_pursuer = None
         self._fold_pursuer_grace = 0.0
 
@@ -3369,8 +3384,9 @@ class Game(CutsceneMixin):
                     self.player.x, self.player.y,
                     facing=self.player.facing)
                 if exit_data:
-                    # Stash a hot pursuer iff this exit is a FOLD; a mundane
-                    # exit clears the stash (architecture shakes the chase).
+                    # Stash a hot pursuer so an active chase carries through
+                    # this exit -- portal or fold alike (only a SAFE room
+                    # shakes it). The far side rebuilds it a beat behind.
                     self._note_fold_pursuit(exit_data)
                     # A fold/portal traversal has a 1/20 chance to bind +1
                     # Watcher (the seed that starts the curse cloning), unless
