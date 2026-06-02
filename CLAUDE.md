@@ -56,8 +56,18 @@ it renders the procedural sprites to a labelled PNG strip.
     other kinds use a straight-line chase.
 - `rendering/`
   - `sprites.py` — procedural sprite drawing (`draw_npc_sprite`,
-    `_draw_king`). The King keeps per-frame state in module globals
-    (`_YK_*`); fine for the single King in play.
+    `_draw_king`). The flat pallid-mask `_draw_king` keeps per-frame state in
+    module globals (`_YK_*`); fine for the single King in play.
+  - `king_unfold.py` — **THE UNFOLDING**, the non-humanoid King now in play. A
+    real 4D everting mass (mass + hypersphere heart rotate through 4D planes,
+    project 4D→3D→2D, silhouette never repeats), faceless, with eyes opening
+    across the skin, 3D limbs that erupt where the body everts forward and reach
+    the player (≥2 above threat 0.8), and 3D toothed eversion-maws that warp with
+    the flesh (patch-bound). `draw_king_unfold(surf,x,y,t,threat,scale,to_player,
+    birth)` and the death `draw_unfold_catch(surf,t)` (the throat-swallow).
+    **Wired as `yellow_king`:** `draw_npc_sprite` routes there when
+    `sprites.KING_UNFOLD` is True (False → the old flat King); death routes from
+    `_draw_death_screen`. Stateless except a one-time cached `_FORM`.
   - `transform.py` — `draw_vessel_bloom`, the human→vessel morph.
   - **Tilted-camera track (scaffolding — NOT wired into the live game
     yet):** `camera.py` (`Camera.project(wx,wy,wz)`, the single

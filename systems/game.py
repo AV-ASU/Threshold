@@ -13,7 +13,8 @@ from rendering.sprites import (draw_player_sprite, draw_npc_sprite,
                                draw_npc_corpse, draw_infested_overlay,
                                draw_axe_swing, draw_king_death,
                                door_mask_surface, reset_king_fx,
-                               view_from_facing)
+                               view_from_facing, KING_UNFOLD)
+from rendering.king_unfold import draw_unfold_catch
 from rendering.transform import draw_vessel_bloom
 from rendering.camera import Camera
 from systems.look_control import LookController
@@ -3297,7 +3298,11 @@ class Game(CutsceneMixin):
         furnace of masks (sprites.draw_king_death) stamped CARCOSA;
         cultist = a stark CAPTURED card over a near-black wash."""
         if self._death_kind == "king":
-            draw_king_death(self.screen, self._death_t)
+            if KING_UNFOLD:
+                # the Unfolding takes you down the throat (see draw_unfold_catch)
+                draw_unfold_catch(self.screen, min(1.0, self._death_t / 3.0))
+            else:
+                draw_king_death(self.screen, self._death_t)
             if self._death_t > 3.0:                  # the name surfaces over the descent
                 w, h = self.screen.get_size()
                 ta = min(235, int((self._death_t - 3.0) / 0.55 * 235))
@@ -3687,9 +3692,16 @@ class Game(CutsceneMixin):
             # convention) is when the king->player heading sits at +pi/2 off the
             # camera yaw. So feed the offset from that face-on heading.
             king3d_yaw = None
+            king_to_player = None
             if npc.sprite_kind == "yellow_king" and self.player and self._tilt_on():
                 phi = math.atan2(self.player.y - npc.y, self.player.x - npc.x)
                 king3d_yaw = (phi - self.camera.yaw - math.pi / 2 + math.pi) % math.tau - math.pi
+            if npc.sprite_kind == "yellow_king" and self.player:
+                # screen-space direction King->player so the Unfolding's limbs
+                # reach + eyes gaze the right way under any camera / approach
+                kxs, kys = self.camera.project(npc.x, npc.y)
+                pxs, pys = self.camera.project(self.player.x, self.player.y)
+                king_to_player = (pxs - kxs, pys - kys)
             npc_lift = int(TILT_LIFT.get(npc.sprite_kind, TILT_ACTOR_STAND)
                            * math.sin(self.camera.pitch))
             for ox, oy in _offsets:
@@ -3718,7 +3730,8 @@ class Game(CutsceneMixin):
                                     gait=getattr(npc, "_gait", None),
                                     threat=king_threat, seed=id(npc) & 0xffff,
                                     curse=curse_v, gaze=w_gaze, view=nview,
-                                    king3d_yaw=king3d_yaw)
+                                    king3d_yaw=king3d_yaw,
+                                    to_player=king_to_player)
                     # A resister whose flesh has turned: their bespoke
                     # fold-horror form, laid over the person they were.
                     if getattr(npc, "_mutated", False):

@@ -1,4 +1,9 @@
-"""THE UNFOLDING -- the non-humanoid King (prototype, not wired into the game).
+"""THE UNFOLDING -- the non-humanoid King. WIRED IN as the `yellow_king`
+sprite: rendering/sprites.py `draw_npc_sprite` routes the King's draw here when
+`sprites.KING_UNFOLD` is True (flip it False to fall back to the flat pallid-mask
+`_draw_king`). The catch/death routes to `draw_unfold_catch` from
+`Game._draw_death_screen`. Fed the live `threat`, `birth`, and a screen-space
+`to_player` from `Game.draw_world`.
 
 Design, decided in chat:
   * BASE FORM = a blend -- an irregular, lumpy 4D MASS (the asymmetry is the

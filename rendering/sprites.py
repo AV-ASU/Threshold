@@ -5,6 +5,13 @@ import pygame
 from constants import C_BLACK
 from rendering import king3d
 
+# THE UNFOLDING as the King (rendering/king_unfold.py): the non-humanoid 4D
+# apex. When KING_UNFOLD is True the `yellow_king` sprite draws as the Unfolding
+# instead of the flat pallid-mask `_draw_king`. Flip to False to fall back to
+# the shipped King for comparison.
+KING_UNFOLD = True
+KING_UNFOLD_SCALE = 48          # tuned down for the in-game ~tilt scale
+
 # ---- Cultist: a stitched animal-hide coat + a carved wooden mask, one of
 # six chosen per individual (by seed) so the congregation reads as "everyone
 # carved their own." Directional: the mask shows front/side; from behind you
@@ -439,7 +446,7 @@ def _cap(surf, x, y, crown, crown_lo, bill, s=0):
 
 def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False,
                     birth=None, gait=None, threat=None, seed=0, curse=0.0,
-                    view="front", king3d_yaw=None):
+                    view="front", king3d_yaw=None, to_player=None):
     """`blink=True` suppresses eye dots for NPC kinds that have human
     eyes (the named locals -- townswoman, tisdale_boy, sheriff, royce,
     preacher, clerk, hettie, old_townsman). Used by Game.draw to make a
@@ -936,7 +943,14 @@ def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False,
         else:
             b = birth
             g = gait if gait is not None else t * 7.0
-        _draw_king(surf, x, y, facing, t, b, g, threat, king3d_yaw=king3d_yaw)
+        if KING_UNFOLD:
+            from rendering.king_unfold import draw_king_unfold
+            tp = to_player if to_player is not None else (0.0, 1.0)
+            draw_king_unfold(surf, x, y, t,
+                             threat=(0.5 if threat is None else threat),
+                             scale=KING_UNFOLD_SCALE, to_player=tp, birth=b)
+        else:
+            _draw_king(surf, x, y, facing, t, b, g, threat, king3d_yaw=king3d_yaw)
     elif kind == "black_figure":
         # Pure-black humanoid silhouette, NPC proportions. No eyes, no
         # facial detail -- just the hole-shaped outline of a person.
