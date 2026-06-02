@@ -464,49 +464,43 @@ def build_son_room():
     """The Lodge Clerk's private room. A bed, a closet (his pressed cult
     robe -- the tell that he's complicit), a bare dresser (he keeps your
     car keys downstairs, behind the tab), a window."""
-    floor = [
-        "==========",
-        "==========",
-        "==========",
-        "==========",
-        "==========",
-        "==========",
-        "==========",
-        "==========",
-    ]
-    # ONE bed and ONE closet (the original three stacked b + three
-    # stacked s read as three beds and three closets). Single
-    # tiles each. Dresser (table sprite) at row 6.
+    floor = ["=" * 14 for _ in range(10)]
+    # A main room plus a partitioned CLOSET alcove (cols 9-12) reached
+    # through an interior doorway. The Clerk's pressed cult robe hangs in
+    # that alcove -- the dividing wall makes it an indoor blind spot, so the
+    # tell that the smiling man is one of them isn't visible from the room
+    # until the player steps into the closet and looks.
     objects = [
-        "WWWiWWWWWW",   # 0 north wall, window col 3
-        "W........W",   # 1
-        "W........W",   # 2
-        "W........W",   # 3
-        "W..b...s.W",   # 4 bed (col 3) + closet (col 7)
-        "W........W",   # 5
-        "W.....t..W",   # 6 dresser (col 5; off the door column)
-        "WWW1WWWWWW",   # 7 south wall, door 1 at col 3
+        "WWWiWWWWWWWWWW",   # 0  north wall, window col 3
+        "W.......W....W",   # 1  the room (cols 1-7) | closet alcove (cols 9-12)
+        "W.......W....W",   # 2
+        "W............W",   # 3  doorway gap in the partition (col 8)
+        "W.......W....W",   # 4
+        "WWWWWWWWW....W",   # 5  closet sealed off below
+        "W............W",   # 6
+        "W............W",   # 7
+        "W............W",   # 8
+        "WWW1WWWWWWWWWW",   # 9  south wall, door 1 at col 3
     ]
     sc = Scene("son_room", floor, objects, music="home")
     sc.add_exit("1", "house", "from_son_room")
-    # Door is at (3, 7); spawn at (4, 6) is open floor and one tile
+    # Door is at (3, 9); spawn at (4, 8) is open floor and one tile
     # off-axis so the player doesn't auto-retrigger.
-    sc.set_spawn("default", 4, 6)
-    sc.set_spawn("from_house", 4, 6)
+    sc.set_spawn("default", 8, 7)
+    sc.set_spawn("from_house", 4, 8)
 
-    # The dresser (table sprite) holds the car keys. Moved off col 3
-    # because col 3 is the door column -- a solid prop directly above
-    # the door previously trapped the player inside.
-    sc._dresser_pos = (5 * TILE + 16, 6 * TILE + 16)
-    # The closet (shelf sprite) holds the Clerk's pressed cult robe -- a
-    # flavor clue (he's complicit), not counted evidence.
-    sc._closet_pos = (7 * TILE + 16, 4 * TILE + 16)
+    # The dresser (table sprite) holds the car keys. Out in the main room,
+    # off the door column so a solid prop never traps the player inside.
+    sc._dresser_pos = (5 * TILE + 16, 7 * TILE + 16)
+    # The closet (wardrobe sprite) holds the Clerk's pressed cult robe -- a
+    # flavor clue (he's complicit), not counted evidence. In the blind alcove.
+    sc._closet_pos = (10 * TILE + 16, 2 * TILE + 16)
     # Hide spot under the bed. The wardrobe is NOT a hide spot: it's the
     # Clerk's-robe tell (clerk_room_interact), and a hide here took E
     # priority and made the only "the Clerk is one of them" clue
     # unreachable. (son_room is a SAFE scene -- the hide was cosmetic.)
     sc.hide_spots = [
-        (4 * TILE + 16, 4 * TILE + 16, "under"),
+        (2 * TILE + 16, 6 * TILE + 24, "under"),
     ]
     # [E] cues for the robe closet (the tell) and the bare dresser.
     sc.add_interactable(sc._closet_pos[0], sc._closet_pos[1], 40)
@@ -514,26 +508,26 @@ def build_son_room():
 
     # Sized darkwood furniture: a 2x2 bed, a tall closet (the Clerk's robe
     # -> _closet_pos), a low dresser (bare -> _dresser_pos).
-    sc.add_furniture("bed", [(2, 3), (3, 3), (2, 4), (3, 4)], w=56, h=56)
-    sc.add_furniture("wardrobe", [(7, 3), (7, 4)], w=26, h=54)
-    sc.add_furniture("table", [(5, 6), (6, 6)], w=54, h=32)
+    sc.add_furniture("bed", [(2, 6), (3, 6), (2, 7), (3, 7)], w=56, h=56)
+    sc.add_furniture("wardrobe", [(10, 2), (10, 3)], w=26, h=54)
+    sc.add_furniture("table", [(5, 7), (6, 7)], w=54, h=32)
 
     # Wall items mounted on the NORTH wall (row 0). Lodge dressing: a
     # mounted buck (replaces the old generic photo) and a trophy
-    # walleye flank the window; a cobweb hangs in the NE corner and a
+    # walleye flank the window; a cobweb hangs in the closet corner and a
     # kerosene lamp burns on the dresser.
     sc.add_decoration(Decoration(2 * TILE + 16, 0 * TILE + 22, "candle"))
-    sc.add_decoration(Decoration(7 * TILE + 16, 0 * TILE + 22, "buck_head",
+    sc.add_decoration(Decoration(6 * TILE + 16, 0 * TILE + 22, "buck_head",
                                  wall="N"))
-    sc.add_decoration(Decoration(5 * TILE + 16, 0 * TILE + 24,
+    sc.add_decoration(Decoration(1 * TILE + 16, 0 * TILE + 24,
                                  "mounted_fish", flip=True))
-    sc.add_decoration(Decoration(8 * TILE + 26, 1 * TILE + 6, "cobweb",
+    sc.add_decoration(Decoration(12 * TILE + 26, 1 * TILE + 6, "cobweb",
                                  ang=math.pi / 2))
-    sc.add_decoration(Decoration(6 * TILE + 16, 6 * TILE + 2,
+    sc.add_decoration(Decoration(6 * TILE + 16, 7 * TILE + 2,
                                  "kerosene_lamp"))
     for i in range(4):
         sc.add_decoration(Decoration(40 + i * 60,
-                                     60 + (i % 2) * 40, "mote"))
+                                     200 + (i % 2) * 40, "mote"))
 
     sc.on_interact_fn = clerk_room_interact
     return sc

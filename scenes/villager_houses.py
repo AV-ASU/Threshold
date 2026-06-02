@@ -210,25 +210,33 @@ def preacher_body_examine(game, npc):
 
 
 def build_fisherman_cottage():
-    floor = ["=" * 10 for _ in range(8)]
+    """The Sheriff's office. A main room where Vane watches from his desk, and
+    a partitioned back RECORDS room (the case board he can't file on, the dead
+    payphone, his cartridges) reached through an interior doorway -- the
+    dividing wall makes the back room an indoor blind spot."""
+    floor = ["=" * 16 for _ in range(12)]
     objects = [
-        "WWWWWWWWWW",
-        "W........W",
-        "W..s..t..W",
-        "W..b..c..W",
-        "W........W",
-        "W..Y.....W",   # Y = fisherman marker
-        "W....y...W",   # y = exit door
-        "WWWWWWWWWW",
+        "WWWWWWWWWWWWWWWW",   # 0
+        "W........W.....W",   # 1   main office (cols 1-8) | records (cols 10-14)
+        "W........W.....W",   # 2
+        "W..............W",   # 3   doorway gap in the partition (col 9)
+        "W....Y...W.....W",   # 4   Y = Sheriff, at his desk
+        "W........W.....W",   # 5
+        "W........WWWWWWW",   # 6   records room sealed off below
+        "W..............W",   # 7   the office opens out under the records room
+        "W..............W",   # 8
+        "W..............W",   # 9
+        "W..............W",   # 10
+        "WWWWWyWWWWWWWWWW",   # 11  y = exit door back to the field
     ]
     sc = Scene("fisherman_cottage", floor, objects, music="home")
     # The Sheriff's office stands on the Brimley bank now; its door
     # opens back onto the field.
     sc.add_exit("y", "brimley", "from_fisherman_cottage")
-    sc.set_spawn("default", 5, 5)
-    sc.set_spawn("from_brimley", 4, 5)       # arrive from Brimley
-    sc.set_spawn("from_village", 4, 5)         # legacy fallback
-    sc.set_spawn("from_town", 4, 5)            # legacy fallback
+    sc.set_spawn("default", 4, 8)
+    sc.set_spawn("from_brimley", 5, 10)      # one tile north of the y door
+    sc.set_spawn("from_village", 5, 10)      # legacy fallback
+    sc.set_spawn("from_town", 5, 10)         # legacy fallback
 
     pos = sc.consume_marker("Y")
     if pos:
@@ -241,50 +249,53 @@ def build_fisherman_cottage():
                        voice="blip_gruff", portrait="sheriff",
                        dialogue_fn=sheriff_dialogue, movement="watch"))
 
-    # Sized darkwood furniture: a long shelf, a desk (radio on it), a
-    # 2x2 bed, a chair.
-    sc.add_furniture("bookshelf", [(2, 2), (3, 2)], w=54, h=18, seed=6)
-    sc.add_furniture("table", [(6, 2), (7, 2)], w=54, h=36)
-    sc.add_furniture("bed", [(2, 3), (3, 3), (2, 4), (3, 4)], w=54, h=54)
-    sc.add_furniture("chair", [(6, 3)], w=22, h=28)
-    sc.add_decoration(Decoration(7 * TILE + 16,  0 * TILE + 22 , "candle"))
-    sc.add_decoration(Decoration(2 * TILE + 16,  0 * TILE + 22 , "candle"))
+    # Sized darkwood furniture: a long shelf, the desk (radio on it), a 2x2
+    # bed in the corner, a chair, and a filing table in the back records room.
+    sc.add_furniture("bookshelf", [(1, 1), (2, 1)], w=58, h=18, seed=6)
+    sc.add_furniture("table", [(4, 5), (5, 5)], w=54, h=36)
+    sc.add_furniture("chair", [(6, 4)], w=22, h=28)
+    sc.add_furniture("bed", [(1, 8), (2, 8), (1, 9), (2, 9)], w=54, h=54)
+    sc.add_furniture("antler_rack", [(1, 4)], w=22, h=46)
+    sc.add_furniture("table", [(11, 4), (12, 4)], w=54, h=36)
+    sc.add_decoration(Decoration(7 * TILE + 16,  0 * TILE + 22, "candle"))
+    sc.add_decoration(Decoration(2 * TILE + 16,  0 * TILE + 22, "candle"))
     # Sheriff's office in hunting country: a mounted buck + trophy
     # walleye on the north wall (replacing the old banner), an antler
-    # coat-rack against the west wall, and a cobweb in the NE corner.
+    # coat-rack against the west wall, and a cobweb in the records corner.
     sc.add_decoration(Decoration(4 * TILE + 16, 0 * TILE + 22, "buck_head",
                                  wall="N"))
     sc.add_decoration(Decoration(6 * TILE + 16, 0 * TILE + 24,
                                  "mounted_fish"))
-    sc.add_decoration(Decoration(8 * TILE + 26, 1 * TILE + 6, "cobweb",
+    sc.add_decoration(Decoration(14 * TILE + 26, 1 * TILE + 6, "cobweb",
                                  ang=math.pi / 2))
-    sc.add_furniture("antler_rack", [(1, 4)], w=22, h=46)
     # AM radio on the desk, a lantern by the door.
-    sc.add_decoration(Decoration(4 * TILE + 16, 2 * TILE + 16, "radio"))
-    sc.add_decoration(Decoration(8 * TILE + 16, 5 * TILE + 24, "lantern"))
-    # Sheriff Vane's office made specific to the man: the case board of
-    # the disappeared he can't file on (polaroid wall), the Blaine girl's
-    # MISSING flyer beside it, a payphone he still lifts to a dead line,
-    # and a calendar of months he stopped reporting.
-    sc.add_decoration(Decoration(7 * TILE + 16, 0 * TILE + 24,
+    sc.add_decoration(Decoration(4 * TILE + 16, 5 * TILE + 8, "radio"))
+    sc.add_decoration(Decoration(5 * TILE + 16, 9 * TILE + 24, "lantern"))
+    # Sheriff Vane's office made specific to the man, with the worst of it
+    # tucked into the back room the public never sees: the case board of the
+    # disappeared he can't file on (polaroid wall), the Blaine girl's MISSING
+    # flyer beside it, the payphone he still lifts to a dead line. A calendar
+    # of months he stopped reporting hangs by the front desk.
+    sc.add_decoration(Decoration(12 * TILE + 16, 0 * TILE + 24,
                                  "polaroid_wall"))
-    sc.add_decoration(Decoration(5 * TILE + 16, 0 * TILE + 24,
+    sc.add_decoration(Decoration(13 * TILE + 16, 0 * TILE + 24,
                                  "missing_flyer"))
-    sc.add_decoration(Decoration(8 * TILE + 16, 3 * TILE + 16, "payphone"))
+    sc.add_decoration(Decoration(14 * TILE + 16, 3 * TILE + 16, "payphone"))
     sc.add_decoration(Decoration(1 * TILE + 16, 0 * TILE + 24, "calendar"))
-    for mx, my in [(4, 3), (5, 4), (3, 5)]:
+    for mx, my in [(4, 7), (6, 8), (3, 9)]:
         sc.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16,
                                      "mote"))
-    # Hide spots: behind the desk, under the table.
+    # Hide spots: behind the front desk, and in the back records room (blind).
     sc.hide_spots = [
-        (3 * TILE + 16, 2 * TILE + 24, "behind"),
-        (7 * TILE + 16, 2 * TILE + 24, "under"),
+        (4 * TILE + 16, 5 * TILE + 24, "behind"),
+        (12 * TILE + 16, 4 * TILE + 24, "behind"),
     ]
 
     def _fc_on_enter(game, scene):
-        # The lawman's cartridges -- the best ammo source in town (one-time).
+        # The lawman's cartridges -- the best ammo source in town (one-time),
+        # kept in the back records room.
         from .base import drop_ammo_cache
-        drop_ammo_cache(game, scene, 8, 4, 6, "ammo_sheriff")
+        drop_ammo_cache(game, scene, 13, 4, 6, "ammo_sheriff")
     sc.on_enter_fn = _fc_on_enter
     return sc
 

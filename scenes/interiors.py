@@ -153,25 +153,34 @@ def build_void_boss():
     sc.on_interact_fn = _void_boss_interact
     return sc
 def build_shop():
-    floor = ["=" * 12 for _ in range(8)]
+    """The General Store. A front shop where Hettie keeps the counter, and a
+    partitioned back STOREROOM through an interior doorway -- the dividing wall
+    makes it an indoor blind spot, and that's where the cult tells live (the
+    mirror with the wrong silhouette, the wrong_photo), unseen from the front
+    until the player steps back through the door."""
+    floor = ["=" * 16 for _ in range(12)]
     objects = [
-        "WWWWWWWWWWWW",
-        "W..........W",
-        "W..ss..ss..W",
-        "W..........W",
-        "W..t.S.....W",   # S = shopkeep marker (behind the counter table)
-        "W..c.......W",
-        "W.....D....W",
-        "WWWWWWWWWWWW",
+        "WWWWWWWWWWWWWWWW",   # 0
+        "W.....W........W",   # 1  storeroom (cols 1-5) | shop floor (cols 7-14)
+        "W.....W........W",   # 2
+        "W.....W........W",   # 3
+        "W..............W",   # 4  doorway gap in the partition (col 6)
+        "W.....W........W",   # 5
+        "WWWWWWW........W",   # 6  storeroom sealed off below
+        "W..............W",   # 7
+        "W.........S....W",   # 8  S = Hettie, behind the counter
+        "W..............W",   # 9
+        "W..............W",   # 10
+        "WWWWWWWWDWWWWWWW",   # 11  D = exit door back to the field
     ]
     sc = Scene("shop", floor, objects, music="home")
     # The General Store stands out on the Brimley bank now; its door
     # opens back onto the field.
     sc.add_exit("D", "brimley", "from_shop")
-    sc.set_spawn("default", 6, 5)
-    sc.set_spawn("from_brimley", 5, 6)       # arrive from Brimley
-    sc.set_spawn("from_village", 5, 6)         # legacy fallback
-    sc.set_spawn("from_town", 5, 6)            # legacy fallback
+    sc.set_spawn("default", 7, 9)
+    sc.set_spawn("from_brimley", 8, 10)      # one tile north of the D door
+    sc.set_spawn("from_village", 8, 10)      # legacy fallback
+    sc.set_spawn("from_town", 8, 10)         # legacy fallback
 
     pos = sc.consume_marker("S")
     if pos:
@@ -180,52 +189,50 @@ def build_shop():
                        "Hettie", "hettie", voice="blip_high",
                        portrait="hettie",
                        dialogue_fn=hettie_dialogue, movement="idle"))
-    # Shop dressing: a candle on the counter, a radio on the back
-    # shelf (use the wrong_radio variant -- it creeps the dial), a
-    # hanging sign banner over the door, two crows behind the
-    # window glass, a single mirror on the east wall (the wrong
-    # silhouette in the glass is the cult tell), a clock that
-    # stopped, motes for atmosphere, and a wrong_photo on the
-    # back wall.
     # Worn shop rug over the open floor -- multi-tile + off-grid to
     # break the plank tiling. First, so props draw on top.
-    sc.add_decoration(Decoration(7 * TILE + 24, 4 * TILE + 8, "rug",
+    sc.add_decoration(Decoration(10 * TILE + 24, 9 * TILE + 8, "rug",
                                  w=104, h=64, color=(58, 60, 64), seed=31))
-    # Sized darkwood furniture: two long shop bookshelves of goods, the
-    # counter table, a stool behind it.
-    sc.add_furniture("bookshelf", [(3, 2), (4, 2)], w=58, h=18, seed=1)
-    sc.add_furniture("bookshelf", [(7, 2), (8, 2)], w=58, h=18, seed=2)
-    sc.add_furniture("table", [(3, 4), (4, 4)], w=58, h=38)
-    sc.add_furniture("chair", [(3, 5)], w=22, h=28)
-    sc.add_decoration(Decoration(6 * TILE + 16, 2 * TILE + 16, "candle"))
-    sc.add_decoration(Decoration(2 * TILE + 16, 2 * TILE + 16, "wrong_radio"))
-    # Lodge dressing: a mounted buck + trophy walleye on the north wall
-    # (the old hanging shop banner is gone -- this is hunting/fishing
-    # country), a kerosene lamp on the counter, and a cobweb in the NW
-    # corner. The mirror + wrong_photo cult tells stay.
-    sc.add_decoration(Decoration(6 * TILE + 16, 0 * TILE + 22, "buck_head",
+    # Sized darkwood furniture: two long shop bookshelves of goods on the
+    # shop floor, the counter Hettie stands behind, a stool, plus storeroom
+    # stock shelves in the back.
+    sc.add_furniture("bookshelf", [(8, 1), (9, 1)], w=58, h=18, seed=1)
+    sc.add_furniture("bookshelf", [(11, 1), (12, 1)], w=58, h=18, seed=2)
+    sc.add_furniture("table", [(9, 9), (10, 9)], w=58, h=38)
+    sc.add_furniture("chair", [(10, 8)], w=22, h=28)
+    sc.add_furniture("bookshelf", [(1, 1), (2, 1)], w=58, h=18, seed=4)
+    sc.add_furniture("table", [(4, 2)], w=30, h=30)
+    sc.add_decoration(Decoration(9 * TILE + 16, 9 * TILE + 2, "candle"))
+    sc.add_decoration(Decoration(13 * TILE + 16, 1 * TILE + 22, "wrong_radio"))
+    # Lodge dressing on the shop floor: a mounted buck + trophy walleye on
+    # the north wall, a kerosene lamp on the counter. The cobweb hangs in
+    # the storeroom corner.
+    sc.add_decoration(Decoration(8 * TILE + 16, 0 * TILE + 22, "buck_head",
                                  wall="N"))
-    sc.add_decoration(Decoration(9 * TILE + 16, 0 * TILE + 24,
+    sc.add_decoration(Decoration(11 * TILE + 16, 0 * TILE + 24,
                                  "mounted_fish"))
-    sc.add_decoration(Decoration(4 * TILE + 16, 4 * TILE + 2,
+    sc.add_decoration(Decoration(9 * TILE + 16, 9 * TILE + 2,
                                  "kerosene_lamp"))
     sc.add_decoration(Decoration(1 * TILE + 6, 1 * TILE + 6, "cobweb",
                                  ang=0.0))
-    sc.add_decoration(Decoration(10 * TILE + 16, 4 * TILE + 16, "mirror"))
-    sc.add_decoration(Decoration(8 * TILE + 16, 1 * TILE + 22, "clock"))
-    # Hettie's calendar -- "no deliveries in a while now," the days
-    # folding back on themselves.
-    sc.add_decoration(Decoration(1 * TILE + 16, 0 * TILE + 24, "calendar"))
+    # The cult tells, hidden in the back storeroom (the blind spot): the
+    # mirror that shows the wrong silhouette, and a wrong_photo on the wall.
+    sc.add_decoration(Decoration(1 * TILE + 16, 3 * TILE + 16, "mirror"))
     sc.add_decoration(Decoration(4 * TILE + 16, 1 * TILE + 22,
                                  "wrong_photo", stage=1))
-    for mx, my in [(7, 4), (9, 5), (5, 5)]:
+    sc.add_decoration(Decoration(14 * TILE + 16, 1 * TILE + 22, "clock"))
+    # Hettie's calendar -- "no deliveries in a while now," the days
+    # folding back on themselves.
+    sc.add_decoration(Decoration(7 * TILE + 16, 0 * TILE + 24, "calendar"))
+    for mx, my in [(8, 7), (12, 8), (10, 10)]:
         sc.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16,
                                      "mote"))
-    # Hide spots colocated with cover (beside shelves / counter).
+    # Hide spots colocated with cover (beside the counter / shelves) and one
+    # in the back storeroom (the blind spot).
     sc.hide_spots = [
-        (4 * TILE + 16, 4 * TILE + 16, "behind"),   # beside counter
-        (4 * TILE + 16, 2 * TILE + 16, "behind"),   # beside W shelf
-        (8 * TILE + 16, 2 * TILE + 16, "behind"),   # beside E shelf
+        (8 * TILE + 16, 9 * TILE + 16, "behind"),   # beside counter
+        (8 * TILE + 16, 1 * TILE + 16, "behind"),   # beside a shop shelf
+        (2 * TILE + 16, 4 * TILE + 16, "behind"),   # in the storeroom
     ]
     return sc
 def build_barn():
@@ -234,38 +241,43 @@ def build_barn():
     tunnel down to the Works once ran -- nailed shut now, since the well
     is the only way underground. Lodge dressing (mounted buck, walleye,
     antler rack, firewood) and hide spots among the hay-bale shelves."""
-    floor = ["=" * 10 for _ in range(8)]
+    floor = ["=" * 16 for _ in range(12)]
     objects = [
-        "WWWWnWWWWW",   # 0  n = barn door (north face)
-        "W........W",   # 1
-        "W..s..s..W",   # 2  shelves stand in for stacked hay bales
-        "W........W",   # 3
-        "W........W",   # 4
-        "W..t.....W",   # 5  workbench
-        "W........W",   # 6
-        "WWWWWWWWWW",   # 7
+        "WWWWnWWWWWWWWWWW",   # 0  n = barn door (north face)
+        "W........W.....W",   # 1  main floor (cols 1-8) | back stall (cols 10-14)
+        "W........W.....W",   # 2
+        "W..............W",   # 3  doorway gap in the partition (col 9)
+        "W........W.....W",   # 4
+        "W........W.....W",   # 5
+        "W........WWWWWWW",   # 6  back stall sealed off below
+        "W..............W",   # 7
+        "W..............W",   # 8
+        "W..............W",   # 9
+        "W..............W",   # 10
+        "WWWWWWWWWWWWWWWW",   # 11
     ]
     sc = Scene("barn", floor, objects, music="home")
     # Barn now sits deep south-east on the brimley east bank.
     sc.add_exit("n", "brimley", "from_barn")
-    # Round-13: tunnel from the barn down to the well_passage. A
-    # ladder hatch tile in the back of the barn (col 8, row 6).
-    sc.set_spawn("default", 5, 5)
+    # The workbench (Mara's journal) and the boarded hatch both sit in the
+    # back stall -- behind the partition, so they're an indoor blind spot.
+    sc.set_spawn("default", 5, 8)
     sc.set_spawn("from_brimley", 4, 1)       # one tile south of n door
     sc.set_spawn("from_village", 4, 1)         # legacy fallback
-    sc.set_spawn("from_well_passage", 7, 6)    # one tile west of the hatch
+    sc.set_spawn("from_well_passage", 11, 5)   # beside the hatch in the stall
 
-    # Sized furniture: stacked hay-bale shelves and a workbench.
+    # Sized furniture: stacked hay-bale shelves out front and the workbench
+    # in the back stall.
     sc.add_furniture("bookshelf", [(2, 2), (3, 2)], w=54, h=18, seed=9)
     sc.add_furniture("bookshelf", [(5, 2), (6, 2)], w=54, h=18, seed=10)
-    sc.add_furniture("table", [(3, 5), (4, 5)], w=54, h=36)
-    sc.add_decoration(Decoration(7 * TILE + 16, 5 * TILE + 16, "candle"))
+    sc.add_furniture("table", [(11, 2), (12, 2)], w=54, h=36)
+    sc.add_decoration(Decoration(13 * TILE + 16, 1 * TILE + 24, "candle"))
     sc.add_decoration(Decoration(2 * TILE + 16, 1 * TILE + 24, "lantern"))
-    sc.add_decoration(Decoration(4 * TILE + 16, 5 * TILE + 24,
+    sc.add_decoration(Decoration(11 * TILE + 16, 3 * TILE + 24,
                                  "bloodstain"))
     # Northern-MN lodge dressing: a mounted buck + trophy walleye on the
     # north wall, cobwebs in the high corners, an antler coat-rack on
-    # the east wall, and a split-wood stack in the SW corner. The floor
+    # the west wall, and a split-wood stack in the SW corner. The floor
     # pieces are collision furniture, tucked clear of the hatch + spawn
     # paths so the room stays passable.
     sc.add_decoration(Decoration(6 * TILE + 16, 0 * TILE + 22, "buck_head",
@@ -274,32 +286,28 @@ def build_barn():
                                  "mounted_fish"))
     sc.add_decoration(Decoration(1 * TILE + 6, 1 * TILE + 6, "cobweb",
                                  ang=0.0))
-    sc.add_decoration(Decoration(8 * TILE + 26, 1 * TILE + 6, "cobweb",
+    sc.add_decoration(Decoration(14 * TILE + 26, 1 * TILE + 6, "cobweb",
                                  ang=math.pi / 2))
-    sc.add_furniture("antler_rack", [(8, 4)], w=22, h=46)
-    sc.add_furniture("firewood", [(1, 5), (1, 6)], w=24, h=58)
+    sc.add_furniture("antler_rack", [(1, 4)], w=22, h=46)
+    sc.add_furniture("firewood", [(1, 8), (1, 9)], w=24, h=58)
     # The well-passage tunnel hatch -- a proper cellar_hatch sprite,
     # NOT a chest. Drawn as a wooden floor hatch with iron pull-ring;
-    # the player presses E adjacent to descend.
-    hatch_x = 8 * TILE + 16
-    hatch_y = 6 * TILE + 16
+    # the player presses E adjacent to descend. In the back stall.
+    hatch_x = 12 * TILE + 16
+    hatch_y = 5 * TILE + 16
     sc.add_decoration(Decoration(hatch_x, hatch_y, "cellar_hatch"))
     sc._barn_hatch_pos = (hatch_x, hatch_y)
     sc.add_interactable(hatch_x, hatch_y, 36)   # [E] cue for the sealed hatch
     # Mara's journal, stashed behind the workbench -- evidence #2.
-    sc._journal_pos = (3 * TILE + 16, 5 * TILE + 16)
+    sc._journal_pos = (11 * TILE + 16, 3 * TILE + 16)
     # [E] cue so the player knows there's something behind the workbench.
     sc.add_interactable(sc._journal_pos[0], sc._journal_pos[1], 40)
-    # Hide spots colocated with cover -- behind the hay-bale shelves
-    # (player stands on a walkable tile beside each shelf, NOT on the
-    # solid shelf tile). The under-workbench spot was previously on
-    # the chest; now sits beside the workbench.
+    # Hide spots colocated with cover -- beside the hay-bale shelves out
+    # front, and in the back stall (the blind spot).
     sc.hide_spots = [
         (4 * TILE + 16, 2 * TILE + 16, "behind"),   # beside W shelf
         (7 * TILE + 16, 2 * TILE + 16, "behind"),   # beside E shelf
-        (2 * TILE + 16, 6 * TILE + 16, "behind"),   # behind the SW woodpile
-                                                    # (was on the bloodstain
-                                                    # + the journal prompt)
+        (12 * TILE + 16, 4 * TILE + 16, "behind"),  # in the back stall
     ]
 
     def _barn_interact(game):
@@ -339,23 +347,25 @@ def build_barn():
 
 
 def build_kid_house():
-    floor = ["=" * 10 for _ in range(8)]
+    floor = ["=" * 14 for _ in range(10)]
     objects = [
-        "WWWWWWWWWW",
-        "W........W",
-        "W..t..s..W",
-        "W..c.....W",
-        "W..K.....W",   # K = kid marker
-        "W..b.....W",
-        "W....J...W",
-        "WWWWWWWWWW",
+        "WWWWWWWWWWWWWW",   # 0
+        "W....W.......W",   # 1  closet (cols 1-4) | the room (cols 6-12)
+        "W....W.......W",   # 2
+        "W............W",   # 3  doorway gap in the partition (col 5)
+        "W....W.......W",   # 4
+        "WWWWWW.......W",   # 5  closet sealed off below
+        "W........K...W",   # 6  K = the Tisdale boy
+        "W............W",   # 7
+        "W............W",   # 8
+        "WWWWJWWWWWWWWW",   # 9  J = exit door back to the field
     ]
     sc = Scene("kid_house", floor, objects, music="home")
     # Kid's house now sits middle-south on the brimley east bank.
     sc.add_exit("J", "brimley", "from_kid_house")
-    sc.set_spawn("default", 5, 5)
-    sc.set_spawn("from_brimley", 4, 6)
-    sc.set_spawn("from_village", 4, 6)         # legacy fallback
+    sc.set_spawn("default", 8, 7)
+    sc.set_spawn("from_brimley", 4, 8)         # one tile north of the J door
+    sc.set_spawn("from_village", 4, 8)         # legacy fallback
 
     pos = sc.consume_marker("K")
     if pos:
@@ -366,50 +376,52 @@ def build_kid_house():
                        dialogue_fn=tisdale_boy_dialogue, movement="idle"))
     # Sized darkwood furniture: a 2x2 kid's bed, a long bookshelf, a
     # small table (toy radio sits on it) and a chair.
-    sc.add_furniture("bed", [(2, 5), (3, 5), (2, 6), (3, 6)], w=54, h=54)
-    sc.add_furniture("bookshelf", [(5, 2), (6, 2)], w=58, h=18, seed=3)
-    sc.add_furniture("table", [(2, 2), (3, 2)], w=54, h=34)
-    sc.add_furniture("chair", [(3, 3)], w=22, h=28)
+    sc.add_furniture("bed", [(10, 6), (11, 6), (10, 7), (11, 7)], w=54, h=54)
+    sc.add_furniture("bookshelf", [(7, 1), (8, 1)], w=58, h=18, seed=3)
+    sc.add_furniture("table", [(11, 1), (12, 1)], w=54, h=34)
+    sc.add_furniture("chair", [(11, 2)], w=22, h=28)
     # The computer used to live here in round 3; in round 4 it migrated to
     # old_man_house. Kid's house now reads as a child's room: a small
     # toy radio, candle, banner. No tech.
-    sc.add_decoration(Decoration(3 * TILE + 16, 2 * TILE + 8, "radio"))
+    sc.add_decoration(Decoration(11 * TILE + 16, 1 * TILE + 8, "radio"))
     sc.add_decoration(Decoration(7 * TILE + 16,  0 * TILE + 22 , "candle"))
     # Lodge dressing for a hunting-family kid: the child's own trophy
     # walleye mounted on the north wall (replacing the old pennant
     # banners), a corner cobweb, and a kerosene lamp on the table. The
-    # wall-mounted kid's drawing (a 'photo' pickup) stays -- it's lore.
-    sc.add_decoration(Decoration(4 * TILE + 16, 0 * TILE + 24,
-                                 "mounted_fish"))
-    sc.add_decoration(Decoration(8 * TILE + 26, 1 * TILE + 6, "cobweb",
-                                 ang=math.pi / 2))
-    sc.add_decoration(Decoration(2 * TILE + 16, 2 * TILE + 2,
-                                 "kerosene_lamp"))
-    sc.add_decoration(Decoration(8 * TILE + 8, 2 * TILE + 16, "clock"))
-    sc.add_decoration(Decoration(2 * TILE + 16,  0 * TILE + 22 , "candle"))
-    # Toby's own things: two corn dolls on the floor where he plays them
-    # through the procession he saw, and a MISSING flyer for his dad --
-    # who walked the road out for help and never came back up it.
-    sc.add_decoration(Decoration(5 * TILE + 16, 4 * TILE + 16, "corn_doll"))
-    sc.add_decoration(Decoration(6 * TILE + 22, 5 * TILE + 16, "corn_doll"))
+    # unsettling things are tucked in the closet -- the blind spot.
     sc.add_decoration(Decoration(8 * TILE + 16, 0 * TILE + 24,
+                                 "mounted_fish"))
+    sc.add_decoration(Decoration(1 * TILE + 6, 1 * TILE + 6, "cobweb",
+                                 ang=0.0))
+    sc.add_decoration(Decoration(11 * TILE + 16, 1 * TILE + 2,
+                                 "kerosene_lamp"))
+    sc.add_decoration(Decoration(12 * TILE + 8, 1 * TILE + 16, "clock"))
+    sc.add_decoration(Decoration(7 * TILE + 16,  0 * TILE + 22 , "candle"))
+    # Toby's own things, played out in secret in the closet: two corn dolls
+    # on the floor where he walks them through the procession he saw. A
+    # MISSING flyer for his dad -- who walked the road out for help and
+    # never came back up it -- hangs out in the room.
+    sc.add_decoration(Decoration(2 * TILE + 16, 2 * TILE + 16, "corn_doll"))
+    sc.add_decoration(Decoration(3 * TILE + 22, 3 * TILE + 16, "corn_doll"))
+    sc.add_decoration(Decoration(12 * TILE + 16, 0 * TILE + 24,
                                  "missing_flyer"))
-    # Chalk phantom-marks on the walls.
-    sc.add_decoration(Decoration(1 * TILE + 28, 2 * TILE + 16,
+    # Chalk phantom-marks in the closet.
+    sc.add_decoration(Decoration(1 * TILE + 28, 3 * TILE + 16,
                                  "phantom_mark"))
-    sc.add_decoration(Decoration(8 * TILE + 4, 4 * TILE + 16,
+    sc.add_decoration(Decoration(4 * TILE + 4, 2 * TILE + 16,
                                  "phantom_mark"))
-    for mx, my in [(5, 3), (6, 4), (4, 5)]:
+    for mx, my in [(8, 7), (11, 8), (7, 8)]:
         sc.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16,
                                      "mote"))
-    # Hide spots: under the kid's bed, behind the shelf.
+    # Hide spots: under the kid's bed, and in the closet (the blind spot).
     sc.hide_spots = [
-        (3 * TILE + 16, 5 * TILE + 24, "under"),
-        (7 * TILE + 16, 2 * TILE + 24, "behind"),
+        (10 * TILE + 16, 6 * TILE + 24, "under"),
+        (2 * TILE + 16, 4 * TILE + 24, "behind"),
     ]
-    # The kid's drawing on the wall (a 'photo' decoration) -- examinable
-    # flavor, grants nothing.
-    drawing_x = 6 * TILE + 16
+    # The kid's drawing of the King, pinned up inside the closet (a 'photo'
+    # decoration) -- examinable flavor, grants nothing. Out of sight from the
+    # room until the player steps into the closet.
+    drawing_x = 2 * TILE + 16
     drawing_y = 1 * TILE + 16
     sc.add_decoration(Decoration(drawing_x, drawing_y, "photo"))
     sc._drawing_pos = (drawing_x, drawing_y)
