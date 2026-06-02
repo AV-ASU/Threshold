@@ -310,7 +310,7 @@ _ARM_MAX = 5
 
 
 def _draw_arms(lay, o3, op, ocenter, sz, cx, cy, t, threat, arm_roots,
-               overts, body_ang, zmin, zr, pdx=0.0, pdy=1.0):
+               overts, body_ang, zmin, zr, pdx=0.0, pdy=1.0, birth=1.0):
     """Limbs are the body UNFOLDING, not appendages bolted on. A root extrudes
     only while its 4D w has everted FORWARD past a threshold -- so the eversion
     itself pushes the limb out, the live count varies (2-5), and the silhouette
@@ -323,7 +323,12 @@ def _draw_arms(lay, o3, op, ocenter, sz, cx, cy, t, threat, arm_roots,
     of the mass, not a ribbon pasted on top."""
     if threat < 0.18:
         return
-    gate = min(1.0, (threat - 0.18) / 0.45)
+    # limbs come in LAST in the birth (they're the lethal reach) -- no limbs
+    # until the body has mostly bloomed
+    limb_b = max(0.0, min(1.0, (birth - 0.55) / 0.45))
+    if limb_b <= 0.0:
+        return
+    gate = min(1.0, (threat - 0.18) / 0.45) * limb_b
     # which roots are everting forward right now -> those are the live limbs
     cand = []
     for ai, (idx, ph) in enumerate(arm_roots):
@@ -465,7 +470,7 @@ def _draw_arms(lay, o3, op, ocenter, sz, cx, cy, t, threat, arm_roots,
 
 
 def draw_king_unfold(surf, cx, cy, t, threat=0.0, scale=96.0,
-                     to_player=(0.0, 1.0)):
+                     to_player=(0.0, 1.0), birth=1.0):
     """THE UNFOLDING, centred at (cx, cy). `threat` 0..1: a small dark fold ->
     larger, faster eversion, the heart kindling, eyes opening, the Sign
     resolving, more light eaten.
@@ -473,12 +478,20 @@ def draw_king_unfold(surf, cx, cy, t, threat=0.0, scale=96.0,
     `to_player` is the SCREEN-space direction from the creature to the player
     (+x right, +y down); the reaching limbs lunge that way and the eyes gaze
     along it, so it tracks the player wherever they are. Defaults to
-    down-screen."""
+    down-screen.
+
+    `birth` 0..1 is the ARRIVAL: a gold wound opens and leads, the dark mass
+    blooms out of it, and the limbs come in last -- so 0->1 is the grace window
+    (the thing is still assembling, not yet lethal). Driven 1->0 it plays in
+    reverse as the DISSOLVE (the mass folds back into the wound and is gone)."""
     pdx, pdy = to_player
     pdl = math.hypot(pdx, pdy) or 1.0
     pdx, pdy = pdx / pdl, pdy / pdl
+    bb = max(0.0, min(1.0, birth))
+    body_b = bb * bb * (3.0 - 2.0 * bb)          # body blooms (smoothstep)
     form = _build()
-    sz = scale * (0.7 + 0.5 * threat)
+    base_sz = scale * (0.7 + 0.5 * threat)
+    sz = base_sz * body_b                        # the mass grows from the seed
     spd = 0.16 + 0.42 * threat
     body_ang = (t * spd * 0.55, t * spd * 0.43 + 1.3, t * spd * 0.27, t * spd * 0.17)
     # the heart turns faster and on different planes -> it everts WITHIN the body
@@ -498,6 +511,14 @@ def draw_king_unfold(surf, cx, cy, t, threat=0.0, scale=96.0,
 
     _eat_light(surf, cx, cy, sz * 1.85, 60 + 110 * threat)
     lay = pygame.Surface(surf.get_size(), pygame.SRCALPHA)
+
+    # BIRTH: a gold wound opens and the mass unfolds out of it -- a central
+    # flare leads (peaking mid-eruption) while the dark body blooms up around
+    # the seed. Run 1->0 this plays in reverse as the dissolve.
+    if bb < 0.999:
+        flare = max(0.0, math.sin(math.pi * min(1.0, bb / 0.85)))
+        _heart_glow(lay, cx, cy, base_sz * (0.30 + 0.45 * bb),
+                    int(60 + 170 * flare))
 
     # build outer face records (outward normal, facing, depth)
     back, front = [], []
@@ -553,7 +574,7 @@ def draw_king_unfold(surf, cx, cy, t, threat=0.0, scale=96.0,
     # 4) ARMS: limbs erupt from the geometry and stretch toward the player (on
     # top of the body -- they reach out past its silhouette, toward the camera)
     _draw_arms(lay, o3, op, ocenter, sz, cx, cy, t, threat, form["arm_roots"],
-               form["overts"], body_ang, zmin, zr, pdx, pdy)
+               form["overts"], body_ang, zmin, zr, pdx, pdy, bb)
 
     # 5) EYES open across the skin -- wrong faces that surface and gaze, never
     # assembling into one. Each rides a facet, so it slides / scales / winks
