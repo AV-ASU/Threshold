@@ -212,7 +212,7 @@ def _build():
         cfaces += [[i + off for i in face] for face in f]
 
     _FORM = dict(overts=overts, ofaces=ofaces, eye_sites=eye_sites,
-                 maw_sites=maw_sites,
+                 maw_sites=maw_sites, nlat=NLAT, nlon=NLON,
                  arm_roots=arm_roots, cverts=cverts, cfaces=cfaces)
     return _FORM
 
@@ -317,34 +317,32 @@ def _eye(surf, x, y, r, openf, gaze, a):
                            (gx - ir // 3, int(y) - ir // 3), max(1, ir // 4))
 
 
-def _draw_maw3d(lay, center, N, b1, b2, em, openf, cx, cy, sz, zmin, zr, seed, a):
-    """An EVERSION-MAW as REAL geometry that WARPS with the flesh. b1, b2 are the
-    facet's actual deformed tangent vectors (carrying its stretch + shear), so
-    the rim is an ellipse/gash matching how the surface is being pulled right
-    there -- not a rigid circle. The throat is pushed INTO the body along -N to a
-    gullet at the bottom (a real pit, gold light pooling down it); the teeth are
-    3D bone spikes rooted on the warped rim, leaning in + raised out along +N so
-    they overhang and crowd/splay as the mouth distorts. Everything projects +
-    depth-sorts, so it foreshortens to a slit edge-on and everts with the mesh.
-    `em` is the world scale (mean basis length) for throat depth + tooth length."""
+def _draw_maw3d(lay, sample, N, em, openf, cx, cy, sz, zmin, zr, seed, a):
+    """An EVERSION-MAW as REAL geometry, BOUND to the flesh. `sample(pu, pv)`
+    returns the 3D point on the deformed surface for a param offset in [-1,1]^2
+    around the maw centre -- it bilinearly interpolates the ACTUAL deformed mesh
+    over a patch, so the rim follows the region's live stretch, shear AND
+    curvature (it tears into curved gashes, wraps over folds, warps non-uniformly
+    as the patch everts). The throat sinks INTO the body along -N to a gullet at
+    the bottom; teeth are 3D bone spikes rooted on the warped rim, leaning in +
+    raised out along +N. Everything projects + depth-sorts. NOT a jaw. `em` is
+    the world scale for throat depth + tooth length."""
     if em <= 0.0 or a < 12 or openf <= 0.03:
         return
-    hole = 0.34 + 0.50 * openf                   # opening, as a fraction of basis
+    hole = 0.34 + 0.50 * openf                   # opening, in patch-param radius
     depth = em * (0.50 + 0.70 * openf)           # how far the throat sinks in
 
     def onring(ang, rf, dz):
-        c, s = math.cos(ang), math.sin(ang)
-        return (center[0] + (b1[0] * c + b2[0] * s) * rf + N[0] * dz,
-                center[1] + (b1[1] * c + b2[1] * s) * rf + N[1] * dz,
-                center[2] + (b1[2] * c + b2[2] * s) * rf + N[2] * dz)
+        p = sample(math.cos(ang) * rf, math.sin(ang) * rf)   # on the curved skin
+        return (p[0] + N[0] * dz, p[1] + N[1] * dz, p[2] + N[2] * dz)
 
     def pr(p):
         return _proj(p, cx, cy, sz)
     K = 9
+    cP = sample(0.0, 0.0)
     outer = [onring(math.tau * k / K, hole, 0.0) for k in range(K)]
     inner = [onring(math.tau * k / K, hole * 0.42, -depth * 0.72) for k in range(K)]
-    bottom = (center[0] - N[0] * depth, center[1] - N[1] * depth,
-              center[2] - N[2] * depth)
+    bottom = (cP[0] - N[0] * depth, cP[1] - N[1] * depth, cP[2] - N[2] * depth)
     # throat walls (a dark, wet pit) -> sorted far-first within the maw
     polys = []
     for k in range(K):
@@ -719,6 +717,7 @@ def draw_king_unfold(surf, cx, cy, t, threat=0.0, scale=96.0,
         # MAWS tear open where the body everts -- scattered toothed throats that
         # gnash and breathe, riding their facets like the eyes. The eversion
         # turning inside-out IS the mouth: dark gullet, gold light down it.
+        nlat = form["nlat"]; nlon = form["nlon"]
         for fi, ph in form["maw_sites"]:
             rec = fmap.get(fi)
             if rec is None:
@@ -727,23 +726,33 @@ def draw_king_unfold(surf, cx, cy, t, threat=0.0, scale=96.0,
             facing = max(0.0, N[2])
             if facing < 0.18:
                 continue
-            # the maw is built on the facet's ACTUAL deformed edges, so it warps
-            # with the flesh: centre, and two tangent vectors carrying the
-            # facet's live stretch + shear (scaled to a consistent maw size).
-            c3 = (sum(o3[i][0] for i in face) / len(face),
-                  sum(o3[i][1] for i in face) / len(face),
-                  sum(o3[i][2] for i in face) / len(face))
+            # the maw is BOUND to a patch of the mesh: sample(pu,pv) interpolates
+            # the actual deformed verts over a few facets around this site, so
+            # the rim warps with the region's live stretch / shear / curvature.
+            i0 = fi // nlon
+            j0 = fi % nlon
+            R = 1.7                                  # patch half-size, in facets
+
+            def sample(pu, pv, i0=i0, j0=j0, R=R):
+                fi_ = (i0 + 0.5) + pu * R
+                fj_ = (j0 + 0.5) + pv * R
+                ii = int(math.floor(fi_)); jj = int(math.floor(fj_))
+                ti = fi_ - ii; tj = fj_ - jj
+                ia = max(0, min(nlat, ii)); ib = max(0, min(nlat, ii + 1))
+                va = o3[ia * nlon + (jj % nlon)]; vb = o3[ia * nlon + ((jj + 1) % nlon)]
+                vc = o3[ib * nlon + (jj % nlon)]; vd = o3[ib * nlon + ((jj + 1) % nlon)]
+                return (va[0] + (vb[0] - va[0]) * tj + (vc[0] - va[0]) * ti +
+                        (va[0] - vb[0] - vc[0] + vd[0]) * ti * tj,
+                        va[1] + (vb[1] - va[1]) * tj + (vc[1] - va[1]) * ti +
+                        (va[1] - vb[1] - vc[1] + vd[1]) * ti * tj,
+                        va[2] + (vb[2] - va[2]) * tj + (vc[2] - va[2]) * ti +
+                        (va[2] - vb[2] - vc[2] + vd[2]) * ti * tj)
+            # world scale (mean facet edge) for throat depth + tooth length
             v0, v1, v3 = o3[face[0]], o3[face[1]], o3[face[3]]
-            e1 = _sub(v1, v0); e2 = _sub(v3, v0)
-            m1 = math.sqrt(_dot(e1, e1)); m2 = math.sqrt(_dot(e2, e2))
-            mean = (m1 + m2) * 0.5 or 1e-6
-            rw = mean * 1.9                          # maw bigger than its facet
-            sc = rw / mean                           # keep aspect/shear, set size
-            b1 = (e1[0] * sc, e1[1] * sc, e1[2] * sc)
-            b2 = (e2[0] * sc, e2[1] * sc, e2[2] * sc)
+            em = (math.dist(v0, v1) + math.dist(v0, v3)) * 0.5 * R
             breath = 0.5 + 0.5 * math.sin(t * 0.8 + ph * 1.7)
             openf = appear * facing * (0.22 + 0.78 * breath)
-            _draw_maw3d(lay, c3, N, b1, b2, rw, openf, cx, cy, sz, zmin, zr,
+            _draw_maw3d(lay, sample, N, em, openf, cx, cy, sz, zmin, zr,
                         fi + int(ph * 7), int(235 * facing * appear))
 
     # 6) the Sign resolves for a beat on the most head-on facet
