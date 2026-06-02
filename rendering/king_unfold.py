@@ -388,10 +388,17 @@ def _draw_arms(lay, o3, op, ocenter, sz, cx, cy, t, threat, arm_roots,
                  mt * mt * root[2] + 2 * mt * s * ctrl[2] + s * s * end[2])
             rw = rad0 * ((1 - s) ** 0.85 + 0.10)
             cen.append((P, rw))
-        # build rings of geometry with a stable frame along the path
+        # build rings of geometry with a stable frame along the path. The
+        # centreline stays 3D (so the limb keeps AIMING at the player and reads
+        # as an arm) -- the 4D lives in the CROSS-SECTION: each rim point gets a
+        # 4th-axis (ana/kata) offset wp, projected by the SAME w-divide as the
+        # body, so the girth everts -- bulges swell, orbit, and travel down the
+        # limb, turning inside-out the way no 3D tube can.
+        ev = 0.40 + 0.45 * threat                    # eversion strength (4D)
         rings = []
         for k in range(M + 1):
             P, rw = cen[k]
+            sfrac = k / M
             a = cen[max(0, k - 1)][0]
             b = cen[min(M, k + 1)][0]
             T = _norm((b[0] - a[0], b[1] - a[1], b[2] - a[2]))
@@ -402,9 +409,12 @@ def _draw_arms(lay, o3, op, ocenter, sz, cx, cy, t, threat, arm_roots,
             for m in range(K):
                 ang = math.tau * m / K
                 cu, sv = math.cos(ang) * rw, math.sin(ang) * rw
-                ring.append((P[0] + u[0] * cu + v[0] * sv,
-                             P[1] + u[1] * cu + v[1] * sv,
-                             P[2] + u[2] * cu + v[2] * sv))
+                ox = u[0] * cu + v[0] * sv
+                oy = u[1] * cu + v[1] * sv
+                oz = u[2] * cu + v[2] * sv
+                wp = ev * math.sin(ang - (t * 1.2 + sfrac * 4.0 + ph))
+                f = _W_EYE / (_W_EYE - wp)           # the 4D->3D eversion swell
+                ring.append((P[0] + ox * f, P[1] + oy * f, P[2] + oz * f))
             rings.append((ring, P))
         # quads between consecutive rings, shaded as the same membrane flesh
         al = int(150 + 98 * emerge)
