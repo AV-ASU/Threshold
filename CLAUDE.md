@@ -80,6 +80,9 @@ it renders the procedural sprites to a labelled PNG strip.
     standard actor (decided: hybrid)** — front walls (`draw_walls_front`) draw
     over his base, he draws over back/far walls; his billboard towering into a
     far wall is intentional. Don't promote him to an always-on-top pass.
+    A **deferred** enhancement (the Flatland CROSS-SECTION — silhouette splits
+    into disconnected lumps that are one 4D object) is spec'd in the file's
+    header (documented, not built).
   - `transform.py` — `draw_vessel_bloom`, the human→vessel morph.
   - **Tilted-camera track (scaffolding — NOT wired into the live game
     yet):** `camera.py` (`Camera.project(wx,wy,wz)`, the single

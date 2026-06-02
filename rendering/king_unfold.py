@@ -28,6 +28,38 @@ import random
 
 import pygame
 
+# ===========================================================================
+# DEFERRED ENHANCEMENT -- "disconnected pieces that are one 4D object"
+# (the Flatland cross-section).  DOCUMENTED, NOT BUILT.
+#
+# Canon (NARRATIVE.md, "What it actually is"): to us -- flat beings -- the King
+# is unperceivable except as a shifting CROSS-SECTION, "the way a flat creature
+# would perceive a hand pushed through its world." A hand pushed through a plane
+# reads as several SEPARATE circles (the fingers) that are secretly one body:
+# they drift in correlated ways and bud/merge as the hand moves. That is the
+# effect to build -- the King's silhouette splitting into multiple disconnected
+# lumps that move together and re-fuse as he everts, so the eye is told "these
+# are one thing in a space you can't point at."
+#
+# Why it's not built yet: this renderer takes the WHOLE 4D mass and projects
+# 4D->3D->2D (see _to3d / _xform), which always yields one connected hull. A
+# true cross-section is a different geometry pass: SLICE the 4D object with the
+# 3-plane w == w0(t) and render only the intersection, which CAN be several
+# disconnected polyhedra.
+#
+# How to build it (sketch):
+#   * Tessellate the mass as 4D cells (e.g. the sphere mesh lofted across two
+#     w-shells into a layer of 4-prisms / 4-simplices), not just a 3-surface.
+#   * For each cell, intersect its edges with the hyperplane w == w0: the cut of
+#     a 4-cell by a 3-plane is a polyhedron. Collect the cut faces -> a 3D mesh
+#     that may have multiple connected components (the "fingers").
+#   * Project + shade those exactly as today (_shade_face, depth sort).
+#   * Animate w0 (and/or the 4D rotation) so components separate, drift, and
+#     re-merge -- the hand sliding through the plane.
+# Hook it behind a flag alongside KING_UNFOLD; keep the current whole-mass
+# projection as the default until the slice pass hits the perf budget.
+# ===========================================================================
+
 # --- palette ---------------------------------------------------------------
 _MEM = (22, 15, 17)                 # membrane base (warm near-black flesh)
 _MEM_HI = (68, 50, 52)              # lit membrane (dark wet flesh)
