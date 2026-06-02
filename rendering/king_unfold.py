@@ -189,7 +189,7 @@ def _build():
     # the eyes (mouths are bigger), each gnashing on its own phase. Plural and
     # wrong: it is all watching AND all hungry; never one face-with-a-mouth.
     maw_sites = [(fi, r.uniform(0, 6.283))
-                 for fi in r.sample(range(len(ofaces)), 7)]
+                 for fi in r.sample(range(len(ofaces)), 6)]
 
     # arm roots: a POOL of candidate vertices spread over the mass. Each frame
     # _draw_arms extrudes only the ones whose 4D w has everted FORWARD past a
@@ -317,42 +317,77 @@ def _eye(surf, x, y, r, openf, gaze, a):
                            (gx - ir // 3, int(y) - ir // 3), max(1, ir // 4))
 
 
-def _maw(surf, x, y, r, openf, a, seed):
-    """An EVERSION-MAW: a radial, lamprey-like toothed hole the body tears open
-    where it turns inside-out -- NOT a hinged jaw. A dark throat with the gold
-    gullet glowing down it, rimmed by irregular bone teeth that overhang the
-    opening. `openf` 0..1 gnashes it from a clenched toothed slit to a gape."""
-    if r < 3 or a < 12 or openf <= 0.03:
+def _draw_maw3d(lay, center, N, rw, openf, cx, cy, sz, zmin, zr, seed, a):
+    """An EVERSION-MAW as REAL geometry, not a flat decal. Built in the facet's
+    local tangent frame: the throat is a ring pushed INTO the body along -N to
+    a gullet at the bottom (a real pit, with gold light pooling down it), and
+    the teeth are 3D bone spikes rooted on the rim, angled inward and raised out
+    along +N so they overhang toward the camera. Everything is projected and
+    depth-sorted, so near teeth occlude far ones, the maw foreshortens to a slit
+    as its facet turns edge-on, and it turns inside-out with the eversion --
+    because the facet it sits on is part of the everting mesh. NOT a jaw."""
+    if rw <= 0.0 or a < 12 or openf <= 0.03:
         return
-    x, y = int(x), int(y)
-    throat_r = max(2, int(r * (0.20 + 0.62 * openf)))
-    # the dark, irregular throat
-    tp = [(x + math.cos(math.tau * k / 11) *
-           throat_r * (0.78 + 0.36 * math.sin(seed * 1.7 + k * 2.1)),
-           y + math.sin(math.tau * k / 11) *
-           throat_r * 0.92 * (0.78 + 0.36 * math.cos(seed * 1.3 + k * 1.7)))
-          for k in range(11)]
-    pygame.draw.polygon(surf, (4, 3, 5, a), tp)
-    # the gullet -- gold light pooling DOWN the throat (additive, over the dark)
-    _heart_glow(surf, x, y, max(2, int(throat_r * 0.95)), int(55 + 150 * openf))
-    # irregular bone teeth ringing the rim, tips overhanging into the gullet.
-    # Wildly uneven lengths + a few gaps so it reads as a wrong lamprey maw,
-    # never a tidy ring.
-    nt = 11 + (seed % 6)
-    for k in range(nt):
-        if math.sin(seed * 3.1 + k * 2.7) < -0.55:        # a few missing teeth
+    ref = (0.0, 1.0, 0.0) if abs(N[1]) < 0.9 else (1.0, 0.0, 0.0)
+    T1 = _norm(_cross(N, ref)); T2 = _cross(N, T1)
+    hole = rw * (0.34 + 0.50 * openf)            # opening radius
+    depth = rw * (0.50 + 0.70 * openf)           # how far the throat sinks in
+
+    def onring(ang, radius, dz):
+        c, s = math.cos(ang), math.sin(ang)
+        return (center[0] + (T1[0] * c + T2[0] * s) * radius + N[0] * dz,
+                center[1] + (T1[1] * c + T2[1] * s) * radius + N[1] * dz,
+                center[2] + (T1[2] * c + T2[2] * s) * radius + N[2] * dz)
+
+    def pr(p):
+        return _proj(p, cx, cy, sz)
+    K = 9
+    outer = [onring(math.tau * k / K, hole, 0.0) for k in range(K)]
+    inner = [onring(math.tau * k / K, hole * 0.42, -depth * 0.72) for k in range(K)]
+    bottom = (center[0] - N[0] * depth, center[1] - N[1] * depth,
+              center[2] - N[2] * depth)
+    # throat walls (a dark, wet pit) -> sorted far-first within the maw
+    polys = []
+    for k in range(K):
+        k2 = (k + 1) % K
+        q = (outer[k], outer[k2], inner[k2], inner[k])
+        zc = (q[0][2] + q[1][2] + q[2][2] + q[3][2]) * 0.25
+        dn = max(0.0, min(1.0, (zc - zmin) / zr))
+        col = _ci(_cadd(_cmix(_MEM_SHADOW, _MEM, 0.05 + 0.12 * dn), _SUBSURF, 0.10))
+        polys.append((zc, [pr(p) for p in q], (*col, a)))
+        tri = (inner[k], inner[k2], bottom)
+        zc2 = (inner[k][2] + inner[k2][2] + bottom[2]) / 3.0
+        polys.append((zc2, [pr(p) for p in tri], (*_ci(_MEM_SHADOW), a)))
+    polys.sort(key=lambda r: r[0])
+    for _z, pts, col in polys:
+        pygame.draw.polygon(lay, col, pts)
+    # the gullet -- gold light pooling at the bottom of the throat
+    bx, by = pr(bottom)
+    k3 = _FOCAL / (_Z_EYE - bottom[2])
+    _heart_glow(lay, bx, by, max(2, int(hole * 0.8 * k3 * sz)), int(55 + 150 * openf))
+    # 3D bone teeth: rooted on the rim, leaning inward + raised out toward the
+    # camera. Irregular lengths, a few missing. Shaded + depth-sorted on top.
+    teeth = []
+    for k in range(K):
+        if math.sin(seed * 3.1 + k * 2.7) < -0.5:         # missing teeth
             continue
-        ang = math.tau * k / nt + 0.26 * math.sin(seed * 2.3 + k)
-        bw = 0.10 + 0.07 * abs(math.sin(seed + k * 1.3))
-        baseR = r * (0.96 + 0.12 * math.sin(seed * 1.1 + k * 0.7))
-        tipR = baseR * (0.18 + 0.55 * (0.5 + 0.5 * math.sin(seed * 0.7 + k * 1.9)))
-        b0 = (x + math.cos(ang - bw) * baseR, y + math.sin(ang - bw) * baseR * 0.92)
-        b1 = (x + math.cos(ang + bw) * baseR, y + math.sin(ang + bw) * baseR * 0.92)
-        tip = (x + math.cos(ang) * tipR, y + math.sin(ang) * tipR * 0.92)
-        pygame.draw.polygon(surf, (*_TOOTH_DK, a), [b0, b1, tip])     # shadowed
-        hi = [(b0[0] * 0.35 + tip[0] * 0.65, b0[1] * 0.35 + tip[1] * 0.65),
-              (b1[0] * 0.35 + tip[0] * 0.65, b1[1] * 0.35 + tip[1] * 0.65), tip]
-        pygame.draw.polygon(surf, (*_TOOTH, a), hi)                   # lit tip
+        mid = math.tau * (k + 0.5) / K
+        dA = (math.tau / K) * 0.42
+        ln = rw * (0.16 + 0.26 * (0.5 + 0.5 * math.sin(seed * 0.7 + k * 1.9)))
+        tipin = hole * (0.42 + 0.28 * math.sin(seed * 1.3 + k))
+        b0 = onring(mid - dA, hole * 1.04, 0.0)
+        b1 = onring(mid + dA, hole * 1.04, 0.0)
+        tip = onring(mid, tipin, ln)                       # +ln out along N
+        Nt = _norm(_cross(_sub(b1, b0), _sub(tip, b0)))
+        if Nt[2] < 0:
+            Nt = (-Nt[0], -Nt[1], -Nt[2])
+        lit = max(0.0, _dot(Nt, _L))
+        col = _ci(_cmix(_TOOTH_DK, _TOOTH, 0.22 + 0.78 * lit))
+        zc = (b0[2] + b1[2] + 2 * tip[2]) * 0.25           # bias to the near tip
+        teeth.append((zc, [pr(b0), pr(b1), pr(tip)], (*col, a)))
+    teeth.sort(key=lambda r: r[0])
+    for _z, pts, col in teeth:
+        pygame.draw.polygon(lay, col, pts)
 
 
 # --------------------------------------------------------------------------- #
@@ -692,20 +727,17 @@ def draw_king_unfold(surf, cx, cy, t, threat=0.0, scale=96.0,
             facing = max(0.0, N[2])
             if facing < 0.18:
                 continue
-            poly = [op[i] for i in face]
-            mx = sum(p[0] for p in poly) / len(poly)
-            my = sum(p[1] for p in poly) / len(poly)
-            ar = 0.0
-            for k in range(len(poly)):
-                x0, y0 = poly[k]; x1, y1 = poly[(k + 1) % len(poly)]
-                ar += x0 * y1 - x1 * y0
-            mr = math.sqrt(abs(ar)) * 0.72           # maw sized to the facet
-            if mr < 3.0:
-                continue
+            # the maw is built in 3D on the facet: its centre + world radius
+            c3 = (sum(o3[i][0] for i in face) / len(face),
+                  sum(o3[i][1] for i in face) / len(face),
+                  sum(o3[i][2] for i in face) / len(face))
+            fr = sum(math.sqrt((o3[i][0] - c3[0]) ** 2 + (o3[i][1] - c3[1]) ** 2 +
+                               (o3[i][2] - c3[2]) ** 2) for i in face) / len(face)
+            rw = fr * 2.6                            # maw bigger than its facet
             breath = 0.5 + 0.5 * math.sin(t * 0.8 + ph * 1.7)
             openf = appear * facing * (0.22 + 0.78 * breath)
-            _maw(lay, mx, my, mr, openf, int(235 * facing * appear),
-                 fi + int(ph * 7))
+            _draw_maw3d(lay, c3, N, rw, openf, cx, cy, sz, zmin, zr,
+                        fi + int(ph * 7), int(235 * facing * appear))
 
     # 6) the Sign resolves for a beat on the most head-on facet
     if front and threat > 0.45:
