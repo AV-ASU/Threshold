@@ -4146,13 +4146,13 @@ class Game(CutsceneMixin):
             # gating would hide every wall decoration behind its own wall. They
             # are environmental like the walls + furniture (which also draw
             # regardless of the cone); the gray fog already greys off-cone.
-            from scenes.base import _WALL_MOUNT_Z
+            from scenes.base import _WALL_MOUNT_Z, draw_wall_deco
             for d in (_tilt_wall_decos or []):
                 for ox, oy in _offsets:
                     _emit(self.camera.depth(d.x + ox, d.y + oy, _WALL_MOUNT_Z),
-                          lambda d=d, ox=ox, oy=oy:
-                          d.draw(self.screen, 0, 0, self.camera, wox=ox, woy=oy,
-                                 mount_z=_WALL_MOUNT_Z))
+                          lambda d=d, ox=ox, oy=oy: draw_wall_deco(
+                              self.screen, self.camera, self.scene, d,
+                              _WALL_MOUNT_Z, woff=(ox, oy)))
             _entries.sort(key=lambda e: e[0])
         # Execute the (legacy-ordered at pitch 0, depth-sorted under tilt) list.
         for _depth, _fn in _entries:

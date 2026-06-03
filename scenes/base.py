@@ -1708,6 +1708,51 @@ def _draw_floor_decal(surf, camera, deco, woff=(0.0, 0.0)):
     surf.blit(scaled, (sx - sw // 2, sy - sh // 2))
 
 
+def _wall_normal(scene, wx, wy):
+    """The inward normal of the wall a decoration hangs on -- the way it FACES,
+    forward off the wall into the room. Rooms are scene-sized, so a wall is the
+    nearest perimeter; face inward from the closest scene edge."""
+    tx, ty = int(wx // TILE), int(wy // TILE)
+    W, H = scene.w, scene.h
+    opts = [(ty, (0, 1)), (H - 1 - ty, (0, -1)),
+            (tx, (1, 0)), (W - 1 - tx, (-1, 0))]
+    opts.sort(key=lambda o: o[0])
+    return opts[0][1]
+
+
+def draw_wall_deco(surf, camera, scene, deco, mount_z, woff=(0.0, 0.0)):
+    """Draw a wall-hung decoration as a card FIXED to the wall plane: it faces
+    forward off the wall and foreshortens / turns as the camera yaws past it --
+    it does NOT billboard (follow the camera). The card lies along the wall's
+    horizontal axis at `mount_z` up the wall; project both ends of that span,
+    then fit + rotate the flat sprite onto the screen span so it reads as part
+    of the wall, edge-on (a sliver) when you look along it."""
+    nx, ny = _wall_normal(scene, deco.x, deco.y)
+    ax, ay = -ny, nx                       # along the wall (perp to the normal)
+    half = 11.0
+    bx, by = deco.x + woff[0], deco.y + woff[1]
+    p1 = camera.project(bx - ax * half, by - ay * half, mount_z)
+    p2 = camera.project(bx + ax * half, by + ay * half, mount_z)
+    cx, cy = (p1[0] + p2[0]) * 0.5, (p1[1] + p2[1]) * 0.5
+    sw_, sh_ = surf.get_size()
+    if cx < -48 or cx > sw_ + 48 or cy < -48 or cy > sh_ + 48:
+        return
+    width = math.hypot(p2[0] - p1[0], p2[1] - p1[1])
+    if width < 3:
+        return                             # edge-on -> a sliver; skip
+    drawfn = getattr(deco, f"_draw_{deco.kind}", deco._draw_unknown)
+    C = 22
+    canvas = pygame.Surface((C * 2, C * 2), pygame.SRCALPHA)
+    drawfn(canvas, C, C)
+    h = int(C * 2 * 0.66)                   # card screen height (upright)
+    card = pygame.transform.scale(canvas, (max(3, int(width)), max(3, h)))
+    ang = math.degrees(math.atan2(-(p2[1] - p1[1]), p2[0] - p1[0]))
+    if abs(ang) > 0.5:
+        card = pygame.transform.rotate(card, ang)
+    surf.blit(card, (int(cx) - card.get_width() // 2,
+                     int(cy) - card.get_height() // 2))
+
+
 def _draw_window_pane(surf, camera, wx, wy, ndx, ndy):
     """A lit amber pane set into one wall face: wood frame, sickly glass, a warm
     core and a muntin cross. `(ndx, ndy)` is the exposed face direction."""
