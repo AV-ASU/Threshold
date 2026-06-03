@@ -182,6 +182,16 @@ it renders the procedural sprites to a labelled PNG strip.
 
 ## Conventions & gotchas
 
+- **Canon TODO lives in `GAME_CHANGES.md`.** A 2026-06 narrative-alignment
+  pass settled a batch of story decisions and the **code changes to make
+  the game match** are tracked in `GAME_CHANGES.md` (with `NARRATIVE.md` §8
+  pointing to it). Highlights that override older code/comments: the
+  **Ledger is on the Lodge front desk** (the cellar copy is cut), **Mr.
+  Sable is the most-attuned *local*** (not a newcomer), the **Playscript is
+  the cult's own notes**, and the **Deep Stair no longer consumes the
+  keystone** (Mask + notes are carried down and spent at the Threshold to
+  SEAL). Check `GAME_CHANGES.md` before touching the cast, the ledger, the
+  fork, or the Deep Stair.
 - **No day/night cycle** — it was removed; everything reads as one
   (daytime) state. Don't reintroduce `day_phase` / `day_count`.
 - **Scene-gating sets**: `SAFE_SCENES`, `DARK_SCENES`, `OUTDOOR_SCENES`
