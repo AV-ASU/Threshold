@@ -166,11 +166,17 @@ visible, His attention settling on you. (Not snow, not weather.)
 ## 10. The lure chain — felt, never stated
 
 **Canon (NARRATIVE §1):** King → (claimed) **Mara** → her father **Walter**
-→ the **marked PI.** Walter real + unwitting. **Never stated in-game** —
-surfaced only as the PI's unease.
+→ the **marked PI.** Walter real + unwitting. **He is powerful, not
+omniscient — He got lucky and was delighted** (opportunism that worked, not
+clockwork; keep the seam of chance). **Never stated in-game** — surfaced
+only as the PI's unease.
 
 - [ ] Add/keep a faint case-notebook touch: *I couldn't tell you why I took
   this one.* Do **not** spell out the chain anywhere diegetic.
+- [ ] Where His POV is ever *felt* (an erupting King, a Watcher fixing on
+  you), let it read as **gleeful recognition / luck** — He found exactly the
+  right hand — not omniscient inevitability. Never explain; just the texture
+  of a vast thing that got *lucky*.
 
 ## 11. Awareness model — verify dialogue (no visible tell; cult knew the gist)
 

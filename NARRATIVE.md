@@ -61,6 +61,18 @@ thing that could ever take Carcosa past the corn.
 > PI's own unease in the notebook: *I couldn't tell you why I took this
 > one.*
 
+> **He is powerful, not omniscient — He got lucky, and He was delighted.**
+> The chain is **opportunism that worked**, not clockwork He computed. The
+> marked soul drifted back within reach; a grieving father happened to
+> reach for help; a case happened to land on His door — and He **took the
+> chance**, with something close to **glee**: the rare, gloating luck of a
+> vast thing finding *exactly* the right hand to reel in the one that got
+> away. That irony is load-bearing for this world — **a cosmic thing,
+> reaching across a plane it already owns, still needing a lucky break.**
+> Keep the seam of chance in it: an all-seeing King who cannot fail
+> deflates the dread and makes the lone unclaimed PI's threat to Him
+> incoherent. He is **huge, patient, and lucky** — never infallible.
+
 **What the fold actually is — the rite.** Brimley isn't sealed by ambient
 weather; the **congregation's ongoing rite seals it**, and the **Sign (the
 Pallid Mask) is that rite's keystone**. What *gathered* the congregation
