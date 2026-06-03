@@ -54,25 +54,34 @@ class LookController:
         a = self.aim
         return (math.cos(a), math.sin(a))
 
-    def update(self, aim_heading=None, rmb_dx=0.0, rmb_held=False):
-        """Advance one frame. `aim_heading` is the world angle to the cursor
-        (ignored while RMB is held). Returns the eased cam_yaw."""
+    def update(self, move_heading=None, aim_heading=None,
+               rmb_dx=0.0, rmb_held=False):
+        """Advance one frame.
+
+          move_heading -- world heading the player is WALKING (None when
+              standing). The BODY eases toward it: you turn to face where you
+              go. This is the ONLY thing that turns the body, so aiming the
+              gun can never spin the camera in circles.
+          aim_heading  -- world heading to the cursor (the HEAD / gun). The
+              head leads the body but is clamped to +/-HEAD_MAX; to aim past
+              the arc you have to walk the body around. (Ignored under RMB.)
+
+        Returns the eased cam_yaw."""
         if rmb_held:
             # deliberate look-around: drag rotates the whole scene
             self.rmb_yaw = wrap(self.rmb_yaw + rmb_dx * RMB_SENS)
         else:
             # relax the free rotation back toward neutral when released
             self.rmb_yaw *= RMB_RELEASE
+            # the body turns toward the WALK direction -- never toward the
+            # cursor (that coupling is what spun the camera in circles).
+            if move_heading is not None:
+                self.body = wrap(self.body
+                                 + wrap(move_heading - self.body) * BODY_EASE)
+            # the head leads the body toward the cursor, clamped to the arc.
             if aim_heading is not None:
-                # body eases toward the aim...
-                self.body = wrap(self.body + wrap(aim_heading - self.body) * BODY_EASE)
-                # ...but the head may only lead by HEAD_MAX; force the body if not
                 off = wrap(aim_heading - self.body)
-                if off > HEAD_MAX:
-                    self.body = wrap(aim_heading - HEAD_MAX); off = HEAD_MAX
-                elif off < -HEAD_MAX:
-                    self.body = wrap(aim_heading + HEAD_MAX); off = -HEAD_MAX
-                self.head_off = off
+                self.head_off = max(-HEAD_MAX, min(HEAD_MAX, off))
         # camera target: body up the screen + partial head lean + free rotation
         target = self.body + math.pi / 2 + self.head_off * LEAN_FRAC + self.rmb_yaw
         self.cam_yaw = wrap(self.cam_yaw + wrap(target - self.cam_yaw) * YAW_EASE)

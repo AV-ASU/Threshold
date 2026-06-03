@@ -798,6 +798,10 @@ class Game(CutsceneMixin):
         # Fold pursuit (Stage 3) -- see _note_fold_pursuit / _tick_fold_pursuit.
         self._fold_pursuer = None
         self._fold_pursuer_grace = 0.0
+        # Tilt look: the world heading the player is walking this frame (set by
+        # update_player, consumed by _update_look to turn the body). Transient,
+        # but reset here so it never leaks across a quit-to-title.
+        self._move_heading = None
         # Stillness + heartbeat
         self.stillness_t = 0.0
         self._delayed_audio = []
@@ -1125,9 +1129,13 @@ class Game(CutsceneMixin):
         # world heading from the player to the point under the cursor
         wx, wy = self.camera.unproject(mx, my)
         aim = math.atan2(wy - self.player.y, wx - self.player.x)
-        self.look.update(aim, rmb_dx, rmb_held)
+        move_heading = getattr(self, "_move_heading", None)
+        self.look.update(move_heading=move_heading, aim_heading=aim,
+                         rmb_dx=rmb_dx, rmb_held=rmb_held)
+        self._move_heading = None      # consumed; movement re-sets it next frame
         self.camera.yaw = self.look.cam_yaw
-        # the gun + sprite face where you aim (head); body governs movement
+        # the gun + sprite face where you aim (the head, clamped to the turn
+        # arc); the body itself is turned by walking (update_player above).
         ax, ay = self.look.aim_vec()
         self.player.facing = (ax, ay)
 
@@ -1171,11 +1179,12 @@ class Game(CutsceneMixin):
             mag = math.hypot(dx, dy) or 1
             dx /= mag; dy /= mag
             if self._tilt_on():
-                # Camera-relative: W = forward (into the screen / facing),
-                # A/D strafe. Facing is owned by _update_look (the mouse), so
-                # don't overwrite it from the movement keys here.
-                (fwx, fwy), (rgx, rgy) = self.look.move_basis()
-                dx, dy = rgx * dx + fwx * (-dy), rgy * dx + fwy * (-dy)
+                # World-relative movement; the body (and the camera that
+                # follows it) turn toward where you WALK -- stash the travel
+                # heading for _update_look to ease the body to. The mouse only
+                # aims the head/gun, so aiming never turns the body (no spin).
+                # (dx,dy) stay world directions; facing is owned by the mouse.
+                self._move_heading = math.atan2(dy, dx)
             else:
                 self.player.facing = (dx, dy)
             self.player.walk_phase += dt * 12
