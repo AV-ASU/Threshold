@@ -55,9 +55,23 @@ it renders the procedural sprites to a labelled PNG strip.
   - `enemy.py` — only `kind == "cultist"` runs the cult state machine;
     other kinds use a straight-line chase.
 - `rendering/`
-  - `sprites.py` — procedural sprite drawing (`draw_npc_sprite`,
-    `_draw_king`). The King keeps per-frame state in module globals
-    (`_YK_*`); fine for the single King in play.
+  - `sprites.py` — procedural sprite drawing (`draw_npc_sprite`). The
+    `yellow_king` sprite routes to **THE UNFOLDING** (`king_unfold.py`) when
+    `KING_UNFOLD` is True (the default); flip it False to fall back to the flat
+    pallid-mask `_draw_king` (keeps per-frame state in `_YK_*` globals).
+  - `king_unfold.py` — **THE UNFOLDING**, the non-humanoid 4D King in play. A
+    real 4D everting mass (mass + hypersphere heart rotate through 4D planes,
+    project 4D→3D→2D, silhouette never repeats), faceless, with eyes opening
+    across the skin, 3D limbs that erupt where it everts forward and reach the
+    player (≥2 above threat 0.8), and 3D toothed eversion-maws (patch-bound).
+    `draw_king_unfold(surf,x,y,t,threat,scale,to_player,birth,lean)` — `lean`
+    is the screen-space travel dir × speed; the mass everts FORWARD along it
+    (leading hemisphere surges+swells, tail tapers) as the locomotion tell. The
+    death `draw_unfold_catch(surf,t)` is the throat-swallow (mouth iris → tunnel
+    of teeth → gold furnace), routed from `_draw_death_screen`. Game feeds it
+    live `threat`, `birth`, screen-space `to_player`/`lean`, and a tilt-only
+    `scale_mul` depth-scale (`KING_TILT_DEPTH_*`, looms as he closes). Stateless
+    except a one-time cached `_FORM`. Preview: `tools/preview_king_unfold.py`.
   - `transform.py` — `draw_vessel_bloom`, the human→vessel morph.
   - **Tilted-camera track (LIVE — the oblique view is the default; F3
     toggles back to flat pitch-0):** `camera.py` (`Camera.project(wx,wy,wz)`,
