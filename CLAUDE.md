@@ -83,6 +83,13 @@ it renders the procedural sprites to a labelled PNG strip.
     projected to 2D, lock pitch ~55°, head-turn ±45°, skybox in the voids —
     lives in **`CAMERA.md`**. Previews:
     `tools/preview_{tilt,skybox,occlusion,pseudo3d,sight,blindspot_live}.py`.
+    Under tilt, **trees + cornstalks stand up as 3D billboards** (`_tilt_standee`
+    in `scenes/base.py`, cached cards + a horizontal-run corn LOD `_corn_runs`)
+    and join the wall/occluder set returned by `draw_terrain_tilted` — so they
+    depth-sort + fade per-actor like walls (`_TILT_BILLBOARD_CHARS` in the
+    collection + `_tilt_tile_box` dispatch; the flat floor raster skips them via
+    `draw_scene_terrain(..., skip_billboard=True)`). Collision is unchanged;
+    flat top-down draws them flat as before.
   - **Blind-spot vision (`sight.py`, CAMERA.md Phase 4):** under tilt,
     `draw_world` gates what is **drawn** (NPCs, enemies, corpses, items, and
     the infestation rot decals — flagged `_sight_gated`) to a forward sight
