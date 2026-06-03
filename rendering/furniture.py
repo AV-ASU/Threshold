@@ -101,6 +101,25 @@ def _d_pew_back(surf, pal, c):
     _hline(surf, *c, 0.86, _shade(pal["top"], 1.1), 2)
 
 
+def _d_screen(surf, pal, c):
+    # a dark glass screen set high on the near face, with a sick green CRT glow
+    def fp(fx, fy):
+        return _lerp(_lerp(c[0], c[1], fx), _lerp(c[2], c[3], fx), fy)
+    pts = [fp(0.20, 0.40), fp(0.80, 0.40), fp(0.80, 0.84), fp(0.20, 0.84)]
+    pts = [(int(x), int(y)) for x, y in pts]
+    pygame.draw.polygon(surf, (16, 26, 24), pts)
+    pygame.draw.polygon(surf, (62, 120, 94), pts, 1)
+    g = fp(0.5, 0.62)
+    pygame.draw.circle(surf, (70, 150, 112), (int(g[0]), int(g[1])), 2)
+
+
+def _d_chest_lid(surf, pal, c):
+    # a lid seam across the upper third + a small latch
+    _hline(surf, *c, 0.62, _shade(pal["dark"], 0.7), 2)
+    p = _lerp(_lerp(c[0], c[1], 0.5), _lerp(c[2], c[3], 0.5), 0.55)
+    pygame.draw.circle(surf, (200, 178, 110), (int(p[0]), int(p[1])), 2)
+
+
 # -- spec: kind -> (w, d, h, palette, detail) -------------------------------
 FURNITURE = {
     "table":     (26, 20, 11, _WOOD_MID, None),
@@ -118,6 +137,13 @@ FURNITURE = {
     "cot":       (28, 13, 8,  _WOOD_DK, _d_cot_pallet),
     "bone_rack": (26, 12, 24, _BONE,    _d_bones),
     "pew":       (40, 11, 11, _WOOD_DK, _d_pew_back),
+    # Free-standing Tier-1 decorations promoted to real box volumes (they used
+    # to float as flat top-down sprites under tilt).
+    "chest":            (24, 18, 13, _WOOD_MID, _d_chest_lid),
+    "small_chair":      (11, 11, 13, _WOOD_DK,  None),
+    "overturned_chair": (16, 13, 8,  _WOOD_DK,  None),   # low box -> toppled
+    "terminal":         (16, 15, 22, _IRON,     _d_screen),
+    "computer":         (20, 17, 16, _IRON,     _d_screen),
 }
 
 
