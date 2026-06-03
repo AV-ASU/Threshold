@@ -714,13 +714,26 @@ def draw_floor(surf, ch, rx, ry, tx, ty):
                              (rx + 8, ry + 12, 14, 8))
     elif ch == "~":
         # A dead, cold river -- murky and scummed over, not clean blue.
-        # Darker depths, slow dim ripples, patches of algae, and only a
-        # rare cold glint instead of bright foam.
+        # Organic DARK PATCHES pool in the deeper middle of the channel
+        # (depth + slow current), under slow dim ripples, algae, and a rare
+        # cold glint instead of bright foam.
         seed = tx * 11 + ty * 23
-        if seed % 3 == 0:                          # darker depth mottle
-            pygame.draw.rect(surf, (17, 28, 30),
-                             (rx + (seed % 22) + 2,
-                              ry + ((seed // 5) % 22) + 2, 9, 6))
+        # Low-frequency field -> large, ORGANIC dark regions (the deep
+        # channel) rather than a per-tile checker, drifting slowly downstream.
+        # The ellipses overrun the tile edge on purpose so patches flow
+        # continuously across neighbouring water tiles.
+        drift = pygame.time.get_ticks() / 5200.0
+        field = (math.sin(tx * 0.55 + drift)
+                 + math.cos(ty * 0.42 - drift * 0.7)
+                 + math.sin((tx + ty) * 0.30 + drift * 0.5))
+        if field > 0.55:
+            depth_c = (12, 22, 24) if field > 1.5 else (18, 29, 31)
+            for k in range(2):
+                ex = rx + (seed * (k + 3) % 14) - 2
+                ey = ry + ((seed // (k + 2)) % 14) - 2
+                ew = 14 + (seed >> k) % 12
+                eh = 9 + (seed >> (k + 1)) % 7
+                pygame.draw.ellipse(surf, depth_c, (ex, ey, ew, eh))
         t = (tx + ty + pygame.time.get_ticks() // 320) % 8
         pygame.draw.line(surf, (40, 54, 52), (rx + t, ry + 9),
                          (rx + t + 7, ry + 9), 1)
