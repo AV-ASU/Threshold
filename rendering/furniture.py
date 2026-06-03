@@ -120,6 +120,40 @@ def _d_chest_lid(surf, pal, c):
     pygame.draw.circle(surf, (200, 178, 110), (int(p[0]), int(p[1])), 2)
 
 
+def _fp(c, fx, fy):
+    """A point on the near face at width-fraction fx, up-fraction fy."""
+    return _lerp(_lerp(c[0], c[1], fx), _lerp(c[2], c[3], fx), fy)
+
+
+def _d_gaspump(surf, pal, c):
+    # a pale price display set high, a thin dark hose down one side
+    p = [_fp(c, 0.24, 0.60), _fp(c, 0.76, 0.60), _fp(c, 0.76, 0.84), _fp(c, 0.24, 0.84)]
+    pts = [(int(x), int(y)) for x, y in p]
+    pygame.draw.polygon(surf, (148, 150, 120), pts)
+    pygame.draw.polygon(surf, (54, 56, 44), pts, 1)
+    a, b = _fp(c, 0.84, 0.52), _fp(c, 0.94, 0.18)
+    pygame.draw.line(surf, (20, 20, 20), (int(a[0]), int(a[1])), (int(b[0]), int(b[1])), 2)
+
+
+def _d_payphone(surf, pal, c):
+    # a dark phone box face with a pale handset
+    p = [_fp(c, 0.26, 0.48), _fp(c, 0.74, 0.48), _fp(c, 0.74, 0.88), _fp(c, 0.26, 0.88)]
+    pts = [(int(x), int(y)) for x, y in p]
+    pygame.draw.polygon(surf, (28, 32, 38), pts)
+    pygame.draw.polygon(surf, (88, 94, 102), pts, 1)
+    h = _fp(c, 0.42, 0.7)
+    pygame.draw.circle(surf, (150, 156, 162), (int(h[0]), int(h[1])), 2)
+
+
+def _d_headstone(surf, pal, c):
+    # an incised cross
+    col = _shade(pal["dark"], 0.7)
+    t, b = _fp(c, 0.5, 0.82), _fp(c, 0.5, 0.42)
+    l, r = _fp(c, 0.36, 0.66), _fp(c, 0.64, 0.66)
+    pygame.draw.line(surf, col, (int(t[0]), int(t[1])), (int(b[0]), int(b[1])), 2)
+    pygame.draw.line(surf, col, (int(l[0]), int(l[1])), (int(r[0]), int(r[1])), 2)
+
+
 # -- spec: kind -> (w, d, h, palette, detail) -------------------------------
 FURNITURE = {
     "table":     (26, 20, 11, _WOOD_MID, None),
@@ -144,6 +178,10 @@ FURNITURE = {
     "overturned_chair": (16, 13, 8,  _WOOD_DK,  None),   # low box -> toppled
     "terminal":         (16, 15, 22, _IRON,     _d_screen),
     "computer":         (20, 17, 16, _IRON,     _d_screen),
+    # Tier-2 roadside + graveyard uprights.
+    "gas_pump":         (14, 12, 30, _IRON,     _d_gaspump),
+    "payphone":         (11, 9,  24, _IRON,     _d_payphone),
+    "headstone":        (16, 7,  19, _STONE,    _d_headstone),
 }
 
 
