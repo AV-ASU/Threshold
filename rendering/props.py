@@ -129,68 +129,164 @@ def _vehicle_shadow(surf, cam, wx, wy, bl, bw):
     shh = max(2, int(bw * 0.5 * cam.ground_squash() * cam.scale * 1.05))
     bx, by = cam.project(wx, wy, 0)
     sh = pygame.Surface((shw * 2 + 4, shh * 2 + 4), pygame.SRCALPHA)
-    pygame.draw.ellipse(sh, (0, 0, 0, 100), (2, 2, shw * 2, shh * 2))
+    pygame.draw.ellipse(sh, (0, 0, 0, 105), (2, 2, shw * 2, shh * 2))
     surf.blit(sh, (bx - shw - 2, by - shh - 2))
 
 
-_WHEEL = {"top": (26, 24, 26), "side": (16, 15, 17), "dark": (8, 8, 10)}
-
-
-def _vehicle_wheels(surf, cam, wx, wy, bl, bw, yaw, r=5):
+def _vframe(cam, wx, wy, yaw):
+    """A local->screen projector for a vehicle: local (lx along length, ly across
+    width, lz height) rotated by yaw about the placement and projected."""
     c, s = math.cos(yaw), math.sin(yaw)
-    for ex in (-bl * 0.30, bl * 0.30):
-        for ey in (-bw * 0.48, bw * 0.48):
-            wxr = wx + ex * c - ey * s
-            wyr = wy + ex * s + ey * c
-            _vbox(surf, cam, wxr, wyr, r * 1.6, r * 1.1, 0, r, _WHEEL,
-                  yaw=yaw, outline=False)
+
+    def P(lx, ly, lz):
+        return cam.project(wx + lx * c - ly * s, wy + lx * s + ly * c, lz)
+    return P
+
+
+def _qp(surf, P, locs, col, w=0):
+    pygame.draw.polygon(surf, col,
+                        [(int(x), int(y)) for x, y in (P(*p) for p in locs)], w)
+
+
+def _lp(surf, P, a, b, col, w=1):
+    pa, pb = P(*a), P(*b)
+    pygame.draw.line(surf, col, (int(pa[0]), int(pa[1])),
+                     (int(pb[0]), int(pb[1])), w)
+
+
+def _round_wheel(surf, P, lx, ly, r):
+    """A tyre as a real disc standing in the length/height plane at local
+    (lx, ly): a 12-gon black tyre + a metal hubcap, projected through the
+    camera so it reads as a round wheel at the oblique angle."""
+    n = 12
+    pts = [P(lx + math.cos(math.tau * i / n) * r, ly,
+             r + math.sin(math.tau * i / n) * r) for i in range(n)]
+    pts = [(int(x), int(y)) for x, y in pts]
+    pygame.draw.polygon(surf, (20, 20, 22), pts)        # tyre
+    pygame.draw.polygon(surf, (46, 46, 50), pts, 1)
+    h = P(lx, ly, r)
+    hr = max(2, int(r * 0.46))
+    pygame.draw.circle(surf, (120, 122, 128), (int(h[0]), int(h[1])), hr)
+    pygame.draw.circle(surf, (64, 66, 72), (int(h[0]), int(h[1])), hr, 1)
+    pygame.draw.circle(surf, (170, 172, 178), (int(h[0]), int(h[1])), max(1, hr // 2))
 
 
 def _draw_car_solid(surf, cam, deco):
-    """A 1994 sedan as a real volume: a low body on four wheels with a glassed
-    cabin set back on top, headlights at the nose. Faded, dead-paint palette."""
+    """A 1994 sedan as a real volume: a low body on four round wheels, a glassed
+    cabin set back on top (side + windshield + rear glass with a B-pillar), a
+    chrome grille + bumpers, headlights at the nose and red tail-lamps, a door
+    seam + handle + side trim. Faded dead-paint palette."""
     wx, wy = deco.x, deco.y
     s = (getattr(deco, "scale", 1.0) or 1.0)
     yaw = float(deco.kwargs.get("yaw", 0.0))
-    bl, bw, bh = 50 * s, 26 * s, 12 * s             # body (length along local x)
-    body = {"top": (92, 100, 106), "side": (64, 72, 78), "dark": (40, 46, 52)}
-    cab = {"top": (60, 70, 78), "side": (44, 52, 58), "dark": (26, 32, 38)}
-    _vehicle_shadow(surf, cam, wx, wy, bl, bw)
-    _vehicle_wheels(surf, cam, wx, wy, bl, bw, yaw)
-    _vbox(surf, cam, wx, wy, bl, bw, 4 * s, bh, body, yaw=yaw)
-    # cabin: shorter, set slightly back (-x), raised onto the body
-    cx = -6 * s
-    _vbox(surf, cam, wx + cx * math.cos(yaw), wy + cx * math.sin(yaw),
-          24 * s, bw * 0.86, bh, bh + 11 * s, cab, yaw=yaw)
-    # headlights at the nose (+x end)
-    hx = bl * 0.5
-    for ey in (-bw * 0.34, bw * 0.34):
-        hp = cam.project(wx + hx * math.cos(yaw) - ey * math.sin(yaw),
-                         wy + hx * math.sin(yaw) + ey * math.cos(yaw), 7 * s)
-        pygame.draw.circle(surf, (214, 208, 172), (int(hp[0]), int(hp[1])),
-                           max(1, int(2 * s)))
+    P = _vframe(cam, wx, wy, yaw)
+    L, W = 52 * s, 26 * s
+    hL, hW = L / 2, W / 2
+    z0, z1 = 5 * s, 14 * s                        # body band
+    cz1 = z1 + 11 * s                             # cabin top
+    cf, cb = 9 * s, -17 * s                       # cabin front / back (local x)
+    chW = W * 0.84 / 2
+    r, wbx = 6 * s, hL * 0.60                      # wheel radius + wheelbase
+    body = {"top": (96, 104, 110), "side": (66, 74, 80), "dark": (42, 48, 54)}
+    cab = {"top": (58, 68, 76), "side": (42, 50, 56), "dark": (24, 30, 36)}
+    glass, glass_hi, chrome = (46, 60, 64), (98, 118, 124), (172, 176, 184)
+    _vehicle_shadow(surf, cam, wx, wy, L, W)
+    _round_wheel(surf, P, wbx, -hW, r)            # far wheels (behind body)
+    _round_wheel(surf, P, -wbx, -hW, r)
+    _vbox(surf, cam, wx, wy, L, W, z0, z1, body, yaw=yaw)
+    ccx = (cf + cb) / 2
+    _vbox(surf, cam, wx + ccx * math.cos(yaw), wy + ccx * math.sin(yaw),
+          cf - cb, W * 0.84, z1, cz1, cab, yaw=yaw)
+    ny = hW + 0.2                                  # near side plane
+    # cabin glass: near-side band (with B-pillar + top highlight), windshield, rear
+    _qp(surf, P, [(cb + 2, chW + 0.2, z1 + 1.5), (cf - 2, chW + 0.2, z1 + 1.5),
+                  (cf - 2, chW + 0.2, cz1 - 1.5), (cb + 2, chW + 0.2, cz1 - 1.5)], glass)
+    _lp(surf, P, (ccx, chW + 0.3, z1 + 1.5), (ccx, chW + 0.3, cz1 - 1.5), cab["dark"], 1)
+    _lp(surf, P, (cb + 2, chW + 0.3, cz1 - 1.6), (cf - 2, chW + 0.3, cz1 - 1.6), glass_hi, 1)
+    _qp(surf, P, [(cf, -chW, z1 + 1.5), (cf, chW, z1 + 1.5),
+                  (cf, chW, cz1 - 1.5), (cf, -chW, cz1 - 1.5)], glass)
+    _qp(surf, P, [(cb, -chW, z1 + 1.5), (cb, chW, z1 + 1.5),
+                  (cb, chW, cz1 - 1.5), (cb, -chW, cz1 - 1.5)], glass)
+    # near-side door seam + handle + chrome trim
+    _lp(surf, P, (-2 * s, ny, z0 + 1), (-2 * s, ny, z1), _shade(body["dark"], 0.8), 1)
+    _lp(surf, P, (-7 * s, ny, z1 - 3 * s), (-12 * s, ny, z1 - 3 * s), chrome, 1)
+    _lp(surf, P, (-hL + 3, ny, z0 + 4 * s), (hL - 3, ny, z0 + 4 * s),
+        _shade(body["side"], 1.3), 1)
+    # bumpers (front bright, rear dim) + front grille bars
+    _qp(surf, P, [(hL, -hW, z0), (hL, hW, z0), (hL, hW, z0 + 3 * s), (hL, -hW, z0 + 3 * s)], chrome)
+    _qp(surf, P, [(-hL, -hW, z0), (-hL, hW, z0), (-hL, hW, z0 + 3 * s), (-hL, -hW, z0 + 3 * s)],
+        _shade(chrome, 0.65))
+    for ey in (-6 * s, -2 * s, 2 * s, 6 * s):
+        _lp(surf, P, (hL, ey, z0 + 4 * s), (hL, ey, z1 - 2 * s), _shade(body["dark"], 0.7), 1)
+    # head / tail lamps
+    for ey in (-hW * 0.62, hW * 0.62):
+        hp = P(hL, ey, z1 - 3 * s)
+        pygame.draw.circle(surf, (230, 224, 188), (int(hp[0]), int(hp[1])), max(2, int(2.2 * s)))
+        tp = P(-hL, ey, z1 - 3 * s)
+        pygame.draw.circle(surf, (178, 42, 38), (int(tp[0]), int(tp[1])), max(2, int(2 * s)))
+    _round_wheel(surf, P, wbx, hW, r)             # near wheels (exposed)
+    _round_wheel(surf, P, -wbx, hW, r)
+    _lp(surf, P, (-hL + 3, -hW + 2, z1), (hL - 3, -hW + 2, z1), _shade(body["top"], 1.15), 1)
 
 
 def _draw_pickup_truck_solid(surf, cam, deco):
-    """A pickup: a cab at the front (+x) and an open bed behind, on four wheels.
-    Faded farm-green paint, rust at the seams implied by the dark palette."""
+    """A pickup as a real volume: a cab at the front (glassed), an OPEN bed
+    behind (recessed dark floor, side rails, a tailgate), four round wheels, a
+    grille + bumper + lamps at the nose. Faded farm-green paint."""
     wx, wy = deco.x, deco.y
     s = (getattr(deco, "scale", 1.0) or 1.0)
     yaw = float(deco.kwargs.get("yaw", 0.0))
-    bl, bw, bh = 54 * s, 26 * s, 11 * s
-    body = {"top": (88, 96, 78), "side": (62, 70, 54), "dark": (38, 44, 32)}
-    cab = {"top": (70, 78, 62), "side": (50, 56, 44), "dark": (30, 36, 26)}
-    _vehicle_shadow(surf, cam, wx, wy, bl, bw)
-    _vehicle_wheels(surf, cam, wx, wy, bl, bw, yaw)
-    _vbox(surf, cam, wx, wy, bl, bw, 4 * s, bh, body, yaw=yaw)
-    # cab at the front (+x), raised
-    cx = bl * 0.26
-    _vbox(surf, cam, wx + cx * math.cos(yaw), wy + cx * math.sin(yaw),
-          18 * s, bw * 0.9, bh, bh + 12 * s, cab, yaw=yaw)
-    # low bed rim at the back so it reads as an open bed
-    rx = -bl * 0.28
-    _vbox(surf, cam, wx + rx * math.cos(yaw), wy + rx * math.sin(yaw),
-          22 * s, bw, bh, bh + 4 * s, body, yaw=yaw, outline=False)
+    P = _vframe(cam, wx, wy, yaw)
+    L, W = 56 * s, 27 * s
+    hL, hW = L / 2, W / 2
+    z0, z1 = 5 * s, 13 * s
+    cf, cb = hL, 7 * s                             # cab spans nose -> x=7
+    cz1 = z1 + 13 * s
+    cW = W * 0.92
+    chW = cW / 2
+    r, wbx = 7 * s, hL * 0.62
+    body = {"top": (92, 100, 82), "side": (64, 72, 56), "dark": (40, 46, 34)}
+    cab = {"top": (74, 82, 66), "side": (52, 60, 46), "dark": (30, 36, 26)}
+    glass, glass_hi, chrome = (46, 58, 60), (96, 114, 118), (166, 170, 176)
+    _vehicle_shadow(surf, cam, wx, wy, L, W)
+    _round_wheel(surf, P, wbx, -hW, r)
+    _round_wheel(surf, P, -wbx, -hW, r)
+    _vbox(surf, cam, wx, wy, L, W, z0, z1, body, yaw=yaw)
+    ccx = (cf + cb) / 2
+    _vbox(surf, cam, wx + ccx * math.cos(yaw), wy + ccx * math.sin(yaw),
+          cf - cb, cW, z1, cz1, cab, yaw=yaw)
+    # OPEN bed behind the cab: recessed dark floor + side rails + tailgate
+    bf, bb = cb - 1 * s, -hL + 1
+    railz = z1 + 5 * s
+    _qp(surf, P, [(bb, -hW + 1, z1), (bf, -hW + 1, z1),
+                  (bf, hW - 1, z1), (bb, hW - 1, z1)], (28, 30, 24))     # bed floor
+    for ly in (-hW, hW):                                                 # side rails
+        _qp(surf, P, [(bb, ly, z1), (bf, ly, z1), (bf, ly, railz), (bb, ly, railz)],
+            body["side"] if ly > 0 else _shade(body["side"], 0.8))
+    _qp(surf, P, [(bb, -hW, z1), (bb, hW, z1), (bb, hW, railz), (bb, -hW, railz)],
+        body["dark"])                                                    # tailgate
+    _lp(surf, P, (bb, hW + 0.2, railz), (bf, hW + 0.2, railz), _shade(body["top"], 1.1), 1)
+    # cab glass: near side + windshield
+    ny = hW + 0.2
+    _qp(surf, P, [(cb + 2, chW + 0.2, z1 + 2), (cf - 3, chW + 0.2, z1 + 2),
+                  (cf - 3, chW + 0.2, cz1 - 2), (cb + 2, chW + 0.2, cz1 - 2)], glass)
+    _lp(surf, P, (cb + 2, chW + 0.3, cz1 - 2), (cf - 3, chW + 0.3, cz1 - 2), glass_hi, 1)
+    _qp(surf, P, [(cf, -chW, z1 + 2), (cf, chW, z1 + 2),
+                  (cf, chW, cz1 - 2), (cf, -chW, cz1 - 2)], glass)
+    # door seam + trim on the cab near side
+    _lp(surf, P, (cb + 3 * s, ny, z0 + 1), (cb + 3 * s, ny, z1), _shade(cab["dark"], 0.8), 1)
+    _lp(surf, P, (cb + 1, ny, z0 + 4 * s), (hL - 3, ny, z0 + 4 * s), _shade(body["side"], 1.3), 1)
+    # nose: bumper, grille, lamps
+    _qp(surf, P, [(hL, -hW, z0), (hL, hW, z0), (hL, hW, z0 + 4 * s), (hL, -hW, z0 + 4 * s)], chrome)
+    for ey in (-7 * s, -2.5 * s, 2.5 * s, 7 * s):
+        _lp(surf, P, (hL, ey, z0 + 5 * s), (hL, ey, z1 - 1 * s), _shade(body["dark"], 0.7), 1)
+    for ey in (-hW * 0.6, hW * 0.6):
+        hp = P(hL, ey, z1 - 2 * s)
+        pygame.draw.circle(surf, (230, 224, 188), (int(hp[0]), int(hp[1])), max(2, int(2.4 * s)))
+        tp = P(-hL, ey, railz - 2 * s)
+        pygame.draw.circle(surf, (178, 42, 38), (int(tp[0]), int(tp[1])), max(2, int(2 * s)))
+    _round_wheel(surf, P, wbx, hW, r)
+    _round_wheel(surf, P, -wbx, hW, r)
 
 
 SOLID_PROPS = {
