@@ -8,10 +8,11 @@ procedural **skybox**, not black. A horror **blind-spot vision** layer is the
 ambitious payoff (terrain reveals on a peek; threats do not).
 
 This file is the source of truth for that track. **The track is COMPLETE
-(Phases 0–5 all live).** The oblique view is wired into the live game behind the
-**F3** toggle; **F3-off is the shipping flat top-down view and stays
-byte-identical** (gated by `tools/capture_world.py`). The modules below are no
-longer isolated scaffolding — they are the live render path under tilt.
+(Phases 0–5 all live).** The oblique view is now the **DEFAULT** — the game
+boots tilted (~55°) with mouse-look. **F3 toggles back to the flat pitch-0
+top-down view**, which stays **byte-identical** to the legacy raster (gated by
+`tools/capture_world.py`, which pins pitch 0). The modules below are no longer
+isolated scaffolding — they are the live render path under tilt.
 
 ---
 
