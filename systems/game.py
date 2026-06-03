@@ -13,7 +13,9 @@ from rendering.sprites import (draw_player_sprite, draw_npc_sprite,
                                draw_npc_corpse, draw_infested_overlay,
                                draw_axe_swing, draw_king_death,
                                door_mask_surface, reset_king_fx,
-                               view_from_facing)
+                               view_from_facing, KING_UNFOLD,
+                               KING_UNFOLD_SCALE)
+from rendering.king_unfold import draw_unfold_catch
 from rendering.transform import draw_vessel_bloom
 from rendering.camera import Camera
 from systems.look_control import LookController
@@ -132,6 +134,13 @@ TILT_ACTOR_STAND = 15        # default px a sprite centre rises to stand
 # Taller sprites need their centre lifted further so their feet meet the
 # floor (foot-offset in sprite px); falls back to TILT_ACTOR_STAND.
 TILT_LIFT = {"yellow_king": 30, "sheriff_hollow": 22, "watcher": 20}
+# The world projection is orthographic, so the King -- the apex -- gets a
+# deliberate perspective-style depth scale under tilt: he LOOMS larger as he
+# closes the view-depth gap toward the camera and shrinks as he hangs back, so a
+# charge reads as bulk rushing the lens. Pure visual (catch is distance-gated).
+KING_TILT_DEPTH_CAM = 360.0    # effective camera->player-plane distance (world px)
+KING_TILT_DEPTH_MIN = 0.7      # scale-mul clamp (far / behind the player)
+KING_TILT_DEPTH_MAX = 1.7      # scale-mul clamp (near / in front, looming)
 
 # Dark scenes -- underground / interior cult sites where the
 # flashlight matters. Without the flashlight the screen is heavily
@@ -3337,7 +3346,12 @@ class Game(CutsceneMixin):
         furnace of masks (sprites.draw_king_death) stamped CARCOSA;
         cultist = a stark CAPTURED card over a near-black wash."""
         if self._death_kind == "king":
-            draw_king_death(self.screen, self._death_t)
+            if KING_UNFOLD:
+                # the Unfolding takes you DOWN THE THROAT (mouth iris -> tunnel
+                # of teeth -> gold furnace); _death_t 0..3 maps to the catch 0..1.
+                draw_unfold_catch(self.screen, min(1.0, self._death_t / 3.0))
+            else:
+                draw_king_death(self.screen, self._death_t)
             if self._death_t > 3.0:                  # the name surfaces over the descent
                 w, h = self.screen.get_size()
                 ta = min(235, int((self._death_t - 3.0) / 0.55 * 235))
@@ -3816,6 +3830,37 @@ class Game(CutsceneMixin):
                 # whole time he's on screen). The 0.15 floor keeps him a
                 # faint watching void, never fully gone, until he nears.
                 king_threat = max(0.15, min(1.0, 1.0 - (d - KING_THREAT_NEAR) / span))
+            # The Unfolding's locomotion + perspective tells (screen-space, so
+            # they read right under any camera yaw/pitch). to_player aims its
+            # reaching limbs + eyes; lean everts the mass forward along its
+            # heading scaled by the smoothed travel magnitude; scale_mul looms
+            # him larger as he closes the view-depth gap (tilt only).
+            king_to_player = None
+            king_lean = None
+            king_scale_mul = 1.0
+            if npc.sprite_kind == "yellow_king" and self.player:
+                kxs, kys = self.camera.project(npc.x, npc.y)
+                pxs, pys = self.camera.project(self.player.x, self.player.y)
+                king_to_player = (pxs - kxs, pys - kys)
+                lean_mag = getattr(npc, "_yk_lean", 0.0)
+                if lean_mag > 0.01:
+                    fx, fy = npc.facing
+                    axs, ays = self.camera.project(npc.x + fx * TILE,
+                                                   npc.y + fy * TILE)
+                    ldx, ldy = axs - kxs, ays - kys
+                    dl = math.hypot(ldx, ldy) or 1.0
+                    king_lean = (ldx / dl * lean_mag, ldy / dl * lean_mag)
+                if self._tilt_on():
+                    C = KING_TILT_DEPTH_CAM
+                    dz = (self.camera.depth(npc.x, npc.y)
+                          - self.camera.depth(self.player.x, self.player.y))
+                    dz = max(-0.45 * C, min(0.45 * C, dz))
+                    f = C / (C - dz)
+                    pf = max(0.0, min(1.0,
+                             self.camera.pitch / math.radians(TILT_PITCH_DEG)))
+                    king_scale_mul = max(KING_TILT_DEPTH_MIN,
+                                         min(KING_TILT_DEPTH_MAX,
+                                             1.0 + (f - 1.0) * pf))
             npc_lift = int(TILT_LIFT.get(npc.sprite_kind, TILT_ACTOR_STAND)
                            * math.sin(self.camera.pitch))
             # The King is the relentless apex -- never gated to sight; you must
@@ -3858,7 +3903,9 @@ class Game(CutsceneMixin):
                                         birth=getattr(npc, "_birth", None),
                                         gait=getattr(npc, "_gait", None),
                                         threat=king_threat, seed=id(npc) & 0xffff,
-                                        curse=curse_v, gaze=w_gaze, view=nview)
+                                        curse=curse_v, gaze=w_gaze, view=nview,
+                                        to_player=king_to_player,
+                                        lean=king_lean, scale_mul=king_scale_mul)
                         # A resister whose flesh has turned: their bespoke
                         # fold-horror form, laid over the person they were.
                         if getattr(npc, "_mutated", False):

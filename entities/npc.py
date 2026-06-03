@@ -83,6 +83,9 @@ class NPC:
         self._yk_head = None        # current heading angle (rad); steers
         self._yk_stuck_t = 0.0
         self._yk_last_pos = None
+        self._yk_lean = 0.0         # smoothed locomotion 0..1 (travel tell;
+                                    # the Unfolding everts forward by this much
+                                    # along self.facing -- see king_unfold)
         # Round-14: NPCs are killable. They take damage from the
         # player's attacks (melee or pistol). The cult takes a
         # specific interest in this -- the kill counter feeds the
@@ -431,6 +434,13 @@ class NPC:
         # Advance the gait phase with distance covered so the run cycle
         # matches the King's speed and freezes when it isn't moving.
         self._gait = getattr(self, "_gait", 0.0) + step * 0.18
+        # Locomotion lean: ease a 0..1 magnitude toward 1 while it is
+        # actually travelling (covered most of a full step this frame) and
+        # back to 0 when pinned on a wall or stalled. The renderer everts
+        # the mass forward along self.facing by this much -- a surge that
+        # reads as the thing lunging, not just sliding to a new position.
+        moving = 1.0 if moved > step * 0.5 else 0.0
+        self._yk_lean += (moving - self._yk_lean) * min(1.0, dt * 4.0)
 
     def _step_toward(self, target, dt, scene, navigate=False):
         tx, ty = target
