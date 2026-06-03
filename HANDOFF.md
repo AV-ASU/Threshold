@@ -1,10 +1,35 @@
 # THRESHOLD — handoff for the next chat
 
 **Repo:** `/home/user/Threshold` · **default branch:** `main`
-**As of this handoff:** `main` == `claude/game-state-verify-tcQKO` == commit
-**`d409062`** (clean tree; everything below is pushed to BOTH branches).
-**Tests:** `tests/smoke.py` green; `tests/flow.py` 57 ok / 0 fail; `compileall`
-clean.
+
+---
+
+## ⮕ LATEST (2026-06): narrative canon-alignment pass — DOCS only
+
+A long story/canon working session with the user settled a batch of
+decisions. **This session changed DOCS, not game code.** What landed:
+
+- **`NARRATIVE.md` rewritten to the settled canon** — the lure chain
+  (King→Mara→Walter→PI, felt not stated), the awareness model (no visible
+  tell; the cult knew the gist of its bargain, the locals never knew they
+  were claimed), the rite as **seal + power-bank**, **Sable = most-attuned
+  local**, **Royce stopped driving**, **Mrs. Calder's unnameable guest**,
+  **Toby's well-clue**, **Ledger → front desk**, **Playscript = the cult's
+  own notes**, the **ashfall** infestation layer, and the **keystone-to-
+  door** fork (Mask + notes combine, the Deep Stair opens *without*
+  consuming them, the keystone is spent at the **Threshold** to SEAL; carry
+  it out = SPREAD; the Mask reads as **"permission to leave,"** built up by
+  the PI's **distressed notes**).
+- **`CLAUDE.md`** — a Conventions pointer to the above.
+- **`GAME_CHANGES.md` (NEW)** — the **code TODO** to make the game match
+  the new canon, with file:line references from a fresh audit. **Start
+  here next session.** None of it is implemented yet.
+
+Re-audit confirmed: the Works **7-room gauntlet** matches the build; the
+Depths has grown to 5 rooms + side-branches (now noted in NARRATIVE §9).
+
+> The section below is the **prior** session's handoff (journal door-dream →
+> "He knows you"); kept for reference.
 
 ---
 
