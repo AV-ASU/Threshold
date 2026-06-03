@@ -3797,7 +3797,7 @@ class Game(CutsceneMixin):
             return 255 if f >= 0.99 else int(255 * f)
 
         _tilt = self.camera.pitch > 0.02
-        _tilt_walls = _tilt_solid_decos = None
+        _tilt_walls = _tilt_solid_decos = _tilt_wall_decos = None
         if _tilt:
             # DEBUG oblique view (CAMERA.md Phase 2/5): skybox fills the void,
             # the floor warps to the tilted plane. The upright occluders -- wall
@@ -3810,7 +3810,7 @@ class Game(CutsceneMixin):
             draw_skybox(self.screen, (0, 0, SCREEN_W, SCREEN_H),
                         yaw=self.camera.yaw, kind=self._skybox_kind(),
                         horizon_frac=0.40)
-            _tilt_walls, _tilt_solid_decos = draw_terrain_tilted(
+            _tilt_walls, _tilt_solid_decos, _tilt_wall_decos = draw_terrain_tilted(
                 self.screen, self.scene, self.camera, sight=_sight)
         else:
             self.scene.draw(self.screen, self.cam_x, self.cam_y, self.camera)
@@ -4139,6 +4139,20 @@ class Game(CutsceneMixin):
                 for ox, oy in _offsets:
                     _emit(self.camera.depth(d.x + ox, d.y + oy),
                           lambda d=d, ox=ox, oy=oy: self._draw_solid_prop(d, ox, oy))
+            # Wall-hung decorations: lift onto the wall face (_WALL_MOUNT_Z) as
+            # camera-facing billboards, depth-sorted at the lifted depth so a
+            # back-wall photo sorts in FRONT of its wall box, not under it. NOT
+            # sight-gated -- they sit ON a wall, and that wall blocks LOS, so
+            # gating would hide every wall decoration behind its own wall. They
+            # are environmental like the walls + furniture (which also draw
+            # regardless of the cone); the gray fog already greys off-cone.
+            from scenes.base import _WALL_MOUNT_Z
+            for d in (_tilt_wall_decos or []):
+                for ox, oy in _offsets:
+                    _emit(self.camera.depth(d.x + ox, d.y + oy, _WALL_MOUNT_Z),
+                          lambda d=d, ox=ox, oy=oy:
+                          d.draw(self.screen, 0, 0, self.camera, wox=ox, woy=oy,
+                                 mount_z=_WALL_MOUNT_Z))
             _entries.sort(key=lambda e: e[0])
         # Execute the (legacy-ordered at pitch 0, depth-sorted under tilt) list.
         for _depth, _fn in _entries:

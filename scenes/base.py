@@ -1669,6 +1669,18 @@ _FLOOR_DECAL_KINDS = frozenset((
     "rug", "bloodstain", "gore", "yellow_sign", "bloody_handprint", "bloody_pile",
 ))
 
+# Wall-mounted decorations. Under tilt these are lifted onto the wall face as
+# camera-facing billboards (and depth-sorted with the walls) instead of lying
+# flat on the floor -- they HANG, they don't sit. _WALL_MOUNT_Z is how far up
+# the wall (walls rise to _TILT_WALL_RISE = 26). Pitch 0 draws them flat as
+# before (Scene.draw).
+_WALL_DECO_KINDS = frozenset((
+    "mirror", "photo", "wrong_photo", "missing_flyer", "polaroid_wall",
+    "banner", "calendar", "clock", "apology_wall",
+    "buck_head", "antler_rack", "mounted_fish", "wrong_taxidermy",
+))
+_WALL_MOUNT_Z = 18
+
 
 def _draw_floor_decal(surf, camera, deco, woff=(0.0, 0.0)):
     """Render a flat decal to a canvas, then warp it onto the floor plane (same
@@ -1832,9 +1844,16 @@ def draw_terrain_tilted(surf, scene, camera, sight=None):
     # its ~600 decorations 9x, and almost all clones -- plus most base decos --
     # are nowhere near the view, yet every one used to be drawn every frame.
     MX, MTOP, MBOT = 120, 110, 240
+    wall_decos = []
     for d in scene.decorations:
         if is_solid_furniture(d.kind) or is_solid_prop(d.kind):
             solid_decos.append(d)
+            continue
+        if d.kind in _WALL_DECO_KINDS:
+            # Hung on the wall, not lying on the floor: returned so the caller
+            # lifts + depth-sorts it with the walls (drawn flat here would put
+            # it on the ground and behind the wall box).
+            wall_decos.append(d)
             continue
         # Phase 4: rot decals are a world change -- gated to line of sight.
         a = 255
@@ -1854,7 +1873,7 @@ def draw_terrain_tilted(surf, scene, camera, sight=None):
             else:
                 draw_with_alpha(surf, a, lambda s, d=d, woff=woff:
                                 d.draw(s, 0, 0, camera, wox=woff[0], woy=woff[1]))
-    return walls, solid_decos
+    return walls, solid_decos, wall_decos
 
 
 def draw_scene_doors(surf, scene, cam_x, cam_y, x0, y0, x1, y1):
