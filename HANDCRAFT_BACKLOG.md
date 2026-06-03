@@ -88,6 +88,18 @@ miss**.
 
 ---
 
+## 3b. Player / weapons
+
+- **Held axe idle pose** — the revolver now draws *in hand* whenever it's the
+  active weapon (`draw_revolver_held`), but the axe still only appears during
+  its swing (`draw_axe_swing`); idle, the player looks unarmed with the axe
+  equipped. Add a `draw_axe_held` to match (so the equipped weapon always
+  reads). `rendering/sprites.py`.
+- **Player sprite under tilt** — `draw_player_sprite` has 2.5D head-turn views
+  (`view_from_facing`); double-check the held-weapon offset reads at every
+  camera yaw (the gun is drawn in screen space off `facing`, so it should, but
+  eyeball it).
+
 ## 4. General 3D-misfit / polish candidates (lower urgency)
 
 These *do* render under tilt but the procedural art is simplistic at an angle
