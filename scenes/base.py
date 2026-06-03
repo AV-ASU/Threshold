@@ -1524,7 +1524,11 @@ def _tilt_warp(flat, camera):
     rotated = pygame.transform.rotate(flat, math.degrees(camera.yaw))
     cp = max(0.05, math.cos(camera.pitch))
     w, h = rotated.get_size()
-    return pygame.transform.smoothscale(
+    # `scale` (nearest) rather than `smoothscale` (bilinear): the floor raster
+    # is a low-detail tile pattern sitting under the tilt + Brimley's haze, so
+    # the smoothing is imperceptible, but smoothscale on this large surface was
+    # the single biggest per-frame cost in the wrapped town (~10x scale's cost).
+    return pygame.transform.scale(
         rotated, (max(1, int(w * camera.scale)),
                   max(1, int(h * camera.scale * cp))))
 
@@ -1806,6 +1810,15 @@ def draw_terrain_tilted(surf, scene, camera, sight=None):
         offsets += [(-world_w, -world_h), (-world_w, world_h),
                     (world_w, -world_h), (world_w, world_h)]
     solid_decos = []
+    sw, sh = surf.get_size()
+    # Cull box for decoration clones. Generous on the BOTTOM so a tall standee
+    # whose ground point sits just off the lower edge still draws (it rises UP
+    # into view under tilt); modest on the other sides. Floor decals lie at the
+    # ground point, so the side/top margins cover them too. This is the big
+    # toroidal-scene win: a wrap_x+wrap_y scene (Brimley) clones every one of
+    # its ~600 decorations 9x, and almost all clones -- plus most base decos --
+    # are nowhere near the view, yet every one used to be drawn every frame.
+    MX, MTOP, MBOT = 120, 110, 240
     for d in scene.decorations:
         if is_solid_furniture(d.kind) or is_solid_prop(d.kind):
             solid_decos.append(d)
@@ -1817,8 +1830,12 @@ def draw_terrain_tilted(surf, scene, camera, sight=None):
             if f <= 0.03:
                 continue
             a = 255 if f >= 0.99 else int(255 * f)
+        floor_decal = d.kind in _FLOOR_DECAL_KINDS
         for woff in offsets:
-            if d.kind in _FLOOR_DECAL_KINDS:
+            psx, psy = camera.project(d.x + woff[0], d.y + woff[1])
+            if not (-MX <= psx <= sw + MX and -MTOP <= psy <= sh + MBOT):
+                continue                         # off-screen clone -> skip
+            if floor_decal:
                 draw_with_alpha(surf, a, lambda s, d=d, woff=woff:
                                 _draw_floor_decal(s, camera, d, woff))
             else:
