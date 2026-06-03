@@ -118,15 +118,18 @@ class Decoration:
     def update(self, dt):
         self.t += dt
 
-    def draw(self, surf, cam_x, cam_y, camera=None, wox=0.0, woy=0.0):
+    def draw(self, surf, cam_x, cam_y, camera=None, wox=0.0, woy=0.0,
+             mount_z=0.0):
         # Route the point anchor through the shared projection when the live
         # game supplies a camera (CAMERA.md); fall back to the legacy
         # top-down conversion for headless tools that pass raw offsets. At
         # pitch 0 the two are arithmetically identical. `wox/woy` is the
         # wrap-clone world offset (0 for the primary draw), passed explicitly
         # so projection doesn't depend on the camera's pivot convention.
+        # `mount_z` lifts the anchor off the ground (wall-hung decorations) so
+        # the flat sprite reads as a card stood up the wall, not on the floor.
         if camera is not None:
-            sx, sy = camera.project(self.x + wox, self.y + woy)
+            sx, sy = camera.project(self.x + wox, self.y + woy, mount_z)
         else:
             sx = int(self.x - cam_x)
             sy = int(self.y - cam_y)

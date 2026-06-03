@@ -11,7 +11,9 @@ from constants import (
 )
 from rendering.sprites import (draw_player_sprite, draw_npc_sprite,
                                draw_npc_corpse, draw_infested_overlay,
-                               draw_axe_swing, draw_king_death,
+                               draw_axe_swing, draw_axe_held,
+                               draw_revolver_held, draw_gun_fire,
+                               draw_king_death,
                                door_mask_surface, reset_king_fx,
                                view_from_facing, KING_UNFOLD,
                                KING_UNFOLD_SCALE)
@@ -131,6 +133,10 @@ TILT_PITCH_DEG = 55
 TILT_EASE = 0.12             # per-frame lerp of pitch toward its target
 TILT_ZOOM = 0.72             # camera scale at full tilt (1.0 = top-down)
 TILT_ACTOR_STAND = 15        # default px a sprite centre rises to stand
+# Blind-spot fog: thin cold gray veiling the AREA outside the forward sight
+# cone under tilt (the cone itself is punched clear). Low alpha so off-cone
+# terrain stays dimly navigable -- the dread is "fogged", not "blind".
+SIGHT_FOG_ALPHA = 96
 # Taller sprites need their centre lifted further so their feet meet the
 # floor (foot-offset in sprite px); falls back to TILT_ACTOR_STAND.
 TILT_LIFT = {"yellow_king": 30, "sheriff_hollow": 22, "watcher": 20}
@@ -798,6 +804,10 @@ class Game(CutsceneMixin):
         # Fold pursuit (Stage 3) -- see _note_fold_pursuit / _tick_fold_pursuit.
         self._fold_pursuer = None
         self._fold_pursuer_grace = 0.0
+        # Tilt look: the world heading the player is walking this frame (set by
+        # update_player, consumed by _update_look to turn the body). Transient,
+        # but reset here so it never leaks across a quit-to-title.
+        self._move_heading = None
         # Stillness + heartbeat
         self.stillness_t = 0.0
         self._delayed_audio = []
@@ -1125,9 +1135,13 @@ class Game(CutsceneMixin):
         # world heading from the player to the point under the cursor
         wx, wy = self.camera.unproject(mx, my)
         aim = math.atan2(wy - self.player.y, wx - self.player.x)
-        self.look.update(aim, rmb_dx, rmb_held)
+        move_heading = getattr(self, "_move_heading", None)
+        self.look.update(move_heading=move_heading, aim_heading=aim,
+                         rmb_dx=rmb_dx, rmb_held=rmb_held)
+        self._move_heading = None      # consumed; movement re-sets it next frame
         self.camera.yaw = self.look.cam_yaw
-        # the gun + sprite face where you aim (head); body governs movement
+        # the gun + sprite face where you aim (the head, clamped to the turn
+        # arc); the body itself is turned by walking (update_player above).
         ax, ay = self.look.aim_vec()
         self.player.facing = (ax, ay)
 
@@ -1171,11 +1185,12 @@ class Game(CutsceneMixin):
             mag = math.hypot(dx, dy) or 1
             dx /= mag; dy /= mag
             if self._tilt_on():
-                # Camera-relative: W = forward (into the screen / facing),
-                # A/D strafe. Facing is owned by _update_look (the mouse), so
-                # don't overwrite it from the movement keys here.
-                (fwx, fwy), (rgx, rgy) = self.look.move_basis()
-                dx, dy = rgx * dx + fwx * (-dy), rgy * dx + fwy * (-dy)
+                # World-relative movement; the body (and the camera that
+                # follows it) turn toward where you WALK -- stash the travel
+                # heading for _update_look to ease the body to. The mouse only
+                # aims the head/gun, so aiming never turns the body (no spin).
+                # (dx,dy) stay world directions; facing is owned by the mouse.
+                self._move_heading = math.atan2(dy, dx)
             else:
                 self.player.facing = (dx, dy)
             self.player.walk_phase += dt * 12
@@ -1590,7 +1605,12 @@ class Game(CutsceneMixin):
             except Exception:
                 pass
         if is_cult:
-            return False        # cultist: swept away, may re-form later
+            # A downed cultist now STAYS as a body for as long as the player is
+            # in the room (override of the old "the cult reclaims its own"
+            # sweep). No visibility spike and no investigate ping -- those only
+            # ever fired for an innocent local. Like a local's body it is not
+            # persisted across scene loads; the scene rebuilds live on re-entry.
+            return True
         # An innocent local. The cult reaction: a loud investigate ping at
         # the body and a hard visibility spike. The body stays down for as
         # long as you're in the room (_make_corpse), but is NOT persisted
@@ -1801,6 +1821,19 @@ class Game(CutsceneMixin):
                 e.on_kill(self)
             except Exception:
                 pass
+        # A downed cultist now leaves a BODY (override of the old vanish-on-
+        # death; the cult no longer reclaims its own). Enemy cultists live in
+        # scene.enemies and get swept on death, so synthesize a corpse NPC at
+        # the spot -- the existing npc-corpse draw path renders it, and it is
+        # NOT persisted across loads (the scene rebuilds live on re-entry).
+        if kind == "cultist" and self.scene is not None:
+            from entities.npc import NPC
+            corpse = NPC(e.x, e.y, "A cultist", "cultist",
+                         movement="idle", solid=False, no_prompt=True)
+            corpse.alive = False
+            corpse._is_corpse = True
+            corpse._kill_processed = True
+            self.scene.npcs.append(corpse)
 
     def _tick_delayed_audio(self, dt):
         """Drain the queued late-play SFX list. An entry is [t, name,
@@ -1837,7 +1870,17 @@ class Game(CutsceneMixin):
             return
         holds_playscript = (self.player is not None
                      and self.player.inventory.has("playscript"))
-        if key == "brimley" or holds_playscript:
+        if key == "brimley":
+            # Daytime town: a LIGHT atmospheric haze, not the oppressive dim.
+            # The "too dark" read was this flat black at 170 (~67%) stacked on
+            # the (now-fixed) void skybox, the blind-spot fog, and the film
+            # grade. Keep the drifting fog + the encroaching vignette for mood,
+            # but drop the flat tint right down so it reads as day.
+            self._draw_haze(70, (40, 40, 50, 70), 14, 24, 0.3, 30)
+            self._draw_vignette()
+        elif holds_playscript:
+            # The playscript's presence is HOSTILE -- the world dims hard
+            # around it. This heavier dim is intentional and unchanged.
             self._draw_haze(170, (40, 40, 50, 80), 14, 24, 0.3, 30)
             self._draw_vignette()
 
@@ -1980,6 +2023,42 @@ class Game(CutsceneMixin):
         clear_r = int(110 + 6 * math.sin(t * 1.4))
         pygame.draw.circle(edge, (0, 0, 0, 0), (psx, psy), clear_r)
         self.screen.blit(edge, (0, 0))
+
+    def _draw_sight_fog(self):
+        """Gray fog over the blind spot. The Phase-4 sight gate already HIDES
+        creatures/items outside the forward cone; this veils the off-cone AREA
+        too, so 'you can't see there' reads as fog rather than just absence. The
+        cone is the same one the gate uses (keyed to look.aim, half-angle
+        SIGHT_HALF out to SIGHT_RANGE) with a clear near-bubble around the
+        player. Tilt only -- at pitch 0 the sight gate is off and the flat
+        shipping view stays untouched."""
+        if not (self._tilt_on() and self.player is not None
+                and self.state == "playing"):
+            return
+        from rendering.sight import (SIGHT_HALF, SIGHT_RANGE, SIGHT_NEAR,
+                                     SIGHT_ANG_FEATHER)
+        fog = pygame.Surface((SCREEN_W, SCREEN_H), pygame.SRCALPHA)
+        fog.fill((58, 60, 66, SIGHT_FOG_ALPHA))         # cold, thin gray
+        aim = self.look.aim
+        # Cone apex = the player's GROUND point (the sight math is ground-plane);
+        # the arc samples the cone's far lip out at SIGHT_RANGE.
+        gx, gy = self.camera.project(self.player.x, self.player.y)
+        half = SIGHT_HALF + SIGHT_ANG_FEATHER
+        pts = [(gx, gy)]
+        steps = 22
+        for i in range(steps + 1):
+            a = aim - half + 2 * half * (i / steps)
+            pts.append(self.camera.project(self.player.x + math.cos(a) * SIGHT_RANGE,
+                                           self.player.y + math.sin(a) * SIGHT_RANGE))
+        # pygame.draw writes the colour's alpha directly, so drawing (…,0)
+        # punches the cone + bubbles fully transparent (a clear window).
+        pygame.draw.polygon(fog, (0, 0, 0, 0), pts)
+        near_r = max(10, int(SIGHT_NEAR * self.camera.scale))
+        pygame.draw.circle(fog, (0, 0, 0, 0), (gx, gy), near_r)
+        # keep the player's own body clear (it's never sight-gated)
+        psx, psy = self._player_screen()
+        pygame.draw.circle(fog, (0, 0, 0, 0), (psx, psy), 26)
+        self.screen.blit(fog, (0, 0))
 
     def _draw_hidden_overlay(self):
         """While player.hidden is set, render a dark vignette
@@ -3636,13 +3715,16 @@ class Game(CutsceneMixin):
     def _skybox_kind(self):
         """The oblique-camera surround for the current scene (CAMERA.md Phase
         5). A scene may pin `skybox_kind` ("overcast"/"void") explicitly;
-        otherwise OUTDOOR_SCENES get the sallow `overcast` sky and everything
-        else (interiors, underground) keeps the near-black `void` so the horror
-        keeps its dark."""
+        otherwise every SURFACE scene gets the sallow daytime `overcast` sky and
+        everything else (interiors, underground) keeps the near-black `void` so
+        the horror keeps its dark. The surface set is `SEAMLESS_WORLD_SCENES`
+        (OUTDOOR_SCENES + Brimley + the surface hidden-folds) -- using
+        OUTDOOR_SCENES alone wrongly handed Brimley and the fold tableaux the
+        near-black void, which is what made daytime Brimley read as night."""
         kind = getattr(self.scene, "skybox_kind", None)
         if kind:
             return kind
-        return "overcast" if self.scene.key in OUTDOOR_SCENES else "void"
+        return "overcast" if self.scene.key in SEAMLESS_WORLD_SCENES else "void"
 
     def _player_screen(self):
         """The player's projected SCREEN position, lifted to the sprite centre
@@ -3715,7 +3797,7 @@ class Game(CutsceneMixin):
             return 255 if f >= 0.99 else int(255 * f)
 
         _tilt = self.camera.pitch > 0.02
-        _tilt_walls = _tilt_solid_decos = None
+        _tilt_walls = _tilt_solid_decos = _tilt_wall_decos = None
         if _tilt:
             # DEBUG oblique view (CAMERA.md Phase 2/5): skybox fills the void,
             # the floor warps to the tilted plane. The upright occluders -- wall
@@ -3728,7 +3810,7 @@ class Game(CutsceneMixin):
             draw_skybox(self.screen, (0, 0, SCREEN_W, SCREEN_H),
                         yaw=self.camera.yaw, kind=self._skybox_kind(),
                         horizon_frac=0.40)
-            _tilt_walls, _tilt_solid_decos = draw_terrain_tilted(
+            _tilt_walls, _tilt_solid_decos, _tilt_wall_decos = draw_terrain_tilted(
                 self.screen, self.scene, self.camera, sight=_sight)
         else:
             self.scene.draw(self.screen, self.cam_x, self.cam_y, self.camera)
@@ -3745,6 +3827,7 @@ class Game(CutsceneMixin):
         _focus = []
         def _emit(depth, fn):
             _entries.append((depth, fn))
+        _tilt_items = self._tilt_on()
         for it in self.scene.items:
             a = _vis_alpha(it["x"], it["y"])
             if a is None:
@@ -3754,9 +3837,28 @@ class Game(CutsceneMixin):
             bob = int(math.sin(t + (it["x"] + it["y"]) * 0.01) * 1)
             color = self._item_color(it["key"])
 
-            def _draw_item(s, sx=sx, sy=sy, bob=bob, color=color):
-                pygame.draw.rect(s, color, (sx - 4, sy - 4 + bob, 8, 8))
-                pygame.draw.rect(s, C_BLACK, (sx - 4, sy - 4 + bob, 8, 8), 1)
+            def _draw_item(s, sx=sx, sy=sy, bob=bob, color=color,
+                           tilt=_tilt_items):
+                if tilt:
+                    # Ground-contact shadow so the pickup reads as sitting ON
+                    # the floor -- a bare icon floats under the oblique camera,
+                    # which is why notes/evidence were easy to miss. The icon
+                    # then hovers just above its shadow with a soft glint to
+                    # catch the eye. (Pitch 0 keeps the legacy bare icon.)
+                    sh = pygame.Surface((16, 8), pygame.SRCALPHA)
+                    pygame.draw.ellipse(sh, (0, 0, 0, 95), sh.get_rect())
+                    s.blit(sh, (sx - 8, sy - 3))
+                    iy = sy - 6 + bob
+                    glow = pygame.Surface((18, 18), pygame.SRCALPHA)
+                    pygame.draw.circle(glow, (color[0], color[1], color[2], 70),
+                                       (9, 9), 7)
+                    s.blit(glow, (sx - 9, iy - 9),
+                           special_flags=pygame.BLEND_RGB_ADD)
+                    pygame.draw.rect(s, color, (sx - 4, iy - 4, 8, 8))
+                    pygame.draw.rect(s, C_BLACK, (sx - 4, iy - 4, 8, 8), 1)
+                else:
+                    pygame.draw.rect(s, color, (sx - 4, sy - 4 + bob, 8, 8))
+                    pygame.draw.rect(s, C_BLACK, (sx - 4, sy - 4 + bob, 8, 8), 1)
             _emit(self.camera.depth(it["x"], it["y"]),
                   lambda a=a, fn=_draw_item: draw_with_alpha(self.screen, a, fn))
         # Pick at most one NPC to "blink" this frame -- their eye dots
@@ -3982,13 +4084,29 @@ class Game(CutsceneMixin):
                                        armor=self.player.inventory.equipped["armor"],
                                        prone=getattr(self.player, "prone", False),
                                        view=pview)
-                # The axe swing: a wood haft + steel head arcing through the
-                # facing hemisphere, with a brief motion smear so the chop
-                # reads. Progress walks 0->1 as melee_swing_t bleeds down.
-                if self.player.melee_swing_t > 0:
-                    prog = 1.0 - (self.player.melee_swing_t / AXE_SWING_DUR)
-                    draw_axe_swing(self.screen, psx, psy,
-                                   self.player.melee_dir, prog)
+                # Held weapon + its use animation. The gun and axe share one
+                # slot (_active_weapon); each gets its OWN art. The gun no
+                # longer borrows the axe arc: it shows a held revolver, and a
+                # muzzle flash + recoil when fired. melee_swing_t drives the
+                # use animation for both (set by the swing / the shot).
+                wpn = self._active_weapon()
+                firing = self.player.melee_swing_t > 0
+                prog = (1.0 - (self.player.melee_swing_t / AXE_SWING_DUR)
+                        if firing else 0.0)
+                if wpn == "pistol":
+                    if firing:
+                        draw_gun_fire(self.screen, psx, psy,
+                                      self.player.melee_dir, prog)
+                    else:
+                        draw_revolver_held(self.screen, psx, psy,
+                                           self.player.facing)
+                elif wpn == "lumber_axe":
+                    if firing:
+                        draw_axe_swing(self.screen, psx, psy,
+                                       self.player.melee_dir, prog)
+                    else:
+                        draw_axe_held(self.screen, psx, psy,
+                                      self.player.facing)
             _emit(self.camera.depth(self.player.x, self.player.y), _draw_player)
 
         # Under tilt, fold the upright occluders -- wall tiles + solid props --
@@ -4021,6 +4139,20 @@ class Game(CutsceneMixin):
                 for ox, oy in _offsets:
                     _emit(self.camera.depth(d.x + ox, d.y + oy),
                           lambda d=d, ox=ox, oy=oy: self._draw_solid_prop(d, ox, oy))
+            # Wall-hung decorations: lift onto the wall face (_WALL_MOUNT_Z) as
+            # camera-facing billboards, depth-sorted at the lifted depth so a
+            # back-wall photo sorts in FRONT of its wall box, not under it. NOT
+            # sight-gated -- they sit ON a wall, and that wall blocks LOS, so
+            # gating would hide every wall decoration behind its own wall. They
+            # are environmental like the walls + furniture (which also draw
+            # regardless of the cone); the gray fog already greys off-cone.
+            from scenes.base import _WALL_MOUNT_Z, draw_wall_deco
+            for d in (_tilt_wall_decos or []):
+                for ox, oy in _offsets:
+                    _emit(self.camera.depth(d.x + ox, d.y + oy, _WALL_MOUNT_Z),
+                          lambda d=d, ox=ox, oy=oy: draw_wall_deco(
+                              self.screen, self.camera, self.scene, d,
+                              _WALL_MOUNT_Z, woff=(ox, oy)))
             _entries.sort(key=lambda e: e[0])
         # Execute the (legacy-ordered at pitch 0, depth-sorted under tilt) list.
         for _depth, _fn in _entries:
@@ -4042,6 +4174,7 @@ class Game(CutsceneMixin):
         self._overlay_dark_used = 0
         self._draw_brimley_haze()
         self._draw_dark()
+        self._draw_sight_fog()
         self._draw_outdoor_vignette()
         self._draw_apex_overlay()
         self._draw_hidden_overlay()
@@ -4148,8 +4281,13 @@ class Game(CutsceneMixin):
                     break
         if target is None:
             return
-        sx = int(target[0] - self.cam_x)
-        sy = int(target[1] - self.cam_y) - 40
+        # Project through the camera so the cue tracks the target under tilt +
+        # yaw (at pitch 0 this is byte-identical to the old `x - cam_x` form).
+        # Lift it above the head: the base 40px gap plus the screen-space rise
+        # the sprite itself gains under tilt (TILT_ACTOR_STAND * sin pitch), so
+        # the [E] clears the risen body instead of sitting on it.
+        sx, sy = self.camera.project(target[0], target[1], 0.0)
+        sy -= 40 + int(TILT_ACTOR_STAND * math.sin(self.camera.pitch))
         t = pygame.time.get_ticks() / 250.0
         yo = int(math.sin(t) * 2)
         txt = self.fonts["sm"].render("[E]", True, C_GOLD)

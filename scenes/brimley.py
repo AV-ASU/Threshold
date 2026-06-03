@@ -775,9 +775,10 @@ def build_brimley():
     # schoolhouse wall beside the door.
     sc.add_decoration(Decoration(62 * TILE + 16, 53 * TILE + 16, "calendar"))
     sc.add_decoration(Decoration(95 * TILE + 16, 55 * TILE + 16, "pickup_truck"))
-    # A body face-down in the river, well south of the bridge -- the
-    # water keeps what it takes.
-    sc.add_decoration(Decoration(33 * TILE + 16, 45 * TILE + 16, "drowned_body"))
+    # (The flat drowned-body decoration that used to float here was removed --
+    # it read as a sprite laid on top of the water. The reworked organic dark
+    # river patches now carry the dread of the channel on their own. It can be
+    # reinstated as a properly submerged form if wanted.)
     # Mrs. Calder's table, laid out in the open by the kid's house: two
     # settings (hers, and his -- set every night), a candle burned down,
     # and his chair knocked over where he got up and never came back.

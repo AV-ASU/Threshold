@@ -714,13 +714,26 @@ def draw_floor(surf, ch, rx, ry, tx, ty):
                              (rx + 8, ry + 12, 14, 8))
     elif ch == "~":
         # A dead, cold river -- murky and scummed over, not clean blue.
-        # Darker depths, slow dim ripples, patches of algae, and only a
-        # rare cold glint instead of bright foam.
+        # Organic DARK PATCHES pool in the deeper middle of the channel
+        # (depth + slow current), under slow dim ripples, algae, and a rare
+        # cold glint instead of bright foam.
         seed = tx * 11 + ty * 23
-        if seed % 3 == 0:                          # darker depth mottle
-            pygame.draw.rect(surf, (17, 28, 30),
-                             (rx + (seed % 22) + 2,
-                              ry + ((seed // 5) % 22) + 2, 9, 6))
+        # Low-frequency field -> large, ORGANIC dark regions (the deep
+        # channel) rather than a per-tile checker, drifting slowly downstream.
+        # The ellipses overrun the tile edge on purpose so patches flow
+        # continuously across neighbouring water tiles.
+        drift = pygame.time.get_ticks() / 5200.0
+        field = (math.sin(tx * 0.55 + drift)
+                 + math.cos(ty * 0.42 - drift * 0.7)
+                 + math.sin((tx + ty) * 0.30 + drift * 0.5))
+        if field > 0.55:
+            depth_c = (12, 22, 24) if field > 1.5 else (18, 29, 31)
+            for k in range(2):
+                ex = rx + (seed * (k + 3) % 14) - 2
+                ey = ry + ((seed // (k + 2)) % 14) - 2
+                ew = 14 + (seed >> k) % 12
+                eh = 9 + (seed >> (k + 1)) % 7
+                pygame.draw.ellipse(surf, depth_c, (ex, ey, ew, eh))
         t = (tx + ty + pygame.time.get_ticks() // 320) % 8
         pygame.draw.line(surf, (40, 54, 52), (rx + t, ry + 9),
                          (rx + t + 7, ry + 9), 1)
@@ -1524,7 +1537,11 @@ def _tilt_warp(flat, camera):
     rotated = pygame.transform.rotate(flat, math.degrees(camera.yaw))
     cp = max(0.05, math.cos(camera.pitch))
     w, h = rotated.get_size()
-    return pygame.transform.smoothscale(
+    # `scale` (nearest) rather than `smoothscale` (bilinear): the floor raster
+    # is a low-detail tile pattern sitting under the tilt + Brimley's haze, so
+    # the smoothing is imperceptible, but smoothscale on this large surface was
+    # the single biggest per-frame cost in the wrapped town (~10x scale's cost).
+    return pygame.transform.scale(
         rotated, (max(1, int(w * camera.scale)),
                   max(1, int(h * camera.scale * cp))))
 
@@ -1652,6 +1669,18 @@ _FLOOR_DECAL_KINDS = frozenset((
     "rug", "bloodstain", "gore", "yellow_sign", "bloody_handprint", "bloody_pile",
 ))
 
+# Wall-mounted decorations. Under tilt these are lifted onto the wall face as
+# camera-facing billboards (and depth-sorted with the walls) instead of lying
+# flat on the floor -- they HANG, they don't sit. _WALL_MOUNT_Z is how far up
+# the wall (walls rise to _TILT_WALL_RISE = 26). Pitch 0 draws them flat as
+# before (Scene.draw).
+_WALL_DECO_KINDS = frozenset((
+    "mirror", "photo", "wrong_photo", "missing_flyer", "polaroid_wall",
+    "banner", "calendar", "clock", "apology_wall",
+    "buck_head", "antler_rack", "mounted_fish", "wrong_taxidermy",
+))
+_WALL_MOUNT_Z = 18
+
 
 def _draw_floor_decal(surf, camera, deco, woff=(0.0, 0.0)):
     """Render a flat decal to a canvas, then warp it onto the floor plane (same
@@ -1677,6 +1706,51 @@ def _draw_floor_decal(surf, camera, deco, woff=(0.0, 0.0)):
     scaled = pygame.transform.smoothscale(rot, (sw, sh))
     sx, sy = camera.project(deco.x + woff[0], deco.y + woff[1], 0)
     surf.blit(scaled, (sx - sw // 2, sy - sh // 2))
+
+
+def _wall_normal(scene, wx, wy):
+    """The inward normal of the wall a decoration hangs on -- the way it FACES,
+    forward off the wall into the room. Rooms are scene-sized, so a wall is the
+    nearest perimeter; face inward from the closest scene edge."""
+    tx, ty = int(wx // TILE), int(wy // TILE)
+    W, H = scene.w, scene.h
+    opts = [(ty, (0, 1)), (H - 1 - ty, (0, -1)),
+            (tx, (1, 0)), (W - 1 - tx, (-1, 0))]
+    opts.sort(key=lambda o: o[0])
+    return opts[0][1]
+
+
+def draw_wall_deco(surf, camera, scene, deco, mount_z, woff=(0.0, 0.0)):
+    """Draw a wall-hung decoration as a card FIXED to the wall plane: it faces
+    forward off the wall and foreshortens / turns as the camera yaws past it --
+    it does NOT billboard (follow the camera). The card lies along the wall's
+    horizontal axis at `mount_z` up the wall; project both ends of that span,
+    then fit + rotate the flat sprite onto the screen span so it reads as part
+    of the wall, edge-on (a sliver) when you look along it."""
+    nx, ny = _wall_normal(scene, deco.x, deco.y)
+    ax, ay = -ny, nx                       # along the wall (perp to the normal)
+    half = 11.0
+    bx, by = deco.x + woff[0], deco.y + woff[1]
+    p1 = camera.project(bx - ax * half, by - ay * half, mount_z)
+    p2 = camera.project(bx + ax * half, by + ay * half, mount_z)
+    cx, cy = (p1[0] + p2[0]) * 0.5, (p1[1] + p2[1]) * 0.5
+    sw_, sh_ = surf.get_size()
+    if cx < -48 or cx > sw_ + 48 or cy < -48 or cy > sh_ + 48:
+        return
+    width = math.hypot(p2[0] - p1[0], p2[1] - p1[1])
+    if width < 3:
+        return                             # edge-on -> a sliver; skip
+    drawfn = getattr(deco, f"_draw_{deco.kind}", deco._draw_unknown)
+    C = 22
+    canvas = pygame.Surface((C * 2, C * 2), pygame.SRCALPHA)
+    drawfn(canvas, C, C)
+    h = int(C * 2 * 0.66)                   # card screen height (upright)
+    card = pygame.transform.scale(canvas, (max(3, int(width)), max(3, h)))
+    ang = math.degrees(math.atan2(-(p2[1] - p1[1]), p2[0] - p1[0]))
+    if abs(ang) > 0.5:
+        card = pygame.transform.rotate(card, ang)
+    surf.blit(card, (int(cx) - card.get_width() // 2,
+                     int(cy) - card.get_height() // 2))
 
 
 def _draw_window_pane(surf, camera, wx, wy, ndx, ndy):
@@ -1806,9 +1880,25 @@ def draw_terrain_tilted(surf, scene, camera, sight=None):
         offsets += [(-world_w, -world_h), (-world_w, world_h),
                     (world_w, -world_h), (world_w, world_h)]
     solid_decos = []
+    sw, sh = surf.get_size()
+    # Cull box for decoration clones. Generous on the BOTTOM so a tall standee
+    # whose ground point sits just off the lower edge still draws (it rises UP
+    # into view under tilt); modest on the other sides. Floor decals lie at the
+    # ground point, so the side/top margins cover them too. This is the big
+    # toroidal-scene win: a wrap_x+wrap_y scene (Brimley) clones every one of
+    # its ~600 decorations 9x, and almost all clones -- plus most base decos --
+    # are nowhere near the view, yet every one used to be drawn every frame.
+    MX, MTOP, MBOT = 120, 110, 240
+    wall_decos = []
     for d in scene.decorations:
         if is_solid_furniture(d.kind) or is_solid_prop(d.kind):
             solid_decos.append(d)
+            continue
+        if d.kind in _WALL_DECO_KINDS:
+            # Hung on the wall, not lying on the floor: returned so the caller
+            # lifts + depth-sorts it with the walls (drawn flat here would put
+            # it on the ground and behind the wall box).
+            wall_decos.append(d)
             continue
         # Phase 4: rot decals are a world change -- gated to line of sight.
         a = 255
@@ -1817,14 +1907,18 @@ def draw_terrain_tilted(surf, scene, camera, sight=None):
             if f <= 0.03:
                 continue
             a = 255 if f >= 0.99 else int(255 * f)
+        floor_decal = d.kind in _FLOOR_DECAL_KINDS
         for woff in offsets:
-            if d.kind in _FLOOR_DECAL_KINDS:
+            psx, psy = camera.project(d.x + woff[0], d.y + woff[1])
+            if not (-MX <= psx <= sw + MX and -MTOP <= psy <= sh + MBOT):
+                continue                         # off-screen clone -> skip
+            if floor_decal:
                 draw_with_alpha(surf, a, lambda s, d=d, woff=woff:
                                 _draw_floor_decal(s, camera, d, woff))
             else:
                 draw_with_alpha(surf, a, lambda s, d=d, woff=woff:
                                 d.draw(s, 0, 0, camera, wox=woff[0], woy=woff[1]))
-    return walls, solid_decos
+    return walls, solid_decos, wall_decos
 
 
 def draw_scene_doors(surf, scene, cam_x, cam_y, x0, y0, x1, y1):

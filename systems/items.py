@@ -13,7 +13,7 @@ The Inventory class is unchanged.
 ITEM_DEFS = {
     # ---- Core items (in circulation) ----
     "pistol":        {"name": "Revolver",
-                       "kind": "key",
+                       "kind": "weapon",
                        "desc": "Your sidearm. Left-click fires it in "
                                "the way you're facing. While the case is "
                                "still shallow a clean shot drops a cultist; "
@@ -110,22 +110,24 @@ class Inventory:
         return 0
 
     def equip(self, key):
+        """Set the active item for its slot. POINTER model: the item STAYS in
+        `items` (you're still carrying it) and `equipped[slot]` just names which
+        carried item is active. This matches `Game._active_weapon`, which reads
+        the weapon slot as a pointer and requires the weapon to still be
+        `has()`-carried -- the old move-out-of-items semantics silently broke
+        that (the gun + axe could never round-trip through the slot)."""
         d = ITEM_DEFS.get(key)
         if not d or d["kind"] not in ("weapon", "armor"):
             return False
-        slot = d["kind"]
-        prev = self.equipped[slot]
-        if prev:
-            self.add(prev, 1)
-        self.equipped[slot] = key
-        self.remove(key, 1)
+        if not self.has(key):
+            return False
+        self.equipped[d["kind"]] = key
         return True
 
     def unequip(self, slot):
-        prev = self.equipped[slot]
-        if prev:
-            self.add(prev, 1)
-            self.equipped[slot] = None
+        # Pointer model: the item was never removed from `items`, so just
+        # clear the pointer.
+        self.equipped[slot] = None
 
     def weapon_atk(self):
         # Weapons do nothing; returns 0 always.
