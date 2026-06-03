@@ -2463,6 +2463,34 @@ def draw_axe_swing(surf, px, py, facing, prog):
                      (int(hx + pdx * bw), int(hy + pdy * bw)), 1)
 
 
+def draw_axe_held(surf, px, py, facing):
+    """The splitting axe carried at rest, pointed where the player faces --
+    drawn whenever the axe is the active weapon and NOT mid-swing, so the
+    equipped weapon always reads (matches draw_revolver_held)."""
+    fx, fy = facing
+    if fx == 0 and fy == 0:
+        fy = 1.0
+    base = math.atan2(fy, fx)
+    ox, oy = px + math.cos(base) * 3, py + math.sin(base) * 3
+    R = 17
+    hx, hy = ox + math.cos(base) * R, oy + math.sin(base) * R
+    # haft (wood): dark edge under a lit core
+    pygame.draw.line(surf, (70, 48, 28), (int(ox), int(oy)), (int(hx), int(hy)), 4)
+    pygame.draw.line(surf, (128, 92, 54), (int(ox), int(oy)), (int(hx), int(hy)), 2)
+    # steel head: a wedge perpendicular at the haft end (resting, smaller than
+    # the swing so it reads as 'carried' not 'striking')
+    pdx, pdy = -math.sin(base), math.cos(base)
+    ddx, ddy = math.cos(base), math.sin(base)
+    bw, bl = 5, 7
+    quad = [(hx + pdx * bw, hy + pdy * bw),
+            (hx - pdx * bw, hy - pdy * bw),
+            (hx + ddx * bl - pdx * (bw - 2), hy + ddy * bl - pdy * (bw - 2)),
+            (hx + ddx * bl + pdx * (bw - 2), hy + ddy * bl + pdy * (bw - 2))]
+    quad = [(int(x), int(y)) for x, y in quad]
+    pygame.draw.polygon(surf, (150, 156, 166), quad)
+    pygame.draw.polygon(surf, (214, 220, 230), quad, 1)
+
+
 # ---------------------------------------------------------------------------
 # Player revolver -- the sidearm, held and fired (NOT the axe arc).
 # ---------------------------------------------------------------------------

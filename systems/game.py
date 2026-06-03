@@ -11,8 +11,9 @@ from constants import (
 )
 from rendering.sprites import (draw_player_sprite, draw_npc_sprite,
                                draw_npc_corpse, draw_infested_overlay,
-                               draw_axe_swing, draw_revolver_held,
-                               draw_gun_fire, draw_king_death,
+                               draw_axe_swing, draw_axe_held,
+                               draw_revolver_held, draw_gun_fire,
+                               draw_king_death,
                                door_mask_surface, reset_king_fx,
                                view_from_facing, KING_UNFOLD,
                                KING_UNFOLD_SCALE)
@@ -4079,9 +4080,13 @@ class Game(CutsceneMixin):
                     else:
                         draw_revolver_held(self.screen, psx, psy,
                                            self.player.facing)
-                elif wpn == "lumber_axe" and firing:
-                    draw_axe_swing(self.screen, psx, psy,
-                                   self.player.melee_dir, prog)
+                elif wpn == "lumber_axe":
+                    if firing:
+                        draw_axe_swing(self.screen, psx, psy,
+                                       self.player.melee_dir, prog)
+                    else:
+                        draw_axe_held(self.screen, psx, psy,
+                                      self.player.facing)
             _emit(self.camera.depth(self.player.x, self.player.y), _draw_player)
 
         # Under tilt, fold the upright occluders -- wall tiles + solid props --
