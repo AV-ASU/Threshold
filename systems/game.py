@@ -131,6 +131,10 @@ TILT_PITCH_DEG = 55
 TILT_EASE = 0.12             # per-frame lerp of pitch toward its target
 TILT_ZOOM = 0.72             # camera scale at full tilt (1.0 = top-down)
 TILT_ACTOR_STAND = 15        # default px a sprite centre rises to stand
+# Blind-spot fog: thin cold gray veiling the AREA outside the forward sight
+# cone under tilt (the cone itself is punched clear). Low alpha so off-cone
+# terrain stays dimly navigable -- the dread is "fogged", not "blind".
+SIGHT_FOG_ALPHA = 96
 # Taller sprites need their centre lifted further so their feet meet the
 # floor (foot-offset in sprite px); falls back to TILT_ACTOR_STAND.
 TILT_LIFT = {"yellow_king": 30, "sheriff_hollow": 22, "watcher": 20}
@@ -2007,6 +2011,42 @@ class Game(CutsceneMixin):
         clear_r = int(110 + 6 * math.sin(t * 1.4))
         pygame.draw.circle(edge, (0, 0, 0, 0), (psx, psy), clear_r)
         self.screen.blit(edge, (0, 0))
+
+    def _draw_sight_fog(self):
+        """Gray fog over the blind spot. The Phase-4 sight gate already HIDES
+        creatures/items outside the forward cone; this veils the off-cone AREA
+        too, so 'you can't see there' reads as fog rather than just absence. The
+        cone is the same one the gate uses (keyed to look.aim, half-angle
+        SIGHT_HALF out to SIGHT_RANGE) with a clear near-bubble around the
+        player. Tilt only -- at pitch 0 the sight gate is off and the flat
+        shipping view stays untouched."""
+        if not (self._tilt_on() and self.player is not None
+                and self.state == "playing"):
+            return
+        from rendering.sight import (SIGHT_HALF, SIGHT_RANGE, SIGHT_NEAR,
+                                     SIGHT_ANG_FEATHER)
+        fog = pygame.Surface((SCREEN_W, SCREEN_H), pygame.SRCALPHA)
+        fog.fill((58, 60, 66, SIGHT_FOG_ALPHA))         # cold, thin gray
+        aim = self.look.aim
+        # Cone apex = the player's GROUND point (the sight math is ground-plane);
+        # the arc samples the cone's far lip out at SIGHT_RANGE.
+        gx, gy = self.camera.project(self.player.x, self.player.y)
+        half = SIGHT_HALF + SIGHT_ANG_FEATHER
+        pts = [(gx, gy)]
+        steps = 22
+        for i in range(steps + 1):
+            a = aim - half + 2 * half * (i / steps)
+            pts.append(self.camera.project(self.player.x + math.cos(a) * SIGHT_RANGE,
+                                           self.player.y + math.sin(a) * SIGHT_RANGE))
+        # pygame.draw writes the colour's alpha directly, so drawing (…,0)
+        # punches the cone + bubbles fully transparent (a clear window).
+        pygame.draw.polygon(fog, (0, 0, 0, 0), pts)
+        near_r = max(10, int(SIGHT_NEAR * self.camera.scale))
+        pygame.draw.circle(fog, (0, 0, 0, 0), (gx, gy), near_r)
+        # keep the player's own body clear (it's never sight-gated)
+        psx, psy = self._player_screen()
+        pygame.draw.circle(fog, (0, 0, 0, 0), (psx, psy), 26)
+        self.screen.blit(fog, (0, 0))
 
     def _draw_hidden_overlay(self):
         """While player.hidden is set, render a dark vignette
@@ -4069,6 +4109,7 @@ class Game(CutsceneMixin):
         self._overlay_dark_used = 0
         self._draw_brimley_haze()
         self._draw_dark()
+        self._draw_sight_fog()
         self._draw_outdoor_vignette()
         self._draw_apex_overlay()
         self._draw_hidden_overlay()
