@@ -3827,6 +3827,7 @@ class Game(CutsceneMixin):
         _focus = []
         def _emit(depth, fn):
             _entries.append((depth, fn))
+        _tilt_items = self._tilt_on()
         for it in self.scene.items:
             a = _vis_alpha(it["x"], it["y"])
             if a is None:
@@ -3836,9 +3837,28 @@ class Game(CutsceneMixin):
             bob = int(math.sin(t + (it["x"] + it["y"]) * 0.01) * 1)
             color = self._item_color(it["key"])
 
-            def _draw_item(s, sx=sx, sy=sy, bob=bob, color=color):
-                pygame.draw.rect(s, color, (sx - 4, sy - 4 + bob, 8, 8))
-                pygame.draw.rect(s, C_BLACK, (sx - 4, sy - 4 + bob, 8, 8), 1)
+            def _draw_item(s, sx=sx, sy=sy, bob=bob, color=color,
+                           tilt=_tilt_items):
+                if tilt:
+                    # Ground-contact shadow so the pickup reads as sitting ON
+                    # the floor -- a bare icon floats under the oblique camera,
+                    # which is why notes/evidence were easy to miss. The icon
+                    # then hovers just above its shadow with a soft glint to
+                    # catch the eye. (Pitch 0 keeps the legacy bare icon.)
+                    sh = pygame.Surface((16, 8), pygame.SRCALPHA)
+                    pygame.draw.ellipse(sh, (0, 0, 0, 95), sh.get_rect())
+                    s.blit(sh, (sx - 8, sy - 3))
+                    iy = sy - 6 + bob
+                    glow = pygame.Surface((18, 18), pygame.SRCALPHA)
+                    pygame.draw.circle(glow, (color[0], color[1], color[2], 70),
+                                       (9, 9), 7)
+                    s.blit(glow, (sx - 9, iy - 9),
+                           special_flags=pygame.BLEND_RGB_ADD)
+                    pygame.draw.rect(s, color, (sx - 4, iy - 4, 8, 8))
+                    pygame.draw.rect(s, C_BLACK, (sx - 4, iy - 4, 8, 8), 1)
+                else:
+                    pygame.draw.rect(s, color, (sx - 4, sy - 4 + bob, 8, 8))
+                    pygame.draw.rect(s, C_BLACK, (sx - 4, sy - 4 + bob, 8, 8), 1)
             _emit(self.camera.depth(it["x"], it["y"]),
                   lambda a=a, fn=_draw_item: draw_with_alpha(self.screen, a, fn))
         # Pick at most one NPC to "blink" this frame -- their eye dots
