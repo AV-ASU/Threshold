@@ -1590,7 +1590,12 @@ class Game(CutsceneMixin):
             except Exception:
                 pass
         if is_cult:
-            return False        # cultist: swept away, may re-form later
+            # A downed cultist now STAYS as a body for as long as the player is
+            # in the room (override of the old "the cult reclaims its own"
+            # sweep). No visibility spike and no investigate ping -- those only
+            # ever fired for an innocent local. Like a local's body it is not
+            # persisted across scene loads; the scene rebuilds live on re-entry.
+            return True
         # An innocent local. The cult reaction: a loud investigate ping at
         # the body and a hard visibility spike. The body stays down for as
         # long as you're in the room (_make_corpse), but is NOT persisted
@@ -1801,6 +1806,19 @@ class Game(CutsceneMixin):
                 e.on_kill(self)
             except Exception:
                 pass
+        # A downed cultist now leaves a BODY (override of the old vanish-on-
+        # death; the cult no longer reclaims its own). Enemy cultists live in
+        # scene.enemies and get swept on death, so synthesize a corpse NPC at
+        # the spot -- the existing npc-corpse draw path renders it, and it is
+        # NOT persisted across loads (the scene rebuilds live on re-entry).
+        if kind == "cultist" and self.scene is not None:
+            from entities.npc import NPC
+            corpse = NPC(e.x, e.y, "A cultist", "cultist",
+                         movement="idle", solid=False, no_prompt=True)
+            corpse.alive = False
+            corpse._is_corpse = True
+            corpse._kill_processed = True
+            self.scene.npcs.append(corpse)
 
     def _tick_delayed_audio(self, dt):
         """Drain the queued late-play SFX list. An entry is [t, name,
