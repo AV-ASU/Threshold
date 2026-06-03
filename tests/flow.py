@@ -149,7 +149,7 @@ def main():
     check("rite_broken" in g._ENDING_SCRIPTS,
           "ending: rite_broken script is authored")
 
-    # --- 4. The Deep Stair fork (Mask + Play together) ---
+    # --- 4. The Deep Stair fork (the keystone: Mask + notes together) ---
     g.load_scene_now("works_deepstair")
     ready(g)
     sc = g.scene
@@ -160,12 +160,14 @@ def main():
     ready(g)                                  # dismiss the fork dialog
     sc.on_interact_fn(g)                      # second press: commit (Seal road)
     check(g.save.flag("deepstair_open"),
-          "deep stair: Mask + Play opens the descent")
+          "deep stair: the keystone opens the descent")
     check(g.save.flag("well_rope_broken"),
           "deep stair: committing snaps the rope (point of no return)")
-    check(not g.player.inventory.has("playscript")
-          and not g.player.inventory.has("sigil_rubbing"),
-          "deep stair: both Mask and Play are spent")
+    # CANON (NARRATIVE §6/§7 rework): the stair opens WITHOUT consuming the
+    # keystone -- you carry it down to spend at the Threshold door.
+    check(g.player.inventory.has("playscript")
+          and g.player.inventory.has("sigil_rubbing"),
+          "deep stair: the keystone is NOT consumed (carried down, not spent)")
 
     # --- 5. The Depths chain loads + steps with no crash ---
     for k in ("depths_antechamber", "depths_procession", "depths_hall",
@@ -198,19 +200,35 @@ def main():
         check(g.save.flag("hive_seen"),
               "hive: speaking to Mara fires the recognition")
 
-    # --- 7. The Threshold seal -> the SEAL ending ---
+    # --- 7. The Threshold seal -> the SEAL ending (consumes the keystone) ---
+    # The keystone carried down from the Deep Stair is spent HERE, at the door
+    # (§7 rework). g still holds both (the stair did not consume them).
     g.load_scene_now("threshold")
     ready(g)
     sc = g.scene
+    check(g.player.inventory.has("playscript")
+          and g.player.inventory.has("sigil_rubbing"),
+          "threshold: the keystone arrives in hand (carried from the stair)")
     g.player.x, g.player.y = sc._lintel_pos
     sc.on_interact_fn(g)
     check(g._ending_active == "seal_threshold",
           "threshold: sealing fires the SEAL ending")
+    check(not g.player.inventory.has("playscript")
+          and not g.player.inventory.has("sigil_rubbing"),
+          "threshold: the seal CONSUMES the keystone at the door")
     seal_text = " ".join(line for line, _ in
                          g._ENDING_SCRIPTS["seal_threshold"])
     check("Nothing leaves Brimley again" in seal_text
           and "Not the hunger" in seal_text and "Not you" in seal_text,
           "threshold: SEAL ending is authored (canonical close present)")
+    # The door seals ONLY to the keystone: empty-handed, it does not fire.
+    gnokey = new_game()
+    gnokey.load_scene_now("threshold")
+    ready(gnokey)
+    gnokey.player.x, gnokey.player.y = gnokey.scene._lintel_pos
+    gnokey.scene.on_interact_fn(gnokey)
+    check(gnokey._ending_active is None,
+          "threshold: without the keystone the door does not seal (no free seal)")
 
     # --- 8. The SPREAD ending: drive out with the Mask ---
     gs = new_game()

@@ -88,7 +88,7 @@ SCENE_BUILDERS = {
     "the_cells":          build_the_cells,          # branch off the Sorting Hall
     "works_scriptorium":  build_works_scriptorium,
     "works_sign":         build_works_sign,         # the Sign (evidence #5)
-    "works_deepstair":    build_works_deepstair,    # Mask+Play gate -> Depths
+    "works_deepstair":    build_works_deepstair,    # keystone gate -> Depths
     # The depths -- five rooms, one-way fall from well_bottom
     "depths_antechamber": build_depths_antechamber,
     "depths_procession":  build_depths_procession,

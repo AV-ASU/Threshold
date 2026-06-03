@@ -1,7 +1,7 @@
 """THE WORKS -- the Basement Level. The cult's underground labour,
 reached ONLY by the rope down the village well. Seven rooms descend
-from the shaft floor to the Deep Stair, which the Mask + Play together
-open onto the Depths:
+from the shaft floor to the Deep Stair, which the keystone (the Pallid
+Mask seated in the cult's notes) opens onto the Depths:
 
   well_bottom        -- the Shaft Floor (rope landing; the way back up)
   well_passage       -- the Drying Racks (first gauntlet)
@@ -9,9 +9,9 @@ open onto the Depths:
   works_sorting      -- the Sorting Hall (shed lives of the claimed)
   works_scriptorium  -- the Scriptorium (the Sign, copied endlessly)
   works_sign         -- the Sign Chamber (lift the Pallid Mask; evidence #5)
-  works_deepstair    -- the Deep Stair (Mask+Play gate down to the Depths)
+  works_deepstair    -- the Deep Stair (the keystone opens it; rope snaps)
 
-The rope breaks the instant you feed the Mask and Play to the Deep Stair
+The rope breaks the instant you press the keystone to the Deep Stair
 -- from then there is no climbing back, only deeper. Cultists labour here; the
 flashlight works (these are DARK_SCENES, not cult-dark) but their gaze
 still finds you, so the gauntlet is run on cover, timing, and the hide
@@ -21,10 +21,12 @@ breaks the chase.
 
 Reworks vs. the old build: the well is now the ONLY mouth down (the
 barn cellar hatch is sealed); nothing is consumed to land here; and the
-way deeper opens only when the Pallid Mask
-(from the Sign Chamber) and the Playscript are fed to the Deep Stair
-TOGETHER -- which spends the Mask, so it can't then be carried out
-(the Spread ending). The fork between Seal and Spread lives at that stair.
+way deeper opens only when the keystone -- the Pallid Mask (Sign Chamber)
+seated in the cult's notes (Scriptorium) -- is pressed to the Deep Stair.
+The stair opens WITHOUT consuming the keystone (§7): you carry it down and
+spend it at the Threshold door to SEAL, or turn back while the rope holds
+and carry it out to SPREAD. The fork between Seal and Spread lives at that
+stair.
 """
 import math
 from constants import TILE
@@ -514,7 +516,7 @@ def build_works_sign():
     return sc
 
 
-# ---- Room 7: the Deep Stair / Mask+Play gate (key: works_deepstair) ----
+# ---- Room 7: the Deep Stair / keystone gate (key: works_deepstair) ----
 
 def build_works_deepstair():
     # An octagonal gate chamber, the Deep Stair sunk in the north face.
@@ -532,10 +534,10 @@ def build_works_deepstair():
     gate_x = 5 * TILE + 16
     gate_y = 2 * TILE + 16
     sc._gate_pos = (gate_x, gate_y)
-    sc.add_interactable(gate_x, gate_y, 40)   # [E] cue: the Deep Stair (Mask + Play gate)
+    sc.add_interactable(gate_x, gate_y, 40)   # [E] cue: the Deep Stair (keystone gate)
     sc.add_decoration(Decoration(3 * TILE + 16, 2 * TILE + 6, "candle"))
     sc.add_decoration(Decoration(7 * TILE + 16, 6 * TILE + 16, "bloodstain"))
-    # Cobweb grime in the beveled corners by the playscript-gate.
+    # Cobweb grime in the beveled corners by the keystone gate.
     sc.add_decoration(Decoration(2 * TILE + 6, 1 * TILE + 6, "cobweb",
                                  ang=0.0))
     sc.add_decoration(Decoration(8 * TILE + 26, 1 * TILE + 6, "cobweb",
@@ -567,43 +569,48 @@ def build_works_deepstair():
                                  "slot below -- a folded book's size -- "
                                  "stays empty.")
             else:
-                game.show_notice("The Play fits the slot. But the socket "
+                game.show_notice("Their notes fit the slot. But the socket "
                                  "above -- the shape of a face -- stays "
                                  "empty.")
             return
         # Both in hand: lay out the fork once, commit on the next press.
-        # Turning back keeps the Mask -- that's the Spread road (carry His
-        # face out the rope). Feeding it here spends it -- the Seal road.
+        # Turning back keeps the keystone for the rope -- the Spread road
+        # (carry His face out). Pressing it here OPENS the stair but does
+        # NOT consume it (§7): you carry the keystone down and spend it at
+        # the Threshold door -- the Seal road.
         if not game.save.flag("deepstair_fork_seen"):
             game.save.set_flag("deepstair_fork_seen", True)
             game.audio.play("low_pulse", 0.5)
             game.dialog.show([
-                "[c=dim](His face fits the socket. The Play fits the slot. "
-                "Both at once, and the stair opens.)[/c]",
+                "[c=dim](His face fits the socket; their notes fit the slot "
+                "below. The keystone, whole. Press it to the stone and the "
+                "stair will open.)[/c]",
                 "You have enough. The register, the names, the Preacher, the "
-                "girl her father sent you for -- and His face in your hands.",
+                "girl her father sent you for -- and the keystone in your "
+                "hands.",
                 "The town belongs to Him; that is why not one of them can "
                 "leave. But you were never claimed. His Sign, carried out by "
                 "the one soul He never took -- the fold opens only for that. "
                 "Climb out while the rope holds, and let the world learn His "
                 "name.",
-                "[s=slow]Or you give them both to the stone and go down. Past "
-                "her. To the thing all of this kneels to.[/s]",
-                "[c=dim](Press again to feed it the Mask and the Play -- or "
-                "turn back, while the rope still holds.)[/c]",
+                "[s=slow]Or you carry the keystone down, past her, to the "
+                "thing all of this kneels to -- and give it to the door.[/s]",
+                "[c=dim](Press again to open the stair and carry the keystone "
+                "down -- or turn back, while the rope still holds.)[/c]",
             ], speaker="", voice="blip_soft", portrait="narrator")
             return
-        # Commit -- spend BOTH. The Mask is gone; you cannot carry it out
-        # now. Point of no return: the rope far above snaps.
-        inv.remove("playscript", 1)
-        inv.remove("sigil_rubbing", 1)
+        # Commit -- press the keystone to the stone. The stair OPENS to His
+        # own authority but the keystone is NOT spent here (§7 rework): you
+        # keep the Mask and the notes and carry them down to the Threshold
+        # door. Point of no return: the rope far above snaps.
         game.save.set_flag("deepstair_open", True)
         game.save.set_flag("well_rope_broken", True)
         game.audio.force_silence()
         game.audio.play("low_pulse", 0.95)
-        game.show_notice("The stone takes the Mask and the Play together. "
-                         "The stair grinds open -- and far above, the rope "
-                         "snaps. Only down, now.", duration=4.5)
+        game.show_notice("You press the keystone to the stone. It knows its "
+                         "own -- the stair grinds open, and far above, the "
+                         "rope snaps. You lift the keystone away again and go "
+                         "down. Only down, now.", duration=4.5)
         game.begin_transition("depths_antechamber", "from_above")
     sc.on_interact_fn = _interact
 

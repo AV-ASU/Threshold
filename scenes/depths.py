@@ -524,10 +524,11 @@ def build_threshold():
     sc = Scene("threshold", floor, objects, music="void")
     sc.set_spawn("default",   5, 1)
     sc.set_spawn("from_dark", 5, 1)
-    # Doorframe at the centre. Pressing E at it seals the door
-    # (seal_threshold ending) -- no item gate. The Mask and the Play were
-    # already spent at the Deep Stair to open the way down here, so a
-    # player who descended can always finish; nothing to soft-lock on.
+    # Doorframe at the centre. Pressing E presses the KEYSTONE -- the Pallid
+    # Mask seated in the cult's notes -- into the door and seals it (the
+    # seal_threshold ending), CONSUMING both (§7 rework). The keystone was
+    # carried down (the Deep Stair opened WITHOUT spending it), so a player
+    # who descended always holds it here; nothing to soft-lock on.
     lintel_x, lintel_y = 5 * TILE + 16, 5 * TILE + 16
     sc._lintel_pos = (lintel_x, lintel_y)
     sc.add_interactable(lintel_x, lintel_y, 40)   # [E] cue: seal the Threshold (END IT)
@@ -558,12 +559,25 @@ def build_threshold():
         px, py = game.player.x, game.player.y
         if abs(px - lintel_x) > 40 or abs(py - lintel_y) > 40:
             return
+        inv = game.player.inventory
+        # The door seals only to the keystone -- the Mask seated in the
+        # cult's notes -- carried down from the Deep Stair (§6/§7). Spend
+        # both at the frame. (The descent guarantees you hold it; the guard
+        # is belt-and-suspenders against a soft-lock.)
+        if not (inv.has("sigil_rubbing") and inv.has("playscript")):
+            game.show_notice("The frame is cold and blank. You have nothing "
+                             "to give it.")
+            return
         game.audio.force_silence()
         game.audio.play("arg_chime", 0.7)
+        inv.remove("sigil_rubbing", 1)
+        inv.remove("playscript", 1)
         game.dialog.show([
-            "[c=dim](You set both hands to the cold frame. You spent His "
-            "face and His Play to come this far. There is nothing left to "
-            "give it but the rest of you.)[/c]",
+            "[c=dim](You set both hands to the cold frame. His face seated in "
+            "their notes -- the keystone you carried all this way. You press "
+            "it into the door.)[/c]",
+            "[c=dim](The frame takes it. Nothing of His is left in your hands "
+            "now -- nothing to give it but the rest of you.)[/c]",
             "[s=slow][c=dim]...the smoke stops.[/c][/s]",
         ], speaker="", voice="blip_soft", portrait="narrator")
         _evidence(game, "the_seal", "It is done.")
