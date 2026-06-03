@@ -1868,7 +1868,17 @@ class Game(CutsceneMixin):
             return
         holds_playscript = (self.player is not None
                      and self.player.inventory.has("playscript"))
-        if key == "brimley" or holds_playscript:
+        if key == "brimley":
+            # Daytime town: a LIGHT atmospheric haze, not the oppressive dim.
+            # The "too dark" read was this flat black at 170 (~67%) stacked on
+            # the (now-fixed) void skybox, the blind-spot fog, and the film
+            # grade. Keep the drifting fog + the encroaching vignette for mood,
+            # but drop the flat tint right down so it reads as day.
+            self._draw_haze(70, (40, 40, 50, 70), 14, 24, 0.3, 30)
+            self._draw_vignette()
+        elif holds_playscript:
+            # The playscript's presence is HOSTILE -- the world dims hard
+            # around it. This heavier dim is intentional and unchanged.
             self._draw_haze(170, (40, 40, 50, 80), 14, 24, 0.3, 30)
             self._draw_vignette()
 
@@ -3703,13 +3713,16 @@ class Game(CutsceneMixin):
     def _skybox_kind(self):
         """The oblique-camera surround for the current scene (CAMERA.md Phase
         5). A scene may pin `skybox_kind` ("overcast"/"void") explicitly;
-        otherwise OUTDOOR_SCENES get the sallow `overcast` sky and everything
-        else (interiors, underground) keeps the near-black `void` so the horror
-        keeps its dark."""
+        otherwise every SURFACE scene gets the sallow daytime `overcast` sky and
+        everything else (interiors, underground) keeps the near-black `void` so
+        the horror keeps its dark. The surface set is `SEAMLESS_WORLD_SCENES`
+        (OUTDOOR_SCENES + Brimley + the surface hidden-folds) -- using
+        OUTDOOR_SCENES alone wrongly handed Brimley and the fold tableaux the
+        near-black void, which is what made daytime Brimley read as night."""
         kind = getattr(self.scene, "skybox_kind", None)
         if kind:
             return kind
-        return "overcast" if self.scene.key in OUTDOOR_SCENES else "void"
+        return "overcast" if self.scene.key in SEAMLESS_WORLD_SCENES else "void"
 
     def _player_screen(self):
         """The player's projected SCREEN position, lifted to the sprite centre
