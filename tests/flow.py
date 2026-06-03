@@ -94,6 +94,37 @@ def main():
     check(g.save.flag("well_rope_tied"), "well: rope ties on first descent")
     check(not g.player.inventory.has("rope"), "well: rope consumed into the rig")
 
+    # --- 1b. The Ledger fires from the Lodge FRONT DESK, not the cellar ---
+    # CANON (NARRATIVE §4, §5): one register, on the front desk; you sign on
+    # arrival and the evidence lands when you RE-READ it. The old cellar copy
+    # behind a loose panel is cut.
+    gl = new_game()
+    gl.load_scene_now("house")
+    ready(gl)
+    gl.player.x, gl.player.y = gl.scene._frontdesk_pos
+    gl.scene.on_interact_fn(gl)                      # first press: sign
+    check(gl.save.flag("register_signed"),
+          "ledger: first press signs the front-desk register")
+    check(not has_evidence(gl, "the_ledger"),
+          "ledger: signing alone does not log the evidence")
+    ready(gl)
+    gl.scene.on_interact_fn(gl)                      # re-read: the evidence
+    check(has_evidence(gl, "the_ledger"),
+          "ledger: re-reading the front-desk register fires the_ledger")
+    # The cellar no longer carries the Ledger.
+    gcellar = new_game()
+    gcellar.load_scene_now("basement")
+    ready(gcellar)
+    check(not hasattr(gcellar.scene, "_wall_panel_pos"),
+          "ledger: the cellar copy is cut (no loose wall panel)")
+    import inspect as _insp_l
+    from scenes import house as _house_mod
+    check("the_ledger" not in _insp_l.getsource(_house_mod.basement_interact),
+          "ledger: basement_interact no longer logs the_ledger")
+    from scenes.dialogue import clerk_dialogue as _clerk_src_fn
+    check("cellar" not in _insp_l.getsource(_clerk_src_fn).lower(),
+          "ledger: Sable no longer points at a cellar register")
+
     # --- 2. The Playscript (Scriptorium) ---
     fire(g, "works_scriptorium", "_desk_pos")
     check(g.player.inventory.has("playscript"),
@@ -221,10 +252,22 @@ def main():
                 if nn.name == "the Tisdale boy"), None)   # renamed in the merge
     check(kid is not None, "kid: the Kid is present in his house")
     if kid:
+        _kid_lines = []
+        gk.dialog.show = (lambda real: (lambda p, **k: (
+            _kid_lines.extend(p if isinstance(p, list) else [p]),
+            real(p, **k))[1]))(gk.dialog.show)
         kid.dialogue_fn(gk, kid)
         check(gk.save.flag("kid_witnessed")
               and not gk.player.inventory.has("polaroid"),
               "kid: the witness beat fires and grants no inventory item")
+        # CANON (NARRATIVE §2): the witness is the clue to DESCEND THE WELL --
+        # Mara AND the others went down it in the procession. The account must
+        # point down the well, not into the corn (the old wrong reading).
+        _kid_text = " ".join(_kid_lines).lower()
+        check("well" in _kid_text and "down" in _kid_text,
+              "kid: the witness points down the well (the clue to descend)")
+        check("corn" not in _kid_text,
+              "kid: the witness no longer sends you into the corn")
 
     # --- 11. The flashlight: found, toggles, double-edged in the dark ---
     gf = new_game()
@@ -437,7 +480,8 @@ def main():
     # --- 17. The principal locals are named (NARRATIVE §2/§8) ---
     # A small town knows its people by name. Each principal surfaces a
     # proper-name speaker label, not a role-tag. (The Clerk, Mr. Sable, is
-    # a newcomer who finally introduces himself.)
+    # the most-attuned LOCAL, NARRATIVE §2 -- not a newcomer; he introduces
+    # himself first thing all the same.)
     from scenes.dialogue import (sheriff_dialogue, preacher_dialogue,
                                  hettie_dialogue, clerk_dialogue)
 
@@ -454,6 +498,18 @@ def main():
     for expected, fn in roster:
         check(first_speaker(fn) == expected,
               f"naming: a principal local speaks as '{expected}' (not a role-tag)")
+
+    # --- 17b. Sable is the most-attuned LOCAL (NARRATIVE §2) -------------
+    # His menace is compulsion, not conspiracy. Lock the framing: the
+    # characterization must not tag him a newcomer/recruiter or have him
+    # scheme, and it must name him a local.
+    import inspect as _insp_s
+    _sable_src = _insp_s.getsource(clerk_dialogue).lower()
+    check("local" in _sable_src,
+          "sable: characterized as a local (most-attuned), not a newcomer")
+    check(not any(w in _sable_src for w in
+                  ("newcomer", "recruiter", "recruit")),
+          "sable: never tagged newcomer/recruiter (compulsion, not conspiracy)")
 
     # --- 18. effigy_grove is a maker-less tableau (§1b/§8) ---------------
     # Individual cursing is redundant -- the closing rite claimed the town at

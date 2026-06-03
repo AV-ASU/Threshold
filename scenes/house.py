@@ -363,6 +363,16 @@ def build_house():
     sc.add_decoration(Decoration(15 * TILE + 16, 7 * TILE + 16, "small_chair"))
     sc.add_decoration(Decoration(8 * TILE + 16, 9 * TILE + 16, "phantom_mark"))
 
+    # The Lodge front desk -- the reception counter where Sable has every
+    # guest sign in. The guest register (the Ledger, evidence #3) sits open
+    # on it; you sign on arrival, and re-reading it later is the evidence
+    # (house_interact). A reception nook below the wall of the vanished, so
+    # the names you sign under are the names that never checked out.
+    sc._frontdesk_pos = (8 * TILE + 16, 2 * TILE + 16)
+    sc.add_furniture("table", [(8, 2), (9, 2)], w=58, h=40)
+    sc.add_decoration(Decoration(9 * TILE + 8, 2 * TILE + 4, "candle"))
+    sc.add_interactable(sc._frontdesk_pos[0], sc._frontdesk_pos[1], 44)
+
     # Northern-MN lodge decor. Wall mounts (no collision) along the
     # east + west walls; an oil lamp on the kitchen counter; cobwebs in
     # the high corners; firewood and an antler coat-rack on the floor
@@ -446,11 +456,45 @@ def house_on_enter(game, scene):
 
 
 def house_interact(game):
-    """Living-room interact handler. The night key-on-hook
-    interaction is gone (the woodshed key lives in the cellar
-    now). Function preserved as a stub so future on-interact
-    needs (sleeping-Clerk hint, etc.) have a place to land."""
-    return
+    """Living-room interact handler. The Lodge FRONT DESK (E): the guest
+    register -- the Ledger, evidence #3 (NARRATIVE §4). One register, in
+    plain sight on the desk. First press SIGNS it (the light arrival beat);
+    re-reading it is where the evidence lands -- the pattern of guests who
+    check in and never out, your own wet name already among them.
+
+    (The night key-on-hook interaction is gone; the woodshed key lives in
+    the cellar.)"""
+    sc = game.scene
+    px, py = game.player.x, game.player.y
+    dx, dy = getattr(sc, "_frontdesk_pos", (None, None))
+    if dx is None or abs(px - dx) > 48 or abs(py - dy) > 48:
+        return
+    if not game.save.flag("register_signed"):
+        game.save.set_flag("register_signed", True)
+        game.dialog.show([
+            "[c=dim](The guest register, open on the front desk. Sable lays "
+            "a pen across the page without being asked.)[/c]",
+            "You sign your name under tonight's date. He turns the book back "
+            "and never reads it.",
+            "[c=dim]\"There. Now you're on the books.\"[/c]",
+        ], speaker="", voice="blip_soft", portrait="narrator")
+        return
+    if game.save.flag("evidence_the_ledger"):
+        game.show_notice("The register, open on the desk. You've read "
+                         "enough.")
+        return
+    game.audio.play("pickup_rare", 0.7)
+    game.audio.play("low_pulse", 0.45)
+    _evidence(game, "the_ledger", [
+        "You turn back through the register. Guests going back years, all in "
+        "the Clerk's hand. A few check-outs -- every one of them old. Then "
+        "none.",
+        "No one has checked out of the Arcadia in a long, long time.",
+        "Your own name sits at the bottom, tonight's ink still wet. No "
+        "check-out beside it -- the same blank as every name above.",
+        "You came to ask your questions and drive home by morning. So did "
+        "all of them.",
+    ])
 
 
 # ---- the Clerk's Room (key: 'son_room') ----
@@ -558,10 +602,11 @@ def clerk_room_interact(game):
 def build_basement():
     """The Arcadia Lodge's cellar -- the Clerk's domain. Stone walls,
     packed dirt floor, a single hanging bulb. A photograph stands on a
-    shelf; the workbench holds the tab-settling bottle, the woodshed key,
-    charcoal. Behind a loose panel in the stone the Clerk keeps the real
-    guest register -- the Ledger (evidence #3): everyone who checked into
-    the Arcadia and never checked out.
+    shelf (the Arcadia's people, never aging, never leaving -- it echoes
+    the front-desk Ledger); the workbench chest holds the woodshed key,
+    and the guttering candles pay off the cult-devotion beat once you've
+    seen the dark below. (The Ledger, evidence #3, lives on the front
+    desk now -- the old cellar copy behind a loose panel is cut.)
 
     Single entry/exit via the kitchen cellar hatch. A previous build
     had a south-wall bulkhead leading to the back yard; removed
@@ -602,16 +647,10 @@ def build_basement():
         sc.add_decoration(Decoration(tx * TILE + 16, ty * TILE + 6,
                                      "photo"))
 
-    # Workbench in the SW corner (holds the woodshed key).
-    # The Clerk's real guest register -- the Ledger (evidence #3) -- is
-    # hidden behind a loose panel in the west wall; the candle beside it
-    # draws the eye. Found via the wall-panel interact (basement_interact).
+    # Workbench in the SW corner (holds the woodshed key). The chest gets
+    # its own chest prompt via basement_interact.
     sc._workbench_pos = (2 * TILE + 16, 7 * TILE + 16)
-    sc._wall_panel_pos = (1 * TILE + 16, 4 * TILE + 16)
     sc._chest_pos = (sc._workbench_pos[0], sc._workbench_pos[1] - 8)
-    # [E] cue for the hidden wall-panel Ledger (the chest gets its own
-    # chest prompt) so the player knows the panel is interactable.
-    sc.add_interactable(sc._wall_panel_pos[0], sc._wall_panel_pos[1], 40)
     # Hide spots: behind the firewood stack (SE) and behind a second
     # woodpile by the south wall. (Neither sits on the workbench chest --
     # which is its own E-interaction now -- nor on the bloodstain, which
@@ -661,8 +700,9 @@ def build_basement():
 
 def basement_on_enter(game, scene):
     """Drop the woodshed key on the workbench (idempotent via save flag).
-    The Ledger (evidence #3) is gated behind the wall_panel interaction in
-    basement_interact."""
+    (The Ledger, evidence #3, moved to the front desk -- nothing evidential
+    is hidden down here now; the cellar is the woodshed-key gate plus the
+    candle-devotion atmosphere beat.)"""
     game._provoke_cult(0.10)
     # The woodshed key lives in the workbench chest -- taken by opening it
     # (E) in basement_interact, not auto-grabbed off the floor. Sync the
@@ -689,39 +729,13 @@ def basement_on_enter(game, scene):
 
 
 def basement_interact(game):
-    """E at the loose wall panel: the Clerk's hidden guest register --
-    the Ledger, evidence #3. One-shot via the evidence flag. The closing
-    beat lands the pattern on the PI: you signed in tonight like every
-    guest before you, and like them there's no check-out beside your name
-    (prospective dread -- you won't be leaving either). No time has passed;
-    the opening's cut to the room is the same night."""
+    """E at the workbench chest: the woodshed key (gate to the axe + rope
+    in the shed). The Ledger evidence moved upstairs to the front desk;
+    nothing evidential is hidden down here now."""
     sc = game.scene
-    px, py = game.player.x, game.player.y
     # The workbench chest -- holds the woodshed key (gate to the axe + rope
     # in the shed). chest_interact does its own range check and flips the
     # chest's open visual; the `woodshed_key_taken` flag keeps it emptied
     # across re-entries.
     cx, cy = sc._chest_pos
-    if chest_interact(game, sc, cx, cy, "woodshed_key_taken",
-                      ["woodshed_key"]):
-        return
-    wpx, wpy = sc._wall_panel_pos
-    if abs(px - wpx) > 40 or abs(py - wpy) > 40:
-        return
-    if game.save.flag("evidence_the_ledger"):
-        game.show_notice("The ledger, back behind its panel. You've read "
-                         "enough.")
-        return
-    game.audio.play("pickup_rare", 0.7)
-    game.audio.play("low_pulse", 0.45)
-    _evidence(game, "the_ledger", [
-        "A panel in the stone swings loose. Behind it, a ledger -- not the "
-        "one at the front desk. The real one.",
-        "Guests going back years, all in the Clerk's hand. A few check-outs, "
-        "every one of them old. Then none. No one has left the Arcadia in a "
-        "long, long time.",
-        "Your own name sits near the bottom, tonight's ink still wet. No "
-        "check-out beside it -- the same blank as every name above it.",
-        "You came to ask your questions and drive home by morning. So did "
-        "all of them.",
-    ])
+    chest_interact(game, sc, cx, cy, "woodshed_key_taken", ["woodshed_key"])

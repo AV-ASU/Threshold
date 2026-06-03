@@ -695,20 +695,28 @@ def build_brimley():
         "Stopped marking the calendar. Not the days -- where would I be counting toward?",
         "[c=dim]You're new. We don't get new. Nobody gets in. Nobody gets--[/c]",
     ], voice="blip_low", movement="homebody", radius=34)
-    # Mrs. Calder is by the east-edge road -- the road her husband
-    # walked out on. She watches the road. She does not wave.
+    # Mrs. Calder is by the east-edge road. She sets a place at supper
+    # for a guest she can't name -- a certainty she can't explain that
+    # someone is coming. No vanished husband (that read as a perceptible
+    # individual loss, forbidden by §1b); just the compulsion she doesn't
+    # question. She watches the road. She does not wave.
     _resident(96, 8, "Mrs. Calder", "townswoman", [
-        "My husband walked to the highway. Tuesday. To flag down help.",
-        "He'll be back. I set his plate. Every night. Every night.",
-        "[c=dim]Some nights I hear the door. I don't get up. Not anymore.[/c]",
+        "I set an extra place at supper. Have done for a while now.",
+        "Couldn't tell you who for. Someone's coming -- I just know it, the "
+        "way you know your own name. So I lay the plate.",
+        "[c=dim]Some nights I hear the door and near get up to answer. Then I "
+        "remember I don't know who I'd be letting in.[/c]",
     ], movement="idle")
-    # Royce -- by the river bridge, where he keeps trying to drive
-    # out and being handed back. His truck is up the road; he comes
-    # to the bridge to look at the water, then goes again.
+    # Royce -- by the river bridge. He TRIED to drive out, for weeks, and
+    # the corn handed him back every time; the futility broke him and he's
+    # STOPPED. He still clings to the one fact he can't square: you got IN.
     _resident(29, 24, "Royce", "royce", [
-        "Drove the river road to the county line. Two hours out. Came right back into Brimley.",
-        "Tried it on foot. Same. The corn just hands you back where you started.",
-        "[c=dim]You came IN. How did you come IN? ...Tell me how you came in.[/c]",
+        "I used to drive it. River road, county line, every road out of "
+        "Brimley. Weeks of it. The corn handed me back every time.",
+        "[c=dim]I don't go anymore. There's no out to drive to. I worked "
+        "that out the hard way, so you don't have to.[/c]",
+        "[c=dim]But you came IN. How did you come IN? ...Tell me how you came "
+        "in.[/c]",
     ])
     # The Tisdale boy lives INSIDE the kid's house (the `kid_house`
     # scene, kid_dialogue). He used to also stand here on the front step,
@@ -751,7 +759,7 @@ def build_brimley():
     # and then stopped -- the season kept turning, the marking didn't (the
     # fold is spatial, NARRATIVE 1b); the truck that drove for the county line and
     # was handed back, nosed dead into the east tree line; and Mrs.
-    # Calder's plate, set for a husband who walked out to the highway.
+    # Calder's plate, set at supper for a guest she can't name.
     sc.add_decoration(Decoration(58 * TILE + 16, 62 * TILE + 16, "payphone"))
     sc._payphone_pos = (58 * TILE + 16, 62 * TILE + 16)
     # The well -- only mouth into the Works. Sits in the eastern
