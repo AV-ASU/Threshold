@@ -4148,8 +4148,13 @@ class Game(CutsceneMixin):
                     break
         if target is None:
             return
-        sx = int(target[0] - self.cam_x)
-        sy = int(target[1] - self.cam_y) - 40
+        # Project through the camera so the cue tracks the target under tilt +
+        # yaw (at pitch 0 this is byte-identical to the old `x - cam_x` form).
+        # Lift it above the head: the base 40px gap plus the screen-space rise
+        # the sprite itself gains under tilt (TILT_ACTOR_STAND * sin pitch), so
+        # the [E] clears the risen body instead of sitting on it.
+        sx, sy = self.camera.project(target[0], target[1], 0.0)
+        sy -= 40 + int(TILT_ACTOR_STAND * math.sin(self.camera.pitch))
         t = pygame.time.get_ticks() / 250.0
         yo = int(math.sin(t) * 2)
         txt = self.fonts["sm"].render("[E]", True, C_GOLD)
