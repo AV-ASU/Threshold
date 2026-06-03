@@ -138,9 +138,13 @@ it renders the procedural sprites to a labelled PNG strip.
   `_BULLET_PHANTOM`). A local kill spikes `visibility`
   (`LOCAL_KILL_VIS_SPIKE`, capped just under the King), pings the cult to
   investigate the body, and leaves a corpse **for as long as the player is
-  in that room** (`_kill_npc` returns keep → `_make_corpse`; cultists are
-  still swept/removed). The body is **not** persisted across scene loads
-  (no `dead_locals` ledger) — the scene rebuilds the local live on re-entry.
+  in that room** (`_kill_npc` returns keep → `_make_corpse`). **Cultists now
+  leave bodies too** (override of the old "the cult reclaims its own" sweep):
+  NPC cultists keep via `_kill_npc` (no visibility spike — that's local-only),
+  and **enemy** cultists (well/depths, `kind="cultist"`) synthesize a corpse
+  NPC in `_kill_enemy` so the npc-corpse draw path renders them. The body is
+  **not** persisted across scene loads (no `dead_locals` ledger) — the scene
+  rebuilds live on re-entry.
 - **Infestation** (`_apply_infestation`, called from `load_scene_now`):
   the world rots as a pure, monotonic function of evidence —
   `_infest_stage()` = `min(3, evidence)`, **front-loaded** so the surface
