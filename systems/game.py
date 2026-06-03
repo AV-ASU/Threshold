@@ -479,7 +479,6 @@ class Game(CutsceneMixin):
         # them); the camera is re-synced to them each frame in draw_world.
         self.camera = Camera()
         self._cam_pitch_target = 0.0      # DEBUG F3 tilt target (radians)
-        self._tilt_front_walls = None     # walls held back to draw over actors
         self.look = LookController()       # mouse-look heading model (tilt mode)
         self._rmb_last_x = None            # right-drag scene-rotate anchor
         self.title_choice = 0
@@ -754,7 +753,6 @@ class Game(CutsceneMixin):
         self._cam_pitch_target = 0.0
         self.camera.pitch = 0.0
         self.camera.yaw = 0.0
-        self._tilt_front_walls = None
         self.look = LookController()
         self._rmb_last_x = None
         # Visibility meter + the King in Yellow
@@ -1848,7 +1846,7 @@ class Game(CutsceneMixin):
         else:
             level = 3
         surf = self._vignette_surf[level]
-        psx, psy = self.camera.project(self.player.x, self.player.y)
+        psx, psy = self._player_screen()
         size = surf.get_width()
         self.screen.blit(surf, (psx - size // 2, psy - size // 2))
 
@@ -1892,7 +1890,7 @@ class Game(CutsceneMixin):
         # rebuilding the gradient every frame.
         level = 1 if self.visibility > 0.55 else 0
         surf = self._outdoor_vignette_surf[level]
-        psx, psy = self.camera.project(self.player.x, self.player.y)
+        psx, psy = self._player_screen()
         size = surf.get_width()
         self.screen.blit(surf, (psx - size // 2, psy - size // 2))
 
@@ -1958,7 +1956,7 @@ class Game(CutsceneMixin):
         edge_a = self._claim_dark(int(180 * pulse))
         edge = pygame.Surface((SCREEN_W, SCREEN_H), pygame.SRCALPHA)
         edge.fill((0, 0, 0, edge_a))
-        psx, psy = self.camera.project(self.player.x, self.player.y)
+        psx, psy = self._player_screen()
         clear_r = int(110 + 6 * math.sin(t * 1.4))
         pygame.draw.circle(edge, (0, 0, 0, 0), (psx, psy), clear_r)
         self.screen.blit(edge, (0, 0))
@@ -1987,7 +1985,7 @@ class Game(CutsceneMixin):
         # hide spots are still meaningful cover.
         if self.scene.key in SAFE_SCENES:
             return
-        psx, psy = self.camera.project(self.player.x, self.player.y)
+        psx, psy = self._player_screen()
         # 60% wash (153 alpha) routed through the darkness cap so
         # hide stacked with apex/dip never blots the whole screen.
         wash_a = self._claim_dark(153)
@@ -2027,7 +2025,7 @@ class Game(CutsceneMixin):
         if self.scene.key not in DARK_SCENES:
             return
         from scenes.base import _light_pool
-        psx, psy = self.camera.project(self.player.x, self.player.y)
+        psx, psy = self._player_screen()
         lit = self._flashlight_lit()
         # Build the beam cone geometry once (apex -> left -> tip -> right).
         cone = None
@@ -3610,6 +3608,44 @@ class Game(CutsceneMixin):
         self._start_play()
 
     # ---- Draw ----
+    def _skybox_kind(self):
+        """The oblique-camera surround for the current scene (CAMERA.md Phase
+        5). A scene may pin `skybox_kind` ("overcast"/"void") explicitly;
+        otherwise OUTDOOR_SCENES get the sallow `overcast` sky and everything
+        else (interiors, underground) keeps the near-black `void` so the horror
+        keeps its dark."""
+        kind = getattr(self.scene, "skybox_kind", None)
+        if kind:
+            return kind
+        return "overcast" if self.scene.key in OUTDOOR_SCENES else "void"
+
+    def _player_screen(self):
+        """The player's projected SCREEN position, lifted to the sprite centre
+        under tilt (sin pitch) so the player-centred overlays -- vignettes,
+        flashlight cone apex, apex/hide discs -- align with the drawn body, not
+        the ground point ~15px below it (CAMERA.md Phase 5). At pitch 0 the lift
+        is 0, so the flat view's overlays do not move a pixel."""
+        psx, psy = self.camera.project(self.player.x, self.player.y)
+        psy -= int(TILT_ACTOR_STAND * math.sin(self.camera.pitch))
+        return psx, psy
+
+    def _draw_solid_prop(self, d, ox=0.0, oy=0.0):
+        """Draw one solid furniture/prop as a projected box volume, optionally
+        shifted by a wrap-clone WORLD offset (ox, oy) so a toroidal scene's
+        props clone across the seam through the projection. Falls back to the
+        prop kit when it isn't a furniture kind."""
+        from rendering.furniture import draw_furniture_solid
+        from rendering.props import draw_prop_solid
+        if ox or oy:
+            d.x += ox; d.y += oy
+            try:
+                if not draw_furniture_solid(self.screen, self.camera, d):
+                    draw_prop_solid(self.screen, self.camera, d)
+            finally:
+                d.x -= ox; d.y -= oy
+        elif not draw_furniture_solid(self.screen, self.camera, d):
+            draw_prop_solid(self.screen, self.camera, d)
+
     def draw_world(self):
         if self.state == "opening":
             self._draw_opening()
@@ -3653,24 +3689,37 @@ class Game(CutsceneMixin):
                 return None
             return 255 if f >= 0.99 else int(255 * f)
 
-        self._tilt_front_walls = None
-        if self.camera.pitch > 0.02:
-            # DEBUG oblique view (CAMERA.md Phase 2): skybox fills the void,
-            # the floor warps to the tilted plane, walls extrude. Actors below
-            # already project through self.camera so they stand on this floor.
-            # Walls in front of the player are held back (returned) and drawn
-            # after the actors so they occlude/fade correctly.
+        _tilt = self.camera.pitch > 0.02
+        _tilt_walls = _tilt_solid_decos = None
+        if _tilt:
+            # DEBUG oblique view (CAMERA.md Phase 2/5): skybox fills the void,
+            # the floor warps to the tilted plane. The upright occluders -- wall
+            # tiles + solid props -- are RETURNED (not drawn here) so they can be
+            # depth-interleaved with the actors below and faded per-actor
+            # (Phase 5). Actors already project through self.camera so they stand
+            # on this floor.
             from scenes.base import draw_terrain_tilted
             from rendering.skybox import draw_skybox
-            sky = "overcast" if self.scene.key in OUTDOOR_SCENES else "void"
             draw_skybox(self.screen, (0, 0, SCREEN_W, SCREEN_H),
-                        yaw=self.camera.yaw, kind=sky, horizon_frac=0.40)
-            focus = (self.player.x, self.player.y) if self.player else None
-            self._tilt_front_walls = draw_terrain_tilted(
-                self.screen, self.scene, self.camera, focus, sight=_sight)
+                        yaw=self.camera.yaw, kind=self._skybox_kind(),
+                        horizon_frac=0.40)
+            _tilt_walls, _tilt_solid_decos = draw_terrain_tilted(
+                self.screen, self.scene, self.camera, sight=_sight)
         else:
             self.scene.draw(self.screen, self.cam_x, self.cam_y, self.camera)
         self._draw_folds()
+        # The unified scene-actor draw list (CAMERA.md Phase 5). Each entry is
+        # (depth, draw_callable). At pitch 0 it stays in INSERTION ORDER (==the
+        # legacy item->npc->enemy->projectile->player order) and is drawn
+        # straight through, so the flat view is byte-identical. Under tilt the
+        # walls + solid props are appended and the whole list is sorted by
+        # Camera.depth so actors, props, and walls interleave correctly. The
+        # focus list collects every VISIBLE actor's ground footprint so an
+        # occluding wall fades for whichever of them it actually covers.
+        _entries = []
+        _focus = []
+        def _emit(depth, fn):
+            _entries.append((depth, fn))
         for it in self.scene.items:
             a = _vis_alpha(it["x"], it["y"])
             if a is None:
@@ -3683,7 +3732,8 @@ class Game(CutsceneMixin):
             def _draw_item(s, sx=sx, sy=sy, bob=bob, color=color):
                 pygame.draw.rect(s, color, (sx - 4, sy - 4 + bob, 8, 8))
                 pygame.draw.rect(s, C_BLACK, (sx - 4, sy - 4 + bob, 8, 8), 1)
-            draw_with_alpha(self.screen, a, _draw_item)
+            _emit(self.camera.depth(it["x"], it["y"]),
+                  lambda a=a, fn=_draw_item: draw_with_alpha(self.screen, a, fn))
         # Pick at most one NPC to "blink" this frame -- their eye dots
         # will skip drawing for a single frame. Only fires while the
         # player is standing still, and only rarely. The villagers
@@ -3735,10 +3785,12 @@ class Game(CutsceneMixin):
                     a = _vis_alpha(npc.x + ox, npc.y + oy)
                     if a is None:
                         continue
-                    draw_with_alpha(self.screen, a,
-                                    lambda s, sx=sx, sy=sy, npc=npc:
-                                    draw_npc_corpse(s, sx, sy, npc.sprite_kind,
-                                                    seed=id(npc) & 0xffff, mold=0))
+                    _emit(self.camera.depth(npc.x + ox, npc.y + oy),
+                          lambda a=a, sx=sx, sy=sy, npc=npc:
+                          draw_with_alpha(self.screen, a,
+                                          lambda s: draw_npc_corpse(
+                                              s, sx, sy, npc.sprite_kind,
+                                              seed=id(npc) & 0xffff, mold=0)))
                 continue
             m = getattr(npc, "morph", 0.0)
             king_threat = None
@@ -3766,6 +3818,10 @@ class Game(CutsceneMixin):
                 a = _vis_alpha(npc.x + ox, npc.y + oy, exempt=exempt)
                 if a is None:
                     continue
+                # A visible standing actor is a "focus": occluding walls fade for
+                # whichever of these they cover (CAMERA.md Phase 5 per-actor
+                # occlusion), so a cultist seen behind a near wall reads through.
+                _focus.append((npc.x + ox, npc.y + oy, 28))
                 sy -= npc_lift            # stand on the floor under tilt
 
                 def _draw_npc(target, sx=sx, sy=sy):
@@ -3797,7 +3853,9 @@ class Game(CutsceneMixin):
                         if getattr(npc, "_mutated", False):
                             draw_infested_overlay(target, sx, sy,
                                                   npc.sprite_kind, view=nview)
-                draw_with_alpha(self.screen, a, _draw_npc)
+                _emit(self.camera.depth(npc.x + ox, npc.y + oy),
+                      lambda a=a, fn=_draw_npc:
+                      draw_with_alpha(self.screen, a, fn))
             # THRESHOLD: NPC name labels removed. They were the
             # last RPG-tell on screen -- the player should learn
             # who an NPC is by interacting with them, not by
@@ -3815,63 +3873,100 @@ class Game(CutsceneMixin):
                 a = _vis_alpha(e.x + ox, e.y + oy)
                 if a is None:
                     continue
+                _focus.append((e.x + ox, e.y + oy, 28))
                 # Feed e.draw an offset that lands its internal `x - cam`
                 # exactly on the (lifted) projected point. At pitch 0 this is
                 # arithmetically the legacy (cam_x - ox) call -> identical.
-                draw_with_alpha(self.screen, a,
-                                lambda s, sx=sx, sy=sy, e=e, eview=eview:
-                                e.draw(s, e.x - sx, e.y - (sy - actor_lift),
-                                       view=eview))
+                _emit(self.camera.depth(e.x + ox, e.y + oy),
+                      lambda a=a, sx=sx, sy=sy, e=e, eview=eview:
+                      draw_with_alpha(self.screen, a,
+                                      lambda s: e.draw(
+                                          s, e.x - sx, e.y - (sy - actor_lift),
+                                          view=eview)))
         for p in self.scene.projectiles:
             psx, psy = self.camera.project(p.x, p.y)
-            p.draw(self.screen, p.x - psx, p.y - (psy - actor_lift))
+            _emit(self.camera.depth(p.x, p.y),
+                  lambda p=p, psx=psx, psy=psy:
+                  p.draw(self.screen, p.x - psx, p.y - (psy - actor_lift)))
         if self.player:
             psx, psy = self.camera.project(self.player.x, self.player.y)
             psy -= actor_lift             # stand on the floor under tilt
-            if self.player.invuln > 0 and int(self.player.invuln * 12) % 2 == 0:
-                pass
-            elif self.player.hidden is not None:
-                # THRESHOLD: hidden player draws on a low-alpha layer
-                # so the silhouette is barely visible -- the cover
-                # is reading as cover. Also draws a single faint
-                # "[hidden]" tag above so the player knows the state
-                # is on without needing a HUD widget.
-                hide_layer = pygame.Surface((40, 60), pygame.SRCALPHA)
-                draw_player_sprite(hide_layer, 20, 30, self.player.facing,
-                                   0,
-                                   armor=self.player.inventory.equipped["armor"],
-                                   prone=getattr(self.player, "prone", False))
-                hide_layer.set_alpha(80)
-                self.screen.blit(hide_layer, (psx - 20, psy - 30))
-                tag = self.fonts["tiny"].render("[hidden]", True,
-                                                 (160, 158, 170))
-                self.screen.blit(tag, (psx - tag.get_width() // 2,
-                                       psy - 40))
-            else:
-                pview = "front"
-                if self._tilt_on():
-                    pview = view_from_facing(self.player.facing[0],
-                                             self.player.facing[1],
-                                             self.camera.yaw)
-                draw_player_sprite(self.screen, psx, psy, self.player.facing,
-                                   self.player.walk_phase,
-                                   armor=self.player.inventory.equipped["armor"],
-                                   prone=getattr(self.player, "prone", False),
-                                   view=pview)
-            # The axe swing: a wood haft + steel head arcing through the
-            # facing hemisphere, with a brief motion smear so the chop
-            # reads. Progress walks 0->1 as melee_swing_t bleeds down.
-            if self.player.melee_swing_t > 0:
-                prog = 1.0 - (self.player.melee_swing_t / AXE_SWING_DUR)
-                draw_axe_swing(self.screen, psx, psy,
-                               self.player.melee_dir, prog)
-        # Tilt: walls nearer the camera than the player, drawn over the actors
-        # and faded where they'd hide the player (occlusion).
-        if self._tilt_front_walls and self.player:
-            from scenes.base import draw_walls_front
-            draw_walls_front(self.screen, self.scene, self.camera,
-                             self._tilt_front_walls,
-                             (self.player.x, self.player.y))
+            _focus.append((self.player.x, self.player.y, 30))
+
+            def _draw_player(psx=psx, psy=psy):
+                if self.player.invuln > 0 and int(self.player.invuln * 12) % 2 == 0:
+                    pass
+                elif self.player.hidden is not None:
+                    # THRESHOLD: hidden player draws on a low-alpha layer
+                    # so the silhouette is barely visible -- the cover
+                    # is reading as cover. Also draws a single faint
+                    # "[hidden]" tag above so the player knows the state
+                    # is on without needing a HUD widget.
+                    hide_layer = pygame.Surface((40, 60), pygame.SRCALPHA)
+                    draw_player_sprite(hide_layer, 20, 30, self.player.facing,
+                                       0,
+                                       armor=self.player.inventory.equipped["armor"],
+                                       prone=getattr(self.player, "prone", False))
+                    hide_layer.set_alpha(80)
+                    self.screen.blit(hide_layer, (psx - 20, psy - 30))
+                    tag = self.fonts["tiny"].render("[hidden]", True,
+                                                     (160, 158, 170))
+                    self.screen.blit(tag, (psx - tag.get_width() // 2,
+                                           psy - 40))
+                else:
+                    pview = "front"
+                    if self._tilt_on():
+                        pview = view_from_facing(self.player.facing[0],
+                                                 self.player.facing[1],
+                                                 self.camera.yaw)
+                    draw_player_sprite(self.screen, psx, psy, self.player.facing,
+                                       self.player.walk_phase,
+                                       armor=self.player.inventory.equipped["armor"],
+                                       prone=getattr(self.player, "prone", False),
+                                       view=pview)
+                # The axe swing: a wood haft + steel head arcing through the
+                # facing hemisphere, with a brief motion smear so the chop
+                # reads. Progress walks 0->1 as melee_swing_t bleeds down.
+                if self.player.melee_swing_t > 0:
+                    prog = 1.0 - (self.player.melee_swing_t / AXE_SWING_DUR)
+                    draw_axe_swing(self.screen, psx, psy,
+                                   self.player.melee_dir, prog)
+            _emit(self.camera.depth(self.player.x, self.player.y), _draw_player)
+
+        # Under tilt, fold the upright occluders -- wall tiles + solid props --
+        # into the same list and depth-sort EVERYTHING so actors, props, and
+        # walls interleave correctly (CAMERA.md Phase 5). A wall fades for
+        # whichever VISIBLE actor it actually covers (min over the focus set),
+        # so the furnished rooms' partition walls + mid-floor props no longer
+        # blanket an actor standing behind them. Solid props are wrap-cloned
+        # through the projection too. At pitch 0 nothing is appended and the
+        # list stays in legacy insertion order -> the flat view is byte-identical.
+        if _tilt:
+            from scenes.base import _TILT_WALL_RISE, _tilt_tile_box
+            from rendering.occlusion import occluder_alpha
+            _whalf = TILE * 0.5 * self.camera.scale
+            for (tx, ty) in (_tilt_walls or []):
+                wcx, wcy = tx * TILE + TILE / 2, ty * TILE + TILE / 2
+                wa = 255
+                for fx, fy, fh in _focus:
+                    wa = min(wa, occluder_alpha(self.camera, wcx, wcy,
+                                                _TILT_WALL_RISE, fx, fy, fh,
+                                                o_halfw=_whalf))
+                    if wa <= 60:
+                        break
+                _emit(self.camera.depth(wcx, wcy, _TILT_WALL_RISE),
+                      lambda wa=wa, tx=tx, ty=ty:
+                      draw_with_alpha(self.screen, wa,
+                                      lambda s: _tilt_tile_box(
+                                          s, self.camera, self.scene, tx, ty)))
+            for d in (_tilt_solid_decos or []):
+                for ox, oy in _offsets:
+                    _emit(self.camera.depth(d.x + ox, d.y + oy),
+                          lambda d=d, ox=ox, oy=oy: self._draw_solid_prop(d, ox, oy))
+            _entries.sort(key=lambda e: e[0])
+        # Execute the (legacy-ordered at pitch 0, depth-sorted under tilt) list.
+        for _depth, _fn in _entries:
+            _fn()
         # Cursor reticle in look mode (the mouse is otherwise hidden) -- shows
         # where the gun aims. A thin ring + tick marks, gold to read as 'aim'.
         if self._tilt_on() and self.state == "playing":

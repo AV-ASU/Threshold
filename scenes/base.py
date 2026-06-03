@@ -1552,11 +1552,13 @@ _FLOOR_DECAL_KINDS = frozenset((
 ))
 
 
-def _draw_floor_decal(surf, camera, deco):
+def _draw_floor_decal(surf, camera, deco, woff=(0.0, 0.0)):
     """Render a flat decal to a canvas, then warp it onto the floor plane (same
     rotate+squash as _tilt_warp) and blit at the projected anchor, so a rug or
     bloodstain lies on the ground and turns with the room instead of standing up
-    as a billboard."""
+    as a billboard. `woff` is the wrap-clone WORLD offset (added before
+    projection so the seam clone lands through the camera, not in screen space;
+    CAMERA.md Phase 5)."""
     drawfn = getattr(deco, f"_draw_{deco.kind}", None)
     if drawfn is None:
         return
@@ -1572,7 +1574,7 @@ def _draw_floor_decal(surf, camera, deco):
     sw = max(1, int(rot.get_width() * camera.scale))
     sh = max(1, int(rot.get_height() * camera.scale * cp))
     scaled = pygame.transform.smoothscale(rot, (sw, sh))
-    sx, sy = camera.project(deco.x, deco.y, 0)
+    sx, sy = camera.project(deco.x + woff[0], deco.y + woff[1], 0)
     surf.blit(scaled, (sx - sw // 2, sy - sh // 2))
 
 
@@ -1631,15 +1633,19 @@ def _tilt_tile_box(surf, camera, scene, tx, ty):
         _tilt_wall_box(surf, camera, scene, tx, ty)
 
 
-def draw_terrain_tilted(surf, scene, camera, focus=None, sight=None):
-    """Floor warp + wall extrusion for the oblique camera. Skybox is the
-    caller's job (drawn first); actors are drawn after by the game, already
-    projected through the same camera so they stand on this floor.
+def draw_terrain_tilted(surf, scene, camera, sight=None):
+    """Floor warp + flat decals for the oblique camera. Skybox is the caller's
+    job (drawn first); actors are drawn after by the game, already projected
+    through the same camera so they stand on this floor.
 
-    `focus` (wx, wy) is the player: walls NEARER the camera than the focus are
-    held back and RETURNED so the caller can draw them after the actors (so
-    they correctly occlude/fade in front of the player). Walls behind the
-    focus are drawn now. Returns the list of (tx, ty) front walls.
+    The upright occluders -- WALL tiles and SOLID furniture/props -- are NOT
+    drawn here. They are RETURNED as `(wall_tiles, solid_decos)` so the caller
+    can depth-interleave them with the actors and fade each per-actor
+    (CAMERA.md Phase 5: every actor + prop sorts against every wall by
+    Camera.depth, and a wall fades for whichever actor it actually covers, not
+    just the player). Only the flat layer -- the warped floor raster and the
+    ground decals / billboard decorations that lie on or rise from it -- is
+    drawn now (it can never occlude an actor).
 
     `sight` is the optional Phase 4 blind-spot factor fn(wx, wy) -> 0..1
     (rendering/sight.py). When given, decorations flagged `_sight_gated`
@@ -1658,7 +1664,9 @@ def draw_terrain_tilted(surf, scene, camera, focus=None, sight=None):
     ox, oy = camera.origin
     surf.blit(warped, (ox - warped.get_width() // 2,
                        oy - warped.get_height() // 2))
-    # extrude walls in the visible window, depth-sorted (far first)
+    # Collect the visible wall tiles (returned for the unified depth pass; the
+    # caller sorts + fades them). Wrap-aware: tx/ty may sit outside [0,W) for a
+    # toroidal scene and the box projects at the un-wrapped world position.
     walls = []
     W, H = scene.w, scene.h
     for ty in range(y0, y1):
@@ -1669,21 +1677,26 @@ def draw_terrain_tilted(surf, scene, camera, focus=None, sight=None):
             wtx = tx % W if scene.wrap_x else tx
             if not (0 <= wtx < W):
                 continue
-            if scene.objects[wty][wtx] in _WALL_CHARS or \
-                    scene.objects[wty][wtx] in _DOOR_CHARS or \
-                    scene.objects[wty][wtx] in _WINDOW_CHARS:
-                walls.append((tx, ty, wtx, wty))
-    walls.sort(key=lambda c: camera.depth(c[0] * TILE + TILE / 2,
-                                          c[1] * TILE + TILE / 2,
-                                          _TILT_WALL_RISE))
-    # Props. Ground decals (rugs, stains, blood) stay flat on the warped floor;
-    # curated upright furniture becomes a projected box VOLUME (depth + correct
-    # rotation under the camera). Flat decals first so a box behind a rug still
-    # reads; boxes depth-sorted far->near so they overlap correctly. Walls draw
-    # after, so a wall in front still overdraws a prop behind it.
-    from rendering.furniture import is_solid_furniture, draw_furniture_solid
-    from rendering.props import is_solid_prop, draw_prop_solid
+            ch = scene.objects[wty][wtx]
+            if ch in _WALL_CHARS or ch in _DOOR_CHARS or ch in _WINDOW_CHARS:
+                walls.append((tx, ty))
+    # Decorations. Ground decals (rugs, stains, blood) stay flat on the warped
+    # floor; non-solid billboards rise from it -- both drawn now, wrap-cloned
+    # across the seam THROUGH the projection (CAMERA.md Phase 5) so a torus
+    # scene's decor doesn't tear or pop at the fold under tilt/yaw. Curated
+    # upright furniture/props are SOLID occluders -> returned for the caller.
+    from rendering.furniture import is_solid_furniture
+    from rendering.props import is_solid_prop
     from rendering.solids import draw_with_alpha
+    world_w, world_h = W * TILE, H * TILE
+    offsets = [(0.0, 0.0)]
+    if scene.wrap_x:
+        offsets += [(-world_w, 0.0), (world_w, 0.0)]
+    if scene.wrap_y:
+        offsets += [(0.0, -world_h), (0.0, world_h)]
+    if scene.wrap_x and scene.wrap_y:
+        offsets += [(-world_w, -world_h), (-world_w, world_h),
+                    (world_w, -world_h), (world_w, world_h)]
     solid_decos = []
     for d in scene.decorations:
         if is_solid_furniture(d.kind) or is_solid_prop(d.kind):
@@ -1696,39 +1709,14 @@ def draw_terrain_tilted(surf, scene, camera, focus=None, sight=None):
             if f <= 0.03:
                 continue
             a = 255 if f >= 0.99 else int(255 * f)
-        if d.kind in _FLOOR_DECAL_KINDS:
-            draw_with_alpha(surf, a, lambda s, d=d: _draw_floor_decal(s, camera, d))
-        else:
-            draw_with_alpha(surf, a, lambda s, d=d: d.draw(s, 0, 0, camera))
-    solid_decos.sort(key=lambda d: camera.depth(d.x, d.y))
-    for d in solid_decos:
-        if not draw_furniture_solid(surf, camera, d):
-            draw_prop_solid(surf, camera, d)
-    # Split walls on the focus (player) depth: behind -> draw now; in front ->
-    # return for the caller to draw after the actors.
-    fdepth = camera.depth(focus[0], focus[1]) if focus else float("inf")
-    front = []
-    for tx, ty, wtx, wty in walls:
-        wcx, wcy = tx * TILE + TILE / 2, ty * TILE + TILE / 2
-        if camera.depth(wcx, wcy, _TILT_WALL_RISE) > fdepth:
-            front.append((tx, ty))
-        else:
-            _tilt_tile_box(surf, camera, scene, tx, ty)
-    return front
-
-
-def draw_walls_front(surf, scene, camera, front, focus):
-    """Second wall pass: the walls nearer the camera than the player, drawn
-    AFTER the actors and faded where they'd hide the player (occlusion.py)."""
-    from rendering.occlusion import occluder_alpha
-    from rendering.solids import draw_with_alpha
-    fx, fy = focus
-    for tx, ty in front:
-        wcx, wcy = tx * TILE + TILE / 2, ty * TILE + TILE / 2
-        a = occluder_alpha(camera, wcx, wcy, _TILT_WALL_RISE, fx, fy, 30,
-                           o_halfw=TILE * 0.5 * camera.scale)
-        draw_with_alpha(surf, a,
-                        lambda s, tx=tx, ty=ty: _tilt_tile_box(s, camera, scene, tx, ty))
+        for woff in offsets:
+            if d.kind in _FLOOR_DECAL_KINDS:
+                draw_with_alpha(surf, a, lambda s, d=d, woff=woff:
+                                _draw_floor_decal(s, camera, d, woff))
+            else:
+                draw_with_alpha(surf, a, lambda s, d=d, woff=woff:
+                                d.draw(s, 0, 0, camera, wox=woff[0], woy=woff[1]))
+    return walls, solid_decos
 
 
 def draw_scene_doors(surf, scene, cam_x, cam_y, x0, y0, x1, y1):
@@ -1990,6 +1978,12 @@ class Scene:
         # fold). Off by default.
         self.wrap_x = False
         self.wrap_y = False
+        # Oblique-camera skybox surround (CAMERA.md Phase 5). None = let the
+        # game pick by scene type ("overcast" sallow sky for OUTDOOR_SCENES,
+        # near-black "void" for interiors/underground so the horror keeps its
+        # dark). A scene builder may pin "overcast"/"void" explicitly to
+        # override the heuristic. Unused at pitch 0 (no skybox).
+        self.skybox_kind = None
         self.exits = {}
         # Direction-sensitive exit chars: char -> "north"/"south"/etc.
         # If a char is in this dict, find_exit_at only fires the exit

@@ -45,6 +45,25 @@ PLR_H = 34
 PX = PLAYER_TILE[0] * TILE + TILE / 2
 PY = PLAYER_TILE[1] * TILE + TILE / 2
 
+# A SECOND actor (a cultist) off to one side, behind a column, so the demo shows
+# the Phase-5 rule: a wall/column fades for whichever actor it covers, not just
+# the player. Its palette reads as a hostile (cold violet).
+CULTIST_TILE = (8, 4)
+CX = CULTIST_TILE[0] * TILE + TILE / 2
+CY = CULTIST_TILE[1] * TILE + TILE / 2
+CULTIST = {"body": (96, 70, 120), "lo": (50, 36, 66), "rim": (170, 130, 210)}
+# focus actors an occluder must read through: (x, y, height)
+FOCUS = [(PX, PY, PLR_H), (CX, CY, PLR_H)]
+
+
+def _occ_alpha(cam, wx, wy, h):
+    """Min occluder alpha over every focus actor -- the wall fades for whichever
+    of them it actually covers (CAMERA.md Phase 5 per-actor occlusion)."""
+    a = 255
+    for fx, fy, fh in FOCUS:
+        a = min(a, occluder_alpha(cam, wx, wy, h, fx, fy, fh))
+    return a
+
 
 def make_cam(head_yaw):
     # camera locked to the player's facing (forward = "north"); head_yaw is the
@@ -71,17 +90,19 @@ def drawables(cam):
     cells += [(0, ty) for ty in range(1, ROWS - 1)] + [(COLS - 1, ty) for ty in range(1, ROWS - 1)]
     for (tx, ty) in cells:
         wx, wy = tx * TILE + TILE / 2, ty * TILE + TILE / 2
-        a = occluder_alpha(cam, wx, wy, 30, PX, PY, PLR_H)
+        a = _occ_alpha(cam, wx, wy, 30)
         items.append((cam.depth(wx, wy, 15), a,
                       lambda s, wx=wx, wy=wy: draw_box(s, cam, wx, wy, TILE, TILE, 30, WALL)))
     for (tx, ty) in COLUMNS:
         wx, wy = tx * TILE + TILE / 2, ty * TILE + TILE / 2
-        a = occluder_alpha(cam, wx, wy, COL_H, PX, PY, PLR_H)
+        a = _occ_alpha(cam, wx, wy, COL_H)
         items.append((cam.depth(wx, wy, COL_H), a,
                       lambda s, wx=wx, wy=wy: draw_solid(s, cam, wx, wy, COL_SECT, COLUMN)))
-    # the player (never faded; the focus actor)
+    # the focus actors (never faded; occluders read through them)
     items.append((cam.depth(PX, PY, PLR_H), 255,
                   lambda s: draw_solid(s, cam, PX, PY, PLR_SECT, PLAYER)))
+    items.append((cam.depth(CX, CY, PLR_H), 255,
+                  lambda s: draw_solid(s, cam, CX, CY, PLR_SECT, CULTIST)))
     return items
 
 

@@ -24,7 +24,8 @@ pygame.init()
 pygame.display.set_mode((1, 1))
 
 from scenes import load_scene
-from scenes.base import draw_terrain_tilted, TILE, _WALL_CHARS
+from scenes.base import (draw_terrain_tilted, _tilt_tile_box, TILE,
+                         _TILT_WALL_RISE, _WALL_CHARS)
 from rendering.camera import Camera
 from rendering.skybox import draw_skybox
 from rendering.sprites import draw_player_sprite
@@ -53,13 +54,24 @@ def render(scene, lc, px, py, label, sub):
     out = pygame.Surface(CELL)
     draw_skybox(out, (0, 0, CELL[0], CELL[1]), yaw=cam.yaw, kind="void",
                 horizon_frac=0.40)
-    front = draw_terrain_tilted(out, scene, cam, focus=(px, py))
+    walls, _solids = draw_terrain_tilted(out, scene, cam)
+    # walls behind the player first, player, then walls in front (Phase 5 the
+    # game depth-sorts these per-actor; this preview keeps a simple player split)
+    pdepth = cam.depth(px, py)
+    behind = [w for w in walls
+              if cam.depth(w[0] * TILE + TILE / 2, w[1] * TILE + TILE / 2,
+                           _TILT_WALL_RISE) <= pdepth]
+    front = [w for w in walls if w not in behind]
+    for tx, ty in behind:
+        _tilt_tile_box(out, cam, scene, tx, ty)
     # player at centre; the body faces "up" by construction, but show the head
     # lead by tilting the drawn facing a touch.
     spr = pygame.Surface((40, 52), pygame.SRCALPHA)
     draw_player_sprite(spr, 20, 34, (0, -1), 0)
     bx, by = cam.project(px, py, 0)
     out.blit(spr, (int(bx - 20), int(by - 30)))
+    for tx, ty in front:
+        _tilt_tile_box(out, cam, scene, tx, ty)
     # HUD: a reticle showing where the aim/head points (screen-relative)
     ang = -math.pi / 2 + lc.head_off          # up + head offset, screen space
     rx = bx + math.cos(ang) * 60
