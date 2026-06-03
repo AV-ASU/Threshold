@@ -478,7 +478,12 @@ class Game(CutsceneMixin):
         # source of truth for the offset (camera update + input still use
         # them); the camera is re-synced to them each frame in draw_world.
         self.camera = Camera()
-        self._cam_pitch_target = 0.0      # DEBUG F3 tilt target (radians)
+        # The oblique view is the DEFAULT (CAMERA.md): start at the locked tilt
+        # pitch. F3 toggles back to the flat pitch-0 top-down view (which stays
+        # byte-identical to the legacy raster). _reset_run_state re-seeds this on
+        # every New Game.
+        self._cam_pitch_target = math.radians(TILT_PITCH_DEG)
+        self.camera.pitch = self._cam_pitch_target
         self.look = LookController()       # mouse-look heading model (tilt mode)
         self._rmb_last_x = None            # right-drag scene-rotate anchor
         self.title_choice = 0
@@ -750,8 +755,9 @@ class Game(CutsceneMixin):
         Game instance is reused across Quit-to-Title -> New Game, so
         in-memory run state from a previous run is cleared here."""
         # Debug oblique tilt (F3) starts off each run.
-        self._cam_pitch_target = 0.0
-        self.camera.pitch = 0.0
+        # Oblique view is the default; New Game starts tilted (F3 -> flat).
+        self._cam_pitch_target = math.radians(TILT_PITCH_DEG)
+        self.camera.pitch = self._cam_pitch_target
         self.camera.yaw = 0.0
         self.look = LookController()
         self._rmb_last_x = None
@@ -1069,13 +1075,18 @@ class Game(CutsceneMixin):
                 target_y = (scene_h - SCREEN_H) // 2
         if snap:
             self.cam_x = target_x; self.cam_y = target_y
+            # Land already at the target pitch on a snap (game start / scene
+            # load) so the default oblique view doesn't ease up from flat on
+            # every door; the F3 toggle still eases (non-snap path below).
+            self.camera.pitch = self._cam_pitch_target
         else:
             self.cam_x += (target_x - self.cam_x) * 0.18
             self.cam_y += (target_y - self.cam_y) * 0.18
-        # Ease the debug tilt pitch toward its target (F3). Zoom out slightly
-        # as it tilts so more of the room reads; both are exactly the shipping
-        # values at pitch 0 (scale 1.0), keeping that view untouched.
-        self.camera.pitch += (self._cam_pitch_target - self.camera.pitch) * TILT_EASE
+            # Ease the tilt pitch toward its target (the F3 toggle). Zoom out
+            # slightly as it tilts so more of the room reads; both are exactly
+            # the shipping values at pitch 0 (scale 1.0), keeping that view
+            # untouched.
+            self.camera.pitch += (self._cam_pitch_target - self.camera.pitch) * TILT_EASE
         pf = self.camera.pitch / math.radians(TILT_PITCH_DEG)
         self.camera.scale = 1.0 - (1.0 - TILT_ZOOM) * pf
         # Keep the camera's spatial pivot in sync here (was only in draw_world)
@@ -4514,11 +4525,11 @@ class Game(CutsceneMixin):
                 elif ev.key == pygame.K_F11:
                     self._toggle_fullscreen()
                 elif ev.key == pygame.K_F3:
-                    # DEBUG (CAMERA.md Phase 2/3): toggle the oblique look mode.
-                    # Pitch eases in _update_camera; pitch 0 is the shipping
-                    # top-down view, untouched. On enable, seed the look heading
-                    # from the player's current facing so the camera settles
-                    # behind them with no rotation jump.
+                    # The oblique look mode is the DEFAULT (CAMERA.md); F3
+                    # toggles it OFF to the flat pitch-0 top-down view and back.
+                    # Pitch eases in _update_camera. On (re-)enable, seed the
+                    # look heading from the player's current facing so the
+                    # camera settles behind them with no rotation jump.
                     if self._cam_pitch_target:
                         self._cam_pitch_target = 0.0
                     else:
