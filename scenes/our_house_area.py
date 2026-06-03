@@ -121,8 +121,11 @@ def build_our_house_area():
         # The road row stub (5-9 north + south stubs of road).
         if 5 <= ty <= 9 and tx >= 5:
             return True
-        # The 'M' directional tile + path to it.
-        if tx == 5 and 9 <= ty <= 12:
+        # The main dirt path running SOUTH from the Lodge porch (the 'M'
+        # arrival-fold tile sits on it). Protected so the forest band doesn't
+        # scatter trees onto it; painted dirt just below (after scatter), cut
+        # clean through the band like the roads (NARRATIVE 11).
+        if 4 <= tx <= 6 and 9 <= ty <= 14:
             return True
         return False
     _yd_bushes = []
@@ -136,6 +139,14 @@ def build_our_house_area():
                             _yd_bushes.append((px, py)))
     sc.floor = floor_ll_yd
     sc.objects = yard_obj
+    # Paint the main path south from the Lodge as DIRT -- it was bare grass,
+    # but the 'M' arrival fold is described as one of the yard's path tiles.
+    # A 3-wide corridor from the east-west road down past the M tile, so the
+    # walk up to the porch reads as a maintained path, not blank lawn.
+    for ty in range(9, 15):
+        for tx in range(4, 7):
+            if 0 <= ty < len(sc.floor) and 0 <= tx < len(sc.floor[ty]):
+                sc.floor[ty][tx] = "d"
     for bx, by in _yd_bushes:
         sc.add_decoration(Decoration(bx, by, "bush"))
 
