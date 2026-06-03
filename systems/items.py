@@ -55,10 +55,16 @@ ITEM_DEFS = {
                                "Closes: \"I'm not lost. I've never been "
                                "this close.\""},
     # ---- Re-meaned existing items ----
-    "playscript":           {"name": "A Yellow Playscript",
+    # The congregation's own notes (key kept as 'playscript' for saves/logic).
+    # Their compulsive, unreliable record -- and the keystone's other half:
+    # the Pallid Mask seats into the recess on its cover.
+    "playscript":           {"name": "The Cult's Notes",
                        "kind": "key",
-                       "desc": "A yellow playscript that has an "
-                               "indentation of a mask on the cover."},
+                       "desc": "A bound notebook in the congregation's own "
+                               "hands -- their compulsive, partial record of "
+                               "what they feel and think they understand. "
+                               "None of it certain. A mask-shaped recess "
+                               "sits in the cover."},
     "lumber_axe":    {"name": "Splitting Axe",
                        "kind": "weapon",
                        "desc": "An axe for chopping wood.",

@@ -393,17 +393,18 @@ def build_works_scriptorium():
         dx, dy = sc._desk_pos
         if (abs(game.player.x - dx) > 40 or abs(game.player.y - dy) > 40):
             return
-        # The Playscript -- the deep-gate key -- is the one bound, whole
-        # Play among the cult's endless flat copies. Taken here, carried
-        # to the Deep Stair.
+        # The cult's notes -- the deep-gate key -- the one bound, whole
+        # volume among the congregation's endless flat copies of the Sign.
+        # Their own record, not a copy. Taken here, carried to the Deep Stair.
         if not game.save.flag("scriptorium_playscript_taken"):
             game.save.set_flag("scriptorium_playscript_taken", True)
             game.player.inventory.add("playscript", 1)
             game.audio.play("pickup_rare", 0.7)
             game.audio.play("low_pulse", 0.45)
             game.dialog.show([
-                "[c=dim]One book is bound and whole. A mask pressed "
-                "into the cover. You take it.[/c]",
+                "[c=dim]Among the loose copies, one volume is bound and "
+                "whole -- their own notes, not the Sign traced again. A "
+                "mask-shaped recess in the cover. You take it.[/c]",
                 "[c=dim]The scribe is wet to the knee.[/c]",
             ], speaker="", voice="blip_soft", portrait="narrator")
             return

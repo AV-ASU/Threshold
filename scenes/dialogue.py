@@ -136,7 +136,7 @@ def tisdale_boy_dialogue(game, npc):
     if inv.has("playscript") and not save.flag("kid_playscript_noticed"):
         save.set_flag("kid_playscript_noticed", True)
         game.dialog.show([
-            "That yellow book.",
+            "That book. The one they keep.",
             "[c=dim]Don't open it where I can see.[/c]",
         ], speaker="Toby Tisdale", voice="blip_kid", portrait="tisdale_boy")
         return
