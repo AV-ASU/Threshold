@@ -687,8 +687,8 @@ def build_brimley():
     # step a while, then back indoors out of the cold that came early.
     _resident(63, 54, "Old Pell", "old_townsman", [
         "Cold came in early this year. And it never lifted. Just sat down on the town and stayed.",
-        "Stopped marking the calendar. Not the days -- where would I be counting toward?",
-        "[c=dim]You're new. We don't get new. Nobody gets in. Nobody gets--[/c]",
+        "Stopped marking the calendar. Not the days. Where would I be counting toward?",
+        "[c=dim]You're new. We don't get new. Nobody gets in. Nobody gets...[/c]",
     ], voice="blip_low", movement="homebody", radius=34, fold=True)
     # Mrs. Calder is by the east-edge road. She sets a place at supper
     # for a guest she can't name -- a certainty she can't explain that
@@ -1048,7 +1048,7 @@ def build_brimley():
                 game.audio.play("low_pulse", 0.4)
                 game.dialog.show([
                     "[c=dim](You lean over the lip. The shaft drops "
-                    "past where any water should be -- no glint, no "
+                    "past where any water should be. No glint, no "
                     "bottom, just cold air climbing up out of it.)[/c]",
                     "[c=dim]Two grooves are worn smooth into the "
                     "stone where a rope has run, over and over.[/c]",
@@ -1079,7 +1079,7 @@ def build_brimley():
             line = [
                 "No dial tone. No ringing. The line is open to something.",
                 "[c=dim]Far down it, under the hiss, you hear your own "
-                "voice -- already mid-sentence.[/c]",
+                "voice, already mid-sentence.[/c]",
             ]
             game.dialog.show(line, speaker="", voice="blip_soft",
                              portrait="narrator")

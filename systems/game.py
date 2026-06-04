@@ -1504,7 +1504,7 @@ class Game(CutsceneMixin):
             self.audio.play("hit", 0.5)
             if not self.save.flag("stun_taught"):
                 self.save.set_flag("stun_taught", True)
-                self.show_notice("You knock it back -- it won't stay "
+                self.show_notice("You knock it back. It won't stay "
                                  "down. Run.", duration=2.6)
 
     def player_fire_gun(self):
@@ -1559,7 +1559,7 @@ class Game(CutsceneMixin):
         if proj.stun_only and not self.save.flag("gun_stun_taught"):
             self.save.set_flag("gun_stun_taught", True)
             self.show_notice("The shot barely staggers it now. You know too "
-                             "much -- they won't die for you anymore.",
+                             "much. They won't die for you anymore.",
                              duration=3.0)
 
     def _active_weapon(self):
@@ -2300,12 +2300,12 @@ class Game(CutsceneMixin):
         notes.append({"name": "the_dream", "lines": [
             "Her journal put me back inside the one odd dream. A year"
             " back, before any of this. I'd forgotten I had it.",
-            "A door standing open in the dark -- no wall around it, just"
+            "A door standing open in the dark. No wall around it, just"
             " the frame, old dry wood.",
             "Light behind it the colour of old gold, breathing in and out"
             " like something asleep.",
-            "I walked up. I looked in. For a blip something looked back --"
-            " met my eye -- and then it broke.",
+            "I walked up. I looked in. For a blip something looked back,"
+            " met my eye, and then it broke.",
             "I never reached it. One dream, a year ago, and it never came"
             " again. So why do I know this place.",
         ]})
@@ -2337,14 +2337,14 @@ class Game(CutsceneMixin):
         notes.insert(0, {"name": "the_case", "lines": [
             "Walter Blaine, Minneapolis. The client. Grief in the voice"
             " you could lean a ladder on.",
-            "His girl -- Mara, 26. Drove north in the spring. Stopped"
+            "His girl, Mara, 26. Drove north in the spring. Stopped"
             " calling home by the thaw.",
             "Last address: Brimley. Had to find it on a map. North woods,"
             " near nothing.",
-            "Skip-trace. A weekend's work -- ask around, turn up the girl,"
+            "Skip-trace. A weekend's work. Ask around, turn up the girl,"
             " drive back by dawn.",
             "I don't take grief jobs. Took this one. Couldn't tell you why"
-            " -- only that the not-knowing itched, and I wanted it gone.",
+            ". Only that the not-knowing itched, and I wanted it gone.",
         ]})
         self.save.set_arg("notes", notes)
 
@@ -2617,17 +2617,17 @@ class Game(CutsceneMixin):
         "escape_alone": [
             ("You turn the key. The engine turns over.", 2.6),
             ("And over. The way it has every time before.", 2.6),
-            ("Then -- with the Sign beside you -- it catches.", 3.0),
+            ("Then, with the Sign beside you, it catches.", 3.0),
             ("You drive out, past the corn that never ended.", 3.2),
             ("You got out. You're the only one who ever has.", 3.4),
             ("Everyone will understand why, soon.", 3.8),
         ],
         "seal_threshold": [
-            ("The frame drinks it down -- the smoke, the sound, the long "
+            ("The frame drinks it down: the smoke, the sound, the long "
              "way you came.", 3.0),
             ("Above you the stair grinds shut. Then the Works. Then the "
              "well.", 3.0),
-            ("Brimley folds the rest of the way closed -- around the "
+            ("Brimley folds the rest of the way closed, around the "
              "hunger, and around you.", 3.4),
             ("On every map after tonight the town is a blank, a place the "
              "roads decline to reach.", 3.6),
@@ -3568,8 +3568,8 @@ class Game(CutsceneMixin):
         if (self._cursed and not self._watchers and self.scene is not None
                 and self.scene.key not in KING_FREE_SCENES):
             self._cursed = False
-            self.show_notice("The last of the eyes closes. The curse lifts "
-                             "-- for now.", duration=3.2)
+            self.show_notice("The last of the eyes closes. The curse lifts, "
+                             "for now.", duration=3.2)
 
     def _dispel_watcher_in_line(self, p, fx, fy):
         """A round (or the axe arc) puts a Watcher down instantly. The gun

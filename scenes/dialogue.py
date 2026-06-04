@@ -83,14 +83,14 @@ def preacher_dialogue(game, npc):
     save.set_arg("old_count", count)
     if count == 1:
         game.dialog.show([
-            "Another new face. That's all that comes to Brimley anymore -- "
+            "Another new face. That's all that comes to Brimley anymore, "
             "strangers off the highway, more every season. And not one of "
             "them leaves.",
             "I don't trust it. They arrive too easy, like something held "
             "the door. Then they go quiet, drift out to the corn, and they "
             "don't come back.",
             "A young woman came through last month. Bright thing, full of "
-            "questions -- like you. She's one of them now, whatever they "
+            "questions, like you. She's one of them now, whatever they "
             "are. You looking for her?",
         ], speaker="Rev. Crane", voice="blip_low", portrait="preacher")
     elif count == 2:
@@ -108,7 +108,7 @@ def preacher_dialogue(game, npc):
         save.set_flag("preacher_doomed", True)
     else:
         game.dialog.show([
-            "I've said my piece. Go on, now -- and watch the road.",
+            "I've said my piece. Go on now, and watch the road.",
         ], speaker="Rev. Crane", voice="blip_low", portrait="preacher")
 
 
@@ -206,7 +206,7 @@ def hettie_dialogue(game, npc):
     if count == 2:
         game.dialog.show([
             "Back again. Good. You haven't gone quiet. Like the others.",
-            "[c=dim]Don't trust the easy ones. The first to make peace -- "
+            "[c=dim]Don't trust the easy ones. The first to make peace, "
             "they went the soonest.[/c]",
         ], speaker="Hettie", voice="blip_high", portrait="hettie")
         return
@@ -309,7 +309,7 @@ def clerk_dialogue(game, npc):
     save.set_arg("clerk_count", count)
     if count == 1:
         plain = [
-            "Sable -- I keep the desk here. Anything you need, you ask me. "
+            "Sable. I keep the desk here. Anything you need, you ask me. "
             "Anything at all.",
             "Settling in all right? Good. Most folks do, once they stop "
             "fighting it.",
@@ -324,7 +324,7 @@ def clerk_dialogue(game, npc):
         return
     if count == 2:
         game.dialog.show([
-            "Sleep all right? People do here -- better than they expect.",
+            "Sleep all right? People do here, better than they expect.",
             "[c=dim]The register's right there on the desk if you're the "
             "restless sort. Sign and guest both, all the way back.[/c]",
             "Read it if you like. Folks always look for a name that left. "

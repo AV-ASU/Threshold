@@ -239,7 +239,7 @@ def bedroom_interact(game):
             "it.)[/c]",
             "CLIENT: Walter Blaine. Wants his daughter found and brought "
             "home.",
-            "MARA BLAINE, 26. Cut the family off two years ago -- 'found "
+            "MARA BLAINE, 26. Cut the family off two years ago, 'found "
             "religion' out past the highway. Last seen here, in Brimley.",
             "The job: ask my questions, find the girl, drive home by "
             "morning.",

@@ -682,18 +682,37 @@ def main():
               if isinstance(e, dict) and e.get("name") == "the_fold_told") == 1,
           "fold: only the FIRST fold mention files the note (not every speaker)")
 
-    # --- 16d. The game's writing carries no em-dashes (style rule). Guard the
-    # voice + fold + chalk + relocated-evidence strings this work added.
-    _no_dash = (
-        list(_G._DESCENT_VOICE.values())
-        and " ".join(
-            " ".join(s["beat"] + s["note"]) for s in _G._DESCENT_VOICE.values()))
-    check("--" not in _no_dash,
-          "style: the interior-voice writing uses no em-dashes (keep it human)")
-    check("--" not in " ".join(_ft["lines"]) if _ft else True,
-          "style: the fold note uses no em-dashes")
-    check("--" not in _lt,
-          "style: the Ledger evidence uses no em-dashes")
+    # --- 16d. STYLE RULE: no em-dashes in ANY player-facing writing (keep it
+    # human). Tokenize every source file and flag every non-docstring STRING
+    # literal that contains '--'. Docstrings + comments are exempt (not game
+    # writing). Locks the whole game's prose, not just this work.
+    import tokenize as _tok
+    import glob as _glob
+    import os as _os
+    _dash_hits = []
+    for _fn in sorted(_glob.glob(_os.path.join(ROOT, "scenes", "*.py"))
+                      + _glob.glob(_os.path.join(ROOT, "systems", "*.py"))
+                      + _glob.glob(_os.path.join(ROOT, "ui", "*.py"))
+                      + _glob.glob(_os.path.join(ROOT, "entities", "*.py"))):
+        with open(_fn, "rb") as _fh:
+            _tks = list(_tok.tokenize(_fh.readline))
+        _sig = [t for t in _tks
+                if t.type not in (_tok.NL, _tok.COMMENT, _tok.ENCODING)]
+        _doc = set()
+        for _i, _t in enumerate(_sig):
+            if _t.type == _tok.STRING:
+                _prev = _sig[_i - 1].type if _i > 0 else _tok.NEWLINE
+                _nxt = _sig[_i + 1].type if _i + 1 < len(_sig) else _tok.NEWLINE
+                if (_prev in (_tok.NEWLINE, _tok.INDENT, _tok.DEDENT)
+                        and _nxt == _tok.NEWLINE):
+                    _doc.add((_t.start, _t.string))
+        for _t in _tks:
+            if (_t.type == _tok.STRING and "--" in _t.string
+                    and (_t.start, _t.string) not in _doc):
+                _dash_hits.append(f"{_os.path.basename(_fn)}:{_t.start[0]}")
+    check(not _dash_hits,
+          "style: no em-dashes in any player-facing string (keep it human)"
+          + (f" (found {_dash_hits[:8]})" if _dash_hits else ""))
 
     # --- 17. The principal locals are named (NARRATIVE §2/§8) ---
     # A small town knows its people by name. Each principal surfaces a

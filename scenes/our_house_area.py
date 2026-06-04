@@ -482,7 +482,7 @@ def build_woodshed():
                 game.save.set_flag("flashlight_taken", True)
                 game.player.inventory.add("flashlight", 1)
                 game.audio.play("pickup_rare", 0.7)
-                game.show_notice("A flashlight. Press [F] in the dark -- "
+                game.show_notice("A flashlight. Press [F] in the dark, "
                                  "but light draws the eye.")
                 return
     sc.on_interact_fn = _woodshed_interact

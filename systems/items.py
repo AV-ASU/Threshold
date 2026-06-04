@@ -18,7 +18,7 @@ ITEM_DEFS = {
                                "the way you're facing. While the case is "
                                "still shallow a clean shot drops a cultist; "
                                "once you understand too much (3+ evidence) the "
-                               "rounds only stagger them -- the deeper you "
+                               "rounds only stagger them. The deeper you "
                                "see, the less the world lets you kill."},
     "pistol_ammo":   {"name": "Cartridges",
                        "kind": "key",
@@ -29,7 +29,7 @@ ITEM_DEFS = {
     "flashlight":    {"name": "Flashlight",
                        "kind": "key",
                        "desc": "A heavy steel flashlight. Press [F] to "
-                               "switch it on in the dark -- but a light in "
+                               "switch it on in the dark. But a light in "
                                "the dark is a thing that can be seen. The "
                                "longer it burns, the more the King feels "
                                "you."},
@@ -61,7 +61,7 @@ ITEM_DEFS = {
     "playscript":           {"name": "The Cult's Notes",
                        "kind": "key",
                        "desc": "A bound notebook in the congregation's own "
-                               "hands -- their compulsive, partial record of "
+                               "hands, their compulsive, partial record of "
                                "what they feel and think they understand. "
                                "None of it certain. A mask-shaped recess "
                                "sits in the cover."},

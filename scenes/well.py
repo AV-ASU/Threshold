@@ -420,7 +420,7 @@ def build_works_scriptorium():
             game.dialog.on_complete = lambda: game._descent_voice("descent_leave")
             return
         game.show_notice(
-            "The Sign, copied over and over across every surface -- a "
+            "The Sign, copied over and over across every surface. A "
             "thousand flat echoes. None of them the thing itself.",
             duration=4.0)
     sc.on_interact_fn = _interact
@@ -528,7 +528,7 @@ def build_works_sign():
         game.dialog.show_choice(
             "The mask on the altar. The Sign daubed above it. The kneeling "
             "at your back. The whole sick machine of it, here in reach.",
-            ["Lift the mask.", "Tear it down -- end this."],
+            ["Lift the mask.", "Tear it down. End this."],
             _pick, speaker="", voice="blip_soft", portrait="narrator")
     sc.on_interact_fn = _interact
     return sc
@@ -584,11 +584,11 @@ def build_works_deepstair():
                                  "Both empty.")
             elif not has_play:
                 game.show_notice("His face fits the socket above. But the "
-                                 "slot below -- a folded book's size -- "
+                                 "slot below, a folded book's size, "
                                  "stays empty.")
             else:
                 game.show_notice("Their notes fit the slot. But the socket "
-                                 "above -- the shape of a face -- stays "
+                                 "above, the shape of a face, stays "
                                  "empty.")
             return
         # Both in hand: lay out the fork once, commit on the next press.
@@ -604,17 +604,17 @@ def build_works_deepstair():
                 "below. The keystone, whole. Press it to the stone and the "
                 "stair will open.)[/c]",
                 "You have enough. The register, the names, the Preacher, the "
-                "girl her father sent you for -- and the keystone in your "
+                "girl her father sent you for, and the keystone in your "
                 "hands.",
                 "The town belongs to Him; that is why not one of them can "
                 "leave. But you were never claimed. His Sign, carried out by "
-                "the one soul He never took -- the fold opens only for that. "
+                "the one soul He never took. The fold opens only for that. "
                 "Climb out while the rope holds, and let the world learn His "
                 "name.",
                 "[s=slow]Or you carry the keystone down, past her, to the "
-                "thing all of this kneels to -- and give it to the door.[/s]",
+                "thing all of this kneels to, and give it to the door.[/s]",
                 "[c=dim](Press again to open the stair and carry the keystone "
-                "down -- or turn back, while the rope still holds.)[/c]",
+                "down, or turn back, while the rope still holds.)[/c]",
             ], speaker="", voice="blip_soft", portrait="narrator")
             return
         # Commit -- press the keystone to the stone. The stair OPENS to His
@@ -626,7 +626,7 @@ def build_works_deepstair():
         game.audio.force_silence()
         game.audio.play("low_pulse", 0.95)
         game.show_notice("You press the keystone to the stone. It knows its "
-                         "own -- the stair grinds open, and far above, the "
+                         "own. The stair grinds open, and far above, the "
                          "rope snaps. You lift the keystone away again and go "
                          "down. Only down, now.", duration=4.5)
         game.begin_transition("depths_antechamber", "from_above")
