@@ -1970,11 +1970,13 @@ class Game(CutsceneMixin):
                      and self.player.inventory.has("playscript"))
         if key == "brimley":
             # Daytime town: a LIGHT atmospheric haze, not the oppressive dim.
-            # The "too dark" read was this flat black at 170 (~67%) stacked on
-            # the (now-fixed) void skybox, the blind-spot fog, and the film
-            # grade. Keep the drifting fog + the encroaching vignette for mood,
-            # but drop the flat tint right down so it reads as day.
-            self._draw_haze(70, (40, 40, 50, 70), 14, 24, 0.3, 30)
+            # The "too dark" read was a flat black tint stacked on the
+            # blind-spot fog, the film grade, AND the grade's own vignette.
+            # Now that the sight fog is shadow-cast (off-cone reads as a shaped
+            # shadow, not a flat gray wash), the flat tint can come almost all
+            # the way down so the LIT cone reads as full day. Keep the drifting
+            # fog patches + the encroaching vignette for mood.
+            self._draw_haze(26, (40, 40, 50, 70), 14, 24, 0.3, 30)
             self._draw_vignette()
         elif holds_playscript:
             # The playscript's presence is HOSTILE -- the world dims hard
@@ -2123,33 +2125,46 @@ class Game(CutsceneMixin):
         self.screen.blit(edge, (0, 0))
 
     def _draw_sight_fog(self):
-        """Gray fog over the blind spot. The Phase-4 sight gate already HIDES
-        creatures/items outside the forward cone; this veils the off-cone AREA
-        too, so 'you can't see there' reads as fog rather than just absence. The
-        cone is the same one the gate uses (keyed to look.aim, half-angle
-        SIGHT_HALF out to SIGHT_RANGE) with a clear near-bubble around the
-        player. Tilt only -- at pitch 0 the sight gate is off and the flat
-        shipping view stays untouched."""
+        """Gray fog over the blind spot, with the clear region SHADOW-CAST
+        against solids: each ray across the cone stops at the first wall it
+        hits, so you see your sightline cut off where vision is interrupted
+        (crisp tile-edged shadows behind walls). This makes the fog HONEST --
+        it now matches the actor gate (visible_factor -> los_clear), which
+        already hides things behind walls. The cone is keyed to look.aim
+        (half-angle SIGHT_HALF, out to SIGHT_RANGE) with a clear near-bubble.
+        Tilt only -- at pitch 0 the sight gate is off and the flat shipping
+        view stays untouched."""
         if not (self._tilt_on() and self.player is not None
                 and self.state == "playing"):
             return
         from rendering.sight import (SIGHT_HALF, SIGHT_RANGE, SIGHT_NEAR,
-                                     SIGHT_ANG_FEATHER)
+                                     SIGHT_ANG_FEATHER, LOS_STEP)
         fog = pygame.Surface((SCREEN_W, SCREEN_H), pygame.SRCALPHA)
         fog.fill((58, 60, 66, SIGHT_FOG_ALPHA))         # cold, thin gray
         aim = self.look.aim
-        # Cone apex = the player's GROUND point (the sight math is ground-plane);
-        # the arc samples the cone's far lip out at SIGHT_RANGE.
-        gx, gy = self.camera.project(self.player.x, self.player.y)
+        # The sight math is ground-plane WORLD space; the apex is the player's
+        # ground point. Cast a fan of rays across the cone, marching each one
+        # out until it crosses a solid (Scene.blocks_sight, the same predicate
+        # the gate uses) or reaches SIGHT_RANGE, then project the clipped tip.
+        px, py = self.player.x, self.player.y
+        blocks = self.scene.blocks_sight
+        gx, gy = self.camera.project(px, py)
         half = SIGHT_HALF + SIGHT_ANG_FEATHER
+        steps = 48          # enough rays for clean, crisp wall shadows
         pts = [(gx, gy)]
-        steps = 22
         for i in range(steps + 1):
             a = aim - half + 2 * half * (i / steps)
-            pts.append(self.camera.project(self.player.x + math.cos(a) * SIGHT_RANGE,
-                                           self.player.y + math.sin(a) * SIGHT_RANGE))
+            ca, sa = math.cos(a), math.sin(a)
+            dist = SIGHT_RANGE
+            d = SIGHT_NEAR
+            while d < SIGHT_RANGE:
+                if blocks(px + ca * d, py + sa * d):
+                    dist = d            # sightline interrupted here
+                    break
+                d += LOS_STEP
+            pts.append(self.camera.project(px + ca * dist, py + sa * dist))
         # pygame.draw writes the colour's alpha directly, so drawing (…,0)
-        # punches the cone + bubbles fully transparent (a clear window).
+        # punches the visibility polygon + bubbles fully transparent.
         pygame.draw.polygon(fog, (0, 0, 0, 0), pts)
         near_r = max(10, int(SIGHT_NEAR * self.camera.scale))
         pygame.draw.circle(fog, (0, 0, 0, 0), (gx, gy), near_r)
