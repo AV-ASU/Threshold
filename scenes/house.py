@@ -409,9 +409,10 @@ def house_on_enter(game, scene):
     until the confrontation fires), and the blocking variant after
     confrontation. Two states for the Clerk:
 
-      pre-confrontation:  visible NPC near the fireplace, talkable
-                          (uses clerk_dialogue). Wanders within
-                          the living room. Solid.
+      pre-confrontation:  the deskman at his post -- stationed behind the
+                          front-desk register, watching whoever comes down,
+                          talkable (uses clerk_dialogue). `watch` movement,
+                          so he turns to face the player. Solid.
       post-confrontation: planted in the front doorway, no_prompt
                           (no dialogue offered), solid. The 'sit
                           back down' line is one-shot from the
@@ -432,25 +433,18 @@ def house_on_enter(game, scene):
         host.dialogue_fn = None
         scene.add_npc(host)
     else:
-        # The Clerk is at the table by the fireplace on the east side
-        # of the living room. He wanders a small circuit (kitchen <->
-        # living room) so the player sees him moving when they pass
-        # through.
-        nx = 13 * TILE + 16
-        ny = 7 * TILE + 16
+        # The trap-keeper at his post: behind the front-desk register (the
+        # SW side of it), facing into the room. `watch` turns him to follow
+        # the player -- the smiling man whose eyes never quite leave you --
+        # so the arrival reads as a man who was waiting for you to come down.
+        nx = 8 * TILE + 16
+        ny = 3 * TILE + 16
         host = NPC(nx, ny, "Clerk", "clerk",
                    solid=True, no_prompt=False,
                    voice="blip_low", portrait="clerk",
                    dialogue_fn=clerk_dialogue,
-                   movement="patrol", speed=0.6,
-                   waypoints=[
-                       (13 * TILE + 16, 7 * TILE + 16),   # by fireplace
-                       (15 * TILE + 16, 8 * TILE + 16),   # east
-                       (10 * TILE + 16, 8 * TILE + 16),   # toward kitchen
-                       (10 * TILE + 16, 4 * TILE + 16),   # north
-                   ],
-                   patrol_pause=2.5)
-        host.facing = (-1, 0)
+                   movement="watch", speed=0.6, radius=320)
+        host.facing = (0, 1)
         host.tag = "host_innkeeper"
         scene.add_npc(host)
 
