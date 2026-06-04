@@ -1731,8 +1731,8 @@ def draw_player_sprite(surf, x, y, facing, walk_phase=0, armor=None,
             s = 1 if view == "right" else -1
             pygame.draw.rect(lay, SKIN_SH, (cx - 4, hcy, 8, 2))       # brim shadow
             ex = cx + s - 1
-            pygame.draw.rect(lay, HI, (ex, hcy, 3, 2))               # eye catch
-            pygame.draw.rect(lay, INK, (ex + (2 if s > 0 else 1), hcy, 1, 2))
+            pygame.draw.rect(lay, INK, (ex, hcy, 3, 2))              # dark socket
+            lay.set_at((ex + (2 if s > 0 else 1), hcy), HI)          # one glint
             pygame.draw.rect(lay, SKIN_SH, (cx + 4 * s, hcy + 2, 2, 2))  # nose/jaw
             pygame.draw.rect(lay, DK, (cx - 5, hcy - 11, 10, 7))      # crown (short)
             pygame.draw.ellipse(lay, DK, (cx - 5, hcy - 13, 10, 5))   # crown top
@@ -1742,8 +1742,8 @@ def draw_player_sprite(surf, x, y, facing, walk_phase=0, armor=None,
         else:
             pygame.draw.rect(lay, SKIN_SH, (cx - 4, hcy + 1, 8, 3))   # brim shadow band
             for ex in (cx - 4, cx + 1):
-                pygame.draw.rect(lay, HI, (ex, hcy + 1, 3, 2))       # eye catch (life)
-                pygame.draw.rect(lay, INK, (ex + 1, hcy + 1, 1, 2))  # pupil
+                pygame.draw.rect(lay, INK, (ex, hcy + 1, 3, 2))       # dark socket (like the NPCs)
+                lay.set_at((ex + 1, hcy + 1), HI)                     # ONE living glint (no bar)
             pygame.draw.line(lay, SKIN_SH, (cx, hcy + 3), (cx, hcy + 5), 1)  # nose
             # fedora: a clean LOW crown (narrower than the brim, the proper
             # proportion) + band + a wide brim at the brow.
