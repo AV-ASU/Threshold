@@ -1611,6 +1611,15 @@ def _tilt_warp(flat, camera):
 _DOOR_HEAD = 19      # doorway opening height; the lintel beam runs head->rise
 
 
+def _quad_pt(quad, fx, fy):
+    """A point inside a projected quad (bl, br, tr, tl) at fractions
+    fx (0..1 left->right along the base) and fy (0..1 bottom->top)."""
+    bl, br, tr, tl = quad
+    bx = bl[0] + (br[0] - bl[0]) * fx; by = bl[1] + (br[1] - bl[1]) * fx
+    tx_ = tl[0] + (tr[0] - tl[0]) * fx; ty_ = tl[1] + (tr[1] - tl[1]) * fx
+    return (bx + (tx_ - bx) * fy, by + (ty_ - by) * fy)
+
+
 def _extrude_box(surf, camera, scene, tx, ty, z0, z1, neigh=_WALL_CHARS):
     """One tile extruded between heights z0..z1. Rotation-correct: every
     EXPOSED side face (neighbour char not in `neigh`) is drawn, depth-sorted
@@ -1625,6 +1634,12 @@ def _extrude_box(surf, camera, scene, tx, ty, z0, z1, neigh=_WALL_CHARS):
     t = [P(-hw, -hw, z1), P(hw, -hw, z1), P(hw, hw, z1), P(-hw, hw, z1)]
     near = tuple(int(c * 0.5) for c in _WALL_FACE)   # N/S faces
     side = tuple(int(c * 0.7) for c in _WALL_FACE)   # E/W faces
+    # Per-tile value jitter so the mass reads as many battered blocks rather
+    # than one flat slab (tile-seeded -> stable, no shimmer as the camera
+    # moves; matches the floor jitter).
+    jv = (_vary(tx * 8009 + ty, 3) % 15) - 7
+    near = tuple(max(0, min(255, c + jv)) for c in near)
+    side = tuple(max(0, min(255, c + jv)) for c in side)
 
     def is_n(ax, ay):
         if scene.wrap_y: ay %= scene.h
@@ -1645,6 +1660,27 @@ def _extrude_box(surf, camera, scene, tx, ty, z0, z1, neigh=_WALL_CHARS):
     vis.sort(key=lambda f: f[0])                      # far first
     for _, quad, col in vis:
         pygame.draw.polygon(surf, col, quad)
+    # Battered detail on the exposed near (south) face so no two wall faces
+    # read the same: a per-tile dark water-stain streak, a pit cluster, or a
+    # faint lit course line. Projected through the quad so it leans correctly.
+    if z1 - z0 > TILE * 0.4 and not is_n(tx, ty + 1):
+        sq = (g[3], g[2], t[2], t[3])
+        hsh = _vary(tx, ty + 7)
+        if hsh % 3 == 0:                               # water-stain dribble
+            fx = 0.2 + (hsh % 6) / 10.0
+            a = _quad_pt(sq, fx, 0.05); b = _quad_pt(sq, fx, 0.85)
+            pygame.draw.line(surf, tuple(int(c * 0.6) for c in near),
+                             (int(a[0]), int(a[1])), (int(b[0]), int(b[1])), 1)
+        elif hsh % 4 == 0:                             # pitting cluster
+            for k in range(3):
+                p = _quad_pt(sq, 0.25 + ((hsh >> k) % 6) / 12.0,
+                             0.25 + ((hsh >> (k + 2)) % 5) / 12.0)
+                pygame.draw.rect(surf, tuple(int(c * 0.7) for c in near),
+                                 (int(p[0]), int(p[1]), 2, 2))
+        elif hsh % 5 == 0:                             # a faint lit course line
+            a = _quad_pt(sq, 0.04, 0.5); b = _quad_pt(sq, 0.96, 0.5)
+            pygame.draw.line(surf, tuple(min(255, int(c * 1.4)) for c in near),
+                             (int(a[0]), int(a[1])), (int(b[0]), int(b[1])), 1)
     # flat shaded top cap: lit but kept dark to read as the game's near-black
     # walls -- top clearly lighter than the sides for form, darker grout edge.
     pygame.draw.polygon(surf, tuple(int(c * 0.72) for c in _WALL_TOP), t)
