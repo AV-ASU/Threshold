@@ -5,7 +5,7 @@
 ---
 
 You are continuing work on **THRESHOLD**, a 1994 narrative-horror game in
-Python/pygame (top-down, no combat — walk, watch, hide; the only lethal
+Python/pygame (oblique tilted camera, no combat — walk, watch, hide; the only lethal
 thing is the King in Yellow). Work on branch **`claude/hopeful-bell-1zI7f`**;
 commit and push there as you go.
 

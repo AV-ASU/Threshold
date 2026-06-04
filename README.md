@@ -1,6 +1,7 @@
 # Threshold
 
-A 2D top-down narrative-horror game built with pygame. In 1994 you drive
+A 2D narrative-horror game built with pygame, played through an oblique
+tilted camera (~55° by default; F3 drops to the flat pitch-0 view). In 1994 you drive
 into **Brimley** -- a private investigator hired by a man named Blaine to
 find his daughter Mara, who found religion out past the highway and
 vanished. You came to ask a few questions and drive home. You can't: the

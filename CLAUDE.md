@@ -1,9 +1,11 @@
 # THRESHOLD — Claude guide
 
-A top-down narrative-horror game in **pygame**. Every sprite is drawn
-**procedurally** — there is no image-asset pipeline. The core loop is
-stealth/dread (walk, watch, hide), driven by a **visibility** meter that
-feeds the **King in Yellow**, the lethal apex pursuer.
+A narrative-horror game in **pygame**, played through an **oblique
+tilted camera** (the view tilts ~55° by default; **F3** toggles back to
+the flat pitch-0 view). Every sprite is drawn **procedurally** — there is
+no image-asset pipeline. The core loop is stealth/dread (walk, watch,
+hide), driven by a **visibility** meter that feeds the **King in Yellow**,
+the lethal apex pursuer. (See the tilted-camera track below + `CAMERA.md`.)
 
 ## Dev commands
 

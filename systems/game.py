@@ -127,8 +127,9 @@ SEAMLESS_WORLD_SCENES = OUTDOOR_SCENES | {
 # the player stays comfortably on screen.
 CAM_LOOKAHEAD = 96
 
-# Oblique-camera tilt (CAMERA.md Phase 2). DEBUG-toggled with F3; eases in.
-# pitch 0 = the shipping top-down view. TILT_PITCH_DEG is the locked ~55deg.
+# Oblique-camera tilt (CAMERA.md Phase 2). The tilt is the DEFAULT view;
+# F3 toggles back to the flat pitch-0 view (the legacy raster) and eases in.
+# pitch 0 = that flat fallback. TILT_PITCH_DEG is the locked ~55deg default.
 TILT_PITCH_DEG = 55
 TILT_EASE = 0.12             # per-frame lerp of pitch toward its target
 TILT_ZOOM = 0.72             # camera scale at full tilt (1.0 = top-down)
