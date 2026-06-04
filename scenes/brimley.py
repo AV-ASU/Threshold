@@ -18,13 +18,18 @@ from .base import Scene
 from .dialogue import _evidence
 
 
-def _brimley_voice(pages, voice="blip_mid"):
+def _brimley_voice(pages, voice="blip_mid", fold=False):
     """NPC dialogue_fn from a fixed page list. Speaker name + portrait are
-    read off the NPC at call time so each resident speaks as themselves."""
+    read off the NPC at call time so each resident speaks as themselves.
+    `fold=True` marks a local who describes the fold (looping roads): the
+    FIRST such conversation files the PI's fold note (Game._fold_mentioned,
+    globally one-shot, so only the first speaker triggers it)."""
     def _fn(game, npc):
         portrait = getattr(npc, "portrait", None) or npc.sprite_kind
         game.dialog.show(pages, speaker=npc.name, voice=voice,
                          portrait=portrait)
+        if fold and hasattr(game, "_fold_mentioned"):
+            game._fold_mentioned(npc.name)
     return _fn
 
 
@@ -660,9 +665,9 @@ def build_brimley():
     # the edges: denial, time-loop confusion, a child saying the quiet
     # part out loud.
     def _resident(tx, ty, name, kind, pages, movement="wander",
-                  voice="blip_mid", radius=52):
+                  voice="blip_mid", radius=52, fold=False):
         sc.add_npc(NPC(tx * TILE + 16, ty * TILE + 16, name, kind,
-                       dialogue_fn=_brimley_voice(pages, voice),
+                       dialogue_fn=_brimley_voice(pages, voice, fold=fold),
                        movement=movement, radius=radius))
 
     # The locals anchored to their houses -- not patrolling random
@@ -684,7 +689,7 @@ def build_brimley():
         "Cold came in early this year. And it never lifted. Just sat down on the town and stayed.",
         "Stopped marking the calendar. Not the days -- where would I be counting toward?",
         "[c=dim]You're new. We don't get new. Nobody gets in. Nobody gets--[/c]",
-    ], voice="blip_low", movement="homebody", radius=34)
+    ], voice="blip_low", movement="homebody", radius=34, fold=True)
     # Mrs. Calder is by the east-edge road. She sets a place at supper
     # for a guest she can't name -- a certainty she can't explain that
     # someone is coming. No vanished husband (that read as a perceptible
@@ -692,7 +697,7 @@ def build_brimley():
     # question. She watches the road. She does not wave.
     _resident(96, 8, "Mrs. Calder", "townswoman", [
         "I set an extra place at supper. Have done for a while now.",
-        "Couldn't tell you who for. Someone's coming -- I just know it, the "
+        "Couldn't tell you who for. Someone's coming. I just know it, the "
         "way you know your own name. So I lay the plate.",
         "[c=dim]Some nights I hear the door and near get up to answer. Then I "
         "remember I don't know who I'd be letting in.[/c]",
@@ -707,7 +712,7 @@ def build_brimley():
         "that out the hard way, so you don't have to.[/c]",
         "[c=dim]But you came IN. How did you come IN? ...Tell me how you came "
         "in.[/c]",
-    ])
+    ], fold=True)
     # The Tisdale boy lives INSIDE the kid's house (the `kid_house`
     # scene, kid_dialogue). He used to also stand here on the front step,
     # but that put a solid NPC right on the `from_kid_house` doorway
@@ -721,7 +726,7 @@ def build_brimley():
         "The Sheriff'll tell you to leave. He knows you can't. He can't either.",
         "Stay on the roads. People who go off the roads come out wrong-side.",
         "[c=dim]Go on home, son. ...Oh. Right. None of us can.[/c]",
-    ])
+    ], fold=True)
     # The newcomer -- standing on the path to the haunted_house
     # (their house now). She is here to welcome you. She is patient.
     sc.add_npc(NPC(8 * TILE + 16, 95 * TILE + 16, "A woman", "townswoman",

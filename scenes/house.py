@@ -486,15 +486,15 @@ def house_interact(game):
     game.audio.play("pickup_rare", 0.7)
     game.audio.play("low_pulse", 0.45)
     _evidence(game, "the_ledger", [
-        "You flip back through the register out of habit. Check-ins in the "
-        "Clerk's hand, years of them -- and a check-out date beside each "
-        "name, where they settled up and left.",
-        "Then the check-outs just... stop. The last one's months back. Every "
-        "name since signs in and never out. Yours among them now, the ink "
-        "still wet.",
+        "You flip back through the register out of habit. Names signed in, in "
+        "the Clerk's hand, years of them, and a date beside each one where "
+        "they settled up and left.",
+        "Then those dates just... stop. The last anyone signed out was months "
+        "back. Every name since signs in and never out. Yours among them now, "
+        "the ink still wet.",
         "[c=dim]Probably nothing. A clerk who got lazy, dropped the habit. "
-        "...Still. Months. That's a long time to forget to write the date "
-        "they left. I'll keep it in mind.[/c]",
+        "...Still. Months. That's a long time to forget to write down the day "
+        "a guest left. I'll keep it in mind.[/c]",
     ])
 
 

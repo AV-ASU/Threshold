@@ -481,7 +481,7 @@ def _mara_voice(game, npc):
     ], speaker="", voice="blip_soft", portrait="narrator")
     _evidence(game, "the_congregation", [
         "Mara, kneeling with the congregation. Turned. There was never "
-        "anyone to bring back -- only this, and now you're in it with her.",
+        "anyone to bring back. Only this, and now you're in it with her.",
     ])
 
 

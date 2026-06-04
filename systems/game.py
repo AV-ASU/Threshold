@@ -2361,14 +2361,16 @@ class Game(CutsceneMixin):
         # chalk door. Still the professional, mildly curious.
         "chalk_surface": {
             "beat": [
-                "[c=dim]A door, chalked on the floorboards. Life-size, careful "
-                "-- a frame laid flat, as if you'd step DOWN through it. ...Kids "
-                "do stranger. I write it down anyway.[/c]",
+                "[c=dim]A door, chalked onto the floorboards. The size of a "
+                "real one, and careful about it. A frame laid flat, like you "
+                "could step down through it. ...Kids do stranger. I wrote it "
+                "down anyway.[/c]",
             ],
             "note": [
-                "Someone's chalked a door on the barn floor. Life-size, and "
-                "not careless -- jambs, lintel, even a knob. Drawn flat, like "
-                "a thing to step down into. Around nothing. Bare plank under it.",
+                "Someone chalked a door onto the barn floor. Full size, and "
+                "they weren't careless about it. Jambs, a lintel, even a knob. "
+                "Drawn flat, like a thing you'd step down into. Around nothing. "
+                "Bare plank under it.",
                 "Could be a child. Doesn't read like a child. It reads like "
                 "practice.",
                 "Filing it. Probably nothing. I've filed nothing before and "
@@ -2380,32 +2382,32 @@ class Game(CutsceneMixin):
         "descent_dig": {
             "beat": [
                 "[c=dim]Their whole lives, sorted and shelved down here. Like "
-                "they set everything human at the door and walked in lighter. "
-                "...My pen won't hold still. That's new.[/c]",
+                "they set everything human down at the door and walked in "
+                "lighter. ...My pen won't hold still. That's new.[/c]",
             ],
             "note": [
-                "This is no cellar. It's a dig -- room on room of it, going "
+                "This is no cellar. It's a dig. Room after room of it, going "
                 "down, and it cost them a year of hands.",
                 "Everything they owned is catalogued in here. Coats, "
                 "photographs, a child's shoe, folded. Set down neat, the way "
                 "you leave a thing you mean never to need again.",
-                "I've worked bad rooms. First one to put a shake in my hands. "
-                "I do not like how far down I am.",
+                "I've worked bad rooms. This is the first one to put a shake "
+                "in my hands. I do not like how far down I am.",
             ],
         },
         # THE WORKS -- the drawn doors multiply, cruder, obsessive. Rattled,
         # and clinging to the way back up.
         "chalk_works": {
             "beat": [
-                "[c=dim]Down here it's nothing but the drawn doors -- walls, "
-                "floor, over each other. None of them open anything. They knew "
-                "that. They kept drawing.[/c]",
+                "[c=dim]Down here it's nothing but the drawn doors. Walls, "
+                "floor, over each other. None of them open onto anything. They "
+                "knew that. They kept drawing.[/c]",
             ],
             "note": [
                 "The whole dig is papered in them. Chalk doors on chalk doors, "
                 "hundreds, going down with the tunnel.",
                 "Not one opens onto anything. They knew. You can see them "
-                "pressing harder, trying to get it right -- like the right one "
+                "pressing harder, trying to get it right, like the right one "
                 "would finally come loose from the wall.",
                 "I came down for a missing girl. I keep checking over my "
                 "shoulder for the rope. Still there. I say so to myself more "
@@ -2419,17 +2421,17 @@ class Game(CutsceneMixin):
         # start of (the §1b line -- he can't tell it isn't his own thought).
         "descent_leave": {
             "beat": [
-                "[c=dim]You turn through the bound notes -- their own hands, "
+                "[c=dim]You turn through the bound notes. Their own hands, "
                 "page on page. ...You've got plenty here. More than plenty.[/c]",
                 "[c=dim]A case this size, you don't keep digging it. You carry "
                 "it up and let the people who can drop a roof on this town do "
                 "the rest. Time to climb out.[/c]",
             ],
             "note": [
-                "Read the bound one -- their own notes. There's enough in this "
+                "Read the bound one. Their own notes. There's enough in this "
                 "town to hang it twice over. Past enough.",
                 "No call to go deeper. You don't work a case past the point "
-                "it's made; you bring it up to the ones who can finish it.",
+                "it's made. You bring it up to the ones who can finish it.",
                 "Climb out. Make the call. Let the law come down on Brimley "
                 "like a roof. That's the job. [c=dim]That's always been the "
                 "job.[/c]",
@@ -2442,16 +2444,16 @@ class Game(CutsceneMixin):
             "beat": [
                 "[c=dim]His face, in your hands. Light as folded paper, cold, "
                 "and it knows your grip.[/c]",
-                "[c=dim]And you KNOW it, the way you know a thing in a dream: "
-                "carry this, and the town opens. The roads let you out.[/c]",
+                "[c=dim]And you KNOW it, the way you know a thing in a dream. "
+                "Carry this, and the town opens. The roads let you out.[/c]",
                 "[c=dim]The names, the register, the girl her father wanted "
-                "found -- you have enough. You could be in the car by morning. "
+                "found. You have enough. You could be in the car by morning. "
                 "You could just go.[/c]",
             ],
             "note": [
-                "I have the mask off the altar. His face -- pale as a drowned "
+                "I have the mask off the altar. His face. Pale as a drowned "
                 "man, cold, light as paper.",
-                "And I'm sure of a thing I've no right to be sure of: this is "
+                "And I'm sure of a thing I've no right to be sure of. This is "
                 "the way out. Whoever carries it, the town lets go.",
                 "I have enough for any court that would hear me. I could climb "
                 "out and never look down again.",
@@ -2470,7 +2472,7 @@ class Game(CutsceneMixin):
             "note": [
                 "The stair took the rope when it opened. No way back up. Only "
                 "down now.",
-                "Everything in me is pulling for the surface -- the car, the "
+                "Everything in me is pulling for the surface. The car, the "
                 "road, the county line. And there is nothing left to climb. So "
                 "I go down, because down is the only direction left.",
                 "I shut my eyes and the chalk doors are still there, drawn on "
@@ -2525,6 +2527,47 @@ class Game(CutsceneMixin):
             self.show_notice("Another door, drawn where no door is. Bare "
                              "wall behind the chalk.")
         return True
+
+    def _fold_mentioned(self, name):
+        """The FIRST time any local describes the fold -- the roads that loop,
+        the town you can't drive out of -- the PI files a note and a short
+        reflection. One-shot globally (flag `voice_fold_heard`); the note names
+        whoever told him. A NOTE, never evidence. §1b-safe: it is the SPATIAL
+        fold (perceptible -- looping roads), never the door/cosmology. Chains
+        the reflection off the NPC's line so it lands after they finish."""
+        if self.save is None or self.save.flag("voice_fold_heard"):
+            return
+        self.save.set_flag("voice_fold_heard", True)
+        notes = self.save.arg("notes", [])
+        if not isinstance(notes, list):
+            notes = []
+        if not any(isinstance(e, dict) and e.get("name") == "the_fold_told"
+                   for e in notes):
+            notes.append({"name": "the_fold_told", "lines": [
+                f"{name} told me you can't drive out of Brimley. The roads "
+                "loop. Make for the county line and the corn hands you back "
+                "where you started.",
+                "Said it flat. The way you'd say it always rains here. No fear "
+                "left in it. A fact they've all stopped arguing with.",
+                "A whole town doesn't go strange like that over a lie. [c=dim]"
+                "And my own engine turned over and died at the lodge steps. "
+                "So.[/c]",
+            ]})
+            self.save.set_arg("notes", notes)
+            if hasattr(self, "_flash_notebook"):
+                self._flash_notebook()
+
+        def _beat():
+            self.dialog.show([
+                f"[c=dim]{name} says there's no driving out of here. The "
+                "roads loop, the corn hands you back. Said it like weather.[/c]",
+                "[c=dim]A town doesn't talk like that about nothing. And my "
+                "car died at the steps. ...So.[/c]",
+            ], speaker="", voice="blip_soft", portrait="narrator")
+        if self.dialog.active:
+            self.dialog.on_complete = _beat
+        else:
+            _beat()
 
     # ---- Endings ----
 

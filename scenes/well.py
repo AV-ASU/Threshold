@@ -335,12 +335,12 @@ def build_maras_room():
         game.player.inventory.add("unsent_letter", 1)
         game.audio.play("pickup_rare", 0.7)
         _evidence(game, "maras_room", [
-            "Her cell. A cot, a burnt-down candle, a cult robe on a peg -- "
+            "Her cell. A cot, a burnt-down candle, a cult robe on a peg, "
             "worn soft. Chosen.",
             "Folded inside the robe: a letter to her father. Stamped, never "
             "mailed. It opens \"Dad.\"",
             "\"...I'm sorry for how I left. I couldn't explain it and have "
-            "it sound sane. The dreams aren't dreams anymore -- they're "
+            "it sound sane. The dreams aren't dreams anymore. They're "
             "full of answers. I'm just hunting the questions now. Don't "
             "come after me. I'm not lost. I've never been this close.\"",
             "This is a room someone moved into. Blaine hired you to bring "
@@ -410,8 +410,8 @@ def build_works_scriptorium():
             game.audio.play("low_pulse", 0.45)
             game.dialog.show([
                 "[c=dim]Among the loose copies, one volume is bound and "
-                "whole -- their own notes, not the Sign traced again. A "
-                "mask-shaped recess in the cover. You take it.[/c]",
+                "whole. Their own notes, not the Sign traced again. A recess "
+                "in the cover, the shape of a mask. You take it.[/c]",
                 "[c=dim]The scribe is wet to the knee.[/c]",
             ], speaker="", voice="blip_soft", portrait="narrator")
             # Reading their notes seeds the want-to-leave (the King's pull to

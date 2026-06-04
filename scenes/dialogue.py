@@ -264,6 +264,8 @@ def sheriff_dialogue(game, npc):
             "Won't start. Won't ever. Nothing with an engine leaves Brimley.",
             "[c=dim]I didn't touch it. None of us did. It's the town.[/c]",
         ], speaker="Sheriff Vane", voice="blip_gruff", portrait="sheriff")
+        if hasattr(game, "_fold_mentioned"):
+            game._fold_mentioned("Sheriff Vane")
     elif n == 3:
         # The town is gone. He's local. He watched it happen.
         game.dialog.show([

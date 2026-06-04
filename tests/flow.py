@@ -654,6 +654,47 @@ def main():
     check(len(_cd) >= 6,
           "chalk: the Scriptorium is swarmed with chalk doors (the compulsion)")
 
+    # --- 16c. The fold-talk note: a local describing the fold (looping roads)
+    # files the PI's note ONCE (the first speaker), names them, stays a NOTE.
+    gf2 = new_game()
+    gf2.load_scene_now("brimley", "default")
+    ready(gf2)
+    _royce = next((n for n in gf2.scene.npcs if n.name == "Royce"), None)
+    _garrick = next((n for n in gf2.scene.npcs if n.name == "Garrick"), None)
+    check(_royce is not None and _garrick is not None,
+          "fold: the fold-mentioning locals are present")
+    _evp = gf2._evidence_count()
+    if _royce:
+        _royce.dialogue_fn(gf2, _royce)
+        g_ = 0
+        while gf2.dialog.active and g_ < 30:
+            gf2.dialog.advance(); g_ += 1
+    _ft = next((e for e in gf2.save.arg("notes", [])
+                if isinstance(e, dict) and e.get("name") == "the_fold_told"), None)
+    check(_ft is not None and "Royce" in " ".join(_ft["lines"]),
+          "fold: a local describing the fold files the note, naming who told you")
+    check(gf2._evidence_count() == _evp,
+          "fold: the fold note is a NOTE, not evidence (never arms the King-gate)")
+    if _garrick:
+        ready(gf2)
+        _garrick.dialogue_fn(gf2, _garrick)
+    check(sum(1 for e in gf2.save.arg("notes", [])
+              if isinstance(e, dict) and e.get("name") == "the_fold_told") == 1,
+          "fold: only the FIRST fold mention files the note (not every speaker)")
+
+    # --- 16d. The game's writing carries no em-dashes (style rule). Guard the
+    # voice + fold + chalk + relocated-evidence strings this work added.
+    _no_dash = (
+        list(_G._DESCENT_VOICE.values())
+        and " ".join(
+            " ".join(s["beat"] + s["note"]) for s in _G._DESCENT_VOICE.values()))
+    check("--" not in _no_dash,
+          "style: the interior-voice writing uses no em-dashes (keep it human)")
+    check("--" not in " ".join(_ft["lines"]) if _ft else True,
+          "style: the fold note uses no em-dashes")
+    check("--" not in _lt,
+          "style: the Ledger evidence uses no em-dashes")
+
     # --- 17. The principal locals are named (NARRATIVE §2/§8) ---
     # A small town knows its people by name. Each principal surfaces a
     # proper-name speaker label, not a role-tag. (The Clerk, Mr. Sable, is
