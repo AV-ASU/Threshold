@@ -288,29 +288,35 @@ def build_arrival_road():
     Nothing stops you turning back -- a DIRT PATH crosses it east-west (the
     real route: east to the Lodge yard, west on to the country lane and town).
 
-    The dead car at the crossroads is the PI's own, killed at the steps on the
-    way in. It is the SPREAD escape: the engine catches only with the Sign,
-    and then the looping road finally lets a car through (NARRATIVE §1/§6)."""
-    W, H = 15, 18
+    The dead car is the PI's own, killed at the steps on the way in. It is the
+    SPREAD escape: the engine catches only with the Sign, and then the looping
+    road finally lets a car through (NARRATIVE §1/§6).
+
+    The road is deliberately TALLER than the camera view (40 tiles) so the
+    wrap never shows its own repeat in a single frame -- you don't notice the
+    loop until you've walked far enough for your own car to come back around.
+    The PATH (the E-W route) sits mid-scene; the car a little north of it."""
+    W, H = 15, 40
+    PATH = (19, 20, 21)                     # the E-W dirt path rows (mid-scene)
     floor_rows = []
     for y in range(H):
         row = ["g"] * W
         for x in (6, 7, 8):                 # N-S gravel road
             row[x] = "d"
-        if 8 <= y <= 10:                    # E-W dirt path (the real route)
+        if y in PATH:                       # E-W dirt path (the real route)
             for x in range(W):
                 row[x] = "d"
         floor_rows.append("".join(row))
     objects_l = []
     for y in range(H):
         row = ["."] * W
-        if not (8 <= y <= 10):              # corn shoulders, cut by the path
+        if y not in PATH:                   # corn shoulders, cut by the path
             row[0] = "C"
             row[W - 1] = "C"
         objects_l.append(row)
     for dy in (-1, 0, 1):                   # path mouths W (lane) + E (yard)
-        objects_l[9 + dy][0] = "a"
-        objects_l[9 + dy][W - 1] = "e"
+        objects_l[20 + dy][0] = "a"
+        objects_l[20 + dy][W - 1] = "e"
     objects = ["".join(r) for r in objects_l]
     sc = Scene("arrival_road", floor_rows, objects, music="outside")
     # The road never ends: walk north or south and the same stretch wraps
@@ -318,20 +324,23 @@ def build_arrival_road():
     sc.wrap_y = True
     sc.add_exit("a", "country_lane", "from_arrival_road")
     sc.add_exit("e", "our_house_area", "from_arrival_road")
-    sc.set_spawn("default", 7, 9)
-    sc.set_spawn("from_our_house_area", W - 2, 9)   # walked WEST from the yard
-    sc.set_spawn("from_country_lane", 1, 9)         # walked EAST from town side
+    sc.set_spawn("default", 7, 20)
+    sc.set_spawn("from_our_house_area", W - 2, 20)   # walked WEST from the yard
+    sc.set_spawn("from_country_lane", 1, 20)         # walked EAST from town side
 
-    # The PI's car, dead on the shoulder at the crossroads. 3-tile solid
-    # footprint under the sprite so the player bumps it. Reaching it with the
-    # Sign fires the SPREAD ending; without it, the engine never catches.
-    car_tx, car_ty = 7, 6
+    # The PI's car, dead on the WEST shoulder at the crossroads -- OFF the
+    # driving lanes (cols 6-8), so the looping road stays walkable both ways
+    # and you pass the car each time round. Solid footprint under the sprite;
+    # the interact anchor sits at its road-facing edge so you trigger it from
+    # the road. Reaching it with the Sign fires SPREAD; without it the engine
+    # never catches.
+    car_tx, car_ty = 4, 16                            # west shoulder, N of path
     car_x = car_tx * TILE + 16
     car_y = car_ty * TILE + 16
     sc.add_decoration(Decoration(car_x, car_y, "player_car"))
-    sc._car_pos = (car_x, car_y)
+    sc._car_pos = ((car_tx + 1) * TILE + 16, car_y)   # east edge, by the road
     objs = [list(r) for r in sc.objects]
-    for cx in (car_tx - 1, car_tx, car_tx + 1):
+    for cx in (car_tx - 1, car_tx, car_tx + 1):       # cols 3-5 (the shoulder)
         if 0 <= cx < sc.w:
             objs[car_ty][cx] = "X"
     sc.objects = objs
@@ -348,29 +357,49 @@ def build_arrival_road():
                              "catches, and dies. The fold won't let the car "
                              "go -- not empty-handed.")
     sc.on_interact_fn = _road_interact
-    sc.add_interactable(car_x, car_y, 44)
+    sc.add_interactable(sc._car_pos[0], sc._car_pos[1], 44)
 
     # Atmosphere: corn tufts off the road, a reflector post or two, a dead
     # crow on the gravel, a missing-flyer the rain has taken. Hide spots in
     # the corn shoulders.
     rng = random.Random(2031)
-    for _ in range(30):
+    for _ in range(70):
         gx = rng.randint(0, W - 1) * TILE + rng.randint(0, 30)
         gy = rng.randint(0, H - 1) * TILE + rng.randint(0, 30)
         tx_, ty_ = gx // TILE, gy // TILE
         if 6 <= tx_ <= 8:                   # keep the road clear
             continue
-        if 8 <= ty_ <= 10:                  # keep the path clear
+        if ty_ in PATH:                     # keep the path clear
             continue
         sc.add_decoration(Decoration(gx, gy, "grass_tuft"))
-    sc.add_decoration(Decoration(9 * TILE + 8, 4 * TILE + 22, "dead_crow"))
-    sc.add_decoration(Decoration(5 * TILE + 16, 13 * TILE + 16, "creepy_tree"))
-    sc.add_decoration(Decoration(10 * TILE + 16, 2 * TILE + 16, "missing_flyer"))
+    sc.add_decoration(Decoration(9 * TILE + 8, 14 * TILE + 22, "dead_crow"))
+    sc.add_decoration(Decoration(5 * TILE + 16, 27 * TILE + 16, "creepy_tree"))
+    sc.add_decoration(Decoration(10 * TILE + 16, 9 * TILE + 16, "missing_flyer"))
+    sc.add_decoration(Decoration(9 * TILE + 8, 31 * TILE + 22, "dead_crow"))
     sc.hide_spots = [
-        (2 * TILE + 16, 5 * TILE + 16, "behind"),
-        (12 * TILE + 16, 14 * TILE + 16, "behind"),
-        (2 * TILE + 16, 13 * TILE + 16, "behind"),
+        (2 * TILE + 16, 12 * TILE + 16, "behind"),
+        (12 * TILE + 16, 26 * TILE + 16, "behind"),
+        (2 * TILE + 16, 34 * TILE + 16, "behind"),
     ]
+
+    def _road_update(game, scene, dt):
+        # The TELL. The road wraps N-S (wrap_y), so walking it long enough
+        # brings the same stretch -- and the PI's own dead car -- back around.
+        # The recurring car IS the recognition (no narration, NARRATIVE §1b
+        # discipline); a soft, escalating dread pulse underscores the wrongness
+        # the moment the fold folds the road back. Detected as the big single-
+        # frame y jump the wrap produces.
+        p = game.player
+        if p is None:
+            return
+        wh = scene.h * TILE
+        last = getattr(scene, "_last_py", None)
+        if last is not None and abs(p.y - last) > wh * 0.5:
+            scene._loops = getattr(scene, "_loops", 0) + 1
+            game.save.set_flag("arrival_road_looped", True)
+            game.audio.play("low_pulse", min(0.75, 0.34 + 0.12 * scene._loops))
+        scene._last_py = p.y
+    sc.on_update_fn = _road_update
     return sc
 
 
