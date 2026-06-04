@@ -547,35 +547,55 @@ def main():
               if isinstance(e, dict) and e.get("name") == "the_case") == 1,
           "lure: re-logging the case does not duplicate the note")
 
-    # --- 16b. The PI's interior voice down the descent (NARRATIVE §6/§8) ---
-    # The put-together investigator comes apart as he understands too much,
-    # baited toward the Mask's off-ramp. Each beat files a NOTE (never
-    # evidence -- it must not arm the King-gate) and the Mask beat carries the
-    # "just leave" temptation. §1b discipline: never explains the door.
+    # --- 16b. The PI's interior voice -- from DIVERSE examined things ------
+    # The voice fires on what the PI EXAMINES (chalk doors, the dig's lives,
+    # the Mask), NOT on bare room entry. Chalk doors are ONE recurring motif,
+    # not the only source. NOTES, never evidence. §1b: never explains the door.
     gv = new_game()
     def _vnotes(g):
         return [e["name"] for e in g.save.arg("notes", []) if isinstance(e, dict)]
     ev_before = gv._evidence_count()
-    for key, note in (("well_bottom", "descent_shaft"),
-                      ("works_sorting", "descent_dig"),
-                      ("works_scriptorium", "descent_exit"),
-                      ("depths_antechamber", "descent_panic")):
+    # (a) Examining a chalk door fires the scene's voice beat (surface->deep).
+    for key, note in (("barn", "chalk_surface"),
+                      ("well_passage", "chalk_works"),
+                      ("depths_antechamber", "chalk_deep")):
         gv.dialog.active = False
         gv.load_scene_now(key, "default")
-        if gv.scene.on_enter_fn:
-            gv.scene.on_enter_fn(gv, gv.scene)
-        check(note in _vnotes(gv),
-              f"voice: entering {key} files the '{note}' interior-voice note")
+        doors = getattr(gv.scene, "_chalk_doors", None)
+        check(bool(doors), f"voice: {key} has chalk doors registered")
+        if doors:
+            gv.player.x, gv.player.y = doors[0]
+            handled = gv._try_chalk_interact()
+            check(handled and note in _vnotes(gv),
+                  f"voice: examining the chalk door in {key} files '{note}'")
+    # (b) A DIFFERENT thing -- the Sorting Hall's catalogued lives -- fires its
+    # own beat. The voice is not all chalk doors.
+    gv.dialog.active = False
+    gv.load_scene_now("works_sorting", "default")
+    gv.player.x, gv.player.y = gv.scene._table_pos
+    gv.scene.on_interact_fn(gv)
+    check("descent_dig" in _vnotes(gv),
+          "voice: examining the dig's catalogued lives fires its own beat (a different trigger)")
+    # (c) The notes never arm the King-gate.
     check(gv._evidence_count() == ev_before,
           "voice: the interior-voice notes never inflate the evidence/King-gate")
-    # The arc is one-shot per beat (no duplicate on re-entry).
+    # (d) Re-examining a chalk door does not duplicate its beat.
     gv.dialog.active = False
-    gv.load_scene_now("well_bottom", "default")
-    gv.scene.on_enter_fn(gv, gv.scene)
-    check(sum(1 for n in _vnotes(gv) if n == "descent_shaft") == 1,
-          "voice: re-entering a room does not duplicate its beat")
-    # Content: the Mask beat baits the off-ramp (leave/out/go); no beat ever
-    # says 'dimension' or otherwise explains the door.
+    gv.load_scene_now("well_passage", "default")
+    gv.player.x, gv.player.y = gv.scene._chalk_doors[1]   # a second door
+    gv._try_chalk_interact()
+    check(sum(1 for n in _vnotes(gv) if n == "chalk_works") <= 1,
+          "voice: re-examining chalk doors does not duplicate the beat")
+    # (e) Chalk doors come in FLOOR and WALL variants.
+    from scenes import load_scene as _ldcd
+    _kinds = set()
+    for k in ("barn", "well_passage", "depths_antechamber"):
+        for d in _ldcd(k).decorations:
+            if d.kind in ("chalk_door", "chalk_door_wall"):
+                _kinds.add(d.kind)
+    check("chalk_door" in _kinds and "chalk_door_wall" in _kinds,
+          "voice: chalk doors are drawn on the FLOOR and on WALLS")
+    # Content: the Mask beat baits leaving; nothing ever says 'dimension'.
     from systems.game import Game as _G
     _mask = " ".join(_G._DESCENT_VOICE["descent_mask"]["beat"]
                      + _G._DESCENT_VOICE["descent_mask"]["note"]).lower()

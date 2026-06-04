@@ -1765,6 +1765,7 @@ def _draw_doorway(surf, camera, scene, tx, ty):
 # screen-aligned sprite that ignores the camera.
 _FLOOR_DECAL_KINDS = frozenset((
     "rug", "bloodstain", "gore", "yellow_sign", "bloody_handprint", "bloody_pile",
+    "chalk_door",
 ))
 
 # Wall-mounted decorations. Under tilt these are lifted onto the wall face as
@@ -1776,6 +1777,7 @@ _WALL_DECO_KINDS = frozenset((
     "mirror", "photo", "wrong_photo", "missing_flyer", "polaroid_wall",
     "banner", "calendar", "clock", "apology_wall",
     "buck_head", "antler_rack", "mounted_fish", "wrong_taxidermy",
+    "chalk_door_wall",
 ))
 _WALL_MOUNT_Z = 18
 
@@ -1827,7 +1829,7 @@ def draw_wall_deco(surf, camera, scene, deco, mount_z, woff=(0.0, 0.0)):
     of the wall, edge-on (a sliver) when you look along it."""
     nx, ny = _wall_normal(scene, deco.x, deco.y)
     ax, ay = -ny, nx                       # along the wall (perp to the normal)
-    half = 11.0
+    half = 15.0 if deco.kind == "chalk_door_wall" else 11.0
     bx, by = deco.x + woff[0], deco.y + woff[1]
     p1 = camera.project(bx - ax * half, by - ay * half, mount_z)
     p2 = camera.project(bx + ax * half, by + ay * half, mount_z)
@@ -1839,10 +1841,12 @@ def draw_wall_deco(surf, camera, scene, deco, mount_z, woff=(0.0, 0.0)):
     if width < 3:
         return                             # edge-on -> a sliver; skip
     drawfn = getattr(deco, f"_draw_{deco.kind}", deco._draw_unknown)
-    C = 22
+    C = 28 if deco.kind == "chalk_door_wall" else 22
     canvas = pygame.Surface((C * 2, C * 2), pygame.SRCALPHA)
     drawfn(canvas, C, C)
     h = int(C * 2 * 0.66)                   # card screen height (upright)
+    if deco.kind == "chalk_door_wall":     # a door is tall, not a small plaque
+        h = int(C * 2 * 0.95)
     card = pygame.transform.scale(canvas, (max(3, int(width)), max(3, h)))
     ang = math.degrees(math.atan2(-(p2[1] - p1[1]), p2[0] - p1[0]))
     if abs(ang) > 0.5:
@@ -2591,6 +2595,25 @@ class Scene:
         readables/pickups resolved in on_interact_fn (which the prompt
         system otherwise can't see)."""
         self.interactables.append((x, y, radius))
+
+    def add_chalk_door(self, x, y, voice=None, seed=0, wall=False):
+        """Place a chalk-drawn door (the cult's drawn-door compulsion) AND an
+        [E]-examinable point. `wall=False` draws it flat on the FLOOR (a decal
+        you'd step down into); `wall=True` hangs it on the nearest perimeter
+        WALL. Examining one surfaces the PI's interior voice
+        (Game._try_chalk_interact): the FIRST chalk door examined in a scene
+        that set `voice` fires that beat; the rest give a brief flat line. Most
+        chalk doors are placed voice-less -- they are the creeping VISUAL
+        motif; only a few key ones carry a beat."""
+        from entities.decoration import Decoration
+        kind = "chalk_door_wall" if wall else "chalk_door"
+        self.add_decoration(Decoration(x, y, kind, seed=seed))
+        if not hasattr(self, "_chalk_doors"):
+            self._chalk_doors = []
+        self._chalk_doors.append((x, y))
+        if voice is not None:
+            self._chalk_voice = voice
+        self.add_interactable(x, y, 40)
 
     def find_marker(self, ch):
         for ty, r in enumerate(self.objects):

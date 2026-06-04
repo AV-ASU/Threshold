@@ -88,8 +88,6 @@ def build_well_bottom():
             game.audio.play("door_open", 0.6)
             game.begin_transition("brimley", "from_well")
     sc.on_interact_fn = _interact
-    # Interior voice: first rung underground -- still the professional.
-    sc.on_enter_fn = lambda game, scene: game._descent_voice("descent_shaft")
     return sc
 
 
@@ -142,6 +140,11 @@ def build_well_passage():
     # One cultist working the corridor, end to end.
     sc.add_enemy(_cultist(3 * TILE + 16, 5 * TILE + 16, speed=0.85))
     _ambient(sc, "cult_breath", 0.16, 5.0, 9.0)
+    # Chalk doors -- the motif thickening underground (floor + wall). The
+    # first Works door carries the voice beat (rattled).
+    sc.add_chalk_door(3 * TILE + 16, 7 * TILE + 16, voice="chalk_works", seed=2)
+    sc.add_chalk_door(11 * TILE + 16, 7 * TILE + 16, seed=8)
+    sc.add_chalk_door(12 * TILE + 16, 7 * TILE + 28, seed=4, wall=True)
     return sc
 
 
@@ -269,16 +272,14 @@ def build_works_sorting():
     def _interact(game):
         tx, ty = sc._table_pos
         if (abs(game.player.x - tx) < 40 and abs(game.player.y - ty) < 40):
-            if not game.save.flag("sorting_recognized"):
-                game.save.set_flag("sorting_recognized", True)
-                game.dialog.show([
-                    "[c=dim]A child's shoe. Folded.[/c]",
-                ], speaker="", voice="blip_soft", portrait="narrator")
+            # Examining the catalogued lives the diggers shed fires the PI's
+            # voice (the dig's scale -- first fear). A distinct trigger from
+            # the chalk doors: different thing, different words.
+            if not game.save.flag("voice_descent_dig"):
+                game._descent_voice("descent_dig")
             else:
                 game.show_notice("A child's shoe. Folded.", duration=3.0)
     sc.on_interact_fn = _interact
-    # Interior voice: the scale of the dig lands -- the first fear admitted.
-    sc.on_enter_fn = lambda game, scene: game._descent_voice("descent_dig")
     return sc
 
 
@@ -419,8 +420,6 @@ def build_works_scriptorium():
             "thousand flat echoes. None of them the thing itself.",
             duration=4.0)
     sc.on_interact_fn = _interact
-    # Interior voice: rattled, clinging to the climb out.
-    sc.on_enter_fn = lambda game, scene: game._descent_voice("descent_exit")
     return sc
 
 

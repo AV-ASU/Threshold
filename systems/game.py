@@ -1376,6 +1376,12 @@ class Game(CutsceneMixin):
                     self.audio.play("bump", 0.55)
                     self.show_notice(notice)
                     return
+        # Chalk doors -- the cult's drawn-door compulsion. Examining one
+        # surfaces the PI's interior voice (the descent's escalation lives on
+        # what he EXAMINES, not on bare room entry). Placed clear of other
+        # interactables, so it's safe to resolve before the NPC/scene checks.
+        if self._try_chalk_interact():
+            return
         # Standard NPC interaction
         best = None; bd = 1e9
         for npc in self.scene.npcs:
@@ -2351,51 +2357,59 @@ class Game(CutsceneMixin):
     # sensation, and the Mask-certainty reads "the way you know a thing in a
     # dream" (the lure, never named).
     _DESCENT_VOICE = {
-        # The shaft floor: still the professional, but the first wrong note.
-        "descent_shaft": {
+        # SURFACE -- the barn (Mara's, the cult's old quarters). The first
+        # chalk door. Still the professional, mildly curious.
+        "chalk_surface": {
             "beat": [
-                "[c=dim]Down the rope. Cold air climbing out of a hole with "
-                "no bottom to it. ...Fine. Work it like any other room.[/c]",
+                "[c=dim]A door, chalked on the floorboards. Life-size, careful "
+                "-- a frame laid flat, as if you'd step DOWN through it. ...Kids "
+                "do stranger. I write it down anyway.[/c]",
             ],
             "note": [
-                "Down the well on the rope. The shaft runs deeper than any "
-                "well has business running -- no water, no bottom, just cold "
-                "air walking up it.",
-                "Steady. This is a missing-persons. Not a ghost story. Work "
-                "it like one.",
-                "Find the Blaine girl. Climb out. Drive home. In that order.",
+                "Someone's chalked a door on the barn floor. Life-size, and "
+                "not careless -- jambs, lintel, even a knob. Drawn flat, like "
+                "a thing to step down into. Around nothing. Bare plank under it.",
+                "Could be a child. Doesn't read like a child. It reads like "
+                "practice.",
+                "Filing it. Probably nothing. I've filed nothing before and "
+                "been wrong.",
             ],
         },
-        # The Sorting Hall: the scale lands -- a year of hands, lives shelved.
-        # First fear admitted.
+        # THE WORKS -- the Sorting Hall. NOT a chalk door: examining the
+        # catalogued lives the diggers shed. The scale lands; first fear.
         "descent_dig": {
             "beat": [
-                "[c=dim]They didn't build this. They dug it -- by hand, for "
-                "a year. My pen won't hold still writing that. That's new.[/c]",
+                "[c=dim]Their whole lives, sorted and shelved down here. Like "
+                "they set everything human at the door and walked in lighter. "
+                "...My pen won't hold still. That's new.[/c]",
             ],
             "note": [
                 "This is no cellar. It's a dig -- room on room of it, going "
                 "down, and it cost them a year of hands.",
-                "Their whole lives are sorted and shelved down here. Like "
-                "they set everything human at the door and walked in lighter.",
+                "Everything they owned is catalogued in here. Coats, "
+                "photographs, a child's shoe, folded. Set down neat, the way "
+                "you leave a thing you mean never to need again.",
                 "I've worked bad rooms. First one to put a shake in my hands. "
                 "I do not like how far down I am.",
             ],
         },
-        # The Scriptorium: rattled, and clinging to the way back up.
-        "descent_exit": {
+        # THE WORKS -- the drawn doors multiply, cruder, obsessive. Rattled,
+        # and clinging to the way back up.
+        "chalk_works": {
             "beat": [
-                "[c=dim]The same mark, ten thousand times, every wall. I keep "
-                "turning to check the way back up. The rope's still there.[/c]",
+                "[c=dim]Down here it's nothing but the drawn doors -- walls, "
+                "floor, over each other. None of them open anything. They knew "
+                "that. They kept drawing.[/c]",
             ],
             "note": [
-                "Every surface is the one sign, copied and copied -- not "
-                "decoration. Someone trying to get it right and never once "
-                "managing it.",
-                "I came down for answers. Somewhere on the rope I stopped "
-                "wanting them.",
-                "I keep looking over my shoulder for the climb out. Still "
-                "there. I say so to myself more than a steady man would.",
+                "The whole dig is papered in them. Chalk doors on chalk doors, "
+                "hundreds, going down with the tunnel.",
+                "Not one opens onto anything. They knew. You can see them "
+                "pressing harder, trying to get it right -- like the right one "
+                "would finally come loose from the wall.",
+                "I came down for a missing girl. I keep checking over my "
+                "shoulder for the rope. Still there. I say so to myself more "
+                "than a steady man would.",
             ],
         },
         # The Mask: THE TEMPTATION. With this, the town lets me out -- the lie
@@ -2421,23 +2435,22 @@ class Game(CutsceneMixin):
                 "so I remember that I did.",
             ],
         },
-        # Past the Deep Stair: the rope snapped behind him, by his own hand,
-        # and he can't square still going DOWN with the way out in his pocket.
-        # The put-together man, gone.
-        "descent_panic": {
+        # THE DEPTHS -- past the point of no return. Panic; the doors in his
+        # head now. The put-together man, gone.
+        "chalk_deep": {
             "beat": [
-                "[c=dim]The rope's gone -- snapped when I opened the stair. I "
-                "opened it. I can't find the part of me that chose that.[/c]",
-                "[c=dim]I have the way out in my pocket. So why am I still "
-                "going down. ...Keep moving. Don't think about the car.[/c]",
+                "[c=dim]I see the drawn doors with my eyes shut now. The "
+                "rope's gone -- I opened the stair, I did that -- and the way "
+                "out's in my pocket and my feet keep going down.[/c]",
             ],
             "note": [
                 "The stair took the rope. No climbing back -- and I chose "
                 "that, and I cannot for the life of me tell you why.",
-                "His face is in my pocket. The way out, the whole time. And "
-                "my feet keep going down.",
-                "[c=dim]keep moving. find her. don't think about the car. "
-                "don't think about the car.[/c]",
+                "His face is in my pocket. The way out, the whole time. My "
+                "feet keep going down.",
+                "I shut my eyes and the chalk doors are still there, drawn on "
+                "the inside of them. [c=dim]I think I could draw one from "
+                "memory. I don't want to know that about myself.[/c]",
             ],
         },
     }
@@ -2467,6 +2480,26 @@ class Game(CutsceneMixin):
                 self._flash_notebook()
         self.dialog.show(spec["beat"], speaker="", voice="blip_soft",
                          portrait="narrator")
+
+    def _try_chalk_interact(self):
+        """E on a chalk door (registered via Scene.add_chalk_door). The FIRST
+        examined in a scene that set `_chalk_voice` fires that interior-voice
+        beat; any other chalk door gives a brief flat line. Returns True if a
+        chalk door was examined (so try_interact stops)."""
+        doors = getattr(self.scene, "_chalk_doors", None)
+        if not doors:
+            return False
+        if not any(abs(self.player.x - cx) < 40 and abs(self.player.y - cy) < 40
+                   for cx, cy in doors):
+            return False
+        self.audio.play("confirm", 0.5)
+        voice = getattr(self.scene, "_chalk_voice", None)
+        if voice and not self.save.flag(f"voice_{voice}"):
+            self._descent_voice(voice)
+        else:
+            self.show_notice("Another door, drawn where no door is. Bare "
+                             "wall behind the chalk.")
+        return True
 
     # ---- Endings ----
 

@@ -309,6 +309,11 @@ def build_barn():
         (7 * TILE + 16, 2 * TILE + 16, "behind"),   # beside E shelf
         (12 * TILE + 16, 4 * TILE + 16, "behind"),  # in the back stall
     ]
+    # Chalk doors -- the cult's drawn-door compulsion. The barn (Mara's, the
+    # diggers' old quarters) is where the PI first meets the motif: one chalked
+    # flat on the floor (the voice beat -- examine it) and one on the wall.
+    sc.add_chalk_door(4 * TILE + 16, 9 * TILE + 16, voice="chalk_surface", seed=3)
+    sc.add_chalk_door(7 * TILE + 16, 1 * TILE + 10, seed=5, wall=True)
 
     def _barn_interact(game):
         px, py = game.player.x, game.player.y
