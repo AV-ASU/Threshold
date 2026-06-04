@@ -10,7 +10,8 @@ for that key.
 from .base import Scene, tile_footstep, OBJECT_DEFS, FLOOR_DEFS, TILE
 from .house import (build_bedroom, build_house, build_basement,
                     build_son_room)
-from .our_house_area import build_our_house_area, build_woodshed
+from .our_house_area import (build_our_house_area, build_woodshed,
+                             build_arrival_road)
 from .forest_path import build_forest_path
 from .well import (build_well_bottom, build_well_passage,
                    build_works_vats, build_works_sorting,
@@ -66,7 +67,8 @@ SCENE_BUILDERS = {
     "house":              build_house,              # the ground floor
     "son_room":           build_son_room,           # the Clerk's room
     "basement":           build_basement,           # -> innkeeper_basement
-    "our_house_area":     build_our_house_area,     # -> yard
+    "our_house_area":     build_our_house_area,     # -> yard (dead car removed -> arrival_road)
+    "arrival_road":       build_arrival_road,       # -> the looping road W of the lodge (the SPREAD car)
     "woodshed":           build_woodshed,           # -> Clerk's shed interior
     # Next door
     "kid_house":          build_kid_house,

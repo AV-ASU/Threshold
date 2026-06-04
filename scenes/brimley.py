@@ -1012,21 +1012,10 @@ def build_brimley():
         (29 * TILE + 16, 27 * TILE + 16, "behind"),  # creepy_tree, bridge west pocket
     ]
 
-    # Player's car: parked on the east bank, visible from the
-    # village entry. It's YOUR car -- you drove in -- so there are no
-    # keys to find; the fold is the only lock. Reaching it with the
-    # Sign (the Pallid Mask) triggers the escape ending (SPREAD). 3-tile
-    # footprint of solid 'X' tiles under the sprite so collision
-    # matches the visual.
-    car_tx, car_ty = 85, 8
-    car_x = car_tx * TILE + 16
-    car_y = car_ty * TILE + 16
-    sc.add_decoration(Decoration(car_x, car_y, "player_car"))
-    sc._car_pos = (car_x, car_y)
+    # The PI's car has MOVED to the arrival road west of the Lodge (where it
+    # died on the way in -- the SPREAD escape now lives there, scenes/
+    # our_house_area.build_arrival_road). Brimley keeps only the dead pickup.
     objects_list = [list(r) for r in sc.objects]
-    for cx in (car_tx - 1, car_tx, car_tx + 1):
-        if 0 <= cx < sc.w:
-            objects_list[car_ty][cx] = "X"
     # The dead pickup is a big hulk -- solid tiles under its length so
     # the player can't walk through it (decoration at tile 95,55).
     for cx in (93, 94, 95, 96):
@@ -1035,25 +1024,8 @@ def build_brimley():
     # Mrs. Calder's outdoor table (solid), her settings drawn on top.
     objects_list[72][71] = "t"
     sc.objects = objects_list
-    # Hide spot beside the car (cover for a brief breather between
-    # village and west bank).
-    sc.hide_spots.append((car_x, (car_ty + 1) * TILE + 16, "behind"))
 
     def _brimley_interact(game):
-        cx, cy = sc._car_pos
-        if (abs(game.player.x - cx) < 40
-                and abs(game.player.y - cy) < 40):
-            sign = game.player.inventory.has("sigil_rubbing")
-            if sign and hasattr(game, "_begin_car_escape"):
-                game._begin_car_escape()          # the Sign breaks the fold
-                return
-            # The fold holds: without a shard of Him aboard, the engine
-            # turns over and over and never catches.
-            game.audio.play("door_locked", 0.6)
-            game.show_notice("You turn the key. The engine catches, and "
-                             "catches, and dies. The fold won't let the "
-                             "car go -- not empty-handed.")
-            return
         # The well -- the only mouth into the Works. Needs the rope to
         # rig the first descent; once tied, the rope stays as the climb
         # route until the playscript snaps it on a later descent
@@ -1128,11 +1100,10 @@ def build_brimley():
             ]
             game.dialog.show(line, speaker="", voice="blip_soft",
                              portrait="narrator")
-    # [E] cues for the interactions resolved in _brimley_interact -- the
-    # car (escape), the well (the only way down), the woodshed door, the
-    # tool barrow and the payphone all had NO prompt before, so the player
-    # had to guess where to press E. Radii match the handler's checks.
-    sc.add_interactable(sc._car_pos[0], sc._car_pos[1], 40)
+    # [E] cues for the interactions resolved in _brimley_interact -- the well
+    # (the only way down), the woodshed door, the tool barrow and the payphone
+    # had NO prompt before, so the player had to guess where to press E. Radii
+    # match the handler's checks. (The car moved to the arrival road.)
     sc.add_interactable(sc._well_pos[0], sc._well_pos[1], 36)
     sc.add_interactable(sc._shed_door_pos[0], sc._shed_door_pos[1], 40)
     sc.add_interactable(sc._barrow_pos[0], sc._barrow_pos[1], 36)

@@ -103,6 +103,7 @@ OUTDOOR_DECAY = {
 OUTDOOR_SCENES = {"our_house_area", "forest_path",
                   "void_boss", "graveyard",
                   "country_lane", "cornfield_maze",
+                  "arrival_road",
                   "gravel_road_north", "river_crossing"}
 
 # The continuous outside world. Crossing between any two of these is

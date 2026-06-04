@@ -333,6 +333,31 @@ def main():
     check("car_keys" not in src,
           "escape: the car no longer checks for car_keys")
 
+    # --- 13b. The SPREAD car lives on the ARRIVAL ROAD west of the lodge ---
+    # The dead car (and the escape) moved off brimley onto the looping arrival
+    # road; the yard's west exit routes through it, and the road wraps (the
+    # fold made the drive-in an endless loop you can turn off of any time).
+    from scenes import load_scene as _ld13
+    _yard = _ld13("our_house_area")
+    check(_yard.exits.get("a", (None,))[0] == "arrival_road",
+          "geo: the lodge yard's west exit lands on the arrival road")
+    _road = _ld13("arrival_road")
+    check(_road.exits.get("a", (None,))[0] == "country_lane"
+          and _road.exits.get("e", (None,))[0] == "our_house_area",
+          "geo: the arrival road's dirt path links country_lane (W) and yard (E)")
+    check(_road.wrap_y and hasattr(_road, "_car_pos"),
+          "geo: the arrival road loops (wrap_y) and holds the dead car")
+    check("_car_pos" not in inspect.getsource(_ml.build_brimley),
+          "geo: the car is gone from brimley (consolidated at the lodge)")
+    gr = new_game()
+    gr.load_scene_now("arrival_road")
+    ready(gr)
+    gr.player.x, gr.player.y = gr.scene._car_pos
+    gr.player.inventory.add("sigil_rubbing", 1)
+    gr.scene.on_interact_fn(gr)
+    check(gr._ending_active == "escape_alone",
+          "geo: SPREAD fires at the car on the arrival road (with the Sign)")
+
     # --- 14. "He knows you": the dream note + Threshold recognition ---
     # Living the journal door-dream writes a personal NOTE (not a clue), and
     # arriving at the real Threshold having dreamed it lands a recognition
