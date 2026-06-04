@@ -63,16 +63,94 @@ Implemented + verified (compileall + smoke + flow green; canon guards added).
 > canon fact (mirror the existing `the_dream` / `the_case` guards: forbid
 > "dimension"/"lure"/"bait"/"the king", assert it never inflates evidence).
 
-### 6b. Author the buried lore inside the cult's notes  *(NARRATIVE §4, §9)*
+### 6b. The cult's notes → THREE testimony fragments + Mask-only keystone  *(NARRATIVE §4, §1b; design settled 2026-06)*
 
-The wrapper is done (§6a). What's left is the **contents**: the
-congregation's own compulsive, unreliable, partial record — the longing, the
-compulsion, the dig, the bargain — as **unconfirmed testimony the game never
-confirms.** Never the author's voice; never "dimension."
+**Design settled with the user (this supersedes §6a's single-notebook wrapper
+AND the §7 "Mask + notes" keystone).** Two decisions:
 
-- [ ] Author the buried lore as fragmentary, longing, unreliable testimony.
-  Surface it where the notes are read/referenced (Scriptorium pickup expands;
-  optional re-read beats). Keep it *felt*, never expository.
+1. **The keystone is the Pallid Mask ALONE.** The notes are decoupled from the
+   endgame entirely. SPREAD already gated on `sigil_rubbing` alone; now the
+   **Deep Stair** gate (`scenes/well.py`) and the **Threshold seal**
+   (`scenes/depths.py`) do too. This makes the fork symmetric and removes a
+   soft-lock surface. See §7 (now Mask-only).
+2. **The single `playscript` item is retired and replaced by THREE collectible
+   lore fragments** (3 new keys; saves are in-memory so no migration). They are
+   **pure lore, gate nothing.** Placement: **1 on the critical path**
+   (Scriptorium) + **2 optional** (a Works side room, a Depths side room).
+
+**Structure (locked):** the **cult's own voice lives in the item DESCRIPTION**
+(flat label `Cultist personal testimony:` + 2 separate quotes, rendered on
+their own lines); the **PI's reaction is logged to `notes`** on pickup (never
+`evidence`). The aches are **solvable problems** (a debt, an addiction, a
+broken back — a longing for a *solution*), never grief/necromancy. The arc
+escalates: **a human problem → the bargain → the self dissolved into
+obsession.** Approved final text:
+
+- **The Calling** (`cult_calling`, Scriptorium, crit-path)
+  - *desc:* "Cultist personal testimony:" / "I had been drinking for eleven
+    years. I quit a hundred times and never once stayed quit. Then I dreamed of
+    a door, and a voice that said it could take it from me clean. I have not
+    touched a drop since I came." / "The bank took the farm in the spring. By
+    summer I was dreaming the same dream as a hundred strangers, and every one
+    of us was already driving north to the same town."
+  - *notes:* "Every hand different. Every one of them grateful. I keep waiting
+    for the page where somebody admits they were tricked. It isn't here."
+- **The Bargain** (`cult_bargain`, a Works side room)
+  - *desc:* "Cultist personal testimony:" / "My back has been broken nine years.
+    He says I will stand straight the day our work is finished. We are nearly
+    finished. Soon we can all help ourselves." / "He asks so little of us. Only
+    everything, and only the once."
+  - *notes:* "They write about the bargain like a debt almost paid off. Not one
+    of them can say what they put up for it, only that the last payment is
+    close. I never took a confession this happy."
+- **The Digging** (`cult_digging`, a Depths side room, deepest)
+  - *desc:* "Cultist personal testimony:" / "There are only a few feet of earth
+    left between us and the door now. We dig in shifts so the work never stops,
+    one hand on the rite, one hand in the dirt. We have only to reach the door."
+    / "I do not sleep. I dig. We hold the rite and we dig and we do not stop.
+    Almost there. Almost. The door. The door. The door."
+  - *notes:* "The last pages stop being sentences. Just the word door, over and
+    over, pressed hard enough to tear the paper. Whatever these people used to
+    be, the digging finished it."
+
+**New scene content (user request, same pass): ambient NON-REACTIVE cultists.**
+- **Mining cultists** — cultists DIGGING in the deep, who **never react to the
+  player**: no chase, no grab, and **no gaze / no visibility rise**. Pure
+  ambient labor (the obsessive dig made visual; pairs with The Digging).
+- **The rite-holder** — a cultist **kneeling at the Sign Chamber altar with the
+  Mask**, also fully non-reactive. The closing-rite tableau made present (this
+  is the §1b "the rite claims the collective" beat, shown not told).
+Both need a passive sprite-only NPC mode that is excluded from the cultist-gaze
+visibility tick. (`cult_convert` is gaze-only-passive; these go further: NO
+gaze at all.)
+
+**Other unsurfaced-lore beats from the same review (delivery assigned):**
+- River as the diggers' road → environmental decal in the water room (no text).
+- Townsfolk drain ("so tired lately, the whole town is") → 1-2 locals' idle
+  lines; the "Brimley is His battery" feeding, felt never named.
+- **Mrs. Calder** → the set place she waits at for a guest she can't name
+  ("Is it you? ... No, this could not be for you. I will know Him when He
+  comes.").
+- **Mr. Sable** → fulfilled while the town dims ("never felt more fulfilled...
+  every room spoken for... not one of them seems to be about. Nobody leaves the
+  Arcadia.").
+- **Mara** → made the named, human face of the anonymous testimony: journal
+  carries the late-arrival arc ("I was the last one in... it took me one
+  winter... the first thing that ever fit"); hive recognition lands evidence #6
+  ("There was never anyone down here to save. I am exactly where I meant to end
+  up.").
+
+**Cut from the missing-lore list (already handled, do NOT add text):** the
+admits-but-never-releases geometry (the looping world + townspeople), the
+Watcher-as-His-gaze (the visibility climb *is* the statement), and Carcosa as
+the inside of Him (the death cutscene already is this).
+
+- [ ] items.py: retire `playscript`, add the 3 keys (desc above); Mask desc → standalone keystone.
+- [ ] well.py: Scriptorium gives `cult_calling`; place `cult_bargain`; Deep Stair → Mask only; rite-holder at the altar.
+- [ ] depths.py: Threshold seal → Mask only; place `cult_digging`; mining cultists.
+- [ ] notes-log each pickup; move the carrying-haze/leave-pull from playscript to the Mask; repoint the Toby line.
+- [ ] Calder + Sable + townsfolk-drain dialogue; Mara journal/hive; river decal.
+- [ ] NARRATIVE §4/§6/§7 subtractive edits (Mask-only); flow.py guards (seal works Mask-only; notes not evidence; no "dimension").
 
 ### ✅ 8. Mask = "permission to leave" + the PI's distressed notes — DONE
 
