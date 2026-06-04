@@ -1691,62 +1691,88 @@ def draw_player_sprite(surf, x, y, facing, walk_phase=0, armor=None,
     lo = int(math.sin(walk_phase) * 2)            # leg phase
     hemsway = int(abs(math.sin(walk_phase)))      # coat hem breathes with the gait
     sh_y = cy - 11                                # shoulder line
-    # --- legs + scuffed boots under the long hem ---
-    pygame.draw.rect(lay, pants, (cx - 6, cy + 6, 12, 8))
-    pygame.draw.rect(lay, boots, (cx - 6, cy + 13, 5, 5 + max(0, -lo)))
-    pygame.draw.rect(lay, boots, (cx + 1, cy + 13, 5, 5 + max(0, lo)))
-    pygame.draw.rect(lay, (20, 16, 13), (cx - 6, cy + 17, 5, 2))
-    pygame.draw.rect(lay, (20, 16, 13), (cx + 1, cy + 17, 5, 2))
-    # --- the long overcoat: broad shoulders tapering to a mid-calf hem ---
-    pygame.draw.rect(lay, coat, (cx - 8, sh_y, 16, 22 + hemsway))
-    pygame.draw.rect(lay, coat, (cx - 9, sh_y, 18, 4))                  # shoulder cap
-    pygame.draw.circle(lay, coat, (cx - 8, sh_y + 1), 2)
-    pygame.draw.circle(lay, coat, (cx + 8, sh_y + 1), 2)
-    pygame.draw.rect(lay, coat_lo, (cx + 3, sh_y, 5, 22))               # shadow side
-    pygame.draw.rect(lay, coat_hi, (cx - 8, sh_y, 1, 20))              # rim light
-    pygame.draw.rect(lay, coat_lo, (cx - 8, cy + 8, 16, 3))            # hem shadow
-    for hx in range(cx - 7, cx + 8, 3):                                # frayed hem
+    # --- legs + scuffed boots under the long hem (a LEAN frame) ---
+    pygame.draw.rect(lay, pants, (cx - 5, cy + 6, 10, 8))
+    pygame.draw.rect(lay, boots, (cx - 5, cy + 13, 4, 5 + max(0, -lo)))
+    pygame.draw.rect(lay, boots, (cx + 1, cy + 13, 4, 5 + max(0, lo)))
+    pygame.draw.rect(lay, (20, 16, 13), (cx - 5, cy + 17, 4, 2))
+    pygame.draw.rect(lay, (20, 16, 13), (cx + 1, cy + 17, 4, 2))
+    # --- the long overcoat: a SLIM frame, narrow shoulders to a mid-calf hem ---
+    pygame.draw.rect(lay, coat, (cx - 6, sh_y, 13, 22 + hemsway))       # body
+    pygame.draw.rect(lay, coat, (cx - 7, sh_y, 15, 3))                  # shoulder line
+    pygame.draw.rect(lay, coat_lo, (cx + 3, sh_y, 4, 22))              # shadow side
+    pygame.draw.rect(lay, coat_hi, (cx - 6, sh_y, 1, 20))             # rim light
+    pygame.draw.rect(lay, coat_lo, (cx - 6, cy + 8, 13, 3))           # hem shadow
+    for hx in range(cx - 5, cx + 7, 3):                               # frayed hem
         pygame.draw.line(lay, coat_lo, (hx, cy + 10), (hx, cy + 11 + (hx % 2)), 1)
-    if view != "back":                                                 # hands in pockets
-        pygame.draw.rect(lay, coat_lo, (cx - 7, cy + 1, 3, 5))
-        pygame.draw.rect(lay, coat_lo, (cx + 4, cy + 1, 3, 5))
-    # --- the turned-up collar of the overcoat (coat detail, behind the head) ---
+    if view != "back":                                                # hands in pockets
+        pygame.draw.rect(lay, coat_lo, (cx - 5, cy + 1, 3, 5))
+        pygame.draw.rect(lay, coat_lo, (cx + 3, cy + 1, 3, 5))
+    # --- the turned-up collar of the overcoat (behind the head) ---
     if view == "back":
-        pygame.draw.rect(lay, coat, (cx - 5, sh_y - 4, 10, 5))         # raised collar
-        pygame.draw.rect(lay, coat_lo, (cx - 5, sh_y - 1, 10, 2))
+        pygame.draw.rect(lay, coat, (cx - 4, sh_y - 4, 9, 5))         # raised collar
+        pygame.draw.rect(lay, coat_lo, (cx - 4, sh_y - 1, 9, 2))
         pygame.draw.line(lay, coat_lo, (cx, sh_y - 2), (cx, cy + 8), 1)  # back seam
     elif view in ("left", "right"):
-        pygame.draw.rect(lay, coat, (cx - 4, sh_y - 4, 8, 5))          # raised collar
-        pygame.draw.rect(lay, coat_lo, (cx - 4, sh_y - 1, 8, 2))
+        pygame.draw.rect(lay, coat, (cx - 3, sh_y - 4, 7, 5))         # raised collar
+        pygame.draw.rect(lay, coat_lo, (cx - 3, sh_y - 1, 7, 2))
     else:
-        pygame.draw.polygon(lay, coat, [(cx - 6, sh_y - 3), (cx - 2, sh_y + 1),
-                                        (cx - 6, sh_y + 3)])           # collar wings
-        pygame.draw.polygon(lay, coat, [(cx + 6, sh_y - 3), (cx + 2, sh_y + 1),
-                                        (cx + 6, sh_y + 3)])
-        pygame.draw.polygon(lay, coat_lo, [(cx - 5, sh_y), (cx, sh_y + 6),
-                                           (cx + 5, sh_y)])             # lapel V
-        pygame.draw.rect(lay, collar, (cx - 2, sh_y, 4, 4))            # pale shirt
-        pygame.draw.rect(lay, tie, (cx - 1, sh_y + 2, 2, 6))          # loose tie
-        pygame.draw.circle(lay, coat_lo, (cx, cy), 1)                  # buttons
+        pygame.draw.polygon(lay, coat, [(cx - 5, sh_y - 3), (cx - 2, sh_y + 1),
+                                        (cx - 5, sh_y + 3)])          # collar wings
+        pygame.draw.polygon(lay, coat, [(cx + 5, sh_y - 3), (cx + 2, sh_y + 1),
+                                        (cx + 5, sh_y + 3)])
+        pygame.draw.polygon(lay, coat_lo, [(cx - 4, sh_y), (cx, sh_y + 5),
+                                           (cx + 4, sh_y)])            # lapel V
+        pygame.draw.rect(lay, collar, (cx - 2, sh_y, 4, 4))           # pale shirt
+        pygame.draw.rect(lay, tie, (cx - 1, sh_y + 2, 2, 6))         # loose tie
+        pygame.draw.circle(lay, coat_lo, (cx, cy), 1)                 # buttons
         pygame.draw.circle(lay, coat_lo, (cx, cy + 4), 1)
-    # --- head: the SAME gaunt skull every NPC uses (_gaunt_head: sunken eye
-    #     sockets + a cold glint, brow + jaw gouges, the faint grim-set line),
-    #     with short grey-flecked hair on top. No bespoke face -- the flat round
-    #     head with dot eyes and a drawn mouth was the style break. ---
-    HN, HT = 6, 16
+    # --- head: the gaunt-skull FAMILY (_gaunt_head), but with a LIVING gaze.
+    #     The PI is the one unclaimed soul, so warm open eyes (sclera + pupil +
+    #     a catchlight) set him apart from the hollow sunken sockets of the
+    #     taken. Short side-parted hair, NOT a cap -- a strip of brow shows. ---
+    HN, HT = 5, 15
     hcy = cy - 12
     _gaunt_head(lay, cx, cy, skin, narrow=HN, tall=HT, view=view)
     if view == "back":
-        pygame.draw.ellipse(lay, hair, (cx - HN, hcy - 8, HN * 2, 9))  # hair crown
-        pygame.draw.line(lay, grey, (cx - 3, hcy - 6), (cx - 1, hcy - 5), 1)
-    elif view in ("left", "right"):
-        s = 1 if view == "right" else -1
-        pygame.draw.ellipse(lay, hair, (cx - HN, hcy - 8, HN * 2, 6))  # hair crown
-        pygame.draw.rect(lay, hair,                                    # back fall
-                         ((cx - HN) if s < 0 else (cx + HN - 3), hcy - 6, 3, 5))
+        pygame.draw.ellipse(lay, hair, (cx - HN - 1, hcy - 8, HN * 2 + 2, 8))
+        pygame.draw.line(lay, grey, (cx - 2, hcy - 7), (cx - 1, hcy - 5), 1)
     else:
-        pygame.draw.ellipse(lay, hair, (cx - HN, cy - 21, HN * 2, 7))  # hair
-        pygame.draw.line(lay, grey, (cx + 2, cy - 20), (cx + 5, cy - 19), 1)  # grey temple
+        # Lift _gaunt_head's sunken brow + sockets back to skin, then set the
+        # living eyes over them.
+        pygame.draw.rect(lay, skin, (cx - HN + 1, hcy - 2, HN * 2 - 2, 4))
+        sclera = (201, 195, 179)
+        pupil = (38, 28, 26)
+        ldx = max(-1, min(1, int(round(fx))))
+        ldy = max(0, min(1, int(round(fy))))
+        if view in ("left", "right"):
+            s = 1 if view == "right" else -1
+            ex = cx + s - 1
+            pygame.draw.rect(lay, sclera, (ex, hcy - 1, 4, 3))
+            pygame.draw.rect(lay, pupil, (ex + (2 if s > 0 else 1), hcy, 2, 2))
+            pygame.draw.rect(lay, skin, (cx + (HN - 1) * s, hcy - 1, 2, 2))   # nose
+            pygame.draw.ellipse(lay, hair, (cx - HN, hcy - 8, HN * 2, 5))     # hair crown
+            pygame.draw.rect(lay, hair,
+                             ((cx - HN) if s < 0 else (cx + HN - 2), hcy - 6, 2, 5))
+        else:
+            for ex in (cx - 4, cx + 1):
+                pygame.draw.rect(lay, sclera, (ex, hcy - 1, 3, 2))           # eye white
+                pygame.draw.rect(lay, pupil, (ex + 1 + ldx, hcy, 1, 2))      # pupil
+                pygame.draw.line(lay, skin_lo, (ex, hcy - 1),                # heavy lid
+                                 (ex + 2, hcy - 1), 1)                       # (weary, not wide)
+            try:
+                lay.set_at((cx - 3, hcy), (234, 228, 218))                  # catchlights
+                lay.set_at((cx + 3, hcy), (234, 228, 218))
+            except (IndexError, ValueError):
+                pass
+            # hair: a swept, slightly-receding crop -- NOT a cap. A clear strip
+            # of brow shows; the hairline is uneven and parted to one side.
+            pygame.draw.ellipse(lay, hair, (cx - HN, cy - 22, HN * 2, 4))
+            pygame.draw.polygon(lay, hair, [(cx - HN, cy - 19), (cx - 2, cy - 19),
+                                            (cx - 3, cy - 16), (cx - HN, cy - 17)])
+            pygame.draw.line(lay, (78, 66, 50), (cx - 1, cy - 22),
+                             (cx + HN - 1, cy - 21), 1)                      # highlight
+            pygame.draw.line(lay, grey, (cx + 2, cy - 21), (cx + 4, cy - 20), 1)
     _darkwood_pass(lay, 0x9117, strength=0.7)
     surf.blit(lay, (int(x) - LX, int(y) - LY))
 
