@@ -1678,147 +1678,136 @@ def _noir_grit(lay, seed):
 
 def draw_player_sprite(surf, x, y, facing, walk_phase=0, armor=None,
                         prone=False, view="front"):
-    """THRESHOLD: the private investigator, 1994. A long dark wool
-    overcoat over a pale collar, dark trousers, scuffed work boots --
-    the silhouette of a man who drove here on a case, not a tourist.
-    Muted to sit in the graded, desaturated palette. Armor overlays
-    are vestigial (combat is gone) but still draw if equipped so old
-    saves render cleanly.
-
-    A faint ground-shadow ellipse roots the player in the scene.
-    None of the NPCs cast a shadow, by design -- the player is the
-    only thing here that's properly *here*."""
-    # Pure neutral greyscale -- the frame grade is mild (32% desat, 15% cool
-    # tint) so he still reads as black-and-white against the coloured town.
-    INK = (12, 12, 13)        # near-black: hard shadow, band, tie, boots
-    DK = (38, 38, 40)         # dark grey: hat, lapels, shadow side
-    MID = (84, 84, 88)        # trench base (darker -- not silvery)
-    LT = (118, 118, 122)      # secondary lit fold
-    HI = (212, 212, 218)      # key-lit edge / shirt / eye catch (used sparingly)
-    SKIN = (140, 140, 144)    # face
-    SKIN_SH = (58, 58, 60)    # face in the brim's shadow
+    """THRESHOLD: the private investigator, 1994 -- a worn OLIVE field jacket
+    (M-65 style: stand collar, snap placket, flap pockets, epaulettes, a
+    drawstring waist) over dark trousers and boots, a soft flat cap, and a lit
+    cigarette (a glowing ember + an animated curl of smoke). Built at full
+    detail front / back / both profiles, then brushed with the game's Darkwood
+    grime so he sits in the cast. He keeps a LIVING gaze (a glint in the
+    socket) -- the one unclaimed soul, not one of the hollow taken. A faint
+    ground shadow roots him; the NPCs cast none."""
+    OLV = (98, 100, 72); OL_LO = (58, 60, 42); OL_HI = (126, 128, 98)
+    CAP = (88, 90, 66); CAP_LO = (52, 54, 38)
+    SKIN = (182, 152, 126); SK_LO = (112, 92, 74)
+    TEE = (120, 118, 108); INK = (16, 15, 16)
+    PANTS = (46, 46, 42); BOOT = (28, 26, 24); GLINT = (224, 222, 210)
     if prone:
-        # Lying on the cot, hat resting at the bedside.
-        bx = x - 12
-        by = y - 2
-        pygame.draw.rect(surf, MID, (bx, by, 24, 9))
-        pygame.draw.rect(surf, DK, (bx, by, 24, 9), 1)
+        bx = x - 12; by = y - 2
+        pygame.draw.rect(surf, (84, 78, 62), (bx, by, 24, 9))            # blanket
+        pygame.draw.rect(surf, (52, 48, 38), (bx, by, 24, 9), 1)
         pygame.draw.circle(surf, SKIN, (bx + 22, by + 4), 4)
-        pygame.draw.rect(surf, DK, (bx + 18, by - 1, 8, 3))      # hat brim at rest
+        pygame.draw.ellipse(surf, CAP, (bx + 18, by - 1, 9, 4))          # cap at rest
         pygame.draw.line(surf, INK, (bx + 21, by + 4), (bx + 24, by + 4), 1)
-        pygame.draw.rect(surf, INK, (bx, by + 5, 4, 3))
+        pygame.draw.rect(surf, BOOT, (bx, by + 5, 4, 3))
         return
-    # Ground shadow (player-only -- the one thing properly *here*).
     shadow = pygame.Surface((24, 8), pygame.SRCALPHA)
     pygame.draw.ellipse(shadow, (0, 0, 0, 95), (0, 0, 24, 8))
     surf.blit(shadow, (int(x) - 12, int(y) + 16))
-    # Pure greyscale (the monochrome outsider) + a B&W Darkwood grit pass at
-    # the end, so he carries the cast's grime without a colour cast.
     LX, LY = 22, 34
     lay = pygame.Surface((44, 60), pygame.SRCALPHA)
     cx, cy = LX, LY
-    t = pygame.time.get_ticks() / 1000.0          # for the animated smoke + ember pulse
+    t = pygame.time.get_ticks() / 1000.0
     lo = int(math.sin(walk_phase) * 2)
     hemsway = int(abs(math.sin(walk_phase)))
     sh_y = cy - 11
     hcy = cy - 14
+    waist = cy + 4
     prof = view in ("left", "right")
     s = 1 if view == "right" else -1
-    # ---- legs + boots (staggered stride in profile) ----
+    # ---- legs + boots (more leg shows under the hip-length jacket) ----
     if prof:
-        pygame.draw.rect(lay, INK, (cx - 3, cy + 6, 6, 8))                 # trousers (edge-on)
-        pygame.draw.rect(lay, INK, (cx - 2 + s * 3, cy + 13, 5, 5 + max(0, -lo)))  # lead boot
-        pygame.draw.rect(lay, INK, (cx - 3 - s * 2, cy + 13, 5, 5 + max(0, lo)))   # trail boot
-        pygame.draw.rect(lay, DK,  (cx - 2 + s * 3, cy + 13, 5, 1))
+        pygame.draw.rect(lay, PANTS, (cx - 3, waist, 6, 10))
+        pygame.draw.rect(lay, BOOT, (cx - 2 + s * 3, cy + 14, 5, 5 + max(0, -lo)))
+        pygame.draw.rect(lay, BOOT, (cx - 3 - s * 2, cy + 14, 5, 5 + max(0, lo)))
     else:
-        pygame.draw.rect(lay, INK, (cx - 5, cy + 6, 10, 8))                # trousers
-        pygame.draw.rect(lay, INK, (cx - 5, cy + 13, 4, 5 + max(0, -lo)))
-        pygame.draw.rect(lay, INK, (cx + 1, cy + 13, 4, 5 + max(0, lo)))
-        pygame.draw.rect(lay, DK,  (cx - 5, cy + 13, 4, 1))
-        pygame.draw.rect(lay, DK,  (cx + 1, cy + 13, 4, 1))
-    # ---- trench body (NEUTRAL even light; narrows edge-on in profile) ----
-    bw = 10 if prof else 13
+        pygame.draw.rect(lay, PANTS, (cx - 5, waist, 10, 10))
+        pygame.draw.line(lay, INK, (cx, waist + 1), (cx, cy + 14), 1)    # trouser inseam
+        pygame.draw.rect(lay, BOOT, (cx - 5, cy + 14, 4, 5 + max(0, -lo)))
+        pygame.draw.rect(lay, BOOT, (cx + 1, cy + 14, 4, 5 + max(0, lo)))
+    # ---- field jacket body (hip-length, even neutral light) ----
+    bw = 10 if prof else 14
     bl = cx - bw // 2
-    pygame.draw.rect(lay, MID, (bl, sh_y, bw, 22 + hemsway))               # body
-    pygame.draw.rect(lay, DK,  (bl, sh_y, bw, 22 + hemsway), 1)            # even outline
-    pygame.draw.rect(lay, INK, (bl, cy + 1, bw, 2))                        # belt
-    pygame.draw.rect(lay, LT,  (cx - 1, cy + 1, 2, 2))                     # buckle / keeper
-    pygame.draw.rect(lay, INK, (bl, cy + 9, bw, 2))                        # hem recess
-    for hx in range(bl + 1, bl + bw, 3):                                   # hem fall
-        pygame.draw.line(lay, INK, (hx, cy + 11), (hx, cy + 11 + (hx % 2)), 1)
-    pygame.draw.rect(lay, MID, (bl - 1, sh_y, bw + 2, 3))                  # shoulders
-    pygame.draw.rect(lay, DK,  (bl - 1, sh_y, bw + 2, 1))                  # shoulder seam
+    jh = (waist - sh_y) + 4 + hemsway
+    pygame.draw.rect(lay, OLV, (bl, sh_y, bw, jh))
+    pygame.draw.rect(lay, OL_LO, (bl, sh_y, bw, jh), 1)
+    pygame.draw.rect(lay, OL_LO, (bl, waist + 1, bw, 2))                 # drawstring waist cinch
+    for gx in range(bl + 1, bl + bw, 2):                                # gathered hem
+        lay.set_at((gx, waist + 2), INK)
+    pygame.draw.rect(lay, OLV, (bl - 1, sh_y, bw + 2, 3))               # shoulders
+    pygame.draw.rect(lay, OL_LO, (bl - 1, sh_y, bw + 2, 1))             # shoulder seam
     if view == "back":
-        # ---- BACK: turned-up collar, yoke + epaulettes, centre seam, vent ----
-        pygame.draw.rect(lay, DK,  (cx - 5, sh_y - 5, 11, 6))             # collar up (tall)
-        pygame.draw.rect(lay, INK, (cx - 4, sh_y - 2, 9, 2))            # collar inside
-        pygame.draw.line(lay, LT,  (cx - 5, sh_y - 5), (cx + 5, sh_y - 5), 1)  # collar top edge
-        pygame.draw.line(lay, INK, (cx - 6, sh_y + 2), (cx + 6, sh_y + 2), 1)  # yoke seam
-        pygame.draw.rect(lay, DK,  (cx - 6, sh_y, 4, 2)); lay.set_at((cx - 5, sh_y), LT)  # epaulette L
-        pygame.draw.rect(lay, DK,  (cx + 2, sh_y, 4, 2)); lay.set_at((cx + 4, sh_y), LT)  # epaulette R
-        pygame.draw.line(lay, INK, (cx, sh_y + 3), (cx, cy), 1)          # centre back seam
-        pygame.draw.line(lay, INK, (cx, cy + 3), (cx, cy + 9), 1)        # back vent
-        pygame.draw.rect(lay, SKIN, (cx - 2, hcy + 1, 4, 2))           # nape sliver
-        pygame.draw.ellipse(lay, DK,  (cx - 8, hcy - 4, 16, 4))         # brim (back)
-        pygame.draw.ellipse(lay, INK, (cx - 8, hcy - 3, 16, 3), 1)
-        pygame.draw.rect(lay, DK,  (cx - 4, hcy - 12, 8, 7))          # crown
-        pygame.draw.ellipse(lay, DK, (cx - 4, hcy - 14, 8, 4))       # crown top
-        pygame.draw.line(lay, INK, (cx, hcy - 13), (cx, hcy - 6), 1)   # back crease
-        pygame.draw.rect(lay, INK, (cx - 4, hcy - 6, 8, 1))          # band
+        # ---- BACK ----
+        pygame.draw.rect(lay, OLV, (cx - 5, sh_y - 4, 11, 5))           # stand collar (up)
+        pygame.draw.rect(lay, OL_LO, (cx - 5, sh_y - 1, 11, 2))
+        pygame.draw.line(lay, OL_HI, (cx - 5, sh_y - 4), (cx + 5, sh_y - 4), 1)  # collar top edge
+        pygame.draw.line(lay, OL_LO, (cx - 6, sh_y + 3), (cx + 6, sh_y + 3), 1)  # yoke seam
+        pygame.draw.rect(lay, OL_LO, (cx - 6, sh_y, 4, 2)); lay.set_at((cx - 5, sh_y), CAP)  # epaulette L
+        pygame.draw.rect(lay, OL_LO, (cx + 2, sh_y, 4, 2)); lay.set_at((cx + 4, sh_y), CAP)  # epaulette R
+        pygame.draw.line(lay, OL_LO, (cx, sh_y + 4), (cx, waist + 1), 1)  # centre back seam
+        pygame.draw.rect(lay, OL_LO, (cx - 6, cy - 1, 5, 4)); pygame.draw.rect(lay, OL_LO, (cx + 1, cy - 1, 5, 4))  # rear cargo pockets
+        pygame.draw.rect(lay, SKIN, (cx - 2, hcy + 2, 4, 2))           # nape sliver
+        pygame.draw.ellipse(lay, CAP, (cx - 7, hcy - 8, 15, 9))        # cap back (rounded)
+        pygame.draw.ellipse(lay, CAP_LO, (cx - 7, hcy - 3, 15, 4), 1)
+        pygame.draw.line(lay, CAP_LO, (cx, hcy - 8), (cx, hcy - 1), 1)  # back panel seam
+        lay.set_at((cx, hcy - 7), OL_HI)                              # crown button
         _cig_fx(lay, t, cx + 4, hcy - 2, ember=False)                  # smoke past the head
     elif prof:
-        # ---- PROFILE: front closure + back drape, pocket, sleeve, collar ----
+        # ---- PROFILE ----
         fxe = cx + (bw // 2 - 1) * s
-        pygame.draw.rect(lay, DK,  (fxe, sh_y, 2, 21))                  # front closure edge
-        pygame.draw.line(lay, INK, (cx - (bw // 2) * s, sh_y + 3),
-                         (cx - (bw // 2) * s, cy + 9), 1)              # back drape line
-        pygame.draw.rect(lay, INK, (cx + s, cy + 3, 4, 4))           # near pocket
-        pygame.draw.rect(lay, MID, (fxe, sh_y + 3, 3, 12))          # near sleeve
-        pygame.draw.rect(lay, DK,  (fxe, sh_y + 3, 3, 12), 1)
-        pygame.draw.rect(lay, INK, (fxe, sh_y + 13, 3, 2))         # cuff
-        pygame.draw.rect(lay, DK,  (cx - 4 * s, sh_y - 5, 5, 6))    # collar up (back of neck)
-        pygame.draw.rect(lay, INK, (cx - 4 * s, sh_y - 2, 5, 2))
-        pygame.draw.ellipse(lay, SKIN, (cx - 4, hcy - 2, 9, 13))    # head
-        pygame.draw.ellipse(lay, DK,  (cx - 4, hcy - 2, 9, 13), 1)
-        pygame.draw.rect(lay, SKIN, (cx + 4 * s, hcy + 2, 2, 2))    # nose
+        pygame.draw.rect(lay, OL_LO, (fxe, sh_y, 2, jh - 1))            # front placket edge (lead)
+        pygame.draw.line(lay, OL_LO, (cx - (bw // 2) * s, sh_y + 3),
+                         (cx - (bw // 2) * s, waist), 1)               # back drape
+        pygame.draw.rect(lay, OL_LO, (cx + s, cy - 1, 4, 4))           # near cargo pocket
+        lay.set_at((cx + 2 * s, cy), CAP)                             # pocket snap
+        pygame.draw.rect(lay, OLV, (fxe, sh_y + 3, 3, jh - 6))         # near sleeve
+        pygame.draw.rect(lay, OL_LO, (fxe, sh_y + 3, 3, jh - 6), 1)
+        pygame.draw.rect(lay, OL_LO, (fxe, sh_y + jh - 5, 3, 2))      # cuff
+        pygame.draw.rect(lay, OLV, (cx - 4 * s, sh_y - 4, 5, 5))       # stand collar (nape)
+        pygame.draw.rect(lay, OL_LO, (cx - 4 * s, sh_y - 1, 5, 2))
+        pygame.draw.ellipse(lay, SKIN, (cx - 4, hcy - 2, 9, 13))       # head
+        pygame.draw.ellipse(lay, SK_LO, (cx - 4, hcy - 2, 9, 13), 1)
+        pygame.draw.rect(lay, SKIN, (cx + 4 * s, hcy + 2, 2, 2))       # nose
         ex = cx + s
-        pygame.draw.rect(lay, INK, (ex, hcy + 1, 2, 2))           # eye socket
-        lay.set_at((ex + (1 if s > 0 else 0), hcy + 1), HI)        # glint
-        pygame.draw.line(lay, DK, (ex - s, hcy), (ex + 2 * s, hcy), 1)  # brow
-        pygame.draw.line(lay, SKIN_SH, (cx, hcy + 6), (cx + 3 * s, hcy + 6), 1)  # jaw
-        pygame.draw.rect(lay, DK,  (cx - 4, hcy - 11, 9, 7))       # crown
-        pygame.draw.ellipse(lay, DK, (cx - 4, hcy - 13, 9, 4))    # crown top
-        pygame.draw.line(lay, INK, (cx, hcy - 12), (cx, hcy - 6), 1)  # crease
-        pygame.draw.rect(lay, INK, (cx - 4, hcy - 5, 9, 1))      # band
-        pygame.draw.ellipse(lay, DK, (cx - 6, hcy - 4, 13, 3))   # brim
-        pygame.draw.ellipse(lay, DK, (cx + (2 if s > 0 else -9), hcy - 4, 9, 3))  # brim front jut
+        pygame.draw.rect(lay, INK, (ex, hcy + 1, 2, 2)); lay.set_at((ex + (1 if s > 0 else 0), hcy + 1), GLINT)
+        pygame.draw.line(lay, SK_LO, (ex - s, hcy), (ex + 2 * s, hcy), 1)  # brow
+        pygame.draw.line(lay, SK_LO, (cx, hcy + 6), (cx + 3 * s, hcy + 6), 1)  # jaw
+        pygame.draw.ellipse(lay, CAP, (cx - 6, hcy - 8, 14, 8))        # crown
+        pygame.draw.ellipse(lay, CAP_LO, (cx - 6, hcy - 4, 14, 4), 1)
+        pygame.draw.ellipse(lay, CAP_LO, (cx + (1 if s > 0 else -8), hcy - 2, 8, 3))  # bill juts forward
+        lay.set_at((cx, hcy - 7), OL_HI)                              # button
         cxg = cx + 5 * s
-        pygame.draw.line(lay, (210, 210, 214), (cx + 3 * s, hcy + 5), (cxg, hcy + 6), 1)  # cig
+        pygame.draw.line(lay, (210, 210, 206), (cx + 3 * s, hcy + 5), (cxg, hcy + 6), 1)  # cigarette
         _cig_fx(lay, t, cxg, hcy + 6)
     else:
-        # ---- FRONT: lapels, shirt+tie, collar wings, pockets, face, hat, cig ----
-        pygame.draw.polygon(lay, DK, [(cx - 6, sh_y - 2), (cx - 1, sh_y + 5), (cx - 6, sh_y + 6)])
-        pygame.draw.polygon(lay, DK, [(cx + 6, sh_y - 2), (cx + 1, sh_y + 5), (cx + 6, sh_y + 6)])
-        pygame.draw.rect(lay, HI, (cx - 1, sh_y, 3, 3))             # shirt
-        pygame.draw.rect(lay, INK, (cx, sh_y + 2, 1, 5))          # tie
-        pygame.draw.polygon(lay, DK, [(cx - 5, sh_y - 4), (cx - 2, sh_y), (cx - 5, sh_y + 1)])
-        pygame.draw.polygon(lay, DK, [(cx + 5, sh_y - 4), (cx + 2, sh_y), (cx + 5, sh_y + 1)])
-        pygame.draw.rect(lay, INK, (cx - 5, cy + 3, 3, 4))        # pockets
-        pygame.draw.rect(lay, INK, (cx + 3, cy + 3, 3, 4))
-        pygame.draw.ellipse(lay, SKIN, (cx - 5, hcy - 2, 10, 13))  # face
-        pygame.draw.ellipse(lay, DK,  (cx - 5, hcy - 2, 10, 13), 1)
-        pygame.draw.rect(lay, SKIN_SH, (cx - 4, hcy + 1, 8, 3))    # brim shadow band
+        # ---- FRONT ----
+        pygame.draw.rect(lay, OLV, (cx - 4, sh_y - 3, 8, 4))           # stand collar
+        pygame.draw.rect(lay, OL_LO, (cx - 4, sh_y - 1, 8, 1))
+        pygame.draw.line(lay, INK, (cx, sh_y - 3), (cx, sh_y - 1), 1)  # collar split
+        pygame.draw.rect(lay, TEE, (cx - 2, sh_y - 1, 4, 3))          # tee at the throat
+        pygame.draw.rect(lay, OL_LO, (cx - 6, sh_y, 4, 2)); lay.set_at((cx - 3, sh_y), CAP)  # epaulette L
+        pygame.draw.rect(lay, OL_LO, (cx + 2, sh_y, 4, 2)); lay.set_at((cx + 2, sh_y), CAP)  # epaulette R
+        pygame.draw.line(lay, OL_LO, (cx + 1, sh_y + 1), (cx + 1, waist), 1)  # snap placket
+        for sy in range(sh_y + 3, waist, 3):
+            lay.set_at((cx + 1, sy), CAP)                            # snaps
+        pygame.draw.rect(lay, OL_LO, (cx - 6, sh_y + 3, 5, 3)); lay.set_at((cx - 4, sh_y + 4), CAP)  # chest pkt L
+        pygame.draw.rect(lay, OL_LO, (cx + 2, sh_y + 3, 5, 3)); lay.set_at((cx + 4, sh_y + 4), CAP)  # chest pkt R
+        pygame.draw.rect(lay, OL_LO, (cx - 6, cy, 5, 4)); lay.set_at((cx - 4, cy + 1), CAP)  # cargo pkt L
+        pygame.draw.rect(lay, OL_LO, (cx + 2, cy, 5, 4)); lay.set_at((cx + 4, cy + 1), CAP)  # cargo pkt R
+        pygame.draw.ellipse(lay, SKIN, (cx - 5, hcy - 2, 10, 13))      # face
+        pygame.draw.ellipse(lay, SK_LO, (cx - 5, hcy - 2, 10, 13), 1)
+        pygame.draw.rect(lay, SK_LO, (cx - 4, hcy + 1, 8, 3))         # eye shadow band
         for ex in (cx - 4, cx + 1):
-            pygame.draw.rect(lay, INK, (ex, hcy + 1, 3, 2)); lay.set_at((ex + 1, hcy + 1), HI)
-        pygame.draw.line(lay, SKIN_SH, (cx, hcy + 3), (cx, hcy + 5), 1)  # nose
-        pygame.draw.ellipse(lay, DK,  (cx - 8, hcy - 2, 16, 3))    # brim
-        pygame.draw.ellipse(lay, INK, (cx - 8, hcy - 1, 16, 2), 1)
-        pygame.draw.rect(lay, DK,  (cx - 4, hcy - 7, 8, 4))       # crown
-        pygame.draw.line(lay, INK, (cx, hcy - 7), (cx, hcy - 4), 1)  # crease
-        pygame.draw.rect(lay, INK, (cx - 4, hcy - 3, 8, 1))      # band
-        pygame.draw.line(lay, (210, 210, 214), (cx + 1, hcy + 6), (cx + 5, hcy + 7), 1)  # cig
+            pygame.draw.rect(lay, INK, (ex, hcy + 1, 3, 2)); lay.set_at((ex + 1, hcy + 1), GLINT)
+        pygame.draw.line(lay, SK_LO, (cx, hcy + 3), (cx, hcy + 5), 1)  # nose
+        pygame.draw.ellipse(lay, CAP, (cx - 7, hcy - 8, 15, 8))       # flat cap crown
+        pygame.draw.ellipse(lay, CAP_LO, (cx - 7, hcy - 4, 15, 4), 1)
+        pygame.draw.ellipse(lay, CAP_LO, (cx - 6, hcy - 1, 13, 3))    # bill forward
+        pygame.draw.ellipse(lay, INK, (cx - 6, hcy, 13, 2), 1)        # bill underside
+        pygame.draw.line(lay, CAP_LO, (cx + 2, hcy - 8), (cx - 1, hcy - 3), 1)  # panel seam
+        lay.set_at((cx + 1, hcy - 7), OL_HI)                         # top button
+        pygame.draw.line(lay, (210, 210, 206), (cx + 1, hcy + 6), (cx + 5, hcy + 7), 1)  # cigarette
         _cig_fx(lay, t, cx + 5, hcy + 7)
-    _noir_grit(lay, 0x9117)                                        # Darkwood B&W grit
+    _darkwood_pass(lay, 0x9151)                                       # the game's grime pass
     surf.blit(lay, (int(x) - LX, int(y) - LY))
 
 
