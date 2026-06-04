@@ -94,6 +94,37 @@ def main():
     check(g.save.flag("well_rope_tied"), "well: rope ties on first descent")
     check(not g.player.inventory.has("rope"), "well: rope consumed into the rig")
 
+    # --- 1b. The Ledger fires from the Lodge FRONT DESK, not the cellar ---
+    # CANON (NARRATIVE §4, §5): one register, on the front desk; you sign on
+    # arrival and the evidence lands when you RE-READ it. The old cellar copy
+    # behind a loose panel is cut.
+    gl = new_game()
+    gl.load_scene_now("house")
+    ready(gl)
+    gl.player.x, gl.player.y = gl.scene._frontdesk_pos
+    gl.scene.on_interact_fn(gl)                      # first press: sign
+    check(gl.save.flag("register_signed"),
+          "ledger: first press signs the front-desk register")
+    check(not has_evidence(gl, "the_ledger"),
+          "ledger: signing alone does not log the evidence")
+    ready(gl)
+    gl.scene.on_interact_fn(gl)                      # re-read: the evidence
+    check(has_evidence(gl, "the_ledger"),
+          "ledger: re-reading the front-desk register fires the_ledger")
+    # The cellar no longer carries the Ledger.
+    gcellar = new_game()
+    gcellar.load_scene_now("basement")
+    ready(gcellar)
+    check(not hasattr(gcellar.scene, "_wall_panel_pos"),
+          "ledger: the cellar copy is cut (no loose wall panel)")
+    import inspect as _insp_l
+    from scenes import house as _house_mod
+    check("the_ledger" not in _insp_l.getsource(_house_mod.basement_interact),
+          "ledger: basement_interact no longer logs the_ledger")
+    from scenes.dialogue import clerk_dialogue as _clerk_src_fn
+    check("cellar" not in _insp_l.getsource(_clerk_src_fn).lower(),
+          "ledger: Sable no longer points at a cellar register")
+
     # --- 2. The Playscript (Scriptorium) ---
     fire(g, "works_scriptorium", "_desk_pos")
     check(g.player.inventory.has("playscript"),
@@ -118,7 +149,7 @@ def main():
     check("rite_broken" in g._ENDING_SCRIPTS,
           "ending: rite_broken script is authored")
 
-    # --- 4. The Deep Stair fork (Mask + Play together) ---
+    # --- 4. The Deep Stair fork (the keystone: Mask + notes together) ---
     g.load_scene_now("works_deepstair")
     ready(g)
     sc = g.scene
@@ -129,12 +160,14 @@ def main():
     ready(g)                                  # dismiss the fork dialog
     sc.on_interact_fn(g)                      # second press: commit (Seal road)
     check(g.save.flag("deepstair_open"),
-          "deep stair: Mask + Play opens the descent")
+          "deep stair: the keystone opens the descent")
     check(g.save.flag("well_rope_broken"),
           "deep stair: committing snaps the rope (point of no return)")
-    check(not g.player.inventory.has("playscript")
-          and not g.player.inventory.has("sigil_rubbing"),
-          "deep stair: both Mask and Play are spent")
+    # CANON (NARRATIVE §6/§7 rework): the stair opens WITHOUT consuming the
+    # keystone -- you carry it down to spend at the Threshold door.
+    check(g.player.inventory.has("playscript")
+          and g.player.inventory.has("sigil_rubbing"),
+          "deep stair: the keystone is NOT consumed (carried down, not spent)")
 
     # --- 5. The Depths chain loads + steps with no crash ---
     for k in ("depths_antechamber", "depths_procession", "depths_hall",
@@ -167,19 +200,35 @@ def main():
         check(g.save.flag("hive_seen"),
               "hive: speaking to Mara fires the recognition")
 
-    # --- 7. The Threshold seal -> the SEAL ending ---
+    # --- 7. The Threshold seal -> the SEAL ending (consumes the keystone) ---
+    # The keystone carried down from the Deep Stair is spent HERE, at the door
+    # (§7 rework). g still holds both (the stair did not consume them).
     g.load_scene_now("threshold")
     ready(g)
     sc = g.scene
+    check(g.player.inventory.has("playscript")
+          and g.player.inventory.has("sigil_rubbing"),
+          "threshold: the keystone arrives in hand (carried from the stair)")
     g.player.x, g.player.y = sc._lintel_pos
     sc.on_interact_fn(g)
     check(g._ending_active == "seal_threshold",
           "threshold: sealing fires the SEAL ending")
+    check(not g.player.inventory.has("playscript")
+          and not g.player.inventory.has("sigil_rubbing"),
+          "threshold: the seal CONSUMES the keystone at the door")
     seal_text = " ".join(line for line, _ in
                          g._ENDING_SCRIPTS["seal_threshold"])
     check("Nothing leaves Brimley again" in seal_text
           and "Not the hunger" in seal_text and "Not you" in seal_text,
           "threshold: SEAL ending is authored (canonical close present)")
+    # The door seals ONLY to the keystone: empty-handed, it does not fire.
+    gnokey = new_game()
+    gnokey.load_scene_now("threshold")
+    ready(gnokey)
+    gnokey.player.x, gnokey.player.y = gnokey.scene._lintel_pos
+    gnokey.scene.on_interact_fn(gnokey)
+    check(gnokey._ending_active is None,
+          "threshold: without the keystone the door does not seal (no free seal)")
 
     # --- 8. The SPREAD ending: drive out with the Mask ---
     gs = new_game()
@@ -221,10 +270,22 @@ def main():
                 if nn.name == "the Tisdale boy"), None)   # renamed in the merge
     check(kid is not None, "kid: the Kid is present in his house")
     if kid:
+        _kid_lines = []
+        gk.dialog.show = (lambda real: (lambda p, **k: (
+            _kid_lines.extend(p if isinstance(p, list) else [p]),
+            real(p, **k))[1]))(gk.dialog.show)
         kid.dialogue_fn(gk, kid)
         check(gk.save.flag("kid_witnessed")
               and not gk.player.inventory.has("polaroid"),
               "kid: the witness beat fires and grants no inventory item")
+        # CANON (NARRATIVE §2): the witness is the clue to DESCEND THE WELL --
+        # Mara AND the others went down it in the procession. The account must
+        # point down the well, not into the corn (the old wrong reading).
+        _kid_text = " ".join(_kid_lines).lower()
+        check("well" in _kid_text and "down" in _kid_text,
+              "kid: the witness points down the well (the clue to descend)")
+        check("corn" not in _kid_text,
+              "kid: the witness no longer sends you into the corn")
 
     # --- 11. The flashlight: found, toggles, double-edged in the dark ---
     gf = new_game()
@@ -271,6 +332,58 @@ def main():
     src = inspect.getsource(_ml.build_brimley)
     check("car_keys" not in src,
           "escape: the car no longer checks for car_keys")
+
+    # --- 13b. The SPREAD car lives on the ARRIVAL ROAD west of the lodge ---
+    # The dead car (and the escape) moved off brimley onto the looping arrival
+    # road; the yard's west exit routes through it, and the road wraps (the
+    # fold made the drive-in an endless loop you can turn off of any time).
+    from scenes import load_scene as _ld13
+    _yard = _ld13("our_house_area")
+    check(_yard.exits.get("a", (None,))[0] == "arrival_road",
+          "geo: the lodge yard's west exit lands on the arrival road")
+    _road = _ld13("arrival_road")
+    check(_road.exits.get("a", (None,))[0] == "country_lane"
+          and _road.exits.get("e", (None,))[0] == "our_house_area",
+          "geo: the arrival road's dirt path links country_lane (W) and yard (E)")
+    check(_road.wrap_y and hasattr(_road, "_car_pos"),
+          "geo: the arrival road loops (wrap_y) and holds the dead car")
+    check(_road.h >= 30,
+          "geo: the road is taller than a screen so the loop's repeat stays "
+          "off-frame (you don't see two cars at once)")
+    check("_car_pos" not in inspect.getsource(_ml.build_brimley),
+          "geo: the car is gone from brimley (consolidated at the lodge)")
+    gr = new_game()
+    gr.load_scene_now("arrival_road")
+    ready(gr)
+    gr.player.x, gr.player.y = gr.scene._car_pos
+    gr.player.inventory.add("sigil_rubbing", 1)
+    gr.scene.on_interact_fn(gr)
+    check(gr._ending_active == "escape_alone",
+          "geo: SPREAD fires at the car on the arrival road (with the Sign)")
+
+    # --- 13c. The woodshed is consolidated into the lodge yard ------------
+    # It used to sit across town in brimley; now it is a key-gated door in
+    # the Arcadia yard (west of the lodge) and exits back to the yard. The
+    # brimley shed door is gone.
+    _yard2 = _ld13("our_house_area")
+    _shed = _ld13("woodshed")
+    check(hasattr(_yard2, "_shed_door_pos"),
+          "geo: the lodge yard has the woodshed door (west of the lodge)")
+    check(_shed.exits.get("h", (None,))[0] == "our_house_area",
+          "geo: the woodshed exits back into the lodge yard")
+    check("_shed_door_pos" not in inspect.getsource(_ml.build_brimley),
+          "geo: brimley no longer hosts the woodshed door (consolidated)")
+    gw = new_game()
+    gw.load_scene_now("our_house_area")
+    ready(gw)
+    gw.player.x, gw.player.y = gw.scene._shed_door_pos
+    gw.scene.on_interact_fn(gw)                       # locked, no key
+    check(gw.scene.key == "our_house_area",
+          "geo: the shed door is locked without the cellar key")
+    gw.player.inventory.add("woodshed_key", 1)
+    gw.scene.on_interact_fn(gw)                       # key in hand -> enters
+    check(getattr(gw, "transition_target", (None,))[0] == "woodshed",
+          "geo: the cellar key opens the yard shed -> woodshed interior")
 
     # --- 14. "He knows you": the dream note + Threshold recognition ---
     # Living the journal door-dream writes a personal NOTE (not a clue), and
@@ -434,10 +547,178 @@ def main():
               if isinstance(e, dict) and e.get("name") == "the_case") == 1,
           "lure: re-logging the case does not duplicate the note")
 
+    # --- 16b. The PI's interior voice -- from DIVERSE examined things ------
+    # The voice fires on what the PI EXAMINES (chalk doors, the dig's lives,
+    # the Mask), NOT on bare room entry. Chalk doors are ONE recurring motif,
+    # not the only source. NOTES, never evidence. §1b: never explains the door.
+    gv = new_game()
+    def _vnotes(g):
+        return [e["name"] for e in g.save.arg("notes", []) if isinstance(e, dict)]
+    ev_before = gv._evidence_count()
+    # (a) Examining a chalk door fires the scene's voice beat (surface->deep).
+    for key, note in (("barn", "chalk_surface"),
+                      ("well_passage", "chalk_works"),
+                      ("depths_antechamber", "chalk_deep")):
+        gv.dialog.active = False
+        gv.load_scene_now(key, "default")
+        doors = getattr(gv.scene, "_chalk_doors", None)
+        check(bool(doors), f"voice: {key} has chalk doors registered")
+        if doors:
+            gv.player.x, gv.player.y = doors[0]
+            handled = gv._try_chalk_interact()
+            check(handled and note in _vnotes(gv),
+                  f"voice: examining the chalk door in {key} files '{note}'")
+    # (b) A DIFFERENT thing -- the Sorting Hall's catalogued lives -- fires its
+    # own beat. The voice is not all chalk doors.
+    gv.dialog.active = False
+    gv.load_scene_now("works_sorting", "default")
+    gv.player.x, gv.player.y = gv.scene._table_pos
+    gv.scene.on_interact_fn(gv)
+    check("descent_dig" in _vnotes(gv),
+          "voice: examining the dig's catalogued lives fires its own beat (a different trigger)")
+    # (c) The notes never arm the King-gate.
+    check(gv._evidence_count() == ev_before,
+          "voice: the interior-voice notes never inflate the evidence/King-gate")
+    # (d) Re-examining a chalk door does not duplicate its beat.
+    gv.dialog.active = False
+    gv.load_scene_now("well_passage", "default")
+    gv.player.x, gv.player.y = gv.scene._chalk_doors[1]   # a second door
+    gv._try_chalk_interact()
+    check(sum(1 for n in _vnotes(gv) if n == "chalk_works") <= 1,
+          "voice: re-examining chalk doors does not duplicate the beat")
+    # (e) Chalk doors come in FLOOR and WALL variants.
+    from scenes import load_scene as _ldcd
+    _kinds = set()
+    for k in ("barn", "well_passage", "depths_antechamber"):
+        for d in _ldcd(k).decorations:
+            if d.kind in ("chalk_door", "chalk_door_wall"):
+                _kinds.add(d.kind)
+    check("chalk_door" in _kinds and "chalk_door_wall" in _kinds,
+          "voice: chalk doors are drawn on the FLOOR and on WALLS")
+    # Content: the Mask beat baits leaving; nothing ever says 'dimension'.
+    from systems.game import Game as _G
+    _mask = " ".join(_G._DESCENT_VOICE["descent_mask"]["beat"]
+                     + _G._DESCENT_VOICE["descent_mask"]["note"]).lower()
+    check(any(w in _mask for w in ("the way out", "let you out", "lets go",
+                                   "could just go", "in the car")),
+          "voice: the Mask beat baits the player toward leaving (SPREAD off-ramp)")
+    _allvoice = " ".join(
+        " ".join(s["beat"] + s["note"]) for s in _G._DESCENT_VOICE.values()).lower()
+    check("dimension" not in _allvoice,
+          "voice: the interior voice never says 'dimension' (truth as sensation)")
+    # The King's influence (the want-to-leave) must read as the PI's OWN
+    # judgment -- he must NEVER notice his thoughts/wants changing, or the
+    # horror collapses. Guard the leave/mask/deep beats against self-aware-of-
+    # the-shift phrasing.
+    _pull = " ".join(
+        " ".join(_G._DESCENT_VOICE[k]["beat"] + _G._DESCENT_VOICE[k]["note"])
+        for k in ("descent_leave", "descent_mask", "chalk_deep")).lower()
+    check(not any(p in _pull for p in (
+        "an hour ago", "when did", "started thinking", "didn't want that",
+        "i don't trust a want", "a want i can't", "turn around")),
+        "voice: the leave-urge never reads as the PI noticing his mind change")
+    # The Playscript (the cult's notes) SEEDS the want-to-leave -- a NOTE, not
+    # evidence (and it must not arm the King-gate).
+    gp2 = new_game()
+    gp2.load_scene_now("works_scriptorium", "default")
+    ready(gp2)
+    ev_pre = gp2._evidence_count()
+    gp2.player.x, gp2.player.y = gp2.scene._desk_pos
+    gp2.scene.on_interact_fn(gp2)
+    guard = 0
+    while gp2.dialog.active and guard < 40:
+        gp2.dialog.advance(); guard += 1
+    _pn = [e["name"] for e in gp2.save.arg("notes", []) if isinstance(e, dict)]
+    check("descent_leave" in _pn,
+          "voice: taking the Playscript seeds the want-to-leave (descent_leave)")
+    check(gp2._evidence_count() == ev_pre,
+          "voice: the leave-seed is a NOTE, not evidence (never arms the King-gate)")
+    # The Ledger -- first evidence -- carries the PI's voice (the checkout-date
+    # confusion), not a dry description.
+    gl2 = new_game()
+    gl2.load_scene_now("house", "from_bedroom")
+    ready(gl2)
+    gl2.player.x, gl2.player.y = gl2.scene._frontdesk_pos
+    gl2.scene.on_interact_fn(gl2)         # sign
+    ready(gl2)
+    gl2.scene.on_interact_fn(gl2)         # re-read -> evidence
+    _lt = " ".join(l for e in gl2.save.arg("evidence", [])
+                   if e.get("name") == "the_ledger" for l in e["lines"]).lower()
+    check("months" in _lt and "keep it in mind" in _lt,
+          "voice: the Ledger carries the PI's voice (the checkout-date confusion)")
+
+    # Chalk-door swarm fills the Scriptorium (obsessive, none overlapping).
+    _scr = _ldcd("works_scriptorium")
+    _cd = [d for d in _scr.decorations
+           if d.kind in ("chalk_door", "chalk_door_wall")]
+    check(len(_cd) >= 6,
+          "chalk: the Scriptorium is swarmed with chalk doors (the compulsion)")
+
+    # --- 16c. The fold-talk note: a local describing the fold (looping roads)
+    # files the PI's note ONCE (the first speaker), names them, stays a NOTE.
+    gf2 = new_game()
+    gf2.load_scene_now("brimley", "default")
+    ready(gf2)
+    _royce = next((n for n in gf2.scene.npcs if n.name == "Royce"), None)
+    _garrick = next((n for n in gf2.scene.npcs if n.name == "Garrick"), None)
+    check(_royce is not None and _garrick is not None,
+          "fold: the fold-mentioning locals are present")
+    _evp = gf2._evidence_count()
+    if _royce:
+        _royce.dialogue_fn(gf2, _royce)
+        g_ = 0
+        while gf2.dialog.active and g_ < 30:
+            gf2.dialog.advance(); g_ += 1
+    _ft = next((e for e in gf2.save.arg("notes", [])
+                if isinstance(e, dict) and e.get("name") == "the_fold_told"), None)
+    check(_ft is not None and "Royce" in " ".join(_ft["lines"]),
+          "fold: a local describing the fold files the note, naming who told you")
+    check(gf2._evidence_count() == _evp,
+          "fold: the fold note is a NOTE, not evidence (never arms the King-gate)")
+    if _garrick:
+        ready(gf2)
+        _garrick.dialogue_fn(gf2, _garrick)
+    check(sum(1 for e in gf2.save.arg("notes", [])
+              if isinstance(e, dict) and e.get("name") == "the_fold_told") == 1,
+          "fold: only the FIRST fold mention files the note (not every speaker)")
+
+    # --- 16d. STYLE RULE: no em-dashes in ANY player-facing writing (keep it
+    # human). Tokenize every source file and flag every non-docstring STRING
+    # literal that contains '--'. Docstrings + comments are exempt (not game
+    # writing). Locks the whole game's prose, not just this work.
+    import tokenize as _tok
+    import glob as _glob
+    import os as _os
+    _dash_hits = []
+    for _fn in sorted(_glob.glob(_os.path.join(ROOT, "scenes", "*.py"))
+                      + _glob.glob(_os.path.join(ROOT, "systems", "*.py"))
+                      + _glob.glob(_os.path.join(ROOT, "ui", "*.py"))
+                      + _glob.glob(_os.path.join(ROOT, "entities", "*.py"))):
+        with open(_fn, "rb") as _fh:
+            _tks = list(_tok.tokenize(_fh.readline))
+        _sig = [t for t in _tks
+                if t.type not in (_tok.NL, _tok.COMMENT, _tok.ENCODING)]
+        _doc = set()
+        for _i, _t in enumerate(_sig):
+            if _t.type == _tok.STRING:
+                _prev = _sig[_i - 1].type if _i > 0 else _tok.NEWLINE
+                _nxt = _sig[_i + 1].type if _i + 1 < len(_sig) else _tok.NEWLINE
+                if (_prev in (_tok.NEWLINE, _tok.INDENT, _tok.DEDENT)
+                        and _nxt == _tok.NEWLINE):
+                    _doc.add((_t.start, _t.string))
+        for _t in _tks:
+            if (_t.type == _tok.STRING and "--" in _t.string
+                    and (_t.start, _t.string) not in _doc):
+                _dash_hits.append(f"{_os.path.basename(_fn)}:{_t.start[0]}")
+    check(not _dash_hits,
+          "style: no em-dashes in any player-facing string (keep it human)"
+          + (f" (found {_dash_hits[:8]})" if _dash_hits else ""))
+
     # --- 17. The principal locals are named (NARRATIVE §2/§8) ---
     # A small town knows its people by name. Each principal surfaces a
     # proper-name speaker label, not a role-tag. (The Clerk, Mr. Sable, is
-    # a newcomer who finally introduces himself.)
+    # the most-attuned LOCAL, NARRATIVE §2 -- not a newcomer; he introduces
+    # himself first thing all the same.)
     from scenes.dialogue import (sheriff_dialogue, preacher_dialogue,
                                  hettie_dialogue, clerk_dialogue)
 
@@ -454,6 +735,18 @@ def main():
     for expected, fn in roster:
         check(first_speaker(fn) == expected,
               f"naming: a principal local speaks as '{expected}' (not a role-tag)")
+
+    # --- 17b. Sable is the most-attuned LOCAL (NARRATIVE §2) -------------
+    # His menace is compulsion, not conspiracy. Lock the framing: the
+    # characterization must not tag him a newcomer/recruiter or have him
+    # scheme, and it must name him a local.
+    import inspect as _insp_s
+    _sable_src = _insp_s.getsource(clerk_dialogue).lower()
+    check("local" in _sable_src,
+          "sable: characterized as a local (most-attuned), not a newcomer")
+    check(not any(w in _sable_src for w in
+                  ("newcomer", "recruiter", "recruit")),
+          "sable: never tagged newcomer/recruiter (compulsion, not conspiracy)")
 
     # --- 18. effigy_grove is a maker-less tableau (§1b/§8) ---------------
     # Individual cursing is redundant -- the closing rite claimed the town at

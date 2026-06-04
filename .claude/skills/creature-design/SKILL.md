@@ -21,8 +21,8 @@ wire the approved design into the game and verify.
   too many joints, things half-submerged in a mass, asymmetry.
 - **Body-horror seed:** the cult's victims fused/absorbed -- embedded faces,
   mouths, eyes are good, but as *suggestion*, not a tidy totem.
-- **Three views that read distinctly** (front / side / back) -- the King is a
-  top-down chaser, so facing must be legible. The **back is occluded by the
+- **Three views that read distinctly** (front / side / back) -- the King is
+  chased down under an oblique overhead camera, so facing must be legible. The **back is occluded by the
   body's own bulk**: never draw "backs of heads"; the rear is just mass,
   limbs, tatters, maybe one eye peering past.
 - **Movement sells dread.** Looming/gliding or wrong-gaited beats clean

@@ -114,7 +114,9 @@ def build_country_lane():
     objects = ["".join(r) for r in objects_l]
     sc = Scene("country_lane", floor_rows, objects, music="outside")
     sc.add_exit("a", "brimley", "from_country_lane")
-    sc.add_exit("e", "our_house_area", "from_country_lane")
+    # East now lands on the ARRIVAL ROAD (the looping road W of the Lodge),
+    # whose dirt path carries on east to the yard.
+    sc.add_exit("e", "arrival_road", "from_country_lane")
     # Direction-sensitive hidden fold: walking EAST across the 'M2'
     # tile (a piece of road past the lodge gate, late on the lane)
     # opens onto the highway that doesn't end -- where the locals
@@ -127,8 +129,10 @@ def build_country_lane():
         objects_ll[6][W - 4] = "Q"
     sc.objects = objects_ll
     sc.set_spawn("default", 1, 6)
-    # Player walked WEST out of our_house_area: lands at the east
-    # end of the lane, facing west toward town.
+    # Player walked WEST off the arrival road: lands at the east end of the
+    # lane, facing west toward town. (from_our_house_area kept as an alias for
+    # any save that still routes straight here.)
+    sc.set_spawn("from_arrival_road", W - 2, 6)
     sc.set_spawn("from_our_house_area", W - 2, 6)
     # Player walked EAST out of Brimley: lands at the west end of
     # the lane, facing east toward home.

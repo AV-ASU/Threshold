@@ -10,7 +10,8 @@ for that key.
 from .base import Scene, tile_footstep, OBJECT_DEFS, FLOOR_DEFS, TILE
 from .house import (build_bedroom, build_house, build_basement,
                     build_son_room)
-from .our_house_area import build_our_house_area, build_woodshed
+from .our_house_area import (build_our_house_area, build_woodshed,
+                             build_arrival_road)
 from .forest_path import build_forest_path
 from .well import (build_well_bottom, build_well_passage,
                    build_works_vats, build_works_sorting,
@@ -45,7 +46,7 @@ from .threshold_extras import (build_schoolhouse, build_graveyard,
 #   house              -> the Arcadia ground floor (Clerk's desk + floor)
 #   son_room           -> the Clerk's room (locked; flavor: his cult robe)
 #   basement           -> the Arcadia cellar (the Ledger #3; the workbench)
-#   our_house_area     -> the Arcadia yard (the dead car, the woodshed)
+#   our_house_area     -> the Arcadia yard (the woodshed; the dead car is on arrival_road)
 #   kid_house          -> kid_house (drawings on walls)
 #   brimley            -> the unified town map (was mistlands + village)
 #   shop               -> general_store
@@ -66,7 +67,8 @@ SCENE_BUILDERS = {
     "house":              build_house,              # the ground floor
     "son_room":           build_son_room,           # the Clerk's room
     "basement":           build_basement,           # -> innkeeper_basement
-    "our_house_area":     build_our_house_area,     # -> yard
+    "our_house_area":     build_our_house_area,     # -> yard (dead car removed -> arrival_road)
+    "arrival_road":       build_arrival_road,       # -> the looping road W of the lodge (the SPREAD car)
     "woodshed":           build_woodshed,           # -> Clerk's shed interior
     # Next door
     "kid_house":          build_kid_house,
@@ -88,7 +90,7 @@ SCENE_BUILDERS = {
     "the_cells":          build_the_cells,          # branch off the Sorting Hall
     "works_scriptorium":  build_works_scriptorium,
     "works_sign":         build_works_sign,         # the Sign (evidence #5)
-    "works_deepstair":    build_works_deepstair,    # Mask+Play gate -> Depths
+    "works_deepstair":    build_works_deepstair,    # keystone gate -> Depths
     # The depths -- five rooms, one-way fall from well_bottom
     "depths_antechamber": build_depths_antechamber,
     "depths_procession":  build_depths_procession,

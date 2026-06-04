@@ -165,12 +165,17 @@ def build_depths_antechamber():
     _ambient(sc, "cult_breath", 0.18, 6.0, 10.0)
 
     sc.add_interactable(5 * TILE + 16, 5 * TILE + 16, 36)   # [E] cue for the landing
+    # Chalk doors -- the motif at its worst, this deep. The voice beat (panic)
+    # rides examining one; placed clear of the landing so it never steals the
+    # the_fall evidence.
+    sc.add_chalk_door(3 * TILE + 16, 5 * TILE + 16, voice="chalk_deep", seed=6)
+    sc.add_chalk_door(7 * TILE + 16, 3 * TILE + 10, seed=1, wall=True)
 
     def _interact(game):
         px, py = game.player.x, game.player.y
         if abs(px - (5 * TILE + 16)) < 36 and abs(py - (5 * TILE + 16)) < 36:
             _evidence(game, "the_fall",
-                "The rope is gone above you and you are not hurt -- the way "
+                "The rope is gone above you and you are not hurt. The way "
                 "down didn't want you broken, only delivered. Cut stone, "
                 "worn smooth by years of feet that came this way before you."
             )
@@ -372,7 +377,7 @@ def build_depths_threshing():
             _evidence(game, "threshing_floor",
                 "The yield, raked into low heaps: grain, all of it, tithed "
                 "down from the fields above. The town's whole harvest, given "
-                "over to the dark below -- season on season, carried down and "
+                "over to the dark below, season on season, carried down and "
                 "never carried back up. An offering. Not a stockpile."
             )
     sc.on_interact_fn = _interact
@@ -405,7 +410,7 @@ def build_depths_stair():
         game.save.set_flag("first_depthstair", True)
         game.show_notice("The stair spirals down past the last of the "
                          "candlelight. No guards. Nothing down here needs "
-                         "guarding -- no one who reaches it ever turns back.",
+                         "guarding. No one who reaches it ever turns back.",
                          duration=4.0)
     sc.on_enter_fn = _on_enter
     return sc
@@ -448,8 +453,8 @@ def build_the_ossuary():
         px, py = game.player.x, game.player.y
         if abs(px - (4 * TILE + 16)) < 36 and abs(py - (9 * TILE + 16)) < 36:
             _evidence(game, "the_ossuary_shelves",
-                "Shelves of leavings -- shoes, spectacles, a wedding band worn "
-                "thin -- racked and labelled in the Clerk's hand. Not trophies. "
+                "Shelves of leavings: shoes, spectacles, a wedding band worn "
+                "thin, racked and labelled in the Clerk's hand. Not trophies. "
                 "An inventory of everything the dark took before it learned to "
                 "leave the body walking.")
     sc.on_interact_fn = _interact
@@ -476,7 +481,7 @@ def _mara_voice(game, npc):
     ], speaker="", voice="blip_soft", portrait="narrator")
     _evidence(game, "the_congregation", [
         "Mara, kneeling with the congregation. Turned. There was never "
-        "anyone to bring back -- only this, and now you're in it with her.",
+        "anyone to bring back. Only this, and now you're in it with her.",
     ])
 
 
@@ -524,10 +529,11 @@ def build_threshold():
     sc = Scene("threshold", floor, objects, music="void")
     sc.set_spawn("default",   5, 1)
     sc.set_spawn("from_dark", 5, 1)
-    # Doorframe at the centre. Pressing E at it seals the door
-    # (seal_threshold ending) -- no item gate. The Mask and the Play were
-    # already spent at the Deep Stair to open the way down here, so a
-    # player who descended can always finish; nothing to soft-lock on.
+    # Doorframe at the centre. Pressing E presses the KEYSTONE -- the Pallid
+    # Mask seated in the cult's notes -- into the door and seals it (the
+    # seal_threshold ending), CONSUMING both (§7 rework). The keystone was
+    # carried down (the Deep Stair opened WITHOUT spending it), so a player
+    # who descended always holds it here; nothing to soft-lock on.
     lintel_x, lintel_y = 5 * TILE + 16, 5 * TILE + 16
     sc._lintel_pos = (lintel_x, lintel_y)
     sc.add_interactable(lintel_x, lintel_y, 40)   # [E] cue: seal the Threshold (END IT)
@@ -558,12 +564,25 @@ def build_threshold():
         px, py = game.player.x, game.player.y
         if abs(px - lintel_x) > 40 or abs(py - lintel_y) > 40:
             return
+        inv = game.player.inventory
+        # The door seals only to the keystone -- the Mask seated in the
+        # cult's notes -- carried down from the Deep Stair (§6/§7). Spend
+        # both at the frame. (The descent guarantees you hold it; the guard
+        # is belt-and-suspenders against a soft-lock.)
+        if not (inv.has("sigil_rubbing") and inv.has("playscript")):
+            game.show_notice("The frame is cold and blank. You have nothing "
+                             "to give it.")
+            return
         game.audio.force_silence()
         game.audio.play("arg_chime", 0.7)
+        inv.remove("sigil_rubbing", 1)
+        inv.remove("playscript", 1)
         game.dialog.show([
-            "[c=dim](You set both hands to the cold frame. You spent His "
-            "face and His Play to come this far. There is nothing left to "
-            "give it but the rest of you.)[/c]",
+            "[c=dim](You set both hands to the cold frame. His face seated in "
+            "their notes, the keystone you carried all this way. You press "
+            "it into the door.)[/c]",
+            "[c=dim](The frame takes it. Nothing of His is left in your hands "
+            "now. Nothing to give it but the rest of you.)[/c]",
             "[s=slow][c=dim]...the smoke stops.[/c][/s]",
         ], speaker="", voice="blip_soft", portrait="narrator")
         _evidence(game, "the_seal", "It is done.")

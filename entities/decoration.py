@@ -891,6 +891,47 @@ class Decoration:
                              (x - 2 + i * 2, y + 4),
                              (x - 2 + i * 2 + sway, y - 2 - i), 1)
 
+    def _draw_chalk_door(self, surf, x, y):
+        """A door drawn in chalk where no door is -- the cult's compulsion
+        (the door's dream made into a crude life-size drawing). A floor decal
+        (see _FLOOR_DECAL_KINDS): a dark 'step-down' interior, jambs, lintel, a
+        knob it cannot open, all hand-drawn (jittered + doubled strokes) so it
+        reads as chalked by hand, not stamped. `seed` varies each one."""
+        rng = random.Random(self.seed * 7 + 3)
+        chalk = (234, 231, 221)
+        faint = (168, 165, 154)
+        w, h = 30, 48
+        L, R, T, B = x - w // 2, x + w // 2, y - h // 2, y + h // 2
+        # a faint dark wash inside the frame -- the "down through it" void that
+        # makes the chalk lines read even on a dark floor
+        void = pygame.Surface((w - 4, h - 4), pygame.SRCALPHA)
+        void.fill((6, 6, 9, 70))
+        surf.blit(void, (L + 2, T + 2))
+
+        def hand(x0, y0, x1, y1, col, wdt=2, passes=2):
+            for _ in range(passes):
+                mx = (x0 + x1) // 2 + rng.randint(-1, 1)
+                my = (y0 + y1) // 2 + rng.randint(-1, 1)
+                pygame.draw.lines(surf, col, False,
+                                  [(x0 + rng.randint(-1, 1), y0 + rng.randint(-1, 1)),
+                                   (mx, my),
+                                   (x1 + rng.randint(-1, 1), y1 + rng.randint(-1, 1))], wdt)
+        hand(L, B, L, T, chalk)              # left jamb
+        hand(R, B, R, T, chalk)              # right jamb
+        hand(L, T, R, T, chalk)              # lintel
+        hand(L, B, R, B, faint, 1, 1)        # threshold line
+        # the knob -- the cruel detail; there is nothing to open
+        pygame.draw.circle(surf, chalk, (R - 4, y + 4), 2)
+        # chalk dust / scuff around it
+        for _ in range(8):
+            px = max(0, min(surf.get_width() - 1, x + rng.randint(-w, w)))
+            py = max(0, min(surf.get_height() - 1, y + rng.randint(-h // 2, h // 2)))
+            surf.set_at((px, py), faint)
+
+    # The same chalk door, but hung on a WALL (a _WALL_DECO_KINDS card lifted
+    # onto the wall plane) instead of lying on the floor. Same drawing.
+    _draw_chalk_door_wall = _draw_chalk_door
+
     def _draw_bush(self, surf, x, y):
         """A dense leafy bush -- walkable, but if the floor under it
         is corn-cover (':') the player hides in it. Used in the

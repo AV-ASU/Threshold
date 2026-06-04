@@ -83,14 +83,14 @@ def preacher_dialogue(game, npc):
     save.set_arg("old_count", count)
     if count == 1:
         game.dialog.show([
-            "Another new face. That's all that comes to Brimley anymore -- "
+            "Another new face. That's all that comes to Brimley anymore, "
             "strangers off the highway, more every season. And not one of "
             "them leaves.",
             "I don't trust it. They arrive too easy, like something held "
             "the door. Then they go quiet, drift out to the corn, and they "
             "don't come back.",
             "A young woman came through last month. Bright thing, full of "
-            "questions -- like you. She's one of them now, whatever they "
+            "questions, like you. She's one of them now, whatever they "
             "are. You looking for her?",
         ], speaker="Rev. Crane", voice="blip_low", portrait="preacher")
     elif count == 2:
@@ -108,17 +108,18 @@ def preacher_dialogue(game, npc):
         save.set_flag("preacher_doomed", True)
     else:
         game.dialog.show([
-            "I've said my piece. Go on, now -- and watch the road.",
+            "I've said my piece. Go on now, and watch the road.",
         ], speaker="Rev. Crane", voice="blip_low", portrait="preacher")
 
 
 # ---- The Kid: Toby Tisdale ----
 
 def tisdale_boy_dialogue(game, npc):
-    """Toby Tisdale -- innocent witness (NARRATIVE §2). He saw Mara walk into
-    the corn; what he gives you is what he tells you (no inventory item --
-    the old keepsake object was purged). Children notice what adults
-    pretend not to."""
+    """Toby Tisdale -- innocent witness (NARRATIVE §2). He saw Mara AND the
+    other cultists go down into the well, in the procession, before the rite
+    -- so his account is the player's clue to descend the well. What he gives
+    you is what he tells you (no inventory item -- the old keepsake object was
+    purged). Children notice what adults pretend not to."""
     save = game.save
     inv = game.player.inventory
     # The witness beat: first real conversation, he tells you what he saw.
@@ -126,13 +127,16 @@ def tisdale_boy_dialogue(game, npc):
         save.set_flag("kid_witnessed", True)
         game.dialog.show([
             "You're looking for the lady from the lodge.",
-            "She walked to the well. She climbed down. I saw her.",
+            "She went with the others. A whole line of them, at night, down "
+            "to the well in the square. Before the cold came.",
+            "They climbed down into it. Down the well. She didn't come back "
+            "up. None of them did. I saw.",
         ], speaker="Toby Tisdale", voice="blip_kid", portrait="tisdale_boy")
         return
     if inv.has("playscript") and not save.flag("kid_playscript_noticed"):
         save.set_flag("kid_playscript_noticed", True)
         game.dialog.show([
-            "That yellow book.",
+            "That book. The one they keep.",
             "[c=dim]Don't open it where I can see.[/c]",
         ], speaker="Toby Tisdale", voice="blip_kid", portrait="tisdale_boy")
         return
@@ -202,7 +206,7 @@ def hettie_dialogue(game, npc):
     if count == 2:
         game.dialog.show([
             "Back again. Good. You haven't gone quiet. Like the others.",
-            "[c=dim]Don't trust the easy ones. The first to make peace -- "
+            "[c=dim]Don't trust the easy ones. The first to make peace, "
             "they went the soonest.[/c]",
         ], speaker="Hettie", voice="blip_high", portrait="hettie")
         return
@@ -260,6 +264,8 @@ def sheriff_dialogue(game, npc):
             "Won't start. Won't ever. Nothing with an engine leaves Brimley.",
             "[c=dim]I didn't touch it. None of us did. It's the town.[/c]",
         ], speaker="Sheriff Vane", voice="blip_gruff", portrait="sheriff")
+        if hasattr(game, "_fold_mentioned"):
+            game._fold_mentioned("Sheriff Vane")
     elif n == 3:
         # The town is gone. He's local. He watched it happen.
         game.dialog.show([
@@ -286,20 +292,24 @@ def sheriff_dialogue(game, npc):
 
 def clerk_dialogue(game, npc):
     """The Lodge Clerk, Mr. Sable -- the smiling trap-keeper (NARRATIVE §2).
-    A newcomer who came early and stayed to keep the door. Complicit:
-    he keeps you comfortable, keeps you here, and never admits the town won't
-    let you leave. The old fetch-quest chain (crate -> cellar bottle -> car
-    keys) is cut -- the car answers only to the Sign now, so he has no keys
-    to dangle. He escalates over visits from warm host to something colder,
-    and (visit 2) points you at the cellar register himself: he's certain
-    it can't help you."""
+    A LOCAL, and the most attuned of them: he dreamed the door longest and
+    loudest of anyone born here, and has spent years subconsciously keeping
+    the desk and the guests ready for arrivals he could never name. His
+    menace is COMPULSION, NOT CONSPIRACY -- he voices certainties he can't
+    account for (the door has spoken through him so long he mistakes it for
+    hospitality), never a scheme he's in on. He keeps you comfortable, keeps
+    you here, and the only thing he says about the car is deniable (the
+    Sheriff carries the plain truth). The old fetch-quest chain is cut -- the
+    car answers only to the Sign now, so he has no keys to dangle. He
+    escalates over visits from warm host to something colder, and (visit 2)
+    nudges you back to the front-desk register he can't say why he keeps."""
     save = game.save
     _cult_tell(game, "clerk")
     count = save.arg("clerk_count", 0) + 1
     save.set_arg("clerk_count", count)
     if count == 1:
         plain = [
-            "Sable -- I keep the desk here. Anything you need, you ask me. "
+            "Sable. I keep the desk here. Anything you need, you ask me. "
             "Anything at all.",
             "Settling in all right? Good. Most folks do, once they stop "
             "fighting it.",
@@ -314,10 +324,11 @@ def clerk_dialogue(game, npc):
         return
     if count == 2:
         game.dialog.show([
-            "Sleep all right? People do here -- better than they expect.",
-            "[c=dim]If you're the restless sort, there's an old guest "
-            "register down in the cellar. Hatch under the kitchen.[/c]",
-            "Read it if you like. Won't change a thing.",
+            "Sleep all right? People do here, better than they expect.",
+            "[c=dim]The register's right there on the desk if you're the "
+            "restless sort. Sign and guest both, all the way back.[/c]",
+            "Read it if you like. Folks always look for a name that left. "
+            "Won't change a thing.",
         ], speaker="Mr. Sable", voice="blip_low", portrait="clerk")
         return
     if count == 3:

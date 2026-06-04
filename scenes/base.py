@@ -633,7 +633,17 @@ def draw_object(surf, ch, rx, ry, tx, ty):
 
 def draw_floor(surf, ch, rx, ry, tx, ty):
     fd = FLOOR_DEFS.get(ch, FLOOR_DEFS["."])
-    pygame.draw.rect(surf, fd["color"], (rx, ry, TILE, TILE))
+    base = fd["color"]
+    # Per-tile value jitter so adjacent tiles never read identical -- the
+    # cheapest break of the grid lockstep (cached per (ch,tx,ty), so free
+    # after the first draw). Animated floors (~,@) skip it: they reseed each
+    # frame and a jitter would shimmer as you walk.
+    if ch not in _ANIM_FLOOR:
+        jv = (_vary(tx * 8009 + ty, 0) % 13) - 6        # -6..6, value only
+        base = (max(0, min(255, base[0] + jv)),
+                max(0, min(255, base[1] + jv)),
+                max(0, min(255, base[2] + jv)))
+    pygame.draw.rect(surf, base, (rx, ry, TILE, TILE))
     if ch in ("g", "G"):
         # Grass with layered detail: a faint base mottle on every
         # tile, occasional grass blades, occasional darker dead-clump,
@@ -654,12 +664,27 @@ def draw_floor(surf, ch, rx, ry, tx, ty):
             pygame.draw.rect(surf, (66, 56, 34),
                              (rx + (seed * 2 % 26),
                               ry + (seed * 5 % 26), 3, 2))
+        if seed % 9 == 0:
+            # Bare earth scuffed through the grass -- a patch of dirt.
+            ex, ey = rx + (seed * 7 % 22) + 2, ry + (seed * 11 % 22) + 2
+            pygame.draw.ellipse(surf, (60, 48, 34), (ex, ey, 7, 5))
+            pygame.draw.rect(surf, (50, 40, 28), (ex + 2, ey + 1, 2, 2))
+        if seed % 13 == 0:
+            # A taller blade clump, lighter green, catching what light there is.
+            bx, by = rx + (seed * 5 % 28), ry + (seed * 3 % 22) + 6
+            for k in range(3):
+                pygame.draw.line(surf, (72, 86, 54),
+                                 (bx + k * 2, by), (bx + k * 2 - 1, by - 5 - k), 1)
         if seed % 73 == 0:
             # Bone speck -- very rare. The kind of thing a player
             # only catches on the second or third walk through.
             pygame.draw.rect(surf, (210, 200, 180),
                              (rx + (seed * 3 % 28),
                               ry + (seed * 7 % 28), 1, 1))
+        elif seed % 57 == 0:
+            # A rare pale weed-flower -- a fleck of off-white in the green.
+            pygame.draw.rect(surf, (172, 170, 142),
+                             (rx + (seed * 9 % 28), ry + (seed * 13 % 28), 1, 1))
     elif ch == "_":
         pygame.draw.rect(surf, (92, 90, 86),
                          (rx + 1, ry + 1, TILE - 2, TILE - 2), 1)
@@ -703,6 +728,25 @@ def draw_floor(surf, ch, rx, ry, tx, ty):
             ky = ry + (seed * 3 % 22) + 3
             pygame.draw.circle(surf, (60, 38, 22), (kx, ky), 2)
             pygame.draw.circle(surf, (40, 26, 16), (kx, ky), 1)
+        # Tracked-in grit + the place half-abandoned: sparse dust specks, a
+        # rare ground-in grime smear, and very rarely a blade of grass pushing
+        # up through a board seam. Reads grimy and lived-in, not a clean floor.
+        if seed % 4 == 0:
+            for k in range(2):
+                gx = rx + (_vary(seed, k) % 28) + 2
+                gy = ry + (_vary(seed, k + 5) % 28) + 2
+                pygame.draw.rect(surf, (44, 33, 22), (gx, gy, 1, 1))
+        if seed % 13 == 0:
+            pygame.draw.ellipse(surf, (40, 30, 20),
+                                (rx + (seed * 3 % 22) + 4,
+                                 ry + (seed * 5 % 22) + 4, 6, 3))
+        if seed % 29 == 0:
+            # A weed through a floorboard seam -- nature creeping back in.
+            wx = rx + (seed % 24) + 4
+            wb = ry + 8 + (seed % 14)
+            for k in range(2):
+                pygame.draw.line(surf, (62, 78, 48),
+                                 (wx + k, wb), (wx + k - 1, wb - 5), 1)
     elif ch == ",":
         pygame.draw.rect(surf, (80, 30, 50), (rx, ry, TILE, TILE), 1)
         for i in range(0, TILE, 6):
@@ -824,6 +868,24 @@ def draw_floor(surf, ch, rx, ry, tx, ty):
         if seed % 7 == 0:                          # mud crack
             cx = rx + (seed % 20) + 4
             pygame.draw.line(surf, (20, 19, 16), (cx, ry + 8), (cx + 5, ry + 13), 1)
+    elif ch == ".":
+        # Plain dark stone -- the bare interior/dark-scene floor. It used to
+        # draw as a flat fill; give it a low mottle, a faint grout seam, and
+        # sparse grit so it stops reading as a single block.
+        seed = tx * 23 + ty * 53
+        for i in range(2):
+            mx = rx + (_vary(seed, i) % 26) + 2
+            my = ry + (_vary(seed, i + 3) % 26) + 2
+            pygame.draw.rect(surf, (37, 35, 46), (mx, my, 3, 3))
+        if seed % 4 == 0:
+            pygame.draw.line(surf, (22, 20, 28),
+                             (rx + 16, ry + 1), (rx + 16, ry + TILE - 1), 1)
+        if seed % 5 == 0:
+            pygame.draw.line(surf, (22, 20, 28),
+                             (rx + 1, ry + 16), (rx + TILE - 1, ry + 16), 1)
+        if seed % 9 == 0:
+            pygame.draw.rect(surf, (24, 22, 30),
+                             (rx + (seed * 3 % 24) + 2, ry + (seed * 5 % 24) + 2, 4, 3))
     # Macro shadow blotches: a low-frequency, world-anchored darkening
     # that rolls across many tiles at once, so the floor stops reading
     # as a grid of identical cells. Two cheap sine layers, darken-only.
@@ -1549,6 +1611,15 @@ def _tilt_warp(flat, camera):
 _DOOR_HEAD = 19      # doorway opening height; the lintel beam runs head->rise
 
 
+def _quad_pt(quad, fx, fy):
+    """A point inside a projected quad (bl, br, tr, tl) at fractions
+    fx (0..1 left->right along the base) and fy (0..1 bottom->top)."""
+    bl, br, tr, tl = quad
+    bx = bl[0] + (br[0] - bl[0]) * fx; by = bl[1] + (br[1] - bl[1]) * fx
+    tx_ = tl[0] + (tr[0] - tl[0]) * fx; ty_ = tl[1] + (tr[1] - tl[1]) * fx
+    return (bx + (tx_ - bx) * fy, by + (ty_ - by) * fy)
+
+
 def _extrude_box(surf, camera, scene, tx, ty, z0, z1, neigh=_WALL_CHARS):
     """One tile extruded between heights z0..z1. Rotation-correct: every
     EXPOSED side face (neighbour char not in `neigh`) is drawn, depth-sorted
@@ -1563,6 +1634,12 @@ def _extrude_box(surf, camera, scene, tx, ty, z0, z1, neigh=_WALL_CHARS):
     t = [P(-hw, -hw, z1), P(hw, -hw, z1), P(hw, hw, z1), P(-hw, hw, z1)]
     near = tuple(int(c * 0.5) for c in _WALL_FACE)   # N/S faces
     side = tuple(int(c * 0.7) for c in _WALL_FACE)   # E/W faces
+    # Per-tile value jitter so the mass reads as many battered blocks rather
+    # than one flat slab (tile-seeded -> stable, no shimmer as the camera
+    # moves; matches the floor jitter).
+    jv = (_vary(tx * 8009 + ty, 3) % 15) - 7
+    near = tuple(max(0, min(255, c + jv)) for c in near)
+    side = tuple(max(0, min(255, c + jv)) for c in side)
 
     def is_n(ax, ay):
         if scene.wrap_y: ay %= scene.h
@@ -1583,6 +1660,27 @@ def _extrude_box(surf, camera, scene, tx, ty, z0, z1, neigh=_WALL_CHARS):
     vis.sort(key=lambda f: f[0])                      # far first
     for _, quad, col in vis:
         pygame.draw.polygon(surf, col, quad)
+    # Battered detail on the exposed near (south) face so no two wall faces
+    # read the same: a per-tile dark water-stain streak, a pit cluster, or a
+    # faint lit course line. Projected through the quad so it leans correctly.
+    if z1 - z0 > TILE * 0.4 and not is_n(tx, ty + 1):
+        sq = (g[3], g[2], t[2], t[3])
+        hsh = _vary(tx, ty + 7)
+        if hsh % 3 == 0:                               # water-stain dribble
+            fx = 0.2 + (hsh % 6) / 10.0
+            a = _quad_pt(sq, fx, 0.05); b = _quad_pt(sq, fx, 0.85)
+            pygame.draw.line(surf, tuple(int(c * 0.6) for c in near),
+                             (int(a[0]), int(a[1])), (int(b[0]), int(b[1])), 1)
+        elif hsh % 4 == 0:                             # pitting cluster
+            for k in range(3):
+                p = _quad_pt(sq, 0.25 + ((hsh >> k) % 6) / 12.0,
+                             0.25 + ((hsh >> (k + 2)) % 5) / 12.0)
+                pygame.draw.rect(surf, tuple(int(c * 0.7) for c in near),
+                                 (int(p[0]), int(p[1]), 2, 2))
+        elif hsh % 5 == 0:                             # a faint lit course line
+            a = _quad_pt(sq, 0.04, 0.5); b = _quad_pt(sq, 0.96, 0.5)
+            pygame.draw.line(surf, tuple(min(255, int(c * 1.4)) for c in near),
+                             (int(a[0]), int(a[1])), (int(b[0]), int(b[1])), 1)
     # flat shaded top cap: lit but kept dark to read as the game's near-black
     # walls -- top clearly lighter than the sides for form, darker grout edge.
     pygame.draw.polygon(surf, tuple(int(c * 0.72) for c in _WALL_TOP), t)
@@ -1667,6 +1765,7 @@ def _draw_doorway(surf, camera, scene, tx, ty):
 # screen-aligned sprite that ignores the camera.
 _FLOOR_DECAL_KINDS = frozenset((
     "rug", "bloodstain", "gore", "yellow_sign", "bloody_handprint", "bloody_pile",
+    "chalk_door",
 ))
 
 # Wall-mounted decorations. Under tilt these are lifted onto the wall face as
@@ -1678,6 +1777,7 @@ _WALL_DECO_KINDS = frozenset((
     "mirror", "photo", "wrong_photo", "missing_flyer", "polaroid_wall",
     "banner", "calendar", "clock", "apology_wall",
     "buck_head", "antler_rack", "mounted_fish", "wrong_taxidermy",
+    "chalk_door_wall",
 ))
 _WALL_MOUNT_Z = 18
 
@@ -1729,7 +1829,7 @@ def draw_wall_deco(surf, camera, scene, deco, mount_z, woff=(0.0, 0.0)):
     of the wall, edge-on (a sliver) when you look along it."""
     nx, ny = _wall_normal(scene, deco.x, deco.y)
     ax, ay = -ny, nx                       # along the wall (perp to the normal)
-    half = 11.0
+    half = 15.0 if deco.kind == "chalk_door_wall" else 11.0
     bx, by = deco.x + woff[0], deco.y + woff[1]
     p1 = camera.project(bx - ax * half, by - ay * half, mount_z)
     p2 = camera.project(bx + ax * half, by + ay * half, mount_z)
@@ -1741,10 +1841,12 @@ def draw_wall_deco(surf, camera, scene, deco, mount_z, woff=(0.0, 0.0)):
     if width < 3:
         return                             # edge-on -> a sliver; skip
     drawfn = getattr(deco, f"_draw_{deco.kind}", deco._draw_unknown)
-    C = 22
+    C = 28 if deco.kind == "chalk_door_wall" else 22
     canvas = pygame.Surface((C * 2, C * 2), pygame.SRCALPHA)
     drawfn(canvas, C, C)
     h = int(C * 2 * 0.66)                   # card screen height (upright)
+    if deco.kind == "chalk_door_wall":     # a door is tall, not a small plaque
+        h = int(C * 2 * 0.95)
     card = pygame.transform.scale(canvas, (max(3, int(width)), max(3, h)))
     ang = math.degrees(math.atan2(-(p2[1] - p1[1]), p2[0] - p1[0]))
     if abs(ang) > 0.5:
@@ -2493,6 +2595,74 @@ class Scene:
         readables/pickups resolved in on_interact_fn (which the prompt
         system otherwise can't see)."""
         self.interactables.append((x, y, radius))
+
+    def add_chalk_door(self, x, y, voice=None, seed=0, wall=False):
+        """Place a chalk-drawn door (the cult's drawn-door compulsion) AND an
+        [E]-examinable point. `wall=False` draws it flat on the FLOOR (a decal
+        you'd step down into); `wall=True` hangs it on the nearest perimeter
+        WALL. Examining one surfaces the PI's interior voice
+        (Game._try_chalk_interact): the FIRST chalk door examined in a scene
+        that set `voice` fires that beat; the rest give a brief flat line. Most
+        chalk doors are placed voice-less -- they are the creeping VISUAL
+        motif; only a few key ones carry a beat."""
+        from entities.decoration import Decoration
+        kind = "chalk_door_wall" if wall else "chalk_door"
+        self.add_decoration(Decoration(x, y, kind, seed=seed))
+        if not hasattr(self, "_chalk_doors"):
+            self._chalk_doors = []
+        self._chalk_doors.append((x, y))
+        if voice is not None:
+            self._chalk_voice = voice
+        self.add_interactable(x, y, 40)
+
+    def scatter_chalk_doors(self, count, seed=0, wall_count=0):
+        """Obsessively fill an empty-feeling room with chalk doors -- drawn
+        over and over, NONE overlapping. Places `count` floor doors on open
+        interior tiles (min spacing) and `wall_count` against perimeter walls.
+        These are the creeping VISUAL swarm: examinable (a flat line) but NOT
+        [E]-prompted, so they don't spam the prompt. The one door that carries
+        a voice beat is added separately via add_chalk_door(voice=...)."""
+        import random as _r
+        from entities.decoration import Decoration
+        rng = _r.Random(seed * 131 + 7)
+        W, H = self.w, self.h
+        if not hasattr(self, "_chalk_doors"):
+            self._chalk_doors = []
+        taken = {(int(cx // TILE), int(cy // TILE)) for cx, cy in self._chalk_doors}
+        # Keep clear of E-points (the desk/altar/etc.) so a swarmed door never
+        # steals another interactable's press.
+        inter = {(int(ix // TILE), int(iy // TILE))
+                 for ix, iy, _ in self.interactables}
+
+        def is_open(tx, ty):
+            if not (1 <= tx < W - 1 and 1 <= ty < H - 1
+                    and self.objects[ty][tx] == "."):
+                return False
+            return not any(abs(tx - ix) + abs(ty - iy) < 2 for ix, iy in inter)
+
+        def place(cands, n, wall):
+            laid = 0
+            rng.shuffle(cands)
+            for tx, ty in cands:
+                if laid >= n:
+                    break
+                if any(abs(tx - ax) + abs(ty - ay) < 2 for ax, ay in taken):
+                    continue
+                self.add_decoration(Decoration(
+                    tx * TILE + 16, ty * TILE + 16,
+                    "chalk_door_wall" if wall else "chalk_door",
+                    seed=rng.randint(1, 9999)))
+                self._chalk_doors.append((tx * TILE + 16, ty * TILE + 16))
+                taken.add((tx, ty))
+                laid += 1
+
+        floor = [(tx, ty) for ty in range(1, H - 1) for tx in range(1, W - 1)
+                 if is_open(tx, ty)]
+        place(list(floor), count, False)
+        if wall_count:
+            edge = [(tx, ty) for tx, ty in floor
+                    if tx in (1, W - 2) or ty in (1, H - 2)]
+            place(edge, wall_count, True)
 
     def find_marker(self, ch):
         for ty, r in enumerate(self.objects):

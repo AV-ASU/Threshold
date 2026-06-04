@@ -4,8 +4,9 @@
 > self-contained. Your job is to make the **game** match the **settled
 > canon** that already lives in the docs.
 
-You are continuing **THRESHOLD**, a top-down narrative-horror game in
-pygame (every sprite procedural; no art assets). The story canon was just
+You are continuing **THRESHOLD**, a narrative-horror game in pygame
+(oblique tilted camera by default, F3 flat; every sprite procedural; no
+art assets). The story canon was just
 re-settled with the user. Two docs are your source of truth — **read both
 in full before touching code**:
 

@@ -1,8 +1,10 @@
 """outside_innkeeper_house (key: 'our_house_area') -- the gravel
-yard behind the Clerk's house. The pickup truck is parked here.
-A small woodshed off to the south holds the splitting axe. The dirt
-road leaves east toward town; a path west connects to the river/
-brimley escape route.
+yard behind the Clerk's house. The WOODSHED sits in the SW (the axe,
+rope and flashlight; a locked facade door 'l' -> the `woodshed`
+interior, key-gated by the Lodge cellar key). The dirt path leaves
+east toward the cornfields; west onto the ARRIVAL ROAD (the looping
+road the PI drove in on, where the dead car / SPREAD escape now sits),
+whose dirt path carries on to the country lane and town.
 
 The basement is reached from inside the Clerk's house (the
 kitchen cellar hatch). A previous build placed a redundant cellar
@@ -11,10 +13,8 @@ trip (basement only exits via the kitchen ladder) and a duplicate
 "door to the basement" two tiles outside the same building.
 
 THRESHOLD reskin: original 'our_house_area' had two houses, a patrol,
-a rust-key cellar gate, and respawning enemies. All cut. The second house is now a woodshed (no interior
-scene, just an interactable door that yields the splitting axe).
-Sheriff patrols this scene as part of his random outdoor route
-(wired in Pass F).
+a rust-key cellar gate, and respawning enemies. All cut. The Sheriff
+patrols this scene as part of his random outdoor route (wired in Pass F).
 """
 import math
 import random
@@ -33,10 +33,10 @@ def _yard_cache_pickup(game):
 
 def build_our_house_area():
     # 24w x 18h. The Clerk's house occupies the upper-left quadrant
-    # with a back door (H) into the kitchen. A woodshed sits in the
-    # lower-left with a door (h) you interact with to take the axe. The
-    # bulkhead cellar entry sits behind the house at the top of the
-    # yard. The dirt road runs east-west across the middle.
+    # with a back door (H) into the kitchen. The woodshed sits in the
+    # lower-left -- a locked facade door 'l' you interact with (key-gated)
+    # to enter the `woodshed` interior. The dirt road runs east-west across
+    # the middle; west now leads onto the looping arrival road.
     floor = [
         "gggggggggggggggggggggggg",   # 0
         "gggggggggggggggggggggggg",   # 1
@@ -90,10 +90,10 @@ def build_our_house_area():
     # H = back door of the Clerk's house. Returns to 'house' scene
     # (the kitchen/living/hallway).
     sc.add_exit("H", "house", "from_our_house_area")
-    # Outdoor passages: west to the country lane that leads to
-    # village; east to the cornfield path. The lane is an intermediate
-    # scene so the village isn't one step from the front yard.
-    sc.add_exit("a", "country_lane", "from_our_house_area")
+    # Outdoor passages: west onto the ARRIVAL ROAD (the looping road the PI
+    # drove in on, with the dead car), which the dirt path carries on to the
+    # country lane and town; east to the cornfield path.
+    sc.add_exit("a", "arrival_road", "from_our_house_area")
     sc.add_exit("e", "forest_path", "from_our_house_area")
     # Direction-sensitive hidden fold: walking NORTH across the 'M'
     # tile (one of the yard's path tiles south of the Lodge) opens
@@ -105,6 +105,16 @@ def build_our_house_area():
     # back door so the player passes it walking up to the porch.
     yard_obj = [list(r) for r in sc.objects]
     yard_obj[12][5] = "M"
+    # The WOODSHED in the SW of the yard -- west of the Lodge, where it
+    # belongs (it used to sit clear across town in brimley). A small solid
+    # structure with a facade door 'l' on its north face; locked until you
+    # find the woodshed key in the Lodge cellar. Clear of the dirt path
+    # (cols 4-6) and the 'M' arrival fold (5,12).
+    for cy in (12, 13, 14):
+        for cx in (1, 2, 3):
+            yard_obj[cy][cx] = "W"
+    yard_obj[12][2] = "l"          # locked facade door, north face
+    sc._shed_door_pos = (2 * TILE + 16, 12 * TILE + 16)
     # ---- Permeable forest band ----
     # Replaces the old hard corn-wall perimeter. Same helper as brimley
     # so the visual treatment of the wrap is consistent. Lodge structure
@@ -126,6 +136,10 @@ def build_our_house_area():
         # scatter trees onto it; painted dirt just below (after scatter), cut
         # clean through the band like the roads (NARRATIVE 11).
         if 4 <= tx <= 6 and 9 <= ty <= 14:
+            return True
+        # The woodshed footprint + its north approach (so the forest band
+        # doesn't bury the door).
+        if 1 <= tx <= 3 and 11 <= ty <= 15:
             return True
         return False
     _yd_bushes = []
@@ -153,10 +167,11 @@ def build_our_house_area():
     sc.set_spawn("default", 12, 7)
     sc.set_spawn("from_house", 5, 6)             # one south of back door
     sc.set_spawn("from_country_lane", 1, 7)      # one east of west passage
+    sc.set_spawn("from_arrival_road", 1, 7)      # walked EAST off the road
     sc.set_spawn("from_village", 1, 7)           # legacy save alias
     sc.set_spawn("from_forest", 22, 7)           # one west of east passage
     sc.set_spawn("from_river", 1, 7)             # west passage spawn alias
-    sc.set_spawn("from_woodshed", 12, 7)         # legacy fallback
+    sc.set_spawn("from_woodshed", 2, 11)         # one N of the shed door
     # Return spawn from the lodge_arrival fold -- lands the player
     # one tile south of the directional M tile so they don't
     # immediately re-trigger the fold.
@@ -187,6 +202,20 @@ def build_our_house_area():
 
     def _outside_interact(game):
         px, py = game.player.x, game.player.y
+        # The woodshed -- locked facade door. Needs the woodshed key from the
+        # Lodge cellar workbench; opens to the woodshed interior (axe, rope,
+        # flashlight). Now in the yard, west of the Lodge, where you'd expect
+        # it -- not across town.
+        sdx, sdy = sc._shed_door_pos
+        if abs(px - sdx) < 44 and abs(py - sdy) < 44:
+            if not game.player.inventory.has("woodshed_key"):
+                game.audio.play("door_locked", 0.6)
+                game.show_notice("Locked. The key's somewhere inside the "
+                                 "Lodge.")
+                return
+            game.audio.play("door_open", 0.7)
+            game.begin_transition("woodshed", "from_yard")
+            return
         # Bloody handprint on the back door -- atmosphere, not a clue.
         # show_notice keeps it as a corner-line that doesn't interrupt
         # play with a full dialog pop.
@@ -203,6 +232,8 @@ def build_our_house_area():
             game.show_notice(
                 "The Clerk's truck. He doesn't drive it. None of them do.")
     sc.on_interact_fn = _outside_interact
+    # [E] cue on the shed door.
+    sc.add_interactable(sc._shed_door_pos[0], sc._shed_door_pos[1], 44)
 
     # Atmosphere -- chimney smoke from the house, a couple of crows,
     # scattered grass. No patrol NPC. No enemy spawn.
@@ -249,11 +280,135 @@ def build_our_house_area():
     return sc
 
 
+def build_arrival_road():
+    """The county road the PI drove in on -- west of the Arcadia. A gravel
+    road running NORTH-SOUTH that the fold has closed into a LOOP: walk it
+    either way and it never ends (wrap_y), the same stretch coming around
+    again, your own dead car passing on the shoulder a second time, a third.
+    Nothing stops you turning back -- a DIRT PATH crosses it east-west (the
+    real route: east to the Lodge yard, west on to the country lane and town).
+
+    The dead car is the PI's own, killed at the steps on the way in. It is the
+    SPREAD escape: the engine catches only with the Sign, and then the looping
+    road finally lets a car through (NARRATIVE §1/§6).
+
+    The road is deliberately TALLER than the camera view (40 tiles) so the
+    wrap never shows its own repeat in a single frame -- you don't notice the
+    loop until you've walked far enough for your own car to come back around.
+    The PATH (the E-W route) sits mid-scene; the car a little north of it."""
+    W, H = 15, 40
+    PATH = (19, 20, 21)                     # the E-W dirt path rows (mid-scene)
+    floor_rows = []
+    for y in range(H):
+        row = ["g"] * W
+        for x in (6, 7, 8):                 # N-S gravel road
+            row[x] = "d"
+        if y in PATH:                       # E-W dirt path (the real route)
+            for x in range(W):
+                row[x] = "d"
+        floor_rows.append("".join(row))
+    objects_l = []
+    for y in range(H):
+        row = ["."] * W
+        if y not in PATH:                   # corn shoulders, cut by the path
+            row[0] = "C"
+            row[W - 1] = "C"
+        objects_l.append(row)
+    for dy in (-1, 0, 1):                   # path mouths W (lane) + E (yard)
+        objects_l[20 + dy][0] = "a"
+        objects_l[20 + dy][W - 1] = "e"
+    objects = ["".join(r) for r in objects_l]
+    sc = Scene("arrival_road", floor_rows, objects, music="outside")
+    # The road never ends: walk north or south and the same stretch wraps
+    # back. The E-W path still exits normally -- only the road loops.
+    sc.wrap_y = True
+    sc.add_exit("a", "country_lane", "from_arrival_road")
+    sc.add_exit("e", "our_house_area", "from_arrival_road")
+    sc.set_spawn("default", 7, 20)
+    sc.set_spawn("from_our_house_area", W - 2, 20)   # walked WEST from the yard
+    sc.set_spawn("from_country_lane", 1, 20)         # walked EAST from town side
+
+    # The PI's car, dead on the WEST shoulder at the crossroads -- OFF the
+    # driving lanes (cols 6-8), so the looping road stays walkable both ways
+    # and you pass the car each time round. Solid footprint under the sprite;
+    # the interact anchor sits at its road-facing edge so you trigger it from
+    # the road. Reaching it with the Sign fires SPREAD; without it the engine
+    # never catches.
+    car_tx, car_ty = 4, 16                            # west shoulder, N of path
+    car_x = car_tx * TILE + 16
+    car_y = car_ty * TILE + 16
+    sc.add_decoration(Decoration(car_x, car_y, "player_car"))
+    sc._car_pos = ((car_tx + 1) * TILE + 16, car_y)   # east edge, by the road
+    objs = [list(r) for r in sc.objects]
+    for cx in (car_tx - 1, car_tx, car_tx + 1):       # cols 3-5 (the shoulder)
+        if 0 <= cx < sc.w:
+            objs[car_ty][cx] = "X"
+    sc.objects = objs
+
+    def _road_interact(game):
+        cx, cy = sc._car_pos
+        if abs(game.player.x - cx) < 44 and abs(game.player.y - cy) < 44:
+            if (game.player.inventory.has("sigil_rubbing")
+                    and hasattr(game, "_begin_car_escape")):
+                game._begin_car_escape()          # the Sign breaks the fold
+                return
+            game.audio.play("door_locked", 0.6)
+            game.show_notice("You turn the key. The engine catches, and "
+                             "catches, and dies. The fold won't let the car "
+                             "go. Not with empty hands.")
+    sc.on_interact_fn = _road_interact
+    sc.add_interactable(sc._car_pos[0], sc._car_pos[1], 44)
+
+    # Atmosphere: corn tufts off the road, a reflector post or two, a dead
+    # crow on the gravel, a missing-flyer the rain has taken. Hide spots in
+    # the corn shoulders.
+    rng = random.Random(2031)
+    for _ in range(70):
+        gx = rng.randint(0, W - 1) * TILE + rng.randint(0, 30)
+        gy = rng.randint(0, H - 1) * TILE + rng.randint(0, 30)
+        tx_, ty_ = gx // TILE, gy // TILE
+        if 6 <= tx_ <= 8:                   # keep the road clear
+            continue
+        if ty_ in PATH:                     # keep the path clear
+            continue
+        sc.add_decoration(Decoration(gx, gy, "grass_tuft"))
+    sc.add_decoration(Decoration(9 * TILE + 8, 14 * TILE + 22, "dead_crow"))
+    sc.add_decoration(Decoration(5 * TILE + 16, 27 * TILE + 16, "creepy_tree"))
+    sc.add_decoration(Decoration(10 * TILE + 16, 9 * TILE + 16, "missing_flyer"))
+    sc.add_decoration(Decoration(9 * TILE + 8, 31 * TILE + 22, "dead_crow"))
+    sc.hide_spots = [
+        (2 * TILE + 16, 12 * TILE + 16, "behind"),
+        (12 * TILE + 16, 26 * TILE + 16, "behind"),
+        (2 * TILE + 16, 34 * TILE + 16, "behind"),
+    ]
+
+    def _road_update(game, scene, dt):
+        # The TELL. The road wraps N-S (wrap_y), so walking it long enough
+        # brings the same stretch -- and the PI's own dead car -- back around.
+        # The recurring car IS the recognition (no narration, NARRATIVE §1b
+        # discipline); a soft, escalating dread pulse underscores the wrongness
+        # the moment the fold folds the road back. Detected as the big single-
+        # frame y jump the wrap produces.
+        p = game.player
+        if p is None:
+            return
+        wh = scene.h * TILE
+        last = getattr(scene, "_last_py", None)
+        if last is not None and abs(p.y - last) > wh * 0.5:
+            scene._loops = getattr(scene, "_loops", 0) + 1
+            game.save.set_flag("arrival_road_looped", True)
+            game.audio.play("low_pulse", min(0.75, 0.34 + 0.12 * scene._loops))
+        scene._last_py = p.y
+    sc.on_update_fn = _road_update
+    return sc
+
+
 def build_woodshed():
-    """A woodshed off the village crossroads (where it actually sits --
-    not the Arcadia yard). Single room: splitting axe on the wall, a coil
-    of rope on the workbench, a chopping stump in the centre. Locked from
-    outside; the Clerk keeps the key (found in his cellar)."""
+    """The Arcadia woodshed -- in the SW of the Lodge yard, west of the
+    Lodge (it used to sit clear across town; consolidated here so the tools
+    are where you'd expect). Single room: splitting axe on the wall, a coil
+    of rope on the workbench, the flashlight on a chopping stump in the
+    centre. Locked from outside; the key is in the Lodge cellar."""
     floor = ["=" * 12 for _ in range(9)]
     objects = [
         "WWWWWWWWWWWW",   # 0
@@ -267,14 +422,13 @@ def build_woodshed():
         "WWWWWWWWWWWW",   # 8
     ]
     sc = Scene("woodshed", floor, objects, music="home")
-    # `h` exit always returns the player to the village/farm scene
-    # now -- the yard shed has been removed, the village shed is
-    # the only entry/exit.
-    sc.add_exit("h", "brimley", "from_woodshed")
+    # `h` exit returns the player to the LODGE YARD (the shed is back in the
+    # Arcadia yard, west of the Lodge).
+    sc.add_exit("h", "our_house_area", "from_woodshed")
     sc.set_spawn("default",            5, 6)
-    sc.set_spawn("from_brimley_shed",  4, 6)
+    sc.set_spawn("from_yard",          4, 6)   # entered from the yard door
+    sc.set_spawn("from_brimley_shed",  4, 6)   # legacy fallback
     sc.set_spawn("from_village_shed",  4, 6)   # legacy fallback
-    sc.set_spawn("from_yard",          4, 6)   # legacy fallback
 
     rope_pos   = (2 * TILE + 16, 2 * TILE + 16)
     # The splitting axe hangs in the back tool nook -- behind the partition,
@@ -328,7 +482,7 @@ def build_woodshed():
                 game.save.set_flag("flashlight_taken", True)
                 game.player.inventory.add("flashlight", 1)
                 game.audio.play("pickup_rare", 0.7)
-                game.show_notice("A flashlight. Press [F] in the dark -- "
+                game.show_notice("A flashlight. Press [F] in the dark, "
                                  "but light draws the eye.")
                 return
     sc.on_interact_fn = _woodshed_interact

@@ -18,13 +18,18 @@ from .base import Scene
 from .dialogue import _evidence
 
 
-def _brimley_voice(pages, voice="blip_mid"):
+def _brimley_voice(pages, voice="blip_mid", fold=False):
     """NPC dialogue_fn from a fixed page list. Speaker name + portrait are
-    read off the NPC at call time so each resident speaks as themselves."""
+    read off the NPC at call time so each resident speaks as themselves.
+    `fold=True` marks a local who describes the fold (looping roads): the
+    FIRST such conversation files the PI's fold note (Game._fold_mentioned,
+    globally one-shot, so only the first speaker triggers it)."""
     def _fn(game, npc):
         portrait = getattr(npc, "portrait", None) or npc.sprite_kind
         game.dialog.show(pages, speaker=npc.name, voice=voice,
                          portrait=portrait)
+        if fold and hasattr(game, "_fold_mentioned"):
+            game._fold_mentioned(npc.name)
     return _fn
 
 
@@ -525,19 +530,9 @@ def build_brimley():
     # Footpaths to the well + shed are carved earlier in the floor pass.
     # The well at col 94, row 13 -- the only mouth down into the Works.
     # Surrounding floor was already grass; the well is a decoration.
-    # The woodshed footprint (5w x 4h) south-east of the well, door
-    # 'z' on north face at col 91.
-    shed_left, shed_right = 89, 93
-    shed_top, shed_bot = 16, 19
-    for cx in range(shed_left, shed_right + 1):
-        objects_list[shed_top][cx] = "W"
-        objects_list[shed_bot][cx] = "W"
-    objects_list[shed_top][91] = "z"   # locked door
-    for ry in (shed_top + 1, shed_top + 2):
-        objects_list[ry][shed_left] = "W"
-        objects_list[ry][shed_right] = "W"
-        for cx in range(shed_left + 1, shed_right):
-            objects_list[ry][cx] = "r"
+    # (The woodshed moved to the Lodge yard -- scenes/our_house_area. Brimley
+    # no longer hosts a shed; the footpath that once led here is left as worn
+    # ground to nowhere.)
     # Gravel road passage (north) -- single 'R' tile at col 96. Uses
     # 'R' rather than 'a' to avoid collision with the river-crossing
     # 'a' exit (exit chars are scene-global, not per-tile).
@@ -670,9 +665,9 @@ def build_brimley():
     # the edges: denial, time-loop confusion, a child saying the quiet
     # part out loud.
     def _resident(tx, ty, name, kind, pages, movement="wander",
-                  voice="blip_mid", radius=52):
+                  voice="blip_mid", radius=52, fold=False):
         sc.add_npc(NPC(tx * TILE + 16, ty * TILE + 16, name, kind,
-                       dialogue_fn=_brimley_voice(pages, voice),
+                       dialogue_fn=_brimley_voice(pages, voice, fold=fold),
                        movement=movement, radius=radius))
 
     # The locals anchored to their houses -- not patrolling random
@@ -692,24 +687,32 @@ def build_brimley():
     # step a while, then back indoors out of the cold that came early.
     _resident(63, 54, "Old Pell", "old_townsman", [
         "Cold came in early this year. And it never lifted. Just sat down on the town and stayed.",
-        "Stopped marking the calendar. Not the days -- where would I be counting toward?",
-        "[c=dim]You're new. We don't get new. Nobody gets in. Nobody gets--[/c]",
-    ], voice="blip_low", movement="homebody", radius=34)
-    # Mrs. Calder is by the east-edge road -- the road her husband
-    # walked out on. She watches the road. She does not wave.
+        "Stopped marking the calendar. Not the days. Where would I be counting toward?",
+        "[c=dim]You're new. We don't get new. Nobody gets in. Nobody gets...[/c]",
+    ], voice="blip_low", movement="homebody", radius=34, fold=True)
+    # Mrs. Calder is by the east-edge road. She sets a place at supper
+    # for a guest she can't name -- a certainty she can't explain that
+    # someone is coming. No vanished husband (that read as a perceptible
+    # individual loss, forbidden by §1b); just the compulsion she doesn't
+    # question. She watches the road. She does not wave.
     _resident(96, 8, "Mrs. Calder", "townswoman", [
-        "My husband walked to the highway. Tuesday. To flag down help.",
-        "He'll be back. I set his plate. Every night. Every night.",
-        "[c=dim]Some nights I hear the door. I don't get up. Not anymore.[/c]",
+        "I set an extra place at supper. Have done for a while now.",
+        "Couldn't tell you who for. Someone's coming. I just know it, the "
+        "way you know your own name. So I lay the plate.",
+        "[c=dim]Some nights I hear the door and near get up to answer. Then I "
+        "remember I don't know who I'd be letting in.[/c]",
     ], movement="idle")
-    # Royce -- by the river bridge, where he keeps trying to drive
-    # out and being handed back. His truck is up the road; he comes
-    # to the bridge to look at the water, then goes again.
+    # Royce -- by the river bridge. He TRIED to drive out, for weeks, and
+    # the corn handed him back every time; the futility broke him and he's
+    # STOPPED. He still clings to the one fact he can't square: you got IN.
     _resident(29, 24, "Royce", "royce", [
-        "Drove the river road to the county line. Two hours out. Came right back into Brimley.",
-        "Tried it on foot. Same. The corn just hands you back where you started.",
-        "[c=dim]You came IN. How did you come IN? ...Tell me how you came in.[/c]",
-    ])
+        "I used to drive it. River road, county line, every road out of "
+        "Brimley. Weeks of it. The corn handed me back every time.",
+        "[c=dim]I don't go anymore. There's no out to drive to. I worked "
+        "that out the hard way, so you don't have to.[/c]",
+        "[c=dim]But you came IN. How did you come IN? ...Tell me how you came "
+        "in.[/c]",
+    ], fold=True)
     # The Tisdale boy lives INSIDE the kid's house (the `kid_house`
     # scene, kid_dialogue). He used to also stand here on the front step,
     # but that put a solid NPC right on the `from_kid_house` doorway
@@ -723,7 +726,7 @@ def build_brimley():
         "The Sheriff'll tell you to leave. He knows you can't. He can't either.",
         "Stay on the roads. People who go off the roads come out wrong-side.",
         "[c=dim]Go on home, son. ...Oh. Right. None of us can.[/c]",
-    ])
+    ], fold=True)
     # The newcomer -- standing on the path to the haunted_house
     # (their house now). She is here to welcome you. She is patient.
     sc.add_npc(NPC(8 * TILE + 16, 95 * TILE + 16, "A woman", "townswoman",
@@ -751,7 +754,7 @@ def build_brimley():
     # and then stopped -- the season kept turning, the marking didn't (the
     # fold is spatial, NARRATIVE 1b); the truck that drove for the county line and
     # was handed back, nosed dead into the east tree line; and Mrs.
-    # Calder's plate, set for a husband who walked out to the highway.
+    # Calder's plate, set at supper for a guest she can't name.
     sc.add_decoration(Decoration(58 * TILE + 16, 62 * TILE + 16, "payphone"))
     sc._payphone_pos = (58 * TILE + 16, 62 * TILE + 16)
     # The well -- only mouth into the Works. Sits in the eastern
@@ -760,13 +763,13 @@ def build_brimley():
     well_y = 13 * TILE + 16
     sc.add_decoration(Decoration(well_x, well_y, "well"))
     sc._well_pos = (well_x, well_y)
-    # The wheelbarrow of "rusted" tools just outside the woodshed door.
+    # A wheelbarrow of "rusted" tools left on the east edge (the shed that
+    # stood here is gone, but the cleaned tools remain -- the contradiction
+    # is the point, still an evidence beat).
     barrow_x = 93 * TILE + 16
     barrow_y = 15 * TILE + 16
     sc.add_decoration(Decoration(barrow_x, barrow_y, "wheelbarrow"))
     sc._barrow_pos = (barrow_x, barrow_y)
-    # Woodshed door coords (for the locked-door interact).
-    sc._shed_door_pos = (91 * TILE + 16, 16 * TILE + 16)
     sc.add_decoration(Decoration(52 * TILE + 16, 61 * TILE + 16, "missing_flyer"))
     sc.add_decoration(Decoration(40 * TILE + 16, 27 * TILE + 16, "missing_flyer"))
     # The calendar, marked up to a day a few months back and then just
@@ -1004,21 +1007,10 @@ def build_brimley():
         (29 * TILE + 16, 27 * TILE + 16, "behind"),  # creepy_tree, bridge west pocket
     ]
 
-    # Player's car: parked on the east bank, visible from the
-    # village entry. It's YOUR car -- you drove in -- so there are no
-    # keys to find; the fold is the only lock. Reaching it with the
-    # Sign (the Pallid Mask) triggers the escape ending (SPREAD). 3-tile
-    # footprint of solid 'X' tiles under the sprite so collision
-    # matches the visual.
-    car_tx, car_ty = 85, 8
-    car_x = car_tx * TILE + 16
-    car_y = car_ty * TILE + 16
-    sc.add_decoration(Decoration(car_x, car_y, "player_car"))
-    sc._car_pos = (car_x, car_y)
+    # The PI's car has MOVED to the arrival road west of the Lodge (where it
+    # died on the way in -- the SPREAD escape now lives there, scenes/
+    # our_house_area.build_arrival_road). Brimley keeps only the dead pickup.
     objects_list = [list(r) for r in sc.objects]
-    for cx in (car_tx - 1, car_tx, car_tx + 1):
-        if 0 <= cx < sc.w:
-            objects_list[car_ty][cx] = "X"
     # The dead pickup is a big hulk -- solid tiles under its length so
     # the player can't walk through it (decoration at tile 95,55).
     for cx in (93, 94, 95, 96):
@@ -1027,25 +1019,8 @@ def build_brimley():
     # Mrs. Calder's outdoor table (solid), her settings drawn on top.
     objects_list[72][71] = "t"
     sc.objects = objects_list
-    # Hide spot beside the car (cover for a brief breather between
-    # village and west bank).
-    sc.hide_spots.append((car_x, (car_ty + 1) * TILE + 16, "behind"))
 
     def _brimley_interact(game):
-        cx, cy = sc._car_pos
-        if (abs(game.player.x - cx) < 40
-                and abs(game.player.y - cy) < 40):
-            sign = game.player.inventory.has("sigil_rubbing")
-            if sign and hasattr(game, "_begin_car_escape"):
-                game._begin_car_escape()          # the Sign breaks the fold
-                return
-            # The fold holds: without a shard of Him aboard, the engine
-            # turns over and over and never catches.
-            game.audio.play("door_locked", 0.6)
-            game.show_notice("You turn the key. The engine catches, and "
-                             "catches, and dies. The fold won't let the "
-                             "car go -- not empty-handed.")
-            return
         # The well -- the only mouth into the Works. Needs the rope to
         # rig the first descent; once tied, the rope stays as the climb
         # route until the playscript snaps it on a later descent
@@ -1073,7 +1048,7 @@ def build_brimley():
                 game.audio.play("low_pulse", 0.4)
                 game.dialog.show([
                     "[c=dim](You lean over the lip. The shaft drops "
-                    "past where any water should be -- no glint, no "
+                    "past where any water should be. No glint, no "
                     "bottom, just cold air climbing up out of it.)[/c]",
                     "[c=dim]Two grooves are worn smooth into the "
                     "stone where a rope has run, over and over.[/c]",
@@ -1083,18 +1058,6 @@ def build_brimley():
                 return
             game.audio.play("door_locked", 0.7)
             game.show_notice("The way down. Too deep without a rope.")
-            return
-        # The woodshed -- locked door. Needs woodshed_key from the
-        # Lodge cellar workbench. Opens to the woodshed interior
-        # (axe, rope, batteries).
-        sdx, sdy = sc._shed_door_pos
-        if abs(game.player.x - sdx) < 40 and abs(game.player.y - sdy) < 40:
-            if not game.player.inventory.has("woodshed_key"):
-                game.audio.play("door_locked", 0.6)
-                game.show_notice("Locked. The Clerk has the key.")
-                return
-            game.audio.play("door_open", 0.7)
-            game.begin_transition("woodshed", "from_brimley_shed")
             return
         # Wheelbarrow of "rusted" tools -- the visible state contradicts
         # the notice. The contradiction is the point.
@@ -1116,17 +1079,15 @@ def build_brimley():
             line = [
                 "No dial tone. No ringing. The line is open to something.",
                 "[c=dim]Far down it, under the hiss, you hear your own "
-                "voice -- already mid-sentence.[/c]",
+                "voice, already mid-sentence.[/c]",
             ]
             game.dialog.show(line, speaker="", voice="blip_soft",
                              portrait="narrator")
-    # [E] cues for the interactions resolved in _brimley_interact -- the
-    # car (escape), the well (the only way down), the woodshed door, the
-    # tool barrow and the payphone all had NO prompt before, so the player
-    # had to guess where to press E. Radii match the handler's checks.
-    sc.add_interactable(sc._car_pos[0], sc._car_pos[1], 40)
+    # [E] cues for the interactions resolved in _brimley_interact -- the well
+    # (the only way down), the woodshed door, the tool barrow and the payphone
+    # had NO prompt before, so the player had to guess where to press E. Radii
+    # match the handler's checks. (The car moved to the arrival road.)
     sc.add_interactable(sc._well_pos[0], sc._well_pos[1], 36)
-    sc.add_interactable(sc._shed_door_pos[0], sc._shed_door_pos[1], 40)
     sc.add_interactable(sc._barrow_pos[0], sc._barrow_pos[1], 36)
     sc.add_interactable(sc._payphone_pos[0], sc._payphone_pos[1], 40)
 

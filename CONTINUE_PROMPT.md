@@ -5,7 +5,8 @@
 > implementation pass. Everything referenced below is on `main`.
 
 ## The project
-THRESHOLD — a top-down narrative-horror game in **pygame**, every sprite
+THRESHOLD — a narrative-horror game in **pygame** played through an
+**oblique tilted camera** (~55° default; F3 flat pitch-0), every sprite
 **procedural** (no art pipeline). Core loop: stealth/dread (walk, watch,
 hide) driven by a **visibility** meter feeding the **King in Yellow**. The
 story is the point; the bible is the source of truth.

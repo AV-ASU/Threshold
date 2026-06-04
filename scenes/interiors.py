@@ -309,6 +309,11 @@ def build_barn():
         (7 * TILE + 16, 2 * TILE + 16, "behind"),   # beside E shelf
         (12 * TILE + 16, 4 * TILE + 16, "behind"),  # in the back stall
     ]
+    # Chalk doors -- the cult's drawn-door compulsion. The barn (Mara's, the
+    # diggers' old quarters) is where the PI first meets the motif: one chalked
+    # flat on the floor (the voice beat -- examine it) and one on the wall.
+    sc.add_chalk_door(4 * TILE + 16, 9 * TILE + 16, voice="chalk_surface", seed=3)
+    sc.add_chalk_door(7 * TILE + 16, 1 * TILE + 10, seed=5, wall=True)
 
     def _barn_interact(game):
         px, py = game.player.x, game.player.y
@@ -325,12 +330,12 @@ def build_barn():
             game.audio.play("low_pulse", 0.45)
             _evidence(game, "maras_journal", [
                 "A notebook, shoved down behind the workbench. You know the "
-                "hand -- it's hers, the same as the letter.",
+                "hand. It's hers, the same as the letter.",
                 "Her journal. The last entries, in a hand that gets calmer "
                 "as it goes:",
                 "\"I just had this urge to go north. Stopped for gas in this "
                 "town. Everyone smiles like I'm already home.\"",
-                "\"I had Him wrong. He isn't out past the corn -- He's under "
+                "\"I had Him wrong. He isn't out past the corn. He's under "
                 "it. You don't walk to Him. You go down.\"",
                 "\"There's a mouth below the town. The others went ahead of "
                 "me, down it, and not one has climbed back up. Tomorrow I "

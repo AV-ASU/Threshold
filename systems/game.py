@@ -103,6 +103,7 @@ OUTDOOR_DECAY = {
 OUTDOOR_SCENES = {"our_house_area", "forest_path",
                   "void_boss", "graveyard",
                   "country_lane", "cornfield_maze",
+                  "arrival_road",
                   "gravel_road_north", "river_crossing"}
 
 # The continuous outside world. Crossing between any two of these is
@@ -127,8 +128,9 @@ SEAMLESS_WORLD_SCENES = OUTDOOR_SCENES | {
 # the player stays comfortably on screen.
 CAM_LOOKAHEAD = 96
 
-# Oblique-camera tilt (CAMERA.md Phase 2). DEBUG-toggled with F3; eases in.
-# pitch 0 = the shipping top-down view. TILT_PITCH_DEG is the locked ~55deg.
+# Oblique-camera tilt (CAMERA.md Phase 2). The tilt is the DEFAULT view;
+# F3 toggles back to the flat pitch-0 view (the legacy raster) and eases in.
+# pitch 0 = that flat fallback. TILT_PITCH_DEG is the locked ~55deg default.
 TILT_PITCH_DEG = 55
 TILT_EASE = 0.12             # per-frame lerp of pitch toward its target
 TILT_ZOOM = 0.72             # camera scale at full tilt (1.0 = top-down)
@@ -1374,6 +1376,12 @@ class Game(CutsceneMixin):
                     self.audio.play("bump", 0.55)
                     self.show_notice(notice)
                     return
+        # Chalk doors -- the cult's drawn-door compulsion. Examining one
+        # surfaces the PI's interior voice (the descent's escalation lives on
+        # what he EXAMINES, not on bare room entry). Placed clear of other
+        # interactables, so it's safe to resolve before the NPC/scene checks.
+        if self._try_chalk_interact():
+            return
         # Standard NPC interaction
         best = None; bd = 1e9
         for npc in self.scene.npcs:
@@ -1496,7 +1504,7 @@ class Game(CutsceneMixin):
             self.audio.play("hit", 0.5)
             if not self.save.flag("stun_taught"):
                 self.save.set_flag("stun_taught", True)
-                self.show_notice("You knock it back -- it won't stay "
+                self.show_notice("You knock it back. It won't stay "
                                  "down. Run.", duration=2.6)
 
     def player_fire_gun(self):
@@ -1551,7 +1559,7 @@ class Game(CutsceneMixin):
         if proj.stun_only and not self.save.flag("gun_stun_taught"):
             self.save.set_flag("gun_stun_taught", True)
             self.show_notice("The shot barely staggers it now. You know too "
-                             "much -- they won't die for you anymore.",
+                             "much. They won't die for you anymore.",
                              duration=3.0)
 
     def _active_weapon(self):
@@ -2292,12 +2300,12 @@ class Game(CutsceneMixin):
         notes.append({"name": "the_dream", "lines": [
             "Her journal put me back inside the one odd dream. A year"
             " back, before any of this. I'd forgotten I had it.",
-            "A door standing open in the dark -- no wall around it, just"
+            "A door standing open in the dark. No wall around it, just"
             " the frame, old dry wood.",
             "Light behind it the colour of old gold, breathing in and out"
             " like something asleep.",
-            "I walked up. I looked in. For a blip something looked back --"
-            " met my eye -- and then it broke.",
+            "I walked up. I looked in. For a blip something looked back,"
+            " met my eye, and then it broke.",
             "I never reached it. One dream, a year ago, and it never came"
             " again. So why do I know this place.",
         ]})
@@ -2329,16 +2337,237 @@ class Game(CutsceneMixin):
         notes.insert(0, {"name": "the_case", "lines": [
             "Walter Blaine, Minneapolis. The client. Grief in the voice"
             " you could lean a ladder on.",
-            "His girl -- Mara, 26. Drove north in the spring. Stopped"
+            "His girl, Mara, 26. Drove north in the spring. Stopped"
             " calling home by the thaw.",
             "Last address: Brimley. Had to find it on a map. North woods,"
             " near nothing.",
-            "Skip-trace. A weekend's work -- ask around, turn up the girl,"
+            "Skip-trace. A weekend's work. Ask around, turn up the girl,"
             " drive back by dawn.",
             "I don't take grief jobs. Took this one. Couldn't tell you why"
-            " -- only that the not-knowing itched, and I wanted it gone.",
+            ". Only that the not-knowing itched, and I wanted it gone.",
         ]})
         self.save.set_arg("notes", notes)
+
+    # The PI's interior voice down the descent (NARRATIVE §6, GAME_CHANGES §8):
+    # the put-together investigator coming apart as he understands too much,
+    # baited toward the Mask's off-ramp (carry it OUT -- SPREAD). Each beat is
+    # one-shot: a brief first-person flash on-screen, plus a fuller entry filed
+    # to the case notebook. NOTES, never evidence -- they must not arm the
+    # King-gate. §1b discipline: the door is never explained; the dread is all
+    # sensation, and the Mask-certainty reads "the way you know a thing in a
+    # dream" (the lure, never named).
+    _DESCENT_VOICE = {
+        # SURFACE -- the barn (Mara's, the cult's old quarters). The first
+        # chalk door. Still the professional, mildly curious.
+        "chalk_surface": {
+            "beat": [
+                "[c=dim]A door, chalked onto the floorboards. The size of a "
+                "real one, and careful about it. A frame laid flat, like you "
+                "could step down through it. ...Kids do stranger. I wrote it "
+                "down anyway.[/c]",
+            ],
+            "note": [
+                "Someone chalked a door onto the barn floor. Full size, and "
+                "they weren't careless about it. Jambs, a lintel, even a knob. "
+                "Drawn flat, like a thing you'd step down into. Around nothing. "
+                "Bare plank under it.",
+                "Could be a child. Doesn't read like a child. It reads like "
+                "practice.",
+                "Filing it. Probably nothing. I've filed nothing before and "
+                "been wrong.",
+            ],
+        },
+        # THE WORKS -- the Sorting Hall. NOT a chalk door: examining the
+        # catalogued lives the diggers shed. The scale lands; first fear.
+        "descent_dig": {
+            "beat": [
+                "[c=dim]Their whole lives, sorted and shelved down here. Like "
+                "they set everything human down at the door and walked in "
+                "lighter. ...My pen won't hold still. That's new.[/c]",
+            ],
+            "note": [
+                "This is no cellar. It's a dig. Room after room of it, going "
+                "down, and it cost them a year of hands.",
+                "Everything they owned is catalogued in here. Coats, "
+                "photographs, a child's shoe, folded. Set down neat, the way "
+                "you leave a thing you mean never to need again.",
+                "I've worked bad rooms. This is the first one to put a shake "
+                "in my hands. I do not like how far down I am.",
+            ],
+        },
+        # THE WORKS -- the drawn doors multiply, cruder, obsessive. Rattled,
+        # and clinging to the way back up.
+        "chalk_works": {
+            "beat": [
+                "[c=dim]Down here it's nothing but the drawn doors. Walls, "
+                "floor, over each other. None of them open onto anything. They "
+                "knew that. They kept drawing.[/c]",
+            ],
+            "note": [
+                "The whole dig is papered in them. Chalk doors on chalk doors, "
+                "hundreds, going down with the tunnel.",
+                "Not one opens onto anything. They knew. You can see them "
+                "pressing harder, trying to get it right, like the right one "
+                "would finally come loose from the wall.",
+                "I came down for a missing girl. I keep checking over my "
+                "shoulder for the rope. Still there. I say so to myself more "
+                "than a steady man would.",
+            ],
+        },
+        # The Playscript (the cult's notes): the SEED of the want-to-leave.
+        # CANON (NARRATIVE §1/§6): this is the King's influence riding their
+        # notes into the PI's head -- the pull to carry the Sign OUT and spread
+        # Him. NEVER stated as His doing; felt only as a want he can't find the
+        # start of (the §1b line -- he can't tell it isn't his own thought).
+        "descent_leave": {
+            "beat": [
+                "[c=dim]You turn through the bound notes. Their own hands, "
+                "page on page. ...You've got plenty here. More than plenty.[/c]",
+                "[c=dim]A case this size, you don't keep digging it. You carry "
+                "it up and let the people who can drop a roof on this town do "
+                "the rest. Time to climb out.[/c]",
+            ],
+            "note": [
+                "Read the bound one. Their own notes. There's enough in this "
+                "town to hang it twice over. Past enough.",
+                "No call to go deeper. You don't work a case past the point "
+                "it's made. You bring it up to the ones who can finish it.",
+                "Climb out. Make the call. Let the law come down on Brimley "
+                "like a roof. That's the job. [c=dim]That's always been the "
+                "job.[/c]",
+            ],
+        },
+        # The Mask: THE TEMPTATION. With this, the town lets me out -- the lie
+        # that dresses Spread up as duty and rest. (The want the notes seeded,
+        # now handed the means.)
+        "descent_mask": {
+            "beat": [
+                "[c=dim]His face, in your hands. Light as folded paper, cold, "
+                "and it knows your grip.[/c]",
+                "[c=dim]And you KNOW it, the way you know a thing in a dream. "
+                "Carry this, and the town opens. The roads let you out.[/c]",
+                "[c=dim]The names, the register, the girl her father wanted "
+                "found. You have enough. You could be in the car by morning. "
+                "You could just go.[/c]",
+            ],
+            "note": [
+                "I have the mask off the altar. His face. Pale as a drowned "
+                "man, cold, light as paper.",
+                "And I'm sure of a thing I've no right to be sure of. This is "
+                "the way out. Whoever carries it, the town lets go.",
+                "I have enough for any court that would hear me. I could climb "
+                "out and never look down again.",
+                "I want to. God help me, I want to. I'm setting it down here "
+                "so I remember that I did.",
+            ],
+        },
+        # THE DEPTHS -- past the point of no return. Panic; the doors in his
+        # head now. The put-together man, gone.
+        "chalk_deep": {
+            "beat": [
+                "[c=dim]The drawn doors are behind my eyes now, every time I "
+                "shut them. Everything in me is pulling for the surface. "
+                "There's no rope to climb. So down.[/c]",
+            ],
+            "note": [
+                "The stair took the rope when it opened. No way back up. Only "
+                "down now.",
+                "Everything in me is pulling for the surface. The car, the "
+                "road, the county line. And there is nothing left to climb. So "
+                "I go down, because down is the only direction left.",
+                "I shut my eyes and the chalk doors are still there, drawn on "
+                "the inside of them. I could draw one from memory now. [c=dim]I "
+                "don't want to know that about myself.[/c]",
+            ],
+        },
+    }
+
+    def _descent_voice(self, name):
+        """Fire one interior-voice beat (see `_DESCENT_VOICE`): file the note
+        to the case notebook and surface the brief on-screen flash. One-shot
+        per beat (flag `voice_<name>`). The note goes in save arg 'notes',
+        NEVER 'evidence' -- it must not move the King-gate."""
+        if self.save is None:
+            return
+        spec = self._DESCENT_VOICE.get(name)
+        if spec is None:
+            return
+        flag = f"voice_{name}"
+        if self.save.flag(flag):
+            return
+        self.save.set_flag(flag, True)
+        notes = self.save.arg("notes", [])
+        if not isinstance(notes, list):
+            notes = []
+        if not any(isinstance(e, dict) and e.get("name") == name
+                   for e in notes):
+            notes.append({"name": name, "lines": list(spec["note"])})
+            self.save.set_arg("notes", notes)
+            if hasattr(self, "_flash_notebook"):
+                self._flash_notebook()
+        self.dialog.show(spec["beat"], speaker="", voice="blip_soft",
+                         portrait="narrator")
+
+    def _try_chalk_interact(self):
+        """E on a chalk door (registered via Scene.add_chalk_door). The FIRST
+        examined in a scene that set `_chalk_voice` fires that interior-voice
+        beat; any other chalk door gives a brief flat line. Returns True if a
+        chalk door was examined (so try_interact stops)."""
+        doors = getattr(self.scene, "_chalk_doors", None)
+        if not doors:
+            return False
+        if not any(abs(self.player.x - cx) < 40 and abs(self.player.y - cy) < 40
+                   for cx, cy in doors):
+            return False
+        self.audio.play("confirm", 0.5)
+        voice = getattr(self.scene, "_chalk_voice", None)
+        if voice and not self.save.flag(f"voice_{voice}"):
+            self._descent_voice(voice)
+        else:
+            self.show_notice("Another door, drawn where no door is. Bare "
+                             "wall behind the chalk.")
+        return True
+
+    def _fold_mentioned(self, name):
+        """The FIRST time any local describes the fold -- the roads that loop,
+        the town you can't drive out of -- the PI files a note and a short
+        reflection. One-shot globally (flag `voice_fold_heard`); the note names
+        whoever told him. A NOTE, never evidence. §1b-safe: it is the SPATIAL
+        fold (perceptible -- looping roads), never the door/cosmology. Chains
+        the reflection off the NPC's line so it lands after they finish."""
+        if self.save is None or self.save.flag("voice_fold_heard"):
+            return
+        self.save.set_flag("voice_fold_heard", True)
+        notes = self.save.arg("notes", [])
+        if not isinstance(notes, list):
+            notes = []
+        if not any(isinstance(e, dict) and e.get("name") == "the_fold_told"
+                   for e in notes):
+            notes.append({"name": "the_fold_told", "lines": [
+                f"{name} told me you can't drive out of Brimley. The roads "
+                "loop. Make for the county line and the corn hands you back "
+                "where you started.",
+                "Said it flat. The way you'd say it always rains here. No fear "
+                "left in it. A fact they've all stopped arguing with.",
+                "A whole town doesn't go strange like that over a lie. [c=dim]"
+                "And my own engine turned over and died at the lodge steps. "
+                "So.[/c]",
+            ]})
+            self.save.set_arg("notes", notes)
+            if hasattr(self, "_flash_notebook"):
+                self._flash_notebook()
+
+        def _beat():
+            self.dialog.show([
+                f"[c=dim]{name} says there's no driving out of here. The "
+                "roads loop, the corn hands you back. Said it like weather.[/c]",
+                "[c=dim]A town doesn't talk like that about nothing. And my "
+                "car died at the steps. ...So.[/c]",
+            ], speaker="", voice="blip_soft", portrait="narrator")
+        if self.dialog.active:
+            self.dialog.on_complete = _beat
+        else:
+            _beat()
 
     # ---- Endings ----
 
@@ -2388,17 +2617,17 @@ class Game(CutsceneMixin):
         "escape_alone": [
             ("You turn the key. The engine turns over.", 2.6),
             ("And over. The way it has every time before.", 2.6),
-            ("Then -- with the Sign beside you -- it catches.", 3.0),
+            ("Then, with the Sign beside you, it catches.", 3.0),
             ("You drive out, past the corn that never ended.", 3.2),
             ("You got out. You're the only one who ever has.", 3.4),
             ("Everyone will understand why, soon.", 3.8),
         ],
         "seal_threshold": [
-            ("The frame drinks it down -- the smoke, the sound, the long "
+            ("The frame drinks it down: the smoke, the sound, the long "
              "way you came.", 3.0),
             ("Above you the stair grinds shut. Then the Works. Then the "
              "well.", 3.0),
-            ("Brimley folds the rest of the way closed -- around the "
+            ("Brimley folds the rest of the way closed, around the "
              "hunger, and around you.", 3.4),
             ("On every map after tonight the town is a blank, a place the "
              "roads decline to reach.", 3.6),
@@ -3339,8 +3568,8 @@ class Game(CutsceneMixin):
         if (self._cursed and not self._watchers and self.scene is not None
                 and self.scene.key not in KING_FREE_SCENES):
             self._cursed = False
-            self.show_notice("The last of the eyes closes. The curse lifts "
-                             "-- for now.", duration=3.2)
+            self.show_notice("The last of the eyes closes. The curse lifts, "
+                             "for now.", duration=3.2)
 
     def _dispel_watcher_in_line(self, p, fx, fy):
         """A round (or the axe arc) puts a Watcher down instantly. The gun

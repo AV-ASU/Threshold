@@ -200,7 +200,7 @@ def preacher_body_examine(game, npc):
     game.audio.play("low_pulse", 0.5)
     _evidence(game, "the_preacher", [
         "The Preacher. He watched the strangers drift into town and vanish "
-        "into the corn -- and he said so, every Sunday, to the sheriff's "
+        "into the corn. And he said so, every Sunday, to the sheriff's "
         "face.",
         "They opened him for it, here on his own floor. He's gone to a "
         "slick the cold won't set.",
