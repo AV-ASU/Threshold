@@ -501,7 +501,7 @@ def build_works_sign():
     holder = NPC(6 * TILE + 16, 3 * TILE + 16, "The rite-holder", "cultist",
                  movement="idle", solid=False, no_prompt=True)
     holder.facing = (0, -1)
-    holder.pose = "kneel"
+    holder.pose = "chant"
     sc.add_npc(holder)
     _ambient(sc, "whisper", 0.16, 5.0, 9.0)
 

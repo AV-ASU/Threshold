@@ -202,17 +202,25 @@ def _draw_cultist_raw(surf, x, y, facing, seed, t, pose=None):
     swing = 0.0
     step = 0.0          # head-lead, only the default shamble sets it nonzero
     if pose == "mine":
-        # Digging at the face: the body leans in and DIPS on a slow beat, the
-        # hem lags. A crude haft swings down with it (drawn below). Ambient
-        # labour -- these never react to the player.
-        ph = t * 2.2 + x * 0.04
+        # Digging at the face: the body dips and leans into each strike; the
+        # pickaxe (drawn below) arcs from raised-back to struck-down on the
+        # same beat. Ambient labour -- these never react to the player.
+        ph = t * 2.4 + x * 0.04
         swing = max(0.0, math.sin(ph))
         lean = int(2 + swing * 3)
         hitch = int(swing * 4)
         sway = int(swing * 2)
         top = y - 8 + hitch
+    elif pose == "chant":
+        # Rite-chant: a slow rhythmic sway, the hem lagging; both arms lift to
+        # the Sign (drawn below). Worship, oblivious to the player.
+        ph = t * 1.6 + x * 0.05
+        lean = int(math.sin(ph) * 3)
+        sway = int(math.sin(ph - 0.6) * 3)
+        top = y - 9
     elif pose == "kneel":
         # The rite-hold: lowered, still, bowed to the altar. No shamble.
+        ph = 0.0
         lean = 0
         sway = 0
         top = y - 4
@@ -236,14 +244,29 @@ def _draw_cultist_raw(surf, x, y, facing, seed, t, pose=None):
         view, mdir = "front", 0
     _cult_hide_coat(surf, x, y, top, rng, lean, sway)
     if pose == "mine":
-        # A crude digging haft swung down at the face, timed to the body dip.
+        # A pickaxe swung at the face: a wooden haft + a double-pointed iron
+        # head, arcing from raised-and-back (windup) to struck-down-front.
         d = mdir if mdir != 0 else 1
-        hx0, hy0 = x + d * 3, top + 7
-        hx1 = x + d * (9 + int(swing * 3))
-        hy1 = top + 13 + int(swing * 7)
-        pygame.draw.line(surf, (54, 42, 30), (hx0, hy0), (hx1, hy1), 2)   # haft
-        pygame.draw.line(surf, (120, 110, 96),                            # tool head
-                         (hx1 - d * 2, hy1 - 1), (hx1 + d * 2, hy1 + 1), 2)
+        sw = (math.sin(ph) + 1) / 2.0
+        piv = (x + d * 2, top + 6)                       # both hands on the haft
+        hxw, hyw = x - d * 5, top - 10                    # windup (raised back)
+        hxs, hys = x + d * 12, top + 12                   # strike (at the face)
+        hx = int(hxw + (hxs - hxw) * sw)
+        hy = int(hyw + (hys - hyw) * sw)
+        pygame.draw.line(surf, (62, 46, 32), piv, (hx, hy), 2)            # haft
+        ddx, ddy = hx - piv[0], hy - piv[1]
+        ln = max(1.0, math.hypot(ddx, ddy))
+        nx, ny = -ddy / ln, ddx / ln                     # perpendicular to haft
+        pygame.draw.line(surf, (150, 152, 160),                          # iron head
+                         (int(hx + nx * 4), int(hy + ny * 4)),
+                         (int(hx - nx * 4), int(hy - ny * 4)), 2)
+    elif pose == "chant":
+        # Both arms lifted to the Sign, swaying with the chant.
+        lift = int((math.sin(ph) + 1) * 2)
+        for sgn in (-1, 1):
+            pygame.draw.line(surf, (52, 44, 34),
+                             (x + sgn * 3, top + 5),
+                             (x + sgn * 6 + sway, top - 7 - lift), 2)
     # the masked head LEADS the lurch (tips a touch past the shoulders)
     hcx, hcy = x + lean + int(step * 1), top - 1
     pygame.draw.ellipse(surf, (32, 26, 20), (hcx - 7, hcy - 7, 14, 15))   # fur hood

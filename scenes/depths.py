@@ -348,15 +348,19 @@ def build_depths_threshing():
     sc.add_exit("E", "depths_stair", "from_threshing")
     sc.set_spawn("default",   1, 5)
     sc.set_spawn("from_hall", 1, 5)
-    # Ambient dig labour: a few cultists working the raw face, oblivious to
-    # you. NPCs with NO tag -> excluded from the cultist-gaze tick (no
-    # visibility, no chase, no grab); pose='mine' gives the digging swing.
-    # The dig toward the door made present (NARRATIVE 1b / The Digging note).
-    for mx, my, mf in [(5, 8, (0, 1)), (7, 8, (0, 1)), (6, 9, (-1, 0))]:
-        m = NPC(mx * TILE + 16, my * TILE + 16, "A digger", "cultist",
+    # Ambient dig labour: miners working the side faces (pickaxe in profile,
+    # facing the wall) while chanters sway at the dig's mouth. All idle NPCs
+    # with NO tag -> excluded from the cultist-gaze tick (no visibility, no
+    # chase, no grab); non-solid. The dig toward the door made present, and
+    # the rite chanted over it (NARRATIVE 1b / The Digging note).
+    for mx, my, mf, mp in [(5, 8, (-1, 0), "mine"), (7, 8, (1, 0), "mine"),
+                           (4, 9, (-1, 0), "mine"),
+                           (6, 9, (0, 1), "chant"), (8, 9, (0, 1), "chant")]:
+        nm = "A digger" if mp == "mine" else "A chanter"
+        m = NPC(mx * TILE + 16, my * TILE + 16, nm, "cultist",
                 movement="idle", solid=False, no_prompt=True)
         m.facing = mf
-        m.pose = "mine"
+        m.pose = mp
         sc.add_npc(m)
     # The yield. Grain mixed with old blood. Hide spots tuck into the cavern's
     # pockets.
