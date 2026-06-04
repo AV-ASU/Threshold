@@ -2342,6 +2342,132 @@ class Game(CutsceneMixin):
         ]})
         self.save.set_arg("notes", notes)
 
+    # The PI's interior voice down the descent (NARRATIVE §6, GAME_CHANGES §8):
+    # the put-together investigator coming apart as he understands too much,
+    # baited toward the Mask's off-ramp (carry it OUT -- SPREAD). Each beat is
+    # one-shot: a brief first-person flash on-screen, plus a fuller entry filed
+    # to the case notebook. NOTES, never evidence -- they must not arm the
+    # King-gate. §1b discipline: the door is never explained; the dread is all
+    # sensation, and the Mask-certainty reads "the way you know a thing in a
+    # dream" (the lure, never named).
+    _DESCENT_VOICE = {
+        # The shaft floor: still the professional, but the first wrong note.
+        "descent_shaft": {
+            "beat": [
+                "[c=dim]Down the rope. Cold air climbing out of a hole with "
+                "no bottom to it. ...Fine. Work it like any other room.[/c]",
+            ],
+            "note": [
+                "Down the well on the rope. The shaft runs deeper than any "
+                "well has business running -- no water, no bottom, just cold "
+                "air walking up it.",
+                "Steady. This is a missing-persons. Not a ghost story. Work "
+                "it like one.",
+                "Find the Blaine girl. Climb out. Drive home. In that order.",
+            ],
+        },
+        # The Sorting Hall: the scale lands -- a year of hands, lives shelved.
+        # First fear admitted.
+        "descent_dig": {
+            "beat": [
+                "[c=dim]They didn't build this. They dug it -- by hand, for "
+                "a year. My pen won't hold still writing that. That's new.[/c]",
+            ],
+            "note": [
+                "This is no cellar. It's a dig -- room on room of it, going "
+                "down, and it cost them a year of hands.",
+                "Their whole lives are sorted and shelved down here. Like "
+                "they set everything human at the door and walked in lighter.",
+                "I've worked bad rooms. First one to put a shake in my hands. "
+                "I do not like how far down I am.",
+            ],
+        },
+        # The Scriptorium: rattled, and clinging to the way back up.
+        "descent_exit": {
+            "beat": [
+                "[c=dim]The same mark, ten thousand times, every wall. I keep "
+                "turning to check the way back up. The rope's still there.[/c]",
+            ],
+            "note": [
+                "Every surface is the one sign, copied and copied -- not "
+                "decoration. Someone trying to get it right and never once "
+                "managing it.",
+                "I came down for answers. Somewhere on the rope I stopped "
+                "wanting them.",
+                "I keep looking over my shoulder for the climb out. Still "
+                "there. I say so to myself more than a steady man would.",
+            ],
+        },
+        # The Mask: THE TEMPTATION. With this, the town lets me out -- the lie
+        # that dresses Spread up as duty and rest.
+        "descent_mask": {
+            "beat": [
+                "[c=dim]His face, in your hands. Light as folded paper, cold, "
+                "and it knows your grip.[/c]",
+                "[c=dim]And you KNOW it, the way you know a thing in a dream: "
+                "carry this, and the town opens. The roads let you out.[/c]",
+                "[c=dim]The names, the register, the girl her father wanted "
+                "found -- you have enough. You could be in the car by morning. "
+                "You could just go.[/c]",
+            ],
+            "note": [
+                "I have the mask off the altar. His face -- pale as a drowned "
+                "man, cold, light as paper.",
+                "And I'm sure of a thing I've no right to be sure of: this is "
+                "the way out. Whoever carries it, the town lets go.",
+                "I have enough for any court that would hear me. I could climb "
+                "out and never look down again.",
+                "I want to. God help me, I want to. I'm setting it down here "
+                "so I remember that I did.",
+            ],
+        },
+        # Past the Deep Stair: the rope snapped behind him, by his own hand,
+        # and he can't square still going DOWN with the way out in his pocket.
+        # The put-together man, gone.
+        "descent_panic": {
+            "beat": [
+                "[c=dim]The rope's gone -- snapped when I opened the stair. I "
+                "opened it. I can't find the part of me that chose that.[/c]",
+                "[c=dim]I have the way out in my pocket. So why am I still "
+                "going down. ...Keep moving. Don't think about the car.[/c]",
+            ],
+            "note": [
+                "The stair took the rope. No climbing back -- and I chose "
+                "that, and I cannot for the life of me tell you why.",
+                "His face is in my pocket. The way out, the whole time. And "
+                "my feet keep going down.",
+                "[c=dim]keep moving. find her. don't think about the car. "
+                "don't think about the car.[/c]",
+            ],
+        },
+    }
+
+    def _descent_voice(self, name):
+        """Fire one interior-voice beat (see `_DESCENT_VOICE`): file the note
+        to the case notebook and surface the brief on-screen flash. One-shot
+        per beat (flag `voice_<name>`). The note goes in save arg 'notes',
+        NEVER 'evidence' -- it must not move the King-gate."""
+        if self.save is None:
+            return
+        spec = self._DESCENT_VOICE.get(name)
+        if spec is None:
+            return
+        flag = f"voice_{name}"
+        if self.save.flag(flag):
+            return
+        self.save.set_flag(flag, True)
+        notes = self.save.arg("notes", [])
+        if not isinstance(notes, list):
+            notes = []
+        if not any(isinstance(e, dict) and e.get("name") == name
+                   for e in notes):
+            notes.append({"name": name, "lines": list(spec["note"])})
+            self.save.set_arg("notes", notes)
+            if hasattr(self, "_flash_notebook"):
+                self._flash_notebook()
+        self.dialog.show(spec["beat"], speaker="", voice="blip_soft",
+                         portrait="narrator")
+
     # ---- Endings ----
 
     def _begin_car_escape(self):

@@ -88,6 +88,8 @@ def build_well_bottom():
             game.audio.play("door_open", 0.6)
             game.begin_transition("brimley", "from_well")
     sc.on_interact_fn = _interact
+    # Interior voice: first rung underground -- still the professional.
+    sc.on_enter_fn = lambda game, scene: game._descent_voice("descent_shaft")
     return sc
 
 
@@ -275,6 +277,8 @@ def build_works_sorting():
             else:
                 game.show_notice("A child's shoe. Folded.", duration=3.0)
     sc.on_interact_fn = _interact
+    # Interior voice: the scale of the dig lands -- the first fear admitted.
+    sc.on_enter_fn = lambda game, scene: game._descent_voice("descent_dig")
     return sc
 
 
@@ -415,6 +419,8 @@ def build_works_scriptorium():
             "thousand flat echoes. None of them the thing itself.",
             duration=4.0)
     sc.on_interact_fn = _interact
+    # Interior voice: rattled, clinging to the climb out.
+    sc.on_enter_fn = lambda game, scene: game._descent_voice("descent_exit")
     return sc
 
 
@@ -488,6 +494,11 @@ def build_works_sign():
             "your hands.",
             "His face. You're holding His face.",
         ])
+        # The TEMPTATION lands as the recognition finishes: with His face in
+        # hand comes the certainty it is the way OUT -- the Spread off-ramp
+        # (NARRATIVE §6). Chained off the evidence dialog's completion so it
+        # reads as one continuous beat.
+        game.dialog.on_complete = lambda: game._descent_voice("descent_mask")
 
     def _interact(game):
         sx, sy = sc._sign_pos

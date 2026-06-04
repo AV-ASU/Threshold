@@ -547,6 +547,46 @@ def main():
               if isinstance(e, dict) and e.get("name") == "the_case") == 1,
           "lure: re-logging the case does not duplicate the note")
 
+    # --- 16b. The PI's interior voice down the descent (NARRATIVE §6/§8) ---
+    # The put-together investigator comes apart as he understands too much,
+    # baited toward the Mask's off-ramp. Each beat files a NOTE (never
+    # evidence -- it must not arm the King-gate) and the Mask beat carries the
+    # "just leave" temptation. §1b discipline: never explains the door.
+    gv = new_game()
+    def _vnotes(g):
+        return [e["name"] for e in g.save.arg("notes", []) if isinstance(e, dict)]
+    ev_before = gv._evidence_count()
+    for key, note in (("well_bottom", "descent_shaft"),
+                      ("works_sorting", "descent_dig"),
+                      ("works_scriptorium", "descent_exit"),
+                      ("depths_antechamber", "descent_panic")):
+        gv.dialog.active = False
+        gv.load_scene_now(key, "default")
+        if gv.scene.on_enter_fn:
+            gv.scene.on_enter_fn(gv, gv.scene)
+        check(note in _vnotes(gv),
+              f"voice: entering {key} files the '{note}' interior-voice note")
+    check(gv._evidence_count() == ev_before,
+          "voice: the interior-voice notes never inflate the evidence/King-gate")
+    # The arc is one-shot per beat (no duplicate on re-entry).
+    gv.dialog.active = False
+    gv.load_scene_now("well_bottom", "default")
+    gv.scene.on_enter_fn(gv, gv.scene)
+    check(sum(1 for n in _vnotes(gv) if n == "descent_shaft") == 1,
+          "voice: re-entering a room does not duplicate its beat")
+    # Content: the Mask beat baits the off-ramp (leave/out/go); no beat ever
+    # says 'dimension' or otherwise explains the door.
+    from systems.game import Game as _G
+    _mask = " ".join(_G._DESCENT_VOICE["descent_mask"]["beat"]
+                     + _G._DESCENT_VOICE["descent_mask"]["note"]).lower()
+    check(any(w in _mask for w in ("the way out", "let you out", "lets go",
+                                   "could just go", "in the car")),
+          "voice: the Mask beat baits the player toward leaving (SPREAD off-ramp)")
+    _allvoice = " ".join(
+        " ".join(s["beat"] + s["note"]) for s in _G._DESCENT_VOICE.values()).lower()
+    check("dimension" not in _allvoice,
+          "voice: the interior voice never says 'dimension' (truth as sensation)")
+
     # --- 17. The principal locals are named (NARRATIVE §2/§8) ---
     # A small town knows its people by name. Each principal surfaces a
     # proper-name speaker label, not a role-tag. (The Clerk, Mr. Sable, is

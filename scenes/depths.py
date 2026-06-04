@@ -183,6 +183,10 @@ def build_depths_antechamber():
         game.show_notice("This is what the well was a throat for. The work "
                          "of the town goes on down here, in the dark.",
                          duration=4.0)
+        # Interior voice: past the Deep Stair, the rope snapped behind him --
+        # the put-together man comes apart (he had the way out, and went down
+        # anyway). The peak of the arc the Mask baited.
+        game._descent_voice("descent_panic")
     sc.on_enter_fn = _on_enter
     return sc
 
