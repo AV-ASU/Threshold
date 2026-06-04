@@ -36,8 +36,8 @@ ITEM_DEFS = {
     "sigil_rubbing": {"name": "The Pallid Mask",
                        "kind": "lore",
                        "desc": "The King's own pale half-mask, made an "
-                               "object. His face. It seats into the "
-                               "Playscript's cover."},
+                               "object. His face. The fold opens for it. So, "
+                               "you suspect, does the door in the deep."},
     "cross":         {"name": "The Preacher's Cross",
                        "kind": "lore",
                        "desc": "A plain silver cross. It was still warm "
@@ -54,17 +54,46 @@ ITEM_DEFS = {
                        "desc": "Stamped, never mailed. Opens \"Dad.\" "
                                "Closes: \"I'm not lost. I've never been "
                                "this close.\""},
-    # ---- Re-meaned existing items ----
-    # The congregation's own notes (key kept as 'playscript' for saves/logic).
-    # Their compulsive, unreliable record -- and the keystone's other half:
-    # the Pallid Mask seats into the recess on its cover.
-    "playscript":           {"name": "The Cult's Notes",
-                       "kind": "key",
-                       "desc": "A bound notebook in the congregation's own "
-                               "hands, their compulsive, partial record of "
-                               "what they feel and think they understand. "
-                               "None of it certain. A mask-shaped recess "
-                               "sits in the cover."},
+    # ---- The cult's testimony (three found fragments; gate nothing) ----
+    # The congregation's own record, split across three leaves found down the
+    # descent. The cult's voice lives in the DESCRIPTION (their personal
+    # testimony); the PI's reaction is logged to `notes` on pickup. They are
+    # pure lore -- the keystone is the Pallid Mask alone now (the old single
+    # `playscript` item that half-made the keystone is retired). The aches are
+    # solvable problems (a debt, an addiction, a broken back); the arc runs
+    # from a human problem, to the bargain, to the self lost in the dig.
+    "cult_calling":  {"name": "The Calling",
+                       "kind": "lore",
+                       "desc": "Cultist personal testimony:\n\n"
+                               "\"I had been drinking for eleven years. I quit "
+                               "a hundred times and never once stayed quit. "
+                               "Then I dreamed of a door, and a voice that "
+                               "said it could take it from me clean. I have "
+                               "not touched a drop since I came.\"\n\n"
+                               "\"The bank took the farm in the spring. By "
+                               "summer I was dreaming the same dream as a "
+                               "hundred strangers, and every one of us was "
+                               "already driving north to the same town.\""},
+    "cult_bargain":  {"name": "The Bargain",
+                       "kind": "lore",
+                       "desc": "Cultist personal testimony:\n\n"
+                               "\"My back has been broken nine years. He says "
+                               "I will stand straight the day our work is "
+                               "finished. We are nearly finished. Soon we can "
+                               "all help ourselves.\"\n\n"
+                               "\"He asks so little of us. Only everything, "
+                               "and only the once.\""},
+    "cult_digging":  {"name": "The Digging",
+                       "kind": "lore",
+                       "desc": "Cultist personal testimony:\n\n"
+                               "\"There are only a few feet of earth left "
+                               "between us and the door now. We dig in shifts "
+                               "so the work never stops, one hand on the rite, "
+                               "one hand in the dirt. We have only to reach "
+                               "the door.\"\n\n"
+                               "\"I do not sleep. I dig. We hold the rite and "
+                               "we dig and we do not stop. Almost there. "
+                               "Almost. The door. The door. The door.\""},
     "lumber_axe":    {"name": "Splitting Axe",
                        "kind": "weapon",
                        "desc": "An axe for chopping wood.",

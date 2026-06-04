@@ -448,6 +448,10 @@ def build_the_ossuary():
     ]
     _ambient(sc, "whisper", 0.12, 7.0, 12.0)
     sc.add_interactable(4 * TILE + 16, 9 * TILE + 16, 36)   # [E] cue: the shelves
+    # Optional lore: The Digging (third, deepest testimony fragment), racked
+    # with one lost digger's leavings. Pure lore, gates nothing.
+    sc._dig_note_pos = (6 * TILE + 16, 9 * TILE + 16)
+    sc.add_interactable(sc._dig_note_pos[0], sc._dig_note_pos[1], 36)
 
     def _interact(game):
         px, py = game.player.x, game.player.y
@@ -457,6 +461,26 @@ def build_the_ossuary():
                 "thin, racked and labelled in the Clerk's hand. Not trophies. "
                 "An inventory of everything the dark took before it learned to "
                 "leave the body walking.")
+            return
+        nx, ny = sc._dig_note_pos
+        if abs(px - nx) < 36 and abs(py - ny) < 36:
+            if not game.save.flag("ossuary_digging_taken"):
+                game.save.set_flag("ossuary_digging_taken", True)
+                game.player.inventory.add("cult_digging", 1)
+                game.audio.play("pickup_rare", 0.6)
+                game._log_note("cult_digging", [
+                    "The last pages stop being sentences. Just the word door, "
+                    "over and over, pressed hard enough to tear the paper. "
+                    "Whatever these people used to be, the digging finished it.",
+                ])
+                game.dialog.show([
+                    "[c=dim]Racked with one digger's leavings, their last "
+                    "pages. The hand starts steady and comes apart. You take "
+                    "it.[/c]",
+                ], speaker="", voice="blip_soft", portrait="narrator")
+                return
+            game.show_notice("A digger's leavings, racked and labelled.",
+                             duration=3.0)
     sc.on_interact_fn = _interact
     return sc
 
@@ -530,10 +554,10 @@ def build_threshold():
     sc.set_spawn("default",   5, 1)
     sc.set_spawn("from_dark", 5, 1)
     # Doorframe at the centre. Pressing E presses the KEYSTONE -- the Pallid
-    # Mask seated in the cult's notes -- into the door and seals it (the
-    # seal_threshold ending), CONSUMING both (§7 rework). The keystone was
-    # carried down (the Deep Stair opened WITHOUT spending it), so a player
-    # who descended always holds it here; nothing to soft-lock on.
+    # Mask -- into the door and seals it (the seal_threshold ending),
+    # CONSUMING it (§7 rework, Mask-only: the cult's notes are pure lore now
+    # and gate nothing). The keystone was carried down (the Deep Stair opened
+    # WITHOUT spending it), so a player who descended always holds it here.
     lintel_x, lintel_y = 5 * TILE + 16, 5 * TILE + 16
     sc._lintel_pos = (lintel_x, lintel_y)
     sc.add_interactable(lintel_x, lintel_y, 40)   # [E] cue: seal the Threshold (END IT)
@@ -565,22 +589,21 @@ def build_threshold():
         if abs(px - lintel_x) > 40 or abs(py - lintel_y) > 40:
             return
         inv = game.player.inventory
-        # The door seals only to the keystone -- the Mask seated in the
-        # cult's notes -- carried down from the Deep Stair (§6/§7). Spend
-        # both at the frame. (The descent guarantees you hold it; the guard
-        # is belt-and-suspenders against a soft-lock.)
-        if not (inv.has("sigil_rubbing") and inv.has("playscript")):
+        # The door seals only to the keystone -- the Pallid Mask -- carried
+        # down from the Deep Stair (§6/§7, Mask-only). Spend it at the frame.
+        # (The descent guarantees you hold it; the guard is belt-and-
+        # suspenders against a soft-lock.)
+        if not inv.has("sigil_rubbing"):
             game.show_notice("The frame is cold and blank. You have nothing "
                              "to give it.")
             return
         game.audio.force_silence()
         game.audio.play("arg_chime", 0.7)
         inv.remove("sigil_rubbing", 1)
-        inv.remove("playscript", 1)
         game.dialog.show([
-            "[c=dim](You set both hands to the cold frame. His face seated in "
-            "their notes, the keystone you carried all this way. You press "
-            "it into the door.)[/c]",
+            "[c=dim](You set both hands to the cold frame. His face, the "
+            "keystone you carried all this way. You press it into the "
+            "door.)[/c]",
             "[c=dim](The frame takes it. Nothing of His is left in your hands "
             "now. Nothing to give it but the rest of you.)[/c]",
             "[s=slow][c=dim]...the smoke stops.[/c][/s]",

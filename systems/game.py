@@ -1954,20 +1954,19 @@ class Game(CutsceneMixin):
     def _draw_brimley_haze(self):
         """Atmospheric overlay. Brimley and alter_room always run the
         outdoor haze + vignette. EVERY OTHER SCENE also runs the
-        outdoor haze + vignette while the player is carrying the
-        playscript -- the playscript's presence is hostile, the world dims around
-        it."""
+        outdoor haze + vignette while the player is carrying the Pallid
+        Mask -- His face is the hostile object now (NARRATIVE 8: the Mask
+        is the temptation and it draws Him), so the world dims around it."""
         if self.scene is None:
             return
         key = self.scene.key
-        # Safe / dim-safe interiors break the playscript-haze. Walking
-        # back to the Inn (or the cellar) with the playscript is meant
-        # to feel like a refuge from the hostile dim, not a
-        # continuation of it.
+        # Safe / dim-safe interiors break the Mask-haze. Walking back to the
+        # Inn (or the cellar) with the Mask is meant to feel like a refuge
+        # from the hostile dim, not a continuation of it.
         if key in SAFE_SCENES or key in DIM_SAFE_SCENES:
             return
-        holds_playscript = (self.player is not None
-                     and self.player.inventory.has("playscript"))
+        holds_mask = (self.player is not None
+                     and self.player.inventory.has("sigil_rubbing"))
         if key == "brimley":
             # Daytime town: a LIGHT atmospheric haze, not the oppressive dim.
             # The "too dark" read was a flat black tint stacked on the
@@ -1978,9 +1977,9 @@ class Game(CutsceneMixin):
             # fog patches + the encroaching vignette for mood.
             self._draw_haze(26, (40, 40, 50, 70), 14, 24, 0.3, 30)
             self._draw_vignette()
-        elif holds_playscript:
-            # The playscript's presence is HOSTILE -- the world dims hard
-            # around it. This heavier dim is intentional and unchanged.
+        elif holds_mask:
+            # The Mask's presence is HOSTILE -- His face draws Him, the world
+            # dims hard around it. This heavier dim is intentional.
             self._draw_haze(170, (40, 40, 50, 80), 14, 24, 0.3, 30)
             self._draw_vignette()
 
@@ -2414,6 +2413,23 @@ class Game(CutsceneMixin):
             "I never reached it. One dream, a year ago, and it never came"
             " again. So why do I know this place.",
         ]})
+        self.save.set_arg("notes", notes)
+        if hasattr(self, "_flash_notebook"):
+            self._flash_notebook()
+
+    def _log_note(self, name, lines):
+        """Append a PI case-notebook NOTE (arg `notes`, never `evidence`).
+        Idempotent by `name` so re-triggering a pickup never dupes. Used by
+        the cult-testimony fragments (the cult's voice is the item desc; this
+        is the PI's reaction). NOTES never inflate `_evidence_count`, so they
+        never arm the King or the infestation -- only the six CANONICAL_EVIDENCE
+        beats do."""
+        notes = self.save.arg("notes", [])
+        if not isinstance(notes, list):
+            notes = []
+        if any(isinstance(e, dict) and e.get("name") == name for e in notes):
+            return
+        notes.append({"name": name, "lines": list(lines)})
         self.save.set_arg("notes", notes)
         if hasattr(self, "_flash_notebook"):
             self._flash_notebook()

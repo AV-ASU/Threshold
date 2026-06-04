@@ -71,10 +71,13 @@ def _mom_notebook(s):
         pygame.draw.line(s, _BRASS, (3, yy), (5, yy), 1)
 
 
-def _playscript(s):
-    pygame.draw.circle(s, _BRUISE_LO, (8, 9), 6)
-    pygame.draw.circle(s, _BRUISE, (8, 9), 5)
-    pygame.draw.circle(s, _BRUISE_HI, (6, 7), 2)
+def _testimony(s):
+    # A loose leaf of the cult's testimony: a written page, a few lines of
+    # script. Shared by the three fragments (Calling / Bargain / Digging).
+    pygame.draw.rect(s, _PAPER, (4, 3, 9, 11))
+    pygame.draw.rect(s, _PAPER_DARK, (4, 3, 9, 11), 1)
+    for yy in (5, 7, 9, 11):
+        pygame.draw.line(s, _PAPER_DARK, (6, yy), (11, yy), 1)
 
 
 def _letter(s):
@@ -110,7 +113,9 @@ _DISPATCH = {
     "robe":            _robe,
     "mom_notebook":    _mom_notebook,
     "unsent_letter":   _letter,
-    "playscript":             _playscript,
+    "cult_calling":    _testimony,
+    "cult_bargain":    _testimony,
+    "cult_digging":    _testimony,
 }
 
 

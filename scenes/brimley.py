@@ -1023,8 +1023,8 @@ def build_brimley():
     def _brimley_interact(game):
         # The well -- the only mouth into the Works. Needs the rope to
         # rig the first descent; once tied, the rope stays as the climb
-        # route until the playscript snaps it on a later descent
-        # (handled in well_bottom's on_enter).
+        # route until opening the Deep Stair snaps it on a later descent
+        # (well_rope_broken, set at works_deepstair).
         wx, wy = sc._well_pos
         if abs(game.player.x - wx) < 36 and abs(game.player.y - wy) < 36:
             if game.save.flag("well_rope_broken"):

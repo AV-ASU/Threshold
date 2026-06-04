@@ -133,10 +133,10 @@ def tisdale_boy_dialogue(game, npc):
             "up. None of them did. I saw.",
         ], speaker="Toby Tisdale", voice="blip_kid", portrait="tisdale_boy")
         return
-    if inv.has("playscript") and not save.flag("kid_playscript_noticed"):
+    if inv.has("cult_calling") and not save.flag("kid_playscript_noticed"):
         save.set_flag("kid_playscript_noticed", True)
         game.dialog.show([
-            "That book. The one they keep.",
+            "That book. The one they write in.",
             "[c=dim]Don't open it where I can see.[/c]",
         ], speaker="Toby Tisdale", voice="blip_kid", portrait="tisdale_boy")
         return

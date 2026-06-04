@@ -75,8 +75,8 @@ def build_well_bottom():
     # The rope no longer snaps on the way down -- you can retreat up the
     # ladder through the whole Works gauntlet. The point of no return is
     # OPENING THE DEEP STAIR (committing to the Depths); that snaps it
-    # (works_deepstair, below). The playscript now lives deep in the
-    # Works (the Scriptorium), so it is never carried down from above.
+    # (works_deepstair, below). The keystone is the Pallid Mask alone (Sign
+    # Chamber); the cult's testimony fragments are pure lore found down here.
 
     def _interact(game):
         px, py = game.player.x, game.player.y
@@ -400,18 +400,25 @@ def build_works_scriptorium():
         dx, dy = sc._desk_pos
         if (abs(game.player.x - dx) > 40 or abs(game.player.y - dy) > 40):
             return
-        # The cult's notes -- the deep-gate key -- the one bound, whole
-        # volume among the congregation's endless flat copies of the Sign.
-        # Their own record, not a copy. Taken here, carried to the Deep Stair.
-        if not game.save.flag("scriptorium_playscript_taken"):
-            game.save.set_flag("scriptorium_playscript_taken", True)
-            game.player.inventory.add("playscript", 1)
+        # The first of the congregation's testimony fragments (The Calling),
+        # bound and whole among their endless flat copies of the Sign. Pure
+        # lore -- it gates nothing (the keystone is the Mask alone now). The
+        # cult's voice is the item description; the PI's reaction is the note
+        # below. Reading it ALSO seeds the §8 want-to-leave (descent_leave).
+        if not game.save.flag("scriptorium_calling_taken"):
+            game.save.set_flag("scriptorium_calling_taken", True)
+            game.player.inventory.add("cult_calling", 1)
             game.audio.play("pickup_rare", 0.7)
             game.audio.play("low_pulse", 0.45)
+            game._log_note("cult_calling", [
+                "Every hand different. Every one of them grateful. I keep "
+                "waiting for the page where somebody admits they were tricked. "
+                "It isn't here.",
+            ])
             game.dialog.show([
                 "[c=dim]Among the loose copies, one volume is bound and "
-                "whole. Their own notes, not the Sign traced again. A recess "
-                "in the cover, the shape of a mask. You take it.[/c]",
+                "whole. Not the Sign traced again. Their own testimony, in a "
+                "hundred different hands. You take it.[/c]",
                 "[c=dim]The scribe is wet to the knee.[/c]",
             ], speaker="", voice="blip_soft", portrait="narrator")
             # Reading their notes seeds the want-to-leave (the King's pull to
@@ -574,24 +581,13 @@ def build_works_deepstair():
             game.begin_transition("depths_antechamber", "from_above")
             return
         inv = game.player.inventory
-        has_play = inv.has("playscript")
-        has_mask = inv.has("sigil_rubbing")     # the Pallid Mask
-        if not (has_play and has_mask):
+        has_mask = inv.has("sigil_rubbing")     # the Pallid Mask -- the keystone
+        if not has_mask:
             game.audio.play("door_locked", 0.5)
-            if not has_play and not has_mask:
-                game.show_notice("A slot the size of a folded book, and "
-                                 "above it a socket the shape of a face. "
-                                 "Both empty.")
-            elif not has_play:
-                game.show_notice("His face fits the socket above. But the "
-                                 "slot below, a folded book's size, "
-                                 "stays empty.")
-            else:
-                game.show_notice("Their notes fit the slot. But the socket "
-                                 "above, the shape of a face, stays "
-                                 "empty.")
+            game.show_notice("A socket sunk in the stone, the shape of a "
+                             "face. Empty.")
             return
-        # Both in hand: lay out the fork once, commit on the next press.
+        # The Mask in hand: lay out the fork once, commit on the next press.
         # Turning back keeps the keystone for the rope -- the Spread road
         # (carry His face out). Pressing it here OPENS the stair but does
         # NOT consume it (§7): you carry the keystone down and spend it at
@@ -600,27 +596,25 @@ def build_works_deepstair():
             game.save.set_flag("deepstair_fork_seen", True)
             game.audio.play("low_pulse", 0.5)
             game.dialog.show([
-                "[c=dim](His face fits the socket; their notes fit the slot "
-                "below. The keystone, whole. Press it to the stone and the "
-                "stair will open.)[/c]",
+                "[c=dim](His face fits the socket. The keystone. Press it to "
+                "the stone and the stair will open.)[/c]",
                 "You have enough. The register, the names, the Preacher, the "
-                "girl her father sent you for, and the keystone in your "
-                "hands.",
+                "girl her father sent you for, and His face in your hands.",
                 "The town belongs to Him; that is why not one of them can "
                 "leave. But you were never claimed. His Sign, carried out by "
                 "the one soul He never took. The fold opens only for that. "
                 "Climb out while the rope holds, and let the world learn His "
                 "name.",
-                "[s=slow]Or you carry the keystone down, past her, to the "
-                "thing all of this kneels to, and give it to the door.[/s]",
+                "[s=slow]Or you carry it down, past her, to the thing all of "
+                "this kneels to, and give it to the door.[/s]",
                 "[c=dim](Press again to open the stair and carry the keystone "
                 "down, or turn back, while the rope still holds.)[/c]",
             ], speaker="", voice="blip_soft", portrait="narrator")
             return
         # Commit -- press the keystone to the stone. The stair OPENS to His
         # own authority but the keystone is NOT spent here (§7 rework): you
-        # keep the Mask and the notes and carry them down to the Threshold
-        # door. Point of no return: the rope far above snaps.
+        # keep the Mask and carry it down to the Threshold door. Point of no
+        # return: the rope far above snaps.
         game.save.set_flag("deepstair_open", True)
         game.save.set_flag("well_rope_broken", True)
         game.audio.force_silence()
@@ -679,6 +673,34 @@ def build_the_sump():
         from .base import drop_ammo_cache
         drop_ammo_cache(game, scene, 5, 6, 4, "ammo_sump")
     sc.on_enter_fn = _on_enter
+
+    # Optional lore: The Bargain (second testimony fragment), left among the
+    # diggers' supplies on the dry ledge. Pure lore, gates nothing.
+    sc._note_pos = (3 * TILE + 16, 4 * TILE + 16)
+    sc.add_interactable(sc._note_pos[0], sc._note_pos[1], 40)
+
+    def _interact(game):
+        nx, ny = sc._note_pos
+        if abs(game.player.x - nx) > 40 or abs(game.player.y - ny) > 40:
+            return
+        if not game.save.flag("sump_bargain_taken"):
+            game.save.set_flag("sump_bargain_taken", True)
+            game.player.inventory.add("cult_bargain", 1)
+            game.audio.play("pickup_rare", 0.6)
+            game._log_note("cult_bargain", [
+                "They write about the bargain like a debt almost paid off. "
+                "Not one of them can say what they put up for it, only that "
+                "the last payment is close. I never took a confession this "
+                "happy.",
+            ])
+            game.dialog.show([
+                "[c=dim]More of their testimony, tucked among the diggers' "
+                "supplies. The same grateful hands. You take it.[/c]",
+            ], speaker="", voice="blip_soft", portrait="narrator")
+            return
+        game.show_notice("The diggers' supplies, left where they dropped "
+                         "them.", duration=3.0)
+    sc.on_interact_fn = _interact
     return sc
 
 
