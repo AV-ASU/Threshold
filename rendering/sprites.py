@@ -1756,15 +1756,10 @@ def draw_player_sprite(surf, x, y, facing, walk_phase=0, armor=None,
                              ((cx - HN) if s < 0 else (cx + HN - 2), hcy - 6, 2, 5))
         else:
             for ex in (cx - 4, cx + 1):
-                pygame.draw.rect(lay, sclera, (ex, hcy - 1, 3, 2))           # eye white
-                pygame.draw.rect(lay, pupil, (ex + 1 + ldx, hcy, 1, 2))      # pupil
-                pygame.draw.line(lay, skin_lo, (ex, hcy - 1),                # heavy lid
-                                 (ex + 2, hcy - 1), 1)                       # (weary, not wide)
-            try:
-                lay.set_at((cx - 3, hcy), (234, 228, 218))                  # catchlights
-                lay.set_at((cx + 3, hcy), (234, 228, 218))
-            except (IndexError, ValueError):
-                pass
+                pygame.draw.rect(lay, sclera, (ex, hcy - 1, 3, 2))           # eye white (3x2)
+                pygame.draw.rect(lay, pupil, (ex + 1, hcy - 1, 1, 2))        # centered pupil
+            pygame.draw.line(lay, skin_lo, (cx - 4, hcy - 2),                # hooded brow ABOVE
+                             (cx + 4, hcy - 2), 1)                           # (weary, not wide)
             # hair: a swept, slightly-receding crop -- NOT a cap. A clear strip
             # of brow shows; the hairline is uneven and parted to one side.
             pygame.draw.ellipse(lay, hair, (cx - HN, cy - 22, HN * 2, 4))
