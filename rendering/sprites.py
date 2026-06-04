@@ -1645,13 +1645,13 @@ def draw_player_sprite(surf, x, y, facing, walk_phase=0, armor=None,
     only thing here that's properly *here*."""
     # Pure neutral greyscale -- the frame grade is mild (32% desat, 15% cool
     # tint) so he still reads as black-and-white against the coloured town.
-    INK = (18, 18, 18)        # near-black: hard shadow, band, tie, boots
-    DK = (48, 48, 48)         # dark grey: hat, lapels, shadow side
-    MID = (116, 116, 116)     # trench base
-    LT = (176, 176, 176)      # secondary lit fold
-    HI = (230, 230, 230)      # key-lit edge, white shirt, eye catch
-    SKIN = (160, 160, 160)    # pale face
-    SKIN_SH = (74, 74, 74)    # face in the brim's shadow
+    INK = (12, 12, 13)        # near-black: hard shadow, band, tie, boots
+    DK = (38, 38, 40)         # dark grey: hat, lapels, shadow side
+    MID = (84, 84, 88)        # trench base (darker -- not silvery)
+    LT = (118, 118, 122)      # secondary lit fold
+    HI = (212, 212, 218)      # key-lit edge / shirt / eye catch (used sparingly)
+    SKIN = (140, 140, 144)    # face
+    SKIN_SH = (58, 58, 60)    # face in the brim's shadow
     if prone:
         # Lying on the cot, hat resting at the bedside.
         bx = x - 12
@@ -1720,9 +1720,9 @@ def draw_player_sprite(surf, x, y, facing, walk_phase=0, armor=None,
     #     brim's shadow (the classic noir read). ---
     if view == "back":
         pygame.draw.ellipse(lay, SKIN, (cx - 5, hcy, 10, 10))         # nape
-        pygame.draw.rect(lay, DK, (cx - 5, hcy - 11, 10, 9))          # crown back
-        pygame.draw.ellipse(lay, DK, (cx - 6, hcy - 13, 12, 5))       # crown top
-        pygame.draw.ellipse(lay, DK, (cx - 9, hcy - 3, 18, 4))        # brim from behind
+        pygame.draw.rect(lay, DK, (cx - 5, hcy - 10, 10, 6))          # crown back (short)
+        pygame.draw.ellipse(lay, DK, (cx - 5, hcy - 13, 10, 5))       # crown top
+        pygame.draw.ellipse(lay, DK, (cx - 8, hcy - 4, 16, 3))        # brim from behind
         pygame.draw.rect(lay, INK, (cx - 5, hcy - 5, 10, 2))         # band
     else:
         pygame.draw.ellipse(lay, SKIN, (cx - 5, hcy - 2, 10, 13))     # face
@@ -1734,24 +1734,26 @@ def draw_player_sprite(surf, x, y, facing, walk_phase=0, armor=None,
             pygame.draw.rect(lay, HI, (ex, hcy, 3, 2))               # eye catch
             pygame.draw.rect(lay, INK, (ex + (2 if s > 0 else 1), hcy, 1, 2))
             pygame.draw.rect(lay, SKIN_SH, (cx + 4 * s, hcy + 2, 2, 2))  # nose/jaw
-            pygame.draw.ellipse(lay, DK, (cx - 6, hcy - 5, 16, 4))    # brim
-            pygame.draw.ellipse(lay, DK, (cx + (0 if s > 0 else -8), hcy - 5, 10, 4))  # front jut
-            pygame.draw.rect(lay, DK, (cx - 5, hcy - 12, 10, 8))      # crown
-            pygame.draw.ellipse(lay, DK, (cx - 5, hcy - 14, 10, 5))
-            pygame.draw.rect(lay, INK, (cx - 5, hcy - 6, 10, 2))     # band
+            pygame.draw.rect(lay, DK, (cx - 5, hcy - 11, 10, 7))      # crown (short)
+            pygame.draw.ellipse(lay, DK, (cx - 5, hcy - 13, 10, 5))   # crown top
+            pygame.draw.rect(lay, INK, (cx - 5, hcy - 5, 10, 2))     # band
+            pygame.draw.ellipse(lay, DK, (cx - 7, hcy - 4, 14, 3))    # brim
+            pygame.draw.ellipse(lay, DK, (cx + (1 if s > 0 else -8), hcy - 4, 8, 3))  # brim jut
         else:
-            pygame.draw.rect(lay, SKIN_SH, (cx - 4, hcy, 8, 3))       # brim shadow band
+            pygame.draw.rect(lay, SKIN_SH, (cx - 4, hcy + 1, 8, 3))   # brim shadow band
             for ex in (cx - 4, cx + 1):
-                pygame.draw.rect(lay, HI, (ex, hcy, 3, 2))           # eye catch (life)
-                pygame.draw.rect(lay, INK, (ex + 1, hcy, 1, 2))      # pupil
-            pygame.draw.line(lay, SKIN_SH, (cx, hcy + 2), (cx, hcy + 4), 1)  # nose
-            pygame.draw.ellipse(lay, DK, (cx - 9, hcy - 5, 18, 4))    # brim (wide)
-            pygame.draw.ellipse(lay, INK, (cx - 9, hcy - 4, 18, 3), 1)  # brim underside
-            pygame.draw.rect(lay, DK, (cx - 5, hcy - 13, 10, 9))      # crown
-            pygame.draw.ellipse(lay, DK, (cx - 5, hcy - 15, 10, 5))   # crown top
-            pygame.draw.rect(lay, INK, (cx - 5, hcy - 6, 10, 2))     # band
-            pygame.draw.rect(lay, MID, (cx - 4, hcy - 13, 2, 7))      # crown lit edge
-            pygame.draw.line(lay, HI, (cx - 8, hcy - 4), (cx - 3, hcy - 4), 1)  # brim lit edge
+                pygame.draw.rect(lay, HI, (ex, hcy + 1, 3, 2))       # eye catch (life)
+                pygame.draw.rect(lay, INK, (ex + 1, hcy + 1, 1, 2))  # pupil
+            pygame.draw.line(lay, SKIN_SH, (cx, hcy + 3), (cx, hcy + 5), 1)  # nose
+            # fedora: a clean LOW crown (narrower than the brim, the proper
+            # proportion) + band + a wide brim at the brow.
+            pygame.draw.ellipse(lay, DK, (cx - 8, hcy - 2, 16, 3))    # brim (wide)
+            pygame.draw.ellipse(lay, INK, (cx - 8, hcy - 1, 16, 2), 1)  # underside
+            pygame.draw.rect(lay, DK, (cx - 4, hcy - 7, 8, 4))        # crown (low)
+            pygame.draw.line(lay, INK, (cx, hcy - 7), (cx, hcy - 4), 1)  # single crease
+            pygame.draw.rect(lay, INK, (cx - 4, hcy - 3, 8, 1))      # band
+            pygame.draw.rect(lay, MID, (cx - 3, hcy - 6, 1, 3))      # crown lit edge
+            pygame.draw.line(lay, HI, (cx - 7, hcy - 2), (cx - 1, hcy - 2), 1)  # brim lit edge
     surf.blit(lay, (int(x) - LX, int(y) - LY))
 
 
