@@ -62,9 +62,6 @@ re-author §8 — it's done; §10 is a standing constraint per iron rules 2-3, N
 a task — the lure chain stays unstated, the lone `the_case` touch already
 exists, never elaborate it). The genuinely open work:
 
-- **Ashfall (§9)** — the one independent system left. A drifting pale-yellow
-  ashfall scaling with `_infest_stage()`, denser near the source, **never on
-  the Threshold**. Procedural; preview headlessly before committing.
 - **Buried lore inside the cult's notes (§6b)** — the *contents* of the
   Playscript: fragmentary, longing, unreliable **testimony the game never
   confirms** (the dig, the bargain, the longing). The wrapper + the leave-urge

@@ -856,6 +856,29 @@ def main():
         check(_br in _UG, f"portal: branch room {_br} is registered underground")
         check(_br in _DK, f"dark: branch room {_br} gets the underground gloom")
 
+    # --- 22. Ashfall scales with the infestation, never on the Threshold ----
+    # (NARRATIVE §4b) The pale-yellow ash is the vessel's pressure made
+    # visible: zero at stage 0, light->steady as evidence climbs, thicker
+    # underground (nearer the source), clean in safe rooms until stage 3, and
+    # NEVER on the Threshold (the still eye of it, §1b).
+    def _ash(scene, ev):
+        ga = new_game()
+        ga.save.set_arg("evidence", [f"ev{i}" for i in range(ev)])
+        ga.load_scene_now(scene)
+        return ga._ashfall_target()
+
+    check(_ash("brimley", 0) == 0,
+          "ashfall: stage 0 air is clean (no evidence, no ash)")
+    check(_ash("brimley", 1) > 0 and _ash("brimley", 3) > _ash("brimley", 1),
+          "ashfall: density climbs with the evidence stage")
+    check(_ash("works_scriptorium", 3) > _ash("brimley", 3),
+          "ashfall: thicker underground (nearer the source)")
+    check(_ash("threshold", 3) == 0,
+          "ashfall: never on the Threshold (the still eye of it)")
+    _safe = next(iter(_SAFE))
+    check(_ash(_safe, 2) == 0 and _ash(_safe, 3) > 0,
+          "ashfall: safe rooms stay clean until stage 3 claims them too")
+
     print()
     if FAILS:
         print(f"{len(FAILS)} flow failure(s).")

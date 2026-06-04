@@ -361,6 +361,21 @@ UNDERGROUND_SCENES = {
     "the_sump", "the_cells", "the_ossuary",
 }
 
+# Ashfall (NARRATIVE 4b): a slow drifting pale-yellow ashfall, the pressure
+# of the vessel made visible -- His attention settling on you, not snow, not
+# weather. Density scales with the infestation stage (light at 1 -> a steady
+# yellow drift at 3) and thickens underground (nearer the source). Never on
+# the Threshold (the eye of it is still, 1b), and safe rooms stay clear until
+# stage 3 (mirrors the rot decals). Pure screen-space overlay, procedural.
+ASHFALL_BY_STAGE = {0: 0, 1: 46, 2: 110, 3: 196}   # target motes by stage
+ASHFALL_SOURCE_MUL = 1.7      # denser underground (nearer the source)
+ASHFALL_MAX = 360             # hard ceiling on live motes
+ASHFALL_COLOR = (210, 176, 86)    # jaundiced pale yellow
+ASHFALL_FALL_MIN, ASHFALL_FALL_MAX = 11.0, 30.0    # px/s downward drift
+ASHFALL_WIND = 7.0            # px/s steady sideways drift
+ASHFALL_SWAY = 9.0            # px sway amplitude as a mote falls
+ASHFALL_GROW = 70.0           # motes/s the field eases toward its target
+
 
 def _corpse_examine(game, npc):
     """E on a local you killed. A flat, dim line -- no absolution, just
@@ -552,6 +567,9 @@ class Game(CutsceneMixin):
         # intense than the brimley vignette but never goes away --
         # the world edges are always pressing in. Cached on first need.
         self._outdoor_vignette_surf = None
+        # Ashfall motes (NARRATIVE 4b): live screen-space particle field,
+        # eased toward a stage-driven target each frame. See _tick_ashfall.
+        self._ashfall_parts = []
 
         # ---- THRESHOLD: the visibility meter ----
         # `visibility` is a float in [0, 1]: how visible the player is
@@ -797,6 +815,7 @@ class Game(CutsceneMixin):
         self._cult_topup_t = 0.0
         self.flashlight_on = False
         self._void_sting_played = False
+        self._ashfall_parts = []      # clear the ash field on New Game
         # The opening "door won't open the first time" beat is a
         # once-per-run latch. The Game instance is reused across
         # quit-to-title, so without this reset a second New Game in the
@@ -1651,6 +1670,77 @@ class Game(CutsceneMixin):
         player commits underground at 3 evidence. Monotonic with the
         evidence count (knowing rots the world, and you can't un-know)."""
         return min(3, self._evidence_count())
+
+    def _ashfall_target(self):
+        """How many ash motes the air should hold right now (NARRATIVE 4b).
+        Zero on the Threshold (the still eye of it) and in safe rooms before
+        stage 3; otherwise stage-driven, thicker underground (the source)."""
+        if self.scene is None:
+            return 0
+        key = self.scene.key
+        if key == "threshold":
+            return 0          # never on the Threshold (1b)
+        stage = self._infest_stage()
+        if key in SAFE_SCENES and stage < 3:
+            return 0          # safe rooms stay clean until it claims them too
+        n = ASHFALL_BY_STAGE.get(stage, 0)
+        if key in UNDERGROUND_SCENES:
+            n = int(n * ASHFALL_SOURCE_MUL) or (1 if stage == 0 else 0)
+        return min(ASHFALL_MAX, n)
+
+    def _spawn_ash_mote(self, seeded_y=False):
+        """One ash mote in screen space. seeded_y scatters it up the whole
+        screen (initial fill); otherwise it starts just above the top edge."""
+        depth = random.random()    # 0 far/slow/faint .. 1 near/fast/bright
+        return {
+            "x": random.uniform(-20, SCREEN_W + 20),
+            "y": random.uniform(0, SCREEN_H) if seeded_y else random.uniform(-30, -4),
+            "vy": ASHFALL_FALL_MIN + depth * (ASHFALL_FALL_MAX - ASHFALL_FALL_MIN),
+            "ph": random.uniform(0, math.tau),
+            "sz": 1 if depth < 0.6 else 2,
+            "a": int(40 + depth * 92),
+        }
+
+    def _tick_ashfall(self, dt):
+        """Ease the live mote field toward its stage target and drift it.
+        Pure screen-space atmosphere -- no world state, runs behind modals."""
+        parts = self._ashfall_parts
+        target = self._ashfall_target()
+        # Grow/shrink toward the target a few motes per frame so the air
+        # thickens and thins smoothly as evidence climbs / scenes change.
+        room = ASHFALL_GROW * dt
+        if len(parts) < target:
+            for _ in range(min(target - len(parts), max(1, int(room)))):
+                parts.append(self._spawn_ash_mote(seeded_y=not parts))
+        elif len(parts) > target:
+            del parts[target:]
+        if not parts:
+            return
+        t = pygame.time.get_ticks() / 1000.0
+        for p in parts:
+            p["y"] += p["vy"] * dt
+            p["x"] += (ASHFALL_WIND + math.sin(t * 0.7 + p["ph"]) * ASHFALL_SWAY) * dt
+            if p["y"] > SCREEN_H + 4:
+                # recycle off the top with a fresh sideways offset
+                p["y"] = random.uniform(-30, -4)
+                p["x"] = random.uniform(-20, SCREEN_W + 20)
+            elif p["x"] > SCREEN_W + 20:
+                p["x"] -= SCREEN_W + 40
+            elif p["x"] < -20:
+                p["x"] += SCREEN_W + 40
+
+    def _draw_ashfall(self):
+        """Blit the ash motes as one soft pale-yellow wash over the world."""
+        parts = self._ashfall_parts
+        if not parts:
+            return
+        layer = pygame.Surface((SCREEN_W, SCREEN_H), pygame.SRCALPHA)
+        cr, cg, cb = ASHFALL_COLOR
+        for p in parts:
+            sz = p["sz"]
+            layer.fill((cr, cg, cb, p["a"]),
+                       (int(p["x"]), int(p["y"]), sz, sz))
+        self.screen.blit(layer, (0, 0))
 
     def _apply_infestation(self):
         """Re-derive the world's rot for the freshly-loaded scene from the
@@ -3820,6 +3910,7 @@ class Game(CutsceneMixin):
                 self._tick_cult_ambient(dt)
                 self._tick_king(dt)
             self._tick_wake_muffle(dt)
+            self._tick_ashfall(dt)        # atmosphere: drifts behind modals too
             self._tick_flashback(dt)
             self._tick_ending(dt)
         elif self.state == "transition":
@@ -4412,6 +4503,10 @@ class Game(CutsceneMixin):
         # image. Applied before the HUD so UI text stays crisp.
         from scenes.base import apply_grade
         apply_grade(self.screen, pygame.time.get_ticks() / 1000.0)
+        # Ashfall over the graded world (NARRATIVE 4b) -- the pale-yellow drift
+        # rides on top so the grade's desaturate/cool-tint can't wash it out.
+        # Under the HUD: it's atmosphere, not interface.
+        self._draw_ashfall()
         self._draw_interact_prompt()
         self._draw_hud()
         self._draw_notebook_toast()

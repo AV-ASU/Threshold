@@ -52,9 +52,9 @@ Implemented + verified (compileall + smoke + flow green; canon guards added).
 
 ## Phase 2 — remaining (adds new content/systems)
 
-> **State (2026-06):** §8 is DONE (above). §10 is a standing constraint, not a
-> task (below). The genuinely-open work is **§9 ashfall**, **§6b buried lore**,
-> and **§12 Crane** (gated on a design conversation).
+> **State (2026-06):** §8 and §9 are DONE (below). §10 is a standing
+> constraint, not a task. The genuinely-open work is **§6b buried lore** and
+> **§12 Crane** (gated on a design conversation).
 >
 > These **author new prose or build new systems**. The hard part is the
 > NARRATIVE §1b discipline: cosmic truth arrives **only as sensation** — never
@@ -87,16 +87,19 @@ Landed in the post-Phase-1 feel/voice pass (confirmed in code, not just docs).
 - [x] **Spread off-ramp reachable/legible** at the moment of temptation (turn
   back at the Deep Stair, climb out) — the choice is real, not theoretical.
 
-### 9. Ashfall — the infestation made airborne  *(NARRATIVE §4b)*
+### ✅ 9. Ashfall — the infestation made airborne — DONE  *(NARRATIVE §4b)*
 
 **Canon:** a slow **drifting pale-yellow ashfall** scales with evidence (light
 at stage 1 → steady yellow drift at 3), denser near the source, **never on the
 Threshold** — the vessel's pressure made visible, His attention settling on
 you. (Not snow, not weather.)
 
-- [ ] Add an ashfall overlay driven by `_infest_stage()` (hook near
-  `_apply_infestation` / the world draw). Exempt `threshold`. Tune density by
-  stage. Procedural (no assets). Preview headlessly before committing.
+- [x] Screen-space mote field (`_tick_ashfall` / `_draw_ashfall`, `ASHFALL_*`
+  constants) driven by `_infest_stage()` via `_ashfall_target()`: zero at stage
+  0, light→steady by stage 3, ×1.7 underground (the source), clean in safe
+  rooms until stage 3, **never on `threshold`**. Procedural, drawn over the film
+  grade so the jaundiced tint reads. Preview: `tools/preview_ashfall.py`.
+  Canon-guarded in `tests/flow.py` (§22).
 
 ### 10. The lure chain — NOT A TASK, a standing constraint  *(NARRATIVE §1)*
 
@@ -130,7 +133,7 @@ from his pulpit, murdered for it (evidence #4, his cross). Only the
   reflect the settled canon; this file now tracks only the Phase 2 remainder.
 - **Coupling:** §6b is the **PI's interior voice** (the `notes` system); §8 (its
   sibling) already landed, so keep §6b in that same escalating-arc tone. §9
-  (ashfall) is the one independent systems/render task. §12 is gated on a
-  design conversation. §10 is a fence, not a ticket.
+  (ashfall) is done. §12 is gated on a design conversation. §10 is a fence, not
+  a ticket. So only §6b + §12 remain.
 - Verify against `NARRATIVE.md` first; keep `tests/flow.py` green and add a
   guard as each canon fact locks.
