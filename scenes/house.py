@@ -369,8 +369,12 @@ def build_house():
     # (house_interact). A reception nook below the wall of the vanished, so
     # the names you sign under are the names that never checked out.
     sc._frontdesk_pos = (8 * TILE + 16, 2 * TILE + 16)
-    sc.add_furniture("table", [(8, 2), (9, 2)], w=58, h=40)
-    sc.add_decoration(Decoration(9 * TILE + 8, 2 * TILE + 4, "candle"))
+    # The desk is a real low COUNTER volume (two abutting boxes, ~2 tiles
+    # wide) so under the tilt it stands as a 3D reception desk the player
+    # sees OVER -- Sable, behind it, shows head + torso above the top.
+    sc.add_furniture("counter", [(8, 2)])
+    sc.add_furniture("counter", [(9, 2)])
+    sc.add_decoration(Decoration(9 * TILE, 2 * TILE + 4, "candle"))  # on the desktop
     sc.add_interactable(sc._frontdesk_pos[0], sc._frontdesk_pos[1], 44)
 
     # Northern-MN lodge decor. Wall mounts (no collision) along the
@@ -433,12 +437,14 @@ def house_on_enter(game, scene):
         host.dialogue_fn = None
         scene.add_npc(host)
     else:
-        # The trap-keeper at his post: behind the front-desk register (the
-        # SW side of it), facing into the room. `watch` turns him to follow
-        # the player -- the smiling man whose eyes never quite leave you --
-        # so the arrival reads as a man who was waiting for you to come down.
-        nx = 8 * TILE + 16
-        ny = 3 * TILE + 16
+        # The trap-keeper at his post: standing BEHIND the front-desk
+        # register (north of it, against the wall), facing south into the
+        # room. The desk volume sits between him and the player, so he reads
+        # head-and-torso over the counter. `watch` turns him to follow the
+        # player -- the smiling man whose eyes never quite leave you -- so
+        # the arrival reads as a man who was waiting for you to come down.
+        nx = 9 * TILE              # centred behind the 2-tile desk (cols 8-9)
+        ny = 1 * TILE + 16         # row 1, between the desk (row 2) and wall
         host = NPC(nx, ny, "Clerk", "clerk",
                    solid=True, no_prompt=False,
                    voice="blip_low", portrait="clerk",
