@@ -633,7 +633,17 @@ def draw_object(surf, ch, rx, ry, tx, ty):
 
 def draw_floor(surf, ch, rx, ry, tx, ty):
     fd = FLOOR_DEFS.get(ch, FLOOR_DEFS["."])
-    pygame.draw.rect(surf, fd["color"], (rx, ry, TILE, TILE))
+    base = fd["color"]
+    # Per-tile value jitter so adjacent tiles never read identical -- the
+    # cheapest break of the grid lockstep (cached per (ch,tx,ty), so free
+    # after the first draw). Animated floors (~,@) skip it: they reseed each
+    # frame and a jitter would shimmer as you walk.
+    if ch not in _ANIM_FLOOR:
+        jv = (_vary(tx * 8009 + ty, 0) % 13) - 6        # -6..6, value only
+        base = (max(0, min(255, base[0] + jv)),
+                max(0, min(255, base[1] + jv)),
+                max(0, min(255, base[2] + jv)))
+    pygame.draw.rect(surf, base, (rx, ry, TILE, TILE))
     if ch in ("g", "G"):
         # Grass with layered detail: a faint base mottle on every
         # tile, occasional grass blades, occasional darker dead-clump,
@@ -654,12 +664,27 @@ def draw_floor(surf, ch, rx, ry, tx, ty):
             pygame.draw.rect(surf, (66, 56, 34),
                              (rx + (seed * 2 % 26),
                               ry + (seed * 5 % 26), 3, 2))
+        if seed % 9 == 0:
+            # Bare earth scuffed through the grass -- a patch of dirt.
+            ex, ey = rx + (seed * 7 % 22) + 2, ry + (seed * 11 % 22) + 2
+            pygame.draw.ellipse(surf, (60, 48, 34), (ex, ey, 7, 5))
+            pygame.draw.rect(surf, (50, 40, 28), (ex + 2, ey + 1, 2, 2))
+        if seed % 13 == 0:
+            # A taller blade clump, lighter green, catching what light there is.
+            bx, by = rx + (seed * 5 % 28), ry + (seed * 3 % 22) + 6
+            for k in range(3):
+                pygame.draw.line(surf, (72, 86, 54),
+                                 (bx + k * 2, by), (bx + k * 2 - 1, by - 5 - k), 1)
         if seed % 73 == 0:
             # Bone speck -- very rare. The kind of thing a player
             # only catches on the second or third walk through.
             pygame.draw.rect(surf, (210, 200, 180),
                              (rx + (seed * 3 % 28),
                               ry + (seed * 7 % 28), 1, 1))
+        elif seed % 57 == 0:
+            # A rare pale weed-flower -- a fleck of off-white in the green.
+            pygame.draw.rect(surf, (172, 170, 142),
+                             (rx + (seed * 9 % 28), ry + (seed * 13 % 28), 1, 1))
     elif ch == "_":
         pygame.draw.rect(surf, (92, 90, 86),
                          (rx + 1, ry + 1, TILE - 2, TILE - 2), 1)
@@ -703,6 +728,25 @@ def draw_floor(surf, ch, rx, ry, tx, ty):
             ky = ry + (seed * 3 % 22) + 3
             pygame.draw.circle(surf, (60, 38, 22), (kx, ky), 2)
             pygame.draw.circle(surf, (40, 26, 16), (kx, ky), 1)
+        # Tracked-in grit + the place half-abandoned: sparse dust specks, a
+        # rare ground-in grime smear, and very rarely a blade of grass pushing
+        # up through a board seam. Reads grimy and lived-in, not a clean floor.
+        if seed % 4 == 0:
+            for k in range(2):
+                gx = rx + (_vary(seed, k) % 28) + 2
+                gy = ry + (_vary(seed, k + 5) % 28) + 2
+                pygame.draw.rect(surf, (44, 33, 22), (gx, gy, 1, 1))
+        if seed % 13 == 0:
+            pygame.draw.ellipse(surf, (40, 30, 20),
+                                (rx + (seed * 3 % 22) + 4,
+                                 ry + (seed * 5 % 22) + 4, 6, 3))
+        if seed % 29 == 0:
+            # A weed through a floorboard seam -- nature creeping back in.
+            wx = rx + (seed % 24) + 4
+            wb = ry + 8 + (seed % 14)
+            for k in range(2):
+                pygame.draw.line(surf, (62, 78, 48),
+                                 (wx + k, wb), (wx + k - 1, wb - 5), 1)
     elif ch == ",":
         pygame.draw.rect(surf, (80, 30, 50), (rx, ry, TILE, TILE), 1)
         for i in range(0, TILE, 6):
@@ -824,6 +868,24 @@ def draw_floor(surf, ch, rx, ry, tx, ty):
         if seed % 7 == 0:                          # mud crack
             cx = rx + (seed % 20) + 4
             pygame.draw.line(surf, (20, 19, 16), (cx, ry + 8), (cx + 5, ry + 13), 1)
+    elif ch == ".":
+        # Plain dark stone -- the bare interior/dark-scene floor. It used to
+        # draw as a flat fill; give it a low mottle, a faint grout seam, and
+        # sparse grit so it stops reading as a single block.
+        seed = tx * 23 + ty * 53
+        for i in range(2):
+            mx = rx + (_vary(seed, i) % 26) + 2
+            my = ry + (_vary(seed, i + 3) % 26) + 2
+            pygame.draw.rect(surf, (37, 35, 46), (mx, my, 3, 3))
+        if seed % 4 == 0:
+            pygame.draw.line(surf, (22, 20, 28),
+                             (rx + 16, ry + 1), (rx + 16, ry + TILE - 1), 1)
+        if seed % 5 == 0:
+            pygame.draw.line(surf, (22, 20, 28),
+                             (rx + 1, ry + 16), (rx + TILE - 1, ry + 16), 1)
+        if seed % 9 == 0:
+            pygame.draw.rect(surf, (24, 22, 30),
+                             (rx + (seed * 3 % 24) + 2, ry + (seed * 5 % 24) + 2, 4, 3))
     # Macro shadow blotches: a low-frequency, world-anchored darkening
     # that rolls across many tiles at once, so the floor stops reading
     # as a grid of identical cells. Two cheap sine layers, darken-only.
