@@ -1631,6 +1631,35 @@ def view_from_facing(fx, fy, yaw):
     return "left"
 
 
+def _blend_px(lay, x, y, col, a):
+    """Alpha-blend `col` at alpha `a` (0..255) onto one pixel of an SRCALPHA
+    layer -- soft glow/smoke specks without a per-pixel Surface."""
+    if a <= 0 or not (0 <= x < lay.get_width() and 0 <= y < lay.get_height()):
+        return
+    bg = lay.get_at((x, y))
+    f = a / 255.0
+    lay.set_at((x, y), (int(bg[0] * (1 - f) + col[0] * f),
+                        int(bg[1] * (1 - f) + col[1] * f),
+                        int(bg[2] * (1 - f) + col[2] * f), 255))
+
+
+def _cig_fx(lay, t, ex, ey, ember=True):
+    """A breathing warm ember at (ex,ey) + an animated curl of smoke rising
+    off it. The ember is the one point of colour on the monochrome PI; pass
+    ember=False (the back view) for smoke only."""
+    pulse = 0.55 + 0.45 * math.sin(t * 4.5)
+    if ember:
+        lay.set_at((ex, ey), (int(150 + 95 * pulse), int(72 + 52 * pulse),
+                              int(30 + 20 * pulse)))
+        glow = (int(118 + 60 * pulse), int(56 + 34 * pulse), 26)
+        for gx, gy in ((-1, 0), (1, 0), (0, -1), (0, 1)):
+            _blend_px(lay, ex + gx, ey + gy, glow, int(110 * pulse))
+    for k in range(7):
+        yy = int(round(ey - 1 - k * 2.0 - ((t * 5.0) % 2.0)))
+        xx = int(round(ex + 1 + math.sin(t * 2.0 + k * 0.7) * (1.0 + k * 0.22)))
+        _blend_px(lay, xx, yy, (120, 120, 124), max(0, 150 - k * 22))
+
+
 def draw_player_sprite(surf, x, y, facing, walk_phase=0, armor=None,
                         prone=False, view="front"):
     """THRESHOLD: the private investigator, 1994. A long dark wool
@@ -1672,6 +1701,7 @@ def draw_player_sprite(surf, x, y, facing, walk_phase=0, armor=None,
     LX, LY = 22, 34
     lay = pygame.Surface((44, 60), pygame.SRCALPHA)
     cx, cy = LX, LY
+    t = pygame.time.get_ticks() / 1000.0          # for the animated smoke + ember pulse
     lo = int(math.sin(walk_phase) * 2)
     hemsway = int(abs(math.sin(walk_phase)))
     sh_y = cy - 11
@@ -1682,22 +1712,20 @@ def draw_player_sprite(surf, x, y, facing, walk_phase=0, armor=None,
     pygame.draw.rect(lay, INK, (cx + 1, cy + 13, 4, 5 + max(0, lo)))
     pygame.draw.rect(lay, DK, (cx - 5, cy + 13, 4, 1))
     pygame.draw.rect(lay, DK, (cx + 1, cy + 13, 4, 1))
-    # --- the belted trench coat (hard noir key-light from the left) ---
-    pygame.draw.rect(lay, MID, (cx - 6, sh_y, 13, 22 + hemsway))      # body
-    pygame.draw.rect(lay, DK, (cx + 2, sh_y, 5, 22))                  # shadow side (right)
-    pygame.draw.rect(lay, HI, (cx - 6, sh_y, 2, 21))                  # lit edge (left)
-    pygame.draw.rect(lay, LT, (cx - 3, sh_y + 2, 1, 17))            # secondary fold
+    # --- the belted trench coat, NEUTRAL even lighting (no side key) ---
+    pygame.draw.rect(lay, MID, (cx - 6, sh_y, 13, 22 + hemsway))      # body (even fill)
+    pygame.draw.rect(lay, DK, (cx - 6, sh_y, 13, 22 + hemsway), 1)    # even outline (both sides)
     pygame.draw.rect(lay, INK, (cx - 6, cy + 1, 13, 2))             # BELT
-    pygame.draw.rect(lay, HI, (cx - 1, cy + 1, 2, 2))              # buckle
-    pygame.draw.rect(lay, INK, (cx - 6, cy + 9, 13, 2))           # hem shadow
+    pygame.draw.rect(lay, LT, (cx - 1, cy + 1, 2, 2))             # buckle (neutral)
+    pygame.draw.rect(lay, INK, (cx - 6, cy + 9, 13, 2))           # hem recess
     for hx in range(cx - 5, cx + 7, 3):                           # hem fall
         pygame.draw.line(lay, INK, (hx, cy + 11), (hx, cy + 11 + (hx % 2)), 1)
-    if view != "back":                                            # pockets
+    if view != "back":                                            # pockets (symmetric)
         pygame.draw.rect(lay, INK, (cx - 5, cy + 3, 3, 4))
         pygame.draw.rect(lay, INK, (cx + 3, cy + 3, 3, 4))
-    # --- shoulders + collar + lapels ---
+    # --- shoulders + collar + lapels (even) ---
     pygame.draw.rect(lay, MID, (cx - 7, sh_y, 15, 3))
-    pygame.draw.rect(lay, DK, (cx + 4, sh_y, 4, 3))               # shoulder shadow
+    pygame.draw.rect(lay, DK, (cx - 7, sh_y, 15, 1))               # even shoulder seam
     if view == "back":
         pygame.draw.rect(lay, DK, (cx - 4, sh_y - 4, 9, 5))       # collar up
         pygame.draw.rect(lay, INK, (cx - 4, sh_y - 1, 9, 2))
@@ -1724,9 +1752,10 @@ def draw_player_sprite(surf, x, y, facing, walk_phase=0, armor=None,
         pygame.draw.ellipse(lay, DK, (cx - 5, hcy - 13, 10, 5))       # crown top
         pygame.draw.ellipse(lay, DK, (cx - 8, hcy - 4, 16, 3))        # brim from behind
         pygame.draw.rect(lay, INK, (cx - 5, hcy - 5, 10, 2))         # band
+        _cig_fx(lay, t, cx + 3, hcy - 1, ember=False)                # smoke rising (cig unseen)
     else:
-        pygame.draw.ellipse(lay, SKIN, (cx - 5, hcy - 2, 10, 13))     # face
-        pygame.draw.ellipse(lay, SKIN_SH, (cx + 1, hcy - 2, 4, 13))   # shadow half of face
+        pygame.draw.ellipse(lay, SKIN, (cx - 5, hcy - 2, 10, 13))     # face (even, neutral)
+        pygame.draw.ellipse(lay, DK, (cx - 5, hcy - 2, 10, 13), 1)    # even outline
         if view in ("left", "right"):
             s = 1 if view == "right" else -1
             pygame.draw.rect(lay, SKIN_SH, (cx - 4, hcy, 8, 2))       # brim shadow
@@ -1739,6 +1768,11 @@ def draw_player_sprite(surf, x, y, facing, walk_phase=0, armor=None,
             pygame.draw.rect(lay, INK, (cx - 5, hcy - 5, 10, 2))     # band
             pygame.draw.ellipse(lay, DK, (cx - 7, hcy - 4, 14, 3))    # brim
             pygame.draw.ellipse(lay, DK, (cx + (1 if s > 0 else -8), hcy - 4, 8, 3))  # brim jut
+            # cigarette juts forward from the mouth on the lead side
+            cxg = cx + 4 * s
+            pygame.draw.line(lay, (210, 210, 214), (cx + 2 * s, hcy + 4),
+                             (cxg, hcy + 5), 1)
+            _cig_fx(lay, t, cxg, hcy + 5)
         else:
             pygame.draw.rect(lay, SKIN_SH, (cx - 4, hcy + 1, 8, 3))   # brim shadow band
             for ex in (cx - 4, cx + 1):
@@ -1752,17 +1786,11 @@ def draw_player_sprite(surf, x, y, facing, walk_phase=0, armor=None,
             pygame.draw.rect(lay, DK, (cx - 4, hcy - 7, 8, 4))        # crown (low)
             pygame.draw.line(lay, INK, (cx, hcy - 7), (cx, hcy - 4), 1)  # single crease
             pygame.draw.rect(lay, INK, (cx - 4, hcy - 3, 8, 1))      # band
-            pygame.draw.rect(lay, MID, (cx - 3, hcy - 6, 1, 3))      # crown lit edge
-            pygame.draw.line(lay, HI, (cx - 7, hcy - 2), (cx - 1, hcy - 2), 1)  # brim lit edge
-            # a lit cigarette at the corner of the mouth + a thread of smoke
-            pygame.draw.line(lay, (224, 224, 228), (cx + 1, hcy + 6),
+            # a lit cigarette at the corner of the mouth + the glowing ember
+            # and animated smoke (the one warm point on the monochrome figure).
+            pygame.draw.line(lay, (210, 210, 214), (cx + 1, hcy + 6),
                              (cx + 5, hcy + 7), 1)                    # cigarette
-            lay.set_at((cx + 5, hcy + 7), (246, 240, 226))           # hot ember
-            for sx, sy in ((6, 5), (7, 3), (6, 1), (8, -1), (7, -3)):  # smoke curl
-                try:
-                    lay.set_at((cx + sx, hcy + sy), (110, 110, 114))
-                except (IndexError, ValueError):
-                    pass
+            _cig_fx(lay, t, cx + 5, hcy + 7)
     surf.blit(lay, (int(x) - LX, int(y) - LY))
 
 
