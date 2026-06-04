@@ -525,19 +525,9 @@ def build_brimley():
     # Footpaths to the well + shed are carved earlier in the floor pass.
     # The well at col 94, row 13 -- the only mouth down into the Works.
     # Surrounding floor was already grass; the well is a decoration.
-    # The woodshed footprint (5w x 4h) south-east of the well, door
-    # 'z' on north face at col 91.
-    shed_left, shed_right = 89, 93
-    shed_top, shed_bot = 16, 19
-    for cx in range(shed_left, shed_right + 1):
-        objects_list[shed_top][cx] = "W"
-        objects_list[shed_bot][cx] = "W"
-    objects_list[shed_top][91] = "z"   # locked door
-    for ry in (shed_top + 1, shed_top + 2):
-        objects_list[ry][shed_left] = "W"
-        objects_list[ry][shed_right] = "W"
-        for cx in range(shed_left + 1, shed_right):
-            objects_list[ry][cx] = "r"
+    # (The woodshed moved to the Lodge yard -- scenes/our_house_area. Brimley
+    # no longer hosts a shed; the footpath that once led here is left as worn
+    # ground to nowhere.)
     # Gravel road passage (north) -- single 'R' tile at col 96. Uses
     # 'R' rather than 'a' to avoid collision with the river-crossing
     # 'a' exit (exit chars are scene-global, not per-tile).
@@ -768,13 +758,13 @@ def build_brimley():
     well_y = 13 * TILE + 16
     sc.add_decoration(Decoration(well_x, well_y, "well"))
     sc._well_pos = (well_x, well_y)
-    # The wheelbarrow of "rusted" tools just outside the woodshed door.
+    # A wheelbarrow of "rusted" tools left on the east edge (the shed that
+    # stood here is gone, but the cleaned tools remain -- the contradiction
+    # is the point, still an evidence beat).
     barrow_x = 93 * TILE + 16
     barrow_y = 15 * TILE + 16
     sc.add_decoration(Decoration(barrow_x, barrow_y, "wheelbarrow"))
     sc._barrow_pos = (barrow_x, barrow_y)
-    # Woodshed door coords (for the locked-door interact).
-    sc._shed_door_pos = (91 * TILE + 16, 16 * TILE + 16)
     sc.add_decoration(Decoration(52 * TILE + 16, 61 * TILE + 16, "missing_flyer"))
     sc.add_decoration(Decoration(40 * TILE + 16, 27 * TILE + 16, "missing_flyer"))
     # The calendar, marked up to a day a few months back and then just
@@ -1064,18 +1054,6 @@ def build_brimley():
             game.audio.play("door_locked", 0.7)
             game.show_notice("The way down. Too deep without a rope.")
             return
-        # The woodshed -- locked door. Needs woodshed_key from the
-        # Lodge cellar workbench. Opens to the woodshed interior
-        # (axe, rope, batteries).
-        sdx, sdy = sc._shed_door_pos
-        if abs(game.player.x - sdx) < 40 and abs(game.player.y - sdy) < 40:
-            if not game.player.inventory.has("woodshed_key"):
-                game.audio.play("door_locked", 0.6)
-                game.show_notice("Locked. The Clerk has the key.")
-                return
-            game.audio.play("door_open", 0.7)
-            game.begin_transition("woodshed", "from_brimley_shed")
-            return
         # Wheelbarrow of "rusted" tools -- the visible state contradicts
         # the notice. The contradiction is the point.
         bx, by = sc._barrow_pos
@@ -1105,7 +1083,6 @@ def build_brimley():
     # had NO prompt before, so the player had to guess where to press E. Radii
     # match the handler's checks. (The car moved to the arrival road.)
     sc.add_interactable(sc._well_pos[0], sc._well_pos[1], 36)
-    sc.add_interactable(sc._shed_door_pos[0], sc._shed_door_pos[1], 40)
     sc.add_interactable(sc._barrow_pos[0], sc._barrow_pos[1], 36)
     sc.add_interactable(sc._payphone_pos[0], sc._payphone_pos[1], 40)
 

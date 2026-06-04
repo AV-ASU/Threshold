@@ -358,6 +358,30 @@ def main():
     check(gr._ending_active == "escape_alone",
           "geo: SPREAD fires at the car on the arrival road (with the Sign)")
 
+    # --- 13c. The woodshed is consolidated into the lodge yard ------------
+    # It used to sit across town in brimley; now it is a key-gated door in
+    # the Arcadia yard (west of the lodge) and exits back to the yard. The
+    # brimley shed door is gone.
+    _yard2 = _ld13("our_house_area")
+    _shed = _ld13("woodshed")
+    check(hasattr(_yard2, "_shed_door_pos"),
+          "geo: the lodge yard has the woodshed door (west of the lodge)")
+    check(_shed.exits.get("h", (None,))[0] == "our_house_area",
+          "geo: the woodshed exits back into the lodge yard")
+    check("_shed_door_pos" not in inspect.getsource(_ml.build_brimley),
+          "geo: brimley no longer hosts the woodshed door (consolidated)")
+    gw = new_game()
+    gw.load_scene_now("our_house_area")
+    ready(gw)
+    gw.player.x, gw.player.y = gw.scene._shed_door_pos
+    gw.scene.on_interact_fn(gw)                       # locked, no key
+    check(gw.scene.key == "our_house_area",
+          "geo: the shed door is locked without the cellar key")
+    gw.player.inventory.add("woodshed_key", 1)
+    gw.scene.on_interact_fn(gw)                       # key in hand -> enters
+    check(getattr(gw, "transition_target", (None,))[0] == "woodshed",
+          "geo: the cellar key opens the yard shed -> woodshed interior")
+
     # --- 14. "He knows you": the dream note + Threshold recognition ---
     # Living the journal door-dream writes a personal NOTE (not a clue), and
     # arriving at the real Threshold having dreamed it lands a recognition

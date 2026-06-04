@@ -1,8 +1,10 @@
 """outside_innkeeper_house (key: 'our_house_area') -- the gravel
-yard behind the Clerk's house. The pickup truck is parked here.
-A small woodshed off to the south holds the splitting axe. The dirt
-road leaves east toward town; a path west connects to the river/
-brimley escape route.
+yard behind the Clerk's house. The WOODSHED sits in the SW (the axe,
+rope and flashlight; a locked facade door 'l' -> the `woodshed`
+interior, key-gated by the Lodge cellar key). The dirt path leaves
+east toward the cornfields; west onto the ARRIVAL ROAD (the looping
+road the PI drove in on, where the dead car / SPREAD escape now sits),
+whose dirt path carries on to the country lane and town.
 
 The basement is reached from inside the Clerk's house (the
 kitchen cellar hatch). A previous build placed a redundant cellar
@@ -11,10 +13,8 @@ trip (basement only exits via the kitchen ladder) and a duplicate
 "door to the basement" two tiles outside the same building.
 
 THRESHOLD reskin: original 'our_house_area' had two houses, a patrol,
-a rust-key cellar gate, and respawning enemies. All cut. The second house is now a woodshed (no interior
-scene, just an interactable door that yields the splitting axe).
-Sheriff patrols this scene as part of his random outdoor route
-(wired in Pass F).
+a rust-key cellar gate, and respawning enemies. All cut. The Sheriff
+patrols this scene as part of his random outdoor route (wired in Pass F).
 """
 import math
 import random
@@ -33,10 +33,10 @@ def _yard_cache_pickup(game):
 
 def build_our_house_area():
     # 24w x 18h. The Clerk's house occupies the upper-left quadrant
-    # with a back door (H) into the kitchen. A woodshed sits in the
-    # lower-left with a door (h) you interact with to take the axe. The
-    # bulkhead cellar entry sits behind the house at the top of the
-    # yard. The dirt road runs east-west across the middle.
+    # with a back door (H) into the kitchen. The woodshed sits in the
+    # lower-left -- a locked facade door 'l' you interact with (key-gated)
+    # to enter the `woodshed` interior. The dirt road runs east-west across
+    # the middle; west now leads onto the looping arrival road.
     floor = [
         "gggggggggggggggggggggggg",   # 0
         "gggggggggggggggggggggggg",   # 1
@@ -105,6 +105,16 @@ def build_our_house_area():
     # back door so the player passes it walking up to the porch.
     yard_obj = [list(r) for r in sc.objects]
     yard_obj[12][5] = "M"
+    # The WOODSHED in the SW of the yard -- west of the Lodge, where it
+    # belongs (it used to sit clear across town in brimley). A small solid
+    # structure with a facade door 'l' on its north face; locked until you
+    # find the woodshed key in the Lodge cellar. Clear of the dirt path
+    # (cols 4-6) and the 'M' arrival fold (5,12).
+    for cy in (12, 13, 14):
+        for cx in (1, 2, 3):
+            yard_obj[cy][cx] = "W"
+    yard_obj[12][2] = "l"          # locked facade door, north face
+    sc._shed_door_pos = (2 * TILE + 16, 12 * TILE + 16)
     # ---- Permeable forest band ----
     # Replaces the old hard corn-wall perimeter. Same helper as brimley
     # so the visual treatment of the wrap is consistent. Lodge structure
@@ -126,6 +136,10 @@ def build_our_house_area():
         # scatter trees onto it; painted dirt just below (after scatter), cut
         # clean through the band like the roads (NARRATIVE 11).
         if 4 <= tx <= 6 and 9 <= ty <= 14:
+            return True
+        # The woodshed footprint + its north approach (so the forest band
+        # doesn't bury the door).
+        if 1 <= tx <= 3 and 11 <= ty <= 15:
             return True
         return False
     _yd_bushes = []
@@ -157,7 +171,7 @@ def build_our_house_area():
     sc.set_spawn("from_village", 1, 7)           # legacy save alias
     sc.set_spawn("from_forest", 22, 7)           # one west of east passage
     sc.set_spawn("from_river", 1, 7)             # west passage spawn alias
-    sc.set_spawn("from_woodshed", 12, 7)         # legacy fallback
+    sc.set_spawn("from_woodshed", 2, 11)         # one N of the shed door
     # Return spawn from the lodge_arrival fold -- lands the player
     # one tile south of the directional M tile so they don't
     # immediately re-trigger the fold.
@@ -188,6 +202,20 @@ def build_our_house_area():
 
     def _outside_interact(game):
         px, py = game.player.x, game.player.y
+        # The woodshed -- locked facade door. Needs the woodshed key from the
+        # Lodge cellar workbench; opens to the woodshed interior (axe, rope,
+        # flashlight). Now in the yard, west of the Lodge, where you'd expect
+        # it -- not across town.
+        sdx, sdy = sc._shed_door_pos
+        if abs(px - sdx) < 44 and abs(py - sdy) < 44:
+            if not game.player.inventory.has("woodshed_key"):
+                game.audio.play("door_locked", 0.6)
+                game.show_notice("Locked. The key's somewhere inside the "
+                                 "Lodge.")
+                return
+            game.audio.play("door_open", 0.7)
+            game.begin_transition("woodshed", "from_yard")
+            return
         # Bloody handprint on the back door -- atmosphere, not a clue.
         # show_notice keeps it as a corner-line that doesn't interrupt
         # play with a full dialog pop.
@@ -204,6 +232,8 @@ def build_our_house_area():
             game.show_notice(
                 "The Clerk's truck. He doesn't drive it. None of them do.")
     sc.on_interact_fn = _outside_interact
+    # [E] cue on the shed door.
+    sc.add_interactable(sc._shed_door_pos[0], sc._shed_door_pos[1], 44)
 
     # Atmosphere -- chimney smoke from the house, a couple of crows,
     # scattered grass. No patrol NPC. No enemy spawn.
@@ -345,10 +375,11 @@ def build_arrival_road():
 
 
 def build_woodshed():
-    """A woodshed off the village crossroads (where it actually sits --
-    not the Arcadia yard). Single room: splitting axe on the wall, a coil
-    of rope on the workbench, a chopping stump in the centre. Locked from
-    outside; the Clerk keeps the key (found in his cellar)."""
+    """The Arcadia woodshed -- in the SW of the Lodge yard, west of the
+    Lodge (it used to sit clear across town; consolidated here so the tools
+    are where you'd expect). Single room: splitting axe on the wall, a coil
+    of rope on the workbench, the flashlight on a chopping stump in the
+    centre. Locked from outside; the key is in the Lodge cellar."""
     floor = ["=" * 12 for _ in range(9)]
     objects = [
         "WWWWWWWWWWWW",   # 0
@@ -362,14 +393,13 @@ def build_woodshed():
         "WWWWWWWWWWWW",   # 8
     ]
     sc = Scene("woodshed", floor, objects, music="home")
-    # `h` exit always returns the player to the village/farm scene
-    # now -- the yard shed has been removed, the village shed is
-    # the only entry/exit.
-    sc.add_exit("h", "brimley", "from_woodshed")
+    # `h` exit returns the player to the LODGE YARD (the shed is back in the
+    # Arcadia yard, west of the Lodge).
+    sc.add_exit("h", "our_house_area", "from_woodshed")
     sc.set_spawn("default",            5, 6)
-    sc.set_spawn("from_brimley_shed",  4, 6)
+    sc.set_spawn("from_yard",          4, 6)   # entered from the yard door
+    sc.set_spawn("from_brimley_shed",  4, 6)   # legacy fallback
     sc.set_spawn("from_village_shed",  4, 6)   # legacy fallback
-    sc.set_spawn("from_yard",          4, 6)   # legacy fallback
 
     rope_pos   = (2 * TILE + 16, 2 * TILE + 16)
     # The splitting axe hangs in the back tool nook -- behind the partition,

@@ -46,7 +46,7 @@ from .threshold_extras import (build_schoolhouse, build_graveyard,
 #   house              -> the Arcadia ground floor (Clerk's desk + floor)
 #   son_room           -> the Clerk's room (locked; flavor: his cult robe)
 #   basement           -> the Arcadia cellar (the Ledger #3; the workbench)
-#   our_house_area     -> the Arcadia yard (the dead car, the woodshed)
+#   our_house_area     -> the Arcadia yard (the woodshed; the dead car is on arrival_road)
 #   kid_house          -> kid_house (drawings on walls)
 #   brimley            -> the unified town map (was mistlands + village)
 #   shop               -> general_store
