@@ -1643,132 +1643,115 @@ def draw_player_sprite(surf, x, y, facing, walk_phase=0, armor=None,
     A faint ground-shadow ellipse roots the player in the scene.
     None of the NPCs cast a shadow, by design -- the player is the
     only thing here that's properly *here*."""
-    coat    = (56, 52, 56)        # worn dark wool overcoat
-    coat_lo = (37, 34, 39)        # coat shadow side / hem
-    collar  = (150, 146, 138)     # pale shirt collar
-    pants   = (40, 38, 45)        # dark trousers
-    boots   = (34, 26, 20)        # scuffed work boots
-    skin    = (188, 158, 134)     # muted
-    hair    = (52, 40, 30)
+    # Pure neutral greyscale -- the frame grade is mild (32% desat, 15% cool
+    # tint) so he still reads as black-and-white against the coloured town.
+    INK = (18, 18, 18)        # near-black: hard shadow, band, tie, boots
+    DK = (48, 48, 48)         # dark grey: hat, lapels, shadow side
+    MID = (116, 116, 116)     # trench base
+    LT = (176, 176, 176)      # secondary lit fold
+    HI = (230, 230, 230)      # key-lit edge, white shirt, eye catch
+    SKIN = (160, 160, 160)    # pale face
+    SKIN_SH = (74, 74, 74)    # face in the brim's shadow
     if prone:
-        # Lying on the cot. Compress the figure to a horizontal
-        # silhouette with a thin blanket overlay. Drawn off-centre
-        # so it reads as resting on the bedding rather than on the
-        # floor.
+        # Lying on the cot, hat resting at the bedside.
         bx = x - 12
         by = y - 2
-        # Blanket / quilt
-        pygame.draw.rect(surf, (90, 60, 70), (bx, by, 24, 9))
-        pygame.draw.rect(surf, (60, 40, 50), (bx, by, 24, 9), 1)
-        # Head poking out at one end
-        pygame.draw.circle(surf, skin, (bx + 22, by + 4), 4)
-        pygame.draw.rect(surf, hair, (bx + 19, by, 7, 4))
-        # Eyes closed: a thin dark line
-        pygame.draw.line(surf, (40, 30, 24),
-                         (bx + 21, by + 4), (bx + 24, by + 4), 1)
-        # One boot peeking out the foot end
-        pygame.draw.rect(surf, boots, (bx, by + 5, 4, 3))
+        pygame.draw.rect(surf, MID, (bx, by, 24, 9))
+        pygame.draw.rect(surf, DK, (bx, by, 24, 9), 1)
+        pygame.draw.circle(surf, SKIN, (bx + 22, by + 4), 4)
+        pygame.draw.rect(surf, DK, (bx + 18, by - 1, 8, 3))      # hat brim at rest
+        pygame.draw.line(surf, INK, (bx + 21, by + 4), (bx + 24, by + 4), 1)
+        pygame.draw.rect(surf, INK, (bx, by + 5, 4, 3))
         return
-    # Ground shadow under the boots (drawn first; player-only -- the one
-    # thing properly *here*).
+    # Ground shadow (player-only -- the one thing properly *here*).
     shadow = pygame.Surface((24, 8), pygame.SRCALPHA)
     pygame.draw.ellipse(shadow, (0, 0, 0, 95), (0, 0, 24, 8))
     surf.blit(shadow, (int(x) - 12, int(y) + 16))
-    # Extra weathered-investigator tones (grounded 1994, not period noir).
-    coat_hi = (88, 84, 90)        # rim light on the lit edge
-    skin_lo = (120, 98, 82)       # shaded face / jaw
-    grey    = (122, 114, 106)     # grey flecking the hair
-    stub    = (120, 100, 86)      # jaw stubble
-    tie     = (66, 58, 62)        # loosened dark tie
-    eye_c   = (24, 20, 18)
-    # Draw the figure on its own layer and brush the Darkwood grime over it
-    # (the SAME pass the cultists use), so the PI sits in the graded palette
-    # at the NPCs' fidelity instead of reading as a flat slab.
-    LX, LY = 22, 32
-    lay = pygame.Surface((44, 58), pygame.SRCALPHA)
+    # No Darkwood grime pass: the PI is rendered CLEAN and monochrome on
+    # purpose -- the outsider the fold doesn't own, not of this place.
+    LX, LY = 22, 34
+    lay = pygame.Surface((44, 60), pygame.SRCALPHA)
     cx, cy = LX, LY
-    fx, fy = facing
-    lo = int(math.sin(walk_phase) * 2)            # leg phase
-    hemsway = int(abs(math.sin(walk_phase)))      # coat hem breathes with the gait
-    sh_y = cy - 11                                # shoulder line
-    # --- legs + scuffed boots under the long hem (a LEAN frame) ---
-    pygame.draw.rect(lay, pants, (cx - 5, cy + 6, 10, 8))
-    pygame.draw.rect(lay, boots, (cx - 5, cy + 13, 4, 5 + max(0, -lo)))
-    pygame.draw.rect(lay, boots, (cx + 1, cy + 13, 4, 5 + max(0, lo)))
-    pygame.draw.rect(lay, (20, 16, 13), (cx - 5, cy + 17, 4, 2))
-    pygame.draw.rect(lay, (20, 16, 13), (cx + 1, cy + 17, 4, 2))
-    # --- the long overcoat: a SLIM frame, narrow shoulders to a mid-calf hem ---
-    pygame.draw.rect(lay, coat, (cx - 6, sh_y, 13, 22 + hemsway))       # body
-    pygame.draw.rect(lay, coat, (cx - 7, sh_y, 15, 3))                  # shoulder line
-    pygame.draw.rect(lay, coat_lo, (cx + 3, sh_y, 4, 22))              # shadow side
-    pygame.draw.rect(lay, coat_hi, (cx - 6, sh_y, 1, 20))             # rim light
-    pygame.draw.rect(lay, coat_lo, (cx - 6, cy + 8, 13, 3))           # hem shadow
-    for hx in range(cx - 5, cx + 7, 3):                               # frayed hem
-        pygame.draw.line(lay, coat_lo, (hx, cy + 10), (hx, cy + 11 + (hx % 2)), 1)
-    if view != "back":                                                # hands in pockets
-        pygame.draw.rect(lay, coat_lo, (cx - 5, cy + 1, 3, 5))
-        pygame.draw.rect(lay, coat_lo, (cx + 3, cy + 1, 3, 5))
-    # --- the turned-up collar of the overcoat (behind the head) ---
+    lo = int(math.sin(walk_phase) * 2)
+    hemsway = int(abs(math.sin(walk_phase)))
+    sh_y = cy - 11
+    hcy = cy - 14
+    # --- legs + boots (dark, peeking under the hem) ---
+    pygame.draw.rect(lay, INK, (cx - 5, cy + 6, 10, 8))
+    pygame.draw.rect(lay, INK, (cx - 5, cy + 13, 4, 5 + max(0, -lo)))
+    pygame.draw.rect(lay, INK, (cx + 1, cy + 13, 4, 5 + max(0, lo)))
+    pygame.draw.rect(lay, DK, (cx - 5, cy + 13, 4, 1))
+    pygame.draw.rect(lay, DK, (cx + 1, cy + 13, 4, 1))
+    # --- the belted trench coat (hard noir key-light from the left) ---
+    pygame.draw.rect(lay, MID, (cx - 6, sh_y, 13, 22 + hemsway))      # body
+    pygame.draw.rect(lay, DK, (cx + 2, sh_y, 5, 22))                  # shadow side (right)
+    pygame.draw.rect(lay, HI, (cx - 6, sh_y, 2, 21))                  # lit edge (left)
+    pygame.draw.rect(lay, LT, (cx - 3, sh_y + 2, 1, 17))            # secondary fold
+    pygame.draw.rect(lay, INK, (cx - 6, cy + 1, 13, 2))             # BELT
+    pygame.draw.rect(lay, HI, (cx - 1, cy + 1, 2, 2))              # buckle
+    pygame.draw.rect(lay, INK, (cx - 6, cy + 9, 13, 2))           # hem shadow
+    for hx in range(cx - 5, cx + 7, 3):                           # hem fall
+        pygame.draw.line(lay, INK, (hx, cy + 11), (hx, cy + 11 + (hx % 2)), 1)
+    if view != "back":                                            # pockets
+        pygame.draw.rect(lay, INK, (cx - 5, cy + 3, 3, 4))
+        pygame.draw.rect(lay, INK, (cx + 3, cy + 3, 3, 4))
+    # --- shoulders + collar + lapels ---
+    pygame.draw.rect(lay, MID, (cx - 7, sh_y, 15, 3))
+    pygame.draw.rect(lay, DK, (cx + 4, sh_y, 4, 3))               # shoulder shadow
     if view == "back":
-        pygame.draw.rect(lay, coat, (cx - 4, sh_y - 4, 9, 5))         # raised collar
-        pygame.draw.rect(lay, coat_lo, (cx - 4, sh_y - 1, 9, 2))
-        pygame.draw.line(lay, coat_lo, (cx, sh_y - 2), (cx, cy + 8), 1)  # back seam
+        pygame.draw.rect(lay, DK, (cx - 4, sh_y - 4, 9, 5))       # collar up
+        pygame.draw.rect(lay, INK, (cx - 4, sh_y - 1, 9, 2))
+        pygame.draw.line(lay, DK, (cx, sh_y - 2), (cx, cy + 8), 1)  # back seam
     elif view in ("left", "right"):
-        pygame.draw.rect(lay, coat, (cx - 3, sh_y - 4, 7, 5))         # raised collar
-        pygame.draw.rect(lay, coat_lo, (cx - 3, sh_y - 1, 7, 2))
+        pygame.draw.rect(lay, DK, (cx - 3, sh_y - 4, 7, 5))       # collar up
+        pygame.draw.rect(lay, INK, (cx - 3, sh_y - 1, 7, 2))
     else:
-        pygame.draw.polygon(lay, coat, [(cx - 5, sh_y - 3), (cx - 2, sh_y + 1),
-                                        (cx - 5, sh_y + 3)])          # collar wings
-        pygame.draw.polygon(lay, coat, [(cx + 5, sh_y - 3), (cx + 2, sh_y + 1),
-                                        (cx + 5, sh_y + 3)])
-        pygame.draw.polygon(lay, coat_lo, [(cx - 4, sh_y), (cx, sh_y + 5),
-                                           (cx + 4, sh_y)])            # lapel V
-        pygame.draw.rect(lay, collar, (cx - 2, sh_y, 4, 4))           # pale shirt
-        pygame.draw.rect(lay, tie, (cx - 1, sh_y + 2, 2, 6))         # loose tie
-        pygame.draw.circle(lay, coat_lo, (cx, cy), 1)                 # buttons
-        pygame.draw.circle(lay, coat_lo, (cx, cy + 4), 1)
-    # --- head: the gaunt-skull FAMILY (_gaunt_head), but with a LIVING gaze.
-    #     The PI is the one unclaimed soul, so warm open eyes (sclera + pupil +
-    #     a catchlight) set him apart from the hollow sunken sockets of the
-    #     taken. Short side-parted hair, NOT a cap -- a strip of brow shows. ---
-    HN, HT = 5, 15
-    hcy = cy - 12
-    _gaunt_head(lay, cx, cy, skin, narrow=HN, tall=HT, view=view)
+        pygame.draw.polygon(lay, DK, [(cx - 6, sh_y - 2), (cx - 1, sh_y + 5),
+                                      (cx - 6, sh_y + 6)])         # sharp lapels
+        pygame.draw.polygon(lay, DK, [(cx + 6, sh_y - 2), (cx + 1, sh_y + 5),
+                                      (cx + 6, sh_y + 6)])
+        pygame.draw.rect(lay, HI, (cx - 1, sh_y, 3, 3))           # white shirt
+        pygame.draw.rect(lay, INK, (cx, sh_y + 2, 1, 5))         # tie
+        pygame.draw.polygon(lay, DK, [(cx - 5, sh_y - 4), (cx - 2, sh_y),
+                                      (cx - 5, sh_y + 1)])         # collar wing L
+        pygame.draw.polygon(lay, DK, [(cx + 5, sh_y - 4), (cx + 2, sh_y),
+                                      (cx + 5, sh_y + 1)])         # collar wing R
+    # --- head: pale face, the FEDORA, and living eyes catching light in the
+    #     brim's shadow (the classic noir read). ---
     if view == "back":
-        pygame.draw.ellipse(lay, hair, (cx - HN - 1, hcy - 8, HN * 2 + 2, 8))
-        pygame.draw.line(lay, grey, (cx - 2, hcy - 7), (cx - 1, hcy - 5), 1)
+        pygame.draw.ellipse(lay, SKIN, (cx - 5, hcy, 10, 10))         # nape
+        pygame.draw.rect(lay, DK, (cx - 5, hcy - 11, 10, 9))          # crown back
+        pygame.draw.ellipse(lay, DK, (cx - 6, hcy - 13, 12, 5))       # crown top
+        pygame.draw.ellipse(lay, DK, (cx - 9, hcy - 3, 18, 4))        # brim from behind
+        pygame.draw.rect(lay, INK, (cx - 5, hcy - 5, 10, 2))         # band
     else:
-        # Lift _gaunt_head's sunken brow + sockets back to skin, then set the
-        # living eyes over them.
-        pygame.draw.rect(lay, skin, (cx - HN + 1, hcy - 2, HN * 2 - 2, 4))
-        sclera = (201, 195, 179)
-        pupil = (38, 28, 26)
-        ldx = max(-1, min(1, int(round(fx))))
-        ldy = max(0, min(1, int(round(fy))))
+        pygame.draw.ellipse(lay, SKIN, (cx - 5, hcy - 2, 10, 13))     # face
+        pygame.draw.ellipse(lay, SKIN_SH, (cx + 1, hcy - 2, 4, 13))   # shadow half of face
         if view in ("left", "right"):
             s = 1 if view == "right" else -1
+            pygame.draw.rect(lay, SKIN_SH, (cx - 4, hcy, 8, 2))       # brim shadow
             ex = cx + s - 1
-            pygame.draw.rect(lay, sclera, (ex, hcy - 1, 4, 3))
-            pygame.draw.rect(lay, pupil, (ex + (2 if s > 0 else 1), hcy, 2, 2))
-            pygame.draw.rect(lay, skin, (cx + (HN - 1) * s, hcy - 1, 2, 2))   # nose
-            pygame.draw.ellipse(lay, hair, (cx - HN, hcy - 8, HN * 2, 5))     # hair crown
-            pygame.draw.rect(lay, hair,
-                             ((cx - HN) if s < 0 else (cx + HN - 2), hcy - 6, 2, 5))
+            pygame.draw.rect(lay, HI, (ex, hcy, 3, 2))               # eye catch
+            pygame.draw.rect(lay, INK, (ex + (2 if s > 0 else 1), hcy, 1, 2))
+            pygame.draw.rect(lay, SKIN_SH, (cx + 4 * s, hcy + 2, 2, 2))  # nose/jaw
+            pygame.draw.ellipse(lay, DK, (cx - 6, hcy - 5, 16, 4))    # brim
+            pygame.draw.ellipse(lay, DK, (cx + (0 if s > 0 else -8), hcy - 5, 10, 4))  # front jut
+            pygame.draw.rect(lay, DK, (cx - 5, hcy - 12, 10, 8))      # crown
+            pygame.draw.ellipse(lay, DK, (cx - 5, hcy - 14, 10, 5))
+            pygame.draw.rect(lay, INK, (cx - 5, hcy - 6, 10, 2))     # band
         else:
+            pygame.draw.rect(lay, SKIN_SH, (cx - 4, hcy, 8, 3))       # brim shadow band
             for ex in (cx - 4, cx + 1):
-                pygame.draw.rect(lay, sclera, (ex, hcy - 1, 3, 2))           # eye white (3x2)
-                pygame.draw.rect(lay, pupil, (ex + 1, hcy - 1, 1, 2))        # centered pupil
-            pygame.draw.line(lay, skin_lo, (cx - 4, hcy - 2),                # hooded brow ABOVE
-                             (cx + 4, hcy - 2), 1)                           # (weary, not wide)
-            # hair: a swept, slightly-receding crop -- NOT a cap. A clear strip
-            # of brow shows; the hairline is uneven and parted to one side.
-            pygame.draw.ellipse(lay, hair, (cx - HN, cy - 22, HN * 2, 4))
-            pygame.draw.polygon(lay, hair, [(cx - HN, cy - 19), (cx - 2, cy - 19),
-                                            (cx - 3, cy - 16), (cx - HN, cy - 17)])
-            pygame.draw.line(lay, (78, 66, 50), (cx - 1, cy - 22),
-                             (cx + HN - 1, cy - 21), 1)                      # highlight
-            pygame.draw.line(lay, grey, (cx + 2, cy - 21), (cx + 4, cy - 20), 1)
-    _darkwood_pass(lay, 0x9117, strength=0.7)
+                pygame.draw.rect(lay, HI, (ex, hcy, 3, 2))           # eye catch (life)
+                pygame.draw.rect(lay, INK, (ex + 1, hcy, 1, 2))      # pupil
+            pygame.draw.line(lay, SKIN_SH, (cx, hcy + 2), (cx, hcy + 4), 1)  # nose
+            pygame.draw.ellipse(lay, DK, (cx - 9, hcy - 5, 18, 4))    # brim (wide)
+            pygame.draw.ellipse(lay, INK, (cx - 9, hcy - 4, 18, 3), 1)  # brim underside
+            pygame.draw.rect(lay, DK, (cx - 5, hcy - 13, 10, 9))      # crown
+            pygame.draw.ellipse(lay, DK, (cx - 5, hcy - 15, 10, 5))   # crown top
+            pygame.draw.rect(lay, INK, (cx - 5, hcy - 6, 10, 2))     # band
+            pygame.draw.rect(lay, MID, (cx - 4, hcy - 13, 2, 7))      # crown lit edge
+            pygame.draw.line(lay, HI, (cx - 8, hcy - 4), (cx - 3, hcy - 4), 1)  # brim lit edge
     surf.blit(lay, (int(x) - LX, int(y) - LY))
 
 
