@@ -91,7 +91,8 @@ _GROUNDED_DECOS = frozenset((
 # -- upscaling via a local canvas would misplace or clip them). The rug
 # sizes itself via w/h kwargs instead, so it opts out too.
 _NO_SCALE_DECOS = frozenset((
-    "candle", "lantern", "brazier", "smoke", "mist", "mote", "wisp",
+    "candle", "lantern", "brazier", "wall_torch",
+    "smoke", "mist", "mote", "wisp",
     "flock", "leaves", "well", "steeple", "pickup_truck", "player_car",
     "cauldron", "watching_eye", "watching_wound", "passing_silhouette",
     "gas_pump", "payphone", "terminal", "computer", "mirror", "rug",
@@ -172,6 +173,25 @@ class Decoration:
         pygame.draw.circle(surf, (150, 126, 70), (x, y), 13)
         pygame.draw.circle(surf, (80, 64, 35), (x, y), 13, 1)
         pygame.draw.circle(surf, (198, 174, 110), (x - 3, y - 3), 5)
+
+    def _draw_wall_torch(self, surf, x, y):
+        # A wall sconce: an iron bracket rising off the wall with a guttering
+        # flame at the top. The ROOM lighting is punched by Game._draw_dark
+        # (which finds wall_torch decos); this is the visible fixture + a tight
+        # flame halo. Drawn tall and anchored at the wall base so the billboard
+        # reads as mounted up the wall.
+        _light_pool(surf, x, y - 16, 28, (255, 170, 80), 78)
+        pygame.draw.line(surf, (38, 34, 36), (x, y), (x, y - 14), 3)          # iron post
+        pygame.draw.line(surf, (62, 56, 50), (x - 3, y - 14), (x + 3, y - 14), 2)  # cup
+        f = math.sin(self.t * 16) + (random.random() - 0.5)
+        fh = 11 + f * 2.2
+        bx = x + int(math.sin(self.t * 9) * 1.2)                             # waver
+        top = int(y - 15 - fh)
+        pygame.draw.ellipse(surf, (190, 70, 24), (bx - 4, top, 8, int(fh)))           # ember
+        pygame.draw.ellipse(surf, (245, 165, 48),
+                            (bx - 3, int(y - 14 - fh * 0.78), 6, int(fh * 0.78)))     # body
+        pygame.draw.ellipse(surf, (255, 236, 175),
+                            (bx - 1, int(y - 13 - fh * 0.45), 3, int(fh * 0.45)))     # core
 
     def _draw_cot(self, surf, x, y):
         pygame.draw.rect(surf, (94, 65, 41), (x - 14, y - 7, 28, 14))

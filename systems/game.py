@@ -2238,6 +2238,15 @@ class Game(CutsceneMixin):
         from scenes.base import _light_pool
         psx, psy = self._player_screen()
         lit = self._flashlight_lit()
+        # Diegetic wall-torch light: each torch punches its own warm, flickering
+        # pool into the gloom, so a torch-lit room reads without the flashlight.
+        tnow = pygame.time.get_ticks() / 1000.0
+        torches = []
+        for d in getattr(self.scene, "decorations", []):
+            if getattr(d, "kind", None) == "wall_torch":
+                tx, ty = self.camera.project(d.x, d.y)
+                fl = 0.82 + 0.18 * math.sin(tnow * 7.0 + d.x * 0.25)
+                torches.append((int(tx), int(ty) - 12, fl))
         # Build the beam cone geometry once (apex -> left -> tip -> right).
         cone = None
         if lit:
@@ -2256,12 +2265,20 @@ class Game(CutsceneMixin):
             _light_pool(self.screen, psx, psy, 96, (240, 226, 165), 72)
         else:
             _light_pool(self.screen, psx, psy, 112, (118, 124, 150), 96)
+        for tx, ty, fl in torches:
+            _light_pool(self.screen, tx, ty, int(118 * fl), (255, 168, 78),
+                        int(82 * fl))
         gloom = 130 if self.scene.key in CULT_DARK_SCENES else 100
         overlay = pygame.Surface((SCREEN_W, SCREEN_H), pygame.SRCALPHA)
         overlay.fill((0, 0, 0, gloom))
         rings = [(30 + i * 14, int(gloom * i / 8)) for i in range(8)]
         for rr, aa in sorted(rings, key=lambda p: -p[0]):
             pygame.draw.circle(overlay, (0, 0, 0, aa), (psx, psy), rr)
+        for tx, ty, fl in torches:
+            trings = [(int((26 + i * 12) * fl), int(gloom * i / 7))
+                      for i in range(7)]
+            for rr, aa in sorted(trings, key=lambda p: -p[0]):
+                pygame.draw.circle(overlay, (0, 0, 0, aa), (tx, ty), rr)
         if cone:
             # Carve the beam clear of the gloom (alpha 0 inside the cone).
             pygame.draw.polygon(overlay, (0, 0, 0, 0), cone)

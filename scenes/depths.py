@@ -373,6 +373,12 @@ def build_depths_threshing():
         sc.add_furniture("grain_heap", [(gx, gy)])
     sc.add_decoration(Decoration(6 * TILE + 16, 5 * TILE + 16,
                                  "phantom_mark"))
+    # Diegetic light: wall torches set against the side walls so the dig reads
+    # without the flashlight (Game._draw_dark punches each one's warm pool into
+    # the gloom). Flank the upper room and the dig face below.
+    for tx, ty in [(2, 3), (10, 3), (2, 7), (10, 7)]:
+        sc.add_decoration(Decoration(tx * TILE + 16, ty * TILE + 16,
+                                     "wall_torch"))
     # Cobweb grime in the cavern's bitten corners.
     sc.add_decoration(Decoration(2 * TILE + 6, 2 * TILE + 6, "cobweb",
                                  ang=0.0))
