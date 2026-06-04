@@ -181,32 +181,52 @@ def _darkwood_pass(lay, seed, strength=1.0):
             lay.set_at((gx, gy), (d[0], d[1], d[2], px.a))
 
 
-def _draw_cultist(surf, x, y, facing, seed, t):
+def _draw_cultist(surf, x, y, facing, seed, t, pose=None):
     """Draw the cultist on a private layer, brush it with the Darkwood
     grime pass, then blit it down -- so the grime/shadow read at sprite
-    level, not just from the frame grade."""
+    level, not just from the frame grade. `pose` swaps the default shamble
+    for an ambient set-piece motion ('mine' = digging at the face, 'kneel'
+    = the rite-hold at the altar) -- see _draw_cultist_raw."""
     LX, LY = 22, 40
     lay = pygame.Surface((44, 66), pygame.SRCALPHA)
-    _draw_cultist_raw(lay, LX, LY, facing, seed, t)
+    _draw_cultist_raw(lay, LX, LY, facing, seed, t, pose)
     _darkwood_pass(lay, seed)
     surf.blit(lay, (int(x) - LX, int(y) - LY))
 
 
-def _draw_cultist_raw(surf, x, y, facing, seed, t):
+def _draw_cultist_raw(surf, x, y, facing, seed, t, pose=None):
     """Assemble a hide-coat cultist with a seeded carved mask + directional
     facing. Drawn at the game's ~32px sprite scale."""
     rng = random.Random(seed & 0xffff)
     variant = (seed >> 3) % 6
-    # A wrong, limping lurch: shoulders rock (lean), the body rises each step
-    # (bob) and DRAGS lower on the off-step (hitch), and the ragged hem swings
-    # opposite with cloth-lag (sway). Reads as a taken body shambling.
-    ph = t * 3.0 + x * 0.02
-    step = math.sin(ph)
-    lean = int(step * 2)
-    bob = int(abs(step) * 2)
-    hitch = int(max(0.0, -step) * 2)
-    sway = int(math.sin(ph - 0.8) * 2)
-    top = y - 10 - bob + hitch
+    swing = 0.0
+    step = 0.0          # head-lead, only the default shamble sets it nonzero
+    if pose == "mine":
+        # Digging at the face: the body leans in and DIPS on a slow beat, the
+        # hem lags. A crude haft swings down with it (drawn below). Ambient
+        # labour -- these never react to the player.
+        ph = t * 2.2 + x * 0.04
+        swing = max(0.0, math.sin(ph))
+        lean = int(2 + swing * 3)
+        hitch = int(swing * 4)
+        sway = int(swing * 2)
+        top = y - 8 + hitch
+    elif pose == "kneel":
+        # The rite-hold: lowered, still, bowed to the altar. No shamble.
+        lean = 0
+        sway = 0
+        top = y - 4
+    else:
+        # A wrong, limping lurch: shoulders rock (lean), the body rises each
+        # step (bob) and DRAGS lower on the off-step (hitch), and the ragged
+        # hem swings opposite with cloth-lag (sway). A taken body shambling.
+        ph = t * 3.0 + x * 0.02
+        step = math.sin(ph)
+        lean = int(step * 2)
+        bob = int(abs(step) * 2)
+        hitch = int(max(0.0, -step) * 2)
+        sway = int(math.sin(ph - 0.8) * 2)
+        top = y - 10 - bob + hitch
     fx, fy = facing
     if abs(fx) > abs(fy):
         view, mdir = "side", (1 if fx > 0 else -1)
@@ -215,6 +235,15 @@ def _draw_cultist_raw(surf, x, y, facing, seed, t):
     else:
         view, mdir = "front", 0
     _cult_hide_coat(surf, x, y, top, rng, lean, sway)
+    if pose == "mine":
+        # A crude digging haft swung down at the face, timed to the body dip.
+        d = mdir if mdir != 0 else 1
+        hx0, hy0 = x + d * 3, top + 7
+        hx1 = x + d * (9 + int(swing * 3))
+        hy1 = top + 13 + int(swing * 7)
+        pygame.draw.line(surf, (54, 42, 30), (hx0, hy0), (hx1, hy1), 2)   # haft
+        pygame.draw.line(surf, (120, 110, 96),                            # tool head
+                         (hx1 - d * 2, hy1 - 1), (hx1 + d * 2, hy1 + 1), 2)
     # the masked head LEADS the lurch (tips a touch past the shoulders)
     hcx, hcy = x + lean + int(step * 1), top - 1
     pygame.draw.ellipse(surf, (32, 26, 20), (hcx - 7, hcy - 7, 14, 15))   # fur hood
@@ -445,7 +474,8 @@ def _cap(surf, x, y, crown, crown_lo, bill, s=0):
 
 def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False,
                     birth=None, gait=None, threat=None, seed=0, curse=0.0,
-                    view="front", to_player=None, lean=None, scale_mul=1.0):
+                    view="front", to_player=None, lean=None, scale_mul=1.0,
+                    pose=None):
     """`blink=True` suppresses eye dots for NPC kinds that have human
     eyes (the named locals -- townswoman, tisdale_boy, sheriff, royce,
     preacher, clerk, hettie, old_townsman). Used by Game.draw to make a
@@ -977,7 +1007,7 @@ def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False,
         # bare fur hood + Sign from behind so you can read its gaze. See
         # _draw_cultist + the mask helpers at the top of this module.
         t = pygame.time.get_ticks() / 1000.0
-        _draw_cultist(surf, x, y, facing, seed, t)
+        _draw_cultist(surf, x, y, facing, seed, t, pose)
     elif kind == "vessel_avatar":
         # A towering Yellow-King vessel with reaching tentacles. Body is
         # the tall_shadow silhouette enlarged + four wiggling tentacles

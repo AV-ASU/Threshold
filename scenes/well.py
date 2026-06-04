@@ -31,6 +31,7 @@ stair.
 import math
 from constants import TILE
 from entities.decoration import Decoration
+from entities.npc import NPC
 from .base import Scene
 from .dialogue import _evidence
 from .depths import _box, _cultist, _ambient, _wall, _bevel
@@ -492,6 +493,16 @@ def build_works_sign():
         k.lock_facing = True
         sc.add_enemy(k)
     sc.add_enemy(_cultist(10 * TILE + 16, 7 * TILE + 16, speed=0.9))
+    # The rite-holder: one cultist bowed at the altar's foot, holding the rite,
+    # oblivious to you. An NPC with NO tag -> excluded from the cultist-gaze
+    # tick entirely (no visibility, no chase, no grab); pose='kneel'; non-solid
+    # so it never blocks the Mask. The closing rite made present, not told
+    # (NARRATIVE 1b: the rite claims the collective).
+    holder = NPC(6 * TILE + 16, 3 * TILE + 16, "The rite-holder", "cultist",
+                 movement="idle", solid=False, no_prompt=True)
+    holder.facing = (0, -1)
+    holder.pose = "kneel"
+    sc.add_npc(holder)
     _ambient(sc, "whisper", 0.16, 5.0, 9.0)
 
     def _take_mask(game):

@@ -4358,7 +4358,8 @@ class Game(CutsceneMixin):
                                         threat=king_threat, seed=id(npc) & 0xffff,
                                         curse=curse_v, gaze=w_gaze, view=nview,
                                         to_player=king_to_player,
-                                        lean=king_lean, scale_mul=king_scale_mul)
+                                        lean=king_lean, scale_mul=king_scale_mul,
+                                        pose=getattr(npc, "pose", None))
                         # A resister whose flesh has turned: their bespoke
                         # fold-horror form, laid over the person they were.
                         if getattr(npc, "_mutated", False):
