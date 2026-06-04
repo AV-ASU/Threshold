@@ -1764,21 +1764,23 @@ def draw_player_sprite(surf, x, y, facing, walk_phase=0, armor=None,
         pygame.draw.rect(lay, OLV, (nape - 2, sh_y - 4, 5, 6))
         pygame.draw.rect(lay, OL_LO, (nape - 2, sh_y - 1, 5, 2))
         pygame.draw.rect(lay, SK_LO, (cx - 1, hcy + 6, 3, 3))                         # neck
-        # profile head, seated + lead-shifted, tighter than before
-        hx = cx + s
-        pygame.draw.ellipse(lay, SKIN, (hx - 4, hcy - 2, 8, 12))
-        pygame.draw.ellipse(lay, SK_LO, (hx - 4, hcy - 2, 8, 12), 1)
-        pygame.draw.rect(lay, SKIN, (hx + 3 * s, hcy + 2, 2, 2))                      # nose
-        pygame.draw.rect(lay, SK_LO, (hx + 3 * s, hcy + 4, 1, 1))                     # nostril shade
-        pygame.draw.rect(lay, INK, (hx + s, hcy + 1, 2, 2))                           # eye socket
-        lay.set_at((hx + (1 if s > 0 else 0), hcy + 1), GLINT)                        # living glint
-        pygame.draw.line(lay, SK_LO, (hx, hcy), (hx + 2 * s, hcy), 1)                 # brow
-        pygame.draw.line(lay, SK_LO, (hx - s, hcy + 5), (hx + 3 * s, hcy + 5), 1)     # jaw
-        # flat cap: crown over the skull + bill jutting forward
-        pygame.draw.ellipse(lay, CAP, (hx - 5, hcy - 8, 13, 8))
-        pygame.draw.ellipse(lay, CAP_LO, (hx - 5, hcy - 4, 13, 4), 1)
+        # profile head: taller-than-wide, skull rounded at the back, with a
+        # clear NOSE poking from the face (the old plain ellipse read as a ball)
+        hx = cx
+        pygame.draw.ellipse(lay, SKIN, (hx - 4, hcy - 2, 8, 11))
+        pygame.draw.ellipse(lay, SK_LO, (hx - 4, hcy - 2, 8, 11), 1)
+        pygame.draw.rect(lay, SKIN, (hx + 4 * s, hcy + 1, 2, 2))            # nose (protrudes)
+        pygame.draw.rect(lay, SK_LO, (hx + 5 * s, hcy + 3, 1, 1))           # under-nose
+        pygame.draw.rect(lay, SK_LO, (hx + s, hcy - 1, 3, 1))              # brow ridge
+        pygame.draw.rect(lay, INK, (hx + 2 * s, hcy + 1, 2, 2))            # deep-set eye
+        lay.set_at((hx + 2 * s, hcy + 1), GLINT)                           # living glint
+        pygame.draw.line(lay, SK_LO, (hx + 2 * s, hcy + 4), (hx + 4 * s, hcy + 4), 1)  # mouth
+        pygame.draw.line(lay, SK_LO, (hx - 2 * s, hcy + 6), (hx + 4 * s, hcy + 6), 1)  # jaw line
+        # flat cap: crown over the skull, bill jutting forward, pulled low
+        pygame.draw.ellipse(lay, CAP, (hx - 5, hcy - 8, 12, 8))
+        pygame.draw.ellipse(lay, CAP_LO, (hx - 5, hcy - 4, 12, 4), 1)
         pygame.draw.ellipse(lay, CAP_LO, (hx + (1 if s > 0 else -8), hcy - 2, 8, 3))  # bill forward
-        lay.set_at((hx, hcy - 7), OL_HI)                                            # button
+        lay.set_at((hx, hcy - 7), OL_HI)                                  # button
         # near arm: a sleeve hung over the torso front, cuff + hand sliver
         ax = cx + (s if s > 0 else s - 2)
         pygame.draw.rect(lay, OLV, (ax, sh_y + 4, 3, 10))
