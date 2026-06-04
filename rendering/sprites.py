@@ -1754,6 +1754,15 @@ def draw_player_sprite(surf, x, y, facing, walk_phase=0, armor=None,
             pygame.draw.rect(lay, INK, (cx - 4, hcy - 3, 8, 1))      # band
             pygame.draw.rect(lay, MID, (cx - 3, hcy - 6, 1, 3))      # crown lit edge
             pygame.draw.line(lay, HI, (cx - 7, hcy - 2), (cx - 1, hcy - 2), 1)  # brim lit edge
+            # a lit cigarette at the corner of the mouth + a thread of smoke
+            pygame.draw.line(lay, (224, 224, 228), (cx + 1, hcy + 6),
+                             (cx + 5, hcy + 7), 1)                    # cigarette
+            lay.set_at((cx + 5, hcy + 7), (246, 240, 226))           # hot ember
+            for sx, sy in ((6, 5), (7, 3), (6, 1), (8, -1), (7, -3)):  # smoke curl
+                try:
+                    lay.set_at((cx + sx, hcy + sy), (110, 110, 114))
+                except (IndexError, ValueError):
+                    pass
     surf.blit(lay, (int(x) - LX, int(y) - LY))
 
 
