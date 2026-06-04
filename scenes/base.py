@@ -2615,6 +2615,55 @@ class Scene:
             self._chalk_voice = voice
         self.add_interactable(x, y, 40)
 
+    def scatter_chalk_doors(self, count, seed=0, wall_count=0):
+        """Obsessively fill an empty-feeling room with chalk doors -- drawn
+        over and over, NONE overlapping. Places `count` floor doors on open
+        interior tiles (min spacing) and `wall_count` against perimeter walls.
+        These are the creeping VISUAL swarm: examinable (a flat line) but NOT
+        [E]-prompted, so they don't spam the prompt. The one door that carries
+        a voice beat is added separately via add_chalk_door(voice=...)."""
+        import random as _r
+        from entities.decoration import Decoration
+        rng = _r.Random(seed * 131 + 7)
+        W, H = self.w, self.h
+        if not hasattr(self, "_chalk_doors"):
+            self._chalk_doors = []
+        taken = {(int(cx // TILE), int(cy // TILE)) for cx, cy in self._chalk_doors}
+        # Keep clear of E-points (the desk/altar/etc.) so a swarmed door never
+        # steals another interactable's press.
+        inter = {(int(ix // TILE), int(iy // TILE))
+                 for ix, iy, _ in self.interactables}
+
+        def is_open(tx, ty):
+            if not (1 <= tx < W - 1 and 1 <= ty < H - 1
+                    and self.objects[ty][tx] == "."):
+                return False
+            return not any(abs(tx - ix) + abs(ty - iy) < 2 for ix, iy in inter)
+
+        def place(cands, n, wall):
+            laid = 0
+            rng.shuffle(cands)
+            for tx, ty in cands:
+                if laid >= n:
+                    break
+                if any(abs(tx - ax) + abs(ty - ay) < 2 for ax, ay in taken):
+                    continue
+                self.add_decoration(Decoration(
+                    tx * TILE + 16, ty * TILE + 16,
+                    "chalk_door_wall" if wall else "chalk_door",
+                    seed=rng.randint(1, 9999)))
+                self._chalk_doors.append((tx * TILE + 16, ty * TILE + 16))
+                taken.add((tx, ty))
+                laid += 1
+
+        floor = [(tx, ty) for ty in range(1, H - 1) for tx in range(1, W - 1)
+                 if is_open(tx, ty)]
+        place(list(floor), count, False)
+        if wall_count:
+            edge = [(tx, ty) for tx, ty in floor
+                    if tx in (1, W - 2) or ty in (1, H - 2)]
+            place(edge, wall_count, True)
+
     def find_marker(self, ch):
         for ty, r in enumerate(self.objects):
             for tx, c in enumerate(r):

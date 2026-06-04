@@ -606,6 +606,53 @@ def main():
         " ".join(s["beat"] + s["note"]) for s in _G._DESCENT_VOICE.values()).lower()
     check("dimension" not in _allvoice,
           "voice: the interior voice never says 'dimension' (truth as sensation)")
+    # The King's influence (the want-to-leave) must read as the PI's OWN
+    # judgment -- he must NEVER notice his thoughts/wants changing, or the
+    # horror collapses. Guard the leave/mask/deep beats against self-aware-of-
+    # the-shift phrasing.
+    _pull = " ".join(
+        " ".join(_G._DESCENT_VOICE[k]["beat"] + _G._DESCENT_VOICE[k]["note"])
+        for k in ("descent_leave", "descent_mask", "chalk_deep")).lower()
+    check(not any(p in _pull for p in (
+        "an hour ago", "when did", "started thinking", "didn't want that",
+        "i don't trust a want", "a want i can't", "turn around")),
+        "voice: the leave-urge never reads as the PI noticing his mind change")
+    # The Playscript (the cult's notes) SEEDS the want-to-leave -- a NOTE, not
+    # evidence (and it must not arm the King-gate).
+    gp2 = new_game()
+    gp2.load_scene_now("works_scriptorium", "default")
+    ready(gp2)
+    ev_pre = gp2._evidence_count()
+    gp2.player.x, gp2.player.y = gp2.scene._desk_pos
+    gp2.scene.on_interact_fn(gp2)
+    guard = 0
+    while gp2.dialog.active and guard < 40:
+        gp2.dialog.advance(); guard += 1
+    _pn = [e["name"] for e in gp2.save.arg("notes", []) if isinstance(e, dict)]
+    check("descent_leave" in _pn,
+          "voice: taking the Playscript seeds the want-to-leave (descent_leave)")
+    check(gp2._evidence_count() == ev_pre,
+          "voice: the leave-seed is a NOTE, not evidence (never arms the King-gate)")
+    # The Ledger -- first evidence -- carries the PI's voice (the checkout-date
+    # confusion), not a dry description.
+    gl2 = new_game()
+    gl2.load_scene_now("house", "from_bedroom")
+    ready(gl2)
+    gl2.player.x, gl2.player.y = gl2.scene._frontdesk_pos
+    gl2.scene.on_interact_fn(gl2)         # sign
+    ready(gl2)
+    gl2.scene.on_interact_fn(gl2)         # re-read -> evidence
+    _lt = " ".join(l for e in gl2.save.arg("evidence", [])
+                   if e.get("name") == "the_ledger" for l in e["lines"]).lower()
+    check("months" in _lt and "keep it in mind" in _lt,
+          "voice: the Ledger carries the PI's voice (the checkout-date confusion)")
+
+    # Chalk-door swarm fills the Scriptorium (obsessive, none overlapping).
+    _scr = _ldcd("works_scriptorium")
+    _cd = [d for d in _scr.decorations
+           if d.kind in ("chalk_door", "chalk_door_wall")]
+    check(len(_cd) >= 6,
+          "chalk: the Scriptorium is swarmed with chalk doors (the compulsion)")
 
     # --- 17. The principal locals are named (NARRATIVE §2/§8) ---
     # A small town knows its people by name. Each principal surfaces a

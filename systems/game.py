@@ -2412,8 +2412,32 @@ class Game(CutsceneMixin):
                 "than a steady man would.",
             ],
         },
+        # The Playscript (the cult's notes): the SEED of the want-to-leave.
+        # CANON (NARRATIVE §1/§6): this is the King's influence riding their
+        # notes into the PI's head -- the pull to carry the Sign OUT and spread
+        # Him. NEVER stated as His doing; felt only as a want he can't find the
+        # start of (the §1b line -- he can't tell it isn't his own thought).
+        "descent_leave": {
+            "beat": [
+                "[c=dim]You turn through the bound notes -- their own hands, "
+                "page on page. ...You've got plenty here. More than plenty.[/c]",
+                "[c=dim]A case this size, you don't keep digging it. You carry "
+                "it up and let the people who can drop a roof on this town do "
+                "the rest. Time to climb out.[/c]",
+            ],
+            "note": [
+                "Read the bound one -- their own notes. There's enough in this "
+                "town to hang it twice over. Past enough.",
+                "No call to go deeper. You don't work a case past the point "
+                "it's made; you bring it up to the ones who can finish it.",
+                "Climb out. Make the call. Let the law come down on Brimley "
+                "like a roof. That's the job. [c=dim]That's always been the "
+                "job.[/c]",
+            ],
+        },
         # The Mask: THE TEMPTATION. With this, the town lets me out -- the lie
-        # that dresses Spread up as duty and rest.
+        # that dresses Spread up as duty and rest. (The want the notes seeded,
+        # now handed the means.)
         "descent_mask": {
             "beat": [
                 "[c=dim]His face, in your hands. Light as folded paper, cold, "
@@ -2439,18 +2463,19 @@ class Game(CutsceneMixin):
         # head now. The put-together man, gone.
         "chalk_deep": {
             "beat": [
-                "[c=dim]I see the drawn doors with my eyes shut now. The "
-                "rope's gone -- I opened the stair, I did that -- and the way "
-                "out's in my pocket and my feet keep going down.[/c]",
+                "[c=dim]The drawn doors are behind my eyes now, every time I "
+                "shut them. Everything in me is pulling for the surface. "
+                "There's no rope to climb. So down.[/c]",
             ],
             "note": [
-                "The stair took the rope. No climbing back -- and I chose "
-                "that, and I cannot for the life of me tell you why.",
-                "His face is in my pocket. The way out, the whole time. My "
-                "feet keep going down.",
+                "The stair took the rope when it opened. No way back up. Only "
+                "down now.",
+                "Everything in me is pulling for the surface -- the car, the "
+                "road, the county line. And there is nothing left to climb. So "
+                "I go down, because down is the only direction left.",
                 "I shut my eyes and the chalk doors are still there, drawn on "
-                "the inside of them. [c=dim]I think I could draw one from "
-                "memory. I don't want to know that about myself.[/c]",
+                "the inside of them. I could draw one from memory now. [c=dim]I "
+                "don't want to know that about myself.[/c]",
             ],
         },
     }

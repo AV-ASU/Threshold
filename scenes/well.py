@@ -414,12 +414,20 @@ def build_works_scriptorium():
                 "mask-shaped recess in the cover. You take it.[/c]",
                 "[c=dim]The scribe is wet to the knee.[/c]",
             ], speaker="", voice="blip_soft", portrait="narrator")
+            # Reading their notes seeds the want-to-leave (the King's pull to
+            # carry the Sign out; felt as the PI's own sourceless urge, never
+            # named). Chained off the pickup so it reads as one beat.
+            game.dialog.on_complete = lambda: game._descent_voice("descent_leave")
             return
         game.show_notice(
             "The Sign, copied over and over across every surface -- a "
             "thousand flat echoes. None of them the thing itself.",
             duration=4.0)
     sc.on_interact_fn = _interact
+    # The scribes drew doors as obsessively as they copied the Sign -- swarm
+    # the floor + walls with chalk doors, none overlapping (the room reads as
+    # a compulsion, not a workshop). The Playscript desk is left clear.
+    sc.scatter_chalk_doors(7, seed=44, wall_count=3)
     return sc
 
 
