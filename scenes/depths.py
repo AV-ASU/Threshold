@@ -585,25 +585,31 @@ def build_threshold():
     W, H = 14, 40
     floor, objs = _box(W, H)
     floor = [list(r) for r in floor]          # mutable rows for the edits below
-    _cavern(objs, seed=771, keep_cols=(6, 7, 8), keep_rows=(4,))
+    # Carve the organic cave edge, but keep the WEST columns (the river + its
+    # bank live there) and the central approach lane out of the carve so the
+    # river meander reads cleanly and the walk is never walled off.
+    _cavern(objs, seed=771, keep_cols=(1, 2, 3, 4, 6, 7, 8))
     for _y in range(H):
         for _x in range(W):
             floor[_y][_x] = "x"
-    # The artery: a MEANDERING river against the west cliff. Its east bank snakes
-    # down the long cave (a sine wander) so it reads as a real river, not a ruled
-    # line. IMPASSABLE (invisible-solid over water), OPEN at the north edge so it
-    # continues past the scene. Pulled clear of the apron near the door.
-    def _river_east(ty):
-        e = 2.0 + 1.8 * (0.5 + 0.5 * math.sin(ty * 0.45 + 0.7))   # col ~2.0..3.8
-        if ty < 8:
-            e = min(e, 2.4)                                       # clear the apron
-        return int(round(e))
+    # The artery: a MEANDERING river near the west cliff. Its 2-wide channel
+    # wanders east/west down the long cave (a sine meander); where it swings east
+    # toward the middle, normal stone floor shows between it and the west wall --
+    # a proper riverBANK, so the river reads as CURVING, not a line ruled flush
+    # to the rock. IMPASSABLE (invisible-solid over water), OPEN off the north.
+    def _river_span(ty):
+        we = 1 + int(round(2 * (0.5 + 0.5 * math.sin(ty * 0.40 + 0.7))))  # west 1..3
+        return we, we + 1                                                  # 2-wide
     for _y in range(0, H - 1):
-        for _x in range(1, _river_east(_y) + 1):
+        we, ea = _river_span(_y)
+        for _x in range(we, ea + 1):
             objs[_y][_x] = "X"; floor[_y][_x] = "~"
-    # The 5x5 smooth APRON centred on the door (cols 5-9, rows 2-6): forced clear
-    # + perfectly smooth grey stone ("0"), no stalagmite intrudes.
-    for _y in range(2, 7):
+    # The doorframe sits MID-cave (row DR): the player walks far up from the far
+    # south to reach it, and there is open cave + river NORTH of it, giving the
+    # water room to pass through and loop back into the river. A 5x5 of smooth
+    # grey stone ("0") is swept clear around the frame.
+    DR = 25
+    for _y in range(DR - 2, DR + 3):
         for _x in range(5, 10):
             objs[_y][_x] = "."; floor[_y][_x] = "0"
     objects = ["".join(r) for r in objs]
@@ -617,7 +623,7 @@ def build_threshold():
     # (§7, Mask-only); the walk-through is handled in on_update below. No [E]
     # prompt, no glow, no smoke. The keystone was carried down (the Deep Stair
     # opened WITHOUT spending it), so a player who descended always holds it.
-    lintel_x, lintel_y = 7 * TILE + 16, 4 * TILE + 16
+    lintel_x, lintel_y = 7 * TILE + 16, DR * TILE + 16
     sc._lintel_pos = (lintel_x, lintel_y)
     sc.add_decoration(Decoration(lintel_x, lintel_y, "doorframe"))
 
@@ -636,12 +642,12 @@ def build_threshold():
         for tx in range(3, W - 1):
             if sc.objects[ty][tx] != ".":
                 continue
-            if 5 <= tx <= 9 and 2 <= ty <= 6:        # the clean apron
+            if 5 <= tx <= 9 and DR - 2 <= ty <= DR + 2:   # the clean apron
                 continue
-            if 6 <= tx <= 8 and ty >= 6:             # the central walking lane
+            if 6 <= tx <= 8 and ty >= DR - 2:             # the central approach lane
                 continue
-            ring = ((ty == 7 and tx in (4, 5, 9, 10))
-                    or (tx in (4, 10) and 2 <= ty <= 6))
+            ring = ((tx in (4, 10) and DR - 2 <= ty <= DR + 2)
+                    or (ty == DR + 3 and tx in (4, 5, 9, 10)))
             if rng.random() < (0.92 if ring else 0.42):
                 sc.objects[ty][tx] = "X"
                 sc.add_decoration(Decoration(
@@ -655,13 +661,13 @@ def build_threshold():
     # earth; water finds it), passes UNDER the frame, then curves back and
     # rejoins the river up near the north wall. Both ends touch the river; the
     # door is the farthest it reaches. Smoothed into a flowing curve at draw time.
-    _tw = [(3.0, 13.4),                        # branches off the meandering river
-           (3.9, 12.0), (4.7, 10.6), (4.0, 9.3), (5.0, 8.1),
-           (5.9, 6.9), (6.4, 5.9), (6.9, 4.9),
-           (7.0, 4.0),                         # under the frame (the low point)
-           (7.0, 3.0),                         # through to the north side
-           (6.0, 2.6), (4.5, 2.7), (3.0, 2.9),
-           (2.5, 3.0)]                         # rejoins the river (NW)
+    _tw = [(3.0, 31.0),                        # branches off the meander (S of door)
+           (4.0, 29.6), (4.8, 28.2), (4.2, 26.9), (5.2, 26.0),
+           (6.0, 25.6), (6.6, 25.2),
+           (7.0, 25.0),                        # under the frame (the low point)
+           (7.0, 24.0),                        # through to the north side
+           (6.6, 22.8), (5.4, 22.0), (4.0, 21.4),
+           (2.8, 21.2)]                        # loops back into the river (N of door)
     _world = [(c * TILE + 16, r * TILE + 16) for (c, r) in _tw]
     _cx = sum(p[0] for p in _world) / len(_world)
     _cy = sum(p[1] for p in _world) / len(_world)
