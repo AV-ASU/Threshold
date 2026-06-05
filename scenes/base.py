@@ -1767,7 +1767,7 @@ _FLOOR_DECAL_KINDS = frozenset((
     # flat onto the floor so they turn with the room instead of standing up as a
     # top-down sticker under tilt. Pitch 0 draws them flat via Scene.draw as before.
     "symbol", "binding_sigil", "swallow_hole", "cellar_hatch",
-    "body", "drowned_body", "water_trail",
+    "body", "drowned_body", "water_trail", "water_channel",
     # Low overhead foliage (drawn top-down): a flat warped decal reads as a
     # shrub on the ground, where a standee would stand the overhead blob up
     # vertically as a smear.
@@ -1801,6 +1801,10 @@ def _draw_floor_decal(surf, camera, deco, woff=(0.0, 0.0)):
     if deco.kind == "rug":
         w = int(deco.kwargs.get("w", 88)); h = int(deco.kwargs.get("h", 60))
         bound = max(w, h) + 18
+    elif deco.kind == "water_channel":
+        path = deco.kwargs.get("path") or [(0, 0)]
+        m = max(max(abs(dx), abs(dy)) for dx, dy in path)
+        bound = int(2 * m + 28)
     else:
         bound = 60
     canvas = pygame.Surface((bound, bound), pygame.SRCALPHA)

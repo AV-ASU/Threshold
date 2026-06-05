@@ -315,21 +315,28 @@ def _draw_pickup_truck_solid(surf, cam, deco):
 
 
 def _draw_waterfall_solid(surf, cam, deco):
-    """A sheet of water cascading down the cave cliff into the river -- the
-    visible mouth of the artery (NARRATIVE 1b). Drawn each frame through the
-    camera (a real falling sheet, depth-sorted against the wall), with streaks
-    scrolling DOWN and foam churning where it strikes the water. `ang` (radians)
-    yaws the sheet so it can hang on any wall; default faces +y (south)."""
+    """A spring gushing from a HOLE in the cave cliff and falling into the river
+    -- the visible mouth of the artery (NARRATIVE 1b). A dark source recess
+    gouged in the rock at the top, then a sheet of water sheeting down into the
+    channel, foam churning where it strikes. Drawn each frame (animated; streaks
+    scroll DOWN), depth-sorted against the wall. `ang` (radians) yaws the sheet
+    onto its wall; default faces +y (toward a south-standing camera)."""
     wx, wy = deco.x, deco.y
     s = (getattr(deco, "scale", 1.0) or 1.0)
     ang = float(deco.kwargs.get("ang", 0.0))
     ca, sn = math.cos(ang), math.sin(ang)
-    H = 46 * s
+    H = 24 * s
     halfw = 9 * s
     t = deco.t
 
     def P(across, z):                       # across the sheet width, height z
         return cam.project(wx + across * ca, wy + across * sn, z)
+    # the source HOLE: a dark recess in the cliff the water gushes from, set just
+    # above the falling sheet with a lit rock rim so it reads as a mouth in rock
+    hole = [P(-halfw * 1.05, H - 2 * s), P(halfw * 1.05, H - 2 * s),
+            P(halfw * 0.78, H + 12 * s), P(-halfw * 0.78, H + 12 * s)]
+    pygame.draw.polygon(surf, (6, 8, 10), hole)
+    pygame.draw.polygon(surf, (56, 60, 66), hole, 1)
     # the wet dark rock the sheet sheets over
     pygame.draw.polygon(surf, (22, 28, 32),
                         [P(-halfw, 0), P(halfw, 0), P(halfw, H), P(-halfw, H)])

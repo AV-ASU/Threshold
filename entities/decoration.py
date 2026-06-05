@@ -1861,6 +1861,53 @@ class Decoration:
             fy = y - 1 - int(abs(math.sin(fa)) * 3)
             pygame.draw.circle(surf, (205, 226, 234), (fx, fy), 1)
 
+    def _draw_water_channel(self, surf, x, y):
+        """A SINGLE continuous fluid thread of the underground river on the cave
+        floor (NARRATIVE 1b): it leaves the channel, licks under the Threshold
+        frame, and curves back into the river -- one unbroken ribbon, with a cold
+        sheen that flows ALONG it. A FLOOR decal. `path` (kwarg) is a list of
+        (dx, dy) world-px offsets from the anchor; joints are rounded so it reads
+        as one line, never jointed segments."""
+        path = self.kwargs.get("path")
+        if not path or len(path) < 2:
+            return
+        raw = [(x + dx, y + dy) for dx, dy in path]
+        # Chaikin corner-cutting: turn the routed waypoints into ONE smooth,
+        # organic flowing curve (endpoints pinned to the south wall + the river).
+        for _ in range(2):
+            sm = [raw[0]]
+            for i in range(len(raw) - 1):
+                p, q = raw[i], raw[i + 1]
+                sm.append((p[0] * 0.75 + q[0] * 0.25, p[1] * 0.75 + q[1] * 0.25))
+                sm.append((p[0] * 0.25 + q[0] * 0.75, p[1] * 0.25 + q[1] * 0.75))
+            sm.append(raw[-1])
+            raw = sm
+        pts = [(int(px), int(py)) for px, py in raw]
+        Wd = 5
+        pygame.draw.lines(surf, (32, 42, 46), False, pts, Wd + 6)   # soaked halo
+        pygame.draw.lines(surf, (44, 76, 88), False, pts, Wd + 2)   # water body
+        pygame.draw.lines(surf, (66, 106, 120), False, pts, Wd)
+        for p in pts:                                               # round the joints
+            pygame.draw.circle(surf, (44, 76, 88), p, (Wd + 2) // 2)
+            pygame.draw.circle(surf, (66, 106, 120), p, Wd // 2)
+        pygame.draw.lines(surf, (104, 146, 160), False, pts, 1)     # bright core
+        # a few cold sheen glints chasing ALONG the line -- the current moving
+        seg = [math.hypot(pts[i + 1][0] - pts[i][0], pts[i + 1][1] - pts[i][1])
+               for i in range(len(pts) - 1)]
+        total = sum(seg)
+        if total > 0:
+            for k in range(3):
+                f = ((self.t * 0.16 + k / 3.0) % 1.0) * total
+                acc = 0.0
+                for i, d in enumerate(seg):
+                    if acc + d >= f and d > 0:
+                        u = (f - acc) / d
+                        gx = int(pts[i][0] + (pts[i + 1][0] - pts[i][0]) * u)
+                        gy = int(pts[i][1] + (pts[i + 1][1] - pts[i][1]) * u)
+                        pygame.draw.circle(surf, (150, 192, 204), (gx, gy), 2)
+                        break
+                    acc += d
+
     def _draw_doorframe(self, surf, x, y):
         """The Threshold frame (flat / F3 fallback; the tilt view stands it up as
         real geometry via rendering/props.py). A plain pale frame around an EMPTY

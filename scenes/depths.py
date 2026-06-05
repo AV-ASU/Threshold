@@ -591,13 +591,17 @@ def build_threshold():
             floor[_y][_x] = "x"
     # The artery: a river channel running the FULL west side, hard against the
     # cliff, IMPASSABLE (invisible-solid over the water) so it reads as one
-    # boundary WALL of the cave -- the source the thread of water crept from to
-    # the frame, and the cliff the waterfall sheets down.
+    # boundary WALL of the cave. It is FED at the south-west by the waterfall
+    # (below) and EXITS off the north edge -- open at row 0 so it reads as the
+    # artery continuing past the scene, not a tank with square ends.
     for _y in range(1, H - 1):
         for _x in (1, 2):
             objs[_y][_x] = "X"
             floor[_y][_x] = "~"
-    for _y, _x in ((4, 3), (7, 3), (10, 3)):    # organic licks onto the near bank
+    for _x in (1, 2):                           # open the north end: flows off-scene
+        objs[0][_x] = "X"
+        floor[0][_x] = "~"
+    for _y, _x in ((5, 3), (8, 3)):             # organic licks onto the near bank
         objs[_y][_x] = "."
         floor[_y][_x] = "~"
     # The threshold APRON: a clean, level clearing around the frame (rows 2-6,
@@ -622,11 +626,10 @@ def build_threshold():
     sc._lintel_pos = (lintel_x, lintel_y)
     sc.add_decoration(Decoration(lintel_x, lintel_y, "doorframe"))
 
-    # The waterfall: the artery's visible mouth, sheeting down the west cliff
-    # into the river channel (NARRATIVE 1b). A main fall + a lesser one below.
-    sc.add_decoration(Decoration(1 * TILE + 12, 3 * TILE + 16, "waterfall"))
-    sc.add_decoration(Decoration(1 * TILE + 12, 9 * TILE + 16, "waterfall",
-                                 scale=0.8))
+    # The waterfall: the river's SOURCE, gushing from a hole in the cliff at the
+    # SOUTH-WEST into the channel (NARRATIVE 1b -- the artery's visible mouth).
+    # One spring; the river flows north from here.
+    sc.add_decoration(Decoration(1 * TILE + 10, 10 * TILE + 16, "waterfall"))
 
     # Stalagmites choking the organic cave floor -- everywhere BUT the swept
     # apron, the river, and the central walking lane. Solid (invisible-solid
@@ -642,21 +645,28 @@ def build_threshold():
         sc.add_decoration(Decoration(sx * TILE + 16, sy * TILE + 16,
                                      "stalagmite", seed=sx * 31 + sy * 17))
 
-    # The river THREAD (NARRATIVE 1b). The river found the lowest, flattest floor
-    # in the earth; a single thread crept off it, crossed the cave, reached the
-    # frame, and CROSSED ITS PLANE. It leaves the west channel, meanders the floor
-    # to the door's foot, pools there, and a thread carries on THROUGH the empty
-    # frame to the far stone -- water passing where a body cannot. Floor decals,
-    # so they lie in the level floor and warp with it under the tilt.
-    _thread = [(2, 4, 0.0), (3, 4, 0.2), (4, 5, 0.5), (5, 5, 0.4), (6, 4, 0.7)]
-    for (tx, ty, ang) in _thread:
-        sc.add_decoration(Decoration(tx * TILE + 16, ty * TILE + 16,
-                                     "water_trail", ang=ang, seed=tx * 13 + ty))
+    # The river THREAD (NARRATIVE 1b): ONE continuous, organic side-channel that
+    # branches OFF the river (the west wall) and returns to it -- a natural
+    # distributary, not a drawn loop across the room. It leaves the channel low
+    # in the south-west, is pulled east to the doorframe (the lowest place in the
+    # earth; water finds it), passes UNDER the frame, then curves back and
+    # rejoins the river up near the north wall. Both ends touch the river; the
+    # door is the farthest it reaches. Smoothed into a flowing curve at draw time.
+    _tw = [(2.5, 8.6),                         # branches off the river (SW)
+           (3.6, 7.6), (4.7, 6.6), (5.7, 5.6), (6.5, 4.7),
+           (7.0, 4.0),                         # under the frame (the low point)
+           (7.0, 3.0),                         # through to the north side
+           (6.0, 2.6), (4.4, 2.7), (3.0, 2.9),
+           (2.5, 3.0)]                         # rejoins the river (NW)
+    _world = [(c * TILE + 16, r * TILE + 16) for (c, r) in _tw]
+    _cx = sum(p[0] for p in _world) / len(_world)
+    _cy = sum(p[1] for p in _world) / len(_world)
+    sc.add_decoration(Decoration(
+        _cx, _cy, "water_channel", seed=42,
+        path=[(px - _cx, py - _cy) for (px, py) in _world]))
+    # a shallow standing pool gathered at the frame's foot -- the low point
     sc.add_decoration(Decoration(lintel_x, lintel_y + 6, "water_trail",
                                  pool=True, seed=99))
-    for ty in (3, 2):                        # the thread crossing the plane
-        sc.add_decoration(Decoration(lintel_x, ty * TILE + 16, "water_trail",
-                                     ang=math.pi / 2, seed=ty * 7))
 
     def _threshold_on_enter(game, scene):
         if game.save.flag("first_threshold"):
