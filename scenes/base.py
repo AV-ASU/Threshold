@@ -110,6 +110,11 @@ FLOOR_DEFS = {
     # it reads as packed dirt next to grass without going full road.
     "d": {"color": (96, 76, 52),   "step": "step_grass"},
     "x": {"color": (28, 22, 30),   "step": "step_stone"},  # basement floor
+    # Smooth flat grey stone -- NO texture at all (no mottle, grout, jitter, or
+    # macro shadow). The Threshold apron: an impossibly even, man-made-looking
+    # floor where geometry serves the door (NARRATIVE 1b). draw_floor flat-fills
+    # it and returns early.
+    "0": {"color": (94, 94, 100),  "step": "step_stone"},
     # Dense corn cover. Walkable + step_grass, but the per-tick
     # cover check in Game.update_player flips player.hidden to
     # "corn" while the player stands on this tile, dropping a
@@ -638,12 +643,17 @@ def draw_floor(surf, ch, rx, ry, tx, ty):
     # cheapest break of the grid lockstep (cached per (ch,tx,ty), so free
     # after the first draw). Animated floors (~,@) skip it: they reseed each
     # frame and a jitter would shimmer as you walk.
-    if ch not in _ANIM_FLOOR:
+    if ch not in _ANIM_FLOOR and ch != "0":
         jv = (_vary(tx * 8009 + ty, 0) % 13) - 6        # -6..6, value only
         base = (max(0, min(255, base[0] + jv)),
                 max(0, min(255, base[1] + jv)),
                 max(0, min(255, base[2] + jv)))
     pygame.draw.rect(surf, base, (rx, ry, TILE, TILE))
+    if ch == "0":
+        # Smooth flat grey stone: a single flat fill, nothing else -- no detail,
+        # no per-tile jitter, and NOT the macro shadow blotch below. Perfectly,
+        # unnaturally even (the Threshold apron).
+        return
     if ch in ("g", "G"):
         # Grass with layered detail: a faint base mottle on every
         # tile, occasional grass blades, occasional darker dead-clump,

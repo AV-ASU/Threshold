@@ -1813,28 +1813,27 @@ class Decoration:
             return (int(x + ca * along - sa * across),
                     int(y + sa * along + ca * across))
         # damp halo seeped into the surrounding stone (a touch wider than the
-        # water, so the rivulet looks soaked-in, not painted on)
+        # water, so the pool looks soaked-in, not painted on)
         for k in range(-L, L + 1, 4):
             f = 1.0 - abs(k) / (L + 4.0)
-            pygame.draw.circle(surf, (34, 44, 48),
+            pygame.draw.circle(surf, (22, 34, 34),
                                P(k, 0), max(1, int((Wd + 2) * f)))
-        # the wet channel itself: clear, cold water catching the dark -- bright
-        # enough to read as a live trickle on the stone, not a near-black seam
+        # the wet channel itself, in the SAME murky teal-green as the river (`~`)
         for k in range(-L, L + 1, 3):
             f = 1.0 - abs(k) / (L + 3.0)
-            pygame.draw.circle(surf, (46, 78, 90), P(k, 0), max(1, int(Wd * f)))
-            pygame.draw.circle(surf, (70, 112, 126), P(k, 0),
+            pygame.draw.circle(surf, (30, 48, 46), P(k, 0), max(1, int(Wd * f)))
+            pygame.draw.circle(surf, (46, 68, 62), P(k, 0),
                                max(1, int(Wd * f * 0.6)))
-        # a bright cold sheen that slides ALONG the flow -- the current moving
+        # a cold sheen that slides ALONG the flow -- the current moving
         drift = (self.t * 9.0) % (2 * L + 6) - (L + 3)
         gx, gy = P(drift, -Wd * 0.3)
-        pygame.draw.circle(surf, (150, 192, 204), (gx, gy), 2)
+        pygame.draw.circle(surf, (104, 128, 116), (gx, gy), 2)
         gx2, gy2 = P(drift * 0.6 + L * 0.4, Wd * 0.25)
-        pygame.draw.circle(surf, (104, 150, 162), (gx2, gy2), 1)
+        pygame.draw.circle(surf, (74, 98, 90), (gx2, gy2), 1)
         # a couple of faint ripple ticks across the thread
         for kk in (-L // 2, L // 3):
             a = P(kk, -Wd * 0.7); b = P(kk, Wd * 0.7)
-            pygame.draw.line(surf, (88, 128, 138), a, b, 1)
+            pygame.draw.line(surf, (60, 84, 76), a, b, 1)
 
     def _draw_waterfall(self, surf, x, y):
         """A sheet of water falling down the cave cliff into the river (flat / F3
@@ -1884,13 +1883,15 @@ class Decoration:
             raw = sm
         pts = [(int(px), int(py)) for px, py in raw]
         Wd = 5
-        pygame.draw.lines(surf, (32, 42, 46), False, pts, Wd + 6)   # soaked halo
-        pygame.draw.lines(surf, (44, 76, 88), False, pts, Wd + 2)   # water body
-        pygame.draw.lines(surf, (66, 106, 120), False, pts, Wd)
+        # the SAME murky teal-green as the river floor (`~`), so the stream reads
+        # as the same water, not a separate cyan thread
+        pygame.draw.lines(surf, (22, 34, 34), False, pts, Wd + 6)   # soaked halo
+        pygame.draw.lines(surf, (30, 48, 46), False, pts, Wd + 2)   # water body
+        pygame.draw.lines(surf, (46, 68, 62), False, pts, Wd)
         for p in pts:                                               # round the joints
-            pygame.draw.circle(surf, (44, 76, 88), p, (Wd + 2) // 2)
-            pygame.draw.circle(surf, (66, 106, 120), p, Wd // 2)
-        pygame.draw.lines(surf, (104, 146, 160), False, pts, 1)     # bright core
+            pygame.draw.circle(surf, (30, 48, 46), p, (Wd + 2) // 2)
+            pygame.draw.circle(surf, (46, 68, 62), p, Wd // 2)
+        pygame.draw.lines(surf, (74, 98, 90), False, pts, 1)        # cold core
         # a few cold sheen glints chasing ALONG the line -- the current moving
         seg = [math.hypot(pts[i + 1][0] - pts[i][0], pts[i + 1][1] - pts[i][1])
                for i in range(len(pts) - 1)]

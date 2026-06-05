@@ -326,23 +326,26 @@ def _draw_waterfall_solid(surf, cam, deco):
     ang = float(deco.kwargs.get("ang", 0.0))
     ca, sn = math.cos(ang), math.sin(ang)
     H = 24 * s
-    halfw = 9 * s
+    # `w` is the sheet width in WORLD px (defaults to ~one tile); a 3-wide fall
+    # passes w ~= 90 so a single object covers the whole river mouth.
+    halfw = float(deco.kwargs.get("w", 18)) * 0.5 * s
     t = deco.t
 
     def P(across, z):                       # across the sheet width, height z
         return cam.project(wx + across * ca, wy + across * sn, z)
     # the source HOLE: a dark recess in the cliff the water gushes from, set just
     # above the falling sheet with a lit rock rim so it reads as a mouth in rock
-    hole = [P(-halfw * 1.05, H - 2 * s), P(halfw * 1.05, H - 2 * s),
-            P(halfw * 0.78, H + 12 * s), P(-halfw * 0.78, H + 12 * s)]
-    pygame.draw.polygon(surf, (6, 8, 10), hole)
-    pygame.draw.polygon(surf, (56, 60, 66), hole, 1)
+    hole = [P(-halfw * 1.02, H - 2 * s), P(halfw * 1.02, H - 2 * s),
+            P(halfw * 0.82, H + 12 * s), P(-halfw * 0.82, H + 12 * s)]
+    pygame.draw.polygon(surf, (5, 9, 9), hole)
+    pygame.draw.polygon(surf, (44, 58, 54), hole, 1)
     # the wet dark rock the sheet sheets over
-    pygame.draw.polygon(surf, (22, 28, 32),
+    pygame.draw.polygon(surf, (20, 30, 30),
                         [P(-halfw, 0), P(halfw, 0), P(halfw, H), P(-halfw, H)])
-    # falling streaks: dashed vertical runs that scroll downward over time
-    cols = [(120, 168, 184), (92, 140, 158), (150, 196, 208)]
-    n = 6
+    # falling streaks: dashed vertical runs that scroll downward over time. Same
+    # murky teal-green as the river (`~`), foam a paler version of it.
+    cols = [(70, 104, 96), (50, 80, 74), (96, 124, 114)]
+    n = max(6, int(halfw / 3))
     for i in range(n):
         across = -halfw + (i + 0.5) * (2 * halfw / n)
         col = cols[i % 3]
@@ -352,20 +355,20 @@ def _draw_waterfall_solid(surf, cam, deco):
             pygame.draw.line(surf, col, P(across, z),
                              P(across, max(0, z - 4 * s)), 1)
             z -= 8 * s
-    pygame.draw.line(surf, (188, 216, 226), P(-halfw, H), P(halfw, H), 2)  # crest
+    pygame.draw.line(surf, (124, 150, 138), P(-halfw, H), P(halfw, H), 2)  # crest
     # foam pool + spray where it strikes the river
     fb = cam.project(wx, wy, 0)
-    fw = max(3, int(halfw * cam.scale * 1.25))
-    fh = max(2, int(halfw * 0.5 * cam.ground_squash() * cam.scale))
+    fw = max(3, int(halfw * cam.scale * 1.15))
+    fh = max(2, int(halfw * 0.4 * cam.ground_squash() * cam.scale))
     foam = pygame.Surface((fw * 2 + 4, fh * 2 + 4), pygame.SRCALPHA)
-    pygame.draw.ellipse(foam, (150, 188, 200, 150), (2, 2, fw * 2, fh * 2))
-    pygame.draw.ellipse(foam, (210, 230, 236, 180),
+    pygame.draw.ellipse(foam, (90, 120, 110, 150), (2, 2, fw * 2, fh * 2))
+    pygame.draw.ellipse(foam, (140, 168, 154, 175),
                         (fw - fw // 2 + 2, fh - fh // 2 + 2, fw, fh))
     surf.blit(foam, (int(fb[0]) - fw - 2, int(fb[1]) - fh - 2))
-    for i in range(5):
-        fa = t * 3.0 + i * 1.3
-        p = P(math.cos(fa) * halfw * 0.7, abs(math.sin(fa)) * 4 * s)
-        pygame.draw.circle(surf, (205, 226, 234), (int(p[0]), int(p[1])), 1)
+    for i in range(6):
+        fa = t * 3.0 + i * 1.1
+        p = P(math.cos(fa) * halfw * 0.8, abs(math.sin(fa)) * 4 * s)
+        pygame.draw.circle(surf, (150, 176, 162), (int(p[0]), int(p[1])), 1)
 
 
 def _draw_doorframe_solid(surf, cam, deco):
