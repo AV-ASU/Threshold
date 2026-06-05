@@ -3,6 +3,7 @@
   schoolhouse        -- one-room schoolhouse, empty for months.
   graveyard          -- behind the church. One readable headstone.
 """
+import math
 import random
 from constants import TILE
 from entities.decoration import Decoration
@@ -17,60 +18,117 @@ def _backwoods_note_pickup(game):
 
 
 def build_schoolhouse():
-    """One-room rural schoolhouse on the edge of town. Closed for
-    months. A small desk at the front of the room. Hide spots: in
-    the coat closet, under the teacher's desk, behind the storage
-    shelf at the back."""
+    """The one-room schoolhouse on the Brimley bank -- but the cult took it over
+    as a COMMUNE before they moved underground. The schoolroom bones still show
+    (the chalkboard, a teacher's desk, the children's desks shoved into a corner
+    to clear the floor), and over them: rows of cots where the congregation
+    bedded down crammed together, their bowls and guttered candles still beside
+    them, the chalkboard scrawled over with the door-motif. Empty now, cobwebbed
+    -- they all went down the well. Hide spots: behind the cot banks, in the
+    shoved-desk corner."""
     floor = ["=" * 16 for _ in range(12)]
     objects = [
-        "WWWWWWWWiWWWWWWWW",   # 0  window
-        "W...W..........W",    # 1  cloakroom (cols 1-3) | the hall (cols 5-14)
-        "W.s.W...t......W",    # 2  storage shelf (cloak) + teacher's desk
-        "W...W...c......W",    # 3  teacher's chair
-        "W..............W",    # 4  doorway gap in the partition (col 4)
-        "WWWWW..........W",    # 5  cloakroom sealed off below
+        "WWWWWWWWiWWWWWWWW",   # 0  N wall (the chalkboard) + window
+        "W..............W",    # 1
+        "W..............W",    # 2
+        "W..............W",    # 3
+        "W..............W",    # 4
+        "W..............W",    # 5
         "W..............W",    # 6
-        "W...tt...tt....W",    # 7  student desks
-        "W...cc...cc....W",    # 8
-        "W...tt...tt....W",    # 9
-        "W...cc...cc....W",    # 10
-        "WWWWWWWHWWWWWWWW",    # 11  H = exit south (col 7, on the aisle)
+        "W..............W",    # 7
+        "W..............W",    # 8
+        "W..............W",    # 9
+        "W..............W",    # 10
+        "WWWWWWWHWWWWWWWW",    # 11  H = exit south, onto the field
     ]
     sc = Scene("schoolhouse", floor, objects, music="home")
-    # The schoolhouse stands on the Brimley bank now; its door opens
-    # back onto the field.
     sc.add_exit("H", "brimley", "from_school")
-    # Spawn in the centre aisle, clear of the desks and the door.
     sc.set_spawn("default", 7, 9)
     sc.set_spawn("from_brimley", 7, 10)       # one tile north of the H door
     sc.set_spawn("from_village", 7, 10)
     sc.set_spawn("from_town_crossroads", 7, 10)
     sc.set_spawn("from_town", 7, 10)
 
-    # Chalk marks on the walls -- the worst of it back in the cloakroom.
-    sc.add_decoration(Decoration(1 * TILE + 28, 2 * TILE + 16,
-                                 "phantom_mark"))
-    sc.add_decoration(Decoration(2 * TILE + 16, 3 * TILE + 28,
-                                 "phantom_mark"))
-    sc.add_decoration(Decoration(13 * TILE + 4, 7 * TILE + 16,
-                                 "phantom_mark"))
-    sc.add_decoration(Decoration(14 * TILE + 16, 0 * TILE + 28,
-                                 "phantom_mark"))
+    # The schoolroom remnants: the teacher's desk shoved askew to the NW front,
+    # and the children's desks + chairs STACKED into the SE corner to clear the
+    # floor for sleeping. The bones of what this was.
+    sc.add_furniture("table", [(2, 1)], w=54, h=34)              # teacher's desk
+    sc.add_furniture("table", [(12, 9), (13, 9)], w=54, h=34)    # stacked desks
+    sc.add_furniture("table", [(12, 10), (13, 10)], w=54, h=30)
+    sc.add_furniture("small_chair", [(11, 9)])
+    sc.add_decoration(Decoration(13 * TILE + 16, 8 * TILE + 16,
+                                 "overturned_chair"))            # knocked over
 
-    # A clock that's stopped, a candle, motes.
+    # The commune: two banks of cots crammed against the long walls, a narrow
+    # aisle down the middle. Where several people lived, in rows, for months.
+    west = [(2, 3), (4, 3), (2, 5), (4, 5), (2, 7), (4, 7)]
+    east = [(11, 3), (13, 3), (11, 5), (13, 5), (11, 7), (13, 7)]
+    for (cx, cy) in west + east:
+        sc.add_furniture("cot", [(cx, cy)])
+    # Their effects, still beside the beds -- bowls they ate from, candle stubs
+    # burned down, a kerosene lamp, an old dark stain. People were here.
+    for (bx, by) in ((3, 4), (12, 4), (3, 8), (12, 6), (5, 6)):
+        sc.add_decoration(Decoration(bx * TILE + 16, by * TILE + 16, "bowl"))
+    sc.add_decoration(Decoration(3 * TILE + 16, 6 * TILE + 8, "candle"))
+    sc.add_decoration(Decoration(12 * TILE + 16, 8 * TILE + 8, "candle"))
+    sc.add_decoration(Decoration(7 * TILE + 16, 5 * TILE + 8, "candle"))
+    sc.add_decoration(Decoration(2 * TILE + 14, 2 * TILE + 2, "kerosene_lamp"))
+    sc.add_decoration(Decoration(8 * TILE + 16, 7 * TILE + 16, "bloodstain",
+                                 scale=1.6))
+
+    # The cult's marks, over the schoolroom: the chalkboard on the N wall scrawled
+    # with the door-compulsion, more chalk on the floor of the aisle, scratched
+    # tallies, and a corn-husk doll left on a cot. (Same motif as the barn.)
+    sc.add_chalk_door(7 * TILE + 16, 0 * TILE + 12, seed=4, wall=True)
+    sc.add_chalk_door(7 * TILE + 16, 8 * TILE + 16, voice="chalk_surface", seed=7)
+    sc.add_decoration(Decoration(10 * TILE + 16, 0 * TILE + 28, "phantom_mark"))
+    sc.add_decoration(Decoration(5 * TILE + 8, 0 * TILE + 28, "phantom_mark"))
+    sc.add_decoration(Decoration(13 * TILE + 6, 4 * TILE + 16, "phantom_mark"))
+    sc.add_decoration(Decoration(13 * TILE + 16, 3 * TILE + 6, "corn_doll"))
+
+    # Abandoned a while: cobwebs strung in the high corners over the cots, a
+    # stopped clock, dust in the dim light.
+    sc.add_decoration(Decoration(1 * TILE + 6, 1 * TILE + 6, "cobweb", ang=0.0))
+    sc.add_decoration(Decoration(14 * TILE + 26, 1 * TILE + 6, "cobweb",
+                                 ang=math.pi / 2))
+    sc.add_decoration(Decoration(1 * TILE + 6, 10 * TILE + 26, "cobweb",
+                                 ang=-math.pi / 2))
     sc.add_decoration(Decoration(9 * TILE + 16, 1 * TILE + 22, "clock"))
-    sc.add_decoration(Decoration(6 * TILE + 16,  0 * TILE + 22 , "candle"))
-    sc.add_decoration(Decoration(13 * TILE + 16,  0 * TILE + 22 , "candle"))
     for i in range(6):
-        sc.add_decoration(Decoration(180 + i * 60,
-                                     220 + (i % 3) * 50, "mote"))
+        sc.add_decoration(Decoration(150 + i * 70, 200 + (i % 3) * 70, "mote"))
 
     sc.hide_spots = [
-        (8 * TILE + 16, 3 * TILE + 24, "under"),     # under the teacher's desk
-        (2 * TILE + 16, 3 * TILE + 24, "behind"),    # in the cloakroom (blind)
-        (4 * TILE + 16, 8 * TILE + 16, "behind"),    # beside a student desk
+        (5 * TILE + 16, 3 * TILE + 16, "behind"),    # behind the west cot bank
+        (10 * TILE + 16, 5 * TILE + 16, "behind"),   # behind the east cot bank
+        (11 * TILE + 16, 10 * TILE + 16, "behind"),  # in the shoved-desk corner
     ]
 
+    # The chalkboard reads as a flavor beat (not counted evidence).
+    sc._board_pos = (7 * TILE + 16, 0 * TILE + 16)
+    sc.add_interactable(sc._board_pos[0], sc._board_pos[1], 44)
+
+    def _school_on_enter(game, scene):
+        if game.save.flag("schoolhouse_seen"):
+            return
+        game.save.set_flag("schoolhouse_seen", True)
+        game.show_notice("The children's schoolhouse. They slept in here, the "
+                         "grown ones, in rows, before they went down.",
+                         duration=4.5)
+
+    def _school_interact(game):
+        px, py = game.player.x, game.player.y
+        bx, by = sc._board_pos
+        if abs(px - bx) <= 44 and abs(py - by) <= 44:
+            game.dialog.show([
+                "[c=dim](The chalkboard. Under a child's faded lesson, the same "
+                "door is drawn over and over, smaller and smaller, to the "
+                "corner.)[/c]",
+                "[c=dim]Whoever did it ran out of board before they ran out of "
+                "the need to draw it.[/c]",
+            ], speaker="", voice="blip_soft", portrait="narrator")
+
+    sc.on_enter_fn = _school_on_enter
+    sc.on_interact_fn = _school_interact
     return sc
 
 
