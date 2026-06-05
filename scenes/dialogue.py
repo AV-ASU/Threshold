@@ -98,19 +98,14 @@ def preacher_dialogue(game, npc):
         # church swaps him for his remains on the next entry (evidence #4).
         game.dialog.show([
             "You came back. They mostly don't.",
-            "Forty years I have preached in that church, and I know a "
-            "congregation when I see one. This town keeps one that gathers "
-            "in no church. It kneels under the ground, down the old well in "
-            "the Clerk's yard.",
-            "And do not tell me they were taken. They walked down willing, "
-            "every one, and sold the Lord for the easing of some private "
-            "ache, then climbed back up calling the wound a mercy. Foul, "
-            "the lot of them, and glad of it. I have preached it so, "
-            "plainly, with no sinner spared.",
-            "The sheriff sits through every word and has never once knelt "
-            "for communion. He hears it all and only waits. Let them come "
-            "for an old man, then. I have buried better than the thing "
-            "they kneel to.",
+            "There's a flock in this town that kneels in no church of "
+            "mine. It kneels under the ground.",
+            "They weren't taken. They walked down willing, and sold the "
+            "Lord to ease their own aches.",
+            "I preach it plain, and spare no sinner. The sheriff hears "
+            "every word, and never once takes communion.",
+            "Let them come for an old man. I've buried better than the "
+            "thing they kneel to.",
         ], speaker="Rev. Crane", voice="blip_low", portrait="preacher")
         save.set_flag("preacher_doomed", True)
     else:
