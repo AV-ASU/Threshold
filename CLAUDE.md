@@ -20,9 +20,14 @@ the lethal apex pursuer. (See the tilted-camera track below + `CAMERA.md`.)
 # Run (needs a display)
 python main.py
 
-# Tests — fast scene-builder / spawn / exit / drop-rate smoke checks.
-# Self-configures SDL dummy drivers, so no env vars needed. Run from repo root.
-python tests/smoke.py
+# Full test gate — runs all four harnesses (smoke + flow + fold_pursuit +
+# render_smoke) and exits nonzero if any fails. Self-configures SDL dummy
+# drivers, so no env vars needed. Run from repo root before every commit/push.
+python tests/run_all.py
+
+# Or run a single harness (same drivers, standalone):
+python tests/smoke.py        # scene-builder / spawn / exit / drop-rate smoke
+python tests/flow.py         # story-beat integration + canon guards
 
 # Syntax/compile check (the project has no configured linter)
 python -m compileall systems entities scenes rendering ui .
@@ -258,10 +263,12 @@ it renders the procedural sprites to a labelled PNG strip.
 
 ## Working agreements (process — learned the hard way)
 
-- **Verify before you commit.** Run compile + `tests/smoke.py` + (for
-  narrative/scene work) `tests/flow.py` and confirm green BEFORE
-  `git commit`/`push`. A commit was pushed twice this project with a
-  `NameError` because edits were batched and not re-verified.
+- **Verify before you commit.** Run compile + `python tests/run_all.py` (the
+  full gate: smoke + flow + fold_pursuit + render_smoke) and confirm green
+  BEFORE `git commit`/`push`. A commit was pushed twice this project with a
+  `NameError` because edits were batched and not re-verified. For
+  rendering/refactor work also run the byte-identity gate
+  (`tools/capture_world.py --tag before/after`, then `--diff`).
 - **One edit at a time on a shifting file.** Don't batch many `Edit`s against
   the same file in one turn; an early edit moves line context and later ones
   silently mis-apply. For multi-site mechanical changes, write a small Python

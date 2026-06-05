@@ -24,13 +24,6 @@ from .base import Scene
 from .dialogue import _evidence
 
 
-def _yard_cache_pickup(game):
-    game.save.set_flag("yard_cache_taken", True)
-    _evidence(game, "yard_cache",
-        "A small stash."
-    )
-
-
 def build_our_house_area():
     # 24w x 18h. The Clerk's house occupies the upper-left quadrant
     # with a back door (H) into the kitchen. The woodshed sits in the

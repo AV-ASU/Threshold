@@ -1144,53 +1144,6 @@ def _draw_wall_mass(surf, scene, cam_x, cam_y, x0, y0, x1, y1):
                                  (rx + TILE - 1 - j, ry + TILE), 1)
 
 
-def _draw_building_eaves(surf, scene, cam_x, cam_y, x0, y0, x1, y1):
-    """Hang a ragged shingle eave + overhang shadow off the exterior
-    walls of roofed buildings where they meet open ground, so a building
-    reads as a structure with an overhanging roof instead of a flat
-    rectangle stamped on the grass. Keyed off roof-adjacency, so ONLY
-    roofed overworld houses get eaves -- interior room walls (no roof
-    tile behind them) are left as the clean continuous mass."""
-    objs = scene.objects
-    h, w = scene.h, scene.w
-
-    def roof(ax, ay):
-        return 0 <= ay < h and 0 <= ax < w and objs[ay][ax] == "r"
-
-    def openg(ax, ay):
-        if not (0 <= ay < h and 0 <= ax < w):
-            return False
-        ch = objs[ay][ax]
-        return ch not in _WALL_CHARS and ch != "r" and ch not in _DOOR_CHARS
-
-    eave = (90, 58, 42)
-    lip = (120, 82, 58)
-    for ty in range(y0, y1):
-        for tx in range(x0, x1):
-            if objs[ty][tx] not in _WALL_CHARS:
-                continue
-            if not (roof(tx, ty - 1) or roof(tx, ty + 1)
-                    or roof(tx - 1, ty) or roof(tx + 1, ty)):
-                continue
-            rx = tx * TILE - cam_x
-            ry = ty * TILE - cam_y
-            j = (tx * 7 + ty * 13) & 3                 # irregular overhang depth
-            if openg(tx, ty + 1):                      # south overhang (front)
-                d = 5 + j
-                _ground_shadow(surf, rx + TILE // 2, ry + TILE + d, 17, 4, 85)
-                pygame.draw.rect(surf, eave, (rx, ry + TILE - 1, TILE, d))
-                pygame.draw.rect(surf, lip, (rx, ry + TILE - 1 + d, TILE, 1))
-            if openg(tx, ty - 1):                      # north (back)
-                d = 3 + (j & 1)
-                pygame.draw.rect(surf, eave, (rx, ry - d, TILE, d))
-            if openg(tx - 1, ty):                      # west
-                d = 4 + (j & 1)
-                pygame.draw.rect(surf, eave, (rx - d, ry, d, TILE))
-            if openg(tx + 1, ty):                      # east
-                d = 4 + (j & 1)
-                pygame.draw.rect(surf, eave, (rx + TILE, ry, d, TILE))
-
-
 def _build_roof_regions(scene):
     """Flood-fill the roof ('r') tiles into one region per building and
     cache each region's tile bounding box on the scene. Roof layout is
