@@ -41,11 +41,27 @@ it renders the procedural sprites to a labelled PNG strip.
 ## Layout
 
 - `main.py` — entry point: `Game().run()`.
-- `systems/game.py` — the orchestrator (large). State machine
-  (`title` / `playing` / `transition`), `step(dt)`, `draw_world`, scene
-  loading (`load_scene_now`), the threat model, and the closure/ending
-  sequences. `_reset_run_state()` wipes per-run state on New Game (the
-  `Game` instance is reused across quit-to-title).
+- `systems/game.py` — the orchestrator (~2k lines). State machine
+  (`title` / `playing` / `transition`), `step(dt)`, scene loading
+  (`load_scene_now`), the core update/input loop, combat, and
+  `_reset_run_state()` (wipes per-run state on New Game; the `Game` instance
+  is reused across quit-to-title). The big cohesive subsystems were split off
+  into **mixins** that `Game` inherits (`class Game(CutsceneMixin,
+  ThreatMixin, InfestationMixin, RenderMixin, NarrativeMixin)`) — they are
+  still `Game` methods, just housed in their own files:
+  - `systems/config.py` — gameplay tuning constants + scene-gating sets
+    (`SAFE_SCENES`, `CULTIST_SCENES`, `UNDERGROUND_SCENES`, the `VIS_*` /
+    `KING_*` / `WATCHER_*` / `FOLD_*` blocks …). `game.py` does
+    `from systems.config import *`, so bare-name refs and external
+    `from systems.game import <CONST>` both still resolve.
+  - `systems/threat_mixin.py` — the threat model (below): King, watcher-curse,
+    cultist + fold/portal pursuit, visibility + evidence floor, death.
+  - `systems/render_mixin.py` — the draw layer: `draw_world`, overlays, HUD,
+    the title/pause/settings screens, the death card.
+  - `systems/infest_mixin.py` — infestation/ashfall + the hunting sheriff,
+    plus the infested-local dialogue helpers.
+  - `systems/narrative_mixin.py` — the journal flashback, the case-file /
+    interior-voice notes (`_log_case_entry` …), the endings + opening crawl.
 - `scenes/` — `SCENE_BUILDERS` registry + `load_scene(key)`
   (`scenes/__init__.py`, ~37 scenes). A scene has spawns, exits,
   decorations, npcs, enemies, items, and optional
@@ -120,7 +136,7 @@ it renders the procedural sprites to a labelled PNG strip.
   - `threat.py` — `proximity_tier` + `PROX_TIER_*` helpers.
 - `ui/` — dialog, inventory, notebook, fonts, text input.
 
-## Threat model (the core mechanic, all in `systems/game.py`)
+## Threat model (the core mechanic, in `systems/threat_mixin.py`)
 
 - **`visibility`** ∈ [0, 1] (`_tick_visibility`): Watchers + cultist gaze
   raise it; hiding (`VIS_HIDE_BLEED`) and idle decay (`VIS_IDLE_DECAY`)
@@ -216,9 +232,9 @@ it renders the procedural sprites to a labelled PNG strip.
 - **Trigger:** reading `mom_notebook` (Mara's journal) a third time sets
   `flashback_pending` (`ui/inventory_ui.py`); `Game._tick_flashback` polls it,
   sets `flashback_seen`, and runs a ~7s wordless cutscene
-  (`_draw_flashback`). Tuning constants are the `FLASHBACK_*` block in
-  `systems/game.py` (`_DUR`, `_MASK_FRAMES`, `_SWARM_START/_PEAK`,
-  `_RATE_MIN/_MAX`, `_FOCAL_Y`).
+  (`_draw_flashback`). `_tick_flashback` lives in `systems/narrative_mixin.py`;
+  the `FLASHBACK_*` tuning block (`_DUR`, `_MASK_FRAMES`, `_SWARM_START/_PEAK`,
+  `_RATE_MIN/_MAX`, `_FOCAL_Y`) is defined in `ui/cutscenes.py`.
 - **Visuals:** dried-wood doorframe in black; a pulsing gold glow pooled at
   the door's **base** (`FLASHBACK_FOCAL_Y`), contained by the frame; faint
   peeking eyes; and an **accelerating swarm** of carved dark-wood masks
