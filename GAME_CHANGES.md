@@ -211,13 +211,14 @@ version is one faint unease, never elaborated. There is no King POV to author
 from his pulpit, murdered for it (evidence #4, his cross). Only the
 **presentation** was up for a rework.
 
-- [x] **Pulpit condemnation added** (`scenes/dialogue.py` `preacher_dialogue`,
-  the 2nd-conversation sermon that sets `preacher_doomed`). Crane now names them
+- [x] **Pulpit condemnation rewritten** (`scenes/dialogue.py` `preacher_dialogue`,
+  the 2nd-conversation sermon that sets `preacher_doomed`). Crane condemns them
   as **willing** apostates, not puppets — they kept their free will and *chose*
-  the bargain: "Not claimed, not stolen. Willing. They cast God aside for their
-  own gain and call the selling of a soul a mercy. Foul sinners, every one, and
-  glad of it." Stays religious/moral (he never grasps the cosmic truth; §10
-  fence held). Settled with the user 2026-06.
+  the bargain: "They walked down willing, every one, and sold the Lord for the
+  easing of some private ache, then climbed back up calling the wound a mercy.
+  Foul, the lot of them, and glad of it." Preacher's voice, not exposition (the
+  old staccato well-directions were cut — Toby already carries the well clue).
+  Stays religious/moral (he never grasps the cosmic truth; §10 fence held).
 - [ ] *(Optional, not requested)* the `preacher_doomed` → gutted-on-the-floor
   reveal could be punched up for impact later. No lore change.
 

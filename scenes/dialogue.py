@@ -97,16 +97,20 @@ def preacher_dialogue(game, npc):
         # The hubris that gets him killed. After this he's marked: the
         # church swaps him for his remains on the next entry (evidence #4).
         game.dialog.show([
-            "You came back. Good.",
-            "It isn't the corn. The mouth is under the well. The well "
-            "is in the Clerk's yard. I name them from my pulpit.",
-            "And I name what they are. Not claimed, not stolen. Willing. "
-            "They cast God aside for their own gain and call the selling "
-            "of a soul a mercy. Foul sinners, every one, and glad of it.",
-            "The sheriff comes to hear me say it. He stays for the "
-            "whole sermon. He's never taken communion.",
-            "Let them come for an old man. I've buried better than "
-            "whatever it is they kneel to.",
+            "You came back. They mostly don't.",
+            "Forty years I have preached in that church, and I know a "
+            "congregation when I see one. This town keeps one that gathers "
+            "in no church. It kneels under the ground, down the old well in "
+            "the Clerk's yard.",
+            "And do not tell me they were taken. They walked down willing, "
+            "every one, and sold the Lord for the easing of some private "
+            "ache, then climbed back up calling the wound a mercy. Foul, "
+            "the lot of them, and glad of it. I have preached it so, "
+            "plainly, with no sinner spared.",
+            "The sheriff sits through every word and has never once knelt "
+            "for communion. He hears it all and only waits. Let them come "
+            "for an old man, then. I have buried better than the thing "
+            "they kneel to.",
         ], speaker="Rev. Crane", voice="blip_low", portrait="preacher")
         save.set_flag("preacher_doomed", True)
     else:
