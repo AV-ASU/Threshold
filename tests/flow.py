@@ -125,10 +125,16 @@ def main():
     check("cellar" not in _insp_l.getsource(_clerk_src_fn).lower(),
           "ledger: Sable no longer points at a cellar register")
 
-    # --- 2. The Playscript (Scriptorium) ---
+    # --- 2. The Calling (Scriptorium) -- first cult-testimony fragment ---
+    _ev_before = len(g.save.arg("evidence", []))
     fire(g, "works_scriptorium", "_desk_pos")
-    check(g.player.inventory.has("playscript"),
-          "scriptorium: grants the Playscript")
+    check(g.player.inventory.has("cult_calling"),
+          "scriptorium: grants The Calling (cult testimony, not a keystone)")
+    check(any(isinstance(e, dict) and e.get("name") == "cult_calling"
+              for e in g.save.arg("notes", [])),
+          "scriptorium: logs the PI's reaction to NOTES")
+    check(len(g.save.arg("evidence", [])) == _ev_before,
+          "scriptorium: the testimony is lore, never inflates evidence")
 
     # --- 3. The Pallid Mask (Sign Chamber, evidence #5) -- LIFT the mask ---
     fire(g, "works_sign", "_sign_pos")
@@ -149,7 +155,7 @@ def main():
     check("rite_broken" in g._ENDING_SCRIPTS,
           "ending: rite_broken script is authored")
 
-    # --- 4. The Deep Stair fork (the keystone: Mask + notes together) ---
+    # --- 4. The Deep Stair fork (the keystone: the Pallid Mask alone) ---
     g.load_scene_now("works_deepstair")
     ready(g)
     sc = g.scene
@@ -164,9 +170,8 @@ def main():
     check(g.save.flag("well_rope_broken"),
           "deep stair: committing snaps the rope (point of no return)")
     # CANON (NARRATIVE §6/§7 rework): the stair opens WITHOUT consuming the
-    # keystone -- you carry it down to spend at the Threshold door.
-    check(g.player.inventory.has("playscript")
-          and g.player.inventory.has("sigil_rubbing"),
+    # keystone (the Mask) -- you carry it down to spend at the Threshold door.
+    check(g.player.inventory.has("sigil_rubbing"),
           "deep stair: the keystone is NOT consumed (carried down, not spent)")
 
     # --- 5. The Depths chain loads + steps with no crash ---
@@ -201,21 +206,19 @@ def main():
               "hive: speaking to Mara fires the recognition")
 
     # --- 7. The Threshold seal -> the SEAL ending (consumes the keystone) ---
-    # The keystone carried down from the Deep Stair is spent HERE, at the door
-    # (§7 rework). g still holds both (the stair did not consume them).
+    # The keystone (the Mask) carried down from the Deep Stair is spent HERE,
+    # at the door (§7 rework, Mask-only). g still holds it (stair did not spend).
     g.load_scene_now("threshold")
     ready(g)
     sc = g.scene
-    check(g.player.inventory.has("playscript")
-          and g.player.inventory.has("sigil_rubbing"),
-          "threshold: the keystone arrives in hand (carried from the stair)")
+    check(g.player.inventory.has("sigil_rubbing"),
+          "threshold: the keystone (Mask) arrives in hand (carried from the stair)")
     g.player.x, g.player.y = sc._lintel_pos
     sc.on_interact_fn(g)
     check(g._ending_active == "seal_threshold",
           "threshold: sealing fires the SEAL ending")
-    check(not g.player.inventory.has("playscript")
-          and not g.player.inventory.has("sigil_rubbing"),
-          "threshold: the seal CONSUMES the keystone at the door")
+    check(not g.player.inventory.has("sigil_rubbing"),
+          "threshold: the seal CONSUMES the keystone (Mask) at the door")
     seal_text = " ".join(line for line, _ in
                          g._ENDING_SCRIPTS["seal_threshold"])
     check("Nothing leaves Brimley again" in seal_text
@@ -242,6 +245,37 @@ def main():
     gb._begin_car_escape()                    # no Mask in hand
     check(gb._ending_active is None,
           "spread: blocked without the Mask (no free escape)")
+
+    # --- 8b. The cult-testimony triptych: pure lore, never evidence ---
+    from systems.items import ITEM_DEFS as _IDEFS
+    gt2 = new_game()
+    _e2 = evidence_count(gt2)
+    fire(gt2, "the_sump", "_note_pos")
+    check(gt2.player.inventory.has("cult_bargain"),
+          "sump: grants The Bargain (optional testimony fragment)")
+    check(any(isinstance(e, dict) and e.get("name") == "cult_bargain"
+              for e in gt2.save.arg("notes", [])),
+          "sump: The Bargain logs the PI reaction to NOTES")
+    check(evidence_count(gt2) == _e2,
+          "sump: The Bargain never inflates evidence (lore, not a beat)")
+    gt3 = new_game()
+    _e3 = evidence_count(gt3)
+    fire(gt3, "the_ossuary", "_dig_note_pos")
+    check(gt3.player.inventory.has("cult_digging"),
+          "ossuary: grants The Digging (optional testimony fragment)")
+    check(any(isinstance(e, dict) and e.get("name") == "cult_digging"
+              for e in gt3.save.arg("notes", [])),
+          "ossuary: The Digging logs the PI reaction to NOTES")
+    check(evidence_count(gt3) == _e3,
+          "ossuary: The Digging never inflates evidence")
+    # CANON (§1b discipline): the dimensional truth is NEVER stated in the
+    # testimony the player reads.
+    _triptych = ("cult_calling", "cult_bargain", "cult_digging")
+    _blob = " ".join(_IDEFS[k]["desc"].lower() for k in _triptych)
+    check("dimension" not in _blob,
+          "testimony: never says 'dimension' (folk horror, not sci-fi)")
+    check("playscript" not in _IDEFS,
+          "items: the old single playscript keystone is retired")
 
     # --- 9. The 3-evidence King gate is reachable ---
     ge = new_game()
@@ -855,6 +889,29 @@ def main():
     for _br in ("the_sump", "the_cells", "the_ossuary"):
         check(_br in _UG, f"portal: branch room {_br} is registered underground")
         check(_br in _DK, f"dark: branch room {_br} gets the underground gloom")
+
+    # --- 22. Ashfall scales with the infestation, never on the Threshold ----
+    # (NARRATIVE §4b) The pale-yellow ash is the vessel's pressure made
+    # visible: zero at stage 0, light->steady as evidence climbs, thicker
+    # underground (nearer the source), clean in safe rooms until stage 3, and
+    # NEVER on the Threshold (the still eye of it, §1b).
+    def _ash(scene, ev):
+        ga = new_game()
+        ga.save.set_arg("evidence", [f"ev{i}" for i in range(ev)])
+        ga.load_scene_now(scene)
+        return ga._ashfall_target()
+
+    check(_ash("brimley", 0) == 0,
+          "ashfall: stage 0 air is clean (no evidence, no ash)")
+    check(_ash("brimley", 1) > 0 and _ash("brimley", 3) > _ash("brimley", 1),
+          "ashfall: density climbs with the evidence stage")
+    check(_ash("works_scriptorium", 3) > _ash("brimley", 3),
+          "ashfall: thicker underground (nearer the source)")
+    check(_ash("threshold", 3) == 0,
+          "ashfall: never on the Threshold (the still eye of it)")
+    _safe = next(iter(_SAFE))
+    check(_ash(_safe, 2) == 0 and _ash(_safe, 3) > 0,
+          "ashfall: safe rooms stay clean until stage 3 claims them too")
 
     print()
     if FAILS:

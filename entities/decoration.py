@@ -91,7 +91,8 @@ _GROUNDED_DECOS = frozenset((
 # -- upscaling via a local canvas would misplace or clip them). The rug
 # sizes itself via w/h kwargs instead, so it opts out too.
 _NO_SCALE_DECOS = frozenset((
-    "candle", "lantern", "brazier", "smoke", "mist", "mote", "wisp",
+    "candle", "lantern", "brazier", "wall_torch", "swallow_hole",
+    "smoke", "mist", "mote", "wisp",
     "flock", "leaves", "well", "steeple", "pickup_truck", "player_car",
     "cauldron", "watching_eye", "watching_wound", "passing_silhouette",
     "gas_pump", "payphone", "terminal", "computer", "mirror", "rug",
@@ -168,10 +169,58 @@ class Decoration:
         pygame.draw.ellipse(surf, (50, 54, 56), (x - 13, y - 9, 26, 18), 1)
         pygame.draw.ellipse(surf, (14, 22, 26), (x - 9, y - 6, 18, 12))
 
+    def _draw_swallow_hole(self, surf, x, y):
+        """A sink where the river spirals down into the earth and is gone --
+        the underground river's mouth (NARRATIVE 1b: the river is the artery;
+        water finds the lowest place and creeps to the door). Depth rings that
+        darken to black at the centre + a slow draining swirl. Used on the
+        surface (the river vanishes here) and in the Sump (the same artery,
+        deeper). `scale` kwarg sizes it."""
+        # wet stone rim, irregular
+        pygame.draw.ellipse(surf, (40, 42, 40), (x - 17, y - 12, 34, 24))
+        pygame.draw.ellipse(surf, (62, 64, 60), (x - 17, y - 12, 34, 24), 1)
+        # depth rings: water -> near-black at the centre (it goes DOWN)
+        rings = [(48, 56, 58), (34, 44, 48), (22, 32, 36), (13, 20, 24),
+                 (6, 11, 14), (2, 4, 6)]
+        for i, col in enumerate(rings):
+            rw = max(2, 14 - i * 2)
+            rh = max(1, 10 - i * 2)
+            pygame.draw.ellipse(surf, col, (x - rw, y - rh, rw * 2, rh * 2))
+        # draining swirl: spiral arms rotating with time (the current going down)
+        for arm in range(3):
+            base = self.t * 1.8 + arm * (2 * math.pi / 3)
+            pts = []
+            for k in range(11):
+                r = 2.0 + k * 1.15
+                a = base + k * 0.5
+                pts.append((x + math.cos(a) * r, y + math.sin(a) * r * 0.62))
+            pygame.draw.lines(surf, (66, 80, 84), False, pts, 1)
+        # a wet glint catching the light off the lip
+        pygame.draw.line(surf, (104, 116, 118), (x - 10, y - 6), (x - 4, y - 8), 1)
+
     def _draw_grain_heap(self, surf, x, y):
         pygame.draw.circle(surf, (150, 126, 70), (x, y), 13)
         pygame.draw.circle(surf, (80, 64, 35), (x, y), 13, 1)
         pygame.draw.circle(surf, (198, 174, 110), (x - 3, y - 3), 5)
+
+    def _draw_wall_torch(self, surf, x, y):
+        # A wall sconce: an iron bracket rising off the wall with a guttering
+        # flame at the top. The ROOM lighting is punched by Game._draw_dark
+        # (which finds wall_torch decos); this is the visible fixture + a tight
+        # flame halo. Drawn tall and anchored at the wall base so the billboard
+        # reads as mounted up the wall.
+        _light_pool(surf, x, y - 16, 28, (255, 170, 80), 78)
+        pygame.draw.line(surf, (38, 34, 36), (x, y), (x, y - 14), 3)          # iron post
+        pygame.draw.line(surf, (62, 56, 50), (x - 3, y - 14), (x + 3, y - 14), 2)  # cup
+        f = math.sin(self.t * 16) + (random.random() - 0.5)
+        fh = 11 + f * 2.2
+        bx = x + int(math.sin(self.t * 9) * 1.2)                             # waver
+        top = int(y - 15 - fh)
+        pygame.draw.ellipse(surf, (190, 70, 24), (bx - 4, top, 8, int(fh)))           # ember
+        pygame.draw.ellipse(surf, (245, 165, 48),
+                            (bx - 3, int(y - 14 - fh * 0.78), 6, int(fh * 0.78)))     # body
+        pygame.draw.ellipse(surf, (255, 236, 175),
+                            (bx - 1, int(y - 13 - fh * 0.45), 3, int(fh * 0.45)))     # core
 
     def _draw_cot(self, surf, x, y):
         pygame.draw.rect(surf, (94, 65, 41), (x - 14, y - 7, 28, 14))

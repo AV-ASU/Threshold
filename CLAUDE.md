@@ -1,5 +1,12 @@
 # THRESHOLD — Claude guide
 
+> **HARD RULE — no dashes in player-facing text.** Never use em-dashes (—),
+> en-dashes (–), or double-hyphen dashes (`--`) as punctuation in ANY text the
+> player reads: item names/descriptions, dialogue, narrator beats, notices,
+> evidence/notes entries, ending text, on-screen labels. Rewrite with a period,
+> comma, colon, or a new sentence instead. (Code comments and these docs may
+> still use them; this rule is about strings the player sees.)
+
 A narrative-horror game in **pygame**, played through an **oblique
 tilted camera** (the view tilts ~55° by default; **F3** toggles back to
 the flat pitch-0 view). Every sprite is drawn **procedurally** — there is

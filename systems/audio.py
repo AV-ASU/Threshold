@@ -296,8 +296,8 @@ class Audio:                        #Starting screen needs music, something simp
             ], beat_ms=180, vol=0.11, wave="square"),
             # wind: 'music' for the brimley -- a long noise drone
             # with a subtle pitched undertone, no melody, no rhythm.
-            # Stops entirely once the playscript is picked up; the silence
-            # is the point.
+            # Stops entirely once you take the first cult testimony in the
+            # Works; the silence is the point.
             "wind": self._wind_loop(),
             # threshold_drone: deeper, more pitched than wind. Title
             # screen + the "world isn't right" takeover. Two stacked

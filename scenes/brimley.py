@@ -611,6 +611,16 @@ def build_brimley():
     sc.add_decoration(Decoration(82 * TILE + 16, 65 * TILE + 16, "hanging_figure"))
     sc.add_decoration(Decoration(63 * TILE + 16, 45 * TILE + 16, "dead_crow"))
     sc.add_decoration(Decoration(74 * TILE + 16, 78 * TILE + 16, "dead_crow"))
+    # A WHIRLPOOL in the river: the water keeps flowing past it, but at this
+    # spot it spirals down a sink in the bed -- where the surface river drains
+    # into the one running under the town (NARRATIVE 1b: the river is the
+    # artery the water, and the diggers, followed down to the door). Cold mist.
+    _whirl_row = 38
+    _whirl_col = _river_cols(_whirl_row)[1]
+    sc.add_decoration(Decoration(_whirl_col * TILE + 16, _whirl_row * TILE + 16,
+                                 "swallow_hole"))
+    for _mx, _my in [(_whirl_col - 1, _whirl_row - 1), (_whirl_col + 1, _whirl_row + 1)]:
+        sc.add_decoration(Decoration(_mx * TILE + 16, _my * TILE + 8, "mist"))
     # The cauldron-entrance threshold -- creepy_tree on the j tile
     # itself, a single bloody handprint at the threshold, and a
     # candle melted to a stone at the foot. Just enough cue for
@@ -687,6 +697,9 @@ def build_brimley():
     # step a while, then back indoors out of the cold that came early.
     _resident(63, 54, "Old Pell", "old_townsman", [
         "Cold came in early this year. And it never lifted. Just sat down on the town and stayed.",
+        "A foulness came with it and spread over the whole town. You feel it "
+        "more than smell it. Folk are tired under it now, all of them, and "
+        "sleep doesn't mend it.",
         "Stopped marking the calendar. Not the days. Where would I be counting toward?",
         "[c=dim]You're new. We don't get new. Nobody gets in. Nobody gets...[/c]",
     ], voice="blip_low", movement="homebody", radius=34, fold=True)
@@ -696,11 +709,13 @@ def build_brimley():
     # individual loss, forbidden by §1b); just the compulsion she doesn't
     # question. She watches the road. She does not wave.
     _resident(96, 8, "Mrs. Calder", "townswoman", [
-        "I set an extra place at supper. Have done for a while now.",
-        "Couldn't tell you who for. Someone's coming. I just know it, the "
-        "way you know your own name. So I lay the plate.",
-        "[c=dim]Some nights I hear the door and near get up to answer. Then I "
-        "remember I don't know who I'd be letting in.[/c]",
+        "Oh. Is it you? ...Are you the one the place is set for?",
+        "[c=dim]No. No, it couldn't be you. Forgive an old woman her "
+        "hoping.[/c]",
+        "I lay an extra plate at supper. Have done a while now. Couldn't tell "
+        "you who for. Someone's coming. I know it the way I know my own name.",
+        "[c=dim]I'll know the face when it's across the table from me. Till "
+        "then it would be unkind not to be ready.[/c]",
     ], movement="idle")
     # Royce -- by the river bridge. He TRIED to drive out, for weeks, and
     # the corn handed him back every time; the futility broke him and he's
@@ -771,7 +786,6 @@ def build_brimley():
     sc.add_decoration(Decoration(barrow_x, barrow_y, "wheelbarrow"))
     sc._barrow_pos = (barrow_x, barrow_y)
     sc.add_decoration(Decoration(52 * TILE + 16, 61 * TILE + 16, "missing_flyer"))
-    sc.add_decoration(Decoration(40 * TILE + 16, 27 * TILE + 16, "missing_flyer"))
     # The calendar, marked up to a day a few months back and then just
     # stopped -- the season kept turning, the marking didn't (NARRATIVE
     # 1b: time runs normally; it's space that folds). Nailed to the
@@ -826,17 +840,15 @@ def build_brimley():
 
     # ---- Main-road waymarks: signs + a lamp thread to follow ----
     # A welcome sign where the Lodge road comes in, directional signs at the
-    # spine's junctions (the well, the town cluster, the church over the
-    # bridge), and a run of lamps along the main road -- the lit thread the
-    # player can always pick up and follow across the wrapped town.
+    # spine's junctions (the well, the town cluster), and a run of lamps along
+    # the main road -- the lit thread the player can always pick up and follow
+    # across the wrapped town.
     sc.add_decoration(Decoration(97 * TILE + 16, 8 * TILE + 16, "town_sign",
                                  text="BRIMLEY"))
     sc.add_decoration(Decoration(92 * TILE + 16, 22 * TILE + 16, "town_sign",
                                  text="WELL"))
     sc.add_decoration(Decoration(60 * TILE + 16, 26 * TILE + 16, "town_sign",
                                  text="TOWN"))
-    sc.add_decoration(Decoration(37 * TILE + 16, 22 * TILE + 16, "town_sign",
-                                 text="CHURCH"))
     for lx in (12, 24, 46, 70, 88):                  # lamps along the E-W spine
         sc.add_decoration(Decoration(lx * TILE + 16, 22 * TILE + 16, "lantern"))
     sc.add_decoration(Decoration(95 * TILE + 16, 16 * TILE + 16, "lantern"))
@@ -1023,8 +1035,8 @@ def build_brimley():
     def _brimley_interact(game):
         # The well -- the only mouth into the Works. Needs the rope to
         # rig the first descent; once tied, the rope stays as the climb
-        # route until the playscript snaps it on a later descent
-        # (handled in well_bottom's on_enter).
+        # route until opening the Deep Stair snaps it on a later descent
+        # (well_rope_broken, set at works_deepstair).
         wx, wy = sc._well_pos
         if abs(game.player.x - wx) < 36 and abs(game.player.y - wy) < 36:
             if game.save.flag("well_rope_broken"):

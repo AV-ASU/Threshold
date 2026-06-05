@@ -39,7 +39,12 @@ isolated scaffolding — they are the live render path under tilt.
   world **keeps simulating off-camera** (entities move/chase normally while
   unseen — "not looking ≠ not there"), only the *render* is gated, so a thing
   re-enters view wherever its own logic carried it. The **King is exempt** (a
-  relentless apex you must be able to track).
+  relentless apex you must be able to track). The blind-spot **fog**
+  (`_draw_sight_fog`) is **shadow-cast**: each ray across the cone stops at the
+  first solid (`Scene.blocks_sight`), so the clear region is a true visibility
+  polygon — you *see* your sightline cut off where a wall interrupts it (crisp
+  tile-edged shadows), and the fog matches the actor gate instead of looking
+  clear through walls.
 - **UI stays flat / screen-space.** HUD, dialog, notebook, vignettes,
   full-screen overlays (transition fade, apex wash, death cards, the Carcosa
   cutscenes) are unaffected by the tilt and keep drawing in screen space.

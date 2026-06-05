@@ -58,20 +58,15 @@ Phase 1 is complete and merged, plus a large feel/voice pass this round:
 ## Phase 2 — what REMAINS
 
 Treat `GAME_CHANGES.md` as the list, but note the state above (do **not**
-re-author §8 — it's done). The genuinely open work:
+re-author §8 — it's done; §10 is a standing constraint per iron rules 2-3, NOT
+a task — the lure chain stays unstated, the lone `the_case` touch already
+exists, never elaborate it). The genuinely open work:
 
-- **Ashfall (§9)** — the one independent system left. A drifting pale-yellow
-  ashfall scaling with `_infest_stage()`, denser near the source, **never on
-  the Threshold**. Procedural; preview headlessly before committing.
 - **Buried lore inside the cult's notes (§6b)** — the *contents* of the
   Playscript: fragmentary, longing, unreliable **testimony the game never
   confirms** (the dig, the bargain, the longing). The wrapper + the leave-urge
   exist; the deeper lore fragments do not. Surface them where the notes are
   read. Never the author's voice; never "dimension."
-- **The lure felt as luck (§10, second half)** — where His POV is ever *felt*
-  (an erupting King, a Watcher fixing on you), let it read as **gleeful
-  recognition / luck** (He found exactly the right hand), never omniscient
-  inevitability. Never stated.
 - **Rev. Asa Crane (§12)** — dialogue/murder rework. Lore unchanged. **Settle
   the new presentation with me before writing.**
 

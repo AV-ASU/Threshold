@@ -428,16 +428,15 @@ the hive.
 | 2 | **Mara's Journal** | `mom_notebook` | The **barn** (`barn`) — behind the workbench | Her descent, in her own words (page 3 → the flashback) |
 | 3 | **The Ledger** (the Lodge's guest register) | read in place | The Arcadia **front desk** — the register Sable has you sign on arrival; the evidence lands when you re-read it | Guests who check in and never out — and your own name, signed in tonight, already among them. *(The old cellar copy behind a loose panel is **cut**; one ledger, on the desk in plain sight.)* |
 | 4 | **The Preacher** | his **cross** (item `cross`) taken from the viscera | The **church** (`old_man_house`) — his own floor | The town murders the ones who name them — gutted for preaching against the cult |
-| 5 | **The Sign — the Pallid Mask** | `sigil_rubbing` (reskinned to the Mask; key kept for saves) | Sign Chamber (well) | His face made an object: what they worship, the shard the fold opens for (the **escape key** → *SPREAD IT*), and the mask that seats into the cult-notes' cover to make the keystone you carry to the door |
+| 5 | **The Sign — the Pallid Mask** | `sigil_rubbing` (reskinned to the Mask; key kept for saves) | Sign Chamber (well) | His face made an object: what they worship, the shard the fold opens for (the **escape key** → *SPREAD IT*), and the keystone you carry to the door (the Mask alone; the cult's notes are decoupled, pure lore) |
 | 6 | **The Congregation** | (Mara, turned) | The Depths / the hive | There was never anyone to save |
 
 > **The Sign IS the Pallid Mask.** Not a glyph — the King's own pale
 > half-mask, made an object. The jaundiced sigil scrawled through the
 > cult's halls (the `yellow_sign` decoration) is only its 2D *brand*.
-> This one fact binds the set: the Mask **seats into the mask-shaped recess
-> on the cover of the cult's notes** (the Playscript — the unmasking, *"I
-> wear no mask"*), and the two combine into the single **keystone you carry
-> down to the door.** Carrying it breaks the fold (it is *a shard of Him*),
+> This one fact binds the set: the Mask is the single **keystone you carry
+> down to the door** (the unmasking, *"I wear no mask"*); the cult's notes
+> are decoupled now, three pure-lore testimony fragments (§6b). Carrying it breaks the fold (it is *a shard of Him*),
 > and possessing it draws Him. The escape key and evidence #5 are the
 > **Mask itself**, not a charcoal rubbing.
 
@@ -504,8 +503,8 @@ other route down and **no secret paths**. The surface is one connected
 sprawl: the **Arcadia Lodge** (lodge, yard, cornfields) ↔ **Brimley**
 (the town itself — the well, the church, the store, the sheriff's
 office, the school, the barn, the kid's house, and the car). Going
-*deeper* than the first underground layer is gated by the
-**playscript**.
+*deeper* than the first underground layer is gated at the **Deep
+Stair** by the **Pallid Mask** (the keystone).
 
 > **Brimley is one place.** The old code had two scenes (`mistlands`
 > and `village`); they were merged into a single `brimley` scene so
@@ -525,9 +524,9 @@ SURFACE         The ARCADIA LODGE (lodge + yard + cornfields) ─▶ BRIMLEY
                   ▼
 THE WORKS       The cult's underground labour, reached by the well: a
 (Basement Level)   built 7-room gauntlet (§9). Mara's cell branches off it;
-                the Playscript + the Pallid Mask are found down here.
+                the cult's testimony + the Pallid Mask are found down here.
                   │
-                  │   gated by the Playscript
+                  │   gated by the Pallid Mask
                   ▼
 DEEPER          The Depths → the Threshold (END IT / seal) → the Hive
                 (the congregation; Mara is here).   (built)
@@ -536,8 +535,8 @@ DEEPER          The Depths → the Threshold (END IT / seal) → the Hive
 ```
 
 - **Surface:** the Arcadia (lodge/yard/cornfields) ↔ Brimley (one map: the well, the church, the store, the sheriff's office, the school, the barn, the kid's house, the locals, the car). Sealed; sole way down = the well (rope).
-- **The Works** (a.k.a. the Basement Level): the first underground layer, reached by the well — a built 7-room gauntlet (§9): Mara's cell, the Playscript, the Pallid Mask.
-- **Deeper (playscript-gated):** the Depths, the Threshold (**End it**), and the Hive where **Mara** is — all built: the `dark` scene holds the kneeling congregation and Mara's one-shot recognition (evidence #6).
+- **The Works** (a.k.a. the Basement Level): the first underground layer, reached by the well — a built 7-room gauntlet (§9): Mara's cell, the cult's testimony, the Pallid Mask.
+- **Deeper (Mask-gated at the Deep Stair):** the Depths, the Threshold (**End it**), and the Hive where **Mara** is — all built: the `dark` scene holds the kneeling congregation and Mara's one-shot recognition (evidence #6).
 
 > **Naming, to avoid the collision:** the **lodge cellar** is the
 > `basement` *scene* — the Arcadia's own cellar, a *surface* interior.
@@ -566,9 +565,9 @@ that fire is someone He already took. You only ever see it by losing.
 ### The Fork — the Mask is your way out, or your way down
 
 Both *chosen* endings branch from **one object**: the **keystone** — the
-**Pallid Mask** seated into the mask-shaped recess on the cover of the
-**cult's notes** (the Playscript). You make it by lifting the Mask in the
-**Sign Chamber** (it combines with the notes you already carry); there is
+**Pallid Mask**, lifted in the **Sign Chamber**. (The cult's notes are
+decoupled now: three pure-lore testimony fragments, §6b. The Mask alone is
+the keystone, which is why SPREAD always answered to it.) There is
 only one, and from the moment you hold it the case has exactly two ends.
 
 **The Mask reads as permission to leave — and that is the temptation.**
@@ -602,7 +601,7 @@ The case ends on that one pull, and the PI hears it as two voices:
 > A case heavy enough to drop the law on Brimley like a roof. The town will
 > finally let you go. So go.*
 
-> **Go deeper.** *Or you carry the Mask and the notes down past her, to the
+> **Go deeper.** *Or you carry the Mask down past her, to the
 > thing all of this kneels to, and give it to the door. Somewhere back up
 > the rope you stopped being sure whether you mean to end it, or only to
 > stand in front of it once.*
@@ -680,8 +679,7 @@ The reworks the new fiction forced are all shipped. What must stay true:
   route. The barn→well_passage hatch is nailed shut from below; no
   secret paths.
 - **Deep Stair gate (rework — see §8/GAME_CHANGES).** The **keystone** —
-  the **Pallid Mask** (Sign Chamber) seated into the **Playscript / cult's
-  notes** (Scriptorium) — opens the stair to His own authority pressed to
+  the **Pallid Mask** (Sign Chamber), Mask-only now (§6b) — opens the stair to His own authority pressed to
   the stone, and snaps the rope (point of no return), **but is NOT consumed
   there.** You carry the keystone down and **spend it at the Threshold door
   (SEAL).** Carrying it back out instead is **SPREAD**; tearing the Mask
@@ -694,7 +692,8 @@ The reworks the new fiction forced are all shipped. What must stay true:
   Room (his pressed cult robe is the only tell). Mara's room is the
   underground `maras_room` cell off the Sorting Hall.
 - **Item keys are load-bearing** (saves and game logic depend on them):
-  `mom_notebook`, `sigil_rubbing`, `playscript`, `cross`, `robe`,
+  `mom_notebook`, `sigil_rubbing`, `cult_calling`, `cult_bargain`,
+  `cult_digging`, `cross`, `robe`,
   `unsent_letter`, `flashlight`, `rope`, `lumber_axe`, `woodshed_key`.
   Display names and fiction may change; keys may not.
 
@@ -708,12 +707,12 @@ The reworks the new fiction forced are all shipped. What must stay true:
 > handoff TODO). In brief: **Ledger → front desk** (cut the cellar copy +
 > Sable's cellar line); **Sable is the most-attuned *local*** (not a
 > newcomer); **Royce has stopped driving out**; **Mrs. Calder sets a place
-> for a guest she can't name** (not a vanished husband); **Playscript = the
-> cult's own notes** (a vehicle for buried lore as unconfirmed testimony);
+> for a guest she can't name** (not a vanished husband); **the cult's notes = three pure-lore testimony fragments**
+> (the Calling, the Bargain, the Digging — unconfirmed testimony);
 > **Mask reads as "permission to leave,"** built up by the PI's escalating
 > **distressed notes**, tempting SPREAD over going deeper; **keystone-to-
-> door rework** (Mask+notes combine, the Deep Stair opens without consuming
-> them, the keystone is spent at the Threshold to SEAL); the **ashfall**
+> door rework** (the **Mask alone** is the keystone, §6b; the Deep Stair
+> opens without consuming it, spent at the Threshold to SEAL); the **ashfall**
 > infestation layer; the **lure chain** (King→Mara→Walter→PI, felt not
 > stated); the **awareness model** (no visible tell; the cult knew the gist
 > of its bargain, the locals never knew they were claimed); and a **Rev.
@@ -832,9 +831,9 @@ finds you — run it on cover, timing, hides).
 | 3 | **The Cistern** (was "Tallow Vats" — cut) | `works_vats` | Where the dig **broke into the underground river** — the artery to the door (§1b), and the diggers' proof they were close. Wet stone, rising damp, 2 tending cultists, 2 hides. *No rendering, no tallow, no bodies — the claiming cult eats no one. Fiction redress is a code TODO (§8); the scene key stays `works_vats`.* |
 | 4 | The Sorting Hall | `works_sorting` | The **worldly lives the congregation shed** when they were claimed — and the effects of the few the fold took — sorted and catalogued. 2 cultists, 3 hides (hardest crossing). A side door north → **Mara's room**. |
 | 4a | **Mara's Room** | `maras_room` | A convert's cell off the hall: cot, her cult robe + the unsent letter. **Evidence #1.** A quiet beat off the gauntlet, 1 hide. |
-| 5 | The Scriptorium | `works_scriptorium` | The Sign copied endlessly — the **attuned compulsively bleeding the dream-image out** onto every surface, none of them the door itself (§1b). 1 oblivious scribe, 2 hides. **The Playscript / the cult's notes** — the one bound, whole volume among the loose copies: their own compulsive, unreliable, partial record of what they feel and think they understand. Taken here; it carries buried lore as **testimony the game never confirms**, and its cover has the mask-shaped recess the Pallid Mask seats into (the keystone, §6). |
+| 5 | The Scriptorium | `works_scriptorium` | The Sign copied endlessly — the **attuned compulsively bleeding the dream-image out** onto every surface, none of them the door itself (§1b). 1 oblivious scribe, 2 hides. **The Calling** — the first of three cult-testimony fragments (§6b), the one bound, whole volume among the loose copies: the congregation's own personal testimony (their voice in the item description, the PI's reaction in his notes). Pure lore; it gates nothing (the keystone is the Mask alone). The Bargain + The Digging are found deeper (the Sump, the Ossuary). |
 | 6 | The Sign Chamber | `works_sign` | The Sign daubed on the wall + an altar; 3 kneelers + 1 patrol. **Lift the Pallid Mask → `sigil_rubbing` + evidence #5** (no charcoal — you take the object itself). |
-| 7 | The Deep Stair | `works_deepstair` | The gate down: opens to `depths_antechamber` **and snaps the rope** (the point of no return). **Rework (§7/GAME_CHANGES):** it should open to the **keystone** (Mask + notes) pressed to the stone **without consuming it** — you carry the keystone down and spend it at the Threshold door. *(Current build consumes Playscript + Mask here — that is the change.)* |
+| 7 | The Deep Stair | `works_deepstair` | The gate down: opens to `depths_antechamber` **and snaps the rope** (the point of no return). It opens to the **keystone** (the **Pallid Mask** alone, §6b/§7) pressed to the stone **without consuming it** — you carry the Mask down and spend it at the Threshold door. |
 
 **Rules wired:**
 - **One mouth:** rope down the well only; the barn cellar hatch is now
@@ -845,11 +844,10 @@ finds you — run it on cover, timing, hides).
   you commit to the Depths. **This is where Seal vs. Spread is decided in
   practice:** turn back here with the keystone and climb out (SPREAD), or
   descend (committing to carry the keystone to the door and SEAL).
-- **Gate (rework — §7/GAME_CHANGES):** the stair should open to the
-  **keystone** (Mask seated in the cult's notes) pressed to the stone
-  **without consuming it**, then snap the rope. *(Current build consumes
-  both the Playscript and the Mask at the stair and seals empty-handed at
-  the Threshold — the change is: keep the keystone, spend it at the door.)*
+- **Gate (§7/GAME_CHANGES, DONE):** the stair opens to the **keystone**
+  (the **Pallid Mask** alone) pressed to the stone **without consuming it**,
+  then snaps the rope. You carry the Mask down and spend it at the Threshold
+  door (SEAL). The cult's notes are decoupled (pure lore, §6b).
 - The well sprite was redesigned and repositioned in `brimley` (the
   east village square — a landmark just off the road).
 

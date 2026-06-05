@@ -1,6 +1,6 @@
 """The Clerk's house (above the inn): spare_room (player's cot),
 main floor (kitchen + living + front door), the Clerk's bedroom
-(locked, holds the playscript + car keys + robe), the basement (photograph,
+(locked, holds the robe), the basement (photograph,
 notebook, flashlight, bulkhead exit).
 
 The bedroom KEY means the spare room above the inn. The house KEY

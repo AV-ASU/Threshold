@@ -361,6 +361,21 @@ UNDERGROUND_SCENES = {
     "the_sump", "the_cells", "the_ossuary",
 }
 
+# Ashfall (NARRATIVE 4b): a slow drifting pale-yellow ashfall, the pressure
+# of the vessel made visible -- His attention settling on you, not snow, not
+# weather. Density scales with the infestation stage (light at 1 -> a steady
+# yellow drift at 3) and thickens underground (nearer the source). Never on
+# the Threshold (the eye of it is still, 1b), and safe rooms stay clear until
+# stage 3 (mirrors the rot decals). Pure screen-space overlay, procedural.
+ASHFALL_BY_STAGE = {0: 0, 1: 46, 2: 110, 3: 196}   # target motes by stage
+ASHFALL_SOURCE_MUL = 1.7      # denser underground (nearer the source)
+ASHFALL_MAX = 360             # hard ceiling on live motes
+ASHFALL_COLOR = (210, 176, 86)    # jaundiced pale yellow
+ASHFALL_FALL_MIN, ASHFALL_FALL_MAX = 11.0, 30.0    # px/s downward drift
+ASHFALL_WIND = 7.0            # px/s steady sideways drift
+ASHFALL_SWAY = 9.0            # px sway amplitude as a mote falls
+ASHFALL_GROW = 70.0           # motes/s the field eases toward its target
+
 
 def _corpse_examine(game, npc):
     """E on a local you killed. A flat, dim line -- no absolution, just
@@ -552,6 +567,9 @@ class Game(CutsceneMixin):
         # intense than the brimley vignette but never goes away --
         # the world edges are always pressing in. Cached on first need.
         self._outdoor_vignette_surf = None
+        # Ashfall motes (NARRATIVE 4b): live screen-space particle field,
+        # eased toward a stage-driven target each frame. See _tick_ashfall.
+        self._ashfall_parts = []
 
         # ---- THRESHOLD: the visibility meter ----
         # `visibility` is a float in [0, 1]: how visible the player is
@@ -797,6 +815,7 @@ class Game(CutsceneMixin):
         self._cult_topup_t = 0.0
         self.flashlight_on = False
         self._void_sting_played = False
+        self._ashfall_parts = []      # clear the ash field on New Game
         # The opening "door won't open the first time" beat is a
         # once-per-run latch. The Game instance is reused across
         # quit-to-title, so without this reset a second New Game in the
@@ -1652,6 +1671,77 @@ class Game(CutsceneMixin):
         evidence count (knowing rots the world, and you can't un-know)."""
         return min(3, self._evidence_count())
 
+    def _ashfall_target(self):
+        """How many ash motes the air should hold right now (NARRATIVE 4b).
+        Zero on the Threshold (the still eye of it) and in safe rooms before
+        stage 3; otherwise stage-driven, thicker underground (the source)."""
+        if self.scene is None:
+            return 0
+        key = self.scene.key
+        if key == "threshold":
+            return 0          # never on the Threshold (1b)
+        stage = self._infest_stage()
+        if key in SAFE_SCENES and stage < 3:
+            return 0          # safe rooms stay clean until it claims them too
+        n = ASHFALL_BY_STAGE.get(stage, 0)
+        if key in UNDERGROUND_SCENES:
+            n = int(n * ASHFALL_SOURCE_MUL) or (1 if stage == 0 else 0)
+        return min(ASHFALL_MAX, n)
+
+    def _spawn_ash_mote(self, seeded_y=False):
+        """One ash mote in screen space. seeded_y scatters it up the whole
+        screen (initial fill); otherwise it starts just above the top edge."""
+        depth = random.random()    # 0 far/slow/faint .. 1 near/fast/bright
+        return {
+            "x": random.uniform(-20, SCREEN_W + 20),
+            "y": random.uniform(0, SCREEN_H) if seeded_y else random.uniform(-30, -4),
+            "vy": ASHFALL_FALL_MIN + depth * (ASHFALL_FALL_MAX - ASHFALL_FALL_MIN),
+            "ph": random.uniform(0, math.tau),
+            "sz": 1 if depth < 0.6 else 2,
+            "a": int(40 + depth * 92),
+        }
+
+    def _tick_ashfall(self, dt):
+        """Ease the live mote field toward its stage target and drift it.
+        Pure screen-space atmosphere -- no world state, runs behind modals."""
+        parts = self._ashfall_parts
+        target = self._ashfall_target()
+        # Grow/shrink toward the target a few motes per frame so the air
+        # thickens and thins smoothly as evidence climbs / scenes change.
+        room = ASHFALL_GROW * dt
+        if len(parts) < target:
+            for _ in range(min(target - len(parts), max(1, int(room)))):
+                parts.append(self._spawn_ash_mote(seeded_y=not parts))
+        elif len(parts) > target:
+            del parts[target:]
+        if not parts:
+            return
+        t = pygame.time.get_ticks() / 1000.0
+        for p in parts:
+            p["y"] += p["vy"] * dt
+            p["x"] += (ASHFALL_WIND + math.sin(t * 0.7 + p["ph"]) * ASHFALL_SWAY) * dt
+            if p["y"] > SCREEN_H + 4:
+                # recycle off the top with a fresh sideways offset
+                p["y"] = random.uniform(-30, -4)
+                p["x"] = random.uniform(-20, SCREEN_W + 20)
+            elif p["x"] > SCREEN_W + 20:
+                p["x"] -= SCREEN_W + 40
+            elif p["x"] < -20:
+                p["x"] += SCREEN_W + 40
+
+    def _draw_ashfall(self):
+        """Blit the ash motes as one soft pale-yellow wash over the world."""
+        parts = self._ashfall_parts
+        if not parts:
+            return
+        layer = pygame.Surface((SCREEN_W, SCREEN_H), pygame.SRCALPHA)
+        cr, cg, cb = ASHFALL_COLOR
+        for p in parts:
+            sz = p["sz"]
+            layer.fill((cr, cg, cb, p["a"]),
+                       (int(p["x"]), int(p["y"]), sz, sz))
+        self.screen.blit(layer, (0, 0))
+
     def _apply_infestation(self):
         """Re-derive the world's rot for the freshly-loaded scene from the
         evidence count. Scenes rebuild every load, so this is deterministic
@@ -1864,31 +1954,32 @@ class Game(CutsceneMixin):
     def _draw_brimley_haze(self):
         """Atmospheric overlay. Brimley and alter_room always run the
         outdoor haze + vignette. EVERY OTHER SCENE also runs the
-        outdoor haze + vignette while the player is carrying the
-        playscript -- the playscript's presence is hostile, the world dims around
-        it."""
+        outdoor haze + vignette while the player is carrying the Pallid
+        Mask -- His face is the hostile object now (NARRATIVE 8: the Mask
+        is the temptation and it draws Him), so the world dims around it."""
         if self.scene is None:
             return
         key = self.scene.key
-        # Safe / dim-safe interiors break the playscript-haze. Walking
-        # back to the Inn (or the cellar) with the playscript is meant
-        # to feel like a refuge from the hostile dim, not a
-        # continuation of it.
+        # Safe / dim-safe interiors break the Mask-haze. Walking back to the
+        # Inn (or the cellar) with the Mask is meant to feel like a refuge
+        # from the hostile dim, not a continuation of it.
         if key in SAFE_SCENES or key in DIM_SAFE_SCENES:
             return
-        holds_playscript = (self.player is not None
-                     and self.player.inventory.has("playscript"))
+        holds_mask = (self.player is not None
+                     and self.player.inventory.has("sigil_rubbing"))
         if key == "brimley":
             # Daytime town: a LIGHT atmospheric haze, not the oppressive dim.
-            # The "too dark" read was this flat black at 170 (~67%) stacked on
-            # the (now-fixed) void skybox, the blind-spot fog, and the film
-            # grade. Keep the drifting fog + the encroaching vignette for mood,
-            # but drop the flat tint right down so it reads as day.
-            self._draw_haze(70, (40, 40, 50, 70), 14, 24, 0.3, 30)
+            # The "too dark" read was a flat black tint stacked on the
+            # blind-spot fog, the film grade, AND the grade's own vignette.
+            # Now that the sight fog is shadow-cast (off-cone reads as a shaped
+            # shadow, not a flat gray wash), the flat tint can come almost all
+            # the way down so the LIT cone reads as full day. Keep the drifting
+            # fog patches + the encroaching vignette for mood.
+            self._draw_haze(26, (40, 40, 50, 70), 14, 24, 0.3, 30)
             self._draw_vignette()
-        elif holds_playscript:
-            # The playscript's presence is HOSTILE -- the world dims hard
-            # around it. This heavier dim is intentional and unchanged.
+        elif holds_mask:
+            # The Mask's presence is HOSTILE -- His face draws Him, the world
+            # dims hard around it. This heavier dim is intentional.
             self._draw_haze(170, (40, 40, 50, 80), 14, 24, 0.3, 30)
             self._draw_vignette()
 
@@ -2033,33 +2124,46 @@ class Game(CutsceneMixin):
         self.screen.blit(edge, (0, 0))
 
     def _draw_sight_fog(self):
-        """Gray fog over the blind spot. The Phase-4 sight gate already HIDES
-        creatures/items outside the forward cone; this veils the off-cone AREA
-        too, so 'you can't see there' reads as fog rather than just absence. The
-        cone is the same one the gate uses (keyed to look.aim, half-angle
-        SIGHT_HALF out to SIGHT_RANGE) with a clear near-bubble around the
-        player. Tilt only -- at pitch 0 the sight gate is off and the flat
-        shipping view stays untouched."""
+        """Gray fog over the blind spot, with the clear region SHADOW-CAST
+        against solids: each ray across the cone stops at the first wall it
+        hits, so you see your sightline cut off where vision is interrupted
+        (crisp tile-edged shadows behind walls). This makes the fog HONEST --
+        it now matches the actor gate (visible_factor -> los_clear), which
+        already hides things behind walls. The cone is keyed to look.aim
+        (half-angle SIGHT_HALF, out to SIGHT_RANGE) with a clear near-bubble.
+        Tilt only -- at pitch 0 the sight gate is off and the flat shipping
+        view stays untouched."""
         if not (self._tilt_on() and self.player is not None
                 and self.state == "playing"):
             return
         from rendering.sight import (SIGHT_HALF, SIGHT_RANGE, SIGHT_NEAR,
-                                     SIGHT_ANG_FEATHER)
+                                     SIGHT_ANG_FEATHER, LOS_STEP)
         fog = pygame.Surface((SCREEN_W, SCREEN_H), pygame.SRCALPHA)
         fog.fill((58, 60, 66, SIGHT_FOG_ALPHA))         # cold, thin gray
         aim = self.look.aim
-        # Cone apex = the player's GROUND point (the sight math is ground-plane);
-        # the arc samples the cone's far lip out at SIGHT_RANGE.
-        gx, gy = self.camera.project(self.player.x, self.player.y)
+        # The sight math is ground-plane WORLD space; the apex is the player's
+        # ground point. Cast a fan of rays across the cone, marching each one
+        # out until it crosses a solid (Scene.blocks_sight, the same predicate
+        # the gate uses) or reaches SIGHT_RANGE, then project the clipped tip.
+        px, py = self.player.x, self.player.y
+        blocks = self.scene.blocks_sight
+        gx, gy = self.camera.project(px, py)
         half = SIGHT_HALF + SIGHT_ANG_FEATHER
+        steps = 48          # enough rays for clean, crisp wall shadows
         pts = [(gx, gy)]
-        steps = 22
         for i in range(steps + 1):
             a = aim - half + 2 * half * (i / steps)
-            pts.append(self.camera.project(self.player.x + math.cos(a) * SIGHT_RANGE,
-                                           self.player.y + math.sin(a) * SIGHT_RANGE))
+            ca, sa = math.cos(a), math.sin(a)
+            dist = SIGHT_RANGE
+            d = SIGHT_NEAR
+            while d < SIGHT_RANGE:
+                if blocks(px + ca * d, py + sa * d):
+                    dist = d            # sightline interrupted here
+                    break
+                d += LOS_STEP
+            pts.append(self.camera.project(px + ca * dist, py + sa * dist))
         # pygame.draw writes the colour's alpha directly, so drawing (…,0)
-        # punches the cone + bubbles fully transparent (a clear window).
+        # punches the visibility polygon + bubbles fully transparent.
         pygame.draw.polygon(fog, (0, 0, 0, 0), pts)
         near_r = max(10, int(SIGHT_NEAR * self.camera.scale))
         pygame.draw.circle(fog, (0, 0, 0, 0), (gx, gy), near_r)
@@ -2134,6 +2238,15 @@ class Game(CutsceneMixin):
         from scenes.base import _light_pool
         psx, psy = self._player_screen()
         lit = self._flashlight_lit()
+        # Diegetic wall-torch light: each torch punches its own warm, flickering
+        # pool into the gloom, so a torch-lit room reads without the flashlight.
+        tnow = pygame.time.get_ticks() / 1000.0
+        torches = []
+        for d in getattr(self.scene, "decorations", []):
+            if getattr(d, "kind", None) == "wall_torch":
+                tx, ty = self.camera.project(d.x, d.y)
+                fl = 0.82 + 0.18 * math.sin(tnow * 7.0 + d.x * 0.25)
+                torches.append((int(tx), int(ty) - 12, fl))
         # Build the beam cone geometry once (apex -> left -> tip -> right).
         cone = None
         if lit:
@@ -2152,12 +2265,20 @@ class Game(CutsceneMixin):
             _light_pool(self.screen, psx, psy, 96, (240, 226, 165), 72)
         else:
             _light_pool(self.screen, psx, psy, 112, (118, 124, 150), 96)
+        for tx, ty, fl in torches:
+            _light_pool(self.screen, tx, ty, int(118 * fl), (255, 168, 78),
+                        int(82 * fl))
         gloom = 130 if self.scene.key in CULT_DARK_SCENES else 100
         overlay = pygame.Surface((SCREEN_W, SCREEN_H), pygame.SRCALPHA)
         overlay.fill((0, 0, 0, gloom))
         rings = [(30 + i * 14, int(gloom * i / 8)) for i in range(8)]
         for rr, aa in sorted(rings, key=lambda p: -p[0]):
             pygame.draw.circle(overlay, (0, 0, 0, aa), (psx, psy), rr)
+        for tx, ty, fl in torches:
+            trings = [(int((26 + i * 12) * fl), int(gloom * i / 7))
+                      for i in range(7)]
+            for rr, aa in sorted(trings, key=lambda p: -p[0]):
+                pygame.draw.circle(overlay, (0, 0, 0, aa), (tx, ty), rr)
         if cone:
             # Carve the beam clear of the gloom (alpha 0 inside the cone).
             pygame.draw.polygon(overlay, (0, 0, 0, 0), cone)
@@ -2309,6 +2430,23 @@ class Game(CutsceneMixin):
             "I never reached it. One dream, a year ago, and it never came"
             " again. So why do I know this place.",
         ]})
+        self.save.set_arg("notes", notes)
+        if hasattr(self, "_flash_notebook"):
+            self._flash_notebook()
+
+    def _log_note(self, name, lines):
+        """Append a PI case-notebook NOTE (arg `notes`, never `evidence`).
+        Idempotent by `name` so re-triggering a pickup never dupes. Used by
+        the cult-testimony fragments (the cult's voice is the item desc; this
+        is the PI's reaction). NOTES never inflate `_evidence_count`, so they
+        never arm the King or the infestation -- only the six CANONICAL_EVIDENCE
+        beats do."""
+        notes = self.save.arg("notes", [])
+        if not isinstance(notes, list):
+            notes = []
+        if any(isinstance(e, dict) and e.get("name") == name for e in notes):
+            return
+        notes.append({"name": name, "lines": list(lines)})
         self.save.set_arg("notes", notes)
         if hasattr(self, "_flash_notebook"):
             self._flash_notebook()
@@ -3820,6 +3958,7 @@ class Game(CutsceneMixin):
                 self._tick_cult_ambient(dt)
                 self._tick_king(dt)
             self._tick_wake_muffle(dt)
+            self._tick_ashfall(dt)        # atmosphere: drifts behind modals too
             self._tick_flashback(dt)
             self._tick_ending(dt)
         elif self.state == "transition":
@@ -4236,7 +4375,8 @@ class Game(CutsceneMixin):
                                         threat=king_threat, seed=id(npc) & 0xffff,
                                         curse=curse_v, gaze=w_gaze, view=nview,
                                         to_player=king_to_player,
-                                        lean=king_lean, scale_mul=king_scale_mul)
+                                        lean=king_lean, scale_mul=king_scale_mul,
+                                        pose=getattr(npc, "pose", None))
                         # A resister whose flesh has turned: their bespoke
                         # fold-horror form, laid over the person they were.
                         if getattr(npc, "_mutated", False):
@@ -4412,6 +4552,10 @@ class Game(CutsceneMixin):
         # image. Applied before the HUD so UI text stays crisp.
         from scenes.base import apply_grade
         apply_grade(self.screen, pygame.time.get_ticks() / 1000.0)
+        # Ashfall over the graded world (NARRATIVE 4b) -- the pale-yellow drift
+        # rides on top so the grade's desaturate/cool-tint can't wash it out.
+        # Under the HUD: it's atmosphere, not interface.
+        self._draw_ashfall()
         self._draw_interact_prompt()
         self._draw_hud()
         self._draw_notebook_toast()
