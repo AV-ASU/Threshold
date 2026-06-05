@@ -758,7 +758,8 @@ class ThreatMixin:
             if self._death_t >= 3.8:
                 self._death_kind = None
                 self._closure_locked = False
-                self._king = None
+                self._despawn_king()          # full teardown: NPC + FX + tone,
+                                              # not just nulling the ref
                 self.visibility = 0.40        # not zero; never zero
                 self.audio.music_muted = False
                 self.state = "title"

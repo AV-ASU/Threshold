@@ -159,11 +159,6 @@ class Decoration:
     # -- Flat (pitch-0 / F3) fallbacks for the volumetric props in
     #    rendering/props.py + the new box furniture. The tilt camera draws
     #    these as real solids; the flat top-down view uses these 2D sprites.
-    def _draw_pillar(self, surf, x, y):
-        pygame.draw.circle(surf, (104, 101, 106), (x, y), 9)
-        pygame.draw.circle(surf, (56, 54, 58), (x, y), 9, 1)
-        pygame.draw.circle(surf, (150, 148, 154), (x - 2, y - 2), 3)
-
     def _draw_cistern_basin(self, surf, x, y):
         pygame.draw.ellipse(surf, (92, 96, 98), (x - 13, y - 9, 26, 18))
         pygame.draw.ellipse(surf, (50, 54, 56), (x - 13, y - 9, 26, 18), 1)

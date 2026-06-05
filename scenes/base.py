@@ -1762,6 +1762,16 @@ def _draw_doorway(surf, camera, scene, tx, ty):
 _FLOOR_DECAL_KINDS = frozenset((
     "rug", "bloodstain", "gore", "yellow_sign", "bloody_handprint", "bloody_pile",
     "chalk_door",
+    # Things that lie IN the ground plane (sigils scratched in stone, a sink
+    # where the river drains, a floor hatch, a slumped body in its pool): warped
+    # flat onto the floor so they turn with the room instead of standing up as a
+    # top-down sticker under tilt. Pitch 0 draws them flat via Scene.draw as before.
+    "symbol", "binding_sigil", "swallow_hole", "cellar_hatch",
+    "body", "drowned_body",
+    # Low overhead foliage (drawn top-down): a flat warped decal reads as a
+    # shrub on the ground, where a standee would stand the overhead blob up
+    # vertically as a smear.
+    "bush",
 ))
 
 # Wall-mounted decorations. Under tilt these are lifted onto the wall face as

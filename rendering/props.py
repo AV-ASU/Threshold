@@ -10,7 +10,7 @@ falls back to the 2D `_draw_<kind>` sprites in entities/decoration.py.
 """
 import math
 import pygame
-from rendering.solids import draw_solid, _shade
+from rendering.solids import draw_solid, draw_billboard, _shade
 
 
 def _disc(surf, cam, wx, wy, hz, rx, ry, col, fill=True, width=2):
@@ -299,16 +299,94 @@ SOLID_PROPS = {
 }
 
 
+# -- Standees: stand authored 2D elevation art UP on the floor -------------
+# Props whose `_draw_<kind>` art in entities/decoration.py is a side-on
+# ELEVATION (a thing seen standing, base at the anchor) -- trees, effigies,
+# signs, a cauldron on its frame. Under tilt these used to blit FLAT at the
+# projected point, reading as a top-down sticker lying in a tilted world. We
+# now render that same authored art onto a card cropped to its silhouette and
+# stand it up GROUNDED, depth-sorted + occluding alongside the walls (the same
+# language as the object-map tree standees). The flat pitch-0 view still draws
+# the 2D sprite via Scene.draw, so it stays byte-identical. `hanging_figure`
+# hangs instead: its card is hung from a mount height so the body dangles.
+_STANDEE_HANG = frozenset(("hanging_figure",))
+_STANDEE_GROUND = frozenset((
+    "creepy_tree", "corn_doll", "corn_altar", "cauldron",
+    "wheelbarrow", "pedestal", "steeple", "town_sign", "flagpole",
+    "tall_grass", "grass_tuft", "doll",
+))
+_STANDEE_KINDS = _STANDEE_GROUND | _STANDEE_HANG
+_STANDEE_HANG_MOUNT = 34          # world height the hanging card is hung from
+_STANDEE_CARD_CACHE = {}          # (kind, seed, scale) -> cropped card | False
+
+
+def _standee_card(deco):
+    """The decoration's own 2D elevation art rendered to a card cropped to its
+    silhouette, cached per (kind, seed, scale). Animation is frozen at t=0 (a
+    standee is a static occluder, like the cached tree cards). Returns the card
+    Surface, or None if the art is empty / missing."""
+    s = round(getattr(deco, "scale", 1.0) or 1.0, 2)
+    key = (deco.kind, deco.seed, s)
+    card = _STANDEE_CARD_CACHE.get(key)
+    if card is None:
+        fn = getattr(deco, f"_draw_{deco.kind}", None)
+        if fn is None:
+            _STANDEE_CARD_CACHE[key] = False
+            return None
+        C = 128
+        big = pygame.Surface((C, C), pygame.SRCALPHA)
+        t0 = deco.t
+        deco.t = 0.0
+        try:
+            fn(big, C // 2, C // 2)
+        except Exception:
+            _STANDEE_CARD_CACHE[key] = False
+            return None
+        finally:
+            deco.t = t0
+        rect = big.get_bounding_rect()
+        if not rect.width or not rect.height:
+            _STANDEE_CARD_CACHE[key] = False
+            return None
+        card = big.subsurface(rect).copy()
+        if s != 1.0:
+            card = pygame.transform.smoothscale(
+                card, (max(1, int(card.get_width() * s)),
+                       max(1, int(card.get_height() * s))))
+        _STANDEE_CARD_CACHE[key] = card
+    return card or None
+
+
+def draw_standee(surf, cam, deco):
+    """Stand the decoration's elevation card up on the floor (or hang it).
+    Returns True if it was a standee kind (and drawn)."""
+    card = _standee_card(deco)
+    if card is None:
+        return False
+    if deco.kind in _STANDEE_HANG:
+        sw = card.get_width()
+        tx, ty = cam.project(deco.x, deco.y, _STANDEE_HANG_MOUNT)
+        surf.blit(card, (int(tx - sw / 2), int(ty)))
+    else:
+        draw_billboard(surf, cam, deco.x, deco.y, card, h_anchor=1.0)
+    return True
+
+
 def is_solid_prop(kind):
-    return kind in SOLID_PROPS
+    """A decoration that, under tilt, draws as world-oriented geometry (a
+    body-of-revolution solid OR a grounded standee) instead of a flat top-down
+    sticker. Both route through draw_prop_solid + the unified depth pass."""
+    return kind in SOLID_PROPS or kind in _STANDEE_KINDS
 
 
 def draw_prop_solid(surf, cam, deco):
-    """Draw one decoration as a volumetric body-of-revolution prop. Returns
-    True if it was a known solid prop (and drawn), False otherwise so the
-    caller can fall back."""
+    """Draw one decoration as a volumetric body-of-revolution prop or a grounded
+    standee. Returns True if it was a known solid/standee (and drawn), False
+    otherwise so the caller can fall back."""
     fn = SOLID_PROPS.get(deco.kind)
-    if fn is None:
-        return False
-    fn(surf, cam, deco)
-    return True
+    if fn is not None:
+        fn(surf, cam, deco)
+        return True
+    if deco.kind in _STANDEE_KINDS:
+        return draw_standee(surf, cam, deco)
+    return False
