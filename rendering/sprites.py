@@ -1745,7 +1745,7 @@ def draw_player_sprite(surf, x, y, facing, walk_phase=0, armor=None,
         pygame.draw.rect(lay, OL_LO, (cx + 2, sh_y, 4, 2)); lay.set_at((cx + 4, sh_y), CAP)  # epaulette R
         pygame.draw.line(lay, OL_LO, (cx, sh_y + 4), (cx, waist + 1), 1)  # centre back seam
         pygame.draw.rect(lay, OL_LO, (cx - 6, cy - 1, 5, 4)); pygame.draw.rect(lay, OL_LO, (cx + 1, cy - 1, 5, 4))  # rear cargo pockets
-        pygame.draw.rect(lay, SKIN, (cx - 2, hcy + 2, 4, 2))           # nape sliver
+        pygame.draw.rect(lay, SK_LO, (cx - 1, hcy, 2, 1))              # thin neck sliver under the cap
         pygame.draw.ellipse(lay, CAP, (cx - 7, hcy - 8, 15, 9))        # cap back (rounded)
         pygame.draw.ellipse(lay, CAP_LO, (cx - 7, hcy - 3, 15, 4), 1)
         pygame.draw.line(lay, CAP_LO, (cx, hcy - 8), (cx, hcy - 1), 1)  # back panel seam
