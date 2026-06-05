@@ -1816,34 +1816,61 @@ class Decoration:
         # water, so the rivulet looks soaked-in, not painted on)
         for k in range(-L, L + 1, 4):
             f = 1.0 - abs(k) / (L + 4.0)
-            pygame.draw.circle(surf, (26, 30, 32),
+            pygame.draw.circle(surf, (34, 44, 48),
                                P(k, 0), max(1, int((Wd + 2) * f)))
-        # the wet channel itself: cold near-black water pooled in the seam
+        # the wet channel itself: clear, cold water catching the dark -- bright
+        # enough to read as a live trickle on the stone, not a near-black seam
         for k in range(-L, L + 1, 3):
             f = 1.0 - abs(k) / (L + 3.0)
-            pygame.draw.circle(surf, (16, 26, 30), P(k, 0), max(1, int(Wd * f)))
-            pygame.draw.circle(surf, (8, 15, 19), P(k, 0), max(1, int(Wd * f * 0.55)))
-        # a cold sheen that slides ALONG the flow -- the current still moving
+            pygame.draw.circle(surf, (46, 78, 90), P(k, 0), max(1, int(Wd * f)))
+            pygame.draw.circle(surf, (70, 112, 126), P(k, 0),
+                               max(1, int(Wd * f * 0.6)))
+        # a bright cold sheen that slides ALONG the flow -- the current moving
         drift = (self.t * 9.0) % (2 * L + 6) - (L + 3)
         gx, gy = P(drift, -Wd * 0.3)
-        pygame.draw.circle(surf, (70, 96, 104), (gx, gy), 2)
+        pygame.draw.circle(surf, (150, 192, 204), (gx, gy), 2)
         gx2, gy2 = P(drift * 0.6 + L * 0.4, Wd * 0.25)
-        pygame.draw.circle(surf, (44, 64, 70), (gx2, gy2), 1)
+        pygame.draw.circle(surf, (104, 150, 162), (gx2, gy2), 1)
         # a couple of faint ripple ticks across the thread
         for kk in (-L // 2, L // 3):
             a = P(kk, -Wd * 0.7); b = P(kk, Wd * 0.7)
-            pygame.draw.line(surf, (40, 58, 64), a, b, 1)
+            pygame.draw.line(surf, (88, 128, 138), a, b, 1)
+
+    def _draw_waterfall(self, surf, x, y):
+        """A sheet of water falling down the cave cliff into the river (flat / F3
+        fallback; the tilt view draws it as a real falling sheet via
+        rendering/props.py). Animated streaks scroll down + foam at the base."""
+        H = 46
+        top = y - H
+        pygame.draw.rect(surf, (22, 28, 32), (x - 9, top, 18, H))       # wet rock
+        cols = [(120, 168, 184), (92, 140, 158), (150, 196, 208)]
+        for i in range(6):
+            sx = x - 8 + i * 3
+            col = cols[i % 3]
+            off = int((self.t * 42 + i * 7) % 8)
+            yy = top + off
+            while yy < y:
+                pygame.draw.line(surf, col, (sx, yy), (sx, min(y, yy + 4)), 1)
+                yy += 8
+        pygame.draw.line(surf, (188, 216, 226), (x - 8, top), (x + 8, top), 2)
+        pygame.draw.ellipse(surf, (150, 188, 200), (x - 11, y - 3, 22, 7))
+        pygame.draw.ellipse(surf, (210, 230, 236), (x - 5, y - 2, 10, 4))
+        for i in range(5):
+            fa = self.t * 3 + i * 1.3
+            fx = x + int(math.cos(fa) * 7)
+            fy = y - 1 - int(abs(math.sin(fa)) * 3)
+            pygame.draw.circle(surf, (205, 226, 234), (fx, fy), 1)
 
     def _draw_doorframe(self, surf, x, y):
         """The Threshold frame (flat / F3 fallback; the tilt view stands it up as
-        real geometry via rendering/props.py). A plain pale frame around an empty
-        opening that bleeds a faint sallow light -- a door with no wall."""
+        real geometry via rendering/props.py). A plain pale frame around an EMPTY
+        opening -- a door with no wall. Nothing fills the gap (you see through
+        it); walking through it is the seal."""
         pal = (152, 150, 158)
         dk = (74, 72, 80)
-        g = 0.5 + 0.5 * math.sin(self.t * 1.1)
-        pygame.draw.rect(surf, (34, 30, 18), (x - 11, y - 46, 22, 46))   # opening void
-        pygame.draw.rect(surf, (int(70 + 38 * g), int(58 + 26 * g), 26),
-                         (x - 9, y - 42, 18, 42))                        # sallow bleed
+        # opening: a hair darker than the apron so it reads as 'through to the
+        # cave behind', with NO glow -- it is only a frame.
+        pygame.draw.rect(surf, (24, 23, 28), (x - 10, y - 46, 20, 46))
         pygame.draw.rect(surf, pal, (x - 14, y - 48, 5, 48))            # left jamb
         pygame.draw.rect(surf, pal, (x + 9, y - 48, 5, 48))            # right jamb
         pygame.draw.rect(surf, pal, (x - 14, y - 48, 28, 5))           # lintel

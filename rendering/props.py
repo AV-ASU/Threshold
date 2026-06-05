@@ -314,13 +314,61 @@ def _draw_pickup_truck_solid(surf, cam, deco):
     _round_wheel(surf, P, -wbx, hW, r)
 
 
+def _draw_waterfall_solid(surf, cam, deco):
+    """A sheet of water cascading down the cave cliff into the river -- the
+    visible mouth of the artery (NARRATIVE 1b). Drawn each frame through the
+    camera (a real falling sheet, depth-sorted against the wall), with streaks
+    scrolling DOWN and foam churning where it strikes the water. `ang` (radians)
+    yaws the sheet so it can hang on any wall; default faces +y (south)."""
+    wx, wy = deco.x, deco.y
+    s = (getattr(deco, "scale", 1.0) or 1.0)
+    ang = float(deco.kwargs.get("ang", 0.0))
+    ca, sn = math.cos(ang), math.sin(ang)
+    H = 46 * s
+    halfw = 9 * s
+    t = deco.t
+
+    def P(across, z):                       # across the sheet width, height z
+        return cam.project(wx + across * ca, wy + across * sn, z)
+    # the wet dark rock the sheet sheets over
+    pygame.draw.polygon(surf, (22, 28, 32),
+                        [P(-halfw, 0), P(halfw, 0), P(halfw, H), P(-halfw, H)])
+    # falling streaks: dashed vertical runs that scroll downward over time
+    cols = [(120, 168, 184), (92, 140, 158), (150, 196, 208)]
+    n = 6
+    for i in range(n):
+        across = -halfw + (i + 0.5) * (2 * halfw / n)
+        col = cols[i % 3]
+        off = (t * 42 * s + i * 7) % (8 * s + 0.01)
+        z = H - off
+        while z > 0:
+            pygame.draw.line(surf, col, P(across, z),
+                             P(across, max(0, z - 4 * s)), 1)
+            z -= 8 * s
+    pygame.draw.line(surf, (188, 216, 226), P(-halfw, H), P(halfw, H), 2)  # crest
+    # foam pool + spray where it strikes the river
+    fb = cam.project(wx, wy, 0)
+    fw = max(3, int(halfw * cam.scale * 1.25))
+    fh = max(2, int(halfw * 0.5 * cam.ground_squash() * cam.scale))
+    foam = pygame.Surface((fw * 2 + 4, fh * 2 + 4), pygame.SRCALPHA)
+    pygame.draw.ellipse(foam, (150, 188, 200, 150), (2, 2, fw * 2, fh * 2))
+    pygame.draw.ellipse(foam, (210, 230, 236, 180),
+                        (fw - fw // 2 + 2, fh - fh // 2 + 2, fw, fh))
+    surf.blit(foam, (int(fb[0]) - fw - 2, int(fb[1]) - fh - 2))
+    for i in range(5):
+        fa = t * 3.0 + i * 1.3
+        p = P(math.cos(fa) * halfw * 0.7, abs(math.sin(fa)) * 4 * s)
+        pygame.draw.circle(surf, (205, 226, 234), (int(p[0]), int(p[1])), 1)
+
+
 def _draw_doorframe_solid(surf, cam, deco):
     """THE THRESHOLD (NARRATIVE 1b): a plain, blank, unmarked frame -- 'about the
     size of a car stood on its nose' -- standing DEAD STRAIGHT on the impossible
-    apron. 'Too slight to hold itself upright, yet it stands.' A one-way window
-    He looks OUT of: the opening shows the void behind it, with a faint sallow
-    bleed at its lips. Two slight jambs + a lintel, pale bone-stone, unnaturally
-    precise against the leaning cave around it -- geometry serving the door."""
+    apron. 'Too slight to hold itself upright, yet it stands.' It is ONLY a
+    frame: nothing fills the opening, you see the cave straight through it (walk
+    through and you stand in the same room; that walk-through is the seal). Two
+    slight jambs + a lintel, pale bone-stone, unnaturally precise against the
+    leaning cave around it -- geometry serving the door."""
     wx, wy = deco.x, deco.y
     s = (getattr(deco, "scale", 1.0) or 1.0)
     Wf, Hf, t, Df = 30 * s, 54 * s, 5 * s, 6 * s
@@ -333,20 +381,9 @@ def _draw_doorframe_solid(surf, cam, deco):
     shsurf = pygame.Surface((shw * 2 + 4, shh * 2 + 4), pygame.SRCALPHA)
     pygame.draw.ellipse(shsurf, (0, 0, 0, 90), (2, 2, shw * 2, shh * 2))
     surf.blit(shsurf, (bx - shw - 2, by - shh - 2))
-    # faint sallow bleed filling the opening (He looks out) -- drawn first, so
-    # the jambs frame it
-    op = [cam.project(wx - half + t, wy, t), cam.project(wx + half - t, wy, t),
-          cam.project(wx + half - t, wy, Hf - t),
-          cam.project(wx - half + t, wy, Hf - t)]
-    xs = [p[0] for p in op]; ys = [p[1] for p in op]
-    ox0, oy0 = int(min(xs)), int(min(ys))
-    ow = max(1, int(max(xs) - ox0)); oh = max(1, int(max(ys) - oy0))
-    g = 0.5 + 0.5 * math.sin(deco.t * 1.1)
-    gs = pygame.Surface((ow, oh), pygame.SRCALPHA)
-    pygame.draw.polygon(gs, (96, 82, 34, int(22 + 20 * g)),
-                        [(int(x - ox0), int(y - oy0)) for x, y in op])
-    surf.blit(gs, (ox0, oy0))
-    # jambs + lintel as slight upright boxes, dead straight (no lean)
+    # jambs + lintel as slight upright boxes, dead straight (no lean). The
+    # opening is left EMPTY -- whatever the camera already drew behind it (the
+    # cave, the far wall) shows through.
     _vbox(surf, cam, wx - half + t / 2, wy, t, Df, 0, Hf, pal)
     _vbox(surf, cam, wx + half - t / 2, wy, t, Df, 0, Hf, pal)
     _vbox(surf, cam, wx, wy, Wf, Df, Hf - t, Hf, pal)
@@ -359,6 +396,7 @@ def _draw_doorframe_solid(surf, cam, deco):
 
 SOLID_PROPS = {
     "doorframe":     _draw_doorframe_solid,
+    "waterfall":     _draw_waterfall_solid,
     "well":          _draw_well_solid,
     "pillar":        _draw_pillar_solid,
     "cistern_basin": _draw_cistern_basin_solid,

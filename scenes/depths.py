@@ -589,15 +589,17 @@ def build_threshold():
     for _y in range(H):
         for _x in range(W):
             floor[_y][_x] = "x"
-    # The artery: a river channel hard against the west rock, IMPASSABLE
-    # (invisible-solid over the water) so it reads as one boundary WALL of the
-    # cave -- the source the thread of water crept from to the frame.
-    for _y in range(2, H - 2):
+    # The artery: a river channel running the FULL west side, hard against the
+    # cliff, IMPASSABLE (invisible-solid over the water) so it reads as one
+    # boundary WALL of the cave -- the source the thread of water crept from to
+    # the frame, and the cliff the waterfall sheets down.
+    for _y in range(1, H - 1):
         for _x in (1, 2):
             objs[_y][_x] = "X"
             floor[_y][_x] = "~"
-    objs[4][3] = "."          # a lick of water onto the bank, where the thread
-    floor[4][3] = "~"         # leaves the river toward the frame
+    for _y, _x in ((4, 3), (7, 3), (10, 3)):    # organic licks onto the near bank
+        objs[_y][_x] = "."
+        floor[_y][_x] = "~"
     # The threshold APRON: a clean, level clearing around the frame (rows 2-6,
     # cols 5-9) -- smoother dark stone, and (below) no stalagmite intrudes on it.
     # The cave's true wrongness is that this order exists down here at all.
@@ -610,20 +612,21 @@ def build_threshold():
     sc.skybox_kind = "void"
     sc.set_spawn("default",   7, 11)
     sc.set_spawn("from_dark", 7, 11)
-    # Doorframe on the apron (the cave's north-centre). Pressing E presses the
-    # KEYSTONE -- the Pallid Mask -- into the door and seals it (the
-    # seal_threshold ending), CONSUMING it (§7 rework, Mask-only: the cult's
-    # notes are pure lore now and gate nothing). The keystone was carried down
-    # (the Deep Stair opened WITHOUT spending it), so a player who descended
-    # always holds it here.
+    # Doorframe on the apron (the cave's north-centre). It is ONLY a frame -- a
+    # door with no wall, nothing in the opening (NARRATIVE 1b). You SEAL by
+    # walking THROUGH it carrying the keystone (the Pallid Mask), spent there
+    # (§7, Mask-only); the walk-through is handled in on_update below. No [E]
+    # prompt, no glow, no smoke. The keystone was carried down (the Deep Stair
+    # opened WITHOUT spending it), so a player who descended always holds it.
     lintel_x, lintel_y = 7 * TILE + 16, 4 * TILE + 16
     sc._lintel_pos = (lintel_x, lintel_y)
-    sc.add_interactable(lintel_x, lintel_y, 40)   # [E] cue: seal the Threshold (END IT)
-    # The frame itself: a real standing doorframe (NARRATIVE 1b), NOT solid --
-    # you can walk through it and stand in the same room on the far side. The
-    # smoke rises from its opening.
     sc.add_decoration(Decoration(lintel_x, lintel_y, "doorframe"))
-    sc.add_decoration(Decoration(lintel_x, lintel_y - TILE, "smoke"))
+
+    # The waterfall: the artery's visible mouth, sheeting down the west cliff
+    # into the river channel (NARRATIVE 1b). A main fall + a lesser one below.
+    sc.add_decoration(Decoration(1 * TILE + 12, 3 * TILE + 16, "waterfall"))
+    sc.add_decoration(Decoration(1 * TILE + 12, 9 * TILE + 16, "waterfall",
+                                 scale=0.8))
 
     # Stalagmites choking the organic cave floor -- everywhere BUT the swept
     # apron, the river, and the central walking lane. Solid (invisible-solid
@@ -676,31 +679,41 @@ def build_threshold():
             _log_doorframe()
     sc.on_enter_fn = _threshold_on_enter
 
-    def _threshold_interact(game):
-        px, py = game.player.x, game.player.y
-        if abs(px - lintel_x) > 40 or abs(py - lintel_y) > 40:
+    def _threshold_seal(game):
+        """Walking THROUGH the empty frame is the seal. Carried the keystone (the
+        Pallid Mask) down? Stepping into the door, pressing yourself + it into the
+        frame, ends it (the SEAL ending) and consumes the Mask. Without it the
+        frame is only a frame -- you stand on the far side and nothing happens (it
+        never opens; NARRATIVE 1b)."""
+        if getattr(game, "_ending_active", None):
+            return                                    # already sealing
+        p = game.player
+        if p is None:
             return
-        inv = game.player.inventory
-        # The door seals only to the keystone -- the Pallid Mask -- carried
-        # down from the Deep Stair (§6/§7, Mask-only). Spend it at the frame.
-        # (The descent guarantees you hold it; the guard is belt-and-
-        # suspenders against a soft-lock.)
+        if abs(p.x - lintel_x) > 16 or abs(p.y - lintel_y) > 18:
+            return                                    # not in the frame yet
+        inv = p.inventory
         if not inv.has("sigil_rubbing"):
-            game.show_notice("The frame is cold and blank. You have nothing "
-                             "to give it.")
+            if not game.save.flag("threshold_blank_seen"):
+                game.save.set_flag("threshold_blank_seen", True)
+                game.show_notice("You step through the frame. You are standing "
+                                 "in the same room. It is only a frame, and "
+                                 "cold.")
             return
         game.audio.force_silence()
         game.audio.play("arg_chime", 0.7)
         inv.remove("sigil_rubbing", 1)
         game.dialog.show([
-            "[c=dim](You set both hands to the cold frame. His face, the "
-            "keystone you carried all this way. You press it into the "
-            "door.)[/c]",
+            "[c=dim](You step into the frame. His face, the keystone you carried "
+            "all this way, you press into the door with the last of you.)[/c]",
             "[c=dim](The frame takes it. Nothing of His is left in your hands "
             "now. Nothing to give it but the rest of you.)[/c]",
-            "[s=slow][c=dim]...the smoke stops.[/c][/s]",
+            "[s=slow][c=dim]...and it goes still.[/c][/s]",
         ], speaker="", voice="blip_soft", portrait="narrator")
         _evidence(game, "the_seal", "It is done.")
         game._play_ending("seal_threshold")
-    sc.on_interact_fn = _threshold_interact
+
+    def _threshold_update(game, scene, dt):
+        _threshold_seal(game)
+    sc.on_update_fn = _threshold_update
     return sc
