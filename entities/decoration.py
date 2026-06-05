@@ -91,7 +91,7 @@ _GROUNDED_DECOS = frozenset((
 # -- upscaling via a local canvas would misplace or clip them). The rug
 # sizes itself via w/h kwargs instead, so it opts out too.
 _NO_SCALE_DECOS = frozenset((
-    "candle", "lantern", "brazier", "wall_torch",
+    "candle", "lantern", "brazier", "wall_torch", "swallow_hole",
     "smoke", "mist", "mote", "wisp",
     "flock", "leaves", "well", "steeple", "pickup_truck", "player_car",
     "cauldron", "watching_eye", "watching_wound", "passing_silhouette",
@@ -168,6 +168,35 @@ class Decoration:
         pygame.draw.ellipse(surf, (92, 96, 98), (x - 13, y - 9, 26, 18))
         pygame.draw.ellipse(surf, (50, 54, 56), (x - 13, y - 9, 26, 18), 1)
         pygame.draw.ellipse(surf, (14, 22, 26), (x - 9, y - 6, 18, 12))
+
+    def _draw_swallow_hole(self, surf, x, y):
+        """A sink where the river spirals down into the earth and is gone --
+        the underground river's mouth (NARRATIVE 1b: the river is the artery;
+        water finds the lowest place and creeps to the door). Depth rings that
+        darken to black at the centre + a slow draining swirl. Used on the
+        surface (the river vanishes here) and in the Sump (the same artery,
+        deeper). `scale` kwarg sizes it."""
+        # wet stone rim, irregular
+        pygame.draw.ellipse(surf, (40, 42, 40), (x - 17, y - 12, 34, 24))
+        pygame.draw.ellipse(surf, (62, 64, 60), (x - 17, y - 12, 34, 24), 1)
+        # depth rings: water -> near-black at the centre (it goes DOWN)
+        rings = [(48, 56, 58), (34, 44, 48), (22, 32, 36), (13, 20, 24),
+                 (6, 11, 14), (2, 4, 6)]
+        for i, col in enumerate(rings):
+            rw = max(2, 14 - i * 2)
+            rh = max(1, 10 - i * 2)
+            pygame.draw.ellipse(surf, col, (x - rw, y - rh, rw * 2, rh * 2))
+        # draining swirl: spiral arms rotating with time (the current going down)
+        for arm in range(3):
+            base = self.t * 1.8 + arm * (2 * math.pi / 3)
+            pts = []
+            for k in range(11):
+                r = 2.0 + k * 1.15
+                a = base + k * 0.5
+                pts.append((x + math.cos(a) * r, y + math.sin(a) * r * 0.62))
+            pygame.draw.lines(surf, (66, 80, 84), False, pts, 1)
+        # a wet glint catching the light off the lip
+        pygame.draw.line(surf, (104, 116, 118), (x - 10, y - 6), (x - 4, y - 8), 1)
 
     def _draw_grain_heap(self, surf, x, y):
         pygame.draw.circle(surf, (150, 126, 70), (x, y), 13)

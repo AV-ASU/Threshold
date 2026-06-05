@@ -153,7 +153,12 @@ the inside of Him (the death cutscene already is this).
   (fulfilled while the town dims; rooms full but no one about), townsfolk drain
   (Old Pell: the town "drawn out of us, slow"), Mara (hive recognition sharpened
   to the #6 payoff; late-arrival journal page in her cell). All canon-guarded.
-- [ ] River-as-the-diggers'-road decal in the Sump (environmental, still open).
+- [x] River-as-the-artery, shown environmentally: the Brimley surface river now
+  ends at a SWALLOW HOLE (the `swallow_hole` decoration: depth rings to black + a
+  draining swirl) where the water spirals into the earth and is gone (grass
+  below, bloodstained bank, cold mist). The Sump gets the same sink for depth +
+  an oblique on-enter line ("the water goes down, you never hear it land"). The
+  surface tell that the river runs under the town and the diggers followed it.
 - [ ] NARRATIVE §4/§6/§7 subtractive edits (Mask-only); flow.py guards (seal works Mask-only; notes not evidence; no "dimension").
 
 ### ✅ 8. Mask = "permission to leave" + the PI's distressed notes — DONE

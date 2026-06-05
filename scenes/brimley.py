@@ -110,18 +110,19 @@ def build_brimley():
                 sine *= dist_to_bridge / 4.0
             cx = int(round(river_center_x + sine))
         return (cx - 1, cx, cx + 1)
+    sink_row = 90                          # the river spirals into the earth here
     floor_rows = []
     for ty in range(h):
         rc = _river_cols(ty)
         row = []
         for tx in range(w):
-            if tx in rc:
+            if tx in rc and ty <= sink_row:
                 if ty in bridge_rows:
                     row.append("g")        # walkable grass under bridge
                 else:
                     row.append("~")        # river water (solid)
             else:
-                row.append("g")
+                row.append("g")            # below the sink: the river is gone under
         floor_rows.append("".join(row))
     # Keep the broader river_cols tuple for downstream code that needs a
     # max-span set (corn-patch protection, border-protection, etc.).
@@ -611,6 +612,19 @@ def build_brimley():
     sc.add_decoration(Decoration(82 * TILE + 16, 65 * TILE + 16, "hanging_figure"))
     sc.add_decoration(Decoration(63 * TILE + 16, 45 * TILE + 16, "dead_crow"))
     sc.add_decoration(Decoration(74 * TILE + 16, 78 * TILE + 16, "dead_crow"))
+    # The river never reaches the county line: it spirals down a sink in the
+    # bed and is gone. The surface tell that the water runs UNDER the town
+    # (NARRATIVE 1b: the river is the artery the water -- and the diggers --
+    # followed down to the door). Cold mist off it, wet rot staining the bank.
+    _sink_col = _river_cols(sink_row)[1]
+    sc.add_decoration(Decoration(_sink_col * TILE + 16, sink_row * TILE + 16,
+                                 "swallow_hole"))
+    for _mx, _my in [(_sink_col - 1, sink_row - 1), (_sink_col + 1, sink_row),
+                     (_sink_col, sink_row - 2)]:
+        sc.add_decoration(Decoration(_mx * TILE + 16, _my * TILE + 8, "mist"))
+    for _rx, _ry in [(_sink_col - 2, sink_row + 1), (_sink_col + 2, sink_row + 1),
+                     (_sink_col, sink_row + 2)]:
+        sc.add_decoration(Decoration(_rx * TILE + 16, _ry * TILE + 16, "bloodstain"))
     # The cauldron-entrance threshold -- creepy_tree on the j tile
     # itself, a single bloody handprint at the threshold, and a
     # candle melted to a stone at the foot. Just enough cue for

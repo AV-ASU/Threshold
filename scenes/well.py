@@ -668,9 +668,12 @@ def build_the_sump():
     sc.set_spawn("default",   5, 5)
     sc.set_spawn("from_vats", 5, 2)
     # Black water pooled in two stone basins, a barrel + crate of the diggers'
-    # supplies on the dry ledge, cold mist rising, a candle.
+    # supplies on the dry ledge, cold mist rising, a candle. The water does not
+    # sit -- a sink in the floor turns it slowly DOWN (the same artery as the
+    # surface river-sink, deeper now).
     sc.add_furniture("cistern_basin", [(4, 6)])
     sc.add_furniture("cistern_basin", [(6, 6)])
+    sc.add_decoration(Decoration(5 * TILE + 16, 7 * TILE + 16, "swallow_hole"))
     sc.add_furniture("barrel", [(7, 4)])
     sc.add_furniture("crate", [(3, 4)])
     for tx, ty in [(3, 5), (6, 6), (4, 7)]:
@@ -689,6 +692,11 @@ def build_the_sump():
     def _on_enter(game, scene):
         from .base import drop_ammo_cache
         drop_ammo_cache(game, scene, 5, 6, 4, "ammo_sump")
+        if not game.save.flag("sump_water_seen"):
+            game.save.set_flag("sump_water_seen", True)
+            game.show_notice("The water here does not sit. It turns, slow, and "
+                             "goes down, and keeps going down. You never hear "
+                             "it land.", duration=4.5)
     sc.on_enter_fn = _on_enter
 
     # Optional lore: The Bargain (second testimony fragment), left among the
