@@ -10,7 +10,7 @@ falls back to the 2D `_draw_<kind>` sprites in entities/decoration.py.
 """
 import math
 import pygame
-from rendering.solids import draw_solid, _shade
+from rendering.solids import draw_solid, draw_billboard, _shade
 
 
 def _disc(surf, cam, wx, wy, hz, rx, ry, col, fill=True, width=2):
@@ -101,6 +101,31 @@ def _draw_grain_heap_solid(surf, cam, deco):
                 (H, R * 0.12, R * 0.12)], pal)
     _disc(surf, cam, wx, wy, 0.5, R * 0.96, R * 0.96, (60, 30, 28),
           fill=False, width=2)
+
+
+def _draw_stalagmite_solid(surf, cam, deco):
+    """A wet limestone spike rising from the cave floor -- a tapered cone (body
+    of revolution), so it stands oriented in the room and occludes/depth-sorts
+    instead of facing the camera. Height + girth vary by seed; a damp sheen
+    catches the dark near the tip."""
+    wx, wy = deco.x, deco.y
+    s = (getattr(deco, "scale", 1.0) or 1.0)
+    seed = getattr(deco, "seed", 0)
+    R = (5 + (seed % 5)) * s
+    H = (18 + (seed % 16)) * s
+    lean = ((seed % 7) - 3) * 0.4 * s           # a slight off-vertical lean
+    pal = {"body": (96, 94, 100), "lo": (48, 48, 54), "rim": (150, 150, 160)}
+    # taper base -> point; the apex section is offset by `lean` so it isn't a
+    # perfectly upright cone (caves don't grow them straight).
+    draw_solid(surf, cam, wx, wy,
+               [(0, R, R * 0.78), (H * 0.5, R * 0.55, R * 0.46),
+                (H, R * 0.12, R * 0.12)], pal)
+    tip = cam.project(wx + lean, wy, H * 0.86)
+    pygame.draw.circle(surf, pal["rim"], (int(tip[0]), int(tip[1])),
+                       max(1, int(1.6 * s)))
+    wet = cam.project(wx - R * 0.3, wy + R * 0.2, H * 0.35)
+    pygame.draw.circle(surf, (118, 122, 130), (int(wet[0]), int(wet[1])),
+                       max(1, int(1.2 * s)))
 
 
 def _vbox(surf, cam, wx, wy, w, d, z0, z1, pal, yaw=0.0, outline=True):
@@ -289,26 +314,197 @@ def _draw_pickup_truck_solid(surf, cam, deco):
     _round_wheel(surf, P, -wbx, hW, r)
 
 
+def _draw_waterfall_solid(surf, cam, deco):
+    """A spring gushing from a HOLE in the cave cliff and falling into the river
+    -- the visible mouth of the artery (NARRATIVE 1b). A dark source recess
+    gouged in the rock at the top, then a sheet of water sheeting down into the
+    channel, foam churning where it strikes. Drawn each frame (animated; streaks
+    scroll DOWN), depth-sorted against the wall. `ang` (radians) yaws the sheet
+    onto its wall; default faces +y (toward a south-standing camera)."""
+    wx, wy = deco.x, deco.y
+    s = (getattr(deco, "scale", 1.0) or 1.0)
+    ang = float(deco.kwargs.get("ang", 0.0))
+    ca, sn = math.cos(ang), math.sin(ang)
+    H = 24 * s
+    # `w` is the sheet width in WORLD px (defaults to ~one tile); a 3-wide fall
+    # passes w ~= 90 so a single object covers the whole river mouth.
+    halfw = float(deco.kwargs.get("w", 18)) * 0.5 * s
+    t = deco.t
+
+    def P(across, z):                       # across the sheet width, height z
+        return cam.project(wx + across * ca, wy + across * sn, z)
+    # the source HOLE: a dark recess in the cliff the water gushes from, set just
+    # above the falling sheet with a lit rock rim so it reads as a mouth in rock
+    hole = [P(-halfw * 1.02, H - 2 * s), P(halfw * 1.02, H - 2 * s),
+            P(halfw * 0.82, H + 12 * s), P(-halfw * 0.82, H + 12 * s)]
+    pygame.draw.polygon(surf, (5, 9, 9), hole)
+    pygame.draw.polygon(surf, (44, 58, 54), hole, 1)
+    # the wet dark rock the sheet sheets over
+    pygame.draw.polygon(surf, (20, 30, 30),
+                        [P(-halfw, 0), P(halfw, 0), P(halfw, H), P(-halfw, H)])
+    # falling streaks: dashed vertical runs that scroll downward over time. Same
+    # murky teal-green as the river (`~`), foam a paler version of it.
+    cols = [(70, 104, 96), (50, 80, 74), (96, 124, 114)]
+    n = max(6, int(halfw / 3))
+    for i in range(n):
+        across = -halfw + (i + 0.5) * (2 * halfw / n)
+        col = cols[i % 3]
+        off = (t * 42 * s + i * 7) % (8 * s + 0.01)
+        z = H - off
+        while z > 0:
+            pygame.draw.line(surf, col, P(across, z),
+                             P(across, max(0, z - 4 * s)), 1)
+            z -= 8 * s
+    pygame.draw.line(surf, (124, 150, 138), P(-halfw, H), P(halfw, H), 2)  # crest
+    # foam pool + spray where it strikes the river
+    fb = cam.project(wx, wy, 0)
+    fw = max(3, int(halfw * cam.scale * 1.15))
+    fh = max(2, int(halfw * 0.4 * cam.ground_squash() * cam.scale))
+    foam = pygame.Surface((fw * 2 + 4, fh * 2 + 4), pygame.SRCALPHA)
+    pygame.draw.ellipse(foam, (90, 120, 110, 150), (2, 2, fw * 2, fh * 2))
+    pygame.draw.ellipse(foam, (140, 168, 154, 175),
+                        (fw - fw // 2 + 2, fh - fh // 2 + 2, fw, fh))
+    surf.blit(foam, (int(fb[0]) - fw - 2, int(fb[1]) - fh - 2))
+    for i in range(6):
+        fa = t * 3.0 + i * 1.1
+        p = P(math.cos(fa) * halfw * 0.8, abs(math.sin(fa)) * 4 * s)
+        pygame.draw.circle(surf, (150, 176, 162), (int(p[0]), int(p[1])), 1)
+
+
+def _draw_doorframe_solid(surf, cam, deco):
+    """THE THRESHOLD (NARRATIVE 1b): a plain, blank, unmarked frame -- 'about the
+    size of a car stood on its nose' -- standing DEAD STRAIGHT on the impossible
+    apron. 'Too slight to hold itself upright, yet it stands.' It is ONLY a
+    frame: nothing fills the opening, you see the cave straight through it (walk
+    through and you stand in the same room; that walk-through is the seal). Two
+    slight jambs + a lintel, pale bone-stone, unnaturally precise against the
+    leaning cave around it -- geometry serving the door."""
+    wx, wy = deco.x, deco.y
+    s = (getattr(deco, "scale", 1.0) or 1.0)
+    Wf, Hf, t, Df = 30 * s, 54 * s, 5 * s, 6 * s
+    half = Wf / 2
+    pal = {"top": (158, 156, 164), "side": (110, 108, 116), "dark": (74, 72, 80)}
+    # cold ground-contact shadow so it seats on the apron
+    bx, by = cam.project(wx, wy, 0)
+    shw = max(4, int(half * cam.scale * 1.1))
+    shh = max(2, int(Df * cam.ground_squash() * cam.scale))
+    shsurf = pygame.Surface((shw * 2 + 4, shh * 2 + 4), pygame.SRCALPHA)
+    pygame.draw.ellipse(shsurf, (0, 0, 0, 90), (2, 2, shw * 2, shh * 2))
+    surf.blit(shsurf, (bx - shw - 2, by - shh - 2))
+    # jambs + lintel as slight upright boxes, dead straight (no lean). The
+    # opening is left EMPTY -- whatever the camera already drew behind it (the
+    # cave, the far wall) shows through.
+    _vbox(surf, cam, wx - half + t / 2, wy, t, Df, 0, Hf, pal)
+    _vbox(surf, cam, wx + half - t / 2, wy, t, Df, 0, Hf, pal)
+    _vbox(surf, cam, wx, wy, Wf, Df, Hf - t, Hf, pal)
+    # a thin pale rule down each inner edge -- precise, machined
+    for ex in (-half + t, half - t):
+        a = cam.project(wx + ex, wy, t)
+        b = cam.project(wx + ex, wy, Hf - t)
+        pygame.draw.line(surf, pal["top"], a, b, 1)
+
+
 SOLID_PROPS = {
+    "doorframe":     _draw_doorframe_solid,
+    "waterfall":     _draw_waterfall_solid,
     "well":          _draw_well_solid,
     "pillar":        _draw_pillar_solid,
     "cistern_basin": _draw_cistern_basin_solid,
     "grain_heap":    _draw_grain_heap_solid,
     "player_car":    _draw_car_solid,
     "pickup_truck":  _draw_pickup_truck_solid,
+    "stalagmite":    _draw_stalagmite_solid,
 }
 
 
+# -- Standees: stand authored 2D elevation art UP on the floor -------------
+# Props whose `_draw_<kind>` art in entities/decoration.py is a side-on
+# ELEVATION (a thing seen standing, base at the anchor) -- trees, effigies,
+# signs, a cauldron on its frame. Under tilt these used to blit FLAT at the
+# projected point, reading as a top-down sticker lying in a tilted world. We
+# now render that same authored art onto a card cropped to its silhouette and
+# stand it up GROUNDED, depth-sorted + occluding alongside the walls (the same
+# language as the object-map tree standees). The flat pitch-0 view still draws
+# the 2D sprite via Scene.draw, so it stays byte-identical. `hanging_figure`
+# hangs instead: its card is hung from a mount height so the body dangles.
+_STANDEE_HANG = frozenset(("hanging_figure",))
+_STANDEE_GROUND = frozenset((
+    "creepy_tree", "corn_doll", "corn_altar", "cauldron",
+    "wheelbarrow", "pedestal", "steeple", "town_sign", "flagpole",
+    "tall_grass", "grass_tuft", "doll",
+))
+_STANDEE_KINDS = _STANDEE_GROUND | _STANDEE_HANG
+_STANDEE_HANG_MOUNT = 34          # world height the hanging card is hung from
+_STANDEE_CARD_CACHE = {}          # (kind, seed, scale) -> cropped card | False
+
+
+def _standee_card(deco):
+    """The decoration's own 2D elevation art rendered to a card cropped to its
+    silhouette, cached per (kind, seed, scale). Animation is frozen at t=0 (a
+    standee is a static occluder, like the cached tree cards). Returns the card
+    Surface, or None if the art is empty / missing."""
+    s = round(getattr(deco, "scale", 1.0) or 1.0, 2)
+    key = (deco.kind, deco.seed, s)
+    card = _STANDEE_CARD_CACHE.get(key)
+    if card is None:
+        fn = getattr(deco, f"_draw_{deco.kind}", None)
+        if fn is None:
+            _STANDEE_CARD_CACHE[key] = False
+            return None
+        C = 128
+        big = pygame.Surface((C, C), pygame.SRCALPHA)
+        t0 = deco.t
+        deco.t = 0.0
+        try:
+            fn(big, C // 2, C // 2)
+        except Exception:
+            _STANDEE_CARD_CACHE[key] = False
+            return None
+        finally:
+            deco.t = t0
+        rect = big.get_bounding_rect()
+        if not rect.width or not rect.height:
+            _STANDEE_CARD_CACHE[key] = False
+            return None
+        card = big.subsurface(rect).copy()
+        if s != 1.0:
+            card = pygame.transform.smoothscale(
+                card, (max(1, int(card.get_width() * s)),
+                       max(1, int(card.get_height() * s))))
+        _STANDEE_CARD_CACHE[key] = card
+    return card or None
+
+
+def draw_standee(surf, cam, deco):
+    """Stand the decoration's elevation card up on the floor (or hang it).
+    Returns True if it was a standee kind (and drawn)."""
+    card = _standee_card(deco)
+    if card is None:
+        return False
+    if deco.kind in _STANDEE_HANG:
+        sw = card.get_width()
+        tx, ty = cam.project(deco.x, deco.y, _STANDEE_HANG_MOUNT)
+        surf.blit(card, (int(tx - sw / 2), int(ty)))
+    else:
+        draw_billboard(surf, cam, deco.x, deco.y, card, h_anchor=1.0)
+    return True
+
+
 def is_solid_prop(kind):
-    return kind in SOLID_PROPS
+    """A decoration that, under tilt, draws as world-oriented geometry (a
+    body-of-revolution solid OR a grounded standee) instead of a flat top-down
+    sticker. Both route through draw_prop_solid + the unified depth pass."""
+    return kind in SOLID_PROPS or kind in _STANDEE_KINDS
 
 
 def draw_prop_solid(surf, cam, deco):
-    """Draw one decoration as a volumetric body-of-revolution prop. Returns
-    True if it was a known solid prop (and drawn), False otherwise so the
-    caller can fall back."""
+    """Draw one decoration as a volumetric body-of-revolution prop or a grounded
+    standee. Returns True if it was a known solid/standee (and drawn), False
+    otherwise so the caller can fall back."""
     fn = SOLID_PROPS.get(deco.kind)
-    if fn is None:
-        return False
-    fn(surf, cam, deco)
-    return True
+    if fn is not None:
+        fn(surf, cam, deco)
+        return True
+    if deco.kind in _STANDEE_KINDS:
+        return draw_standee(surf, cam, deco)
+    return False

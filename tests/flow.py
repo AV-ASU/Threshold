@@ -214,9 +214,9 @@ def main():
     check(g.player.inventory.has("sigil_rubbing"),
           "threshold: the keystone (Mask) arrives in hand (carried from the stair)")
     g.player.x, g.player.y = sc._lintel_pos
-    sc.on_interact_fn(g)
+    sc.on_update_fn(g, sc, 0.1)               # walking THROUGH the frame seals it
     check(g._ending_active == "seal_threshold",
-          "threshold: sealing fires the SEAL ending")
+          "threshold: walking through the frame fires the SEAL ending")
     check(not g.player.inventory.has("sigil_rubbing"),
           "threshold: the seal CONSUMES the keystone (Mask) at the door")
     seal_text = " ".join(line for line, _ in
@@ -229,7 +229,7 @@ def main():
     gnokey.load_scene_now("threshold")
     ready(gnokey)
     gnokey.player.x, gnokey.player.y = gnokey.scene._lintel_pos
-    gnokey.scene.on_interact_fn(gnokey)
+    gnokey.scene.on_update_fn(gnokey, gnokey.scene, 0.1)
     check(gnokey._ending_active is None,
           "threshold: without the keystone the door does not seal (no free seal)")
 

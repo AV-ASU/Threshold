@@ -573,20 +573,121 @@ def build_dark():
 
 
 def build_threshold():
-    floor, objs = _box(10, 10)
+    # An underground RIVER CAVE -- not a box, and LONG: the player comes up from
+    # the dark at the far SOUTH and walks a long way north, through a choked
+    # stalagmite field, before reaching the frame. Ragged organic rock walls; the
+    # artery-river (NARRATIVE 1b) is the whole WEST boundary, fed by a wide
+    # waterfall at the south-west and running off the north edge. The one place
+    # the cave goes WRONG is the doorframe: a 5x5 of impossibly smooth, level
+    # grey stone swept utterly clear of stalagmites -- geometry serving the door
+    # (the seed of the spatial fold), its emptiness the more uncanny for the
+    # choked field crowding right to its edge. Nothing here is man-made.
+    W, H = 14, 40
+    floor, objs = _box(W, H)
+    floor = [list(r) for r in floor]          # mutable rows for the edits below
+    # Carve the organic cave edge, but keep the WEST columns (the river + its
+    # bank live there) and the central approach lane out of the carve so the
+    # river meander reads cleanly and the walk is never walled off.
+    _cavern(objs, seed=771, keep_cols=(1, 2, 3, 4, 6, 7, 8))
+    for _y in range(H):
+        for _x in range(W):
+            floor[_y][_x] = "x"
+    # The artery: a MEANDERING river near the west cliff. Its 2-wide channel
+    # wanders east/west down the long cave (a sine meander); where it swings east
+    # toward the middle, normal stone floor shows between it and the west wall --
+    # a proper riverBANK, so the river reads as CURVING, not a line ruled flush
+    # to the rock. IMPASSABLE (invisible-solid over water), OPEN off the north.
+    def _river_span(ty):
+        we = 1 + int(round(2 * (0.5 + 0.5 * math.sin(ty * 0.40 + 0.7))))  # west 1..3
+        return we, we + 1                                                  # 2-wide
+    for _y in range(0, H - 1):
+        we, ea = _river_span(_y)
+        for _x in range(we, ea + 1):
+            objs[_y][_x] = "X"; floor[_y][_x] = "~"
+    # The doorframe sits MID-cave (row DR): the player walks far up from the far
+    # south to reach it, and there is open cave + river NORTH of it, giving the
+    # water room to pass through and loop back into the river. A 5x5 of smooth
+    # grey stone ("0") is swept clear around the frame.
+    DR = 25
+    for _y in range(DR - 2, DR + 3):
+        for _x in range(5, 10):
+            objs[_y][_x] = "."; floor[_y][_x] = "0"
     objects = ["".join(r) for r in objs]
     sc = Scene("threshold", floor, objects, music="void")
-    sc.set_spawn("default",   5, 1)
-    sc.set_spawn("from_dark", 5, 1)
-    # Doorframe at the centre. Pressing E presses the KEYSTONE -- the Pallid
-    # Mask -- into the door and seals it (the seal_threshold ending),
-    # CONSUMING it (§7 rework, Mask-only: the cult's notes are pure lore now
-    # and gate nothing). The keystone was carried down (the Deep Stair opened
-    # WITHOUT spending it), so a player who descended always holds it here.
-    lintel_x, lintel_y = 5 * TILE + 16, 5 * TILE + 16
+    sc.skybox_kind = "void"
+    sc.set_spawn("default",   7, 38)
+    sc.set_spawn("from_dark", 7, 38)
+    # Doorframe on the apron (the cave's north-centre). It is ONLY a frame -- a
+    # door with no wall, nothing in the opening (NARRATIVE 1b). You SEAL by
+    # walking THROUGH it carrying the keystone (the Pallid Mask), spent there
+    # (§7, Mask-only); the walk-through is handled in on_update below. No [E]
+    # prompt, no glow, no smoke. The keystone was carried down (the Deep Stair
+    # opened WITHOUT spending it), so a player who descended always holds it.
+    lintel_x, lintel_y = 7 * TILE + 16, DR * TILE + 16
     sc._lintel_pos = (lintel_x, lintel_y)
-    sc.add_interactable(lintel_x, lintel_y, 40)   # [E] cue: seal the Threshold (END IT)
-    sc.add_decoration(Decoration(lintel_x, lintel_y - TILE, "smoke"))
+    sc.add_decoration(Decoration(lintel_x, lintel_y, "doorframe"))
+
+    # The waterfall: ONE wide spring (~3 tiles) gushing from a hole in the
+    # south-west cliff, covering the whole river mouth (NARRATIVE 1b -- the
+    # artery's visible source). The river flows north from here.
+    sc.add_decoration(Decoration(2 * TILE + 16, 37 * TILE + 16, "waterfall",
+                                 w=110))
+
+    # Stalagmites choking the long floor in organic clusters -- crowding right up
+    # to the apron's edge (a dense ring) so the swept 5x5 reads as a wound of
+    # order in the chaos, its emptiness the more noticeable. The central cols 6-8
+    # lane stays clear so the long walk is never blocked. Solid; size varies.
+    rng = random.Random(913)
+    for ty in range(2, H - 1):
+        for tx in range(3, W - 1):
+            if sc.objects[ty][tx] != ".":
+                continue
+            if 5 <= tx <= 9 and DR - 2 <= ty <= DR + 2:   # the clean apron
+                continue
+            if 6 <= tx <= 8 and ty >= DR - 2:             # the central approach lane
+                continue
+            ring = ((tx in (4, 10) and DR - 2 <= ty <= DR + 2)
+                    or (ty == DR + 3 and tx in (4, 5, 9, 10)))
+            if rng.random() < (0.92 if ring else 0.42):
+                sc.objects[ty][tx] = "X"
+                sc.add_decoration(Decoration(
+                    tx * TILE + 16, ty * TILE + 16, "stalagmite",
+                    seed=tx * 31 + ty * 17, scale=round(rng.uniform(0.7, 1.3), 2)))
+
+    # The river THREAD (NARRATIVE 1b): ONE continuous, organic side-channel that
+    # branches OFF the river (the west wall) and returns to it -- a natural
+    # distributary, not a drawn loop across the room. It leaves the channel low
+    # in the south-west, is pulled east to the doorframe (the lowest place in the
+    # earth; water finds it), passes UNDER the frame, then curves back and
+    # rejoins the river up near the north wall. Both ends touch the river; the
+    # door is the farthest it reaches. Smoothed into a flowing curve at draw time.
+    _tw = [(3.5, 2.0),                         # off the river at the NORTH (H 2)
+           (4.6, 4.0), (5.6, 6.5), (5.0, 9.0), (6.0, 11.5), (6.6, 14.0),
+           (5.9, 16.5), (6.8, 19.0), (6.3, 21.5), (7.0, 23.5),
+           (7.0, 25.0),                        # under the frame (the low point)
+           (7.0, 26.5), (6.3, 28.5), (6.9, 30.5), (5.8, 32.5), (4.9, 34.5),
+           (3.8, 36.0),
+           (2.6, 37.0)]                        # back into the river at the SOUTH (H 37)
+    _world = [(c * TILE + 16, r * TILE + 16) for (c, r) in _tw]
+    _cx = sum(p[0] for p in _world) / len(_world)
+    _cy = sum(p[1] for p in _world) / len(_world)
+    sc.add_decoration(Decoration(
+        _cx, _cy, "water_channel", seed=42,
+        path=[(px - _cx, py - _cy) for (px, py) in _world]))
+    # a shallow standing pool gathered at the frame's foot -- the low point
+    sc.add_decoration(Decoration(lintel_x, lintel_y + 6, "water_trail",
+                                 pool=True, seed=99))
+
+    # Natural cave dressing only -- nothing man-made down here. Cobwebs strung in
+    # the ragged high corners + a few drifting mist patches low in the dark.
+    for (cwx, cwy, a) in ((1, 1, 0.0), (12, 1, math.pi / 2),
+                          (12, 19, math.pi), (1, 37, -math.pi / 2),
+                          (12, 37, math.pi)):
+        sc.add_decoration(Decoration(cwx * TILE + 6, cwy * TILE + 6,
+                                     "cobweb", ang=a))
+    for (mx, my) in ((9, 11), (5, 17), (11, 23), (4, 28), (10, 32),
+                     (6, 35), (8, 25)):
+        sc.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16, "mist"))
 
     def _threshold_on_enter(game, scene):
         if game.save.flag("first_threshold"):
@@ -609,31 +710,41 @@ def build_threshold():
             _log_doorframe()
     sc.on_enter_fn = _threshold_on_enter
 
-    def _threshold_interact(game):
-        px, py = game.player.x, game.player.y
-        if abs(px - lintel_x) > 40 or abs(py - lintel_y) > 40:
+    def _threshold_seal(game):
+        """Walking THROUGH the empty frame is the seal. Carried the keystone (the
+        Pallid Mask) down? Stepping into the door, pressing yourself + it into the
+        frame, ends it (the SEAL ending) and consumes the Mask. Without it the
+        frame is only a frame -- you stand on the far side and nothing happens (it
+        never opens; NARRATIVE 1b)."""
+        if getattr(game, "_ending_active", None):
+            return                                    # already sealing
+        p = game.player
+        if p is None:
             return
-        inv = game.player.inventory
-        # The door seals only to the keystone -- the Pallid Mask -- carried
-        # down from the Deep Stair (§6/§7, Mask-only). Spend it at the frame.
-        # (The descent guarantees you hold it; the guard is belt-and-
-        # suspenders against a soft-lock.)
+        if abs(p.x - lintel_x) > 16 or abs(p.y - lintel_y) > 18:
+            return                                    # not in the frame yet
+        inv = p.inventory
         if not inv.has("sigil_rubbing"):
-            game.show_notice("The frame is cold and blank. You have nothing "
-                             "to give it.")
+            if not game.save.flag("threshold_blank_seen"):
+                game.save.set_flag("threshold_blank_seen", True)
+                game.show_notice("You step through the frame. You are standing "
+                                 "in the same room. It is only a frame, and "
+                                 "cold.")
             return
         game.audio.force_silence()
         game.audio.play("arg_chime", 0.7)
         inv.remove("sigil_rubbing", 1)
         game.dialog.show([
-            "[c=dim](You set both hands to the cold frame. His face, the "
-            "keystone you carried all this way. You press it into the "
-            "door.)[/c]",
+            "[c=dim](You step into the frame. His face, the keystone you carried "
+            "all this way, you press into the door with the last of you.)[/c]",
             "[c=dim](The frame takes it. Nothing of His is left in your hands "
             "now. Nothing to give it but the rest of you.)[/c]",
-            "[s=slow][c=dim]...the smoke stops.[/c][/s]",
+            "[s=slow][c=dim]...and it goes still.[/c][/s]",
         ], speaker="", voice="blip_soft", portrait="narrator")
         _evidence(game, "the_seal", "It is done.")
         game._play_ending("seal_threshold")
-    sc.on_interact_fn = _threshold_interact
+
+    def _threshold_update(game, scene, dt):
+        _threshold_seal(game)
+    sc.on_update_fn = _threshold_update
     return sc
