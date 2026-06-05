@@ -1483,24 +1483,44 @@ def _draw_bank_fringe(surf, scene, tx, ty, rx, ry):
 
 
 def _round_water_corners(surf, scene, tx, ty, rx, ry):
-    """Shave the square corners off the river. At a CONVEX corner (both
-    orthogonal neighbours are land) paint a muddy round over the water's
-    corner, so the channel + its bends read as a curved bank, not a stepped
-    grid. Pairs with _draw_bank_fringe; only the bends/turns get rounded
-    (straight edges have one land side, so no corner triggers)."""
+    """Smooth the river's blocky outline. CARVES the land colour into the
+    water: convex corners get a big grass quarter-round (the corner reads as a
+    curve), and each straight land-facing edge gets seeded grass bumps eating
+    into the water so the waterline MEANDERS instead of running dead straight.
+    A muddy rim on each carve keeps the silted-bank read. Pairs with the bank
+    fringe; applies to any '~' water tile."""
     floor, h, w = scene.floor, scene.h, scene.w
 
     def _land(nx, ny):
         return (not (0 <= nx < w and 0 <= ny < h)) or floor[ny][nx] in _BANK_LAND
-    mud, mud_dk = (54, 44, 30), (40, 32, 22)
-    R = 7
+    grass, mud = (46, 58, 44), (54, 44, 30)
+    seed = (tx * 73856093) ^ (ty * 19349663)
+    # convex corners -> a grass quarter-round carves off the square corner
     for d1, d2, cxp, cyp in (((0, -1), (-1, 0), rx, ry),
                              ((0, -1), (1, 0), rx + TILE, ry),
                              ((0, 1), (-1, 0), rx, ry + TILE),
                              ((0, 1), (1, 0), rx + TILE, ry + TILE)):
         if _land(tx + d1[0], ty + d1[1]) and _land(tx + d2[0], ty + d2[1]):
-            pygame.draw.circle(surf, mud, (cxp, cyp), R)
-            pygame.draw.circle(surf, mud_dk, (cxp, cyp), R, 1)
+            pygame.draw.circle(surf, grass, (cxp, cyp), 12)
+            pygame.draw.circle(surf, mud, (cxp, cyp), 12, 2)      # muddy waterline on the curve
+    # straight land-facing edges -> seeded grass bumps undulate the waterline
+    for si, (ndx, ndy) in enumerate(((0, -1), (0, 1), (-1, 0), (1, 0))):
+        if not _land(tx + ndx, ty + ndy):
+            continue
+        for k in range(2):
+            u = (k + 0.5) / 2.0
+            if ndy:
+                ecx = rx + TILE * u
+                ecy = ry + (TILE if ndy > 0 else 0)
+            else:
+                ecx = rx + (TILE if ndx > 0 else 0)
+                ecy = ry + TILE * u
+            r = 5 + (_vary(seed, si * 7 + k) % 4)
+            inset = (_vary(seed, si * 3 + k) % 5)        # how far it eats into the water
+            cxp = int(ecx - ndx * inset)
+            cyp = int(ecy - ndy * inset)
+            pygame.draw.circle(surf, grass, (cxp, cyp), r)
+            pygame.draw.circle(surf, mud, (cxp, cyp), r, 1)
 
 
 def draw_scene_terrain(surf, scene, cam_x, cam_y, x0, y0, x1, y1,
