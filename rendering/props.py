@@ -405,16 +405,23 @@ def _draw_doorframe_solid(surf, cam, deco):
 
 
 def _draw_shaft_ladder_solid(surf, cam, deco):
-    """The way UP from the shaft floor: a timber ladder hanging from a hatch in
-    the rock ceiling down to the landing, with real volume. The dark shaft + a
-    framed hatch sit high overhead; the two rails converge + lean back into the
-    hole as they rise, rungs climbing between them. (Flat F3 uses the 2D sprite.)"""
+    """The way UP from the shaft floor: a ROPE LADDER hanging from a hatch in the
+    rock ceiling down to the landing, with real volume. The dark shaft + a framed
+    hatch sit high overhead; two hemp ropes (slightly wavering, knotted to the
+    frame) descend, wooden rungs lashed between them. (Flat F3 uses the 2D sprite.)"""
     wx, wy = deco.x, deco.y
     s = (getattr(deco, "scale", 1.0) or 1.0)
     H = 82 * s
-    rw = 6 * s              # half rail spacing at the foot
-    topw = 3.5 * s          # rails converge toward the hole as they rise
+    rw = 6 * s              # half rope spacing at the foot
+    topw = 3.5 * s          # ropes converge toward the hole as they rise
     lean = -3.0 * s         # the top leans back (north) into the rock
+
+    def along(side, f):     # a point on rope `side` at height fraction f
+        z = f * H
+        basex = side * (rw * (1 - f) + topw * f)
+        wav = math.sin(f * 9.0 + side * 1.3) * 1.3 * s     # rope sway, not rigid
+        return cam.project(wx + basex + wav, wy + lean * f, z)
+
     # contact shadow so the foot seats on the floor
     bx, by = cam.project(wx, wy, 0)
     shw = max(3, int(rw * cam.scale * 1.6))
@@ -429,19 +436,15 @@ def _draw_shaft_ladder_solid(surf, cam, deco):
              cam.project(wx + fr, fy + fr, H), cam.project(wx - fr, fy + fr, H)]
     pygame.draw.polygon(surf, (6, 6, 8), frame)                 # black shaft going up
     pygame.draw.polygon(surf, (88, 62, 36), frame, max(2, int(2 * s)))   # hatch frame
-    rc, rs = (126, 94, 56), (74, 52, 28)
-    for side in (-1, 1):                                        # the two rails
-        b = cam.project(wx + side * rw, wy, 0)
-        t = cam.project(wx + side * topw, fy, H)
-        pygame.draw.line(surf, rc, b, t, max(2, int(3 * s)))
-        pygame.draw.line(surf, rs, b, t, 1)
-    for i in range(1, 10):                                      # rungs climbing up
-        f = i / 10.0
-        lw = rw * (1 - f) + topw * f
-        yy = wy + lean * f
-        a = cam.project(wx - lw, yy, f * H)
-        b = cam.project(wx + lw, yy, f * H)
-        pygame.draw.line(surf, rc, a, b, max(1, int(2 * s)))
+    rope, rope_sh = (158, 136, 96), (108, 90, 58)
+    wood = (120, 86, 50)
+    for side in (-1, 1):                                        # the two hemp ropes
+        pts = [along(side, i / 12.0) for i in range(13)]
+        pygame.draw.lines(surf, rope, False, pts, max(2, int(2 * s)))
+        pygame.draw.lines(surf, rope_sh, False, pts, 1)
+    for i in range(1, 12):                                      # wooden rungs lashed on
+        f = i / 12.0
+        pygame.draw.line(surf, wood, along(-1, f), along(1, f), max(1, int(2 * s)))
 
 
 def _draw_cellar_hatch_solid(surf, cam, deco):
