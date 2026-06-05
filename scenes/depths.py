@@ -573,20 +573,87 @@ def build_dark():
 
 
 def build_threshold():
-    floor, objs = _box(10, 10)
+    # An underground RIVER CAVE -- not a box. Ragged rock walls, a stalagmite
+    # floor, and the artery-river (NARRATIVE 1b) forming the whole WEST boundary.
+    # The one place the cave goes WRONG is the doorframe: there the floor lies
+    # impossibly level and swept clear, geometry serving the door (1b -- the seed
+    # of the spatial fold). The player comes up from the dark to the SOUTH and
+    # walks the cave north to the frame -- the dream-walk made real.
+    W, H = 14, 13
+    floor, objs = _box(W, H)
+    floor = [list(r) for r in floor]          # mutable rows for the edits below
+    # Gnaw an organic cave edge, but keep the central approach (entry S -> door
+    # N) and the door's row open so the apron stays clean and reachable.
+    _cavern(objs, seed=771, keep_cols=(6, 7, 8), keep_rows=(4,))
+    # Rough packed-stone cave floor throughout (the apron is reset smoother below).
+    for _y in range(H):
+        for _x in range(W):
+            floor[_y][_x] = "x"
+    # The artery: a river channel hard against the west rock, IMPASSABLE
+    # (invisible-solid over the water) so it reads as one boundary WALL of the
+    # cave -- the source the thread of water crept from to the frame.
+    for _y in range(2, H - 2):
+        for _x in (1, 2):
+            objs[_y][_x] = "X"
+            floor[_y][_x] = "~"
+    objs[4][3] = "."          # a lick of water onto the bank, where the thread
+    floor[4][3] = "~"         # leaves the river toward the frame
+    # The threshold APRON: a clean, level clearing around the frame (rows 2-6,
+    # cols 5-9) -- smoother dark stone, and (below) no stalagmite intrudes on it.
+    # The cave's true wrongness is that this order exists down here at all.
+    for _y in range(2, 7):
+        for _x in range(5, 10):
+            if objs[_y][_x] == ".":          # don't punch through carved rock
+                floor[_y][_x] = "."
     objects = ["".join(r) for r in objs]
     sc = Scene("threshold", floor, objects, music="void")
-    sc.set_spawn("default",   5, 1)
-    sc.set_spawn("from_dark", 5, 1)
-    # Doorframe at the centre. Pressing E presses the KEYSTONE -- the Pallid
-    # Mask -- into the door and seals it (the seal_threshold ending),
-    # CONSUMING it (§7 rework, Mask-only: the cult's notes are pure lore now
-    # and gate nothing). The keystone was carried down (the Deep Stair opened
-    # WITHOUT spending it), so a player who descended always holds it here.
-    lintel_x, lintel_y = 5 * TILE + 16, 5 * TILE + 16
+    sc.skybox_kind = "void"
+    sc.set_spawn("default",   7, 11)
+    sc.set_spawn("from_dark", 7, 11)
+    # Doorframe on the apron (the cave's north-centre). Pressing E presses the
+    # KEYSTONE -- the Pallid Mask -- into the door and seals it (the
+    # seal_threshold ending), CONSUMING it (§7 rework, Mask-only: the cult's
+    # notes are pure lore now and gate nothing). The keystone was carried down
+    # (the Deep Stair opened WITHOUT spending it), so a player who descended
+    # always holds it here.
+    lintel_x, lintel_y = 7 * TILE + 16, 4 * TILE + 16
     sc._lintel_pos = (lintel_x, lintel_y)
     sc.add_interactable(lintel_x, lintel_y, 40)   # [E] cue: seal the Threshold (END IT)
+    # The frame itself: a real standing doorframe (NARRATIVE 1b), NOT solid --
+    # you can walk through it and stand in the same room on the far side. The
+    # smoke rises from its opening.
+    sc.add_decoration(Decoration(lintel_x, lintel_y, "doorframe"))
     sc.add_decoration(Decoration(lintel_x, lintel_y - TILE, "smoke"))
+
+    # Stalagmites choking the organic cave floor -- everywhere BUT the swept
+    # apron, the river, and the central walking lane. Solid (invisible-solid
+    # under each), so they shape the space like real rock; hand-placed clear of
+    # the col-7 approach so the walk to the frame is never blocked.
+    _stals = [(4, 8), (3, 6), (5, 10), (4, 11), (3, 9), (5, 7),
+              (10, 5), (11, 7), (12, 9), (10, 8), (11, 11), (9, 10),
+              (12, 4), (11, 3), (12, 6)]
+    for (sx, sy) in _stals:
+        if not (0 <= sy < H and 0 <= sx < W) or sc.objects[sy][sx] != ".":
+            continue
+        sc.objects[sy][sx] = "X"             # collision; the prop draws over it
+        sc.add_decoration(Decoration(sx * TILE + 16, sy * TILE + 16,
+                                     "stalagmite", seed=sx * 31 + sy * 17))
+
+    # The river THREAD (NARRATIVE 1b). The river found the lowest, flattest floor
+    # in the earth; a single thread crept off it, crossed the cave, reached the
+    # frame, and CROSSED ITS PLANE. It leaves the west channel, meanders the floor
+    # to the door's foot, pools there, and a thread carries on THROUGH the empty
+    # frame to the far stone -- water passing where a body cannot. Floor decals,
+    # so they lie in the level floor and warp with it under the tilt.
+    _thread = [(2, 4, 0.0), (3, 4, 0.2), (4, 5, 0.5), (5, 5, 0.4), (6, 4, 0.7)]
+    for (tx, ty, ang) in _thread:
+        sc.add_decoration(Decoration(tx * TILE + 16, ty * TILE + 16,
+                                     "water_trail", ang=ang, seed=tx * 13 + ty))
+    sc.add_decoration(Decoration(lintel_x, lintel_y + 6, "water_trail",
+                                 pool=True, seed=99))
+    for ty in (3, 2):                        # the thread crossing the plane
+        sc.add_decoration(Decoration(lintel_x, ty * TILE + 16, "water_trail",
+                                     ang=math.pi / 2, seed=ty * 7))
 
     def _threshold_on_enter(game, scene):
         if game.save.flag("first_threshold"):

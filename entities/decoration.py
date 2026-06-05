@@ -1793,6 +1793,81 @@ class Decoration:
         pygame.draw.ellipse(surf, (90, 10, 14), (x - 8, y - 3, 16, 8))
         pygame.draw.ellipse(surf, (60, 6, 10), (x - 4, y, 8, 4))
 
+    def _draw_water_trail(self, surf, x, y):
+        """A thin thread of the underground river crossing a stone floor
+        (NARRATIVE 1b: the river is the artery; water finds the lowest place
+        and the first thread reached the Threshold frame and crossed its plane).
+        A FLOOR decal -- warped onto the tilted floor -- so it lies IN the stone
+        and turns with the room. A dark wet rivulet pooled in a shallow seam,
+        with a cold sheen that drifts along the flow (the current still moving)
+        and faint ripple ticks. `ang` (radians) sets the flow axis (default down
+        the +y screen toward the door); `pool=True` widens it into a standing
+        pool where the thread reaches the frame."""
+        ang = float(self.kwargs.get("ang", math.pi / 2))   # default: flows +y
+        ca, sa = math.cos(ang), math.sin(ang)
+        pool = self.kwargs.get("pool", False)
+        L = 16 if not pool else 11                          # half-length along flow
+        Wd = 4 if not pool else 9                           # half-width across flow
+
+        def P(along, across):
+            return (int(x + ca * along - sa * across),
+                    int(y + sa * along + ca * across))
+        # damp halo seeped into the surrounding stone (a touch wider than the
+        # water, so the rivulet looks soaked-in, not painted on)
+        for k in range(-L, L + 1, 4):
+            f = 1.0 - abs(k) / (L + 4.0)
+            pygame.draw.circle(surf, (26, 30, 32),
+                               P(k, 0), max(1, int((Wd + 2) * f)))
+        # the wet channel itself: cold near-black water pooled in the seam
+        for k in range(-L, L + 1, 3):
+            f = 1.0 - abs(k) / (L + 3.0)
+            pygame.draw.circle(surf, (16, 26, 30), P(k, 0), max(1, int(Wd * f)))
+            pygame.draw.circle(surf, (8, 15, 19), P(k, 0), max(1, int(Wd * f * 0.55)))
+        # a cold sheen that slides ALONG the flow -- the current still moving
+        drift = (self.t * 9.0) % (2 * L + 6) - (L + 3)
+        gx, gy = P(drift, -Wd * 0.3)
+        pygame.draw.circle(surf, (70, 96, 104), (gx, gy), 2)
+        gx2, gy2 = P(drift * 0.6 + L * 0.4, Wd * 0.25)
+        pygame.draw.circle(surf, (44, 64, 70), (gx2, gy2), 1)
+        # a couple of faint ripple ticks across the thread
+        for kk in (-L // 2, L // 3):
+            a = P(kk, -Wd * 0.7); b = P(kk, Wd * 0.7)
+            pygame.draw.line(surf, (40, 58, 64), a, b, 1)
+
+    def _draw_doorframe(self, surf, x, y):
+        """The Threshold frame (flat / F3 fallback; the tilt view stands it up as
+        real geometry via rendering/props.py). A plain pale frame around an empty
+        opening that bleeds a faint sallow light -- a door with no wall."""
+        pal = (152, 150, 158)
+        dk = (74, 72, 80)
+        g = 0.5 + 0.5 * math.sin(self.t * 1.1)
+        pygame.draw.rect(surf, (34, 30, 18), (x - 11, y - 46, 22, 46))   # opening void
+        pygame.draw.rect(surf, (int(70 + 38 * g), int(58 + 26 * g), 26),
+                         (x - 9, y - 42, 18, 42))                        # sallow bleed
+        pygame.draw.rect(surf, pal, (x - 14, y - 48, 5, 48))            # left jamb
+        pygame.draw.rect(surf, pal, (x + 9, y - 48, 5, 48))            # right jamb
+        pygame.draw.rect(surf, pal, (x - 14, y - 48, 28, 5))           # lintel
+        pygame.draw.rect(surf, dk, (x - 14, y - 48, 28, 48), 1)
+        _ground_shadow(surf, x, y + 1, 14, 4, 80)
+
+    def _draw_stalagmite(self, surf, x, y):
+        """A wet limestone spike rising from the cave floor. Flat / F3 fallback
+        -- the tilt view draws it as a real tapered cone via rendering/props.py.
+        Girth + height vary by seed so a field of them never reads as a stamp."""
+        R = 5 + (self.seed % 5)
+        H = 18 + (self.seed % 16)
+        lean = (self.seed % 7) - 3
+        base = (92, 92, 98)
+        lite = (140, 142, 150)
+        dk = (52, 52, 58)
+        tip = (x + lean // 2, y - H)
+        pygame.draw.polygon(surf, base,
+                            [(x - R, y + 6), (x + R, y + 6), tip])
+        pygame.draw.polygon(surf, dk,
+                            [(x - R, y + 6), (x + R, y + 6), tip], 1)
+        pygame.draw.line(surf, lite, (x - 1, y + 4), tip, 1)
+        _ground_shadow(surf, x, y + 6, R + 1, 3, 70)
+
     def _draw_symbol(self, surf, x, y):
         # Pulsing arcane sigil on the floor. Two concentric circles + an
         # inner triangle, all in violet. Pulses size with a slow sine so

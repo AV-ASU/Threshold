@@ -103,6 +103,31 @@ def _draw_grain_heap_solid(surf, cam, deco):
           fill=False, width=2)
 
 
+def _draw_stalagmite_solid(surf, cam, deco):
+    """A wet limestone spike rising from the cave floor -- a tapered cone (body
+    of revolution), so it stands oriented in the room and occludes/depth-sorts
+    instead of facing the camera. Height + girth vary by seed; a damp sheen
+    catches the dark near the tip."""
+    wx, wy = deco.x, deco.y
+    s = (getattr(deco, "scale", 1.0) or 1.0)
+    seed = getattr(deco, "seed", 0)
+    R = (5 + (seed % 5)) * s
+    H = (18 + (seed % 16)) * s
+    lean = ((seed % 7) - 3) * 0.4 * s           # a slight off-vertical lean
+    pal = {"body": (96, 94, 100), "lo": (48, 48, 54), "rim": (150, 150, 160)}
+    # taper base -> point; the apex section is offset by `lean` so it isn't a
+    # perfectly upright cone (caves don't grow them straight).
+    draw_solid(surf, cam, wx, wy,
+               [(0, R, R * 0.78), (H * 0.5, R * 0.55, R * 0.46),
+                (H, R * 0.12, R * 0.12)], pal)
+    tip = cam.project(wx + lean, wy, H * 0.86)
+    pygame.draw.circle(surf, pal["rim"], (int(tip[0]), int(tip[1])),
+                       max(1, int(1.6 * s)))
+    wet = cam.project(wx - R * 0.3, wy + R * 0.2, H * 0.35)
+    pygame.draw.circle(surf, (118, 122, 130), (int(wet[0]), int(wet[1])),
+                       max(1, int(1.2 * s)))
+
+
 def _vbox(surf, cam, wx, wy, w, d, z0, z1, pal, yaw=0.0, outline=True):
     """A box from height z0 to z1 (footprint w x d), yaw-rotated about its
     centre -- used to stack a vehicle from a body + cabin + wheels."""
@@ -289,13 +314,58 @@ def _draw_pickup_truck_solid(surf, cam, deco):
     _round_wheel(surf, P, -wbx, hW, r)
 
 
+def _draw_doorframe_solid(surf, cam, deco):
+    """THE THRESHOLD (NARRATIVE 1b): a plain, blank, unmarked frame -- 'about the
+    size of a car stood on its nose' -- standing DEAD STRAIGHT on the impossible
+    apron. 'Too slight to hold itself upright, yet it stands.' A one-way window
+    He looks OUT of: the opening shows the void behind it, with a faint sallow
+    bleed at its lips. Two slight jambs + a lintel, pale bone-stone, unnaturally
+    precise against the leaning cave around it -- geometry serving the door."""
+    wx, wy = deco.x, deco.y
+    s = (getattr(deco, "scale", 1.0) or 1.0)
+    Wf, Hf, t, Df = 30 * s, 54 * s, 5 * s, 6 * s
+    half = Wf / 2
+    pal = {"top": (158, 156, 164), "side": (110, 108, 116), "dark": (74, 72, 80)}
+    # cold ground-contact shadow so it seats on the apron
+    bx, by = cam.project(wx, wy, 0)
+    shw = max(4, int(half * cam.scale * 1.1))
+    shh = max(2, int(Df * cam.ground_squash() * cam.scale))
+    shsurf = pygame.Surface((shw * 2 + 4, shh * 2 + 4), pygame.SRCALPHA)
+    pygame.draw.ellipse(shsurf, (0, 0, 0, 90), (2, 2, shw * 2, shh * 2))
+    surf.blit(shsurf, (bx - shw - 2, by - shh - 2))
+    # faint sallow bleed filling the opening (He looks out) -- drawn first, so
+    # the jambs frame it
+    op = [cam.project(wx - half + t, wy, t), cam.project(wx + half - t, wy, t),
+          cam.project(wx + half - t, wy, Hf - t),
+          cam.project(wx - half + t, wy, Hf - t)]
+    xs = [p[0] for p in op]; ys = [p[1] for p in op]
+    ox0, oy0 = int(min(xs)), int(min(ys))
+    ow = max(1, int(max(xs) - ox0)); oh = max(1, int(max(ys) - oy0))
+    g = 0.5 + 0.5 * math.sin(deco.t * 1.1)
+    gs = pygame.Surface((ow, oh), pygame.SRCALPHA)
+    pygame.draw.polygon(gs, (96, 82, 34, int(22 + 20 * g)),
+                        [(int(x - ox0), int(y - oy0)) for x, y in op])
+    surf.blit(gs, (ox0, oy0))
+    # jambs + lintel as slight upright boxes, dead straight (no lean)
+    _vbox(surf, cam, wx - half + t / 2, wy, t, Df, 0, Hf, pal)
+    _vbox(surf, cam, wx + half - t / 2, wy, t, Df, 0, Hf, pal)
+    _vbox(surf, cam, wx, wy, Wf, Df, Hf - t, Hf, pal)
+    # a thin pale rule down each inner edge -- precise, machined
+    for ex in (-half + t, half - t):
+        a = cam.project(wx + ex, wy, t)
+        b = cam.project(wx + ex, wy, Hf - t)
+        pygame.draw.line(surf, pal["top"], a, b, 1)
+
+
 SOLID_PROPS = {
+    "doorframe":     _draw_doorframe_solid,
     "well":          _draw_well_solid,
     "pillar":        _draw_pillar_solid,
     "cistern_basin": _draw_cistern_basin_solid,
     "grain_heap":    _draw_grain_heap_solid,
     "player_car":    _draw_car_solid,
     "pickup_truck":  _draw_pickup_truck_solid,
+    "stalagmite":    _draw_stalagmite_solid,
 }
 
 
