@@ -1910,22 +1910,29 @@ class Decoration:
                     acc += d
 
     def _draw_chalkboard(self, surf, x, y):
-        """A schoolroom chalkboard on the wall: the children's faded lesson still
-        ghosted under the cult's compulsion -- a doorway chalked over and over,
-        smaller and smaller, marching off into a corner. Wall-mounted."""
-        pygame.draw.rect(surf, (96, 66, 38), (x - 26, y - 16, 52, 32))      # frame
-        pygame.draw.rect(surf, (60, 40, 22), (x - 26, y - 16, 52, 32), 1)
-        pygame.draw.rect(surf, (28, 36, 32), (x - 23, y - 13, 46, 26))      # slate
-        pygame.draw.rect(surf, (18, 24, 22), (x - 23, y - 13, 46, 26), 1)
-        for lx in (-19, -14, -9):                                          # ghost lesson
-            pygame.draw.rect(surf, (110, 122, 112), (x + lx, y - 10, 3, 4), 1)
-        cx, cy, s = x - 7, y - 2, 9                                        # the door, shrinking
-        for k in range(5):
-            col = (212, 216, 208) if k == 0 else (150, 160, 150)
-            pygame.draw.rect(surf, col, (cx, cy - s, max(2, s * 2 // 3), s), 1)
-            cx += s // 2 + 2; cy += 1; s = max(3, int(s * 0.78))
-        pygame.draw.rect(surf, (70, 50, 30), (x - 24, y + 12, 48, 3))       # chalk tray
-        pygame.draw.rect(surf, (184, 190, 182), (x - 18, y + 13, 9, 1))     # chalk dust
+        """A WIDE schoolroom chalkboard on the wall (spans 4-5 tiles): the
+        children's faded lesson ghosted under the cult's compulsion -- a doorway
+        chalked over and over, smaller and smaller, marching off into a corner.
+        Wall-mounted; draw_wall_deco stretches it along the wall span."""
+        HW, HH = 52, 15                                                    # half size
+        pygame.draw.rect(surf, (96, 66, 38), (x - HW, y - HH, HW * 2, HH * 2))      # frame
+        pygame.draw.rect(surf, (60, 40, 22), (x - HW, y - HH, HW * 2, HH * 2), 2)
+        pygame.draw.rect(surf, (28, 36, 32),
+                         (x - HW + 4, y - HH + 4, HW * 2 - 8, HH * 2 - 8))  # slate
+        for i in range(9):                                                 # ghost lesson
+            pygame.draw.rect(surf, (96, 110, 100),
+                             (x - HW + 10 + i * 7, y - HH + 7, 4, 5), 1)
+        cx, cy, s = x - HW + 13, y + 3.0, 15.0                             # the door, shrinking
+        for k in range(8):
+            col = (214, 218, 210) if k == 0 else (150, 162, 150)
+            pygame.draw.rect(surf, col, (int(cx), int(cy - s),
+                                         max(2, int(s * 0.62)), int(s)), 1)
+            cx += s * 0.55 + 3; cy += 1.0; s = max(3.0, s * 0.82)
+        for tx in (x - HW + 24, x - HW + 34, x - HW + 44):                 # tally scratches
+            pygame.draw.line(surf, (120, 132, 122), (tx, y + HH - 9),
+                             (tx, y + HH - 5), 1)
+        pygame.draw.rect(surf, (70, 50, 30), (x - HW + 4, y + HH - 4, HW * 2 - 8, 3))  # tray
+        pygame.draw.rect(surf, (186, 192, 184), (x - HW + 14, y + HH - 3, 12, 1))      # dust
 
     def _draw_child_drawing(self, surf, x, y):
         """A child's crayon drawing dropped on the floor. Most are ordinary (a

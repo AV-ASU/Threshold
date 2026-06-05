@@ -1888,7 +1888,8 @@ def draw_wall_deco(surf, camera, scene, deco, mount_z, woff=(0.0, 0.0)):
     of the wall, edge-on (a sliver) when you look along it."""
     nx, ny = _wall_normal(scene, deco.x, deco.y)
     ax, ay = -ny, nx                       # along the wall (perp to the normal)
-    half = 15.0 if deco.kind == "chalk_door_wall" else 11.0
+    half = (70.0 if deco.kind == "chalkboard"
+            else 15.0 if deco.kind == "chalk_door_wall" else 11.0)
     bx, by = deco.x + woff[0], deco.y + woff[1]
     p1 = camera.project(bx - ax * half, by - ay * half, mount_z)
     p2 = camera.project(bx + ax * half, by + ay * half, mount_z)
@@ -1900,12 +1901,15 @@ def draw_wall_deco(surf, camera, scene, deco, mount_z, woff=(0.0, 0.0)):
     if width < 3:
         return                             # edge-on -> a sliver; skip
     drawfn = getattr(deco, f"_draw_{deco.kind}", deco._draw_unknown)
-    C = 28 if deco.kind == "chalk_door_wall" else 22
+    C = (56 if deco.kind == "chalkboard"
+         else 28 if deco.kind == "chalk_door_wall" else 22)
     canvas = pygame.Surface((C * 2, C * 2), pygame.SRCALPHA)
     drawfn(canvas, C, C)
     h = int(C * 2 * 0.66)                   # card screen height (upright)
     if deco.kind == "chalk_door_wall":     # a door is tall, not a small plaque
         h = int(C * 2 * 0.95)
+    if deco.kind == "chalkboard":          # wide board: square card -> art keeps
+        h = max(3, int(width))             # its drawn (wide-but-short) proportions
     card = pygame.transform.scale(canvas, (max(3, int(width)), max(3, h)))
     ang = math.degrees(math.atan2(-(p2[1] - p1[1]), p2[0] - p1[0]))
     if abs(ang) > 0.5:
