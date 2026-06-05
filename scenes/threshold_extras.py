@@ -50,14 +50,15 @@ def build_schoolhouse():
     sc.set_spawn("from_town", 7, 10)
 
     # The schoolroom remnants: the teacher's desk shoved askew to the NW front,
-    # and the children's desks + chairs STACKED into the SE corner to clear the
-    # floor for sleeping. The bones of what this was.
+    # and the children's desks ALL pushed into the SE corner -- a jumbled pile of
+    # little desks + chairs cleared off the floor to make room for the cots.
     sc.add_furniture("table", [(2, 1)], w=54, h=34)              # teacher's desk
-    sc.add_furniture("table", [(12, 9), (13, 9)], w=54, h=34)    # stacked desks
+    sc.add_furniture("table", [(12, 9), (13, 9)], w=54, h=34)    # piled desks
     sc.add_furniture("table", [(12, 10), (13, 10)], w=54, h=30)
-    sc.add_furniture("small_chair", [(11, 9)])
-    sc.add_decoration(Decoration(13 * TILE + 16, 8 * TILE + 16,
-                                 "overturned_chair"))            # knocked over
+    for (dx, dy) in ((11, 9), (11, 10), (12, 8), (11, 8)):       # little desks
+        sc.add_furniture("small_chair", [(dx, dy)])
+    sc.add_decoration(Decoration(10 * TILE + 16, 9 * TILE + 16,
+                                 "overturned_chair"))            # one knocked into the aisle
 
     # The commune: two banks of cots crammed against the long walls, a narrow
     # aisle down the middle. Where several people lived, in rows, for months.
@@ -76,15 +77,26 @@ def build_schoolhouse():
     sc.add_decoration(Decoration(8 * TILE + 16, 7 * TILE + 16, "bloodstain",
                                  scale=1.6))
 
-    # The cult's marks, over the schoolroom: the chalkboard on the N wall scrawled
-    # with the door-compulsion, more chalk on the floor of the aisle, scratched
-    # tallies, and a corn-husk doll left on a cot. (Same motif as the barn.)
-    sc.add_chalk_door(7 * TILE + 16, 0 * TILE + 12, seed=4, wall=True)
-    sc.add_chalk_door(7 * TILE + 16, 8 * TILE + 16, voice="chalk_surface", seed=7)
-    sc.add_decoration(Decoration(10 * TILE + 16, 0 * TILE + 28, "phantom_mark"))
-    sc.add_decoration(Decoration(5 * TILE + 8, 0 * TILE + 28, "phantom_mark"))
-    sc.add_decoration(Decoration(13 * TILE + 6, 4 * TILE + 16, "phantom_mark"))
+    # The schoolroom CHALKBOARD on the N wall, the children's faded lesson
+    # scrawled over with the cult's door-compulsion (the door drawn over and
+    # over, shrinking into a corner). A couple of chalk smudges flank it.
+    sc.add_decoration(Decoration(7 * TILE + 16, 0 * TILE + 20, "chalkboard"))
+    sc.add_decoration(Decoration(11 * TILE + 16, 0 * TILE + 28, "phantom_mark"))
+    sc.add_decoration(Decoration(4 * TILE + 8, 0 * TILE + 28, "phantom_mark"))
+    # A corn-husk doll left on a cot -- the one overt cult tell among the relics.
     sc.add_decoration(Decoration(13 * TILE + 16, 3 * TILE + 6, "corn_doll"))
+
+    # The remnants of a campfire they burned INSIDE, on the wood floor in a
+    # cleared spot off the aisle -- reckless, the way squatters do.
+    sc.add_decoration(Decoration(9 * TILE + 16, 4 * TILE + 16, "campfire"))
+
+    # Children's crayon drawings scattered on the floor -- most ordinary (a
+    # house, a sun, little figures), a couple of them wrong (a black door + a
+    # tall yellow figure). Left where the children left them.
+    for (gx, gy, gs) in ((6, 3, 3), (5, 6, 4), (5, 8, 5), (10, 7, 6),
+                         (6, 9, 7), (4, 5, 8)):
+        sc.add_decoration(Decoration(gx * TILE + 16, gy * TILE + 16,
+                                     "child_drawing", seed=gs))
 
     # Abandoned a while: cobwebs strung in the high corners over the cots, a
     # stopped clock, dust in the dim light.
@@ -100,7 +112,7 @@ def build_schoolhouse():
     sc.hide_spots = [
         (5 * TILE + 16, 3 * TILE + 16, "behind"),    # behind the west cot bank
         (10 * TILE + 16, 5 * TILE + 16, "behind"),   # behind the east cot bank
-        (11 * TILE + 16, 10 * TILE + 16, "behind"),  # in the shoved-desk corner
+        (10 * TILE + 16, 10 * TILE + 16, "behind"),  # beside the shoved-desk corner
     ]
 
     # The chalkboard reads as a flavor beat (not counted evidence).

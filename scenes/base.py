@@ -1777,7 +1777,7 @@ _FLOOR_DECAL_KINDS = frozenset((
     # flat onto the floor so they turn with the room instead of standing up as a
     # top-down sticker under tilt. Pitch 0 draws them flat via Scene.draw as before.
     "symbol", "binding_sigil", "swallow_hole", "cellar_hatch",
-    "body", "drowned_body", "water_trail",
+    "body", "drowned_body", "water_trail", "child_drawing", "campfire",
     # Low overhead foliage (drawn top-down): a flat warped decal reads as a
     # shrub on the ground, where a standee would stand the overhead blob up
     # vertically as a smear.
@@ -1793,7 +1793,7 @@ _WALL_DECO_KINDS = frozenset((
     "mirror", "photo", "wrong_photo", "missing_flyer", "polaroid_wall",
     "banner", "calendar", "clock", "apology_wall",
     "buck_head", "antler_rack", "mounted_fish", "wrong_taxidermy",
-    "chalk_door_wall",
+    "chalk_door_wall", "chalkboard",
 ))
 _WALL_MOUNT_Z = 18
 
