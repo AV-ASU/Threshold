@@ -190,6 +190,12 @@ CULT_AMBIENT_SCENES = {"works_vats", "works_sorting", "works_scriptorium",
 # (you are already safe; the cramped read is wrong here).
 SAFE_SCENES = {"bedroom", "house", "son_room", "kid_house"}
 
+# Refuges a chase can never cross (NARRATIVE §8): the safe houses above, plus
+# Mara's cell -- a deliberate underground refuge that hosts no cult, so a
+# pursuer fled into it is shaken. (A chase is also shaken by a mundane interior
+# door, but that's keyed on the EXIT type in _note_fold_pursuit, not the scene.)
+FOLD_REFUGE_SCENES = SAFE_SCENES | {"maras_room"}
+
 # The King never manifests in these: the homey refuges above PLUS the two
 # narrative set-pieces whose whole work is recognition / resolution rather
 # than a chase -- the hive (dark) and the Threshold itself. Without this a
@@ -2861,14 +2867,30 @@ class Game(CutsceneMixin):
         if self.scene is None or self.player is None:
             return
         key = self.scene.key
-        # Safe interiors + non-cult scenes: sweep any strays and bail.
+        # Safe interiors + non-cult scenes host no cult patrol: sweep stray
+        # cultists and bail. The one exception is a fold-FOLLOWER -- a pursuer
+        # that chased you through the seam into here. It isn't a spawn; it
+        # persists and can still reach you (the chase you carried in), but draws
+        # no patrol, gaze, or reinforcements. A true refuge (FOLD_REFUGE_SCENES)
+        # is gated upstream, so no follower is ever stashed into one.
         if key in SAFE_SCENES or key not in CULTIST_SCENES:
-            if any(str(getattr(n, "tag", "")).startswith("cult_")
-                   for n in self.scene.npcs):
-                self.scene.npcs = [
-                    n for n in self.scene.npcs
-                    if not str(getattr(n, "tag", "")).startswith("cult_")
-                ]
+            survivors = []
+            for n in self.scene.npcs:
+                tag = str(getattr(n, "tag", ""))
+                if tag.startswith("cult_") and not getattr(n, "_fold_follower", False):
+                    continue                 # stray patrol cultist: sweep it
+                survivors.append(n)
+            self.scene.npcs = survivors
+            hidden = self.player.hidden is not None
+            for n in survivors:
+                if not getattr(n, "_fold_follower", False):
+                    continue
+                if getattr(n, "_stun_t", 0) > 0:
+                    continue                 # shoved: blind + can't grab
+                d = math.hypot(n.x - self.player.x, n.y - self.player.y)
+                if d < 22 and not hidden and self.player.invuln <= 0:
+                    self._trigger_death("cultist")
+                    return
             return
         self._ensure_cultists(key, dt)
         hidden = self.player.hidden is not None
@@ -3093,16 +3115,27 @@ class Game(CutsceneMixin):
         exit, stash that one pursuer so it follows a beat behind, whether the
         exit is a door, ladder, rope, seamless passage, or a hidden fold. Both
         cultist classes count -- the surface NPC chasers AND the underground
-        Enemy cultists. A destination shakes the chase when it can't host a
-        pursuer: a SAFE_SCENES refuge, or any room that doesn't tick cultists
-        at all -- an underground room (Enemy) or a CULTIST_SCENE (NPC) is the
-        only place one can materialize, so e.g. Mara's cell stays a refuge."""
+        Enemy cultists. The chase carries through a FOLD or seamless PASSAGE, or
+        a descent into cult-held ground (underground / a CULTIST_SCENE) -- INCL.
+        a hidden-fold grove that hosts no cult of its own: the one chaser you
+        brought with you crosses the seam and can still reach you (it does NOT
+        make the grove cult territory). The escapes that shake it: a refuge
+        (FOLD_REFUGE_SCENES), or a mundane door/ladder/rope into an ordinary
+        interior (architecture is the player-only way out)."""
         target_scene, _spawn_id = exit_data
-        if target_scene in SAFE_SCENES:
+        # A refuge always shakes the chase (the safe houses + Mara's cell).
+        if target_scene in FOLD_REFUGE_SCENES:
             self._fold_pursuer = None
             return
-        if (target_scene not in UNDERGROUND_SCENES
-                and target_scene not in CULTIST_SCENES):
+        # Otherwise the pursuer follows only where it can reach you on the far
+        # side: through a FOLD or seamless PASSAGE (the cult's own wrong-ground,
+        # incl. a hidden grove that hosts no cult of its own), or down into
+        # cult-held ground -- the underground (Enemy cultists) or a surface
+        # CULTIST_SCENE (NPC chasers). A mundane door / ladder / rope into an
+        # ordinary interior is the player-only escape: it shakes the chase.
+        if not (self._exit_is_fold(exit_data)
+                or target_scene in UNDERGROUND_SCENES
+                or target_scene in CULTIST_SCENES):
             self._fold_pursuer = None
             return
         hot, hot_d = None, FOLD_PURSUE_RANGE
@@ -3178,6 +3211,11 @@ class Game(CutsceneMixin):
                                       gaze_range=info["gaze_range"],
                                       at=(sx, sy))
             if npc is not None:
+                # Mark it a fold-FOLLOWER so a non-cult destination (a hidden
+                # grove, an ordinary interior) keeps it alive and lethal --
+                # _tick_cultists sweeps stray cultists in such rooms, but spares
+                # the one chaser that came through the seam after you.
+                npc._fold_follower = True
                 npc._cult_state = "chase"
                 npc._last_seen_pos = (self.player.x, self.player.y)
         self._fold_pursuer = None
