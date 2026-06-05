@@ -100,6 +100,9 @@ def preacher_dialogue(game, npc):
             "You came back. Good.",
             "It isn't the corn. The mouth is under the well. The well "
             "is in the Clerk's yard. I name them from my pulpit.",
+            "And I name what they are. Not claimed, not stolen. Willing. "
+            "They cast God aside for their own gain and call the selling "
+            "of a soul a mercy. Foul sinners, every one, and glad of it.",
             "The sheriff comes to hear me say it. He stays for the "
             "whole sermon. He's never taken communion.",
             "Let them come for an old man. I've buried better than "

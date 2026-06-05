@@ -205,15 +205,21 @@ version is one faint unease, never elaborated. There is no King POV to author
   rare break of a vast thing finding exactly the right hand. He is powerful,
   **not** infallible. Keep the seam of chance in any moment His reach is felt.
 
-### 12. Rev. Asa Crane — dialogue/murder rework (lore unchanged)
+### ✅ 12. Rev. Asa Crane — dialogue settled — DONE (murder-beat polish optional)
 
 **Canon (NARRATIVE §2):** unchanged — local dissenter who **names the cult**
 from his pulpit, murdered for it (evidence #4, his cross). Only the
-**presentation** (his dialogue + the murder beat) is up for a rework.
+**presentation** was up for a rework.
 
-- [ ] **Settle the new presentation with the user before writing.** Revisit
-  Crane's lines + the `preacher_doomed` → gutted-on-the-floor reveal for
-  impact. No lore change.
+- [x] **Pulpit condemnation added** (`scenes/dialogue.py` `preacher_dialogue`,
+  the 2nd-conversation sermon that sets `preacher_doomed`). Crane now names them
+  as **willing** apostates, not puppets — they kept their free will and *chose*
+  the bargain: "Not claimed, not stolen. Willing. They cast God aside for their
+  own gain and call the selling of a soul a mercy. Foul sinners, every one, and
+  glad of it." Stays religious/moral (he never grasps the cosmic truth; §10
+  fence held). Settled with the user 2026-06.
+- [ ] *(Optional, not requested)* the `preacher_doomed` → gutted-on-the-floor
+  reveal could be punched up for impact later. No lore change.
 
 ---
 
@@ -223,7 +229,8 @@ from his pulpit, murdered for it (evidence #4, his cross). Only the
   reflect the settled canon; this file now tracks only the Phase 2 remainder.
 - **Coupling:** §6b (the three testimony fragments + Mask-only keystone) is
   DONE and flow-guarded; §8 (the PI's interior voice) and §9 (ashfall) landed
-  earlier. §10 is a fence, not a ticket. **So only §12 (Crane) remains, gated on
-  a design conversation.**
+  earlier; §12 (Crane's pulpit condemnation) is now DONE. §10 is a fence, not a
+  ticket. **No required canon-alignment work remains** (only an optional Crane
+  murder-beat polish).
 - Verify against `NARRATIVE.md` first; keep `tests/flow.py` green (run the full
   gate, `python tests/run_all.py`) and add a guard as each canon fact locks.

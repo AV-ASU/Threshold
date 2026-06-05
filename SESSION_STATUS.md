@@ -60,9 +60,10 @@ agreements, flashback tuning pointer → `ui/cutscenes.py`), this file, HANDOFF.
 - No open ship-blockers found.
 
 ## Open / next (need direction)
-- **GAME_CHANGES.md §12 — Rev. Asa Crane** dialogue/murder-beat rework: the only
-  open narrative item, gated on a design conversation with the user. (Lore
-  unchanged; presentation only.)
+- **GAME_CHANGES.md §12 — Rev. Asa Crane: DONE.** Added his pulpit condemnation
+  (the cult are *willing* apostates who cast God aside for gain, not puppets) to
+  the doomed 2nd-conversation sermon in `scenes/dialogue.py`. Only an *optional*
+  murder-beat polish remains. No required narrative work is now open.
 - **Optional deeper refactor:** the god-methods inside the mixins
   (`draw_world` ~466L, `update_player`, `_log_case_entry` 169L) were left intact
   — splitting their internals is real surgery (z-order/logic risk), now safely
