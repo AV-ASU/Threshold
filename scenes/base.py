@@ -1482,6 +1482,27 @@ def _draw_bank_fringe(surf, scene, tx, ty, rx, ry):
             pygame.draw.line(surf, reed, (bx, by), (tipx, tipy - 1), 1)
 
 
+def _round_water_corners(surf, scene, tx, ty, rx, ry):
+    """Shave the square corners off the river. At a CONVEX corner (both
+    orthogonal neighbours are land) paint a muddy round over the water's
+    corner, so the channel + its bends read as a curved bank, not a stepped
+    grid. Pairs with _draw_bank_fringe; only the bends/turns get rounded
+    (straight edges have one land side, so no corner triggers)."""
+    floor, h, w = scene.floor, scene.h, scene.w
+
+    def _land(nx, ny):
+        return (not (0 <= nx < w and 0 <= ny < h)) or floor[ny][nx] in _BANK_LAND
+    mud, mud_dk = (54, 44, 30), (40, 32, 22)
+    R = 7
+    for d1, d2, cxp, cyp in (((0, -1), (-1, 0), rx, ry),
+                             ((0, -1), (1, 0), rx + TILE, ry),
+                             ((0, 1), (-1, 0), rx, ry + TILE),
+                             ((0, 1), (1, 0), rx + TILE, ry + TILE)):
+        if _land(tx + d1[0], ty + d1[1]) and _land(tx + d2[0], ty + d2[1]):
+            pygame.draw.circle(surf, mud, (cxp, cyp), R)
+            pygame.draw.circle(surf, mud_dk, (cxp, cyp), R, 1)
+
+
 def draw_scene_terrain(surf, scene, cam_x, cam_y, x0, y0, x1, y1,
                        skip_billboard=False):
     """Floor -> path fringe -> wall-cast shadows -> continuous wall mass
@@ -1546,6 +1567,8 @@ def draw_scene_terrain(surf, scene, cam_x, cam_y, x0, y0, x1, y1,
             elif ch == "~":
                 _draw_bank_fringe(surf, scene, tx, ty,
                                   tx * TILE - cam_x, ty * TILE - cam_y)
+                _round_water_corners(surf, scene, tx, ty,
+                                     tx * TILE - cam_x, ty * TILE - cam_y)
     strip = _wall_shadow_strip()
     for ty in range(y0, y1):
         for tx in range(x0, x1):
