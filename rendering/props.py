@@ -404,9 +404,77 @@ def _draw_doorframe_solid(surf, cam, deco):
         pygame.draw.line(surf, pal["top"], a, b, 1)
 
 
+def _draw_shaft_ladder_solid(surf, cam, deco):
+    """The way UP from the shaft floor: a timber ladder hanging from a hatch in
+    the rock ceiling down to the landing, with real volume. The dark shaft + a
+    framed hatch sit high overhead; the two rails converge + lean back into the
+    hole as they rise, rungs climbing between them. (Flat F3 uses the 2D sprite.)"""
+    wx, wy = deco.x, deco.y
+    s = (getattr(deco, "scale", 1.0) or 1.0)
+    H = 82 * s
+    rw = 6 * s              # half rail spacing at the foot
+    topw = 3.5 * s          # rails converge toward the hole as they rise
+    lean = -3.0 * s         # the top leans back (north) into the rock
+    # contact shadow so the foot seats on the floor
+    bx, by = cam.project(wx, wy, 0)
+    shw = max(3, int(rw * cam.scale * 1.6))
+    shh = max(2, int(rw * 0.6 * cam.ground_squash() * cam.scale))
+    sh = pygame.Surface((shw * 2 + 4, shh * 2 + 4), pygame.SRCALPHA)
+    pygame.draw.ellipse(sh, (0, 0, 0, 95), (2, 2, shw * 2, shh * 2))
+    surf.blit(sh, (int(bx) - shw - 2, int(by) - shh - 2))
+    # the dark shaft + timber hatch frame high overhead
+    fr = 12 * s
+    fy = wy + lean
+    frame = [cam.project(wx - fr, fy - fr, H), cam.project(wx + fr, fy - fr, H),
+             cam.project(wx + fr, fy + fr, H), cam.project(wx - fr, fy + fr, H)]
+    pygame.draw.polygon(surf, (6, 6, 8), frame)                 # black shaft going up
+    pygame.draw.polygon(surf, (88, 62, 36), frame, max(2, int(2 * s)))   # hatch frame
+    rc, rs = (126, 94, 56), (74, 52, 28)
+    for side in (-1, 1):                                        # the two rails
+        b = cam.project(wx + side * rw, wy, 0)
+        t = cam.project(wx + side * topw, fy, H)
+        pygame.draw.line(surf, rc, b, t, max(2, int(3 * s)))
+        pygame.draw.line(surf, rs, b, t, 1)
+    for i in range(1, 10):                                      # rungs climbing up
+        f = i / 10.0
+        lw = rw * (1 - f) + topw * f
+        yy = wy + lean * f
+        a = cam.project(wx - lw, yy, f * H)
+        b = cam.project(wx + lw, yy, f * H)
+        pygame.draw.line(surf, rc, a, b, max(1, int(2 * s)))
+
+
+def _draw_cellar_hatch_solid(surf, cam, deco):
+    """A timber cellar hatch with real volume: a low raised plank box on the
+    floor (not a flat decal), cross-boarded and nailed shut, an iron pull-ring
+    on top. (Flat F3 uses the 2D sprite.)"""
+    wx, wy = deco.x, deco.y
+    s = (getattr(deco, "scale", 1.0) or 1.0)
+    w, d, rim = 26 * s, 24 * s, 6 * s
+    pal = {"top": (120, 86, 50), "side": (84, 58, 34), "dark": (58, 40, 22)}
+    _vbox(surf, cam, wx, wy, w, d, 0, rim, pal)
+    hw, hd = w / 2, d / 2
+    tl, tr = cam.project(wx - hw, wy - hd, rim), cam.project(wx + hw, wy - hd, rim)
+    bl, br = cam.project(wx - hw, wy + hd, rim), cam.project(wx + hw, wy + hd, rim)
+    # plank seams + the cross-boards nailed over the lid (shut)
+    for f in (0.33, 0.66):
+        a = (tl[0] + (bl[0] - tl[0]) * f, tl[1] + (bl[1] - tl[1]) * f)
+        b = (tr[0] + (br[0] - tr[0]) * f, tr[1] + (br[1] - tr[1]) * f)
+        pygame.draw.line(surf, pal["dark"], a, b, 1)
+    pygame.draw.line(surf, _shade(pal["top"], 1.1), tl, br, max(2, int(2 * s)))
+    pygame.draw.line(surf, _shade(pal["top"], 1.1), tr, bl, max(2, int(2 * s)))
+    for c in (tl, tr, bl, br):                                  # nail heads
+        pygame.draw.circle(surf, (54, 52, 58), (int(c[0]), int(c[1])), max(1, int(1.5 * s)))
+    ring = cam.project(wx, wy, rim)                             # iron pull-ring
+    pygame.draw.circle(surf, (176, 176, 196), (int(ring[0]), int(ring[1])),
+                       max(2, int(4 * s)), 2)
+
+
 SOLID_PROPS = {
     "doorframe":     _draw_doorframe_solid,
     "waterfall":     _draw_waterfall_solid,
+    "shaft_ladder":  _draw_shaft_ladder_solid,
+    "cellar_hatch":  _draw_cellar_hatch_solid,
     "well":          _draw_well_solid,
     "pillar":        _draw_pillar_solid,
     "cistern_basin": _draw_cistern_basin_solid,

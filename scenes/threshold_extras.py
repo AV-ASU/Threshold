@@ -55,10 +55,13 @@ def build_schoolhouse():
     sc.add_furniture("table", [(2, 1)], w=54, h=34)              # teacher's desk
     sc.add_furniture("table", [(12, 9), (13, 9)], w=54, h=34)    # piled desks
     sc.add_furniture("table", [(12, 10), (13, 10)], w=54, h=30)
-    for (dx, dy) in ((11, 9), (11, 10), (12, 8), (11, 8)):       # little desks
+    for (dx, dy) in ((11, 9), (11, 10), (12, 8), (11, 8), (13, 8)):  # little desks
         sc.add_furniture("small_chair", [(dx, dy)])
-    sc.add_decoration(Decoration(10 * TILE + 16, 9 * TILE + 16,
-                                 "overturned_chair"))            # one knocked into the aisle
+    sc.add_furniture("chair", [(3, 1)])                          # the teacher's chair
+    # chairs shoved off the desks, knocked over into the room
+    sc.add_decoration(Decoration(10 * TILE + 16, 9 * TILE + 16, "overturned_chair"))
+    sc.add_decoration(Decoration(6 * TILE + 16, 6 * TILE + 16, "overturned_chair"))
+    sc.add_decoration(Decoration(9 * TILE + 16, 8 * TILE + 16, "overturned_chair"))
 
     # The commune: two banks of cots crammed against the long walls, a narrow
     # aisle down the middle. Where several people lived, in rows, for months.

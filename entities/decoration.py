@@ -1909,6 +1909,24 @@ class Decoration:
                         break
                     acc += d
 
+    def _draw_shaft_ladder(self, surf, x, y):
+        """The way up from the shaft floor: a timber ladder hanging from a hatch
+        overhead (flat / F3 fallback; the tilt view draws it as a real 3D ladder
+        rising into the ceiling via rendering/props.py)."""
+        # hatch frame + dark shaft at the top
+        pygame.draw.rect(surf, (6, 6, 8), (x - 10, y - 50, 20, 9))
+        pygame.draw.rect(surf, (88, 62, 36), (x - 12, y - 52, 24, 11), 2)
+        # rails (converging upward) + rungs
+        rc = (126, 94, 56)
+        pygame.draw.line(surf, rc, (x - 6, y + 10), (x - 4, y - 44), 3)
+        pygame.draw.line(surf, rc, (x + 6, y + 10), (x + 4, y - 44), 3)
+        for i in range(7):
+            yy = y + 6 - i * 8
+            f = i / 7.0
+            lw = int(6 - 2 * f)
+            pygame.draw.line(surf, rc, (x - lw, yy), (x + lw, yy), 2)
+        _ground_shadow(surf, x, y + 10, 8, 3, 80)
+
     def _draw_chalkboard(self, surf, x, y):
         """A WIDE schoolroom chalkboard on the wall (spans 4-5 tiles): the
         children's faded lesson ghosted under the cult's compulsion -- a doorway

@@ -45,7 +45,7 @@ def build_well_bottom():
     floor, objs = _box(12, 10)
     _bevel(objs, 3)
     objs[5][11] = "E"         # east -> the drying racks (deeper)
-    objs[2][3]  = "U"         # ladder up -- climb is interact-gated below
+    objs[2][3]  = "."         # the ladder up is a 3D prop now (below), not a flat tile
     objects = ["".join(r) for r in objs]
     sc = Scene("well_bottom", floor, objects, music="basement")
     sc.add_exit("E", "well_passage", "from_above")
@@ -57,6 +57,9 @@ def build_well_bottom():
     ladder_y = 2 * TILE + 16
     sc._ladder_pos = (ladder_x, ladder_y)
     sc.add_interactable(ladder_x, ladder_y, 40)   # [E] cue: climb the rope/ladder up
+    # The way up: a real 3D ladder hanging from a hatch in the ceiling down to
+    # the landing (volume, not a flat painted ladder on the floor).
+    sc.add_decoration(Decoration(ladder_x, ladder_y, "shaft_ladder"))
     sc.add_decoration(Decoration(4 * TILE + 16, 2 * TILE + 22, "candle"))
     sc.add_decoration(Decoration(7 * TILE + 16, 6 * TILE + 16, "bloodstain"))
     # A "wrong" mount in the well dark -- too many eyes.
