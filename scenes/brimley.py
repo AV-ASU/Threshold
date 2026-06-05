@@ -687,6 +687,9 @@ def build_brimley():
     # step a while, then back indoors out of the cold that came early.
     _resident(63, 54, "Old Pell", "old_townsman", [
         "Cold came in early this year. And it never lifted. Just sat down on the town and stayed.",
+        "I'm tired clean through, all the time now. The whole town is. We "
+        "move like we're wading. Like something's being drawn out of us, "
+        "slow, and not a soul can say what.",
         "Stopped marking the calendar. Not the days. Where would I be counting toward?",
         "[c=dim]You're new. We don't get new. Nobody gets in. Nobody gets...[/c]",
     ], voice="blip_low", movement="homebody", radius=34, fold=True)
@@ -696,11 +699,13 @@ def build_brimley():
     # individual loss, forbidden by §1b); just the compulsion she doesn't
     # question. She watches the road. She does not wave.
     _resident(96, 8, "Mrs. Calder", "townswoman", [
-        "I set an extra place at supper. Have done for a while now.",
-        "Couldn't tell you who for. Someone's coming. I just know it, the "
-        "way you know your own name. So I lay the plate.",
-        "[c=dim]Some nights I hear the door and near get up to answer. Then I "
-        "remember I don't know who I'd be letting in.[/c]",
+        "Oh. Is it you? ...Are you the one the place is set for?",
+        "[c=dim]No. No, it couldn't be you. Forgive an old woman her "
+        "hoping.[/c]",
+        "I lay an extra plate at supper. Have done a while now. Couldn't tell "
+        "you who for. Someone's coming. I know it the way I know my own name.",
+        "[c=dim]I'll know the face when it's across the table from me. Till "
+        "then it would be unkind not to be ready.[/c]",
     ], movement="idle")
     # Royce -- by the river bridge. He TRIED to drive out, for weeks, and
     # the corn handed him back every time; the futility broke him and he's

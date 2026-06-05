@@ -344,6 +344,10 @@ def build_maras_room():
             "it sound sane. The dreams aren't dreams anymore. They're "
             "full of answers. I'm just hunting the questions now. Don't "
             "come after me. I'm not lost. I've never been this close.\"",
+            "A journal page, weighted flat under the candle: \"I was the last "
+            "one in. Months behind the rest, and still they looked up when I "
+            "came down the road like they had set a place for me. It took them "
+            "years of dreaming to follow it here. It took me one winter.\"",
             "This is a room someone moved into. Blaine hired you to bring "
             "her home. She was already home.",
         ])

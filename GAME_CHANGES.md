@@ -149,7 +149,11 @@ the inside of Him (the death cutscene already is this).
 - [ ] well.py: Scriptorium gives `cult_calling`; place `cult_bargain`; Deep Stair → Mask only; rite-holder at the altar.
 - [ ] depths.py: Threshold seal → Mask only; place `cult_digging`; mining cultists.
 - [ ] notes-log each pickup; move the carrying-haze/leave-pull from playscript to the Mask; repoint the Toby line.
-- [ ] Calder + Sable + townsfolk-drain dialogue; Mara journal/hive; river decal.
+- [x] Calder (set place, hope-then-deflation, never names the guest), Sable
+  (fulfilled while the town dims; rooms full but no one about), townsfolk drain
+  (Old Pell: the town "drawn out of us, slow"), Mara (hive recognition sharpened
+  to the #6 payoff; late-arrival journal page in her cell). All canon-guarded.
+- [ ] River-as-the-diggers'-road decal in the Sump (environmental, still open).
 - [ ] NARRATIVE §4/§6/§7 subtractive edits (Mask-only); flow.py guards (seal works Mask-only; notes not evidence; no "dimension").
 
 ### ✅ 8. Mask = "permission to leave" + the PI's distressed notes — DONE

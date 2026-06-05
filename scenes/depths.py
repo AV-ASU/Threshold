@@ -519,9 +519,14 @@ def _mara_voice(game, npc):
     game.audio.force_silence()
     game.audio.play("low_pulse", 0.6)
     game.dialog.show([
-        "[c=dim](You say her name. The hooded head lifts.)[/c]",
-        "It is Mara.",
-        "[s=slow]\"I'm not lost. I've never been this close.\"[/s]",
+        "[c=dim](You say her name. The hooded head lifts. It is Mara.)[/c]",
+        "\"My father sent you. Of course he did. He never could let a thing "
+        "stay lost.\"",
+        "[s=slow]\"Tell him what I told him at the start. I'm not lost. I have "
+        "never been this close.\"[/s]",
+        "[c=dim]\"There was no one down here to bring back. I was not taken. I "
+        "was answered, and I went to it gladly. Go home, while the town still "
+        "lets you think you can.\"[/c]",
     ], speaker="", voice="blip_soft", portrait="narrator")
     _evidence(game, "the_congregation", [
         "Mara, kneeling with the congregation. Turned. There was never "

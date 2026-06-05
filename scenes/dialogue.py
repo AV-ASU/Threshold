@@ -311,8 +311,11 @@ def clerk_dialogue(game, npc):
         plain = [
             "Sable. I keep the desk here. Anything you need, you ask me. "
             "Anything at all.",
-            "Settling in all right? Good. Most folks do, once they stop "
-            "fighting it.",
+            "Can't account for the gloom that's settled on the town of late. "
+            "Myself, I have never felt more content. Not in all my years "
+            "behind this desk.",
+            "The lodge has never been fuller, you know. Every room spoken for, "
+            "going back a good while now.",
             "[c=dim]He doesn't ask what brought you. He just smiles, like "
             "he's glad you'll be staying.[/c]",
             "The roads aren't going anywhere tonight. Neither are you. Get "
@@ -325,6 +328,9 @@ def clerk_dialogue(game, npc):
     if count == 2:
         game.dialog.show([
             "Sleep all right? People do here, better than they expect.",
+            "[c=dim]Every room above is spoken for, and yet the halls stay so "
+            "quiet. They have all checked in. Not a one of them seems to be "
+            "about. ...No matter. They will not have left.[/c]",
             "[c=dim]The register's right there on the desk if you're the "
             "restless sort. Sign and guest both, all the way back.[/c]",
             "Read it if you like. Folks always look for a name that left. "
