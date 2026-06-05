@@ -53,8 +53,10 @@ Implemented + verified (compileall + smoke + flow green; canon guards added).
 ## Phase 2 — remaining (adds new content/systems)
 
 > **State (2026-06):** §8 and §9 are DONE (below). §10 is a standing
-> constraint, not a task. The genuinely-open work is **§6b buried lore** and
-> **§12 Crane** (gated on a design conversation).
+> constraint, not a task. **§6b is now DONE** (the three testimony fragments,
+> the Mask-only keystone, mining cultists + rite-holder — all in code and
+> flow-guarded). The only genuinely-open work is **§12 Crane** (gated on a
+> design conversation).
 >
 > These **author new prose or build new systems**. The hard part is the
 > NARRATIVE §1b discipline: cosmic truth arrives **only as sensation** — never
@@ -63,7 +65,7 @@ Implemented + verified (compileall + smoke + flow green; canon guards added).
 > canon fact (mirror the existing `the_dream` / `the_case` guards: forbid
 > "dimension"/"lure"/"bait"/"the king", assert it never inflates evidence).
 
-### 6b. The cult's notes → THREE testimony fragments + Mask-only keystone  *(NARRATIVE §4, §1b; design settled 2026-06)*
+### ✅ 6b. The cult's notes → THREE testimony fragments + Mask-only keystone — DONE  *(NARRATIVE §4, §1b; design settled 2026-06)*
 
 **Design settled with the user (this supersedes §6a's single-notebook wrapper
 AND the §7 "Mask + notes" keystone).** Two decisions:
@@ -145,10 +147,10 @@ admits-but-never-releases geometry (the looping world + townspeople), the
 Watcher-as-His-gaze (the visibility climb *is* the statement), and Carcosa as
 the inside of Him (the death cutscene already is this).
 
-- [ ] items.py: retire `playscript`, add the 3 keys (desc above); Mask desc → standalone keystone.
-- [ ] well.py: Scriptorium gives `cult_calling`; place `cult_bargain`; Deep Stair → Mask only; rite-holder at the altar.
-- [ ] depths.py: Threshold seal → Mask only; place `cult_digging`; mining cultists.
-- [ ] notes-log each pickup; move the carrying-haze/leave-pull from playscript to the Mask; repoint the Toby line.
+- [x] items.py: retire `playscript`, add the 3 keys (desc above); Mask desc → standalone keystone.
+- [x] well.py: Scriptorium gives `cult_calling`; place `cult_bargain`; Deep Stair → Mask only; rite-holder at the altar.
+- [x] depths.py: Threshold seal → Mask only; place `cult_digging`; mining cultists.
+- [x] notes-log each pickup; move the carrying-haze/leave-pull from playscript to the Mask; repoint the Toby line.
 - [x] Calder (set place, hope-then-deflation, never names the guest), Sable
   (fulfilled while the town dims; rooms full but no one about), townsfolk drain
   (Old Pell: the town "drawn out of us, slow"), Mara (hive recognition sharpened
@@ -160,7 +162,7 @@ the inside of Him (the death cutscene already is this).
   the town. The Sump gets the same sink among its pools for depth + an oblique
   on-enter line ("the water goes down, you never hear it land"). NARRATIVE 1b:
   the river is the artery the water, and the diggers, followed down to the door.
-- [ ] NARRATIVE §4/§6/§7 subtractive edits (Mask-only); flow.py guards (seal works Mask-only; notes not evidence; no "dimension").
+- [x] NARRATIVE §4/§6/§7 subtractive edits (Mask-only); flow.py guards (seal works Mask-only; notes not evidence; no "dimension").
 
 ### ✅ 8. Mask = "permission to leave" + the PI's distressed notes — DONE
 
@@ -219,9 +221,9 @@ from his pulpit, murdered for it (evidence #4, his cross). Only the
 
 - **Phase 1 is done + pushed.** Docs (`NARRATIVE.md`, `CLAUDE.md`) already
   reflect the settled canon; this file now tracks only the Phase 2 remainder.
-- **Coupling:** §6b is the **PI's interior voice** (the `notes` system); §8 (its
-  sibling) already landed, so keep §6b in that same escalating-arc tone. §9
-  (ashfall) is done. §12 is gated on a design conversation. §10 is a fence, not
-  a ticket. So only §6b + §12 remain.
-- Verify against `NARRATIVE.md` first; keep `tests/flow.py` green and add a
-  guard as each canon fact locks.
+- **Coupling:** §6b (the three testimony fragments + Mask-only keystone) is
+  DONE and flow-guarded; §8 (the PI's interior voice) and §9 (ashfall) landed
+  earlier. §10 is a fence, not a ticket. **So only §12 (Crane) remains, gated on
+  a design conversation.**
+- Verify against `NARRATIVE.md` first; keep `tests/flow.py` green (run the full
+  gate, `python tests/run_all.py`) and add a guard as each canon fact locks.

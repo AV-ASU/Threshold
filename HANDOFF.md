@@ -2,9 +2,28 @@
 
 **Repo:** `/home/user/Threshold` · **default branch:** `main`
 
+> **Current state lives in `SESSION_STATUS.md`** — read that first. The sections
+> below are kept as historical handoff context (canon to preserve, prior arcs).
+
 ---
 
-## ⮕ LATEST (2026-06): narrative canon-alignment pass — DOCS only
+## ⮕ LATEST (2026-06): shippability review → game.py refactor → health pass
+
+Branch `claude/game-shippability-review-B1c5e`. **Code + docs.** In short:
+- Fixed fold-pursuit so a chaser follows through hidden-fold groves (no spawns
+  there); locked by `tests/fold_pursuit.py`.
+- Refactored `systems/game.py` 5163 → 2069 lines into five mixins (config,
+  threat, infest, render, narrative) — behavior-preserving, byte-identity
+  verified via `tools/capture_world.py`.
+- Added `tests/run_all.py` (the full gate) and swept ~550 lines of dead code
+  (incl. the superseded `rendering/king3d.py`).
+- Only open narrative item: **GAME_CHANGES.md §12 (Rev. Crane)**, design-gated.
+
+Full detail + open items: **`SESSION_STATUS.md`**.
+
+---
+
+## ⮕ EARLIER (2026-06): narrative canon-alignment pass — DOCS only
 
 A long story/canon working session with the user settled a batch of
 decisions. **This session changed DOCS, not game code.** What landed:
@@ -47,7 +66,8 @@ Depths has grown to 5 rooms + side-branches (now noted in NARRATIVE §9).
    - audio bed `falling_air` (wind + falling) via `Audio.flashback_air()`.
    - Mask art: `door_mask_surface()` in `rendering/sprites.py` (dark wood,
      recessed sockets, no mouth, `gaze`-pointed pupils, `_jag_blob` shapes).
-   - Tuning: the `FLASHBACK_*` constant block in `systems/game.py`.
+   - Tuning: the `FLASHBACK_*` block in `ui/cutscenes.py`; `_tick_flashback` /
+     `_spawn_flashback_masks` now live in `systems/narrative_mixin.py`.
 
 2. **"He knows you" (NARRATIVE §0/§1b).**
    - `Game._log_dream_entry()` writes the dream to save arg **`notes`** (NOT
