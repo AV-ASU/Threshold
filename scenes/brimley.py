@@ -687,9 +687,9 @@ def build_brimley():
     # step a while, then back indoors out of the cold that came early.
     _resident(63, 54, "Old Pell", "old_townsman", [
         "Cold came in early this year. And it never lifted. Just sat down on the town and stayed.",
-        "I'm tired clean through, all the time now. The whole town is. We "
-        "move like we're wading. Like something's being drawn out of us, "
-        "slow, and not a soul can say what.",
+        "A foulness came with it and spread over the whole town. You feel it "
+        "more than smell it. Folk are tired under it now, all of them, and "
+        "sleep doesn't mend it.",
         "Stopped marking the calendar. Not the days. Where would I be counting toward?",
         "[c=dim]You're new. We don't get new. Nobody gets in. Nobody gets...[/c]",
     ], voice="blip_low", movement="homebody", radius=34, fold=True)
