@@ -1,65 +1,74 @@
-# Session status — journal door-dream → "He knows you"
+# Session status — shippability review → game.py refactor → health pass
 
-Branch: `claude/game-state-verify-tcQKO`  ·  tip: **`e5c1da1`** (local == remote, tree clean)
+> This is the **current** live-state doc. It supersedes the prior door-dream
+> status (that arc is long landed; see HANDOFF.md history for it).
 
-## What's done & verified
+Branch: `claude/game-shippability-review-B1c5e` · pushed (local == remote).
 
-### 1. The journal door-dream (NARRATIVE 1b) — wordless visual cutscene
-Replaces the old three text stills. Fires when the player reads Mara's
-journal through a third time (`flashback_pending` → `_tick_flashback`).
-- Dried-wood **doorframe** suspended in black; **pulsing yellow glow** pooled
-  at the **base of the doorway** (`FLASHBACK_FOCAL_Y`), contained by the frame
-  (no leak past the wood).
-- Faint **eyes peeking** in the light.
-- A **mask swarm**: carved dark-wood faces flash all over the opening, starting
-  slow ~2s in and **accelerating** to a staring crowd, then fading with the
-  dream. Faces clip on the jamb; **gold pupils aim back at the player**
-  (`door_mask_surface(gaze=…)`). Driven by `_spawn_flashback_masks` (rate ramp)
-  + a pre-rendered pool (`_build_flashback_pool`).
-- Audio: `falling_air` wind/fall bed on the ambient channel + a `wrong` stab
-  as the faces begin.
+## What landed this session (all verified green: `python tests/run_all.py`)
 
-### 2. "He knows you"
-- `_log_dream_entry()` writes a **case-notebook NOTE** ("the_dream") in the
-  PI's voice after the dream. Stored in save arg **`notes`**, deliberately NOT
-  `evidence` — `_evidence_count()` is `len(evidence)` and drives the King-gate
-  + infestation, so a flavor note must never land there. Idempotent.
-- `NotebookUI` lists clues (evidence) then personal notes.
-- Real **Threshold** (`scenes/depths.py build_threshold`): if the dream was seen
-  (`flashback_seen`), one quiet line lands first — *"You have stood here before.
-  In sleep."* — then the doorframe narration (chained via dialog `on_complete`).
-  Never-dreamed path is unchanged.
+### 1. Fold-pursuit fix — a chaser follows through grove folds
+A cultist hot on your heels now follows you through a hidden-fold grove
+(`husk_grove` / `effigy_grove` / `scarecrow_ring`), even though those rooms host
+no cult of their own. The old gate keyed the carry on the *destination* being a
+cult/underground scene, so a grove fold wrongly shook the chase.
+- `_note_fold_pursuit` (now in `systems/threat_mixin.py`) carries through a FOLD
+  or seamless PASSAGE, or a descent into cult-held ground; it still shakes on a
+  refuge (`FOLD_REFUGE_SCENES`) or a mundane interior door (via `_exit_is_fold`).
+- The followed chaser is flagged `_fold_follower`; `_tick_cultists` spares it
+  from the non-cult-scene sweep and lets it reach you, while the grove still
+  draws no patrol/gaze/reinforcements. Mara's cell stays a refuge.
+- Locked by `tests/fold_pursuit.py` (8/8).
 
-## Verification (all green)
-- `compileall` clean.
-- `tests/smoke.py`: all pass.
-- `tests/flow.py`: 51 ok, incl. all flashback + 6 new "heknows" checks.
-- Full end-to-end arc test (read→dream→note→threshold) passes; re-entry
-  idempotent; recognition only when dreamed.
+### 2. systems/game.py refactor — 5163 → 2069 lines (−60%)
+Behavior-preserving extraction into mixins (`class Game(CutsceneMixin,
+ThreatMixin, InfestationMixin, RenderMixin, NarrativeMixin)`):
+- `systems/config.py` — tuning constants + scene-gating sets.
+- `systems/threat_mixin.py` — King, watcher-curse, cultist/fold pursuit,
+  visibility + evidence floor, death.
+- `systems/infest_mixin.py` — infestation/ashfall + hunting sheriff (+ the
+  infested-local dialogue helpers).
+- `systems/render_mixin.py` — `draw_world`, overlays, HUD, menus, death card.
+- `systems/narrative_mixin.py` — flashback, case-log/notes, endings, opening.
 
-## ⚠️ Pre-existing failures (NOT mine — left untouched)
-`tests/flow.py` has 3 failures unrelated to this arc, present on the pre-arc
-base (`7c15a0b`):
-- `well: rope ties on first descent`
-- `well: rope consumed into the rig`
-- `kid: the Kid is present in his house`
+Method moves were `ast`-exact (whole bodies only); each step verified with the
+full gate **and** the `tools/capture_world.py` byte-identity diff (render output
+identical within the documented ambient-spawn noise floor). No MRO method-name
+collisions across the mixins.
 
-## ⚠️ History note — needs your call
-The mask-swarm work pushed **two broken commits** before the verified one
-superseded them (both had a `NameError`; tip is correct & working):
-- `9e62773`, `06b3b67` — "Journal dream: mask SWARM…" (broken intermediates)
-- superseded by `90c701a` (verified) and later commits.
-I did **not** rewrite/squash history (don't rewrite shared history without
-your OK). If you want a clean history, say so and I'll interactive-rebase
-those out.
+### 3. Test gate + dead-code sweep
+- **`tests/run_all.py`** — one command runs all four harnesses (smoke + flow +
+  fold_pursuit + render_smoke) and exits nonzero on any failure. Documented in
+  CLAUDE.md (dev commands + working agreements).
+- **Dead code swept** (~550 lines): removed `rendering/king3d.py` (whole module,
+  superseded by `king_unfold.py`) and 12 unreferenced functions
+  (`sprites.py` `_cult_eye`/`_scream_face`/`_noir_grit`/`_yk_glow`/`_yk_void`/
+  `_yk_flames`, `dsp.py` `pitch_shift`/`fade_in`/`fade_out`, `sight.py`
+  `is_seen`, `base.py` `_draw_building_eaves`, `our_house_area.py`
+  `_yard_cache_pickup`). Verified 0 call sites + 0 doc refs before removal; the
+  live `_yk_glow_disc` and the `_draw_king` fallback were left intact.
 
-## Open tuning knobs (visual/feel — your judgement)
-- `FLASHBACK_RATE_MAX` (climax density), `FLASHBACK_SWARM_START/_PEAK` (timing),
-  `FLASHBACK_MASK_FRAMES` (flicker), `FLASHBACK_FOCAL_Y` (focal height).
-- Audio is synthesized to spec but I can't hear it — confirm the `falling_air`
-  bed + `wrong` stab land by ear when you run it.
+### 4. Docs updated to match
+CLAUDE.md (mixin layout, threat-model location, dev commands, working
+agreements, flashback tuning pointer → `ui/cutscenes.py`), this file, HANDOFF.md.
 
-## Possible next steps (didn't start — need your direction)
-- Squash the two broken commits (your call above).
-- Any further narrative beats.
-- A play-through pass once you can run it with a display.
+## Health snapshot (2026-06)
+- Compiles clean; `python tests/run_all.py` all green; 120-frame runtime sweep
+  across 5 scenes + king-spawn path with no exceptions.
+- Player-facing dash rule clean; zero TODO/FIXME markers; deps pinned in
+  `requirements.txt`; no committed `.pyc`.
+- No open ship-blockers found.
+
+## Open / next (need direction)
+- **GAME_CHANGES.md §12 — Rev. Asa Crane: DONE.** Added his pulpit condemnation
+  (the cult are *willing* apostates who cast God aside for gain, not puppets) to
+  the doomed 2nd-conversation sermon in `scenes/dialogue.py`. Only an *optional*
+  murder-beat polish remains. No required narrative work is now open.
+- **Optional deeper refactor:** the god-methods inside the mixins
+  (`draw_world` ~466L, `update_player`, `_log_case_entry` 169L) were left intact
+  — splitting their internals is real surgery (z-order/logic risk), now safely
+  behind the `capture_world.py` golden gate if you want it.
+- **Doc scatter:** several overlapping kickoff prompts remain
+  (`CONTINUE_PROMPT.md`, `SESSION_PROMPT.md`, `PHASE1/2_PROMPT.md`) — historical;
+  consolidate/prune if you want a tidier root.
+- Branch is well ahead of `main`; merge when ready.

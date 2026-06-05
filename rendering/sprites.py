@@ -42,12 +42,6 @@ def _cult_sign(surf, cx, cy, dim=False, u=1.0):
                      (int(cx + 5 * u), int(cy + 1 * u)), 1)
 
 
-def _cult_eye(surf, x, y):
-    pygame.draw.circle(surf, _CVOID, (int(x), int(y)), 1)
-    _cult_glow(surf, x, y, 2, 46)
-    pygame.draw.circle(surf, _CGOLD, (int(x), int(y)), 1)
-
-
 def _cult_hide_coat(surf, x, y, top, rng, lean=0, sway=0):
     """Stitched-hide coat: a near-black trapezoid of pelt patches with
     bone-thread seams, a fur collar and a ragged fur hem. `sway` swings the
@@ -299,19 +293,6 @@ _VP_GT = (196, 150, 42); _VP_GHI = (236, 204, 64)
 _VP_FLESH = (150, 134, 124); _VP_FLESH_LO = (104, 92, 84)
 _VP_MOUTH = (28, 16, 16); _VP_TEETH = (150, 142, 124)
 _VP_GOR = (84, 46, 40); _VP_GOR_LO = (54, 30, 28)
-
-
-def _scream_face(surf, cx, cy, r=3, gold=False):
-    """A small fused, screaming face -- one of the people He took, crying out
-    from inside the torn body."""
-    cx, cy = int(cx), int(cy)
-    pygame.draw.ellipse(surf, _VP_FLESH, (cx - r, cy - r, 2 * r, 2 * r + 1))
-    pygame.draw.ellipse(surf, _VP_FLESH_LO, (cx - r, cy - r, 2 * r, 2 * r + 1), 1)
-    pygame.draw.circle(surf, _VP_PIT, (cx - r // 2 - 1, cy - 1), 1)
-    pygame.draw.circle(surf, _VP_PIT, (cx + r // 2, cy - 1), 1)
-    pygame.draw.ellipse(surf, _VP_MOUTH, (cx - 1, cy + 1, 3, 3))   # open mouth
-    if gold:
-        _cult_glow(surf, cx, cy + 1, 2, 44)
 
 
 # Tier-2 (2.5D) head config for the bare human NPC kinds: the front body draws
@@ -1660,22 +1641,6 @@ def _cig_fx(lay, t, ex, ey, ember=True):
         _blend_px(lay, xx, yy, (120, 120, 124), max(0, 150 - k * 22))
 
 
-def _noir_grit(lay, seed):
-    """A B&W Darkwood grit pass: seeded speckle on the sprite's neutral-grey
-    pixels (skips the warm ember), so the monochrome PI carries the same grimy
-    texture as the cast without a colour cast."""
-    rng = random.Random(seed & 0xffff)
-    w, h = lay.get_size()
-    for _ in range(48):
-        gx, gy = rng.randint(0, w - 1), rng.randint(0, h - 1)
-        px = lay.get_at((gx, gy))
-        if px.a > 60 and abs(int(px[0]) - int(px[2])) <= 10:
-            d = rng.choice((-26, -16, 14, 20))
-            lay.set_at((gx, gy), (max(0, min(255, px[0] + d)),
-                                  max(0, min(255, px[1] + d)),
-                                  max(0, min(255, px[2] + d)), px.a))
-
-
 def draw_player_sprite(surf, x, y, facing, walk_phase=0, armor=None,
                         prone=False, view="front"):
     """THRESHOLD: the private investigator, 1994 -- a worn, belted TAN TRENCH
@@ -2027,34 +1992,6 @@ def _yk_radial(surf, x, y, R, color, a0, add=True):
               special_flags=pygame.BLEND_RGBA_ADD if add else 0)
 
 
-def _yk_glow(layer, cx, cy, R, t):
-    """A clot of bright gold light. Orange lives ONLY in the soft aura behind the
-    mass, so it reads as the warm outline of the whole silhouette; the bright
-    lumpy body is drawn opaque on top, so it never goes orange between its blobs."""
-    R = int(R * (1 + 0.06 * math.sin(t * 2.0)))
-    # warm orange outline: a broad aura behind everything (shows only at the rim).
-    _yk_radial(layer, cx, cy, int(R * 1.95), _YK_T1, 72)
-    _yk_radial(layer, cx, cy, int(R * 1.5), _YK_T2, 58)
-    subs = [(0, 0), (-0.4, -0.18), (0.4, -0.12), (-0.12, 0.4),
-            (0.22, 0.32), (-0.3, 0.2), (0.12, -0.34)]
-    sw = t * 0.6
-    ca, sa = math.cos(sw), math.sin(sw)
-    # gold body, drawn opaque so it covers the centre. It SMOULDERS gold/pale
-    # rather than blazing white -- the white-hot stab is added only on the lunge
-    # (the flare punch in _draw_king), so darkness keeps the upper hand.
-    for col, scl, grow in [(_YK_T3, 1.06, 3), (_YK_T3, 0.74, 1), (_YK_PALE, 0.36, 0)]:
-        for ox, oy in subs:
-            rx, ry = ox * ca - oy * sa, ox * sa + oy * ca
-            pygame.draw.circle(layer, col,
-                               (int(cx + rx * R * 0.6), int(cy + ry * R * 0.9)),
-                               int(R * 0.5 * scl) + grow)
-    for k in range(4):
-        a = sw * 1.6 + k * 1.57
-        _yk_radial(layer, cx + math.cos(a) * R * 0.42, cy + math.sin(a) * R * 0.42,
-                   int(R * 0.36), _YK_GOLD, 34)
-    _yk_radial(layer, cx, cy - 2, int(R * 0.42), _YK_PALE, 30)
-
-
 # Slot/orb kind vocabulary -> facial expression. The faces read as people:
 # a dead, pallid human face surfaces from the light, mostly shrieking.
 _YK_EXPR = {"hollow": "gaunt", "crack": "scream", "plain": "calm"}
@@ -2280,18 +2217,6 @@ def _yk_orb_faces(surf, cx, cy, r, vis, seed, t):
         rad = r * 0.36
         _yk_mask(surf, cx + math.cos(ang) * rad, cy + math.sin(ang) * rad,
                  max(3, int(r * 0.44)), vis * 0.9, _YK_ORB_KINDS[(seed + k) % 4])
-
-
-def _yk_void(layer, cx, cy, R):
-    """The barely-existing form, seen while the King is still far: a void darker
-    than the dark, edged in a cold shimmer, and DEAD STILL. The only thing that
-    moves or shows a face is the pale mask, drawn over this by the caller."""
-    _yk_radial(layer, cx, cy, int(R * 1.4), (58, 62, 86), 50)    # cold shimmer rim
-    subs = [(0, 0), (-0.4, -0.18), (0.4, -0.12), (-0.12, 0.4),
-            (0.22, 0.32), (-0.3, 0.2), (0.12, -0.34)]
-    for ox, oy in subs:                                          # static lumps -- no swirl
-        pygame.draw.circle(layer, (8, 7, 12),
-                           (int(cx + ox * R * 0.6), int(cy + oy * R * 0.9)), int(R * 0.58), 0)
 
 
 def _yk_spire(layer, bx, by, ang, length, R, t, idx, m, dk, gold, hot):
@@ -2739,39 +2664,6 @@ def _flame_tongue(surf, bx, by, dx, dy, length, width, ph):
     tongue(1.0, 1.0, (196, 58, 16))
     tongue(0.72, 0.62, (252, 146, 30))
     tongue(0.46, 0.30, (255, 226, 128))
-
-
-def _yk_flames(surf, w, h, t, ramp):
-    """A wall of fire along the bottom edge plus licks up the sides --
-    the furnace burning all around. A bright base glow seats the flames
-    so they don't read as floating triangles."""
-    # Hot base glow band along the bottom (additive).
-    glow = pygame.Surface((w, int(h * 0.22)), pygame.SRCALPHA)
-    gh = glow.get_height()
-    for i in range(gh):
-        a = int(120 * (1 - i / gh) ** 1.5 * ramp)
-        pygame.draw.line(glow, (255, 120, 30, a), (0, gh - i), (w, gh - i))
-    surf.blit(glow, (0, h - gh), special_flags=pygame.BLEND_RGBA_ADD)
-    # Edges: (dir, fixed-coord, span, step, height-scale).
-    edges = (
-        (0, -1, h, w, 18, 2.05),    # bottom, pointing up   -- the wall
-        (1,  0, 0, h, 30, 0.95),    # left, pointing right
-        (-1, 0, w, h, 30, 0.95),    # right, pointing left
-    )
-    for dx, dy, fixed, span, step, scale in edges:
-        horizontal = dx != 0
-        for s in range(0, span + step, step):
-            seed = s * 0.07 + (0 if dx >= 0 else 3.3)
-            fh = ((30 + 48 * (0.5 + 0.5 * math.sin(t * 6 + seed))
-                   + 24 * math.sin(t * 11 + seed * 2)) * scale * ramp)
-            if fh < 4:
-                continue
-            if horizontal:
-                bx, by = fixed, s
-            else:
-                bx, by = s, fixed
-            _flame_tongue(surf, bx, by, dx, dy, fh, step * 1.05, t + seed)
-
 
 
 def _cold_fire_pit(surf, cx, cy, R, t):

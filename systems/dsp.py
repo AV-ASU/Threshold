@@ -198,17 +198,6 @@ def granular(sig, grain_ms=80, density=1.0, jitter=0.5, pitch_jitter=0.0,
 
 # ---- pitch shift via resampling ------------------------------------
 
-def pitch_shift(sig, semitones):
-    """Cheap pitch shift -- resamples in place. Changes duration too,
-    so the result is a different length than the input. Fine for SFX,
-    not for music."""
-    if abs(semitones) < 0.01:
-        return sig.copy()
-    ratio = 2.0 ** (semitones / 12.0)
-    new_n = max(1, int(len(sig) / ratio))
-    return signal.resample(sig, new_n).astype(np.float32)
-
-
 # ---- mixing --------------------------------------------------------
 
 def mix(*signals, normalise=True):
@@ -228,21 +217,3 @@ def mix(*signals, normalise=True):
     return out
 
 
-def fade_in(sig, ms=20):
-    n = int(SR * ms / 1000)
-    if n <= 0 or n >= len(sig):
-        return sig
-    env = np.linspace(0.0, 1.0, n, dtype=np.float32)
-    out = sig.copy()
-    out[:n] *= env
-    return out
-
-
-def fade_out(sig, ms=20):
-    n = int(SR * ms / 1000)
-    if n <= 0 or n >= len(sig):
-        return sig
-    env = np.linspace(1.0, 0.0, n, dtype=np.float32)
-    out = sig.copy()
-    out[-n:] *= env
-    return out

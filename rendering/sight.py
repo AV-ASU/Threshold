@@ -91,6 +91,3 @@ def visible_factor(px, py, heading, tx, ty, blocks=None):
     return cf if los_clear(px, py, tx, ty, blocks) else 0.0
 
 
-def is_seen(px, py, heading, tx, ty, blocks=None, thresh=0.5):
-    """Hard seen/unseen decision (factor past `thresh`)."""
-    return visible_factor(px, py, heading, tx, ty, blocks) >= thresh

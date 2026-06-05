@@ -97,13 +97,15 @@ def preacher_dialogue(game, npc):
         # The hubris that gets him killed. After this he's marked: the
         # church swaps him for his remains on the next entry (evidence #4).
         game.dialog.show([
-            "You came back. Good.",
-            "It isn't the corn. The mouth is under the well. The well "
-            "is in the Clerk's yard. I name them from my pulpit.",
-            "The sheriff comes to hear me say it. He stays for the "
-            "whole sermon. He's never taken communion.",
-            "Let them come for an old man. I've buried better than "
-            "whatever it is they kneel to.",
+            "You came back. They mostly don't.",
+            "There's a flock in this town that kneels in no church of "
+            "mine. It kneels under the ground.",
+            "They weren't taken. They walked down willing, and sold the "
+            "Lord to ease their own aches.",
+            "I preach it plain, and spare no sinner. The sheriff hears "
+            "every word, and never once takes communion.",
+            "Let them come for an old man. I've buried better than the "
+            "thing they kneel to.",
         ], speaker="Rev. Crane", voice="blip_low", portrait="preacher")
         save.set_flag("preacher_doomed", True)
     else:
