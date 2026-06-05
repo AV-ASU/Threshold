@@ -582,21 +582,25 @@ def build_threshold():
     # grey stone swept utterly clear of stalagmites -- geometry serving the door
     # (the seed of the spatial fold), its emptiness the more uncanny for the
     # choked field crowding right to its edge. Nothing here is man-made.
-    W, H = 14, 20
+    W, H = 14, 40
     floor, objs = _box(W, H)
     floor = [list(r) for r in floor]          # mutable rows for the edits below
     _cavern(objs, seed=771, keep_cols=(6, 7, 8), keep_rows=(4,))
     for _y in range(H):
         for _x in range(W):
             floor[_y][_x] = "x"
-    # The artery: the WEST boundary, IMPASSABLE (invisible-solid over water),
-    # OPEN at the north edge so it reads as continuing past the scene. Its east
-    # bank is organic (occasional licks east) and noses a little toward the door.
+    # The artery: a MEANDERING river against the west cliff. Its east bank snakes
+    # down the long cave (a sine wander) so it reads as a real river, not a ruled
+    # line. IMPASSABLE (invisible-solid over water), OPEN at the north edge so it
+    # continues past the scene. Pulled clear of the apron near the door.
+    def _river_east(ty):
+        e = 2.0 + 1.8 * (0.5 + 0.5 * math.sin(ty * 0.45 + 0.7))   # col ~2.0..3.8
+        if ty < 8:
+            e = min(e, 2.4)                                       # clear the apron
+        return int(round(e))
     for _y in range(0, H - 1):
-        for _x in (1, 2):
+        for _x in range(1, _river_east(_y) + 1):
             objs[_y][_x] = "X"; floor[_y][_x] = "~"
-    for _y, _x in ((4, 3), (5, 3), (6, 3), (9, 3), (12, 3), (15, 3)):
-        objs[_y][_x] = "X"; floor[_y][_x] = "~"
     # The 5x5 smooth APRON centred on the door (cols 5-9, rows 2-6): forced clear
     # + perfectly smooth grey stone ("0"), no stalagmite intrudes.
     for _y in range(2, 7):
@@ -605,8 +609,8 @@ def build_threshold():
     objects = ["".join(r) for r in objs]
     sc = Scene("threshold", floor, objects, music="void")
     sc.skybox_kind = "void"
-    sc.set_spawn("default",   7, 18)
-    sc.set_spawn("from_dark", 7, 18)
+    sc.set_spawn("default",   7, 38)
+    sc.set_spawn("from_dark", 7, 38)
     # Doorframe on the apron (the cave's north-centre). It is ONLY a frame -- a
     # door with no wall, nothing in the opening (NARRATIVE 1b). You SEAL by
     # walking THROUGH it carrying the keystone (the Pallid Mask), spent there
@@ -620,7 +624,8 @@ def build_threshold():
     # The waterfall: ONE wide spring (~3 tiles) gushing from a hole in the
     # south-west cliff, covering the whole river mouth (NARRATIVE 1b -- the
     # artery's visible source). The river flows north from here.
-    sc.add_decoration(Decoration(2 * TILE, 17 * TILE + 16, "waterfall", w=92))
+    sc.add_decoration(Decoration(2 * TILE + 16, 37 * TILE + 16, "waterfall",
+                                 w=110))
 
     # Stalagmites choking the long floor in organic clusters -- crowding right up
     # to the apron's edge (a dense ring) so the swept 5x5 reads as a wound of
@@ -650,8 +655,8 @@ def build_threshold():
     # earth; water finds it), passes UNDER the frame, then curves back and
     # rejoins the river up near the north wall. Both ends touch the river; the
     # door is the farthest it reaches. Smoothed into a flowing curve at draw time.
-    _tw = [(2.5, 11.6),                        # branches off the river (mid-south)
-           (3.7, 10.7), (4.6, 9.7), (4.0, 8.7), (5.0, 7.9),
+    _tw = [(3.0, 13.4),                        # branches off the meandering river
+           (3.9, 12.0), (4.7, 10.6), (4.0, 9.3), (5.0, 8.1),
            (5.9, 6.9), (6.4, 5.9), (6.9, 4.9),
            (7.0, 4.0),                         # under the frame (the low point)
            (7.0, 3.0),                         # through to the north side
@@ -670,10 +675,12 @@ def build_threshold():
     # Natural cave dressing only -- nothing man-made down here. Cobwebs strung in
     # the ragged high corners + a few drifting mist patches low in the dark.
     for (cwx, cwy, a) in ((1, 1, 0.0), (12, 1, math.pi / 2),
-                          (1, 17, -math.pi / 2), (12, 17, math.pi)):
+                          (12, 19, math.pi), (1, 37, -math.pi / 2),
+                          (12, 37, math.pi)):
         sc.add_decoration(Decoration(cwx * TILE + 6, cwy * TILE + 6,
                                      "cobweb", ang=a))
-    for (mx, my) in ((5, 13), (10, 15), (4, 16), (9, 10), (11, 12)):
+    for (mx, my) in ((9, 11), (5, 17), (11, 23), (4, 28), (10, 32),
+                     (6, 35), (8, 25)):
         sc.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16, "mist"))
 
     def _threshold_on_enter(game, scene):
