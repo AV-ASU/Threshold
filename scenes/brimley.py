@@ -786,7 +786,6 @@ def build_brimley():
     sc.add_decoration(Decoration(barrow_x, barrow_y, "wheelbarrow"))
     sc._barrow_pos = (barrow_x, barrow_y)
     sc.add_decoration(Decoration(52 * TILE + 16, 61 * TILE + 16, "missing_flyer"))
-    sc.add_decoration(Decoration(40 * TILE + 16, 27 * TILE + 16, "missing_flyer"))
     # The calendar, marked up to a day a few months back and then just
     # stopped -- the season kept turning, the marking didn't (NARRATIVE
     # 1b: time runs normally; it's space that folds). Nailed to the
@@ -841,17 +840,15 @@ def build_brimley():
 
     # ---- Main-road waymarks: signs + a lamp thread to follow ----
     # A welcome sign where the Lodge road comes in, directional signs at the
-    # spine's junctions (the well, the town cluster, the church over the
-    # bridge), and a run of lamps along the main road -- the lit thread the
-    # player can always pick up and follow across the wrapped town.
+    # spine's junctions (the well, the town cluster), and a run of lamps along
+    # the main road -- the lit thread the player can always pick up and follow
+    # across the wrapped town.
     sc.add_decoration(Decoration(97 * TILE + 16, 8 * TILE + 16, "town_sign",
                                  text="BRIMLEY"))
     sc.add_decoration(Decoration(92 * TILE + 16, 22 * TILE + 16, "town_sign",
                                  text="WELL"))
     sc.add_decoration(Decoration(60 * TILE + 16, 26 * TILE + 16, "town_sign",
                                  text="TOWN"))
-    sc.add_decoration(Decoration(37 * TILE + 16, 22 * TILE + 16, "town_sign",
-                                 text="CHURCH"))
     for lx in (12, 24, 46, 70, 88):                  # lamps along the E-W spine
         sc.add_decoration(Decoration(lx * TILE + 16, 22 * TILE + 16, "lantern"))
     sc.add_decoration(Decoration(95 * TILE + 16, 16 * TILE + 16, "lantern"))
