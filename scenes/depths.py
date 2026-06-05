@@ -661,13 +661,13 @@ def build_threshold():
     # earth; water finds it), passes UNDER the frame, then curves back and
     # rejoins the river up near the north wall. Both ends touch the river; the
     # door is the farthest it reaches. Smoothed into a flowing curve at draw time.
-    _tw = [(3.0, 31.0),                        # branches off the meander (S of door)
-           (4.0, 29.6), (4.8, 28.2), (4.2, 26.9), (5.2, 26.0),
-           (6.0, 25.6), (6.6, 25.2),
+    _tw = [(3.5, 2.0),                         # off the river at the NORTH (H 2)
+           (4.6, 4.0), (5.6, 6.5), (5.0, 9.0), (6.0, 11.5), (6.6, 14.0),
+           (5.9, 16.5), (6.8, 19.0), (6.3, 21.5), (7.0, 23.5),
            (7.0, 25.0),                        # under the frame (the low point)
-           (7.0, 24.0),                        # through to the north side
-           (6.6, 22.8), (5.4, 22.0), (4.0, 21.4),
-           (2.8, 21.2)]                        # loops back into the river (N of door)
+           (7.0, 26.5), (6.3, 28.5), (6.9, 30.5), (5.8, 32.5), (4.9, 34.5),
+           (3.8, 36.0),
+           (2.6, 37.0)]                        # back into the river at the SOUTH (H 37)
     _world = [(c * TILE + 16, r * TILE + 16) for (c, r) in _tw]
     _cx = sum(p[0] for p in _world) / len(_world)
     _cy = sum(p[1] for p in _world) / len(_world)

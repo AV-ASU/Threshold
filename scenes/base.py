@@ -1777,7 +1777,7 @@ _FLOOR_DECAL_KINDS = frozenset((
     # flat onto the floor so they turn with the room instead of standing up as a
     # top-down sticker under tilt. Pitch 0 draws them flat via Scene.draw as before.
     "symbol", "binding_sigil", "swallow_hole", "cellar_hatch",
-    "body", "drowned_body", "water_trail", "water_channel",
+    "body", "drowned_body", "water_trail",
     # Low overhead foliage (drawn top-down): a flat warped decal reads as a
     # shrub on the ground, where a standee would stand the overhead blob up
     # vertically as a smear.
@@ -1811,10 +1811,6 @@ def _draw_floor_decal(surf, camera, deco, woff=(0.0, 0.0)):
     if deco.kind == "rug":
         w = int(deco.kwargs.get("w", 88)); h = int(deco.kwargs.get("h", 60))
         bound = max(w, h) + 18
-    elif deco.kind == "water_channel":
-        path = deco.kwargs.get("path") or [(0, 0)]
-        m = max(max(abs(dx), abs(dy)) for dx, dy in path)
-        bound = int(2 * m + 28)
     else:
         bound = 60
     canvas = pygame.Surface((bound, bound), pygame.SRCALPHA)
@@ -1826,6 +1822,49 @@ def _draw_floor_decal(surf, camera, deco, woff=(0.0, 0.0)):
     scaled = pygame.transform.smoothscale(rot, (sw, sh))
     sx, sy = camera.project(deco.x + woff[0], deco.y + woff[1], 0)
     surf.blit(scaled, (sx - sw // 2, sy - sh // 2))
+
+
+def _draw_water_channel_tilt(surf, camera, deco, woff=(0.0, 0.0)):
+    """Draw a water_channel as a projected FLOOR polyline: each waypoint
+    (anchor + offset) is Chaikin-smoothed in world space then projected to z=0
+    and connected. Lies on the floor + follows the tilt, with no big per-frame
+    canvas -- so the thread can span the whole cave. Murky teal to match `~`."""
+    path = deco.kwargs.get("path")
+    if not path or len(path) < 2:
+        return
+    raw = [(deco.x + woff[0] + dx, deco.y + woff[1] + dy) for dx, dy in path]
+    for _ in range(2):                         # Chaikin smoothing in world space
+        sm = [raw[0]]
+        for i in range(len(raw) - 1):
+            p, q = raw[i], raw[i + 1]
+            sm.append((p[0] * 0.75 + q[0] * 0.25, p[1] * 0.75 + q[1] * 0.25))
+            sm.append((p[0] * 0.25 + q[0] * 0.75, p[1] * 0.25 + q[1] * 0.75))
+        sm.append(raw[-1])
+        raw = sm
+    pts = [camera.project(wx, wy, 0) for wx, wy in raw]
+    pts = [(int(x), int(y)) for x, y in pts]
+    Wd = max(3, int(7 * camera.scale))
+    pygame.draw.lines(surf, (22, 34, 34), False, pts, Wd + 4)   # soaked halo
+    pygame.draw.lines(surf, (30, 48, 46), False, pts, Wd + 1)   # water body
+    pygame.draw.lines(surf, (46, 68, 62), False, pts, Wd)
+    for p in pts:                                               # round the joints
+        pygame.draw.circle(surf, (46, 68, 62), p, max(1, Wd // 2))
+    pygame.draw.lines(surf, (74, 98, 90), False, pts, 1)        # cold core
+    seg = [math.hypot(pts[i + 1][0] - pts[i][0], pts[i + 1][1] - pts[i][1])
+           for i in range(len(pts) - 1)]
+    total = sum(seg)
+    if total > 0:                                               # sheen glints flowing
+        for k in range(4):
+            f = ((deco.t * 0.06 + k / 4.0) % 1.0) * total
+            acc = 0.0
+            for i, d in enumerate(seg):
+                if acc + d >= f and d > 0:
+                    u = (f - acc) / d
+                    gx = int(pts[i][0] + (pts[i + 1][0] - pts[i][0]) * u)
+                    gy = int(pts[i][1] + (pts[i + 1][1] - pts[i][1]) * u)
+                    pygame.draw.circle(surf, (104, 128, 116), (gx, gy), 2)
+                    break
+                acc += d
 
 
 def _wall_normal(scene, wx, wy):
@@ -2021,6 +2060,12 @@ def draw_terrain_tilted(surf, scene, camera, sight=None):
             # lifts + depth-sorts it with the walls (drawn flat here would put
             # it on the ground and behind the wall box).
             wall_decos.append(d)
+            continue
+        if d.kind == "water_channel":
+            # A long floor thread: drawn as a projected polyline (no canvas), so
+            # it can run the length of the scene. Under everything (terrain pass).
+            for woff in offsets:
+                _draw_water_channel_tilt(surf, camera, d, woff)
             continue
         # Phase 4: rot decals are a world change -- gated to line of sight.
         a = 255
