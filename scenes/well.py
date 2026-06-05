@@ -57,7 +57,7 @@ def build_well_bottom():
     ladder_y = 2 * TILE + 16
     sc._ladder_pos = (ladder_x, ladder_y)
     sc.add_interactable(ladder_x, ladder_y, 40)   # [E] cue: climb the rope/ladder up
-    # The way up: a real 3D ladder hanging from a hatch in the ceiling down to
+    # The way up: a real 3D rope hanging from a hatch in the ceiling down to
     # the landing (volume, not a flat painted ladder on the floor).
     sc.add_decoration(Decoration(ladder_x, ladder_y, "shaft_ladder"))
     sc.add_decoration(Decoration(4 * TILE + 16, 2 * TILE + 22, "candle"))

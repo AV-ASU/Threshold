@@ -1910,26 +1910,19 @@ class Decoration:
                     acc += d
 
     def _draw_shaft_ladder(self, surf, x, y):
-        """The way up from the shaft floor: a rope ladder hanging from a hatch
+        """The way up from the shaft floor: a single rope hanging from a hatch
         overhead (flat / F3 fallback; the tilt view draws it as a real 3D rope
-        ladder rising into the ceiling via rendering/props.py)."""
+        rising into the ceiling via rendering/props.py)."""
         # hatch frame + dark shaft at the top
         pygame.draw.rect(surf, (6, 6, 8), (x - 10, y - 50, 20, 9))
         pygame.draw.rect(surf, (88, 62, 36), (x - 12, y - 52, 24, 11), 2)
-        rope, wood = (158, 136, 96), (120, 86, 50)
-        for side in (-1, 1):                                   # hemp ropes (wavering)
-            pts = []
-            for i in range(11):
-                f = i / 10.0
-                bx = side * int(6 - 2 * f)
-                pts.append((int(x + bx + math.sin(f * 9 + side) * 1.5),
-                            int(y + 10 - f * 54)))
-            pygame.draw.lines(surf, rope, False, pts, 2)
-        for i in range(7):                                     # wooden rungs
-            f = i / 7.0
-            yy = int(y + 6 - i * 8)
-            lw = int(6 - 2 * f)
-            pygame.draw.line(surf, wood, (x - lw, yy), (x + lw, yy), 2)
+        pts = [(int(x + math.sin(f / 10.0 * 7 + 0.5) * 2.4), int(y + 10 - f / 10.0 * 54))
+               for f in range(11)]
+        pygame.draw.lines(surf, (92, 72, 44), False, pts, 4)      # rope body/edge
+        pygame.draw.lines(surf, (150, 128, 88), False, pts, 2)    # rope mid
+        for f in (0.34, 0.66):                                    # climbing knots
+            pygame.draw.circle(surf, (120, 98, 60), pts[int(f * 10)], 3)
+        pygame.draw.ellipse(surf, (120, 98, 60), (x - 6, y + 7, 12, 5), 2)  # frayed coil
         _ground_shadow(surf, x, y + 10, 8, 3, 80)
 
     def _draw_chalkboard(self, surf, x, y):
