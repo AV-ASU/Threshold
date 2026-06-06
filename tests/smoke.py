@@ -229,6 +229,10 @@ _RESET_EXEMPT = {
     "_vignette_surf", "_outdoor_vignette_surf",
     # Per-frame scratch, reset at the top of each draw_world.
     "_overlay_dark_used",
+    # Transient input state: the mouselook cursor grab. Re-derived every frame
+    # from _looking() at the top of step(), so it self-corrects across a
+    # quit-to-title and never carries run meaning.
+    "_mouse_grabbed",
 }
 
 

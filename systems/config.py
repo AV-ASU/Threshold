@@ -87,6 +87,11 @@ SEAMLESS_WORLD_SCENES = OUTDOOR_SCENES | {
 # the player stays comfortably on screen.
 CAM_LOOKAHEAD = 96
 
+# Mouselook turn rate: world radians the facing rotates per pixel of horizontal
+# mouse motion (the cursor is grabbed in the tilted view). ~0.0026 rad/px puts a
+# half-screen drag at roughly a quarter turn -- brisk but not twitchy.
+MOUSE_TURN_SENS = 0.0026
+
 # Oblique-camera tilt (CAMERA.md Phase 2). The tilt is the DEFAULT view;
 # F3 toggles back to the flat pitch-0 view (the legacy raster) and eases in.
 # pitch 0 = that flat fallback. TILT_PITCH_DEG is the locked ~55deg default.

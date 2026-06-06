@@ -125,8 +125,8 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         # every New Game.
         self._cam_pitch_target = math.radians(TILT_PITCH_DEG)
         self.camera.pitch = self._cam_pitch_target
-        self.look = LookController()       # mouse-look heading model (tilt mode)
-        self._rmb_last_x = None            # right-drag scene-rotate anchor
+        self.look = LookController()       # mouselook heading model (tilt mode)
+        self._mouse_grabbed = False        # cursor captured for relative mouselook
         self.title_choice = 0
         # title_options is computed each render via _title_menu_options
         # so the middle slot can flip between "Delete Save" (when a
@@ -343,7 +343,6 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         self.camera.pitch = self._cam_pitch_target
         self.camera.yaw = 0.0
         self.look = LookController()
-        self._rmb_last_x = None
         # Visibility meter + the King in Yellow
         self.visibility = 0.0
         self._vis_floor = 0.0
@@ -380,10 +379,6 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         # Fold pursuit (Stage 3) -- see _note_fold_pursuit / _tick_fold_pursuit.
         self._fold_pursuer = None
         self._fold_pursuer_grace = 0.0
-        # Tilt look: the world heading the player is walking this frame (set by
-        # update_player, consumed by _update_look to turn the body). Transient,
-        # but reset here so it never leaks across a quit-to-title.
-        self._move_heading = None
         # Stillness + heartbeat
         self.stillness_t = 0.0
         self._delayed_audio = []
@@ -685,14 +680,22 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         target_y += (fy / flen) * CAM_LOOKAHEAD
         scene_w = self.scene.w * Scene.TILE
         scene_h = self.scene.h * Scene.TILE
-        if not self.scene.wrap_x:
-            target_x = max(0, min(scene_w - SCREEN_W, target_x))
-            if scene_w < SCREEN_W:
-                target_x = (scene_w - SCREEN_W) // 2
-        if not self.scene.wrap_y:
-            target_y = max(0, min(scene_h - SCREEN_H, target_y))
-            if scene_h < SCREEN_H:
-                target_y = (scene_h - SCREEN_H) // 2
+        # Clamp the camera to the scene bounds ONLY in the flat top-down view,
+        # where the world is axis-aligned and a small room should sit centred.
+        # Under the tilted "behind the PI" camera the view is rotated and the
+        # skybox fills the voids, so the camera must FOLLOW the player instead
+        # of locking to scene-centre -- otherwise small rooms (the bedroom is
+        # smaller than the screen) leave the camera anchored to the scene and
+        # the player walks around under a static view.
+        if not self._tilt_on():
+            if not self.scene.wrap_x:
+                target_x = max(0, min(scene_w - SCREEN_W, target_x))
+                if scene_w < SCREEN_W:
+                    target_x = (scene_w - SCREEN_W) // 2
+            if not self.scene.wrap_y:
+                target_y = max(0, min(scene_h - SCREEN_H, target_y))
+                if scene_h < SCREEN_H:
+                    target_y = (scene_h - SCREEN_H) // 2
         if snap:
             self.cam_x = target_x; self.cam_y = target_y
             # Land already at the target pitch on a snap (game start / scene
@@ -721,28 +724,36 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         top-down game untouched."""
         return self._cam_pitch_target > 0.0
 
-    def _update_look(self, dt):
-        """Drive the LookController from the mouse and steer the camera yaw +
-        player facing. Runs only in tilt mode and only during play."""
-        if not (self._tilt_on() and self.state == "playing" and self.player):
-            self._rmb_last_x = None
+    def _looking(self):
+        """Mouselook is actively driving: the tilted view, mid-play, with no
+        modal up. Grabbing the cursor for relative motion is gated on this so a
+        dialog/inventory/pause hands the pointer back."""
+        return (self._tilt_on() and self.state == "playing" and self.player
+                and not (self.dialog.active or self.inv_ui.open
+                         or self.notebook_ui.open or self.text_input.active))
+
+    def _set_mouselook(self, on):
+        """Grab/release the cursor for relative-motion mouselook. Idempotent."""
+        if on == self._mouse_grabbed:
             return
-        mx, my = pygame.mouse.get_pos()
-        rmb_held = pygame.mouse.get_pressed()[2]
-        rmb_dx = 0.0
-        if rmb_held and self._rmb_last_x is not None:
-            rmb_dx = mx - self._rmb_last_x
-        self._rmb_last_x = mx if rmb_held else None
-        # world heading from the player to the point under the cursor
-        wx, wy = self.camera.unproject(mx, my)
-        aim = math.atan2(wy - self.player.y, wx - self.player.x)
-        move_heading = getattr(self, "_move_heading", None)
-        self.look.update(move_heading=move_heading, aim_heading=aim,
-                         rmb_dx=rmb_dx, rmb_held=rmb_held)
-        self._move_heading = None      # consumed; movement re-sets it next frame
+        pygame.event.set_grab(on)
+        self._mouse_grabbed = on
+        if on:
+            pygame.mouse.get_rel()     # flush accrued delta so we don't snap
+
+    def _update_look(self, dt):
+        """MOUSELOOK: the horizontal mouse delta turns the player's facing and
+        the camera rides directly behind (the face points up the screen), so W
+        walks where you look. Runs only in the tilted view, mid-play."""
+        if not self._looking():
+            self._set_mouselook(False)
+            return
+        self._set_mouselook(True)
+        mdx, _mdy = pygame.mouse.get_rel()
+        self.look.update(turn=mdx * MOUSE_TURN_SENS)
         self.camera.yaw = self.look.cam_yaw
-        # the gun + sprite face where you aim (the head, clamped to the turn
-        # arc); the body itself is turned by walking (update_player above).
+        # The gun + sprite face where the player is turned (mouselook unifies
+        # facing and aim, so a round fires straight ahead, where you look).
         ax, ay = self.look.aim_vec()
         self.player.facing = (ax, ay)
 
@@ -788,19 +799,14 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
             if self._tilt_on():
                 # Face-relative movement: WASD are read in SCREEN space and
                 # rotated into world space so FORWARD (W) is the way the player
-                # is LOOKING -- the mouse-aimed head, self.look.aim -- with S
-                # straight back, A/D strafing to either side. The basis is the
-                # head aim (not the body or the eased camera), so turning the
-                # mouse turns where W takes you. Rotating the screen vector by
-                # (aim + pi/2) maps screen-up exactly onto the aim direction.
+                # is FACING (mouselook keeps facing == aim), with S straight
+                # back and A/D strafing to either side. The mouse turns the
+                # facing (and the camera behind it), so turning the mouse turns
+                # where W takes you. Rotating the screen vector by (aim + pi/2)
+                # maps screen-up exactly onto the facing direction.
                 ay = self.look.aim + math.pi / 2
                 cy, sy = math.cos(ay), math.sin(ay)
                 dx, dy = dx * cy - dy * sy, dx * sy + dy * cy
-                # The body (and the camera that follows it) ease toward where
-                # you WALK, so holding W steers the body around to the head and
-                # you can keep turning past the head's arc. The mouse aims the
-                # head/gun; it never snaps the body.
-                self._move_heading = math.atan2(dy, dx)
             else:
                 self.player.facing = (dx, dy)
             self.player.walk_phase += dt * 12
@@ -1726,6 +1732,11 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
     def step(self, dt):
         keys = pygame.key.get_pressed()
         self.title_t += dt
+        # Capture the cursor for mouselook only while actively playing the
+        # tilted view; title / pause / dialogue / inventory hand it back. Done
+        # here (not just in _update_look) so a pause -- which skips the play
+        # block below -- still releases the grab.
+        self._set_mouselook(self._looking())
         if self.state == "playing":
             # Death screen holds the world frozen until it resolves
             # (respawn or title). Tick it alone and skip the sim.
@@ -2102,7 +2113,6 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
                             fx, fy = self.player.facing
                             self.look = LookController(math.atan2(fy, fx))
                             self.camera.yaw = self.look.cam_yaw
-                        self._rmb_last_x = None
                 elif ev.key == pygame.K_ESCAPE:
                     self.state = "paused"
                     self.pause_view = "menu"

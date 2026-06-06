@@ -23,7 +23,7 @@ import math
 # Tuning (all eased per-frame fractions unless noted).
 HEAD_MAX = math.radians(45)     # the head-turn arc limit off the body facing
 BODY_EASE = 0.10                # how fast the body rotates toward the aim
-YAW_EASE = 0.18                 # how fast cam_yaw eases to its target
+YAW_EASE = 0.45                 # how tightly cam_yaw tracks behind the facing
 LEAN_FRAC = 0.55                # camera lean per unit of head offset (<1 = partial)
 RMB_SENS = math.radians(0.30)   # scene-rotate radians per pixel of mouse x
 RMB_RELEASE = 0.85              # how fast free rotation relaxes when RMB released
@@ -54,36 +54,21 @@ class LookController:
         a = self.aim
         return (math.cos(a), math.sin(a))
 
-    def update(self, move_heading=None, aim_heading=None,
-               rmb_dx=0.0, rmb_held=False):
-        """Advance one frame.
+    def update(self, turn=0.0):
+        """Advance one frame of MOUSELOOK.
 
-          move_heading -- world heading the player is WALKING (None when
-              standing). The BODY eases toward it: you turn to face where you
-              go. This is the ONLY thing that turns the body, so aiming the
-              gun can never spin the camera in circles.
-          aim_heading  -- world heading to the cursor (the HEAD / gun). The
-              head leads the body but is clamped to +/-HEAD_MAX; to aim past
-              the arc you have to walk the body around. (Ignored under RMB.)
+          turn -- world radians to rotate the facing this frame (the horizontal
+              mouse delta, already scaled by sensitivity). The body turns by it
+              directly and the camera sits DIRECTLY BEHIND the player (the face
+              points up the screen), so where you look is where W walks. The
+              head no longer leads the body -- the face IS the body.
 
         Returns the eased cam_yaw."""
-        if rmb_held:
-            # deliberate look-around: drag rotates the whole scene
-            self.rmb_yaw = wrap(self.rmb_yaw + rmb_dx * RMB_SENS)
-        else:
-            # relax the free rotation back toward neutral when released
-            self.rmb_yaw *= RMB_RELEASE
-            # the body turns toward the WALK direction -- never toward the
-            # cursor (that coupling is what spun the camera in circles).
-            if move_heading is not None:
-                self.body = wrap(self.body
-                                 + wrap(move_heading - self.body) * BODY_EASE)
-            # the head leads the body toward the cursor, clamped to the arc.
-            if aim_heading is not None:
-                off = wrap(aim_heading - self.body)
-                self.head_off = max(-HEAD_MAX, min(HEAD_MAX, off))
-        # camera target: body up the screen + partial head lean + free rotation
-        target = self.body + math.pi / 2 + self.head_off * LEAN_FRAC + self.rmb_yaw
+        if turn:
+            self.body = wrap(self.body + turn)
+        self.head_off = 0.0          # no head/body split under mouselook
+        # camera target: the body faces straight up the screen (behind the PI).
+        target = self.body + math.pi / 2
         self.cam_yaw = wrap(self.cam_yaw + wrap(target - self.cam_yaw) * YAW_EASE)
         return self.cam_yaw
 
