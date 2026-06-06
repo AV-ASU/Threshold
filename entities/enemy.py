@@ -477,9 +477,15 @@ class Enemy:
         # downstream math.
         is_hidden = (getattr(self, "respects_hide", False)
                      and getattr(player, "hidden", None) is not None)
+        # Real line of sight: walls + solid props occlude (windows/water do
+        # not). Distance + un-hidden alone is no longer enough -- the player
+        # breaks a chase by stepping behind cover, so the cultist loses LOS
+        # and drops into SEARCH. Only paid for when the cheaper gates pass.
         has_los = (not is_hidden
                    and d < self.aggro
-                   and getattr(player, "hidden", None) is None)
+                   and getattr(player, "hidden", None) is None
+                   and scene.clear_sight_line(self.x, self.y,
+                                              player.x, player.y))
         # Audio reaction. Only in SCOUT (existing target intent
         # would otherwise rubber-band on every step).
         if self._cult_state == "scout":

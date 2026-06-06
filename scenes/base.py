@@ -1776,8 +1776,9 @@ _FLOOR_DECAL_KINDS = frozenset((
     # where the river drains, a floor hatch, a slumped body in its pool): warped
     # flat onto the floor so they turn with the room instead of standing up as a
     # top-down sticker under tilt. Pitch 0 draws them flat via Scene.draw as before.
-    "symbol", "binding_sigil", "swallow_hole", "cellar_hatch",
-    "body", "drowned_body", "water_trail",
+    "symbol", "binding_sigil", "swallow_hole",
+    "body", "drowned_body", "water_trail", "child_drawing", "campfire",
+    "effects_pile",
     # Low overhead foliage (drawn top-down): a flat warped decal reads as a
     # shrub on the ground, where a standee would stand the overhead blob up
     # vertically as a smear.
@@ -1793,7 +1794,7 @@ _WALL_DECO_KINDS = frozenset((
     "mirror", "photo", "wrong_photo", "missing_flyer", "polaroid_wall",
     "banner", "calendar", "clock", "apology_wall",
     "buck_head", "antler_rack", "mounted_fish", "wrong_taxidermy",
-    "chalk_door_wall",
+    "chalk_door_wall", "chalkboard",
 ))
 _WALL_MOUNT_Z = 18
 
@@ -1888,7 +1889,8 @@ def draw_wall_deco(surf, camera, scene, deco, mount_z, woff=(0.0, 0.0)):
     of the wall, edge-on (a sliver) when you look along it."""
     nx, ny = _wall_normal(scene, deco.x, deco.y)
     ax, ay = -ny, nx                       # along the wall (perp to the normal)
-    half = 15.0 if deco.kind == "chalk_door_wall" else 11.0
+    half = (70.0 if deco.kind == "chalkboard"
+            else 15.0 if deco.kind == "chalk_door_wall" else 11.0)
     bx, by = deco.x + woff[0], deco.y + woff[1]
     p1 = camera.project(bx - ax * half, by - ay * half, mount_z)
     p2 = camera.project(bx + ax * half, by + ay * half, mount_z)
@@ -1900,12 +1902,15 @@ def draw_wall_deco(surf, camera, scene, deco, mount_z, woff=(0.0, 0.0)):
     if width < 3:
         return                             # edge-on -> a sliver; skip
     drawfn = getattr(deco, f"_draw_{deco.kind}", deco._draw_unknown)
-    C = 28 if deco.kind == "chalk_door_wall" else 22
+    C = (56 if deco.kind == "chalkboard"
+         else 28 if deco.kind == "chalk_door_wall" else 22)
     canvas = pygame.Surface((C * 2, C * 2), pygame.SRCALPHA)
     drawfn(canvas, C, C)
     h = int(C * 2 * 0.66)                   # card screen height (upright)
     if deco.kind == "chalk_door_wall":     # a door is tall, not a small plaque
         h = int(C * 2 * 0.95)
+    if deco.kind == "chalkboard":          # wide board: square card -> art keeps
+        h = max(3, int(width))             # its drawn (wide-but-short) proportions
     card = pygame.transform.scale(canvas, (max(3, int(width)), max(3, h)))
     ang = math.degrees(math.atan2(-(p2[1] - p1[1]), p2[0] - p1[0]))
     if abs(ang) > 0.5:
@@ -2480,6 +2485,23 @@ class Scene:
         n = max(1, int(math.hypot(dx, dy) // step))
         for i in range(1, n + 1):
             if self._nav_solid_at(x0 + dx * i / n, y0 + dy * i / n):
+                return False
+        return True
+
+    def clear_sight_line(self, x0, y0, x1, y1, step=10):
+        """True if the straight (wrap-aware) segment from (x0,y0) to (x1,y1)
+        crosses no SIGHT blocker -- walls and solid props occlude; windows and
+        floor (water/pits) do NOT (see `blocks_sight`). This is the line-of-
+        sight predicate the cult AI uses to decide if it can actually SEE the
+        player, not merely sense distance: step behind a wall or a solid prop
+        and you break the chase. Distinct from `nav_clear_line` (which treats
+        water/pits as solid for pathing); a cultist can see ACROSS a pit it
+        cannot walk through, so sight must not reuse the nav predicate."""
+        dx = self.world_dx(x0, x1)
+        dy = self.world_dy(y0, y1)
+        n = max(1, int(math.hypot(dx, dy) // step))
+        for i in range(1, n + 1):
+            if self.blocks_sight(x0 + dx * i / n, y0 + dy * i / n):
                 return False
         return True
 

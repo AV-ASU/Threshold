@@ -45,7 +45,7 @@ def build_well_bottom():
     floor, objs = _box(12, 10)
     _bevel(objs, 3)
     objs[5][11] = "E"         # east -> the drying racks (deeper)
-    objs[2][3]  = "U"         # ladder up -- climb is interact-gated below
+    objs[2][3]  = "."         # the ladder up is a 3D prop now (below), not a flat tile
     objects = ["".join(r) for r in objs]
     sc = Scene("well_bottom", floor, objects, music="basement")
     sc.add_exit("E", "well_passage", "from_above")
@@ -57,6 +57,9 @@ def build_well_bottom():
     ladder_y = 2 * TILE + 16
     sc._ladder_pos = (ladder_x, ladder_y)
     sc.add_interactable(ladder_x, ladder_y, 40)   # [E] cue: climb the rope/ladder up
+    # The way up: a real 3D rope hanging from a hatch in the ceiling down to
+    # the landing (volume, not a flat painted ladder on the floor).
+    sc.add_decoration(Decoration(ladder_x, ladder_y, "shaft_ladder"))
     sc.add_decoration(Decoration(4 * TILE + 16, 2 * TILE + 22, "candle"))
     sc.add_decoration(Decoration(7 * TILE + 16, 6 * TILE + 16, "bloodstain"))
     # A "wrong" mount in the well dark -- too many eyes.
@@ -67,10 +70,36 @@ def build_well_bottom():
                                  ang=math.pi / 2))
     sc.add_decoration(Decoration(1 * TILE + 6, 8 * TILE + 26, "cobweb",
                                  ang=-math.pi / 2))
-    sc.hide_spots = [
-        (8 * TILE + 16, 6 * TILE + 16, "behind"),   # collapsed-timber nook
-        (3 * TILE + 16, 6 * TILE + 16, "behind"),
-    ]
+    sc.add_decoration(Decoration(3 * TILE + 26, 1 * TILE + 6, "cobweb", ang=0.0))
+
+    # --- Shaft-floor dressing: the wet, dead bottom of the well ---
+    # Fallen shoring timbers collapsed into the SE -- the cover the hide spot
+    # crouches behind.
+    sc.add_furniture("firewood", [(7, 7)], w=44, h=22, seed=3)
+    sc.add_furniture("firewood", [(8, 7)], w=40, h=20, seed=4)
+    # Supplies once lowered down the shaft, left to rot against the NE wall, and
+    # a stray crate in the SW the second hide spot can crouch behind.
+    sc.add_furniture("barrel", [(8, 2)])
+    sc.add_furniture("crate", [(2, 6)])
+    # Water seeping to the lowest place (NARRATIVE 1b): a thin teal rivulet
+    # pooling in the SW, and what the well keeps -- a bound, drowned figure in it.
+    sc.add_decoration(Decoration(4 * TILE + 16, 7 * TILE + 16, "water_trail",
+                                 ang=math.pi / 2, seed=5))
+    sc.add_decoration(Decoration(5 * TILE + 16, 8 * TILE + 12, "water_trail",
+                                 pool=True, seed=9))
+    sc.add_decoration(Decoration(2 * TILE + 18, 4 * TILE + 16, "drowned_body"))
+    # Grime: claw gouges in the stone, mud tracked from the rope, more old blood.
+    sc.add_decoration(Decoration(10 * TILE + 8, 4 * TILE + 16, "claw_marks",
+                                 scale=1.8))
+    sc.add_decoration(Decoration(5 * TILE + 16, 1 * TILE + 10, "claw_marks",
+                                 scale=1.4))
+    sc.add_decoration(Decoration(4 * TILE + 16, 6 * TILE + 16, "bloodstain"))
+    sc.add_decoration(Decoration(5 * TILE + 16, 4 * TILE + 16, "mud_footprint"))
+    sc.add_decoration(Decoration(6 * TILE + 16, 4 * TILE + 16, "mud_footprint"))
+    for mx, my in ((4, 4), (7, 5), (5, 7)):
+        sc.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16, "mote"))
+
+    sc.hide_spots = []
     _ambient(sc, "low_pulse", 0.12, 9.0, 14.0)
 
     # The rope no longer snaps on the way down -- you can retreat up the
@@ -133,11 +162,22 @@ def build_well_passage():
                                  ang=0.0))
     sc.add_decoration(Decoration(9 * TILE + 26, 1 * TILE + 6, "cobweb",
                                  ang=math.pi / 2))
-    sc.hide_spots = [
-        (8 * TILE + 16, 1 * TILE + 24, "behind"),    # up in the bay (blind)
-        (4 * TILE + 16, 7 * TILE + 16, "behind"),    # between racks
-        (11 * TILE + 16, 7 * TILE + 16, "behind"),
-    ]
+
+    # Sheaves of dried husks/reeds hung on the racks -- the cult's corn-doll
+    # material, drying (this is what the racks are FOR). A few in the bay pocket
+    # and leaning at the corridor rack ends.
+    for (hx, hy) in ((6, 2), (8, 3), (9, 2), (5, 5), (12, 5)):
+        sc.add_decoration(Decoration(hx * TILE + 16, hy * TILE + 16,
+                                     "husk_bundle", seed=hx * 7 + hy))
+    # Grime: mud tracked from the shaft, a cold drip seeping through, old blood.
+    sc.add_decoration(Decoration(2 * TILE + 16, 5 * TILE + 16, "mud_footprint"))
+    sc.add_decoration(Decoration(8 * TILE + 16, 7 * TILE + 16, "water_trail",
+                                 ang=math.pi / 2, seed=6))
+    sc.add_decoration(Decoration(5 * TILE + 16, 6 * TILE + 16, "bloodstain"))
+    for mx, my in ((7, 3), (11, 5), (3, 5)):
+        sc.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16, "mote"))
+
+    sc.hide_spots = []
     # One cultist working the corridor, end to end.
     sc.add_enemy(_cultist(3 * TILE + 16, 5 * TILE + 16, speed=0.85))
     _ambient(sc, "cult_breath", 0.16, 5.0, 9.0)
@@ -185,10 +225,7 @@ def build_works_vats():
                                  ang=0.0))
     sc.add_decoration(Decoration(8 * TILE + 26, 1 * TILE + 6, "cobweb",
                                  ang=math.pi / 2))
-    sc.hide_spots = [
-        (6 * TILE + 16, 2 * TILE + 16, "behind"),   # in the north arm (blind)
-        (6 * TILE + 16, 8 * TILE + 16, "behind"),   # in the south arm (blind)
-    ]
+    sc.hide_spots = []
     # Two cultists working the basins -- one walks the N-S arms, one the
     # E-W crossing.
     sc.add_enemy(_cultist(6 * TILE + 16, 5 * TILE + 16, speed=0.8))
@@ -220,9 +257,8 @@ def build_works_sorting():
     objs[6][15] = "E"         # east -> the scriptorium
     objs[0][13] = "M"         # north (top of the stem) -> Mara's cell
     objs[10][4] = "D"         # south -> the holding cells (dead-end branch)
-    for tx in (3, 6, 9, 12):  # long sorting tables, two rows on the hall floor
-        objs[5][tx] = "t"
-        objs[8][tx] = "t"
+    # (the sorting tables are 3D furniture now -- added after the scene is built,
+    # same footprint the cult AI routes around)
     objects = ["".join(r) for r in objs]
     sc = Scene("works_sorting", floor, objects, music="basement")
     sc.add_exit("F", "works_vats", "from_below")
@@ -259,12 +295,27 @@ def build_works_sorting():
     # Crates of catalogued effects stacked up in the north stem.
     sc.add_furniture("crate", [(11, 2)])
     sc.add_furniture("crate", [(12, 2)])
+    # The sorting tables themselves -- 3D worktops (were flat tiles), two rows
+    # across the hall floor, the same footprint the cult AI routes around.
+    for tx in (3, 6, 9, 12):
+        sc.add_furniture("table", [(tx, 5)], w=30, h=20)
+        sc.add_furniture("table", [(tx, 8)], w=30, h=20)
+    # The shed lives sorted into piles on the floor between the tables -- a
+    # folded coat, a shoe, a hat, a child's toy in each (NARRATIVE 1b/4).
+    for (ex, ey, es) in ((4, 6, 1), (7, 7, 2), (10, 6, 3),
+                         (3, 7, 4), (12, 7, 5), (8, 9, 6)):
+        sc.add_decoration(Decoration(ex * TILE + 16, ey * TILE + 16,
+                                     "effects_pile", seed=es))
+    # The catalogued faces of the vanished, pinned over the work beside the mount.
+    sc.add_decoration(Decoration(3 * TILE + 16, 3 * TILE + 18, "missing_flyer"))
+    sc.add_decoration(Decoration(5 * TILE + 16, 3 * TILE + 20, "polaroid_wall"))
+    # more grime: mud worked across the floor, blood, motes in the dead air.
+    sc.add_decoration(Decoration(7 * TILE + 16, 9 * TILE + 16, "mud_footprint"))
+    sc.add_decoration(Decoration(11 * TILE + 16, 8 * TILE + 16, "bloodstain"))
+    for mx, my in ((5, 4), (10, 7), (13, 5)):
+        sc.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16, "mote"))
     sc._table_pos = (6 * TILE + 16, 5 * TILE + 16)
-    sc.hide_spots = [
-        (5 * TILE + 16, 6 * TILE + 16, "behind"),
-        (11 * TILE + 16, 6 * TILE + 16, "behind"),
-        (13 * TILE + 16, 2 * TILE + 16, "behind"),   # up in the stem (blind)
-    ]
+    sc.hide_spots = []
     # Two cultists sorting/patrolling -- the hardest crossing.
     sc.add_enemy(_cultist(4 * TILE + 16, 6 * TILE + 16, speed=0.9))
     sc.add_enemy(_cultist(11 * TILE + 16, 6 * TILE + 16, speed=0.9))
@@ -390,10 +441,7 @@ def build_works_scriptorium():
                                  ang=math.pi / 2))
     sc._desk_pos = (4 * TILE + 16, 2 * TILE + 16)
     sc.add_interactable(sc._desk_pos[0], sc._desk_pos[1], 40)  # [E] cue: the Playscript
-    sc.hide_spots = [
-        (6 * TILE + 16, 6 * TILE + 16, "behind"),
-        (10 * TILE + 16, 6 * TILE + 16, "behind"),
-    ]
+    sc.hide_spots = []
     # One scribe, kneeling at a desk, oblivious (aggro 0) -- unless you
     # cross into its lane. Locked facing toward its work.
     scribe = _cultist(5 * TILE + 16, 2 * TILE + 16, speed=0.8)
@@ -486,10 +534,7 @@ def build_works_sign():
                                  ang=-math.pi / 2))
     sc.add_decoration(Decoration(11 * TILE + 26, 9 * TILE + 26, "cobweb",
                                  ang=math.pi))
-    sc.hide_spots = [
-        (2 * TILE + 16, 8 * TILE + 16, "behind"),
-        (10 * TILE + 16, 8 * TILE + 16, "behind"),
-    ]
+    sc.hide_spots = []
     # The congregation: three kneelers facing the Sign (north), plus one
     # patrol on the east flank. Kneelers start oblivious (aggro 0).
     for kx in (4, 6, 8):
@@ -584,10 +629,7 @@ def build_works_deepstair():
                                  ang=0.0))
     sc.add_decoration(Decoration(8 * TILE + 26, 1 * TILE + 6, "cobweb",
                                  ang=math.pi / 2))
-    sc.hide_spots = [
-        (8 * TILE + 16, 6 * TILE + 16, "behind"),
-        (2 * TILE + 16, 6 * TILE + 16, "behind"),
-    ]
+    sc.hide_spots = []
     _ambient(sc, "low_pulse", 0.12, 10.0, 15.0)
 
     def _interact(game):
@@ -683,10 +725,7 @@ def build_the_sump():
                                  ang=-math.pi / 2))
     sc.add_decoration(Decoration(7 * TILE + 26, 5 * TILE + 6, "cobweb",
                                  ang=math.pi / 2))
-    sc.hide_spots = [
-        (3 * TILE + 16, 6 * TILE + 16, "behind"),
-        (7 * TILE + 16, 6 * TILE + 16, "behind"),
-    ]
+    sc.hide_spots = []
     _ambient(sc, "low_pulse", 0.12, 8.0, 13.0)
 
     def _on_enter(game, scene):
@@ -763,11 +802,7 @@ def build_the_cells():
     sc.add_decoration(Decoration(6 * TILE + 16, 9 * TILE + 16, "candle"))
     sc.add_decoration(Decoration(1 * TILE + 6, 9 * TILE + 26, "cobweb",
                                  ang=-math.pi / 2))
-    sc.hide_spots = [
-        (3 * TILE + 16, 4 * TILE + 16, "behind"),   # beside a west cot
-        (8 * TILE + 16, 6 * TILE + 16, "behind"),   # beside an east cot
-        (6 * TILE + 16, 6 * TILE + 16, "behind"),   # in the corridor
-    ]
+    sc.hide_spots = []
     _ambient(sc, "whisper", 0.13, 6.0, 11.0)
 
     def _on_enter(game, scene):

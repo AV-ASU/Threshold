@@ -155,11 +155,7 @@ def build_depths_antechamber():
                                  ang=0.0))
     sc.add_decoration(Decoration(8 * TILE + 26, 8 * TILE + 26, "cobweb",
                                  ang=math.pi))
-    # Two pillar-style hide spots flanking the diamond.
-    sc.hide_spots = [
-        (4 * TILE + 16, 8 * TILE + 16, "behind"),
-        (6 * TILE + 16, 2 * TILE + 16, "behind"),
-    ]
+    sc.hide_spots = []
     # One cultist patrolling a small loop around the landing.
     sc.add_enemy(_cultist(7 * TILE + 16, 6 * TILE + 16, speed=0.85))
     _ambient(sc, "cult_breath", 0.18, 6.0, 10.0)
@@ -229,11 +225,7 @@ def build_depths_procession():
                                  ang=0.0))
     sc.add_decoration(Decoration(14 * TILE + 26, 3 * TILE + 6, "cobweb",
                                  ang=math.pi / 2))
-    sc.hide_spots = [
-        (3 * TILE + 16, 1 * TILE + 24, "behind"),    # up in a north bay
-        (11 * TILE + 16, 7 * TILE + 16, "behind"),   # down in a south bay
-        (6 * TILE + 16, 7 * TILE + 16, "behind"),
-    ]
+    sc.hide_spots = []
     # Two cultists walking the column, single file, opposite phases
     # so they meet between (5..12) and pass each other. Endpoints
     # held away from the west-edge spawn (col 1) so the player
@@ -288,12 +280,7 @@ def build_depths_hall():
                                  ang=0.0))
     sc.add_decoration(Decoration(10 * TILE + 26, 8 * TILE + 26, "cobweb",
                                  ang=math.pi))
-    sc.hide_spots = [
-        (9 * TILE + 16, 1 * TILE + 24, "behind"),    # north transept arm
-        (9 * TILE + 16, 8 * TILE + 16, "behind"),    # south transept arm
-        (2 * TILE + 16, 5 * TILE + 16, "behind"),    # west nave aisle
-        (8 * TILE + 16, 6 * TILE + 16, "behind"),    # at the crossing
-    ]
+    sc.hide_spots = []
     # Two stationary cultists kneel at the iron door, facing east.
     # Aggro starts at 0 (oblivious) so they don't react until the
     # crossing trigger flips them. aggro=0 + lock_facing pins them in
@@ -384,10 +371,7 @@ def build_depths_threshing():
                                  ang=0.0))
     sc.add_decoration(Decoration(10 * TILE + 26, 2 * TILE + 6, "cobweb",
                                  ang=math.pi / 2))
-    sc.hide_spots = [
-        (3 * TILE + 16, 3 * TILE + 16, "behind"),
-        (9 * TILE + 16, 7 * TILE + 16, "behind"),
-    ]
+    sc.hide_spots = []
     _ambient(sc, "step_grass", 0.22, 3.5, 6.0)
     sc.add_interactable(6 * TILE + 16, 5 * TILE + 16, 36)   # [E] cue: the threshing heaps
 
@@ -418,10 +402,7 @@ def build_depths_stair():
     # One candle at the head of the stair. The Stair is empty per
     # design -- silence is the keeper.
     sc.add_decoration(Decoration(4 * TILE + 16, 4 * TILE + 16, "candle"))
-    sc.hide_spots = [
-        (4 * TILE + 16, 2 * TILE + 16, "behind"),
-        (5 * TILE + 16, 8 * TILE + 16, "behind"),
-    ]
+    sc.hide_spots = []
     _ambient(sc, "low_pulse", 0.10, 11.0, 16.0)
 
     def _on_enter(game, scene):
@@ -462,10 +443,7 @@ def build_the_ossuary():
                                  ang=-math.pi / 2))
     sc.add_decoration(Decoration(7 * TILE + 26, 9 * TILE + 6, "cobweb",
                                  ang=math.pi))
-    sc.hide_spots = [
-        (2 * TILE + 16, 6 * TILE + 16, "behind"),
-        (6 * TILE + 16, 6 * TILE + 16, "behind"),
-    ]
+    sc.hide_spots = []
     _ambient(sc, "whisper", 0.12, 7.0, 12.0)
     sc.add_interactable(4 * TILE + 16, 9 * TILE + 16, 36)   # [E] cue: the shelves
     # Optional lore: The Digging (third, deepest testimony fragment), racked
@@ -564,10 +542,7 @@ def build_dark():
                dialogue_fn=_mara_voice, movement="idle")
     mara.facing = (0, -1)
     sc.add_npc(mara)
-    sc.hide_spots = [
-        (1 * TILE + 24, 8 * TILE + 16, "behind"),
-        (10 * TILE + 16, 1 * TILE + 24, "behind"),
-    ]
+    sc.hide_spots = []
     _ambient(sc, "heartbeat", 0.18, 3.5, 5.0)
     return sc
 

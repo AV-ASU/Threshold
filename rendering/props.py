@@ -404,9 +404,85 @@ def _draw_doorframe_solid(surf, cam, deco):
         pygame.draw.line(surf, pal["top"], a, b, 1)
 
 
+def _draw_shaft_ladder_solid(surf, cam, deco):
+    """The way UP from the shaft floor: a single thick ROPE hanging from a hatch
+    in the rock ceiling down to the landing. The dark shaft + a framed hatch sit
+    high overhead; the rope sways slightly on its slack, knotted at intervals for
+    climbing, frayed where it coils on the floor. (Flat F3 uses the 2D sprite.)"""
+    wx, wy = deco.x, deco.y
+    s = (getattr(deco, "scale", 1.0) or 1.0)
+    H = 82 * s
+    lean = -3.0 * s         # the top leans back (north) into the rock
+
+    def at(f):              # a point on the rope at height fraction f
+        wav = math.sin(f * 7.0 + 0.5) * 2.4 * s            # the rope's slack sway
+        return cam.project(wx + wav, wy + lean * f, f * H)
+
+    # contact shadow so the foot seats on the floor
+    bx, by = cam.project(wx, wy, 0)
+    shw = max(3, int(5 * s * cam.scale))
+    shh = max(2, int(3 * s * cam.ground_squash() * cam.scale))
+    sh = pygame.Surface((shw * 2 + 4, shh * 2 + 4), pygame.SRCALPHA)
+    pygame.draw.ellipse(sh, (0, 0, 0, 90), (2, 2, shw * 2, shh * 2))
+    surf.blit(sh, (int(bx) - shw - 2, int(by) - shh - 2))
+    # the dark shaft + timber hatch frame high overhead
+    fr = 12 * s
+    fy = wy + lean
+    frame = [cam.project(wx - fr, fy - fr, H), cam.project(wx + fr, fy - fr, H),
+             cam.project(wx + fr, fy + fr, H), cam.project(wx - fr, fy + fr, H)]
+    pygame.draw.polygon(surf, (6, 6, 8), frame)                 # black shaft going up
+    pygame.draw.polygon(surf, (88, 62, 36), frame, max(2, int(2 * s)))   # hatch frame
+    # the rope itself: thick, with a dark edge, a lit strand, twist texture
+    pts = [at(i / 18.0) for i in range(19)]
+    pygame.draw.lines(surf, (92, 72, 44), False, pts, max(3, int(4 * s)))    # body/edge
+    pygame.draw.lines(surf, (146, 124, 84), False, pts, max(2, int(3 * s)))  # mid
+    pygame.draw.lines(surf, (184, 162, 114), False, pts, 1)                  # lit strand
+    for i in range(2, 18, 2):                                   # twisted-strand ticks
+        p = at(i / 18.0)
+        pygame.draw.line(surf, (96, 76, 48),
+                         (int(p[0]) - 2, int(p[1]) - 1), (int(p[0]) + 2, int(p[1]) + 1), 1)
+    for f in (0.34, 0.66):                                      # climbing knots (bulges)
+        kp = at(f)
+        pygame.draw.circle(surf, (120, 98, 60), (int(kp[0]), int(kp[1])), max(2, int(3 * s)))
+        pygame.draw.circle(surf, (176, 154, 108),
+                           (int(kp[0]) - 1, int(kp[1]) - 1), max(1, int(1.4 * s)))
+    foot = at(0.0)                                              # frayed coil on the floor
+    pygame.draw.ellipse(surf, (120, 98, 60),
+                        (int(foot[0]) - int(6 * s), int(foot[1]) - int(2 * s),
+                         int(12 * s), int(5 * s)), max(1, int(2 * s)))
+
+
+def _draw_cellar_hatch_solid(surf, cam, deco):
+    """A timber cellar hatch with real volume: a low raised plank box on the
+    floor (not a flat decal), cross-boarded and nailed shut, an iron pull-ring
+    on top. (Flat F3 uses the 2D sprite.)"""
+    wx, wy = deco.x, deco.y
+    s = (getattr(deco, "scale", 1.0) or 1.0)
+    w, d, rim = 26 * s, 24 * s, 6 * s
+    pal = {"top": (120, 86, 50), "side": (84, 58, 34), "dark": (58, 40, 22)}
+    _vbox(surf, cam, wx, wy, w, d, 0, rim, pal)
+    hw, hd = w / 2, d / 2
+    tl, tr = cam.project(wx - hw, wy - hd, rim), cam.project(wx + hw, wy - hd, rim)
+    bl, br = cam.project(wx - hw, wy + hd, rim), cam.project(wx + hw, wy + hd, rim)
+    # plank seams + the cross-boards nailed over the lid (shut)
+    for f in (0.33, 0.66):
+        a = (tl[0] + (bl[0] - tl[0]) * f, tl[1] + (bl[1] - tl[1]) * f)
+        b = (tr[0] + (br[0] - tr[0]) * f, tr[1] + (br[1] - tr[1]) * f)
+        pygame.draw.line(surf, pal["dark"], a, b, 1)
+    pygame.draw.line(surf, _shade(pal["top"], 1.1), tl, br, max(2, int(2 * s)))
+    pygame.draw.line(surf, _shade(pal["top"], 1.1), tr, bl, max(2, int(2 * s)))
+    for c in (tl, tr, bl, br):                                  # nail heads
+        pygame.draw.circle(surf, (54, 52, 58), (int(c[0]), int(c[1])), max(1, int(1.5 * s)))
+    ring = cam.project(wx, wy, rim)                             # iron pull-ring
+    pygame.draw.circle(surf, (176, 176, 196), (int(ring[0]), int(ring[1])),
+                       max(2, int(4 * s)), 2)
+
+
 SOLID_PROPS = {
     "doorframe":     _draw_doorframe_solid,
     "waterfall":     _draw_waterfall_solid,
+    "shaft_ladder":  _draw_shaft_ladder_solid,
+    "cellar_hatch":  _draw_cellar_hatch_solid,
     "well":          _draw_well_solid,
     "pillar":        _draw_pillar_solid,
     "cistern_basin": _draw_cistern_basin_solid,
@@ -431,7 +507,7 @@ _STANDEE_HANG = frozenset(("hanging_figure",))
 _STANDEE_GROUND = frozenset((
     "creepy_tree", "corn_doll", "corn_altar", "cauldron",
     "wheelbarrow", "pedestal", "steeple", "town_sign", "flagpole",
-    "tall_grass", "grass_tuft", "doll",
+    "tall_grass", "grass_tuft", "doll", "husk_bundle",
 ))
 _STANDEE_KINDS = _STANDEE_GROUND | _STANDEE_HANG
 _STANDEE_HANG_MOUNT = 34          # world height the hanging card is hung from

@@ -119,13 +119,7 @@ def build_effigy_grove():
     # worker: the dead fire, the effigy ring, the nailed-up faces, all
     # tended by no one you'll ever see. It reads like its siblings
     # (husk_grove, scarecrow_ring): a maker-less dread tableau.
-    # Hide spots so a player who stumbles in can retreat in cover.
-    sc.hide_spots = [
-        (2 * TILE + 16, 6 * TILE + 16, "behind"),    # behind west tree
-                                                     # (was on the bloodstain)
-        (11 * TILE + 16, 5 * TILE + 16, "behind"),   # behind east tree
-        (1 * TILE + 16, 5 * TILE + 16, "behind"),    # by the wall
-    ]
+    sc.hide_spots = []
     return sc
 
 
@@ -362,10 +356,7 @@ def build_husk_grove():
                                  "phantom_mark"))
     sc.add_decoration(Decoration(8 * TILE + 16, 7 * TILE + 16,
                                  "phantom_mark"))
-    sc.hide_spots = [
-        (2 * TILE + 16, 4 * TILE + 16, "behind"),
-        (10 * TILE + 16, 4 * TILE + 16, "behind"),
-    ]
+    sc.hide_spots = []
     return sc
 
 
@@ -434,8 +425,5 @@ def build_scarecrow_ring():
                                  "watching_wound", size="small"))
     sc.add_decoration(Decoration(W * TILE - 16, H * TILE - 16,
                                  "watching_wound", size="small"))
-    sc.hide_spots = [
-        (2 * TILE + 16, 8 * TILE + 16, "behind"),
-        ((W - 2) * TILE + 16, 2 * TILE + 16, "behind"),
-    ]
+    sc.hide_spots = []
     return sc

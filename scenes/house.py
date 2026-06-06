@@ -59,7 +59,6 @@ def build_bedroom():
     # Hide spots: BESIDE the wardrobe (col 3 row 8) and UNDER the
     # writing desk (col 11 row 6).
     sc.hide_spots = [
-        (3 * TILE + 16,  8 * TILE + 16, "behind"),   # beside wardrobe
         (11 * TILE + 16, 6 * TILE + 16, "under"),    # under writing desk
     ]
 
@@ -399,8 +398,6 @@ def build_house():
     # to the visible cover (not on top of a solid prop).
     sc.hide_spots = [
         (3 * TILE + 16, 3 * TILE + 16, "under"),    # under the kitchen table
-        (3 * TILE + 16, 6 * TILE + 16, "behind"),   # beside the shelves
-        (11 * TILE + 16, 4 * TILE + 16, "behind"),  # beside the fireplace
     ]
 
     sc.on_enter_fn = house_on_enter
@@ -652,14 +649,9 @@ def build_basement():
     # its own chest prompt via basement_interact.
     sc._workbench_pos = (2 * TILE + 16, 7 * TILE + 16)
     sc._chest_pos = (sc._workbench_pos[0], sc._workbench_pos[1] - 8)
-    # Hide spots: behind the firewood stack (SE) and behind a second
-    # woodpile by the south wall. (Neither sits on the workbench chest --
-    # which is its own E-interaction now -- nor on the bloodstain, which
-    # is not something you can hide in.)
-    sc.hide_spots = [
-        (8 * TILE + 16, 7 * TILE + 16, "behind"),   # behind the SE firewood
-        (5 * TILE + 16, 7 * TILE + 16, "behind"),   # behind the south woodpile
-    ]
+    # No hide spots: the firewood stacks are solid cover the player breaks
+    # line of sight behind; the workbench chest stays its own E-interaction.
+    sc.hide_spots = []
     sc.add_decoration(Decoration(sc._chest_pos[0], sc._chest_pos[1],
                                  "chest", open=False))
 

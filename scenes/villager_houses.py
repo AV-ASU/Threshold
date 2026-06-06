@@ -160,11 +160,7 @@ def build_old_man_house():
     for mx, my in [(10, 7), (12, 8), (9, 9)]:
         sc.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16,
                                      "mote"))
-    # Hide spots: in the vestry (the blind back room) and behind the altar.
-    sc.hide_spots = [
-        (2 * TILE + 16, 4 * TILE + 24, "behind"),
-        (8 * TILE + 16, 1 * TILE + 24, "behind"),
-    ]
+    sc.hide_spots = []
     sc.on_enter_fn = old_man_house_on_enter
     return sc
 
@@ -285,11 +281,7 @@ def build_fisherman_cottage():
     for mx, my in [(4, 7), (6, 8), (3, 9)]:
         sc.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16,
                                      "mote"))
-    # Hide spots: behind the front desk, and in the back records room (blind).
-    sc.hide_spots = [
-        (4 * TILE + 16, 5 * TILE + 24, "behind"),
-        (12 * TILE + 16, 4 * TILE + 24, "behind"),
-    ]
+    sc.hide_spots = []
 
     def _fc_on_enter(game, scene):
         # The lawman's cartridges -- the best ammo source in town (one-time),
@@ -371,10 +363,7 @@ def build_haunted_house():
     sc._farmhouse_hatch = (hatch_x, hatch_y)
     sc.add_interactable(hatch_x, hatch_y, 36)   # [E] cue for the sealed hatch
 
-    sc.hide_spots = [
-        (2 * TILE + 16, 4 * TILE + 24, "behind"),
-        (9 * TILE + 16, 4 * TILE + 24, "behind"),   # in the back room (blind)
-    ]
+    sc.hide_spots = []
 
     def _farmhouse_interact(game):
         # Sealed. This hatch used to drop into the old cult chamber, which

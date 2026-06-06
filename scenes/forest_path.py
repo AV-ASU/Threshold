@@ -129,17 +129,9 @@ def build_forest_path():
     # (The secret-clearing branch dressing was removed when the
     # cauldron entrance moved to the brimley river bank.)
 
-    # Hide spots: cornstalks along the south fence, behind the rocks,
-    # behind the decoy passable trees. The player can melt into the
-    # cornfield off the road on either side.
-    sc.hide_spots = [
-        (10 * TILE + 16, 11 * TILE + 16, "behind"),  # cornstalks south
-        (15 * TILE + 16, 4 * TILE + 16, "behind"),   # cornstalks north
-        (25 * TILE + 16, 12 * TILE + 16, "behind"),  # cornstalks south
-        (32 * TILE + 16, 8 * TILE + 16, "behind"),   # behind a rock
-        (42 * TILE + 16, 4 * TILE + 16, "behind"),   # cornstalks north
-        (50 * TILE + 16, 1 * TILE + 16, "behind"),   # decoy tree gap
-    ]
+    # No hide spots: the player melts into the cornfield off either road
+    # shoulder (walkable corn cover) and breaks sight behind the trees.
+    sc.hide_spots = []
 
     sc._fp_W = W
     sc._fp_H = H
@@ -151,12 +143,6 @@ def build_forest_path():
     # a door.
     sc.objects[1][30] = "!"
     sc.objects[1][31] = "!"
-
-    # Hide spot at the START of the cornfield path -- west end, in
-    # the corn against the south wall. Gives the player cover the
-    # moment they step off the inn yard onto the road.
-    sc.hide_spots.insert(0,
-        (3 * TILE + 16, 11 * TILE + 16, "behind"))
 
     def _forest_on_enter(game, scene):
         # First-visit: arm the wind-dies beat. The music silence

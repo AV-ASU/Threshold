@@ -1909,6 +1909,136 @@ class Decoration:
                         break
                     acc += d
 
+    def _draw_effects_pile(self, surf, x, y):
+        """A sorted heap of the vanished's belongings -- a folded coat, a shoe, a
+        hat, spectacles, a child's toy -- catalogued in the Sorting Hall (the
+        lives the claimed shed). Muted, dead colours. A floor decal; varies by
+        seed."""
+        seed = self.seed
+        def dk(c, f=0.55):
+            return (int(c[0] * f), int(c[1] * f), int(c[2] * f))
+        pygame.draw.ellipse(surf, (26, 22, 24), (x - 13, y - 1, 26, 11))   # heap shadow
+        cols = [(86, 72, 90), (74, 84, 72), (96, 80, 58), (70, 70, 84)]
+        c = cols[seed % 4]
+        pygame.draw.rect(surf, c, (x - 10, y - 3, 13, 8))                  # folded cloth
+        pygame.draw.rect(surf, dk(c), (x - 10, y - 3, 13, 8), 1)
+        pygame.draw.line(surf, dk(c, 0.75), (x - 10, y + 1), (x + 3, y + 1), 1)
+        pygame.draw.ellipse(surf, (60, 44, 32), (x + 2, y + 2, 9, 5))      # a shoe
+        pygame.draw.ellipse(surf, (40, 28, 20), (x + 2, y + 2, 9, 5), 1)
+        pygame.draw.ellipse(surf, (52, 48, 54), (x - 5, y - 6, 11, 5))     # a hat brim
+        pygame.draw.ellipse(surf, (66, 62, 68), (x - 1, y - 8, 5, 4))      # hat crown
+        if seed % 2:                                                       # spectacles
+            pygame.draw.circle(surf, (150, 150, 160), (x + 6, y - 2), 1)
+            pygame.draw.circle(surf, (150, 150, 160), (x + 9, y - 2), 1)
+        pygame.draw.circle(surf, (182, 170, 150), (x - 7, y + 4), 2)       # a child's toy
+        pygame.draw.circle(surf, (120, 108, 92), (x - 7, y + 4), 2, 1)
+
+    def _draw_husk_bundle(self, surf, x, y):
+        """A tied sheaf of dried corn husks / reeds, bound with twine -- the
+        cult's material for the corn-dolls, hung on the racks to dry. An upright
+        sheaf (stood up as a standee under tilt; flat sprite at pitch 0)."""
+        base = (150, 134, 86)
+        blade = (180, 164, 116)
+        dk = (110, 96, 58)
+        twine = (124, 92, 52)
+        for dx in (-7, -4, -1, 2, 5, 8):                  # blades fanning up
+            sway = (dx % 3) - 1
+            tipx = x + dx + sway
+            tipy = y - 18 - (abs(dx) // 2) - (dx % 2)
+            pygame.draw.line(surf, base, (x + 1, y + 5), (tipx, tipy), 2)
+            pygame.draw.line(surf, blade, (x + 1, y + 5), (tipx, tipy), 1)
+        pygame.draw.polygon(surf, dk, [(x - 3, y + 4), (x + 5, y + 4),
+                                       (x + 1, y + 13)])      # tied point down
+        pygame.draw.line(surf, twine, (x - 5, y + 1), (x + 6, y + 1), 2)   # twine band
+        pygame.draw.line(surf, twine, (x - 4, y + 4), (x + 5, y + 4), 1)
+
+    def _draw_shaft_ladder(self, surf, x, y):
+        """The way up from the shaft floor: a single rope hanging from a hatch
+        overhead (flat / F3 fallback; the tilt view draws it as a real 3D rope
+        rising into the ceiling via rendering/props.py)."""
+        # hatch frame + dark shaft at the top
+        pygame.draw.rect(surf, (6, 6, 8), (x - 10, y - 50, 20, 9))
+        pygame.draw.rect(surf, (88, 62, 36), (x - 12, y - 52, 24, 11), 2)
+        pts = [(int(x + math.sin(f / 10.0 * 7 + 0.5) * 2.4), int(y + 10 - f / 10.0 * 54))
+               for f in range(11)]
+        pygame.draw.lines(surf, (92, 72, 44), False, pts, 4)      # rope body/edge
+        pygame.draw.lines(surf, (150, 128, 88), False, pts, 2)    # rope mid
+        for f in (0.34, 0.66):                                    # climbing knots
+            pygame.draw.circle(surf, (120, 98, 60), pts[int(f * 10)], 3)
+        pygame.draw.ellipse(surf, (120, 98, 60), (x - 6, y + 7, 12, 5), 2)  # frayed coil
+        _ground_shadow(surf, x, y + 10, 8, 3, 80)
+
+    def _draw_chalkboard(self, surf, x, y):
+        """A WIDE schoolroom chalkboard on the wall (spans 4-5 tiles): the
+        children's faded lesson ghosted under the cult's compulsion -- a doorway
+        chalked over and over, smaller and smaller, marching off into a corner.
+        Wall-mounted; draw_wall_deco stretches it along the wall span."""
+        HW, HH = 52, 15                                                    # half size
+        pygame.draw.rect(surf, (96, 66, 38), (x - HW, y - HH, HW * 2, HH * 2))      # frame
+        pygame.draw.rect(surf, (60, 40, 22), (x - HW, y - HH, HW * 2, HH * 2), 2)
+        pygame.draw.rect(surf, (28, 36, 32),
+                         (x - HW + 4, y - HH + 4, HW * 2 - 8, HH * 2 - 8))  # slate
+        for i in range(9):                                                 # ghost lesson
+            pygame.draw.rect(surf, (96, 110, 100),
+                             (x - HW + 10 + i * 7, y - HH + 7, 4, 5), 1)
+        cx, cy, s = x - HW + 13, y + 3.0, 15.0                             # the door, shrinking
+        for k in range(8):
+            col = (214, 218, 210) if k == 0 else (150, 162, 150)
+            pygame.draw.rect(surf, col, (int(cx), int(cy - s),
+                                         max(2, int(s * 0.62)), int(s)), 1)
+            cx += s * 0.55 + 3; cy += 1.0; s = max(3.0, s * 0.82)
+        for tx in (x - HW + 24, x - HW + 34, x - HW + 44):                 # tally scratches
+            pygame.draw.line(surf, (120, 132, 122), (tx, y + HH - 9),
+                             (tx, y + HH - 5), 1)
+        pygame.draw.rect(surf, (70, 50, 30), (x - HW + 4, y + HH - 4, HW * 2 - 8, 3))  # tray
+        pygame.draw.rect(surf, (186, 192, 184), (x - HW + 14, y + HH - 3, 12, 1))      # dust
+
+    def _draw_child_drawing(self, surf, x, y):
+        """A child's crayon drawing dropped on the floor. Most are ordinary (a
+        house, a sun, little figures); some are wrong -- a black doorway and a
+        tall yellow figure beside it. Varies by seed. A floor decal."""
+        pygame.draw.rect(surf, (226, 222, 208), (x - 8, y - 10, 16, 20))    # paper
+        pygame.draw.rect(surf, (182, 178, 164), (x - 8, y - 10, 16, 20), 1)
+        v = self.seed % 3
+        if v == 0:                                                         # house + sun + kid
+            pygame.draw.rect(surf, (150, 80, 60), (x - 5, y, 7, 6))
+            pygame.draw.polygon(surf, (120, 60, 50), [(x - 6, y), (x - 1, y - 4), (x + 3, y)])
+            pygame.draw.circle(surf, (218, 188, 60), (x + 5, y - 6), 2)
+            for r in range(4):
+                a = r * 1.571
+                pygame.draw.line(surf, (218, 188, 60), (x + 5, y - 6),
+                                 (int(x + 5 + math.cos(a) * 4), int(y - 6 + math.sin(a) * 4)), 1)
+            pygame.draw.circle(surf, (60, 80, 140), (x - 4, y - 5), 1)
+            pygame.draw.line(surf, (60, 80, 140), (x - 4, y - 4), (x - 4, y - 1), 1)
+        elif v == 1:                                                       # a row of figures
+            for i in range(4):
+                fx = x - 6 + i * 4
+                pygame.draw.circle(surf, (40, 40, 50), (fx, y - 2), 1)
+                pygame.draw.line(surf, (40, 40, 50), (fx, y - 1), (fx, y + 3), 1)
+        else:                                                              # the wrong one
+            pygame.draw.rect(surf, (18, 16, 20), (x - 4, y - 6, 6, 12))    # black door
+            pygame.draw.circle(surf, (210, 180, 40), (x + 4, y - 8), 2)    # yellow figure
+            pygame.draw.line(surf, (210, 180, 40), (x + 4, y - 7), (x + 4, y + 6), 2)
+
+    def _draw_campfire(self, surf, x, y):
+        """The cold remnants of a campfire built INSIDE -- a scorch scar burned
+        into the floorboards, grey ash, charred crossed logs, a ring of stones,
+        long dead but for one last dull ember. A floor decal."""
+        pygame.draw.ellipse(surf, (20, 16, 14), (x - 15, y - 12, 30, 24))   # scorch
+        pygame.draw.ellipse(surf, (40, 34, 28), (x - 15, y - 12, 30, 24), 1)
+        pygame.draw.ellipse(surf, (74, 70, 66), (x - 9, y - 7, 18, 14))     # ash bed
+        pygame.draw.ellipse(surf, (96, 92, 88), (x - 5, y - 4, 9, 7))
+        pygame.draw.line(surf, (30, 22, 18), (x - 8, y - 5), (x + 8, y + 5), 3)  # logs
+        pygame.draw.line(surf, (30, 22, 18), (x + 8, y - 5), (x - 8, y + 5), 3)
+        pygame.draw.line(surf, (54, 40, 30), (x - 8, y - 5), (x + 8, y + 5), 1)
+        for i in range(8):                                                 # ring of stones
+            a = i * 0.785
+            sx = int(x + math.cos(a) * 13); sy = int(y + math.sin(a) * 10)
+            pygame.draw.circle(surf, (112, 110, 114), (sx, sy), 2)
+            pygame.draw.circle(surf, (70, 68, 72), (sx, sy), 2, 1)
+        e = 0.5 + 0.5 * math.sin(self.t * 2.0)                             # last dull ember
+        pygame.draw.circle(surf, (int(110 + 70 * e), 48, 22), (x, y), 1)
+
     def _draw_doorframe(self, surf, x, y):
         """The Threshold frame (flat / F3 fallback; the tilt view stands it up as
         real geometry via rendering/props.py). A plain pale frame around an EMPTY

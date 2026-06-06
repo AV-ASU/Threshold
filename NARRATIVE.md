@@ -345,7 +345,19 @@ ordered and nobody can refuse.
 
 A single meter: **VISIBILITY** `[0, 1]` — how visible you are to the King
 right now. Cultist gaze + Watcher figures push it up; **hiding** bleeds
-it back down (`hide_spots` via E, plus passive corn-cover tiles).
+it back down (passive corn-cover tiles, plus the few crawl-**under**-
+furniture `hide_spots` via E).
+
+**Breaking a chase is positional.** The cult AI now has **real line of
+sight** (`Scene.clear_sight_line` over the `blocks_sight` predicate): a
+wall or a solid prop between a cultist and you drops their lock, and they
+fall to SEARCH (walk to where they last saw you, mill, give up). So you
+shake a pursuer by **putting cover between you** — round a pillar, slip
+behind a wall, melt into the corn — not by pressing E at a marked spot.
+The only E-press hides left are the handful where you **crawl under**
+furniture (a bed, a desk, the cot), a distinct act you can't do by simply
+walking. The apex pursuers (the King, the hollow Sheriff) are **exempt** —
+they never lose sight of you.
 
 **The flashlight (`[F]`) is the player's hand on that meter.** Found in
 the woodshed (beside the axe and rope), it casts a long beam **cone** in
@@ -721,12 +733,19 @@ The reworks the new fiction forced are all shipped. What must stay true:
 - ~~**Cultist movement → dynamic AI, not preset patrol coordinates.**~~
   **DONE.** The hard-coded `waypoints=[...]` are gone from `_cultist` and all
   14 spawns. SCOUT now **pure-roams** — each cultist picks its own reachable
-  goals, wanders, pauses to scan — and pursuit is **cover-aware**: a wrap-aware
-  BFS nav layer (`Scene.nav_grid`/`nav_clear_line`/`nav_path`/`nav_toward` in
-  `scenes/base.py`) routes pursuers **around** the volumetric props (pillars,
-  pews, cots, basins) while staying a straight shot in the open. Wired into
-  both cult paths (`enemy.py` underground + `npc.py` surface chasers); the
-  `_force_chase` apex stays straight (relentless). A chase carries **through
+  goals, wanders, pauses to scan — and pursuit is **cover-aware** in two
+  ways. (1) **Detection is line-of-sight**, not X-ray: `has_los` gates on
+  `Scene.clear_sight_line` (the `blocks_sight` predicate — walls + solid props
+  occlude, windows + water do not), so stepping behind cover drops the lock
+  and the cultist falls to SEARCH. This is the hide system now — you break a
+  chase by **positioning**, not by an E-press (the old "behind" `hide_spots`
+  were removed as redundant; only crawl-**under**-furniture hides remain). (2)
+  **Pathing routes around cover**: a wrap-aware BFS nav layer
+  (`Scene.nav_grid`/`nav_clear_line`/`nav_path`/`nav_toward` in
+  `scenes/base.py`) steers pursuers **around** the volumetric props (pillars,
+  pews, cots, basins) while staying a straight shot in the open. Both wired
+  into both cult paths (`enemy.py` underground + `npc.py` surface chasers); the
+  `_force_chase` apex stays straight and **never loses sight** (relentless). A chase carries **through
   portals and folds** alike (`_note_fold_pursuit`/`_tick_fold_pursuit` —
   surface NPC chasers AND underground Enemy cultists, the latter spawned native
   to the destination), with **SAFE_SCENES the one refuge** that always shakes
@@ -822,7 +841,7 @@ are the **dig** at successive depths; partway down it broke into the
 underground river (Room 3), the diggers' proof they were close. A
 seven-room stealth gauntlet, descending. Built in `scenes/well.py`; all
 rooms are `DARK_SCENES` (flashlight works, but the cultists' gaze still
-finds you — run it on cover, timing, hides).
+finds you — run it on cover, timing, and breaking their line of sight).
 
 | # | Room | Key | Contents |
 |---|---|---|---|
