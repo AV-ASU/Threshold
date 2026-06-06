@@ -121,6 +121,9 @@ class Decoration:
 
     def draw(self, surf, cam_x, cam_y, camera=None, wox=0.0, woy=0.0,
              mount_z=0.0):
+        if getattr(self, "hidden", False):
+            return                       # conditionally withheld (e.g. the
+            #                              arrival-road car during the treadmill)
         # Route the point anchor through the shared projection when the live
         # game supplies a camera (CAMERA.md); fall back to the legacy
         # top-down conversion for headless tools that pass raw offsets. At
