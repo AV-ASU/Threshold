@@ -255,6 +255,16 @@ PORTAL_CHARGE_TIME = 5.5     # s of pinned 100% before the tear (5-6s window)
 PORTAL_CROSS_DIST = 26.0     # px; step into the rift to juke through it
 PORTAL_EMERGE_GRACE = 0.8    # s after the tear before his body steps through
 
+# The idle state (KING_PROMPT): before the 3-evidence gate the King stands at
+# full bloom far up THE road (arrival_road), barely visible by distance,
+# indifferent, unreachable. He is NOT a scene entity -- no collision, no
+# interaction, no catch -- just a receding horizon render: he hangs a fixed gap
+# NORTH of the player, so running up the treadmill road never closes on him
+# (the road grows between you). Only drawn in arrival_road while not armed.
+IDLE_KING_GAP = 11 * 32      # px north the idle King hangs (TILE=32; far up road)
+IDLE_KING_SCALE = 30.0       # small: barely visible at the end of the road
+IDLE_KING_ALPHA = 150        # faint horizon presence
+
 # Fold pursuit (Stage 3): a cultist hot on the player's heels follows them
 # through a hidden FOLD (a direction-gated exit) "a beat behind" -- it
 # re-emerges at the entry seam shortly after the player. Mundane exits

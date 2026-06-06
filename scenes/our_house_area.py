@@ -279,12 +279,16 @@ def build_arrival_road():
     SPREAD escape: the engine catches only with the Sign, and then the looping
     road finally lets a car through (NARRATIVE §1/§6).
 
-    The road is deliberately TALLER than the camera view (40 tiles) so the
-    wrap never shows its own repeat in a single frame -- you don't notice the
-    loop until you've walked far enough for your own car to come back around.
-    The PATH (the E-W route) sits mid-scene; the car a little north of it."""
-    W, H = 15, 40
-    PATH = (19, 20, 21)                     # the E-W dirt path rows (mid-scene)
+    The road is deliberately TALLER than the camera view so the wrap never
+    shows its own repeat in a single frame -- you don't notice the loop until
+    you've walked far enough for your own car to come back around. The E-W PATH
+    sits in the SOUTH third; NORTH of it is a long straight runway toward the
+    idle King at the vanishing point (KING_PROMPT idle state): he hangs a fixed
+    gap up the road, so running the runway never closes on him -- the road grows
+    between you. The car sits just north of the path."""
+    W, H = 15, 52
+    PATH = (40, 41, 42)                     # the E-W dirt path rows (south third)
+    PMID = PATH[1]                          # the path's centre row (the mouths)
     floor_rows = []
     for y in range(H):
         row = ["g"] * W
@@ -302,8 +306,8 @@ def build_arrival_road():
             row[W - 1] = "C"
         objects_l.append(row)
     for dy in (-1, 0, 1):                   # path mouths W (lane) + E (yard)
-        objects_l[20 + dy][0] = "a"
-        objects_l[20 + dy][W - 1] = "e"
+        objects_l[PMID + dy][0] = "a"
+        objects_l[PMID + dy][W - 1] = "e"
     objects = ["".join(r) for r in objects_l]
     sc = Scene("arrival_road", floor_rows, objects, music="outside")
     # The road never ends: walk north or south and the same stretch wraps
@@ -311,9 +315,9 @@ def build_arrival_road():
     sc.wrap_y = True
     sc.add_exit("a", "country_lane", "from_arrival_road")
     sc.add_exit("e", "our_house_area", "from_arrival_road")
-    sc.set_spawn("default", 7, 20)
-    sc.set_spawn("from_our_house_area", W - 2, 20)   # walked WEST from the yard
-    sc.set_spawn("from_country_lane", 1, 20)         # walked EAST from town side
+    sc.set_spawn("default", 7, PMID)
+    sc.set_spawn("from_our_house_area", W - 2, PMID)   # walked WEST from the yard
+    sc.set_spawn("from_country_lane", 1, PMID)         # walked EAST from town side
 
     # The PI's car, dead on the WEST shoulder at the crossroads -- OFF the
     # driving lanes (cols 6-8), so the looping road stays walkable both ways
@@ -321,7 +325,7 @@ def build_arrival_road():
     # the interact anchor sits at its road-facing edge so you trigger it from
     # the road. Reaching it with the Sign fires SPREAD; without it the engine
     # never catches.
-    car_tx, car_ty = 4, 16                            # west shoulder, N of path
+    car_tx, car_ty = 4, PMID - 3                       # west shoulder, N of path
     car_x = car_tx * TILE + 16
     car_y = car_ty * TILE + 16
     sc.add_decoration(Decoration(car_x, car_y, "player_car"))
@@ -359,10 +363,15 @@ def build_arrival_road():
         if ty_ in PATH:                     # keep the path clear
             continue
         sc.add_decoration(Decoration(gx, gy, "grass_tuft"))
-    sc.add_decoration(Decoration(9 * TILE + 8, 14 * TILE + 22, "dead_crow"))
-    sc.add_decoration(Decoration(5 * TILE + 16, 27 * TILE + 16, "creepy_tree"))
-    sc.add_decoration(Decoration(10 * TILE + 16, 9 * TILE + 16, "missing_flyer"))
-    sc.add_decoration(Decoration(9 * TILE + 8, 31 * TILE + 22, "dead_crow"))
+    sc.add_decoration(Decoration(9 * TILE + 8, 30 * TILE + 22, "dead_crow"))
+    sc.add_decoration(Decoration(10 * TILE + 16, 26 * TILE + 16, "missing_flyer"))
+    sc.add_decoration(Decoration(9 * TILE + 8, 35 * TILE + 22, "dead_crow"))
+    # Lone leafless trees marching up the north runway shoulders -- under tilt
+    # they stand as billboards and give the long approach toward the idle King
+    # its perspective + scroll read (the treadmill toward the vanishing point).
+    for ry, shoulder in ((4, 4), (10, 10), (16, 4), (23, 10), (31, 5), (37, 9)):
+        sc.add_decoration(Decoration(shoulder * TILE + 16, ry * TILE + 16,
+                                     "creepy_tree"))
     sc.hide_spots = []
 
     def _road_update(game, scene, dt):

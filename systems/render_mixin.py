@@ -498,6 +498,31 @@ class RenderMixin:
         t = pygame.time.get_ticks() / 1000.0
         draw_portal(self.screen, p, self.cam_x, self.cam_y, self.camera, t)
 
+    def _draw_idle_king(self):
+        """The idle state: the King at full bloom far up THE road, barely
+        visible by distance, indifferent. A faint receding horizon render (set
+        by _tick_idle_king), never a scene entity -- you can't reach him."""
+        ik = getattr(self, "_idle_king", None)
+        if not ik or self.player is None:
+            return
+        from rendering.king_unfold import draw_king_unfold
+        from rendering.solids import draw_with_alpha
+        sx, sy = self.camera.project(ik[0], ik[1])
+        h = self.screen.get_height()
+        if sy < -120 or sy > h + 120:
+            return                       # fully off the top: nothing to draw
+        sy -= int(TILT_LIFT.get("yellow_king", TILT_ACTOR_STAND)
+                  * math.sin(self.camera.pitch))
+        t = pygame.time.get_ticks() / 1000.0
+        # He everts in place -- alive at the vanishing point, never a poster.
+        lean = (math.sin(t * 0.8) * 0.14, -0.18)
+
+        def _fn(target):
+            draw_king_unfold(target, int(sx), int(sy), t, threat=0.32,
+                             scale=IDLE_KING_SCALE, to_player=(0.0, 1.0),
+                             birth=1.0, lean=lean)
+        draw_with_alpha(self.screen, IDLE_KING_ALPHA, _fn)
+
     def _draw_death_screen(self):
         """Render the active death card over everything. King = the
         furnace of masks (sprites.draw_king_death) stamped CARCOSA;
@@ -649,6 +674,7 @@ class RenderMixin:
             self.scene.draw(self.screen, self.cam_x, self.cam_y, self.camera)
         self._draw_folds()
         self._draw_portal()
+        self._draw_idle_king()
         # The unified scene-actor draw list (CAMERA.md Phase 5). Each entry is
         # (depth, draw_callable). At pitch 0 it stays in INSERTION ORDER (==the
         # legacy item->npc->enemy->projectile->player order) and is drawn
