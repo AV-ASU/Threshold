@@ -41,7 +41,7 @@ def render(g, yaw_deg):
     g.camera.yaw = g.look.cam_yaw
     # the look heading the sight cone keys to (face up-screen + the head lean)
     g.look.body = -math.pi / 2
-    g.look.head_off = math.radians(yaw_deg)
+    g.look.aim = g.look.body + math.radians(yaw_deg)
     if g.player:
         ax, ay = g.look.aim_vec()
         g.player.facing = (ax, ay)
