@@ -786,11 +786,18 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
             mag = math.hypot(dx, dy) or 1
             dx /= mag; dy /= mag
             if self._tilt_on():
-                # World-relative movement; the body (and the camera that
-                # follows it) turn toward where you WALK -- stash the travel
-                # heading for _update_look to ease the body to. The mouse only
-                # aims the head/gun, so aiming never turns the body (no spin).
-                # (dx,dy) stay world directions; facing is owned by the mouse.
+                # Camera-relative movement: WASD are read in SCREEN space
+                # (W = up the screen) and rotated into world space by the live
+                # camera yaw, so you always travel the way you are LOOKING, not
+                # along a fixed world compass. This inverts Camera.project's
+                # world->screen yaw rotation (matches Camera.unproject), so at
+                # rest screen-up maps to the body's facing -- W walks where the
+                # head faces, A/D strafe to either side of it.
+                cy, sy = math.cos(self.camera.yaw), math.sin(self.camera.yaw)
+                dx, dy = dx * cy - dy * sy, dx * sy + dy * cy
+                # The body (and the camera that follows it) ease toward where
+                # you WALK: forward holds a straight line, strafing curves you
+                # around. The mouse only aims the head/gun, never the body.
                 self._move_heading = math.atan2(dy, dx)
             else:
                 self.player.facing = (dx, dy)
