@@ -2601,16 +2601,16 @@ class Decoration:
         pygame.draw.circle(surf, moss, (x - w // 4, b - 2), 2)
 
     def _draw_player_car(self, surf, x, y):
-        """The PI's faded-red sedan, dead on the shoulder, drawn TOP-DOWN (the
-        game's overhead read) pointing NORTH up the road into town -- roof,
+        """The PI's pale grey-blue sedan, dead on the shoulder, drawn TOP-DOWN
+        (the game's overhead read) pointing NORTH up the road into town -- roof,
         glass and all four tyres seen from above. ~1.5 tiles wide, ~3 long.
         Pair with a solid 'X' footprint so collision matches."""
-        body = (140, 60, 60)
-        body_dark = (78, 30, 30)
-        body_lit = (172, 86, 82)
-        glass = (64, 80, 98)
+        body = (112, 126, 142)
+        body_dark = (60, 72, 90)
+        body_lit = (146, 160, 176)
+        glass = (60, 74, 92)
         tire = (22, 20, 24)
-        rust = (104, 80, 54)
+        rust = (96, 92, 80)
         # Four tyres at the corners, poking out the sides (top-down view).
         for wx, wy in ((x - 15, y - 17), (x + 10, y - 17),
                        (x - 15, y + 7), (x + 10, y + 7)):
