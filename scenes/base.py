@@ -1778,6 +1778,7 @@ _FLOOR_DECAL_KINDS = frozenset((
     # top-down sticker under tilt. Pitch 0 draws them flat via Scene.draw as before.
     "symbol", "binding_sigil", "swallow_hole",
     "body", "drowned_body", "water_trail", "child_drawing", "campfire",
+    "effects_pile",
     # Low overhead foliage (drawn top-down): a flat warped decal reads as a
     # shrub on the ground, where a standee would stand the overhead blob up
     # vertically as a smear.

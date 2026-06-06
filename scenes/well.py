@@ -265,9 +265,8 @@ def build_works_sorting():
     objs[6][15] = "E"         # east -> the scriptorium
     objs[0][13] = "M"         # north (top of the stem) -> Mara's cell
     objs[10][4] = "D"         # south -> the holding cells (dead-end branch)
-    for tx in (3, 6, 9, 12):  # long sorting tables, two rows on the hall floor
-        objs[5][tx] = "t"
-        objs[8][tx] = "t"
+    # (the sorting tables are 3D furniture now -- added after the scene is built,
+    # same footprint the cult AI routes around)
     objects = ["".join(r) for r in objs]
     sc = Scene("works_sorting", floor, objects, music="basement")
     sc.add_exit("F", "works_vats", "from_below")
@@ -304,6 +303,25 @@ def build_works_sorting():
     # Crates of catalogued effects stacked up in the north stem.
     sc.add_furniture("crate", [(11, 2)])
     sc.add_furniture("crate", [(12, 2)])
+    # The sorting tables themselves -- 3D worktops (were flat tiles), two rows
+    # across the hall floor, the same footprint the cult AI routes around.
+    for tx in (3, 6, 9, 12):
+        sc.add_furniture("table", [(tx, 5)], w=30, h=20)
+        sc.add_furniture("table", [(tx, 8)], w=30, h=20)
+    # The shed lives sorted into piles on the floor between the tables -- a
+    # folded coat, a shoe, a hat, a child's toy in each (NARRATIVE 1b/4).
+    for (ex, ey, es) in ((4, 6, 1), (7, 7, 2), (10, 6, 3),
+                         (3, 7, 4), (12, 7, 5), (8, 9, 6)):
+        sc.add_decoration(Decoration(ex * TILE + 16, ey * TILE + 16,
+                                     "effects_pile", seed=es))
+    # The catalogued faces of the vanished, pinned over the work beside the mount.
+    sc.add_decoration(Decoration(3 * TILE + 16, 3 * TILE + 18, "missing_flyer"))
+    sc.add_decoration(Decoration(5 * TILE + 16, 3 * TILE + 20, "polaroid_wall"))
+    # more grime: mud worked across the floor, blood, motes in the dead air.
+    sc.add_decoration(Decoration(7 * TILE + 16, 9 * TILE + 16, "mud_footprint"))
+    sc.add_decoration(Decoration(11 * TILE + 16, 8 * TILE + 16, "bloodstain"))
+    for mx, my in ((5, 4), (10, 7), (13, 5)):
+        sc.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16, "mote"))
     sc._table_pos = (6 * TILE + 16, 5 * TILE + 16)
     sc.hide_spots = [
         (5 * TILE + 16, 6 * TILE + 16, "behind"),

@@ -1909,6 +1909,30 @@ class Decoration:
                         break
                     acc += d
 
+    def _draw_effects_pile(self, surf, x, y):
+        """A sorted heap of the vanished's belongings -- a folded coat, a shoe, a
+        hat, spectacles, a child's toy -- catalogued in the Sorting Hall (the
+        lives the claimed shed). Muted, dead colours. A floor decal; varies by
+        seed."""
+        seed = self.seed
+        def dk(c, f=0.55):
+            return (int(c[0] * f), int(c[1] * f), int(c[2] * f))
+        pygame.draw.ellipse(surf, (26, 22, 24), (x - 13, y - 1, 26, 11))   # heap shadow
+        cols = [(86, 72, 90), (74, 84, 72), (96, 80, 58), (70, 70, 84)]
+        c = cols[seed % 4]
+        pygame.draw.rect(surf, c, (x - 10, y - 3, 13, 8))                  # folded cloth
+        pygame.draw.rect(surf, dk(c), (x - 10, y - 3, 13, 8), 1)
+        pygame.draw.line(surf, dk(c, 0.75), (x - 10, y + 1), (x + 3, y + 1), 1)
+        pygame.draw.ellipse(surf, (60, 44, 32), (x + 2, y + 2, 9, 5))      # a shoe
+        pygame.draw.ellipse(surf, (40, 28, 20), (x + 2, y + 2, 9, 5), 1)
+        pygame.draw.ellipse(surf, (52, 48, 54), (x - 5, y - 6, 11, 5))     # a hat brim
+        pygame.draw.ellipse(surf, (66, 62, 68), (x - 1, y - 8, 5, 4))      # hat crown
+        if seed % 2:                                                       # spectacles
+            pygame.draw.circle(surf, (150, 150, 160), (x + 6, y - 2), 1)
+            pygame.draw.circle(surf, (150, 150, 160), (x + 9, y - 2), 1)
+        pygame.draw.circle(surf, (182, 170, 150), (x - 7, y + 4), 2)       # a child's toy
+        pygame.draw.circle(surf, (120, 108, 92), (x - 7, y + 4), 2, 1)
+
     def _draw_husk_bundle(self, surf, x, y):
         """A tied sheaf of dried corn husks / reeds, bound with twine -- the
         cult's material for the corn-dolls, hung on the racks to dry. An upright
