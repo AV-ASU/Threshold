@@ -1909,6 +1909,25 @@ class Decoration:
                         break
                     acc += d
 
+    def _draw_husk_bundle(self, surf, x, y):
+        """A tied sheaf of dried corn husks / reeds, bound with twine -- the
+        cult's material for the corn-dolls, hung on the racks to dry. An upright
+        sheaf (stood up as a standee under tilt; flat sprite at pitch 0)."""
+        base = (150, 134, 86)
+        blade = (180, 164, 116)
+        dk = (110, 96, 58)
+        twine = (124, 92, 52)
+        for dx in (-7, -4, -1, 2, 5, 8):                  # blades fanning up
+            sway = (dx % 3) - 1
+            tipx = x + dx + sway
+            tipy = y - 18 - (abs(dx) // 2) - (dx % 2)
+            pygame.draw.line(surf, base, (x + 1, y + 5), (tipx, tipy), 2)
+            pygame.draw.line(surf, blade, (x + 1, y + 5), (tipx, tipy), 1)
+        pygame.draw.polygon(surf, dk, [(x - 3, y + 4), (x + 5, y + 4),
+                                       (x + 1, y + 13)])      # tied point down
+        pygame.draw.line(surf, twine, (x - 5, y + 1), (x + 6, y + 1), 2)   # twine band
+        pygame.draw.line(surf, twine, (x - 4, y + 4), (x + 5, y + 4), 1)
+
     def _draw_shaft_ladder(self, surf, x, y):
         """The way up from the shaft floor: a single rope hanging from a hatch
         overhead (flat / F3 fallback; the tilt view draws it as a real 3D rope

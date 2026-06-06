@@ -163,6 +163,21 @@ def build_well_passage():
                                  ang=0.0))
     sc.add_decoration(Decoration(9 * TILE + 26, 1 * TILE + 6, "cobweb",
                                  ang=math.pi / 2))
+
+    # Sheaves of dried husks/reeds hung on the racks -- the cult's corn-doll
+    # material, drying (this is what the racks are FOR). A few in the bay pocket
+    # and leaning at the corridor rack ends.
+    for (hx, hy) in ((6, 2), (8, 3), (9, 2), (5, 5), (12, 5)):
+        sc.add_decoration(Decoration(hx * TILE + 16, hy * TILE + 16,
+                                     "husk_bundle", seed=hx * 7 + hy))
+    # Grime: mud tracked from the shaft, a cold drip seeping through, old blood.
+    sc.add_decoration(Decoration(2 * TILE + 16, 5 * TILE + 16, "mud_footprint"))
+    sc.add_decoration(Decoration(8 * TILE + 16, 7 * TILE + 16, "water_trail",
+                                 ang=math.pi / 2, seed=6))
+    sc.add_decoration(Decoration(5 * TILE + 16, 6 * TILE + 16, "bloodstain"))
+    for mx, my in ((7, 3), (11, 5), (3, 5)):
+        sc.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16, "mote"))
+
     sc.hide_spots = [
         (8 * TILE + 16, 1 * TILE + 24, "behind"),    # up in the bay (blind)
         (4 * TILE + 16, 7 * TILE + 16, "behind"),    # between racks

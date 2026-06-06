@@ -507,7 +507,7 @@ _STANDEE_HANG = frozenset(("hanging_figure",))
 _STANDEE_GROUND = frozenset((
     "creepy_tree", "corn_doll", "corn_altar", "cauldron",
     "wheelbarrow", "pedestal", "steeple", "town_sign", "flagpole",
-    "tall_grass", "grass_tuft", "doll",
+    "tall_grass", "grass_tuft", "doll", "husk_bundle",
 ))
 _STANDEE_KINDS = _STANDEE_GROUND | _STANDEE_HANG
 _STANDEE_HANG_MOUNT = 34          # world height the hanging card is hung from
