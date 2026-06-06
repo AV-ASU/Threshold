@@ -188,6 +188,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         # 0.90 and he dissolves. See _tick_visibility + _tick_king.
         self.visibility = 0.0
         self._vis_floor = 0.0        # evidence-driven minimum (NARRATIVE §3)
+        self._being_seen = 0.0       # instantaneous cult/human gaze RATE (HUD)
         # Heartbeat schedule -- time to next thump. Kicks in only at
         # proximity >= 0.70 and only while the player is unhidden.
         # Period shortens with proximity so the pulse races at apex.
@@ -343,6 +344,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         # Visibility meter + the King in Yellow
         self.visibility = 0.0
         self._vis_floor = 0.0
+        self._being_seen = 0.0
         self._chant_t = 0.0
         self._breath_t = 0.0
         self._heartbeat_t = 0.0

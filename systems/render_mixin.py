@@ -1248,6 +1248,32 @@ class RenderMixin:
         if fw > 0:                                   # the locked watermark
             pygame.draw.line(self.screen, (122, 52, 44),
                              (tx + fw, ty), (tx + fw, ty + bar_h - 1))
+        # Being-seen readout -- a small NOTCHED rate bar just under the threat
+        # meter: how hard human/cult eyes are on you THIS second (the King is
+        # felt, not counted). Splits the faucet (rate) from the bathtub (the
+        # visibility state above), teaching "unseen is good" in real time.
+        seen = max(0.0, min(1.0, getattr(self, "_being_seen", 0.0)))
+        n = BEING_SEEN_NOTCHES
+        lit_n = int(round(seen * n))
+        ng = 1
+        nw = (bar_w - (n - 1) * ng) // n
+        nb_y = ty + bar_h + 3
+        for i in range(n):
+            nx = tx + i * (nw + ng)
+            if i < lit_n:                            # cool -> amber as eyes pile on
+                f = (i + 1) / n
+                c = (int(70 + 150 * f), int(82 + 86 * f), int(96 - 44 * f))
+            else:
+                c = (32, 30, 40)
+            pygame.draw.rect(self.screen, c, (nx, nb_y, nw, bar_h))
+        # The hidden-floor lesson: unseen (rate 0) but the meter won't drain
+        # below the evidence floor -> "knowing dooms you". Pulse the locked floor
+        # segment so the player SEES why hiding stopped saving them.
+        if seen <= 0.001 and fw > 0 and pw <= fw + 1:
+            t_now = pygame.time.get_ticks() / 1000.0
+            fl = 0.5 + 0.5 * abs(math.sin(t_now * 4.0))
+            pygame.draw.rect(self.screen, (int(150 * fl), int(42 * fl),
+                                           int(36 * fl)), (tx, ty, fw, bar_h))
         # Stamina (sprint wind) -- lower-left, just above the scene
         # label. Hidden while full + idle so the minimalist HUD stays
         # quiet; it surfaces the instant you spend wind. Cool blue while

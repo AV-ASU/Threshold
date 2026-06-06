@@ -97,6 +97,23 @@ def test_never_returns_to_idle():
     print("  OK  once armed he never returns to idle (cools to check-nearby)")
 
 
+def test_leaving_his_scene_drops_the_hunt():
+    # Hunting, then the player leaves the King's scene (he can't see you from a
+    # room away): his abstract state must fall back to searching, not stay stuck
+    # hunting forever.
+    g = _boot()
+    _arm(g)
+    g._roam_king.update(armed=True, state="hunting", scene=g.scene.key)
+    g._tick_king_roam(0.05)               # materialise as a concrete hunter
+    # Player escapes to a DIFFERENT surface scene the King isn't in.
+    other = next(t for t in KING_ROAM_SCENES if t != g._roam_king["scene"])
+    g.load_scene_now(other, "default")
+    g._tick_king_roam(0.05)               # now abstract (not co-located)
+    assert g._roam_king["state"] == "searching", \
+        "leaving his scene must drop hunting to searching (no stuck hunt)"
+    print("  OK  leaving his scene drops the hunt to searching")
+
+
 def test_roam_domain_excludes_indoors_and_safe():
     g = _boot()
     graph = g._king_roam_graph()
@@ -303,6 +320,7 @@ if __name__ == "__main__":
     test_idle_until_gate()
     test_arms_at_gate()
     test_never_returns_to_idle()
+    test_leaving_his_scene_drops_the_hunt()
     test_roam_domain_excludes_indoors_and_safe()
     test_materializes_away_from_player()
     test_hunts_on_sight()
