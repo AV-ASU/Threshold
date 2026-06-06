@@ -10,21 +10,21 @@ by three things, all converging on the one number:
                 visibility up. This is the thing that raises it.
   * HIDING   -- the lever that pulls visibility back down. Cover is
                 how the player survives a curse they cannot undo.
-  * THE KING -- the lethal apex. The instant visibility hits 1.0 he
-                materialises at the doorway the player entered from
-                and hunts relentlessly; reaching the player is the
-                closure ending. Claw visibility below 0.90 -- by
-                hiding -- and he dissolves.
+  * THE KING -- the lethal apex. Once armed (the evidence gate) he
+                roams the surface, hunts you on sight, and reaching
+                you is the closure ending. Hold visibility pinned at
+                100% and he tears a portal to fold through; break the
+                pin and the forming rift collapses.
 
 The live tick logic lives on the Game class (`_tick_visibility`,
-`_tick_king`) so the wiring stays in one place. This module
+`_tick_king_roam`) so the wiring stays in one place. This module
 documents the model and exposes the tier constants other modules
 import without dragging in the full Game class.
 
 The full input side is built: `_tick_visibility` is driven by the live
 Watcher count and cultist gaze (plus the lit-flashlight cost), bled by
 hiding and idle decay, with an evidence + per-Watcher floor it can't sink
-below. See `Game._tick_visibility` / `_tick_watchers` / `_tick_king`.
+below. See `Game._tick_visibility` / `_tick_watchers` / `_tick_king_roam`.
 """
 
 

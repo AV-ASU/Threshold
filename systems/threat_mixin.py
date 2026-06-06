@@ -438,8 +438,9 @@ class ThreatMixin:
     def _tick_visibility(self, dt):
         """The visibility meter [0, 1] -- how visible the player is to
         the King in Yellow. Watchers (spawned by a cultist's curse)
-        push it up; hiding bleeds it down. At 1.0 the King materialises
-        (see _tick_king); claw it back under 0.90 and he dissolves.
+        push it up; hiding bleeds it down. While the King hunts, holding
+        it pinned at 100% tears a portal he folds through (see
+        _tick_king_roam); break the pin and the forming rift collapses.
 
         Heavy curses tip the balance: enough Watchers out-pace even
         hiding -- the spiral toward a King the player can no longer
@@ -495,45 +496,6 @@ class ThreatMixin:
                     for e in log)
         return min(VIS_FLOOR_CAP, total)
 
-    def _tick_king(self, dt):
-        """The King in Yellow -- the lethal apex. The instant
-        visibility hits 1.0 he materialises at the doorway the player
-        entered from and hunts relentlessly; reaching the player ends
-        the run (the closure sequence). Drop visibility below 0.90 --
-        by hiding -- and he dissolves. Safe rooms never host him."""
-        if self.scene is None or self.player is None:
-            return
-        in_safe = self.scene.key in KING_FREE_SCENES
-        if self._reinforce_t > 0:
-            self._reinforce_t -= dt
-        if self._king is None:
-            self.audio.king_tone(False)
-            if self.visibility >= 1.0 and not in_safe:
-                # Investigating arms the apex: 3+ evidence and a maxed meter
-                # bring the King himself; below that, only a cultist wave.
-                if self._evidence_count() >= KING_GATE_EVIDENCE:
-                    self._spawn_king()
-                else:
-                    self._muster_reinforcements()
-            return
-        # He is here. Dissolve if visibility falls or the player
-        # reaches a refuge; otherwise check for the catch.
-        if self.visibility < 0.90 or in_safe:
-            self._despawn_king()
-            return
-        d = math.hypot(self._king.x - self.player.x,
-                       self._king.y - self.player.y)
-        # His signature tone loops while he's on screen and swells the closer
-        # he gets -- the same nearness curve that cracks the mask open.
-        prox = max(0.0, min(1.0, 1.0 - (d - KING_THREAT_NEAR) /
-                            (KING_THREAT_FAR - KING_THREAT_NEAR)))
-        self.audio.king_tone(True, 0.28 + 0.6 * prox)
-        # Don't let the King catch mid-eruption: while _birth ramps
-        # 0->1 (~1.2s, npc._yk_update) he can't move, so he mustn't
-        # kill either -- that ramp is the player's grace window.
-        if d < 24 and getattr(self._king, "_birth", 1.0) >= 1.0:
-            self._trigger_death("king")
-
     def _muster_reinforcements(self):
         """Below the evidence gate, a maxed meter musters a cultist wave at the
         entry the player came in by -- the net tightening, not yet lethal.
@@ -549,22 +511,10 @@ class ThreatMixin:
                                  speed=0.85, gaze_range=180,
                                  at=self._king_anchor)
 
-    def _spawn_king(self):
-        """Materialise the King at the entry doorway (_king_anchor),
-        falling back to the player's position if no anchor was set."""
-        ax, ay = self._king_anchor or (self.player.x, self.player.y)
-        king = NPC(ax, ay, "", "yellow_king",
-                   movement="chaser", speed=2.4,
-                   no_prompt=True, solid=False)
-        king.tag = "king"
-        king.dialogue_fn = None
-        king._birth = 0.0      # 0..1 eruption progress (renderer reads it)
-        king._gait = 0.0       # run-cycle phase, advanced by movement
-        self.scene.add_npc(king)
-        self._king = king
-        self.audio.play("void_sting", 0.7)
-
     def _despawn_king(self):
+        """Full teardown of the concrete King NPC: remove him from the scene,
+        clear his trail/particle FX, and silence his tone. Shared by the roaming
+        sim (player leaves his room / he hops out) and the death sequence."""
         if self._king is not None and self.scene is not None:
             try:
                 self.scene.npcs.remove(self._king)

@@ -215,9 +215,8 @@ CULT_TOPUP_INTERVAL = 8.0      # seconds between cultist (re)spawns
 # world-positioned entity: he sits IDLE at full bloom down the road until the
 # 3-evidence gate, then roams the surface scene-to-scene SEARCHING, HUNTS on
 # sight (visibility climbs fast), and de-escalates when you break his line of
-# sight. Flag-gated so the legacy King (_tick_king) and the old tests' subject
-# stay intact; flip False to fall back. Portals are a later milestone.
-KING_ROAM = True
+# sight. This is the only King: the per-scene spawn-at-vis-1.0 model is gone,
+# and pinning visibility at 100% tears a portal he folds through.
 # The surface domain he may occupy: the continuous outdoor world + the seen
 # fold groves. Never indoors, never a safe room, never the boss arena. He
 # travels only the edges BETWEEN these (passages + folds); a door/ladder into
