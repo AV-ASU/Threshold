@@ -17,11 +17,21 @@ if not defined REPO (
 )
 
 cd /d "%REPO%"
-echo Starting Threshold from %REPO%
-echo.
 
 where py >nul 2>nul
-if %errorlevel%==0 (py main.py) else (python main.py)
+if %errorlevel%==0 (set "PY=py") else (set "PY=python")
+
+REM Make sure the game's libraries are installed (first run only)
+%PY% -c "import pygame, numpy, scipy" >nul 2>nul
+if not %errorlevel%==0 (
+  echo Installing required libraries, this only happens once...
+  %PY% -m pip install -r requirements.txt
+  echo.
+)
+
+echo Starting Threshold from %REPO%
+echo.
+%PY% main.py
 
 echo.
 echo Game closed.
