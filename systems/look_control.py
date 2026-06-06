@@ -1,32 +1,27 @@
 """Look / heading control for the oblique camera (CAMERA.md Phase 3).
 
-One input -- the mouse -- drives aim, head-turn, body-turn, and (with right
-mouse held) free scene rotation. No extra keys.
+The camera trails the player's MOVEMENT; the mouse is a free cursor that aims
+the gun, and never rotates the view.
 
 Model, updated per frame:
-  * `aim`  -- world heading from the player to the cursor (where the gun points)
-  * `body` -- the player's facing; eases toward `aim` but the HEAD may lead it
-              by up to +/-45deg. If the body lags more than that, it is forced
-              to keep up so the head never exceeds the limit. Hold the cursor
-              off to one side and the body slowly comes around (head re-centres).
-  * `cam_yaw` -- the world rotation fed to Camera.yaw. Targets "body faces up
-              the screen" (body + pi/2) plus a PARTIAL lean toward the head
-              offset (so a peek swings the view a little, not fully) plus any
-              free RMB rotation. Eased so the world never snaps.
+  * `body` -- the heading the player is travelling. Eases toward the walk
+              direction, so the body (and the camera behind it) gently swing to
+              face where you go. Standing still, it holds.
+  * `aim`  -- the free look/aim heading: the world direction from the player to
+              the cursor. The gun fires along it and the sprite faces it. It is
+              independent of the body, so you can walk one way and aim another.
+  * `cam_yaw` -- the world rotation fed to Camera.yaw. Sits directly behind the
+              body (body + pi/2, so travel reads up the screen). Eased, never
+              snaps. The mouse does NOT feed into it.
 
-Pure + headless-testable: feed it headings/deltas, read back cam_yaw / body /
-head_off. The live game maps mouse -> aim via Camera.unproject and supplies the
-RMB delta.
+Pure + headless-testable: feed it a move heading + an aim heading, read back
+cam_yaw / body / aim. The live game maps mouse -> aim via Camera.unproject.
 """
 import math
 
-# Tuning (all eased per-frame fractions unless noted).
-HEAD_MAX = math.radians(45)     # the head-turn arc limit off the body facing
-BODY_EASE = 0.10                # how fast the body rotates toward the aim
-YAW_EASE = 0.45                 # how tightly cam_yaw tracks behind the facing
-LEAN_FRAC = 0.55                # camera lean per unit of head offset (<1 = partial)
-RMB_SENS = math.radians(0.30)   # scene-rotate radians per pixel of mouse x
-RMB_RELEASE = 0.85              # how fast free rotation relaxes when RMB released
+# Tuning (eased per-frame fractions).
+BODY_EASE = 0.09                # how fast the body swings toward the walk dir
+YAW_EASE = 0.14                 # how gently cam_yaw trails behind the body
 
 
 def wrap(a):
@@ -36,44 +31,33 @@ def wrap(a):
 
 class LookController:
     def __init__(self, heading=math.pi / 2):
-        self.body = wrap(heading)        # world facing (radians)
-        self.head_off = 0.0              # clamped head offset (radians)
-        self.rmb_yaw = 0.0               # free scene rotation under RMB
+        self.body = wrap(heading)        # travel facing (radians)
+        self.aim = wrap(heading)         # free cursor aim heading (radians)
         # start the camera already settled behind the facing
         self.cam_yaw = wrap(self.body + math.pi / 2)
-
-    @property
-    def aim(self):
-        """World heading the gun points along (body + head lead)."""
-        return wrap(self.body + self.head_off)
 
     def facing_vec(self):
         return (math.cos(self.body), math.sin(self.body))
 
     def aim_vec(self):
-        a = self.aim
-        return (math.cos(a), math.sin(a))
+        return (math.cos(self.aim), math.sin(self.aim))
 
-    def update(self, turn=0.0):
-        """Advance one frame of MOUSELOOK.
+    def update(self, move_heading=None, aim_heading=None):
+        """Advance one frame.
 
-          turn -- world radians to rotate the facing this frame (the horizontal
-              mouse delta, already scaled by sensitivity). The body turns by it
-              directly and the camera sits DIRECTLY BEHIND the player (the face
-              points up the screen), so where you look is where W walks. The
-              head no longer leads the body -- the face IS the body.
+          move_heading -- world heading the player is WALKING this frame (None
+              when standing). The body eases toward it and the camera trails
+              behind, so the view swings to sit behind your travel. This is the
+              ONLY thing that turns the camera.
+          aim_heading  -- world heading to the cursor (the free gun aim). Set
+              straight onto `aim`; it never moves the camera.
 
         Returns the eased cam_yaw."""
-        if turn:
-            self.body = wrap(self.body + turn)
-        self.head_off = 0.0          # no head/body split under mouselook
-        # camera target: the body faces straight up the screen (behind the PI).
+        if move_heading is not None:
+            self.body = wrap(self.body
+                             + wrap(move_heading - self.body) * BODY_EASE)
+        if aim_heading is not None:
+            self.aim = wrap(aim_heading)
         target = self.body + math.pi / 2
         self.cam_yaw = wrap(self.cam_yaw + wrap(target - self.cam_yaw) * YAW_EASE)
         return self.cam_yaw
-
-    def move_basis(self):
-        """Camera-relative movement basis in WORLD space: (forward, right)
-        unit vectors. `forward` = the way the player faces (screen-up)."""
-        fx, fy = math.cos(self.body), math.sin(self.body)
-        return (fx, fy), (-fy, fx)

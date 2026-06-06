@@ -29,7 +29,7 @@ from scenes.base import (draw_terrain_tilted, _tilt_tile_box, TILE,
 from rendering.camera import Camera
 from rendering.skybox import draw_skybox
 from rendering.sprites import draw_player_sprite
-from systems.look_control import LookController, HEAD_MAX
+from systems.look_control import LookController, wrap
 
 PITCH = 55
 CELL = (440, 380)
@@ -72,8 +72,10 @@ def render(scene, lc, px, py, label, sub):
     out.blit(spr, (int(bx - 20), int(by - 30)))
     for tx, ty in front:
         _tilt_tile_box(out, cam, scene, tx, ty)
-    # HUD: a reticle showing where the aim/head points (screen-relative)
-    ang = -math.pi / 2 + lc.head_off          # up + head offset, screen space
+    # HUD: a free-aim reticle. The camera-up is the body, so the aim's screen
+    # angle is up + (aim - body); the reticle moves with the cursor, not the cam.
+    aim_off = wrap(lc.aim - lc.body)
+    ang = -math.pi / 2 + aim_off
     rx = bx + math.cos(ang) * 60
     ry = by + math.sin(ang) * 60
     pygame.draw.line(out, (210, 180, 80), (bx, by - 18), (rx, ry), 2)
@@ -82,35 +84,36 @@ def render(scene, lc, px, py, label, sub):
     f2 = pygame.font.SysFont("monospace", 11)
     out.blit(f.render(label, True, (210, 200, 150)), (8, 6))
     out.blit(f2.render(sub, True, (150, 150, 160)), (8, 22))
-    deg = math.degrees(lc.head_off)
-    out.blit(f2.render("head %+.0fdeg  body %3.0f  yaw %3.0f"
-                       % (deg, math.degrees(lc.body) % 360,
+    out.blit(f2.render("aim %+.0fdeg  body %3.0f  yaw %3.0f"
+                       % (math.degrees(aim_off), math.degrees(lc.body) % 360,
                           math.degrees(lc.cam_yaw) % 360),
                        True, (130, 150, 130)), (8, CELL[1] - 16))
     return out
 
 
 def script(scene, px, py):
-    """Yield (label, sub, aim_heading|None, rmb_dx, rmb_held) per frame."""
+    """Yield (label, sub, move_heading|None, aim_heading) per frame."""
     base = math.pi / 2          # facing 'south' in world == default
-    # 1. peek right (aim leads within the 45 arc)
+    # 1. free aim: cursor swings right, the gun reticle follows, camera holds
     for i in range(26):
-        a = base + math.radians(35) * (i / 25)
-        yield ("PEEK", "cursor drifts right -> head leads", a, 0, False)
-    # 2. hold far right -> body catches up, world rotates
+        a = base + math.radians(80) * (i / 25)
+        yield ("FREE AIM", "cursor moves -> reticle only, camera holds", None, a)
+    # 2. walk a new direction: the camera swings to trail your travel
     for i in range(34):
-        a = base + math.radians(80)
-        yield ("BODY FOLLOWS", "held off-axis -> body comes around", a, 0, False)
-    # 3. return to centre
+        m = base + math.radians(90)
+        yield ("WALK TURNS CAM", "travel right -> camera trails movement", m,
+               base + math.radians(80))
+    # 3. keep walking that way -> camera settled behind travel
     for i in range(24):
-        a = base + math.radians(80) * (1 - i / 23)
-        yield ("RE-CENTRE", "cursor back -> head relaxes", a, 0, False)
-    # 4. RMB free-rotate the scene
+        m = base + math.radians(90)
+        yield ("SETTLED", "camera now behind the walk direction", m, None)
+    # 4. aim back across while still walking (decoupled aim vs travel)
     for i in range(40):
-        yield ("RMB LOOK", "right-drag rotates the whole scene", None, 6, True)
-    # 5. release -> relax
+        a = base + math.radians(90) - math.radians(120) * (i / 39)
+        yield ("AIM != MOVE", "aim left while walking right", base + math.radians(90), a)
+    # 5. stop -> camera holds where it settled
     for i in range(18):
-        yield ("RELEASE", "free rotation eases back", base, 0, False)
+        yield ("STOP", "standing still -> camera holds", None, base)
 
 
 def main():
@@ -122,12 +125,12 @@ def main():
     # strip: one frame per phase
     phases = {}
     frames = []
-    for label, sub, aim, dx, held in script(scene, px, py):
-        lc.update(aim, dx, held)
+    for label, sub, move_h, aim in script(scene, px, py):
+        lc.update(move_heading=move_h, aim_heading=aim)
         frames.append(render(scene, lc, px, py, label, sub))
         phases.setdefault(label, frames[-1])
     # contact strip of the 5 phases
-    keys = ["PEEK", "BODY FOLLOWS", "RE-CENTRE", "RMB LOOK", "RELEASE"]
+    keys = ["FREE AIM", "WALK TURNS CAM", "SETTLED", "AIM != MOVE", "STOP"]
     strip = pygame.Surface((CELL[0] * len(keys), CELL[1]))
     strip.fill((6, 6, 8))
     for i, k in enumerate(keys):

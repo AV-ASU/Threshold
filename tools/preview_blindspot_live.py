@@ -56,7 +56,7 @@ def render(g, head_deg):
     g.look = LookController(math.radians(head_deg))
     # settle the head/look so aim == heading (no easing lag for the still shot)
     g.look.body = math.radians(head_deg)
-    g.look.head_off = 0.0
+    g.look.aim = g.look.body
     g.look.cam_yaw = (g.look.body + math.pi / 2)
     g.camera.yaw = g.look.cam_yaw
     if g.player:
