@@ -53,12 +53,14 @@ from ui.cutscenes import (
 # every external `from systems.game import <CONST>` -- resolves unchanged.
 from systems.config import *        # noqa: F401,F403
 from systems.threat_mixin import ThreatMixin
+from systems.king_roam_mixin import KingRoamMixin
 from systems.infest_mixin import InfestationMixin, _corpse_examine
 from systems.render_mixin import RenderMixin
 from systems.narrative_mixin import NarrativeMixin
 
 
-class Game(CutsceneMixin, ThreatMixin, InfestationMixin, RenderMixin, NarrativeMixin):
+class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
+           RenderMixin, NarrativeMixin):
     def __init__(self):
         pygame.init()
         self.fullscreen = True
@@ -216,6 +218,12 @@ class Game(CutsceneMixin, ThreatMixin, InfestationMixin, RenderMixin, NarrativeM
         self._king_anchor = None
         self._reinforce_t = 0.0      # cultist reinforcement-wave cooldown
         self._gun_cd = 0.0           # seconds until the pistol can fire again
+        # The roaming King (KING_ROAM rework): one persistent, world-positioned
+        # apex that idles down the road, then roams + hunts. Survives scene
+        # loads; only _reset_run_state wipes it. _king_dread (0..1) is the
+        # cross-scene tell the ashfall + audio read when he is near.
+        self._roam_king = self._new_roam_king_state()
+        self._king_dread = 0.0
 
         # ---- THRESHOLD: cultists, the curse, and Watchers ----
         # Regular cultists roam the outdoor scenes (chaser AI: scout,
@@ -336,6 +344,8 @@ class Game(CutsceneMixin, ThreatMixin, InfestationMixin, RenderMixin, NarrativeM
         reset_king_fx()        # clear his render trail/particles across runs
         self._reinforce_t = 0.0
         self._gun_cd = 0.0
+        self._roam_king = self._new_roam_king_state()
+        self._king_dread = 0.0
         # Cultists, the curse, and Watchers
         self._cursed = False
         self._watchers = []
@@ -1697,6 +1707,9 @@ class Game(CutsceneMixin, ThreatMixin, InfestationMixin, RenderMixin, NarrativeM
                     # this exit -- portal or fold alike (only a SAFE room
                     # shakes it). The far side rebuilds it a beat behind.
                     self._note_fold_pursuit(exit_data)
+                    # The roaming King follows the player scene-to-scene through
+                    # his own ground (passages/folds), but never through a door.
+                    self._note_king_follow(exit_data)
                     # A fold/portal traversal has a 1/20 chance to bind +1
                     # Watcher (the seed that starts the curse cloning), unless
                     # already at the 5-Watcher ceiling.
@@ -1785,7 +1798,10 @@ class Game(CutsceneMixin, ThreatMixin, InfestationMixin, RenderMixin, NarrativeM
                 self._tick_visibility(dt)
                 self._tick_heartbeat(dt)
                 self._tick_cult_ambient(dt)
-                self._tick_king(dt)
+                if KING_ROAM:
+                    self._tick_king_roam(dt)
+                else:
+                    self._tick_king(dt)
             self._tick_wake_muffle(dt)
             self._tick_ashfall(dt)        # atmosphere: drifts behind modals too
             self._tick_flashback(dt)
