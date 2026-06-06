@@ -183,6 +183,38 @@ discussion; the buzz of it is a *feature* (a little extra mental load = tension)
 
 ---
 
+## TODO: portal rendering — camera-respecting black-gold seams (visual-fidelity pass)
+
+Sharpens behaviour item 7 (portals as windows). This is the *look* pass, done
+**after** the portal mechanic works (M2+), like M1 deferred the idle-King
+"road-grows" visual. Not gold-plating: a flat portal is the worst offender of
+the tilt's "sticker on the floor" failure mode (CAMERA.md / HANDCRAFT_BACKLOG),
+because the one object that must read as a hole in space is the one flatness
+most contradicts.
+
+- **Respect the tilt.** The rift *and the view through it* project through
+  `camera.project` like everything else and depth-sort into the world. Never a
+  flat screen-space decal or a top-down sticker. It should read as a real
+  oriented opening in 3D space.
+- **What's behind respects the camera too (the hard part).** Use the *same*
+  projection so the far side reads as a coherent continuation of space, not a
+  pasted photo. **Cheap path (do first):** a stylised black-gold void + the King
+  silhouette at correct perspective/scale + the gray liminal falloff. **Expensive
+  path (only if perf allows):** a real clipped second-scene render. It is CPU-side
+  surface clipping in pygame, so watch the per-frame cost.
+- **Black-gold lighting that uses the pseudo-3D.** The seam is a *light in the
+  scene*, not an overlay: a gold floor-pool projected at z=0, an additive rim on
+  the neighbouring solids/billboards, a glow on the player as they near it. Hook
+  the existing light-pool / `occlusion` / `solids` pass; a localised faked glow
+  that projects correctly is fine (do not build real GI).
+- **Palette = identity.** Black + gold electric is the *portal/fold* signature
+  the player learns to read. Keep it OFF the Threshold door (its own thing).
+- Tech: `rendering/folds.py` + `camera.py` (the one projection seam) +
+  `solids.py` / `occlusion.py`; preview headless (`tools/preview_portal.py`)
+  before committing.
+
+---
+
 ## Decisions to settle with me (raise these in the opening discussion)
 
 1. **Feel:** slow-inevitability (watch him cross) vs. acute portal-panic ("it's
