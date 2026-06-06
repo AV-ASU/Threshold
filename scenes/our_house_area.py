@@ -286,9 +286,9 @@ def build_arrival_road():
     idle King at the vanishing point (KING_PROMPT idle state): he hangs a fixed
     gap up the road, so running the runway never closes on him -- the road grows
     between you. The car sits just north of the path."""
-    W, H = 15, 52
-    PATH = (40, 41, 42)                     # the E-W dirt path rows (south third)
-    PMID = PATH[1]                          # the path's centre row (the mouths)
+    W, H = 15, 80
+    PATH = (H - 14, H - 13, H - 12)     # the E-W dirt path rows (deep south)
+    PMID = PATH[1]                       # the path's centre row (the mouths)
     floor_rows = []
     for y in range(H):
         row = ["g"] * W
@@ -379,7 +379,7 @@ def build_arrival_road():
     # under tilt they stand as billboards, deepening the forest wall and giving
     # the approach toward the idle King its perspective + scroll read (the
     # treadmill to the vanishing point). The east shoulder holds the sign + car.
-    for ry in (3, 9, 17, 25, 33):
+    for ry in range(3, PMID - 3, 7):
         sc.add_decoration(Decoration(3 * TILE + 16, ry * TILE + 16,
                                      "creepy_tree"))
     sc.hide_spots = []
