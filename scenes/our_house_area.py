@@ -292,11 +292,12 @@ def build_arrival_road():
     floor_rows = []
     for y in range(H):
         row = ["g"] * W
-        for x in (6, 7, 8):                 # N-S gravel road
-            row[x] = "d"
-        if y in PATH:                       # E-W dirt path (the real route)
+        if y in PATH:                       # E-W DIRT path (the real route)
             for x in range(W):
                 row[x] = "d"
+        for x in (6, 8):                    # N-S PAVED road lanes (runs through
+            row[x] = "P"                    # the dirt crossing, unbroken)
+        row[7] = "Y"                        # centre lane + dashed centreline
         floor_rows.append("".join(row))
     objects_l = []
     for y in range(H):
