@@ -499,14 +499,15 @@ class RenderMixin:
         draw_portal(self.screen, p, self.cam_x, self.cam_y, self.camera, t)
 
     def _draw_idle_king(self):
-        """The idle state: the King at full bloom far up THE road, barely
-        visible by distance, indifferent. A faint receding horizon render (set
-        by _tick_idle_king), never a scene entity -- you can't reach him."""
+        """The idle state: the King at full bloom far up THE road, indifferent.
+        A receding horizon render (set by _tick_idle_king), never a scene entity
+        -- you can't reach him. Drawn SOLID (not alpha-blended -- translucency
+        washed out his gloss + maws) so he reads as the King, just distant; the
+        night vignette is what keeps him from popping like a poster."""
         ik = getattr(self, "_idle_king", None)
         if not ik or self.player is None:
             return
         from rendering.king_unfold import draw_king_unfold
-        from rendering.solids import draw_with_alpha
         sx, sy = self.camera.project(ik[0], ik[1])
         h = self.screen.get_height()
         if sy < -120 or sy > h + 120:
@@ -516,12 +517,9 @@ class RenderMixin:
         t = pygame.time.get_ticks() / 1000.0
         # He everts in place -- alive at the vanishing point, never a poster.
         lean = (math.sin(t * 0.8) * 0.14, -0.18)
-
-        def _fn(target):
-            draw_king_unfold(target, int(sx), int(sy), t, threat=0.32,
-                             scale=IDLE_KING_SCALE, to_player=(0.0, 1.0),
-                             birth=1.0, lean=lean)
-        draw_with_alpha(self.screen, IDLE_KING_ALPHA, _fn)
+        draw_king_unfold(self.screen, int(sx), int(sy), t,
+                         threat=IDLE_KING_THREAT, scale=IDLE_KING_SCALE,
+                         to_player=(0.0, 1.0), birth=1.0, lean=lean)
 
     def _draw_death_screen(self):
         """Render the active death card over everything. King = the

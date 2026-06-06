@@ -262,8 +262,12 @@ PORTAL_EMERGE_GRACE = 0.8    # s after the tear before his body steps through
 # NORTH of the player, so running up the treadmill road never closes on him
 # (the road grows between you). Only drawn in arrival_road while not armed.
 IDLE_KING_GAP = 11 * 32      # px north the idle King hangs (TILE=32; far up road)
-IDLE_KING_SCALE = 64.0       # distant but readable as the King at the road's end
-IDLE_KING_ALPHA = 225        # present, not a ghost (still dimmed by the night)
+IDLE_KING_SCALE = 80.0       # distant but readable as the King at the road's end
+# Threat fed to the idle render. NOT a hunt state -- purely how much of the form
+# resolves: maws only draw above 0.45 and eyes/gold-gloss/eversion strengthen
+# with it, so keep it past the maw threshold so he reads as the King, not a
+# dark lump. Stays under 0.8 (no player-reaching limbs -- he is indifferent).
+IDLE_KING_THREAT = 0.6
 
 # Fold pursuit (Stage 3): a cultist hot on the player's heels follows them
 # through a hidden FOLD (a direction-gated exit) "a beat behind" -- it
