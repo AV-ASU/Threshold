@@ -183,9 +183,9 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         # ---- THRESHOLD: the visibility meter ----
         # `visibility` is a float in [0, 1]: how visible the player is
         # to the King in Yellow right now. Watchers (spawned by a
-        # cultist's curse) raise it; hiding bleeds it back down. At 1.0
-        # the King materialises at the doorway and hunts; drop below
-        # 0.90 and he dissolves. See _tick_visibility + _tick_king.
+        # cultist's curse) raise it; hiding bleeds it back down. While
+        # the King hunts, holding it at 100% tears a portal he folds
+        # through. See _tick_visibility + _tick_king_roam.
         self.visibility = 0.0
         self._vis_floor = 0.0        # evidence-driven minimum (NARRATIVE §3)
         self._being_seen = 0.0       # instantaneous cult/human gaze RATE (HUD)
@@ -210,22 +210,21 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         self._chant_t = 0.0          # depths cult-chant ambient timer
         self._breath_t = 0.0         # depths cult-breath ambient timer
         # ---- THRESHOLD: the King in Yellow ----
-        # The King is the lethal apex. `_king` holds his NPC while he
-        # is in the scene (None otherwise); `_king_anchor` is the
-        # doorway the player entered from -- where he materialises. He
-        # spawns when visibility hits 1.0 and dissolves below 0.90.
-        # See _tick_king.
+        # The King is the lethal apex (see _tick_king_roam). `_king`
+        # holds his concrete NPC while he shares the player's scene
+        # (None otherwise); `_king_anchor` is the doorway the player
+        # entered from -- where a below-gate cult wave musters.
         self._king = None
         self._king_anchor = None
         self._reinforce_t = 0.0      # cultist reinforcement-wave cooldown
         self._gun_cd = 0.0           # seconds until the pistol can fire again
-        # The roaming King (KING_ROAM rework): one persistent, world-positioned
+        # The roaming King (KING_PROMPT rework): one persistent, world-positioned
         # apex that idles down the road, then roams + hunts. Survives scene
         # loads; only _reset_run_state wipes it. _king_dread (0..1) is the
         # cross-scene tell the ashfall + audio read when he is near.
         self._roam_king = self._new_roam_king_state()
         self._king_dread = 0.0
-        # The King's portal (KING_ROAM M2): the active rift dict while one is
+        # The King's portal (the roaming-King rift): the active rift dict while one is
         # torn (None otherwise), and the pinned-100% charge timer toward it.
         self._portal = None
         self._portal_charge_t = 0.0
@@ -1840,10 +1839,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
                 self._tick_visibility(dt)
                 self._tick_heartbeat(dt)
                 self._tick_cult_ambient(dt)
-                if KING_ROAM:
-                    self._tick_king_roam(dt)
-                else:
-                    self._tick_king(dt)
+                self._tick_king_roam(dt)
             self._tick_wake_muffle(dt)
             self._tick_ashfall(dt)        # atmosphere: drifts behind modals too
             self._tick_flashback(dt)

@@ -490,7 +490,7 @@ class RenderMixin:
                       self.player, t, self.camera)
 
     def _draw_portal(self):
-        """Composite the King's torn rift (KING_ROAM M2), if one is open."""
+        """Composite the King's torn rift (the roaming-King portal), if open."""
         p = getattr(self, "_portal", None)
         if not p:
             return
@@ -795,12 +795,11 @@ class RenderMixin:
                 d = math.hypot(npc.x - self.player.x, npc.y - self.player.y)
                 span = KING_THREAT_FAR - KING_THREAT_NEAR
                 # Existence is purely proximity: a far void that blooms only
-                # as he closes. Visibility is NOT mixed in here -- it's the
-                # spawn/despawn gate (_tick_king), and while he's present it
-                # only ever sits in [0.90, 1.0], far too narrow a band to
-                # read as existence (it would just pin him near-real the
-                # whole time he's on screen). The 0.15 floor keeps him a
-                # faint watching void, never fully gone, until he nears.
+                # as he closes. Visibility is NOT mixed in here -- it drives the
+                # hunt + the portal (_tick_king_roam), not his on-screen bloom,
+                # and reads too narrow a band near apex to gauge existence by.
+                # The 0.15 floor keeps him a faint watching void, never fully
+                # gone, until he nears.
                 king_threat = max(0.15, min(1.0, 1.0 - (d - KING_THREAT_NEAR) / span))
             # The Unfolding's locomotion + perspective tells (screen-space, so
             # they read right under any camera yaw/pitch). to_player aims its

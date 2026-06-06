@@ -1,10 +1,11 @@
 # PORTALS — design plan (the visible 4D crossing)
 
-> **STATUS: plan, not yet built.** Forward-looking design agreed in a planning
-> session. When it's implemented, fold the locked parts into `NARRATIVE.md`
-> §11 ("The Fold, made mechanical") and trim this file, so the docs never
-> split (project rule: never leave doc + code split). Until then this is the
-> single home for the portal/fold 4D direction.
+> **STATUS: landed.** The portal/fold 4D crossing described here is built: the
+> King tears a rift when you pin visibility at 100% and folds through
+> (`systems/king_roam_mixin.py` `_tick_portal`), rendered by `rendering/portal.py`.
+> This file is kept as the **design archive** for the portal/fold direction; the
+> canonical in-fiction account lives in `NARRATIVE.md` §11 ("The Fold, made
+> mechanical").
 
 ## Vocabulary (locked)
 

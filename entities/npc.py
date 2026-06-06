@@ -394,10 +394,10 @@ class NPC:
         self._step_toward(self._scout_target, dt, scene, navigate=True)
 
     def _yk_update(self, dt, scene, player):
-        # The roaming apex (KING_ROAM) steers toward a target the Game sets:
+        # The roaming apex steers toward a target the Game sets:
         # the live player while HUNTING, a last-seen / wander point while
         # SEARCHING (so he doesn't magically home onto a hidden player). With
-        # no override he chases the player, the legacy behaviour.
+        # no override he chases the player directly.
         tgt = getattr(self, "_hunt_target", None)
         if tgt is not None:
             pdx = tgt[0] - self.x
@@ -438,7 +438,7 @@ class NPC:
             # The roaming apex: a 4D thing walls can't stop. He paths the floor
             # toward his target like anything else, but ignores collision -- where
             # his bulk overlaps a wall he simply exists inside it. Nothing to snag
-            # on, so he never gets stuck (KING_ROAM rework).
+            # on, so he never gets stuck (the roaming-King rework).
             self.x, self.y = nx, ny
         # It floats, but doesn't pass through walls: take the full step
         # if clear, else slide along whichever axis is open.

@@ -28,8 +28,8 @@ Movement rules:
 
 The concrete NPC (the existing `yellow_king` sprite) exists only while he shares
 the player's scene; otherwise he is simulated abstractly at scene granularity.
-All of this is gated behind config.KING_ROAM; flip it False and the legacy King
-(ThreatMixin._tick_king) runs unchanged. Portals are the next milestone.
+This is the only King; the per-scene spawn-at-vis-1.0 model is gone. The portal
+(M2) is built: pinning visibility at 100% tears a rift he folds through.
 """
 import math
 import random
@@ -37,7 +37,6 @@ from collections import deque
 
 from constants import TILE
 from entities.npc import NPC
-from rendering.sprites import reset_king_fx
 from rendering.sight import los_clear
 from systems.config import *        # noqa: F401,F403
 
@@ -171,8 +170,8 @@ class KingRoamMixin:
 
     # ---- the master tick -------------------------------------------------
     def _tick_king_roam(self, dt):
-        """Drive the roaming King. Called from Game.step in place of
-        _tick_king when KING_ROAM is set."""
+        """Drive the roaming King. Called every world-sim frame from
+        Game.step (the sole King tick)."""
         if self.scene is None or self.player is None:
             return
         self._tick_idle_king()
@@ -214,7 +213,7 @@ class KingRoamMixin:
     def _king_roam_abstract(self, dt):
         rk = self._roam_king
         if self._king is not None:        # player left his scene: drop the body
-            self._despawn_roam_king()
+            self._despawn_king()
         if rk["state"] == "hunting":
             # He can't have eyes on you from another scene -- losing the room is
             # losing the scent. Drop the hunt to a search (starts the 2-min cool).
@@ -342,22 +341,12 @@ class KingRoamMixin:
         self.audio.play("void_sting", 0.7)
         self._roam_king["enter_at"] = "far"
 
-    def _despawn_roam_king(self):
-        if self._king is not None and self.scene is not None:
-            try:
-                self.scene.npcs.remove(self._king)
-            except ValueError:
-                pass
-        self._king = None
-        reset_king_fx()
-        self.audio.king_tone(False)
-
     def _king_leave_scene(self):
         """In check-nearby he gives up your room and drifts one scene out."""
         rk = self._roam_king
         graph = self._king_roam_graph()
         nbrs = sorted(graph.get(self.scene.key, ()))
-        self._despawn_roam_king()
+        self._despawn_king()
         if nbrs:
             rk["scene"] = random.choice(nbrs)
         rk["leave_t"] = KING_HOP_INTERVAL
@@ -388,8 +377,6 @@ class KingRoamMixin:
         ground (a passage / fold to another surface scene) and re-forms a beat
         behind on the far side. A door / ladder / rope (target outside the roam
         domain) is the player's escape -- he stays put."""
-        if not KING_ROAM:
-            return
         rk = self._roam_king
         if not rk["armed"] or self._king is None:
             return
