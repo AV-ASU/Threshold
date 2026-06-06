@@ -510,6 +510,17 @@ class RenderMixin:
         from rendering.king_unfold import draw_king_unfold
         sx, sy = self.camera.project(ik[0], ik[1])
         h = self.screen.get_height()
+        w = self.screen.get_width()
+        # He stays OUT of frame until the car has fully left it: while the dead
+        # car is anywhere on screen (ahead, passing, or dropping off behind you)
+        # the King is withheld, so you only meet him once the last landmark is
+        # gone and it is just the endless road. The car sprite stands ~2 tiles,
+        # so pad the edge check around its anchor.
+        car = getattr(self.scene, "_car_pos", None)
+        if car is not None:
+            csx, csy = self.camera.project(car[0], car[1])
+            if -80 <= csx <= w + 80 and -60 <= csy <= h + 56:
+                return
         if sy < -120 or sy > h + 120:
             return                       # fully off the top: nothing to draw
         sy -= int(TILT_LIFT.get("yellow_king", TILT_ACTOR_STAND)
