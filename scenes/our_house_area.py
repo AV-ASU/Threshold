@@ -302,9 +302,9 @@ def build_arrival_road():
     objects_l = []
     for y in range(H):
         row = ["."] * W
-        if y not in PATH:                   # corn shoulders, cut by the path
-            row[0] = "C"
-            row[W - 1] = "C"
+        if y not in PATH:                   # dense pine forest walls the road,
+            row[0] = row[1] = "T"           # same as the intro drive (not corn)
+            row[W - 1] = row[W - 2] = "T"
         objects_l.append(row)
     for dy in (-1, 0, 1):                   # path mouths W (lane) + E (yard)
         objects_l[PMID + dy][0] = "a"
@@ -320,19 +320,24 @@ def build_arrival_road():
     sc.set_spawn("from_our_house_area", W - 2, PMID)   # walked WEST from the yard
     sc.set_spawn("from_country_lane", 1, PMID)         # walked EAST from town side
 
-    # The PI's car, dead on the WEST shoulder at the crossroads -- OFF the
-    # driving lanes (cols 6-8), so the looping road stays walkable both ways
-    # and you pass the car each time round. Solid footprint under the sprite;
-    # the interact anchor sits at its road-facing edge so you trigger it from
-    # the road. Reaching it with the Sign fires SPREAD; without it the engine
-    # never catches.
-    car_tx, car_ty = 4, PMID - 3                       # west shoulder, N of path
+    # Same road as the intro drive: the "Entering Brimley" sign on the east
+    # shoulder, and just AHEAD of it (north, the way the PI drove in) his own
+    # dead car. Off the driving lanes (cols 6-8) so the looping road stays
+    # walkable both ways and you pass both each time round.
+    sign_tx, sign_ty = 10, PMID - 4                    # east shoulder, by the path
+    sc.add_decoration(Decoration(sign_tx * TILE + 16, sign_ty * TILE + 16,
+                                 "town_sign", text="BRIMLEY"))
+    # The dead car a few tiles north of the sign -- seen from BEHIND (it died
+    # facing up the road into town). Solid footprint under the sprite; the
+    # interact anchor sits at its road-facing (west) edge. The Sign fires
+    # SPREAD; without it the engine never catches.
+    car_tx, car_ty = 10, PMID - 9                      # east shoulder, N of sign
     car_x = car_tx * TILE + 16
     car_y = car_ty * TILE + 16
     sc.add_decoration(Decoration(car_x, car_y, "player_car"))
-    sc._car_pos = ((car_tx + 1) * TILE + 16, car_y)   # east edge, by the road
+    sc._car_pos = ((car_tx - 1) * TILE + 16, car_y)   # west edge, by the road
     objs = [list(r) for r in sc.objects]
-    for cx in (car_tx - 1, car_tx, car_tx + 1):       # cols 3-5 (the shoulder)
+    for cx in (car_tx - 1, car_tx, car_tx + 1):       # the car's footprint
         if 0 <= cx < sc.w:
             objs[car_ty][cx] = "X"
     sc.objects = objs
@@ -364,14 +369,15 @@ def build_arrival_road():
         if ty_ in PATH:                     # keep the path clear
             continue
         sc.add_decoration(Decoration(gx, gy, "grass_tuft"))
-    sc.add_decoration(Decoration(9 * TILE + 8, 30 * TILE + 22, "dead_crow"))
-    sc.add_decoration(Decoration(10 * TILE + 16, 26 * TILE + 16, "missing_flyer"))
-    sc.add_decoration(Decoration(9 * TILE + 8, 35 * TILE + 22, "dead_crow"))
-    # Lone leafless trees marching up the north runway shoulders -- under tilt
-    # they stand as billboards and give the long approach toward the idle King
-    # its perspective + scroll read (the treadmill toward the vanishing point).
-    for ry, shoulder in ((4, 4), (10, 10), (16, 4), (23, 10), (31, 5), (37, 9)):
-        sc.add_decoration(Decoration(shoulder * TILE + 16, ry * TILE + 16,
+    sc.add_decoration(Decoration(5 * TILE + 8, 28 * TILE + 22, "dead_crow"))
+    sc.add_decoration(Decoration(4 * TILE + 16, 22 * TILE + 16, "missing_flyer"))
+    sc.add_decoration(Decoration(5 * TILE + 8, 12 * TILE + 22, "dead_crow"))
+    # Extra leafless trees just inside the WEST shoulder up the long runway --
+    # under tilt they stand as billboards, deepening the forest wall and giving
+    # the approach toward the idle King its perspective + scroll read (the
+    # treadmill to the vanishing point). The east shoulder holds the sign + car.
+    for ry in (3, 9, 17, 25, 33):
+        sc.add_decoration(Decoration(3 * TILE + 16, ry * TILE + 16,
                                      "creepy_tree"))
     sc.hide_spots = []
 

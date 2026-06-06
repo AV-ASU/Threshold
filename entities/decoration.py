@@ -2601,55 +2601,49 @@ class Decoration:
         pygame.draw.circle(surf, moss, (x - w // 4, b - 2), 2)
 
     def _draw_player_car(self, surf, x, y):
-        """A faded-red 1990s sedan, parked. Approx 3 tiles wide, 1.5
-        tiles tall -- properly sized so it reads as a real vehicle
-        the player physically can't squeeze past. Pair with a solid
-        'X' tile under it so collision matches the silhouette."""
-        body = (140, 60, 60)
-        body_dark = (80, 32, 32)
-        glass = (140, 170, 200)
+        """The PI's faded-red sedan, dead, seen from BEHIND -- it died facing up
+        the road into Brimley, so on a N-S road you walk up on its rear (not a
+        side profile, which read as parked sideways across the lane). ~2 tiles
+        wide, receding away from the camera. Pair with a solid 'X' footprint."""
+        body = (138, 58, 58)
+        body_dark = (74, 28, 28)
+        body_lit = (170, 84, 80)
+        glass = (60, 74, 92)
         tire = (20, 18, 22)
-        chrome = (200, 200, 210)
-        # Lower body
-        pygame.draw.rect(surf, body, (x - 28, y - 4, 56, 16))
-        pygame.draw.rect(surf, body_dark, (x - 28, y - 4, 56, 16), 1)
-        # Greenhouse / roof
-        pygame.draw.rect(surf, body, (x - 18, y - 16, 36, 12))
-        pygame.draw.rect(surf, body_dark, (x - 18, y - 16, 36, 12), 1)
-        # Windshield + rear window slants
+        chrome = (188, 190, 198)
+        rust = (104, 80, 54)
+        # Rear wheels peeking at the base corners.
+        pygame.draw.ellipse(surf, tire, (x - 23, y + 7, 13, 9))
+        pygame.draw.ellipse(surf, tire, (x + 10, y + 7, 13, 9))
+        # Rear quarter / trunk -- widest at the bumper, tapering away up-road.
+        pygame.draw.polygon(surf, body, [
+            (x - 22, y + 11), (x + 22, y + 11), (x + 17, y - 12), (x - 17, y - 12)])
+        pygame.draw.polygon(surf, body_dark, [
+            (x - 22, y + 11), (x + 22, y + 11), (x + 17, y - 12), (x - 17, y - 12)], 1)
+        # Trunk lid highlight.
+        pygame.draw.line(surf, body_lit, (x - 16, y - 11), (x + 16, y - 11), 1)
+        # Rear bumper (chrome) + license plate.
+        pygame.draw.rect(surf, chrome, (x - 22, y + 9, 44, 3))
+        pygame.draw.rect(surf, (198, 194, 168), (x - 7, y + 1, 14, 6))
+        pygame.draw.rect(surf, (58, 56, 48), (x - 7, y + 1, 14, 6), 1)
+        # Tail lights.
+        pygame.draw.rect(surf, (196, 42, 36), (x - 18, y - 4, 7, 6))
+        pygame.draw.rect(surf, (196, 42, 36), (x + 11, y - 4, 7, 6))
+        # Roof + rear window receding up the road (three-quarter).
+        pygame.draw.polygon(surf, body, [
+            (x - 16, y - 12), (x + 16, y - 12), (x + 12, y - 28), (x - 12, y - 28)])
+        pygame.draw.polygon(surf, body_dark, [
+            (x - 16, y - 12), (x + 16, y - 12), (x + 12, y - 28), (x - 12, y - 28)], 1)
         pygame.draw.polygon(surf, glass, [
-            (x - 18, y - 4), (x - 14, y - 14),
-            (x - 6, y - 14), (x - 6, y - 4),
-        ])
-        pygame.draw.polygon(surf, glass, [
-            (x + 6, y - 4), (x + 6, y - 14),
-            (x + 14, y - 14), (x + 18, y - 4),
-        ])
-        # Side window
-        pygame.draw.rect(surf, glass, (x - 5, y - 14, 10, 11))
-        pygame.draw.rect(surf, body_dark, (x - 5, y - 14, 10, 11), 1)
-        # Door seam (centre split)
-        pygame.draw.line(surf, body_dark, (x, y - 3), (x, y + 10), 1)
-        # Roof rack with rolled tarp
-        pygame.draw.line(surf, chrome, (x - 18, y - 16), (x + 18, y - 16), 1)
-        pygame.draw.rect(surf, (110, 80, 60), (x - 14, y - 19, 28, 3))
-        pygame.draw.line(surf, (60, 40, 25),
-                         (x - 14, y - 17), (x + 14, y - 17), 1)
-        # Headlights
-        pygame.draw.rect(surf, (220, 220, 180), (x + 27, y - 1, 2, 4))
-        pygame.draw.rect(surf, (220, 220, 180), (x + 27, y + 5, 2, 4))
-        # Tail lights
-        pygame.draw.rect(surf, (200, 30, 30), (x - 29, y - 1, 2, 4))
-        pygame.draw.rect(surf, (200, 30, 30), (x - 29, y + 5, 2, 4))
-        # Bumpers (chrome)
-        pygame.draw.rect(surf, chrome, (x - 30, y + 10, 60, 2))
-        # Wheels
-        pygame.draw.circle(surf, tire, (x - 19, y + 12), 5)
-        pygame.draw.circle(surf, tire, (x + 19, y + 12), 5)
-        pygame.draw.circle(surf, chrome, (x - 19, y + 12), 2)
-        pygame.draw.circle(surf, chrome, (x + 19, y + 12), 2)
-        # Antenna
-        pygame.draw.line(surf, chrome, (x + 16, y - 16), (x + 18, y - 24), 1)
+            (x - 13, y - 14), (x + 13, y - 14), (x + 10, y - 25), (x - 10, y - 25)])
+        # Roof cap.
+        pygame.draw.rect(surf, body_lit, (x - 12, y - 31, 24, 4))
+        # Rust streaks + a cracked, dark cabin -- it has been dead a while.
+        pygame.draw.line(surf, rust, (x - 11, y - 10), (x - 11, y + 8), 1)
+        pygame.draw.line(surf, rust, (x + 10, y - 8), (x + 10, y + 8), 1)
+        pygame.draw.line(surf, (30, 30, 34), (x - 4, y - 24), (x + 3, y - 16), 1)
+        # Antenna, bent.
+        pygame.draw.line(surf, chrome, (x + 12, y - 28), (x + 16, y - 35), 1)
 
     def _draw_mirror(self, surf, x, y):
         """Wall-mounted mirror with a slim wood frame. The reflection
