@@ -70,6 +70,33 @@ def build_well_bottom():
                                  ang=math.pi / 2))
     sc.add_decoration(Decoration(1 * TILE + 6, 8 * TILE + 26, "cobweb",
                                  ang=-math.pi / 2))
+    sc.add_decoration(Decoration(3 * TILE + 26, 1 * TILE + 6, "cobweb", ang=0.0))
+
+    # --- Shaft-floor dressing: the wet, dead bottom of the well ---
+    # Fallen shoring timbers collapsed into the SE -- the cover the hide spot
+    # crouches behind.
+    sc.add_furniture("firewood", [(7, 7)], w=44, h=22, seed=3)
+    sc.add_furniture("firewood", [(8, 7)], w=40, h=20, seed=4)
+    # Supplies once lowered down the shaft, left to rot against the NE wall.
+    sc.add_furniture("barrel", [(8, 2)])
+    # Water seeping to the lowest place (NARRATIVE 1b): a thin teal rivulet
+    # pooling in the SW, and what the well keeps -- a bound, drowned figure in it.
+    sc.add_decoration(Decoration(4 * TILE + 16, 7 * TILE + 16, "water_trail",
+                                 ang=math.pi / 2, seed=5))
+    sc.add_decoration(Decoration(5 * TILE + 16, 8 * TILE + 12, "water_trail",
+                                 pool=True, seed=9))
+    sc.add_decoration(Decoration(2 * TILE + 18, 4 * TILE + 16, "drowned_body"))
+    # Grime: claw gouges in the stone, mud tracked from the rope, more old blood.
+    sc.add_decoration(Decoration(10 * TILE + 8, 4 * TILE + 16, "claw_marks",
+                                 scale=1.8))
+    sc.add_decoration(Decoration(5 * TILE + 16, 1 * TILE + 10, "claw_marks",
+                                 scale=1.4))
+    sc.add_decoration(Decoration(4 * TILE + 16, 6 * TILE + 16, "bloodstain"))
+    sc.add_decoration(Decoration(5 * TILE + 16, 4 * TILE + 16, "mud_footprint"))
+    sc.add_decoration(Decoration(6 * TILE + 16, 4 * TILE + 16, "mud_footprint"))
+    for mx, my in ((4, 4), (7, 5), (5, 7)):
+        sc.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16, "mote"))
+
     sc.hide_spots = [
         (8 * TILE + 16, 6 * TILE + 16, "behind"),   # collapsed-timber nook
         (3 * TILE + 16, 6 * TILE + 16, "behind"),
