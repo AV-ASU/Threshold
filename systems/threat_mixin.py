@@ -462,6 +462,12 @@ class ThreatMixin:
         else:
             rise = self._gaze_count * VIS_GAZE + lit_rise
             self.visibility += dt * (rise - VIS_IDLE_DECAY)
+        # The being-seen RATE the HUD reads (the faucet): human/cult gaze on you
+        # THIS second + a lit torch. Cover breaks the gaze (only the torch
+        # leaks). The King's own gaze is NOT counted here (added to visibility in
+        # the roam tick) -- the bar reads the cult puzzle, the King stays felt.
+        seen_rate = (0.0 if hidden else self._gaze_count * VIS_GAZE) + lit_rise
+        self._being_seen = max(0.0, min(1.0, seen_rate / BEING_SEEN_FULL))
         # FLOORS the meter can't bleed below: evidence (the more you
         # understand, the higher your baseline) PLUS each live Watcher of the
         # curse. Capped just under the King so the curse presses you to the

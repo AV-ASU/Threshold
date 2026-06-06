@@ -267,6 +267,20 @@ IDLE_KING_SCALE = 80.0       # distant but readable as the King at the road's en
 # dark lump. Stays under 0.8 (no player-reaching limbs -- he is indifferent).
 IDLE_KING_THREAT = 0.6
 
+# ---- Being-seen readout (KING_PROMPT legibility milestone) -------------
+# A second HUD layer that splits the RATE (how hard eyes are on you THIS second)
+# from the visibility STATE (the accumulated meter that drives the gate/floor).
+# It surfaces the per-frame human/cult gaze sum that already drives visibility
+# (_tick_visibility), so eyes-on -> the bar fills and visibility climbs;
+# being-seen 0 -> the drain opens and visibility creeps toward the floor. The
+# King's OWN gaze is deliberately excluded (it's added straight to visibility in
+# the roam tick), so the bar reads the solvable cult stealth puzzle precisely
+# while the cosmic threat stays FELT (ashfall / the tone / the red apex wash),
+# never a clean number. Notched so units map to gaze sources (a cultist, the
+# torch each add a known amount).
+BEING_SEEN_NOTCHES = 10       # discrete ticks on the bar
+BEING_SEEN_FULL = 0.60        # gaze rate (/s) that lights all the notches
+
 # Fold pursuit (Stage 3): a cultist hot on the player's heels follows them
 # through a hidden FOLD (a direction-gated exit) "a beat behind" -- it
 # re-emerges at the entry seam shortly after the player. Mundane exits
