@@ -77,8 +77,10 @@ def build_well_bottom():
     # crouches behind.
     sc.add_furniture("firewood", [(7, 7)], w=44, h=22, seed=3)
     sc.add_furniture("firewood", [(8, 7)], w=40, h=20, seed=4)
-    # Supplies once lowered down the shaft, left to rot against the NE wall.
+    # Supplies once lowered down the shaft, left to rot against the NE wall, and
+    # a stray crate in the SW the second hide spot can crouch behind.
     sc.add_furniture("barrel", [(8, 2)])
+    sc.add_furniture("crate", [(2, 6)])
     # Water seeping to the lowest place (NARRATIVE 1b): a thin teal rivulet
     # pooling in the SW, and what the well keeps -- a bound, drowned figure in it.
     sc.add_decoration(Decoration(4 * TILE + 16, 7 * TILE + 16, "water_trail",
@@ -180,8 +182,8 @@ def build_well_passage():
 
     sc.hide_spots = [
         (8 * TILE + 16, 1 * TILE + 24, "behind"),    # up in the bay (blind)
-        (4 * TILE + 16, 7 * TILE + 16, "behind"),    # between racks
-        (11 * TILE + 16, 7 * TILE + 16, "behind"),
+        (4 * TILE + 16, 7 * TILE + 16, "behind"),    # behind a rack
+        (10 * TILE + 16, 7 * TILE + 16, "behind"),   # behind the east rack
     ]
     # One cultist working the corridor, end to end.
     sc.add_enemy(_cultist(3 * TILE + 16, 5 * TILE + 16, speed=0.85))
@@ -324,9 +326,9 @@ def build_works_sorting():
         sc.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16, "mote"))
     sc._table_pos = (6 * TILE + 16, 5 * TILE + 16)
     sc.hide_spots = [
-        (5 * TILE + 16, 6 * TILE + 16, "behind"),
-        (11 * TILE + 16, 6 * TILE + 16, "behind"),
-        (13 * TILE + 16, 2 * TILE + 16, "behind"),   # up in the stem (blind)
+        (3 * TILE + 16, 6 * TILE + 16, "behind"),    # behind a sorting table
+        (9 * TILE + 16, 6 * TILE + 16, "behind"),    # behind a sorting table
+        (13 * TILE + 16, 2 * TILE + 16, "behind"),   # up in the stem (behind crates)
     ]
     # Two cultists sorting/patrolling -- the hardest crossing.
     sc.add_enemy(_cultist(4 * TILE + 16, 6 * TILE + 16, speed=0.9))
