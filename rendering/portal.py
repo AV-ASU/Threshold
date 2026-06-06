@@ -56,8 +56,8 @@ for _a in range(4):
                     _q.append(_idx)
                 _TESS_FACES.append(tuple(_q))
 
-_GOLD_DK = (66, 50, 14)
-_GOLD_HI = (240, 214, 132)
+_GOLD_DK = (48, 37, 11)
+_GOLD_HI = (196, 166, 88)
 
 
 def _tess_project(a, b, size):
@@ -221,8 +221,8 @@ def _gold_pool(screen, cx, cy, r, intensity):
         base.fill((0, 0, 0))
         for rr in range(r, 0, -1):
             ff = (1.0 - rr / r) ** 2
-            pygame.draw.circle(base, (int(150 * ff), int(112 * ff),
-                                      int(34 * ff)), (r, r), rr)
+            pygame.draw.circle(base, (int(108 * ff), int(80 * ff),
+                                      int(24 * ff)), (r, r), rr)
         _POOL_CACHE[r] = base
     k = max(0.2, min(1.0, intensity))
     pool = pygame.transform.scale(base, (r * 2, max(2, int(r * 1.1))))

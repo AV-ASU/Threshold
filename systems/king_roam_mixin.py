@@ -88,6 +88,25 @@ class KingRoamMixin:
         self._idle_king = (7 * TILE + TILE // 2,
                            IDLE_KING_ROW * TILE + TILE // 2)
 
+    def _nearest_walkable(self, scene, x, y, rings=10):
+        """Snap (x, y) to the nearest non-solid tile centre in `scene` (spiral
+        out). The King PHASES, so his tracked spot can sit inside a wall/building
+        -- this keeps the rift's view + the player's emergence on walkable ground
+        instead of stranding them in a wall or a hard-to-reach pocket."""
+        if not scene.is_solid_at(x, y):
+            return (x, y)
+        for r in range(1, rings + 1):
+            for dx in range(-r, r + 1):
+                for dy in range(-r, r + 1):
+                    if max(abs(dx), abs(dy)) != r:
+                        continue
+                    nx = x + dx * TILE
+                    ny = y + dy * TILE
+                    if (0 <= nx < scene.w * TILE and 0 <= ny < scene.h * TILE
+                            and not scene.is_solid_at(nx, ny)):
+                        return (nx, ny)
+        return None
+
     def _king_scene_pos(self, scene_key):
         """A real walkable world point in `scene_key` for the King to stand at
         while he's abstract there -- his default spawn, else the centre. Used so
@@ -465,6 +484,10 @@ class KingRoamMixin:
             tpos = (float(sp[0]), float(sp[1])) if sp else (
                 (tgt_scene.w * TILE / 2.0, tgt_scene.h * TILE / 2.0)
                 if tgt_scene else (0.0, 0.0))
+        # He phases, so his spot may be inside a wall -- snap it to walkable
+        # ground so the rift shows (and you emerge at) a reachable place.
+        if tgt_scene is not None:
+            tpos = self._nearest_walkable(tgt_scene, tpos[0], tpos[1]) or tpos
         anchor = (int(tpos[0] // TILE), int(tpos[1] // TILE))
         self._portal = {
             "x": spot[0], "y": spot[1],

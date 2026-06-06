@@ -517,13 +517,24 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         if spawn:
             self.player.x, self.player.y = spawn
         # Juked through a rift: drop the player at the EXACT spot it showed (the
-        # King's vacated position), overriding the spawn, if it is walkable.
+        # King's vacated position), overriding the spawn. Snap to walkable ground
+        # (he phases, so the spot can be in a wall) and face them INTO the room
+        # (toward its centre) so they walk out oriented right, not into a wall.
         pe = getattr(self, "_pending_emerge", None)
         if pe is not None and pe[0] == key and pe[1] is not None:
             ex, ey = pe[1]
-            if not self.scene.is_solid_at(ex, ey):
-                self.player.x, self.player.y = ex, ey
-                spawn = (ex, ey)
+            safe = self._nearest_walkable(self.scene, ex, ey)
+            if safe is not None:
+                self.player.x, self.player.y = safe
+                spawn = safe
+                cx = self.scene.w * TILE / 2.0
+                cy = self.scene.h * TILE / 2.0
+                hdx, hdy = cx - safe[0], cy - safe[1]
+                hd = math.hypot(hdx, hdy) or 1.0
+                self.player.facing = (hdx / hd, hdy / hd)
+                if getattr(self, "look", None) is not None:
+                    self.look.body = math.atan2(hdy, hdx)
+                    self.look.cam_yaw = (self.look.body + math.pi / 2)
         self._pending_emerge = None
         # The King materialises at the doorway the player entered from.
         # He stays behind on a scene change (cleared here) and re-forms
