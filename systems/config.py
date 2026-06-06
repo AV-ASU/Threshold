@@ -232,12 +232,6 @@ KING_SEARCH_TIME = 120.0     # s searching after losing you before he loosens to
 KING_SEE_RANGE = 360.0       # px; how far he can pick you out (LOS, unhidden)
 KING_GAZE_RISE = 0.45        # /s visibility climb while he has eyes on you (fast)
 KING_CATCH_DIST = 24.0       # px; contact range that ends the run (birth-gated)
-KING_HUNT_DROP_VIS = 0.90    # visibility floor of the hunt; below it (or once you
-                             # break his sight) hunting falls back to searching.
-                             # The six evidence beats sum to exactly 0.90, so at
-                             # FULL evidence the meter alone can't dip under it --
-                             # breaking his line of sight (cover) is the relief
-                             # that always works (knowing dooms you, NARRATIVE 3).
 KING_ROAM_SPEED = 1.7        # in-room float speed (px*60/s via _yk_update)
 KING_DREAD_ASH = 70          # extra ash motes when he is one room away (the tell)
 

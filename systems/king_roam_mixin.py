@@ -177,6 +177,11 @@ class KingRoamMixin:
         rk = self._roam_king
         if self._king is not None:        # player left his scene: drop the body
             self._despawn_roam_king()
+        if rk["state"] == "hunting":
+            # He can't have eyes on you from another scene -- losing the room is
+            # losing the scent. Drop the hunt to a search (starts the 2-min cool).
+            rk["state"] = "searching"
+            rk["search_t"] = 0.0
         if rk["state"] == "searching":
             rk["search_t"] += dt
             if rk["search_t"] >= KING_SEARCH_TIME:
