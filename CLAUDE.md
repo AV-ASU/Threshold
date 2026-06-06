@@ -85,10 +85,20 @@ it renders the procedural sprites to a labelled PNG strip.
   - `enemy.py` — only `kind == "cultist"` runs the cult state machine;
     other kinds use a straight-line chase.
 - `rendering/`
-  - `sprites.py` — procedural sprite drawing (`draw_npc_sprite`). The
+  - `sprites.py` — procedural sprite drawing (`draw_npc_sprite`). This is now a
+    thin **facade** that re-exports the public surface from themed siblings, so
+    `from rendering.sprites import <name>` is unchanged. The siblings:
+    `sprites_common.py` (shared palettes + the `KING_UNFOLD` flags),
+    `sprites_cultist.py`, `sprites_npc.py` (`draw_npc_sprite` + per-view body/
+    head helpers), `sprites_corpse.py`, `sprites_infested.py`,
+    `sprites_player.py` (`draw_player_sprite`, `view_from_facing`),
+    `sprites_king.py` (the pallid `_draw_king` fallback + `_YK_*` FX +
+    `door_mask_surface`), `sprites_weapons.py`, and `sprites_carcosa.py` (the
+    death + Carcosa cutscene art). Edit the sibling, not the facade. The
     `yellow_king` sprite routes to **THE UNFOLDING** (`king_unfold.py`) when
-    `KING_UNFOLD` is True (the default); flip it False to fall back to the flat
-    pallid-mask `_draw_king` (keeps per-frame state in `_YK_*` globals).
+    `KING_UNFOLD` is True (the default); flip it False (in `sprites_common.py`)
+    to fall back to the flat pallid-mask `_draw_king` (keeps per-frame state in
+    `_YK_*` globals).
   - `king_unfold.py` — **THE UNFOLDING**, the non-humanoid 4D King in play. A
     real 4D everting mass (mass + hypersphere heart rotate through 4D planes,
     project 4D→3D→2D, silhouette never repeats), faceless, with eyes opening
