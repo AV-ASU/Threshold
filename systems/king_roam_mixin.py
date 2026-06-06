@@ -151,6 +151,8 @@ class KingRoamMixin:
         else:
             self._king_roam_abstract(dt)
         self._king_roam_dread()
+        if self._tick_portal(dt):
+            return                    # the player crossed: a transition fired
 
     # ---- abstract sim (he is in another scene) ---------------------------
     def _king_roam_abstract(self, dt):
@@ -253,8 +255,9 @@ class KingRoamMixin:
     # ---- materialise / despawn / hop -------------------------------------
     def _materialize_roam_king(self):
         """Bring the body into the player's scene at a point AWAY from them (and
-        from the door), so he never appears on top of the player."""
-        spot = self._king_far_spot()
+        from the door), so he never appears on top of the player. After a portal
+        he steps out of the rift instead (enter_pos)."""
+        spot = self._roam_king.pop("enter_pos", None) or self._king_far_spot()
         if spot is None:
             return
         king = NPC(spot[0], spot[1], "", "yellow_king",
@@ -348,3 +351,83 @@ class KingRoamMixin:
         else:
             self._king_dread = 0.0
             self.audio.king_tone(False)
+
+    # ---- the portal (M2): pin 100% and he folds in ------------------------
+    def _tick_portal(self, dt):
+        """The rift. Pin visibility at 100% for PORTAL_CHARGE_TIME (while he is
+        NOT already in your room) and he tears a portal to wherever he stands
+        and folds through. Break 100% during the charge and it collapses. Once
+        formed, stepping into it jukes you to the room he just left (one-way for
+        him); it shuts on the cross. Returns True if a crossing transition
+        fired (the caller must then stop touching the old scene)."""
+        rk = self._roam_king
+        if not rk["armed"]:
+            self._portal = None
+            self._portal_charge_t = 0.0
+            return False
+        # Formed: hold it; check for the player stepping through (the juke).
+        if self._portal is not None:
+            d = math.hypot(self._portal["x"] - self.player.x,
+                           self._portal["y"] - self.player.y)
+            if self.player.hidden is None and d < PORTAL_CROSS_DIST:
+                tgt, spawn = self._portal["target"], self._portal["spawn"]
+                self._portal = None          # shuts the instant you cross
+                self._portal_charge_t = 0.0
+                self.audio.play("void_sting", 0.7)
+                self.begin_transition(tgt, spawn)
+                return True
+            return False
+        # Not formed. He can only tear in from ELSEWHERE -- never into a room he
+        # already stands in, a refuge, or the boss arena.
+        if (rk["scene"] == self.scene.key
+                or self.scene.key in KING_FREE_SCENES
+                or self.scene.key == "void_boss"):
+            self._portal_charge_t = 0.0
+            return False
+        if self.visibility >= PORTAL_PIN_VIS:
+            if self._portal_charge_t == 0.0:
+                self.show_notice("The air begins to tear. Get out of sight.",
+                                 duration=3.0)
+            self._portal_charge_t += dt
+            if self._portal_charge_t >= PORTAL_CHARGE_TIME:
+                self._tear_portal()
+        else:
+            self._portal_charge_t = 0.0      # broke 100%: it collapses unformed
+        return False
+
+    def _tear_portal(self):
+        """Open the rift at a point away from the player, connected to the room
+        the King is in, and fold him through to hunt."""
+        rk = self._roam_king
+        spot = self._king_far_spot()
+        if spot is None:
+            self._portal_charge_t = 0.0
+            return
+        from scenes import load_scene
+        try:
+            tgt_scene = load_scene(rk["scene"])
+        except Exception:
+            tgt_scene = None
+        spawn = tgt_scene.spawns.get("default") if tgt_scene else None
+        if spawn:
+            anchor = (int(spawn[0] // TILE), int(spawn[1] // TILE))
+        elif tgt_scene:
+            anchor = (tgt_scene.w // 2, tgt_scene.h // 2)
+        else:
+            anchor = (0, 0)
+        self._portal = {
+            "x": spot[0], "y": spot[1],
+            "target": rk["scene"], "spawn": "default",
+            "_scene": tgt_scene, "anchor": anchor, "charge": 1.0,
+        }
+        self._portal_charge_t = 0.0
+        # He folds through to your room and comes for you. The room he LEAVES
+        # (portal["target"]) is your escape; he stays on this side.
+        rk["scene"] = self.scene.key
+        rk["state"] = "hunting"
+        rk["last_seen"] = (self.player.x, self.player.y)
+        rk["enter_pos"] = spot
+        rk["follow_grace"] = PORTAL_EMERGE_GRACE
+        self.audio.play("void_sting", 0.9)
+        self.show_notice("The air tears open. He is coming through.",
+                         duration=3.0)

@@ -489,6 +489,15 @@ class RenderMixin:
             draw_fold(self.screen, face, self.cam_x, self.cam_y,
                       self.player, t, self.camera)
 
+    def _draw_portal(self):
+        """Composite the King's torn rift (KING_ROAM M2), if one is open."""
+        p = getattr(self, "_portal", None)
+        if not p:
+            return
+        from rendering.portal import draw_portal
+        t = pygame.time.get_ticks() / 1000.0
+        draw_portal(self.screen, p, self.cam_x, self.cam_y, self.camera, t)
+
     def _draw_death_screen(self):
         """Render the active death card over everything. King = the
         furnace of masks (sprites.draw_king_death) stamped CARCOSA;
@@ -639,6 +648,7 @@ class RenderMixin:
         else:
             self.scene.draw(self.screen, self.cam_x, self.cam_y, self.camera)
         self._draw_folds()
+        self._draw_portal()
         # The unified scene-actor draw list (CAMERA.md Phase 5). Each entry is
         # (depth, draw_callable). At pitch 0 it stays in INSERTION ORDER (==the
         # legacy item->npc->enemy->projectile->player order) and is drawn

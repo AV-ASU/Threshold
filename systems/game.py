@@ -224,6 +224,10 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         # cross-scene tell the ashfall + audio read when he is near.
         self._roam_king = self._new_roam_king_state()
         self._king_dread = 0.0
+        # The King's portal (KING_ROAM M2): the active rift dict while one is
+        # torn (None otherwise), and the pinned-100% charge timer toward it.
+        self._portal = None
+        self._portal_charge_t = 0.0
 
         # ---- THRESHOLD: cultists, the curse, and Watchers ----
         # Regular cultists roam the outdoor scenes (chaser AI: scout,
@@ -346,6 +350,8 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         self._gun_cd = 0.0
         self._roam_king = self._new_roam_king_state()
         self._king_dread = 0.0
+        self._portal = None
+        self._portal_charge_t = 0.0
         # Cultists, the curse, and Watchers
         self._cursed = False
         self._watchers = []
@@ -505,6 +511,11 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         self._king = None
         reset_king_fx()        # his trail/particles don't follow across scenes
         self._king_anchor = (self.player.x, self.player.y)
+        # A torn portal belongs to the room it opened in: leaving the scene
+        # (through the rift or any other exit) collapses it. The roaming King's
+        # own position (_roam_king) persists -- only the rift is per-scene.
+        self._portal = None
+        self._portal_charge_t = 0.0
         # Watchers are tied to YOU, not the room -- they re-manifest in
         # the new scene from the persistent curse. Clear the old set and
         # the per-scene cultist top-up timer so cultists re-populate.

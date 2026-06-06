@@ -241,6 +241,20 @@ KING_HUNT_DROP_VIS = 0.90    # visibility floor of the hunt; below it (or once y
 KING_ROAM_SPEED = 1.7        # in-room float speed (px*60/s via _yk_update)
 KING_DREAD_ASH = 70          # extra ash motes when he is one room away (the tell)
 
+# The portal (KING_PROMPT M2): pin visibility at 100% for PORTAL_CHARGE_TIME and
+# he tears a rift connecting your room to the room he stands in, then folds
+# through to hunt. Break 100% before it forms and the rift collapses unformed
+# (agency, not a death timer). It opens at a distance, never on top of you, and
+# it is ALSO your escape: step through to the room he just left and strand him.
+# It is one-way for HIM (he can't go back through), and shuts the moment you
+# cross it or leave the scene. Never forms in a safe room / the boss arena, nor
+# where he already stands. Same gold-on-black motif as the folds; NOT the
+# Threshold doorframe (canon: the real door never screams).
+PORTAL_PIN_VIS = 0.999       # visibility counts as "pinned at 100%" at/above this
+PORTAL_CHARGE_TIME = 5.5     # s of pinned 100% before the tear (5-6s window)
+PORTAL_CROSS_DIST = 26.0     # px; step into the rift to juke through it
+PORTAL_EMERGE_GRACE = 0.8    # s after the tear before his body steps through
+
 # Fold pursuit (Stage 3): a cultist hot on the player's heels follows them
 # through a hidden FOLD (a direction-gated exit) "a beat behind" -- it
 # re-emerges at the entry seam shortly after the player. Mundane exits
