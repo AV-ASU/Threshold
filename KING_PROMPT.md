@@ -124,8 +124,7 @@ entity with these states and rules:
    = you drag the god down with you.
 
 6. **Tells of the approach (reuse what exists).** As he closes: **ashfall
-   intensifies**, the **screen thumps red** (vignette pulse), his **shifting
-   maw bleeds into the player's periphery** (via `sight.py`), audio swells.
+   intensifies**, the **screen thumps red** (vignette pulse), audio swells.
 
 7. **Portals as windows.** A rift **shows the room on its other side** (a second
    view through the camera seam) **desaturating to gray** at the threshold
@@ -142,9 +141,9 @@ entity with these states and rules:
 **A scene the rulebook should be able to PRODUCE (not a script):** 3rd evidence
 collected, crossing Brimley, the cult fixes on you and you never break their
 sight, so visibility pins at 100%. A rift tears open elsewhere in town and the
-King closes; ashfall thickens, the screen thumps red, his maw leaks into the
-corner of your eye. You duck behind a house into the corn, barely scrape under
-90%, and wait in the stalks hoping his search drifts away instead of onto you.
+King closes; ashfall thickens, the screen thumps red. You duck behind a house
+into the corn, barely scrape under 90%, and wait in the stalks hoping his
+search drifts away instead of onto you.
 
 ---
 
@@ -167,7 +166,7 @@ discussion; the buzz of it is a *feature* (a little extra mental load = tension)
 - **Cult-legible, King-felt (the key call).** The bar reads **human/cult gaze
   precisely** (a fair, solvable stealth puzzle). The **King's** contribution is
   rendered **diegetically, never as a clean number** (the red flash, ashfall,
-  the maw in the periphery, a quickening pulse). A crisp "the King sees you 7/10"
+  a quickening pulse). A crisp "the King sees you 7/10"
   would drain his dread; keep the cosmic threat *felt*, the mundane one *read*.
 - **Bias the feedback to screen-space, not a billboard you stare at.** Lean on
   edge vignette / a red pulse / a heartbeat that quickens with exposure so eyes
@@ -184,6 +183,14 @@ discussion; the buzz of it is a *feature* (a little extra mental load = tension)
 ---
 
 ## TODO: portal rendering — camera-respecting black-gold seams (visual-fidelity pass)
+
+> **DECISION: portals are PSEUDO-3D.** They are not flat screen-space decals.
+> The rift and the view through it project through the one camera seam
+> (`camera.project`) and depth-sort into the world like the solids/billboards,
+> so a portal reads as a real oriented hole in space under the tilt. The "look
+> through" is the cheap pseudo-3D path (a stylised black-gold void + the King
+> silhouette at correct perspective/scale + the gray liminal falloff), NOT a
+> real second-scene render, unless perf clearly allows it.
 
 Sharpens behaviour item 7 (portals as windows). This is the *look* pass, done
 **after** the portal mechanic works (M2+), like M1 deferred the idle-King
