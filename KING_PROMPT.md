@@ -148,6 +148,41 @@ corner of your eye. You duck behind a house into the corn, barely scrape under
 
 ---
 
+## TODO: the being-seen / exposure UI (legibility milestone, deliberately stressful)
+
+A second HUD reading that **splits the rate from the state**, so the player can
+read their exposure moment to moment. Settled as the best option of a UI
+discussion; the buzz of it is a *feature* (a little extra mental load = tension).
+
+- **Two layers, faucet + bathtub.** Keep the existing **visibility** meter as
+  the *state* (accumulated, drives the gate/floor). Add a **being-seen** reading
+  as the *rate* (instantaneous: how hard eyes are on you *this second*). Make the
+  being-seen reading visibly *drive* visibility: eyes on you -> level climbs;
+  being-seen at 0 -> the drain opens and visibility creeps down. That immediate
+  cause/effect is what teaches "unseen is good" in real time (a single meter
+  teaches it far too slowly).
+- **Notched, ~10 units.** Discrete ticks so the player can map *units to gaze
+  sources* (a cultist, open ground, the flashlight each add a known amount) and
+  do mental stealth math. Supports the legibility pillar of the hunt loop.
+- **Cult-legible, King-felt (the key call).** The bar reads **human/cult gaze
+  precisely** (a fair, solvable stealth puzzle). The **King's** contribution is
+  rendered **diegetically, never as a clean number** (the red flash, ashfall,
+  the maw in the periphery, a quickening pulse). A crisp "the King sees you 7/10"
+  would drain his dread; keep the cosmic threat *felt*, the mundane one *read*.
+- **Bias the feedback to screen-space, not a billboard you stare at.** Lean on
+  edge vignette / a red pulse / a heartbeat that quickens with exposure so eyes
+  stay on the *world*; keep the notched bar small and peripheral as the precise
+  reference. Horror wants the dashboard quiet.
+- **It teaches the hidden floor for free.** When exposure hits 0 but visibility
+  refuses to drain below the evidence floor (`KING_HUNT_DROP_VIS` 0.90 at full
+  evidence), the player *sees* "knowing dooms you" without a tutorial. Make that
+  stuck-at-the-floor state legible (the bar pins + flashes).
+- **Cheap.** This mostly **surfaces the per-frame gaze sum that already drives
+  visibility** (`_tick_visibility` / the gaze count in `threat_mixin`), not a new
+  system. Wire it into `_draw_hud` (`render_mixin`).
+
+---
+
 ## Decisions to settle with me (raise these in the opening discussion)
 
 1. **Feel:** slow-inevitability (watch him cross) vs. acute portal-panic ("it's
