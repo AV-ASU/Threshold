@@ -1,11 +1,16 @@
-# THRESHOLD — The Yellow King rework (session-start prompt)
+# THRESHOLD — The Yellow King rework (design archive)
 
-> This seeds a working session to rebuild the **King in Yellow** from a thing
-> that *spawns and catches* into a **free-roaming, attention-fed apex that hunts
-> you across the world and folds in through portals when you push it too far.**
-> The whole design below was settled in a long design conversation. Treat it as
-> the intent, not gospel: the goal of *this* session's opening is to pressure-
-> test it with me before a line of code changes.
+> **STATUS: landed.** The rework described below is fully built (the roaming
+> apex, the idle receding-horizon King, the portal fold-through, the being-seen
+> UI). This file is kept as the **design archive / rationale** for that work:
+> the systems live in `systems/king_roam_mixin.py`, `systems/threat_mixin.py`,
+> `rendering/portal.py`, and the `KING_*` block in `systems/config.py`. The
+> original session-kickoff framing below is preserved as historical context.
+
+> This seeded the working session that rebuilt the **King in Yellow** from a
+> thing that *spawns and catches* into a **free-roaming, attention-fed apex that
+> hunts you across the world and folds in through portals when you push it too
+> far.** The whole design below was settled in a long design conversation.
 
 ---
 
