@@ -229,6 +229,10 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         # torn (None otherwise), and the pinned-100% charge timer toward it.
         self._portal = None
         self._portal_charge_t = 0.0
+        # After juking through a rift: (target_scene, (x, y)) to drop the player
+        # at the EXACT spot the rift showed (where the King was). Applied in
+        # load_scene_now, then cleared.
+        self._pending_emerge = None
         # The idle state's receding horizon King (world x,y on THE road, or
         # None). Recomputed each tick by _tick_idle_king; drawn faint + far.
         self._idle_king = None
@@ -357,6 +361,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         self._king_dread = 0.0
         self._portal = None
         self._portal_charge_t = 0.0
+        self._pending_emerge = None
         self._idle_king = None
         # Cultists, the curse, and Watchers
         self._cursed = False
@@ -511,6 +516,15 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         spawn = self.scene.spawns.get(spawn_id, self.scene.spawns.get("default"))
         if spawn:
             self.player.x, self.player.y = spawn
+        # Juked through a rift: drop the player at the EXACT spot it showed (the
+        # King's vacated position), overriding the spawn, if it is walkable.
+        pe = getattr(self, "_pending_emerge", None)
+        if pe is not None and pe[0] == key and pe[1] is not None:
+            ex, ey = pe[1]
+            if not self.scene.is_solid_at(ex, ey):
+                self.player.x, self.player.y = ex, ey
+                spawn = (ex, ey)
+        self._pending_emerge = None
         # The King materialises at the doorway the player entered from.
         # He stays behind on a scene change (cleared here) and re-forms
         # at the new entry if visibility is still pinned at the top.

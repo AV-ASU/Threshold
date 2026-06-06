@@ -65,6 +65,10 @@ class KingRoamMixin:
             "last_seen": None,         # (x, y) where he last saw you, for searching
             "last_surface": None,      # last surface scene you stood in (path goal)
             "enter_at": "far",         # where the body materialises (away from you)
+            "pos": None,               # his EXACT (x, y) in his current scene --
+                                       # tracked dynamically so a portal shows
+                                       # (and you emerge at) the real spot, no
+                                       # brittle per-scene presets
         }
 
     # ---- the idle state (the receding horizon King) ----------------------
@@ -83,6 +87,20 @@ class KingRoamMixin:
         # no pop. Placed far enough north that he never co-frames the car.
         self._idle_king = (7 * TILE + TILE // 2,
                            IDLE_KING_ROW * TILE + TILE // 2)
+
+    def _king_scene_pos(self, scene_key):
+        """A real walkable world point in `scene_key` for the King to stand at
+        while he's abstract there -- his default spawn, else the centre. Used so
+        a portal shows (and you emerge at) an actual spot, not a hand-preset."""
+        from scenes import load_scene
+        try:
+            sc = load_scene(scene_key)
+        except Exception:
+            return None
+        sp = sc.spawns.get("default")
+        if sp:
+            return (float(sp[0]), float(sp[1]))
+        return (sc.w * TILE / 2.0, sc.h * TILE / 2.0)
 
     # ---- the graph -------------------------------------------------------
     def _king_roam_graph(self):
@@ -153,6 +171,7 @@ class KingRoamMixin:
                 rk["state"] = "searching"
                 rk["search_t"] = 0.0
                 rk["hop_t"] = KING_HOP_INTERVAL
+                rk["pos"] = self._king_scene_pos(KING_ROAM_START)
             else:
                 if (self.visibility >= 1.0
                         and self.scene.key not in KING_FREE_SCENES):
@@ -206,6 +225,7 @@ class KingRoamMixin:
             nxt = random.choice(nbrs)
         rk["scene"] = nxt
         rk["enter_at"] = "far"
+        rk["pos"] = self._king_scene_pos(nxt)     # his exact spot in the new room
 
     # ---- concrete sim (he shares your scene) -----------------------------
     def _king_roam_in_scene(self, dt):
@@ -219,6 +239,7 @@ class KingRoamMixin:
             if self._king is None:
                 return
         king = self._king
+        rk["pos"] = (king.x, king.y)               # his EXACT live position
         sees = self._king_sees_player()
         if sees:
             rk["state"] = "hunting"
@@ -293,6 +314,7 @@ class KingRoamMixin:
         king._phase = True         # walls don't stop him
         self.scene.add_npc(king)
         self._king = king
+        self._roam_king["pos"] = (king.x, king.y)
         self.audio.play("void_sting", 0.7)
         self._roam_king["enter_at"] = "far"
 
@@ -394,9 +416,12 @@ class KingRoamMixin:
                            self._portal["y"] - self.player.y)
             if self.player.hidden is None and d < PORTAL_CROSS_DIST:
                 tgt, spawn = self._portal["target"], self._portal["spawn"]
+                tpos = self._portal.get("target_pos")
                 self._portal = None          # shuts the instant you cross
                 self._portal_charge_t = 0.0
                 self.audio.play("void_sting", 0.7)
+                # Emerge at the EXACT spot the rift showed (where the King was).
+                self._pending_emerge = (tgt, tpos) if tpos else None
                 self.begin_transition(tgt, spawn)
                 return True
             return False
@@ -431,16 +456,19 @@ class KingRoamMixin:
             tgt_scene = load_scene(rk["scene"])
         except Exception:
             tgt_scene = None
-        spawn = tgt_scene.spawns.get("default") if tgt_scene else None
-        if spawn:
-            anchor = (int(spawn[0] // TILE), int(spawn[1] // TILE))
-        elif tgt_scene:
-            anchor = (tgt_scene.w // 2, tgt_scene.h // 2)
-        else:
-            anchor = (0, 0)
+        # The EXACT spot in his room he is folding out of -- what the rift shows
+        # and where you walk out if you juke through. His tracked dynamic pos,
+        # falling back to the target's default spawn.
+        tpos = rk.get("pos")
+        if not tpos:
+            sp = tgt_scene.spawns.get("default") if tgt_scene else None
+            tpos = (float(sp[0]), float(sp[1])) if sp else (
+                (tgt_scene.w * TILE / 2.0, tgt_scene.h * TILE / 2.0)
+                if tgt_scene else (0.0, 0.0))
+        anchor = (int(tpos[0] // TILE), int(tpos[1] // TILE))
         self._portal = {
             "x": spot[0], "y": spot[1],
-            "target": rk["scene"], "spawn": "default",
+            "target": rk["scene"], "spawn": "default", "target_pos": tpos,
             "_scene": tgt_scene, "anchor": anchor, "charge": 1.0,
         }
         self._portal_charge_t = 0.0
@@ -450,6 +478,7 @@ class KingRoamMixin:
         rk["state"] = "hunting"
         rk["last_seen"] = (self.player.x, self.player.y)
         rk["enter_pos"] = spot
+        rk["pos"] = spot
         rk["follow_grace"] = PORTAL_EMERGE_GRACE
         self.audio.play("void_sting", 0.9)
         self.show_notice("The air tears open. He is coming through.",

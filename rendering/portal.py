@@ -38,19 +38,35 @@ _POOL_CACHE = {}
 _GLOW_CACHE = {}
 
 # Tesseract topology: 16 vertices (a 4-bit index -> coord -1/+1 per axis x,y,z,w)
-# and the 32 edges joining vertices that differ in exactly one axis.
-_TESS_EDGES = [(i, j) for i in range(16) for j in range(i + 1, 16)
-               if bin(i ^ j).count("1") == 1]
-_RIM_GOLD = (196, 162, 48)
+# and the 24 square FACES (two axes vary, the other two are fixed -- 6 axis-pairs
+# x 4 fixed combos). We draw the faces filled + glossy, not wireframe.
+_TESS_FACES = []
+for _a in range(4):
+    for _b in range(_a + 1, 4):
+        _others = [x for x in range(4) if x not in (_a, _b)]
+        for _cv in (0, 1):
+            for _dv in (0, 1):
+                _q = []
+                for _av, _bv in ((0, 0), (0, 1), (1, 1), (1, 0)):
+                    _idx = 0
+                    for _axis, _val in zip([_a, _b, _others[0], _others[1]],
+                                           [_av, _bv, _cv, _dv]):
+                        if _val:
+                            _idx |= (1 << _axis)
+                    _q.append(_idx)
+                _TESS_FACES.append(tuple(_q))
+
+_GOLD_DK = (66, 50, 14)
+_GOLD_HI = (240, 214, 132)
 
 
-def _tess_lines(a, b, size):
-    """A tesseract projected 4D->3D->2D, rotating through the x-w and y-z planes
-    by a, b. Returns its 32 edges as 2D segments centred on 0. The double
-    perspective divide (on w then z) is what gives it the 'wrong space' churn."""
+def _tess_project(a, b, size):
+    """Project the tesseract's 16 vertices, rotating through the x-w and y-z
+    planes by a, b. Returns (x2d, y2d, z3d) per vertex -- the double perspective
+    divide (on w then z) gives the wrong-space churn; z3d sorts the faces."""
     ca, sa = math.cos(a), math.sin(a)
     cb, sb = math.cos(b), math.sin(b)
-    pts = []
+    out = []
     for idx in range(16):
         x = -1.0 if not (idx & 1) else 1.0
         y = -1.0 if not (idx & 2) else 1.0
@@ -60,47 +76,60 @@ def _tess_lines(a, b, size):
         w2 = x * sa + w * ca
         y2 = y * cb - z * sb
         z2 = y * sb + z * cb
-        f = 1.6 / (2.6 - w2 * 0.6)          # 4D -> 3D
+        f = 1.6 / (2.6 - w2 * 0.6)           # 4D -> 3D
         X, Y, Z = x2 * f, y2 * f, z2 * f
-        g = 1.6 / (2.6 - Z * 0.6)           # 3D -> 2D
-        pts.append((X * g * size, Y * g * size))
-    return [(pts[i], pts[j]) for (i, j) in _TESS_EDGES]
-
-
-def _tess_variants(t, size, k):
-    """`k` small additive-gold tesseract stamps at staggered rotations (drawn on
-    black so BLEND_RGB_ADD ignores the background). Computed per frame -- cheap
-    (a handful of 32-edge wireframes) and they all keep turning."""
-    out = []
-    for v in range(k):
-        a = t * 1.25 + v * 0.9
-        b = t * 0.85 + v * 0.55
-        surf = pygame.Surface((size, size))
-        surf.fill((0, 0, 0))
-        h = size / 2
-        for (p, q) in _tess_lines(a, b, size * 0.40):
-            pygame.draw.line(surf, _RIM_GOLD, (p[0] + h, p[1] + h),
-                             (q[0] + h, q[1] + h), 1)
-        out.append(surf)
+        g = 1.6 / (2.6 - Z * 0.6)            # 3D -> 2D
+        out.append((X * g * size, Y * g * size, Z))
     return out
 
 
+def _tess_face_surf(a, b, t, size):
+    """One tesseract drawn as GLOSSY OPAQUE gold faces (not see-through wire):
+    faces painted back-to-front, shaded by depth + a moving specular (the
+    shimmer). Transparent background (SRCALPHA) so only the solid metal shows."""
+    pts = _tess_project(a, b, size * 0.46)
+    surf = pygame.Surface((size, size), pygame.SRCALPHA)
+    h = size / 2
+    faces = sorted(((sum(pts[i][2] for i in q) / 4.0, q) for q in _TESS_FACES),
+                   key=lambda fz: fz[0])           # far first (painter's order)
+    for zavg, q in faces:
+        poly = [(pts[i][0] + h, pts[i][1] + h) for i in q]
+        zn = max(0.0, min(1.0, (zavg + 1.2) / 2.4))
+        spec = 0.5 + 0.5 * math.sin(t * 3.4 + zavg * 3.0)   # the shimmer
+        f = max(0.0, min(1.0, 0.22 + 0.5 * zn + 0.30 * spec))
+        col = (int(_GOLD_DK[0] + (_GOLD_HI[0] - _GOLD_DK[0]) * f),
+               int(_GOLD_DK[1] + (_GOLD_HI[1] - _GOLD_DK[1]) * f),
+               int(_GOLD_DK[2] + (_GOLD_HI[2] - _GOLD_DK[2]) * f))
+        pygame.draw.polygon(surf, col, poly)
+        pygame.draw.polygon(surf, _GOLD_DK, poly, 1)        # seam each face
+    return surf
+
+
+def _tess_variants(t, size, k):
+    """`k` glossy tesseract stamps at staggered rotations, all turning. Computed
+    per frame (cheap: a few dozen filled faces each)."""
+    return [_tess_face_surf(t * 1.25 + v * 0.9, t * 0.85 + v * 0.55, t, size)
+            for v in range(k)]
+
+
 def _draw_rim(screen, quad, t, intensity):
-    """A gapless, buzzing rim of rotating tesseracts around the rift's opening
-    (the black-gold 4D edge). Sides + top at full intensity, a FAINT bottom sill
-    so the frame fully encircles and the rift reads as wholly THERE, not cut
-    into the floor. Dense overlap = no gaps; per-stamp jitter = the buzz."""
-    size = 16
+    """A gapless, buzzing rim of rotating glossy tesseracts around the rift's
+    opening (the black-gold 4D edge). Sides + top full, a FAINT bottom sill so
+    the frame fully encircles and the rift reads wholly THERE, not cut into the
+    floor. Opaque metal faces (alpha-blit, not additive); dense overlap = no
+    gaps; per-stamp jitter = the buzz."""
+    size = 15
     half = size // 2
-    k = max(0.25, min(1.4, intensity))
+    k = max(0.4, min(1.0, intensity))
     variants = _tess_variants(t, size, 5)
-    if k != 1.0:
+    if k < 0.99:
         variants = [s.copy() for s in variants]
         for s in variants:
-            s.fill((int(255 * k),) * 3, special_flags=pygame.BLEND_RGB_MULT)
+            s.fill((int(255 * k),) * 3 + (255,),
+                   special_flags=pygame.BLEND_RGBA_MULT)
     faint = [s.copy() for s in variants]                # the bottom sill
     for s in faint:
-        s.fill((115, 115, 115), special_flags=pygame.BLEND_RGB_MULT)
+        s.fill((120, 120, 120, 255), special_flags=pygame.BLEND_RGBA_MULT)
     bl, br, tr, tl = quad
     edges = [(bl, br, faint), (br, tr, variants),
              (tr, tl, variants), (tl, bl, variants)]
@@ -108,29 +137,27 @@ def _draw_rim(screen, quad, t, intensity):
     vi = 0
     for (p, q, vs) in edges:
         ln = math.hypot(q[0] - p[0], q[1] - p[1])
-        steps = max(1, int(ln / (size * 0.38)))         # overlap -> no gaps
+        steps = max(1, int(ln / (size * 0.40)))         # overlap -> no gaps
         for i in range(steps + 1):
             f = i / steps
-            x = p[0] + (q[0] - p[0]) * f + rng.uniform(-2.0, 2.0)
-            y = p[1] + (q[1] - p[1]) * f + rng.uniform(-2.0, 2.0)
-            screen.blit(vs[vi % len(vs)], (int(x - half), int(y - half)),
-                        special_flags=pygame.BLEND_RGB_ADD)
+            x = p[0] + (q[0] - p[0]) * f + rng.uniform(-1.6, 1.6)
+            y = p[1] + (q[1] - p[1]) * f + rng.uniform(-1.6, 1.6)
+            screen.blit(vs[vi % len(vs)], (int(x - half), int(y - half)))
             vi += 1
 
 
 # ---- the camera-respecting view through the rift -----------------------------
 
-def _render_through(target, anchor, camera, origin):
+def _render_through(target, anchor_px, camera, origin):
     """Render `target` with a portal-camera that matches the live tilt (pitch /
-    yaw / scale) and is aimed so the target's emergence anchor projects to
-    `origin` on screen. Returns a full-screen Surface of the tilted room,
-    desaturated toward gray. Same renderer as the near side, so the far side's
-    floor/walls recede in the same perspective."""
+    yaw / scale) and is aimed so the EXACT emergence point `anchor_px` (world x,
+    y -- where the King stands / you walk out) projects to `origin` on screen.
+    Returns a full-screen Surface of the tilted room. Same renderer as the near
+    side, so the far side's floor/walls recede in the same perspective."""
     from rendering.camera import Camera
     from rendering.skybox import draw_skybox
     from scenes.base import draw_terrain_tilted, _tilt_tile_box, _TILT_WALL_RISE
-    ax = anchor[0] * TILE + TILE // 2
-    ay = anchor[1] * TILE + TILE // 2
+    ax, ay = anchor_px
     pcam = Camera(cam_x=ax, cam_y=ay, pitch=camera.pitch, yaw=camera.yaw,
                   scale=camera.scale, origin=(int(origin[0]), int(origin[1])))
     buf = pygame.Surface((SCREEN_W, SCREEN_H))
@@ -261,24 +288,33 @@ def draw_portal(screen, portal, cam_x, cam_y, camera, t):
     pulse = (0.78 + 0.22 * math.sin(t * 5.0)) * (0.5 + 0.5 * charge)
     fx, fy = portal["x"], portal["y"]
     seam_len = PORTAL_H
+    # EXACT emergence point in the target room (where the King stands / you walk
+    # out): the dynamic world pos, falling back to the anchor tile centre.
+    tp = portal.get("target_pos")
+    anchor_px = tp if tp else (portal["anchor"][0] * TILE + TILE // 2,
+                               portal["anchor"][1] * TILE + TILE // 2)
     if camera is not None and camera.pitch > 0.02:
         # An UPRIGHT door standing on the ground (like the Threshold sprite):
         # base on the floor at the rift tile, rising vertically + foreshortened
-        # by the tilt, taller than wide. Not a slit in the floor.
+        # by the tilt, taller than wide. Smaller than a slit-in-the-floor read.
         bx, by = camera.project(fx, fy)
         sq = camera.ground_squash()
-        doorW = max(24, int(seam_len * camera.scale * 1.05))
-        doorH = max(28, int(seam_len * camera.scale * (0.9 + 1.5 * sq)))
+        doorW = max(18, int(seam_len * camera.scale * 0.7))
+        doorH = max(22, int(seam_len * camera.scale * (0.62 + 1.05 * sq)))
         top = by - doorH
         quad = [(bx - doorW / 2, by), (bx + doorW / 2, by),
                 (bx + doorW / 2, top), (bx - doorW / 2, top)]
-        _gold_pool(screen, bx, by, doorW * 0.62, pulse)     # light spilt on floor
+        # Ground-contact shadow so the door bites the floor (anchored, not
+        # floating), then the gold light it spills on the ground.
+        shadow = pygame.Surface((doorW + 10, 12), pygame.SRCALPHA)
+        pygame.draw.ellipse(shadow, (0, 0, 0, 120), shadow.get_rect())
+        screen.blit(shadow, (int(bx - doorW / 2 - 5), int(by - 6)))
+        _gold_pool(screen, bx, by, doorW * 0.7, pulse)      # light spilt on floor
         # The camera-respecting view through the upright door -- the room beyond
-        # at 1:1 scale (flows with your view), cropped to the door and sunk
-        # toward black so the rift reads black-gold, not a bright photo.
+        # at 1:1 scale, centred on the EXACT spot you'd emerge, cropped to the
+        # door and sunk toward black so the rift reads black-gold.
         try:
-            buf = _render_through(target, portal["anchor"], camera,
-                                  (bx, (by + top) / 2))
+            buf = _render_through(target, anchor_px, camera, (bx, (by + top) / 2))
             rect = pygame.Rect(int(bx - doorW / 2), int(top),
                                doorW, doorH).clip(screen.get_rect())
             if rect.width > 2 and rect.height > 2:
