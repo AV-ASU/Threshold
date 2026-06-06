@@ -151,11 +151,12 @@ def _render_through(target, anchor, camera, origin):
                 draw_prop_solid(buf, pcam, d)
         except Exception:
             pass
-    # Liminal: sink toward gray (the between has no colour).
+    # Liminal: sink hard toward BLACK (the between has almost no colour or
+    # light -- the gold rim/pool supply the gold; the room reads as a dim shape).
     arr = pygame.surfarray.pixels3d(buf)
     gray = (arr[..., 0] * 0.30 + arr[..., 1] * 0.59 + arr[..., 2] * 0.11)
     for c in range(3):
-        arr[..., c] = (arr[..., c] * 0.30 + gray * 0.62).astype(arr.dtype)
+        arr[..., c] = (arr[..., c] * 0.18 + gray * 0.34).astype(arr.dtype)
     del arr
     return buf
 
@@ -261,28 +262,35 @@ def draw_portal(screen, portal, cam_x, cam_y, camera, t):
     fx, fy = portal["x"], portal["y"]
     seam_len = PORTAL_H
     if camera is not None and camera.pitch > 0.02:
-        s0 = camera.project(fx - seam_len / 2, fy)
-        s1 = camera.project(fx + seam_len / 2, fy)
-        cx = (s0[0] + s1[0]) / 2
-        cy = (s0[1] + s1[1]) / 2
-        rise = int(seam_len * (0.5 + 0.7 * camera.ground_squash()))
-        _gold_pool(screen, cx, cy, seam_len * 0.7, pulse)
-        # The camera-respecting view through the rift, masked to the tear hole.
-        quad = [s0, s1, (s1[0], s1[1] - rise), (s0[0], s0[1] - rise)]
+        # An UPRIGHT door standing on the ground (like the Threshold sprite):
+        # base on the floor at the rift tile, rising vertically + foreshortened
+        # by the tilt, taller than wide. Not a slit in the floor.
+        bx, by = camera.project(fx, fy)
+        sq = camera.ground_squash()
+        doorW = max(24, int(seam_len * camera.scale * 1.05))
+        doorH = max(28, int(seam_len * camera.scale * (0.9 + 1.5 * sq)))
+        top = by - doorH
+        quad = [(bx - doorW / 2, by), (bx + doorW / 2, by),
+                (bx + doorW / 2, top), (bx - doorW / 2, top)]
+        _gold_pool(screen, bx, by, doorW * 0.62, pulse)     # light spilt on floor
+        # The camera-respecting view through the upright door -- the room beyond
+        # at 1:1 scale (flows with your view), cropped to the door and sunk
+        # toward black so the rift reads black-gold, not a bright photo.
         try:
             buf = _render_through(target, portal["anchor"], camera,
-                                  (cx, cy - rise * 0.5))
-            buf = buf.convert_alpha()
-            buf.blit(_aperture_mask(quad), (0, 0),
-                     special_flags=pygame.BLEND_RGBA_MULT)
-            if charge < 0.99:
-                buf.set_alpha(int(120 + 135 * charge))
-            screen.blit(buf, (0, 0))
+                                  (bx, (by + top) / 2))
+            rect = pygame.Rect(int(bx - doorW / 2), int(top),
+                               doorW, doorH).clip(screen.get_rect())
+            if rect.width > 2 and rect.height > 2:
+                win = buf.subsurface(rect).copy()
+                win.fill((118, 118, 118), special_flags=pygame.BLEND_RGB_MULT)
+                if charge < 0.99:
+                    win.set_alpha(int(120 + 135 * charge))
+                screen.blit(win, rect.topleft)
         except Exception:
             _blit_tear(screen, _flat_peek(target, portal["anchor"], charge),
-                       s0, s1, rise)
-        _tear_glow(screen, s0, s1, rise, pulse * 0.7)
-        _draw_rim(screen, quad, t, pulse)                  # the buzzing 4D edge
+                       (bx - doorW / 2, by), (bx + doorW / 2, by), doorH)
+        _draw_rim(screen, quad, t, pulse)                   # the buzzing 4D edge
         return
     # Flat (pitch 0): stand the old peek panel up from the host tile.
     cx, cy = int(fx - cam_x), int(fy - cam_y)
