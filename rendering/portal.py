@@ -29,136 +29,13 @@ import numpy as np
 
 from constants import TILE, SCREEN_W, SCREEN_H
 from scenes.base import apply_grade
-from rendering.folds import _fog_mask, _draw_seam, _blit_tear
+from rendering.folds import _fog_mask, _draw_seam, _blit_tear, _draw_rim
 
 PORTAL_W = 3 * TILE          # peek depth (flat fallback only)
 PORTAL_H = 3 * TILE          # breadth of the slit
 
 _POOL_CACHE = {}
 _GLOW_CACHE = {}
-
-# Tesseract topology: 16 vertices (a 4-bit index -> coord -1/+1 per axis x,y,z,w)
-# and the 24 square FACES (two axes vary, the other two are fixed -- 6 axis-pairs
-# x 4 fixed combos). We draw the faces filled + glossy, not wireframe.
-_TESS_FACES = []
-for _a in range(4):
-    for _b in range(_a + 1, 4):
-        _others = [x for x in range(4) if x not in (_a, _b)]
-        for _cv in (0, 1):
-            for _dv in (0, 1):
-                _q = []
-                for _av, _bv in ((0, 0), (0, 1), (1, 1), (1, 0)):
-                    _idx = 0
-                    for _axis, _val in zip([_a, _b, _others[0], _others[1]],
-                                           [_av, _bv, _cv, _dv]):
-                        if _val:
-                            _idx |= (1 << _axis)
-                    _q.append(_idx)
-                _TESS_FACES.append(tuple(_q))
-
-_GOLD_DK = (48, 37, 11)
-_GOLD_HI = (196, 166, 88)
-
-
-def _tess_project(a, b, size):
-    """Project the tesseract's 16 vertices, rotating through the x-w and y-z
-    planes by a, b. Returns (x2d, y2d, z3d) per vertex -- the double perspective
-    divide (on w then z) gives the wrong-space churn; z3d sorts the faces."""
-    ca, sa = math.cos(a), math.sin(a)
-    cb, sb = math.cos(b), math.sin(b)
-    out = []
-    for idx in range(16):
-        x = -1.0 if not (idx & 1) else 1.0
-        y = -1.0 if not (idx & 2) else 1.0
-        z = -1.0 if not (idx & 4) else 1.0
-        w = -1.0 if not (idx & 8) else 1.0
-        x2 = x * ca - w * sa
-        w2 = x * sa + w * ca
-        y2 = y * cb - z * sb
-        z2 = y * sb + z * cb
-        f = 1.6 / (2.6 - w2 * 0.6)           # 4D -> 3D
-        X, Y, Z = x2 * f, y2 * f, z2 * f
-        g = 1.6 / (2.6 - Z * 0.6)            # 3D -> 2D
-        out.append((X * g * size, Y * g * size, Z))
-    return out
-
-
-def _tess_face_surf(a, b, t, size):
-    """One tesseract drawn as GLOSSY OPAQUE gold faces (not see-through wire):
-    faces painted back-to-front, shaded by depth + a moving specular (the
-    shimmer). Transparent background (SRCALPHA) so only the solid metal shows."""
-    pts = _tess_project(a, b, size * 0.46)
-    surf = pygame.Surface((size, size), pygame.SRCALPHA)
-    h = size / 2
-    faces = sorted(((sum(pts[i][2] for i in q) / 4.0, q) for q in _TESS_FACES),
-                   key=lambda fz: fz[0])           # far first (painter's order)
-    for zavg, q in faces:
-        poly = [(pts[i][0] + h, pts[i][1] + h) for i in q]
-        zn = max(0.0, min(1.0, (zavg + 1.2) / 2.4))
-        spec = 0.5 + 0.5 * math.sin(t * 3.4 + zavg * 3.0)   # the shimmer
-        f = max(0.0, min(1.0, 0.22 + 0.5 * zn + 0.30 * spec))
-        col = (int(_GOLD_DK[0] + (_GOLD_HI[0] - _GOLD_DK[0]) * f),
-               int(_GOLD_DK[1] + (_GOLD_HI[1] - _GOLD_DK[1]) * f),
-               int(_GOLD_DK[2] + (_GOLD_HI[2] - _GOLD_DK[2]) * f))
-        pygame.draw.polygon(surf, col, poly)
-        pygame.draw.polygon(surf, _GOLD_DK, poly, 1)        # seam each face
-    return surf
-
-
-def _draw_rim(screen, quad, t, intensity):
-    """The rift's edge: ONE continuous black-gold band around the opening, with
-    rotating glossy tesseracts overlapped tightly along it as its churning 4D
-    surface (not a string of separate cubes). A solid gold band underneath
-    connects them into a single object; the tesseracts give it the shimmer.
-    Sides + top full, a FAINT bottom sill so the frame fully encircles and the
-    rift reads wholly THERE, not cut into the floor."""
-    size = 15
-    half = size // 2
-    k = max(0.4, min(1.0, intensity))
-    bl, br, tr, tl = quad
-    # 1) The continuous connecting band: a thick gold stroke following the whole
-    #    perimeter, so the edge is one unbroken object. Bottom dimmer (the sill).
-    band = (int(96 * k), int(74 * k), int(24 * k))
-    sill = (int(54 * k), int(42 * k), int(13 * k))
-    edge = (int(150 * k), int(120 * k), int(52 * k))
-    for (p, q, w, col) in ((br, tr, 9, band), (tr, tl, 9, band),
-                           (tl, bl, 9, band), (bl, br, 7, sill)):
-        pygame.draw.line(screen, col, p, q, w)
-    pygame.draw.lines(screen, edge, False, [bl, tl, tr, br], 2)   # bright inner lip
-    # 2) The tesseracts as the band's surface: tightly overlapped with rotation
-    #    that ADVANCES smoothly along the perimeter, so they flow as one twisting
-    #    object rather than read as discrete beads. Cached by quantised angle.
-    cache = {}
-
-    def _bead(ang):
-        key = round(ang * 4) / 4.0                       # ~0.25 rad buckets
-        s = cache.get(key)
-        if s is None:
-            s = _tess_face_surf(key, key * 0.7 + 0.4, t, size)
-            if k < 0.99:
-                s = s.copy()
-                s.fill((int(255 * k),) * 3 + (255,),
-                       special_flags=pygame.BLEND_RGBA_MULT)
-            cache[key] = s
-        return s
-
-    dist = 0.0
-    for (p, q, faint) in ((bl, br, True), (br, tr, False),
-                          (tr, tl, False), (tl, bl, False)):
-        ln = math.hypot(q[0] - p[0], q[1] - p[1])
-        steps = max(1, int(ln / (size * 0.30)))          # heavy overlap = unbroken
-        for i in range(steps + 1):
-            f = i / steps
-            x = p[0] + (q[0] - p[0]) * f
-            y = p[1] + (q[1] - p[1]) * f
-            s = _bead(t * 1.1 + dist * 0.05)             # smooth twist along path
-            if faint:
-                s = s.copy()
-                s.fill((150, 150, 150, 255),
-                       special_flags=pygame.BLEND_RGBA_MULT)
-            screen.blit(s, (int(x - half), int(y - half)))
-            dist += ln / steps
-
 
 # ---- the camera-respecting view through the rift -----------------------------
 
@@ -304,15 +181,59 @@ def _flat_peek(target, anchor, charge):
     return surf
 
 
+def draw_rift_door(screen, target, anchor_px, fx, fy, camera, t,
+                   formed=True, charge=1.0):
+    """The shared RIFT DOOR -- an upright black-gold door standing on the ground
+    at world (fx, fy), showing `target` (centred on the EXACT world point
+    `anchor_px`) through it with the same tilt camera, framed by the continuous
+    tesseract rim. Used by BOTH the King's portal AND the hidden folds so every
+    rift reads as one door-passage family (KING_PROMPT). `charge`/`formed` drive
+    the form-up grow + the looming King; a fold passes formed=True, charge=1."""
+    charge = max(0.0, min(1.0, charge))
+    pulse = (0.78 + 0.22 * math.sin(t * 5.0)) * (0.5 + 0.5 * charge)
+    seam_len = PORTAL_H
+    bx, by = camera.project(fx, fy)
+    sq = camera.ground_squash()
+    growth = 0.30 + 0.70 * charge
+    doorW = max(14, int(seam_len * camera.scale * 0.7 * growth))
+    doorH = max(18, int(seam_len * camera.scale * (0.62 + 1.05 * sq) * growth))
+    top = by - doorH
+    quad = [(bx - doorW / 2, by), (bx + doorW / 2, by),
+            (bx + doorW / 2, top), (bx - doorW / 2, top)]
+    shadow = pygame.Surface((doorW + 10, 12), pygame.SRCALPHA)
+    pygame.draw.ellipse(shadow, (0, 0, 0, int(120 * (0.4 + 0.6 * charge))),
+                        shadow.get_rect())
+    screen.blit(shadow, (int(bx - doorW / 2 - 5), int(by - 6)))
+    _gold_pool(screen, bx, by, doorW * 0.7, pulse)
+    rect = pygame.Rect(int(bx - doorW / 2), int(top),
+                       doorW, doorH).clip(screen.get_rect())
+    if (formed or charge > 0.5) and rect.width > 2 and rect.height > 2:
+        try:
+            loom = 0.0 if formed else charge
+            buf = _render_through(target, anchor_px, camera,
+                                  (bx, (by + top) / 2), loom=loom, t=t)
+            win = buf.subsurface(rect).copy()
+            win.fill((118, 118, 118), special_flags=pygame.BLEND_RGB_MULT)
+            if formed:
+                if charge < 0.99:
+                    win.set_alpha(int(120 + 135 * charge))
+            else:
+                win.set_alpha(int(40 + 200 * (charge - 0.5) / 0.5))
+            screen.blit(win, rect.topleft)
+        except Exception:
+            pygame.draw.rect(screen, (10, 8, 12), rect)
+    elif rect.width > 2 and rect.height > 2:
+        pygame.draw.rect(screen, (10, 8, 12), rect)         # forming: dark wound
+    _draw_rim(screen, quad, t, pulse)                       # the buzzing 4D edge
+
+
 def draw_portal(screen, portal, cam_x, cam_y, camera, t):
-    """Composite the torn rift onto `screen` (already showing the host room)."""
+    """Composite the King's torn rift onto `screen` (already showing the host)."""
     target = portal.get("_scene")
     if target is None:
         return
     charge = max(0.0, min(1.0, portal.get("charge", 1.0)))
-    pulse = (0.78 + 0.22 * math.sin(t * 5.0)) * (0.5 + 0.5 * charge)
     fx, fy = portal["x"], portal["y"]
-    seam_len = PORTAL_H
     # EXACT emergence point in the target room (where the King stands / you walk
     # out): the dynamic world pos, falling back to the anchor tile centre.
     tp = portal.get("target_pos")
@@ -320,51 +241,13 @@ def draw_portal(screen, portal, cam_x, cam_y, camera, t):
                                portal["anchor"][1] * TILE + TILE // 2)
     formed = portal.get("formed", True)        # legacy/iso dicts read as formed
     if camera is not None and camera.pitch > 0.02:
-        # An UPRIGHT door standing on the ground (like the Threshold sprite),
-        # taller than wide. While the rift FORMS it GROWS from a seed (the
-        # warning): the door scales up with `charge` over the window.
-        bx, by = camera.project(fx, fy)
-        sq = camera.ground_squash()
-        growth = 0.30 + 0.70 * charge
-        doorW = max(14, int(seam_len * camera.scale * 0.7 * growth))
-        doorH = max(18, int(seam_len * camera.scale * (0.62 + 1.05 * sq) * growth))
-        top = by - doorH
-        quad = [(bx - doorW / 2, by), (bx + doorW / 2, by),
-                (bx + doorW / 2, top), (bx - doorW / 2, top)]
-        # Ground-contact shadow so the door bites the floor, then its gold spill.
-        shadow = pygame.Surface((doorW + 10, 12), pygame.SRCALPHA)
-        pygame.draw.ellipse(shadow, (0, 0, 0, int(120 * (0.4 + 0.6 * charge))),
-                            shadow.get_rect())
-        screen.blit(shadow, (int(bx - doorW / 2 - 5), int(by - 6)))
-        _gold_pool(screen, bx, by, doorW * 0.7, pulse)
-        rect = pygame.Rect(int(bx - doorW / 2), int(top),
-                           doorW, doorH).clip(screen.get_rect())
-        # The room beyond resolves only in the second half of the form-up (early
-        # on it's just a dark tearing wound); once formed it's the full window.
-        # While forming, the King LOOMS through it before he comes (canon #7).
-        if (formed or charge > 0.5) and rect.width > 2 and rect.height > 2:
-            try:
-                loom = 0.0 if formed else charge
-                buf = _render_through(target, anchor_px, camera,
-                                      (bx, (by + top) / 2), loom=loom, t=t)
-                win = buf.subsurface(rect).copy()
-                win.fill((118, 118, 118), special_flags=pygame.BLEND_RGB_MULT)
-                if formed:
-                    if charge < 0.99:
-                        win.set_alpha(int(120 + 135 * charge))
-                else:
-                    win.set_alpha(int(40 + 200 * (charge - 0.5) / 0.5))
-                screen.blit(win, rect.topleft)
-            except Exception:
-                if rect.width > 2 and rect.height > 2:
-                    pygame.draw.rect(screen, (10, 8, 12), rect)
-        elif rect.width > 2 and rect.height > 2:
-            pygame.draw.rect(screen, (10, 8, 12), rect)   # forming: dark wound
-        _draw_rim(screen, quad, t, pulse)                   # the buzzing 4D edge
+        draw_rift_door(screen, target, anchor_px, fx, fy, camera, t,
+                       formed=formed, charge=charge)
         return
     # Flat (pitch 0): stand the old peek panel up from the host tile.
+    pulse = (0.78 + 0.22 * math.sin(t * 5.0)) * (0.5 + 0.5 * charge)
     cx, cy = int(fx - cam_x), int(fy - cam_y)
-    _gold_pool(screen, cx, cy, seam_len * 0.7, pulse)
+    _gold_pool(screen, cx, cy, PORTAL_H * 0.7, pulse)
     screen.blit(_flat_peek(target, portal["anchor"], charge),
                 (cx - PORTAL_W // 2, cy - PORTAL_H))
     _draw_seam(screen, (cx - PORTAL_W // 2, cy), (cx + PORTAL_W // 2, cy), t)
