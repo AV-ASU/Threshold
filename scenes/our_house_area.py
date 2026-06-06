@@ -299,12 +299,23 @@ def build_arrival_road():
             row[x] = "P"                    # the dirt crossing, unbroken)
         row[7] = "Y"                        # centre lane + dashed centreline
         floor_rows.append("".join(row))
+    # Pine forest walls the road (same as the intro drive). RAGGED, not a ruled
+    # line: each row's inner edge wavers a tile or two and the odd lone pine
+    # stands out into the shoulder, so the treeline reads as woods, not a fence.
+    # The road (cols 6-8) and the car/sign lane (cols 9-10) stay clear.
+    forest_rng = random.Random(90210)
     objects_l = []
     for y in range(H):
         row = ["."] * W
-        if y not in PATH:                   # dense pine forest walls the road,
-            row[0] = row[1] = "T"           # same as the intro drive (not corn)
-            row[W - 1] = row[W - 2] = "T"
+        if y not in PATH:
+            for x in range(0, 2 + forest_rng.randint(0, 2)):       # west wall
+                row[x] = "T"
+            for x in range(W - 2 - forest_rng.randint(0, 2), W):   # east wall
+                row[x] = "T"
+            if forest_rng.random() < 0.12:                          # lone pine W
+                row[forest_rng.choice((3, 4))] = "T"
+            if forest_rng.random() < 0.12:                          # lone pine E
+                row[forest_rng.choice((11, 12))] = "T"
         objects_l.append(row)
     for dy in (-1, 0, 1):                   # path mouths W (lane) + E (yard)
         objects_l[PMID + dy][0] = "a"
@@ -379,9 +390,16 @@ def build_arrival_road():
     # under tilt they stand as billboards, deepening the forest wall and giving
     # the approach toward the idle King its perspective + scroll read (the
     # treadmill to the vanishing point). The east shoulder holds the sign + car.
-    for ry in range(3, PMID - 3, 7):
-        sc.add_decoration(Decoration(3 * TILE + 16, ry * TILE + 16,
+    tree_rng = random.Random(7777)
+    ry = 3
+    while ry < PMID - 4:
+        # irregular spacing + wandering column + jitter so they never line up;
+        # east side only well north of the car/sign lane.
+        col = tree_rng.choice((3, 4, 5) if ry > PMID - 16 else (3, 4, 5, 11, 12))
+        sc.add_decoration(Decoration(col * TILE + tree_rng.randint(2, 30),
+                                     ry * TILE + tree_rng.randint(2, 30),
                                      "creepy_tree"))
+        ry += tree_rng.randint(3, 8)
     sc.hide_spots = []
 
     def _road_update(game, scene, dt):

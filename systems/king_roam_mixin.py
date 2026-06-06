@@ -78,9 +78,11 @@ class KingRoamMixin:
                 or self.scene.key != KING_ROAM_START):
             self._idle_king = None
             return
-        # Raw (un-wrapped) y so he is always ABOVE the player on screen, even
-        # across the road's wrap seam -- he hangs at the vanishing point.
-        self._idle_king = (7 * TILE + TILE // 2, self.player.y - IDLE_KING_GAP)
+        # A FIXED haunt near the road's north end (not player-relative): he
+        # scrolls into frame naturally as you walk up and you walk INTO him --
+        # no pop. Placed far enough north that he never co-frames the car.
+        self._idle_king = (7 * TILE + TILE // 2,
+                           IDLE_KING_ROW * TILE + TILE // 2)
 
     # ---- the graph -------------------------------------------------------
     def _king_roam_graph(self):
