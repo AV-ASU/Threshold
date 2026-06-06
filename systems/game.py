@@ -786,18 +786,20 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
             mag = math.hypot(dx, dy) or 1
             dx /= mag; dy /= mag
             if self._tilt_on():
-                # Camera-relative movement: WASD are read in SCREEN space
-                # (W = up the screen) and rotated into world space by the live
-                # camera yaw, so you always travel the way you are LOOKING, not
-                # along a fixed world compass. This inverts Camera.project's
-                # world->screen yaw rotation (matches Camera.unproject), so at
-                # rest screen-up maps to the body's facing -- W walks where the
-                # head faces, A/D strafe to either side of it.
-                cy, sy = math.cos(self.camera.yaw), math.sin(self.camera.yaw)
+                # Face-relative movement: WASD are read in SCREEN space and
+                # rotated into world space so FORWARD (W) is the way the player
+                # is LOOKING -- the mouse-aimed head, self.look.aim -- with S
+                # straight back, A/D strafing to either side. The basis is the
+                # head aim (not the body or the eased camera), so turning the
+                # mouse turns where W takes you. Rotating the screen vector by
+                # (aim + pi/2) maps screen-up exactly onto the aim direction.
+                ay = self.look.aim + math.pi / 2
+                cy, sy = math.cos(ay), math.sin(ay)
                 dx, dy = dx * cy - dy * sy, dx * sy + dy * cy
                 # The body (and the camera that follows it) ease toward where
-                # you WALK: forward holds a straight line, strafing curves you
-                # around. The mouse only aims the head/gun, never the body.
+                # you WALK, so holding W steers the body around to the head and
+                # you can keep turning past the head's arc. The mouse aims the
+                # head/gun; it never snaps the body.
                 self._move_heading = math.atan2(dy, dx)
             else:
                 self.player.facing = (dx, dy)
