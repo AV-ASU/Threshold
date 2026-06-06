@@ -212,8 +212,8 @@ def _draw_car_solid(surf, cam, deco):
     cf, cb = 9 * s, -17 * s                       # cabin front / back (local x)
     chW = W * 0.84 / 2
     r, wbx = 6 * s, hL * 0.60                      # wheel radius + wheelbase
-    body = {"top": (96, 104, 110), "side": (66, 74, 80), "dark": (42, 48, 54)}
-    cab = {"top": (58, 68, 76), "side": (42, 50, 56), "dark": (24, 30, 36)}
+    body = {"top": (112, 126, 142), "side": (78, 92, 110), "dark": (46, 56, 70)}
+    cab = {"top": (70, 84, 102), "side": (50, 62, 78), "dark": (28, 36, 48)}
     glass, glass_hi, chrome = (46, 60, 64), (98, 118, 124), (172, 176, 184)
     _vehicle_shadow(surf, cam, wx, wy, L, W)
     _round_wheel(surf, P, wbx, -hW, r)            # far wheels (behind body)
