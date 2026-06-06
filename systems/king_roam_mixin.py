@@ -224,6 +224,11 @@ class KingRoamMixin:
             rk["search_t"] += dt
             if rk["search_t"] >= KING_SEARCH_TIME:
                 rk["state"] = "check_nearby"
+        # While a rift is FORMING he holds where he is (he's tearing it) so the
+        # spot it grows at stays the spot he comes through.
+        p = getattr(self, "_portal", None)
+        if p is not None and not p.get("formed"):
+            return
         rk["hop_t"] -= dt
         if rk["hop_t"] > 0:
             return
@@ -418,53 +423,61 @@ class KingRoamMixin:
 
     # ---- the portal (M2): pin 100% and he folds in ------------------------
     def _tick_portal(self, dt):
-        """The rift. Pin visibility at 100% for PORTAL_CHARGE_TIME (while he is
-        NOT already in your room) and he tears a portal to wherever he stands
-        and folds through. Break 100% during the charge and it collapses. Once
-        formed, stepping into it jukes you to the room he just left (one-way for
-        him); it shuts on the cross. Returns True if a crossing transition
-        fired (the caller must then stop touching the old scene)."""
+        """The rift. Pin visibility at 100% (while he is NOT already in your
+        room) and a rift OPENS at once at the spot he'll come through, then GROWS
+        over PORTAL_CHARGE_TIME as a visible warning -- you watch it tear and
+        him loom through it. Break 100% before it completes and it COLLAPSES.
+        When it finishes he folds through; from then on stepping into the rift
+        jukes you to the room he just left (one-way; it shuts on the cross).
+        Returns True if a crossing transition fired."""
         rk = self._roam_king
         if not rk["armed"]:
             self._portal = None
             self._portal_charge_t = 0.0
             return False
-        # Formed: hold it; check for the player stepping through (the juke).
-        if self._portal is not None:
-            d = math.hypot(self._portal["x"] - self.player.x,
-                           self._portal["y"] - self.player.y)
+        p = self._portal
+        # A FORMED rift (he has come through): hold it; check the juke.
+        if p is not None and p.get("formed"):
+            d = math.hypot(p["x"] - self.player.x, p["y"] - self.player.y)
             if self.player.hidden is None and d < PORTAL_CROSS_DIST:
-                tgt, spawn = self._portal["target"], self._portal["spawn"]
-                tpos = self._portal.get("target_pos")
+                tgt, spawn = p["target"], p["spawn"]
+                tpos = p.get("target_pos")
                 self._portal = None          # shuts the instant you cross
                 self._portal_charge_t = 0.0
                 self.audio.play("void_sting", 0.7)
-                # Emerge at the EXACT spot the rift showed (where the King was).
                 self._pending_emerge = (tgt, tpos) if tpos else None
                 self.begin_transition(tgt, spawn)
                 return True
             return False
-        # Not formed. He can only tear in from ELSEWHERE -- never into a room he
-        # already stands in, a refuge, or the boss arena.
-        if (rk["scene"] == self.scene.key
-                or self.scene.key in KING_FREE_SCENES
-                or self.scene.key == "void_boss"):
-            self._portal_charge_t = 0.0
-            return False
-        if self.visibility >= PORTAL_PIN_VIS:
-            if self._portal_charge_t == 0.0:
-                self.show_notice("The air begins to tear. Get out of sight.",
-                                 duration=3.0)
+        # A FORMING rift (charging): grow it while pinned, collapse if you break
+        # 100% (or step into his room / a refuge) before it completes.
+        can = (rk["scene"] != self.scene.key
+               and self.scene.key not in KING_FREE_SCENES
+               and self.scene.key != "void_boss")
+        if can and self.visibility >= PORTAL_PIN_VIS:
+            if p is None:
+                self._open_forming_portal()
+                p = self._portal
+                if p is None:
+                    return False
             self._portal_charge_t += dt
-            if self._portal_charge_t >= PORTAL_CHARGE_TIME:
-                self._tear_portal()
+            p["charge"] = max(0.0, min(1.0,
+                                       self._portal_charge_t / PORTAL_CHARGE_TIME))
+            # The forming rift thickens the air as it grows (a felt warning).
+            self._king_dread = max(self._king_dread, 0.4 + 0.6 * p["charge"])
+            if p["charge"] >= 1.0:
+                self._fold_king_through()
+        elif p is not None and not p.get("formed"):
+            self._portal = None              # collapsed unformed: the relief
+            self._portal_charge_t = 0.0
         else:
-            self._portal_charge_t = 0.0      # broke 100%: it collapses unformed
+            self._portal_charge_t = 0.0
         return False
 
-    def _tear_portal(self):
-        """Open the rift at a point away from the player, connected to the room
-        the King is in, and fold him through to hunt."""
+    def _open_forming_portal(self):
+        """Tear the rift open (charge 0) at a spot away from the player, pinned
+        to the room + EXACT spot the King is in NOW, so where it grows is where
+        he'll come through. He does not cross until it completes."""
         rk = self._roam_king
         spot = self._king_far_spot()
         if spot is None:
@@ -475,28 +488,33 @@ class KingRoamMixin:
             tgt_scene = load_scene(rk["scene"])
         except Exception:
             tgt_scene = None
-        # The EXACT spot in his room he is folding out of -- what the rift shows
-        # and where you walk out if you juke through. His tracked dynamic pos,
-        # falling back to the target's default spawn.
         tpos = rk.get("pos")
         if not tpos:
             sp = tgt_scene.spawns.get("default") if tgt_scene else None
             tpos = (float(sp[0]), float(sp[1])) if sp else (
                 (tgt_scene.w * TILE / 2.0, tgt_scene.h * TILE / 2.0)
                 if tgt_scene else (0.0, 0.0))
-        # He phases, so his spot may be inside a wall -- snap it to walkable
-        # ground so the rift shows (and you emerge at) a reachable place.
-        if tgt_scene is not None:
+        if tgt_scene is not None:               # he phases: snap to walkable
             tpos = self._nearest_walkable(tgt_scene, tpos[0], tpos[1]) or tpos
         anchor = (int(tpos[0] // TILE), int(tpos[1] // TILE))
         self._portal = {
             "x": spot[0], "y": spot[1],
             "target": rk["scene"], "spawn": "default", "target_pos": tpos,
-            "_scene": tgt_scene, "anchor": anchor, "charge": 1.0,
+            "_scene": tgt_scene, "anchor": anchor, "charge": 0.0, "formed": False,
         }
+        self.audio.play("low_pulse", 0.6)
+        self.show_notice("The air begins to tear. Get out of sight.",
+                         duration=3.0)
+
+    def _fold_king_through(self):
+        """The forming rift completes: the King steps through into your room and
+        hunts. The room he LEAVES (portal['target']) is your one-way escape."""
+        rk = self._roam_king
+        p = self._portal
+        p["formed"] = True
+        p["charge"] = 1.0
         self._portal_charge_t = 0.0
-        # He folds through to your room and comes for you. The room he LEAVES
-        # (portal["target"]) is your escape; he stays on this side.
+        spot = (p["x"], p["y"])
         rk["scene"] = self.scene.key
         rk["state"] = "hunting"
         rk["last_seen"] = (self.player.x, self.player.y)
