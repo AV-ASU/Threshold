@@ -35,7 +35,8 @@ pygame.display.set_mode((1, 1))
 from systems.game import Game
 from systems.config import (KING_ROAM_SCENES, KING_ROAM_START, KING_GATE_EVIDENCE,
                             KING_CATCH_DIST, SAFE_SCENES, KING_FREE_SCENES,
-                            CULT_REGULARS)
+                            CULT_REGULARS, PORTAL_CHARGE_TIME, PORTAL_PIN_VIS,
+                            PORTAL_CROSS_DIST)
 
 
 def _boot(scene="graveyard"):
@@ -211,6 +212,93 @@ def test_follow_through_passage_not_door():
     print("  OK  he follows through passages/folds but a door loses him")
 
 
+def _arm_elsewhere(g):
+    """Armed, with the King in a DIFFERENT surface scene than the player -- the
+    precondition for a portal to be able to tear in."""
+    _arm(g)
+    g._tick_king_roam(0.05)               # arm
+    other = next(t for t in KING_ROAM_SCENES if t != g.scene.key)
+    g._roam_king.update(armed=True, state="searching", scene=other)
+    g._king = None
+
+
+def test_portal_charges_and_tears():
+    g = _boot()
+    _arm_elsewhere(g)
+    g.visibility = 1.0
+    steps = int(PORTAL_CHARGE_TIME / 0.1) + 3
+    for _ in range(steps):
+        g.visibility = 1.0                # held pinned
+        g._tick_king_roam(0.1)
+    assert g._portal is not None, "pinned 100% for the window tears a portal"
+    assert g._portal["x"] is not None, "the rift has a world position"
+    print("  OK  pinned 100% for the window tears a portal")
+
+
+def test_portal_cancels_on_vis_drop():
+    g = _boot()
+    _arm_elsewhere(g)
+    g.visibility = 1.0
+    g._tick_king_roam(0.1)
+    g._tick_king_roam(0.1)
+    assert g._portal_charge_t > 0, "charge builds while pinned"
+    g.visibility = 0.5                    # break 100%
+    g._tick_king_roam(0.1)
+    assert g._portal_charge_t == 0.0, "dropping below 100% collapses the charge"
+    assert g._portal is None, "no rift forms once the charge is broken"
+    print("  OK  breaking 100% collapses the forming rift (the cancel window)")
+
+
+def test_portal_brings_him_through():
+    g = _boot()
+    _arm_elsewhere(g)
+    g.visibility = 1.0
+    for _ in range(int(PORTAL_CHARGE_TIME / 0.1) + 3):
+        g.visibility = 1.0
+        g._tick_king_roam(0.1)
+    assert g._roam_king["scene"] == g.scene.key, "he folds INTO your room"
+    assert g._roam_king["state"] == "hunting", "he comes through hunting"
+    # The rift's far side is the room he LEFT (your escape).
+    assert g._portal["target"] != g.scene.key, "the rift leads to the room he left"
+    print("  OK  he folds through to your room; the rift leads to where he was")
+
+
+def test_portal_never_tears_in_safe_room():
+    safe = next(iter(SAFE_SCENES))
+    g = _boot(safe)
+    _arm(g)
+    g._tick_king_roam(0.05)
+    other = next(t for t in KING_ROAM_SCENES if t != safe)
+    g._roam_king.update(armed=True, state="searching", scene=other)
+    g.visibility = 1.0
+    for _ in range(int(PORTAL_CHARGE_TIME / 0.1) + 5):
+        g.visibility = 1.0
+        g._tick_king_roam(0.1)
+    assert g._portal is None, "a safe room never lets a rift tear in"
+    print("  OK  a portal never tears into a safe room")
+
+
+def test_portal_cross_jukes_and_clears():
+    g = _boot()
+    _arm_elsewhere(g)
+    g.visibility = 1.0
+    for _ in range(int(PORTAL_CHARGE_TIME / 0.1) + 3):
+        g.visibility = 1.0
+        g._tick_king_roam(0.1)
+    assert g._portal is not None
+    target = g._portal["target"]
+    king_side = g._roam_king["scene"]
+    # Step into the rift.
+    g.player.x, g.player.y = g._portal["x"], g._portal["y"]
+    g.player.hidden = None
+    g._tick_king_roam(0.05)
+    assert g._portal is None, "the rift shuts the instant you cross"
+    assert g.scene.key == target, "crossing jukes you to the room he left"
+    assert g._roam_king["scene"] == king_side, "he is stranded on the far side"
+    assert g._roam_king["scene"] != g.scene.key, "one-way: he can't follow you through"
+    print("  OK  stepping through jukes you across and strands him (one-way)")
+
+
 if __name__ == "__main__":
     test_idle_until_gate()
     test_arms_at_gate()
@@ -223,4 +311,9 @@ if __name__ == "__main__":
     test_birth_grace_no_catch()
     test_safe_room_never_hosts()
     test_follow_through_passage_not_door()
+    test_portal_charges_and_tears()
+    test_portal_cancels_on_vis_drop()
+    test_portal_brings_him_through()
+    test_portal_never_tears_in_safe_room()
+    test_portal_cross_jukes_and_clears()
     print("All roaming-King guards held.")
