@@ -334,12 +334,15 @@ def build_arrival_road():
     car_tx, car_ty = 10, PMID - 9                      # east shoulder, N of sign
     car_x = car_tx * TILE + 16
     car_y = car_ty * TILE + 16
-    sc.add_decoration(Decoration(car_x, car_y, "player_car"))
+    # yaw -pi/2 aims the 3D car NORTH, up the road into town (default yaw 0 left
+    # it broadside across the lane -- you saw its whole flank + all four tyres).
+    sc.add_decoration(Decoration(car_x, car_y, "player_car", yaw=-math.pi / 2))
     sc._car_pos = ((car_tx - 1) * TILE + 16, car_y)   # west edge, by the road
     objs = [list(r) for r in sc.objects]
-    for cx in (car_tx - 1, car_tx, car_tx + 1):       # the car's footprint
-        if 0 <= cx < sc.w:
-            objs[car_ty][cx] = "X"
+    for cx in (car_tx - 1, car_tx):                   # footprint runs N-S now
+        for cy in (car_ty - 1, car_ty, car_ty + 1):   # (the car points up-road)
+            if 0 <= cx < sc.w and 0 <= cy < sc.h:
+                objs[cy][cx] = "X"
     sc.objects = objs
 
     def _road_interact(game):
