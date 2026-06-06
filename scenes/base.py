@@ -2488,6 +2488,23 @@ class Scene:
                 return False
         return True
 
+    def clear_sight_line(self, x0, y0, x1, y1, step=10):
+        """True if the straight (wrap-aware) segment from (x0,y0) to (x1,y1)
+        crosses no SIGHT blocker -- walls and solid props occlude; windows and
+        floor (water/pits) do NOT (see `blocks_sight`). This is the line-of-
+        sight predicate the cult AI uses to decide if it can actually SEE the
+        player, not merely sense distance: step behind a wall or a solid prop
+        and you break the chase. Distinct from `nav_clear_line` (which treats
+        water/pits as solid for pathing); a cultist can see ACROSS a pit it
+        cannot walk through, so sight must not reuse the nav predicate."""
+        dx = self.world_dx(x0, x1)
+        dy = self.world_dy(y0, y1)
+        n = max(1, int(math.hypot(dx, dy) // step))
+        for i in range(1, n + 1):
+            if self.blocks_sight(x0 + dx * i / n, y0 + dy * i / n):
+                return False
+        return True
+
     def nav_path(self, fx, fy, tx, ty, max_visit=None):
         """Wrap-aware BFS over the walkable grid. Returns a list of world-
         centre points from the step AFTER the start up to the goal tile, or

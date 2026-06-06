@@ -183,15 +183,9 @@ def build_our_house_area():
             objects[12][tx] = "X"
     sc.objects = objects
 
-    # Hide spots: BESIDE the pickup truck (tile is solid now, so
-    # the player has to crouch in the gap), in the back of the
-    # yard against the corn perimeter, two more along the corn.
-    sc.hide_spots = [
-        (22 * TILE + 16, 12 * TILE + 16, "behind"),  # beside pickup
-        (5 * TILE + 16, 15 * TILE + 16, "behind"),   # south corn band
-        (15 * TILE + 16, 16 * TILE + 16, "behind"),  # south corn band
-        (1 * TILE + 28, 10 * TILE + 16, "behind"),   # west corn band
-    ]
+    # No hide spots: the solid pickup truck and the corn perimeter are
+    # cover the player breaks line of sight behind (corn is walkable cover).
+    sc.hide_spots = []
 
     def _outside_interact(game):
         px, py = game.player.x, game.player.y
@@ -369,11 +363,7 @@ def build_arrival_road():
     sc.add_decoration(Decoration(5 * TILE + 16, 27 * TILE + 16, "creepy_tree"))
     sc.add_decoration(Decoration(10 * TILE + 16, 9 * TILE + 16, "missing_flyer"))
     sc.add_decoration(Decoration(9 * TILE + 8, 31 * TILE + 22, "dead_crow"))
-    sc.hide_spots = [
-        (2 * TILE + 16, 12 * TILE + 16, "behind"),
-        (12 * TILE + 16, 26 * TILE + 16, "behind"),
-        (2 * TILE + 16, 34 * TILE + 16, "behind"),
-    ]
+    sc.hide_spots = []
 
     def _road_update(game, scene, dt):
         # The TELL. The road wraps N-S (wrap_y), so walking it long enough
@@ -446,10 +436,7 @@ def build_woodshed():
                                  ang=0.0))
     sc.add_decoration(Decoration(10 * TILE + 26, 1 * TILE + 6, "cobweb",
                                  ang=math.pi / 2))
-    sc.hide_spots = [
-        (2 * TILE + 16, 3 * TILE + 16, "behind"),     # behind workbench
-        (8 * TILE + 16, 3 * TILE + 16, "behind"),     # in the tool nook (blind)
-    ]
+    sc.hide_spots = []
 
     def _woodshed_interact(game):
         px, py = game.player.x, game.player.y

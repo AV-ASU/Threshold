@@ -127,16 +127,7 @@ def build_void_boss():
         sc.add_decoration(Decoration(40 + i * 50,
                                      60 + (i % 3) * 50, "mote"))
 
-    # Hide spots colocated with VISIBLE cover. Each spot lands on
-    # an open walkable tile directly beside the cover prop -- never
-    # ON the prop itself, so leaving cover doesn't clip the player
-    # into a solid tile.
-    sc.hide_spots = [
-        (3 * TILE + 16, 6 * TILE + 16, "behind"),    # beside W cordwood
-        (14 * TILE + 16, 6 * TILE + 16, "behind"),   # beside E cordwood
-        (1 * TILE + 16, 9 * TILE + 16, "behind"),    # beside cult robes
-        (5 * TILE + 16, 7 * TILE + 16, "behind"),    # beside W bloody pile
-    ]
+    sc.hide_spots = []
 
     # Tag the scene as the clearing for the flashback / patrol systems.
     sc.is_clearing = True
@@ -227,13 +218,7 @@ def build_shop():
     for mx, my in [(8, 7), (12, 8), (10, 10)]:
         sc.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16,
                                      "mote"))
-    # Hide spots colocated with cover (beside the counter / shelves) and one
-    # in the back storeroom (the blind spot).
-    sc.hide_spots = [
-        (8 * TILE + 16, 9 * TILE + 16, "behind"),   # beside counter
-        (8 * TILE + 16, 1 * TILE + 16, "behind"),   # beside a shop shelf
-        (2 * TILE + 16, 4 * TILE + 16, "behind"),   # in the storeroom
-    ]
+    sc.hide_spots = []
     return sc
 def build_barn():
     """Small barn on the brimley east bank. Holds Mara's journal
@@ -302,13 +287,7 @@ def build_barn():
     sc._journal_pos = (11 * TILE + 16, 3 * TILE + 16)
     # [E] cue so the player knows there's something behind the workbench.
     sc.add_interactable(sc._journal_pos[0], sc._journal_pos[1], 40)
-    # Hide spots colocated with cover -- beside the hay-bale shelves out
-    # front, and in the back stall (the blind spot).
-    sc.hide_spots = [
-        (4 * TILE + 16, 2 * TILE + 16, "behind"),   # beside W shelf
-        (7 * TILE + 16, 2 * TILE + 16, "behind"),   # beside E shelf
-        (12 * TILE + 16, 4 * TILE + 16, "behind"),  # in the back stall
-    ]
+    sc.hide_spots = []
     # Chalk doors -- the cult's drawn-door compulsion. The barn (Mara's, the
     # diggers' old quarters) is where the PI first meets the motif: one chalked
     # flat on the floor (the voice beat -- examine it) and one on the wall.
@@ -421,7 +400,6 @@ def build_kid_house():
     # Hide spots: under the kid's bed, and in the closet (the blind spot).
     sc.hide_spots = [
         (10 * TILE + 16, 6 * TILE + 24, "under"),
-        (2 * TILE + 16, 4 * TILE + 24, "behind"),
     ]
     # The kid's drawing of the King, pinned up inside the closet (a 'photo'
     # decoration) -- examinable flavor, grants nothing. Out of sight from the

@@ -99,10 +99,7 @@ def build_well_bottom():
     for mx, my in ((4, 4), (7, 5), (5, 7)):
         sc.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16, "mote"))
 
-    sc.hide_spots = [
-        (8 * TILE + 16, 6 * TILE + 16, "behind"),   # collapsed-timber nook
-        (3 * TILE + 16, 6 * TILE + 16, "behind"),
-    ]
+    sc.hide_spots = []
     _ambient(sc, "low_pulse", 0.12, 9.0, 14.0)
 
     # The rope no longer snaps on the way down -- you can retreat up the
@@ -180,11 +177,7 @@ def build_well_passage():
     for mx, my in ((7, 3), (11, 5), (3, 5)):
         sc.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16, "mote"))
 
-    sc.hide_spots = [
-        (8 * TILE + 16, 1 * TILE + 24, "behind"),    # up in the bay (blind)
-        (4 * TILE + 16, 7 * TILE + 16, "behind"),    # behind a rack
-        (10 * TILE + 16, 7 * TILE + 16, "behind"),   # behind the east rack
-    ]
+    sc.hide_spots = []
     # One cultist working the corridor, end to end.
     sc.add_enemy(_cultist(3 * TILE + 16, 5 * TILE + 16, speed=0.85))
     _ambient(sc, "cult_breath", 0.16, 5.0, 9.0)
@@ -232,10 +225,7 @@ def build_works_vats():
                                  ang=0.0))
     sc.add_decoration(Decoration(8 * TILE + 26, 1 * TILE + 6, "cobweb",
                                  ang=math.pi / 2))
-    sc.hide_spots = [
-        (6 * TILE + 16, 2 * TILE + 16, "behind"),   # in the north arm (blind)
-        (6 * TILE + 16, 8 * TILE + 16, "behind"),   # in the south arm (blind)
-    ]
+    sc.hide_spots = []
     # Two cultists working the basins -- one walks the N-S arms, one the
     # E-W crossing.
     sc.add_enemy(_cultist(6 * TILE + 16, 5 * TILE + 16, speed=0.8))
@@ -325,11 +315,7 @@ def build_works_sorting():
     for mx, my in ((5, 4), (10, 7), (13, 5)):
         sc.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16, "mote"))
     sc._table_pos = (6 * TILE + 16, 5 * TILE + 16)
-    sc.hide_spots = [
-        (3 * TILE + 16, 6 * TILE + 16, "behind"),    # behind a sorting table
-        (9 * TILE + 16, 6 * TILE + 16, "behind"),    # behind a sorting table
-        (13 * TILE + 16, 2 * TILE + 16, "behind"),   # up in the stem (behind crates)
-    ]
+    sc.hide_spots = []
     # Two cultists sorting/patrolling -- the hardest crossing.
     sc.add_enemy(_cultist(4 * TILE + 16, 6 * TILE + 16, speed=0.9))
     sc.add_enemy(_cultist(11 * TILE + 16, 6 * TILE + 16, speed=0.9))
@@ -455,10 +441,7 @@ def build_works_scriptorium():
                                  ang=math.pi / 2))
     sc._desk_pos = (4 * TILE + 16, 2 * TILE + 16)
     sc.add_interactable(sc._desk_pos[0], sc._desk_pos[1], 40)  # [E] cue: the Playscript
-    sc.hide_spots = [
-        (6 * TILE + 16, 6 * TILE + 16, "behind"),
-        (10 * TILE + 16, 6 * TILE + 16, "behind"),
-    ]
+    sc.hide_spots = []
     # One scribe, kneeling at a desk, oblivious (aggro 0) -- unless you
     # cross into its lane. Locked facing toward its work.
     scribe = _cultist(5 * TILE + 16, 2 * TILE + 16, speed=0.8)
@@ -551,10 +534,7 @@ def build_works_sign():
                                  ang=-math.pi / 2))
     sc.add_decoration(Decoration(11 * TILE + 26, 9 * TILE + 26, "cobweb",
                                  ang=math.pi))
-    sc.hide_spots = [
-        (2 * TILE + 16, 8 * TILE + 16, "behind"),
-        (10 * TILE + 16, 8 * TILE + 16, "behind"),
-    ]
+    sc.hide_spots = []
     # The congregation: three kneelers facing the Sign (north), plus one
     # patrol on the east flank. Kneelers start oblivious (aggro 0).
     for kx in (4, 6, 8):
@@ -649,10 +629,7 @@ def build_works_deepstair():
                                  ang=0.0))
     sc.add_decoration(Decoration(8 * TILE + 26, 1 * TILE + 6, "cobweb",
                                  ang=math.pi / 2))
-    sc.hide_spots = [
-        (8 * TILE + 16, 6 * TILE + 16, "behind"),
-        (2 * TILE + 16, 6 * TILE + 16, "behind"),
-    ]
+    sc.hide_spots = []
     _ambient(sc, "low_pulse", 0.12, 10.0, 15.0)
 
     def _interact(game):
@@ -748,10 +725,7 @@ def build_the_sump():
                                  ang=-math.pi / 2))
     sc.add_decoration(Decoration(7 * TILE + 26, 5 * TILE + 6, "cobweb",
                                  ang=math.pi / 2))
-    sc.hide_spots = [
-        (3 * TILE + 16, 6 * TILE + 16, "behind"),
-        (7 * TILE + 16, 6 * TILE + 16, "behind"),
-    ]
+    sc.hide_spots = []
     _ambient(sc, "low_pulse", 0.12, 8.0, 13.0)
 
     def _on_enter(game, scene):
@@ -828,11 +802,7 @@ def build_the_cells():
     sc.add_decoration(Decoration(6 * TILE + 16, 9 * TILE + 16, "candle"))
     sc.add_decoration(Decoration(1 * TILE + 6, 9 * TILE + 26, "cobweb",
                                  ang=-math.pi / 2))
-    sc.hide_spots = [
-        (3 * TILE + 16, 4 * TILE + 16, "behind"),   # beside a west cot
-        (8 * TILE + 16, 6 * TILE + 16, "behind"),   # beside an east cot
-        (6 * TILE + 16, 6 * TILE + 16, "behind"),   # in the corridor
-    ]
+    sc.hide_spots = []
     _ambient(sc, "whisper", 0.13, 6.0, 11.0)
 
     def _on_enter(game, scene):

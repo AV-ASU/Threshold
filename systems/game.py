@@ -899,7 +899,6 @@ class Game(CutsceneMixin, ThreatMixin, InfestationMixin, RenderMixin, NarrativeM
             verb = {
                 "under": "you crawl under cover.",
                 "in":    "you step inside.",
-                "behind":"you crouch behind it.",
             }.get(bestH[2], "you take cover.")
             self.show_notice(verb, duration=1.8)
             self.audio.play("blip_soft", 0.4)

@@ -146,6 +146,19 @@ it renders the procedural sprites to a labelled PNG strip.
 - **`visibility`** ∈ [0, 1] (`_tick_visibility`): Watchers + cultist gaze
   raise it; hiding (`VIS_HIDE_BLEED`) and idle decay (`VIS_IDLE_DECAY`)
   lower it. Tuning lives in the `VIS_*` constant block.
+- **Hiding is positional (cult line of sight).** The cult AI detects by
+  **real line of sight**, not distance X-ray: `has_los` (`entities/enemy.py`
+  underground + `entities/npc.py` surface) gates on
+  `Scene.clear_sight_line(x0,y0,x1,y1)` — a wrap-aware march over the
+  `blocks_sight` predicate (walls + solid props occlude; windows + water do
+  not). Put cover between you and a cultist and the lock drops → SEARCH
+  (walk to last-seen, mill, give up). So the player breaks a chase by
+  **moving behind cover** (a wall, a pillar, the corn). The old "behind"
+  `hide_spots` were **removed** as redundant with this; the only E-press
+  hides left are the handful of crawl-**under**-furniture spots (`"under"`,
+  e.g. under a bed/desk/cot), which set `player.hidden` the same way corn
+  does (`game.py`). Apex pursuers (`_force_chase`: King, hollow Sheriff)
+  are **exempt** — they never lose sight.
 - **King in Yellow** (`_tick_king`): at `visibility >= 1.0` he spawns at
   `_king_anchor` (the player's scene-entry point); below `0.90` he
   dissolves; he catches at distance `< 24` **only once `_birth >= 1.0`**

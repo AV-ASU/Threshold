@@ -250,8 +250,14 @@ class NPC:
         dx = scene.world_dx(self.x, player.x)
         dy = scene.world_dy(self.y, player.y)
         d = math.hypot(dx, dy)
+        # Real line of sight: walls + solid props occlude (windows/water do
+        # not), so the player breaks a chase by stepping behind cover and the
+        # cultist drops into SEARCH. The hunter (_force_chase, below) ignores
+        # this and closes regardless -- the apex avatar never loses you.
         has_los = (d < 180
-                   and getattr(player, "hidden", None) is None)
+                   and getattr(player, "hidden", None) is None
+                   and scene.clear_sight_line(self.x, self.y,
+                                              player.x, player.y))
         # Hunter override: ignore the machine, ignore flanking.
         # The avatar's behaviour is dictated by _yk_update for the
         # YK sprite kind; non-YK NPCs with _force_chase set still

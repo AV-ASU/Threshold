@@ -1004,20 +1004,10 @@ def build_brimley():
                        (20, 40), (52, 80), (75, 42), (36, 30)]:
         sc.add_decoration(Decoration(ltx * TILE + 16, lty * TILE + 16, "leaves"))
 
-    # Hide spots colocated with VISIBLE cover so the prompt always
-    # matches what the player can see. Each entry sits on top of a
-    # grass-tuft / watching-eye / dead-tree decoration on the east
-    # bank; the empty west bank deliberately offers no cover.
-    sc.hide_spots = [
-        (50 * TILE + 16, 50 * TILE + 16, "behind"),  # eye + tuft
-        (60 * TILE + 16, 30 * TILE + 16, "behind"),  # tuft
-        (70 * TILE + 16, 60 * TILE + 16, "behind"),  # tuft
-        (75 * TILE + 16, 75 * TILE + 16, "behind"),  # eye + tuft
-        (55 * TILE + 16, 80 * TILE + 16, "behind"),  # tuft
-        (80 * TILE + 16, 40 * TILE + 16, "behind"),  # tuft
-        (37 * TILE + 16, 21 * TILE + 16, "behind"),  # creepy_tree, bridge east pocket
-        (29 * TILE + 16, 27 * TILE + 16, "behind"),  # creepy_tree, bridge west pocket
-    ]
+    # No hide spots: the east bank's grass-tufts, watching-eyes and dead
+    # trees are visual cover the player breaks line of sight behind by
+    # moving; the open west bank still offers none.
+    sc.hide_spots = []
 
     # The PI's car has MOVED to the arrival road west of the Lodge (where it
     # died on the way in -- the SPREAD escape now lives there, scenes/

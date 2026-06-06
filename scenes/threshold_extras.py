@@ -112,11 +112,7 @@ def build_schoolhouse():
     for i in range(6):
         sc.add_decoration(Decoration(150 + i * 70, 200 + (i % 3) * 70, "mote"))
 
-    sc.hide_spots = [
-        (5 * TILE + 16, 3 * TILE + 16, "behind"),    # behind the west cot bank
-        (10 * TILE + 16, 5 * TILE + 16, "behind"),   # behind the east cot bank
-        (10 * TILE + 16, 10 * TILE + 16, "behind"),  # beside the shoved-desk corner
-    ]
+    sc.hide_spots = []
 
     # The chalkboard reads as a flavor beat (not counted evidence).
     sc._board_pos = (7 * TILE + 16, 0 * TILE + 16)
@@ -234,12 +230,7 @@ def build_country_lane():
                                  "dead_crow"))
     sc.add_decoration(Decoration(11 * TILE + 16, 9 * TILE + 16,
                                  "missing_flyer"))
-    # Hide spots colocated with cover (cornstalks).
-    sc.hide_spots = [
-        (5 * TILE + 16, 3 * TILE + 16, "behind"),
-        (12 * TILE + 16, 9 * TILE + 16, "behind"),
-        (24 * TILE + 16, 3 * TILE + 16, "behind"),
-    ]
+    sc.hide_spots = []
     return sc
 
 
@@ -314,13 +305,7 @@ def build_graveyard():
         gy = rng.randint(1, 8) * TILE + rng.randint(0, 30)
         sc.add_decoration(Decoration(gx, gy, "grass_tuft"))
 
-    # Hide beside the headstones (on walkable tiles, not ON the rock 'R'
-    # tiles or the bloodstain the middle spot used to sit on).
-    sc.hide_spots = [
-        (5 * TILE + 16, 6 * TILE + 16, "behind"),     # beside middle-row stone
-        (8 * TILE + 16, 2 * TILE + 16, "behind"),     # beside rear-row stone
-        (1 * TILE + 28, 7 * TILE + 16, "behind"),     # west fence
-    ]
+    sc.hide_spots = []
 
     # Boarded-over panel of nailed planks set into the east iron-fence/
     # tree line -- a chop-target for the axe that opens onto an empty,
@@ -419,11 +404,7 @@ def build_gravel_road_north():
     # midway -- a chop-target that opens onto an empty, long-looted alcove.
     sc.objects[10][13] = "q"
 
-    sc.hide_spots = [
-        (3 * TILE + 16, 6 * TILE + 16, "behind"),
-        (10 * TILE + 16, 12 * TILE + 16, "behind"),
-        (3 * TILE + 16, 16 * TILE + 16, "behind"),
-    ]
+    sc.hide_spots = []
     return sc
 
 
@@ -518,11 +499,7 @@ def build_backwoods_cabin():
         if 3 <= ty_ <= 7 and 4 <= tx_ <= 11:   # keep cabin clear
             continue
         sc.add_decoration(Decoration(gx, gy, "grass_tuft"))
-    sc.hide_spots = [
-        (3 * TILE + 16, 8 * TILE + 16, "behind"),     # cordwood
-        (12 * TILE + 16, 5 * TILE + 16, "behind"),    # east of cabin
-        (1 * TILE + 28, 6 * TILE + 16, "behind"),     # west tree line
-    ]
+    sc.hide_spots = []
 
     def _backwoods_interact(game):
         nx, ny = sc._notepad_pos
@@ -567,10 +544,7 @@ def build_backwoods_cabin_interior():
     # door until the player comes around the partition.
     sc.add_decoration(Decoration(8 * TILE + 16, 1 * TILE + 24,
                                  "claw_marks"))
-    sc.hide_spots = [
-        (1 * TILE + 24, 1 * TILE + 24, "behind"),
-        (8 * TILE + 16, 3 * TILE + 16, "behind"),   # in the back nook (blind)
-    ]
+    sc.hide_spots = []
     return sc
 
 
@@ -656,11 +630,7 @@ def build_river_crossing():
     # Boarded-over panel at col 5 row 0 -- a chop-target that opens onto
     # an empty, long-looted pocket.
 
-    sc.hide_spots = [
-        (3 * TILE + 16, 5 * TILE + 16, "behind"),     # west bank trees
-        (20 * TILE + 16, 5 * TILE + 16, "behind"),    # east bank trees
-        (3 * TILE + 16, 11 * TILE + 16, "behind"),    # west south bank
-    ]
+    sc.hide_spots = []
     return sc
 
 
@@ -702,10 +672,7 @@ def build_bell_tower():
     for i in range(8):
         sc.add_decoration(Decoration(40 + i * 36,
                                      60 + (i % 3) * 50, "mote"))
-    sc.hide_spots = [
-        (3 * TILE + 16, 4 * TILE + 16, "behind"),    # one side of the housing
-        (8 * TILE + 16, 5 * TILE + 16, "behind"),    # the far (blind) side
-    ]
+    sc.hide_spots = []
 
     def _bell_tower_on_enter(game, scene):
         if game.save.flag("bell_tower_seen"):
@@ -1122,11 +1089,7 @@ def build_cornfield_maze():
             return
     sc.on_interact_fn = _cornfield_maze_interact
 
-    sc.hide_spots = [
-        (2 * TILE + 16, 6 * TILE + 16, "behind"),     # west lane
-        (16 * TILE + 16, 11 * TILE + 16, "behind"),   # east lane
-        (10 * TILE + 16, 11 * TILE + 16, "behind"),   # central
-    ]
+    sc.hide_spots = []
     return sc
 
 
