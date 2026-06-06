@@ -262,8 +262,8 @@ PORTAL_EMERGE_GRACE = 0.8    # s after the tear before his body steps through
 # NORTH of the player, so running up the treadmill road never closes on him
 # (the road grows between you). Only drawn in arrival_road while not armed.
 IDLE_KING_GAP = 11 * 32      # px north the idle King hangs (TILE=32; far up road)
-IDLE_KING_SCALE = 30.0       # small: barely visible at the end of the road
-IDLE_KING_ALPHA = 150        # faint horizon presence
+IDLE_KING_SCALE = 64.0       # distant but readable as the King at the road's end
+IDLE_KING_ALPHA = 225        # present, not a ghost (still dimmed by the night)
 
 # Fold pursuit (Stage 3): a cultist hot on the player's heels follows them
 # through a hidden FOLD (a direction-gated exit) "a beat behind" -- it
