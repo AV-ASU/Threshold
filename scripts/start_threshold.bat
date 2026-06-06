@@ -1,43 +1,28 @@
 @echo off
-setlocal enableextensions
 title Threshold
 
-REM ============================================================
-REM  start_threshold.bat
-REM  Finds your Threshold copy and launches the game.
-REM  Looks next to this file first, then common spots.
-REM ============================================================
-
+REM Find the game (your copy is at %USERPROFILE%\Threshold)
 set "REPO="
-for %%D in (
-  "%~dp0Threshold"
-  "%~dp0"
-  "%USERPROFILE%\Desktop\Threshold"
-  "%USERPROFILE%\Threshold"
-  "%USERPROFILE%\Documents\Threshold"
-  "%USERPROFILE%\source\repos\Threshold"
-) do if not defined REPO if exist "%%~fD\main.py" set "REPO=%%~fD"
+if exist "%USERPROFILE%\Threshold\main.py" set "REPO=%USERPROFILE%\Threshold"
+if not defined REPO if exist "%USERPROFILE%\Desktop\Threshold\main.py" set "REPO=%USERPROFILE%\Desktop\Threshold"
+if not defined REPO if exist "%USERPROFILE%\Documents\Threshold\main.py" set "REPO=%USERPROFILE%\Documents\Threshold"
+if not defined REPO if exist "%~dp0Threshold\main.py" set "REPO=%~dp0Threshold"
+if not defined REPO if exist "%~dp0main.py" set "REPO=%~dp0"
 
 if not defined REPO (
-  echo.
-  echo   Could not find your Threshold copy.
-  echo   Run update_threshold.bat first to download it,
-  echo   then run this again.
-  echo.
+  echo Could not find Threshold.
+  echo Run update_threshold.bat first to download it.
   pause
   exit /b 1
 )
 
-echo Starting Threshold from "%REPO%"
 cd /d "%REPO%"
+echo Starting Threshold from %REPO%
+echo.
 
-REM Prefer the Windows Python launcher, fall back to python on PATH
-where py >nul 2>nul && (set "PY=py") || (set "PY=python")
+where py >nul 2>nul
+if %errorlevel%==0 (py main.py) else (python main.py)
 
-%PY% main.py
-if errorlevel 1 (
-  echo.
-  echo   Threshold exited with an error (see above).
-  pause
-)
-endlocal
+echo.
+echo Game closed.
+pause
