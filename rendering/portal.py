@@ -22,6 +22,7 @@ rendering.skybox) so the far side is the same renderer as the near side, plus
 the folds gold seam so the two rift kinds read as one family.
 """
 import math
+import random
 
 import pygame
 import numpy as np
@@ -35,6 +36,86 @@ PORTAL_H = 3 * TILE          # breadth of the slit
 
 _POOL_CACHE = {}
 _GLOW_CACHE = {}
+
+# Tesseract topology: 16 vertices (a 4-bit index -> coord -1/+1 per axis x,y,z,w)
+# and the 32 edges joining vertices that differ in exactly one axis.
+_TESS_EDGES = [(i, j) for i in range(16) for j in range(i + 1, 16)
+               if bin(i ^ j).count("1") == 1]
+_RIM_GOLD = (196, 162, 48)
+
+
+def _tess_lines(a, b, size):
+    """A tesseract projected 4D->3D->2D, rotating through the x-w and y-z planes
+    by a, b. Returns its 32 edges as 2D segments centred on 0. The double
+    perspective divide (on w then z) is what gives it the 'wrong space' churn."""
+    ca, sa = math.cos(a), math.sin(a)
+    cb, sb = math.cos(b), math.sin(b)
+    pts = []
+    for idx in range(16):
+        x = -1.0 if not (idx & 1) else 1.0
+        y = -1.0 if not (idx & 2) else 1.0
+        z = -1.0 if not (idx & 4) else 1.0
+        w = -1.0 if not (idx & 8) else 1.0
+        x2 = x * ca - w * sa
+        w2 = x * sa + w * ca
+        y2 = y * cb - z * sb
+        z2 = y * sb + z * cb
+        f = 1.6 / (2.6 - w2 * 0.6)          # 4D -> 3D
+        X, Y, Z = x2 * f, y2 * f, z2 * f
+        g = 1.6 / (2.6 - Z * 0.6)           # 3D -> 2D
+        pts.append((X * g * size, Y * g * size))
+    return [(pts[i], pts[j]) for (i, j) in _TESS_EDGES]
+
+
+def _tess_variants(t, size, k):
+    """`k` small additive-gold tesseract stamps at staggered rotations (drawn on
+    black so BLEND_RGB_ADD ignores the background). Computed per frame -- cheap
+    (a handful of 32-edge wireframes) and they all keep turning."""
+    out = []
+    for v in range(k):
+        a = t * 1.25 + v * 0.9
+        b = t * 0.85 + v * 0.55
+        surf = pygame.Surface((size, size))
+        surf.fill((0, 0, 0))
+        h = size / 2
+        for (p, q) in _tess_lines(a, b, size * 0.40):
+            pygame.draw.line(surf, _RIM_GOLD, (p[0] + h, p[1] + h),
+                             (q[0] + h, q[1] + h), 1)
+        out.append(surf)
+    return out
+
+
+def _draw_rim(screen, quad, t, intensity):
+    """A gapless, buzzing rim of rotating tesseracts around the rift's opening
+    (the black-gold 4D edge). Sides + top at full intensity, a FAINT bottom sill
+    so the frame fully encircles and the rift reads as wholly THERE, not cut
+    into the floor. Dense overlap = no gaps; per-stamp jitter = the buzz."""
+    size = 16
+    half = size // 2
+    k = max(0.25, min(1.4, intensity))
+    variants = _tess_variants(t, size, 5)
+    if k != 1.0:
+        variants = [s.copy() for s in variants]
+        for s in variants:
+            s.fill((int(255 * k),) * 3, special_flags=pygame.BLEND_RGB_MULT)
+    faint = [s.copy() for s in variants]                # the bottom sill
+    for s in faint:
+        s.fill((115, 115, 115), special_flags=pygame.BLEND_RGB_MULT)
+    bl, br, tr, tl = quad
+    edges = [(bl, br, faint), (br, tr, variants),
+             (tr, tl, variants), (tl, bl, variants)]
+    rng = random.Random(int(t * 90) & 0xffff)
+    vi = 0
+    for (p, q, vs) in edges:
+        ln = math.hypot(q[0] - p[0], q[1] - p[1])
+        steps = max(1, int(ln / (size * 0.38)))         # overlap -> no gaps
+        for i in range(steps + 1):
+            f = i / steps
+            x = p[0] + (q[0] - p[0]) * f + rng.uniform(-2.0, 2.0)
+            y = p[1] + (q[1] - p[1]) * f + rng.uniform(-2.0, 2.0)
+            screen.blit(vs[vi % len(vs)], (int(x - half), int(y - half)),
+                        special_flags=pygame.BLEND_RGB_ADD)
+            vi += 1
 
 
 # ---- the camera-respecting view through the rift -----------------------------
@@ -200,8 +281,8 @@ def draw_portal(screen, portal, cam_x, cam_y, camera, t):
         except Exception:
             _blit_tear(screen, _flat_peek(target, portal["anchor"], charge),
                        s0, s1, rise)
-        _tear_glow(screen, s0, s1, rise, pulse * 0.9)
-        _draw_seam(screen, s0, s1, t)
+        _tear_glow(screen, s0, s1, rise, pulse * 0.7)
+        _draw_rim(screen, quad, t, pulse)                  # the buzzing 4D edge
         return
     # Flat (pitch 0): stand the old peek panel up from the host tile.
     cx, cy = int(fx - cam_x), int(fy - cam_y)
