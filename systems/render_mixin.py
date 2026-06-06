@@ -498,6 +498,40 @@ class RenderMixin:
         t = pygame.time.get_ticks() / 1000.0
         draw_portal(self.screen, p, self.cam_x, self.cam_y, self.camera, t)
 
+    def _draw_idle_king(self):
+        """The idle state: the King at full bloom far up THE road, indifferent.
+        A receding horizon render (set by _tick_idle_king), never a scene entity
+        -- you can't reach him. Drawn SOLID (not alpha-blended -- translucency
+        washed out his gloss + maws) so he reads as the King, just distant; the
+        night vignette is what keeps him from popping like a poster."""
+        ik = getattr(self, "_idle_king", None)
+        if not ik or self.player is None:
+            return
+        from rendering.king_unfold import draw_king_unfold
+        sx, sy = self.camera.project(ik[0], ik[1])
+        h = self.screen.get_height()
+        w = self.screen.get_width()
+        # He stays OUT of frame until the car has fully left it: while the dead
+        # car is anywhere on screen (ahead, passing, or dropping off behind you)
+        # the King is withheld, so you only meet him once the last landmark is
+        # gone and it is just the endless road. The car sprite stands ~2 tiles,
+        # so pad the edge check around its anchor.
+        car = getattr(self.scene, "_car_pos", None)
+        if car is not None:
+            csx, csy = self.camera.project(car[0], car[1])
+            if -80 <= csx <= w + 80 and -60 <= csy <= h + 56:
+                return
+        if sy < -120 or sy > h + 120:
+            return                       # fully off the top: nothing to draw
+        sy -= int(TILT_LIFT.get("yellow_king", TILT_ACTOR_STAND)
+                  * math.sin(self.camera.pitch))
+        t = pygame.time.get_ticks() / 1000.0
+        # He everts in place -- alive at the vanishing point, never a poster.
+        lean = (math.sin(t * 0.8) * 0.14, -0.18)
+        draw_king_unfold(self.screen, int(sx), int(sy), t,
+                         threat=IDLE_KING_THREAT, scale=IDLE_KING_SCALE,
+                         to_player=(0.0, 1.0), birth=1.0, lean=lean)
+
     def _draw_death_screen(self):
         """Render the active death card over everything. King = the
         furnace of masks (sprites.draw_king_death) stamped CARCOSA;
@@ -649,6 +683,7 @@ class RenderMixin:
             self.scene.draw(self.screen, self.cam_x, self.cam_y, self.camera)
         self._draw_folds()
         self._draw_portal()
+        self._draw_idle_king()
         # The unified scene-actor draw list (CAMERA.md Phase 5). Each entry is
         # (depth, draw_callable). At pitch 0 it stays in INSERTION ORDER (==the
         # legacy item->npc->enemy->projectile->player order) and is drawn

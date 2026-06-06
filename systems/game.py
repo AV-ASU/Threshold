@@ -228,6 +228,9 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         # torn (None otherwise), and the pinned-100% charge timer toward it.
         self._portal = None
         self._portal_charge_t = 0.0
+        # The idle state's receding horizon King (world x,y on THE road, or
+        # None). Recomputed each tick by _tick_idle_king; drawn faint + far.
+        self._idle_king = None
 
         # ---- THRESHOLD: cultists, the curse, and Watchers ----
         # Regular cultists roam the outdoor scenes (chaser AI: scout,
@@ -352,6 +355,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         self._king_dread = 0.0
         self._portal = None
         self._portal_charge_t = 0.0
+        self._idle_king = None
         # Cultists, the curse, and Watchers
         self._cursed = False
         self._watchers = []

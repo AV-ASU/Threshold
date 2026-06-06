@@ -279,31 +279,47 @@ def build_arrival_road():
     SPREAD escape: the engine catches only with the Sign, and then the looping
     road finally lets a car through (NARRATIVE §1/§6).
 
-    The road is deliberately TALLER than the camera view (40 tiles) so the
-    wrap never shows its own repeat in a single frame -- you don't notice the
-    loop until you've walked far enough for your own car to come back around.
-    The PATH (the E-W route) sits mid-scene; the car a little north of it."""
-    W, H = 15, 40
-    PATH = (19, 20, 21)                     # the E-W dirt path rows (mid-scene)
+    The road is deliberately TALLER than the camera view so the wrap never
+    shows its own repeat in a single frame -- you don't notice the loop until
+    you've walked far enough for your own car to come back around. The E-W PATH
+    sits in the SOUTH third; NORTH of it is a long straight runway toward the
+    idle King at the vanishing point (KING_PROMPT idle state): he hangs a fixed
+    gap up the road, so running the runway never closes on him -- the road grows
+    between you. The car sits just north of the path."""
+    W, H = 15, 80
+    PATH = (H - 14, H - 13, H - 12)     # the E-W dirt path rows (deep south)
+    PMID = PATH[1]                       # the path's centre row (the mouths)
     floor_rows = []
     for y in range(H):
         row = ["g"] * W
-        for x in (6, 7, 8):                 # N-S gravel road
-            row[x] = "d"
-        if y in PATH:                       # E-W dirt path (the real route)
+        if y in PATH:                       # E-W DIRT path (the real route)
             for x in range(W):
                 row[x] = "d"
+        for x in (6, 8):                    # N-S PAVED road lanes (runs through
+            row[x] = "P"                    # the dirt crossing, unbroken)
+        row[7] = "Y"                        # centre lane + dashed centreline
         floor_rows.append("".join(row))
+    # Pine forest walls the road (same as the intro drive). RAGGED, not a ruled
+    # line: each row's inner edge wavers a tile or two and the odd lone pine
+    # stands out into the shoulder, so the treeline reads as woods, not a fence.
+    # The road (cols 6-8) and the car/sign lane (cols 9-10) stay clear.
+    forest_rng = random.Random(90210)
     objects_l = []
     for y in range(H):
         row = ["."] * W
-        if y not in PATH:                   # corn shoulders, cut by the path
-            row[0] = "C"
-            row[W - 1] = "C"
+        if y not in PATH:
+            for x in range(0, 2 + forest_rng.randint(0, 2)):       # west wall
+                row[x] = "T"
+            for x in range(W - 2 - forest_rng.randint(0, 2), W):   # east wall
+                row[x] = "T"
+            if forest_rng.random() < 0.12:                          # lone pine W
+                row[forest_rng.choice((3, 4))] = "T"
+            if forest_rng.random() < 0.12:                          # lone pine E
+                row[forest_rng.choice((11, 12))] = "T"
         objects_l.append(row)
     for dy in (-1, 0, 1):                   # path mouths W (lane) + E (yard)
-        objects_l[20 + dy][0] = "a"
-        objects_l[20 + dy][W - 1] = "e"
+        objects_l[PMID + dy][0] = "a"
+        objects_l[PMID + dy][W - 1] = "e"
     objects = ["".join(r) for r in objects_l]
     sc = Scene("arrival_road", floor_rows, objects, music="outside")
     # The road never ends: walk north or south and the same stretch wraps
@@ -311,25 +327,33 @@ def build_arrival_road():
     sc.wrap_y = True
     sc.add_exit("a", "country_lane", "from_arrival_road")
     sc.add_exit("e", "our_house_area", "from_arrival_road")
-    sc.set_spawn("default", 7, 20)
-    sc.set_spawn("from_our_house_area", W - 2, 20)   # walked WEST from the yard
-    sc.set_spawn("from_country_lane", 1, 20)         # walked EAST from town side
+    sc.set_spawn("default", 7, PMID)
+    sc.set_spawn("from_our_house_area", W - 2, PMID)   # walked WEST from the yard
+    sc.set_spawn("from_country_lane", 1, PMID)         # walked EAST from town side
 
-    # The PI's car, dead on the WEST shoulder at the crossroads -- OFF the
-    # driving lanes (cols 6-8), so the looping road stays walkable both ways
-    # and you pass the car each time round. Solid footprint under the sprite;
-    # the interact anchor sits at its road-facing edge so you trigger it from
-    # the road. Reaching it with the Sign fires SPREAD; without it the engine
-    # never catches.
-    car_tx, car_ty = 4, 16                            # west shoulder, N of path
+    # Same road as the intro drive: the "Entering Brimley" sign on the east
+    # shoulder, and just AHEAD of it (north, the way the PI drove in) his own
+    # dead car. Off the driving lanes (cols 6-8) so the looping road stays
+    # walkable both ways and you pass both each time round.
+    sign_tx, sign_ty = 10, PMID - 4                    # east shoulder, by the path
+    sc.add_decoration(Decoration(sign_tx * TILE + 16, sign_ty * TILE + 16,
+                                 "town_sign", text="BRIMLEY"))
+    # The dead car a few tiles north of the sign -- seen from BEHIND (it died
+    # facing up the road into town). Solid footprint under the sprite; the
+    # interact anchor sits at its road-facing (west) edge. The Sign fires
+    # SPREAD; without it the engine never catches.
+    car_tx, car_ty = 10, PMID - 9                      # east shoulder, N of sign
     car_x = car_tx * TILE + 16
     car_y = car_ty * TILE + 16
-    sc.add_decoration(Decoration(car_x, car_y, "player_car"))
-    sc._car_pos = ((car_tx + 1) * TILE + 16, car_y)   # east edge, by the road
+    # yaw -pi/2 aims the 3D car NORTH, up the road into town (default yaw 0 left
+    # it broadside across the lane -- you saw its whole flank + all four tyres).
+    sc.add_decoration(Decoration(car_x, car_y, "player_car", yaw=-math.pi / 2))
+    sc._car_pos = ((car_tx - 1) * TILE + 16, car_y)   # west edge, by the road
     objs = [list(r) for r in sc.objects]
-    for cx in (car_tx - 1, car_tx, car_tx + 1):       # cols 3-5 (the shoulder)
-        if 0 <= cx < sc.w:
-            objs[car_ty][cx] = "X"
+    for cx in (car_tx - 1, car_tx):                   # footprint runs N-S now
+        for cy in (car_ty - 1, car_ty, car_ty + 1):   # (the car points up-road)
+            if 0 <= cx < sc.w and 0 <= cy < sc.h:
+                objs[cy][cx] = "X"
     sc.objects = objs
 
     def _road_interact(game):
@@ -359,10 +383,23 @@ def build_arrival_road():
         if ty_ in PATH:                     # keep the path clear
             continue
         sc.add_decoration(Decoration(gx, gy, "grass_tuft"))
-    sc.add_decoration(Decoration(9 * TILE + 8, 14 * TILE + 22, "dead_crow"))
-    sc.add_decoration(Decoration(5 * TILE + 16, 27 * TILE + 16, "creepy_tree"))
-    sc.add_decoration(Decoration(10 * TILE + 16, 9 * TILE + 16, "missing_flyer"))
-    sc.add_decoration(Decoration(9 * TILE + 8, 31 * TILE + 22, "dead_crow"))
+    sc.add_decoration(Decoration(5 * TILE + 8, 28 * TILE + 22, "dead_crow"))
+    sc.add_decoration(Decoration(4 * TILE + 16, 22 * TILE + 16, "missing_flyer"))
+    sc.add_decoration(Decoration(5 * TILE + 8, 12 * TILE + 22, "dead_crow"))
+    # Extra leafless trees just inside the WEST shoulder up the long runway --
+    # under tilt they stand as billboards, deepening the forest wall and giving
+    # the approach toward the idle King its perspective + scroll read (the
+    # treadmill to the vanishing point). The east shoulder holds the sign + car.
+    tree_rng = random.Random(7777)
+    ry = 3
+    while ry < PMID - 4:
+        # irregular spacing + wandering column + jitter so they never line up;
+        # east side only well north of the car/sign lane.
+        col = tree_rng.choice((3, 4, 5) if ry > PMID - 16 else (3, 4, 5, 11, 12))
+        sc.add_decoration(Decoration(col * TILE + tree_rng.randint(2, 30),
+                                     ry * TILE + tree_rng.randint(2, 30),
+                                     "creepy_tree"))
+        ry += tree_rng.randint(3, 8)
     sc.hide_spots = []
 
     def _road_update(game, scene, dt):

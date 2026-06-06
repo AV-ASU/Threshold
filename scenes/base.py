@@ -109,6 +109,11 @@ FLOOR_DEFS = {
     # outdoor scene (replaces the round-4 stone corridor). Soft ochre so
     # it reads as packed dirt next to grass without going full road.
     "d": {"color": (96, 76, 52),   "step": "step_grass"},
+    # Paved asphalt -- THE road (arrival_road): the one paved road in the game,
+    # west of the start, where the King idles. Cold grey aggregate. "Y" is the
+    # centre lane and paints the faded dashed centreline. Other roads stay dirt.
+    "P": {"color": (44, 42, 47),   "step": "step_stone"},
+    "Y": {"color": (44, 42, 47),   "step": "step_stone"},
     "x": {"color": (28, 22, 30),   "step": "step_stone"},  # basement floor
     # Smooth flat grey stone -- NO texture at all (no mottle, grout, jitter, or
     # macro shadow). The Threshold apron: an impossibly even, man-made-looking
@@ -859,6 +864,27 @@ def draw_floor(surf, ch, rx, ry, tx, ty):
             pygame.draw.rect(surf, (66, 44, 28),
                              (rx + (seed * 3 % 22) + 4,
                               ry + (seed * 7 % 22) + 4, 4, 3))
+    elif ch in ("P", "Y"):
+        # Paved asphalt -- cold grey aggregate speckle, the odd hairline crack
+        # and a tar-dark patch. "Y" is the centre lane: it paints the faded
+        # dashed centreline so the run of tiles reads as one paved road.
+        seed = tx * 31 + ty * 17
+        for i in range(4):
+            sx = rx + ((seed * (i + 1)) % 26) + 3
+            sy = ry + ((seed * (i + 2)) % 26) + 3
+            g = 56 + (seed * (i + 1)) % 18
+            pygame.draw.rect(surf, (g, g, g + 4), (sx, sy, 1, 1))    # aggregate
+        if seed % 6 == 0:                          # tar-dark patch
+            pygame.draw.rect(surf, (30, 29, 33),
+                             (rx + (seed * 3 % 22) + 3,
+                              ry + (seed * 5 % 22) + 3, 4, 3))
+        if seed % 7 == 0:                          # hairline crack
+            cx, cy = rx + (seed % 18) + 5, ry + 3
+            pygame.draw.line(surf, (24, 23, 26), (cx, cy),
+                             (cx + (seed % 6) - 3, cy + TILE - 6), 1)
+        if ch == "Y" and (ty % 2 == 0):            # faded dashed centreline
+            pygame.draw.rect(surf, (150, 138, 86),
+                             (rx + TILE // 2 - 1, ry + 6, 2, TILE - 12))
     elif ch == ";":
         # Marsh mud -- wet, churned ground. Dark puddle blotches with a
         # cold standing-water glint, dead reeds, hairline mud cracks.

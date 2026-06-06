@@ -255,6 +255,24 @@ PORTAL_CHARGE_TIME = 5.5     # s of pinned 100% before the tear (5-6s window)
 PORTAL_CROSS_DIST = 26.0     # px; step into the rift to juke through it
 PORTAL_EMERGE_GRACE = 0.8    # s after the tear before his body steps through
 
+# The idle state (KING_PROMPT): before the 3-evidence gate the King stands at
+# full bloom far up THE road (arrival_road), barely visible by distance,
+# indifferent, unreachable. He is NOT a scene entity -- no collision, no
+# interaction, no catch -- just a receding horizon render: he hangs a fixed gap
+# NORTH of the player, so running up the treadmill road never closes on him
+# (the road grows between you). Only drawn in arrival_road while not armed.
+IDLE_KING_ROW = 1            # he stands at a FIXED haunt this many tiles from the
+                             # road's north end -- you walk UP into him. So far
+                             # north he only ENTERS the frame as the car LEAVES
+                             # it (no co-frame), and being fixed he scrolls in as
+                             # a sliver and grows (no pop) -- you walk into him.
+IDLE_KING_SCALE = 80.0       # distant but readable as the King at the road's end
+# Threat fed to the idle render. NOT a hunt state -- purely how much of the form
+# resolves: maws only draw above 0.45 and eyes/gold-gloss/eversion strengthen
+# with it, so keep it past the maw threshold so he reads as the King, not a
+# dark lump. Stays under 0.8 (no player-reaching limbs -- he is indifferent).
+IDLE_KING_THREAT = 0.6
+
 # Fold pursuit (Stage 3): a cultist hot on the player's heels follows them
 # through a hidden FOLD (a direction-gated exit) "a beat behind" -- it
 # re-emerges at the entry seam shortly after the player. Mundane exits

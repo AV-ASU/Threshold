@@ -67,6 +67,23 @@ class KingRoamMixin:
             "enter_at": "far",         # where the body materialises (away from you)
         }
 
+    # ---- the idle state (the receding horizon King) ----------------------
+    def _tick_idle_king(self):
+        """Before the gate, place the idle King a fixed gap NORTH of the player
+        on THE road -- a receding horizon render (not a scene entity): running
+        up the treadmill never closes on him. Cleared once armed or off-road;
+        the renderer reads _idle_king (world x, y) or None."""
+        rk = self._roam_king
+        if (rk["armed"] or self.scene is None or self.player is None
+                or self.scene.key != KING_ROAM_START):
+            self._idle_king = None
+            return
+        # A FIXED haunt near the road's north end (not player-relative): he
+        # scrolls into frame naturally as you walk up and you walk INTO him --
+        # no pop. Placed far enough north that he never co-frames the car.
+        self._idle_king = (7 * TILE + TILE // 2,
+                           IDLE_KING_ROW * TILE + TILE // 2)
+
     # ---- the graph -------------------------------------------------------
     def _king_roam_graph(self):
         """scene -> set(adjacent surface scenes) reachable by a passage/fold.
@@ -121,6 +138,7 @@ class KingRoamMixin:
         _tick_king when KING_ROAM is set."""
         if self.scene is None or self.player is None:
             return
+        self._tick_idle_king()
         rk = self._roam_king
         if self.scene.key in KING_ROAM_SCENES:
             rk["last_surface"] = self.scene.key

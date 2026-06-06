@@ -2601,55 +2601,41 @@ class Decoration:
         pygame.draw.circle(surf, moss, (x - w // 4, b - 2), 2)
 
     def _draw_player_car(self, surf, x, y):
-        """A faded-red 1990s sedan, parked. Approx 3 tiles wide, 1.5
-        tiles tall -- properly sized so it reads as a real vehicle
-        the player physically can't squeeze past. Pair with a solid
-        'X' tile under it so collision matches the silhouette."""
+        """The PI's faded-red sedan, dead on the shoulder, drawn TOP-DOWN (the
+        game's overhead read) pointing NORTH up the road into town -- roof,
+        glass and all four tyres seen from above. ~1.5 tiles wide, ~3 long.
+        Pair with a solid 'X' footprint so collision matches."""
         body = (140, 60, 60)
-        body_dark = (80, 32, 32)
-        glass = (140, 170, 200)
-        tire = (20, 18, 22)
-        chrome = (200, 200, 210)
-        # Lower body
-        pygame.draw.rect(surf, body, (x - 28, y - 4, 56, 16))
-        pygame.draw.rect(surf, body_dark, (x - 28, y - 4, 56, 16), 1)
-        # Greenhouse / roof
-        pygame.draw.rect(surf, body, (x - 18, y - 16, 36, 12))
-        pygame.draw.rect(surf, body_dark, (x - 18, y - 16, 36, 12), 1)
-        # Windshield + rear window slants
-        pygame.draw.polygon(surf, glass, [
-            (x - 18, y - 4), (x - 14, y - 14),
-            (x - 6, y - 14), (x - 6, y - 4),
-        ])
-        pygame.draw.polygon(surf, glass, [
-            (x + 6, y - 4), (x + 6, y - 14),
-            (x + 14, y - 14), (x + 18, y - 4),
-        ])
-        # Side window
-        pygame.draw.rect(surf, glass, (x - 5, y - 14, 10, 11))
-        pygame.draw.rect(surf, body_dark, (x - 5, y - 14, 10, 11), 1)
-        # Door seam (centre split)
-        pygame.draw.line(surf, body_dark, (x, y - 3), (x, y + 10), 1)
-        # Roof rack with rolled tarp
-        pygame.draw.line(surf, chrome, (x - 18, y - 16), (x + 18, y - 16), 1)
-        pygame.draw.rect(surf, (110, 80, 60), (x - 14, y - 19, 28, 3))
-        pygame.draw.line(surf, (60, 40, 25),
-                         (x - 14, y - 17), (x + 14, y - 17), 1)
-        # Headlights
-        pygame.draw.rect(surf, (220, 220, 180), (x + 27, y - 1, 2, 4))
-        pygame.draw.rect(surf, (220, 220, 180), (x + 27, y + 5, 2, 4))
-        # Tail lights
-        pygame.draw.rect(surf, (200, 30, 30), (x - 29, y - 1, 2, 4))
-        pygame.draw.rect(surf, (200, 30, 30), (x - 29, y + 5, 2, 4))
-        # Bumpers (chrome)
-        pygame.draw.rect(surf, chrome, (x - 30, y + 10, 60, 2))
-        # Wheels
-        pygame.draw.circle(surf, tire, (x - 19, y + 12), 5)
-        pygame.draw.circle(surf, tire, (x + 19, y + 12), 5)
-        pygame.draw.circle(surf, chrome, (x - 19, y + 12), 2)
-        pygame.draw.circle(surf, chrome, (x + 19, y + 12), 2)
-        # Antenna
-        pygame.draw.line(surf, chrome, (x + 16, y - 16), (x + 18, y - 24), 1)
+        body_dark = (78, 30, 30)
+        body_lit = (172, 86, 82)
+        glass = (64, 80, 98)
+        tire = (22, 20, 24)
+        rust = (104, 80, 54)
+        # Four tyres at the corners, poking out the sides (top-down view).
+        for wx, wy in ((x - 15, y - 17), (x + 10, y - 17),
+                       (x - 15, y + 7), (x + 10, y + 7)):
+            pygame.draw.rect(surf, tire, (wx, wy, 5, 10), border_radius=2)
+        # Body, longer along Y because it points up the road.
+        pygame.draw.rect(surf, body, (x - 13, y - 25, 26, 50), border_radius=6)
+        pygame.draw.rect(surf, body_dark, (x - 13, y - 25, 26, 50), 1,
+                         border_radius=6)
+        # Hood seam (north) + a door seam down each side.
+        pygame.draw.line(surf, body_dark, (x - 11, y - 22), (x + 11, y - 22), 1)
+        pygame.draw.line(surf, body_dark, (x - 13, y + 1), (x + 13, y + 1), 1)
+        # Windshield (front/north) + rear window (back/south).
+        pygame.draw.rect(surf, glass, (x - 10, y - 10, 20, 7))
+        pygame.draw.rect(surf, glass, (x - 10, y + 11, 20, 6))
+        # Roof between the glass.
+        pygame.draw.rect(surf, body_lit, (x - 10, y - 2, 20, 12))
+        # Headlights (north) + tail lights (south).
+        pygame.draw.rect(surf, (224, 222, 180), (x - 11, y - 25, 4, 3))
+        pygame.draw.rect(surf, (224, 222, 180), (x + 7, y - 25, 4, 3))
+        pygame.draw.rect(surf, (196, 40, 36), (x - 11, y + 22, 4, 3))
+        pygame.draw.rect(surf, (196, 40, 36), (x + 7, y + 22, 4, 3))
+        # Side mirrors + a rust scar on the roof -- it has sat a while.
+        pygame.draw.rect(surf, body_dark, (x - 16, y - 7, 3, 3))
+        pygame.draw.rect(surf, body_dark, (x + 13, y - 7, 3, 3))
+        pygame.draw.rect(surf, rust, (x - 5, y + 2, 4, 7))
 
     def _draw_mirror(self, surf, x, y):
         """Wall-mounted mirror with a slim wood frame. The reflection
