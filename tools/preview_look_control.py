@@ -92,28 +92,27 @@ def render(scene, lc, px, py, label, sub):
 
 
 def script(scene, px, py):
-    """Yield (label, sub, move_heading|None, aim_heading) per frame."""
+    """Yield (label, sub, turn_delta, aim_heading|None) per frame -- tank model:
+    turn_delta is A/D steering (radians this frame); aim is the free cursor."""
     base = math.pi / 2          # facing 'south' in world == default
+    step = math.radians(2.5)    # per-frame turn while 'holding' A/D
     # 1. free aim: cursor swings right, the gun reticle follows, camera holds
     for i in range(26):
         a = base + math.radians(80) * (i / 25)
-        yield ("FREE AIM", "cursor moves -> reticle only, camera holds", None, a)
-    # 2. walk a new direction: the camera swings to trail your travel
+        yield ("FREE AIM", "cursor moves -> reticle only, camera holds", 0.0, a)
+    # 2. hold D: the heading (and the camera behind it) turn right
     for i in range(34):
-        m = base + math.radians(90)
-        yield ("WALK TURNS CAM", "travel right -> camera trails movement", m,
-               base + math.radians(80))
-    # 3. keep walking that way -> camera settled behind travel
-    for i in range(24):
-        m = base + math.radians(90)
-        yield ("SETTLED", "camera now behind the walk direction", m, None)
-    # 4. aim back across while still walking (decoupled aim vs travel)
+        yield ("TURN (D)", "A/D steer the heading + camera", step, base + math.radians(80))
+    # 3. settle: stop turning, camera holds the new heading
+    for i in range(20):
+        yield ("SETTLED", "released -> camera holds the heading", 0.0, None)
+    # 4. aim across the new heading (decoupled aim vs facing)
     for i in range(40):
-        a = base + math.radians(90) - math.radians(120) * (i / 39)
-        yield ("AIM != MOVE", "aim left while walking right", base + math.radians(90), a)
-    # 5. stop -> camera holds where it settled
+        a = base + math.radians(80) - math.radians(150) * (i / 39)
+        yield ("AIM != FACE", "aim left while facing right", 0.0, a)
+    # 5. hold A: turn back the other way
     for i in range(18):
-        yield ("STOP", "standing still -> camera holds", None, base)
+        yield ("TURN (A)", "steer back left", -step, base)
 
 
 def main():
@@ -125,12 +124,14 @@ def main():
     # strip: one frame per phase
     phases = {}
     frames = []
-    for label, sub, move_h, aim in script(scene, px, py):
-        lc.update(move_heading=move_h, aim_heading=aim)
+    for label, sub, turn_d, aim in script(scene, px, py):
+        if turn_d:
+            lc.turn(turn_d)
+        lc.update(aim_heading=aim)
         frames.append(render(scene, lc, px, py, label, sub))
         phases.setdefault(label, frames[-1])
     # contact strip of the 5 phases
-    keys = ["FREE AIM", "WALK TURNS CAM", "SETTLED", "AIM != MOVE", "STOP"]
+    keys = ["FREE AIM", "TURN (D)", "SETTLED", "AIM != FACE", "TURN (A)"]
     strip = pygame.Surface((CELL[0] * len(keys), CELL[1]))
     strip.fill((6, 6, 8))
     for i, k in enumerate(keys):

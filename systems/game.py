@@ -378,10 +378,6 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         # Fold pursuit (Stage 3) -- see _note_fold_pursuit / _tick_fold_pursuit.
         self._fold_pursuer = None
         self._fold_pursuer_grace = 0.0
-        # Tilt look: the world heading the player is walking this frame (set by
-        # update_player, consumed by _update_look to swing the camera behind the
-        # travel). Transient, reset here so it never leaks across quit-to-title.
-        self._move_heading = None
         # Stillness + heartbeat
         self.stillness_t = 0.0
         self._delayed_audio = []
@@ -728,8 +724,8 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         return self._cam_pitch_target > 0.0
 
     def _update_look(self, dt):
-        """The camera trails the player's MOVEMENT (it swings to sit behind the
-        way you walk) while a free mouse cursor aims the gun. The mouse never
+        """The camera rides behind the player's HEADING (steered by A/D in
+        update_player) while a free mouse cursor aims the gun. The mouse never
         rotates the view. Runs only in the tilted view, mid-play."""
         if not (self._tilt_on() and self.state == "playing" and self.player):
             return
@@ -737,12 +733,10 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         mx, my = pygame.mouse.get_pos()
         wx, wy = self.camera.unproject(mx, my)
         aim = math.atan2(wy - self.player.y, wx - self.player.x)
-        move_heading = getattr(self, "_move_heading", None)
-        self.look.update(move_heading=move_heading, aim_heading=aim)
-        self._move_heading = None        # consumed; movement re-sets it next frame
+        self.look.update(aim_heading=aim)
         self.camera.yaw = self.look.cam_yaw
         # The gun + sprite face the cursor (free aim); the camera, separately,
-        # trails the body/travel direction set by update_player.
+        # rides behind the steered heading.
         ax, ay = self.look.aim_vec()
         self.player.facing = (ax, ay)
 
@@ -764,10 +758,24 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         # investigation pauses, not a panic-trap that punishes the
         # player for using cover.
         dx = dy = 0
-        if keys[pygame.K_a] or keys[pygame.K_LEFT]: dx -= 1
-        if keys[pygame.K_d] or keys[pygame.K_RIGHT]: dx += 1
-        if keys[pygame.K_w] or keys[pygame.K_UP]: dy -= 1
-        if keys[pygame.K_s] or keys[pygame.K_DOWN]: dy += 1
+        if self._tilt_on():
+            # Tank steering: A/D TURN the heading (and the camera that rides
+            # behind it); W/S drive FORWARD/back along that heading. The mouse
+            # is a free cursor that aims the gun, independent of travel.
+            turn = ((1.0 if keys[pygame.K_d] or keys[pygame.K_RIGHT] else 0.0)
+                    - (1.0 if keys[pygame.K_a] or keys[pygame.K_LEFT] else 0.0))
+            if turn:
+                self.look.turn(turn * TURN_RATE * dt)
+            fwd = ((1.0 if keys[pygame.K_w] or keys[pygame.K_UP] else 0.0)
+                   - (1.0 if keys[pygame.K_s] or keys[pygame.K_DOWN] else 0.0))
+            if fwd:
+                fx, fy = self.look.facing_vec()
+                dx, dy = fx * fwd, fy * fwd
+        else:
+            if keys[pygame.K_a] or keys[pygame.K_LEFT]: dx -= 1
+            if keys[pygame.K_d] or keys[pygame.K_RIGHT]: dx += 1
+            if keys[pygame.K_w] or keys[pygame.K_UP]: dy -= 1
+            if keys[pygame.K_s] or keys[pygame.K_DOWN]: dy += 1
         # Movement breaks explicit hide spots (those set
         # hide_origin so we can teleport the player back). Corn-
         # patch cover is *passive* -- the player walks through the
@@ -785,18 +793,10 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         if dx or dy:
             mag = math.hypot(dx, dy) or 1
             dx /= mag; dy /= mag
-            if self._tilt_on():
-                # Screen-relative movement: WASD are read in SCREEN space (W up
-                # the screen) and rotated into world space by the camera yaw, so
-                # W always walks "forward" into the view regardless of how the
-                # camera has swung. Inverts Camera.project's world->screen yaw
-                # (matches Camera.unproject). Stash the resulting world heading
-                # so _update_look swings the camera to trail your travel; the
-                # mouse aims the gun separately and never turns the view.
-                cy, sy = math.cos(self.camera.yaw), math.sin(self.camera.yaw)
-                dx, dy = dx * cy - dy * sy, dx * sy + dy * cy
-                self._move_heading = math.atan2(dy, dx)
-            else:
+            # In tilt mode (dx,dy) is already a world heading vector (W/S along
+            # the steered facing); the sprite faces the cursor, set by
+            # _update_look. Flat mode keeps raw WASD as the facing.
+            if not self._tilt_on():
                 self.player.facing = (dx, dy)
             self.player.walk_phase += dt * 12
             # Base speed is reduced by the threat meter (spatial

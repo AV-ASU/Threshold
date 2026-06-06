@@ -87,6 +87,10 @@ SEAMLESS_WORLD_SCENES = OUTDOOR_SCENES | {
 # the player stays comfortably on screen.
 CAM_LOOKAHEAD = 96
 
+# Tank-steering turn rate: world radians/sec the heading (and the camera that
+# rides behind it) rotates while A/D are held in the tilted view.
+TURN_RATE = 2.6
+
 # Oblique-camera tilt (CAMERA.md Phase 2). The tilt is the DEFAULT view;
 # F3 toggles back to the flat pitch-0 view (the legacy raster) and eases in.
 # pitch 0 = that flat fallback. TILT_PITCH_DEG is the locked ~55deg default.
@@ -254,11 +258,10 @@ PORTAL_EMERGE_GRACE = 0.8    # s after the tear before his body steps through
 # interaction, no catch -- just a receding horizon render: he hangs a fixed gap
 # NORTH of the player, so running up the treadmill road never closes on him
 # (the road grows between you). Only drawn in arrival_road while not armed.
-IDLE_KING_ROW = 1            # he stands at a FIXED haunt this many tiles from the
-                             # road's north end -- you walk UP into him. So far
-                             # north he only ENTERS the frame as the car LEAVES
-                             # it (no co-frame), and being fixed he scrolls in as
-                             # a sliver and grows (no pop) -- you walk into him.
+IDLE_KING_GAP = 13 * 32      # he hangs this many world px NORTH of the player
+                             # every tick. arrival_road is a wrap_y treadmill, so
+                             # the gap never closes however far you walk up -- a
+                             # receding horizon you can never reach or touch.
 IDLE_KING_SCALE = 80.0       # distant but readable as the King at the road's end
 # Threat fed to the idle render. NOT a hunt state -- purely how much of the form
 # resolves: maws only draw above 0.45 and eyes/gold-gloss/eversion strengthen

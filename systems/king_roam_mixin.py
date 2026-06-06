@@ -81,11 +81,13 @@ class KingRoamMixin:
                 or self.scene.key != KING_ROAM_START):
             self._idle_king = None
             return
-        # A FIXED haunt near the road's north end (not player-relative): he
-        # scrolls into frame naturally as you walk up and you walk INTO him --
-        # no pop. Placed far enough north that he never co-frames the car.
+        # The receding horizon: he hangs a FIXED GAP north of the player (recomputed
+        # every tick), centred on the road. arrival_road is a wrap_y treadmill, so
+        # walking up never closes the gap -- he is always the same distance ahead,
+        # distant and untouchable. Same coordinate frame as the player each tick,
+        # so no wrap-seam: a bare player.y - GAP renders straight up the road.
         self._idle_king = (7 * TILE + TILE // 2,
-                           IDLE_KING_ROW * TILE + TILE // 2)
+                           self.player.y - IDLE_KING_GAP)
 
     def _nearest_walkable(self, scene, x, y, rings=10):
         """Snap (x, y) to the nearest non-solid tile centre in `scene` (spiral

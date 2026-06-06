@@ -1,27 +1,26 @@
 """Look / heading control for the oblique camera (CAMERA.md Phase 3).
 
-The camera trails the player's MOVEMENT; the mouse is a free cursor that aims
-the gun, and never rotates the view.
+Tank steering: A/D turn the heading (and the camera that rides behind it); W/S
+drive forward/back along it. The mouse is a free cursor that aims the gun and
+never rotates the view.
 
 Model, updated per frame:
-  * `body` -- the heading the player is travelling. Eases toward the walk
-              direction, so the body (and the camera behind it) gently swing to
-              face where you go. Standing still, it holds.
+  * `body` -- the heading the player faces / travels. Turned by A/D (the game
+              calls turn()); the camera sits behind it. W/S move along it.
   * `aim`  -- the free look/aim heading: the world direction from the player to
               the cursor. The gun fires along it and the sprite faces it. It is
-              independent of the body, so you can walk one way and aim another.
+              independent of the body, so you can drive one way and aim another.
   * `cam_yaw` -- the world rotation fed to Camera.yaw. Sits directly behind the
-              body (body + pi/2, so travel reads up the screen). Eased, never
-              snaps. The mouse does NOT feed into it.
+              body (body + pi/2, so the heading reads up the screen). Eased so a
+              turn glides rather than snaps. The mouse does NOT feed into it.
 
-Pure + headless-testable: feed it a move heading + an aim heading, read back
-cam_yaw / body / aim. The live game maps mouse -> aim via Camera.unproject.
+Pure + headless-testable: turn() it / feed an aim heading, read back cam_yaw /
+body / aim. The live game maps mouse -> aim via Camera.unproject.
 """
 import math
 
-# Tuning (eased per-frame fractions).
-BODY_EASE = 0.09                # how fast the body swings toward the walk dir
-YAW_EASE = 0.14                 # how gently cam_yaw trails behind the body
+# Tuning.
+YAW_EASE = 0.25                 # how tightly cam_yaw tracks behind the heading
 
 
 def wrap(a):
@@ -31,7 +30,7 @@ def wrap(a):
 
 class LookController:
     def __init__(self, heading=math.pi / 2):
-        self.body = wrap(heading)        # travel facing (radians)
+        self.body = wrap(heading)        # heading / travel facing (radians)
         self.aim = wrap(heading)         # free cursor aim heading (radians)
         # start the camera already settled behind the facing
         self.cam_yaw = wrap(self.body + math.pi / 2)
@@ -42,20 +41,14 @@ class LookController:
     def aim_vec(self):
         return (math.cos(self.aim), math.sin(self.aim))
 
-    def update(self, move_heading=None, aim_heading=None):
-        """Advance one frame.
+    def turn(self, d):
+        """Rotate the heading by `d` radians (A/D steering)."""
+        self.body = wrap(self.body + d)
 
-          move_heading -- world heading the player is WALKING this frame (None
-              when standing). The body eases toward it and the camera trails
-              behind, so the view swings to sit behind your travel. This is the
-              ONLY thing that turns the camera.
-          aim_heading  -- world heading to the cursor (the free gun aim). Set
-              straight onto `aim`; it never moves the camera.
-
-        Returns the eased cam_yaw."""
-        if move_heading is not None:
-            self.body = wrap(self.body
-                             + wrap(move_heading - self.body) * BODY_EASE)
+    def update(self, aim_heading=None):
+        """Advance one frame: set the free aim and ease the camera to sit behind
+        the heading. `aim_heading` is the world heading to the cursor (the gun
+        aim); it never moves the camera. Returns the eased cam_yaw."""
         if aim_heading is not None:
             self.aim = wrap(aim_heading)
         target = self.body + math.pi / 2
