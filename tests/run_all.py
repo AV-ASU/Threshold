@@ -19,7 +19,7 @@ os.environ.setdefault("SDL_AUDIODRIVER", "dummy")
 _ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # Order: cheapest/most-fundamental first.
-SUITES = ["smoke", "flow", "fold_pursuit", "render_smoke"]
+SUITES = ["smoke", "flow", "fold_pursuit", "king_roam", "render_smoke"]
 
 
 def main():

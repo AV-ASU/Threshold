@@ -114,6 +114,9 @@ class InfestationMixin:
         n = ASHFALL_BY_STAGE.get(stage, 0)
         if key in UNDERGROUND_SCENES:
             n = int(n * ASHFALL_SOURCE_MUL) or (1 if stage == 0 else 0)
+        # The roaming King's approach thickens the air: a tell of His nearness
+        # that builds as he closes (full in your room, partial one room away).
+        n += int(getattr(self, "_king_dread", 0.0) * KING_DREAD_ASH)
         return min(ASHFALL_MAX, n)
 
     def _spawn_ash_mote(self, seeded_y=False):

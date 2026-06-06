@@ -388,8 +388,17 @@ class NPC:
         self._step_toward(self._scout_target, dt, scene, navigate=True)
 
     def _yk_update(self, dt, scene, player):
-        pdx = player.x - self.x
-        pdy = player.y - self.y
+        # The roaming apex (KING_ROAM) steers toward a target the Game sets:
+        # the live player while HUNTING, a last-seen / wander point while
+        # SEARCHING (so he doesn't magically home onto a hidden player). With
+        # no override he chases the player, the legacy behaviour.
+        tgt = getattr(self, "_hunt_target", None)
+        if tgt is not None:
+            pdx = tgt[0] - self.x
+            pdy = tgt[1] - self.y
+        else:
+            pdx = player.x - self.x
+            pdy = player.y - self.y
         desired = math.atan2(pdy, pdx)
         # Birth: the King erupts from a cult member over ~1.2s before it
         # can move; _birth ramps 0->1 and the renderer plays the
@@ -419,9 +428,15 @@ class NPC:
         self._yk_last_pos = (self.x, self.y)
         nx = self.x + math.cos(head) * step
         ny = self.y + math.sin(head) * step
+        if getattr(self, "_phase", False):
+            # The roaming apex: a 4D thing walls can't stop. He paths the floor
+            # toward his target like anything else, but ignores collision -- where
+            # his bulk overlaps a wall he simply exists inside it. Nothing to snag
+            # on, so he never gets stuck (KING_ROAM rework).
+            self.x, self.y = nx, ny
         # It floats, but doesn't pass through walls: take the full step
         # if clear, else slide along whichever axis is open.
-        if not scene.is_solid_at(nx, ny, ignore=self):
+        elif not scene.is_solid_at(nx, ny, ignore=self):
             self.x, self.y = nx, ny
         elif not scene.is_solid_at(nx, self.y, ignore=self):
             self.x = nx
@@ -429,7 +444,7 @@ class NPC:
             self.y = ny
         # Pressed against a wall with no progress: swing the heading so
         # it arcs around the obstacle instead of grinding into it.
-        if self._yk_stuck_t > 0.5:
+        if not getattr(self, "_phase", False) and self._yk_stuck_t > 0.5:
             self._yk_head = (head + 2.2 * dt) % (2 * math.pi)
         # Advance the gait phase with distance covered so the run cycle
         # matches the King's speed and freezes when it isn't moving.

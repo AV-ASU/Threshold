@@ -210,6 +210,37 @@ VIS_FLOOR_TOTAL_CAP = 0.92     # summed floor stays just under the King (1.0)
 CULT_REGULARS = 2              # roaming cultists kept per cult scene
 CULT_TOPUP_INTERVAL = 8.0      # seconds between cultist (re)spawns
 
+# ---- The roaming King (KING_PROMPT rework) -----------------------------
+# The apex reworked from a per-scene spawn-at-vis-1.0 into ONE persistent,
+# world-positioned entity: he sits IDLE at full bloom down the road until the
+# 3-evidence gate, then roams the surface scene-to-scene SEARCHING, HUNTS on
+# sight (visibility climbs fast), and de-escalates when you break his line of
+# sight. Flag-gated so the legacy King (_tick_king) and the old tests' subject
+# stay intact; flip False to fall back. Portals are a later milestone.
+KING_ROAM = True
+# The surface domain he may occupy: the continuous outdoor world + the seen
+# fold groves. Never indoors, never a safe room, never the boss arena. He
+# travels only the edges BETWEEN these (passages + folds); a door/ladder into
+# an interior is the player's escape, never his.
+KING_ROAM_SCENES = (SEAMLESS_WORLD_SCENES - {"void_boss"}) - SAFE_SCENES
+KING_ROAM_START = "arrival_road"   # idle home: the looping road W of the Lodge
+KING_HOP_INTERVAL = 6.0      # s between adjacent-scene hops while off-camera
+KING_HOP_TOWARD = 0.55       # chance a search hop steps toward the player (lucky,
+                             # not omniscient -- the rest is a random drift)
+KING_SEARCH_TIME = 120.0     # s searching after losing you before he loosens to
+                             # the "check one or two rooms away" wander
+KING_SEE_RANGE = 360.0       # px; how far he can pick you out (LOS, unhidden)
+KING_GAZE_RISE = 0.45        # /s visibility climb while he has eyes on you (fast)
+KING_CATCH_DIST = 24.0       # px; contact range that ends the run (birth-gated)
+KING_HUNT_DROP_VIS = 0.90    # visibility floor of the hunt; below it (or once you
+                             # break his sight) hunting falls back to searching.
+                             # The six evidence beats sum to exactly 0.90, so at
+                             # FULL evidence the meter alone can't dip under it --
+                             # breaking his line of sight (cover) is the relief
+                             # that always works (knowing dooms you, NARRATIVE 3).
+KING_ROAM_SPEED = 1.7        # in-room float speed (px*60/s via _yk_update)
+KING_DREAD_ASH = 70          # extra ash motes when he is one room away (the tell)
+
 # Fold pursuit (Stage 3): a cultist hot on the player's heels follows them
 # through a hidden FOLD (a direction-gated exit) "a beat behind" -- it
 # re-emerges at the entry seam shortly after the player. Mundane exits
