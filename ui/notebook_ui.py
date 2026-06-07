@@ -12,7 +12,7 @@ slug as the title with no body.
 Shares the quiet, filmic chrome with the inventory (ui/menu_chrome).
 """
 import pygame
-from constants import SCREEN_W, SCREEN_H, C_GOLD, C_DIM
+from constants import SCREEN_W, SCREEN_H
 from ui import menu_chrome as mc
 
 
@@ -62,59 +62,67 @@ class NotebookUI:
         self.cursor = (self.cursor + dy) % n
         self.audio.play("cursor", 0.4)
 
+    # The case card sits to the right; the index of beats to the left.
+    _CARD_CENTER = (SCREEN_W - 250, SCREEN_H // 2 + 4)
+
     def draw(self, surf):
         if not self.open:
             return
-        mc.darken(surf, 180)
-        panel = pygame.Rect(80, 60, SCREEN_W - 160, SCREEN_H - 120)
-        mc.panel(surf, panel)
-        title = self.fonts["lg"].render("Notebook", True, C_GOLD)
-        surf.blit(title, (panel.x + 24, panel.y + 16))
-        sub = self.fonts["sm"].render("What you have pieced together.",
-                                      True, C_DIM)
-        surf.blit(sub, (panel.x + 26, panel.y + 58))
+        mc.darken(surf, 210)
+
+        BONE = (200, 194, 180)
+        FAINT = (132, 126, 116)
+        head = self.fonts["serif_lg"].render("Case notes", True, BONE)
+        surf.blit(head, (64, 44))
+        surf.blit(self.fonts["serif_sm"].render(
+            "What you have pieced together.", True, FAINT), (66, 86))
 
         entries = self._entries()
-        lx = panel.x + 36
-        ly = panel.y + 96
+        lx = 84
+        ly = 140
         if not entries:
-            empty = self.fonts["md"].render(
-                "Nothing yet.", True, C_DIM)
-            surf.blit(empty, (lx, ly))
-            self._draw_hint(surf, panel)
+            surf.blit(self.fonts["serif_it"].render(
+                "The page is still blank.", True, FAINT), (lx, ly))
+            self._draw_hint(surf)
             return
 
         # Clamp cursor so it stays valid if the list shrank.
         if self.cursor >= len(entries):
             self.cursor = max(0, len(entries) - 1)
 
-        # Left column: titles. Right column: full body of selected.
-        list_w = 240
-        md = self.fonts["md"]
+        rf = self.fonts["serif"]
         for i, (name, _lines) in enumerate(entries):
-            mc.row(surf, md, _humanise(name), lx, ly + i * 26,
-                   i == self.cursor)
+            selected = (i == self.cursor)
+            row_y = ly + i * 30
+            if selected:
+                mc.accent_bar(surf, lx - 18, row_y, rf.get_linesize())
+            col = (214, 198, 150) if selected else (158, 152, 142)
+            surf.blit(rf.render(_humanise(name), True, col), (lx, row_y))
 
+        # The selected beat, rendered as a card the PI typed up.
         name, lines = entries[self.cursor]
-        dx = panel.x + 36 + list_w + 20
-        dy = panel.y + 96
-        dw = panel.right - dx - 24
-        dh = panel.bottom - dy - 50
-        body = pygame.Rect(dx, dy, dw, dh)
-        mc.panel(surf, body, fill=mc.SUBPANEL_FILL, border=mc.PANEL_BORDER)
-        surf.blit(self.fonts["md"].render(_humanise(name), True, C_GOLD),
-                  (dx + 14, dy + 12))
+        self._draw_case_card(surf, name, lines)
+        self._draw_hint(surf)
+
+    def _draw_case_card(self, surf, name, lines):
+        W, H = 420, 470
+        card = mc.paper(W, H, seed=sum(ord(c) for c in name) + 3,
+                        base=mc.CARD_MANILA)
+        # A typed header, upper-cased like a case label, ruled off below.
+        title = self.fonts["mono"].render(
+            _humanise(name).upper(), True, mc.CARD_INK)
+        card.blit(title, (26, 30))
+        pygame.draw.line(card, mc.CARD_RULE, (26, 58), (W - 26, 58), 1)
         if lines:
-            mc.wrap(surf, self.fonts["sm"], "\n".join(lines),
-                    dx + 14, dy + 44, dw - 28)
+            mc.wrap(card, self.fonts["mono"], "\n".join(lines),
+                    26, 76, W - 52, color=mc.CARD_INK, line_h=22)
         else:
-            surf.blit(self.fonts["sm"].render(
-                "Nothing more set down.", True, C_DIM),
-                (dx + 14, dy + 44))
+            card.blit(self.fonts["mono"].render(
+                "(nothing more set down)", True, mc.INK_FADE), (26, 76))
+        mc.lay_page(surf, card, self._CARD_CENTER, tilt=-1.0)
 
-        self._draw_hint(surf, panel)
-
-    def _draw_hint(self, surf, panel):
-        mc.hint(surf, self.fonts["sm"],
-                "arrows move . i for inventory . n or esc to close",
-                panel.x + 24, panel.bottom - 30)
+    def _draw_hint(self, surf):
+        mc.hint(surf, self.fonts["serif_sm"],
+                "arrow keys to read . i for what you carry . "
+                "n or esc to close the book",
+                64, SCREEN_H - 34)

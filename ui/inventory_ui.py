@@ -12,7 +12,7 @@ is shared with the notebook via ui/menu_chrome, to keep the menus
 feeling like the same quiet, filmic UI rather than an arcade menu.
 """
 import pygame
-from constants import SCREEN_W, SCREEN_H, C_GOLD, C_DIM
+from constants import SCREEN_W, SCREEN_H
 from systems.items import ITEM_DEFS, effective_desc, journal_page
 from ui.item_icons import draw_item_icon
 from ui import menu_chrome as mc
@@ -129,95 +129,140 @@ class InventoryUI:
 
     # ---- drawing ----
 
+    # The document leaf lives on the right; the carried-things index on
+    # the left. Geometry shared by draw() and the document helpers.
+    _DOC_CENTER = (SCREEN_W - 246, SCREEN_H // 2 + 6)
+
     def draw(self, surf, player):
         if not self.open: return
-        mc.darken(surf, 170)
-
-        panel = pygame.Rect(80, 60, SCREEN_W - 160, SCREEN_H - 120)
-        mc.panel(surf, panel)
-
-        title = self.fonts["lg"].render("Inventory", True, C_GOLD)
-        surf.blit(title, (panel.x + 24, panel.y + 16))
-
+        # A deep, near-opaque veil: the world recedes and we're left with
+        # the PI going through what he carries by a low light. Not a glass
+        # panel floating over a lit game.
+        mc.darken(surf, 210)
         inv = player.inventory
+
+        BONE = (200, 194, 180)
+        FAINT = (132, 126, 116)
+
+        # Heading + what's in his hand, set in serif like a chapter head
+        # rather than a menu title.
+        head = self.fonts["serif_lg"].render("What you carry", True, BONE)
+        surf.blit(head, (64, 44))
         eq = inv.equipped
-        # Combat is gone, so only the Tool slot is meaningful.
-        # The Worn slot is vestigial -- not shown.
-        eq_str = "In hand:  " + (
-            ITEM_DEFS.get(eq["weapon"], {}).get("name", eq["weapon"])
-            if eq["weapon"] else "nothing")
-        surf.blit(self.fonts["sm"].render(eq_str, True, (150, 146, 158)),
-                  (panel.x + 24, panel.y + 52))
-
-        # Tab bar -- the active tab is gold with a thin underline; the
-        # others sit dim and quiet. No brackets.
-        tab_y = panel.y + 90
-        tab_x = panel.x + 24
-        tab_font = self.fonts["sm"]
-        for i, (_kinds, label) in enumerate(TABS):
-            col = C_GOLD if i == self.tab else C_DIM
-            t_surf = tab_font.render(label, True, col)
-            surf.blit(t_surf, (tab_x, tab_y))
-            if i == self.tab:
-                pygame.draw.line(surf, C_GOLD,
-                                 (tab_x, tab_y + t_surf.get_height() + 1),
-                                 (tab_x + t_surf.get_width(),
-                                  tab_y + t_surf.get_height() + 1))
-            tab_x += t_surf.get_width() + 24
-
-        # Items list (filtered to active tab).
-        items = self._filtered_items(inv)
-        lx = panel.x + 36
-        ly = panel.y + 124
-        if not items:
-            surf.blit(self.fonts["md"].render("nothing here.", True, C_DIM),
-                      (lx, ly))
+        if eq["weapon"]:
+            held = ITEM_DEFS.get(eq["weapon"], {}).get("name", eq["weapon"])
+            eq_str = f"In hand, the {held.lower()}."
         else:
-            md = self.fonts["md"]
+            eq_str = "Your hands are empty."
+        surf.blit(self.fonts["serif_sm"].render(eq_str, True, FAINT), (66, 86))
+
+        # Tabs: serif words, the open one in warm ink-gold and underlined,
+        # the rest recede. No brackets, no buttons.
+        tab_y = 122
+        tab_x = 66
+        tf = self.fonts["serif"]
+        for i, (_kinds, label) in enumerate(TABS):
+            col = (210, 184, 110) if i == self.tab else (110, 104, 96)
+            t = tf.render(label, True, col)
+            surf.blit(t, (tab_x, tab_y))
+            if i == self.tab:
+                pygame.draw.line(surf, (170, 142, 80),
+                                 (tab_x, tab_y + t.get_height() + 1),
+                                 (tab_x + t.get_width(),
+                                  tab_y + t.get_height() + 1))
+            tab_x += t.get_width() + 30
+
+        # The index of things, down the left.
+        items = self._filtered_items(inv)
+        lx = 84
+        ly = 172
+        rf = self.fonts["serif"]
+        if not items:
+            surf.blit(self.fonts["serif_it"].render(
+                "Nothing under this heading.", True, FAINT), (lx, ly))
+        else:
             for vi, (_orig, key, qty) in enumerate(items):
                 d = ITEM_DEFS.get(key, {"name": key, "kind": "?"})
                 selected = (vi == self.cursor)
-                row_y = ly + vi * 28
+                row_y = ly + vi * 32
                 if selected:
-                    mc.accent_bar(surf, lx - 14, row_y, md.get_linesize())
-                draw_item_icon(surf, lx, row_y + 2, key)
-                color = C_GOLD if selected else mc.TEXT_IDLE
-                surf.blit(md.render(d["name"], True, color), (lx + 24, row_y))
+                    mc.accent_bar(surf, lx - 18, row_y, rf.get_linesize())
+                draw_item_icon(surf, lx - 2, row_y + 3, key)
+                color = (214, 198, 150) if selected else (158, 152, 142)
+                surf.blit(rf.render(d["name"], True, color), (lx + 22, row_y))
                 if qty > 1:
-                    qx = lx + 24 + md.size(d["name"])[0] + 8
-                    surf.blit(self.fonts["sm"].render(str(qty), True, C_DIM),
-                              (qx, row_y + 4))
+                    qx = lx + 22 + rf.size(d["name"])[0] + 8
+                    surf.blit(self.fonts["serif_sm"].render(
+                        str(qty), True, FAINT), (qx, row_y + 4))
 
-        # Reading pane on the right of the selected item.
+        # The selected thing, rendered as the object it is.
         if items and self.cursor < len(items):
             key = items[self.cursor][1]
             d = ITEM_DEFS.get(key, {})
-            dx = panel.right - 340
-            dy = panel.y + 124
-            dpanel = pygame.Rect(dx, dy, 316, 326)
-            mc.panel(surf, dpanel, fill=mc.SUBPANEL_FILL, border=mc.PANEL_BORDER)
-            surf.blit(self.fonts["md"].render(d.get("name", key), True, C_GOLD),
-                      (dx + 14, dy + 12))
-            tx = dx + 14
-            ty = dy + 44
-            tw = dpanel.width - 28
             if key == "mom_notebook":
-                page, idx, total = journal_page(self.save)
-                mc.wrap(surf, self.fonts["sm"], page, tx, ty, tw)
-                # Page footer: which leaf, and the quiet turn-the-page tell.
-                foot = f"page {idx + 1} of {total}"
-                surf.blit(self.fonts["sm"].render(foot, True, C_DIM),
-                          (tx, dpanel.bottom - 28))
-                turn = ("enter . turn the page" if idx < total - 1
-                        else "the last page")
-                ts = self.fonts["sm"].render(turn, True, mc.HINT)
-                surf.blit(ts, (dpanel.right - ts.get_width() - 14,
-                               dpanel.bottom - 28))
+                self._draw_journal_leaf(surf)
+            elif d.get("kind") == "lore":
+                self._draw_paper_note(surf, key, d)
             else:
-                mc.wrap(surf, self.fonts["sm"],
-                        effective_desc(key, self.save), tx, ty, tw)
+                self._draw_object(surf, key, d)
 
-        mc.hint(surf, self.fonts["sm"],
-                "arrows move . left and right change tab . enter to "
-                "read or equip . n for notes . esc to close",
-                panel.x + 24, panel.bottom - 30)
+        mc.hint(surf, self.fonts["serif_sm"],
+                "arrow keys to look . enter to read or take in hand . "
+                "n for your notes . esc to put it away",
+                64, SCREEN_H - 34)
+
+    def _draw_journal_leaf(self, surf):
+        """Mara's journal as an aged, ruled leaf with her words in ink."""
+        page, idx, total = journal_page(self.save)
+        W, H = 388, 452
+        line_h = 27
+        top_pad = 96
+        leaf = mc.paper(W, H, seed=7, base=mc.PAPER_CREAM,
+                        ruled=True, line_h=line_h, top_pad=top_pad - line_h)
+        title = self.fonts["serif_it"].render("Mara's Journal", True, mc.INK)
+        leaf.blit(title, (28, 34))
+        pygame.draw.line(leaf, mc.RULE, (28, 70), (W - 28, 70), 1)
+        mc.ink_wrap(leaf, self.fonts["serif_sm"], page,
+                    28, top_pad, W - 56, color=mc.INK, line_h=line_h)
+        foot = self.fonts["serif_sm"].render(
+            f"page {idx + 1} of {total}", True, mc.INK_FADE)
+        leaf.blit(foot, (28, H - 34))
+        turn = ("turn the page" if idx < total - 1 else "her last page")
+        ts = self.fonts["serif_it"].render(turn, True, mc.INK_FADE)
+        leaf.blit(ts, (W - ts.get_width() - 28, H - 34))
+        mc.lay_page(surf, leaf, self._DOC_CENTER, tilt=-1.4)
+
+    def _draw_paper_note(self, surf, key, d):
+        """A lore fragment (letter, the cult's testimony) as a paper note."""
+        W, H = 388, 452
+        leaf = mc.paper(W, H, seed=sum(ord(c) for c in key),
+                        base=mc.PAPER_CREAM)
+        title = self.fonts["serif_it"].render(
+            d.get("name", key), True, mc.INK)
+        leaf.blit(title, (28, 34))
+        pygame.draw.line(leaf, mc.RULE, (28, 70), (W - 28, 70), 1)
+        mc.ink_wrap(leaf, self.fonts["serif_sm"],
+                    effective_desc(key, self.save),
+                    28, 88, W - 56, color=mc.INK, line_h=24)
+        mc.lay_page(surf, leaf, self._DOC_CENTER, tilt=1.1)
+
+    def _draw_object(self, surf, key, d):
+        """A tool or key: the object itself, held up to the light, with a
+        plain ink-pale caption. Not paper, not a card -- a thing."""
+        cx, cy = self._DOC_CENTER
+        # Soft pool of light behind the object.
+        glow = pygame.Surface((220, 220), pygame.SRCALPHA)
+        for i in range(90, 0, -6):
+            a = int(26 * (1 - i / 90))
+            pygame.draw.circle(glow, (60, 56, 50, a), (110, 110), i)
+        surf.blit(glow, (cx - 110, cy - 130))
+        # The icon, blown up large with nearest-neighbour pixel edges.
+        chip = pygame.Surface((16, 16), pygame.SRCALPHA)
+        draw_item_icon(chip, 0, 0, key)
+        big = pygame.transform.scale(chip, (112, 112))
+        surf.blit(big, (cx - 56, cy - 150))
+        name = self.fonts["serif_lg"].render(
+            d.get("name", key), True, (206, 198, 182))
+        surf.blit(name, (cx - name.get_width() // 2, cy - 24))
+        mc.wrap(surf, self.fonts["serif_sm"], effective_desc(key, self.save),
+                cx - 150, cy + 16, 300, color=(150, 144, 134))
