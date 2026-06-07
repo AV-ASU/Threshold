@@ -809,6 +809,21 @@ def draw_floor(surf, ch, rx, ry, tx, ty):
         if seed % 19 == 0:                         # rare cold glint
             pygame.draw.rect(surf, (88, 104, 100),
                              (rx + (seed % 26), ry + (seed * 5 % 26), 1, 1))
+        # Cold sky-glints: a couple of tiny moving specks per tile, faintly
+        # whiter than the algae ripples, drifting downstream. They give the
+        # surface a live shimmer that sells "water" rather than "wet mud" --
+        # especially under tilt where the dark patches don't read alone.
+        gt = pygame.time.get_ticks()
+        for k in range(2):
+            phase = (gt // 110 + (seed >> k)) & 0x7FF
+            gx = (phase + (seed * (k + 1))) % TILE
+            gy = ((phase * 3) >> 1) % TILE
+            life = phase & 31
+            if life < 5:                           # only briefly visible
+                bright = 96 + life * 6
+                col = (min(255, bright - 12),
+                       min(255, bright), min(255, bright - 4))
+                pygame.draw.rect(surf, col, (rx + gx, ry + gy, 1, 1))
     elif ch == "@":
         # Void floor -- animated speck drift, plus a static darker
         # mottle so the void never reads as flat black.
@@ -1135,7 +1150,9 @@ def _tilt_corn_solid(surf, camera, scene, tx, ty, ch):
     wx0 = tx * TILE
     wy0 = ty * TILE
     sim_t = pygame.time.get_ticks() / 600.0
-    n = 5 + (_vary(seed, 0) % 2)            # 5 or 6 stalks per tile
+    n = 7 + (_vary(seed, 0) % 2)            # 7 or 8 stalks per tile -- denser
+                                            # so a lane reads as a wall of corn
+                                            # instead of standing grass
     g = _vary(seed, 1) % 10
     stalk_dk = (40 + g // 2, 54 + g // 2, 26 + g // 3)
     stalk_col = (58 + g, 72 + g, 38 + g // 2)
@@ -1148,7 +1165,13 @@ def _tilt_corn_solid(surf, camera, scene, tx, ty, ch):
     for si in range(n):
         bx_off = 5 + (si * (TILE - 10)) / max(1, n - 1) + (_vary(seed, 30 + si) % 5) - 2
         sx_off = bx_off + (_vary(seed, 10 + si) % 7) - 3
-        top_h  = TILE + 6 + (_vary(seed, 20 + si) % 9)        # world height
+        top_h  = TILE + 18 + (_vary(seed, 20 + si) % 12)      # world height
+                                                              # taller (~50-62)
+                                                              # so a stalk
+                                                              # over-tops a
+                                                              # player and the
+                                                              # lane feels
+                                                              # head-deep
         # Per-stalk wy jitter so they don't all line up at the tile's south edge
         wy_jit = (_vary(seed, 40 + si) % 9) - 4
         tip_sway = math.sin(sim_t + ph + si * 0.7) * amp
@@ -1179,6 +1202,23 @@ def _tilt_corn_solid(surf, camera, scene, tx, ty, ch):
             # Lit upper edge
             p_tip_hi = camera.project(leaf_x - side * 0.5, leaf_y, leaf_z + 1)
             pygame.draw.line(surf, blade_hi, p_attach, p_tip_hi, 1)
+        # Ear of corn at ~60% height on ~half the stalks. A short husked
+        # cylinder offset from the stalk on the side opposite the highest
+        # leaf, so the cluster reads as "ears of corn in the rows" rather
+        # than pure foliage. Tiny, but it sells the stalks as edible crop.
+        if (_vary(seed, 50 + si) & 1):
+            ear_side = 1 if (_vary(seed, 60 + si) & 1) else -1
+            ear_z = top_h * 0.58
+            ear_x = wx_base + ear_side * 3.5
+            ear_y = wy_base + 1
+            ear_b = camera.project(ear_x, ear_y, ear_z - 3)
+            ear_t = camera.project(ear_x, ear_y, ear_z + 3)
+            pygame.draw.line(surf, (190, 168, 96), ear_b, ear_t, 3)
+            pygame.draw.line(surf, (108, 92, 50), ear_b, ear_t, 1)
+            # silk: a couple of fine wisps at the cob tip
+            silk = camera.project(ear_x + ear_side * 1.0, ear_y,
+                                  ear_z + 3 + 1.5)
+            pygame.draw.line(surf, (228, 208, 130), ear_t, silk, 1)
         # Tassel head: a pale paddle + a beard of fine strokes radiating out
         p_tassel_top = camera.project(wx_top, wy_base, top_h + 5)
         pygame.draw.line(surf, tip_col, p_top, p_tassel_top, 2)
@@ -1351,15 +1391,17 @@ def _draw_wall_mass(surf, scene, cam_x, cam_y, x0, y0, x1, y1):
 
 def _build_roof_regions(scene):
     """Flood-fill the roof ('r') tiles into one region per building and
-    cache each region's tile bounding box on the scene. Roof layout is
-    static after build, so this runs once. Each region -> one gabled
-    roof drawn over its footprint."""
+    cache each region's tile bounding box on the scene. Also builds a
+    `wall_to_region` map so each wall tile knows which building it belongs
+    to (used to give per-building wall colour under tilt). Roof layout is
+    static after build, so this runs once."""
     regions = getattr(scene, "_roof_regions", None)
     if regions is not None:
         return regions
     objs, h, w = scene.objects, scene.h, scene.w
     seen = [[False] * w for _ in range(h)]
     regions = []
+    wall_map = {}
     for ty in range(h):
         for tx in range(w):
             if objs[ty][tx] != "r" or seen[ty][tx]:
@@ -1368,6 +1410,7 @@ def _build_roof_regions(scene):
             seen[ty][tx] = True
             minx = maxx = tx
             miny = maxy = ty
+            cells = [(tx, ty)]
             while stack:
                 cx, cy = stack.pop()
                 minx = min(minx, cx); maxx = max(maxx, cx)
@@ -1378,9 +1421,34 @@ def _build_roof_regions(scene):
                             and not seen[ay][ax] and objs[ay][ax] == "r"):
                         seen[ay][ax] = True
                         stack.append((ax, ay))
-            regions.append((minx, miny, maxx, maxy))
+                        cells.append((ax, ay))
+            region = (minx, miny, maxx, maxy)
+            regions.append(region)
+            # Walk each roof tile's 4 neighbours; if neighbour is a wall (or
+            # a door or a window: they're embedded IN the wall), tag it as
+            # belonging to this region. A wall on the seam between two
+            # buildings would be claimed by whichever region we hit first
+            # (no shared walls in this game's town layouts).
+            for (cx, cy) in cells:
+                for ax, ay in ((cx + 1, cy), (cx - 1, cy),
+                               (cx, cy + 1), (cx, cy - 1)):
+                    if not (0 <= ax < w and 0 <= ay < h):
+                        continue
+                    ch = objs[ay][ax]
+                    if (ch in _WALL_CHARS or ch in _DOOR_CHARS
+                            or ch in _WINDOW_CHARS) and (ax, ay) not in wall_map:
+                        wall_map[(ax, ay)] = region
     scene._roof_regions = regions
+    scene._wall_region_map = wall_map
     return regions
+
+
+def wall_region_for(scene, tx, ty):
+    """Which building (roof region) this wall/door/window tile belongs to,
+    or None for free-standing walls (a fence, a depths corridor)."""
+    if getattr(scene, "_wall_region_map", None) is None:
+        _build_roof_regions(scene)
+    return scene._wall_region_map.get((tx, ty))
 
 
 def _draw_gable_roof(surf, region, cam_x, cam_y):
@@ -1472,6 +1540,261 @@ def _draw_scene_roofs(surf, scene, cam_x, cam_y, x0, y0, x1, y1):
         if maxx + 2 < x0 or minx - 2 > x1 or maxy + 2 < y0 or miny - 2 > y1:
             continue
         _draw_gable_roof(surf, region, cam_x, cam_y)
+
+
+# -- 3D gabled roofs for the tilt path --------------------------------------
+# The flat-pitch `_draw_gable_roof` above paints the roof art into the top-
+# down floor surface, which under tilt warps onto the GROUND as a flat plate
+# (skipped from the tilt floor pass via `skip_roofs=True`). The tilt path
+# instead emits one of these volumetric roofs per building region into the
+# depth-sorted draw queue, so each building is a real prism rising above the
+# walls + a ridge beam + a chimney. Material + tint are seeded per region so
+# the houses read as distinct without losing town cohesion.
+
+def _building_palette(seed_a, seed_b):
+    """Per-region (wall tint, trim accent, roof palette). Stable from the
+    region's geometry seed so a given building keeps its look across reloads.
+    """
+    rng = random.Random((seed_a * 73856093) ^ (seed_b * 19349663))
+    mat = rng.randint(0, 2)
+    if mat == 1:                                # rusted corrugated tin
+        roof = {"col": (94, 96, 100), "lit": (132, 134, 138),
+                "dark": (52, 54, 58), "ridge": (40, 42, 44),
+                "chimney": (60, 42, 36)}
+    elif mat == 2:                              # tar-paper
+        roof = {"col": (54, 50, 56), "lit": (80, 76, 84),
+                "dark": (32, 28, 34), "ridge": (24, 22, 26),
+                "chimney": (44, 36, 36)}
+    else:                                       # weathered cedar shingle
+        roof = {"col": (118, 80, 56), "lit": (158, 110, 76),
+                "dark": (74, 50, 34), "ridge": (44, 28, 19),
+                "chimney": (58, 40, 36)}
+    # Per-building wall warmth: each house gets its own RGB offset so the
+    # weathered wood reads cooler/warmer house to house. Wider than purely
+    # subtle so adjacent buildings are unambiguously distinct but the
+    # palette stays in town-cohesion range (no pinks/greens).
+    wall_dr = rng.randint(-22, 28)
+    wall_dg = rng.randint(-18, 22)
+    wall_db = rng.randint(-20, 20)
+    trim_choices = [(120, 64, 52), (90, 70, 40), (60, 80, 70),
+                    (110, 100, 80), (80, 60, 50)]
+    trim = trim_choices[rng.randint(0, len(trim_choices) - 1)]
+    return roof, (wall_dr, wall_dg, wall_db), trim
+
+
+_BUILDING_PALETTE_CACHE = {}
+
+
+def _get_building_palette(region):
+    minx, miny, maxx, maxy = region
+    key = (minx, miny, maxx, maxy)
+    pal = _BUILDING_PALETTE_CACHE.get(key)
+    if pal is None:
+        pal = _building_palette(minx, maxy)
+        _BUILDING_PALETTE_CACHE[key] = pal
+    return pal
+
+
+def _draw_building_3d(surf, camera, region, scene):
+    """A real volumetric gabled roof over the building's footprint plus a
+    ridge beam and a crooked chimney. All four slopes are drawn opaque so the
+    roof fully encloses the interior under tilt (no peek-in). Per-region
+    palette gives each building a subtle but recognisable look.
+
+    Ridge runs along the building's LONGER axis (the door direction --
+    typically the road-facing wall -- becomes the gable end). Aligned-with-
+    the-road buildings get their gable end facing the street naturally."""
+    minx, miny, maxx, maxy = region
+    EAVE = 9
+    # outer footprint in world px (wall outer edges + eave overhang)
+    xL = (minx - 1) * TILE - EAVE
+    xR = (maxx + 2) * TILE + EAVE
+    yT = (miny - 1) * TILE - EAVE
+    yB = (maxy + 2) * TILE + EAVE
+    width = xR - xL
+    depth = yB - yT
+    z_wall = _TILT_WALL_RISE
+    H = max(14, min(28, int(min(width, depth) * 0.32)))
+    z_apex = z_wall + H
+    roof, _wall_tint, trim = _get_building_palette(region)
+
+    ridge_ew = width >= depth         # longer than deep -> ridge runs east-west
+    # 4 base corners
+    NW = camera.project(xL, yT, z_wall)
+    NE = camera.project(xR, yT, z_wall)
+    SW = camera.project(xL, yB, z_wall)
+    SE = camera.project(xR, yB, z_wall)
+
+    if ridge_ew:
+        yMid = (yT + yB) / 2
+        Rw = camera.project(xL, yMid, z_apex)
+        Re = camera.project(xR, yMid, z_apex)
+        # Camera under typical tilt looks DOWN+SOUTH, so:
+        # - north slope is the FAR (back) face -- draw first
+        # - south slope is the NEAR (front) face -- draw last so it covers
+        # Gables on east + west, between the two slopes.
+        pygame.draw.polygon(surf, roof["dark"], [NW, NE, Re, Rw])  # back slope
+        pygame.draw.polygon(surf, roof["dark"], [NW, SW, Rw])      # west gable
+        pygame.draw.polygon(surf, roof["dark"], [NE, SE, Re])      # east gable
+        pygame.draw.polygon(surf, roof["col"], [SW, SE, Re, Rw])   # front slope
+        # gable rim outlines so the form catches the light
+        pygame.draw.line(surf, roof["lit"], NW, Rw, 1)
+        pygame.draw.line(surf, roof["lit"], NE, Re, 1)
+        pygame.draw.line(surf, roof["lit"], SW, Rw, 1)
+        pygame.draw.line(surf, roof["lit"], SE, Re, 1)
+        # ridge beam
+        pygame.draw.line(surf, roof["ridge"], Rw, Re, 2)
+        # chimney near the back-east corner of the ridge
+        cx_w = xR - TILE * 0.6
+        cy_w = yT + (yB - yT) * 0.35
+        ch_base_z = z_wall + H * 0.25
+        ch_top_z = z_apex + 4
+        chx_w = TILE * 0.25
+        chy_w = TILE * 0.25
+    else:
+        xMid = (xL + xR) / 2
+        Rn = camera.project(xMid, yT, z_apex)
+        Rs = camera.project(xMid, yB, z_apex)
+        pygame.draw.polygon(surf, roof["dark"], [NW, SW, Rs, Rn])  # west slope
+        pygame.draw.polygon(surf, roof["dark"], [NW, NE, Rn])      # north gable
+        pygame.draw.polygon(surf, roof["dark"], [SW, SE, Rs])      # south gable
+        pygame.draw.polygon(surf, roof["col"], [NE, SE, Rs, Rn])   # east slope
+        pygame.draw.line(surf, roof["lit"], NW, Rn, 1)
+        pygame.draw.line(surf, roof["lit"], SW, Rs, 1)
+        pygame.draw.line(surf, roof["lit"], NE, Rn, 1)
+        pygame.draw.line(surf, roof["lit"], SE, Rs, 1)
+        pygame.draw.line(surf, roof["ridge"], Rn, Rs, 2)
+        cx_w = xL + (xR - xL) * 0.3
+        cy_w = yT + TILE * 0.6
+        ch_base_z = z_wall + H * 0.25
+        ch_top_z = z_apex + 4
+        chx_w = TILE * 0.25
+        chy_w = TILE * 0.25
+
+    # chimney: short box on top of the roof
+    cb_NW = camera.project(cx_w - chx_w, cy_w - chy_w, ch_base_z)
+    cb_NE = camera.project(cx_w + chx_w, cy_w - chy_w, ch_base_z)
+    cb_SW = camera.project(cx_w - chx_w, cy_w + chy_w, ch_base_z)
+    cb_SE = camera.project(cx_w + chx_w, cy_w + chy_w, ch_base_z)
+    ct_NW = camera.project(cx_w - chx_w, cy_w - chy_w, ch_top_z)
+    ct_NE = camera.project(cx_w + chx_w, cy_w - chy_w, ch_top_z)
+    ct_SW = camera.project(cx_w - chx_w, cy_w + chy_w, ch_top_z)
+    ct_SE = camera.project(cx_w + chx_w, cy_w + chy_w, ch_top_z)
+    chim = roof["chimney"]
+    pygame.draw.polygon(surf, chim, [cb_SW, cb_SE, ct_SE, ct_SW])   # front face
+    pygame.draw.polygon(surf, _shade_col(chim, 0.72),
+                        [cb_SW, cb_NW, ct_NW, ct_SW])               # left face
+    pygame.draw.polygon(surf, _shade_col(chim, 0.72),
+                        [cb_SE, cb_NE, ct_NE, ct_SE])               # right face
+    pygame.draw.polygon(surf, _shade_col(chim, 1.18),
+                        [ct_NW, ct_NE, ct_SE, ct_SW])               # cap top
+    pygame.draw.polygon(surf, _shade_col(chim, 0.50),
+                        [ct_NW, ct_NE, ct_SE, ct_SW], 1)            # cap rim
+    # ground/midpoint for depth sort
+    return ((xL + xR) / 2, (yT + yB) / 2, z_apex / 2)
+
+
+def _shade_col(col, f):
+    return (max(0, min(255, int(col[0] * f))),
+            max(0, min(255, int(col[1] * f))),
+            max(0, min(255, int(col[2] * f))))
+
+
+def _build_water_bank_edges(scene):
+    """Precompute every water-land boundary segment (a water tile that has
+    a `_BANK_LAND` neighbour). Each edge is (cx_world, cy_world, ndx, ndy,
+    seed) -- the midpoint on the WATER side of the boundary, the direction
+    of the land neighbour, and a stable seed for reed jitter / sway.
+    Cached on the scene so we don't rescan ~10k tiles per frame."""
+    edges = getattr(scene, "_water_bank_edges", None)
+    if edges is not None:
+        return edges
+    floor, h, w = scene.floor, scene.h, scene.w
+    edges = []
+    for ty in range(h):
+        for tx in range(w):
+            if floor[ty][tx] != "~":
+                continue
+            for si, (ndx, ndy) in enumerate(((0, -1), (0, 1),
+                                             (-1, 0), (1, 0))):
+                nx, ny = tx + ndx, ty + ndy
+                if not (0 <= nx < w and 0 <= ny < h):
+                    continue
+                if floor[ny][nx] not in _BANK_LAND:
+                    continue
+                # Boundary midpoint sits ON the water tile's land-facing edge
+                cx_w = tx * TILE + TILE / 2 + ndx * (TILE / 2 - 1)
+                cy_w = ty * TILE + TILE / 2 + ndy * (TILE / 2 - 1)
+                seed = (tx * 73856093) ^ (ty * 19349663) ^ (si * 40503)
+                edges.append((cx_w, cy_w, ndx, ndy, seed))
+    scene._water_bank_edges = edges
+    return edges
+
+
+def _draw_reed_cluster(surf, camera, cx_w, cy_w, ndx, ndy, seed, wt):
+    """3 upright reeds at a bank edge. Each is a thin near-vertical line
+    projected through the camera so it stands at the right pitch; the tip
+    sways with the marsh wind. Density throttled by the seed -- not every
+    edge gets reeds, so the bank reads patchy + organic."""
+    if (seed % 5) >= 3:                  # ~40% of edges actually get reeds
+        return
+    reed = (80, 88, 46)
+    reed_dk = (50, 58, 30)
+    # The boundary direction is perpendicular to (ndx, ndy) -- reeds spread
+    # ALONG the boundary so they form a small line, not a single point.
+    if ndx:
+        ax, ay = 0, 1
+    else:
+        ax, ay = 1, 0
+    n = 3
+    for k in range(n):
+        u = ((k - (n - 1) / 2.0) / float(n)) * TILE * 0.7
+        jitter_x = ((seed >> (k * 3)) & 3) - 1
+        jitter_y = ((seed >> (k * 3 + 4)) & 3) - 1
+        bx = cx_w + ax * u + jitter_x * 0.5
+        by = cy_w + ay * u + jitter_y * 0.5
+        h_reed = 7 + ((seed >> (k * 2)) & 7)
+        sway = math.sin(wt + seed * 0.013 + k * 0.7) * 1.7
+        b = camera.project(bx, by, 0)
+        t = camera.project(bx + sway, by, h_reed)
+        if abs(t[0] - b[0]) + abs(t[1] - b[1]) < 200:    # cull off-screen
+            pygame.draw.line(surf, reed_dk,
+                             (int(b[0]), int(b[1])),
+                             (int(t[0]), int(t[1])), 1)
+            pygame.draw.line(surf, reed,
+                             (int(b[0]) + 1, int(b[1])),
+                             (int(t[0]) + 1, int(t[1])), 1)
+
+
+def emit_tilt_water_reeds(emit_fn, scene, camera, surf, x0, y0, x1, y1):
+    """Emit one depth-sorted reed cluster per visible water-bank edge so
+    the marsh fringe stands UP under tilt instead of being painted flat
+    onto the warped floor."""
+    wt = pygame.time.get_ticks() / 650.0
+    for (cx_w, cy_w, ndx, ndy, seed) in _build_water_bank_edges(scene):
+        tx, ty = int(cx_w // TILE), int(cy_w // TILE)
+        if tx < x0 - 1 or tx > x1 + 1 or ty < y0 - 1 or ty > y1 + 1:
+            continue
+        emit_fn(camera.depth(cx_w, cy_w, 4),
+                lambda cx_w=cx_w, cy_w=cy_w, ndx=ndx, ndy=ndy, seed=seed,
+                wt=wt, surf=surf:
+                _draw_reed_cluster(surf, camera, cx_w, cy_w,
+                                   ndx, ndy, seed, wt))
+
+
+def emit_tilt_roofs(emit_fn, scene, camera, surf, x0, y0, x1, y1):
+    """Emit one depth-sorted draw closure per visible building region. The
+    closure draws the volumetric roof + ridge + chimney for that region. The
+    flat (pitch-0) gabled roof is unrelated and still drawn by Scene.draw."""
+    for region in _build_roof_regions(scene):
+        minx, miny, maxx, maxy = region
+        if maxx + 2 < x0 or minx - 2 > x1 or maxy + 2 < y0 or miny - 2 > y1:
+            continue
+        cx_w = ((minx - 1) + (maxx + 2)) * TILE / 2
+        cy_w = ((miny - 1) + (maxy + 2)) * TILE / 2
+        emit_fn(camera.depth(cx_w, cy_w, _TILT_WALL_RISE / 2),
+                lambda region=region, scene=scene, camera=camera, surf=surf:
+                _draw_building_3d(surf, camera, region, scene))
 
 
 def _door_room_dir(scene, tx, ty):
@@ -1704,7 +2027,7 @@ def _round_water_corners(surf, scene, tx, ty, rx, ry):
 
 
 def draw_scene_terrain(surf, scene, cam_x, cam_y, x0, y0, x1, y1,
-                       skip_billboard=False):
+                       skip_billboard=False, skip_roofs=False):
     """Floor -> path fringe -> wall-cast shadows -> continuous wall mass
     -> non-wall objects, for a tile window. Shared by Scene.draw (camera
     window) and the offline full-map renderer. When scene.wrap_x or
@@ -1714,7 +2037,10 @@ def draw_scene_terrain(surf, scene, cam_x, cam_y, x0, y0, x1, y1,
 
     `skip_billboard` (the tilt floor pass) omits trees/cornstalks here so they
     aren't painted flat on the warped floor -- draw_terrain_tilted stands them
-    up as billboards instead."""
+    up as billboards instead.
+    `skip_roofs` (also tilt) omits the gabled roof art so it doesn't render
+    as a warped flat plate on the warped floor; the walls supply the
+    building's vertical mass under tilt."""
     W, H = scene.w, scene.h
     wx, wy = scene.wrap_x, scene.wrap_y
     def _lookup_floor(ty, tx):
@@ -1794,7 +2120,11 @@ def draw_scene_terrain(surf, scene, cam_x, cam_y, x0, y0, x1, y1,
                 draw_object(surf, ch, rx, ry, tx, ty)
     # Unified gabled roofs, drawn over the walls so each building reads
     # as one overhanging roof (door stays visible under the front eave).
-    _draw_scene_roofs(surf, scene, cam_x, cam_y, x0, y0, x1, y1)
+    # Tilt skips this -- a top-down roof drawn into the warped floor pass
+    # reads as a flat plate ON THE GROUND. The walls + furniture supply
+    # vertical mass instead.
+    if not skip_roofs:
+        _draw_scene_roofs(surf, scene, cam_x, cam_y, x0, y0, x1, y1)
 
 
 # --- Tilted (oblique-camera) terrain (CAMERA.md Phase 2) -------------------
@@ -1918,7 +2248,21 @@ def _extrude_box(surf, camera, scene, tx, ty, z0, z1, neigh=_WALL_CHARS,
 
 
 def _tilt_wall_box(surf, camera, scene, tx, ty):
-    _extrude_box(surf, camera, scene, tx, ty, 0, _TILT_WALL_RISE)
+    # If this wall belongs to a building, paint it in the building's per-
+    # region tint so the town reads as recognisable houses rather than one
+    # uniform mass of stone.
+    face_col = top_col = None
+    region = wall_region_for(scene, tx, ty)
+    if region is not None:
+        _roof, (dr, dg, db), _trim = _get_building_palette(region)
+        face_col = (max(0, min(255, _WALL_FACE[0] + dr)),
+                    max(0, min(255, _WALL_FACE[1] + dg)),
+                    max(0, min(255, _WALL_FACE[2] + db)))
+        top_col = (max(0, min(255, _WALL_TOP[0] + dr)),
+                   max(0, min(255, _WALL_TOP[1] + dg)),
+                   max(0, min(255, _WALL_TOP[2] + db)))
+    _extrude_box(surf, camera, scene, tx, ty, 0, _TILT_WALL_RISE,
+                 face_col=face_col, top_col=top_col)
 
 
 _COUNTER_RISE = 15      # waist-high: a divider you can see over, not a wall
@@ -2020,6 +2364,13 @@ _FLOOR_DECAL_KINDS = frozenset((
     # shrub on the ground, where a standee would stand the overhead blob up
     # vertically as a smear.
     "bush",
+    # Marks scratched into the floor or the body of something laid in the dirt:
+    # all read as ground decals and want to turn with the room under tilt.
+    "mud_footprint", "claw_marks", "dead_crow", "watching_wound",
+    # Low ground fog hugging the wet earth, and dead leaves tumbling across the
+    # ground: both want to warp onto the floor under tilt, not stand up as
+    # vertical stickers.
+    "mist", "leaves",
 ))
 
 # Decals that lie flat on a RAISED surface (a ledger open on a desktop): warped
@@ -2049,6 +2400,9 @@ _WALL_DECO_KINDS = frozenset((
     "banner", "calendar", "clock", "apology_wall",
     "buck_head", "antler_rack", "mounted_fish", "wrong_taxidermy",
     "chalk_door_wall", "chalkboard",
+    # Things that belong ON a wall, not lying flat on the floor: a cobweb
+    # spans a corner; a passing silhouette glides past a window.
+    "cobweb", "passing_silhouette",
 ))
 _WALL_MOUNT_Z = 18
 
@@ -2471,7 +2825,7 @@ def draw_terrain_tilted(surf, scene, camera, sight=None):
     if not (scene.wrap_x or scene.wrap_y):
         _draw_neighbor_strips(flat, scene, wx0, wy0, x0, y0, x1, y1)
     draw_scene_terrain(flat, scene, wx0, wy0, x0, y0, x1, y1,
-                       skip_billboard=True)
+                       skip_billboard=True, skip_roofs=True)
     warped = _tilt_warp(flat, camera)
     ox, oy = camera.origin
     surf.blit(warped, (ox - warped.get_width() // 2,
