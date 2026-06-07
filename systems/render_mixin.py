@@ -25,6 +25,13 @@ from rendering.king_unfold import draw_unfold_catch
 from rendering.transform import draw_vessel_bloom
 from systems.config import *        # noqa: F401,F403
 
+# Solid-prop card cache (see _draw_solid_prop). Static props rendered once per
+# (prop, camera angle) and blitted thereafter; FIFO-capped so roaming the town
+# doesn't grow it without bound.
+_PROP_CARD_CACHE = {}
+_PROP_CARD_ORDER = []
+_PROP_CARD_CAP = 1400
+
 
 class RenderMixin:
     def _draw_boot_screen(self):
@@ -606,21 +613,48 @@ class RenderMixin:
         return psx, psy
 
     def _draw_solid_prop(self, d, ox=0.0, oy=0.0):
-        """Draw one solid furniture/prop as a projected box volume, optionally
-        shifted by a wrap-clone WORLD offset (ox, oy) so a toroidal scene's
-        props clone across the seam through the projection. Falls back to the
-        prop kit when it isn't a furniture kind."""
+        """Draw one solid furniture/prop by blitting a cached card. Solid props
+        (headstones, signs, the flagpole, lamps, furniture boxes) are STATIC --
+        none animate -- and their shape relative to the ground point depends
+        only on the camera angle, never on where the camera is panned to. So
+        render the 3D prop once per (prop, angle) into a card and blit it at the
+        projected base, exactly like the trees. The wrap offset (ox, oy) only
+        moves the base, so every wrap-clone shares one card."""
+        cam = self.camera
+        bx, by = cam.project(d.x + ox, d.y + oy)
+        key = (id(d), round(cam.yaw, 2), round(cam.pitch, 2),
+               round(cam.scale, 2))
+        entry = _PROP_CARD_CACHE.get(key)
+        if entry is None:
+            entry = self._build_prop_card(d)
+            _PROP_CARD_CACHE[key] = entry
+            _PROP_CARD_ORDER.append(key)
+            if len(_PROP_CARD_ORDER) > _PROP_CARD_CAP:
+                _PROP_CARD_CACHE.pop(_PROP_CARD_ORDER.pop(0), None)
+        card, ax, ay = entry
+        if card is not None:
+            self.screen.blit(card, (bx - ax, by - ay))
+
+    def _build_prop_card(self, d):
+        """Cache-miss path: render one solid prop to a tight SRCALPHA card via a
+        throwaway camera at the same angle whose origin pins the prop's ground
+        point to a fixed spot. Returns (surface, anchor_x, anchor_y)."""
+        from rendering.camera import Camera
         from rendering.furniture import draw_furniture_solid
         from rendering.props import draw_prop_solid
-        if ox or oy:
-            d.x += ox; d.y += oy
-            try:
-                if not draw_furniture_solid(self.screen, self.camera, d):
-                    draw_prop_solid(self.screen, self.camera, d)
-            finally:
-                d.x -= ox; d.y -= oy
-        elif not draw_furniture_solid(self.screen, self.camera, d):
-            draw_prop_solid(self.screen, self.camera, d)
+        cam = self.camera
+        PADX, PADY, BASE = 200, 380, 40   # generous; the card is cropped tight
+        tmp = pygame.Surface((PADX * 2, PADY + BASE), pygame.SRCALPHA)
+        anchor = (PADX, PADY)
+        tcam = Camera(cam_x=d.x, cam_y=d.y, pitch=cam.pitch, yaw=cam.yaw,
+                      scale=cam.scale, origin=anchor)
+        if not draw_furniture_solid(tmp, tcam, d):
+            draw_prop_solid(tmp, tcam, d)
+        rect = tmp.get_bounding_rect()
+        if rect.width == 0 or rect.height == 0:
+            return (None, 0, 0)
+        card = tmp.subsurface(rect).copy()
+        return (card, anchor[0] - rect.x, anchor[1] - rect.y)
 
     def _draw_fps_overlay(self):
         """Dev perf readout (F1): FPS, frame ms, and the live scene key, drawn
