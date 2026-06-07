@@ -1150,9 +1150,12 @@ def _tilt_corn_solid(surf, camera, scene, tx, ty, ch):
     wx0 = tx * TILE
     wy0 = ty * TILE
     sim_t = pygame.time.get_ticks() / 600.0
-    n = 7 + (_vary(seed, 0) % 2)            # 7 or 8 stalks per tile -- denser
-                                            # so a lane reads as a wall of corn
-                                            # instead of standing grass
+    n = 5 + (_vary(seed, 0) % 2)            # 5 or 6 stalks per tile -- the
+                                            # tile reads as a dense cluster
+                                            # without paying for two extra
+                                            # full stalks (each costs ~10
+                                            # camera.project + line draws,
+                                            # 30+ tiles in view = real ms)
     g = _vary(seed, 1) % 10
     stalk_dk = (40 + g // 2, 54 + g // 2, 26 + g // 3)
     stalk_col = (58 + g, 72 + g, 38 + g // 2)
@@ -1202,23 +1205,6 @@ def _tilt_corn_solid(surf, camera, scene, tx, ty, ch):
             # Lit upper edge
             p_tip_hi = camera.project(leaf_x - side * 0.5, leaf_y, leaf_z + 1)
             pygame.draw.line(surf, blade_hi, p_attach, p_tip_hi, 1)
-        # Ear of corn at ~60% height on ~half the stalks. A short husked
-        # cylinder offset from the stalk on the side opposite the highest
-        # leaf, so the cluster reads as "ears of corn in the rows" rather
-        # than pure foliage. Tiny, but it sells the stalks as edible crop.
-        if (_vary(seed, 50 + si) & 1):
-            ear_side = 1 if (_vary(seed, 60 + si) & 1) else -1
-            ear_z = top_h * 0.58
-            ear_x = wx_base + ear_side * 3.5
-            ear_y = wy_base + 1
-            ear_b = camera.project(ear_x, ear_y, ear_z - 3)
-            ear_t = camera.project(ear_x, ear_y, ear_z + 3)
-            pygame.draw.line(surf, (190, 168, 96), ear_b, ear_t, 3)
-            pygame.draw.line(surf, (108, 92, 50), ear_b, ear_t, 1)
-            # silk: a couple of fine wisps at the cob tip
-            silk = camera.project(ear_x + ear_side * 1.0, ear_y,
-                                  ear_z + 3 + 1.5)
-            pygame.draw.line(surf, (228, 208, 130), ear_t, silk, 1)
         # Tassel head: a pale paddle + a beard of fine strokes radiating out
         p_tassel_top = camera.project(wx_top, wy_base, top_h + 5)
         pygame.draw.line(surf, tip_col, p_top, p_tassel_top, 2)
@@ -1700,17 +1686,23 @@ def _shade_col(col, f):
             max(0, min(255, int(col[2] * f))))
 
 
+_WATER_EDGE_CHUNK = 16          # tiles per spatial bucket -- matches the
+                                # decoration chunk size so the marsh edges
+                                # cull the same way the marsh trees do
+
+
 def _build_water_bank_edges(scene):
-    """Precompute every water-land boundary segment (a water tile that has
-    a `_BANK_LAND` neighbour). Each edge is (cx_world, cy_world, ndx, ndy,
-    seed) -- the midpoint on the WATER side of the boundary, the direction
-    of the land neighbour, and a stable seed for reed jitter / sway.
-    Cached on the scene so we don't rescan ~10k tiles per frame."""
+    """Precompute every water-land boundary segment AND bucket them into a
+    spatial chunk index (chunk_size = _WATER_EDGE_CHUNK tiles). Each edge
+    is (cx_world, cy_world, ndx, ndy, seed). The emit walker then only
+    iterates buckets the camera window overlaps, so a marsh row that
+    visits 212 edges drops to ~30 per frame. Cached on the scene."""
     edges = getattr(scene, "_water_bank_edges", None)
     if edges is not None:
         return edges
     floor, h, w = scene.floor, scene.h, scene.w
     edges = []
+    chunks = {}
     for ty in range(h):
         for tx in range(w):
             if floor[ty][tx] != "~":
@@ -1726,8 +1718,13 @@ def _build_water_bank_edges(scene):
                 cx_w = tx * TILE + TILE / 2 + ndx * (TILE / 2 - 1)
                 cy_w = ty * TILE + TILE / 2 + ndy * (TILE / 2 - 1)
                 seed = (tx * 73856093) ^ (ty * 19349663) ^ (si * 40503)
-                edges.append((cx_w, cy_w, ndx, ndy, seed))
+                rec = (cx_w, cy_w, ndx, ndy, seed)
+                edges.append(rec)
+                cx = tx // _WATER_EDGE_CHUNK
+                cy = ty // _WATER_EDGE_CHUNK
+                chunks.setdefault((cx, cy), []).append(rec)
     scene._water_bank_edges = edges
+    scene._water_bank_chunks = chunks
     return edges
 
 
@@ -1769,17 +1766,32 @@ def _draw_reed_cluster(surf, camera, cx_w, cy_w, ndx, ndy, seed, wt):
 def emit_tilt_water_reeds(emit_fn, scene, camera, surf, x0, y0, x1, y1):
     """Emit one depth-sorted reed cluster per visible water-bank edge so
     the marsh fringe stands UP under tilt instead of being painted flat
-    onto the warped floor."""
+    onto the warped floor. Walks only the spatial chunks the camera
+    window overlaps so a 212-edge marsh hits the ~30 edges actually in
+    view, not all of them."""
+    _build_water_bank_edges(scene)
+    chunks = getattr(scene, "_water_bank_chunks", None)
+    if not chunks:
+        return
     wt = pygame.time.get_ticks() / 650.0
-    for (cx_w, cy_w, ndx, ndy, seed) in _build_water_bank_edges(scene):
-        tx, ty = int(cx_w // TILE), int(cy_w // TILE)
-        if tx < x0 - 1 or tx > x1 + 1 or ty < y0 - 1 or ty > y1 + 1:
-            continue
-        emit_fn(camera.depth(cx_w, cy_w, 4),
-                lambda cx_w=cx_w, cy_w=cy_w, ndx=ndx, ndy=ndy, seed=seed,
-                wt=wt, surf=surf:
-                _draw_reed_cluster(surf, camera, cx_w, cy_w,
-                                   ndx, ndy, seed, wt))
+    cx0 = x0 // _WATER_EDGE_CHUNK - 1
+    cy0 = y0 // _WATER_EDGE_CHUNK - 1
+    cx1 = x1 // _WATER_EDGE_CHUNK + 1
+    cy1 = y1 // _WATER_EDGE_CHUNK + 1
+    for cy in range(cy0, cy1 + 1):
+        for cx in range(cx0, cx1 + 1):
+            bucket = chunks.get((cx, cy))
+            if not bucket:
+                continue
+            for (cx_w, cy_w, ndx, ndy, seed) in bucket:
+                tx, ty = int(cx_w // TILE), int(cy_w // TILE)
+                if tx < x0 - 1 or tx > x1 + 1 or ty < y0 - 1 or ty > y1 + 1:
+                    continue
+                emit_fn(camera.depth(cx_w, cy_w, 4),
+                        lambda cx_w=cx_w, cy_w=cy_w, ndx=ndx, ndy=ndy,
+                        seed=seed, wt=wt, surf=surf:
+                        _draw_reed_cluster(surf, camera, cx_w, cy_w,
+                                           ndx, ndy, seed, wt))
 
 
 def emit_tilt_roofs(emit_fn, scene, camera, surf, x0, y0, x1, y1):
@@ -2247,13 +2259,22 @@ def _extrude_box(surf, camera, scene, tx, ty, z0, z1, neigh=_WALL_CHARS,
     pygame.draw.polygon(surf, tuple(int(c * 0.4) for c in top_col), t, 1)
 
 
-def _tilt_wall_box(surf, camera, scene, tx, ty):
-    # If this wall belongs to a building, paint it in the building's per-
-    # region tint so the town reads as recognisable houses rather than one
-    # uniform mass of stone.
-    face_col = top_col = None
+def _tilt_wall_tint(scene, tx, ty):
+    """(face_col, top_col) for this wall tile, or (None, None) if it's not
+    in a building (use the default near-black palette). Cached per-tile on
+    the scene so the hot wall loop doesn't recompute the building palette
+    every frame; cleared with the wall_region_map when scenes rebuild."""
+    cache = getattr(scene, "_wall_tint_cache", None)
+    if cache is None:
+        cache = scene._wall_tint_cache = {}
+    key = (tx, ty)
+    cached = cache.get(key)
+    if cached is not None:
+        return cached
     region = wall_region_for(scene, tx, ty)
-    if region is not None:
+    if region is None:
+        face_col = top_col = None
+    else:
         _roof, (dr, dg, db), _trim = _get_building_palette(region)
         face_col = (max(0, min(255, _WALL_FACE[0] + dr)),
                     max(0, min(255, _WALL_FACE[1] + dg)),
@@ -2261,6 +2282,12 @@ def _tilt_wall_box(surf, camera, scene, tx, ty):
         top_col = (max(0, min(255, _WALL_TOP[0] + dr)),
                    max(0, min(255, _WALL_TOP[1] + dg)),
                    max(0, min(255, _WALL_TOP[2] + db)))
+    cache[key] = (face_col, top_col)
+    return face_col, top_col
+
+
+def _tilt_wall_box(surf, camera, scene, tx, ty):
+    face_col, top_col = _tilt_wall_tint(scene, tx, ty)
     _extrude_box(surf, camera, scene, tx, ty, 0, _TILT_WALL_RISE,
                  face_col=face_col, top_col=top_col)
 
