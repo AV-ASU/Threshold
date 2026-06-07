@@ -809,6 +809,21 @@ def draw_floor(surf, ch, rx, ry, tx, ty):
         if seed % 19 == 0:                         # rare cold glint
             pygame.draw.rect(surf, (88, 104, 100),
                              (rx + (seed % 26), ry + (seed * 5 % 26), 1, 1))
+        # Cold sky-glints: a couple of tiny moving specks per tile, faintly
+        # whiter than the algae ripples, drifting downstream. They give the
+        # surface a live shimmer that sells "water" rather than "wet mud" --
+        # especially under tilt where the dark patches don't read alone.
+        gt = pygame.time.get_ticks()
+        for k in range(2):
+            phase = (gt // 110 + (seed >> k)) & 0x7FF
+            gx = (phase + (seed * (k + 1))) % TILE
+            gy = ((phase * 3) >> 1) % TILE
+            life = phase & 31
+            if life < 5:                           # only briefly visible
+                bright = 96 + life * 6
+                col = (min(255, bright - 12),
+                       min(255, bright), min(255, bright - 4))
+                pygame.draw.rect(surf, col, (rx + gx, ry + gy, 1, 1))
     elif ch == "@":
         # Void floor -- animated speck drift, plus a static darker
         # mottle so the void never reads as flat black.
@@ -1658,6 +1673,88 @@ def _shade_col(col, f):
     return (max(0, min(255, int(col[0] * f))),
             max(0, min(255, int(col[1] * f))),
             max(0, min(255, int(col[2] * f))))
+
+
+def _build_water_bank_edges(scene):
+    """Precompute every water-land boundary segment (a water tile that has
+    a `_BANK_LAND` neighbour). Each edge is (cx_world, cy_world, ndx, ndy,
+    seed) -- the midpoint on the WATER side of the boundary, the direction
+    of the land neighbour, and a stable seed for reed jitter / sway.
+    Cached on the scene so we don't rescan ~10k tiles per frame."""
+    edges = getattr(scene, "_water_bank_edges", None)
+    if edges is not None:
+        return edges
+    floor, h, w = scene.floor, scene.h, scene.w
+    edges = []
+    for ty in range(h):
+        for tx in range(w):
+            if floor[ty][tx] != "~":
+                continue
+            for si, (ndx, ndy) in enumerate(((0, -1), (0, 1),
+                                             (-1, 0), (1, 0))):
+                nx, ny = tx + ndx, ty + ndy
+                if not (0 <= nx < w and 0 <= ny < h):
+                    continue
+                if floor[ny][nx] not in _BANK_LAND:
+                    continue
+                # Boundary midpoint sits ON the water tile's land-facing edge
+                cx_w = tx * TILE + TILE / 2 + ndx * (TILE / 2 - 1)
+                cy_w = ty * TILE + TILE / 2 + ndy * (TILE / 2 - 1)
+                seed = (tx * 73856093) ^ (ty * 19349663) ^ (si * 40503)
+                edges.append((cx_w, cy_w, ndx, ndy, seed))
+    scene._water_bank_edges = edges
+    return edges
+
+
+def _draw_reed_cluster(surf, camera, cx_w, cy_w, ndx, ndy, seed, wt):
+    """3 upright reeds at a bank edge. Each is a thin near-vertical line
+    projected through the camera so it stands at the right pitch; the tip
+    sways with the marsh wind. Density throttled by the seed -- not every
+    edge gets reeds, so the bank reads patchy + organic."""
+    if (seed % 5) >= 3:                  # ~40% of edges actually get reeds
+        return
+    reed = (80, 88, 46)
+    reed_dk = (50, 58, 30)
+    # The boundary direction is perpendicular to (ndx, ndy) -- reeds spread
+    # ALONG the boundary so they form a small line, not a single point.
+    if ndx:
+        ax, ay = 0, 1
+    else:
+        ax, ay = 1, 0
+    n = 3
+    for k in range(n):
+        u = ((k - (n - 1) / 2.0) / float(n)) * TILE * 0.7
+        jitter_x = ((seed >> (k * 3)) & 3) - 1
+        jitter_y = ((seed >> (k * 3 + 4)) & 3) - 1
+        bx = cx_w + ax * u + jitter_x * 0.5
+        by = cy_w + ay * u + jitter_y * 0.5
+        h_reed = 7 + ((seed >> (k * 2)) & 7)
+        sway = math.sin(wt + seed * 0.013 + k * 0.7) * 1.7
+        b = camera.project(bx, by, 0)
+        t = camera.project(bx + sway, by, h_reed)
+        if abs(t[0] - b[0]) + abs(t[1] - b[1]) < 200:    # cull off-screen
+            pygame.draw.line(surf, reed_dk,
+                             (int(b[0]), int(b[1])),
+                             (int(t[0]), int(t[1])), 1)
+            pygame.draw.line(surf, reed,
+                             (int(b[0]) + 1, int(b[1])),
+                             (int(t[0]) + 1, int(t[1])), 1)
+
+
+def emit_tilt_water_reeds(emit_fn, scene, camera, surf, x0, y0, x1, y1):
+    """Emit one depth-sorted reed cluster per visible water-bank edge so
+    the marsh fringe stands UP under tilt instead of being painted flat
+    onto the warped floor."""
+    wt = pygame.time.get_ticks() / 650.0
+    for (cx_w, cy_w, ndx, ndy, seed) in _build_water_bank_edges(scene):
+        tx, ty = int(cx_w // TILE), int(cy_w // TILE)
+        if tx < x0 - 1 or tx > x1 + 1 or ty < y0 - 1 or ty > y1 + 1:
+            continue
+        emit_fn(camera.depth(cx_w, cy_w, 4),
+                lambda cx_w=cx_w, cy_w=cy_w, ndx=ndx, ndy=ndy, seed=seed,
+                wt=wt, surf=surf:
+                _draw_reed_cluster(surf, camera, cx_w, cy_w,
+                                   ndx, ndy, seed, wt))
 
 
 def emit_tilt_roofs(emit_fn, scene, camera, surf, x0, y0, x1, y1):
