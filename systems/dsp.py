@@ -48,29 +48,43 @@ def highpass(sig, cutoff_hz, order=4):
 # ---- reverb (Schroeder: 4 parallel combs -> 2 series allpasses) ---
 
 def _comb(sig, delay_samples, feedback):
-    """Single feedback-comb. Returns same length as input."""
-    out = np.zeros_like(sig)
-    buf = np.zeros(delay_samples, dtype=np.float32)
-    bi = 0
-    for i in range(len(sig)):
-        delayed = buf[bi]
-        out[i] = delayed
-        buf[bi] = sig[i] + delayed * feedback
-        bi = (bi + 1) % delay_samples
-    return out
+    """Feedback-comb: y[n] = x[n-D] + fb * y[n-D]. Block-vectorised:
+    within any D-sample window the right-hand side only references
+    indices D samples earlier (the previous block), so a whole block
+    can be computed in one numpy op. Two orders of magnitude faster
+    than the pure-Python per-sample loop on large signals."""
+    D = delay_samples
+    sig = np.asarray(sig, dtype=np.float32)
+    n = len(sig)
+    sig_pad = np.concatenate([np.zeros(D, dtype=np.float32), sig])
+    out_pad = np.zeros(n + D, dtype=np.float32)
+    for B in range(0, n, D):
+        E = min(B + D, n)
+        sz = E - B
+        # y[B:E] = x[B-D:E-D] + fb * y[B-D:E-D]
+        out_pad[B + D:E + D] = (sig_pad[B:B + sz]
+                                + feedback * out_pad[B:B + sz])
+    return out_pad[D:n + D]
 
 
 def _allpass(sig, delay_samples, gain=0.5):
-    out = np.zeros_like(sig)
-    buf = np.zeros(delay_samples, dtype=np.float32)
-    bi = 0
-    for i in range(len(sig)):
-        delayed = buf[bi]
-        v = -gain * sig[i] + delayed
-        buf[bi] = sig[i] + gain * v
-        out[i] = v
-        bi = (bi + 1) % delay_samples
-    return out
+    """Schroeder allpass: y[n] = -g*x[n] + x[n-D] + g*y[n-D]. Same
+    block-vectorised pattern as _comb: the -g*x[n] term is immediate
+    (no inter-sample dependency within the block) and the delayed
+    terms reference only the previous block."""
+    D = delay_samples
+    sig = np.asarray(sig, dtype=np.float32)
+    n = len(sig)
+    sig_pad = np.concatenate([np.zeros(D, dtype=np.float32), sig])
+    out_pad = np.zeros(n + D, dtype=np.float32)
+    for B in range(0, n, D):
+        E = min(B + D, n)
+        sz = E - B
+        # y[B:E] = -g*x[B:E] + x[B-D:E-D] + g*y[B-D:E-D]
+        out_pad[B + D:E + D] = (-gain * sig[B:E]
+                                + sig_pad[B:B + sz]
+                                + gain * out_pad[B:B + sz])
+    return out_pad[D:n + D]
 
 
 # Per-space reverb profiles. tail_s is added to the input length so

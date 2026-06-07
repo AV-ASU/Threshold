@@ -636,6 +636,15 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
                 self.audio.play_music(self.scene.music)
             else:
                 self.audio.stop_music()
+        # Scene-aware footstep reverb. UNDERGROUND_SCENES route through
+        # the cellar profile (stone tail); OUTDOOR_SCENES + brimley use
+        # outdoor (subtle slap-back); everything else stays dry.
+        if key in UNDERGROUND_SCENES:
+            self.audio.set_scene_reverb("cellar")
+        elif key in OUTDOOR_SCENES or key == "brimley":
+            self.audio.set_scene_reverb("outdoor")
+        else:
+            self.audio.set_scene_reverb(None)
         if self.scene.on_enter_fn:
             self.scene.on_enter_fn(self, self.scene)
         # Outdoor decay: re-apply tier-additive decorations every
@@ -980,7 +989,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
                             self._delayed_audio.append([0.12, sfx, 0.7])
                             delayed = True
                     if not delayed:
-                        self.audio.play(sfx, 0.7)
+                        self.audio.play_footstep(sfx, 0.7)
                     # Broadcast the step to listening cultists. Per-
                     # surface base loudness, scaled 1.5x while
                     # sprinting. Cultists in SCOUT poll
@@ -1407,7 +1416,11 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
             entry[0] -= dt
             if entry[0] <= 0:
                 pan = entry[3] if len(entry) > 3 else None
-                self.audio.play(entry[1], entry[2], pan=pan)
+                name = entry[1]
+                if name.startswith("step_"):
+                    self.audio.play_footstep(name, entry[2], pan=pan)
+                else:
+                    self.audio.play(name, entry[2], pan=pan)
             else:
                 survivors.append(entry)
         self._delayed_audio = survivors
@@ -1778,6 +1791,11 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
             self._chant_t = (9.0 - 5.5 * chant_t) * random.uniform(0.8, 1.2)
             pan = self.audio.pan_for_world(closest.x, self.player.x)
             self.audio.play("cult_chant", 0.12 + 0.16 * chant_t, pan=pan)
+            # Duck the depths music so the chant carries. Depth scales
+            # with proximity -- a close chant ducks harder. The 2.7s
+            # window covers the chant's reverb tail (cult_chant is
+            # 1.8s dry + ~0.9s cellar tail).
+            self.audio.duck(2.7, depth=0.40 - 0.20 * chant_t)
 
     def _flashlight_lit(self):
         """Is the flashlight actually casting a beam right now? True only

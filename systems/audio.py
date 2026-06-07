@@ -40,6 +40,12 @@ class Audio:                        #Starting screen needs music, something simp
         self.ambient_channel = None
         self.king_channel = None
         self._king_on = False
+        # Scene-reverb tag for play_footstep -- "cellar" / "outdoor" /
+        # None. Set by Game.load_scene_now from the scene's tag set
+        # (UNDERGROUND_SCENES, OUTDOOR_SCENES). Footstep variants are
+        # baked at build time per profile; play_footstep picks the one
+        # matching the active scene and falls back to dry.
+        self._scene_reverb = None
         if self.enabled:
             self._build_library()
             self.music_channel = pygame.mixer.Channel(0)
@@ -149,10 +155,10 @@ class Audio:                        #Starting screen needs music, something simp
         self.sfx["swing"]       = g(280, 100, 0.18, "saw", attack_ms=2, decay_ms=60, noise_mix=0.3)
         self.sfx["hit"]         = g(180, 70, 0.20, "noise", attack_ms=2, decay_ms=50, noise_mix=1.0)
         self.sfx["enemy_die"]   = g(110, 380, 0.22, "saw", attack_ms=10, decay_ms=320, noise_mix=0.4)
-        self.sfx["heartbeat"]   = g(55, 220, 0.30, "sine", attack_ms=20, decay_ms=180)
+        self.sfx["heartbeat"]   = self._build_heartbeat()
         self.sfx["static"]      = g(0, 600, 0.25, "noise", attack_ms=20, decay_ms=400, noise_mix=1.0)
         self.sfx["wrong"]       = g(33, 900, 0.32, "saw", attack_ms=80, decay_ms=700)
-        self.sfx["whisper"]     = g(290, 700, 0.16, "noise", attack_ms=80, decay_ms=500, noise_mix=0.85)
+        self.sfx["whisper"]     = self._build_whisper()
         self.sfx["arg_chime"]   = g(311, 480, 0.22, "sine", attack_ms=20, decay_ms=400, vibrato=2)
         # Depths ambient layers: a low droning chant + a wet exhale.
         # Played at intervals that tighten as the dread aperture
@@ -193,9 +199,10 @@ class Audio:                        #Starting screen needs music, something simp
                                       noise_mix=1.0)
         # `low_pulse`: a single sub-bass pulse used for the rare moment
         # the Pursuer manifests strongly (e.g. when the player stands
-        # still too long, or when a Watcher just despawned).
-        self.sfx["low_pulse"]    = g(36, 480, 0.30, "sine",
-                                      attack_ms=40, decay_ms=400)
+        # still too long, or when a Watcher just despawned). Carries a
+        # 200 Hz partial so laptop speakers (which roll off ~120 Hz)
+        # still register a thump.
+        self.sfx["low_pulse"]    = self._build_low_pulse()
         # `falling_air`: the bed under the journal door-dream (NARRATIVE
         # 1b). Not a melody -- the rush of air past you as you fall, plus
         # a low howl that sinks and never lands. Looped under the cutscene.
@@ -238,31 +245,48 @@ class Audio:                        #Starting screen needs music, something simp
             if key in self.sfx:
                 self.sfx[key] = self._post(self.sfx[key], **kw)
 
+        # ---- Scene-aware footstep variants ---------------------------
+        # Pre-bake cellar + outdoor reverb variants for the dry step
+        # cues so play_footstep can pick a scene-appropriate take at
+        # play time. step_void is excluded -- it already has cellar
+        # reverb baked above and is the void scenes' bespoke step.
+        # The dry originals remain in self.sfx as the room fallback.
+        for _step in ("step_grass", "step_wood", "step_stone",
+                      "step_carpet"):
+            if _step not in self.sfx:
+                continue
+            dry = self.sfx[_step]
+            self.sfx[f"{_step}_cellar"]  = self._post(dry, reverb="cellar")
+            self.sfx[f"{_step}_outdoor"] = self._post(dry, reverb="outdoor")
+
         # MUSIC. THRESHOLD's tracks are intentionally not melodies --
         # most are drones, two are haunted-with-pings versions of the
         # original lullaby/lilting tunes. Older cheerful definitions
         # of `home` and `village` were dictionary collisions (they
         # were overwritten further down) so they are removed.
         self.music = {
-            # void: drone + rests = more uneasy
+            # void: drone + rests. Notes carry a 4th-harmonic partial
+            # so the sub-only fundamentals reach laptop speakers.
             "void": self._music_loop([
                 (55,4.0),(58,4.0),(52,4.0),
                 (0,2.0),(48,4.0),(0,2.0),(60,4.0),
-            ], beat_ms=900, vol=0.14, wave="sine"),
+            ], beat_ms=900, vol=0.22, wave="sine", mid_partial=4),
             # wrong: extra notes
             "wrong": self._music_loop([
                 (41,2.0),(0,1.0),(43,2.0),(0,1.0),
                 (39,3.0),(0,2.0),(37,3.0),(0,1.0),(45,2.0),
-            ], beat_ms=700, vol=0.18, wave="saw"),
-            # basement: low pulse, very sparse, 1 melodic motif
+            ], beat_ms=700, vol=0.22, wave="saw"),
+            # basement: low pulse, very sparse, 1 melodic motif. Mid
+            # partials keep the triangle drone present on small speakers.
             "basement": self._music_loop([
                 (49,3.0),(0,2.0),(55,2.0),(0,3.0),
                 (52,2.0),(0,4.0),
-            ], beat_ms=700, vol=0.12, wave="triangle"),
-            # wind: 'music' for the brimley -- a long noise drone
-            # with a subtle pitched undertone, no melody, no rhythm.
-            # Stops entirely once you take the first cult testimony in the
-            # Works; the silence is the point.
+            ], beat_ms=700, vol=0.20, wave="triangle", mid_partial=4),
+            # wind: 'music' for the brimley -- a long stereo wind bed
+            # with gust modulation and a leaf-rustle layer (above the
+            # base noise drone). Stops entirely once the player takes
+            # the first cult testimony in the Works; the silence is
+            # the point.
             "wind": self._wind_loop(),
             # threshold_drone: deeper, more pitched than wind. Title
             # screen + the "world isn't right" takeover. Two stacked
@@ -273,7 +297,7 @@ class Audio:                        #Starting screen needs music, something simp
             # are what the scene wiring passes; the audio is wrong.
             "home": self._haunted_home(),
             "village": self._haunted_village(),
-            "outside": self._wind_loop(duration_ms=8000, vol=0.07),
+            "outside": self._wind_loop(duration_ms=12000, vol=0.13),
         }
         # Opening-drive loops (played on their own channels, not "music").
         self.engine_snd = self._engine_loop()
@@ -472,13 +496,15 @@ class Audio:                        #Starting screen needs music, something simp
             stereo[i * 4 + 3] = buf[i * 2 + 1]
         return pygame.mixer.Sound(buffer=bytes(stereo))
 
-    def _threshold_drone(self, duration_ms=12000, vol=0.10):
+    def _threshold_drone(self, duration_ms=12000, vol=0.18):
         """Two stacked low sines a tritone apart (41Hz + 58Hz), with
         a slow breathing envelope and a faint smoothed-noise layer.
         No melody, no rhythm, no resolution. The tritone sits as a
         permanent unresolved interval -- the ear keeps waiting for
         a third note that never comes. Used for the title screen
-        and the late-game 'world is wrong' takeover."""
+        and the late-game 'world is wrong' takeover. Mid partials at
+        the 4th harmonic (164 + 232 Hz) preserve the tritone identity
+        an octave-and-fifth up so laptop speakers still hear it."""
         sr = 22050
         n = int(sr * duration_ms / 1000)
         buf = bytearray(n * 2)
@@ -490,8 +516,12 @@ class Audio:                        #Starting screen needs music, something simp
             # can fully resolve as pitch, but it still feels wrong.
             tone = (math.sin(2 * math.pi * 41 * t) * 0.55
                     + math.sin(2 * math.pi * 58 * t) * 0.40)
+            # Mid partials (4 * fundamental) at -12 dB. Same musical
+            # identity, audible on small speakers.
+            mid = (math.sin(2 * math.pi * 164 * t) * 0.22
+                   + math.sin(2 * math.pi * 232 * t) * 0.16)
             smooth = 0.93 * smooth + 0.07 * random.uniform(-1, 1)
-            v = tone * 0.85 + smooth * 0.20
+            v = tone * 0.85 + mid + smooth * 0.20
             # Slow breathing envelope -- 0.7 .. 1.1 over ~14 seconds.
             env = 0.90 + 0.20 * math.sin(2 * math.pi * 0.07 * t)
             sample = int(v * vol * env * 32767)
@@ -506,7 +536,7 @@ class Audio:                        #Starting screen needs music, something simp
             stereo[i * 4 + 3] = buf[i * 2 + 1]
         return pygame.mixer.Sound(buffer=bytes(stereo))
 
-    def _haunted_home(self, duration_ms=14000, vol=0.09):
+    def _haunted_home(self, duration_ms=14000, vol=0.16):
         """Replacement for the original C-major lullaby. A low drone
         with a single high triangle-wave note that pings at irregular
         intervals -- the suggestion of a music box that has stopped
@@ -526,7 +556,8 @@ class Audio:                        #Starting screen needs music, something simp
         ]
         for i in range(n):
             t = i / sr
-            drone = math.sin(2 * math.pi * 49 * t) * 0.55
+            drone = (math.sin(2 * math.pi * 49 * t) * 0.55
+                     + math.sin(2 * math.pi * 196 * t) * 0.18)
             smooth = 0.92 * smooth + 0.08 * random.uniform(-1, 1)
             v = drone * 0.80 + smooth * 0.18
             for start, freq, length in pings:
@@ -554,7 +585,7 @@ class Audio:                        #Starting screen needs music, something simp
             stereo[i * 4 + 3] = buf[i * 2 + 1]
         return pygame.mixer.Sound(buffer=bytes(stereo))
 
-    def _haunted_village(self, duration_ms=13000, vol=0.08):
+    def _haunted_village(self, duration_ms=13000, vol=0.16):
         """The village no longer lilts. Same drone treatment as
         _haunted_home but with a sparser, lower ping pattern that
         only fires twice across the full loop -- a public square
@@ -570,7 +601,9 @@ class Audio:                        #Starting screen needs music, something simp
         for i in range(n):
             t = i / sr
             drone = (math.sin(2 * math.pi * 55 * t) * 0.50
-                     + math.sin(2 * math.pi * 73 * t) * 0.30)
+                     + math.sin(2 * math.pi * 73 * t) * 0.30
+                     + math.sin(2 * math.pi * 220 * t) * 0.16
+                     + math.sin(2 * math.pi * 292 * t) * 0.11)
             smooth = 0.91 * smooth + 0.09 * random.uniform(-1, 1)
             v = drone * 0.75 + smooth * 0.20
             for start, freq, length in pings:
@@ -635,6 +668,117 @@ class Audio:                        #Starting screen needs music, something simp
             stereo[i * 4 + 1] = buf[i * 2 + 1]
             stereo[i * 4 + 2] = buf[i * 2]
             stereo[i * 4 + 3] = buf[i * 2 + 1]
+        return pygame.mixer.Sound(buffer=bytes(stereo))
+
+    def _build_heartbeat(self, duration_ms=220, vol=0.32):
+        """The dread heartbeat. 55 Hz sine fundamental for the chest
+        thump, plus a 200 Hz partial at ~-12 dB so laptop speakers
+        (which roll off around 120 Hz) still register a perceivable
+        beat. The fundamental alone reads as SUB-ONLY on small
+        speakers; the partial rescues it without changing the
+        identity."""
+        sr = 22050
+        n = int(sr * duration_ms / 1000)
+        buf = bytearray(n * 2)
+        attack_n = max(1, int(sr * 0.020))
+        decay_n = max(1, int(sr * 0.180))
+        for i in range(n):
+            t = i / sr
+            fund = math.sin(2 * math.pi * 55 * t)
+            mid = math.sin(2 * math.pi * 200 * t) * 0.60
+            v = fund + mid
+            if i < attack_n:
+                env = i / attack_n
+            elif i > n - decay_n:
+                env = max(0.0, (n - i) / decay_n)
+            else:
+                env = 1.0
+            sample = max(-32768, min(32767,
+                                     int(v * vol * env * 32767 / 1.60)))
+            buf[i * 2] = sample & 0xFF
+            buf[i * 2 + 1] = (sample >> 8) & 0xFF
+        stereo = bytearray(n * 4)
+        for i in range(n):
+            stereo[i * 4]     = buf[i * 2]
+            stereo[i * 4 + 1] = buf[i * 2 + 1]
+            stereo[i * 4 + 2] = buf[i * 2]
+            stereo[i * 4 + 3] = buf[i * 2 + 1]
+        return pygame.mixer.Sound(buffer=bytes(stereo))
+
+    def _build_low_pulse(self, duration_ms=480, vol=0.32):
+        """Sub-bass pulse with a 200 Hz upper-bass partial so the cue
+        survives laptop speakers. The 36 Hz fundamental alone is
+        inaudible on most consumer hardware; the partial gives the
+        speaker something to actually push."""
+        sr = 22050
+        n = int(sr * duration_ms / 1000)
+        buf = bytearray(n * 2)
+        attack_n = max(1, int(sr * 0.040))
+        decay_n = max(1, int(sr * 0.400))
+        for i in range(n):
+            t = i / sr
+            fund = math.sin(2 * math.pi * 36 * t)
+            mid = math.sin(2 * math.pi * 200 * t) * 0.65
+            v = fund + mid
+            if i < attack_n:
+                env = i / attack_n
+            elif i > n - decay_n:
+                env = max(0.0, (n - i) / decay_n)
+            else:
+                env = 1.0
+            sample = max(-32768, min(32767,
+                                     int(v * vol * env * 32767 / 1.65)))
+            buf[i * 2] = sample & 0xFF
+            buf[i * 2 + 1] = (sample >> 8) & 0xFF
+        stereo = bytearray(n * 4)
+        for i in range(n):
+            stereo[i * 4]     = buf[i * 2]
+            stereo[i * 4 + 1] = buf[i * 2 + 1]
+            stereo[i * 4 + 2] = buf[i * 2]
+            stereo[i * 4 + 3] = buf[i * 2 + 1]
+        return pygame.mixer.Sound(buffer=bytes(stereo))
+
+    def _build_whisper(self, duration_ms=700, vol=0.38):
+        """A human-formant whisper. Noise band-passed to 800-2200 Hz
+        (vocal speech range, the 'sibilant + vowel' band) with a slow
+        amplitude LFO so it breathes. The previous whisper was raw
+        wide-band noise with a faint 290 Hz tone; centroid landed at
+        5.5 kHz (HARSH flag) and read as hiss, not breath."""
+        sr = 22050
+        n = int(sr * duration_ms / 1000)
+        # Build noise, then band-pass via highpass + lowpass chain.
+        # _HAVE_DSP gates the filtering; falls back to dry noise if
+        # numpy/scipy aren't installed (matches _post's no-op path).
+        raw = bytearray(n * 2)
+        smooth = 0.0
+        for i in range(n):
+            smooth = 0.55 * smooth + 0.45 * random.uniform(-1, 1)
+            sample = max(-32768, min(32767, int(smooth * 32767)))
+            raw[i * 2] = sample & 0xFF
+            raw[i * 2 + 1] = (sample >> 8) & 0xFF
+        if _HAVE_DSP:
+            import numpy as _np
+            sig = (_np.frombuffer(bytes(raw), dtype=_np.int16)
+                   .astype(_np.float32) / 32768.0)
+            sig = dsp.highpass(sig, 800)
+            sig = dsp.lowpass(sig, 2200)
+            # Slow amplitude LFO (0.4 Hz) + attack/decay envelope.
+            t = _np.arange(len(sig)) / sr
+            lfo = 0.7 + 0.3 * _np.sin(2 * _np.pi * 0.4 * t)
+            env = _np.ones_like(sig)
+            attack_n = max(1, int(sr * 0.080))
+            decay_n = max(1, int(sr * 0.500))
+            env[:attack_n] = _np.linspace(0, 1, attack_n)
+            env[-decay_n:] = _np.linspace(1, 0, decay_n)
+            sig = sig * lfo * env
+            return dsp.to_sound(sig, vol)
+        # Fallback: dry stereo (no formant, but no failure).
+        stereo = bytearray(n * 4)
+        for i in range(n):
+            stereo[i * 4]     = raw[i * 2]
+            stereo[i * 4 + 1] = raw[i * 2 + 1]
+            stereo[i * 4 + 2] = raw[i * 2]
+            stereo[i * 4 + 3] = raw[i * 2 + 1]
         return pygame.mixer.Sound(buffer=bytes(stereo))
 
     def _build_cult_lock(self, duration_ms=380, vol=0.34):
@@ -867,47 +1011,103 @@ class Audio:                        #Starting screen needs music, something simp
         else:
             self.ambient_channel.fadeout(600)
 
-    def _wind_loop(self, duration_ms=8000, vol=0.08):
-        """Build a long noise-based ambient loop that reads as wind --
-        filtered (smoothed) noise + a low pitched undertone, modulated
-        by a slow envelope so the loudness breathes. No tonal hits;
-        the goal is texture, not music."""
+    def _wind_loop(self, duration_ms=24000, vol=0.28):
+        """Wind ambient bed for Brimley. Long stereo loop with gust
+        modulation and a leaf-rustle layer above the base noise drone.
+
+        Four perceptual layers:
+          * BASE     -- smoothed noise (the body of the air), independent
+                        L/R streams so the field has width
+          * GUSTS    -- scheduled at irregular intervals; each one
+                        ramps amplitude + opens the rustle band
+          * RUSTLE   -- thin barely-smoothed noise that only opens
+                        during gust peaks (wind through dry leaves)
+          * UNDERTONE -- low pitched body (55 Hz + 220 Hz partial so
+                         laptop speakers carry the body)
+
+        24 s is long enough that a full Brimley walk won't catch the
+        loop point. Stereo decorrelation gives the bed depth so it
+        doesn't read as a single noise source.
+
+        Implementation is numpy-vectorised: building this in a pure
+        Python sample loop took ~4 s at Audio init; vectorised it's
+        ~0.2 s. Falls back to a no-op silent loop if numpy isn't
+        available (matches dsp.py's optional-import pattern)."""
+        if not _HAVE_DSP:
+            return self._silent_stereo(duration_ms)
+        import numpy as _np
         sr = 22050
         n = int(sr * duration_ms / 1000)
-        buf = bytearray(n * 2)
-        smooth = 0.0
-        for i in range(n):
-            t = i / sr
-            # Smoothed white noise (one-pole low-pass)
-            smooth = 0.92 * smooth + 0.08 * random.uniform(-1, 1)
-            # Slow undertone (low sine modulated by slower sine)
-            under = math.sin(2 * math.pi * 55 * t) * 0.25 \
-                  * (0.5 + 0.5 * math.sin(2 * math.pi * 0.07 * t))
-            v = smooth * 0.85 + under
-            # Breathing envelope -- gentle 0.5 .. 1.2 oscillation
-            env = 0.85 + 0.35 * math.sin(2 * math.pi * 0.12 * t)
-            sample = int(v * vol * env * 32767)
-            sample = max(-32768, min(32767, sample))
-            buf[i * 2] = sample & 0xFF
-            buf[i * 2 + 1] = (sample >> 8) & 0xFF
-        stereo = bytearray(n * 4)
-        for i in range(n):
-            stereo[i * 4]     = buf[i * 2]
-            stereo[i * 4 + 1] = buf[i * 2 + 1]
-            stereo[i * 4 + 2] = buf[i * 2]
-            stereo[i * 4 + 3] = buf[i * 2 + 1]
-        return pygame.mixer.Sound(buffer=bytes(stereo))
+        t = _np.arange(n, dtype=_np.float32) / sr
+        rng = _np.random.default_rng()
+        # Gust envelope: triangle pulses with asymmetric attack/release.
+        # (start_s, duration_s, peak_strength)
+        gusts = [(2.5, 3.4, 0.65), (8.7, 4.2, 0.85),
+                 (14.3, 2.6, 0.55), (18.2, 4.0, 0.75)]
+        gust = _np.zeros(n, dtype=_np.float32)
+        for gs, gd, gp in gusts:
+            mask = (t >= gs) & (t < gs + gd)
+            local = (t - gs) / gd
+            env = _np.where(local < 0.20, local / 0.20,
+                            _np.maximum(0.0,
+                                         1.0 - (local - 0.20) / 0.80))
+            gust = _np.maximum(gust, _np.where(mask, env * gp, 0.0))
+        # Smoothed noise -- one-pole low-pass for each channel.
+        smooth_coef = 0.92
+        baseL = rng.uniform(-1.0, 1.0, n).astype(_np.float32)
+        baseR = rng.uniform(-1.0, 1.0, n).astype(_np.float32)
+        # y[n] = smooth_coef * y[n-1] + (1-smooth_coef) * x[n]
+        # -> lfilter b=[1-c], a=[1, -c]
+        from scipy import signal as _sig
+        L_air = _sig.lfilter([1 - smooth_coef], [1, -smooth_coef],
+                              baseL).astype(_np.float32)
+        R_air = _sig.lfilter([1 - smooth_coef], [1, -smooth_coef],
+                              baseR).astype(_np.float32)
+        # Rustle -- shorter smoothing for brighter content.
+        rust_coef = 0.45
+        L_rust = _sig.lfilter([1 - rust_coef], [1, -rust_coef],
+                               rng.uniform(-1.0, 1.0, n)).astype(_np.float32)
+        R_rust = _sig.lfilter([1 - rust_coef], [1, -rust_coef],
+                               rng.uniform(-1.0, 1.0, n)).astype(_np.float32)
+        # Undertone (mono, shared L/R for centering).
+        sub_env = 0.5 + 0.5 * _np.sin(2 * _np.pi * 0.07 * t)
+        under = (_np.sin(2 * _np.pi * 55 * t) * 0.20
+                 + _np.sin(2 * _np.pi * 220 * t) * 0.08) * sub_env
+        L = L_air * 0.75 + L_rust * 0.20 * gust + under * 0.6
+        R = R_air * 0.75 + R_rust * 0.20 * gust + under * 0.6
+        env = (0.75 + 0.25 * _np.sin(2 * _np.pi * 0.04 * t)
+               + 0.30 * gust)
+        L = _np.clip(L * env * vol, -1.0, 1.0)
+        R = _np.clip(R * env * vol, -1.0, 1.0)
+        stereo = _np.column_stack([L, R])
+        return pygame.sndarray.make_sound((stereo * 32767)
+                                          .astype(_np.int16))
 
-    def _music_loop(self, notes, beat_ms=400, vol=0.1, wave="sine"):
+    def _silent_stereo(self, duration_ms):
+        """Silent stereo Sound of the given duration. Used by the
+        wind/whisper fallback paths when numpy isn't available."""
+        n = int(22050 * duration_ms / 1000)
+        return pygame.mixer.Sound(buffer=bytes(n * 4))
+
+    def _music_loop(self, notes, beat_ms=400, vol=0.1, wave="sine",
+                    mid_partial=0):
+        """Build a procedural music loop from a (freq, beats) note list.
+        `mid_partial` (0 = off, N > 0 = harmonic index) adds the Nth
+        harmonic of each pitched note at -12 dB so sub-only drones
+        (e.g. void at 48-60 Hz) carry an audible upper-bass band on
+        laptop speakers. Norm divides amplitude to keep peak in check
+        when the partial is added."""
         sr = 22050
         total_samples = 0
         segments = []
+        norm = 1.0 / 1.25 if mid_partial else 1.0
         for f, beats in notes:
             ms = int(beat_ms * beats)
             n = int(sr * ms / 1000)
             seg = bytearray(n * 2)
             attack_n = max(1, int(sr * 0.02))
             decay_n = max(1, int(sr * 0.10))
+            mf = f * mid_partial if (mid_partial and f > 0) else 0.0
             for i in range(n):
                 t = i / sr
                 if f <= 0:
@@ -922,13 +1122,15 @@ class Audio:                        #Starting screen needs music, something simp
                     v = 2.0 * (f * t - math.floor(0.5 + f * t))
                 else:
                     v = math.sin(2 * math.pi * f * t)
+                if mf > 0.0:
+                    v += math.sin(2 * math.pi * mf * t) * 0.25
                 if i < attack_n:
                     env = i / attack_n
                 elif i > n - decay_n:
                     env = max(0.0, (n - i) / decay_n)
                 else:
                     env = 0.85
-                sample = int(v * vol * env * 32767)
+                sample = int(v * vol * env * norm * 32767)
                 sample = max(-32768, min(32767, sample))
                 seg[i*2] = sample & 0xFF
                 seg[i*2+1] = (sample >> 8) & 0xFF
@@ -997,6 +1199,23 @@ class Audio:                        #Starting screen needs music, something simp
         s.set_volume(1.0)
         ch.set_volume(left, right)
         ch.play(s)
+
+    def set_scene_reverb(self, profile):
+        """Set the active reverb profile for play_footstep ('cellar' /
+        'outdoor' / None). Game.load_scene_now calls this from the
+        scene-tag dispatch."""
+        self._scene_reverb = profile
+
+    def play_footstep(self, name, volume=1.0, pan=None):
+        """Play a footstep cue routed through the current scene's
+        reverb (built per-profile at startup). Falls back to the dry
+        cue when no profile is active or the variant doesn't exist."""
+        if self._scene_reverb:
+            variant = f"{name}_{self._scene_reverb}"
+            if variant in self.sfx:
+                self.play(variant, volume=volume, pan=pan)
+                return
+        self.play(name, volume=volume, pan=pan)
 
     def king_tone(self, on, volume=0.5):
         """Loop the King's signature tone on its own channel while his sprite is

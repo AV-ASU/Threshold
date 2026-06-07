@@ -1,9 +1,10 @@
-"""One-shot composite preview of the chase-loop cues -- waveform + log
-Mel-ish spectrogram for cult_lock, cult_lose, watcher_spawn, watcher_dispel,
-hide_enter, hide_exit, stacked vertically with stats per cue.
+"""Composite preview of a named cue set -- waveform + log-frequency
+spectrogram for each cue, stacked vertically with stats. Default set is
+the chase-loop cues; --set atmosphere switches to the atmospheric beds.
 
 Usage:
     python tools/preview_chase_cues.py
+    python tools/preview_chase_cues.py --set atmosphere
     python tools/preview_chase_cues.py --out PATH.png
 """
 import argparse
@@ -24,9 +25,19 @@ from scipy import signal
 SR = 22050
 FULL = 32767.0
 
-CHASE_CUES = ["cult_lock", "cult_lose",
-              "watcher_spawn", "watcher_dispel",
-              "hide_enter", "hide_exit"]
+CUE_SETS = {
+    "chase": [
+        ("sfx", "cult_lock"), ("sfx", "cult_lose"),
+        ("sfx", "watcher_spawn"), ("sfx", "watcher_dispel"),
+        ("sfx", "hide_enter"), ("sfx", "hide_exit"),
+    ],
+    "atmosphere": [
+        ("music", "wind"), ("music", "threshold_drone"),
+        ("music", "void"), ("music", "basement"),
+        ("sfx", "heartbeat"), ("sfx", "low_pulse"),
+        ("sfx", "whisper"), ("sfx", "cult_chant"),
+    ],
+}
 
 
 def mono(snd):
@@ -51,9 +62,13 @@ def stats(m):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--out", default=os.path.join(ROOT, "tools",
-                                                   "chase_cues.png"))
+    ap.add_argument("--set", default="chase", choices=list(CUE_SETS),
+                    help="cue set to render")
+    ap.add_argument("--out", default=None,
+                    help="output path (default: tools/<set>_cues.png)")
     args = ap.parse_args()
+    out_path = args.out or os.path.join(ROOT, "tools",
+                                         f"{args.set}_cues.png")
 
     pygame.init()
     pygame.mixer.init(frequency=SR, size=-16, channels=2)
@@ -64,13 +79,15 @@ def main():
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 
-    n_cues = len(CHASE_CUES)
+    cues = CUE_SETS[args.set]
+    n_cues = len(cues)
     fig = plt.figure(figsize=(12, n_cues * 1.9), facecolor="#1c1a18")
     gs = fig.add_gridspec(n_cues, 2, width_ratios=[1, 2.6],
                           hspace=0.55, wspace=0.12)
 
-    for row, name in enumerate(CHASE_CUES):
-        snd = audio.sfx[name]
+    for row, (kind, name) in enumerate(cues):
+        snd = audio.sfx[name] if kind == "sfx" else audio.music[name]
+        label = name if kind == "sfx" else f"music/{name}"
         sig = mono(snd)
         st = stats(sig)
         t = np.arange(len(sig)) / SR
@@ -87,7 +104,7 @@ def main():
         for sp in ax_w.spines.values():
             sp.set_color("#3a3633")
         ax_w.set_title(
-            f"{name}", color="#ecc840", fontsize=10,
+            label, color="#ecc840", fontsize=10,
             fontfamily="monospace", loc="left")
 
         # spectrogram (right)
@@ -119,11 +136,13 @@ def main():
             color="#cfcadf", fontsize=8, fontfamily="monospace",
             loc="left")
 
-    fig.suptitle("THRESHOLD chase-loop cues", color="#ecc840",
+    titles = {"chase": "THRESHOLD chase-loop cues",
+              "atmosphere": "THRESHOLD atmospheric bed"}
+    fig.suptitle(titles.get(args.set, args.set), color="#ecc840",
                  fontsize=13, fontfamily="monospace", y=0.995)
-    fig.savefig(args.out, dpi=110, facecolor=fig.get_facecolor(),
+    fig.savefig(out_path, dpi=110, facecolor=fig.get_facecolor(),
                 bbox_inches="tight")
-    print(f"-> {args.out}")
+    print(f"-> {out_path}")
 
 
 if __name__ == "__main__":
