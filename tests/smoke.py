@@ -229,6 +229,9 @@ _RESET_EXEMPT = {
     "_vignette_surf", "_outdoor_vignette_surf",
     # Per-frame scratch, reset at the top of each draw_world.
     "_overlay_dark_used",
+    # Dev-only background frame capture (F3 under THRESHOLD_DEV) -- a debug tool,
+    # not run state; carries no game meaning across a quit-to-title.
+    "_dev_capturing", "_dev_cap_idx",
 }
 
 
