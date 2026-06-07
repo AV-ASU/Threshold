@@ -87,9 +87,19 @@ SEAMLESS_WORLD_SCENES = OUTDOOR_SCENES | {
 # the player stays comfortably on screen.
 CAM_LOOKAHEAD = 96
 
-# Tank-steering turn rate: world radians/sec the heading (and the camera that
-# rides behind it) rotates while A/D are held in the tilted view.
-TURN_RATE = 2.6
+# Camera follow rate: max world radians/sec the body heading chases the mouse
+# aim in the tilted view (the camera rides behind body, so this is the speed at
+# which the camera catches up to where the cursor is pointing). Mouse-driven
+# steering replaced explicit A/D turn input; A/D now strafes.
+TURN_RATE = 4.2
+
+# Dead-zone (radians) within which the body ignores small mouse-aim deltas, so
+# micro-jitter on the cursor doesn't shake the camera. ~8 degrees.
+AIM_DEAD_ZONE = 0.14
+
+# Velocity smoothing time constant (seconds). Player velocity eases toward the
+# input-driven target over this window, giving a tactile accel/decel feel.
+MOVE_SMOOTH_TAU = 0.12
 
 # Oblique-camera tilt (CAMERA.md Phase 2). The tilt is the DEFAULT view;
 # F3 toggles back to the flat pitch-0 view (the legacy raster) and eases in.

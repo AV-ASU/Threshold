@@ -48,9 +48,22 @@ class LookController:
     def update(self, aim_heading=None):
         """Advance one frame: set the free aim and ease the camera to sit behind
         the heading. `aim_heading` is the world heading to the cursor (the gun
-        aim); it never moves the camera. Returns the eased cam_yaw."""
+        aim); it does not directly move the camera (use chase_aim() to make the
+        body chase aim with a dead-zone + rate cap). Returns the eased cam_yaw."""
         if aim_heading is not None:
             self.aim = wrap(aim_heading)
         target = self.body + math.pi / 2
         self.cam_yaw = wrap(self.cam_yaw + wrap(target - self.cam_yaw) * YAW_EASE)
         return self.cam_yaw
+
+    def chase_aim(self, dt, rate, dead_zone=0.0):
+        """Rotate body toward aim, capped at `rate` rad/s, ignoring deltas
+        smaller than `dead_zone`. This is what makes mouse-driven steering
+        feel like a steered camera: small cursor wiggles do nothing, larger
+        swings drag the body (and the camera behind it) at a bounded rate."""
+        delta = wrap(self.aim - self.body)
+        if abs(delta) <= dead_zone:
+            return
+        excess = delta - dead_zone if delta > 0 else delta + dead_zone
+        step = max(-rate * dt, min(rate * dt, excess))
+        self.body = wrap(self.body + step)
