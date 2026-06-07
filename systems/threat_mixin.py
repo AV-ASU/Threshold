@@ -47,6 +47,8 @@ class ThreatMixin:
             for n in survivors:
                 if not getattr(n, "_fold_follower", False):
                     continue
+                if not getattr(n, "alive", True) or getattr(n, "_is_corpse", False):
+                    continue                 # a body on the floor can't grab
                 if getattr(n, "_stun_t", 0) > 0:
                     continue                 # shoved: blind + can't grab
                 d = math.hypot(n.x - self.player.x, n.y - self.player.y)
@@ -60,6 +62,8 @@ class ThreatMixin:
             tag = getattr(n, "tag", "")
             if not isinstance(tag, str) or not tag.startswith("cult_"):
                 continue
+            if not getattr(n, "alive", True) or getattr(n, "_is_corpse", False):
+                continue                     # a body: it can't watch, spot, or grab
             if getattr(n, "_stun_t", 0) > 0:
                 continue                     # shoved: blind + can't grab
             d = math.hypot(n.x - self.player.x, n.y - self.player.y)

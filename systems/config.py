@@ -258,11 +258,15 @@ PORTAL_EMERGE_GRACE = 0.8    # s after the tear before his body steps through
 # interaction, no catch -- just a receding horizon render: he hangs a fixed gap
 # NORTH of the player, so running up the treadmill road never closes on him
 # (the road grows between you). Only drawn in arrival_road while not armed.
-IDLE_KING_GAP = 13 * 32      # he hangs this many world px NORTH of the player
+IDLE_KING_GAP = 26 * 32      # he hangs this many world px NORTH of the player
                              # every tick. arrival_road is a wrap_y treadmill, so
                              # the gap never closes however far you walk up -- a
-                             # receding horizon you can never reach or touch.
-IDLE_KING_SCALE = 80.0       # distant but readable as the King at the road's end
+                             # receding horizon you can never reach or touch. The
+                             # larger the gap, the further up the road he sits, so
+                             # he reads near the TOP EDGE / vanishing point rather
+                             # than mid-screen.
+IDLE_KING_SCALE = 56.0       # small + distant: a figure at the road's end near the
+                             # top edge, not a big shape filling the upper screen
 # Threat fed to the idle render. NOT a hunt state -- purely how much of the form
 # resolves: maws only draw above 0.45 and eyes/gold-gloss/eversion strengthen
 # with it, so keep it past the maw threshold so he reads as the King, not a

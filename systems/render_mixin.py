@@ -507,20 +507,16 @@ class RenderMixin:
         ik = getattr(self, "_idle_king", None)
         if not ik or self.player is None:
             return
+        # He stays OUT of frame until the treadmill has engaged -- the player has
+        # walked north past the dead car (now hidden along with the sign). Before
+        # that it is the arrival beat with the car as the landmark; after, it is
+        # just the endless road and the King at its vanishing point.
+        if not getattr(self, "_treadmill_latched", False):
+            return
         from rendering.king_unfold import draw_king_unfold
         sx, sy = self.camera.project(ik[0], ik[1])
         h = self.screen.get_height()
         w = self.screen.get_width()
-        # He stays OUT of frame until the car has fully left it: while the dead
-        # car is anywhere on screen (ahead, passing, or dropping off behind you)
-        # the King is withheld, so you only meet him once the last landmark is
-        # gone and it is just the endless road. The car sprite stands ~2 tiles,
-        # so pad the edge check around its anchor.
-        car = getattr(self.scene, "_car_pos", None)
-        if car is not None:
-            csx, csy = self.camera.project(car[0], car[1])
-            if -80 <= csx <= w + 80 and -60 <= csy <= h + 56:
-                return
         if sy < -120 or sy > h + 120:
             return                       # fully off the top: nothing to draw
         sy -= int(TILT_LIFT.get("yellow_king", TILT_ACTOR_STAND)
@@ -699,33 +695,50 @@ class RenderMixin:
             _entries.append((depth, fn))
         _tilt_items = self._tilt_on()
         for it in self.scene.items:
-            a = _vis_alpha(it["x"], it["y"])
+            # Items are pickups, not threats: exempt from the blind-spot sight
+            # cull so they always READ as existing in the world (gated + tiny,
+            # they were easy to miss). Drawn as a clear floating gem.
+            a = _vis_alpha(it["x"], it["y"], exempt=True)
             if a is None:
                 continue
             sx, sy = self.camera.project(it["x"], it["y"])
             t = pygame.time.get_ticks() / 200.0
-            bob = int(math.sin(t + (it["x"] + it["y"]) * 0.01) * 1)
+            ph = t + (it["x"] + it["y"]) * 0.01
+            bob = int(math.sin(ph) * 2)
+            pulse = 0.5 + 0.5 * math.sin(ph * 1.3)
             color = self._item_color(it["key"])
 
-            def _draw_item(s, sx=sx, sy=sy, bob=bob, color=color,
+            def _draw_item(s, sx=sx, sy=sy, bob=bob, color=color, pulse=pulse,
                            tilt=_tilt_items):
                 if tilt:
                     # Ground-contact shadow so the pickup reads as sitting ON
-                    # the floor -- a bare icon floats under the oblique camera,
-                    # which is why notes/evidence were easy to miss. The icon
-                    # then hovers just above its shadow with a soft glint to
-                    # catch the eye. (Pitch 0 keeps the legacy bare icon.)
-                    sh = pygame.Surface((16, 8), pygame.SRCALPHA)
-                    pygame.draw.ellipse(sh, (0, 0, 0, 95), sh.get_rect())
-                    s.blit(sh, (sx - 8, sy - 3))
-                    iy = sy - 6 + bob
-                    glow = pygame.Surface((18, 18), pygame.SRCALPHA)
-                    pygame.draw.circle(glow, (color[0], color[1], color[2], 70),
-                                       (9, 9), 7)
-                    s.blit(glow, (sx - 9, iy - 9),
+                    # the floor, then a gem floating above it with a pulsing
+                    # halo + glint to catch the eye. (Pitch 0 keeps the legacy
+                    # bare icon.)
+                    sh = pygame.Surface((20, 10), pygame.SRCALPHA)
+                    pygame.draw.ellipse(sh, (0, 0, 0, 120), sh.get_rect())
+                    s.blit(sh, (sx - 10, sy - 4))
+                    iy = sy - 12 + bob
+                    gr = 16
+                    glow = pygame.Surface((gr * 2, gr * 2), pygame.SRCALPHA)
+                    ga = int(55 + pulse * 70)
+                    pygame.draw.circle(glow, (color[0], color[1], color[2], ga),
+                                       (gr, gr), gr)
+                    pygame.draw.circle(glow, (color[0], color[1], color[2],
+                                              min(255, ga + 40)),
+                                       (gr, gr), gr // 2)
+                    s.blit(glow, (sx - gr, iy - gr),
                            special_flags=pygame.BLEND_RGB_ADD)
-                    pygame.draw.rect(s, color, (sx - 4, iy - 4, 8, 8))
-                    pygame.draw.rect(s, C_BLACK, (sx - 4, iy - 4, 8, 8), 1)
+                    # the gem: a diamond with a dark outline + bright core so it
+                    # stands out on any floor.
+                    gem = [(sx, iy - 8), (sx + 7, iy), (sx, iy + 8), (sx - 7, iy)]
+                    pygame.draw.polygon(s, color, gem)
+                    pygame.draw.polygon(s, C_BLACK, gem, 1)
+                    core = tuple(min(255, c + 70) for c in color)
+                    pygame.draw.polygon(s, core,
+                                        [(sx, iy - 4), (sx + 3, iy),
+                                         (sx, iy + 4), (sx - 3, iy)])
+                    pygame.draw.circle(s, (255, 255, 255), (sx - 2, iy - 3), 1)
                 else:
                     pygame.draw.rect(s, color, (sx - 4, sy - 4 + bob, 8, 8))
                     pygame.draw.rect(s, C_BLACK, (sx - 4, sy - 4 + bob, 8, 8), 1)

@@ -1002,6 +1002,7 @@ def scene_display_name(scene):
 # faces that touch open floor -- no per-tile borders or grout, so a run
 # of wall stops reading as a row of grey blocks (the RimWorld tell).
 _WALL_CHARS = frozenset("#W%&")
+_COUNTER_CHARS = frozenset("5")   # kitchen counter / peninsula divider (waist-high box under tilt)
 # Door tiles cast the same floor-shadow as walls so a door in a south
 # wall grounds into the building instead of leaving a lit threshold gap
 # between the shadows of its flanking walls.
@@ -1591,8 +1592,9 @@ def draw_scene_terrain(surf, scene, cam_x, cam_y, x0, y0, x1, y1,
             ch = _lookup_obj(ty, tx)
             if ch == "." or ch in _WALL_CHARS:
                 continue
-            if skip_billboard and ch in _TILT_BILLBOARD_CHARS:
-                continue                     # stood up as a billboard under tilt
+            if skip_billboard and (ch in _TILT_BILLBOARD_CHARS
+                                   or ch in _COUNTER_CHARS):
+                continue                     # stood up as a 3D box/standee under tilt
             rx = tx * TILE - cam_x
             ry = ty * TILE - cam_y
             if ch in _DOOR_CHARS:
@@ -1652,11 +1654,16 @@ def _quad_pt(quad, fx, fy):
     return (bx + (tx_ - bx) * fy, by + (ty_ - by) * fy)
 
 
-def _extrude_box(surf, camera, scene, tx, ty, z0, z1, neigh=_WALL_CHARS):
+def _extrude_box(surf, camera, scene, tx, ty, z0, z1, neigh=_WALL_CHARS,
+                 face_col=None, top_col=None):
     """One tile extruded between heights z0..z1. Rotation-correct: every
     EXPOSED side face (neighbour char not in `neigh`) is drawn, depth-sorted
     far->near so near faces overdraw far, capped with a flat shaded top quad
-    (no axis-aligned texture that would overflow once the camera yaws)."""
+    (no axis-aligned texture that would overflow once the camera yaws).
+    `face_col` / `top_col` default to the near-black wall palette; pass wood
+    tones for a counter/furniture box."""
+    face_col = _WALL_FACE if face_col is None else face_col
+    top_col = _WALL_TOP if top_col is None else top_col
     wx, wy = tx * TILE + TILE / 2, ty * TILE + TILE / 2
     hw = TILE / 2
 
@@ -1664,8 +1671,8 @@ def _extrude_box(surf, camera, scene, tx, ty, z0, z1, neigh=_WALL_CHARS):
         return camera.project(wx + dx, wy + dy, dz)
     g = [P(-hw, -hw, z0), P(hw, -hw, z0), P(hw, hw, z0), P(-hw, hw, z0)]
     t = [P(-hw, -hw, z1), P(hw, -hw, z1), P(hw, hw, z1), P(-hw, hw, z1)]
-    near = tuple(int(c * 0.5) for c in _WALL_FACE)   # N/S faces
-    side = tuple(int(c * 0.7) for c in _WALL_FACE)   # E/W faces
+    near = tuple(int(c * 0.5) for c in face_col)     # N/S faces
+    side = tuple(int(c * 0.7) for c in face_col)     # E/W faces
     # Per-tile value jitter so the mass reads as many battered blocks rather
     # than one flat slab (tile-seeded -> stable, no shimmer as the camera
     # moves; matches the floor jitter).
@@ -1715,12 +1722,25 @@ def _extrude_box(surf, camera, scene, tx, ty, z0, z1, neigh=_WALL_CHARS):
                              (int(a[0]), int(a[1])), (int(b[0]), int(b[1])), 1)
     # flat shaded top cap: lit but kept dark to read as the game's near-black
     # walls -- top clearly lighter than the sides for form, darker grout edge.
-    pygame.draw.polygon(surf, tuple(int(c * 0.72) for c in _WALL_TOP), t)
-    pygame.draw.polygon(surf, tuple(int(c * 0.4) for c in _WALL_TOP), t, 1)
+    pygame.draw.polygon(surf, tuple(int(c * 0.72) for c in top_col), t)
+    pygame.draw.polygon(surf, tuple(int(c * 0.4) for c in top_col), t, 1)
 
 
 def _tilt_wall_box(surf, camera, scene, tx, ty):
     _extrude_box(surf, camera, scene, tx, ty, 0, _TILT_WALL_RISE)
+
+
+_COUNTER_RISE = 15      # waist-high: a divider you can see over, not a wall
+
+
+def _tilt_counter_box(surf, camera, scene, tx, ty):
+    """The kitchen counter / peninsula divider: a waist-high wood box (shorter
+    than a wall) so the common-room divider reads as a solid 3D bar under the
+    tilt instead of a flat painted strip. Adjacent counter tiles merge into one
+    run (counter neighbours cull their shared faces)."""
+    _extrude_box(surf, camera, scene, tx, ty, 0, _COUNTER_RISE,
+                 neigh=_WALL_CHARS | _COUNTER_CHARS,
+                 face_col=(96, 72, 48), top_col=(122, 98, 66))
 
 
 def _tilt_door_box(surf, camera, scene, tx, ty):
@@ -1994,6 +2014,8 @@ def _tilt_tile_box(surf, camera, scene, tx, ty):
           if 0 <= wty < scene.h and 0 <= wtx < scene.w else "")
     if ch in _TILT_BILLBOARD_CHARS:
         _tilt_standee(surf, camera, scene, tx, ty, ch)
+    elif ch in _COUNTER_CHARS:
+        _tilt_counter_box(surf, camera, scene, tx, ty)
     elif ch in _DOOR_CHARS:
         _tilt_door_box(surf, camera, scene, tx, ty)
     elif ch in _WINDOW_CHARS:
@@ -2052,7 +2074,7 @@ def draw_terrain_tilted(surf, scene, camera, sight=None):
             if ch in _CORN_CHARS and (wtx, wty) in corn_suppressed:
                 continue                         # part of a run; its anchor draws it
             if (ch in _WALL_CHARS or ch in _DOOR_CHARS or ch in _WINDOW_CHARS
-                    or ch in _TILT_BILLBOARD_CHARS):
+                    or ch in _TILT_BILLBOARD_CHARS or ch in _COUNTER_CHARS):
                 walls.append((tx, ty))
     # Decorations. Ground decals (rugs, stains, blood) stay flat on the warped
     # floor; non-solid billboards rise from it -- both drawn now, wrap-cloned
