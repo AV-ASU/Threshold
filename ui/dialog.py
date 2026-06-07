@@ -5,7 +5,7 @@ import pygame
 from constants import (
     SCREEN_W, SCREEN_H,
     C_WHITE, C_GOLD, C_RED, C_BLOOD, C_GREEN, C_BLUE, C_PURPLE,
-    C_DIM, C_DIALOG_BG, C_PANEL_BORDER, C_BLACK,
+    C_DIM, C_DIALOG_BG, C_BLACK,
 )
 
 NAMED_COLORS = {
@@ -28,7 +28,7 @@ class DialogueGlyph:
         self.voice = voice
 
 
-def parse_dialogue(text, default_color=C_WHITE, default_font="md", default_voice="blip_mid"):
+def parse_dialogue(text, default_color=C_WHITE, default_font="serif", default_voice="blip_mid"):
     glyphs = []
     color_stack = [default_color]
     font_stack = [default_font]
@@ -206,21 +206,29 @@ class DialogueBox:
         box_h = 160
         box_y = SCREEN_H - box_h - 14
         box = pygame.Rect(20, box_y, SCREEN_W - 40, box_h)
+        # A cinematic lower band rather than a bordered game panel: a soft
+        # dark wash, a little more opaque toward the foot for legibility,
+        # closed off by a single hairline rule top and bottom (no 2px frame).
         s = pygame.Surface((box.width, box.height), pygame.SRCALPHA)
-        s.fill((*C_DIALOG_BG, 232))
+        for i in range(box.height):
+            a = int(196 + 36 * (i / box.height))
+            s.fill((*C_DIALOG_BG, a), (0, i, box.width, 1))
         surf.blit(s, box.topleft)
-        pygame.draw.rect(surf, C_PANEL_BORDER, box, 2)
+        pygame.draw.line(surf, (70, 64, 84), box.topleft, (box.right, box.top))
+        pygame.draw.line(surf, (44, 40, 54),
+                         (box.left, box.bottom - 1), (box.right, box.bottom - 1))
         portrait_x = box.x + 14
         portrait_y = box.y + 14
         portrait_size = 64
         prect = pygame.Rect(portrait_x, portrait_y, portrait_size, portrait_size)
-        pygame.draw.rect(surf, (24, 22, 32), prect)
-        pygame.draw.rect(surf, C_PANEL_BORDER, prect, 1)
+        pygame.draw.rect(surf, (20, 18, 26), prect)
+        pygame.draw.rect(surf, (70, 64, 84), prect, 1)
         self._draw_portrait(surf, prect, self.portrait_kind)
         if getattr(self, "portrait_infested", False):
             self._draw_infested_portrait(surf, prect, self.portrait_kind)
         if self.speaker_name:
-            name_surf = self.fonts["sm"].render(self.speaker_name, True, C_GOLD)
+            name_surf = self.fonts["serif_sm"].render(
+                self.speaker_name, True, C_GOLD)
             surf.blit(name_surf, (portrait_x, portrait_y + portrait_size + 6))
         tx = portrait_x + portrait_size + 16
         ty = box.y + 16
@@ -238,7 +246,7 @@ class DialogueBox:
 
     def _draw_glyphs(self, surf, x, y, max_w):
         cx, cy = x, y
-        line_h = self.fonts["md"].get_linesize()
+        line_h = self.fonts["serif"].get_linesize()
         t = pygame.time.get_ticks() / 1000.0
         word_buf = []
         word_w = 0
@@ -259,7 +267,7 @@ class DialogueBox:
                 ch = g.ch
                 if g.glitch and random.random() < 0.4:
                     ch = random.choice(self.GLITCH_CHARS)
-                font = self.fonts.get(g.font_key, self.fonts["md"])
+                font = self.fonts.get(g.font_key, self.fonts["serif"])
                 color = g.color
                 if g.glitch:
                     color = (random.randint(120,255), random.randint(0,80), random.randint(0,80))
@@ -301,12 +309,16 @@ class DialogueBox:
         s = pygame.Surface((crect.width, crect.height), pygame.SRCALPHA)
         s.fill((*C_DIALOG_BG, 240))
         surf.blit(s, crect.topleft)
-        pygame.draw.rect(surf, C_PANEL_BORDER, crect, 2)
+        pygame.draw.line(surf, (70, 64, 84), crect.topleft, crect.topright)
+        rf = self.fonts["serif"]
         for i, opt in enumerate(self.choices):
-            color = C_GOLD if i == self.choice_idx else C_WHITE
-            prefix = ">" if i == self.choice_idx else " "
-            txt = self.fonts["md"].render(f"{prefix} {opt}", True, color)
-            surf.blit(txt, (crect.x + 14, crect.y + 12 + i * 28))
+            selected = (i == self.choice_idx)
+            color = C_GOLD if selected else (172, 166, 156)
+            oy2 = crect.y + 12 + i * 28
+            if selected:
+                pygame.draw.rect(surf, C_GOLD,
+                                 (crect.x + 14, oy2 + 4, 2, rf.get_linesize() - 6))
+            surf.blit(rf.render(opt, True, color), (crect.x + 26, oy2))
 
     def _draw_infested_portrait(self, surf, rect, kind):
         """Lay a mutated resister's bespoke flesh-horror over their normal

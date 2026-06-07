@@ -126,6 +126,49 @@ def effective_desc(key, save=None):
     return ITEM_DEFS.get(key, {}).get("desc", "")
 
 
+# Mara's Journal, in her own words: three short leaves the player turns
+# one Enter at a time in the inventory. The arc is the whole of her
+# descent in miniature -- the ache that drew her, the dream of the door,
+# the glad walk down toward it (NARRATIVE 1b: she was answered, not
+# deceived). Turning past the LAST page is what fires the door-dream
+# flashback, so the count here must stay at three (it drives the
+# `notebook_pages_read` 3-gate the Game system polls). No dashes in any
+# of this text -- it is read by the player.
+MARA_JOURNAL_PAGES = [
+    "I came north because I could not stand the quiet of that "
+    "apartment one more night. They told me grief would pass. It did "
+    "not pass. It only learned my name.\n\n"
+    "Brimley is small, and kind the way tired places are. No one here "
+    "asks what I am running from. They look at me like they already "
+    "know.",
+
+    "I have started to dream of a door. Plain wood, a little warped, "
+    "standing alone in a field with nothing around it. I know, the way "
+    "you know things in dreams, that everything I have ever wanted is "
+    "on the other side.\n\n"
+    "It is not frightening. That is the part I cannot explain to anyone "
+    "who has not felt it. It feels like being remembered.",
+
+    "They are not strangers. They dreamed the same door, every one of "
+    "them, and drove here the way I did. We are digging down to it "
+    "together now. My hands are raw and I have never been so happy.\n\n"
+    "I was not tricked. I was asked, and I said yes. I am not lost. I "
+    "have never been this close.",
+]
+
+
+def journal_page(save):
+    """Return (page_text, page_index, page_count) for Mara's Journal,
+    keyed to how many times the player has turned through it
+    (`notebook_pages_read`). Opening the journal shows page 1 even
+    before the first Enter, so the words are visible immediately -- the
+    read counter only ever advances the page forward, clamped to the
+    last leaf."""
+    read = save.arg("notebook_pages_read", 0) if save is not None else 0
+    idx = max(0, min(read, len(MARA_JOURNAL_PAGES) - 1))
+    return MARA_JOURNAL_PAGES[idx], idx, len(MARA_JOURNAL_PAGES)
+
+
 class Inventory:
     """Simple stackable inventory + 2 equipment slots."""
     def __init__(self):
