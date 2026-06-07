@@ -1065,7 +1065,25 @@ def _corn_runs(scene):
 _TILT_STANDEE_CACHE = {}
 
 
-def _tilt_tree_solid(surf, camera, scene, tx, ty, ch):
+# Distance-LOD threshold (world-px, squared) for the tilted billboards. A tree
+# or cornstalk farther than this from the camera centre is drawn with fewer
+# rings / stalks and no fine detail: at that range it's small on screen and sits
+# under Brimley's haze + sight fog, so the simplification is imperceptible but it
+# roughly halves the per-tile solid cost for the dense back ranks of the woods
+# and cornfield (the panning worst case). ~11 tiles out.
+_TILT_LOD_FAR2 = (11 * TILE) ** 2
+
+
+def _tilt_lod_far(camera, tx, ty):
+    """Is this billboard tile beyond the near-detail radius? (cheap, no trig)."""
+    wx = tx * TILE + TILE / 2
+    wy = ty * TILE + TILE / 2
+    dx = wx - camera.cam_x
+    dy = wy - camera.cam_y
+    return (dx * dx + dy * dy) > _TILT_LOD_FAR2
+
+
+def _tilt_tree_solid(surf, camera, scene, tx, ty, ch, far=False):
     """A tree as a real volumetric body: a brown cylindrical trunk + a tapered
     canopy projected through the camera as a body of revolution. Anchored to
     the tile, the silhouette varies correctly under yaw (a billboard never
@@ -1101,16 +1119,25 @@ def _tilt_tree_solid(surf, camera, scene, tx, ty, ch):
     }
     z0 = trunk_h * 0.80
     h = canopy_h
-    draw_solid(surf, camera, wx + lean_x, wy,
-               [(z0,             canopy_r * 0.32, canopy_r * 0.32),
-                (z0 + h * 0.20,  canopy_r * 0.85, canopy_r * 0.85),
-                (z0 + h * 0.45,  canopy_r * 1.00, canopy_r * 1.00),
-                (z0 + h * 0.70,  canopy_r * 0.92, canopy_r * 0.92),
-                (z0 + h * 0.90,  canopy_r * 0.55, canopy_r * 0.55),
-                (z0 + h,         canopy_r * 0.15, canopy_r * 0.15)],
-               canopy_pal)
-    # Occasional offset lobe so the canopy isn't perfectly axis-symmetric.
-    if (_vary(seed, 6) % 3) == 0:
+    if far:
+        # Far LOD: a 3-ring canopy lobe instead of 6. Same silhouette envelope
+        # (base/widest/crown), half the polygon + ellipse work.
+        canopy_sections = [
+            (z0,             canopy_r * 0.32, canopy_r * 0.32),
+            (z0 + h * 0.45,  canopy_r * 1.00, canopy_r * 1.00),
+            (z0 + h,         canopy_r * 0.15, canopy_r * 0.15)]
+    else:
+        canopy_sections = [
+            (z0,             canopy_r * 0.32, canopy_r * 0.32),
+            (z0 + h * 0.20,  canopy_r * 0.85, canopy_r * 0.85),
+            (z0 + h * 0.45,  canopy_r * 1.00, canopy_r * 1.00),
+            (z0 + h * 0.70,  canopy_r * 0.92, canopy_r * 0.92),
+            (z0 + h * 0.90,  canopy_r * 0.55, canopy_r * 0.55),
+            (z0 + h,         canopy_r * 0.15, canopy_r * 0.15)]
+    draw_solid(surf, camera, wx + lean_x, wy, canopy_sections, canopy_pal)
+    # Occasional offset lobe so the canopy isn't perfectly axis-symmetric. The
+    # back ranks (far LOD) skip it -- it's a subtle asymmetry lost at range.
+    if not far and (_vary(seed, 6) % 3) == 0:
         ox = ((_vary(seed, 7) % 11) - 5) * 0.9
         oy = ((_vary(seed, 8) % 7) - 3) * 0.45
         zoff = h * 0.22
@@ -1122,7 +1149,7 @@ def _tilt_tree_solid(surf, camera, scene, tx, ty, ch):
                    canopy_pal)
 
 
-def _tilt_corn_solid(surf, camera, scene, tx, ty, ch):
+def _tilt_corn_solid(surf, camera, scene, tx, ty, ch, far=False):
     """A corn tile as 5-6 stalks drawn as REAL 3D lines projected through the
     camera: each stalk has a ground base, a midpoint, a swaying tip, four
     leaves (a low pair + an upper pair) fanning at mid-height, and a paler
@@ -1135,7 +1162,10 @@ def _tilt_corn_solid(surf, camera, scene, tx, ty, ch):
     wx0 = tx * TILE
     wy0 = ty * TILE
     sim_t = pygame.time.get_ticks() / 600.0
-    n = 5 + (_vary(seed, 0) % 2)            # 5 or 6 stalks per tile
+    # Far LOD: 3 stalks and body-only (no leaves, no tassel beard). A dense
+    # back-rank corn tile reads as the same green wall at range, but the
+    # per-stalk leaf/beard projections were the bulk of the cost.
+    n = 3 if far else 5 + (_vary(seed, 0) % 2)   # 5 or 6 stalks per tile
     g = _vary(seed, 1) % 10
     stalk_dk = (40 + g // 2, 54 + g // 2, 26 + g // 3)
     stalk_col = (58 + g, 72 + g, 38 + g // 2)
@@ -1165,31 +1195,36 @@ def _tilt_corn_solid(surf, camera, scene, tx, ty, ch):
         pygame.draw.line(surf, stalk_dk,  p_mid,  p_top, 3)
         pygame.draw.line(surf, stalk_col, p_base, p_mid, 2)
         pygame.draw.line(surf, stalk_col, p_mid,  p_top, 2)
-        # Two pairs of leaves (lower + upper) fanning out in world space
-        for ly_off, side in (
-                (wz_mid * 0.55, -1), (wz_mid * 0.55, 1),
-                (wz_mid * 1.05, -1), (wz_mid * 1.05, 1)):
-            base_x = wx_base + (wx_mid - wx_base) * (ly_off / wz_mid)
-            leaf_x = base_x + side * 9
-            leaf_y = wy_base + side * 0.6
-            leaf_z = ly_off - 1
-            p_attach = camera.project(base_x, wy_base, ly_off)
-            p_tip = camera.project(leaf_x, leaf_y, leaf_z)
-            pygame.draw.line(surf, blade_col, p_attach, p_tip, 2)
-            # Lit upper edge
-            p_tip_hi = camera.project(leaf_x - side * 0.5, leaf_y, leaf_z + 1)
-            pygame.draw.line(surf, blade_hi, p_attach, p_tip_hi, 1)
+        # Two pairs of leaves (lower + upper) fanning out in world space. Far
+        # LOD drops them (body-only): the leaf projections were the bulk of the
+        # per-stalk cost and don't read at range.
+        if not far:
+            for ly_off, side in (
+                    (wz_mid * 0.55, -1), (wz_mid * 0.55, 1),
+                    (wz_mid * 1.05, -1), (wz_mid * 1.05, 1)):
+                base_x = wx_base + (wx_mid - wx_base) * (ly_off / wz_mid)
+                leaf_x = base_x + side * 9
+                leaf_y = wy_base + side * 0.6
+                leaf_z = ly_off - 1
+                p_attach = camera.project(base_x, wy_base, ly_off)
+                p_tip = camera.project(leaf_x, leaf_y, leaf_z)
+                pygame.draw.line(surf, blade_col, p_attach, p_tip, 2)
+                # Lit upper edge
+                p_tip_hi = camera.project(leaf_x - side * 0.5, leaf_y, leaf_z + 1)
+                pygame.draw.line(surf, blade_hi, p_attach, p_tip_hi, 1)
         # Tassel head: a pale paddle + a beard of fine strokes radiating out
+        # (the beard is near-LOD only).
         p_tassel_top = camera.project(wx_top, wy_base, top_h + 5)
         pygame.draw.line(surf, tip_col, p_top, p_tassel_top, 2)
         pygame.draw.circle(surf, tassel_col,
                            (int(p_tassel_top[0]), int(p_tassel_top[1])), 2)
-        for k in range(3):
-            ang = -math.pi / 2 + (k - 1) * 0.6
-            p_b = camera.project(wx_top + math.cos(ang) * 3,
-                                 wy_base + math.sin(ang) * 0.6,
-                                 top_h + 5 + math.sin(ang) * 2)
-            pygame.draw.line(surf, tassel_col, p_tassel_top, p_b, 1)
+        if not far:
+            for k in range(3):
+                ang = -math.pi / 2 + (k - 1) * 0.6
+                p_b = camera.project(wx_top + math.cos(ang) * 3,
+                                     wy_base + math.sin(ang) * 0.6,
+                                     top_h + 5 + math.sin(ang) * 2)
+                pygame.draw.line(surf, tassel_col, p_tassel_top, p_b, 1)
 
 
 def _tilt_standee(surf, camera, scene, tx, ty, ch):
@@ -2265,9 +2300,11 @@ def _tilt_tile_box(surf, camera, scene, tx, ty):
     if ch in _TILT_BILLBOARD_CHARS:
         kind = OBJECT_DEFS.get(ch, {}).get("kind")
         if kind == "tree":
-            _tilt_tree_solid(surf, camera, scene, tx, ty, ch)
+            _tilt_tree_solid(surf, camera, scene, tx, ty, ch,
+                             far=_tilt_lod_far(camera, tx, ty))
         elif kind == "cornstalk":
-            _tilt_corn_solid(surf, camera, scene, tx, ty, ch)
+            _tilt_corn_solid(surf, camera, scene, tx, ty, ch,
+                             far=_tilt_lod_far(camera, tx, ty))
         else:
             _tilt_standee(surf, camera, scene, tx, ty, ch)
     elif ch in _COUNTER_CHARS:
