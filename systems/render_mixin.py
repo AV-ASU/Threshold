@@ -1048,9 +1048,16 @@ class RenderMixin:
         if _tilt:
             from scenes.base import (_TILT_WALL_RISE, _COUNTER_RISE,
                                      _COUNTER_CHARS, _tilt_tile_box)
-            from rendering.occlusion import occluder_alpha
+            from rendering.occlusion import (focus_occ_data,
+                                              occluder_alpha_box, _screen_span)
             _whalf = TILE * 0.5 * self.camera.scale
             _sw, _sh = self.scene.w, self.scene.h
+            # Precompute each focus actor's (depth, screen box) ONCE. The fade
+            # test below runs for every wall x every actor; the actor side is
+            # identical across all walls, so recomputing its projection per wall
+            # (the old occluder_alpha did) was pure waste in the wall-dense town.
+            _focus_pre = [focus_occ_data(self.camera, fx, fy, fh)
+                          for (fx, fy, fh) in _focus]
             for (tx, ty) in (_tilt_walls or []):
                 wcx, wcy = tx * TILE + TILE / 2, ty * TILE + TILE / 2
                 # A counter is waist-high: occlude + depth-sort at its real
@@ -1062,12 +1069,13 @@ class RenderMixin:
                        if 0 <= _wty < _sh and 0 <= _wtx < _sw else "")
                 rise = _COUNTER_RISE if _ch in _COUNTER_CHARS else _TILT_WALL_RISE
                 wa = 255
-                for fx, fy, fh in _focus:
-                    wa = min(wa, occluder_alpha(self.camera, wcx, wcy,
-                                                rise, fx, fy, fh,
-                                                o_halfw=_whalf))
-                    if wa <= 60:
-                        break
+                if _focus_pre:
+                    _od = self.camera.depth(wcx, wcy)
+                    _os = _screen_span(self.camera, wcx, wcy, rise, _whalf)
+                    for _pd, _ps in _focus_pre:
+                        wa = min(wa, occluder_alpha_box(_od, _os, _pd, _ps))
+                        if wa <= 60:
+                            break
                 _emit(self.camera.depth(wcx, wcy, rise),
                       lambda wa=wa, tx=tx, ty=ty:
                       draw_with_alpha(self.screen, wa,
