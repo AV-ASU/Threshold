@@ -2119,7 +2119,8 @@ def _round_water_corners(surf, scene, tx, ty, rx, ry):
 
 
 def draw_scene_terrain(surf, scene, cam_x, cam_y, x0, y0, x1, y1,
-                       skip_billboard=False, skip_roofs=False):
+                       skip_billboard=False, skip_roofs=False,
+                       bake_static=False):
     """Floor -> path fringe -> wall-cast shadows -> continuous wall mass
     -> non-wall objects, for a tile window. Shared by Scene.draw (camera
     window) and the offline full-map renderer. When scene.wrap_x or
@@ -2168,7 +2169,13 @@ def draw_scene_terrain(surf, scene, cam_x, cam_y, x0, y0, x1, y1,
             rx = tx * TILE - cam_x
             ry = ty * TILE - cam_y
             if ch in _ANIM_FLOOR:
-                draw_floor(surf, ch, rx, ry, tx, ty)
+                # `bake_static` (the whole-map floor bake) leaves animated water
+                # out -- the tilt path redraws it live over the baked window, so
+                # baking it would only freeze it (and its swaying reeds) under
+                # the live copy. The (10,10,14) fill it leaves is fully covered
+                # by that live water tile.
+                if not bake_static:
+                    draw_floor(surf, ch, rx, ry, tx, ty)
                 continue
             key = (ch, tx, ty)
             tile = _FLOOR_CACHE.get(key)
@@ -2183,7 +2190,9 @@ def draw_scene_terrain(surf, scene, cam_x, cam_y, x0, y0, x1, y1,
             if ch == "d":
                 _draw_path_fringe(surf, scene, tx, ty,
                                   tx * TILE - cam_x, ty * TILE - cam_y)
-            elif ch == "~":
+            elif ch == "~" and not bake_static:
+                # Skipped in the static bake (see above) -- the live water
+                # overlay redraws the bank fringe + rounded corners each frame.
                 _draw_bank_fringe(surf, scene, tx, ty,
                                   tx * TILE - cam_x, ty * TILE - cam_y)
                 _round_water_corners(surf, scene, tx, ty,
@@ -2234,6 +2243,95 @@ _TILT_WALL_RISE = 26
 # pose; a miss (the camera moved, or a new scene) rebuilds it. This was the
 # single biggest per-frame cost in the wrapped town.
 _TILT_FLOOR_CACHE = {"key": None, "surf": None}
+
+# Whole-scene flat-floor bake. On a big wrap scene (Brimley: 100x100) the tilt
+# floor pass rastered a ~78x78 tile window EVERY frame the camera panned -- four
+# passes over ~6000 tiles plus ~6000 blits, the dominant walking-frame cost.
+# But the floor is STATIC: render the entire map's flat floor ONCE into a cached
+# surface, then each frame blit the window sub-region out of it (wrap-aware, a
+# handful of blits) and warp that. Only the animated water tiles are redrawn
+# live on top. Gated to large wrap scenes within a pixel budget; small rooms
+# keep the per-tile path (cheap already, and they own the byte-identity gate via
+# the flat Scene.draw, which is untouched).
+_TILT_FULLMAP_CACHE = {"scene": None, "surf": None, "water": None}
+_TILT_FULLMAP_MIN_TILES = 1500          # below this the per-tile path is fine
+_TILT_FULLMAP_BUDGET_PX = 16 * 1024 * 1024   # don't bake maps bigger than this
+
+
+def _tilt_use_fullmap(scene):
+    return ((scene.wrap_x or scene.wrap_y)
+            and scene.w * scene.h >= _TILT_FULLMAP_MIN_TILES
+            and (scene.w * TILE) * (scene.h * TILE) <= _TILT_FULLMAP_BUDGET_PX)
+
+
+def _tilt_fullmap(scene):
+    """The cached whole-map flat floor + the list of animated floor tiles.
+    Built once per scene (lazy); the bake reuses draw_scene_terrain so it is
+    pixel-for-pixel the per-tile raster, just done for the entire map at world
+    origin instead of a moving window."""
+    c = _TILT_FULLMAP_CACHE
+    if c["scene"] is scene:
+        return c["surf"], c["water"]
+    W, H = scene.w, scene.h
+    full = pygame.Surface((W * TILE, H * TILE))
+    full.fill((10, 10, 14))
+    draw_scene_terrain(full, scene, 0, 0, 0, 0, W, H,
+                       skip_billboard=True, skip_roofs=True, bake_static=True)
+    water = [(tx, ty) for ty in range(H) for tx in range(W)
+             if scene.floor[ty][tx] in _ANIM_FLOOR]
+    c["scene"] = scene
+    c["surf"] = full
+    c["water"] = water
+    # The per-tile floor cache just filled with the whole map (~10k tiles);
+    # we blit from the baked surface now, so drop it to reclaim that memory.
+    _FLOOR_CACHE.clear()
+    return full, water
+
+
+def _blit_window_wrapped(dst, src, wx0, wy0, wrap_x, wrap_y):
+    """Blit the world rect starting at (wx0, wy0) of size = dst out of the
+    whole-map surface `src`, tiling it across the wrap seam (up to 2x2 copies)."""
+    sw, sh = dst.get_size()
+    mw, mh = src.get_size()
+    kx = (range(math.floor(wx0 / mw), math.floor((wx0 + sw - 1) / mw) + 1)
+          if wrap_x else [0])
+    jy = (range(math.floor(wy0 / mh), math.floor((wy0 + sh - 1) / mh) + 1)
+          if wrap_y else [0])
+    for j in jy:
+        for k in kx:
+            dst.blit(src, (int(k * mw - wx0), int(j * mh - wy0)))
+
+
+def _overlay_anim_water(dst, scene, water, wx0, wy0, span):
+    """Redraw the animated water (floor + swaying bank reeds + rounded corners)
+    live over the baked window, for every water tile -- and wrap-clone -- inside
+    it. Two passes so the draw order matches the per-tile raster exactly: all
+    water floors first, then the fringes/corners on top. The fringe/corner
+    helpers self-guard on map bounds, so wrap-clones draw only their floor (the
+    same quirk the per-tile path has)."""
+    if not water:
+        return
+    W, H = scene.w, scene.h
+    mw, mh = W * TILE, H * TILE
+    kx = (range(math.floor(wx0 / mw), math.floor((wx0 + span - 1) / mw) + 1)
+          if scene.wrap_x else [0])
+    jy = (range(math.floor(wy0 / mh), math.floor((wy0 + span - 1) / mh) + 1)
+          if scene.wrap_y else [0])
+    cells = []
+    for j in jy:
+        for k in kx:
+            for (tx, ty) in water:
+                rtx, rty = tx + k * W, ty + j * H
+                rx = rtx * TILE - wx0
+                ry = rty * TILE - wy0
+                if -TILE <= rx < span and -TILE <= ry < span:
+                    cells.append((rtx, rty, int(rx), int(ry)))
+    for (rtx, rty, rx, ry) in cells:
+        draw_floor(dst, "~", rx, ry, rtx, rty)
+    for (rtx, rty, rx, ry) in cells:
+        _draw_bank_fringe(dst, scene, rtx, rty, rx, ry)
+        _round_water_corners(dst, scene, rtx, rty, rx, ry)
+
 
 
 def _tilt_window_half(camera):
@@ -2928,17 +3026,25 @@ def draw_terrain_tilted(surf, scene, camera, sight=None):
     else:
         flat = pygame.Surface((span, span))
         flat.fill((10, 10, 14))
-        # Phase 2 of the seamless-world neighbor strip: when the player is near
-        # a non-wrap host's edge and the visible tile range extends past the
-        # world's bounds, fill the OUT-OF-BOUNDS tiles with the neighbor
-        # scene's floor content (per rendering/world_neighbors.get_neighbors).
-        # draw_scene_terrain below then overdraws the in-bounds area with the
-        # host's tiles, so the strip only shows where the host doesn't reach --
-        # a clean seamless seam. Wrap hosts tile edge to edge; they get no strip.
-        if not (scene.wrap_x or scene.wrap_y):
-            _draw_neighbor_strips(flat, scene, wx0, wy0, x0, y0, x1, y1)
-        draw_scene_terrain(flat, scene, wx0, wy0, x0, y0, x1, y1,
-                           skip_billboard=True, skip_roofs=True)
+        if _tilt_use_fullmap(scene):
+            # Big wrap scene: blit the window out of the whole-map bake (a few
+            # wrap-aware blits) and redraw only the animated water on top,
+            # instead of rastering ~6000 tiles every frame.
+            full, water = _tilt_fullmap(scene)
+            _blit_window_wrapped(flat, full, wx0, wy0,
+                                 scene.wrap_x, scene.wrap_y)
+            _overlay_anim_water(flat, scene, water, wx0, wy0, span)
+        else:
+            # Phase 2 of the seamless-world neighbor strip: when the player is
+            # near a non-wrap host's edge and the visible tile range extends
+            # past the world's bounds, fill the OUT-OF-BOUNDS tiles with the
+            # neighbor scene's floor content (per world_neighbors). The
+            # in-bounds area is overdrawn with the host's tiles below, so the
+            # strip shows only where the host doesn't reach -- a seamless seam.
+            if not (scene.wrap_x or scene.wrap_y):
+                _draw_neighbor_strips(flat, scene, wx0, wy0, x0, y0, x1, y1)
+            draw_scene_terrain(flat, scene, wx0, wy0, x0, y0, x1, y1,
+                               skip_billboard=True, skip_roofs=True)
         warped = _tilt_warp(flat, camera)
         _fc["key"] = fkey
         _fc["surf"] = warped
