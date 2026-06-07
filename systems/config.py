@@ -258,7 +258,7 @@ PORTAL_EMERGE_GRACE = 0.8    # s after the tear before his body steps through
 # interaction, no catch -- just a receding horizon render: he hangs a fixed gap
 # NORTH of the player, so running up the treadmill road never closes on him
 # (the road grows between you). Only drawn in arrival_road while not armed.
-IDLE_KING_GAP = 15 * 32      # he hangs this many world px NORTH of the player
+IDLE_KING_GAP = 26 * 32      # he hangs this many world px NORTH of the player
                              # every tick. arrival_road is a wrap_y treadmill, so
                              # the gap never closes however far you walk up -- a
                              # receding horizon you can never reach or touch. The
