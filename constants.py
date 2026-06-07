@@ -8,6 +8,15 @@ ARCHIVE_DIR = os.path.join(HERE, ".archive")
 SCREEN_W, SCREEN_H = 960, 640
 TILE = 32
 
+# Internal render scale for the WORLD layer (CAMERA/FPS). The oblique world +
+# its full-screen atmosphere passes (grade, fog, haze, skybox) are the bulk of
+# the frame and scale with pixel count, so the world is rendered to a buffer at
+# this fraction of the window and upscaled once; the HUD/text still draw at full
+# resolution on top, so they stay crisp. 1.0 = off (byte-identical to the
+# unscaled path). ~0.8 trades a slight softening of the world for a real fps win
+# that suits the hazy look.
+RENDER_SCALE = 1.0
+
 # Round-10: matches the @-floor void color exactly so when the camera
 # can't fill the screen with a small scene (or when a scene's @-floor
 # extends to a region the camera can show beyond the layout), there's

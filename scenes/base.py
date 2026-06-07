@@ -1112,13 +1112,59 @@ _TREE_CARD_CACHE = {}
 _TREE_CARD_ORDER = []
 _TREE_CARD_CAP = 1600
 
+# Passable, walk-through greenery ('p', 'j') reads as low BRUSH/saplings rather
+# than a full tree, so the player can tell at a glance which growth blocks them
+# ('T', solid) and which they can slip through -- a stealth-navigation tell --
+# and the woods get a low understory layer instead of one stamped canopy height.
+_TILT_BRUSH_CHARS = frozenset({"p", "j"})
+
+
+def _draw_brush_body(surf, camera, wx, wy, seed, far):
+    """A low scrub bush: a short woody stem under a clumped, ground-hugging mound
+    of foliage (a couple of offset lobes near rank). Clearly under knee/waist
+    height next to a tree, so passable growth reads as passable."""
+    from rendering.solids import draw_solid
+    g = _vary(seed, 5) % 12
+    r = 8 + (_vary(seed, 2) % 5)            # spread 8..12
+    hgt = 9 + (_vary(seed, 3) % 6)          # low: 9..14 world tall
+    foliage = {
+        "body": (30 + g, 50 + g, 26 + g // 2),
+        "lo":   (18 + g // 2, 34 + g, 16 + g // 2),
+        "rim":  (54 + g, 78 + g, 42 + g),
+    }
+    stem = {"body": (54 + g // 3, 42 + g // 4, 28 + g // 4),
+            "lo": (30, 22, 14), "rim": (86, 62, 40)}
+    # stubby woody base
+    draw_solid(surf, camera, wx, wy,
+               [(0, 1.6, 1.6), (hgt * 0.5, 1.2, 1.2)], stem)
+    # main low foliage mound
+    z0 = hgt * 0.30
+    draw_solid(surf, camera, wx, wy,
+               [(z0,             r * 0.5,  r * 0.5),
+                (z0 + hgt * 0.45, r,        r),
+                (z0 + hgt * 0.85, r * 0.7,  r * 0.7),
+                (z0 + hgt * 1.10, r * 0.25, r * 0.25)],
+               foliage)
+    # a clumped side lobe or two so it reads as a bush, not a green ball
+    if not far:
+        for li in range(1 + (_vary(seed, 6) % 2)):
+            ox = ((_vary(seed, 7 + li * 3) % 11) - 5) * 0.8
+            oy = ((_vary(seed, 8 + li * 3) % 7) - 3) * 0.4
+            rr = r * 0.55
+            zb = z0 * 0.6
+            draw_solid(surf, camera, wx + ox, wy + oy,
+                       [(zb,            rr * 0.4, rr * 0.4),
+                        (zb + rr,       rr,       rr),
+                        (zb + rr * 1.9, rr * 0.3, rr * 0.3)],
+                       foliage)
+
 
 def _tilt_tree_solid(surf, camera, scene, tx, ty, ch, far=False):
     """Draw a tree by blitting its cached card (see _TREE_CARD_CACHE). The 3D
     body is rendered through `_tilt_tree_draw` on a cache miss; identical look,
     a fraction of the per-frame cost."""
     bx, by = camera.project(tx * TILE + 16, ty * TILE + 16, 0)
-    key = (tx, ty, far, round(camera.yaw, 2),
+    key = (tx, ty, ch, far, round(camera.yaw, 2),
            round(camera.pitch, 2), round(camera.scale, 2))
     entry = _TREE_CARD_CACHE.get(key)
     if entry is None:
@@ -1166,6 +1212,9 @@ def _tilt_tree_draw(surf, camera, scene, tx, ty, ch, far=False):
     seed = (tx * 73856093) ^ (ty * 19349663)
     wx = tx * TILE + 16
     wy = ty * TILE + 16
+    if ch in _TILT_BRUSH_CHARS:
+        _draw_brush_body(surf, camera, wx, wy, seed, far)
+        return
     trunk_r = 2.4 + (_vary(seed, 0) % 10) * 0.12   # 2.4..3.5
     trunk_h = 13 + (_vary(seed, 1) % 7)            # 13..19
     canopy_r = 11 + (_vary(seed, 2) % 6)           # 11..16
@@ -1221,19 +1270,66 @@ def _tilt_tree_draw(surf, camera, scene, tx, ty, ch, far=False):
                    canopy_pal)
 
 
+# Corn-card cache. With the sway frozen (see _tilt_corn_draw) a corn cluster is
+# a pure function of (tile, far-LOD, angle), exactly like a tree, so it renders
+# once into a card and blits thereafter instead of re-projecting ~50 stalk lines
+# every frame. Same machinery as the trees.
+_CORN_CARD_CACHE = {}
+_CORN_CARD_ORDER = []
+_CORN_CARD_CAP = 1200
+
+
 def _tilt_corn_solid(surf, camera, scene, tx, ty, ch, far=False):
+    """Draw a corn cluster by blitting its cached card (see _CORN_CARD_CACHE).
+    The stalks are rendered through `_tilt_corn_draw` on a cache miss."""
+    bx, by = camera.project(tx * TILE + 16, ty * TILE + 16, 0)
+    key = (tx, ty, far, round(camera.yaw, 2),
+           round(camera.pitch, 2), round(camera.scale, 2))
+    entry = _CORN_CARD_CACHE.get(key)
+    if entry is None:
+        entry = _build_corn_card(camera, scene, tx, ty, ch, far)
+        _CORN_CARD_CACHE[key] = entry
+        _CORN_CARD_ORDER.append(key)
+        if len(_CORN_CARD_ORDER) > _CORN_CARD_CAP:
+            _CORN_CARD_CACHE.pop(_CORN_CARD_ORDER.pop(0), None)
+    card, ax, ay = entry
+    if card is not None:
+        surf.blit(card, (bx - ax, by - ay))
+
+
+def _build_corn_card(camera, scene, tx, ty, ch, far):
+    """Cache-miss path: render one corn cluster to a tight SRCALPHA card via a
+    throwaway camera at the same angle, pinned at the tile centre."""
+    from rendering.camera import Camera
+    PAD = 90
+    tmp = pygame.Surface((PAD * 2, PAD * 2), pygame.SRCALPHA)
+    anchor = (PAD, int(PAD * 1.45))
+    tcam = Camera(cam_x=tx * TILE + 16, cam_y=ty * TILE + 16,
+                  pitch=camera.pitch, yaw=camera.yaw,
+                  scale=camera.scale, origin=anchor)
+    _tilt_corn_draw(tmp, tcam, scene, tx, ty, ch, far)
+    rect = tmp.get_bounding_rect()
+    if rect.width == 0 or rect.height == 0:
+        return (None, 0, 0)
+    card = tmp.subsurface(rect).copy()
+    return (card, anchor[0] - rect.x, anchor[1] - rect.y)
+
+
+def _tilt_corn_draw(surf, camera, scene, tx, ty, ch, far=False):
     """A corn tile as 5-6 stalks drawn as REAL 3D lines projected through the
-    camera: each stalk has a ground base, a midpoint, a swaying tip, four
+    camera: each stalk has a ground base, a midpoint, a wind-leaned tip, four
     leaves (a low pair + an upper pair) fanning at mid-height, and a paler
     tassel + tassel beard at the top. Anchored in the scene so the cluster
     turns with yaw (a camera-facing card never does). The layout mirrors the
     flat _draw_corn proportions but uses thicker strokes + extra leaves so
-    a dense cornfield reads as a wall under tilt, not a thicket of bare
-    twigs."""
+    a dense cornfield reads as a wall under tilt, not a thicket of bare twigs.
+    The tip lean is STATIC (seeded per stalk) rather than animated, so the
+    cluster is a pure function of (tile, angle) and renders once into a cached
+    card like the trees -- the sway was a ~2px wiggle, invisible at play scale
+    but the one thing that kept corn redrawn every frame."""
     seed = (tx * 73856093) ^ (ty * 19349663)
     wx0 = tx * TILE
     wy0 = ty * TILE
-    sim_t = pygame.time.get_ticks() / 600.0
     # Far LOD: 3 stalks and body-only (no leaves, no ears, no tassel beard). A
     # dense back-rank corn tile reads as the same green wall at range, but the
     # per-stalk leaf/ear/beard projections were the bulk of the cost.
@@ -1261,7 +1357,9 @@ def _tilt_corn_solid(surf, camera, scene, tx, ty, ch, far=False):
                                                               # head-deep
         # Per-stalk wy jitter so they don't all line up at the tile's south edge
         wy_jit = (_vary(seed, 40 + si) % 9) - 4
-        tip_sway = math.sin(sim_t + ph + si * 0.7) * amp
+        # Static per-stalk wind-lean (was an animated sin sway). Seeded so the
+        # field still bends every-which-way and reads as varied, not stamped.
+        tip_sway = (math.sin(ph + si * 0.7) + 0.4 * math.sin(ph * 2.3 + si)) * amp
         wx_base = wx0 + bx_off
         wy_base = wy0 + TILE - 1 + wy_jit * 0.4
         wx_top  = wx0 + sx_off + tip_sway
@@ -2361,9 +2459,12 @@ def _overlay_anim_water(dst, scene, water, wx0, wy0, span):
 def _tilt_window_half(camera):
     """Smallest centred half-span (world px) whose flat window still covers
     the tilted screen. Unproject the screen corners (+ upward wall headroom)
-    and take the farthest world offset from the view centre."""
-    corners = [(0, 0), (SCREEN_W, 0), (0, SCREEN_H), (SCREEN_W, SCREEN_H),
-               (SCREEN_W // 2, -_TILT_WALL_RISE)]
+    and take the farthest world offset from the view centre. Uses the live
+    VIEWPORT size (camera.origin is its centre), not the window constants, so a
+    low-res render buffer computes the right -- smaller -- window."""
+    vw, vh = camera.origin[0] * 2, camera.origin[1] * 2
+    corners = [(0, 0), (vw, 0), (0, vh), (vw, vh),
+               (vw // 2, -_TILT_WALL_RISE)]
     half = 0.0
     for sx, sy in corners:
         wx, wy = camera.unproject(sx, sy)

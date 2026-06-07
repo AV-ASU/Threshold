@@ -13,7 +13,7 @@ import random
 
 import pygame
 
-from constants import (TILE, SCREEN_W, SCREEN_H,
+from constants import (TILE, SCREEN_W, SCREEN_H, RENDER_SCALE,
                        C_BG, C_BLACK, C_BLOOD, C_GOLD, C_WHITE)
 from systems.items import ITEM_DEFS
 from rendering.sprites import (draw_player_sprite, draw_npc_sprite,
@@ -117,7 +117,7 @@ class RenderMixin:
         parts = self._ashfall_parts
         if not parts:
             return
-        layer = pygame.Surface((SCREEN_W, SCREEN_H), pygame.SRCALPHA)
+        layer = pygame.Surface(self.screen.get_size(), pygame.SRCALPHA)
         cr, cg, cb = ASHFALL_COLOR
         for p in parts:
             sz = p["sz"]
@@ -193,7 +193,7 @@ class RenderMixin:
         no longer blots the player out. Even level 3 keeps a
         ~2-tile clear radius so the player can read where they
         are while the haze closes in."""
-        size = max(SCREEN_W, SCREEN_H) * 2
+        size = max(self.screen.get_size()) * 2
         surfaces = []
         # inner_r values for stillness levels 0..3 (widest -> tightest)
         for inner_r in (160, 120, 90, 70):
@@ -237,7 +237,7 @@ class RenderMixin:
         press in but the cone of vision is wide enough to
         navigate. Late-game vignette tightens the hole and
         deepens the corner alpha as proximity climbs."""
-        size = max(SCREEN_W, SCREEN_H) * 2
+        size = max(self.screen.get_size()) * 2
         surfaces = []
         # (inner_r, peak_alpha). 260 ~= 8-tile clear radius early;
         # 210 ~= 6.5-tile clear radius late. Peak alphas (130/165)
@@ -282,7 +282,7 @@ class RenderMixin:
         # routed through _claim_dark so the combined-darkness budget
         # caps stacked overlays.
         wash_a = self._claim_dark(int(70 * pulse))
-        wash = pygame.Surface((SCREEN_W, SCREEN_H), pygame.SRCALPHA)
+        wash = pygame.Surface(self.screen.get_size(), pygame.SRCALPHA)
         wash.fill((C_BLOOD[0], C_BLOOD[1], C_BLOOD[2], wash_a))
         self.screen.blit(wash, (0, 0))
         # Edge-crush vignette: heavy black ring around the screen
@@ -290,7 +290,7 @@ class RenderMixin:
         # player to feel tunnel-vision. Inner radius pulses with
         # the wash so the disc breathes with the world.
         edge_a = self._claim_dark(int(180 * pulse))
-        edge = pygame.Surface((SCREEN_W, SCREEN_H), pygame.SRCALPHA)
+        edge = pygame.Surface(self.screen.get_size(), pygame.SRCALPHA)
         edge.fill((0, 0, 0, edge_a))
         psx, psy = self._player_screen()
         clear_r = int(110 + 6 * math.sin(t * 1.4))
@@ -312,7 +312,7 @@ class RenderMixin:
             return
         from rendering.sight import (SIGHT_HALF, SIGHT_RANGE, SIGHT_NEAR,
                                      SIGHT_ANG_FEATHER, LOS_STEP)
-        fog = pygame.Surface((SCREEN_W, SCREEN_H), pygame.SRCALPHA)
+        fog = pygame.Surface(self.screen.get_size(), pygame.SRCALPHA)
         fog.fill((58, 60, 66, SIGHT_FOG_ALPHA))         # cold, thin gray
         aim = self.look.aim
         # The sight math is ground-plane WORLD space; the apex is the player's
@@ -374,7 +374,7 @@ class RenderMixin:
         # 60% wash (153 alpha) routed through the darkness cap so
         # hide stacked with apex/dip never blots the whole screen.
         wash_a = self._claim_dark(153)
-        layer = pygame.Surface((SCREEN_W, SCREEN_H), pygame.SRCALPHA)
+        layer = pygame.Surface(self.screen.get_size(), pygame.SRCALPHA)
         layer.fill((0, 0, 0, wash_a))
         clear_r = 95
         for r_step in range(8):
@@ -443,7 +443,7 @@ class RenderMixin:
             _light_pool(self.screen, tx, ty, int(118 * fl), (255, 168, 78),
                         int(82 * fl))
         gloom = 130 if self.scene.key in CULT_DARK_SCENES else 100
-        overlay = pygame.Surface((SCREEN_W, SCREEN_H), pygame.SRCALPHA)
+        overlay = pygame.Surface(self.screen.get_size(), pygame.SRCALPHA)
         overlay.fill((0, 0, 0, gloom))
         rings = [(30 + i * 14, int(gloom * i / 8)) for i in range(8)]
         for rr, aa in sorted(rings, key=lambda p: -p[0]):
@@ -459,7 +459,7 @@ class RenderMixin:
         self.screen.blit(overlay, (0, 0))
         if cone:
             # A faint warm wash inside the cone sells it as a light source.
-            beam = pygame.Surface((SCREEN_W, SCREEN_H), pygame.SRCALPHA)
+            beam = pygame.Surface(self.screen.get_size(), pygame.SRCALPHA)
             pygame.draw.polygon(beam, (250, 232, 170, 26), cone)
             self.screen.blit(beam, (0, 0))
 
@@ -469,16 +469,17 @@ class RenderMixin:
         `fog_n` drifting translucent SQUARE patches tinted `fog_rgba`.
         Used by the brimley overlay with different parameters."""
         if base_alpha:
-            dim = pygame.Surface((SCREEN_W, SCREEN_H))
+            dim = pygame.Surface(self.screen.get_size())
             dim.fill((0, 0, 0))
             dim.set_alpha(base_alpha)
             self.screen.blit(dim, (0, 0))
         t = pygame.time.get_ticks() / 1000.0
         size = 160
+        _sw, _sh = self.screen.get_size()
         for i in range(fog_n):
             fx = ((i * 137 + int(t * drift_x + i * 50))
-                  % (SCREEN_W + 240) - 120)
-            fy = ((i * 73) % SCREEN_H
+                  % (_sw + 240) - 120)
+            fy = ((i * 73) % _sh
                   + int(math.sin(t * sway_amp + i * 0.7) * sway_y_amt))
             fog = pygame.Surface((size, size), pygame.SRCALPHA)
             fog.fill(fog_rgba)
@@ -682,16 +683,36 @@ class RenderMixin:
         if self.state == "opening":
             self._draw_opening()
             return
+        # Internal render scale: draw the world layer (geometry + atmosphere +
+        # grade) to a smaller buffer, then upscale once to the window before the
+        # crisp HUD. The camera is scaled to match so framing is identical. Off
+        # (s == 1.0) -> the world draws straight to the window, unchanged.
+        self._win = self.screen
+        _rs = getattr(self, "_render_scale", RENDER_SCALE)
+        _s = (_rs if (_rs < 0.999 and self.scene and self._tilt_on()) else 1.0)
+        if _s < 1.0:
+            rw, rh = max(1, round(SCREEN_W * _s)), max(1, round(SCREEN_H * _s))
+            if self._world_buf is None or self._world_buf.get_size() != (rw, rh):
+                self._world_buf = pygame.Surface((rw, rh)).convert()
+            self.screen = self._world_buf
+        self._render_s = _s
         self.screen.fill(C_BG)
-        if not self.scene: return
+        if not self.scene:
+            if _s < 1.0:
+                self._win.fill(C_BG)
+                self.screen = self._win
+            return
         # Re-sync the projection to the live camera offset for this frame.
-        # Pivot about the SCREEN CENTRE (the view centre world point) so any
+        # Pivot about the BUFFER centre (the view centre world point) so any
         # pitch/yaw rotates about the middle of the view, not the corner. At
-        # pitch 0 this is arithmetically identical to the legacy view:
+        # pitch 0 + scale 1 this is arithmetically identical to the legacy view:
         #   project(x) = (SCREEN/2) + (x - (cam + SCREEN/2)) = x - cam.
-        self.camera.origin = (SCREEN_W // 2, SCREEN_H // 2)
+        _rw, _rh = self.screen.get_size()
+        self.camera.origin = (_rw // 2, _rh // 2)
         self.camera.cam_x = self.cam_x + SCREEN_W // 2
         self.camera.cam_y = self.cam_y + SCREEN_H // 2
+        if _s < 1.0:
+            self.camera.scale *= _s
         # Phase 4 blind-spot vision (CAMERA.md Phase 4). Under tilt, gate WHAT
         # IS DRAWN to a forward sight cone keyed to the look heading + walls
         # (rendering/sight.py). The world keeps simulating off-camera (the
@@ -732,7 +753,7 @@ class RenderMixin:
             # on this floor.
             from scenes.base import draw_terrain_tilted
             from rendering.skybox import draw_skybox
-            draw_skybox(self.screen, (0, 0, SCREEN_W, SCREEN_H),
+            draw_skybox(self.screen, (0, 0, *self.screen.get_size()),
                         yaw=self.camera.yaw, kind=self._skybox_kind(),
                         horizon_frac=0.40)
             (_tilt_walls, _tilt_solid_decos, _tilt_wall_decos,
@@ -1252,15 +1273,6 @@ class RenderMixin:
         # Execute the (legacy-ordered at pitch 0, depth-sorted under tilt) list.
         for _depth, _fn in _entries:
             _fn()
-        # Cursor reticle in look mode (the mouse is otherwise hidden) -- shows
-        # where the gun aims. A thin ring + tick marks, gold to read as 'aim'.
-        if self._tilt_on() and self.state == "playing":
-            mx, my = pygame.mouse.get_pos()
-            pygame.draw.circle(self.screen, (228, 198, 96), (mx, my), 7, 1)
-            for ddx, ddy in ((10, 0), (-10, 0), (0, 10), (0, -10)):
-                pygame.draw.line(self.screen, (228, 198, 96),
-                                 (mx + ddx // 2, my + ddy // 2),
-                                 (mx + ddx, my + ddy), 1)
         # Reset the per-frame full-screen darkness budget. Each
         # whole-screen black overlay below claims a slice via
         # _claim_dark() so the combined wash never exceeds
@@ -1278,6 +1290,24 @@ class RenderMixin:
         # image. Applied before the HUD so UI text stays crisp.
         from scenes.base import apply_grade
         apply_grade(self.screen, pygame.time.get_ticks() / 1000.0)
+        # World layer done. Upscale it to the window (one smoothscale) so the
+        # HUD below draws at full resolution over a softened world. Restore the
+        # full-res camera so next frame's input/unproject reads window pixels.
+        if self._render_s < 1.0:
+            pygame.transform.smoothscale(self.screen, (SCREEN_W, SCREEN_H),
+                                         self._win)
+            self.screen = self._win
+            self.camera.origin = (SCREEN_W // 2, SCREEN_H // 2)
+            self.camera.scale /= self._render_s
+        # Cursor reticle in look mode (the mouse is otherwise hidden) -- shows
+        # where the gun aims. Drawn on the window (crisp), at the window cursor.
+        if self._tilt_on() and self.state == "playing":
+            mx, my = pygame.mouse.get_pos()
+            pygame.draw.circle(self.screen, (228, 198, 96), (mx, my), 7, 1)
+            for ddx, ddy in ((10, 0), (-10, 0), (0, 10), (0, -10)):
+                pygame.draw.line(self.screen, (228, 198, 96),
+                                 (mx + ddx // 2, my + ddy // 2),
+                                 (mx + ddx, my + ddy), 1)
         # Ashfall over the graded world (NARRATIVE 4b) -- the pale-yellow drift
         # rides on top so the grade's desaturate/cool-tint can't wash it out.
         # Under the HUD: it's atmosphere, not interface.
@@ -1297,7 +1327,7 @@ class RenderMixin:
             t = self.transition_t / 0.85
             alpha = int(t * 255) if self.transition_dir == "out" else int((1 - t) * 255)
             alpha = max(0, min(255, alpha))
-            fade = pygame.Surface((SCREEN_W, SCREEN_H))
+            fade = pygame.Surface(self.screen.get_size())
             fade.fill(C_BLACK)
             fade.set_alpha(alpha)
             self.screen.blit(fade, (0, 0))
@@ -1587,7 +1617,7 @@ class RenderMixin:
         self.screen.blit(s, (x + 12, y + 7))
 
     def draw_pause(self):
-        s = pygame.Surface((SCREEN_W, SCREEN_H), pygame.SRCALPHA)
+        s = pygame.Surface(self.screen.get_size(), pygame.SRCALPHA)
         s.fill((0, 0, 0, 180))
         self.screen.blit(s, (0, 0))
         if self.pause_view == "controls":
