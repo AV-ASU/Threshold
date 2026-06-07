@@ -25,10 +25,12 @@ def make_fonts():
         "mono":    mono,
         "mono_sm": mono_sm,
         # Diegetic document type.
+        "serif_tiny":  serif(15),
         "serif_sm":    serif(17),
         "serif":       serif(20),
         "serif_it":    serif(20, italic=True),
         "serif_lg":    serif(28),
         "serif_title": serif(38),
+        "serif_huge":  serif(56),
     }
 

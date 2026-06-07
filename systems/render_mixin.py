@@ -69,7 +69,7 @@ class RenderMixin:
         # cycling. Letter-spacing widened so the word reads as a slab
         # rather than a friendly logo.
         title_text = "T H R E S H O L D"
-        title_font = self.fonts["title"]
+        title_font = self.fonts["serif_huge"]
         title_surf = title_font.render(title_text, True, (170, 168, 174))
         # 1px vertical breath, very slow.
         breath = int(math.sin(t * 1.05) * 1)
@@ -91,16 +91,16 @@ class RenderMixin:
                 color = (220, 218, 226)
             else:
                 color = (96, 92, 104)
-            txt = self.fonts["lg"].render(opt, True, color)
+            txt = self.fonts["serif_lg"].render(opt, True, color)
             tx2 = SCREEN_W // 2 - txt.get_width() // 2
-            ty2 = 360 + i * 44
+            ty2 = 360 + i * 46
             if i == self.title_choice:
                 # A single small bracket on the left only -- asymmetric,
                 # never resolves to a neat selector.
-                marker = self.fonts["lg"].render("[", True, (220, 218, 226))
+                marker = self.fonts["serif_lg"].render("[", True, (220, 218, 226))
                 self.screen.blit(marker, (tx2 - 24, ty2))
             self.screen.blit(txt, (tx2, ty2))
-        hint = self.fonts["sm"].render(
+        hint = self.fonts["serif_sm"].render(
             "arrow keys . enter . F11", True, (60, 58, 68))
         self.screen.blit(hint, (SCREEN_W // 2 - hint.get_width() // 2,
                                 SCREEN_H - 28))
@@ -1315,14 +1315,14 @@ class RenderMixin:
         # Scene-name label, very small, very dim, lower-left.
         from scenes.base import scene_display_name
         scene_label = scene_display_name(self.scene)
-        s = self.fonts["tiny"].render(scene_label, True, (60, 56, 70))
-        self.screen.blit(s, (14, SCREEN_H - 22))
+        s = self.fonts["serif_tiny"].render(scene_label, True, (74, 70, 84))
+        self.screen.blit(s, (14, SCREEN_H - 24))
         # Ammo readout, lower-right -- only while carrying the pistol. Red
         # when empty. Dim, like the rest of the HUD.
         if self.player.inventory.has("pistol"):
             ammo = self.player.inventory.count("pistol_ammo")
-            col = (200, 70, 60) if ammo <= 0 else (140, 136, 112)
-            a = self.fonts["tiny"].render(f"rounds  {ammo}", True, col)
+            col = (200, 70, 60) if ammo <= 0 else (150, 144, 120)
+            a = self.fonts["serif_tiny"].render(f"rounds  {ammo}", True, col)
             self.screen.blit(a, (SCREEN_W - a.get_width() - 14,
                                  SCREEN_H - 22))
         # Flashlight state -- only surfaces in the dark, and only once you
@@ -1332,13 +1332,13 @@ class RenderMixin:
         if (self.scene.key in DARK_SCENES
                 and self.player.inventory.has("flashlight")):
             if self._flashlight_lit():
-                lbl, col = "[F] light: on", (210, 180, 90)
+                lbl, col = "light, lit  (f)", (210, 180, 90)
             elif self.scene.key in CULT_DARK_SCENES:
-                lbl, col = "[F] light: dead here", (70, 66, 78)
+                lbl, col = "the light will not catch here", (70, 66, 78)
             else:
-                lbl, col = "[F] light: off", (96, 92, 108)
-            ls = self.fonts["tiny"].render(lbl, True, col)
-            self.screen.blit(ls, (14, SCREEN_H - 36))
+                lbl, col = "light, dark  (f)", (96, 92, 108)
+            ls = self.fonts["serif_tiny"].render(lbl, True, col)
+            self.screen.blit(ls, (14, SCREEN_H - 40))
         # Threat meter -- thin bar upper-right. Tracks Pursuer
         # proximity (the threat fiction's spine). Stays dim and
         # quiet at low values; warms amber in the middle band; goes
@@ -1485,7 +1485,7 @@ class RenderMixin:
         self.screen.blit(surf, (14, 14))
 
     def _draw_notice(self):
-        s = self.fonts["sm"].render(self.notice_text, True, C_WHITE)
+        s = self.fonts["serif"].render(self.notice_text, True, C_WHITE)
         bg = pygame.Surface((s.get_width() + 24, s.get_height() + 14), pygame.SRCALPHA)
         bg.fill((10, 8, 14, 220))
         x = SCREEN_W // 2 - bg.get_width() // 2
@@ -1503,12 +1503,12 @@ class RenderMixin:
         if self.pause_view == "settings":
             self._draw_settings_screen()
             return
-        title = self.fonts["xl"].render("PAUSED", True, (200, 198, 206))
+        title = self.fonts["serif_title"].render("Paused", True, (200, 198, 206))
         self.screen.blit(title, (SCREEN_W//2 - title.get_width()//2, 160))
         for i, opt in enumerate(self.pause_options):
             selected = (i == self.pause_choice)
             color = C_GOLD if selected else (120, 116, 132)
-            txt = self.fonts["lg"].render(opt, True, color)
+            txt = self.fonts["serif_lg"].render(opt, True, color)
             ox = SCREEN_W//2 - 80
             oy = 260 + i * 50
             # A thin gold margin tick marks the choice -- the same quiet
@@ -1519,22 +1519,23 @@ class RenderMixin:
             self.screen.blit(txt, (ox, oy))
 
     def _draw_controls_screen(self):
-        title = self.fonts["xl"].render("CONTROLS", True, C_WHITE)
+        title = self.fonts["serif_title"].render("Controls", True, C_WHITE)
         self.screen.blit(title, (SCREEN_W//2 - title.get_width()//2, 90))
         x_label = SCREEN_W//2 - 230
         x_key = SCREEN_W//2 + 20
         y0 = 180
         for i, (action, keys) in enumerate(self.CONTROLS_REFERENCE):
             y = y0 + i * 34
-            a = self.fonts["md"].render(action, True, (200, 196, 210))
-            k = self.fonts["md"].render(keys, True, C_GOLD)
+            a = self.fonts["serif"].render(action, True, (200, 196, 210))
+            k = self.fonts["serif"].render(keys, True, C_GOLD)
             self.screen.blit(a, (x_label, y))
             self.screen.blit(k, (x_key, y))
-        hint = self.fonts["sm"].render("Esc / Enter . back", True, (120, 116, 132))
+        hint = self.fonts["serif_sm"].render(
+            "esc or enter . back", True, (120, 116, 132))
         self.screen.blit(hint, (SCREEN_W//2 - hint.get_width()//2, SCREEN_H - 60))
 
     def _draw_settings_screen(self):
-        title = self.fonts["xl"].render("SETTINGS", True, C_WHITE)
+        title = self.fonts["serif_title"].render("Settings", True, C_WHITE)
         self.screen.blit(title, (SCREEN_W//2 - title.get_width()//2, 130))
         rows = [
             ("Master volume", self.audio.master_vol),
@@ -1547,18 +1548,21 @@ class RenderMixin:
         for i, (name, val) in enumerate(rows):
             y = 240 + i * 56
             sel = (i == self.settings_choice)
-            color = C_GOLD if sel else C_WHITE
-            label = f"> {name}" if sel else f"  {name}"
-            self.screen.blit(self.fonts["lg"].render(label, True, color),
-                             (x_label, y))
+            color = C_GOLD if sel else (170, 166, 178)
+            txt = self.fonts["serif_lg"].render(name, True, color)
+            if sel:
+                pygame.draw.rect(self.screen, C_GOLD,
+                                 (x_label - 16, y + 6, 2, txt.get_height() - 12))
+            self.screen.blit(txt, (x_label, y))
             # Slider track + fill + percent.
             pygame.draw.rect(self.screen, (60, 56, 70),
-                             (bar_x, y + 14, bar_w, 6), 1)
+                             (bar_x, y + 18, bar_w, 6), 1)
             pygame.draw.rect(self.screen, color,
-                             (bar_x, y + 14, int(bar_w * val), 6))
-            pct = self.fonts["sm"].render(f"{int(round(val * 100))}%", True, color)
-            self.screen.blit(pct, (bar_x + bar_w + 12, y + 8))
-        hint = self.fonts["sm"].render(
-            "Up/Down . select    Left/Right . adjust    Esc . back",
+                             (bar_x, y + 18, int(bar_w * val), 6))
+            pct = self.fonts["serif_sm"].render(
+                f"{int(round(val * 100))}%", True, color)
+            self.screen.blit(pct, (bar_x + bar_w + 12, y + 12))
+        hint = self.fonts["serif_sm"].render(
+            "up and down . select     left and right . adjust     esc . back",
             True, (120, 116, 132))
         self.screen.blit(hint, (SCREEN_W//2 - hint.get_width()//2, SCREEN_H - 60))
