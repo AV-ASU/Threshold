@@ -2048,6 +2048,62 @@ def _tilt_tile_box(surf, camera, scene, tx, ty):
         _tilt_wall_box(surf, camera, scene, tx, ty)
 
 
+# Spatial bucket size for the decoration cull (Move 1+2 of the perf strategy:
+# stop drawing what the camera can't see). 16 tiles = 512 px gives Brimley
+# (100x100 wrap_x+wrap_y) ~7x7 chunks of ~12 props each. The camera's visible
+# rect typically hits ~4x3 chunks per wrap offset, so 9-offset toroidal draws
+# touch ~100-200 props instead of the ~5,500 the naive loop produces.
+_DECO_CHUNK_TILES = 16
+_DECO_CHUNK_PX = _DECO_CHUNK_TILES * TILE
+# World-px margin added to the visible rect when picking chunks, so a tall
+# standee whose BASE sits just outside the visible square but whose TOP
+# pokes into view still gets considered. Trees rise ~60 px on the card; at
+# scale 0.72 and sin(55 deg)=0.82 that's ~35 screen px, well under a full
+# chunk -- 1 tile of world margin is enough.
+_DECO_TALL_MARGIN = TILE
+
+
+def _deco_index(scene):
+    """Categorise scene.decorations into the four downstream paths and bucket
+    the per-frame-culled subset into a spatial grid. Lazy + cached on the
+    scene; rebuilt when scene.decorations changes length (covers infestation /
+    runtime additions). Pure data, no draw."""
+    cache = getattr(scene, "_deco_index_cache", None)
+    if cache is not None and cache["len"] == len(scene.decorations):
+        return cache
+    from rendering.furniture import is_solid_furniture
+    from rendering.props import is_solid_prop
+    solid_decos = []
+    solid_chunks = {}                # spatial bucket for the solid-prop cull
+    wall_decos = []
+    water_channels = []
+    chunks = {}
+    for d in scene.decorations:
+        if is_solid_furniture(d.kind) or is_solid_prop(d.kind):
+            solid_decos.append(d)
+            cx = int(d.x // _DECO_CHUNK_PX)
+            cy = int(d.y // _DECO_CHUNK_PX)
+            solid_chunks.setdefault((cx, cy), []).append(d)
+            continue
+        if d.kind in _WALL_DECO_KINDS:
+            wall_decos.append(d)
+            continue
+        if d.kind in _SURFACE_DECAL_KINDS or \
+                float(getattr(d, "kwargs", {}).get("z", 0.0)) > 0:
+            continue                 # seated on a surface; depth-sorted upstream
+        if d.kind == "water_channel":
+            water_channels.append(d)
+            continue
+        cx = int(d.x // _DECO_CHUNK_PX)
+        cy = int(d.y // _DECO_CHUNK_PX)
+        chunks.setdefault((cx, cy), []).append(d)
+    cache = {"solid": solid_decos, "solid_chunks": solid_chunks,
+             "wall": wall_decos, "water": water_channels,
+             "chunks": chunks, "len": len(scene.decorations)}
+    scene._deco_index_cache = cache
+    return cache
+
+
 def draw_terrain_tilted(surf, scene, camera, sight=None):
     """Floor warp + flat decals for the oblique camera. Skybox is the caller's
     job (drawn first); actors are drawn after by the game, already projected
@@ -2127,44 +2183,57 @@ def draw_terrain_tilted(surf, scene, camera, sight=None):
     # its ~600 decorations 9x, and almost all clones -- plus most base decos --
     # are nowhere near the view, yet every one used to be drawn every frame.
     MX, MTOP, MBOT = 120, 110, 240
-    wall_decos = []
-    for d in scene.decorations:
-        if is_solid_furniture(d.kind) or is_solid_prop(d.kind):
-            solid_decos.append(d)
-            continue
-        if d.kind in _WALL_DECO_KINDS:
-            # Hung on the wall, not lying on the floor: returned so the caller
-            # lifts + depth-sorts it with the walls (drawn flat here would put
-            # it on the ground and behind the wall box).
-            wall_decos.append(d)
-            continue
-        if d.kind in _SURFACE_DECAL_KINDS or \
-                float(getattr(d, "kwargs", {}).get("z", 0.0)) > 0:
-            continue          # lifted + depth-sorted by render_mixin, not here
-        if d.kind == "water_channel":
-            # A long floor thread: drawn as a projected polyline (no canvas), so
-            # it can run the length of the scene. Under everything (terrain pass).
-            for woff in offsets:
-                _draw_water_channel_tilt(surf, camera, d, woff)
-            continue
-        # Phase 4: rot decals are a world change -- gated to line of sight.
-        a = 255
-        if sight is not None and getattr(d, "_sight_gated", False):
-            f = sight(d.x, d.y)
-            if f <= 0.03:
-                continue
-            a = 255 if f >= 0.99 else int(255 * f)
-        floor_decal = d.kind in _FLOOR_DECAL_KINDS
+    # Pull the cached categorisation + spatial bucket. _deco_index is O(N) on
+    # cache miss (scene change / decoration added) and O(1) otherwise.
+    idx = _deco_index(scene)
+    solid_decos.extend(idx["solid"])
+    wall_decos = list(idx["wall"])
+    # Water channels are projected polylines, not per-frame culled here -- a
+    # toroidal scene's road can run the full world axis; let the polyline
+    # clipper handle it.
+    for d in idx["water"]:
         for woff in offsets:
-            psx, psy = camera.project(d.x + woff[0], d.y + woff[1])
-            if not (-MX <= psx <= sw + MX and -MTOP <= psy <= sh + MBOT):
-                continue                         # off-screen clone -> skip
-            if floor_decal:
-                draw_with_alpha(surf, a, lambda s, d=d, woff=woff:
-                                _draw_floor_decal(s, camera, d, woff))
-            else:
-                draw_with_alpha(surf, a, lambda s, d=d, woff=woff:
-                                d.draw(s, 0, 0, camera, wox=woff[0], woy=woff[1]))
+            _draw_water_channel_tilt(surf, camera, d, woff)
+    # Bucket-cull the rest. For each wrap-clone offset, take the camera's
+    # visible world rect (with a 1-tile tall-prop margin), find the chunks it
+    # spans, and only iterate THOSE chunks. Brimley used to project all ~5,500
+    # clones each frame; this typically projects ~150-300.
+    chunks = idx["chunks"]
+    half = _tilt_window_half(camera) + _DECO_TALL_MARGIN
+    vx0 = camera.cam_x - half
+    vy0 = camera.cam_y - half
+    vx1 = camera.cam_x + half
+    vy1 = camera.cam_y + half
+    for woff in offsets:
+        # The prop is drawn at world (d.x + woff). For it to appear in the
+        # visible rect, d.x must be in [vx0 - woff_x, vx1 - woff_x].
+        cx0 = int((vx0 - woff[0]) // _DECO_CHUNK_PX)
+        cy0 = int((vy0 - woff[1]) // _DECO_CHUNK_PX)
+        cx1 = int((vx1 - woff[0]) // _DECO_CHUNK_PX) + 1
+        cy1 = int((vy1 - woff[1]) // _DECO_CHUNK_PX) + 1
+        for cy in range(cy0, cy1):
+            for cx in range(cx0, cx1):
+                bucket = chunks.get((cx, cy))
+                if not bucket:
+                    continue
+                for d in bucket:
+                    a = 255
+                    if sight is not None and getattr(d, "_sight_gated", False):
+                        f = sight(d.x, d.y)
+                        if f <= 0.03:
+                            continue
+                        a = 255 if f >= 0.99 else int(255 * f)
+                    psx, psy = camera.project(d.x + woff[0], d.y + woff[1])
+                    if not (-MX <= psx <= sw + MX
+                            and -MTOP <= psy <= sh + MBOT):
+                        continue                  # tight screen-px cull
+                    if d.kind in _FLOOR_DECAL_KINDS:
+                        draw_with_alpha(surf, a, lambda s, d=d, woff=woff:
+                                        _draw_floor_decal(s, camera, d, woff))
+                    else:
+                        draw_with_alpha(surf, a, lambda s, d=d, woff=woff:
+                                        d.draw(s, 0, 0, camera,
+                                               wox=woff[0], woy=woff[1]))
     return walls, solid_decos, wall_decos
 
 

@@ -93,87 +93,16 @@ def _draw_seam(frame, p0, p1, t, alpha=1.0):
 
 
 
-# Tesseract topology: 16 vertices (a 4-bit index -> coord -1/+1 per axis x,y,z,w)
-# and the 24 square FACES (two axes vary, the other two are fixed -- 6 axis-pairs
-# x 4 fixed combos). We draw the faces filled + glossy, not wireframe.
-_TESS_FACES = []
-for _a in range(4):
-    for _b in range(_a + 1, 4):
-        _others = [x for x in range(4) if x not in (_a, _b)]
-        for _cv in (0, 1):
-            for _dv in (0, 1):
-                _q = []
-                for _av, _bv in ((0, 0), (0, 1), (1, 1), (1, 0)):
-                    _idx = 0
-                    for _axis, _val in zip([_a, _b, _others[0], _others[1]],
-                                           [_av, _bv, _cv, _dv]):
-                        if _val:
-                            _idx |= (1 << _axis)
-                    _q.append(_idx)
-                _TESS_FACES.append(tuple(_q))
-
-_GOLD_DK = (48, 37, 11)
-_GOLD_HI = (196, 166, 88)
-
-
-def _tess_project(a, b, size):
-    """Project the tesseract's 16 vertices, rotating through the x-w and y-z
-    planes by a, b. Returns (x2d, y2d, z3d) per vertex -- the double perspective
-    divide (on w then z) gives the wrong-space churn; z3d sorts the faces."""
-    ca, sa = math.cos(a), math.sin(a)
-    cb, sb = math.cos(b), math.sin(b)
-    out = []
-    for idx in range(16):
-        x = -1.0 if not (idx & 1) else 1.0
-        y = -1.0 if not (idx & 2) else 1.0
-        z = -1.0 if not (idx & 4) else 1.0
-        w = -1.0 if not (idx & 8) else 1.0
-        x2 = x * ca - w * sa
-        w2 = x * sa + w * ca
-        y2 = y * cb - z * sb
-        z2 = y * sb + z * cb
-        f = 1.6 / (2.6 - w2 * 0.6)           # 4D -> 3D
-        X, Y, Z = x2 * f, y2 * f, z2 * f
-        g = 1.6 / (2.6 - Z * 0.6)            # 3D -> 2D
-        out.append((X * g * size, Y * g * size, Z))
-    return out
-
-
-def _tess_face_surf(a, b, t, size):
-    """One tesseract drawn as GLOSSY OPAQUE gold faces (not see-through wire):
-    faces painted back-to-front, shaded by depth + a moving specular (the
-    shimmer). Transparent background (SRCALPHA) so only the solid metal shows."""
-    pts = _tess_project(a, b, size * 0.46)
-    surf = pygame.Surface((size, size), pygame.SRCALPHA)
-    h = size / 2
-    faces = sorted(((sum(pts[i][2] for i in q) / 4.0, q) for q in _TESS_FACES),
-                   key=lambda fz: fz[0])           # far first (painter's order)
-    for zavg, q in faces:
-        poly = [(pts[i][0] + h, pts[i][1] + h) for i in q]
-        zn = max(0.0, min(1.0, (zavg + 1.2) / 2.4))
-        spec = 0.5 + 0.5 * math.sin(t * 3.4 + zavg * 3.0)   # the shimmer
-        f = max(0.0, min(1.0, 0.22 + 0.5 * zn + 0.30 * spec))
-        col = (int(_GOLD_DK[0] + (_GOLD_HI[0] - _GOLD_DK[0]) * f),
-               int(_GOLD_DK[1] + (_GOLD_HI[1] - _GOLD_DK[1]) * f),
-               int(_GOLD_DK[2] + (_GOLD_HI[2] - _GOLD_DK[2]) * f))
-        pygame.draw.polygon(surf, col, poly)
-        pygame.draw.polygon(surf, _GOLD_DK, poly, 1)        # seam each face
-    return surf
-
-
 def _draw_rim(screen, quad, t, intensity):
-    """The rift's edge: ONE continuous black-gold band around the opening, with
-    rotating glossy tesseracts overlapped tightly along it as its churning 4D
-    surface (not a string of separate cubes). A solid gold band underneath
-    connects them into a single object; the tesseracts give it the shimmer.
-    Sides + top full, a FAINT bottom sill so the frame fully encircles and the
-    rift reads wholly THERE, not cut into the floor."""
-    size = 15
-    half = size // 2
+    """The rift's edge per the PORTALS.md spec: a dim desaturated gold band
+    plus a few jagged electric arcs that flick along it and die in a few
+    frames -- the 'living wound'. Re-seeded each frame so the arcs crackle
+    on and off; the randomness IS the visual, so no cache needed. Cheaper
+    than the old rotating tesseract beads and closer to canon."""
     k = max(0.4, min(1.0, intensity))
     bl, br, tr, tl = quad
-    # 1) The continuous connecting band: a thick gold stroke following the whole
-    #    perimeter, so the edge is one unbroken object. Bottom dimmer (the sill).
+    # 1) The continuous gold band: a thick stroke following the perimeter,
+    #    so the edge reads as one unbroken object. Bottom dimmer (the sill).
     band = (int(96 * k), int(74 * k), int(24 * k))
     sill = (int(54 * k), int(42 * k), int(13 * k))
     edge = (int(150 * k), int(120 * k), int(52 * k))
@@ -181,39 +110,32 @@ def _draw_rim(screen, quad, t, intensity):
                            (tl, bl, 9, band), (bl, br, 7, sill)):
         pygame.draw.line(screen, col, p, q, w)
     pygame.draw.lines(screen, edge, False, [bl, tl, tr, br], 2)   # bright inner lip
-    # 2) The tesseracts as the band's surface: tightly overlapped with rotation
-    #    that ADVANCES smoothly along the perimeter, so they flow as one twisting
-    #    object rather than read as discrete beads. Cached by quantised angle.
-    cache = {}
-
-    def _bead(ang):
-        key = round(ang * 4) / 4.0                       # ~0.25 rad buckets
-        s = cache.get(key)
-        if s is None:
-            s = _tess_face_surf(key, key * 0.7 + 0.4, t, size)
-            if k < 0.99:
-                s = s.copy()
-                s.fill((int(255 * k),) * 3 + (255,),
-                       special_flags=pygame.BLEND_RGBA_MULT)
-            cache[key] = s
-        return s
-
-    dist = 0.0
-    for (p, q, faint) in ((bl, br, True), (br, tr, False),
-                          (tr, tl, False), (tl, bl, False)):
-        ln = math.hypot(q[0] - p[0], q[1] - p[1])
-        steps = max(1, int(ln / (size * 0.30)))          # heavy overlap = unbroken
-        for i in range(steps + 1):
-            f = i / steps
-            x = p[0] + (q[0] - p[0]) * f
-            y = p[1] + (q[1] - p[1]) * f
-            s = _bead(t * 1.1 + dist * 0.05)             # smooth twist along path
-            if faint:
-                s = s.copy()
-                s.fill((150, 150, 150, 255),
-                       special_flags=pygame.BLEND_RGBA_MULT)
-            screen.blit(s, (int(x - half), int(y - half)))
-            dist += ln / steps
+    # 2) Jagged gold arcs that crackle along the rim. Re-seeded per frame at
+    #    ~60 Hz so they flicker on and die; the canon's "living wound." A few
+    #    cheap line draws -- no per-bead surfaces, no per-frame cache fill.
+    rng = random.Random(int(t * 60) & 0xffff)
+    sides = ((bl, br, True), (br, tr, False), (tr, tl, False), (tl, bl, False))
+    bright = (int(228 * k), int(196 * k), int(94 * k))
+    dim = (int(150 * k), int(118 * k), int(54 * k))
+    for _ in range(rng.randint(5, 8)):
+        p, q, faint = sides[rng.randint(0, 3)]
+        f = rng.uniform(0.05, 0.95)
+        x = p[0] + (q[0] - p[0]) * f
+        y = p[1] + (q[1] - p[1]) * f
+        # Jag tangent so the arc trails along the rim, not straight off it.
+        tx, ty = q[0] - p[0], q[1] - p[1]
+        ln = math.hypot(tx, ty) or 1.0
+        tx /= ln; ty /= ln
+        nx, ny = -ty, tx
+        pts = [(x, y)]
+        seg = rng.randint(2, 4)
+        step = rng.uniform(4, 9)
+        for _ in range(seg):
+            x += tx * step + nx * rng.uniform(-5, 5)
+            y += ty * step + ny * rng.uniform(-5, 5)
+            pts.append((x, y))
+        col = dim if faint else bright
+        pygame.draw.lines(screen, col, False, pts, 1)
 
 
 def _blit_tear(out, peek, s0, s1, rise):
@@ -257,7 +179,8 @@ def draw_fold(screen, face, host_cam_x, host_cam_y, player, t, camera=None):
     if camera is not None and camera.pitch > 0.02:
         from rendering.portal import draw_rift_door
         anchor_px = (ax * TILE + TILE // 2, ay * TILE + TILE // 2)
-        draw_rift_door(screen, target, anchor_px, fold_x, fold_y, camera, t)
+        draw_rift_door(screen, target, anchor_px, fold_x, fold_y, camera, t,
+                       cache_key=("fold", id(face)))
         return True
 
     if nx != 0:

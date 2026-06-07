@@ -479,7 +479,9 @@ class RenderMixin:
 
     def _draw_folds(self):
         """Composite every seen fold in the current scene -- a one-sided peek
-        into its target, only visible when the player faces into it."""
+        into its target, only visible when the player faces into it. Pitch-0
+        path only; under tilt each fold is depth-sorted into the unified list
+        so it interleaves with the player, NPCs, and walls (see draw_world)."""
         folds = getattr(self, "_folds", None)
         if not folds or self.player is None:
             return
@@ -488,6 +490,13 @@ class RenderMixin:
         for face in folds:
             draw_fold(self.screen, face, self.cam_x, self.cam_y,
                       self.player, t, self.camera)
+
+    def _draw_one_fold(self, face):
+        """Draw a single seen fold (used by the tilted depth-sort list)."""
+        from rendering.folds import draw_fold
+        t = pygame.time.get_ticks() / 1000.0
+        draw_fold(self.screen, face, self.cam_x, self.cam_y,
+                  self.player, t, self.camera)
 
     def _draw_portal(self):
         """Composite the King's torn rift (the roaming-King portal), if open."""
@@ -674,8 +683,8 @@ class RenderMixin:
                 self.screen, self.scene, self.camera, sight=_sight)
         else:
             self.scene.draw(self.screen, self.cam_x, self.cam_y, self.camera)
-        self._draw_folds()
         if not self._tilt_on():
+            self._draw_folds()
             self._draw_portal()        # flat: drawn inline (legacy order)
         self._draw_idle_king()
         # The unified scene-actor draw list (CAMERA.md Phase 5). Each entry is
@@ -1018,12 +1027,46 @@ class RenderMixin:
                       draw_with_alpha(self.screen, wa,
                                       lambda s: _tilt_tile_box(
                                           s, self.camera, self.scene, tx, ty)))
-            for d in (_tilt_solid_decos or []):
-                for ox, oy in _offsets:
-                    if getattr(d, "_no_wrap", False) and (ox or oy):
-                        continue          # stays at its true spot; no wrap-clone
-                    _emit(self.camera.depth(d.x + ox, d.y + oy),
-                          lambda d=d, ox=ox, oy=oy: self._draw_solid_prop(d, ox, oy))
+            # Solid props (trees, headstones, lanterns -- the standees) wrap-
+            # clone like decorations and used to emit one depth entry per
+            # (prop x offset) pair. Brimley has ~420 such props x 9 wrap
+            # offsets = ~3800 emits/frame, almost all of them off-screen.
+            # Walk the SPATIAL CHUNK INDEX (Move 2 of the perf strategy: only
+            # touch chunks the visible window overlaps), then per-prop project
+            # + screen-pixel cull. Brimley typically projects ~50-200 instead
+            # of 3800. The scene's _deco_index_cache is built by
+            # draw_terrain_tilted above; both flat solid list AND chunk map
+            # are populated there.
+            from scenes.base import (_DECO_CHUNK_PX, _DECO_TALL_MARGIN,
+                                     _tilt_window_half)
+            _SOL_MX, _SOL_MTOP, _SOL_MBOT = 100, 100, 220
+            _idx = getattr(self.scene, "_deco_index_cache", None) or {}
+            _solid_chunks = _idx.get("solid_chunks") or {}
+            _half = _tilt_window_half(self.camera) + _DECO_TALL_MARGIN
+            _vx0 = self.camera.cam_x - _half
+            _vy0 = self.camera.cam_y - _half
+            _vx1 = self.camera.cam_x + _half
+            _vy1 = self.camera.cam_y + _half
+            for ox, oy in _offsets:
+                _cx0 = int((_vx0 - ox) // _DECO_CHUNK_PX)
+                _cy0 = int((_vy0 - oy) // _DECO_CHUNK_PX)
+                _cx1 = int((_vx1 - ox) // _DECO_CHUNK_PX) + 1
+                _cy1 = int((_vy1 - oy) // _DECO_CHUNK_PX) + 1
+                for _cy in range(_cy0, _cy1):
+                    for _cx in range(_cx0, _cx1):
+                        _bucket = _solid_chunks.get((_cx, _cy))
+                        if not _bucket:
+                            continue
+                        for d in _bucket:
+                            if getattr(d, "_no_wrap", False) and (ox or oy):
+                                continue   # stays at its true spot; no wrap
+                            psx, psy = self.camera.project(d.x + ox, d.y + oy)
+                            if not (-_SOL_MX <= psx <= SCREEN_W + _SOL_MX
+                                    and -_SOL_MTOP <= psy <= SCREEN_H + _SOL_MBOT):
+                                continue
+                            _emit(self.camera.depth(d.x + ox, d.y + oy),
+                                  lambda d=d, ox=ox, oy=oy:
+                                  self._draw_solid_prop(d, ox, oy))
             # Surface props seated ON furniture (a ledger, candle, lamp on a
             # desk/table): lifted to the prop height (deco kwarg `z`) and depth-
             # sorted at the GROUND position so they tie with the host furniture
@@ -1058,13 +1101,30 @@ class RenderMixin:
                           lambda d=d, ox=ox, oy=oy: draw_wall_deco(
                               self.screen, self.camera, self.scene, d,
                               _WALL_MOUNT_Z, woff=(ox, oy)))
-            # The portal depth-sorts with the trees/walls/actors (so a tree in
-            # front of it occludes it and it occludes what is behind) instead of
-            # always drawing on top -- it is a real upright thing in the scene.
+            # The portal + folds depth-sort with the trees/walls/actors (so a
+            # tree in front of one occludes it and it occludes what is behind)
+            # instead of always drawing on top -- they are real upright things
+            # in the scene. Without this, hidden folds drew under the player and
+            # the room peek was hidden behind whatever stood in front of it.
             if getattr(self, "_portal", None):
                 _emit(self.camera.depth(self._portal["x"], self._portal["y"],
                                         _TILT_WALL_RISE),
                       lambda: self._draw_portal())
+            # FOLDS: a scene can ship several direction-gated portals (the
+            # cornfield maze has three: effigy_grove, husk_grove, scarecrow_ring)
+            # and a naive draw runs a full target-room render for each. Cull
+            # to the ones IN THE PLAYER'S SIGHT CONE -- a portal that is behind
+            # you, beside you, or behind a wall isn't drawn. The canon already
+            # says each fold reads as floor from any other angle, so dropping
+            # off-cone ones leaves no visible gap. Combined with the canonical
+            # direction-into-normal check inside draw_fold, only the rifts the
+            # player is actually looking AT pay the render cost.
+            for face in (getattr(self, "_folds", None) or ()):
+                fx, fy = face["fold_px"]
+                if _sight is not None and _sight(fx, fy) <= 0.0:
+                    continue                      # outside the sight cone
+                _emit(self.camera.depth(fx, fy, _TILT_WALL_RISE),
+                      lambda f=face: self._draw_one_fold(f))
             _entries.sort(key=lambda e: e[0])
         # Execute the (legacy-ordered at pitch 0, depth-sorted under tilt) list.
         for _depth, _fn in _entries:

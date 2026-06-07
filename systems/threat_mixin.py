@@ -190,6 +190,13 @@ class ThreatMixin:
         exits) and pre-load the small set of target scenes once. A seen fold
         is drawn as a peek into its target (rendering.folds.draw_fold)."""
         self._folds = []
+        # Drop the through-view buffers for the previous scene's folds/portals.
+        # Their cache keys are id()s of dicts that are about to be GC'd.
+        try:
+            from rendering.portal import clear_through_cache
+            clear_through_cache()
+        except Exception:
+            pass
         scene = self.scene
         if scene is None:
             return
