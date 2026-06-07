@@ -1735,17 +1735,22 @@ def _shade_col(col, f):
             max(0, min(255, int(col[2] * f))))
 
 
+_WATER_EDGE_CHUNK = 16          # tiles per spatial bucket -- matches the
+                                # decoration chunk size so the marsh edges
+                                # cull the same way the marsh trees do
+
+
 def _build_water_bank_edges(scene):
-    """Precompute every water-land boundary segment (a water tile that has
-    a `_BANK_LAND` neighbour). Each edge is (cx_world, cy_world, ndx, ndy,
-    seed) -- the midpoint on the WATER side of the boundary, the direction
-    of the land neighbour, and a stable seed for reed jitter / sway.
-    Cached on the scene so we don't rescan ~10k tiles per frame."""
+    """Precompute every water-land boundary segment AND bucket them into a
+    spatial chunk index. Each edge is (cx_world, cy_world, ndx, ndy, seed).
+    The emit walker iterates only buckets the camera window overlaps, so a
+    full-marsh scan (212 edges in brimley) drops to ~30 per frame."""
     edges = getattr(scene, "_water_bank_edges", None)
     if edges is not None:
         return edges
     floor, h, w = scene.floor, scene.h, scene.w
     edges = []
+    chunks = {}
     for ty in range(h):
         for tx in range(w):
             if floor[ty][tx] != "~":
@@ -1761,8 +1766,13 @@ def _build_water_bank_edges(scene):
                 cx_w = tx * TILE + TILE / 2 + ndx * (TILE / 2 - 1)
                 cy_w = ty * TILE + TILE / 2 + ndy * (TILE / 2 - 1)
                 seed = (tx * 73856093) ^ (ty * 19349663) ^ (si * 40503)
-                edges.append((cx_w, cy_w, ndx, ndy, seed))
+                rec = (cx_w, cy_w, ndx, ndy, seed)
+                edges.append(rec)
+                cx = tx // _WATER_EDGE_CHUNK
+                cy = ty // _WATER_EDGE_CHUNK
+                chunks.setdefault((cx, cy), []).append(rec)
     scene._water_bank_edges = edges
+    scene._water_bank_chunks = chunks
     return edges
 
 
@@ -1804,17 +1814,31 @@ def _draw_reed_cluster(surf, camera, cx_w, cy_w, ndx, ndy, seed, wt):
 def emit_tilt_water_reeds(emit_fn, scene, camera, surf, x0, y0, x1, y1):
     """Emit one depth-sorted reed cluster per visible water-bank edge so
     the marsh fringe stands UP under tilt instead of being painted flat
-    onto the warped floor."""
+    onto the warped floor. Walks only the spatial chunks the camera window
+    overlaps so a marsh row visits ~30 edges per frame, not all 212."""
+    _build_water_bank_edges(scene)
+    chunks = getattr(scene, "_water_bank_chunks", None)
+    if not chunks:
+        return
     wt = pygame.time.get_ticks() / 650.0
-    for (cx_w, cy_w, ndx, ndy, seed) in _build_water_bank_edges(scene):
-        tx, ty = int(cx_w // TILE), int(cy_w // TILE)
-        if tx < x0 - 1 or tx > x1 + 1 or ty < y0 - 1 or ty > y1 + 1:
-            continue
-        emit_fn(camera.depth(cx_w, cy_w, 4),
-                lambda cx_w=cx_w, cy_w=cy_w, ndx=ndx, ndy=ndy, seed=seed,
-                wt=wt, surf=surf:
-                _draw_reed_cluster(surf, camera, cx_w, cy_w,
-                                   ndx, ndy, seed, wt))
+    cx0 = x0 // _WATER_EDGE_CHUNK - 1
+    cy0 = y0 // _WATER_EDGE_CHUNK - 1
+    cx1 = x1 // _WATER_EDGE_CHUNK + 1
+    cy1 = y1 // _WATER_EDGE_CHUNK + 1
+    for cy in range(cy0, cy1 + 1):
+        for cx in range(cx0, cx1 + 1):
+            bucket = chunks.get((cx, cy))
+            if not bucket:
+                continue
+            for (cx_w, cy_w, ndx, ndy, seed) in bucket:
+                tx, ty = int(cx_w // TILE), int(cy_w // TILE)
+                if tx < x0 - 1 or tx > x1 + 1 or ty < y0 - 1 or ty > y1 + 1:
+                    continue
+                emit_fn(camera.depth(cx_w, cy_w, 4),
+                        lambda cx_w=cx_w, cy_w=cy_w, ndx=ndx, ndy=ndy,
+                        seed=seed, wt=wt, surf=surf:
+                        _draw_reed_cluster(surf, camera, cx_w, cy_w,
+                                           ndx, ndy, seed, wt))
 
 
 def emit_tilt_roofs(emit_fn, scene, camera, surf, x0, y0, x1, y1):
@@ -2291,13 +2315,22 @@ def _extrude_box(surf, camera, scene, tx, ty, z0, z1, neigh=_WALL_CHARS,
     pygame.draw.polygon(surf, tuple(int(c * 0.4) for c in top_col), t, 1)
 
 
-def _tilt_wall_box(surf, camera, scene, tx, ty):
-    # If this wall belongs to a building, paint it in the building's per-
-    # region tint so the town reads as recognisable houses rather than one
-    # uniform mass of stone.
-    face_col = top_col = None
+def _tilt_wall_tint(scene, tx, ty):
+    """(face_col, top_col) for this wall tile, or (None, None) if it's not
+    in a building (use the default near-black palette). Cached per-tile on
+    the scene so the hot wall loop doesn't recompute the building palette
+    every frame; cleared with the wall_region_map when scenes rebuild."""
+    cache = getattr(scene, "_wall_tint_cache", None)
+    if cache is None:
+        cache = scene._wall_tint_cache = {}
+    key = (tx, ty)
+    cached = cache.get(key)
+    if cached is not None:
+        return cached
     region = wall_region_for(scene, tx, ty)
-    if region is not None:
+    if region is None:
+        face_col = top_col = None
+    else:
         _roof, (dr, dg, db), _trim = _get_building_palette(region)
         face_col = (max(0, min(255, _WALL_FACE[0] + dr)),
                     max(0, min(255, _WALL_FACE[1] + dg)),
@@ -2305,6 +2338,12 @@ def _tilt_wall_box(surf, camera, scene, tx, ty):
         top_col = (max(0, min(255, _WALL_TOP[0] + dr)),
                    max(0, min(255, _WALL_TOP[1] + dg)),
                    max(0, min(255, _WALL_TOP[2] + db)))
+    cache[key] = (face_col, top_col)
+    return face_col, top_col
+
+
+def _tilt_wall_box(surf, camera, scene, tx, ty):
+    face_col, top_col = _tilt_wall_tint(scene, tx, ty)
     _extrude_box(surf, camera, scene, tx, ty, 0, _TILT_WALL_RISE,
                  face_col=face_col, top_col=top_col)
 
