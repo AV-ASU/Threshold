@@ -161,13 +161,45 @@ def _tess_face_surf(a, b, t, size):
     return surf
 
 
+_BEAD_CACHE = {}                  # (ang_bucket, t_bucket, k_bucket, faint) -> Surface
+
+
+def _bead_surf(ang, t, k, faint, size):
+    """Cached tesseract bead. Heavy hit: each fresh surface runs 24 polygon
+    draws into a 15x15 SRCALPHA, so previously building ~180 per frame
+    (uncached across frames) was the rim's dominant cost. Quantising (ang, t,
+    intensity) into coarse buckets gives lots of cross-frame reuse with no
+    visible loss: the twist still flows, the shimmer still pulses, the cache
+    just spans frames."""
+    ab = round(ang * 2) / 2.0                            # ~0.5 rad buckets
+    tb = round(t * 8) / 8.0                              # ~8 Hz shimmer update
+    kb = round(k * 5) / 5.0                              # 5 intensity steps
+    key = (ab, tb, kb, faint)
+    s = _BEAD_CACHE.get(key)
+    if s is None:
+        s = _tess_face_surf(ab, ab * 0.7 + 0.4, tb, size)
+        if kb < 0.99 or faint:
+            s = s.copy()
+            mr = mg = mb = int(255 * kb)
+            if faint:
+                mr = mg = mb = int(mr * 0.6)             # the dimmer sill
+            s.fill((mr, mg, mb, 255), special_flags=pygame.BLEND_RGBA_MULT)
+        _BEAD_CACHE[key] = s
+        # Bound memory: drop the oldest entries when the cache gets fat.
+        if len(_BEAD_CACHE) > 2048:
+            for k_ in list(_BEAD_CACHE)[:512]:
+                _BEAD_CACHE.pop(k_, None)
+    return s
+
+
 def _draw_rim(screen, quad, t, intensity):
     """The rift's edge: ONE continuous black-gold band around the opening, with
-    rotating glossy tesseracts overlapped tightly along it as its churning 4D
-    surface (not a string of separate cubes). A solid gold band underneath
-    connects them into a single object; the tesseracts give it the shimmer.
-    Sides + top full, a FAINT bottom sill so the frame fully encircles and the
-    rift reads wholly THERE, not cut into the floor."""
+    rotating glossy tesseracts along it as its churning 4D surface. A solid gold
+    band underneath connects them into a single object; the tesseracts give it
+    the shimmer. Sides + top full, a faint bottom sill so the frame fully
+    encircles. Bead spacing kept just below bead size so the chain stays
+    visually unbroken WITHOUT the 3x bead count the old heavy-overlap pass
+    needed (each bead is 24 cached polygons, so it really matters)."""
     size = 15
     half = size // 2
     k = max(0.4, min(1.0, intensity))
@@ -181,39 +213,23 @@ def _draw_rim(screen, quad, t, intensity):
                            (tl, bl, 9, band), (bl, br, 7, sill)):
         pygame.draw.line(screen, col, p, q, w)
     pygame.draw.lines(screen, edge, False, [bl, tl, tr, br], 2)   # bright inner lip
-    # 2) The tesseracts as the band's surface: tightly overlapped with rotation
-    #    that ADVANCES smoothly along the perimeter, so they flow as one twisting
-    #    object rather than read as discrete beads. Cached by quantised angle.
-    cache = {}
-
-    def _bead(ang):
-        key = round(ang * 4) / 4.0                       # ~0.25 rad buckets
-        s = cache.get(key)
-        if s is None:
-            s = _tess_face_surf(key, key * 0.7 + 0.4, t, size)
-            if k < 0.99:
-                s = s.copy()
-                s.fill((int(255 * k),) * 3 + (255,),
-                       special_flags=pygame.BLEND_RGBA_MULT)
-            cache[key] = s
-        return s
-
+    # 2) The tesseracts as the band's surface. The gold band underneath fills
+    #    any thin gap between beads, so we don't need heavy overlap -- one bead
+    #    every ~`size` px reads as one continuous churning object and costs 3x
+    #    less than the old 0.30 spacing.
     dist = 0.0
     for (p, q, faint) in ((bl, br, True), (br, tr, False),
                           (tr, tl, False), (tl, bl, False)):
         ln = math.hypot(q[0] - p[0], q[1] - p[1])
-        steps = max(1, int(ln / (size * 0.30)))          # heavy overlap = unbroken
+        steps = max(1, int(ln / size))                   # touch, not overlap
+        step_len = ln / steps
         for i in range(steps + 1):
             f = i / steps
             x = p[0] + (q[0] - p[0]) * f
             y = p[1] + (q[1] - p[1]) * f
-            s = _bead(t * 1.1 + dist * 0.05)             # smooth twist along path
-            if faint:
-                s = s.copy()
-                s.fill((150, 150, 150, 255),
-                       special_flags=pygame.BLEND_RGBA_MULT)
+            s = _bead_surf(t * 1.1 + dist * 0.05, t, k, faint, size)
             screen.blit(s, (int(x - half), int(y - half)))
-            dist += ln / steps
+            dist += step_len
 
 
 def _blit_tear(out, peek, s0, s1, rise):
