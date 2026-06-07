@@ -62,9 +62,13 @@ ITEM_DEFS = {
                                "I feel so close now.\""},
     "unsent_letter": {"name": "Mara's Letter",
                        "kind": "lore",
-                       "desc": "Stamped, never mailed. Opens \"Dad.\" "
-                               "Closes: \"I'm not lost. I've never been "
-                               "this close.\""},
+                       "desc": "Stamped, never mailed.\n\n"
+                               "\"Dad. ...I'm sorry for how I left. I couldn't "
+                               "explain it and have it sound sane. The dreams "
+                               "aren't dreams anymore. They're full of answers. "
+                               "I'm just hunting the questions now. Don't come "
+                               "after me. I'm not lost. I've never been this "
+                               "close.\""},
     # ---- The cult's testimony (three found fragments; gate nothing) ----
     # The congregation's own record, split across three leaves found down the
     # descent. The cult's voice lives in the DESCRIPTION (their personal
