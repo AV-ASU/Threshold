@@ -1474,6 +1474,178 @@ def _draw_scene_roofs(surf, scene, cam_x, cam_y, x0, y0, x1, y1):
         _draw_gable_roof(surf, region, cam_x, cam_y)
 
 
+# -- 3D gabled roofs for the tilt path --------------------------------------
+# The flat-pitch `_draw_gable_roof` above paints the roof art into the top-
+# down floor surface, which under tilt warps onto the GROUND as a flat plate
+# (skipped from the tilt floor pass via `skip_roofs=True`). The tilt path
+# instead emits one of these volumetric roofs per building region into the
+# depth-sorted draw queue, so each building is a real prism rising above the
+# walls + a ridge beam + a chimney. Material + tint are seeded per region so
+# the houses read as distinct without losing town cohesion.
+
+def _building_palette(seed_a, seed_b):
+    """Per-region (wall tint, trim accent, roof palette). Stable from the
+    region's geometry seed so a given building keeps its look across reloads.
+    """
+    rng = random.Random((seed_a * 73856093) ^ (seed_b * 19349663))
+    mat = rng.randint(0, 2)
+    if mat == 1:                                # rusted corrugated tin
+        roof = {"col": (94, 96, 100), "lit": (132, 134, 138),
+                "dark": (52, 54, 58), "ridge": (40, 42, 44),
+                "chimney": (60, 42, 36)}
+    elif mat == 2:                              # tar-paper
+        roof = {"col": (54, 50, 56), "lit": (80, 76, 84),
+                "dark": (32, 28, 34), "ridge": (24, 22, 26),
+                "chimney": (44, 36, 36)}
+    else:                                       # weathered cedar shingle
+        roof = {"col": (118, 80, 56), "lit": (158, 110, 76),
+                "dark": (74, 50, 34), "ridge": (44, 28, 19),
+                "chimney": (58, 40, 36)}
+    # Subtle per-building wall warmth: a small tint offset so the wood reads
+    # slightly cooler / warmer house to house, plus a trim accent for the
+    # door-frame underside the eaves can pick up later.
+    wall_dr = rng.randint(-10, 12)
+    wall_dg = rng.randint(-8, 10)
+    wall_db = rng.randint(-10, 8)
+    trim_choices = [(120, 64, 52), (90, 70, 40), (60, 80, 70),
+                    (110, 100, 80), (80, 60, 50)]
+    trim = trim_choices[rng.randint(0, len(trim_choices) - 1)]
+    return roof, (wall_dr, wall_dg, wall_db), trim
+
+
+_BUILDING_PALETTE_CACHE = {}
+
+
+def _get_building_palette(region):
+    minx, miny, maxx, maxy = region
+    key = (minx, miny, maxx, maxy)
+    pal = _BUILDING_PALETTE_CACHE.get(key)
+    if pal is None:
+        pal = _building_palette(minx, maxy)
+        _BUILDING_PALETTE_CACHE[key] = pal
+    return pal
+
+
+def _draw_building_3d(surf, camera, region, scene):
+    """A real volumetric gabled roof over the building's footprint plus a
+    ridge beam and a crooked chimney. All four slopes are drawn opaque so the
+    roof fully encloses the interior under tilt (no peek-in). Per-region
+    palette gives each building a subtle but recognisable look.
+
+    Ridge runs along the building's LONGER axis (the door direction --
+    typically the road-facing wall -- becomes the gable end). Aligned-with-
+    the-road buildings get their gable end facing the street naturally."""
+    minx, miny, maxx, maxy = region
+    EAVE = 9
+    # outer footprint in world px (wall outer edges + eave overhang)
+    xL = (minx - 1) * TILE - EAVE
+    xR = (maxx + 2) * TILE + EAVE
+    yT = (miny - 1) * TILE - EAVE
+    yB = (maxy + 2) * TILE + EAVE
+    width = xR - xL
+    depth = yB - yT
+    z_wall = _TILT_WALL_RISE
+    H = max(14, min(28, int(min(width, depth) * 0.32)))
+    z_apex = z_wall + H
+    roof, _wall_tint, trim = _get_building_palette(region)
+
+    ridge_ew = width >= depth         # longer than deep -> ridge runs east-west
+    # 4 base corners
+    NW = camera.project(xL, yT, z_wall)
+    NE = camera.project(xR, yT, z_wall)
+    SW = camera.project(xL, yB, z_wall)
+    SE = camera.project(xR, yB, z_wall)
+
+    if ridge_ew:
+        yMid = (yT + yB) / 2
+        Rw = camera.project(xL, yMid, z_apex)
+        Re = camera.project(xR, yMid, z_apex)
+        # Camera under typical tilt looks DOWN+SOUTH, so:
+        # - north slope is the FAR (back) face -- draw first
+        # - south slope is the NEAR (front) face -- draw last so it covers
+        # Gables on east + west, between the two slopes.
+        pygame.draw.polygon(surf, roof["dark"], [NW, NE, Re, Rw])  # back slope
+        pygame.draw.polygon(surf, roof["dark"], [NW, SW, Rw])      # west gable
+        pygame.draw.polygon(surf, roof["dark"], [NE, SE, Re])      # east gable
+        pygame.draw.polygon(surf, roof["col"], [SW, SE, Re, Rw])   # front slope
+        # gable rim outlines so the form catches the light
+        pygame.draw.line(surf, roof["lit"], NW, Rw, 1)
+        pygame.draw.line(surf, roof["lit"], NE, Re, 1)
+        pygame.draw.line(surf, roof["lit"], SW, Rw, 1)
+        pygame.draw.line(surf, roof["lit"], SE, Re, 1)
+        # ridge beam
+        pygame.draw.line(surf, roof["ridge"], Rw, Re, 2)
+        # chimney near the back-east corner of the ridge
+        cx_w = xR - TILE * 0.6
+        cy_w = yT + (yB - yT) * 0.35
+        ch_base_z = z_wall + H * 0.25
+        ch_top_z = z_apex + 4
+        chx_w = TILE * 0.25
+        chy_w = TILE * 0.25
+    else:
+        xMid = (xL + xR) / 2
+        Rn = camera.project(xMid, yT, z_apex)
+        Rs = camera.project(xMid, yB, z_apex)
+        pygame.draw.polygon(surf, roof["dark"], [NW, SW, Rs, Rn])  # west slope
+        pygame.draw.polygon(surf, roof["dark"], [NW, NE, Rn])      # north gable
+        pygame.draw.polygon(surf, roof["dark"], [SW, SE, Rs])      # south gable
+        pygame.draw.polygon(surf, roof["col"], [NE, SE, Rs, Rn])   # east slope
+        pygame.draw.line(surf, roof["lit"], NW, Rn, 1)
+        pygame.draw.line(surf, roof["lit"], SW, Rs, 1)
+        pygame.draw.line(surf, roof["lit"], NE, Rn, 1)
+        pygame.draw.line(surf, roof["lit"], SE, Rs, 1)
+        pygame.draw.line(surf, roof["ridge"], Rn, Rs, 2)
+        cx_w = xL + (xR - xL) * 0.3
+        cy_w = yT + TILE * 0.6
+        ch_base_z = z_wall + H * 0.25
+        ch_top_z = z_apex + 4
+        chx_w = TILE * 0.25
+        chy_w = TILE * 0.25
+
+    # chimney: short box on top of the roof
+    cb_NW = camera.project(cx_w - chx_w, cy_w - chy_w, ch_base_z)
+    cb_NE = camera.project(cx_w + chx_w, cy_w - chy_w, ch_base_z)
+    cb_SW = camera.project(cx_w - chx_w, cy_w + chy_w, ch_base_z)
+    cb_SE = camera.project(cx_w + chx_w, cy_w + chy_w, ch_base_z)
+    ct_NW = camera.project(cx_w - chx_w, cy_w - chy_w, ch_top_z)
+    ct_NE = camera.project(cx_w + chx_w, cy_w - chy_w, ch_top_z)
+    ct_SW = camera.project(cx_w - chx_w, cy_w + chy_w, ch_top_z)
+    ct_SE = camera.project(cx_w + chx_w, cy_w + chy_w, ch_top_z)
+    chim = roof["chimney"]
+    pygame.draw.polygon(surf, chim, [cb_SW, cb_SE, ct_SE, ct_SW])   # front face
+    pygame.draw.polygon(surf, _shade_col(chim, 0.72),
+                        [cb_SW, cb_NW, ct_NW, ct_SW])               # left face
+    pygame.draw.polygon(surf, _shade_col(chim, 0.72),
+                        [cb_SE, cb_NE, ct_NE, ct_SE])               # right face
+    pygame.draw.polygon(surf, _shade_col(chim, 1.18),
+                        [ct_NW, ct_NE, ct_SE, ct_SW])               # cap top
+    pygame.draw.polygon(surf, _shade_col(chim, 0.50),
+                        [ct_NW, ct_NE, ct_SE, ct_SW], 1)            # cap rim
+    # ground/midpoint for depth sort
+    return ((xL + xR) / 2, (yT + yB) / 2, z_apex / 2)
+
+
+def _shade_col(col, f):
+    return (max(0, min(255, int(col[0] * f))),
+            max(0, min(255, int(col[1] * f))),
+            max(0, min(255, int(col[2] * f))))
+
+
+def emit_tilt_roofs(emit_fn, scene, camera, surf, x0, y0, x1, y1):
+    """Emit one depth-sorted draw closure per visible building region. The
+    closure draws the volumetric roof + ridge + chimney for that region. The
+    flat (pitch-0) gabled roof is unrelated and still drawn by Scene.draw."""
+    for region in _build_roof_regions(scene):
+        minx, miny, maxx, maxy = region
+        if maxx + 2 < x0 or minx - 2 > x1 or maxy + 2 < y0 or miny - 2 > y1:
+            continue
+        cx_w = ((minx - 1) + (maxx + 2)) * TILE / 2
+        cy_w = ((miny - 1) + (maxy + 2)) * TILE / 2
+        emit_fn(camera.depth(cx_w, cy_w, _TILT_WALL_RISE / 2),
+                lambda region=region, scene=scene, camera=camera, surf=surf:
+                _draw_building_3d(surf, camera, region, scene))
+
+
 def _door_room_dir(scene, tx, ty):
     """Which way the door opens -- the floor (room) side its leaf swings
     into. Off-map edges don't count as wall, so a building's south-edge

@@ -1062,6 +1062,19 @@ class RenderMixin:
                       lambda n_scene=n_scene, ntx=ntx, nty=nty,
                       sat_cam=sat_cam:
                       _tilt_tile_box(self.screen, sat_cam, n_scene, ntx, nty))
+            # Volumetric gabled roofs over each building region (tilt only --
+            # the flat view paints the top-down roof art in draw_scene_terrain).
+            # Each region emits one depth entry at the building centre + apex
+            # half-height so the roof depth-sorts behind props closer to the
+            # camera and in front of things further back.
+            from scenes.base import emit_tilt_roofs, _tilt_window_half as _twh
+            _rh = _twh(self.camera)
+            _rx0 = int((self.camera.cam_x - _rh) // TILE) - 1
+            _ry0 = int((self.camera.cam_y - _rh) // TILE) - 1
+            _rx1 = int((self.camera.cam_x + _rh) // TILE) + 1
+            _ry1 = int((self.camera.cam_y + _rh) // TILE) + 1
+            emit_tilt_roofs(_emit, self.scene, self.camera, self.screen,
+                            _rx0, _ry0, _rx1, _ry1)
             # Solid props (trees, headstones, lanterns -- the standees) wrap-
             # clone like decorations and used to emit one depth entry per
             # (prop x offset) pair. Brimley has ~420 such props x 9 wrap
