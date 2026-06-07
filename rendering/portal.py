@@ -41,16 +41,6 @@ _GLOW_CACHE = {}
 
 _THROUGH_CACHE = {}              # cache the expensive scene composite per fold
 
-# How many frames between full re-renders of the through-view. The target room
-# is STATIC (no actors walking around in it for the hidden folds), and the
-# translation-safe cache shift handles the player walking past, so a real
-# rebuild is only needed when pitch/yaw/scale change OR the cached crop falls
-# off the edge of the buf. We bumped this from 4 to 30 (~half a second at 60
-# fps) -- the eye can't see content updates that aren't there to update, but
-# you do see the rebuild stalls. The forming King's portal still rebuilds per
-# loom step since loom changes invalidate the cache.
-_REFRESH_FRAMES = 30
-
 
 def clear_through_cache():
     """Drop the cached through-view buffers. Called on scene load (fold/portal
@@ -97,34 +87,20 @@ def _render_through_full(target, anchor_px, camera, door_origin, loom, t):
     return buf
 
 
-# Mouselook eases camera.yaw by tiny amounts every frame (~0.004 rad / frame),
-# so a fine-rounded yaw signature invalidated the cache on every frame the
-# player moved -- the actual lag the player feels. We tolerate a small yaw
-# delta and only force a real rebuild past this threshold. Inside the band the
-# cached buf is used as-is, so the destination room's projection is mildly
-# off-axis from the rim by up to _YAW_THRESH radians. Hard to spot under the
-# liminal desaturate; preserves smooth mouselook performance.
-_YAW_THRESH = 0.14               # ~8 deg of yaw drift tolerated before rebuild
-
-
-def _wrap_pi(a):
-    return (a + math.pi) % (2 * math.pi) - math.pi
-
-
 def _render_through(target, anchor_px, camera, rect, door_origin,
                     loom=0.0, t=0.0, cache_key=None):
     """Return a `rect`-sized Surface showing `target` through the rift, with the
-    same tilt camera as the host. CACHED per `cache_key` (id of the fold/portal).
+    same tilt camera as the host. CACHED per `cache_key` (id of the fold/portal)
+    and BUILT ONCE -- the destination room's orientation is frozen at
+    build-time yaw, like a CCTV screen showing elsewhere rather than a live
+    window panning with your head. This is a deliberate canon move (the other
+    room doesn't share our rotation -- eldritch) and it kills the rebuild
+    spikes that fast head whips otherwise provoke (~150 ms each).
 
-    The cached buf is anchored to the door's screen origin at build time. When
-    the player walks, the host camera translates and the door moves on screen,
-    but the cached buf's content stays valid -- we just CROP at a shifted
-    position equal to (current door_origin minus the door_origin at build).
-    This lets the cache survive camera translation, which is the hot case
-    (walking past the fold). A real rebuild only fires every
-    `_REFRESH_FRAMES` frames OR when pitch/scale change OR the camera yaw has
-    drifted past `_YAW_THRESH` since the build (so the smooth mouselook ease
-    doesn't thrash the cache every frame).
+    Pitch and scale changes still invalidate (those are rare in actual play,
+    and a pitch flip via F3 should genuinely repaint). Loom changes too, for
+    the King's portal forming animation. Camera translation is handled by
+    shifting the crop position on the cached buf, NOT by rebuilding.
 
     `loom` (0..1) draws the King at the anchor -- him looming through the rift
     while it forms, before he comes (canon: you see him on the far side first).
@@ -137,10 +113,7 @@ def _render_through(target, anchor_px, camera, rect, door_origin,
     if cache_key is not None:
         entry = _THROUGH_CACHE.get(cache_key)
         if entry is not None:
-            yaw_drift = abs(_wrap_pi(camera.yaw - entry["yaw"]))
-            refresh = (entry["frame"] >= _REFRESH_FRAMES
-                       or yaw_drift > _YAW_THRESH
-                       or entry["pitch"] != pitch_b
+            refresh = (entry["pitch"] != pitch_b
                        or entry["scale"] != scale_b
                        or entry["loom"] != loom_b)
     if refresh:
@@ -152,14 +125,12 @@ def _render_through(target, anchor_px, camera, rect, door_origin,
             arr[..., c] = np.clip(arr[..., c] * 0.55 + gray * 0.30,
                                   0, 255).astype(arr.dtype)
         del arr
-        entry = {"buf": full, "frame": 0,
-                 "yaw": camera.yaw, "pitch": pitch_b, "scale": scale_b,
+        entry = {"buf": full,
+                 "pitch": pitch_b, "scale": scale_b,
                  "origin": (int(door_origin[0]), int(door_origin[1])),
                  "loom": loom_b}
         if cache_key is not None:
             _THROUGH_CACHE[cache_key] = entry
-    else:
-        entry["frame"] += 1
     # Crop at a shifted position so a cache hit still aligns with the door's
     # new screen position. The cached buf has the anchor at entry["origin"];
     # the current frame wants it at door_origin.
@@ -179,7 +150,7 @@ def _render_through(target, anchor_px, camera, rect, door_origin,
             arr[..., c] = np.clip(arr[..., c] * 0.55 + gray * 0.30,
                                   0, 255).astype(arr.dtype)
         del arr
-        entry["buf"] = full; entry["frame"] = 0
+        entry["buf"] = full
         entry["origin"] = (int(door_origin[0]), int(door_origin[1]))
         src_rect = rect
     return entry["buf"].subsurface(src_rect).copy()
