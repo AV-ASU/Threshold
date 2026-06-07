@@ -301,12 +301,12 @@ def build_barn():
         jx, jy = sc._journal_pos
         if abs(px - jx) < 40 and abs(py - jy) < 40:
             if game.save.flag("evidence_maras_journal"):
-                game.show_notice("You have her journal. Read it again from "
-                                 "your kit.")
                 return
             game.player.inventory.add("mom_notebook", 1)
             game.audio.play("pickup_rare", 0.7)
             game.audio.play("low_pulse", 0.45)
+            # File the case beat silently; the journal itself reads from the
+            # kit (its entries are the item desc), not forced on pickup.
             _evidence(game, "maras_journal", [
                 "A notebook, shoved down behind the workbench. You know the "
                 "hand. It's hers, the same as the letter.",
@@ -319,13 +319,13 @@ def build_barn():
                 "\"There's a mouth below the town. The others went ahead of "
                 "me, down it, and not one has climbed back up. Tomorrow I "
                 "follow them down. I feel so close now.\"",
-            ])
+            ], show=False)
+            game.show_notice("Her journal.")
             return
         # The old tunnel down to the Works has been nailed shut: the
         # well is the ONLY way underground now (no secret paths).
         if (abs(px - hatch_x) < 36 and abs(py - hatch_y) < 36):
             game.audio.play("door_locked", 0.6)
-            game.show_notice("Boarded over and nailed shut from below.")
     sc.on_interact_fn = _barn_interact
     return sc
 
@@ -409,11 +409,4 @@ def build_kid_house():
     sc.add_decoration(Decoration(drawing_x, drawing_y, "photo"))
     sc._drawing_pos = (drawing_x, drawing_y)
 
-    def _kid_house_interact(game):
-        # The kid's drawing on the wall -- flavor lore, examinable only.
-        if (abs(game.player.x - drawing_x) < 36
-                and abs(game.player.y - drawing_y) < 36):
-            game.show_notice("A child's drawing pinned to the wall: a tall "
-                             "figure in yellow, the people lifted toward it.")
-    sc.on_interact_fn = _kid_house_interact
     return sc

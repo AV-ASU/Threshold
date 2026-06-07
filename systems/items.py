@@ -48,12 +48,27 @@ ITEM_DEFS = {
                        "desc": "A coarse wool robe."},
     "mom_notebook":  {"name": "Mara's Journal",
                        "kind": "lore",
-                       "desc": "Her descent, in her own words."},
+                       "desc": "Her last entries, in a hand that gets calmer "
+                               "as it goes:\n\n"
+                               "\"I just had this urge to go north. Stopped "
+                               "for gas in this town. Everyone smiles like "
+                               "I'm already home.\"\n\n"
+                               "\"I had Him wrong. He isn't out past the corn. "
+                               "He's under it. You don't walk to Him. You go "
+                               "down.\"\n\n"
+                               "\"There's a mouth below the town. The others "
+                               "went ahead of me, down it, and not one has "
+                               "climbed back up. Tomorrow I follow them down. "
+                               "I feel so close now.\""},
     "unsent_letter": {"name": "Mara's Letter",
                        "kind": "lore",
-                       "desc": "Stamped, never mailed. Opens \"Dad.\" "
-                               "Closes: \"I'm not lost. I've never been "
-                               "this close.\""},
+                       "desc": "Stamped, never mailed.\n\n"
+                               "\"Dad. ...I'm sorry for how I left. I couldn't "
+                               "explain it and have it sound sane. The dreams "
+                               "aren't dreams anymore. They're full of answers. "
+                               "I'm just hunting the questions now. Don't come "
+                               "after me. I'm not lost. I've never been this "
+                               "close.\""},
     # ---- The cult's testimony (three found fragments; gate nothing) ----
     # The congregation's own record, split across three leaves found down the
     # descent. The cult's voice lives in the DESCRIPTION (their personal
@@ -109,6 +124,49 @@ def effective_desc(key, save=None):
     Signature is preserved for callers; the `save` parameter is
     accepted but ignored (no dynamic flavour anymore)."""
     return ITEM_DEFS.get(key, {}).get("desc", "")
+
+
+# Mara's Journal, in her own words: three short leaves the player turns
+# one Enter at a time in the inventory. The arc is the whole of her
+# descent in miniature -- the ache that drew her, the dream of the door,
+# the glad walk down toward it (NARRATIVE 1b: she was answered, not
+# deceived). Turning past the LAST page is what fires the door-dream
+# flashback, so the count here must stay at three (it drives the
+# `notebook_pages_read` 3-gate the Game system polls). No dashes in any
+# of this text -- it is read by the player.
+MARA_JOURNAL_PAGES = [
+    "I came north because I could not stand the quiet of that "
+    "apartment one more night. They told me grief would pass. It did "
+    "not pass. It only learned my name.\n\n"
+    "Brimley is small, and kind the way tired places are. No one here "
+    "asks what I am running from. They look at me like they already "
+    "know.",
+
+    "I have started to dream of a door. Plain wood, a little warped, "
+    "standing alone in a field with nothing around it. I know, the way "
+    "you know things in dreams, that everything I have ever wanted is "
+    "on the other side.\n\n"
+    "It is not frightening. That is the part I cannot explain to anyone "
+    "who has not felt it. It feels like being remembered.",
+
+    "They are not strangers. They dreamed the same door, every one of "
+    "them, and drove here the way I did. We are digging down to it "
+    "together now. My hands are raw and I have never been so happy.\n\n"
+    "I was not tricked. I was asked, and I said yes. I am not lost. I "
+    "have never been this close.",
+]
+
+
+def journal_page(save):
+    """Return (page_text, page_index, page_count) for Mara's Journal,
+    keyed to how many times the player has turned through it
+    (`notebook_pages_read`). Opening the journal shows page 1 even
+    before the first Enter, so the words are visible immediately -- the
+    read counter only ever advances the page forward, clamped to the
+    last leaf."""
+    read = save.arg("notebook_pages_read", 0) if save is not None else 0
+    idx = max(0, min(read, len(MARA_JOURNAL_PAGES) - 1))
+    return MARA_JOURNAL_PAGES[idx], idx, len(MARA_JOURNAL_PAGES)
 
 
 class Inventory:

@@ -329,8 +329,6 @@ def build_works_sorting():
             # the chalk doors: different thing, different words.
             if not game.save.flag("voice_descent_dig"):
                 game._descent_voice("descent_dig")
-            else:
-                game.show_notice("A child's shoe. Folded.", duration=3.0)
     sc.on_interact_fn = _interact
     return sc
 
@@ -379,7 +377,6 @@ def build_maras_room():
         if (abs(game.player.x - cx) > 44 or abs(game.player.y - cy) > 48):
             return
         if game.save.flag("evidence_maras_room"):
-            game.show_notice("Her cot, her robe. You've read what's here.")
             return
         game.player.inventory.add("robe", 1)
         # The unsent letter is its own item so the player still carries
@@ -470,21 +467,13 @@ def build_works_scriptorium():
                 "waiting for the page where somebody admits they were tricked. "
                 "It isn't here.",
             ])
-            game.dialog.show([
-                "[c=dim]Among the loose copies, one volume is bound and "
-                "whole. Not the Sign traced again. Their own testimony, in a "
-                "hundred different hands. You take it.[/c]",
-                "[c=dim]The scribe is wet to the knee.[/c]",
-            ], speaker="", voice="blip_soft", portrait="narrator")
-            # Reading their notes seeds the want-to-leave (the King's pull to
-            # carry the Sign out; felt as the PI's own sourceless urge, never
-            # named). Chained off the pickup so it reads as one beat.
-            game.dialog.on_complete = lambda: game._descent_voice("descent_leave")
+            game.show_notice("The Calling. Their own testimony.")
+            # Carrying off their confessions seeds the want-to-leave (the King's
+            # pull to bear the Sign out, felt as the PI's own sourceless urge,
+            # never named). The testimony itself reads from the kit, not on
+            # pickup; the PI's interior pull still fires here.
+            game._descent_voice("descent_leave")
             return
-        game.show_notice(
-            "The Sign, copied over and over across every surface. A "
-            "thousand flat echoes. None of them the thing itself.",
-            duration=4.0)
     sc.on_interact_fn = _interact
     # The scribes drew doors as obsessively as they copied the Sign -- swarm
     # the floor + walls with chalk doors, none overlapping (the room reads as
@@ -581,7 +570,6 @@ def build_works_sign():
         if (abs(game.player.x - sx) > 44 or abs(game.player.y - sy) > 56):
             return
         if game.save.flag("sign_rubbing_taken"):
-            game.show_notice("The altar is bare. You have His face.")
             return
         # Two instincts at the altar (NARRATIVE §6). Lifting the mask is the
         # controlled keystone-removal the chosen endings need. Tearing the
@@ -596,7 +584,7 @@ def build_works_sign():
                 game._play_ending("rite_broken")
         game.dialog.show_choice(
             "The mask on the altar. The Sign daubed above it. The kneeling "
-            "at your back. The whole sick machine of it, here in reach.",
+            "at your back. The whole machine of it, here in reach.",
             ["Lift the mask.", "Tear it down. End this."],
             _pick, speaker="", voice="blip_soft", portrait="narrator")
     sc.on_interact_fn = _interact
@@ -731,11 +719,6 @@ def build_the_sump():
     def _on_enter(game, scene):
         from .base import drop_ammo_cache
         drop_ammo_cache(game, scene, 5, 6, 4, "ammo_sump")
-        if not game.save.flag("sump_water_seen"):
-            game.save.set_flag("sump_water_seen", True)
-            game.show_notice("The water here does not sit. It turns, slow, and "
-                             "goes down, and keeps going down. You never hear "
-                             "it land.", duration=4.5)
     sc.on_enter_fn = _on_enter
 
     # Optional lore: The Bargain (second testimony fragment), left among the
@@ -757,13 +740,8 @@ def build_the_sump():
                 "the last payment is close. I never took a confession this "
                 "happy.",
             ])
-            game.dialog.show([
-                "[c=dim]More of their testimony, tucked among the diggers' "
-                "supplies. The same grateful hands. You take it.[/c]",
-            ], speaker="", voice="blip_soft", portrait="narrator")
+            game.show_notice("The Bargain. Their own testimony.")
             return
-        game.show_notice("The diggers' supplies, left where they dropped "
-                         "them.", duration=3.0)
     sc.on_interact_fn = _interact
     return sc
 
@@ -805,12 +783,4 @@ def build_the_cells():
     sc.hide_spots = []
     _ambient(sc, "whisper", 0.13, 6.0, 11.0)
 
-    def _on_enter(game, scene):
-        if game.save.flag("first_cells"):
-            return
-        game.save.set_flag("first_cells", True)
-        game.show_notice("A row of stalls, the doors standing open. They only "
-                         "needed locks the first night. After that, no one "
-                         "wanted to leave.", duration=4.0)
-    sc.on_enter_fn = _on_enter
     return sc

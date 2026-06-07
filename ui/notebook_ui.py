@@ -8,12 +8,12 @@ Each save entry is the dict shape `{"name": slug, "lines": [...]}`,
 written by scenes/dialogue.py:_evidence. If a legacy save still
 holds bare-string names, this UI tolerates them by showing the
 slug as the title with no body.
+
+Shares the quiet, filmic chrome with the inventory (ui/menu_chrome).
 """
 import pygame
-from constants import (
-    SCREEN_W, SCREEN_H,
-    C_WHITE, C_GOLD, C_DIM, C_PANEL, C_PANEL_BORDER,
-)
+from constants import SCREEN_W, SCREEN_H
+from ui import menu_chrome as mc
 
 
 def _humanise(slug):
@@ -62,85 +62,67 @@ class NotebookUI:
         self.cursor = (self.cursor + dy) % n
         self.audio.play("cursor", 0.4)
 
+    # The case card sits to the right; the index of beats to the left.
+    _CARD_CENTER = (SCREEN_W - 250, SCREEN_H // 2 + 4)
+
     def draw(self, surf):
         if not self.open:
             return
-        veil = pygame.Surface((SCREEN_W, SCREEN_H), pygame.SRCALPHA)
-        veil.fill((0, 0, 0, 180))
-        surf.blit(veil, (0, 0))
-        panel = pygame.Rect(80, 60, SCREEN_W - 160, SCREEN_H - 120)
-        pygame.draw.rect(surf, C_PANEL, panel)
-        pygame.draw.rect(surf, C_PANEL_BORDER, panel, 2)
-        title = self.fonts["lg"].render("Notebook", True, C_GOLD)
-        surf.blit(title, (panel.x + 20, panel.y + 14))
-        sub = self.fonts["sm"].render(
-            "Your notes.", True, C_DIM)
-        surf.blit(sub, (panel.x + 22, panel.y + 56))
+        mc.darken(surf, 210)
+
+        BONE = (200, 194, 180)
+        FAINT = (132, 126, 116)
+        head = self.fonts["serif_lg"].render("Case notes", True, BONE)
+        surf.blit(head, (64, 44))
+        surf.blit(self.fonts["serif_sm"].render(
+            "What you have pieced together.", True, FAINT), (66, 86))
 
         entries = self._entries()
-        lx = panel.x + 20
-        ly = panel.y + 92
+        lx = 84
+        ly = 140
         if not entries:
-            empty = self.fonts["md"].render(
-                "(nothing yet.)", True, C_DIM)
-            surf.blit(empty, (lx, ly))
-            self._draw_hint(surf, panel)
+            surf.blit(self.fonts["serif_it"].render(
+                "The page is still blank.", True, FAINT), (lx, ly))
+            self._draw_hint(surf)
             return
 
         # Clamp cursor so it stays valid if the list shrank.
         if self.cursor >= len(entries):
             self.cursor = max(0, len(entries) - 1)
 
-        # Left column: titles. Right column: full body of selected.
-        list_w = 240
+        rf = self.fonts["serif"]
         for i, (name, _lines) in enumerate(entries):
-            color = C_GOLD if i == self.cursor else C_WHITE
-            prefix = ">" if i == self.cursor else " "
-            label = f"{prefix} {_humanise(name)}"
-            surf.blit(self.fonts["md"].render(label, True, color),
-                      (lx, ly + i * 24))
+            selected = (i == self.cursor)
+            row_y = ly + i * 30
+            if selected:
+                mc.accent_bar(surf, lx - 18, row_y, rf.get_linesize())
+            col = (214, 198, 150) if selected else (158, 152, 142)
+            surf.blit(rf.render(_humanise(name), True, col), (lx, row_y))
 
+        # The selected beat, rendered as a card the PI typed up.
         name, lines = entries[self.cursor]
-        dx = panel.x + 20 + list_w + 20
-        dy = panel.y + 92
-        dw = panel.right - dx - 20
-        dh = panel.bottom - dy - 50
-        body = pygame.Rect(dx, dy, dw, dh)
-        pygame.draw.rect(surf, (24, 22, 32), body)
-        pygame.draw.rect(surf, C_PANEL_BORDER, body, 1)
-        surf.blit(self.fonts["md"].render(_humanise(name), True, C_GOLD),
-                  (dx + 10, dy + 10))
+        self._draw_case_card(surf, name, lines)
+        self._draw_hint(surf)
+
+    def _draw_case_card(self, surf, name, lines):
+        W, H = 420, 470
+        card = mc.paper(W, H, seed=sum(ord(c) for c in name) + 3,
+                        base=mc.CARD_MANILA)
+        # A typed header, upper-cased like a case label, ruled off below.
+        title = self.fonts["mono"].render(
+            _humanise(name).upper(), True, mc.CARD_INK)
+        card.blit(title, (26, 30))
+        pygame.draw.line(card, mc.CARD_RULE, (26, 58), (W - 26, 58), 1)
         if lines:
-            self._wrap_text(surf, "\n".join(lines),
-                            dx + 10, dy + 40, dw - 20)
+            mc.wrap(card, self.fonts["mono"], "\n".join(lines),
+                    26, 76, W - 52, color=mc.CARD_INK, line_h=22)
         else:
-            surf.blit(self.fonts["sm"].render(
-                "(no detail recorded)", True, C_DIM),
-                (dx + 10, dy + 40))
+            card.blit(self.fonts["mono"].render(
+                "(nothing more set down)", True, mc.INK_FADE), (26, 76))
+        mc.lay_page(surf, card, self._CARD_CENTER, tilt=-1.0)
 
-        self._draw_hint(surf, panel)
-
-    def _draw_hint(self, surf, panel):
-        hint = self.fonts["sm"].render(
-            "[Up/Down] entry   [N or Esc] close",
-            True, C_DIM)
-        surf.blit(hint, (panel.x + 20, panel.bottom - 30))
-
-    def _wrap_text(self, surf, text, x, y, w):
-        font = self.fonts["sm"]
-        line_h = font.get_linesize()
-        lines = []
-        for raw_line in text.split("\n"):
-            words = raw_line.split(" ")
-            cur = ""
-            for word in words:
-                test = (cur + " " + word).strip()
-                if font.size(test)[0] > w:
-                    lines.append(cur)
-                    cur = word
-                else:
-                    cur = test
-            lines.append(cur)
-        for i, line in enumerate(lines):
-            surf.blit(font.render(line, True, C_WHITE),
-                      (x, y + i * line_h))
+    def _draw_hint(self, surf):
+        mc.hint(surf, self.fonts["serif_sm"],
+                "arrow keys to read . i for what you carry . "
+                "n or esc to close the book",
+                64, SCREEN_H - 34)

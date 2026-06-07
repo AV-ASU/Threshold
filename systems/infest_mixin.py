@@ -169,6 +169,16 @@ class InfestationMixin:
             return
         key = self.scene.key
         surface_stage = self._infest_stage()
+        # Stage transition cue: the world rots one step further. Fires
+        # on the scene load that lands AFTER an evidence cross (so the
+        # audio aligns with the visible decal/ashfall change, not with
+        # the case-file beat itself, which has its own chime). Tracked
+        # on the Game instance; reset to 0 by _reset_run_state.
+        last = getattr(self, "_last_infest_stage", 0)
+        if surface_stage > last:
+            self._last_infest_stage = surface_stage
+            self.audio.play("infest_throb", 0.80)
+            self.audio.duck(1.6, depth=0.40)
         underground = key in UNDERGROUND_SCENES
         if underground:
             # Wrong from the first rung: a baseline even at 0 evidence,
@@ -276,7 +286,7 @@ class InfestationMixin:
         self.show_notice("Sheriff Vane stands. \"I'm supposed to tell you "
                          "to leave, son. I can't say it anymore.\"",
                          duration=3.2)
-        self.audio.play("low_pulse", 0.6)
+        self.audio.play("sheriff_hunt", 0.85)
 
     def _tick_sheriff(self, dt):
         """Drive the stage-3 Sheriff encounter: hold for the intro beat,
@@ -295,7 +305,8 @@ class InfestationMixin:
             if self._sheriff_intro_t <= 0:
                 s.movement = "chaser"
                 s._force_chase = True
-                self.audio.play("void_sting", 0.6)
+                self.audio.play("sheriff_hunt", 0.95)
+                self.audio.duck(0.8, depth=0.4)
             return
         d = math.hypot(s.x - self.player.x, s.y - self.player.y)
         if d < 24 and self.player.invuln <= 0:

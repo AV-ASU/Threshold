@@ -94,8 +94,14 @@ CAM_LOOKAHEAD = 96
 TURN_RATE = 2.0
 
 # Dead-zone (radians) within which the body ignores small mouse-aim deltas, so
-# micro-jitter on the cursor doesn't shake the camera. ~8 degrees.
-AIM_DEAD_ZONE = 0.14
+# micro-jitter on the cursor doesn't shake the camera. ~17 degrees of arc near
+# straight-up where the chase does NOTHING.
+AIM_DEAD_ZONE = 0.30
+
+# Outer bound of the chase cone (radians from straight-up). Beyond this the
+# chase disengages — a few degrees of dead arc near the horizontal so the
+# transition between chase and free-look isn't an edge. ~75 degrees from up.
+CHASE_MAX_OFFSET = 1.30
 
 # Velocity smoothing time constant (seconds). Player velocity eases toward the
 # input-driven target over this window, giving a tactile accel/decel feel.

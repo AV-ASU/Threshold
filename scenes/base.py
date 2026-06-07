@@ -1080,7 +1080,25 @@ def _corn_runs(scene):
 _TILT_STANDEE_CACHE = {}
 
 
-def _tilt_tree_solid(surf, camera, scene, tx, ty, ch):
+# Distance-LOD threshold (world-px, squared) for the tilted billboards. A tree
+# or cornstalk farther than this from the camera centre is drawn with fewer
+# rings / stalks and no fine detail: at that range it's small on screen and sits
+# under Brimley's haze + sight fog, so the simplification is imperceptible but it
+# roughly halves the per-tile solid cost for the dense back ranks of the woods
+# and cornfield (the panning worst case). ~11 tiles out.
+_TILT_LOD_FAR2 = (11 * TILE) ** 2
+
+
+def _tilt_lod_far(camera, tx, ty):
+    """Is this billboard tile beyond the near-detail radius? (cheap, no trig)."""
+    wx = tx * TILE + TILE / 2
+    wy = ty * TILE + TILE / 2
+    dx = wx - camera.cam_x
+    dy = wy - camera.cam_y
+    return (dx * dx + dy * dy) > _TILT_LOD_FAR2
+
+
+def _tilt_tree_solid(surf, camera, scene, tx, ty, ch, far=False):
     """A tree as a real volumetric body: a brown cylindrical trunk + a tapered
     canopy projected through the camera as a body of revolution. Anchored to
     the tile, the silhouette varies correctly under yaw (a billboard never
@@ -1116,16 +1134,25 @@ def _tilt_tree_solid(surf, camera, scene, tx, ty, ch):
     }
     z0 = trunk_h * 0.80
     h = canopy_h
-    draw_solid(surf, camera, wx + lean_x, wy,
-               [(z0,             canopy_r * 0.32, canopy_r * 0.32),
-                (z0 + h * 0.20,  canopy_r * 0.85, canopy_r * 0.85),
-                (z0 + h * 0.45,  canopy_r * 1.00, canopy_r * 1.00),
-                (z0 + h * 0.70,  canopy_r * 0.92, canopy_r * 0.92),
-                (z0 + h * 0.90,  canopy_r * 0.55, canopy_r * 0.55),
-                (z0 + h,         canopy_r * 0.15, canopy_r * 0.15)],
-               canopy_pal)
-    # Occasional offset lobe so the canopy isn't perfectly axis-symmetric.
-    if (_vary(seed, 6) % 3) == 0:
+    if far:
+        # Far LOD: a 3-ring canopy lobe instead of 6. Same silhouette envelope
+        # (base/widest/crown), half the polygon + ellipse work.
+        canopy_sections = [
+            (z0,             canopy_r * 0.32, canopy_r * 0.32),
+            (z0 + h * 0.45,  canopy_r * 1.00, canopy_r * 1.00),
+            (z0 + h,         canopy_r * 0.15, canopy_r * 0.15)]
+    else:
+        canopy_sections = [
+            (z0,             canopy_r * 0.32, canopy_r * 0.32),
+            (z0 + h * 0.20,  canopy_r * 0.85, canopy_r * 0.85),
+            (z0 + h * 0.45,  canopy_r * 1.00, canopy_r * 1.00),
+            (z0 + h * 0.70,  canopy_r * 0.92, canopy_r * 0.92),
+            (z0 + h * 0.90,  canopy_r * 0.55, canopy_r * 0.55),
+            (z0 + h,         canopy_r * 0.15, canopy_r * 0.15)]
+    draw_solid(surf, camera, wx + lean_x, wy, canopy_sections, canopy_pal)
+    # Occasional offset lobe so the canopy isn't perfectly axis-symmetric. The
+    # back ranks (far LOD) skip it -- it's a subtle asymmetry lost at range.
+    if not far and (_vary(seed, 6) % 3) == 0:
         ox = ((_vary(seed, 7) % 11) - 5) * 0.9
         oy = ((_vary(seed, 8) % 7) - 3) * 0.45
         zoff = h * 0.22
@@ -1137,7 +1164,7 @@ def _tilt_tree_solid(surf, camera, scene, tx, ty, ch):
                    canopy_pal)
 
 
-def _tilt_corn_solid(surf, camera, scene, tx, ty, ch):
+def _tilt_corn_solid(surf, camera, scene, tx, ty, ch, far=False):
     """A corn tile as 5-6 stalks drawn as REAL 3D lines projected through the
     camera: each stalk has a ground base, a midpoint, a swaying tip, four
     leaves (a low pair + an upper pair) fanning at mid-height, and a paler
@@ -1150,12 +1177,12 @@ def _tilt_corn_solid(surf, camera, scene, tx, ty, ch):
     wx0 = tx * TILE
     wy0 = ty * TILE
     sim_t = pygame.time.get_ticks() / 600.0
-    n = 5 + (_vary(seed, 0) % 2)            # 5 or 6 stalks per tile -- the
-                                            # tile reads as a dense cluster
-                                            # without paying for two extra
-                                            # full stalks (each costs ~10
-                                            # camera.project + line draws,
-                                            # 30+ tiles in view = real ms)
+    # Far LOD: 3 stalks and body-only (no leaves, no ears, no tassel beard). A
+    # dense back-rank corn tile reads as the same green wall at range, but the
+    # per-stalk leaf/ear/beard projections were the bulk of the cost.
+    n = 3 if far else 7 + (_vary(seed, 0) % 2)   # 7 or 8 stalks (near) -- denser
+                                                 # so a lane reads as a wall of
+                                                 # corn, not standing grass
     g = _vary(seed, 1) % 10
     stalk_dk = (40 + g // 2, 54 + g // 2, 26 + g // 3)
     stalk_col = (58 + g, 72 + g, 38 + g // 2)
@@ -1191,31 +1218,53 @@ def _tilt_corn_solid(surf, camera, scene, tx, ty, ch):
         pygame.draw.line(surf, stalk_dk,  p_mid,  p_top, 3)
         pygame.draw.line(surf, stalk_col, p_base, p_mid, 2)
         pygame.draw.line(surf, stalk_col, p_mid,  p_top, 2)
-        # Two pairs of leaves (lower + upper) fanning out in world space
-        for ly_off, side in (
-                (wz_mid * 0.55, -1), (wz_mid * 0.55, 1),
-                (wz_mid * 1.05, -1), (wz_mid * 1.05, 1)):
-            base_x = wx_base + (wx_mid - wx_base) * (ly_off / wz_mid)
-            leaf_x = base_x + side * 9
-            leaf_y = wy_base + side * 0.6
-            leaf_z = ly_off - 1
-            p_attach = camera.project(base_x, wy_base, ly_off)
-            p_tip = camera.project(leaf_x, leaf_y, leaf_z)
-            pygame.draw.line(surf, blade_col, p_attach, p_tip, 2)
-            # Lit upper edge
-            p_tip_hi = camera.project(leaf_x - side * 0.5, leaf_y, leaf_z + 1)
-            pygame.draw.line(surf, blade_hi, p_attach, p_tip_hi, 1)
+        # Two pairs of leaves (lower + upper) fanning out in world space, plus
+        # an occasional ear of corn. Far LOD drops them (body-only): these
+        # per-stalk projections were the bulk of the cost and don't read at range.
+        if not far:
+            for ly_off, side in (
+                    (wz_mid * 0.55, -1), (wz_mid * 0.55, 1),
+                    (wz_mid * 1.05, -1), (wz_mid * 1.05, 1)):
+                base_x = wx_base + (wx_mid - wx_base) * (ly_off / wz_mid)
+                leaf_x = base_x + side * 9
+                leaf_y = wy_base + side * 0.6
+                leaf_z = ly_off - 1
+                p_attach = camera.project(base_x, wy_base, ly_off)
+                p_tip = camera.project(leaf_x, leaf_y, leaf_z)
+                pygame.draw.line(surf, blade_col, p_attach, p_tip, 2)
+                # Lit upper edge
+                p_tip_hi = camera.project(leaf_x - side * 0.5, leaf_y, leaf_z + 1)
+                pygame.draw.line(surf, blade_hi, p_attach, p_tip_hi, 1)
+            # Ear of corn at ~60% height on ~half the stalks. A short husked
+            # cylinder offset from the stalk on the side opposite the highest
+            # leaf, so the cluster reads as "ears of corn in the rows" rather
+            # than pure foliage. Tiny, but it sells the stalks as edible crop.
+            if (_vary(seed, 50 + si) & 1):
+                ear_side = 1 if (_vary(seed, 60 + si) & 1) else -1
+                ear_z = top_h * 0.58
+                ear_x = wx_base + ear_side * 3.5
+                ear_y = wy_base + 1
+                ear_b = camera.project(ear_x, ear_y, ear_z - 3)
+                ear_t = camera.project(ear_x, ear_y, ear_z + 3)
+                pygame.draw.line(surf, (190, 168, 96), ear_b, ear_t, 3)
+                pygame.draw.line(surf, (108, 92, 50), ear_b, ear_t, 1)
+                # silk: a couple of fine wisps at the cob tip
+                silk = camera.project(ear_x + ear_side * 1.0, ear_y,
+                                      ear_z + 3 + 1.5)
+                pygame.draw.line(surf, (228, 208, 130), ear_t, silk, 1)
         # Tassel head: a pale paddle + a beard of fine strokes radiating out
+        # (the beard is near-LOD only).
         p_tassel_top = camera.project(wx_top, wy_base, top_h + 5)
         pygame.draw.line(surf, tip_col, p_top, p_tassel_top, 2)
         pygame.draw.circle(surf, tassel_col,
                            (int(p_tassel_top[0]), int(p_tassel_top[1])), 2)
-        for k in range(3):
-            ang = -math.pi / 2 + (k - 1) * 0.6
-            p_b = camera.project(wx_top + math.cos(ang) * 3,
-                                 wy_base + math.sin(ang) * 0.6,
-                                 top_h + 5 + math.sin(ang) * 2)
-            pygame.draw.line(surf, tassel_col, p_tassel_top, p_b, 1)
+        if not far:
+            for k in range(3):
+                ang = -math.pi / 2 + (k - 1) * 0.6
+                p_b = camera.project(wx_top + math.cos(ang) * 3,
+                                     wy_base + math.sin(ang) * 0.6,
+                                     top_h + 5 + math.sin(ang) * 2)
+                pygame.draw.line(surf, tassel_col, p_tassel_top, p_b, 1)
 
 
 def _tilt_standee(surf, camera, scene, tx, ty, ch):
@@ -1693,10 +1742,9 @@ _WATER_EDGE_CHUNK = 16          # tiles per spatial bucket -- matches the
 
 def _build_water_bank_edges(scene):
     """Precompute every water-land boundary segment AND bucket them into a
-    spatial chunk index (chunk_size = _WATER_EDGE_CHUNK tiles). Each edge
-    is (cx_world, cy_world, ndx, ndy, seed). The emit walker then only
-    iterates buckets the camera window overlaps, so a marsh row that
-    visits 212 edges drops to ~30 per frame. Cached on the scene."""
+    spatial chunk index. Each edge is (cx_world, cy_world, ndx, ndy, seed).
+    The emit walker iterates only buckets the camera window overlaps, so a
+    full-marsh scan (212 edges in brimley) drops to ~30 per frame."""
     edges = getattr(scene, "_water_bank_edges", None)
     if edges is not None:
         return edges
@@ -1766,9 +1814,8 @@ def _draw_reed_cluster(surf, camera, cx_w, cy_w, ndx, ndy, seed, wt):
 def emit_tilt_water_reeds(emit_fn, scene, camera, surf, x0, y0, x1, y1):
     """Emit one depth-sorted reed cluster per visible water-bank edge so
     the marsh fringe stands UP under tilt instead of being painted flat
-    onto the warped floor. Walks only the spatial chunks the camera
-    window overlaps so a 212-edge marsh hits the ~30 edges actually in
-    view, not all of them."""
+    onto the warped floor. Walks only the spatial chunks the camera window
+    overlaps so a marsh row visits ~30 edges per frame, not all 212."""
     _build_water_bank_edges(scene)
     chunks = getattr(scene, "_water_bank_chunks", None)
     if not chunks:
@@ -2145,6 +2192,15 @@ def draw_scene_terrain(surf, scene, cam_x, cam_y, x0, y0, x1, y1,
 # warp the whole image to the oblique plane -- preserving every procedural
 # floor detail -- then extrude wall tiles as upright quads on top.
 _TILT_WALL_RISE = 26
+
+# Single-slot cache for the warped floor (the raster + rotate + scale in
+# draw_terrain_tilted). That surface is a pure function of the camera pose +
+# scene, and the camera eases to a stop whenever the player is settled
+# (standing still, in dialogue, in a menu), so once it stops moving we rebuild
+# the same warped floor every frame for nothing. Keyed on the rounded camera
+# pose; a miss (the camera moved, or a new scene) rebuilds it. This was the
+# single biggest per-frame cost in the wrapped town.
+_TILT_FLOOR_CACHE = {"key": None, "surf": None}
 
 
 def _tilt_window_half(camera):
@@ -2637,9 +2693,11 @@ def _tilt_tile_box(surf, camera, scene, tx, ty):
     if ch in _TILT_BILLBOARD_CHARS:
         kind = OBJECT_DEFS.get(ch, {}).get("kind")
         if kind == "tree":
-            _tilt_tree_solid(surf, camera, scene, tx, ty, ch)
+            _tilt_tree_solid(surf, camera, scene, tx, ty, ch,
+                             far=_tilt_lod_far(camera, tx, ty))
         elif kind == "cornstalk":
-            _tilt_corn_solid(surf, camera, scene, tx, ty, ch)
+            _tilt_corn_solid(surf, camera, scene, tx, ty, ch,
+                             far=_tilt_lod_far(camera, tx, ty))
         else:
             _tilt_standee(surf, camera, scene, tx, ty, ch)
     elif ch in _COUNTER_CHARS:
@@ -2837,23 +2895,35 @@ def draw_terrain_tilted(surf, scene, camera, sight=None):
     cx, cy = camera.cam_x, camera.cam_y
     half = _tilt_window_half(camera)
     span = int(half * 2)
-    flat = pygame.Surface((span, span))
-    flat.fill((10, 10, 14))
     wx0, wy0 = cx - half, cy - half
     x0 = int(math.floor(wx0 / TILE)); y0 = int(math.floor(wy0 / TILE))
     x1 = int(math.ceil((wx0 + span) / TILE)); y1 = int(math.ceil((wy0 + span) / TILE))
-    # Phase 2 of the seamless-world neighbor strip: when the player is near a
-    # non-wrap host's edge and the visible tile range extends past the world's
-    # bounds, fill the OUT-OF-BOUNDS tiles with the neighbor scene's floor
-    # content (per rendering/world_neighbors.get_neighbors). draw_scene_terrain
-    # below then overdraws the in-bounds area with the host's tiles, so the
-    # strip only shows where the host doesn't reach -- a clean seamless seam.
-    # Wrap hosts already tile their content edge to edge; they get no strip.
-    if not (scene.wrap_x or scene.wrap_y):
-        _draw_neighbor_strips(flat, scene, wx0, wy0, x0, y0, x1, y1)
-    draw_scene_terrain(flat, scene, wx0, wy0, x0, y0, x1, y1,
-                       skip_billboard=True, skip_roofs=True)
-    warped = _tilt_warp(flat, camera)
+    # The warped floor is cached (see _TILT_FLOOR_CACHE): rebuilt only when the
+    # camera pose changes. x0..y1 / wx0,wy0 are still computed every frame --
+    # they're cheap and the wall + neighbor passes below need them.
+    fkey = (id(scene), getattr(scene, "key", None), scene.w, scene.h,
+            round(cx), round(cy), round(camera.yaw, 4),
+            round(camera.pitch, 4), round(camera.scale, 4))
+    _fc = _TILT_FLOOR_CACHE
+    if _fc["key"] == fkey:
+        warped = _fc["surf"]
+    else:
+        flat = pygame.Surface((span, span))
+        flat.fill((10, 10, 14))
+        # Phase 2 of the seamless-world neighbor strip: when the player is near
+        # a non-wrap host's edge and the visible tile range extends past the
+        # world's bounds, fill the OUT-OF-BOUNDS tiles with the neighbor
+        # scene's floor content (per rendering/world_neighbors.get_neighbors).
+        # draw_scene_terrain below then overdraws the in-bounds area with the
+        # host's tiles, so the strip only shows where the host doesn't reach --
+        # a clean seamless seam. Wrap hosts tile edge to edge; they get no strip.
+        if not (scene.wrap_x or scene.wrap_y):
+            _draw_neighbor_strips(flat, scene, wx0, wy0, x0, y0, x1, y1)
+        draw_scene_terrain(flat, scene, wx0, wy0, x0, y0, x1, y1,
+                           skip_billboard=True, skip_roofs=True)
+        warped = _tilt_warp(flat, camera)
+        _fc["key"] = fkey
+        _fc["surf"] = warped
     ox, oy = camera.origin
     surf.blit(warped, (ox - warped.get_width() // 2,
                        oy - warped.get_height() // 2))

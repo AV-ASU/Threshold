@@ -203,21 +203,6 @@ def build_our_house_area():
             game.audio.play("door_open", 0.7)
             game.begin_transition("woodshed", "from_yard")
             return
-        # Bloody handprint on the back door -- atmosphere, not a clue.
-        # show_notice keeps it as a corner-line that doesn't interrupt
-        # play with a full dialog pop.
-        hx, hy = sc._handprint_pos
-        if abs(px - hx) < 48 and abs(py - hy) < 48:
-            game.show_notice(
-                "Handprint on the back door. Palm-out. Someone leaving.")
-            return
-        # The Clerk's pickup is visible-but-useless. Examining it turns
-        # the noun into worldbuilding: he doesn't drive it because there
-        # is nowhere in Brimley for him to go.
-        tx, ty = 20 * TILE + 16, 12 * TILE + 16
-        if abs(px - tx) < 56 and abs(py - ty) < 56:
-            game.show_notice(
-                "The Clerk's truck. He doesn't drive it. None of them do.")
     sc.on_interact_fn = _outside_interact
     # [E] cue on the shed door.
     sc.add_interactable(sc._shed_door_pos[0], sc._shed_door_pos[1], 44)

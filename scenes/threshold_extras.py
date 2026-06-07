@@ -122,9 +122,6 @@ def build_schoolhouse():
         if game.save.flag("schoolhouse_seen"):
             return
         game.save.set_flag("schoolhouse_seen", True)
-        game.show_notice("The children's schoolhouse. They slept in here, the "
-                         "grown ones, in rows, before they went down.",
-                         duration=4.5)
 
     def _school_interact(game):
         px, py = game.player.x, game.player.y
@@ -134,8 +131,6 @@ def build_schoolhouse():
                 "[c=dim](The chalkboard. Under a child's faded lesson, the same "
                 "door is drawn over and over, smaller and smaller, to the "
                 "corner.)[/c]",
-                "[c=dim]Whoever did it ran out of board before they ran out of "
-                "the need to draw it.[/c]",
             ], speaker="", voice="blip_soft", portrait="narrator")
 
     sc.on_enter_fn = _school_on_enter
@@ -507,8 +502,6 @@ def build_backwoods_cabin():
                 and abs(game.player.y - ny) < 40):
             if not game.save.flag("backwoods_note_taken"):
                 _backwoods_note_pickup(game)
-            else:
-                game.show_notice("You've read enough.")
     sc.on_interact_fn = _backwoods_interact
     return sc
 

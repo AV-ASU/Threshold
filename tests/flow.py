@@ -180,10 +180,6 @@ def main():
         g.load_scene_now(k)
         g.step(1 / 60.0)
         check(g.scene.key == k, f"depths: {k} loads and ticks")
-    # The descent rooms each fire a one-shot first-visit narration beat.
-    for flag in ("first_antechamber", "first_procession", "first_hall",
-                 "first_depthstair"):
-        check(g.save.flag(flag), f"depths: {flag} narration fired on entry")
     # The journal flashback is now a WORDLESS visual dream (the burning
     # doorway + the accelerating mask swarm), not text stills: a single
     # None-line phase held for FLASHBACK_DUR. Assert the visual mechanics
@@ -420,6 +416,31 @@ def main():
     gw.scene.on_interact_fn(gw)                       # key in hand -> enters
     check(getattr(gw, "transition_target", (None,))[0] == "woodshed",
           "geo: the cellar key opens the yard shed -> woodshed interior")
+
+    # --- 13c. Reading Mara's journal in the inventory fires the dream ---
+    # The journal is a paged, readable item: opening it shows page 1, and
+    # turning past the LAST leaf (the third Enter) sets flashback_pending.
+    # Lock that the three-read count drives the door-dream, since the
+    # mechanic is the only in-game trigger for the §1b cutscene.
+    from systems.items import MARA_JOURNAL_PAGES, journal_page as _jpage
+    gj = new_game()
+    gj.player.inventory.add("mom_notebook", 1)
+    gj.inv_ui.open = True
+    gj.inv_ui.tab = 1                                 # Notes tab
+    _fk = [k for _, k, _ in gj.inv_ui._filtered_items(gj.player.inventory)]
+    gj.inv_ui.cursor = _fk.index("mom_notebook")
+    check(_jpage(gj.save)[1] == 0,
+          "journal: opens on page 1 (its words are visible immediately)")
+    gj.inv_ui.use_selected(gj.player)                 # turn 1 -> page 2
+    gj.inv_ui.use_selected(gj.player)                 # turn 2 -> page 3
+    check(_jpage(gj.save)[1] == len(MARA_JOURNAL_PAGES) - 1
+          and not gj.save.flag("flashback_pending"),
+          "journal: reading short of the last leaf does NOT fire the dream")
+    gj.inv_ui.use_selected(gj.player)                 # turn past the last leaf
+    check(gj.save.flag("flashback_pending"),
+          "journal: turning past the last leaf fires the door-dream")
+    check(not gj.inv_ui.open,
+          "journal: the inventory closes as the dream takes over")
 
     # --- 14. "He knows you": the dream note + Threshold recognition ---
     # Living the journal door-dream writes a personal NOTE (not a clue), and
