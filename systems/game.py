@@ -808,7 +808,12 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         dys = my - psy
         if dys < 0:
             offset = math.atan2(dxs, -dys)
-            self.look.chase_by(offset, dt, TURN_RATE, AIM_DEAD_ZONE)
+            # Chase only inside the FORWARD cone: AIM_DEAD_ZONE arc near
+            # straight-up (no chase), out to CHASE_MAX_OFFSET near the
+            # horizontal (no chase). Both bounds give the camera a few degrees
+            # of rest before it starts swinging.
+            if abs(offset) < CHASE_MAX_OFFSET:
+                self.look.chase_by(offset, dt, TURN_RATE, AIM_DEAD_ZONE)
         self.camera.yaw = self.look.cam_yaw
         # The sprite + gun face the cursor (free aim), independent of body.
         ax, ay = self.look.aim_vec()
