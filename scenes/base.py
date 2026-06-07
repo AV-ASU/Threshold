@@ -1351,15 +1351,17 @@ def _draw_wall_mass(surf, scene, cam_x, cam_y, x0, y0, x1, y1):
 
 def _build_roof_regions(scene):
     """Flood-fill the roof ('r') tiles into one region per building and
-    cache each region's tile bounding box on the scene. Roof layout is
-    static after build, so this runs once. Each region -> one gabled
-    roof drawn over its footprint."""
+    cache each region's tile bounding box on the scene. Also builds a
+    `wall_to_region` map so each wall tile knows which building it belongs
+    to (used to give per-building wall colour under tilt). Roof layout is
+    static after build, so this runs once."""
     regions = getattr(scene, "_roof_regions", None)
     if regions is not None:
         return regions
     objs, h, w = scene.objects, scene.h, scene.w
     seen = [[False] * w for _ in range(h)]
     regions = []
+    wall_map = {}
     for ty in range(h):
         for tx in range(w):
             if objs[ty][tx] != "r" or seen[ty][tx]:
@@ -1368,6 +1370,7 @@ def _build_roof_regions(scene):
             seen[ty][tx] = True
             minx = maxx = tx
             miny = maxy = ty
+            cells = [(tx, ty)]
             while stack:
                 cx, cy = stack.pop()
                 minx = min(minx, cx); maxx = max(maxx, cx)
@@ -1378,9 +1381,34 @@ def _build_roof_regions(scene):
                             and not seen[ay][ax] and objs[ay][ax] == "r"):
                         seen[ay][ax] = True
                         stack.append((ax, ay))
-            regions.append((minx, miny, maxx, maxy))
+                        cells.append((ax, ay))
+            region = (minx, miny, maxx, maxy)
+            regions.append(region)
+            # Walk each roof tile's 4 neighbours; if neighbour is a wall (or
+            # a door or a window: they're embedded IN the wall), tag it as
+            # belonging to this region. A wall on the seam between two
+            # buildings would be claimed by whichever region we hit first
+            # (no shared walls in this game's town layouts).
+            for (cx, cy) in cells:
+                for ax, ay in ((cx + 1, cy), (cx - 1, cy),
+                               (cx, cy + 1), (cx, cy - 1)):
+                    if not (0 <= ax < w and 0 <= ay < h):
+                        continue
+                    ch = objs[ay][ax]
+                    if (ch in _WALL_CHARS or ch in _DOOR_CHARS
+                            or ch in _WINDOW_CHARS) and (ax, ay) not in wall_map:
+                        wall_map[(ax, ay)] = region
     scene._roof_regions = regions
+    scene._wall_region_map = wall_map
     return regions
+
+
+def wall_region_for(scene, tx, ty):
+    """Which building (roof region) this wall/door/window tile belongs to,
+    or None for free-standing walls (a fence, a depths corridor)."""
+    if getattr(scene, "_wall_region_map", None) is None:
+        _build_roof_regions(scene)
+    return scene._wall_region_map.get((tx, ty))
 
 
 def _draw_gable_roof(surf, region, cam_x, cam_y):
@@ -1501,12 +1529,13 @@ def _building_palette(seed_a, seed_b):
         roof = {"col": (118, 80, 56), "lit": (158, 110, 76),
                 "dark": (74, 50, 34), "ridge": (44, 28, 19),
                 "chimney": (58, 40, 36)}
-    # Subtle per-building wall warmth: a small tint offset so the wood reads
-    # slightly cooler / warmer house to house, plus a trim accent for the
-    # door-frame underside the eaves can pick up later.
-    wall_dr = rng.randint(-10, 12)
-    wall_dg = rng.randint(-8, 10)
-    wall_db = rng.randint(-10, 8)
+    # Per-building wall warmth: each house gets its own RGB offset so the
+    # weathered wood reads cooler/warmer house to house. Wider than purely
+    # subtle so adjacent buildings are unambiguously distinct but the
+    # palette stays in town-cohesion range (no pinks/greens).
+    wall_dr = rng.randint(-22, 28)
+    wall_dg = rng.randint(-18, 22)
+    wall_db = rng.randint(-20, 20)
     trim_choices = [(120, 64, 52), (90, 70, 40), (60, 80, 70),
                     (110, 100, 80), (80, 60, 50)]
     trim = trim_choices[rng.randint(0, len(trim_choices) - 1)]
@@ -2097,7 +2126,21 @@ def _extrude_box(surf, camera, scene, tx, ty, z0, z1, neigh=_WALL_CHARS,
 
 
 def _tilt_wall_box(surf, camera, scene, tx, ty):
-    _extrude_box(surf, camera, scene, tx, ty, 0, _TILT_WALL_RISE)
+    # If this wall belongs to a building, paint it in the building's per-
+    # region tint so the town reads as recognisable houses rather than one
+    # uniform mass of stone.
+    face_col = top_col = None
+    region = wall_region_for(scene, tx, ty)
+    if region is not None:
+        _roof, (dr, dg, db), _trim = _get_building_palette(region)
+        face_col = (max(0, min(255, _WALL_FACE[0] + dr)),
+                    max(0, min(255, _WALL_FACE[1] + dg)),
+                    max(0, min(255, _WALL_FACE[2] + db)))
+        top_col = (max(0, min(255, _WALL_TOP[0] + dr)),
+                   max(0, min(255, _WALL_TOP[1] + dg)),
+                   max(0, min(255, _WALL_TOP[2] + db)))
+    _extrude_box(surf, camera, scene, tx, ty, 0, _TILT_WALL_RISE,
+                 face_col=face_col, top_col=top_col)
 
 
 _COUNTER_RISE = 15      # waist-high: a divider you can see over, not a wall
