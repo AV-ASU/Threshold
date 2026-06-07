@@ -588,7 +588,7 @@ def build_works_sign():
                 game._play_ending("rite_broken")
         game.dialog.show_choice(
             "The mask on the altar. The Sign daubed above it. The kneeling "
-            "at your back. The whole sick machine of it, here in reach.",
+            "at your back. The whole machine of it, here in reach.",
             ["Lift the mask.", "Tear it down. End this."],
             _pick, speaker="", voice="blip_soft", portrait="narrator")
     sc.on_interact_fn = _interact

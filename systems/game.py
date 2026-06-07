@@ -1450,9 +1450,8 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         # catalogued lives the diggers shed. The scale lands; first fear.
         "descent_dig": {
             "beat": [
-                "[c=dim]Their whole lives, sorted and shelved down here. Like "
-                "they set everything human down at the door and walked in "
-                "lighter. ...My pen won't hold still. That's new.[/c]",
+                "[c=dim]Their whole lives, sorted and shelved down here. "
+                "...My pen won't hold still. That's new.[/c]",
             ],
             "note": [
                 "This is no cellar. It's a dig. Room after room of it, going "

@@ -131,8 +131,6 @@ def build_schoolhouse():
                 "[c=dim](The chalkboard. Under a child's faded lesson, the same "
                 "door is drawn over and over, smaller and smaller, to the "
                 "corner.)[/c]",
-                "[c=dim]Whoever did it ran out of board before they ran out of "
-                "the need to draw it.[/c]",
             ], speaker="", voice="blip_soft", portrait="narrator")
 
     sc.on_enter_fn = _school_on_enter
