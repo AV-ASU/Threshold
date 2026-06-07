@@ -138,6 +138,124 @@ def _draw_well_solid(surf, cam, deco):
     pygame.draw.line(surf, rope, bh_a, bh_b, max(1, int(1.5 * s)))
 
 
+def _draw_town_sign_solid(surf, cam, deco):
+    """A wooden roadside signpost as real volume: two thin upright posts +
+    a thicker board nailed across them, the town name burnt into the front
+    face. The board catches the camera tilt as a flat plane instead of
+    pointing at you forever."""
+    wx, wy = deco.x, deco.y
+    s = (getattr(deco, "scale", 1.0) or 1.0)
+    text = deco.kwargs.get("text", "BRIMLEY") if hasattr(deco, "kwargs") else "BRIMLEY"
+    post_col = (62, 44, 28)
+    post_lit = (88, 64, 40)
+    board_col = (96, 70, 44)
+    board_lit = (124, 92, 58)
+    board_dk = (60, 42, 22)
+    POST_H = 26 * s
+    POST_T = 1.6 * s
+    POST_DX = 9 * s
+    # Two upright posts (thin box-extrude). Board is mounted to the FRONT
+    # (south-facing) face so it reads facing the road.
+    for ox in (-POST_DX, POST_DX):
+        b = (cam.project(wx + ox - POST_T / 2, wy - POST_T / 2, 0),
+             cam.project(wx + ox + POST_T / 2, wy - POST_T / 2, 0),
+             cam.project(wx + ox + POST_T / 2, wy + POST_T / 2, 0),
+             cam.project(wx + ox - POST_T / 2, wy + POST_T / 2, 0))
+        t = (cam.project(wx + ox - POST_T / 2, wy - POST_T / 2, POST_H),
+             cam.project(wx + ox + POST_T / 2, wy - POST_T / 2, POST_H),
+             cam.project(wx + ox + POST_T / 2, wy + POST_T / 2, POST_H),
+             cam.project(wx + ox - POST_T / 2, wy + POST_T / 2, POST_H))
+        pygame.draw.polygon(surf, post_col, [b[3], b[2], t[2], t[3]])
+        pygame.draw.polygon(surf, _shade(post_col, 0.7),
+                            [b[1], b[2], t[2], t[1]])
+        pygame.draw.polygon(surf, post_lit, [t[0], t[1], t[2], t[3]])
+    # Board: a thin plank box at z = POST_H * 0.55 .. * 0.85
+    BOARD_Z0 = POST_H * 0.55
+    BOARD_Z1 = POST_H * 0.95
+    BOARD_W = 14 * s
+    BOARD_DEPTH = 1.0 * s
+    by = wy - POST_T / 2 - BOARD_DEPTH * 0.6     # nailed to the FRONT of posts
+    bb = (cam.project(wx - BOARD_W, by - BOARD_DEPTH / 2, BOARD_Z0),
+          cam.project(wx + BOARD_W, by - BOARD_DEPTH / 2, BOARD_Z0),
+          cam.project(wx + BOARD_W, by + BOARD_DEPTH / 2, BOARD_Z0),
+          cam.project(wx - BOARD_W, by + BOARD_DEPTH / 2, BOARD_Z0))
+    bt = (cam.project(wx - BOARD_W, by - BOARD_DEPTH / 2, BOARD_Z1),
+          cam.project(wx + BOARD_W, by - BOARD_DEPTH / 2, BOARD_Z1),
+          cam.project(wx + BOARD_W, by + BOARD_DEPTH / 2, BOARD_Z1),
+          cam.project(wx - BOARD_W, by + BOARD_DEPTH / 2, BOARD_Z1))
+    # FRONT face (this is what reads the text)
+    front = [bb[0], bb[1], bt[1], bt[0]]
+    pygame.draw.polygon(surf, board_col, front)
+    pygame.draw.polygon(surf, board_dk, front, 1)
+    # bottom edge highlight
+    pygame.draw.line(surf, board_lit,
+                     (int(bb[0][0]), int(bb[0][1])),
+                     (int(bb[1][0]), int(bb[1][1])), 1)
+    # top edge cap
+    pygame.draw.polygon(surf, _shade(board_col, 1.18),
+                        [bt[0], bt[1], bt[2], bt[3]])
+    # right face (east end of board)
+    pygame.draw.polygon(surf, _shade(board_col, 0.7),
+                        [bb[1], bb[2], bt[2], bt[1]])
+    # Render the text onto the FRONT face. We render at native pixel size
+    # then warp via a polygon-bounded blit -- simpler approach: render onto
+    # a small surface and blit centered on the projected board front centre
+    # (the board is mostly facing the camera under pitch 55, so this reads).
+    try:
+        font_h = max(7, int(7 * s * cam.scale))
+        font = pygame.font.SysFont(None, font_h, bold=True)
+        txt = font.render(text, True, (28, 18, 8))
+        tcx = int((bb[0][0] + bb[1][0]) / 2)
+        tcy = int((bb[0][1] + bt[1][1]) / 2)
+        surf.blit(txt, (tcx - txt.get_width() // 2,
+                        tcy - txt.get_height() // 2))
+    except Exception:
+        pass
+
+
+def _draw_flagpole_solid(surf, cam, deco):
+    """A weathered metal flagpole. Tall cylinder body of revolution + a
+    rounded knob cap. The flag is a small drooping cloth quad that sways
+    with deco.t. Half-mast and tattered, matching the schoolyard read."""
+    wx, wy = deco.x, deco.y
+    s = (getattr(deco, "scale", 1.0) or 1.0)
+    t = getattr(deco, "t", 0.0)
+    seed = getattr(deco, "seed", 0)
+    H = 34 * s
+    R = 0.8 * s
+    pole_pal = {"body": (130, 132, 138), "lo": (78, 80, 86),
+                "rim": (190, 192, 200)}
+    draw_solid(surf, cam, wx, wy,
+               [(0, R * 1.2, R * 1.2), (2 * s, R, R), (H, R, R)],
+               pole_pal)
+    # rounded knob cap
+    knob = cam.project(wx, wy, H)
+    pygame.draw.circle(surf, pole_pal["rim"], knob, max(2, int(2 * s)))
+    pygame.draw.circle(surf, pole_pal["lo"], knob, max(1, int(1 * s)), 1)
+    # Half-mast flag: a small drooping cloth from z = H*0.55..H*0.75
+    cloth = (66, 50, 50)
+    cloth_dk = (40, 28, 28)
+    sway = math.sin(t * 2.2 + seed * 0.1) * 1.4 * s
+    fy_top = H * 0.78
+    fy_bot = H * 0.52
+    FW = 9 * s
+    # Flag hangs off the east side of the pole (so it catches the wind in
+    # the camera's view); its trailing edge ripples with sway.
+    a_t = cam.project(wx + 0.5 * s, wy, fy_top)
+    a_b = cam.project(wx + 0.5 * s, wy, fy_bot)
+    b_t = cam.project(wx + FW + sway, wy + sway * 0.4, fy_top - 1 * s)
+    b_b = cam.project(wx + FW * 0.7 + sway * 0.6, wy + sway * 0.4,
+                      fy_bot + 1 * s)
+    pygame.draw.polygon(surf, cloth, [a_t, b_t, b_b, a_b])
+    pygame.draw.polygon(surf, cloth_dk, [a_t, b_t, b_b, a_b], 1)
+    # frayed trailing edge: a few short rips
+    for k in range(3):
+        rx = b_t[0] + (b_b[0] - b_t[0]) * (k + 0.5) / 3
+        ry = b_t[1] + (b_b[1] - b_t[1]) * (k + 0.5) / 3
+        pygame.draw.line(surf, cloth_dk, (int(rx), int(ry)),
+                         (int(rx + 1 + sway * 0.3), int(ry + 2)), 1)
+
+
 def _draw_headstone_solid(surf, cam, deco):
     """A grave marker as a real volume: a thin stone slab leaning a few
     degrees off vertical, mossed at the foot, with a turned-dirt mound at
@@ -1042,6 +1160,8 @@ SOLID_PROPS = {
     "cellar_hatch":  _draw_cellar_hatch_solid,
     "well":          _draw_well_solid,
     "headstone":     _draw_headstone_solid,
+    "town_sign":     _draw_town_sign_solid,
+    "flagpole":      _draw_flagpole_solid,
     "pillar":        _draw_pillar_solid,
     "cistern_basin": _draw_cistern_basin_solid,
     "grain_heap":    _draw_grain_heap_solid,
