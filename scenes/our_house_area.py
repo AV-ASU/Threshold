@@ -322,9 +322,15 @@ def build_arrival_road():
         objects_l[PMID + dy][W - 1] = "e"
     objects = ["".join(r) for r in objects_l]
     sc = Scene("arrival_road", floor_rows, objects, music="outside")
-    # The road never ends: walk north or south and the same stretch wraps
-    # back. The E-W path still exits normally -- only the road loops.
-    sc.wrap_y = True
+    # Only a SMALL forest band to the NORTH loops -- the southern arrival stretch
+    # (car, sign, the E-W crossing + its exits) is fixed and walkable back to.
+    # Walking north past BAND_TOP wraps you to BAND_BOTTOM (a landmark-free
+    # stretch north of the car), so that part of the road loops endlessly with
+    # nothing coming back round; walking south drops you out of the loop into the
+    # arrival stretch. The idle King shows only while you're on this band.
+    sc.wrap_y = False
+    _BAND_TOP, _BAND_BOTTOM = 8, PMID - 23     # rows; ~14 tiles N of the car
+    sc._treadmill = (_BAND_TOP * TILE, _BAND_BOTTOM * TILE)
     sc.add_exit("a", "country_lane", "from_arrival_road")
     sc.add_exit("e", "our_house_area", "from_arrival_road")
     sc.set_spawn("default", 7, PMID)

@@ -371,9 +371,12 @@ def build_house():
     # The desk is a real low COUNTER volume (two abutting boxes, ~2 tiles
     # wide) so under the tilt it stands as a 3D reception desk the player
     # sees OVER -- Sable, behind it, shows head + torso above the top.
-    sc.add_furniture("counter", [(8, 2)])
-    sc.add_furniture("counter", [(9, 2)])
+    sc.add_furniture("counter", [(8, 2)], see_over=True)
+    sc.add_furniture("counter", [(9, 2)], see_over=True)
     sc.add_decoration(Decoration(9 * TILE, 2 * TILE + 4, "candle"))  # on the desktop
+    # The open guest register itself, sitting on the desktop where you sign --
+    # at the interact anchor so the [E] prompt lands on the visible book.
+    sc.add_decoration(Decoration(sc._frontdesk_pos[0], 2 * TILE + 12, "ledger"))
     sc.add_interactable(sc._frontdesk_pos[0], sc._frontdesk_pos[1], 44)
 
     # Northern-MN lodge decor. Wall mounts (no collision) along the

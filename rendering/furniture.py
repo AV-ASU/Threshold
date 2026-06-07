@@ -189,6 +189,19 @@ def is_solid_furniture(kind):
     return kind in FURNITURE
 
 
+# Furniture shorter than eye level can be seen (and shot/seen) over: it stays
+# solid for collision but does not block line of sight. (A wall rises 26.)
+SEE_OVER_MAX_H = 20
+
+
+def is_see_over_furniture(kind):
+    """True if this furniture is low enough to see over (a chair, table, bed,
+    counter, crate...) vs a tall piece that blocks the view (bookshelf,
+    wardrobe, fireplace)."""
+    spec = FURNITURE.get(kind)
+    return bool(spec and spec[2] < SEE_OVER_MAX_H)
+
+
 def draw_furniture_solid(surf, cam, deco):
     """Draw one decoration as a projected box volume. Returns True if it was a
     furniture kind (and drawn), False if the caller should fall back to flat."""
