@@ -439,11 +439,7 @@ def build_the_ossuary():
                     "over and over, pressed hard enough to tear the paper. "
                     "Whatever these people used to be, the digging finished it.",
                 ])
-                game.dialog.show([
-                    "[c=dim]Racked with one digger's leavings, their last "
-                    "pages. The hand starts steady and comes apart. You take "
-                    "it.[/c]",
-                ], speaker="", voice="blip_soft", portrait="narrator")
+                game.show_notice("The Digging. Their last pages.")
                 return
     sc.on_interact_fn = _interact
     return sc
