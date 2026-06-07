@@ -677,6 +677,163 @@ def _draw_wall_torch_solid(surf, cam, deco):
                      max(1, int(1.5 * s)))
 
 
+def _draw_smoke_solid(surf, cam, deco):
+    """A rising column of smoke -- four puffs ascending in world z, each
+    larger and more faded than the last. Reads as a real column you can
+    walk around instead of a 2D sticker stuck to the wall."""
+    wx, wy = deco.x, deco.y
+    s = (getattr(deco, "scale", 1.0) or 1.0)
+    z0 = float(getattr(deco, "kwargs", {}).get("z", 0.0))
+    t = getattr(deco, "t", 0.0)
+    seed = getattr(deco, "seed", 0)
+    for i in range(4):
+        phase = (t * 0.6 + i * 0.4 + seed * 0.1) % 1.0
+        ox = math.sin(phase * 6 + seed) * 3 * s
+        rise = z0 + 4 * s + phase * 36 * s
+        r = (4 + phase * 6) * s
+        alpha = int((1 - phase) * 130)
+        cx, cy = cam.project(wx + ox, wy, rise)
+        rs = max(2, int(r * cam.scale))
+        puff = pygame.Surface((rs * 2 + 2, rs * 2 + 2), pygame.SRCALPHA)
+        pygame.draw.circle(puff, (160, 160, 170, alpha),
+                           (rs + 1, rs + 1), rs)
+        surf.blit(puff, (cx - rs, cy - rs))
+
+
+def _draw_wisp_solid(surf, cam, deco):
+    """A will-o-the-wisp: a cold pale glow drifting LOW over the bog. Drawn
+    as a small floating orb projected at a marsh-gas height, so it reads as a
+    light in the air, not painted on the ground."""
+    wx, wy = deco.x, deco.y
+    s = (getattr(deco, "scale", 1.0) or 1.0)
+    t = getattr(deco, "t", 0.0)
+    seed = getattr(deco, "seed", 0)
+    z_air = 8 * s
+    drift_x = math.sin(t * 0.5 + seed) * 14 * s
+    drift_y = math.cos(t * 0.37 + seed * 0.6) * 8 * s
+    z_bob = math.sin(t * 0.42 + seed * 0.3) * 2 * s
+    cx, cy = cam.project(wx + drift_x, wy + drift_y, z_air + z_bob)
+    rs = max(2, int(10 * s * cam.scale))
+    glow = pygame.Surface((rs * 2 + 4, rs * 2 + 4), pygame.SRCALPHA)
+    pygame.draw.circle(glow, (110, 168, 146, 38),
+                       (rs + 2, rs + 2), rs)
+    pygame.draw.circle(glow, (150, 200, 174, 70),
+                       (rs + 2, rs + 2), max(1, rs // 2))
+    pygame.draw.circle(glow, (210, 235, 220),
+                       (rs + 2, rs + 2), max(1, rs // 5))
+    surf.blit(glow, (cx - rs - 2, cy - rs - 2))
+
+
+def _draw_rope_solid(surf, cam, deco):
+    """A hung cord: a vertical rope dropping from a hang height down toward
+    the anchor, frayed knot at the bottom. Reads as a real hanging line in
+    3D space instead of a curved sticker on the floor."""
+    wx, wy = deco.x, deco.y
+    s = (getattr(deco, "scale", 1.0) or 1.0)
+    z_hang = 24 * s
+    z_bot = 4 * s
+    seed = getattr(deco, "seed", 0)
+    kink_x = math.sin(seed * 0.7) * 1.0 * s
+    cord = (132, 110, 70)
+    cord_dk = (92, 74, 44)
+    top = cam.project(wx, wy, z_hang)
+    mid = cam.project(wx + kink_x, wy, (z_hang + z_bot) / 2)
+    bot = cam.project(wx, wy, z_bot)
+    pygame.draw.line(surf, cord_dk, top, mid, max(2, int(2 * s)))
+    pygame.draw.line(surf, cord_dk, mid, bot, max(2, int(2 * s)))
+    pygame.draw.line(surf, cord, top, mid, 1)
+    pygame.draw.line(surf, cord, mid, bot, 1)
+    pygame.draw.circle(surf, cord_dk, bot, max(2, int(2 * s)))
+
+
+def _draw_mote_solid(surf, cam, deco):
+    """A floating dust mote: a single pixel-sized speck lifted off the floor
+    to about head height, drifting slowly. Reads as suspended in the air
+    instead of a glitter on the ground."""
+    wx, wy = deco.x, deco.y
+    s = (getattr(deco, "scale", 1.0) or 1.0)
+    t = getattr(deco, "t", 0.0)
+    seed = getattr(deco, "seed", 0)
+    z_air = 16 * s
+    dx = math.sin(t * 0.4 + seed) * 8 * s
+    dy = math.cos(t * 0.3 + seed * 0.7) * 4 * s
+    z_bob = math.sin(t * 0.32 + seed * 0.4) * 3 * s
+    cx, cy = cam.project(wx + dx, wy + dy, z_air + z_bob)
+    col = (200, 200, 220)
+    try:
+        surf.set_at((cx, cy), col)
+        surf.set_at((cx + 1, cy), col)
+    except (IndexError, ValueError):
+        pass
+
+
+def _draw_flock_solid(surf, cam, deco):
+    """A few distant birds drifting across the grey, wings beating. Each
+    silhouette is projected at sky height so the flock reads as overhead
+    under tilt instead of pasted on the field."""
+    wx, wy = deco.x, deco.y
+    s = (getattr(deco, "scale", 1.0) or 1.0)
+    t = getattr(deco, "t", 0.0)
+    seed = getattr(deco, "seed", 0)
+    span = deco.kwargs.get("span", 180)
+    speed = deco.kwargs.get("speed", 0.5)
+    lead = ((t * speed * 16 + seed * 7) % (span + 60)) - 30
+    n = 3 + (seed % 3)
+    z_sky = 60 * s
+    for i in range(n):
+        bx_w = wx + lead - i * (11 + (seed + i) % 8)
+        bz = z_sky + (i % 3 - 1) * 6 * s + math.sin(t * 0.6 + i) * 3 * s
+        by_w = wy + (i % 3 - 1) * 4 * s
+        flap = math.sin(t * 6 + i * 1.3) * 4 * s
+        cx, cy = cam.project(bx_w, by_w, bz)
+        wing_dx = max(3, int(5 * s * cam.scale))
+        wing_dy = max(2, int(flap * cam.scale))
+        col = (52, 52, 60)
+        pygame.draw.line(surf, col, (cx - wing_dx, cy + wing_dy), (cx, cy), 2)
+        pygame.draw.line(surf, col, (cx + wing_dx, cy + wing_dy), (cx, cy), 2)
+
+
+def _draw_stalk_marker_solid(surf, cam, deco):
+    """A single corn stalk taller than the rest with a sun-bleached red cloth
+    tied around it. The cult marks the next to be taken. Rises as a real
+    vertical line under tilt, swaying."""
+    wx, wy = deco.x, deco.y
+    s = (getattr(deco, "scale", 1.0) or 1.0)
+    t = getattr(deco, "t", 0.0)
+    seed = getattr(deco, "seed", 0)
+    H = 26 * s
+    sway = math.sin(t * 1.4 + seed * 0.13) * 1.6 * s
+    stalk = (74, 102, 50)
+    stalk_dk = (44, 64, 30)
+    base = cam.project(wx, wy, 0)
+    tip_ground_dx = sway
+    tip = cam.project(wx + tip_ground_dx, wy, H)
+    pygame.draw.line(surf, stalk_dk, base, tip, max(2, int(2 * s)))
+    pygame.draw.line(surf, stalk, base, tip, 1)
+    # husk leaf at mid-height
+    mid_z = H * 0.45
+    mid_a = cam.project(wx, wy, mid_z)
+    mid_b = cam.project(wx + 4 * s, wy, mid_z + 1 * s)
+    pygame.draw.line(surf, stalk_dk, mid_a, mid_b, 1)
+    # cloth band near the top
+    cloth = (164, 80, 60)
+    cloth_dk = (100, 44, 36)
+    band_z0 = H * 0.78
+    band_z1 = H * 0.92
+    b_lo = cam.project(wx + tip_ground_dx * 0.85, wy, band_z0)
+    b_hi = cam.project(wx + tip_ground_dx * 0.85, wy, band_z1)
+    bw = max(2, int(4 * s * cam.scale))
+    bh = max(2, int(abs(b_hi[1] - b_lo[1])))
+    rect = (b_hi[0] - bw // 2, b_hi[1], bw, bh)
+    pygame.draw.rect(surf, cloth_dk, rect)
+    pygame.draw.rect(surf, cloth, (rect[0] + 1, rect[1] + 1,
+                                    rect[2] - 2, max(1, rect[3] - 2)))
+    # token hung from the cloth
+    tok = cam.project(wx + tip_ground_dx * 0.85 + 2 * s, wy, band_z0 - 3 * s)
+    pygame.draw.circle(surf, (40, 30, 24),
+                       (int(tok[0]), int(tok[1])), max(1, int(1.5 * s)))
+
+
 SOLID_PROPS = {
     "doorframe":     _draw_doorframe_solid,
     "waterfall":     _draw_waterfall_solid,
@@ -694,6 +851,12 @@ SOLID_PROPS = {
     "lantern":       _draw_lantern_solid,
     "brazier":       _draw_brazier_solid,
     "wall_torch":    _draw_wall_torch_solid,
+    "smoke":         _draw_smoke_solid,
+    "wisp":          _draw_wisp_solid,
+    "rope":          _draw_rope_solid,
+    "stalk_marker":  _draw_stalk_marker_solid,
+    "mote":          _draw_mote_solid,
+    "flock":         _draw_flock_solid,
 }
 
 

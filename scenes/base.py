@@ -2023,6 +2023,10 @@ _FLOOR_DECAL_KINDS = frozenset((
     # Marks scratched into the floor or the body of something laid in the dirt:
     # all read as ground decals and want to turn with the room under tilt.
     "mud_footprint", "claw_marks", "dead_crow", "watching_wound",
+    # Low ground fog hugging the wet earth, and dead leaves tumbling across the
+    # ground: both want to warp onto the floor under tilt, not stand up as
+    # vertical stickers.
+    "mist", "leaves",
 ))
 
 # Decals that lie flat on a RAISED surface (a ledger open on a desktop): warped
