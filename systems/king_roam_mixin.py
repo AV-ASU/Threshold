@@ -78,10 +78,13 @@ class KingRoamMixin:
         the renderer reads _idle_king (world x, y) or None."""
         rk = self._roam_king
         tm = getattr(self.scene, "_treadmill", None) if self.scene else None
-        if (rk["armed"] or self.scene is None or self.player is None
+        if (rk["armed"] or self._king is not None or self.scene is None
+                or self.player is None
                 or self.scene.key != KING_ROAM_START
                 # only once you're ON the looping band (north of its south edge);
                 # the car is off screen by then. In the arrival stretch: no King.
+                # `self._king is not None` keeps the distant idol from ever
+                # showing alongside the concrete King body (no two Kings at once).
                 or (tm is not None and self.player.y >= tm[1])):
             self._idle_king = None
             return
@@ -195,6 +198,7 @@ class KingRoamMixin:
                 rk["search_t"] = 0.0
                 rk["hop_t"] = KING_HOP_INTERVAL
                 rk["pos"] = self._king_scene_pos(KING_ROAM_START)
+                self._idle_king = None     # the idol gives way to the real King
             else:
                 if (self.visibility >= 1.0
                         and self.scene.key not in KING_FREE_SCENES):
@@ -332,6 +336,11 @@ class KingRoamMixin:
         spot = self._roam_king.pop("enter_pos", None) or self._king_far_spot()
         if spot is None:
             return
+        # Never stack a second body: clear any stray King NPC + the distant idol
+        # before planting the one true King (guards every two-Kings path).
+        self.scene.npcs = [n for n in self.scene.npcs
+                           if getattr(n, "sprite_kind", "") != "yellow_king"]
+        self._idle_king = None
         king = NPC(spot[0], spot[1], "", "yellow_king",
                    movement="chaser", speed=KING_ROAM_SPEED,
                    no_prompt=True, solid=False)
