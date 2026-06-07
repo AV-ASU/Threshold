@@ -2077,15 +2077,15 @@ def draw_scene_terrain(surf, scene, cam_x, cam_y, x0, y0, x1, y1,
     as a warped flat plate on the warped floor; the walls supply the
     building's vertical mass under tilt."""
     W, H = scene.w, scene.h
-    wx, wy = scene.wrap_x, scene.wrap_y
+    wx = scene.wrap_x          # row wrap/banding is handled by scene.render_row
     def _lookup_floor(ty, tx):
-        if wy: ty %= H
+        ty = scene.render_row(ty)
         if wx: tx %= W
         if not (0 <= ty < H and 0 <= tx < W):
             return "."
         return scene.floor[ty][tx]
     def _lookup_obj(ty, tx):
-        if wy: ty %= H
+        ty = scene.render_row(ty)
         if wx: tx %= W
         if not (0 <= ty < H and 0 <= tx < W):
             return "."
@@ -2648,7 +2648,7 @@ def _tilt_tile_box(surf, camera, scene, tx, ty):
     corn project through the camera so they anchor in the scene; the legacy
     rotated-billboard standee survives as a fallback for any future kind."""
     wtx = tx % scene.w if scene.wrap_x else tx
-    wty = ty % scene.h if scene.wrap_y else ty
+    wty = scene.render_row(ty)
     ch = (scene.objects[wty][wtx]
           if 0 <= wty < scene.h and 0 <= wtx < scene.w else "")
     if ch in _TILT_BILLBOARD_CHARS:
@@ -2897,7 +2897,7 @@ def draw_terrain_tilted(surf, scene, camera, sight=None):
     # cornstalk tile depth-sorts on its own; the legacy card-merging LOD is
     # bypassed (its anchors-and-suppressed map is unused under the 3D path).
     for ty in range(y0, y1):
-        wty = ty % H if scene.wrap_y else ty
+        wty = scene.render_row(ty)
         if not (0 <= wty < H):
             continue
         for tx in range(x0, x1):
@@ -3255,6 +3255,16 @@ class Scene:
         # fold). Off by default.
         self.wrap_x = False
         self.wrap_y = False
+        # Optional RENDER BAND: a (top_row, bottom_row) tile span that tiles
+        # ENDLESSLY toward the north (decreasing y) for rendering ONLY, while
+        # everything from top_row south renders once. Used by the arrival road
+        # to make a landmark-free forest stretch read as an infinite corridor
+        # without wrapping the WHOLE column (which would clone the southern
+        # landmarks -- the dead car, the town sign, the dirt crossing -- back
+        # into the northern view). Travel north of the band is handled by the
+        # separate `_treadmill` loop. None = no band (see render_row). Off by
+        # default; only the arrival road sets it.
+        self._render_band = None
         # Oblique-camera skybox surround (CAMERA.md Phase 5). None = let the
         # game pick by scene type ("overcast" sallow sky for OUTDOOR_SCENES,
         # near-black "void" for interiors/underground so the horror keeps its
@@ -3325,6 +3335,26 @@ class Scene:
             elif dy < -h_px / 2:
                 dy += h_px
         return dy
+
+    def render_row(self, ty):
+        """Map a requested tile row to the scene row whose CONTENT renders there.
+
+        For a plain scene this is `ty % h` when wrap_y (toroidal column) else
+        `ty` unchanged. For a `_render_band` scene (the arrival road) rows NORTH
+        of the band (ty < top) tile the anonymous band content endlessly, while
+        the band itself and everything south of it render once -- so the looping
+        forest stretch reads as an infinite corridor with no southern landmark
+        (the dead car, the sign, the dirt crossing) ever cloned into the
+        distance. Used by the floor raster + the tilt wall/billboard collector
+        so both the ground and the tree walls extend to the vanishing point."""
+        band = self._render_band
+        if band is not None:
+            top, bot = band
+            if ty < top:
+                span = bot - top
+                return top + ((ty - top) % span)
+            return ty
+        return ty % self.h if self.wrap_y else ty
 
     def world_dist(self, from_x, from_y, to_x, to_y):
         """Shortest world distance respecting wrap on both axes."""
