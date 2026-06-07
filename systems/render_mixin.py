@@ -1307,7 +1307,7 @@ class RenderMixin:
                 tx = int((px + dx * TILE) // TILE)
                 ty = int((py + dy * TILE) // TILE)
                 if (0 <= ty < self.scene.h and 0 <= tx < self.scene.w
-                        and self.scene.objects[ty][tx] in ("*", "q", "K")):
+                        and self.scene.objects[ty][tx] in ("*", "q")):
                     target = (tx * TILE + 16, ty * TILE + 16)
                     break
         # 3. A chest within reach -- but only if it's actually openable.
@@ -1323,7 +1323,12 @@ class RenderMixin:
         # 4. An NPC to talk to.
         if target is None:
             for npc in self.scene.npcs:
-                if getattr(npc, "no_prompt", False):
+                # Mirror try_interact's skips so the cue never points at an
+                # NPC you can't talk to: no_prompt (the invisible-interact
+                # pattern, where a decoration shows its own cue) and _inside
+                # (a homebody gone behind its door -- not drawn, not talkable).
+                if (getattr(npc, "no_prompt", False)
+                        or getattr(npc, "_inside", False)):
                     continue
                 if math.hypot(npc.x - px, npc.y - py) < 40:
                     target = (npc.x, npc.y)
