@@ -1027,12 +1027,46 @@ class RenderMixin:
                       draw_with_alpha(self.screen, wa,
                                       lambda s: _tilt_tile_box(
                                           s, self.camera, self.scene, tx, ty)))
-            for d in (_tilt_solid_decos or []):
-                for ox, oy in _offsets:
-                    if getattr(d, "_no_wrap", False) and (ox or oy):
-                        continue          # stays at its true spot; no wrap-clone
-                    _emit(self.camera.depth(d.x + ox, d.y + oy),
-                          lambda d=d, ox=ox, oy=oy: self._draw_solid_prop(d, ox, oy))
+            # Solid props (trees, headstones, lanterns -- the standees) wrap-
+            # clone like decorations and used to emit one depth entry per
+            # (prop x offset) pair. Brimley has ~420 such props x 9 wrap
+            # offsets = ~3800 emits/frame, almost all of them off-screen.
+            # Walk the SPATIAL CHUNK INDEX (Move 2 of the perf strategy: only
+            # touch chunks the visible window overlaps), then per-prop project
+            # + screen-pixel cull. Brimley typically projects ~50-200 instead
+            # of 3800. The scene's _deco_index_cache is built by
+            # draw_terrain_tilted above; both flat solid list AND chunk map
+            # are populated there.
+            from scenes.base import (_DECO_CHUNK_PX, _DECO_TALL_MARGIN,
+                                     _tilt_window_half)
+            _SOL_MX, _SOL_MTOP, _SOL_MBOT = 100, 100, 220
+            _idx = getattr(self.scene, "_deco_index_cache", None) or {}
+            _solid_chunks = _idx.get("solid_chunks") or {}
+            _half = _tilt_window_half(self.camera) + _DECO_TALL_MARGIN
+            _vx0 = self.camera.cam_x - _half
+            _vy0 = self.camera.cam_y - _half
+            _vx1 = self.camera.cam_x + _half
+            _vy1 = self.camera.cam_y + _half
+            for ox, oy in _offsets:
+                _cx0 = int((_vx0 - ox) // _DECO_CHUNK_PX)
+                _cy0 = int((_vy0 - oy) // _DECO_CHUNK_PX)
+                _cx1 = int((_vx1 - ox) // _DECO_CHUNK_PX) + 1
+                _cy1 = int((_vy1 - oy) // _DECO_CHUNK_PX) + 1
+                for _cy in range(_cy0, _cy1):
+                    for _cx in range(_cx0, _cx1):
+                        _bucket = _solid_chunks.get((_cx, _cy))
+                        if not _bucket:
+                            continue
+                        for d in _bucket:
+                            if getattr(d, "_no_wrap", False) and (ox or oy):
+                                continue   # stays at its true spot; no wrap
+                            psx, psy = self.camera.project(d.x + ox, d.y + oy)
+                            if not (-_SOL_MX <= psx <= SCREEN_W + _SOL_MX
+                                    and -_SOL_MTOP <= psy <= SCREEN_H + _SOL_MBOT):
+                                continue
+                            _emit(self.camera.depth(d.x + ox, d.y + oy),
+                                  lambda d=d, ox=ox, oy=oy:
+                                  self._draw_solid_prop(d, ox, oy))
             # Surface decals (a ledger on a desktop): warped FLAT like a floor
             # decal but lifted to the prop height (deco kwarg `z`) and depth-
             # sorted AT that height, so it rests on the desktop and sorts in
