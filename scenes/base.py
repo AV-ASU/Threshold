@@ -2835,6 +2835,49 @@ def _tilt_window_box(surf, camera, scene, tx, ty):
         _draw_window_pane(surf, camera, wx, wy, ndx, ndy)
 
 
+_WALL_BOX_CACHE = {}
+_WALL_BOX_ORDER = []
+_WALL_BOX_CAP = 2200
+
+
+def _tilt_wall_box_cached(surf, camera, scene, tx, ty):
+    """Plain wall tiles are static geometry (no animation), and like the trees
+    their box's shape depends only on the camera angle + which neighbours are
+    walls -- never on where the camera pans. So render each wall tile's box
+    once per (scene, tile, angle) into a card and blit it at the projected tile
+    centre. The bulk of the town's ~640 wall tiles become blits while panning."""
+    key = (scene.key, tx, ty, round(camera.yaw, 2),
+           round(camera.pitch, 2), round(camera.scale, 2))
+    entry = _WALL_BOX_CACHE.get(key)
+    if entry is None:
+        entry = _build_wall_box_card(camera, scene, tx, ty)
+        _WALL_BOX_CACHE[key] = entry
+        _WALL_BOX_ORDER.append(key)
+        if len(_WALL_BOX_ORDER) > _WALL_BOX_CAP:
+            _WALL_BOX_CACHE.pop(_WALL_BOX_ORDER.pop(0), None)
+    card, ax, ay = entry
+    if card is not None:
+        bx, by = camera.project(tx * TILE + TILE / 2, ty * TILE + TILE / 2, 0)
+        surf.blit(card, (bx - ax, by - ay))
+
+
+def _build_wall_box_card(camera, scene, tx, ty):
+    """Cache-miss path: render one wall tile's box to a tight SRCALPHA card via
+    a throwaway camera at the same angle, pinned at the tile centre."""
+    from rendering.camera import Camera
+    PAD = 90
+    tmp = pygame.Surface((PAD * 2, PAD * 2), pygame.SRCALPHA)
+    anchor = (PAD, int(PAD * 1.3))
+    tcam = Camera(cam_x=tx * TILE + TILE / 2, cam_y=ty * TILE + TILE / 2,
+                  pitch=camera.pitch, yaw=camera.yaw,
+                  scale=camera.scale, origin=anchor)
+    _tilt_wall_box(tmp, tcam, scene, tx, ty)
+    rect = tmp.get_bounding_rect()
+    if rect.width == 0 or rect.height == 0:
+        return (None, 0, 0)
+    return (tmp.subsurface(rect).copy(), anchor[0] - rect.x, anchor[1] - rect.y)
+
+
 def _tilt_tile_box(surf, camera, scene, tx, ty):
     """Dispatch a tile to its tilt solid: a wall-mass box, a doorway (lintel +
     swung leaf), a window (box + lit pane), a 3D tree (trunk + canopy bodies
@@ -2862,7 +2905,7 @@ def _tilt_tile_box(surf, camera, scene, tx, ty):
     elif ch in _WINDOW_CHARS:
         _tilt_window_box(surf, camera, scene, tx, ty)
     else:
-        _tilt_wall_box(surf, camera, scene, tx, ty)
+        _tilt_wall_box_cached(surf, camera, scene, tx, ty)
 
 
 # Spatial bucket size for the decoration cull (Move 1+2 of the perf strategy:
