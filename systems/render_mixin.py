@@ -679,7 +679,8 @@ class RenderMixin:
             draw_skybox(self.screen, (0, 0, SCREEN_W, SCREEN_H),
                         yaw=self.camera.yaw, kind=self._skybox_kind(),
                         horizon_frac=0.40)
-            _tilt_walls, _tilt_solid_decos, _tilt_wall_decos = draw_terrain_tilted(
+            (_tilt_walls, _tilt_solid_decos, _tilt_wall_decos,
+             _tilt_neighbor_solids) = draw_terrain_tilted(
                 self.screen, self.scene, self.camera, sight=_sight)
         else:
             self.scene.draw(self.screen, self.cam_x, self.cam_y, self.camera)
@@ -1027,6 +1028,17 @@ class RenderMixin:
                       draw_with_alpha(self.screen, wa,
                                       lambda s: _tilt_tile_box(
                                           s, self.camera, self.scene, tx, ty)))
+            # Phase 2+ of neighbor strips: emit the neighbor's wall-class
+            # tiles through a satellite camera (shifted by the offset so
+            # neighbor world coords project at the seam). Depth-sorted in
+            # host frame against the host actors, so a neighbor tree in
+            # front of the player sorts correctly.
+            for (n_scene, ntx, nty, hwx, hwy, sat_cam) in (
+                    _tilt_neighbor_solids or []):
+                _emit(self.camera.depth(hwx, hwy, _TILT_WALL_RISE),
+                      lambda n_scene=n_scene, ntx=ntx, nty=nty,
+                      sat_cam=sat_cam:
+                      _tilt_tile_box(self.screen, sat_cam, n_scene, ntx, nty))
             # Solid props (trees, headstones, lanterns -- the standees) wrap-
             # clone like decorations and used to emit one depth entry per
             # (prop x offset) pair. Brimley has ~420 such props x 9 wrap
