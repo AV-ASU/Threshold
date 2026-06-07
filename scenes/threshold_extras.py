@@ -122,9 +122,6 @@ def build_schoolhouse():
         if game.save.flag("schoolhouse_seen"):
             return
         game.save.set_flag("schoolhouse_seen", True)
-        game.show_notice("The children's schoolhouse. They slept in here, the "
-                         "grown ones, in rows, before they went down.",
-                         duration=4.5)
 
     def _school_interact(game):
         px, py = game.player.x, game.player.y
