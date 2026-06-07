@@ -1098,13 +1098,70 @@ def _tilt_lod_far(camera, tx, ty):
     return (dx * dx + dy * dy) > _TILT_LOD_FAR2
 
 
+# Tree-card cache. A tree's SHAPE (its silhouette relative to its ground point)
+# depends only on its per-tile seed + the camera ANGLES (yaw/pitch/scale) --
+# never on where the camera is panned to, since panning is a pure screen
+# translation. So the 3D tree is rendered ONCE per (tile, angle bucket) into a
+# small card and blitted at its projected base every frame after. During panning
+# (constant angles) every tree is a cache hit: one project + one blit instead of
+# 2-3 draw_solid, a dozen projects, and the polygon fills (the real per-frame
+# cost). The cache re-renders only when the head turns (yaw bucket changes); the
+# locked tilt pitch + zoom are effectively constant. FIFO-capped so roaming the
+# 100x100 town doesn't grow it without bound.
+_TREE_CARD_CACHE = {}
+_TREE_CARD_ORDER = []
+_TREE_CARD_CAP = 1600
+
+
 def _tilt_tree_solid(surf, camera, scene, tx, ty, ch, far=False):
+    """Draw a tree by blitting its cached card (see _TREE_CARD_CACHE). The 3D
+    body is rendered through `_tilt_tree_draw` on a cache miss; identical look,
+    a fraction of the per-frame cost."""
+    bx, by = camera.project(tx * TILE + 16, ty * TILE + 16, 0)
+    key = (tx, ty, far, round(camera.yaw, 2),
+           round(camera.pitch, 2), round(camera.scale, 2))
+    entry = _TREE_CARD_CACHE.get(key)
+    if entry is None:
+        entry = _build_tree_card(camera, scene, tx, ty, ch, far)
+        _TREE_CARD_CACHE[key] = entry
+        _TREE_CARD_ORDER.append(key)
+        if len(_TREE_CARD_ORDER) > _TREE_CARD_CAP:
+            _TREE_CARD_CACHE.pop(_TREE_CARD_ORDER.pop(0), None)
+    card, ax, ay = entry
+    if card is not None:
+        surf.blit(card, (bx - ax, by - ay))
+
+
+def _build_tree_card(camera, scene, tx, ty, ch, far):
+    """Cache-miss path: render one tree to a tight SRCALPHA card. Returns
+    (surface, anchor_x, anchor_y) where the anchor is the tree's ground point
+    within the card, so the caller blits at (base_x - anchor_x, base_y -
+    anchor_y). Uses a throwaway camera at the same angles whose origin pins the
+    base to a fixed spot on a padded scratch surface; the tight crop comes from
+    the rendered pixels' bounding rect."""
+    from rendering.camera import Camera
+    PAD = 90
+    tmp = pygame.Surface((PAD * 2, PAD * 2), pygame.SRCALPHA)
+    anchor = (PAD, int(PAD * 1.45))
+    tcam = Camera(cam_x=tx * TILE + 16, cam_y=ty * TILE + 16,
+                  pitch=camera.pitch, yaw=camera.yaw,
+                  scale=camera.scale, origin=anchor)
+    _tilt_tree_draw(tmp, tcam, scene, tx, ty, ch, far)
+    rect = tmp.get_bounding_rect()
+    if rect.width == 0 or rect.height == 0:
+        return (None, 0, 0)
+    card = tmp.subsurface(rect).copy()
+    return (card, anchor[0] - rect.x, anchor[1] - rect.y)
+
+
+def _tilt_tree_draw(surf, camera, scene, tx, ty, ch, far=False):
     """A tree as a real volumetric body: a brown cylindrical trunk + a tapered
     canopy projected through the camera as a body of revolution. Anchored to
     the tile, the silhouette varies correctly under yaw (a billboard never
     does -- it always faces the camera, swinging with the head turn). Per-
     tile seed varies trunk girth, canopy size, lean, palette + an occasional
-    secondary lobe so a band of trees doesn't read as a stamped row."""
+    secondary lobe so a band of trees doesn't read as a stamped row.
+    Rendered once per (tile, angle) into a card by _tilt_tree_solid."""
     from rendering.solids import draw_solid
     seed = (tx * 73856093) ^ (ty * 19349663)
     wx = tx * TILE + 16
