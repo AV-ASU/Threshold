@@ -91,7 +91,7 @@ CAM_LOOKAHEAD = 96
 # aim in the tilted view (the camera rides behind body, so this is the speed at
 # which the camera catches up to where the cursor is pointing). Mouse-driven
 # steering replaced explicit A/D turn input; A/D now strafes.
-TURN_RATE = 4.2
+TURN_RATE = 2.0
 
 # Dead-zone (radians) within which the body ignores small mouse-aim deltas, so
 # micro-jitter on the cursor doesn't shake the camera. ~8 degrees.
