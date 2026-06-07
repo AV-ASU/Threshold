@@ -382,6 +382,10 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         self.stillness_t = 0.0
         self._delayed_audio = []
         self._creepy_step_count = 0
+        # Infestation stage-transition tracker (infest_mixin fires
+        # infest_throb when the surface stage steps up). New game
+        # starts at 0 so 0 -> 1 trips on the first evidence cross.
+        self._last_infest_stage = 0
         # Flashback / ending state
         self._flashback_phase = None
         self._flashback_t = 0.0
@@ -1302,7 +1306,9 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         an investigate ping at the body and spikes visibility: the town
         turns its head toward what you just did."""
         pan = self.audio.pan_for_world(npc.x, self.player.x)
-        self.audio.play("enemy_die", 0.55, pan=pan)
+        dmult = self.audio.distance_attenuation(npc.x, npc.y,
+                                                self.player.x, self.player.y)
+        self.audio.play("enemy_die", 0.55 * dmult, pan=pan)
         tag = getattr(npc, "tag", None)
         is_cult = ((isinstance(tag, str) and tag.startswith("cult_"))
                    or getattr(npc, "sprite_kind", None) == "cultist")
@@ -1362,7 +1368,9 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         substrate references in late-game evidence files."""
         e.alive = False
         pan = self.audio.pan_for_world(e.x, self.player.x)
-        self.audio.play("enemy_die", 0.6, pan=pan)
+        dmult = self.audio.distance_attenuation(e.x, e.y,
+                                                self.player.x, self.player.y)
+        self.audio.play("enemy_die", 0.6 * dmult, pan=pan)
         kind = getattr(e, "kind", "")
         if kind == "wolf":
             arg = "animal_kills"
@@ -1732,6 +1740,14 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         t = max(0.0, min(1.0, (prox - 0.70) / 0.25))
         self._heartbeat_t = 5.0 - t * 3.8
         self.audio.play("heartbeat", 0.40 + prox * 0.30)
+        # As the King-spawn threshold (1.0) closes in, duck the music
+        # so each beat lands cleanly. Depth ramps with proximity: a
+        # subtle 0.65 at the prox=0.85 entry point, hardening to 0.30
+        # when the player is about to lose. Half a beat's worth of
+        # duck so the gap re-closes between heartbeats.
+        if prox > 0.85:
+            depth = 0.65 - 0.35 * max(0.0, min(1.0, (prox - 0.85) / 0.15))
+            self.audio.duck(self._heartbeat_t * 0.6, depth=depth)
 
     def _tick_cult_ambient(self, dt):
         """Reactive cult-rite audio bed. In CULT_AMBIENT_SCENES, the
@@ -1885,7 +1901,9 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
                     e.update(dt, self.scene, self.player)
                     if e.just_shot and e.shoot_sfx:
                         pan = self.audio.pan_for_world(e.x, self.player.x)
-                        self.audio.play(e.shoot_sfx, 0.55, pan=pan)
+                        dmult = self.audio.distance_attenuation(
+                            e.x, e.y, self.player.x, self.player.y)
+                        self.audio.play(e.shoot_sfx, 0.55 * dmult, pan=pan)
                 if not e.alive:
                     self.scene.enemies.remove(e)
             # A scene-placed cultist (the Works gauntlet uses Enemy-class
@@ -1915,7 +1933,9 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
                     p.update(dt, self.scene, self.player)
                     if p.hit:
                         pan = self.audio.pan_for_world(p.x, self.player.x)
-                        self.audio.play("hit", 0.55, pan=pan)
+                        dmult = self.audio.distance_attenuation(
+                            p.x, p.y, self.player.x, self.player.y)
+                        self.audio.play("hit", 0.55 * dmult, pan=pan)
                     if not p.alive:
                         self.scene.projectiles.remove(p)
                 # Sweep any enemy a projectile flagged dead. (The melee

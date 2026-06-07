@@ -15,4 +15,5 @@ venv/
 tools/sfx_previews/
 tools/chase_cues.png
 tools/atmosphere_cues.png
+tools/narrative_cues.png
 tools/audio_waveforms.png

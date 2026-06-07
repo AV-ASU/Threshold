@@ -219,6 +219,19 @@ class Audio:                        #Starting screen needs music, something simp
         self.sfx["watcher_dispel"] = self._build_watcher_dispel()
         self.sfx["hide_enter"]     = self._build_hide_enter()
         self.sfx["hide_exit"]      = self._build_hide_exit()
+        # ---- Death + world-rot beats ---------------------------------
+        # Bespoke death-card beds (CAPTURED / TAKEN INTO CUSTODY) so
+        # those endings carry their own identity instead of the generic
+        # low_pulse. Both run for the death-screen hold (~2.8s) on a
+        # single play() call from _trigger_death. infest_throb fires on
+        # each evidence-driven stage transition (the world rots more).
+        # evidence_added is the small case-file chime per canonical
+        # evidence beat. sheriff_hunt is the hollow lawman's signature.
+        self.sfx["captured_bed"]   = self._build_captured_bed()
+        self.sfx["custody_bed"]    = self._build_custody_bed()
+        self.sfx["infest_throb"]   = self._build_infest_throb()
+        self.sfx["evidence_added"] = self._build_evidence_added()
+        self.sfx["sheriff_hunt"]   = self._build_sheriff_hunt()
 
         # ---- DSP atmosphere pass --------------------------------------
         # Route the horror SFX through the dsp reverb + filter toolkit so
@@ -998,6 +1011,240 @@ class Audio:                        #Starting screen needs music, something simp
             stereo[i * 4 + 3] = buf[i * 2 + 1]
         return pygame.mixer.Sound(buffer=bytes(stereo))
 
+    def _build_captured_bed(self, duration_ms=2800, vol=0.32):
+        """The CAPTURED death-card bed. The cult has taken you for the
+        hive. 2.8s, plays once on _trigger_death('cultist') over the
+        death-screen hold. Numpy-vectorised so the synth doesn't add
+        notable cost at startup.
+
+        Beats in order: a grab thud (sub kick + breath spike), three
+        chant voices entering at descending pitches with vibrato
+        (58/65/72 Hz saws), a whisper layer in the vocal-formant
+        band that builds as they drag you, and a final descending
+        sub-glide as you go under."""
+        if not _HAVE_DSP:
+            return self._silent_stereo(duration_ms)
+        import numpy as _np
+        sr = 22050
+        n = int(sr * duration_ms / 1000)
+        t = _np.arange(n, dtype=_np.float32) / sr
+        # Grab thud at t=0: 50 Hz sine + broadband noise spike, 250ms.
+        kick_env = _np.exp(-t / 0.080).astype(_np.float32)
+        rng = _np.random.default_rng()
+        thud_noise = rng.uniform(-1.0, 1.0, n).astype(_np.float32)
+        thud_noise_env = _np.exp(-t / 0.030).astype(_np.float32)
+        kick = (_np.sin(2 * _np.pi * 50 * t) * 0.85 * kick_env
+                + thud_noise * 0.55 * thud_noise_env)
+        # Three chant voices, entering at t=0.3 / 0.6 / 0.9, holding
+        # to ~2.0s. Saw waves with vibrato; pitches 58/65/72 Hz.
+        def _chant(f, start, hold, vib_hz):
+            mask = (t >= start) & (t < start + hold)
+            local = _np.where(mask, t - start, 0.0)
+            attack = _np.minimum(1.0, local / 0.30)
+            decay = _np.maximum(0.0, 1.0 - (local - hold + 0.40) / 0.40)
+            env = _np.where(mask, attack * decay, 0.0)
+            # Saw wave with frequency vibrato.
+            vib = 1.0 + 0.04 * _np.sin(2 * _np.pi * vib_hz * t)
+            phase = _np.cumsum(2 * _np.pi * f * vib / sr).astype(_np.float32)
+            saw = (2.0 * (phase / (2 * _np.pi)
+                          - _np.floor(0.5 + phase / (2 * _np.pi))))
+            return (saw * env).astype(_np.float32)
+        chant = (_chant(58, 0.30, 1.80, 2.0) * 0.32
+                 + _chant(65, 0.60, 1.50, 2.3) * 0.26
+                 + _chant(72, 0.90, 1.20, 2.7) * 0.22)
+        # Whisper band-passed (vocal formant), ramps in from t=1.0.
+        breath = rng.uniform(-1.0, 1.0, n).astype(_np.float32)
+        breath = dsp.highpass(breath, 800)
+        breath = dsp.lowpass(breath, 2200)
+        breath_env = _np.maximum(0.0, _np.minimum(1.0, (t - 1.0) / 0.80))
+        breath_env = breath_env * _np.maximum(0.0, 1.0 - _np.maximum(0.0, t - 2.4) / 0.4)
+        breath_layer = breath * 0.45 * breath_env
+        # Final descending sub-glide t=2.3 -> 2.8, 80 -> 30 Hz.
+        glide_mask = (t >= 2.3)
+        glide_local = _np.where(glide_mask, (t - 2.3) / 0.5, 0.0)
+        glide_f = _np.where(glide_mask, 80.0 - 50.0 * glide_local, 0.0)
+        glide_phase = _np.cumsum(2 * _np.pi * glide_f / sr).astype(_np.float32)
+        glide_env = _np.where(glide_mask,
+                              _np.minimum(1.0, glide_local / 0.10)
+                              * _np.maximum(0.0, 1.0 - (glide_local - 0.10) / 0.90),
+                              0.0)
+        glide = _np.sin(glide_phase) * 0.40 * glide_env
+        mono = kick + chant + breath_layer + glide
+        mono = _np.clip(mono * vol, -1.0, 1.0)
+        stereo = _np.column_stack([mono, mono])
+        return pygame.sndarray.make_sound((stereo * 32767)
+                                          .astype(_np.int16))
+
+    def _build_custody_bed(self, duration_ms=2800, vol=0.42):
+        """The TAKEN INTO CUSTODY death-card bed. The hollow Sheriff
+        takes you in. 2.8s, plays once on _trigger_death('sheriff').
+
+        Beats: three slow boot thuds at t=0/0.5/1.0 (the lawman's
+        weight settling), a metallic cuff click at t=1.2, dead-air
+        silence over a thin sub rumble t=1.4-2.4, then a deep door
+        slam at t=2.5 as the room closes."""
+        if not _HAVE_DSP:
+            return self._silent_stereo(duration_ms)
+        import numpy as _np
+        sr = 22050
+        n = int(sr * duration_ms / 1000)
+        t = _np.arange(n, dtype=_np.float32) / sr
+        rng = _np.random.default_rng()
+        out = _np.zeros(n, dtype=_np.float32)
+        # Three boot thuds: 45 Hz sub kick + brief mid noise.
+        for boot_t in (0.0, 0.50, 1.00):
+            local = t - boot_t
+            env = _np.where(local >= 0,
+                            _np.exp(-local / 0.10), 0.0).astype(_np.float32)
+            noise_env = _np.where(local >= 0,
+                                  _np.exp(-local / 0.020), 0.0).astype(_np.float32)
+            kick = _np.sin(2 * _np.pi * 45 * t) * env * 0.75
+            scrape = rng.uniform(-1.0, 1.0, n).astype(_np.float32) * noise_env * 0.40
+            out += kick + scrape
+        # Cuff click at t=1.20: high transient (1200 Hz pluck + mid).
+        click_t = 1.20
+        click_local = t - click_t
+        click_env = _np.where(click_local >= 0,
+                              _np.exp(-click_local / 0.040), 0.0).astype(_np.float32)
+        click = (_np.sin(2 * _np.pi * 1200 * t) * 0.30
+                 + _np.sin(2 * _np.pi * 800 * t) * 0.20) * click_env
+        out += click
+        # Dead-air rumble t=1.4-2.4: thin sub at 40 Hz.
+        rumble_mask = (t >= 1.4) & (t < 2.4)
+        rumble = _np.where(rumble_mask,
+                           _np.sin(2 * _np.pi * 40 * t) * 0.22, 0.0)
+        out += rumble
+        # Door slam at t=2.50: 55 Hz sub kick + broadband noise burst,
+        # 250ms decay (heavy room-closing).
+        slam_t = 2.50
+        slam_local = t - slam_t
+        slam_env = _np.where(slam_local >= 0,
+                             _np.exp(-slam_local / 0.120), 0.0).astype(_np.float32)
+        slam_noise_env = _np.where(slam_local >= 0,
+                                   _np.exp(-slam_local / 0.040), 0.0).astype(_np.float32)
+        slam = (_np.sin(2 * _np.pi * 55 * t) * 0.85 * slam_env
+                + rng.uniform(-1.0, 1.0, n).astype(_np.float32)
+                  * 0.55 * slam_noise_env)
+        out += slam
+        out = _np.clip(out * vol, -1.0, 1.0)
+        stereo = _np.column_stack([out, out])
+        return pygame.sndarray.make_sound((stereo * 32767)
+                                          .astype(_np.int16))
+
+    def _build_infest_throb(self, duration_ms=1600, vol=0.34):
+        """A wet structural groan -- the world rots one stage further.
+        Plays on each infestation stage transition (0->1, 1->2, 2->3).
+        Slow attack so it reads as ambient pressure rather than a hit;
+        sub fundamental + mid partial so laptop speakers carry it."""
+        sr = 22050
+        n = int(sr * duration_ms / 1000)
+        dur_s = duration_ms / 1000.0
+        buf = bytearray(n * 2)
+        smooth = 0.0
+        phase = 0.0
+        for i in range(n):
+            tt = i / sr
+            # Sub fundamental sliding downward 70 -> 35 Hz across the
+            # duration -- pitch sinking = world giving way.
+            f = 70.0 - 35.0 * (tt / dur_s)
+            phase += 2 * math.pi * f / sr
+            fund = math.sin(phase) * 0.65
+            # Mid partial at 3x the (initial) fundamental so the cue
+            # carries on small speakers.
+            mid = math.sin(2 * math.pi * 210 * tt) * 0.22
+            # Noise layer for the "structural" texture (creaking,
+            # settling); smoothed so it isn't bright.
+            smooth = 0.91 * smooth + 0.09 * random.uniform(-1, 1)
+            noise = smooth * 0.35
+            # Slow attack 400ms, slow decay across the rest.
+            if tt < 0.40:
+                env = (tt / 0.40) ** 1.5
+            else:
+                env = max(0.0, 1.0 - (tt - 0.40) / (dur_s - 0.40)) ** 1.2
+            v = (fund + mid + noise) * env
+            sample = max(-32768, min(32767,
+                                     int(max(-1.0, min(1.0, v))
+                                         * vol * 32767 / 1.20)))
+            buf[i * 2]     = sample & 0xFF
+            buf[i * 2 + 1] = (sample >> 8) & 0xFF
+        stereo = bytearray(n * 4)
+        for i in range(n):
+            stereo[i * 4]     = buf[i * 2]
+            stereo[i * 4 + 1] = buf[i * 2 + 1]
+            stereo[i * 4 + 2] = buf[i * 2]
+            stereo[i * 4 + 3] = buf[i * 2 + 1]
+        return pygame.mixer.Sound(buffer=bytes(stereo))
+
+    def _build_evidence_added(self, duration_ms=420, vol=0.28):
+        """A small warm chime for case-file beats -- played the moment
+        a canonical evidence entry is appended. Two stacked sines at
+        a perfect fifth (440 + 660 Hz) with a soft attack and a long
+        decay. Warmer than `confirm`, colder than `pickup_rare` so it
+        reads as 'noted' rather than 'won'."""
+        sr = 22050
+        n = int(sr * duration_ms / 1000)
+        dur_s = duration_ms / 1000.0
+        buf = bytearray(n * 2)
+        attack_n = max(1, int(sr * 0.030))
+        for i in range(n):
+            tt = i / sr
+            # Slight vibrato on the upper voice, none on the lower.
+            v1 = math.sin(2 * math.pi * 440 * tt) * 0.55
+            v2 = math.sin(2 * math.pi * 660 * tt
+                          + 0.10 * math.sin(2 * math.pi * 4.5 * tt)) * 0.40
+            if i < attack_n:
+                env = i / attack_n
+            else:
+                env = max(0.0, 1.0 - (tt - 0.030) / (dur_s - 0.030)) ** 1.4
+            v = (v1 + v2) * env
+            sample = max(-32768, min(32767, int(v * vol * 32767)))
+            buf[i * 2]     = sample & 0xFF
+            buf[i * 2 + 1] = (sample >> 8) & 0xFF
+        stereo = bytearray(n * 4)
+        for i in range(n):
+            stereo[i * 4]     = buf[i * 2]
+            stereo[i * 4 + 1] = buf[i * 2 + 1]
+            stereo[i * 4 + 2] = buf[i * 2]
+            stereo[i * 4 + 3] = buf[i * 2 + 1]
+        return pygame.mixer.Sound(buffer=bytes(stereo))
+
+    def _build_sheriff_hunt(self, duration_ms=620, vol=0.40):
+        """The hollow Sheriff's signature: a slow heavy boot thud + a
+        held sub-tone (his presence). Fired on _spawn_hunting_sheriff
+        and again when his intro ends and he starts chasing. The
+        sub-tone holds across the duration so the cue lingers as
+        'something just settled into the room'."""
+        sr = 22050
+        n = int(sr * duration_ms / 1000)
+        dur_s = duration_ms / 1000.0
+        buf = bytearray(n * 2)
+        smooth = 0.0
+        for i in range(n):
+            tt = i / sr
+            # Boot thud: 45 Hz sub-kick with fast decay (180ms).
+            kick_env = max(0.0, math.exp(-tt / 0.090))
+            kick = math.sin(2 * math.pi * 45 * tt) * 0.85 * kick_env
+            # Mid scrape: brief 220 Hz noise body (50ms).
+            smooth = 0.55 * smooth + 0.45 * random.uniform(-1, 1)
+            scrape_env = max(0.0, math.exp(-tt / 0.025))
+            scrape = smooth * 0.40 * scrape_env
+            # Held sub-tone: 60 Hz sine across the full duration with a
+            # slow fade. Reads as 'his weight, sitting in the room'.
+            hold_env = max(0.0, 1.0 - tt / dur_s) ** 1.4
+            hold = math.sin(2 * math.pi * 60 * tt) * 0.32 * hold_env
+            v = kick + scrape + hold
+            sample = max(-32768, min(32767, int(max(-1.0, min(1.0, v))
+                                                * vol * 32767 / 1.30)))
+            buf[i * 2]     = sample & 0xFF
+            buf[i * 2 + 1] = (sample >> 8) & 0xFF
+        stereo = bytearray(n * 4)
+        for i in range(n):
+            stereo[i * 4]     = buf[i * 2]
+            stereo[i * 4 + 1] = buf[i * 2 + 1]
+            stereo[i * 4 + 2] = buf[i * 2]
+            stereo[i * 4 + 3] = buf[i * 2 + 1]
+        return pygame.mixer.Sound(buffer=bytes(stereo))
+
     def flashback_air(self, on, volume=0.9):
         """Loop / stop the falling-air bed on the ambient channel for the
         journal door-dream. Mirrors king_tone's pattern (own channel, clean
@@ -1240,6 +1487,19 @@ class Audio:                        #Starting screen needs music, something simp
         source is at the player's column. Vertical offset is ignored --
         ear separation is left/right only."""
         return max(-1.0, min(1.0, (world_x - player_x) / half_width))
+
+    def distance_attenuation(self, sx, sy, px, py, falloff=240.0):
+        """Distance-based volume multiplier (0..1) for a positioned
+        cue. Curve is 1 / (1 + (d/falloff)^2), so:
+            d=0      -> 1.0
+            d=120    -> 0.80
+            d=240    -> 0.50  (the `falloff` half-volume point)
+            d=480    -> 0.20
+            d=720    -> 0.10
+        Apply alongside pan_for_world so far-away sources both pan AND
+        quiet, instead of just panning at full volume."""
+        d = math.hypot(sx - px, sy - py)
+        return 1.0 / (1.0 + (d / max(1.0, falloff)) ** 2)
 
     def play_music(self, track_name, fade_in_ms=400):
         if not self.enabled:

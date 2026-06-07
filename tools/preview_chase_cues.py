@@ -37,6 +37,11 @@ CUE_SETS = {
         ("sfx", "heartbeat"), ("sfx", "low_pulse"),
         ("sfx", "whisper"), ("sfx", "cult_chant"),
     ],
+    "narrative": [
+        ("sfx", "captured_bed"), ("sfx", "custody_bed"),
+        ("sfx", "infest_throb"), ("sfx", "evidence_added"),
+        ("sfx", "sheriff_hunt"),
+    ],
 }
 
 
@@ -137,7 +142,8 @@ def main():
             loc="left")
 
     titles = {"chase": "THRESHOLD chase-loop cues",
-              "atmosphere": "THRESHOLD atmospheric bed"}
+              "atmosphere": "THRESHOLD atmospheric bed",
+              "narrative": "THRESHOLD death + world-rot beats"}
     fig.suptitle(titles.get(args.set, args.set), color="#ecc840",
                  fontsize=13, fontfamily="monospace", y=0.995)
     fig.savefig(out_path, dpi=110, facecolor=fig.get_facecolor(),

@@ -47,6 +47,8 @@ def _evidence(game, name, content, weight=None):
             game.save.set_arg("evidence", log)
             if hasattr(game, "_flash_notebook"):
                 game._flash_notebook()    # corner scribble: you wrote it down
+            if hasattr(game, "audio"):
+                game.audio.play("evidence_added", 0.7)
     game.dialog.show(lines,
                      speaker="", voice="blip_soft",
                      portrait="narrator")

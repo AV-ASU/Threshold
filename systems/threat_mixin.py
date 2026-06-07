@@ -89,12 +89,16 @@ class ThreatMixin:
             if getattr(n, "_just_locked", False):
                 n._just_locked = False
                 pan = self.audio.pan_for_world(n.x, self.player.x)
-                self.audio.play("cult_lock", 0.55, pan=pan)
+                dmult = self.audio.distance_attenuation(
+                    n.x, n.y, self.player.x, self.player.y)
+                self.audio.play("cult_lock", 0.55 * dmult, pan=pan)
                 self.audio.duck(0.7, depth=0.4)
             elif getattr(n, "_just_lost", False):
                 n._just_lost = False
                 pan = self.audio.pan_for_world(n.x, self.player.x)
-                self.audio.play("cult_lose", 0.45, pan=pan)
+                dmult = self.audio.distance_attenuation(
+                    n.x, n.y, self.player.x, self.player.y)
+                self.audio.play("cult_lose", 0.45 * dmult, pan=pan)
             if d < 22 and not hidden and self.player.invuln <= 0:
                 self._trigger_death("cultist")
                 return
@@ -116,12 +120,16 @@ class ThreatMixin:
             if getattr(e, "_just_locked", False):
                 e._just_locked = False
                 pan = self.audio.pan_for_world(e.x, self.player.x)
-                self.audio.play("cult_lock", 0.55, pan=pan)
+                dmult = self.audio.distance_attenuation(
+                    e.x, e.y, self.player.x, self.player.y)
+                self.audio.play("cult_lock", 0.55 * dmult, pan=pan)
                 self.audio.duck(0.7, depth=0.4)
             elif getattr(e, "_just_lost", False):
                 e._just_lost = False
                 pan = self.audio.pan_for_world(e.x, self.player.x)
-                self.audio.play("cult_lose", 0.45, pan=pan)
+                dmult = self.audio.distance_attenuation(
+                    e.x, e.y, self.player.x, self.player.y)
+                self.audio.play("cult_lose", 0.45 * dmult, pan=pan)
 
     def _tick_gaze_bind(self, dt):
         """His gaze, binding the curse (NARRATIVE 1b/3). In a GAZE_BIND_SCENES
@@ -694,7 +702,9 @@ class ThreatMixin:
         if self.scene is not None and w in self.scene.npcs:
             self.scene.npcs.remove(w)
         pan = self.audio.pan_for_world(w.x, self.player.x)
-        self.audio.play("watcher_dispel", 0.55, pan=pan)
+        dmult = self.audio.distance_attenuation(
+            w.x, w.y, self.player.x, self.player.y)
+        self.audio.play("watcher_dispel", 0.55 * dmult, pan=pan)
         if (self._cursed and not self._watchers and self.scene is not None
                 and self.scene.key not in KING_FREE_SCENES):
             self._cursed = False
@@ -751,8 +761,10 @@ class ThreatMixin:
         if kind == "king":
             self.audio.play("void_sting", 0.9)
             self.audio.play("low_pulse", 0.8)
+        elif kind == "sheriff":
+            self.audio.play("custody_bed", 1.0)
         else:
-            self.audio.play("low_pulse", 0.7)
+            self.audio.play("captured_bed", 1.0)
 
     def _tick_death(self, dt):
         """Hold the death screen, then resolve -- both END the run.
