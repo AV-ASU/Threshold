@@ -22,7 +22,7 @@ CANONICAL_EVIDENCE = {
 }
 
 
-def _evidence(game, name, content, weight=None):
+def _evidence(game, name, content, weight=None, show=True):
     """Surface a one-shot narrator line. If `name` is one of the six CANONICAL
     beats it is ALSO logged as evidence -- counting toward the King-gate and
     raising the visibility FLOOR by its canonical weight (the "knowing dooms
@@ -49,9 +49,13 @@ def _evidence(game, name, content, weight=None):
                 game._flash_notebook()    # corner scribble: you wrote it down
             if hasattr(game, "audio"):
                 game.audio.play("evidence_added", 0.7)
-    game.dialog.show(lines,
-                     speaker="", voice="blip_soft",
-                     portrait="narrator")
+    # `show=False` files the beat (log + scribble) WITHOUT the forced dialog --
+    # for readable items whose text lives in the kit, so picking one up doesn't
+    # hijack the moment to read it at you.
+    if show:
+        game.dialog.show(lines,
+                         speaker="", voice="blip_soft",
+                         portrait="narrator")
 
 
 def escalate(game, low, mid, high):

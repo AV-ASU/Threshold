@@ -467,16 +467,12 @@ def build_works_scriptorium():
                 "waiting for the page where somebody admits they were tricked. "
                 "It isn't here.",
             ])
-            game.dialog.show([
-                "[c=dim]Among the loose copies, one volume is bound and "
-                "whole. Not the Sign traced again. Their own testimony, in a "
-                "hundred different hands. You take it.[/c]",
-                "[c=dim]The scribe is wet to the knee.[/c]",
-            ], speaker="", voice="blip_soft", portrait="narrator")
-            # Reading their notes seeds the want-to-leave (the King's pull to
-            # carry the Sign out; felt as the PI's own sourceless urge, never
-            # named). Chained off the pickup so it reads as one beat.
-            game.dialog.on_complete = lambda: game._descent_voice("descent_leave")
+            game.show_notice("The Calling. Their own testimony.")
+            # Carrying off their confessions seeds the want-to-leave (the King's
+            # pull to bear the Sign out, felt as the PI's own sourceless urge,
+            # never named). The testimony itself reads from the kit, not on
+            # pickup; the PI's interior pull still fires here.
+            game._descent_voice("descent_leave")
             return
     sc.on_interact_fn = _interact
     # The scribes drew doors as obsessively as they copied the Sign -- swarm
@@ -744,10 +740,7 @@ def build_the_sump():
                 "the last payment is close. I never took a confession this "
                 "happy.",
             ])
-            game.dialog.show([
-                "[c=dim]More of their testimony, tucked among the diggers' "
-                "supplies. The same grateful hands. You take it.[/c]",
-            ], speaker="", voice="blip_soft", portrait="narrator")
+            game.show_notice("The Bargain. Their own testimony.")
             return
     sc.on_interact_fn = _interact
     return sc

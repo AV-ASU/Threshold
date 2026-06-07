@@ -48,12 +48,27 @@ ITEM_DEFS = {
                        "desc": "A coarse wool robe."},
     "mom_notebook":  {"name": "Mara's Journal",
                        "kind": "lore",
-                       "desc": "Her descent, in her own words."},
+                       "desc": "Her last entries, in a hand that gets calmer "
+                               "as it goes:\n\n"
+                               "\"I just had this urge to go north. Stopped "
+                               "for gas in this town. Everyone smiles like "
+                               "I'm already home.\"\n\n"
+                               "\"I had Him wrong. He isn't out past the corn. "
+                               "He's under it. You don't walk to Him. You go "
+                               "down.\"\n\n"
+                               "\"There's a mouth below the town. The others "
+                               "went ahead of me, down it, and not one has "
+                               "climbed back up. Tomorrow I follow them down. "
+                               "I feel so close now.\""},
     "unsent_letter": {"name": "Mara's Letter",
                        "kind": "lore",
-                       "desc": "Stamped, never mailed. Opens \"Dad.\" "
-                               "Closes: \"I'm not lost. I've never been "
-                               "this close.\""},
+                       "desc": "Stamped, never mailed.\n\n"
+                               "\"Dad. ...I'm sorry for how I left. I couldn't "
+                               "explain it and have it sound sane. The dreams "
+                               "aren't dreams anymore. They're full of answers. "
+                               "I'm just hunting the questions now. Don't come "
+                               "after me. I'm not lost. I've never been this "
+                               "close.\""},
     # ---- The cult's testimony (three found fragments; gate nothing) ----
     # The congregation's own record, split across three leaves found down the
     # descent. The cult's voice lives in the DESCRIPTION (their personal
