@@ -25,38 +25,117 @@ def _disc(surf, cam, wx, wy, hz, rx, ry, col, fill=True, width=2):
 
 
 def _draw_well_solid(surf, cam, deco):
-    """The wellhead, as a real volume: a fitted-stone drum, a mossy cap, the
-    black shaft mouth, a timber winch gallows (two posts + beam), and the rope
-    descending into the dark. The ONLY way down into the Works -- now it reads
-    like a thing you could lean over and fall into."""
+    """The wellhead, as a real volume. Big enough to lean over. Course-laid
+    fitted-stone drum with a mossy crown, a sunken throat that fades from rim
+    light into abyss black across multiple inset rings (the descent), and a
+    timber winch gallows with a hand crank, rope wrap, and a battered bucket
+    half-into the shaft. The ONLY way down to the Works -- it must read like
+    a thing, not a tile."""
     wx, wy = deco.x, deco.y
     s = (getattr(deco, "scale", 1.0) or 1.0)
-    R = 17 * s
+    R = 28 * s                                  # was 17 -- monumental
+    H_DRUM = 16 * s                             # drum rises above the path
     drum = {"body": (96, 94, 100), "lo": (52, 50, 56), "rim": (152, 152, 164)}
+    # Body of revolution: belled base + straight drum + slight flare at the rim
     draw_solid(surf, cam, wx, wy,
-               [(0, R, R), (11 * s, R, R), (15 * s, R * 0.94, R * 0.94)], drum)
-    # mossy cap ring + the black shaft mouth on the rim
-    _disc(surf, cam, wx, wy, 15 * s, R * 0.94, R * 0.94, (64, 82, 58),
-          fill=False, width=2)
-    _disc(surf, cam, wx, wy, 15 * s, R * 0.66, R * 0.66, (7, 7, 9))
-    # timber winch gallows: two posts at the near rim + a cross-beam, drawn
-    # at the front of the drum (wy + R*0.6) so they read as flanking timbers
+               [(0, R * 1.06, R * 1.06),
+                (3 * s, R, R),
+                (H_DRUM - 2 * s, R, R),
+                (H_DRUM, R * 1.04, R * 1.04)], drum)
+    # Stone-course joint bands so the drum reads as fitted stone, not a tube
+    for hz in (5 * s, 9 * s, 13 * s):
+        _disc(surf, cam, wx, wy, hz, R * 1.005, R * 1.005,
+              _shade(drum["lo"], 0.85), fill=False, width=1)
+    # Crown ring: a darker mortar groove just under the rim, then the rim cap
+    _disc(surf, cam, wx, wy, H_DRUM - 1 * s, R * 0.99, R * 0.99,
+          _shade(drum["lo"], 0.6), fill=False, width=1)
+    _disc(surf, cam, wx, wy, H_DRUM, R * 1.04, R * 1.04,
+          drum["rim"], fill=False, width=2)
+    # Moss on the crown: a few short arcs, not a closed ring, so it looks
+    # patchy rather than painted on. Two clumps, NE and SW.
+    moss = (74, 92, 56)
+    cx, cy = cam.project(wx, wy, H_DRUM)
+    rxp = int(R * 1.02 * cam.scale)
+    ryp = int(R * 1.02 * cam.ground_squash() * cam.scale)
+    if rxp > 2 and ryp > 1:
+        rect = (cx - rxp, cy - ryp, rxp * 2, ryp * 2)
+        pygame.draw.arc(surf, moss, rect, math.radians(20),
+                        math.radians(70), 2)
+        pygame.draw.arc(surf, moss, rect, math.radians(200),
+                        math.radians(245), 2)
+        pygame.draw.arc(surf, _shade(moss, 1.2), rect, math.radians(30),
+                        math.radians(55), 1)
+    # THROAT: nested inset rings that fade from inner-rim grey to abyss black
+    # so the shaft reads as a deep hole, not a painted dot. Each ring sits a
+    # touch lower than the previous so the descent has a real lip.
+    for i, (r_f, h_f, col) in enumerate([
+            (0.90, H_DRUM - 0.5 * s, (28, 26, 30)),
+            (0.80, H_DRUM - 1.8 * s, (16, 14, 16)),
+            (0.66, H_DRUM - 3.5 * s, (6, 6, 8)),
+            (0.50, H_DRUM - 5.5 * s, (2, 2, 3)),
+            (0.32, H_DRUM - 8.0 * s, (0, 0, 0))]):
+        _disc(surf, cam, wx, wy, h_f, R * r_f, R * r_f, col)
+    # A faint rim-light scratch where the inner stones meet the throat
+    _disc(surf, cam, wx, wy, H_DRUM - 0.4 * s, R * 0.92, R * 0.92,
+          _shade(drum["rim"], 0.7), fill=False, width=1)
+    # Timber winch gallows: thicker posts (a real beam you'd hang weight on),
+    # cross-beam over the centre, a hand crank on the east post, rope wrap on
+    # the beam, and the rope feeding into the dark.
     post = (120, 88, 52)
-    beam_h = 30 * s
-    py = wy + R * 0.6
-    lw = max(2, int(3 * s))
-    for ox in (-R * 0.9, R * 0.9):
-        b = cam.project(wx + ox, py, 0)
-        t = cam.project(wx + ox, py, beam_h)
-        pygame.draw.line(surf, post, b, t, lw)
-        pygame.draw.line(surf, _shade(post, 0.7), b, t, 1)
-    bl = cam.project(wx - R * 0.9, py, beam_h)
-    br = cam.project(wx + R * 0.9, py, beam_h)
-    pygame.draw.line(surf, _shade(post, 1.2), bl, br, lw)
-    # rope from the beam centre down into the shaft
+    beam_h = 44 * s
+    py = wy + R * 0.55
+    lw = max(3, int(4 * s))
+    for ox in (-R * 0.92, R * 0.92):
+        bx, by = cam.project(wx + ox, py, 0)
+        tx, ty = cam.project(wx + ox, py, beam_h)
+        # post shaft (thick)
+        pygame.draw.line(surf, post, (bx, by), (tx, ty), lw)
+        pygame.draw.line(surf, _shade(post, 0.6), (bx, by), (tx, ty), 1)
+        pygame.draw.line(surf, _shade(post, 1.25),
+                         (bx - 1, by), (tx - 1, ty), 1)
+    # Diagonal brace timbers between post base and beam centre (a sturdier
+    # silhouette than two thin uprights)
+    for ox in (-R * 0.92, R * 0.92):
+        a = cam.project(wx + ox, py, 6 * s)
+        b = cam.project(wx + ox * 0.35, py, beam_h - 1 * s)
+        pygame.draw.line(surf, _shade(post, 0.85), a, b, max(2, int(2 * s)))
+    bl = cam.project(wx - R * 0.92, py, beam_h)
+    br = cam.project(wx + R * 0.92, py, beam_h)
+    pygame.draw.line(surf, _shade(post, 1.25), bl, br, lw)
+    pygame.draw.line(surf, _shade(post, 0.55), bl, br, 1)
+    # Hand-crank: a small dark drum + handle off the east post
+    cdx = R * 0.92
+    cdh = beam_h * 0.6
+    cd_b = cam.project(wx + cdx - 4 * s, py - 1, cdh)
+    cd_t = cam.project(wx + cdx + 4 * s, py + 1, cdh)
+    pygame.draw.line(surf, _shade(post, 0.45),
+                     cd_b, cd_t, max(3, int(4 * s)))
+    handle = cam.project(wx + cdx + 6 * s, py + 4 * s, cdh - 2 * s)
+    pygame.draw.line(surf, post, cd_t, handle, max(2, int(2 * s)))
+    # Rope wrap on the beam centre + the rope down into the throat
+    rope = (152, 132, 94)
+    rw_a = cam.project(wx - 3 * s, py, beam_h)
+    rw_b = cam.project(wx + 3 * s, py, beam_h)
+    pygame.draw.line(surf, rope, rw_a, rw_b, max(2, int(3 * s)))
     rt = cam.project(wx, py, beam_h - 1 * s)
-    rb = cam.project(wx, wy, 11 * s)
-    pygame.draw.line(surf, (152, 132, 94), rt, rb, max(1, int(2 * s)))
+    rb = cam.project(wx, wy + R * 0.15, H_DRUM - 6 * s)
+    pygame.draw.line(surf, rope, rt, rb, max(1, int(2 * s)))
+    # The bucket: a small wooden cylinder hanging off-centre on the rope,
+    # half-eaten by the throat shadow. Anchors the gallows visually + gives
+    # the well a "in use" feel.
+    bx_w = wx - 1 * s
+    by_w = wy + R * 0.12
+    bz0 = H_DRUM - 7 * s
+    bz1 = H_DRUM - 2 * s
+    bR = 3.5 * s
+    bk = {"body": (96, 70, 44), "lo": (50, 36, 22), "rim": (140, 104, 64)}
+    draw_solid(surf, cam, bx_w, by_w, [(bz0, bR, bR), (bz1, bR, bR)], bk)
+    _disc(surf, cam, bx_w, by_w, bz1, bR, bR, _shade(bk["lo"], 0.7),
+          fill=False, width=1)
+    # Rope's last inch sits ON the bucket handle
+    bh_a = cam.project(bx_w - bR, by_w, bz1 + 1 * s)
+    bh_b = cam.project(bx_w + bR, by_w, bz1 + 1 * s)
+    pygame.draw.line(surf, rope, bh_a, bh_b, max(1, int(1.5 * s)))
 
 
 def _draw_pillar_solid(surf, cam, deco):
