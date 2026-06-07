@@ -1065,14 +1065,143 @@ def _corn_runs(scene):
 _TILT_STANDEE_CACHE = {}
 
 
+def _tilt_tree_solid(surf, camera, scene, tx, ty, ch):
+    """A tree as a real volumetric body: a brown cylindrical trunk + a tapered
+    canopy projected through the camera as a body of revolution. Anchored to
+    the tile, the silhouette varies correctly under yaw (a billboard never
+    does -- it always faces the camera, swinging with the head turn). Per-
+    tile seed varies trunk girth, canopy size, lean, palette + an occasional
+    secondary lobe so a band of trees doesn't read as a stamped row."""
+    from rendering.solids import draw_solid
+    seed = (tx * 73856093) ^ (ty * 19349663)
+    wx = tx * TILE + 16
+    wy = ty * TILE + 16
+    trunk_r = 2.4 + (_vary(seed, 0) % 10) * 0.12   # 2.4..3.5
+    trunk_h = 13 + (_vary(seed, 1) % 7)            # 13..19
+    canopy_r = 11 + (_vary(seed, 2) % 6)           # 11..16
+    canopy_h = 24 + (_vary(seed, 3) % 9)           # 24..32
+    lean_x = ((_vary(seed, 4) % 7) - 3) * 0.6      # -1.8..1.8
+    g = _vary(seed, 5) % 12
+    # Trunk -- the gnarled bole, slight base flare
+    trunk_pal = {
+        "body": (60 + g // 3, 42 + g // 4, 26 + g // 4),
+        "lo":   (32 + g // 4, 22 + g // 4, 14 + g // 4),
+        "rim":  (102 + g // 2, 72 + g // 3, 46 + g // 3),
+    }
+    draw_solid(surf, camera, wx, wy,
+               [(0, trunk_r * 1.22, trunk_r * 1.22),
+                (trunk_h * 0.5, trunk_r, trunk_r),
+                (trunk_h, trunk_r * 0.86, trunk_r * 0.86)],
+               trunk_pal)
+    # Canopy -- stacked elliptical sections form a tapered sphere
+    canopy_pal = {
+        "body": (24 + g, 54 + g, 30 + g // 2),
+        "lo":   (14 + g // 2, 36 + g, 20 + g // 2),
+        "rim":  (44 + g, 80 + g, 48 + g),
+    }
+    z0 = trunk_h * 0.80
+    h = canopy_h
+    draw_solid(surf, camera, wx + lean_x, wy,
+               [(z0,             canopy_r * 0.32, canopy_r * 0.32),
+                (z0 + h * 0.20,  canopy_r * 0.85, canopy_r * 0.85),
+                (z0 + h * 0.45,  canopy_r * 1.00, canopy_r * 1.00),
+                (z0 + h * 0.70,  canopy_r * 0.92, canopy_r * 0.92),
+                (z0 + h * 0.90,  canopy_r * 0.55, canopy_r * 0.55),
+                (z0 + h,         canopy_r * 0.15, canopy_r * 0.15)],
+               canopy_pal)
+    # Occasional offset lobe so the canopy isn't perfectly axis-symmetric.
+    if (_vary(seed, 6) % 3) == 0:
+        ox = ((_vary(seed, 7) % 11) - 5) * 0.9
+        oy = ((_vary(seed, 8) % 7) - 3) * 0.45
+        zoff = h * 0.22
+        rr = canopy_r * 0.55
+        draw_solid(surf, camera, wx + lean_x + ox, wy + oy,
+                   [(z0 + zoff,            rr * 0.4, rr * 0.4),
+                    (z0 + zoff + rr,       rr,       rr),
+                    (z0 + zoff + rr * 2.2, rr * 0.3, rr * 0.3)],
+                   canopy_pal)
+
+
+def _tilt_corn_solid(surf, camera, scene, tx, ty, ch):
+    """A corn tile as 5-6 stalks drawn as REAL 3D lines projected through the
+    camera: each stalk has a ground base, a midpoint, a swaying tip, four
+    leaves (a low pair + an upper pair) fanning at mid-height, and a paler
+    tassel + tassel beard at the top. Anchored in the scene so the cluster
+    turns with yaw (a camera-facing card never does). The layout mirrors the
+    flat _draw_corn proportions but uses thicker strokes + extra leaves so
+    a dense cornfield reads as a wall under tilt, not a thicket of bare
+    twigs."""
+    seed = (tx * 73856093) ^ (ty * 19349663)
+    wx0 = tx * TILE
+    wy0 = ty * TILE
+    sim_t = pygame.time.get_ticks() / 600.0
+    n = 5 + (_vary(seed, 0) % 2)            # 5 or 6 stalks per tile
+    g = _vary(seed, 1) % 10
+    stalk_dk = (40 + g // 2, 54 + g // 2, 26 + g // 3)
+    stalk_col = (58 + g, 72 + g, 38 + g // 2)
+    blade_col = (82 + g, 96 + g, 48 + g)
+    blade_hi = (108 + g, 124 + g, 64 + g)
+    tip_col   = (170 + g, 142, 72)
+    tassel_col = (208 + g, 184, 96)
+    amp = 2.0 + (_vary(seed, 2) % 3)
+    ph  = (seed % 628) / 100.0
+    for si in range(n):
+        bx_off = 5 + (si * (TILE - 10)) / max(1, n - 1) + (_vary(seed, 30 + si) % 5) - 2
+        sx_off = bx_off + (_vary(seed, 10 + si) % 7) - 3
+        top_h  = TILE + 6 + (_vary(seed, 20 + si) % 9)        # world height
+        # Per-stalk wy jitter so they don't all line up at the tile's south edge
+        wy_jit = (_vary(seed, 40 + si) % 9) - 4
+        tip_sway = math.sin(sim_t + ph + si * 0.7) * amp
+        wx_base = wx0 + bx_off
+        wy_base = wy0 + TILE - 1 + wy_jit * 0.4
+        wx_top  = wx0 + sx_off + tip_sway
+        wx_mid  = (wx_base + wx_top) / 2
+        wz_mid  = top_h / 2
+        p_base = camera.project(wx_base, wy_base, 0)
+        p_mid  = camera.project(wx_mid,  wy_base, wz_mid)
+        p_top  = camera.project(wx_top,  wy_base, top_h)
+        # Dark backing stroke -> lighter front stroke for body
+        pygame.draw.line(surf, stalk_dk,  p_base, p_mid, 3)
+        pygame.draw.line(surf, stalk_dk,  p_mid,  p_top, 3)
+        pygame.draw.line(surf, stalk_col, p_base, p_mid, 2)
+        pygame.draw.line(surf, stalk_col, p_mid,  p_top, 2)
+        # Two pairs of leaves (lower + upper) fanning out in world space
+        for ly_off, side in (
+                (wz_mid * 0.55, -1), (wz_mid * 0.55, 1),
+                (wz_mid * 1.05, -1), (wz_mid * 1.05, 1)):
+            base_x = wx_base + (wx_mid - wx_base) * (ly_off / wz_mid)
+            leaf_x = base_x + side * 9
+            leaf_y = wy_base + side * 0.6
+            leaf_z = ly_off - 1
+            p_attach = camera.project(base_x, wy_base, ly_off)
+            p_tip = camera.project(leaf_x, leaf_y, leaf_z)
+            pygame.draw.line(surf, blade_col, p_attach, p_tip, 2)
+            # Lit upper edge
+            p_tip_hi = camera.project(leaf_x - side * 0.5, leaf_y, leaf_z + 1)
+            pygame.draw.line(surf, blade_hi, p_attach, p_tip_hi, 1)
+        # Tassel head: a pale paddle + a beard of fine strokes radiating out
+        p_tassel_top = camera.project(wx_top, wy_base, top_h + 5)
+        pygame.draw.line(surf, tip_col, p_top, p_tassel_top, 2)
+        pygame.draw.circle(surf, tassel_col,
+                           (int(p_tassel_top[0]), int(p_tassel_top[1])), 2)
+        for k in range(3):
+            ang = -math.pi / 2 + (k - 1) * 0.6
+            p_b = camera.project(wx_top + math.cos(ang) * 3,
+                                 wy_base + math.sin(ang) * 0.6,
+                                 top_h + 5 + math.sin(ang) * 2)
+            pygame.draw.line(surf, tassel_col, p_tassel_top, p_b, 1)
+
+
 def _tilt_standee(surf, camera, scene, tx, ty, ch):
-    """Stand a tree / cornstalk up as a camera-facing billboard whose base sits
-    on the floor at the tile centre. The flat tile art (_draw_tree/_draw_corn)
-    is rendered onto a card with its trunk/stalk base at the bottom-centre, then
-    draw_billboard foreshortens it consistently with the wall solids. Corn merges
-    into a width-wide run card (LOD). Cards are CACHED + convert_alpha'd (cleared
-    on scene change with the floor cache); trees keep a soft contact shadow."""
-    from rendering.solids import draw_billboard
+    """Stand a tree / cornstalk up as a WORLD-ANCHORED card whose base sits on
+    the floor at the tile centre and whose horizontal axis tracks world-X. The
+    flat tile art (_draw_tree/_draw_corn) is rendered onto a card with the
+    trunk/stalk base at the bottom-centre; the card is then scaled to the
+    projected screen-width of its world footprint AND rotated to follow the
+    row's tilt under yaw, so the foliage anchors in the scene instead of
+    swinging to face the camera. Corn merges into a width-wide run card (LOD);
+    cards are CACHED + convert_alpha'd (cleared on scene change with the floor
+    cache); trees keep a soft contact shadow."""
     kind = OBJECT_DEFS.get(ch, {}).get("kind")
     width = 1
     if kind == "cornstalk":                # LOD: this tile may anchor a run
@@ -1098,12 +1227,47 @@ def _tilt_standee(surf, camera, scene, tx, ty, ch):
                        (tx * 73856093) ^ (ty * 19349663))
         card = card.convert_alpha()        # fast per-pixel-alpha blits
         _TILT_STANDEE_CACHE[key] = card
-    wx = tx * TILE + (width * TILE) // 2   # run centre (single tile -> centre)
-    wy = ty * TILE + 16
+    # The card represents a width-wide strip of foliage anchored along the
+    # world's +X axis. Its bottom edge is a horizontal world-line at z=0; its
+    # top edge is the same line lifted to the card's pixel height in world
+    # units. Project both endpoints of the bottom edge to screen; the segment
+    # between them is the row's WORLD-anchored base under the current yaw,
+    # so as the camera turns the row foreshortens / leans with the field
+    # instead of swinging to face the camera.
+    sw, sh = card.get_size()
+    half_world = sw / 2.0                  # card's half-extent in WORLD units
+    wx_center = tx * TILE + (width * TILE) // 2
+    wy_world = ty * TILE + 16
+    p_left = camera.project(wx_center - half_world, wy_world, 0.0)
+    p_right = camera.project(wx_center + half_world, wy_world, 0.0)
     if kind != "cornstalk":                # trees grounded; corn is too dense
-        bx, by = camera.project(wx, wy, 0.0)
+        bx, by = camera.project(wx_center, wy_world, 0.0)
         _ground_shadow(surf, bx, by, 12, 5, 70)
-    draw_billboard(surf, camera, wx, wy, card, h_anchor=1.0)
+    base_len = math.hypot(p_right[0] - p_left[0], p_right[1] - p_left[1])
+    if base_len < 2:
+        return                              # seen edge-on along the row -> a sliver
+    rise = sh * (0.4 + 0.6 * camera.ground_squash())   # foreshortened upright
+    scaled = pygame.transform.scale(card,
+                                    (max(2, int(base_len)), max(2, int(rise))))
+    angle = math.degrees(math.atan2(-(p_right[1] - p_left[1]),
+                                    p_right[0] - p_left[0]))
+    if abs(angle) > 0.5:
+        final = pygame.transform.rotate(scaled, angle)
+    else:
+        final = scaled
+    nw, nh = final.get_size()
+    # pygame.rotate keeps the surface's geometric centre in place. The card's
+    # original bottom-centre (offset (0, rise/2) from its centre before
+    # rotation) lands at (rise/2 * sin(a), rise/2 * cos(a)) from the new
+    # centre once rotated -- anchor that point to the projected mid-base so
+    # the stalks/canopy stand ON the floor at the row.
+    a_rad = math.radians(angle)
+    bc_off_x = (rise / 2.0) * math.sin(a_rad)
+    bc_off_y = (rise / 2.0) * math.cos(a_rad)
+    mid_x = (p_left[0] + p_right[0]) / 2.0
+    mid_y = (p_left[1] + p_right[1]) / 2.0
+    surf.blit(final, (int(mid_x - nw / 2.0 - bc_off_x),
+                      int(mid_y - nh / 2.0 - bc_off_y)))
 
 
 _WALL_BASE = (19, 18, 23)
@@ -2081,13 +2245,22 @@ def _tilt_window_box(surf, camera, scene, tx, ty):
 
 def _tilt_tile_box(surf, camera, scene, tx, ty):
     """Dispatch a tile to its tilt solid: a wall-mass box, a doorway (lintel +
-    swung leaf), a window (box + lit pane), or a tree/cornstalk STANDEE."""
+    swung leaf), a window (box + lit pane), a 3D tree (trunk + canopy bodies
+    of revolution) or a 3D corn cluster (per-stalk projected lines). Trees /
+    corn project through the camera so they anchor in the scene; the legacy
+    rotated-billboard standee survives as a fallback for any future kind."""
     wtx = tx % scene.w if scene.wrap_x else tx
     wty = ty % scene.h if scene.wrap_y else ty
     ch = (scene.objects[wty][wtx]
           if 0 <= wty < scene.h and 0 <= wtx < scene.w else "")
     if ch in _TILT_BILLBOARD_CHARS:
-        _tilt_standee(surf, camera, scene, tx, ty, ch)
+        kind = OBJECT_DEFS.get(ch, {}).get("kind")
+        if kind == "tree":
+            _tilt_tree_solid(surf, camera, scene, tx, ty, ch)
+        elif kind == "cornstalk":
+            _tilt_corn_solid(surf, camera, scene, tx, ty, ch)
+        else:
+            _tilt_standee(surf, camera, scene, tx, ty, ch)
     elif ch in _COUNTER_CHARS:
         _tilt_counter_box(surf, camera, scene, tx, ty)
     elif ch in _DOOR_CHARS:
@@ -2152,6 +2325,59 @@ def _deco_index(scene):
              "chunks": chunks, "len": len(scene.decorations)}
     scene._deco_index_cache = cache
     return cache
+
+
+def _collect_neighbor_solids(scene, camera, x0, y0, x1, y1):
+    """Walk the visible tile window's OUT-OF-BOUNDS region for each seamless
+    neighbor and collect the wall-class tiles to be drawn as standing boxes
+    later (in render_mixin's depth-sorted pass). Returns a list of
+    `(neighbor_scene, ntx, nty, host_world_x, host_world_y, sat_camera)`.
+
+    The satellite camera mirrors the host camera shifted by the neighbor's
+    offset; projecting a neighbor world point through it lands at the same
+    screen pixel a host world point at the equivalent seam location would.
+    The depth sort still uses the host camera + host world coords, so a
+    neighbor wall in front of an actor sorts correctly."""
+    from rendering.world_neighbors import get_neighbors
+    neighbors = get_neighbors(scene)
+    if not neighbors:
+        return []
+    from scenes import load_scene
+    from rendering.camera import Camera
+    H, W = scene.h, scene.w
+    out = []
+    for n in neighbors:
+        try:
+            tgt = load_scene(n.target_key)
+        except Exception:
+            continue
+        sat_cam = Camera(cam_x=camera.cam_x + n.offset_dx,
+                         cam_y=camera.cam_y + n.offset_dy,
+                         pitch=camera.pitch, yaw=camera.yaw,
+                         scale=camera.scale, origin=camera.origin)
+        tw, th = tgt.w, tgt.h
+        for ty in range(y0, y1):
+            if 0 <= ty < H:
+                continue
+            for tx in range(x0, x1):
+                if 0 <= tx < W:
+                    continue
+                ntx = int((tx * TILE + TILE // 2 + n.offset_dx) // TILE)
+                nty = int((ty * TILE + TILE // 2 + n.offset_dy) // TILE)
+                if tgt.wrap_x: ntx %= tw
+                if tgt.wrap_y: nty %= th
+                if not (0 <= ntx < tw and 0 <= nty < th):
+                    continue
+                ch = tgt.objects[nty][ntx]
+                if (ch in _WALL_CHARS or ch in _DOOR_CHARS
+                        or ch in _WINDOW_CHARS
+                        or ch in _TILT_BILLBOARD_CHARS
+                        or ch in _COUNTER_CHARS):
+                    out.append((tgt, ntx, nty,
+                                tx * TILE + TILE / 2,
+                                ty * TILE + TILE / 2,
+                                sat_cam))
+    return out
 
 
 def _draw_neighbor_strips(flat, scene, wx0, wy0, x0, y0, x1, y1):
@@ -2255,7 +2481,9 @@ def draw_terrain_tilted(surf, scene, camera, sight=None):
     # toroidal scene and the box projects at the un-wrapped world position.
     walls = []
     W, H = scene.w, scene.h
-    corn_suppressed = _corn_runs(scene)[1]   # LOD: tiles drawn by a run anchor
+    # Corn now renders as per-tile 3D stalks (_tilt_corn_solid), so each
+    # cornstalk tile depth-sorts on its own; the legacy card-merging LOD is
+    # bypassed (its anchors-and-suppressed map is unused under the 3D path).
     for ty in range(y0, y1):
         wty = ty % H if scene.wrap_y else ty
         if not (0 <= wty < H):
@@ -2265,8 +2493,6 @@ def draw_terrain_tilted(surf, scene, camera, sight=None):
             if not (0 <= wtx < W):
                 continue
             ch = scene.objects[wty][wtx]
-            if ch in _CORN_CHARS and (wtx, wty) in corn_suppressed:
-                continue                         # part of a run; its anchor draws it
             if (ch in _WALL_CHARS or ch in _DOOR_CHARS or ch in _WINDOW_CHARS
                     or ch in _TILT_BILLBOARD_CHARS or ch in _COUNTER_CHARS):
                 walls.append((tx, ty))
@@ -2348,7 +2574,14 @@ def draw_terrain_tilted(surf, scene, camera, sight=None):
                         draw_with_alpha(surf, a, lambda s, d=d, woff=woff:
                                         d.draw(s, 0, 0, camera,
                                                wox=woff[0], woy=woff[1]))
-    return walls, solid_decos, wall_decos
+    # Neighbor walls/standees for the seamless strip. Same Phase 2 deferral:
+    # wrap hosts get no strip yet. Returned as a parallel list so render_mixin
+    # can dispatch each through a satellite camera while still depth-sorting
+    # against the host actors via host-frame world coords.
+    neighbor_solids = []
+    if not (scene.wrap_x or scene.wrap_y):
+        neighbor_solids = _collect_neighbor_solids(scene, camera, x0, y0, x1, y1)
+    return walls, solid_decos, wall_decos, neighbor_solids
 
 
 def draw_scene_doors(surf, scene, cam_x, cam_y, x0, y0, x1, y1):

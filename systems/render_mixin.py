@@ -679,7 +679,8 @@ class RenderMixin:
             draw_skybox(self.screen, (0, 0, SCREEN_W, SCREEN_H),
                         yaw=self.camera.yaw, kind=self._skybox_kind(),
                         horizon_frac=0.40)
-            _tilt_walls, _tilt_solid_decos, _tilt_wall_decos = draw_terrain_tilted(
+            (_tilt_walls, _tilt_solid_decos, _tilt_wall_decos,
+             _tilt_neighbor_solids) = draw_terrain_tilted(
                 self.screen, self.scene, self.camera, sight=_sight)
         else:
             self.scene.draw(self.screen, self.cam_x, self.cam_y, self.camera)
@@ -792,8 +793,19 @@ class RenderMixin:
                 continue
             m = getattr(npc, "morph", 0.0)
             king_threat = None
+            # The King is a SINGLE apex. In a toroidal scene (Brimley) the actor
+            # wrap-clones below would draw him TWICE near a seam (you saw two by
+            # the well). Collapse him to the ONE wrap image nearest the player and
+            # compute his screen-space tells + proximity at that image.
+            king_offset = (0.0, 0.0)
+            if (npc.sprite_kind == "yellow_king" and self.player
+                    and len(_offsets) > 1):
+                king_offset = min(_offsets, key=lambda o:
+                                  (npc.x + o[0] - self.player.x) ** 2
+                                  + (npc.y + o[1] - self.player.y) ** 2)
+            kx, ky = npc.x + king_offset[0], npc.y + king_offset[1]
             if npc.sprite_kind == "yellow_king" and self.player:
-                d = math.hypot(npc.x - self.player.x, npc.y - self.player.y)
+                d = math.hypot(kx - self.player.x, ky - self.player.y)
                 span = KING_THREAT_FAR - KING_THREAT_NEAR
                 # Existence is purely proximity: a far void that blooms only
                 # as he closes. Visibility is NOT mixed in here -- it drives the
@@ -811,20 +823,20 @@ class RenderMixin:
             king_lean = None
             king_scale_mul = 1.0
             if npc.sprite_kind == "yellow_king" and self.player:
-                kxs, kys = self.camera.project(npc.x, npc.y)
+                kxs, kys = self.camera.project(kx, ky)
                 pxs, pys = self.camera.project(self.player.x, self.player.y)
                 king_to_player = (pxs - kxs, pys - kys)
                 lean_mag = getattr(npc, "_yk_lean", 0.0)
                 if lean_mag > 0.01:
                     fx, fy = npc.facing
-                    axs, ays = self.camera.project(npc.x + fx * TILE,
-                                                   npc.y + fy * TILE)
+                    axs, ays = self.camera.project(kx + fx * TILE,
+                                                   ky + fy * TILE)
                     ldx, ldy = axs - kxs, ays - kys
                     dl = math.hypot(ldx, ldy) or 1.0
                     king_lean = (ldx / dl * lean_mag, ldy / dl * lean_mag)
                 if self._tilt_on():
                     C = KING_TILT_DEPTH_CAM
-                    dz = (self.camera.depth(npc.x, npc.y)
+                    dz = (self.camera.depth(kx, ky)
                           - self.camera.depth(self.player.x, self.player.y))
                     dz = max(-0.45 * C, min(0.45 * C, dz))
                     f = C / (C - dz)
@@ -839,7 +851,10 @@ class RenderMixin:
             # be able to track him as he closes. Everyone else obeys the blind
             # spot (idle locals, converts, watchers, mutated resisters).
             exempt = npc.sprite_kind == "yellow_king"
-            for ox, oy in _offsets:
+            # One image for the singular King; the wrap-clone set for everyone
+            # else (so a townsperson near the seam still reads on both sides).
+            actor_offsets = [king_offset] if exempt else _offsets
+            for ox, oy in actor_offsets:
                 sx, sy = self.camera.project(npc.x + ox, npc.y + oy)
                 if not _on_screen(sx, sy):
                     continue
@@ -852,7 +867,16 @@ class RenderMixin:
                 _focus.append((npc.x + ox, npc.y + oy, 28))
                 sy -= npc_lift            # stand on the floor under tilt
 
-                def _draw_npc(target, sx=sx, sy=sy):
+                # Capture EVERY per-NPC value as a default arg: this closure
+                # runs later (from the depth-sorted _entries), by which point the
+                # loop variables (npc, m, i, the king_* tells) have advanced to
+                # the LAST npc. Binding them here freezes each NPC's own data --
+                # otherwise every NPC drew as the last one in the list (and the
+                # King, materialised last, turned every visible NPC into a King).
+                def _draw_npc(target, sx=sx, sy=sy, npc=npc, m=m, i=i,
+                              king_threat=king_threat,
+                              king_to_player=king_to_player,
+                              king_lean=king_lean, king_scale_mul=king_scale_mul):
                     if m > 0.0:
                         draw_vessel_bloom(target, sx, sy, npc.sprite_kind,
                                           npc.facing, m, seed=id(npc) & 0xffff)
@@ -1027,6 +1051,17 @@ class RenderMixin:
                       draw_with_alpha(self.screen, wa,
                                       lambda s: _tilt_tile_box(
                                           s, self.camera, self.scene, tx, ty)))
+            # Phase 2+ of neighbor strips: emit the neighbor's wall-class
+            # tiles through a satellite camera (shifted by the offset so
+            # neighbor world coords project at the seam). Depth-sorted in
+            # host frame against the host actors, so a neighbor tree in
+            # front of the player sorts correctly.
+            for (n_scene, ntx, nty, hwx, hwy, sat_cam) in (
+                    _tilt_neighbor_solids or []):
+                _emit(self.camera.depth(hwx, hwy, _TILT_WALL_RISE),
+                      lambda n_scene=n_scene, ntx=ntx, nty=nty,
+                      sat_cam=sat_cam:
+                      _tilt_tile_box(self.screen, sat_cam, n_scene, ntx, nty))
             # Solid props (trees, headstones, lanterns -- the standees) wrap-
             # clone like decorations and used to emit one depth entry per
             # (prop x offset) pair. Brimley has ~420 such props x 9 wrap

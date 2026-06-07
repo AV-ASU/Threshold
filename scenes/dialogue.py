@@ -378,5 +378,5 @@ def basement_photo_dialogue(game, npc):
         ], speaker="", voice="blip_soft", portrait="narrator")
     else:
         game.dialog.show([
-            "[c=dim](The same faces. The same patient, unmoving eyes.)[/c]",
+            "[c=dim](The same faces. The same unmoving eyes.)[/c]",
         ], speaker="", voice="blip_soft", portrait="narrator")
