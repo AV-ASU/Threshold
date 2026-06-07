@@ -500,6 +500,30 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         self.state = "transition"
         self.audio.play("door_open", 0.7)
 
+    def _entry_facing(self, scene, x, y):
+        """Heading to orient the player on entry: look INTO the open room. Prefer
+        the heading toward the scene centre, but if that runs into a wall within
+        ~2 tiles (a door tucked in a corner, the centre through a wall), fall back
+        to the compass direction with the most clear space ahead -- so you never
+        spawn staring at a wall with the room behind you."""
+        def clear(h):                       # tiles clear ahead before a solid
+            for step in range(1, 13):
+                if scene.is_solid_at(x + math.cos(h) * step * TILE,
+                                     y + math.sin(h) * step * TILE):
+                    return step - 1
+            return 12
+        cx, cy = scene.w * TILE / 2.0, scene.h * TILE / 2.0
+        center = math.atan2(cy - y, cx - x)
+        if (cx - x or cy - y) and clear(center) >= 2:
+            return center
+        best_c, best_h = -1, center
+        for k in range(8):
+            h = k * math.pi / 4.0
+            c = clear(h)
+            if c > best_c:
+                best_c, best_h = c, h
+        return best_h
+
     def load_scene_now(self, key, spawn_id="default", *, keep_music=False):
         if self.scene and self.scene.on_exit_fn:
             self.scene.on_exit_fn(self, self.scene)
@@ -529,22 +553,18 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
                     self.look.body = math.atan2(hdy, hdx)
                     self.look.cam_yaw = (self.look.body + math.pi / 2)
         self._pending_emerge = None
-        # Face the player INTO the room on entry: a heading from the spawn toward
-        # the scene centre. You just walked in, so you look forward at the room
-        # (and whoever's standing in it) instead of back at the door -- otherwise
-        # anyone ahead of the spawn sits in the blind-spot sight cone and reads
-        # as invisible until you happen to turn around (the church Preacher did).
-        # The camera rides behind this heading, so it orients the sight cone too.
+        # Face the player INTO the open room on entry. You just walked in, so you
+        # look forward at the room (and whoever's standing in it) instead of back
+        # at the door -- otherwise anyone ahead of the spawn sits in the blind-
+        # spot sight cone and reads as invisible until you turn around (the church
+        # Preacher did). The camera rides behind this heading, so it orients the
+        # sight cone too.
         if getattr(self, "look", None) is not None and self.player is not None:
-            _cx = self.scene.w * TILE / 2.0
-            _cy = self.scene.h * TILE / 2.0
-            _hdx, _hdy = _cx - self.player.x, _cy - self.player.y
-            if _hdx or _hdy:
-                self.look.body = math.atan2(_hdy, _hdx)
-                self.look.aim = self.look.body
-                self.look.cam_yaw = self.look.body + math.pi / 2
-                self.player.facing = (math.cos(self.look.body),
-                                      math.sin(self.look.body))
+            h = self._entry_facing(self.scene, self.player.x, self.player.y)
+            self.look.body = h
+            self.look.aim = h
+            self.look.cam_yaw = h + math.pi / 2
+            self.player.facing = (math.cos(h), math.sin(h))
         # The King materialises at the doorway the player entered from.
         # He stays behind on a scene change (cleared here) and re-forms
         # at the new entry if visibility is still pinned at the top.

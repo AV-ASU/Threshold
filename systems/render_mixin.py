@@ -1067,20 +1067,26 @@ class RenderMixin:
                             _emit(self.camera.depth(d.x + ox, d.y + oy),
                                   lambda d=d, ox=ox, oy=oy:
                                   self._draw_solid_prop(d, ox, oy))
-            # Surface decals (a ledger on a desktop): warped FLAT like a floor
-            # decal but lifted to the prop height (deco kwarg `z`) and depth-
-            # sorted AT that height, so it rests on the desktop and sorts in
-            # front of the counter box instead of under it or facing the camera.
-            from scenes.base import _SURFACE_DECAL_KINDS, _draw_floor_decal
+            # Surface props seated ON furniture (a ledger, candle, lamp on a
+            # desk/table): lifted to the prop height (deco kwarg `z`) and depth-
+            # sorted at the GROUND position so they tie with the host furniture
+            # and, emitted last, draw ON TOP of it instead of tucked under its
+            # box or floating at floor level. Flat-lying kinds warp onto the
+            # surface; upright kinds stand on it as a lifted billboard. (Ground
+            # depth, not the lifted height: depth treats higher z as farther.)
+            from scenes.base import (_SURFACE_DECAL_KINDS, _FLOOR_DECAL_KINDS,
+                                     _draw_floor_decal)
             for d in self.scene.decorations:
-                if d.kind not in _SURFACE_DECAL_KINDS:
+                _z = float(getattr(d, "kwargs", {}).get("z", 0.0))
+                if _z <= 0 and d.kind not in _SURFACE_DECAL_KINDS:
                     continue
-                # Sort at the GROUND position (z=0), not the lifted height: depth
-                # treats higher z as farther, which would tuck it under its own
-                # desk. At ground depth it ties with the host prop and, emitted
-                # last, draws on top. The visual lift is in _draw_floor_decal.
-                _emit(self.camera.depth(d.x, d.y),
-                      lambda d=d: _draw_floor_decal(self.screen, self.camera, d))
+                if d.kind in _SURFACE_DECAL_KINDS or d.kind in _FLOOR_DECAL_KINDS:
+                    _emit(self.camera.depth(d.x, d.y),
+                          lambda d=d: _draw_floor_decal(self.screen, self.camera, d))
+                else:
+                    _emit(self.camera.depth(d.x, d.y),
+                          lambda d=d, z=_z: d.draw(self.screen, 0, 0, self.camera,
+                                                   mount_z=z))
             # Wall-hung decorations: lift onto the wall face (_WALL_MOUNT_Z) as
             # camera-facing billboards, depth-sorted at the lifted depth so a
             # back-wall photo sorts in FRONT of its wall box, not under it. NOT

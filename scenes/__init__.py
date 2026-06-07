@@ -136,7 +136,11 @@ def load_scene(key):
         # Any save or exit pointing at a deleted scene falls back to the
         # player's room rather than crashing.
         key = "bedroom"
-    return SCENE_BUILDERS[key]()
+    sc = SCENE_BUILDERS[key]()
+    # Seat candles/lamps/bowls/etc. ON the furniture they're placed on, so they
+    # don't float at the furniture's base under the tilt.
+    sc.seat_tabletop_props()
+    return sc
 
 
 __all__ = [

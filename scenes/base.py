@@ -1842,6 +1842,16 @@ _FLOOR_DECAL_KINDS = frozenset((
 # camera-facing billboard. Skipped in the terrain pass; emitted by render_mixin.
 _SURFACE_DECAL_KINDS = frozenset(("ledger",))
 
+# Small props that REST on a tabletop: when one is placed on a furniture
+# footprint tile, seat_tabletop_props lifts it onto that surface (a deco `z`)
+# instead of leaving it floating at the furniture's base. Curated so structural
+# decor on a furniture tile isn't lifted by accident.
+_TABLETOP_PROP_KINDS = frozenset((
+    "candle", "lantern", "kerosene_lamp", "oil_lamp", "lamp", "ledger",
+    "bowl", "cup", "mug", "bottle", "jar", "plate", "radio", "papers",
+    "book", "photo", "photo_frame", "tankard", "teapot",
+))
+
 # Wall-mounted decorations. Under tilt these are lifted onto the wall face as
 # camera-facing billboards (and depth-sorted with the walls) instead of lying
 # flat on the floor -- they HANG, they don't sit. _WALL_MOUNT_Z is how far up
@@ -2078,8 +2088,9 @@ def _deco_index(scene):
         if d.kind in _WALL_DECO_KINDS:
             wall_decos.append(d)
             continue
-        if d.kind in _SURFACE_DECAL_KINDS:
-            continue                 # depth-sorted upstream
+        if d.kind in _SURFACE_DECAL_KINDS or \
+                float(getattr(d, "kwargs", {}).get("z", 0.0)) > 0:
+            continue                 # seated on a surface; depth-sorted upstream
         if d.kind == "water_channel":
             water_channels.append(d)
             continue
@@ -2499,6 +2510,9 @@ class Scene:
         self.spawns = {"default": (self.w * 16, self.h * 16)}
         self.npcs = []
         self.decorations = []
+        # Furniture footprint tile (tx, ty) -> top height, so a tabletop prop
+        # placed on that tile can be seated ON the surface (seat_tabletop_props).
+        self._surface_tops = {}
         self.enemies = []
         self.items = []          # list of {x,y,key,qty,on_pickup?}
         self.projectiles = []    # ranged-attack bullets
@@ -2787,6 +2801,24 @@ class Scene:
     def add_decoration(self, deco):
         self.decorations.append(deco)
 
+    def seat_tabletop_props(self):
+        """Lift each small tabletop prop (candle, lamp, bowl, ledger...) that
+        sits on a furniture footprint onto that surface, by tagging it with a
+        deco `z` = the furniture top. Without this it draws at the furniture's
+        BASE under tilt (floating at floor level beside the desk). Run once after
+        the scene is built; idempotent (scenes rebuild each load). An explicit
+        `z` already set by the builder is left alone."""
+        if not self._surface_tops:
+            return
+        for d in self.decorations:
+            if d.kind not in _TABLETOP_PROP_KINDS:
+                continue
+            if getattr(d, "kwargs", {}).get("z"):
+                continue
+            top = self._surface_tops.get((int(d.x // TILE), int(d.y // TILE)))
+            if top:
+                d.kwargs["z"] = top
+
     def add_furniture(self, kind, tiles, see_over=False, **kw):
         """Place a sized furniture decoration centred over `tiles` (a
         list of (tx, ty)) and mark those tiles solid + invisible for
@@ -2798,7 +2830,7 @@ class Scene:
         does not block line of sight, so a low piece (a reception counter, a
         desk) lets whoever stands behind it stay visible over the top."""
         from entities.decoration import Decoration
-        from rendering.furniture import is_see_over_furniture
+        from rendering.furniture import is_see_over_furniture, FURNITURE
         if self.objects and isinstance(self.objects[0], str):
             self.objects = [list(r) for r in self.objects]
         xs = [t[0] for t in tiles]
@@ -2807,9 +2839,13 @@ class Scene:
         # by default: solid, but you look over it so whoever's behind stays
         # visible. Tall pieces (bookshelf, wardrobe, fireplace) keep blocking.
         footprint = "x" if (see_over or is_see_over_furniture(kind)) else "X"
+        # Record each footprint tile's top height so a tabletop prop on it can be
+        # seated on the surface (seat_tabletop_props).
+        top_h = FURNITURE.get(kind, (0, 0, 0))[2] * (kw.get("scale", 1.0) or 1.0)
         for tx, ty in tiles:
             if 0 <= ty < len(self.objects) and 0 <= tx < len(self.objects[ty]):
                 self.objects[ty][tx] = footprint
+            self._surface_tops[(tx, ty)] = top_h
         cx = (min(xs) * TILE + (max(xs) + 1) * TILE) // 2
         cy = (min(ys) * TILE + (max(ys) + 1) * TILE) // 2
         deco = Decoration(cx + kw.pop("dx", 0), cy + kw.pop("dy", 0), kind, **kw)
