@@ -2154,6 +2154,61 @@ def _deco_index(scene):
     return cache
 
 
+def _draw_neighbor_strips(flat, scene, wx0, wy0, x0, y0, x1, y1):
+    """Paint the seamless neighbor scenes' floor tiles into the host flat for
+    every (tx, ty) in the visible tile window that sits OUTSIDE the host
+    scene's tile bounds. Each neighbor knows its world-coord offset (set up
+    at scene-load time by rendering.world_neighbors); we translate the host
+    tile coord into the neighbor's grid and draw the neighbor's floor char
+    using the SAME cached path draw_scene_terrain uses, so the strip blends
+    visually with the host's floor pattern. Terrain only at this phase --
+    walls, decorations, actors come later."""
+    from rendering.world_neighbors import get_neighbors
+    neighbors = get_neighbors(scene)
+    if not neighbors:
+        return
+    from scenes import load_scene
+    H, W = scene.h, scene.w
+    for n in neighbors:
+        try:
+            tgt = load_scene(n.target_key)
+        except Exception:
+            continue
+        # The target tile that a host (tx, ty) tile maps to.
+        # host world point = (tx*TILE + TILE/2, ty*TILE + TILE/2)
+        # target world point = host world point + (offset_dx, offset_dy)
+        tw, th = tgt.w, tgt.h
+        for ty in range(y0, y1):
+            if 0 <= ty < H:
+                continue                     # host renders this row
+            for tx in range(x0, x1):
+                if 0 <= tx < W:
+                    continue                 # host renders this column
+                nx_px = tx * TILE + TILE // 2 + n.offset_dx
+                ny_px = ty * TILE + TILE // 2 + n.offset_dy
+                ntx = int(nx_px // TILE)
+                nty = int(ny_px // TILE)
+                if tgt.wrap_x:
+                    ntx %= tw
+                if tgt.wrap_y:
+                    nty %= th
+                if not (0 <= ntx < tw and 0 <= nty < th):
+                    continue                 # outside the neighbor too
+                ch = tgt.floor[nty][ntx]
+                rx = tx * TILE - wx0
+                ry = ty * TILE - wy0
+                if ch in _ANIM_FLOOR:
+                    draw_floor(flat, ch, rx, ry, ntx, nty)
+                    continue
+                key = (ch, ntx, nty)
+                tile = _FLOOR_CACHE.get(key)
+                if tile is None:
+                    tile = pygame.Surface((TILE, TILE)).convert()
+                    draw_floor(tile, ch, 0, 0, ntx, nty)
+                    _FLOOR_CACHE[key] = tile
+                flat.blit(tile, (rx, ry))
+
+
 def draw_terrain_tilted(surf, scene, camera, sight=None):
     """Floor warp + flat decals for the oblique camera. Skybox is the caller's
     job (drawn first); actors are drawn after by the game, already projected
@@ -2180,6 +2235,15 @@ def draw_terrain_tilted(surf, scene, camera, sight=None):
     wx0, wy0 = cx - half, cy - half
     x0 = int(math.floor(wx0 / TILE)); y0 = int(math.floor(wy0 / TILE))
     x1 = int(math.ceil((wx0 + span) / TILE)); y1 = int(math.ceil((wy0 + span) / TILE))
+    # Phase 2 of the seamless-world neighbor strip: when the player is near a
+    # non-wrap host's edge and the visible tile range extends past the world's
+    # bounds, fill the OUT-OF-BOUNDS tiles with the neighbor scene's floor
+    # content (per rendering/world_neighbors.get_neighbors). draw_scene_terrain
+    # below then overdraws the in-bounds area with the host's tiles, so the
+    # strip only shows where the host doesn't reach -- a clean seamless seam.
+    # Wrap hosts already tile their content edge to edge; they get no strip.
+    if not (scene.wrap_x or scene.wrap_y):
+        _draw_neighbor_strips(flat, scene, wx0, wy0, x0, y0, x1, y1)
     draw_scene_terrain(flat, scene, wx0, wy0, x0, y0, x1, y1,
                        skip_billboard=True)
     warped = _tilt_warp(flat, camera)

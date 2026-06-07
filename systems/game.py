@@ -761,22 +761,30 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         return self._cam_pitch_target > 0.0
 
     def _update_look(self, dt):
-        """The camera rides behind the player's body heading, and the body
-        chases the mouse aim through a dead-zone at TURN_RATE rad/s. Net effect:
-        the camera follows where you are looking with a small dead-zone so
-        micro-jitter doesn't shake the view. The sprite + gun face the cursor
-        directly (free aim). Runs only in the tilted view, mid-play."""
+        """The camera rides behind the player's body heading. The body chases
+        the cursor's SCREEN offset from the player's screen position through a
+        dead-zone at TURN_RATE rad/s — screen offset is camera-yaw-independent,
+        so it doesn't form the feedback loop a world-unprojected aim would
+        (the world point under the cursor rotates 1:1 with the camera). The
+        sprite + gun still face the unprojected world cursor directly (free
+        aim). Runs only in the tilted view, mid-play."""
         if not (self._tilt_on() and self.state == "playing" and self.player):
             return
-        # Free aim: world heading from the player to the point under the cursor.
         mx, my = pygame.mouse.get_pos()
+        # Free aim for the gun: world heading to the point under the cursor.
         wx, wy = self.camera.unproject(mx, my)
         aim = math.atan2(wy - self.player.y, wx - self.player.x)
         self.look.update(aim_heading=aim)
-        # Drag the body toward the aim (dead-zone + rate cap), then let cam_yaw
-        # ease behind body the next frame — this is what makes the camera turn
-        # when the cursor moves.
-        self.look.chase_aim(dt, TURN_RATE, AIM_DEAD_ZONE)
+        # Camera steering: cursor's screen offset from the player's screen
+        # position. Screen-up is (0, -1); positive offset = cursor to the right
+        # of straight ahead, which should rotate body the same direction. This
+        # offset is independent of self.camera.yaw, so the chase converges
+        # instead of spinning.
+        psx, psy = self.camera.project(self.player.x, self.player.y)
+        dxs = mx - psx
+        dys = my - psy
+        offset = math.atan2(dxs, -dys) if (dxs or dys) else 0.0
+        self.look.chase_by(offset, dt, TURN_RATE, AIM_DEAD_ZONE)
         self.camera.yaw = self.look.cam_yaw
         # The sprite + gun face the cursor (free aim), independent of body.
         ax, ay = self.look.aim_vec()
