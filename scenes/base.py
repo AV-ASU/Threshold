@@ -2020,6 +2020,9 @@ _FLOOR_DECAL_KINDS = frozenset((
     # shrub on the ground, where a standee would stand the overhead blob up
     # vertically as a smear.
     "bush",
+    # Marks scratched into the floor or the body of something laid in the dirt:
+    # all read as ground decals and want to turn with the room under tilt.
+    "mud_footprint", "claw_marks", "dead_crow", "watching_wound",
 ))
 
 # Decals that lie flat on a RAISED surface (a ledger open on a desktop): warped
@@ -2049,6 +2052,9 @@ _WALL_DECO_KINDS = frozenset((
     "banner", "calendar", "clock", "apology_wall",
     "buck_head", "antler_rack", "mounted_fish", "wrong_taxidermy",
     "chalk_door_wall", "chalkboard",
+    # Things that belong ON a wall, not lying flat on the floor: a cobweb
+    # spans a corner; a passing silhouette glides past a window.
+    "cobweb", "passing_silhouette",
 ))
 _WALL_MOUNT_Z = 18
 

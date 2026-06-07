@@ -10,7 +10,7 @@ falls back to the 2D `_draw_<kind>` sprites in entities/decoration.py.
 """
 import math
 import pygame
-from rendering.solids import draw_solid, draw_billboard, _shade
+from rendering.solids import draw_solid, draw_box, draw_billboard, _shade
 
 
 def _disc(surf, cam, wx, wy, hz, rx, ry, col, fill=True, width=2):
@@ -478,6 +478,205 @@ def _draw_cellar_hatch_solid(surf, cam, deco):
                        max(2, int(4 * s)), 2)
 
 
+# ---- Lighting fixtures as real volumetric props ---------------------------
+# Each reads `deco.kwargs['z']` for the base height (a candle on a tabletop
+# stands ON the tabletop, not hovering at floor level), then builds the body
+# UP from there and projects the flame through the camera. The pitch-0 view
+# still uses the 2D `_draw_<kind>` sprite via Scene.draw, byte-identical.
+# Game._draw_dark drives the lit pool independently (ground projection of the
+# decoration anchor), so all of these stay compatible with the dark-scene
+# lighting pass.
+
+def _flame_tri(surf, cam, wx, wy, z_base, fh, fw, col_outer, col_inner):
+    """A 2-tone screen-space flame triangle: tip at world height z_base + fh,
+    base at z_base. fw is the screen-px half-width at the base."""
+    base = cam.project(wx, wy, z_base)
+    tip = cam.project(wx, wy, z_base + fh)
+    pygame.draw.polygon(surf, col_outer,
+                        [(base[0] - fw, base[1]),
+                         (base[0] + fw, base[1]),
+                         tip])
+    inner_tip_y = tip[1] + (base[1] - tip[1]) * 0.35
+    pygame.draw.polygon(surf, col_inner,
+                        [(base[0] - fw * 0.5, base[1]),
+                         (base[0] + fw * 0.5, base[1]),
+                         (tip[0], inner_tip_y)])
+
+
+def _draw_candle_solid(surf, cam, deco):
+    """A stout wax pillar with a wick and a guttering flame. Lifts to
+    `kwargs['z']` so a candle on a desk stands ON the desk."""
+    wx, wy = deco.x, deco.y
+    z0 = float(getattr(deco, "kwargs", {}).get("z", 0.0))
+    s = (getattr(deco, "scale", 1.0) or 1.0)
+    r = 2.2 * s
+    h = 8 * s
+    wax = {"body": (236, 222, 192), "lo": (164, 152, 128),
+           "rim": (252, 240, 218)}
+    draw_solid(surf, cam, wx, wy,
+               [(z0, r, r), (z0 + h * 0.9, r * 0.95, r * 0.95),
+                (z0 + h, r * 0.78, r * 0.78)], wax)
+    t = getattr(deco, "t", 0.0)
+    fh = (6 + math.sin(t * 18) * 1.0) * s
+    fw = (1.6 + math.sin(t * 13) * 0.3) * s * cam.scale
+    wick_b = cam.project(wx, wy, z0 + h)
+    wick_t = cam.project(wx, wy, z0 + h + 1.0 * s)
+    pygame.draw.line(surf, (40, 30, 28), wick_b, wick_t, 1)
+    _flame_tri(surf, cam, wx, wy, z0 + h + 0.8 * s, fh, fw,
+               (255, 200, 80), (255, 240, 180))
+
+
+def _draw_kerosene_lamp_solid(surf, cam, deco):
+    """A brass oil lamp: cylindrical font, glass chimney, a small flame inside.
+    Lifts to `kwargs['z']` for tabletop placement."""
+    wx, wy = deco.x, deco.y
+    z0 = float(getattr(deco, "kwargs", {}).get("z", 0.0))
+    s = (getattr(deco, "scale", 1.0) or 1.0)
+    # brass base + font (a low cylinder + a rounded font on top)
+    brass = {"body": (152, 110, 50), "lo": (78, 56, 24),
+             "rim": (208, 168, 92)}
+    rb = 4.5 * s
+    base_h = 3 * s
+    font_h = 4.5 * s
+    chimney_h = 9 * s
+    draw_solid(surf, cam, wx, wy,
+               [(z0, rb, rb), (z0 + base_h, rb, rb),
+                (z0 + base_h + 0.3 * s, rb * 0.78, rb * 0.78),
+                (z0 + base_h + font_h, rb * 0.62, rb * 0.62)], brass)
+    # glass chimney: a thin translucent cylinder rising above the font
+    cz = z0 + base_h + font_h
+    rcb = rb * 0.62
+    rct = rb * 0.55
+    glass_col = (210, 220, 230)
+    # draw as 4 vertical edges + 2 caps for a wireframe glass look
+    for ang_off in (0.0, math.pi):
+        sx0, sy0 = cam.project(wx + math.cos(cam.yaw + ang_off) * rcb,
+                               wy + math.sin(cam.yaw + ang_off) * rcb, cz)
+        sx1, sy1 = cam.project(wx + math.cos(cam.yaw + ang_off) * rct,
+                               wy + math.sin(cam.yaw + ang_off) * rct,
+                               cz + chimney_h)
+        pygame.draw.line(surf, glass_col, (sx0, sy0), (sx1, sy1), 1)
+    # subtle chimney top ring
+    _disc(surf, cam, wx, wy, cz + chimney_h, rct, rct,
+          _shade(glass_col, 0.9), fill=False, width=1)
+    # flame in the chimney
+    t = getattr(deco, "t", 0.0)
+    fh = (5 + math.sin(t * 16 + deco.seed) * 1.2) * s
+    fw = 1.5 * s * cam.scale
+    _flame_tri(surf, cam, wx, wy, cz + 1.0 * s, fh, fw,
+               (255, 206, 96), (255, 244, 186))
+
+
+def _draw_lantern_solid(surf, cam, deco):
+    """A 19th-century iron lamppost: a vertical pole on the ground, a
+    cross-arm at the top, a square lantern hung from the arm. The town-square
+    fixture; under dark cult-rooms it's the only legible light."""
+    wx, wy = deco.x, deco.y
+    s = (getattr(deco, "scale", 1.0) or 1.0)
+    iron = (52, 52, 60)
+    iron_hi = (96, 96, 108)
+    # pole
+    pole_h = 30 * s
+    base = cam.project(wx, wy, 0)
+    top = cam.project(wx, wy, pole_h)
+    pygame.draw.line(surf, iron, base, top, max(2, int(2 * s)))
+    # cross-arm: a short horizontal beam to one side of the pole
+    arm_len = 6 * s
+    arm_ax = math.cos(cam.yaw + math.pi / 2)
+    arm_ay = math.sin(cam.yaw + math.pi / 2)
+    arm_end = cam.project(wx + arm_ax * arm_len, wy + arm_ay * arm_len, pole_h)
+    pygame.draw.line(surf, iron, top, arm_end, max(2, int(2 * s)))
+    # lantern body hung from the arm end -- a small box
+    lx = wx + arm_ax * arm_len
+    ly = wy + arm_ay * arm_len
+    box_h = 7 * s
+    box_w = 5 * s
+    lantern_pal = {"top": (60, 56, 50), "side": (38, 36, 40),
+                   "dark": (24, 22, 26)}
+    draw_box(surf, cam, lx, ly, box_w, box_w, box_h, lantern_pal)
+    # chain bit
+    hang_top = cam.project(lx, ly, pole_h)
+    hang_bot = cam.project(lx, ly, pole_h - 1 * s)
+    pygame.draw.line(surf, iron_hi, hang_top, hang_bot, 1)
+    # lit window: a small bright square on the lantern's near face
+    win_z = pole_h - 1.0 * s - box_h * 0.5
+    win = cam.project(lx, ly + box_w * 0.55, win_z)
+    ww = max(2, int(box_w * 0.5 * cam.scale))
+    wh = max(2, int(box_h * 0.55 * cam.scale))
+    pygame.draw.rect(surf, (255, 196, 120),
+                     (int(win[0] - ww / 2), int(win[1] - wh / 2), ww, wh))
+    pygame.draw.rect(surf, (255, 232, 180),
+                     (int(win[0] - ww / 4), int(win[1] - wh / 4),
+                      max(1, ww // 2), max(1, wh // 2)))
+
+
+def _draw_brazier_solid(surf, cam, deco):
+    """A cult fire-bowl on an iron tripod: three splayed legs grounded in a
+    triangle, a wide flat bowl set on top, the flame guttering above. Reads as
+    a real ritual fixture under tilt instead of a 2D sticker."""
+    wx, wy = deco.x, deco.y
+    s = (getattr(deco, "scale", 1.0) or 1.0)
+    iron = (28, 26, 30)
+    iron_hi = (66, 64, 70)
+    bowl_z = 12 * s
+    leg_r = 6 * s
+    # three legs, 120deg apart, ground -> bowl center
+    apex = cam.project(wx, wy, bowl_z)
+    for k in range(3):
+        ang = k * (2 * math.pi / 3) + 0.5
+        bx = wx + math.cos(ang) * leg_r
+        by = wy + math.sin(ang) * leg_r
+        base = cam.project(bx, by, 0)
+        pygame.draw.line(surf, iron, base, apex, max(2, int(2 * s)))
+        pygame.draw.line(surf, iron_hi, base, apex, 1)
+    # bowl: a low cylinder, wider at the top -- the rim shows
+    rb = 8 * s
+    rim_r = 9 * s
+    bowl_pal = {"body": (42, 40, 44), "lo": (18, 16, 20),
+                "rim": (96, 78, 60)}
+    draw_solid(surf, cam, wx, wy,
+               [(bowl_z, rb, rb), (bowl_z + 3 * s, rim_r, rim_r)], bowl_pal)
+    # dark coals visible inside the rim
+    _disc(surf, cam, wx, wy, bowl_z + 3 * s, rim_r * 0.7, rim_r * 0.7,
+          (18, 16, 20))
+    # flame
+    t = getattr(deco, "t", 0.0)
+    fh = (8 + math.sin(t * 6 + deco.seed) * 3) * s
+    fw = 4 * s * cam.scale
+    _flame_tri(surf, cam, wx, wy, bowl_z + 3 * s, fh, fw,
+               (208, 88, 28), (250, 178, 68))
+
+
+def _draw_wall_torch_solid(surf, cam, deco):
+    """An iron wall sconce: a short vertical post rising off the floor with a
+    flat iron cup at the top, a guttering flame in the cup. Drawn standing
+    upright at the deco's ground point (placements line it against the wall
+    already). Game._draw_dark drives the warm pool around it."""
+    wx, wy = deco.x, deco.y
+    s = (getattr(deco, "scale", 1.0) or 1.0)
+    iron = (38, 34, 36)
+    iron_hi = (74, 70, 72)
+    post_h = 14 * s
+    base = cam.project(wx, wy, 0)
+    top = cam.project(wx, wy, post_h)
+    pygame.draw.line(surf, iron, base, top, max(2, int(2 * s)))
+    pygame.draw.line(surf, iron_hi, base, top, 1)
+    # cup: a wide flat disc
+    _disc(surf, cam, wx, wy, post_h, 3 * s, 3 * s, (62, 56, 50))
+    _disc(surf, cam, wx, wy, post_h, 3 * s, 3 * s, iron, fill=False, width=1)
+    # flame
+    t = getattr(deco, "t", 0.0)
+    fh = (11 + math.sin(t * 16) * 2.2) * s
+    fw = 2.5 * s * cam.scale
+    _flame_tri(surf, cam, wx, wy, post_h + 0.5 * s, fh, fw,
+               (190, 70, 24), (245, 165, 48))
+    # bright core
+    core_b = cam.project(wx, wy, post_h + 1.0 * s)
+    core_t = cam.project(wx, wy, post_h + 1.0 * s + fh * 0.45)
+    pygame.draw.line(surf, (255, 236, 175), core_b, core_t,
+                     max(1, int(1.5 * s)))
+
+
 SOLID_PROPS = {
     "doorframe":     _draw_doorframe_solid,
     "waterfall":     _draw_waterfall_solid,
@@ -490,6 +689,11 @@ SOLID_PROPS = {
     "player_car":    _draw_car_solid,
     "pickup_truck":  _draw_pickup_truck_solid,
     "stalagmite":    _draw_stalagmite_solid,
+    "candle":        _draw_candle_solid,
+    "kerosene_lamp": _draw_kerosene_lamp_solid,
+    "lantern":       _draw_lantern_solid,
+    "brazier":       _draw_brazier_solid,
+    "wall_torch":    _draw_wall_torch_solid,
 }
 
 

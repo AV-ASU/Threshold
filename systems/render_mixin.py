@@ -1111,9 +1111,17 @@ class RenderMixin:
             # depth, not the lifted height: depth treats higher z as farther.)
             from scenes.base import (_SURFACE_DECAL_KINDS, _FLOOR_DECAL_KINDS,
                                      _draw_floor_decal)
+            from rendering.props import is_solid_prop
+            from rendering.furniture import is_solid_furniture
             for d in self.scene.decorations:
                 _z = float(getattr(d, "kwargs", {}).get("z", 0.0))
                 if _z <= 0 and d.kind not in _SURFACE_DECAL_KINDS:
+                    continue
+                # Solid props (e.g. a candle/lamp now drawn as a real volume)
+                # bake `z` into their own draw, so the solid pass already
+                # placed them on the surface. Re-emitting here would render
+                # them twice.
+                if is_solid_prop(d.kind) or is_solid_furniture(d.kind):
                     continue
                 if d.kind in _SURFACE_DECAL_KINDS or d.kind in _FLOOR_DECAL_KINDS:
                     _emit(self.camera.depth(d.x, d.y),
