@@ -1403,38 +1403,60 @@ def _draw_door_leaf(surf, rx, ry, room, seed):
 _PATH_GRASS = frozenset(("g", "G", ":"))
 
 
-def _draw_path_fringe(surf, scene, tx, ty, rx, ry):
-    """Fray a dirt-path tile's edge wherever it meets grass: dirt tongues
-    spill raggedly into the grass and a few grass tufts bite back into the
-    dirt, so the worn track wanders instead of reading as a clean
-    rectangle. Run after every floor fill so the blobs paint across the
-    tile boundary. Dirt only frays its grass-facing sides, so adjacent
-    path tiles leave their shared (interior) edge clean."""
+_PATH_FRINGE_MARGIN = 8                 # the fringe blobs spill ~3 px into the
+                                        # adjacent tile; 8 px margin is plenty.
+_PATH_FRINGE_CACHE = {}                 # (tx, ty) -> cached SRCALPHA surface
+
+
+def _build_path_fringe_card(scene, tx, ty):
+    """Render the four-edge fringe + grass-tuft bite-backs ONCE into a
+    TILE+2m square SRCALPHA card, so the per-frame call is a single blit
+    instead of ~30 circle draws per path tile. Pure function of scene.floor
+    around (tx, ty); cleared in _draw_path_fringe when the scene changes."""
     floor, h, w = scene.floor, scene.h, scene.w
     dirt, dirt2 = (88, 68, 45), (74, 56, 37)
+    m = _PATH_FRINGE_MARGIN
+    card = pygame.Surface((TILE + 2 * m, TILE + 2 * m), pygame.SRCALPHA)
+    # Local rx, ry of the tile origin inside the card.
+    rx = m
+    ry = m
     for si, (ndx, ndy) in enumerate(((0, -1), (0, 1), (-1, 0), (1, 0))):
         nx, ny = tx + ndx, ty + ndy
         if not (0 <= nx < w and 0 <= ny < h) or floor[ny][nx] not in _PATH_GRASS:
             continue
         grass = FLOOR_DEFS[floor[ny][nx]]["color"]
         seed = (tx * 73856093) ^ (ty * 19349663) ^ (si * 83492791)
-        if ndy:                                  # horizontal edge (N/S)
+        if ndy:
             ex = rx; ey = ry + (TILE if ndy > 0 else 0); ax, ay = 1, 0
-        else:                                    # vertical edge (W/E)
+        else:
             ex = rx + (TILE if ndx > 0 else 0); ey = ry; ax, ay = 0, 1
-        for k in range(6):                       # ragged dirt fringe, mostly into grass
+        for k in range(6):
             u = (k + (_vary(seed, k) % 3) / 3.0) / 6.0
             depth = (_vary(seed, 10 + k) % 9) - 3
             cx = int(ex + ax * TILE * u + ndx * depth)
             cy = int(ey + ay * TILE * u + ndy * depth)
             col = dirt if (_vary(seed, 30 + k) % 3) else dirt2
-            pygame.draw.circle(surf, col, (cx, cy), 3 + (_vary(seed, 20 + k) % 3))
-        for k in range(2):                       # grass tufts biting back into the dirt
+            pygame.draw.circle(card, col, (cx, cy), 3 + (_vary(seed, 20 + k) % 3))
+        for k in range(2):
             u = (1 + 2 * k) / 4.0
             d = 2 + (_vary(seed, 40 + k) % 3)
             cx = int(ex + ax * TILE * u - ndx * d)
             cy = int(ey + ay * TILE * u - ndy * d)
-            pygame.draw.circle(surf, grass, (cx, cy), 2 + (_vary(seed, 50 + k) % 2))
+            pygame.draw.circle(card, grass, (cx, cy), 2 + (_vary(seed, 50 + k) % 2))
+    return card.convert_alpha()
+
+
+def _draw_path_fringe(surf, scene, tx, ty, rx, ry):
+    """Fray a dirt-path tile's edge wherever it meets grass. Cached as a
+    pre-rendered card per (tx, ty); the per-frame cost is one blit instead
+    of the ~30 pygame.draw.circle calls the function used to make. The cache
+    rides on the same scene-change reset that drops _FLOOR_CACHE."""
+    key = (tx, ty)
+    card = _PATH_FRINGE_CACHE.get(key)
+    if card is None:
+        card = _build_path_fringe_card(scene, tx, ty)
+        _PATH_FRINGE_CACHE[key] = card
+    surf.blit(card, (rx - _PATH_FRINGE_MARGIN, ry - _PATH_FRINGE_MARGIN))
 
 
 _BANK_LAND = frozenset(("g", "G", ":", "d"))
@@ -1556,6 +1578,7 @@ def draw_scene_terrain(surf, scene, cam_x, cam_y, x0, y0, x1, y1,
         _FLOOR_CACHE.clear()
         _TILT_STANDEE_CACHE.clear()  # tree/corn billboard cards are scene-keyed
         _CORN_RUN_CACHE.clear()      # corn-run LOD decomposition is per scene
+        _PATH_FRINGE_CACHE.clear()   # path-edge fringe cards are scene-keyed
         _FLOOR_CACHE_SCENE = scene   # hold the ref so its identity can't be reused
     for ty in range(y0, y1):
         for tx in range(x0, x1):
@@ -1866,28 +1889,55 @@ _WALL_DECO_KINDS = frozenset((
 _WALL_MOUNT_Z = 18
 
 
+_FLOOR_DECAL_CARD_CACHE = {}        # (id(deco), yaw_bkt, scale_bkt, pitch_bkt)
+                                    #     -> pre-warped Surface
+# How tightly we quantise yaw/pitch/scale for the cache. Yaw eases by ~0.004
+# rad/frame during mouselook, so 0.05 rad (~3 deg) buckets give the cache
+# hits during smooth play and only re-warp on real turns. Pitch + scale are
+# typically constant in actual play -- F3 changes pitch but isn't wired in
+# game; scale is fixed at TILT_ZOOM -- so coarse buckets are fine.
+_FLOOR_DECAL_YAW_BKT = 0.05
+_FLOOR_DECAL_SCALE_BKT = 0.05
+
+
 def _draw_floor_decal(surf, camera, deco, woff=(0.0, 0.0)):
     """Render a flat decal to a canvas, then warp it onto the floor plane (same
     rotate+squash as _tilt_warp) and blit at the projected anchor, so a rug or
     bloodstain lies on the ground and turns with the room instead of standing up
-    as a billboard. `woff` is the wrap-clone WORLD offset (added before
-    projection so the seam clone lands through the camera, not in screen space;
-    CAMERA.md Phase 5)."""
+    as a billboard. The fill -> rotate -> smoothscale pipeline is CACHED per
+    decoration + camera-orientation bucket; the per-frame cost on a cache hit
+    is just one project + blit. `woff` is the wrap-clone WORLD offset (added
+    before projection so the seam clone lands through the camera, not in
+    screen space; CAMERA.md Phase 5)."""
     drawfn = getattr(deco, f"_draw_{deco.kind}", None)
     if drawfn is None:
         return
-    if deco.kind == "rug":
-        w = int(deco.kwargs.get("w", 88)); h = int(deco.kwargs.get("h", 60))
-        bound = max(w, h) + 18
-    else:
-        bound = 60
-    canvas = pygame.Surface((bound, bound), pygame.SRCALPHA)
-    drawfn(canvas, bound // 2, bound // 2)
-    rot = pygame.transform.rotate(canvas, math.degrees(camera.yaw))
-    cp = max(0.05, math.cos(camera.pitch))
-    sw = max(1, int(rot.get_width() * camera.scale))
-    sh = max(1, int(rot.get_height() * camera.scale * cp))
-    scaled = pygame.transform.smoothscale(rot, (sw, sh))
+    yaw_bkt = round(camera.yaw / _FLOOR_DECAL_YAW_BKT)
+    scale_bkt = round(camera.scale / _FLOOR_DECAL_SCALE_BKT)
+    pitch_bkt = round(camera.pitch / _FLOOR_DECAL_YAW_BKT)
+    key = (id(deco), yaw_bkt, scale_bkt, pitch_bkt)
+    scaled = _FLOOR_DECAL_CARD_CACHE.get(key)
+    if scaled is None:
+        if deco.kind == "rug":
+            w = int(deco.kwargs.get("w", 88)); h = int(deco.kwargs.get("h", 60))
+            bound = max(w, h) + 18
+        else:
+            bound = 60
+        canvas = pygame.Surface((bound, bound), pygame.SRCALPHA)
+        drawfn(canvas, bound // 2, bound // 2)
+        rot = pygame.transform.rotate(canvas, math.degrees(camera.yaw))
+        cp = max(0.05, math.cos(camera.pitch))
+        sw = max(1, int(rot.get_width() * camera.scale))
+        sh = max(1, int(rot.get_height() * camera.scale * cp))
+        scaled = pygame.transform.smoothscale(rot, (sw, sh)).convert_alpha()
+        _FLOOR_DECAL_CARD_CACHE[key] = scaled
+        # Bound memory: drop the oldest entries when the cache gets fat. A
+        # single scene's worth of decals at one yaw bucket is ~100 entries; a
+        # few-thousand cap covers head turns + scene changes without leaking.
+        if len(_FLOOR_DECAL_CARD_CACHE) > 4096:
+            for k_ in list(_FLOOR_DECAL_CARD_CACHE)[:1024]:
+                _FLOOR_DECAL_CARD_CACHE.pop(k_, None)
+    sw, sh = scaled.get_size()
     # `z` lifts the flat decal onto a raised surface (a ledger on a desktop);
     # 0 keeps it on the floor (rugs, stains).
     zlift = float(getattr(deco, "kwargs", {}).get("z", 0.0))
