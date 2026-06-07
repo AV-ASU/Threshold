@@ -180,6 +180,10 @@ def main():
         g.load_scene_now(k)
         g.step(1 / 60.0)
         check(g.scene.key == k, f"depths: {k} loads and ticks")
+    # The descent rooms each fire a one-shot first-visit narration beat.
+    for flag in ("first_antechamber", "first_procession", "first_hall",
+                 "first_depthstair"):
+        check(g.save.flag(flag), f"depths: {flag} narration fired on entry")
     # The journal flashback is now a WORDLESS visual dream (the burning
     # doorway + the accelerating mask swarm), not text stills: a single
     # None-line phase held for FLASHBACK_DUR. Assert the visual mechanics

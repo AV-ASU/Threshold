@@ -723,6 +723,11 @@ def build_the_sump():
     def _on_enter(game, scene):
         from .base import drop_ammo_cache
         drop_ammo_cache(game, scene, 5, 6, 4, "ammo_sump")
+        if not game.save.flag("sump_water_seen"):
+            game.save.set_flag("sump_water_seen", True)
+            game.show_notice("The water here does not sit. It turns, slow, and "
+                             "goes down, and keeps going down. You never hear "
+                             "it land.", duration=4.5)
     sc.on_enter_fn = _on_enter
 
     # Optional lore: The Bargain (second testimony fragment), left among the
@@ -790,4 +795,12 @@ def build_the_cells():
     sc.hide_spots = []
     _ambient(sc, "whisper", 0.13, 6.0, 11.0)
 
+    def _on_enter(game, scene):
+        if game.save.flag("first_cells"):
+            return
+        game.save.set_flag("first_cells", True)
+        game.show_notice("A row of stalls, the doors standing open. They only "
+                         "needed locks the first night. After that, no one "
+                         "wanted to leave.", duration=4.0)
+    sc.on_enter_fn = _on_enter
     return sc
