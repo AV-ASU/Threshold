@@ -288,6 +288,7 @@ class NPC:
                 self._cult_state = "chase"
                 self._cult_state_t = 0.0
                 self._scout_target = None
+                self._just_locked = True
             # A cultist that locks on blooms into His maw -- but ONLY once
             # the world is corrupt enough (3+ evidence; flagged on the scene
             # by Game each frame). Below that they stay mundane.
@@ -307,6 +308,7 @@ class NPC:
         if self._cult_state == "chase":
             self._cult_state = "search"
             self._cult_state_t = 6.0
+            self._just_lost = True
         if self._cult_state == "search":
             self._cult_state_t -= dt
             if self._cult_state_t <= 0 or self._last_seen_pos is None:

@@ -382,6 +382,10 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         self.stillness_t = 0.0
         self._delayed_audio = []
         self._creepy_step_count = 0
+        # Infestation stage-transition tracker (infest_mixin fires
+        # infest_throb when the surface stage steps up). New game
+        # starts at 0 so 0 -> 1 trips on the first evidence cross.
+        self._last_infest_stage = 0
         # Flashback / ending state
         self._flashback_phase = None
         self._flashback_t = 0.0
@@ -636,6 +640,15 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
                 self.audio.play_music(self.scene.music)
             else:
                 self.audio.stop_music()
+        # Scene-aware footstep reverb. UNDERGROUND_SCENES route through
+        # the cellar profile (stone tail); OUTDOOR_SCENES + brimley use
+        # outdoor (subtle slap-back); everything else stays dry.
+        if key in UNDERGROUND_SCENES:
+            self.audio.set_scene_reverb("cellar")
+        elif key in OUTDOOR_SCENES or key == "brimley":
+            self.audio.set_scene_reverb("outdoor")
+        else:
+            self.audio.set_scene_reverb(None)
         if self.scene.on_enter_fn:
             self.scene.on_enter_fn(self, self.scene)
         # Outdoor decay: re-apply tier-additive decorations every
@@ -954,8 +967,10 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
                 on_corn = (floor_ch_now == ":")
                 if on_corn and self.player.hidden is None:
                     self.player.hidden = "corn"
+                    self.audio.play("hide_enter", 0.55)
                 elif (not on_corn) and self.player.hidden == "corn":
                     self.player.hidden = None
+                    self.audio.play("hide_exit", 0.55)
                 # Sync the in_river state to whatever floor the player
                 # is now standing on. River tile -> True, anything else
                 # -> False. The blocker logic above ensures the player
@@ -982,7 +997,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
                             self._delayed_audio.append([0.12, sfx, 0.7])
                             delayed = True
                     if not delayed:
-                        self.audio.play(sfx, 0.7)
+                        self.audio.play_footstep(sfx, 0.7)
                     # Broadcast the step to listening cultists. Per-
                     # surface base loudness, scaled 1.5x while
                     # sprinting. Cultists in SCOUT poll
@@ -1034,7 +1049,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
                 self.player.x, self.player.y = self.player.hide_origin
                 self.player.hide_origin = None
             self.show_notice("You slip out of cover.", duration=1.6)
-            self.audio.play("blip_soft", 0.4)
+            self.audio.play("hide_exit", 0.7)
             return
         # Hide-spot pickup: scenes declare hide_spots = [(x,y,kind)]
         # where kind is 'under', 'in', or 'behind'. Closest within
@@ -1055,7 +1070,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
                 "in":    "you step inside.",
             }.get(bestH[2], "you take cover.")
             self.show_notice(verb, duration=1.8)
-            self.audio.play("blip_soft", 0.4)
+            self.audio.play("hide_enter", 0.7)
             return
         # Splitting axe: if the player has the lumber_axe in their
         # inventory and is adjacent to a chop-eligible tile (`*`
@@ -1295,7 +1310,9 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         an investigate ping at the body and spikes visibility: the town
         turns its head toward what you just did."""
         pan = self.audio.pan_for_world(npc.x, self.player.x)
-        self.audio.play("enemy_die", 0.55, pan=pan)
+        dmult = self.audio.distance_attenuation(npc.x, npc.y,
+                                                self.player.x, self.player.y)
+        self.audio.play("enemy_die", 0.55 * dmult, pan=pan)
         tag = getattr(npc, "tag", None)
         is_cult = ((isinstance(tag, str) and tag.startswith("cult_"))
                    or getattr(npc, "sprite_kind", None) == "cultist")
@@ -1355,7 +1372,9 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         substrate references in late-game evidence files."""
         e.alive = False
         pan = self.audio.pan_for_world(e.x, self.player.x)
-        self.audio.play("enemy_die", 0.6, pan=pan)
+        dmult = self.audio.distance_attenuation(e.x, e.y,
+                                                self.player.x, self.player.y)
+        self.audio.play("enemy_die", 0.6 * dmult, pan=pan)
         kind = getattr(e, "kind", "")
         if kind == "wolf":
             arg = "animal_kills"
@@ -1409,7 +1428,11 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
             entry[0] -= dt
             if entry[0] <= 0:
                 pan = entry[3] if len(entry) > 3 else None
-                self.audio.play(entry[1], entry[2], pan=pan)
+                name = entry[1]
+                if name.startswith("step_"):
+                    self.audio.play_footstep(name, entry[2], pan=pan)
+                else:
+                    self.audio.play(name, entry[2], pan=pan)
             else:
                 survivors.append(entry)
         self._delayed_audio = survivors
@@ -1717,6 +1740,14 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         t = max(0.0, min(1.0, (prox - 0.70) / 0.25))
         self._heartbeat_t = 5.0 - t * 3.8
         self.audio.play("heartbeat", 0.40 + prox * 0.30)
+        # As the King-spawn threshold (1.0) closes in, duck the music
+        # so each beat lands cleanly. Depth ramps with proximity: a
+        # subtle 0.65 at the prox=0.85 entry point, hardening to 0.30
+        # when the player is about to lose. Half a beat's worth of
+        # duck so the gap re-closes between heartbeats.
+        if prox > 0.85:
+            depth = 0.65 - 0.35 * max(0.0, min(1.0, (prox - 0.85) / 0.15))
+            self.audio.duck(self._heartbeat_t * 0.6, depth=depth)
 
     def _tick_cult_ambient(self, dt):
         """Reactive cult-rite audio bed. In CULT_AMBIENT_SCENES, the
@@ -1776,6 +1807,11 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
             self._chant_t = (9.0 - 5.5 * chant_t) * random.uniform(0.8, 1.2)
             pan = self.audio.pan_for_world(closest.x, self.player.x)
             self.audio.play("cult_chant", 0.12 + 0.16 * chant_t, pan=pan)
+            # Duck the depths music so the chant carries. Depth scales
+            # with proximity -- a close chant ducks harder. The 2.7s
+            # window covers the chant's reverb tail (cult_chant is
+            # 1.8s dry + ~0.9s cellar tail).
+            self.audio.duck(2.7, depth=0.40 - 0.20 * chant_t)
 
     def _flashlight_lit(self):
         """Is the flashlight actually casting a beam right now? True only
@@ -1865,7 +1901,9 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
                     e.update(dt, self.scene, self.player)
                     if e.just_shot and e.shoot_sfx:
                         pan = self.audio.pan_for_world(e.x, self.player.x)
-                        self.audio.play(e.shoot_sfx, 0.55, pan=pan)
+                        dmult = self.audio.distance_attenuation(
+                            e.x, e.y, self.player.x, self.player.y)
+                        self.audio.play(e.shoot_sfx, 0.55 * dmult, pan=pan)
                 if not e.alive:
                     self.scene.enemies.remove(e)
             # A scene-placed cultist (the Works gauntlet uses Enemy-class
@@ -1895,7 +1933,9 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
                     p.update(dt, self.scene, self.player)
                     if p.hit:
                         pan = self.audio.pan_for_world(p.x, self.player.x)
-                        self.audio.play("hit", 0.55, pan=pan)
+                        dmult = self.audio.distance_attenuation(
+                            p.x, p.y, self.player.x, self.player.y)
+                        self.audio.play("hit", 0.55 * dmult, pan=pan)
                     if not p.alive:
                         self.scene.projectiles.remove(p)
                 # Sweep any enemy a projectile flagged dead. (The melee
@@ -1931,6 +1971,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
             # while a box is up. Cutscene/audio drivers keep running.
             if not world_frozen:
                 self._tick_cultists(dt)
+                self._tick_chase_cues_enemies(dt)
                 self._tick_fold_pursuit(dt)
                 self._tick_sheriff(dt)
                 self._tick_gaze_bind(dt)

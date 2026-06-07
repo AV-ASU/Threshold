@@ -31,10 +31,6 @@ def to_sound(sig, vol=1.0):
     return pygame.sndarray.make_sound((sig * 32767).astype(np.int16))
 
 
-def silence(duration_s):
-    return np.zeros(int(SR * duration_s), dtype=np.float32)
-
-
 # ---- filters (scipy biquads) --------------------------------------
 
 def lowpass(sig, cutoff_hz, order=4):
@@ -49,38 +45,46 @@ def highpass(sig, cutoff_hz, order=4):
     return signal.sosfilt(sos, sig).astype(np.float32)
 
 
-def bandpass(sig, low_hz, high_hz, order=4):
-    sos = signal.butter(order, [low_hz, high_hz], btype="bandpass",
-                        fs=SR, output="sos")
-    return signal.sosfilt(sos, sig).astype(np.float32)
-
-
 # ---- reverb (Schroeder: 4 parallel combs -> 2 series allpasses) ---
 
 def _comb(sig, delay_samples, feedback):
-    """Single feedback-comb. Returns same length as input."""
-    out = np.zeros_like(sig)
-    buf = np.zeros(delay_samples, dtype=np.float32)
-    bi = 0
-    for i in range(len(sig)):
-        delayed = buf[bi]
-        out[i] = delayed
-        buf[bi] = sig[i] + delayed * feedback
-        bi = (bi + 1) % delay_samples
-    return out
+    """Feedback-comb: y[n] = x[n-D] + fb * y[n-D]. Block-vectorised:
+    within any D-sample window the right-hand side only references
+    indices D samples earlier (the previous block), so a whole block
+    can be computed in one numpy op. Two orders of magnitude faster
+    than the pure-Python per-sample loop on large signals."""
+    D = delay_samples
+    sig = np.asarray(sig, dtype=np.float32)
+    n = len(sig)
+    sig_pad = np.concatenate([np.zeros(D, dtype=np.float32), sig])
+    out_pad = np.zeros(n + D, dtype=np.float32)
+    for B in range(0, n, D):
+        E = min(B + D, n)
+        sz = E - B
+        # y[B:E] = x[B-D:E-D] + fb * y[B-D:E-D]
+        out_pad[B + D:E + D] = (sig_pad[B:B + sz]
+                                + feedback * out_pad[B:B + sz])
+    return out_pad[D:n + D]
 
 
 def _allpass(sig, delay_samples, gain=0.5):
-    out = np.zeros_like(sig)
-    buf = np.zeros(delay_samples, dtype=np.float32)
-    bi = 0
-    for i in range(len(sig)):
-        delayed = buf[bi]
-        v = -gain * sig[i] + delayed
-        buf[bi] = sig[i] + gain * v
-        out[i] = v
-        bi = (bi + 1) % delay_samples
-    return out
+    """Schroeder allpass: y[n] = -g*x[n] + x[n-D] + g*y[n-D]. Same
+    block-vectorised pattern as _comb: the -g*x[n] term is immediate
+    (no inter-sample dependency within the block) and the delayed
+    terms reference only the previous block."""
+    D = delay_samples
+    sig = np.asarray(sig, dtype=np.float32)
+    n = len(sig)
+    sig_pad = np.concatenate([np.zeros(D, dtype=np.float32), sig])
+    out_pad = np.zeros(n + D, dtype=np.float32)
+    for B in range(0, n, D):
+        E = min(B + D, n)
+        sz = E - B
+        # y[B:E] = -g*x[B:E] + x[B-D:E-D] + g*y[B-D:E-D]
+        out_pad[B + D:E + D] = (-gain * sig[B:E]
+                                + sig_pad[B:B + sz]
+                                + gain * out_pad[B:B + sz])
+    return out_pad[D:n + D]
 
 
 # Per-space reverb profiles. tail_s is added to the input length so
@@ -99,11 +103,6 @@ _REVERB_PROFILES = {
     "cellar": dict(combs=[(53, 0.78), (61, 0.74), (67, 0.70), (71, 0.66)],
                    allpasses=[(23, 0.55), (11, 0.55)], wet=0.35,
                    tail_s=0.9, hp_after=120),
-    # Big halls (the Sign Chamber). Long, slightly more open than
-    # cellar.
-    "chapel": dict(combs=[(61, 0.82), (71, 0.78), (79, 0.74), (83, 0.70)],
-                   allpasses=[(29, 0.55), (13, 0.55)], wet=0.40,
-                   tail_s=1.2),
     # Open outdoor (cornfield, brimley). No reflective surfaces;
     # almost no reverb, but a very subtle slap-back so wide spaces
     # don't sound the same as inside a closet.
@@ -140,80 +139,4 @@ def reverb(sig, profile="room"):
     if p.get("lp_after"):
         wet = lowpass(wet, p["lp_after"], order=2)
     return padded + wet * p["wet"]
-
-
-REVERB_PROFILES = tuple(_REVERB_PROFILES.keys())
-
-
-# ---- granular synthesis --------------------------------------------
-
-def granular(sig, grain_ms=80, density=1.0, jitter=0.5, pitch_jitter=0.0,
-             out_seconds=None, seed=None):
-    """Chop `sig` into ~`grain_ms` grains and re-scatter them with
-    overlap. `density` is grains-per-second-of-output relative to the
-    grain length. `jitter` 0..1 randomises grain selection (1 = pure
-    random, 0 = sequential). `pitch_jitter` 0..1 detunes each grain
-    by up to +/- 1 semitone via resampling.
-
-    Useful for: smearing a recognisable sample into a textural bed
-    (cult chant -> cult breath cloud), or building noise-with-pitch
-    moments that don't repeat audibly.
-    """
-    rng = np.random.default_rng(seed)
-    sig = np.asarray(sig, dtype=np.float32)
-    grain_n = max(1, int(SR * grain_ms / 1000))
-    if len(sig) < grain_n:
-        return sig.copy()
-    out_n = int(SR * (out_seconds if out_seconds is not None else
-                      len(sig) / SR))
-    out = np.zeros(out_n, dtype=np.float32)
-    # Hann window for each grain so they crossfade without clicks.
-    window = np.hanning(grain_n).astype(np.float32)
-    # Step between grain starts in the OUTPUT. Smaller = denser.
-    step = max(1, int(grain_n / max(0.1, density)))
-    pos_out = 0
-    max_src_start = len(sig) - grain_n
-    while pos_out + grain_n < out_n:
-        if jitter > 0:
-            src = rng.integers(0, max_src_start + 1)
-        else:
-            src = (pos_out % (max_src_start + 1))
-        grain = sig[src:src + grain_n] * window
-        if pitch_jitter > 0:
-            cents = rng.uniform(-pitch_jitter, pitch_jitter) * 100
-            ratio = 2.0 ** (cents / 1200.0)
-            new_n = max(2, int(grain_n / ratio))
-            grain = signal.resample(grain, new_n).astype(np.float32)
-            grain = grain[:grain_n] if len(grain) > grain_n else np.pad(
-                grain, (0, grain_n - len(grain)))
-        out[pos_out:pos_out + grain_n] += grain
-        pos_out += step
-    # Normalise back into [-1, 1] -- granular overlap usually
-    # accumulates well over unity.
-    peak = float(np.max(np.abs(out)))
-    if peak > 1e-6:
-        out *= min(1.0, 0.95 / peak)
-    return out
-
-
-# ---- pitch shift via resampling ------------------------------------
-
-# ---- mixing --------------------------------------------------------
-
-def mix(*signals, normalise=True):
-    """Sum same-or-different-length float arrays at the same start.
-    Returns a buffer the length of the longest input; shorter inputs
-    are zero-padded. Optional peak normalisation back into [-1, 1]."""
-    if not signals:
-        return np.zeros(0, dtype=np.float32)
-    n = max(len(s) for s in signals)
-    out = np.zeros(n, dtype=np.float32)
-    for s in signals:
-        out[:len(s)] += s.astype(np.float32, copy=False)
-    if normalise:
-        peak = float(np.max(np.abs(out)))
-        if peak > 1.0:
-            out /= peak
-    return out
-
 
