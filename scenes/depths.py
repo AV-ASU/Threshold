@@ -340,9 +340,11 @@ def build_depths_threshing():
     # with NO tag -> excluded from the cultist-gaze tick (no visibility, no
     # chase, no grab); non-solid. The dig toward the door made present, and
     # the rite chanted over it (NARRATIVE 1b / The Digging note).
-    for mx, my, mf, mp in [(5, 8, (-1, 0), "mine"), (7, 8, (1, 0), "mine"),
+    # NB: keep these on OPEN floor (rows 8-9 have wall pillars at cols 2/5/8) --
+    # a body stamped on a '#' is embedded in the wall and never draws.
+    for mx, my, mf, mp in [(6, 8, (-1, 0), "mine"), (7, 8, (1, 0), "mine"),
                            (4, 9, (-1, 0), "mine"),
-                           (6, 9, (0, 1), "chant"), (8, 9, (0, 1), "chant")]:
+                           (6, 9, (0, 1), "chant"), (9, 9, (0, 1), "chant")]:
         nm = "A digger" if mp == "mine" else "A chanter"
         m = NPC(mx * TILE + 16, my * TILE + 16, nm, "cultist",
                 movement="idle", solid=False, no_prompt=True)
