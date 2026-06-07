@@ -516,18 +516,15 @@ class RenderMixin:
         ik = getattr(self, "_idle_king", None)
         if not ik or self.player is None:
             return
-        # He stays OUT of frame until the treadmill has engaged -- the player has
-        # walked north past the dead car (now hidden along with the sign). Before
-        # that it is the arrival beat with the car as the landmark; after, it is
-        # just the endless road and the King at its vanishing point.
-        if not getattr(self, "_treadmill_latched", False):
-            return
         from rendering.king_unfold import draw_king_unfold
         sx, sy = self.camera.project(ik[0], ik[1])
         h = self.screen.get_height()
         w = self.screen.get_width()
-        if sy < -120 or sy > h + 120:
-            return                       # fully off the top: nothing to draw
+        # Only when he's actually up the road in front of you: facing north he is
+        # ahead at the vanishing point (glimpsed); turn away and he projects
+        # off-screen and isn't drawn.
+        if sy < -120 or sy > h + 120 or sx < -160 or sx > w + 160:
+            return
         sy -= int(TILT_LIFT.get("yellow_king", TILT_ACTOR_STAND)
                   * math.sin(self.camera.pitch))
         t = pygame.time.get_ticks() / 1000.0
@@ -985,20 +982,31 @@ class RenderMixin:
                 firing = self.player.melee_swing_t > 0
                 prog = (1.0 - (self.player.melee_swing_t / AXE_SWING_DUR)
                         if firing else 0.0)
+                # The held weapon points where you AIM. facing/melee_dir are
+                # WORLD headings; under the yawed camera, rotate them into screen
+                # space (Camera.project's yaw rotation) so the gun/axe lines up
+                # with the on-screen crosshair. The body view is already
+                # yaw-aware via view_from_facing.
+                def _sf(v):
+                    fx, fy = v
+                    if self._tilt_on() and self.camera.yaw:
+                        c, s = math.cos(self.camera.yaw), math.sin(self.camera.yaw)
+                        return (fx * c + fy * s, -fx * s + fy * c)
+                    return (fx, fy)
                 if wpn == "pistol":
                     if firing:
                         draw_gun_fire(self.screen, psx, psy,
-                                      self.player.melee_dir, prog)
+                                      _sf(self.player.melee_dir), prog)
                     else:
                         draw_revolver_held(self.screen, psx, psy,
-                                           self.player.facing)
+                                           _sf(self.player.facing))
                 elif wpn == "lumber_axe":
                     if firing:
                         draw_axe_swing(self.screen, psx, psy,
-                                       self.player.melee_dir, prog)
+                                       _sf(self.player.melee_dir), prog)
                     else:
                         draw_axe_held(self.screen, psx, psy,
-                                      self.player.facing)
+                                      _sf(self.player.facing))
             _emit(self.camera.depth(self.player.x, self.player.y), _draw_player)
 
         # Under tilt, fold the upright occluders -- wall tiles + solid props --
@@ -1010,25 +1018,37 @@ class RenderMixin:
         # through the projection too. At pitch 0 nothing is appended and the
         # list stays in legacy insertion order -> the flat view is byte-identical.
         if _tilt:
-            from scenes.base import _TILT_WALL_RISE, _tilt_tile_box
+            from scenes.base import (_TILT_WALL_RISE, _COUNTER_RISE,
+                                     _COUNTER_CHARS, _tilt_tile_box)
             from rendering.occlusion import occluder_alpha
             _whalf = TILE * 0.5 * self.camera.scale
+            _sw, _sh = self.scene.w, self.scene.h
             for (tx, ty) in (_tilt_walls or []):
                 wcx, wcy = tx * TILE + TILE / 2, ty * TILE + TILE / 2
+                # A counter is waist-high: occlude + depth-sort at its real
+                # (short) rise so an NPC standing behind it shows OVER the top
+                # instead of being blanketed like a full wall.
+                _wtx = tx % _sw if self.scene.wrap_x else tx
+                _wty = ty % _sh if self.scene.wrap_y else ty
+                _ch = (self.scene.objects[_wty][_wtx]
+                       if 0 <= _wty < _sh and 0 <= _wtx < _sw else "")
+                rise = _COUNTER_RISE if _ch in _COUNTER_CHARS else _TILT_WALL_RISE
                 wa = 255
                 for fx, fy, fh in _focus:
                     wa = min(wa, occluder_alpha(self.camera, wcx, wcy,
-                                                _TILT_WALL_RISE, fx, fy, fh,
+                                                rise, fx, fy, fh,
                                                 o_halfw=_whalf))
                     if wa <= 60:
                         break
-                _emit(self.camera.depth(wcx, wcy, _TILT_WALL_RISE),
+                _emit(self.camera.depth(wcx, wcy, rise),
                       lambda wa=wa, tx=tx, ty=ty:
                       draw_with_alpha(self.screen, wa,
                                       lambda s: _tilt_tile_box(
                                           s, self.camera, self.scene, tx, ty)))
             for d in (_tilt_solid_decos or []):
                 for ox, oy in _offsets:
+                    if getattr(d, "_no_wrap", False) and (ox or oy):
+                        continue          # stays at its true spot; no wrap-clone
                     _emit(self.camera.depth(d.x + ox, d.y + oy),
                           lambda d=d, ox=ox, oy=oy: self._draw_solid_prop(d, ox, oy))
             # Wall-hung decorations: lift onto the wall face (_WALL_MOUNT_Z) as

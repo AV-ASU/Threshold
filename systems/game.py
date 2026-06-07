@@ -360,7 +360,6 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         self._portal_charge_t = 0.0
         self._pending_emerge = None
         self._idle_king = None
-        self._treadmill_latched = False    # arrival-road car/sign hidden on the treadmill
         # Cultists, the curse, and Watchers
         self._cursed = False
         self._watchers = []
@@ -534,7 +533,6 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         # He stays behind on a scene change (cleared here) and re-forms
         # at the new entry if visibility is still pinned at the top.
         self._king = None
-        self._treadmill_latched = False    # the arrival-road car/sign show again
         reset_king_fx()        # his trail/particles don't follow across scenes
         self._king_anchor = (self.player.x, self.player.y)
         # A torn portal belongs to the room it opened in: leaving the scene
@@ -720,9 +718,10 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         self.camera.cam_y = self.cam_y + SCREEN_H // 2
 
     def _tilt_on(self):
-        """The oblique 'look' mode is engaged (F3). Mouse-look + camera-relative
-        movement + cursor-aimed gun apply ONLY here; pitch 0 stays the shipping
-        top-down game untouched."""
+        """The oblique view is engaged. It is the ONLY in-game camera now (the
+        flat pitch-0 view is dev-only -- the headless capture tools set pitch 0
+        directly). Always true during play; false only when a dev/capture script
+        forces pitch 0."""
         return self._cam_pitch_target > 0.0
 
     def _update_look(self, dt):
@@ -2085,20 +2084,6 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
                                       duration=2.0)
                 elif ev.key == pygame.K_F11:
                     self._toggle_fullscreen()
-                elif ev.key == pygame.K_F3:
-                    # The oblique look mode is the DEFAULT (CAMERA.md); F3
-                    # toggles it OFF to the flat pitch-0 top-down view and back.
-                    # Pitch eases in _update_camera. On (re-)enable, seed the
-                    # look heading from the player's current facing so the
-                    # camera settles behind them with no rotation jump.
-                    if self._cam_pitch_target:
-                        self._cam_pitch_target = 0.0
-                    else:
-                        self._cam_pitch_target = math.radians(TILT_PITCH_DEG)
-                        if self.player:
-                            fx, fy = self.player.facing
-                            self.look = LookController(math.atan2(fy, fx))
-                            self.camera.yaw = self.look.cam_yaw
                 elif ev.key == pygame.K_ESCAPE:
                     self.state = "paused"
                     self.pause_view = "menu"

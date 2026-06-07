@@ -1822,7 +1822,7 @@ _FLOOR_DECAL_KINDS = frozenset((
     # where the river drains, a floor hatch, a slumped body in its pool): warped
     # flat onto the floor so they turn with the room instead of standing up as a
     # top-down sticker under tilt. Pitch 0 draws them flat via Scene.draw as before.
-    "symbol", "binding_sigil", "swallow_hole",
+    "symbol", "binding_sigil", "swallow_hole", "phantom_mark",
     "body", "drowned_body", "water_trail", "child_drawing", "campfire",
     "effects_pile",
     # Low overhead foliage (drawn top-down): a flat warped decal reads as a
