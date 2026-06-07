@@ -529,6 +529,22 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
                     self.look.body = math.atan2(hdy, hdx)
                     self.look.cam_yaw = (self.look.body + math.pi / 2)
         self._pending_emerge = None
+        # Face the player INTO the room on entry: a heading from the spawn toward
+        # the scene centre. You just walked in, so you look forward at the room
+        # (and whoever's standing in it) instead of back at the door -- otherwise
+        # anyone ahead of the spawn sits in the blind-spot sight cone and reads
+        # as invisible until you happen to turn around (the church Preacher did).
+        # The camera rides behind this heading, so it orients the sight cone too.
+        if getattr(self, "look", None) is not None and self.player is not None:
+            _cx = self.scene.w * TILE / 2.0
+            _cy = self.scene.h * TILE / 2.0
+            _hdx, _hdy = _cx - self.player.x, _cy - self.player.y
+            if _hdx or _hdy:
+                self.look.body = math.atan2(_hdy, _hdx)
+                self.look.aim = self.look.body
+                self.look.cam_yaw = self.look.body + math.pi / 2
+                self.player.facing = (math.cos(self.look.body),
+                                      math.sin(self.look.body))
         # The King materialises at the doorway the player entered from.
         # He stays behind on a scene change (cleared here) and re-forms
         # at the new entry if visibility is still pinned at the top.
