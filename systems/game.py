@@ -126,6 +126,11 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         self._cam_pitch_target = math.radians(TILT_PITCH_DEG)
         self.camera.pitch = self._cam_pitch_target
         self.look = LookController()       # look/heading model (tilt mode)
+        # Dev perf overlay (F1): FPS + frame-time readout, off by default. The
+        # last frame's dt feeds the ms number; clock.get_fps() is pygame's own
+        # rolling average. Purely diagnostic -- never shown unless toggled.
+        self._show_fps = False
+        self._last_dt = 0.0
         self.title_choice = 0
         # title_options is computed each render via _title_menu_options
         # so the middle slot can flip between "Delete Save" (when a
@@ -290,6 +295,8 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         if ev.type != pygame.KEYDOWN: return
         if ev.key == pygame.K_F11:
             self._toggle_fullscreen(); return
+        if ev.key == pygame.K_F1:
+            self._show_fps = not self._show_fps; return
         opts = self._title_menu_options()
         if ev.key in (pygame.K_UP, pygame.K_w):
             self.title_choice = (self.title_choice - 1) % len(opts)
@@ -2219,6 +2226,8 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
                                       duration=2.0)
                 elif ev.key == pygame.K_F11:
                     self._toggle_fullscreen()
+                elif ev.key == pygame.K_F1:
+                    self._show_fps = not self._show_fps
                 elif ev.key == pygame.K_ESCAPE:
                     self.state = "paused"
                     self.pause_view = "menu"
@@ -2234,6 +2243,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
     def run(self):
         while True:
             dt = self.clock.tick(60) / 1000.0
+            self._last_dt = dt
             self.frame_count += 1
             for ev in pygame.event.get():
                 self.handle_event(ev)
@@ -2244,4 +2254,6 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
                 self.draw_world()
                 if self.state == "paused":
                     self.draw_pause()
+            if self._show_fps:
+                self._draw_fps_overlay()
             pygame.display.flip()

@@ -27,20 +27,47 @@ class Camera:
                  scale=1.0, origin=(0, 0)):
         self.cam_x = cam_x
         self.cam_y = cam_y
-        self.pitch = pitch        # 0 = top-down, ->pi/2 = looking along ground
-        self.yaw = yaw            # rotation about the vertical axis
         self.scale = scale
         self.origin = origin      # screen pixel that world (cam_x, cam_y, 0) maps to
+        # pitch/yaw are PROPERTIES that cache their cos/sin. project()/depth()
+        # run thousands of times per frame (every decoration x9 wrap clones,
+        # every billboard, every depth-sort entry) but the angles only change
+        # ONCE per frame, so recomputing the trig per call was pure waste. The
+        # setters refresh the cache; the math below reads it. Values are
+        # identical to the old per-call trig -- this is a speed change, not a
+        # visual one.
+        self._pitch = pitch       # 0 = top-down, ->pi/2 = looking along ground
+        self._yaw = yaw           # rotation about the vertical axis
+        self._cp, self._sp = math.cos(pitch), math.sin(pitch)
+        self._cy, self._sy = math.cos(yaw), math.sin(yaw)
+
+    @property
+    def pitch(self):
+        return self._pitch
+
+    @pitch.setter
+    def pitch(self, v):
+        self._pitch = v
+        self._cp, self._sp = math.cos(v), math.sin(v)
+
+    @property
+    def yaw(self):
+        return self._yaw
+
+    @yaw.setter
+    def yaw(self, v):
+        self._yaw = v
+        self._cy, self._sy = math.cos(v), math.sin(v)
 
     # -- the seam ------------------------------------------------------------
     def project(self, wx, wy, wz=0.0):
         """World (x, y, z) -> integer screen (sx, sy)."""
         dx = (wx - self.cam_x)
         dy = (wy - self.cam_y)
-        if self.yaw:
-            c, s = math.cos(self.yaw), math.sin(self.yaw)
+        if self._yaw:
+            c, s = self._cy, self._sy
             dx, dy = dx * c + dy * s, -dx * s + dy * c
-        cp, sp = math.cos(self.pitch), math.sin(self.pitch)
+        cp, sp = self._cp, self._sp
         sx = self.origin[0] + dx * self.scale
         sy = self.origin[1] + dy * self.scale * cp - wz * self.scale * sp
         return int(sx), int(sy)
@@ -55,10 +82,10 @@ class Camera:
         render window to exactly cover the tilted screen, and for mouse->world
         picking once the live view tilts."""
         rx = (sx - self.origin[0]) / self.scale
-        cp = math.cos(self.pitch) or 1e-6
+        cp = self._cp or 1e-6
         ry = (sy - self.origin[1]) / (self.scale * cp)
-        if self.yaw:
-            c, s = math.cos(self.yaw), math.sin(self.yaw)
+        if self._yaw:
+            c, s = self._cy, self._sy
             # inverse of the forward rotation [[c, s], [-s, c]]
             rx, ry = rx * c - ry * s, rx * s + ry * c
         return self.cam_x + rx, self.cam_y + ry
@@ -69,8 +96,8 @@ class Camera:
         sorts just behind/over its own base consistently."""
         dx = (wx - self.cam_x)
         dy = (wy - self.cam_y)
-        if self.yaw:
-            c, s = math.cos(self.yaw), math.sin(self.yaw)
+        if self._yaw:
+            c, s = self._cy, self._sy
             dy = -dx * s + dy * c
         return dy - wz * 0.001
 
@@ -78,8 +105,8 @@ class Camera:
     def ground_squash(self):
         """How much a flat-on-the-ground circle flattens vertically on screen
         (1 at top-down, ->0 as we tilt to the horizon)."""
-        return math.cos(self.pitch)
+        return self._cp
 
     def height_rise(self):
         """Screen pixels up per world unit of height (0 top-down, ->1)."""
-        return math.sin(self.pitch) * self.scale
+        return self._sp * self.scale

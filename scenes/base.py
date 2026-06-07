@@ -1804,6 +1804,15 @@ def draw_scene_terrain(surf, scene, cam_x, cam_y, x0, y0, x1, y1,
 # floor detail -- then extrude wall tiles as upright quads on top.
 _TILT_WALL_RISE = 26
 
+# Single-slot cache for the warped floor (the raster + rotate + scale in
+# draw_terrain_tilted). That surface is a pure function of the camera pose +
+# scene, and the camera eases to a stop whenever the player is settled
+# (standing still, in dialogue, in a menu), so once it stops moving we rebuild
+# the same warped floor every frame for nothing. Keyed on the rounded camera
+# pose; a miss (the camera moved, or a new scene) rebuilds it. This was the
+# single biggest per-frame cost in the wrapped town.
+_TILT_FLOOR_CACHE = {"key": None, "surf": None}
+
 
 def _tilt_window_half(camera):
     """Smallest centred half-span (world px) whose flat window still covers
@@ -2456,23 +2465,35 @@ def draw_terrain_tilted(surf, scene, camera, sight=None):
     cx, cy = camera.cam_x, camera.cam_y
     half = _tilt_window_half(camera)
     span = int(half * 2)
-    flat = pygame.Surface((span, span))
-    flat.fill((10, 10, 14))
     wx0, wy0 = cx - half, cy - half
     x0 = int(math.floor(wx0 / TILE)); y0 = int(math.floor(wy0 / TILE))
     x1 = int(math.ceil((wx0 + span) / TILE)); y1 = int(math.ceil((wy0 + span) / TILE))
-    # Phase 2 of the seamless-world neighbor strip: when the player is near a
-    # non-wrap host's edge and the visible tile range extends past the world's
-    # bounds, fill the OUT-OF-BOUNDS tiles with the neighbor scene's floor
-    # content (per rendering/world_neighbors.get_neighbors). draw_scene_terrain
-    # below then overdraws the in-bounds area with the host's tiles, so the
-    # strip only shows where the host doesn't reach -- a clean seamless seam.
-    # Wrap hosts already tile their content edge to edge; they get no strip.
-    if not (scene.wrap_x or scene.wrap_y):
-        _draw_neighbor_strips(flat, scene, wx0, wy0, x0, y0, x1, y1)
-    draw_scene_terrain(flat, scene, wx0, wy0, x0, y0, x1, y1,
-                       skip_billboard=True)
-    warped = _tilt_warp(flat, camera)
+    # The warped floor is cached (see _TILT_FLOOR_CACHE): rebuilt only when the
+    # camera pose changes. x0..y1 / wx0,wy0 are still computed every frame --
+    # they're cheap and the wall + neighbor passes below need them.
+    fkey = (id(scene), getattr(scene, "key", None), scene.w, scene.h,
+            round(cx), round(cy), round(camera.yaw, 4),
+            round(camera.pitch, 4), round(camera.scale, 4))
+    _fc = _TILT_FLOOR_CACHE
+    if _fc["key"] == fkey:
+        warped = _fc["surf"]
+    else:
+        flat = pygame.Surface((span, span))
+        flat.fill((10, 10, 14))
+        # Phase 2 of the seamless-world neighbor strip: when the player is near
+        # a non-wrap host's edge and the visible tile range extends past the
+        # world's bounds, fill the OUT-OF-BOUNDS tiles with the neighbor
+        # scene's floor content (per rendering/world_neighbors.get_neighbors).
+        # draw_scene_terrain below then overdraws the in-bounds area with the
+        # host's tiles, so the strip only shows where the host doesn't reach --
+        # a clean seamless seam. Wrap hosts tile edge to edge; they get no strip.
+        if not (scene.wrap_x or scene.wrap_y):
+            _draw_neighbor_strips(flat, scene, wx0, wy0, x0, y0, x1, y1)
+        draw_scene_terrain(flat, scene, wx0, wy0, x0, y0, x1, y1,
+                           skip_billboard=True)
+        warped = _tilt_warp(flat, camera)
+        _fc["key"] = fkey
+        _fc["surf"] = warped
     ox, oy = camera.origin
     surf.blit(warped, (ox - warped.get_width() // 2,
                        oy - warped.get_height() // 2))
