@@ -29,6 +29,32 @@ def _screen_span(cam, wx, wy, h, half_w):
     return xmin, xmax, ymin, ymax
 
 
+def focus_occ_data(cam, px, py, ph, p_halfw=8):
+    """Precompute a focus actor's (ground depth, screen box) so a whole wall
+    list can be tested against it without recomputing the actor's projection
+    for every wall. Pairs with occluder_alpha_box below."""
+    return cam.depth(px, py), _screen_span(cam, px, py, ph, p_halfw)
+
+
+def occluder_alpha_box(o_depth, o_span, p_depth, p_span,
+                       floor_alpha=60, feather=10):
+    """occluder_alpha with the occluder's depth + screen box and the actor's
+    precomputed (depth, box) already in hand -- identical math, just no repeated
+    projection. The actor data comes from focus_occ_data()."""
+    if o_depth <= p_depth:
+        return 255
+    oxn, oxx, oyn, oyx = o_span
+    pxn, pxx, pyn, pyx = p_span
+    ox_ov = min(oxx, pxx) - max(oxn, pxn)
+    oy_ov = min(oyx, pyx) - max(oyn, pyn)
+    if ox_ov <= -feather or oy_ov <= -feather:
+        return 255
+    p_w = max(1.0, pxx - pxn)
+    cover_x = max(0.0, min(1.0, (ox_ov + feather) / (p_w + feather)))
+    cover_y = max(0.0, min(1.0, (oy_ov + feather) / feather)) if oy_ov < feather else 1.0
+    return int(255 - (255 - floor_alpha) * cover_x * cover_y)
+
+
 def occluder_alpha(cam, ox, oy, oh, px, py, ph,
                    o_halfw=14, p_halfw=8, floor_alpha=60, feather=10):
     """Alpha (0..255) to draw an occluder at ground (ox, oy), height `oh`,
