@@ -1207,7 +1207,7 @@ def _build_tree_card(camera, scene, tx, ty, ch, far):
     rect = tmp.get_bounding_rect()
     if rect.width == 0 or rect.height == 0:
         return (None, 0, 0)
-    card = tmp.subsurface(rect).copy()
+    card = tmp.subsurface(rect).copy().convert_alpha()
     return (card, anchor[0] - rect.x, anchor[1] - rect.y)
 
 
@@ -1322,7 +1322,7 @@ def _build_corn_card(camera, scene, tx, ty, ch, far):
     rect = tmp.get_bounding_rect()
     if rect.width == 0 or rect.height == 0:
         return (None, 0, 0)
-    card = tmp.subsurface(rect).copy()
+    card = tmp.subsurface(rect).copy().convert_alpha()
     return (card, anchor[0] - rect.x, anchor[1] - rect.y)
 
 
@@ -2987,7 +2987,7 @@ def _build_wall_box_card(camera, scene, tx, ty):
     rect = tmp.get_bounding_rect()
     if rect.width == 0 or rect.height == 0:
         return (None, 0, 0)
-    return (tmp.subsurface(rect).copy(), anchor[0] - rect.x, anchor[1] - rect.y)
+    return (tmp.subsurface(rect).copy().convert_alpha(), anchor[0] - rect.x, anchor[1] - rect.y)
 
 
 def _tilt_tile_box(surf, camera, scene, tx, ty):

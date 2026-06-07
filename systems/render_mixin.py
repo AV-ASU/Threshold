@@ -555,6 +555,7 @@ class RenderMixin:
             draw_king_unfold(card, R, R, t, threat=IDLE_KING_THREAT,
                              scale=IDLE_KING_SCALE, to_player=(0.0, 1.0),
                              birth=1.0, lean=lean, eat_light=False)
+            card = card.convert_alpha()        # fast blits on a real display
             self._idle_king_card = card
             self._idle_king_card_frame = self.frame_count
         self.screen.blit(card, (sx - R, sy - R))
@@ -671,7 +672,7 @@ class RenderMixin:
         rect = tmp.get_bounding_rect()
         if rect.width == 0 or rect.height == 0:
             return (None, 0, 0)
-        card = tmp.subsurface(rect).copy()
+        card = tmp.subsurface(rect).copy().convert_alpha()
         return (card, anchor[0] - rect.x, anchor[1] - rect.y)
 
     def _draw_fps_overlay(self):
