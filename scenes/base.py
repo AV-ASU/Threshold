@@ -2154,6 +2154,59 @@ def _deco_index(scene):
     return cache
 
 
+def _collect_neighbor_solids(scene, camera, x0, y0, x1, y1):
+    """Walk the visible tile window's OUT-OF-BOUNDS region for each seamless
+    neighbor and collect the wall-class tiles to be drawn as standing boxes
+    later (in render_mixin's depth-sorted pass). Returns a list of
+    `(neighbor_scene, ntx, nty, host_world_x, host_world_y, sat_camera)`.
+
+    The satellite camera mirrors the host camera shifted by the neighbor's
+    offset; projecting a neighbor world point through it lands at the same
+    screen pixel a host world point at the equivalent seam location would.
+    The depth sort still uses the host camera + host world coords, so a
+    neighbor wall in front of an actor sorts correctly."""
+    from rendering.world_neighbors import get_neighbors
+    neighbors = get_neighbors(scene)
+    if not neighbors:
+        return []
+    from scenes import load_scene
+    from rendering.camera import Camera
+    H, W = scene.h, scene.w
+    out = []
+    for n in neighbors:
+        try:
+            tgt = load_scene(n.target_key)
+        except Exception:
+            continue
+        sat_cam = Camera(cam_x=camera.cam_x + n.offset_dx,
+                         cam_y=camera.cam_y + n.offset_dy,
+                         pitch=camera.pitch, yaw=camera.yaw,
+                         scale=camera.scale, origin=camera.origin)
+        tw, th = tgt.w, tgt.h
+        for ty in range(y0, y1):
+            if 0 <= ty < H:
+                continue
+            for tx in range(x0, x1):
+                if 0 <= tx < W:
+                    continue
+                ntx = int((tx * TILE + TILE // 2 + n.offset_dx) // TILE)
+                nty = int((ty * TILE + TILE // 2 + n.offset_dy) // TILE)
+                if tgt.wrap_x: ntx %= tw
+                if tgt.wrap_y: nty %= th
+                if not (0 <= ntx < tw and 0 <= nty < th):
+                    continue
+                ch = tgt.objects[nty][ntx]
+                if (ch in _WALL_CHARS or ch in _DOOR_CHARS
+                        or ch in _WINDOW_CHARS
+                        or ch in _TILT_BILLBOARD_CHARS
+                        or ch in _COUNTER_CHARS):
+                    out.append((tgt, ntx, nty,
+                                tx * TILE + TILE / 2,
+                                ty * TILE + TILE / 2,
+                                sat_cam))
+    return out
+
+
 def _draw_neighbor_strips(flat, scene, wx0, wy0, x0, y0, x1, y1):
     """Paint the seamless neighbor scenes' floor tiles into the host flat for
     every (tx, ty) in the visible tile window that sits OUTSIDE the host
@@ -2348,7 +2401,14 @@ def draw_terrain_tilted(surf, scene, camera, sight=None):
                         draw_with_alpha(surf, a, lambda s, d=d, woff=woff:
                                         d.draw(s, 0, 0, camera,
                                                wox=woff[0], woy=woff[1]))
-    return walls, solid_decos, wall_decos
+    # Neighbor walls/standees for the seamless strip. Same Phase 2 deferral:
+    # wrap hosts get no strip yet. Returned as a parallel list so render_mixin
+    # can dispatch each through a satellite camera while still depth-sorting
+    # against the host actors via host-frame world coords.
+    neighbor_solids = []
+    if not (scene.wrap_x or scene.wrap_y):
+        neighbor_solids = _collect_neighbor_solids(scene, camera, x0, y0, x1, y1)
+    return walls, solid_decos, wall_decos, neighbor_solids
 
 
 def draw_scene_doors(surf, scene, cam_x, cam_y, x0, y0, x1, y1):
