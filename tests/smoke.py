@@ -232,6 +232,8 @@ _RESET_EXEMPT = {
     # Dev perf overlay (F1): a diagnostic toggle + last-frame dt readout. Meant
     # to persist across New Game like fullscreen -- not run state.
     "_show_fps", "_last_dt",
+    # World render scale (F2): a display/perf setting, persists like fullscreen.
+    "_render_scale", "_world_buf", "_win", "_render_s",
 }
 
 

@@ -6,7 +6,7 @@ import sys
 import pygame
 
 from constants import (
-    SCREEN_W, SCREEN_H, TILE,
+    SCREEN_W, SCREEN_H, TILE, RENDER_SCALE,
     C_BG, C_WHITE, C_BLACK, C_GOLD, C_BLOOD,
 )
 from rendering.sprites import (draw_player_sprite, draw_npc_sprite,
@@ -78,6 +78,10 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         pygame.display.set_caption("THRESHOLD")
         pygame.mouse.set_visible(False)
         self.clock = pygame.time.Clock()
+        # Low-res world-render buffer (constants.RENDER_SCALE); lazily sized in
+        # draw_world. None when render scale is 1.0 (the world draws straight to
+        # the window).
+        self._world_buf = None
         self.fonts = make_fonts()
         # Audio() synthesises the entire SFX + music library at startup (the
         # game ships zero audio assets) -- several seconds of pure-Python DSP
@@ -131,6 +135,10 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         # rolling average. Purely diagnostic -- never shown unless toggled.
         self._show_fps = False
         self._last_dt = 0.0
+        # Live-toggleable world render scale (F2 cycles it). Lower = the world
+        # layer renders to a smaller buffer and upscales (HUD stays crisp),
+        # trading sharpness for fps. Starts at the constant default.
+        self._render_scale = RENDER_SCALE
         self.title_choice = 0
         # title_options is computed each render via _title_menu_options
         # so the middle slot can flip between "Delete Save" (when a
@@ -297,6 +305,8 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
             self._toggle_fullscreen(); return
         if ev.key == pygame.K_F1:
             self._show_fps = not self._show_fps; return
+        if ev.key == pygame.K_F2:
+            self._cycle_render_scale(); return
         opts = self._title_menu_options()
         if ev.key in (pygame.K_UP, pygame.K_w):
             self.title_choice = (self.title_choice - 1) % len(opts)
@@ -314,6 +324,17 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
                 self._begin_opening()
             elif opt == "Quit":
                 pygame.quit(); sys.exit(0)
+
+    def _cycle_render_scale(self):
+        """F2: cycle the world render scale (1.0 -> 0.85 -> 0.7 -> 1.0). Lower
+        renders the world to a smaller buffer + upscales (HUD stays crisp) for
+        more fps. Flashes a notice so the current setting is visible."""
+        steps = [1.0, 0.85, 0.7]
+        cur = getattr(self, "_render_scale", 1.0)
+        i = min(range(len(steps)), key=lambda k: abs(steps[k] - cur))
+        self._render_scale = steps[(i + 1) % len(steps)]
+        pct = int(round(self._render_scale * 100))
+        self.show_notice(f"Render scale: {pct}%", duration=1.5)
 
     def _toggle_fullscreen(self):
         try:
@@ -2233,6 +2254,8 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
                     self._toggle_fullscreen()
                 elif ev.key == pygame.K_F1:
                     self._show_fps = not self._show_fps
+                elif ev.key == pygame.K_F2:
+                    self._cycle_render_scale()
                 elif ev.key == pygame.K_ESCAPE:
                     self.state = "paused"
                     self.pause_view = "menu"

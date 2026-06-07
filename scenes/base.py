@@ -2459,9 +2459,12 @@ def _overlay_anim_water(dst, scene, water, wx0, wy0, span):
 def _tilt_window_half(camera):
     """Smallest centred half-span (world px) whose flat window still covers
     the tilted screen. Unproject the screen corners (+ upward wall headroom)
-    and take the farthest world offset from the view centre."""
-    corners = [(0, 0), (SCREEN_W, 0), (0, SCREEN_H), (SCREEN_W, SCREEN_H),
-               (SCREEN_W // 2, -_TILT_WALL_RISE)]
+    and take the farthest world offset from the view centre. Uses the live
+    VIEWPORT size (camera.origin is its centre), not the window constants, so a
+    low-res render buffer computes the right -- smaller -- window."""
+    vw, vh = camera.origin[0] * 2, camera.origin[1] * 2
+    corners = [(0, 0), (vw, 0), (0, vh), (vw, vh),
+               (vw // 2, -_TILT_WALL_RISE)]
     half = 0.0
     for sx, sy in corners:
         wx, wy = camera.unproject(sx, sy)
