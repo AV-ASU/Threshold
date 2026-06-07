@@ -138,6 +138,128 @@ def _draw_well_solid(surf, cam, deco):
     pygame.draw.line(surf, rope, bh_a, bh_b, max(1, int(1.5 * s)))
 
 
+def _draw_headstone_solid(surf, cam, deco):
+    """A grave marker as a real volume: a thin stone slab leaning a few
+    degrees off vertical, mossed at the foot, with a turned-dirt mound at
+    its base. ~30% are crosses; the rest are rounded slabs. Per-seed
+    variation so a row reads as graves, never a clean grid."""
+    wx, wy = deco.x, deco.y
+    s = (getattr(deco, "scale", 1.0) or 1.0)
+    seed = getattr(deco, "seed", 0)
+    rng_h = 10 + (seed % 11)                       # 10..20 world units tall
+    rng_w = 6 + ((seed >> 3) % 4)                  # 6..9 wide
+    thick = 1.6 + ((seed >> 5) % 4) * 0.3          # ~1.6..2.5 deep
+    lean_x = (((seed >> 7) % 9) - 4) * 0.25 * s    # crooked sideways lean
+    lean_y = (((seed >> 9) % 5) - 1) * 0.20 * s    # forward/back lean
+    cross = ((seed >> 11) & 7) == 0                # ~12% crosses
+    H = rng_h * s
+    W = rng_w * s
+    T = thick * s
+    # Turned-dirt mound (a flat dark oval on the ground beneath)
+    _disc(surf, cam, wx, wy, 0.2, W + 4, T + 3, (32, 26, 22))
+    _disc(surf, cam, wx, wy, 0.2, W + 1, T + 1, (52, 42, 32),
+          fill=False, width=1)
+    stone = {"body": (94, 92, 90), "lo": (52, 50, 50),
+             "rim": (160, 158, 156)}
+    if cross:
+        # 3D cross: an upright beam + a transverse crossbar, both as thin
+        # boxes so they catch a side face under tilt.
+        # Upright trunk
+        cx_top = wx + lean_x
+        cy_top = wy + lean_y
+        # box extruded between z=0 and z=H, x size T, y size T
+        b = (cam.project(wx - T / 2, wy - T / 2, 0),
+             cam.project(wx + T / 2, wy - T / 2, 0),
+             cam.project(wx + T / 2, wy + T / 2, 0),
+             cam.project(wx - T / 2, wy + T / 2, 0))
+        t = (cam.project(cx_top - T / 2, cy_top - T / 2, H),
+             cam.project(cx_top + T / 2, cy_top - T / 2, H),
+             cam.project(cx_top + T / 2, cy_top + T / 2, H),
+             cam.project(cx_top - T / 2, cy_top + T / 2, H))
+        # near (south) face + east face
+        pygame.draw.polygon(surf, stone["lo"], [b[3], b[2], t[2], t[3]])
+        pygame.draw.polygon(surf, stone["body"], [b[1], b[2], t[2], t[1]])
+        pygame.draw.polygon(surf, stone["rim"], [t[0], t[1], t[2], t[3]])
+        # Crossbar at ~2/3 up the trunk
+        cz = H * 0.66
+        arm_w = W * 0.9
+        arm_t = T * 0.9
+        arm_h = T * 0.9
+        # along x axis: from -arm_w to +arm_w, centred on the trunk
+        # Apply the same lean fraction
+        bx_off = lean_x * (cz / H)
+        by_off = lean_y * (cz / H)
+        # Two endpoints of the arm
+        for sgn in (-1, 1):
+            ax = wx + bx_off + sgn * arm_w * 0.5
+            ay = wy + by_off
+            ab = (cam.project(ax - arm_w / 2, ay - arm_t / 2, cz),
+                  cam.project(ax + arm_w / 2, ay - arm_t / 2, cz),
+                  cam.project(ax + arm_w / 2, ay + arm_t / 2, cz),
+                  cam.project(ax - arm_w / 2, ay + arm_t / 2, cz))
+            at = (cam.project(ax - arm_w / 2, ay - arm_t / 2, cz + arm_h),
+                  cam.project(ax + arm_w / 2, ay - arm_t / 2, cz + arm_h),
+                  cam.project(ax + arm_w / 2, ay + arm_t / 2, cz + arm_h),
+                  cam.project(ax - arm_w / 2, ay + arm_t / 2, cz + arm_h))
+            pygame.draw.polygon(surf, stone["lo"],
+                                [ab[3], ab[2], at[2], at[3]])
+            pygame.draw.polygon(surf, stone["rim"],
+                                [at[0], at[1], at[2], at[3]])
+    else:
+        # Slab: a flat tablet, rounded top hinted by inset corner points.
+        # Build the 8 corners (base 4 + top 4) of a leaning box.
+        cx_top = wx + lean_x
+        cy_top = wy + lean_y
+        b = (cam.project(wx - W / 2, wy - T / 2, 0),
+             cam.project(wx + W / 2, wy - T / 2, 0),
+             cam.project(wx + W / 2, wy + T / 2, 0),
+             cam.project(wx - W / 2, wy + T / 2, 0))
+        # Rounded top: pinch the top width to 80% of base width
+        topw = W * 0.84
+        t = (cam.project(cx_top - topw / 2, cy_top - T / 2, H),
+             cam.project(cx_top + topw / 2, cy_top - T / 2, H),
+             cam.project(cx_top + topw / 2, cy_top + T / 2, H),
+             cam.project(cx_top - topw / 2, cy_top + T / 2, H))
+        # front (south, camera-facing) face
+        pygame.draw.polygon(surf, stone["body"],
+                            [b[3], b[2], t[2], t[3]])
+        # west / east edge faces
+        pygame.draw.polygon(surf, stone["lo"],
+                            [b[0], b[3], t[3], t[0]])
+        pygame.draw.polygon(surf, stone["lo"],
+                            [b[1], b[2], t[2], t[1]])
+        # cap top (catches the light)
+        pygame.draw.polygon(surf, stone["rim"],
+                            [t[0], t[1], t[2], t[3]])
+        # Two scratched inscription lines on the front face
+        sq = (b[3], b[2], t[2], t[3])
+        for k, fy in enumerate((0.45, 0.60)):
+            a = _quad_pt(sq, 0.20, fy)
+            c = _quad_pt(sq, 0.80, fy)
+            pygame.draw.line(surf, stone["lo"],
+                             (int(a[0]), int(a[1])),
+                             (int(c[0]), int(c[1])), 1)
+    # Moss clump at the SW foot (low on the stone, near the dirt)
+    moss = (58, 74, 50)
+    moss_dk = (38, 50, 32)
+    mx, my = cam.project(wx - W * 0.35, wy + T * 0.2, H * 0.12)
+    pygame.draw.circle(surf, moss_dk, (int(mx), int(my)),
+                       max(1, int(1.8 * s)))
+    pygame.draw.circle(surf, moss, (int(mx - 1), int(my - 1)),
+                       max(1, int(1.2 * s)))
+
+
+def _quad_pt(quad, fx, fy):
+    """Bilinear interpolation inside a 4-pt projected quad (TL, TR, BR, BL).
+    Used to paint detail onto the leaning front face."""
+    tl, tr, br, bl = quad
+    ax = tl[0] + (tr[0] - tl[0]) * fx
+    ay = tl[1] + (tr[1] - tl[1]) * fx
+    bx = bl[0] + (br[0] - bl[0]) * fx
+    by = bl[1] + (br[1] - bl[1]) * fx
+    return (ax + (bx - ax) * fy, ay + (by - ay) * fy)
+
+
 def _draw_pillar_solid(surf, cam, deco):
     """A round fitted-stone column with a flared base + capital, rising into
     the dark -- a colonnade upright + an occluder to round."""
@@ -919,6 +1041,7 @@ SOLID_PROPS = {
     "shaft_ladder":  _draw_shaft_ladder_solid,
     "cellar_hatch":  _draw_cellar_hatch_solid,
     "well":          _draw_well_solid,
+    "headstone":     _draw_headstone_solid,
     "pillar":        _draw_pillar_solid,
     "cistern_basin": _draw_cistern_basin_solid,
     "grain_heap":    _draw_grain_heap_solid,
