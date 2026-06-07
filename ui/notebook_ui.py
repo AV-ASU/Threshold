@@ -8,12 +8,12 @@ Each save entry is the dict shape `{"name": slug, "lines": [...]}`,
 written by scenes/dialogue.py:_evidence. If a legacy save still
 holds bare-string names, this UI tolerates them by showing the
 slug as the title with no body.
+
+Shares the quiet, filmic chrome with the inventory (ui/menu_chrome).
 """
 import pygame
-from constants import (
-    SCREEN_W, SCREEN_H,
-    C_WHITE, C_GOLD, C_DIM, C_PANEL, C_PANEL_BORDER,
-)
+from constants import SCREEN_W, SCREEN_H, C_GOLD, C_DIM
+from ui import menu_chrome as mc
 
 
 def _humanise(slug):
@@ -65,24 +65,21 @@ class NotebookUI:
     def draw(self, surf):
         if not self.open:
             return
-        veil = pygame.Surface((SCREEN_W, SCREEN_H), pygame.SRCALPHA)
-        veil.fill((0, 0, 0, 180))
-        surf.blit(veil, (0, 0))
+        mc.darken(surf, 180)
         panel = pygame.Rect(80, 60, SCREEN_W - 160, SCREEN_H - 120)
-        pygame.draw.rect(surf, C_PANEL, panel)
-        pygame.draw.rect(surf, C_PANEL_BORDER, panel, 2)
+        mc.panel(surf, panel)
         title = self.fonts["lg"].render("Notebook", True, C_GOLD)
-        surf.blit(title, (panel.x + 20, panel.y + 14))
-        sub = self.fonts["sm"].render(
-            "Your notes.", True, C_DIM)
-        surf.blit(sub, (panel.x + 22, panel.y + 56))
+        surf.blit(title, (panel.x + 24, panel.y + 16))
+        sub = self.fonts["sm"].render("What you have pieced together.",
+                                      True, C_DIM)
+        surf.blit(sub, (panel.x + 26, panel.y + 58))
 
         entries = self._entries()
-        lx = panel.x + 20
-        ly = panel.y + 92
+        lx = panel.x + 36
+        ly = panel.y + 96
         if not entries:
             empty = self.fonts["md"].render(
-                "(nothing yet.)", True, C_DIM)
+                "Nothing yet.", True, C_DIM)
             surf.blit(empty, (lx, ly))
             self._draw_hint(surf, panel)
             return
@@ -93,54 +90,31 @@ class NotebookUI:
 
         # Left column: titles. Right column: full body of selected.
         list_w = 240
+        md = self.fonts["md"]
         for i, (name, _lines) in enumerate(entries):
-            color = C_GOLD if i == self.cursor else C_WHITE
-            prefix = ">" if i == self.cursor else " "
-            label = f"{prefix} {_humanise(name)}"
-            surf.blit(self.fonts["md"].render(label, True, color),
-                      (lx, ly + i * 24))
+            mc.row(surf, md, _humanise(name), lx, ly + i * 26,
+                   i == self.cursor)
 
         name, lines = entries[self.cursor]
-        dx = panel.x + 20 + list_w + 20
-        dy = panel.y + 92
-        dw = panel.right - dx - 20
+        dx = panel.x + 36 + list_w + 20
+        dy = panel.y + 96
+        dw = panel.right - dx - 24
         dh = panel.bottom - dy - 50
         body = pygame.Rect(dx, dy, dw, dh)
-        pygame.draw.rect(surf, (24, 22, 32), body)
-        pygame.draw.rect(surf, C_PANEL_BORDER, body, 1)
+        mc.panel(surf, body, fill=mc.SUBPANEL_FILL, border=mc.PANEL_BORDER)
         surf.blit(self.fonts["md"].render(_humanise(name), True, C_GOLD),
-                  (dx + 10, dy + 10))
+                  (dx + 14, dy + 12))
         if lines:
-            self._wrap_text(surf, "\n".join(lines),
-                            dx + 10, dy + 40, dw - 20)
+            mc.wrap(surf, self.fonts["sm"], "\n".join(lines),
+                    dx + 14, dy + 44, dw - 28)
         else:
             surf.blit(self.fonts["sm"].render(
-                "(no detail recorded)", True, C_DIM),
-                (dx + 10, dy + 40))
+                "Nothing more set down.", True, C_DIM),
+                (dx + 14, dy + 44))
 
         self._draw_hint(surf, panel)
 
     def _draw_hint(self, surf, panel):
-        hint = self.fonts["sm"].render(
-            "[Up/Down] entry   [N or Esc] close",
-            True, C_DIM)
-        surf.blit(hint, (panel.x + 20, panel.bottom - 30))
-
-    def _wrap_text(self, surf, text, x, y, w):
-        font = self.fonts["sm"]
-        line_h = font.get_linesize()
-        lines = []
-        for raw_line in text.split("\n"):
-            words = raw_line.split(" ")
-            cur = ""
-            for word in words:
-                test = (cur + " " + word).strip()
-                if font.size(test)[0] > w:
-                    lines.append(cur)
-                    cur = word
-                else:
-                    cur = test
-            lines.append(cur)
-        for i, line in enumerate(lines):
-            surf.blit(font.render(line, True, C_WHITE),
-                      (x, y + i * line_h))
+        mc.hint(surf, self.fonts["sm"],
+                "arrows move . i for inventory . n or esc to close",
+                panel.x + 24, panel.bottom - 30)

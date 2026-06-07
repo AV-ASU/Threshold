@@ -1503,13 +1503,20 @@ class RenderMixin:
         if self.pause_view == "settings":
             self._draw_settings_screen()
             return
-        title = self.fonts["xl"].render("PAUSED", True, C_WHITE)
+        title = self.fonts["xl"].render("PAUSED", True, (200, 198, 206))
         self.screen.blit(title, (SCREEN_W//2 - title.get_width()//2, 160))
         for i, opt in enumerate(self.pause_options):
-            color = C_GOLD if i == self.pause_choice else C_WHITE
-            label = f"> {opt}" if i == self.pause_choice else f"  {opt}"
-            txt = self.fonts["lg"].render(label, True, color)
-            self.screen.blit(txt, (SCREEN_W//2 - 90, 260 + i * 50))
+            selected = (i == self.pause_choice)
+            color = C_GOLD if selected else (120, 116, 132)
+            txt = self.fonts["lg"].render(opt, True, color)
+            ox = SCREEN_W//2 - 80
+            oy = 260 + i * 50
+            # A thin gold margin tick marks the choice -- the same quiet
+            # selection language as the inventory/notebook menus, no caret.
+            if selected:
+                pygame.draw.rect(self.screen, C_GOLD,
+                                 (ox - 16, oy + 5, 3, txt.get_height() - 10))
+            self.screen.blit(txt, (ox, oy))
 
     def _draw_controls_screen(self):
         title = self.fonts["xl"].render("CONTROLS", True, C_WHITE)
