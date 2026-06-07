@@ -305,6 +305,8 @@ def build_barn():
             game.player.inventory.add("mom_notebook", 1)
             game.audio.play("pickup_rare", 0.7)
             game.audio.play("low_pulse", 0.45)
+            # File the case beat silently; the journal itself reads from the
+            # kit (its entries are the item desc), not forced on pickup.
             _evidence(game, "maras_journal", [
                 "A notebook, shoved down behind the workbench. You know the "
                 "hand. It's hers, the same as the letter.",
@@ -317,7 +319,8 @@ def build_barn():
                 "\"There's a mouth below the town. The others went ahead of "
                 "me, down it, and not one has climbed back up. Tomorrow I "
                 "follow them down. I feel so close now.\"",
-            ])
+            ], show=False)
+            game.show_notice("Her journal.")
             return
         # The old tunnel down to the Works has been nailed shut: the
         # well is the ONLY way underground now (no secret paths).
