@@ -1150,7 +1150,9 @@ def _tilt_corn_solid(surf, camera, scene, tx, ty, ch):
     wx0 = tx * TILE
     wy0 = ty * TILE
     sim_t = pygame.time.get_ticks() / 600.0
-    n = 5 + (_vary(seed, 0) % 2)            # 5 or 6 stalks per tile
+    n = 7 + (_vary(seed, 0) % 2)            # 7 or 8 stalks per tile -- denser
+                                            # so a lane reads as a wall of corn
+                                            # instead of standing grass
     g = _vary(seed, 1) % 10
     stalk_dk = (40 + g // 2, 54 + g // 2, 26 + g // 3)
     stalk_col = (58 + g, 72 + g, 38 + g // 2)
@@ -1163,7 +1165,13 @@ def _tilt_corn_solid(surf, camera, scene, tx, ty, ch):
     for si in range(n):
         bx_off = 5 + (si * (TILE - 10)) / max(1, n - 1) + (_vary(seed, 30 + si) % 5) - 2
         sx_off = bx_off + (_vary(seed, 10 + si) % 7) - 3
-        top_h  = TILE + 6 + (_vary(seed, 20 + si) % 9)        # world height
+        top_h  = TILE + 18 + (_vary(seed, 20 + si) % 12)      # world height
+                                                              # taller (~50-62)
+                                                              # so a stalk
+                                                              # over-tops a
+                                                              # player and the
+                                                              # lane feels
+                                                              # head-deep
         # Per-stalk wy jitter so they don't all line up at the tile's south edge
         wy_jit = (_vary(seed, 40 + si) % 9) - 4
         tip_sway = math.sin(sim_t + ph + si * 0.7) * amp
@@ -1194,6 +1202,23 @@ def _tilt_corn_solid(surf, camera, scene, tx, ty, ch):
             # Lit upper edge
             p_tip_hi = camera.project(leaf_x - side * 0.5, leaf_y, leaf_z + 1)
             pygame.draw.line(surf, blade_hi, p_attach, p_tip_hi, 1)
+        # Ear of corn at ~60% height on ~half the stalks. A short husked
+        # cylinder offset from the stalk on the side opposite the highest
+        # leaf, so the cluster reads as "ears of corn in the rows" rather
+        # than pure foliage. Tiny, but it sells the stalks as edible crop.
+        if (_vary(seed, 50 + si) & 1):
+            ear_side = 1 if (_vary(seed, 60 + si) & 1) else -1
+            ear_z = top_h * 0.58
+            ear_x = wx_base + ear_side * 3.5
+            ear_y = wy_base + 1
+            ear_b = camera.project(ear_x, ear_y, ear_z - 3)
+            ear_t = camera.project(ear_x, ear_y, ear_z + 3)
+            pygame.draw.line(surf, (190, 168, 96), ear_b, ear_t, 3)
+            pygame.draw.line(surf, (108, 92, 50), ear_b, ear_t, 1)
+            # silk: a couple of fine wisps at the cob tip
+            silk = camera.project(ear_x + ear_side * 1.0, ear_y,
+                                  ear_z + 3 + 1.5)
+            pygame.draw.line(surf, (228, 208, 130), ear_t, silk, 1)
         # Tassel head: a pale paddle + a beard of fine strokes radiating out
         p_tassel_top = camera.project(wx_top, wy_base, top_h + 5)
         pygame.draw.line(surf, tip_col, p_top, p_tassel_top, 2)
