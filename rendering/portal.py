@@ -97,6 +97,20 @@ def _render_through_full(target, anchor_px, camera, door_origin, loom, t):
     return buf
 
 
+# Mouselook eases camera.yaw by tiny amounts every frame (~0.004 rad / frame),
+# so a fine-rounded yaw signature invalidated the cache on every frame the
+# player moved -- the actual lag the player feels. We tolerate a small yaw
+# delta and only force a real rebuild past this threshold. Inside the band the
+# cached buf is used as-is, so the destination room's projection is mildly
+# off-axis from the rim by up to _YAW_THRESH radians. Hard to spot under the
+# liminal desaturate; preserves smooth mouselook performance.
+_YAW_THRESH = 0.14               # ~8 deg of yaw drift tolerated before rebuild
+
+
+def _wrap_pi(a):
+    return (a + math.pi) % (2 * math.pi) - math.pi
+
+
 def _render_through(target, anchor_px, camera, rect, door_origin,
                     loom=0.0, t=0.0, cache_key=None):
     """Return a `rect`-sized Surface showing `target` through the rift, with the
@@ -108,24 +122,27 @@ def _render_through(target, anchor_px, camera, rect, door_origin,
     position equal to (current door_origin minus the door_origin at build).
     This lets the cache survive camera translation, which is the hot case
     (walking past the fold). A real rebuild only fires every
-    `_REFRESH_FRAMES` frames OR when pitch/yaw/scale change (so a rotation or
-    zoom invalidates the cached projection).
-
-    The full-screen scene build was ~1 s/frame; the crop is ~5 ms.
+    `_REFRESH_FRAMES` frames OR when pitch/scale change OR the camera yaw has
+    drifted past `_YAW_THRESH` since the build (so the smooth mouselook ease
+    doesn't thrash the cache every frame).
 
     `loom` (0..1) draws the King at the anchor -- him looming through the rift
     while it forms, before he comes (canon: you see him on the far side first).
     """
-    rot_sig = (round(camera.pitch, 3), round(camera.yaw, 3),
-               round(camera.scale, 3))
+    pitch_b = round(camera.pitch, 3)
+    scale_b = round(camera.scale, 3)
+    loom_b = round(loom, 2)
     refresh = True
     entry = None
     if cache_key is not None:
         entry = _THROUGH_CACHE.get(cache_key)
         if entry is not None:
+            yaw_drift = abs(_wrap_pi(camera.yaw - entry["yaw"]))
             refresh = (entry["frame"] >= _REFRESH_FRAMES
-                       or entry["rot"] != rot_sig
-                       or entry["loom"] != round(loom, 2))
+                       or yaw_drift > _YAW_THRESH
+                       or entry["pitch"] != pitch_b
+                       or entry["scale"] != scale_b
+                       or entry["loom"] != loom_b)
     if refresh:
         full = _render_through_full(target, anchor_px, camera, door_origin,
                                     loom, t)
@@ -135,9 +152,10 @@ def _render_through(target, anchor_px, camera, rect, door_origin,
             arr[..., c] = np.clip(arr[..., c] * 0.55 + gray * 0.30,
                                   0, 255).astype(arr.dtype)
         del arr
-        entry = {"buf": full, "frame": 0, "rot": rot_sig,
+        entry = {"buf": full, "frame": 0,
+                 "yaw": camera.yaw, "pitch": pitch_b, "scale": scale_b,
                  "origin": (int(door_origin[0]), int(door_origin[1])),
-                 "loom": round(loom, 2)}
+                 "loom": loom_b}
         if cache_key is not None:
             _THROUGH_CACHE[cache_key] = entry
     else:
