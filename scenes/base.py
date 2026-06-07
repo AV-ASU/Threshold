@@ -1088,6 +1088,17 @@ _TILT_STANDEE_CACHE = {}
 # and cornfield (the panning worst case). ~11 tiles out.
 _TILT_LOD_FAR2 = (11 * TILE) ** 2
 
+# Hard cull for billboard tiles (trees / cornstalks). Under the oblique camera
+# the floor window reaches far toward the vanishing point, so a road/forest
+# corridor (arrival_road tiles its treeline endlessly north) collects hundreds
+# of tree tiles per frame -- but everything past this range sits at/above the
+# fog horizon under the haze + sight fog and isn't visible. The tilt camera is
+# orthographic, so those far trees are full-size, just stacked in the fog: pure
+# wasted draws. Buildings (walls/doors/windows) are NOT culled -- only the
+# billboards, which read as a solid treeline at range anyway.
+_TILT_BILLBOARD_CULL_TILES = 21
+_TILT_BILLBOARD_CULL2 = (_TILT_BILLBOARD_CULL_TILES * TILE) ** 2
+
 
 def _tilt_lod_far(camera, tx, ty):
     """Is this billboard tile beyond the near-detail radius? (cheap, no trig)."""
@@ -3253,6 +3264,11 @@ def draw_terrain_tilted(surf, scene, camera, sight=None):
             ch = scene.objects[wty][wtx]
             if (ch in _WALL_CHARS or ch in _DOOR_CHARS or ch in _WINDOW_CHARS
                     or ch in _TILT_BILLBOARD_CHARS or ch in _COUNTER_CHARS):
+                if ch in _TILT_BILLBOARD_CHARS:
+                    dx = (tx * TILE + 16) - camera.cam_x
+                    dy = (ty * TILE + 16) - camera.cam_y
+                    if dx * dx + dy * dy > _TILT_BILLBOARD_CULL2:
+                        continue            # far treeline -> lost in the fog
                 walls.append((tx, ty))
     # Decorations. Ground decals (rugs, stains, blood) stay flat on the warped
     # floor; non-solid billboards rise from it -- both drawn now, wrap-cloned
