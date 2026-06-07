@@ -1061,14 +1061,9 @@ def build_brimley():
             game.audio.play("door_locked", 0.7)
             game.show_notice("The way down. Too deep without a rope.")
             return
-        # Wheelbarrow of "rusted" tools -- the visible state contradicts
-        # the notice. The contradiction is the point.
+        # Wheelbarrow of "rusted" tools -- the diggers keep them cleaned.
         bx, by = sc._barrow_pos
         if abs(game.player.x - bx) < 36 and abs(game.player.y - by) < 36:
-            game.show_notice(
-                "All of these rusted tools have been recently cleaned.",
-                duration=4.0,
-            )
             if not game.save.flag("barrow_inspected"):
                 game.save.set_flag("barrow_inspected", True)
                 _evidence(game, "barrow_tools", "Some old tools.")

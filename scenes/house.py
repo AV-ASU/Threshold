@@ -223,8 +223,6 @@ def bedroom_interact(game):
         # repetition doesn't dilute it.
         if game.save.flag("hive_seen"):
             if game.save.flag("case_closed_read"):
-                game.show_notice(
-                    "The case is closed. You wrote it.")
                 return
             game.save.set_flag("case_closed_read", True)
             game.dialog.show([
@@ -250,10 +248,6 @@ def bedroom_interact(game):
         return
     # The cot is just furniture now -- single-session game, no sleeping
     # or saving.
-    cx, cy = sc._cot_pos
-    if abs(px - cx) > 40 or abs(py - cy) > 40:
-        return
-    game.show_notice("A cot. You don't feel like lying down.")
 
 
 # ---- innkeeper_house (key: 'house') ----
@@ -482,8 +476,6 @@ def house_interact(game):
         ], speaker="", voice="blip_soft", portrait="narrator")
         return
     if game.save.flag("evidence_the_ledger"):
-        game.show_notice("The register, open on the desk. You've read "
-                         "enough.")
         return
     game.audio.play("pickup_rare", 0.7)
     game.audio.play("low_pulse", 0.45)
@@ -594,10 +586,6 @@ def clerk_room_interact(game):
                   "folded, ready. The smiling man at the desk is one of "
                   "them.")
         return
-    dx, dy = sc._dresser_pos
-    if abs(px - dx) <= 40 and abs(py - dy) <= 40:
-        game.show_notice("His dresser. Bare. He doesn't live like a man "
-                         "who plans to stay.")
 
 
 # ---- innkeeper_basement (key: 'basement') ----
