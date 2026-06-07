@@ -288,6 +288,12 @@ IDLE_KING_SCALE = 56.0       # small + distant: a figure at the road's end near 
 # with it, so keep it past the maw threshold so he reads as the King, not a
 # dark lump. Stays under 0.8 (no player-reaching limbs -- he is indifferent).
 IDLE_KING_THREAT = 0.6
+# The idle King is the single most expensive thing drawn on the arrival road (a
+# full UNFOLDING -- ~1300 polys + a full-screen surface every frame) for a tiny,
+# distant figure that only everts slowly. Render his BODY to a small card and
+# reuse it for this many frames before refreshing (his eversion animates in
+# steps; his light-eating shadow stays live so the scene still pulses). 1 = off.
+IDLE_KING_CARD_REFRESH = 6
 
 # ---- Being-seen readout (KING_PROMPT legibility milestone) -------------
 # A second HUD layer that splits the RATE (how hard eyes are on you THIS second)
