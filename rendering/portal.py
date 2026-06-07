@@ -42,12 +42,14 @@ _GLOW_CACHE = {}
 _THROUGH_CACHE = {}              # cache the expensive scene composite per fold
 
 # How many frames between full re-renders of the through-view. The target room
-# is STATIC (no actors walking around in it for the hidden folds), so the only
-# thing that should change with the player walking is the camera framing. We
-# accept a small lag: the peek lags behind player movement by a few frames so
-# we avoid rebuilding the full tilted room every frame -- the cost was ~1s/
-# frame in dummy mode (and a real lag spike on hardware) per visible fold.
-_REFRESH_FRAMES = 4
+# is STATIC (no actors walking around in it for the hidden folds), and the
+# translation-safe cache shift handles the player walking past, so a real
+# rebuild is only needed when pitch/yaw/scale change OR the cached crop falls
+# off the edge of the buf. We bumped this from 4 to 30 (~half a second at 60
+# fps) -- the eye can't see content updates that aren't there to update, but
+# you do see the rebuild stalls. The forming King's portal still rebuilds per
+# loom step since loom changes invalidate the cache.
+_REFRESH_FRAMES = 30
 
 
 def clear_through_cache():

@@ -1054,8 +1054,19 @@ class RenderMixin:
                 _emit(self.camera.depth(self._portal["x"], self._portal["y"],
                                         _TILT_WALL_RISE),
                       lambda: self._draw_portal())
+            # FOLDS: a scene can ship several direction-gated portals (the
+            # cornfield maze has three: effigy_grove, husk_grove, scarecrow_ring)
+            # and a naive draw runs a full target-room render for each. Cull
+            # to the ones IN THE PLAYER'S SIGHT CONE -- a portal that is behind
+            # you, beside you, or behind a wall isn't drawn. The canon already
+            # says each fold reads as floor from any other angle, so dropping
+            # off-cone ones leaves no visible gap. Combined with the canonical
+            # direction-into-normal check inside draw_fold, only the rifts the
+            # player is actually looking AT pay the render cost.
             for face in (getattr(self, "_folds", None) or ()):
                 fx, fy = face["fold_px"]
+                if _sight is not None and _sight(fx, fy) <= 0.0:
+                    continue                      # outside the sight cone
                 _emit(self.camera.depth(fx, fy, _TILT_WALL_RISE),
                       lambda f=face: self._draw_one_fold(f))
             _entries.sort(key=lambda e: e[0])
