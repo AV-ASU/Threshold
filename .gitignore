@@ -10,3 +10,8 @@ saves/
 .venv/
 venv/
 .DS_Store
+
+# Preview-tool outputs (regenerate via tools/preview_*.py)
+tools/sfx_previews/
+tools/chase_cues.png
+tools/audio_waveforms.png
