@@ -39,26 +39,38 @@ _GLOW_CACHE = {}
 
 # ---- the camera-respecting view through the rift -----------------------------
 
-def _render_through(target, anchor_px, camera, origin, loom=0.0, t=0.0):
-    """Render `target` with a portal-camera that matches the live tilt (pitch /
-    yaw / scale) and is aimed so the EXACT emergence point `anchor_px` (world x,
-    y -- where the King stands / you walk out) projects to `origin` on screen.
-    Returns a full-screen Surface of the tilted room. Same renderer as the near
-    side, so the far side's floor/walls recede in the same perspective. `loom`
-    (0..1) draws the King at that spot -- him looming through the rift while it
-    forms, before he comes (canon: you see him on the far side first)."""
+_THROUGH_CACHE = {}              # cache the expensive scene composite per fold
+
+# How many frames between full re-renders of the through-view. The target room
+# is STATIC (no actors walking around in it for the hidden folds), so the only
+# thing that should change with the player walking is the camera framing. We
+# accept a small lag: the peek lags behind player movement by a few frames so
+# we avoid rebuilding the full tilted room every frame -- the cost was ~1s/
+# frame in dummy mode (and a real lag spike on hardware) per visible fold.
+_REFRESH_FRAMES = 4
+
+
+def clear_through_cache():
+    """Drop the cached through-view buffers. Called on scene load (fold/portal
+    object identities change) so stale buffers don't linger forever."""
+    _THROUGH_CACHE.clear()
+
+
+def _render_through_full(target, anchor_px, camera, door_origin, loom, t):
+    """Build the full-screen tilted render of `target` aimed so anchor_px lands
+    at door_origin. Returns the SCREEN-sized Surface (so caller can crop).
+    This is the expensive call we want to cache between frames."""
     from rendering.camera import Camera
     from rendering.skybox import draw_skybox
     from scenes.base import draw_terrain_tilted, _tilt_tile_box, _TILT_WALL_RISE
     ax, ay = anchor_px
     pcam = Camera(cam_x=ax, cam_y=ay, pitch=camera.pitch, yaw=camera.yaw,
-                  scale=camera.scale, origin=(int(origin[0]), int(origin[1])))
+                  scale=camera.scale, origin=(int(door_origin[0]),
+                                              int(door_origin[1])))
     buf = pygame.Surface((SCREEN_W, SCREEN_H))
     draw_skybox(buf, (0, 0, SCREEN_W, SCREEN_H), yaw=pcam.yaw,
                 kind="void", horizon_frac=0.40)
     walls, solid_decos, _wall_decos = draw_terrain_tilted(buf, target, pcam)
-    # Walls back-to-front (static room view -- a plain depth sort, no per-actor
-    # occlusion needed) so near walls overdraw far ones correctly.
     walls = sorted(walls, key=lambda w: pcam.depth(
         w[0] * TILE + TILE / 2, w[1] * TILE + TILE / 2, _TILT_WALL_RISE))
     for tx, ty in walls:
@@ -71,23 +83,86 @@ def _render_through(target, anchor_px, camera, origin, loom=0.0, t=0.0):
                 draw_prop_solid(buf, pcam, d)
         except Exception:
             pass
-    # Liminal: sink hard toward BLACK (the between has almost no colour or
-    # light -- the gold rim/pool supply the gold; the room reads as a dim shape).
-    arr = pygame.surfarray.pixels3d(buf)
-    gray = (arr[..., 0] * 0.30 + arr[..., 1] * 0.59 + arr[..., 2] * 0.11)
-    for c in range(3):
-        arr[..., c] = (arr[..., c] * 0.18 + gray * 0.34).astype(arr.dtype)
-    del arr
     if loom > 0.01:
         # He looms on the far side while the rift forms, before he steps through.
         from rendering.king_unfold import draw_king_unfold
-        ox, oy = int(origin[0]), int(origin[1])
+        ox, oy = int(door_origin[0]), int(door_origin[1])
         lift = int(18 * math.sin(camera.pitch))
         draw_king_unfold(buf, ox, oy - lift, t, threat=0.45,
                          scale=max(26.0, camera.scale * 40.0),
                          to_player=(0.0, 1.0), birth=1.0,
                          lean=(math.sin(t * 0.8) * 0.12, -0.12))
     return buf
+
+
+def _render_through(target, anchor_px, camera, rect, door_origin,
+                    loom=0.0, t=0.0, cache_key=None):
+    """Return a `rect`-sized Surface showing `target` through the rift, with the
+    same tilt camera as the host. CACHED per `cache_key` (id of the fold/portal).
+
+    The cached buf is anchored to the door's screen origin at build time. When
+    the player walks, the host camera translates and the door moves on screen,
+    but the cached buf's content stays valid -- we just CROP at a shifted
+    position equal to (current door_origin minus the door_origin at build).
+    This lets the cache survive camera translation, which is the hot case
+    (walking past the fold). A real rebuild only fires every
+    `_REFRESH_FRAMES` frames OR when pitch/yaw/scale change (so a rotation or
+    zoom invalidates the cached projection).
+
+    The full-screen scene build was ~1 s/frame; the crop is ~5 ms.
+
+    `loom` (0..1) draws the King at the anchor -- him looming through the rift
+    while it forms, before he comes (canon: you see him on the far side first).
+    """
+    rot_sig = (round(camera.pitch, 3), round(camera.yaw, 3),
+               round(camera.scale, 3))
+    refresh = True
+    entry = None
+    if cache_key is not None:
+        entry = _THROUGH_CACHE.get(cache_key)
+        if entry is not None:
+            refresh = (entry["frame"] >= _REFRESH_FRAMES
+                       or entry["rot"] != rot_sig
+                       or entry["loom"] != round(loom, 2))
+    if refresh:
+        full = _render_through_full(target, anchor_px, camera, door_origin,
+                                    loom, t)
+        arr = pygame.surfarray.pixels3d(full)
+        gray = (arr[..., 0] * 0.30 + arr[..., 1] * 0.59 + arr[..., 2] * 0.11)
+        for c in range(3):
+            arr[..., c] = np.clip(arr[..., c] * 0.55 + gray * 0.30,
+                                  0, 255).astype(arr.dtype)
+        del arr
+        entry = {"buf": full, "frame": 0, "rot": rot_sig,
+                 "origin": (int(door_origin[0]), int(door_origin[1])),
+                 "loom": round(loom, 2)}
+        if cache_key is not None:
+            _THROUGH_CACHE[cache_key] = entry
+    else:
+        entry["frame"] += 1
+    # Crop at a shifted position so a cache hit still aligns with the door's
+    # new screen position. The cached buf has the anchor at entry["origin"];
+    # the current frame wants it at door_origin.
+    shift_x = entry["origin"][0] - int(door_origin[0])
+    shift_y = entry["origin"][1] - int(door_origin[1])
+    src_rect = pygame.Rect(rect.left + shift_x, rect.top + shift_y,
+                           rect.width, rect.height)
+    buf_rect = entry["buf"].get_rect()
+    if not buf_rect.contains(src_rect):
+        # The cached buf doesn't cover the requested crop -- the camera moved
+        # too far since the build. Force a fresh build (full-screen render).
+        full = _render_through_full(target, anchor_px, camera, door_origin,
+                                    loom, t)
+        arr = pygame.surfarray.pixels3d(full)
+        gray = (arr[..., 0] * 0.30 + arr[..., 1] * 0.59 + arr[..., 2] * 0.11)
+        for c in range(3):
+            arr[..., c] = np.clip(arr[..., c] * 0.55 + gray * 0.30,
+                                  0, 255).astype(arr.dtype)
+        del arr
+        entry["buf"] = full; entry["frame"] = 0
+        entry["origin"] = (int(door_origin[0]), int(door_origin[1]))
+        src_rect = rect
+    return entry["buf"].subsurface(src_rect).copy()
 
 
 def _aperture_mask(quad):
@@ -182,7 +257,7 @@ def _flat_peek(target, anchor, charge):
 
 
 def draw_rift_door(screen, target, anchor_px, fx, fy, camera, t,
-                   formed=True, charge=1.0):
+                   formed=True, charge=1.0, cache_key=None):
     """The shared RIFT DOOR -- an upright black-gold door standing on the ground
     at world (fx, fy), showing `target` (centred on the EXACT world point
     `anchor_px`) through it with the same tilt camera, framed by the continuous
@@ -210,15 +285,18 @@ def draw_rift_door(screen, target, anchor_px, fx, fy, camera, t,
     if (formed or charge > 0.5) and rect.width > 2 and rect.height > 2:
         try:
             loom = 0.0 if formed else charge
-            buf = _render_through(target, anchor_px, camera,
-                                  (bx, (by + top) / 2), loom=loom, t=t)
-            win = buf.subsurface(rect).copy()
-            win.fill((118, 118, 118), special_flags=pygame.BLEND_RGB_MULT)
+            win = _render_through(target, anchor_px, camera, rect,
+                                  (bx, (by + top) / 2), loom=loom, t=t,
+                                  cache_key=cache_key)
+            # The through-view's own desaturate already supplies the liminal
+            # look; no second crush -- that turned the room into a black hole
+            # the player couldn't see into. Forming rifts still ramp alpha up
+            # as the tear grows.
             if formed:
                 if charge < 0.99:
-                    win.set_alpha(int(120 + 135 * charge))
+                    win.set_alpha(int(160 + 95 * charge))
             else:
-                win.set_alpha(int(40 + 200 * (charge - 0.5) / 0.5))
+                win.set_alpha(int(60 + 195 * (charge - 0.5) / 0.5))
             screen.blit(win, rect.topleft)
         except Exception:
             pygame.draw.rect(screen, (10, 8, 12), rect)
@@ -242,7 +320,8 @@ def draw_portal(screen, portal, cam_x, cam_y, camera, t):
     formed = portal.get("formed", True)        # legacy/iso dicts read as formed
     if camera is not None and camera.pitch > 0.02:
         draw_rift_door(screen, target, anchor_px, fx, fy, camera, t,
-                       formed=formed, charge=charge)
+                       formed=formed, charge=charge,
+                       cache_key=("portal", id(portal)))
         return
     # Flat (pitch 0): stand the old peek panel up from the host tile.
     pulse = (0.78 + 0.22 * math.sin(t * 5.0)) * (0.5 + 0.5 * charge)

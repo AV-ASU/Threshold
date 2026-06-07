@@ -479,7 +479,9 @@ class RenderMixin:
 
     def _draw_folds(self):
         """Composite every seen fold in the current scene -- a one-sided peek
-        into its target, only visible when the player faces into it."""
+        into its target, only visible when the player faces into it. Pitch-0
+        path only; under tilt each fold is depth-sorted into the unified list
+        so it interleaves with the player, NPCs, and walls (see draw_world)."""
         folds = getattr(self, "_folds", None)
         if not folds or self.player is None:
             return
@@ -488,6 +490,13 @@ class RenderMixin:
         for face in folds:
             draw_fold(self.screen, face, self.cam_x, self.cam_y,
                       self.player, t, self.camera)
+
+    def _draw_one_fold(self, face):
+        """Draw a single seen fold (used by the tilted depth-sort list)."""
+        from rendering.folds import draw_fold
+        t = pygame.time.get_ticks() / 1000.0
+        draw_fold(self.screen, face, self.cam_x, self.cam_y,
+                  self.player, t, self.camera)
 
     def _draw_portal(self):
         """Composite the King's torn rift (the roaming-King portal), if open."""
@@ -677,8 +686,8 @@ class RenderMixin:
                 self.screen, self.scene, self.camera, sight=_sight)
         else:
             self.scene.draw(self.screen, self.cam_x, self.cam_y, self.camera)
-        self._draw_folds()
         if not self._tilt_on():
+            self._draw_folds()
             self._draw_portal()        # flat: drawn inline (legacy order)
         self._draw_idle_king()
         # The unified scene-actor draw list (CAMERA.md Phase 5). Each entry is
@@ -1036,13 +1045,19 @@ class RenderMixin:
                           lambda d=d, ox=ox, oy=oy: draw_wall_deco(
                               self.screen, self.camera, self.scene, d,
                               _WALL_MOUNT_Z, woff=(ox, oy)))
-            # The portal depth-sorts with the trees/walls/actors (so a tree in
-            # front of it occludes it and it occludes what is behind) instead of
-            # always drawing on top -- it is a real upright thing in the scene.
+            # The portal + folds depth-sort with the trees/walls/actors (so a
+            # tree in front of one occludes it and it occludes what is behind)
+            # instead of always drawing on top -- they are real upright things
+            # in the scene. Without this, hidden folds drew under the player and
+            # the room peek was hidden behind whatever stood in front of it.
             if getattr(self, "_portal", None):
                 _emit(self.camera.depth(self._portal["x"], self._portal["y"],
                                         _TILT_WALL_RISE),
                       lambda: self._draw_portal())
+            for face in (getattr(self, "_folds", None) or ()):
+                fx, fy = face["fold_px"]
+                _emit(self.camera.depth(fx, fy, _TILT_WALL_RISE),
+                      lambda f=face: self._draw_one_fold(f))
             _entries.sort(key=lambda e: e[0])
         # Execute the (legacy-ordered at pitch 0, depth-sorted under tilt) list.
         for _depth, _fn in _entries:

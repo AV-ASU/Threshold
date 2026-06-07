@@ -257,7 +257,8 @@ def draw_fold(screen, face, host_cam_x, host_cam_y, player, t, camera=None):
     if camera is not None and camera.pitch > 0.02:
         from rendering.portal import draw_rift_door
         anchor_px = (ax * TILE + TILE // 2, ay * TILE + TILE // 2)
-        draw_rift_door(screen, target, anchor_px, fold_x, fold_y, camera, t)
+        draw_rift_door(screen, target, anchor_px, fold_x, fold_y, camera, t,
+                       cache_key=("fold", id(face)))
         return True
 
     if nx != 0:
