@@ -56,12 +56,15 @@ class LookController:
         self.cam_yaw = wrap(self.cam_yaw + wrap(target - self.cam_yaw) * YAW_EASE)
         return self.cam_yaw
 
-    def chase_aim(self, dt, rate, dead_zone=0.0):
-        """Rotate body toward aim, capped at `rate` rad/s, ignoring deltas
-        smaller than `dead_zone`. This is what makes mouse-driven steering
-        feel like a steered camera: small cursor wiggles do nothing, larger
-        swings drag the body (and the camera behind it) at a bounded rate."""
-        delta = wrap(self.aim - self.body)
+    def chase_by(self, delta, dt, rate, dead_zone=0.0):
+        """Rotate body by `delta` radians, capped at `rate` rad/s and ignoring
+        magnitudes below `dead_zone`. The caller supplies the angular delta in
+        whatever frame is stable against the body's own rotation — typically a
+        SCREEN-relative cursor offset, not a world-aim delta. Using a world-aim
+        delta forms a feedback loop in tilt mode: the camera rides body, so
+        yawing the camera also yaws the world point under the cursor, and the
+        delta never closes (body spins indefinitely)."""
+        delta = wrap(delta)
         if abs(delta) <= dead_zone:
             return
         excess = delta - dead_zone if delta > 0 else delta + dead_zone
