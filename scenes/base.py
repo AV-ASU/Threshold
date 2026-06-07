@@ -151,8 +151,12 @@ OBJECT_DEFS = {
     "i": {"solid": True, "kind": "window"},
     "f": {"solid": True, "kind": "fireplace"},
     "k": {"solid": True, "kind": "stove"},
-    "5": {"solid": True, "kind": "counter"},   # kitchen counter / cabinets
+    "5": {"solid": True, "kind": "counter", "see_over": True},   # kitchen counter (see over it)
     "X": {"solid": True, "kind": "invisible"},
+    # Low solid footprint you can SEE OVER: solid for collision, but it does NOT
+    # block line of sight (so someone behind a counter/low desk is visible over
+    # it). Invisible itself -- the furniture/prop sprite supplies the visuals.
+    "x": {"solid": True, "kind": "invisible", "see_over": True},
     "D": {"solid": False, "kind": "door"},
     "E": {"solid": False, "kind": "door"},   # depths chain east-exits
     "H": {"solid": False, "kind": "door"},
@@ -2643,6 +2647,9 @@ class Scene:
         ch = self.char_object_at(x_px, y_px)
         if ch in _WINDOW_CHARS:
             return False
+        od = OBJECT_DEFS.get(ch)
+        if od and od.get("see_over"):
+            return False           # low enough to see (and be seen) over
         return ch in _WALL_CHARS or is_object_solid(ch)
 
     def is_solid_at(self, x_px, y_px, ignore=None):
@@ -2699,20 +2706,25 @@ class Scene:
     def add_decoration(self, deco):
         self.decorations.append(deco)
 
-    def add_furniture(self, kind, tiles, **kw):
+    def add_furniture(self, kind, tiles, see_over=False, **kw):
         """Place a sized furniture decoration centred over `tiles` (a
-        list of (tx, ty)) and mark those tiles solid + invisible ('X')
-        for collision -- so furniture can span several tiles (or sit shy
+        list of (tx, ty)) and mark those tiles solid + invisible for
+        collision -- so furniture can span several tiles (or sit shy
         of one) instead of reading as uniform 1-tile squares. `kw`
-        (w, h, seed, color, ...) pass through to the decoration."""
+        (w, h, seed, color, ...) pass through to the decoration.
+
+        `see_over=True` stamps the SEE-OVER footprint ('x'): still solid, but it
+        does not block line of sight, so a low piece (a reception counter, a
+        desk) lets whoever stands behind it stay visible over the top."""
         from entities.decoration import Decoration
         if self.objects and isinstance(self.objects[0], str):
             self.objects = [list(r) for r in self.objects]
         xs = [t[0] for t in tiles]
         ys = [t[1] for t in tiles]
+        footprint = "x" if see_over else "X"
         for tx, ty in tiles:
             if 0 <= ty < len(self.objects) and 0 <= tx < len(self.objects[ty]):
-                self.objects[ty][tx] = "X"
+                self.objects[ty][tx] = footprint
         cx = (min(xs) * TILE + (max(xs) + 1) * TILE) // 2
         cy = (min(ys) * TILE + (max(ys) + 1) * TILE) // 2
         deco = Decoration(cx + kw.pop("dx", 0), cy + kw.pop("dy", 0), kind, **kw)

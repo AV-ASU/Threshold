@@ -302,6 +302,41 @@ class Decoration:
         pygame.draw.line(surf, (62, 32, 36), (x, by + 2), (x, iy + ih - 2), 1)  # fold
         pygame.draw.rect(surf, (58, 38, 30), (ix + iw // 2, by + ih // 4, 7, 6))  # stain
 
+    def _draw_ledger(self, surf, x, y):
+        """The guest register open on the front desk: a leather-bound ledger,
+        two cream pages with ruled lines + signature scrawls, a faint gold gleam
+        on the names (evidence #3 -- the guests who never checked out)."""
+        cover = (74, 52, 36); cover_lo = (52, 36, 24)
+        page = (224, 214, 188); spine = (150, 138, 112)
+        line = (158, 148, 126); ink = (44, 36, 30)
+        # leather cover, a touch wider than the pages
+        pygame.draw.polygon(surf, cover,
+                            [(x - 11, y - 7), (x + 11, y - 7),
+                             (x + 12, y + 7), (x - 12, y + 7)])
+        pygame.draw.polygon(surf, cover_lo,
+                            [(x - 11, y - 7), (x + 11, y - 7),
+                             (x + 12, y + 7), (x - 12, y + 7)], 1)
+        # the two open pages + a shadowed spine down the middle
+        pygame.draw.polygon(surf, page,
+                            [(x - 10, y - 6), (x - 1, y - 6),
+                             (x - 1, y + 6), (x - 10, y + 6)])
+        pygame.draw.polygon(surf, page,
+                            [(x + 1, y - 6), (x + 10, y - 6),
+                             (x + 11, y + 6), (x + 1, y + 6)])
+        pygame.draw.line(surf, spine, (x, y - 6), (x, y + 6), 1)
+        # ruled lines, with a few inked signatures over them
+        rng = random.Random(self.seed)
+        for i in range(4):
+            ly = y - 4 + i * 3
+            pygame.draw.line(surf, line, (x - 9, ly), (x - 2, ly), 1)
+            pygame.draw.line(surf, line, (x + 2, ly), (x + 9, ly), 1)
+            for x0 in (x - 9, x + 2):
+                sx = x0 + rng.randint(0, 2)
+                pygame.draw.line(surf, ink, (sx, ly - 1),
+                                 (sx + rng.randint(3, 6), ly - 1), 1)
+        # faint gold gleam on the page -- the Sign in the names
+        _light_pool(surf, x, y - 1, 13, (220, 190, 90), 24)
+
     def _draw_bookshelf(self, surf, x, y):
         # Long + shallow: sits flush to a wall, books leaning along it.
         w = int(self.kwargs.get("w", 58)); h = int(self.kwargs.get("h", 18))
