@@ -1704,7 +1704,7 @@ def _round_water_corners(surf, scene, tx, ty, rx, ry):
 
 
 def draw_scene_terrain(surf, scene, cam_x, cam_y, x0, y0, x1, y1,
-                       skip_billboard=False):
+                       skip_billboard=False, skip_roofs=False):
     """Floor -> path fringe -> wall-cast shadows -> continuous wall mass
     -> non-wall objects, for a tile window. Shared by Scene.draw (camera
     window) and the offline full-map renderer. When scene.wrap_x or
@@ -1714,7 +1714,10 @@ def draw_scene_terrain(surf, scene, cam_x, cam_y, x0, y0, x1, y1,
 
     `skip_billboard` (the tilt floor pass) omits trees/cornstalks here so they
     aren't painted flat on the warped floor -- draw_terrain_tilted stands them
-    up as billboards instead."""
+    up as billboards instead.
+    `skip_roofs` (also tilt) omits the gabled roof art so it doesn't render
+    as a warped flat plate on the warped floor; the walls supply the
+    building's vertical mass under tilt."""
     W, H = scene.w, scene.h
     wx, wy = scene.wrap_x, scene.wrap_y
     def _lookup_floor(ty, tx):
@@ -1794,7 +1797,11 @@ def draw_scene_terrain(surf, scene, cam_x, cam_y, x0, y0, x1, y1,
                 draw_object(surf, ch, rx, ry, tx, ty)
     # Unified gabled roofs, drawn over the walls so each building reads
     # as one overhanging roof (door stays visible under the front eave).
-    _draw_scene_roofs(surf, scene, cam_x, cam_y, x0, y0, x1, y1)
+    # Tilt skips this -- a top-down roof drawn into the warped floor pass
+    # reads as a flat plate ON THE GROUND. The walls + furniture supply
+    # vertical mass instead.
+    if not skip_roofs:
+        _draw_scene_roofs(surf, scene, cam_x, cam_y, x0, y0, x1, y1)
 
 
 # --- Tilted (oblique-camera) terrain (CAMERA.md Phase 2) -------------------
@@ -2481,7 +2488,7 @@ def draw_terrain_tilted(surf, scene, camera, sight=None):
     if not (scene.wrap_x or scene.wrap_y):
         _draw_neighbor_strips(flat, scene, wx0, wy0, x0, y0, x1, y1)
     draw_scene_terrain(flat, scene, wx0, wy0, x0, y0, x1, y1,
-                       skip_billboard=True)
+                       skip_billboard=True, skip_roofs=True)
     warped = _tilt_warp(flat, camera)
     ox, oy = camera.origin
     surf.blit(warped, (ox - warped.get_width() // 2,
