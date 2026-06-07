@@ -2717,11 +2717,15 @@ class Scene:
         does not block line of sight, so a low piece (a reception counter, a
         desk) lets whoever stands behind it stay visible over the top."""
         from entities.decoration import Decoration
+        from rendering.furniture import is_see_over_furniture
         if self.objects and isinstance(self.objects[0], str):
             self.objects = [list(r) for r in self.objects]
         xs = [t[0] for t in tiles]
         ys = [t[1] for t in tiles]
-        footprint = "x" if see_over else "X"
+        # Low furniture (chairs, tables, counters, beds, crates...) is see-over
+        # by default: solid, but you look over it so whoever's behind stays
+        # visible. Tall pieces (bookshelf, wardrobe, fireplace) keep blocking.
+        footprint = "x" if (see_over or is_see_over_furniture(kind)) else "X"
         for tx, ty in tiles:
             if 0 <= ty < len(self.objects) and 0 <= tx < len(self.objects[ty]):
                 self.objects[ty][tx] = footprint
