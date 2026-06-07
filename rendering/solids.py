@@ -47,14 +47,19 @@ def draw_solid(surf, cam, wx, wy, sections, palette, t=0.0, yaw=0.0,
     cp = cam.ground_squash()              # footprint vertical flatten
     body, lo, rim = palette["body"], palette["lo"], palette["rim"]
 
+    # The footprint-yaw angle is the same for every section of one body, so its
+    # cos/sin are hoisted out of the ring loop (this runs for every wall/tree/
+    # prop section in the tilted town -- it was the hottest inner loop).
+    a = yaw + cam.yaw
+    ca, sa = math.cos(a), math.sin(a)
+
     # Precompute each section's screen ring: center, and on-screen x extent.
     rings = []
     for (hz, rx, ry) in sections:
         cx, cy = cam.project(wx, wy, hz + bob)
         # effective on-screen half-width of an elliptical footprint after the
         # camera's own yaw (broad side-on, thin head-on); reuse object yaw too.
-        a = yaw + cam.yaw
-        half = math.hypot(rx * math.cos(a), ry * math.sin(a)) * cam.scale
+        half = math.hypot(rx * ca, ry * sa) * cam.scale
         ydep = ry * cp * cam.scale        # how deep the footprint reads down
         rings.append((cx, cy, half, ydep, hz, rx, ry))
 

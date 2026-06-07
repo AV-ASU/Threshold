@@ -622,6 +622,28 @@ class RenderMixin:
         elif not draw_furniture_solid(self.screen, self.camera, d):
             draw_prop_solid(self.screen, self.camera, d)
 
+    def _draw_fps_overlay(self):
+        """Dev perf readout (F1): FPS, frame ms, and the live scene key, drawn
+        top-left over everything. Diagnostic only -- used to measure render
+        cost (e.g. the wrapped Brimley town) before/after tuning."""
+        fps = self.clock.get_fps()
+        ms = self._last_dt * 1000.0
+        scene_key = getattr(self.scene, "key", "?") if self.scene else "?"
+        lines = [f"{fps:4.1f} fps   {ms:5.1f} ms", f"scene: {scene_key}"]
+        font = self.fonts["mono_sm"]
+        pad = 4
+        surfs = [font.render(t, True, (210, 230, 140)) for t in lines]
+        w = max(s.get_width() for s in surfs) + pad * 2
+        h = sum(s.get_height() for s in surfs) + pad * 2
+        bg = pygame.Surface((w, h))
+        bg.set_alpha(150)
+        bg.fill((0, 0, 0))
+        self.screen.blit(bg, (6, 6))
+        y = 6 + pad
+        for s in surfs:
+            self.screen.blit(s, (6 + pad, y))
+            y += s.get_height()
+
     def draw_world(self):
         if self.state == "opening":
             self._draw_opening()

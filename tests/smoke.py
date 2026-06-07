@@ -229,6 +229,9 @@ _RESET_EXEMPT = {
     "_vignette_surf", "_outdoor_vignette_surf",
     # Per-frame scratch, reset at the top of each draw_world.
     "_overlay_dark_used",
+    # Dev perf overlay (F1): a diagnostic toggle + last-frame dt readout. Meant
+    # to persist across New Game like fullscreen -- not run state.
+    "_show_fps", "_last_dt",
 }
 
 
