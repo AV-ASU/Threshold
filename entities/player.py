@@ -11,6 +11,12 @@ class Player:
         self.walk_phase = 0.0
         self.step_timer = 0.0
         self.bump_timer = 0.0
+        # Velocity smoothing for camera-relative movement. Each frame the
+        # input-driven target velocity is eased into (vel_x, vel_y) over
+        # MOVE_SMOOTH_TAU seconds, so start/stop is a short tactile ramp
+        # instead of binary on/off.
+        self.vel_x = 0.0
+        self.vel_y = 0.0
         self.hp = 100
         self.max_hp = 100
         self.invuln = 0.0

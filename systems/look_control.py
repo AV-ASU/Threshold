@@ -48,9 +48,25 @@ class LookController:
     def update(self, aim_heading=None):
         """Advance one frame: set the free aim and ease the camera to sit behind
         the heading. `aim_heading` is the world heading to the cursor (the gun
-        aim); it never moves the camera. Returns the eased cam_yaw."""
+        aim); it does not directly move the camera (use chase_aim() to make the
+        body chase aim with a dead-zone + rate cap). Returns the eased cam_yaw."""
         if aim_heading is not None:
             self.aim = wrap(aim_heading)
         target = self.body + math.pi / 2
         self.cam_yaw = wrap(self.cam_yaw + wrap(target - self.cam_yaw) * YAW_EASE)
         return self.cam_yaw
+
+    def chase_by(self, delta, dt, rate, dead_zone=0.0):
+        """Rotate body by `delta` radians, capped at `rate` rad/s and ignoring
+        magnitudes below `dead_zone`. The caller supplies the angular delta in
+        whatever frame is stable against the body's own rotation — typically a
+        SCREEN-relative cursor offset, not a world-aim delta. Using a world-aim
+        delta forms a feedback loop in tilt mode: the camera rides body, so
+        yawing the camera also yaws the world point under the cursor, and the
+        delta never closes (body spins indefinitely)."""
+        delta = wrap(delta)
+        if abs(delta) <= dead_zone:
+            return
+        excess = delta - dead_zone if delta > 0 else delta + dead_zone
+        step = max(-rate * dt, min(rate * dt, excess))
+        self.body = wrap(self.body + step)

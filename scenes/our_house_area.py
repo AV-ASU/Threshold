@@ -317,6 +317,13 @@ def build_arrival_road():
             if forest_rng.random() < 0.12:                          # lone pine E
                 row[forest_rng.choice((11, 12))] = "T"
         objects_l.append(row)
+    # Dead-end the road just SOUTH of the crossing: the fold only opens NORTH
+    # (the looping runway toward the King) and out via the E-W path. South of the
+    # path is solid woods, so you can't wander down the deep-south stub -- where
+    # walking off the bottom edge would otherwise wrap you jarringly up to the
+    # band. Keeps travel bounded; reads as the road swallowed by trees behind you.
+    for y in range(PMID + 2, H):
+        objects_l[y] = ["T"] * W
     for dy in (-1, 0, 1):                   # path mouths W (lane) + E (yard)
         objects_l[PMID + dy][0] = "a"
         objects_l[PMID + dy][W - 1] = "e"

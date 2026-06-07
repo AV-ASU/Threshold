@@ -500,6 +500,30 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         self.state = "transition"
         self.audio.play("door_open", 0.7)
 
+    def _entry_facing(self, scene, x, y):
+        """Heading to orient the player on entry: look INTO the open room. Prefer
+        the heading toward the scene centre, but if that runs into a wall within
+        ~2 tiles (a door tucked in a corner, the centre through a wall), fall back
+        to the compass direction with the most clear space ahead -- so you never
+        spawn staring at a wall with the room behind you."""
+        def clear(h):                       # tiles clear ahead before a solid
+            for step in range(1, 13):
+                if scene.is_solid_at(x + math.cos(h) * step * TILE,
+                                     y + math.sin(h) * step * TILE):
+                    return step - 1
+            return 12
+        cx, cy = scene.w * TILE / 2.0, scene.h * TILE / 2.0
+        center = math.atan2(cy - y, cx - x)
+        if (cx - x or cy - y) and clear(center) >= 2:
+            return center
+        best_c, best_h = -1, center
+        for k in range(8):
+            h = k * math.pi / 4.0
+            c = clear(h)
+            if c > best_c:
+                best_c, best_h = c, h
+        return best_h
+
     def load_scene_now(self, key, spawn_id="default", *, keep_music=False):
         if self.scene and self.scene.on_exit_fn:
             self.scene.on_exit_fn(self, self.scene)
@@ -529,22 +553,18 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
                     self.look.body = math.atan2(hdy, hdx)
                     self.look.cam_yaw = (self.look.body + math.pi / 2)
         self._pending_emerge = None
-        # Face the player INTO the room on entry: a heading from the spawn toward
-        # the scene centre. You just walked in, so you look forward at the room
-        # (and whoever's standing in it) instead of back at the door -- otherwise
-        # anyone ahead of the spawn sits in the blind-spot sight cone and reads
-        # as invisible until you happen to turn around (the church Preacher did).
-        # The camera rides behind this heading, so it orients the sight cone too.
+        # Face the player INTO the open room on entry. You just walked in, so you
+        # look forward at the room (and whoever's standing in it) instead of back
+        # at the door -- otherwise anyone ahead of the spawn sits in the blind-
+        # spot sight cone and reads as invisible until you turn around (the church
+        # Preacher did). The camera rides behind this heading, so it orients the
+        # sight cone too.
         if getattr(self, "look", None) is not None and self.player is not None:
-            _cx = self.scene.w * TILE / 2.0
-            _cy = self.scene.h * TILE / 2.0
-            _hdx, _hdy = _cx - self.player.x, _cy - self.player.y
-            if _hdx or _hdy:
-                self.look.body = math.atan2(_hdy, _hdx)
-                self.look.aim = self.look.body
-                self.look.cam_yaw = self.look.body + math.pi / 2
-                self.player.facing = (math.cos(self.look.body),
-                                      math.sin(self.look.body))
+            h = self._entry_facing(self.scene, self.player.x, self.player.y)
+            self.look.body = h
+            self.look.aim = h
+            self.look.cam_yaw = h + math.pi / 2
+            self.player.facing = (math.cos(h), math.sin(h))
         # The King materialises at the doorway the player entered from.
         # He stays behind on a scene change (cleared here) and re-forms
         # at the new entry if visibility is still pinned at the top.
@@ -741,19 +761,36 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         return self._cam_pitch_target > 0.0
 
     def _update_look(self, dt):
-        """The camera rides behind the player's HEADING (steered by A/D in
-        update_player) while a free mouse cursor aims the gun. The mouse never
-        rotates the view. Runs only in the tilted view, mid-play."""
+        """The camera rides behind the player's body heading. The body chases
+        the cursor's SCREEN offset from the player's screen position, but only
+        when the cursor is in the UPPER half of the screen (above the player).
+        The lower half is free-look space — drop the cursor below the player
+        to scan or fire backwards without the camera following you around.
+        Chase is rate-capped at TURN_RATE rad/s with a small dead-zone so
+        micro-jitter near straight-ahead doesn't shake the view. The sprite +
+        gun still face the unprojected world cursor directly (free aim).
+        Tilt mode only."""
         if not (self._tilt_on() and self.state == "playing" and self.player):
             return
-        # Free aim: world heading from the player to the point under the cursor.
         mx, my = pygame.mouse.get_pos()
+        # Free aim for the gun: world heading to the point under the cursor.
         wx, wy = self.camera.unproject(mx, my)
         aim = math.atan2(wy - self.player.y, wx - self.player.x)
         self.look.update(aim_heading=aim)
+        # Camera steering: cursor's screen offset from the player's screen
+        # position. Screen-up is (0, -1); positive offset = cursor to the right
+        # of straight ahead, which should rotate body the same direction.
+        # Screen offset is camera-yaw-independent, so the chase converges
+        # instead of spinning (a world-unprojected aim would feed back: the
+        # world point under the cursor rotates 1:1 with cam_yaw).
+        psx, psy = self.camera.project(self.player.x, self.player.y)
+        dxs = mx - psx
+        dys = my - psy
+        if dys < 0:
+            offset = math.atan2(dxs, -dys)
+            self.look.chase_by(offset, dt, TURN_RATE, AIM_DEAD_ZONE)
         self.camera.yaw = self.look.cam_yaw
-        # The gun + sprite face the cursor (free aim); the camera, separately,
-        # rides behind the steered heading.
+        # The sprite + gun face the cursor (free aim), independent of body.
         ax, ay = self.look.aim_vec()
         self.player.facing = (ax, ay)
 
@@ -776,18 +813,22 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         # player for using cover.
         dx = dy = 0
         if self._tilt_on():
-            # Tank steering: A/D TURN the heading (and the camera that rides
-            # behind it); W/S drive FORWARD/back along that heading. The mouse
-            # is a free cursor that aims the gun, independent of travel.
-            turn = ((1.0 if keys[pygame.K_d] or keys[pygame.K_RIGHT] else 0.0)
-                    - (1.0 if keys[pygame.K_a] or keys[pygame.K_LEFT] else 0.0))
-            if turn:
-                self.look.turn(turn * TURN_RATE * dt)
+            # Camera-relative movement. W/S = forward/back along the body
+            # heading; A/D = strafe perpendicular. Steering happens by looking:
+            # _update_look drags the body (and the camera) toward the mouse aim
+            # at TURN_RATE rad/s through a dead-zone. The sprite + gun face the
+            # cursor independently.
             fwd = ((1.0 if keys[pygame.K_w] or keys[pygame.K_UP] else 0.0)
                    - (1.0 if keys[pygame.K_s] or keys[pygame.K_DOWN] else 0.0))
-            if fwd:
+            side = ((1.0 if keys[pygame.K_d] or keys[pygame.K_RIGHT] else 0.0)
+                    - (1.0 if keys[pygame.K_a] or keys[pygame.K_LEFT] else 0.0))
+            if fwd or side:
                 fx, fy = self.look.facing_vec()
-                dx, dy = fx * fwd, fy * fwd
+                # Right-perpendicular to body in world coords (+y = down):
+                # rotate body by +90 deg → (-fy, fx).
+                px, py = -fy, fx
+                dx = fx * fwd + px * side
+                dy = fy * fwd + py * side
         else:
             if keys[pygame.K_a] or keys[pygame.K_LEFT]: dx -= 1
             if keys[pygame.K_d] or keys[pygame.K_RIGHT]: dx += 1
@@ -798,7 +839,8 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         # patch cover is *passive* -- the player walks through the
         # patch while hidden, no teleport on exit; the floor-tile
         # check after movement clears the hide when they step out.
-        if (dx or dy) and self.player.hidden is not None:
+        input_active = bool(dx or dy)
+        if input_active and self.player.hidden is not None:
             if self.player.hide_origin is not None:
                 self.player.hidden = None
                 self.player.x, self.player.y = self.player.hide_origin
@@ -807,31 +849,59 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
                                   duration=1.6)
             # else: corn-state hide; let the floor check below
             # handle entry/exit transparently.
-        if dx or dy:
+        # Quadratic visibility compression: barely shows in normal play, bites
+        # only as visibility approaches the King-gate. Sprint multiplies on top.
+        comp_mult = 1.0 - self.visibility * self.visibility * 0.45
+        sprint_mult = 1.7 if self.player.sprint_active else 1.0
+        effective_speed = self.player.speed * comp_mult * sprint_mult
+        # Build the input-driven TARGET velocity (world units/sec), then ease
+        # the actual velocity toward it over MOVE_SMOOTH_TAU. Releasing input
+        # coasts to a stop instead of cutting cold.
+        if input_active:
             mag = math.hypot(dx, dy) or 1
-            dx /= mag; dy /= mag
+            ndx, ndy = dx / mag, dy / mag
             # In tilt mode (dx,dy) is already a world heading vector (W/S along
-            # the steered facing); the sprite faces the cursor, set by
-            # _update_look. Flat mode keeps raw WASD as the facing.
+            # the body facing, A/D strafe); the sprite faces the cursor, set by
+            # _update_look. Flat mode (dev capture only) keeps raw WASD as
+            # the facing.
             if not self._tilt_on():
-                self.player.facing = (dx, dy)
+                self.player.facing = (ndx, ndy)
+            target_vx = ndx * effective_speed
+            target_vy = ndy * effective_speed
+        else:
+            target_vx = target_vy = 0.0
+        k = 1.0 - math.exp(-dt / MOVE_SMOOTH_TAU)
+        self.player.vel_x += (target_vx - self.player.vel_x) * k
+        self.player.vel_y += (target_vy - self.player.vel_y) * k
+        # Snap to zero when coasting tail is below 1 unit/sec so we don't
+        # accumulate jitter.
+        if (not input_active and abs(self.player.vel_x) < 1.0
+                and abs(self.player.vel_y) < 1.0):
+            self.player.vel_x = 0.0
+            self.player.vel_y = 0.0
+        vx, vy = self.player.vel_x, self.player.vel_y
+        in_motion = bool(input_active or vx or vy)
+        if in_motion:
             self.player.walk_phase += dt * 12
-            # Base speed is reduced by the threat meter (spatial
-            # compression -- the closer you are to being caught, the
-            # harder it is to move) and boosted by active sprint.
-            comp_mult = 1.0 - self.visibility * 0.45
-            sprint_mult = 1.7 if self.player.sprint_active else 1.0
-            effective_speed = (self.player.speed
-                               * comp_mult * sprint_mult)
-            new_x = self.player.x + dx * effective_speed * dt
-            new_y = self.player.y + dy * effective_speed * dt
+            new_x = self.player.x + vx * dt
+            new_y = self.player.y + vy * dt
             blocked_x = (self.scene.is_solid_at(new_x, self.player.y)
                          or self._river_blocks(new_x, self.player.y))
             blocked_y = (self.scene.is_solid_at(self.player.x, new_y)
                          or self._river_blocks(self.player.x, new_y))
             moved = False
-            if not blocked_x: self.player.x = new_x; moved = True
-            if not blocked_y: self.player.y = new_y; moved = True
+            if not blocked_x:
+                self.player.x = new_x
+                moved = True
+            else:
+                # Wall on this axis: kill the residual velocity so we don't
+                # keep grinding into it next frame.
+                self.player.vel_x = 0.0
+            if not blocked_y:
+                self.player.y = new_y
+                moved = True
+            else:
+                self.player.vel_y = 0.0
             # Toroidal wrap. When the scene is wrap_x / wrap_y, the
             # player's coord cycles mod world width / height and the
             # camera is shifted by the same amount so the world
@@ -865,12 +935,12 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
                     _band = _band_bottom - _band_top
                     self.player.y += _band
                     self.cam_y += _band
-            if not moved:
+            if input_active and not moved:
                 self.player.bump_timer -= dt
                 if self.player.bump_timer <= 0:
                     self.audio.play("bump", 0.4)
                     self.player.bump_timer = 0.25
-            else:
+            elif moved:
                 self.stillness_t = 0.0
                 # Corn-patch cover: passive hide while standing on
                 # `:` tiles. Doesn't compete with explicit hide

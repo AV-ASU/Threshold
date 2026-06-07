@@ -1567,38 +1567,60 @@ def _draw_door_leaf(surf, rx, ry, room, seed):
 _PATH_GRASS = frozenset(("g", "G", ":"))
 
 
-def _draw_path_fringe(surf, scene, tx, ty, rx, ry):
-    """Fray a dirt-path tile's edge wherever it meets grass: dirt tongues
-    spill raggedly into the grass and a few grass tufts bite back into the
-    dirt, so the worn track wanders instead of reading as a clean
-    rectangle. Run after every floor fill so the blobs paint across the
-    tile boundary. Dirt only frays its grass-facing sides, so adjacent
-    path tiles leave their shared (interior) edge clean."""
+_PATH_FRINGE_MARGIN = 8                 # the fringe blobs spill ~3 px into the
+                                        # adjacent tile; 8 px margin is plenty.
+_PATH_FRINGE_CACHE = {}                 # (tx, ty) -> cached SRCALPHA surface
+
+
+def _build_path_fringe_card(scene, tx, ty):
+    """Render the four-edge fringe + grass-tuft bite-backs ONCE into a
+    TILE+2m square SRCALPHA card, so the per-frame call is a single blit
+    instead of ~30 circle draws per path tile. Pure function of scene.floor
+    around (tx, ty); cleared in _draw_path_fringe when the scene changes."""
     floor, h, w = scene.floor, scene.h, scene.w
     dirt, dirt2 = (88, 68, 45), (74, 56, 37)
+    m = _PATH_FRINGE_MARGIN
+    card = pygame.Surface((TILE + 2 * m, TILE + 2 * m), pygame.SRCALPHA)
+    # Local rx, ry of the tile origin inside the card.
+    rx = m
+    ry = m
     for si, (ndx, ndy) in enumerate(((0, -1), (0, 1), (-1, 0), (1, 0))):
         nx, ny = tx + ndx, ty + ndy
         if not (0 <= nx < w and 0 <= ny < h) or floor[ny][nx] not in _PATH_GRASS:
             continue
         grass = FLOOR_DEFS[floor[ny][nx]]["color"]
         seed = (tx * 73856093) ^ (ty * 19349663) ^ (si * 83492791)
-        if ndy:                                  # horizontal edge (N/S)
+        if ndy:
             ex = rx; ey = ry + (TILE if ndy > 0 else 0); ax, ay = 1, 0
-        else:                                    # vertical edge (W/E)
+        else:
             ex = rx + (TILE if ndx > 0 else 0); ey = ry; ax, ay = 0, 1
-        for k in range(6):                       # ragged dirt fringe, mostly into grass
+        for k in range(6):
             u = (k + (_vary(seed, k) % 3) / 3.0) / 6.0
             depth = (_vary(seed, 10 + k) % 9) - 3
             cx = int(ex + ax * TILE * u + ndx * depth)
             cy = int(ey + ay * TILE * u + ndy * depth)
             col = dirt if (_vary(seed, 30 + k) % 3) else dirt2
-            pygame.draw.circle(surf, col, (cx, cy), 3 + (_vary(seed, 20 + k) % 3))
-        for k in range(2):                       # grass tufts biting back into the dirt
+            pygame.draw.circle(card, col, (cx, cy), 3 + (_vary(seed, 20 + k) % 3))
+        for k in range(2):
             u = (1 + 2 * k) / 4.0
             d = 2 + (_vary(seed, 40 + k) % 3)
             cx = int(ex + ax * TILE * u - ndx * d)
             cy = int(ey + ay * TILE * u - ndy * d)
-            pygame.draw.circle(surf, grass, (cx, cy), 2 + (_vary(seed, 50 + k) % 2))
+            pygame.draw.circle(card, grass, (cx, cy), 2 + (_vary(seed, 50 + k) % 2))
+    return card.convert_alpha()
+
+
+def _draw_path_fringe(surf, scene, tx, ty, rx, ry):
+    """Fray a dirt-path tile's edge wherever it meets grass. Cached as a
+    pre-rendered card per (tx, ty); the per-frame cost is one blit instead
+    of the ~30 pygame.draw.circle calls the function used to make. The cache
+    rides on the same scene-change reset that drops _FLOOR_CACHE."""
+    key = (tx, ty)
+    card = _PATH_FRINGE_CACHE.get(key)
+    if card is None:
+        card = _build_path_fringe_card(scene, tx, ty)
+        _PATH_FRINGE_CACHE[key] = card
+    surf.blit(card, (rx - _PATH_FRINGE_MARGIN, ry - _PATH_FRINGE_MARGIN))
 
 
 _BANK_LAND = frozenset(("g", "G", ":", "d"))
@@ -1720,6 +1742,7 @@ def draw_scene_terrain(surf, scene, cam_x, cam_y, x0, y0, x1, y1,
         _FLOOR_CACHE.clear()
         _TILT_STANDEE_CACHE.clear()  # tree/corn billboard cards are scene-keyed
         _CORN_RUN_CACHE.clear()      # corn-run LOD decomposition is per scene
+        _PATH_FRINGE_CACHE.clear()   # path-edge fringe cards are scene-keyed
         _FLOOR_CACHE_SCENE = scene   # hold the ref so its identity can't be reused
     for ty in range(y0, y1):
         for tx in range(x0, x1):
@@ -2006,6 +2029,16 @@ _FLOOR_DECAL_KINDS = frozenset((
 # camera-facing billboard. Skipped in the terrain pass; emitted by render_mixin.
 _SURFACE_DECAL_KINDS = frozenset(("ledger",))
 
+# Small props that REST on a tabletop: when one is placed on a furniture
+# footprint tile, seat_tabletop_props lifts it onto that surface (a deco `z`)
+# instead of leaving it floating at the furniture's base. Curated so structural
+# decor on a furniture tile isn't lifted by accident.
+_TABLETOP_PROP_KINDS = frozenset((
+    "candle", "lantern", "kerosene_lamp", "oil_lamp", "lamp", "ledger",
+    "bowl", "cup", "mug", "bottle", "jar", "plate", "radio", "papers",
+    "book", "photo", "photo_frame", "tankard", "teapot",
+))
+
 # Wall-mounted decorations. Under tilt these are lifted onto the wall face as
 # camera-facing billboards (and depth-sorted with the walls) instead of lying
 # flat on the floor -- they HANG, they don't sit. _WALL_MOUNT_Z is how far up
@@ -2020,28 +2053,55 @@ _WALL_DECO_KINDS = frozenset((
 _WALL_MOUNT_Z = 18
 
 
+_FLOOR_DECAL_CARD_CACHE = {}        # (id(deco), yaw_bkt, scale_bkt, pitch_bkt)
+                                    #     -> pre-warped Surface
+# How tightly we quantise yaw/pitch/scale for the cache. Yaw eases by ~0.004
+# rad/frame during mouselook, so 0.05 rad (~3 deg) buckets give the cache
+# hits during smooth play and only re-warp on real turns. Pitch + scale are
+# typically constant in actual play -- F3 changes pitch but isn't wired in
+# game; scale is fixed at TILT_ZOOM -- so coarse buckets are fine.
+_FLOOR_DECAL_YAW_BKT = 0.05
+_FLOOR_DECAL_SCALE_BKT = 0.05
+
+
 def _draw_floor_decal(surf, camera, deco, woff=(0.0, 0.0)):
     """Render a flat decal to a canvas, then warp it onto the floor plane (same
     rotate+squash as _tilt_warp) and blit at the projected anchor, so a rug or
     bloodstain lies on the ground and turns with the room instead of standing up
-    as a billboard. `woff` is the wrap-clone WORLD offset (added before
-    projection so the seam clone lands through the camera, not in screen space;
-    CAMERA.md Phase 5)."""
+    as a billboard. The fill -> rotate -> smoothscale pipeline is CACHED per
+    decoration + camera-orientation bucket; the per-frame cost on a cache hit
+    is just one project + blit. `woff` is the wrap-clone WORLD offset (added
+    before projection so the seam clone lands through the camera, not in
+    screen space; CAMERA.md Phase 5)."""
     drawfn = getattr(deco, f"_draw_{deco.kind}", None)
     if drawfn is None:
         return
-    if deco.kind == "rug":
-        w = int(deco.kwargs.get("w", 88)); h = int(deco.kwargs.get("h", 60))
-        bound = max(w, h) + 18
-    else:
-        bound = 60
-    canvas = pygame.Surface((bound, bound), pygame.SRCALPHA)
-    drawfn(canvas, bound // 2, bound // 2)
-    rot = pygame.transform.rotate(canvas, math.degrees(camera.yaw))
-    cp = max(0.05, math.cos(camera.pitch))
-    sw = max(1, int(rot.get_width() * camera.scale))
-    sh = max(1, int(rot.get_height() * camera.scale * cp))
-    scaled = pygame.transform.smoothscale(rot, (sw, sh))
+    yaw_bkt = round(camera.yaw / _FLOOR_DECAL_YAW_BKT)
+    scale_bkt = round(camera.scale / _FLOOR_DECAL_SCALE_BKT)
+    pitch_bkt = round(camera.pitch / _FLOOR_DECAL_YAW_BKT)
+    key = (id(deco), yaw_bkt, scale_bkt, pitch_bkt)
+    scaled = _FLOOR_DECAL_CARD_CACHE.get(key)
+    if scaled is None:
+        if deco.kind == "rug":
+            w = int(deco.kwargs.get("w", 88)); h = int(deco.kwargs.get("h", 60))
+            bound = max(w, h) + 18
+        else:
+            bound = 60
+        canvas = pygame.Surface((bound, bound), pygame.SRCALPHA)
+        drawfn(canvas, bound // 2, bound // 2)
+        rot = pygame.transform.rotate(canvas, math.degrees(camera.yaw))
+        cp = max(0.05, math.cos(camera.pitch))
+        sw = max(1, int(rot.get_width() * camera.scale))
+        sh = max(1, int(rot.get_height() * camera.scale * cp))
+        scaled = pygame.transform.smoothscale(rot, (sw, sh)).convert_alpha()
+        _FLOOR_DECAL_CARD_CACHE[key] = scaled
+        # Bound memory: drop the oldest entries when the cache gets fat. A
+        # single scene's worth of decals at one yaw bucket is ~100 entries; a
+        # few-thousand cap covers head turns + scene changes without leaking.
+        if len(_FLOOR_DECAL_CARD_CACHE) > 4096:
+            for k_ in list(_FLOOR_DECAL_CARD_CACHE)[:1024]:
+                _FLOOR_DECAL_CARD_CACHE.pop(k_, None)
+    sw, sh = scaled.get_size()
     # `z` lifts the flat decal onto a raised surface (a ledger on a desktop);
     # 0 keeps it on the floor (rugs, stains).
     zlift = float(getattr(deco, "kwargs", {}).get("z", 0.0))
@@ -2251,8 +2311,9 @@ def _deco_index(scene):
         if d.kind in _WALL_DECO_KINDS:
             wall_decos.append(d)
             continue
-        if d.kind in _SURFACE_DECAL_KINDS:
-            continue                 # depth-sorted upstream
+        if d.kind in _SURFACE_DECAL_KINDS or \
+                float(getattr(d, "kwargs", {}).get("z", 0.0)) > 0:
+            continue                 # seated on a surface; depth-sorted upstream
         if d.kind == "water_channel":
             water_channels.append(d)
             continue
@@ -2264,6 +2325,114 @@ def _deco_index(scene):
              "chunks": chunks, "len": len(scene.decorations)}
     scene._deco_index_cache = cache
     return cache
+
+
+def _collect_neighbor_solids(scene, camera, x0, y0, x1, y1):
+    """Walk the visible tile window's OUT-OF-BOUNDS region for each seamless
+    neighbor and collect the wall-class tiles to be drawn as standing boxes
+    later (in render_mixin's depth-sorted pass). Returns a list of
+    `(neighbor_scene, ntx, nty, host_world_x, host_world_y, sat_camera)`.
+
+    The satellite camera mirrors the host camera shifted by the neighbor's
+    offset; projecting a neighbor world point through it lands at the same
+    screen pixel a host world point at the equivalent seam location would.
+    The depth sort still uses the host camera + host world coords, so a
+    neighbor wall in front of an actor sorts correctly."""
+    from rendering.world_neighbors import get_neighbors
+    neighbors = get_neighbors(scene)
+    if not neighbors:
+        return []
+    from scenes import load_scene
+    from rendering.camera import Camera
+    H, W = scene.h, scene.w
+    out = []
+    for n in neighbors:
+        try:
+            tgt = load_scene(n.target_key)
+        except Exception:
+            continue
+        sat_cam = Camera(cam_x=camera.cam_x + n.offset_dx,
+                         cam_y=camera.cam_y + n.offset_dy,
+                         pitch=camera.pitch, yaw=camera.yaw,
+                         scale=camera.scale, origin=camera.origin)
+        tw, th = tgt.w, tgt.h
+        for ty in range(y0, y1):
+            if 0 <= ty < H:
+                continue
+            for tx in range(x0, x1):
+                if 0 <= tx < W:
+                    continue
+                ntx = int((tx * TILE + TILE // 2 + n.offset_dx) // TILE)
+                nty = int((ty * TILE + TILE // 2 + n.offset_dy) // TILE)
+                if tgt.wrap_x: ntx %= tw
+                if tgt.wrap_y: nty %= th
+                if not (0 <= ntx < tw and 0 <= nty < th):
+                    continue
+                ch = tgt.objects[nty][ntx]
+                if (ch in _WALL_CHARS or ch in _DOOR_CHARS
+                        or ch in _WINDOW_CHARS
+                        or ch in _TILT_BILLBOARD_CHARS
+                        or ch in _COUNTER_CHARS):
+                    out.append((tgt, ntx, nty,
+                                tx * TILE + TILE / 2,
+                                ty * TILE + TILE / 2,
+                                sat_cam))
+    return out
+
+
+def _draw_neighbor_strips(flat, scene, wx0, wy0, x0, y0, x1, y1):
+    """Paint the seamless neighbor scenes' floor tiles into the host flat for
+    every (tx, ty) in the visible tile window that sits OUTSIDE the host
+    scene's tile bounds. Each neighbor knows its world-coord offset (set up
+    at scene-load time by rendering.world_neighbors); we translate the host
+    tile coord into the neighbor's grid and draw the neighbor's floor char
+    using the SAME cached path draw_scene_terrain uses, so the strip blends
+    visually with the host's floor pattern. Terrain only at this phase --
+    walls, decorations, actors come later."""
+    from rendering.world_neighbors import get_neighbors
+    neighbors = get_neighbors(scene)
+    if not neighbors:
+        return
+    from scenes import load_scene
+    H, W = scene.h, scene.w
+    for n in neighbors:
+        try:
+            tgt = load_scene(n.target_key)
+        except Exception:
+            continue
+        # The target tile that a host (tx, ty) tile maps to.
+        # host world point = (tx*TILE + TILE/2, ty*TILE + TILE/2)
+        # target world point = host world point + (offset_dx, offset_dy)
+        tw, th = tgt.w, tgt.h
+        for ty in range(y0, y1):
+            if 0 <= ty < H:
+                continue                     # host renders this row
+            for tx in range(x0, x1):
+                if 0 <= tx < W:
+                    continue                 # host renders this column
+                nx_px = tx * TILE + TILE // 2 + n.offset_dx
+                ny_px = ty * TILE + TILE // 2 + n.offset_dy
+                ntx = int(nx_px // TILE)
+                nty = int(ny_px // TILE)
+                if tgt.wrap_x:
+                    ntx %= tw
+                if tgt.wrap_y:
+                    nty %= th
+                if not (0 <= ntx < tw and 0 <= nty < th):
+                    continue                 # outside the neighbor too
+                ch = tgt.floor[nty][ntx]
+                rx = tx * TILE - wx0
+                ry = ty * TILE - wy0
+                if ch in _ANIM_FLOOR:
+                    draw_floor(flat, ch, rx, ry, ntx, nty)
+                    continue
+                key = (ch, ntx, nty)
+                tile = _FLOOR_CACHE.get(key)
+                if tile is None:
+                    tile = pygame.Surface((TILE, TILE)).convert()
+                    draw_floor(tile, ch, 0, 0, ntx, nty)
+                    _FLOOR_CACHE[key] = tile
+                flat.blit(tile, (rx, ry))
 
 
 def draw_terrain_tilted(surf, scene, camera, sight=None):
@@ -2292,6 +2461,15 @@ def draw_terrain_tilted(surf, scene, camera, sight=None):
     wx0, wy0 = cx - half, cy - half
     x0 = int(math.floor(wx0 / TILE)); y0 = int(math.floor(wy0 / TILE))
     x1 = int(math.ceil((wx0 + span) / TILE)); y1 = int(math.ceil((wy0 + span) / TILE))
+    # Phase 2 of the seamless-world neighbor strip: when the player is near a
+    # non-wrap host's edge and the visible tile range extends past the world's
+    # bounds, fill the OUT-OF-BOUNDS tiles with the neighbor scene's floor
+    # content (per rendering/world_neighbors.get_neighbors). draw_scene_terrain
+    # below then overdraws the in-bounds area with the host's tiles, so the
+    # strip only shows where the host doesn't reach -- a clean seamless seam.
+    # Wrap hosts already tile their content edge to edge; they get no strip.
+    if not (scene.wrap_x or scene.wrap_y):
+        _draw_neighbor_strips(flat, scene, wx0, wy0, x0, y0, x1, y1)
     draw_scene_terrain(flat, scene, wx0, wy0, x0, y0, x1, y1,
                        skip_billboard=True)
     warped = _tilt_warp(flat, camera)
@@ -2396,7 +2574,14 @@ def draw_terrain_tilted(surf, scene, camera, sight=None):
                         draw_with_alpha(surf, a, lambda s, d=d, woff=woff:
                                         d.draw(s, 0, 0, camera,
                                                wox=woff[0], woy=woff[1]))
-    return walls, solid_decos, wall_decos
+    # Neighbor walls/standees for the seamless strip. Same Phase 2 deferral:
+    # wrap hosts get no strip yet. Returned as a parallel list so render_mixin
+    # can dispatch each through a satellite camera while still depth-sorting
+    # against the host actors via host-frame world coords.
+    neighbor_solids = []
+    if not (scene.wrap_x or scene.wrap_y):
+        neighbor_solids = _collect_neighbor_solids(scene, camera, x0, y0, x1, y1)
+    return walls, solid_decos, wall_decos, neighbor_solids
 
 
 def draw_scene_doors(surf, scene, cam_x, cam_y, x0, y0, x1, y1):
@@ -2672,6 +2857,9 @@ class Scene:
         self.spawns = {"default": (self.w * 16, self.h * 16)}
         self.npcs = []
         self.decorations = []
+        # Furniture footprint tile (tx, ty) -> top height, so a tabletop prop
+        # placed on that tile can be seated ON the surface (seat_tabletop_props).
+        self._surface_tops = {}
         self.enemies = []
         self.items = []          # list of {x,y,key,qty,on_pickup?}
         self.projectiles = []    # ranged-attack bullets
@@ -2960,6 +3148,24 @@ class Scene:
     def add_decoration(self, deco):
         self.decorations.append(deco)
 
+    def seat_tabletop_props(self):
+        """Lift each small tabletop prop (candle, lamp, bowl, ledger...) that
+        sits on a furniture footprint onto that surface, by tagging it with a
+        deco `z` = the furniture top. Without this it draws at the furniture's
+        BASE under tilt (floating at floor level beside the desk). Run once after
+        the scene is built; idempotent (scenes rebuild each load). An explicit
+        `z` already set by the builder is left alone."""
+        if not self._surface_tops:
+            return
+        for d in self.decorations:
+            if d.kind not in _TABLETOP_PROP_KINDS:
+                continue
+            if getattr(d, "kwargs", {}).get("z"):
+                continue
+            top = self._surface_tops.get((int(d.x // TILE), int(d.y // TILE)))
+            if top:
+                d.kwargs["z"] = top
+
     def add_furniture(self, kind, tiles, see_over=False, **kw):
         """Place a sized furniture decoration centred over `tiles` (a
         list of (tx, ty)) and mark those tiles solid + invisible for
@@ -2971,7 +3177,7 @@ class Scene:
         does not block line of sight, so a low piece (a reception counter, a
         desk) lets whoever stands behind it stay visible over the top."""
         from entities.decoration import Decoration
-        from rendering.furniture import is_see_over_furniture
+        from rendering.furniture import is_see_over_furniture, FURNITURE
         if self.objects and isinstance(self.objects[0], str):
             self.objects = [list(r) for r in self.objects]
         xs = [t[0] for t in tiles]
@@ -2980,9 +3186,13 @@ class Scene:
         # by default: solid, but you look over it so whoever's behind stays
         # visible. Tall pieces (bookshelf, wardrobe, fireplace) keep blocking.
         footprint = "x" if (see_over or is_see_over_furniture(kind)) else "X"
+        # Record each footprint tile's top height so a tabletop prop on it can be
+        # seated on the surface (seat_tabletop_props).
+        top_h = FURNITURE.get(kind, (0, 0, 0))[2] * (kw.get("scale", 1.0) or 1.0)
         for tx, ty in tiles:
             if 0 <= ty < len(self.objects) and 0 <= tx < len(self.objects[ty]):
                 self.objects[ty][tx] = footprint
+            self._surface_tops[(tx, ty)] = top_h
         cx = (min(xs) * TILE + (max(xs) + 1) * TILE) // 2
         cy = (min(ys) * TILE + (max(ys) + 1) * TILE) // 2
         deco = Decoration(cx + kw.pop("dx", 0), cy + kw.pop("dy", 0), kind, **kw)
