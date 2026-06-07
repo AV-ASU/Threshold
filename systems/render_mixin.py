@@ -700,42 +700,24 @@ class RenderMixin:
                 continue
             sx, sy = self.camera.project(it["x"], it["y"])
             t = pygame.time.get_ticks() / 200.0
-            ph = t + (it["x"] + it["y"]) * 0.01
-            bob = int(math.sin(ph) * 2)
-            pulse = 0.5 + 0.5 * math.sin(ph * 1.3)
+            bob = int(math.sin(t + (it["x"] + it["y"]) * 0.01))
             color = self._item_color(it["key"])
 
-            def _draw_item(s, sx=sx, sy=sy, bob=bob, color=color, pulse=pulse,
+            def _draw_item(s, sx=sx, sy=sy, bob=bob, color=color,
                            tilt=_tilt_items):
                 if tilt:
-                    # Ground-contact shadow so the pickup reads as sitting ON
-                    # the floor, then a gem floating above it with a pulsing
-                    # halo + glint to catch the eye. (Pitch 0 keeps the legacy
-                    # bare icon.)
-                    sh = pygame.Surface((20, 10), pygame.SRCALPHA)
-                    pygame.draw.ellipse(sh, (0, 0, 0, 120), sh.get_rect())
-                    s.blit(sh, (sx - 10, sy - 4))
-                    iy = sy - 12 + bob
-                    gr = 16
-                    glow = pygame.Surface((gr * 2, gr * 2), pygame.SRCALPHA)
-                    ga = int(55 + pulse * 70)
-                    pygame.draw.circle(glow, (color[0], color[1], color[2], ga),
-                                       (gr, gr), gr)
-                    pygame.draw.circle(glow, (color[0], color[1], color[2],
-                                              min(255, ga + 40)),
-                                       (gr, gr), gr // 2)
-                    s.blit(glow, (sx - gr, iy - gr),
-                           special_flags=pygame.BLEND_RGB_ADD)
-                    # the gem: a diamond with a dark outline + bright core so it
-                    # stands out on any floor.
-                    gem = [(sx, iy - 8), (sx + 7, iy), (sx, iy + 8), (sx - 7, iy)]
-                    pygame.draw.polygon(s, color, gem)
-                    pygame.draw.polygon(s, C_BLACK, gem, 1)
-                    core = tuple(min(255, c + 70) for c in color)
-                    pygame.draw.polygon(s, core,
-                                        [(sx, iy - 4), (sx + 3, iy),
-                                         (sx, iy + 4), (sx - 3, iy)])
-                    pygame.draw.circle(s, (255, 255, 255), (sx - 2, iy - 3), 1)
+                    # A small ground shadow so the pickup sits ON the floor, then
+                    # a plain icon just above it -- no glow halo. Items are exempt
+                    # from the sight cull (drawn always), so they read in the
+                    # world without needing to be big.
+                    sh = pygame.Surface((12, 6), pygame.SRCALPHA)
+                    pygame.draw.ellipse(sh, (0, 0, 0, 90), sh.get_rect())
+                    s.blit(sh, (sx - 6, sy - 2))
+                    iy = sy - 5 + bob
+                    pygame.draw.rect(s, color, (sx - 4, iy - 4, 8, 8))
+                    pygame.draw.rect(s, C_BLACK, (sx - 4, iy - 4, 8, 8), 1)
+                    pygame.draw.rect(s, tuple(min(255, c + 60) for c in color),
+                                     (sx - 3, iy - 3, 2, 2))
                 else:
                     pygame.draw.rect(s, color, (sx - 4, sy - 4 + bob, 8, 8))
                     pygame.draw.rect(s, C_BLACK, (sx - 4, sy - 4 + bob, 8, 8), 1)

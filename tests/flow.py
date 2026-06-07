@@ -379,8 +379,10 @@ def main():
     check(_road.exits.get("a", (None,))[0] == "country_lane"
           and _road.exits.get("e", (None,))[0] == "our_house_area",
           "geo: the arrival road's dirt path links country_lane (W) and yard (E)")
-    check(_road.wrap_y and hasattr(_road, "_car_pos"),
-          "geo: the arrival road loops (wrap_y) and holds the dead car")
+    check(hasattr(_road, "_treadmill") and not _road.wrap_y
+          and hasattr(_road, "_car_pos"),
+          "geo: the arrival road loops a small NORTH band (_treadmill, not full "
+          "wrap_y) and holds the dead car")
     check(_road.h >= 30,
           "geo: the road is taller than a screen so the loop's repeat stays "
           "off-frame (you don't see two cars at once)")

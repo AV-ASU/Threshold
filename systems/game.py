@@ -837,6 +837,18 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
                 elif self.player.y >= world_h:
                     self.player.y -= world_h
                     self.cam_y -= world_h
+            # Treadmill BAND (arrival_road): only a small northern stretch loops.
+            # Cross the band's north edge walking up and you wrap back to its
+            # south edge (player + camera shift together, so no jump) -- the road
+            # loops a small landmark-free part forever. Walking south just leaves
+            # the band into the fixed arrival stretch (no wrap that way).
+            _tm = getattr(self.scene, "_treadmill", None)
+            if _tm is not None:
+                _band_top, _band_bottom = _tm
+                if self.player.y < _band_top:
+                    _band = _band_bottom - _band_top
+                    self.player.y += _band
+                    self.cam_y += _band
             if not moved:
                 self.player.bump_timer -= dt
                 if self.player.bump_timer <= 0:

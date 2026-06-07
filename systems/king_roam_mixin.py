@@ -77,18 +77,18 @@ class KingRoamMixin:
         up the treadmill never closes on him. Cleared once armed or off-road;
         the renderer reads _idle_king (world x, y) or None."""
         rk = self._roam_king
+        tm = getattr(self.scene, "_treadmill", None) if self.scene else None
         if (rk["armed"] or self.scene is None or self.player is None
-                or self.scene.key != KING_ROAM_START):
+                or self.scene.key != KING_ROAM_START
+                # only once you're ON the looping band (north of its south edge);
+                # the car is off screen by then. In the arrival stretch: no King.
+                or (tm is not None and self.player.y >= tm[1])):
             self._idle_king = None
             return
-        # The receding horizon: he hangs a FIXED GAP north of the player (recomputed
-        # every tick), centred on the road. arrival_road is a wrap_y treadmill, so
-        # walking up never closes the gap -- he is always the same distance ahead,
-        # distant and untouchable. Same coordinate frame as the player each tick,
-        # so no wrap-seam: a bare player.y - GAP renders straight up the road. The
-        # car + sign stay in the world (you see them when you turn around) but
-        # don't wrap-clone into the road AHEAD (_no_wrap), so walking north stays
-        # endless -- only the road, and the King glimpsed at its end.
+        # The receding horizon: he hangs a FIXED GAP north of the player
+        # (recomputed each tick), centred on the road. He is always the same
+        # distance ahead up the looping band -- distant, untouchable -- and his
+        # screen position holds steady as the band scrolls under you.
         self._idle_king = (7 * TILE + TILE // 2,
                            self.player.y - IDLE_KING_GAP)
 
