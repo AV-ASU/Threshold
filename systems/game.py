@@ -360,7 +360,6 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         self._portal_charge_t = 0.0
         self._pending_emerge = None
         self._idle_king = None
-        self._treadmill_latched = False    # arrival-road car/sign hidden on the treadmill
         # Cultists, the curse, and Watchers
         self._cursed = False
         self._watchers = []
@@ -534,7 +533,6 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         # He stays behind on a scene change (cleared here) and re-forms
         # at the new entry if visibility is still pinned at the top.
         self._king = None
-        self._treadmill_latched = False    # the arrival-road car/sign show again
         reset_king_fx()        # his trail/particles don't follow across scenes
         self._king_anchor = (self.player.x, self.player.y)
         # A torn portal belongs to the room it opened in: leaving the scene

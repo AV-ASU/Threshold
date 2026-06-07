@@ -80,33 +80,17 @@ class KingRoamMixin:
         if (rk["armed"] or self.scene is None or self.player is None
                 or self.scene.key != KING_ROAM_START):
             self._idle_king = None
-            self._treadmill_latched = False
-            sc = self.scene
-            if sc is not None:                       # un-hide landmarks off-road
-                for d in (getattr(sc, "_car_deco", None),
-                          getattr(sc, "_sign_deco", None)):
-                    if d is not None:
-                        d.hidden = False
             return
         # The receding horizon: he hangs a FIXED GAP north of the player (recomputed
         # every tick), centred on the road. arrival_road is a wrap_y treadmill, so
         # walking up never closes the gap -- he is always the same distance ahead,
         # distant and untouchable. Same coordinate frame as the player each tick,
-        # so no wrap-seam: a bare player.y - GAP renders straight up the road.
+        # so no wrap-seam: a bare player.y - GAP renders straight up the road. The
+        # car + sign stay in the world (you see them when you turn around) but
+        # don't wrap-clone into the road AHEAD (_no_wrap), so walking north stays
+        # endless -- only the road, and the King glimpsed at its end.
         self._idle_king = (7 * TILE + TILE // 2,
                            self.player.y - IDLE_KING_GAP)
-        # Treadmill latch: once the player walks NORTH past the dead car, hide the
-        # car AND the BRIMLEY sign so the wrap_y loop never brings them back round.
-        # From then on it is just the endless road -- only the road getting longer,
-        # new space ahead -- and the receding King at the vanishing point.
-        car = getattr(self.scene, "_car_pos", None)
-        if car is not None and self.player.y < car[1] - TILE * 2:
-            self._treadmill_latched = True
-        latched = getattr(self, "_treadmill_latched", False)
-        for d in (getattr(self.scene, "_car_deco", None),
-                  getattr(self.scene, "_sign_deco", None)):
-            if d is not None:
-                d.hidden = latched
 
     def _nearest_walkable(self, scene, x, y, rings=10):
         """Snap (x, y) to the nearest non-solid tile centre in `scene` (spiral

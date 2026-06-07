@@ -612,16 +612,27 @@ class ThreatMixin:
         self.audio.play("breath", 0.4)
 
     def _tick_watcher_gaze(self, dt):
-        """Holding a Watcher in your gaze (facing it, within range) dissolves
-        it over WATCHER_GAZE_DISPEL seconds -- its eyes are already dark while
-        looked at. Look away and the progress bleeds back. This is the free
-        (but slow, and exposed) way to clear them."""
+        """Holding a Watcher in your gaze (SEEING it) dissolves it over
+        WATCHER_GAZE_DISPEL seconds -- its eyes are already dark while looked
+        at. Look away and the progress bleeds back. 'Seeing it' is the same
+        forward sight cone the render uses (keyed to the cursor aim, blocked by
+        walls), so if it is visibly in front of you it dispels; the flat view
+        falls back to a facing dot-product."""
         p = self.player
+        cone = None
+        if self._tilt_on() and self.scene is not None:
+            from rendering.sight import visible_factor
+            aim = self.look.aim
+            blk = self.scene.blocks_sight
+            cone = lambda w: visible_factor(p.x, p.y, aim, w.x, w.y, blk)
         fdx, fdy = p.facing
         for w in list(self._watchers):
-            pdx, pdy = w.x - p.x, w.y - p.y
-            d = math.hypot(pdx, pdy) or 1.0
-            looking = ((pdx / d) * fdx + (pdy / d) * fdy) > 0.55 and d < 360
+            if cone is not None:
+                looking = cone(w) > 0.25
+            else:
+                pdx, pdy = w.x - p.x, w.y - p.y
+                d = math.hypot(pdx, pdy) or 1.0
+                looking = ((pdx / d) * fdx + (pdy / d) * fdy) > 0.5 and d < 360
             gt = getattr(w, "_gaze_dispel_t", 0.0)
             if looking:
                 gt += dt

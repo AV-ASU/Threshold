@@ -338,8 +338,8 @@ def build_arrival_road():
     sign_tx, sign_ty = 10, PMID - 4                    # east shoulder, by the path
     _sign_deco = Decoration(sign_tx * TILE + 16, sign_ty * TILE + 16,
                             "town_sign", text="BRIMLEY")
+    _sign_deco._no_wrap = True                           # never clones into the road AHEAD
     sc.add_decoration(_sign_deco)
-    sc._sign_deco = _sign_deco                          # hidden with the car on the treadmill
     # The dead car a few tiles north of the sign -- seen from BEHIND (it died
     # facing up the road into town). Solid footprint under the sprite; the
     # interact anchor sits at its road-facing (west) edge. The Sign fires
@@ -350,8 +350,8 @@ def build_arrival_road():
     # yaw -pi/2 aims the 3D car NORTH, up the road into town (default yaw 0 left
     # it broadside across the lane -- you saw its whole flank + all four tyres).
     _car_deco = Decoration(car_x, car_y, "player_car", yaw=-math.pi / 2)
+    _car_deco._no_wrap = True                          # never clones into the road AHEAD
     sc.add_decoration(_car_deco)
-    sc._car_deco = _car_deco                           # so the treadmill can hide it
     sc._car_pos = ((car_tx - 1) * TILE + 16, car_y)   # west edge, by the road
     objs = [list(r) for r in sc.objects]
     for cx in (car_tx - 1, car_tx):                   # footprint runs N-S now

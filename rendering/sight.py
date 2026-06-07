@@ -24,11 +24,11 @@ import math
 
 # Tuning. These are the design knobs the look/feel hangs on (see CAMERA.md
 # Phase 4). Kept here so the preview tool and the live game read one source.
-SIGHT_HALF = math.radians(62)      # cone half-angle (~124 deg total field)
-SIGHT_RANGE = 280.0                # px; how far the player can make things out
-SIGHT_NEAR = 30.0                  # px; always-seen bubble around the player
-SIGHT_ANG_FEATHER = math.radians(14)  # soft angular edge (eases in, no pop)
-SIGHT_RANGE_FEATHER = 48.0         # px; soft far-edge fade band
+SIGHT_HALF = math.radians(74)      # cone half-angle (~148 deg total field)
+SIGHT_RANGE = 360.0                # px; how far the player can make things out
+SIGHT_NEAR = 40.0                  # px; always-seen bubble around the player
+SIGHT_ANG_FEATHER = math.radians(16)  # soft angular edge (eases in, no pop)
+SIGHT_RANGE_FEATHER = 56.0         # px; soft far-edge fade band
 LOS_STEP = 7.0                     # px ray-march step for the wall check
 
 
