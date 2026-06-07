@@ -372,8 +372,6 @@ def build_haunted_house():
         if (abs(game.player.x - hatch_x) < 36
                 and abs(game.player.y - hatch_y) < 36):
             game.audio.play("door_close", 0.5)
-            game.show_notice("The hatch is nailed shut from below. Whatever's "
-                             "down there, it isn't for you to reach this way.")
     sc.on_interact_fn = _farmhouse_interact
 
     return sc

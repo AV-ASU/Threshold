@@ -1566,9 +1566,6 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         voice = getattr(self.scene, "_chalk_voice", None)
         if voice and not self.save.flag(f"voice_{voice}"):
             self._descent_voice(voice)
-        else:
-            self.show_notice("Another door, drawn where no door is. Bare "
-                             "wall behind the chalk.")
         return True
 
     # ---- Endings ----
