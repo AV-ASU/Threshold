@@ -9,10 +9,9 @@
 
 A narrative-horror game in **pygame**, played through an **oblique
 tilted camera** (the view tilts ~55°; it is the only in-game camera). The
-flat pitch-0 view is **dev-only** now: the headless capture tools
-(`tools/capture_world.py`, the previews) set pitch 0 directly, and in-game
-**F3** is a dev-only background frame capture (toggled when `THRESHOLD_DEV`
-is set, frames written to `captures/`). Every sprite is drawn **procedurally** — there is
+flat pitch-0 view is **dev-only** now (there is no in-game toggle): the
+headless capture tools (`tools/capture_world.py`, the previews) set pitch 0
+directly for frame capture. Every sprite is drawn **procedurally** — there is
 no image-asset pipeline. The core loop is stealth/dread (walk, watch,
 hide), driven by a **visibility** meter that feeds the **King in Yellow**,
 the lethal apex pursuer. (See the tilted-camera track below + `CAMERA.md`.)

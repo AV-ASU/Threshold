@@ -1,7 +1,6 @@
 """The top-level Game runtime: title screen, scene transitions, input,
 combat, save/load, the main loop."""
 import math
-import os
 import random
 import sys
 import pygame
@@ -146,8 +145,6 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         self.notice_text = None
         self.notice_t = 0
         self.frame_count = 0
-        self._dev_capturing = False     # F3 dev-only background frame capture
-        self._dev_cap_idx = 0
         self.title_t = 0.0
         # Session-only flag: the void sting plays on the first entry
         # into a substrate scene per launch. Not persisted; subsequent
@@ -2087,19 +2084,6 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
                                       duration=2.0)
                 elif ev.key == pygame.K_F11:
                     self._toggle_fullscreen()
-                elif ev.key == pygame.K_F3:
-                    # The flat pitch-0 view is no longer a player toggle -- the
-                    # tilted view is the only in-game camera. F3 is now a
-                    # DEV-only background frame capture: with THRESHOLD_DEV set it
-                    # toggles saving every composed frame to captures/ (for
-                    # GIFs / debugging). pitch-0 lives on only in the headless
-                    # python capture tools (tools/capture_world.py + previews).
-                    if os.environ.get("THRESHOLD_DEV"):
-                        self._dev_capturing = not self._dev_capturing
-                        self.show_notice(
-                            "Frame capture %s" %
-                            ("ON -> captures/" if self._dev_capturing else "OFF"),
-                            duration=1.5)
                 elif ev.key == pygame.K_ESCAPE:
                     self.state = "paused"
                     self.pause_view = "menu"
@@ -2125,16 +2109,4 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
                 self.draw_world()
                 if self.state == "paused":
                     self.draw_pause()
-            if self._dev_capturing:
-                self._dev_save_frame()
             pygame.display.flip()
-
-    def _dev_save_frame(self):
-        """Dev-only background frame capture (toggled by F3 when THRESHOLD_DEV is
-        set): write the composed frame to captures/frame_NNNNNN.png. Stitch them
-        into a GIF/MP4 offline. Never runs in normal play."""
-        os.makedirs("captures", exist_ok=True)
-        pygame.image.save(
-            self.screen, os.path.join("captures",
-                                      "frame_%06d.png" % self._dev_cap_idx))
-        self._dev_cap_idx += 1
