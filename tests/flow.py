@@ -375,13 +375,29 @@ def main():
     check(_road.exits.get("a", (None,))[0] == "country_lane"
           and _road.exits.get("e", (None,))[0] == "our_house_area",
           "geo: the arrival road's dirt path links country_lane (W) and yard (E)")
-    check(_road.wrap_y and hasattr(_road, "_treadmill")
-          and hasattr(_road, "_car_pos"),
-          "geo: the arrival road renders endlessly (wrap_y) but loops travel "
-          "over a small NORTH band (_treadmill) and holds the dead car")
+    # The road reads INFINITE without a full-column wrap: a landmark-free north
+    # BAND renders endlessly (_render_band) and loops travel (_treadmill), while
+    # the southern arrival stretch (car / sign / dirt crossing) renders ONCE.
+    # wrap_y is deliberately OFF -- a full wrap cloned those landmarks into the
+    # northern view (the old loop tell, now reversed).
+    check(not _road.wrap_y and hasattr(_road, "_render_band")
+          and hasattr(_road, "_treadmill") and hasattr(_road, "_car_pos"),
+          "geo: the arrival road renders endlessly via a north band "
+          "(_render_band) + loops travel over it (_treadmill); no full wrap")
+    # EVERY northern render row must map back into the landmark-free band, so no
+    # car / sign / dirt path can ever clone into the distance up the runway.
+    _bt, _bb = _road._render_band
+    _north_ok = all(_bt <= _road.render_row(_ty) < _bb
+                    for _ty in range(-60, _bt))
+    _band_clean = all("d" not in "".join(_road.floor[_r])
+                      and "X" not in "".join(_road.objects[_r])
+                      for _r in range(_bt, _bb))
+    check(_north_ok and _band_clean,
+          "geo: the northern view only ever shows the landmark-free band "
+          "(no dead car, town sign, or dirt path repeating up the road)")
     check(_road.h >= 30,
-          "geo: the road is taller than a screen so the loop's repeat stays "
-          "off-frame (you don't see two cars at once)")
+          "geo: the road is taller than a screen so the south landmarks stay "
+          "off-frame from the looping band (you never see two cars at once)")
     check("_car_pos" not in inspect.getsource(_ml.build_brimley),
           "geo: the car is gone from brimley (consolidated at the lodge)")
     gr = new_game()

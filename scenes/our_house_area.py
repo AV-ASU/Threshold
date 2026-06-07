@@ -254,23 +254,29 @@ def build_our_house_area():
 
 def build_arrival_road():
     """The county road the PI drove in on -- west of the Arcadia. A gravel
-    road running NORTH-SOUTH that the fold has closed into a LOOP: walk it
-    either way and it never ends (wrap_y), the same stretch coming around
-    again, your own dead car passing on the shoulder a second time, a third.
-    Nothing stops you turning back -- a DIRT PATH crosses it east-west (the
-    real route: east to the Lodge yard, west on to the country lane and town).
+    road running NORTH-SOUTH that the fold has stretched into an ENDLESS
+    forest corridor: walk NORTH and the paved road + the pine walls tile on
+    forever toward the vanishing point, the same anonymous stretch with NO
+    landmark ever coming back around. Nothing stops you turning back -- a DIRT
+    PATH crosses it east-west in the SOUTH (the real route: east to the Lodge
+    yard, west on to the country lane and town).
+
+    The infinity is built from a landmark-FREE forest BAND in the north that
+    renders endlessly (Scene._render_band tiles its grass/road/treeline toward
+    the horizon) AND loops your travel (the `_treadmill`: cross the band's north
+    edge walking up and you warp back to its south edge, player + camera shifted
+    together, no jump). The southern ARRIVAL zone -- the dead car, the BRIMLEY
+    sign, the E-W crossing and its exits -- sits BELOW the band, renders ONCE,
+    and never clones into the northern view. So walking north reads as infinite;
+    turn around and you pass the fixed arrival zone once and exit by the path.
 
     The dead car is the PI's own, killed at the steps on the way in. It is the
-    SPREAD escape: the engine catches only with the Sign, and then the looping
-    road finally lets a car through (NARRATIVE §1/§6).
+    SPREAD escape: the engine catches only with the Sign, and then the road
+    finally lets a car through (NARRATIVE §1/§6).
 
-    The road is deliberately TALLER than the camera view so the wrap never
-    shows its own repeat in a single frame -- you don't notice the loop until
-    you've walked far enough for your own car to come back around. The E-W PATH
-    sits in the SOUTH third; NORTH of it is a long straight runway toward the
-    idle King at the vanishing point (KING_PROMPT idle state): he hangs a fixed
-    gap up the road, so running the runway never closes on him -- the road grows
-    between you. The car sits just north of the path."""
+    NORTH of the crossing is a long straight runway toward the idle King at the
+    vanishing point (KING_PROMPT idle state): he hangs a fixed gap up the road,
+    so running the runway never closes on him -- the road grows between you."""
     W, H = 15, 80
     PATH = (H - 14, H - 13, H - 12)     # the E-W dirt path rows (deep south)
     PMID = PATH[1]                       # the path's centre row (the mouths)
@@ -314,17 +320,21 @@ def build_arrival_road():
         objects_l[PMID + dy][W - 1] = "e"
     objects = ["".join(r) for r in objects_l]
     sc = Scene("arrival_road", floor_rows, objects, music="outside")
-    # The road RENDERS endlessly in both directions (wrap_y -- the floor + trees
-    # tile to the vanishing point, never an unloaded edge), but only a SMALL
-    # forest band to the NORTH actually loops your TRAVEL: walking north past
-    # BAND_TOP warps you back to BAND_BOTTOM (a landmark-free stretch north of
-    # the car), so that part of the road repeats forever with nothing coming
-    # back round, while the southern arrival stretch (car, sign, the E-W crossing
-    # + its exits) stays fixed and walkable back to. The band catches you before
-    # the full wrap ever fires going north. The idle King shows only on the band.
-    sc.wrap_y = True
+    # A landmark-FREE forest band to the NORTH does two jobs: it RENDERS
+    # endlessly (sc._render_band tiles its anonymous grass/road/treeline toward
+    # the vanishing point -- never an unloaded edge, never a southern landmark
+    # cloned into the distance) and it loops your TRAVEL (the `_treadmill`:
+    # walking north past BAND_TOP warps you back to BAND_BOTTOM, player + camera
+    # shifted together, no jump). The southern arrival stretch (car, sign, the
+    # E-W crossing + its exits) sits BELOW the band, renders ONCE, and is walked
+    # back to normally -- it never tiles north, so nothing recognisable repeats
+    # ahead of you. NOTE: wrap_y is deliberately OFF (a full-column wrap would
+    # clone the car / sign / dirt path into the northern view -- the old loop
+    # tell, now reversed). The idle King shows only while you are on the band.
+    sc.wrap_y = False
     _BAND_TOP, _BAND_BOTTOM = 8, PMID - 23     # rows; ~14 tiles N of the car
     sc._treadmill = (_BAND_TOP * TILE, _BAND_BOTTOM * TILE)
+    sc._render_band = (_BAND_TOP, _BAND_BOTTOM)   # tile rows that tile north
     sc.add_exit("a", "country_lane", "from_arrival_road")
     sc.add_exit("e", "our_house_area", "from_arrival_road")
     sc.set_spawn("default", 7, PMID)
@@ -407,18 +417,19 @@ def build_arrival_road():
     sc.hide_spots = []
 
     def _road_update(game, scene, dt):
-        # The TELL. The road wraps N-S (wrap_y), so walking it long enough
-        # brings the same stretch -- and the PI's own dead car -- back around.
-        # The recurring car IS the recognition (no narration, NARRATIVE §1b
-        # discipline); a soft, escalating dread pulse underscores the wrongness
-        # the moment the fold folds the road back. Detected as the big single-
-        # frame y jump the wrap produces.
+        # The TELL. Walking the northern band long enough warps you back to its
+        # south edge (the `_treadmill`) -- the same anonymous forest coming round
+        # with no landmark to catch the eye, the road going nowhere. No narration
+        # (NARRATIVE §1b discipline); a soft, escalating dread pulse underscores
+        # the wrongness each time the fold folds the band back. Detected as the
+        # single-frame y jump the treadmill warp produces (a band-height hop).
         p = game.player
         if p is None:
             return
-        wh = scene.h * TILE
+        tm = getattr(scene, "_treadmill", None)
+        band = (tm[1] - tm[0]) if tm else scene.h * TILE
         last = getattr(scene, "_last_py", None)
-        if last is not None and abs(p.y - last) > wh * 0.5:
+        if last is not None and abs(p.y - last) > band * 0.5:
             scene._loops = getattr(scene, "_loops", 0) + 1
             game.save.set_flag("arrival_road_looped", True)
             game.audio.play("low_pulse", min(0.75, 0.34 + 0.12 * scene._loops))
