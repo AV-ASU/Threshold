@@ -234,6 +234,16 @@ def _eat_light(surf, cx, cy, r, strength):
     surf.blit(a, (int(cx - r), int(cy - r)), special_flags=pygame.BLEND_RGB_SUB)
 
 
+def eat_light_at(surf, cx, cy, scale, threat, birth=1.0):
+    """Public: THE UNFOLDING's light-eating shadow alone, at the same radius/
+    strength draw_king_unfold uses -- for callers that cache the King body and
+    want the (subtractive, un-cacheable) shadow drawn live each frame."""
+    bb = max(0.0, min(1.0, birth))
+    body_b = bb * bb * (3.0 - 2.0 * bb)
+    sz = scale * (0.7 + 0.5 * threat) * body_b
+    _eat_light(surf, cx, cy, sz * 1.85, 60 + 110 * threat)
+
+
 def _heart_glow(lay, x, y, r, inten):
     r = int(r)
     if r < 2 or inten < 4:
@@ -558,7 +568,8 @@ def _draw_arms(lay, o3, op, ocenter, sz, cx, cy, t, threat, arm_roots,
 
 
 def draw_king_unfold(surf, cx, cy, t, threat=0.0, scale=96.0,
-                     to_player=(0.0, 1.0), birth=1.0, lean=(0.0, 0.0)):
+                     to_player=(0.0, 1.0), birth=1.0, lean=(0.0, 0.0),
+                     eat_light=True):
     """THE UNFOLDING, centred at (cx, cy). `threat` 0..1: a small dark fold ->
     larger, faster eversion, the heart kindling, eyes opening, the Sign
     resolving, more light eaten.
@@ -639,7 +650,11 @@ def draw_king_unfold(surf, cx, cy, t, threat=0.0, scale=96.0,
     zmin, zmax = min(zs), max(zs)
     zr = (zmax - zmin) or 1.0
 
-    _eat_light(surf, cx, cy, sz * 1.85, 60 + 110 * threat)
+    # The light-eating shadow is a SUBTRACTIVE wash on the scene -- it can't live
+    # in an alpha card, so callers that cache the body (the idle King) pass
+    # eat_light=False and draw it live each frame via eat_light_at().
+    if eat_light:
+        _eat_light(surf, cx, cy, sz * 1.85, 60 + 110 * threat)
     lay = pygame.Surface(surf.get_size(), pygame.SRCALPHA)
 
     # BIRTH: a gold wound opens and the mass unfolds out of it -- a central

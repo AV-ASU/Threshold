@@ -234,6 +234,8 @@ _RESET_EXEMPT = {
     "_show_fps", "_last_dt",
     # World render scale (F2): a display/perf setting, persists like fullscreen.
     "_render_scale", "_world_buf", "_win", "_render_s",
+    # Idle-King body card: a pure render cache, refreshed on its own interval.
+    "_idle_king_card", "_idle_king_card_frame",
 }
 
 

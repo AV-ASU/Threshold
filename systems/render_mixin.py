@@ -524,7 +524,7 @@ class RenderMixin:
         ik = getattr(self, "_idle_king", None)
         if not ik or self.player is None:
             return
-        from rendering.king_unfold import draw_king_unfold
+        from rendering.king_unfold import draw_king_unfold, eat_light_at
         sx, sy = self.camera.project(ik[0], ik[1])
         h = self.screen.get_height()
         w = self.screen.get_width()
@@ -535,12 +535,29 @@ class RenderMixin:
             return
         sy -= int(TILT_LIFT.get("yellow_king", TILT_ACTOR_STAND)
                   * math.sin(self.camera.pitch))
+        sx, sy = int(sx), int(sy)
         t = pygame.time.get_ticks() / 1000.0
-        # He everts in place -- alive at the vanishing point, never a poster.
-        lean = (math.sin(t * 0.8) * 0.14, -0.18)
-        draw_king_unfold(self.screen, int(sx), int(sy), t,
-                         threat=IDLE_KING_THREAT, scale=IDLE_KING_SCALE,
-                         to_player=(0.0, 1.0), birth=1.0, lean=lean)
+        # The light-eating shadow is subtractive on the scene (can't be cached) +
+        # cheap -- draw it live so the world keeps pulsing under him.
+        eat_light_at(self.screen, sx, sy, IDLE_KING_SCALE, IDLE_KING_THREAT)
+        # The BODY is the expensive part (a full UNFOLDING for a ~56px figure).
+        # Render it to a small card and reuse it for a few frames -- he everts in
+        # steps, imperceptible at the vanishing point, instead of ~1300 polys +
+        # a full-screen surface every frame. Position still updates every frame
+        # (cheap blit); only the eversion refreshes on the interval.
+        R = int(IDLE_KING_SCALE * 2.6) + 8
+        card = getattr(self, "_idle_king_card", None)
+        last = getattr(self, "_idle_king_card_frame", -999)
+        if (card is None or card.get_width() != R * 2
+                or self.frame_count - last >= IDLE_KING_CARD_REFRESH):
+            card = pygame.Surface((R * 2, R * 2), pygame.SRCALPHA)
+            lean = (math.sin(t * 0.8) * 0.14, -0.18)
+            draw_king_unfold(card, R, R, t, threat=IDLE_KING_THREAT,
+                             scale=IDLE_KING_SCALE, to_player=(0.0, 1.0),
+                             birth=1.0, lean=lean, eat_light=False)
+            self._idle_king_card = card
+            self._idle_king_card_frame = self.frame_count
+        self.screen.blit(card, (sx - R, sy - R))
 
     def _draw_death_screen(self):
         """Render the active death card over everything. King = the
