@@ -506,6 +506,7 @@ class Enemy:
                 self._cult_state = "chase"
                 self._cult_state_t = 0.0
                 self.move_target = None
+                self._just_locked = True
             # Bloom into His maw only once the world is corrupt enough
             # (3+ evidence -- set on the scene by Game each frame).
             self.morph_target = 1.0 if getattr(scene, "_bloom_enabled", False) else 0.0
@@ -517,6 +518,7 @@ class Enemy:
         if self._cult_state == "chase":
             self._cult_state = "search"
             self._cult_state_t = 6.0
+            self._just_lost = True
         if self._cult_state == "search":
             self._cult_state_t -= dt
             if self._cult_state_t <= 0 or self._last_seen_pos is None:

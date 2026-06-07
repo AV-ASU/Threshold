@@ -133,36 +133,27 @@ class Audio:                        #Starting screen needs music, something simp
         self.sfx["engine_die"]  = g(64, 900, 0.34, "saw", attack_ms=4, decay_ms=820, noise_mix=0.45, vibrato=11)
         self.sfx["carcosa_boom"] = g(50, 1100, 0.55, "sine", attack_ms=2, decay_ms=950, noise_mix=0.45)
         self.sfx["door_locked"] = g(220, 80, 0.22, "square", attack_ms=2, decay_ms=50)
-        self.sfx["transition"]  = g(280, 350, 0.18, "sine", attack_ms=40, decay_ms=300)
         self.sfx["menu_open"]   = g(440, 90, 0.20, "triangle", attack_ms=2, decay_ms=70)
         self.sfx["menu_close"]  = g(330, 90, 0.20, "triangle", attack_ms=2, decay_ms=70)
         self.sfx["cursor"]      = g(660, 35, 0.18, "square", attack_ms=2, decay_ms=20)
         self.sfx["confirm"]     = g(880, 80, 0.22, "triangle", attack_ms=2, decay_ms=60)
         self.sfx["cancel"]      = g(220, 80, 0.20, "triangle", attack_ms=2, decay_ms=60)
-        self.sfx["save"]        = g(523, 200, 0.22, "sine", attack_ms=10, decay_ms=180)
-        self.sfx["save_chime2"] = g(659, 220, 0.22, "sine", attack_ms=10, decay_ms=200)
         self.sfx["blip_low"]    = g(200, 35, 0.16, "square", attack_ms=2, decay_ms=20)
         self.sfx["blip_mid"]    = g(330, 35, 0.16, "square", attack_ms=2, decay_ms=20)
         self.sfx["blip_high"]   = g(550, 30, 0.14, "square", attack_ms=2, decay_ms=18)
         self.sfx["blip_soft"]   = g(420, 40, 0.10, "sine", attack_ms=4, decay_ms=30)
         self.sfx["blip_kid"]    = g(720, 28, 0.16, "triangle", attack_ms=2, decay_ms=18)
-        self.sfx["blip_glitch"] = g(180, 50, 0.22, "noise", attack_ms=2, decay_ms=30, noise_mix=1.0)
         self.sfx["blip_gruff"]  = g(160, 40, 0.18, "saw", attack_ms=2, decay_ms=25, noise_mix=0.2)
         self.sfx["pickup"]      = g(660, 110, 0.20, "sine", attack_ms=2, decay_ms=90)
         self.sfx["pickup_rare"] = g(880, 280, 0.24, "sine", attack_ms=20, decay_ms=240, vibrato=8)
-        self.sfx["chest"]       = g(440, 350, 0.22, "triangle", attack_ms=20, decay_ms=300)
         self.sfx["swing"]       = g(280, 100, 0.18, "saw", attack_ms=2, decay_ms=60, noise_mix=0.3)
         self.sfx["hit"]         = g(180, 70, 0.20, "noise", attack_ms=2, decay_ms=50, noise_mix=1.0)
         self.sfx["enemy_die"]   = g(110, 380, 0.22, "saw", attack_ms=10, decay_ms=320, noise_mix=0.4)
-        self.sfx["player_hurt"] = g(160, 200, 0.24, "saw", attack_ms=2, decay_ms=160, noise_mix=0.3)
         self.sfx["heartbeat"]   = g(55, 220, 0.30, "sine", attack_ms=20, decay_ms=180)
         self.sfx["static"]      = g(0, 600, 0.25, "noise", attack_ms=20, decay_ms=400, noise_mix=1.0)
         self.sfx["wrong"]       = g(33, 900, 0.32, "saw", attack_ms=80, decay_ms=700)
         self.sfx["whisper"]     = g(290, 700, 0.16, "noise", attack_ms=80, decay_ms=500, noise_mix=0.85)
         self.sfx["arg_chime"]   = g(311, 480, 0.22, "sine", attack_ms=20, decay_ms=400, vibrato=2)
-        # Trespass alarm: a long ringing brass-bell tone. Used by
-        # eye-cameras flagged alarm=True (church, sheriff's office).
-        self.sfx["alarm_bell"]  = g(420, 1200, 0.30, "sine", attack_ms=8, decay_ms=1100, vibrato=3)
         # Depths ambient layers: a low droning chant + a wet exhale.
         # Played at intervals that tighten as the dread aperture
         # closes, so the rite gets louder the closer the player is
@@ -175,16 +166,11 @@ class Audio:                        #Starting screen needs music, something simp
         # bending downward. Played ONLY while his sprite is on
         # screen, never reused.
         self.sfx["yk_tone"]     = self._build_yk_tone()
-        self.sfx["heal"]        = g(660, 260, 0.20, "sine", attack_ms=20, decay_ms=220, vibrato=4)
         # First-void-entry sting. Single short low-sine pulse with a
         # noise edge -- played once per session the first time the
         # player crosses into a substrate scene, since the transition
         # itself is now a single-frame swap.
         self.sfx["void_sting"]  = g(60, 140, 0.30, "sine", attack_ms=4, decay_ms=120, noise_mix=0.3)
-        # Pistol gunshot. Sharp square+noise burst; used for the
-        # player's pistol attack and (eventually) the policeman's
-        # ranged volleys.
-        self.sfx["pistol_shot"] = g(220, 90, 0.32, "square", attack_ms=2, decay_ms=70, noise_mix=0.7)
         # Round-13: a faint, short child-humming sample played in
         # creepy non-village scenes. Built as a quick three-note
         # arpeggio of the village melody at low volume so it reads
@@ -205,28 +191,27 @@ class Audio:                        #Starting screen needs music, something simp
         self.sfx["phantom_step"] = g(70, 110, 0.16, "noise",
                                       attack_ms=4, decay_ms=80,
                                       noise_mix=1.0)
-        # `door_distant`: a faint door-close from a room you can't
-        # see. Half the volume of the regular door_close, lower pitch,
-        # longer tail.
-        self.sfx["door_distant"] = g(80, 360, 0.14, "saw",
-                                      attack_ms=20, decay_ms=320,
-                                      noise_mix=0.4)
         # `low_pulse`: a single sub-bass pulse used for the rare moment
         # the Pursuer manifests strongly (e.g. when the player stands
         # still too long, or when a Watcher just despawned).
         self.sfx["low_pulse"]    = g(36, 480, 0.30, "sine",
                                       attack_ms=40, decay_ms=400)
-        # `threshold_chime`: replaces the cheerful save_chime2 on the
-        # 5th and 9th save -- a slightly out-of-tune dyad that says
-        # "saved" but feels wrong. Same trigger points, different
-        # affect.
-        self.sfx["threshold_chime"] = g(207, 380, 0.20, "sine",
-                                         attack_ms=20, decay_ms=350,
-                                         vibrato=1)
         # `falling_air`: the bed under the journal door-dream (NARRATIVE
         # 1b). Not a melody -- the rush of air past you as you fall, plus
         # a low howl that sinks and never lands. Looped under the cutscene.
         self.sfx["falling_air"] = self._build_falling_air()
+        # ---- Chase loop ----------------------------------------------
+        # The stealth heartbeat: cult LOS lock + lose, watcher curse
+        # spawn + dispel, player hide enter + exit. Wired in
+        # threat_mixin (_cult_tick state transitions, _spawn_watcher,
+        # _dispel_watcher) and game.py (corn auto-hide, try_interact).
+        # cult_lock also ducks music briefly so the sting lands clean.
+        self.sfx["cult_lock"]      = self._build_cult_lock()
+        self.sfx["cult_lose"]      = self._build_cult_lose()
+        self.sfx["watcher_spawn"]  = self._build_watcher_spawn()
+        self.sfx["watcher_dispel"] = self._build_watcher_dispel()
+        self.sfx["hide_enter"]     = self._build_hide_enter()
+        self.sfx["hide_exit"]      = self._build_hide_exit()
 
         # ---- DSP atmosphere pass --------------------------------------
         # Route the horror SFX through the dsp reverb + filter toolkit so
@@ -259,20 +244,6 @@ class Audio:                        #Starting screen needs music, something simp
         # of `home` and `village` were dictionary collisions (they
         # were overwritten further down) so they are removed.
         self.music = {
-            # encounter: pulsing bass + 2 stabs + rests. Used by
-            # combat-bearing scenes; THRESHOLD doesn't need it for
-            # the player but a legacy cave scene still references
-            # it via the scene registry.
-            "encounter": self._music_loop([
-                (220,0.5),(294,0.5),(330,0.5),(294,0.5),
-                (220,0.5),(196,0.5),(220,1.0),(196,1.0),
-                (165,1.0),(0,0.5),(220,0.5),(0,0.5),
-            ], beat_ms=240, vol=0.12, wave="square"),
-            # cave: low slow drone for the cave-scene family.
-            "cave": self._music_loop([
-                (165,2.0),(0,1.5),(196,1.0),(165,2.0),
-                (0,2.5),(220,1.0),(196,1.5),(0,3.0),
-            ], beat_ms=520, vol=0.08, wave="triangle"),
             # void: drone + rests = more uneasy
             "void": self._music_loop([
                 (55,4.0),(58,4.0),(52,4.0),
@@ -288,12 +259,6 @@ class Audio:                        #Starting screen needs music, something simp
                 (49,3.0),(0,2.0),(55,2.0),(0,3.0),
                 (52,2.0),(0,4.0),
             ], beat_ms=700, vol=0.12, wave="triangle"),
-            # easter: bouncy, contrast
-            "easter": self._music_loop([
-                (523,0.5),(659,0.5),(784,0.5),(880,0.5),
-                (784,0.5),(659,0.5),(523,1.0),
-                (587,0.5),(659,0.5),(587,1.0),(0,0.5),
-            ], beat_ms=180, vol=0.11, wave="square"),
             # wind: 'music' for the brimley -- a long noise drone
             # with a subtle pitched undertone, no melody, no rhythm.
             # Stops entirely once you take the first cult testimony in the
@@ -662,6 +627,223 @@ class Audio:                        #Starting screen needs music, something simp
             v = (rush + howl) * swell
             sample = int(max(-1.0, min(1.0, v)) * vol * 32767)
             sample = max(-32768, min(32767, sample))
+            buf[i * 2] = sample & 0xFF
+            buf[i * 2 + 1] = (sample >> 8) & 0xFF
+        stereo = bytearray(n * 4)
+        for i in range(n):
+            stereo[i * 4]     = buf[i * 2]
+            stereo[i * 4 + 1] = buf[i * 2 + 1]
+            stereo[i * 4 + 2] = buf[i * 2]
+            stereo[i * 4 + 3] = buf[i * 2 + 1]
+        return pygame.mixer.Sound(buffer=bytes(stereo))
+
+    def _build_cult_lock(self, duration_ms=380, vol=0.34):
+        """The 'you've been seen' sting. Plays once per fresh chase: a
+        sub kick + broadband transient (the heart drop) over a held
+        tritone (50Hz / 71Hz, unresolvable) that fades across the
+        duration. Loud enough to read over wind / depths beds, short
+        enough not to step on the chase music."""
+        sr = 22050
+        n = int(sr * duration_ms / 1000)
+        dur_s = duration_ms / 1000.0
+        buf = bytearray(n * 2)
+        smooth = 0.0
+        for i in range(n):
+            t = i / sr
+            # Sub kick: 50 Hz sine, hard attack, drops over 80 ms.
+            kick_env = max(0.0, 1.0 - t / 0.080) ** 1.4
+            kick = math.sin(2 * math.pi * 50 * t) * kick_env * 0.85
+            # Broadband transient: noise burst, 30 ms.
+            smooth = 0.6 * smooth + 0.4 * random.uniform(-1, 1)
+            trans_env = max(0.0, 1.0 - t / 0.030) ** 1.3
+            trans = smooth * trans_env * 0.55
+            # Held tritone: 50 + 71 Hz sub-tones, fade across full duration.
+            held_env = max(0.0, 1.0 - t / dur_s) ** 1.6
+            held = (math.sin(2 * math.pi * 50 * t) * 0.30
+                  + math.sin(2 * math.pi * 71 * t) * 0.22) * held_env
+            tail = max(0.0, (n - i) / 200) if i > n - 200 else 1.0
+            v = (kick + trans + held) * tail
+            sample = max(-32768, min(32767, int(max(-1.0, min(1.0, v))
+                                                * vol * 32767)))
+            buf[i * 2] = sample & 0xFF
+            buf[i * 2 + 1] = (sample >> 8) & 0xFF
+        stereo = bytearray(n * 4)
+        for i in range(n):
+            stereo[i * 4]     = buf[i * 2]
+            stereo[i * 4 + 1] = buf[i * 2 + 1]
+            stereo[i * 4 + 2] = buf[i * 2]
+            stereo[i * 4 + 3] = buf[i * 2 + 1]
+        return pygame.mixer.Sound(buffer=bytes(stereo))
+
+    def _build_cult_lose(self, duration_ms=520, vol=0.32):
+        """The 'they don't see you anymore' breath-out. Soft attack,
+        long decay, lower in the spectrum than cult_lock. Plays on the
+        chase -> search transition when a cultist loses line of sight."""
+        sr = 22050
+        n = int(sr * duration_ms / 1000)
+        dur_s = duration_ms / 1000.0
+        buf = bytearray(n * 2)
+        smooth = 0.0
+        phase = 0.0
+        for i in range(n):
+            t = i / sr
+            smooth = 0.93 * smooth + 0.07 * random.uniform(-1, 1)
+            # Envelope: 80 ms attack, then power-curve decay across the rest.
+            if t < 0.080:
+                env = t / 0.080
+            else:
+                env = max(0.0, 1.0 - (t - 0.080) / (dur_s - 0.080)) ** 1.2
+            sigh = smooth * env * 0.65
+            # Sub drone with a downward pitch glide (60 -> 45 Hz). The
+            # falling pitch reads as release. Integrated phase so the
+            # bend has no zipper artefacts.
+            f = 60.0 - 15.0 * (t / dur_s)
+            phase += 2 * math.pi * f / sr
+            sub = math.sin(phase) * env * 0.45
+            v = sigh + sub
+            sample = max(-32768, min(32767, int(max(-1.0, min(1.0, v))
+                                                * vol * 32767)))
+            buf[i * 2] = sample & 0xFF
+            buf[i * 2 + 1] = (sample >> 8) & 0xFF
+        stereo = bytearray(n * 4)
+        for i in range(n):
+            stereo[i * 4]     = buf[i * 2]
+            stereo[i * 4 + 1] = buf[i * 2 + 1]
+            stereo[i * 4 + 2] = buf[i * 2]
+            stereo[i * 4 + 3] = buf[i * 2 + 1]
+        return pygame.mixer.Sound(buffer=bytes(stereo))
+
+    def _build_watcher_spawn(self, duration_ms=320, vol=0.40):
+        """A vacuum opening -- the moment another Watcher's eye binds.
+        Reverse-envelope (silence -> swell -> hard cut), with a tonal
+        kernel that emerges late. Non-spatial (the curse attaches to
+        the player, not the room)."""
+        sr = 22050
+        n = int(sr * duration_ms / 1000)
+        buf = bytearray(n * 2)
+        smooth = 0.0
+        phase = 0.0
+        for i in range(n):
+            t = i / sr
+            ramp = i / n
+            env = ramp ** 1.4
+            if i > n - 20:
+                env *= max(0.0, (n - i) / 20)
+            # Whisper-y noise: the inhale toward the eye opening.
+            smooth = 0.92 * smooth + 0.08 * random.uniform(-1, 1)
+            air = smooth * 0.85
+            # Tonal kernel emerges in the last 130 ms.
+            if t > 0.180:
+                local = t - 0.180
+                if local < 0.080:
+                    k_env = local / 0.080
+                else:
+                    k_env = max(0.0, 1.0 - (local - 0.080) / 0.060)
+                phase += 2 * math.pi * 800.0 / sr
+                kernel = math.sin(phase) * k_env * 0.32
+            else:
+                kernel = 0.0
+            v = (air + kernel) * env
+            sample = max(-32768, min(32767, int(max(-1.0, min(1.0, v))
+                                                * vol * 32767)))
+            buf[i * 2] = sample & 0xFF
+            buf[i * 2 + 1] = (sample >> 8) & 0xFF
+        stereo = bytearray(n * 4)
+        for i in range(n):
+            stereo[i * 4]     = buf[i * 2]
+            stereo[i * 4 + 1] = buf[i * 2 + 1]
+            stereo[i * 4 + 2] = buf[i * 2]
+            stereo[i * 4 + 3] = buf[i * 2 + 1]
+        return pygame.mixer.Sound(buffer=bytes(stereo))
+
+    def _build_watcher_dispel(self, duration_ms=480, vol=0.36):
+        """A Watcher's eye closes. Forward attack, long decay, with a
+        pitched element that drops 700 -> 300 Hz across the duration.
+        Plays on gaze-dispel, gun, or axe kill (same cue, since 'the
+        eye closes' reads whichever way it dies)."""
+        sr = 22050
+        n = int(sr * duration_ms / 1000)
+        buf = bytearray(n * 2)
+        smooth = 0.0
+        phase = 0.0
+        for i in range(n):
+            t = i / sr
+            ramp = i / n
+            if ramp < 0.10:
+                env = ramp / 0.10
+            else:
+                env = max(0.0, 1.0 - (ramp - 0.10) / 0.90) ** 1.3
+            smooth = 0.90 * smooth + 0.10 * random.uniform(-1, 1)
+            air = smooth * 0.70
+            # 700 -> 300 Hz glide via integrated phase.
+            f = 700.0 - 400.0 * ramp
+            phase += 2 * math.pi * f / sr
+            tone = math.sin(phase) * 0.40
+            v = (air + tone) * env
+            sample = max(-32768, min(32767, int(max(-1.0, min(1.0, v))
+                                                * vol * 32767)))
+            buf[i * 2] = sample & 0xFF
+            buf[i * 2 + 1] = (sample >> 8) & 0xFF
+        stereo = bytearray(n * 4)
+        for i in range(n):
+            stereo[i * 4]     = buf[i * 2]
+            stereo[i * 4 + 1] = buf[i * 2 + 1]
+            stereo[i * 4 + 2] = buf[i * 2]
+            stereo[i * 4 + 3] = buf[i * 2 + 1]
+        return pygame.mixer.Sound(buffer=bytes(stereo))
+
+    def _build_hide_enter(self, duration_ms=200, vol=0.28):
+        """Muffled thump + quick breath-in. Plays when player.hidden
+        flips true (corn, under furniture)."""
+        sr = 22050
+        n = int(sr * duration_ms / 1000)
+        buf = bytearray(n * 2)
+        smooth = 0.0
+        for i in range(n):
+            t = i / sr
+            # Sub kick at 80 Hz, decays in 60 ms.
+            kick_env = max(0.0, 1.0 - t / 0.060) ** 1.3
+            kick = math.sin(2 * math.pi * 80 * t) * kick_env * 0.55
+            # Breath-in: low-pass noise rising for 80 ms then falling.
+            smooth = 0.85 * smooth + 0.15 * random.uniform(-1, 1)
+            if t < 0.080:
+                b_env = t / 0.080
+            else:
+                b_env = max(0.0, 1.0 - (t - 0.080) / 0.120)
+            breath = smooth * b_env * 0.40
+            v = kick + breath
+            sample = max(-32768, min(32767, int(max(-1.0, min(1.0, v))
+                                                * vol * 32767)))
+            buf[i * 2] = sample & 0xFF
+            buf[i * 2 + 1] = (sample >> 8) & 0xFF
+        stereo = bytearray(n * 4)
+        for i in range(n):
+            stereo[i * 4]     = buf[i * 2]
+            stereo[i * 4 + 1] = buf[i * 2 + 1]
+            stereo[i * 4 + 2] = buf[i * 2]
+            stereo[i * 4 + 3] = buf[i * 2 + 1]
+        return pygame.mixer.Sound(buffer=bytes(stereo))
+
+    def _build_hide_exit(self, duration_ms=220, vol=0.32):
+        """Soft breath-out + faint warmth. The 'standing back up' cue,
+        sibling to hide_enter. Plays when player.hidden flips false."""
+        sr = 22050
+        n = int(sr * duration_ms / 1000)
+        buf = bytearray(n * 2)
+        smooth = 0.0
+        for i in range(n):
+            t = i / sr
+            smooth = 0.88 * smooth + 0.12 * random.uniform(-1, 1)
+            if t < 0.060:
+                env = t / 0.060
+            else:
+                env = max(0.0, 1.0 - (t - 0.060) / 0.160) ** 1.1
+            breath = smooth * env * 0.55
+            # Faint warmth: 180 Hz sine pinned to the breath envelope.
+            warm = math.sin(2 * math.pi * 180 * t) * env * 0.20
+            v = breath + warm
+            sample = max(-32768, min(32767, int(max(-1.0, min(1.0, v))
+                                                * vol * 32767)))
             buf[i * 2] = sample & 0xFF
             buf[i * 2 + 1] = (sample >> 8) & 0xFF
         stereo = bytearray(n * 4)

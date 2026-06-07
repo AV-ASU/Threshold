@@ -82,10 +82,46 @@ class ThreatMixin:
                 n._has_been_spotted = True
                 self.audio.play("low_pulse", 0.5)
                 self.show_notice("They've seen you.", duration=2.4)
+            # Chase-loop cues. _cult_tick sets _just_locked when chase
+            # begins (real LOS, not just gaze range) and _just_lost when
+            # the player breaks cover and chase drops to search. Both
+            # consumed here so the flag is one-shot per tick.
+            if getattr(n, "_just_locked", False):
+                n._just_locked = False
+                pan = self.audio.pan_for_world(n.x, self.player.x)
+                self.audio.play("cult_lock", 0.55, pan=pan)
+                self.audio.duck(0.7, depth=0.4)
+            elif getattr(n, "_just_lost", False):
+                n._just_lost = False
+                pan = self.audio.pan_for_world(n.x, self.player.x)
+                self.audio.play("cult_lose", 0.45, pan=pan)
             if d < 22 and not hidden and self.player.invuln <= 0:
                 self._trigger_death("cultist")
                 return
         self._flank_cultists()
+
+    def _tick_chase_cues_enemies(self, dt):
+        """Underground Enemy cultists run the same chase state machine
+        as surface NPC chasers (entities/enemy.py _cult_tick mirrors
+        entities/npc.py). Read their _just_locked / _just_lost flags
+        here so the chase loop plays the same cult_lock / cult_lose
+        stings underground as on the surface."""
+        if self.scene is None or self.player is None:
+            return
+        for e in self.scene.enemies:
+            if getattr(e, "kind", "") != "cultist":
+                continue
+            if not getattr(e, "alive", True):
+                continue
+            if getattr(e, "_just_locked", False):
+                e._just_locked = False
+                pan = self.audio.pan_for_world(e.x, self.player.x)
+                self.audio.play("cult_lock", 0.55, pan=pan)
+                self.audio.duck(0.7, depth=0.4)
+            elif getattr(e, "_just_lost", False):
+                e._just_lost = False
+                pan = self.audio.pan_for_world(e.x, self.player.x)
+                self.audio.play("cult_lose", 0.45, pan=pan)
 
     def _tick_gaze_bind(self, dt):
         """His gaze, binding the curse (NARRATIVE 1b/3). In a GAZE_BIND_SCENES
@@ -616,7 +652,7 @@ class ThreatMixin:
         scene.add_npc(w)
         self._watchers.append(w)
         self.visibility = min(1.0, self.visibility + 0.03)
-        self.audio.play("breath", 0.4)
+        self.audio.play("watcher_spawn", 0.5)
 
     def _tick_watcher_gaze(self, dt):
         """Holding a Watcher in your gaze (SEEING it) dissolves it over
@@ -657,7 +693,8 @@ class ThreatMixin:
             self._watchers.remove(w)
         if self.scene is not None and w in self.scene.npcs:
             self.scene.npcs.remove(w)
-        self.audio.play("breath" if reason == "gaze" else "void_sting", 0.45)
+        pan = self.audio.pan_for_world(w.x, self.player.x)
+        self.audio.play("watcher_dispel", 0.55, pan=pan)
         if (self._cursed and not self._watchers and self.scene is not None
                 and self.scene.key not in KING_FREE_SCENES):
             self._cursed = False

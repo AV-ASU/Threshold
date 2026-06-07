@@ -950,8 +950,10 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
                 on_corn = (floor_ch_now == ":")
                 if on_corn and self.player.hidden is None:
                     self.player.hidden = "corn"
+                    self.audio.play("hide_enter", 0.55)
                 elif (not on_corn) and self.player.hidden == "corn":
                     self.player.hidden = None
+                    self.audio.play("hide_exit", 0.55)
                 # Sync the in_river state to whatever floor the player
                 # is now standing on. River tile -> True, anything else
                 # -> False. The blocker logic above ensures the player
@@ -1030,7 +1032,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
                 self.player.x, self.player.y = self.player.hide_origin
                 self.player.hide_origin = None
             self.show_notice("You slip out of cover.", duration=1.6)
-            self.audio.play("blip_soft", 0.4)
+            self.audio.play("hide_exit", 0.7)
             return
         # Hide-spot pickup: scenes declare hide_spots = [(x,y,kind)]
         # where kind is 'under', 'in', or 'behind'. Closest within
@@ -1051,7 +1053,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
                 "in":    "you step inside.",
             }.get(bestH[2], "you take cover.")
             self.show_notice(verb, duration=1.8)
-            self.audio.play("blip_soft", 0.4)
+            self.audio.play("hide_enter", 0.7)
             return
         # Splitting axe: if the player has the lumber_axe in their
         # inventory and is adjacent to a chop-eligible tile (`*`
@@ -1931,6 +1933,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
             # while a box is up. Cutscene/audio drivers keep running.
             if not world_frozen:
                 self._tick_cultists(dt)
+                self._tick_chase_cues_enemies(dt)
                 self._tick_fold_pursuit(dt)
                 self._tick_sheriff(dt)
                 self._tick_gaze_bind(dt)
