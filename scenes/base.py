@@ -1835,6 +1835,13 @@ _FLOOR_DECAL_KINDS = frozenset((
     "bush",
 ))
 
+# Decals that lie flat on a RAISED surface (a ledger open on a desktop): warped
+# flat like a floor decal, but lifted to the prop's height (deco kwarg `z`) and
+# DEPTH-SORTED with the props by the caller -- so the counter box doesn't paint
+# over them and they read as resting ON the desk, not the floor, and not as a
+# camera-facing billboard. Skipped in the terrain pass; emitted by render_mixin.
+_SURFACE_DECAL_KINDS = frozenset(("ledger",))
+
 # Wall-mounted decorations. Under tilt these are lifted onto the wall face as
 # camera-facing billboards (and depth-sorted with the walls) instead of lying
 # flat on the floor -- they HANG, they don't sit. _WALL_MOUNT_Z is how far up
@@ -1871,7 +1878,10 @@ def _draw_floor_decal(surf, camera, deco, woff=(0.0, 0.0)):
     sw = max(1, int(rot.get_width() * camera.scale))
     sh = max(1, int(rot.get_height() * camera.scale * cp))
     scaled = pygame.transform.smoothscale(rot, (sw, sh))
-    sx, sy = camera.project(deco.x + woff[0], deco.y + woff[1], 0)
+    # `z` lifts the flat decal onto a raised surface (a ledger on a desktop);
+    # 0 keeps it on the floor (rugs, stains).
+    zlift = float(getattr(deco, "kwargs", {}).get("z", 0.0))
+    sx, sy = camera.project(deco.x + woff[0], deco.y + woff[1], zlift)
     surf.blit(scaled, (sx - sw // 2, sy - sh // 2))
 
 
@@ -2118,6 +2128,8 @@ def draw_terrain_tilted(surf, scene, camera, sight=None):
             # it on the ground and behind the wall box).
             wall_decos.append(d)
             continue
+        if d.kind in _SURFACE_DECAL_KINDS:
+            continue          # lifted + depth-sorted by render_mixin, not here
         if d.kind == "water_channel":
             # A long floor thread: drawn as a projected polyline (no canvas), so
             # it can run the length of the scene. Under everything (terrain pass).
