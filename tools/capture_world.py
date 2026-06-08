@@ -104,6 +104,16 @@ def _capture(g, key):
         pass
     surf = pygame.Surface((g.screen.get_width(), g.screen.get_height()))
     g.screen = surf
+    # Each scene is a single deterministic frame with no temporal continuity,
+    # so clear the live grade's cross-frame grey cache -- otherwise the first
+    # scene's desaturation would be reused for the rest (the cache keys on the
+    # frame counter, which never advances here). This keeps every capture a
+    # self-contained fresh grade.
+    try:
+        from scenes import base as _sb
+        _sb._GREY_CACHE["frame"] = None
+    except Exception:
+        pass
     try:
         g.draw_world()
     except Exception as e:

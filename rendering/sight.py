@@ -29,7 +29,13 @@ SIGHT_RANGE = 360.0                # px; how far the player can make things out
 SIGHT_NEAR = 40.0                  # px; always-seen bubble around the player
 SIGHT_ANG_FEATHER = math.radians(16)  # soft angular edge (eases in, no pop)
 SIGHT_RANGE_FEATHER = 56.0         # px; soft far-edge fade band
-LOS_STEP = 7.0                     # px ray-march step for the wall check
+LOS_STEP = 7.0                     # px ray-march step for the wall check (AI)
+# The RENDER gate marches LOS for every visible actor/deco EVERY frame -- the
+# dominant per-frame sight cost. Walls are a full TILE (32px), so a coarser
+# step still lands inside every wall (no see-through) while ~halving the march
+# iterations. Kept separate from LOS_STEP so the King's AI sight (king_roam)
+# stays at the fine 7px step -- this only loosens the draw gate.
+SIGHT_RENDER_STEP = 14.0
 
 
 def _wrap(a):
@@ -82,12 +88,16 @@ def los_clear(px, py, tx, ty, blocks, step=LOS_STEP):
     return True
 
 
-def visible_factor(px, py, heading, tx, ty, blocks=None):
+def visible_factor(px, py, heading, tx, ty, blocks=None, step=LOS_STEP):
     """Combined sight: the cone factor, gated to 0 if a wall occludes the
-    target. `blocks` may be None (open arena — cone only). Returns 0..1."""
+    target. `blocks` may be None (open arena — cone only). Returns 0..1.
+
+    `step` is the LOS ray-march granularity; callers in the per-frame draw
+    gate pass the coarser SIGHT_RENDER_STEP. The cheap cone test runs first
+    and short-circuits before any wall march."""
     cf = cone_factor(px, py, heading, tx, ty)
     if cf <= 0.0 or blocks is None:
         return cf
-    return cf if los_clear(px, py, tx, ty, blocks) else 0.0
+    return cf if los_clear(px, py, tx, ty, blocks, step=step) else 0.0
 
 

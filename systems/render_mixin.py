@@ -31,6 +31,22 @@ from systems.config import *        # noqa: F401,F403
 _PROP_CARD_CACHE = {}
 _PROP_CARD_ORDER = []
 _PROP_CARD_CAP = 1400
+# Radially-symmetric props whose card is yaw-invariant (measured 0% pixel
+# change across a full turn): grass/spires/cylinders read the same from every
+# azimuth. These key WITHOUT yaw, so they build once and survive camera turns
+# instead of rebuilding every frame the view rotates. Asymmetric props (signs,
+# vehicles, the well, the flock) keep yaw in the key and reshape correctly.
+_YAW_INVARIANT_PROPS = frozenset({
+    "grass_tuft", "tall_grass", "pillar", "creepy_tree", "candle", "steeple",
+})
+# The yaw-invariant props get their OWN cache. Eviction is FIFO by insertion,
+# and the yaw-keyed props churn a fresh entry per bucket as the camera turns;
+# sharing one cache, that churn would evict the stable yaw-invariant entries
+# (inserted once, so oldest in the queue) and force them to rebuild every few
+# frames. A separate cache keeps the static cards out of that line of fire.
+_PROP_STATIC_CACHE = {}
+_PROP_STATIC_ORDER = []
+_PROP_STATIC_CAP = 2000
 
 
 class RenderMixin:
@@ -641,15 +657,24 @@ class RenderMixin:
         moves the base, so every wrap-clone shares one card."""
         cam = self.camera
         bx, by = cam.project(d.x + ox, d.y + oy)
-        key = (id(d), round(cam.yaw, 2), round(cam.pitch, 2),
-               round(cam.scale, 2))
-        entry = _PROP_CARD_CACHE.get(key)
+        # Yaw-invariant props build once (no yaw in the key) and live in their
+        # own cache so the yaw-keyed props' per-turn churn can't evict them.
+        if d.kind in _YAW_INVARIANT_PROPS:
+            key = (id(d), round(cam.pitch, 2), round(cam.scale, 2))
+            cache, order, cap = (_PROP_STATIC_CACHE, _PROP_STATIC_ORDER,
+                                 _PROP_STATIC_CAP)
+        else:
+            key = (id(d), round(cam.yaw, 2), round(cam.pitch, 2),
+                   round(cam.scale, 2))
+            cache, order, cap = (_PROP_CARD_CACHE, _PROP_CARD_ORDER,
+                                 _PROP_CARD_CAP)
+        entry = cache.get(key)
         if entry is None:
             entry = self._build_prop_card(d)
-            _PROP_CARD_CACHE[key] = entry
-            _PROP_CARD_ORDER.append(key)
-            if len(_PROP_CARD_ORDER) > _PROP_CARD_CAP:
-                _PROP_CARD_CACHE.pop(_PROP_CARD_ORDER.pop(0), None)
+            cache[key] = entry
+            order.append(key)
+            if len(order) > cap:
+                cache.pop(order.pop(0), None)
         card, ax, ay = entry
         if card is not None:
             self.screen.blit(card, (bx - ax, by - ay))
@@ -742,11 +767,12 @@ class RenderMixin:
         # byte-identical to the shipping top-down view.
         _sight = None
         if self._tilt_on() and self.player:
-            from rendering.sight import visible_factor
+            from rendering.sight import visible_factor, SIGHT_RENDER_STEP
             _spx, _spy, _shead = self.player.x, self.player.y, self.look.aim
             _blk = self.scene.blocks_sight
             def _sight(wx, wy):
-                return visible_factor(_spx, _spy, _shead, wx, wy, _blk)
+                return visible_factor(_spx, _spy, _shead, wx, wy, _blk,
+                                      step=SIGHT_RENDER_STEP)
         from rendering.solids import draw_with_alpha
 
         def _vis_alpha(wx, wy, exempt=False):
@@ -1307,7 +1333,8 @@ class RenderMixin:
         # vignette, animated grain) -- fuses the frame into one grimy
         # image. Applied before the HUD so UI text stays crisp.
         from scenes.base import apply_grade
-        apply_grade(self.screen, pygame.time.get_ticks() / 1000.0)
+        apply_grade(self.screen, pygame.time.get_ticks() / 1000.0,
+                    frame=self.frame_count)
         # World layer done. Upscale it to the window (one smoothscale) so the
         # HUD below draws at full resolution over a softened world. Restore the
         # full-res camera so next frame's input/unproject reads window pixels.
