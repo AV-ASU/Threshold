@@ -3099,6 +3099,24 @@ def _deco_index(scene):
     return cache
 
 
+_NEIGHBOR_SCENE_CACHE = {}
+
+
+def _neighbor_scene(key):
+    """Built neighbor scene for the seam strips, cached by key. The strips
+    sample only the neighbor's static terrain (its `objects` grid + wrap flags)
+    every frame, but load_scene() rebuilds the whole scene from scratch -- so
+    calling it per frame re-ran the neighbor's entire builder (e.g. Brimley +
+    its forest scatter) ~twice a frame. Terrain is deterministic per key and
+    the strips never mutate it, so one cached build per key is correct."""
+    sc = _NEIGHBOR_SCENE_CACHE.get(key)
+    if sc is None:
+        from scenes import load_scene
+        sc = load_scene(key)
+        _NEIGHBOR_SCENE_CACHE[key] = sc
+    return sc
+
+
 def _collect_neighbor_solids(scene, camera, x0, y0, x1, y1):
     """Walk the visible tile window's OUT-OF-BOUNDS region for each seamless
     neighbor and collect the wall-class tiles to be drawn as standing boxes
@@ -3120,7 +3138,7 @@ def _collect_neighbor_solids(scene, camera, x0, y0, x1, y1):
     out = []
     for n in neighbors:
         try:
-            tgt = load_scene(n.target_key)
+            tgt = _neighbor_scene(n.target_key)
         except Exception:
             continue
         sat_cam = Camera(cam_x=camera.cam_x + n.offset_dx,
@@ -3169,7 +3187,7 @@ def _draw_neighbor_strips(flat, scene, wx0, wy0, x0, y0, x1, y1):
     H, W = scene.h, scene.w
     for n in neighbors:
         try:
-            tgt = load_scene(n.target_key)
+            tgt = _neighbor_scene(n.target_key)
         except Exception:
             continue
         # The target tile that a host (tx, ty) tile maps to.
