@@ -1318,9 +1318,15 @@ def _build_corn_card(camera, scene, tx, ty, ch, far):
     """Cache-miss path: render one corn cluster to a tight SRCALPHA card via a
     throwaway camera at the same angle, pinned at the tile centre."""
     from rendering.camera import Camera
-    PAD = 90
-    tmp = pygame.Surface((PAD * 2, PAD * 2), pygame.SRCALPHA)
-    anchor = (PAD, int(PAD * 1.45))
+    # Scratch the cluster is drawn into before the tight crop. get_bounding_rect
+    # scans the WHOLE thing on every rebuild, and corn re-renders on every yaw
+    # bucket (a clump of stalks genuinely reshapes under yaw), so an oversized
+    # scratch was the top cost in cornfield scenes. Sized from the measured
+    # worst-case corn extents across every corn scene (up=49, down=10, half=27)
+    # at full tilt, scaled for the tilt-in max zoom (scale->1.0) and padded.
+    PADX, PADY, BASE = 40, 65, 20
+    tmp = pygame.Surface((PADX * 2, PADY + BASE), pygame.SRCALPHA)
+    anchor = (PADX, PADY)
     tcam = Camera(cam_x=tx * TILE + 16, cam_y=ty * TILE + 16,
                   pitch=camera.pitch, yaw=camera.yaw,
                   scale=camera.scale, origin=anchor)
