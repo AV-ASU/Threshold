@@ -2772,6 +2772,15 @@ _FLOOR_DECAL_CARD_CACHE = {}        # (id(deco), yaw_bkt, scale_bkt, pitch_bkt)
 # game; scale is fixed at TILT_ZOOM -- so coarse buckets are fine.
 _FLOOR_DECAL_YAW_BKT = 0.05
 _FLOOR_DECAL_SCALE_BKT = 0.05
+# Formless natural decals (foliage clumps, scattered leaves, mist) have no
+# meaningful orientation, so warping them with the camera yaw just spins their
+# fixed light/shadow as the head turns -- visibly wrong, and the per-turn
+# rotate of every one (Brimley has ~100 bushes) was the top cost left in the
+# tilted view. These skip the yaw rotate and key WITHOUT yaw: built once and
+# only pitch-squashed onto the floor, so they hold still and cost nothing on a
+# turn. Directional decals (signs, prints, the Yellow Sign, a dead crow) keep
+# the yaw rotate so they stay pinned to the ground as it turns.
+_FLOOR_DECAL_YAW_INVARIANT = frozenset({"bush", "mist", "leaves"})
 
 
 def _draw_floor_decal(surf, camera, deco, woff=(0.0, 0.0)):
@@ -2786,7 +2795,8 @@ def _draw_floor_decal(surf, camera, deco, woff=(0.0, 0.0)):
     drawfn = getattr(deco, f"_draw_{deco.kind}", None)
     if drawfn is None:
         return
-    yaw_bkt = round(camera.yaw / _FLOOR_DECAL_YAW_BKT)
+    spin = deco.kind not in _FLOOR_DECAL_YAW_INVARIANT
+    yaw_bkt = round(camera.yaw / _FLOOR_DECAL_YAW_BKT) if spin else 0
     scale_bkt = round(camera.scale / _FLOOR_DECAL_SCALE_BKT)
     pitch_bkt = round(camera.pitch / _FLOOR_DECAL_YAW_BKT)
     key = (id(deco), yaw_bkt, scale_bkt, pitch_bkt)
@@ -2799,7 +2809,8 @@ def _draw_floor_decal(surf, camera, deco, woff=(0.0, 0.0)):
             bound = 60
         canvas = pygame.Surface((bound, bound), pygame.SRCALPHA)
         drawfn(canvas, bound // 2, bound // 2)
-        rot = pygame.transform.rotate(canvas, math.degrees(camera.yaw))
+        rot = (pygame.transform.rotate(canvas, math.degrees(camera.yaw))
+               if spin else canvas)
         cp = max(0.05, math.cos(camera.pitch))
         sw = max(1, int(rot.get_width() * camera.scale))
         sh = max(1, int(rot.get_height() * camera.scale * cp))
