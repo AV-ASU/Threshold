@@ -3389,6 +3389,15 @@ _GRAIN_TILE = None
 _VIGNETTE_CACHE = {}
 _GRADE_TINT = (16, 20, 22)
 
+# The desaturation half-res smoothscale+grayscale+upscale is the single most
+# expensive per-frame op in the live grade. The grey is only ever blended back
+# at ~32% alpha, so a one-frame-stale grey is imperceptible: refresh it every
+# GRADE_DESAT_EVERY frames and reuse the cached surface between. Only the live
+# game passes `frame` (its frame counter); offline tools omit it and recompute
+# every call, so single-shot composites are byte-identical.
+GRADE_DESAT_EVERY = 2
+_GREY_CACHE = {"frame": None, "size": None, "surf": None}
+
 
 def _grain_tile():
     global _GRAIN_TILE
@@ -3426,20 +3435,38 @@ def _vignette(w, h):
     return v
 
 
-def apply_grade(surf, t=0.0, desat=82):
+def apply_grade(surf, t=0.0, desat=82, frame=None):
     """Grade a finished frame in place: partial desaturation, a cool
-    tint, a radial vignette, and animated film grain."""
+    tint, a radial vignette, and animated film grain.
+
+    `frame` (live game only) lets the costly desaturation be refreshed every
+    GRADE_DESAT_EVERY frames and reused between; omit it (offline tools) to
+    recompute every call."""
     w, h = surf.get_size()
     # Desaturate via a HALF-RESOLUTION grayscale pass. The grey is blended
     # back at ~32% alpha, so the downscale is imperceptible, but grayscaling
     # a quarter of the pixels (then scaling the result back up) is ~2x
     # cheaper than a full-frame grayscale every frame -- the single largest
     # per-frame cost otherwise. smoothscale DOWN (clean average), plain
-    # scale UP (cheap; the soft grey hides the blockiness).
+    # scale UP (cheap; the soft grey hides the blockiness). The grey is also
+    # reused for GRADE_DESAT_EVERY frames (see _GREY_CACHE) since it is barely
+    # visible at 32% alpha -- halving even this op's cost.
     try:
-        small = pygame.transform.smoothscale(surf, (w // 2, h // 2))
-        grey = pygame.transform.grayscale(small)
-        grey = pygame.transform.scale(grey, (w, h))
+        reuse = (frame is not None
+                 and _GREY_CACHE["surf"] is not None
+                 and _GREY_CACHE["size"] == (w, h)
+                 and _GREY_CACHE["frame"] is not None
+                 and 0 <= frame - _GREY_CACHE["frame"] < GRADE_DESAT_EVERY)
+        if reuse:
+            grey = _GREY_CACHE["surf"]
+        else:
+            small = pygame.transform.smoothscale(surf, (w // 2, h // 2))
+            grey = pygame.transform.grayscale(small)
+            grey = pygame.transform.scale(grey, (w, h))
+            if frame is not None:
+                _GREY_CACHE["surf"] = grey
+                _GREY_CACHE["size"] = (w, h)
+                _GREY_CACHE["frame"] = frame
         grey.set_alpha(desat)
         surf.blit(grey, (0, 0))
     except Exception:

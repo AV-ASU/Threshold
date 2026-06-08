@@ -742,11 +742,12 @@ class RenderMixin:
         # byte-identical to the shipping top-down view.
         _sight = None
         if self._tilt_on() and self.player:
-            from rendering.sight import visible_factor
+            from rendering.sight import visible_factor, SIGHT_RENDER_STEP
             _spx, _spy, _shead = self.player.x, self.player.y, self.look.aim
             _blk = self.scene.blocks_sight
             def _sight(wx, wy):
-                return visible_factor(_spx, _spy, _shead, wx, wy, _blk)
+                return visible_factor(_spx, _spy, _shead, wx, wy, _blk,
+                                      step=SIGHT_RENDER_STEP)
         from rendering.solids import draw_with_alpha
 
         def _vis_alpha(wx, wy, exempt=False):
@@ -1307,7 +1308,8 @@ class RenderMixin:
         # vignette, animated grain) -- fuses the frame into one grimy
         # image. Applied before the HUD so UI text stays crisp.
         from scenes.base import apply_grade
-        apply_grade(self.screen, pygame.time.get_ticks() / 1000.0)
+        apply_grade(self.screen, pygame.time.get_ticks() / 1000.0,
+                    frame=self.frame_count)
         # World layer done. Upscale it to the window (one smoothscale) so the
         # HUD below draws at full resolution over a softened world. Restore the
         # full-res camera so next frame's input/unproject reads window pixels.
