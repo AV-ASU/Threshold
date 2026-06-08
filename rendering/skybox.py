@@ -31,6 +31,55 @@ _PALETTES = {
 # cache the seeded silhouette profile so it doesn't boil frame to frame
 _SIL_CACHE = {}
 
+# cache the STATIC backdrop (sky + fog gradients + sallow sign band) keyed on
+# (w, h, kind, horizon_frac). Only the silhouette parallaxes with yaw, so the
+# ~640 per-frame gradient draw.line calls become a single cached blit.
+_BG_CACHE = {}
+
+
+def _skybox_bg(w, h, kind, horizon_frac):
+    key = (w, h, kind, round(horizon_frac, 4))
+    bg = _BG_CACHE.get(key)
+    if bg is not None:
+        return bg
+    pal = _PALETTES.get(kind, _PALETTES["overcast"])
+    horizon_y = int(h * horizon_frac)
+    bg = pygame.Surface((w, h))
+
+    # Vertical gradient sky, top -> horizon.
+    top, hor = pal["top"], pal["horizon"]
+    band = max(1, horizon_y)
+    for i in range(band):
+        f = i / band
+        col = (int(top[0] + (hor[0] - top[0]) * f),
+               int(top[1] + (hor[1] - top[1]) * f),
+               int(top[2] + (hor[2] - top[2]) * f))
+        pygame.draw.line(bg, col, (0, i), (w, i))
+
+    # A faint sallow Sign-band just above the horizon (the fold's pallor in
+    # the sky) -- restrained, only on overcast.
+    if kind == "overcast":
+        sg = pal["sign"]
+        for i in range(8):
+            a = 30 - i * 3
+            if a <= 0:
+                break
+            ln = pygame.Surface((w, 1), pygame.SRCALPHA)
+            ln.fill((sg[0], sg[1], sg[2], a))
+            bg.blit(ln, (0, horizon_y - 10 + i))
+
+    # Ground/fog below the horizon, fading down into where the scene sits.
+    fog = pal["fog"]
+    fband = max(1, h - horizon_y)
+    for i in range(fband):
+        f = i / fband
+        col = (int(fog[0] + (0 - fog[0]) * f * 0.7),
+               int(fog[1] + (0 - fog[1]) * f * 0.7),
+               int(fog[2] + (0 - fog[2]) * f * 0.7))
+        pygame.draw.line(bg, col, (0, horizon_y + i), (w, horizon_y + i))
+    _BG_CACHE[key] = bg
+    return bg
+
 
 def _silhouette_profile(width, kind, seed=7):
     key = (width, kind, seed)
@@ -63,37 +112,8 @@ def draw_skybox(surf, rect, yaw=0.0, kind="overcast", horizon_frac=0.42):
     pal = _PALETTES.get(kind, _PALETTES["overcast"])
     horizon_y = y0 + int(h * horizon_frac)
 
-    # Vertical gradient sky, top -> horizon.
-    top, hor = pal["top"], pal["horizon"]
-    band = max(1, horizon_y - y0)
-    for i in range(band):
-        f = i / band
-        col = (int(top[0] + (hor[0] - top[0]) * f),
-               int(top[1] + (hor[1] - top[1]) * f),
-               int(top[2] + (hor[2] - top[2]) * f))
-        pygame.draw.line(surf, col, (x0, y0 + i), (x0 + w, y0 + i))
-
-    # A faint sallow Sign-band just above the horizon (the fold's pallor in
-    # the sky) -- restrained, only on overcast.
-    if kind == "overcast":
-        sg = pal["sign"]
-        for i in range(8):
-            a = 30 - i * 3
-            if a <= 0:
-                break
-            ln = pygame.Surface((w, 1), pygame.SRCALPHA)
-            ln.fill((sg[0], sg[1], sg[2], a))
-            surf.blit(ln, (x0, horizon_y - 10 + i))
-
-    # Ground/fog below the horizon, fading down into where the scene sits.
-    fog, fcol = pal["fog"], pal["horizon"]
-    fband = max(1, (y0 + h) - horizon_y)
-    for i in range(fband):
-        f = i / fband
-        col = (int(fog[0] + (0 - fog[0]) * f * 0.7),
-               int(fog[1] + (0 - fog[1]) * f * 0.7),
-               int(fog[2] + (0 - fog[2]) * f * 0.7))
-        pygame.draw.line(surf, col, (x0, horizon_y + i), (x0 + w, horizon_y + i))
+    # Static sky + fog + sign band: one cached blit (was ~640 draw.line/frame).
+    surf.blit(_skybox_bg(w, h, kind, horizon_frac), (x0, y0))
 
     # Wrapping distant silhouette, scrolled by yaw (parallax). Drawn twice so
     # it tiles seamlessly as the camera turns.

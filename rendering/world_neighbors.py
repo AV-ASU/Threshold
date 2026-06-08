@@ -68,6 +68,21 @@ def _edge_for(scene, tx, ty):
 
 
 _CACHE = {}
+# Built neighbor scenes, memoized by key. The strip/solid renderers need only a
+# neighbor's STATIC floor + object layout (read-only), so a one-time build is
+# safe -- without this, the tilt floor pass rebuilt each seamless neighbor scene
+# procedurally EVERY frame (load_scene is uncached).
+_SCENE_CACHE = {}
+
+
+def load_neighbor(key):
+    """load_scene(key), memoized for the seamless-strip render path."""
+    sc = _SCENE_CACHE.get(key)
+    if sc is None:
+        from scenes import load_scene
+        sc = load_scene(key)
+        _SCENE_CACHE[key] = sc
+    return sc
 
 
 def get_neighbors(scene):
@@ -127,3 +142,4 @@ def get_neighbors(scene):
 def clear_cache():
     """Drop the memo (test/dev hook)."""
     _CACHE.clear()
+    _SCENE_CACHE.clear()

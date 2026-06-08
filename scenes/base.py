@@ -2377,6 +2377,33 @@ _TILT_WALL_RISE = 26
 # single biggest per-frame cost in the wrapped town.
 _TILT_FLOOR_CACHE = {"key": None, "surf": None}
 
+# Scrollable warped-floor cache. The floor warp (rotate+scale) and the per-tile
+# raster behind it are a pure function of camera GEOMETRY (yaw/pitch/scale) plus
+# the floor content, NOT of camera position -- project() for z=0 is a linear map
+# of (world - cam), so a floor baked around an anchor can be re-blitted at
+# project(anchor) and every floor point lands exactly where project() puts it.
+# So we bake the floor over a MARGIN-extended window ONCE per geometry, then just
+# SCROLL-BLIT it each frame the player walks (the dominant case), rebuilding only
+# when the camera rotates/zooms or drifts past the margin. This turns the
+# ~24ms/frame raster+warp of a walking frame into a single blit. Excluded:
+# animated-floor scenes (water/void would freeze under the scroll) and the
+# fullmap wrap scenes (which have their own bake), both of which keep the
+# position-keyed _TILT_FLOOR_CACHE path.
+_TILT_SCROLL_CACHE = {"gkey": None, "surf": None, "bcx": 0.0, "bcy": 0.0}
+_TILT_FLOOR_MARGIN = 128            # world px the camera may drift before re-bake
+_HAS_ANIM_FLOOR_CACHE = {}
+
+
+def _scene_has_anim_floor(scene):
+    """Does this scene have any animated floor tile (water/void)? Cached by
+    scene identity -- such scenes keep the per-frame floor path so the
+    animation never freezes under the scroll cache."""
+    c = _HAS_ANIM_FLOOR_CACHE
+    if c.get("scene") is not scene:
+        c["scene"] = scene
+        c["val"] = any(ch in _ANIM_FLOOR for row in scene.floor for ch in row)
+    return c["val"]
+
 # Whole-scene flat-floor bake. On a big wrap scene (Brimley: 100x100) the tilt
 # floor pass rastered a ~78x78 tile window EVERY frame the camera panned -- four
 # passes over ~6000 tiles plus ~6000 blits, the dominant walking-frame cost.
@@ -3087,17 +3114,16 @@ def _collect_neighbor_solids(scene, camera, x0, y0, x1, y1):
     screen pixel a host world point at the equivalent seam location would.
     The depth sort still uses the host camera + host world coords, so a
     neighbor wall in front of an actor sorts correctly."""
-    from rendering.world_neighbors import get_neighbors
+    from rendering.world_neighbors import get_neighbors, load_neighbor
     neighbors = get_neighbors(scene)
     if not neighbors:
         return []
-    from scenes import load_scene
     from rendering.camera import Camera
     H, W = scene.h, scene.w
     out = []
     for n in neighbors:
         try:
-            tgt = load_scene(n.target_key)
+            tgt = load_neighbor(n.target_key)
         except Exception:
             continue
         sat_cam = Camera(cam_x=camera.cam_x + n.offset_dx,
@@ -3138,15 +3164,14 @@ def _draw_neighbor_strips(flat, scene, wx0, wy0, x0, y0, x1, y1):
     using the SAME cached path draw_scene_terrain uses, so the strip blends
     visually with the host's floor pattern. Terrain only at this phase --
     walls, decorations, actors come later."""
-    from rendering.world_neighbors import get_neighbors
+    from rendering.world_neighbors import get_neighbors, load_neighbor
     neighbors = get_neighbors(scene)
     if not neighbors:
         return
-    from scenes import load_scene
     H, W = scene.h, scene.w
     for n in neighbors:
         try:
-            tgt = load_scene(n.target_key)
+            tgt = load_neighbor(n.target_key)
         except Exception:
             continue
         # The target tile that a host (tx, ty) tile maps to.
@@ -3208,43 +3233,78 @@ def draw_terrain_tilted(surf, scene, camera, sight=None):
     wx0, wy0 = cx - half, cy - half
     x0 = int(math.floor(wx0 / TILE)); y0 = int(math.floor(wy0 / TILE))
     x1 = int(math.ceil((wx0 + span) / TILE)); y1 = int(math.ceil((wy0 + span) / TILE))
-    # The warped floor is cached (see _TILT_FLOOR_CACHE): rebuilt only when the
-    # camera pose changes. x0..y1 / wx0,wy0 are still computed every frame --
-    # they're cheap and the wall + neighbor passes below need them.
-    fkey = (id(scene), getattr(scene, "key", None), scene.w, scene.h,
-            round(cx), round(cy), round(camera.yaw, 4),
-            round(camera.pitch, 4), round(camera.scale, 4))
-    _fc = _TILT_FLOOR_CACHE
-    if _fc["key"] == fkey:
-        warped = _fc["surf"]
-    else:
-        flat = pygame.Surface((span, span))
-        flat.fill((10, 10, 14))
-        if _tilt_use_fullmap(scene):
-            # Big wrap scene: blit the window out of the whole-map bake (a few
-            # wrap-aware blits) and redraw only the animated water on top,
-            # instead of rastering ~6000 tiles every frame.
-            full, water = _tilt_fullmap(scene)
-            _blit_window_wrapped(flat, full, wx0, wy0,
-                                 scene.wrap_x, scene.wrap_y)
-            _overlay_anim_water(flat, scene, water, wx0, wy0, span)
-        else:
-            # Phase 2 of the seamless-world neighbor strip: when the player is
-            # near a non-wrap host's edge and the visible tile range extends
-            # past the world's bounds, fill the OUT-OF-BOUNDS tiles with the
-            # neighbor scene's floor content (per world_neighbors). The
-            # in-bounds area is overdrawn with the host's tiles below, so the
-            # strip shows only where the host doesn't reach -- a seamless seam.
-            if not (scene.wrap_x or scene.wrap_y):
-                _draw_neighbor_strips(flat, scene, wx0, wy0, x0, y0, x1, y1)
-            draw_scene_terrain(flat, scene, wx0, wy0, x0, y0, x1, y1,
-                               skip_billboard=True, skip_roofs=True)
-        warped = _tilt_warp(flat, camera)
-        _fc["key"] = fkey
-        _fc["surf"] = warped
     ox, oy = camera.origin
-    surf.blit(warped, (ox - warped.get_width() // 2,
-                       oy - warped.get_height() // 2))
+    # Eligible scenes (no animated floor, not a fullmap wrap scene) use the
+    # SCROLL cache: bake the floor over a margin-extended window once per camera
+    # geometry, then scroll-blit it each walking frame (see _TILT_SCROLL_CACHE).
+    if not _scene_has_anim_floor(scene) and not _tilt_use_fullmap(scene):
+        gkey = (id(scene), getattr(scene, "key", None), scene.w, scene.h,
+                round(camera.yaw, 5), round(camera.pitch, 5),
+                round(camera.scale, 5))
+        _sc = _TILT_SCROLL_CACHE
+        drift_ok = (_sc["gkey"] == gkey
+                    and abs(cx - _sc["bcx"]) <= _TILT_FLOOR_MARGIN
+                    and abs(cy - _sc["bcy"]) <= _TILT_FLOOR_MARGIN)
+        if not drift_ok:
+            # Re-bake, anchored at the current view centre, over screen + margin.
+            half_m = half + _TILT_FLOOR_MARGIN
+            span_m = int(half_m * 2)
+            bwx0, bwy0 = cx - half_m, cy - half_m
+            bx0 = int(math.floor(bwx0 / TILE)); by0 = int(math.floor(bwy0 / TILE))
+            bx1 = int(math.ceil((bwx0 + span_m) / TILE))
+            by1 = int(math.ceil((bwy0 + span_m) / TILE))
+            flat = pygame.Surface((span_m, span_m))
+            flat.fill((10, 10, 14))
+            if not (scene.wrap_x or scene.wrap_y):
+                _draw_neighbor_strips(flat, scene, bwx0, bwy0, bx0, by0, bx1, by1)
+            draw_scene_terrain(flat, scene, bwx0, bwy0, bx0, by0, bx1, by1,
+                               skip_billboard=True, skip_roofs=True)
+            _sc["surf"] = _tilt_warp(flat, camera)
+            _sc["gkey"] = gkey
+            _sc["bcx"], _sc["bcy"] = cx, cy
+        warped = _sc["surf"]
+        # Blit so the baked anchor (bcx, bcy) lands where project() now puts it;
+        # the linear warp carries every other floor point to its exact pixel.
+        csx, csy = camera.project(_sc["bcx"], _sc["bcy"])
+        surf.blit(warped, (csx - warped.get_width() // 2,
+                           csy - warped.get_height() // 2))
+    else:
+        # The warped floor is cached (see _TILT_FLOOR_CACHE): rebuilt only when
+        # the camera pose changes. x0..y1 / wx0,wy0 are still computed every
+        # frame -- they're cheap and the wall + neighbor passes below need them.
+        fkey = (id(scene), getattr(scene, "key", None), scene.w, scene.h,
+                round(cx), round(cy), round(camera.yaw, 4),
+                round(camera.pitch, 4), round(camera.scale, 4))
+        _fc = _TILT_FLOOR_CACHE
+        if _fc["key"] == fkey:
+            warped = _fc["surf"]
+        else:
+            flat = pygame.Surface((span, span))
+            flat.fill((10, 10, 14))
+            if _tilt_use_fullmap(scene):
+                # Big wrap scene: blit the window out of the whole-map bake (a
+                # few wrap-aware blits) and redraw only the animated water on
+                # top, instead of rastering ~6000 tiles every frame.
+                full, water = _tilt_fullmap(scene)
+                _blit_window_wrapped(flat, full, wx0, wy0,
+                                     scene.wrap_x, scene.wrap_y)
+                _overlay_anim_water(flat, scene, water, wx0, wy0, span)
+            else:
+                # Phase 2 of the seamless-world neighbor strip: when the player
+                # is near a non-wrap host's edge and the visible tile range
+                # extends past the world's bounds, fill the OUT-OF-BOUNDS tiles
+                # with the neighbor scene's floor content (per world_neighbors).
+                # The in-bounds area is overdrawn with the host's tiles below, so
+                # the strip shows only where the host doesn't reach -- a seam.
+                if not (scene.wrap_x or scene.wrap_y):
+                    _draw_neighbor_strips(flat, scene, wx0, wy0, x0, y0, x1, y1)
+                draw_scene_terrain(flat, scene, wx0, wy0, x0, y0, x1, y1,
+                                   skip_billboard=True, skip_roofs=True)
+            warped = _tilt_warp(flat, camera)
+            _fc["key"] = fkey
+            _fc["surf"] = warped
+        surf.blit(warped, (ox - warped.get_width() // 2,
+                           oy - warped.get_height() // 2))
     # Collect the visible wall tiles (returned for the unified depth pass; the
     # caller sorts + fades them). Wrap-aware: tx/ty may sit outside [0,W) for a
     # toroidal scene and the box projects at the un-wrapped world position.
@@ -3387,7 +3447,20 @@ def draw_scene_doors(surf, scene, cam_x, cam_y, x0, y0, x1, y1):
 # frame by the game each draw, and by the offline renderer.
 _GRAIN_TILE = None
 _VIGNETTE_CACHE = {}
+_GRADE_TINT_CACHE = {}
 _GRADE_TINT = (16, 20, 22)
+
+
+def _grade_tint(w, h):
+    """The flat cool-tint layer, cached by size -- reused instead of allocating
+    + filling a fresh SRCALPHA surface every frame. Byte-identical to the old
+    per-frame fill (same colour + alpha, same blit)."""
+    t = _GRADE_TINT_CACHE.get((w, h))
+    if t is None:
+        t = pygame.Surface((w, h), pygame.SRCALPHA)
+        t.fill((_GRADE_TINT[0], _GRADE_TINT[1], _GRADE_TINT[2], 38))
+        _GRADE_TINT_CACHE[(w, h)] = t
+    return t
 
 
 def _grain_tile():
@@ -3444,9 +3517,9 @@ def apply_grade(surf, t=0.0, desat=82):
         surf.blit(grey, (0, 0))
     except Exception:
         pass
-    tint = pygame.Surface((w, h), pygame.SRCALPHA)
-    tint.fill((_GRADE_TINT[0], _GRADE_TINT[1], _GRADE_TINT[2], 38))
-    surf.blit(tint, (0, 0))
+    # Cool tint (cached surface, byte-identical to the old per-frame fill) +
+    # radial vignette. Two blits, exactly as before.
+    surf.blit(_grade_tint(w, h), (0, 0))
     surf.blit(_vignette(w, h), (0, 0))
     g = _grain_tile()
     gw, gh = g.get_size()
