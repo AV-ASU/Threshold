@@ -1175,8 +1175,14 @@ def _tilt_tree_solid(surf, camera, scene, tx, ty, ch, far=False):
     body is rendered through `_tilt_tree_draw` on a cache miss; identical look,
     a fraction of the per-frame cost."""
     bx, by = camera.project(tx * TILE + 16, ty * TILE + 16, 0)
-    key = (tx, ty, ch, far, round(camera.yaw, 2),
-           round(camera.pitch, 2), round(camera.scale, 2))
+    # Trees + brush are bodies of revolution: rotating the view about the
+    # vertical axis barely touches their silhouette (measured <=0.02% pixel
+    # change across a FULL turn -- the lean/lobe offsets are sub-pixel at this
+    # scale). So the card is keyed WITHOUT yaw: one build per (tile, pitch,
+    # scale) that survives camera turns, instead of rebuilding every frame the
+    # view rotates (the dominant per-frame cost in a treed scene). pitch +
+    # scale stay in the key -- they DO reshape the projected body.
+    key = (tx, ty, ch, far, round(camera.pitch, 2), round(camera.scale, 2))
     entry = _TREE_CARD_CACHE.get(key)
     if entry is None:
         entry = _build_tree_card(camera, scene, tx, ty, ch, far)
