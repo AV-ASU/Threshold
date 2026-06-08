@@ -687,7 +687,14 @@ class RenderMixin:
         from rendering.furniture import draw_furniture_solid
         from rendering.props import draw_prop_solid
         cam = self.camera
-        PADX, PADY, BASE = 200, 380, 40   # generous; the card is cropped tight
+        # Scratch the prop is drawn into before the tight crop. get_bounding_rect
+        # scans the WHOLE scratch every rebuild, so an oversized one is pure
+        # cost. Sized from the measured worst-case extents across every scene
+        # (steeple up=64, hanging_figure down=26, flock half-width=85) at the
+        # full-tilt zoom, scaled to the transition's max zoom (scale->1.0 during
+        # tilt-in, ~1.39x) and padded ~25%. Anything that fits is cropped to a
+        # byte-identical card; this just stops scanning ~120k empty pixels.
+        PADX, PADY, BASE = 150, 120, 55
         tmp = pygame.Surface((PADX * 2, PADY + BASE), pygame.SRCALPHA)
         anchor = (PADX, PADY)
         tcam = Camera(cam_x=d.x, cam_y=d.y, pitch=cam.pitch, yaw=cam.yaw,
