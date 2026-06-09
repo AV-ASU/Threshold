@@ -98,11 +98,28 @@ folded 4D space**, and portals are the places where its edge pokes up where you
 can see it. That is the bible's line made literal — *"the looping roads and the
 level floor are the same wrongness at different sizes"* (§1b).
 
-## Open questions (next planning bites)
+## Decisions landed (2026-06 consolidation)
 
-- How loud is the crossing "turn" — barely-there, or a real beat the player
-  feels every time?
-- Does every portal share one border, or do special ones (the curse-grove,
-  `scarecrow_ring`) escalate?
-- Fold: keep invisible forever, or evolve the canon so it turns visibly wrong
-  as Brimley rots? (a story decision, not an art one)
+The open questions below were settled in the teleportation-consolidation
+pass (NARRATIVE.md §11 "One phenomenon, two presentations"):
+
+- **The crossing is NOTHING.** Not barely-there — literally nothing: no
+  flourish, no sting, no fade, no input hitch. All crossings funnel through
+  one primitive (`Game.cross_fold`) that preserves stride, look, music, and
+  screen position. The frame is the monument; its threshold is silent.
+- **One border, one family.** Every visible fold wears the same standing
+  rift frame (`rendering/portal.py draw_rift_door`), ANCHORED in the world:
+  the pane stands along its world seam (it foreshortens with the view like
+  a wall, never billboards), its contact shadow and gold pool lie on the
+  floor plane, and it thins/dims to nothing as the approach goes oblique
+  (the pane has no back). The King's portal is the same frame torn loudly
+  (charge/looming), with its orientation fixed at tear time.
+- **Hidden folds are SEEN now** (a deliberate canon change): faced head-on
+  they show the frame; discovery is choosing, not stumbling.
+- **The wrap stays invisible** — futility, not spectacle, unchanged.
+- **One-way is the King's signature.** Static folds are two-way; the wrap
+  loops; the only one-way crossing is the juke through HIS tear.
+- **In-maze relocations** are ordinary same-scene direction-gated exits
+  now (silent — no frame; the lie is the world itself).
+
+Live proof sheet: `tools/preview_rift_anchored.py`.

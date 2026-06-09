@@ -247,6 +247,20 @@ it renders the procedural sprites to a labelled PNG strip.
   keystone** (Mask + notes are carried down and spent at the Threshold to
   SEAL). Check `GAME_CHANGES.md` before touching the cast, the ledger, the
   fork, or the Deep Stair.
+- **Teleportation is consolidated — one primitive, don't add bespoke
+  paths.** Doors/ladders/ropes fade (`begin_transition`'s fade path);
+  EVERY other traversal — seamless world edges, direction-gated fold
+  exits, the maze's same-scene `I`/`Q` relocations, and the King's rift
+  juke — funnels through `Game.cross_fold` (`systems/game.py`): no fade,
+  no sting, stride/look/screen-position preserved. The crossing is
+  deliberately nothing; the FRAME is the spectacle. Visible folds + the
+  King's portal share ONE anchored frame renderer
+  (`rendering/portal.py draw_rift_door`: pane stands along its world
+  seam, foreshortens like a wall, thins to nothing off-angle). Same-scene
+  folds are SILENT (skipped by `_build_fold_cache` — the lie is the world
+  itself). One-way is the King's signature alone. See NARRATIVE §11 "One
+  phenomenon, two presentations" + PORTALS.md "Decisions landed". Live
+  proof sheet: `tools/preview_rift_anchored.py`.
 - **No day/night cycle** — it was removed; everything reads as one
   (daytime) state. Don't reintroduce `day_phase` / `day_count`.
 - **Scene-gating sets**: `SAFE_SCENES`, `DARK_SCENES`, `OUTDOOR_SCENES`
