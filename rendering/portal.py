@@ -62,7 +62,10 @@ def _render_through_full(target, anchor_px, camera, door_origin, loom, t):
     buf = pygame.Surface((SCREEN_W, SCREEN_H))
     draw_skybox(buf, (0, 0, SCREEN_W, SCREEN_H), yaw=pcam.yaw,
                 kind="void", horizon_frac=0.40)
-    walls, solid_decos, _wall_decos = draw_terrain_tilted(buf, target, pcam)
+    # draw_terrain_tilted grew a 4th return (neighbor seam solids) in the
+    # perf pass; the through-view only needs this room's walls + props.
+    walls, solid_decos, _wall_decos, _neighbors = draw_terrain_tilted(
+        buf, target, pcam)
     walls = sorted(walls, key=lambda w: pcam.depth(
         w[0] * TILE + TILE / 2, w[1] * TILE + TILE / 2, _TILT_WALL_RISE))
     for tx, ty in walls:
@@ -247,52 +250,110 @@ def _flat_peek(target, anchor, charge):
     return surf
 
 
+def _contact_shadow(screen, p0, p1, charge):
+    """The pane's ground contact: a soft dark ellipse laid ALONG the projected
+    base segment (which slants with the seam's world orientation under tilt),
+    not an axis-aligned smudge. Contact is what glues the frame to the floor."""
+    length = math.hypot(p1[0] - p0[0], p1[1] - p0[1])
+    w = max(12, int(length) + 10)
+    shadow = pygame.Surface((w, 12), pygame.SRCALPHA)
+    pygame.draw.ellipse(shadow, (0, 0, 0, int(120 * (0.4 + 0.6 * charge))),
+                        shadow.get_rect())
+    ang = math.degrees(math.atan2(p1[1] - p0[1], p1[0] - p0[0]))
+    if abs(ang) > 0.5:
+        shadow = pygame.transform.rotate(shadow, -ang)
+    mx = (p0[0] + p1[0]) / 2.0
+    my = (p0[1] + p1[1]) / 2.0
+    screen.blit(shadow, (int(mx - shadow.get_width() / 2),
+                         int(my - shadow.get_height() / 2)))
+
+
 def draw_rift_door(screen, target, anchor_px, fx, fy, camera, t,
-                   formed=True, charge=1.0, cache_key=None):
-    """The shared RIFT DOOR -- an upright black-gold door standing on the ground
+                   formed=True, charge=1.0, cache_key=None,
+                   seam_dir=None, vis=1.0):
+    """The shared RIFT DOOR -- an upright black-gold pane standing on the ground
     at world (fx, fy), showing `target` (centred on the EXACT world point
-    `anchor_px`) through it with the same tilt camera, framed by the continuous
-    tesseract rim. Used by BOTH the King's portal AND the hidden folds so every
-    rift reads as one door-passage family (KING_PROMPT). `charge`/`formed` drive
-    the form-up grow + the looming King; a fold passes formed=True, charge=1."""
+    `anchor_px`) through it with the same tilt camera, framed by the living
+    gold rim. Used by BOTH the King's portal AND the hidden folds so every
+    rift reads as one door-passage family (KING_PROMPT). `charge`/`formed`
+    drive the form-up grow + the looming King; a fold passes formed=True,
+    charge=1.
+
+    ANCHORED, not a billboard: `seam_dir` (a unit WORLD vector) is the line
+    the pane stands along; its base edge is the PROJECTION of the seam's two
+    world endpoints, so the frame foreshortens with the head-turn yaw and
+    with where you stand, exactly like the walls do. It is a fixed object in
+    the room you can circle. `vis` (0..1) is the approach-angle falloff: a
+    pane seen obliquely thins and dims toward nothing (it has no back)."""
     charge = max(0.0, min(1.0, charge))
-    pulse = (0.78 + 0.22 * math.sin(t * 5.0)) * (0.5 + 0.5 * charge)
+    vis = max(0.0, min(1.0, vis))
+    if vis <= 0.0:
+        return
+    pulse = ((0.78 + 0.22 * math.sin(t * 5.0))
+             * (0.5 + 0.5 * charge) * (0.35 + 0.65 * vis))
     seam_len = PORTAL_H
     bx, by = camera.project(fx, fy)
     sq = camera.ground_squash()
     growth = 0.30 + 0.70 * charge
-    doorW = max(14, int(seam_len * camera.scale * 0.7 * growth))
+    sdx, sdy = seam_dir if seam_dir is not None else (1.0, 0.0)
+    half = seam_len * 0.5 * growth
+    p0 = camera.project(fx - sdx * half, fy - sdy * half)
+    p1 = camera.project(fx + sdx * half, fy + sdy * half)
+    base_w = math.hypot(p1[0] - p0[0], p1[1] - p0[1])
+    if base_w < 14.0:
+        # Seam nearly along the view axis: hold a minimum apparent width so
+        # an open rift never collapses to literally nothing on screen.
+        mx, my = (p0[0] + p1[0]) / 2.0, (p0[1] + p1[1]) / 2.0
+        if base_w > 0.5:
+            ux, uy = (p1[0] - p0[0]) / base_w, (p1[1] - p0[1]) / base_w
+        else:
+            ux, uy = 1.0, 0.0
+        p0 = (mx - ux * 7.0, my - uy * 7.0)
+        p1 = (mx + ux * 7.0, my + uy * 7.0)
+        base_w = 14.0
     doorH = max(18, int(seam_len * camera.scale * (0.62 + 1.05 * sq) * growth))
-    top = by - doorH
-    quad = [(bx - doorW / 2, by), (bx + doorW / 2, by),
-            (bx + doorW / 2, top), (bx - doorW / 2, top)]
-    shadow = pygame.Surface((doorW + 10, 12), pygame.SRCALPHA)
-    pygame.draw.ellipse(shadow, (0, 0, 0, int(120 * (0.4 + 0.6 * charge))),
-                        shadow.get_rect())
-    screen.blit(shadow, (int(bx - doorW / 2 - 5), int(by - 6)))
-    _gold_pool(screen, bx, by, doorW * 0.7, pulse)
-    rect = pygame.Rect(int(bx - doorW / 2), int(top),
-                       doorW, doorH).clip(screen.get_rect())
+    # World height projects straight up the screen (the standee/wall rule),
+    # so the pane is a parallelogram: the base slants with the seam, the
+    # sides stay vertical.
+    quad = [p0, p1, (p1[0], p1[1] - doorH), (p0[0], p0[1] - doorH)]
+    _contact_shadow(screen, p0, p1, charge)
+    _gold_pool(screen, bx, by, base_w * 0.7, pulse)
+    left = int(min(p0[0], p1[0]))
+    top = int(min(p0[1], p1[1]) - doorH)
+    rect = pygame.Rect(left, top,
+                       int(max(p0[0], p1[0])) - left + 1,
+                       int(max(p0[1], p1[1])) - top + 1
+                       ).clip(screen.get_rect())
     if (formed or charge > 0.5) and rect.width > 2 and rect.height > 2:
         try:
             loom = 0.0 if formed else charge
             win = _render_through(target, anchor_px, camera, rect,
-                                  (bx, (by + top) / 2), loom=loom, t=t,
+                                  (bx, by - doorH / 2), loom=loom, t=t,
                                   cache_key=cache_key)
             # The through-view's own desaturate already supplies the liminal
             # look; no second crush -- that turned the room into a black hole
             # the player couldn't see into. Forming rifts still ramp alpha up
-            # as the tear grows.
+            # as the tear grows; oblique approaches dim with `vis`.
+            win = win.convert_alpha()
+            mask = pygame.Surface(rect.size, pygame.SRCALPHA)
+            pygame.draw.polygon(mask, (255, 255, 255, 255),
+                                [(qx - rect.left, qy - rect.top)
+                                 for qx, qy in quad])
+            win.blit(mask, (0, 0),
+                     special_flags=pygame.BLEND_RGBA_MULT)
             if formed:
-                if charge < 0.99:
-                    win.set_alpha(int(160 + 95 * charge))
+                base_a = 255 if charge >= 0.99 else int(160 + 95 * charge)
             else:
-                win.set_alpha(int(60 + 195 * (charge - 0.5) / 0.5))
+                base_a = int(60 + 195 * (charge - 0.5) / 0.5)
+            a = int(base_a * (0.25 + 0.75 * vis))
+            if a < 255:
+                win.fill((255, 255, 255, a),
+                         special_flags=pygame.BLEND_RGBA_MULT)
             screen.blit(win, rect.topleft)
         except Exception:
-            pygame.draw.rect(screen, (10, 8, 12), rect)
+            pygame.draw.polygon(screen, (10, 8, 12), quad)
     elif rect.width > 2 and rect.height > 2:
-        pygame.draw.rect(screen, (10, 8, 12), rect)         # forming: dark wound
+        pygame.draw.polygon(screen, (10, 8, 12), quad)      # forming: dark wound
     _draw_rim(screen, quad, t, pulse)                       # the buzzing 4D edge
 
 
@@ -310,9 +371,14 @@ def draw_portal(screen, portal, cam_x, cam_y, camera, t):
                                portal["anchor"][1] * TILE + TILE // 2)
     formed = portal.get("formed", True)        # legacy/iso dicts read as formed
     if camera is not None and camera.pitch > 0.02:
+        # seam_dir was fixed at tear time (across the line to the player when
+        # the King tore it) -- the rift is an object in the room, not a
+        # billboard that swivels to face you. The King's rift never angle-
+        # fades (vis=1): his violence has no polite edge-on side.
         draw_rift_door(screen, target, anchor_px, fx, fy, camera, t,
                        formed=formed, charge=charge,
-                       cache_key=("portal", id(portal)))
+                       cache_key=("portal", id(portal)),
+                       seam_dir=portal.get("seam_dir"))
         return
     # Flat (pitch 0): stand the old peek panel up from the host tile.
     pulse = (0.78 + 0.22 * math.sin(t * 5.0)) * (0.5 + 0.5 * charge)

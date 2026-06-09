@@ -1031,16 +1031,28 @@ way. The fold stops being an escape.
 
 ### Direction-sensitive hidden folds
 
-Three hidden scenes are accessed only by walking a specific tile in a
-specific direction. From any other angle the tile reads as floor and
-the player walks over it without consequence. All three are in
-`SEAMLESS_WORLD_SCENES` so the crossing has no fade -- the player
-stumbles into the fold without realising they crossed a boundary.
+Five hidden scenes are accessed only by walking a specific tile in a
+specific direction. All five are in `SEAMLESS_WORLD_SCENES` so the
+crossing has no fade.
+
+**Canon update (2026-06, decided deliberately):** these folds are no
+longer invisible-until-tripped. Faced head-on, a fold SHOWS itself: a
+standing black-gold rift frame anchored on its world seam, one visual
+family with the King's portal (`rendering/portal.py draw_rift_door`).
+Step to the side and the pane thins and dims toward nothing; from
+behind it isn't there at all (a 4D pane has no back) -- so from any
+other angle the tile still reads as floor and the player walks over it
+without consequence. The discovery beat changes from *stumbling* to
+*choosing*: the player sees a wound in the world ahead and walks into
+it on purpose. The crossing itself stays NOTHING -- no fade, no sting,
+no beat; the frame is the spectacle and stepping through is just
+walking. The world's silent lies remain the torus wrap and the in-maze
+relocations, which never show a frame.
 
 | Scene key | Where it lives | Access | What it shows |
 |---|---|---|---|
 | `effigy_grove` | new scene | `cornfield_maze` tile (6, 10), walked WEST | A maker-less dread tableau (§8): the dread set kept (effigies, a polaroid board of faces, hanging figures) but **without a maker** — a workshop with no worker, the corn-doll work of the congregation. The effigies-as-individual-curses reading is dropped. |
-| `lodge_arrival` | new scene | `our_house_area` tile (5, 12), walked NORTH | The Lodge porch at the moment Mara walked up to it. Mara with a suitcase, the Clerk smiling in the doorway. Neither sees the PI. Makes the bible's "she chose this" concrete -- the player *witnesses* the choice. |
+| `lodge_arrival` | new scene | `our_house_area` tile (5, 1), against the Lodge's BACK wall, walked SOUTH | The Lodge porch at the moment Mara walked up to it. Mara with a suitcase, the Clerk smiling in the doorway. Neither sees the PI. Makes the bible's "she chose this" concrete -- the player *witnesses* the choice. The pane stands flush on the building's rear face and reads as a door the Lodge shouldn't have, seen only from behind it; you walk into the back of the building and step out of its front, years earlier. |
 | `highway_walk` | new scene | `country_lane` tile (28, 6), walked EAST | A stretch of empty highway. Two figures walk east, their backs to the PI -- the locals who walked out to flag down help. The road wraps; they stay ahead; nobody arrives anywhere. |
 | `husk_grove` | new scene | `cornfield_maze` tile (21, 8), walked EAST | A small clearing where the cult assembles its corn-dolls. Two altars used as workbenches, unfinished dolls scattered, a stalk-marker, a candle still lit. No NPC -- the work is here, the worker isn't. |
 | `scarecrow_ring` | new scene | `cornfield_maze` tile (2, 14), walked WEST | A ring of six scarecrows facing inward around a doubled Yellow Sign in charred dirt. Two braziers, bloodstains underfoot. The cult's central mark in the corn. |
@@ -1050,7 +1062,11 @@ stumbles into the fold without realising they crossed a boundary.
 NORTH) don't open a new scene -- they teleport the player to another
 spot in the same maze, camera offset preserved so the swap is
 invisible at the moment of crossing. The player notices when their
-surroundings stop matching.
+surroundings stop matching. Mechanically they are ordinary
+direction-gated exits whose target is the maze itself
+(`Game.cross_fold` handles the same-scene case with no load); they are
+SILENT by canon -- a relocation never shows a frame, because here the
+lie is the world itself.
 
 **Visible perimeter side passages.** The maze's outer wall has four
 clear dirt-lane gaps (west edge at rows 5 + 13, east edge at rows 8 +
@@ -1060,3 +1076,28 @@ loop.
 
 The framework (`Scene.add_exit(direction=...)` + `find_exit_at(facing=)`)
 is general -- more direction-sensitive folds can be added as wanted.
+
+### One phenomenon, two presentations (the consolidation)
+
+There are exactly two kinds of spatial transition in THRESHOLD:
+
+- **Doors** (doors, ladders, the well rope): ordinary plumbing. They
+  fade, they make a sound, they feel like doorways. Architecture is
+  the player-only escape.
+- **The Fold**: everything else. One phenomenon with two faces:
+  - **The fold you SEE** -- the standing rift frame: the five hidden
+    folds (at rest, quiet) and the King's portal (the same frame torn
+    violently). One renderer, one black-gold grammar.
+  - **The fold you DON'T** -- the silent lie: the torus wrap, the
+    seamless world edges, the in-maze relocations. The horror here is
+    futility, never spectacle; no frame is ever shown.
+
+Every fold crossing goes through one primitive (`Game.cross_fold`):
+no fade, music keeps playing, stride and look preserved, the player
+holds their screen position while the world swaps around them. The
+crossing is deliberately nothing; the frame is the monument.
+One-way-ness is the King's signature alone: the town's geometry is
+symmetric (every static fold has its return), the wrap is a loop, and
+the single one-way crossing in the game is the juke through the tear
+HE made (it shuts behind you). The Threshold doorframe stays plain --
+the world's folds scream so that the real door's silence lands (§1b).

@@ -43,16 +43,19 @@ def _stand_on(g, tx, ty):
     g.player.y = ty * TILE + TILE // 2
 
 
-def _find_exit_tile(g, *, fold):
+def _find_exit_tile(g, *, fold, same_scene=False):
     """The cornfield maze is procedurally generated, so exit tiles move
     between loads. Locate a fold (direction-gated) or mundane exit char in
-    the *actual* loaded scene and return (tx, ty, char)."""
+    the *actual* loaded scene and return (tx, ty, char). `same_scene`
+    selects the in-maze relocation folds (target == the scene itself);
+    by default those are skipped (they relocate, they don't carry)."""
     for ty, row in enumerate(g.scene.objects):
         for tx, ch in enumerate(row):
             if ch not in g.scene.exits:
                 continue
             is_fold = ch in g.scene.exit_directions
-            if is_fold == fold:
+            is_same = g.scene.exits[ch][0] == g.scene.key
+            if is_fold == fold and is_same == same_scene:
                 return tx, ty, ch
     raise AssertionError(f"no {'fold' if fold else 'mundane'} exit in scene")
 
@@ -229,6 +232,34 @@ def test_fold_watcher_never_exceeds_max():
     print("  OK  fold-watcher: +1 never fires at the WATCHER_MAX ceiling")
 
 
+def test_same_scene_reloc_silent_and_seamless():
+    # The maze 'I'/'Q' relocations are same-scene folds: crossing relocates
+    # the player with NO load, NO pursuer stash (the chaser is still
+    # physically in the room), and NO visible frame -- the lie is the world
+    # itself, never a gold seam.
+    g = _boot()
+    tx, ty, ch = _find_exit_tile(g, fold=True, same_scene=True)
+    target, spawn = g.scene.exits[ch]
+    assert target == g.scene.key, "the relocation targets the maze itself"
+    _stand_on(g, tx, ty)
+    _add_hot_cultist(g)
+    g._note_fold_pursuit((target, spawn))
+    assert g._fold_pursuer is None, "a same-scene relocation never stashes"
+    assert all(f["target"].key != g.scene.key for f in g._folds), \
+        "a relocation fold must never join the seen-fold (frame) list"
+    before = g.scene
+    sdx = g.player.x - g.cam_x
+    sdy = g.player.y - g.cam_y
+    g.cross_fold(target, spawn)
+    assert g.scene is before, "a relocation must not reload the scene"
+    assert (g.player.x, g.player.y) == before.spawns[spawn], \
+        "relocated to the fold's destination spawn"
+    assert abs((g.player.x - g.cam_x) - sdx) < 1e-6, \
+        "the camera carries the screen offset (the swap is invisible)"
+    assert abs((g.player.y - g.cam_y) - sdy) < 1e-6
+    print("  OK  a same-scene relocation is silent, loadless, camera-carried")
+
+
 if __name__ == "__main__":
     test_fold_carries_pursuer()
     test_passage_carries_pursuer()
@@ -238,4 +269,5 @@ if __name__ == "__main__":
     test_fold_watcher_binds_on_hit()
     test_fold_watcher_misses_on_high_roll()
     test_fold_watcher_never_exceeds_max()
+    test_same_scene_reloc_silent_and_seamless()
     print("All fold-pursuit guards held.")

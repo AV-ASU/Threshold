@@ -246,10 +246,6 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         # torn (None otherwise), and the pinned-100% charge timer toward it.
         self._portal = None
         self._portal_charge_t = 0.0
-        # After juking through a rift: (target_scene, (x, y)) to drop the player
-        # at the EXACT spot the rift showed (where the King was). Applied in
-        # load_scene_now, then cleared.
-        self._pending_emerge = None
         # The idle state's receding horizon King (world x,y on THE road, or
         # None). Recomputed each tick by _tick_idle_king; drawn faint + far.
         self._idle_king = None
@@ -392,7 +388,6 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         self._king_dread = 0.0
         self._portal = None
         self._portal_charge_t = 0.0
-        self._pending_emerge = None
         self._idle_king = None
         # Cultists, the curse, and Watchers
         self._cursed = False
@@ -458,31 +453,89 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         self._folds = []               # seen-fold peek cache (_build_fold_cache)
 
     # ---- Scene management ----
+    def cross_fold(self, target_scene, spawn_id="default", dest_pos=None):
+        """The ONE seamless fold-crossing primitive. Every non-door traversal
+        funnels here: seamless world edges, direction-gated fold exits, the
+        maze's same-scene relocations, and the King's rift juke. The crossing
+        itself is deliberately NOTHING. No fade, no sting, no facing yank, no
+        input hitch. The music keeps playing, the player keeps their stride
+        and their screen position, and the world swaps around them. The FRAME
+        is the spectacle (rendering.portal.draw_rift_door); stepping through
+        is just walking. Doors / ladders / ropes stay on the fade path in
+        begin_transition; they ARE doorways and should feel like them.
+
+        `dest_pos` (world px) overrides the named spawn. The rift juke uses it
+        (you emerge at the King's vacated spot); it is snapped to walkable
+        ground because he phases, so the spot can sit inside a wall."""
+        if self.scene is None or self.player is None:
+            return
+        screen_dx = self.player.x - self.cam_x
+        screen_dy = self.player.y - self.cam_y
+        same_scene = (target_scene == self.scene.key)
+        if same_scene:
+            # A same-scene relocation (the maze 'I'/'Q' tiles): no load, no
+            # per-load state clears. The world IS the same room; it just put
+            # you somewhere else in it. Hide-state is re-derived below: a
+            # relocation moves you, so the cover you stood in does not carry.
+            dest = (dest_pos or self.scene.spawns.get(spawn_id)
+                    or self.scene.spawns.get("default"))
+            if dest is None:
+                return
+            self.player.x, self.player.y = dest
+            self.player.hidden = None
+            self.player.hide_origin = None
+            if self.scene.char_floor_at(self.player.x, self.player.y) == ":":
+                self.player.hidden = "corn"
+        else:
+            # Cross-scene: a real load (all the per-load clears apply) with
+            # the stride preserved across it. load_scene_now orients the
+            # player INTO the room, which is right for a door you just
+            # opened but wrong for a fold you walked through, so the look
+            # and facing are restored after the swap.
+            facing = self.player.facing
+            look = getattr(self, "look", None)
+            look_state = ((look.body, look.aim, look.cam_yaw)
+                          if look is not None else None)
+            self.load_scene_now(target_scene, spawn_id, keep_music=True)
+            if dest_pos is not None:
+                safe = self._nearest_walkable(self.scene,
+                                              dest_pos[0], dest_pos[1])
+                if safe is not None:
+                    self.player.x, self.player.y = safe
+                self.scene._last_entry_exit_tile = (
+                    int(self.player.x // TILE), int(self.player.y // TILE))
+                if self.scene.char_floor_at(self.player.x,
+                                            self.player.y) == ":":
+                    self.player.hidden = "corn"
+            self.player.facing = facing
+            if look is not None and look_state is not None:
+                look.body, look.aim, look.cam_yaw = look_state
+        # The player never moves on screen: the camera carries the offset
+        # through the swap. For non-wrap destinations the camera may drift on
+        # the next frame due to clamping; that's fine -- the crossing moment
+        # itself is continuous.
+        self.cam_x = self.player.x - screen_dx
+        self.cam_y = self.player.y - screen_dy
+
     def begin_transition(self, target_scene, spawn_id="default"):
         if self.state == "transition": return
+        current_key = self.scene.key if self.scene else None
+        # A same-scene exit is a fold RELOCATION (the maze 'I'/'Q' tiles):
+        # the world folds you elsewhere in the same room, seamlessly.
+        if current_key is not None and target_scene == current_key:
+            self.cross_fold(target_scene, spawn_id)
+            return
         # Seamless outdoor-to-outdoor crossing. Both scenes are part of
         # the continuous outside world (SEAMLESS_WORLD_SCENES). No
-        # fade, no level-load semantic. Use the destination's canonical
-        # spawn (because the spawn already accounts for the destination's
-        # road position) and then shift the camera so the player stays
-        # at the SAME SCREEN POSITION before and after the swap. From
-        # their point of view nothing jumped -- the tiles around them
-        # changed.
-        current_key = self.scene.key if self.scene else None
+        # fade, no level-load semantic. The destination's canonical
+        # spawn already accounts for its road position; cross_fold then
+        # shifts the camera so the player stays at the SAME SCREEN
+        # POSITION before and after the swap. From their point of view
+        # nothing jumped -- the tiles around them changed.
         if (current_key is not None
                 and current_key in SEAMLESS_WORLD_SCENES
-                and target_scene in SEAMLESS_WORLD_SCENES
-                and current_key != target_scene):
-            screen_dx = self.player.x - self.cam_x
-            screen_dy = self.player.y - self.cam_y
-            self.load_scene_now(target_scene, spawn_id, keep_music=True)
-            # load_scene_now snapped the camera; override so the
-            # player stays at the same screen position. For non-wrap
-            # destination scenes the camera may immediately drift on
-            # the next frame due to clamping; that's fine -- the
-            # transition moment itself is continuous.
-            self.cam_x = self.player.x - screen_dx
-            self.cam_y = self.player.y - screen_dy
+                and target_scene in SEAMLESS_WORLD_SCENES):
+            self.cross_fold(target_scene, spawn_id)
             return
         # The cellar is no longer key-gated -- the Ledger (evidence #3) is a
         # core clue and shouldn't hide behind a fetch-quest. The Clerk's old
@@ -571,26 +624,6 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         spawn = self.scene.spawns.get(spawn_id, self.scene.spawns.get("default"))
         if spawn:
             self.player.x, self.player.y = spawn
-        # Juked through a rift: drop the player at the EXACT spot it showed (the
-        # King's vacated position), overriding the spawn. Snap to walkable ground
-        # (he phases, so the spot can be in a wall) and face them INTO the room
-        # (toward its centre) so they walk out oriented right, not into a wall.
-        pe = getattr(self, "_pending_emerge", None)
-        if pe is not None and pe[0] == key and pe[1] is not None:
-            ex, ey = pe[1]
-            safe = self._nearest_walkable(self.scene, ex, ey)
-            if safe is not None:
-                self.player.x, self.player.y = safe
-                spawn = safe
-                cx = self.scene.w * TILE / 2.0
-                cy = self.scene.h * TILE / 2.0
-                hdx, hdy = cx - safe[0], cy - safe[1]
-                hd = math.hypot(hdx, hdy) or 1.0
-                self.player.facing = (hdx / hd, hdy / hd)
-                if getattr(self, "look", None) is not None:
-                    self.look.body = math.atan2(hdy, hdx)
-                    self.look.cam_yaw = (self.look.body + math.pi / 2)
-        self._pending_emerge = None
         # Face the player INTO the open room on entry. You just walked in, so you
         # look forward at the room (and whoever's standing in it) instead of back
         # at the door -- otherwise anyone ahead of the spawn sits in the blind-

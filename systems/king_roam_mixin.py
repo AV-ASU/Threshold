@@ -445,9 +445,11 @@ class KingRoamMixin:
                 tpos = p.get("target_pos")
                 self._portal = None          # shuts the instant you cross
                 self._portal_charge_t = 0.0
-                self.audio.play("void_sting", 0.7)
-                self._pending_emerge = (tgt, tpos) if tpos else None
-                self.begin_transition(tgt, spawn)
+                # The crossing is deliberately NOTHING -- no sting, no fade,
+                # no facing yank. The frame was the spectacle; stepping
+                # through is just walking (cross_fold keeps the stride and
+                # the screen position through the swap).
+                self.cross_fold(tgt, spawn, dest_pos=tpos)
                 return True
             return False
         # A FORMING rift (charging): grow it while pinned, collapse if you break
@@ -498,10 +500,17 @@ class KingRoamMixin:
         if tgt_scene is not None:               # he phases: snap to walkable
             tpos = self._nearest_walkable(tgt_scene, tpos[0], tpos[1]) or tpos
         anchor = (int(tpos[0] // TILE), int(tpos[1] // TILE))
+        # The pane's orientation is FIXED at tear time: it stands across the
+        # line to the player (he tears it facing you), and from then on it is
+        # an object in the world you can circle, not a billboard that swivels.
+        pdx = self.player.x - spot[0]
+        pdy = self.player.y - spot[1]
+        pln = math.hypot(pdx, pdy) or 1.0
         self._portal = {
             "x": spot[0], "y": spot[1],
             "target": rk["scene"], "spawn": "default", "target_pos": tpos,
             "_scene": tgt_scene, "anchor": anchor, "charge": 0.0, "formed": False,
+            "seam_dir": (-pdy / pln, pdx / pln),
         }
         self.audio.play("low_pulse", 0.6)
         self.show_notice("The air begins to tear. Get out of sight.",
