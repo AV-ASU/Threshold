@@ -3,6 +3,7 @@ import math
 import random
 import pygame
 from constants import C_BLACK
+from rendering.sprites_common import _breath_lift
 
 
 # ---- Infested resisters (NARRATIVE infestation) -----------------------
@@ -216,21 +217,95 @@ def _infest_old_townsman(surf, x, y, t, view="front"):
         _popout_tumor(surf, nx, ny, r, thr, rng)
 
 
+def _infest_old_pell(surf, x, y, t, view="front"):
+    # Old Pell stopped marking the calendar, so the calendar marks HIM.
+    # Tally-scars carve themselves across his face and torso in fours with
+    # the fifth slashed through; one eye is crossed off (a scar X over a
+    # void socket); and over his heart sits the 14th, the day that was
+    # "already crossed": a heavier re-cut stroke that never closed, the
+    # fold's gold welling in the line. (Adult geometry: head ~y-12 under
+    # the hat brim, body y-2..y+17. Distinct from Garrick's cancer -- Pell
+    # is INSCRIBED, not overgrown.)
+    thr = 0.5 + 0.5 * math.sin(t * 1.8)
+    SCAR = (46, 22, 24)
+    s = 1 if view == "right" else (-1 if view == "left" else 0)
+    hy = y - 12
+
+    def tally(tx, ty, n=4, slash=True, h=3):
+        for i in range(n):
+            pygame.draw.line(surf, SCAR, (tx + i * 2, ty), (tx + i * 2, ty + h - 1), 1)
+        if slash:
+            pygame.draw.line(surf, _MEAT, (tx - 1, ty + h - 1), (tx + n * 2 - 1, ty), 1)
+
+    if view == "back":
+        # the count continues where he can't see it: rows across the yoke,
+        # and the heavy line re-cut straight down the spine seam
+        tally(x - 6, y - 1); tally(x + 1, y - 1)
+        tally(x - 5, y + 4); tally(x + 2, y + 4, slash=False)
+        tally(x - 4, y + 9, n=3)
+        pygame.draw.line(surf, _MEAT, (x, y + 2), (x, y + 13), 2)
+        pygame.draw.line(surf, _WGOLD, (x, y + 4), (x, y + 11), 1)
+        tally(x - 4, hy + 2, n=3, slash=False, h=2)        # up the nape
+        return
+    if s:
+        # profile: the rows wrap the lead cheek and the narrowed torso;
+        # the crossed-off eye leads
+        tally(x + 2 * s - 3, hy + 1, n=3, h=2)
+        ex = x + 3 * s
+        pygame.draw.rect(surf, (6, 4, 6), (ex - 2, hy - 3, 4, 4))
+        _gold_in_wound(surf, ex, hy - 1, 2, 16 + int(10 * thr))
+        pygame.draw.line(surf, _MEAT, (ex - 2, hy - 3), (ex + 2, hy + 1), 1)
+        pygame.draw.line(surf, _MEAT, (ex + 2, hy - 3), (ex - 2, hy + 1), 1)
+        tally(x - 4, y + 1); tally(x - 3, y + 6, slash=False)
+        hx = x + 2 * s
+        _gold_in_wound(surf, hx, y + 9, 3, 22 + int(14 * thr))
+        pygame.draw.line(surf, _MEAT, (hx, y + 4), (hx, y + 13), 3)
+        pygame.draw.line(surf, _WGOLD, (hx, y + 5), (hx, y + 12), 1)
+        return
+    # front: rows under the hat brim, then the ledger of days down the body
+    tally(x - 5, hy - 4, n=3, slash=False, h=2)
+    tally(x - 4, hy + 2, n=4, h=2)
+    ex = x - 3                                             # the crossed-off eye
+    pygame.draw.rect(surf, (6, 4, 6), (ex - 2, hy - 3, 4, 4))
+    _gold_in_wound(surf, ex, hy - 1, 2, 16 + int(10 * thr))
+    pygame.draw.line(surf, _MEAT, (ex - 2, hy - 3), (ex + 2, hy + 1), 1)
+    pygame.draw.line(surf, _MEAT, (ex + 2, hy - 3), (ex - 2, hy + 1), 1)
+    tally(x - 6, y + 1); tally(x + 1, y + 1)
+    tally(x + 1, y + 6); tally(x - 5, y + 11, n=3, slash=False)
+    # the 14th, crossed twice: the heavier line over the heart, still open
+    # ("mine's the heavier line; you can tell")
+    hx = x - 3
+    _gold_in_wound(surf, hx, y + 8, 4, 26 + int(16 * thr))
+    pygame.draw.line(surf, _MEAT, (hx, y + 4), (hx, y + 13), 3)
+    pygame.draw.line(surf, _MEAT_LO, (hx - 2, y + 4), (hx - 2, y + 13), 1)
+    pygame.draw.line(surf, _WGOLD, (hx, y + 5), (hx, y + 12), 1)
+    pygame.draw.circle(surf, _WGOLD_HI, (hx, y + 8), 1)
+
+
 _INFEST_WORLD = {
     "tisdale_boy": _infest_tisdale_boy,
     "hettie": _infest_hettie,
     "old_townsman": _infest_old_townsman,
 }
 
+# Mutated locals who SHARE a sprite kind resolve by name first (Old Pell
+# wears the same old_townsman body as Garrick but carries his own horror).
+_INFEST_NAMED = {
+    "Old Pell": _infest_old_pell,
+}
 
-def draw_infested_overlay(surf, x, y, kind, view="front"):
+
+def draw_infested_overlay(surf, x, y, kind, view="front", name=None, seed=0):
     """Drawn OVER a mutated resister's base sprite: their bespoke flesh-
     horror form. `view` ('front'/'back'/'left'/'right') matches the base
     sprite's camera-relative facing so the horror reads from every angle
-    (no face on the back of the head, profile in the sides). Falls back to a
-    generic jaundice + eye-void wash for any kind without a dedicated
-    incident."""
-    fn = _INFEST_WORLD.get(kind)
+    (no face on the back of the head, profile in the sides). `name` picks a
+    name-keyed incident over the kind-keyed one (sprite kinds are shared);
+    `seed` rides the base sprite's idle breath so the wound moves with the
+    flesh. Falls back to a generic jaundice + eye-void wash for anyone
+    without a dedicated incident."""
+    y -= _breath_lift(seed)
+    fn = _INFEST_NAMED.get(name) or _INFEST_WORLD.get(kind)
     t = pygame.time.get_ticks() / 1000.0
     if fn is not None:
         fn(surf, x, y, t, view)

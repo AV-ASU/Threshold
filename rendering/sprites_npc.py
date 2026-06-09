@@ -7,7 +7,7 @@ from rendering.sprites_common import (
     KING_UNFOLD, KING_UNFOLD_SCALE,
     _VP_HIDE, _VP_LO, _VP_HI, _VP_PALE, _VP_PALE_LO, _VP_PIT,
     _VP_GT, _VP_GHI, _VP_FLESH, _VP_FLESH_LO, _VP_MOUTH, _VP_TEETH,
-    _VP_GOR, _VP_GOR_LO,
+    _VP_GOR, _VP_GOR_LO, _breath_lift,
 )
 from rendering.sprites_cultist import _draw_cultist
 from rendering.sprites_king import _draw_king
@@ -26,6 +26,11 @@ _NPC_HEAD = {}
 # that's properly *here*" -- so these helpers draw none. A dim, COLD socket
 # glint (not gold) keeps baseline townsfolk unclaimed by the fold.
 _GLINT_COLD = (118, 122, 126)
+
+# The living human locals breathe at idle (_breath_lift): a slow desynced 1px
+# rise. Masked/hooded/inhuman kinds stay deathly still on purpose.
+_BREATH_KINDS = {"townswoman", "old_townsman", "hettie", "tisdale_boy",
+                 "sheriff", "royce", "preacher", "clerk"}
 
 
 def _grim_body(surf, x, y, base, w=14, h=19, ragged=True, grime=True, view="front"):
@@ -207,6 +212,8 @@ def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False,
     while the player stands still."""
     if kind == "_invisible":
         return
+    if kind in _BREATH_KINDS:
+        y -= _breath_lift(seed)
     if kind == "townswoman":
         # Mrs. Calder & the Brimley women. F&H-gaunt: a crushed-dark red dress
         # over a grubby apron, lank dark hair in a bun, a sallow hollow-eyed

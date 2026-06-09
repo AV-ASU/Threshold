@@ -1069,7 +1069,9 @@ class RenderMixin:
                         # fold-horror form, laid over the person they were.
                         if getattr(npc, "_mutated", False):
                             draw_infested_overlay(target, sx, sy,
-                                                  npc.sprite_kind, view=nview)
+                                                  npc.sprite_kind, view=nview,
+                                                  name=getattr(npc, "name", None),
+                                                  seed=id(npc) & 0xffff)
                 _emit(self.camera.depth(npc.x + ox, npc.y + oy),
                       lambda a=a, fn=_draw_npc, sx=sx, sy=sy:
                       draw_with_alpha(self.screen, a, fn,

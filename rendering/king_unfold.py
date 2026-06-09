@@ -377,9 +377,11 @@ def _draw_maw3d(lay, sample, N, em, openf, cx, cy, sz, zmin, zr, seed, a):
 
 
 # --------------------------------------------------------------------------- #
-def _shade_face(N, dn, threat):
+def _shade_face(N, dn, threat, gild=0.0):
     """Oily membrane shading from a 3D normal: lit dark flesh + wet sheen +
-    gold rim trapped on the grazing silhouette."""
+    gold rim trapped on the grazing silhouette. `gild` (0..1) is the extra
+    locomotion kindle: gold trapped on the LEADING edge where the mass everts
+    forward into its travel direction, so the lunge reads gold-first."""
     diff = max(0.0, _dot(N, _L))
     spec = max(0.0, _dot(N, _H)) ** 18
     rim = (1.0 - abs(N[2])) ** 2.7                          # gold edge band
@@ -390,6 +392,8 @@ def _shade_face(N, dn, threat):
     # a gold rim trapped on the grazing silhouette -- present even when calm, so
     # the dark flesh keeps a glowing edge against a near-black scene
     col = _cadd(col, _GOLD_RIM, rim * (0.50 + 0.5 * threat) * (0.45 + 0.55 * dn))
+    if gild > 0.0:
+        col = _cadd(col, _GOLD_RIM, gild)
     return _ci(col)
 
 
@@ -614,6 +618,7 @@ def draw_king_unfold(surf, cx, cy, t, threat=0.0, scale=96.0,
     # by body_b so a half-born mass doesn't lunge.
     lx, ly = lean
     lmag = min(1.0, math.hypot(lx, ly)) * body_b
+    Lm = None
     if lmag > 0.01:
         dm = math.hypot(lx, ly) or 1.0
         Lm = _norm((lx / dm, -ly / dm, 0.55))    # unit travel dir, model frame
@@ -684,7 +689,15 @@ def draw_king_unfold(surf, cx, cy, t, threat=0.0, scale=96.0,
         for zc, fi, face, N in recs:
             poly = [op[i] for i in face]
             dn = (zc - zmin) / zr
-            col = _shade_face(N, dn, threat)
+            # locomotion kindle: the grazing edges of the LEADING hemisphere
+            # catch gold as the mass everts forward, so at gameplay distance
+            # the travel direction reads as a gilded crescent, not mud sliding
+            gild = 0.0
+            if Lm is not None and front_side:
+                fwd_n = max(0.0, _dot(N, Lm))
+                gild = (fwd_n ** 1.6) * lmag \
+                    * (0.22 + 0.75 * (1.0 - abs(N[2])))
+            col = _shade_face(N, dn, threat, gild)
             al = (196 if front_side else 232)
             pygame.draw.polygon(lay, (*col, al), poly)
             # anti-alias the silhouette only (no per-facet seam -> smoother skin)

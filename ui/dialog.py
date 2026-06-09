@@ -342,6 +342,43 @@ class DialogueBox:
             surf.blit(g, (gx - R - 1, gy - R - 1),
                       special_flags=pygame.BLEND_RGBA_ADD)
 
+        if kind == "old_townsman" and getattr(self, "speaker_name", "") == "Old Pell":
+            # (Old Pell) the calendar counts him now: tally-scars carved in
+            # rows across the face, one eye crossed off (a scar X over a void
+            # socket), and the 14th re-cut heavier down the cheek, gold
+            # welling in the line. Same form as the world sprite, at
+            # portrait scale. (He shares Garrick's old_townsman sprite kind,
+            # so this resolves by speaker name first.)
+            SCAR = (66, 30, 32)
+
+            def tally(tx, ty, n=4, slash=True, h=7):
+                for i in range(n):
+                    pygame.draw.line(surf, SCAR, (tx + i * 4, ty),
+                                     (tx + i * 4, ty + h), 2)
+                if slash:
+                    pygame.draw.line(surf, MEAT, (tx - 2, ty + h),
+                                     (tx + n * 4 - 2, ty), 2)
+
+            tally(cx - 22, cy - 16, n=3)                  # across the brow
+            tally(cx + 6, cy - 18, n=3, slash=False, h=6)
+            tally(cx - 24, cy - 2, n=3)                   # down the far cheek
+            tally(cx - 22, cy + 12, n=3, slash=False, h=6)
+            tally(cx + 8, cy + 12, n=4, h=6)
+            # the crossed-off eye: scar X over a void socket, gold deep in it
+            ex, ey = cx + 10, cy - 6
+            pygame.draw.rect(surf, (10, 7, 10), (ex - 5, ey - 5, 10, 10))
+            gold_in(ex, ey, 4, 30 + int(16 * thr))
+            pygame.draw.line(surf, MEAT, (ex - 6, ey - 6), (ex + 6, ey + 6), 2)
+            pygame.draw.line(surf, MEAT, (ex + 6, ey - 6), (ex - 6, ey + 6), 2)
+            # the 14th, crossed twice: the heavier line, still open, run
+            # down the jaw off the crossed eye's side
+            hx = cx - 12
+            gold_in(hx, cy + 12, 6, 40 + int(20 * thr))
+            pygame.draw.line(surf, MEAT, (hx, cy + 2), (hx, cy + 24), 4)
+            pygame.draw.line(surf, MEAT_LO, (hx - 3, cy + 2), (hx - 3, cy + 24), 2)
+            pygame.draw.line(surf, GOLD, (hx, cy + 4), (hx, cy + 22), 2)
+            pygame.draw.circle(surf, GOLD_HI, (hx, cy + 12), 2)
+            return
         if kind == "tisdale_boy":
             # Head cleaved into a vertical MAW (matches the world sprite):
             # raw-flesh lips bow open around a deep dark throat, interlocking
