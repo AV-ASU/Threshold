@@ -29,7 +29,11 @@ from scenes.base import apply_grade
 from rendering.sprites import draw_npc_sprite
 
 SIGHT_DEPTH = 3 * TILE          # how far the peek reaches before fogging out
-SEAM_DOT = 0.6                  # facing dot below which the fold is invisible
+SEAM_DOT = 0.6                  # facing dot below which the fold is CROSSABLE
+                                # (and, at pitch 0, visible -- the flat path
+                                # keeps the legacy hard cut)
+SEAM_VIS_MIN = 0.15             # tilt: facing dot where the pane starts to show
+SEAM_VIS_FULL = 0.80            # tilt: facing dot where it reads at full
 SEAM_TILES = 3                  # breadth of the slit, in tiles
 SHEAR_GAIN = 0.9                # far-layer slide per px of along-seam offset
 SHEAR_CAP = 2 * TILE            # max along-seam offset that shears the view
@@ -166,22 +170,38 @@ def draw_fold(screen, face, host_cam_x, host_cam_y, player, t, camera=None):
     """
     nx, ny = face["normal"]
     pfx, pfy = player.facing
-    if pfx * nx + pfy * ny < SEAM_DOT:
-        return False                              # not facing in: invisible
+    dot = pfx * nx + pfy * ny
     target = face["target"]
     ax, ay = face["anchor_tile"]
     fold_x, fold_y = face["fold_px"]
 
     # Under tilt a fold is the SAME upright door-passage as the King's portal
-    # (KING_PROMPT: one rift family), oriented to the player's view, showing the
-    # target room centred on where you'd arrive (anchor_tile). Pitch 0 keeps the
-    # legacy flat slit below.
+    # (KING_PROMPT: one rift family), standing along its WORLD seam (the line
+    # across the fold normal) so it foreshortens like a wall, showing the
+    # target room centred on where you'd arrive (anchor_tile). Pitch 0 keeps
+    # the legacy flat slit below.
     if camera is not None and camera.pitch > 0.02:
+        # Smooth approach-angle falloff (the pane rule): full when faced
+        # head-on, thinning + dimming to nothing as the approach goes
+        # oblique -- the pane has no back. The old binary SEAM_DOT cut made
+        # the rift blink in and out of existence; a real object fades with
+        # the angle you hold it at. CROSSING stays gated at SEAM_DOT
+        # (Scene.find_exit_at), so you can see a fold a little before you
+        # can take it.
+        f = (dot - SEAM_VIS_MIN) / (SEAM_VIS_FULL - SEAM_VIS_MIN)
+        vis = max(0.0, min(1.0, f))
+        if vis <= 0.0:
+            return False
+        vis = vis * vis * (3.0 - 2.0 * vis)          # smoothstep the ends
         from rendering.portal import draw_rift_door
         anchor_px = (ax * TILE + TILE // 2, ay * TILE + TILE // 2)
         draw_rift_door(screen, target, anchor_px, fold_x, fold_y, camera, t,
-                       cache_key=("fold", id(face)))
+                       cache_key=("fold", id(face)),
+                       seam_dir=(-ny, nx), vis=vis)
         return True
+
+    if dot < SEAM_DOT:
+        return False                              # not facing in: invisible
 
     if nx != 0:
         w, h = SIGHT_DEPTH, SEAM_TILES * TILE
