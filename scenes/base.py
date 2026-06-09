@@ -2801,6 +2801,9 @@ _WALL_DECO_KINDS = frozenset((
     "banner", "calendar", "clock", "apology_wall",
     "buck_head", "antler_rack", "mounted_fish", "wrong_taxidermy",
     "chalk_door_wall", "chalkboard",
+    # Framed needlework, a varnish-dark portrait, and a larder shelf of
+    # preserves: all HANG on the wall face.
+    "sampler", "oil_portrait", "preserve_shelf",
     # Things that belong ON a wall, not lying flat on the floor: a cobweb
     # spans a corner; a passing silhouette glides past a window.
     "cobweb", "passing_silhouette",

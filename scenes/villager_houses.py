@@ -149,6 +149,13 @@ def build_old_man_house():
     # Phantom-mark chalk on the nave's east wall.
     sc.add_decoration(Decoration(14 * TILE + 4, 6 * TILE + 16,
                                  "phantom_mark"))
+    # Parsonage dressing: a varnish-dark oil portrait of some prior
+    # reverend at the head of the nave (the face long sunk into the
+    # murk), and a stitched psalm sampler in the vestry, coming undone.
+    sc.add_decoration(Decoration(14 * TILE + 16, 0 * TILE + 22,
+                                 "oil_portrait", seed=7))
+    sc.add_decoration(Decoration(3 * TILE + 16, 0 * TILE + 22, "sampler",
+                                 seed=19))
     # The Preacher's own hand: the MISSING flyer for the bright young
     # woman he watched go quiet (he warns about her from the pulpit), and
     # the polaroid wall of faces he keeps -- the ones who drifted into the
@@ -278,6 +285,11 @@ def build_fisherman_cottage():
                                  "missing_flyer"))
     sc.add_decoration(Decoration(14 * TILE + 16, 3 * TILE + 16, "payphone"))
     sc.add_decoration(Decoration(1 * TILE + 16, 0 * TILE + 24, "calendar"))
+    # A varnish-dark portrait of a lawman who held the office before
+    # Vane, and the washstand by his cot -- he lives at his desk now.
+    sc.add_decoration(Decoration(8 * TILE + 16, 0 * TILE + 22,
+                                 "oil_portrait", seed=4))
+    sc.add_decoration(Decoration(3 * TILE + 20, 8 * TILE + 8, "washstand"))
     for mx, my in [(4, 7), (6, 8), (3, 9)]:
         sc.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16,
                                      "mote"))
@@ -350,6 +362,11 @@ def build_haunted_house():
                                  "phantom_mark"))
     sc.add_decoration(Decoration(4 * TILE + 16, 7 * TILE + 24,
                                  "bloodstain"))
+    # What the family left when they went: a preserves shelf nobody came
+    # back for, and a birdcage standing open in all that bare floor.
+    sc.add_decoration(Decoration(3 * TILE + 24, 0 * TILE + 22,
+                                 "preserve_shelf", seed=23))
+    sc.add_decoration(Decoration(4 * TILE + 16, 2 * TILE + 16, "birdcage"))
     for mx, my in [(3, 2), (4, 6), (8, 7)]:
         sc.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16,
                                      "mote"))

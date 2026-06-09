@@ -537,6 +537,12 @@ def build_backwoods_cabin_interior():
     # door until the player comes around the partition.
     sc.add_decoration(Decoration(8 * TILE + 16, 1 * TILE + 24,
                                  "claw_marks"))
+    # A homestead that was lived in until it wasn't: the washstand still
+    # by the door, a preserves shelf in the back nook nobody came back
+    # to empty.
+    sc.add_decoration(Decoration(1 * TILE + 18, 1 * TILE + 28, "washstand"))
+    sc.add_decoration(Decoration(9 * TILE + 20, 0 * TILE + 22,
+                                 "preserve_shelf", seed=27))
     sc.hide_spots = []
     return sc
 

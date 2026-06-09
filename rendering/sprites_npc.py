@@ -260,8 +260,13 @@ def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False,
             _grim_body(surf, x, y, coat, view=view)
             pygame.draw.ellipse(surf, skin, (x - HN, hcy - 7, HN * 2, HT))      # back of skull
             pygame.draw.ellipse(surf, sk_lo, (x - HN, hcy - 7, HN * 2, HT), 1)
-            pygame.draw.rect(surf, beard, (x - HN, hcy, HN * 2, 8))            # ash hair down the nape
-            pygame.draw.line(surf, (120, 116, 96), (x, hcy), (x, hcy + 7), 1)   # part
+            # long ash hair covers the back of the head down the nape --
+            # clearly HAIR (darker than the skin), only a neck strip below
+            hair_bk = (114, 112, 92)
+            pygame.draw.rect(surf, hair_bk, (x - HN, hcy - 4, HN * 2, 11))
+            pygame.draw.line(surf, (88, 86, 70), (x, hcy - 3), (x, hcy + 6), 1)   # part
+            pygame.draw.line(surf, (88, 86, 70), (x - 3, hcy - 2), (x - 4, hcy + 5), 1)  # strands
+            pygame.draw.line(surf, (88, 86, 70), (x + 3, hcy - 2), (x + 4, hcy + 5), 1)
             _oldhat(surf, x, y, hatc, hatc_lo, hatc_hi, hatb, hatb_lo)         # hat (rings the head)
             pygame.draw.line(surf, cane, (x + 9, y - 4), (x + 9, y + 14), 2)   # cane
         elif view in ("left", "right"):
@@ -459,7 +464,11 @@ def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False,
             _grim_body(surf, x, y, flannel, view=view)
             pygame.draw.ellipse(surf, skin, (x - HN, hcy - 7, HN * 2, HT))
             pygame.draw.ellipse(surf, sk_lo, (x - HN, hcy - 7, HN * 2, HT), 1)
-            pygame.draw.rect(surf, (60, 46, 34), (x - HN, hcy, HN * 2, 4))     # hair at nape
+            # hair fills the gap between cap and collar -- only a thin strip
+            # of neck shows, so the back never reads as a blank face
+            pygame.draw.rect(surf, (60, 46, 34), (x - HN, hcy - 3, HN * 2, 9))
+            pygame.draw.line(surf, (42, 32, 24), (x - 2, hcy - 1), (x - 2, hcy + 4), 1)
+            pygame.draw.line(surf, (42, 32, 24), (x + 2, hcy - 1), (x + 2, hcy + 4), 1)
             _cap(surf, x, y, cap_c, cap_lo, cap_bill)
             pygame.draw.rect(surf, cap_lo, (x - 4, y - 23, 8, 2))             # adjuster strap
         elif view in ("left", "right"):

@@ -213,8 +213,10 @@ it renders the procedural sprites to a labelled PNG strip.
   grabs) and **mutates** the resisters (`INFEST_MUTATE` → `_mutated` flag):
   their flesh deforms into a **bespoke body-horror form** with the fold's
   gold/Sign in the wound — Toby (head cleaves to a maw), Hettie (face
-  peels, Sign carved in), Garrick (skinned to sallow raw flesh, a black-gold
-  cancer of pop-out tumors erupting through it, fed by engorged vessels),
+  peels, Sign carved in), Garrick (the cancer took the arm that would
+  point: ONE black-gold mass swallows his shoulder and arm, a gold fissure
+  splits its crown, his eyes are sealed over, a few thick vessels anchor
+  it),
   Old Pell (tally-scars carve themselves into him in rows, one eye crossed
   off, the heavy re-cut 14th over his heart; resolved by NAME via
   `_INFEST_NAMED`, since he shares Garrick's `old_townsman` sprite kind),

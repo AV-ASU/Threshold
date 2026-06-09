@@ -428,31 +428,21 @@ class DialogueBox:
             pygame.draw.line(surf, GOLD, (fx, fy + 2), (fx + 4, fy + 6), 2)
             pygame.draw.circle(surf, GOLD_HI, (fx, fy), 1)
         elif kind == "old_townsman":
-            # (Garrick) face skinned to sallow raw flesh, crawling with a
-            # black-gold CANCER: engorged vessels feed tumors that BULGE out
-            # of the meat -- shaded black domes lit cold at the crown, molten
-            # gold cracking out of their fissures. The same form as the world
-            # sprite, at portrait scale.
+            # (Garrick) the cancer took the arm that would point: ONE great
+            # black-gold mass swallows his right shoulder and jaw from below
+            # the frame (the fused arm is out of crop), a single gold
+            # fissure splits its crown, his eyes are sealed over ("didn't
+            # need eyes for it"), and a FEW thick vessels anchor it up the
+            # neck. The man stays recognisable under it. Same form as the
+            # world sprite, at portrait scale.
             import random as _r
             rng = _r.Random(11)
-            SALLOW = (170, 162, 130); SALLOW_LO = (104, 98, 78)
             INFLAME = (150, 70, 62); INFLAME_LO = (90, 42, 37); VEIN = (120, 34, 36)
             TDK = (9, 8, 12); TLIT = (60, 54, 66); TSPEC = (94, 88, 100)
 
             def lerp(a, b, f):
                 f = max(0.0, min(1.0, f))
                 return tuple(int(a[i] + (b[i] - a[i]) * f) for i in range(3))
-
-            def veins(vx, vy, n, length):
-                for _ in range(n):
-                    a = rng.uniform(0, 6.28); x0, y0 = float(vx), float(vy)
-                    steps = rng.randint(2, 4); seg = length / steps; pts = [(x0, y0)]
-                    for _ in range(steps):
-                        a += rng.uniform(-0.7, 0.7)
-                        x0 += math.cos(a) * seg; y0 += math.sin(a) * seg
-                        pts.append((x0, y0))
-                    for i in range(len(pts) - 1):
-                        pygame.draw.line(surf, VEIN, pts[i], pts[i + 1], 2)
 
             def tumor(tx, ty, r):
                 R = r + int(thr * 1.5)
@@ -481,22 +471,22 @@ class DialogueBox:
                     pygame.draw.lines(surf, GOLD, False, [crown, (mx, my), (ex, ey)], 2)
                 pygame.draw.circle(surf, GOLD_HI, crown, 2)
 
-            pygame.draw.circle(surf, SALLOW, (cx, cy - 4), 16)         # flayed sallow head
-            pygame.draw.circle(surf, SALLOW_LO, (cx, cy - 4), 16, 1)
-            pygame.draw.circle(surf, (44, 30, 28), (cx - 6, cy - 6), 2)  # sunken eye-pits
-            pygame.draw.circle(surf, (44, 30, 28), (cx + 6, cy - 6), 2)
-            # The spread: a vein network creeping across the flayed flesh
-            # (feeders + vessels off every nodule) carries the cancer; then
-            # SMALL nodules bulge from the meat -- matches the world sprite,
-            # not a few oversized blobs.
-            sites = [(cx - 7, cy + 3, 4), (cx + 6, cy, 3), (cx - 1, cy + 9, 4),
-                     (cx + 8, cy + 8, 3), (cx + 1, cy - 10, 3)]
-            for fx, fy in [(cx, cy - 2), (cx - 9, cy + 4), (cx + 9, cy + 5)]:
-                veins(fx, fy, 4, 16)
-            for sx, sy, _r2 in sites:
-                veins(sx, sy, 3, 11)
-            for sx, sy, r in sites:
-                tumor(sx, sy, r)
+            # eyes sealed over: sick lids drawn shut, a dark healed seam
+            SEAL = (152, 136, 106)
+            for ex in (cx - 5, cx + 5):
+                pygame.draw.rect(surf, SEAL, (ex - 3, cy - 7, 7, 5))
+                pygame.draw.line(surf, (70, 54, 44), (ex - 3, cy - 5), (ex + 3, cy - 5), 1)
+            # a few THICK vessels, hand-placed, climbing from the mass into
+            # the jaw and neck -- anchors, not spaghetti
+            for pts in ([(cx - 4, cy + 2), (cx - 9, cy + 8), (cx - 13, cy + 14)],
+                        [(cx + 1, cy + 8), (cx - 5, cy + 13), (cx - 10, cy + 18)]):
+                for i in range(len(pts) - 1):
+                    pygame.draw.line(surf, VEIN, pts[i], pts[i + 1], 2)
+            # the ONE great mass, rising over the shoulder from below frame:
+            # under-lobes first so the dome reads as a single grown thing
+            pygame.draw.circle(surf, TDK, (cx - 25, cy + 17), 7)
+            pygame.draw.circle(surf, TDK, (cx - 4, cy + 24), 8)
+            tumor(cx - 15, cy + 20, 12)
 
     def _draw_portrait(self, surf, rect, kind):
         cx = rect.centerx; cy = rect.centery
