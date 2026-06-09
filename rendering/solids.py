@@ -23,17 +23,63 @@ def _shade(col, f):
             max(0, min(255, int(col[2] * f))))
 
 
-def draw_with_alpha(surf, alpha, fn):
+# Scratch layers for draw_with_alpha, pooled so the hot faded-draw path stops
+# allocating (and zero-filling) a fresh screen-sized SRCALPHA surface per call.
+# A small pool (not a single slot) keeps re-entrant fns safe: an inner
+# draw_with_alpha simply takes the next surface.
+_SCRATCH_POOL = []
+_SCRATCH_POOL_CAP = 4
+
+
+def draw_with_alpha(surf, alpha, fn, rect=None):
     """Run draw callable `fn(target)` at the given alpha. Opaque draws go
     straight to `surf`; faded ones render to a scratch layer then blit, so
-    an occluding wall can be made see-through without touching its art."""
+    an occluding wall can be made see-through without touching its art.
+
+    `rect` (optional) is a screen-space bound on what `fn` draws. When given,
+    only that region of the scratch is cleared + blitted back (the clip keeps
+    fn inside it), which turns a full-screen alpha composite into a small one
+    -- the difference between ~2.5ms and ~0.05ms per faded wall/actor."""
     if alpha >= 255:
         fn(surf)
         return
-    tmp = pygame.Surface(surf.get_size(), pygame.SRCALPHA)
-    fn(tmp)
-    tmp.set_alpha(alpha)
-    surf.blit(tmp, (0, 0))
+    size = surf.get_size()
+    tmp = None
+    for i, s in enumerate(_SCRATCH_POOL):
+        if s.get_size() == size:
+            tmp = _SCRATCH_POOL.pop(i)
+            break
+    if tmp is None:
+        # stale sizes (a render-scale change) would otherwise pin the pool
+        _SCRATCH_POOL[:] = [s for s in _SCRATCH_POOL if s.get_size() == size]
+        tmp = pygame.Surface(size, pygame.SRCALPHA)
+        # freshly created -> already transparent; skip the clearing fill
+        if rect is None:
+            fn(tmp)
+            tmp.set_alpha(alpha)
+            surf.blit(tmp, (0, 0))
+            if len(_SCRATCH_POOL) < _SCRATCH_POOL_CAP:
+                _SCRATCH_POOL.append(tmp)
+            return
+    if rect is not None:
+        r = pygame.Rect(rect).clip(tmp.get_rect())
+        if r.width <= 0 or r.height <= 0:
+            if len(_SCRATCH_POOL) < _SCRATCH_POOL_CAP:
+                _SCRATCH_POOL.append(tmp)
+            return
+        tmp.fill((0, 0, 0, 0), r)
+        tmp.set_clip(r)
+        fn(tmp)
+        tmp.set_clip(None)
+        tmp.set_alpha(alpha)
+        surf.blit(tmp, r.topleft, r)
+    else:
+        tmp.fill((0, 0, 0, 0))
+        fn(tmp)
+        tmp.set_alpha(alpha)
+        surf.blit(tmp, (0, 0))
+    if len(_SCRATCH_POOL) < _SCRATCH_POOL_CAP:
+        _SCRATCH_POOL.append(tmp)
 
 
 def draw_solid(surf, cam, wx, wy, sections, palette, t=0.0, yaw=0.0,

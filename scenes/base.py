@@ -2395,17 +2395,46 @@ _TILT_FLOOR_CACHE = {"key": None, "surf": None}
 # But the floor is STATIC: render the entire map's flat floor ONCE into a cached
 # surface, then each frame blit the window sub-region out of it (wrap-aware, a
 # handful of blits) and warp that. Only the animated water tiles are redrawn
-# live on top. Gated to large wrap scenes within a pixel budget; small rooms
-# keep the per-tile path (cheap already, and they own the byte-identity gate via
-# the flat Scene.draw, which is untouched).
+# live on top. Gated to wrap scenes within a pixel budget (large AND small --
+# a small torus wraps many copies of itself into the window, so it gains the
+# most); non-wrap rooms keep the per-tile path (cheap already, and they own the
+# byte-identity gate via the flat Scene.draw, which is untouched).
 _TILT_FULLMAP_CACHE = {"scene": None, "surf": None, "water": None}
-_TILT_FULLMAP_MIN_TILES = 1500          # below this the per-tile path is fine
+
+# Single-slot cache for the wall-tile window scan in draw_terrain_tilted.
+# The scan touches every tile in the visible window (~6000 on Brimley) every
+# frame, but its result only changes when the tile window moves or the object
+# grid mutates. Holds the scene ref so a recycled id() can't false-hit.
+# Invalidated by invalidate_tilt_objects() whenever a tile is opened/changed
+# at runtime (axe chops, consumed markers).
+_TILT_WALL_SCAN_CACHE = {"key": None, "walls": None, "scene": None}
+
+
+def invalidate_tilt_objects():
+    """Call after mutating a Scene's `objects` grid mid-play (chopped boards,
+    consumed markers) so the tilt render caches drop their stale geometry."""
+    _TILT_WALL_SCAN_CACHE["key"] = None
+    _TILT_WALL_SCAN_CACHE["walls"] = None
+    # Wall box cards key on neighbour exposure; an opened tile changes the
+    # faces of the walls around it.
+    _WALL_BOX_CACHE.clear()
+    _WALL_BOX_ORDER.clear()
+    # The warped-floor cache keys on the camera pose only; flat-drawn objects
+    # (debris '*', boards 'q') are painted INTO it, so a settled camera would
+    # keep showing a chopped tile until the player moved. Drop it too.
+    _TILT_FLOOR_CACHE["key"] = None
+    _TILT_FLOOR_CACHE["surf"] = None
 _TILT_FULLMAP_BUDGET_PX = 16 * 1024 * 1024   # don't bake maps bigger than this
 
 
 def _tilt_use_fullmap(scene):
+    # Every wrap scene within the pixel budget bakes. Big ones (Brimley) for
+    # the obvious reason; SMALL ones even more so -- a 24x22 torus under the
+    # tilt window wraps ~10 copies of itself, so the per-tile path rasters
+    # thousands of wrapped tiles per panned frame while its whole-map bake is
+    # a few hundred KB blitted a handful of times (the cornfield_maze was the
+    # worst walking-fps scene in the game for exactly this reason).
     return ((scene.wrap_x or scene.wrap_y)
-            and scene.w * scene.h >= _TILT_FULLMAP_MIN_TILES
             and (scene.w * TILE) * (scene.h * TILE) <= _TILT_FULLMAP_BUDGET_PX)
 
 
@@ -2497,8 +2526,12 @@ def _tilt_window_half(camera):
 
 def _tilt_warp(flat, camera):
     """Affine warp of the flat floor to match camera.project() for z=0:
-    world-rotate by yaw, then scale x by scale and y by scale*cos(pitch)."""
-    rotated = pygame.transform.rotate(flat, math.degrees(camera.yaw))
+    world-rotate by yaw, then scale x by scale and y by scale*cos(pitch).
+    At yaw 0 (the eased-to-rest head position, i.e. most walking frames) the
+    rotate is skipped entirely -- transform.rotate(s, 0) still copies the
+    whole large window surface for nothing."""
+    deg = math.degrees(camera.yaw)
+    rotated = pygame.transform.rotate(flat, deg) if abs(deg) > 1e-4 else flat
     cp = max(0.05, math.cos(camera.pitch))
     w, h = rotated.get_size()
     # `scale` (nearest) rather than `smoothscale` (bilinear): the floor raster
@@ -2740,7 +2773,12 @@ _FLOOR_DECAL_KINDS = frozenset((
 # DEPTH-SORTED with the props by the caller -- so the counter box doesn't paint
 # over them and they read as resting ON the desk, not the floor, and not as a
 # camera-facing billboard. Skipped in the terrain pass; emitted by render_mixin.
-_SURFACE_DECAL_KINDS = frozenset(("ledger",))
+_SURFACE_DECAL_KINDS = frozenset((
+    "ledger",
+    # A plate + cutlery IS flat: warp it onto the table top (or the floor when
+    # not seated) instead of standing a top-down sticker up under tilt.
+    "place_setting",
+))
 
 # Small props that REST on a tabletop: when one is placed on a furniture
 # footprint tile, seat_tabletop_props lifts it onto that surface (a deco `z`)
@@ -2750,6 +2788,7 @@ _TABLETOP_PROP_KINDS = frozenset((
     "candle", "lantern", "kerosene_lamp", "oil_lamp", "lamp", "ledger",
     "bowl", "cup", "mug", "bottle", "jar", "plate", "radio", "papers",
     "book", "photo", "photo_frame", "tankard", "teapot",
+    "wrong_radio", "place_setting",
 ))
 
 # Wall-mounted decorations. Under tilt these are lifted onto the wall face as
@@ -3259,7 +3298,12 @@ def draw_terrain_tilted(surf, scene, camera, sight=None):
     if _fc["key"] == fkey:
         warped = _fc["surf"]
     else:
-        flat = pygame.Surface((span, span))
+        # Reuse the flat scratch between rebuilds -- allocating a fresh
+        # span x span surface (several MB) every panned frame was churn.
+        flat = _fc.get("flat")
+        if flat is None or flat.get_size() != (span, span):
+            flat = pygame.Surface((span, span))
+            _fc["flat"] = flat
         flat.fill((10, 10, 14))
         if _tilt_use_fullmap(scene):
             # Big wrap scene: blit the window out of the whole-map bake (a few
@@ -3289,28 +3333,43 @@ def draw_terrain_tilted(surf, scene, camera, sight=None):
     # Collect the visible wall tiles (returned for the unified depth pass; the
     # caller sorts + fades them). Wrap-aware: tx/ty may sit outside [0,W) for a
     # toroidal scene and the box projects at the un-wrapped world position.
-    walls = []
+    # The scan walks every tile in the window (~6000 on Brimley) but its result
+    # only changes when the TILE window shifts (sub-tile camera pans land in
+    # the same window), so it's cached on the window. The billboard cull keys
+    # on the camera's tile too -- a sub-tile-stale fog boundary is invisible.
     W, H = scene.w, scene.h
-    # Corn now renders as per-tile 3D stalks (_tilt_corn_solid), so each
-    # cornstalk tile depth-sorts on its own; the legacy card-merging LOD is
-    # bypassed (its anchors-and-suppressed map is unused under the 3D path).
-    for ty in range(y0, y1):
-        wty = scene.render_row(ty)
-        if not (0 <= wty < H):
-            continue
-        for tx in range(x0, x1):
-            wtx = tx % W if scene.wrap_x else tx
-            if not (0 <= wtx < W):
+    wkey = (x0, y0, x1, y1,
+            int(camera.cam_x // TILE), int(camera.cam_y // TILE))
+    _wc = _TILT_WALL_SCAN_CACHE
+    if _wc["key"] == wkey and _wc["scene"] is scene:
+        walls = _wc["walls"]
+    else:
+        walls = []
+        # Corn now renders as per-tile 3D stalks (_tilt_corn_solid), so each
+        # cornstalk tile depth-sorts on its own; the legacy card-merging LOD is
+        # bypassed (its anchors-and-suppressed map is unused under the 3D path).
+        for ty in range(y0, y1):
+            wty = scene.render_row(ty)
+            if not (0 <= wty < H):
                 continue
-            ch = scene.objects[wty][wtx]
-            if (ch in _WALL_CHARS or ch in _DOOR_CHARS or ch in _WINDOW_CHARS
-                    or ch in _TILT_BILLBOARD_CHARS or ch in _COUNTER_CHARS):
-                if ch in _TILT_BILLBOARD_CHARS:
-                    dx = (tx * TILE + 16) - camera.cam_x
-                    dy = (ty * TILE + 16) - camera.cam_y
-                    if dx * dx + dy * dy > _TILT_BILLBOARD_CULL2:
-                        continue            # far treeline -> lost in the fog
-                walls.append((tx, ty))
+            for tx in range(x0, x1):
+                wtx = tx % W if scene.wrap_x else tx
+                if not (0 <= wtx < W):
+                    continue
+                ch = scene.objects[wty][wtx]
+                if (ch in _WALL_CHARS or ch in _DOOR_CHARS
+                        or ch in _WINDOW_CHARS
+                        or ch in _TILT_BILLBOARD_CHARS
+                        or ch in _COUNTER_CHARS):
+                    if ch in _TILT_BILLBOARD_CHARS:
+                        dx = (tx * TILE + 16) - camera.cam_x
+                        dy = (ty * TILE + 16) - camera.cam_y
+                        if dx * dx + dy * dy > _TILT_BILLBOARD_CULL2:
+                            continue        # far treeline -> lost in the fog
+                    walls.append((tx, ty))
+        _wc["key"] = wkey
+        _wc["walls"] = walls
+        _wc["scene"] = scene
     # Decorations. Ground decals (rugs, stains, blood) stay flat on the warped
     # floor; non-solid billboards rise from it -- both drawn now, wrap-cloned
     # across the seam THROUGH the projection (CAMERA.md Phase 5) so a torus
@@ -3382,13 +3441,19 @@ def draw_terrain_tilted(surf, scene, camera, sight=None):
                     if not (-MX <= psx <= sw + MX
                             and -MTOP <= psy <= sh + MBOT):
                         continue                  # tight screen-px cull
+                    # `a` < 255 only for sight-gated rot decals fading at the
+                    # cone lip; bound their scratch composite near the deco.
+                    drect = (None if a >= 255
+                             else (psx - 140, psy - 180, 280, 300))
                     if d.kind in _FLOOR_DECAL_KINDS:
                         draw_with_alpha(surf, a, lambda s, d=d, woff=woff:
-                                        _draw_floor_decal(s, camera, d, woff))
+                                        _draw_floor_decal(s, camera, d, woff),
+                                        rect=drect)
                     else:
                         draw_with_alpha(surf, a, lambda s, d=d, woff=woff:
                                         d.draw(s, 0, 0, camera,
-                                               wox=woff[0], woy=woff[1]))
+                                               wox=woff[0], woy=woff[1]),
+                                        rect=drect)
     # Neighbor walls/standees for the seamless strip. Same Phase 2 deferral:
     # wrap hosts get no strip yet. Returned as a parallel list so render_mixin
     # can dispatch each through a satellite camera while still depth-sorting
@@ -3429,6 +3494,7 @@ def draw_scene_doors(surf, scene, cam_x, cam_y, x0, y0, x1, y1):
 _GRAIN_TILE = None
 _VIGNETTE_CACHE = {}
 _GRADE_TINT = (16, 20, 22)
+_TINT_CACHE = {}     # static full-frame tint fill, per buffer size
 
 # The desaturation half-res smoothscale+grayscale+upscale is the single most
 # expensive per-frame op in the live grade. The grey is only ever blended back
@@ -3512,8 +3578,11 @@ def apply_grade(surf, t=0.0, desat=82, frame=None):
         surf.blit(grey, (0, 0))
     except Exception:
         pass
-    tint = pygame.Surface((w, h), pygame.SRCALPHA)
-    tint.fill((_GRADE_TINT[0], _GRADE_TINT[1], _GRADE_TINT[2], 38))
+    tint = _TINT_CACHE.get((w, h))
+    if tint is None:
+        tint = pygame.Surface((w, h), pygame.SRCALPHA)
+        tint.fill((_GRADE_TINT[0], _GRADE_TINT[1], _GRADE_TINT[2], 38))
+        _TINT_CACHE[(w, h)] = tint
     surf.blit(tint, (0, 0))
     surf.blit(_vignette(w, h), (0, 0))
     g = _grain_tile()
@@ -4163,6 +4232,7 @@ class Scene:
         if pos:
             tx, ty = pos
             self.objects[ty][tx] = "."
+            invalidate_tilt_objects()
             return tx, ty
         return None
 

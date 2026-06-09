@@ -22,9 +22,9 @@ the lethal apex pursuer. (See the tilted-camera track below + `CAMERA.md`.)
 # Run (needs a display)
 python main.py
 
-# Full test gate — runs all four harnesses (smoke + flow + fold_pursuit +
-# render_smoke) and exits nonzero if any fails. Self-configures SDL dummy
-# drivers, so no env vars needed. Run from repo root before every commit/push.
+# Full test gate — runs all five harnesses (smoke + flow + fold_pursuit +
+# king_roam + render_smoke) and exits nonzero if any fails. Self-configures SDL
+# dummy drivers, so no env vars needed. Run from repo root before every commit/push.
 python tests/run_all.py
 
 # Or run a single harness (same drivers, standalone):
@@ -289,7 +289,7 @@ it renders the procedural sprites to a labelled PNG strip.
 ## Working agreements (process — learned the hard way)
 
 - **Verify before you commit.** Run compile + `python tests/run_all.py` (the
-  full gate: smoke + flow + fold_pursuit + render_smoke) and confirm green
+  full gate: smoke + flow + fold_pursuit + king_roam + render_smoke) and confirm green
   BEFORE `git commit`/`push`. A commit was pushed twice this project with a
   `NameError` because edits were batched and not re-verified. For
   rendering/refactor work also run the byte-identity gate
