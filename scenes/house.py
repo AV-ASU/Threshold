@@ -109,9 +109,11 @@ def build_bedroom():
                                  "phantom_mark"))
     # Guest-room toilette: a washstand against the west wall (the basin
     # water a shade too dark), and somebody's old framed needlework on
-    # the east wall, its bottom rows come undone.
+    # the north wall, its bottom rows come undone. (North wall, not east:
+    # E/W wall faces are edge-on to the tilt camera at rest, so a picture
+    # there only shows during a head-turn.)
     sc.add_decoration(Decoration(1 * TILE + 18, 6 * TILE + 8, "washstand"))
-    sc.add_decoration(Decoration(14 * TILE + 24, 3 * TILE + 16, "sampler",
+    sc.add_decoration(Decoration(14 * TILE + 10, 0 * TILE + 22, "sampler",
                                  seed=9))
     # Drifting motes through the room -- dust in old light.
     for i in range(7):

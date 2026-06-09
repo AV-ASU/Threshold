@@ -1343,9 +1343,15 @@ class RenderMixin:
             # are environmental like the walls + furniture (which also draw
             # regardless of the cone); the gray fog already greys off-cone.
             from scenes.base import _WALL_MOUNT_Z, draw_wall_deco
+            # +4 depth bias (depth is in world px): a card on an E/W wall ties
+            # with its own wall box at yaw ~0 (same camera distance) and the
+            # box painted over it; the bias keeps the card just in front of
+            # its own wall while staying far below the one-tile (32) gap to
+            # any real occluder.
             for d in (_tilt_wall_decos or []):
                 for ox, oy in _offsets:
-                    _emit(self.camera.depth(d.x + ox, d.y + oy, _WALL_MOUNT_Z),
+                    _emit(self.camera.depth(d.x + ox, d.y + oy,
+                                            _WALL_MOUNT_Z) + 4.0,
                           lambda d=d, ox=ox, oy=oy: draw_wall_deco(
                               self.screen, self.camera, self.scene, d,
                               _WALL_MOUNT_Z, woff=(ox, oy)))

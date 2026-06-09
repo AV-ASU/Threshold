@@ -53,7 +53,8 @@ def _shot(key, center_tile, aim, zoom, fog):
     g.camera.scale *= zoom
     if hasattr(g, "look"):
         try:
-            g.look.aim = aim
+            # look.aim is a HEADING (radians), not a vector
+            g.look.aim = math.atan2(aim[1], aim[0])
         except Exception:
             pass
     if not fog:
