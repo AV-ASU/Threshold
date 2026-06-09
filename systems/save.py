@@ -14,10 +14,11 @@ DEFAULT_SAVE = {
     "spawn": "default",
     "player": {"hp": 100, "max_hp": 100},
     # The PI starts with their sidearm and a handful of rounds (1994 noir),
-    # plus the morning paper from the drive north. Brimley has had no
-    # deliveries since the fold closed, so the paper is the one thing in
-    # his pockets the town can't get: proof the outside is still there.
-    # Hettie at the store trades for it (scenes/dialogue.py).
+    # plus yesterday's paper: the April 14 issue, picked up before the
+    # drive north. Brimley hasn't seen a paper since the trucks stopped
+    # in spring, so yesterday's date makes the cut-off legible, and
+    # Hettie at the store trades a load of ammo for it
+    # (scenes/dialogue.py).
     "inventory": {"items": [["pistol", 1], ["pistol_ammo", 8],
                             ["newspaper", 1]],
                   "equipped": {"weapon": None, "armor": None}},

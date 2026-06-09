@@ -196,11 +196,14 @@ def hettie_dialogue(game, npc):
             "here. Don't ask me to.",
         ], speaker="Hettie", voice="blip_high", portrait="hettie")
         return
-    # The trade: the PI's morning paper for the cartridges she keeps under
-    # the counter. One opportunistic barter, NOT a fetch chain (Sable's was
-    # cut on purpose) -- she has nothing to sell, but a paper from outside
-    # is the one thing in Brimley money can't buy. Fires once, after she's
-    # met you (her first conversation is too wary for it).
+    # The trade: yesterday's paper (the April 14 issue, picked up before
+    # the drive north) for ONE load of the cartridges she keeps under the
+    # counter. One opportunistic barter, NOT a fetch chain (Sable's was
+    # cut on purpose). The date is the point: Brimley hasn't seen a paper
+    # since the trucks stopped in spring, so yesterday's date makes the
+    # cut-off legible, and trading ammo for one is how starved for word
+    # they are. Fires once, after she's met you (her first conversation
+    # is too wary for it).
     if (save.arg("shop_count", 0) >= 1
             and not save.flag("newspaper_traded")
             and game.player.inventory.has("newspaper")):
@@ -210,15 +213,16 @@ def hettie_dialogue(game, npc):
         game.audio.play("pickup_rare", 0.7)
         game.dialog.show([
             "[c=dim]Her eyes stop on the newspaper folded in your coat "
-            "pocket.[/c]",
-            "That today's? From outside?",
-            "[c=dim]She says outside the way other people say a dead "
-            "man's name.[/c]",
-            "Tell you what. Leave it on the counter and take what's under "
-            "it. The till's been empty since spring. The shelf under it "
-            "hasn't.",
-            "[c=dim]A box of cartridges. She doesn't count them. She's "
-            "already reading the front page like a letter from someone "
+            "pocket. She goes very still.[/c]",
+            "What's the date on that. The date.",
+            "[c=dim]You show her. April 14. Yesterday. You bought it "
+            "before the drive north.[/c]",
+            "Yesterday's. We haven't had a paper through here since the "
+            "trucks stopped.",
+            "Leave it on the counter and take what's under it. The till's "
+            "been empty since spring. The shelf under it hasn't.",
+            "[c=dim]One load of cartridges across the counter. She's "
+            "already reading yesterday's news like a letter from someone "
             "she'd given up on.[/c]",
         ], speaker="Hettie", voice="blip_high", portrait="hettie")
         return

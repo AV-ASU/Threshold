@@ -89,7 +89,7 @@ def _letter(s):
 
 
 def _newspaper(s):
-    # Today's paper, folded in half: masthead band, column rules below.
+    # Yesterday's paper, folded in half: masthead band, column rules.
     pygame.draw.rect(s, _PAPER, (2, 4, 12, 9))
     pygame.draw.rect(s, _PAPER_DARK, (2, 4, 12, 9), 1)
     pygame.draw.line(s, _PAPER_DARK, (2, 8), (13, 8), 1)   # the fold

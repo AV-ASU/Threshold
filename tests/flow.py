@@ -953,20 +953,26 @@ def main():
           "ashfall: safe rooms stay clean until stage 3 claims them too")
 
     # --- 23. The beat pass: paper trade, Vane one-shot, Calder, SPREAD ------
-    # (a) The PI drives in with the morning paper (the one thing in his
-    # pockets a sealed town can't get) and Hettie trades it ONCE for the
-    # cartridges under the counter. A single barter, never a fetch chain.
+    # (a) The PI carries yesterday's paper (the April 14 issue, bought
+    # before the drive north) and Hettie trades it ONCE for one load of
+    # the cartridges under the counter: Brimley hasn't seen a paper since
+    # the trucks stopped, so yesterday's date makes the cut-off legible,
+    # and the trade is how starved for word they are. A single barter,
+    # never a fetch chain.
     from scenes.dialogue import hettie_dialogue, sheriff_dialogue
+    from systems.items import ITEM_DEFS as _IDEFS
     gp = new_game()
     check(gp.player.inventory.has("newspaper"),
-          "paper: the PI drives in with this morning's paper")
+          "paper: the PI drives in with yesterday's paper")
+    check("April 14" in _IDEFS["newspaper"]["desc"],
+          "paper: the issue is dated April 14 (the cut-off yardstick)")
     gp.save.set_arg("shop_count", 1)            # she has met you once
     _ammo0 = gp.player.inventory.count("pistol_ammo")
     hettie_dialogue(gp, None)
     check(gp.save.flag("newspaper_traded")
           and not gp.player.inventory.has("newspaper")
           and gp.player.inventory.count("pistol_ammo") == _ammo0 + 6,
-          "paper: Hettie trades the paper for a box of cartridges")
+          "paper: Hettie trades the paper for one load of cartridges")
     _ammo1 = gp.player.inventory.count("pistol_ammo")
     hettie_dialogue(gp, None)
     check(gp.player.inventory.count("pistol_ammo") == _ammo1,
