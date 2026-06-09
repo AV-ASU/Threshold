@@ -338,12 +338,14 @@ class RenderMixin:
         # fog is a soft gray wash, so re-blitting a sub-bucket-stale layer is
         # imperceptible, and walking frames get cache hits too.
         cam = self.camera
-        fkey = (self.screen.get_size(), id(self.scene),
+        fkey = (self.screen.get_size(),
                 int(self.player.x / 3), int(self.player.y / 3),
                 int(aim * 100), int(cam.cam_x / 3), int(cam.cam_y / 3),
                 round(cam.yaw, 3), round(cam.scale, 3))
         fc = self._sight_fog_cache
-        if fc.get("key") == fkey and fc.get("surf") is not None:
+        # Identity-held scene ref (not id(): a freed scene's id can recycle).
+        if (fc.get("key") == fkey and fc.get("scene") is self.scene
+                and fc.get("surf") is not None):
             self.screen.blit(fc["surf"], (0, 0))
             return
         fog = fc.get("surf")
@@ -381,6 +383,7 @@ class RenderMixin:
         pygame.draw.circle(fog, (0, 0, 0, 0), (psx, psy), 26)
         fc["key"] = fkey
         fc["surf"] = fog
+        fc["scene"] = self.scene
         self.screen.blit(fog, (0, 0))
 
     def _draw_hidden_overlay(self):
