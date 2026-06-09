@@ -2773,7 +2773,12 @@ _FLOOR_DECAL_KINDS = frozenset((
 # DEPTH-SORTED with the props by the caller -- so the counter box doesn't paint
 # over them and they read as resting ON the desk, not the floor, and not as a
 # camera-facing billboard. Skipped in the terrain pass; emitted by render_mixin.
-_SURFACE_DECAL_KINDS = frozenset(("ledger",))
+_SURFACE_DECAL_KINDS = frozenset((
+    "ledger",
+    # A plate + cutlery IS flat: warp it onto the table top (or the floor when
+    # not seated) instead of standing a top-down sticker up under tilt.
+    "place_setting",
+))
 
 # Small props that REST on a tabletop: when one is placed on a furniture
 # footprint tile, seat_tabletop_props lifts it onto that surface (a deco `z`)
@@ -2783,6 +2788,7 @@ _TABLETOP_PROP_KINDS = frozenset((
     "candle", "lantern", "kerosene_lamp", "oil_lamp", "lamp", "ledger",
     "bowl", "cup", "mug", "bottle", "jar", "plate", "radio", "papers",
     "book", "photo", "photo_frame", "tankard", "teapot",
+    "wrong_radio", "place_setting",
 ))
 
 # Wall-mounted decorations. Under tilt these are lifted onto the wall face as

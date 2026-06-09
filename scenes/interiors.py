@@ -194,6 +194,10 @@ def build_shop():
     sc.add_furniture("bookshelf", [(1, 1), (2, 1)], w=58, h=18, seed=4)
     sc.add_furniture("table", [(4, 2)], w=30, h=30)
     sc.add_decoration(Decoration(9 * TILE + 16, 9 * TILE + 2, "candle"))
+    # A low goods shelf finishes the north-wall run, and the wrong radio
+    # sits ON it (its art is a thing on a surface; on the bare floor it
+    # read as a sticker under the tilt).
+    sc.add_furniture("shelf", [(13, 1)], w=28, h=16, seed=7)
     sc.add_decoration(Decoration(13 * TILE + 16, 1 * TILE + 22, "wrong_radio"))
     # Lodge dressing on the shop floor: a mounted buck + trophy walleye on
     # the north wall, a kerosene lamp on the counter. The cobweb hangs in

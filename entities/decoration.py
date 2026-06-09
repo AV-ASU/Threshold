@@ -512,6 +512,47 @@ class Decoration:
         pygame.draw.polygon(surf, (255, 206, 96),
                             [(x, int(y - 4 - fh)), (x - 2, y - 4), (x + 2, y - 4)])
 
+    def _draw_crate(self, surf, x, y):
+        # Flat (pitch-0 / F3) fallback for the crate FURNITURE box -- it had
+        # none and rendered as the magenta _draw_unknown square. A slatted
+        # pine lid seen from above, cross-braced.
+        w = int(self.kwargs.get("w", 30)); h = int(self.kwargs.get("h", 30))
+        rx, ry = x - w // 2, y - h // 2
+        pygame.draw.rect(surf, (74, 52, 32), (rx, ry, w, h))             # lid
+        pygame.draw.rect(surf, (34, 23, 13), (rx, ry, w, h), 1)
+        pygame.draw.rect(surf, (96, 70, 44), (rx, ry, w, 2))             # lit back
+        for gx in range(rx + 6, rx + w - 3, 7):                          # slats
+            pygame.draw.line(surf, (56, 38, 22), (gx, ry + 2), (gx, ry + h - 3), 1)
+        pygame.draw.line(surf, (46, 31, 18), (rx + 2, ry + 2),
+                         (rx + w - 3, ry + h - 3), 1)                    # brace
+        pygame.draw.line(surf, (46, 31, 18), (rx + w - 3, ry + 2),
+                         (rx + 2, ry + h - 3), 1)
+
+    def _draw_barrel(self, surf, x, y):
+        # Flat fallback for the barrel FURNITURE volume (same magenta-square
+        # gap): round top, iron hoop, sunken wet lid.
+        r = max(8, int(self.kwargs.get("w", 26)) // 2)
+        pygame.draw.circle(surf, (66, 46, 28), (x, y), r)                # staves
+        pygame.draw.circle(surf, (30, 21, 12), (x, y), r, 1)
+        pygame.draw.circle(surf, (96, 96, 104), (x, y), r - 2, 1)        # hoop
+        pygame.draw.circle(surf, (44, 32, 20), (x, y), max(2, r - 4))    # sunken lid
+        pygame.draw.circle(surf, (22, 17, 13), (x, y), max(1, r - 8))    # dark core
+        pygame.draw.arc(surf, (104, 78, 50),
+                        (x - r + 2, y - r + 2, (r - 2) * 2, (r - 2) * 2),
+                        2.2, 3.4, 1)                                     # cold glint
+
+    def _draw_counter(self, surf, x, y):
+        # Flat fallback for the counter slab (same gap): a long worktop,
+        # like the table top but with a solid front lip and no legs.
+        w = int(self.kwargs.get("w", 60)); h = int(self.kwargs.get("h", 26))
+        rx, ry = x - w // 2, y - h // 2
+        pygame.draw.rect(surf, (74, 52, 32), (rx, ry, w, h))
+        pygame.draw.rect(surf, (34, 23, 13), (rx, ry, w, h), 1)
+        pygame.draw.rect(surf, (96, 70, 44), (rx, ry, w, 2))             # lit back
+        pygame.draw.rect(surf, (40, 27, 16), (rx, ry + h - 4, w, 4))     # front lip
+        for gx in range(rx + 8, rx + w - 4, 12):                         # grain
+            pygame.draw.line(surf, (56, 38, 22), (gx, ry + 3), (gx, ry + h - 5), 1)
+
     def _draw_firewood(self, surf, x, y):
         # A stack of split logs -- pale ringed ends in a dark cradle.
         w = int(self.kwargs.get("w", 40)); h = int(self.kwargs.get("h", 24))
@@ -1440,7 +1481,11 @@ class Decoration:
             pygame.draw.ellipse(surf, cols[2], (x - 3, y - 2, 4, 2))
 
     def _draw_item_drop(self, surf, x, y):
-        # generic loot bob: small box that bobs gently with subtle glow
+        # generic loot bob: small box that bobs gently with subtle glow.
+        # A faint ground-contact shadow sits under the bobbing icon so the
+        # pickup reads as ON the floor, not floating (HANDCRAFT_BACKLOG 2);
+        # the icon bobs, the shadow stays put.
+        _ground_shadow(surf, x, y + 5, 7, 3, 90)
         bob = int(math.sin(self.t * 2) * 1)
         col = self.kwargs.get("color", C_GOLD)
         pygame.draw.rect(surf, col, (x - 4, y - 4 + bob, 8, 8))
@@ -1518,8 +1563,6 @@ class Decoration:
         # A few darker smudges for texture (matches well-gore style).
         pygame.draw.line(surf, (4, 10, 18), (x - 10, y + 4),
                          (x + 12, y + 6), 1)
-        pygame.draw.line(surf, (4, 10, 18), (x - 8, y + 8),
-                         (x + 10, y + 8), 1)
 
     def _draw_watching_eye(self, surf, x, y):
         """An eye that always looks at the player. The pupil rotates

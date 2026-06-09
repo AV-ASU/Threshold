@@ -1,122 +1,83 @@
 # HANDCRAFT BACKLOG — sprites/art that don't fit the 3D tilt yet
 
 > The oblique tilt camera is the default. Under it, things should render as
-> **volumetric solids** (`rendering/furniture.py`, `rendering/props.py`) or
-> **stood-up billboards/standees** (`scenes/base.py` `_tilt_standee`,
-> `_TILT_BILLBOARD_CHARS`). Anything still drawn **flat top-down** reads as a
-> *stain on the floor* under tilt. This is the slow-burn list to hand-craft.
+> **volumetric solids** (`rendering/furniture.py`, `rendering/props.py`),
+> **stood-up billboards/standees** (`props.py` `_STANDEE_KINDS`, `scenes/base.py`
+> `_tilt_standee`), **wall-hung cards** (`_WALL_DECO_KINDS`), or **flat decals
+> warped onto the floor/surface plane** (`_FLOOR_DECAL_KINDS` /
+> `_SURFACE_DECAL_KINDS`). Anything still drawn **flat top-down** reads as a
+> *stain on the floor* under tilt.
 >
-> **What already has 3D:** the 14 `FURNITURE` kinds (`furniture.py`: table,
-> chair, bed, bookshelf, shelf, wardrobe, stove, fireplace, counter, firewood,
-> crate, barrel, cot, bone_rack, pew), the 4 `SOLID_PROPS` (`props.py`: well,
-> pillar, cistern_basin, grain_heap), wall/door/window **tiles**, and
-> tree/cornstalk **tiles** (billboarded). Floor decals (rug, bloodstain, gore,
-> yellow_sign, bloody_handprint, bloody_pile) are *intentionally* flat. Pure
-> particles (smoke, mist, mote, wisp, leaves, flock) are intentionally flat.
->
-> Everything below is a **`Decoration` kind** (`entities/decoration.py`) with
-> **no** solid/billboard treatment — flat under tilt.
+> **STATUS (2026-06 audit): the original backlog is almost entirely BUILT.**
+> A per-kind audit against the live kind-sets found nearly every item already
+> handled; the stragglers were finished in the same pass. The mechanism map
+> below is kept for the next new decoration kind.
 
-## Tier 1 — high-visibility, frequently placed
+## Audit result (how each original item renders today)
 
-### Kitchen / dining (the called-out group)
-- `place_setting` — plate/cutlery drawn top-down (brimley, house interiors)
-- `calendar` — wall calendar drawn as a flat grid (should hang on a wall)
-- `clock` — wall clock face, flat circle+hands (should hang on a wall)
-- `radio` / `wrong_radio` — flat speaker grille + dial
-- `cauldron`, `bowl` — circular rims seen from straight above
+- **FURNITURE box volumes** (`furniture.py`): table, chair, bed, bookshelf,
+  shelf, wardrobe, stove, fireplace, counter, firewood, crate, barrel, cot,
+  bone_rack, pew, **chest, small_chair, overturned_chair, terminal, computer,
+  gas_pump, payphone, headstone**.
+- **SOLID_PROPS / live solids** (`props.py`): well, pillar, cistern_basin,
+  grain_heap, doorframe, waterfall, shaft_ladder, cellar_hatch, town_sign,
+  flagpole, **player_car, pickup_truck**, stalagmite, candle, kerosene_lamp,
+  lantern, brazier, wall_torch, rope, stalk_marker, smoke, wisp, mote, flock,
+  **crow** (live, so its hop + looking-backwards anomaly survive).
+- **Standees** (grounded elevation cards): creepy_tree, corn_doll, corn_altar,
+  cauldron, wheelbarrow, pedestal, **steeple**, tall_grass, grass_tuft, doll,
+  husk_bundle, hanging_figure (hung).
+- **Wall-hung cards** (`_WALL_DECO_KINDS`): **mirror, photo, wrong_photo,
+  missing_flyer, polaroid_wall, banner, calendar, clock, apology_wall,
+  buck_head, antler_rack, mounted_fish, wrong_taxidermy**, chalk_door_wall,
+  chalkboard, cobweb, passing_silhouette.
+- **Floor/surface decals** (intentionally flat, warped onto the plane): rug,
+  bloodstain, gore, yellow_sign, bloody_handprint, bloody_pile, symbol,
+  binding_sigil, swallow_hole, body, drowned_body, bush, dead_crow,
+  mud_footprint, claw_marks, mist, leaves, ledger, **place_setting**.
+- **Tabletop-seated** (`_TABLETOP_PROP_KINDS` + `seat_tabletop_props`): radio,
+  **wrong_radio**, bowl, cup, plate, papers, book, photo, lamps...
 
-### Wall decoration / signage (the called-out group)
-- `mirror` — flat disc; should be a vertical wall billboard
-- `photo` / `wrong_photo`, `polaroid_wall` — flat frames on the wall
-- `missing_flyer` — flat poster (very common: brimley, houses)
-- `banner`, `apology_wall`, `symbol` — flat cloth / wall-scrawl / painted mark
-- `town_sign`, `steeple` — stand tall in the world but drawn flat
+## Closed in the 2026-06 pass
 
-### Standing furniture missing a solid
-- `chest` — top-down box; belongs in `FURNITURE` (it's a real volume)
-- `small_chair`, `overturned_chair` — chair variants not in `FURNITURE`
-- mounts: `buck_head`, `antler_rack`, `mounted_fish`, `wrong_taxidermy` — wall trophies drawn flat
+1. **Pickup ground shadows** — scene items already had a tilt shadow in
+   `_draw_item`; the `item_drop` *decoration* now draws its own contact
+   shadow too (`entities/decoration.py`).
+2. **crow** — was the last truly flat ambient kind; now a LIVE solid prop
+   (`props.py _draw_crow_solid`): grounded with a contact shadow, legs, body
+   and head projected at real heights, animation (hop / head-turn / the rare
+   looking-backwards beat) intact. Flat pitch-0 art unchanged.
+3. **place_setting** — now a surface decal: warps flat onto the table top
+   (seated to the surface z) instead of standing up as a sticker.
+4. **wrong_radio** — seated like the plain radio; the shop builder also puts
+   a low goods shelf under it so it sits ON something.
+5. **Surface-decal depth fix** — seated props now depth-sort at their host
+   tile's SOUTH edge, so a plate near a tile's north edge can't sort behind
+   its own table (the table top used to paint over it).
+6. **crate / barrel / counter flat fallbacks** — these FURNITURE kinds had no
+   `_draw_<kind>` and rendered as the magenta `_draw_unknown` square in the
+   pitch-0/F3 view (house, basement, well_bottom, well_passage, works_sorting,
+   the_sump). Proper top-down art added.
+7. **The river tile** — the backlog's "organic dark depth patches drifting
+   mid-channel" already shipped (`scenes/base.py` `draw_floor` `'~'`), along
+   with bank fringes, algae, and cold glints. Confirmed in-game; nothing left.
 
-### Interactive / readable
-- `terminal`, `computer` — functional, flat screens
-- `rope`, `cellar_hatch` — flat coil / hatch
+## Genuinely open
 
-## Tier 2 — outdoor & atmospheric
-- Vehicles/roadside: `player_car`, `pickup_truck`, `gas_pump`, `payphone`,
-  `flagpole` — prominent, all flat (a stood-up billboard would fix most)
-- Graveyard/ritual: `headstone`, `pedestal`, `wheelbarrow`, `stalk_marker`,
-  `corn_altar`, `corn_doll`, `doll`, `bush`, `creepy_tree`, `tall_grass`
-- Birds: `crow`, `dead_crow`
+- **`drowned_body`** — mechanically correct (a floor decal lying in the water
+  plane). A submerged-read art rework was attempted and REJECTED (2026-06);
+  the original art stands. The other half of the original note ("reconsider
+  whether it stays at all") is an open DESIGN call, not an art task.
+- **3b. Player / weapons** — `draw_axe_held` now exists (the equipped weapon
+  always reads); the remaining note is an eyeball pass on the held-weapon
+  offset at every camera yaw.
+- **4. Flat-feeling detail** (not bugs): the `fireplace`/`stove` tile sprite
+  detail, `bed` blanket folds, `shelf` book layout, `counter` butcher detail
+  would all benefit from handcraft at the oblique angle, as time allows.
 
-## Tier 3 — ground marks (lie flat — mostly fine, but listed)
-`binding_sigil`, `etched_char`, `phantom_mark`, `claw_marks`, `mud_footprint`,
-`cobweb` — flat evidence/marks. These reading flat is *acceptable* (they're on
-surfaces), but they overlap with category 2 below.
-
----
-
-## 2. Ground-indication gaps (pickups float / no footprint)
-
-Items are drawn as small bobbing boxes (`systems/game.py` `_draw_item`,
-~line 3760) with **no ground shadow/decal**, so under tilt a pickup reads as
-floating with no contact with the floor — and **notes/evidence are easy to
-miss**.
-
-- **Fix shape:** give every pickup a small ground-contact shadow/marker
-  (a faint dark ellipse + maybe a glint) projected at z=0 under the bobbing
-  icon, like a "something is here" decal. Cheap and uniform.
-- Affected: all inventory pickups (key, letter, journal, cross, robe, axe,
-  flashlight, ammo) and every scene-placed note/evidence. `item_drop`
-  (`decoration.py`) gets a tiny box but **no** shadow.
-
----
-
-## 3. The river (Brimley)
-
-- **Water tile `~`** drawn in `scenes/base.py` (~line 715): a flat uniform
-  `(26,40,40)` tint with scrolling ripple lines + algae specks. **No depth.**
-  - **Want:** darker, organic patches in the *middle* of the channel that
-    read as depth/current/silt — layered darker blobs (irregular, drifting),
-    not a flat tint. River geometry/bends: `scenes/brimley.py` (~line 96).
-- **The `drowned_body`** decoration the dev dislikes:
-  `scenes/brimley.py` ~line 446 places it at tile (33,45) — deep water south
-  of the bridge; art in `entities/decoration.py` (`drowned_body`, flat figure
-  bobbing on the surface).
-  - **Want:** either rework it as a submerged/partly-sunk volume (project
-    lower, fade, ripple-distort) or reconsider whether it stays at all.
-
----
-
-## 3b. Player / weapons
-
-- **Held axe idle pose** — the revolver now draws *in hand* whenever it's the
-  active weapon (`draw_revolver_held`), but the axe still only appears during
-  its swing (`draw_axe_swing`); idle, the player looks unarmed with the axe
-  equipped. Add a `draw_axe_held` to match (so the equipped weapon always
-  reads). `rendering/sprites.py`.
-- **Player sprite under tilt** — `draw_player_sprite` has 2.5D head-turn views
-  (`view_from_facing`); double-check the held-weapon offset reads at every
-  camera yaw (the gun is drawn in screen space off `facing`, so it should, but
-  eyeball it).
-
-## 4. General 3D-misfit / polish candidates (lower urgency)
-
-These *do* render under tilt but the procedural art is simplistic at an angle
-and would benefit from handcraft: the `fireplace`/`stove` tile sprites, the
-`bed` blanket folds, `shelf` book layout, `counter` butcher detail. Not 3D
-*bugs* — just flat-feeling detail.
-
----
-
-## Suggested order
-1. The river (single dramatic, player-faces-it centerpiece).
-2. Pickup ground shadows (one fix, helps every note/evidence everywhere).
-3. Kitchen + wall-decor billboards (Tier 1) — most rooms read furnished.
-4. Vehicles/roadside billboards (Tier 2) — the town exterior.
-5. Everything else as time allows.
-
-> Mechanism reminder when implementing: add a kind to `FURNITURE`/`SOLID_PROPS`
-> for a real volume, or to the billboard/standee path for a flat-card-stood-up.
-> Floor-bound marks can stay in `_FLOOR_DECAL_KINDS`. Verify with a tilt
-> capture (`/tmp/cap_*.py` pattern) before/after.
+> Mechanism reminder when adding a new kind: add it to `FURNITURE`/`SOLID_PROPS`
+> for a real volume, `_STANDEE_KINDS` for a flat-card-stood-up,
+> `_WALL_DECO_KINDS` to hang it, `_FLOOR_DECAL_KINDS`/`_SURFACE_DECAL_KINDS` to
+> lie it flat, or `_TABLETOP_PROP_KINDS` to seat it on furniture. Animated
+> kinds that must stay animated need a LIVE solid fn (standee cards freeze at
+> t=0). Verify with a tilt capture before/after.

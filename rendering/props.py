@@ -1112,6 +1112,49 @@ def _draw_flock_solid(surf, cam, deco):
         pygame.draw.line(surf, col, (cx + wing_dx, cy + wing_dy), (cx, cy), 2)
 
 
+def _draw_crow_solid(surf, cam, deco):
+    """A perched crow stood up off the ground: contact shadow at z=0, legs,
+    body and head projected at real heights so it sits IN the scene instead of
+    lying flat. Drawn live every frame (not a cached standee card) so the hop,
+    the head-turn, and the rare looking-backwards anomaly all survive under
+    tilt (the anomaly is a designed beat; freezing it on a card would kill it)."""
+    t = getattr(deco, "t", 0.0)
+    seed = getattr(deco, "seed", 0)
+    s = cam.scale
+    hop = abs(math.sin(t * 0.8)) * 1.0
+    head_turn = math.sin(t * 0.5) * 2.0
+    ink = (10, 10, 14)
+    bx, by = cam.project(deco.x, deco.y, 0)
+    # contact shadow so the perch reads grounded
+    sw = max(3, int(6 * s))
+    sh = max(2, int(3 * s * cam.ground_squash()))
+    shadow = pygame.Surface((sw * 2, sh * 2), pygame.SRCALPHA)
+    pygame.draw.ellipse(shadow, (0, 0, 0, 70), (0, 0, sw * 2, sh * 2))
+    surf.blit(shadow, (bx - sw, by - sh))
+    # body
+    cx, cy = cam.project(deco.x, deco.y, 3.0 + hop)
+    bw = max(4, int(10 * s))
+    bh = max(3, int(6 * s))
+    # stick legs from the body underside to the ground point
+    for lx in (-2, 2):
+        pygame.draw.line(surf, ink,
+                         (cx + int(lx * s), cy + bh // 2 - 1),
+                         (bx + int(lx * s), by), 1)
+    pygame.draw.ellipse(surf, ink, (cx - bw // 2, cy - bh // 2, bw, bh))
+    # tail tick off the back
+    pygame.draw.line(surf, ink, (cx - bw // 2, cy),
+                     (cx - bw // 2 - max(2, int(3 * s)), cy - 1), 1)
+    # head -- same rare looking-backwards anomaly as the flat art: at a
+    # per-seed phase the head flips to the opposite side for ~120ms.
+    anomaly_phase = (t + seed * 0.13) % 9.0
+    side = -1 if anomaly_phase > 8.88 else 1
+    hx, hy = cam.project(deco.x, deco.y, 7.0 + hop)
+    head_x = int(hx + side * (4 + head_turn) * s)
+    pygame.draw.circle(surf, ink, (head_x, hy), max(1, int(2 * s)))
+    eye_x = int(hx + side * (5 + head_turn) * s)
+    pygame.draw.circle(surf, (220, 200, 50), (eye_x, hy), 1)
+
+
 def _draw_stalk_marker_solid(surf, cam, deco):
     """A single corn stalk taller than the rest with a sun-bleached red cloth
     tied around it. The cult marks the next to be taken. Rises as a real
@@ -1179,6 +1222,7 @@ SOLID_PROPS = {
     "stalk_marker":  _draw_stalk_marker_solid,
     "mote":          _draw_mote_solid,
     "flock":         _draw_flock_solid,
+    "crow":          _draw_crow_solid,
 }
 
 

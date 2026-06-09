@@ -1299,13 +1299,18 @@ class RenderMixin:
                             _emit(self.camera.depth(d.x + ox, d.y + oy),
                                   lambda d=d, ox=ox, oy=oy:
                                   self._draw_solid_prop(d, ox, oy))
-            # Surface props seated ON furniture (a ledger, candle, lamp on a
-            # desk/table): lifted to the prop height (deco kwarg `z`) and depth-
-            # sorted at the GROUND position so they tie with the host furniture
-            # and, emitted last, draw ON TOP of it instead of tucked under its
-            # box or floating at floor level. Flat-lying kinds warp onto the
-            # surface; upright kinds stand on it as a lifted billboard. (Ground
-            # depth, not the lifted height: depth treats higher z as farther.)
+            # Surface props seated ON furniture (a ledger, plate, lamp on a
+            # desk/table): lifted to the prop height (deco kwarg `z`) and
+            # depth-sorted at the SOUTH EDGE of their host tile, not their own
+            # anchor -- the host furniture box's anchor can sit deeper in the
+            # tile than the prop's (a plate placed near the tile's north edge
+            # sorted BEHIND its own table and the table top painted over it),
+            # and the south edge is the deepest any single-tile host anchor can
+            # be, so the prop always lands at-or-after its host. On a tie the
+            # stable sort keeps these (emitted after the solids) on top. Flat-
+            # lying kinds warp onto the surface; upright kinds stand on it as a
+            # lifted billboard. (Ground depth, not the lifted height: depth
+            # treats higher z as farther.)
             from scenes.base import (_SURFACE_DECAL_KINDS, _FLOOR_DECAL_KINDS,
                                      _draw_floor_decal)
             from rendering.props import is_solid_prop
@@ -1320,11 +1325,12 @@ class RenderMixin:
                 # them twice.
                 if is_solid_prop(d.kind) or is_solid_furniture(d.kind):
                     continue
+                _dy = (int(d.y // TILE) + 1) * TILE if _z > 0 else d.y
                 if d.kind in _SURFACE_DECAL_KINDS or d.kind in _FLOOR_DECAL_KINDS:
-                    _emit(self.camera.depth(d.x, d.y),
+                    _emit(self.camera.depth(d.x, _dy),
                           lambda d=d: _draw_floor_decal(self.screen, self.camera, d))
                 else:
-                    _emit(self.camera.depth(d.x, d.y),
+                    _emit(self.camera.depth(d.x, _dy),
                           lambda d=d, z=_z: d.draw(self.screen, 0, 0, self.camera,
                                                    mount_z=z))
             # Wall-hung decorations: lift onto the wall face (_WALL_MOUNT_Z) as
