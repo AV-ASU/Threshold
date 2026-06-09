@@ -252,6 +252,11 @@ class ThreatMixin:
             if not exit_data:
                 continue
             target_key, spawn_id = exit_data
+            # Same-scene folds (the maze 'I'/'Q' relocations) are SILENT by
+            # canon -- the lie is the world itself, never a visible frame --
+            # so they never join the seen-fold list.
+            if target_key == scene.key:
+                continue
             pos = scene.find_marker(ch)
             if pos is None:
                 continue
@@ -328,6 +333,11 @@ class ThreatMixin:
         (FOLD_REFUGE_SCENES), or a mundane door/ladder/rope into an ordinary
         interior (architecture is the player-only way out)."""
         target_scene, _spawn_id = exit_data
+        # A same-scene relocation (the maze 'I'/'Q' folds) never touches the
+        # stash: no scene load follows, the pursuer is still physically in
+        # this room, and the wrap-aware chase AI keeps coming on its own.
+        if self.scene is not None and target_scene == self.scene.key:
+            return
         # A refuge always shakes the chase (the safe houses + Mara's cell).
         if target_scene in FOLD_REFUGE_SCENES:
             self._fold_pursuer = None
