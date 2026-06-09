@@ -179,6 +179,10 @@ def old_man_house_on_enter(game, scene):
     here we remove him and lay out his remains + the cross (evidence #4)."""
     if not game.save.flag("preacher_doomed"):
         return
+    # The player has now seen what's on the church floor. Sheriff Vane's
+    # murder one-shot (scenes/dialogue.py sheriff_dialogue) keys on this,
+    # so he can never announce the killing before the player finds it.
+    game.save.set_flag("preacher_body_seen", True)
     scene.npcs = [n for n in scene.npcs
                   if getattr(n, "tag", None) != "preacher"]
     bx, by = 9 * TILE + 16, 4 * TILE + 16

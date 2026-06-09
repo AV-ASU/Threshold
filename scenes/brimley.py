@@ -797,8 +797,11 @@ def build_brimley():
     # river patches now carry the dread of the channel on their own. It can be
     # reinstated as a properly submerged form if wanted.)
     # Mrs. Calder's table, laid out in the open by the kid's house: two
-    # settings (hers, and his -- set every night), a candle burned down,
-    # and his chair knocked over where he got up and never came back.
+    # settings (hers, and the extra place she lays every night for the
+    # guest she can't name -- NARRATIVE 2), a candle burned down, and a
+    # chair knocked over. Once she converts (stage 2) the infestation
+    # pass clears the extra setting: she has stopped waiting
+    # (systems/infest_mixin.py _infest_locals).
     # (The table itself is a solid 't' tile placed below.)
     sc.add_decoration(Decoration(71 * TILE + 10, 72 * TILE + 12, "place_setting"))
     sc.add_decoration(Decoration(71 * TILE + 24, 72 * TILE + 12, "place_setting"))

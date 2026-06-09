@@ -23,6 +23,13 @@ ITEM_DEFS = {
     "pistol_ammo":   {"name": "Cartridges",
                        "kind": "key",
                        "desc": "Pistol rounds. Never as many as you'd like."},
+    "newspaper":     {"name": "Today's Paper",
+                       "kind": "lore",
+                       "desc": "This morning's Minneapolis paper, picked up "
+                               "for the drive north. Ordinary headlines, box "
+                               "scores, the funnies. Nothing in it matters. "
+                               "Here, that makes it the rarest thing in "
+                               "town."},
     "woodshed_key":  {"name": "Woodshed Key",
                        "kind": "key",
                        "desc": "A key."},

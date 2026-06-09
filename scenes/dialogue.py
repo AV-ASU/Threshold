@@ -196,6 +196,32 @@ def hettie_dialogue(game, npc):
             "here. Don't ask me to.",
         ], speaker="Hettie", voice="blip_high", portrait="hettie")
         return
+    # The trade: the PI's morning paper for the cartridges she keeps under
+    # the counter. One opportunistic barter, NOT a fetch chain (Sable's was
+    # cut on purpose) -- she has nothing to sell, but a paper from outside
+    # is the one thing in Brimley money can't buy. Fires once, after she's
+    # met you (her first conversation is too wary for it).
+    if (save.arg("shop_count", 0) >= 1
+            and not save.flag("newspaper_traded")
+            and game.player.inventory.has("newspaper")):
+        save.set_flag("newspaper_traded", True)
+        game.player.inventory.remove("newspaper", 1)
+        game.player.inventory.add("pistol_ammo", 6)
+        game.audio.play("pickup_rare", 0.7)
+        game.dialog.show([
+            "[c=dim]Her eyes stop on the newspaper folded in your coat "
+            "pocket.[/c]",
+            "That today's? From outside?",
+            "[c=dim]She says outside the way other people say a dead "
+            "man's name.[/c]",
+            "Tell you what. Leave it on the counter and take what's under "
+            "it. The till's been empty since spring. The shelf under it "
+            "hasn't.",
+            "[c=dim]A box of cartridges. She doesn't count them. She's "
+            "already reading the front page like a letter from someone "
+            "she'd given up on.[/c]",
+        ], speaker="Hettie", voice="blip_high", portrait="hettie")
+        return
     count = save.arg("shop_count", 0) + 1
     save.set_arg("shop_count", count)
     if count == 1:
@@ -250,10 +276,27 @@ def sheriff_dialogue(game, npc):
     he's watched it happen before. He tells outsiders to leave out of
     muscle memory, knowing they can't and he can't either. A witness who
     can't help; the badge is just clothing now. Escalates over visits:
-    weary warning -> the car (not his doing) -> the town's history ->
-    the preacher he couldn't save."""
+    weary warning -> the car (not his doing) -> the town's history.
+    The preacher he couldn't save is a one-shot, gated on the player
+    having SEEN the church floor (preacher_body_seen) -- it used to sit
+    at visit 4, where it could announce the murder before it happened."""
     save = game.save
     _cult_tell(game, "sheriff")
+    # The murder he can't report. Fires once, on the first visit after
+    # the player has found the body -- but never as a first impression.
+    if (save.flag("preacher_body_seen")
+            and not save.flag("vane_preacher_noticed")
+            and save.arg("fisher_count", 0) >= 1):
+        save.set_flag("vane_preacher_noticed", True)
+        game.dialog.show([
+            "They killed the preacher.",
+            "He named them from his pulpit. They came in the night.",
+            "[c=dim]I went over Tuesday morning. I didn't write a report. "
+            "Who would I send it to.[/c]",
+            "[c=dim]He doesn't say the Reverend's name. You realize "
+            "nobody in town has.[/c]",
+        ], speaker="Sheriff Vane", voice="blip_gruff", portrait="sheriff")
+        return
     n = save.arg("fisher_count", 0) + 1
     save.set_arg("fisher_count", n)
     if n == 1:
@@ -281,14 +324,6 @@ def sheriff_dialogue(game, npc):
             "They started showing up in the summer. The new ones. "
             "Polite folks. After a while the road stopped going anywhere.",
             "[c=dim]I tell people to leave. I haven't been able to in months.[/c]",
-        ], speaker="Sheriff Vane", voice="blip_gruff", portrait="sheriff")
-    elif n == 4:
-        # The preacher. He couldn't stop it.
-        game.dialog.show([
-            "They killed the preacher.",
-            "He named them from his pulpit. They came in the night.",
-            "[c=dim]I went over Tuesday morning. I didn't write a report. "
-            "Who would I send it to.[/c]",
         ], speaker="Sheriff Vane", voice="blip_gruff", portrait="sheriff")
     else:
         game.dialog.show([

@@ -1678,6 +1678,8 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
             ("And over. The way it has every time before.", 2.6),
             ("Then, with the Sign beside you, it catches.", 3.0),
             ("You drive out, past the corn that never ended.", 3.2),
+            ("The radio hunts between stations, all the way south. Under "
+             "the static, the same hiss as the open line in town.", 3.6),
             ("You got out. You're the only one who ever has.", 3.4),
             ("Everyone will understand why, soon.", 3.8),
         ],
