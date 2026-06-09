@@ -3,6 +3,7 @@ import math
 import random
 import pygame
 from constants import C_BLACK
+from rendering.sprites_common import _breath_lift
 
 
 # ---- Infested resisters (NARRATIVE infestation) -----------------------
@@ -166,54 +167,144 @@ def _popout_tumor(surf, cx, cy, r, thr, rng):
 
 
 def _infest_old_townsman(surf, x, y, t, view="front"):
-    # (Garrick) skinned to sallow raw flesh, and a black-gold CANCER eats
-    # him: engorged vessels CREEP all over the flayed skin (this carries the
-    # spread) and erupt in SMALL tumors that bulge from the flesh -- shaded
-    # black nodules lit cold at the crown with gold cracking from the bigger
-    # ones. Kept small and within the silhouette so they read as growths
-    # through him, not blobs stuck on. (Adult geometry: head ~y-12, body
-    # y-1..y+16.)
-    # View-aware AND asymmetric: front/right/left/back each get their own
-    # nodule+vein layout and rng seed -- the profiles are NOT mirrors and the
-    # back is its own sprite. The torso narrows in profile; the head leads a
-    # socket in profile and loses its face on the back.
+    # (Garrick) the cancer took the arm that would point. ONE great
+    # black-gold mass swallows his shoulder and arm, bulging out past the
+    # coat's silhouette in lobes; a single gold fissure splits its crown
+    # (the thing that watches the road for him now); his eyes are sealed
+    # over ("didn't need eyes for it"); a FEW thick engorged vessels anchor
+    # the mass into his neck and chest. Fewer, larger features -- the man
+    # stays recognisable under the wrongness, the horror has one centre.
+    # (Adult geometry: head ~y-12 under the hat, body y-2..y+17. The mass
+    # sits on his right side -- screen LEFT when he faces us, leading or
+    # trailing the turn in profile, wrapping the shoulder from behind.)
     thr = 0.5 + 0.5 * math.sin(t * 2.2)
     hy = y - 12
-    profile = view in ("left", "right")
     s = 1 if view == "right" else (-1 if view == "left" else 0)
-    hw = 4 if profile else 6
-    hr = 5 if profile else 6
-    hx = x + s                                                   # head leads toward the facing
-    pygame.draw.circle(surf, _SALLOW, (hx, hy), hr)              # flayed raw-flesh head
-    pygame.draw.circle(surf, _SALLOW_LO, (hx, hy), hr, 1)
-    pygame.draw.rect(surf, _SALLOW, (x - hw, y - 1, hw * 2, 17))  # flayed raw-flesh torso
-    pygame.draw.rect(surf, _SALLOW_LO, (x - hw, y - 1, hw * 2, 17), 1)
-    # Per-view sunken sockets + a SMALL nodule layout (r 2-3), each unique.
-    if view == "right":
-        seed = 23; pits = [(hx + 1, hy - 1)]
-        nodes = [(hx - 2, hy - 1, 2), (x + 1, y + 3, 3), (x - 1, y + 7, 2), (x + 1, y + 11, 2)]
-    elif view == "left":
-        seed = 37; pits = [(hx - 1, hy - 1)]
-        nodes = [(hx + 2, hy, 2), (x - 2, y + 5, 3), (x + 1, y + 9, 2), (x - 1, y + 12, 2)]
-    elif view == "back":
-        seed = 51; pits = []
-        nodes = [(x - 2, hy - 2, 2), (x + 2, y + 4, 2), (x - 3, y + 8, 3), (x + 1, y + 12, 2)]
-    else:                                                        # front
-        seed = 11; pits = [(x - 2, hy - 1), (x + 2, hy - 1)]
-        nodes = [(x + 2, hy + 1, 2), (x - 3, y + 4, 3), (x + 2, y + 8, 2), (x - 1, y + 12, 3)]
-    for ex, ey in pits:
-        pygame.draw.circle(surf, (44, 30, 28), (ex, ey), 1)
-    rng = random.Random(seed)
-    vrng = random.Random(seed ^ 0x55)
-    # The spread: a vein network creeping across the flayed flesh (feeders
-    # spanning the torso + vessels off every nodule). This does the work.
-    for fx, fy in [(x, y + 2), (x - hw + 1, y + 8), (x + hw - 1, y + 11)]:
-        _tumor_veins(surf, fx, fy, 4, 10, vrng)
-    for nx, ny, _r in nodes:
-        _tumor_veins(surf, nx, ny, 3, 7, vrng)
-    # Then the small pop-out nodules bulging from the flesh.
-    for nx, ny, r in nodes:
-        _popout_tumor(surf, nx, ny, r, thr, rng)
+    SEAL = (118, 106, 84)                                  # sick sealed-lid skin
+
+    def vessel(pts, w=2):
+        for i in range(len(pts) - 1):
+            pygame.draw.line(surf, _VEIN, pts[i], pts[i + 1], w)
+
+    def mass(mx, my, r, rng_seed):
+        # the dome + its under-lobes; crown fissure + gold come from
+        # _popout_tumor, lobes first so the dome reads as one grown thing
+        rng = random.Random(rng_seed)
+        for la, ld, lr in ((2.6, 0.9, 0.55), (3.6, 0.8, 0.45), (1.9, 1.0, 0.4)):
+            pygame.draw.circle(surf, _TUMOR_DK,
+                               (int(mx + math.cos(la) * ld * r),
+                                int(my + math.sin(la) * ld * r)),
+                               max(2, int(r * lr)))
+        _popout_tumor(surf, mx, my, r, thr, rng)
+
+    if view == "back":
+        # the mass wraps the shoulder from behind -- a black moon rising
+        # over the yoke; vessels cross the spine to feed it; no face
+        mx, my = x + 4, y + 1
+        vessel([(x - 5, y + 9), (x - 1, y + 5), (mx - 2, my + 2)])
+        vessel([(x - 3, y + 14), (x + 1, y + 9), (mx - 1, my + 3)])
+        mass(mx, my, 4, 53)
+        pygame.draw.circle(surf, _TUMOR_DK, (mx + 2, my - 4), 2)   # cresting lobe
+        return
+    if s:
+        # profile: his right side LEADS when he faces left (the mass comes
+        # at you before the man) and TRAILS when he faces right (the man
+        # first, the thing looming off his back). Both land screen-left.
+        mx, my = x - 4, y + 2
+        # sealed near eye (the far one is hidden by the head)
+        pygame.draw.rect(surf, SEAL, (x + s * 2 - 1, hy - 1, 3, 2))
+        pygame.draw.line(surf, (60, 48, 40), (x + s * 2 - 1, hy), (x + s * 2 + 1, hy), 1)
+        vessel([(x + s, y - 1), (mx, my - 2)], w=1)
+        vessel([(x + 3, y + 8), (mx + 1, my + 3)], w=1)
+        mass(mx, my, 4, 23 if view == "right" else 37)
+        # the arm it took: fused down his side to a half-clenched knot
+        pygame.draw.line(surf, _TUMOR_DK, (mx, my + 3), (mx, y + 12), 3)
+        pygame.draw.circle(surf, _TUMOR_DK, (mx, y + 13), 2)
+        _gold_in_wound(surf, mx, y + 13, 2, 14 + int(8 * thr))
+        return
+    # FRONT -- his right shoulder/arm = screen left
+    mx, my = x - 5, y + 1
+    # both eyes sealed over: lids of sick skin, a dark healed seam
+    for ex in (x - 3, x + 3):
+        pygame.draw.rect(surf, SEAL, (ex - 1, hy - 1, 3, 2))
+        pygame.draw.line(surf, (60, 48, 40), (ex - 1, hy), (ex + 1, hy), 1)
+    # a few THICK vessels, hand-placed: up the neck to the jaw, across the
+    # chest under the coat, down toward the hip -- anchors, not spaghetti
+    vessel([(x - 2, hy + 5), (x - 4, y - 1), (mx + 1, my - 3)])
+    vessel([(x + 4, y + 6), (x, y + 4), (mx + 2, my + 2)])
+    vessel([(mx + 1, my + 4), (mx + 2, y + 10)])
+    mass(mx, my, 5, 11)
+    # the arm it took, fused to his side: a tar sleeve ending in a knot
+    # that will never point again, gold seeping at the knuckles
+    pygame.draw.line(surf, _TUMOR_DK, (mx - 1, my + 4), (mx - 1, y + 13), 3)
+    pygame.draw.circle(surf, _TUMOR_DK, (mx - 1, y + 14), 2)
+    pygame.draw.circle(surf, _TUMOR_LIT, (mx - 2, y + 13), 1)
+    _gold_in_wound(surf, mx - 1, y + 14, 2, 16 + int(10 * thr))
+
+
+def _infest_old_pell(surf, x, y, t, view="front"):
+    # Old Pell stopped marking the calendar, so the calendar marks HIM.
+    # Tally-scars carve themselves across his face and torso in fours with
+    # the fifth slashed through; one eye is crossed off (a scar X over a
+    # void socket); and over his heart sits the 14th, the day that was
+    # "already crossed": a heavier re-cut stroke that never closed, the
+    # fold's gold welling in the line. (Adult geometry: head ~y-12 under
+    # the hat brim, body y-2..y+17. Distinct from Garrick's cancer -- Pell
+    # is INSCRIBED, not overgrown.)
+    thr = 0.5 + 0.5 * math.sin(t * 1.8)
+    SCAR = (46, 22, 24)
+    s = 1 if view == "right" else (-1 if view == "left" else 0)
+    hy = y - 12
+
+    def tally(tx, ty, n=4, slash=True, h=3):
+        for i in range(n):
+            pygame.draw.line(surf, SCAR, (tx + i * 2, ty), (tx + i * 2, ty + h - 1), 1)
+        if slash:
+            pygame.draw.line(surf, _MEAT, (tx - 1, ty + h - 1), (tx + n * 2 - 1, ty), 1)
+
+    if view == "back":
+        # the count continues where he can't see it: rows across the yoke,
+        # and the heavy line re-cut straight down the spine seam
+        tally(x - 6, y - 1); tally(x + 1, y - 1)
+        tally(x - 5, y + 4); tally(x + 2, y + 4, slash=False)
+        tally(x - 4, y + 9, n=3)
+        pygame.draw.line(surf, _MEAT, (x, y + 2), (x, y + 13), 2)
+        pygame.draw.line(surf, _WGOLD, (x, y + 4), (x, y + 11), 1)
+        tally(x - 4, hy + 2, n=3, slash=False, h=2)        # up the nape
+        return
+    if s:
+        # profile: the rows wrap the lead cheek and the narrowed torso;
+        # the crossed-off eye leads
+        tally(x + 2 * s - 3, hy + 1, n=3, h=2)
+        ex = x + 3 * s
+        pygame.draw.rect(surf, (6, 4, 6), (ex - 2, hy - 3, 4, 4))
+        _gold_in_wound(surf, ex, hy - 1, 2, 16 + int(10 * thr))
+        pygame.draw.line(surf, _MEAT, (ex - 2, hy - 3), (ex + 2, hy + 1), 1)
+        pygame.draw.line(surf, _MEAT, (ex + 2, hy - 3), (ex - 2, hy + 1), 1)
+        tally(x - 4, y + 1); tally(x - 3, y + 6, slash=False)
+        hx = x + 2 * s
+        _gold_in_wound(surf, hx, y + 9, 3, 22 + int(14 * thr))
+        pygame.draw.line(surf, _MEAT, (hx, y + 4), (hx, y + 13), 3)
+        pygame.draw.line(surf, _WGOLD, (hx, y + 5), (hx, y + 12), 1)
+        return
+    # front: rows under the hat brim, then the ledger of days down the body
+    tally(x - 5, hy - 4, n=3, slash=False, h=2)
+    tally(x - 4, hy + 2, n=4, h=2)
+    ex = x - 3                                             # the crossed-off eye
+    pygame.draw.rect(surf, (6, 4, 6), (ex - 2, hy - 3, 4, 4))
+    _gold_in_wound(surf, ex, hy - 1, 2, 16 + int(10 * thr))
+    pygame.draw.line(surf, _MEAT, (ex - 2, hy - 3), (ex + 2, hy + 1), 1)
+    pygame.draw.line(surf, _MEAT, (ex + 2, hy - 3), (ex - 2, hy + 1), 1)
+    tally(x - 6, y + 1); tally(x + 1, y + 1)
+    tally(x + 1, y + 6); tally(x - 5, y + 11, n=3, slash=False)
+    # the 14th, crossed twice: the heavier line over the heart, still open
+    # ("mine's the heavier line; you can tell")
+    hx = x - 3
+    _gold_in_wound(surf, hx, y + 8, 4, 26 + int(16 * thr))
+    pygame.draw.line(surf, _MEAT, (hx, y + 4), (hx, y + 13), 3)
+    pygame.draw.line(surf, _MEAT_LO, (hx - 2, y + 4), (hx - 2, y + 13), 1)
+    pygame.draw.line(surf, _WGOLD, (hx, y + 5), (hx, y + 12), 1)
+    pygame.draw.circle(surf, _WGOLD_HI, (hx, y + 8), 1)
 
 
 _INFEST_WORLD = {
@@ -222,15 +313,24 @@ _INFEST_WORLD = {
     "old_townsman": _infest_old_townsman,
 }
 
+# Mutated locals who SHARE a sprite kind resolve by name first (Old Pell
+# wears the same old_townsman body as Garrick but carries his own horror).
+_INFEST_NAMED = {
+    "Old Pell": _infest_old_pell,
+}
 
-def draw_infested_overlay(surf, x, y, kind, view="front"):
+
+def draw_infested_overlay(surf, x, y, kind, view="front", name=None, seed=0):
     """Drawn OVER a mutated resister's base sprite: their bespoke flesh-
     horror form. `view` ('front'/'back'/'left'/'right') matches the base
     sprite's camera-relative facing so the horror reads from every angle
-    (no face on the back of the head, profile in the sides). Falls back to a
-    generic jaundice + eye-void wash for any kind without a dedicated
-    incident."""
-    fn = _INFEST_WORLD.get(kind)
+    (no face on the back of the head, profile in the sides). `name` picks a
+    name-keyed incident over the kind-keyed one (sprite kinds are shared);
+    `seed` rides the base sprite's idle breath so the wound moves with the
+    flesh. Falls back to a generic jaundice + eye-void wash for anyone
+    without a dedicated incident."""
+    y -= _breath_lift(seed)
+    fn = _INFEST_NAMED.get(name) or _INFEST_WORLD.get(kind)
     t = pygame.time.get_ticks() / 1000.0
     if fn is not None:
         fn(surf, x, y, t, view)

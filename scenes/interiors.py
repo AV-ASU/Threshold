@@ -210,6 +210,14 @@ def build_shop():
                                  "kerosene_lamp"))
     sc.add_decoration(Decoration(1 * TILE + 6, 1 * TILE + 6, "cobweb",
                                  ang=0.0))
+    # Storeroom stock: a shelf of Hettie's preserves. Nobody has bought
+    # any in a while; the contents have all gone the same murky shade.
+    sc.add_decoration(Decoration(3 * TILE + 16, 0 * TILE + 22,
+                                 "preserve_shelf", seed=17))
+    # A butter churn parked by the east wall. The dairy stopped coming
+    # before the trucks did.
+    sc.add_decoration(Decoration(14 * TILE + 10, 9 * TILE + 8,
+                                 "butter_churn"))
     # The cult tells, hidden in the back storeroom (the blind spot): the
     # mirror that shows the wrong silhouette, and a wrong_photo on the wall.
     sc.add_decoration(Decoration(1 * TILE + 16, 3 * TILE + 16, "mirror"))
@@ -279,6 +287,12 @@ def build_barn():
                                  ang=math.pi / 2))
     sc.add_furniture("antler_rack", [(1, 4)], w=22, h=46)
     sc.add_furniture("firewood", [(1, 8), (1, 9)], w=24, h=58)
+    # Farm gear gone idle: a dry butter churn against the west wall, and
+    # a preserves shelf in the back stall over the workbench.
+    sc.add_decoration(Decoration(1 * TILE + 18, 6 * TILE + 8,
+                                 "butter_churn"))
+    sc.add_decoration(Decoration(11 * TILE + 16, 0 * TILE + 22,
+                                 "preserve_shelf", seed=21))
     # The well-passage tunnel hatch -- a proper cellar_hatch sprite,
     # NOT a chest. Drawn as a wooden floor hatch with iron pull-ring;
     # the player presses E adjacent to descend. In the back stall.
@@ -393,6 +407,11 @@ def build_kid_house():
     sc.add_decoration(Decoration(3 * TILE + 22, 3 * TILE + 16, "corn_doll"))
     sc.add_decoration(Decoration(12 * TILE + 16, 0 * TILE + 24,
                                  "missing_flyer"))
+    # His mother's needlework over the bed, and the canary cage by the
+    # partition: empty, door open. The bird went the way the dad did.
+    sc.add_decoration(Decoration(9 * TILE + 24, 0 * TILE + 22, "sampler",
+                                 seed=14))
+    sc.add_decoration(Decoration(6 * TILE + 16, 2 * TILE + 8, "birdcage"))
     # Chalk phantom-marks in the closet.
     sc.add_decoration(Decoration(1 * TILE + 28, 3 * TILE + 16,
                                  "phantom_mark"))

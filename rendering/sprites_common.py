@@ -19,3 +19,15 @@ _VP_GT = (196, 150, 42); _VP_GHI = (236, 204, 64)
 _VP_FLESH = (150, 134, 124); _VP_FLESH_LO = (104, 92, 84)
 _VP_MOUTH = (28, 16, 16); _VP_TEETH = (150, 142, 124)
 _VP_GOR = (84, 46, 40); _VP_GOR_LO = (54, 30, 28)
+
+
+def _breath_lift(seed):
+    """The locals' idle breath: a slow 1px rise-and-settle. Returns the pixel
+    lift (0 or 1) for this frame. `seed` desyncs the phase per NPC so a room
+    full of people doesn't inhale in unison. Shared by the NPC body draw and
+    the infested overlay so a mutated local's wound rides the same breath.
+    (Locals cast no contact shadow, so the lift reads as breath, not float.)"""
+    import math, pygame
+    t = pygame.time.get_ticks() / 1000.0
+    # ~3.9s cycle; airborne ~40% of it (a held inhale, then the settle)
+    return 1 if math.sin(t * 1.6 + (seed % 997) * 0.731) > 0.3 else 0

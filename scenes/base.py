@@ -2801,6 +2801,9 @@ _WALL_DECO_KINDS = frozenset((
     "banner", "calendar", "clock", "apology_wall",
     "buck_head", "antler_rack", "mounted_fish", "wrong_taxidermy",
     "chalk_door_wall", "chalkboard",
+    # Framed needlework, a varnish-dark portrait, and a larder shelf of
+    # preserves: all HANG on the wall face.
+    "sampler", "oil_portrait", "preserve_shelf",
     # Things that belong ON a wall, not lying flat on the floor: a cobweb
     # spans a corner; a passing silhouette glides past a window.
     "cobweb", "passing_silhouette",
@@ -2961,12 +2964,34 @@ def draw_wall_deco(surf, camera, scene, deco, mount_z, woff=(0.0, 0.0)):
         h = int(C * 2 * 0.95)
     if deco.kind == "chalkboard":          # wide board: square card -> art keeps
         h = max(3, int(width))             # its drawn (wide-but-short) proportions
-    card = pygame.transform.scale(canvas, (max(3, int(width)), max(3, h)))
-    ang = math.degrees(math.atan2(-(p2[1] - p1[1]), p2[0] - p1[0]))
-    if abs(ang) > 0.5:
-        card = pygame.transform.rotate(card, ang)
-    surf.blit(card, (int(cx) - card.get_width() // 2,
-                     int(cy) - card.get_height() // 2))
+    dx_, dy_ = p2[0] - p1[0], p2[1] - p1[1]
+    if abs(dy_) <= abs(dx_):
+        # N/S wall: the span is screen-horizontal, so a rotated rectangle is
+        # exact (the card's height axis stays vertical). Unchanged path.
+        card = pygame.transform.scale(canvas, (max(3, int(width)), max(3, h)))
+        ang = math.degrees(math.atan2(-dy_, dx_))
+        if abs(ang) > 0.5:
+            card = pygame.transform.rotate(card, ang)
+        surf.blit(card, (int(cx) - card.get_width() // 2,
+                         int(cy) - card.get_height() // 2))
+        return
+    # E/W wall: the span projects near-vertical, but the card's HEIGHT must
+    # stay the world vertical (screen-vertical) -- rotating the rectangle laid
+    # the art down flat along the wall foot. The true projected shape is a
+    # parallelogram whose vertical edges stay vertical, so draw it as 1px
+    # vertical strips lerped along the span (an exact affine fit). Its screen
+    # WIDTH is the span's horizontal extent: zero at yaw 0 (the face is
+    # edge-on; honestly invisible) and opening up as the camera yaws past.
+    Wpx = int(abs(dx_))
+    if Wpx < 3:
+        return                             # face edge-on at this yaw
+    card = pygame.transform.scale(canvas, (Wpx, max(3, h)))
+    for i in range(Wpx):
+        t = i / max(1, Wpx - 1)
+        sxp = p1[0] + dx_ * t
+        syp = p1[1] + dy_ * t
+        surf.blit(card, (int(sxp), int(syp - h / 2)),
+                  area=pygame.Rect(i, 0, 1, card.get_height()))
 
 
 def _draw_window_pane(surf, camera, wx, wy, ndx, ndy):

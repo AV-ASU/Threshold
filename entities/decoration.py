@@ -912,6 +912,145 @@ class Decoration:
         pygame.draw.line(surf, (40, 25, 15), (x, y - 4), (x + sw, y + 8), 1)
         pygame.draw.circle(surf, (200, 180, 60), (int(x + sw), y + 8), 2)
 
+    def _draw_washstand(self, surf, x, y):
+        # A bedroom washstand: a small dark stand with a towel rail, a
+        # porcelain basin sunk in the top and a ewer jug beside it. The
+        # water in the basin is a shade too dark.
+        pygame.draw.ellipse(surf, (0, 0, 0), (x - 11, y + 12, 24, 6))   # shadow
+        pygame.draw.rect(surf, (56, 42, 30), (x - 9, y - 2, 19, 14))    # stand body
+        pygame.draw.rect(surf, (38, 28, 20), (x - 9, y - 2, 19, 14), 1)
+        pygame.draw.rect(surf, (70, 54, 38), (x - 9, y - 2, 19, 3))     # top edge
+        pygame.draw.rect(surf, (30, 22, 16), (x - 8, y + 12, 3, 3))     # feet
+        pygame.draw.rect(surf, (30, 22, 16), (x + 6, y + 12, 3, 3))
+        pygame.draw.line(surf, (38, 28, 20), (x - 12, y + 1), (x - 12, y + 9), 1)  # towel rail
+        pygame.draw.rect(surf, (168, 160, 144), (x - 14, y + 1, 4, 8))  # limp towel
+        pygame.draw.rect(surf, (132, 124, 110), (x - 14, y + 5, 4, 1))
+        pygame.draw.ellipse(surf, (208, 202, 188), (x - 7, y - 6, 12, 7))   # basin
+        pygame.draw.ellipse(surf, (148, 142, 130), (x - 7, y - 6, 12, 7), 1)
+        pygame.draw.ellipse(surf, (44, 48, 50), (x - 5, y - 5, 8, 4))   # too-dark water
+        pygame.draw.ellipse(surf, (208, 202, 188), (x + 5, y - 9, 6, 9))    # ewer jug
+        pygame.draw.ellipse(surf, (148, 142, 130), (x + 5, y - 9, 6, 9), 1)
+        pygame.draw.arc(surf, (148, 142, 130), (x + 9, y - 8, 4, 6), -1.6, 1.6, 1)  # handle
+        pygame.draw.rect(surf, (208, 202, 188), (x + 6, y - 11, 3, 3))  # spout neck
+
+    def _draw_preserve_shelf(self, surf, x, y):
+        # A larder shelf of preserve jars. Most hold what they should;
+        # the contents have all gone the same murky shade, and one jar
+        # near the end holds something the light doesn't explain.
+        rng = random.Random(self.seed if self.seed is not None else 7)
+        pygame.draw.rect(surf, (52, 40, 28), (x - 16, y + 4, 33, 3))    # shelf board
+        pygame.draw.rect(surf, (34, 26, 18), (x - 16, y + 4, 33, 3), 1)
+        pygame.draw.rect(surf, (34, 26, 18), (x - 15, y + 7, 2, 3))     # brackets
+        pygame.draw.rect(surf, (34, 26, 18), (x + 13, y + 7, 2, 3))
+        murks = [(96, 82, 40), (88, 56, 34), (72, 70, 38), (90, 44, 38)]
+        jx = x - 13
+        wrong = rng.randint(2, 4)                       # which jar is wrong
+        for i in range(5):
+            jw = rng.choice((5, 6)); jh = rng.choice((8, 9, 10))
+            if jx + jw > x + 16:
+                break
+            jy = y + 4 - jh
+            body = rng.choice(murks)
+            if i == wrong:
+                body = (24, 22, 26)                     # the one that's wrong
+            pygame.draw.rect(surf, body, (jx, jy, jw, jh))
+            pygame.draw.rect(surf, (140, 134, 118), (jx, jy - 2, jw, 2))   # wax/lid
+            pygame.draw.rect(surf, tuple(c // 2 for c in body), (jx, jy, jw, jh), 1)
+            pygame.draw.line(surf, (200, 196, 180), (jx + 1, jy + 1),
+                             (jx + 1, jy + jh - 2), 1)                     # glass glint
+            if i == wrong:
+                # a pale curve pressed against the inside of the glass
+                pygame.draw.arc(surf, (150, 142, 124),
+                                (jx + 1, jy + 2, jw - 2, jh - 4), 0.6, 2.6, 1)
+            jx += jw + 1
+
+    def _draw_birdcage(self, surf, x, y):
+        # A domed wire birdcage on a floor stand. The little door hangs
+        # open. The perch still swings, just barely. Nothing is on it.
+        pygame.draw.ellipse(surf, (0, 0, 0), (x - 7, y + 14, 15, 4))    # shadow
+        pygame.draw.line(surf, (70, 66, 60), (x, y + 4), (x, y + 14), 2)    # stand post
+        pygame.draw.rect(surf, (70, 66, 60), (x - 5, y + 14, 11, 2))    # foot
+        cage = pygame.Rect(x - 7, y - 14, 15, 19)
+        pygame.draw.ellipse(surf, (96, 90, 78), (cage.x, cage.y - 4, 15, 10))   # dome
+        pygame.draw.ellipse(surf, (60, 56, 48), (cage.x, cage.y - 4, 15, 10), 1)
+        pygame.draw.rect(surf, (96, 90, 78), (cage.x, cage.y, 15, 2))   # collar
+        for i in range(5):                                              # bars
+            bx = cage.x + 1 + i * 3
+            pygame.draw.line(surf, (96, 90, 78), (bx, cage.y + 1), (bx, cage.bottom - 1), 1)
+        pygame.draw.rect(surf, (96, 90, 78), (cage.x, cage.bottom - 2, 15, 2))  # base ring
+        pygame.draw.line(surf, (60, 56, 48), (x, cage.y - 8), (x, cage.y - 4), 1)  # finial
+        # the door, swung open on its hinge
+        pygame.draw.rect(surf, (10, 9, 12), (x + 1, y - 8, 5, 7))       # the gap it left
+        pygame.draw.rect(surf, (96, 90, 78), (x + 6, y - 10, 5, 7), 1)  # door ajar
+        # the perch, swaying empty
+        sway = math.sin(self.t * 0.9 + (self.seed or 0)) * 1.0
+        pygame.draw.line(surf, (84, 62, 40),
+                         (x - 4 + sway, y - 5), (x + 2 + sway, y - 5), 1)
+        # a few down-feathers under the cage
+        for fx, fy in ((-4, 17), (2, 18), (-1, 19)):
+            pygame.draw.line(surf, (170, 164, 150), (x + fx, y + fy), (x + fx + 2, y + fy), 1)
+
+    def _draw_butter_churn(self, surf, x, y):
+        # A barrel butter churn: tapered staves, two hoops, the plunger
+        # staff leaning out of the lid. Nobody has churned in a while.
+        pygame.draw.ellipse(surf, (0, 0, 0), (x - 7, y + 12, 16, 5))    # shadow
+        pygame.draw.polygon(surf, (92, 66, 40),                          # tapered body
+                            [(x - 7, y + 14), (x + 8, y + 14), (x + 6, y - 4), (x - 5, y - 4)])
+        pygame.draw.polygon(surf, (56, 40, 24),
+                            [(x - 7, y + 14), (x + 8, y + 14), (x + 6, y - 4), (x - 5, y - 4)], 1)
+        for sxo in (-3, 0, 3):                                           # stave seams
+            pygame.draw.line(surf, (66, 47, 28), (x + sxo, y - 3), (x + sxo, y + 13), 1)
+        pygame.draw.rect(surf, (50, 48, 52), (x - 6, y - 1, 13, 2))     # iron hoops
+        pygame.draw.rect(surf, (50, 48, 52), (x - 7, y + 8, 15, 2))
+        pygame.draw.ellipse(surf, (70, 50, 30), (x - 5, y - 6, 11, 4))  # lid
+        pygame.draw.ellipse(surf, (44, 32, 20), (x - 5, y - 6, 11, 4), 1)
+        pygame.draw.line(surf, (84, 62, 40), (x, y - 5), (x + 4, y - 18), 2)   # plunger staff
+        pygame.draw.rect(surf, (84, 62, 40), (x + 2, y - 20, 5, 3))     # handle
+
+    def _draw_oil_portrait(self, surf, x, y):
+        # A framed oil portrait gone varnish-dark: a pale collar and two
+        # folded hands still float in the murk, but the face has sunk
+        # where the varnish pooled. Whoever it was, the room forgot.
+        pygame.draw.rect(surf, (74, 56, 30), (x - 9, y - 13, 19, 25))   # frame
+        pygame.draw.rect(surf, (108, 86, 48), (x - 9, y - 13, 19, 25), 1)
+        pygame.draw.rect(surf, (46, 36, 20), (x - 7, y - 11, 15, 21), 1)  # inner lip
+        pygame.draw.rect(surf, (26, 24, 22), (x - 6, y - 10, 13, 19))   # the dark field
+        rng = random.Random(self.seed if self.seed is not None else 3)
+        # the sitter, almost gone: shoulders, collar, folded hands
+        pygame.draw.ellipse(surf, (38, 34, 30), (x - 5, y - 4, 11, 12))  # shoulders
+        pygame.draw.rect(surf, (118, 112, 98), (x - 2, y - 2, 5, 2))    # pale collar
+        pygame.draw.ellipse(surf, (96, 88, 74), (x - 2, y + 5, 5, 3))   # folded hands
+        # where the face should be, only pooled varnish
+        pygame.draw.ellipse(surf, (20, 18, 17), (x - 3, y - 9, 7, 8))
+        if rng.random() < 0.5:
+            pygame.draw.line(surf, (60, 52, 40), (x - 5, y - 10 + rng.randint(0, 14)),
+                             (x + 6, y - 9 + rng.randint(0, 14)), 1)    # varnish crack
+
+    def _draw_sampler(self, surf, x, y):
+        # A framed cross-stitch sampler: rows of little stitched motifs
+        # on old linen, a stitched house at the foot. The bottom rows are
+        # unraveling; a red thread hangs loose below the frame.
+        rng = random.Random(self.seed if self.seed is not None else 5)
+        pygame.draw.rect(surf, (66, 50, 32), (x - 10, y - 11, 21, 21))  # frame
+        pygame.draw.rect(surf, (42, 32, 20), (x - 10, y - 11, 21, 21), 1)
+        pygame.draw.rect(surf, (186, 178, 156), (x - 8, y - 9, 17, 17))  # linen
+        pygame.draw.rect(surf, (124, 60, 56), (x - 7, y - 8, 15, 15), 1)  # stitched border
+        # rows of stitch motifs (an alphabet the eye can't quite read)
+        for row, ry in enumerate((y - 6, y - 3)):
+            for i in range(5):
+                if rng.random() < 0.85:
+                    c = (96, 84, 110) if (i + row) % 2 else (124, 60, 56)
+                    pygame.draw.rect(surf, c, (x - 6 + i * 3, ry, 2, 2))
+        # the little stitched house
+        pygame.draw.rect(surf, (96, 84, 110), (x - 2, y + 2, 5, 4))
+        pygame.draw.polygon(surf, (124, 60, 56), [(x - 3, y + 2), (x + 3, y + 2), (x, y - 1)])
+        # the bottom row come undone
+        pygame.draw.line(surf, (124, 60, 56), (x - 6, y + 4), (x - 4, y + 6), 1)
+        pygame.draw.line(surf, (124, 60, 56), (x + 4, y + 7), (x + 7, y + 5), 1)
+        # the loose red thread, hanging out of the frame
+        pygame.draw.line(surf, (124, 60, 56), (x + 5, y + 10), (x + 4, y + 15), 1)
+        pygame.draw.line(surf, (124, 60, 56), (x + 4, y + 15), (x + 6, y + 17), 1)
+
     def _draw_meat(self, surf, x, y):
         # A haunch of meat hung on a hook: a rounded red slab with fat
         # marbling and a pale bone nub at the base, swaying slightly,

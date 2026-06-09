@@ -7,7 +7,7 @@ from rendering.sprites_common import (
     KING_UNFOLD, KING_UNFOLD_SCALE,
     _VP_HIDE, _VP_LO, _VP_HI, _VP_PALE, _VP_PALE_LO, _VP_PIT,
     _VP_GT, _VP_GHI, _VP_FLESH, _VP_FLESH_LO, _VP_MOUTH, _VP_TEETH,
-    _VP_GOR, _VP_GOR_LO,
+    _VP_GOR, _VP_GOR_LO, _breath_lift,
 )
 from rendering.sprites_cultist import _draw_cultist
 from rendering.sprites_king import _draw_king
@@ -26,6 +26,11 @@ _NPC_HEAD = {}
 # that's properly *here*" -- so these helpers draw none. A dim, COLD socket
 # glint (not gold) keeps baseline townsfolk unclaimed by the fold.
 _GLINT_COLD = (118, 122, 126)
+
+# The living human locals breathe at idle (_breath_lift): a slow desynced 1px
+# rise. Masked/hooded/inhuman kinds stay deathly still on purpose.
+_BREATH_KINDS = {"townswoman", "old_townsman", "hettie", "tisdale_boy",
+                 "sheriff", "royce", "preacher", "clerk"}
 
 
 def _grim_body(surf, x, y, base, w=14, h=19, ragged=True, grime=True, view="front"):
@@ -207,6 +212,8 @@ def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False,
     while the player stands still."""
     if kind == "_invisible":
         return
+    if kind in _BREATH_KINDS:
+        y -= _breath_lift(seed)
     if kind == "townswoman":
         # Mrs. Calder & the Brimley women. F&H-gaunt: a crushed-dark red dress
         # over a grubby apron, lank dark hair in a bun, a sallow hollow-eyed
@@ -253,8 +260,13 @@ def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False,
             _grim_body(surf, x, y, coat, view=view)
             pygame.draw.ellipse(surf, skin, (x - HN, hcy - 7, HN * 2, HT))      # back of skull
             pygame.draw.ellipse(surf, sk_lo, (x - HN, hcy - 7, HN * 2, HT), 1)
-            pygame.draw.rect(surf, beard, (x - HN, hcy, HN * 2, 8))            # ash hair down the nape
-            pygame.draw.line(surf, (120, 116, 96), (x, hcy), (x, hcy + 7), 1)   # part
+            # long ash hair covers the back of the head down the nape --
+            # clearly HAIR (darker than the skin), only a neck strip below
+            hair_bk = (114, 112, 92)
+            pygame.draw.rect(surf, hair_bk, (x - HN, hcy - 4, HN * 2, 11))
+            pygame.draw.line(surf, (88, 86, 70), (x, hcy - 3), (x, hcy + 6), 1)   # part
+            pygame.draw.line(surf, (88, 86, 70), (x - 3, hcy - 2), (x - 4, hcy + 5), 1)  # strands
+            pygame.draw.line(surf, (88, 86, 70), (x + 3, hcy - 2), (x + 4, hcy + 5), 1)
             _oldhat(surf, x, y, hatc, hatc_lo, hatc_hi, hatb, hatb_lo)         # hat (rings the head)
             pygame.draw.line(surf, cane, (x + 9, y - 4), (x + 9, y + 14), 2)   # cane
         elif view in ("left", "right"):
@@ -452,7 +464,11 @@ def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False,
             _grim_body(surf, x, y, flannel, view=view)
             pygame.draw.ellipse(surf, skin, (x - HN, hcy - 7, HN * 2, HT))
             pygame.draw.ellipse(surf, sk_lo, (x - HN, hcy - 7, HN * 2, HT), 1)
-            pygame.draw.rect(surf, (60, 46, 34), (x - HN, hcy, HN * 2, 4))     # hair at nape
+            # hair fills the gap between cap and collar -- only a thin strip
+            # of neck shows, so the back never reads as a blank face
+            pygame.draw.rect(surf, (60, 46, 34), (x - HN, hcy - 3, HN * 2, 9))
+            pygame.draw.line(surf, (42, 32, 24), (x - 2, hcy - 1), (x - 2, hcy + 4), 1)
+            pygame.draw.line(surf, (42, 32, 24), (x + 2, hcy - 1), (x + 2, hcy + 4), 1)
             _cap(surf, x, y, cap_c, cap_lo, cap_bill)
             pygame.draw.rect(surf, cap_lo, (x - 4, y - 23, 8, 2))             # adjuster strap
         elif view in ("left", "right"):

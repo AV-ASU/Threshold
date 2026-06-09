@@ -406,9 +406,10 @@ RIVER_ENTRY_TILE = (34, 60)
 # in his own office (_spawn_hunting_sheriff).
 # CONVERT -- peace-makers cleanly join the cult (passive). MUTATE -- the
 # resisters whose flesh deforms into a bespoke fold-horror (Toby, Hettie,
-# Garrick each have a dedicated incident in rendering.sprites /
-# ui.dialog; Old Pell + Royce use the generic fallback). Values are the
-# evidence stage at which they turn.
+# Garrick, and Old Pell each have a dedicated incident in rendering.sprites
+# / ui.dialog; Old Pell's resolves by NAME, since he shares Garrick's
+# old_townsman sprite kind). Values are the evidence stage at which they
+# turn.
 INFEST_CONVERT = {"A woman": 1, "Mrs. Calder": 2, "Royce": 3}
 INFEST_MUTATE = {"Hettie": 2, "Garrick": 3, "Old Pell": 3,
                  "the Tisdale boy": 3}

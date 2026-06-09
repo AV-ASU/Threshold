@@ -107,6 +107,14 @@ def build_bedroom():
     # easy to miss the first session.
     sc.add_decoration(Decoration(4 * TILE + 12, 9 * TILE + 16,
                                  "phantom_mark"))
+    # Guest-room toilette: a washstand against the west wall (the basin
+    # water a shade too dark), and somebody's old framed needlework on
+    # the north wall, its bottom rows come undone. (North wall, not east:
+    # E/W wall faces are edge-on to the tilt camera at rest, so a picture
+    # there only shows during a head-turn.)
+    sc.add_decoration(Decoration(1 * TILE + 18, 6 * TILE + 8, "washstand"))
+    sc.add_decoration(Decoration(14 * TILE + 10, 0 * TILE + 22, "sampler",
+                                 seed=9))
     # Drifting motes through the room -- dust in old light.
     for i in range(7):
         sc.add_decoration(Decoration(3 * TILE + i * 64,
@@ -391,6 +399,15 @@ def build_house():
                                  ang=math.pi / 2))
     sc.add_furniture("firewood", [(15, 8), (16, 8)], w=58, h=24)
     sc.add_furniture("antler_rack", [(16, 2)], w=22, h=46)
+    # A varnish-dark oil portrait hung among the missing flyers -- some
+    # founding Arcadia proprietor whose face has sunk into the murk.
+    # Nobody can say who it is anymore.
+    sc.add_decoration(Decoration(12 * TILE + 24, 0 * TILE + 22,
+                                 "oil_portrait", seed=2))
+    # An empty birdcage by the east wall, door hanging open. The lodge
+    # used to keep a canary for the guests.
+    sc.add_decoration(Decoration(15 * TILE + 10, 4 * TILE + 16,
+                                 "birdcage"))
 
     # Hide spots: under the kitchen table, behind the kitchen shelves,
     # beside the fireplace. Each spot lands on a walkable tile next
@@ -564,6 +581,9 @@ def build_son_room():
                                  ang=math.pi / 2))
     sc.add_decoration(Decoration(6 * TILE + 16, 7 * TILE + 2,
                                  "kerosene_lamp"))
+    # The Clerk's washstand against the west wall -- he keeps himself
+    # presentable for the desk.
+    sc.add_decoration(Decoration(1 * TILE + 18, 2 * TILE + 16, "washstand"))
     for i in range(4):
         sc.add_decoration(Decoration(40 + i * 60,
                                      200 + (i % 2) * 40, "mote"))
@@ -675,6 +695,15 @@ def build_basement():
     sc.add_furniture("crate", [(10, 4)])
     sc.add_furniture("crate", [(11, 4)])
     sc.add_furniture("barrel", [(11, 2)])
+    # Larder shelves of preserves on the north wall. The contents have
+    # all gone the same murky shade, and one jar holds something the
+    # light doesn't explain. A butter churn stands dry by the firewood.
+    sc.add_decoration(Decoration(2 * TILE + 16, 0 * TILE + 22,
+                                 "preserve_shelf", seed=13))
+    sc.add_decoration(Decoration(8 * TILE + 24, 0 * TILE + 22,
+                                 "preserve_shelf", seed=29))
+    sc.add_decoration(Decoration(1 * TILE + 18, 10 * TILE + 4,
+                                 "butter_churn"))
     for mx, my in [(2, 5), (6, 6), (4, 3), (8, 7)]:
         sc.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16,
                                      "mote"))
