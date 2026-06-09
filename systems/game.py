@@ -82,6 +82,12 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         # draw_world. None when render scale is 1.0 (the world draws straight to
         # the window).
         self._world_buf = None
+        # Cached blind-spot fog layer (render_mixin._draw_sight_fog): rebuilt
+        # only when the player/aim/camera actually move.
+        self._sight_fog_cache = {}
+        # Cached haze surfaces (render_mixin._draw_haze): the dim layer + one
+        # patch per fog tint, reused across frames.
+        self._haze_cache = {}
         self.fonts = make_fonts()
         # Audio() synthesises the entire SFX + music library at startup (the
         # game ships zero audio assets) -- several seconds of pure-Python DSP
@@ -1189,10 +1195,14 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
             # West-edge debris becomes the '4' exit tile when cleared.
             sc_.objects[ty][tx] = "4" if tx == 0 else "."
             self.save.set_flag(f"debris_broken_{sc_.key}_{tx}_{ty}", True)
+            from scenes.base import invalidate_tilt_objects
+            invalidate_tilt_objects()
             return "The pile splinters apart."
         if ch == "q":
             sc_.objects[ty][tx] = "."
             self.save.set_flag(f"boards_broken_{sc_.key}_{tx}_{ty}", True)
+            from scenes.base import invalidate_tilt_objects
+            invalidate_tilt_objects()
             return "The boards splinter away."
         return None
 

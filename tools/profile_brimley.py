@@ -78,6 +78,12 @@ def main():
         import cProfile
         import pstats
         base_x, base_y = g.cam_x, g.cam_y
+        # Warm up first (build the floor bake, cards, deco index) so the
+        # profile shows the steady state, not one-time cache construction.
+        for i in range(30):
+            g.cam_x = base_x + (i % 40) * 2.0
+            g.cam_y = base_y + (i % 23) * 1.5
+            g.draw_world()
         def _run():
             for i in range(args.frames):
                 g.cam_x = base_x + (i % 40) * 2.0

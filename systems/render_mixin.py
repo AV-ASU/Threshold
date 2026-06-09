@@ -328,9 +328,28 @@ class RenderMixin:
             return
         from rendering.sight import (SIGHT_HALF, SIGHT_RANGE, SIGHT_NEAR,
                                      SIGHT_ANG_FEATHER, LOS_STEP)
-        fog = pygame.Surface(self.screen.get_size(), pygame.SRCALPHA)
-        fog.fill((58, 60, 66, SIGHT_FOG_ALPHA))         # cold, thin gray
         aim = self.look.aim
+        # The fog layer is a pure function of the player's ground point, the
+        # aim heading, the camera pose, and the scene. All of those hold still
+        # whenever the player is settled (standing, reading, in dialogue) --
+        # the common case -- so cache the built layer and re-blit it until one
+        # of them moves. The raymarch + polygon rebuild only runs on change.
+        # Positions quantize to 3px buckets and the aim to ~0.6 degrees: the
+        # fog is a soft gray wash, so re-blitting a sub-bucket-stale layer is
+        # imperceptible, and walking frames get cache hits too.
+        cam = self.camera
+        fkey = (self.screen.get_size(), id(self.scene),
+                int(self.player.x / 3), int(self.player.y / 3),
+                int(aim * 100), int(cam.cam_x / 3), int(cam.cam_y / 3),
+                round(cam.yaw, 3), round(cam.scale, 3))
+        fc = self._sight_fog_cache
+        if fc.get("key") == fkey and fc.get("surf") is not None:
+            self.screen.blit(fc["surf"], (0, 0))
+            return
+        fog = fc.get("surf")
+        if fog is None or fog.get_size() != self.screen.get_size():
+            fog = pygame.Surface(self.screen.get_size(), pygame.SRCALPHA)
+        fog.fill((58, 60, 66, SIGHT_FOG_ALPHA))         # cold, thin gray
         # The sight math is ground-plane WORLD space; the apex is the player's
         # ground point. Cast a fan of rays across the cone, marching each one
         # out until it crosses a solid (Scene.blocks_sight, the same predicate
@@ -360,6 +379,8 @@ class RenderMixin:
         # keep the player's own body clear (it's never sight-gated)
         psx, psy = self._player_screen()
         pygame.draw.circle(fog, (0, 0, 0, 0), (psx, psy), 26)
+        fc["key"] = fkey
+        fc["surf"] = fog
         self.screen.blit(fog, (0, 0))
 
     def _draw_hidden_overlay(self):
@@ -484,21 +505,30 @@ class RenderMixin:
         """Reusable haze helper: a flat black tint at `base_alpha` plus
         `fog_n` drifting translucent SQUARE patches tinted `fog_rgba`.
         Used by the brimley overlay with different parameters."""
+        cache = self._haze_cache
         if base_alpha:
-            dim = pygame.Surface(self.screen.get_size())
-            dim.fill((0, 0, 0))
+            dim = cache.get(("dim", self.screen.get_size()))
+            if dim is None:
+                dim = pygame.Surface(self.screen.get_size())
+                dim.fill((0, 0, 0))
+                cache[("dim", self.screen.get_size())] = dim
             dim.set_alpha(base_alpha)
             self.screen.blit(dim, (0, 0))
         t = pygame.time.get_ticks() / 1000.0
         size = 160
         _sw, _sh = self.screen.get_size()
+        # One translucent patch per tint, built once -- allocating + filling
+        # fog_n fresh SRCALPHA squares every frame was ~1.5ms of pure waste.
+        fog = cache.get(("patch", fog_rgba))
+        if fog is None:
+            fog = pygame.Surface((size, size), pygame.SRCALPHA)
+            fog.fill(fog_rgba)
+            cache[("patch", fog_rgba)] = fog
         for i in range(fog_n):
             fx = ((i * 137 + int(t * drift_x + i * 50))
                   % (_sw + 240) - 120)
             fy = ((i * 73) % _sh
                   + int(math.sin(t * sway_amp + i * 0.7) * sway_y_amt))
-            fog = pygame.Surface((size, size), pygame.SRCALPHA)
-            fog.fill(fog_rgba)
             self.screen.blit(fog, (fx, fy))
 
     def _draw_folds(self):
@@ -917,7 +947,8 @@ class RenderMixin:
                           draw_with_alpha(self.screen, a,
                                           lambda s: draw_npc_corpse(
                                               s, sx, sy, npc.sprite_kind,
-                                              seed=id(npc) & 0xffff, mold=0)))
+                                              seed=id(npc) & 0xffff, mold=0),
+                                          rect=(sx - 90, sy - 90, 180, 170)))
                 continue
             m = getattr(npc, "morph", 0.0)
             king_threat = None
@@ -1037,8 +1068,9 @@ class RenderMixin:
                             draw_infested_overlay(target, sx, sy,
                                                   npc.sprite_kind, view=nview)
                 _emit(self.camera.depth(npc.x + ox, npc.y + oy),
-                      lambda a=a, fn=_draw_npc:
-                      draw_with_alpha(self.screen, a, fn))
+                      lambda a=a, fn=_draw_npc, sx=sx, sy=sy:
+                      draw_with_alpha(self.screen, a, fn,
+                                      rect=(sx - 110, sy - 160, 220, 250)))
             # THRESHOLD: NPC name labels removed. They were the
             # last RPG-tell on screen -- the player should learn
             # who an NPC is by interacting with them, not by
@@ -1065,7 +1097,8 @@ class RenderMixin:
                       draw_with_alpha(self.screen, a,
                                       lambda s: e.draw(
                                           s, e.x - sx, e.y - (sy - actor_lift),
-                                          view=eview)))
+                                          view=eview),
+                                      rect=(sx - 110, sy - 160, 220, 250)))
         for p in self.scene.projectiles:
             psx, psy = self.camera.project(p.x, p.y)
             _emit(self.camera.depth(p.x, p.y),
@@ -1182,11 +1215,20 @@ class RenderMixin:
                         wa = min(wa, occluder_alpha_box(_od, _os, _pd, _ps))
                         if wa <= 60:
                             break
-                _emit(self.camera.depth(wcx, wcy, rise),
-                      lambda wa=wa, tx=tx, ty=ty:
-                      draw_with_alpha(self.screen, wa,
-                                      lambda s: _tilt_tile_box(
-                                          s, self.camera, self.scene, tx, ty)))
+                def _wall_fn(wa=wa, tx=tx, ty=ty, wcx=wcx, wcy=wcy):
+                    rect = None
+                    if wa < 255:
+                        # Bound the scratch composite to the tile's card area
+                        # (wall/tree cards are <=180px, anchored at the ground
+                        # point) so the fade costs a small blit, not a
+                        # full-screen one.
+                        bx, by = self.camera.project(wcx, wcy)
+                        rect = (bx - 100, by - 150, 200, 215)
+                    draw_with_alpha(self.screen, wa,
+                                    lambda s: _tilt_tile_box(
+                                        s, self.camera, self.scene, tx, ty),
+                                    rect=rect)
+                _emit(self.camera.depth(wcx, wcy, rise), _wall_fn)
             # Phase 2+ of neighbor strips: emit the neighbor's wall-class
             # tiles through a satellite camera (shifted by the offset so
             # neighbor world coords project at the seam). Depth-sorted in
