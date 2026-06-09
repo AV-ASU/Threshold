@@ -129,7 +129,10 @@ def build_lodge_arrival():
     """The Lodge yard at a different moment -- Mara on the porch with
     her suitcase, the Clerk welcoming her in. Both are frozen-feeling.
     They do not see the PI. The PI can walk around them, see her face,
-    and leave the way they came. Makes 'she chose this' concrete."""
+    and leave by the south end of the yard. Makes 'she chose this'
+    concrete. Entered through the BACK of the Lodge (the fold pane
+    against its rear wall in our_house_area, walked south): in the
+    back, out the front, years earlier -- the building is the fold."""
     W, H = 18, 12
     floor_rows = []
     for ty in range(H):
@@ -149,8 +152,9 @@ def build_lodge_arrival():
             else:
                 row.append(".")
         objects_l.append(row)
-    # Return tile on the SOUTH wall at col 9. The player walked north
-    # to get here; walking south returns them to our_house_area.
+    # Return tile on the SOUTH wall at col 9. The player stepped out of
+    # the Lodge's front; walking south down the yard (past the tableau)
+    # returns them to our_house_area, back behind the building.
     objects_l[H - 1][9] = "G"
     # The Lodge's south face -- one row of wall + a door at col 9.
     for tx in range(5, 14):
@@ -163,9 +167,12 @@ def build_lodge_arrival():
     sc.wrap_y = False
     sc.add_exit("G", "our_house_area", "from_lodge_arrival")
     sc.set_spawn("default", 9, H - 2)
-    # The player walked north onto the entry tile in our_house_area;
-    # they arrive at the south edge of the yard facing the porch.
-    sc.set_spawn("from_our_house_area", 9, H - 2)
+    # The player walked SOUTH into the back of the Lodge; they emerge
+    # just south of its porch in the past, stride preserved -- out the
+    # front door of the building they walked into the back of. Two
+    # tiles below Mara so the spawn never overlaps the figures; one
+    # turn and the tableau is there.
+    sc.set_spawn("from_our_house_area", 9, 6)
     # ---- Decorations ----
     # Lit windows flanking the Lodge door.
     sc.add_decoration(Decoration(7 * TILE + 16, 3 * TILE + 16, "candle"))

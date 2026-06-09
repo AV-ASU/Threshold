@@ -88,21 +88,27 @@ def build_our_house_area():
     # country lane and town; east to the cornfield path.
     sc.add_exit("a", "arrival_road", "from_our_house_area")
     sc.add_exit("e", "forest_path", "from_our_house_area")
-    # Direction-sensitive hidden fold: walking NORTH across the 'M'
-    # tile (one of the yard's path tiles south of the Lodge) opens
-    # onto Mara's arrival -- the night she walked up onto this porch
-    # with a suitcase. From any other angle it's just yard floor.
+    # Direction-sensitive hidden fold: the BACK of the Lodge. Walking
+    # SOUTH onto the 'M' tile pressed against the building's rear
+    # (north) wall opens onto Mara's arrival -- the day she walked up
+    # onto this porch with a suitcase. The pane stands flush along the
+    # back wall, so faced head-on it reads as a door the building
+    # shouldn't have; from any other angle the Lodge's rear is just
+    # wall. In the back, out the front, years earlier: the building IS
+    # the fold. You only ever face it by deliberately snooping behind
+    # your own lodge (the forest band crowds the strip), so the beat
+    # lands mid-investigation instead of on the first woodshed errand.
     sc.add_exit("M", "lodge_arrival", "from_our_house_area",
-                direction="north")
-    # Carve the M tile into the yard at (5, 12), south of the Lodge
-    # back door so the player passes it walking up to the porch.
+                direction="south")
+    # The M tile sits at (5, 1), one tile off the Lodge's back wall,
+    # mirroring the H door on the front face.
     yard_obj = [list(r) for r in sc.objects]
-    yard_obj[12][5] = "M"
+    yard_obj[1][5] = "M"
     # The WOODSHED in the SW of the yard -- west of the Lodge, where it
     # belongs (it used to sit clear across town in brimley). A small solid
     # structure with a facade door 'l' on its north face; locked until you
     # find the woodshed key in the Lodge cellar. Clear of the dirt path
-    # (cols 4-6) and the 'M' arrival fold (5,12).
+    # (cols 4-6).
     for cy in (12, 13, 14):
         for cx in (1, 2, 3):
             yard_obj[cy][cx] = "W"
@@ -121,12 +127,18 @@ def build_our_house_area():
         # Lodge structure footprint + porch approach.
         if 2 <= tx <= 7 and 2 <= ty <= 6:
             return True
+        # The pocket clearing behind the Lodge (the 'M' arrival fold
+        # stands against the back wall at (5, 1)). The band still crowds
+        # the rest of the strip, so reaching the pocket means pushing
+        # through the scattered trees around the building's sides.
+        if 4 <= tx <= 6 and ty <= 1:
+            return True
         # The road row stub (5-9 north + south stubs of road).
         if 5 <= ty <= 9 and tx >= 5:
             return True
-        # The main dirt path running SOUTH from the Lodge porch (the 'M'
-        # arrival-fold tile sits on it). Protected so the forest band doesn't
-        # scatter trees onto it; painted dirt just below (after scatter), cut
+        # The main dirt path running SOUTH from the Lodge porch toward the
+        # woodshed corner. Protected so the forest band doesn't scatter
+        # trees onto it; painted dirt just below (after scatter), cut
         # clean through the band like the roads (NARRATIVE 11).
         if 4 <= tx <= 6 and 9 <= ty <= 14:
             return True
@@ -146,10 +158,10 @@ def build_our_house_area():
                             _yd_bushes.append((px, py)))
     sc.floor = floor_ll_yd
     sc.objects = yard_obj
-    # Paint the main path south from the Lodge as DIRT -- it was bare grass,
-    # but the 'M' arrival fold is described as one of the yard's path tiles.
-    # A 3-wide corridor from the east-west road down past the M tile, so the
-    # walk up to the porch reads as a maintained path, not blank lawn.
+    # Paint the main path south from the Lodge as DIRT -- it was bare grass.
+    # A 3-wide corridor from the east-west road down toward the woodshed
+    # corner, so the walk up to the porch reads as a maintained path, not
+    # blank lawn.
     for ty in range(9, 15):
         for tx in range(4, 7):
             if 0 <= ty < len(sc.floor) and 0 <= tx < len(sc.floor[ty]):
@@ -165,10 +177,11 @@ def build_our_house_area():
     sc.set_spawn("from_forest", 22, 7)           # one west of east passage
     sc.set_spawn("from_river", 1, 7)             # west passage spawn alias
     sc.set_spawn("from_woodshed", 2, 11)         # one N of the shed door
-    # Return spawn from the lodge_arrival fold -- lands the player
-    # one tile south of the directional M tile so they don't
-    # immediately re-trigger the fold.
-    sc.set_spawn("from_lodge_arrival", 5, 13)
+    # Return spawn from the lodge_arrival fold -- back behind the Lodge,
+    # BESIDE the pane (one tile east of the M tile) rather than in front
+    # of it, so the preserved southward stride can't immediately
+    # re-trigger the fold (one step south from here is the Lodge wall).
+    sc.set_spawn("from_lodge_arrival", 6, 1)
 
     # The pickup truck -- a decoration the player can SEE but not
     # use. The player's car (the escape vehicle) is on the Brimley
