@@ -765,8 +765,9 @@ def build_brimley():
     # ---- The loop, made visible ----
     # The residents say they can't leave; the town shows it. A payphone
     # that won't connect; missing-person flyers (one of them Mara);
-    # a clock stopped dead and a calendar marked up to a day months back
-    # and then stopped -- the season kept turning, the marking didn't (the
+    # a clock stopped dead and a calendar marked up to JAN 15 (the
+    # mid-January seal, NARRATIVE 1 setting note 3) and then stopped --
+    # the season kept turning, the marking didn't (the
     # fold is spatial, NARRATIVE 1b); the truck that drove for the county line and
     # was handed back, nosed dead into the east tree line; and Mrs.
     # Calder's plate, set at supper for a guest she can't name.
@@ -786,7 +787,7 @@ def build_brimley():
     sc.add_decoration(Decoration(barrow_x, barrow_y, "wheelbarrow"))
     sc._barrow_pos = (barrow_x, barrow_y)
     sc.add_decoration(Decoration(52 * TILE + 16, 61 * TILE + 16, "missing_flyer"))
-    # The calendar, marked up to a day a few months back and then just
+    # The calendar, marked up to JAN 15 (the seal) and then just
     # stopped -- the season kept turning, the marking didn't (NARRATIVE
     # 1b: time runs normally; it's space that folds). Nailed to the
     # schoolhouse wall beside the door.
@@ -797,8 +798,11 @@ def build_brimley():
     # river patches now carry the dread of the channel on their own. It can be
     # reinstated as a properly submerged form if wanted.)
     # Mrs. Calder's table, laid out in the open by the kid's house: two
-    # settings (hers, and his -- set every night), a candle burned down,
-    # and his chair knocked over where he got up and never came back.
+    # settings (hers, and the extra place she lays every night for the
+    # guest she can't name -- NARRATIVE 2), a candle burned down, and a
+    # chair knocked over. Once she converts (stage 2) the infestation
+    # pass clears the extra setting: she has stopped waiting
+    # (systems/infest_mixin.py _infest_locals).
     # (The table itself is a solid 't' tile placed below.)
     sc.add_decoration(Decoration(71 * TILE + 10, 72 * TILE + 12, "place_setting"))
     sc.add_decoration(Decoration(71 * TILE + 24, 72 * TILE + 12, "place_setting"))

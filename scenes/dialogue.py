@@ -196,6 +196,37 @@ def hettie_dialogue(game, npc):
             "here. Don't ask me to.",
         ], speaker="Hettie", voice="blip_high", portrait="hettie")
         return
+    # The trade: yesterday's paper (the April 14 issue, picked up before
+    # the drive north) for ONE load of the cartridges she keeps under the
+    # counter. One opportunistic barter, NOT a fetch chain (Sable's was
+    # cut on purpose). The date is the point: Brimley hasn't seen a paper
+    # since the trucks stopped at the mid-January seal (NARRATIVE §1
+    # setting note 3), so yesterday's date makes the three-month cut-off
+    # legible, and trading ammo for one is how starved for word they
+    # are. Fires once, after she's met you (her first conversation is
+    # too wary for it).
+    if (save.arg("shop_count", 0) >= 1
+            and not save.flag("newspaper_traded")
+            and game.player.inventory.has("newspaper")):
+        save.set_flag("newspaper_traded", True)
+        game.player.inventory.remove("newspaper", 1)
+        game.player.inventory.add("pistol_ammo", 6)
+        game.audio.play("pickup_rare", 0.7)
+        game.dialog.show([
+            "[c=dim]Her eyes stop on the newspaper folded in your coat "
+            "pocket. She goes very still.[/c]",
+            "What's the date on that. The date.",
+            "[c=dim]You show her. April 14. Yesterday. You bought it "
+            "before the drive north.[/c]",
+            "Yesterday's. We haven't had a paper through here since the "
+            "trucks stopped.",
+            "Leave it on the counter and take what's under it. The till's "
+            "been empty since the new year. The shelf under it hasn't.",
+            "[c=dim]One load of cartridges across the counter. She's "
+            "already reading yesterday's news like a letter from someone "
+            "she'd given up on.[/c]",
+        ], speaker="Hettie", voice="blip_high", portrait="hettie")
+        return
     count = save.arg("shop_count", 0) + 1
     save.set_arg("shop_count", count)
     if count == 1:
@@ -203,7 +234,8 @@ def hettie_dialogue(game, npc):
             "You're the one asking after the Blaine girl. Keep your voice "
             "down. In here.",
             "[c=dim]Can't help you. Not the way you want. Shelves are bare. "
-            "Till's been empty since the spring. Nobody buys. Nobody sells.[/c]",
+            "Till's been empty since the new year. Nobody buys. Nobody "
+            "sells.[/c]",
             "I'll say this much. Then nothing. Don't go where they tell you "
             "it's safe. I've got a family. Look around.",
         ]
@@ -250,10 +282,27 @@ def sheriff_dialogue(game, npc):
     he's watched it happen before. He tells outsiders to leave out of
     muscle memory, knowing they can't and he can't either. A witness who
     can't help; the badge is just clothing now. Escalates over visits:
-    weary warning -> the car (not his doing) -> the town's history ->
-    the preacher he couldn't save."""
+    weary warning -> the car (not his doing) -> the town's history.
+    The preacher he couldn't save is a one-shot, gated on the player
+    having SEEN the church floor (preacher_body_seen) -- it used to sit
+    at visit 4, where it could announce the murder before it happened."""
     save = game.save
     _cult_tell(game, "sheriff")
+    # The murder he can't report. Fires once, on the first visit after
+    # the player has found the body -- but never as a first impression.
+    if (save.flag("preacher_body_seen")
+            and not save.flag("vane_preacher_noticed")
+            and save.arg("fisher_count", 0) >= 1):
+        save.set_flag("vane_preacher_noticed", True)
+        game.dialog.show([
+            "They killed the preacher.",
+            "He named them from his pulpit. They came in the night.",
+            "[c=dim]I went over Tuesday morning. I didn't write a report. "
+            "Who would I send it to.[/c]",
+            "[c=dim]He doesn't say the Reverend's name. You realize "
+            "nobody in town has.[/c]",
+        ], speaker="Sheriff Vane", voice="blip_gruff", portrait="sheriff")
+        return
     n = save.arg("fisher_count", 0) + 1
     save.set_arg("fisher_count", n)
     if n == 1:
@@ -281,14 +330,6 @@ def sheriff_dialogue(game, npc):
             "They started showing up in the summer. The new ones. "
             "Polite folks. After a while the road stopped going anywhere.",
             "[c=dim]I tell people to leave. I haven't been able to in months.[/c]",
-        ], speaker="Sheriff Vane", voice="blip_gruff", portrait="sheriff")
-    elif n == 4:
-        # The preacher. He couldn't stop it.
-        game.dialog.show([
-            "They killed the preacher.",
-            "He named them from his pulpit. They came in the night.",
-            "[c=dim]I went over Tuesday morning. I didn't write a report. "
-            "Who would I send it to.[/c]",
         ], speaker="Sheriff Vane", voice="blip_gruff", portrait="sheriff")
     else:
         game.dialog.show([

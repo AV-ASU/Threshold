@@ -358,8 +358,8 @@ def build_depths_threshing():
             _evidence(game, "threshing_floor",
                 "The yield, raked into low heaps: grain, all of it, tithed "
                 "down from the fields above. The town's whole harvest, given "
-                "over to the dark below, season on season, carried down and "
-                "never carried back up. An offering. Not a stockpile."
+                "over to the dark below, carried down and never carried "
+                "back up. An offering. Not a stockpile."
             )
     sc.on_interact_fn = _interact
     return sc

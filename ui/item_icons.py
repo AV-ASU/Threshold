@@ -88,6 +88,16 @@ def _letter(s):
     pygame.draw.line(s, _PAPER_DARK, (14, 4), (8, 9), 1)
 
 
+def _newspaper(s):
+    # Yesterday's paper, folded in half: masthead band, column rules.
+    pygame.draw.rect(s, _PAPER, (2, 4, 12, 9))
+    pygame.draw.rect(s, _PAPER_DARK, (2, 4, 12, 9), 1)
+    pygame.draw.line(s, _PAPER_DARK, (2, 8), (13, 8), 1)   # the fold
+    pygame.draw.rect(s, _INK, (4, 5, 6, 1))                # masthead
+    for ly in (10, 11):
+        pygame.draw.line(s, _PAPER_DARK, (4, ly), (11, ly), 1)
+
+
 def _unknown(s):
     pygame.draw.line(s, _PAPER_DARK, (6, 5), (10, 5), 1)
     pygame.draw.line(s, _PAPER_DARK, (10, 5), (10, 8), 1)
@@ -113,6 +123,7 @@ _DISPATCH = {
     "robe":            _robe,
     "mom_notebook":    _mom_notebook,
     "unsent_letter":   _letter,
+    "newspaper":       _newspaper,
     "cult_calling":    _testimony,
     "cult_bargain":    _testimony,
     "cult_digging":    _testimony,

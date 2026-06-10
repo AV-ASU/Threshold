@@ -393,7 +393,7 @@ def build_maras_room():
             "full of answers. I'm just hunting the questions now. Don't "
             "come after me. I'm not lost. I've never been this close.\"",
             "A journal page, weighted flat under the candle: \"I was the last "
-            "one in. The rest had been here the better part of a year, and "
+            "one in. The rest had been here since the summer, and "
             "still they looked up when I came down the road like they had set "
             "a place for me. Whatever it cost them to give in, it cost me next "
             "to nothing. I was driving north before I had even finished "

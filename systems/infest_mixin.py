@@ -35,7 +35,28 @@ def _corpse_examine(game, npc):
 def _converted_local_dialogue(game, npc):
     """A local who has made their peace and joined. They no longer answer
     as themselves -- they turn toward you and speak with the others'
-    mouth. A flat, patient line; no name."""
+    mouth. A flat, patient line; no name. Mrs. Calder is the one bespoke
+    case: her place-setting thread (the guest she could never name) pays
+    off here -- she has stopped waiting. The guest is never named (1b);
+    the player draws the line themselves."""
+    if getattr(npc, "name", "") == "Mrs. Calder":
+        game.dialog.show([
+            "[c=dim]She turns toward you, unhurried. The face is Mrs. "
+            "Calder's. The voice underneath it is not.[/c]",
+            "\"I cleared the table this morning. All that setting and "
+            "waiting. There was no need.\"",
+            "[c=dim]\"He was never going to come by the road.\"[/c]",
+            "[c=dim]She smiles past you, toward the well.[/c]",
+        ], speaker="", voice="blip_soft", portrait="narrator")
+        if hasattr(game, "_log_note"):
+            game._log_note("calder_table", [
+                "Mrs. Calder cleared the extra place. Months of laying it "
+                "for a guest she couldn't name, and the day she stopped, "
+                "she looked relieved.",
+                "I keep starting the thought of who the plate was for. I "
+                "keep not finishing it.",
+            ])
+        return
     lines = [
         "[c=dim]They turn toward you, unhurried. The face is the one you "
         "knew. The voice underneath it is not.[/c]",
@@ -253,6 +274,16 @@ class InfestationMixin:
                 # Their body has started speaking for the fold; the
                 # dialogue curdles to match the overlay.
                 n.dialogue_fn = _mutated_local_dialogue
+        # Mrs. Calder's outdoor table: once she has joined, the extra
+        # place she kept set for the guest she couldn't name is cleared
+        # away -- the waiting is over. One setting stays (hers, unused).
+        # Her converted dialogue above carries the other half of the beat.
+        if (self.scene.key == "brimley"
+                and stage >= INFEST_CONVERT.get("Mrs. Calder", 99)):
+            settings = [d for d in self.scene.decorations
+                        if getattr(d, "kind", "") == "place_setting"]
+            for d in settings[1:]:
+                self.scene.decorations.remove(d)
 
     def _convert_local(self, n):
         """A peace-maker, joined. Becomes a masked cultist that watches

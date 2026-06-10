@@ -111,6 +111,39 @@ came north to Brimley a few months ago, was **attuned** — passively
 pulled by the door's dream (§1b) — "found religion," and joined the
 cult. She is one of the newcomers (§2).
 
+**Setting note 3 — when this is (date locked 2026-06).** The present is
+**mid-April 1994**: the PI drove in carrying **yesterday's paper, the
+April 14 issue** (start inventory; Hettie trades a load of cartridges
+for it — a one-day-old date against a town that hasn't seen a paper
+since the trucks stopped is what makes the cut-off legible, and the
+trade is how starved for word they are). Treat **April 14 = yesterday**
+as canon wherever a date surfaces. Locked in `tests/flow.py` §23a.
+
+**THE TIMELINE (locked 2026-06 — the calendar sweep, GAME_CHANGES §13).**
+Every dated reference in the game agrees with this chain; check new text
+against it:
+
+- **~April 1993** — the river touches the frame; the door wakes (§1b "about
+  a year ago"). The PI's single dream lands the same spring ("a year ago").
+- **Summer 1993** — the attuned start arriving (Vane: *"They started showing
+  up in the summer"*). The dig begins, following the water down.
+- **Fall 1993** — **Mara drives north**, the last one in (her cell journal:
+  *"The rest had been here since the summer"*; the case note: *"Drove north
+  in the fall"*). The harvest is tithed down, never carried back up.
+- **Mid-January 1994** — the congregation is whole; the **closing rite**
+  seals the town. Deliveries stop (Hettie: *"Till's been empty since the
+  new year"*); Mara stops calling home; **every calendar in town stops at
+  JAN 15** (the wall-calendar prop's default card). Three months of sealed
+  winter follow.
+- **April 15, 1994 — the present.** The PI drives in as the ice goes out,
+  carrying yesterday's paper, the April 14 issue.
+
+> **The corn note.** Corn standing in a Minnesota April is last year's
+> stand: the harvest was tithed down in the fall and the fields were never
+> cut, so the corn the player hides in is **dead stalks that should have
+> fallen by now and haven't**. That is part of the wrongness; it needs no
+> line of dialogue, and no text should call the corn green or growing.
+
 ---
 
 ## 1b. The Door, the River, and the Dream — where this starts
@@ -271,8 +304,9 @@ through the flat one.
 **Time is not looping — space is.** Hold this line in every line of
 dialogue and every decal: the binding is **spatial**. Roads loop, the road
 home folds back on itself, walk for the town line and you walk back in. But
-**time runs normally** — crops grow, the season turns, three months have
-passed since the seal. The dread of time here is **stasis** (nothing
+**time runs normally** — the ice goes out, the season turns, three months
+have passed since the mid-January seal (it is mid-April 1994 now; the full
+chain is §1 setting note 3). The dread of time here is **stasis** (nothing
 changes, nowhere to go), **never recurrence** (the days do *not* repeat).
 The word *fold* belongs to the **road**, never the **calendar**. (Code
 still carries day-loop lines to scrub — see §8.)
@@ -823,9 +857,19 @@ The reworks the new fiction forced are all shipped. What must stay true:
 - ~~Individual-curser in dialog / evidence beats.~~ **Superseded:** the
   closing rite makes an individual curser redundant (see the build-order
   above).
+- ~~**Reconcile the calendar (April 14).**~~ **DONE.** The seal is locked
+  to **mid-January 1994** and the full chain lives in §1 setting note 3
+  (door wakes ~April '93 → attuned from summer '93 → Mara north in the
+  fall → rite mid-January → the PI in on April 15, 1994). Swept: Hettie's
+  till is empty "since the new year" (both lines), the case note reads
+  "Drove north in the fall. Stopped calling home by the new year," Mara's
+  cell journal says the rest "had been here since the summer," the
+  threshing tithe dropped its "season on season," and every wall calendar
+  in town now defaults to a stopped **JAN 15** card. Flow-guarded
+  (`tests/flow.py` §23a). See `GAME_CHANGES.md` §13.
 - **Food scarcity — the VISUAL pass.** The dialogue side is done
   (Hettie: "The shelves don't empty anymore... No deliveries."; the
-  Store-Owner: "Shelves are bare. Till's been empty since the spring").
+  Store-Owner: "Shelves are bare. Till's been empty since the new year").
   What's left is the world art: visibly bare store shelves, gardens on
   some lots and not others, a cultist eating at a counter. Wallpaper,
   not a mechanic.

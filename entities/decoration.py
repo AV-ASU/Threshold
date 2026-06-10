@@ -668,15 +668,18 @@ class Decoration:
         """Stripped-down wall calendar. Just the month abbreviation
         and the day number on a small paper card -- no grid, no X
         marks, no week-day headers. Reads kwargs:
-          today_d -- 1-based day-of-month for the current day
+          today_d -- 1-based day-of-month shown on the card
           month   -- numeric month (10, 11, 12, or 1)
         `month_days` is still accepted for compatibility but ignored.
 
-        The Game advances `today_d` and `month` on each sleep; this
-        prop just rerenders the new label. Cached SysFont surface so
-        we don't re-rasterise every frame."""
-        today_d = self.kwargs.get("today_d", 4)
-        month = self.kwargs.get("month", 10)
+        CANON (NARRATIVE §1 setting note 3): every calendar in town
+        stopped at the mid-January seal, so the default card reads
+        JAN 15 -- the last day anyone marked, three months before the
+        PI's mid-April arrival. (The old day-cycle that advanced this
+        on sleep is removed; the stopped date IS the prop now.)
+        Cached SysFont surface so we don't re-rasterise every frame."""
+        today_d = self.kwargs.get("today_d", 15)
+        month = self.kwargs.get("month", 1)
         # Paper. Smaller now that the grid is gone -- a tear-off
         # day-card pinned to the wall.
         paper_w, paper_h = 26, 26
@@ -686,7 +689,7 @@ class Decoration:
         pygame.draw.rect(surf, (50, 40, 30), (px, py, paper_w, paper_h), 1)
         # Header band carries the month abbreviation.
         pygame.draw.rect(surf, (40, 30, 24), (px, py, paper_w, 8))
-        name = {10: "OCT", 11: "NOV", 12: "DEC", 1: "JAN"}.get(month, "OCT")
+        name = {10: "OCT", 11: "NOV", 12: "DEC", 1: "JAN"}.get(month, "JAN")
         # The day number, big and centred on the lower portion.
         day_str = str(today_d)
         try:
