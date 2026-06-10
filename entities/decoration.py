@@ -2311,7 +2311,9 @@ class Decoration:
                     int(46 + 10 * math.sin(self.t * 1.1 + self.seed)))
         col = (196, 178, 72)
         dark = (92, 80, 28)
-        sock = (26, 22, 14)
+        # The sockets go DEEP black -- darker than any ground they're
+        # painted on, so the empty stare reads as holes, not smudges.
+        sock = (6, 5, 4)
         R = 13 * pulse
         rx = R * rng.uniform(0.66, 0.74)
         ry = R * rng.uniform(0.96, 1.06)
