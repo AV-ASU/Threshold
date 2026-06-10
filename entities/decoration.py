@@ -2300,7 +2300,11 @@ class Decoration:
         different hand on a different night -- and it breathes on the
         same faint pulse + sickly light pool as the old glyph (this is
         still the cosmic-horror anchor; it repeats at scale across the
-        Scriptorium and Sign Chamber)."""
+        Scriptorium and Sign Chamber). SLIGHTLY ANIMATED, all of it
+        wrongness-quiet: the breath pulse; the chin runs creep like paint
+        that never dried; and every few seconds one socket catches a
+        faint gold fleck set toward the player (the watching_eye's
+        player_world cache) -- the daub watches."""
         rng = random.Random(self.seed)
         pulse = 1.0 + math.sin(self.t * 1.1 + self.seed) * 0.08
         _light_pool(surf, int(x), int(y), int(30 * pulse), (206, 188, 84),
@@ -2326,13 +2330,36 @@ class Decoration:
                 pygame.draw.line(surf, dark, a, b, 5)
                 pygame.draw.line(surf, col, a, b, 3)
         # Thumb-press sockets, mismatched, set off-centre. No mouth.
+        sockets = []
         for fx, fy, fr in ((-0.40, -0.25, 0.20), (0.43, -0.18, 0.23)):
-            pygame.draw.circle(surf, sock,
-                               (int(x + rx * fx), int(y + ry * fy)),
-                               max(2, int(R * fr)))
-        # Two paint runs off the chin, one trailing thinner.
+            sxp, syp = int(x + rx * fx), int(y + ry * fy)
+            srr = max(2, int(R * fr))
+            sockets.append((sxp, syp, srr))
+            pygame.draw.circle(surf, sock, (sxp, syp), srr)
+        # THE GLEAM: every few seconds (seeded period) one socket
+        # catches a faint gold fleck, set toward wherever the player
+        # stands (the same player_world cache the watching_eye uses).
+        # In and out in under half a second -- seen mostly from the
+        # corner of the eye; the daub watches.
+        period = 7.0 + (self.seed % 7)
+        ph = (self.t + self.seed * 0.37) % period
+        if ph < 0.45:
+            fade = 1.0 - abs(ph / 0.45 * 2.0 - 1.0)
+            sxp, syp, srr = sockets[self.seed % 2]
+            pwx, pwy = Decoration.player_world
+            dx, dy = pwx - x, pwy - y
+            d = math.hypot(dx, dy) or 1.0
+            off = max(1, srr - 2)
+            gx = int(sxp + dx / d * off)
+            gy = int(syp + dy / d * off)
+            gleam = tuple(int(sc + (gc - sc) * fade)
+                          for sc, gc in zip(sock, (188, 164, 70)))
+            pygame.draw.circle(surf, gleam, (gx, gy), 1)
+        # Two paint runs off the chin, one trailing thinner. They CREEP
+        # -- a very slow lengthening drift, wet paint that never dried.
+        creep = 1.0 + 0.30 * math.sin(self.t * 0.13 + self.seed * 0.7)
         for dx, fl in ((-R * 0.2, 1.0), (R * 0.12, 0.7)):
-            rl = rng.randint(int(R * 0.4), int(R * 0.9)) * fl
+            rl = rng.randint(int(R * 0.4), int(R * 0.9)) * fl * creep
             y0 = y + ry * 0.9
             pygame.draw.line(surf, dark, (x + dx, y0),
                              (x + dx, y0 + rl), 2)
