@@ -282,6 +282,9 @@ class ThreatMixin:
                 "target": target,
                 "anchor_tile": anchor_tile,
                 "fold_px": (tx * TILE + TILE // 2, ty * TILE + TILE // 2),
+                # The exit char, so state-driven folds can be looked up at
+                # draw time (Scene.fold_charge_fn keys on it).
+                "char": ch,
             })
 
     def _exit_is_fold(self, exit_data):

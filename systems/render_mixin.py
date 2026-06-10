@@ -534,6 +534,14 @@ class RenderMixin:
                   + int(math.sin(t * sway_amp + i * 0.7) * sway_y_amt))
             self.screen.blit(fog, (fx, fy))
 
+    def _refresh_fold_charge(self, face):
+        """Pull a state-driven fold's formation charge from the scene hook
+        (Scene.fold_charge_fn(game, char) -> 0..1) before it draws. Scenes
+        without the hook keep the default fully-formed pane."""
+        fn = getattr(self.scene, "fold_charge_fn", None)
+        if fn is not None:
+            face["charge"] = fn(self, face.get("char"))
+
     def _draw_folds(self):
         """Composite every seen fold in the current scene -- a one-sided peek
         into its target, only visible when the player faces into it. Pitch-0
@@ -545,6 +553,7 @@ class RenderMixin:
         from rendering.folds import draw_fold
         t = pygame.time.get_ticks() / 1000.0
         for face in folds:
+            self._refresh_fold_charge(face)
             draw_fold(self.screen, face, self.cam_x, self.cam_y,
                       self.player, t, self.camera)
 
@@ -552,6 +561,7 @@ class RenderMixin:
         """Draw a single seen fold (used by the tilted depth-sort list)."""
         from rendering.folds import draw_fold
         t = pygame.time.get_ticks() / 1000.0
+        self._refresh_fold_charge(face)
         draw_fold(self.screen, face, self.cam_x, self.cam_y,
                   self.player, t, self.camera)
 

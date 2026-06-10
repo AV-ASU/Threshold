@@ -1229,7 +1229,7 @@ SOLID_PROPS = {
 # -- Standees: stand authored 2D elevation art UP on the floor -------------
 # Props whose `_draw_<kind>` art in entities/decoration.py is a side-on
 # ELEVATION (a thing seen standing, base at the anchor) -- trees, effigies,
-# signs, a cauldron on its frame. Under tilt these used to blit FLAT at the
+# signs. Under tilt these used to blit FLAT at the
 # projected point, reading as a top-down sticker lying in a tilted world. We
 # now render that same authored art onto a card cropped to its silhouette and
 # stand it up GROUNDED, depth-sorted + occluding alongside the walls (the same
@@ -1238,7 +1238,7 @@ SOLID_PROPS = {
 # hangs instead: its card is hung from a mount height so the body dangles.
 _STANDEE_HANG = frozenset(("hanging_figure",))
 _STANDEE_GROUND = frozenset((
-    "creepy_tree", "corn_doll", "corn_altar", "cauldron",
+    "creepy_tree", "corn_doll", "corn_altar", "standing_stone",
     "wheelbarrow", "pedestal", "steeple", "town_sign", "flagpole",
     "tall_grass", "grass_tuft", "doll", "husk_bundle",
 ))

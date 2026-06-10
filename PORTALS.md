@@ -121,5 +121,17 @@ pass (NARRATIVE.md §11 "One phenomenon, two presentations"):
   loops; the only one-way crossing is the juke through HIS tear.
 - **In-maze relocations** are ordinary same-scene direction-gated exits
   now (silent — no frame; the lie is the world itself).
+- **Folds can be STATE-DRIVEN (2026-06 descent rework).** A scene may gate
+  an exit on game state (`Scene.exit_gate_fn(game, char)`) and drive a
+  fold's formation charge per frame (`Scene.fold_charge_fn(game, char)` →
+  0..1 into `draw_rift_door`'s charge ramp; 0 = not drawn, reads as
+  floor). Direction-gated exits also route straight through `cross_fold`
+  regardless of set membership, so a fold can join ANY two scenes —
+  including surface↔underground. The shipped uses: the **effigy grove's
+  descent fold** (clarity = evidence/3, opens at 3, lands at
+  `well_bottom`, dies at `descent_sealed`), its **return pane** at the
+  shaft floor, and the **school door** (opened by the chalk-door rite,
+  then permanent). All stay two-way until they DIE — never one-way (the
+  King keeps his signature).
 
 Live proof sheet: `tools/preview_rift_anchored.py`.

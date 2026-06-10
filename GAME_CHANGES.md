@@ -30,7 +30,10 @@ Implemented + verified (compileall + smoke + flow green; canon guards added).
 4. **Mrs. Calder → a guest she can't name** *(§4)* — unnameable-guest beat;
    the vanished husband is cut.
 5. **Toby → the well clue** *(§5)* — Mara **and the other cultists**, in the
-   **procession**, **before the rite**, down the **well**.
+   **procession**, **before the rite**, down the **well**. *(§14 rework: the
+   well can no longer be followed, so his witness now ALSO seeds the
+   **school** — the commune he watched empty out; the actionable route is
+   the rite.)*
 6a. **Playscript → the cult's own notes — WRAPPER ONLY** *(§6, wrapper)* —
    display name (`The Cult's Notes`) + description + Scriptorium pickup +
    Toby's reaction reskinned; item key `playscript` + save flag kept; the
@@ -259,10 +262,96 @@ from his pulpit, murdered for it (evidence #4, his cross). Only the
   the bargain: "They walked down willing, every one, and sold the Lord for the
   easing of some private ache, then climbed back up calling the wound a mercy.
   Foul, the lot of them, and glad of it." Preacher's voice, not exposition (the
-  old staccato well-directions were cut — Toby already carries the well clue).
+  old staccato well-directions were cut — Toby already carries the witness clue).
   Stays religious/moral (he never grasps the cosmic truth; §10 fence held).
 - [ ] *(Optional, not requested)* the `preacher_doomed` → gutted-on-the-floor
   reveal could be punched up for impact later. No lore change.
+
+---
+
+### ✅ 14. The descent rework — the rope is CUT; the rite is the way down — DONE  *(2026-06; NARRATIVE §2, §4, §5, §9, §11)*
+
+**Decision.** Act 1 and Act 2 are now separated by a player-performed
+descent built on the fold system itself, gated by the evidence count.
+The rope (and its woodshed pickup, and the `rope` item key) is cut.
+
+- [x] **The Invitation** (`rite_envelope`, `systems/items.py`): the
+  congregation — the Lodge guests who sign in and never out — left an
+  envelope at Sable's desk when they went below. At **3 evidence** he hands
+  it over (state-gated interjection at the top of `clerk_dialogue`; never
+  farmable by repeat visits) + the PI's `the_invitation` NOTE. **Canon
+  shift:** Sable holds it *knowingly*; his complicity stays hospitality,
+  never scheme (flow-guarded: no recruiter language).
+- [x] **The school rite** (`scenes/threshold_extras.py`): chalk on the
+  teacher's desk + incense among the cot relics; burn the incense at the
+  commune's indoor campfire, then draw the **final, smallest door** on the
+  chalkboard → the school↔grove fold opens permanently (`school_door_open`).
+- [x] **The grove descent fold** (`scenes/hidden_folds.py`): a rift stands
+  over the dead fire in `effigy_grove`, **clarity = evidence count**
+  (`fold_charge_fn`, 0.15→1.0), crossable only at 3 (`exit_gate_fn`) →
+  lands at `well_bottom`; a symmetric **return pane** stands at the shaft
+  floor where the rope hung. The grove was rebuilt as a **crop circle
+  deep in the corn** (18×13): the corn itself is the border (an oval
+  clearing in solid stalks — the old tree wall + canopy dressing is cut),
+  with **three organic standing stones** (seeded `standing_stone` deco,
+  solid see-over footprints) around the ring and the nailed-up faces
+  moved onto the north-west stone. It now takes infestation decals (the
+  rot and the way down escalate on the same dial).
+- [x] **The cauldron is removed GAME-WIDE** (it was eat-cult imagery, §1b
+  scrub): the prop, its draw code (`entities/decoration.py`), its standee
+  entry (`rendering/props.py`), and the old clearing centrepiece. The
+  clearing (`void_boss`, `scenes/interiors.py`) is reworked as the **burn
+  site**: the dead fire pit where the claimed burned their worldly effects
+  before going below (the surface twin of the Sorting Hall's shed lives);
+  its flavor beat is `the_burning` (narration only, never evidence).
+  Flow-guarded: "cauldron" joins the eat-cult scrub list.
+- [x] **The gate keys on EVIDENCE, never visibility** (flow-guarded): the
+  grove's charge/gate read `_evidence_count()` (the six canonical beats);
+  Watchers raise the visibility *floor* and can never open the way down.
+- [x] **Death never seals the descent.** The old rope fiction ("death at
+  the shaft floor snaps the rope") silently SOFTLOCKED a run: hp-death
+  respawns in bed with flags intact, so the seal made the run
+  unwinnable. Cut from `_on_player_death`; the descent seals only at the
+  Deep Stair, by choice. (Pursuer-contact deaths still end the run
+  outright.) The well art loses its hanging rope too (a frayed stub on
+  the winch drum).
+- [x] **Mask pickup recognition line** (descent_mask beat): "The origin
+  of every half reflection daubed on this town's walls. The pale mask
+  hums in your hand." -- the daubs pay off at the altar.
+- [x] **The painted Sign is now a MASK** (`_draw_yellow_sign`,
+  `entities/decoration.py`): canon says the Sign IS the Pallid Mask ("His
+  face made an object", §4 #5), so the daubed glyph (the old three-armed
+  curl) is replaced by a crude painted face -- broken oval, two
+  thumb-press sockets, NO mouth (the flashback-mask grammar), paint runs
+  off the chin. Primitive yet put together; seeded per instance (every
+  daub is a different hand); same pulse + sickly light pool. One draw fn,
+  so every placement (grove centre, Sign Chamber, Scriptorium, Brimley,
+  the infestation pool) updated at once.
+- [x] **Engine seams** (`systems/game.py`, `rendering/folds.py`,
+  `systems/render_mixin.py`, `systems/threat_mixin.py`): direction-gated
+  exits route straight through `cross_fold` (folds are seamless whatever
+  scenes they join); scenes may gate exits on game state
+  (`Scene.exit_gate_fn`) and drive per-fold formation charge
+  (`Scene.fold_charge_fn`).
+- [x] **The seal** (`scenes/well.py` Deep Stair): `well_rope_broken` →
+  **`descent_sealed`** — pressing the keystone kills the grove fold AND the
+  return pane (the fold dies; it never turns one-way — one-way stays the
+  King's signature alone, §11).
+- [x] **The well demoted** (`scenes/brimley.py`): dread set-dressing — the
+  lip worn smooth by a year of hands, no rope, no way to follow. Toby's
+  witness beat still points at it; the rite answers it.
+- [x] **The Ledger says A YEAR** (`scenes/house.py`): the checkout dates
+  stop a year back (same season as the PI's one dream), not "months";
+  flow-guarded.
+- [x] **Guidance:** the Invitation's text names the school; the
+  `the_invitation` case note echoes it; Toby seeds the school from FIRST
+  contact (the witness beat: they lived in his school, then walked out in
+  a line) and adds the one-shot "don't go in there" warning once the
+  envelope is carried (`tisdale_boy_dialogue`). The well's examine answers
+  the witness: they went down here, and you never can.
+- [x] Flow harness rewritten (`tests/flow.py` beat 1 + Deep Stair beat):
+  handoff gating, school rite order, grove gate below/at 3, two-way
+  descent, seal kills both panes, no-dash guard on the Invitation.
 
 ---
 

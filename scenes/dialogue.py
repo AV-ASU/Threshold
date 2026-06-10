@@ -125,9 +125,12 @@ def preacher_dialogue(game, npc):
 def tisdale_boy_dialogue(game, npc):
     """Toby Tisdale -- innocent witness (NARRATIVE §2). He saw Mara AND the
     other cultists go down into the well, in the procession, before the rite
-    -- so his account is the player's clue to descend the well. What he gives
-    you is what he tells you (no inventory item -- the old keepsake object was
-    purged). Children notice what adults pretend not to."""
+    -- and before that they LIVED in his school (the commune). His witness
+    does two jobs now (§14 descent rework): it poses the descent question
+    (they went down a well no one can follow) and it SEEDS THE SCHOOL --
+    the room the Invitation names and the chalk-door rite reopens. What he
+    gives you is what he tells you (no inventory item -- the old keepsake
+    object was purged). Children notice what adults pretend not to."""
     save = game.save
     inv = game.player.inventory
     # The witness beat: first real conversation, he tells you what he saw.
@@ -139,6 +142,9 @@ def tisdale_boy_dialogue(game, npc):
             "to the well in the square. Before the cold came.",
             "They climbed down into it. Down the well. She didn't come back "
             "up. None of them did. I saw.",
+            "[c=dim]Before that they had my school. All of them, living in "
+            "it, in rows. Then one night they walked out of it in a "
+            "line.[/c]",
         ], speaker="Toby Tisdale", voice="blip_kid", portrait="tisdale_boy")
         return
     if inv.has("cult_calling") and not save.flag("kid_playscript_noticed"):
@@ -146,6 +152,18 @@ def tisdale_boy_dialogue(game, npc):
         game.dialog.show([
             "That book. The one they write in.",
             "[c=dim]Don't open it where I can see.[/c]",
+        ], speaker="Toby Tisdale", voice="blip_kid", portrait="tisdale_boy")
+        return
+    # The envelope in the PI's pocket points at the school; the boy it
+    # belonged to confirms it, once, and begs him off it.
+    if (save.flag("rite_envelope_given")
+            and not save.flag("kid_school_warned")):
+        save.set_flag("kid_school_warned", True)
+        game.dialog.show([
+            "They slept in my school. All of them, in rows.",
+            "[c=dim]I looked in the window once. The board still has my "
+            "lesson on it, under their door.[/c]",
+            "Don't go in there, mister.",
         ], speaker="Toby Tisdale", voice="blip_kid", portrait="tisdale_boy")
         return
     count = save.arg("kid_count", 0) + 1
@@ -342,18 +360,60 @@ def sheriff_dialogue(game, npc):
 def clerk_dialogue(game, npc):
     """The Lodge Clerk, Mr. Sable -- the smiling trap-keeper (NARRATIVE §2).
     A LOCAL, and the most attuned of them: he dreamed the door longest and
-    loudest of anyone born here, and has spent years subconsciously keeping
-    the desk and the guests ready for arrivals he could never name. His
-    menace is COMPULSION, NOT CONSPIRACY -- he voices certainties he can't
-    account for (the door has spoken through him so long he mistakes it for
-    hospitality), never a scheme he's in on. He keeps you comfortable, keeps
-    you here, and the only thing he says about the car is deniable (the
-    Sheriff carries the plain truth). The old fetch-quest chain is cut -- the
-    car answers only to the Sign now, so he has no keys to dangle. He
-    escalates over visits from warm host to something colder, and (visit 2)
-    nudges you back to the front-desk register he can't say why he keeps."""
+    loudest of anyone born here, and has spent years keeping the desk and
+    the guests ready. His menace is COMPULSION, NOT CONSPIRACY -- he voices
+    certainties he can't account for (the door has spoken through him so
+    long he mistakes it for hospitality), never a scheme he's in on. He
+    keeps you comfortable, keeps you here, and the only thing he says about
+    the car is deniable (the Sheriff carries the plain truth). The old
+    fetch-quest chain is cut -- the car answers only to the Sign now, so he
+    has no keys to dangle. He escalates over visits from warm host to
+    something colder, and (visit 2) nudges you back to the front-desk
+    register he can't say why he keeps.
+
+    THE INVITATION (the act break): the congregation -- the guests who sign
+    in and never out -- left an envelope at his desk when they went below,
+    told to hold it until he was ready to follow. He KNOWS what it is and
+    where its writers went (the robe in his closet was always the tell);
+    what he does with it stays hospitality: at 3 evidence he judges the
+    guest ready in his place, and hands it over like a room key. Somebody
+    has to keep the desk. State-gated on what the PI knows -- never
+    farmable by repeat visits."""
     save = game.save
     _cult_tell(game, "clerk")
+    # The handoff preempts the visit rotation the moment the PI is ready.
+    if (not save.flag("rite_envelope_given")
+            and game._evidence_count() >= 3):
+        save.set_flag("rite_envelope_given", True)
+        game.player.inventory.add("rite_envelope", 1)
+        game.audio.play("pickup_rare", 0.7)
+        game.dialog.show([
+            "You're past pretending to be a guest now, I think. All right.",
+            "[c=dim](He reaches under the register and lays a long envelope "
+            "on the desk. Wax seal, and the Sign pressed into the wax. He "
+            "handles it like a room key.)[/c]",
+            "The ones who stayed here before you left this at my desk when "
+            "they went. They said I would know when I was ready to follow.",
+            "I believe it meant you. Somebody has to keep the desk.",
+            "[c=dim]He smiles the way he always smiles. \"Anything else you "
+            "need, you ask me. Anything at all.\"[/c]",
+        ], speaker="Mr. Sable", voice="blip_low", portrait="clerk")
+        # The PI's case note (a NOTE, never evidence -- must not feed the
+        # King-gate). Same live-list append pattern as _log_case_entry.
+        notes = save.arg("notes", [])
+        if isinstance(notes, list) and not any(
+                isinstance(e, dict) and e.get("name") == "the_invitation"
+                for e in notes):
+            notes.append({"name": "the_invitation", "lines": [
+                "Sable kept an envelope under the register. A year at "
+                "least. Handed it to me like a room key.",
+                "The guests who never signed out left it for him, for the "
+                "day he was ready. He gave it away instead. Says the desk "
+                "needs him.",
+                "It reads like scripture and gives directions like a "
+                "flyer. The school first, it says. Where they slept.",
+            ]})
+        return
     count = save.arg("clerk_count", 0) + 1
     save.set_arg("clerk_count", count)
     if count == 1:

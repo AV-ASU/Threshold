@@ -25,7 +25,7 @@
   lantern, brazier, wall_torch, rope, stalk_marker, smoke, wisp, mote, flock,
   **crow** (live, so its hop + looking-backwards anomaly survive).
 - **Standees** (grounded elevation cards): creepy_tree, corn_doll, corn_altar,
-  cauldron, wheelbarrow, pedestal, **steeple**, tall_grass, grass_tuft, doll,
+  wheelbarrow, pedestal, **steeple**, tall_grass, grass_tuft, doll,
   husk_bundle, hanging_figure (hung).
 - **Wall-hung cards** (`_WALL_DECO_KINDS`): **mirror, photo, wrong_photo,
   missing_flyer, polaroid_wall, banner, calendar, clock, apology_wall,

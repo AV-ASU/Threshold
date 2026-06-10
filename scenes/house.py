@@ -500,12 +500,12 @@ def house_interact(game):
         "You flip back through the register out of habit. Names signed in, in "
         "the Clerk's hand, years of them, and a date beside each one where "
         "they settled up and left.",
-        "Then those dates just... stop. The last anyone signed out was months "
+        "Then those dates just... stop. The last anyone signed out was a year "
         "back. Every name since signs in and never out. Yours among them now, "
         "the ink still wet.",
         "[c=dim]Probably nothing. A clerk who got lazy, dropped the habit. "
-        "...Still. Months. That's a long time to forget to write down the day "
-        "a guest left. I'll keep it in mind.[/c]",
+        "...Still. A year. That's a long time to forget to write down the "
+        "day a guest left. I'll keep it in mind.[/c]",
     ])
 
 
@@ -744,11 +744,11 @@ def basement_on_enter(game, scene):
 
 
 def basement_interact(game):
-    """E at the workbench chest: the woodshed key (gate to the axe + rope
+    """E at the workbench chest: the woodshed key (gate to the axe
     in the shed). The Ledger evidence moved upstairs to the front desk;
     nothing evidential is hidden down here now."""
     sc = game.scene
-    # The workbench chest -- holds the woodshed key (gate to the axe + rope
+    # The workbench chest -- holds the woodshed key (gate to the axe
     # in the shed). chest_interact does its own range check and flips the
     # chest's open visual; the `woodshed_key_taken` flag keeps it emptied
     # across re-entries.

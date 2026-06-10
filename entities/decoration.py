@@ -80,10 +80,10 @@ def _light_pool(surf, cx, cy, radius, color=(255, 170, 70), peak=70):
 
 
 _GROUNDED_DECOS = frozenset((
-    "well", "creepy_tree", "pickup_truck", "player_car", "cauldron",
+    "well", "creepy_tree", "pickup_truck", "player_car",
     "gas_pump", "payphone", "pedestal", "pillar", "wheelbarrow",
     "headstone", "brazier", "town_sign", "flagpole", "bush",
-    "corn_doll", "corn_altar", "stalk_marker",
+    "corn_doll", "corn_altar", "stalk_marker", "standing_stone",
 ))
 
 # Kinds that must NOT use the generic upscale path (they draw absolute
@@ -94,7 +94,7 @@ _NO_SCALE_DECOS = frozenset((
     "candle", "lantern", "brazier", "wall_torch", "swallow_hole",
     "smoke", "mist", "mote", "wisp",
     "flock", "leaves", "well", "steeple", "pickup_truck", "player_car",
-    "cauldron", "watching_eye", "watching_wound", "passing_silhouette",
+    "watching_eye", "watching_wound", "passing_silhouette",
     "gas_pump", "payphone", "terminal", "computer", "mirror", "rug",
     "creepy_tree", "crow", "flock", "town_sign", "flagpole",
 ))
@@ -239,7 +239,7 @@ class Decoration:
     def _draw_doll(self, surf, x, y):
         """A small bound effigy -- cloth body, twine waist, stick arms,
         two dark X-marks for eyes. The cult's watching-charm, set on the
-        charred edges around the cauldron clearing. ~14px tall."""
+        charred edges around the burn clearing. ~14px tall."""
         # Drop shadow.
         sh = pygame.Surface((12, 5), pygame.SRCALPHA)
         pygame.draw.ellipse(sh, (0, 0, 0, 90), (0, 0, 12, 5))
@@ -1085,9 +1085,10 @@ class Decoration:
             pygame.draw.line(surf, col, (x - 6, y + i * 2 + wy), (x + 6, y + i * 2 + wy), 2)
 
     def _draw_well(self, surf, x, y):
-        # Redesign: a fuller, ominous wellhead -- the ONLY way down into
-        # the Works. Mossy ring of fitted stones, a bottomless black
-        # shaft, a winch frame, and the rope that descends into the dark.
+        # A fuller, ominous wellhead -- the congregation's old mouth into
+        # the Works, unusable now (dread set-dressing; the rite is the way
+        # down). Mossy ring of fitted stones, a bottomless black shaft, a
+        # winch frame, and a frayed stub where the rope used to hang.
         # Outer stone ring (3/4 top-down ellipse)
         pygame.draw.ellipse(surf, (78, 78, 88), (x - 18, y - 8, 36, 22))
         pygame.draw.ellipse(surf, (54, 54, 64), (x - 18, y - 8, 36, 22), 2)
@@ -1109,8 +1110,11 @@ class Decoration:
         pygame.draw.line(surf, (70, 46, 28), (x - 15, y - 22), (x + 15, y - 22), 3)
         # Winch drum on the crossbar
         pygame.draw.rect(surf, (60, 40, 24), (x - 6, y - 24, 12, 4))
-        # The rope -- from the drum straight down into the shaft
-        pygame.draw.line(surf, (150, 130, 90), (x, y - 22), (x, y + 3), 1)
+        # The frayed stub -- the rope is long gone; a hand's-width of it
+        # still knotted to the drum, ending in loose threads.
+        pygame.draw.line(surf, (150, 130, 90), (x, y - 22), (x, y - 16), 1)
+        pygame.draw.line(surf, (120, 102, 70), (x, y - 16), (x - 1, y - 13), 1)
+        pygame.draw.line(surf, (120, 102, 70), (x, y - 16), (x + 1, y - 14), 1)
 
     def _draw_radio(self, surf, x, y):
         pygame.draw.rect(surf, (90, 60, 40), (x - 10, y - 4, 20, 12))
@@ -1567,47 +1571,6 @@ class Decoration:
             ly = (y - 8 + i * 4 + int(self.t * 8)) % 16 + (y - 10)
             w = (self.seed + i * 31) % 12 + 4
             pygame.draw.line(surf, (50, 200, 80), (x - 10, ly), (x - 10 + w, ly), 1)
-
-    def _draw_cauldron(self, surf, x, y):
-        """THRESHOLD: cast-iron cauldron suspended on a triangular
-        iron frame over a fire pit. Used in the clearing scene
-        (the cult's purification site). Black-iron body with a
-        rolled rim, three-leg frame angling out from above the pot,
-        embers visible at the base when 'lit' kwarg is True."""
-        # Triangular frame (three iron rods crossing above the pot)
-        rod = (30, 28, 34)
-        pygame.draw.line(surf, rod, (x - 14, y - 18), (x, y - 22), 2)
-        pygame.draw.line(surf, rod, (x + 14, y - 18), (x, y - 22), 2)
-        pygame.draw.line(surf, rod, (x - 14, y - 18), (x - 18, y + 6), 2)
-        pygame.draw.line(surf, rod, (x + 14, y - 18), (x + 18, y + 6), 2)
-        # Hanging chain
-        for i in range(3):
-            pygame.draw.line(surf, rod,
-                             (x, y - 22 + i * 4),
-                             (x, y - 18 + i * 4), 1)
-        # Cauldron body (cast iron)
-        pygame.draw.ellipse(surf, (16, 14, 18), (x - 12, y - 10, 24, 16))
-        pygame.draw.ellipse(surf, (40, 36, 42), (x - 12, y - 10, 24, 16), 1)
-        # Rolled rim
-        pygame.draw.ellipse(surf, (50, 46, 52), (x - 12, y - 12, 24, 6))
-        pygame.draw.ellipse(surf, (8, 6, 10), (x - 10, y - 11, 20, 4))
-        # Liquid surface (dark, slightly steaming)
-        if self.kwargs.get("lit", True):
-            pygame.draw.ellipse(surf, (60, 30, 30), (x - 9, y - 10, 18, 4))
-            # Steam wisps
-            wisp_t = self.t * 2
-            for i in range(3):
-                wy = int(y - 18 - (wisp_t + i * 4) % 12)
-                wx = int(x - 4 + i * 3 + math.sin(wisp_t + i) * 2)
-                pygame.draw.rect(surf, (100, 90, 100), (wx, wy, 2, 2))
-        # Embers at the base
-        if self.kwargs.get("lit", True):
-            for i in range(4):
-                ex = x - 8 + i * 5
-                ey = y + 8
-                col = (200 + int(math.sin(self.t * 6 + i) * 20),
-                       80, 30)
-                pygame.draw.rect(surf, col, (ex, ey, 2, 2))
 
     def _draw_bowl(self, surf, x, y):
         # ceramic bowl on table — empty by default; if "filled" kwarg is True, contains an egg
@@ -2332,37 +2295,82 @@ class Decoration:
             pygame.draw.line(surf, gold, (x - w, ly), (x + w, ly), 1)
 
     def _draw_yellow_sign(self, surf, x, y):
-        # The Yellow Sign -- the cult's glyph, daubed on stone. An
-        # asymmetric three-armed curl in jaundiced yellow, breathing
-        # faintly. Deliberately wrong: the arms don't match, and the
-        # eye sits off-centre. This is the cosmic-horror anchor; it
-        # repeats at scale across the Scriptorium and Sign Chamber.
-        pulse = 1.0 + math.sin(self.t * 1.1 + self.seed) * 0.10
-        # A sickly jaundiced glow behind the glyph -- the one note of
-        # real colour in the muck, and a focal point the eye catches.
+        """The Yellow Sign -- His face, daubed in paint. CANON (NARRATIVE
+        §4 #5): the Sign IS the Pallid Mask, "His face made an object",
+        so what the cult paints is a crude mask: a broken oval outline,
+        two thumb-press sockets, NO mouth (the flashback-mask grammar),
+        and paint runs where the hand hurried. Primitive yet put
+        together. Seeded per instance -- every daub in the world is a
+        different hand on a different night -- and it breathes on the
+        same faint pulse + sickly light pool as the old glyph (this is
+        still the cosmic-horror anchor; it repeats at scale across the
+        Scriptorium and Sign Chamber). SLIGHTLY ANIMATED, all of it
+        wrongness-quiet: the breath pulse; the chin runs creep like paint
+        that never dried; and every few seconds one socket catches a
+        faint gold fleck set toward the player (the watching_eye's
+        player_world cache) -- the daub watches."""
+        rng = random.Random(self.seed)
+        pulse = 1.0 + math.sin(self.t * 1.1 + self.seed) * 0.08
         _light_pool(surf, int(x), int(y), int(30 * pulse), (206, 188, 84),
                     int(46 + 10 * math.sin(self.t * 1.1 + self.seed)))
         col = (196, 178, 72)
         dark = (92, 80, 28)
+        # The sockets go DEEP black -- darker than any ground they're
+        # painted on, so the empty stare reads as holes, not smudges.
+        sock = (6, 5, 4)
         R = 13 * pulse
-        arms = ((-1.5, 1.05), (1.15, 0.85), (0.25, 1.3))
-        for base_ang, lscale in arms:
-            L = R * lscale
-            pts = []
-            seg = 6
-            for i in range(seg + 1):
-                t = i / seg
-                a = base_ang + t * 1.05      # curl as the arm extends
-                rr = L * t
-                pts.append((int(x + math.cos(a) * rr),
-                            int(y + math.sin(a) * rr)))
-            pygame.draw.lines(surf, dark, False, pts, 4)
-            pygame.draw.lines(surf, col, False, pts, 2)
-        # Off-centre hooked eye at the heart of the glyph.
-        ex, ey = int(x - 1), int(y + 1)
-        pygame.draw.circle(surf, dark, (ex, ey), int(5 * pulse))
-        pygame.draw.circle(surf, col, (ex, ey), int(5 * pulse), 1)
-        pygame.draw.circle(surf, col, (ex + 2, ey - 1), 2)
+        rx = R * rng.uniform(0.66, 0.74)
+        ry = R * rng.uniform(0.96, 1.06)
+        # Broken outline: most strokes survive (put together), a few
+        # gaps where the hand lifted (primitive).
+        n = 16
+        pts = []
+        for i in range(n):
+            a = i / n * math.tau
+            w = rng.uniform(-2.4, 2.4)
+            pts.append((x + math.cos(a) * (rx + w),
+                        y + math.sin(a) * (ry + w)))
+        for i in range(n):
+            if rng.random() < 0.78:
+                a, b = pts[i], pts[(i + 1) % n]
+                pygame.draw.line(surf, dark, a, b, 5)
+                pygame.draw.line(surf, col, a, b, 3)
+        # Thumb-press sockets, mismatched, set off-centre. No mouth.
+        sockets = []
+        for fx, fy, fr in ((-0.40, -0.25, 0.20), (0.43, -0.18, 0.23)):
+            sxp, syp = int(x + rx * fx), int(y + ry * fy)
+            srr = max(2, int(R * fr))
+            sockets.append((sxp, syp, srr))
+            pygame.draw.circle(surf, sock, (sxp, syp), srr)
+        # THE GLEAM: every few seconds (seeded period) one socket
+        # catches a faint gold fleck, set toward wherever the player
+        # stands (the same player_world cache the watching_eye uses).
+        # In and out in under half a second -- seen mostly from the
+        # corner of the eye; the daub watches.
+        period = 7.0 + (self.seed % 7)
+        ph = (self.t + self.seed * 0.37) % period
+        if ph < 0.45:
+            fade = 1.0 - abs(ph / 0.45 * 2.0 - 1.0)
+            sxp, syp, srr = sockets[self.seed % 2]
+            pwx, pwy = Decoration.player_world
+            dx, dy = pwx - x, pwy - y
+            d = math.hypot(dx, dy) or 1.0
+            off = max(1, srr - 2)
+            gx = int(sxp + dx / d * off)
+            gy = int(syp + dy / d * off)
+            gleam = tuple(int(sc + (gc - sc) * fade)
+                          for sc, gc in zip(sock, (188, 164, 70)))
+            pygame.draw.circle(surf, gleam, (gx, gy), 1)
+        # Two paint runs off the chin, one trailing thinner. They CREEP
+        # -- a very slow lengthening drift, wet paint that never dried.
+        creep = 1.0 + 0.30 * math.sin(self.t * 0.13 + self.seed * 0.7)
+        for dx, fl in ((-R * 0.2, 1.0), (R * 0.12, 0.7)):
+            rl = rng.randint(int(R * 0.4), int(R * 0.9)) * fl * creep
+            y0 = y + ry * 0.9
+            pygame.draw.line(surf, dark, (x + dx, y0),
+                             (x + dx, y0 + rl), 2)
+            pygame.draw.line(surf, col, (x + dx, y0),
+                             (x + dx, y0 + rl * 0.7), 1)
 
     def _draw_chest(self, surf, x, y):
         # Wooden chest. Closed = lid down with a gold lock plate (and a
@@ -2822,6 +2830,61 @@ class Decoration:
                 lx = x - w // 4 + int(lean * (1 - (ly - top) / h))
                 pygame.draw.line(surf, stone_dk, (lx, ly), (lx + w // 2, ly), 1)
         pygame.draw.circle(surf, moss, (x - w // 4, b - 2), 2)
+
+
+    def _draw_standing_stone(self, surf, x, y):
+        """An ORGANIC standing stone -- a weathered monolith at the burn
+        clearing: an irregular tapering slab with no tool marks, moss
+        skirting the base, pale lichen blooming up one face, a hairline
+        crack. Seeded per instance so the three in the grove read as
+        siblings, never copies. Elevation art; under tilt it stands up
+        as a grounded standee (rendering/props.py)."""
+        rng = random.Random(self.seed)
+        h = rng.randint(42, 56)
+        wbase = rng.randint(15, 19)
+        wtop = rng.randint(5, 9)
+        lean = rng.randint(-3, 3)
+        stone = (96, 94, 98)
+        stone_dk = (52, 50, 56)
+        stone_lt = (126, 124, 130)
+        moss = (58, 74, 50)
+        lichen = (134, 138, 118)
+        # Foot seated on the ground shadow (same grounding as headstone).
+        b = y + 14
+        top = b - h
+        # Jagged silhouette: walk both flanks with seeded wobble so no
+        # edge is a ruled line.
+        left, right = [], []
+        steps = 5
+        for i2 in range(steps + 1):
+            f = i2 / steps
+            yy = b - f * h
+            half = (wbase * (1 - f) + wtop * f) / 2.0
+            cx = x + lean * f
+            left.append((cx - half + rng.uniform(-1.8, 1.8), yy))
+            right.append((cx + half + rng.uniform(-1.8, 1.8), yy))
+        pts = left + right[::-1]
+        pygame.draw.polygon(surf, stone, pts)
+        pygame.draw.polygon(surf, stone_dk, pts, 1)
+        # One lit flank, one hairline crack wandering down from the crown.
+        pygame.draw.line(surf, stone_lt, left[1], left[-2], 1)
+        crack = [(x + rng.randint(-3, 3), top + rng.randint(3, 7))]
+        for _ in range(3):
+            crack.append((crack[-1][0] + rng.randint(-3, 3),
+                          crack[-1][1] + h // 5))
+        pygame.draw.lines(surf, stone_dk, False, crack, 1)
+        # Lichen blooms up one face.
+        for _ in range(rng.randint(3, 5)):
+            lx = x + rng.randint(-(wbase // 2) + 2, (wbase // 2) - 2)
+            ly = b - rng.randint(6, h - 8)
+            pygame.draw.circle(surf, lichen, (lx, ly), rng.randint(1, 2))
+        # Turned dirt + moss skirting the base.
+        pygame.draw.ellipse(surf, (30, 26, 23),
+                            (x - wbase // 2 - 2, b - 2, wbase + 4, 6))
+        for _ in range(rng.randint(3, 5)):
+            mx = x + rng.randint(-(wbase // 2), wbase // 2)
+            pygame.draw.circle(surf, moss,
+                               (mx, b - rng.randint(1, 4)), rng.randint(1, 2))
 
     def _draw_player_car(self, surf, x, y):
         """The PI's pale grey-blue sedan, dead on the shoulder, drawn TOP-DOWN

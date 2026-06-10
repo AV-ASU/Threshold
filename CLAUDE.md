@@ -250,13 +250,23 @@ it renders the procedural sprites to a labelled PNG strip.
   Sable is the most-attuned *local*** (not a newcomer), the **Playscript is
   the cult's own notes**, and the **Deep Stair no longer consumes the
   keystone** (Mask + notes are carried down and spent at the Threshold to
-  SEAL). Check `GAME_CHANGES.md` before touching the cast, the ledger, the
-  fork, or the Deep Stair.
+  SEAL). **The rope is CUT (2026-06, §14): the descent is the RITE** — at 3
+  evidence Sable hands over the Invitation (`rite_envelope`), the school
+  rite (incense + the final chalk door) opens the school↔grove fold, and
+  the grove's **descent fold** (clarity = evidence count via
+  `Scene.fold_charge_fn`; crossable at 3 via `Scene.exit_gate_fn`) lands at
+  `well_bottom`; the Deep Stair sets `descent_sealed` (was
+  `well_rope_broken`) and kills the fold + its return pane. The Brimley
+  well is dread set-dressing; the Ledger's checkout dates stop **a year**
+  back (flow-guarded). Check `GAME_CHANGES.md` before touching the cast,
+  the ledger, the fork, the descent, or the Deep Stair.
 - **Teleportation is consolidated — one primitive, don't add bespoke
-  paths.** Doors/ladders/ropes fade (`begin_transition`'s fade path);
+  paths.** Doors/ladders fade (`begin_transition`'s fade path);
   EVERY other traversal — seamless world edges, direction-gated fold
-  exits, the maze's same-scene `I`/`Q` relocations, and the King's rift
-  juke — funnels through `Game.cross_fold` (`systems/game.py`): no fade,
+  exits (these now route straight through `cross_fold` whatever scenes
+  they join, so a fold can cross surface↔underground), the maze's
+  same-scene `I`/`Q` relocations, and the King's rift juke — funnels
+  through `Game.cross_fold` (`systems/game.py`): no fade,
   no sting, stride/look/screen-position preserved. The crossing is
   deliberately nothing; the FRAME is the spectacle. Visible folds + the
   King's portal share ONE anchored frame renderer

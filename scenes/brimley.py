@@ -5,7 +5,7 @@ rework: the village's six buildings have been scattered across
 this map. Three sit on the west bank (Church north, Sheriff +
 Farmhouse south); three sit middle-south on the east bank (Shop,
 Kid's House, Barn). Player walks the bank to find them. The
-cauldron clearing and player's car are still here.
+burn clearing and player's car are still here.
 
 Atmosphere: black haze drawn by Game._draw_brimley_haze, ambient
 'wind' track played by music='wind'."""
@@ -132,7 +132,7 @@ def build_brimley():
     # "corn" while they stand on it), turning the open brimley into a
     # field with cover lanes to sneak between the buildings past the
     # roaming cult -- the way the cornfields do. Stamped only on open
-    # grass, clear of the river, the buildings, the car/cauldron, and
+    # grass, clear of the river, the buildings, the car/clearing, and
     # the spawn tiles.
     corn_patches = [
         (16, 18, 28, 30), (3, 35, 14, 47), (18, 52, 29, 64), (3, 70, 12, 78),
@@ -317,7 +317,7 @@ def build_brimley():
         # Northern lobe between the cornfield-maze exit and the
         # river crossing.
         (44, 6,  6, 4, 31),
-        # Southern lobe between the cauldron clearing and the barn.
+        # Southern lobe between the burn clearing and the barn.
         (60, 95, 9, 4, 37),
     ]
     for (lx, ly, rx, ry, seed) in lobes:
@@ -372,13 +372,13 @@ def build_brimley():
     _carve_track(floor_ll, objects_l,
                  [(58, 72), (70, 77), (80, 80), (83, 81)], trk)              # -> Barn door
     # West bank: bridge west end -> Church (north) and Sheriff +
-    # Farmhouse (south), plus a spur toward the cauldron clearing.
+    # Farmhouse (south), plus a spur toward the burn clearing.
     _carve_track(floor_ll, objects_l,
                  [(31, 24), (16, 16), (9, 11), (7, 10)], trk)                # -> Church door
     _carve_track(floor_ll, objects_l,
                  [(31, 24), (18, 44), (9, 58), (7, 66)], trk)                # -> Sheriff door
     _carve_track(floor_ll, objects_l, [(7, 66), (7, 80), (7, 94)], trk)      # -> Farmhouse door
-    _carve_track(floor_ll, objects_l, [(7, 82), (11, 81), (14, 80)], trk)    # -> cauldron entrance
+    _carve_track(floor_ll, objects_l, [(7, 82), (11, 81), (14, 80)], trk)    # -> clearing entrance
     # ---- THE FOLD ROAD ----
     # A dirt road that runs east-west across Brimley at row 24, passing
     # right over the bridge. The brimley scene wraps on its x axis (see
@@ -518,9 +518,9 @@ def build_brimley():
     sc.add_exit("M", "cornfield_maze",    "from_brimley_south")  # South: macro-loop
     # (The east-west road wrap is handled by the engine via wrap_x --
     # no exit tile, no spawn. See the gaps carved at row 24 below.)
-    cauldron_tx, cauldron_ty = 15, 80
+    clearing_tx, clearing_ty = 15, 80
     objects_list = [list(r) for r in objects]
-    objects_list[cauldron_ty][cauldron_tx] = "j"
+    objects_list[clearing_ty][clearing_tx] = "j"
     # North passage to the river_crossing -- a single tile carved
     # into the north tree line, west of the river.
     objects_list[0][50] = "a"
@@ -561,7 +561,7 @@ def build_brimley():
     sc.set_spawn("from_our_house_area", w - 2, 7)
     # Climbing back out of the well lands beside it.
     sc.set_spawn("from_well", 94, 13)
-    # Coming out of the woodshed door (the lumber axe + rope shed).
+    # Coming out of the woodshed door (the lumber axe + flashlight shed).
     # Spawn ONE TILE NORTH of the door so the player doesn't immediately
     # re-trigger and isn't stuck inside the shed walls.
     sc.set_spawn("from_woodshed", 91, 15)
@@ -579,7 +579,7 @@ def build_brimley():
     sc.set_spawn("from_forest_path", 48, 1)
     # Returning from the clearing -- spawn one tile EAST of the j
     # tile so the player doesn't auto-retrigger.
-    sc.set_spawn("from_clearing", cauldron_tx + 1, cauldron_ty)
+    sc.set_spawn("from_clearing", clearing_tx + 1, clearing_ty)
     # Returning from each scattered building lands the player one
     # tile south of the door so they don't immediately re-enter.
     sc.set_spawn("from_old_man_house",     church_door,  church_bot + 1)
@@ -600,7 +600,7 @@ def build_brimley():
     sc.add_decoration(Decoration(72 * TILE + 16, 40 * TILE + 16, "crow"))
     sc.add_decoration(Decoration(85 * TILE + 16, 70 * TILE + 16, "crow"))
     # Creepy bank dressing -- creepy_trees, hanging figures, dead
-    # crows. The cauldron-clearing entrance at (15, 80) gets its own
+    # crows. The burn-clearing entrance at (15, 80) gets its own
     # creepy_tree so the player can SPOT it among the empty bank.
     # A bloody-handprint trail leads east-to-west across the bank
     # from the river to the entrance, marking the cult's path.
@@ -621,18 +621,18 @@ def build_brimley():
                                  "swallow_hole"))
     for _mx, _my in [(_whirl_col - 1, _whirl_row - 1), (_whirl_col + 1, _whirl_row + 1)]:
         sc.add_decoration(Decoration(_mx * TILE + 16, _my * TILE + 8, "mist"))
-    # The cauldron-entrance threshold -- creepy_tree on the j tile
+    # The clearing-entrance threshold -- creepy_tree on the j tile
     # itself, a single bloody handprint at the threshold, and a
     # candle melted to a stone at the foot. Just enough cue for
     # the player to recognise the route without a blood trail
     # that telegraphs the discovery from the river.
-    sc.add_decoration(Decoration(cauldron_tx * TILE + 16,
-                                 cauldron_ty * TILE + 16, "creepy_tree"))
-    sc.add_decoration(Decoration((cauldron_tx + 1) * TILE + 16,
-                                 cauldron_ty * TILE + 16,
+    sc.add_decoration(Decoration(clearing_tx * TILE + 16,
+                                 clearing_ty * TILE + 16, "creepy_tree"))
+    sc.add_decoration(Decoration((clearing_tx + 1) * TILE + 16,
+                                 clearing_ty * TILE + 16,
                                  "bloody_handprint"))
-    sc.add_decoration(Decoration((cauldron_tx + 1) * TILE + 16,
-                                 cauldron_ty * TILE + 8, "candle"))
+    sc.add_decoration(Decoration((clearing_tx + 1) * TILE + 16,
+                                 clearing_ty * TILE + 8, "candle"))
     # Marks scattered through the bank, placed near the buildings.
     # West-bank marks
     sc.add_decoration(Decoration(2 * TILE + 24, 62 * TILE + 16,
@@ -932,7 +932,7 @@ def build_brimley():
     # The church steeple -- the one tall thing for miles, a landmark to
     # orient by, rising over the roof into the treeline.
     sc.add_decoration(Decoration(7 * TILE + 16, 7 * TILE + 16, "steeple"))
-    # A brazier marking the cauldron-clearing threshold.
+    # A brazier marking the burn-clearing threshold.
     sc.add_decoration(Decoration(13 * TILE + 16, 80 * TILE + 16, "brazier"))
     # A murder of crows posted along the treeline, watching.
     for (cx, cy) in [(2, 22), (2, 71), (50, 2), (88, 31), (97, 60), (41, 97)]:
@@ -1027,28 +1027,15 @@ def build_brimley():
     sc.objects = objects_list
 
     def _brimley_interact(game):
-        # The well -- the only mouth into the Works. Needs the rope to
-        # rig the first descent; once tied, the rope stays as the climb
-        # route until opening the Deep Stair snaps it on a later descent
-        # (well_rope_broken, set at works_deepstair).
+        # The well -- DEMOTED to dread set-dressing. It was the
+        # congregation's mouth into the Works (a year of descents wore
+        # the lip smooth), but there is no rope and no rigging one: the
+        # player follows by the rite instead (the Invitation -> the
+        # school door -> the grove's descent fold). The well's job now
+        # is to pose the act-one question: they went down HERE, and you
+        # never can.
         wx, wy = sc._well_pos
         if abs(game.player.x - wx) < 36 and abs(game.player.y - wy) < 36:
-            if game.save.flag("well_rope_broken"):
-                game.audio.play("door_locked", 0.6)
-                game.show_notice("The rope's gone. There's no climbing "
-                                 "back down.")
-                return
-            if game.save.flag("well_rope_tied"):
-                game.audio.play("door_open", 0.7)
-                game.begin_transition("well_bottom", "from_well")
-                return
-            if game.player.inventory.has("rope"):
-                game.player.inventory.remove("rope", 1)
-                game.save.set_flag("well_rope_tied", True)
-                game.audio.play("door_open", 0.7)
-                game.show_notice("You tie the rope and climb down.")
-                game.begin_transition("well_bottom", "from_well")
-                return
             if not game.save.flag("well_examined"):
                 game.save.set_flag("well_examined", True)
                 game.audio.play("low_pulse", 0.4)
@@ -1056,14 +1043,16 @@ def build_brimley():
                     "[c=dim](You lean over the lip. The shaft drops "
                     "past where any water should be. No glint, no "
                     "bottom, just cold air climbing up out of it.)[/c]",
-                    "[c=dim]Two grooves are worn smooth into the "
-                    "stone where a rope has run, over and over.[/c]",
-                    "This is the way below the town. You just need "
-                    "a rope.",
+                    "[c=dim]The stone is worn smooth where hands have "
+                    "gripped it, over and over. Years of hands. No "
+                    "rope, and no rig to hang one from.[/c]",
+                    "People went down here. There is no way you can "
+                    "follow.",
                 ], speaker="", voice="blip_soft", portrait="narrator")
                 return
-            game.audio.play("door_locked", 0.7)
-            game.show_notice("The way down. Too deep without a rope.")
+            game.audio.play("low_pulse", 0.4)
+            game.show_notice("Cold air climbs out of the dark. No way "
+                             "down for you here.")
             return
         # Wheelbarrow of "rusted" tools -- the diggers keep them cleaned.
         bx, by = sc._barrow_pos
@@ -1085,7 +1074,7 @@ def build_brimley():
             game.dialog.show(line, speaker="", voice="blip_soft",
                              portrait="narrator")
     # [E] cues for the interactions resolved in _brimley_interact -- the well
-    # (the only way down), the woodshed door, the tool barrow and the payphone
+    # (dread set-dressing), the woodshed door, the tool barrow and the payphone
     # had NO prompt before, so the player had to guess where to press E. Radii
     # match the handler's checks. (The car moved to the arrival road.)
     sc.add_interactable(sc._well_pos[0], sc._well_pos[1], 36)

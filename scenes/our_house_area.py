@@ -1,6 +1,6 @@
 """outside_innkeeper_house (key: 'our_house_area') -- the gravel
 yard behind the Clerk's house. The WOODSHED sits in the SW (the axe,
-rope and flashlight; a locked facade door 'l' -> the `woodshed`
+flashlight; a locked facade door 'l' -> the `woodshed`
 interior, key-gated by the Lodge cellar key). The dirt path leaves
 east toward the cornfields; west onto the ARRIVAL ROAD (the looping
 road the PI drove in on, where the dead car / SPREAD escape now sits),
@@ -203,7 +203,7 @@ def build_our_house_area():
     def _outside_interact(game):
         px, py = game.player.x, game.player.y
         # The woodshed -- locked facade door. Needs the woodshed key from the
-        # Lodge cellar workbench; opens to the woodshed interior (axe, rope,
+        # Lodge cellar workbench; opens to the woodshed interior (axe,
         # flashlight). Now in the yard, west of the Lodge, where you'd expect
         # it -- not across town.
         sdx, sdy = sc._shed_door_pos
@@ -455,13 +455,13 @@ def build_woodshed():
     """The Arcadia woodshed -- in the SW of the Lodge yard, west of the
     Lodge (it used to sit clear across town; consolidated here so the tools
     are where you'd expect). Single room: splitting axe on the wall, a coil
-    of rope on the workbench, the flashlight on a chopping stump in the
-    centre. Locked from outside; the key is in the Lodge cellar."""
+    of old chain on the workbench, the flashlight on a chopping stump in
+    the centre. Locked from outside; the key is in the Lodge cellar."""
     floor = ["=" * 12 for _ in range(9)]
     objects = [
         "WWWWWWWWWWWW",   # 0
         "W.....W....W",   # 1  main shed (cols 1-5) | tool nook (cols 7-10)
-        "W.....W....W",   # 2  workbench (rope) out front
+        "W.....W....W",   # 2  workbench out front
         "W..........W",   # 3  doorway gap in the partition (col 6)
         "W.....W....W",   # 4
         "W.....WWWWWW",   # 5  tool nook sealed off below
@@ -478,22 +478,20 @@ def build_woodshed():
     sc.set_spawn("from_brimley_shed",  4, 6)   # legacy fallback
     sc.set_spawn("from_village_shed",  4, 6)   # legacy fallback
 
-    rope_pos   = (2 * TILE + 16, 2 * TILE + 16)
     # The splitting axe hangs in the back tool nook -- behind the partition,
     # so the weapon is an indoor blind spot you have to round the wall for.
     axe_pos    = (8 * TILE + 16, 1 * TILE + 16)
     flash_pos  = (4 * TILE + 16, 5 * TILE + 16)   # on the chopping stump
-    sc._rope_pos = rope_pos
     sc._axe_pos  = axe_pos
     sc._flash_pos = flash_pos
-    # Sized workbench (the rope sits on it).
+    # Sized workbench.
     sc.add_furniture("table", [(2, 2)], w=54, h=36)
     sc.add_decoration(Decoration(2 * TILE + 16, 0 * TILE + 22, "candle"))
     sc.add_decoration(Decoration(3 * TILE + 20, 6 * TILE + 8, "bloodstain",
                                  scale=2.6))
     # It IS a woodshed: a split-wood stack against the west wall, a
     # kerosene lamp on the workbench, and cobwebs in the corners. The
-    # firewood is collision furniture, set clear of the axe/rope/door.
+    # firewood is collision furniture, set clear of the axe/door.
     sc.add_furniture("firewood", [(1, 5), (1, 6)], w=24, h=58)
     sc.add_decoration(Decoration(2 * TILE + 16, 2 * TILE + 2,
                                  "kerosene_lamp"))
@@ -513,14 +511,6 @@ def build_woodshed():
                 game.audio.play("pickup_rare", 0.7)
                 game.show_notice("Splitting axe.")
                 return
-        # Rope on the bench.
-        if abs(px - rope_pos[0]) < 36 and abs(py - rope_pos[1]) < 36:
-            if not game.save.flag("rope_taken"):
-                game.save.set_flag("rope_taken", True)
-                game.player.inventory.add("rope", 1)
-                game.audio.play("pickup_rare", 0.7)
-                game.show_notice("Coil of rope. Long enough for the well.")
-                return
         # Flashlight left on the chopping stump in the centre.
         if abs(px - flash_pos[0]) < 36 and abs(py - flash_pos[1]) < 36:
             if not game.save.flag("flashlight_taken"):
@@ -533,12 +523,12 @@ def build_woodshed():
     sc.on_interact_fn = _woodshed_interact
 
     def _woodshed_on_enter(game, scene):
-        # The axe, rope and flashlight had no world object AND no [E] cue
-        # -- three critical items you'd walk right past. Glimmer-mark each
-        # one still on offer and register it for the [E] prompt; drop the
-        # marker once it's been taken.
+        # The axe and flashlight had no world object AND no [E] cue --
+        # critical items you'd walk right past. Glimmer-mark each one
+        # still on offer and register it for the [E] prompt; drop the
+        # marker once it's been taken. (The rope is CUT: the descent is
+        # the rite now, not a climb.)
         for pos, flag in ((axe_pos, "axe_taken"),
-                          (rope_pos, "rope_taken"),
                           (flash_pos, "flashlight_taken")):
             if not game.save.flag(flag):
                 scene.add_decoration(Decoration(pos[0], pos[1], "item_drop"))

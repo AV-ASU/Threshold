@@ -127,7 +127,7 @@ def build_forest_path():
     sc.add_decoration(Decoration(20 * TILE + 16, 9 * TILE + 22, "dead_crow"))
 
     # (The secret-clearing branch dressing was removed when the
-    # cauldron entrance moved to the brimley river bank.)
+    # clearing entrance moved to the brimley river bank.)
 
     # No hide spots: the player melts into the cornfield off either road
     # shoulder (walkable corn cover) and breaks sight behind the trees.

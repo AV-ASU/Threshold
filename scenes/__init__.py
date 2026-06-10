@@ -53,7 +53,7 @@ from .threshold_extras import (build_schoolhouse, build_graveyard,
 #   old_man_house      -> church (with belfry; Preacher)
 #   fisherman_cottage  -> sheriffs_office (Sheriff's wooden box)
 #   forest_path        -> cornfield_path (cornstalk hides)
-#   void_boss          -> clearing (the cauldron site)
+#   void_boss          -> clearing (the burn site)
 #   barn               -> barn (hide spots, tunnel)
 #   well_bottom        -> well_bottom (sigil etched at the binding)
 #   well_passage       -> well_passage (cult tunnels)
@@ -80,7 +80,7 @@ SCENE_BUILDERS = {
     "void_boss":          build_void_boss,          # -> clearing
     "barn":               build_barn,
     # The Works -- the Basement Level. Seven rooms, well is the sole
-    # entrance (rope down); Mask + Play together gate the way to the Depths.
+    # entrance (the grove's descent fold); the Mask gates the way to the Depths.
     "well_bottom":        build_well_bottom,        # the Shaft Floor
     "well_passage":       build_well_passage,       # the Drying Racks
     "works_vats":         build_works_vats,
