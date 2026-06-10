@@ -561,7 +561,7 @@ def build_brimley():
     sc.set_spawn("from_our_house_area", w - 2, 7)
     # Climbing back out of the well lands beside it.
     sc.set_spawn("from_well", 94, 13)
-    # Coming out of the woodshed door (the lumber axe + rope shed).
+    # Coming out of the woodshed door (the lumber axe + flashlight shed).
     # Spawn ONE TILE NORTH of the door so the player doesn't immediately
     # re-trigger and isn't stuck inside the shed walls.
     sc.set_spawn("from_woodshed", 91, 15)
@@ -1027,28 +1027,15 @@ def build_brimley():
     sc.objects = objects_list
 
     def _brimley_interact(game):
-        # The well -- the only mouth into the Works. Needs the rope to
-        # rig the first descent; once tied, the rope stays as the climb
-        # route until opening the Deep Stair snaps it on a later descent
-        # (well_rope_broken, set at works_deepstair).
+        # The well -- DEMOTED to dread set-dressing. It was the
+        # congregation's mouth into the Works (a year of descents wore
+        # the lip smooth), but there is no rope and no rigging one: the
+        # player follows by the rite instead (the Invitation -> the
+        # school door -> the grove's descent fold). The well's job now
+        # is to pose the act-one question: they went down HERE, and you
+        # never can.
         wx, wy = sc._well_pos
         if abs(game.player.x - wx) < 36 and abs(game.player.y - wy) < 36:
-            if game.save.flag("well_rope_broken"):
-                game.audio.play("door_locked", 0.6)
-                game.show_notice("The rope's gone. There's no climbing "
-                                 "back down.")
-                return
-            if game.save.flag("well_rope_tied"):
-                game.audio.play("door_open", 0.7)
-                game.begin_transition("well_bottom", "from_well")
-                return
-            if game.player.inventory.has("rope"):
-                game.player.inventory.remove("rope", 1)
-                game.save.set_flag("well_rope_tied", True)
-                game.audio.play("door_open", 0.7)
-                game.show_notice("You tie the rope and climb down.")
-                game.begin_transition("well_bottom", "from_well")
-                return
             if not game.save.flag("well_examined"):
                 game.save.set_flag("well_examined", True)
                 game.audio.play("low_pulse", 0.4)
@@ -1056,14 +1043,16 @@ def build_brimley():
                     "[c=dim](You lean over the lip. The shaft drops "
                     "past where any water should be. No glint, no "
                     "bottom, just cold air climbing up out of it.)[/c]",
-                    "[c=dim]Two grooves are worn smooth into the "
-                    "stone where a rope has run, over and over.[/c]",
-                    "This is the way below the town. You just need "
-                    "a rope.",
+                    "[c=dim]The stone is worn smooth where hands have "
+                    "gripped it, over and over. Years of hands. No "
+                    "rope, and no rig to hang one from.[/c]",
+                    "People went down here. There is no way you can "
+                    "follow.",
                 ], speaker="", voice="blip_soft", portrait="narrator")
                 return
-            game.audio.play("door_locked", 0.7)
-            game.show_notice("The way down. Too deep without a rope.")
+            game.audio.play("low_pulse", 0.4)
+            game.show_notice("Cold air climbs out of the dark. No way "
+                             "down for you here.")
             return
         # Wheelbarrow of "rusted" tools -- the diggers keep them cleaned.
         bx, by = sc._barrow_pos
@@ -1085,7 +1074,7 @@ def build_brimley():
             game.dialog.show(line, speaker="", voice="blip_soft",
                              portrait="narrator")
     # [E] cues for the interactions resolved in _brimley_interact -- the well
-    # (the only way down), the woodshed door, the tool barrow and the payphone
+    # (dread set-dressing), the woodshed door, the tool barrow and the payphone
     # had NO prompt before, so the player had to guess where to press E. Radii
     # match the handler's checks. (The car moved to the arrival road.)
     sc.add_interactable(sc._well_pos[0], sc._well_pos[1], 36)

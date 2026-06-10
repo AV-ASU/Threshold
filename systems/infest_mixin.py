@@ -220,7 +220,9 @@ class InfestationMixin:
         scenes (outdoor + the safe rooms at stage 3) and underground
         scenes only -- ordinary interiors are left to their own dressing."""
         key = self.scene.key
-        surface = key in OUTDOOR_SCENES or key == "brimley"
+        # The effigy grove counts as surface here: it hosts the descent
+        # fold, so the rot and the way down escalate on the same dial.
+        surface = key in OUTDOOR_SCENES or key in ("brimley", "effigy_grove")
         safe = key in SAFE_SCENES
         if not underground and not surface and not (safe and stage >= 3):
             return

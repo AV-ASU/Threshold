@@ -174,6 +174,14 @@ def draw_fold(screen, face, host_cam_x, host_cam_y, player, t, camera=None):
     target = face["target"]
     ax, ay = face["anchor_tile"]
     fold_x, fold_y = face["fold_px"]
+    # Optional per-fold CHARGE (set per-frame from Scene.fold_charge_fn):
+    # 1.0 is a formed, crossable fold (the default; byte-identical path);
+    # below 1.0 the pane renders mid-formation (the grove's way down
+    # clarifying with evidence); 0 is not drawn at all (a gated-shut fold
+    # reads as floor).
+    charge = face.get("charge", 1.0)
+    if charge <= 0.0:
+        return False
 
     # Under tilt a fold is the SAME upright door-passage as the King's portal
     # (KING_PROMPT: one rift family), standing along its WORLD seam (the line
@@ -196,6 +204,7 @@ def draw_fold(screen, face, host_cam_x, host_cam_y, player, t, camera=None):
         from rendering.portal import draw_rift_door
         anchor_px = (ax * TILE + TILE // 2, ay * TILE + TILE // 2)
         draw_rift_door(screen, target, anchor_px, fold_x, fold_y, camera, t,
+                       formed=(charge >= 0.999), charge=charge,
                        cache_key=("fold", id(face)),
                        seam_dir=(-ny, nx), vis=vis)
         return True
@@ -272,7 +281,9 @@ def draw_fold(screen, face, host_cam_x, host_cam_y, player, t, camera=None):
     surf = surf.convert_alpha()
     mask = _fog_mask(w, h, face["normal"])
     pa = pygame.surfarray.pixels_alpha(surf)
-    pa[:, :] = (mask * 255).astype(np.uint8)
+    # Pitch-0 (dev) path: a mid-formation fold just dims the peek. The
+    # charge==1.0 default keeps this byte-identical.
+    pa[:, :] = (mask * (255 * charge)).astype(np.uint8)
     del pa
 
     # (Tilt is handled up top by the shared rift door; this is the pitch-0 path.)

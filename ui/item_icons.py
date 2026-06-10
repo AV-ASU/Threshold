@@ -115,6 +115,31 @@ def _cross(s):
     pygame.draw.rect(s, silver, (4, 5, 7, 2))
 
 
+def _rite_envelope(s):
+    # A long pale envelope, the Sign pressed into a wax seal.
+    pygame.draw.rect(s, (208, 200, 178), (2, 5, 12, 7))
+    pygame.draw.rect(s, _PAPER_DARK, (2, 5, 12, 7), 1)
+    pygame.draw.line(s, _PAPER_DARK, (2, 5), (8, 9), 1)     # flap
+    pygame.draw.line(s, _PAPER_DARK, (14, 5), (8, 9), 1)
+    pygame.draw.circle(s, (150, 118, 40), (8, 9), 2)        # gold wax
+
+
+def _chalk(s):
+    # A worn white stub, dust under it.
+    pygame.draw.rect(s, (224, 222, 214), (5, 6, 7, 3))
+    pygame.draw.rect(s, (170, 168, 160), (5, 6, 7, 3), 1)
+    pygame.draw.rect(s, (190, 188, 180), (4, 12, 2, 1))
+    pygame.draw.rect(s, (190, 188, 180), (10, 13, 2, 1))
+
+
+def _incense(s):
+    # A tied bundle of dried sticks, one thread of smoke.
+    for dx in (-2, 0, 2):
+        pygame.draw.line(s, (118, 96, 62), (8 + dx, 5), (8 + dx, 13), 1)
+    pygame.draw.rect(s, (84, 62, 40), (5, 9, 7, 2))          # the tie
+    pygame.draw.line(s, (150, 148, 142), (8, 4), (9, 2), 1)  # smoke
+
+
 _DISPATCH = {
     "lumber_axe":      _axe,
     "cross":           _cross,
@@ -127,6 +152,9 @@ _DISPATCH = {
     "cult_calling":    _testimony,
     "cult_bargain":    _testimony,
     "cult_digging":    _testimony,
+    "rite_envelope":   _rite_envelope,
+    "chalk":           _chalk,
+    "incense":         _incense,
 }
 
 

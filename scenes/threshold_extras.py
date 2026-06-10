@@ -41,13 +41,44 @@ def build_schoolhouse():
         "W..............W",    # 10
         "WWWWWWWHWWWWWWWW",    # 11  H = exit south, onto the field
     ]
+    # THE SCHOOL DOOR: the commune's own way to the work-clearing. The
+    # fold tile 'O' (a marker char: invisible, walkable) sits on the
+    # indoor campfire spot; the rite (sweeten
+    # the air at the fire, then draw the final door on the board) opens
+    # it, and from then on it simply stands. Walked NORTH into.
+    objects[4] = objects[4][:9] + "O" + objects[4][10:]
     sc = Scene("schoolhouse", floor, objects, music="home")
     sc.add_exit("H", "brimley", "from_school")
+    sc.add_exit("O", "effigy_grove", "from_school", direction="north")
     sc.set_spawn("default", 7, 9)
     sc.set_spawn("from_brimley", 7, 10)       # one tile north of the H door
     sc.set_spawn("from_village", 7, 10)
     sc.set_spawn("from_town_crossroads", 7, 10)
     sc.set_spawn("from_town", 7, 10)
+    # Back through the pane from the grove: one tile south of it, carried
+    # southward so arrival never re-fires the north-walked crossing.
+    sc.set_spawn("from_grove", 9, 5)
+
+    def _door_charge(game, ch):
+        if ch != "O":
+            return 1.0
+        if not game.save.flag("school_door_open"):
+            return 0.0
+        # Forms over a few seconds the moment it is drawn; on any later
+        # load it simply stands.
+        t0 = getattr(game, "_school_door_t0", None)
+        if t0 is None:
+            return 1.0
+        import pygame as _pg
+        return min(1.0, (_pg.time.get_ticks() - t0) / 2500.0)
+    sc.fold_charge_fn = _door_charge
+
+    def _door_gate(game, ch):
+        if ch != "O":
+            return True
+        return (game.save.flag("school_door_open")
+                and _door_charge(game, "O") >= 0.999)
+    sc.exit_gate_fn = _door_gate
 
     # The schoolroom remnants: the teacher's desk shoved askew to the NW front,
     # and the children's desks ALL pushed into the SE corner -- a jumbled pile of
@@ -114,24 +145,134 @@ def build_schoolhouse():
 
     sc.hide_spots = []
 
-    # The chalkboard reads as a flavor beat (not counted evidence).
+    # The chalkboard: a flavor beat until the rite is ready, then the act
+    # itself (draw the final door). The rite's components live in the
+    # room: chalk on the teacher's desk, incense among the cot relics,
+    # the indoor campfire to burn it on.
     sc._board_pos = (7 * TILE + 16, 0 * TILE + 16)
+    sc._chalk_pos = (2 * TILE + 16, 1 * TILE + 16)     # the teacher's desk
+    sc._incense_pos = (12 * TILE + 16, 5 * TILE + 16)  # beside an east cot
+    sc._fire_pos = (9 * TILE + 16, 4 * TILE + 16)      # the indoor campfire
     sc.add_interactable(sc._board_pos[0], sc._board_pos[1], 44)
+    sc.add_interactable(sc._fire_pos[0], sc._fire_pos[1], 36)
 
     def _school_on_enter(game, scene):
+        # Glimmer-mark the rite components still on offer (the woodshed
+        # pattern) so they read as takeable among the relics.
+        for pos, flag in ((scene._chalk_pos, "chalk_taken"),
+                          (scene._incense_pos, "incense_taken")):
+            if not game.save.flag(flag):
+                scene.add_decoration(Decoration(pos[0], pos[1], "item_drop"))
+                scene.add_interactable(pos[0], pos[1], 36)
+        # The incense smoke still hangs once it has been burned.
+        if game.save.flag("school_incense_lit"):
+            scene.add_decoration(Decoration(scene._fire_pos[0],
+                                            scene._fire_pos[1] - 8, "smoke"))
         if game.save.flag("schoolhouse_seen"):
             return
         game.save.set_flag("schoolhouse_seen", True)
 
     def _school_interact(game):
         px, py = game.player.x, game.player.y
+        save = game.save
+        inv = game.player.inventory
+        # Chalk on the teacher's desk.
+        cx, cy = sc._chalk_pos
+        if abs(px - cx) < 36 and abs(py - cy) < 36:
+            if not save.flag("chalk_taken"):
+                save.set_flag("chalk_taken", True)
+                inv.add("chalk", 1)
+                game.audio.play("pickup_rare", 0.7)
+                game.show_notice("A stub of chalk off the teacher's desk.")
+                return
+        # Incense among the cot relics.
+        ix, iy = sc._incense_pos
+        if abs(px - ix) < 36 and abs(py - iy) < 36:
+            if not save.flag("incense_taken"):
+                save.set_flag("incense_taken", True)
+                inv.add("incense", 1)
+                game.audio.play("pickup_rare", 0.7)
+                game.show_notice("Dried incense, left beside a cot.")
+                return
+        # The indoor campfire: where the air is sweetened.
+        fx, fy = sc._fire_pos
+        if abs(px - fx) < 36 and abs(py - fy) < 36:
+            if save.flag("school_incense_lit"):
+                game.show_notice("The smoke hangs in the room and does "
+                                 "not drift.")
+                return
+            if inv.has("rite_envelope") and inv.has("incense"):
+                inv.remove("incense", 1)
+                save.set_flag("school_incense_lit", True)
+                game.audio.play("low_pulse", 0.5)
+                sc.add_decoration(Decoration(fx, fy - 8, "smoke"))
+                game.dialog.show([
+                    "[c=dim](You set the bundle on the cold ash and light "
+                    "it. The smoke goes up in one straight line, sweet and "
+                    "cold, and then it stops going anywhere. It hangs.)[/c]",
+                    "[c=dim]The room smells the way it must have smelled "
+                    "every night they slept here.[/c]",
+                ], speaker="", voice="blip_soft", portrait="narrator")
+                return
+            if inv.has("rite_envelope"):
+                game.audio.play("low_pulse", 0.4)
+                game.show_notice("A fire burned flat on the floorboards. "
+                                 "Sweeten the air, the sheet says. You "
+                                 "have nothing to burn.")
+                return
+            game.show_notice("They burned a fire inside, on the "
+                             "floorboards, the way squatters do.")
+            return
+        # The chalkboard.
         bx, by = sc._board_pos
         if abs(px - bx) <= 44 and abs(py - by) <= 44:
+            if save.flag("school_door_open"):
+                game.dialog.show([
+                    "[c=dim](The lesson, the shrinking doors, and at the "
+                    "corner your own hand, the smallest one. It is the "
+                    "only door on the board that is open.)[/c]",
+                ], speaker="", voice="blip_soft", portrait="narrator")
+                return
+            if (inv.has("rite_envelope")
+                    and save.flag("school_incense_lit")
+                    and inv.has("chalk")):
+                save.set_flag("school_door_open", True)
+                import pygame as _pg
+                game._school_door_t0 = _pg.time.get_ticks()
+                game.audio.force_silence()
+                game.audio.play("low_pulse", 0.9)
+                game.dialog.show([
+                    "[c=dim](The sequence stops one door short of the "
+                    "corner. You set the chalk where the last hand left "
+                    "off and draw it once more. Smaller. The smallest "
+                    "one.)[/c]",
+                    "[c=dim]The chalk goes through the board like a knife "
+                    "through paper, and behind you the smoke leans toward "
+                    "the old fire.[/c]",
+                    "[c=dim]Something stands up in the middle of the "
+                    "room.[/c]",
+                ], speaker="", voice="blip_soft", portrait="narrator")
+                return
+            if inv.has("rite_envelope") and save.flag("school_incense_lit"):
+                game.show_notice("The last door wants drawing. You have "
+                                 "nothing to draw with.")
+                return
+            if inv.has("rite_envelope"):
+                game.dialog.show([
+                    "[c=dim](The chalkboard. Under a child's faded lesson, "
+                    "the same door is drawn over and over, smaller and "
+                    "smaller, to the corner.)[/c]",
+                    "[c=dim]The sequence stops one door short. The "
+                    "smallest one was never drawn. The sheet in your "
+                    "pocket says the air comes first.[/c]",
+                ], speaker="", voice="blip_soft", portrait="narrator")
+                return
             game.dialog.show([
-                "[c=dim](The chalkboard. Under a child's faded lesson, the same "
-                "door is drawn over and over, smaller and smaller, to the "
-                "corner.)[/c]",
+                "[c=dim](The chalkboard. Under a child's faded lesson, the "
+                "same door is drawn over and over, smaller and smaller, to "
+                "the corner.)[/c]",
             ], speaker="", voice="blip_soft", portrait="narrator")
+            return
 
     sc.on_enter_fn = _school_on_enter
     sc.on_interact_fn = _school_interact

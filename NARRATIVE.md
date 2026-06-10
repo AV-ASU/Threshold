@@ -357,7 +357,7 @@ ordered and nobody can refuse.
 
 | Who | Origin | Their thread |
 |---|---|---|
-| **Lodge Clerk — Mr. Sable** | **Local — the most attuned of them** | The smiling trap-keeper, and a **local**, not a newcomer. He dreamed the door **longest and loudest** of anyone born here — attuned for years, **subconsciously preparing** for arrivals he couldn't name, keeping the desk and the guests ready. His menace is **compulsion, not conspiracy**: he voices certainties he can't explain (*"You're not a guest who checks out"*) because the door has been speaking through him so long he mistakes it for hospitality. Introduces himself first thing (*"Sable -- I keep the desk here. Anything you need, you ask me. Anything at all."*); the name is genteel and hospitable with a funereal undertow that pays off as he turns colder. Runs the only inn in town, the only place an outsider would naturally stay. The old fetch-quest chain (crate -> cellar bottle -> car keys) is **cut** -- the car answers only to the Sign now, so he has no keys to dangle; he handles the stranded car **deniably** (the Sheriff is the one who carries the plain truth, §below). |
+| **Lodge Clerk — Mr. Sable** | **Local — the most attuned of them** | The smiling trap-keeper, and a **local**, not a newcomer. He dreamed the door **longest and loudest** of anyone born here — attuned for years, **subconsciously preparing** for arrivals he couldn't name, keeping the desk and the guests ready. His menace is **compulsion, not conspiracy**: he voices certainties he can't explain (*"You're not a guest who checks out"*) because the door has been speaking through him so long he mistakes it for hospitality. Introduces himself first thing (*"Sable -- I keep the desk here. Anything you need, you ask me. Anything at all."*); the name is genteel and hospitable with a funereal undertow that pays off as he turns colder. Runs the only inn in town, the only place an outsider would naturally stay. The old fetch-quest chain (crate -> cellar bottle -> car keys) is **cut** -- the car answers only to the Sign now, so he has no keys to dangle; he handles the stranded car **deniably** (the Sheriff is the one who carries the plain truth, §below). **THE INVITATION (canon shift, 2026-06):** when the congregation went below, they left an envelope at his desk — the rite that opens the way down — and told him to hold it until *he* was ready to follow. He **knows** what it is and where its writers went (the pressed robe in his closet was always the tell); what he does with it stays **hospitality, never scheme**: at 3 evidence he judges the guest ready in his place and hands it over like a room key. Somebody has to keep the desk. |
 | **The Sheriff — Hollis Vane** | **Local** | Born here. Has stood at the rim of the well. Knows the fold is real and that none of his deputies will be coming back. **He did not kill your car — the fold did.** He patrols because patrolling is what he did before; he tells outsiders "leave, son" out of muscle memory, even though he knows you can't and he can't either. Not a believer, not a cultist. A witness who can't help. The badge is just clothing now. |
 | **The Preacher — Rev. Asa Crane** | **Local — innocent dissenter** | A small-town minister who **names the cult from his own pulpit** — oblivious to *what* they truly are, but loud that they're no church. Your **2nd** conversation (his hubris) sets `preacher_doomed`; on the next entry he's **gutted on his own church floor**, his cross in the viscera (evidence #4). The town murders the ones who name them. |
 | **The Store-Owner — Hettie** | **Local — quiet resister** | *(In-game this role is **Hettie** from the chorus — one person, not two; the counter-keeper and the quiet resister merged.)* The shop is gutted -- shelves bare, till empty, **nothing to sell** (deliveries stopped when the fold closed). Her value is what she risks saying out loud: frightened warnings about who to trust, never said outright. She has a one-shot reaction to the Preacher's death. **She does not know Walter Blaine.** No local does — Walter is a voice in Minneapolis and Brimley locals would have no reason to recognize the name. |
@@ -394,7 +394,7 @@ walking. The apex pursuers (the King, the hollow Sheriff) are **exempt** —
 they never lose sight of you.
 
 **The flashlight (`[F]`) is the player's hand on that meter.** Found in
-the woodshed (beside the axe and rope), it casts a long beam **cone** in
+the woodshed (beside the axe), it casts a long beam **cone** in
 the facing direction through `DARK_SCENES` — the only way to read a black
 room far enough ahead to navigate it. But it is **double-edged**: a light
 in the dark is a thing that can be seen, so while it burns visibility
@@ -472,7 +472,7 @@ the hive.
 |---|---|---|---|---|
 | 1 | **Mara's Room** | `maras_room` (robe + unsent letter) | **Underground** — a convert's cell off the Sorting Hall (`works_sorting`) | She didn't rent a room and vanish — she *moved in* down here. She joined willingly; she was already home. Her last sane line — *"I'm not lost. I've never been this close."* — stays in your hand all the way to the Dark |
 | 2 | **Mara's Journal** | `mom_notebook` | The **barn** (`barn`) — behind the workbench | Her descent, in her own words (page 3 → the flashback) |
-| 3 | **The Ledger** (the Lodge's guest register) | read in place | The Arcadia **front desk** — the register Sable has you sign on arrival; the evidence lands when you re-read it | Guests who check in and never out — and your own name, signed in tonight, already among them. *(The old cellar copy behind a loose panel is **cut**; one ledger, on the desk in plain sight.)* |
+| 3 | **The Ledger** (the Lodge's guest register) | read in place | The Arcadia **front desk** — the register Sable has you sign on arrival; the evidence lands when you re-read it | Guests who check in and never out — the checkout dates stop **a year back** (the same season the PI dreamed the door, once) — and your own name, signed in tonight, already among them. *(The old cellar copy behind a loose panel is **cut**; one ledger, on the desk in plain sight.)* |
 | 4 | **The Preacher** | his **cross** (item `cross`) taken from the viscera | The **church** (`old_man_house`) — his own floor | The town murders the ones who name them — gutted for preaching against the cult |
 | 5 | **The Sign — the Pallid Mask** | `sigil_rubbing` (reskinned to the Mask; key kept for saves) | Sign Chamber (well) | His face made an object: what they worship, the shard the fold opens for (the **escape key** → *SPREAD IT*), and the keystone you carry to the door (the Mask alone; the cult's notes are decoupled, pure lore) |
 | 6 | **The Congregation** | (Mara, turned) | The Depths / the hive | There was never anyone to save |
@@ -544,8 +544,17 @@ What rises with the stage:
 ## 5. The Descent — "how deep does this go"
 
 The descent is strictly **vertical**, and it has exactly **one mouth**:
-the **well in Brimley**. You go down it on a **rope** — there is no
-other route down and **no secret paths**. The surface is one connected
+the **well in Brimley** — but the well is the *congregation's* mouth, not
+yours. A year of descents wore its lip smooth; there is no rope left and
+no rigging one. The player goes down by the **rite** instead: at **3
+evidence** Mr. Sable hands over the **Invitation** (the envelope the
+congregation left at the Lodge desk when they went below), the **school
+rite** (incense at the commune's indoor fire, then the final chalk door
+drawn on the board) opens the school↔grove fold, and the **descent fold
+in the effigy grove** — a standing rift over the dead fire that
+**clarifies as evidence mounts** and opens at 3 — lands you at the bottom
+of the well shaft. There is no other route down and **no secret paths**.
+The surface is one connected
 sprawl: the **Arcadia Lodge** (lodge, yard, cornfields) ↔ **Brimley**
 (the town itself — the well, the church, the store, the sheriff's
 office, the school, the barn, the kid's house, and the car). Going
@@ -565,8 +574,10 @@ SURFACE         The ARCADIA LODGE (lodge + yard + cornfields) ─▶ BRIMLEY
                 school, barn, kid's house, named locals on their stoops,
                 the CAR parked at the edge of town).
                   │
-                  │   THE ONLY WAY DOWN — a rope down the well in Brimley.
-                  │   No other route. No secret paths.
+                  │   THE ONLY WAY DOWN — the rite: the Invitation
+                  │   (Sable, 3 evidence) → the school chalk door → the
+                  │   effigy grove's descent fold (lands at the bottom
+                  │   of the well shaft). No other route. No secret paths.
                   ▼
 THE WORKS       The cult's underground labour, reached by the well: a
 (Basement Level)   built 7-room gauntlet (§9). Mara's cell branches off it;
@@ -580,7 +591,7 @@ DEEPER          The Depths → the Threshold (END IT / seal) → the Hive
 [not a place]   CARCOSA — the King's fire-and-masks catch-cutscene.
 ```
 
-- **Surface:** the Arcadia (lodge/yard/cornfields) ↔ Brimley (one map: the well, the church, the store, the sheriff's office, the school, the barn, the kid's house, the locals, the car). Sealed; sole way down = the well (rope).
+- **Surface:** the Arcadia (lodge/yard/cornfields) ↔ Brimley (one map: the well, the church, the store, the sheriff's office, the school, the barn, the kid's house, the locals, the car). Sealed; sole way down = the rite (the grove's descent fold; the well itself is dread set-dressing).
 - **The Works** (a.k.a. the Basement Level): the first underground layer, reached by the well — a built 7-room gauntlet (§9): Mara's cell, the cult's testimony, the Pallid Mask.
 - **Deeper (Mask-gated at the Deep Stair):** the Depths, the Threshold (**End it**), and the Hive where **Mara** is — all built: the `dark` scene holds the kneeling congregation and Mara's one-shot recognition (evidence #6).
 
@@ -629,13 +640,14 @@ to — is the harder, costlier road, and that is the point.
 
 So the fork is **experiential, not a menu.** With the keystone in hand:
 
-- **Carry it back out → SPREAD.** Turn for the rope, climb up, and drive
+- **Carry it back out → SPREAD.** Turn back through the standing fold,
+  climb out, and drive
   past the fold no one else can cross — the Mask is the key the fold
   answers to. What you carry out is the Sign itself, and Carcosa bleeds
   through the hole you made. This is the off-ramp the Mask tempted you with.
 - **Carry it down to the door → SEAL.** Resist the pull. Take the keystone
   **past** the Deep Stair (which opens to His own authority pressed to the
-  stone, and snaps the rope behind you — the point of no return), down
+  stone, and seals the descent behind you — the point of no return), down
   through the Depths and the hive (Mara), to the **Threshold**, and **give
   the keystone to the door.** The geometry closes; you and Brimley become a
   hole in the map. *The keystone is spent at the door, not at the stair.*
@@ -649,7 +661,7 @@ The case ends on that one pull, and the PI hears it as two voices:
 
 > **Go deeper.** *Or you carry the Mask down past her, to the
 > thing all of this kneels to, and give it to the door. Somewhere back up
-> the rope you stopped being sure whether you mean to end it, or only to
+> the shaft you stopped being sure whether you mean to end it, or only to
 > stand in front of it once.*
 
 The "take it back" pull is the lie that dresses Spread as duty and rest:
@@ -721,13 +733,15 @@ Only display names and fiction change.
 
 The reworks the new fiction forced are all shipped. What must stay true:
 
-- **One mouth down.** The well + rope is the *only* surface→underground
-  route. The barn→well_passage hatch is nailed shut from below; no
-  secret paths.
+- **One way down.** The rite — the Invitation (Sable, 3 evidence) → the
+  school chalk door → the **grove's descent fold** — is the *only*
+  surface→underground route. The well is dread set-dressing (no rope,
+  no rigging one); the barn→well_passage hatch is nailed shut from
+  below; no secret paths.
 - **Deep Stair gate (rework — see §8/GAME_CHANGES).** The **keystone** —
   the **Pallid Mask** (Sign Chamber), Mask-only now (§6b) — opens the stair to His own authority pressed to
-  the stone, and snaps the rope (point of no return), **but is NOT consumed
-  there.** You carry the keystone down and **spend it at the Threshold door
+  the stone, and seals the descent (point of no return), **but is NOT
+  consumed there.** You carry the keystone down and **spend it at the Threshold door
   (SEAL).** Carrying it back out instead is **SPREAD**; tearing the Mask
   down at the Sign Chamber altar before sealing is the **TRAP** (§6). *(The
   current build consumes both items at the stair and seals empty-handed —
@@ -740,7 +754,9 @@ The reworks the new fiction forced are all shipped. What must stay true:
 - **Item keys are load-bearing** (saves and game logic depend on them):
   `mom_notebook`, `sigil_rubbing`, `cult_calling`, `cult_bargain`,
   `cult_digging`, `cross`, `robe`,
-  `unsent_letter`, `flashlight`, `rope`, `lumber_axe`, `woodshed_key`.
+  `unsent_letter`, `flashlight`, `lumber_axe`, `woodshed_key`,
+  `rite_envelope`, `chalk`, `incense`. *(The `rope` key is CUT with the
+  rope mechanic — the descent is the rite now.)*
   Display names and fiction may change; keys may not.
 
 ---
@@ -848,8 +864,8 @@ The reworks the new fiction forced are all shipped. What must stay true:
   Now named, surfaced as the dialogue speaker: the Sheriff is **Hollis
   Vane**, the Preacher **Rev. Asa Crane**, the Store-Owner/quiet-resister
   is **Hettie** (one person, not two — merged with the chorus Hettie), the
-  Kid **Toby Tisdale**, and the Lodge Clerk **Mr. Sable** (a newcomer, so a
-  smoother name than the plain local surnames). The rest of the Brimley
+  Kid **Toby Tisdale**, and the Lodge Clerk **Mr. Sable** (a local — the most
+  attuned of them; the genteel name is the funereal-hospitality tell). The rest of the Brimley
   chorus was already named: Old Pell, Mrs. Calder, Royce, Garrick. Locked in
   `tests/flow.py`.
 - **The liminal-composition pass** (§10): per-scene level design —
@@ -878,8 +894,8 @@ The reworks the new fiction forced are all shipped. What must stay true:
 
 ## 9. The Basement Level — "The Works" (built)
 
-The cult's **year-long excavation**, reached *only* by the rope down the
-village well. The attuned didn't build a temple — they **dug**, following
+The cult's **year-long excavation**, reached *only* through the effigy
+grove's descent fold (which lands at the bottom of the village well). The attuned didn't build a temple — they **dug**, following
 the water down toward the door the dream promised (§1b). The seven rooms
 are the **dig** at successive depths; partway down it broke into the
 underground river (Room 3), the diggers' proof they were close. A
@@ -889,28 +905,29 @@ finds you — run it on cover, timing, and breaking their line of sight).
 
 | # | Room | Key | Contents |
 |---|---|---|---|
-| 1 | The Shaft Floor | `well_bottom` | Rope landing + the ladder back up. Quiet airlock, 1 hide. |
+| 1 | The Shaft Floor | `well_bottom` | The descent fold lands you here; its return pane (the way back up) stands where the rope once hung. Quiet airlock, 1 hide. |
 | 2 | The Drying Racks | `well_passage` | Rack-maze, 1 patrolling cultist, 2 hides. |
 | 3 | **The Cistern** (was "Tallow Vats" — cut) | `works_vats` | Where the dig **broke into the underground river** — the artery to the door (§1b), and the diggers' proof they were close. Wet stone, rising damp, 2 tending cultists, 2 hides. *No rendering, no tallow, no bodies — the claiming cult eats no one. Fiction redress is a code TODO (§8); the scene key stays `works_vats`.* |
 | 4 | The Sorting Hall | `works_sorting` | The **worldly lives the congregation shed** when they were claimed — and the effects of the few the fold took — sorted and catalogued. 2 cultists, 3 hides (hardest crossing). A side door north → **Mara's room**. |
 | 4a | **Mara's Room** | `maras_room` | A convert's cell off the hall: cot, her cult robe + the unsent letter. **Evidence #1.** A quiet beat off the gauntlet, 1 hide. |
 | 5 | The Scriptorium | `works_scriptorium` | The Sign copied endlessly — the **attuned compulsively bleeding the dream-image out** onto every surface, none of them the door itself (§1b). 1 oblivious scribe, 2 hides. **The Calling** — the first of three cult-testimony fragments (§6b), the one bound, whole volume among the loose copies: the congregation's own personal testimony (their voice in the item description, the PI's reaction in his notes). Pure lore; it gates nothing (the keystone is the Mask alone). The Bargain + The Digging are found deeper (the Sump, the Ossuary). |
 | 6 | The Sign Chamber | `works_sign` | The Sign daubed on the wall + an altar; 3 kneelers + 1 patrol. **Lift the Pallid Mask → `sigil_rubbing` + evidence #5** (no charcoal — you take the object itself). |
-| 7 | The Deep Stair | `works_deepstair` | The gate down: opens to `depths_antechamber` **and snaps the rope** (the point of no return). It opens to the **keystone** (the **Pallid Mask** alone, §6b/§7) pressed to the stone **without consuming it** — you carry the Mask down and spend it at the Threshold door. |
+| 7 | The Deep Stair | `works_deepstair` | The gate down: opens to `depths_antechamber` **and seals the descent** (the point of no return). It opens to the **keystone** (the **Pallid Mask** alone, §6b/§7) pressed to the stone **without consuming it** — you carry the Mask down and spend it at the Threshold door. |
 
 **Rules wired:**
-- **One mouth:** rope down the well only; the barn cellar hatch is now
-  sealed (`scenes/interiors.py`). The tied rope persists as a two-way
-  climb until it breaks.
-- **Point of no return:** descending the Deep Stair (Room 7) snaps the rope
-  (`well_rope_broken`) — the gauntlet stays retreatable up the ladder until
-  you commit to the Depths. **This is where Seal vs. Spread is decided in
+- **One way down:** the grove's descent fold only; the barn cellar hatch
+  stays sealed (`scenes/interiors.py`). The fold and its shaft-floor
+  return pane persist as a two-way crossing until the seal.
+- **Point of no return:** descending the Deep Stair (Room 7) seals the
+  descent (`descent_sealed`: the grove fold and the return pane both die)
+  — the gauntlet stays retreatable through the pane until you commit to
+  the Depths. **This is where Seal vs. Spread is decided in
   practice:** turn back here with the keystone and climb out (SPREAD), or
   descend (committing to carry the keystone to the door and SEAL).
 - **Gate (§7/GAME_CHANGES, DONE):** the stair opens to the **keystone**
   (the **Pallid Mask** alone) pressed to the stone **without consuming it**,
-  then snaps the rope. You carry the Mask down and spend it at the Threshold
-  door (SEAL). The cult's notes are decoupled (pure lore, §6b).
+  then seals the descent. You carry the Mask down and spend it at the
+  Threshold door (SEAL). The cult's notes are decoupled (pure lore, §6b).
 - The well sprite was redesigned and repositioned in `brimley` (the
   east village square — a landmark just off the road).
 
@@ -928,8 +945,8 @@ Threshold.
 
 **Note:** the old cult chamber (`symbol_portal_room`) has been **removed
 entirely** — its only entrance was the `haunted_house` hatch, which is now
-a nailed-shut dead end (a deliberate in-fiction seal: the well + rope is
-the sole way down). Saves are in-memory only, so there were no persistent
+a nailed-shut dead end (a deliberate in-fiction seal: the grove's descent
+fold is the sole way down). Saves are in-memory only, so there were no persistent
 saves to keep it registered for. The `diner_gas_station` spur off the
 cornfield was likewise removed (the car lives in the lodge yard); the
 cornfield's east end is now a closed tree wall.
@@ -1125,7 +1142,7 @@ is general -- more direction-sensitive folds can be added as wanted.
 
 There are exactly two kinds of spatial transition in THRESHOLD:
 
-- **Doors** (doors, ladders, the well rope): ordinary plumbing. They
+- **Doors** (doors, ladders): ordinary plumbing. They
   fade, they make a sound, they feel like doorways. Architecture is
   the player-only escape.
 - **The Fold**: everything else. One phenomenon with two faces:

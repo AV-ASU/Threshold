@@ -120,8 +120,37 @@ ITEM_DEFS = {
                        "kind": "weapon",
                        "desc": "An axe for chopping wood.",
                        "atk": 0},
-    "rope":          {"name": "Coil of Rope",  "kind": "key",
-                       "desc": "A coil of rope."},
+    # The congregation's invitation -- left at the Lodge desk by the guests
+    # who never signed out, handed over by Sable at 3 evidence. Carries the
+    # rite: the school first (smoke, then the chalk door), then the clearing.
+    # Voice rules: compulsion-certainty, never explanation (NARRATIVE 1b);
+    # NO dashes in this text.
+    "rite_envelope": {"name": "The Invitation",
+                       "kind": "lore",
+                       "desc": "A long envelope, the Sign pressed into its "
+                               "wax. One sheet inside, in a careful hand:\n\n"
+                               "\"Sleep where we slept, in the school. "
+                               "Sweeten the air the way we did, at the "
+                               "fire. Then take up the chalk and draw the "
+                               "door once more, the smallest one, where the "
+                               "lesson ends.\"\n\n"
+                               "\"The clearing in the corn does the rest. "
+                               "Speak nothing there. The dead fire knows "
+                               "the way down.\"\n\n"
+                               "\"When we are ready, all of us go down "
+                               "together.\""},
+    "chalk":         {"name": "Schoolroom Chalk",
+                       "kind": "key",
+                       "desc": "A worn stub of white chalk off the "
+                               "teacher's desk. The board has been drawn "
+                               "on over the lesson, the same door, smaller "
+                               "and smaller. The last one was never "
+                               "drawn."},
+    "incense":       {"name": "Dried Incense",
+                       "kind": "key",
+                       "desc": "A bundle of dried incense left beside a "
+                               "cot. A sweet, cold smell, like a church "
+                               "with no god in it."},
 }
 
 

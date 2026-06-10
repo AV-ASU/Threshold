@@ -266,6 +266,55 @@ from his pulpit, murdered for it (evidence #4, his cross). Only the
 
 ---
 
+### ✅ 14. The descent rework — the rope is CUT; the rite is the way down — DONE  *(2026-06; NARRATIVE §2, §4, §5, §9, §11)*
+
+**Decision.** Act 1 and Act 2 are now separated by a player-performed
+descent built on the fold system itself, gated by the evidence count.
+The rope (and its woodshed pickup, and the `rope` item key) is cut.
+
+- [x] **The Invitation** (`rite_envelope`, `systems/items.py`): the
+  congregation — the Lodge guests who sign in and never out — left an
+  envelope at Sable's desk when they went below. At **3 evidence** he hands
+  it over (state-gated interjection at the top of `clerk_dialogue`; never
+  farmable by repeat visits) + the PI's `the_invitation` NOTE. **Canon
+  shift:** Sable holds it *knowingly*; his complicity stays hospitality,
+  never scheme (flow-guarded: no recruiter language).
+- [x] **The school rite** (`scenes/threshold_extras.py`): chalk on the
+  teacher's desk + incense among the cot relics; burn the incense at the
+  commune's indoor campfire, then draw the **final, smallest door** on the
+  chalkboard → the school↔grove fold opens permanently (`school_door_open`).
+- [x] **The grove descent fold** (`scenes/hidden_folds.py`): a rift stands
+  over the dead fire in `effigy_grove`, **clarity = evidence count**
+  (`fold_charge_fn`, 0.15→1.0), crossable only at 3 (`exit_gate_fn`) →
+  lands at `well_bottom`; a symmetric **return pane** stands at the shaft
+  floor where the rope hung. The grove was widened (18×13), the **cauldron
+  is removed**, and it now takes infestation decals (the rot and the way
+  down escalate on the same dial).
+- [x] **Engine seams** (`systems/game.py`, `rendering/folds.py`,
+  `systems/render_mixin.py`, `systems/threat_mixin.py`): direction-gated
+  exits route straight through `cross_fold` (folds are seamless whatever
+  scenes they join); scenes may gate exits on game state
+  (`Scene.exit_gate_fn`) and drive per-fold formation charge
+  (`Scene.fold_charge_fn`).
+- [x] **The seal** (`scenes/well.py` Deep Stair): `well_rope_broken` →
+  **`descent_sealed`** — pressing the keystone kills the grove fold AND the
+  return pane (the fold dies; it never turns one-way — one-way stays the
+  King's signature alone, §11).
+- [x] **The well demoted** (`scenes/brimley.py`): dread set-dressing — the
+  lip worn smooth by a year of hands, no rope, no way to follow. Toby's
+  witness beat still points at it; the rite answers it.
+- [x] **The Ledger says A YEAR** (`scenes/house.py`): the checkout dates
+  stop a year back (same season as the PI's one dream), not "months";
+  flow-guarded.
+- [x] **Guidance:** the Invitation's text names the school; the
+  `the_invitation` case note echoes it; Toby's one-shot "they slept in my
+  school" beat (`tisdale_boy_dialogue`).
+- [x] Flow harness rewritten (`tests/flow.py` beat 1 + Deep Stair beat):
+  handoff gating, school rite order, grove gate below/at 3, two-way
+  descent, seal kills both panes, no-dash guard on the Invitation.
+
+---
+
 ## Status / sequencing notes
 
 - **Phase 1 is done + pushed.** Docs (`NARRATIVE.md`, `CLAUDE.md`) already

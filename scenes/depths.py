@@ -171,8 +171,8 @@ def build_depths_antechamber():
         px, py = game.player.x, game.player.y
         if abs(px - (5 * TILE + 16)) < 36 and abs(py - (5 * TILE + 16)) < 36:
             _evidence(game, "the_fall",
-                "The rope is gone above you and you are not hurt. The way "
-                "down didn't want you broken, only delivered. Cut stone, "
+                "There is no way back above you and you are not hurt. The "
+                "way down didn't want you broken, only delivered. Cut stone, "
                 "worn smooth by years of feet that came this way before you."
             )
     sc.on_interact_fn = _interact

@@ -1,32 +1,36 @@
 """THE WORKS -- the Basement Level. The cult's underground labour,
-reached ONLY by the rope down the village well. Seven rooms descend
-from the shaft floor to the Deep Stair, which the keystone (the Pallid
-Mask seated in the cult's notes) opens onto the Depths:
+reached ONLY through the descent fold in the effigy grove (the rite:
+the Invitation at 3 evidence, the school door, the clearing). Seven
+rooms descend from the shaft floor to the Deep Stair, which the
+keystone (the Pallid Mask) opens onto the Depths:
 
-  well_bottom        -- the Shaft Floor (rope landing; the way back up)
+  well_bottom        -- the Shaft Floor (the fold lands you here; its
+                        return pane is the way back up)
   well_passage       -- the Drying Racks (first gauntlet)
   works_vats         -- the Cistern (the dig broke into the river)
   works_sorting      -- the Sorting Hall (shed lives of the claimed)
   works_scriptorium  -- the Scriptorium (the Sign, copied endlessly)
   works_sign         -- the Sign Chamber (lift the Pallid Mask; evidence #5)
-  works_deepstair    -- the Deep Stair (the keystone opens it; rope snaps)
+  works_deepstair    -- the Deep Stair (the keystone opens it; the way
+                        back seals)
 
-The rope breaks the instant you press the keystone to the Deep Stair
--- from then there is no climbing back, only deeper. Cultists labour here; the
+The descent SEALS the instant you press the keystone to the Deep Stair
+(descent_sealed: the grove fold and its return pane both die) -- from
+then there is no climbing back, only deeper. Cultists labour here; the
 flashlight works (these are DARK_SCENES, not cult-dark) but their gaze
 still finds you, so the gauntlet is run on cover, timing, and the hide
 spots. Combat is gone -- contact slams the dread aperture; the danger
 is being seen. Cultists respect hiding (player.hidden), so a hide spot
 breaks the chase.
 
-Reworks vs. the old build: the well is now the ONLY mouth down (the
-barn cellar hatch is sealed); nothing is consumed to land here; and the
-way deeper opens only when the keystone -- the Pallid Mask (Sign Chamber)
-seated in the cult's notes (Scriptorium) -- is pressed to the Deep Stair.
-The stair opens WITHOUT consuming the keystone (§7): you carry it down and
-spend it at the Threshold door to SEAL, or turn back while the rope holds
-and carry it out to SPREAD. The fork between Seal and Spread lives at that
-stair.
+Reworks vs. the old build: the rope is CUT -- the only way down is the
+rite (the Brimley well is demoted to dread set-dressing; the barn cellar
+hatch stays sealed); nothing is consumed to land here; and the way
+deeper opens only when the keystone -- the Pallid Mask (Sign Chamber) --
+is pressed to the Deep Stair. The stair opens WITHOUT consuming the
+keystone (§7): you carry it down and spend it at the Threshold door to
+SEAL, or turn back while the way above still stands and carry it out to
+SPREAD. The fork between Seal and Spread lives at that stair.
 """
 import math
 from constants import TILE
@@ -41,25 +45,40 @@ from .depths import _box, _cultist, _ambient, _wall, _bevel
 
 def build_well_bottom():
     # The shaft floor: a round (octagonal) stone pit at the bottom of the
-    # well, the rope/ladder dangling at one beveled edge.
+    # well. No rope, no ladder: the descent fold in the grove lands you
+    # here, and its RETURN PANE ('O', walked west) stands where the rope
+    # once hung -- symmetric while it lives, dead once the Deep Stair
+    # seals the descent.
     floor, objs = _box(12, 10)
     _bevel(objs, 3)
     objs[5][11] = "E"         # east -> the drying racks (deeper)
-    objs[2][3]  = "."         # the ladder up is a 3D prop now (below), not a flat tile
+    objs[2][3]  = "O"         # the way back up: the fold's return pane
+    #                             (the marker char: invisible, walkable)
     objects = ["".join(r) for r in objs]
     sc = Scene("well_bottom", floor, objects, music="basement")
     sc.add_exit("E", "well_passage", "from_above")
+    sc.add_exit("O", "effigy_grove", "from_well_bottom", direction="west")
     sc.set_spawn("default",   5, 5)
-    sc.set_spawn("from_well", 4, 3)       # land here on the descent
+    sc.set_spawn("from_well", 4, 3)       # legacy alias for the landing
+    sc.set_spawn("from_grove", 4, 4)      # land here on the descent (east
+    #                                       of the return pane, carried
+    #                                       clear of it)
     sc.set_spawn("from_below", 9, 5)      # back up from the racks
 
-    ladder_x = 3 * TILE + 16
-    ladder_y = 2 * TILE + 16
-    sc._ladder_pos = (ladder_x, ladder_y)
-    sc.add_interactable(ladder_x, ladder_y, 40)   # [E] cue: climb the rope/ladder up
-    # The way up: a real 3D rope hanging from a hatch in the ceiling down to
-    # the landing (volume, not a flat painted ladder on the floor).
-    sc.add_decoration(Decoration(ladder_x, ladder_y, "shaft_ladder"))
+    def _up_charge(game, ch):
+        if ch == "O" and game.save.flag("descent_sealed"):
+            return 0.0
+        return 1.0
+    sc.fold_charge_fn = _up_charge
+
+    def _up_gate(game, ch):
+        if ch != "O":
+            return True
+        if game.save.flag("descent_sealed"):
+            return False
+        return True
+    sc.exit_gate_fn = _up_gate
+
     sc.add_decoration(Decoration(4 * TILE + 16, 2 * TILE + 22, "candle"))
     sc.add_decoration(Decoration(7 * TILE + 16, 6 * TILE + 16, "bloodstain"))
     # A "wrong" mount in the well dark -- too many eyes.
@@ -88,7 +107,8 @@ def build_well_bottom():
     sc.add_decoration(Decoration(5 * TILE + 16, 8 * TILE + 12, "water_trail",
                                  pool=True, seed=9))
     sc.add_decoration(Decoration(2 * TILE + 18, 4 * TILE + 16, "drowned_body"))
-    # Grime: claw gouges in the stone, mud tracked from the rope, more old blood.
+    # Grime: claw gouges in the stone, mud tracked from the landing, more
+    # old blood.
     sc.add_decoration(Decoration(10 * TILE + 8, 4 * TILE + 16, "claw_marks",
                                  scale=1.8))
     sc.add_decoration(Decoration(5 * TILE + 16, 1 * TILE + 10, "claw_marks",
@@ -102,22 +122,12 @@ def build_well_bottom():
     sc.hide_spots = []
     _ambient(sc, "low_pulse", 0.12, 9.0, 14.0)
 
-    # The rope no longer snaps on the way down -- you can retreat up the
-    # ladder through the whole Works gauntlet. The point of no return is
-    # OPENING THE DEEP STAIR (committing to the Depths); that snaps it
-    # (works_deepstair, below). The keystone is the Pallid Mask alone (Sign
-    # Chamber); the cult's testimony fragments are pure lore found down here.
-
-    def _interact(game):
-        px, py = game.player.x, game.player.y
-        if abs(px - ladder_x) < 40 and abs(py - ladder_y) < 40:
-            if game.save.flag("well_rope_broken"):
-                game.audio.play("door_locked", 0.5)
-                game.show_notice("The rope is gone. Only the dark below.")
-                return
-            game.audio.play("door_open", 0.6)
-            game.begin_transition("brimley", "from_well")
-    sc.on_interact_fn = _interact
+    # Nothing seals on the way down -- you can retreat up through the
+    # return pane through the whole Works gauntlet. The point of no return
+    # is OPENING THE DEEP STAIR (committing to the Depths); that kills the
+    # descent fold and this pane with it (descent_sealed, works_deepstair
+    # below). The keystone is the Pallid Mask alone (Sign Chamber); the
+    # cult's testimony fragments are pure lore found down here.
     return sc
 
 
@@ -635,10 +645,10 @@ def build_works_deepstair():
                              "face. Empty.")
             return
         # The Mask in hand: lay out the fork once, commit on the next press.
-        # Turning back keeps the keystone for the rope -- the Spread road
-        # (carry His face out). Pressing it here OPENS the stair but does
-        # NOT consume it (§7): you carry the keystone down and spend it at
-        # the Threshold door -- the Seal road.
+        # Turning back keeps the keystone for the way out -- the Spread road
+        # (carry His face out through the standing fold). Pressing it here
+        # OPENS the stair but does NOT consume it (§7): you carry the
+        # keystone down and spend it at the Threshold door -- the Seal road.
         if not game.save.flag("deepstair_fork_seen"):
             game.save.set_flag("deepstair_fork_seen", True)
             game.audio.play("low_pulse", 0.5)
@@ -650,26 +660,28 @@ def build_works_deepstair():
                 "The town belongs to Him; that is why not one of them can "
                 "leave. But you were never claimed. His Sign, carried out by "
                 "the one soul He never took. The fold opens only for that. "
-                "Climb out while the rope holds, and let the world learn His "
-                "name.",
+                "Climb out while the way you opened still stands, and let "
+                "the world learn His name.",
                 "[s=slow]Or you carry it down, past her, to the thing all of "
                 "this kneels to, and give it to the door.[/s]",
                 "[c=dim](Press again to open the stair and carry the keystone "
-                "down, or turn back, while the rope still holds.)[/c]",
+                "down, or turn back, while the way above still stands.)[/c]",
             ], speaker="", voice="blip_soft", portrait="narrator")
             return
         # Commit -- press the keystone to the stone. The stair OPENS to His
         # own authority but the keystone is NOT spent here (§7 rework): you
         # keep the Mask and carry it down to the Threshold door. Point of no
-        # return: the rope far above snaps.
+        # return: the descent fold far above (and its return pane at the
+        # shaft floor) dies -- descent_sealed.
         game.save.set_flag("deepstair_open", True)
-        game.save.set_flag("well_rope_broken", True)
+        game.save.set_flag("descent_sealed", True)
         game.audio.force_silence()
         game.audio.play("low_pulse", 0.95)
         game.show_notice("You press the keystone to the stone. It knows its "
-                         "own. The stair grinds open, and far above, the "
-                         "rope snaps. You lift the keystone away again and go "
-                         "down. Only down, now.", duration=4.5)
+                         "own. The stair grinds open, and far behind you, "
+                         "you feel the way you came pinch shut. You lift the "
+                         "keystone away again and go down. Only down, now.",
+                         duration=4.5)
         game.begin_transition("depths_antechamber", "from_above")
     sc.on_interact_fn = _interact
 

@@ -80,7 +80,7 @@ SCENE_BUILDERS = {
     "void_boss":          build_void_boss,          # -> clearing
     "barn":               build_barn,
     # The Works -- the Basement Level. Seven rooms, well is the sole
-    # entrance (rope down); Mask + Play together gate the way to the Depths.
+    # entrance (the grove's descent fold); the Mask gates the way to the Depths.
     "well_bottom":        build_well_bottom,        # the Shaft Floor
     "well_passage":       build_well_passage,       # the Drying Racks
     "works_vats":         build_works_vats,

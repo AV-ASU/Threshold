@@ -1577,8 +1577,8 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
                 "pressing harder, trying to get it right, like the right one "
                 "would finally come loose from the wall.",
                 "I came down for a missing girl. I keep checking over my "
-                "shoulder for the rope. Still there. I say so to myself more "
-                "than a steady man would.",
+                "shoulder for the way back up. Still open. I say so to "
+                "myself more than a steady man would.",
             ],
         },
         # The Playscript (the cult's notes): the SEED of the want-to-leave.
@@ -1634,11 +1634,11 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
             "beat": [
                 "[c=dim]The drawn doors are behind my eyes now, every time I "
                 "shut them. Everything in me is pulling for the surface. "
-                "There's no rope to climb. So down.[/c]",
+                "The way back is shut. So down.[/c]",
             ],
             "note": [
-                "The stair took the rope when it opened. No way back up. Only "
-                "down now.",
+                "The stair shut the way behind me when it opened. No way back "
+                "up. Only down now.",
                 "Everything in me is pulling for the surface. The car, the "
                 "road, the county line. And there is nothing left to climb. So "
                 "I go down, because down is the only direction left.",
@@ -1957,6 +1957,15 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
                     self.player.x, self.player.y,
                     facing=self.player.facing)
                 if exit_data:
+                    exit_ch = self.scene.char_object_at(
+                        self.player.x, self.player.y)
+                    # A scene may GATE an exit on game state (the grove's
+                    # descent fold opens only at 3 evidence; the school door
+                    # only once drawn). A gated-shut exit reads as floor.
+                    gate = getattr(self.scene, "exit_gate_fn", None)
+                    if gate is not None and not gate(self, exit_ch):
+                        exit_data = None
+                if exit_data:
                     # Stash a hot pursuer so an active chase carries through
                     # this exit -- portal or fold alike (only a SAFE room
                     # shakes it). The far side rebuilds it a beat behind.
@@ -1968,7 +1977,15 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
                     # Watcher (the seed that starts the curse cloning), unless
                     # already at the 5-Watcher ceiling.
                     self._roll_fold_watcher(exit_data)
-                    self.begin_transition(*exit_data)
+                    # A direction-gated exit IS a fold: it crosses seamlessly
+                    # whatever scenes it joins (the grove's way down, the
+                    # school door). Everything else keeps the set-membership
+                    # routing in begin_transition (seamless passages vs the
+                    # door fade).
+                    if exit_ch in self.scene.exit_directions:
+                        self.cross_fold(*exit_data)
+                    else:
+                        self.begin_transition(*exit_data)
             # Suspend scene update (NPC patrols, decoration anims, triggers)
             # while any modal is up so the world freezes behind it.
             if not world_frozen:
@@ -2089,8 +2106,8 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
 
     def _on_player_death(self):
         if self.scene and self.scene.key == "well_bottom":
-            if not self.save.flag("well_rope_broken"):
-                self.save.set_flag("well_rope_broken", True)
+            if not self.save.flag("descent_sealed"):
+                self.save.set_flag("descent_sealed", True)
         # Death in the void boss arena seals the secret path forever,
         # empties the world of NPCs, and respawns the player on the
         # town square rather than their bed. The world_emptied flag

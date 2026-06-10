@@ -3,9 +3,11 @@
 Where smoke.py only *builds* scenes, this drives a full run headlessly and
 asserts the spine is COMPLETABLE with no crash or soft-lock:
 
-  rope down the well -> take the Playscript -> take the Pallid Mask ->
-  fork at the Deep Stair (Mask + Play) -> cross the Depths -> the hive
-  (speak to Mara) -> seal the Threshold (the SEAL ending).
+  3 evidence -> Sable hands over the Invitation -> the school rite
+  (incense + the chalk door) -> the grove's descent fold -> take the
+  Playscript -> take the Pallid Mask -> fork at the Deep Stair (the
+  descent seals) -> cross the Depths -> the hive (speak to Mara) ->
+  seal the Threshold (the SEAL ending).
 
 Plus the SPREAD ending (drive out with the Mask) and the 3-evidence King
 gate. Interactions are driven by positioning the player on each
@@ -84,15 +86,132 @@ def main():
     check(g.state == "playing" and g.player is not None,
           "new game boots into a playable state")
 
-    # --- 1. Descend the well (needs the rope) ---
+    # --- 1. THE ACT BREAK: evidence + rite + the grove fold -------------
+    # The rope is CUT. The way down is the rite: at 3 evidence Sable hands
+    # over the Invitation, the school rite (incense, then the chalk door)
+    # opens the school<->grove fold, and the grove's descent fold (which
+    # clarifies with the evidence count) drops you at the shaft floor.
+    from scenes.dialogue import clerk_dialogue
+    from systems.items import ITEM_DEFS as _IDEFS1
+    check("rope" not in _IDEFS1, "act break: the rope item is cut")
+    for key in ("rite_envelope", "chalk", "incense"):
+        check(key in _IDEFS1, f"act break: the {key} item exists")
+    check(not any(d in _IDEFS1["rite_envelope"]["desc"]
+                  for d in ("—", "–", "--")),
+          "act break: the Invitation text carries no dashes (HARD RULE)")
+
+    def _take_fold(gg, ch):
+        """Stand on fold tile `ch` facing its direction and fire the
+        game's gated exit path (find_exit_at + exit_gate_fn + cross_fold),
+        mirroring the step() block."""
+        from rendering.folds import _DIRV
+        pos = gg.scene.find_marker(ch)
+        assert pos is not None, f"no {ch!r} tile in {gg.scene.key}"
+        gg.player.x = pos[0] * 32 + 16
+        gg.player.y = pos[1] * 32 + 16
+        gg.player.facing = _DIRV[gg.scene.exit_directions[ch]]
+        data = gg.scene.find_exit_at(gg.player.x, gg.player.y,
+                                     facing=gg.player.facing)
+        if data is None:
+            return False
+        gate = getattr(gg.scene, "exit_gate_fn", None)
+        if gate is not None and not gate(gg, ch):
+            return False
+        gg.cross_fold(*data)
+        return True
+
+    # (a) Below 3 evidence: Sable holds the envelope; the grove fold is a
+    # dim thread that will not cross; the well is dread set-dressing.
     g.load_scene_now("brimley")
     ready(g)
-    g.player.inventory.add("rope", 1)
-    wx, wy = g.scene._well_pos              # the well moved in the brimley merge
+    wx, wy = g.scene._well_pos
     g.player.x, g.player.y = wx, wy
     g.scene.on_interact_fn(g)
-    check(g.save.flag("well_rope_tied"), "well: rope ties on first descent")
-    check(not g.player.inventory.has("rope"), "well: rope consumed into the rig")
+    check(g.save.flag("well_examined") and g.scene.key == "brimley",
+          "well: demoted to dread set-dressing (no descent)")
+    ready(g)
+    clerk_dialogue(g, None)
+    check(not g.player.inventory.has("rite_envelope"),
+          "sable: below 3 evidence the Invitation stays under the register")
+    g.load_scene_now("effigy_grove")
+    ready(g)
+    check(0.0 < g.scene.fold_charge_fn(g, "O") < 0.2,
+          "grove: at 0 evidence the descent fold is a faint thread")
+    check(not _take_fold(g, "O"),
+          "grove: at 0 evidence the descent fold will not cross")
+    check(g.scene.key == "effigy_grove", "grove: still in the grove")
+
+    # (b) At 3 evidence: the handoff fires once, with the PI's note.
+    for i in range(3):
+        g.save.arg("evidence", []).append(
+            {"name": f"_act1_{i}", "lines": ["x"]})
+    ready(g)
+    clerk_dialogue(g, None)
+    check(g.player.inventory.has("rite_envelope"),
+          "sable: at 3 evidence he hands over the Invitation")
+    check(any(isinstance(e, dict) and e.get("name") == "the_invitation"
+              for e in g.save.arg("notes", [])),
+          "sable: the handoff logs the PI's NOTE (never evidence)")
+    check(len(g.save.arg("evidence", [])) == 3,
+          "sable: the handoff does not inflate the evidence count")
+    ready(g)
+    _notes_n = sum(1 for e in g.save.arg("notes", [])
+                   if isinstance(e, dict)
+                   and e.get("name") == "the_invitation")
+    clerk_dialogue(g, None)
+    check(_notes_n == 1 and sum(
+              1 for e in g.save.arg("notes", [])
+              if isinstance(e, dict)
+              and e.get("name") == "the_invitation") == 1,
+          "sable: the handoff fires exactly once (no duplicate note)")
+
+    # (c) The school rite: incense first, then the chalk door; the fold
+    # stays open from then on.
+    g.load_scene_now("schoolhouse")
+    ready(g)
+    g.player.x, g.player.y = g.scene._board_pos
+    g.scene.on_interact_fn(g)
+    check(not g.save.flag("school_door_open"),
+          "school: the board alone does not open the door (air first)")
+    ready(g)
+    g.player.x, g.player.y = g.scene._chalk_pos
+    g.scene.on_interact_fn(g)
+    check(g.player.inventory.has("chalk"), "school: chalk off the desk")
+    ready(g)
+    g.player.x, g.player.y = g.scene._incense_pos
+    g.scene.on_interact_fn(g)
+    check(g.player.inventory.has("incense"),
+          "school: incense among the cot relics")
+    ready(g)
+    g.player.x, g.player.y = g.scene._fire_pos
+    g.scene.on_interact_fn(g)
+    check(g.save.flag("school_incense_lit"),
+          "school: the incense burns at the indoor fire")
+    check(not g.player.inventory.has("incense"),
+          "school: the rite consumes the incense")
+    ready(g)
+    g.player.x, g.player.y = g.scene._board_pos
+    g.scene.on_interact_fn(g)
+    check(g.save.flag("school_door_open"),
+          "school: smoke + chalk draw the final door")
+    g._school_door_t0 = None              # skip the formation ramp
+    ready(g)
+    check(_take_fold(g, "O") and g.scene.key == "effigy_grove",
+          "school: the drawn door crosses to the grove")
+
+    # (d) The descent: at 3 evidence the grove fold is formed and crossable;
+    # its return pane stands at the shaft floor (symmetric, NARRATIVE §11).
+    check(g.scene.fold_charge_fn(g, "O") >= 0.999,
+          "grove: at 3 evidence the descent fold is fully formed")
+    ready(g)
+    check(_take_fold(g, "O") and g.scene.key == "well_bottom",
+          "grove: the descent fold lands at the shaft floor")
+    ready(g)
+    check(_take_fold(g, "O") and g.scene.key == "effigy_grove",
+          "well bottom: the return pane climbs back to the grove")
+    ready(g)
+    check(_take_fold(g, "O") and g.scene.key == "well_bottom",
+          "grove: the descent stays two-way until the Deep Stair")
 
     # --- 1b. The Ledger fires from the Lodge FRONT DESK, not the cellar ---
     # CANON (NARRATIVE §4, §5): one register, on the front desk; you sign on
@@ -167,12 +286,25 @@ def main():
     sc.on_interact_fn(g)                      # second press: commit (Seal road)
     check(g.save.flag("deepstair_open"),
           "deep stair: the keystone opens the descent")
-    check(g.save.flag("well_rope_broken"),
-          "deep stair: committing snaps the rope (point of no return)")
+    check(g.save.flag("descent_sealed"),
+          "deep stair: committing seals the descent (point of no return)")
     # CANON (NARRATIVE §6/§7 rework): the stair opens WITHOUT consuming the
     # keystone (the Mask) -- you carry it down to spend at the Threshold door.
     check(g.player.inventory.has("sigil_rubbing"),
           "deep stair: the keystone is NOT consumed (carried down, not spent)")
+    # The seal kills the grove's descent fold AND its return pane (the
+    # one-way crossing stays the King's signature alone: this fold doesn't
+    # turn one-way, it dies).
+    g.load_scene_now("effigy_grove")
+    ready(g)
+    check(g.scene.fold_charge_fn(g, "O") == 0.0,
+          "seal: the grove descent fold is dead (charge 0)")
+    check(not _take_fold(g, "O") and g.scene.key == "effigy_grove",
+          "seal: the descent fold will not cross")
+    g.load_scene_now("well_bottom")
+    ready(g)
+    check(not _take_fold(g, "O") and g.scene.key == "well_bottom",
+          "seal: the shaft-floor return pane is dead")
 
     # --- 5. The Depths chain loads + steps with no crash ---
     for k in ("depths_antechamber", "depths_procession", "depths_hall",
@@ -717,8 +849,10 @@ def main():
     gl2.scene.on_interact_fn(gl2)         # re-read -> evidence
     _lt = " ".join(l for e in gl2.save.arg("evidence", [])
                    if e.get("name") == "the_ledger" for l in e["lines"]).lower()
-    check("months" in _lt and "keep it in mind" in _lt,
-          "voice: the Ledger carries the PI's voice (the checkout-date confusion)")
+    # CANON: the checkout dates stop A YEAR back (the same season the PI
+    # dreamed the door once) -- never "months". Guard the duration.
+    check("a year" in _lt and "months" not in _lt and "keep it in mind" in _lt,
+          "voice: the Ledger carries the PI's voice (dates stop a YEAR back)")
 
     # Chalk-door swarm fills the Scriptorium (obsessive, none overlapping).
     _scr = _ldcd("works_scriptorium")
