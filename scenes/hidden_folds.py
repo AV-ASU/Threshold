@@ -45,19 +45,21 @@ def build_effigy_grove():
     dial. Crossing it lands at the bottom of the well (well_bottom). The
     Deep Stair seals it (descent_sealed). A second fold ('M') is the school
     door's return pane, open only once the chalk door is drawn."""
-    W, H = 18, 13
+    W, H = 26, 19
     # The crop circle: an OVAL clearing pressed into solid corn. Inside
-    # the oval the ground is open (charred at the heart, grass at the
-    # rim); everything outside it is standing corn -- the border IS the
-    # field, so the clearing reads as a held-open wound in the crop.
+    # the oval the ground is open (charred at the heart, grass out to
+    # the rim); everything outside it is standing corn -- the border IS
+    # the field. The clearing is CLEAN-CUT and big: the corn stays a
+    # distant rim, never crowding the fire, the stones or the door
+    # (the tall stalk standees lean over a tile or two at most).
     def _in_clearing(tx, ty):
-        dx = (tx - 9) / 8.2
-        dy = (ty - 6) / 5.4
+        dx = (tx - 13) / 11.6
+        dy = (ty - 9) / 8.0
         return dx * dx + dy * dy <= 1.0
 
     def _in_char(tx, ty):
-        dx = (tx - 9) / 3.6
-        dy = (ty - 5.5) / 2.9
+        dx = (tx - 13) / 4.4
+        dy = (ty - 8.5) / 3.2
         return dx * dx + dy * dy <= 1.0
 
     floor_rows = []
@@ -74,20 +76,20 @@ def build_effigy_grove():
         objects_l.append(row)
     # Three ORGANIC standing stones around the ring -- solid, see-over
     # footprints ('x' object) so they block walking but never sight.
-    for sx, sy in ((6, 3), (13, 8), (4, 8)):
+    for sx, sy in ((9, 5), (18, 12), (7, 12)):
         objects_l[sy][sx] = "x"
     # Return exit through the corn on the east rim at the centre row.
     # (Off the fold's column, so walking out east never brushes the way
     # down.)
-    objects_l[6][W - 1] = "G"
+    objects_l[9][W - 1] = "G"
     # THE WAY DOWN: the fold tile at the dead fire ('O', a marker char:
     # invisible, walkable), walked SOUTH into --
     # a deliberate step into the pane, never crossed by the natural
     # east-west walk through the clearing.
-    objects_l[5][9] = "O"
+    objects_l[8][13] = "O"
     # The school door's grove-side pane ('M'), south of the ring. Walked
     # SOUTH.
-    objects_l[10][9] = "M"
+    objects_l[13][13] = "M"
     objects = ["".join(r) for r in objects_l]
     sc = Scene("effigy_grove", floor_rows, objects, music="outside")
     # Part of the continuous outside world -- transitions in and out
@@ -97,15 +99,15 @@ def build_effigy_grove():
     sc.add_exit("G", "cornfield_maze", "from_effigy_grove")
     sc.add_exit("O", "well_bottom", "from_grove", direction="south")
     sc.add_exit("M", "schoolhouse", "from_grove", direction="south")
-    sc.set_spawn("default", 1, 6)
+    sc.set_spawn("default", 2, 9)
     # The player walked WEST onto the entry tile in the maze; they
-    # arrive on the west bank of the grove, the fire ahead of them.
-    sc.set_spawn("from_cornfield_maze", 1, 6)
+    # arrive on the west bank of the circle, the fire ahead of them.
+    sc.set_spawn("from_cornfield_maze", 2, 9)
     # Back up out of the well: beside the fire, carried westward so
     # arrival never re-fires the south-walked crossing.
-    sc.set_spawn("from_well_bottom", 8, 5)
+    sc.set_spawn("from_well_bottom", 12, 8)
     # In through the school door: one tile north of its return pane.
-    sc.set_spawn("from_school", 9, 9)
+    sc.set_spawn("from_school", 13, 12)
 
     # ---- The two state-driven folds ----
     def _charge(game, ch):
@@ -165,14 +167,14 @@ def build_effigy_grove():
     # The dead fire pit on the fold tile itself, the Sign painted under
     # it. (The fold's gold pool relights the charred ring as the frame
     # clarifies; the way down stands IN the fire.)
-    sc.add_decoration(Decoration(9 * TILE + 16, 5 * TILE + 16, "brazier"))
-    sc.add_decoration(Decoration(9 * TILE + 16, 5 * TILE + 16,
+    sc.add_decoration(Decoration(13 * TILE + 16, 8 * TILE + 16, "brazier"))
+    sc.add_decoration(Decoration(13 * TILE + 16, 8 * TILE + 16,
                                  "yellow_sign"))
     # Effigy circle around the fire -- six small chairs/effigies on
     # the charred ring. Each represents a local the priest was working
     # against.
     effigy_ring = [
-        (7, 4), (11, 4), (7, 8), (11, 8), (6, 6), (13, 6),
+        (11, 6), (15, 6), (11, 10), (15, 10), (10, 8), (17, 8),
     ]
     for tx, ty in effigy_ring:
         sc.add_decoration(Decoration(tx * TILE + 16, ty * TILE + 16,
@@ -180,19 +182,19 @@ def build_effigy_grove():
     # THREE standing stones, organic and asymmetric (distinct seeds).
     # The nailed-up faces moved from the old tree-wall board onto the
     # north-west stone -- fixed to the rock, watching the fire.
-    sc.add_decoration(Decoration(6 * TILE + 16, 3 * TILE + 16,
+    sc.add_decoration(Decoration(9 * TILE + 16, 5 * TILE + 16,
                                  "standing_stone", seed=11))
-    sc.add_decoration(Decoration(13 * TILE + 16, 8 * TILE + 16,
+    sc.add_decoration(Decoration(18 * TILE + 16, 12 * TILE + 16,
                                  "standing_stone", seed=47))
-    sc.add_decoration(Decoration(4 * TILE + 16, 8 * TILE + 16,
+    sc.add_decoration(Decoration(7 * TILE + 16, 12 * TILE + 16,
                                  "standing_stone", seed=83))
-    sc.add_decoration(Decoration(6 * TILE + 16, 3 * TILE + 6,
+    sc.add_decoration(Decoration(9 * TILE + 16, 5 * TILE + 6,
                                  "polaroid_wall"))
     # One old stain on the approach, one mark off the ring -- kept sparse
     # so the fire, the stones and the fold stay the focus.
-    sc.add_decoration(Decoration(4 * TILE + 16, 6 * TILE + 16,
+    sc.add_decoration(Decoration(8 * TILE + 16, 9 * TILE + 16,
                                  "bloodstain"))
-    sc.add_decoration(Decoration(7 * TILE + 16, 9 * TILE + 16,
+    sc.add_decoration(Decoration(11 * TILE + 16, 12 * TILE + 16,
                                  "phantom_mark"))
     # ---- No worker ----
     # There is no worker here. The closing rite claimed the whole town

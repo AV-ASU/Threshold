@@ -2791,8 +2791,8 @@ class Decoration:
         siblings, never copies. Elevation art; under tilt it stands up
         as a grounded standee (rendering/props.py)."""
         rng = random.Random(self.seed)
-        h = rng.randint(34, 46)
-        wbase = rng.randint(14, 18)
+        h = rng.randint(42, 56)
+        wbase = rng.randint(15, 19)
         wtop = rng.randint(5, 9)
         lean = rng.randint(-3, 3)
         stone = (96, 94, 98)
