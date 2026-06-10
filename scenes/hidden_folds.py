@@ -19,6 +19,7 @@ All three are in SEAMLESS_WORLD_SCENES so crossing into them carries no
 fade -- the player walks into the fold without realising they crossed
 a boundary.
 """
+import math
 import random
 from constants import TILE
 from entities.decoration import Decoration
@@ -149,6 +150,30 @@ def build_effigy_grove():
                     and _charge(game, "M") >= 0.999)
         return True
     sc.exit_gate_fn = _gate
+
+    def _grove_update(game, scene, dt):
+        # THE LOOM: a low, ominous bed that swells as evidence is found
+        # -- the fold's charge made audible. A repeating low pulse,
+        # louder and FASTER as the way down clarifies (ev 0: a faint
+        # beat every ~5.5s; ev 3: a strong one every ~2s), panned to
+        # the fire and leaning harder the closer you stand to it. Falls
+        # silent once the Deep Stair seals the descent.
+        if game.save.flag("descent_sealed"):
+            return
+        t = getattr(scene, "_loom_t", 0.0) - dt
+        if t <= 0.0:
+            ev = min(3, game._evidence_count())
+            charge = 0.15 + 0.85 * (ev / 3.0)
+            fx, fy = 13 * TILE + 16, 8 * TILE + 16
+            d = math.hypot(game.player.x - fx, game.player.y - fy)
+            prox = max(0.25, 1.0 - d / (12 * TILE))
+            pan = game.audio.pan_for_world(fx, game.player.x)
+            game.audio.play("low_pulse",
+                            min(0.85, 0.16 + 0.55 * charge * prox),
+                            pan=pan)
+            t = 5.5 - 3.5 * charge
+        scene._loom_t = t
+    sc.on_update_fn = _grove_update
 
     def _grove_enter(game, scene):
         if game.save.flag("grove_seen"):
