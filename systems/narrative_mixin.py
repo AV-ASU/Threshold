@@ -187,8 +187,8 @@ class NarrativeMixin:
         notes.insert(0, {"name": "the_case", "lines": [
             "Walter Blaine, Minneapolis. The client. Grief in the voice"
             " you could lean a ladder on.",
-            "His girl, Mara, 26. Drove north in the spring. Stopped"
-            " calling home by the thaw.",
+            "His girl, Mara, 26. Drove north in the fall. Stopped"
+            " calling home by the new year.",
             "Last address: Brimley. Had to find it on a map. North woods,"
             " near nothing.",
             "Skip-trace. A weekend's work. Ask around, turn up the girl,"

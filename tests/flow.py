@@ -978,6 +978,26 @@ def main():
     check(gp.player.inventory.count("pistol_ammo") == _ammo1,
           "paper: the trade fires exactly once (can't be farmed)")
 
+    # (a2) The calendar sweep (GAME_CHANGES §13): the seal is mid-January
+    # 1994, so nothing may date the cut-off to spring. Hettie's till went
+    # empty at the new year, and the case note has Mara driving north in
+    # the fall and going quiet by the new year.
+    import inspect as _insp
+    import scenes.dialogue as _dlg
+    _dlg_src = _insp.getsource(_dlg)
+    check("since the spring" not in _dlg_src and "since spring" not in _dlg_src,
+          "calendar: no dialogue dates the cut-off to spring")
+    check("since the new year" in _dlg_src,
+          "calendar: Hettie's till went empty at the new year (the seal)")
+    _case_n = next((e for e in gp.save.arg("notes", [])
+                    if isinstance(e, dict) and e.get("name") == "the_case"),
+                   None)
+    _case_t = " ".join(_case_n["lines"]).lower() if _case_n else ""
+    check("drove north in the fall" in _case_t
+          and "by the new year" in _case_t
+          and "spring" not in _case_t and "thaw" not in _case_t,
+          "calendar: the case note keeps Mara's fall drive + new-year silence")
+
     # (b) Sheriff Vane's murder beat is a one-shot gated on the player
     # having SEEN the church floor -- he can never announce the killing
     # before it is found (the old visit-4 slot could).
