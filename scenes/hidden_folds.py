@@ -29,11 +29,15 @@ from .base import Scene
 # ----- #2: The Work-Clearing (no worker) ----------------------------
 
 def build_effigy_grove():
-    """A clearing the cult once worked, found by walking east-to-west
-    through a specific cornstalk gap in cornfield_maze, or (act break)
-    through the school door. A dead fire pit at centre, effigy-dolls in a
-    ring, a polaroid board with faces nailed to it -- the work without the
-    worker (the closing rite claimed the town at once, NARRATIVE 1b/3).
+    """A CROP CIRCLE deep in the corn -- the clearing the cult once
+    worked, found by walking east-to-west through a specific cornstalk
+    gap in cornfield_maze, or (act break) through the school door. The
+    corn itself is the border: an oval of cut ground pressed into an
+    unbroken field, charred at the heart. A dead fire pit at centre,
+    effigy-dolls in a ring, THREE weathered standing stones (organic,
+    seeded -- siblings, never copies) with the nailed-up faces on one of
+    them -- the work without the worker (the closing rite claimed the
+    town at once, NARRATIVE 1b/3).
 
     THE WAY DOWN lives here now: a fold stands over the dead fire ('O'),
     clarifying with the evidence count (fold_charge_fn) and crossable only
@@ -42,32 +46,39 @@ def build_effigy_grove():
     Deep Stair seals it (descent_sealed). A second fold ('M') is the school
     door's return pane, open only once the chalk door is drawn."""
     W, H = 18, 13
-    # Floor: charred dirt at the centre, grass at the edges. The clearing
-    # is wider than the old build so the tree-wall standees ring the
-    # tableau instead of crowding it (the fire and the fold need air).
+    # The crop circle: an OVAL clearing pressed into solid corn. Inside
+    # the oval the ground is open (charred at the heart, grass at the
+    # rim); everything outside it is standing corn -- the border IS the
+    # field, so the clearing reads as a held-open wound in the crop.
+    def _in_clearing(tx, ty):
+        dx = (tx - 9) / 8.2
+        dy = (ty - 6) / 5.4
+        return dx * dx + dy * dy <= 1.0
+
+    def _in_char(tx, ty):
+        dx = (tx - 9) / 3.6
+        dy = (ty - 5.5) / 2.9
+        return dx * dx + dy * dy <= 1.0
+
     floor_rows = []
     for ty in range(H):
         row = []
         for tx in range(W):
-            if 6 <= tx <= 12 and 4 <= ty <= 8:
-                row.append("x")     # charred ground around the fire
-            else:
-                row.append("g")
+            row.append("x" if _in_char(tx, ty) else "g")
         floor_rows.append("".join(row))
-    # Objects: tree-wall perimeter, "G" return tile on the EAST face
-    # (the player walked west to get in; walking east back out returns
-    # to the maze).
     objects_l = []
     for ty in range(H):
         row = []
         for tx in range(W):
-            if ty == 0 or ty == H - 1 or tx == 0 or tx == W - 1:
-                row.append("T")
-            else:
-                row.append(".")
+            row.append("." if _in_clearing(tx, ty) else "C")
         objects_l.append(row)
-    # Return exit on the east wall at the centre row. (Off the fold's
-    # column, so walking out east never brushes the way down.)
+    # Three ORGANIC standing stones around the ring -- solid, see-over
+    # footprints ('x' object) so they block walking but never sight.
+    for sx, sy in ((6, 3), (13, 8), (4, 8)):
+        objects_l[sy][sx] = "x"
+    # Return exit through the corn on the east rim at the centre row.
+    # (Off the fold's column, so walking out east never brushes the way
+    # down.)
     objects_l[6][W - 1] = "G"
     # THE WAY DOWN: the fold tile at the dead fire ('O', a marker char:
     # invisible, walkable), walked SOUTH into --
@@ -166,30 +177,23 @@ def build_effigy_grove():
     for tx, ty in effigy_ring:
         sc.add_decoration(Decoration(tx * TILE + 16, ty * TILE + 16,
                                      "small_chair"))
-    # Polaroid board on the north wall -- faces nailed up.
-    sc.add_decoration(Decoration(9 * TILE + 16, 1 * TILE + 22,
+    # THREE standing stones, organic and asymmetric (distinct seeds).
+    # The nailed-up faces moved from the old tree-wall board onto the
+    # north-west stone -- fixed to the rock, watching the fire.
+    sc.add_decoration(Decoration(6 * TILE + 16, 3 * TILE + 16,
+                                 "standing_stone", seed=11))
+    sc.add_decoration(Decoration(13 * TILE + 16, 8 * TILE + 16,
+                                 "standing_stone", seed=47))
+    sc.add_decoration(Decoration(4 * TILE + 16, 8 * TILE + 16,
+                                 "standing_stone", seed=83))
+    sc.add_decoration(Decoration(6 * TILE + 16, 3 * TILE + 6,
                                  "polaroid_wall"))
-    # Two leafless trees flanking the ring -- focal dread.
-    sc.add_decoration(Decoration(4 * TILE + 16, 6 * TILE + 16,
-                                 "creepy_tree"))
-    sc.add_decoration(Decoration(14 * TILE + 16, 6 * TILE + 16,
-                                 "creepy_tree"))
-    # Hanging figures in the deep canopy at the corners.
-    sc.add_decoration(Decoration(2 * TILE + 16, 1 * TILE + 24,
-                                 "hanging_figure"))
-    sc.add_decoration(Decoration(15 * TILE + 16, 1 * TILE + 24,
-                                 "hanging_figure"))
     # One old stain on the approach, one mark off the ring -- kept sparse
-    # so the fire and the fold stay the focus.
+    # so the fire, the stones and the fold stay the focus.
     sc.add_decoration(Decoration(4 * TILE + 16, 6 * TILE + 16,
                                  "bloodstain"))
     sc.add_decoration(Decoration(7 * TILE + 16, 9 * TILE + 16,
                                  "phantom_mark"))
-    # Watching-wounds in the surrounding tree-mass.
-    sc.add_decoration(Decoration(0 * TILE + 24, 5 * TILE + 16,
-                                 "watching_wound", size="small"))
-    sc.add_decoration(Decoration(17 * TILE + 8, 7 * TILE + 16,
-                                 "watching_wound", size="small"))
     # ---- No worker ----
     # There is no worker here. The closing rite claimed the whole town
     # at once (NARRATIVE 1b/3), so individual cursing -- and the figure

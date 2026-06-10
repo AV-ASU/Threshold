@@ -1238,7 +1238,7 @@ SOLID_PROPS = {
 # hangs instead: its card is hung from a mount height so the body dangles.
 _STANDEE_HANG = frozenset(("hanging_figure",))
 _STANDEE_GROUND = frozenset((
-    "creepy_tree", "corn_doll", "corn_altar",
+    "creepy_tree", "corn_doll", "corn_altar", "standing_stone",
     "wheelbarrow", "pedestal", "steeple", "town_sign", "flagpole",
     "tall_grass", "grass_tuft", "doll", "husk_bundle",
 ))

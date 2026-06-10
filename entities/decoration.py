@@ -83,7 +83,7 @@ _GROUNDED_DECOS = frozenset((
     "well", "creepy_tree", "pickup_truck", "player_car",
     "gas_pump", "payphone", "pedestal", "pillar", "wheelbarrow",
     "headstone", "brazier", "town_sign", "flagpole", "bush",
-    "corn_doll", "corn_altar", "stalk_marker",
+    "corn_doll", "corn_altar", "stalk_marker", "standing_stone",
 ))
 
 # Kinds that must NOT use the generic upscale path (they draw absolute
@@ -2781,6 +2781,61 @@ class Decoration:
                 lx = x - w // 4 + int(lean * (1 - (ly - top) / h))
                 pygame.draw.line(surf, stone_dk, (lx, ly), (lx + w // 2, ly), 1)
         pygame.draw.circle(surf, moss, (x - w // 4, b - 2), 2)
+
+
+    def _draw_standing_stone(self, surf, x, y):
+        """An ORGANIC standing stone -- a weathered monolith at the burn
+        clearing: an irregular tapering slab with no tool marks, moss
+        skirting the base, pale lichen blooming up one face, a hairline
+        crack. Seeded per instance so the three in the grove read as
+        siblings, never copies. Elevation art; under tilt it stands up
+        as a grounded standee (rendering/props.py)."""
+        rng = random.Random(self.seed)
+        h = rng.randint(34, 46)
+        wbase = rng.randint(14, 18)
+        wtop = rng.randint(5, 9)
+        lean = rng.randint(-3, 3)
+        stone = (96, 94, 98)
+        stone_dk = (52, 50, 56)
+        stone_lt = (126, 124, 130)
+        moss = (58, 74, 50)
+        lichen = (134, 138, 118)
+        # Foot seated on the ground shadow (same grounding as headstone).
+        b = y + 14
+        top = b - h
+        # Jagged silhouette: walk both flanks with seeded wobble so no
+        # edge is a ruled line.
+        left, right = [], []
+        steps = 5
+        for i2 in range(steps + 1):
+            f = i2 / steps
+            yy = b - f * h
+            half = (wbase * (1 - f) + wtop * f) / 2.0
+            cx = x + lean * f
+            left.append((cx - half + rng.uniform(-1.8, 1.8), yy))
+            right.append((cx + half + rng.uniform(-1.8, 1.8), yy))
+        pts = left + right[::-1]
+        pygame.draw.polygon(surf, stone, pts)
+        pygame.draw.polygon(surf, stone_dk, pts, 1)
+        # One lit flank, one hairline crack wandering down from the crown.
+        pygame.draw.line(surf, stone_lt, left[1], left[-2], 1)
+        crack = [(x + rng.randint(-3, 3), top + rng.randint(3, 7))]
+        for _ in range(3):
+            crack.append((crack[-1][0] + rng.randint(-3, 3),
+                          crack[-1][1] + h // 5))
+        pygame.draw.lines(surf, stone_dk, False, crack, 1)
+        # Lichen blooms up one face.
+        for _ in range(rng.randint(3, 5)):
+            lx = x + rng.randint(-(wbase // 2) + 2, (wbase // 2) - 2)
+            ly = b - rng.randint(6, h - 8)
+            pygame.draw.circle(surf, lichen, (lx, ly), rng.randint(1, 2))
+        # Turned dirt + moss skirting the base.
+        pygame.draw.ellipse(surf, (30, 26, 23),
+                            (x - wbase // 2 - 2, b - 2, wbase + 4, 6))
+        for _ in range(rng.randint(3, 5)):
+            mx = x + rng.randint(-(wbase // 2), wbase // 2)
+            pygame.draw.circle(surf, moss,
+                               (mx, b - rng.randint(1, 4)), rng.randint(1, 2))
 
     def _draw_player_car(self, surf, x, y):
         """The PI's pale grey-blue sedan, dead on the shoulder, drawn TOP-DOWN

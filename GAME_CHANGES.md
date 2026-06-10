@@ -290,8 +290,13 @@ The rope (and its woodshed pickup, and the `rope` item key) is cut.
   over the dead fire in `effigy_grove`, **clarity = evidence count**
   (`fold_charge_fn`, 0.15→1.0), crossable only at 3 (`exit_gate_fn`) →
   lands at `well_bottom`; a symmetric **return pane** stands at the shaft
-  floor where the rope hung. The grove was widened (18×13) and now takes
-  infestation decals (the rot and the way down escalate on the same dial).
+  floor where the rope hung. The grove was rebuilt as a **crop circle
+  deep in the corn** (18×13): the corn itself is the border (an oval
+  clearing in solid stalks — the old tree wall + canopy dressing is cut),
+  with **three organic standing stones** (seeded `standing_stone` deco,
+  solid see-over footprints) around the ring and the nailed-up faces
+  moved onto the north-west stone. It now takes infestation decals (the
+  rot and the way down escalate on the same dial).
 - [x] **The cauldron is removed GAME-WIDE** (it was eat-cult imagery, §1b
   scrub): the prop, its draw code (`entities/decoration.py`), its standee
   entry (`rendering/props.py`), and the old clearing centrepiece. The

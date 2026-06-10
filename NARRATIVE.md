@@ -831,8 +831,10 @@ The reworks the new fiction forced are all shipped. What must stay true:
 - ~~**Reskin `effigy_grove` as a maker-less dread tableau.**~~ **DONE.**
   Individual cursing is redundant now the closing rite claims the whole town
   at once (§1b), so there is no maker. `effigy_grove` is a maker-less dread
-  tableau — the dead fire, the effigy ring, the nailed-up faces, all tended
-  by no one you'll ever see — matching its siblings `husk_grove` /
+  tableau — a crop circle deep in the corn (the corn itself is the border):
+  the dead fire, the effigy ring, three weathered standing stones with the
+  nailed-up faces fixed to one, all tended by no one you'll ever see —
+  matching its siblings `husk_grove` /
   `scarecrow_ring` (the work, no worker). Locked in `tests/flow.py`.
 - **Rehome the Watchers as His gaze (§3).** Keep the mechanic exactly
   (they raise visibility; dispel by breaking the gaze / axe / round) but
