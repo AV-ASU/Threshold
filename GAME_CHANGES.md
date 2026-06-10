@@ -308,6 +308,15 @@ The rope (and its woodshed pickup, and the `rope` item key) is cut.
 - [x] **The gate keys on EVIDENCE, never visibility** (flow-guarded): the
   grove's charge/gate read `_evidence_count()` (the six canonical beats);
   Watchers raise the visibility *floor* and can never open the way down.
+- [x] **The painted Sign is now a MASK** (`_draw_yellow_sign`,
+  `entities/decoration.py`): canon says the Sign IS the Pallid Mask ("His
+  face made an object", §4 #5), so the daubed glyph (the old three-armed
+  curl) is replaced by a crude painted face -- broken oval, two
+  thumb-press sockets, NO mouth (the flashback-mask grammar), paint runs
+  off the chin. Primitive yet put together; seeded per instance (every
+  daub is a different hand); same pulse + sickly light pool. One draw fn,
+  so every placement (grove centre, Sign Chamber, Scriptorium, Brimley,
+  the infestation pool) updated at once.
 - [x] **Engine seams** (`systems/game.py`, `rendering/folds.py`,
   `systems/render_mixin.py`, `systems/threat_mixin.py`): direction-gated
   exits route straight through `cross_fold` (folds are seamless whatever

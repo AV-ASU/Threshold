@@ -2291,37 +2291,53 @@ class Decoration:
             pygame.draw.line(surf, gold, (x - w, ly), (x + w, ly), 1)
 
     def _draw_yellow_sign(self, surf, x, y):
-        # The Yellow Sign -- the cult's glyph, daubed on stone. An
-        # asymmetric three-armed curl in jaundiced yellow, breathing
-        # faintly. Deliberately wrong: the arms don't match, and the
-        # eye sits off-centre. This is the cosmic-horror anchor; it
-        # repeats at scale across the Scriptorium and Sign Chamber.
-        pulse = 1.0 + math.sin(self.t * 1.1 + self.seed) * 0.10
-        # A sickly jaundiced glow behind the glyph -- the one note of
-        # real colour in the muck, and a focal point the eye catches.
+        """The Yellow Sign -- His face, daubed in paint. CANON (NARRATIVE
+        §4 #5): the Sign IS the Pallid Mask, "His face made an object",
+        so what the cult paints is a crude mask: a broken oval outline,
+        two thumb-press sockets, NO mouth (the flashback-mask grammar),
+        and paint runs where the hand hurried. Primitive yet put
+        together. Seeded per instance -- every daub in the world is a
+        different hand on a different night -- and it breathes on the
+        same faint pulse + sickly light pool as the old glyph (this is
+        still the cosmic-horror anchor; it repeats at scale across the
+        Scriptorium and Sign Chamber)."""
+        rng = random.Random(self.seed)
+        pulse = 1.0 + math.sin(self.t * 1.1 + self.seed) * 0.08
         _light_pool(surf, int(x), int(y), int(30 * pulse), (206, 188, 84),
                     int(46 + 10 * math.sin(self.t * 1.1 + self.seed)))
         col = (196, 178, 72)
         dark = (92, 80, 28)
+        sock = (26, 22, 14)
         R = 13 * pulse
-        arms = ((-1.5, 1.05), (1.15, 0.85), (0.25, 1.3))
-        for base_ang, lscale in arms:
-            L = R * lscale
-            pts = []
-            seg = 6
-            for i in range(seg + 1):
-                t = i / seg
-                a = base_ang + t * 1.05      # curl as the arm extends
-                rr = L * t
-                pts.append((int(x + math.cos(a) * rr),
-                            int(y + math.sin(a) * rr)))
-            pygame.draw.lines(surf, dark, False, pts, 4)
-            pygame.draw.lines(surf, col, False, pts, 2)
-        # Off-centre hooked eye at the heart of the glyph.
-        ex, ey = int(x - 1), int(y + 1)
-        pygame.draw.circle(surf, dark, (ex, ey), int(5 * pulse))
-        pygame.draw.circle(surf, col, (ex, ey), int(5 * pulse), 1)
-        pygame.draw.circle(surf, col, (ex + 2, ey - 1), 2)
+        rx = R * rng.uniform(0.66, 0.74)
+        ry = R * rng.uniform(0.96, 1.06)
+        # Broken outline: most strokes survive (put together), a few
+        # gaps where the hand lifted (primitive).
+        n = 16
+        pts = []
+        for i in range(n):
+            a = i / n * math.tau
+            w = rng.uniform(-2.4, 2.4)
+            pts.append((x + math.cos(a) * (rx + w),
+                        y + math.sin(a) * (ry + w)))
+        for i in range(n):
+            if rng.random() < 0.78:
+                a, b = pts[i], pts[(i + 1) % n]
+                pygame.draw.line(surf, dark, a, b, 5)
+                pygame.draw.line(surf, col, a, b, 3)
+        # Thumb-press sockets, mismatched, set off-centre. No mouth.
+        for fx, fy, fr in ((-0.40, -0.25, 0.20), (0.43, -0.18, 0.23)):
+            pygame.draw.circle(surf, sock,
+                               (int(x + rx * fx), int(y + ry * fy)),
+                               max(2, int(R * fr)))
+        # Two paint runs off the chin, one trailing thinner.
+        for dx, fl in ((-R * 0.2, 1.0), (R * 0.12, 0.7)):
+            rl = rng.randint(int(R * 0.4), int(R * 0.9)) * fl
+            y0 = y + ry * 0.9
+            pygame.draw.line(surf, dark, (x + dx, y0),
+                             (x + dx, y0 + rl), 2)
+            pygame.draw.line(surf, col, (x + dx, y0),
+                             (x + dx, y0 + rl * 0.7), 1)
 
     def _draw_chest(self, surf, x, y):
         # Wooden chest. Closed = lid down with a gold lock plate (and a
