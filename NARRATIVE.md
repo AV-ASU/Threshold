@@ -111,6 +111,23 @@ came north to Brimley a few months ago, was **attuned** — passively
 pulled by the door's dream (§1b) — "found religion," and joined the
 cult. She is one of the newcomers (§2).
 
+**Setting note 3 — when this is (date locked 2026-06).** The present is
+**mid-April 1994**: the PI drove in carrying **yesterday's paper, the
+April 14 issue** (start inventory; Hettie trades a load of cartridges
+for it — a one-day-old date against a town that hasn't seen a paper
+since the trucks stopped is what makes the cut-off legible, and the
+trade is how starved for word they are). Treat **April 14 = yesterday**
+as canon wherever a date surfaces. Locked in `tests/flow.py` §23a.
+
+> **TODO — reconcile the season around this date.** The surrounding lore
+> was written before the date existed: "three months have passed since
+> the seal" (§1b) lands the closing rite in mid-January, while Hettie's
+> "the till's been empty since spring" / "the trucks stopped" and the
+> crops-grow language read later in the year. Nothing on-screen
+> contradicts itself yet, but the next lore pass should settle the
+> seal's month and sweep the season references to agree. Tracked in
+> §8 and `GAME_CHANGES.md` §13.
+
 ---
 
 ## 1b. The Door, the River, and the Dream — where this starts
@@ -823,6 +840,12 @@ The reworks the new fiction forced are all shipped. What must stay true:
 - ~~Individual-curser in dialog / evidence beats.~~ **Superseded:** the
   closing rite makes an individual curser redundant (see the build-order
   above).
+- **Reconcile the calendar (April 14).** The present is now dated —
+  yesterday's paper, the April 14 issue (§1 setting note 3). Settle when
+  the closing rite happened and sweep the seasonal references ("three
+  months have passed since the seal," "since spring," the crops-grow
+  language) so they agree with a mid-April present. Concrete code/doc
+  work tracked in `GAME_CHANGES.md` §13.
 - **Food scarcity — the VISUAL pass.** The dialogue side is done
   (Hettie: "The shelves don't empty anymore... No deliveries."; the
   Store-Owner: "Shelves are bare. Till's been empty since the spring").

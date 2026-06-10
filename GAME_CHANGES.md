@@ -55,8 +55,8 @@ Implemented + verified (compileall + smoke + flow green; canon guards added).
 > **State (2026-06):** §8 and §9 are DONE (below). §10 is a standing
 > constraint, not a task. **§6b is now DONE** (the three testimony fragments,
 > the Mask-only keystone, mining cultists + rite-holder — all in code and
-> flow-guarded). The only genuinely-open work is **§12 Crane** (gated on a
-> design conversation).
+> flow-guarded). **§12 Crane is DONE** (murder-beat polish optional). The only
+> genuinely-open work is **§13** (the calendar sweep around April 14).
 >
 > These **author new prose or build new systems**. The hard part is the
 > NARRATIVE §1b discipline: cosmic truth arrives **only as sensation** — never
@@ -205,6 +205,27 @@ version is one faint unease, never elaborated. There is no King POV to author
   rare break of a vast thing finding exactly the right hand. He is powerful,
   **not** infallible. Keep the seam of chance in any moment His reach is felt.
 
+### 13. The calendar — reconcile the season around April 14 (OPEN)
+
+**Canon (2026-06, settled with the user):** the present is **mid-April
+1994**. The PI starts with **yesterday's paper, the April 14 issue**
+(`systems/save.py` DEFAULT_SAVE; item def in `systems/items.py`; Hettie's
+one-shot trade in `scenes/dialogue.py`; the date is flow-guarded in
+`tests/flow.py` §23a). See NARRATIVE §1 setting note 3.
+
+**Open work — the lore around the date was written before it existed:**
+
+- "Three months have passed since the seal" (NARRATIVE §1b) lands the
+  closing rite in **mid-January**; Hettie's "the till's been empty since
+  spring" / "the trucks stopped" and the crops-grow / season-turns
+  language read later in the year. A Minnesota April also sits oddly
+  against standing corn (the corn is eldritch, but the next pass should
+  decide whether that's load-bearing or needs a line).
+- **Decide the seal's month**, then sweep dialogue + NARRATIVE so no
+  line dates the seal inconsistently with April 14 = yesterday.
+- Acceptance: the seasonal references agree; add a flow guard if a
+  month gets locked.
+
 ### ✅ 12. Rev. Asa Crane — dialogue settled — DONE (murder-beat polish optional)
 
 **Canon (NARRATIVE §2):** unchanged — local dissenter who **names the cult**
@@ -231,7 +252,7 @@ from his pulpit, murdered for it (evidence #4, his cross). Only the
 - **Coupling:** §6b (the three testimony fragments + Mask-only keystone) is
   DONE and flow-guarded; §8 (the PI's interior voice) and §9 (ashfall) landed
   earlier; §12 (Crane's pulpit condemnation) is now DONE. §10 is a fence, not a
-  ticket. **No required canon-alignment work remains** (only an optional Crane
-  murder-beat polish).
+  ticket. **Open:** §13 (the calendar sweep around the April 14 date, added
+  2026-06) and the optional Crane murder-beat polish.
 - Verify against `NARRATIVE.md` first; keep `tests/flow.py` green (run the full
   gate, `python tests/run_all.py`) and add a guard as each canon fact locks.
