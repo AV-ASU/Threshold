@@ -24,8 +24,9 @@ def build_schoolhouse():
     to clear the floor), and over them: rows of cots where the congregation
     bedded down crammed together, their bowls and guttered candles still beside
     them, the chalkboard scrawled over with the door-motif. Empty now, cobwebbed
-    -- they all went down the well. Hide spots: behind the cot banks, in the
-    shoved-desk corner."""
+    -- they all went below (the procession Toby watched). The chalk-door
+    rite reopens their school door to the work-clearing. Hide spots:
+    behind the cot banks, in the shoved-desk corner."""
     floor = ["=" * 16 for _ in range(12)]
     objects = [
         "WWWWWWWWiWWWWWWWW",   # 0  N wall (the chalkboard) + window

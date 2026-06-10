@@ -125,9 +125,12 @@ def preacher_dialogue(game, npc):
 def tisdale_boy_dialogue(game, npc):
     """Toby Tisdale -- innocent witness (NARRATIVE §2). He saw Mara AND the
     other cultists go down into the well, in the procession, before the rite
-    -- so his account is the player's clue to descend the well. What he gives
-    you is what he tells you (no inventory item -- the old keepsake object was
-    purged). Children notice what adults pretend not to."""
+    -- and before that they LIVED in his school (the commune). His witness
+    does two jobs now (§14 descent rework): it poses the descent question
+    (they went down a well no one can follow) and it SEEDS THE SCHOOL --
+    the room the Invitation names and the chalk-door rite reopens. What he
+    gives you is what he tells you (no inventory item -- the old keepsake
+    object was purged). Children notice what adults pretend not to."""
     save = game.save
     inv = game.player.inventory
     # The witness beat: first real conversation, he tells you what he saw.
@@ -139,6 +142,9 @@ def tisdale_boy_dialogue(game, npc):
             "to the well in the square. Before the cold came.",
             "They climbed down into it. Down the well. She didn't come back "
             "up. None of them did. I saw.",
+            "[c=dim]Before that they had my school. All of them, living in "
+            "it, in rows. Then one night they walked out of it in a "
+            "line.[/c]",
         ], speaker="Toby Tisdale", voice="blip_kid", portrait="tisdale_boy")
         return
     if inv.has("cult_calling") and not save.flag("kid_playscript_noticed"):

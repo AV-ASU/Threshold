@@ -453,12 +453,16 @@ def main():
         check(gk.save.flag("kid_witnessed")
               and not gk.player.inventory.has("polaroid"),
               "kid: the witness beat fires and grants no inventory item")
-        # CANON (NARRATIVE §2): the witness is the clue to DESCEND THE WELL --
-        # Mara AND the others went down it in the procession. The account must
-        # point down the well, not into the corn (the old wrong reading).
+        # CANON (NARRATIVE §2, §14 rework): the witness does two jobs --
+        # it poses the descent question (Mara AND the others went down the
+        # well, which can no longer be followed) and it SEEDS THE SCHOOL
+        # (the commune the Invitation names). Never the corn (the old
+        # wrong reading).
         _kid_text = " ".join(_kid_lines).lower()
         check("well" in _kid_text and "down" in _kid_text,
-              "kid: the witness points down the well (the clue to descend)")
+              "kid: the witness still points down the well (the history)")
+        check("school" in _kid_text,
+              "kid: the witness seeds the SCHOOL (the route the rite opens)")
         check("corn" not in _kid_text,
               "kid: the witness no longer sends you into the corn")
 

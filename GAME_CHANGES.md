@@ -30,7 +30,10 @@ Implemented + verified (compileall + smoke + flow green; canon guards added).
 4. **Mrs. Calder → a guest she can't name** *(§4)* — unnameable-guest beat;
    the vanished husband is cut.
 5. **Toby → the well clue** *(§5)* — Mara **and the other cultists**, in the
-   **procession**, **before the rite**, down the **well**.
+   **procession**, **before the rite**, down the **well**. *(§14 rework: the
+   well can no longer be followed, so his witness now ALSO seeds the
+   **school** — the commune he watched empty out; the actionable route is
+   the rite.)*
 6a. **Playscript → the cult's own notes — WRAPPER ONLY** *(§6, wrapper)* —
    display name (`The Cult's Notes`) + description + Scriptorium pickup +
    Toby's reaction reskinned; item key `playscript` + save flag kept; the
@@ -259,7 +262,7 @@ from his pulpit, murdered for it (evidence #4, his cross). Only the
   the bargain: "They walked down willing, every one, and sold the Lord for the
   easing of some private ache, then climbed back up calling the wound a mercy.
   Foul, the lot of them, and glad of it." Preacher's voice, not exposition (the
-  old staccato well-directions were cut — Toby already carries the well clue).
+  old staccato well-directions were cut — Toby already carries the witness clue).
   Stays religious/moral (he never grasps the cosmic truth; §10 fence held).
 - [ ] *(Optional, not requested)* the `preacher_doomed` → gutted-on-the-floor
   reveal could be punched up for impact later. No lore change.
@@ -317,8 +320,11 @@ The rope (and its woodshed pickup, and the `rope` item key) is cut.
   stop a year back (same season as the PI's one dream), not "months";
   flow-guarded.
 - [x] **Guidance:** the Invitation's text names the school; the
-  `the_invitation` case note echoes it; Toby's one-shot "they slept in my
-  school" beat (`tisdale_boy_dialogue`).
+  `the_invitation` case note echoes it; Toby seeds the school from FIRST
+  contact (the witness beat: they lived in his school, then walked out in
+  a line) and adds the one-shot "don't go in there" warning once the
+  envelope is carried (`tisdale_boy_dialogue`). The well's examine answers
+  the witness: they went down here, and you never can.
 - [x] Flow harness rewritten (`tests/flow.py` beat 1 + Deep Stair beat):
   handoff gating, school rite order, grove gate below/at 3, two-way
   descent, seal kills both panes, no-dash guard on the Invitation.
