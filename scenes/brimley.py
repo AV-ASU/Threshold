@@ -5,7 +5,7 @@ rework: the village's six buildings have been scattered across
 this map. Three sit on the west bank (Church north, Sheriff +
 Farmhouse south); three sit middle-south on the east bank (Shop,
 Kid's House, Barn). Player walks the bank to find them. The
-cauldron clearing and player's car are still here.
+burn clearing and player's car are still here.
 
 Atmosphere: black haze drawn by Game._draw_brimley_haze, ambient
 'wind' track played by music='wind'."""
@@ -132,7 +132,7 @@ def build_brimley():
     # "corn" while they stand on it), turning the open brimley into a
     # field with cover lanes to sneak between the buildings past the
     # roaming cult -- the way the cornfields do. Stamped only on open
-    # grass, clear of the river, the buildings, the car/cauldron, and
+    # grass, clear of the river, the buildings, the car/clearing, and
     # the spawn tiles.
     corn_patches = [
         (16, 18, 28, 30), (3, 35, 14, 47), (18, 52, 29, 64), (3, 70, 12, 78),
@@ -317,7 +317,7 @@ def build_brimley():
         # Northern lobe between the cornfield-maze exit and the
         # river crossing.
         (44, 6,  6, 4, 31),
-        # Southern lobe between the cauldron clearing and the barn.
+        # Southern lobe between the burn clearing and the barn.
         (60, 95, 9, 4, 37),
     ]
     for (lx, ly, rx, ry, seed) in lobes:
@@ -372,13 +372,13 @@ def build_brimley():
     _carve_track(floor_ll, objects_l,
                  [(58, 72), (70, 77), (80, 80), (83, 81)], trk)              # -> Barn door
     # West bank: bridge west end -> Church (north) and Sheriff +
-    # Farmhouse (south), plus a spur toward the cauldron clearing.
+    # Farmhouse (south), plus a spur toward the burn clearing.
     _carve_track(floor_ll, objects_l,
                  [(31, 24), (16, 16), (9, 11), (7, 10)], trk)                # -> Church door
     _carve_track(floor_ll, objects_l,
                  [(31, 24), (18, 44), (9, 58), (7, 66)], trk)                # -> Sheriff door
     _carve_track(floor_ll, objects_l, [(7, 66), (7, 80), (7, 94)], trk)      # -> Farmhouse door
-    _carve_track(floor_ll, objects_l, [(7, 82), (11, 81), (14, 80)], trk)    # -> cauldron entrance
+    _carve_track(floor_ll, objects_l, [(7, 82), (11, 81), (14, 80)], trk)    # -> clearing entrance
     # ---- THE FOLD ROAD ----
     # A dirt road that runs east-west across Brimley at row 24, passing
     # right over the bridge. The brimley scene wraps on its x axis (see
@@ -518,9 +518,9 @@ def build_brimley():
     sc.add_exit("M", "cornfield_maze",    "from_brimley_south")  # South: macro-loop
     # (The east-west road wrap is handled by the engine via wrap_x --
     # no exit tile, no spawn. See the gaps carved at row 24 below.)
-    cauldron_tx, cauldron_ty = 15, 80
+    clearing_tx, clearing_ty = 15, 80
     objects_list = [list(r) for r in objects]
-    objects_list[cauldron_ty][cauldron_tx] = "j"
+    objects_list[clearing_ty][clearing_tx] = "j"
     # North passage to the river_crossing -- a single tile carved
     # into the north tree line, west of the river.
     objects_list[0][50] = "a"
@@ -579,7 +579,7 @@ def build_brimley():
     sc.set_spawn("from_forest_path", 48, 1)
     # Returning from the clearing -- spawn one tile EAST of the j
     # tile so the player doesn't auto-retrigger.
-    sc.set_spawn("from_clearing", cauldron_tx + 1, cauldron_ty)
+    sc.set_spawn("from_clearing", clearing_tx + 1, clearing_ty)
     # Returning from each scattered building lands the player one
     # tile south of the door so they don't immediately re-enter.
     sc.set_spawn("from_old_man_house",     church_door,  church_bot + 1)
@@ -600,7 +600,7 @@ def build_brimley():
     sc.add_decoration(Decoration(72 * TILE + 16, 40 * TILE + 16, "crow"))
     sc.add_decoration(Decoration(85 * TILE + 16, 70 * TILE + 16, "crow"))
     # Creepy bank dressing -- creepy_trees, hanging figures, dead
-    # crows. The cauldron-clearing entrance at (15, 80) gets its own
+    # crows. The burn-clearing entrance at (15, 80) gets its own
     # creepy_tree so the player can SPOT it among the empty bank.
     # A bloody-handprint trail leads east-to-west across the bank
     # from the river to the entrance, marking the cult's path.
@@ -621,18 +621,18 @@ def build_brimley():
                                  "swallow_hole"))
     for _mx, _my in [(_whirl_col - 1, _whirl_row - 1), (_whirl_col + 1, _whirl_row + 1)]:
         sc.add_decoration(Decoration(_mx * TILE + 16, _my * TILE + 8, "mist"))
-    # The cauldron-entrance threshold -- creepy_tree on the j tile
+    # The clearing-entrance threshold -- creepy_tree on the j tile
     # itself, a single bloody handprint at the threshold, and a
     # candle melted to a stone at the foot. Just enough cue for
     # the player to recognise the route without a blood trail
     # that telegraphs the discovery from the river.
-    sc.add_decoration(Decoration(cauldron_tx * TILE + 16,
-                                 cauldron_ty * TILE + 16, "creepy_tree"))
-    sc.add_decoration(Decoration((cauldron_tx + 1) * TILE + 16,
-                                 cauldron_ty * TILE + 16,
+    sc.add_decoration(Decoration(clearing_tx * TILE + 16,
+                                 clearing_ty * TILE + 16, "creepy_tree"))
+    sc.add_decoration(Decoration((clearing_tx + 1) * TILE + 16,
+                                 clearing_ty * TILE + 16,
                                  "bloody_handprint"))
-    sc.add_decoration(Decoration((cauldron_tx + 1) * TILE + 16,
-                                 cauldron_ty * TILE + 8, "candle"))
+    sc.add_decoration(Decoration((clearing_tx + 1) * TILE + 16,
+                                 clearing_ty * TILE + 8, "candle"))
     # Marks scattered through the bank, placed near the buildings.
     # West-bank marks
     sc.add_decoration(Decoration(2 * TILE + 24, 62 * TILE + 16,
@@ -932,7 +932,7 @@ def build_brimley():
     # The church steeple -- the one tall thing for miles, a landmark to
     # orient by, rising over the roof into the treeline.
     sc.add_decoration(Decoration(7 * TILE + 16, 7 * TILE + 16, "steeple"))
-    # A brazier marking the cauldron-clearing threshold.
+    # A brazier marking the burn-clearing threshold.
     sc.add_decoration(Decoration(13 * TILE + 16, 80 * TILE + 16, "brazier"))
     # A murder of crows posted along the treeline, watching.
     for (cx, cy) in [(2, 22), (2, 71), (50, 2), (88, 31), (97, 60), (41, 97)]:

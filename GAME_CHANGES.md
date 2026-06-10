@@ -287,9 +287,19 @@ The rope (and its woodshed pickup, and the `rope` item key) is cut.
   over the dead fire in `effigy_grove`, **clarity = evidence count**
   (`fold_charge_fn`, 0.15→1.0), crossable only at 3 (`exit_gate_fn`) →
   lands at `well_bottom`; a symmetric **return pane** stands at the shaft
-  floor where the rope hung. The grove was widened (18×13), the **cauldron
-  is removed**, and it now takes infestation decals (the rot and the way
-  down escalate on the same dial).
+  floor where the rope hung. The grove was widened (18×13) and now takes
+  infestation decals (the rot and the way down escalate on the same dial).
+- [x] **The cauldron is removed GAME-WIDE** (it was eat-cult imagery, §1b
+  scrub): the prop, its draw code (`entities/decoration.py`), its standee
+  entry (`rendering/props.py`), and the old clearing centrepiece. The
+  clearing (`void_boss`, `scenes/interiors.py`) is reworked as the **burn
+  site**: the dead fire pit where the claimed burned their worldly effects
+  before going below (the surface twin of the Sorting Hall's shed lives);
+  its flavor beat is `the_burning` (narration only, never evidence).
+  Flow-guarded: "cauldron" joins the eat-cult scrub list.
+- [x] **The gate keys on EVIDENCE, never visibility** (flow-guarded): the
+  grove's charge/gate read `_evidence_count()` (the six canonical beats);
+  Watchers raise the visibility *floor* and can never open the way down.
 - [x] **Engine seams** (`systems/game.py`, `rendering/folds.py`,
   `systems/render_mixin.py`, `systems/threat_mixin.py`): direction-gated
   exits route straight through `cross_fold` (folds are seamless whatever

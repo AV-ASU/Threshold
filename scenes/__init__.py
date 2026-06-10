@@ -53,7 +53,7 @@ from .threshold_extras import (build_schoolhouse, build_graveyard,
 #   old_man_house      -> church (with belfry; Preacher)
 #   fisherman_cottage  -> sheriffs_office (Sheriff's wooden box)
 #   forest_path        -> cornfield_path (cornstalk hides)
-#   void_boss          -> clearing (the cauldron site)
+#   void_boss          -> clearing (the burn site)
 #   barn               -> barn (hide spots, tunnel)
 #   well_bottom        -> well_bottom (sigil etched at the binding)
 #   well_passage       -> well_passage (cult tunnels)

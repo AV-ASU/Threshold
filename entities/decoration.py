@@ -80,7 +80,7 @@ def _light_pool(surf, cx, cy, radius, color=(255, 170, 70), peak=70):
 
 
 _GROUNDED_DECOS = frozenset((
-    "well", "creepy_tree", "pickup_truck", "player_car", "cauldron",
+    "well", "creepy_tree", "pickup_truck", "player_car",
     "gas_pump", "payphone", "pedestal", "pillar", "wheelbarrow",
     "headstone", "brazier", "town_sign", "flagpole", "bush",
     "corn_doll", "corn_altar", "stalk_marker",
@@ -94,7 +94,7 @@ _NO_SCALE_DECOS = frozenset((
     "candle", "lantern", "brazier", "wall_torch", "swallow_hole",
     "smoke", "mist", "mote", "wisp",
     "flock", "leaves", "well", "steeple", "pickup_truck", "player_car",
-    "cauldron", "watching_eye", "watching_wound", "passing_silhouette",
+    "watching_eye", "watching_wound", "passing_silhouette",
     "gas_pump", "payphone", "terminal", "computer", "mirror", "rug",
     "creepy_tree", "crow", "flock", "town_sign", "flagpole",
 ))
@@ -239,7 +239,7 @@ class Decoration:
     def _draw_doll(self, surf, x, y):
         """A small bound effigy -- cloth body, twine waist, stick arms,
         two dark X-marks for eyes. The cult's watching-charm, set on the
-        charred edges around the cauldron clearing. ~14px tall."""
+        charred edges around the burn clearing. ~14px tall."""
         # Drop shadow.
         sh = pygame.Surface((12, 5), pygame.SRCALPHA)
         pygame.draw.ellipse(sh, (0, 0, 0, 90), (0, 0, 12, 5))
@@ -1567,47 +1567,6 @@ class Decoration:
             ly = (y - 8 + i * 4 + int(self.t * 8)) % 16 + (y - 10)
             w = (self.seed + i * 31) % 12 + 4
             pygame.draw.line(surf, (50, 200, 80), (x - 10, ly), (x - 10 + w, ly), 1)
-
-    def _draw_cauldron(self, surf, x, y):
-        """THRESHOLD: cast-iron cauldron suspended on a triangular
-        iron frame over a fire pit. Used in the clearing scene
-        (the cult's purification site). Black-iron body with a
-        rolled rim, three-leg frame angling out from above the pot,
-        embers visible at the base when 'lit' kwarg is True."""
-        # Triangular frame (three iron rods crossing above the pot)
-        rod = (30, 28, 34)
-        pygame.draw.line(surf, rod, (x - 14, y - 18), (x, y - 22), 2)
-        pygame.draw.line(surf, rod, (x + 14, y - 18), (x, y - 22), 2)
-        pygame.draw.line(surf, rod, (x - 14, y - 18), (x - 18, y + 6), 2)
-        pygame.draw.line(surf, rod, (x + 14, y - 18), (x + 18, y + 6), 2)
-        # Hanging chain
-        for i in range(3):
-            pygame.draw.line(surf, rod,
-                             (x, y - 22 + i * 4),
-                             (x, y - 18 + i * 4), 1)
-        # Cauldron body (cast iron)
-        pygame.draw.ellipse(surf, (16, 14, 18), (x - 12, y - 10, 24, 16))
-        pygame.draw.ellipse(surf, (40, 36, 42), (x - 12, y - 10, 24, 16), 1)
-        # Rolled rim
-        pygame.draw.ellipse(surf, (50, 46, 52), (x - 12, y - 12, 24, 6))
-        pygame.draw.ellipse(surf, (8, 6, 10), (x - 10, y - 11, 20, 4))
-        # Liquid surface (dark, slightly steaming)
-        if self.kwargs.get("lit", True):
-            pygame.draw.ellipse(surf, (60, 30, 30), (x - 9, y - 10, 18, 4))
-            # Steam wisps
-            wisp_t = self.t * 2
-            for i in range(3):
-                wy = int(y - 18 - (wisp_t + i * 4) % 12)
-                wx = int(x - 4 + i * 3 + math.sin(wisp_t + i) * 2)
-                pygame.draw.rect(surf, (100, 90, 100), (wx, wy, 2, 2))
-        # Embers at the base
-        if self.kwargs.get("lit", True):
-            for i in range(4):
-                ex = x - 8 + i * 5
-                ey = y + 8
-                col = (200 + int(math.sin(self.t * 6 + i) * 20),
-                       80, 30)
-                pygame.draw.rect(surf, col, (ex, ey, 2, 2))
 
     def _draw_bowl(self, surf, x, y):
         # ceramic bowl on table — empty by default; if "filled" kwarg is True, contains an egg

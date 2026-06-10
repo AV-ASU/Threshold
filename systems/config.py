@@ -8,7 +8,7 @@ every external `from systems.game import <CONST>` keeps resolving unchanged.
 """
 
 # THRESHOLD: scene sets keyed to the cult fiction. The cult sites
-# (cult_chamber, the cauldron clearing) bypass the standard fade --
+# (cult_chamber, the burn clearing) bypass the standard fade --
 # crossing into them is meant to feel like a snap, not a door.
 VOID_SCENES = {"void_boss"}
 

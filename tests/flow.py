@@ -137,6 +137,19 @@ def main():
     ready(g)
     check(0.0 < g.scene.fold_charge_fn(g, "O") < 0.2,
           "grove: at 0 evidence the descent fold is a faint thread")
+    # The gate and charge key on the EVIDENCE COUNT (the six canonical
+    # beats), never on visibility or its floor -- Watchers raise the
+    # visibility floor and must never open the way down.
+    import inspect as _insp_g
+    from scenes import hidden_folds as _hf_mod
+    _gsrc = _insp_g.getsource(_hf_mod.build_effigy_grove)
+    check("_evidence_count" in _gsrc and "visibility" not in _gsrc,
+          "grove: the descent keys on evidence, never the visibility floor")
+    _vis_before = g.visibility
+    g.visibility = 1.0                      # even pinned at the cap...
+    check(g.scene.fold_charge_fn(g, "O") < 0.2 and not _take_fold(g, "O"),
+          "grove: max visibility alone never charges or opens the fold")
+    g.visibility = _vis_before
     check(not _take_fold(g, "O"),
           "grove: at 0 evidence the descent fold will not cross")
     check(g.scene.key == "effigy_grove", "grove: still in the grove")
@@ -975,6 +988,9 @@ def main():
         "tasting it", "tallow", "the rendering at", "feed what waits",
         "grain threaded through", "fold back on themselves",
         "comes home for dinner",
+        # The cauldron is REMOVED game-wide (eat-cult imagery; the old
+        # clearing centrepiece is now the burn site's dead fire pit).
+        "cauldron",
     ]
     _hits = []
     for fn in sorted(os.listdir(_scene_dir)):

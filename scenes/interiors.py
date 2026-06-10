@@ -10,24 +10,26 @@ from entities.decoration import Decoration
 from .base import Scene
 from .dialogue import tisdale_boy_dialogue, hettie_dialogue, _evidence
 def build_void_boss():
-    """THRESHOLD: the clearing. A small open glade in the dense
-    woods at the south end of the cornfield_path's secret branch.
-    Cast-iron cauldron suspended on a triangular iron frame, fire
-    pit dug into the earth beneath. Sigils carved into the
-    surrounding stones. Charred ground spreading from the fire pit.
+    """THRESHOLD: the clearing -- the BURN SITE. A small open glade off
+    the brimley river bank where the claimed burned their worldly
+    effects before they went below (the surface twin of the Sorting
+    Hall's shed lives, NARRATIVE 1b/3): a fire pit big enough to stand
+    a family around, cold now, ringed by what wouldn't burn. No pot, no
+    offerings -- the claiming cult eats no one (the eat-cult imagery
+    scrub); what fed this fire was luggage.
 
     Visual layout (18 wide x 14 tall):
       - Tree-wall border on every edge.
       - Worn dirt path enters from the south at col 9, widening as
-        it approaches the cauldron. The path is the only break in
+        it approaches the fire pit. The path is the only break in
         an otherwise overgrown perimeter.
       - The 'j' tile at (9, 13) is the transition tree. The
         'from_*' spawns sit at (9, 11) -- two rows north of the
         threshold so the player can look around without immediately
         re-firing the exit.
       - Charred patch in cols 5-12, rows 5-8 (centre).
-      - Cauldron + iron frame at centre (9, 7), bloody pile flanks
-        on either side -- offerings being prepared.
+      - The dead fire pit at centre (9, 7), the unburnable slag
+        around it.
       - Hanging figures in the canopy NW + NE -- visible above the
         tree wall on either side of the entrance approach.
       - Cordwood stacks at (2, 6) and (15, 6). Solid t tiles; their
@@ -35,8 +37,8 @@ def build_void_boss():
       - Cult robes (banner) hung on the west tree. Effigy dolls at
         (4, 6) and (14, 6) sitting on the charred edge.
 
-    Hide spots are colocated with visible cover (cordwood, robes,
-    iron frame) and never on a solid object's tile."""
+    Hide spots are colocated with visible cover (cordwood, robes)
+    and never on a solid object's tile."""
     floor = []
     for y in range(14):
         row = ""
@@ -77,23 +79,20 @@ def build_void_boss():
     sc.set_spawn("from_forest",    9, 11)   # legacy alias
     sc.set_spawn("from_cornfield", 9, 11)   # legacy alias
 
-    # Cast-iron cauldron + frame at centre, lit and steaming.
+    # The dead fire pit at centre -- scaled up so it reads as the
+    # communal burn, not a campsite. Around it, what wouldn't burn:
+    # bowls and effects, left where the fire spat them.
     sc.add_decoration(Decoration(9 * TILE + 16, 7 * TILE + 16,
-                                 "cauldron", lit=True))
-    # ONE bloodstain directly under the cauldron (the fire pit
-    # drip), not a spatter pattern. The cauldron itself reads
-    # heavy enough.
-    sc.add_decoration(Decoration(9 * TILE + 16, 8 * TILE + 16,
-                                 "bloodstain"))
-    # ONE bloody pile flanking the cauldron -- offering being
-    # prepared. Two reads as redundant.
+                                 "campfire", scale=3.0))
+    sc.add_decoration(Decoration(7 * TILE + 16, 8 * TILE + 16, "bowl"))
+    sc.add_decoration(Decoration(11 * TILE + 16, 6 * TILE + 16, "bowl"))
     sc.add_decoration(Decoration(6 * TILE + 16, 7 * TILE + 16,
-                                 "bloody_pile"))
+                                 "phantom_mark"))
     for sx, sy in [(4, 5), (13, 5), (4, 9), (13, 9), (9, 4)]:
         sc.add_decoration(Decoration(sx * TILE + 16, sy * TILE + 16,
                                      "phantom_mark"))
     # Two hanging figures in the canopy, visible behind the tree
-    # wall NW and NE of the cauldron.
+    # wall NW and NE of the fire pit.
     sc.add_decoration(Decoration(3 * TILE + 16, 1 * TILE + 24,
                                  "hanging_figure"))
     sc.add_decoration(Decoration(15 * TILE + 16, 1 * TILE + 24,
@@ -102,7 +101,7 @@ def build_void_boss():
     sc.add_decoration(Decoration(1 * TILE + 16, 8 * TILE + 16,
                                  "banner", color=(110, 90, 50)))
     # Effigy dolls on the charred edge -- small, X-eyed, watching
-    # the cauldron.
+    # the fire pit.
     sc.add_decoration(Decoration(4 * TILE + 16, 6 * TILE + 16, "doll"))
     sc.add_decoration(Decoration(14 * TILE + 16, 6 * TILE + 16, "doll"))
     # Claw gouges on the charred ground around the fire pit.
@@ -110,16 +109,15 @@ def build_void_boss():
                                  "claw_marks"))
     sc.add_decoration(Decoration(11 * TILE + 16, 5 * TILE + 22,
                                  "claw_marks"))
-    # (Bloody handprint trail removed -- the cordwood + dolls +
-    # bloody pile already read clearly. The cauldron site shouldn't
-    # be wallpapered in blood marks.)
+    # (Blood dressing removed with the eat-cult scrub -- the burn
+    # site renders no one; the dread is the luggage in the ash.)
     # Path-side candles framing the entrance threshold.
     sc.add_decoration(Decoration(8 * TILE + 4, 12 * TILE + 22, "candle"))
     sc.add_decoration(Decoration(10 * TILE + 28, 12 * TILE + 22, "candle"))
     # Two crows in the tree line.
     sc.add_decoration(Decoration(2 * TILE + 8, 1 * TILE + 22, "crow"))
     sc.add_decoration(Decoration(15 * TILE + 8, 1 * TILE + 22, "crow"))
-    # Dead crow on the path -- the cult feeds them to the fire too.
+    # Dead crow on the path.
     sc.add_decoration(Decoration(9 * TILE + 16, 10 * TILE + 22,
                                  "dead_crow"))
     # Motes for ambient particles.
@@ -132,14 +130,19 @@ def build_void_boss():
     # Tag the scene as the clearing for the flashback / patrol systems.
     sc.is_clearing = True
 
-    cauldron_x, cauldron_y = 9 * TILE + 16, 7 * TILE + 16
-    sc.add_interactable(cauldron_x, cauldron_y, 40)   # [E] cue for the cauldron
+    pyre_x, pyre_y = 9 * TILE + 16, 7 * TILE + 16
+    sc.add_interactable(pyre_x, pyre_y, 40)   # [E] cue for the fire pit
     def _void_boss_interact(game):
         px, py = game.player.x, game.player.y
-        if abs(px - cauldron_x) > 40 or abs(py - cauldron_y) > 40:
+        if abs(px - pyre_x) > 40 or abs(py - pyre_y) > 40:
             return
-        _evidence(game, "the_cauldron",
-            "Nothing here."
+        # Flavor narration only -- NOT one of the six canonical beats, so
+        # it never touches the evidence count or the King-gate.
+        _evidence(game, "the_burning",
+            "A fire pit big enough to stand a family around, cold a long "
+            "while. What it burned was not all wood. Buckles, bowl rims, "
+            "boot eyelets, a watch case, slagged in the ash. People "
+            "burned their things here. All of their things."
         )
     sc.on_interact_fn = _void_boss_interact
     return sc
