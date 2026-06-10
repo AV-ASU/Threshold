@@ -238,8 +238,9 @@ def build_shop():
 def build_barn():
     """Small barn on the brimley east bank. Holds Mara's journal
     (evidence #2) behind the workbench, and a boarded-over hatch where a
-    tunnel down to the Works once ran -- nailed shut now, since the well
-    is the only way underground. Lodge dressing (mounted buck, walleye,
+    tunnel down to the Works once ran -- nailed shut now; the rite (the
+    grove's descent fold) is the only way underground, and no hatch ever
+    will be again. Lodge dressing (mounted buck, walleye,
     antler rack, firewood) and hide spots among the hay-bale shelves."""
     floor = ["=" * 16 for _ in range(12)]
     objects = [
@@ -344,7 +345,8 @@ def build_barn():
             game.show_notice("Her journal.")
             return
         # The old tunnel down to the Works has been nailed shut: the
-        # well is the ONLY way underground now (no secret paths).
+        # rite (the grove's descent fold) is the ONLY way underground
+        # now (no secret paths).
         if (abs(px - hatch_x) < 36 and abs(py - hatch_y) < 36):
             game.audio.play("door_locked", 0.6)
     sc.on_interact_fn = _barn_interact

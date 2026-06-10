@@ -1085,9 +1085,10 @@ class Decoration:
             pygame.draw.line(surf, col, (x - 6, y + i * 2 + wy), (x + 6, y + i * 2 + wy), 2)
 
     def _draw_well(self, surf, x, y):
-        # Redesign: a fuller, ominous wellhead -- the ONLY way down into
-        # the Works. Mossy ring of fitted stones, a bottomless black
-        # shaft, a winch frame, and the rope that descends into the dark.
+        # A fuller, ominous wellhead -- the congregation's old mouth into
+        # the Works, unusable now (dread set-dressing; the rite is the way
+        # down). Mossy ring of fitted stones, a bottomless black shaft, a
+        # winch frame, and a frayed stub where the rope used to hang.
         # Outer stone ring (3/4 top-down ellipse)
         pygame.draw.ellipse(surf, (78, 78, 88), (x - 18, y - 8, 36, 22))
         pygame.draw.ellipse(surf, (54, 54, 64), (x - 18, y - 8, 36, 22), 2)
@@ -1109,8 +1110,11 @@ class Decoration:
         pygame.draw.line(surf, (70, 46, 28), (x - 15, y - 22), (x + 15, y - 22), 3)
         # Winch drum on the crossbar
         pygame.draw.rect(surf, (60, 40, 24), (x - 6, y - 24, 12, 4))
-        # The rope -- from the drum straight down into the shaft
-        pygame.draw.line(surf, (150, 130, 90), (x, y - 22), (x, y + 3), 1)
+        # The frayed stub -- the rope is long gone; a hand's-width of it
+        # still knotted to the drum, ending in loose threads.
+        pygame.draw.line(surf, (150, 130, 90), (x, y - 22), (x, y - 16), 1)
+        pygame.draw.line(surf, (120, 102, 70), (x, y - 16), (x - 1, y - 13), 1)
+        pygame.draw.line(surf, (120, 102, 70), (x, y - 16), (x + 1, y - 14), 1)
 
     def _draw_radio(self, surf, x, y):
         pygame.draw.rect(surf, (90, 60, 40), (x - 10, y - 4, 20, 12))

@@ -308,6 +308,16 @@ The rope (and its woodshed pickup, and the `rope` item key) is cut.
 - [x] **The gate keys on EVIDENCE, never visibility** (flow-guarded): the
   grove's charge/gate read `_evidence_count()` (the six canonical beats);
   Watchers raise the visibility *floor* and can never open the way down.
+- [x] **Death never seals the descent.** The old rope fiction ("death at
+  the shaft floor snaps the rope") silently SOFTLOCKED a run: hp-death
+  respawns in bed with flags intact, so the seal made the run
+  unwinnable. Cut from `_on_player_death`; the descent seals only at the
+  Deep Stair, by choice. (Pursuer-contact deaths still end the run
+  outright.) The well art loses its hanging rope too (a frayed stub on
+  the winch drum).
+- [x] **Mask pickup recognition line** (descent_mask beat): "The origin
+  of every half reflection daubed on this town's walls. The pale mask
+  hums in your hand." -- the daubs pay off at the altar.
 - [x] **The painted Sign is now a MASK** (`_draw_yellow_sign`,
   `entities/decoration.py`): canon says the Sign IS the Pallid Mask ("His
   face made an object", §4 #5), so the daubed glyph (the old three-armed

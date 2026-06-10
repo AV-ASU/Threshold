@@ -157,7 +157,7 @@ def build_well_passage():
     sc.set_spawn("from_below", 14, 5)     # back from the vats
     # Legacy spawns kept so old saves + the (now unreachable) cult
     # chamber's exit still resolve. The barn tunnel is nailed shut from
-    # below now -- the well is the only way underground.
+    # below now -- the grove's descent fold is the only way underground.
     sc.set_spawn("from_well",    1, 5)
     sc.set_spawn("from_chamber", 14, 5)
 
@@ -518,8 +518,9 @@ def build_works_sign():
     # [E] cue at the altar -- the Mask / rite choice is the key decision
     # of the run and must read as interactable.
     sc.add_interactable(sc._sign_pos[0], sc._sign_pos[1], 50)
-    # The Sign itself -- one large glyph centred in the apse, flanked by
-    # two smaller ones, ringed with candles.
+    # The Sign itself -- one large painted face centred in the apse,
+    # flanked by two smaller ones, ringed with candles (the daubs the
+    # Mask on the altar is the original of).
     sc.add_decoration(Decoration(sign_x, 1 * TILE + 18, "yellow_sign"))
     sc.add_decoration(Decoration(4 * TILE + 16, 1 * TILE + 16, "yellow_sign"))
     sc.add_decoration(Decoration(8 * TILE + 16, 1 * TILE + 16, "yellow_sign"))

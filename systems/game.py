@@ -1611,6 +1611,8 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
             "beat": [
                 "[c=dim]His face, in your hands. Light as folded paper, cold, "
                 "and it knows your grip.[/c]",
+                "[c=dim]The origin of every half reflection daubed on this "
+                "town's walls. The pale mask hums in your hand.[/c]",
                 "[c=dim]And you KNOW it, the way you know a thing in a dream. "
                 "Carry this, and the town opens. The roads let you out.[/c]",
                 "[c=dim]The names, the register, the girl her father wanted "
@@ -2105,9 +2107,10 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
                 self.notice_text = None
 
     def _on_player_death(self):
-        if self.scene and self.scene.key == "well_bottom":
-            if not self.save.flag("descent_sealed"):
-                self.save.set_flag("descent_sealed", True)
+        # (The old rope-fiction "death at the shaft floor snaps the rope"
+        # seal is CUT: hp-death respawns the run in bed with flags intact,
+        # so sealing the descent here silently softlocked the run. The
+        # descent only seals at the Deep Stair, by choice.)
         # Death in the void boss arena seals the secret path forever,
         # empties the world of NPCs, and respawns the player on the
         # town square rather than their bed. The world_emptied flag
