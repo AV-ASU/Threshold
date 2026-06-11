@@ -215,7 +215,7 @@ def main():
     # (d) THE RITE: at 3 evidence + the Invitation, E at the dead fire is
     # a TWO-PRESS commit (never a lone-press point of no return); the
     # second press plays the FULL door-dream (a pure cutscene, no input),
-    # and completion opens the throat and seals the circle.
+    # and completion tears the pane open and seals the circle.
     check(g.scene.fold_charge_fn(g, "O") >= 0.999,
           "grove: at 3 evidence the frame is fully formed (the meter)")
     ready(g)
@@ -239,13 +239,13 @@ def main():
           "rite: acceptance lands as an oblique NOTE, never a banner")
     check(len(g.save.arg("evidence", [])) == 3,
           "rite: the rite never inflates evidence")
-    g._throat_t0 = None                        # skip the opening ramp
+    g._rite_fold_t0 = None                        # skip the opening ramp
     check(not g.scene.exit_gate_fn(g, "G")
           and not g.scene.exit_gate_fn(g, "M"),
           "rite: the circle seals the surface exits behind you")
     ready(g)
     check(_take_fold(g, "O") and g.scene.key == "well_bottom",
-          "rite: the open throat lands at the shaft floor")
+          "rite: the opened pane lands at the shaft floor")
     # (e) The way home is KEYED to His face, never one-way (the King keeps
     # his signature).
     ready(g)
@@ -257,7 +257,7 @@ def main():
     for i in range(3):
         g2.save.arg("evidence", []).append({"name": f"_e{i}", "lines": ["x"]})
     g2.save.set_flag("rite_performed", True)
-    g2._throat_t0 = None
+    g2._rite_fold_t0 = None
     g2.player.inventory.add("sigil_rubbing", 1)
     g2.load_scene_now("well_bottom", "from_grove")
     ready(g2)
@@ -267,7 +267,7 @@ def main():
           "egress: crossing up with the Mask seals the descent (SPREAD lock)")
     check(g2.scene.fold_charge_fn(g2, "O") == 0.0
           and not _take_fold(g2, "O"),
-          "egress: the throat is dead behind you")
+          "egress: the descent fold is dead behind you")
     check(g2.scene.exit_gate_fn(g2, "G"),
           "egress: the circle releases you once the way down is dead")
 

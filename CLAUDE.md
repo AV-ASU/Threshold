@@ -298,7 +298,7 @@ it renders the procedural sprites to a labelled PNG strip.
   `flashback_seen`, and fires a ~0.5s MEMORY FLASH (two flickers of the
   door, no swarm; `FLASHBACK_FLASH_DUR`). The FULL ~7s wordless dream
   (`_draw_flashback`, mode "rite") plays at the GROVE RITE via
-  `begin_rite_dream` — completing it opens the descent throat
+  `begin_rite_dream` — completing it opens the descent fold
   (`rite_performed`) and also sets `flashback_seen`. `_tick_flashback` lives in `systems/narrative_mixin.py`;
   the `FLASHBACK_*` tuning block (`_DUR`, `_MASK_FRAMES`, `_SWARM_START/_PEAK`,
   `_RATE_MIN/_MAX`, `_FOCAL_Y`) is defined in `ui/cutscenes.py`.

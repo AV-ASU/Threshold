@@ -52,7 +52,7 @@ class NarrativeMixin:
     def begin_rite_dream(self):
         """The grove rite: the PI consciously re-enters his ONE dream
         (a year old, never recurred) and finally answers the door. A
-        pure cutscene (no input); completion opens the descent throat
+        pure cutscene (no input); completion tears the descent fold open
         and keys the way home to His face (_finish_rite, below)."""
         if self._flashback_phase is not None:
             return
@@ -60,12 +60,12 @@ class NarrativeMixin:
         self._start_flashback("rite")
 
     def _finish_rite(self):
-        """Rite-dream completion: the throat opens, the circle seals.
+        """Rite-dream completion: the pane tears open, the circle seals.
         DIEGETIC only -- no banner, no 'accepted' notice. The PI's note
         registers it obliquely (a NOTE, never evidence)."""
         import pygame as _pg
         self.save.set_flag("rite_performed", True)
-        self._throat_t0 = _pg.time.get_ticks()    # the opening ramp
+        self._rite_fold_t0 = _pg.time.get_ticks()    # the opening ramp
         self.audio.play("void_sting", 0.8)
         self.audio.play("low_pulse", 0.95)
         self._log_note("the_rite", [

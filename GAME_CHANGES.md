@@ -382,11 +382,11 @@ the PI finishes it with powder.
   the Mask; crossing it up sets `descent_sealed` (the SPREAD lock) and
   the circle releases. SPREAD's surface egress is therefore Mask-gated
   end to end (the car already answers only the Sign).
-- [x] **The THROAT** (`draw_rift_throat`, `rendering/portal.py`;
-  dispatched via `Scene.fold_style_fn`): the rite's once-only rift
-  presentation — a projected ground ring stepping down as a gold-rimmed
-  throat (a true floor ellipse under tilt; never a vertical cylinder).
-  Documented in PORTALS.md.
+- [x] **One presentation, one family (throat CUT).** A ground-throat
+  variant was prototyped and reverted same-day by direction: the rite's
+  open descent is the REGULAR standing rift pane, torn fully open. The
+  rite's first press is SENSATION ONLY (no narrator forecast of the
+  seal; the seal is discovered when the player tries to leave).
 - [x] **The Deep Stair is CUT → the Deepest Face.** `works_deepstair`
   (key kept) is the dig's dead end now. Powder lives in **the Sump**
   (`powder` item, the diggers' store); the blast requires the **Mask in
