@@ -40,10 +40,10 @@ class Audio:                        #Starting screen needs music, something simp
         self.ambient_channel = None
         self.king_channel = None
         self._king_on = False
-        # Scene-reverb tag for play_footstep -- "cellar" / "outdoor" /
+        # Scene-reverb tag for play_in_scene -- "cellar" / "outdoor" /
         # None. Set by Game.load_scene_now from the scene's tag set
-        # (UNDERGROUND_SCENES, OUTDOOR_SCENES). Footstep variants are
-        # baked at build time per profile; play_footstep picks the one
+        # (UNDERGROUND_SCENES, OUTDOOR_SCENES). Cue variants are baked
+        # at build time per profile; play_in_scene picks the one
         # matching the active scene and falls back to dry.
         self._scene_reverb = None
         if self.enabled:
@@ -154,6 +154,12 @@ class Audio:                        #Starting screen needs music, something simp
         self.sfx["pickup_rare"] = g(880, 280, 0.24, "sine", attack_ms=20, decay_ms=240, vibrato=8)
         self.sfx["swing"]       = g(280, 100, 0.18, "saw", attack_ms=2, decay_ms=60, noise_mix=0.3)
         self.sfx["hit"]         = g(180, 70, 0.20, "noise", attack_ms=2, decay_ms=50, noise_mix=1.0)
+        # The revolver. `gunshot` is the live report (crack + bark +
+        # sub thump + air tail, soft-clipped); `gun_dry` is the empty
+        # chamber -- two small hammer clicks, distinct from the
+        # door_locked rattle it used to borrow.
+        self.sfx["gunshot"]     = self._build_gunshot()
+        self.sfx["gun_dry"]     = self._build_gun_dry()
         self.sfx["enemy_die"]   = g(110, 380, 0.22, "saw", attack_ms=10, decay_ms=320, noise_mix=0.4)
         self.sfx["heartbeat"]   = self._build_heartbeat()
         self.sfx["static"]      = g(0, 600, 0.25, "noise", attack_ms=20, decay_ms=400, noise_mix=1.0)
@@ -258,19 +264,20 @@ class Audio:                        #Starting screen needs music, something simp
             if key in self.sfx:
                 self.sfx[key] = self._post(self.sfx[key], **kw)
 
-        # ---- Scene-aware footstep variants ---------------------------
-        # Pre-bake cellar + outdoor reverb variants for the dry step
-        # cues so play_footstep can pick a scene-appropriate take at
-        # play time. step_void is excluded -- it already has cellar
-        # reverb baked above and is the void scenes' bespoke step.
-        # The dry originals remain in self.sfx as the room fallback.
-        for _step in ("step_grass", "step_wood", "step_stone",
-                      "step_carpet"):
-            if _step not in self.sfx:
+        # ---- Scene-aware cue variants --------------------------------
+        # Pre-bake cellar + outdoor reverb variants for the cues that
+        # play in every kind of space (footsteps, the gunshot) so
+        # play_in_scene can pick a scene-appropriate take at play
+        # time. step_void is excluded -- it already has cellar reverb
+        # baked above and is the void scenes' bespoke step. The dry
+        # originals remain in self.sfx as the room fallback.
+        for _cue in ("step_grass", "step_wood", "step_stone",
+                     "step_carpet", "gunshot"):
+            if _cue not in self.sfx:
                 continue
-            dry = self.sfx[_step]
-            self.sfx[f"{_step}_cellar"]  = self._post(dry, reverb="cellar")
-            self.sfx[f"{_step}_outdoor"] = self._post(dry, reverb="outdoor")
+            dry = self.sfx[_cue]
+            self.sfx[f"{_cue}_cellar"]  = self._post(dry, reverb="cellar")
+            self.sfx[f"{_cue}_outdoor"] = self._post(dry, reverb="outdoor")
 
         # MUSIC. THRESHOLD's tracks are intentionally not melodies --
         # most are drones, two are haunted-with-pings versions of the
@@ -949,6 +956,64 @@ class Audio:                        #Starting screen needs music, something simp
             stereo[i * 4 + 3] = buf[i * 2 + 1]
         return pygame.mixer.Sound(buffer=bytes(stereo))
 
+    def _build_gunshot(self, duration_ms=850, vol=0.50):
+        """The revolver report. Four layers: an instant broadband
+        CRACK (the muzzle blast, ~12 ms), a mid BARK whose pitch drops
+        320 -> 140 Hz in the first 120 ms (the body of the report), a
+        65 Hz SUB thump (the chest punch), and a low-passed noise TAIL
+        (the air settling after, ~0.4 s). The mix is soft-clipped so
+        it reads compressed and loud the way a close gunshot does on
+        small speakers. Scene-reverb variants are baked alongside the
+        footsteps, so a shot indoors slaps and a shot in the open
+        rolls away. Replaces the old swing + bump pair, which read as
+        a whoosh plus walking into a wall."""
+        if not _HAVE_DSP:
+            return self._gen(90, 320, 0.55, "noise", attack_ms=1,
+                             decay_ms=300, noise_mix=1.0)
+        import numpy as _np
+        sr = 22050
+        n = int(sr * duration_ms / 1000)
+        t = _np.arange(n, dtype=_np.float32) / sr
+        rng = _np.random.default_rng()
+        crack = (rng.uniform(-1.0, 1.0, n).astype(_np.float32)
+                 * _np.exp(-t / 0.012))
+        f = 320.0 - 180.0 * _np.clip(t / 0.120, 0.0, 1.0)
+        phase = _np.cumsum(2 * _np.pi * f / sr).astype(_np.float32)
+        bark = _np.sin(phase) * _np.exp(-t / 0.070) * 0.85
+        sub = _np.sin(2 * _np.pi * 65 * t) * _np.exp(-t / 0.100) * 0.75
+        tail = dsp.lowpass(rng.uniform(-1.0, 1.0, n).astype(_np.float32),
+                           1600)
+        tail = tail * _np.exp(-t / 0.28) * _np.minimum(1.0, t / 0.015) * 0.40
+        mix = crack * 0.90 + bark + sub + tail
+        mix = _np.tanh(mix * 1.6) / math.tanh(1.6)
+        return dsp.to_sound(mix, vol)
+
+    def _build_gun_dry(self, duration_ms=170, vol=0.40):
+        """Empty chamber. Two small mechanical clicks ~70 ms apart
+        (hammer back, hammer fall) -- thin high transients with no
+        body, so the cue reads as the gun itself rather than the
+        door_locked rattle it used to borrow."""
+        if not _HAVE_DSP:
+            return self._gen(1400, 50, 0.30, "square", attack_ms=1,
+                             decay_ms=30, noise_mix=0.4)
+        import numpy as _np
+        sr = 22050
+        n = int(sr * duration_ms / 1000)
+        t = _np.arange(n, dtype=_np.float32) / sr
+        rng = _np.random.default_rng()
+        out = _np.zeros(n, dtype=_np.float32)
+        for click_t, f, amp in ((0.0, 1900.0, 0.55), (0.07, 1300.0, 0.85)):
+            local = t - click_t
+            env = _np.where(local >= 0,
+                            _np.exp(-_np.maximum(local, 0.0) / 0.008),
+                            0.0).astype(_np.float32)
+            n_env = _np.where(local >= 0,
+                              _np.exp(-_np.maximum(local, 0.0) / 0.004),
+                              0.0).astype(_np.float32)
+            out += _np.sin(2 * _np.pi * f * t) * env * amp
+            out += rng.uniform(-1.0, 1.0, n).astype(_np.float32) * n_env * 0.45
+        return dsp.to_sound(_np.clip(out, -1.0, 1.0), vol)
+
     def _build_hide_enter(self, duration_ms=200, vol=0.28):
         """Muffled thump + quick breath-in. Plays when player.hidden
         flips true (corn, under furniture)."""
@@ -1448,15 +1513,16 @@ class Audio:                        #Starting screen needs music, something simp
         ch.play(s)
 
     def set_scene_reverb(self, profile):
-        """Set the active reverb profile for play_footstep ('cellar' /
+        """Set the active reverb profile for play_in_scene ('cellar' /
         'outdoor' / None). Game.load_scene_now calls this from the
         scene-tag dispatch."""
         self._scene_reverb = profile
 
-    def play_footstep(self, name, volume=1.0, pan=None):
-        """Play a footstep cue routed through the current scene's
-        reverb (built per-profile at startup). Falls back to the dry
-        cue when no profile is active or the variant doesn't exist."""
+    def play_in_scene(self, name, volume=1.0, pan=None):
+        """Play a cue routed through the current scene's reverb
+        (variants pre-baked per profile at startup -- footsteps and
+        the gunshot). Falls back to the dry cue when no profile is
+        active or no variant exists."""
         if self._scene_reverb:
             variant = f"{name}_{self._scene_reverb}"
             if variant in self.sfx:

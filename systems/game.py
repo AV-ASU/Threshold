@@ -1069,7 +1069,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
                             self._delayed_audio.append([0.12, sfx, 0.7])
                             delayed = True
                     if not delayed:
-                        self.audio.play_footstep(sfx, 0.7)
+                        self.audio.play_in_scene(sfx, 0.7)
                     # Broadcast the step to listening cultists. Per-
                     # surface base loudness, scaled 1.5x while
                     # sprinting. Cultists in SCOUT poll
@@ -1316,7 +1316,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         if not p.inventory.has("pistol") or self._gun_cd > 0:
             return
         if p.inventory.count("pistol_ammo") <= 0:
-            self.audio.play("door_locked", 0.45)        # dry click
+            self.audio.play("gun_dry", 0.5)
             self.show_notice("Empty. You need cartridges.", duration=1.4)
             self._gun_cd = GUN_CD
             return
@@ -1341,8 +1341,8 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         self.scene.projectiles.append(proj)
         p.melee_swing_t = AXE_SWING_DUR             # brief recoil/muzzle tell
         p.melee_dir = p.facing
-        self.audio.play("swing", 0.4)
-        self.audio.play("bump", 0.5)               # the report
+        self.audio.play_in_scene("gunshot", 0.85)
+        self.audio.duck(0.9, depth=0.35)            # let the report own the air
         # A gunshot is loud -- feed the cult's investigate AI like a sprint.
         if self.scene is not None:
             self.scene._last_step_event = (p.x, p.y, 1.0,
@@ -1504,11 +1504,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
             entry[0] -= dt
             if entry[0] <= 0:
                 pan = entry[3] if len(entry) > 3 else None
-                name = entry[1]
-                if name.startswith("step_"):
-                    self.audio.play_footstep(name, entry[2], pan=pan)
-                else:
-                    self.audio.play(name, entry[2], pan=pan)
+                self.audio.play_in_scene(entry[1], entry[2], pan=pan)
             else:
                 survivors.append(entry)
         self._delayed_audio = survivors
