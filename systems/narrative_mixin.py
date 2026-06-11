@@ -25,45 +25,98 @@ from systems.config import *        # noqa: F401,F403
 
 
 class NarrativeMixin:
+    def _start_flashback(self, mode):
+        """Arm the door-dream renderer in one of its two modes.
+        "flash": the journal's intrusive MEMORY (two flickers, ~0.5s, no
+        swarm, no bed) -- the half-dismissed memory surfacing, not a
+        scene. "rite": the FULL dream at the grove rite (the memory,
+        finished): swarm, falling bed, the works."""
+        from ui.cutscenes import FLASHBACK_DUR, FLASHBACK_FLASH_DUR
+        self._flashback_mode = mode
+        self._flashback_dur = (FLASHBACK_FLASH_DUR if mode == "flash"
+                               else FLASHBACK_DUR)
+        self._flashback_stills = [(None, self._flashback_dur)]
+        self._flashback_phase = 0
+        self._flashback_t = 0.0
+        self._flashback_masks = []
+        self._flashback_pool = None
+        self._flashback_spawn_acc = 0.0
+        self._flashback_stab_done = False
+        if mode == "rite":
+            self.audio.force_silence()
+            self.audio.play("low_pulse", 0.85)
+            self.audio.flashback_air(True)        # wind + falling bed
+        else:
+            self.audio.play("low_pulse", 0.6)     # the memory jolts
+
+    def begin_rite_dream(self):
+        """The grove rite: the PI consciously re-enters his ONE dream
+        (a year old, never recurred) and finally answers the door. A
+        pure cutscene (no input); completion opens the descent throat
+        and keys the way home to His face (_finish_rite, below)."""
+        if self._flashback_phase is not None:
+            return
+        self.save.set_flag("flashback_seen", True)
+        self._start_flashback("rite")
+
+    def _finish_rite(self):
+        """Rite-dream completion: the throat opens, the circle seals.
+        DIEGETIC only -- no banner, no 'accepted' notice. The PI's note
+        registers it obliquely (a NOTE, never evidence)."""
+        import pygame as _pg
+        self.save.set_flag("rite_performed", True)
+        self._throat_t0 = _pg.time.get_ticks()    # the opening ramp
+        self.audio.play("void_sting", 0.8)
+        self.audio.play("low_pulse", 0.95)
+        self._log_note("the_rite", [
+            "I went back into the dream. On purpose, this time. The "
+            "same door, the same light under it, a year old and not "
+            "one day faded.",
+            "I walked up to it the way I never did in my sleep. It "
+            "knew me. It let me in.",
+            "When I came out of it the fire was open and the corn "
+            "had closed. I am not saying that to anyone the way I "
+            "just said it here.",
+        ])
+
     def _tick_flashback(self, dt):
         """Poll the flashback_pending save flag (set by inventory_ui
-        when the player reads page 3 of Mom's notebook). When set,
-        start the flashback and clear the flag. Once started, walk
-        through the stills phase by phase."""
+        when the player reads page 3 of Mom's notebook) -> the SHORT
+        memory flash. (The grove rite starts the FULL dream directly
+        via begin_rite_dream.) Once started, walk the stills phase by
+        phase."""
         if (self._flashback_phase is None
                 and self.save.flag("flashback_pending")):
             self.save.set_flag("flashback_pending", False)
             self.save.set_flag("flashback_seen", True)
-            self._flashback_phase = 0
-            self._flashback_t = 0.0
-            self._flashback_masks = []
-            self._flashback_pool = None
-            self._flashback_spawn_acc = 0.0
-            self._flashback_stab_done = False
-            self.audio.force_silence()
-            self.audio.play("low_pulse", 0.85)
-            self.audio.flashback_air(True)        # wind + falling bed
+            self._start_flashback("flash")
         if self._flashback_phase is None:
             return
         self._flashback_t += dt
-        self._spawn_flashback_masks(dt)
+        if self._flashback_mode != "flash":
+            self._spawn_flashback_masks(dt)
         _, dur = self._flashback_stills[self._flashback_phase]
         if self._flashback_t >= dur:
             self._flashback_phase += 1
             self._flashback_t = 0.0
             if self._flashback_phase >= len(self._flashback_stills):
-                # Done -- restore music, play a final chord.
+                mode = self._flashback_mode
                 self._flashback_phase = None
                 self._flashback_masks = []
                 self._flashback_pool = None
-                self.audio.flashback_air(False)   # fade the falling bed out
-                self.audio.music_muted = False
-                self.audio.play("breath", 0.7)
-                if self.scene and self.scene.music:
-                    self.audio.play_music(self.scene.music)
-                # Bump proximity hard -- the player KNOWS now.
-                self._provoke_cult(0.20)
-                self._log_dream_entry()
+                if mode == "rite":
+                    # Done -- restore music, play a final chord.
+                    self.audio.flashback_air(False)
+                    self.audio.music_muted = False
+                    self.audio.play("breath", 0.7)
+                    if self.scene and self.scene.music:
+                        self.audio.play_music(self.scene.music)
+                    self._finish_rite()
+                else:
+                    # The flash: the memory surfaces, the note lands.
+                    # Bump proximity hard -- the player KNOWS now.
+                    self._provoke_cult(0.20)
+                    self._log_dream_entry()
 
     def _build_flashback_pool(self):
         """Pre-render the mask pool (gaze-direction x seed) so the swarm

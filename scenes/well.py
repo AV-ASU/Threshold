@@ -11,12 +11,15 @@ keystone (the Pallid Mask) opens onto the Depths:
   works_sorting      -- the Sorting Hall (shed lives of the claimed)
   works_scriptorium  -- the Scriptorium (the Sign, copied endlessly)
   works_sign         -- the Sign Chamber (lift the Pallid Mask; evidence #5)
-  works_deepstair    -- the Deep Stair (the keystone opens it; the way
-                        back seals)
+  works_deepstair    -- the Deepest Face (the dig's end: powder from the
+                        Sump blasts the last few feet; the FALL into the
+                        old workings is one-way)
 
-The descent SEALS the instant you press the keystone to the Deep Stair
-(descent_sealed: the grove fold and its return pane both die) -- from
-then there is no climbing back, only deeper. Cultists labour here; the
+THE WAY HOME is KEYED, not one-way (one-way stays the King's signature):
+after the grove rite the circle holds you, and the shaft-floor return
+pane answers only His face. Crossing up WITH the Mask seals the descent
+behind you (descent_sealed) and locks the run to SPREAD; walking the
+breach down to the Threshold with it is SEAL. Cultists labour here; the
 flashlight works (these are DARK_SCENES, not cult-dark) but their gaze
 still finds you, so the gauntlet is run on cover, timing, and the hide
 spots. Combat is gone -- contact slams the dread aperture; the danger
@@ -24,13 +27,13 @@ is being seen. Cultists respect hiding (player.hidden), so a hide spot
 breaks the chase.
 
 Reworks vs. the old build: the rope is CUT -- the only way down is the
-rite (the Brimley well is demoted to dread set-dressing; the barn cellar
-hatch stays sealed); nothing is consumed to land here; and the way
-deeper opens only when the keystone -- the Pallid Mask (Sign Chamber) --
-is pressed to the Deep Stair. The stair opens WITHOUT consuming the
-keystone (§7): you carry it down and spend it at the Threshold door to
-SEAL, or turn back while the way above still stands and carry it out to
-SPREAD. The fork between Seal and Spread lives at that stair.
+rite; the Deep Stair is CUT (the mine never finished; the cult's own
+testimony says a few feet of earth remained) -- the way deeper is the
+BLAST at the deepest face (powder from the Sump, Mask in hand first).
+The Mask is NOT spent at the face (§7): you carry it down and spend it
+at the Threshold door to SEAL, or carry it up through the keyed pane and
+out (SPREAD). The fork is experiential now -- where you carry His face
+-- not a menu.
 """
 import math
 from constants import TILE
@@ -76,6 +79,19 @@ def build_well_bottom():
             return True
         if game.save.flag("descent_sealed"):
             return False
+        # The way home answers only His face (the Mask). NOT one-way --
+        # one-way stays the King's signature; this pane is KEYED. The
+        # crossing itself spends the privilege: the descent seals at
+        # your back (descent_sealed), and SPREAD is all that is left.
+        if not game.player.inventory.has("sigil_rubbing"):
+            if not game.save.flag("pane_refused_noticed"):
+                game.save.set_flag("pane_refused_noticed", True)
+                game.audio.play("low_pulse", 0.5)
+                game.show_notice("The pane stands where the rope hung, "
+                                 "and it does not open. It is waiting on "
+                                 "a face.", duration=3.6)
+            return False
+        game.save.set_flag("descent_sealed", True)
         return True
     sc.exit_gate_fn = _up_gate
 
@@ -122,12 +138,9 @@ def build_well_bottom():
     sc.hide_spots = []
     _ambient(sc, "low_pulse", 0.12, 9.0, 14.0)
 
-    # Nothing seals on the way down -- you can retreat up through the
-    # return pane through the whole Works gauntlet. The point of no return
-    # is OPENING THE DEEP STAIR (committing to the Depths); that kills the
-    # descent fold and this pane with it (descent_sealed, works_deepstair
-    # below). The keystone is the Pallid Mask alone (Sign Chamber); the
-    # cult's testimony fragments are pure lore found down here.
+    # The Works gauntlet is walkable both ways for the Mask-bearer; for
+    # anyone else the pane above refuses (keyed to His face). The fall
+    # through the blasted face (works_deepstair) is the one-way step.
     return sc
 
 
@@ -602,14 +615,20 @@ def build_works_sign():
     return sc
 
 
-# ---- Room 7: the Deep Stair / keystone gate (key: works_deepstair) ----
+# ---- Room 7: the Deepest Face (key kept: works_deepstair) ----
+# The dig's end. The cult's testimony says it plain: "a few feet of
+# earth left between us and the door". The mine NEVER finished -- there
+# is no stair, no gate, only the dead face where the digging stopped.
+# The PI opens it the miner's way: powder from the diggers' stores (the
+# Sump), laid and lit at the face. The blast drops the floor and he
+# FALLS into something older than the dig (depths_antechamber, the fall
+# zone -- cut stone worn smooth by feet that came before the cult).
 
 def build_works_deepstair():
-    # An octagonal gate chamber, the Deep Stair sunk in the north face.
+    # An octagonal dead-end chamber, the dig's final face in the north wall.
     floor, objs = _box(11, 9)
     _bevel(objs, 2)
     objs[4][0] = "F"          # west -> back to the sign chamber
-    objs[2][5] = "L"          # the stair down (visual; gated by Mask + Play)
     objects = ["".join(r) for r in objs]
     sc = Scene("works_deepstair", floor, objects, music="void")
     sc.add_exit("F", "works_sign", "from_below")
@@ -620,7 +639,12 @@ def build_works_deepstair():
     gate_x = 5 * TILE + 16
     gate_y = 2 * TILE + 16
     sc._gate_pos = (gate_x, gate_y)
-    sc.add_interactable(gate_x, gate_y, 40)   # [E] cue: the Deep Stair (keystone gate)
+    sc.add_interactable(gate_x, gate_y, 40)   # [E] cue: the deepest face
+    # Mining detritus at the face: spades down, claw-gouged stone.
+    sc.add_decoration(Decoration(4 * TILE + 16, 2 * TILE + 16, "claw_marks",
+                                 scale=1.5))
+    sc.add_decoration(Decoration(6 * TILE + 16, 2 * TILE + 12, "claw_marks",
+                                 scale=1.2))
     sc.add_decoration(Decoration(3 * TILE + 16, 2 * TILE + 6, "candle"))
     sc.add_decoration(Decoration(7 * TILE + 16, 6 * TILE + 16, "bloodstain"))
     # Cobweb grime in the beveled corners by the keystone gate.
@@ -635,63 +659,78 @@ def build_works_deepstair():
         if (abs(game.player.x - gate_x) > 40
                 or abs(game.player.y - gate_y) > 40):
             return
-        if game.save.flag("deepstair_open"):
+        inv = game.player.inventory
+        if game.save.flag("depths_breached"):
+            # The blown floor: re-descend the hole (the fall is one-way;
+            # this is the mouth of it).
+            game.audio.play("low_pulse", 0.6)
             game.begin_transition("depths_antechamber", "from_above")
             return
-        inv = game.player.inventory
-        has_mask = inv.has("sigil_rubbing")     # the Pallid Mask -- the keystone
-        if not has_mask:
-            game.audio.play("door_locked", 0.5)
-            game.show_notice("A socket sunk in the stone, the shape of a "
-                             "face. Empty.")
-            return
-        # The Mask in hand: lay out the fork once, commit on the next press.
-        # Turning back keeps the keystone for the way out -- the Spread road
-        # (carry His face out through the standing fold). Pressing it here
-        # OPENS the stair but does NOT consume it (§7): you carry the
-        # keystone down and spend it at the Threshold door -- the Seal road.
-        if not game.save.flag("deepstair_fork_seen"):
-            game.save.set_flag("deepstair_fork_seen", True)
-            game.audio.play("low_pulse", 0.5)
+        if not inv.has("powder"):
+            game.audio.play("low_pulse", 0.4)
             game.dialog.show([
-                "[c=dim](His face fits the socket. The keystone. Press it to "
-                "the stone and the stair will open.)[/c]",
-                "You have enough. The register, the names, the Preacher, the "
-                "girl her father sent you for, and His face in your hands.",
-                "The town belongs to Him; that is why not one of them can "
-                "leave. But you were never claimed. His Sign, carried out by "
-                "the one soul He never took. The fold opens only for that. "
-                "Climb out while the way you opened still stands, and let "
-                "the world learn His name.",
-                "[s=slow]Or you carry it down, past her, to the thing all of "
-                "this kneels to, and give it to the door.[/s]",
-                "[c=dim](Press again to open the stair and carry the keystone "
-                "down, or turn back, while the way above still stands.)[/c]",
+                "[c=dim](The dig stops here. Dead earth, picked at and "
+                "given up on. You put your ear to it, and you would "
+                "swear there is a hollow behind it.)[/c]",
+                "A charge would open it. A dig like this keeps powder "
+                "somewhere.",
             ], speaker="", voice="blip_soft", portrait="narrator")
             return
-        # Commit -- press the keystone to the stone. The stair OPENS to His
-        # own authority but the keystone is NOT spent here (§7 rework): you
-        # keep the Mask and carry it down to the Threshold door. Point of no
-        # return: the descent fold far above (and its return pane at the
-        # shaft floor) dies -- descent_sealed.
-        game.save.set_flag("deepstair_open", True)
-        game.save.set_flag("descent_sealed", True)
+        if not inv.has("sigil_rubbing"):
+            # The investigator's discipline: you do not blow a scene
+            # before you have seen all of it. (Mechanically: the Mask
+            # first -- the temptation -- then the refusal.)
+            game.audio.play("low_pulse", 0.4)
+            game.dialog.show([
+                "[c=dim](You lay the charge out, and stop. The thing all "
+                "of this kneels to is still down here somewhere, and you "
+                "have not seen its face.)[/c]",
+                "Finish the sweep first. Then the wall.",
+            ], speaker="", voice="blip_soft", portrait="narrator")
+            return
+        # Powder + the Mask in hand: lay the fork out once, commit on the
+        # next press. This is where Seal and Spread part in practice:
+        # climb out with His face and the world learns His name (SPREAD),
+        # or light it and go down to the door (no way back up from the
+        # fall). The Mask is NOT spent here (§7): it is spent at the
+        # Threshold, or carried out.
+        if not game.save.flag("blast_laid"):
+            game.save.set_flag("blast_laid", True)
+            game.audio.play("low_pulse", 0.5)
+            game.dialog.show([
+                "[c=dim](You set the charge against the last few feet of "
+                "earth and run the fuse back. Your hands are steady. You "
+                "note that the way you note evidence.)[/c]",
+                "You have enough. The register, the names, the Preacher, "
+                "the girl her father sent you for, and His face in your "
+                "hands. The way up answers it. The car answers it. You "
+                "could climb out and let the world learn His name.",
+                "[s=slow]Or you light it, and you cut this thing off at "
+                "its source.[/s]",
+                "[c=dim](Press again to light the fuse. There is no way "
+                "back up from where this goes.)[/c]",
+            ], speaker="", voice="blip_soft", portrait="narrator")
+            return
+        # Light it. The wall goes, and the floor goes with it -- the dig
+        # breaks into the OLD workings and the PI falls through, delivered
+        # (depths_antechamber on_interact carries the_fall beat).
+        inv.remove("powder", 1)
+        game.save.set_flag("depths_breached", True)
         game.audio.force_silence()
-        game.audio.play("low_pulse", 0.95)
-        game.show_notice("You press the keystone to the stone. It knows its "
-                         "own. The stair grinds open, and far behind you, "
-                         "you feel the way you came pinch shut. You lift the "
-                         "keystone away again and go down. Only down, now.",
-                         duration=4.5)
+        game.audio.play("low_pulse", 1.0)
+        game.audio.play("hit", 0.9)
+        game.show_notice("The charge takes the wall, and the floor goes "
+                         "with it. You drop with the stone into a dark "
+                         "the dig never reached.", duration=4.5)
         game.begin_transition("depths_antechamber", "from_above")
     sc.on_interact_fn = _interact
 
     def _on_exit(game, scene):
-        # Re-arm the two-press fork each visit: clearing this means a player
-        # who steps away to weigh the Spread road and returns gets the
-        # warning again before the irreversible commit -- never a lone-press
-        # point-of-no-return. Harmless after committing (deepstair_open wins).
-        game.save.set_flag("deepstair_fork_seen", False)
+        # Re-arm the two-press fuse each visit: a player who steps away to
+        # weigh the Spread road and returns gets the warning again before
+        # the irreversible commit -- never a lone-press point-of-no-return.
+        # Harmless after the blast (depths_breached wins).
+        game.save.set_flag("blast_laid", False)
     sc.on_exit_fn = _on_exit
     return sc
 
@@ -739,7 +778,22 @@ def build_the_sump():
     sc._note_pos = (3 * TILE + 16, 4 * TILE + 16)
     sc.add_interactable(sc._note_pos[0], sc._note_pos[1], 40)
 
+    # The diggers' POWDER STORE -- the charge that opens the deepest
+    # face. Kept dry on the ledge by the barrel.
+    sc._powder_pos = (7 * TILE + 16, 4 * TILE + 16)
+    sc.add_interactable(sc._powder_pos[0], sc._powder_pos[1], 40)
+
     def _interact(game):
+        pxp, pyp = sc._powder_pos
+        if (abs(game.player.x - pxp) <= 40
+                and abs(game.player.y - pyp) <= 40
+                and not game.save.flag("powder_taken")):
+            game.save.set_flag("powder_taken", True)
+            game.player.inventory.add("powder", 1)
+            game.audio.play("pickup_rare", 0.7)
+            game.show_notice("Blasting powder, kept dry on the ledge. "
+                             "Enough to open a few feet of dead earth.")
+            return
         nx, ny = sc._note_pos
         if abs(game.player.x - nx) > 40 or abs(game.player.y - ny) > 40:
             return

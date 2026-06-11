@@ -140,6 +140,16 @@ def _incense(s):
     pygame.draw.line(s, (150, 148, 142), (8, 4), (9, 2), 1)  # smoke
 
 
+def _powder(s):
+    # A small powder keg: staved barrel, a fuse coiling off the top.
+    pygame.draw.rect(s, (110, 78, 48), (5, 6, 7, 8))
+    pygame.draw.rect(s, (70, 48, 30), (5, 6, 7, 8), 1)
+    pygame.draw.line(s, (60, 42, 26), (5, 9), (11, 9), 1)
+    pygame.draw.line(s, (60, 42, 26), (5, 12), (11, 12), 1)
+    pygame.draw.line(s, (150, 130, 90), (8, 6), (10, 3), 1)
+    pygame.draw.rect(s, (220, 120, 50), (10, 2, 1, 1))
+
+
 _DISPATCH = {
     "lumber_axe":      _axe,
     "cross":           _cross,
@@ -155,6 +165,7 @@ _DISPATCH = {
     "rite_envelope":   _rite_envelope,
     "chalk":           _chalk,
     "incense":         _incense,
+    "powder":          _powder,
 }
 
 

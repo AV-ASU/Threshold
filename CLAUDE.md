@@ -255,11 +255,15 @@ it renders the procedural sprites to a labelled PNG strip.
   rite (incense + the final chalk door) opens the school↔grove fold, and
   the grove's **descent fold** (clarity = evidence count via
   `Scene.fold_charge_fn`; crossable at 3 via `Scene.exit_gate_fn`) lands at
-  `well_bottom`; the Deep Stair sets `descent_sealed` (was
-  `well_rope_broken`) and kills the fold + its return pane. The Brimley
-  well is dread set-dressing; the Ledger's checkout dates stop **a year**
-  back (flow-guarded). Check `GAME_CHANGES.md` before touching the cast,
-  the ledger, the fork, the descent, or the Deep Stair.
+  `well_bottom`. **§15 rework:** the crossing is opened by the GROVE
+  RITE (the full door-dream, cutscene only, two-press); the circle then
+  holds you and the way home is **keyed to the Mask** (crossing up sets
+  `descent_sealed`, the SPREAD lock). The **Deep Stair is CUT**: the way
+  deeper is the **blast** at the deepest face (`powder` from the Sump,
+  Mask in hand, two-press) → the one-way FALL into the Depths. The
+  Brimley well is dread set-dressing; the Ledger's checkout dates stop
+  **a year** back (flow-guarded). Check `GAME_CHANGES.md` before
+  touching the cast, the ledger, the fork, the descent, or the face.
 - **Teleportation is consolidated — one primitive, don't add bespoke
   paths.** Doors/ladders fade (`begin_transition`'s fade path);
   EVERY other traversal — seamless world edges, direction-gated fold
@@ -288,10 +292,14 @@ it renders the procedural sprites to a labelled PNG strip.
 
 ## The journal door-dream + "He knows you" (NARRATIVE §1b / §0)
 
-- **Trigger:** reading `mom_notebook` (Mara's journal) a third time sets
-  `flashback_pending` (`ui/inventory_ui.py`); `Game._tick_flashback` polls it,
-  sets `flashback_seen`, and runs a ~7s wordless cutscene
-  (`_draw_flashback`). `_tick_flashback` lives in `systems/narrative_mixin.py`;
+- **Trigger (two-stage since the §15 rework):** reading `mom_notebook`
+  (Mara's journal) a third time sets `flashback_pending`
+  (`ui/inventory_ui.py`); `Game._tick_flashback` polls it, sets
+  `flashback_seen`, and fires a ~0.5s MEMORY FLASH (two flickers of the
+  door, no swarm; `FLASHBACK_FLASH_DUR`). The FULL ~7s wordless dream
+  (`_draw_flashback`, mode "rite") plays at the GROVE RITE via
+  `begin_rite_dream` — completing it opens the descent throat
+  (`rite_performed`) and also sets `flashback_seen`. `_tick_flashback` lives in `systems/narrative_mixin.py`;
   the `FLASHBACK_*` tuning block (`_DUR`, `_MASK_FRAMES`, `_SWARM_START/_PEAK`,
   `_RATE_MIN/_MAX`, `_FOCAL_Y`) is defined in `ui/cutscenes.py`.
 - **Visuals:** dried-wood doorframe in black; a pulsing gold glow pooled at

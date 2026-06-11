@@ -212,19 +212,64 @@ def main():
     check(_take_fold(g, "O") and g.scene.key == "effigy_grove",
           "school: the drawn door crosses to the grove")
 
-    # (d) The descent: at 3 evidence the grove fold is formed and crossable;
-    # its return pane stands at the shaft floor (symmetric, NARRATIVE §11).
+    # (d) THE RITE: at 3 evidence + the Invitation, E at the dead fire is
+    # a TWO-PRESS commit (never a lone-press point of no return); the
+    # second press plays the FULL door-dream (a pure cutscene, no input),
+    # and completion opens the throat and seals the circle.
     check(g.scene.fold_charge_fn(g, "O") >= 0.999,
-          "grove: at 3 evidence the descent fold is fully formed")
+          "grove: at 3 evidence the frame is fully formed (the meter)")
+    ready(g)
+    check(not _take_fold(g, "O") and g.scene.key == "effigy_grove",
+          "grove: even at 3 evidence the fold will not cross before the rite")
+    g.player.x, g.player.y = g.scene._rite_pos
+    g.scene.on_interact_fn(g)                  # first press: the stakes
+    check(g.save.flag("rite_laid") and not g.save.flag("rite_performed"),
+          "rite: first press lays the stakes (two-press commit)")
+    ready(g)
+    g.scene.on_interact_fn(g)                  # second press: the dream
+    check(g._flashback_phase is not None
+          and g._flashback_mode == "rite",
+          "rite: second press starts the FULL door-dream (cutscene only)")
+    while g._flashback_phase is not None:
+        g._tick_flashback(0.5)
+    check(g.save.flag("rite_performed") and g.save.flag("flashback_seen"),
+          "rite: the dream completes the rite (and seeds the Threshold beat)")
+    check(any(isinstance(e, dict) and e.get("name") == "the_rite"
+              for e in g.save.arg("notes", [])),
+          "rite: acceptance lands as an oblique NOTE, never a banner")
+    check(len(g.save.arg("evidence", [])) == 3,
+          "rite: the rite never inflates evidence")
+    g._throat_t0 = None                        # skip the opening ramp
+    check(not g.scene.exit_gate_fn(g, "G")
+          and not g.scene.exit_gate_fn(g, "M"),
+          "rite: the circle seals the surface exits behind you")
     ready(g)
     check(_take_fold(g, "O") and g.scene.key == "well_bottom",
-          "grove: the descent fold lands at the shaft floor")
+          "rite: the open throat lands at the shaft floor")
+    # (e) The way home is KEYED to His face, never one-way (the King keeps
+    # his signature).
     ready(g)
-    check(_take_fold(g, "O") and g.scene.key == "effigy_grove",
-          "well bottom: the return pane climbs back to the grove")
-    ready(g)
-    check(_take_fold(g, "O") and g.scene.key == "well_bottom",
-          "grove: the descent stays two-way until the Deep Stair")
+    check(not _take_fold(g, "O") and g.scene.key == "well_bottom",
+          "pane: without the Mask the way home refuses (keyed, not one-way)")
+    # (f) Egress with the Mask seals the descent (the SPREAD lock) --
+    # proven on a separate game so the main run stays underground.
+    g2 = new_game()
+    for i in range(3):
+        g2.save.arg("evidence", []).append({"name": f"_e{i}", "lines": ["x"]})
+    g2.save.set_flag("rite_performed", True)
+    g2._throat_t0 = None
+    g2.player.inventory.add("sigil_rubbing", 1)
+    g2.load_scene_now("well_bottom", "from_grove")
+    ready(g2)
+    check(_take_fold(g2, "O") and g2.scene.key == "effigy_grove",
+          "egress: His face opens the way home")
+    check(g2.save.flag("descent_sealed"),
+          "egress: crossing up with the Mask seals the descent (SPREAD lock)")
+    check(g2.scene.fold_charge_fn(g2, "O") == 0.0
+          and not _take_fold(g2, "O"),
+          "egress: the throat is dead behind you")
+    check(g2.scene.exit_gate_fn(g2, "G"),
+          "egress: the circle releases you once the way down is dead")
 
     # --- 1b. The Ledger fires from the Lodge FRONT DESK, not the cellar ---
     # CANON (NARRATIVE §4, §5): one register, on the front desk; you sign on
@@ -287,37 +332,38 @@ def main():
     check("rite_broken" in g._ENDING_SCRIPTS,
           "ending: rite_broken script is authored")
 
-    # --- 4. The Deep Stair fork (the keystone: the Pallid Mask alone) ---
+    # --- 4. The Deepest Face: powder + the blast (the dig never finished;
+    # the cult's testimony left a few feet of earth; the stair is CUT) ---
+    fire(g, "the_sump", "_powder_pos")
+    check(g.player.inventory.has("powder"),
+          "sump: the diggers' powder store arms the blast")
+    # The investigator's discipline: no Mask, no fuse (sweep first).
+    gb = new_game()
+    gb.player.inventory.add("powder", 1)
+    gb.load_scene_now("works_deepstair")
+    ready(gb)
+    gb.player.x, gb.player.y = gb.scene._gate_pos
+    gb.scene.on_interact_fn(gb)
+    check(not gb.save.flag("blast_laid"),
+          "face: without the Mask the charge stays unlit (sweep first)")
+    # The real run: Mask + powder, two-press, light it.
     g.load_scene_now("works_deepstair")
     ready(g)
     sc = g.scene
     g.player.x, g.player.y = sc._gate_pos
-    sc.on_interact_fn(g)                      # first press: lay out the fork
-    check(g.save.flag("deepstair_fork_seen"),
-          "deep stair: first press shows the fork")
-    ready(g)                                  # dismiss the fork dialog
-    sc.on_interact_fn(g)                      # second press: commit (Seal road)
-    check(g.save.flag("deepstair_open"),
-          "deep stair: the keystone opens the descent")
-    check(g.save.flag("descent_sealed"),
-          "deep stair: committing seals the descent (point of no return)")
-    # CANON (NARRATIVE §6/§7 rework): the stair opens WITHOUT consuming the
-    # keystone (the Mask) -- you carry it down to spend at the Threshold door.
+    sc.on_interact_fn(g)                      # first press: lay the fuse
+    check(g.save.flag("blast_laid"),
+          "face: first press lays the charge (two-press commit)")
+    ready(g)
+    sc.on_interact_fn(g)                      # second press: light it
+    check(g.save.flag("depths_breached"),
+          "face: the blast breaks the dig into the old workings")
+    check(not g.player.inventory.has("powder"),
+          "face: the charge is spent")
+    # CANON (NARRATIVE §7): the Mask is NOT consumed at the face -- you
+    # carry it down to spend at the Threshold door (or out, for SPREAD).
     check(g.player.inventory.has("sigil_rubbing"),
-          "deep stair: the keystone is NOT consumed (carried down, not spent)")
-    # The seal kills the grove's descent fold AND its return pane (the
-    # one-way crossing stays the King's signature alone: this fold doesn't
-    # turn one-way, it dies).
-    g.load_scene_now("effigy_grove")
-    ready(g)
-    check(g.scene.fold_charge_fn(g, "O") == 0.0,
-          "seal: the grove descent fold is dead (charge 0)")
-    check(not _take_fold(g, "O") and g.scene.key == "effigy_grove",
-          "seal: the descent fold will not cross")
-    g.load_scene_now("well_bottom")
-    ready(g)
-    check(not _take_fold(g, "O") and g.scene.key == "well_bottom",
-          "seal: the shaft-floor return pane is dead")
+          "face: the keystone is NOT consumed (carried down, not spent)")
 
     # --- 5. The Depths chain loads + steps with no crash ---
     for k in ("depths_antechamber", "depths_procession", "depths_hall",
@@ -325,16 +371,18 @@ def main():
         g.load_scene_now(k)
         g.step(1 / 60.0)
         check(g.scene.key == k, f"depths: {k} loads and ticks")
-    # The journal flashback is now a WORDLESS visual dream (the burning
-    # doorway + the accelerating mask swarm), not text stills: a single
-    # None-line phase held for FLASHBACK_DUR. Assert the visual mechanics
-    # exist rather than authored prose.
-    check(g._flashback_stills == [(None, __import__("systems.game",
-          fromlist=["FLASHBACK_DUR"]).FLASHBACK_DUR)],
-          "flashback: the dream is a single wordless visual phase")
+    # The door-dream is TWO-STAGE now: the journal fires a brief memory
+    # FLASH (two flickers, ~0.5s, no swarm -- the half-dismissed memory
+    # surfacing); the FULL wordless dream (door + accelerating mask
+    # swarm) plays at the GROVE RITE. Same dream, two weights.
+    from ui.cutscenes import (FLASHBACK_DUR as _FBD,
+                              FLASHBACK_FLASH_DUR as _FBF)
+    check(0.0 < _FBF <= 1.0 < _FBD,
+          "flashback: the journal flash is brief; the rite dream is long")
     check(hasattr(g, "_spawn_flashback_masks")
-          and hasattr(g, "_build_flashback_pool"),
-          "flashback: the mask-swarm system is wired")
+          and hasattr(g, "_build_flashback_pool")
+          and hasattr(g, "begin_rite_dream"),
+          "flashback: the mask-swarm + rite-dream systems are wired")
 
     # --- 6. The hive: speaking to Mara is the #6 payoff ---
     g.load_scene_now("dark")

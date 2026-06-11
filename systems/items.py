@@ -151,6 +151,12 @@ ITEM_DEFS = {
                        "desc": "A bundle of dried incense left beside a "
                                "cot. A sweet, cold smell, like a church "
                                "with no god in it."},
+    "powder":        {"name": "Blasting Powder",
+                       "kind": "key",
+                       "desc": "A miner's charge from the diggers' "
+                               "stores, kept dry on the Sump ledge. "
+                               "Enough to open a few feet of dead earth, "
+                               "and a fuse to outrun."},
 }
 
 
