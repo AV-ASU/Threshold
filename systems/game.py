@@ -1947,7 +1947,11 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
             # in and visibility kept rising while they could only read.
             world_frozen = (self.dialog.active or self.inv_ui.open
                             or self.notebook_ui.open
-                            or self.text_input.active)
+                            or self.text_input.active
+                            # The door-dream (flash or rite) freezes the
+                            # sim: nothing closes in while the PI is inside
+                            # the memory.
+                            or self._flashback_phase is not None)
             # Evidence-gated corruption: cultists only bloom into His maw
             # once you understand too much (3+ evidence). Read by the
             # cultist AI when it locks on (enemy._cult_tick / npc chaser).

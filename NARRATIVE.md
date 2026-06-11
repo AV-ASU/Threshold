@@ -550,10 +550,19 @@ no rigging one. The player goes down by the **rite** instead: at **3
 evidence** Mr. Sable hands over the **Invitation** (the envelope the
 congregation left at the Lodge desk when they went below), the **school
 rite** (incense at the commune's indoor fire, then the final chalk door
-drawn on the board) opens the school↔grove fold, and the **descent fold
-in the effigy grove** — a standing rift over the dead fire that
-**clarifies as evidence mounts** and opens at 3 — lands you at the bottom
-of the well shaft. There is no other route down and **no secret paths**.
+drawn on the board) opens the school↔grove fold, and the **grove rite**
+finishes it: over the dead fire stands a rift that **clarifies as
+evidence mounts** (the meter), and at 3, with the Invitation in hand,
+the PI performs the rite — he **consciously re-enters his one, year-old
+dream** (the full door-dream, a pure cutscene; the journal only ever
+*flashes* the memory) and finally answers the door. The ground opens as
+a **throat** (the rift family's once-only presentation) and lands you at
+the bottom of the well shaft. **The circle then holds you:** the grove's
+surface exits refuse, and the shaft-floor pane answers only **His
+face** — *keyed* to the Mask, never one-way (one-way stays the King's
+signature). Surfacing with the Mask seals the descent at your back and
+locks the run to SPREAD. There is no other route down and **no secret
+paths**.
 The surface is one connected
 sprawl: the **Arcadia Lodge** (lodge, yard, cornfields) ↔ **Brimley**
 (the town itself — the well, the church, the store, the sheriff's
@@ -640,16 +649,16 @@ to — is the harder, costlier road, and that is the point.
 
 So the fork is **experiential, not a menu.** With the keystone in hand:
 
-- **Carry it back out → SPREAD.** Turn back through the standing fold,
-  climb out, and drive
+- **Carry it back out → SPREAD.** Climb back to the shaft floor; the
+  pane answers His face and shuts at your back, and you drive
   past the fold no one else can cross — the Mask is the key the fold
   answers to. What you carry out is the Sign itself, and Carcosa bleeds
   through the hole you made. This is the off-ramp the Mask tempted you with.
 - **Carry it down to the door → SEAL.** Resist the pull. Take the keystone
   **past** the Deep Stair (which opens to His own authority pressed to the
-  stone, and seals the descent behind you — the point of no return), down
-  through the Depths and the hive (Mara), to the **Threshold**, and **give
-  the keystone to the door.** The geometry closes; you and Brimley become a
+  the blasted floor at the deepest face — the fall is the point of no
+  return), down through the Depths and the hive (Mara), to the
+  **Threshold**, and **give the keystone to the door.** The geometry closes; you and Brimley become a
   hole in the map. *The keystone is spent at the door, not at the stair.*
 
 The case ends on that one pull, and the PI hears it as two voices:
@@ -734,14 +743,17 @@ Only display names and fiction change.
 The reworks the new fiction forced are all shipped. What must stay true:
 
 - **One way down.** The rite — the Invitation (Sable, 3 evidence) → the
-  school chalk door → the **grove's descent fold** — is the *only*
-  surface→underground route. The well is dread set-dressing (no rope,
-  no rigging one); the barn→well_passage hatch is nailed shut from
-  below; no secret paths.
+  school chalk door → the **grove rite** (the dream, answered) → the
+  throat — is the *only* surface→underground route. The well is dread
+  set-dressing (no rope, no rigging one); the barn→well_passage hatch is
+  nailed shut from below; no secret paths. **The way home is keyed:**
+  the shaft-floor pane opens only to the Mask, and crossing it spends
+  the descent (SPREAD lock).
 - **Deep Stair gate (rework — see §8/GAME_CHANGES).** The **keystone** —
   the **Pallid Mask** (Sign Chamber), Mask-only now (§6b) — opens the stair to His own authority pressed to
-  the stone, and seals the descent (point of no return), **but is NOT
-  consumed there.** You carry the keystone down and **spend it at the Threshold door
+  nothing — the Deep Stair is CUT (the dig never finished; §9). The way
+  deeper is the **blast at the deepest face** (powder from the Sump,
+  Mask in hand first); the keystone is **NOT consumed there.** You carry the keystone down and **spend it at the Threshold door
   (SEAL).** Carrying it back out instead is **SPREAD**; tearing the Mask
   down at the Sign Chamber altar before sealing is the **TRAP** (§6). *(The
   current build consumes both items at the stair and seals empty-handed —
@@ -914,21 +926,22 @@ finds you — run it on cover, timing, and breaking their line of sight).
 | 4a | **Mara's Room** | `maras_room` | A convert's cell off the hall: cot, her cult robe + the unsent letter. **Evidence #1.** A quiet beat off the gauntlet, 1 hide. |
 | 5 | The Scriptorium | `works_scriptorium` | The Sign copied endlessly — the **attuned compulsively bleeding the dream-image out** onto every surface, none of them the door itself (§1b). 1 oblivious scribe, 2 hides. **The Calling** — the first of three cult-testimony fragments (§6b), the one bound, whole volume among the loose copies: the congregation's own personal testimony (their voice in the item description, the PI's reaction in his notes). Pure lore; it gates nothing (the keystone is the Mask alone). The Bargain + The Digging are found deeper (the Sump, the Ossuary). |
 | 6 | The Sign Chamber | `works_sign` | The Sign daubed on the wall + an altar; 3 kneelers + 1 patrol. **Lift the Pallid Mask → `sigil_rubbing` + evidence #5** (no charcoal — you take the object itself). |
-| 7 | The Deep Stair | `works_deepstair` | The gate down: opens to `depths_antechamber` **and seals the descent** (the point of no return). It opens to the **keystone** (the **Pallid Mask** alone, §6b/§7) pressed to the stone **without consuming it** — you carry the Mask down and spend it at the Threshold door. |
+| 7 | **The Deepest Face** | `works_deepstair` | The dig's END — the cult's testimony left "a few feet of earth"; there is no stair, no gate. With the **Mask in hand** (the sweep finished) and **powder from the Sump**, a two-press charge **blasts the floor through into the old workings**: the FALL into `depths_antechamber` is the one-way step. The Mask is **not consumed** — carried down and spent at the Threshold door. |
 
 **Rules wired:**
-- **One way down:** the grove's descent fold only; the barn cellar hatch
-  stays sealed (`scenes/interiors.py`). The fold and its shaft-floor
-  return pane persist as a two-way crossing until the seal.
-- **Point of no return:** descending the Deep Stair (Room 7) seals the
-  descent (`descent_sealed`: the grove fold and the return pane both die)
-  — the gauntlet stays retreatable through the pane until you commit to
-  the Depths. **This is where Seal vs. Spread is decided in
-  practice:** turn back here with the keystone and climb out (SPREAD), or
-  descend (committing to carry the keystone to the door and SEAL).
-- **Gate (§7/GAME_CHANGES, DONE):** the stair opens to the **keystone**
-  (the **Pallid Mask** alone) pressed to the stone **without consuming it**,
-  then seals the descent. You carry the Mask down and spend it at the
+- **One way down:** the grove rite's throat only; the barn cellar hatch
+  stays sealed (`scenes/interiors.py`). The shaft-floor return pane is
+  **keyed to the Mask** (never one-way); crossing it up seals the
+  descent (`descent_sealed`, the SPREAD lock).
+- **Point of no return:** the FALL through the blasted face (Room 7,
+  `depths_breached`) — the Works stay walkable both ways for the
+  Mask-bearer; the Depths do not give you back. **Seal vs. Spread is
+  experiential, not a menu:** both live anytime you hold the Mask
+  underground; the fork is where you carry His face (up through the
+  keyed pane = SPREAD lock; down to the door = SEAL).
+- **Gate (§7/§14/§15, DONE):** the blast requires the **Mask in hand**
+  (the investigator finishes the sweep before he blows the scene) and
+  **does not consume it**. You carry the Mask down and spend it at the
   Threshold door (SEAL). The cult's notes are decoupled (pure lore, §6b).
 - The well sprite was redesigned and repositioned in `brimley` (the
   east village square — a landmark just off the road).
@@ -942,8 +955,8 @@ off the Sorting Hall) — plus the **Depths**, which has grown to five rooms
 `depths_threshing` → `depths_stair`, with `the_ossuary` branching off the
 procession) before the **Hive** (`dark`, the kneeling congregation + Mara,
 evidence #6) and the **Threshold** (`threshold`, the doorframe). The
-descent order is: well → Works (7) → Deep Stair → Depths (5) → Hive →
-Threshold.
+descent order is: grove rite → Works (7) → the blast → Depths (5) →
+Hive → Threshold.
 
 **Note:** the old cult chamber (`symbol_portal_room`) has been **removed
 entirely** — its only entrance was the `haunted_house` hatch, which is now

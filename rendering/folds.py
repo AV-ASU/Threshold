@@ -182,6 +182,14 @@ def draw_fold(screen, face, host_cam_x, host_cam_y, player, t, camera=None):
     charge = face.get("charge", 1.0)
     if charge <= 0.0:
         return False
+    # Optional per-fold STYLE (set per-frame from Scene.fold_style_fn):
+    # "throat" draws the rite's ground-opening instead of the standing
+    # pane (PORTALS.md). A hole in the floor is visible from any angle,
+    # so it skips the facing falloff entirely.
+    if face.get("style") == "throat" and camera is not None:
+        from rendering.portal import draw_rift_throat
+        draw_rift_throat(screen, fold_x, fold_y, camera, t, charge=charge)
+        return True
 
     # Under tilt a fold is the SAME upright door-passage as the King's portal
     # (KING_PROMPT: one rift family), standing along its WORLD seam (the line

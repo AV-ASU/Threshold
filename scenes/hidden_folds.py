@@ -41,11 +41,14 @@ def build_effigy_grove():
     town at once, NARRATIVE 1b/3).
 
     THE WAY DOWN lives here now: a fold stands over the dead fire ('O'),
-    clarifying with the evidence count (fold_charge_fn) and crossable only
-    at 3 evidence (exit_gate_fn) -- the world rots and opens on the same
-    dial. Crossing it lands at the bottom of the well (well_bottom). The
-    Deep Stair seals it (descent_sealed). A second fold ('M') is the school
-    door's return pane, open only once the chalk door is drawn."""
+    clarifying with the evidence count (fold_charge_fn, the meter). At 3
+    evidence with the Invitation, THE RITE (E at the fire, two-press)
+    plays the FULL door-dream (begin_rite_dream, cutscene only); on
+    completion the ground opens as the THROAT (fold_style_fn) and the
+    CIRCLE HOLDS: the maze return ('G') and the school pane ('M') refuse
+    while the way down lives. The way home (well_bottom's pane) answers
+    only His face; surfacing with the Mask sets descent_sealed (the
+    SPREAD lock) and the circle lets go."""
     W, H = 26, 19
     # The crop circle: an OVAL clearing pressed into solid corn. Inside
     # the oval the ground is open (charred at the heart, grass out to
@@ -116,9 +119,22 @@ def build_effigy_grove():
         if ch == "O":
             if game.save.flag("descent_sealed"):
                 return 0.0
-            # A thread of gold at 0 evidence; fully formed at 3. The
-            # frame IS the evidence meter, standing in the world.
+            if game.save.flag("rite_performed"):
+                # The throat, opening over a few seconds after the dream
+                # (the wave from the circle's centre); 1.0 on later loads.
+                t0 = getattr(game, "_throat_t0", None)
+                if t0 is None:
+                    return 1.0
+                import pygame as _pg
+                return min(1.0, (_pg.time.get_ticks() - t0) / 2500.0)
+            # Pre-rite: a thread of gold at 0 evidence, a fully formed
+            # (but shut) frame at 3. The frame IS the evidence meter.
             return min(1.0, 0.15 + 0.85 * (ev / 3.0))
+        if ch in ("G", "M") and (game.save.flag("rite_performed")
+                                 and not game.save.flag("descent_sealed")):
+            # The circle holds you: while the way down lives, the school
+            # pane is dead (G has no pane; its gate below does the work).
+            return 0.0
         if ch == "M":
             if not game.save.flag("school_door_open"):
                 return 0.0
@@ -133,23 +149,102 @@ def build_effigy_grove():
     sc.fold_charge_fn = _charge
 
     def _gate(game, ch):
+        sealed_in = (game.save.flag("rite_performed")
+                     and not game.save.flag("descent_sealed"))
         if ch == "O":
             if game.save.flag("descent_sealed"):
                 return False
-            if game._evidence_count() >= 3:
-                return True
-            # Shut: the tile reads as floor. Once, say why in sensation.
+            if game.save.flag("rite_performed"):
+                return _charge(game, "O") >= 0.999
+            # Shut until the rite. Once, say why in sensation.
             if not game.save.flag("grove_fold_refused"):
                 game.save.set_flag("grove_fold_refused", True)
                 game.audio.play("low_pulse", 0.4)
                 game.show_notice("The light over the fire will not take "
                                  "your weight. Not yet.", duration=3.2)
             return False
+        if ch == "G":
+            if sealed_in:
+                # The circle holds you (one sensation line, once).
+                if not game.save.flag("grove_held_noticed"):
+                    game.save.set_flag("grove_held_noticed", True)
+                    game.audio.play("low_pulse", 0.5)
+                    game.show_notice("The corn does not open. The circle "
+                                     "holds. There is only down.",
+                                     duration=3.4)
+                return False
+            return True
         if ch == "M":
+            if sealed_in:
+                return False
             return (game.save.flag("school_door_open")
                     and _charge(game, "M") >= 0.999)
         return True
     sc.exit_gate_fn = _gate
+
+    def _style(game, ch):
+        # The rite's once-only presentation (PORTALS.md): after the
+        # dream the descent fold stops being a standing pane and is the
+        # ground itself, opened -- the throat.
+        if (ch == "O" and game.save.flag("rite_performed")
+                and not game.save.flag("descent_sealed")):
+            return "throat"
+        return None
+    sc.fold_style_fn = _style
+
+    # ---- THE RITE (E at the dead fire) ----
+    # Two-press commit (never a lone-press point of no return; the
+    # Deep Stair lesson): the first press lays the stakes out in
+    # sensation, the second begins the FULL door-dream (a pure
+    # cutscene). Completion opens the throat and keys the way home to
+    # His face. Re-armed on every scene exit.
+    sc._rite_pos = (13 * TILE + 16, 8 * TILE + 16)
+    sc.add_interactable(sc._rite_pos[0], sc._rite_pos[1], 44)
+
+    def _grove_interact(game):
+        fx, fy = sc._rite_pos
+        if (abs(game.player.x - fx) > 44
+                or abs(game.player.y - fy) > 44):
+            return
+        save = game.save
+        if save.flag("descent_sealed"):
+            game.show_notice("Cold ash. The fire is done with this place.")
+            return
+        if save.flag("rite_performed"):
+            game.show_notice("The fire is open. The way down waits.")
+            return
+        if game._evidence_count() < 3:
+            game.audio.play("low_pulse", 0.4)
+            game.show_notice("The thread of gold stands in the dead "
+                             "fire, not finished forming.")
+            return
+        if not game.player.inventory.has("rite_envelope"):
+            game.audio.play("low_pulse", 0.4)
+            game.show_notice("The fire is ready for something. You were "
+                             "never given what it wants.")
+            return
+        if not save.flag("rite_laid"):
+            save.set_flag("rite_laid", True)
+            game.audio.play("low_pulse", 0.5)
+            game.dialog.show([
+                "[c=dim](You stand over the dead fire. The gold stands "
+                "fully formed in it now, and the air leans toward it the "
+                "way a room leans toward an open window.)[/c]",
+                "[c=dim]You know what this is. You stood in front of it "
+                "once, a year ago, asleep, and you did not answer.[/c]",
+                "[c=dim](Press again to close your eyes. The circle will "
+                "keep you after. Whatever goes down here does not come "
+                "back up the same way.)[/c]",
+            ], speaker="", voice="blip_soft", portrait="narrator")
+            return
+        game.begin_rite_dream()
+    sc.on_interact_fn = _grove_interact
+
+    def _grove_exit(game, scene):
+        # Re-arm the two-press rite each visit (the Deep Stair lesson:
+        # a player who steps away and returns gets the warning again).
+        game.save.set_flag("rite_laid", False)
+    sc.on_exit_fn = _grove_exit
 
     def _grove_update(game, scene, dt):
         # THE LOOM: a low, ominous bed that swells as evidence is found

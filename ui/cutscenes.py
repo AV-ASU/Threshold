@@ -20,7 +20,9 @@ from rendering.sprites import draw_carcosa, draw_mask_yank
 
 # ---- Cutscene tuning constants (owned here; re-exported by systems.game) ----
 
-FLASHBACK_DUR = 7.0            # seconds the journal door-dream still holds
+FLASHBACK_DUR = 7.0            # seconds the FULL door-dream holds (the rite)
+FLASHBACK_FLASH_DUR = 0.55     # the journal's intrusive MEMORY FLASH: two
+                               # hard flickers of the door, in and gone
 FLASHBACK_MASK_FRAMES = 3      # frames each individual mask holds on screen
 # Mask SWARM: dark-wood faces flash all over the inside of the doorframe
 # (some clipped by it), starting slow ~START s in and accelerating to a
@@ -65,9 +67,17 @@ class CutsceneMixin:
         audio bed (flashback_air) carries the fall."""
         if self._flashback_phase is None:
             return
-        t = self._flashback_t / max(0.01, FLASHBACK_DUR)   # 0..1 over the hold
+        dur = getattr(self, "_flashback_dur", FLASHBACK_DUR)
+        t = self._flashback_t / max(0.01, dur)   # 0..1 over the hold
+        if getattr(self, "_flashback_mode", "rite") == "flash":
+            # The journal's INTRUSIVE MEMORY: two hard flickers of the
+            # door, forced in over half a second and gone. No swarm, no
+            # audio bed; the full dream waits at the grove rite.
+            if not (t < 0.28 or 0.48 < t < 0.86):
+                return
+            fade = 1.0
         # Whole-still fade: in over first 12%, out over last 18%.
-        if t < 0.12:
+        elif t < 0.12:
             fade = t / 0.12
         elif t > 0.82:
             fade = max(0.0, (1.0 - t) / 0.18)

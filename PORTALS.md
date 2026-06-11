@@ -131,7 +131,16 @@ pass (NARRATIVE.md §11 "One phenomenon, two presentations"):
   descent fold** (clarity = evidence/3, opens at 3, lands at
   `well_bottom`, dies at `descent_sealed`), its **return pane** at the
   shaft floor, and the **school door** (opened by the chalk-door rite,
-  then permanent). All stay two-way until they DIE — never one-way (the
-  King keeps his signature).
+  then permanent). Folds stay two-way until they DIE or are **KEYED**
+  (the shaft-floor pane answers only the Mask after the grove rite) —
+  never one-way (the King keeps his signature).
+- **The THROAT (the rite's once-only presentation, 2026-06).** After the
+  grove rite the descent fold stops being a standing pane: the ground
+  itself opens — `draw_rift_throat` (`rendering/portal.py`) projects a
+  world-space ring point by point (a true floor ellipse under tilt;
+  NEVER a vertical cylinder, which pinches at the side tangents) and
+  steps it down as a gold-rimmed throat with the family's crackling rim.
+  Dispatched per-fold via `Scene.fold_style_fn` → `face["style"]`. Used
+  exactly once, at the grove; everything else keeps the anchored pane.
 
 Live proof sheet: `tools/preview_rift_anchored.py`.

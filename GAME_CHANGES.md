@@ -355,6 +355,55 @@ The rope (and its woodshed pickup, and the `rope` item key) is cut.
 
 ---
 
+### ✅ 15. The dream-thread + the blast — the Deep Stair is CUT — DONE  *(2026-06; NARRATIVE §1b, §5, §6, §7, §9, §11; PORTALS.md)*
+
+**Decisions (DISCUSS-FIRST settled).** Dreams are CUTSCENES ONLY. The
+descent is one-way down; the way home is KEYED to the Mask (never
+"one-way" — that stays the King's signature). The Deep Stair never fit a
+mine and is cut; the dig never finished (the cult's own testimony), and
+the PI finishes it with powder.
+
+- [x] **Two-stage door-dream.** The journal now fires a brief MEMORY
+  FLASH (`FLASHBACK_FLASH_DUR` ~0.55s, two flickers, no swarm, no bed —
+  the half-dismissed memory surfacing); the FULL dream (door + mask
+  swarm, `FLASHBACK_DUR`) plays at the GROVE RITE via `begin_rite_dream`
+  (`systems/narrative_mixin.py`). Same dream, two weights; the one-dream
+  / a-year / no-recurrence canon is untouched (`_log_dream_entry`
+  unchanged). The dream freezes the world sim while it plays.
+- [x] **The grove rite** (E at the dead fire, two-press — never a
+  lone-press point of no return; re-armed on scene exit): completion
+  sets `rite_performed`, `flashback_seen` (so the Threshold recognition
+  fires for non-journal players too), opens the THROAT, and logs the
+  oblique `the_rite` NOTE ("It knew me. It let me in.") — no banner, no
+  "accepted" string, never evidence.
+- [x] **The circle holds / the keyed pane.** While `rite_performed` and
+  not `descent_sealed`: the grove's maze return + school pane refuse
+  (one sensation line, once). The shaft-floor return pane answers only
+  the Mask; crossing it up sets `descent_sealed` (the SPREAD lock) and
+  the circle releases. SPREAD's surface egress is therefore Mask-gated
+  end to end (the car already answers only the Sign).
+- [x] **The THROAT** (`draw_rift_throat`, `rendering/portal.py`;
+  dispatched via `Scene.fold_style_fn`): the rite's once-only rift
+  presentation — a projected ground ring stepping down as a gold-rimmed
+  throat (a true floor ellipse under tilt; never a vertical cylinder).
+  Documented in PORTALS.md.
+- [x] **The Deep Stair is CUT → the Deepest Face.** `works_deepstair`
+  (key kept) is the dig's dead end now. Powder lives in **the Sump**
+  (`powder` item, the diggers' store); the blast requires the **Mask in
+  hand** (the investigator finishes the sweep before he blows the
+  scene), two-press, consumes the powder, sets `depths_breached`, and
+  DROPS the PI into `depths_antechamber` — the existing fall-zone text
+  ("cut stone, worn smooth by years of feet") now reads as the OLD
+  workings the dig broke into. The fall is the one-way step. Flags
+  `deepstair_open`/`deepstair_fork_seen` are gone; the Seal/Spread fork
+  is **experiential, not a menu** (where you carry His face), with the
+  deliberation voices at the fuse.
+- [x] Flow harness: rite two-press + cutscene drive, pre-rite crossing
+  refusal, circle seal, keyed-pane refusal, Mask egress + SPREAD lock,
+  sump powder, mask-gated fuse, blast + keystone-not-consumed.
+
+---
+
 ## Status / sequencing notes
 
 - **Phase 1 is done + pushed.** Docs (`NARRATIVE.md`, `CLAUDE.md`) already
