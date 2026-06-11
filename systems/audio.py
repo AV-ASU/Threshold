@@ -134,16 +134,26 @@ class Audio:                        #Starting screen needs music, something simp
         self.sfx["step_carpet"] = g(90, 80, 0.06, "noise", attack_ms=4, decay_ms=50, noise_mix=1.0)
         self.sfx["step_void"]   = g(40, 220, 0.18, "sine", attack_ms=20, decay_ms=180)
         self.sfx["bump"]        = g(80, 100, 0.18, "square", attack_ms=2, decay_ms=70, noise_mix=0.3)
-        self.sfx["door_open"]   = g(180, 250, 0.25, "saw", attack_ms=20, decay_ms=200, noise_mix=0.2)
-        self.sfx["door_close"]  = g(120, 220, 0.25, "saw", attack_ms=10, decay_ms=180, noise_mix=0.25)
+        # Door foley: a latch + hinge-creak open and a whoosh + frame-
+        # thud + latch close (the old raw saw sweeps read as synth, not
+        # wood). Same stick-slip friction trick as wood_creak.
+        self.sfx["door_open"]   = self._build_door_open()
+        self.sfx["door_close"]  = self._build_door_close()
         self.sfx["engine_die"]  = g(64, 900, 0.34, "saw", attack_ms=4, decay_ms=820, noise_mix=0.45, vibrato=11)
         self.sfx["carcosa_boom"] = g(50, 1100, 0.55, "sine", attack_ms=2, decay_ms=950, noise_mix=0.45)
         self.sfx["door_locked"] = g(220, 80, 0.22, "square", attack_ms=2, decay_ms=50)
-        self.sfx["menu_open"]   = g(440, 90, 0.20, "triangle", attack_ms=2, decay_ms=70)
-        self.sfx["menu_close"]  = g(330, 90, 0.20, "triangle", attack_ms=2, decay_ms=70)
-        self.sfx["cursor"]      = g(660, 35, 0.18, "square", attack_ms=2, decay_ms=20)
-        self.sfx["confirm"]     = g(880, 80, 0.22, "triangle", attack_ms=2, decay_ms=60)
-        self.sfx["cancel"]      = g(220, 80, 0.20, "triangle", attack_ms=2, decay_ms=60)
+        # UI cues: soft sine pairs (fundamental + a quiet partial).
+        # The pitch grammar of the old square/triangle chirps is kept
+        # (open above close, confirm bright, cancel low) but the
+        # timbre no longer reads as chiptune against the organic
+        # soundscape. Dialog voice blips are NOT touched -- they are
+        # character voices, not UI.
+        self.sfx["menu_open"]   = self._build_ui_tone(392, 110, 0.20)
+        self.sfx["menu_close"]  = self._build_ui_tone(294, 110, 0.20)
+        self.sfx["cursor"]      = self._build_ui_tone(523, 35, 0.16)
+        self.sfx["confirm"]     = self._build_ui_tone(523, 110, 0.20,
+                                                      partial=1.5)
+        self.sfx["cancel"]      = self._build_ui_tone(220, 100, 0.18)
         self.sfx["blip_low"]    = g(200, 35, 0.16, "square", attack_ms=2, decay_ms=20)
         self.sfx["blip_mid"]    = g(330, 35, 0.16, "square", attack_ms=2, decay_ms=20)
         self.sfx["blip_high"]   = g(550, 30, 0.14, "square", attack_ms=2, decay_ms=18)
@@ -965,6 +975,121 @@ class Audio:                        #Starting screen needs music, something simp
             stereo[i * 4 + 1] = buf[i * 2 + 1]
             stereo[i * 4 + 2] = buf[i * 2]
             stereo[i * 4 + 3] = buf[i * 2 + 1]
+        return pygame.mixer.Sound(buffer=bytes(stereo))
+
+    def _build_ui_tone(self, freq, duration_ms, vol, partial=2.0,
+                       partial_amp=0.30):
+        """Soft UI cue: a sine fundamental + a quiet upper partial
+        (default the octave; 1.5 gives a warm fifth), eased attack and
+        a curved decay. The menu grammar lives in the pitch
+        relationships, so callers only choose freq/length."""
+        sr = 22050
+        n = int(sr * duration_ms / 1000)
+        dur_s = duration_ms / 1000.0
+        buf = bytearray(n * 2)
+        attack_n = max(1, int(sr * 0.006))
+        norm = 1.0 / (1.0 + partial_amp)
+        for i in range(n):
+            t = i / sr
+            v = (math.sin(2 * math.pi * freq * t)
+                 + math.sin(2 * math.pi * freq * partial * t) * partial_amp)
+            if i < attack_n:
+                env = i / attack_n
+            else:
+                env = max(0.0, 1.0 - (t - 0.006) / (dur_s - 0.006)) ** 1.3
+            sample = max(-32768, min(32767,
+                                     int(v * norm * vol * env * 32767)))
+            buf[i * 2]     = sample & 0xFF
+            buf[i * 2 + 1] = (sample >> 8) & 0xFF
+        stereo = bytearray(n * 4)
+        for i in range(n):
+            stereo[i * 4]     = stereo[i * 4 + 2] = buf[i * 2]
+            stereo[i * 4 + 1] = stereo[i * 4 + 3] = buf[i * 2 + 1]
+        return pygame.mixer.Sound(buffer=bytes(stereo))
+
+    def _build_door_open(self, duration_ms=520, vol=0.30):
+        """A real door opens: the latch frees (a small metallic ping +
+        noise snap at t=0), then the hinge creaks as it swings -- a
+        stick-slip tone rising 150 -> 240 Hz with grain flutter, the
+        wood_creak friction trick, brighter and shorter."""
+        sr = 22050
+        n = int(sr * duration_ms / 1000)
+        dur_s = duration_ms / 1000.0
+        buf = bytearray(n * 2)
+        phase = 0.0
+        smooth = 0.0
+        grain = 0.0
+        for i in range(n):
+            t = i / sr
+            latch = 0.0
+            if t < 0.030:
+                latch = (math.sin(2 * math.pi * 1500 * t)
+                         * math.exp(-t / 0.006) * 0.55
+                         + random.uniform(-1, 1)
+                         * math.exp(-t / 0.004) * 0.45)
+            creak = 0.0
+            if t >= 0.050:
+                local = t - 0.050
+                ramp = local / (dur_s - 0.050)
+                smooth = 0.92 * smooth + 0.08 * random.uniform(-1, 1)
+                f = (150.0 + 90.0 * ramp
+                     + 12.0 * math.sin(2 * math.pi * 7.1 * local)
+                     + smooth * 12.0)
+                phase += 2 * math.pi * max(60.0, f) / sr
+                grain = 0.55 * grain + 0.45 * random.uniform(-1, 1)
+                gate = 0.60 + 0.40 * grain
+                if ramp < 0.18:
+                    envc = ramp / 0.18
+                else:
+                    envc = max(0.0, 1.0 - (ramp - 0.18) / 0.82) ** 1.1
+                creak = math.sin(phase) * gate * envc * 0.55
+            v = latch + creak
+            sample = max(-32768, min(32767, int(max(-1.0, min(1.0, v))
+                                                * vol * 32767)))
+            buf[i * 2]     = sample & 0xFF
+            buf[i * 2 + 1] = (sample >> 8) & 0xFF
+        stereo = bytearray(n * 4)
+        for i in range(n):
+            stereo[i * 4]     = stereo[i * 4 + 2] = buf[i * 2]
+            stereo[i * 4 + 1] = stereo[i * 4 + 3] = buf[i * 2 + 1]
+        return pygame.mixer.Sound(buffer=bytes(stereo))
+
+    def _build_door_close(self, duration_ms=430, vol=0.32):
+        """A real door closes: a soft swing of air, the frame thud at
+        t=0.20 (70 Hz kick + a noise burst), and the latch catching
+        just after. Sibling of _build_door_open."""
+        sr = 22050
+        n = int(sr * duration_ms / 1000)
+        buf = bytearray(n * 2)
+        smooth = 0.0
+        for i in range(n):
+            t = i / sr
+            smooth = 0.88 * smooth + 0.12 * random.uniform(-1, 1)
+            whoosh = 0.0
+            if t < 0.20:
+                whoosh = smooth * math.sin(math.pi * t / 0.20) * 0.30
+            thud = 0.0
+            if t >= 0.20:
+                local = t - 0.20
+                thud = (math.sin(2 * math.pi * 70 * t)
+                        * math.exp(-local / 0.070) * 0.85
+                        + smooth * math.exp(-local / 0.018) * 0.50)
+            latch = 0.0
+            if t >= 0.30:
+                local = t - 0.30
+                latch = (math.sin(2 * math.pi * 1200 * t)
+                         * math.exp(-local / 0.005) * 0.35
+                         + random.uniform(-1, 1)
+                         * math.exp(-local / 0.003) * 0.30)
+            v = whoosh + thud + latch
+            sample = max(-32768, min(32767, int(max(-1.0, min(1.0, v))
+                                                * vol * 32767)))
+            buf[i * 2]     = sample & 0xFF
+            buf[i * 2 + 1] = (sample >> 8) & 0xFF
+        stereo = bytearray(n * 4)
+        for i in range(n):
+            stereo[i * 4]     = stereo[i * 4 + 2] = buf[i * 2]
+            stereo[i * 4 + 1] = stereo[i * 4 + 3] = buf[i * 2 + 1]
         return pygame.mixer.Sound(buffer=bytes(stereo))
 
     def _build_wood_creak(self, duration_ms=750, vol=0.30):

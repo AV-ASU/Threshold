@@ -237,7 +237,14 @@ class InfestationMixin:
         deterministic + additive, like the rest of the infestation."""
         sc = self.scene
         key = sc.key
-        if key in UNDERGROUND_SCENES or sc.music in ("void", "wrong"):
+        if sc.music in ("void", "wrong"):
+            return
+        if key in CREEPY_SCENES:
+            # The kid humming somewhere they shouldn't be. Deliberately
+            # rare (most visits hear it at most once) -- the card loses
+            # its power if it plays like a loop.
+            sc.add_ambient("child_hum", 0.30, 50.0, 95.0, pan_spread=0.8)
+        if key in UNDERGROUND_SCENES:
             return
         outdoor = key in OUTDOOR_SCENES or key in ("brimley",
                                                    "effigy_grove")

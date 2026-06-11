@@ -116,6 +116,20 @@ sites, 8 music sites, channel helpers).
    `flies` / `whisper` + `infest_throb`, same SAFE_SCENES-at-3 rule as
    the decals. The post-King `world_emptied` path skips the pass, so
    the emptied world goes acoustically dead along with its people.
+6. **Door foley was a raw saw sweep.** Now real wood: `door_open` is
+   a latch ping + a rising stick-slip hinge creak (the `wood_creak`
+   friction trick, brighter and shorter); `door_close` is a swing of
+   air, the frame thud, and the latch catching.
+7. **UI cues were chiptune squares/triangles.** Now soft sine pairs
+   (`_build_ui_tone`: fundamental + a quiet partial, eased attack).
+   The pitch grammar is unchanged — open above close, confirm a warm
+   fifth, cancel low — only the timbre moved. Dialog voice blips were
+   left alone: they are character voices, not UI.
+8. **`child_hum` now does what its comment promised.** It rides
+   `Scene.add_ambient` in `CREEPY_SCENES` at a deliberately rare
+   50–95 s cadence (most visits hear it at most once), panned so it
+   drifts from somewhere — including down the well rooms. The scripted
+   forest_path beat is untouched.
 
 **Healthy, verified, leave alone:**
 
@@ -130,19 +144,8 @@ sites, 8 music sites, channel helpers).
 - Ducking, silence windows, king-tone hygiene (faded the frame he
   dissolves) all behave.
 
-**Known opportunities (deferred, in rough priority order):**
+**Known opportunities (deferred):**
 
-- Door foley (`door_open`/`door_close`) is still a raw saw sweep — the
-  weakest remaining cue. A creak (descending narrow-band noise) +
-  latch transient would carry the house scenes better.
-- UI cues (`cursor`/`confirm`/`menu_*`) are bright square/triangle
-  blips — chiptune-adjacent against an otherwise organic palette.
-  Acceptable as non-diegetic UI, but a softer filtered take would sit
-  better.
 - `Enemy.shoot_sfx` is plumbed (`game.py` plays it panned/attenuated)
   but no enemy sets it — dormant, not dead. If a shooting enemy is
   ever added the wiring is ready.
-- `child_hum`'s builder comment promises random scheduling in creepy
-  scenes; in reality it's a single scripted forest_path beat. Now that
-  `Scene.add_ambient` exists, wiring it for real is a one-liner — but
-  it's a design call (a kid humming is a strong card to play often).
