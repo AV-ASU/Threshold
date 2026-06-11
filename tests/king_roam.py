@@ -295,6 +295,40 @@ def test_portal_never_tears_in_safe_room():
     print("  OK  a portal never tears into a safe room")
 
 
+def test_portal_tears_underground():
+    # The descent rework (GAME_CHANGES 14): the Works/Depths are NOT
+    # KING_FREE -- pinning 100% underground still tears his rift in.
+    from systems.config import UNDERGROUND_SCENES, KING_FREE_SCENES
+    g = _boot("well_bottom")
+    _arm_elsewhere(g)
+    g.load_scene_now("well_bottom")
+    assert g.scene.key in UNDERGROUND_SCENES
+    assert g.scene.key not in KING_FREE_SCENES
+    steps = int(PORTAL_CHARGE_TIME / 0.1) + 3
+    for _ in range(steps):
+        g.visibility = 1.0                # held pinned
+        g._tick_king_roam(0.1)
+    assert g._portal is not None, "a portal must tear into the underground"
+    print("  OK  pinned 100% underground still tears his portal in")
+
+
+def test_no_pathing_underground():
+    # His AI never PATHS underground: the roam domain holds no
+    # underground room, and the grove's descent fold (target
+    # well_bottom) releases him rather than carrying him down.
+    from systems.config import UNDERGROUND_SCENES
+    assert not (KING_ROAM_SCENES & UNDERGROUND_SCENES), \
+        "the roam domain must hold no underground scene"
+    g = _boot("effigy_grove")
+    _arm(g)
+    g._roam_king.update(armed=True, state="hunting", scene=g.scene.key)
+    g._tick_king_roam(0.05)               # concrete in the grove
+    g._note_king_follow(("well_bottom", "from_grove"))
+    assert g._roam_king["scene"] == "effigy_grove", \
+        "the descent fold must release him (he never follows below)"
+    print("  OK  the descent fold releases him; the roam domain stays surface")
+
+
 def test_portal_cross_jukes_and_clears():
     g = _boot()
     _arm_elsewhere(g)
@@ -333,5 +367,7 @@ if __name__ == "__main__":
     test_portal_cancels_on_vis_drop()
     test_portal_brings_him_through()
     test_portal_never_tears_in_safe_room()
+    test_portal_tears_underground()
+    test_no_pathing_underground()
     test_portal_cross_jukes_and_clears()
     print("All roaming-King guards held.")
