@@ -555,9 +555,10 @@ finishes it: over the dead fire stands a rift that **clarifies as
 evidence mounts** (the meter), and at 3, with the Invitation in hand,
 the PI performs the rite — he **consciously re-enters his one, year-old
 dream** (the full door-dream, a pure cutscene; the journal only ever
-*flashes* the memory) and finally answers the door. The ground opens as
-a **throat** (the rift family's once-only presentation) and lands you at
-the bottom of the well shaft. **The circle then holds you:** the grove's
+*flashes* the memory) and finally answers the door. The standing rift
+over the fire **tears fully open** (the same pane as every fold; one
+family, one presentation) and lands you at the bottom of the well
+shaft. **The circle then holds you:** the grove's
 surface exits refuse, and the shaft-floor pane answers only **His
 face** — *keyed* to the Mask, never one-way (one-way stays the King's
 signature). Surfacing with the Mask seals the descent at your back and
@@ -929,7 +930,7 @@ finds you — run it on cover, timing, and breaking their line of sight).
 | 7 | **The Deepest Face** | `works_deepstair` | The dig's END — the cult's testimony left "a few feet of earth"; there is no stair, no gate. With the **Mask in hand** (the sweep finished) and **powder from the Sump**, a two-press charge **blasts the floor through into the old workings**: the FALL into `depths_antechamber` is the one-way step. The Mask is **not consumed** — carried down and spent at the Threshold door. |
 
 **Rules wired:**
-- **One way down:** the grove rite's throat only; the barn cellar hatch
+- **One way down:** the grove rite's opened pane only; the barn cellar hatch
   stays sealed (`scenes/interiors.py`). The shaft-floor return pane is
   **keyed to the Mask** (never one-way); crossing it up seals the
   descent (`descent_sealed`, the SPREAD lock).

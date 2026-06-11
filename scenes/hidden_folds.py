@@ -44,9 +44,10 @@ def build_effigy_grove():
     clarifying with the evidence count (fold_charge_fn, the meter). At 3
     evidence with the Invitation, THE RITE (E at the fire, two-press)
     plays the FULL door-dream (begin_rite_dream, cutscene only); on
-    completion the ground opens as the THROAT (fold_style_fn) and the
-    CIRCLE HOLDS: the maze return ('G') and the school pane ('M') refuse
-    while the way down lives. The way home (well_bottom's pane) answers
+    completion the pane tears OPEN (the regular standing rift; one
+    presentation, one family) and the CIRCLE HOLDS: the maze return
+    ('G') and the school pane ('M') refuse while the way down lives --
+    the seal is DISCOVERED, never announced. The way home (well_bottom's pane) answers
     only His face; surfacing with the Mask sets descent_sealed (the
     SPREAD lock) and the circle lets go."""
     W, H = 26, 19
@@ -120,9 +121,10 @@ def build_effigy_grove():
             if game.save.flag("descent_sealed"):
                 return 0.0
             if game.save.flag("rite_performed"):
-                # The throat, opening over a few seconds after the dream
-                # (the wave from the circle's centre); 1.0 on later loads.
-                t0 = getattr(game, "_throat_t0", None)
+                # The pane, tearing fully open over a few seconds after
+                # the dream; 1.0 on later loads. (The REGULAR standing
+                # rift pane: the rift family has one presentation.)
+                t0 = getattr(game, "_rite_fold_t0", None)
                 if t0 is None:
                     return 1.0
                 import pygame as _pg
@@ -182,21 +184,11 @@ def build_effigy_grove():
         return True
     sc.exit_gate_fn = _gate
 
-    def _style(game, ch):
-        # The rite's once-only presentation (PORTALS.md): after the
-        # dream the descent fold stops being a standing pane and is the
-        # ground itself, opened -- the throat.
-        if (ch == "O" and game.save.flag("rite_performed")
-                and not game.save.flag("descent_sealed")):
-            return "throat"
-        return None
-    sc.fold_style_fn = _style
-
     # ---- THE RITE (E at the dead fire) ----
     # Two-press commit (never a lone-press point of no return; the
     # Deep Stair lesson): the first press lays the stakes out in
     # sensation, the second begins the FULL door-dream (a pure
-    # cutscene). Completion opens the throat and keys the way home to
+    # cutscene). Completion tears the pane open and keys the way home to
     # His face. Re-armed on every scene exit.
     sc._rite_pos = (13 * TILE + 16, 8 * TILE + 16)
     sc.add_interactable(sc._rite_pos[0], sc._rite_pos[1], 44)
@@ -232,9 +224,7 @@ def build_effigy_grove():
                 "way a room leans toward an open window.)[/c]",
                 "[c=dim]You know what this is. You stood in front of it "
                 "once, a year ago, asleep, and you did not answer.[/c]",
-                "[c=dim](Press again to close your eyes. The circle will "
-                "keep you after. Whatever goes down here does not come "
-                "back up the same way.)[/c]",
+                "[c=dim](Press again to close your eyes.)[/c]",
             ], speaker="", voice="blip_soft", portrait="narrator")
             return
         game.begin_rite_dream()

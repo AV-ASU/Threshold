@@ -541,9 +541,6 @@ class RenderMixin:
         fn = getattr(self.scene, "fold_charge_fn", None)
         if fn is not None:
             face["charge"] = fn(self, face.get("char"))
-        sfn = getattr(self.scene, "fold_style_fn", None)
-        if sfn is not None:
-            face["style"] = sfn(self, face.get("char"))
 
     def _draw_folds(self):
         """Composite every seen fold in the current scene -- a one-sided peek

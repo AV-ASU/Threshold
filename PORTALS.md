@@ -134,13 +134,12 @@ pass (NARRATIVE.md §11 "One phenomenon, two presentations"):
   then permanent). Folds stay two-way until they DIE or are **KEYED**
   (the shaft-floor pane answers only the Mask after the grove rite) —
   never one-way (the King keeps his signature).
-- **The THROAT (the rite's once-only presentation, 2026-06).** After the
-  grove rite the descent fold stops being a standing pane: the ground
-  itself opens — `draw_rift_throat` (`rendering/portal.py`) projects a
-  world-space ring point by point (a true floor ellipse under tilt;
-  NEVER a vertical cylinder, which pinches at the side tangents) and
-  steps it down as a gold-rimmed throat with the family's crackling rim.
-  Dispatched per-fold via `Scene.fold_style_fn` → `face["style"]`. Used
-  exactly once, at the grove; everything else keeps the anchored pane.
+- **The rift family keeps ONE presentation (decision re-affirmed,
+  2026-06).** A "throat" ground-opening variant was prototyped for the
+  grove rite and CUT the same day: the rite's open descent is the same
+  regular standing pane as every other fold, torn fully open. If a
+  ground-anchored presentation is ever revisited, project a world-space
+  ring point by point (a floor ellipse under tilt) — never a vertical
+  cylinder, which pinches at the side tangents.
 
 Live proof sheet: `tools/preview_rift_anchored.py`.
