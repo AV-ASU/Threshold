@@ -76,7 +76,8 @@ the pause menu (`set_volumes`). Single-session, like the save model.
 | infestation (`infest_mixin`) | `infest_throb` per stage transition; `sheriff_hunt` on the hollow lawman's spawn + chase start |
 | deaths (`_trigger_death`) | `captured_bed` (cult), `custody_bed` (sheriff), Carcosa drone/roar loops (King) |
 | case file (`narrative_mixin`) | `evidence_added` (canonical evidence only), `arg_chime` (notes) |
-| scenes (`scenes/depths.py _ambient`) | per-room timed ambients (`cult_chant`, `cult_breath`, `low_pulse`, `heartbeat`) |
+| recurring one-shots (`Scene.add_ambient`) | the scheduler: each entry fires every lo..hi s (re-rolled per fire) with volume jitter and a random pan within `pan_spread`. Ticked by `Scene.update`; additive, never clobbers `on_update_fn`. The depths/well rooms author theirs in the builders (`_ambient` helper); the surface gets them from the air pass below |
+| infestation air (`infest_mixin._apply_ambient_air`) | the audible twin of the decal pass, applied on every scene load. Interiors (`music == "home"`) always carry the LIVING HOUSE base (`wood_creak` + rare `wood_pop`, panned); rot layers escalate with stage: `drip` at 1, `flies` at 2, `whisper` + `infest_throb` at 3. Outdoor scenes gain only the rot layers (the wind carries them otherwise). SAFE_SCENES stay clean until stage 3 (decal rule); underground and void scenes are skipped (authored / silent by design) |
 | pursuer dressing | `breath`, `phantom_step`, `child_hum` in creepy scenes; every 12th creepy-tile step is delayed 0.12 s (the wrongness in the rhythm) |
 
 Dialog voices: per-NPC blip names on `ui/dialog.py` (`blip_low/mid/
@@ -104,6 +105,17 @@ sites, 8 music sites, channel helpers).
    generic scene-reverb dispatch; the gunshot now rides it too, and the
    delayed-audio drain routes everything through it (safe: it falls
    back to dry when no variant exists).
+4. **Surface interiors were acoustically flat.** The `_ambient`
+   one-shot trick existed only underground. Now the scheduler is a
+   first-class `Scene.add_ambient` (list-based, so cues stack and
+   `on_update_fn` stays free), and every wooden interior gets the
+   living-house base layer (`wood_creak`, `wood_pop`) from evidence 0.
+5. **The ambience didn't rot with the world.** The visual infestation
+   had no audible twin. `_apply_ambient_air` (in the infestation pass,
+   every scene load) now escalates the air with the stage: `drip` /
+   `flies` / `whisper` + `infest_throb`, same SAFE_SCENES-at-3 rule as
+   the decals. The post-King `world_emptied` path skips the pass, so
+   the emptied world goes acoustically dead along with its people.
 
 **Healthy, verified, leave alone:**
 
@@ -130,5 +142,7 @@ sites, 8 music sites, channel helpers).
 - `Enemy.shoot_sfx` is plumbed (`game.py` plays it panned/attenuated)
   but no enemy sets it — dormant, not dead. If a shooting enemy is
   ever added the wiring is ready.
-- The `whisper` cue is only used twice; the formant band-pass work in
-  `_build_whisper` could carry more of the late-game surface dread.
+- `child_hum`'s builder comment promises random scheduling in creepy
+  scenes; in reality it's a single scripted forest_path beat. Now that
+  `Scene.add_ambient` exists, wiring it for real is a one-liner — but
+  it's a design call (a kid humming is a strong card to play often).

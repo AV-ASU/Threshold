@@ -238,6 +238,17 @@ class Audio:                        #Starting screen needs music, something simp
         self.sfx["infest_throb"]   = self._build_infest_throb()
         self.sfx["evidence_added"] = self._build_evidence_added()
         self.sfx["sheriff_hunt"]   = self._build_sheriff_hunt()
+        # ---- Living-house + rot-air ambients -------------------------
+        # The surface ambience layer. Interiors carry a quiet stick-
+        # slip creak + a rare knock (Scene.add_ambient schedules them);
+        # the air then rots with the infestation stage -- drips at 1,
+        # flies at 2, whisper + structural groan at 3 (wired in
+        # InfestationMixin._apply_ambient_air on every scene load).
+        self.sfx["wood_creak"] = self._build_wood_creak()
+        self.sfx["wood_pop"]   = g(150, 90, 0.20, "sine", attack_ms=1,
+                                   decay_ms=70, noise_mix=0.35)
+        self.sfx["drip"]       = self._build_drip()
+        self.sfx["flies"]      = self._build_flies()
 
         # ---- DSP atmosphere pass --------------------------------------
         # Route the horror SFX through the dsp reverb + filter toolkit so
@@ -954,6 +965,119 @@ class Audio:                        #Starting screen needs music, something simp
             stereo[i * 4 + 1] = buf[i * 2 + 1]
             stereo[i * 4 + 2] = buf[i * 2]
             stereo[i * 4 + 3] = buf[i * 2 + 1]
+        return pygame.mixer.Sound(buffer=bytes(stereo))
+
+    def _build_wood_creak(self, duration_ms=750, vol=0.30):
+        """An old joist easing -- stick-slip friction. A narrow tone
+        sinking 260 -> 110 Hz with a slow wobble and a coarse grain
+        flutter (the slip is uneven), over a faint smoothed-noise
+        body. Quiet by design: it plays under the home drone at the
+        edge of attention, panned randomly so the house creaks from
+        somewhere."""
+        sr = 22050
+        n = int(sr * duration_ms / 1000)
+        dur_s = duration_ms / 1000.0
+        buf = bytearray(n * 2)
+        phase = 0.0
+        smooth = 0.0
+        grain = 0.0
+        for i in range(n):
+            t = i / sr
+            ramp = i / n
+            smooth = 0.92 * smooth + 0.08 * random.uniform(-1, 1)
+            # Sinking pitch with wobble + noise jitter, integrated so
+            # the bend glides without zipper artefacts.
+            f = (260.0 - 150.0 * ramp
+                 + 16.0 * math.sin(2 * math.pi * 6.3 * t)
+                 + smooth * 14.0)
+            phase += 2 * math.pi * max(60.0, f) / sr
+            tone = math.sin(phase)
+            # Grain flutter: barely-smoothed noise gating the tone.
+            grain = 0.55 * grain + 0.45 * random.uniform(-1, 1)
+            gate = 0.62 + 0.38 * grain
+            if t < 0.12:
+                env = t / 0.12
+            elif t > dur_s - 0.25:
+                env = max(0.0, (dur_s - t) / 0.25)
+            else:
+                env = 1.0
+            v = (tone * gate * 0.80 + smooth * 0.18) * env
+            sample = max(-32768, min(32767, int(max(-1.0, min(1.0, v))
+                                                * vol * 32767)))
+            buf[i * 2]     = sample & 0xFF
+            buf[i * 2 + 1] = (sample >> 8) & 0xFF
+        stereo = bytearray(n * 4)
+        for i in range(n):
+            stereo[i * 4]     = stereo[i * 4 + 2] = buf[i * 2]
+            stereo[i * 4 + 1] = stereo[i * 4 + 3] = buf[i * 2 + 1]
+        return pygame.mixer.Sound(buffer=bytes(stereo))
+
+    def _build_drip(self, duration_ms=190, vol=0.30):
+        """A single wet drip. The classic plink: a short sine whose
+        pitch RISES 950 -> 1500 Hz as the droplet's cavity closes,
+        over a tiny low plop at the front. Stage-1 rot air."""
+        sr = 22050
+        n = int(sr * duration_ms / 1000)
+        buf = bytearray(n * 2)
+        phase = 0.0
+        for i in range(n):
+            t = i / sr
+            ramp = i / n
+            f = 950.0 + 550.0 * ramp * ramp
+            phase += 2 * math.pi * f / sr
+            plink = math.sin(phase) * math.exp(-t / 0.060)
+            plop = math.sin(2 * math.pi * 180 * t) * math.exp(-t / 0.020) * 0.5
+            env = min(1.0, t / 0.002)
+            if i > n - 60:
+                env *= max(0.0, (n - i) / 60)
+            v = (plink + plop) * env
+            sample = max(-32768, min(32767, int(max(-1.0, min(1.0, v))
+                                                * vol * 32767)))
+            buf[i * 2]     = sample & 0xFF
+            buf[i * 2 + 1] = (sample >> 8) & 0xFF
+        stereo = bytearray(n * 4)
+        for i in range(n):
+            stereo[i * 4]     = stereo[i * 4 + 2] = buf[i * 2]
+            stereo[i * 4 + 1] = stereo[i * 4 + 3] = buf[i * 2 + 1]
+        return pygame.mixer.Sound(buffer=bytes(stereo))
+
+    def _build_flies(self, duration_ms=2200, vol=0.26):
+        """A knot of flies passing. Two detuned voices (saw softened
+        with a sine at the same phase) whose pitches wander on a fast
+        random walk (the swerve), amplitude-fluttered ~24 Hz (the
+        wingbeat), under a swell-in / swell-out envelope so the swarm
+        drifts near and away rather than switching on. Stage-2 rot
+        air, indoors and out."""
+        sr = 22050
+        n = int(sr * duration_ms / 1000)
+        dur_s = duration_ms / 1000.0
+        buf = bytearray(n * 2)
+        f1, f2 = 168.0, 233.0
+        p1 = p2 = 0.0
+        smooth = 0.0
+        for i in range(n):
+            t = i / sr
+            f1 = min(260.0, max(120.0, f1 + random.uniform(-0.9, 0.9)))
+            f2 = min(330.0, max(170.0, f2 + random.uniform(-1.1, 1.1)))
+            p1 += 2 * math.pi * f1 / sr
+            p2 += 2 * math.pi * f2 / sr
+            v1 = (2.0 * ((p1 / (2 * math.pi)) % 1.0) - 1.0) * 0.5 \
+                + math.sin(p1) * 0.5
+            v2 = (2.0 * ((p2 / (2 * math.pi)) % 1.0) - 1.0) * 0.5 \
+                + math.sin(p2) * 0.5
+            flutter = 0.62 + 0.38 * math.sin(
+                2 * math.pi * 24 * t + 1.7 * math.sin(2 * math.pi * 3 * t))
+            swell = math.sin(math.pi * min(1.0, t / dur_s)) ** 1.5
+            smooth = 0.80 * smooth + 0.20 * random.uniform(-1, 1)
+            v = ((v1 * 0.55 + v2 * 0.40) * flutter + smooth * 0.08) * swell
+            sample = max(-32768, min(32767, int(max(-1.0, min(1.0, v))
+                                                * vol * 32767)))
+            buf[i * 2]     = sample & 0xFF
+            buf[i * 2 + 1] = (sample >> 8) & 0xFF
+        stereo = bytearray(n * 4)
+        for i in range(n):
+            stereo[i * 4]     = stereo[i * 4 + 2] = buf[i * 2]
+            stereo[i * 4 + 1] = stereo[i * 4 + 3] = buf[i * 2 + 1]
         return pygame.mixer.Sound(buffer=bytes(stereo))
 
     def _build_gunshot(self, duration_ms=850, vol=0.50):
