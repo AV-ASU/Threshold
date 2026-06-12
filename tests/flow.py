@@ -413,6 +413,14 @@ def main():
     check("Nothing leaves Brimley again" in seal_text
           and "Not the hunger" in seal_text and "Not you" in seal_text,
           "threshold: SEAL ending is authored (canonical close present)")
+    # Canon (2026-06): the SEAL warps the cult-bent ground whole into
+    # Carcosa; the map's edges grow together and Brimley simply was. No
+    # "hole in the map" / blank-spot language.
+    check("Carcosa" in seal_text and "Brimley simply was" in seal_text,
+          "threshold: SEAL canon (warped into Carcosa; Brimley simply was)")
+    check("hole in the map" not in seal_text
+          and "roads decline" not in seal_text,
+          "threshold: SEAL carries no dead hole-in-the-map language")
     # The door seals ONLY to the keystone: empty-handed, it does not fire.
     gnokey = new_game()
     gnokey.load_scene_now("threshold")

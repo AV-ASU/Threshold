@@ -1686,10 +1686,12 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
              "way you came.", 3.0),
             ("Above you the long fall closes over. Then the Works. Then "
              "the fold in the grove.", 3.0),
-            ("Brimley folds the rest of the way closed, around the "
-             "hunger, and around you.", 3.4),
-            ("On every map after tonight the town is a blank, a place the "
-             "roads decline to reach.", 3.6),
+            ("Brimley goes with it, every acre the cult bent, warped "
+             "whole into Carcosa, around the hunger, and around you.", 3.6),
+            ("And at the edges the county grows together. Road meets "
+             "road, field meets field, across where a town stood.", 3.6),
+            ("No blank on any map. No missing town. Brimley simply "
+             "was.", 3.4),
             ("It is done. Nothing leaves Brimley again.", 3.4),
             ("Not the hunger. Not you.", 4.0),
         ],
