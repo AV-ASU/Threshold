@@ -325,6 +325,10 @@ it renders the procedural sprites to a labelled PNG strip.
 
 ## Working agreements (process — learned the hard way)
 
+- **"Push to main" MEANS MERGE TO MAIN.** When the maintainer says "push to
+  main" / "PR and push to main", that is an instruction to open the PR **and
+  merge it into `main`** in the same action — not to stop after creating the
+  PR and ask. Don't ask for a second confirmation.
 - **Verify before you commit.** Run compile + `python tests/run_all.py` (the
   full gate: smoke + flow + fold_pursuit + king_roam + render_smoke) and confirm green
   BEFORE `git commit`/`push`. A commit was pushed twice this project with a

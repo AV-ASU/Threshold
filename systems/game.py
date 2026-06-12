@@ -18,6 +18,7 @@ from rendering.sprites import (draw_player_sprite, draw_npc_sprite,
                                view_from_facing, KING_UNFOLD,
                                KING_UNFOLD_SCALE)
 from rendering.king_unfold import draw_unfold_catch
+from rendering.spread_drive import SPREAD_BEAT_DURS
 from rendering.transform import draw_vessel_bloom
 from rendering.camera import Camera
 from systems.look_control import LookController
@@ -1671,20 +1672,30 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
     # ---- Endings ----
 
     # Ending scripts. Each is a list of (line, duration_seconds).
-    # escape_alone is the SPREAD IT ending -- drive out with the Sign, the
-    # only thing the fold opens for (NARRATIVE §1/§6). seal_threshold
+    # escape_alone is the SPREAD IT ending -- the drive-out CUTSCENE (the
+    # claiming, lines locked 2026-06): the engine answers the mask, the
+    # mask turns in the passenger seat, the PI answers the gaze his one
+    # dream broke off a year ago, and what he longed for most -- to FEEL
+    # -- floods in as he crosses out. The visuals live in
+    # rendering/spread_drive.py; the durations come from its beat table
+    # so the captions and the picture can never drift. seal_threshold
     # (END IT) closes the Threshold on Brimley and on you (NARRATIVE §6).
     _ENDING_SCRIPTS = {
-        "escape_alone": [
-            ("You turn the key. The engine turns over.", 2.6),
-            ("And over. The way it has every time before.", 2.6),
-            ("Then, with the Sign beside you, it catches.", 3.0),
-            ("You drive out, past the corn that never ended.", 3.2),
-            ("The radio hunts between stations, all the way south. Under "
-             "the static, the same hiss as the open line in town.", 3.6),
-            ("You got out. You're the only one who ever has.", 3.4),
-            ("Everyone will understand why, soon.", 3.8),
-        ],
+        "escape_alone": list(zip((
+            "You turn the key and the engine roars to life.",
+            "You drive down the highway further than you could before, "
+            "and near the edge of Brimley.",
+            "The mask shifts in the seat, as if to look at you.",
+            "You gaze into the mask's deep sunken eyes.",
+            "And for the first time in twenty years, you feel. All of it, "
+            "all at once. You have to stop the car because you are "
+            "laughing, or weeping. You can't tell. You don't care. "
+            "It's back.",
+            "When you drive on, your hands are steady and the road south "
+            "is wide open. For the first time in your life, you know "
+            "exactly where you are going.",
+            "Everyone will know.",
+        ), SPREAD_BEAT_DURS)),
         # The approved SEAL text (2026-06). It plays AFTER the live warp
         # (the threshold scene pours through the doorframe around you,
         # scenes/depths.py) and hands off to the wordless wide-shot

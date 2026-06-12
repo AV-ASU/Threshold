@@ -80,6 +80,36 @@ def check_vignette_paints(g):
     return errors
 
 
+def check_ending_cutscenes(g):
+    """_draw_ending across every authored ending at sampled timestamps.
+    The endings are bespoke draw code (the SPREAD drive-out, the Carcosa
+    tableau) that nothing else exercises; sample each at several points
+    through its run and fail on any exception."""
+    errors = 0
+    for name in ("escape_alone", "seal_threshold", "rite_broken"):
+        script = g._ENDING_SCRIPTS[name]
+        total = sum(d for _, d in script)
+        g._ending_active = name
+        for frac in (0.02, 0.18, 0.34, 0.5, 0.66, 0.82, 0.97):
+            t = total * frac
+            ph, pt = len(script) - 1, max(0.0, script[-1][1] - 0.01)
+            acc = t
+            for i, (_, d) in enumerate(script):
+                if acc < d:
+                    ph, pt = i, acc
+                    break
+                acc -= d
+            g._ending_phase, g._ending_phase_t = ph, pt
+            try:
+                g._draw_ending()
+            except Exception as e:
+                errors += fail(f"_draw_ending {name} t={t:.1f}: {e!r}")
+    g._ending_active = None
+    g._ending_phase = 0
+    g._ending_phase_t = 0.0
+    return errors
+
+
 def main():
     g = Game()
     g.save.new()
@@ -87,10 +117,12 @@ def main():
     g._start_play()
 
     failures = 0
-    print("[1/2] draw pipeline across scenes ...")
+    print("[1/3] draw pipeline across scenes ...")
     failures += check_draw_pipeline(g)
-    print("[2/2] core vignette overlays paint ...")
+    print("[2/3] core vignette overlays paint ...")
     failures += check_vignette_paints(g)
+    print("[3/3] ending cutscenes draw ...")
+    failures += check_ending_cutscenes(g)
 
     if failures:
         print(f"\n{failures} failure(s).")
