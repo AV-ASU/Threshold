@@ -1684,8 +1684,8 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         "seal_threshold": [
             ("The frame drinks it down: the smoke, the sound, the long "
              "way you came.", 3.0),
-            ("Above you the stair grinds shut. Then the Works. Then the "
-             "well.", 3.0),
+            ("Above you the long fall closes over. Then the Works. Then "
+             "the fold in the grove.", 3.0),
             ("Brimley folds the rest of the way closed, around the "
              "hunger, and around you.", 3.4),
             ("On every map after tonight the town is a blank, a place the "
