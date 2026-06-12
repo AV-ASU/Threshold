@@ -642,13 +642,42 @@ def build_threshold():
             _log_doorframe()
     sc.on_enter_fn = _threshold_on_enter
 
-    def _threshold_seal(game):
-        """Walking THROUGH the empty frame is the seal. Carried the keystone (the
-        Pallid Mask) down? Stepping into the door, pressing yourself + it into the
-        frame, ends it (the SEAL ending) and consumes the Mask. Without it the
-        frame is only a frame -- you stand on the far side and nothing happens (it
-        never opens; NARRATIVE 1b)."""
-        if getattr(game, "_ending_active", None):
+    # The SEAL: walking THROUGH the empty frame carrying the keystone (the
+    # Pallid Mask). The crossing plays as LIVE ACTION first: you go through,
+    # and the world FOLLOWS you -- the cave's own dressing tears loose and
+    # pours through the frame, then foreign things stream in from beyond
+    # the dark (brush, the houses' insides, a pew, the town's NAME, last
+    # through before the door slams) -- every acre the cult bent, funneling
+    # through the one door. Then the approved black-screen lines + the
+    # wordless tableau take over (_play_ending("seal_threshold")). Without
+    # the Mask the frame is only a frame; it never opens (NARRATIVE 1b).
+    SEAL_WARP_DUR = 4.8
+    _WARP_FOREIGN = [
+        (1.60, "bush"), (1.75, "tall_grass"), (1.90, "firewood"),
+        (2.05, "grass_tuft"), (2.20, "crate"), (2.35, "barrel"),
+        (2.50, "chair"), (2.65, "kerosene_lamp"), (2.80, "corn_doll"),
+        (2.95, "wheelbarrow"), (3.10, "calendar"), (3.25, "photo"),
+        (3.40, "radio"), (3.55, "doll"), (3.70, "stalk_marker"),
+        (3.85, "pew"), (4.05, "town_sign"),
+    ]
+
+    def _begin_seal_warp(game, scene):
+        rng = random.Random(417)
+        pending = [(rng.uniform(0.25, 2.0), d) for d in scene.decorations
+                   if d.kind != "doorframe"]          # the door itself stays
+        game._seal_warp = {
+            "t": 0.0, "door": (lintel_x, lintel_y - 2),
+            "pending": sorted(pending, key=lambda e: e[0]),
+            "flights": [], "foreign": list(_WARP_FOREIGN), "rng": rng,
+        }
+        game._closure_locked = True                   # he has crossed; hold
+        game.audio.force_silence()
+        game.audio.play("arg_chime", 0.7)
+        game.audio.flashback_air(True)                # the falling-air bed
+
+    def _threshold_seal(game, scene):
+        if (getattr(game, "_ending_active", None)
+                or getattr(game, "_seal_warp", None)):
             return                                    # already sealing
         p = game.player
         if p is None:
@@ -663,20 +692,59 @@ def build_threshold():
                                  "in the same room. It is only a frame, and "
                                  "cold.")
             return
-        game.audio.force_silence()
-        game.audio.play("arg_chime", 0.7)
-        inv.remove("sigil_rubbing", 1)
-        game.dialog.show([
-            "[c=dim](You step into the frame. His face, the keystone you carried "
-            "all this way, you press into the door with the last of you.)[/c]",
-            "[c=dim](The frame takes it. Nothing of His is left in your hands "
-            "now. Nothing to give it but the rest of you.)[/c]",
-            "[s=slow][c=dim]...and it goes still.[/c][/s]",
-        ], speaker="", voice="blip_soft", portrait="narrator")
+        inv.remove("sigil_rubbing", 1)                # spent at the door
         _evidence(game, "the_seal", "It is done.")
-        game._play_ending("seal_threshold")
+        _begin_seal_warp(game, scene)
+
+    def _tick_seal_warp(game, scene, sw, dt):
+        """Drive the live warp: launch the room's dressing, stream in the
+        world beyond, fly every flight into the frame (accelerating,
+        shrinking, gone), then hand off to the ending."""
+        sw["t"] = t = sw["t"] + dt
+        dx, dy = sw["door"]
+        rng = sw["rng"]
+        while sw["pending"] and sw["pending"][0][0] <= t:
+            _, d = sw["pending"].pop(0)
+            dur = max(0.35, min(0.95,
+                                math.hypot(d.x - dx, d.y - dy) / 420.0))
+            sw["flights"].append({"d": d, "sx": d.x, "sy": d.y,
+                                  "t0": t, "dur": dur, "s0": d.scale})
+        while sw["foreign"] and sw["foreign"][0][0] <= t:
+            _, kind = sw["foreign"].pop(0)
+            ang = rng.uniform(0, math.tau)
+            rad = rng.uniform(240, 380)
+            d = Decoration(dx + math.cos(ang) * rad,
+                           dy + math.sin(ang) * rad, kind)
+            scene.decorations.append(d)
+            sw["flights"].append({"d": d, "sx": d.x, "sy": d.y,
+                                  "t0": t, "dur": rng.uniform(0.45, 0.7),
+                                  "s0": d.scale})
+        done = []
+        for f in sw["flights"]:
+            p = (t - f["t0"]) / f["dur"]
+            if p >= 1.0:
+                done.append(f)
+                continue
+            e = p * p                                 # ease-in: the suck
+            f["d"].x = f["sx"] + (dx - f["sx"]) * e
+            f["d"].y = f["sy"] + (dy - f["sy"]) * e
+            f["d"].scale = f["s0"] * (1.0 - 0.75 * e)
+        for f in done:
+            sw["flights"].remove(f)
+            if f["d"] in scene.decorations:
+                scene.decorations.remove(f["d"])
+            if rng.random() < 0.35:
+                game.audio.play("bump", 0.16)
+        if t >= SEAL_WARP_DUR:                        # the room is bare
+            game._seal_warp = None
+            game.audio.flashback_air(False)
+            game._play_ending("seal_threshold")
 
     def _threshold_update(game, scene, dt):
-        _threshold_seal(game)
+        sw = getattr(game, "_seal_warp", None)
+        if sw is not None:
+            _tick_seal_warp(game, scene, sw, dt)
+        else:
+            _threshold_seal(game, scene)
     sc.on_update_fn = _threshold_update
     return sc

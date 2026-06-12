@@ -5,10 +5,9 @@ import pygame
 from constants import C_BLACK
 from rendering.sprites_king import (
     _yk_face, _yk_mask, _yk_orb_faces, _yk_orb_glow, _yk_radial,
-    _yk_shatter_mask, _yk_spire,
+    _yk_shatter_mask, _yk_spire, door_mask_surface,
     _YK_GOLD, _YK_HOT, _YK_SHADOW,
 )
-from rendering.sprites_player import draw_player_sprite
 
 
 # ---------------------------------------------------------------------------
@@ -937,426 +936,206 @@ def draw_carcosa(surf, t, mode="spread"):
 
 
 # ---------------------------------------------------------------------------
-# The SEAL ending -- the PI and the Mask go THROUGH the door, and the frame
-# drinks them both down (NARRATIVE §6). Three drawn acts, then black:
-#   1. THE DRINK [0, SEAL_T_WARP): the PI, back to us, walks up into the
-#      waiting doorway carrying the keystone; the frame takes them at the
-#      threshold, and the gold light drains down after them -- the
-#      rite-dream run in reverse (the eyes close, the glow pulls inward)
-#      while the way he came grinds shut overhead in three receding jolts.
-#   2. THE WARP [SEAL_T_WARP, SEAL_T_MAP): the inversion of the Carcosa
-#      detonation -- everything the cult bent is pulled INTO a contracting
-#      point, the taken's masks spiralling inward, and the place winks out.
-#   3. THE MAP [SEAL_T_MAP, SEAL_T_BLACK): the PI's county map; the roads
-#      grow together across where the town stood, the marks and the name
-#      fade unwritten. Brimley simply was.
-# The act boundaries mirror the seal_threshold script durations in
-# systems/game.py (_ENDING_SCRIPTS): lines 1-2 drive act 1, line 3 act 2,
-# lines 4-5 act 3; ui/cutscenes.py rides the lines under the visuals as
-# captions and lets the last two lines fall through to plain black.
+# The SEAL ending's wordless close -- THE WIDE SHOT (NARRATIVE §6): every
+# acre the cult bent, seen from high above, a torn slab suspended in a black
+# void under black stars and the twin suns. Behind it a towering figure
+# looms, almost all void itself; faint traces of gold gutter along a mask
+# that is part of an eldritch shape, almost visible, and coming closer.
+# Rage approaches.
+# The live warp (scenes/depths.py drives the real scene's dressing through
+# the doorframe) and the approved black-screen lines (_ENDING_SCRIPTS in
+# systems/game.py) play before it; this still is wordless by design --
+# ui/cutscenes.py draws it for the script's final empty line.
 # ---------------------------------------------------------------------------
-SEAL_T_WARP = 6.0
-SEAL_T_MAP = 9.6
-SEAL_T_BLACK = 16.6
-SEAL_CLOSE_TS = (3.2, 4.3, 5.4)   # the long fall / the Works / the grove fold
+SEAL_TABLEAU_DUR = 8.0          # mirrors the script's final ("", 8.0) phase
 
 
 def _seal_clamp(x):
     return max(0.0, min(1.0, x))
 
 
-def _seal_frame(scene, left, top, dw, dh, post, glow, pulse):
-    """The Threshold's dried-oak frame (the dream door made real): two
-    too-slight uprights + the lintel, grain + dry cracks, with a warm rim
-    where the inside light still catches the jamb."""
-    base, grain, splitc = (104, 74, 46), (78, 52, 30), (44, 28, 16)
-    rng = random.Random(7)
-    for rx, rw, rh, ry in ((left, post, dh, top),
-                           (left + dw - post, post, dh, top)):
-        pygame.draw.rect(scene, base, (rx, ry, rw, rh))
-        for gi in range(3):
-            gx = rx + int((gi + 0.5) / 3 * rw) + rng.randint(-1, 1)
-            pygame.draw.line(scene, grain, (gx, ry + 2), (gx, ry + rh - 2), 1)
-        for _ in range(2):
-            cxx = rx + rng.randint(1, max(1, rw - 1))
-            y0 = ry + rng.randint(4, max(5, rh // 2))
-            y1 = min(ry + rh - 2, y0 + rng.randint(rh // 5, rh // 2))
-            pygame.draw.line(scene, splitc, (cxx, y0),
-                             (cxx + rng.randint(-1, 1), y1), 1)
-    pygame.draw.rect(scene, base, (left, top, dw, post))
-    for gi in range(int(dw / 14)):
-        gx = left + gi * 14 + 6
-        pygame.draw.line(scene, grain, (gx, top + 2), (gx, top + post - 2), 1)
-    if glow > 0.01:
-        rim = (min(255, int(250 * glow * pulse)),
-               min(255, int(206 * glow * pulse)),
-               min(255, int(120 * glow * pulse)))
-        ox, oy = left + post, top + post
-        ow = dw - 2 * post
-        bot = top + dh
-        pygame.draw.line(scene, rim, (ox, oy), (ox, bot - 1), 1)
-        pygame.draw.line(scene, rim, (ox + ow - 1, oy),
-                         (ox + ow - 1, bot - 1), 1)
-        pygame.draw.line(scene, rim, (ox, oy), (ox + ow - 1, oy), 1)
+_SEAL_MASK_EDGES = None
 
 
-def _seal_drink(surf, w, h, t):
-    """Act 1: the PI and the Mask go THROUGH the door. The dream doorway
-    stands waiting in the dark; he walks up into the light carrying the
-    keystone, the frame takes them both at the threshold, and the glow
-    drains down after them -- the dream run in reverse (the eyes close
-    and stay shut) while the way he came seals overhead slab by slab."""
-    wp = _seal_clamp(t / 2.7)                      # the walk to the frame
-    cross = _seal_clamp((t - 2.7) / 0.6)           # stepping through
-    drink = _seal_clamp((t - 3.0) / 2.9)           # the light going with him
-    flare = _seal_clamp(1.0 - abs(t - 3.0) / 0.4)  # the frame takes them
+def _seal_mask_edges(height):
+    """Edge-trace of the carved dream mask (door_mask_surface) -- the gold
+    contour lines the void figure's face gutters through. Built once."""
+    global _SEAL_MASK_EDGES
+    if _SEAL_MASK_EDGES is None or _SEAL_MASK_EDGES.get_height() != height:
+        card = door_mask_surface(height, 0.0, (0.0, 0.35), 11)
+        flat = pygame.Surface(card.get_size())
+        flat.fill((0, 0, 0))
+        flat.blit(card, (0, 0))
+        _SEAL_MASK_EDGES = pygame.transform.laplacian(flat)
+    return _SEAL_MASK_EDGES
+
+
+def draw_seal_tableau(surf, t):
+    """The wordless wide shot. `t` = seconds into the still: fade in, the
+    figure looms a breath closer across the whole hold, fade out to title."""
+    w, h = surf.get_size()
+    fade = min(_seal_clamp(t / 1.0),
+               _seal_clamp((SEAL_TABLEAU_DUR - t) / 0.9))
+    loom = _seal_clamp(t / SEAL_TABLEAU_DUR)      # one slow breath forward
     scene = pygame.Surface((w, h))
-    scene.fill((7, 6, 9))
+    scene.fill((3, 3, 5))
 
     cx = w // 2
-    dh = int(h * 0.55)
-    dw = int(dh * 0.48)
-    post = max(5, dw // 8)
-    top = int(h * 0.50 - dh / 2)
-    left = cx - dw // 2
-    bot = top + dh
-    ox, oy = left + post, top + post
-    ow, oh = dw - 2 * post, dh - post
+    isl_x = cx
+    isl_y = int(h * 0.66 + math.sin(t * 0.5) * 3)
+    hor_y = int(h * 0.80)
 
-    pulse = 0.45 + 0.55 * (0.5 + 0.5 * math.sin(t * (1.7 - 1.1 * drink)))
-    glow = min(1.4, (1.0 - 0.92 * drink) * pulse + 0.9 * flare)
+    # A band of not-quite-horizon far below, holding the twin suns.
+    band = pygame.Surface((w, h), pygame.SRCALPHA)
+    for i in range(30):
+        a = int(22 * (1 - i / 30))
+        pygame.draw.line(band, (30, 26, 36, a), (0, hor_y + i),
+                         (w, hor_y + i))
+    scene.blit(band, (0, 0))
+    for k, sx in enumerate((int(w * 0.15), int(w * 0.225))):   # the twin suns
+        sr = 11 - k * 3
+        gut = 0.75 + 0.25 * math.sin(t * 0.9 + k * 2.1)
+        pygame.draw.circle(scene, (int(170 * gut), int(128 * gut),
+                                   int(54 * gut)), (sx, hor_y), sr)
+        pygame.draw.rect(scene, (4, 4, 6),
+                         (sx - sr - 2, hor_y + 1, sr * 2 + 4, sr + 4))
+        for gr in range(3):                        # a thin peeking glow
+            pygame.draw.line(scene, (44 - gr * 10, 34 - gr * 8, 16 - gr * 4),
+                             (sx - sr - 6 - gr * 5, hor_y - 1 - gr),
+                             (sx + sr + 6 + gr * 5, hor_y - 1 - gr), 1)
 
-    if ow > 6 and oh > 6:
-        inner = pygame.Surface((ow, oh), pygame.SRCALPHA)
-        # The glow pools at the door's base where he enters, then recedes
-        # DOWN into the threshold after him -- swallowed, not spent.
-        fx = ow / 2
-        fy = oh * (0.80 + 0.16 * drink)
-        steps = 30
-        maxr = max(ow, oh) * 0.62 * (1.0 - 0.45 * drink)
-        for s_i in range(steps):
-            f = s_i / (steps - 1)
-            rr = maxr * (1.0 - f)
-            a = max(0, min(255, int((6 + 168 * f * f)
-                                    * (0.30 + 0.70 * glow))))
-            col = (246, 200 + int(38 * f), 70 + int(46 * f), a)
-            rect = pygame.Rect(0, 0, max(2, int(rr * 1.5)),
-                               max(2, int(rr * 1.62)))
-            rect.center = (int(fx), int(fy))
-            pygame.draw.ellipse(inner, col, rect)
-        # Inflow: motes of the light draining down after him.
-        if drink > 0.02:
-            for i in range(14):
-                u = _frand(i * 7 + 1)
-                sx0 = ow * (0.12 + 0.76 * _frand(i * 7 + 2))
-                sy0 = oh * (0.45 + 0.50 * u)
-                p = (t * (0.5 + 0.5 * u) + _frand(i * 7 + 3)) % 1.0
-                px = sx0 + (fx - sx0) * p
-                py = sy0 + (fy - sy0) * p
-                a = int(150 * p * drink * (1.0 - 0.6 * drink))
-                if a > 4:
-                    pygame.draw.circle(inner, (250, 226, 140, a),
-                                       (int(px), int(py)), 1 + int(p * 2))
-        # The eyes close, staggered, and stay shut.
-        for ei, (ex, ey, off) in enumerate(((0.36, 0.40, 0.0),
-                                            (0.62, 0.54, 1.9),
-                                            (0.50, 0.30, 3.7))):
-            shut = _seal_clamp((t - 1.2 - ei * 0.9) / 1.1)
-            openness = max(0.0, (0.5 + 0.5 * math.sin(t * 2.6 + off * 3))
-                           * (1.0 - shut))
-            a = int(150 * (0.4 + 0.6 * glow) * (1.0 - shut))
-            if a <= 4:
-                continue
-            exx, eyy = ex * ow, ey * oh
-            ew = max(2, int(0.045 * ow))
-            eh = max(1, int(ew * 0.62 * max(0.08, openness)))
-            gap = ew * 1.5
-            for sgn in (-1, 1):
-                er = pygame.Rect(0, 0, ew, eh)
-                er.center = (int(exx + sgn * gap), int(eyy))
-                pygame.draw.ellipse(inner, (230, 222, 190, a), er)
-        scene.blit(inner, (ox, oy))
+    # BLACK STARS: holes in the dark, ringed by guttering cold halos.
+    for i in range(13):
+        sx = int(_frand(i * 13 + 1) * w)
+        sy = int(_frand(i * 13 + 2) * h * 0.60)
+        rr = 2 + int(3 * _frand(i * 13 + 3))
+        gut = 0.5 + 0.5 * math.sin(t * (0.6 + 0.5 * _frand(i)) + i * 1.7)
+        halo = pygame.Surface((rr * 8, rr * 8), pygame.SRCALPHA)
+        for hr in range(rr * 4, rr, -1):
+            a = int(48 * gut * (1 - hr / (rr * 4.0)))
+            if a > 0:
+                pygame.draw.circle(halo, (104, 98, 142, a),
+                                   (rr * 4, rr * 4), hr)
+        scene.blit(halo, (sx - rr * 4, sy - rr * 4))
+        pygame.draw.circle(scene, (1, 1, 2), (sx, sy), rr)
 
-    _seal_frame(scene, left, top, dw, dh, post, 1.0 - 0.9 * drink, pulse)
+    # THE FIGURE: towering past the TOP of the frame -- a cowled pillar of
+    # not-quite-void, ragged at the edges, occluding the stars. No feet, no
+    # crown: it exceeds the shot. It leans a breath closer the whole hold.
+    fig = pygame.Surface((w, h), pygame.SRCALPHA)
+    fw = w * (0.34 + 0.05 * loom)
+    head_y = int(h * (0.30 + 0.05 * loom))
+    edge_l, edge_r = [], []
+    for k in range(13):                            # ragged sloping flanks
+        u = k / 12.0
+        yy = -h * 0.05 + u * (h * 1.1)
+        spread2 = fw * (0.42 + 0.85 * u)
+        jl = (_frand(k * 7 + 1) - 0.5) * fw * 0.10
+        jr = (_frand(k * 7 + 4) - 0.5) * fw * 0.10
+        sway = math.sin(t * 0.5 + u * 2.2) * 5 * u
+        edge_l.append((cx - spread2 + jl + sway, yy))
+        edge_r.append((cx + spread2 + jr + sway, yy))
+    body = edge_l + edge_r[::-1]
+    pygame.draw.polygon(fig, (11, 10, 16, 240),
+                        [(int(a), int(b)) for a, b in body])
+    # the head: a darker bulge the mask hangs on
+    hw = int(fw * 0.62)
+    pygame.draw.ellipse(fig, (9, 8, 13, 245),
+                        (cx - hw // 2, head_y - int(hw * 0.66),
+                         hw, int(hw * 1.32)))
+    scene.blit(fig, (0, 0))
 
-    # THE PI, back to us, walking up into the opening with the Mask at his
-    # side, its gold leaking past the coat. The frame takes him at the
-    # threshold: he fades INTO the light, not out of frame.
-    if cross < 0.999:
-        k = 3.0 - 1.1 * wp                         # walks away; recedes
-        feet_y = h * 0.93 + (bot - 4 - h * 0.93) * wp
-        card = pygame.Surface((48, 56), pygame.SRCALPHA)
-        draw_player_sprite(card, 24, 44, (0, -1), t * 8.0, view="back")
-        for rr_i, aa in ((7, 40), (5, 70), (3, 120)):  # the Mask's glow
-            pygame.draw.circle(card, (250, 214, 120, aa), (33, 32), rr_i)
-        pygame.draw.circle(card, (236, 228, 206, 210), (33, 32), 2)
-        spr = pygame.transform.scale(card, (int(48 * k), int(56 * k)))
-        spr.set_alpha(int(255 * (1.0 - cross)))
-        scene.blit(spr, (int(cx - 24 * k), int(feet_y - 44 * k)))
+    # The MASK, almost visible: the carved dream-mask's contours in gold,
+    # guttering -- a slow swell where it nearly resolves, never the whole
+    # face at once; near the end two embers open in the sockets.
+    mh = int(h * 0.26 * (1.0 + 0.06 * loom))
+    edges = _seal_mask_edges(mh)
+    swell = max(0.0, math.sin(t * 1.8 - 0.8)) ** 3   # near-resolves ~3.5s apart
+    rise = _seal_clamp((t - 6.0) / 1.8)              # Rage approaches: He
+    flick = 0.72 + 0.28 * math.sin(t * 7.3) * math.sin(t * 3.1)  # resolves
+    ga = max(0.0, min(1.0, (0.16 + 0.60 * swell + 0.55 * rise) * flick))
+    gold = edges.copy()
+    gold.fill((int(235 * ga), int(186 * ga), int(84 * ga)),
+              special_flags=pygame.BLEND_RGB_MULT)
+    mrect = gold.get_rect(center=(cx, head_y))
+    scene.blit(gold, mrect, special_flags=pygame.BLEND_RGB_ADD)
+    for sgn in (-1, 1):                            # socket hollows + embers
+        ex = cx + sgn * int(mh * 0.16)
+        ey = head_y - int(mh * 0.10)
+        pygame.draw.ellipse(scene, (2, 2, 3),
+                            (ex - 7, ey - 4, 14, 9))
+        if t > 6.2:
+            ea = (120 * _seal_clamp((t - 6.2) / 0.5)
+                  * (0.7 + 0.3 * math.sin(t * 9)))
+            if ea > 2:
+                emb = pygame.Surface((14, 14), pygame.SRCALPHA)
+                pygame.draw.circle(emb, (180, 120, 40, int(ea * 0.35)),
+                                   (7, 7), 6)
+                pygame.draw.circle(emb, (224, 168, 74, int(ea)), (7, 7), 3)
+                scene.blit(emb, (ex - 7, ey - 7))
 
-    # The way you came, grinding shut overhead: three slabs drop across the
-    # dark above the frame (the long fall, the Works, then the grove fold,
-    # whose light snuffs gold as it thins to nothing).
-    bh = int(h * 0.085)
-    for i, ct in enumerate(SEAL_CLOSE_TS):
-        prog = _seal_clamp((t - ct) / 0.45)
-        if prog <= 0.0:
-            continue
-        prog = 1.0 - (1.0 - prog) ** 2.4
-        y = int(-bh * 1.5 + prog * (i * bh + bh * 1.5))
-        slab = pygame.Rect(0, min(y, 0) - 2, w,
-                           y + bh + 2 - (min(y, 0) - 2))
-        pygame.draw.rect(scene, (31, 28, 35), slab)
-        for k in range(5):                         # stone seams in the slab
-            sx2 = int((k + 0.5) / 5 * w + _frand(i * 9 + k) * 40 - 20)
-            pygame.draw.line(scene, (20, 18, 24), (sx2, slab.top),
-                             (sx2 + 8, slab.bottom), 1)
-        edge = (58, 53, 62)
-        if i == 2:
-            gl = 1.0 - prog
-            edge = (58 + int(170 * gl), 53 + int(140 * gl),
-                    62 + int(50 * gl))
-        pygame.draw.line(scene, edge, (0, y + bh), (w, y + bh), 2)
-
-    # A jolt on each closure; the view recedes a step from the door each
-    # time -- buried by elevation.
-    shake = 0.0
-    rec = 0.0
-    for ct in SEAL_CLOSE_TS:
-        if t > ct:
-            shake = max(shake, max(0.0, 1.0 - (t - ct) / 0.35))
-            rec += 0.030 * _seal_clamp((t - ct) / 0.45)
-    shx = int(math.sin(t * 61) * 7 * shake)
-    shy = int(math.cos(t * 57) * 5 * shake)
-    surf.fill((0, 0, 0))
-    if rec > 0.001:
-        z = 1.0 - rec
-        zw, zh = int(w * z), int(h * z)
-        surf.blit(pygame.transform.smoothscale(scene, (zw, zh)),
-                  (shx + (w - zw) // 2, shy + (h - zh) // 2))
-    else:
-        surf.blit(scene, (shx, shy))
-    _carcosa_post(surf, t)
-
-
-def _seal_warp(surf, w, h, wt):
-    """Act 2: the warp. The inversion of the Carcosa detonation -- every
-    acre the cult bent is pulled INTO the door's point, the doorframe and
-    the taken's masks spiralling inward with it, and the place winks out."""
-    p = _seal_clamp(wt / 3.6)
-    pe = p * p * (3 - 2 * p)                       # smoothstep pull
-    cx, cy = w // 2, int(h * 0.50)
-    scene = pygame.Surface((w, h))
-    scene.fill((4, 4, 7))
-
-    # The gathering point brightens as it takes everything in (filled, not
-    # additive: no sun -- same rule as the blast).
-    core = 0.25 + 0.75 * pe
-    maxd = math.hypot(w * 0.46, h * 0.44) * (1.0 - 0.5 * pe)
-    for i in range(20, 0, -1):
-        f = i / 20
-        rad = max(2, int(maxd * f))
-        col = (min(255, int(70 * (1 - f) ** 1.5 * core)),
-               min(255, int(56 * (1 - f) ** 1.5 * core)),
-               min(255, int(22 * (1 - f) ** 1.5 * core)))
-        pygame.draw.ellipse(scene, col, (cx - rad, cy - int(rad * 0.7),
-                                         rad * 2, int(rad * 1.4)))
-
-    # The reverse shockwave: a ring CONTRACTING onto the point.
-    rr = int(math.hypot(w, h) * 0.55 * (1.0 - pe))
-    if rr > 4:
-        rg = pygame.Surface((w, h), pygame.SRCALPHA)
-        a = int(120 * (0.35 + 0.65 * pe))
-        pygame.draw.circle(rg, (250, 232, 150, a), (cx, cy), rr,
-                           max(2, int(10 * (1.0 - pe))))
-        scene.blit(rg, (0, 0))
-
-    # The doorframe itself goes with it: pulled in, twisting as it shrinks.
-    if pe < 0.985:
-        dh2 = int(h * 0.45)
-        dw2 = int(dh2 * 0.48)
-        post2 = max(4, dw2 // 8)
-        card = pygame.Surface((dw2, dh2), pygame.SRCALPHA)
-        _seal_frame(card, 0, 0, dw2, dh2, post2, 0.0, 0.0)
-        card = pygame.transform.rotozoom(card, pe * 75,
-                                         max(0.03, 1.0 - 0.97 * pe))
-        scene.blit(card, card.get_rect(center=(cx, cy)))
-
-    # The taken spiral in with it.
-    masks = []
-    for i in range(40):
-        u = _frand(i * 9 + 1)
-        q = _seal_clamp(pe * 1.3 - u * 0.3)
-        rad = (0.12 + 0.42 * _frand(i * 9 + 2)) * w * (1.0 - q)
-        ang = u * math.tau + q * 2.8 + wt * 0.15
-        mxx = cx + math.cos(ang) * rad
-        myy = cy + math.sin(ang) * rad * 0.78
-        mr = int((4 + 9 * _frand(i * 9 + 3)) * (1.0 - 0.65 * q))
-        if mr >= 3 and rad > 8:
-            masks.append((mxx, myy, mr, i * 7 + 3))
-    for (mxx, myy, mr, seed) in sorted(masks, key=lambda m: -m[2]):
-        vis = 0.55 + 0.45 * (0.5 + 0.5 * math.sin(wt * 2.0 + seed))
-        _yk_mask(scene, mxx, myy, mr, vis, _CARCOSA_FACEKINDS[seed % 4])
-
-    # Gold streaks wound along the pull.
+    # THE LAND: every acre the cult bent, a small torn slab adrift far
+    # below Him -- the wide shot's whole subject, dwarfed on purpose.
+    isl = pygame.Surface((w, h), pygame.SRCALPHA)
+    iw = w * 0.26
+    ih = h * 0.052
+    under = [(isl_x - iw * 0.5, isl_y)]            # ragged torn underside
     for k in range(9):
-        a0 = k * math.tau / 9 - wt * 0.9
-        pts = []
-        for s_i in range(7):
-            f = s_i / 6.0
-            rad = (0.55 - 0.50 * f) * w * (1.0 - pe) + 6
-            ang = a0 + f * 1.8
-            pts.append((int(cx + math.cos(ang) * rad),
-                        int(cy + math.sin(ang) * rad * 0.78)))
-        col = (220, 196, 120) if k % 2 else (160, 130, 60)
-        pygame.draw.lines(scene, col, False, pts, 1)
-
-    # Shake grows with the pull; then the wink-out -- a flash CUT to dark
-    # (the map act fades up from the black it leaves behind).
-    shake = 0.25 + 0.55 * pe
-    shx = int(math.sin(wt * 47) * 6 * shake)
-    shy = int(math.cos(wt * 53) * 4 * shake)
-    surf.fill((0, 0, 0))
-    surf.blit(scene, (shx, shy))
-    fl = min(_seal_clamp((wt - 3.18) / 0.22), _seal_clamp((3.6 - wt) / 0.12))
-    if fl > 0.01:
-        fs2 = pygame.Surface((w, h), pygame.SRCALPHA)
-        fs2.fill((255, 244, 212, int(235 * fl)))
-        surf.blit(fs2, (0, 0))
-    _carcosa_post(surf, wt + SEAL_T_WARP)
-
-
-_SEAL_LABEL_SURF = None
-
-
-def _seal_town_label():
-    """'BRIMLEY' in plain map ink, cached. Returns a blank where the font
-    system is unavailable (headless safety)."""
-    global _SEAL_LABEL_SURF
-    if _SEAL_LABEL_SURF is None:
-        try:
-            if not pygame.font.get_init():
-                pygame.font.init()
-            _SEAL_LABEL_SURF = pygame.font.Font(None, 26).render(
-                "BRIMLEY", True, (44, 37, 30))
-        except Exception:
-            _SEAL_LABEL_SURF = pygame.Surface((1, 1), pygame.SRCALPHA)
-    return _SEAL_LABEL_SURF
-
-
-def _seal_map(surf, w, h, mt):
-    """Act 3: the county map heals. The town's marks and name fade off the
-    paper first; then the roads and the river grow together across where it
-    stood, a gold seam dying along the join. Brimley simply was."""
-    fade = min(_seal_clamp(mt / 0.6),
-               _seal_clamp((SEAL_T_BLACK - SEAL_T_MAP - mt) / 0.8))
-    hp = _seal_clamp((mt - 1.2) / 4.2)
-    hp = hp * hp * (3 - 2 * hp)
-    cx, cy = int(w * 0.52), int(h * 0.48)
-    R0 = min(w, h) * 0.30
-    void = R0 * (1.0 - hp)
-
-    scene = pygame.Surface((w, h))
-    scene.fill((118, 108, 86))                     # lamplit paper
-    for i in range(10):                            # blotches + foxing
-        bx = int(_frand(i * 5 + 1) * w)
-        by = int(_frand(i * 5 + 2) * h)
-        br = int(30 + 70 * _frand(i * 5 + 3))
-        col = (124, 114, 92) if i % 2 else (110, 100, 80)
-        pygame.draw.ellipse(scene, col, (bx - br, by - int(br * 0.6),
-                                         br * 2, int(br * 1.2)))
-    pygame.draw.line(scene, (100, 92, 74), (int(w * 0.33), 0),
-                     (int(w * 0.30), h), 2)        # old fold creases
-    pygame.draw.line(scene, (100, 92, 74), (0, int(h * 0.62)),
-                     (w, int(h * 0.66)), 2)
-
-    def dist(px, py):
-        return math.hypot(px - cx, py - cy)
-
-    def ink_path(pts, col, width):
-        # Draw the authored crossing, skipping segments still inside the
-        # unhealed void -- the dead ends creep toward each other and meet.
-        for a, b in zip(pts, pts[1:]):
-            if dist(*a) < void or dist(*b) < void:
-                continue
-            pygame.draw.line(scene, col, (int(a[0]), int(a[1])),
-                             (int(b[0]), int(b[1])), width)
-
-    for (x0, y0, x1, y1, amp) in ((0, h * 0.30, w, h * 0.55, 0.04),
-                                  (w * 0.18, 0, w * 0.70, h, -0.05),
-                                  (0, h * 0.78, w, h * 0.20, 0.03)):
-        pts = []
-        for s_i in range(25):
-            f = s_i / 24.0
-            pts.append((x0 + (x1 - x0) * f,
-                        y0 + (y1 - y0) * f + math.sin(f * 6.0) * h * amp))
-        ink_path(pts, (54, 48, 40), 3)
-    river = []
-    for s_i in range(30):
-        f = s_i / 29.0
-        river.append((w * (0.92 - 0.80 * f),
-                      h * (0.06 + 0.90 * f) + math.sin(f * 9.0) * h * 0.03))
-    ink_path(river, (62, 68, 74), 4)
-    for i in range(120):                           # field hatching creeps in
-        hx = _frand(i * 3 + 1) * w
-        hy = _frand(i * 3 + 2) * h
-        if dist(hx, hy) < void + 6 or _frand(i * 3 + 3) < 0.45:
-            continue
-        pygame.draw.line(scene, (104, 96, 78), (int(hx), int(hy)),
-                         (int(hx + 5), int(hy - 2)), 1)
-
-    # The town, fading off the record before the land closes over it.
-    tf = 1.0 - _seal_clamp((mt - 0.7) / 2.2)
-    if tf > 0.01:
-        layer = pygame.Surface((w, h), pygame.SRCALPHA)
-        a = int(255 * tf)
-        ink = (40, 34, 27, a)
-        for i in range(7):                         # the blocks of the town
-            bx2 = cx + int((_frand(i * 11 + 1) - 0.5) * R0 * 1.1)
-            by2 = cy + int((_frand(i * 11 + 2) - 0.5) * R0 * 0.8)
-            pygame.draw.rect(layer, ink, (bx2, by2, 9, 7), 1)
-        pygame.draw.line(layer, ink, (cx - 14, cy - 18), (cx - 14, cy - 6), 2)
-        pygame.draw.line(layer, ink, (cx - 18, cy - 14), (cx - 10, cy - 14), 2)
-        pygame.draw.circle(layer, ink, (cx + 12, cy + 8), 4, 1)  # the well
-        lab = _seal_town_label()
-        if lab.get_width() > 2:
-            ls = lab.copy()
-            ls.set_alpha(a)
-            layer.blit(ls, (cx - lab.get_width() // 2, cy + int(R0 * 0.45)))
-        scene.blit(layer, (0, 0))
-
-    # A gold seam dying along the join as the edges grow together.
-    seam = math.sin(math.pi * hp)
-    if 0.02 < hp < 0.999 and seam > 0.02:
-        sl = pygame.Surface((w, h), pygame.SRCALPHA)
-        for k in range(30):
-            ang = k * math.tau / 30 + mt * 0.4
-            px = cx + math.cos(ang) * void
-            py = cy + math.sin(ang) * void * 0.9
-            a = int(80 * seam * (0.5 + 0.5 * math.sin(mt * 3 + k)))
-            if a > 3:
-                pygame.draw.circle(sl, (235, 200, 110, a),
-                                   (int(px), int(py)), 2)
-        scene.blit(sl, (0, 0))
+        u = (k + 1) / 10.0
+        under.append((isl_x - iw * 0.5 + u * iw,
+                      isl_y + ih * (0.4 + 2.2 * math.sin(math.pi * u) ** 1.4
+                                    * (0.6 + 0.4 * _frand(k * 5 + 3)))))
+    under.append((isl_x + iw * 0.5, isl_y))
+    pygame.draw.polygon(isl, (22, 17, 13, 255),
+                        [(int(a), int(b)) for a, b in under])
+    pygame.draw.ellipse(isl, (38, 36, 26, 255),    # the oblique plate
+                        (int(isl_x - iw * 0.5), int(isl_y - ih * 0.5),
+                         int(iw), max(3, int(ih))))
+    for k in range(10):                            # field patches
+        px = isl_x + (_frand(k * 9 + 1) - 0.5) * iw * 0.80
+        py = isl_y + (_frand(k * 9 + 2) - 0.5) * ih * 0.55
+        pw = iw * (0.08 + 0.10 * _frand(k * 9 + 3))
+        ph = ih * (0.18 + 0.22 * _frand(k * 9 + 4))
+        col = ((50, 46, 26, 255), (43, 38, 22, 255),
+               (33, 35, 21, 255))[k % 3]
+        pygame.draw.ellipse(isl, col, (int(px - pw / 2), int(py - ph / 2),
+                                       max(2, int(pw)), max(2, int(ph))))
+    pygame.draw.line(isl, (27, 24, 19, 255),       # the road thread
+                     (int(isl_x - iw * 0.42), int(isl_y + ih * 0.10)),
+                     (int(isl_x + iw * 0.40), int(isl_y - ih * 0.16)), 1)
+    pygame.draw.line(isl, (36, 46, 50, 255),       # the river glint
+                     (int(isl_x - iw * 0.20), int(isl_y - ih * 0.30)),
+                     (int(isl_x + iw * 0.16), int(isl_y + ih * 0.30)), 1)
+    for k in range(8):                             # the town's tiny roofs
+        bx = isl_x + (_frand(k * 7 + 1) - 0.5) * iw * 0.14
+        by = isl_y + (_frand(k * 7 + 2) - 0.5) * ih * 0.30
+        pygame.draw.rect(isl, (58, 50, 40, 255), (int(bx), int(by), 2, 2))
+    pygame.draw.line(isl, (64, 56, 46, 255),       # the steeple needle
+                     (int(isl_x + iw * 0.02), int(isl_y - 5)),
+                     (int(isl_x + iw * 0.02), int(isl_y - 1)), 1)
+    for k in range(7):                             # earth shed into the void
+        pp = (t * (0.06 + 0.05 * _frand(k * 3)) + _frand(k * 11)) % 1.0
+        ca = int(110 * (1 - pp))
+        if ca > 6:
+            pygame.draw.circle(
+                isl, (20, 16, 13, ca),
+                (int(isl_x + (_frand(k * 11 + 1) - 0.5) * iw * 0.7),
+                 int(isl_y + ih * 1.6 + pp * h * 0.10)), 1)
+    scene.blit(isl, (0, 0))
+    # The faintest gold spill from above onto the slab -- His light on it.
+    sp_w, sp_h = max(2, int(iw * 1.1)), max(2, int(ih * 3.0))
+    spill = pygame.Surface((sp_w, sp_h), pygame.SRCALPHA)
+    for i in range(8, 0, -1):
+        a = int(4 + 10 * (1 - i / 8) * (0.4 + 0.6 * swell))
+        pygame.draw.ellipse(spill, (235, 196, 96, a),
+                            (int(sp_w / 2 - sp_w * 0.06 * i),
+                             int(sp_h * 0.55 - sp_h * 0.065 * i),
+                             max(2, int(sp_w * 0.12 * i)),
+                             max(2, int(sp_h * 0.13 * i))))
+    scene.blit(spill, (int(isl_x - sp_w / 2), int(isl_y - sp_h * 0.55)))
 
     surf.fill((0, 0, 0))
     if fade < 0.999:
         scene.set_alpha(int(255 * fade))
     surf.blit(scene, (0, 0))
-    _carcosa_post(surf, mt + SEAL_T_MAP, tint=(230, 222, 200), cold=(0, 5, 7))
-
-
-def draw_threshold_seal(surf, t):
-    """The SEAL ending cutscene (walking through the Threshold doorframe
-    with the Mask): the drink, the warp into Carcosa, the map healing over.
-    `t` = seconds since the ending began; past SEAL_T_BLACK it holds black
-    for the closing lines."""
-    w, h = surf.get_size()
-    if t < SEAL_T_WARP:
-        _seal_drink(surf, w, h, t)
-    elif t < SEAL_T_MAP:
-        _seal_warp(surf, w, h, t - SEAL_T_WARP)
-    elif t < SEAL_T_BLACK:
-        _seal_map(surf, w, h, t - SEAL_T_MAP)
-    else:
-        surf.fill((0, 0, 0))
+    _carcosa_post(surf, t, tint=(216, 210, 192), cold=(0, 6, 9))

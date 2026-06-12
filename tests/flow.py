@@ -403,21 +403,31 @@ def main():
     check(g.player.inventory.has("sigil_rubbing"),
           "threshold: the keystone (Mask) arrives in hand (carried from the stair)")
     g.player.x, g.player.y = sc._lintel_pos
-    sc.on_update_fn(g, sc, 0.1)               # walking THROUGH the frame seals it
-    check(g._ending_active == "seal_threshold",
-          "threshold: walking through the frame fires the SEAL ending")
+    sc.on_update_fn(g, sc, 0.1)               # walking THROUGH the frame
+    check(getattr(g, "_seal_warp", None) is not None,
+          "threshold: walking through the frame starts the LIVE warp")
     check(not g.player.inventory.has("sigil_rubbing"),
           "threshold: the seal CONSUMES the keystone (Mask) at the door")
+    n_deco = len(sc.decorations)
+    for _ in range(120):                      # the world pours through...
+        if g._ending_active:
+            break
+        sc.on_update_fn(g, sc, 0.1)
+    check(g._ending_active == "seal_threshold",
+          "threshold: the live warp hands off to the SEAL ending")
+    check(len(sc.decorations) < n_deco,
+          "threshold: the warp consumed the room's dressing")
+    # Canon (2026-06, approved text): the crossing lands you under the
+    # black stars and the twin suns of Carcosa, and the run closes on
+    # 'Rage approaches.' into the WORDLESS tableau (the final empty line).
     seal_text = " ".join(line for line, _ in
                          g._ENDING_SCRIPTS["seal_threshold"])
-    check("Nothing leaves Brimley again" in seal_text
-          and "Not the hunger" in seal_text and "Not you" in seal_text,
-          "threshold: SEAL ending is authored (canonical close present)")
-    # Canon (2026-06): the SEAL warps the cult-bent ground whole into
-    # Carcosa; the map's edges grow together and Brimley simply was. No
-    # "hole in the map" / blank-spot language.
-    check("Carcosa" in seal_text and "Brimley simply was" in seal_text,
-          "threshold: SEAL canon (warped into Carcosa; Brimley simply was)")
+    check("black stars" in seal_text and "Rage approaches." in seal_text,
+          "threshold: SEAL text is the approved set (black stars; Rage)")
+    check("held the Mask" in seal_text and "the door slams shut" in seal_text,
+          "threshold: SEAL text keeps the crossing + the slam beats")
+    check(g._ENDING_SCRIPTS["seal_threshold"][-1][0] == "",
+          "threshold: SEAL closes on the wordless tableau still")
     check("hole in the map" not in seal_text
           and "roads decline" not in seal_text,
           "threshold: SEAL carries no dead hole-in-the-map language")

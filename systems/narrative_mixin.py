@@ -344,11 +344,10 @@ class NarrativeMixin:
         self._closure_locked = True
         # Cue the appropriate audio.
         if name == "seal_threshold":
-            # The chime at the press; the rest (_tick_seal_audio) is a
-            # DIMINISHING bed -- receding booms, one cold swell, then
-            # nothing. Silence is the seal.
+            # No sting here: the live warp already chimed and roared; the
+            # black text opens in dead silence. _tick_seal_audio lands the
+            # door-slam and the tableau's low approach.
             self._seal_cues = set()
-            self.audio.play("arg_chime", 0.7)
         elif name == "rite_broken":
             # The dread drone for the mask-yank; the boom/roar come at the cut
             # (see _tick_rite_audio). Runs on the idle drive_channel.
@@ -421,13 +420,13 @@ class NarrativeMixin:
                 cues.add("swell"); self.audio.play("yk_tone", 0.7)
 
     def _tick_seal_audio(self):
-        """seal_threshold soundtrack, matched to draw_threshold_seal's acts:
-        three booms RECEDING (each quieter -- the way up sealing further
-        off) as the slabs drop, one cold swell + a whisper at the warp into
-        Carcosa, then nothing at all over the healing map. The bed
-        deliberately diminishes into true silence; the rite_broken roar's
-        opposite. Cue times key off total elapsed (the act clock the draw
-        side uses), not the per-phase clock."""
+        """seal_threshold soundtrack. The black text plays in dead silence
+        (the live warp's roar just cut out) except ONE hit: the door slam
+        under its line. Then the wordless tableau gets a low approaching
+        drone -- Rage approaches -- that dies before the cut to title, so
+        the run ends in true silence. Cue times key off total elapsed
+        across phases (durations: 3.4/3.6/3.2/3.0/3.4/8.0 -> the slam line
+        starts at 10.2, the tableau at 16.6)."""
         script = self._ENDING_SCRIPTS["seal_threshold"]
         tt = (sum(d for _, d in script[:self._ending_phase])
               + self._ending_phase_t)
@@ -435,27 +434,24 @@ class NarrativeMixin:
         cues = getattr(self, "_seal_cues", None)
         if cues is None:
             cues = self._seal_cues = set()
-        # The slabs: SEAL_CLOSE_TS in rendering/sprites_carcosa.py.
-        for name, at, vol in (("boom1", 3.2, 0.50), ("boom2", 4.3, 0.32),
-                              ("boom3", 5.4, 0.18)):
-            if tt > at and name not in cues:
-                cues.add(name)
-                self.audio.play("carcosa_boom", vol)
-        if tt > 6.0 and "warp" not in cues:           # the pull begins
-            cues.add("warp")
-            self.audio.play("yk_tone", 0.45)
-            dc.play(self.audio.carcosa_drone_snd, loops=-1)
-            dc.set_volume(0.0)
-        if tt > 7.2 and "whisper" not in cues:        # the taken, going with it
-            cues.add("whisper")
-            self.audio.play("whisper", 0.35)
-        if "warp" in cues and "hush" not in cues:
-            wt = tt - 6.0
-            dc.set_volume(min(0.5, wt / 1.2) if wt < 2.2
-                          else max(0.0, 0.5 * (1 - (wt - 2.2) / 1.4)))
-            if tt > 9.8:                              # the map: dead quiet
-                cues.add("hush")
-                dc.stop()
+        if tt > 10.35 and "slam" not in cues:         # the door slams shut
+            cues.add("slam")
+            self.audio.play("carcosa_boom", 0.85)
+            self.audio.play("door_close", 0.6)
+        if tt > 13.3 and "rage" not in cues:          # Rage approaches.
+            cues.add("rage")
+            self.audio.play("yk_tone", 0.4)
+        if tt > 16.6:                                 # the wordless tableau
+            if "loom" not in cues:
+                cues.add("loom")
+                dc.play(self.audio.carcosa_drone_snd, loops=-1)
+                dc.set_volume(0.0)
+            bt = tt - 16.6
+            dc.set_volume(min(0.30, bt / 8.0) if bt < 5.2
+                          else max(0.0, 0.30 * (1 - (bt - 5.2) / 1.8)))
+            if bt > 1.0 and "whisper" not in cues:
+                cues.add("whisper")
+                self.audio.play("whisper", 0.3)
 
     def _end_ending(self):
         """Wrap up the ending sequence and return to title."""

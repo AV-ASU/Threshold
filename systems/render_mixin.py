@@ -1125,6 +1125,8 @@ class RenderMixin:
             _focus.append((self.player.x, self.player.y, 30))
 
             def _draw_player(psx=psx, psy=psy):
+                if getattr(self, "_seal_warp", None) is not None:
+                    return        # SEAL live warp: he has gone through
                 if self.player.invuln > 0 and int(self.player.invuln * 12) % 2 == 0:
                     pass
                 elif self.player.hidden is not None:
@@ -1429,6 +1431,11 @@ class RenderMixin:
                 pygame.draw.line(self.screen, (228, 198, 96),
                                  (mx + ddx // 2, my + ddy // 2),
                                  (mx + ddx, my + ddy), 1)
+        # SEAL live warp overlay: the doorframe ignites gold and the warped
+        # dressing leaves streaks as it pours through (the motion itself is
+        # driven by the threshold scene's on_update, scenes/depths.py).
+        if getattr(self, "_seal_warp", None) is not None:
+            self._draw_seal_warp_overlay()
         # Ashfall over the graded world (NARRATIVE 4b) -- the pale-yellow drift
         # rides on top so the grade's desaturate/cool-tint can't wash it out.
         # Under the HUD: it's atmosphere, not interface.
