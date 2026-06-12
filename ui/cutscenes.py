@@ -15,7 +15,7 @@ import random
 import pygame
 
 from constants import SCREEN_W, SCREEN_H, TILE
-from rendering.sprites import draw_carcosa, draw_mask_yank
+from rendering.sprites import draw_carcosa, draw_mask_yank, draw_seal_tableau
 
 
 # ---- Cutscene tuning constants (owned here; re-exported by systems.game) ----
@@ -263,13 +263,71 @@ class CutsceneMixin:
         else:
             alpha = 255
         alpha = max(0, min(255, alpha))
+        if self._ending_active == "seal_threshold" and line == "":
+            # The wordless close: the wide shot -- Brimley's acres
+            # suspended in the void, the towering figure almost visible
+            # behind them. No text by design (the approved lines all
+            # played on black before this).
+            draw_seal_tableau(self.screen, self._ending_phase_t)
+            return
+        rows = self._wrap_ending_line(line, int(SCREEN_W * 0.90))
         veil = pygame.Surface((SCREEN_W, SCREEN_H))
         veil.fill((0, 0, 0))
         self.screen.blit(veil, (0, 0))
-        s = self.fonts["lg"].render(line, True, (220, 218, 226))
-        s.set_alpha(alpha)
-        self.screen.blit(s, (SCREEN_W // 2 - s.get_width() // 2,
-                             SCREEN_H // 2 - s.get_height() // 2))
+        surfs = [self.fonts["lg"].render(r, True, (220, 218, 226))
+                 for r in rows]
+        lh = surfs[0].get_height() if surfs else 0
+        y0 = SCREEN_H // 2 - (lh * len(surfs)) // 2
+        for i, s in enumerate(surfs):
+            s.set_alpha(alpha)
+            self.screen.blit(s, (SCREEN_W // 2 - s.get_width() // 2,
+                                 y0 + i * lh))
+
+    def _draw_seal_warp_overlay(self):
+        """The SEAL live warp's screen dressing. The motion itself is the
+        scene's (scenes/depths.py flies the real decorations through the
+        frame); here the doorframe burns gold as it drinks, and each flight
+        smears a streak into it. Drawn over the graded world, under the
+        HUD (called from draw_world when game._seal_warp is active)."""
+        sw = getattr(self, "_seal_warp", None)
+        if sw is None:
+            return
+        t = sw["t"]
+        dx, dy = sw["door"]
+        sx, sy = self.camera.project(dx, dy, 0.0)
+        lay = pygame.Surface(self.screen.get_size(), pygame.SRCALPHA)
+        # The frame's burn: swells in over the first beat, gutters like
+        # the dream door's pulse.
+        pulse = 0.55 + 0.45 * math.sin(t * 6.0)
+        grow = min(1.0, t / 1.2)
+        for rr in range(int(26 + 30 * grow), 2, -3):
+            a = int((6 + 60 * (1 - rr / 60.0)) * grow * (0.6 + 0.4 * pulse))
+            pygame.draw.circle(lay, (246, 206, 96, max(0, min(160, a))),
+                               (int(sx), int(sy)), rr)
+        # Streaks: every flying thing smears a gold line into the door,
+        # brightening as the suck takes it.
+        for f in sw["flights"]:
+            p = max(0.0, min(1.0, (t - f["t0"]) / f["dur"]))
+            fx, fy = self.camera.project(f["d"].x, f["d"].y, 0.0)
+            a = int(40 + 130 * p)
+            pygame.draw.line(lay, (235, 196, 110, a), (int(fx), int(fy)),
+                             (int(sx), int(sy)), 1 + int(2 * p))
+        self.screen.blit(lay, (0, 0))
+
+    def _wrap_ending_line(self, line, max_w):
+        """Greedy word-wrap for the ending stills; some authored lines run
+        wider than the screen."""
+        rows, cur = [], ""
+        for wd in line.split():
+            trial = (cur + " " + wd).strip()
+            if cur and self.fonts["lg"].size(trial)[0] > max_w:
+                rows.append(cur)
+                cur = wd
+            else:
+                cur = trial
+        if cur:
+            rows.append(cur)
+        return rows
 
 
     def _draw_car(self, s, cx, cy, light=1.0, exhaust=0.0, scale=1.3):

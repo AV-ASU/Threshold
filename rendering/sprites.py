@@ -16,7 +16,9 @@ from rendering.sprites_player import (
 from rendering.sprites_weapons import (
     draw_axe_swing, draw_axe_held, draw_revolver_held, draw_gun_fire,
 )
-from rendering.sprites_carcosa import draw_king_death, draw_mask_yank, draw_carcosa
+from rendering.sprites_carcosa import (
+    draw_king_death, draw_mask_yank, draw_carcosa, draw_seal_tableau,
+)
 
 __all__ = [
     "KING_UNFOLD", "KING_UNFOLD_SCALE",
@@ -25,4 +27,5 @@ __all__ = [
     "reset_king_fx", "door_mask_surface",
     "draw_axe_swing", "draw_axe_held", "draw_revolver_held", "draw_gun_fire",
     "draw_king_death", "draw_mask_yank", "draw_carcosa",
+    "draw_seal_tableau",
 ]

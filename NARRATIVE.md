@@ -625,7 +625,7 @@ that fire is someone He already took. You only ever see it by losing.
 |---|---|---|---|
 | **A cultist catches you** | The cult takes you for the ritual | Stark text card — **CAPTURED** (cult takes you alive; worse than killed, and feeds the hive) | `_trigger_death("cultist")` → `_tick_death` (exists) |
 | **The King catches you** (vis `1.0`, *3+ evidence*, He reaches you) | He takes you into Himself | Brief cutscene: fire/hell, the floating masks of His sprite drifting in it — title **Carcosa** | `_trigger_death("king")` → `_tick_death` (exists; the bespoke `_trigger_closure` path was replaced by the shared death system) |
-| **Seal the threshold** — *END IT* | You give the **keystone** (the Mask seated in the cult's notes) to the door; contain the hunger; Brimley + you become a hole in the map | Ending sequence. *"It is done. Nothing leaves Brimley again. Not the hunger. Not you."* | `_play_ending("seal_threshold")` (exists; now **consumes the keystone at the doorframe**, §below — a code change) |
+| **Seal the threshold** — *END IT* | You carry the **keystone** (the Mask seated in the cult's notes) THROUGH the door; contain the hunger; **every acre the cult bent is warped whole into Carcosa** — the map's edges grow together over the place, and **Brimley simply was** | Three movements (2026-06 approved): a **LIVE warp** (the threshold scene's dressing, then the world's things, pour through the doorframe after you — in-engine, not a still); the **approved lines on black** (you under the **black stars** and **twin suns** of Carcosa); a **wordless wide shot** — the cult-bent acres adrift in the void, a towering figure behind, gold tracing a mask, almost visible. *"Rage approaches."* | `_threshold_seal`/`_tick_seal_warp` (scenes/depths.py, consumes the keystone at the doorframe) → `_play_ending("seal_threshold")` → `draw_seal_tableau` |
 | **Drive out with the Sign** — *SPREAD IT* | You pull the rite's keystone and carry it out; the release rides out *with you* as a latent bomb that detonates on His timeline | Ending sequence — the engine catches *for the first time*: *"You got out. You're the only one who ever has. Everyone will understand why, soon."* | `_begin_car_escape()` → `_play_ending("escape_alone")` (exists). Gates on the **Sign** (`sigil_rubbing`) **alone** — your own car, no keys; the fold is the only lock, and only a shard of Him opens it. |
 | **Break the rite before sealing** — *YOU FUCKED UP* (a game over) | You tear down the rite *in place* — the obvious heroic move — with the source still open. The lid comes off a pressurized pot: His influence floods out, uncontained, here and now | Ending sequence: you destroy the altar/Sign/kneeling, one breath of quiet, then the flood — *"It was never a cage for you. It was a cage for Him."* | `_play_ending("rite_broken")`. Triggered at the **Sign Chamber altar** (the FIRST place you meet the active rite): a choice — *take the mask* (controlled) vs *tear it down* (the trap). |
 
@@ -659,8 +659,11 @@ So the fork is **experiential, not a menu.** With the keystone in hand:
   **past** the Deep Stair (which opens to His own authority pressed to the
   the blasted floor at the deepest face — the fall is the point of no
   return), down through the Depths and the hive (Mara), to the
-  **Threshold**, and **give the keystone to the door.** The geometry closes; you and Brimley become a
-  hole in the map. *The keystone is spent at the door, not at the stair.*
+  **Threshold**, and **give the keystone to the door.** The geometry closes;
+  everything the cult's doings touched — the town, the ground under it, the
+  hunger, and you — is warped whole into Carcosa, and the county's edges
+  grow together over the place. Brimley simply *was*. *The keystone is spent
+  at the door, not at the stair.*
 
 The case ends on that one pull, and the PI hears it as two voices:
 
@@ -676,8 +679,8 @@ The case ends on that one pull, and the PI hears it as two voices:
 
 The "take it back" pull is the lie that dresses Spread as duty and rest:
 carrying the Sign out *is* the breach. "Deeper" is the Seal — you end it at
-the source and become, with Brimley, a hole in the map. Both ways out damn
-something (§1).
+the source and go, with Brimley, into Carcosa; the world heals over the
+place as if it never held a town. Both ways out damn something (§1).
 
 ### The pressure model — and the trap
 
@@ -687,8 +690,9 @@ ways to touch it, and an **order rule**:
 - **SEAL** — go *past* the rite and cap the **source** (the Threshold) by
   **giving the keystone — the Mask seated in the cult's notes — to the
   door.** With the source capped the pressure has nowhere to go; the rite
-  can lapse safely *because you sealed first*. Brimley and you become a
-  permanent sealed hole.
+  can lapse safely *because you sealed first*. Everything the cult bent is
+  warped whole into Carcosa — Brimley and you included, sealed there with
+  the hunger — and the map's edges grow together over the place.
 - **SPREAD** — pull the keystone (take the Sign) and carry it *out*. The
   rite breaks, but the release is **channeled through the Sign/you** — it
   rides out as a latent charge, a bomb that goes off later, on His clock.

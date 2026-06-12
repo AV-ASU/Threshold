@@ -295,6 +295,9 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         self._ending_active = None
         self._ending_phase = 0
         self._ending_phase_t = 0.0
+        # SEAL live warp state (the threshold scene pours through the
+        # doorframe before the ending proper; scenes/depths.py drives it).
+        self._seal_warp = None
 
     def _title_menu_options(self):
         """THRESHOLD is a single-session game -- there is no save file
@@ -425,6 +428,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         self._ending_active = None
         self._ending_phase = 0
         self._ending_phase_t = 0.0
+        self._seal_warp = None
         self._closure_locked = False
         # Death screen: None | "cultist" | "king". A catch triggers it;
         # _tick_death holds it (cultist ~2.8s CAPTURED card, king ~3.5s
@@ -1681,17 +1685,20 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
             ("You got out. You're the only one who ever has.", 3.4),
             ("Everyone will understand why, soon.", 3.8),
         ],
+        # The approved SEAL text (2026-06). It plays AFTER the live warp
+        # (the threshold scene pours through the doorframe around you,
+        # scenes/depths.py) and hands off to the wordless wide-shot
+        # tableau (the final empty line; draw_seal_tableau).
         "seal_threshold": [
-            ("The frame drinks it down: the smoke, the sound, the long "
-             "way you came.", 3.0),
-            ("Above you the stair grinds shut. Then the Works. Then the "
-             "well.", 3.0),
-            ("Brimley folds the rest of the way closed, around the "
-             "hunger, and around you.", 3.4),
-            ("On every map after tonight the town is a blank, a place the "
-             "roads decline to reach.", 3.6),
-            ("It is done. Nothing leaves Brimley again.", 3.4),
-            ("Not the hunger. Not you.", 4.0),
+            ("You stood at the Threshold and held the Mask out before "
+             "you. You took the step.", 3.4),
+            ("The moment it crossed, you were pulled through with it. "
+             "And Brimley came after, every acre.", 3.6),
+            ("The sky holds black stars. The twin suns peek at the "
+             "horizon.", 3.2),
+            ("You look up as the door slams shut.", 3.0),
+            ("Rage approaches.", 3.4),
+            ("", 8.0),
         ],
         # rite_broken is the TRAP game over (NARRATIVE §6). PURELY VISUAL --
         # no text boxes -- and two beats the draw path special-cases: the
