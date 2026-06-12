@@ -672,6 +672,8 @@ def build_threshold():
             "cues": set(),
         }
         game._closure_locked = True                   # he has crossed; hold
+        game.dialog.active = False                    # nothing talks over it
+        game.notice_text = None
         game.audio.force_silence()
         game.audio.play("arg_chime", 0.7)
         game.audio.flashback_air(True)                # the falling-air bed
@@ -698,7 +700,9 @@ def build_threshold():
                                  "cold.")
             return
         inv.remove("sigil_rubbing", 1)                # spent at the door
-        _evidence(game, "the_seal", "It is done.")
+        # File the beat SILENTLY (show=False): no narrator box may talk
+        # over the warp -- the world going through the door IS the line.
+        _evidence(game, "the_seal", "It is done.", show=False)
         _begin_seal_warp(game, scene)
 
     def _tick_seal_warp(game, scene, sw, dt):
