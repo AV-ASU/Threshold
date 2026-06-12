@@ -13,6 +13,10 @@ import random
 
 from constants import SCREEN_H
 from rendering.sprites import door_mask_surface
+from rendering.spread_drive import (
+    SPREAD_T_SHIFT, SPREAD_T_GAZE, SPREAD_T_FLOOD, SPREAD_T_ON,
+    SPREAD_T_KNOW, SPREAD_CROSS_AT,
+)
 from ui.cutscenes import (
     FLASHBACK_DUR, FLASHBACK_MASK_FRAMES,
     FLASHBACK_SWARM_START, FLASHBACK_SWARM_PEAK,
@@ -353,6 +357,11 @@ class NarrativeMixin:
                 self.audio.drive_channel.play(self.audio.carcosa_drone_snd,
                                               loops=-1)
                 self.audio.drive_channel.set_volume(0.0)
+        elif name == "escape_alone":
+            # The drive out rides the opening's engine/radio/static bed,
+            # started silent; _tick_spread_audio shapes it beat by beat.
+            self._spread_cues = set()
+            self.audio.start_drive()
         else:
             self.audio.play("door_close", 0.7)
 
@@ -365,6 +374,8 @@ class NarrativeMixin:
         self._ending_phase_t += dt
         if self._ending_active == "rite_broken" and self.audio.enabled:
             self._tick_rite_audio()
+        elif self._ending_active == "escape_alone" and self.audio.enabled:
+            self._tick_spread_audio()
         script = self._ENDING_SCRIPTS.get(self._ending_active, [])
         if not script:
             self._end_ending()
@@ -414,8 +425,86 @@ class NarrativeMixin:
             if bt > 3.3 and "swell" not in cues:
                 cues.add("swell"); self.audio.play("yk_tone", 0.7)
 
+    def _ending_elapsed(self):
+        """Seconds since the active ending began (phases walked so far
+        plus the time inside the current one) -- the clock the spread
+        cutscene's picture and soundtrack both run on."""
+        script = self._ENDING_SCRIPTS.get(self._ending_active, [])
+        return (sum(d for _, d in script[:self._ending_phase])
+                + self._ending_phase_t)
+
+    def _tick_spread_audio(self):
+        """escape_alone soundtrack, matched to the drive-out's beats: the
+        key clicks dead, the engine catches and ROARS for the first time
+        in the game, the radio hunts between stations on the way to the
+        edge, the seat creaks as the mask turns, a heartbeat under the
+        gaze -- and at the crossing the static simply DIES (the non-event
+        is the cue). Then the feeling floods in (yk_tone, whispers), the
+        engine returns steady for the drive south, and everything settles
+        to a slow pulse under the verdict. Runs the opening drive's
+        engine/radio/static bed, started silent in _play_ending."""
+        t = self._ending_elapsed()
+        cues = getattr(self, "_spread_cues", None)
+        if cues is None:
+            cues = self._spread_cues = set()
+
+        def cue(name, at, snd, vol):
+            if t >= at and name not in cues:
+                cues.add(name)
+                self.audio.play(snd, vol)
+
+        cue("key", 0.9, "gun_dry", 0.3)              # the key turns
+        cue("catch", 1.35, "bump", 0.55)             # ...and it CATCHES
+        cue("creak", SPREAD_T_SHIFT + 1.3, "wood_creak", 0.55)  # the shift
+        for i, at in enumerate((0.6, 1.4, 2.1, 2.7)):           # the gaze
+            cue(f"hb{i}", SPREAD_T_GAZE + at, "heartbeat", 0.30 + 0.06 * i)
+        cue("breath", SPREAD_T_FLOOD - 0.7, "breath", 0.7)
+        cue("flood", SPREAD_T_FLOOD + 0.4, "yk_tone", 0.6)
+        cue("wh1", SPREAD_T_FLOOD + 2.2, "whisper", 0.45)
+        cue("wh2", SPREAD_T_FLOOD + 4.4, "whisper", 0.55)
+        cue("know", SPREAD_T_KNOW + 0.3, "low_pulse", 0.9)
+        cue("know2", SPREAD_T_KNOW + 3.2, "low_pulse", 0.6)
+
+        # Engine envelope: dead -> the roar -> settled cruise -> falling
+        # away under the gaze -> idle while he is overcome -> steady for
+        # the drive on -> gone with the car.
+        if t < 1.35:
+            eng = 0.0
+        elif t < 1.9:
+            eng = 0.85 * (t - 1.35) / 0.55
+        elif t < SPREAD_T_SHIFT:
+            eng = 0.62 + 0.23 * max(0.0, 1.0 - (t - 1.9) / 0.8)
+        elif t < SPREAD_T_GAZE:
+            eng = 0.46
+        elif t < SPREAD_CROSS_AT:
+            eng = 0.46 - 0.32 * ((t - SPREAD_T_GAZE)
+                                 / max(0.01, SPREAD_CROSS_AT - SPREAD_T_GAZE))
+        elif t < SPREAD_T_FLOOD:
+            eng = 0.12
+        elif t < SPREAD_T_ON:
+            eng = 0.26
+        elif t < SPREAD_T_KNOW:
+            eng = min(0.55, 0.26 + (t - SPREAD_T_ON) / 0.8 * 0.29)
+        else:
+            eng = max(0.0, 0.55 * (1.0 - (t - SPREAD_T_KNOW) / 2.2))
+
+        # Radio: hunting between stations all the way to the fold, then
+        # CUT DEAD at the crossing -- and coming back CLEAN south of it
+        # (the first working signal of the game).
+        rad = stat = 0.0
+        if SPREAD_T_SHIFT - 6.0 < t < SPREAD_CROSS_AT and t > 2.4:
+            hunt = math.sin(t * 0.9)
+            duck = 0.5 if t > SPREAD_T_SHIFT else 1.0    # lower inside the cab
+            rad = 0.10 * max(0.0, hunt) * duck
+            stat = (0.05 + 0.09 * max(0.0, -hunt)) * duck
+        elif SPREAD_T_ON < t:
+            rad = 0.10 * max(0.0, min(1.0, (SPREAD_T_KNOW + 1.5 - t) / 1.5))
+        self.audio.set_drive(eng, rad, stat)
+
     def _end_ending(self):
         """Wrap up the ending sequence and return to title."""
+        if self._ending_active == "escape_alone":
+            self.audio.stop_drive()        # engine + radio + static bed
         if self.audio.enabled:
             self.audio.drive_channel.fadeout(300)
         self._ending_active = None

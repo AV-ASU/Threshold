@@ -1249,11 +1249,21 @@ def main():
                   for e in _notes) and evidence_count(gc) == _ev_before,
               "calder: stopped-waiting lands as a NOTE, never evidence")
 
-    # (d) The SPREAD drive-out carries the open line's hiss with it (the
-    # payphone callback -- the breach rides out in the cab with you).
-    check(any("hiss" in ln for ln, _ in
-              Game._ENDING_SCRIPTS["escape_alone"]),
-          "spread: the radio carries the open line's hiss out of town")
+    # (d) The SPREAD drive-out is the CLAIMING (script locked 2026-06):
+    # the mask rides the passenger seat and turns; the PI answers the
+    # gaze his one dream broke off a year ago; the verdict card is the
+    # three-word close. Guard the load-bearing lines so a rewrite can't
+    # drift them silently -- and hold the no-dash rule on all of them.
+    spread_lines = [ln for ln, _ in Game._ENDING_SCRIPTS["escape_alone"]]
+    check(any("mask shifts in the seat" in ln for ln in spread_lines),
+          "spread: the mask turns in the passenger seat (the claiming)")
+    check(any("deep sunken eyes" in ln for ln in spread_lines),
+          "spread: the PI answers the gaze (the dream, completed)")
+    check(spread_lines[-1] == "Everyone will know.",
+          "spread: the verdict card closes the run")
+    check(not any(("—" in ln) or ("–" in ln) or ("--" in ln)
+                  for ln in spread_lines),
+          "spread: no dashes in player-facing ending text")
 
     print()
     if FAILS:

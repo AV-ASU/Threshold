@@ -402,6 +402,37 @@ the PI finishes it with powder.
   refusal, circle seal, keyed-pane refusal, Mask egress + SPREAD lock,
   sump powder, mask-gated fuse, blast + keystone-not-consumed.
 
+### ✅ 16. The SPREAD ending — the drive-out cutscene + the CLAIMING — DONE  *(2026-06, directed; NARRATIVE §6 table updated)*
+
+The text-on-black `escape_alone` stills were replaced by a full ~38s
+cutscene, and the ending's canon sharpened by direction:
+
+- **The claiming.** The King does not chase the car out — he is already
+  IN it: the Mask rides the passenger seat. At the edge of Brimley it
+  shifts as if to look at the PI; he gazes into its deep sunken eyes
+  (completing the one dream that broke off a year ago, §1b) and is
+  **claimed**. What he longed for most — to FEEL, after twenty numb
+  years — floods back, and he drives south willing, certain, and His.
+  The breach is now a claimed vector, not a passive latent charge.
+- **The trailing King is a particle effect only** — a gold wake
+  streaming behind the car through the corn, never a body. It cuts off
+  at the fold. The crossing itself stays a NON-EVENT (the teleport
+  doctrine): the fold's frame sweeps past the windows mid-gaze,
+  unwitnessed; the corn simply ends, the rearview goes black.
+- **The locked caption script** (7 lines, flow-guarded: the mask-shift
+  line, the deep-sunken-eyes line, the closing card "Everyone will
+  know.", and the no-dash rule). Durations come from
+  `rendering/spread_drive.py SPREAD_BEAT_DURS` so picture and text
+  cannot drift.
+- **Code:** `rendering/spread_drive.py` (three handcrafted
+  compositions: the ignition at the river's edge, the cab interior with
+  the bespoke `_pallid_mask`, the open south flooding into colour);
+  captions wrap over the picture in `ui/cutscenes._draw_ending`;
+  `_tick_spread_audio` (narrative_mixin) runs the opening's
+  engine/radio/static bed — the static DIES at the crossing, the radio
+  comes back clean south of the fold; render_smoke now drives all three
+  authored endings' draw paths.
+
 ---
 
 ## Status / sequencing notes

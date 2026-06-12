@@ -16,6 +16,7 @@ import pygame
 
 from constants import SCREEN_W, SCREEN_H, TILE
 from rendering.sprites import draw_carcosa, draw_mask_yank
+from rendering.spread_drive import draw_spread_drive
 
 
 # ---- Cutscene tuning constants (owned here; re-exported by systems.game) ----
@@ -47,6 +48,21 @@ OPENING_STALLS = 2            # normal stalls; the one after is the fatal one
 # to the Carcosa blast.
 RITE_YANK_DUR = 3.0
 RITE_BLAST_DUR = 7.0
+
+
+def _wrap_caption(font, text, max_w):
+    """Greedy word-wrap for the ending captions drawn over the picture."""
+    lines, cur = [], ""
+    for word in text.split():
+        trial = (cur + " " + word).strip()
+        if not cur or font.size(trial)[0] <= max_w:
+            cur = trial
+        else:
+            lines.append(cur)
+            cur = word
+    if cur:
+        lines.append(cur)
+    return lines
 
 
 
@@ -240,8 +256,9 @@ class CutsceneMixin:
 
     def _draw_ending(self):
         """Render the active ending's current still. Same overlay
-        treatment as the flashback -- except rite_broken, which is the
-        wholly-visual Carcosa tableau (no text)."""
+        treatment as the flashback -- except rite_broken (the wholly-
+        visual Carcosa tableau, no text) and escape_alone (the SPREAD
+        drive-out cutscene, captions over the picture)."""
         if not self._ending_active:
             return
         if self._ending_active == "rite_broken":
@@ -263,6 +280,37 @@ class CutsceneMixin:
         else:
             alpha = 255
         alpha = max(0, min(255, alpha))
+        if self._ending_active == "escape_alone":
+            # The drive out: the picture runs continuously underneath
+            # (rendering/spread_drive.py, clocked off the whole-ending
+            # elapsed time); the locked caption lines ride over it.
+            et = (sum(d for _, d in script[:self._ending_phase])
+                  + self._ending_phase_t)
+            draw_spread_drive(self.screen, et)
+            font = self.fonts["lg"]
+            last = self._ending_phase == len(script) - 1
+            if last:
+                # The verdict card holds alone, centre frame, over the
+                # fade to black.
+                srf = font.render(line, True, (224, 214, 196))
+                srf.set_alpha(alpha)
+                self.screen.blit(srf, (SCREEN_W // 2 - srf.get_width() // 2,
+                                       SCREEN_H // 2 - srf.get_height() // 2))
+                return
+            wrapped = _wrap_caption(font, line, int(SCREEN_W * 0.80))
+            lh = font.get_height() + 4
+            y0 = SCREEN_H - 56 - lh * len(wrapped)
+            for i, ln in enumerate(wrapped):
+                srf = font.render(ln, True, (222, 218, 224))
+                shd = font.render(ln, True, (0, 0, 0))
+                srf.set_alpha(alpha)
+                shd.set_alpha(min(220, alpha))
+                x = SCREEN_W // 2 - srf.get_width() // 2
+                y = y0 + i * lh
+                for ox, oy in ((1, 1), (2, 2), (-1, 1)):
+                    self.screen.blit(shd, (x + ox, y + oy))
+                self.screen.blit(srf, (x, y))
+            return
         veil = pygame.Surface((SCREEN_W, SCREEN_H))
         veil.fill((0, 0, 0))
         self.screen.blit(veil, (0, 0))
