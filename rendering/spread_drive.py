@@ -514,6 +514,11 @@ def _cab_interior(s, t):
         if c > 8:
             cab.set_at((sx, sy), (c, c, int(c * 1.1)))
 
+    # A low waning moon through the glass, riding the corn tops.
+    mx_, my_ = int(W * 0.36), int(H * 0.13)
+    pygame.draw.circle(cab, (172, 176, 184), (mx_, my_), 9)
+    pygame.draw.circle(cab, (8, 9, 14), (mx_ - 4, my_ - 3), 8)
+
     # The ground plane rushing under the lights.
     for band, (y0, y1, col) in enumerate((
             (vpy, int(H * 0.46), (17, 17, 16)),
@@ -792,6 +797,60 @@ def _open_south(s, t):
     for y in range(0, horizon, step):
         f = (y / max(1, horizon)) ** 1.25
         pygame.draw.rect(s, _lerpc(top_c, hor_c, f), (0, y, W, step))
+
+    # Stars above, drowning as the gold floods in. Two of them hold:
+    # steady, faintly warm, not stars.
+    sick = _clamp01((t - (SPREAD_T_KNOW - 0.6)) / 3.0)
+    for i in range(26):
+        sx_ = int(_frand(i * 5 + 1) * W)
+        sy_ = int((_frand(i * 5 + 2) ** 1.4) * horizon * 0.72)
+        tw = 0.55 + 0.45 * math.sin(t * 1.5 + i * 1.9)
+        dim = 1.0 - flood * 0.88
+        if i < 2:                                # the pair that stays
+            tw, dim = 1.0, max(0.45, 1.0 - flood * 0.5)
+        a = 150 * _frand(i * 5 + 3) * tw * dim
+        if a > 8:
+            c = int(a)
+            col = ((int(c * 1.05), c, int(c * 0.72)) if i < 2
+                   else (c, c, min(255, int(c * 1.08))))
+            pygame.draw.circle(s, col, (sx_, sy_), 1)
+
+    # Cloud shelves -- thin lenses riding the upper sky. Their
+    # undersides catch the arriving gold, then go pale as the fog
+    # ruins the dawn.
+    for ci, (cyf, cxf, cwf, drift) in enumerate(
+            ((0.10, 0.30, 0.36, 7.0), (0.17, 0.68, 0.27, -5.0),
+             (0.06, 0.78, 0.20, 3.0), (0.25, 0.16, 0.24, -3.0))):
+        cw_ = int(W * cwf)
+        ch_ = max(5, int(cw_ * 0.065))
+        cx_ = int(W * cxf + math.sin(t * 0.05 + ci * 2.1) * drift)
+        cy_ = int(H * cyf)
+        body = _lerpc(_lerpc((22, 21, 29), (88, 58, 66), flood),
+                      (132, 138, 124), 0.7 * sick)
+        lit = _lerpc(_lerpc((30, 29, 37), (236, 176, 96), flood),
+                     (176, 182, 164), 0.8 * sick)
+        pygame.draw.ellipse(s, body, (cx_ - cw_ // 2, cy_ - ch_ // 2,
+                                      cw_, ch_))
+        pygame.draw.ellipse(s, body, (cx_ - cw_ // 3, cy_ - ch_,
+                                      int(cw_ * 0.52), ch_))
+        pygame.draw.ellipse(s, lit, (cx_ - cw_ // 2, cy_ + ch_ // 2 - 2,
+                                     cw_, 3))
+
+    # A thin flock crossing south, the way he went -- everything that
+    # can leave is leaving.
+    bt = t - (SPREAD_T_ON + 1.2)
+    if 0.0 < bt < 9.0:
+        prog = bt / 9.0
+        for bi in range(7):
+            bx = int(W * (-0.06 + prog * 1.2) + _frand(bi * 3) * 90 - bi * 26)
+            by_ = int(H * 0.13 + _frand(bi * 7) * H * 0.07
+                      + math.sin(t * 2.2 + bi) * 3)
+            if not (6 <= bx < W - 6):
+                continue
+            flap = int(math.sin(t * 7.0 + bi * 1.4) * 3)
+            pygame.draw.lines(s, (16, 14, 16), False,
+                              [(bx - 4, by_ - flap), (bx, by_),
+                               (bx + 4, by_ - flap)], 1)
 
     # The glow on the horizon -- gold, breathing (beat G) like the light
     # under the dream-door.
