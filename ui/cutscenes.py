@@ -15,7 +15,7 @@ import random
 import pygame
 
 from constants import SCREEN_W, SCREEN_H, TILE
-from rendering.sprites import draw_carcosa, draw_mask_yank
+from rendering.sprites import draw_carcosa, draw_mask_yank, draw_threshold_seal
 
 
 # ---- Cutscene tuning constants (owned here; re-exported by systems.game) ----
@@ -263,13 +263,59 @@ class CutsceneMixin:
         else:
             alpha = 255
         alpha = max(0, min(255, alpha))
+        rows = self._wrap_ending_line(line, int(SCREEN_W * 0.90))
+        if (self._ending_active == "seal_threshold"
+                and self._ending_phase < len(script) - 2):
+            # The walked-through-the-door cutscene: the frame drinks the
+            # Mask, the warp into Carcosa, the county map healing over
+            # (draw_threshold_seal; acts keyed to the script durations).
+            # The script line rides under the visuals as a caption; the
+            # last two lines fall through to the plain black close.
+            tt = (sum(d for _, d in script[:self._ending_phase])
+                  + self._ending_phase_t)
+            draw_threshold_seal(self.screen, tt)
+            if rows:
+                surfs = [self.fonts["lg"].render(r, True, (220, 218, 226))
+                         for r in rows]
+                pad = 8
+                bw = max(s.get_width() for s in surfs) + pad * 2
+                lh = surfs[0].get_height()
+                bh = lh * len(surfs) + pad * 2
+                back = pygame.Surface((bw, bh), pygame.SRCALPHA)
+                back.fill((0, 0, 0, int(130 * alpha / 255)))
+                by = int(SCREEN_H * 0.87) - bh // 2
+                self.screen.blit(back, (SCREEN_W // 2 - bw // 2, by))
+                for i, s in enumerate(surfs):
+                    s.set_alpha(alpha)
+                    self.screen.blit(s, (SCREEN_W // 2 - s.get_width() // 2,
+                                         by + pad + i * lh))
+            return
         veil = pygame.Surface((SCREEN_W, SCREEN_H))
         veil.fill((0, 0, 0))
         self.screen.blit(veil, (0, 0))
-        s = self.fonts["lg"].render(line, True, (220, 218, 226))
-        s.set_alpha(alpha)
-        self.screen.blit(s, (SCREEN_W // 2 - s.get_width() // 2,
-                             SCREEN_H // 2 - s.get_height() // 2))
+        surfs = [self.fonts["lg"].render(r, True, (220, 218, 226))
+                 for r in rows]
+        lh = surfs[0].get_height() if surfs else 0
+        y0 = SCREEN_H // 2 - (lh * len(surfs)) // 2
+        for i, s in enumerate(surfs):
+            s.set_alpha(alpha)
+            self.screen.blit(s, (SCREEN_W // 2 - s.get_width() // 2,
+                                 y0 + i * lh))
+
+    def _wrap_ending_line(self, line, max_w):
+        """Greedy word-wrap for the ending stills; some authored lines run
+        wider than the screen."""
+        rows, cur = [], ""
+        for wd in line.split():
+            trial = (cur + " " + wd).strip()
+            if cur and self.fonts["lg"].size(trial)[0] > max_w:
+                rows.append(cur)
+                cur = wd
+            else:
+                cur = trial
+        if cur:
+            rows.append(cur)
+        return rows
 
 
     def _draw_car(self, s, cx, cy, light=1.0, exhaust=0.0, scale=1.3):

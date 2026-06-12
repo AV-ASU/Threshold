@@ -344,6 +344,10 @@ class NarrativeMixin:
         self._closure_locked = True
         # Cue the appropriate audio.
         if name == "seal_threshold":
+            # The chime at the press; the rest (_tick_seal_audio) is a
+            # DIMINISHING bed -- receding booms, one cold swell, then
+            # nothing. Silence is the seal.
+            self._seal_cues = set()
             self.audio.play("arg_chime", 0.7)
         elif name == "rite_broken":
             # The dread drone for the mask-yank; the boom/roar come at the cut
@@ -365,6 +369,8 @@ class NarrativeMixin:
         self._ending_phase_t += dt
         if self._ending_active == "rite_broken" and self.audio.enabled:
             self._tick_rite_audio()
+        elif self._ending_active == "seal_threshold" and self.audio.enabled:
+            self._tick_seal_audio()
         script = self._ENDING_SCRIPTS.get(self._ending_active, [])
         if not script:
             self._end_ending()
@@ -413,6 +419,43 @@ class NarrativeMixin:
                 cues.add("whisper2"); self.audio.play("whisper", 0.6)
             if bt > 3.3 and "swell" not in cues:
                 cues.add("swell"); self.audio.play("yk_tone", 0.7)
+
+    def _tick_seal_audio(self):
+        """seal_threshold soundtrack, matched to draw_threshold_seal's acts:
+        three booms RECEDING (each quieter -- the way up sealing further
+        off) as the slabs drop, one cold swell + a whisper at the warp into
+        Carcosa, then nothing at all over the healing map. The bed
+        deliberately diminishes into true silence; the rite_broken roar's
+        opposite. Cue times key off total elapsed (the act clock the draw
+        side uses), not the per-phase clock."""
+        script = self._ENDING_SCRIPTS["seal_threshold"]
+        tt = (sum(d for _, d in script[:self._ending_phase])
+              + self._ending_phase_t)
+        dc = self.audio.drive_channel
+        cues = getattr(self, "_seal_cues", None)
+        if cues is None:
+            cues = self._seal_cues = set()
+        # The slabs: SEAL_CLOSE_TS in rendering/sprites_carcosa.py.
+        for name, at, vol in (("boom1", 3.2, 0.50), ("boom2", 4.3, 0.32),
+                              ("boom3", 5.4, 0.18)):
+            if tt > at and name not in cues:
+                cues.add(name)
+                self.audio.play("carcosa_boom", vol)
+        if tt > 6.0 and "warp" not in cues:           # the pull begins
+            cues.add("warp")
+            self.audio.play("yk_tone", 0.45)
+            dc.play(self.audio.carcosa_drone_snd, loops=-1)
+            dc.set_volume(0.0)
+        if tt > 7.2 and "whisper" not in cues:        # the taken, going with it
+            cues.add("whisper")
+            self.audio.play("whisper", 0.35)
+        if "warp" in cues and "hush" not in cues:
+            wt = tt - 6.0
+            dc.set_volume(min(0.5, wt / 1.2) if wt < 2.2
+                          else max(0.0, 0.5 * (1 - (wt - 2.2) / 1.4)))
+            if tt > 9.8:                              # the map: dead quiet
+                cues.add("hush")
+                dc.stop()
 
     def _end_ending(self):
         """Wrap up the ending sequence and return to title."""
