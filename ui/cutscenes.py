@@ -249,7 +249,7 @@ class CutsceneMixin:
             if yt < RITE_YANK_DUR:                # the culpable act...
                 draw_mask_yank(self.screen, yt)
             else:                                 # ...HARD CUT to the blast
-                draw_carcosa(self.screen, yt - RITE_YANK_DUR, "spread")
+                draw_carcosa(self.screen, yt - RITE_YANK_DUR)
             return
         script = self._ENDING_SCRIPTS.get(self._ending_active, [])
         if self._ending_phase >= len(script):

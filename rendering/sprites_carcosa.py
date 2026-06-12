@@ -506,28 +506,139 @@ def _carcosa_post(surf, t, tint=(220, 210, 164), cold=(0, 10, 14)):
     surf.blit(vig, (0, 0))
 
 
-def _draw_carcosa_axe(surf, hx, hy, ang):
+def _draw_carcosa_axe(surf, hx, hy, ang, k=1.0):
     """The splitting axe mid-swing: a wood handle + a steel wedge head."""
     dx, dy = math.cos(ang), math.sin(ang)
-    tail = (int(hx - dx * 200), int(hy - dy * 200))
-    pygame.draw.line(surf, (26, 18, 11), (int(hx), int(hy)), tail, 9)
-    pygame.draw.line(surf, (76, 54, 31), (int(hx), int(hy)), tail, 6)
+    tail = (int(hx - dx * 200 * k), int(hy - dy * 200 * k))
+    pygame.draw.line(surf, (26, 18, 11), (int(hx), int(hy)), tail,
+                     max(2, int(9 * k)))
+    pygame.draw.line(surf, (76, 54, 31), (int(hx), int(hy)), tail,
+                     max(1, int(6 * k)))
     px, py = -dy, dx
-    blade = [(int(hx + px * 5), int(hy + py * 5)),
-             (int(hx + dx * 34 + px * 30), int(hy + dy * 34 + py * 30)),
-             (int(hx + dx * 34 - px * 30), int(hy + dy * 34 - py * 30)),
-             (int(hx - px * 5), int(hy - py * 5))]
+    blade = [(int(hx + px * 5 * k), int(hy + py * 5 * k)),
+             (int(hx + (dx * 34 + px * 30) * k), int(hy + (dy * 34 + py * 30) * k)),
+             (int(hx + (dx * 34 - px * 30) * k), int(hy + (dy * 34 - py * 30) * k)),
+             (int(hx - px * 5 * k), int(hy - py * 5 * k))]
     pygame.draw.polygon(surf, (42, 44, 50), blade)
     pygame.draw.polygon(surf, (168, 172, 180), blade, 2)
 
 
+def _yank_daub(surf, x, y, R, t, seed, bleed=0.0):
+    """One painted Sign at cutscene scale -- the cult's crude mask-daub
+    (CANON: a broken oval, two thumb-press sockets, NO mouth, paint runs;
+    the _draw_yellow_sign grammar). Breathes on a faint gold pulse while
+    the rite holds; `bleed` (0..1) kills the glow and sends dark-red runs
+    down the wall (the Sign bleeds when the Mask is struck)."""
+    rng = random.Random(seed)
+    pulse = 1.0 + math.sin(t * 1.1 + seed) * 0.08
+    glow = max(0.0, 1.0 - bleed)
+    if glow > 0.03:
+        _yk_radial(surf, int(x), int(y), int(R * 2.1 * pulse), (206, 188, 84),
+                   int((30 + 8 * math.sin(t * 1.1 + seed)) * glow), add=False)
+    col = (196, 178, 72)
+    dark = (92, 80, 28)
+    sock = (6, 5, 4)
+    rx = R * rng.uniform(0.66, 0.74)
+    ry = R * rng.uniform(0.96, 1.06)
+    wd_d = max(2, int(R * 0.085))
+    wd_c = max(1, int(R * 0.055))
+    n = 16
+    pts = []
+    for i in range(n):
+        a = i / n * math.tau
+        w = rng.uniform(-2.4, 2.4) * R / 13.0
+        pts.append((x + math.cos(a) * (rx + w), y + math.sin(a) * (ry + w)))
+    for i in range(n):
+        if rng.random() < 0.78:
+            a, b = pts[i], pts[(i + 1) % n]
+            pygame.draw.line(surf, dark, a, b, wd_d)
+            pygame.draw.line(surf, col, a, b, wd_c)
+    sockets = []
+    for fx, fy, fr in ((-0.40, -0.25, 0.20), (0.43, -0.18, 0.23)):
+        sxp, syp = int(x + rx * fx), int(y + ry * fy)
+        srr = max(2, int(R * fr))
+        sockets.append((sxp, syp, srr))
+        pygame.draw.circle(surf, sock, (sxp, syp), srr)
+    # Two paint runs off the chin, one trailing thinner (wet, never dried).
+    creep = 1.0 + 0.30 * math.sin(t * 0.13 + seed * 0.7)
+    for dx, fl in ((-R * 0.2, 1.0), (R * 0.12, 0.7)):
+        rl = rng.randint(int(R * 0.4), int(R * 0.9)) * fl * creep
+        y0 = y + ry * 0.9
+        pygame.draw.line(surf, dark, (int(x + dx), int(y0)),
+                         (int(x + dx), int(y0 + rl)), max(2, int(R * 0.04)))
+    # THE BLEED: dark-red wells from the sockets and runs down the wall.
+    if bleed > 0.02:
+        for j, (sxp, syp, srr) in enumerate(sockets):
+            pygame.draw.circle(surf, (96, 18, 14), (sxp, syp),
+                               max(2, int(srr * (0.5 + 0.5 * bleed))))
+            for k in range(2):
+                bx = sxp + (k * 2 - 1) * max(1, srr // 3) + int((_frand(seed + j * 3 + k) - 0.5) * srr)
+                ln = int(R * (0.5 + 2.2 * bleed) * (0.7 + 0.5 * _frand(seed + j + k * 7)))
+                pygame.draw.line(surf, (96, 18, 14), (bx, syp + srr - 1),
+                                 (bx + int((_frand(seed + k) - 0.5) * 6), syp + srr + ln),
+                                 max(1, int(R * 0.035)))
+
+
+def _yank_kneeler(surf, x, y, k, t, seed, lift=0.0):
+    """One congregant seen from behind, bowed at the rite -- a near-black
+    robed hump with a faint candle-side rim. `lift` (0..1) raises the bowed
+    head (the shatter beat: every head in the room comes up as one)."""
+    sway = math.sin(t * 0.8 + seed * 1.7) * 0.015 * k
+    robe = (11, 9, 13)
+    rim = (54, 44, 22)
+    bw, bh = int(k * 1.05), int(k * 0.78)
+    body = pygame.Rect(0, 0, bw, bh)
+    body.center = (int(x + sway), int(y))
+    pygame.draw.ellipse(surf, robe, body)
+    pygame.draw.arc(surf, rim, body.inflate(2, 2), math.pi * 0.25,
+                    math.pi * 0.78, max(1, int(k * 0.04)))
+    hr = max(3, int(k * 0.21))
+    hy = y - bh * (0.34 + 0.42 * lift)
+    hx = x + sway + bw * 0.05 * (1.0 - lift)
+    pygame.draw.circle(surf, robe, (int(hx), int(hy)), hr)
+    pygame.draw.arc(surf, rim,
+                    (int(hx - hr), int(hy - hr), hr * 2, hr * 2),
+                    math.pi * 0.2, math.pi * 0.9, 1)
+
+
+def _yank_candle(surf, x, y, t, seed, out=0.0):
+    """A lit altar candle: stub, halo, a guttering flame. `out` (0..1)
+    snuffs it -- the flame dies and a smoke wisp curls off the wick (every
+    candle in the chamber goes out on the blow)."""
+    pygame.draw.rect(surf, (172, 158, 128), (int(x - 3), int(y), 6, 14))
+    pygame.draw.rect(surf, (96, 86, 66), (int(x - 3), int(y), 6, 14), 1)
+    if out < 0.95:
+        fl = (0.7 + 0.3 * math.sin(t * 9 + seed * 2.1)) * (1.0 - out)
+        _yk_radial(surf, int(x), int(y - 6), int(26 * fl + 6), (224, 176, 88),
+                   int(46 * fl), add=False)
+        fh = int(9 * fl) + 2
+        pygame.draw.ellipse(surf, (236, 168, 70),
+                            (int(x - 3), int(y - 4 - fh), 6, fh + 4))
+        pygame.draw.ellipse(surf, (255, 234, 168),
+                            (int(x - 1), int(y - 1 - fh // 2), 3, fh // 2 + 2))
+    if 0.02 < out:
+        # the smoke wisp, rising and dispersing
+        wl = int(18 + 26 * out)
+        pts = [(int(x + math.sin(t * 3 + seed + s * 0.9) * (2 + s * 1.5 * out)),
+                int(y - 6 - s * wl / 4)) for s in range(5)]
+        a = int(90 * (1.0 - out))
+        if a > 8:
+            wisp = pygame.Surface(surf.get_size(), pygame.SRCALPHA)
+            pygame.draw.lines(wisp, (120, 118, 124, a), False, pts, 1)
+            surf.blit(wisp, (0, 0))
+
+
 def draw_mask_yank(surf, t):
     """The act that breaks the rite (NARRATIVE §6): you SHATTER the Pallid
-    Mask with your splitting axe -- the catastrophic 'tear it down'. Dread
-    stillness, the axe swings in, the mask bursts into shards and the Sign
-    bleeds, whiting out into the blast. `t` = seconds into the act (~3s)."""
+    Mask with your splitting axe -- the catastrophic 'tear it down'. Staged
+    as the Sign Chamber the player is standing in: the Mask big on its
+    pedestal altar, the vast daubed Sign above it with its flanking copies,
+    the candle row, the kneeling congregation bowed in the foreground. Dread
+    stillness, the axe swings in, the mask bursts, every candle dies, the
+    daubs bleed, the kneelers' heads come up as one -- whiting out into the
+    blast. `t` = seconds into the act (~3s)."""
     w, h = surf.get_size()
-    cx, cy = w // 2, int(h * 0.46)
+    cx, cy = w // 2, int(h * 0.47)
     impact = 1.6
     sh = max(0.0, t - impact)                      # time since the blow lands
     flare = max(0.0, (t - 2.55) / 0.45)
@@ -535,31 +646,55 @@ def draw_mask_yank(surf, t):
     shx = int(math.sin(t * 64) * (2 + 20 * shake))
     shy = int(math.cos(t * 70) * (1 + 12 * shake))
     sx, sy = cx + shx, cy + shy
+    r = 112                                        # the Mask, altar-piece big
+    s = max(0.0, sh - 0.07)                        # time since the shatter
+    bleed = min(1.0, s * 1.6)                      # the Sign bleeding out
+    out = min(1.0, s * 1.2) if sh > 0 else 0.0     # the candles dying
 
     surf.fill((9, 8, 11))
-    for i in range(7):                             # cellar-wall stone seams
+    for i in range(7):                             # apse-wall stone seams
         yy = int(h * (0.12 + 0.12 * i)) + (i % 2) * 6
         pygame.draw.line(surf, (16, 14, 18), (0, yy), (w, yy + 4), 1)
-    # The daubed Yellow Sign + the dark socket the mask sits in.
-    glyph = [(sx, sy - 96), (sx - 9, sy - 32), (sx - 44, sy - 12),
-             (sx - 15, sy + 20), (sx - 28, sy + 76), (sx + 7, sy + 32),
-             (sx + 42, sy + 64), (sx + 19, sy + 9), (sx + 50, sy - 26),
-             (sx + 11, sy - 28)]
-    pygame.draw.lines(surf, (70, 56, 24), False,
-                      [(int(a), int(b)) for a, b in glyph], 2)
-    pygame.draw.ellipse(surf, (5, 4, 7), (sx - 60, sy - 78, 120, 156))
+    # The floor line + a deep apse shadow behind the altar.
+    fy = int(h * 0.80)
+    pygame.draw.rect(surf, (7, 6, 9), (0, fy, w, h - fy))
+    pygame.draw.line(surf, (15, 13, 17), (0, fy), (w, fy), 2)
+    shadow = pygame.Surface((w, h), pygame.SRCALPHA)
+    pygame.draw.ellipse(shadow, (4, 3, 6, 150),
+                        (sx - int(r * 1.7), sy - int(r * 2.1),
+                         int(r * 3.4), int(r * 4.0)))
+    surf.blit(shadow, (0, 0))
+    # The daubed Sign, vast over the altar, flanked by two smaller hands'
+    # copies (the scene's own staging: every daub a crude copy of the Mask
+    # below it). They bleed when the original is struck.
+    _yank_daub(surf, sx, int(h * 0.15) + shy, 84, t, 5, bleed)
+    _yank_daub(surf, sx - 312, int(h * 0.18) + shy, 46, t, 11, bleed * 0.8)
+    _yank_daub(surf, sx + 308, int(h * 0.17) + shy, 49, t, 23, bleed * 0.8)
+    # The pedestal altar the Mask sits on.
+    ped_y = sy + int(r * 0.92)
+    pygame.draw.rect(surf, (24, 21, 27), (sx - 96, ped_y, 192, 18))
+    pygame.draw.rect(surf, (38, 34, 42), (sx - 96, ped_y, 192, 5))
+    pygame.draw.polygon(surf, (18, 16, 21),
+                        [(sx - 74, ped_y + 18), (sx + 74, ped_y + 18),
+                         (sx + 58, fy + 26), (sx - 58, fy + 26)])
+    # The candle row along the altar's foot. Every flame dies on the blow.
+    for j, dx in enumerate((-226, -148, 148, 226)):
+        _yank_candle(surf, sx + dx, ped_y + 6, t, j * 3 + 1, out)
+        if out < 0.9:                              # warm pools on the floor
+            _yk_radial(surf, sx + dx, ped_y + 16, 40, (160, 118, 52),
+                       int(16 * (1.0 - out)), add=False)
     hitstop = 0.07                                 # frozen frames on contact
     if sh <= hitstop:
         # Mask whole. Tremor builds; the axe rears back, HOLDS, then drops.
         trem = int(math.sin(t * 36) * 2 * (t / impact))
         # Swing timeline: enter+cock [0.55,1.05] -> anticipation HOLD
         # [1.05,1.35] -> fast accel drop [1.35,impact].
-        cocked = (sx + 230, sy - 250)              # axe held high, off upper-right
-        contact = (sx + 24, sy - 18)
+        cocked = (sx + 264, sy - 224)              # axe held high, upper-right
+        contact = (sx + 30, sy - int(r * 0.40))
         if t < 1.05:
             p = max(0.0, (t - 0.55) / 0.5)
-            ax = sx + 470 - (470 - 230) * p        # slide in from off-screen
-            ay = sy - 250
+            ax = sx + 600 - (600 - 264) * p        # slide in from off-screen
+            ay = sy - 224
             hxx, hyy = int(ax), int(ay)
         elif t < 1.35:
             hxx, hyy = cocked                      # the held beat (dread)
@@ -569,59 +704,62 @@ def draw_mask_yank(surf, t):
             hxx = int(cocked[0] + (contact[0] - cocked[0]) * sw)
             hyy = int(cocked[1] + (contact[1] - cocked[1]) * sw)
         ang = math.atan2(contact[1] - cocked[1], contact[0] - cocked[0])
+        ms = r * 2 + 26
+        msurf = pygame.Surface((ms, ms), pygame.SRCALPHA)
+        _yk_mask(msurf, ms // 2, ms // 2, r, 1.0, "wail")
         if sh <= 0:
-            ms = 130
-            msurf = pygame.Surface((ms, ms), pygame.SRCALPHA)
-            _yk_mask(msurf, ms // 2, ms // 2, 58, 1.0, "wail")
             surf.blit(msurf, msurf.get_rect(center=(sx + trem, sy)))
-            _draw_carcosa_axe(surf, hxx, hyy, ang)
+            _draw_carcosa_axe(surf, hxx, hyy, ang, 1.45)
         else:
             # CONTACT held: axe buried, a hairline crack lights, white spark.
-            ms = 130
-            msurf = pygame.Surface((ms, ms), pygame.SRCALPHA)
-            _yk_mask(msurf, ms // 2, ms // 2, 58, 1.0, "wail")
             surf.blit(msurf, msurf.get_rect(center=(sx, sy)))
-            crk = [(sx + (_frand(c) - 0.5) * 16, sy - 70 + c * 24)
+            crk = [(sx + (_frand(c) - 0.5) * 26, sy - int(r * 1.05) + c * int(r * 0.36))
                    for c in range(7)]
             pygame.draw.lines(surf, (255, 248, 224), False,
                               [(int(a), int(b)) for a, b in crk], 2)
-            _draw_carcosa_axe(surf, contact[0], contact[1], ang)
-            _yk_radial(surf, contact[0], contact[1], 26, (255, 248, 224), 220)
+            _draw_carcosa_axe(surf, contact[0], contact[1], ang, 1.45)
+            _yk_radial(surf, contact[0], contact[1], 34, (255, 248, 224), 220)
     else:
         # SHATTERED: the mask SPLITS down the strike line into two halves that
-        # fall apart under gravity, gore bursts from the Sign, debris rains.
-        s = sh - hitstop
-        _yk_radial(surf, sx, sy, int(50 + 80 * shake), (150, 30, 22),
+        # fall apart under gravity, gore bursts from the socket, debris rains.
+        _yk_radial(surf, sx, sy, int(70 + 110 * shake), (150, 30, 22),
                    int(28 + 46 * shake))
         for i in range(5):                         # red bleeding rakes
             a = (i / 5.0) * math.tau + 0.4
-            ln = 60 + 200 * min(1.0, s * 1.4)
+            ln = 80 + 260 * min(1.0, s * 1.4)
             pygame.draw.line(surf, (110, 26, 18), (sx, sy),
                              (int(sx + math.cos(a) * ln), int(sy + math.sin(a) * ln)),
-                             max(1, int(3 * min(1.0, s * 2))))
+                             max(1, int(4 * min(1.0, s * 2))))
         # the two halves of the mask, cleaved down the centre
-        ms = 130
+        ms = r * 2 + 26
         msurf = pygame.Surface((ms, ms), pygame.SRCALPHA)
-        _yk_mask(msurf, ms // 2, ms // 2, 58, 1.0, "wail")
-        gap = int(s * 90)
-        drop = int(s * s * 520)                    # gravity
+        _yk_mask(msurf, ms // 2, ms // 2, r, 1.0, "wail")
+        gap = int(s * 150)
+        drop = int(s * s * 560)                    # gravity
         for side, srcx in ((-1, 0), (1, ms // 2)):
             half = msurf.subsurface((srcx, 0, ms // 2, ms)).copy()
             half = pygame.transform.rotozoom(half, -side * s * 30, 1.0)
             surf.blit(half, half.get_rect(center=(
                 int(sx + side * (ms * 0.22 + gap)), int(sy + drop))))
-        for i in range(9):                         # secondary debris, falling
-            a = (i / 9.0) * math.tau + (_frand(i * 5) - 0.5) * 0.5
-            d = s * (180 + 180 * _frand(i * 5 + 1))
+        for i in range(11):                        # secondary debris, falling
+            a = (i / 11.0) * math.tau + (_frand(i * 5) - 0.5) * 0.5
+            d = s * (220 + 240 * _frand(i * 5 + 1))
             px = sx + math.cos(a) * d
             py = sy + math.sin(a) * d - s * 30 + s * s * 460   # arc then fall
-            shard = pygame.Surface((40, 40), pygame.SRCALPHA)
+            shard = pygame.Surface((48, 48), pygame.SRCALPHA)
             col = (206, 196, 156) if i % 3 else (54, 50, 36)
-            pygame.draw.polygon(shard, col, [(20, 4), (34, 30), (7, 28)])
+            pygame.draw.polygon(shard, col, [(24, 5), (41, 36), (8, 34)])
             shard = pygame.transform.rotozoom(
                 shard, s * 460 * (1 if i % 2 else -1) + i * 29,
-                0.4 + 0.6 * _frand(i * 5 + 2))
+                0.4 + 0.7 * _frand(i * 5 + 2))
             surf.blit(shard, shard.get_rect(center=(int(px), int(py))))
+    # The congregation, bowed and oblivious between you and the altar --
+    # the only lid on the pot, and you swing over their heads. On the
+    # shatter every head comes up as one.
+    lift = min(1.0, s * 2.5) if sh > 0 else 0.0
+    _yank_kneeler(surf, cx - 240, int(h * 0.92), 130, t, 1, lift)
+    _yank_kneeler(surf, cx + 16, int(h * 0.99), 165, t, 2, lift)
+    _yank_kneeler(surf, cx + 262, int(h * 0.93), 120, t, 3, lift)
     vig = pygame.Surface((w, h), pygame.SRCALPHA)
     for i in range(56):
         a = int(170 * (1 - i / 56) ** 1.6)
@@ -743,7 +881,7 @@ def _carcosa_fg_tentacles(surf, w, h, t, grow):
                           dark=(3, 3, 5), gold=(48, 39, 18))
 
 
-def draw_carcosa(surf, t, mode="spread"):
+def draw_carcosa(surf, t):
     """rite_broken: His influence DETONATES -- a mushroom cloud of the taken.
     A flash + shockwave + shake at ground zero (the town/well); a stem of
     tendrils and faces PUNCHES upward; it billows into a cap of branching
