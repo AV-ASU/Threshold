@@ -463,6 +463,8 @@ class NarrativeMixin:
         cue("wh1", SPREAD_T_FLOOD + 2.2, "whisper", 0.45)
         cue("wh2", SPREAD_T_FLOOD + 4.4, "whisper", 0.55)
         cue("know", SPREAD_T_KNOW + 0.3, "low_pulse", 0.9)
+        cue("fog", SPREAD_T_ON + 2.8, "infest_throb", 0.40)   # it followed
+        cue("fog2", SPREAD_T_KNOW + 1.8, "infest_throb", 0.5)
         cue("know2", SPREAD_T_KNOW + 3.2, "low_pulse", 0.6)
 
         # Engine envelope: dead -> the roar -> settled cruise -> falling

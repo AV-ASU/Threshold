@@ -171,10 +171,11 @@ def _travelled(t):
 # Beats A + B -- the exterior road (top-down, the car facing south/down).
 # ---------------------------------------------------------------------------
 
-def _car_topdown_south(s, cx, cy, light, t, running):
+def _car_topdown_south(s, cx, cy, light, t, running, dome=0.0):
     """Top-down car FACING DOWN-SCREEN (south, out) -- the opening drive's
     car, turned around. `light` gates the headlights; `running` adds the
-    idle tremor and exhaust."""
+    idle tremor and exhaust; `dome` (0..1) lights the cabin from inside
+    (the key-turn beat)."""
     jx = jy = 0
     if running:
         jx = int(round(math.sin(t * 47.0) * 0.9))
@@ -215,6 +216,9 @@ def _car_topdown_south(s, cx, cy, light, t, running):
     # Trunk (top), rear window, roof, windshield, hood (bottom).
     pygame.draw.rect(s, (24, 26, 32), R(-7, -13, 14, 5), border_radius=2)
     pygame.draw.rect(s, (40, 42, 50), R(-8, -7, 16, 12), border_radius=2)
+    if dome > 0.02:
+        dc = (int(196 * dome), int(166 * dome), int(108 * dome))
+        pygame.draw.rect(s, dc, R(-4, -4, 8, 7), border_radius=2)
     wsh = (int(70 * light + 26), int(78 * light + 28), int(92 * light + 30))
     pygame.draw.polygon(s, wsh, [P(-7, 6), P(7, 6), P(9, 13), P(-9, 13)])
     pygame.draw.rect(s, (30, 28, 34), R(-11, 13, 22, 7), border_radius=2)
@@ -256,6 +260,10 @@ def _exterior_road(s, t):
     W, H = s.get_size()
     cx = W // 2
     cy = int(H * 0.40)
+    road_w = int(W * 0.42)
+    # Right-hand traffic: heading south (down-screen, north at the top)
+    # the car's lane is the WEST one -- the screen-left half of the road.
+    car_x = cx - int(road_w * 0.21)
     scroll = _travelled(t)
     moving = _clamp01((t - (_ROAR_AT + 0.35)) / 1.6)
 
@@ -269,7 +277,6 @@ def _exterior_road(s, t):
         return (int(c[0] * light), int(c[1] * light), int(c[2] * light))
 
     s.fill((10, 11, 10))                      # night earth
-    road_w = int(W * 0.42)
     rx0 = cx - road_w // 2
     rx1 = rx0 + road_w
 
@@ -328,7 +335,69 @@ def _exterior_road(s, t):
                          (int(74 * shade * lit), int(64 * shade * lit),
                           int(32 * shade * lit)))
 
-    # The back of the BRIMLEY sign passes on the right shoulder.
+    # A lonely power line down the west shoulder -- poles above the corn,
+    # wire sagging span to span (the opening drive's line, on the way out).
+    pole_sp, pole_x, ph_h = 240, rx0 - 26, 58
+
+    def _attach(idx):
+        return (pole_x + 10, cy + idx * pole_sp - int(scroll) - ph_h + 9)
+    lo_i = int((scroll - cy) // pole_sp) - 3
+    hi_i = int((scroll + (H - cy)) // pole_sp) + 2
+    wire_c = L((46, 48, 52))
+    for idx in range(lo_i, hi_i):
+        ax, ay = _attach(idx)
+        bx, by = _attach(idx + 1)
+        if max(ay, by) < -70 or min(ay, by) > H + 70:
+            continue
+        pygame.draw.lines(s, wire_c, False,
+                          [(ax, ay), ((ax + bx) // 2 + 6,
+                                      (ay + by) // 2 + 9), (bx, by)], 1)
+    for idx in range(lo_i, hi_i):
+        yb = cy + idx * pole_sp - int(scroll)
+        tp = yb - ph_h
+        if tp > H + 20 or yb < -20:
+            continue
+        pf = max(0.0, 1.0 - abs(yb - cy) / 220.0)
+        pc = (int(38 + 40 * pf * light), int(34 + 32 * pf * light),
+              int(28 + 22 * pf * light))
+        pygame.draw.rect(s, pc, (pole_x - 2, tp, 4, ph_h))
+        pygame.draw.rect(s, pc, (pole_x - 11, tp + 6, 22, 3))
+        pygame.draw.rect(s, pc, (pole_x - 2, tp - 4, 4, 6))
+
+    # Reflector posts on both shoulders, flaring where the beam reaches.
+    post_sp = 150
+    for idx in range(int((scroll - cy) // post_sp) - 3,
+                     int((scroll + (H - cy)) // post_sp) + 2):
+        py = cy + idx * post_sp - int(scroll)
+        if py < -10 or py > H + 10:
+            continue
+        rf = max(0.0, 1.0 - abs(py - (cy + 170)) / 190.0)
+        for postx in (rx0 - 13, rx1 + 13):
+            pygame.draw.rect(s, L((58, 54, 46)), (postx - 1, py - 14, 2, 14))
+            ac = (int(100 + 150 * rf * light), int(70 + 96 * rf * light),
+                  int(16 + 28 * rf))
+            pygame.draw.circle(s, ac, (postx, py - 13), 2)
+
+    # A farmhouse set back in the corn on the west side, one window lit.
+    # The light goes out as the car comes level: the town shutting its
+    # eyes on the way out.
+    fy = cy + 420 - scroll
+    if -90 <= fy <= H + 90:
+        fx = rx0 - 96
+        wall = (int(30 * light + 8), int(27 * light + 8), int(24 * light + 8))
+        roof = (int(20 * light + 5), int(18 * light + 5), int(16 * light + 5))
+        pygame.draw.rect(s, wall, (fx - 30, int(fy) - 26, 60, 26))
+        pygame.draw.polygon(s, roof, [(fx - 34, int(fy) - 26),
+                                      (fx, int(fy) - 46),
+                                      (fx + 34, int(fy) - 26)])
+        if fy > cy + 36:                          # still ahead: the lamp burns
+            pygame.draw.rect(s, (216, 168, 92), (fx + 8, int(fy) - 18, 7, 8))
+            _yk_radial(s, fx + 11, int(fy) - 14, 10, (216, 168, 92), 70,
+                       add=False)
+        else:                                     # come level: it goes dark
+            pygame.draw.rect(s, (14, 12, 10), (fx + 8, int(fy) - 18, 7, 8))
+
+    # The back of the BRIMLEY sign passes on the east shoulder.
     sy = cy + 700 - scroll
     if -70 <= sy <= H + 70:
         flare = max(0.35, 1.0 - abs(sy - (cy + 130)) / 260.0)
@@ -364,7 +433,7 @@ def _exterior_road(s, t):
                    min(255, int(102 * b)))
             if col[0] + col[1] + col[2] > 3:
                 pygame.draw.ellipse(glow, col,
-                                    (cx - half, y - eh // 2, 2 * half, eh))
+                                    (car_x - half, y - eh // 2, 2 * half, eh))
         for i in range(12, 0, -1):
             f = i / 12
             rw, rh = int(38 * f) + 3, int(52 * f) + 3
@@ -373,7 +442,7 @@ def _exterior_road(s, t):
                    min(255, int(146 * hb)))
             if col[0] + col[1] + col[2] > 3:
                 pygame.draw.ellipse(glow, col,
-                                    (cx - rw, (front + 34) - rh // 2,
+                                    (car_x - rw, (front + 34) - rh // 2,
                                      2 * rw, rh))
         s.blit(glow, (0, 0), special_flags=pygame.BLEND_RGBA_ADD)
 
@@ -389,8 +458,8 @@ def _exterior_road(s, t):
             p = (t * 0.55 * spd + _frand(i * 5 + 2)) % 1.0
             yy = tail_y - p * reach
             fan = (6 + p * 52) * (1 if (i & 1) else -1)
-            xx = cx + int(math.sin(t * 1.7 + i * 1.31) * 5
-                          + fan * _frand(i * 7 + 3))
+            xx = car_x + int(math.sin(t * 1.7 + i * 1.31) * 5
+                             + fan * _frand(i * 7 + 3))
             a = int(210 * (1 - p) * moving)
             if a <= 0:
                 continue
@@ -400,7 +469,7 @@ def _exterior_road(s, t):
                 pygame.draw.line(wake, (*_YK_HOT, int(a * 0.7)),
                                  (xx, int(yy)), (xx, int(yy) + 9), 1)
         # a soft smear right at the tail, the stream's root
-        _yk_radial(wake, cx, tail_y - 6, 22, _YK_GOLD, int(46 * moving))
+        _yk_radial(wake, car_x, tail_y - 6, 22, _YK_GOLD, int(46 * moving))
         s.blit(wake, (0, 0))
 
     # The mask riding shotgun, seen from outside: one breathing gold
@@ -408,10 +477,17 @@ def _exterior_road(s, t):
     ga = int(60 * (0.45 + 0.55 * math.sin(t * 1.7)))
     glint = pygame.Surface((26, 26), pygame.SRCALPHA)
     _yk_radial(glint, 13, 13, 6, _YK_GOLD, ga)
-    s.blit(glint, (cx + 7 - 13, cy + 2 - 13))
+    s.blit(glint, (car_x + 7 - 13, cy + 2 - 13))
 
-    # The car, dead still then running.
-    _car_topdown_south(s, cx, cy, light, t, running=(t >= _ROAR_AT))
+    # The car, dead still then running. The dome light blinks on with
+    # the key and dies once the engine holds -- something to watch in
+    # the dark beat before the roar.
+    dome = 0.0
+    if _KEY_AT <= t < _ROAR_AT + 0.8:
+        dome = (_clamp01((t - _KEY_AT) / 0.12)
+                * _clamp01((_ROAR_AT + 0.8 - t) / 0.5))
+    _car_topdown_south(s, car_x, cy, light, t, running=(t >= _ROAR_AT),
+                       dome=dome)
 
 
 # ---------------------------------------------------------------------------
@@ -472,11 +548,13 @@ def _cab_interior(s, t):
             pygame.draw.line(seam, (214, 150, 70, a), (0, r), (W, r))
         cab.blit(seam, (0, vpy - 4))
 
-    # Road edges + centre dashes streaking at the glass.
+    # Road edges + centre dashes streaking at the glass. Right-hand
+    # traffic: the car rides the west lane, so the centreline streams
+    # past on the DRIVER'S LEFT and the near road edge sits off right.
     edge_c = (78, 74, 58)
-    pygame.draw.line(cab, edge_c, (vpx - 8, vpy + 2), (int(W * 0.04), dash_y + 36), 2)
-    pygame.draw.line(cab, edge_c, (vpx + 8, vpy + 2), (int(W * 0.88), dash_y + 36), 2)
-    tx, ty = int(W * 0.42), int(H * 0.92)
+    pygame.draw.line(cab, edge_c, (vpx - 8, vpy + 2), (-int(W * 0.04), dash_y + 36), 2)
+    pygame.draw.line(cab, edge_c, (vpx + 8, vpy + 2), (int(W * 0.96), dash_y + 36), 2)
+    tx, ty = int(W * 0.27), int(H * 0.92)
     for k in range(8):
         q = (t * 1.05 + k / 8.0) % 1.0
         qq = q ** 1.8
@@ -769,6 +847,60 @@ def _open_south(s, t):
         if x < W + 80:
             _car_profile(s, x, gy, 0.9, t, idle=0.0, rim=1.0)
 
+    # THE FOG -- pale and sickly, cresting from the north (frame left)
+    # on the car's heels and rolling south down the road it took. It
+    # smothers the gold layer by layer until the dawn is ruined: the
+    # spread, already arriving. Thin fingers run out ahead of the bank
+    # along the asphalt, reaching after him.
+    fog_t = t - (SPREAD_T_ON + 2.4)
+    if fog_t > 0.0:
+        front = W * 1.25 * (_clamp01(fog_t / 8.0) ** 0.85)
+        # Built at quarter resolution and smoothscaled up, so the banks
+        # blur into vapour instead of hard terraces.
+        sc = 0.25
+        fw_, fh_ = int(W * sc), int(H * sc)
+        fog = pygame.Surface((fw_, fh_), pygame.SRCALPHA)
+        pale = (160, 176, 150)
+        layers = ((horizon - 32, 54, 56), (horizon - 10, 66, 80),
+                  (horizon + 16, 80, 100), (ry0 - 6, rh + 34, 116))
+        for li, (by, depth, alpha) in enumerate(layers):
+            fl = (front - li * 60) * sc
+            if fl <= 0:
+                continue
+            byl, dl = by * sc, depth * sc
+            pts = [(-10, int(byl + dl))]
+            x = -10.0
+            while x < fl:
+                ytop = (byl + math.sin(t * 0.5 + x * 0.05 + li * 1.9) * 2.4
+                        + _frand(li * 31 + int(x // 7)) * 2.4)
+                pts.append((int(x), int(ytop)))
+                x += 7
+            pts.append((int(fl), int(byl + dl * 0.5)))      # the bank's nose
+            pts.append((int(fl), int(byl + dl)))
+            pygame.draw.polygon(fog, (*pale, alpha), pts)
+            for k in range(8):                   # ragged puffs along the top
+                px = fl - k * 9 - _frand(li * 9 + k) * 6
+                if px < 0:
+                    continue
+                pr = 3 + int(_frand(li * 13 + k) * 4)
+                pa = int(alpha * (0.45 + 0.4 * _frand(li * 17 + k)))
+                py_ = byl + math.sin(t * 0.6 + k * 1.7 + li) * 2
+                pygame.draw.circle(fog, (*pale, pa), (int(px), int(py_)), pr)
+        for k in range(3):                       # the fingers, on the road
+            fx = (front + 40 + k * 90 + _frand(k * 7) * 40) * sc
+            if fx > fw_ + 16:
+                continue
+            fwl = int((90 + _frand(k * 9) * 60) * sc)
+            fhl = max(2, int((10 + _frand(k * 11) * 8) * sc))
+            fyk = (ry0 + rh // 2 + math.sin(t * 0.7 + k * 2) * 6 + k * 9 - 9) * sc
+            pygame.draw.ellipse(fog, (*pale, 70),
+                                (int(fx - fwl), int(fyk - fhl / 2), fwl, fhl))
+        s.blit(pygame.transform.smoothscale(fog, (W, H)), (0, 0))
+        # The sun, reduced to a pale smudge behind the haze.
+        if front > sunx:
+            _yk_radial(s, sunx, horizon, int(W * 0.045),
+                       (214, 206, 178), int(46 * pulse), add=False)
+
 
 # ---------------------------------------------------------------------------
 # Shared film grade + the master entry point.
@@ -778,17 +910,19 @@ _GRAIN = None
 _VIG = None
 
 
-def _post(surf, t, warmth):
+def _post(surf, t, warmth, sick=0.0):
     """The cutscene grade: chunky downsample, a tint that thaws from the
-    cold night grade to gold as the flood lands, emulsion grain, a gate
-    flicker, crushed edges."""
+    cold night grade to gold as the flood lands -- then SICKENS toward a
+    pale grey-green as the fog claims the verdict (`sick` 0..1) -- with
+    emulsion grain, a gate flicker, crushed edges."""
     global _GRAIN, _VIG
     w, h = surf.get_size()
     dw, dh = int(w / 1.5), int(h / 1.5)
     surf.blit(pygame.transform.scale(
         pygame.transform.smoothscale(surf, (dw, dh)), (w, h)), (0, 0))
     tint = pygame.Surface((w, h))
-    tint.fill(_lerpc((200, 210, 228), (255, 238, 205), warmth))
+    base = _lerpc((200, 210, 228), (255, 238, 205), warmth)
+    tint.fill(_lerpc(base, (202, 212, 190), 0.75 * sick))
     surf.blit(tint, (0, 0), special_flags=pygame.BLEND_RGB_MULT)
     if _GRAIN is None:
         g = pygame.Surface((w, h), pygame.SRCALPHA)
@@ -827,7 +961,8 @@ def draw_spread_drive(surf, t):
         _open_south(surf, t)
 
     warmth = _clamp01((t - SPREAD_T_FLOOD) / (BEAT_FLOOD * 0.6))
-    _post(surf, t, warmth)
+    sick = _clamp01((t - (SPREAD_T_KNOW - 0.6)) / 3.0)
+    _post(surf, t, warmth, sick)
 
     # The white-gold bloom carrying the gaze into the flood (D -> E).
     bloom = 0.0
