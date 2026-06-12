@@ -669,11 +669,16 @@ def build_threshold():
             "t": 0.0, "door": (lintel_x, lintel_y - 2),
             "pending": sorted(pending, key=lambda e: e[0]),
             "flights": [], "foreign": list(_WARP_FOREIGN), "rng": rng,
+            "cues": set(),
         }
         game._closure_locked = True                   # he has crossed; hold
         game.audio.force_silence()
         game.audio.play("arg_chime", 0.7)
         game.audio.flashback_air(True)                # the falling-air bed
+        if game.audio.enabled:                        # the pressure under it
+            game.audio.drive_channel.play(game.audio.carcosa_drone_snd,
+                                          loops=-1)
+            game.audio.drive_channel.set_volume(0.0)
 
     def _threshold_seal(game, scene):
         if (getattr(game, "_ending_active", None)
@@ -703,6 +708,19 @@ def build_threshold():
         sw["t"] = t = sw["t"] + dt
         dx, dy = sw["door"]
         rng = sw["rng"]
+        # The dread builds the whole pour: the drone swells under the
+        # falling air, whispers + static stack as the world goes through.
+        if game.audio.enabled:
+            game.audio.drive_channel.set_volume(
+                min(0.55, (t / SEAL_WARP_DUR) * 0.65))
+        for cue, at, name, vol in (("w1", 1.8, "whisper", 0.30),
+                                   ("s1", 2.4, "static", 0.30),
+                                   ("w2", 3.2, "whisper", 0.45),
+                                   ("s2", 3.8, "static", 0.35),
+                                   ("w3", 4.3, "whisper", 0.55)):
+            if t > at and cue not in sw["cues"]:
+                sw["cues"].add(cue)
+                game.audio.play(name, vol)
         while sw["pending"] and sw["pending"][0][0] <= t:
             _, d = sw["pending"].pop(0)
             dur = max(0.35, min(0.95,
@@ -738,7 +756,8 @@ def build_threshold():
         if t >= SEAL_WARP_DUR:                        # the room is bare
             game._seal_warp = None
             game.audio.flashback_air(False)
-            game._play_ending("seal_threshold")
+            game._play_ending("seal_threshold")       # force_silence cuts all
+            game.audio.play("carcosa_boom", 0.9)      # ...one boom INTO black
 
     def _threshold_update(game, scene, dt):
         sw = getattr(game, "_seal_warp", None)

@@ -455,14 +455,16 @@ def _carcosa_town(surf, w, h, base_y, t, flood):
 _CARCOSA_GRAIN = None
 
 
-def _carcosa_post(surf, t, tint=(220, 210, 164), cold=(0, 10, 14)):
+def _carcosa_post(surf, t, tint=(220, 210, 164), cold=(0, 10, 14),
+                  chunk=2.5):
     """Darkwood / Fear & Hunger grime applied to the whole cutscene frame so
     nothing reads as clean vector: chunky downsample, a muddy palette multiply
     (`tint`), a cold shadow-tone (`cold`), animated dither-grain, a guttering
     flicker, and crushed edges."""
     w, h = surf.get_size()
-    # Chunky downsample -> dirty low-res pixels (F&H grit).
-    dw, dh = int(w / 2.5), int(h / 2.5)
+    # Chunky downsample -> dirty low-res pixels (F&H grit). `chunk` lets a
+    # detail-heavy still (the seal tableau's tiny town) keep its pixels.
+    dw, dh = int(w / chunk), int(h / chunk)
     surf.blit(pygame.transform.scale(
         pygame.transform.smoothscale(surf, (dw, dh)), (w, h)), (0, 0))
     # Muddy the palette, but lightly -- keep the sickly highlights bright
@@ -1074,11 +1076,12 @@ def draw_seal_tableau(surf, t):
                 pygame.draw.circle(emb, (224, 168, 74, int(ea)), (7, 7), 3)
                 scene.blit(emb, (ex - 7, ey - 7))
 
-    # THE LAND: every acre the cult bent, a small torn slab adrift far
-    # below Him -- the wide shot's whole subject, dwarfed on purpose.
+    # THE LAND: every acre the cult bent, a torn slab adrift far below
+    # Him -- and DRESSED: corn rows, the grove and lone trees, the town's
+    # buildings around the steeple. Small on purpose; it is the subject.
     isl = pygame.Surface((w, h), pygame.SRCALPHA)
-    iw = w * 0.26
-    ih = h * 0.052
+    iw = w * 0.31
+    ih = h * 0.060
     under = [(isl_x - iw * 0.5, isl_y)]            # ragged torn underside
     for k in range(9):
         u = (k + 1) / 10.0
@@ -1091,28 +1094,65 @@ def draw_seal_tableau(surf, t):
     pygame.draw.ellipse(isl, (38, 36, 26, 255),    # the oblique plate
                         (int(isl_x - iw * 0.5), int(isl_y - ih * 0.5),
                          int(iw), max(3, int(ih))))
-    for k in range(10):                            # field patches
-        px = isl_x + (_frand(k * 9 + 1) - 0.5) * iw * 0.80
-        py = isl_y + (_frand(k * 9 + 2) - 0.5) * ih * 0.55
-        pw = iw * (0.08 + 0.10 * _frand(k * 9 + 3))
-        ph = ih * (0.18 + 0.22 * _frand(k * 9 + 4))
-        col = ((50, 46, 26, 255), (43, 38, 22, 255),
-               (33, 35, 21, 255))[k % 3]
-        pygame.draw.ellipse(isl, col, (int(px - pw / 2), int(py - ph / 2),
-                                       max(2, int(pw)), max(2, int(ph))))
-    pygame.draw.line(isl, (27, 24, 19, 255),       # the road thread
-                     (int(isl_x - iw * 0.42), int(isl_y + ih * 0.10)),
-                     (int(isl_x + iw * 0.40), int(isl_y - ih * 0.16)), 1)
+
+    def _on_plate(u, v):
+        """Plate-local (-1..1, -1..1) -> screen point on the oblique top."""
+        return (int(isl_x + u * iw * 0.48), int(isl_y + v * ih * 0.46))
+
+    # CORNFIELDS: dry gold patches combed into visible furrow rows.
+    for (fu, fv, fw2, fh2, sd) in ((-0.52, -0.18, 0.34, 0.42, 1),
+                                   (0.46, 0.22, 0.38, 0.46, 2),
+                                   (0.10, -0.40, 0.26, 0.34, 3)):
+        fx, fy = _on_plate(fu, fv)
+        pw = max(6, int(iw * 0.48 * fw2))
+        ph = max(4, int(ih * 0.46 * fh2 * 2))
+        pygame.draw.ellipse(isl, (46, 42, 22, 255),
+                            (fx - pw, fy - ph // 2, pw * 2, ph))
+        rows = max(2, ph // 3)
+        for r in range(rows):
+            vy = (r + 0.5) / rows * 2 - 1
+            yy = fy - ph // 2 + int((r + 0.5) / rows * ph)
+            half = int(pw * max(0.2, math.sqrt(max(0.0, 1 - vy * vy))))
+            for xx in range(fx - half, fx + half, 4):
+                if _frand(sd * 97 + r * 13 + xx) < 0.8:
+                    pygame.draw.line(isl, (76, 66, 30, 255),
+                                     (xx, yy), (xx + 2, yy), 1)
+    # TREES: the grove huddled at the north end + strays along the road.
+    trees = [(-0.10 + 0.16 * _frand(k * 3 + 1), -0.66 + 0.3 * _frand(k * 3 + 2))
+             for k in range(5)]                     # the grove cluster
+    trees += [(-0.78, 0.30), (-0.30, 0.55), (0.74, -0.30), (0.30, 0.62)]
+    for k, (tu, tv) in enumerate(trees):
+        tx, ty = _on_plate(tu, tv)
+        pygame.draw.line(isl, (24, 18, 13, 255), (tx, ty), (tx, ty - 3), 1)
+        pygame.draw.circle(isl, (25, 33, 20, 255), (tx, ty - 4),
+                           2 + (k % 2))
+        pygame.draw.circle(isl, (16, 22, 13, 255), (tx, ty - 4),
+                           2 + (k % 2), 1)
+    # ROADS: the through-road and the lane to the town's heart.
+    pygame.draw.lines(isl, (29, 26, 21, 255), False,
+                      [_on_plate(-0.95, 0.32), _on_plate(-0.30, 0.12),
+                       _on_plate(0.18, -0.04), _on_plate(0.95, -0.30)], 1)
+    pygame.draw.line(isl, (29, 26, 21, 255),
+                     _on_plate(0.0, 0.04), _on_plate(-0.06, -0.52), 1)
     pygame.draw.line(isl, (36, 46, 50, 255),       # the river glint
-                     (int(isl_x - iw * 0.20), int(isl_y - ih * 0.30)),
-                     (int(isl_x + iw * 0.16), int(isl_y + ih * 0.30)), 1)
-    for k in range(8):                             # the town's tiny roofs
-        bx = isl_x + (_frand(k * 7 + 1) - 0.5) * iw * 0.14
-        by = isl_y + (_frand(k * 7 + 2) - 0.5) * ih * 0.30
-        pygame.draw.rect(isl, (58, 50, 40, 255), (int(bx), int(by), 2, 2))
-    pygame.draw.line(isl, (64, 56, 46, 255),       # the steeple needle
-                     (int(isl_x + iw * 0.02), int(isl_y - 5)),
-                     (int(isl_x + iw * 0.02), int(isl_y - 1)), 1)
+                     _on_plate(-0.42, -0.62), _on_plate(0.34, 0.66), 1)
+    # THE TOWN: a tight cluster of buildings around the steeple, the well
+    # a ring beside them. Lit top edges so they read as roofs.
+    for k, (bu, bv, bw2, bh2) in enumerate(
+            ((-0.16, 0.02, 4, 3), (-0.05, 0.10, 3, 2), (0.05, 0.00, 4, 2),
+             (0.13, 0.10, 3, 3), (-0.10, -0.12, 3, 2), (0.02, -0.14, 2, 2),
+             (0.18, -0.06, 3, 2))):
+        bx, by = _on_plate(bu, bv)
+        pygame.draw.rect(isl, (54, 46, 37, 255), (bx, by, bw2, bh2))
+        pygame.draw.line(isl, (74, 64, 52, 255), (bx, by),
+                         (bx + bw2 - 1, by), 1)
+    chx, chy = _on_plate(-0.02, -0.05)
+    pygame.draw.line(isl, (66, 58, 48, 255), (chx, chy),
+                     (chx, chy - 6), 1)            # the steeple needle
+    pygame.draw.line(isl, (66, 58, 48, 255), (chx - 1, chy - 5),
+                     (chx + 1, chy - 5), 1)
+    wx2, wy2 = _on_plate(0.30, 0.16)
+    pygame.draw.circle(isl, (30, 27, 23, 255), (wx2, wy2), 2, 1)  # the well
     for k in range(7):                             # earth shed into the void
         pp = (t * (0.06 + 0.05 * _frand(k * 3)) + _frand(k * 11)) % 1.0
         ca = int(110 * (1 - pp))
@@ -1122,6 +1162,63 @@ def draw_seal_tableau(surf, t):
                 (int(isl_x + (_frand(k * 11 + 1) - 0.5) * iw * 0.7),
                  int(isl_y + ih * 1.6 + pp * h * 0.10)), 1)
     scene.blit(isl, (0, 0))
+
+    # HIS TENDRILS, invading the island: they hang from the figure's mass
+    # and curl down onto the slab -- two already rooted (gold fissures
+    # crawling out from the contact), two still descending as He looms.
+    tlay = pygame.Surface((w, h), pygame.SRCALPHA)
+    fiss_pts = []
+    for k, (ou, lu, landed) in enumerate(((-0.62, -0.40, True),
+                                          (0.55, 0.42, True),
+                                          (-0.30, -0.10, False),
+                                          (0.30, 0.14, False))):
+        ox = cx + ou * fw * 0.9
+        oy = h * (0.34 + 0.06 * _frand(k * 9 + 2))
+        txp, typ = _on_plate(lu, -0.2)
+        drop = 1.0 if landed else (0.62 + 0.36 * loom)
+        pts = []
+        n = 13
+        for s_i in range(n + 1):
+            f = s_i / n
+            mx2 = ox + (txp - ox) * (f ** 1.25)
+            my2 = oy + (typ - oy) * f * drop
+            # a slow WRITHE: two stacked sine orders so it coils, not hangs
+            sway = (math.sin(t * 0.8 + k * 2.1 + f * 4.2) * 14
+                    + math.sin(t * 1.7 + k + f * 9.0) * 5) \
+                * f * (0.45 if landed else 1.0)
+            pts.append((mx2 + sway, my2))
+        for s_i in range(n):
+            wd = max(2, int(12 * (1 - s_i / n) ** 1.2))
+            pygame.draw.line(tlay, (8, 7, 11, 245),
+                             (int(pts[s_i][0]), int(pts[s_i][1])),
+                             (int(pts[s_i + 1][0]), int(pts[s_i + 1][1])), wd)
+        # a hair of His gold down the leading edge -- the light that gives
+        # the invasion away against the void
+        ga2 = int(105 * (0.5 + 0.5 * (swell + rise) * 0.5))
+        if ga2 > 4:
+            pygame.draw.lines(tlay, (188, 144, 58, ga2), False,
+                              [(int(a + 1), int(b)) for a, b in pts[n // 3:]], 1)
+        if landed:
+            fiss_pts.append((txp, typ))
+    # Gold fissures: the claim spreading from each rooted tip.
+    for k, (fx2, fy2) in enumerate(fiss_pts):
+        spread2 = _seal_clamp(0.45 + 0.55 * loom)
+        for br in range(4):
+            ang = (-0.6 + 0.5 * br + 0.2 * _frand(k * 17 + br)) * (1 if fx2 < isl_x else -1)
+            ln = (6 + 13 * _frand(k * 17 + br + 5)) * spread2
+            px2, py2 = float(fx2), float(fy2)
+            ddx = math.cos(ang) * (1 if fx2 < isl_x else -1)
+            ddy = math.sin(ang) * 0.35
+            seg = []
+            for s_i in range(4):
+                seg.append((int(px2), int(py2)))
+                px2 += ddx * ln / 3 + (_frand(k * 31 + br * 7 + s_i) - 0.5) * 3
+                py2 += ddy * ln / 3 + (_frand(k * 37 + br * 5 + s_i) - 0.5) * 2
+            fa = int(95 * (0.5 + 0.5 * math.sin(t * 2.4 + k * 2 + br)) * spread2)
+            if fa > 4:
+                pygame.draw.lines(tlay, (212, 164, 70, fa), False, seg, 1)
+    scene.blit(tlay, (0, 0))
+
     # The faintest gold spill from above onto the slab -- His light on it.
     sp_w, sp_h = max(2, int(iw * 1.1)), max(2, int(ih * 3.0))
     spill = pygame.Surface((sp_w, sp_h), pygame.SRCALPHA)
@@ -1138,4 +1235,4 @@ def draw_seal_tableau(surf, t):
     if fade < 0.999:
         scene.set_alpha(int(255 * fade))
     surf.blit(scene, (0, 0))
-    _carcosa_post(surf, t, tint=(216, 210, 192), cold=(0, 6, 9))
+    _carcosa_post(surf, t, tint=(216, 210, 192), cold=(0, 6, 9), chunk=1.4)

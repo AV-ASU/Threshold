@@ -441,17 +441,27 @@ class NarrativeMixin:
         if tt > 13.3 and "rage" not in cues:          # Rage approaches.
             cues.add("rage")
             self.audio.play("yk_tone", 0.4)
+        if tt > 13.9 and "rage_w" not in cues:        # ...and is heard coming
+            cues.add("rage_w")
+            self.audio.play("whisper", 0.28)
         if tt > 16.6:                                 # the wordless tableau
             if "loom" not in cues:
                 cues.add("loom")
                 dc.play(self.audio.carcosa_drone_snd, loops=-1)
                 dc.set_volume(0.0)
             bt = tt - 16.6
-            dc.set_volume(min(0.30, bt / 8.0) if bt < 5.2
-                          else max(0.0, 0.30 * (1 - (bt - 5.2) / 1.8)))
-            if bt > 1.0 and "whisper" not in cues:
+            dc.set_volume(min(0.42, bt / 7.0) if bt < 5.2
+                          else max(0.0, 0.42 * (1 - (bt - 5.2) / 1.8)))
+            if bt > 1.2 and "whisper" not in cues:
                 cues.add("whisper")
-                self.audio.play("whisper", 0.3)
+                self.audio.play("whisper", 0.30)
+            if bt > 3.8 and "whisper2" not in cues:
+                cues.add("whisper2")
+                self.audio.play("whisper", 0.38)
+            if bt > 6.2 and "embers" not in cues:     # the eyes open
+                cues.add("embers")
+                self.audio.play("carcosa_boom", 0.5)
+                self.audio.play("yk_tone", 0.35)
 
     def _end_ending(self):
         """Wrap up the ending sequence and return to title."""
