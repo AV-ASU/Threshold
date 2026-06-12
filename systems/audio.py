@@ -40,10 +40,10 @@ class Audio:                        #Starting screen needs music, something simp
         self.ambient_channel = None
         self.king_channel = None
         self._king_on = False
-        # Scene-reverb tag for play_footstep -- "cellar" / "outdoor" /
+        # Scene-reverb tag for play_in_scene -- "cellar" / "outdoor" /
         # None. Set by Game.load_scene_now from the scene's tag set
-        # (UNDERGROUND_SCENES, OUTDOOR_SCENES). Footstep variants are
-        # baked at build time per profile; play_footstep picks the one
+        # (UNDERGROUND_SCENES, OUTDOOR_SCENES). Cue variants are baked
+        # at build time per profile; play_in_scene picks the one
         # matching the active scene and falls back to dry.
         self._scene_reverb = None
         if self.enabled:
@@ -134,16 +134,26 @@ class Audio:                        #Starting screen needs music, something simp
         self.sfx["step_carpet"] = g(90, 80, 0.06, "noise", attack_ms=4, decay_ms=50, noise_mix=1.0)
         self.sfx["step_void"]   = g(40, 220, 0.18, "sine", attack_ms=20, decay_ms=180)
         self.sfx["bump"]        = g(80, 100, 0.18, "square", attack_ms=2, decay_ms=70, noise_mix=0.3)
-        self.sfx["door_open"]   = g(180, 250, 0.25, "saw", attack_ms=20, decay_ms=200, noise_mix=0.2)
-        self.sfx["door_close"]  = g(120, 220, 0.25, "saw", attack_ms=10, decay_ms=180, noise_mix=0.25)
+        # Door foley: a latch + hinge-creak open and a whoosh + frame-
+        # thud + latch close (the old raw saw sweeps read as synth, not
+        # wood). Same stick-slip friction trick as wood_creak.
+        self.sfx["door_open"]   = self._build_door_open()
+        self.sfx["door_close"]  = self._build_door_close()
         self.sfx["engine_die"]  = g(64, 900, 0.34, "saw", attack_ms=4, decay_ms=820, noise_mix=0.45, vibrato=11)
         self.sfx["carcosa_boom"] = g(50, 1100, 0.55, "sine", attack_ms=2, decay_ms=950, noise_mix=0.45)
         self.sfx["door_locked"] = g(220, 80, 0.22, "square", attack_ms=2, decay_ms=50)
-        self.sfx["menu_open"]   = g(440, 90, 0.20, "triangle", attack_ms=2, decay_ms=70)
-        self.sfx["menu_close"]  = g(330, 90, 0.20, "triangle", attack_ms=2, decay_ms=70)
-        self.sfx["cursor"]      = g(660, 35, 0.18, "square", attack_ms=2, decay_ms=20)
-        self.sfx["confirm"]     = g(880, 80, 0.22, "triangle", attack_ms=2, decay_ms=60)
-        self.sfx["cancel"]      = g(220, 80, 0.20, "triangle", attack_ms=2, decay_ms=60)
+        # UI cues: soft sine pairs (fundamental + a quiet partial).
+        # The pitch grammar of the old square/triangle chirps is kept
+        # (open above close, confirm bright, cancel low) but the
+        # timbre no longer reads as chiptune against the organic
+        # soundscape. Dialog voice blips are NOT touched -- they are
+        # character voices, not UI.
+        self.sfx["menu_open"]   = self._build_ui_tone(392, 110, 0.20)
+        self.sfx["menu_close"]  = self._build_ui_tone(294, 110, 0.20)
+        self.sfx["cursor"]      = self._build_ui_tone(523, 35, 0.16)
+        self.sfx["confirm"]     = self._build_ui_tone(523, 110, 0.20,
+                                                      partial=1.5)
+        self.sfx["cancel"]      = self._build_ui_tone(220, 100, 0.18)
         self.sfx["blip_low"]    = g(200, 35, 0.16, "square", attack_ms=2, decay_ms=20)
         self.sfx["blip_mid"]    = g(330, 35, 0.16, "square", attack_ms=2, decay_ms=20)
         self.sfx["blip_high"]   = g(550, 30, 0.14, "square", attack_ms=2, decay_ms=18)
@@ -154,6 +164,12 @@ class Audio:                        #Starting screen needs music, something simp
         self.sfx["pickup_rare"] = g(880, 280, 0.24, "sine", attack_ms=20, decay_ms=240, vibrato=8)
         self.sfx["swing"]       = g(280, 100, 0.18, "saw", attack_ms=2, decay_ms=60, noise_mix=0.3)
         self.sfx["hit"]         = g(180, 70, 0.20, "noise", attack_ms=2, decay_ms=50, noise_mix=1.0)
+        # The revolver. `gunshot` is the live report (crack + bark +
+        # sub thump + air tail, soft-clipped); `gun_dry` is the empty
+        # chamber -- two small hammer clicks, distinct from the
+        # door_locked rattle it used to borrow.
+        self.sfx["gunshot"]     = self._build_gunshot()
+        self.sfx["gun_dry"]     = self._build_gun_dry()
         self.sfx["enemy_die"]   = g(110, 380, 0.22, "saw", attack_ms=10, decay_ms=320, noise_mix=0.4)
         self.sfx["heartbeat"]   = self._build_heartbeat()
         self.sfx["static"]      = g(0, 600, 0.25, "noise", attack_ms=20, decay_ms=400, noise_mix=1.0)
@@ -232,6 +248,17 @@ class Audio:                        #Starting screen needs music, something simp
         self.sfx["infest_throb"]   = self._build_infest_throb()
         self.sfx["evidence_added"] = self._build_evidence_added()
         self.sfx["sheriff_hunt"]   = self._build_sheriff_hunt()
+        # ---- Living-house + rot-air ambients -------------------------
+        # The surface ambience layer. Interiors carry a quiet stick-
+        # slip creak + a rare knock (Scene.add_ambient schedules them);
+        # the air then rots with the infestation stage -- drips at 1,
+        # flies at 2, whisper + structural groan at 3 (wired in
+        # InfestationMixin._apply_ambient_air on every scene load).
+        self.sfx["wood_creak"] = self._build_wood_creak()
+        self.sfx["wood_pop"]   = g(150, 90, 0.20, "sine", attack_ms=1,
+                                   decay_ms=70, noise_mix=0.35)
+        self.sfx["drip"]       = self._build_drip()
+        self.sfx["flies"]      = self._build_flies()
 
         # ---- DSP atmosphere pass --------------------------------------
         # Route the horror SFX through the dsp reverb + filter toolkit so
@@ -258,19 +285,20 @@ class Audio:                        #Starting screen needs music, something simp
             if key in self.sfx:
                 self.sfx[key] = self._post(self.sfx[key], **kw)
 
-        # ---- Scene-aware footstep variants ---------------------------
-        # Pre-bake cellar + outdoor reverb variants for the dry step
-        # cues so play_footstep can pick a scene-appropriate take at
-        # play time. step_void is excluded -- it already has cellar
-        # reverb baked above and is the void scenes' bespoke step.
-        # The dry originals remain in self.sfx as the room fallback.
-        for _step in ("step_grass", "step_wood", "step_stone",
-                      "step_carpet"):
-            if _step not in self.sfx:
+        # ---- Scene-aware cue variants --------------------------------
+        # Pre-bake cellar + outdoor reverb variants for the cues that
+        # play in every kind of space (footsteps, the gunshot) so
+        # play_in_scene can pick a scene-appropriate take at play
+        # time. step_void is excluded -- it already has cellar reverb
+        # baked above and is the void scenes' bespoke step. The dry
+        # originals remain in self.sfx as the room fallback.
+        for _cue in ("step_grass", "step_wood", "step_stone",
+                     "step_carpet", "gunshot"):
+            if _cue not in self.sfx:
                 continue
-            dry = self.sfx[_step]
-            self.sfx[f"{_step}_cellar"]  = self._post(dry, reverb="cellar")
-            self.sfx[f"{_step}_outdoor"] = self._post(dry, reverb="outdoor")
+            dry = self.sfx[_cue]
+            self.sfx[f"{_cue}_cellar"]  = self._post(dry, reverb="cellar")
+            self.sfx[f"{_cue}_outdoor"] = self._post(dry, reverb="outdoor")
 
         # MUSIC. THRESHOLD's tracks are intentionally not melodies --
         # most are drones, two are haunted-with-pings versions of the
@@ -949,6 +977,292 @@ class Audio:                        #Starting screen needs music, something simp
             stereo[i * 4 + 3] = buf[i * 2 + 1]
         return pygame.mixer.Sound(buffer=bytes(stereo))
 
+    def _build_ui_tone(self, freq, duration_ms, vol, partial=2.0,
+                       partial_amp=0.30):
+        """Soft UI cue: a sine fundamental + a quiet upper partial
+        (default the octave; 1.5 gives a warm fifth), eased attack and
+        a curved decay. The menu grammar lives in the pitch
+        relationships, so callers only choose freq/length."""
+        sr = 22050
+        n = int(sr * duration_ms / 1000)
+        dur_s = duration_ms / 1000.0
+        buf = bytearray(n * 2)
+        attack_n = max(1, int(sr * 0.006))
+        norm = 1.0 / (1.0 + partial_amp)
+        for i in range(n):
+            t = i / sr
+            v = (math.sin(2 * math.pi * freq * t)
+                 + math.sin(2 * math.pi * freq * partial * t) * partial_amp)
+            if i < attack_n:
+                env = i / attack_n
+            else:
+                env = max(0.0, 1.0 - (t - 0.006) / (dur_s - 0.006)) ** 1.3
+            sample = max(-32768, min(32767,
+                                     int(v * norm * vol * env * 32767)))
+            buf[i * 2]     = sample & 0xFF
+            buf[i * 2 + 1] = (sample >> 8) & 0xFF
+        stereo = bytearray(n * 4)
+        for i in range(n):
+            stereo[i * 4]     = stereo[i * 4 + 2] = buf[i * 2]
+            stereo[i * 4 + 1] = stereo[i * 4 + 3] = buf[i * 2 + 1]
+        return pygame.mixer.Sound(buffer=bytes(stereo))
+
+    def _build_door_open(self, duration_ms=520, vol=0.30):
+        """A real door opens: the latch frees (a small metallic ping +
+        noise snap at t=0), then the hinge creaks as it swings -- a
+        stick-slip tone rising 150 -> 240 Hz with grain flutter, the
+        wood_creak friction trick, brighter and shorter."""
+        sr = 22050
+        n = int(sr * duration_ms / 1000)
+        dur_s = duration_ms / 1000.0
+        buf = bytearray(n * 2)
+        phase = 0.0
+        smooth = 0.0
+        grain = 0.0
+        for i in range(n):
+            t = i / sr
+            latch = 0.0
+            if t < 0.030:
+                latch = (math.sin(2 * math.pi * 1500 * t)
+                         * math.exp(-t / 0.006) * 0.55
+                         + random.uniform(-1, 1)
+                         * math.exp(-t / 0.004) * 0.45)
+            creak = 0.0
+            if t >= 0.050:
+                local = t - 0.050
+                ramp = local / (dur_s - 0.050)
+                smooth = 0.92 * smooth + 0.08 * random.uniform(-1, 1)
+                f = (150.0 + 90.0 * ramp
+                     + 12.0 * math.sin(2 * math.pi * 7.1 * local)
+                     + smooth * 12.0)
+                phase += 2 * math.pi * max(60.0, f) / sr
+                grain = 0.55 * grain + 0.45 * random.uniform(-1, 1)
+                gate = 0.60 + 0.40 * grain
+                if ramp < 0.18:
+                    envc = ramp / 0.18
+                else:
+                    envc = max(0.0, 1.0 - (ramp - 0.18) / 0.82) ** 1.1
+                creak = math.sin(phase) * gate * envc * 0.55
+            v = latch + creak
+            sample = max(-32768, min(32767, int(max(-1.0, min(1.0, v))
+                                                * vol * 32767)))
+            buf[i * 2]     = sample & 0xFF
+            buf[i * 2 + 1] = (sample >> 8) & 0xFF
+        stereo = bytearray(n * 4)
+        for i in range(n):
+            stereo[i * 4]     = stereo[i * 4 + 2] = buf[i * 2]
+            stereo[i * 4 + 1] = stereo[i * 4 + 3] = buf[i * 2 + 1]
+        return pygame.mixer.Sound(buffer=bytes(stereo))
+
+    def _build_door_close(self, duration_ms=430, vol=0.32):
+        """A real door closes: a soft swing of air, the frame thud at
+        t=0.20 (70 Hz kick + a noise burst), and the latch catching
+        just after. Sibling of _build_door_open."""
+        sr = 22050
+        n = int(sr * duration_ms / 1000)
+        buf = bytearray(n * 2)
+        smooth = 0.0
+        for i in range(n):
+            t = i / sr
+            smooth = 0.88 * smooth + 0.12 * random.uniform(-1, 1)
+            whoosh = 0.0
+            if t < 0.20:
+                whoosh = smooth * math.sin(math.pi * t / 0.20) * 0.30
+            thud = 0.0
+            if t >= 0.20:
+                local = t - 0.20
+                thud = (math.sin(2 * math.pi * 70 * t)
+                        * math.exp(-local / 0.070) * 0.85
+                        + smooth * math.exp(-local / 0.018) * 0.50)
+            latch = 0.0
+            if t >= 0.30:
+                local = t - 0.30
+                latch = (math.sin(2 * math.pi * 1200 * t)
+                         * math.exp(-local / 0.005) * 0.35
+                         + random.uniform(-1, 1)
+                         * math.exp(-local / 0.003) * 0.30)
+            v = whoosh + thud + latch
+            sample = max(-32768, min(32767, int(max(-1.0, min(1.0, v))
+                                                * vol * 32767)))
+            buf[i * 2]     = sample & 0xFF
+            buf[i * 2 + 1] = (sample >> 8) & 0xFF
+        stereo = bytearray(n * 4)
+        for i in range(n):
+            stereo[i * 4]     = stereo[i * 4 + 2] = buf[i * 2]
+            stereo[i * 4 + 1] = stereo[i * 4 + 3] = buf[i * 2 + 1]
+        return pygame.mixer.Sound(buffer=bytes(stereo))
+
+    def _build_wood_creak(self, duration_ms=750, vol=0.30):
+        """An old joist easing -- stick-slip friction. A narrow tone
+        sinking 260 -> 110 Hz with a slow wobble and a coarse grain
+        flutter (the slip is uneven), over a faint smoothed-noise
+        body. Quiet by design: it plays under the home drone at the
+        edge of attention, panned randomly so the house creaks from
+        somewhere."""
+        sr = 22050
+        n = int(sr * duration_ms / 1000)
+        dur_s = duration_ms / 1000.0
+        buf = bytearray(n * 2)
+        phase = 0.0
+        smooth = 0.0
+        grain = 0.0
+        for i in range(n):
+            t = i / sr
+            ramp = i / n
+            smooth = 0.92 * smooth + 0.08 * random.uniform(-1, 1)
+            # Sinking pitch with wobble + noise jitter, integrated so
+            # the bend glides without zipper artefacts.
+            f = (260.0 - 150.0 * ramp
+                 + 16.0 * math.sin(2 * math.pi * 6.3 * t)
+                 + smooth * 14.0)
+            phase += 2 * math.pi * max(60.0, f) / sr
+            tone = math.sin(phase)
+            # Grain flutter: barely-smoothed noise gating the tone.
+            grain = 0.55 * grain + 0.45 * random.uniform(-1, 1)
+            gate = 0.62 + 0.38 * grain
+            if t < 0.12:
+                env = t / 0.12
+            elif t > dur_s - 0.25:
+                env = max(0.0, (dur_s - t) / 0.25)
+            else:
+                env = 1.0
+            v = (tone * gate * 0.80 + smooth * 0.18) * env
+            sample = max(-32768, min(32767, int(max(-1.0, min(1.0, v))
+                                                * vol * 32767)))
+            buf[i * 2]     = sample & 0xFF
+            buf[i * 2 + 1] = (sample >> 8) & 0xFF
+        stereo = bytearray(n * 4)
+        for i in range(n):
+            stereo[i * 4]     = stereo[i * 4 + 2] = buf[i * 2]
+            stereo[i * 4 + 1] = stereo[i * 4 + 3] = buf[i * 2 + 1]
+        return pygame.mixer.Sound(buffer=bytes(stereo))
+
+    def _build_drip(self, duration_ms=190, vol=0.30):
+        """A single wet drip. The classic plink: a short sine whose
+        pitch RISES 950 -> 1500 Hz as the droplet's cavity closes,
+        over a tiny low plop at the front. Stage-1 rot air."""
+        sr = 22050
+        n = int(sr * duration_ms / 1000)
+        buf = bytearray(n * 2)
+        phase = 0.0
+        for i in range(n):
+            t = i / sr
+            ramp = i / n
+            f = 950.0 + 550.0 * ramp * ramp
+            phase += 2 * math.pi * f / sr
+            plink = math.sin(phase) * math.exp(-t / 0.060)
+            plop = math.sin(2 * math.pi * 180 * t) * math.exp(-t / 0.020) * 0.5
+            env = min(1.0, t / 0.002)
+            if i > n - 60:
+                env *= max(0.0, (n - i) / 60)
+            v = (plink + plop) * env
+            sample = max(-32768, min(32767, int(max(-1.0, min(1.0, v))
+                                                * vol * 32767)))
+            buf[i * 2]     = sample & 0xFF
+            buf[i * 2 + 1] = (sample >> 8) & 0xFF
+        stereo = bytearray(n * 4)
+        for i in range(n):
+            stereo[i * 4]     = stereo[i * 4 + 2] = buf[i * 2]
+            stereo[i * 4 + 1] = stereo[i * 4 + 3] = buf[i * 2 + 1]
+        return pygame.mixer.Sound(buffer=bytes(stereo))
+
+    def _build_flies(self, duration_ms=2200, vol=0.26):
+        """A knot of flies passing. Two detuned voices (saw softened
+        with a sine at the same phase) whose pitches wander on a fast
+        random walk (the swerve), amplitude-fluttered ~24 Hz (the
+        wingbeat), under a swell-in / swell-out envelope so the swarm
+        drifts near and away rather than switching on. Stage-2 rot
+        air, indoors and out."""
+        sr = 22050
+        n = int(sr * duration_ms / 1000)
+        dur_s = duration_ms / 1000.0
+        buf = bytearray(n * 2)
+        f1, f2 = 168.0, 233.0
+        p1 = p2 = 0.0
+        smooth = 0.0
+        for i in range(n):
+            t = i / sr
+            f1 = min(260.0, max(120.0, f1 + random.uniform(-0.9, 0.9)))
+            f2 = min(330.0, max(170.0, f2 + random.uniform(-1.1, 1.1)))
+            p1 += 2 * math.pi * f1 / sr
+            p2 += 2 * math.pi * f2 / sr
+            v1 = (2.0 * ((p1 / (2 * math.pi)) % 1.0) - 1.0) * 0.5 \
+                + math.sin(p1) * 0.5
+            v2 = (2.0 * ((p2 / (2 * math.pi)) % 1.0) - 1.0) * 0.5 \
+                + math.sin(p2) * 0.5
+            flutter = 0.62 + 0.38 * math.sin(
+                2 * math.pi * 24 * t + 1.7 * math.sin(2 * math.pi * 3 * t))
+            swell = math.sin(math.pi * min(1.0, t / dur_s)) ** 1.5
+            smooth = 0.80 * smooth + 0.20 * random.uniform(-1, 1)
+            v = ((v1 * 0.55 + v2 * 0.40) * flutter + smooth * 0.08) * swell
+            sample = max(-32768, min(32767, int(max(-1.0, min(1.0, v))
+                                                * vol * 32767)))
+            buf[i * 2]     = sample & 0xFF
+            buf[i * 2 + 1] = (sample >> 8) & 0xFF
+        stereo = bytearray(n * 4)
+        for i in range(n):
+            stereo[i * 4]     = stereo[i * 4 + 2] = buf[i * 2]
+            stereo[i * 4 + 1] = stereo[i * 4 + 3] = buf[i * 2 + 1]
+        return pygame.mixer.Sound(buffer=bytes(stereo))
+
+    def _build_gunshot(self, duration_ms=850, vol=0.50):
+        """The revolver report. Four layers: an instant broadband
+        CRACK (the muzzle blast, ~12 ms), a mid BARK whose pitch drops
+        320 -> 140 Hz in the first 120 ms (the body of the report), a
+        65 Hz SUB thump (the chest punch), and a low-passed noise TAIL
+        (the air settling after, ~0.4 s). The mix is soft-clipped so
+        it reads compressed and loud the way a close gunshot does on
+        small speakers. Scene-reverb variants are baked alongside the
+        footsteps, so a shot indoors slaps and a shot in the open
+        rolls away. Replaces the old swing + bump pair, which read as
+        a whoosh plus walking into a wall."""
+        if not _HAVE_DSP:
+            return self._gen(90, 320, 0.55, "noise", attack_ms=1,
+                             decay_ms=300, noise_mix=1.0)
+        import numpy as _np
+        sr = 22050
+        n = int(sr * duration_ms / 1000)
+        t = _np.arange(n, dtype=_np.float32) / sr
+        rng = _np.random.default_rng()
+        crack = (rng.uniform(-1.0, 1.0, n).astype(_np.float32)
+                 * _np.exp(-t / 0.012))
+        f = 320.0 - 180.0 * _np.clip(t / 0.120, 0.0, 1.0)
+        phase = _np.cumsum(2 * _np.pi * f / sr).astype(_np.float32)
+        bark = _np.sin(phase) * _np.exp(-t / 0.070) * 0.85
+        sub = _np.sin(2 * _np.pi * 65 * t) * _np.exp(-t / 0.100) * 0.75
+        tail = dsp.lowpass(rng.uniform(-1.0, 1.0, n).astype(_np.float32),
+                           1600)
+        tail = tail * _np.exp(-t / 0.28) * _np.minimum(1.0, t / 0.015) * 0.40
+        mix = crack * 0.90 + bark + sub + tail
+        mix = _np.tanh(mix * 1.6) / math.tanh(1.6)
+        return dsp.to_sound(mix, vol)
+
+    def _build_gun_dry(self, duration_ms=170, vol=0.40):
+        """Empty chamber. Two small mechanical clicks ~70 ms apart
+        (hammer back, hammer fall) -- thin high transients with no
+        body, so the cue reads as the gun itself rather than the
+        door_locked rattle it used to borrow."""
+        if not _HAVE_DSP:
+            return self._gen(1400, 50, 0.30, "square", attack_ms=1,
+                             decay_ms=30, noise_mix=0.4)
+        import numpy as _np
+        sr = 22050
+        n = int(sr * duration_ms / 1000)
+        t = _np.arange(n, dtype=_np.float32) / sr
+        rng = _np.random.default_rng()
+        out = _np.zeros(n, dtype=_np.float32)
+        for click_t, f, amp in ((0.0, 1900.0, 0.55), (0.07, 1300.0, 0.85)):
+            local = t - click_t
+            env = _np.where(local >= 0,
+                            _np.exp(-_np.maximum(local, 0.0) / 0.008),
+                            0.0).astype(_np.float32)
+            n_env = _np.where(local >= 0,
+                              _np.exp(-_np.maximum(local, 0.0) / 0.004),
+                              0.0).astype(_np.float32)
+            out += _np.sin(2 * _np.pi * f * t) * env * amp
+            out += rng.uniform(-1.0, 1.0, n).astype(_np.float32) * n_env * 0.45
+        return dsp.to_sound(_np.clip(out, -1.0, 1.0), vol)
+
     def _build_hide_enter(self, duration_ms=200, vol=0.28):
         """Muffled thump + quick breath-in. Plays when player.hidden
         flips true (corn, under furniture)."""
@@ -1448,15 +1762,16 @@ class Audio:                        #Starting screen needs music, something simp
         ch.play(s)
 
     def set_scene_reverb(self, profile):
-        """Set the active reverb profile for play_footstep ('cellar' /
+        """Set the active reverb profile for play_in_scene ('cellar' /
         'outdoor' / None). Game.load_scene_now calls this from the
         scene-tag dispatch."""
         self._scene_reverb = profile
 
-    def play_footstep(self, name, volume=1.0, pan=None):
-        """Play a footstep cue routed through the current scene's
-        reverb (built per-profile at startup). Falls back to the dry
-        cue when no profile is active or the variant doesn't exist."""
+    def play_in_scene(self, name, volume=1.0, pan=None):
+        """Play a cue routed through the current scene's reverb
+        (variants pre-baked per profile at startup -- footsteps and
+        the gunshot). Falls back to the dry cue when no profile is
+        active or no variant exists."""
         if self._scene_reverb:
             variant = f"{name}_{self._scene_reverb}"
             if variant in self.sfx:

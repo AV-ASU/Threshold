@@ -3820,6 +3820,12 @@ class Scene:
         # Each entry is (x, y, radius). See Game._draw_interact_prompt.
         self.interactables = []
         self.on_update_fn = None      # called every tick if set: fn(game, scene, dt)
+        # Recurring ambient one-shots, ticked by Scene.update. Each
+        # entry is [countdown, sfx_name, vol, lo, hi, pan_spread]; see
+        # add_ambient. Additive: the depths' per-room cues and the
+        # infestation air layer both ride this list, so neither
+        # clobbers the other (or on_update_fn).
+        self.ambient_cues = []
         self.combat = False
         # Optional human-readable name for HUD display. When None,
         # the HUD falls back to a name lookup (DISPLAY_NAMES below)
@@ -4261,6 +4267,16 @@ class Scene:
             return tx, ty
         return None
 
+    def add_ambient(self, name, vol, lo, hi, pan_spread=0.0):
+        """Schedule a recurring ambient one-shot: `name` fires every
+        lo..hi seconds (re-rolled per fire) at `vol` with a little
+        volume jitter, panned within +-pan_spread so the cue comes
+        from somewhere. Additive -- a scene can carry any number of
+        these. The depths' per-room cues and the infestation air
+        layer both route through here."""
+        self.ambient_cues.append(
+            [random.uniform(lo, hi), name, vol, lo, hi, pan_spread])
+
     def update(self, dt, game):
         for npc in self.npcs:
             npc.update(dt, self, game.player)
@@ -4273,6 +4289,14 @@ class Scene:
             if x1 <= px <= x2 and y1 <= py <= y2:
                 tr["fired"] = True
                 tr["fn"](game)
+        for cue in self.ambient_cues:
+            cue[0] -= dt
+            if cue[0] <= 0:
+                _, name, vol, lo, hi, spread = cue
+                cue[0] = random.uniform(lo, hi)
+                pan = random.uniform(-spread, spread) if spread else None
+                game.audio.play(name, vol * random.uniform(0.7, 1.0),
+                                pan=pan)
         if self.on_update_fn is not None:
             self.on_update_fn(game, self, dt)
 

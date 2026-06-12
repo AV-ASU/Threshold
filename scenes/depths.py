@@ -27,16 +27,11 @@ from .dialogue import _evidence
 
 
 def _ambient(scene, sfx, vol, lo, hi):
-    """Wire a periodic ambient sfx to scene.on_update_fn. Each room
-    gets its own cue + period so the depths read as different
-    spaces, not one repeated basement."""
-    scene._amb_t = random.uniform(lo, hi)
-    def _tick(game, sc, dt):
-        sc._amb_t -= dt
-        if sc._amb_t <= 0:
-            sc._amb_t = random.uniform(lo, hi)
-            game.audio.play(sfx, vol)
-    scene.on_update_fn = _tick
+    """Wire a periodic ambient sfx to the scene. Each room gets its
+    own cue + period so the depths read as different spaces, not one
+    repeated basement. Rides Scene.add_ambient, so it no longer
+    claims on_update_fn for itself."""
+    scene.add_ambient(sfx, vol, lo, hi)
 
 
 def _cultist(x, y, speed=1.0):

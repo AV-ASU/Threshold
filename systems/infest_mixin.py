@@ -213,6 +213,55 @@ class InfestationMixin:
         # Sheriff Vane's office becomes a unique threat at stage 3.
         if surface_stage >= 3 and key == "fisherman_cottage":
             self._spawn_hunting_sheriff()
+        # The AIR rots too: schedule the scene's ambient one-shot
+        # layer, escalating with the stage.
+        self._apply_ambient_air(surface_stage)
+
+    def _apply_ambient_air(self, stage):
+        """Schedule the freshly-loaded scene's recurring ambient
+        one-shots (Scene.add_ambient). Two ideas stacked:
+
+        LIVING HOUSE -- every wooden interior (music == "home")
+        carries a quiet joist creak + a rare knock from evidence 0,
+        panned so the house settles from somewhere. The surface
+        equivalent of the depths' per-room cues.
+
+        ROT AIR -- the layer escalates with the infestation stage,
+        the audible twin of the decal pass: drips at 1, flies at 2,
+        whisper + structural groan at 3. Outdoor scenes are carried
+        by the wind bed and only gain the rot layers (flies, groan).
+        SAFE_SCENES stay clean until stage 3, the same rule as the
+        decals. Underground rooms are skipped entirely -- their cues
+        are authored per-room in the builders, baseline-rotted from
+        the start. Scenes rebuild every load, so the pass is
+        deterministic + additive, like the rest of the infestation."""
+        sc = self.scene
+        key = sc.key
+        if sc.music in ("void", "wrong"):
+            return
+        if key in CREEPY_SCENES:
+            # The kid humming somewhere they shouldn't be. Deliberately
+            # rare (most visits hear it at most once) -- the card loses
+            # its power if it plays like a loop.
+            sc.add_ambient("child_hum", 0.30, 50.0, 95.0, pan_spread=0.8)
+        if key in UNDERGROUND_SCENES:
+            return
+        outdoor = key in OUTDOOR_SCENES or key in ("brimley",
+                                                   "effigy_grove")
+        interior = sc.music == "home"
+        rot = stage if (key not in SAFE_SCENES or stage >= 3) else 0
+        if interior:
+            sc.add_ambient("wood_creak", 0.16, 9.0, 17.0, pan_spread=0.6)
+            sc.add_ambient("wood_pop",   0.14, 16.0, 28.0, pan_spread=0.7)
+            if rot >= 1:
+                sc.add_ambient("drip", 0.20, 8.0, 15.0, pan_spread=0.5)
+            if rot >= 2:
+                sc.add_ambient("flies", 0.22, 11.0, 20.0, pan_spread=0.8)
+        elif outdoor and rot >= 2:
+            sc.add_ambient("flies", 0.15, 14.0, 24.0, pan_spread=0.8)
+        if (interior or outdoor) and rot >= 3:
+            sc.add_ambient("whisper", 0.10, 12.0, 22.0, pan_spread=0.6)
+            sc.add_ambient("infest_throb", 0.12, 14.0, 24.0)
 
     def _infest_decals(self, stage, underground=False):
         """Scatter escalating infestation decorations on walkable tiles,
