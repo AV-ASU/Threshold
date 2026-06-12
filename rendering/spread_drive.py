@@ -798,7 +798,15 @@ def _open_south(s, t):
         f = (y / max(1, horizon)) ** 1.25
         pygame.draw.rect(s, _lerpc(top_c, hor_c, f), (0, y, W, step))
 
-    # Stars above, drowning as the gold floods in. Two of them hold:
+    # The spread's arrival clock -- the ground bank and the sky
+    # sickness share one front, rolling in from the north (frame left).
+    fog_t = t - (SPREAD_T_ON + 2.4)
+    front = (W * 1.25 * (_clamp01(fog_t / 8.0) ** 0.85)
+             if fog_t > 0.0 else 0.0)
+    sky_front = front * 1.12          # the sky sickens a step ahead
+
+    # Stars above, drowning as the gold floods in -- then smothered
+    # outright as the sickness crawls over them. Two of them hold:
     # steady, faintly warm, not stars.
     sick = _clamp01((t - (SPREAD_T_KNOW - 0.6)) / 3.0)
     for i in range(26):
@@ -808,6 +816,8 @@ def _open_south(s, t):
         dim = 1.0 - flood * 0.88
         if i < 2:                                # the pair that stays
             tw, dim = 1.0, max(0.45, 1.0 - flood * 0.5)
+        elif sky_front > sx_:                    # the haze has reached it
+            dim *= 0.3
         a = 150 * _frand(i * 5 + 3) * tw * dim
         if a > 8:
             c = int(a)
@@ -825,16 +835,51 @@ def _open_south(s, t):
         ch_ = max(5, int(cw_ * 0.065))
         cx_ = int(W * cxf + math.sin(t * 0.05 + ci * 2.1) * drift)
         cy_ = int(H * cyf)
+        csick = _clamp01((sky_front - (cx_ - cw_ * 0.5)) / max(40, cw_))
         body = _lerpc(_lerpc((22, 21, 29), (88, 58, 66), flood),
-                      (132, 138, 124), 0.7 * sick)
+                      (132, 138, 124), 0.85 * csick)
         lit = _lerpc(_lerpc((30, 29, 37), (236, 176, 96), flood),
-                     (176, 182, 164), 0.8 * sick)
+                     (176, 182, 164), 0.95 * csick)
         pygame.draw.ellipse(s, body, (cx_ - cw_ // 2, cy_ - ch_ // 2,
                                       cw_, ch_))
         pygame.draw.ellipse(s, body, (cx_ - cw_ // 3, cy_ - ch_,
                                       int(cw_ * 0.52), ch_))
         pygame.draw.ellipse(s, lit, (cx_ - cw_ // 2, cy_ + ch_ // 2 - 2,
                                      cw_, 3))
+
+    # THE SICKNESS IN THE SKY -- the spread is not a ground fog alone.
+    # A pale haze crawls across the dome itself: mare's-tail streamers
+    # running ahead, a ragged-edged veil filling in behind them,
+    # smothering what it crosses. Low-res + smoothscale = vapour.
+    if sky_front > 0.0:
+        vsc = 0.25
+        vw, vh = int(W * vsc), int(H * vsc)
+        veil = pygame.Surface((vw, vh), pygame.SRCALPHA)
+        vpale = (164, 178, 152)
+        fl = sky_front * vsc
+        hz = horizon * vsc
+        pts = [(-8, 0)]                          # the veil, ragged edge
+        yv = 0.0
+        while yv < hz:
+            xe = fl - (_frand(int(yv // 4) * 13) * 30
+                       + math.sin(t * 0.4 + yv * 0.5) * 9) * vsc * 4
+            pts.append((int(max(-8, xe)), int(yv)))
+            yv += 4
+        pts.append((-8, int(hz)))
+        pygame.draw.polygon(veil, (*vpale, 48), pts)
+        for k in range(8):                       # the streamers, leading
+            sy_ = int((_frand(k * 19 + 3) ** 1.2) * hz * 0.92)
+            tipx = fl + (30 + _frand(k * 23) * 110) * vsc
+            lnw = (110 + _frand(k * 29) * 170) * vsc
+            if tipx <= 0:
+                continue
+            ehh = max(2, int(2 + _frand(k * 31) * 3))
+            av = int(38 + _frand(k * 37) * 30)
+            yy_ = sy_ + math.sin(t * 0.5 + k * 1.7) * 2
+            pygame.draw.ellipse(veil, (*vpale, av),
+                                (int(tipx - lnw), int(yy_ - ehh / 2),
+                                 int(lnw), ehh))
+        s.blit(pygame.transform.smoothscale(veil, (W, H)), (0, 0))
 
     # A thin flock crossing south, the way he went -- everything that
     # can leave is leaving.
@@ -911,9 +956,7 @@ def _open_south(s, t):
     # smothers the gold layer by layer until the dawn is ruined: the
     # spread, already arriving. Thin fingers run out ahead of the bank
     # along the asphalt, reaching after him.
-    fog_t = t - (SPREAD_T_ON + 2.4)
-    if fog_t > 0.0:
-        front = W * 1.25 * (_clamp01(fog_t / 8.0) ** 0.85)
+    if front > 0.0:
         # Built at quarter resolution and smoothscaled up, so the banks
         # blur into vapour instead of hard terraces.
         sc = 0.25
