@@ -558,8 +558,9 @@ def build_threshold():
     # door with no wall, nothing in the opening (NARRATIVE 1b). You SEAL by
     # walking THROUGH it carrying the keystone (the Pallid Mask), spent there
     # (§7, Mask-only); the walk-through is handled in on_update below. No [E]
-    # prompt, no glow, no smoke. The keystone was carried down (the Deep Stair
-    # opened WITHOUT spending it), so a player who descended always holds it.
+    # prompt, no glow, no smoke. The keystone was carried down (the Deepest
+    # Face blast required it in hand but never spent it), so a player who
+    # took the fall always holds it.
     lintel_x, lintel_y = 7 * TILE + 16, DR * TILE + 16
     sc._lintel_pos = (lintel_x, lintel_y)
     sc.add_decoration(Decoration(lintel_x, lintel_y, "doorframe"))

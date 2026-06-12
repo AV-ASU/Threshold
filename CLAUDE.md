@@ -247,10 +247,11 @@ it renders the procedural sprites to a labelled PNG strip.
   the game match** are tracked in `GAME_CHANGES.md` (with `NARRATIVE.md` §8
   pointing to it). Highlights that override older code/comments: the
   **Ledger is on the Lodge front desk** (the cellar copy is cut), **Mr.
-  Sable is the most-attuned *local*** (not a newcomer), the **Playscript is
-  the cult's own notes**, and the **Deep Stair no longer consumes the
-  keystone** (Mask + notes are carried down and spent at the Threshold to
-  SEAL). **The rope is CUT (2026-06, §14): the descent is the RITE** — at 3
+  Sable is the most-attuned *local*** (not a newcomer), the **Playscript was
+  retired for three pure-lore testimony fragments** (§6b), and the
+  **keystone is the Pallid Mask ALONE** — never spent on the way down,
+  carried down and consumed only at the Threshold to SEAL (or carried out:
+  SPREAD). **The rope is CUT (2026-06, §14): the descent is the RITE** — at 3
   evidence Sable hands over the Invitation (`rite_envelope`), the school
   rite (incense + the final chalk door) opens the school↔grove fold, and
   the grove's **descent fold** (clarity = evidence count via

@@ -38,10 +38,15 @@ Implemented + verified (compileall + smoke + flow green; canon guards added).
    display name (`The Cult's Notes`) + description + Scriptorium pickup +
    Toby's reaction reskinned; item key `playscript` + save flag kept; the
    **mask-shaped recess** kept. *(The buried-lore CONTENTS are Phase 2 — §6b.)*
-7. **Keystone-to-door rework** *(§7)* — the Deep Stair gates on **having** the
-   keystone and opens/snaps-rope **without consuming** it; the **Threshold**
-   seal now **requires + consumes** the Mask+notes at the door; SPREAD carries
-   the Sign out. Guards: stair does not consume; seal requires it.
+7. **Keystone-to-door rework** *(§7)* — ⚠️ **SUPERSEDED twice over** (kept for
+   history; do NOT follow these mechanics): first §6b made the keystone the
+   **Mask alone** (the notes decoupled), then **§14/§15 cut the Deep Stair and
+   the rope entirely** — the way down is the **grove rite**, the way deeper is
+   the **Deepest Face blast** (powder from the Sump, Mask in hand first), and
+   the way home is the **Mask-keyed shaft-floor pane** (SPREAD lock). The fact
+   that *survives*: the keystone is **never spent on the way down** — it is
+   consumed only at the **Threshold door** (SEAL), or carried out (SPREAD).
+   Guards: the blast does not consume; the seal requires + consumes.
 8. **Awareness-model dialogue sweep** *(§11)* — no perceptible-claiming /
    individual-descent leaks (Calder husband + Tisdale "dad" lines were the
    offenders); compulsion-certainty allowed, cosmology never explained.
@@ -78,7 +83,9 @@ AND the §7 "Mask + notes" keystone).** Two decisions:
    endgame entirely. SPREAD already gated on `sigil_rubbing` alone; now the
    **Deep Stair** gate (`scenes/well.py`) and the **Threshold seal**
    (`scenes/depths.py`) do too. This makes the fork symmetric and removes a
-   soft-lock surface. See §7 (now Mask-only).
+   soft-lock surface. See §7 (now Mask-only). *(§15 later CUT the Deep Stair
+   itself; the Mask-gate survives as the Deepest Face blast's "finish the
+   sweep first" requirement — Mask in hand before the fuse lights.)*
 2. **The single `playscript` item is retired and replaced by THREE collectible
    lore fragments** (3 new keys; saves are in-memory so no migration). They are
    **pure lore, gate nothing.** Placement: **1 on the critical path**

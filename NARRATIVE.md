@@ -500,9 +500,10 @@ the hive.
 Knowing dooms you, and it **shows**. Surface corruption is a pure,
 monotonic function of the evidence count — `_infest_stage = min(3,
 evidence)` — and it is deliberately **front-loaded** to peak exactly as
-you commit underground at 3. (The hard lock is *opening the Deep Stair*,
-not crossing 3; you can still resurface — and a fully-rotted town greets
-you when you do.) The underground is the asymmetry: it is **already
+you commit underground at 3. (The hard lock is the **fall through the
+blasted Deepest Face**, not crossing 3; the Mask-bearer can still
+resurface through the keyed shaft-floor pane — and a fully-rotted town
+greets him when he does.) The underground is the asymmetry: it is **already
 wrong from the first rung** (a baseline at 0 evidence) and **deepens on
 the full count**, so the well is a wound the rest of the world only
 catches up to.
@@ -568,8 +569,10 @@ The surface is one connected
 sprawl: the **Arcadia Lodge** (lodge, yard, cornfields) ↔ **Brimley**
 (the town itself — the well, the church, the store, the sheriff's
 office, the school, the barn, the kid's house, and the car). Going
-*deeper* than the first underground layer is gated at the **Deep
-Stair** by the **Pallid Mask** (the keystone).
+*deeper* than the first underground layer is the **blast at the Deepest
+Face** (powder from the Sump, the **Pallid Mask in hand first** — the
+sweep finished before the fuse); the fall through the blown floor is
+**one-way**.
 
 > **Brimley is one place.** The old code had two scenes (`mistlands`
 > and `village`); they were merged into a single `brimley` scene so
@@ -589,11 +592,13 @@ SURFACE         The ARCADIA LODGE (lodge + yard + cornfields) ─▶ BRIMLEY
                   │   effigy grove's descent fold (lands at the bottom
                   │   of the well shaft). No other route. No secret paths.
                   ▼
-THE WORKS       The cult's underground labour, reached by the well: a
-(Basement Level)   built 7-room gauntlet (§9). Mara's cell branches off it;
-                the cult's testimony + the Pallid Mask are found down here.
+THE WORKS       The cult's underground labour, landed in by the rite
+(Basement Level)   (the bottom of the well shaft): a built 7-room gauntlet
+                (§9). Mara's cell branches off it; the cult's testimony +
+                the Pallid Mask are found down here.
                   │
-                  │   gated by the Pallid Mask
+                  │   the BLAST at the Deepest Face (powder from the
+                  │   Sump, Mask in hand first) — the fall is one-way
                   ▼
 DEEPER          The Depths → the Threshold (END IT / seal) → the Hive
                 (the congregation; Mara is here).   (built)
@@ -602,8 +607,8 @@ DEEPER          The Depths → the Threshold (END IT / seal) → the Hive
 ```
 
 - **Surface:** the Arcadia (lodge/yard/cornfields) ↔ Brimley (one map: the well, the church, the store, the sheriff's office, the school, the barn, the kid's house, the locals, the car). Sealed; sole way down = the rite (the grove's descent fold; the well itself is dread set-dressing).
-- **The Works** (a.k.a. the Basement Level): the first underground layer, reached by the well — a built 7-room gauntlet (§9): Mara's cell, the cult's testimony, the Pallid Mask.
-- **Deeper (Mask-gated at the Deep Stair):** the Depths, the Threshold (**End it**), and the Hive where **Mara** is — all built: the `dark` scene holds the kneeling congregation and Mara's one-shot recognition (evidence #6).
+- **The Works** (a.k.a. the Basement Level): the first underground layer, landed in by the rite (the descent fold lands at the bottom of the well shaft) — a built 7-room gauntlet (§9): Mara's cell, the cult's testimony, the Pallid Mask.
+- **Deeper (through the blasted Deepest Face — the one-way fall):** the Depths, the Threshold (**End it**), and the Hive where **Mara** is — all built: the `dark` scene holds the kneeling congregation and Mara's one-shot recognition (evidence #6).
 
 > **Naming, to avoid the collision:** the **lodge cellar** is the
 > `basement` *scene* — the Arcadia's own cellar, a *surface* interior.
@@ -625,7 +630,7 @@ that fire is someone He already took. You only ever see it by losing.
 |---|---|---|---|
 | **A cultist catches you** | The cult takes you for the ritual | Stark text card — **CAPTURED** (cult takes you alive; worse than killed, and feeds the hive) | `_trigger_death("cultist")` → `_tick_death` (exists) |
 | **The King catches you** (vis `1.0`, *3+ evidence*, He reaches you) | He takes you into Himself | Brief cutscene: fire/hell, the floating masks of His sprite drifting in it — title **Carcosa** | `_trigger_death("king")` → `_tick_death` (exists; the bespoke `_trigger_closure` path was replaced by the shared death system) |
-| **Seal the threshold** — *END IT* | You give the **keystone** (the Mask seated in the cult's notes) to the door; contain the hunger; Brimley + you become a hole in the map | Ending sequence. *"It is done. Nothing leaves Brimley again. Not the hunger. Not you."* | `_play_ending("seal_threshold")` (exists; now **consumes the keystone at the doorframe**, §below — a code change) |
+| **Seal the threshold** — *END IT* | You give the **keystone** (the Pallid Mask alone, §6b) to the door; contain the hunger; Brimley + you become a hole in the map | Ending sequence. *"It is done. Nothing leaves Brimley again. Not the hunger. Not you."* | `_play_ending("seal_threshold")` (built: walking through the frame **consumes the Mask at the doorframe**) |
 | **Drive out with the Sign** — *SPREAD IT* | You pull the rite's keystone and carry it out; the release rides out *with you* as a latent bomb that detonates on His timeline | Ending sequence — the engine catches *for the first time*: *"You got out. You're the only one who ever has. Everyone will understand why, soon."* | `_begin_car_escape()` → `_play_ending("escape_alone")` (exists). Gates on the **Sign** (`sigil_rubbing`) **alone** — your own car, no keys; the fold is the only lock, and only a shard of Him opens it. |
 | **Break the rite before sealing** — *YOU FUCKED UP* (a game over) | You tear down the rite *in place* — the obvious heroic move — with the source still open. The lid comes off a pressurized pot: His influence floods out, uncontained, here and now | Ending sequence: you destroy the altar/Sign/kneeling, one breath of quiet, then the flood — *"It was never a cage for you. It was a cage for Him."* | `_play_ending("rite_broken")`. Triggered at the **Sign Chamber altar** (the FIRST place you meet the active rite): a choice — *take the mask* (controlled) vs *tear it down* (the trap). |
 
@@ -655,12 +660,13 @@ So the fork is **experiential, not a menu.** With the keystone in hand:
   past the fold no one else can cross — the Mask is the key the fold
   answers to. What you carry out is the Sign itself, and Carcosa bleeds
   through the hole you made. This is the off-ramp the Mask tempted you with.
-- **Carry it down to the door → SEAL.** Resist the pull. Take the keystone
-  **past** the Deep Stair (which opens to His own authority pressed to the
-  the blasted floor at the deepest face — the fall is the point of no
-  return), down through the Depths and the hive (Mara), to the
-  **Threshold**, and **give the keystone to the door.** The geometry closes; you and Brimley become a
-  hole in the map. *The keystone is spent at the door, not at the stair.*
+- **Carry it down to the door → SEAL.** Resist the pull. Lay the charge
+  at the **Deepest Face** (powder from the Sump; the investigator finishes
+  the sweep first, so His face is already in hand) and light it — the fall
+  through the blasted floor is the point of no return — then down through
+  the Depths and the hive (Mara), to the **Threshold**, and **give the
+  keystone to the door.** The geometry closes; you and Brimley become a
+  hole in the map. *The keystone is spent at the door, not at the face.*
 
 The case ends on that one pull, and the PI hears it as two voices:
 
@@ -679,13 +685,39 @@ carrying the Sign out *is* the breach. "Deeper" is the Seal — you end it at
 the source and become, with Brimley, a hole in the map. Both ways out damn
 something (§1).
 
+### His way out — the priming, felt and defied
+
+The King has a stake in the fork, and it is **SPREAD**: the breach rides
+out through whoever carries His face past the fold, and the PI — the one
+unclaimed hand the fold opens for (§1b) — is the only courier there is.
+The want-to-leave the PI feels all the way down (the notes' *"climb out,
+make the call"*, the Mask's dream-certainty *"the town lets you out"*) is
+**His pull**, riding the cult's testimony and the object itself into a numb
+man's head as the PI's own sourceless urge. Two disciplines bound it:
+
+- **Felt, never stated.** No line, note, or card ever names the urge as
+  His doing (§1b: he must never notice his thoughts changing, or the
+  horror collapses — the flow-guarded phrasing fence). The player may
+  *suspect* whose want it is; the PI never does.
+- **Lucky, not clockwork** (the §10 fence). The King *found* the right
+  hand and leans on it; he does not script the run. Nothing about the
+  descent is a plan unfolding — it is a vast thing pressing on the one
+  seam it got lucky enough to find. Keep the seam of chance in any moment
+  His reach is felt.
+
+Which is what makes the breach-to-seal land: blasting the Deepest Face
+and walking the Mask **down** is the PI's **defiance** of that priming —
+a man cutting against the one urge that has been fed to him the whole
+descent — not a move in His game. The fall is chosen *against* the pull,
+never delivered by His hand.
+
 ### The pressure model — and the trap
 
 The rite is a **pressure vessel** holding the King compressed (§1). Three
 ways to touch it, and an **order rule**:
 
 - **SEAL** — go *past* the rite and cap the **source** (the Threshold) by
-  **giving the keystone — the Mask seated in the cult's notes — to the
+  **giving the keystone — the Pallid Mask — to the
   door.** With the source capped the pressure has nowhere to go; the rite
   can lapse safely *because you sealed first*. Brimley and you become a
   permanent sealed hole.
@@ -750,15 +782,19 @@ The reworks the new fiction forced are all shipped. What must stay true:
   nailed shut from below; no secret paths. **The way home is keyed:**
   the shaft-floor pane opens only to the Mask, and crossing it spends
   the descent (SPREAD lock).
-- **Deep Stair gate (rework — see §8/GAME_CHANGES).** The **keystone** —
-  the **Pallid Mask** (Sign Chamber), Mask-only now (§6b) — opens the stair to His own authority pressed to
-  nothing — the Deep Stair is CUT (the dig never finished; §9). The way
-  deeper is the **blast at the deepest face** (powder from the Sump,
-  Mask in hand first); the keystone is **NOT consumed there.** You carry the keystone down and **spend it at the Threshold door
-  (SEAL).** Carrying it back out instead is **SPREAD**; tearing the Mask
-  down at the Sign Chamber altar before sealing is the **TRAP** (§6). *(The
-  current build consumes both items at the stair and seals empty-handed —
-  that is the change to make.)*
+- **The Deepest Face (the Deep Stair is CUT — §14/§15, GAME_CHANGES).**
+  The dig never finished (the cult's own testimony: a few feet of earth
+  left); there is no stair and no gate, only the dead face where the
+  digging stopped (`works_deepstair`, scene key kept). The way deeper is
+  the **blast**: **powder from the Sump**, the **Pallid Mask in hand
+  first** (the investigator finishes the sweep before he blows the scene
+  — no Mask, no fuse), a **two-press** commit (re-armed on scene exit);
+  the fall into the old workings (`depths_antechamber`) is the one-way
+  step. The keystone is **NOT consumed there.** You carry the Mask down
+  and **spend it at the Threshold door (SEAL).** Carrying it back out
+  through the keyed shaft-floor pane instead is **SPREAD** (the crossing
+  sets `descent_sealed`); tearing the rite down at the Sign Chamber altar
+  before sealing is the **TRAP** (§6). All flow-guarded.
 - **The car answers only to the Sign.** No keys, no tab, no fetch chain
   — Brimley itself is the lock and only a shard of Him opens it.
 - **Innkeeper → Lodge Clerk** throughout. `son_room` is the Clerk's
@@ -786,8 +822,9 @@ The reworks the new fiction forced are all shipped. What must stay true:
 > (the Calling, the Bargain, the Digging — unconfirmed testimony);
 > **Mask reads as "permission to leave,"** built up by the PI's escalating
 > **distressed notes**, tempting SPREAD over going deeper; **keystone-to-
-> door rework** (the **Mask alone** is the keystone, §6b; the Deep Stair
-> opens without consuming it, spent at the Threshold to SEAL); the **ashfall**
+> door rework** (the **Mask alone** is the keystone, §6b; never spent on the
+> way down — the Deep Stair was later CUT for the Deepest Face blast,
+> §14/§15 — only at the Threshold to SEAL); the **ashfall**
 > infestation layer; the **lure chain** (King→Mara→Walter→PI, felt not
 > stated); the **awareness model** (no visible tell; the cult knew the gist
 > of its bargain, the locals never knew they were claimed); and a **Rev.

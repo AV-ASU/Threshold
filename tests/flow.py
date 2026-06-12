@@ -4,10 +4,12 @@ Where smoke.py only *builds* scenes, this drives a full run headlessly and
 asserts the spine is COMPLETABLE with no crash or soft-lock:
 
   3 evidence -> Sable hands over the Invitation -> the school rite
-  (incense + the chalk door) -> the grove's descent fold -> take the
-  Playscript -> take the Pallid Mask -> fork at the Deep Stair (the
-  descent seals) -> cross the Depths -> the hive (speak to Mara) ->
-  seal the Threshold (the SEAL ending).
+  (incense + the chalk door) -> the GROVE RITE (the full door-dream,
+  two-press) -> the descent fold lands at the shaft floor -> take The
+  Calling -> lift the Pallid Mask -> powder from the Sump -> BLAST the
+  Deepest Face (Mask in hand; the one-way fall) -> cross the Depths ->
+  the hive (speak to Mara) -> seal the Threshold (the SEAL ending).
+  The way home is KEYED to the Mask (crossing up = the SPREAD lock).
 
 Plus the SPREAD ending (drive out with the Mask) and the 3-evidence King
 gate. Interactions are driven by positioning the player on each
@@ -395,13 +397,14 @@ def main():
               "hive: speaking to Mara fires the recognition")
 
     # --- 7. The Threshold seal -> the SEAL ending (consumes the keystone) ---
-    # The keystone (the Mask) carried down from the Deep Stair is spent HERE,
-    # at the door (§7 rework, Mask-only). g still holds it (stair did not spend).
+    # The keystone (the Mask) carried down through the blasted face is spent
+    # HERE, at the door (§7 rework, Mask-only). g still holds it (the blast
+    # did not spend it).
     g.load_scene_now("threshold")
     ready(g)
     sc = g.scene
     check(g.player.inventory.has("sigil_rubbing"),
-          "threshold: the keystone (Mask) arrives in hand (carried from the stair)")
+          "threshold: the keystone (Mask) arrives in hand (carried through the fall)")
     g.player.x, g.player.y = sc._lintel_pos
     sc.on_update_fn(g, sc, 0.1)               # walking THROUGH the frame seals it
     check(g._ending_active == "seal_threshold",
@@ -689,6 +692,9 @@ def main():
           "heknows: the dream note does NOT imply a recurring dream")
     check(gd._evidence_count() == ev_pre,
           "heknows: the dream note never inflates the evidence/King gate")
+    check(not any(isinstance(e, dict) and e.get("name") == "the_dream"
+                  for e in gd.save.arg("evidence", [])),
+          "heknows: the dream lands in NOTES, never in the evidence arg")
     gd._log_dream_entry()                     # idempotent: no duplicate
     check(sum(1 for e in gd.save.arg("notes", [])
               if isinstance(e, dict) and e.get("name") == "the_dream") == 1,
@@ -1254,6 +1260,89 @@ def main():
     check(any("hiss" in ln for ln, _ in
               Game._ENDING_SCRIPTS["escape_alone"]),
           "spread: the radio carries the open line's hiss out of town")
+
+    # --- 24. Act-handoff structural locks (GAME_CHANGES §14/§15) ----------
+    # The Act 1 -> Act 2 handoff was rebuilt: the rite is the only way
+    # down, the blast is the only way deeper, the Mask is the only way
+    # home. Lock the STRUCTURE (the scene graph itself) so no later scene
+    # edit can quietly add a bypass route around the gates.
+    from systems.config import UNDERGROUND_SCENES as _UG24
+    from scenes import SCENE_BUILDERS as _SB24, load_scene as _ld24
+    # The below-world: the registered underground set plus its three
+    # satellites that carry their own treatment (the refuge cell, the
+    # hive, the Threshold cave).
+    _below = set(_UG24) | {"maras_room", "dark", "threshold"}
+    _down_x, _up_x, _ante_x = [], [], []
+    for _k24 in _SB24:
+        try:
+            _s24 = _ld24(_k24)
+        except Exception:
+            continue
+        for _ch24, (_dst24, _sp24) in _s24.exits.items():
+            if _k24 not in _below and _dst24 in _below:
+                _down_x.append((_k24, _ch24, _dst24))
+            if _k24 in _below and _dst24 not in _below:
+                _up_x.append((_k24, _ch24, _dst24))
+            if _dst24 == "depths_antechamber":
+                _ante_x.append((_k24, _ch24))
+    # (a) ONE way down: the grove's rite-gated descent fold alone. Its
+    # gate (exit_gate_fn) refuses until rite_performed -- proven in beat
+    # 1(d) above -- so with no other crossing, NO underground access
+    # exists without the grove rite.
+    check(_down_x == [("effigy_grove", "O", "well_bottom")],
+          "structure: the grove rite fold is the ONLY surface->underground "
+          f"crossing (found {_down_x})")
+    # (b) ONE way home: the shaft-floor pane alone, keyed to the Mask
+    # (refusal + the SPREAD lock proven in beats 1(e)/1(f) above). With no
+    # other crossing, leaving the underground ALWAYS requires the Mask and
+    # always arms descent_sealed -> the run is locked to SPREAD.
+    check(_up_x == [("well_bottom", "O", "effigy_grove")],
+          "structure: the Mask-keyed shaft pane is the ONLY underground->"
+          f"surface crossing (found {_up_x})")
+    # (c) The Depths begin past the BLAST: no scene exit leads into the
+    # fall zone -- the only entry is the Deepest Face's two-press charge
+    # (powder + Mask, beat 4), so reaching the Threshold always requires
+    # the blast AND the Mask.
+    check(not _ante_x,
+          "structure: nothing exits into depths_antechamber (the blast is "
+          f"the only way down to the Depths) (found {_ante_x})")
+    # (d) The face refuses BOTH half-equipped states: powder without the
+    # Mask is locked in beat 4; Mask without powder must refuse too (no
+    # fuse, no fall, no flags).
+    gm24 = new_game()
+    gm24.player.inventory.add("sigil_rubbing", 1)
+    gm24.load_scene_now("works_deepstair")
+    ready(gm24)
+    gm24.player.x, gm24.player.y = gm24.scene._gate_pos
+    gm24.scene.on_interact_fn(gm24)
+    check(not gm24.save.flag("blast_laid")
+          and not gm24.save.flag("depths_breached")
+          and gm24.scene.key == "works_deepstair",
+          "face: the Mask without powder does not arm the blast")
+    # (e) The rite alone seeds the Threshold recognition: a player who
+    # NEVER reads the journal still gets flashback_seen from the grove
+    # rite's full dream, so "You have stood here before. In sleep." can
+    # never be silently locked to the journal path.
+    gr24 = new_game()
+    check(not gr24.save.flag("flashback_seen"),
+          "rite-seen: a fresh run has not dreamed")
+    gr24.begin_rite_dream()
+    _g24 = 0
+    while gr24._flashback_phase is not None and _g24 < 200:
+        gr24._tick_flashback(0.5)
+        _g24 += 1
+    check(gr24.save.flag("flashback_seen")
+          and gr24.save.flag("rite_performed"),
+          "rite-seen: completing the rite dream sets flashback_seen "
+          "(no journal required)")
+    _seen24 = []
+    gr24.dialog.show = (lambda real: (lambda p, **k: (
+        _seen24.append((p if isinstance(p, list) else [p])[0]),
+        real(p, **k))[1]))(gr24.dialog.show)
+    _sct24 = _ld24("threshold")
+    _sct24.on_enter_fn(gr24, _sct24)
+    check(_seen24 and "in sleep" in _seen24[0].lower(),
+          "rite-seen: the rite alone makes the Threshold recognition land")
 
     print()
     if FAILS:
