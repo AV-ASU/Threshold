@@ -95,7 +95,7 @@ def preacher_dialogue(game, npc):
             "I don't trust it. They arrive too easy, like something held "
             "the door. Then they go quiet, drift out to the corn, and they "
             "don't come back.",
-            "A young woman came through last month. Bright thing, full of "
+            "A young woman came through last fall. Bright thing, full of "
             "questions, like you. She's one of them now, whatever they "
             "are. You looking for her?",
         ], speaker="Rev. Crane", voice="blip_low", portrait="preacher")

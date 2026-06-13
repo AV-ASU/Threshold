@@ -1217,6 +1217,19 @@ def main():
           and "by the new year" in _case_t
           and "spring" not in _case_t and "thaw" not in _case_t,
           "calendar: the case note keeps Mara's fall drive + new-year silence")
+    # The Preacher places Mara's arrival in the FALL (the timeline: she was
+    # the last one in, fall 1993; the present is mid-April 1994). The old
+    # "last month" dated her to weeks ago, which the calendar forbids.
+    check("last month" not in _dlg_src and "last fall" in _dlg_src,
+          "calendar: the Preacher dates Mara's arrival to the fall, not 'last month'")
+
+    # (a3) The infested store-owner never claims deliveries resumed: canon
+    # has the trucks stopped at the new year (Hettie's own lines + the store
+    # dialogue), so her stage-3 denial must not reinstate them.
+    import systems.infest_mixin as _inf
+    _inf_src = _insp.getsource(_inf).lower()
+    check("truck still comes" not in _inf_src,
+          "infest: the mutated store-owner does not claim the deliveries came back")
 
     # (b) Sheriff Vane's murder beat is a one-shot gated on the player
     # having SEEN the church floor -- he can never announce the killing
@@ -1282,6 +1295,24 @@ def main():
     check(not any(("—" in ln) or ("–" in ln) or ("--" in ln)
                   for ln in spread_lines),
           "spread: no dashes in player-facing ending text")
+
+    # --- 24. The case notes live in the inventory, not a separate N panel --
+    # The book is one book now: the evidence/door-dream notes are a tab that
+    # REPLACED the dead Consumables tab, and N opens the inventory straight
+    # to it. The standalone notebook panel is retired.
+    from ui.inventory_ui import TABS as _ITABS, InventoryUI as _IUI
+    _labels = [lbl for _k, lbl in _ITABS]
+    check("Case Notes" in _labels and "Consumables" not in _labels,
+          "inventory: Case Notes tab replaced the Consumables tab")
+    check(hasattr(_IUI, "open_case_notes"),
+          "inventory: N opens the book straight to the Case Notes tab")
+    import importlib
+    try:
+        importlib.import_module("ui.notebook_ui")
+        _notebook_gone = False
+    except ImportError:
+        _notebook_gone = True
+    check(_notebook_gone, "inventory: the standalone N-key notebook panel is retired")
 
     print()
     if FAILS:

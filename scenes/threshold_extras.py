@@ -221,6 +221,11 @@ def build_schoolhouse():
                                  "Sweeten the air, the sheet says. You "
                                  "have nothing to burn.")
                 return
+            if inv.has("incense"):
+                game.show_notice("Dried incense in your hand, a cold fire "
+                                 "pit at your feet. They were left out "
+                                 "together for some use you cannot read yet.")
+                return
             game.show_notice("They burned a fire inside, on the "
                              "floorboards, the way squatters do.")
             return
@@ -266,6 +271,17 @@ def build_schoolhouse():
                     "[c=dim]The sequence stops one door short. The "
                     "smallest one was never drawn. The sheet in your "
                     "pocket says the air comes first.[/c]",
+                ], speaker="", voice="blip_soft", portrait="narrator")
+                return
+            if inv.has("chalk"):
+                game.dialog.show([
+                    "[c=dim](The chalkboard. Under a child's faded lesson, "
+                    "the same door is drawn over and over, smaller and "
+                    "smaller, to the corner. The last one was never "
+                    "drawn.)[/c]",
+                    "[c=dim]You have the chalk for it. You do not have the "
+                    "hand for it. There is an order to this you were never "
+                    "taught.[/c]",
                 ], speaker="", voice="blip_soft", portrait="narrator")
                 return
             game.dialog.show([

@@ -14,32 +14,28 @@ ITEM_DEFS = {
     # ---- Core items (in circulation) ----
     "pistol":        {"name": "Revolver",
                        "kind": "weapon",
-                       "desc": "Your sidearm. Left-click fires it in "
-                               "the way you're facing. While the case is "
-                               "still shallow a clean shot drops a cultist; "
-                               "once you understand too much (3+ evidence) the "
-                               "rounds only stagger them. The deeper you "
-                               "see, the less the world lets you kill."},
+                       "desc": "Your sidearm, and a few rounds for it. It "
+                               "has always been the thing that made you feel "
+                               "ready. You are not sure it makes you ready "
+                               "for this."},
     "pistol_ammo":   {"name": "Cartridges",
                        "kind": "key",
                        "desc": "Pistol rounds. Never as many as you'd like."},
     "newspaper":     {"name": "Yesterday's Paper",
                        "kind": "lore",
                        "desc": "The Minneapolis paper for April 14. "
-                               "Yesterday. Picked up before the drive "
-                               "north. Ordinary headlines, box scores, the "
-                               "funnies. The freshest thing in Brimley by "
-                               "months."},
+                               "Yesterday's. You picked it up before the "
+                               "drive north. Ordinary headlines, box scores, "
+                               "the funnies."},
     "woodshed_key":  {"name": "Woodshed Key",
                        "kind": "key",
                        "desc": "A key."},
     "flashlight":    {"name": "Flashlight",
                        "kind": "key",
-                       "desc": "A heavy steel flashlight. Press [F] to "
-                               "switch it on in the dark. But a light in "
-                               "the dark is a thing that can be seen. The "
-                               "longer it burns, the more the King feels "
-                               "you."},
+                       "desc": "A heavy steel flashlight. Press [F] to throw "
+                               "a beam into the dark ahead. A light is a "
+                               "thing that can be seen, the same as it lets "
+                               "you see."},
     "sigil_rubbing": {"name": "The Pallid Mask",
                        "kind": "lore",
                        "desc": "The King's own pale half-mask, made an "

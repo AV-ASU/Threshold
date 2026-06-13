@@ -1,14 +1,16 @@
 """Inventory menu UI.
 
 THRESHOLD: combat is gone, so the inventory is small and reads as
-"what you carry" rather than "what you fight with." Two live tabs --
-Tools (axe, keys) and Notes (lore: the journal, diary pages, robe,
-the Mask). The Notebook (evidence review) lives in its own panel
-keyed to N -- not in inventory tabs -- because it shows text beats
-rather than carryable items.
+"what you carry" rather than "what you fight with." Three tabs --
+Tools (axe, keys), Notes (lore: the journal, diary pages, robe, the
+Mask), and Case Notes (the beats the PI has pieced together: the six
+canonical clues plus the personal door-dream note). The case notes used
+to live in their own N-key panel; they are folded in here so the player
+keeps everything in one book. N now opens the inventory straight to the
+Case Notes tab.
 
 The chrome (translucent panel, gold margin selection, quiet hints)
-is shared with the notebook via ui/menu_chrome, to keep the menus
+is shared with the menu helpers in ui/menu_chrome, to keep the menus
 feeling like the same quiet, filmic UI rather than an arcade menu.
 """
 import pygame
@@ -18,18 +20,28 @@ from ui.item_icons import draw_item_icon
 from ui import menu_chrome as mc
 
 
-# Tabs in display order. Each entry: (set-of-item-kinds shown,
-# display label). The first tab to match an item's kind owns it,
-# so order matters. "Tools" sweeps weapon+key+armor (combat-era
-# armor stubs collapse here too -- one fewer empty tab). "Notes"
-# is anything tagged "lore" -- the things the player reads, not
-# uses. "Consumables" is its own tab because the player USES
-# them differently (use vs equip).
+def _humanise(slug):
+    """Turn a slug like 'some_note' into a title 'Some Note'."""
+    parts = slug.split("_")
+    return " ".join(p.capitalize() for p in parts)
+
+
+# Tabs in display order. Each entry: (set-of-item-kinds shown OR None,
+# display label). The first tab to match an item's kind owns it, so
+# order matters. "Tools" sweeps weapon+key+armor (combat-era armor
+# stubs collapse here too). "Notes" is anything tagged "lore" -- the
+# things the player reads. "Case Notes" is the SPECIAL non-item tab
+# (kinds=None): it reads the evidence/notes logs off the save rather
+# than the inventory, replacing the old Consumables tab (no consumables
+# remain in circulation).
+CASE_NOTES = None
 TABS = [
     (("weapon", "key", "armor"),  "Tools"),
     (("lore",),                    "Notes"),
-    (("consumable",),              "Consumables"),
+    (CASE_NOTES,                   "Case Notes"),
 ]
+# Index of the Case Notes tab, so N can jump straight to it.
+NOTES_TAB = next(i for i, (k, _) in enumerate(TABS) if k is CASE_NOTES)
 
 
 class InventoryUI:
@@ -38,7 +50,8 @@ class InventoryUI:
         self.audio = audio
         # Optional save reference, kept for the inventory API. Item
         # descriptions are static now (effective_desc ignores it), but
-        # the journal reads its current page off the save.
+        # the journal reads its current page off the save, and the Case
+        # Notes tab reads the evidence/notes logs.
         self.save = save
         self.open = False
         self.cursor = 0
@@ -50,18 +63,56 @@ class InventoryUI:
         self.tab = 0
         self.audio.play("menu_open" if self.open else "menu_close", 0.6)
 
+    def open_case_notes(self):
+        """Open (or reveal) the book straight on the Case Notes tab --
+        what N does now that the notebook is no longer its own panel."""
+        if not self.open:
+            self.open = True
+            self.audio.play("menu_open", 0.6)
+        self.tab = NOTES_TAB
+        self.cursor = 0
+
     # ---- selection helpers ----
 
+    def _is_notes_tab(self, tab=None):
+        return TABS[self.tab if tab is None else tab][0] is CASE_NOTES
+
+    def _case_entries(self):
+        """The case-notes list: the canonical clues first, then the PI's
+        personal notes (the door-dream). Each entry is (title, lines).
+        Notes live in their own save list so they never count toward the
+        evidence/King-gate (see Game._log_dream_entry)."""
+        if self.save is None:
+            return []
+        out = []
+        for key in ("evidence", "notes"):
+            src = self.save.arg(key, [])
+            if not isinstance(src, list):
+                continue
+            for e in src:
+                if isinstance(e, dict):
+                    out.append((e.get("name", "?"), e.get("lines", [])))
+                else:
+                    out.append((str(e), []))
+        return out
+
     def _filtered_items(self, inv):
-        """Return list of (orig_index, key, qty) for items in the active tab."""
+        """Return list of (orig_index, key, qty) for items in the active tab.
+        The Case Notes tab holds no items (it reads the save), so it
+        returns an empty list here."""
         kinds = TABS[self.tab][0]
-        # Owned-kinds set: every kind claimed by any tab. Anything
-        # whose kind isn't owned falls into the LAST tab as a
+        if kinds is CASE_NOTES:
+            return []
+        # Owned-kinds set: every item-kind claimed by any tab. Anything
+        # whose kind isn't owned falls into the LAST item-tab as a
         # catch-all so unknown future items aren't invisible.
         owned = set()
         for tab_kinds, _ in TABS:
-            owned.update(tab_kinds)
-        is_last = (self.tab == len(TABS) - 1)
+            if tab_kinds is not CASE_NOTES:
+                owned.update(tab_kinds)
+        # The last ITEM tab (not the case-notes tab) is the catch-all.
+        item_tabs = [i for i, (k, _) in enumerate(TABS) if k is not CASE_NOTES]
+        is_last = (self.tab == item_tabs[-1])
         out = []
         for i, (key, qty) in enumerate(inv.items):
             d = ITEM_DEFS.get(key, {})
@@ -78,8 +129,10 @@ class InventoryUI:
         self.audio.play("cursor", 0.5)
 
     def move(self, dy, inventory):
-        items = self._filtered_items(inventory)
-        n = max(1, len(items))
+        if self._is_notes_tab():
+            n = max(1, len(self._case_entries()))
+        else:
+            n = max(1, len(self._filtered_items(inventory)))
         self.cursor = (self.cursor + dy) % n
         self.audio.play("cursor", 0.5)
 
@@ -90,6 +143,10 @@ class InventoryUI:
         return items[self.cursor][1]
 
     def use_selected(self, player):
+        # The Case Notes tab is read-only -- there is nothing to "use."
+        if self._is_notes_tab():
+            self.audio.play("cursor", 0.4)
+            return
         inv = player.inventory
         items = self._filtered_items(inv)
         if not items: return
@@ -100,11 +157,6 @@ class InventoryUI:
         if d["kind"] in ("weapon", "armor"):
             inv.equip(key)
             self.audio.play("confirm", 0.7)
-        elif d["kind"] == "consumable":
-            # No consumables remain in circulation (combat-era potions are
-            # gone; the flashlight is a key-kind Tool toggled with [F], not
-            # a consumable).
-            self.audio.play("cancel", 0.4)
         elif d["kind"] in ("key", "lore"):
             # THRESHOLD: Mara's Journal is a readable, paged item. Each
             # Enter turns one leaf (advancing the read counter so the
@@ -121,8 +173,7 @@ class InventoryUI:
                     self.audio.play("blip_soft", 0.45)
             else:
                 self.audio.play("cursor", 0.5)
-        # Re-clamp the cursor in case the filtered list shrank (e.g. a
-        # consumable was used up).
+        # Re-clamp the cursor in case the filtered list shrank.
         items = self._filtered_items(inv)
         if self.cursor >= len(items):
             self.cursor = max(0, len(items) - 1)
@@ -172,6 +223,17 @@ class InventoryUI:
                                   tab_y + t.get_height() + 1))
             tab_x += t.get_width() + 30
 
+        if self._is_notes_tab():
+            self._draw_case_notes(surf, FAINT)
+        else:
+            self._draw_items(surf, inv, FAINT)
+
+        mc.hint(surf, self.fonts["serif_sm"],
+                "arrow keys to look . left and right to turn the page . "
+                "enter to read or take in hand . esc to put it away",
+                64, SCREEN_H - 34)
+
+    def _draw_items(self, surf, inv, FAINT):
         # The index of things, down the left.
         items = self._filtered_items(inv)
         lx = 84
@@ -206,10 +268,47 @@ class InventoryUI:
             else:
                 self._draw_object(surf, key, d)
 
-        mc.hint(surf, self.fonts["serif_sm"],
-                "arrow keys to look . enter to read or take in hand . "
-                "n for your notes . esc to put it away",
-                64, SCREEN_H - 34)
+    def _draw_case_notes(self, surf, FAINT):
+        """The Case Notes tab: an index of pieced-together beats down the
+        left, the selected one typed up as a case card on the right. The
+        evidence/dream notes that used to live behind the N key."""
+        entries = self._case_entries()
+        lx = 84
+        ly = 172
+        rf = self.fonts["serif"]
+        if not entries:
+            surf.blit(self.fonts["serif_it"].render(
+                "The page is still blank.", True, FAINT), (lx, ly))
+            return
+        if self.cursor >= len(entries):
+            self.cursor = max(0, len(entries) - 1)
+        for i, (name, _lines) in enumerate(entries):
+            selected = (i == self.cursor)
+            row_y = ly + i * 30
+            if selected:
+                mc.accent_bar(surf, lx - 18, row_y, rf.get_linesize())
+            col = (214, 198, 150) if selected else (158, 152, 142)
+            surf.blit(rf.render(_humanise(name), True, col), (lx, row_y))
+        name, lines = entries[self.cursor]
+        self._draw_case_card(surf, name, lines)
+
+    def _draw_case_card(self, surf, name, lines):
+        """A case beat the PI typed up -- manila card, mono header ruled
+        off, the body in typewriter ink (ported from the old notebook)."""
+        W, H = 420, 470
+        card = mc.paper(W, H, seed=sum(ord(c) for c in name) + 3,
+                        base=mc.CARD_MANILA)
+        title = self.fonts["mono"].render(
+            _humanise(name).upper(), True, mc.CARD_INK)
+        card.blit(title, (26, 30))
+        pygame.draw.line(card, mc.CARD_RULE, (26, 58), (W - 26, 58), 1)
+        if lines:
+            mc.wrap(card, self.fonts["mono"], "\n".join(lines),
+                    26, 76, W - 52, color=mc.CARD_INK, line_h=22)
+        else:
+            card.blit(self.fonts["mono"].render(
+                "(nothing more set down)", True, mc.INK_FADE), (26, 76))
+        mc.lay_page(surf, card, self._DOC_CENTER, tilt=-1.0)
 
     def _draw_journal_leaf(self, surf):
         """Mara's journal as an aged, ruled leaf with her words in ink."""

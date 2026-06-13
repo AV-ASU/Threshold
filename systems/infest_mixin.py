@@ -71,9 +71,10 @@ def _converted_local_dialogue(game, npc):
 # small specifics and don't acknowledge what they've become.
 INFEST_MUTATE_LINES = {
     "Hettie": [
-        "Truck still comes Thursdays. I unload it myself now.",
-        "The driver won't get out of the cab anymore. That's all right. I "
-        "manage the crates.",
+        "Shelves don't empty anymore. I dust them. I face what's left to "
+        "the front so it reads as full.",
+        "Nobody's bought a thing in months. I still ring it up. Habit is "
+        "the last thing to go.",
         "[c=dim]Don't mind me. I've a customer face on. You get used to "
         "putting it on.[/c]",
     ],

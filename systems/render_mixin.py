@@ -1445,7 +1445,6 @@ class RenderMixin:
         self._draw_notebook_toast()
         self.dialog.draw(self.screen)
         self.inv_ui.draw(self.screen, self.player)
-        self.notebook_ui.draw(self.screen)
         # Text-input modal (LOGIN: terminal etc.) drawn over inventory so
         # it always wins focus.
         self.text_input.draw(self.screen)
@@ -1487,7 +1486,7 @@ class RenderMixin:
         hide-spot first (the core stealth affordance), then an adjacent
         axe-chop target, a chest, or an NPC to talk to. Drawn over the
         world, under the HUD."""
-        if (self.dialog.active or self.inv_ui.open or self.notebook_ui.open
+        if (self.dialog.active or self.inv_ui.open
                 or self.text_input.active
                 or self.state != "playing"):
             return

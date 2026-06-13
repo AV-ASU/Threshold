@@ -25,7 +25,6 @@ from systems.look_control import LookController
 from ui.fonts import make_fonts
 from ui.dialog import DialogueBox
 from ui.inventory_ui import InventoryUI
-from ui.notebook_ui import NotebookUI
 from ui.text_input import TextInputModal
 from systems.audio import Audio
 from systems.save import Save
@@ -99,7 +98,6 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         self.save = Save(slot=1)
         self.dialog = DialogueBox(self.audio, self.fonts)
         self.inv_ui = InventoryUI(self.fonts, self.audio, self.save)
-        self.notebook_ui = NotebookUI(self.fonts, self.audio, self.save)
         # Text-input modal -- used by the old man's computer terminal
         # (LOGIN: prompt) and reusable for any future ARG hooks. While
         # active, the Game suspends play and routes key events here.
@@ -885,7 +883,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         self.player.facing = (ax, ay)
 
     def update_player(self, dt, keys):
-        if (self.dialog.active or self.inv_ui.open or self.notebook_ui.open
+        if (self.dialog.active or self.inv_ui.open
                 or self.text_input.active):
             return
         # During the threshold-closure sequence, the player cannot
@@ -1316,7 +1314,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         p = self.player
         if (self.state != "playing" or p.hidden is not None
                 or self.dialog.active or self.inv_ui.open
-                or self.notebook_ui.open or self.text_input.active):
+                or self.text_input.active):
             return
         if not p.inventory.has("pistol") or self._gun_cd > 0:
             return
@@ -1960,7 +1958,6 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
             # turned the player into a sitting duck -- cultists kept closing
             # in and visibility kept rising while they could only read.
             world_frozen = (self.dialog.active or self.inv_ui.open
-                            or self.notebook_ui.open
                             or self.text_input.active
                             # The door-dream (flash or rite) freezes the
                             # sim: nothing closes in while the PI is inside
@@ -2271,11 +2268,9 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
                 if ev.key in (pygame.K_i, pygame.K_ESCAPE):
                     self.inv_ui.toggle()
                 elif ev.key == pygame.K_n:
-                    # Hot-swap from inventory to notebook so the
-                    # player doesn't have to close one to open
-                    # the other.
-                    self.inv_ui.toggle()
-                    self.notebook_ui.toggle()
+                    # The case notes are a tab now, not a separate panel:
+                    # N jumps straight to it without closing the book.
+                    self.inv_ui.open_case_notes()
                 elif ev.key in (pygame.K_UP, pygame.K_w):
                     self.inv_ui.move(-1, self.player.inventory)
                 elif ev.key in (pygame.K_DOWN, pygame.K_s):
@@ -2286,18 +2281,6 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
                     self.inv_ui.change_tab(1, self.player.inventory)
                 elif ev.key in (pygame.K_RETURN, pygame.K_e, pygame.K_SPACE):
                     self.inv_ui.use_selected(self.player)
-            return
-        if self.notebook_ui.open:
-            if ev.type == pygame.KEYDOWN:
-                if ev.key in (pygame.K_n, pygame.K_ESCAPE):
-                    self.notebook_ui.toggle()
-                elif ev.key == pygame.K_i:
-                    self.notebook_ui.toggle()
-                    self.inv_ui.toggle()
-                elif ev.key in (pygame.K_UP, pygame.K_w):
-                    self.notebook_ui.move(-1)
-                elif ev.key in (pygame.K_DOWN, pygame.K_s):
-                    self.notebook_ui.move(1)
             return
         if self.state in ("playing", "transition"):
             if ev.type == pygame.KEYDOWN:
@@ -2322,7 +2305,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
                 elif ev.key == pygame.K_i:
                     self.inv_ui.toggle()
                 elif ev.key == pygame.K_n:
-                    self.notebook_ui.toggle()
+                    self.inv_ui.open_case_notes()
                 elif ev.key == pygame.K_f:
                     self._toggle_flashlight()
                 elif ev.key == pygame.K_F5:
