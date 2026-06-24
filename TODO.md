@@ -13,6 +13,19 @@
 
 ## Open work
 
+### 0. Stealth rework — hiding mechanic + enemy/hide placement pass  *(see `STEALTH_REWORK.md`)*
+
+The biggest planned change. Hiding today is a binary `player.hidden`
+invisibility toggle: it is not tense (wait out a 6 s timer) and "inside"
+something is too powerful (an enemy can stand next to your hide and never
+find you). The agreed direction is **"concealment, not invisibility"** —
+graded per-enemy suspicion, two cover classes (mobile/leaky vs
+rooted/strong/checkable), searchers that sweep hides, and a timed **struggle**
+when a searcher checks the enclosed hide you are in. Plus a placement pass
+(the gauntlet is 17 cultists with 0 dedicated hides today). **Design is
+settled and written up in `STEALTH_REWORK.md`; no code yet.** Build mechanic
+first, then the placement pass.
+
 ### 1. Food scarcity — the VISUAL pass  *(NARRATIVE.md §8)*
 
 The dialogue side is done (Hettie: "The shelves don't empty anymore... No
