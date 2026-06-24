@@ -50,6 +50,86 @@ Pairs naturally with the "cultist eating at a counter" beat above.
 
 ---
 
+## Design review findings (2026-06 critique pass)
+
+> From a critical review of gamification + story (two independent passes).
+> Ranked by impact; the top two were flagged by **both** passes. These are
+> bigger than the polish items above. Some are arguably intentional dread-first
+> design (minimal combat, oblique storytelling) — flagged as judgment calls,
+> not bugs. Decide scope before building; none are settled like the stealth
+> rework yet.
+
+### 5. Onboarding / guidance gap  *(highest impact, both passes)*
+
+The game is hostile to a player who has not read `NARRATIVE.md`. No objective
+system, no tutorial, no map/waypoints; the notebook records what you *found*,
+not what to do next. The only in-game mechanic taught is the axe stun
+(`systems/game.py`); hiding, the visibility meter, limited ammo, and the
+curse are never explained. A first-timer spawns in the bedroom with no idea
+what the game is or where to go. Fix candidates: an opening framing beat, a
+light "objectives/leads" view in the notebook (`ui/notebook_ui.py`), and a
+couple of proactive teach-moments instead of fail-state-only teaching.
+
+### 6. Mara's arc is undelivered  *(highest impact, story pass)*
+
+The case is "find Mara," but the player never learns her *ache* (what the door
+answered) — she is a name, a journal, a cell, and a kneeling mass with one
+good final line. The tragedy the bible promises ("not deceived, answered")
+never lands, and the case evaporates after Act 1. Fix candidates: an unsent
+letter in her cell that names what she fled; one local who knew her; the
+door-dream showing *her* at the frame; evidence #6 as a short exchange, not a
+single line. Hold the §1b/§10 fence (no cosmology stated). Add a flow guard.
+
+### 7. The lure chain is invisible in-play  *(story pass)*
+
+The deepest plot — the PI was marked a year ago and *sent* to Brimley — lives
+only in `NARRATIVE.md` and three scattered notebook notes (`the_case`,
+`the_dream`), never connected for a play-only player, so the ending feels
+arbitrary. Fix candidate: ONE oblique moment (near the Threshold, or on
+learning of Mara) that links the dream + the case + Mara's presence — felt,
+never explained (this brushes the §10 fence; keep it a sensation, not a
+reveal).
+
+### 8. The descent midgame is hollow (both axes)  *(both passes)*
+
+The Works (7 rooms) + Depths (5 rooms) are the longest stretch and the
+emptiest. Mechanically: the same walk/hide/evade loop with no new threats,
+hazards, or escalation across ~12 rooms. Narratively: ~3 plot beats total,
+cultists never speak, rooms do not change as infestation rises. Fix
+candidates: one diegetic beat per room (a shed-life object in the Sorting
+Hall, a line at the Cistern/river, the rite-holder's weight), and a mechanical
+wrinkle or two in the deep (a hazard, an enemy variant). Pairs with the
+stealth placement pass (#0).
+
+### 9. Ending fork is not legible  *(story pass)*
+
+SEAL vs SPREAD are mechanically distinct but the player often will not grasp
+what either *means*, or even that carrying the Mask up is an escape. No beat
+states the stakes before the commit, so neither ending reads as won or lost.
+Fix candidate: a clarifying sensation/voice beat at the fork (still no
+cosmology spelled out), and an ending-text pass so each lands a clear feeling.
+
+### 10. The town does not react to state  *(story pass, medium)*
+
+Ambient locals (Royce, Old Pell, Calder, Garrick) speak once and never react
+to the preacher's murder, rising infestation, or evidence count. The
+`escalate()` system (`scenes/dialogue.py`) exists but is barely used. Fix
+candidate: one state-dependent beat per named local so the town visibly
+changes as the player learns more.
+
+### 11. Combat / difficulty — judgment calls (decide on purpose)
+
+Not bugs; deliberate choices worth confirming rather than leaving by default:
+the gun goes **stun-only at 3 evidence** with ~14 rounds total per run, so the
+main combat verb is removed exactly when danger spikes (agency loss vs
+intended dread). There are **no difficulty options**, so the visibility/Watcher
+death-spiral hits newcomers and is trivial to experts. Items are gates, not
+resources (armor slots return 0). Consider: transforming the stun into a
+tactical window rather than a tax, an easy/hard toggle, or light resource
+tension — only if it serves the horror, not despite it.
+
+---
+
 ## Design calls (decide before building)
 
 ### 3. `drowned_body` — does it stay?  *(HANDCRAFT_BACKLOG.md "Genuinely open")*
