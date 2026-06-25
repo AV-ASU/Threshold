@@ -17,9 +17,10 @@ geometry "bruising through" the flat plane — the same impossible thing as the
 door, at every scale.
 
 - **Environment warps.** Stretched / skewed decorations, hallways too long,
-  rooms that loop, Backrooms-style labyrinth pockets — but **diegetic to
-  Brimley** (the barn that goes on too long, the same corn road four times, a
-  parlor whose far wall recedes), never generic-internet-Backrooms yellow.
+  rooms that loop, labyrinth pockets where corridors fold back on themselves —
+  but **diegetic to Brimley** (the barn that goes on too long, the same corn
+  road four times, a parlor whose far wall recedes), never a generic liminal
+  void; always Brimley's own rooms turned wrong.
 - **Keep the yellow ashfall.** It is the cosmic anchor (the Sign's jaundice);
   it fits warping even better than it fit mutation.
 - **Drive it off the existing ramp:** `_infest_stage = min(3, evidence)`. Same
@@ -53,8 +54,10 @@ The warp **encodes the town's cult/local split into the horror itself**
 - **All warping is spatial-stretch** (elongation, wrong proportions), **NOT
   biological gore.** A stretched man and a stretched hallway are the same
   impossible thing. Gore would break the unity; stretch keeps it.
-- **"Skinwalker" is dev shorthand only.** Never in player text (cultural
-  sensitivity + the game never names its monsters; everything is felt).
+- **Never name it in player text.** The situational warps stay unnamed:
+  the game never names its monsters (everything is felt), and naming the
+  shape would also drag in loaded real-world labels. Keep dev shorthand
+  out of anything the player reads.
 
 ## 3. The spear-cult (the keeper mechanic)
 
@@ -75,8 +78,9 @@ he becomes lethal and the gun stops working on them) cultists warp into
 - **Layer, don't replace.** Below 3 evidence cultists stay the line-of-sight
   stalkers they are now (the slow dread). The spear-form is the late-game
   intensifier. Keep the stealth identity ("it isn't a combat game").
-- **Tone: idle / silent / sad, not kinetic shonen.** The lunge is the one
-  kinetic exception against an otherwise still, watching world.
+- **Tone: idle / silent / sad, not frantic.** The lunge is the one kinetic
+  exception against an otherwise still, watching world. Keep the action-game
+  energy out of everything else.
 - **The King stays the relentless, unshootable apex** above all of it (the
   contrast: cult survivable with skill, He is not).
 
@@ -101,18 +105,19 @@ Hard constraints on **how**:
 
 ## 5. CUT (rejected deliberately)
 
-- **"Rooms made of people" / Mahito-style transfiguration domain.** Too much
-  spectacle; wrong register (pulls toward shonen action, away from
-  Darkwood/Fear&Hunger dread). It is a set-piece you walk past once, and it
-  competes with the spear mechanic instead of supporting it.
+- **A "domain made entirely of fused people" set-piece.** Too much
+  spectacle; wrong register (pulls toward action spectacle, away from the
+  slow survival-horror dread the game wants). It is a set-piece you walk past
+  once, and it competes with the spear mechanic instead of supporting it.
 - The **person-stretched-into-a-wall-you-must-kill** beat is shelved with it
   (and was never to be Mara regardless).
 
 ## 6. The focal detail canvas (the most important feature)
 
-Interaction focus, **Darkwood-style, NOT Deltarune.** Deltarune pauses the
-world (kills tension); Darkwood tightens *awareness* while the world keeps
-living around the edges. We want Darkwood.
+Interaction focus that **tightens awareness without pausing the world.**
+Pausing the world to examine a thing kills the tension; instead, leaning in
+should narrow the player's attention onto one subject while the world keeps
+living and threatening at the edges.
 
 **Primary purpose: high-detail horror delivery.** At gameplay scale on the
 oblique camera, a warped local or twisted Mara reads only as a silhouette. The
