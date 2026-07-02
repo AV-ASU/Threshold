@@ -809,6 +809,19 @@ def build_brimley():
     sc.add_decoration(Decoration(71 * TILE + 16, 72 * TILE + 2, "candle"))
     sc.add_decoration(Decoration(71 * TILE + 28, 74 * TILE + 12, "overturned_chair"))
 
+    # ---- Gardens, on some lots and not others (food scarcity, NARRATIVE
+    # 8): with no deliveries since the new year, the town feeds itself
+    # unevenly. The Tisdales keep a working bed dug in beside their house
+    # (fresh-turned rows, a staked string, the first cold-hardy shoots);
+    # the farmhouse plot has gone over -- collapsed furrows and last
+    # year's stubble, let go when its people were. The other lots never
+    # dug at all.
+    sc.add_decoration(Decoration(int(73.5 * TILE), 67 * TILE, "garden_patch",
+                                 tended=True, w=110, h=72, seed=41))
+    sc.add_decoration(Decoration(int(12.5 * TILE), 86 * TILE,
+                                 "garden_patch",
+                                 tended=False, w=100, h=64, seed=42))
+
     # ---- The churchyard -- the too-even graves of the vanished ----
     # Crooked headstones in two rows: the uncanny rows-of-the-vanished,
     # each leaning its own way a few px off the lattice. (The Preacher's

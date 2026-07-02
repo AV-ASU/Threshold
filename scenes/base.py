@@ -2754,7 +2754,7 @@ _FLOOR_DECAL_KINDS = frozenset((
     # top-down sticker under tilt. Pitch 0 draws them flat via Scene.draw as before.
     "symbol", "binding_sigil", "swallow_hole", "phantom_mark",
     "body", "water_trail", "child_drawing", "campfire",
-    "effects_pile",
+    "effects_pile", "garden_patch",
     # Low overhead foliage (drawn top-down): a flat warped decal reads as a
     # shrub on the ground, where a standee would stand the overhead blob up
     # vertically as a smear.
@@ -2850,7 +2850,7 @@ def _draw_floor_decal(surf, camera, deco, woff=(0.0, 0.0)):
     key = (id(deco), yaw_bkt, scale_bkt, pitch_bkt)
     scaled = _FLOOR_DECAL_CARD_CACHE.get(key)
     if scaled is None:
-        if deco.kind == "rug":
+        if deco.kind in ("rug", "garden_patch"):
             w = int(deco.kwargs.get("w", 88)); h = int(deco.kwargs.get("h", 60))
             bound = max(w, h) + 18
         else:

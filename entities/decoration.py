@@ -356,6 +356,88 @@ class Decoration:
                              (bx, ry + h - 3 - bh, bw, 1))
             bx += bw + 1; i += 1
 
+    def _draw_bare_shelf(self, surf, x, y):
+        # The general store's emptied goods shelf (food scarcity, NARRATIVE
+        # 8): the bookshelf case with nothing standing on the runs -- pale
+        # dust-ghost outlines where stock stood, and one tin nobody wanted.
+        w = int(self.kwargs.get("w", 58)); h = int(self.kwargs.get("h", 18))
+        rx, ry = x - w // 2, y - h // 2
+        pygame.draw.rect(surf, (56, 41, 25), (rx, ry, w, h))             # case
+        pygame.draw.rect(surf, (30, 22, 12), (rx, ry, w, h), 1)
+        pygame.draw.rect(surf, (78, 58, 36), (rx, ry, w, 2))             # lit top rail
+        pygame.draw.rect(surf, (24, 17, 9), (rx, ry + h - 2, w, 2))      # base shadow
+        for i in range(3):                                               # dust ghosts
+            gx = rx + 5 + ((self.seed + i * 13) % max(1, w - 18))
+            pygame.draw.rect(surf, (70, 54, 34),
+                             (gx, ry + 4, 6 + (i % 2) * 3, h - 9), 1)
+        tx = rx + w - 9                                                  # the lone tin
+        pygame.draw.rect(surf, (118, 112, 96), (tx, ry + 5, 4, h - 10))
+        pygame.draw.line(surf, (86, 82, 70), (tx, ry + 5), (tx + 3, ry + 5), 1)
+
+    def _draw_garden_patch(self, surf, x, y):
+        """A household vegetable plot dug into the lot -- the town feeding
+        itself, unevenly (food scarcity, NARRATIVE 8). `tended=True` is a
+        working bed: fresh-turned cold soil, straight furrows, a staked
+        string line, the first pale hardy shoots. `tended=False` is the
+        same plot let go: dried ridges gone to dashes, a stake fallen
+        over, last year's weed stubble. Mid-April in the north; nothing
+        here is ever lush."""
+        rng = random.Random(self.seed)
+        w = int(self.kwargs.get("w", 84)); h = int(self.kwargs.get("h", 56))
+        tended = bool(self.kwargs.get("tended", True))
+        rx, ry = x - w // 2, y - h // 2
+        # value contrast does the work against the dark grass: turned earth
+        # is near-black, every ridge catches a pale highlight
+        soil = (30, 23, 16) if tended else (52, 45, 35)
+        edge = (74, 58, 38) if tended else (66, 58, 45)
+        pygame.draw.rect(surf, soil, (rx, ry, w, h), border_radius=6)   # the bed
+        pygame.draw.rect(surf, edge, (rx, ry, w, h), 1, border_radius=6)
+        rows = 4
+        step_y = (h - 16) // (rows - 1)
+        for i in range(rows):
+            fy = ry + 8 + i * step_y
+            if tended:
+                pygame.draw.line(surf, (18, 13, 8),
+                                 (rx + 6, fy), (rx + w - 6, fy), 2)     # furrow
+                pygame.draw.line(surf, (88, 70, 46),
+                                 (rx + 6, fy + 2), (rx + w - 6, fy + 2), 1)  # ridge light
+            else:
+                gx = rx + 6                     # collapsed furrow: broken dashes
+                while gx < rx + w - 8:
+                    seg = rng.randint(4, 10)
+                    if rng.random() < 0.7:
+                        pygame.draw.line(surf, (34, 28, 20), (gx, fy),
+                                         (min(gx + seg, rx + w - 6), fy), 1)
+                    gx += seg + rng.randint(2, 6)
+        if tended:
+            # stakes + a taut string along the first furrow, and the first
+            # sparse cold-hardy shoots on the middle rows
+            sy = ry + 8
+            for sx in (rx + 8, rx + w - 8):
+                pygame.draw.circle(surf, (112, 88, 56), (sx, sy), 2)
+            pygame.draw.line(surf, (176, 164, 132),
+                             (rx + 8, sy), (rx + w - 8, sy), 1)
+            for i in (1, 2):
+                fy = ry + 8 + i * step_y
+                gx = rx + 8
+                while gx < rx + w - 8:
+                    if rng.random() < 0.55:
+                        pygame.draw.line(surf, (108, 138, 82),
+                                         (gx, fy - 1), (gx, fy - 4), 1)
+                        pygame.draw.line(surf, (84, 112, 66),
+                                         (gx + 1, fy - 1), (gx + 1, fy - 3), 1)
+                    gx += rng.randint(4, 8)
+        else:
+            # a stake gone over, and last year's stubble through the beds
+            pygame.draw.line(surf, (96, 76, 48),
+                             (rx + w - 14, ry + 12), (rx + w - 5, ry + 6), 2)
+            for _ in range(12):
+                gx = rx + 6 + rng.randint(0, max(1, w - 12))
+                gy = ry + 6 + rng.randint(0, max(1, h - 12))
+                pygame.draw.line(surf, (118, 102, 66), (gx, gy),
+                                 (gx + rng.randint(-2, 2),
+                                  gy - rng.randint(2, 5)), 1)
+
     def _draw_table(self, surf, x, y):
         w = int(self.kwargs.get("w", 54)); h = int(self.kwargs.get("h", 38))
         rx, ry = x - w // 2, y - h // 2

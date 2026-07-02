@@ -213,6 +213,13 @@ class InfestationMixin:
         # Sheriff Vane's office becomes a unique threat at stage 3.
         if surface_stage >= 3 and key == "fisherman_cottage":
             self._spawn_hunting_sheriff()
+        # The general store from stage 2: one of them eats at Hettie's
+        # counter, calm as a lunch hour, while the shelves behind it stand
+        # empty (food scarcity, NARRATIVE 8 -- where the town's food goes).
+        # Same ambient contract as the depths diggers: idle, NO tag, so the
+        # gaze tick never counts it. Pure tableau; it does not look up.
+        if surface_stage >= 2 and key == "shop":
+            self._spawn_counter_eater()
         # The AIR rots too: schedule the scene's ambient one-shot
         # layer, escalating with the stage.
         self._apply_ambient_air(surface_stage)
@@ -349,6 +356,18 @@ class InfestationMixin:
         n.solid = True
         n._gaze_range = 150
         n._mutated = False
+
+    def _spawn_counter_eater(self):
+        """Stage 2+: a convert eating at the store counter (food scarcity,
+        NARRATIVE 8 -- the town's food goes where its faith went). Ambient
+        tableau on the depths-digger contract: idle, non-solid, no prompt,
+        NO tag -- excluded from the gaze tick, never chases, never reacts.
+        The tin bowl is part of the pose art (sprites_cultist 'eat')."""
+        e = NPC(8 * TILE + 16, 9 * TILE + 16, "A neighbor", "cultist",
+                movement="idle", solid=False, no_prompt=True)
+        e.facing = (1, 0)                  # in profile, toward the counter
+        e.pose = "eat"
+        self.scene.add_npc(e)
 
     def _spawn_hunting_sheriff(self):
         """Stage 3: Sheriff Vane's office is no longer a place you visit.

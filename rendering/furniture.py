@@ -39,8 +39,37 @@ def _hline(surf, fbl, fbr, tbl, tbr, f, col, w=1):
 
 # -- per-kind near-face detail ----------------------------------------------
 def _d_shelves(surf, pal, c):
+    # shelf runs with goods standing on them (leaning spines, a gap or two)
     for f in (0.18, 0.44, 0.70):
         _hline(surf, *c, f, _shade(pal["dark"], 0.6), 2)
+    spines = ((92, 60, 48), (58, 66, 80), (66, 78, 56), (104, 88, 52))
+    i = 0
+    for f in (0.18, 0.44, 0.70):
+        for fx in (0.15, 0.27, 0.41, 0.57, 0.73, 0.86):
+            i += 1
+            if (i * 7) % 5 == 4:                 # leave gaps in the runs
+                continue
+            p = _fp(c, fx, f + 0.11)
+            pygame.draw.rect(surf, spines[i % 4],
+                             (int(p[0]) - 1, int(p[1]) - 3, 3, 7))
+
+
+def _d_bare_shelves(surf, pal, c):
+    # the emptied store shelf: the runs are there, the goods are not --
+    # pale dust-ghosts where stock stood, and one tin nobody wanted
+    for f in (0.18, 0.44, 0.70):
+        _hline(surf, *c, f, _shade(pal["dark"], 0.6), 2)
+    ghost = _shade(pal["side"], 1.22)
+    for fx, f, w in ((0.22, 0.44, 5), (0.55, 0.44, 4),
+                     (0.36, 0.70, 5), (0.72, 0.18, 4)):
+        p = _fp(c, fx, f + 0.07)
+        pygame.draw.rect(surf, ghost, (int(p[0]) - w // 2, int(p[1]) - 1, w, 2))
+    tin = _fp(c, 0.84, 0.55)
+    pygame.draw.rect(surf, (118, 112, 96),
+                     (int(tin[0]) - 2, int(tin[1]) - 4, 4, 6))
+    pygame.draw.line(surf, (86, 82, 70),
+                     (int(tin[0]) - 2, int(tin[1]) - 4),
+                     (int(tin[0]) + 1, int(tin[1]) - 4), 1)
 
 
 def _d_mattress(surf, pal, c):
@@ -180,6 +209,9 @@ FURNITURE = {
     "bed":       (30, 46, 9,  _CLOTH,   _d_mattress),
     "bookshelf": (28, 13, 23, _WOOD_DK, _d_shelves),
     "shelf":     (26, 10, 22, _WOOD_DK, _d_shelves),
+    # the general store's emptied goods run (food scarcity, NARRATIVE §8):
+    # same case as a bookshelf, nothing standing on the shelves
+    "bare_shelf": (28, 13, 23, _WOOD_DK, _d_bare_shelves),
     "wardrobe":  (24, 15, 26, _WOOD_DK, _d_door_seam),
     "stove":     (22, 20, 18, _IRON,    _d_firebox),
     "fireplace": (30, 14, 24, _STONE,   _d_firebox),

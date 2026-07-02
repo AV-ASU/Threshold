@@ -26,18 +26,27 @@ when a searcher checks the enclosed hide you are in. Plus a placement pass
 settled and written up in `STEALTH_REWORK.md`; no code yet.** Build mechanic
 first, then the placement pass.
 
-### 1. Food scarcity — the VISUAL pass  *(NARRATIVE.md §8)*
+### ~~1. Food scarcity — the VISUAL pass~~ — DONE (2026-07)
 
-The dialogue side is done (Hettie: "The shelves don't empty anymore... No
-deliveries."; the Store-Owner: "Shelves are bare. Till's been empty since the
-new year"). What's left is the **world art**, none of which exists yet:
+All three beats landed, verified with headless tilt captures:
 
-- Visibly **bare store shelves** in the shop.
-- **Gardens on some lots and not others** (the town feeding itself unevenly).
-- A **cultist eating at a counter**.
-
-Wallpaper, not a mechanic. Render under the oblique tilt (see
-`HANDCRAFT_BACKLOG.md` for the volume/standee/decal mechanism map).
+- **Bare store shelves**: the shop floor's two goods runs are now the
+  `bare_shelf` FURNITURE kind (empty runs, dust-ghosts where stock stood,
+  one tin left; flat art in `entities/decoration.py`, tilt detail
+  `_d_bare_shelves`). The storeroom shelf stays stocked (Hettie's
+  preserves; nobody buys). The regular `_d_shelves` detail gained book
+  spines so stocked vs bare contrast under tilt.
+- **Gardens on some lots and not others**: a new `garden_patch` floor
+  decal (`tended=True/False`). The Tisdales keep a working April bed
+  beside their house (turned rows, staked string, first cold-hardy
+  shoots); the farmhouse plot has gone over (collapsed furrows, last
+  year's stubble). Other lots never dug.
+- **A cultist eating at a counter**: Hettie's shop counter is now real
+  `counter` furniture (shows the new butcher detail), and from
+  infestation stage 2 a convert stands at it eating from a tin bowl
+  (`pose="eat"` in `sprites_cultist.py`, spawned by
+  `_spawn_counter_eater` in `systems/infest_mixin.py` on the
+  depths-digger ambient contract: idle, no tag, no gaze, no prompt).
 
 ### ~~2. Counter "butcher" detail at the oblique angle~~ — DONE (2026-07)
 

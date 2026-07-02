@@ -187,12 +187,16 @@ def build_shop():
     # break the plank tiling. First, so props draw on top.
     sc.add_decoration(Decoration(10 * TILE + 24, 9 * TILE + 8, "rug",
                                  w=104, h=64, color=(58, 60, 64), seed=31))
-    # Sized darkwood furniture: two long shop bookshelves of goods on the
-    # shop floor, the counter Hettie stands behind, a stool, plus storeroom
-    # stock shelves in the back.
-    sc.add_furniture("bookshelf", [(8, 1), (9, 1)], w=58, h=18, seed=1)
-    sc.add_furniture("bookshelf", [(11, 1), (12, 1)], w=58, h=18, seed=2)
-    sc.add_furniture("table", [(9, 9), (10, 9)], w=58, h=38)
+    # Sized darkwood furniture. The two long goods runs on the shop floor
+    # stand EMPTY (bare_shelf: dust-ghosts where stock stood, one tin left;
+    # no deliveries since the new year, NARRATIVE 8 food scarcity). Hettie
+    # keeps a real counter now -- a low see-over volume like the Lodge
+    # front desk -- plus a stool, and stocked shelves in the back room
+    # (her preserves; nobody buys, so those never emptied).
+    sc.add_furniture("bare_shelf", [(8, 1), (9, 1)], w=58, h=18, seed=1)
+    sc.add_furniture("bare_shelf", [(11, 1), (12, 1)], w=58, h=18, seed=2)
+    sc.add_furniture("counter", [(9, 9)], see_over=True)
+    sc.add_furniture("counter", [(10, 9)], see_over=True)
     sc.add_furniture("chair", [(10, 8)], w=22, h=28)
     sc.add_furniture("bookshelf", [(1, 1), (2, 1)], w=58, h=18, seed=4)
     sc.add_furniture("table", [(4, 2)], w=30, h=30)
