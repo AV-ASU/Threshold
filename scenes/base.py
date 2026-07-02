@@ -4009,16 +4009,20 @@ class Scene:
         self.add_interactable(x, y, 40)
         return src
 
-    def door_pulse(self, tx, ty, hold=0.9):
+    def door_pulse(self, tx, ty, hold=0.9, quiet=False):
         """Swing the door leaf at tile (tx, ty) open for `hold` seconds
         (then Game._tick_doors eases it shut). Returns True if this
         pulse OPENED a resting door (the caller plays the door_open
-        foley), False if it only extended a swing already live."""
+        foley), False if it only extended a swing already live.
+        `quiet=True` marks the swing as ALREADY covered by other foley
+        (the transition fade plays its own door_open/door_close pair),
+        so neither end of it makes a sound of its own."""
         key = (tx % self.w if self.wrap_x else tx,
                ty % self.h if self.wrap_y else ty)
         st = self._door_anim.get(key)
         if st is None:
-            self._door_anim[key] = {"open": 0.0, "hold": hold}
+            self._door_anim[key] = {"open": 0.0, "hold": hold,
+                                    "quiet": quiet}
             return True
         st["hold"] = max(st["hold"], hold)
         return False

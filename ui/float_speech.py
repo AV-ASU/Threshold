@@ -79,10 +79,13 @@ class FloatSpeech:
     def update(self, dt, game):
         if not self.active:
             return
-        # The speaker walked off-scene / died -> drop the caption.
+        # The speaker walked off-scene, died, or (a homebody) stepped
+        # inside their house -> drop the caption rather than float it
+        # over nothing.
         sp = self.speaker
         if sp is not None and (not getattr(sp, "alive", True)
-                               or getattr(sp, "_is_corpse", False)):
+                               or getattr(sp, "_is_corpse", False)
+                               or getattr(sp, "_inside", False)):
             self._finish()
             return
         page = self._page()

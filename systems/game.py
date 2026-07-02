@@ -717,10 +717,12 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
             )
             # The door you came through swings shut behind you (tilt
             # view): pulse any door on or beside the entry tile.
+            # quiet: the transition fade already plays the arrival's
+            # door_close, so the swing itself stays silent.
             for ddx, ddy in ((0, 0), (1, 0), (-1, 0), (0, 1), (0, -1)):
                 self._pulse_door_at(self.player.x + ddx * TILE,
                                     self.player.y + ddy * TILE,
-                                    hold=0.35)
+                                    hold=0.35, quiet=True)
         else:
             self.scene._last_entry_exit_tile = None
         # Reset the noise channel on each scene load. A step in one
@@ -1423,10 +1425,13 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         return False
 
     # ---- Animated doors + the one-hop noise bleed ----
-    def _pulse_door_at(self, x, y, hold=0.9):
+    def _pulse_door_at(self, x, y, hold=0.9, quiet=False):
         """Swing the door leaf at world (x, y) if that tile holds a
         door; plays the positional door_open foley when the pulse
-        opens a resting leaf. The tell for anything passing through."""
+        opens a resting leaf. The tell for anything passing through.
+        `quiet=True` for pulses whose sound is already covered -- the
+        transition fade plays its own door_open/door_close pair, so
+        the player-passage swings must not double it."""
         sc = self.scene
         if sc is None:
             return
@@ -1438,7 +1443,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         from scenes.base import _DOOR_CHARS
         if sc.objects[wty][wtx] not in _DOOR_CHARS:
             return
-        if sc.door_pulse(wtx, wty, hold=hold):
+        if sc.door_pulse(wtx, wty, hold=hold, quiet=quiet) and not quiet:
             pan = self.audio.pan_for_world(x, self.player.x)
             dm = self.audio.distance_attenuation(
                 x, y, self.player.x, self.player.y)
@@ -1463,7 +1468,10 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
                 if st["open"] <= 0.0:
                     done.append(key)
         for key in done:
+            quiet = anim[key].get("quiet", False)
             del anim[key]
+            if quiet:
+                continue        # its foley is the transition's own pair
             wx, wy = key[0] * TILE + 16, key[1] * TILE + 16
             pan = self.audio.pan_for_world(wx, self.player.x)
             dm = self.audio.distance_attenuation(
@@ -2491,7 +2499,10 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
                         self.cross_fold(*exit_data)
                     else:
                         # The leaf swings as you go through (tilt view).
-                        self._pulse_door_at(self.player.x, self.player.y)
+                        # quiet: begin_transition plays its own
+                        # door_open, so the swing must not double it.
+                        self._pulse_door_at(self.player.x, self.player.y,
+                                            quiet=True)
                         self.begin_transition(*exit_data)
             # Suspend scene update (NPC patrols, decoration anims, triggers)
             # while any modal is up so the world freezes behind it.
