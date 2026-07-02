@@ -1283,6 +1283,87 @@ def main():
                   for ln in spread_lines),
           "spread: no dashes in player-facing ending text")
 
+    # --- 24. The town reacts to state (TODO #10) + descent beats (#8) ----
+    # Each ambient local carries ONE pre-mutation state beat (a one-shot,
+    # gated on what the PI has learned) before falling back to their
+    # ambient loop; the procession's candle beat lands as a NOTE. None of
+    # it may ever inflate the evidence count (the six canonical beats are
+    # locked), and all of it holds the no-dash + no-cosmology rules.
+    gb = new_game()
+    gb.load_scene_now("brimley")
+    ready(gb)
+    shown = []
+    _orig_show = gb.dialog.show
+
+    def _spy(pages, *a, **k):
+        shown[:] = [pages] if isinstance(pages, str) else list(pages)
+        return _orig_show(pages, *a, **k)
+    gb.dialog.show = _spy
+
+    def _local(nm):
+        return next((nn for nn in gb.scene.npcs
+                     if getattr(nn, "name", "") == nm), None)
+
+    _ga = _local("Garrick")
+    _ev0 = evidence_count(gb)
+    if _ga is not None:
+        gb.save.set_flag("preacher_doomed", True)
+        _ga.dialogue_fn(gb, _ga)
+        check(any("gone quiet" in p for p in shown),
+              "react: Garrick clocks the pulpit going silent (murder beat)")
+        ready(gb)
+        _ga.dialogue_fn(gb, _ga)
+        check(not any("gone quiet" in p for p in shown),
+              "react: the Garrick beat is one-shot; ambient loop resumes")
+        ready(gb)
+    else:
+        check(False, "react: Garrick present in brimley")
+    gb.save.set_arg("evidence", [{"key": "a", "weight": 0.05},
+                                 {"key": "b", "weight": 0.05}])
+    for nm, tell in (("Old Pell", "coal dust"), ("Mrs. Calder", "unlatched"),
+                     ("Royce", "throat")):
+        _n = _local(nm)
+        if _n is None:
+            check(False, f"react: {nm} present in brimley")
+            continue
+        _n.dialogue_fn(gb, _n)
+        check(any(tell in p for p in shown),
+              f"react: {nm} carries a state beat at the gate")
+        ready(gb)
+        joined = " ".join(shown).lower()
+        check(not any(w in joined for w in
+                      ("dimension", "lure", "bait", "the king")),
+              f"react: the {nm} beat holds the no-cosmology fence")
+        check(not any(("—" in p) or ("–" in p) or ("--" in p)
+                      for p in shown),
+              f"react: no dashes in the {nm} beat")
+    check(evidence_count(gb) == 2,
+          "react: state beats never inflate the evidence count")
+
+    gp2 = new_game()
+    gp2.load_scene_now("depths_procession")
+    ready(gp2)
+    gp2.player.x, gp2.player.y = 8 * _TILE + 16, 4 * _TILE + 16
+    _evp = evidence_count(gp2)
+    gp2.scene.on_interact_fn(gp2)
+    _pnotes = gp2.save.arg("notes", []) or []
+    check(any(isinstance(e, dict) and e.get("name") == "the_procession"
+              for e in _pnotes) and evidence_count(gp2) == _evp,
+          "descent: the procession candles land as a NOTE, never evidence")
+
+    # --- 25. The placement pass (STEALTH_REWORK §6): every declared hide
+    # sits on walkable ground, and the gauntlet rooms now HAVE one.
+    from scenes import load_scene as _ld2
+    for _key in ("well_passage", "works_vats", "works_sorting",
+                 "works_scriptorium", "works_sign", "depths_antechamber",
+                 "depths_procession", "depths_hall", "brimley"):
+        _sc2 = _ld2(_key)
+        check(len(_sc2.hide_spots) >= 1,
+              f"hides: {_key} has an enclosed hide")
+        check(all(not _sc2.is_solid_at(hx, hy)
+                  for hx, hy, _k in _sc2.hide_spots),
+              f"hides: {_key} spots sit on walkable ground")
+
     print()
     if FAILS:
         print(f"{len(FAILS)} flow failure(s).")

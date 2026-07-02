@@ -200,7 +200,12 @@ def build_well_passage():
     for mx, my in ((7, 3), (11, 5), (3, 5)):
         sc.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16, "mote"))
 
-    sc.hide_spots = []
+    # One enclosed hide off the patrol loop (STEALTH_REWORK §6): the gap
+    # under the bay's drying rack. Strong against the corridor patrol at
+    # range; a searcher that loses you here will sweep and CHECK it.
+    sc.hide_spots = [
+        (7 * TILE + 16, 3 * TILE + 8, "under"),   # under the bay rack
+    ]
     # One cultist working the corridor, end to end.
     sc.add_enemy(_cultist(3 * TILE + 16, 5 * TILE + 16, speed=0.85))
     _ambient(sc, "cult_breath", 0.16, 5.0, 9.0)
@@ -248,7 +253,12 @@ def build_works_vats():
                                  ang=0.0))
     sc.add_decoration(Decoration(8 * TILE + 26, 1 * TILE + 6, "cobweb",
                                  ang=math.pi / 2))
-    sc.hide_spots = []
+    # One enclosed hide (STEALTH_REWORK §6): the dry lee under the SE
+    # basin's lip -- inside the patrol's own arm, so it is a risky option
+    # a searcher can sweep, not a panic room.
+    sc.hide_spots = [
+        (7 * TILE + 16, 9 * TILE + 8, "under"),   # under the SE basin lip
+    ]
     # Two cultists working the basins -- one walks the N-S arms, one the
     # E-W crossing.
     sc.add_enemy(_cultist(6 * TILE + 16, 5 * TILE + 16, speed=0.8))
@@ -338,7 +348,13 @@ def build_works_sorting():
     for mx, my in ((5, 4), (10, 7), (13, 5)):
         sc.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16, "mote"))
     sc._table_pos = (6 * TILE + 16, 5 * TILE + 16)
-    sc.hide_spots = []
+    # The hardest crossing gets two enclosed hides among the cover lanes
+    # (STEALTH_REWORK §6): under a sorting table in each row. Both sit on
+    # the patrol floor itself -- reachable mid-route, sweepable.
+    sc.hide_spots = [
+        (6 * TILE + 16, 6 * TILE + 8, "under"),    # under a north-row table
+        (9 * TILE + 16, 9 * TILE + 8, "under"),    # under a south-row table
+    ]
     # Two cultists sorting/patrolling -- the hardest crossing.
     sc.add_enemy(_cultist(4 * TILE + 16, 6 * TILE + 16, speed=0.9))
     sc.add_enemy(_cultist(11 * TILE + 16, 6 * TILE + 16, speed=0.9))
@@ -461,7 +477,12 @@ def build_works_scriptorium():
                                  ang=math.pi / 2))
     sc._desk_pos = (4 * TILE + 16, 2 * TILE + 16)
     sc.add_interactable(sc._desk_pos[0], sc._desk_pos[1], 40)  # [E] cue: the Playscript
-    sc.hide_spots = []
+    # One enclosed hide (STEALTH_REWORK §6): under the centre copying
+    # desk -- echoes the safe-room "under" spots, but down here it is
+    # checkable, and the scribe's lane is a step away.
+    sc.hide_spots = [
+        (6 * TILE + 16, 6 * TILE + 8, "under"),    # under the centre desk
+    ]
     # One scribe, kneeling at a desk, oblivious (aggro 0) -- unless you
     # cross into its lane. Locked facing toward its work.
     scribe = _cultist(5 * TILE + 16, 2 * TILE + 16, speed=0.8)
@@ -547,7 +568,11 @@ def build_works_sign():
                                  ang=-math.pi / 2))
     sc.add_decoration(Decoration(11 * TILE + 26, 9 * TILE + 26, "cobweb",
                                  ang=math.pi))
-    sc.hide_spots = []
+    # Hides stay sparse + risky here on purpose (STEALTH_REWORK §6): one
+    # spot under the west pew, a pew-length from the kneeling congregation.
+    sc.hide_spots = [
+        (4 * TILE + 16, 8 * TILE + 8, "under"),    # under the west pew
+    ]
     # The congregation: three kneelers facing the Sign (north), plus one
     # patrol on the east flank. Kneelers start oblivious (aggro 0).
     for kx in (4, 6, 8):
@@ -567,6 +592,24 @@ def build_works_sign():
     holder.facing = (0, -1)
     holder.pose = "chant"
     sc.add_npc(holder)
+
+    # The rite-holder's WEIGHT, felt on approach (TODO #8; NARRATIVE 1b:
+    # the self dissolved into the work). A one-shot trigger on stepping
+    # into the apse band -- not an E-press, so it can never steal the
+    # altar's Mask/rite choice.
+    def _holder_weight(game):
+        game.audio.play("low_pulse", 0.5)
+        game.dialog.show([
+            "[c=dim]The one bowed at the altar's foot never pauses. "
+            "Metronome steady. Whatever it was before, its share of the "
+            "rite is the whole of it now.[/c]",
+        ], speaker="", voice="blip_soft", portrait="narrator")
+    sc.triggers.append({
+        "rect": (3 * TILE, 3 * TILE, 10 * TILE, 5 * TILE),
+        "fn": _holder_weight,
+        "once": True,
+        "fired": False,
+    })
     _ambient(sc, "whisper", 0.16, 5.0, 9.0)
 
     def _take_mask(game):

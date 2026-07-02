@@ -18,14 +18,36 @@ from .base import Scene
 from .dialogue import _evidence
 
 
-def _brimley_voice(pages, voice="blip_mid", fold=False):
+def _brimley_voice(pages, voice="blip_mid", fold=False, beats=None):
     """NPC dialogue_fn from a fixed page list. Speaker name + portrait are
     read off the NPC at call time so each resident speaks as themselves.
     `fold=True` marks a local who describes the fold (looping roads): the
     FIRST such conversation files the PI's fold note (Game._fold_mentioned,
-    globally one-shot, so only the first speaker triggers it)."""
+    globally one-shot, so only the first speaker triggers it).
+
+    `beats` makes the town REACT to state (TODO #10): a list of
+    (flag, predicate, beat_pages). On each talk the first beat whose
+    predicate(game) holds and whose one-shot save flag is unset fires
+    INSTEAD of the base pages (and sets its flag); afterwards the local
+    falls back to their ambient loop. The infestation convert/mutate
+    swap overwrites dialogue_fn at its stage, so each beat's window is
+    the local's pre-turn stretch -- fired once, in it, or never."""
     def _fn(game, npc):
         portrait = getattr(npc, "portrait", None) or npc.sprite_kind
+        for flag, pred, beat_pages in (beats or ()):
+            if game.save.arg(flag):
+                continue
+            try:
+                hit = bool(pred(game))
+            except Exception:
+                hit = False
+            if hit:
+                game.save.set_arg(flag, True)
+                game.dialog.show(beat_pages, speaker=npc.name, voice=voice,
+                                 portrait=portrait)
+                if fold and hasattr(game, "_fold_mentioned"):
+                    game._fold_mentioned(npc.name)
+                return
         game.dialog.show(pages, speaker=npc.name, voice=voice,
                          portrait=portrait)
         if fold and hasattr(game, "_fold_mentioned"):
@@ -675,9 +697,10 @@ def build_brimley():
     # the edges: denial, time-loop confusion, a child saying the quiet
     # part out loud.
     def _resident(tx, ty, name, kind, pages, movement="wander",
-                  voice="blip_mid", radius=52, fold=False):
+                  voice="blip_mid", radius=52, fold=False, beats=None):
         sc.add_npc(NPC(tx * TILE + 16, ty * TILE + 16, name, kind,
-                       dialogue_fn=_brimley_voice(pages, voice, fold=fold),
+                       dialogue_fn=_brimley_voice(pages, voice, fold=fold,
+                                                  beats=beats),
                        movement=movement, radius=radius))
 
     # The locals anchored to their houses -- not patrolling random
@@ -702,7 +725,18 @@ def build_brimley():
         "sleep doesn't mend it.",
         "Stopped marking the calendar. Not the days. Where would I be counting toward?",
         "[c=dim]You're new. We don't get new. Nobody gets in. Nobody gets...[/c]",
-    ], voice="blip_low", movement="homebody", radius=34, fold=True)
+    ], voice="blip_low", movement="homebody", radius=34, fold=True,
+        # TODO #10: the town reacts to what the PI learns. Pell reads the
+        # digging on him like weather (stasis register; he mutates at
+        # stage 3, so this lives in his pre-turn window).
+        beats=[("beat_pell_coal",
+                lambda g: g._evidence_count() >= 1, [
+            "You've been digging at it. I can tell. It's on you like "
+            "coal dust.",
+            "[c=dim]Whatever you're finding out there, don't bring it up "
+            "my step. I've got the calendar where I want it. Stopped. "
+            "Some of us need it stopped.[/c]",
+        ])])
     # Mrs. Calder is by the east-edge road. She sets a place at supper
     # for a guest she can't name -- a certainty she can't explain that
     # someone is coming. No vanished husband (that read as a perceptible
@@ -716,7 +750,16 @@ def build_brimley():
         "you who for. Someone's coming. I know it the way I know my own name.",
         "[c=dim]I'll know the face when it's across the table from me. Till "
         "then it would be unkind not to be ready.[/c]",
-    ], movement="idle")
+    ], movement="idle",
+        # TODO #10: the waiting sharpens as the case opens (she converts
+        # at stage 2, so this is her only pre-turn window: evidence 1).
+        beats=[("beat_calder_unlatched",
+                lambda g: g._evidence_count() >= 1, [
+            "Closer now. Whoever the place is set for. An old woman can "
+            "feel a knock coming before it lands.",
+            "[c=dim]I've started leaving the door unlatched at night. It "
+            "seemed... polite.[/c]",
+        ])])
     # Royce -- by the river bridge. He TRIED to drive out, for weeks, and
     # the corn handed him back every time; the futility broke him and he's
     # STOPPED. He still clings to the one fact he can't square: you got IN.
@@ -727,7 +770,17 @@ def build_brimley():
         "that out the hard way, so you don't have to.[/c]",
         "[c=dim]But you came IN. How did you come IN? ...Tell me how you came "
         "in.[/c]",
-    ], fold=True)
+    ], fold=True,
+        # TODO #10: his one impossible fact curdles as the case opens (he
+        # converts at stage 3; window is evidence 0-2, fires at 2).
+        beats=[("beat_royce_throat",
+                lambda g: g._evidence_count() >= 2, [
+            "You're still here. Course you're still here.",
+            "[c=dim]I keep turning it over. Every road out of Brimley "
+            "hands you back. Except the one that carried you in. If a "
+            "door only opens the one way, mister, it isn't a door.[/c]",
+            "[c=dim]It's a throat.[/c]",
+        ])])
     # The Tisdale boy lives INSIDE the kid's house (the `kid_house`
     # scene, kid_dialogue). He used to also stand here on the front step,
     # but that put a solid NPC right on the `from_kid_house` doorway
@@ -741,7 +794,20 @@ def build_brimley():
         "The Sheriff'll tell you to leave. He knows you can't. He can't either.",
         "Stay on the roads. People who go off the roads come out wrong-side.",
         "[c=dim]Go on home, son. ...Oh. Right. None of us can.[/c]",
-    ], fold=True)
+    ], fold=True,
+        # TODO #10: the direct preacher-murder reaction. Garrick watches
+        # the whole town from the well; the pulpit going silent is
+        # exactly the kind of thing he'd clock first (he also SAID this
+        # would happen: folks who ask questions go quiet).
+        beats=[("beat_garrick_quiet",
+                lambda g: g.save.flag("preacher_doomed"), [
+            "The reverend's gone quiet. Any other week you'd hear him "
+            "clear from here, worked up over something or other.",
+            "[c=dim]Nothing out of him for days now. Man spends his life "
+            "raising his voice, then nothing at all.[/c]",
+            "[c=dim]You go by and look in on him, son. Somebody ought "
+            "to.[/c]",
+        ])])
     # The newcomer -- standing on the path to the haunted_house
     # (their house now). She is here to welcome you. She is patient.
     sc.add_npc(NPC(8 * TILE + 16, 95 * TILE + 16, "A woman", "townswoman",
@@ -1021,10 +1087,13 @@ def build_brimley():
                        (20, 40), (52, 80), (75, 42), (36, 30)]:
         sc.add_decoration(Decoration(ltx * TILE + 16, lty * TILE + 16, "leaves"))
 
-    # No hide spots: the east bank's grass-tufts, watching-eyes and dead
-    # trees are visual cover the player breaks line of sight behind by
-    # moving; the open west bank still offers none.
-    sc.hide_spots = []
+    # Surface enclosed cover (STEALTH_REWORK §6): the corn and the tree
+    # lines are the CONCEALMENT system out here; the one rooted set-piece
+    # option is the gap under the dead pickup's bed. A searcher can check
+    # it like any other enclosed hide.
+    sc.hide_spots = [
+        (94 * TILE + 16, 56 * TILE + 8, "under"),   # under the dead pickup
+    ]
 
     # The PI's car has MOVED to the arrival road west of the Lodge (where it
     # died on the way in -- the SPREAD escape now lives there, scenes/

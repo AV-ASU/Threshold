@@ -1,10 +1,14 @@
 """All NPC dialogue functions.
 
 The spoken lines are final, lore-bearing copy: each NPC reacts to the
-case (the Blaine girl, the well, the cult) and many escalate with the
-visibility tier via `escalate`. Evidence beats are surfaced through
-`_evidence`; only the six in `CANONICAL_EVIDENCE` count toward the
-King-gate and the visibility floor.
+case (the Blaine girl, the well, the cult). State reactivity comes from
+per-NPC flag/count gates (see the stateful fns below and the `beats`
+hook in scenes/brimley.py _brimley_voice); `escalate` still exists but
+both its call sites pass identical tiers, so it is effectively inert --
+kept only in case visibility-tiered copy is ever authored. Evidence
+beats are surfaced through `_evidence`; only the six in
+`CANONICAL_EVIDENCE` count toward the King-gate and the visibility
+floor.
 """
 
 

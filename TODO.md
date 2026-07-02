@@ -26,11 +26,16 @@ hides around last-seen, and the timed mash **struggle** on a checked hide
 pursuers stay exempt. Deferred to the human-tuning pass: the peek verb +
 the exit-beat (see `STEALTH_REWORK.md` status note).
 
-**Still open: the placement pass** (`STEALTH_REWORK.md` §6) — the
-per-area cover rhythm + enclosed-hide audit (the gauntlet is 17 cultists
-with 0 dedicated hides). Pairs with #8's descent beats below. And the
+**The placement pass is DONE too (2026-07):** every gauntlet room now
+carries at least one enclosed, checkable hide on walkable ground, placed
+near the patrol routes per the §6 table (well_passage bay rack;
+works_vats basin lee; works_sorting two table hides on the hardest
+crossing; works_scriptorium centre desk; works_sign one risky pew spot;
+depths_antechamber/procession crate hides; depths_hall nave pew; the
+dead pickup on the Brimley surface). Flow-guarded (§25: every declared
+hide sits on walkable ground). What remains of #0 is pure TUNING: the
 numbers (`SUS_FILL_RATE`, concealment factors, the struggle window) only
-prove out against a human player; expect a tuning loop.
+prove out against a human player.
 
 ### ~~1. Food scarcity — the VISUAL pass~~ — DONE (2026-07)
 
@@ -102,16 +107,23 @@ learning of Mara) that links the dream + the case + Mara's presence — felt,
 never explained (this brushes the §10 fence; keep it a sensation, not a
 reveal).
 
-### 8. The descent midgame is hollow (both axes)  *(both passes)*
+### 8. The descent midgame — narrative half CLOSED (2026-07); one wrinkle open
 
-The Works (7 rooms) + Depths (5 rooms) are the longest stretch and the
-emptiest. Mechanically: the same walk/hide/evade loop with no new threats,
-hazards, or escalation across ~12 rooms. Narratively: ~3 plot beats total,
-cultists never speak, rooms do not change as infestation rises. Fix
-candidates: one diegetic beat per room (a shed-life object in the Sorting
-Hall, a line at the Cistern/river, the rite-holder's weight), and a mechanical
-wrinkle or two in the deep (a hazard, an enemy variant). Pairs with the
-stealth placement pass (#0).
+A 2026-07 re-verification found the "~3 beats" claim stale: the 2026-06
+descent rework had already landed an interior-voice arc (descent_dig /
+descent_leave / descent_mask, chalk beats), three cult testimonies, and
+per-room flavor (works_vats_seen, effects_pile, the_fall,
+threshing_floor). The genuinely-missing beats are now in: the
+**procession candle line** (wax on old wax, a NOTE, never evidence), the
+**kneeler-wake line** in depths_hall ("Not startled. Called."), and the
+**rite-holder's weight** (a one-shot trigger in the works_sign apse).
+depths_stair stays deliberately empty ("silence is the keeper"). The
+stealth placement pass (#0) closed the mechanical-monotony half for
+cover; **still open: ONE mechanical wrinkle in the deep** — best
+candidate now that the noise model exists: deep-water wade (slow +
+splash noise on the dressed '~' tiles in works_vats/the_sump/
+depths_threshing), or a listener-cultist variant built on the suspicion
+model. Decide the fiction before building.
 
 ### 9. Ending fork is not legible  *(story pass)*
 
@@ -121,13 +133,20 @@ states the stakes before the commit, so neither ending reads as won or lost.
 Fix candidate: a clarifying sensation/voice beat at the fork (still no
 cosmology spelled out), and an ending-text pass so each lands a clear feeling.
 
-### 10. The town does not react to state  *(story pass, medium)*
+### ~~10. The town does not react to state~~ — DONE (2026-07)
 
-Ambient locals (Royce, Old Pell, Calder, Garrick) speak once and never react
-to the preacher's murder, rising infestation, or evidence count. The
-`escalate()` system (`scenes/dialogue.py`) exists but is barely used. Fix
-candidate: one state-dependent beat per named local so the town visibly
-changes as the player learns more.
+Each ambient local now carries ONE pre-mutation state beat (a one-shot
+via the `beats` hook on `_brimley_voice`, fired before their ambient
+loop and before the infestation convert/mutate swap overwrites them):
+**Garrick** clocks the pulpit going silent (preacher_doomed — the direct
+murder reaction, and a lead to the church), **Old Pell** reads the
+digging on the PI like coal dust (evidence 1), **Mrs. Calder** starts
+leaving the door unlatched (evidence 1, inside her pre-convert window),
+**Royce** works out that a road that only opens one way is a throat
+(evidence 2). All flow-guarded (§24: one-shot, gated, never evidence,
+no-dash, no-cosmology). `escalate()` was confirmed inert (both call
+sites pass identical tiers) — kept but documented as such; the false
+module docstring in `scenes/dialogue.py` is fixed.
 
 ### 11. Combat / difficulty — judgment calls (decide on purpose)
 
