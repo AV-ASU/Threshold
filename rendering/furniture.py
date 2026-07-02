@@ -154,6 +154,25 @@ def _d_headstone(surf, pal, c):
     pygame.draw.line(surf, col, (int(l[0]), int(l[1])), (int(r[0]), int(r[1])), 2)
 
 
+def _d_counter(surf, pal, c):
+    # butcher-block front: plank seams, a worn pale lip along the top edge,
+    # knife scores, and one old dark stain bleeding down from the lip
+    seam = _shade(pal["dark"], 0.7)
+    for fx in (0.34, 0.67):
+        a, b = _fp(c, fx, 0.0), _fp(c, fx, 0.96)
+        pygame.draw.line(surf, seam, (int(a[0]), int(a[1])), (int(b[0]), int(b[1])), 1)
+    _hline(surf, *c, 0.88, _shade(pal["top"], 1.14), 2)     # the handled lip
+    score = _shade(pal["dark"], 0.55)
+    for fx, fy, ln in ((0.14, 0.64, 0.11), (0.48, 0.52, 0.09), (0.76, 0.68, 0.08)):
+        a, b = _fp(c, fx, fy), _fp(c, fx + ln, fy - 0.09)
+        pygame.draw.line(surf, score, (int(a[0]), int(a[1])), (int(b[0]), int(b[1])), 1)
+    stain = (58, 34, 28)                                    # dried dark-red soak
+    p = _fp(c, 0.55, 0.80)
+    pygame.draw.ellipse(surf, stain, (int(p[0]) - 4, int(p[1]) - 2, 9, 5))
+    d0, d1 = _fp(c, 0.57, 0.78), _fp(c, 0.57, 0.44)
+    pygame.draw.line(surf, stain, (int(d0[0]), int(d0[1])), (int(d1[0]), int(d1[1])), 1)
+
+
 # -- spec: kind -> (w, d, h, palette, detail) -------------------------------
 FURNITURE = {
     "table":     (26, 20, 11, _WOOD_MID, None),
@@ -164,7 +183,7 @@ FURNITURE = {
     "wardrobe":  (24, 15, 26, _WOOD_DK, _d_door_seam),
     "stove":     (22, 20, 18, _IRON,    _d_firebox),
     "fireplace": (30, 14, 24, _STONE,   _d_firebox),
-    "counter":   (34, 14, 14, _WOOD_MID, None),
+    "counter":   (34, 14, 14, _WOOD_MID, _d_counter),
     "firewood":  (20, 16, 9,  _WOOD_DK, _d_logs),
     "crate":     (18, 18, 16, _WOOD_MID, None),
     "barrel":    (16, 16, 18, _WOOD_MID, None),

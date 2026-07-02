@@ -117,12 +117,12 @@ def build_well_bottom():
     sc.add_furniture("barrel", [(8, 2)])
     sc.add_furniture("crate", [(2, 6)])
     # Water seeping to the lowest place (NARRATIVE 1b): a thin teal rivulet
-    # pooling in the SW, and what the well keeps -- a bound, drowned figure in it.
+    # pooling in the SW. (The drowned-body decal that lay in it was cut by
+    # design call, 2026-07 -- the pool and the claw gouges carry the dread.)
     sc.add_decoration(Decoration(4 * TILE + 16, 7 * TILE + 16, "water_trail",
                                  ang=math.pi / 2, seed=5))
     sc.add_decoration(Decoration(5 * TILE + 16, 8 * TILE + 12, "water_trail",
                                  pool=True, seed=9))
-    sc.add_decoration(Decoration(2 * TILE + 18, 4 * TILE + 16, "drowned_body"))
     # Grime: claw gouges in the stone, mud tracked from the landing, more
     # old blood.
     sc.add_decoration(Decoration(10 * TILE + 8, 4 * TILE + 16, "claw_marks",

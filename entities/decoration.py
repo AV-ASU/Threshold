@@ -1620,55 +1620,6 @@ class Decoration:
         pygame.draw.line(surf, scrap, (x - 6, y - 4), (x - 9, y - 8), 1)
         pygame.draw.line(surf, scrap, (x + 4, y - 6), (x + 8, y - 9), 1)
 
-    def _draw_drowned_body(self, surf, x, y):
-        """Slumped, tied, drowned figure. Built on the same silhouette
-        as the well-passage `gore` decoration -- broken pose, dark
-        underbody pool, head turned -- but the palette is drowned
-        (cold blue-grey) and the figure is bound at wrists and ankles
-        with long hair fanning out into the water. Bobs slowly on the
-        current."""
-        y += int(math.sin(self.t * 0.55 + self.seed) * 1.6)   # bob on the water
-        # Underbody pool -- not blood here, just the dark water /
-        # silt under the body. Same shape language as the well gore.
-        pygame.draw.ellipse(surf, (10, 18, 36), (x - 18, y, 36, 14))
-        pygame.draw.ellipse(surf, (16, 28, 56), (x - 14, y - 2, 28, 10))
-        pygame.draw.ellipse(surf, (4, 10, 24), (x - 6, y + 2, 12, 6))
-        # Slumped torso (cold cloth)
-        pygame.draw.rect(surf, (50, 60, 80), (x - 9, y - 12, 18, 14))
-        pygame.draw.rect(surf, (24, 30, 44), (x - 9, y - 12, 18, 14), 1)
-        # Splayed limb to the right (same direction as the gore)
-        pygame.draw.rect(surf, (50, 60, 80), (x + 8, y - 4, 12, 5))
-        pygame.draw.rect(surf, (24, 30, 44), (x + 8, y - 4, 12, 5), 1)
-        # Rope binding the wrists where the splayed limb meets the
-        # body -- a cinched dark band.
-        pygame.draw.rect(surf, (140, 110, 70), (x + 6, y - 4, 4, 5))
-        pygame.draw.line(surf, (90, 60, 30), (x + 10, y - 1),
-                         (x + 14, y + 4), 1)
-        # Rope binding the ankles -- visible band across the lower
-        # body where the legs are pinned together.
-        pygame.draw.rect(surf, (140, 110, 70), (x - 6, y + 6, 12, 2))
-        # Head turned away (off-centre to the left like the gore).
-        pygame.draw.circle(surf, (170, 180, 190), (x - 6, y - 14), 5)
-        pygame.draw.circle(surf, (40, 50, 70), (x - 6, y - 14), 5, 1)
-        # Eyes-open variant -- triggered after the player has come
-        # close once. Two small bright dots where the closed eyes
-        # used to be lineless. The body has not moved otherwise.
-        if self.kwargs.get("eyes_open"):
-            pygame.draw.circle(surf, (240, 240, 250), (x - 7, y - 14), 1)
-            pygame.draw.circle(surf, (240, 240, 250), (x - 5, y - 14), 1)
-        # Long hair fanning OUT from the head into the surrounding
-        # water -- streaks on every side, longer than the head is wide.
-        hair = (30, 24, 28)
-        for ang_step in range(8):
-            ang = (ang_step / 8) * 6.283
-            length = 12 + (ang_step % 3) * 2
-            ex = x - 6 + int(math.cos(ang) * length)
-            ey = y - 14 + int(math.sin(ang) * length)
-            pygame.draw.line(surf, hair, (x - 6, y - 14), (ex, ey), 1)
-        # A few darker smudges for texture (matches well-gore style).
-        pygame.draw.line(surf, (4, 10, 18), (x - 10, y + 4),
-                         (x + 12, y + 6), 1)
-
     def _draw_watching_eye(self, surf, x, y):
         """An eye that always looks at the player. The pupil rotates
         toward the player's world position each frame using the

@@ -39,14 +39,11 @@ new year"). What's left is the **world art**, none of which exists yet:
 Wallpaper, not a mechanic. Render under the oblique tilt (see
 `HANDCRAFT_BACKLOG.md` for the volume/standee/decal mechanism map).
 
-### 2. Counter "butcher" detail at the oblique angle  *(HANDCRAFT_BACKLOG.md §4)*
+### ~~2. Counter "butcher" detail at the oblique angle~~ — DONE (2026-07)
 
-The `counter` FURNITURE kind is spec'd with **no detail function**
-(`rendering/furniture.py`: `"counter": (..., None)`), so it reads as a plain
-box under the tilt. The companion details (`fireplace`/`stove` firebox, `bed`
-blanket folds, `shelf` book layout) already exist; the counter is the one
-straggler. Add a `_d_*` detail hook and wire it into the FURNITURE spec.
-Pairs naturally with the "cultist eating at a counter" beat above.
+`_d_counter` added in `rendering/furniture.py` and wired into the FURNITURE
+spec: butcher-block plank seams, a worn pale lip, knife scores, and one old
+dark stain with a drip on the near face. Verified under tilt.
 
 ---
 
@@ -132,12 +129,11 @@ tension — only if it serves the horror, not despite it.
 
 ## Design calls (decide before building)
 
-### 3. `drowned_body` — does it stay?  *(HANDCRAFT_BACKLOG.md "Genuinely open")*
+### ~~3. `drowned_body` — does it stay?~~ — DECIDED: CUT (2026-07)
 
-The art is mechanically correct (a floor decal in the water plane) and a
-submerged-read rework was already attempted and **rejected** (2026-06). The
-remaining question is purely a **design decision**: keep the prop or cut it.
-Not a code task until that call is made.
+The maintainer called it: cut. The `well_bottom` placement, the
+`_draw_drowned_body` draw fn, and the `_FLOOR_DECAL_KINDS` entry are
+removed; the seep pool and claw gouges carry the room's dread.
 
 ### 4. The liminal-composition pass  *(NARRATIVE.md §8/§10)*
 
