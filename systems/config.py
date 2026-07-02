@@ -423,6 +423,20 @@ BELL_STOP_DIST = 70.0         # a hunter this close to the door stills it
 TRAP_REARM = 2.0              # s before a left-and-re-entered trap re-fires
 NOISE_SRC_SILENCE_DIST = 40.0 # a hunter this close shuts a source off
 
+# ---- One-hop noise bleed (the tunnels carry sound) -------------------------
+# A LOUD noise in an underground room (a gunshot, the struggle burst)
+# reaches the NEXT room: after a short walk-time a transient cultist
+# comes through the nearest exit door (the leaf swings -- the tell),
+# looks the noise over, and leaves the way he came. One live visitor at
+# a time, a long cooldown between visits, never in safe rooms/refuges,
+# and never into a room already crowded with cult.
+BLEED_LOUD = 0.9              # min loudness that carries next door
+BLEED_DELAY_LO = 3.0          # walk-time before he appears
+BLEED_DELAY_HI = 6.0
+BLEED_CD = 45.0               # s between visits
+BLEED_CAP = 3                 # no visit if this many cult already here
+BLEED_LINGER = 20.0           # hard cap on the look-around before leaving
+
 # Visibility rates, per second. Watchers + cultist gaze push the meter
 # up; hiding pulls it down. Enough Watchers out-pace even hiding --
 # that is the spiral toward a King the player can no longer shake.

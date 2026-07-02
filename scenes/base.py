@@ -2718,8 +2718,19 @@ def _draw_doorway(surf, camera, scene, tx, ty):
     face(-hw, -hw + tw, 0, head, wood)            # left jamb
     face(hw - tw, hw, 0, head, wood)              # right jamb
     face(-hw, hw, head - th, head, wood_hi)       # lintel
-    # 3. the leaf, hinged at the left jamb
+    # 3. the leaf, hinged at the left jamb. At rest a passable door
+    # hangs ajar and a locked/facade one sits shut; a live door_pulse
+    # (someone passing through -- the player leaving, the noise-bleed
+    # visitor arriving) swings it wide and Game._tick_doors eases it
+    # back. Tilt-only: the flat pitch-0 view keeps its static leaves.
     a = 0.0 if solid else math.radians(26)        # shut vs ajar
+    anim = getattr(scene, "_door_anim", None)
+    if anim and not solid:
+        st = anim.get((wtx, wty))
+        if st is not None:
+            k = max(0.0, min(1.0, st["open"]))
+            k = k * k * (3.0 - 2.0 * k)           # smoothstep ease
+            a = math.radians(26.0 + 62.0 * k)     # ajar -> swung wide
     ca, sa = math.cos(a), math.sin(a)
     hu = -hw + tw                                  # hinge at inner left jamb
     L = (2 * hw - 2 * tw)                          # spans the clear opening
@@ -3840,6 +3851,10 @@ class Scene:
         # per-enemy waypoints stay banned (NARRATIVE §8); this is the
         # town's WORK, and any noise or sighting peels him off it.
         self.cult_stations = []
+        # Live door-leaf animations (door_pulse): (tx, ty) -> {open,
+        # hold}. Read by the TILT doorway draw only -- the flat pitch-0
+        # view keeps its static leaves (byte-identity gate).
+        self._door_anim = {}
         self.on_enter_fn = None
         self.on_exit_fn = None
         self.on_interact_fn = None    # called when E pressed and no NPC nearby
@@ -3993,6 +4008,20 @@ class Scene:
         self.noise_sources.append(src)
         self.add_interactable(x, y, 40)
         return src
+
+    def door_pulse(self, tx, ty, hold=0.9):
+        """Swing the door leaf at tile (tx, ty) open for `hold` seconds
+        (then Game._tick_doors eases it shut). Returns True if this
+        pulse OPENED a resting door (the caller plays the door_open
+        foley), False if it only extended a swing already live."""
+        key = (tx % self.w if self.wrap_x else tx,
+               ty % self.h if self.wrap_y else ty)
+        st = self._door_anim.get(key)
+        if st is None:
+            self._door_anim[key] = {"open": 0.0, "hold": hold}
+            return True
+        st["hold"] = max(st["hold"], hold)
+        return False
 
     def add_cult_station(self, x, y, pose=None, face=None,
                          dwell=(3.0, 6.0)):

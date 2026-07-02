@@ -476,6 +476,76 @@ def main():
             break
     check(resumed, "errands: he resumes his rounds after the noise dies")
 
+    # --- 4g. one-hop noise bleed + animated doors ------------------------
+    # A LOUD noise underground brings ONE transient cultist through the
+    # nearest exit after a walk-time (the swinging leaf is the tell);
+    # he looks the noise over and leaves; a long cooldown follows. The
+    # surface never bleeds; quiet noises don't carry.
+    g = new_game()
+    g.load_scene_now("the_cells", "default")
+    tick(g, 10)
+    g.player.x, g.player.y = 2 * TILE + 16, 2 * TILE + 16
+    g.player.hidden = "under"
+    g.scene.emit_noise(4 * TILE + 16, 5 * TILE + 16, 1.0, kind="shot")
+    tick(g, 2)
+    check(g._bleed is not None and g._bleed["npc"] is None,
+          "bleed: a LOUD noise underground arms a visit (walk-time first)")
+    n0 = len(g.scene.enemies)
+    for _ in range(30 * 7):
+        tick(g, 1)
+        if g._bleed and g._bleed["npc"] is not None:
+            break
+    check(g._bleed is not None and g._bleed["npc"] is not None
+          and len(g.scene.enemies) == n0 + 1,
+          "bleed: exactly one transient comes through the door")
+    e = g._bleed["npc"]
+    check(e._cult_state == "investigate"
+          and e._last_seen_pos == (4 * TILE + 16, 5 * TILE + 16),
+          "bleed: he walks to the noise")
+    check(g.scene._door_anim.get(g._bleed["door"]) is not None,
+          "doors: the leaf swings as the tell")
+    g._bleed["linger"] = 999.0            # skip the look-around
+    gone = False
+    for _ in range(30 * 20):
+        tick(g, 1)
+        if g._bleed is None:
+            gone = True
+            break
+    check(gone and e not in g.scene.enemies and g._bleed_cd > 0,
+          "bleed: he leaves, despawns, and the cooldown arms")
+    g.scene.emit_noise(4 * TILE + 16, 5 * TILE + 16, 1.0, kind="shot")
+    tick(g, 3)
+    check(g._bleed is None, "bleed: the cooldown blocks a second visit")
+
+    g = new_game()
+    g.load_scene_now("the_cells", "default")
+    tick(g, 10)
+    g.player.hidden = "under"
+    g.scene.emit_noise(4 * TILE + 16, 5 * TILE + 16, 0.8, kind="probe")
+    tick(g, 3)
+    check(g._bleed is None, "bleed: a sub-LOUD noise does not carry")
+    g = new_game()
+    g.load_scene_now("brimley", "default")
+    tick(g, 10)
+    g.player.hidden = "under"
+    g.scene.emit_noise(g.player.x, g.player.y, 1.0, kind="shot")
+    tick(g, 3)
+    check(g._bleed is None, "bleed: the surface never bleeds")
+
+    g = new_game()
+    g.load_scene_now("works_sorting", "default")
+    tick(g, 10)
+    door = g._nearest_exit_tile(g.player.x, g.player.y)
+    check(g.scene.door_pulse(door[0], door[1], hold=0.5),
+          "doors: a pulse opens a resting leaf")
+    tick(g, 10)
+    st_ = g.scene._door_anim.get(door)
+    check(st_ is not None and st_["open"] > 0.9,
+          "doors: the leaf swings fully open")
+    tick(g, 40)
+    check(g.scene._door_anim.get(door) is None,
+          "doors: the leaf seats shut and the state cleans up")
+
     # --- 5. walls occlude absolutely ------------------------------------
     g = new_game()
     g.load_scene_now("brimley", "default")

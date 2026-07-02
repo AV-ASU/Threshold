@@ -394,6 +394,10 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         # accumulator (see _ring_bell / _tick_bell, BELL_* config).
         self._bell_t = 0.0
         self._bell_toll_t = 0.0
+        # The one-hop noise bleed: the live visit (scene-local, also
+        # cleared on every load) + the between-visits cooldown.
+        self._bleed = None
+        self._bleed_cd = 0.0
         self._chant_t = 0.0
         self._breath_t = 0.0
         self._heartbeat_t = 0.0
@@ -699,6 +703,12 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
                 int(self.player.x // TILE),
                 int(self.player.y // TILE),
             )
+            # The door you came through swings shut behind you (tilt
+            # view): pulse any door on or beside the entry tile.
+            for ddx, ddy in ((0, 0), (1, 0), (-1, 0), (0, 1), (0, -1)):
+                self._pulse_door_at(self.player.x + ddx * TILE,
+                                    self.player.y + ddy * TILE,
+                                    hold=0.35)
         else:
             self.scene._last_entry_exit_tile = None
         # Reset the noise channel on each scene load. A step in one
@@ -707,6 +717,9 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         self.scene._last_step_event = None
         self.scene._noise_events = []
         self.scene._noise_mask = None
+        # A pending/live bleed visit belongs to the room it was armed
+        # in; the transient itself was rebuilt away with the scene.
+        self._bleed = None
         self._build_fold_cache()
         # Fold pursuit hand-off: if the player fled here through a fold with
         # a hot cultist (stashed by _note_fold_pursuit), arm the beat-behind
@@ -1392,6 +1405,169 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
                     self.show_notice(s["off_notice"], duration=1.8)
             return True
         return False
+
+    # ---- Animated doors + the one-hop noise bleed ----
+    def _pulse_door_at(self, x, y, hold=0.9):
+        """Swing the door leaf at world (x, y) if that tile holds a
+        door; plays the positional door_open foley when the pulse
+        opens a resting leaf. The tell for anything passing through."""
+        sc = self.scene
+        if sc is None:
+            return
+        tx, ty = int(x // TILE), int(y // TILE)
+        wtx = tx % sc.w if sc.wrap_x else tx
+        wty = ty % sc.h if sc.wrap_y else ty
+        if not (0 <= wty < sc.h and 0 <= wtx < sc.w):
+            return
+        from scenes.base import _DOOR_CHARS
+        if sc.objects[wty][wtx] not in _DOOR_CHARS:
+            return
+        if sc.door_pulse(wtx, wty, hold=hold):
+            pan = self.audio.pan_for_world(x, self.player.x)
+            dm = self.audio.distance_attenuation(
+                x, y, self.player.x, self.player.y)
+            self.audio.play("door_open", 0.55 * dm, pan=pan)
+
+    def _tick_doors(self, dt):
+        """Ease every live door-leaf swing (Scene.door_pulse): open
+        while the hold lasts, shut after, with the door_close foley as
+        the leaf seats. Anim state lives on the scene, so a scene load
+        drops it with the room."""
+        sc = self.scene
+        anim = getattr(sc, "_door_anim", None)
+        if not anim:
+            return
+        done = []
+        for key, st in anim.items():
+            if st["hold"] > 0.0:
+                st["hold"] -= dt
+                st["open"] = min(1.0, st["open"] + dt / 0.22)
+            else:
+                st["open"] -= dt / 0.30
+                if st["open"] <= 0.0:
+                    done.append(key)
+        for key in done:
+            del anim[key]
+            wx, wy = key[0] * TILE + 16, key[1] * TILE + 16
+            pan = self.audio.pan_for_world(wx, self.player.x)
+            dm = self.audio.distance_attenuation(
+                wx, wy, self.player.x, self.player.y)
+            self.audio.play("door_close", 0.45 * dm, pan=pan)
+
+    def _nearest_exit_tile(self, x, y):
+        """The (tx, ty) of the scene exit nearest to world (x, y) --
+        the door the next room's visitor comes through. None if the
+        scene has no exits on the grid."""
+        sc = self.scene
+        best = None
+        best_d = 1e18
+        for ty in range(sc.h):
+            row = sc.objects[ty]
+            for tx in range(sc.w):
+                if row[tx] not in sc.exits:
+                    continue
+                d = sc.world_dist(x, y, tx * TILE + 16, ty * TILE + 16)
+                if d < best_d:
+                    best_d = d
+                    best = (tx, ty)
+        return best
+
+    def _tick_bleed(self, dt):
+        """The one-hop noise bleed: the tunnels carry sound. A LOUD
+        noise (>= BLEED_LOUD -- a gunshot, the struggle burst) in an
+        underground room brings ONE transient cultist through the
+        nearest exit a few seconds later (the leaf swings, the tell).
+        He walks to the noise, looks it over, and leaves the way he
+        came -- unless he finds YOU, in which case he is a real threat
+        and stays hot until the machine cools. Capped: one live visitor,
+        a long cooldown, never in safe rooms or refuges, never into a
+        room already crowded with cult."""
+        self._bleed_cd = max(0.0, self._bleed_cd - dt)
+        sc = self.scene
+        if sc is None or self.player is None:
+            return
+        b = self._bleed
+        if b is None:
+            if self._bleed_cd > 0.0:
+                return
+            key = sc.key
+            if (key not in UNDERGROUND_SCENES or key in SAFE_SCENES
+                    or key in FOLD_REFUGE_SCENES):
+                return
+            live = 0
+            for grp in (sc.npcs, sc.enemies):
+                for a in grp:
+                    if not getattr(a, "alive", True):
+                        continue
+                    if getattr(a, "_is_corpse", False):
+                        continue
+                    if (str(getattr(a, "tag", "")).startswith("cult_")
+                            or getattr(a, "kind", "") == "cultist"):
+                        live += 1
+            if live >= BLEED_CAP:
+                return
+            now = sc._noise_now
+            for (ex, ey, loud, et, _kind, _reach) in sc._noise_events:
+                if loud < BLEED_LOUD or now - et >= NOISE_FRESH:
+                    continue
+                door = self._nearest_exit_tile(ex, ey)
+                if door is None:
+                    return
+                self._bleed = {"t": random.uniform(BLEED_DELAY_LO,
+                                                   BLEED_DELAY_HI),
+                               "door": door, "src": (ex, ey),
+                               "npc": None, "linger": 0.0}
+                return
+            return
+        if b["npc"] is None:
+            b["t"] -= dt
+            if b["t"] > 0.0:
+                return
+            tx, ty = b["door"]
+            wx, wy = tx * TILE + 16, ty * TILE + 16
+            if sc.is_solid_at(wx, wy):
+                self._bleed = None
+                self._bleed_cd = BLEED_CD
+                return
+            from scenes.depths import _cultist
+            e = _cultist(wx, wy, speed=0.9)
+            e._cult_state = "investigate"
+            e._last_seen_pos = b["src"]
+            e._cult_state_t = 6.0 + sc.world_dist(
+                wx, wy, b["src"][0], b["src"][1]) / NOISE_WALK_SPEED
+            e._noise_loud = 0.95
+            e._bleed_transient = True
+            sc.enemies.append(e)
+            b["npc"] = e
+            self._pulse_door_at(wx, wy, hold=1.2)   # the door is the tell
+            return
+        e = b["npc"]
+        if not getattr(e, "alive", True) or e not in sc.enemies:
+            self._bleed = None
+            self._bleed_cd = BLEED_CD
+            return
+        b["linger"] += dt
+        if e._cult_state in ("chase", "search"):
+            return                        # he found something; he stays hot
+        tx, ty = b["door"]
+        wx, wy = tx * TILE + 16, ty * TILE + 16
+        if (not b.get("leaving")
+                and e._cult_state == "investigate"
+                and b["linger"] < BLEED_LINGER):
+            return
+        # done looking: back out the way he came, and gone
+        b["leaving"] = True
+        e._cult_state = "investigate"
+        e._last_seen_pos = (wx, wy)
+        e._cult_state_t = max(getattr(e, "_cult_state_t", 0.0), 6.0)
+        e._noise_loud = 0.95
+        if sc.world_dist(e.x, e.y, wx, wy) < 22:
+            e.alive = False
+            if e in sc.enemies:
+                sc.enemies.remove(e)
+            self._pulse_door_at(wx, wy, hold=0.6)
+            self._bleed = None
+            self._bleed_cd = BLEED_CD
 
     # ---- Interaction ----
     def try_interact(self):
@@ -2286,6 +2462,8 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
                     if exit_ch in self.scene.exit_directions:
                         self.cross_fold(*exit_data)
                     else:
+                        # The leaf swings as you go through (tilt view).
+                        self._pulse_door_at(self.player.x, self.player.y)
                         self.begin_transition(*exit_data)
             # Suspend scene update (NPC patrols, decoration anims, triggers)
             # while any modal is up so the world freezes behind it.
@@ -2377,6 +2555,8 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
                 self._tick_bell(dt)
                 self._trip_noise_traps(dt)
                 self._tick_noise_sources(dt)
+                self._tick_doors(dt)
+                self._tick_bleed(dt)
                 self._tick_cultists(dt)
                 self._tick_struggle(dt)
                 self._tick_chase_cues_enemies(dt)
