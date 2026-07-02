@@ -3824,11 +3824,22 @@ class Scene:
         self._noise_events = []
         self._noise_mask = None
         self._last_step_event = None
+        # The noise channel's SIM clock (seconds; Game.step advances it
+        # while the world runs). Event freshness and mask expiry key to
+        # THIS, not wall time: behind a modal the world freezes and so
+        # do the sounds in flight, and the headless harness (which runs
+        # sim time far faster than wall time) ages events correctly.
+        self._noise_now = 0.0
         # Placed noisemakers (add_noise_trap / add_noise_source):
         # passive traps underfoot and E-toggleable lure sources. All
         # state lives on these dicts, so a scene rebuild resets them.
         self.noise_traps = []
         self.noise_sources = []
+        # The cult's errand stations (add_cult_station): scene-local
+        # JOBS a scouting cultist walks between. Not patrol routes --
+        # per-enemy waypoints stay banned (NARRATIVE §8); this is the
+        # town's WORK, and any noise or sighting peels him off it.
+        self.cult_stations = []
         self.on_enter_fn = None
         self.on_exit_fn = None
         self.on_interact_fn = None    # called when E pressed and no NPC nearby
@@ -3924,7 +3935,7 @@ class Scene:
         dominant source (the bell) is audible out to `reach` px no
         matter whose ears; None keeps each listener's own range.
         Returns the event tuple, or None if masked."""
-        now = pygame.time.get_ticks() / 1000.0
+        now = self._noise_now
         m = self._noise_mask
         if m is not None:
             mx, my, mrad, mlevel, muntil = m
@@ -3945,11 +3956,11 @@ class Scene:
         return evt
 
     def set_noise_mask(self, x, y, radius, level, duration):
-        """Install the dominant-source mask for `duration` seconds (the
-        bell). While it lives, emit_noise swallows anything quieter than
-        `level` within `radius` of (x, y). Call again to extend."""
-        now = pygame.time.get_ticks() / 1000.0
-        self._noise_mask = (x, y, radius, level, now + duration)
+        """Install the dominant-source mask for `duration` SIM seconds
+        (the bell). While it lives, emit_noise swallows anything quieter
+        than `level` within `radius` of (x, y). Call again to extend."""
+        self._noise_mask = (x, y, radius, level,
+                            self._noise_now + duration)
 
     def clear_noise_mask(self):
         self._noise_mask = None
@@ -3959,7 +3970,7 @@ class Scene:
         m = self._noise_mask
         if m is None:
             return False
-        if pygame.time.get_ticks() / 1000.0 > m[4]:
+        if self._noise_now > m[4]:
             self._noise_mask = None
             return False
         return True
@@ -3982,6 +3993,17 @@ class Scene:
         self.noise_sources.append(src)
         self.add_interactable(x, y, 40)
         return src
+
+    def add_cult_station(self, x, y, pose=None, face=None,
+                         dwell=(3.0, 6.0)):
+        """Register an errand station: a spot where the cult's work
+        happens (a basin lip, a sorting table, the stone ring). A
+        scouting cultist walks his stations in nearest-first rounds
+        (systems/stealth.errand_step), takes up `pose` facing `face`,
+        dwells a random spell inside `dwell`, and moves on. Noise and
+        sightings always outrank the chore; he resumes after."""
+        self.cult_stations.append(dict(x=x, y=y, pose=pose, face=face,
+                                       dwell=dwell))
 
     def add_noise_trap(self, x, y, kind, seed=None):
         """Place a PASSIVE noisemaker underfoot: strewn cans, glass

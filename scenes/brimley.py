@@ -1059,6 +1059,21 @@ def build_brimley():
     sc.add_noise_trap(61 * TILE + 16, 55 * TILE + 16, "cans", seed=8)
     sc.add_noise_trap(75 * TILE + 16, 38 * TILE + 16, "crow", seed=9)
 
+    # ---- The cult's errands (Scene.add_cult_station) ----
+    # The roaming regulars have JOBS, not beats: kneel at the stone
+    # ring, look in on the well, stand over Mrs. Calder's laid table.
+    # They walk their rounds between stations and any noise or
+    # sighting peels them off (systems/stealth.errand_step). This is
+    # what makes the town read as THEIRS -- and what the bell and the
+    # lures interrupt. (The burn clearing is a sealed pocket off the
+    # walkable web, so no station goes there.)
+    sc.add_cult_station(79 * TILE + 16, 34 * TILE + 16, pose="kneel",
+                        face=(0, -1), dwell=(6.0, 10.0))
+    sc.add_cult_station(93 * TILE + 16, 13 * TILE + 16,
+                        face=(1, 0), dwell=(4.0, 7.0))
+    sc.add_cult_station(71 * TILE + 16, 73 * TILE + 16,
+                        face=(0, -1), dwell=(5.0, 9.0))
+
     # ---- Cult-taken territory: the south-west farmhouse ----
     # Bible §2: newcomers ARE the cult, and one or two contiguous lots
     # would be "their" houses. The haunted_house already reads as the

@@ -423,6 +423,59 @@ def main():
     check(any(x._cult_state == "search" for x in g.scene.enemies),
           "noisemakers: the silencer sweeps around the dead lure")
 
+    # --- 4f. errand stations (the cult's JOBS layer) ---------------------
+    # Scene.add_cult_station + stealth.errand_step: scouts walk their
+    # stations (leg planned once over the full grid, so cross-town legs
+    # work), pose and dwell, and anything the ears or eyes raise peels
+    # them off; they resume after. Every station must be REACHABLE from
+    # the scene's default spawn -- a walkable-but-sealed pocket (the
+    # burn clearing) once ate a station whole.
+    n_st = 0
+    for skey in SCENE_BUILDERS:
+        _sc = load_scene(skey)
+        _spx, _spy = _sc.spawns["default"]
+        for _st in getattr(_sc, "cult_stations", []) or []:
+            n_st += 1
+            _p = _sc.nav_path(_spx, _spy, _st["x"], _st["y"],
+                              max_visit=_sc.w * _sc.h + 8)
+            check(_p is not None,
+                  f"errands: station in {skey} at ({_st['x']},"
+                  f"{_st['y']}) reachable from spawn")
+    check(n_st >= 10, f"errands: stations present ({n_st})")
+
+    g = new_game()
+    g.load_scene_now("works_vats", "default")
+    tick(g, 10)
+    hx, hy, hkind = g.scene.hide_spots[0]
+    g.player.x, g.player.y = hx, hy
+    g.player.hidden = hkind
+    w = g.scene.enemies[0]
+    w._cult_state = "scout"
+    w._suspicion = 0.0
+    posed = False
+    for _ in range(30 * 40):
+        tick(g, 1)
+        if getattr(w, "_errand_posing", False):
+            posed = True
+            break
+    check(posed, "errands: a vats worker reaches a station and poses")
+    check(getattr(w, "pose", None) == "chant",
+          "errands: the station's task pose is taken")
+    tr = g.scene.noise_traps[0]
+    g.scene.emit_noise(tr["x"], tr["y"], 0.8, kind="probe")
+    tick(g, 2)
+    check(w._cult_state == "investigate"
+          and getattr(w, "pose", None) is None,
+          "errands: noise outranks the chore and drops the pose")
+    resumed = False
+    for _ in range(30 * 30):
+        tick(g, 1)
+        if (w._cult_state == "scout"
+                and getattr(w, "_errand_posing", False)):
+            resumed = True
+            break
+    check(resumed, "errands: he resumes his rounds after the noise dies")
+
     # --- 5. walls occlude absolutely ------------------------------------
     g = new_game()
     g.load_scene_now("brimley", "default")

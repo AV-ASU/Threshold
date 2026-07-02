@@ -9,7 +9,7 @@ from rendering.transform import draw_vessel_bloom
 from systems.config import SUS_NOTICE, SUS_SCORE_HOLD
 from systems.stealth import (detection_score, update_suspicion,
                              enter_search, sweep_check, hear_noise,
-                             react_hold)
+                             react_hold, errand_step, errand_drop)
 
 
 def _is_cultist(obj):
@@ -490,6 +490,11 @@ class Enemy:
         # scouts turn on any fresh loud event; searchers/investigators
         # hold their target unless something strictly LOUDER pulls them.
         hear_noise(self, scene, 180.0)
+        # Anything above a chore drops the chore (mirrors the NPC
+        # machine): a worker pulled off his errand stands up out of
+        # the task pose; the station index survives for the resume.
+        if self._cult_state != "scout":
+            errand_drop(self)
         # An active CHASE holds while any usable score remains.
         if self._cult_state == "chase":
             if score >= SUS_SCORE_HOLD:
@@ -591,6 +596,12 @@ class Enemy:
         # to CHASE above.
         if getattr(self, "lock_facing", False):
             return
+        # Errands first: scenes that declare stations put the workers
+        # to WORK (basins, sorting tables); the pure roam only runs
+        # where no jobs are set.
+        if errand_step(self, scene, dt,
+                       lambda ex, ey: self._cult_step(ex, ey, dt, scene)):
+            return
         T = scene.TILE
         # Pause-and-scan on arrival: rotate facing slowly, no movement.
         if self.move_timer > 0:
@@ -639,7 +650,8 @@ class Enemy:
                               seed=id(self) & 0xffff)
         else:
             draw_npc_sprite(surf, sx, sy, kind, self.facing,
-                            seed=id(self) & 0xffff, view=view)
+                            seed=id(self) & 0xffff, view=view,
+                            pose=getattr(self, "pose", None))
         # THRESHOLD: enemies can no longer hurt the player (atk is
         # zeroed every tick in update). Suppress the gold-ring
         # "charge incoming" telegraph in that case -- a wind-up

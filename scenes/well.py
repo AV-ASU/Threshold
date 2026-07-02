@@ -306,6 +306,18 @@ def build_works_vats():
                         "the line.")
     # A loose plank over the south-arm runoff channel.
     sc.add_noise_trap(6 * TILE + 16, 7 * TILE + 16, "plank", seed=11)
+    # The basin work: the two cultists tend the four vats in rounds --
+    # stand at a lip, chant over the black water, move to the next
+    # (systems/stealth.errand_step; noise and sightings outrank the
+    # chore). What the valve lure pulls them OFF of.
+    sc.add_cult_station(5 * TILE + 16, 3 * TILE + 16, pose="chant",
+                        face=(0, -1), dwell=(3.0, 6.0))
+    sc.add_cult_station(7 * TILE + 16, 3 * TILE + 16, pose="chant",
+                        face=(0, -1), dwell=(3.0, 6.0))
+    sc.add_cult_station(5 * TILE + 16, 7 * TILE + 16, pose="chant",
+                        face=(0, 1), dwell=(3.0, 6.0))
+    sc.add_cult_station(7 * TILE + 16, 7 * TILE + 16, pose="chant",
+                        face=(0, 1), dwell=(3.0, 6.0))
 
     def _vats_on_enter(game, scene):
         # First entry: the dig hit water. This is the river (NARRATIVE 1b) --
@@ -404,6 +416,16 @@ def build_works_sorting():
     # Glass litter between the sorting rows -- a jar knocked off a
     # table long ago, never swept. The crossing's floor bites back.
     sc.add_noise_trap(8 * TILE + 16, 6 * TILE + 16, "glass", seed=12)
+    # The sorting work: stations along the table rows. The two
+    # patrollers stand at the tables handling the shed lives, then
+    # move down the row -- the room reads as a working floor, not a
+    # guard post (noise and sightings still outrank the chore).
+    sc.add_cult_station(3 * TILE + 16, 6 * TILE + 16,
+                        face=(0, -1), dwell=(3.5, 6.5))
+    sc.add_cult_station(9 * TILE + 16, 7 * TILE + 16,
+                        face=(0, 1), dwell=(3.5, 6.5))
+    sc.add_cult_station(12 * TILE + 16, 6 * TILE + 16,
+                        face=(0, -1), dwell=(3.5, 6.5))
 
     def _interact(game):
         tx, ty = sc._table_pos

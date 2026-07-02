@@ -29,6 +29,7 @@ Apex pursuers (_force_chase: the King via _yk_update, the hollow
 Sheriff) never consult any of this.
 """
 import math
+import random
 
 import pygame
 
@@ -209,7 +210,7 @@ def hear_noise(actor, scene, hearing_range=180.0):
     events = getattr(scene, "_noise_events", None)
     if not events:
         return False
-    now = pygame.time.get_ticks() / 1000.0
+    now = getattr(scene, "_noise_now", 0.0)
     held = 0.0
     if st in ("search", "investigate"):
         held = getattr(actor, "_noise_loud", NOISE_SEARCH_PULL)
@@ -263,6 +264,118 @@ def react_hold(actor, scene, dt):
         fm = math.hypot(fdx, fdy) or 1.0
         actor.facing = (fdx / fm, fdy / fm)
     return True
+
+
+def errand_step(actor, scene, dt, step_fn):
+    """The cult's JOBS layer: scenes declare stations
+    (Scene.add_cult_station) and a SCOUT with nothing better to do
+    walks his errands between them -- travel to a station, take up its
+    task pose, dwell a while, move to the next. Owns the tick ONLY in
+    scout (anything the eyes or ears raise outranks a chore, and the
+    chore is resumed after; errand_drop clears the pose on interrupt).
+    Not a patrol route: the stations are the town's WORK, walked in
+    whatever order the cultist stands nearest, and any noise or
+    sighting peels him straight off it.
+
+    Travel plans the whole leg ONCE (full-grid nav_path -- the per-tick
+    nav_toward replan is bounded and fails across a map as big as
+    Brimley), string-pulls it, then walks node to node. A station off
+    the walkable web is SKIPPED; if every station fails in a row the
+    actor gives errands up for this scene and falls back to the mill.
+    Returns True while the errand owns the actor's movement."""
+    stations = getattr(scene, "cult_stations", None)
+    if not stations or getattr(actor, "_errand_off", False):
+        return False
+    i = getattr(actor, "_errand_i", None)
+    if i is None:
+        # first assignment: start on the nearest station, so spawn
+        # placement reads as "already at work"
+        i = min(range(len(stations)),
+                key=lambda j: scene.world_dist(actor.x, actor.y,
+                                               stations[j]["x"],
+                                               stations[j]["y"]))
+        actor._errand_i = i
+        actor._errand_dwell = 0.0
+    st = stations[i % len(stations)]
+    dwell = getattr(actor, "_errand_dwell", 0.0)
+    if dwell > 0.0:
+        # working the station
+        actor._errand_dwell = dwell - dt
+        if actor._errand_dwell <= 0.0:
+            errand_drop(actor)
+            actor._errand_i = (i + 1) % len(stations)
+        return True
+    if scene.world_dist(actor.x, actor.y, st["x"], st["y"]) <= 14.0:
+        # arrived: take up the task
+        actor._errand_path = None
+        actor._errand_fail = 0
+        actor._errand_dwell = random.uniform(*st["dwell"])
+        if st.get("face") is not None:
+            actor.facing = st["face"]
+        if st.get("pose"):
+            actor.pose = st["pose"]
+            actor._errand_posing = True
+        return True
+    path = getattr(actor, "_errand_path", None)
+    if path is None:
+        raw = scene.nav_path(actor.x, actor.y, st["x"], st["y"],
+                             max_visit=scene.w * scene.h + 8)
+        if raw is None:
+            # off the walkable web (a sealed pocket) or the actor is
+            # boxed in: skip this station; give errands up entirely
+            # once every station has failed in a row
+            actor._errand_fail = getattr(actor, "_errand_fail", 0) + 1
+            actor._errand_i = (i + 1) % len(stations)
+            if actor._errand_fail >= len(stations):
+                actor._errand_off = True
+                return False
+            return True
+        # string-pull once at plan time so the walk arcs across open
+        # ground instead of tracing tile centres
+        pulled = []
+        cx, cy = actor.x, actor.y
+        k = 0
+        while k < len(raw):
+            far = k
+            for m in range(k, len(raw)):
+                if scene.nav_clear_line(cx, cy, raw[m][0], raw[m][1]):
+                    far = m
+                else:
+                    break
+            pulled.append(raw[far])
+            cx, cy = raw[far]
+            k = far + 1
+        actor._errand_fail = 0
+        actor._errand_path = path = pulled
+    while path and scene.world_dist(actor.x, actor.y,
+                                    path[0][0], path[0][1]) < 12.0:
+        path.pop(0)
+    nx, ny = path[0] if path else (st["x"], st["y"])
+    px, py = actor.x, actor.y
+    step_fn(nx, ny)
+    # wedge safety: no progress for a spell (a body in the way, a
+    # geometry jag) -> replan the leg from wherever he stands
+    if math.hypot(actor.x - px, actor.y - py) < 0.2:
+        actor._errand_stuck = getattr(actor, "_errand_stuck", 0.0) + dt
+        if actor._errand_stuck > 2.0:
+            actor._errand_stuck = 0.0
+            actor._errand_path = None
+    else:
+        actor._errand_stuck = 0.0
+    return True
+
+
+def errand_drop(actor):
+    """Drop the errand's task pose, dwell, and planned leg (called
+    whenever anything outranks the chore -- a noise, a sighting, the
+    search). The station index survives, so the cultist RESUMES his
+    rounds from wherever the interruption leaves him."""
+    if getattr(actor, "_errand_posing", False):
+        actor.pose = None
+        actor._errand_posing = False
+    actor._errand_dwell = 0.0
+    actor._errand_path = None
+    actor._errand_stuck = 0.0
 
 
 def grab_allowed(player, chasing):

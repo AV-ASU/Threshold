@@ -6,7 +6,7 @@ from constants import C_WHITE
 from systems.config import SUS_NOTICE, SUS_SCORE_HOLD
 from systems.stealth import (detection_score, update_suspicion,
                              enter_search, sweep_check, hear_noise,
-                             react_hold)
+                             react_hold, errand_step, errand_drop)
 
 class NPC:
     def __init__(self, x, y, name, sprite_kind, voice="blip_mid",
@@ -276,6 +276,11 @@ class NPC:
         # strictly LOUDER (so they don't rubber-band to every footstep,
         # but a gunshot or the bell re-tasks the whole room).
         hear_noise(self, scene, 180.0)
+        # Anything above a chore drops the chore: a cultist pulled off
+        # his errand (noise, sighting, search) stands up out of the
+        # task pose. The station index survives for the resume.
+        if self._cult_state != "scout":
+            errand_drop(self)
         # An active CHASE holds while any usable score remains --
         # cover has to actually break the line (a wall, an enclosed
         # hide, or corn at real distance) to shake it. Close-range
@@ -372,7 +377,12 @@ class NPC:
                 ang = (pygame.time.get_ticks() / 1000.0) % math.tau
                 self.facing = (math.cos(ang), math.sin(ang))
             return
-        # Default: SCOUT.
+        # Default: SCOUT. Errands first -- the cult has JOBS (scenes
+        # declare stations); the random mill only where no work is set.
+        if errand_step(self, scene, dt,
+                       lambda ex, ey: self._step_toward(
+                           (ex, ey), dt, scene, navigate=True)):
+            return
         self._scout_step(dt, scene)
 
     def _scout_step(self, dt, scene):

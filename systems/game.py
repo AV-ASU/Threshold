@@ -2369,6 +2369,11 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
             # a modal too, so visibility can't climb and the King can't close
             # while a box is up. Cutscene/audio drivers keep running.
             if not world_frozen:
+                # Advance the noise channel's SIM clock (event
+                # freshness + mask expiry key to it; it freezes with
+                # the world behind modals).
+                if self.scene is not None:
+                    self.scene._noise_now += dt
                 self._tick_bell(dt)
                 self._trip_noise_traps(dt)
                 self._tick_noise_sources(dt)
