@@ -56,9 +56,17 @@ _H = tuple(c / _HMAG for c in _H)
 
 _FORM = None
 
+# The Pallid Mask's drift state (2026-07 rework): the mask surfaces
+# through the churning skin and GLIDES between facets instead of
+# teleporting, so it needs a little screen-space memory between frames.
+# Reset per run like the other King fx state.
+_MASK_DRIFT = {"x": None, "y": None, "f": 0.0}
+
 
 def reset_king_unfold_fx():
-    pass
+    _MASK_DRIFT["x"] = None
+    _MASK_DRIFT["y"] = None
+    _MASK_DRIFT["f"] = 0.0
 
 
 # --------------------------------------------------------------------------- #
@@ -150,8 +158,9 @@ def _build():
     # MAW SITES: facets where eversion-maws tear open -- scattered, fewer than
     # the eyes (mouths are bigger), each gnashing on its own phase. Plural and
     # wrong: it is all watching AND all hungry; never one face-with-a-mouth.
+    # (2026-07 rework: 5 -> 8, the mouths are the point now.)
     maw_sites = [(fi, r.uniform(0, 6.283))
-                 for fi in r.sample(range(len(ofaces)), 5)]
+                 for fi in r.sample(range(len(ofaces)), 8)]
 
     # arm roots: a POOL of candidate vertices spread over the mass. Each frame
     # _draw_arms extrudes only the ones whose 4D w has everted FORWARD past a
@@ -289,7 +298,8 @@ def _eye(surf, x, y, r, openf, gaze, a):
                            (gx - ir // 3, int(y) - ir // 3), max(1, ir // 4))
 
 
-def _draw_maw3d(lay, sample, N, em, openf, cx, cy, sz, zmin, zr, seed, a):
+def _draw_maw3d(lay, sample, N, em, openf, cx, cy, sz, zmin, zr, seed, a,
+                drips=None):
     """An EVERSION-MAW as REAL geometry, BOUND to the flesh. `sample(pu, pv)`
     returns the 3D point on the deformed surface for a param offset in [-1,1]^2
     around the maw centre -- it bilinearly interpolates the ACTUAL deformed mesh
@@ -374,6 +384,51 @@ def _draw_maw3d(lay, sample, N, em, openf, cx, cy, sz, zmin, zr, seed, a):
     teeth.sort(key=lambda r: r[0])
     for _z, pts, col in teeth:
         pygame.draw.polygon(lay, col, pts)
+    # hand the caller the lip's lowest screen point: the maws DROOL
+    # (strands drawn after all maws so they hang over everything local)
+    if drips is not None:
+        lip = max((pr(p) for p in outer), key=lambda q: q[1])
+        drips.append((lip[0], lip[1], openf, a))
+
+
+def _pallid_mask(lay, x, y, w, h, a, tilt=0.0, backlit=0.0, glint=0.0):
+    """The Pallid Mask -- carved-pale, recessed dark sockets, NO mouth
+    (door_mask_surface's grammar at creature scale). `tilt` skews it as
+    the skin it rides turns away; `backlit` rims it in furnace gold
+    (hanging in the throat); `glint` puts a gold point deep in each
+    socket (it has started watching)."""
+    if w < 4 or h < 5 or a < 10:
+        return
+    x, y = int(x), int(y)
+    rect = pygame.Rect(x - w // 2, y - h // 2, w, h)
+    if backlit > 0.0:
+        _heart_glow(lay, x, y, int(max(w, h) * 0.9),
+                    int(90 * backlit))
+        pygame.draw.ellipse(lay, (*_GOLD_RIM, int(120 * backlit)),
+                            rect.inflate(3, 3))
+    pygame.draw.ellipse(lay, (74, 66, 58, a), rect.inflate(2, 2))
+    pygame.draw.ellipse(lay, (164, 154, 136, a), rect)
+    # the jaw falls into shade; the brow catches what light there is
+    pygame.draw.ellipse(lay, (118, 109, 94, a),
+                        (rect.x, y, w, h // 2))
+    pygame.draw.arc(lay, (206, 196, 176, a), rect.inflate(-2, -2),
+                    math.radians(35), math.radians(145),
+                    max(1, w // 12))
+    ey = y - h // 8 + int(tilt)
+    sw = max(2, w // 5)
+    sh = max(3, h // 4)
+    for ex in (x - w // 4, x + w // 4):
+        pygame.draw.ellipse(lay, (10, 8, 12, a),
+                            (ex - sw // 2 - 1, ey - sh // 2 - 1,
+                             sw + 2, sh + 2))
+        pygame.draw.ellipse(lay, (3, 3, 5, a),
+                            (ex - sw // 2, ey - sh // 2, sw, sh))
+        if glint > 0.0:
+            pygame.draw.circle(lay, (*_GOLD_HI, int(a * glint)),
+                               (ex, ey + 1), 1)
+    # a worn crack down one cheek (asymmetry: it is old)
+    pygame.draw.line(lay, (140, 130, 112, a),
+                     (x + w // 5, ey + sh), (x + w // 7, y + h // 3), 1)
 
 
 # --------------------------------------------------------------------------- #
@@ -573,7 +628,7 @@ def _draw_arms(lay, o3, op, ocenter, sz, cx, cy, t, threat, arm_roots,
 
 def draw_king_unfold(surf, cx, cy, t, threat=0.0, scale=96.0,
                      to_player=(0.0, 1.0), birth=1.0, lean=(0.0, 0.0),
-                     eat_light=True):
+                     eat_light=True, gape=0.0):
     """THE UNFOLDING, centred at (cx, cy). `threat` 0..1: a small dark fold ->
     larger, faster eversion, the heart kindling, eyes opening, the Sign
     resolving, more light eaten.
@@ -592,7 +647,14 @@ def draw_king_unfold(surf, cx, cy, t, threat=0.0, scale=96.0,
     `birth` 0..1 is the ARRIVAL: a gold wound opens and leads, the dark mass
     blooms out of it, and the limbs come in last -- so 0->1 is the grace window
     (the thing is still assembling, not yet lethal). Driven 1->0 it plays in
-    reverse as the DISSOLVE (the mass folds back into the wound and is gone)."""
+    reverse as the DISSOLVE (the mass folds back into the wound and is gone).
+
+    `gape` 0..1 is the LUNGE tell (driven by _yk_update's gape-lunge):
+    the leading face irises open into one huge toothed mouth with the
+    Pallid Mask hanging in the throat, furnace-lit -- the same image the
+    catch cutscene takes you down. At 0 the mask instead SURFACES on the
+    churning skin (threat > 0.25), drifting, always turned toward the
+    player: the faceless thing wearing its one face wherever you are."""
     pdx, pdy = to_player
     pdl = math.hypot(pdx, pdy) or 1.0
     pdx, pdy = pdx / pdl, pdy / pdl
@@ -729,6 +791,45 @@ def draw_king_unfold(surf, cx, cy, t, threat=0.0, scale=96.0,
     # 3) near wall of the mass (occludes/veils the heart -> flesh)
     draw_membrane(front, True)
 
+    # 3b) SMOOTH the membrane (2026-07 material rework): a light in-place
+    # box blur over the mass's bounding box melts the flat quad facets
+    # into continuous wet flesh -- the mesh keeps its 4D silhouette, the
+    # skin stops reading as geometry. Everything after this (mask, gape,
+    # arms, eyes, maws, glints) draws CRISP on top.
+    if op:
+        bxs = [p[0] for p in op]
+        bys = [p[1] for p in op]
+        pad = 6
+        bb_r = pygame.Rect(int(min(bxs)) - pad, int(min(bys)) - pad,
+                           int(max(bxs) - min(bxs)) + pad * 2,
+                           int(max(bys) - min(bys)) + pad * 2)
+        bb_r = bb_r.clip(lay.get_rect())
+        if bb_r.w > 8 and bb_r.h > 8:
+            region = lay.subsurface(bb_r).copy()
+            small = pygame.transform.smoothscale(
+                region, (max(1, bb_r.w // 2), max(1, bb_r.h // 2)))
+            region = pygame.transform.smoothscale(small, (bb_r.w, bb_r.h))
+            lay.fill((0, 0, 0, 0), bb_r)
+            lay.blit(region, bb_r.topleft)
+    # 3c) WET pass: sharp specular catchlights on the most light-facing
+    # facets (the blur diffused the baked sheen, so the glints go back
+    # on top, crisp -- water on oil), strongest along the upper lobes.
+    if front:
+        by_spec = sorted(front, key=lambda r: -_dot(r[3], _H))[:9]
+        for zc, fi, face, N in by_spec:
+            sfac = max(0.0, _dot(N, _H)) ** 14
+            if sfac < 0.12:
+                continue
+            poly = [op[i] for i in face]
+            gx = sum(p[0] for p in poly) / len(poly)
+            gy = sum(p[1] for p in poly) / len(poly)
+            ga = int(150 * sfac * body_b)
+            pygame.draw.circle(lay, (*_SHEEN, ga), (int(gx), int(gy)), 1)
+            if sfac > 0.5:
+                pygame.draw.line(lay, (*_SHEEN, int(ga * 0.6)),
+                                 (int(gx) - 2, int(gy) + 1),
+                                 (int(gx) + 2, int(gy) - 1), 1)
+
     # 4) ARMS: limbs erupt from the geometry and stretch toward the player (on
     # top of the body -- they reach out past its silhouette, toward the camera)
     _draw_arms(lay, o3, op, ocenter, sz, cx, cy, t, threat, form["arm_roots"],
@@ -766,6 +867,7 @@ def draw_king_unfold(surf, cx, cy, t, threat=0.0, scale=96.0,
         # gnash and breathe, riding their facets like the eyes. The eversion
         # turning inside-out IS the mouth: dark gullet, gold light down it.
         nlat = form["nlat"]; nlon = form["nlon"]
+        drips = []
         for fi, ph in form["maw_sites"]:
             rec = fmap.get(fi)
             if rec is None:
@@ -779,7 +881,9 @@ def draw_king_unfold(surf, cx, cy, t, threat=0.0, scale=96.0,
             # the rim warps with the region's live stretch / shear / curvature.
             i0 = fi // nlon
             j0 = fi % nlon
-            R = 1.7                                  # patch half-size, in facets
+            R = 2.0                                  # patch half-size, in facets
+            #                                          (1.7 pre-rework; the
+            #                                          mouths are the point now)
 
             def sample(pu, pv, i0=i0, j0=j0, R=R):
                 fi_ = (i0 + 0.5) + pu * R
@@ -799,9 +903,121 @@ def draw_king_unfold(surf, cx, cy, t, threat=0.0, scale=96.0,
             v0, v1, v3 = o3[face[0]], o3[face[1]], o3[face[3]]
             em = (math.dist(v0, v1) + math.dist(v0, v3)) * 0.5 * R
             breath = 0.5 + 0.5 * math.sin(t * 0.8 + ph * 1.7)
-            openf = appear * facing * (0.22 + 0.78 * breath)
+            openf = appear * facing * (0.34 + 0.66 * breath)
             _draw_maw3d(lay, sample, N, em, openf, cx, cy, sz, zmin, zr,
-                        fi + int(ph * 7), int(235 * facing * appear))
+                        fi + int(ph * 7), int(235 * facing * appear),
+                        drips=drips)
+        # the maws RUN: thin strands off the lowest lips, swaying, a
+        # bead of sheen at each strand's end (the wet pass, in motion)
+        for dxp, dyp, opf, da in drips:
+            if opf < 0.25:
+                continue
+            ln = int(3 + 5 * opf)
+            x0, y0 = int(dxp), int(dyp)
+            x1 = x0 + int(math.sin(t * 2.3 + x0) * 1.6)
+            pygame.draw.line(lay, (104, 110, 104, int(da * 0.55)),
+                             (x0, y0), (x1, y0 + ln), 1)
+            pygame.draw.circle(lay, (*_SHEEN, int(da * 0.7)),
+                               (x1, y0 + ln), 1)
+
+    # 5b) THE PALLID MASK surfaces through the skin (threat > 0.25, no
+    # gape): it rides the facet most turned toward the player, GLIDING
+    # between hosts (eased screen-space memory), pale against the tar,
+    # weeping where it breaks the surface. As the gape opens it sinks
+    # back in -- the mask and the throat-mask are the same object.
+    g_open = max(0.0, min(1.0, gape)) * body_b
+    mask_a = 0.0
+    if threat > 0.25 and body_b > 0.5:
+        mask_a = min(1.0, (threat - 0.25) / 0.35) * (1.0 - g_open)
+    if mask_a > 0.03 and front:
+        drift = (math.sin(t * 0.23) * 0.5, math.cos(t * 0.17) * 0.4)
+        want = _norm((pdx * 0.45 + drift[0], -pdy * 0.45 + drift[1], 1.0))
+        best = max(front, key=lambda r: _dot(r[3], want))
+        poly = [op[i] for i in best[2]]
+        tx_ = sum(p[0] for p in poly) / len(poly)
+        ty_ = sum(p[1] for p in poly) / len(poly)
+        if _MASK_DRIFT["x"] is None or \
+                abs(_MASK_DRIFT["x"] - cx) > sz * 4:
+            _MASK_DRIFT["x"], _MASK_DRIFT["y"] = tx_, ty_
+        _MASK_DRIFT["x"] += (tx_ - _MASK_DRIFT["x"]) * 0.06
+        _MASK_DRIFT["y"] += (ty_ - _MASK_DRIFT["y"]) * 0.06
+        facing = max(0.2, best[3][2])
+        mw = int(sz * 0.30 * (0.6 + 0.4 * facing))
+        mh = int(sz * 0.38)
+        _pallid_mask(lay, _MASK_DRIFT["x"], _MASK_DRIFT["y"], mw, mh,
+                     int(205 * mask_a),
+                     tilt=best[3][0] * 3.0,
+                     glint=max(0.0, (threat - 0.55) / 0.45))
+        # it WEEPS where it breaks the skin: dark runnels off the jaw
+        for wx_ in (-mw // 4, mw // 5):
+            dx0 = int(_MASK_DRIFT["x"]) + wx_
+            dy0 = int(_MASK_DRIFT["y"]) + mh // 2
+            pygame.draw.line(lay, (12, 9, 12, int(170 * mask_a)),
+                             (dx0, dy0),
+                             (dx0 + int(math.sin(t * 2 + wx_) * 1.5),
+                              dy0 + max(2, mh // 5)), 1)
+
+    # 5c) THE GAPE: the leading face irises open into one huge toothed
+    # mouth -- the lunge tell. Jittered rim (never a clean ellipse),
+    # rings of teeth receding inward, the furnace behind, and the Mask
+    # hanging in the throat, backlit, swaying. This is the catch
+    # cutscene's image shown alive: the mouth that will take you.
+    if g_open > 0.03:
+        Pm = _norm((pdx, -pdy, 0.85))
+        lead = max(range(len(o3)),
+                   key=lambda i: _dot(_sub(o3[i], ocenter), Pm))
+        lx_, ly_ = op[lead]
+        gxc = lx_ * 0.55 + cx * 0.45      # ON the body, not off its rim
+        gyc = ly_ * 0.55 + cy * 0.45
+        gw = sz * (0.30 + 0.68 * g_open)
+        gh = gw * 0.82
+        rng_g = random.Random(31)
+        rim = []
+        for k in range(18):
+            a_ = math.tau * k / 18
+            jr = 1.0 + 0.16 * math.sin(a_ * 3 + t * 0.9) \
+                + rng_g.uniform(-0.08, 0.08)
+            rim.append((gxc + math.cos(a_) * gw * 0.5 * jr,
+                        gyc + math.sin(a_) * gh * 0.5 * jr))
+        # wet lip, then the throat sinking to black-red
+        pygame.draw.polygon(lay, (*_SHEEN, 90), rim, 0)
+        for shrink, col in ((0.96, (34, 12, 14)), (0.72, (22, 7, 9)),
+                            (0.46, (12, 4, 6)), (0.22, (5, 2, 3))):
+            pygame.draw.polygon(lay, (*col, 235), [
+                (gxc + (px - gxc) * shrink, gyc + (py - gyc) * shrink)
+                for px, py in rim])
+        _heart_glow(lay, gxc, gyc, gw * 0.34, int(70 + 150 * g_open))
+        # tooth rings: short, uneven, mostly in shadow -- a throat,
+        # not a pinwheel (the first pass's long white wedges read as a
+        # turbine at gameplay scale)
+        for ring, (rr, nt) in enumerate(((0.97, 11), (0.62, 7))):
+            for k in range(nt):
+                if math.sin(k * 2.9 + ring * 1.3) < -0.55:
+                    continue
+                a_ = math.tau * k / nt + ring * 0.35 \
+                    + 0.07 * math.sin(t + k)
+                b0 = (gxc + math.cos(a_ - 0.11) * gw * 0.5 * rr,
+                      gyc + math.sin(a_ - 0.11) * gh * 0.5 * rr)
+                b1 = (gxc + math.cos(a_ + 0.11) * gw * 0.5 * rr,
+                      gyc + math.sin(a_ + 0.11) * gh * 0.5 * rr)
+                ln = (0.16 + 0.10 * math.sin(k * 1.7 + ring)) * rr
+                tip = (gxc + math.cos(a_) * gw * 0.5 * (rr - ln),
+                       gyc + math.sin(a_) * gh * 0.5 * (rr - ln))
+                lit = 0.5 + 0.5 * math.sin(k * 2.3 + ring * 0.9)
+                col = _ci(_cmix(_TOOTH_DK, _TOOTH, 0.25 + 0.5 * lit))
+                pygame.draw.polygon(lay, (*col, 205), [b0, b1, tip])
+        # the Mask, hanging in the dark of the throat -- backlit, swaying
+        _pallid_mask(lay, gxc + math.sin(t * 1.1) * gw * 0.05,
+                     gyc + gh * 0.06, int(gw * 0.42), int(gh * 0.52),
+                     int(235 * min(1.0, g_open * 1.6)),
+                     backlit=g_open, glint=1.0)
+        # it runs: drool off the lower lip
+        low = max(rim, key=lambda p: p[1])
+        for ddx in (-3, 2):
+            pygame.draw.line(lay, (120, 126, 118, 130),
+                             (int(low[0]) + ddx, int(low[1])),
+                             (int(low[0]) + ddx + int(math.sin(t * 3) * 2),
+                              int(low[1]) + 4 + 2 * (ddx % 2)), 1)
 
     # 6) the Sign resolves for a beat on the most head-on facet
     if front and threat > 0.45:

@@ -136,6 +136,19 @@ KING_TILT_DEPTH_CAM = 360.0    # effective camera->player-plane distance (world 
 KING_TILT_DEPTH_MIN = 0.7      # scale-mul clamp (far / behind the player)
 KING_TILT_DEPTH_MAX = 1.7      # scale-mul clamp (near / in front, looming)
 
+# ---- The gape-lunge (2026-07 King rework) ---------------------------------
+# Near live prey the mass GATHERS (crawling, its leading face irising
+# open around the Pallid Mask in its throat -- the tell, and the same
+# image the catch cutscene takes you down), then SURGES. The telegraph
+# slow-down is the counterplay window: read the mouth, break sideways.
+KING_LUNGE_RANGE = 250.0     # px to the live player that arms a lunge
+KING_LUNGE_TELE = 0.45       # s of gather: mouth irises open, speed drops
+KING_LUNGE_DUR = 0.5         # s of surge, mouth wide
+KING_LUNGE_MULT = 1.75       # surge speed multiplier
+KING_LUNGE_GATHER = 0.30     # crawl multiplier during the telegraph
+KING_LUNGE_CD_LO = 3.5       # s between lunges (randomised)
+KING_LUNGE_CD_HI = 6.0
+
 # Dark scenes -- underground / interior cult sites where the
 # flashlight matters. Without the flashlight the screen is heavily
 # dimmed with a small clear circle around the player. With it,

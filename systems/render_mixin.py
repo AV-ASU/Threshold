@@ -1162,7 +1162,8 @@ class RenderMixin:
                                         curse=curse_v, gaze=w_gaze, view=nview,
                                         to_player=king_to_player,
                                         lean=king_lean, scale_mul=king_scale_mul,
-                                        pose=getattr(npc, "pose", None))
+                                        pose=getattr(npc, "pose", None),
+                                        gape=getattr(npc, "_gape", 0.0))
                         # A resister whose flesh has turned: their bespoke
                         # fold-horror form, laid over the person they were.
                         if getattr(npc, "_mutated", False):
