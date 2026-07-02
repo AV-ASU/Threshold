@@ -346,6 +346,83 @@ def main():
     check(not g.scene.mask_active(),
           "bell: the mask drops with the bell")
 
+    # --- 4e. placed noisemakers (traps underfoot + lure sources) --------
+    # Scene.add_noise_trap: fires ON ENTRY, re-arms only after leaving;
+    # Scene.add_noise_source: E toggles a periodic lure that the first
+    # cult hunter to reach shuts off (then sweeps around it, like the
+    # bell). Every placement must sit on walkable ground.
+    from scenes import SCENE_BUILDERS, load_scene
+    n_placed = 0
+    for skey in SCENE_BUILDERS:
+        _sc = load_scene(skey)
+        for tr in getattr(_sc, "noise_traps", []) or []:
+            n_placed += 1
+            check(not _sc.is_solid_at(tr["x"], tr["y"]),
+                  f"noisemakers: trap {tr['kind']} in {skey} on "
+                  f"walkable ground")
+        for s in getattr(_sc, "noise_sources", []) or []:
+            n_placed += 1
+            check(not _sc.is_solid_at(s["x"], s["y"]),
+                  f"noisemakers: source {s['kind']} in {skey} on "
+                  f"walkable ground")
+    check(n_placed >= 9, f"noisemakers: placements present ({n_placed})")
+
+    g = new_game()
+    g.load_scene_now("works_sorting", "default")
+    tick(g, 10)
+    for e in g.scene.enemies:
+        e._cult_state = "scout"
+        e._suspicion = 0.0
+        e.x, e.y = 13 * TILE + 16, 9 * TILE + 16
+        e.facing = (0.0, 1.0)
+    tr = g.scene.noise_traps[0]
+    e = g.scene.enemies[0]
+    e.x, e.y = tr["x"] + 120, tr["y"]
+    e.facing = (0.0, -1.0)
+    g.player.x, g.player.y = 1 * TILE + 16, 9 * TILE + 16
+    g.player.hidden = None
+    tick(g, 2)
+    g.player.x, g.player.y = tr["x"], tr["y"]        # step into the litter
+    tick(g, 2)
+    check(e._cult_state == "investigate"
+          and e._last_seen_pos == (tr["x"], tr["y"]),
+          "noisemakers: stepping in the litter turns the nearest head")
+
+    g = new_game()
+    g.load_scene_now("works_vats", "default")
+    tick(g, 10)
+    src = next(s for s in g.scene.noise_sources if s["kind"] == "valve")
+    for e in g.scene.enemies:
+        e._cult_state = "scout"
+        e._suspicion = 0.0
+        e.x, e.y = 10 * TILE + 16, 5 * TILE + 16
+        e.facing = (1.0, 0.0)
+    g.player.x, g.player.y = src["x"], src["y"] + 20
+    g.player.hidden = None
+    press_e(g)
+    check(src["on"], "noisemakers: E cracks the valve open")
+    w = g.scene.enemies[0]
+    heard = False
+    for _ in range(60):
+        tick(g, 1)
+        if w._cult_state == "investigate":
+            heard = True
+            break
+    check(heard and w._last_seen_pos == (src["x"], src["y"]),
+          "noisemakers: the hiss lures a worker off the crossing")
+    hx, hy, hkind = g.scene.hide_spots[0]
+    g.player.x, g.player.y = hx, hy                  # vanish into the hide
+    g.player.hidden = hkind
+    silenced = False
+    for _ in range(600):
+        tick(g, 1)
+        if not src["on"]:
+            silenced = True
+            break
+    check(silenced, "noisemakers: a worker seats the valve shut")
+    check(any(x._cult_state == "search" for x in g.scene.enemies),
+          "noisemakers: the silencer sweeps around the dead lure")
+
     # --- 5. walls occlude absolutely ------------------------------------
     g = new_game()
     g.load_scene_now("brimley", "default")

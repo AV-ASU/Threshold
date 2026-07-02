@@ -1269,6 +1269,25 @@ class Decoration:
         pygame.draw.circle(surf, (220, 190, 160), (x + 4, y - 2), 1)
 
     def _draw_crow(self, surf, x, y):
+        # The noise-trap flush (Game._trip_noise_traps sets flushed_at):
+        # the bird bursts up and away over ~0.9s, wings as alternating
+        # chevrons, then the decoration hides -- the crow is gone for
+        # the rest of the scene load.
+        flushed = getattr(self, "flushed_at", None)
+        if flushed is not None:
+            el = self.t - flushed
+            if el > 0.9:
+                self.hidden = True
+                return
+            k = el / 0.9
+            fx = x + int(k * k * 46) * (1 if (self.seed % 2) else -1)
+            fy = y - int(k * 60)
+            spread = 6 if math.sin(el * 22.0) > 0 else 2
+            col = (10, 10, 14)
+            pygame.draw.line(surf, col, (fx - spread, fy - 2), (fx, fy), 2)
+            pygame.draw.line(surf, col, (fx + spread, fy - 2), (fx, fy), 2)
+            pygame.draw.circle(surf, col, (fx, fy), 2)
+            return
         hop = int(abs(math.sin(self.t * 0.8)) * 1)
         head_turn = int(math.sin(self.t * 0.5) * 2)
         # Body
@@ -1288,6 +1307,86 @@ class Decoration:
             eye_x = x + 5 + head_turn
         pygame.draw.circle(surf, (10, 10, 14), (head_x, y - 4 - hop), 2)
         pygame.draw.circle(surf, (220, 200, 50), (eye_x, y - 4 - hop), 1)
+
+    # ---- Noise-trap litter (Scene.add_noise_trap; ground decals) ----
+    def _draw_tin_cans(self, surf, x, y):
+        """Strewn tins on the ground -- the cans noise trap. Three
+        dull cans, one tipped with its lid sprung, seeded scatter."""
+        rng = random.Random(self.seed)
+        dull = (118, 116, 108)
+        dark = (66, 64, 58)
+        rust = (110, 70, 44)
+        for i in range(3):
+            cx = x + rng.randint(-9, 9)
+            cy = y + rng.randint(-5, 5)
+            if i == 0:              # tipped: seen side-on
+                pygame.draw.rect(surf, dull, (cx - 5, cy - 2, 10, 5))
+                pygame.draw.rect(surf, dark, (cx - 5, cy - 2, 10, 5), 1)
+                pygame.draw.ellipse(surf, dark, (cx + 3, cy - 3, 4, 7))
+            else:                   # standing: a small ring from above
+                pygame.draw.circle(surf, dull, (cx, cy), 3)
+                pygame.draw.circle(surf, dark, (cx, cy), 3, 1)
+                pygame.draw.circle(surf, dark, (cx, cy), 1)
+            if rng.random() < 0.7:
+                surf.set_at((cx + rng.randint(-2, 2),
+                             cy + rng.randint(-2, 2)), rust)
+        # the sprung lid, glinting a little off to one side
+        pygame.draw.ellipse(surf, (150, 148, 140), (x + 6, y + 4, 5, 3))
+
+    def _draw_glass_litter(self, surf, x, y):
+        """Broken glass across the ground -- the glass noise trap.
+        A seeded scatter of pale glints and two larger shards."""
+        rng = random.Random(self.seed * 3 + 1)
+        glint = (188, 198, 204)
+        dim = (120, 130, 138)
+        for _ in range(9):
+            gx = x + rng.randint(-11, 11)
+            gy = y + rng.randint(-7, 7)
+            col = glint if rng.random() < 0.4 else dim
+            if rng.random() < 0.5:
+                surf.set_at((gx, gy), col)
+            else:
+                pygame.draw.line(surf, col, (gx, gy),
+                                 (gx + rng.randint(1, 2), gy), 1)
+        for sx, sy, flip in ((x - 4, y - 1, 1), (x + 5, y + 3, -1)):
+            pygame.draw.polygon(surf, dim,
+                                [(sx, sy), (sx + 4 * flip, sy + 1),
+                                 (sx + 1 * flip, sy - 3)])
+            pygame.draw.line(surf, glint, (sx, sy),
+                             (sx + 1 * flip, sy - 3), 1)
+
+    def _draw_loose_plank(self, surf, x, y):
+        """A weathered board lying askew over a gap -- the plank noise
+        trap. Grain lines, one nail head, dark shadow under the
+        raised end."""
+        sh = pygame.Surface((30, 8), pygame.SRCALPHA)
+        pygame.draw.ellipse(sh, (0, 0, 0, 70), (0, 0, 30, 8))
+        surf.blit(sh, (x - 15, y))
+        pts = [(x - 14, y + 2), (x + 13, y - 3),
+               (x + 14, y + 1), (x - 13, y + 6)]
+        pygame.draw.polygon(surf, (104, 82, 56), pts)
+        pygame.draw.polygon(surf, (58, 44, 30), pts, 1)
+        pygame.draw.line(surf, (76, 58, 40),
+                         (x - 10, y + 3), (x + 10, y - 1), 1)
+        pygame.draw.circle(surf, (40, 36, 34), (x + 10, y - 1), 1)
+
+    def _draw_valve(self, surf, x, y):
+        """A works pressure valve set in a wall pipe run -- the
+        toggleable hiss source. Iron pipe with flange bolts and a
+        spoked handwheel."""
+        pipe = (58, 60, 64)
+        pipe_dk = (34, 36, 40)
+        wheel = (108, 52, 40)
+        pygame.draw.rect(surf, pipe, (x - 3, y - 22, 6, 26))
+        pygame.draw.rect(surf, pipe_dk, (x - 3, y - 22, 6, 26), 1)
+        for fy in (y - 18, y - 2):
+            pygame.draw.rect(surf, pipe_dk, (x - 5, fy, 10, 3))
+        pygame.draw.circle(surf, wheel, (x, y - 10), 6, 2)
+        for ang in (0.3, 2.4, 4.5):
+            pygame.draw.line(surf, wheel, (x, y - 10),
+                             (x + int(math.cos(ang) * 5),
+                              y - 10 + int(math.sin(ang) * 5)), 1)
+        pygame.draw.circle(surf, pipe_dk, (x, y - 10), 1)
 
     def _draw_grass_tuft(self, surf, x, y):
         sway = math.sin(self.t * 2 + self.seed) * 1

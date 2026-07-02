@@ -292,6 +292,20 @@ def build_works_vats():
     sc.add_enemy(_cultist(6 * TILE + 16, 5 * TILE + 16, speed=0.8))
     sc.add_enemy(_cultist(9 * TILE + 16, 5 * TILE + 16, speed=0.8))
     _ambient(sc, "low_pulse", 0.14, 6.0, 10.0)
+    # A pressure valve on the west arm's pipe run: crack it open and
+    # the line knocks and hisses -- a lure that pulls the basin workers
+    # off the crossing until one of them seats it shut.
+    sc.add_decoration(Decoration(2 * TILE + 16, 4 * TILE + 6, "valve"))
+    sc.add_noise_source(
+        2 * TILE + 16, 4 * TILE + 12, "valve", period=1.1, reach=380.0,
+        sfx="valve_hiss",
+        on_notice="You crack the valve. The line begins to knock and "
+                  "hiss.",
+        off_notice="You seat the valve shut.",
+        silenced_notice="A hand seats the valve shut. The hiss dies in "
+                        "the line.")
+    # A loose plank over the south-arm runoff channel.
+    sc.add_noise_trap(6 * TILE + 16, 7 * TILE + 16, "plank", seed=11)
 
     def _vats_on_enter(game, scene):
         # First entry: the dig hit water. This is the river (NARRATIVE 1b) --
@@ -387,6 +401,9 @@ def build_works_sorting():
     sc.add_enemy(_cultist(4 * TILE + 16, 6 * TILE + 16, speed=0.9))
     sc.add_enemy(_cultist(11 * TILE + 16, 6 * TILE + 16, speed=0.9))
     _ambient(sc, "whisper", 0.13, 7.0, 12.0)
+    # Glass litter between the sorting rows -- a jar knocked off a
+    # table long ago, never swept. The crossing's floor bites back.
+    sc.add_noise_trap(8 * TILE + 16, 6 * TILE + 16, "glass", seed=12)
 
     def _interact(game):
         tx, ty = sc._table_pos

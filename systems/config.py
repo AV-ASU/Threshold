@@ -415,6 +415,14 @@ BELL_MASK_RADIUS = 100000.0   # the peal covers the whole scene
 BELL_REACH = 100000.0         # the pull is heard map-wide
 BELL_STOP_DIST = 70.0         # a hunter this close to the door stills it
 
+# ---- Placed noisemakers (Scene.add_noise_trap / add_noise_source) ---------
+# Passive traps underfoot (cans, glass, a loose plank, a crow that
+# flushes) fire on entry and re-arm after the player leaves; toggleable
+# sources (the truck radio, the works valve) loop a lure until a cult
+# hunter reaches them and shuts them off.
+TRAP_REARM = 2.0              # s before a left-and-re-entered trap re-fires
+NOISE_SRC_SILENCE_DIST = 40.0 # a hunter this close shuts a source off
+
 # Visibility rates, per second. Watchers + cultist gaze push the meter
 # up; hiding pulls it down. Enough Watchers out-pace even hiding --
 # that is the spiral toward a King the player can no longer shake.

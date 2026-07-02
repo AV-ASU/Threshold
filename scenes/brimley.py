@@ -1042,6 +1042,23 @@ def build_brimley():
                      (92 * TILE + 28, 14 * TILE + 22)]:
         sc.add_decoration(Decoration(fx, fy, "missing_flyer"))
 
+    # ---- Placed noisemakers (2026-07 sound overhaul) ----
+    # The stalled pickup's cab radio: an E-toggleable lure. Turn it on,
+    # slip away, and the patrol walks to the music instead of you,
+    # until a hand reaches into the cab and kills it.
+    sc.add_noise_source(
+        95 * TILE + 16, 56 * TILE + 16, "radio", sfx="radio_snatch",
+        on_notice="The truck radio catches. A dead station rolls out "
+                  "over the street.",
+        off_notice="You kill the radio.",
+        silenced_notice="The music stops dead.")
+    # Passive litter along the routes: glass under the truck's door,
+    # tins in the schoolyard lee, and a crow posted on the open
+    # approach to the stone ring that flushes screaming.
+    sc.add_noise_trap(94 * TILE + 16, 56 * TILE + 24, "glass", seed=7)
+    sc.add_noise_trap(61 * TILE + 16, 55 * TILE + 16, "cans", seed=8)
+    sc.add_noise_trap(75 * TILE + 16, 38 * TILE + 16, "crow", seed=9)
+
     # ---- Cult-taken territory: the south-west farmhouse ----
     # Bible §2: newcomers ARE the cult, and one or two contiguous lots
     # would be "their" houses. The haunted_house already reads as the

@@ -1210,6 +1210,12 @@ def build_cornfield_maze():
             return
     sc.on_interact_fn = _cornfield_maze_interact
 
+    # Litter in the lanes (2026-07 sound overhaul): tins dumped in lane
+    # 2, and a crow posted in lane 4 that flushes screaming -- the maze
+    # punishes a careless line even when nothing can see you.
+    sc.add_noise_trap(6 * TILE + 16, 8 * TILE + 16, "cans", seed=13)
+    sc.add_noise_trap(16 * TILE + 16, 10 * TILE + 16, "crow", seed=14)
+
     sc.hide_spots = []
     return sc
 

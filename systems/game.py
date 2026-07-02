@@ -1276,6 +1276,123 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
                 sc.emit_noise(bell_door[0], bell_door[1], 1.0,
                               kind="bell", reach=BELL_REACH)
 
+    # ---- Placed noisemakers (traps underfoot + toggleable sources) ----
+    def _trip_noise_traps(self, dt):
+        """Passive noisemakers underfoot (Scene.add_noise_trap): strewn
+        cans, glass litter, a loose plank, a crow that flushes. Fire ON
+        ENTRY into the trap's radius -- once -- then re-arm only after
+        the player leaves it (plus TRAP_REARM), so standing in the
+        litter doesn't machine-gun events. The crow is one-shot per
+        load: the bird is gone. A live bell mask still swallows the
+        event (loud hides small); the foley plays regardless."""
+        sc = self.scene
+        traps = getattr(sc, "noise_traps", None)
+        if not traps:
+            return
+        px, py = self.player.x, self.player.y
+        for tr in traps:
+            if tr.get("dead"):
+                continue
+            tr["cool"] = max(0.0, tr["cool"] - dt)
+            inside = sc.world_dist(px, py, tr["x"], tr["y"]) <= tr["r"]
+            fire = inside and not tr["inside"] and tr["cool"] <= 0.0
+            tr["inside"] = inside
+            if not fire:
+                continue
+            tr["cool"] = TRAP_REARM
+            sc.emit_noise(tr["x"], tr["y"], tr["loud"], kind=tr["kind"])
+            if tr["sfx"]:
+                self.audio.play_in_scene(tr["sfx"], 0.8)
+            if tr["kind"] == "crow":
+                tr["dead"] = True
+                d = tr.get("deco")
+                if d is not None:
+                    d.flushed_at = d.t       # the draw animates the flush
+
+    def _tick_noise_sources(self, dt):
+        """Drive the toggleable lure sources (Scene.add_noise_source).
+        A playing source emits its event every `period` (with its own
+        `reach`, at 0.8 -- turns scout heads, never breaks a
+        sighting-born search) and plays its loop foley panned/attenuated
+        to the player's ear. The first mobile cult hunter to reach it
+        shuts it off and sweeps around it, exactly like the bell;
+        set-piece kneelers and apex pursuers never touch it."""
+        sc = self.scene
+        srcs = getattr(sc, "noise_sources", None)
+        if not srcs:
+            return
+        for s in srcs:
+            if not s["on"]:
+                continue
+            silencer = None
+            for group in (sc.npcs, sc.enemies):
+                for a in group:
+                    if not getattr(a, "alive", True):
+                        continue
+                    if getattr(a, "_is_corpse", False):
+                        continue
+                    is_cult = (str(getattr(a, "tag", "")).startswith("cult_")
+                               or getattr(a, "kind", "") == "cultist")
+                    if not is_cult or getattr(a, "tag", "") == "cult_convert":
+                        continue
+                    if getattr(a, "_force_chase", False):
+                        continue
+                    if (getattr(a, "lock_facing", False)
+                            or getattr(a, "aggro", 1) == 0):
+                        continue
+                    if sc.world_dist(a.x, a.y, s["x"], s["y"]) \
+                            <= NOISE_SRC_SILENCE_DIST:
+                        silencer = a
+                        break
+                if silencer is not None:
+                    break
+            if silencer is not None:
+                s["on"] = False
+                # a dead lure stops calling (same rule as the bell)
+                sc._noise_events = [e for e in sc._noise_events
+                                    if e[4] != s["kind"]]
+                silencer._last_seen_pos = (s["x"], s["y"])
+                _cult_enter_search(silencer, sc)
+                self.audio.play("bump", 0.4)
+                if s.get("silenced_notice"):
+                    self.show_notice(s["silenced_notice"], duration=2.4)
+                continue
+            s["t"] -= dt
+            if s["t"] > 0.0:
+                continue
+            s["t"] = s["period"]
+            sc.emit_noise(s["x"], s["y"], s["loud"], kind=s["kind"],
+                          reach=s["reach"])
+            if s["sfx"]:
+                pan = self.audio.pan_for_world(s["x"], self.player.x)
+                dmult = self.audio.distance_attenuation(
+                    s["x"], s["y"], self.player.x, self.player.y,
+                    falloff=420.0)
+                self.audio.play(s["sfx"], 0.8 * dmult, pan=pan)
+
+    def _try_toggle_source(self):
+        """E on a placed noise source flips it. Runs after the NPC
+        check in try_interact (talking always wins) and before the
+        scene's own on_interact_fn."""
+        srcs = getattr(self.scene, "noise_sources", None)
+        if not srcs:
+            return False
+        for s in srcs:
+            if math.hypot(s["x"] - self.player.x,
+                          s["y"] - self.player.y) > 40:
+                continue
+            s["on"] = not s["on"]
+            self.audio.play("bump", 0.35)
+            if s["on"]:
+                s["t"] = 0.0             # first emit lands this tick
+                if s.get("on_notice"):
+                    self.show_notice(s["on_notice"], duration=2.6)
+            else:
+                if s.get("off_notice"):
+                    self.show_notice(s["off_notice"], duration=1.8)
+            return True
+        return False
+
     # ---- Interaction ----
     def try_interact(self):
         # If currently hidden, E exits the hide.
@@ -1345,6 +1462,10 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         if best:
             self.audio.play("confirm", 0.6)
             best.interact(self)
+            return
+        # Toggleable noise sources (the truck radio, the works valve) --
+        # after NPCs (talking always wins), before the scene handler.
+        if self._try_toggle_source():
             return
         if self.scene.on_interact_fn:
             self.scene.on_interact_fn(self)
@@ -2249,6 +2370,8 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
             # while a box is up. Cutscene/audio drivers keep running.
             if not world_frozen:
                 self._tick_bell(dt)
+                self._trip_noise_traps(dt)
+                self._tick_noise_sources(dt)
                 self._tick_cultists(dt)
                 self._tick_struggle(dt)
                 self._tick_chase_cues_enemies(dt)

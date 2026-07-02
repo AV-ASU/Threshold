@@ -2766,6 +2766,9 @@ _FLOOR_DECAL_KINDS = frozenset((
     # ground: both want to warp onto the floor under tilt, not stand up as
     # vertical stickers.
     "mist", "leaves",
+    # Noise-trap litter (add_noise_trap): tins, shards, and a board all
+    # lie IN the ground plane. (The trap crow is the standing `crow`.)
+    "tin_cans", "glass_litter", "loose_plank",
 ))
 
 # Decals that lie flat on a RAISED surface (a ledger open on a desktop): warped
@@ -3821,6 +3824,11 @@ class Scene:
         self._noise_events = []
         self._noise_mask = None
         self._last_step_event = None
+        # Placed noisemakers (add_noise_trap / add_noise_source):
+        # passive traps underfoot and E-toggleable lure sources. All
+        # state lives on these dicts, so a scene rebuild resets them.
+        self.noise_traps = []
+        self.noise_sources = []
         self.on_enter_fn = None
         self.on_exit_fn = None
         self.on_interact_fn = None    # called when E pressed and no NPC nearby
@@ -3955,6 +3963,51 @@ class Scene:
             self._noise_mask = None
             return False
         return True
+
+    def add_noise_source(self, x, y, kind, loud=0.8, period=1.4,
+                         reach=340.0, sfx=None, on_notice=None,
+                         off_notice=None, silenced_notice=None):
+        """Register a TURN-ON-ABLE noise source (the truck radio, the
+        works valve). E toggles it (Game._try_toggle_source); while on,
+        Game._tick_noise_sources emits a periodic event at (x, y) --
+        loud enough to turn scout heads (0.8 < the searcher pull, so
+        it lures patrols without breaking a sighting-born search) and
+        carrying its own `reach`. The first mobile cult hunter to
+        reach it shuts it off and sweeps around it. Notices are the
+        placement's own fiction; the machinery is shared."""
+        src = dict(x=x, y=y, kind=kind, on=False, t=0.0, loud=loud,
+                   period=period, reach=reach, sfx=sfx,
+                   on_notice=on_notice, off_notice=off_notice,
+                   silenced_notice=silenced_notice)
+        self.noise_sources.append(src)
+        self.add_interactable(x, y, 40)
+        return src
+
+    def add_noise_trap(self, x, y, kind, seed=None):
+        """Place a PASSIVE noisemaker underfoot: strewn cans, glass
+        litter, a loose plank, a crow that flushes. Stepping into its
+        radius fires once (Game._trip_noise_traps): the foley plays and
+        the noise event goes out to listening cultists. Leave and
+        return (past a short re-arm) to fire it again; the crow is
+        one-shot per load (the bird is gone). The matching decoration
+        is placed automatically."""
+        spec = {
+            "cans":  dict(r=20.0, loud=0.75, sfx="cans_rattle",
+                          deco="tin_cans"),
+            "glass": dict(r=18.0, loud=0.80, sfx="glass_crunch",
+                          deco="glass_litter"),
+            "plank": dict(r=18.0, loud=0.72, sfx="wood_pop",
+                          deco="loose_plank"),
+            "crow":  dict(r=55.0, loud=0.75, sfx="crow_flush",
+                          deco="crow"),
+        }[kind]
+        from entities.decoration import Decoration
+        d = Decoration(x, y, spec["deco"], seed=seed)
+        self.add_decoration(d)
+        trap = dict(x=x, y=y, kind=kind, r=spec["r"], loud=spec["loud"],
+                    sfx=spec["sfx"], deco=d, inside=False, cool=0.0)
+        self.noise_traps.append(trap)
+        return trap
 
     def char_floor_at(self, x_px, y_px):
         tx = int(x_px // TILE); ty = int(y_px // TILE)
