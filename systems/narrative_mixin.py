@@ -203,6 +203,45 @@ class NarrativeMixin:
         if hasattr(self, "_flash_notebook"):
             self._flash_notebook()
 
+    def _current_lead(self):
+        """The single soft "where the thread points" line the notebook
+        shows (TODO #5). DERIVED from run state on every read, so there
+        is no wiring to go stale and no scatter of setters: the deepest
+        milestone that holds wins. Authored, oblique, PI-voiced. Never
+        a checklist, never a waypoint, never evidence."""
+        s = self.save
+        if s is None:
+            return None
+        inv = getattr(self.player, "inventory", None)
+
+        def has(k):
+            return bool(inv is not None and inv.has(k))
+        if s.flag("descent_sealed"):
+            return ("Up was spent the moment you crossed. The car on the "
+                    "arrival road answers what you carry.")
+        if s.flag("depths_breached"):
+            return "Old stone under the face. It is close now. Down."
+        if has("sigil_rubbing"):
+            return ("His face opens every door left in this town. Where "
+                    "you carry it is the whole of the choice.")
+        if s.flag("rite_performed"):
+            return "The circle took you once already. Down."
+        if s.flag("school_door_open"):
+            return ("The clearing deep in the corn. Speak nothing there. "
+                    "The dead fire knows the way down.")
+        if has("rite_envelope"):
+            return ("The Invitation names the school. Sleep where they "
+                    "slept. Sweeten the air. Draw the last door.")
+        if self._evidence_count() >= 3:
+            return ("Enough of it holds together now. The Arcadia's desk "
+                    "has been waiting for you to know that much.")
+        if self._evidence_count() >= 1:
+            return ("Pull the threads. The register at the Lodge, the "
+                    "barn she slept in, the well the boy watched. The "
+                    "town talks around what it knows.")
+        return ("Ask the town about the Blaine girl. Start where anyone "
+                "starts. The store, the law, the church.")
+
     def _log_note(self, name, lines):
         """Append a PI case-notebook NOTE (arg `notes`, never `evidence`).
         Idempotent by `name` so re-triggering a pickup never dupes. Used by

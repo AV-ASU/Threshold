@@ -100,6 +100,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         self.dialog = DialogueBox(self.audio, self.fonts)
         self.inv_ui = InventoryUI(self.fonts, self.audio, self.save)
         self.notebook_ui = NotebookUI(self.fonts, self.audio, self.save)
+        self.notebook_ui.game = self   # the soft lead line reads live state
         # Text-input modal -- used by the old man's computer terminal
         # (LOGIN: prompt) and reusable for any future ARG hooks. While
         # active, the Game suspends play and routes key events here.
@@ -1059,6 +1060,13 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
                 if on_corn and self.player.hidden is None:
                     self.player.hidden = "corn"
                     self.audio.play("hide_enter", 0.55)
+                    # One-shot teach (TODO #5): corn is CONCEALMENT, not
+                    # invisibility (the stealth rework's core rule).
+                    if self.save and not self.save.flag("teach_corn"):
+                        self.save.set_flag("teach_corn", True)
+                        self.show_notice("The stalks take you in. Distance "
+                                         "hides you. Close eyes still find "
+                                         "you.", duration=3.6)
                 elif (not on_corn) and self.player.hidden == "corn":
                     self.player.hidden = None
                     self.audio.play("hide_exit", 0.55)

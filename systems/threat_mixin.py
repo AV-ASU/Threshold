@@ -633,6 +633,14 @@ class ThreatMixin:
         # the roam tick) -- the bar reads the cult puzzle, the King stays felt.
         seen_rate = self._gaze_count * VIS_GAZE + lit_rise
         self._being_seen = max(0.0, min(1.0, seen_rate / BEING_SEEN_FULL))
+        # One-shot teach (TODO #5): the first time eyes really pile on,
+        # name what the notched bar is and what breaks it.
+        if (self._being_seen >= 0.5 and self.save
+                and not self.save.flag("teach_seen")):
+            self.save.set_flag("teach_seen", True)
+            self.show_notice("Eyes are on you. The notches read how hard. "
+                             "Walls, corn, distance break the line.",
+                             duration=3.6)
         # FLOORS the meter can't bleed below: evidence (the more you
         # understand, the higher your baseline) PLUS each live Watcher of the
         # curse. Capped just under the King so the curse presses you to the

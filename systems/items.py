@@ -53,29 +53,39 @@ ITEM_DEFS = {
     "robe":          {"name": "Old Robe",
                        "kind": "lore",
                        "desc": "A coarse wool robe."},
+    # NB: the journal READS from MARA_JOURNAL_PAGES below (the paged
+    # leaves); this desc is the skim text and must stay consistent with
+    # those pages -- the ache first (grief that learned her name), then
+    # the door, then the glad dig down (NARRATIVE 1b: answered, not
+    # deceived).
     "mom_notebook":  {"name": "Mara's Journal",
                        "kind": "lore",
-                       "desc": "Her last entries, in a hand that gets calmer "
-                               "as it goes:\n\n"
-                               "\"I just had this urge to go north. Stopped "
-                               "for gas in this town. Everyone smiles like "
-                               "I'm already home.\"\n\n"
-                               "\"I had Him wrong. He isn't out past the corn. "
-                               "He's under it. You don't walk to Him. You go "
-                               "down.\"\n\n"
-                               "\"There's a mouth below the town. The others "
-                               "went ahead of me, down it, and not one has "
-                               "climbed back up. Tomorrow I follow them down. "
-                               "I feel so close now.\""},
+                       "desc": "Her journal. Three leaves, in a hand that "
+                               "gets calmer as it goes:\n\n"
+                               "\"They told me grief would pass. It did not "
+                               "pass. It only learned my name.\"\n\n"
+                               "\"I have started to dream of a door. It is "
+                               "not frightening. It feels like being "
+                               "remembered.\"\n\n"
+                               "\"They dreamed the same door, every one of "
+                               "them. We are digging down to it together "
+                               "now. I am not lost. I have never been this "
+                               "close.\""},
+    # The thing the player CARRIES out of her cell holds the ache: what
+    # she fled is named as a shape, never a person (canon keeps her
+    # grief unspecified; Dad knows "after" what, the player never does).
     "unsent_letter": {"name": "Mara's Letter",
                        "kind": "lore",
                        "desc": "Stamped, never mailed.\n\n"
                                "\"Dad. ...I'm sorry for how I left. I couldn't "
-                               "explain it and have it sound sane. The dreams "
-                               "aren't dreams anymore. They're full of answers. "
-                               "I'm just hunting the questions now. Don't come "
-                               "after me. I'm not lost. I've never been this "
-                               "close.\""},
+                               "explain it and have it sound sane. You know "
+                               "what the apartment got like after. The quiet "
+                               "had a shape. I could not keep sitting inside "
+                               "it.\n\n"
+                               "The dreams aren't dreams anymore. They're "
+                               "full of answers. I'm just hunting the "
+                               "questions now. Don't come after me. I'm not "
+                               "lost. I've never been this close.\""},
     # ---- The cult's testimony (three found fragments; gate nothing) ----
     # The congregation's own record, split across three leaves found down the
     # descent. The cult's voice lives in the DESCRIPTION (their personal

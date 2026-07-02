@@ -333,18 +333,21 @@ def build_barn():
             game.audio.play("low_pulse", 0.45)
             # File the case beat silently; the journal itself reads from the
             # kit (its entries are the item desc), not forced on pickup.
+            # The log excerpts quote MARA_JOURNAL_PAGES (systems/items.py)
+            # so the evidence beat and the readable journal can never
+            # drift apart again: the ache, the door, the glad dig down.
             _evidence(game, "maras_journal", [
                 "A notebook, shoved down behind the workbench. You know the "
                 "hand. It's hers, the same as the letter.",
-                "Her journal. The last entries, in a hand that gets calmer "
+                "Her journal. Three leaves, in a hand that gets calmer "
                 "as it goes:",
-                "\"I just had this urge to go north. Stopped for gas in this "
-                "town. Everyone smiles like I'm already home.\"",
-                "\"I had Him wrong. He isn't out past the corn. He's under "
-                "it. You don't walk to Him. You go down.\"",
-                "\"There's a mouth below the town. The others went ahead of "
-                "me, down it, and not one has climbed back up. Tomorrow I "
-                "follow them down. I feel so close now.\"",
+                "\"They told me grief would pass. It did not pass. It only "
+                "learned my name.\"",
+                "\"I have started to dream of a door. It is not "
+                "frightening. It feels like being remembered.\"",
+                "\"They dreamed the same door, every one of them. We are "
+                "digging down to it together now. I am not lost. I have "
+                "never been this close.\"",
             ], show=False)
             game.show_notice("Her journal.")
             return

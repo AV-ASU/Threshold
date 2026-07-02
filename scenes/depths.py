@@ -504,6 +504,32 @@ def _mara_voice(game, npc):
     game.save.set_flag("hive_seen", True)
     game.audio.force_silence()
     game.audio.play("low_pulse", 0.6)
+
+    def _lure_collision():
+        # TODO #7 -- the lure chain, felt ONCE (NARRATIVE §1/§10 fence:
+        # never stated, no chain named; the PI starts the thought and
+        # declines to finish it). Only for a player who lived the dream
+        # (flashback_seen); for anyone else her lines stand alone.
+        if not game.save.flag("flashback_seen"):
+            return
+        game.dialog.show([
+            "[c=dim](A door in your sleep, a year back. Then a grief job "
+            "you had no reason to take, and an itch that drove you north "
+            "with it.)[/c]",
+            "[c=dim](And every road in handed you here. To her, kneeling. "
+            "You start the arithmetic of that, and you put it down. Some "
+            "sums you don't finish standing up.)[/c]",
+        ], speaker="", voice="blip_soft", portrait="narrator")
+
+    # File evidence #6 FIRST and silently (show=False): the log + the
+    # King-gate land immediately, and the one-line evidence dialog no
+    # longer CLOBBERS her four lines (dialog.show replaces the open
+    # box, so the old order showed the player only the summary and the
+    # whole exchange was lost). The notebook keeps the summary text.
+    _evidence(game, "the_congregation", [
+        "Mara, kneeling with the congregation. Turned. There was never "
+        "anyone to bring back. Only this, and now you're in it with her.",
+    ], show=False)
     game.dialog.show([
         "[c=dim](You say her name. The hooded head lifts. It is Mara.)[/c]",
         "\"My father sent you. Of course he did. He never could let a thing "
@@ -513,11 +539,8 @@ def _mara_voice(game, npc):
         "[c=dim]\"There was no one down here to bring back. I was not taken. I "
         "was answered, and I went to it gladly. Go home, while the town still "
         "lets you think you can.\"[/c]",
-    ], speaker="", voice="blip_soft", portrait="narrator")
-    _evidence(game, "the_congregation", [
-        "Mara, kneeling with the congregation. Turned. There was never "
-        "anyone to bring back. Only this, and now you're in it with her.",
-    ])
+    ], speaker="", voice="blip_soft", portrait="narrator",
+        on_complete=_lure_collision)
 
 
 def build_dark():

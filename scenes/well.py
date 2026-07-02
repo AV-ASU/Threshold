@@ -138,6 +138,34 @@ def build_well_bottom():
     sc.hide_spots = []
     _ambient(sc, "low_pulse", 0.12, 9.0, 14.0)
 
+    # TODO #9 -- the SPREAD counterweight. A SPREAD-bound player never
+    # passes the Deepest Face fuse (where both roads are spoken), so the
+    # fork could end without ever reading as a fork. One interior-voice
+    # beat, fired ONCE, on standing at the way up with His face in hand:
+    # it names the other road and leaves the crossing itself silent (the
+    # fold stays a non-event; the stakes land BEFORE the pane, never on
+    # it). Fires for a SEAL-bound backtracker too, which only sharpens
+    # the choice. Never evidence.
+    def _bottom_on_enter(game, scene):
+        if game.save.flag("spread_counterweight"):
+            return
+        if game.save.flag("descent_sealed"):
+            return
+        if not game.player.inventory.has("sigil_rubbing"):
+            return
+        game.save.set_flag("spread_counterweight", True)
+        game.audio.play("low_pulse", 0.5)
+        game.dialog.show([
+            "[c=dim]The pane stands where the rope hung, and with His "
+            "face in your hands you can feel it holding the door open "
+            "for you. Up is real again. The roads would run.[/c]",
+            "[c=dim]And under your feet the dig runs the other way, down "
+            "to the thing this whole town kneels to. You could end it "
+            "where it starts. Nobody is coming down here after you to do "
+            "it instead.[/c]",
+        ], speaker="", voice="blip_soft", portrait="narrator")
+    sc.on_enter_fn = _bottom_on_enter
+
     # The Works gauntlet is walkable both ways for the Mask-bearer; for
     # anyone else the pane above refuses (keyed to His face). The fall
     # through the blasted face (works_deepstair) is the one-way step.

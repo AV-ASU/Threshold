@@ -218,6 +218,27 @@ def hettie_dialogue(game, npc):
             "here. Don't ask me to.",
         ], speaker="Hettie", voice="blip_high", portrait="hettie")
         return
+    # A faint memory of the girl herself (TODO #6): fires once the PI
+    # carries her journal (her hand is in his pocket; the asking got
+    # real). Mara passed through Brimley for a season before she went
+    # below; Hettie knew her the way a counter knows anyone. NARRATIVE
+    # §2: she does NOT know Walter; this is the girl, never the family.
+    if (save.arg("shop_count", 0) >= 1
+            and not save.flag("hettie_mara_memory")
+            and game.player.inventory.has("mom_notebook")):
+        save.set_flag("hettie_mara_memory", True)
+        game.dialog.show([
+            "The Blaine girl. I'll tell you the one thing I know that's "
+            "worth the telling.",
+            "She used to come in here. Matches, canned milk. Counted her "
+            "change twice, every time, like it mattered. Sad around the "
+            "eyes, and polite with it.",
+            "[c=dim]Then one day past the new year she set her basket "
+            "down half filled and walked out smiling. Left the basket "
+            "on the counter. I never saw her again.[/c]",
+            "[c=dim]It was the smiling I minded.[/c]",
+        ], speaker="Hettie", voice="blip_high", portrait="hettie")
+        return
     # The trade: yesterday's paper (the April 14 issue, picked up before
     # the drive north) for ONE load of the cartridges she keeps under the
     # counter. One opportunistic barter, NOT a fetch chain (Sable's was

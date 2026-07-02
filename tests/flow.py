@@ -493,8 +493,11 @@ def main():
     jlines = next((e["lines"] for e in ge.save.arg("evidence", [])
                    if e.get("name") == "maras_journal"), [])
     jtext = " ".join(jlines).lower()
-    check("you go down" in jtext or "below the town" in jtext,
+    check(any(k in jtext for k in ("you go down", "below the town",
+                                   "digging down")),
           "barn: Mara's journal motivates the descent (points down/below)")
+    check("learned my name" in jtext,
+          "barn: the journal log carries her ache (grief, page 1)")
     ge.load_scene_now("dark")                          # the_congregation (#6)
     ready(ge)
     mara_e = next((n for n in ge.scene.npcs if n.name == "Mara"), None)
@@ -1350,6 +1353,104 @@ def main():
     check(any(isinstance(e, dict) and e.get("name") == "the_procession"
               for e in _pnotes) and evidence_count(gp2) == _evp,
           "descent: the procession candles land as a NOTE, never evidence")
+
+    # --- 24b. Mara's exchange displays; the lure collides once (TODO #6/#7);
+    # the SPREAD counterweight names the other road (TODO #9).
+    gm = new_game()
+    gm.load_scene_now("dark")
+    ready(gm)
+    gm.save.set_flag("flashback_seen", True)
+    _mshown = []
+    _morig = gm.dialog.show
+
+    def _mspy(pages, *a, **k):
+        _mshown.extend([pages] if isinstance(pages, str) else list(pages))
+        return _morig(pages, *a, **k)
+    gm.dialog.show = _mspy
+    _mara = next((n for n in gm.scene.npcs
+                  if getattr(n, "name", "") == "Mara"), None)
+    if _mara is not None:
+        _evm = evidence_count(gm)
+        _mara.dialogue_fn(gm, _mara)
+        check(len(gm.dialog.pages) == 4,
+              "mara: her four-line exchange is the ACTIVE dialog (evidence "
+              "one-liner no longer clobbers it)")
+        check(evidence_count(gm) == _evm + 1,
+              "mara: evidence #6 still files immediately")
+        if gm.dialog.on_complete:
+            gm.dialog.on_complete()
+        _mj = " ".join(_mshown).lower()
+        check("arithmetic" in _mj,
+              "lure: the dream+case+Mara collision fires after her lines")
+        check(not any(w in _mj for w in ("marked", "lure", "bait",
+                                         "the king", "dimension")),
+              "lure: the collision beat holds the fence")
+        check(not any(("—" in p) or ("–" in p) or ("--" in p)
+                      for p in _mshown),
+              "lure: no dashes in the beat")
+    else:
+        check(False, "mara: present in the hive")
+
+    gw = new_game()
+    gw.player.inventory.add("sigil_rubbing", 1)
+    gw.load_scene_now("well_bottom")
+    _wtext = "".join(str(getattr(gw.dialog, "pages", "")))
+    check(gw.save.flag("spread_counterweight"),
+          "spread: the counterweight beat fires at the shaft floor with "
+          "the Mask in hand")
+    gw2 = new_game()
+    gw2.player.inventory.add("sigil_rubbing", 1)
+    gw2.save.set_flag("descent_sealed", True)
+    gw2.load_scene_now("well_bottom")
+    check(not gw2.save.flag("spread_counterweight"),
+          "spread: the counterweight never fires after the seal")
+
+    gh = new_game()
+    gh.load_scene_now("shop")
+    ready(gh)
+    gh.save.set_arg("shop_count", 1)
+    gh.player.inventory.add("mom_notebook", 1)
+    from scenes.dialogue import hettie_dialogue as _hd
+    _hshown = []
+    _horig = gh.dialog.show
+
+    def _hspy(pages, *a, **k):
+        _hshown.extend([pages] if isinstance(pages, str) else list(pages))
+        return _horig(pages, *a, **k)
+    gh.dialog.show = _hspy
+
+    class _HStub:
+        pass
+    _hd(gh, _HStub())
+    check(any("smiling I minded" in p for p in _hshown),
+          "hettie: the memory of the girl fires once the journal is carried")
+    check(not any(("—" in p) or ("–" in p) or ("--" in p) for p in _hshown),
+          "hettie: no dashes in the memory beat")
+
+    # --- 24c. The soft lead (TODO #5): derived, oblique, never empty,
+    # never dashed, and it climbs the milestone ladder.
+    gl = new_game()
+    _lead0 = gl._current_lead()
+    check(isinstance(_lead0, str) and "Blaine girl" in _lead0,
+          "lead: a fresh run points at asking the town")
+    gl.save.set_arg("evidence", [{"name": c, "lines": [], "weight": 0.05}
+                                 for c in "abc"])
+    check("desk" in (gl._current_lead() or ""),
+          "lead: three beats point back at the Lodge desk")
+    gl.player.inventory.add("rite_envelope", 1)
+    check("school" in (gl._current_lead() or ""),
+          "lead: the Invitation points at the school")
+    gl.save.set_flag("rite_performed", True)
+    gl.player.inventory.add("sigil_rubbing", 1)
+    _leadm = gl._current_lead() or ""
+    check("carry" in _leadm,
+          "lead: the Mask stage names the carried choice")
+    gl.save.set_flag("descent_sealed", True)
+    check("car" in (gl._current_lead() or ""),
+          "lead: the SPREAD lock points at the car")
+    for _st in (_lead0, _leadm):
+        check(not (("—" in _st) or ("–" in _st) or ("--" in _st)),
+              "lead: no dashes in the thread line")
 
     # --- 25. The placement pass (STEALTH_REWORK §6): every declared hide
     # sits on walkable ground, and the gauntlet rooms now HAVE one.

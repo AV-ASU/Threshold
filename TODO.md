@@ -76,36 +76,47 @@ dark stain with a drip on the near face. Verified under tilt.
 > not bugs. Decide scope before building; none are settled like the stealth
 > rework yet.
 
-### 5. Onboarding / guidance gap  *(highest impact, both passes)*
+### ~~5. Onboarding / guidance gap~~ — DONE, the soft version (2026-07)
 
-The game is hostile to a player who has not read `NARRATIVE.md`. No objective
-system, no tutorial, no map/waypoints; the notebook records what you *found*,
-not what to do next. The only in-game mechanic taught is the axe stun
-(`systems/game.py`); hiding, the visibility meter, limited ammo, and the
-curse are never explained. A first-timer spawns in the bedroom with no idea
-what the game is or where to go. Fix candidates: an opening framing beat, a
-light "objectives/leads" view in the notebook (`ui/notebook_ui.py`), and a
-couple of proactive teach-moments instead of fail-state-only teaching.
+A re-verification found the framing half already built (the opening
+drive + case cards, the seeded case note, the first-run controls line).
+The chosen scope was the SOFT version, holding the minimalist HUD: **the
+thread line** — one italic PI-voiced "where the thread points" sentence
+at the top of the notebook, DERIVED live from run state
+(`Game._current_lead`, an authored milestone ladder: ask the town → the
+Lodge desk → the Invitation/school → the clearing → down → the carried
+choice → the car). Never a checklist, never a waypoint, never evidence;
+flow-guarded (§24c). Plus two one-shot teach cues for the new stealth
+model: first corn entry ("Distance hides you. Close eyes still find
+you.") and the first strong being-seen fill (what the notches read and
+what breaks the line).
 
-### 6. Mara's arc is undelivered  *(highest impact, story pass)*
+### ~~6. Mara's arc is undelivered~~ — DONE (2026-07)
 
-The case is "find Mara," but the player never learns her *ache* (what the door
-answered) — she is a name, a journal, a cell, and a kneeling mass with one
-good final line. The tragedy the bible promises ("not deceived, answered")
-never lands, and the case evaporates after Act 1. Fix candidates: an unsent
-letter in her cell that names what she fled; one local who knew her; the
-door-dream showing *her* at the frame; evidence #6 as a short exchange, not a
-single line. Hold the §1b/§10 fence (no cosmology stated). Add a flow guard.
+Re-verification found most of the arc already built (the ache opens
+page 1 of her journal; the cell + letter exist; evidence #6 was already
+a four-line exchange) — plus one REAL bug hiding the payoff: the
+evidence one-liner was CLOBBERING her four-line hive exchange in the
+same frame (`dialog.show` replaces the open box), so the "answered, not
+deceived" beat never displayed. Fixed (evidence files silently first;
+her lines are the active dialog; flow-guarded). Landed with it: the
+stale "urge to go north" journal desc + barn log reconciled to the
+ache-bearing pages (grief that learned her name; the barn log now
+quotes the pages so they can't drift), her unsent letter carries the
+ache as a shape ("the quiet had a shape", Dad knows after what, the
+player never does), and Hettie holds a faint counter memory of the girl
+(one-shot, once the journal is carried: "It was the smiling I minded.").
 
-### 7. The lure chain is invisible in-play  *(story pass)*
+### ~~7. The lure chain is invisible in-play~~ — DONE (2026-07)
 
-The deepest plot — the PI was marked a year ago and *sent* to Brimley — lives
-only in `NARRATIVE.md` and three scattered notebook notes (`the_case`,
-`the_dream`), never connected for a play-only player, so the ending feels
-arbitrary. Fix candidate: ONE oblique moment (near the Threshold, or on
-learning of Mara) that links the dream + the case + Mara's presence — felt,
-never explained (this brushes the §10 fence; keep it a sensation, not a
-reveal).
+The ONE oblique moment now exists: a private narrator beat chained
+after Mara's hive lines (`_mara_voice` on_complete), gated on having
+lived the dream (`flashback_seen`): the dream, the grief job, the itch
+north, and her kneeling are set side by side, and the PI declines to
+finish the thought ("Some sums you don't finish standing up."). Never
+evidence, never a note (the cross-notebook surfacing stays the primary
+channel); fence held and flow-guarded (§24b: no "marked"/"lure"/
+"the king"/"dimension", no dashes).
 
 ### 8. The descent midgame — narrative half CLOSED (2026-07); one wrinkle open
 
@@ -125,13 +136,19 @@ splash noise on the dressed '~' tiles in works_vats/the_sump/
 depths_threshing), or a listener-cultist variant built on the suspicion
 model. Decide the fiction before building.
 
-### 9. Ending fork is not legible  *(story pass)*
+### ~~9. Ending fork is not legible~~ — DONE (2026-07)
 
-SEAL vs SPREAD are mechanically distinct but the player often will not grasp
-what either *means*, or even that carrying the Mask up is an escape. No beat
-states the stakes before the commit, so neither ending reads as won or lost.
-Fix candidate: a clarifying sensation/voice beat at the fork (still no
-cosmology spelled out), and an ending-text pass so each lands a clear feeling.
+Re-verification found the stakes beat already existed on the SEAL route
+(the Deepest Face two-press fuse speaks both roads), and the real gap
+was the SPREAD-only player who never passes it. Now closed: a one-shot
+interior-voice **counterweight** fires on standing at the shaft floor
+with the Mask in hand — the pane holds the way up ("Up is real again.
+The roads would run.") and the dig runs the other way ("You could end
+it where it starts. Nobody is coming down here after you to do it
+instead."). The crossing itself stays silent (the fold is still a
+non-event); never after the seal; flow-guarded (§24b). The locked
+ending texts were left untouched by choice (both endings damn
+something; neither should read as a clean win).
 
 ### ~~10. The town does not react to state~~ — DONE (2026-07)
 

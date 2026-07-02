@@ -27,6 +27,7 @@ class NotebookUI:
         self.fonts = fonts
         self.audio = audio
         self.save = save
+        self.game = None       # set by Game; source of the soft lead line
         self.open = False
         self.cursor = 0
 
@@ -80,6 +81,18 @@ class NotebookUI:
         entries = self._entries()
         lx = 84
         ly = 140
+        # The soft lead (TODO #5): one italic PI-voiced line, where the
+        # thread points right now. Derived live from run state
+        # (Game._current_lead) -- never a checklist, never a waypoint.
+        lead = None
+        if self.game is not None and hasattr(self.game, "_current_lead"):
+            lead = self.game._current_lead()
+        if lead:
+            end_y = mc.wrap(surf, self.fonts["serif_it"],
+                            "The thread: " + lead,
+                            66, 112, 400, color=(176, 162, 128),
+                            line_h=22)
+            ly = max(ly, end_y + 18)
         if not entries:
             surf.blit(self.fonts["serif_it"].render(
                 "The page is still blank.", True, FAINT), (lx, ly))
