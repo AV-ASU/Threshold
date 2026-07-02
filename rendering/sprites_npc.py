@@ -202,7 +202,7 @@ def _cap(surf, x, y, crown, crown_lo, bill, s=0):
 def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False,
                     birth=None, gait=None, threat=None, seed=0, curse=0.0,
                     view="front", to_player=None, lean=None, scale_mul=1.0,
-                    pose=None):
+                    pose=None, gape=0.0):
     """`blink=True` suppresses eye dots for NPC kinds that have human
     eyes (the named locals -- townswoman, tisdale_boy, sheriff, royce,
     preacher, clerk, hettie, old_townsman). Used by Game.draw to make a
@@ -717,7 +717,7 @@ def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False,
             draw_king_unfold(surf, x, y, t,
                              threat=(0.5 if threat is None else threat),
                              scale=KING_UNFOLD_SCALE * scale_mul,
-                             to_player=tp, birth=b, lean=ln)
+                             to_player=tp, birth=b, lean=ln, gape=gape)
         else:
             _draw_king(surf, x, y, facing, t, b, g, threat)
     elif kind == "black_figure":

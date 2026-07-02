@@ -3,7 +3,11 @@ import math
 import random
 
 from constants import C_WHITE
-from systems.config import SUS_NOTICE, SUS_SCORE_HOLD
+from systems.config import (SUS_NOTICE, SUS_SCORE_HOLD,
+                            KING_LUNGE_RANGE, KING_LUNGE_TELE,
+                            KING_LUNGE_DUR, KING_LUNGE_MULT,
+                            KING_LUNGE_GATHER, KING_LUNGE_CD_LO,
+                            KING_LUNGE_CD_HI)
 from systems.stealth import (detection_score, update_suspicion,
                              enter_search, sweep_check, hear_noise,
                              react_hold, errand_step, errand_drop)
@@ -484,7 +488,36 @@ class NPC:
         self.facing = (math.cos(head), math.sin(head))
         if self._birth < 1.0:
             return
-        step = self.speed * 60 * dt
+        # THE GAPE-LUNGE (2026-07 rework). Near the LIVE player (never a
+        # search/wander target) the mass GATHERS: it slows to a crawl
+        # while its leading face irises open around the Pallid Mask in
+        # its throat (the renderer reads self._gape) -- the tell and the
+        # counterplay window -- then SURGES. Cooldown randomised so the
+        # rhythm can't be metronomed.
+        lt = getattr(self, "_lunge_t", 0.0)
+        if lt > 0.0:
+            lt -= dt
+            self._lunge_t = lt
+        else:
+            cd = getattr(self, "_lunge_cd", 2.5) - dt
+            self._lunge_cd = cd
+            if cd <= 0.0 and tgt is None:
+                dpl = math.hypot(player.x - self.x, player.y - self.y)
+                if dpl < KING_LUNGE_RANGE:
+                    self._lunge_t = lt = KING_LUNGE_TELE + KING_LUNGE_DUR
+                    self._lunge_cd = random.uniform(KING_LUNGE_CD_LO,
+                                                    KING_LUNGE_CD_HI)
+        mult = 1.0
+        if lt > KING_LUNGE_DUR:                    # the gather (telegraph)
+            self._gape = min(1.0, (KING_LUNGE_TELE + KING_LUNGE_DUR - lt)
+                             / KING_LUNGE_TELE)
+            mult = KING_LUNGE_GATHER
+        elif lt > 0.0:                             # the surge, mouth wide
+            self._gape = 1.0
+            mult = KING_LUNGE_MULT
+        else:                                      # ease the mouth shut
+            self._gape = max(0.0, getattr(self, "_gape", 0.0) - dt * 3.0)
+        step = self.speed * 60 * dt * mult
         if self._yk_last_pos is None:
             self._yk_last_pos = (self.x, self.y)
         moved = math.hypot(self.x - self._yk_last_pos[0],
