@@ -102,6 +102,13 @@ AIM_DEAD_ZONE = 0.30
 # chase disengages — a few degrees of dead arc near the horizontal so the
 # transition between chase and free-look isn't an edge. ~75 degrees from up.
 CHASE_MAX_OFFSET = 1.30
+# Aim-steady rules (2026-07): aiming must never be a standing order to
+# swing the view. While the trigger is held (and for CHASE_FIRE_LOCK
+# seconds after a shot) the body-chase is OFF entirely; standing still
+# damps it to CHASE_STATIONARY_MULT of TURN_RATE; the full rate applies
+# only while movement keys are actually driving.
+CHASE_FIRE_LOCK = 0.40
+CHASE_STATIONARY_MULT = 0.35
 
 # Velocity smoothing time constant (seconds). Player velocity eases toward the
 # input-driven target over this window, giving a tactile accel/decel feel.

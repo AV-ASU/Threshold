@@ -385,6 +385,10 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         # The hide-check struggle (STEALTH_REWORK.md): a searcher checking
         # the enclosed hide the player is in opens a timed mash window.
         self._struggle = None
+        # Aim-steady camera state: the post-shot chase lock and the
+        # movement-input flag _update_look reads (see CHASE_FIRE_LOCK).
+        self._chase_lock_t = 0.0
+        self._move_input_active = False
         self._chant_t = 0.0
         self._breath_t = 0.0
         self._heartbeat_t = 0.0
@@ -876,14 +880,27 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         psx, psy = self.camera.project(self.player.x, self.player.y)
         dxs = mx - psx
         dys = my - psy
-        if dys < 0:
+        # Aim-steady rules (2026-07): holding the trigger (or the beat
+        # after a shot) locks the chase entirely -- lining up a shot is
+        # a stable platform, never a standing order to swing. Standing
+        # still damps the chase hard; the full turn rate only applies
+        # while movement keys are actually driving.
+        self._chase_lock_t = max(0.0,
+                                 getattr(self, "_chase_lock_t", 0.0) - dt)
+        if pygame.mouse.get_pressed()[0] or self._chase_lock_t > 0.0:
+            chase_rate = 0.0
+        elif getattr(self, "_move_input_active", False):
+            chase_rate = TURN_RATE
+        else:
+            chase_rate = TURN_RATE * CHASE_STATIONARY_MULT
+        if dys < 0 and chase_rate > 0.0:
             offset = math.atan2(dxs, -dys)
             # Chase only inside the FORWARD cone: AIM_DEAD_ZONE arc near
             # straight-up (no chase), out to CHASE_MAX_OFFSET near the
             # horizontal (no chase). Both bounds give the camera a few degrees
             # of rest before it starts swinging.
             if abs(offset) < CHASE_MAX_OFFSET:
-                self.look.chase_by(offset, dt, TURN_RATE, AIM_DEAD_ZONE)
+                self.look.chase_by(offset, dt, chase_rate, AIM_DEAD_ZONE)
         self.camera.yaw = self.look.cam_yaw
         # The sprite + gun face the cursor (free aim), independent of body.
         ax, ay = self.look.aim_vec()
@@ -940,6 +957,9 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         # patch while hidden, no teleport on exit; the floor-tile
         # check after movement clears the hide when they step out.
         input_active = bool(dx or dy)
+        # Shared with _update_look: the camera chase runs at full rate
+        # only while movement keys are actually driving (aim-steady).
+        self._move_input_active = input_active
         if input_active and self.player.hidden is not None:
             if self.player.hide_origin is not None:
                 self.player.hidden = None
@@ -1349,6 +1369,9 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
             self._gun_cd = GUN_CD
             return
         self._gun_cd = GUN_CD
+        # Firing braces the camera: the body-chase stays locked for a
+        # beat so the view cannot swing mid-shot (see _update_look).
+        self._chase_lock_t = CHASE_FIRE_LOCK
         p.inventory.remove("pistol_ammo", 1)
         fx, fy = p.facing
         proj = Projectile(p.x + fx * 16, p.y + fy * 16, fx, fy,
