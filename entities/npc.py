@@ -5,7 +5,8 @@ import random
 from constants import C_WHITE
 from systems.config import SUS_NOTICE, SUS_SCORE_HOLD
 from systems.stealth import (detection_score, update_suspicion,
-                             enter_search, sweep_check)
+                             enter_search, sweep_check, hear_noise,
+                             react_hold)
 
 class NPC:
     def __init__(self, x, y, name, sprite_kind, voice="blip_mid",
@@ -269,22 +270,12 @@ class NPC:
                                 player, 180.0)
         sus = update_suspicion(self, score, dt)
         self._sus_alert = False
-        # Audio reaction. Fires only in SCOUT (an investigating or
-        # searching cultist already has a target and shouldn't
-        # rubber-band to every footstep). A fresh, close, loud
-        # event kicks them to INVESTIGATE.
-        if self._cult_state == "scout":
-            evt = getattr(scene, "_last_step_event", None)
-            if evt is not None:
-                ex, ey, loud, et = evt
-                now = pygame.time.get_ticks() / 1000.0
-                if (now - et < 0.4
-                        and scene.world_dist(self.x, self.y, ex, ey) < 180
-                        and loud >= 0.7):
-                    self._cult_state = "investigate"
-                    self._cult_state_t = 4.0
-                    self._last_seen_pos = (ex, ey)
-                    self._scout_target = None
+        # Audio reaction (the shared ear, systems/stealth.hear_noise):
+        # scouts turn on any fresh loud event; searchers/investigators
+        # already hold a target and are only pulled off it by something
+        # strictly LOUDER (so they don't rubber-band to every footstep,
+        # but a gunshot or the bell re-tasks the whole room).
+        hear_noise(self, scene, 180.0)
         # An active CHASE holds while any usable score remains --
         # cover has to actually break the line (a wall, an enclosed
         # hide, or corn at real distance) to shake it. Close-range
@@ -365,6 +356,11 @@ class NPC:
                 self._cult_state = "scout"
                 self._scout_target = None
                 self.morph_target = 0.0
+                self._noise_loud = 0.0
+                return
+            # The turn-first telegraph: face the sound and hold a beat
+            # before walking (the player reads the head turn).
+            if react_hold(self, scene, dt):
                 return
             tx, ty = self._last_seen_pos
             d_target = scene.world_dist(self.x, self.y, tx, ty)

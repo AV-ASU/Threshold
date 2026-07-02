@@ -696,9 +696,12 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
             )
         else:
             self.scene._last_entry_exit_tile = None
-        # Reset the step-event buffer on each scene load. A step in
-        # one scene shouldn't bleed into the next.
+        # Reset the noise channel on each scene load. A step in one
+        # scene shouldn't bleed into the next (the one-hop bleed system
+        # is the deliberate exception, and it re-emits on this side).
         self.scene._last_step_event = None
+        self.scene._noise_events = []
+        self.scene._noise_mask = None
         self._build_fold_cache()
         # Fold pursuit hand-off: if the player fled here through a fold with
         # a hot cultist (stashed by _note_fold_pursuit), arm the beat-behind
@@ -1138,10 +1141,8 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
                         "step_void":    0.50,
                     }.get(sfx, 0.50)
                     mult = 2.0 if self.player.sprint_active else 1.0
-                    now = pygame.time.get_ticks() / 1000.0
-                    self.scene._last_step_event = (
-                        self.player.x, self.player.y,
-                        base * mult, now)
+                    self.scene.emit_noise(self.player.x, self.player.y,
+                                          base * mult, kind="step")
         else:
             self.player.walk_phase = 0
             self.stillness_t += dt
@@ -1394,10 +1395,9 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         p.melee_dir = p.facing
         self.audio.play_in_scene("gunshot", 0.85)
         self.audio.duck(0.9, depth=0.35)            # let the report own the air
-        # A gunshot is loud -- feed the cult's investigate AI like a sprint.
+        # A gunshot is loud -- it re-tasks even searchers (NOISE_SEARCH_PULL).
         if self.scene is not None:
-            self.scene._last_step_event = (p.x, p.y, 1.0,
-                                           pygame.time.get_ticks() / 1000.0)
+            self.scene.emit_noise(p.x, p.y, 1.0, kind="shot")
         # One-time teach about the evidence gate the first time it staggers.
         if proj.stun_only and not self.save.flag("gun_stun_taught"):
             self.save.set_flag("gun_stun_taught", True)
@@ -1473,8 +1473,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
                               max(self.visibility,
                                   self.visibility + LOCAL_KILL_VIS_SPIKE))
         if self.scene is not None:
-            self.scene._last_step_event = (
-                npc.x, npc.y, 1.0, pygame.time.get_ticks() / 1000.0)
+            self.scene.emit_noise(npc.x, npc.y, 1.0, kind="body")
         return True
 
     def _make_corpse(self, npc):

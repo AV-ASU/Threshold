@@ -207,11 +207,9 @@ class ThreatMixin:
         if enemy is not None:
             enemy._stun_t = max(getattr(enemy, "_stun_t", 0.0),
                                 STRUGGLE_STUN)
-        # The burst is LOUD: a max-loudness step event pulls every
+        # The burst is LOUD: a max-loudness noise event pulls every
         # scout in earshot to the spot...
-        import pygame as _pg
-        self.scene._last_step_event = (p.x, p.y, 1.0,
-                                       _pg.time.get_ticks() / 1000.0)
+        self.scene.emit_noise(p.x, p.y, 1.0, kind="burst")
         # ...but the step-event channel only wakes SCOUTS (searchers and
         # investigators already own a target and ignore it), so the
         # documented cost of winning -- the room CONVERGES -- is applied

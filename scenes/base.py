@@ -3810,6 +3810,17 @@ class Scene:
         self.items = []          # list of {x,y,key,qty,on_pickup?}
         self.projectiles = []    # ranged-attack bullets
         self.triggers = []
+        # The noise channel (2026-07 sound overhaul): world noises are
+        # broadcast through emit_noise onto this small per-frame list
+        # (the cult ticks iterate it; events go stale after
+        # NOISE_FRESH). _last_step_event stays mirrored for any legacy
+        # single-slot reader. _noise_mask is the active dominant source
+        # (the bell): (x, y, radius, level, until_ts) -- events quieter
+        # than `level` inside `radius` are swallowed while it lives (so
+        # loud hides small).
+        self._noise_events = []
+        self._noise_mask = None
+        self._last_step_event = None
         self.on_enter_fn = None
         self.on_exit_fn = None
         self.on_interact_fn = None    # called when E pressed and no NPC nearby
@@ -3892,6 +3903,55 @@ class Scene:
         dx = self.world_dx(from_x, to_x)
         dy = self.world_dy(from_y, to_y)
         return _math.hypot(dx, dy)
+
+    # ---- the noise channel (2026-07 sound overhaul) ---------------------
+    def emit_noise(self, x, y, loud, kind="step"):
+        """Broadcast a world noise at (x, y) with loudness `loud` [0..1].
+        The cult ticks hear it through systems/stealth.hear_noise; events
+        stay audible for NOISE_FRESH seconds. A live noise MASK (a
+        dominant source like the bell) swallows events quieter than its
+        level inside its radius -- SO LOUD IT HIDES SMALL SOUNDS -- and
+        the swallowed event never reaches anyone's ears. Returns the
+        event tuple, or None if masked."""
+        now = pygame.time.get_ticks() / 1000.0
+        m = self._noise_mask
+        if m is not None:
+            mx, my, mrad, mlevel, muntil = m
+            if now > muntil:
+                self._noise_mask = None
+            elif (loud < mlevel
+                    and self.world_dist(x, y, mx, my) <= mrad):
+                return None
+        # prune stale events so the list never grows past a frame's worth
+        self._noise_events = [e for e in self._noise_events
+                              if now - e[3] < 0.4]
+        evt = (x, y, loud, now, kind)
+        self._noise_events.append(evt)
+        # legacy single-slot mirror (loudest fresh event wins the slot)
+        last = self._last_step_event
+        if (last is None or loud >= last[2] or now - last[3] >= 0.4):
+            self._last_step_event = (x, y, loud, now)
+        return evt
+
+    def set_noise_mask(self, x, y, radius, level, duration):
+        """Install the dominant-source mask for `duration` seconds (the
+        bell). While it lives, emit_noise swallows anything quieter than
+        `level` within `radius` of (x, y). Call again to extend."""
+        now = pygame.time.get_ticks() / 1000.0
+        self._noise_mask = (x, y, radius, level, now + duration)
+
+    def clear_noise_mask(self):
+        self._noise_mask = None
+
+    def mask_active(self):
+        """True while a dominant noise source is masking the room."""
+        m = self._noise_mask
+        if m is None:
+            return False
+        if pygame.time.get_ticks() / 1000.0 > m[4]:
+            self._noise_mask = None
+            return False
+        return True
 
     def char_floor_at(self, x_px, y_px):
         tx = int(x_px // TILE); ty = int(y_px // TILE)

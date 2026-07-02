@@ -30,10 +30,14 @@ Sheriff) never consult any of this.
 """
 import math
 
+import pygame
+
 from systems.config import (SUS_NEAR, SUS_CONE_HALF, SUS_CONE_FEATHER,
                             SUS_CONCEAL_CORN, SUS_FILL_RATE, SUS_DECAY,
                             SUS_SCORE_HOLD, SUS_SWEEP_RADIUS,
-                            SUS_CHECK_DIST, SUS_CHECK_PAUSE)
+                            SUS_CHECK_DIST, SUS_CHECK_PAUSE,
+                            NOISE_HEAR_MIN, NOISE_FRESH,
+                            NOISE_REACT_PAUSE, NOISE_SEARCH_PULL)
 
 # The two enclosed hide kinds ('behind' was removed with the old model;
 # kept out on purpose -- see CLAUDE.md).
@@ -151,6 +155,9 @@ def enter_search(actor, scene):
     actor._sweep_i = 0
     actor._check_t = 0.0
     actor._cult_state_t = 6.0 + 3.0 * len(actor._sweep_list)
+    # A sighting-born search outranks ordinary noise: only something at
+    # NOISE_SEARCH_PULL or louder (a shot, the burst, the bell) diverts.
+    actor._noise_loud = NOISE_SEARCH_PULL
 
 
 def sweep_check(actor, scene, player, dt, step_fn):
@@ -180,6 +187,69 @@ def sweep_check(actor, scene, player, dt, step_fn):
             scene._hide_check = (actor, hx, hy)
         actor._sweep_i = i + 1
         actor._check_t = 0.0
+    return True
+
+
+def hear_noise(actor, scene, hearing_range=180.0):
+    """One shared ear for both cult machines: scan this frame's noise
+    events (Scene.emit_noise) and re-target the actor onto the best
+    audible one. SCOUTS turn on anything fresh, in range, at or over
+    NOISE_HEAR_MIN. SEARCHERS/INVESTIGATORS already own a target and are
+    only PULLED OFF it by something strictly louder than what they hold
+    (actor._noise_loud; a sighting-born search holds NOISE_SEARCH_PULL,
+    so only a gunshot/burst/bell diverts it). CHASE never diverts.
+    Set-piece kneelers (lock_facing / aggro 0) are deaf: their wake is
+    scripted. Returns True if the actor re-targeted this tick."""
+    st = getattr(actor, "_cult_state", "scout")
+    if st == "chase":
+        return False
+    if getattr(actor, "lock_facing", False) or getattr(actor, "aggro", 1) == 0:
+        return False
+    events = getattr(scene, "_noise_events", None)
+    if not events:
+        return False
+    now = pygame.time.get_ticks() / 1000.0
+    held = 0.0
+    if st in ("search", "investigate"):
+        held = getattr(actor, "_noise_loud", NOISE_SEARCH_PULL)
+    best = None
+    for (ex, ey, loud, et, _kind) in events:
+        if now - et >= NOISE_FRESH or loud < NOISE_HEAR_MIN:
+            continue
+        if loud <= held:
+            continue
+        if scene.world_dist(actor.x, actor.y, ex, ey) > hearing_range:
+            continue
+        if best is None or loud > best[2]:
+            best = (ex, ey, loud)
+    if best is None:
+        return False
+    ex, ey, loud = best
+    actor._cult_state = "investigate"
+    actor._cult_state_t = 4.0
+    actor._last_seen_pos = (ex, ey)
+    actor._noise_loud = loud
+    actor._react_t = NOISE_REACT_PAUSE
+    actor.move_target = None
+    if hasattr(actor, "_scout_target"):
+        actor._scout_target = None
+    return True
+
+
+def react_hold(actor, scene, dt):
+    """The turn-first telegraph: for NOISE_REACT_PAUSE after hearing
+    something, the actor faces the source and holds still before it
+    walks. Returns True while the hold owns this tick's movement."""
+    t = getattr(actor, "_react_t", 0.0)
+    if t <= 0.0:
+        return False
+    actor._react_t = t - dt
+    pos = getattr(actor, "_last_seen_pos", None)
+    if pos is not None:
+        fdx = scene.world_dx(actor.x, pos[0])
+        fdy = scene.world_dy(actor.y, pos[1])
+        fm = math.hypot(fdx, fdy) or 1.0
+        actor.facing = (fdx / fm, fdy / fm)
     return True
 
 

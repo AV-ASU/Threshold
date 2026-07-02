@@ -383,6 +383,20 @@ STRUGGLE_BURST_T = 0.9        # s of panic-burst speed after winning
 STRUGGLE_BURST_MULT = 1.8     # burst speed multiplier
 STRUGGLE_STUN = 1.4           # s the checker staggers after a burst-out
 
+# ---- The noise core (2026-07 sound overhaul) ------------------------------
+# World noises broadcast through Scene.emit_noise; the cult hears them
+# through systems/stealth.hear_noise. SCOUTS turn on anything at or over
+# NOISE_HEAR_MIN; SEARCHERS/INVESTIGATORS already own a target and are
+# only PULLED OFF it by something louder (NOISE_SEARCH_PULL -- a gunshot,
+# the struggle burst, the bell). Every reaction starts with the
+# turn-first telegraph: face the source and hold NOISE_REACT_PAUSE before
+# walking. Set-piece kneelers (lock_facing / aggro 0) are deaf on
+# purpose: their wake is scripted. CHASE never diverts; apex never hears.
+NOISE_HEAR_MIN = 0.7          # min loudness that turns a scout's head
+NOISE_FRESH = 0.4             # s an event stays audible
+NOISE_REACT_PAUSE = 0.45      # the face-the-sound beat before walking
+NOISE_SEARCH_PULL = 0.9       # loudness that diverts a searcher
+
 # Visibility rates, per second. Watchers + cultist gaze push the meter
 # up; hiding pulls it down. Enough Watchers out-pace even hiding --
 # that is the spiral toward a King the player can no longer shake.

@@ -234,6 +234,71 @@ def main():
           f"fringe: a sub-threshold glimpse never locks or oscillates "
           f"(sus={n._suspicion:.2f}, flips={flips})")
 
+    # --- 4c. the noise core (2026-07 sound overhaul) ---------------------
+    # One shared ear (stealth.hear_noise over Scene.emit_noise): scouts
+    # turn on loud events with a face-the-sound telegraph; a dominant
+    # MASK swallows quieter sounds; searchers hold their target unless
+    # something strictly louder pulls them; set-piece kneelers are deaf.
+    def underground(scene="works_sorting"):
+        g = new_game()
+        g.load_scene_now(scene, "default")
+        tick(g, 10)
+        return g
+
+    g = underground()
+    e = next(x for x in g.scene.enemies if x.kind == "cultist")
+    e._cult_state = "scout"
+    e._suspicion = 0.0
+    g.scene.emit_noise(e.x + 100, e.y, 0.8, kind="test")
+    x0, y0 = e.x, e.y
+    tick(g, 1)
+    check(e._cult_state == "investigate",
+          "noise: a scout turns on a loud event")
+    moved = False
+    for _ in range(10):                 # inside NOISE_REACT_PAUSE
+        tick(g, 1)
+        if abs(e.x - x0) + abs(e.y - y0) > 2:
+            moved = True
+    check(not moved and e.facing[0] > 0.7,
+          "noise: the telegraph faces the sound before walking")
+    tick(g, 30)
+    check(abs(e.x - x0) > 4, "noise: after the hold it walks to the source")
+
+    g = underground()
+    e = next(x for x in g.scene.enemies if x.kind == "cultist")
+    e._cult_state = "scout"
+    g.scene.set_noise_mask(e.x, e.y, 4000, 0.85, 10.0)
+    r = g.scene.emit_noise(e.x + 80, e.y, 0.8, kind="test")
+    tick(g, 1)
+    check(r is None and e._cult_state == "scout",
+          "mask: a sub-level sound is swallowed (loud hides small)")
+    r2 = g.scene.emit_noise(e.x + 80, e.y, 1.0, kind="test")
+    tick(g, 1)
+    check(r2 is not None and e._cult_state == "investigate",
+          "mask: a louder-than-the-mask sound still lands")
+
+    g = underground()
+    e = next(x for x in g.scene.enemies if x.kind == "cultist")
+    from systems.stealth import enter_search
+    e._last_seen_pos = (e.x + 60, e.y)
+    enter_search(e, g.scene)
+    g.scene.emit_noise(e.x - 100, e.y, 0.8, kind="test")
+    tick(g, 1)
+    check(e._cult_state == "search",
+          "pull: an ordinary noise cannot divert a searcher")
+    g.scene.emit_noise(e.x - 100, e.y, 0.95, kind="test")
+    tick(g, 1)
+    check(e._cult_state == "investigate" and e._last_seen_pos[0] < e.x,
+          "pull: a LOUD noise re-tasks the searcher")
+
+    g = underground("works_sign")
+    kneeler = next(x for x in g.scene.enemies
+                   if x.kind == "cultist" and getattr(x, "aggro", 1) == 0)
+    g.scene.emit_noise(kneeler.x + 40, kneeler.y, 1.0, kind="test")
+    tick(g, 1)
+    check(kneeler._cult_state == "scout",
+          "deaf: a set-piece kneeler ignores noise (its wake is scripted)")
+
     # --- 5. walls occlude absolutely ------------------------------------
     g = new_game()
     g.load_scene_now("brimley", "default")
