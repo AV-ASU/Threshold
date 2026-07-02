@@ -616,7 +616,16 @@ class RenderMixin:
         A receding horizon render (set by _tick_idle_king), never a scene entity
         -- you can't reach him. Drawn SOLID (not alpha-blended -- translucency
         washed out his gloss + maws) so he reads as the King, just distant; the
-        night vignette is what keeps him from popping like a poster."""
+        night vignette is what keeps him from popping like a poster.
+
+        Three grounding layers seat him in the 3D world (2026-07 pass):
+        the ROAD MIRAGE (the air around him refracts -- horizontal screen
+        strips displaced like heat-shimmer, the road bending around what
+        stands on it), his softened UNLIGHT, and the WRONG-WAY SHADOW (a
+        long stain smearing DOWN the road toward the player, against
+        every light in the scene). His eversion churns at half tempo --
+        indifferent, not hunting -- and refreshes every couple of frames
+        so the warp reads as slow weather, not a stepped stutter."""
         ik = getattr(self, "_idle_king", None)
         if not ik or self.player is None:
             return
@@ -633,14 +642,31 @@ class RenderMixin:
                   * math.sin(self.camera.pitch))
         sx, sy = int(sx), int(sy)
         t = pygame.time.get_ticks() / 1000.0
-        # The light-eating shadow is subtractive on the scene (can't be cached) +
-        # cheap -- draw it live so the world keeps pulsing under him.
-        eat_light_at(self.screen, sx, sy, IDLE_KING_SCALE, IDLE_KING_THREAT)
-        # The BODY is the expensive part (a full UNFOLDING for a ~56px figure).
-        # Render it to a small card and reuse it for a few frames -- he everts in
-        # steps, imperceptible at the vanishing point, instead of ~1300 polys +
-        # a full-screen surface every frame. Position still updates every frame
-        # (cheap blit); only the eversion refreshes on the interval.
+        # 1. The road mirage: displace thin horizontal strips of the
+        # already-drawn scene around him, stronger toward his base --
+        # the air over the tarmac refuses to hold still where he
+        # stands. Drawn FIRST so his body and shadow stay crisp.
+        band_w, band_h = 170, 100
+        bx, by = sx - band_w // 2, sy - 4
+        srect = self.screen.get_rect()
+        for i in range(0, band_h, 3):
+            off = int(round(math.sin(t * 2.6 + i * 0.33)
+                            * (1.0 + 1.8 * (i / band_h))))
+            if off == 0:
+                continue
+            r = pygame.Rect(bx, by + i, band_w, 3).clip(srect)
+            if r.w <= 0 or r.h <= 0:
+                continue
+            strip = self.screen.subsurface(r).copy()
+            self.screen.blit(strip, (r.x + off, r.y))
+        # 2. The light-eating shadow, softened at idle (the full hunt
+        # disc read as a hard black hole at the vanishing point). Live
+        # every frame so the world keeps pulsing under him.
+        eat_light_at(self.screen, sx, sy, IDLE_KING_SCALE * IDLE_KING_EAT,
+                     IDLE_KING_THREAT * IDLE_KING_EAT)
+        # 3. The BODY: a full UNFOLDING rendered to a small card, reused
+        # for IDLE_KING_CARD_REFRESH frames, churning at half tempo.
+        # Position still updates every frame (cheap blit).
         R = int(IDLE_KING_SCALE * 2.6) + 8
         card = getattr(self, "_idle_king_card", None)
         last = getattr(self, "_idle_king_card_frame", -999)
@@ -648,12 +674,27 @@ class RenderMixin:
                 or self.frame_count - last >= IDLE_KING_CARD_REFRESH):
             card = pygame.Surface((R * 2, R * 2), pygame.SRCALPHA)
             lean = (math.sin(t * 0.8) * 0.14, -0.18)
-            draw_king_unfold(card, R, R, t, threat=IDLE_KING_THREAT,
+            draw_king_unfold(card, R, R, t * IDLE_KING_TEMPO,
+                             threat=IDLE_KING_THREAT,
                              scale=IDLE_KING_SCALE, to_player=(0.0, 1.0),
                              birth=1.0, lean=lean, eat_light=False)
             card = card.convert_alpha()        # fast blits on a real display
             self._idle_king_card = card
             self._idle_king_card_frame = self.frame_count
+        # 4. The wrong-way shadow: a tapering stain smeared down the
+        # road TOWARD the player (he only exists on this north road, so
+        # screen-down IS toward you), swaying slowly. No light in the
+        # scene casts it.
+        L = 260
+        shs = pygame.Surface((110, L), pygame.SRCALPHA)
+        for i in range(L):
+            k = i / L
+            wd = int(52 * (1.0 - 0.5 * k))
+            a = int(95 * (1.0 - k) ** 1.5)
+            wob = int(math.sin(t * 1.7 + i * 0.045) * 4 * k)
+            pygame.draw.rect(shs, (4, 3, 8, a),
+                             (55 - wd // 2 + wob, i, wd, 1))
+        self.screen.blit(shs, (sx - 55, sy + int(R * 0.30)))
         self.screen.blit(card, (sx - R, sy - R))
 
     def _draw_death_screen(self):
