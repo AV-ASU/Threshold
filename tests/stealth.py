@@ -572,6 +572,72 @@ def main():
     check(n._cult_state == "chase",
           "apex: _force_chase bypasses suspicion and cover entirely")
 
+    # --- 8. darkness is concealment + the hide-exit beat -----------------
+    # Pillar 2A's "shadow" cover: in a DARK scene an unlit player
+    # (flashlight off, outside every light pool) reads at
+    # SUS_CONCEAL_DARK -- leaky like corn, never stacking, ignored by
+    # apex eyes. And leaving an enclosed hide takes HIDE_EXIT_BEAT of
+    # rooted vulnerability (the deferred exit-takes-a-beat window).
+    from systems.stealth import concealment_factor as _cf
+    from systems.config import SUS_CONCEAL_DARK, HIDE_EXIT_BEAT
+    g = new_game()
+    g.load_scene_now("the_cells", "default")
+    tick(g, 10)
+    p = g.player
+    p.hidden = None
+    g.flashlight_on = False
+    p.x, p.y = 2 * TILE + 16, 2 * TILE + 16
+    if g.scene.lit_at(p.x, p.y):
+        p.x, p.y = 4 * TILE + 16, 2 * TILE + 16
+    tick(g, 2)
+    check(getattr(p, "_in_dark", False)
+          and abs(_cf(p) - SUS_CONCEAL_DARK) < 1e-9,
+          "dark: the unlit gloom conceals at SUS_CONCEAL_DARK")
+    p.inventory.add("flashlight", 1)
+    g.flashlight_on = True
+    tick(g, 2)
+    check(not getattr(p, "_in_dark", False) and _cf(p) == 1.0,
+          "dark: a lit flashlight burns the cover away")
+    g.flashlight_on = False
+    p.hidden = "under"
+    check(_cf(p) == 0.0, "dark: an enclosed hide still zeroes the score")
+    p.hidden = None
+    g2 = new_game()
+    g2.load_scene_now("brimley", "default")
+    tick(g2, 10)
+    check(not getattr(g2.player, "_in_dark", False),
+          "dark: the daylit surface never grants it")
+
+    g = new_game()
+    g.load_scene_now("works_vats", "default")
+    tick(g, 10)
+    for e in g.scene.enemies:
+        e.x, e.y = 10 * TILE + 16, 5 * TILE + 16
+        e._cult_state = "scout"
+        e._suspicion = 0.0
+        e.facing = (1, 0)
+    p = g.player
+    hx, hy, hkind = g.scene.hide_spots[0]
+    p.x, p.y = hx + 10, hy
+    p.hidden = None
+    press_e(g)
+    check(p.hidden == hkind, "beat: E enters the enclosed hide")
+    press_e(g)
+    check(p.hidden is None
+          and getattr(p, "emerge_t", 0.0) > 0.0,
+          "beat: exiting arms the rooted emerge window")
+
+    class _FK(dict):
+        def __getitem__(self, k):
+            return self.get(k, False)
+    fk = _FK({pygame.K_w: True})
+    x0, y0 = p.x, p.y
+    g.update_player(1 / 30.0, fk)
+    check((p.x, p.y) == (x0, y0), "beat: movement is rooted while emerging")
+    for _ in range(int(HIDE_EXIT_BEAT * 30) + 2):
+        g.update_player(1 / 30.0, fk)
+    check((p.x, p.y) != (x0, y0), "beat: movement returns after the beat")
+
     print()
     if FAILS:
         print(f"{len(FAILS)} FAILURES")

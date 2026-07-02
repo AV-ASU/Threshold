@@ -34,7 +34,8 @@ import random
 import pygame
 
 from systems.config import (SUS_NEAR, SUS_CONE_HALF, SUS_CONE_FEATHER,
-                            SUS_CONCEAL_CORN, SUS_FILL_RATE, SUS_DECAY,
+                            SUS_CONCEAL_CORN, SUS_CONCEAL_DARK,
+                            SUS_FILL_RATE, SUS_DECAY,
                             SUS_SCORE_HOLD, SUS_SWEEP_RADIUS,
                             SUS_CHECK_DIST, SUS_CHECK_PAUSE,
                             NOISE_HEAR_MIN, NOISE_FRESH,
@@ -48,15 +49,23 @@ ENCLOSED_KINDS = ("under", "in")
 
 def concealment_factor(player):
     """How much the player's current cover scales the detection score.
-    1.0 in the open, SUS_CONCEAL_CORN in corn, 0.0 in an enclosed hide."""
+    1.0 in the open, SUS_CONCEAL_CORN in corn, 0.0 in an enclosed hide.
+    DARKNESS is cover too (Pillar 2A): an unlit player in a dark scene
+    (player._in_dark, stamped each frame by Game._tick_dark_cover)
+    reads at SUS_CONCEAL_DARK. Cover kinds never stack -- the best
+    (lowest) factor wins."""
     hidden = getattr(player, "hidden", None)
-    if hidden is None:
-        return 1.0
-    if hidden == "corn":
-        return SUS_CONCEAL_CORN
     if hidden in ENCLOSED_KINDS:
         return 0.0
-    return SUS_CONCEAL_CORN      # any future cover kind defaults leaky
+    if hidden == "corn":
+        base = SUS_CONCEAL_CORN
+    elif hidden is not None:
+        base = SUS_CONCEAL_CORN  # any future cover kind defaults leaky
+    else:
+        base = 1.0
+    if getattr(player, "_in_dark", False):
+        base = min(base, SUS_CONCEAL_DARK)
+    return base
 
 
 def is_enclosed(player):

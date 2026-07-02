@@ -4077,6 +4077,33 @@ class Scene:
         st["hold"] = max(st["hold"], hold)
         return False
 
+    # Light-emitting decoration kinds and their mechanical pool radii
+    # (px). Mirrors the fixtures _draw_dark renders visibly so what
+    # LOOKS lit IS lit to the stealth model.
+    _LIGHT_KINDS = {"wall_torch": 90.0, "brazier": 90.0,
+                    "campfire": 80.0, "lantern": 60.0, "candle": 55.0}
+
+    def light_sources(self):
+        """Cached [(x, y, r)] of the scene's light-emitting decorations
+        (see _LIGHT_KINDS). Rebuilt when the decoration count changes
+        (infestation adds decals at load; nothing removes lights)."""
+        cache = getattr(self, "_light_cache", None)
+        if cache is not None and cache[0] == len(self.decorations):
+            return cache[1]
+        srcs = [(d.x, d.y, self._LIGHT_KINDS[d.kind])
+                for d in self.decorations if d.kind in self._LIGHT_KINDS]
+        self._light_cache = (len(self.decorations), srcs)
+        return srcs
+
+    def lit_at(self, x, y):
+        """True when world (x, y) stands inside any light pool -- the
+        darkness-concealment gate (a player beside a torch reads as lit
+        however dark the room is)."""
+        for lx, ly, r in self.light_sources():
+            if self.world_dist(x, y, lx, ly) <= r:
+                return True
+        return False
+
     def add_cult_station(self, x, y, pose=None, face=None,
                          dwell=(3.0, 6.0)):
         """Register an errand station: a spot where the cult's work

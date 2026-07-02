@@ -55,7 +55,8 @@ from ui.cutscenes import (
 # every external `from systems.game import <CONST>` -- resolves unchanged.
 from systems.config import *        # noqa: F401,F403
 from systems.stealth import (grab_allowed as _grab_ok,
-                             enter_search as _cult_enter_search)
+                             enter_search as _cult_enter_search,
+                             is_enclosed as _is_enclosed_hide)
 from systems.threat_mixin import ThreatMixin
 from systems.king_roam_mixin import KingRoamMixin
 from systems.infest_mixin import InfestationMixin, _corpse_examine
@@ -958,6 +959,14 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         # loop) is the only verb until it resolves.
         if getattr(self, "_struggle", None) is not None:
             return
+        # Emerging from an enclosed hide takes a BEAT (the deferred
+        # exit-takes-a-beat window, STEALTH_REWORK): out, visible, and
+        # rooted while you unfold. The struggle burst-out bypasses this
+        # (it has its own panic sprint).
+        emerge = getattr(self.player, "emerge_t", 0.0)
+        if emerge > 0.0:
+            self.player.emerge_t = emerge - dt
+            return
         # Tick the sprint timers regardless of input -- cooldown has
         # to drain even when the player is standing still.
         self._tick_sprint(dt, keys)
@@ -1424,6 +1433,44 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
             return True
         return False
 
+    # ---- Darkness as concealment (STEALTH_REWORK Pillar 2A) ----
+    def _tick_dark_cover(self):
+        """Stamp player._in_dark once per frame: True in a DARK scene
+        with the flashlight unlit and the player outside every light
+        pool (Scene.lit_at). systems/stealth.concealment_factor reads
+        the stamp, so the gloom scales every cult eye's score (and the
+        gaze pressure) by SUS_CONCEAL_DARK -- leaky cover, like corn.
+        Apex pursuers ignore all cover as ever. A one-shot teach cue
+        fires the first time the dark takes you with the cult near."""
+        p = self.player
+        if p is None or self.scene is None:
+            return
+        in_dark = (self.scene.key in DARK_SCENES
+                   and not self._flashlight_lit()
+                   and not self.scene.lit_at(p.x, p.y))
+        was = getattr(p, "_in_dark", False)
+        p._in_dark = in_dark
+        if (in_dark and not was
+                and not self.save.flag("teach_dark_seen")):
+            near = False
+            for grp in (self.scene.npcs, self.scene.enemies):
+                for a in grp:
+                    if not getattr(a, "alive", True):
+                        continue
+                    is_cult = (str(getattr(a, "tag", "")).startswith("cult_")
+                               or getattr(a, "kind", "") == "cultist")
+                    if is_cult and self.scene.world_dist(
+                            a.x, a.y, p.x, p.y) < 260:
+                        near = True
+                        break
+                if near:
+                    break
+            if near:
+                self.save.set_flag("teach_dark_seen", True)
+                self.show_notice(
+                    "The dark takes the edge off their eyes. It will "
+                    "not save you up close.", duration=3.0)
+
     # ---- Animated doors + the one-hop noise bleed ----
     def _pulse_door_at(self, x, y, hold=0.9, quiet=False):
         """Swing the door leaf at world (x, y) if that tile holds a
@@ -1595,12 +1642,17 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
 
     # ---- Interaction ----
     def try_interact(self):
-        # If currently hidden, E exits the hide.
+        # If currently hidden, E exits the hide. Leaving an ENCLOSED
+        # hide takes a beat (HIDE_EXIT_BEAT): you are out and visible
+        # before you can move -- bolting is a commitment, not a blink.
         if self.player.hidden is not None:
+            enclosed = _is_enclosed_hide(self.player)
             self.player.hidden = None
             if self.player.hide_origin is not None:
                 self.player.x, self.player.y = self.player.hide_origin
                 self.player.hide_origin = None
+            if enclosed:
+                self.player.emerge_t = HIDE_EXIT_BEAT
             self.show_notice("You slip out of cover.", duration=1.6)
             self.audio.play("hide_exit", 0.7)
             return
@@ -2510,6 +2562,11 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
             # Suspend scene update (NPC patrols, decoration anims, triggers)
             # while any modal is up so the world freezes behind it.
             if not world_frozen:
+                # Stamp darkness-concealment BEFORE the cult ticks run
+                # (NPC updates inside scene.update + the enemy loop
+                # below both read player._in_dark through the shared
+                # concealment_factor).
+                self._tick_dark_cover()
                 self.scene.update(dt, self)
             self.text_input.update(dt)
             for e in list(self.scene.enemies):
