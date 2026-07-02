@@ -295,12 +295,19 @@ IDLE_KING_SCALE = 56.0       # small + distant: a figure at the road's end near 
 # with it, so keep it past the maw threshold so he reads as the King, not a
 # dark lump. Stays under 0.8 (no player-reaching limbs -- he is indifferent).
 IDLE_KING_THREAT = 0.6
-# The idle King is the single most expensive thing drawn on the arrival road (a
-# full UNFOLDING -- ~1300 polys + a full-screen surface every frame) for a tiny,
-# distant figure that only everts slowly. Render his BODY to a small card and
-# reuse it for this many frames before refreshing (his eversion animates in
-# steps; his light-eating shadow stays live so the scene still pulses). 1 = off.
-IDLE_KING_CARD_REFRESH = 6
+# The idle King's BODY renders to a small card reused between refreshes
+# (a full UNFOLDING every frame was the road's top cost). At 6 the
+# eversion visibly STEPPED (~5 fps warping -- read as broken); at 2 it
+# holds 15 fps, smooth for a slow distant churn, at ~2 ms/frame average
+# (affordable after the tilt-renderer cache fixes). 1 = every frame.
+IDLE_KING_CARD_REFRESH = 2
+# The idle churn runs at half time: he is INDIFFERENT, not hunting --
+# the mass turns over like weather, not like appetite. (The hunt King's
+# eversion tempo is untouched.)
+IDLE_KING_TEMPO = 0.5
+# His unlight at idle, scaled down from the hunt disc: at the vanishing
+# point the full disc read as a hard black hole pasted on the road.
+IDLE_KING_EAT = 0.75
 
 # ---- Being-seen readout (KING_PROMPT legibility milestone) -------------
 # A second HUD layer that splits the RATE (how hard eyes are on you THIS second)
