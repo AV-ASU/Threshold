@@ -367,6 +367,21 @@ def build_country_lane():
                                  "dead_crow"))
     sc.add_decoration(Decoration(11 * TILE + 16, 9 * TILE + 16,
                                  "missing_flyer"))
+
+    # ---- The walked-out road (2026-07 detail pass) ----
+    # The locals who went to flag down help walked EAST down this lane
+    # and never came back (the highway fold): bootprints along the
+    # road that head east and simply stop, well short of the seam.
+    for fx, fy in ((17, 6), (20, 5), (23, 6), (25, 6)):
+        sc.add_decoration(Decoration(fx * TILE + 16, fy * TILE + 16,
+                                     "mud_footprint"))
+    # The busted south fence sheds a plank; tins dumped off the north
+    # shoulder (both noise traps along the cover lanes).
+    sc.add_noise_trap(24 * TILE + 16, 9 * TILE + 16, "plank", seed=25)
+    sc.add_noise_trap(9 * TILE + 16, 3 * TILE + 16, "cans", seed=26)
+    for lx, ly in ((6, 4), (28, 8)):
+        sc.add_decoration(Decoration(lx * TILE + 16, ly * TILE + 16,
+                                     "leaves"))
     sc.hide_spots = []
     return sc
 
@@ -767,6 +782,18 @@ def build_river_crossing():
         if tx_ in river_cols:
             continue
         sc.add_decoration(Decoration(gx, gy, "grass_tuft"))
+
+    # ---- River detail (2026-07 pass): fog on the water, and the
+    # banks remember what crossed them. ----
+    for mx, my in ((12, 3), (11, 9), (13, 11)):
+        sc.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16,
+                                     "mist"))
+    sc.add_decoration(Decoration(15 * TILE + 16, 4 * TILE + 16,
+                                 "claw_marks"))
+    # Litter where someone sat watching the water, and a crow on the
+    # east bank that flushes as you come off the bridge (noise traps).
+    sc.add_noise_trap(9 * TILE + 16, 8 * TILE + 16, "cans", seed=27)
+    sc.add_noise_trap(17 * TILE + 16, 6 * TILE + 16, "crow", seed=28)
 
     # Boarded-over panel at col 5 row 0 -- a chop-target that opens onto
     # an empty, long-looted pocket.

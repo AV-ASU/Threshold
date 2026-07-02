@@ -126,6 +126,30 @@ def build_forest_path():
     sc.add_decoration(Decoration(36 * TILE + 16, 0 * TILE + 28, "hanging_figure"))
     sc.add_decoration(Decoration(20 * TILE + 16, 9 * TILE + 22, "dead_crow"))
 
+    # ---- Worn-road detail (2026-07 pass) ----
+    # The cult files north to the maze mouth: a corn doll set where the
+    # rows break, bootprints crossing the road toward it, and claw
+    # furrows in the dirt where something was dragged the other way.
+    sc.add_decoration(Decoration(29 * TILE + 16, 2 * TILE + 8,
+                                 "corn_doll"))
+    sc.add_decoration(Decoration(30 * TILE + 16, 5 * TILE + 16,
+                                 "mud_footprint"))
+    sc.add_decoration(Decoration(30 * TILE + 24, 3 * TILE + 24,
+                                 "mud_footprint"))
+    sc.add_decoration(Decoration(33 * TILE + 16, 7 * TILE + 16,
+                                 "claw_marks"))
+    # An abandoned harvest: a wheelbarrow left mid-field, going to rust.
+    sc.add_decoration(Decoration(46 * TILE + 16, 4 * TILE + 16,
+                                 "wheelbarrow"))
+    # Dead leaves drifting the road.
+    for lx, ly in ((10, 6), (26, 8), (44, 7)):
+        sc.add_decoration(Decoration(lx * TILE + 16, ly * TILE + 16,
+                                     "leaves"))
+    # Litter along the cover lanes (noise traps): tins dumped on the
+    # north shoulder, a bottle gone to pieces on the south.
+    sc.add_noise_trap(14 * TILE + 16, 4 * TILE + 16, "cans", seed=21)
+    sc.add_noise_trap(40 * TILE + 16, 10 * TILE + 16, "glass", seed=22)
+
     # (The secret-clearing branch dressing was removed when the
     # clearing entrance moved to the brimley river bank.)
 
