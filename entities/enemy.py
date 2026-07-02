@@ -6,6 +6,9 @@ import random
 import pygame
 from rendering.sprites import draw_npc_sprite
 from rendering.transform import draw_vessel_bloom
+from systems.config import SUS_NOTICE, SUS_SCORE_HOLD
+from systems.stealth import (detection_score, update_suspicion,
+                             enter_search, sweep_check)
 
 
 def _is_cultist(obj):
@@ -271,12 +274,12 @@ class Enemy:
         self.can_shoot = False
         dx = player.x - self.x; dy = player.y - self.y
         d = math.hypot(dx, dy) or 1
-        # Hidden players are invisible to enemies that respect hiding
-        # (cultist chasers in the depths). Forces the wander branch by
-        # treating distance as effectively infinite.
-        if (getattr(self, "respects_hide", False)
-                and getattr(player, "hidden", None) is not None):
-            d = 1e9
+        # (The old respects_hide distance zap lived here -- binary
+        # invisibility for hidden players. The stealth rework routed all
+        # cover through _cult_tick's graded detection_score, and only
+        # cultists ever set respects_hide, so the zap was dead code and
+        # a trap for future variants: respects_hide now means exactly
+        # "concealment scales this eye's score" inside _cult_tick.)
         self.attack_timer -= dt
         self.flash = max(0, self.flash - dt)
         if self._stun_t > 0:
@@ -467,11 +470,6 @@ class Enemy:
         existing depths corridor routes still drive the patroller
         in idle. SEARCH sweeps nearby enclosed hides and CHECKS
         them (the struggle fires via scene._hide_check)."""
-        import pygame
-        from systems.config import (SUS_NOTICE, SUS_FILL_RATE, SUS_DECAY,
-                                    SUS_SCORE_HOLD, SUS_SWEEP_RADIUS,
-                                    SUS_CHECK_DIST, SUS_CHECK_PAUSE)
-        from systems.stealth import detection_score, sweep_points, is_enclosed
         # Wrap-aware distance so cultists in wrap scenes follow the
         # shortest path through the fold (used for atk_range below).
         dx = scene.world_dx(self.x, player.x)
@@ -480,15 +478,12 @@ class Enemy:
         # The graded detection score for this eye, this tick. Walls
         # still occlude absolutely; corn scales it; an enclosed hide
         # zeroes it. respects_hide=False eyes ignore cover entirely.
+        # Fill/decay is the shared accumulator (systems/stealth.py) so
+        # the two cult machines can never drift.
         score = detection_score(
             scene, self.x, self.y, self.facing, player, self.aggro,
             ignore_conceal=not getattr(self, "respects_hide", False))
-        sus = getattr(self, "_suspicion", 0.0)
-        if score > 0.0:
-            sus = min(1.0, sus + score * SUS_FILL_RATE * dt)
-        else:
-            sus = max(0.0, sus - SUS_DECAY * dt)
-        self._suspicion = sus
+        sus = update_suspicion(self, score, dt)
         self._sus_alert = False
         # Audio reaction. Only in SCOUT (existing target intent
         # would otherwise rubber-band on every step).
@@ -517,18 +512,10 @@ class Enemy:
                     self._cult_step(player.x, player.y, dt, scene)
                 return
             # Lost the line: SEARCH, and sweep the enclosed hides
-            # around last-seen (Pillar 3 -- searchers hunt cover).
-            self._cult_state = "search"
-            self._cult_state_t = 6.0
-            self._just_lost = True
-            if self._last_seen_pos is not None:
-                lx, ly = self._last_seen_pos
-                self._sweep_list = sweep_points(scene, lx, ly,
-                                                SUS_SWEEP_RADIUS)
-            else:
-                self._sweep_list = []
-            self._sweep_i = 0
-            self._check_t = 0.0
+            # around last-seen (Pillar 3 -- searchers hunt cover; the
+            # budget scales with the sweep so it isn't abandoned
+            # mid-check).
+            enter_search(self, scene)
         # Promotion to CHASE only on a FULL suspicion bar.
         elif sus >= 1.0:
             self._cult_state = "chase"
@@ -565,29 +552,11 @@ class Enemy:
                 self._cult_step(tx, ty, dt, scene)
                 return
             # At last-known. Sweep the enclosed hides nearby -- walk to
-            # each and CHECK it. A checked hide with the player inside
-            # starts the struggle (Game reads scene._hide_check).
-            sweep = getattr(self, "_sweep_list", None) or []
-            i = getattr(self, "_sweep_i", 0)
-            if i < len(sweep):
-                hx, hy, hkind = sweep[i]
-                d_h = scene.world_dist(self.x, self.y, hx, hy)
-                if d_h > SUS_CHECK_DIST:
-                    self._check_t = 0.0
-                    self._cult_step(hx, hy, dt, scene)
-                else:
-                    fdx = scene.world_dx(self.x, hx)
-                    fdy = scene.world_dy(self.y, hy)
-                    fm = math.hypot(fdx, fdy) or 1.0
-                    self.facing = (fdx / fm, fdy / fm)
-                    self._check_t = getattr(self, "_check_t", 0.0) + dt
-                    if self._check_t >= SUS_CHECK_PAUSE:
-                        if (is_enclosed(player)
-                                and scene.world_dist(player.x, player.y,
-                                                     hx, hy) < 24):
-                            scene._hide_check = (self, hx, hy)
-                        self._sweep_i = i + 1
-                        self._check_t = 0.0
+            # each and CHECK it (shared sweep_check; an occupied hide
+            # starts the struggle via scene._hide_check).
+            if sweep_check(self, scene, player, dt,
+                           lambda hx, hy: self._cult_step(hx, hy, dt,
+                                                          scene)):
                 return
             # Sweep exhausted: mill within ~80 px of last-seen.
             self.move_timer -= dt

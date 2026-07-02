@@ -210,6 +210,30 @@ def main():
     else:
         check(False, "struggle: second check never fired")
 
+    # --- 4b. the sight fringe cannot oscillate ---------------------------
+    # A score below SUS_SCORE_HOLD must neither fill nor hold suspicion:
+    # if it could pin the bar at 1.0, the machine would flip chase/search
+    # every frame at the fringe and spam the lock/lose stings.
+    g = new_game()
+    g.load_scene_now("brimley", "default")
+    tick(g, 30)
+    clear_cult(g)
+    open_field(g)
+    n = plant(g, 172)               # inside range, score < SUS_SCORE_HOLD
+    ex, ey = n.x, n.y
+    flips = 0
+    prev = n._cult_state
+    for _ in range(300):            # 10 s of staring from the fringe
+        aim(g, n)
+        tick(g, 1)
+        n.x, n.y = ex, ey
+        if n._cult_state != prev:
+            flips += 1
+            prev = n._cult_state
+    check(n._cult_state != "chase" and n._suspicion < 1.0 and flips == 0,
+          f"fringe: a sub-threshold glimpse never locks or oscillates "
+          f"(sus={n._suspicion:.2f}, flips={flips})")
+
     # --- 5. walls occlude absolutely ------------------------------------
     g = new_game()
     g.load_scene_now("brimley", "default")

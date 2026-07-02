@@ -195,8 +195,8 @@ def build_shop():
     # (her preserves; nobody buys, so those never emptied).
     sc.add_furniture("bare_shelf", [(8, 1), (9, 1)], w=58, h=18, seed=1)
     sc.add_furniture("bare_shelf", [(11, 1), (12, 1)], w=58, h=18, seed=2)
-    sc.add_furniture("counter", [(9, 9)], see_over=True)
-    sc.add_furniture("counter", [(10, 9)], see_over=True)
+    sc.add_furniture("butcher_counter", [(9, 9)], see_over=True)
+    sc.add_furniture("butcher_counter", [(10, 9)], see_over=True)
     sc.add_furniture("chair", [(10, 8)], w=22, h=28)
     sc.add_furniture("bookshelf", [(1, 1), (2, 1)], w=58, h=18, seed=4)
     sc.add_furniture("table", [(4, 2)], w=30, h=30)
@@ -432,9 +432,10 @@ def build_kid_house():
     for mx, my in [(8, 7), (11, 8), (7, 8)]:
         sc.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16,
                                      "mote"))
-    # Hide spots: under the kid's bed, and in the closet (the blind spot).
+    # Hide spots: under the kid's bed (the spot sits on the bed's
+    # walkable south lip; flow §25 guards every scene's spots).
     sc.hide_spots = [
-        (10 * TILE + 16, 6 * TILE + 24, "under"),
+        (10 * TILE + 16, 8 * TILE + 8, "under"),
     ]
     # The kid's drawing of the King, pinned up inside the closet (a 'photo'
     # decoration) -- examinable flavor, grants nothing. Out of sight from the

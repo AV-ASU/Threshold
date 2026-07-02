@@ -3,6 +3,9 @@ import math
 import random
 
 from constants import C_WHITE
+from systems.config import SUS_NOTICE, SUS_SCORE_HOLD
+from systems.stealth import (detection_score, update_suspicion,
+                             enter_search, sweep_check)
 
 class NPC:
     def __init__(self, x, y, name, sprite_kind, voice="blip_mid",
@@ -249,10 +252,6 @@ class NPC:
         walks straight at the player every tick -- the apex avatar
         doesn't suspect or search, it closes."""
         import pygame
-        from systems.config import (SUS_NOTICE, SUS_FILL_RATE, SUS_DECAY,
-                                    SUS_SCORE_HOLD, SUS_SWEEP_RADIUS,
-                                    SUS_CHECK_DIST, SUS_CHECK_PAUSE)
-        from systems.stealth import detection_score, sweep_points, is_enclosed
         # Hunter override: ignore the machine, ignore flanking.
         # The avatar's behaviour is dictated by _yk_update for the
         # YK sprite kind; non-YK NPCs with _force_chase set still
@@ -263,15 +262,12 @@ class NPC:
             return
         # The graded detection score for this eye, this tick. Walls
         # still occlude absolutely (clear_sight_line inside); corn
-        # scales it; an enclosed hide zeroes it.
+        # scales it; an enclosed hide zeroes it. Fill/decay is the
+        # shared accumulator (systems/stealth.py) so the two cult
+        # machines can never drift.
         score = detection_score(scene, self.x, self.y, self.facing,
                                 player, 180.0)
-        sus = getattr(self, "_suspicion", 0.0)
-        if score > 0.0:
-            sus = min(1.0, sus + score * SUS_FILL_RATE * dt)
-        else:
-            sus = max(0.0, sus - SUS_DECAY * dt)
-        self._suspicion = sus
+        sus = update_suspicion(self, score, dt)
         self._sus_alert = False
         # Audio reaction. Fires only in SCOUT (an investigating or
         # searching cultist already has a target and shouldn't
@@ -310,19 +306,10 @@ class NPC:
                 return
             # Lost the line. Drop flank intent and fall into SEARCH --
             # and this searcher HUNTS: it will sweep the enclosed hides
-            # around where it last saw you (Pillar 3).
+            # around where it last saw you (Pillar 3; the budget scales
+            # with the sweep so it isn't abandoned mid-check).
             self._flank_target = None
-            self._cult_state = "search"
-            self._cult_state_t = 6.0
-            self._just_lost = True
-            if self._last_seen_pos is not None:
-                lx, ly = self._last_seen_pos
-                self._sweep_list = sweep_points(scene, lx, ly,
-                                                SUS_SWEEP_RADIUS)
-            else:
-                self._sweep_list = []
-            self._sweep_i = 0
-            self._check_t = 0.0
+            enter_search(self, scene)
         # Promotion to CHASE only on a FULL suspicion bar.
         elif sus >= 1.0:
             self._cult_state = "chase"
@@ -363,35 +350,13 @@ class NPC:
                 self._step_toward((tx, ty), dt, scene, navigate=True)
                 return
             # At last-known. Sweep the enclosed hides nearby -- walk to
-            # each and CHECK it (look under / open it). A checked hide
-            # with the player inside starts the struggle (Game reads
-            # scene._hide_check). Only after the sweep runs dry does the
-            # searcher fall back to the old mill.
-            sweep = getattr(self, "_sweep_list", None) or []
-            i = getattr(self, "_sweep_i", 0)
-            if i < len(sweep):
-                hx, hy, hkind = sweep[i]
-                d_h = scene.world_dist(self.x, self.y, hx, hy)
-                if d_h > SUS_CHECK_DIST:
-                    self._check_t = 0.0
-                    self._step_toward((hx, hy), dt, scene, navigate=True)
-                else:
-                    # Face the hide and look into it for a beat.
-                    fdx = scene.world_dx(self.x, hx)
-                    fdy = scene.world_dy(self.y, hy)
-                    fm = math.hypot(fdx, fdy) or 1.0
-                    self.facing = (fdx / fm, fdy / fm)
-                    self._check_t = getattr(self, "_check_t", 0.0) + dt
-                    if self._check_t >= SUS_CHECK_PAUSE:
-                        if (is_enclosed(player)
-                                and scene.world_dist(player.x, player.y,
-                                                     hx, hy) < 24):
-                            scene._hide_check = (self, hx, hy)
-                        self._sweep_i = i + 1
-                        self._check_t = 0.0
+            # each and CHECK it (shared sweep_check; an occupied hide
+            # starts the struggle via scene._hide_check). Only after
+            # the sweep runs dry does the searcher fall back to the mill.
+            if sweep_check(self, scene, player, dt,
+                           lambda hx, hy: self._step_toward(
+                               (hx, hy), dt, scene, navigate=True)):
                 return
-            # Sweep exhausted: mill within ~80 px using the existing
-            # scout pick-and-look loop until the budget runs out.
             self._scout_step(dt, scene)
             return
         if self._cult_state == "investigate":

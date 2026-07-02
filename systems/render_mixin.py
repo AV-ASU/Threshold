@@ -25,24 +25,41 @@ from rendering.king_unfold import draw_unfold_catch
 from rendering.transform import draw_vessel_bloom
 from systems.config import *        # noqa: F401,F403
 
+# The "?" tell card, pre-rendered once per alpha bucket (8 buckets) --
+# a fresh SRCALPHA surface + three vector draws per suspicious cultist
+# per frame was pure GC churn at exactly the moment frame pacing matters.
+_SUS_TELL_CACHE = {}
+
+
+def _sus_tell_card(bucket):
+    card = _SUS_TELL_CACHE.get(bucket)
+    if card is None:
+        a = int(110 + 130 * (bucket / 7.0))
+        col = (222, 196, 120, a)
+        card = pygame.Surface((12, 16), pygame.SRCALPHA)
+        pygame.draw.arc(card, col, (2, 1, 8, 8),
+                        -math.pi * 0.7, math.pi * 0.95, 2)
+        pygame.draw.line(card, col, (6, 8), (6, 10), 2)
+        pygame.draw.circle(card, col, (6, 14), 1)
+        _SUS_TELL_CACHE[bucket] = card
+    return card
+
+
 def _draw_sus_tell(surf, x, y, actor):
     """The rising "?" tell (STEALTH_REWORK.md Pillar 1): drawn over a
-    cultist whose suspicion is climbing but hasn't locked -- the player's
-    read on the "have they spotted me?" window. Procedural (no font glyph;
-    the HUD stays diegetic-minimal): a pale-gold curl + dot that brightens
-    and lifts as suspicion fills. No-ops for anything without suspicion,
-    or once the chase has locked (the lock has its own audio sting)."""
+    SCOUTING cultist whose suspicion is climbing -- the player's read on
+    the "have they spotted me?" window. Procedural (no font glyph; the
+    HUD stays diegetic-minimal): a pale-gold curl + dot that brightens
+    and lifts as suspicion fills. Scout-only on purpose: a locked chase
+    has its own sting, and a SEARCHING hunter wearing a full "?" would
+    tell the player they are merely suspected one beat after the lock
+    announced the opposite."""
     sus = getattr(actor, "_suspicion", 0.0)
-    if sus < SUS_NOTICE or getattr(actor, "_cult_state", "") == "chase":
+    if sus < SUS_NOTICE or getattr(actor, "_cult_state", "") != "scout":
         return
-    a = int(110 + 130 * min(1.0, sus))
-    col = (222, 196, 120, a)
-    lay = pygame.Surface((12, 16), pygame.SRCALPHA)
-    pygame.draw.arc(lay, col, (2, 1, 8, 8), -math.pi * 0.7, math.pi * 0.95, 2)
-    pygame.draw.line(lay, col, (6, 8), (6, 10), 2)
-    pygame.draw.circle(lay, col, (6, 14), 1)
+    bucket = min(7, int(min(1.0, sus) * 8))
     lift = int(4 * min(1.0, sus))
-    surf.blit(lay, (int(x) - 6, int(y) - 16 - lift))
+    surf.blit(_sus_tell_card(bucket), (int(x) - 6, int(y) - 16 - lift))
 
 
 # Solid-prop card cache (see _draw_solid_prop). Static props rendered once per
@@ -1719,9 +1736,19 @@ class RenderMixin:
             pulse = 0.6 + 0.4 * abs(math.sin(t_now * 9.0))
             cx = SCREEN_W // 2
             cy = SCREEN_H // 2 + 70
-            txt = self.fonts["serif"].render(
-                "FIGHT. Mash E.", True,
-                (int(230 * pulse), int(70 + 40 * pulse), int(50 * pulse)))
+            # Font.render is one of pygame's priciest per-frame calls --
+            # quantize the pulse into 8 cached renders instead of
+            # rasterizing the prompt fresh 60x/s inside the mash window.
+            pb = min(7, int((pulse - 0.6) / 0.4 * 8))
+            cache = getattr(self, "_struggle_txt_cache", None)
+            if cache is None:
+                cache = self._struggle_txt_cache = {}
+            txt = cache.get(pb)
+            if txt is None:
+                pv = 0.6 + 0.4 * (pb / 7.0)
+                txt = cache[pb] = self.fonts["serif"].render(
+                    "FIGHT. Mash E.", True,
+                    (int(230 * pv), int(70 + 40 * pv), int(50 * pv)))
             self.screen.blit(txt, (cx - txt.get_width() // 2, cy))
             need = max(1, STRUGGLE_PRESSES)
             got = min(need, st.get("presses", 0))

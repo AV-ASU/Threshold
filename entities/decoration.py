@@ -635,6 +635,12 @@ class Decoration:
         for gx in range(rx + 8, rx + w - 4, 12):                         # grain
             pygame.draw.line(surf, (56, 38, 22), (gx, ry + 3), (gx, ry + h - 5), 1)
 
+    def _draw_butcher_counter(self, surf, x, y):
+        # Flat fallback: the shop's butcher counter shares the plain
+        # counter slab top-down (the butcher detail is a tilt near-face
+        # read; see rendering/furniture.py _d_butcher).
+        self._draw_counter(surf, x, y)
+
     def _draw_firewood(self, surf, x, y):
         # A stack of split logs -- pale ringed ends in a dark cradle.
         w = int(self.kwargs.get("w", 40)); h = int(self.kwargs.get("h", 24))

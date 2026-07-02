@@ -15,7 +15,8 @@ from scenes import Scene
 from rendering.sprites import reset_king_fx
 from systems.config import *        # noqa: F401,F403
 from systems.stealth import (concealment_factor as _conceal_factor,
-                             is_enclosed as _is_enclosed)
+                             is_enclosed as _is_enclosed,
+                             grab_allowed as _grab_allowed)
 
 
 class ThreatMixin:
@@ -45,7 +46,6 @@ class ThreatMixin:
                     continue                 # stray patrol cultist: sweep it
                 survivors.append(n)
             self.scene.npcs = survivors
-            grabbable = self._grabbable_in_cover()
             for n in survivors:
                 if not getattr(n, "_fold_follower", False):
                     continue
@@ -55,9 +55,9 @@ class ThreatMixin:
                     continue                 # shoved: blind + can't grab
                 d = math.hypot(n.x - self.player.x, n.y - self.player.y)
                 if (d < 22 and self.player.invuln <= 0
-                        and (self.player.hidden is None
-                             or (grabbable and getattr(n, "_cult_state", "")
-                                 == "chase"))):
+                        and _grab_allowed(self.player,
+                                          getattr(n, "_cult_state", "")
+                                          == "chase")):
                     self._trigger_death("cultist")
                     return
             return
@@ -66,7 +66,6 @@ class ThreatMixin:
         # (STEALTH_REWORK.md §5): corn scales each watching cultist's
         # contribution by SUS_CONCEAL_CORN, an enclosed hide zeroes it.
         conceal = _conceal_factor(self.player)
-        grabbable = self._grabbable_in_cover()
         for n in self.scene.npcs:
             tag = getattr(n, "tag", "")
             if not isinstance(tag, str) or not tag.startswith("cult_"):
@@ -109,22 +108,18 @@ class ThreatMixin:
                 dmult = self.audio.distance_attenuation(
                     n.x, n.y, self.player.x, self.player.y)
                 self.audio.play("cult_lose", 0.45 * dmult, pan=pan)
-            # Contact takes you in the open -- and in CORN too, when the
-            # cultist has already locked (concealment is not armor; an
-            # enclosed hide is exempt: its threat is the CHECK/struggle).
+            # Contact takes you in the open -- and in CONCEALMENT too,
+            # when the cultist has already locked (cover is not armor;
+            # an enclosed hide is exempt: its threat is the CHECK/
+            # struggle). One gate for every grab site:
+            # systems/stealth.py grab_allowed.
             if (d < 22 and self.player.invuln <= 0
-                    and (self.player.hidden is None
-                         or (grabbable and getattr(n, "_cult_state", "")
-                             == "chase"))):
+                    and _grab_allowed(self.player,
+                                      getattr(n, "_cult_state", "")
+                                      == "chase")):
                 self._trigger_death("cultist")
                 return
         self._flank_cultists()
-
-    def _grabbable_in_cover(self):
-        """True when the player's current cover still allows a locked
-        chaser's contact grab: corn conceals but does not protect. An
-        enclosed hide never grabs directly (the struggle owns it)."""
-        return getattr(self.player, "hidden", None) == "corn"
 
     def _tick_chase_cues_enemies(self, dt):
         """Underground Enemy cultists run the same chase state machine
@@ -180,8 +175,7 @@ class ThreatMixin:
             return
         self.scene._hide_check = None
         enemy, hx, hy = check
-        from systems.stealth import is_enclosed
-        if not is_enclosed(self.player):
+        if not _is_enclosed(self.player):
             return                      # bolted before the hands came down
         if self._death_kind is not None:
             return
@@ -214,10 +208,42 @@ class ThreatMixin:
             enemy._stun_t = max(getattr(enemy, "_stun_t", 0.0),
                                 STRUGGLE_STUN)
         # The burst is LOUD: a max-loudness step event pulls every
-        # scout in earshot to the spot.
+        # scout in earshot to the spot...
         import pygame as _pg
         self.scene._last_step_event = (p.x, p.y, 1.0,
                                        _pg.time.get_ticks() / 1000.0)
+        # ...but the step-event channel only wakes SCOUTS (searchers and
+        # investigators already own a target and ignore it), so the
+        # documented cost of winning -- the room CONVERGES -- is applied
+        # directly: every mobile cult hunter in earshot turns on the
+        # burst point. Set-piece kneelers (aggro 0 / lock_facing) and
+        # apex pursuers keep their own scripts; the stunned checker is
+        # skipped (it is still reeling).
+        for group in (self.scene.npcs, self.scene.enemies):
+            for a in group:
+                if a is enemy or not getattr(a, "alive", True):
+                    continue
+                if getattr(a, "_is_corpse", False):
+                    continue
+                is_cult = (str(getattr(a, "tag", "")).startswith("cult_")
+                           or getattr(a, "kind", "") == "cultist")
+                if not is_cult:
+                    continue
+                if getattr(a, "_force_chase", False):
+                    continue
+                if (getattr(a, "lock_facing", False)
+                        or getattr(a, "aggro", 1) == 0):
+                    continue
+                if getattr(a, "_cult_state", "") == "chase":
+                    continue
+                if self.scene.world_dist(a.x, a.y, p.x, p.y) > 220:
+                    continue
+                a._cult_state = "investigate"
+                a._cult_state_t = 4.0
+                a._last_seen_pos = (p.x, p.y)
+                a.move_target = None
+                if hasattr(a, "_scout_target"):
+                    a._scout_target = None
         self.audio.play("hide_exit", 0.9)
         self.audio.play("bump", 0.6)
         self.show_notice("You tear free.", duration=1.8)

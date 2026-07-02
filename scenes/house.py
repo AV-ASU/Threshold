@@ -409,11 +409,12 @@ def build_house():
     sc.add_decoration(Decoration(15 * TILE + 10, 4 * TILE + 16,
                                  "birdcage"))
 
-    # Hide spots: under the kitchen table, behind the kitchen shelves,
-    # beside the fireplace. Each spot lands on a walkable tile next
-    # to the visible cover (not on top of a solid prop).
+    # Hide spots: under the kitchen table. The spot sits on the table's
+    # walkable NORTH lip -- the old coords were inside the solid
+    # footprint, which roots the player in the furniture (flow §25 now
+    # guards every scene's spots against this).
     sc.hide_spots = [
-        (3 * TILE + 16, 3 * TILE + 16, "under"),    # under the kitchen table
+        (3 * TILE + 16, 2 * TILE + 24, "under"),    # under the kitchen table
     ]
 
     sc.on_enter_fn = house_on_enter
@@ -556,7 +557,7 @@ def build_son_room():
     # priority and made the only "the Clerk is one of them" clue
     # unreachable. (son_room is a SAFE scene -- the hide was cosmetic.)
     sc.hide_spots = [
-        (2 * TILE + 16, 6 * TILE + 24, "under"),
+        (1 * TILE + 24, 6 * TILE + 24, "under"),   # the bed's walkable lip
     ]
     # [E] cues for the robe closet (the tell) and the bare dresser.
     sc.add_interactable(sc._closet_pos[0], sc._closet_pos[1], 40)

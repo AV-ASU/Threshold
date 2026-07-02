@@ -53,6 +53,7 @@ from ui.cutscenes import (
 # config/logic split). Imported * so every bare-name reference below -- and
 # every external `from systems.game import <CONST>` -- resolves unchanged.
 from systems.config import *        # noqa: F401,F403
+from systems.stealth import grab_allowed as _grab_ok
 from systems.threat_mixin import ThreatMixin
 from systems.king_roam_mixin import KingRoamMixin
 from systems.infest_mixin import InfestationMixin, _corpse_examine
@@ -2049,12 +2050,11 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
             # Without this those cultists just chased and did nothing, so
             # capture felt random ("some take me, some don't"). Enclosed
             # hides / invuln / mid-death are exempt, matching
-            # _tick_cultists -- but corn is CONCEALMENT now, not armor: a
-            # cultist that has already locked (chase state, required in
-            # the loop below) takes you in the stalks too
-            # (STEALTH_REWORK.md Pillar 2).
+            # _tick_cultists -- one gate for every grab site
+            # (systems/stealth.py grab_allowed; the loop below requires
+            # chase state, so concealment yields to a locked pursuer).
             if (not world_frozen and self._death_kind is None
-                    and self.player.hidden in (None, "corn")
+                    and _grab_ok(self.player, True)
                     and self.player.invuln <= 0):
                 for e in self.scene.enemies:
                     # Only an AWARE cultist (actively chasing) takes you --

@@ -1452,18 +1452,28 @@ def main():
         check(not (("—" in _st) or ("–" in _st) or ("--" in _st)),
               "lead: no dashes in the thread line")
 
-    # --- 25. The placement pass (STEALTH_REWORK §6): every declared hide
-    # sits on walkable ground, and the gauntlet rooms now HAVE one.
-    from scenes import load_scene as _ld2
+    # --- 25. The placement pass (STEALTH_REWORK §6): the gauntlet rooms
+    # HAVE an enclosed hide, and EVERY declared hide in EVERY scene sits
+    # on walkable ground (a spot inside a solid roots the player in a
+    # wall and a sweeping searcher can never close to check range).
+    from scenes import load_scene as _ld2, SCENE_BUILDERS as _SB2
     for _key in ("well_passage", "works_vats", "works_sorting",
                  "works_scriptorium", "works_sign", "depths_antechamber",
                  "depths_procession", "depths_hall", "brimley"):
-        _sc2 = _ld2(_key)
-        check(len(_sc2.hide_spots) >= 1,
+        check(len(_ld2(_key).hide_spots) >= 1,
               f"hides: {_key} has an enclosed hide")
-        check(all(not _sc2.is_solid_at(hx, hy)
-                  for hx, hy, _k in _sc2.hide_spots),
-              f"hides: {_key} spots sit on walkable ground")
+    _bad_spots = []
+    for _key in _SB2:
+        try:
+            _sc2 = _ld2(_key)
+        except Exception:
+            continue
+        for hx, hy, _k in (getattr(_sc2, "hide_spots", None) or []):
+            if _sc2.is_solid_at(hx, hy):
+                _bad_spots.append((_key, hx, hy))
+    check(not _bad_spots,
+          f"hides: every declared spot in every scene sits on walkable "
+          f"ground {_bad_spots or ''}")
 
     print()
     if FAILS:

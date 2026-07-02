@@ -35,18 +35,16 @@ def _brimley_voice(pages, voice="blip_mid", fold=False, beats=None):
     def _fn(game, npc):
         portrait = getattr(npc, "portrait", None) or npc.sprite_kind
         for flag, pred, beat_pages in (beats or ()):
-            if game.save.arg(flag):
+            if game.save.flag(flag):
                 continue
-            try:
-                hit = bool(pred(game))
-            except Exception:
-                hit = False
-            if hit:
-                game.save.set_arg(flag, True)
+            if pred(game):
+                game.save.set_flag(flag, True)
                 game.dialog.show(beat_pages, speaker=npc.name, voice=voice,
                                  portrait=portrait)
-                if fold and hasattr(game, "_fold_mentioned"):
-                    game._fold_mentioned(npc.name)
+                # NB: the fold note is NOT filed here -- the beat pages
+                # are their own subject (the preacher, the digging, the
+                # plate); only the base pages carry the looping-roads
+                # account the `fold` mark attributes to this speaker.
                 return
         game.dialog.show(pages, speaker=npc.name, voice=voice,
                          portrait=portrait)
