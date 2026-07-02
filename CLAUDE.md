@@ -45,6 +45,20 @@ export SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy PYTHONPATH=.
 on the web. To *see* sprites/animations, use the `sprite-preview` skill —
 it renders the procedural sprites to a labelled PNG strip.
 
+## Skills (`.claude/skills/`) — use them, they encode this repo's discipline
+
+- `deep-reason` — structured protocol for design calls / judgment calls
+  (ground truth from the docs first, real options, adversarial pass).
+- `bug-hunt` — hypothesis-driven debugging (headless repro FIRST, localize
+  the layer, never pattern-match a fix).
+- `canon-check` — BEFORE writing any player-facing text: the source-of-truth
+  chain, the §10/§1b fences, voice matching, the no-dash rule.
+- `pre-flight` — the pre-commit gate + edit discipline (compile, run_all,
+  byte-identity for render work, one-edit-at-a-time).
+- `tuning-brain` — the threat-constant invariant lattice (floors < 1.0 King
+  line, escape outruns exposure, …) + simulate-before-ship.
+- `sprite-preview` / `creature-design` — see/iterate on the procedural art.
+
 ## Layout
 
 - `main.py` — entry point: `Game().run()`.
