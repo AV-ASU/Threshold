@@ -509,6 +509,12 @@ def build_brimley():
     objects = ["".join(r) for r in objects_l]
 
     sc = Scene("brimley", floor_rows, objects, music="wind")
+    # The church-door point the pealing bell broadcasts from
+    # (Game._tick_bell): cult hunters converge here while it rings, and
+    # a hunter reaching it stills the rope. One step outside the door
+    # tile so the walk target lands on open ground.
+    sc._bell_door = (church_door * TILE + 16,
+                     (church_bot + 1) * TILE + 16)
     # Hideable bushes the band helper queued -- each sits on a corn-
     # cover (':') tile so stepping into one hides the player.
     for bx, by in _band_bushes:

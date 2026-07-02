@@ -37,7 +37,8 @@ from systems.config import (SUS_NEAR, SUS_CONE_HALF, SUS_CONE_FEATHER,
                             SUS_SCORE_HOLD, SUS_SWEEP_RADIUS,
                             SUS_CHECK_DIST, SUS_CHECK_PAUSE,
                             NOISE_HEAR_MIN, NOISE_FRESH,
-                            NOISE_REACT_PAUSE, NOISE_SEARCH_PULL)
+                            NOISE_REACT_PAUSE, NOISE_SEARCH_PULL,
+                            NOISE_WALK_SPEED)
 
 # The two enclosed hide kinds ('behind' was removed with the old model;
 # kept out on purpose -- see CLAUDE.md).
@@ -213,20 +214,31 @@ def hear_noise(actor, scene, hearing_range=180.0):
     if st in ("search", "investigate"):
         held = getattr(actor, "_noise_loud", NOISE_SEARCH_PULL)
     best = None
-    for (ex, ey, loud, et, _kind) in events:
+    for (ex, ey, loud, et, _kind, reach) in events:
         if now - et >= NOISE_FRESH or loud < NOISE_HEAR_MIN:
             continue
-        if loud <= held:
+        d = scene.world_dist(actor.x, actor.y, ex, ey)
+        if d > (reach if reach is not None else hearing_range):
             continue
-        if scene.world_dist(actor.x, actor.y, ex, ey) > hearing_range:
+        if loud <= held:
+            # A source that keeps sounding (the bell striking again)
+            # keeps its investigator committed: top the walk budget
+            # back up, no re-turn, no new telegraph.
+            if (st == "investigate"
+                    and getattr(actor, "_last_seen_pos", None) == (ex, ey)):
+                actor._cult_state_t = max(
+                    getattr(actor, "_cult_state_t", 0.0),
+                    4.0 + d / NOISE_WALK_SPEED)
             continue
         if best is None or loud > best[2]:
-            best = (ex, ey, loud)
+            best = (ex, ey, loud, d)
     if best is None:
         return False
-    ex, ey, loud = best
+    ex, ey, loud, d = best
     actor._cult_state = "investigate"
-    actor._cult_state_t = 4.0
+    # The walk budget scales with the trip: a pull from across the
+    # field (the bell's reach) must survive the whole walk there.
+    actor._cult_state_t = 4.0 + d / NOISE_WALK_SPEED
     actor._last_seen_pos = (ex, ey)
     actor._noise_loud = loud
     actor._react_t = NOISE_REACT_PAUSE

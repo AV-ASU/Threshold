@@ -265,6 +265,55 @@ class Decoration:
             pygame.draw.line(surf, (20, 16, 14), (ex - 1, y - 7), (ex, y - 6), 1)
             pygame.draw.line(surf, (20, 16, 14), (ex - 1, y - 6), (ex, y - 7), 1)
 
+    def _draw_church_bell(self, surf, x, y):
+        """The church bell, hung in its hoist frame: two grounded
+        uprights, the yoke beam across them, the bell swung between.
+        Aged bronze with a patina bloom and a worn-bright lip. While
+        `ring_t` > 0 (set by Game._tick_bell when the peal is live) the
+        whole bell swings on its pivot and the clapper lags behind it;
+        at rest it hangs dead still. Anchor is the frame's FOOT, drawn
+        ~38px upward."""
+        pivot_x, pivot_y = x, y - 28
+        ring = getattr(self, "ring_t", 0.0)
+        a = 0.0
+        if ring > 0.0:
+            # full swing while the peal lives, easing off near the end
+            env = min(1.0, ring / 2.0)
+            a = math.sin(self.t * 5.4) * 0.42 * env
+        ca, sa = math.cos(a), math.sin(a)
+
+        def rot(px, py):
+            return (int(pivot_x + px * ca - py * sa),
+                    int(pivot_y + px * sa + py * ca))
+        # the hoist frame: grounded uprights + the yoke beam across
+        wood, wood_dk = (56, 44, 32), (34, 26, 20)
+        for px_ in (x - 12, x + 10):
+            pygame.draw.rect(surf, wood, (px_, y - 32, 3, 36))
+            pygame.draw.rect(surf, wood_dk, (px_, y - 32, 3, 36), 1)
+        pygame.draw.rect(surf, wood, (x - 13, y - 36, 26, 6))
+        pygame.draw.rect(surf, wood_dk, (x - 13, y - 36, 26, 6), 1)
+        bronze    = (118, 100, 62)
+        bronze_dk = (78, 66, 42)
+        patina    = (96, 110, 84)
+        lip_hi    = (178, 160, 108)
+        # crown loop on the pivot
+        pygame.draw.circle(surf, bronze_dk, (int(pivot_x), int(pivot_y)), 3)
+        # the bell profile, rotated about the pivot: shoulder -> waist
+        # -> flared sound-bow -> lip
+        prof = [(-4, 2), (4, 2), (5, 8), (6, 14), (10, 19), (10, 22),
+                (-10, 22), (-10, 19), (-6, 14), (-5, 8)]
+        pts = [rot(px, py) for px, py in prof]
+        pygame.draw.polygon(surf, bronze, pts)
+        pygame.draw.polygon(surf, bronze_dk, pts, 1)
+        # patina bloom down one flank + the worn-bright lip edge
+        pygame.draw.line(surf, patina, rot(-4, 6), rot(-6, 15), 2)
+        pygame.draw.line(surf, lip_hi, rot(-9, 21), rot(9, 21), 1)
+        # shoulder band (the founder's line)
+        pygame.draw.line(surf, bronze_dk, rot(-4, 5), rot(4, 5), 1)
+        # the clapper, lagging the swing
+        cl = rot(-sa * 6, 24)
+        pygame.draw.circle(surf, (40, 34, 26), cl, 3)
+
     def _draw_rope(self, surf, x, y):
         """A hanging cord -- a bell-pull / hoist line. A slightly kinked
         vertical rope with a frayed knot at the bottom; hangs from the

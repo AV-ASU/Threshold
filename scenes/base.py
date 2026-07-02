@@ -3905,14 +3905,17 @@ class Scene:
         return _math.hypot(dx, dy)
 
     # ---- the noise channel (2026-07 sound overhaul) ---------------------
-    def emit_noise(self, x, y, loud, kind="step"):
+    def emit_noise(self, x, y, loud, kind="step", reach=None):
         """Broadcast a world noise at (x, y) with loudness `loud` [0..1].
         The cult ticks hear it through systems/stealth.hear_noise; events
         stay audible for NOISE_FRESH seconds. A live noise MASK (a
         dominant source like the bell) swallows events quieter than its
         level inside its radius -- SO LOUD IT HIDES SMALL SOUNDS -- and
-        the swallowed event never reaches anyone's ears. Returns the
-        event tuple, or None if masked."""
+        the swallowed event never reaches anyone's ears. `reach`
+        overrides the LISTENER'S hearing range for this event alone: a
+        dominant source (the bell) is audible out to `reach` px no
+        matter whose ears; None keeps each listener's own range.
+        Returns the event tuple, or None if masked."""
         now = pygame.time.get_ticks() / 1000.0
         m = self._noise_mask
         if m is not None:
@@ -3925,7 +3928,7 @@ class Scene:
         # prune stale events so the list never grows past a frame's worth
         self._noise_events = [e for e in self._noise_events
                               if now - e[3] < 0.4]
-        evt = (x, y, loud, now, kind)
+        evt = (x, y, loud, now, kind, reach)
         self._noise_events.append(evt)
         # legacy single-slot mirror (loudest fresh event wins the slot)
         last = self._last_step_event

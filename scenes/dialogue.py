@@ -89,6 +89,20 @@ def _cult_tell(game, npc_key):
 def preacher_dialogue(game, npc):
     save = game.save
     _cult_tell(game, "preacher")
+    # One-shot: the PI rang his bell. Crane claims it, and in claiming
+    # it he teaches what the peal is FOR (everything in this town walks
+    # toward a loud enough sound). Never preempts the first meeting,
+    # and doesn't advance his doom ladder.
+    if (save.flag("bell_rung") and not save.flag("crane_bell_beat")
+            and save.arg("old_count", 0) >= 1):
+        save.set_flag("crane_bell_beat", True)
+        game.dialog.show([
+            "That was you in my tower. The bell has not swung in years. "
+            "Nobody left worth calling.",
+            "They heard it, though. Everything in this town comes when "
+            "something rings loud enough. Remember that.",
+        ], speaker="Rev. Crane", voice="blip_low", portrait="preacher")
+        return
     count = save.arg("old_count", 0) + 1
     save.set_arg("old_count", count)
     if count == 1:

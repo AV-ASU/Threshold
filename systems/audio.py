@@ -139,6 +139,11 @@ class Audio:                        #Starting screen needs music, something simp
         # wood). Same stick-slip friction trick as wood_creak.
         self.sfx["door_open"]   = self._build_door_open()
         self.sfx["door_close"]  = self._build_door_close()
+        # The church bell -- the town's one dominant noise source
+        # (rung from the tower; see the BELL_* config block). A real
+        # minor-third bell voicing: inharmonic partials over a beating
+        # hum, struck once, left to ring.
+        self.sfx["bell_toll"]   = self._build_bell_toll()
         self.sfx["engine_die"]  = g(64, 900, 0.34, "saw", attack_ms=4, decay_ms=820, noise_mix=0.45, vibrato=11)
         self.sfx["carcosa_boom"] = g(50, 1100, 0.55, "sine", attack_ms=2, decay_ms=950, noise_mix=0.45)
         self.sfx["door_locked"] = g(220, 80, 0.22, "square", attack_ms=2, decay_ms=50)
@@ -280,6 +285,9 @@ class Audio:                        #Starting screen needs music, something simp
             "void_sting":   dict(reverb="void"),
             # Opening drive -- the radio dissolving into static.
             "static":       dict(highpass=500),
+            # The bell always rings over open ground (heard from the
+            # tower, the street, the fields) -- bake the outdoor air in.
+            "bell_toll":    dict(reverb="outdoor"),
         }
         for key, kw in _atmos.items():
             if key in self.sfx:
@@ -1082,6 +1090,56 @@ class Audio:                        #Starting screen needs music, something simp
                          + random.uniform(-1, 1)
                          * math.exp(-local / 0.003) * 0.30)
             v = whoosh + thud + latch
+            sample = max(-32768, min(32767, int(max(-1.0, min(1.0, v))
+                                                * vol * 32767)))
+            buf[i * 2]     = sample & 0xFF
+            buf[i * 2 + 1] = (sample >> 8) & 0xFF
+        stereo = bytearray(n * 4)
+        for i in range(n):
+            stereo[i * 4]     = stereo[i * 4 + 2] = buf[i * 2]
+            stereo[i * 4 + 1] = stereo[i * 4 + 3] = buf[i * 2 + 1]
+        return pygame.mixer.Sound(buffer=bytes(stereo))
+
+    def _build_bell_toll(self, duration_ms=3400, vol=0.42, f0=195.0):
+        """One strike of a bronze church bell, left to ring. Real bell
+        voicing: an inharmonic partial stack over the prime -- the hum
+        an octave under (doubled a hair sharp so the pair BEATS, the
+        slow wow of a big bell), the minor-third tierce that makes
+        church bells sound mournful, quint, nominal, and two fast high
+        partials that are mostly gone by the first half-second. Each
+        partial decays at its own rate (high dies fast, hum outlasts
+        everything), plus a click-and-noise strike transient."""
+        sr = 22050
+        n = int(sr * duration_ms / 1000)
+        buf = bytearray(n * 2)
+        # (ratio to f0, amplitude, decay tau seconds)
+        partials = (
+            (0.500, 0.55, 1.90),      # hum
+            (0.504, 0.30, 1.90),      # hum's beating twin (~0.8 Hz wow)
+            (1.000, 0.50, 1.10),      # prime
+            (1.200, 0.42, 0.90),      # tierce (the minor third)
+            (1.500, 0.26, 0.70),      # quint
+            (2.000, 0.36, 0.55),      # nominal
+            (2.670, 0.16, 0.28),      # upper partials: the strike's
+            (4.100, 0.10, 0.14),      #   metallic edge, gone fast
+        )
+        norm = 1.0 / sum(a for _r, a, _t in partials)
+        for i in range(n):
+            t = i / sr
+            v = 0.0
+            for ratio, amp, tau in partials:
+                v += (math.sin(2 * math.pi * f0 * ratio * t)
+                      * amp * math.exp(-t / tau))
+            v *= norm
+            if t < 0.012:
+                # the clapper: a hard click + a breath of noise
+                v += (math.sin(2 * math.pi * 2400 * t)
+                      * math.exp(-t / 0.003) * 0.35
+                      + random.uniform(-1, 1)
+                      * math.exp(-t / 0.004) * 0.30)
+            # 4 ms attack so the strike doesn't pop the speaker
+            if t < 0.004:
+                v *= t / 0.004
             sample = max(-32768, min(32767, int(max(-1.0, min(1.0, v))
                                                 * vol * 32767)))
             buf[i * 2]     = sample & 0xFF

@@ -396,6 +396,24 @@ NOISE_HEAR_MIN = 0.7          # min loudness that turns a scout's head
 NOISE_FRESH = 0.4             # s an event stays audible
 NOISE_REACT_PAUSE = 0.45      # the face-the-sound beat before walking
 NOISE_SEARCH_PULL = 0.9       # loudness that diverts a searcher
+NOISE_WALK_SPEED = 55.0       # px/s travel estimate that sizes an
+                              # investigator's walk budget by distance,
+                              # so a far pull (the bell) isn't abandoned
+                              # halfway across the field
+
+# ---- The church bell (the town's one dominant noise source) ---------------
+# Rung from the bell tower (E on the pull, scenes/threshold_extras.py).
+# While it peals: every surface scene is MASKED (small noises, the
+# player's steps, drown under it) and in Brimley it broadcasts a
+# map-wide pull at the church door -- every cult hunter converges on the
+# church. A hunter that reaches the door stills the rope; otherwise the
+# peal rings itself out. Apex pursuers never hear it (they hunt YOU).
+BELL_RING_DUR = 20.0          # s the peal lasts if nothing stops it
+BELL_TOLL_PERIOD = 2.6        # s between strikes
+BELL_MASK_LEVEL = 0.85        # emit_noise events quieter than this drown
+BELL_MASK_RADIUS = 100000.0   # the peal covers the whole scene
+BELL_REACH = 100000.0         # the pull is heard map-wide
+BELL_STOP_DIST = 70.0         # a hunter this close to the door stills it
 
 # Visibility rates, per second. Watchers + cultist gaze push the meter
 # up; hiding pulls it down. Enough Watchers out-pace even hiding --

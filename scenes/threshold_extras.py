@@ -789,7 +789,8 @@ def build_bell_tower():
     # you circle, so whatever is on its far side is an indoor blind spot.
     floor_rows = ["=" * 12 for _ in range(10)]
     objects = [
-        "WWWWiWWWiWWWW",   # 0  north-wall window slits
+        "WWWWiWWWiWWW",    # 0  north-wall window slits (12 wide, matching
+        #                       the rest -- row 0 carried a stray 13th tile)
         "W..........W",    # 1
         "W..........W",    # 2
         "i..........i",    # 3  east/west window slits
@@ -804,16 +805,30 @@ def build_bell_tower():
     sc.add_exit("L", "old_man_house", "from_bell_tower")
     sc.set_spawn("default", 5, 8)
     sc.set_spawn("from_church", 7, 8)        # at the foot of the L stairs
-    # The bell hangs in the central housing. Use a lantern + rope as a
-    # stand-in -- we don't have a `bell` deco.
-    sc.add_decoration(Decoration(5 * TILE + 32, 4 * TILE + 16, "lantern"))
-    sc.add_decoration(Decoration(5 * TILE + 32, 4 * TILE + 34, "rope"))
+    # The bell hangs off the housing's south face (drawn upward from its
+    # lip, so under tilt it reads in front of the solid housing box),
+    # with the pull rope dropping to hand height below it. E on the
+    # rope rings it: the peal masks every small noise on the surface
+    # and pulls the cult across Brimley to the church door
+    # (Game._ring_bell / _tick_bell; the BELL_* config block).
+    sc.add_decoration(Decoration(5 * TILE + 32, 5 * TILE + 28,
+                                 "church_bell"))
+    sc.add_decoration(Decoration(5 * TILE + 32, 6 * TILE + 5, "rope"))
+    sc.add_interactable(5 * TILE + 32, 6 * TILE + 16, 44)
     sc.add_decoration(Decoration(2 * TILE + 16, 2 * TILE + 16,
                                  "phantom_mark"))
     for i in range(8):
         sc.add_decoration(Decoration(40 + i * 36,
                                      60 + (i % 3) * 50, "mote"))
     sc.hide_spots = []
+
+    def _bell_interact(game):
+        px, py = game.player.x, game.player.y
+        if (abs(px - (5 * TILE + 32)) > 44
+                or abs(py - (6 * TILE + 16)) > 44):
+            return
+        game._ring_bell()
+    sc.on_interact_fn = _bell_interact
 
     def _bell_tower_on_enter(game, scene):
         if game.save.flag("bell_tower_seen"):

@@ -53,7 +53,8 @@ from ui.cutscenes import (
 # config/logic split). Imported * so every bare-name reference below -- and
 # every external `from systems.game import <CONST>` -- resolves unchanged.
 from systems.config import *        # noqa: F401,F403
-from systems.stealth import grab_allowed as _grab_ok
+from systems.stealth import (grab_allowed as _grab_ok,
+                             enter_search as _cult_enter_search)
 from systems.threat_mixin import ThreatMixin
 from systems.king_roam_mixin import KingRoamMixin
 from systems.infest_mixin import InfestationMixin, _corpse_examine
@@ -389,6 +390,10 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         # movement-input flag _update_look reads (see CHASE_FIRE_LOCK).
         self._chase_lock_t = 0.0
         self._move_input_active = False
+        # The church bell: remaining peal time + the strike cadence
+        # accumulator (see _ring_bell / _tick_bell, BELL_* config).
+        self._bell_t = 0.0
+        self._bell_toll_t = 0.0
         self._chant_t = 0.0
         self._breath_t = 0.0
         self._heartbeat_t = 0.0
@@ -1160,6 +1165,116 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
                 self.show_notice(f"Picked up: {d['name']}")
                 if it.get("on_pickup"):
                     it["on_pickup"](self)
+
+    # ---- The church bell (the town's dominant noise source) ----
+    def _ring_bell(self):
+        """E on the pull rope in the bell tower (scenes/threshold_extras).
+        Arms the peal: BELL_RING_DUR seconds of wall-clock ringing that
+        _tick_bell drives every frame, whatever scene the player walks
+        through. The peal MASKS every small surface noise (the player's
+        own steps drown under it) and pulls the cult across Brimley to
+        the church door. A hunter that reaches the door stills the
+        rope; otherwise the peal rings itself out."""
+        if self._bell_t > 0.0:
+            self.show_notice("The bell is already swinging.",
+                             duration=1.6)
+            return
+        self._bell_t = BELL_RING_DUR
+        self._bell_toll_t = 0.0          # first strike lands this frame
+        self.save.set_flag("bell_rung", True)
+        self.show_notice(
+            "You haul the rope. The bell swings out over the town.",
+            duration=2.6)
+
+    def _tick_bell(self, dt):
+        """Drive a live peal (armed by _ring_bell). Lives on Game, not
+        the scene, so the bell keeps ringing across scene loads: haul
+        the rope, climb down, and walk out into the town it is calling
+        in. Each strike plays the toll, re-arms the surface noise MASK
+        (so loud it hides small sounds), and in Brimley broadcasts a
+        map-wide pull at the church door. Cult hunters converge on it;
+        the first to reach the door stills the rope and searches the
+        churchyard. Apex pursuers never hear it. The deep places never
+        hear it either."""
+        if self._bell_t <= 0.0:
+            return
+        self._bell_t -= dt
+        sc = self.scene
+        if sc is None:
+            return
+        key = sc.key
+        bell_door = getattr(sc, "_bell_door", None)
+        # The tower prop swings while the peal lives.
+        if key == "bell_tower":
+            for deco in sc.decorations:
+                if deco.kind == "church_bell":
+                    deco.ring_t = max(0.0, self._bell_t)
+        # A cult hunter reaching the church door stills the rope. Only
+        # a scene that declares the door (Brimley) can be silenced --
+        # elsewhere nobody can reach the rope and the 20s peal is the
+        # only clock.
+        if bell_door is not None:
+            bx, by = bell_door
+            for n in sc.npcs:
+                tag = str(getattr(n, "tag", ""))
+                if not tag.startswith("cult_") or tag == "cult_convert":
+                    continue
+                if (not getattr(n, "alive", True)
+                        or getattr(n, "_is_corpse", False)):
+                    continue
+                if getattr(n, "_force_chase", False):
+                    continue            # apex hunts YOU, not the noise
+                if sc.world_dist(n.x, n.y, bx, by) <= BELL_STOP_DIST:
+                    self._bell_t = 0.0
+                    sc.clear_noise_mask()
+                    # A stilled bell stops calling: purge its still-
+                    # fresh events so they can't yank the silencer (or
+                    # anyone else) straight back into an investigate.
+                    sc._noise_events = [e for e in sc._noise_events
+                                        if e[4] != "bell"]
+                    # The silencer lingers: it sweeps the churchyard
+                    # before drifting back to its rounds.
+                    n._last_seen_pos = (bx, by)
+                    _cult_enter_search(n, sc)
+                    self.audio.play("bump", 0.5)
+                    self.show_notice("The bell stops mid swing.",
+                                     duration=2.4)
+                    return
+        if self._bell_t <= 0.0:
+            sc.clear_noise_mask()        # rang itself out
+            return
+        # The strike cadence.
+        self._bell_toll_t -= dt
+        if self._bell_toll_t > 0.0:
+            return
+        self._bell_toll_t = BELL_TOLL_PERIOD
+        underground = key in UNDERGROUND_SCENES
+        if underground:
+            vol = 0.0                    # the peal doesn't reach down here
+        elif key == "bell_tower":
+            vol = 0.95                   # you are standing under it
+        elif key == "old_man_house":
+            vol = 0.70                   # the church nave, one floor down
+        elif bell_door is not None:
+            vol = max(0.25, 0.85 * self.audio.distance_attenuation(
+                bell_door[0], bell_door[1],
+                self.player.x, self.player.y, falloff=900.0))
+        else:
+            vol = 0.30                   # a far peal through the trees
+        if vol > 0.0:
+            self.audio.play("bell_toll", vol)
+        if not underground:
+            # The peal drowns every smaller noise on the surface...
+            cx, cy = bell_door if bell_door is not None else (
+                sc.w * TILE * 0.5, sc.h * TILE * 0.5)
+            sc.set_noise_mask(cx, cy, BELL_MASK_RADIUS, BELL_MASK_LEVEL,
+                              BELL_TOLL_PERIOD + 0.6)
+            # ...and calls the cult in: a map-wide pull at the church
+            # door. Only the scene that declares the door has anyone
+            # who can answer it.
+            if bell_door is not None:
+                sc.emit_noise(bell_door[0], bell_door[1], 1.0,
+                              kind="bell", reach=BELL_REACH)
 
     # ---- Interaction ----
     def try_interact(self):
@@ -2133,6 +2248,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
             # a modal too, so visibility can't climb and the King can't close
             # while a box is up. Cutscene/audio drivers keep running.
             if not world_frozen:
+                self._tick_bell(dt)
                 self._tick_cultists(dt)
                 self._tick_struggle(dt)
                 self._tick_chase_cues_enemies(dt)

@@ -299,6 +299,53 @@ def main():
     check(kneeler._cult_state == "scout",
           "deaf: a set-piece kneeler ignores noise (its wake is scripted)")
 
+    # --- 4d. the church bell (the town's dominant noise source) ---------
+    # Rung from the tower pull (E, scenes/threshold_extras.py); Game.
+    # _ring_bell/_tick_bell drive the peal across scene loads. While it
+    # peals: the surface is MASKED (small noises drown), Brimley hears a
+    # map-wide pull at the church door, and the first cult hunter to
+    # reach the door stills the rope and sweeps the churchyard.
+    g = new_game()
+    g.load_scene_now("bell_tower", "default")
+    tick(g, 40)
+    g.player.x, g.player.y = 5 * TILE + 32, 6 * TILE + 30
+    press_e(g)
+    check(g._bell_t > 19.0 and g.save.flag("bell_rung"),
+          "bell: E at the pull arms the peal")
+    g.load_scene_now("brimley", "default")
+    tick(g, 10)
+    clear_cult(g)
+    g.player.x, g.player.y = 73 * TILE + 16, 68 * TILE
+    g.player.hidden = None
+    n = g._spawn_cultist("cult_regular", "cultist",
+                         at=(70 * TILE + 16, 66 * TILE))
+    n.x, n.y = 70 * TILE + 16, 66 * TILE
+    n._cult_state = "scout"
+    n._suspicion = 0.0
+    n.facing = (0.0, -1.0)
+    bx, by = g.scene._bell_door
+    d0 = g.scene.world_dist(n.x, n.y, bx, by)
+    heard = False
+    for _ in range(120):
+        tick(g, 1)
+        if n._cult_state == "investigate":
+            heard = True
+            break
+    check(heard and getattr(n, "_last_seen_pos", None) == (bx, by),
+          f"bell: the peal pulls a cultist {d0:.0f}px out, far past "
+          f"his 180px ear, onto the church door")
+    check(getattr(n, "_cult_state_t", 0) > 15.0,
+          "bell: the walk budget scales to the trip")
+    r = g.scene.emit_noise(g.player.x, g.player.y, 0.8, kind="probe")
+    check(r is None,
+          "bell: the peal MASKS the player's small noises scene-wide")
+    n.x, n.y = bx + 30, by
+    tick(g, 2)
+    check(g._bell_t <= 0.0 and n._cult_state == "search",
+          "bell: a hunter at the door stills the rope and sweeps")
+    check(not g.scene.mask_active(),
+          "bell: the mask drops with the bell")
+
     # --- 5. walls occlude absolutely ------------------------------------
     g = new_game()
     g.load_scene_now("brimley", "default")

@@ -1073,7 +1073,12 @@ class RenderMixin:
                 # A visible standing actor is a "focus": occluding walls fade for
                 # whichever of these they cover (CAMERA.md Phase 5 per-actor
                 # occlusion), so a cultist seen behind a near wall reads through.
-                _focus.append((npc.x + ox, npc.y + oy, 28))
+                # Invisible interact MARKERS are exempt: they draw nothing, so
+                # fading a wall for one erases real architecture for a ghost
+                # (the church vestry's back wall vanished for the records
+                # terminal's marker; the room read as missing a wall).
+                if npc.sprite_kind != "_invisible":
+                    _focus.append((npc.x + ox, npc.y + oy, 28))
                 sy -= npc_lift            # stand on the floor under tilt
 
                 # Capture EVERY per-NPC value as a default arg: this closure
