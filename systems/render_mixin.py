@@ -744,7 +744,11 @@ class RenderMixin:
             cache, order, cap = (_PROP_STATIC_CACHE, _PROP_STATIC_ORDER,
                                  _PROP_STATIC_CAP)
         else:
-            key = (id(d), round(cam.yaw, 2), round(cam.pitch, 2),
+            # Yaw bucketed at 0.04 rad (like the wall cards): a
+            # continuous head-turn used to rebuild every yaw-keyed prop
+            # every frame; ~1px of in-bucket shape error is invisible
+            # mid-swing.
+            key = (id(d), int(cam.yaw / 0.04), round(cam.pitch, 2),
                    round(cam.scale, 2))
             cache, order, cap = (_PROP_CARD_CACHE, _PROP_CARD_ORDER,
                                  _PROP_CARD_CAP)

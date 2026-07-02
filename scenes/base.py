@@ -1298,9 +1298,12 @@ _CORN_CARD_CAP = 1200
 
 def _tilt_corn_solid(surf, camera, scene, tx, ty, ch, far=False):
     """Draw a corn cluster by blitting its cached card (see _CORN_CARD_CACHE).
-    The stalks are rendered through `_tilt_corn_draw` on a cache miss."""
+    The stalks are rendered through `_tilt_corn_draw` on a cache miss. Yaw is
+    BUCKETED at 0.04 rad like the wall cards: at 0.01-rad keys a continuous
+    head-turn rebuilt every visible corn tile every frame (~500 card builds a
+    frame in the maze -- the single worst look-around cost in the game)."""
     bx, by = camera.project(tx * TILE + 16, ty * TILE + 16, 0)
-    key = (tx, ty, far, round(camera.yaw, 2),
+    key = (tx, ty, far, int(camera.yaw / 0.04),
            round(camera.pitch, 2), round(camera.scale, 2))
     entry = _CORN_CARD_CACHE.get(key)
     if entry is None:
@@ -2529,18 +2532,27 @@ def _tilt_warp(flat, camera):
     world-rotate by yaw, then scale x by scale and y by scale*cos(pitch).
     At yaw 0 (the eased-to-rest head position, i.e. most walking frames) the
     rotate is skipped entirely -- transform.rotate(s, 0) still copies the
-    whole large window surface for nothing."""
-    deg = math.degrees(camera.yaw)
-    rotated = pygame.transform.rotate(flat, deg) if abs(deg) > 1e-4 else flat
+    whole large window surface for nothing.
+
+    At nonzero yaw the order is uniform-shrink FIRST, then rotate, then
+    the cos(pitch) y-squash: rotation commutes with a UNIFORM scale, so
+    the transform is identical, but the expensive rotate runs on
+    scale^2 (~half) of the pixels -- it was the top per-frame cost of a
+    head-turn. `scale` (nearest) rather than `smoothscale` throughout:
+    the floor raster is a low-detail tile pattern under the tilt +
+    Brimley's haze, and smoothscale on surfaces this size was ~10x."""
     cp = max(0.05, math.cos(camera.pitch))
-    w, h = rotated.get_size()
-    # `scale` (nearest) rather than `smoothscale` (bilinear): the floor raster
-    # is a low-detail tile pattern sitting under the tilt + Brimley's haze, so
-    # the smoothing is imperceptible, but smoothscale on this large surface was
-    # the single biggest per-frame cost in the wrapped town (~10x scale's cost).
-    return pygame.transform.scale(
-        rotated, (max(1, int(w * camera.scale)),
-                  max(1, int(h * camera.scale * cp))))
+    s = camera.scale
+    deg = math.degrees(camera.yaw)
+    w, h = flat.get_size()
+    if abs(deg) <= 1e-4:
+        return pygame.transform.scale(
+            flat, (max(1, int(w * s)), max(1, int(h * s * cp))))
+    small = pygame.transform.scale(
+        flat, (max(1, int(w * s)), max(1, int(h * s))))
+    rotated = pygame.transform.rotate(small, deg)
+    rw, rh = rotated.get_size()
+    return pygame.transform.scale(rotated, (rw, max(1, int(rh * cp))))
 
 
 _DOOR_HEAD = 19      # doorway opening height; the lintel beam runs head->rise
@@ -3058,8 +3070,12 @@ def _tilt_wall_box_cached(surf, camera, scene, tx, ty):
     their box's shape depends only on the camera angle + which neighbours are
     walls -- never on where the camera pans. So render each wall tile's box
     once per (scene, tile, angle) into a card and blit it at the projected tile
-    centre. The bulk of the town's ~640 wall tiles become blits while panning."""
-    key = (scene.key, tx, ty, round(camera.yaw, 2),
+    centre. The bulk of the town's ~640 wall tiles become blits while panning.
+    Yaw is BUCKETED at 0.04 rad (~2.3 deg): a continuous head-turn used to
+    mint a fresh key every frame (a full-visible-wall rebuild per frame, the
+    dominant look-around cost); inside a bucket the shape error is ~1px on a
+    card this size, invisible mid-swing."""
+    key = (scene.key, tx, ty, int(camera.yaw / 0.04),
            round(camera.pitch, 2), round(camera.scale, 2))
     entry = _WALL_BOX_CACHE.get(key)
     if entry is None:
@@ -3076,7 +3092,11 @@ def _tilt_wall_box_cached(surf, camera, scene, tx, ty):
 
 def _build_wall_box_card(camera, scene, tx, ty):
     """Cache-miss path: render one wall tile's box to a tight SRCALPHA card via
-    a throwaway camera at the same angle, pinned at the tile centre."""
+    a throwaway camera at the same angle, pinned at the tile centre. The tight
+    rect is ANALYTIC -- the drawn box lies inside the projected hull of the
+    tile's eight extruded corners -- because get_bounding_rect's full-pixel
+    scan was ~70% of every rebuild (and a head-turn rebuilds every visible
+    wall)."""
     from rendering.camera import Camera
     PAD = 90
     tmp = pygame.Surface((PAD * 2, PAD * 2), pygame.SRCALPHA)
@@ -3085,9 +3105,21 @@ def _build_wall_box_card(camera, scene, tx, ty):
                   pitch=camera.pitch, yaw=camera.yaw,
                   scale=camera.scale, origin=anchor)
     _tilt_wall_box(tmp, tcam, scene, tx, ty)
-    rect = tmp.get_bounding_rect()
-    if rect.width == 0 or rect.height == 0:
+    xs = []
+    ys = []
+    for cxw in (tx * TILE, tx * TILE + TILE):
+        for cyw in (ty * TILE, ty * TILE + TILE):
+            for z in (0, _TILT_WALL_RISE):
+                sxp, syp = tcam.project(cxw, cyw, z)
+                xs.append(sxp)
+                ys.append(syp)
+    rx0 = max(0, min(xs) - 2)
+    ry0 = max(0, min(ys) - 2)
+    rx1 = min(PAD * 2, max(xs) + 3)
+    ry1 = min(PAD * 2, max(ys) + 3)
+    if rx1 - rx0 <= 0 or ry1 - ry0 <= 0:
         return (None, 0, 0)
+    rect = pygame.Rect(rx0, ry0, rx1 - rx0, ry1 - ry0)
     return (tmp.subsurface(rect).copy().convert_alpha(), anchor[0] - rect.x, anchor[1] - rect.y)
 
 
@@ -3327,21 +3359,35 @@ def draw_terrain_tilted(surf, scene, camera, sight=None):
     wx0, wy0 = cx - half, cy - half
     x0 = int(math.floor(wx0 / TILE)); y0 = int(math.floor(wy0 / TILE))
     x1 = int(math.ceil((wx0 + span) / TILE)); y1 = int(math.ceil((wy0 + span) / TILE))
-    # The warped floor is cached (see _TILT_FLOOR_CACHE): rebuilt only when the
-    # camera pose changes. x0..y1 / wx0,wy0 are still computed every frame --
-    # they're cheap and the wall + neighbor passes below need them.
+    # The warped floor is cached (see _TILT_FLOOR_CACHE). The build is
+    # anchored to a TILE-quantized camera centre: the warp is AFFINE
+    # (rotate + scale), so panning within a tile reuses the cached
+    # surface blitted at the projected offset instead of re-rastering +
+    # re-warping the whole window every moving frame (that rebuild was
+    # the single biggest walking cost). One extra TILE of margin covers
+    # the largest sub-tile shift. x0..y1 / wx0,wy0 are still computed
+    # every frame from the TRUE camera -- the wall + neighbor passes
+    # below need them.
+    qx = math.floor(cx / TILE) * TILE
+    qy = math.floor(cy / TILE) * TILE
     fkey = (id(scene), getattr(scene, "key", None), scene.w, scene.h,
-            round(cx), round(cy), round(camera.yaw, 4),
+            qx, qy, round(camera.yaw, 4),
             round(camera.pitch, 4), round(camera.scale, 4))
     _fc = _TILT_FLOOR_CACHE
     if _fc["key"] == fkey:
         warped = _fc["surf"]
     else:
+        half_b = half + TILE                 # margin for the sub-tile shift
+        span_b = int(half_b * 2)
+        bx0, by0 = qx - half_b, qy - half_b
+        tx0 = int(math.floor(bx0 / TILE)); ty0 = int(math.floor(by0 / TILE))
+        tx1 = int(math.ceil((bx0 + span_b) / TILE))
+        ty1 = int(math.ceil((by0 + span_b) / TILE))
         # Reuse the flat scratch between rebuilds -- allocating a fresh
-        # span x span surface (several MB) every panned frame was churn.
+        # span x span surface (several MB) every rebuilt frame was churn.
         flat = _fc.get("flat")
-        if flat is None or flat.get_size() != (span, span):
-            flat = pygame.Surface((span, span))
+        if flat is None or flat.get_size() != (span_b, span_b):
+            flat = pygame.Surface((span_b, span_b))
             _fc["flat"] = flat
         flat.fill((10, 10, 14))
         if _tilt_use_fullmap(scene):
@@ -3349,9 +3395,9 @@ def draw_terrain_tilted(surf, scene, camera, sight=None):
             # wrap-aware blits) and redraw only the animated water on top,
             # instead of rastering ~6000 tiles every frame.
             full, water = _tilt_fullmap(scene)
-            _blit_window_wrapped(flat, full, wx0, wy0,
+            _blit_window_wrapped(flat, full, bx0, by0,
                                  scene.wrap_x, scene.wrap_y)
-            _overlay_anim_water(flat, scene, water, wx0, wy0, span)
+            _overlay_anim_water(flat, scene, water, bx0, by0, span_b)
         else:
             # Phase 2 of the seamless-world neighbor strip: when the player is
             # near a non-wrap host's edge and the visible tile range extends
@@ -3360,15 +3406,19 @@ def draw_terrain_tilted(surf, scene, camera, sight=None):
             # in-bounds area is overdrawn with the host's tiles below, so the
             # strip shows only where the host doesn't reach -- a seamless seam.
             if not (scene.wrap_x or scene.wrap_y):
-                _draw_neighbor_strips(flat, scene, wx0, wy0, x0, y0, x1, y1)
-            draw_scene_terrain(flat, scene, wx0, wy0, x0, y0, x1, y1,
+                _draw_neighbor_strips(flat, scene, bx0, by0,
+                                      tx0, ty0, tx1, ty1)
+            draw_scene_terrain(flat, scene, bx0, by0, tx0, ty0, tx1, ty1,
                                skip_billboard=True, skip_roofs=True)
         warped = _tilt_warp(flat, camera)
         _fc["key"] = fkey
         _fc["surf"] = warped
-    ox, oy = camera.origin
-    surf.blit(warped, (ox - warped.get_width() // 2,
-                       oy - warped.get_height() // 2))
+    # Blit so the cached surface's centre (world point (qx, qy)) lands at
+    # its CURRENT projection -- the affine shift that makes the tile-
+    # anchored build valid for every sub-tile camera position.
+    px, py = camera.project(qx, qy, 0)
+    surf.blit(warped, (px - warped.get_width() // 2,
+                       py - warped.get_height() // 2))
     # Collect the visible wall tiles (returned for the unified depth pass; the
     # caller sorts + fades them). Wrap-aware: tx/ty may sit outside [0,W) for a
     # toroidal scene and the box projects at the un-wrapped world position.
