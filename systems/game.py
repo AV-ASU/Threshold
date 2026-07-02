@@ -24,6 +24,7 @@ from rendering.camera import Camera
 from systems.look_control import LookController
 from ui.fonts import make_fonts
 from ui.dialog import DialogueBox
+from ui.float_speech import FloatSpeech
 from ui.inventory_ui import InventoryUI
 from ui.notebook_ui import NotebookUI
 from ui.text_input import TextInputModal
@@ -53,6 +54,9 @@ from ui.cutscenes import (
 # config/logic split). Imported * so every bare-name reference below -- and
 # every external `from systems.game import <CONST>` -- resolves unchanged.
 from systems.config import *        # noqa: F401,F403
+from systems.stealth import (grab_allowed as _grab_ok,
+                             enter_search as _cult_enter_search,
+                             is_enclosed as _is_enclosed_hide)
 from systems.threat_mixin import ThreatMixin
 from systems.king_roam_mixin import KingRoamMixin
 from systems.infest_mixin import InfestationMixin, _corpse_examine
@@ -98,8 +102,16 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         self.audio = Audio()
         self.save = Save(slot=1)
         self.dialog = DialogueBox(self.audio, self.fonts)
+        self.dialog.game = self        # so show() can route casual NPC
+        #                                lines to the floating layer
+        # Floating, non-modal NPC speech (above the speaker's head; the
+        # world keeps running). DialogueBox.show decides what floats.
+        self.float_speech = FloatSpeech(self.audio, self.fonts)
+        self._speaking_npc = None      # set during an interact so show()
+        #                                knows whose head to float over
         self.inv_ui = InventoryUI(self.fonts, self.audio, self.save)
         self.notebook_ui = NotebookUI(self.fonts, self.audio, self.save)
+        self.notebook_ui.game = self   # the soft lead line reads live state
         # Text-input modal -- used by the old man's computer terminal
         # (LOGIN: prompt) and reusable for any future ARG hooks. While
         # active, the Game suspends play and routes key events here.
@@ -380,6 +392,25 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         self.visibility = 0.0
         self._vis_floor = 0.0
         self._being_seen = 0.0
+        # The hide-check struggle (STEALTH_REWORK.md): a searcher checking
+        # the enclosed hide the player is in opens a timed mash window.
+        self._struggle = None
+        # Aim-steady camera state: the post-shot chase lock and the
+        # movement-input flag _update_look reads (see CHASE_FIRE_LOCK).
+        self._chase_lock_t = 0.0
+        self._move_input_active = False
+        # The church bell: remaining peal time + the strike cadence
+        # accumulator (see _ring_bell / _tick_bell, BELL_* config).
+        self._bell_t = 0.0
+        self._bell_toll_t = 0.0
+        # The one-hop noise bleed: the live visit (scene-local, also
+        # cleared on every load) + the between-visits cooldown.
+        self._bleed = None
+        self._bleed_cd = 0.0
+        # Floating NPC speech + the interact speaker context.
+        self.float_speech.active = False
+        self.float_speech.speaker = None
+        self._speaking_npc = None
         self._chant_t = 0.0
         self._breath_t = 0.0
         self._heartbeat_t = 0.0
@@ -685,11 +716,29 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
                 int(self.player.x // TILE),
                 int(self.player.y // TILE),
             )
+            # The door you came through swings shut behind you (tilt
+            # view): pulse any door on or beside the entry tile.
+            # quiet: the transition fade already plays the arrival's
+            # door_close, so the swing itself stays silent.
+            for ddx, ddy in ((0, 0), (1, 0), (-1, 0), (0, 1), (0, -1)):
+                self._pulse_door_at(self.player.x + ddx * TILE,
+                                    self.player.y + ddy * TILE,
+                                    hold=0.35, quiet=True)
         else:
             self.scene._last_entry_exit_tile = None
-        # Reset the step-event buffer on each scene load. A step in
-        # one scene shouldn't bleed into the next.
+        # Reset the noise channel on each scene load. A step in one
+        # scene shouldn't bleed into the next (the one-hop bleed system
+        # is the deliberate exception, and it re-emits on this side).
         self.scene._last_step_event = None
+        self.scene._noise_events = []
+        self.scene._noise_mask = None
+        # A pending/live bleed visit belongs to the room it was armed
+        # in; the transient itself was rebuilt away with the scene.
+        self._bleed = None
+        # A floating conversation's speaker was rebuilt away with the
+        # scene -- drop the caption on load.
+        self.float_speech.active = False
+        self.float_speech.speaker = None
         self._build_fold_cache()
         # Fold pursuit hand-off: if the player fled here through a fold with
         # a hot cultist (stashed by _note_fold_pursuit), arm the beat-behind
@@ -871,14 +920,27 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         psx, psy = self.camera.project(self.player.x, self.player.y)
         dxs = mx - psx
         dys = my - psy
-        if dys < 0:
+        # Aim-steady rules (2026-07): holding the trigger (or the beat
+        # after a shot) locks the chase entirely -- lining up a shot is
+        # a stable platform, never a standing order to swing. Standing
+        # still damps the chase hard; the full turn rate only applies
+        # while movement keys are actually driving.
+        self._chase_lock_t = max(0.0,
+                                 getattr(self, "_chase_lock_t", 0.0) - dt)
+        if pygame.mouse.get_pressed()[0] or self._chase_lock_t > 0.0:
+            chase_rate = 0.0
+        elif getattr(self, "_move_input_active", False):
+            chase_rate = TURN_RATE
+        else:
+            chase_rate = TURN_RATE * CHASE_STATIONARY_MULT
+        if dys < 0 and chase_rate > 0.0:
             offset = math.atan2(dxs, -dys)
             # Chase only inside the FORWARD cone: AIM_DEAD_ZONE arc near
             # straight-up (no chase), out to CHASE_MAX_OFFSET near the
             # horizontal (no chase). Both bounds give the camera a few degrees
             # of rest before it starts swinging.
             if abs(offset) < CHASE_MAX_OFFSET:
-                self.look.chase_by(offset, dt, TURN_RATE, AIM_DEAD_ZONE)
+                self.look.chase_by(offset, dt, chase_rate, AIM_DEAD_ZONE)
         self.camera.yaw = self.look.cam_yaw
         # The sprite + gun face the cursor (free aim), independent of body.
         ax, ay = self.look.aim_vec()
@@ -891,6 +953,19 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         # During the threshold-closure sequence, the player cannot
         # move. They can only watch.
         if getattr(self, "_closure_locked", False):
+            return
+        # Mid-struggle the player is pinned in the hide: no movement,
+        # no interaction -- the mash (E/SPACE, handled in the event
+        # loop) is the only verb until it resolves.
+        if getattr(self, "_struggle", None) is not None:
+            return
+        # Emerging from an enclosed hide takes a BEAT (the deferred
+        # exit-takes-a-beat window, STEALTH_REWORK): out, visible, and
+        # rooted while you unfold. The struggle burst-out bypasses this
+        # (it has its own panic sprint).
+        emerge = getattr(self.player, "emerge_t", 0.0)
+        if emerge > 0.0:
+            self.player.emerge_t = emerge - dt
             return
         # Tick the sprint timers regardless of input -- cooldown has
         # to drain even when the player is standing still.
@@ -930,6 +1005,9 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         # patch while hidden, no teleport on exit; the floor-tile
         # check after movement clears the hide when they step out.
         input_active = bool(dx or dy)
+        # Shared with _update_look: the camera chase runs at full rate
+        # only while movement keys are actually driving (aim-steady).
+        self._move_input_active = input_active
         if input_active and self.player.hidden is not None:
             if self.player.hide_origin is not None:
                 self.player.hidden = None
@@ -943,6 +1021,12 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         # only as visibility approaches the King-gate. Sprint multiplies on top.
         comp_mult = 1.0 - self.visibility * self.visibility * 0.45
         sprint_mult = 1.7 if self.player.sprint_active else 1.0
+        # The panic burst out of a won struggle: a short adrenaline window
+        # (doesn't stack with sprint -- the stronger of the two applies).
+        bt = getattr(self.player, "_burst_t", 0.0)
+        if bt > 0.0:
+            self.player._burst_t = max(0.0, bt - dt)
+            sprint_mult = max(sprint_mult, STRUGGLE_BURST_MULT)
         effective_speed = self.player.speed * comp_mult * sprint_mult
         # Build the input-driven TARGET velocity (world units/sec), then ease
         # the actual velocity toward it over MOVE_SMOOTH_TAU. Releasing input
@@ -1045,6 +1129,13 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
                 if on_corn and self.player.hidden is None:
                     self.player.hidden = "corn"
                     self.audio.play("hide_enter", 0.55)
+                    # One-shot teach (TODO #5): corn is CONCEALMENT, not
+                    # invisibility (the stealth rework's core rule).
+                    if self.save and not self.save.flag("teach_corn"):
+                        self.save.set_flag("teach_corn", True)
+                        self.show_notice("The stalks take you in. Distance "
+                                         "hides you. Close eyes still find "
+                                         "you.", duration=3.6)
                 elif (not on_corn) and self.player.hidden == "corn":
                     self.player.hidden = None
                     self.audio.play("hide_exit", 0.55)
@@ -1095,10 +1186,8 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
                         "step_void":    0.50,
                     }.get(sfx, 0.50)
                     mult = 2.0 if self.player.sprint_active else 1.0
-                    now = pygame.time.get_ticks() / 1000.0
-                    self.scene._last_step_event = (
-                        self.player.x, self.player.y,
-                        base * mult, now)
+                    self.scene.emit_noise(self.player.x, self.player.y,
+                                          base * mult, kind="step")
         else:
             self.player.walk_phase = 0
             self.stillness_t += dt
@@ -1117,16 +1206,460 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
                 if it.get("on_pickup"):
                     it["on_pickup"](self)
 
+    # ---- The church bell (the town's dominant noise source) ----
+    def _ring_bell(self):
+        """E on the pull rope in the bell tower (scenes/threshold_extras).
+        Arms the peal: BELL_RING_DUR seconds of wall-clock ringing that
+        _tick_bell drives every frame, whatever scene the player walks
+        through. The peal MASKS every small surface noise (the player's
+        own steps drown under it) and pulls the cult across Brimley to
+        the church door. A hunter that reaches the door stills the
+        rope; otherwise the peal rings itself out."""
+        if self._bell_t > 0.0:
+            self.show_notice("The bell is already swinging.",
+                             duration=1.6)
+            return
+        self._bell_t = BELL_RING_DUR
+        self._bell_toll_t = 0.0          # first strike lands this frame
+        self.save.set_flag("bell_rung", True)
+        self.show_notice(
+            "You haul the rope. The bell swings out over the town.",
+            duration=2.6)
+
+    def _tick_bell(self, dt):
+        """Drive a live peal (armed by _ring_bell). Lives on Game, not
+        the scene, so the bell keeps ringing across scene loads: haul
+        the rope, climb down, and walk out into the town it is calling
+        in. Each strike plays the toll, re-arms the surface noise MASK
+        (so loud it hides small sounds), and in Brimley broadcasts a
+        map-wide pull at the church door. Cult hunters converge on it;
+        the first to reach the door stills the rope and searches the
+        churchyard. Apex pursuers never hear it. The deep places never
+        hear it either."""
+        if self._bell_t <= 0.0:
+            return
+        self._bell_t -= dt
+        sc = self.scene
+        if sc is None:
+            return
+        key = sc.key
+        bell_door = getattr(sc, "_bell_door", None)
+        # The tower prop swings while the peal lives.
+        if key == "bell_tower":
+            for deco in sc.decorations:
+                if deco.kind == "church_bell":
+                    deco.ring_t = max(0.0, self._bell_t)
+        # A cult hunter reaching the church door stills the rope. Only
+        # a scene that declares the door (Brimley) can be silenced --
+        # elsewhere nobody can reach the rope and the 20s peal is the
+        # only clock.
+        if bell_door is not None:
+            bx, by = bell_door
+            for n in sc.npcs:
+                tag = str(getattr(n, "tag", ""))
+                if not tag.startswith("cult_") or tag == "cult_convert":
+                    continue
+                if (not getattr(n, "alive", True)
+                        or getattr(n, "_is_corpse", False)):
+                    continue
+                if getattr(n, "_force_chase", False):
+                    continue            # apex hunts YOU, not the noise
+                if sc.world_dist(n.x, n.y, bx, by) <= BELL_STOP_DIST:
+                    self._bell_t = 0.0
+                    sc.clear_noise_mask()
+                    # A stilled bell stops calling: purge its still-
+                    # fresh events so they can't yank the silencer (or
+                    # anyone else) straight back into an investigate.
+                    sc._noise_events = [e for e in sc._noise_events
+                                        if e[4] != "bell"]
+                    # The silencer lingers: it sweeps the churchyard
+                    # before drifting back to its rounds.
+                    n._last_seen_pos = (bx, by)
+                    _cult_enter_search(n, sc)
+                    self.audio.play("bump", 0.5)
+                    self.show_notice("The bell stops mid swing.",
+                                     duration=2.4)
+                    return
+        if self._bell_t <= 0.0:
+            sc.clear_noise_mask()        # rang itself out
+            return
+        # The strike cadence.
+        self._bell_toll_t -= dt
+        if self._bell_toll_t > 0.0:
+            return
+        self._bell_toll_t = BELL_TOLL_PERIOD
+        underground = key in UNDERGROUND_SCENES
+        if underground:
+            vol = 0.0                    # the peal doesn't reach down here
+        elif key == "bell_tower":
+            vol = 0.95                   # you are standing under it
+        elif key == "old_man_house":
+            vol = 0.70                   # the church nave, one floor down
+        elif bell_door is not None:
+            vol = max(0.25, 0.85 * self.audio.distance_attenuation(
+                bell_door[0], bell_door[1],
+                self.player.x, self.player.y, falloff=900.0))
+        else:
+            vol = 0.30                   # a far peal through the trees
+        if vol > 0.0:
+            self.audio.play("bell_toll", vol)
+        if not underground:
+            # The peal drowns every smaller noise on the surface...
+            cx, cy = bell_door if bell_door is not None else (
+                sc.w * TILE * 0.5, sc.h * TILE * 0.5)
+            sc.set_noise_mask(cx, cy, BELL_MASK_RADIUS, BELL_MASK_LEVEL,
+                              BELL_TOLL_PERIOD + 0.6)
+            # ...and calls the cult in: a map-wide pull at the church
+            # door. Only the scene that declares the door has anyone
+            # who can answer it.
+            if bell_door is not None:
+                sc.emit_noise(bell_door[0], bell_door[1], 1.0,
+                              kind="bell", reach=BELL_REACH)
+
+    # ---- Placed noisemakers (traps underfoot + toggleable sources) ----
+    def _trip_noise_traps(self, dt):
+        """Passive noisemakers underfoot (Scene.add_noise_trap): strewn
+        cans, glass litter, a loose plank, a crow that flushes. Fire ON
+        ENTRY into the trap's radius -- once -- then re-arm only after
+        the player leaves it (plus TRAP_REARM), so standing in the
+        litter doesn't machine-gun events. The crow is one-shot per
+        load: the bird is gone. A live bell mask still swallows the
+        event (loud hides small); the foley plays regardless."""
+        sc = self.scene
+        traps = getattr(sc, "noise_traps", None)
+        if not traps:
+            return
+        px, py = self.player.x, self.player.y
+        for tr in traps:
+            if tr.get("dead"):
+                continue
+            tr["cool"] = max(0.0, tr["cool"] - dt)
+            inside = sc.world_dist(px, py, tr["x"], tr["y"]) <= tr["r"]
+            fire = inside and not tr["inside"] and tr["cool"] <= 0.0
+            tr["inside"] = inside
+            if not fire:
+                continue
+            tr["cool"] = TRAP_REARM
+            sc.emit_noise(tr["x"], tr["y"], tr["loud"], kind=tr["kind"])
+            if tr["sfx"]:
+                self.audio.play_in_scene(tr["sfx"], 0.8)
+            if tr["kind"] == "crow":
+                tr["dead"] = True
+                d = tr.get("deco")
+                if d is not None:
+                    d.flushed_at = d.t       # the draw animates the flush
+
+    def _tick_noise_sources(self, dt):
+        """Drive the toggleable lure sources (Scene.add_noise_source).
+        A playing source emits its event every `period` (with its own
+        `reach`, at 0.8 -- turns scout heads, never breaks a
+        sighting-born search) and plays its loop foley panned/attenuated
+        to the player's ear. The first mobile cult hunter to reach it
+        shuts it off and sweeps around it, exactly like the bell;
+        set-piece kneelers and apex pursuers never touch it."""
+        sc = self.scene
+        srcs = getattr(sc, "noise_sources", None)
+        if not srcs:
+            return
+        for s in srcs:
+            if not s["on"]:
+                continue
+            silencer = None
+            for group in (sc.npcs, sc.enemies):
+                for a in group:
+                    if not getattr(a, "alive", True):
+                        continue
+                    if getattr(a, "_is_corpse", False):
+                        continue
+                    is_cult = (str(getattr(a, "tag", "")).startswith("cult_")
+                               or getattr(a, "kind", "") == "cultist")
+                    if not is_cult or getattr(a, "tag", "") == "cult_convert":
+                        continue
+                    if getattr(a, "_force_chase", False):
+                        continue
+                    if (getattr(a, "lock_facing", False)
+                            or getattr(a, "aggro", 1) == 0):
+                        continue
+                    if sc.world_dist(a.x, a.y, s["x"], s["y"]) \
+                            <= NOISE_SRC_SILENCE_DIST:
+                        silencer = a
+                        break
+                if silencer is not None:
+                    break
+            if silencer is not None:
+                s["on"] = False
+                # a dead lure stops calling (same rule as the bell)
+                sc._noise_events = [e for e in sc._noise_events
+                                    if e[4] != s["kind"]]
+                silencer._last_seen_pos = (s["x"], s["y"])
+                _cult_enter_search(silencer, sc)
+                self.audio.play("bump", 0.4)
+                if s.get("silenced_notice"):
+                    self.show_notice(s["silenced_notice"], duration=2.4)
+                continue
+            s["t"] -= dt
+            if s["t"] > 0.0:
+                continue
+            s["t"] = s["period"]
+            sc.emit_noise(s["x"], s["y"], s["loud"], kind=s["kind"],
+                          reach=s["reach"])
+            if s["sfx"]:
+                pan = self.audio.pan_for_world(s["x"], self.player.x)
+                dmult = self.audio.distance_attenuation(
+                    s["x"], s["y"], self.player.x, self.player.y,
+                    falloff=420.0)
+                self.audio.play(s["sfx"], 0.8 * dmult, pan=pan)
+
+    def _try_toggle_source(self):
+        """E on a placed noise source flips it. Runs after the NPC
+        check in try_interact (talking always wins) and before the
+        scene's own on_interact_fn."""
+        srcs = getattr(self.scene, "noise_sources", None)
+        if not srcs:
+            return False
+        for s in srcs:
+            if math.hypot(s["x"] - self.player.x,
+                          s["y"] - self.player.y) > 40:
+                continue
+            s["on"] = not s["on"]
+            self.audio.play("bump", 0.35)
+            if s["on"]:
+                s["t"] = 0.0             # first emit lands this tick
+                if s.get("on_notice"):
+                    self.show_notice(s["on_notice"], duration=2.6)
+            else:
+                if s.get("off_notice"):
+                    self.show_notice(s["off_notice"], duration=1.8)
+            return True
+        return False
+
+    # ---- Darkness as concealment (STEALTH_REWORK Pillar 2A) ----
+    def _tick_dark_cover(self):
+        """Stamp player._in_dark once per frame: True in a DARK scene
+        with the flashlight unlit and the player outside every light
+        pool (Scene.lit_at). systems/stealth.concealment_factor reads
+        the stamp, so the gloom scales every cult eye's score (and the
+        gaze pressure) by SUS_CONCEAL_DARK -- leaky cover, like corn.
+        Apex pursuers ignore all cover as ever. A one-shot teach cue
+        fires the first time the dark takes you with the cult near."""
+        p = self.player
+        if p is None or self.scene is None:
+            return
+        in_dark = (self.scene.key in DARK_SCENES
+                   and not self._flashlight_lit()
+                   and not self.scene.lit_at(p.x, p.y))
+        was = getattr(p, "_in_dark", False)
+        p._in_dark = in_dark
+        if (in_dark and not was
+                and not self.save.flag("teach_dark_seen")):
+            near = False
+            for grp in (self.scene.npcs, self.scene.enemies):
+                for a in grp:
+                    if not getattr(a, "alive", True):
+                        continue
+                    is_cult = (str(getattr(a, "tag", "")).startswith("cult_")
+                               or getattr(a, "kind", "") == "cultist")
+                    if is_cult and self.scene.world_dist(
+                            a.x, a.y, p.x, p.y) < 260:
+                        near = True
+                        break
+                if near:
+                    break
+            if near:
+                self.save.set_flag("teach_dark_seen", True)
+                self.show_notice(
+                    "The dark takes the edge off their eyes. It will "
+                    "not save you up close.", duration=3.0)
+
+    # ---- Animated doors + the one-hop noise bleed ----
+    def _pulse_door_at(self, x, y, hold=0.9, quiet=False):
+        """Swing the door leaf at world (x, y) if that tile holds a
+        door; plays the positional door_open foley when the pulse
+        opens a resting leaf. The tell for anything passing through.
+        `quiet=True` for pulses whose sound is already covered -- the
+        transition fade plays its own door_open/door_close pair, so
+        the player-passage swings must not double it."""
+        sc = self.scene
+        if sc is None:
+            return
+        tx, ty = int(x // TILE), int(y // TILE)
+        wtx = tx % sc.w if sc.wrap_x else tx
+        wty = ty % sc.h if sc.wrap_y else ty
+        if not (0 <= wty < sc.h and 0 <= wtx < sc.w):
+            return
+        from scenes.base import _DOOR_CHARS
+        if sc.objects[wty][wtx] not in _DOOR_CHARS:
+            return
+        if sc.door_pulse(wtx, wty, hold=hold, quiet=quiet) and not quiet:
+            pan = self.audio.pan_for_world(x, self.player.x)
+            dm = self.audio.distance_attenuation(
+                x, y, self.player.x, self.player.y)
+            self.audio.play("door_open", 0.55 * dm, pan=pan)
+
+    def _tick_doors(self, dt):
+        """Ease every live door-leaf swing (Scene.door_pulse): open
+        while the hold lasts, shut after, with the door_close foley as
+        the leaf seats. Anim state lives on the scene, so a scene load
+        drops it with the room."""
+        sc = self.scene
+        anim = getattr(sc, "_door_anim", None)
+        if not anim:
+            return
+        done = []
+        for key, st in anim.items():
+            if st["hold"] > 0.0:
+                st["hold"] -= dt
+                st["open"] = min(1.0, st["open"] + dt / 0.22)
+            else:
+                st["open"] -= dt / 0.30
+                if st["open"] <= 0.0:
+                    done.append(key)
+        for key in done:
+            quiet = anim[key].get("quiet", False)
+            del anim[key]
+            if quiet:
+                continue        # its foley is the transition's own pair
+            wx, wy = key[0] * TILE + 16, key[1] * TILE + 16
+            pan = self.audio.pan_for_world(wx, self.player.x)
+            dm = self.audio.distance_attenuation(
+                wx, wy, self.player.x, self.player.y)
+            self.audio.play("door_close", 0.45 * dm, pan=pan)
+
+    def _nearest_exit_tile(self, x, y):
+        """The (tx, ty) of the scene exit nearest to world (x, y) --
+        the door the next room's visitor comes through. None if the
+        scene has no exits on the grid."""
+        sc = self.scene
+        best = None
+        best_d = 1e18
+        for ty in range(sc.h):
+            row = sc.objects[ty]
+            for tx in range(sc.w):
+                if row[tx] not in sc.exits:
+                    continue
+                d = sc.world_dist(x, y, tx * TILE + 16, ty * TILE + 16)
+                if d < best_d:
+                    best_d = d
+                    best = (tx, ty)
+        return best
+
+    def _tick_bleed(self, dt):
+        """The one-hop noise bleed: the tunnels carry sound. A LOUD
+        noise (>= BLEED_LOUD -- a gunshot, the struggle burst) in an
+        underground room brings ONE transient cultist through the
+        nearest exit a few seconds later (the leaf swings, the tell).
+        He walks to the noise, looks it over, and leaves the way he
+        came -- unless he finds YOU, in which case he is a real threat
+        and stays hot until the machine cools. Capped: one live visitor,
+        a long cooldown, never in safe rooms or refuges, never into a
+        room already crowded with cult."""
+        self._bleed_cd = max(0.0, self._bleed_cd - dt)
+        sc = self.scene
+        if sc is None or self.player is None:
+            return
+        b = self._bleed
+        if b is None:
+            if self._bleed_cd > 0.0:
+                return
+            key = sc.key
+            if (key not in UNDERGROUND_SCENES or key in SAFE_SCENES
+                    or key in FOLD_REFUGE_SCENES):
+                return
+            live = 0
+            for grp in (sc.npcs, sc.enemies):
+                for a in grp:
+                    if not getattr(a, "alive", True):
+                        continue
+                    if getattr(a, "_is_corpse", False):
+                        continue
+                    if (str(getattr(a, "tag", "")).startswith("cult_")
+                            or getattr(a, "kind", "") == "cultist"):
+                        live += 1
+            if live >= BLEED_CAP:
+                return
+            now = sc._noise_now
+            for (ex, ey, loud, et, _kind, _reach) in sc._noise_events:
+                if loud < BLEED_LOUD or now - et >= NOISE_FRESH:
+                    continue
+                door = self._nearest_exit_tile(ex, ey)
+                if door is None:
+                    return
+                self._bleed = {"t": random.uniform(BLEED_DELAY_LO,
+                                                   BLEED_DELAY_HI),
+                               "door": door, "src": (ex, ey),
+                               "npc": None, "linger": 0.0}
+                return
+            return
+        if b["npc"] is None:
+            b["t"] -= dt
+            if b["t"] > 0.0:
+                return
+            tx, ty = b["door"]
+            wx, wy = tx * TILE + 16, ty * TILE + 16
+            if sc.is_solid_at(wx, wy):
+                self._bleed = None
+                self._bleed_cd = BLEED_CD
+                return
+            from scenes.depths import _cultist
+            e = _cultist(wx, wy, speed=0.9)
+            e._cult_state = "investigate"
+            e._last_seen_pos = b["src"]
+            e._cult_state_t = 6.0 + sc.world_dist(
+                wx, wy, b["src"][0], b["src"][1]) / NOISE_WALK_SPEED
+            e._noise_loud = 0.95
+            e._bleed_transient = True
+            sc.enemies.append(e)
+            b["npc"] = e
+            self._pulse_door_at(wx, wy, hold=1.2)   # the door is the tell
+            return
+        e = b["npc"]
+        if not getattr(e, "alive", True) or e not in sc.enemies:
+            self._bleed = None
+            self._bleed_cd = BLEED_CD
+            return
+        b["linger"] += dt
+        if e._cult_state in ("chase", "search"):
+            return                        # he found something; he stays hot
+        tx, ty = b["door"]
+        wx, wy = tx * TILE + 16, ty * TILE + 16
+        if (not b.get("leaving")
+                and e._cult_state == "investigate"
+                and b["linger"] < BLEED_LINGER):
+            return
+        # done looking: back out the way he came, and gone
+        b["leaving"] = True
+        e._cult_state = "investigate"
+        e._last_seen_pos = (wx, wy)
+        e._cult_state_t = max(getattr(e, "_cult_state_t", 0.0), 6.0)
+        e._noise_loud = 0.95
+        if sc.world_dist(e.x, e.y, wx, wy) < 22:
+            e.alive = False
+            if e in sc.enemies:
+                sc.enemies.remove(e)
+            self._pulse_door_at(wx, wy, hold=0.6)
+            self._bleed = None
+            self._bleed_cd = BLEED_CD
+
     # ---- Interaction ----
     def try_interact(self):
-        # If currently hidden, E exits the hide.
+        # If currently hidden, E exits the hide. Leaving an ENCLOSED
+        # hide takes a beat (HIDE_EXIT_BEAT): you are out and visible
+        # before you can move -- bolting is a commitment, not a blink.
         if self.player.hidden is not None:
+            enclosed = _is_enclosed_hide(self.player)
             self.player.hidden = None
             if self.player.hide_origin is not None:
                 self.player.x, self.player.y = self.player.hide_origin
                 self.player.hide_origin = None
+            if enclosed:
+                self.player.emerge_t = HIDE_EXIT_BEAT
             self.show_notice("You slip out of cover.", duration=1.6)
             self.audio.play("hide_exit", 0.7)
+            return
+        # A floating conversation is up and you're beside the speaker:
+        # E advances it (skip the reveal, then next line) instead of
+        # starting something new.
+        if self.float_speech.advance_from_input(self):
             return
         # Hide-spot pickup: scenes declare hide_spots = [(x,y,kind)]
         # where kind is 'under', 'in', or 'behind'. Closest within
@@ -1185,7 +1718,18 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
                 bd = d; best = npc
         if best:
             self.audio.play("confirm", 0.6)
-            best.interact(self)
+            # Mark the speaker so DialogueBox.show can float a casual
+            # line over their head; cleared right after so scene hooks
+            # that call dialog.show stay modal.
+            self._speaking_npc = best
+            try:
+                best.interact(self)
+            finally:
+                self._speaking_npc = None
+            return
+        # Toggleable noise sources (the truck radio, the works valve) --
+        # after NPCs (talking always wins), before the scene handler.
+        if self._try_toggle_source():
             return
         if self.scene.on_interact_fn:
             self.scene.on_interact_fn(self)
@@ -1326,6 +1870,9 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
             self._gun_cd = GUN_CD
             return
         self._gun_cd = GUN_CD
+        # Firing braces the camera: the body-chase stays locked for a
+        # beat so the view cannot swing mid-shot (see _update_look).
+        self._chase_lock_t = CHASE_FIRE_LOCK
         p.inventory.remove("pistol_ammo", 1)
         fx, fy = p.facing
         proj = Projectile(p.x + fx * 16, p.y + fy * 16, fx, fy,
@@ -1348,10 +1895,9 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         p.melee_dir = p.facing
         self.audio.play_in_scene("gunshot", 0.85)
         self.audio.duck(0.9, depth=0.35)            # let the report own the air
-        # A gunshot is loud -- feed the cult's investigate AI like a sprint.
+        # A gunshot is loud -- it re-tasks even searchers (NOISE_SEARCH_PULL).
         if self.scene is not None:
-            self.scene._last_step_event = (p.x, p.y, 1.0,
-                                           pygame.time.get_ticks() / 1000.0)
+            self.scene.emit_noise(p.x, p.y, 1.0, kind="shot")
         # One-time teach about the evidence gate the first time it staggers.
         if proj.stun_only and not self.save.flag("gun_stun_taught"):
             self.save.set_flag("gun_stun_taught", True)
@@ -1427,8 +1973,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
                               max(self.visibility,
                                   self.visibility + LOCAL_KILL_VIS_SPIKE))
         if self.scene is not None:
-            self.scene._last_step_event = (
-                npc.x, npc.y, 1.0, pygame.time.get_ticks() / 1000.0)
+            self.scene.emit_noise(npc.x, npc.y, 1.0, kind="body")
         return True
 
     def _make_corpse(self, npc):
@@ -1491,6 +2036,9 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
             from entities.npc import NPC
             corpse = NPC(e.x, e.y, "A cultist", "cultist",
                          movement="idle", solid=False, no_prompt=True)
+            # the body keeps the dead cultist's face (mask variant)
+            corpse.sprite_seed = getattr(e, "sprite_seed",
+                                         corpse.sprite_seed)
             corpse.alive = False
             corpse._is_corpse = True
             corpse._kill_processed = True
@@ -2005,10 +2553,20 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
                     if exit_ch in self.scene.exit_directions:
                         self.cross_fold(*exit_data)
                     else:
+                        # The leaf swings as you go through (tilt view).
+                        # quiet: begin_transition plays its own
+                        # door_open, so the swing must not double it.
+                        self._pulse_door_at(self.player.x, self.player.y,
+                                            quiet=True)
                         self.begin_transition(*exit_data)
             # Suspend scene update (NPC patrols, decoration anims, triggers)
             # while any modal is up so the world freezes behind it.
             if not world_frozen:
+                # Stamp darkness-concealment BEFORE the cult ticks run
+                # (NPC updates inside scene.update + the enemy loop
+                # below both read player._in_dark through the shared
+                # concealment_factor).
+                self._tick_dark_cover()
                 self.scene.update(dt, self)
             self.text_input.update(dt)
             for e in list(self.scene.enemies):
@@ -2025,10 +2583,13 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
             # cultists, not the threat-system NPCs) reaching the player
             # TAKES them -- the same CAPTURED end the town cultists trigger.
             # Without this those cultists just chased and did nothing, so
-            # capture felt random ("some take me, some don't"). Hidden /
-            # invuln / mid-death are exempt, matching _tick_cultists.
+            # capture felt random ("some take me, some don't"). Enclosed
+            # hides / invuln / mid-death are exempt, matching
+            # _tick_cultists -- one gate for every grab site
+            # (systems/stealth.py grab_allowed; the loop below requires
+            # chase state, so concealment yields to a locked pursuer).
             if (not world_frozen and self._death_kind is None
-                    and self.player.hidden is None
+                    and _grab_ok(self.player, True)
                     and self.player.invuln <= 0):
                 for e in self.scene.enemies:
                     # Only an AWARE cultist (actively chasing) takes you --
@@ -2080,12 +2641,28 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
             self.audio.update_silence()
             self.audio.update_duck()
             self.dialog.update(dt)
+            # Floating NPC speech reveals + auto-advances with the world
+            # (it IS the non-modal path; it pauses when a modal freezes
+            # the world, same as everything else).
+            if not world_frozen:
+                self.float_speech.update(dt, self)
             self._tick_delayed_audio(dt)
             # The threat model is part of the world sim -- it freezes behind
             # a modal too, so visibility can't climb and the King can't close
             # while a box is up. Cutscene/audio drivers keep running.
             if not world_frozen:
+                # Advance the noise channel's SIM clock (event
+                # freshness + mask expiry key to it; it freezes with
+                # the world behind modals).
+                if self.scene is not None:
+                    self.scene._noise_now += dt
+                self._tick_bell(dt)
+                self._trip_noise_traps(dt)
+                self._tick_noise_sources(dt)
+                self._tick_doors(dt)
+                self._tick_bleed(dt)
                 self._tick_cultists(dt)
+                self._tick_struggle(dt)
                 self._tick_chase_cues_enemies(dt)
                 self._tick_fold_pursuit(dt)
                 self._tick_sheriff(dt)
@@ -2301,6 +2878,24 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
             return
         if self.state in ("playing", "transition"):
             if ev.type == pygame.KEYDOWN:
+                # The hide-check struggle owns E/SPACE while it runs: each
+                # press is a wrench against the hands reaching in. Enough
+                # presses inside the window tears the player free
+                # (_struggle_win); the timer running out is the grab.
+                if getattr(self, "_struggle", None) is not None:
+                    if ev.key in (pygame.K_e, pygame.K_SPACE, pygame.K_RETURN):
+                        self._struggle["presses"] += 1
+                        self.audio.play("bump", 0.35)
+                        if self._struggle["presses"] >= STRUGGLE_PRESSES:
+                            self._struggle_win()
+                    return
+                # Post-win swallow: the player is still mashing when the
+                # struggle resolves -- a stray E must not re-enter the
+                # hide they just tore out of.
+                if (getattr(self, "_post_struggle_t", 0.0) > 0.0
+                        and ev.key in (pygame.K_e, pygame.K_SPACE,
+                                       pygame.K_RETURN)):
+                    return
                 if self.dialog.active:
                     if ev.key in (pygame.K_UP, pygame.K_w):
                         self.dialog.move_choice(-1)

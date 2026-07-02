@@ -493,8 +493,11 @@ def main():
     jlines = next((e["lines"] for e in ge.save.arg("evidence", [])
                    if e.get("name") == "maras_journal"), [])
     jtext = " ".join(jlines).lower()
-    check("you go down" in jtext or "below the town" in jtext,
+    check(any(k in jtext for k in ("you go down", "below the town",
+                                   "digging down")),
           "barn: Mara's journal motivates the descent (points down/below)")
+    check("learned my name" in jtext,
+          "barn: the journal log carries her ache (grief, page 1)")
     ge.load_scene_now("dark")                          # the_congregation (#6)
     ready(ge)
     mara_e = next((n for n in ge.scene.npcs if n.name == "Mara"), None)
@@ -1282,6 +1285,239 @@ def main():
     check(not any(("—" in ln) or ("–" in ln) or ("--" in ln)
                   for ln in spread_lines),
           "spread: no dashes in player-facing ending text")
+
+    # --- 24. The town reacts to state (TODO #10) + descent beats (#8) ----
+    # Each ambient local carries ONE pre-mutation state beat (a one-shot,
+    # gated on what the PI has learned) before falling back to their
+    # ambient loop; the procession's candle beat lands as a NOTE. None of
+    # it may ever inflate the evidence count (the six canonical beats are
+    # locked), and all of it holds the no-dash + no-cosmology rules.
+    gb = new_game()
+    gb.load_scene_now("brimley")
+    ready(gb)
+    shown = []
+    _orig_show = gb.dialog.show
+
+    def _spy(pages, *a, **k):
+        shown[:] = [pages] if isinstance(pages, str) else list(pages)
+        return _orig_show(pages, *a, **k)
+    gb.dialog.show = _spy
+
+    def _local(nm):
+        return next((nn for nn in gb.scene.npcs
+                     if getattr(nn, "name", "") == nm), None)
+
+    _ga = _local("Garrick")
+    _ev0 = evidence_count(gb)
+    if _ga is not None:
+        gb.save.set_flag("preacher_doomed", True)
+        _ga.dialogue_fn(gb, _ga)
+        check(any("gone quiet" in p for p in shown),
+              "react: Garrick clocks the pulpit going silent (murder beat)")
+        ready(gb)
+        _ga.dialogue_fn(gb, _ga)
+        check(not any("gone quiet" in p for p in shown),
+              "react: the Garrick beat is one-shot; ambient loop resumes")
+        ready(gb)
+    else:
+        check(False, "react: Garrick present in brimley")
+    gb.save.set_arg("evidence", [{"key": "a", "weight": 0.05},
+                                 {"key": "b", "weight": 0.05}])
+    for nm, tell in (("Old Pell", "coal dust"), ("Mrs. Calder", "unlatched"),
+                     ("Royce", "throat")):
+        _n = _local(nm)
+        if _n is None:
+            check(False, f"react: {nm} present in brimley")
+            continue
+        _n.dialogue_fn(gb, _n)
+        check(any(tell in p for p in shown),
+              f"react: {nm} carries a state beat at the gate")
+        ready(gb)
+        joined = " ".join(shown).lower()
+        check(not any(w in joined for w in
+                      ("dimension", "lure", "bait", "the king")),
+              f"react: the {nm} beat holds the no-cosmology fence")
+        check(not any(("—" in p) or ("–" in p) or ("--" in p)
+                      for p in shown),
+              f"react: no dashes in the {nm} beat")
+    check(evidence_count(gb) == 2,
+          "react: state beats never inflate the evidence count")
+
+    gp2 = new_game()
+    gp2.load_scene_now("depths_procession")
+    ready(gp2)
+    gp2.player.x, gp2.player.y = 8 * _TILE + 16, 4 * _TILE + 16
+    _evp = evidence_count(gp2)
+    gp2.scene.on_interact_fn(gp2)
+    _pnotes = gp2.save.arg("notes", []) or []
+    check(any(isinstance(e, dict) and e.get("name") == "the_procession"
+              for e in _pnotes) and evidence_count(gp2) == _evp,
+          "descent: the procession candles land as a NOTE, never evidence")
+
+    # --- 24b. Mara's exchange displays; the lure collides once (TODO #6/#7);
+    # the SPREAD counterweight names the other road (TODO #9).
+    gm = new_game()
+    gm.load_scene_now("dark")
+    ready(gm)
+    gm.save.set_flag("flashback_seen", True)
+    _mshown = []
+    _morig = gm.dialog.show
+
+    def _mspy(pages, *a, **k):
+        _mshown.extend([pages] if isinstance(pages, str) else list(pages))
+        return _morig(pages, *a, **k)
+    gm.dialog.show = _mspy
+    _mara = next((n for n in gm.scene.npcs
+                  if getattr(n, "name", "") == "Mara"), None)
+    if _mara is not None:
+        _evm = evidence_count(gm)
+        _mara.dialogue_fn(gm, _mara)
+        check(len(gm.dialog.pages) == 4,
+              "mara: her four-line exchange is the ACTIVE dialog (evidence "
+              "one-liner no longer clobbers it)")
+        check(evidence_count(gm) == _evm + 1,
+              "mara: evidence #6 still files immediately")
+        if gm.dialog.on_complete:
+            gm.dialog.on_complete()
+        _mj = " ".join(_mshown).lower()
+        check("arithmetic" in _mj,
+              "lure: the dream+case+Mara collision fires after her lines")
+        check(not any(w in _mj for w in ("marked", "lure", "bait",
+                                         "the king", "dimension")),
+              "lure: the collision beat holds the fence")
+        check(not any(("—" in p) or ("–" in p) or ("--" in p)
+                      for p in _mshown),
+              "lure: no dashes in the beat")
+    else:
+        check(False, "mara: present in the hive")
+
+    gw = new_game()
+    gw.player.inventory.add("sigil_rubbing", 1)
+    gw.load_scene_now("well_bottom")
+    _wtext = "".join(str(getattr(gw.dialog, "pages", "")))
+    check(gw.save.flag("spread_counterweight"),
+          "spread: the counterweight beat fires at the shaft floor with "
+          "the Mask in hand")
+    gw2 = new_game()
+    gw2.player.inventory.add("sigil_rubbing", 1)
+    gw2.save.set_flag("descent_sealed", True)
+    gw2.load_scene_now("well_bottom")
+    check(not gw2.save.flag("spread_counterweight"),
+          "spread: the counterweight never fires after the seal")
+
+    gh = new_game()
+    gh.load_scene_now("shop")
+    ready(gh)
+    gh.save.set_arg("shop_count", 1)
+    gh.player.inventory.add("mom_notebook", 1)
+    from scenes.dialogue import hettie_dialogue as _hd
+    _hshown = []
+    _horig = gh.dialog.show
+
+    def _hspy(pages, *a, **k):
+        _hshown.extend([pages] if isinstance(pages, str) else list(pages))
+        return _horig(pages, *a, **k)
+    gh.dialog.show = _hspy
+
+    class _HStub:
+        pass
+    _hd(gh, _HStub())
+    check(any("smiling I minded" in p for p in _hshown),
+          "hettie: the memory of the girl fires once the journal is carried")
+    check(not any(("—" in p) or ("–" in p) or ("--" in p) for p in _hshown),
+          "hettie: no dashes in the memory beat")
+
+    # --- 24c. The soft lead (TODO #5): derived, oblique, never empty,
+    # never dashed, and it climbs the milestone ladder.
+    gl = new_game()
+    _lead0 = gl._current_lead()
+    check(isinstance(_lead0, str) and "Blaine girl" in _lead0,
+          "lead: a fresh run points at asking the town")
+    gl.save.set_arg("evidence", [{"name": c, "lines": [], "weight": 0.05}
+                                 for c in "abc"])
+    check("desk" in (gl._current_lead() or ""),
+          "lead: three beats point back at the Lodge desk")
+    gl.player.inventory.add("rite_envelope", 1)
+    check("school" in (gl._current_lead() or ""),
+          "lead: the Invitation points at the school")
+    gl.save.set_flag("rite_performed", True)
+    gl.player.inventory.add("sigil_rubbing", 1)
+    _leadm = gl._current_lead() or ""
+    check("carry" in _leadm,
+          "lead: the Mask stage names the carried choice")
+    gl.save.set_flag("descent_sealed", True)
+    check("car" in (gl._current_lead() or ""),
+          "lead: the SPREAD lock points at the car")
+    for _st in (_lead0, _leadm):
+        check(not (("—" in _st) or ("–" in _st) or ("--" in _st)),
+              "lead: no dashes in the thread line")
+
+    # --- 25. The placement pass (STEALTH_REWORK §6): the gauntlet rooms
+    # HAVE an enclosed hide, and EVERY declared hide in EVERY scene sits
+    # on walkable ground (a spot inside a solid roots the player in a
+    # wall and a sweeping searcher can never close to check range).
+    from scenes import load_scene as _ld2, SCENE_BUILDERS as _SB2
+    for _key in ("well_passage", "works_vats", "works_sorting",
+                 "works_scriptorium", "works_sign", "depths_antechamber",
+                 "depths_procession", "depths_hall", "brimley"):
+        check(len(_ld2(_key).hide_spots) >= 1,
+              f"hides: {_key} has an enclosed hide")
+    _bad_spots = []
+    for _key in _SB2:
+        try:
+            _sc2 = _ld2(_key)
+        except Exception:
+            continue
+        for hx, hy, _k in (getattr(_sc2, "hide_spots", None) or []):
+            if _sc2.is_solid_at(hx, hy):
+                _bad_spots.append((_key, hx, hy))
+    check(not _bad_spots,
+          f"hides: every declared spot in every scene sits on walkable "
+          f"ground {_bad_spots or ''}")
+
+    # --- 26. Floating NPC speech (2026-07 sound overhaul): a casual
+    # talkable-NPC line reached through the interact path FLOATS over
+    # the speaker's head and leaves the world running; narrator lines,
+    # choices, infested portraits, and scripted (on_complete) beats
+    # stay in the MODAL box.
+    gfs = new_game()
+    gfs.load_scene_now("old_man_house", "default")
+    for _ in range(20):
+        gfs.state = "playing"
+        gfs.step(1 / 30.0)
+    _crane = next(n for n in gfs.scene.npcs
+                  if getattr(n, "tag", "") == "preacher")
+    gfs.player.x, gfs.player.y = _crane.x, _crane.y + 30
+    gfs._speaking_npc = _crane
+    _crane.interact(gfs)
+    gfs._speaking_npc = None
+    check(gfs.float_speech.active and not gfs.dialog.active,
+          "float: an interact-path NPC line floats (not the modal box)")
+    check(gfs.float_speech.speaker is _crane,
+          "float: the caption tracks the speaker")
+    _wf = (gfs.dialog.active or gfs.inv_ui.open or gfs.notebook_ui.open
+           or gfs.text_input.active or gfs._flashback_phase is not None)
+    check(not _wf, "float: the world is not frozen while a float is up")
+    # narrator / choice / on_complete / no-context all stay modal
+    gfs.float_speech.active = False
+    gfs._speaking_npc = _crane
+    gfs.dialog.show(["A cold room."], speaker="", portrait="narrator")
+    gfs._speaking_npc = None
+    check(gfs.dialog.active and not gfs.float_speech.active,
+          "float: a narrator line stays modal")
+    gfs.dialog.active = False
+    gfs._speaking_npc = _crane
+    gfs.dialog.show_choice("Pick", ["a", "b"], lambda i: None,
+                           speaker="Crane", portrait="preacher")
+    gfs._speaking_npc = None
+    check(gfs.dialog.active and gfs.dialog.choices is not None
+          and not gfs.float_speech.active,
+          "float: a choice stays modal")
+    gfs.dialog.active = False
+    gfs.dialog.show(["Scene voice."], speaker="Someone",
+                    portrait="preacher")
+    check(gfs.dialog.active and not gfs.float_speech.active,
+          "float: a line outside the interact path stays modal")
 
     print()
     if FAILS:

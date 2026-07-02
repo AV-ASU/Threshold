@@ -1298,9 +1298,12 @@ _CORN_CARD_CAP = 1200
 
 def _tilt_corn_solid(surf, camera, scene, tx, ty, ch, far=False):
     """Draw a corn cluster by blitting its cached card (see _CORN_CARD_CACHE).
-    The stalks are rendered through `_tilt_corn_draw` on a cache miss."""
+    The stalks are rendered through `_tilt_corn_draw` on a cache miss. Yaw is
+    BUCKETED at 0.04 rad like the wall cards: at 0.01-rad keys a continuous
+    head-turn rebuilt every visible corn tile every frame (~500 card builds a
+    frame in the maze -- the single worst look-around cost in the game)."""
     bx, by = camera.project(tx * TILE + 16, ty * TILE + 16, 0)
-    key = (tx, ty, far, round(camera.yaw, 2),
+    key = (tx, ty, far, int(camera.yaw / 0.04),
            round(camera.pitch, 2), round(camera.scale, 2))
     entry = _CORN_CARD_CACHE.get(key)
     if entry is None:
@@ -2529,18 +2532,27 @@ def _tilt_warp(flat, camera):
     world-rotate by yaw, then scale x by scale and y by scale*cos(pitch).
     At yaw 0 (the eased-to-rest head position, i.e. most walking frames) the
     rotate is skipped entirely -- transform.rotate(s, 0) still copies the
-    whole large window surface for nothing."""
-    deg = math.degrees(camera.yaw)
-    rotated = pygame.transform.rotate(flat, deg) if abs(deg) > 1e-4 else flat
+    whole large window surface for nothing.
+
+    At nonzero yaw the order is uniform-shrink FIRST, then rotate, then
+    the cos(pitch) y-squash: rotation commutes with a UNIFORM scale, so
+    the transform is identical, but the expensive rotate runs on
+    scale^2 (~half) of the pixels -- it was the top per-frame cost of a
+    head-turn. `scale` (nearest) rather than `smoothscale` throughout:
+    the floor raster is a low-detail tile pattern under the tilt +
+    Brimley's haze, and smoothscale on surfaces this size was ~10x."""
     cp = max(0.05, math.cos(camera.pitch))
-    w, h = rotated.get_size()
-    # `scale` (nearest) rather than `smoothscale` (bilinear): the floor raster
-    # is a low-detail tile pattern sitting under the tilt + Brimley's haze, so
-    # the smoothing is imperceptible, but smoothscale on this large surface was
-    # the single biggest per-frame cost in the wrapped town (~10x scale's cost).
-    return pygame.transform.scale(
-        rotated, (max(1, int(w * camera.scale)),
-                  max(1, int(h * camera.scale * cp))))
+    s = camera.scale
+    deg = math.degrees(camera.yaw)
+    w, h = flat.get_size()
+    if abs(deg) <= 1e-4:
+        return pygame.transform.scale(
+            flat, (max(1, int(w * s)), max(1, int(h * s * cp))))
+    small = pygame.transform.scale(
+        flat, (max(1, int(w * s)), max(1, int(h * s))))
+    rotated = pygame.transform.rotate(small, deg)
+    rw, rh = rotated.get_size()
+    return pygame.transform.scale(rotated, (rw, max(1, int(rh * cp))))
 
 
 _DOOR_HEAD = 19      # doorway opening height; the lintel beam runs head->rise
@@ -2718,8 +2730,19 @@ def _draw_doorway(surf, camera, scene, tx, ty):
     face(-hw, -hw + tw, 0, head, wood)            # left jamb
     face(hw - tw, hw, 0, head, wood)              # right jamb
     face(-hw, hw, head - th, head, wood_hi)       # lintel
-    # 3. the leaf, hinged at the left jamb
+    # 3. the leaf, hinged at the left jamb. At rest a passable door
+    # hangs ajar and a locked/facade one sits shut; a live door_pulse
+    # (someone passing through -- the player leaving, the noise-bleed
+    # visitor arriving) swings it wide and Game._tick_doors eases it
+    # back. Tilt-only: the flat pitch-0 view keeps its static leaves.
     a = 0.0 if solid else math.radians(26)        # shut vs ajar
+    anim = getattr(scene, "_door_anim", None)
+    if anim and not solid:
+        st = anim.get((wtx, wty))
+        if st is not None:
+            k = max(0.0, min(1.0, st["open"]))
+            k = k * k * (3.0 - 2.0 * k)           # smoothstep ease
+            a = math.radians(26.0 + 62.0 * k)     # ajar -> swung wide
     ca, sa = math.cos(a), math.sin(a)
     hu = -hw + tw                                  # hinge at inner left jamb
     L = (2 * hw - 2 * tw)                          # spans the clear opening
@@ -2753,8 +2776,8 @@ _FLOOR_DECAL_KINDS = frozenset((
     # flat onto the floor so they turn with the room instead of standing up as a
     # top-down sticker under tilt. Pitch 0 draws them flat via Scene.draw as before.
     "symbol", "binding_sigil", "swallow_hole", "phantom_mark",
-    "body", "drowned_body", "water_trail", "child_drawing", "campfire",
-    "effects_pile",
+    "body", "water_trail", "child_drawing", "campfire",
+    "effects_pile", "garden_patch",
     # Low overhead foliage (drawn top-down): a flat warped decal reads as a
     # shrub on the ground, where a standee would stand the overhead blob up
     # vertically as a smear.
@@ -2766,6 +2789,9 @@ _FLOOR_DECAL_KINDS = frozenset((
     # ground: both want to warp onto the floor under tilt, not stand up as
     # vertical stickers.
     "mist", "leaves",
+    # Noise-trap litter (add_noise_trap): tins, shards, and a board all
+    # lie IN the ground plane. (The trap crow is the standing `crow`.)
+    "tin_cans", "glass_litter", "loose_plank",
 ))
 
 # Decals that lie flat on a RAISED surface (a ledger open on a desktop): warped
@@ -2850,7 +2876,7 @@ def _draw_floor_decal(surf, camera, deco, woff=(0.0, 0.0)):
     key = (id(deco), yaw_bkt, scale_bkt, pitch_bkt)
     scaled = _FLOOR_DECAL_CARD_CACHE.get(key)
     if scaled is None:
-        if deco.kind == "rug":
+        if deco.kind in ("rug", "garden_patch"):
             w = int(deco.kwargs.get("w", 88)); h = int(deco.kwargs.get("h", 60))
             bound = max(w, h) + 18
         else:
@@ -3044,8 +3070,12 @@ def _tilt_wall_box_cached(surf, camera, scene, tx, ty):
     their box's shape depends only on the camera angle + which neighbours are
     walls -- never on where the camera pans. So render each wall tile's box
     once per (scene, tile, angle) into a card and blit it at the projected tile
-    centre. The bulk of the town's ~640 wall tiles become blits while panning."""
-    key = (scene.key, tx, ty, round(camera.yaw, 2),
+    centre. The bulk of the town's ~640 wall tiles become blits while panning.
+    Yaw is BUCKETED at 0.04 rad (~2.3 deg): a continuous head-turn used to
+    mint a fresh key every frame (a full-visible-wall rebuild per frame, the
+    dominant look-around cost); inside a bucket the shape error is ~1px on a
+    card this size, invisible mid-swing."""
+    key = (scene.key, tx, ty, int(camera.yaw / 0.04),
            round(camera.pitch, 2), round(camera.scale, 2))
     entry = _WALL_BOX_CACHE.get(key)
     if entry is None:
@@ -3062,7 +3092,11 @@ def _tilt_wall_box_cached(surf, camera, scene, tx, ty):
 
 def _build_wall_box_card(camera, scene, tx, ty):
     """Cache-miss path: render one wall tile's box to a tight SRCALPHA card via
-    a throwaway camera at the same angle, pinned at the tile centre."""
+    a throwaway camera at the same angle, pinned at the tile centre. The tight
+    rect is ANALYTIC -- the drawn box lies inside the projected hull of the
+    tile's eight extruded corners -- because get_bounding_rect's full-pixel
+    scan was ~70% of every rebuild (and a head-turn rebuilds every visible
+    wall)."""
     from rendering.camera import Camera
     PAD = 90
     tmp = pygame.Surface((PAD * 2, PAD * 2), pygame.SRCALPHA)
@@ -3071,9 +3105,21 @@ def _build_wall_box_card(camera, scene, tx, ty):
                   pitch=camera.pitch, yaw=camera.yaw,
                   scale=camera.scale, origin=anchor)
     _tilt_wall_box(tmp, tcam, scene, tx, ty)
-    rect = tmp.get_bounding_rect()
-    if rect.width == 0 or rect.height == 0:
+    xs = []
+    ys = []
+    for cxw in (tx * TILE, tx * TILE + TILE):
+        for cyw in (ty * TILE, ty * TILE + TILE):
+            for z in (0, _TILT_WALL_RISE):
+                sxp, syp = tcam.project(cxw, cyw, z)
+                xs.append(sxp)
+                ys.append(syp)
+    rx0 = max(0, min(xs) - 2)
+    ry0 = max(0, min(ys) - 2)
+    rx1 = min(PAD * 2, max(xs) + 3)
+    ry1 = min(PAD * 2, max(ys) + 3)
+    if rx1 - rx0 <= 0 or ry1 - ry0 <= 0:
         return (None, 0, 0)
+    rect = pygame.Rect(rx0, ry0, rx1 - rx0, ry1 - ry0)
     return (tmp.subsurface(rect).copy().convert_alpha(), anchor[0] - rect.x, anchor[1] - rect.y)
 
 
@@ -3313,21 +3359,35 @@ def draw_terrain_tilted(surf, scene, camera, sight=None):
     wx0, wy0 = cx - half, cy - half
     x0 = int(math.floor(wx0 / TILE)); y0 = int(math.floor(wy0 / TILE))
     x1 = int(math.ceil((wx0 + span) / TILE)); y1 = int(math.ceil((wy0 + span) / TILE))
-    # The warped floor is cached (see _TILT_FLOOR_CACHE): rebuilt only when the
-    # camera pose changes. x0..y1 / wx0,wy0 are still computed every frame --
-    # they're cheap and the wall + neighbor passes below need them.
+    # The warped floor is cached (see _TILT_FLOOR_CACHE). The build is
+    # anchored to a TILE-quantized camera centre: the warp is AFFINE
+    # (rotate + scale), so panning within a tile reuses the cached
+    # surface blitted at the projected offset instead of re-rastering +
+    # re-warping the whole window every moving frame (that rebuild was
+    # the single biggest walking cost). One extra TILE of margin covers
+    # the largest sub-tile shift. x0..y1 / wx0,wy0 are still computed
+    # every frame from the TRUE camera -- the wall + neighbor passes
+    # below need them.
+    qx = math.floor(cx / TILE) * TILE
+    qy = math.floor(cy / TILE) * TILE
     fkey = (id(scene), getattr(scene, "key", None), scene.w, scene.h,
-            round(cx), round(cy), round(camera.yaw, 4),
+            qx, qy, round(camera.yaw, 4),
             round(camera.pitch, 4), round(camera.scale, 4))
     _fc = _TILT_FLOOR_CACHE
     if _fc["key"] == fkey:
         warped = _fc["surf"]
     else:
+        half_b = half + TILE                 # margin for the sub-tile shift
+        span_b = int(half_b * 2)
+        bx0, by0 = qx - half_b, qy - half_b
+        tx0 = int(math.floor(bx0 / TILE)); ty0 = int(math.floor(by0 / TILE))
+        tx1 = int(math.ceil((bx0 + span_b) / TILE))
+        ty1 = int(math.ceil((by0 + span_b) / TILE))
         # Reuse the flat scratch between rebuilds -- allocating a fresh
-        # span x span surface (several MB) every panned frame was churn.
+        # span x span surface (several MB) every rebuilt frame was churn.
         flat = _fc.get("flat")
-        if flat is None or flat.get_size() != (span, span):
-            flat = pygame.Surface((span, span))
+        if flat is None or flat.get_size() != (span_b, span_b):
+            flat = pygame.Surface((span_b, span_b))
             _fc["flat"] = flat
         flat.fill((10, 10, 14))
         if _tilt_use_fullmap(scene):
@@ -3335,9 +3395,9 @@ def draw_terrain_tilted(surf, scene, camera, sight=None):
             # wrap-aware blits) and redraw only the animated water on top,
             # instead of rastering ~6000 tiles every frame.
             full, water = _tilt_fullmap(scene)
-            _blit_window_wrapped(flat, full, wx0, wy0,
+            _blit_window_wrapped(flat, full, bx0, by0,
                                  scene.wrap_x, scene.wrap_y)
-            _overlay_anim_water(flat, scene, water, wx0, wy0, span)
+            _overlay_anim_water(flat, scene, water, bx0, by0, span_b)
         else:
             # Phase 2 of the seamless-world neighbor strip: when the player is
             # near a non-wrap host's edge and the visible tile range extends
@@ -3346,15 +3406,19 @@ def draw_terrain_tilted(surf, scene, camera, sight=None):
             # in-bounds area is overdrawn with the host's tiles below, so the
             # strip shows only where the host doesn't reach -- a seamless seam.
             if not (scene.wrap_x or scene.wrap_y):
-                _draw_neighbor_strips(flat, scene, wx0, wy0, x0, y0, x1, y1)
-            draw_scene_terrain(flat, scene, wx0, wy0, x0, y0, x1, y1,
+                _draw_neighbor_strips(flat, scene, bx0, by0,
+                                      tx0, ty0, tx1, ty1)
+            draw_scene_terrain(flat, scene, bx0, by0, tx0, ty0, tx1, ty1,
                                skip_billboard=True, skip_roofs=True)
         warped = _tilt_warp(flat, camera)
         _fc["key"] = fkey
         _fc["surf"] = warped
-    ox, oy = camera.origin
-    surf.blit(warped, (ox - warped.get_width() // 2,
-                       oy - warped.get_height() // 2))
+    # Blit so the cached surface's centre (world point (qx, qy)) lands at
+    # its CURRENT projection -- the affine shift that makes the tile-
+    # anchored build valid for every sub-tile camera position.
+    px, py = camera.project(qx, qy, 0)
+    surf.blit(warped, (px - warped.get_width() // 2,
+                       py - warped.get_height() // 2))
     # Collect the visible wall tiles (returned for the unified depth pass; the
     # caller sorts + fades them). Wrap-aware: tx/ty may sit outside [0,W) for a
     # toroidal scene and the box projects at the un-wrapped world position.
@@ -3810,6 +3874,37 @@ class Scene:
         self.items = []          # list of {x,y,key,qty,on_pickup?}
         self.projectiles = []    # ranged-attack bullets
         self.triggers = []
+        # The noise channel (2026-07 sound overhaul): world noises are
+        # broadcast through emit_noise onto this small per-frame list
+        # (the cult ticks iterate it; events go stale after
+        # NOISE_FRESH). _last_step_event stays mirrored for any legacy
+        # single-slot reader. _noise_mask is the active dominant source
+        # (the bell): (x, y, radius, level, until_ts) -- events quieter
+        # than `level` inside `radius` are swallowed while it lives (so
+        # loud hides small).
+        self._noise_events = []
+        self._noise_mask = None
+        self._last_step_event = None
+        # The noise channel's SIM clock (seconds; Game.step advances it
+        # while the world runs). Event freshness and mask expiry key to
+        # THIS, not wall time: behind a modal the world freezes and so
+        # do the sounds in flight, and the headless harness (which runs
+        # sim time far faster than wall time) ages events correctly.
+        self._noise_now = 0.0
+        # Placed noisemakers (add_noise_trap / add_noise_source):
+        # passive traps underfoot and E-toggleable lure sources. All
+        # state lives on these dicts, so a scene rebuild resets them.
+        self.noise_traps = []
+        self.noise_sources = []
+        # The cult's errand stations (add_cult_station): scene-local
+        # JOBS a scouting cultist walks between. Not patrol routes --
+        # per-enemy waypoints stay banned (NARRATIVE §8); this is the
+        # town's WORK, and any noise or sighting peels him off it.
+        self.cult_stations = []
+        # Live door-leaf animations (door_pulse): (tx, ty) -> {open,
+        # hold}. Read by the TILT doorway draw only -- the flat pitch-0
+        # view keeps its static leaves (byte-identity gate).
+        self._door_anim = {}
         self.on_enter_fn = None
         self.on_exit_fn = None
         self.on_interact_fn = None    # called when E pressed and no NPC nearby
@@ -3892,6 +3987,159 @@ class Scene:
         dx = self.world_dx(from_x, to_x)
         dy = self.world_dy(from_y, to_y)
         return _math.hypot(dx, dy)
+
+    # ---- the noise channel (2026-07 sound overhaul) ---------------------
+    def emit_noise(self, x, y, loud, kind="step", reach=None):
+        """Broadcast a world noise at (x, y) with loudness `loud` [0..1].
+        The cult ticks hear it through systems/stealth.hear_noise; events
+        stay audible for NOISE_FRESH seconds. A live noise MASK (a
+        dominant source like the bell) swallows events quieter than its
+        level inside its radius -- SO LOUD IT HIDES SMALL SOUNDS -- and
+        the swallowed event never reaches anyone's ears. `reach`
+        overrides the LISTENER'S hearing range for this event alone: a
+        dominant source (the bell) is audible out to `reach` px no
+        matter whose ears; None keeps each listener's own range.
+        Returns the event tuple, or None if masked."""
+        now = self._noise_now
+        m = self._noise_mask
+        if m is not None:
+            mx, my, mrad, mlevel, muntil = m
+            if now > muntil:
+                self._noise_mask = None
+            elif (loud < mlevel
+                    and self.world_dist(x, y, mx, my) <= mrad):
+                return None
+        # prune stale events so the list never grows past a frame's worth
+        self._noise_events = [e for e in self._noise_events
+                              if now - e[3] < 0.4]
+        evt = (x, y, loud, now, kind, reach)
+        self._noise_events.append(evt)
+        # legacy single-slot mirror (loudest fresh event wins the slot)
+        last = self._last_step_event
+        if (last is None or loud >= last[2] or now - last[3] >= 0.4):
+            self._last_step_event = (x, y, loud, now)
+        return evt
+
+    def set_noise_mask(self, x, y, radius, level, duration):
+        """Install the dominant-source mask for `duration` SIM seconds
+        (the bell). While it lives, emit_noise swallows anything quieter
+        than `level` within `radius` of (x, y). Call again to extend."""
+        self._noise_mask = (x, y, radius, level,
+                            self._noise_now + duration)
+
+    def clear_noise_mask(self):
+        self._noise_mask = None
+
+    def mask_active(self):
+        """True while a dominant noise source is masking the room."""
+        m = self._noise_mask
+        if m is None:
+            return False
+        if self._noise_now > m[4]:
+            self._noise_mask = None
+            return False
+        return True
+
+    def add_noise_source(self, x, y, kind, loud=0.8, period=1.4,
+                         reach=340.0, sfx=None, on_notice=None,
+                         off_notice=None, silenced_notice=None):
+        """Register a TURN-ON-ABLE noise source (the truck radio, the
+        works valve). E toggles it (Game._try_toggle_source); while on,
+        Game._tick_noise_sources emits a periodic event at (x, y) --
+        loud enough to turn scout heads (0.8 < the searcher pull, so
+        it lures patrols without breaking a sighting-born search) and
+        carrying its own `reach`. The first mobile cult hunter to
+        reach it shuts it off and sweeps around it. Notices are the
+        placement's own fiction; the machinery is shared."""
+        src = dict(x=x, y=y, kind=kind, on=False, t=0.0, loud=loud,
+                   period=period, reach=reach, sfx=sfx,
+                   on_notice=on_notice, off_notice=off_notice,
+                   silenced_notice=silenced_notice)
+        self.noise_sources.append(src)
+        self.add_interactable(x, y, 40)
+        return src
+
+    def door_pulse(self, tx, ty, hold=0.9, quiet=False):
+        """Swing the door leaf at tile (tx, ty) open for `hold` seconds
+        (then Game._tick_doors eases it shut). Returns True if this
+        pulse OPENED a resting door (the caller plays the door_open
+        foley), False if it only extended a swing already live.
+        `quiet=True` marks the swing as ALREADY covered by other foley
+        (the transition fade plays its own door_open/door_close pair),
+        so neither end of it makes a sound of its own."""
+        key = (tx % self.w if self.wrap_x else tx,
+               ty % self.h if self.wrap_y else ty)
+        st = self._door_anim.get(key)
+        if st is None:
+            self._door_anim[key] = {"open": 0.0, "hold": hold,
+                                    "quiet": quiet}
+            return True
+        st["hold"] = max(st["hold"], hold)
+        return False
+
+    # Light-emitting decoration kinds and their mechanical pool radii
+    # (px). Mirrors the fixtures _draw_dark renders visibly so what
+    # LOOKS lit IS lit to the stealth model.
+    _LIGHT_KINDS = {"wall_torch": 90.0, "brazier": 90.0,
+                    "campfire": 80.0, "lantern": 60.0, "candle": 55.0}
+
+    def light_sources(self):
+        """Cached [(x, y, r)] of the scene's light-emitting decorations
+        (see _LIGHT_KINDS). Rebuilt when the decoration count changes
+        (infestation adds decals at load; nothing removes lights)."""
+        cache = getattr(self, "_light_cache", None)
+        if cache is not None and cache[0] == len(self.decorations):
+            return cache[1]
+        srcs = [(d.x, d.y, self._LIGHT_KINDS[d.kind])
+                for d in self.decorations if d.kind in self._LIGHT_KINDS]
+        self._light_cache = (len(self.decorations), srcs)
+        return srcs
+
+    def lit_at(self, x, y):
+        """True when world (x, y) stands inside any light pool -- the
+        darkness-concealment gate (a player beside a torch reads as lit
+        however dark the room is)."""
+        for lx, ly, r in self.light_sources():
+            if self.world_dist(x, y, lx, ly) <= r:
+                return True
+        return False
+
+    def add_cult_station(self, x, y, pose=None, face=None,
+                         dwell=(3.0, 6.0)):
+        """Register an errand station: a spot where the cult's work
+        happens (a basin lip, a sorting table, the stone ring). A
+        scouting cultist walks his stations in nearest-first rounds
+        (systems/stealth.errand_step), takes up `pose` facing `face`,
+        dwells a random spell inside `dwell`, and moves on. Noise and
+        sightings always outrank the chore; he resumes after."""
+        self.cult_stations.append(dict(x=x, y=y, pose=pose, face=face,
+                                       dwell=dwell))
+
+    def add_noise_trap(self, x, y, kind, seed=None):
+        """Place a PASSIVE noisemaker underfoot: strewn cans, glass
+        litter, a loose plank, a crow that flushes. Stepping into its
+        radius fires once (Game._trip_noise_traps): the foley plays and
+        the noise event goes out to listening cultists. Leave and
+        return (past a short re-arm) to fire it again; the crow is
+        one-shot per load (the bird is gone). The matching decoration
+        is placed automatically."""
+        spec = {
+            "cans":  dict(r=20.0, loud=0.75, sfx="cans_rattle",
+                          deco="tin_cans"),
+            "glass": dict(r=18.0, loud=0.80, sfx="glass_crunch",
+                          deco="glass_litter"),
+            "plank": dict(r=18.0, loud=0.72, sfx="wood_pop",
+                          deco="loose_plank"),
+            "crow":  dict(r=55.0, loud=0.75, sfx="crow_flush",
+                          deco="crow"),
+        }[kind]
+        from entities.decoration import Decoration
+        d = Decoration(x, y, spec["deco"], seed=seed)
+        self.add_decoration(d)
+        trap = dict(x=x, y=y, kind=kind, r=spec["r"], loud=spec["loud"],
+                    sfx=spec["sfx"], deco=d, inside=False, cool=0.0)
+        self.noise_traps.append(trap)
+        return trap
 
     def char_floor_at(self, x_px, y_px):
         tx = int(x_px // TILE); ty = int(y_px // TILE)

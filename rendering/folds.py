@@ -251,7 +251,7 @@ def draw_fold(screen, face, host_cam_x, host_cam_y, player, t, camera=None):
         sy = int(npc.y - bcam_y)
         if -32 <= sx <= bw + 32 and -32 <= sy <= bh + 32:
             draw_npc_sprite(big, sx, sy, npc.sprite_kind, npc.facing,
-                            seed=id(npc) & 0xffff)
+                            seed=getattr(npc, 'sprite_seed', 0))
 
     if abs(along_off) < 0.5:
         if nx != 0:                               # crop the margin back off

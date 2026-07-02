@@ -14,6 +14,9 @@ from entities.npc import NPC
 from scenes import Scene
 from rendering.sprites import reset_king_fx
 from systems.config import *        # noqa: F401,F403
+from systems.stealth import (concealment_factor as _conceal_factor,
+                             is_enclosed as _is_enclosed,
+                             grab_allowed as _grab_allowed)
 
 
 class ThreatMixin:
@@ -25,7 +28,7 @@ class ThreatMixin:
         binds the curse: stay exposed in its sightline long enough and a
         permanent curse lands. Safe interiors are
         refuges -- no cultists, and the gaze-pressure lifts."""
-        self._gaze_count = 0
+        self._gaze_count = 0.0
         if self.scene is None or self.player is None:
             return
         key = self.scene.key
@@ -43,7 +46,6 @@ class ThreatMixin:
                     continue                 # stray patrol cultist: sweep it
                 survivors.append(n)
             self.scene.npcs = survivors
-            hidden = self.player.hidden is not None
             for n in survivors:
                 if not getattr(n, "_fold_follower", False):
                     continue
@@ -52,12 +54,18 @@ class ThreatMixin:
                 if getattr(n, "_stun_t", 0) > 0:
                     continue                 # shoved: blind + can't grab
                 d = math.hypot(n.x - self.player.x, n.y - self.player.y)
-                if d < 22 and not hidden and self.player.invuln <= 0:
+                if (d < 22 and self.player.invuln <= 0
+                        and _grab_allowed(self.player,
+                                          getattr(n, "_cult_state", "")
+                                          == "chase")):
                     self._trigger_death("cultist")
                     return
             return
         self._ensure_cultists(key, dt)
-        hidden = self.player.hidden is not None
+        # Cover WEIGHTS the gaze now instead of blanking it
+        # (STEALTH_REWORK.md §5): corn scales each watching cultist's
+        # contribution by SUS_CONCEAL_CORN, an enclosed hide zeroes it.
+        conceal = _conceal_factor(self.player)
         for n in self.scene.npcs:
             tag = getattr(n, "tag", "")
             if not isinstance(tag, str) or not tag.startswith("cult_"):
@@ -67,9 +75,10 @@ class ThreatMixin:
             if getattr(n, "_stun_t", 0) > 0:
                 continue                     # shoved: blind + can't grab
             d = math.hypot(n.x - self.player.x, n.y - self.player.y)
-            sees = (d < getattr(n, "_gaze_range", 180)) and not hidden
-            if sees:
-                self._gaze_count += 1
+            w = conceal if d < getattr(n, "_gaze_range", 180) else 0.0
+            sees = w >= 1.0                  # plainly in the open, in range
+            if w > 0.0:
+                self._gaze_count += w
             if tag == "cult_convert":
                 # A turned local: passive cult. Their watching raises
                 # visibility (counted above) but they never chase, spot,
@@ -99,7 +108,15 @@ class ThreatMixin:
                 dmult = self.audio.distance_attenuation(
                     n.x, n.y, self.player.x, self.player.y)
                 self.audio.play("cult_lose", 0.45 * dmult, pan=pan)
-            if d < 22 and not hidden and self.player.invuln <= 0:
+            # Contact takes you in the open -- and in CONCEALMENT too,
+            # when the cultist has already locked (cover is not armor;
+            # an enclosed hide is exempt: its threat is the CHECK/
+            # struggle). One gate for every grab site:
+            # systems/stealth.py grab_allowed.
+            if (d < 22 and self.player.invuln <= 0
+                    and _grab_allowed(self.player,
+                                      getattr(n, "_cult_state", "")
+                                      == "chase")):
                 self._trigger_death("cultist")
                 return
         self._flank_cultists()
@@ -130,6 +147,104 @@ class ThreatMixin:
                 dmult = self.audio.distance_attenuation(
                     e.x, e.y, self.player.x, self.player.y)
                 self.audio.play("cult_lose", 0.45 * dmult, pan=pan)
+
+    def _tick_struggle(self, dt):
+        """The hide-check struggle (STEALTH_REWORK.md §4). A SEARCHING
+        cultist that reaches the enclosed hide the player is in CHECKS it
+        (the cult ticks set scene._hide_check); that opens a short mash
+        window -- E/SPACE presses count in the event loop. Enough presses
+        is the burst-out (_struggle_win); the window running out is the
+        grab (the CAPTURED card). Concealment cover (corn) never triggers
+        this -- getting found in the stalks just resumes the chase."""
+        if self.scene is None or self.player is None:
+            return
+        # A short post-win swallow window: the player is still mashing
+        # when the struggle resolves, and a stray E must not re-enter
+        # the hide (try_interact) or advance a dialog mid-panic.
+        self._post_struggle_t = max(
+            0.0, getattr(self, "_post_struggle_t", 0.0) - dt)
+        st = getattr(self, "_struggle", None)
+        if st is not None:
+            st["t"] -= dt
+            if st["t"] <= 0.0:
+                self._struggle = None
+                self._trigger_death("cultist")
+            return
+        check = getattr(self.scene, "_hide_check", None)
+        if check is None:
+            return
+        self.scene._hide_check = None
+        enemy, hx, hy = check
+        if not _is_enclosed(self.player):
+            return                      # bolted before the hands came down
+        if self._death_kind is not None:
+            return
+        self._struggle = {"t": STRUGGLE_WINDOW, "presses": 0,
+                          "enemy": enemy}
+        self.audio.play("cult_lock", 0.8)
+        self.audio.duck(0.9, depth=0.45)
+        self.show_notice("It looks under. Hands. FIGHT. Mash E.",
+                         duration=STRUGGLE_WINDOW)
+
+    def _struggle_win(self):
+        """The burst-out: the player tears free of the checking hands.
+        A one-time panic sprint, the checker staggers, and the noise
+        converges every searcher in earshot -- you won the moment, not
+        the room."""
+        st = self._struggle
+        self._struggle = None
+        self._post_struggle_t = 0.5      # swallow the overshoot presses
+        if st is None or self.player is None or self.scene is None:
+            return
+        p = self.player
+        p.hidden = None
+        if p.hide_origin is not None:
+            p.x, p.y = p.hide_origin
+            p.hide_origin = None
+        p._burst_t = STRUGGLE_BURST_T
+        p.invuln = max(getattr(p, "invuln", 0.0), 0.8)
+        enemy = st.get("enemy")
+        if enemy is not None:
+            enemy._stun_t = max(getattr(enemy, "_stun_t", 0.0),
+                                STRUGGLE_STUN)
+        # The burst is LOUD: a max-loudness noise event pulls every
+        # scout in earshot to the spot...
+        self.scene.emit_noise(p.x, p.y, 1.0, kind="burst")
+        # ...but the step-event channel only wakes SCOUTS (searchers and
+        # investigators already own a target and ignore it), so the
+        # documented cost of winning -- the room CONVERGES -- is applied
+        # directly: every mobile cult hunter in earshot turns on the
+        # burst point. Set-piece kneelers (aggro 0 / lock_facing) and
+        # apex pursuers keep their own scripts; the stunned checker is
+        # skipped (it is still reeling).
+        for group in (self.scene.npcs, self.scene.enemies):
+            for a in group:
+                if a is enemy or not getattr(a, "alive", True):
+                    continue
+                if getattr(a, "_is_corpse", False):
+                    continue
+                is_cult = (str(getattr(a, "tag", "")).startswith("cult_")
+                           or getattr(a, "kind", "") == "cultist")
+                if not is_cult:
+                    continue
+                if getattr(a, "_force_chase", False):
+                    continue
+                if (getattr(a, "lock_facing", False)
+                        or getattr(a, "aggro", 1) == 0):
+                    continue
+                if getattr(a, "_cult_state", "") == "chase":
+                    continue
+                if self.scene.world_dist(a.x, a.y, p.x, p.y) > 220:
+                    continue
+                a._cult_state = "investigate"
+                a._cult_state_t = 4.0
+                a._last_seen_pos = (p.x, p.y)
+                a.move_target = None
+                if hasattr(a, "_scout_target"):
+                    a._scout_target = None
+        self.audio.play("hide_exit", 0.9)
+        self.audio.play("bump", 0.6)
+        self.show_notice("You tear free.", duration=1.8)
 
     def _tick_gaze_bind(self, dt):
         """His gaze, binding the curse (NARRATIVE 1b/3). In a GAZE_BIND_SCENES
@@ -461,6 +576,11 @@ class ThreatMixin:
             ]
             best_d = -1.0
             for sx, sy in corners:
+                # jitter like the `at` path above: exact corner points
+                # gave every corner-spawned cultist one of only FOUR
+                # sprite seeds -- the same mask on every respawn
+                sx += random.uniform(-12, 12)
+                sy += random.uniform(-12, 12)
                 if scene.is_solid_at(sx, sy):
                     continue
                 d = math.hypot(sx - self.player.x, sy - self.player.y)
@@ -515,7 +635,6 @@ class ThreatMixin:
         shake."""
         if self.scene is None or self.player is None:
             return
-        hidden = getattr(self.player, "hidden", None) is not None
         n_watch = len(self._watchers)
         # A burning flashlight marks you. The cost applies everywhere the
         # beam is lit EXCEPT the safe cellar (DIM_SAFE) -- there the light
@@ -525,18 +644,32 @@ class ThreatMixin:
                     if (self._flashlight_lit()
                         and self.scene.key not in DIM_SAFE_SCENES)
                     else 0.0)
-        if hidden:
-            # In cover the cult's gaze breaks; only a lit torch still leaks.
+        # Cover reads GRADED now (STEALTH_REWORK.md §5). The gaze term
+        # (self._gaze_count) arrives already concealment-weighted from
+        # _tick_cultists -- corn scales each watcher's contribution, an
+        # enclosed hide zeroes it. Only the enclosed hide keeps the old
+        # strong bleed; corn is mobile concealment and drains at the
+        # plain idle rate, so sitting in the stalks is no longer a
+        # visibility eraser -- just a place the gaze mostly misses.
+        if _is_enclosed(self.player):
             self.visibility += dt * (lit_rise - VIS_HIDE_BLEED)
         else:
             rise = self._gaze_count * VIS_GAZE + lit_rise
             self.visibility += dt * (rise - VIS_IDLE_DECAY)
-        # The being-seen RATE the HUD reads (the faucet): human/cult gaze on you
-        # THIS second + a lit torch. Cover breaks the gaze (only the torch
-        # leaks). The King's own gaze is NOT counted here (added to visibility in
+        # The being-seen RATE the HUD reads (the faucet): human/cult gaze on
+        # you THIS second + a lit torch, concealment-weighted the same way.
+        # The King's own gaze is NOT counted here (added to visibility in
         # the roam tick) -- the bar reads the cult puzzle, the King stays felt.
-        seen_rate = (0.0 if hidden else self._gaze_count * VIS_GAZE) + lit_rise
+        seen_rate = self._gaze_count * VIS_GAZE + lit_rise
         self._being_seen = max(0.0, min(1.0, seen_rate / BEING_SEEN_FULL))
+        # One-shot teach (TODO #5): the first time eyes really pile on,
+        # name what the notched bar is and what breaks it.
+        if (self._being_seen >= 0.5 and self.save
+                and not self.save.flag("teach_seen")):
+            self.save.set_flag("teach_seen", True)
+            self.show_notice("Eyes are on you. The notches read how hard. "
+                             "Walls, corn, distance break the line.",
+                             duration=3.6)
         # FLOORS the meter can't bleed below: evidence (the more you
         # understand, the higher your baseline) PLUS each live Watcher of the
         # curse. Capped just under the King so the curse presses you to the

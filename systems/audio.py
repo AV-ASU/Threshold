@@ -139,6 +139,20 @@ class Audio:                        #Starting screen needs music, something simp
         # wood). Same stick-slip friction trick as wood_creak.
         self.sfx["door_open"]   = self._build_door_open()
         self.sfx["door_close"]  = self._build_door_close()
+        # The church bell -- the town's one dominant noise source
+        # (rung from the tower; see the BELL_* config block). A real
+        # minor-third bell voicing: inharmonic partials over a beating
+        # hum, struck once, left to ring.
+        self.sfx["bell_toll"]   = self._build_bell_toll()
+        # Placed-noisemaker foley (Scene.add_noise_trap / _source):
+        # strewn cans, glass litter, a crow flushing (the loose plank
+        # reuses wood_pop), the truck radio's dead-station snatch, and
+        # the works valve's knock-and-hiss loop.
+        self.sfx["cans_rattle"]  = self._build_cans_rattle()
+        self.sfx["glass_crunch"] = self._build_glass_crunch()
+        self.sfx["crow_flush"]   = self._build_crow_flush()
+        self.sfx["radio_snatch"] = self._build_radio_snatch()
+        self.sfx["valve_hiss"]   = self._build_valve_hiss()
         self.sfx["engine_die"]  = g(64, 900, 0.34, "saw", attack_ms=4, decay_ms=820, noise_mix=0.45, vibrato=11)
         self.sfx["carcosa_boom"] = g(50, 1100, 0.55, "sine", attack_ms=2, decay_ms=950, noise_mix=0.45)
         self.sfx["door_locked"] = g(220, 80, 0.22, "square", attack_ms=2, decay_ms=50)
@@ -280,6 +294,9 @@ class Audio:                        #Starting screen needs music, something simp
             "void_sting":   dict(reverb="void"),
             # Opening drive -- the radio dissolving into static.
             "static":       dict(highpass=500),
+            # The bell always rings over open ground (heard from the
+            # tower, the street, the fields) -- bake the outdoor air in.
+            "bell_toll":    dict(reverb="outdoor"),
         }
         for key, kw in _atmos.items():
             if key in self.sfx:
@@ -1091,6 +1108,195 @@ class Audio:                        #Starting screen needs music, something simp
             stereo[i * 4]     = stereo[i * 4 + 2] = buf[i * 2]
             stereo[i * 4 + 1] = stereo[i * 4 + 3] = buf[i * 2 + 1]
         return pygame.mixer.Sound(buffer=bytes(stereo))
+
+    def _build_bell_toll(self, duration_ms=3400, vol=0.42, f0=195.0):
+        """One strike of a bronze church bell, left to ring. Real bell
+        voicing: an inharmonic partial stack over the prime -- the hum
+        an octave under (doubled a hair sharp so the pair BEATS, the
+        slow wow of a big bell), the minor-third tierce that makes
+        church bells sound mournful, quint, nominal, and two fast high
+        partials that are mostly gone by the first half-second. Each
+        partial decays at its own rate (high dies fast, hum outlasts
+        everything), plus a click-and-noise strike transient."""
+        sr = 22050
+        n = int(sr * duration_ms / 1000)
+        buf = bytearray(n * 2)
+        # (ratio to f0, amplitude, decay tau seconds)
+        partials = (
+            (0.500, 0.55, 1.90),      # hum
+            (0.504, 0.30, 1.90),      # hum's beating twin (~0.8 Hz wow)
+            (1.000, 0.50, 1.10),      # prime
+            (1.200, 0.42, 0.90),      # tierce (the minor third)
+            (1.500, 0.26, 0.70),      # quint
+            (2.000, 0.36, 0.55),      # nominal
+            (2.670, 0.16, 0.28),      # upper partials: the strike's
+            (4.100, 0.10, 0.14),      #   metallic edge, gone fast
+        )
+        norm = 1.0 / sum(a for _r, a, _t in partials)
+        for i in range(n):
+            t = i / sr
+            v = 0.0
+            for ratio, amp, tau in partials:
+                v += (math.sin(2 * math.pi * f0 * ratio * t)
+                      * amp * math.exp(-t / tau))
+            v *= norm
+            if t < 0.012:
+                # the clapper: a hard click + a breath of noise
+                v += (math.sin(2 * math.pi * 2400 * t)
+                      * math.exp(-t / 0.003) * 0.35
+                      + random.uniform(-1, 1)
+                      * math.exp(-t / 0.004) * 0.30)
+            # 4 ms attack so the strike doesn't pop the speaker
+            if t < 0.004:
+                v *= t / 0.004
+            sample = max(-32768, min(32767, int(max(-1.0, min(1.0, v))
+                                                * vol * 32767)))
+            buf[i * 2]     = sample & 0xFF
+            buf[i * 2 + 1] = (sample >> 8) & 0xFF
+        stereo = bytearray(n * 4)
+        for i in range(n):
+            stereo[i * 4]     = stereo[i * 4 + 2] = buf[i * 2]
+            stereo[i * 4 + 1] = stereo[i * 4 + 3] = buf[i * 2 + 1]
+        return pygame.mixer.Sound(buffer=bytes(stereo))
+
+    def _mono_to_sound(self, buf, n):
+        """Duplicate a filled mono int16 bytearray into a stereo
+        Sound -- the shared tail of every bespoke builder."""
+        stereo = bytearray(n * 4)
+        for i in range(n):
+            stereo[i * 4]     = stereo[i * 4 + 2] = buf[i * 2]
+            stereo[i * 4 + 1] = stereo[i * 4 + 3] = buf[i * 2 + 1]
+        return pygame.mixer.Sound(buffer=bytes(stereo))
+
+    def _build_cans_rattle(self, duration_ms=380, vol=0.30):
+        """A boot through strewn tins: a scuff of noise at contact,
+        then four small metallic pings knocked loose at staggered
+        offsets, each a short ringing sine at its own pitch."""
+        sr = 22050
+        n = int(sr * duration_ms / 1000)
+        buf = bytearray(n * 2)
+        pings = [(0.020, 1180.0), (0.075, 860.0),
+                 (0.150, 1420.0), (0.235, 990.0)]
+        for i in range(n):
+            t = i / sr
+            v = 0.0
+            if t < 0.045:
+                v += random.uniform(-1, 1) * math.exp(-t / 0.014) * 0.55
+            for t0, f in pings:
+                if t >= t0:
+                    local = t - t0
+                    v += (math.sin(2 * math.pi * f * local)
+                          * math.exp(-local / 0.035) * 0.42)
+            sample = max(-32768, min(32767, int(max(-1.0, min(1.0, v))
+                                                * vol * 32767)))
+            buf[i * 2]     = sample & 0xFF
+            buf[i * 2 + 1] = (sample >> 8) & 0xFF
+        return self._mono_to_sound(buf, n)
+
+    def _build_glass_crunch(self, duration_ms=260, vol=0.28):
+        """Glass litter underfoot: a dense fast-decaying crunch with
+        three high tinks riding it -- shards pressed and split."""
+        sr = 22050
+        n = int(sr * duration_ms / 1000)
+        buf = bytearray(n * 2)
+        tinks = [(0.015, 3400.0), (0.060, 2650.0), (0.115, 3900.0)]
+        for i in range(n):
+            t = i / sr
+            v = random.uniform(-1, 1) * math.exp(-t / 0.045) * 0.6
+            for t0, f in tinks:
+                if t >= t0:
+                    local = t - t0
+                    v += (math.sin(2 * math.pi * f * local)
+                          * math.exp(-local / 0.010) * 0.35)
+            sample = max(-32768, min(32767, int(max(-1.0, min(1.0, v))
+                                                * vol * 32767)))
+            buf[i * 2]     = sample & 0xFF
+            buf[i * 2 + 1] = (sample >> 8) & 0xFF
+        return self._mono_to_sound(buf, n)
+
+    def _build_crow_flush(self, duration_ms=820, vol=0.32):
+        """A crow bursting off the ground: wingbeats as gated noise
+        (~11 Hz flaps that recede as it climbs away) under one harsh
+        caw -- a rough tone falling 950 -> 600 Hz with a torn noise
+        edge."""
+        sr = 22050
+        n = int(sr * duration_ms / 1000)
+        dur_s = duration_ms / 1000.0
+        buf = bytearray(n * 2)
+        smooth = 0.0
+        for i in range(n):
+            t = i / sr
+            smooth = 0.80 * smooth + 0.20 * random.uniform(-1, 1)
+            flap_gate = max(0.0, math.sin(2 * math.pi * 11.0 * t)) ** 2
+            recede = max(0.0, 1.0 - t / dur_s) ** 1.2
+            v = smooth * flap_gate * recede * 0.6
+            if 0.10 <= t < 0.30:
+                local = (t - 0.10) / 0.20
+                f = 950.0 - 350.0 * local
+                caw_env = math.sin(math.pi * local)
+                v += ((math.sin(2 * math.pi * f * t) * 0.55
+                       + random.uniform(-1, 1) * 0.45)
+                      * caw_env * 0.55)
+            sample = max(-32768, min(32767, int(max(-1.0, min(1.0, v))
+                                                * vol * 32767)))
+            buf[i * 2]     = sample & 0xFF
+            buf[i * 2 + 1] = (sample >> 8) & 0xFF
+        return self._mono_to_sound(buf, n)
+
+    def _build_radio_snatch(self, duration_ms=1300, vol=0.26):
+        """One bar of the dead station: three notes that don't resolve
+        (a tune remembered wrong), each a sine doubled a hair sharp so
+        it wows, over a constant bed of low static. Cut off mid-phrase
+        with a short fade -- the source loops it every period, so the
+        snatch never finishes."""
+        sr = 22050
+        n = int(sr * duration_ms / 1000)
+        dur_s = duration_ms / 1000.0
+        buf = bytearray(n * 2)
+        notes = [(0.00, 392.0), (0.45, 466.2), (0.90, 349.2)]
+        for i in range(n):
+            t = i / sr
+            v = random.uniform(-1, 1) * 0.14        # the static bed
+            for t0, f in notes:
+                if t0 <= t < t0 + 0.42:
+                    local = t - t0
+                    env = math.sin(math.pi * min(1.0, local / 0.42))
+                    trem = 0.75 + 0.25 * math.sin(2 * math.pi * 5.5 * t)
+                    v += ((math.sin(2 * math.pi * f * t)
+                           + math.sin(2 * math.pi * f * 1.012 * t))
+                          * 0.5 * env * trem * 0.55)
+            if t > dur_s - 0.03:                    # de-click the loop cut
+                v *= (dur_s - t) / 0.03
+            sample = max(-32768, min(32767, int(max(-1.0, min(1.0, v))
+                                                * vol * 32767)))
+            buf[i * 2]     = sample & 0xFF
+            buf[i * 2 + 1] = (sample >> 8) & 0xFF
+        return self._mono_to_sound(buf, n)
+
+    def _build_valve_hiss(self, duration_ms=1000, vol=0.30):
+        """The opened works valve: steam swelling through the line
+        (smoothed noise) with two pipe knocks banging down the run as
+        the pressure walks it."""
+        sr = 22050
+        n = int(sr * duration_ms / 1000)
+        dur_s = duration_ms / 1000.0
+        buf = bytearray(n * 2)
+        smooth = 0.0
+        for i in range(n):
+            t = i / sr
+            smooth = 0.90 * smooth + 0.10 * random.uniform(-1, 1)
+            swell = min(1.0, t / 0.15) * max(0.0, 1.0 - t / dur_s) ** 0.7
+            v = smooth * swell * 0.55
+            for t0 in (0.15, 0.55):
+                if t >= t0:
+                    local = t - t0
+                    v += (math.sin(2 * math.pi * 150.0 * local)
+                          * math.exp(-local / 0.040) * 0.5)
+            sample = max(-32768, min(32767, int(max(-1.0, min(1.0, v))
+                                                * vol * 32767)))
+            buf[i * 2]     = sample & 0xFF
+            buf[i * 2 + 1] = (sample >> 8) & 0xFF
+        return self._mono_to_sound(buf, n)
 
     def _build_wood_creak(self, duration_ms=750, vol=0.30):
         """An old joist easing -- stick-slip friction. A narrow tone

@@ -64,16 +64,22 @@
 
 ## Genuinely open
 
-- **`drowned_body`** — mechanically correct (a floor decal lying in the water
-  plane). A submerged-read art rework was attempted and REJECTED (2026-06);
-  the original art stands. The other half of the original note ("reconsider
-  whether it stays at all") is an open DESIGN call, not an art task.
 - **3b. Player / weapons** — `draw_axe_held` now exists (the equipped weapon
   always reads); the remaining note is an eyeball pass on the held-weapon
   offset at every camera yaw.
-- **4. Flat-feeling detail** (not bugs): the `fireplace`/`stove` tile sprite
-  detail, `bed` blanket folds, `shelf` book layout, `counter` butcher detail
-  would all benefit from handcraft at the oblique angle, as time allows.
+
+## Closed in the 2026-07 pass
+
+- **`drowned_body` — CUT (design call settled 2026-07).** The keep-or-cut
+  question was decided: cut. The `well_bottom` placement, the
+  `_draw_drowned_body` draw fn (`entities/decoration.py`), and the
+  `_FLOOR_DECAL_KINDS` entry are removed; the seep pool and claw gouges
+  carry the room's dread.
+- **4. Flat-feeling detail** — the last straggler is done: `counter` now has
+  a `_d_counter` near-face detail (butcher-block seams, worn lip, knife
+  scores, an old stain) wired into the FURNITURE spec. The
+  `fireplace`/`stove` firebox, `bed` blanket, and `shelf` layout details
+  already existed.
 
 > Mechanism reminder when adding a new kind: add it to `FURNITURE`/`SOLID_PROPS`
 > for a real volume, `_STANDEE_KINDS` for a flat-card-stood-up,

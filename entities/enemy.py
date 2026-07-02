@@ -6,6 +6,10 @@ import random
 import pygame
 from rendering.sprites import draw_npc_sprite
 from rendering.transform import draw_vessel_bloom
+from systems.config import SUS_NOTICE, SUS_SCORE_HOLD
+from systems.stealth import (detection_score, update_suspicion,
+                             enter_search, sweep_check, hear_noise,
+                             react_hold, errand_step, errand_drop)
 
 
 def _is_cultist(obj):
@@ -169,6 +173,11 @@ class Enemy:
         self.attack_timer = 0
         self.flash = 0
         self._stun_t = 0.0      # player's shove freezes the AI for a beat
+        # Stable per-actor sprite seed (entities/npc.py sprite_seed_for):
+        # the fix for id()-alignment locking the cultist mask variant to
+        # even picks -- half the masks never spawned.
+        from entities.npc import sprite_seed_for
+        self.sprite_seed = sprite_seed_for(x, y)
         self.facing = (0, 1)
         self.move_timer = random.uniform(0, 2)
         self.move_target = None
@@ -271,12 +280,12 @@ class Enemy:
         self.can_shoot = False
         dx = player.x - self.x; dy = player.y - self.y
         d = math.hypot(dx, dy) or 1
-        # Hidden players are invisible to enemies that respect hiding
-        # (cultist chasers in the depths). Forces the wander branch by
-        # treating distance as effectively infinite.
-        if (getattr(self, "respects_hide", False)
-                and getattr(player, "hidden", None) is not None):
-            d = 1e9
+        # (The old respects_hide distance zap lived here -- binary
+        # invisibility for hidden players. The stealth rework routed all
+        # cover through _cult_tick's graded detection_score, and only
+        # cultists ever set respects_hide, so the zap was dead code and
+        # a trap for future variants: respects_hide now means exactly
+        # "concealment scales this eye's score" inside _cult_tick.)
         self.attack_timer -= dt
         self.flash = max(0, self.flash - dt)
         if self._stun_t > 0:
@@ -458,67 +467,77 @@ class Enemy:
     def _cult_tick(self, dt, scene, player):
         """Cultist behaviour: SCOUT -> CHASE -> SEARCH (or
         INVESTIGATE on a loud step) -> back to SCOUT. Mirrors
-        the NPC chaser machine. SCOUT defaults to the prior
-        waypoint / wander branch so the existing depths corridor
-        routes still drive the patroller in idle. CHASE walks
-        straight at the player; SEARCH walks to last-seen and
-        mills; INVESTIGATE walks to step source and mills."""
-        import pygame
+        the NPC chaser machine, including the graded-suspicion
+        detection (STEALTH_REWORK.md Pillar 1): the score (los *
+        distance * facing cone * concealment) fills a per-enemy
+        suspicion bar, only a FULL bar locks the chase, and an
+        active chase holds while any usable score remains. SCOUT
+        defaults to the prior waypoint / wander branch so the
+        existing depths corridor routes still drive the patroller
+        in idle. SEARCH sweeps nearby enclosed hides and CHECKS
+        them (the struggle fires via scene._hide_check)."""
         # Wrap-aware distance so cultists in wrap scenes follow the
-        # shortest path through the fold. If the player is at the
-        # west edge and the cultist is at the east edge of a wrap_x
-        # scene, they read each other as adjacent, not as the full
-        # map width apart.
+        # shortest path through the fold (used for atk_range below).
         dx = scene.world_dx(self.x, player.x)
         dy = scene.world_dy(self.y, player.y)
         d = math.hypot(dx, dy)
-        # Hidden players are invisible to cultists that respect
-        # hiding. Forces has_los False without leaking 1e9 into
-        # downstream math.
-        is_hidden = (getattr(self, "respects_hide", False)
-                     and getattr(player, "hidden", None) is not None)
-        # Real line of sight: walls + solid props occlude (windows/water do
-        # not). Distance + un-hidden alone is no longer enough -- the player
-        # breaks a chase by stepping behind cover, so the cultist loses LOS
-        # and drops into SEARCH. Only paid for when the cheaper gates pass.
-        has_los = (not is_hidden
-                   and d < self.aggro
-                   and getattr(player, "hidden", None) is None
-                   and scene.clear_sight_line(self.x, self.y,
-                                              player.x, player.y))
-        # Audio reaction. Only in SCOUT (existing target intent
-        # would otherwise rubber-band on every step).
-        if self._cult_state == "scout":
-            evt = getattr(scene, "_last_step_event", None)
-            if evt is not None:
-                ex, ey, loud, et = evt
-                now = pygame.time.get_ticks() / 1000.0
-                if (now - et < 0.4
-                        and scene.world_dist(self.x, self.y, ex, ey) < 180
-                        and loud >= 0.7):
-                    self._cult_state = "investigate"
-                    self._cult_state_t = 4.0
-                    self._last_seen_pos = (ex, ey)
-                    self.move_target = None
-        # Promotion to CHASE on LOS, from any state.
-        if has_los:
-            if self._cult_state != "chase":
-                self._cult_state = "chase"
-                self._cult_state_t = 0.0
-                self.move_target = None
-                self._just_locked = True
-            # Bloom into His maw only once the world is corrupt enough
-            # (3+ evidence -- set on the scene by Game each frame).
-            self.morph_target = 1.0 if getattr(scene, "_bloom_enabled", False) else 0.0
+        # The graded detection score for this eye, this tick. Walls
+        # still occlude absolutely; corn scales it; an enclosed hide
+        # zeroes it. respects_hide=False eyes ignore cover entirely.
+        # Fill/decay is the shared accumulator (systems/stealth.py) so
+        # the two cult machines can never drift.
+        score = detection_score(
+            scene, self.x, self.y, self.facing, player, self.aggro,
+            ignore_conceal=not getattr(self, "respects_hide", False))
+        sus = update_suspicion(self, score, dt)
+        self._sus_alert = False
+        # Audio reaction (the shared ear, systems/stealth.hear_noise):
+        # scouts turn on any fresh loud event; searchers/investigators
+        # hold their target unless something strictly LOUDER pulls them.
+        hear_noise(self, scene, 180.0)
+        # Anything above a chore drops the chore (mirrors the NPC
+        # machine): a worker pulled off his errand stands up out of
+        # the task pose; the station index survives for the resume.
+        if self._cult_state != "scout":
+            errand_drop(self)
+        # An active CHASE holds while any usable score remains.
+        if self._cult_state == "chase":
+            if score >= SUS_SCORE_HOLD:
+                self._suspicion = 1.0
+                # Bloom into His maw only once the world is corrupt enough
+                # (3+ evidence -- set on the scene by Game each frame).
+                self.morph_target = (1.0 if getattr(scene, "_bloom_enabled",
+                                                    False) else 0.0)
+                self._last_seen_pos = (player.x, player.y)
+                if d > self.atk_range:
+                    self._cult_step(player.x, player.y, dt, scene)
+                return
+            # Lost the line: SEARCH, and sweep the enclosed hides
+            # around last-seen (Pillar 3 -- searchers hunt cover; the
+            # budget scales with the sweep so it isn't abandoned
+            # mid-check).
+            enter_search(self, scene)
+        # Promotion to CHASE only on a FULL suspicion bar.
+        elif sus >= 1.0:
+            self._cult_state = "chase"
+            self._cult_state_t = 0.0
+            self.move_target = None
+            self._just_locked = True
+            self.morph_target = (1.0 if getattr(scene, "_bloom_enabled",
+                                                False) else 0.0)
             self._last_seen_pos = (player.x, player.y)
             if d > self.atk_range:
                 self._cult_step(player.x, player.y, dt, scene)
             return
-        # Demotion from CHASE: lost the player. Drop into SEARCH.
-        if self._cult_state == "chase":
-            self._cult_state = "search"
-            self._cult_state_t = 6.0
-            self._just_lost = True
+        # NOTICE: a scouting cultist whose suspicion is climbing stops
+        # and turns toward what it half-saw (the telegraph window).
+        if (self._cult_state == "scout" and sus >= SUS_NOTICE
+                and score > 0.0 and not getattr(self, "lock_facing", False)):
+            m = math.hypot(dx, dy) or 1.0
+            self.facing = (dx / m, dy / m)
+            self._sus_alert = True
+            self.move_target = None
+            return
         if self._cult_state == "search":
             self._cult_state_t -= dt
             if self._cult_state_t <= 0 or self._last_seen_pos is None:
@@ -526,24 +545,30 @@ class Enemy:
                 self.move_target = None
                 self.move_timer = 0.0
                 self.morph_target = 0.0
+                self._sweep_list = []
                 return
             tx, ty = self._last_seen_pos
             d_target = scene.world_dist(self.x, self.y, tx, ty)
             if d_target > 30:
                 self._cult_step(tx, ty, dt, scene)
-            else:
-                # Mill: small random steps within ~80 px of last-
-                # seen. Re-uses the wander move_target field --
-                # picks a new one on a short timer.
-                self.move_timer -= dt
-                if self.move_timer <= 0 or self.move_target is None:
-                    self.move_timer = random.uniform(0.8, 1.6)
-                    ang = random.uniform(0, math.tau)
-                    r = random.uniform(20, 80)
-                    self.move_target = (tx + math.cos(ang) * r,
-                                         ty + math.sin(ang) * r)
-                mtx, mty = self.move_target
-                self._cult_step(mtx, mty, dt, scene)
+                return
+            # At last-known. Sweep the enclosed hides nearby -- walk to
+            # each and CHECK it (shared sweep_check; an occupied hide
+            # starts the struggle via scene._hide_check).
+            if sweep_check(self, scene, player, dt,
+                           lambda hx, hy: self._cult_step(hx, hy, dt,
+                                                          scene)):
+                return
+            # Sweep exhausted: mill within ~80 px of last-seen.
+            self.move_timer -= dt
+            if self.move_timer <= 0 or self.move_target is None:
+                self.move_timer = random.uniform(0.8, 1.6)
+                ang = random.uniform(0, math.tau)
+                r = random.uniform(20, 80)
+                self.move_target = (tx + math.cos(ang) * r,
+                                     ty + math.sin(ang) * r)
+            mtx, mty = self.move_target
+            self._cult_step(mtx, mty, dt, scene)
             return
         if self._cult_state == "investigate":
             self._cult_state_t -= dt
@@ -552,6 +577,10 @@ class Enemy:
                 self.move_target = None
                 self.move_timer = 0.0
                 self.morph_target = 0.0
+                self._noise_loud = 0.0
+                return
+            # The turn-first telegraph: face the sound, hold, then walk.
+            if react_hold(self, scene, dt):
                 return
             tx, ty = self._last_seen_pos
             d_target = scene.world_dist(self.x, self.y, tx, ty)
@@ -571,6 +600,12 @@ class Enemy:
         # moving only once a trigger flips their aggro and LOS promotes them
         # to CHASE above.
         if getattr(self, "lock_facing", False):
+            return
+        # Errands first: scenes that declare stations put the workers
+        # to WORK (basins, sorting tables); the pure roam only runs
+        # where no jobs are set.
+        if errand_step(self, scene, dt,
+                       lambda ex, ey: self._cult_step(ex, ey, dt, scene)):
             return
         T = scene.TILE
         # Pause-and-scan on arrival: rotate facing slowly, no movement.
@@ -617,10 +652,11 @@ class Enemy:
         m = getattr(self, "morph", 0.0)
         if m > 0.0:
             draw_vessel_bloom(surf, sx, sy, kind, self.facing, m,
-                              seed=id(self) & 0xffff)
+                              seed=self.sprite_seed)
         else:
             draw_npc_sprite(surf, sx, sy, kind, self.facing,
-                            seed=id(self) & 0xffff, view=view)
+                            seed=self.sprite_seed, view=view,
+                            pose=getattr(self, "pose", None))
         # THRESHOLD: enemies can no longer hurt the player (atk is
         # zeroed every tick in update). Suppress the gold-ring
         # "charge incoming" telegraph in that case -- a wind-up

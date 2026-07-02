@@ -117,12 +117,12 @@ def build_well_bottom():
     sc.add_furniture("barrel", [(8, 2)])
     sc.add_furniture("crate", [(2, 6)])
     # Water seeping to the lowest place (NARRATIVE 1b): a thin teal rivulet
-    # pooling in the SW, and what the well keeps -- a bound, drowned figure in it.
+    # pooling in the SW. (The drowned-body decal that lay in it was cut by
+    # design call, 2026-07 -- the pool and the claw gouges carry the dread.)
     sc.add_decoration(Decoration(4 * TILE + 16, 7 * TILE + 16, "water_trail",
                                  ang=math.pi / 2, seed=5))
     sc.add_decoration(Decoration(5 * TILE + 16, 8 * TILE + 12, "water_trail",
                                  pool=True, seed=9))
-    sc.add_decoration(Decoration(2 * TILE + 18, 4 * TILE + 16, "drowned_body"))
     # Grime: claw gouges in the stone, mud tracked from the landing, more
     # old blood.
     sc.add_decoration(Decoration(10 * TILE + 8, 4 * TILE + 16, "claw_marks",
@@ -137,6 +137,34 @@ def build_well_bottom():
 
     sc.hide_spots = []
     _ambient(sc, "low_pulse", 0.12, 9.0, 14.0)
+
+    # TODO #9 -- the SPREAD counterweight. A SPREAD-bound player never
+    # passes the Deepest Face fuse (where both roads are spoken), so the
+    # fork could end without ever reading as a fork. One interior-voice
+    # beat, fired ONCE, on standing at the way up with His face in hand:
+    # it names the other road and leaves the crossing itself silent (the
+    # fold stays a non-event; the stakes land BEFORE the pane, never on
+    # it). Fires for a SEAL-bound backtracker too, which only sharpens
+    # the choice. Never evidence.
+    def _bottom_on_enter(game, scene):
+        if game.save.flag("spread_counterweight"):
+            return
+        if game.save.flag("descent_sealed"):
+            return
+        if not game.player.inventory.has("sigil_rubbing"):
+            return
+        game.save.set_flag("spread_counterweight", True)
+        game.audio.play("low_pulse", 0.5)
+        game.dialog.show([
+            "[c=dim]The pane stands where the rope hung, and with His "
+            "face in your hands you can feel it holding the door open "
+            "for you. Up is real again. The roads would run.[/c]",
+            "[c=dim]And under your feet the dig runs the other way, down "
+            "to the thing this whole town kneels to. You could end it "
+            "where it starts. Nobody is coming down here after you to do "
+            "it instead.[/c]",
+        ], speaker="", voice="blip_soft", portrait="narrator")
+    sc.on_enter_fn = _bottom_on_enter
 
     # The Works gauntlet is walkable both ways for the Mask-bearer; for
     # anyone else the pane above refuses (keyed to His face). The fall
@@ -200,7 +228,12 @@ def build_well_passage():
     for mx, my in ((7, 3), (11, 5), (3, 5)):
         sc.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16, "mote"))
 
-    sc.hide_spots = []
+    # One enclosed hide off the patrol loop (STEALTH_REWORK §6): the gap
+    # under the bay's drying rack. Strong against the corridor patrol at
+    # range; a searcher that loses you here will sweep and CHECK it.
+    sc.hide_spots = [
+        (7 * TILE + 16, 3 * TILE + 8, "under"),   # under the bay rack
+    ]
     # One cultist working the corridor, end to end.
     sc.add_enemy(_cultist(3 * TILE + 16, 5 * TILE + 16, speed=0.85))
     _ambient(sc, "cult_breath", 0.16, 5.0, 9.0)
@@ -248,12 +281,43 @@ def build_works_vats():
                                  ang=0.0))
     sc.add_decoration(Decoration(8 * TILE + 26, 1 * TILE + 6, "cobweb",
                                  ang=math.pi / 2))
-    sc.hide_spots = []
+    # One enclosed hide (STEALTH_REWORK §6): the dry lee under the SE
+    # basin's lip -- inside the patrol's own arm, so it is a risky option
+    # a searcher can sweep, not a panic room.
+    sc.hide_spots = [
+        (7 * TILE + 16, 9 * TILE + 8, "under"),   # under the SE basin lip
+    ]
     # Two cultists working the basins -- one walks the N-S arms, one the
     # E-W crossing.
     sc.add_enemy(_cultist(6 * TILE + 16, 5 * TILE + 16, speed=0.8))
     sc.add_enemy(_cultist(9 * TILE + 16, 5 * TILE + 16, speed=0.8))
     _ambient(sc, "low_pulse", 0.14, 6.0, 10.0)
+    # A pressure valve on the west arm's pipe run: crack it open and
+    # the line knocks and hisses -- a lure that pulls the basin workers
+    # off the crossing until one of them seats it shut.
+    sc.add_decoration(Decoration(2 * TILE + 16, 4 * TILE + 6, "valve"))
+    sc.add_noise_source(
+        2 * TILE + 16, 4 * TILE + 12, "valve", period=1.1, reach=380.0,
+        sfx="valve_hiss",
+        on_notice="You crack the valve. The line begins to knock and "
+                  "hiss.",
+        off_notice="You seat the valve shut.",
+        silenced_notice="A hand seats the valve shut. The hiss dies in "
+                        "the line.")
+    # A loose plank over the south-arm runoff channel.
+    sc.add_noise_trap(6 * TILE + 16, 7 * TILE + 16, "plank", seed=11)
+    # The basin work: the two cultists tend the four vats in rounds --
+    # stand at a lip, chant over the black water, move to the next
+    # (systems/stealth.errand_step; noise and sightings outrank the
+    # chore). What the valve lure pulls them OFF of.
+    sc.add_cult_station(5 * TILE + 16, 3 * TILE + 16, pose="chant",
+                        face=(0, -1), dwell=(3.0, 6.0))
+    sc.add_cult_station(7 * TILE + 16, 3 * TILE + 16, pose="chant",
+                        face=(0, -1), dwell=(3.0, 6.0))
+    sc.add_cult_station(5 * TILE + 16, 7 * TILE + 16, pose="chant",
+                        face=(0, 1), dwell=(3.0, 6.0))
+    sc.add_cult_station(7 * TILE + 16, 7 * TILE + 16, pose="chant",
+                        face=(0, 1), dwell=(3.0, 6.0))
 
     def _vats_on_enter(game, scene):
         # First entry: the dig hit water. This is the river (NARRATIVE 1b) --
@@ -338,11 +402,30 @@ def build_works_sorting():
     for mx, my in ((5, 4), (10, 7), (13, 5)):
         sc.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16, "mote"))
     sc._table_pos = (6 * TILE + 16, 5 * TILE + 16)
-    sc.hide_spots = []
+    # The hardest crossing gets two enclosed hides among the cover lanes
+    # (STEALTH_REWORK §6): under a sorting table in each row. Both sit on
+    # the patrol floor itself -- reachable mid-route, sweepable.
+    sc.hide_spots = [
+        (6 * TILE + 16, 6 * TILE + 8, "under"),    # under a north-row table
+        (9 * TILE + 16, 9 * TILE + 8, "under"),    # under a south-row table
+    ]
     # Two cultists sorting/patrolling -- the hardest crossing.
     sc.add_enemy(_cultist(4 * TILE + 16, 6 * TILE + 16, speed=0.9))
     sc.add_enemy(_cultist(11 * TILE + 16, 6 * TILE + 16, speed=0.9))
     _ambient(sc, "whisper", 0.13, 7.0, 12.0)
+    # Glass litter between the sorting rows -- a jar knocked off a
+    # table long ago, never swept. The crossing's floor bites back.
+    sc.add_noise_trap(8 * TILE + 16, 6 * TILE + 16, "glass", seed=12)
+    # The sorting work: stations along the table rows. The two
+    # patrollers stand at the tables handling the shed lives, then
+    # move down the row -- the room reads as a working floor, not a
+    # guard post (noise and sightings still outrank the chore).
+    sc.add_cult_station(3 * TILE + 16, 6 * TILE + 16,
+                        face=(0, -1), dwell=(3.5, 6.5))
+    sc.add_cult_station(9 * TILE + 16, 7 * TILE + 16,
+                        face=(0, 1), dwell=(3.5, 6.5))
+    sc.add_cult_station(12 * TILE + 16, 6 * TILE + 16,
+                        face=(0, -1), dwell=(3.5, 6.5))
 
     def _interact(game):
         tx, ty = sc._table_pos
@@ -461,7 +544,12 @@ def build_works_scriptorium():
                                  ang=math.pi / 2))
     sc._desk_pos = (4 * TILE + 16, 2 * TILE + 16)
     sc.add_interactable(sc._desk_pos[0], sc._desk_pos[1], 40)  # [E] cue: the Playscript
-    sc.hide_spots = []
+    # One enclosed hide (STEALTH_REWORK §6): under the centre copying
+    # desk -- echoes the safe-room "under" spots, but down here it is
+    # checkable, and the scribe's lane is a step away.
+    sc.hide_spots = [
+        (6 * TILE + 16, 6 * TILE + 8, "under"),    # under the centre desk
+    ]
     # One scribe, kneeling at a desk, oblivious (aggro 0) -- unless you
     # cross into its lane. Locked facing toward its work.
     scribe = _cultist(5 * TILE + 16, 2 * TILE + 16, speed=0.8)
@@ -547,7 +635,11 @@ def build_works_sign():
                                  ang=-math.pi / 2))
     sc.add_decoration(Decoration(11 * TILE + 26, 9 * TILE + 26, "cobweb",
                                  ang=math.pi))
-    sc.hide_spots = []
+    # Hides stay sparse + risky here on purpose (STEALTH_REWORK §6): one
+    # spot under the west pew, a pew-length from the kneeling congregation.
+    sc.hide_spots = [
+        (4 * TILE + 16, 8 * TILE + 8, "under"),    # under the west pew
+    ]
     # The congregation: three kneelers facing the Sign (north), plus one
     # patrol on the east flank. Kneelers start oblivious (aggro 0).
     for kx in (4, 6, 8):
@@ -567,6 +659,24 @@ def build_works_sign():
     holder.facing = (0, -1)
     holder.pose = "chant"
     sc.add_npc(holder)
+
+    # The rite-holder's WEIGHT, felt on approach (TODO #8; NARRATIVE 1b:
+    # the self dissolved into the work). A one-shot trigger on stepping
+    # into the apse band -- not an E-press, so it can never steal the
+    # altar's Mask/rite choice.
+    def _holder_weight(game):
+        game.audio.play("low_pulse", 0.5)
+        game.dialog.show([
+            "[c=dim]The one bowed at the altar's foot never pauses. "
+            "Metronome steady. Whatever it was before, its share of the "
+            "rite is the whole of it now.[/c]",
+        ], speaker="", voice="blip_soft", portrait="narrator")
+    sc.triggers.append({
+        "rect": (3 * TILE, 3 * TILE, 10 * TILE, 5 * TILE),
+        "fn": _holder_weight,
+        "once": True,
+        "fired": False,
+    })
     _ambient(sc, "whisper", 0.16, 5.0, 9.0)
 
     def _take_mask(game):

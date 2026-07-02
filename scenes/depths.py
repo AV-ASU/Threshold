@@ -150,7 +150,12 @@ def build_depths_antechamber():
                                  ang=0.0))
     sc.add_decoration(Decoration(8 * TILE + 26, 8 * TILE + 26, "cobweb",
                                  ang=math.pi))
-    sc.hide_spots = []
+    # A supply crate from the old workings, and the gap beneath it: one
+    # enclosed hide near the patrol loop (STEALTH_REWORK §6).
+    sc.add_furniture("crate", [(7, 4)])
+    sc.hide_spots = [
+        (7 * TILE + 16, 5 * TILE + 8, "under"),    # under the old crate
+    ]
     # One cultist patrolling a small loop around the landing.
     sc.add_enemy(_cultist(7 * TILE + 16, 6 * TILE + 16, speed=0.85))
     _ambient(sc, "cult_breath", 0.18, 6.0, 10.0)
@@ -211,7 +216,13 @@ def build_depths_procession():
                                  ang=0.0))
     sc.add_decoration(Decoration(14 * TILE + 26, 3 * TILE + 6, "cobweb",
                                  ang=math.pi / 2))
-    sc.hide_spots = []
+    # A crate tucked in a south bay + the gap under it: one enclosed hide
+    # off the column (STEALTH_REWORK §6) -- the bays themselves are the
+    # concealment; this is the rooted option a searcher can check.
+    sc.add_furniture("crate", [(12, 7)])
+    sc.hide_spots = [
+        (11 * TILE + 24, 7 * TILE + 16, "under"),  # beside the bay crate
+    ]
     # Two cultists walking the column, single file, opposite phases
     # so they meet between (5..12) and pass each other. Endpoints
     # held away from the west-edge spawn (col 1) so the player
@@ -220,6 +231,38 @@ def build_depths_procession():
     sc.add_enemy(_cultist(11 * TILE + 16, 4 * TILE + 16, speed=0.9))
     _ambient(sc, "blip_soft", 0.12, 2.5, 4.5)
 
+    # The procession's one diegetic beat (TODO #8): the candle line read
+    # up close. Wax on old wax -- they filed to the rite many more times
+    # than once, and never hurried. Narration + a case NOTE (never
+    # evidence; the six canonical beats are locked).
+    sc.add_interactable(8 * TILE + 16, 4 * TILE + 16, 36)
+
+    def _candles_interact(game):
+        px, py = game.player.x, game.player.y
+        if abs(px - (8 * TILE + 16)) > 36 or abs(py - (4 * TILE + 16)) > 36:
+            return
+        if game.save.flag("procession_candles_read"):
+            game.dialog.show([
+                "[c=dim]The wax holds its little lights steady. Nobody "
+                "hurried here. The wax says nobody ever hurried.[/c]",
+            ], speaker="", voice="blip_soft", portrait="narrator")
+            return
+        game.save.set_flag("procession_candles_read", True)
+        game.audio.play("low_pulse", 0.4)
+        game.dialog.show([
+            "[c=dim]A line of candles down the dark, burned to coins. Each "
+            "one stands in older wax, and older wax under that.[/c]",
+            "[c=dim]They walked this in single file, carrying light, many "
+            "more times than once. Nobody hurried. The wax says nobody "
+            "ever hurried.[/c]",
+        ], speaker="", voice="blip_soft", portrait="narrator")
+        if hasattr(game, "_log_note"):
+            game._log_note("the_procession", [
+                "A candle line tended half a mile under Brimley, wax on "
+                "old wax. They filed to their rite the way other towns "
+                "file to Sunday service. Unhurried. Certain.",
+            ])
+    sc.on_interact_fn = _candles_interact
     return sc
 
 
@@ -258,7 +301,11 @@ def build_depths_hall():
                                  ang=0.0))
     sc.add_decoration(Decoration(10 * TILE + 26, 8 * TILE + 26, "cobweb",
                                  ang=math.pi))
-    sc.hide_spots = []
+    # One enclosed hide on the nave route (STEALTH_REWORK §6): under a
+    # pew, in the roamer's sweep range.
+    sc.hide_spots = [
+        (4 * TILE + 16, 5 * TILE + 24, "under"),   # under a nave pew
+    ]
     # Two stationary cultists kneel at the iron door, facing east.
     # Aggro starts at 0 (oblivious) so they don't react until the
     # crossing trigger flips them. aggro=0 + lock_facing pins them in
@@ -283,6 +330,10 @@ def build_depths_hall():
                 e.aggro = 600
                 e.lock_facing = False
         game.audio.play("low_pulse", 0.55)
+        # The narrative half of the trigger (TODO #8): the grid was
+        # facing the door, and it turns as one body. Not startled. Called.
+        game.show_notice("The kneeling rise together. Not startled. Called.",
+                         duration=2.8)
     sc.triggers.append({
         "rect": (8 * TILE, 1 * TILE, 11 * TILE, 10 * TILE),
         "fn": _alert_kneelers,
@@ -453,6 +504,32 @@ def _mara_voice(game, npc):
     game.save.set_flag("hive_seen", True)
     game.audio.force_silence()
     game.audio.play("low_pulse", 0.6)
+
+    def _lure_collision():
+        # TODO #7 -- the lure chain, felt ONCE (NARRATIVE §1/§10 fence:
+        # never stated, no chain named; the PI starts the thought and
+        # declines to finish it). Only for a player who lived the dream
+        # (flashback_seen); for anyone else her lines stand alone.
+        if not game.save.flag("flashback_seen"):
+            return
+        game.dialog.show([
+            "[c=dim](A door in your sleep, a year back. Then a grief job "
+            "you had no reason to take, and an itch that drove you north "
+            "with it.)[/c]",
+            "[c=dim](And every road in handed you here. To her, kneeling. "
+            "You start the arithmetic of that, and you put it down. Some "
+            "sums you don't finish standing up.)[/c]",
+        ], speaker="", voice="blip_soft", portrait="narrator")
+
+    # File evidence #6 FIRST and silently (show=False): the log + the
+    # King-gate land immediately, and the one-line evidence dialog no
+    # longer CLOBBERS her four lines (dialog.show replaces the open
+    # box, so the old order showed the player only the summary and the
+    # whole exchange was lost). The notebook keeps the summary text.
+    _evidence(game, "the_congregation", [
+        "Mara, kneeling with the congregation. Turned. There was never "
+        "anyone to bring back. Only this, and now you're in it with her.",
+    ], show=False)
     game.dialog.show([
         "[c=dim](You say her name. The hooded head lifts. It is Mara.)[/c]",
         "\"My father sent you. Of course he did. He never could let a thing "
@@ -462,11 +539,8 @@ def _mara_voice(game, npc):
         "[c=dim]\"There was no one down here to bring back. I was not taken. I "
         "was answered, and I went to it gladly. Go home, while the town still "
         "lets you think you can.\"[/c]",
-    ], speaker="", voice="blip_soft", portrait="narrator")
-    _evidence(game, "the_congregation", [
-        "Mara, kneeling with the congregation. Turned. There was never "
-        "anyone to bring back. Only this, and now you're in it with her.",
-    ])
+    ], speaker="", voice="blip_soft", portrait="narrator",
+        on_complete=_lure_collision)
 
 
 def build_dark():

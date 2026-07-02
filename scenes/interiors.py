@@ -187,12 +187,16 @@ def build_shop():
     # break the plank tiling. First, so props draw on top.
     sc.add_decoration(Decoration(10 * TILE + 24, 9 * TILE + 8, "rug",
                                  w=104, h=64, color=(58, 60, 64), seed=31))
-    # Sized darkwood furniture: two long shop bookshelves of goods on the
-    # shop floor, the counter Hettie stands behind, a stool, plus storeroom
-    # stock shelves in the back.
-    sc.add_furniture("bookshelf", [(8, 1), (9, 1)], w=58, h=18, seed=1)
-    sc.add_furniture("bookshelf", [(11, 1), (12, 1)], w=58, h=18, seed=2)
-    sc.add_furniture("table", [(9, 9), (10, 9)], w=58, h=38)
+    # Sized darkwood furniture. The two long goods runs on the shop floor
+    # stand EMPTY (bare_shelf: dust-ghosts where stock stood, one tin left;
+    # no deliveries since the new year, NARRATIVE 8 food scarcity). Hettie
+    # keeps a real counter now -- a low see-over volume like the Lodge
+    # front desk -- plus a stool, and stocked shelves in the back room
+    # (her preserves; nobody buys, so those never emptied).
+    sc.add_furniture("bare_shelf", [(8, 1), (9, 1)], w=58, h=18, seed=1)
+    sc.add_furniture("bare_shelf", [(11, 1), (12, 1)], w=58, h=18, seed=2)
+    sc.add_furniture("butcher_counter", [(9, 9)], see_over=True)
+    sc.add_furniture("butcher_counter", [(10, 9)], see_over=True)
     sc.add_furniture("chair", [(10, 8)], w=22, h=28)
     sc.add_furniture("bookshelf", [(1, 1), (2, 1)], w=58, h=18, seed=4)
     sc.add_furniture("table", [(4, 2)], w=30, h=30)
@@ -329,18 +333,21 @@ def build_barn():
             game.audio.play("low_pulse", 0.45)
             # File the case beat silently; the journal itself reads from the
             # kit (its entries are the item desc), not forced on pickup.
+            # The log excerpts quote MARA_JOURNAL_PAGES (systems/items.py)
+            # so the evidence beat and the readable journal can never
+            # drift apart again: the ache, the door, the glad dig down.
             _evidence(game, "maras_journal", [
                 "A notebook, shoved down behind the workbench. You know the "
                 "hand. It's hers, the same as the letter.",
-                "Her journal. The last entries, in a hand that gets calmer "
+                "Her journal. Three leaves, in a hand that gets calmer "
                 "as it goes:",
-                "\"I just had this urge to go north. Stopped for gas in this "
-                "town. Everyone smiles like I'm already home.\"",
-                "\"I had Him wrong. He isn't out past the corn. He's under "
-                "it. You don't walk to Him. You go down.\"",
-                "\"There's a mouth below the town. The others went ahead of "
-                "me, down it, and not one has climbed back up. Tomorrow I "
-                "follow them down. I feel so close now.\"",
+                "\"They told me grief would pass. It did not pass. It only "
+                "learned my name.\"",
+                "\"I have started to dream of a door. It is not "
+                "frightening. It feels like being remembered.\"",
+                "\"They dreamed the same door, every one of them. We are "
+                "digging down to it together now. I am not lost. I have "
+                "never been this close.\"",
             ], show=False)
             game.show_notice("Her journal.")
             return
@@ -425,9 +432,10 @@ def build_kid_house():
     for mx, my in [(8, 7), (11, 8), (7, 8)]:
         sc.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16,
                                      "mote"))
-    # Hide spots: under the kid's bed, and in the closet (the blind spot).
+    # Hide spots: under the kid's bed (the spot sits on the bed's
+    # walkable south lip; flow §25 guards every scene's spots).
     sc.hide_spots = [
-        (10 * TILE + 16, 6 * TILE + 24, "under"),
+        (10 * TILE + 16, 8 * TILE + 8, "under"),
     ]
     # The kid's drawing of the King, pinned up inside the closet (a 'photo'
     # decoration) -- examinable flavor, grants nothing. Out of sight from the

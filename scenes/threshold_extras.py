@@ -367,6 +367,21 @@ def build_country_lane():
                                  "dead_crow"))
     sc.add_decoration(Decoration(11 * TILE + 16, 9 * TILE + 16,
                                  "missing_flyer"))
+
+    # ---- The walked-out road (2026-07 detail pass) ----
+    # The locals who went to flag down help walked EAST down this lane
+    # and never came back (the highway fold): bootprints along the
+    # road that head east and simply stop, well short of the seam.
+    for fx, fy in ((17, 6), (20, 5), (23, 6), (25, 6)):
+        sc.add_decoration(Decoration(fx * TILE + 16, fy * TILE + 16,
+                                     "mud_footprint"))
+    # The busted south fence sheds a plank; tins dumped off the north
+    # shoulder (both noise traps along the cover lanes).
+    sc.add_noise_trap(24 * TILE + 16, 9 * TILE + 16, "plank", seed=25)
+    sc.add_noise_trap(9 * TILE + 16, 3 * TILE + 16, "cans", seed=26)
+    for lx, ly in ((6, 4), (28, 8)):
+        sc.add_decoration(Decoration(lx * TILE + 16, ly * TILE + 16,
+                                     "leaves"))
     sc.hide_spots = []
     return sc
 
@@ -768,6 +783,18 @@ def build_river_crossing():
             continue
         sc.add_decoration(Decoration(gx, gy, "grass_tuft"))
 
+    # ---- River detail (2026-07 pass): fog on the water, and the
+    # banks remember what crossed them. ----
+    for mx, my in ((12, 3), (11, 9), (13, 11)):
+        sc.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16,
+                                     "mist"))
+    sc.add_decoration(Decoration(15 * TILE + 16, 4 * TILE + 16,
+                                 "claw_marks"))
+    # Litter where someone sat watching the water, and a crow on the
+    # east bank that flushes as you come off the bridge (noise traps).
+    sc.add_noise_trap(9 * TILE + 16, 8 * TILE + 16, "cans", seed=27)
+    sc.add_noise_trap(17 * TILE + 16, 6 * TILE + 16, "crow", seed=28)
+
     # Boarded-over panel at col 5 row 0 -- a chop-target that opens onto
     # an empty, long-looted pocket.
 
@@ -789,7 +816,8 @@ def build_bell_tower():
     # you circle, so whatever is on its far side is an indoor blind spot.
     floor_rows = ["=" * 12 for _ in range(10)]
     objects = [
-        "WWWWiWWWiWWWW",   # 0  north-wall window slits
+        "WWWWiWWWiWWW",    # 0  north-wall window slits (12 wide, matching
+        #                       the rest -- row 0 carried a stray 13th tile)
         "W..........W",    # 1
         "W..........W",    # 2
         "i..........i",    # 3  east/west window slits
@@ -804,16 +832,30 @@ def build_bell_tower():
     sc.add_exit("L", "old_man_house", "from_bell_tower")
     sc.set_spawn("default", 5, 8)
     sc.set_spawn("from_church", 7, 8)        # at the foot of the L stairs
-    # The bell hangs in the central housing. Use a lantern + rope as a
-    # stand-in -- we don't have a `bell` deco.
-    sc.add_decoration(Decoration(5 * TILE + 32, 4 * TILE + 16, "lantern"))
-    sc.add_decoration(Decoration(5 * TILE + 32, 4 * TILE + 34, "rope"))
+    # The bell hangs off the housing's south face (drawn upward from its
+    # lip, so under tilt it reads in front of the solid housing box),
+    # with the pull rope dropping to hand height below it. E on the
+    # rope rings it: the peal masks every small noise on the surface
+    # and pulls the cult across Brimley to the church door
+    # (Game._ring_bell / _tick_bell; the BELL_* config block).
+    sc.add_decoration(Decoration(5 * TILE + 32, 5 * TILE + 28,
+                                 "church_bell"))
+    sc.add_decoration(Decoration(5 * TILE + 32, 6 * TILE + 5, "rope"))
+    sc.add_interactable(5 * TILE + 32, 6 * TILE + 16, 44)
     sc.add_decoration(Decoration(2 * TILE + 16, 2 * TILE + 16,
                                  "phantom_mark"))
     for i in range(8):
         sc.add_decoration(Decoration(40 + i * 36,
                                      60 + (i % 3) * 50, "mote"))
     sc.hide_spots = []
+
+    def _bell_interact(game):
+        px, py = game.player.x, game.player.y
+        if (abs(px - (5 * TILE + 32)) > 44
+                or abs(py - (6 * TILE + 16)) > 44):
+            return
+        game._ring_bell()
+    sc.on_interact_fn = _bell_interact
 
     def _bell_tower_on_enter(game, scene):
         if game.save.flag("bell_tower_seen"):
@@ -1194,6 +1236,12 @@ def build_cornfield_maze():
                 )
             return
     sc.on_interact_fn = _cornfield_maze_interact
+
+    # Litter in the lanes (2026-07 sound overhaul): tins dumped in lane
+    # 2, and a crow posted in lane 4 that flushes screaming -- the maze
+    # punishes a careless line even when nothing can see you.
+    sc.add_noise_trap(6 * TILE + 16, 8 * TILE + 16, "cans", seed=13)
+    sc.add_noise_trap(16 * TILE + 16, 10 * TILE + 16, "crow", seed=14)
 
     sc.hide_spots = []
     return sc

@@ -25,6 +25,43 @@ from rendering.king_unfold import draw_unfold_catch
 from rendering.transform import draw_vessel_bloom
 from systems.config import *        # noqa: F401,F403
 
+# The "?" tell card, pre-rendered once per alpha bucket (8 buckets) --
+# a fresh SRCALPHA surface + three vector draws per suspicious cultist
+# per frame was pure GC churn at exactly the moment frame pacing matters.
+_SUS_TELL_CACHE = {}
+
+
+def _sus_tell_card(bucket):
+    card = _SUS_TELL_CACHE.get(bucket)
+    if card is None:
+        a = int(110 + 130 * (bucket / 7.0))
+        col = (222, 196, 120, a)
+        card = pygame.Surface((12, 16), pygame.SRCALPHA)
+        pygame.draw.arc(card, col, (2, 1, 8, 8),
+                        -math.pi * 0.7, math.pi * 0.95, 2)
+        pygame.draw.line(card, col, (6, 8), (6, 10), 2)
+        pygame.draw.circle(card, col, (6, 14), 1)
+        _SUS_TELL_CACHE[bucket] = card
+    return card
+
+
+def _draw_sus_tell(surf, x, y, actor):
+    """The rising "?" tell (STEALTH_REWORK.md Pillar 1): drawn over a
+    SCOUTING cultist whose suspicion is climbing -- the player's read on
+    the "have they spotted me?" window. Procedural (no font glyph; the
+    HUD stays diegetic-minimal): a pale-gold curl + dot that brightens
+    and lifts as suspicion fills. Scout-only on purpose: a locked chase
+    has its own sting, and a SEARCHING hunter wearing a full "?" would
+    tell the player they are merely suspected one beat after the lock
+    announced the opposite."""
+    sus = getattr(actor, "_suspicion", 0.0)
+    if sus < SUS_NOTICE or getattr(actor, "_cult_state", "") != "scout":
+        return
+    bucket = min(7, int(min(1.0, sus) * 8))
+    lift = int(4 * min(1.0, sus))
+    surf.blit(_sus_tell_card(bucket), (int(x) - 6, int(y) - 16 - lift))
+
+
 # Solid-prop card cache (see _draw_solid_prop). Static props rendered once per
 # (prop, camera angle) and blitted thereafter; FIFO-capped so roaming the town
 # doesn't grow it without bound.
@@ -707,7 +744,11 @@ class RenderMixin:
             cache, order, cap = (_PROP_STATIC_CACHE, _PROP_STATIC_ORDER,
                                  _PROP_STATIC_CAP)
         else:
-            key = (id(d), round(cam.yaw, 2), round(cam.pitch, 2),
+            # Yaw bucketed at 0.04 rad (like the wall cards): a
+            # continuous head-turn used to rebuild every yaw-keyed prop
+            # every frame; ~1px of in-bucket shape error is invisible
+            # mid-swing.
+            key = (id(d), int(cam.yaw / 0.04), round(cam.pitch, 2),
                    round(cam.scale, 2))
             cache, order, cap = (_PROP_CARD_CACHE, _PROP_CARD_ORDER,
                                  _PROP_CARD_CAP)
@@ -960,7 +1001,7 @@ class RenderMixin:
                           draw_with_alpha(self.screen, a,
                                           lambda s: draw_npc_corpse(
                                               s, sx, sy, npc.sprite_kind,
-                                              seed=id(npc) & 0xffff, mold=0),
+                                              seed=getattr(npc, 'sprite_seed', 0), mold=0),
                                           rect=(sx - 90, sy - 90, 180, 170)))
                 continue
             m = getattr(npc, "morph", 0.0)
@@ -1036,7 +1077,12 @@ class RenderMixin:
                 # A visible standing actor is a "focus": occluding walls fade for
                 # whichever of these they cover (CAMERA.md Phase 5 per-actor
                 # occlusion), so a cultist seen behind a near wall reads through.
-                _focus.append((npc.x + ox, npc.y + oy, 28))
+                # Invisible interact MARKERS are exempt: they draw nothing, so
+                # fading a wall for one erases real architecture for a ghost
+                # (the church vestry's back wall vanished for the records
+                # terminal's marker; the room read as missing a wall).
+                if npc.sprite_kind != "_invisible":
+                    _focus.append((npc.x + ox, npc.y + oy, 28))
                 sy -= npc_lift            # stand on the floor under tilt
 
                 # Capture EVERY per-NPC value as a default arg: this closure
@@ -1051,7 +1097,7 @@ class RenderMixin:
                               king_lean=king_lean, king_scale_mul=king_scale_mul):
                     if m > 0.0:
                         draw_vessel_bloom(target, sx, sy, npc.sprite_kind,
-                                          npc.facing, m, seed=id(npc) & 0xffff)
+                                          npc.facing, m, seed=getattr(npc, 'sprite_seed', 0))
                     else:
                         # (The curse is His own gaze now; NARRATIVE 1b/3.
                         # curse_v stays 0 for all normal NPCs.)
@@ -1070,7 +1116,8 @@ class RenderMixin:
                                         npc.facing, blink=(i == blink_idx),
                                         birth=getattr(npc, "_birth", None),
                                         gait=getattr(npc, "_gait", None),
-                                        threat=king_threat, seed=id(npc) & 0xffff,
+                                        threat=king_threat,
+                                        seed=getattr(npc, 'sprite_seed', 0),
                                         curse=curse_v, gaze=w_gaze, view=nview,
                                         to_player=king_to_player,
                                         lean=king_lean, scale_mul=king_scale_mul,
@@ -1081,7 +1128,11 @@ class RenderMixin:
                             draw_infested_overlay(target, sx, sy,
                                                   npc.sprite_kind, view=nview,
                                                   name=getattr(npc, "name", None),
-                                                  seed=id(npc) & 0xffff)
+                                                  seed=getattr(npc, 'sprite_seed', 0))
+                    # The rising "?" tell (STEALTH_REWORK.md Pillar 1): a
+                    # cultist whose suspicion is climbing but hasn't locked
+                    # shows the half-seen hesitation over its head.
+                    _draw_sus_tell(target, sx, sy - 32, npc)
                 _emit(self.camera.depth(npc.x + ox, npc.y + oy),
                       lambda a=a, fn=_draw_npc, sx=sx, sy=sy:
                       draw_with_alpha(self.screen, a, fn,
@@ -1107,12 +1158,14 @@ class RenderMixin:
                 # Feed e.draw an offset that lands its internal `x - cam`
                 # exactly on the (lifted) projected point. At pitch 0 this is
                 # arithmetically the legacy (cam_x - ox) call -> identical.
+                def _draw_enemy(s, e=e, sx=sx, sy=sy, eview=eview):
+                    e.draw(s, e.x - sx, e.y - (sy - actor_lift), view=eview)
+                    # The rising "?" tell for a suspicious-but-not-locked
+                    # underground cultist (mirrors the NPC path).
+                    _draw_sus_tell(s, sx, sy - 32, e)
                 _emit(self.camera.depth(e.x + ox, e.y + oy),
-                      lambda a=a, sx=sx, sy=sy, e=e, eview=eview:
-                      draw_with_alpha(self.screen, a,
-                                      lambda s: e.draw(
-                                          s, e.x - sx, e.y - (sy - actor_lift),
-                                          view=eview),
+                      lambda a=a, sx=sx, sy=sy, fn=_draw_enemy:
+                      draw_with_alpha(self.screen, a, fn,
                                       rect=(sx - 110, sy - 160, 220, 250)))
         for p in self.scene.projectiles:
             psx, psy = self.camera.project(p.x, p.y)
@@ -1443,6 +1496,10 @@ class RenderMixin:
         self._draw_interact_prompt()
         self._draw_hud()
         self._draw_notebook_toast()
+        # Floating NPC speech (above the speaker's head, non-modal, not
+        # sight-gated) sits under the modal dialog box -- the two are
+        # mutually exclusive in practice, but a scripted modal always wins.
+        self.float_speech.draw(self.screen, self)
         self.dialog.draw(self.screen)
         self.inv_ui.draw(self.screen, self.player)
         self.notebook_ui.draw(self.screen)
@@ -1684,6 +1741,45 @@ class RenderMixin:
                              (sx2 - 1, sy2 - 1, sw + 2, sh + 2), 1)
             pygame.draw.rect(self.screen, fill,
                              (sx2, sy2, int(sw * ratio), sh))
+        # The hide-check struggle (STEALTH_REWORK.md §4): a pulsing centre
+        # prompt + press pips while the window runs. The prompt IS the
+        # mechanic's legibility -- unmistakable, urgent, brief.
+        st = getattr(self, "_struggle", None)
+        if st is not None:
+            t_now = pygame.time.get_ticks() / 1000.0
+            pulse = 0.6 + 0.4 * abs(math.sin(t_now * 9.0))
+            cx = SCREEN_W // 2
+            cy = SCREEN_H // 2 + 70
+            # Font.render is one of pygame's priciest per-frame calls --
+            # quantize the pulse into 8 cached renders instead of
+            # rasterizing the prompt fresh 60x/s inside the mash window.
+            pb = min(7, int((pulse - 0.6) / 0.4 * 8))
+            cache = getattr(self, "_struggle_txt_cache", None)
+            if cache is None:
+                cache = self._struggle_txt_cache = {}
+            txt = cache.get(pb)
+            if txt is None:
+                pv = 0.6 + 0.4 * (pb / 7.0)
+                txt = cache[pb] = self.fonts["serif"].render(
+                    "FIGHT. Mash E.", True,
+                    (int(230 * pv), int(70 + 40 * pv), int(50 * pv)))
+            self.screen.blit(txt, (cx - txt.get_width() // 2, cy))
+            need = max(1, STRUGGLE_PRESSES)
+            got = min(need, st.get("presses", 0))
+            pw2, ph2, pg = 16, 6, 4
+            total = need * pw2 + (need - 1) * pg
+            px0 = cx - total // 2
+            py0 = cy + txt.get_height() + 8
+            for i in range(need):
+                c = ((236, 200, 120) if i < got else (60, 40, 40))
+                pygame.draw.rect(self.screen, c,
+                                 (px0 + i * (pw2 + pg), py0, pw2, ph2))
+            # The window itself: a thin draining bar under the pips.
+            frac = max(0.0, min(1.0, st.get("t", 0.0) / STRUGGLE_WINDOW))
+            pygame.draw.rect(self.screen, (90, 30, 26),
+                             (px0, py0 + ph2 + 4, total, 3))
+            pygame.draw.rect(self.screen, (210, 60, 48),
+                             (px0, py0 + ph2 + 4, int(total * frac), 3))
 
     def _draw_notebook_toast(self):
         """A small page in the upper-left that the PI scribbles a beat onto,

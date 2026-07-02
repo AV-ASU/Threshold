@@ -1,4 +1,5 @@
-"""The full THRESHOLD test gate: smoke + flow + fold_pursuit + render_smoke.
+"""The full THRESHOLD test gate: smoke + flow + stealth + fold_pursuit +
+king_roam + render_smoke.
 
 One command to run every harness before a commit/push. Self-configures the
 SDL dummy drivers (no display/audio needed) and sets PYTHONPATH, runs each
@@ -19,7 +20,8 @@ os.environ.setdefault("SDL_AUDIODRIVER", "dummy")
 _ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # Order: cheapest/most-fundamental first.
-SUITES = ["smoke", "flow", "fold_pursuit", "king_roam", "render_smoke"]
+SUITES = ["smoke", "flow", "stealth", "fold_pursuit", "king_roam",
+          "render_smoke"]
 
 
 def main():

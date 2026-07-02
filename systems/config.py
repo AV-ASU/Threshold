@@ -102,6 +102,13 @@ AIM_DEAD_ZONE = 0.30
 # chase disengages — a few degrees of dead arc near the horizontal so the
 # transition between chase and free-look isn't an edge. ~75 degrees from up.
 CHASE_MAX_OFFSET = 1.30
+# Aim-steady rules (2026-07): aiming must never be a standing order to
+# swing the view. While the trigger is held (and for CHASE_FIRE_LOCK
+# seconds after a shot) the body-chase is OFF entirely; standing still
+# damps it to CHASE_STATIONARY_MULT of TURN_RATE; the full rate applies
+# only while movement keys are actually driving.
+CHASE_FIRE_LOCK = 0.40
+CHASE_STATIONARY_MULT = 0.35
 
 # Velocity smoothing time constant (seconds). Player velocity eases toward the
 # input-driven target over this window, giving a tactile accel/decel feel.
@@ -343,9 +350,109 @@ LOCAL_KILL_VIS_SPIKE = 0.35
 LOCAL_KILL_VIS_CAP = 0.96
 GUN_PROJECTILE_SPEED = 340
 GUN_PROJECTILE_COLOR = (236, 232, 214)   # pale lead, distinct from cult amber
+
+# ---- Stealth rework (STEALTH_REWORK.md): graded suspicion + cover classes -
+# Detection is GRADED, not binary: each cultist carries a suspicion value in
+# [0, 1] filled per tick by score = los * distance_falloff * facing_cone *
+# concealment. Cover changes how HARD you are to detect, never WHETHER you
+# can be. Two cover classes: CONCEALMENT (corn -- mobile, leaky: a distant
+# cultist barely reads you, a near one still fills) and ENCLOSED ('under'/
+# 'in' hide spots -- rooted, a hard sight break, but a SEARCHING cultist
+# that reaches the hide CHECKS it -> the struggle). Apex pursuers
+# (_force_chase: the King, the hollow Sheriff) bypass all of this.
+SUS_NOTICE = 0.45             # alert threshold: turn toward you, the "?" tell
+SUS_FILL_RATE = 2.6           # /s at score 1.0 -> point-blank open lock ~0.4s
+SUS_DECAY = 0.55              # /s drain while the score is broken
+SUS_SCORE_HOLD = 0.12         # min score that sustains an active CHASE
+SUS_NEAR = 44.0               # px: inside this, facing no longer matters
+SUS_CONE_HALF = 1.40          # rad (~80 deg) enemy sight-cone half-angle
+SUS_CONE_FEATHER = 0.35       # rad soft edge on the cone lip
+SUS_CONCEAL_CORN = 0.30       # concealment factor in corn (leaky, not zero)
+# Darkness is CONCEALMENT too (STEALTH_REWORK Pillar 2A "corn, shadow"):
+# in a DARK scene, with the flashlight unlit and outside every light
+# pool (Scene.lit_at), the player reads as half-swallowed by the gloom.
+# Weaker than corn (a shape in the dark is still a shape), and it never
+# stacks with other cover (the better factor wins). Apex pursuers and
+# respects_hide=False eyes ignore it like all cover.
+SUS_CONCEAL_DARK = 0.45
+# Leaving an enclosed hide takes a BEAT (the deferred exit-takes-a-beat
+# window): you are out, visible, and unable to move while you unfold.
+HIDE_EXIT_BEAT = 0.35
+# Searchers sweep cover instead of milling: enclosed hides near the
+# last-seen point get walked to and CHECKED (looked under / opened).
+SUS_SWEEP_RADIUS = 170.0      # px around last-seen a searcher will sweep
+SUS_CHECK_DIST = 22.0         # px: close enough to check a swept hide
+SUS_CHECK_PAUSE = 0.7         # s spent looking into each swept spot
+# The struggle: a searcher checks the enclosed hide you are in. A short
+# mash window decides it -- win = burst out (sprint burst, the checker
+# staggers, a LOUD noise event converges the room), lose = taken (the
+# CAPTURED card). Tuned so a ready player usually escapes.
+STRUGGLE_WINDOW = 1.6         # s to win the mash
+STRUGGLE_PRESSES = 5          # E/SPACE presses needed
+STRUGGLE_BURST_T = 0.9        # s of panic-burst speed after winning
+STRUGGLE_BURST_MULT = 1.8     # burst speed multiplier
+STRUGGLE_STUN = 1.4           # s the checker staggers after a burst-out
+
+# ---- The noise core (2026-07 sound overhaul) ------------------------------
+# World noises broadcast through Scene.emit_noise; the cult hears them
+# through systems/stealth.hear_noise. SCOUTS turn on anything at or over
+# NOISE_HEAR_MIN; SEARCHERS/INVESTIGATORS already own a target and are
+# only PULLED OFF it by something louder (NOISE_SEARCH_PULL -- a gunshot,
+# the struggle burst, the bell). Every reaction starts with the
+# turn-first telegraph: face the source and hold NOISE_REACT_PAUSE before
+# walking. Set-piece kneelers (lock_facing / aggro 0) are deaf on
+# purpose: their wake is scripted. CHASE never diverts; apex never hears.
+NOISE_HEAR_MIN = 0.7          # min loudness that turns a scout's head
+NOISE_FRESH = 0.4             # s an event stays audible
+NOISE_REACT_PAUSE = 0.45      # the face-the-sound beat before walking
+NOISE_SEARCH_PULL = 0.9       # loudness that diverts a searcher
+NOISE_WALK_SPEED = 55.0       # px/s travel estimate that sizes an
+                              # investigator's walk budget by distance,
+                              # so a far pull (the bell) isn't abandoned
+                              # halfway across the field
+
+# ---- The church bell (the town's one dominant noise source) ---------------
+# Rung from the bell tower (E on the pull, scenes/threshold_extras.py).
+# While it peals: every surface scene is MASKED (small noises, the
+# player's steps, drown under it) and in Brimley it broadcasts a
+# map-wide pull at the church door -- every cult hunter converges on the
+# church. A hunter that reaches the door stills the rope; otherwise the
+# peal rings itself out. Apex pursuers never hear it (they hunt YOU).
+BELL_RING_DUR = 20.0          # s the peal lasts if nothing stops it
+BELL_TOLL_PERIOD = 2.6        # s between strikes
+BELL_MASK_LEVEL = 0.85        # emit_noise events quieter than this drown
+BELL_MASK_RADIUS = 100000.0   # the peal covers the whole scene
+BELL_REACH = 100000.0         # the pull is heard map-wide
+BELL_STOP_DIST = 70.0         # a hunter this close to the door stills it
+
+# ---- Placed noisemakers (Scene.add_noise_trap / add_noise_source) ---------
+# Passive traps underfoot (cans, glass, a loose plank, a crow that
+# flushes) fire on entry and re-arm after the player leaves; toggleable
+# sources (the truck radio, the works valve) loop a lure until a cult
+# hunter reaches them and shuts them off.
+TRAP_REARM = 2.0              # s before a left-and-re-entered trap re-fires
+NOISE_SRC_SILENCE_DIST = 40.0 # a hunter this close shuts a source off
+
+# ---- One-hop noise bleed (the tunnels carry sound) -------------------------
+# A LOUD noise in an underground room (a gunshot, the struggle burst)
+# reaches the NEXT room: after a short walk-time a transient cultist
+# comes through the nearest exit door (the leaf swings -- the tell),
+# looks the noise over, and leaves the way he came. One live visitor at
+# a time, a long cooldown between visits, never in safe rooms/refuges,
+# and never into a room already crowded with cult.
+BLEED_LOUD = 0.9              # min loudness that carries next door
+BLEED_DELAY_LO = 3.0          # walk-time before he appears
+BLEED_DELAY_HI = 6.0
+BLEED_CD = 45.0               # s between visits
+BLEED_CAP = 3                 # no visit if this many cult already here
+BLEED_LINGER = 20.0           # hard cap on the look-around before leaving
+
 # Visibility rates, per second. Watchers + cultist gaze push the meter
 # up; hiding pulls it down. Enough Watchers out-pace even hiding --
 # that is the spiral toward a King the player can no longer shake.
+# (Rework: the gaze term is now WEIGHTED by concealment -- corn scales
+# it by SUS_CONCEAL_CORN, an enclosed hide zeroes it; VIS_HIDE_BLEED
+# drains only in an enclosed hide, corn gets the idle decay.)
 VIS_HIDE_BLEED = 0.10
 VIS_IDLE_DECAY = 0.02
 VIS_WATCHER_OPEN = 0.03

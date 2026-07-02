@@ -1,10 +1,14 @@
 """All NPC dialogue functions.
 
 The spoken lines are final, lore-bearing copy: each NPC reacts to the
-case (the Blaine girl, the well, the cult) and many escalate with the
-visibility tier via `escalate`. Evidence beats are surfaced through
-`_evidence`; only the six in `CANONICAL_EVIDENCE` count toward the
-King-gate and the visibility floor.
+case (the Blaine girl, the well, the cult). State reactivity comes from
+per-NPC flag/count gates (see the stateful fns below and the `beats`
+hook in scenes/brimley.py _brimley_voice); `escalate` still exists but
+both its call sites pass identical tiers, so it is effectively inert --
+kept only in case visibility-tiered copy is ever authored. Evidence
+beats are surfaced through `_evidence`; only the six in
+`CANONICAL_EVIDENCE` count toward the King-gate and the visibility
+floor.
 """
 
 
@@ -85,6 +89,20 @@ def _cult_tell(game, npc_key):
 def preacher_dialogue(game, npc):
     save = game.save
     _cult_tell(game, "preacher")
+    # One-shot: the PI rang his bell. Crane claims it, and in claiming
+    # it he teaches what the peal is FOR (everything in this town walks
+    # toward a loud enough sound). Never preempts the first meeting,
+    # and doesn't advance his doom ladder.
+    if (save.flag("bell_rung") and not save.flag("crane_bell_beat")
+            and save.arg("old_count", 0) >= 1):
+        save.set_flag("crane_bell_beat", True)
+        game.dialog.show([
+            "That was you in my tower. The bell has not swung in years. "
+            "Nobody left worth calling.",
+            "They heard it, though. Everything in this town comes when "
+            "something rings loud enough. Remember that.",
+        ], speaker="Rev. Crane", voice="blip_low", portrait="preacher")
+        return
     count = save.arg("old_count", 0) + 1
     save.set_arg("old_count", count)
     if count == 1:
@@ -212,6 +230,27 @@ def hettie_dialogue(game, npc):
         game.dialog.show([
             "Heard about the preacher. I won't be saying his prayers in "
             "here. Don't ask me to.",
+        ], speaker="Hettie", voice="blip_high", portrait="hettie")
+        return
+    # A faint memory of the girl herself (TODO #6): fires once the PI
+    # carries her journal (her hand is in his pocket; the asking got
+    # real). Mara passed through Brimley for a season before she went
+    # below; Hettie knew her the way a counter knows anyone. NARRATIVE
+    # §2: she does NOT know Walter; this is the girl, never the family.
+    if (save.arg("shop_count", 0) >= 1
+            and not save.flag("hettie_mara_memory")
+            and game.player.inventory.has("mom_notebook")):
+        save.set_flag("hettie_mara_memory", True)
+        game.dialog.show([
+            "The Blaine girl. I'll tell you the one thing I know that's "
+            "worth the telling.",
+            "She used to come in here. Matches, canned milk. Counted her "
+            "change twice, every time, like it mattered. Sad around the "
+            "eyes, and polite with it.",
+            "[c=dim]Then one day past the new year she set her basket "
+            "down half filled and walked out smiling. Left the basket "
+            "on the counter. I never saw her again.[/c]",
+            "[c=dim]It was the smiling I minded.[/c]",
         ], speaker="Hettie", voice="blip_high", portrait="hettie")
         return
     # The trade: yesterday's paper (the April 14 issue, picked up before

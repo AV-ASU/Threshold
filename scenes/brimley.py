@@ -18,14 +18,34 @@ from .base import Scene
 from .dialogue import _evidence
 
 
-def _brimley_voice(pages, voice="blip_mid", fold=False):
+def _brimley_voice(pages, voice="blip_mid", fold=False, beats=None):
     """NPC dialogue_fn from a fixed page list. Speaker name + portrait are
     read off the NPC at call time so each resident speaks as themselves.
     `fold=True` marks a local who describes the fold (looping roads): the
     FIRST such conversation files the PI's fold note (Game._fold_mentioned,
-    globally one-shot, so only the first speaker triggers it)."""
+    globally one-shot, so only the first speaker triggers it).
+
+    `beats` makes the town REACT to state (TODO #10): a list of
+    (flag, predicate, beat_pages). On each talk the first beat whose
+    predicate(game) holds and whose one-shot save flag is unset fires
+    INSTEAD of the base pages (and sets its flag); afterwards the local
+    falls back to their ambient loop. The infestation convert/mutate
+    swap overwrites dialogue_fn at its stage, so each beat's window is
+    the local's pre-turn stretch -- fired once, in it, or never."""
     def _fn(game, npc):
         portrait = getattr(npc, "portrait", None) or npc.sprite_kind
+        for flag, pred, beat_pages in (beats or ()):
+            if game.save.flag(flag):
+                continue
+            if pred(game):
+                game.save.set_flag(flag, True)
+                game.dialog.show(beat_pages, speaker=npc.name, voice=voice,
+                                 portrait=portrait)
+                # NB: the fold note is NOT filed here -- the beat pages
+                # are their own subject (the preacher, the digging, the
+                # plate); only the base pages carry the looping-roads
+                # account the `fold` mark attributes to this speaker.
+                return
         game.dialog.show(pages, speaker=npc.name, voice=voice,
                          portrait=portrait)
         if fold and hasattr(game, "_fold_mentioned"):
@@ -489,6 +509,12 @@ def build_brimley():
     objects = ["".join(r) for r in objects_l]
 
     sc = Scene("brimley", floor_rows, objects, music="wind")
+    # The church-door point the pealing bell broadcasts from
+    # (Game._tick_bell): cult hunters converge here while it rings, and
+    # a hunter reaching it stills the rope. One step outside the door
+    # tile so the walk target lands on open ground.
+    sc._bell_door = (church_door * TILE + 16,
+                     (church_bot + 1) * TILE + 16)
     # Hideable bushes the band helper queued -- each sits on a corn-
     # cover (':') tile so stepping into one hides the player.
     for bx, by in _band_bushes:
@@ -675,9 +701,10 @@ def build_brimley():
     # the edges: denial, time-loop confusion, a child saying the quiet
     # part out loud.
     def _resident(tx, ty, name, kind, pages, movement="wander",
-                  voice="blip_mid", radius=52, fold=False):
+                  voice="blip_mid", radius=52, fold=False, beats=None):
         sc.add_npc(NPC(tx * TILE + 16, ty * TILE + 16, name, kind,
-                       dialogue_fn=_brimley_voice(pages, voice, fold=fold),
+                       dialogue_fn=_brimley_voice(pages, voice, fold=fold,
+                                                  beats=beats),
                        movement=movement, radius=radius))
 
     # The locals anchored to their houses -- not patrolling random
@@ -702,7 +729,18 @@ def build_brimley():
         "sleep doesn't mend it.",
         "Stopped marking the calendar. Not the days. Where would I be counting toward?",
         "[c=dim]You're new. We don't get new. Nobody gets in. Nobody gets...[/c]",
-    ], voice="blip_low", movement="homebody", radius=34, fold=True)
+    ], voice="blip_low", movement="homebody", radius=34, fold=True,
+        # TODO #10: the town reacts to what the PI learns. Pell reads the
+        # digging on him like weather (stasis register; he mutates at
+        # stage 3, so this lives in his pre-turn window).
+        beats=[("beat_pell_coal",
+                lambda g: g._evidence_count() >= 1, [
+            "You've been digging at it. I can tell. It's on you like "
+            "coal dust.",
+            "[c=dim]Whatever you're finding out there, don't bring it up "
+            "my step. I've got the calendar where I want it. Stopped. "
+            "Some of us need it stopped.[/c]",
+        ])])
     # Mrs. Calder is by the east-edge road. She sets a place at supper
     # for a guest she can't name -- a certainty she can't explain that
     # someone is coming. No vanished husband (that read as a perceptible
@@ -716,7 +754,16 @@ def build_brimley():
         "you who for. Someone's coming. I know it the way I know my own name.",
         "[c=dim]I'll know the face when it's across the table from me. Till "
         "then it would be unkind not to be ready.[/c]",
-    ], movement="idle")
+    ], movement="idle",
+        # TODO #10: the waiting sharpens as the case opens (she converts
+        # at stage 2, so this is her only pre-turn window: evidence 1).
+        beats=[("beat_calder_unlatched",
+                lambda g: g._evidence_count() >= 1, [
+            "Closer now. Whoever the place is set for. An old woman can "
+            "feel a knock coming before it lands.",
+            "[c=dim]I've started leaving the door unlatched at night. It "
+            "seemed... polite.[/c]",
+        ])])
     # Royce -- by the river bridge. He TRIED to drive out, for weeks, and
     # the corn handed him back every time; the futility broke him and he's
     # STOPPED. He still clings to the one fact he can't square: you got IN.
@@ -727,7 +774,17 @@ def build_brimley():
         "that out the hard way, so you don't have to.[/c]",
         "[c=dim]But you came IN. How did you come IN? ...Tell me how you came "
         "in.[/c]",
-    ], fold=True)
+    ], fold=True,
+        # TODO #10: his one impossible fact curdles as the case opens (he
+        # converts at stage 3; window is evidence 0-2, fires at 2).
+        beats=[("beat_royce_throat",
+                lambda g: g._evidence_count() >= 2, [
+            "You're still here. Course you're still here.",
+            "[c=dim]I keep turning it over. Every road out of Brimley "
+            "hands you back. Except the one that carried you in. If a "
+            "door only opens the one way, mister, it isn't a door.[/c]",
+            "[c=dim]It's a throat.[/c]",
+        ])])
     # The Tisdale boy lives INSIDE the kid's house (the `kid_house`
     # scene, kid_dialogue). He used to also stand here on the front step,
     # but that put a solid NPC right on the `from_kid_house` doorway
@@ -741,7 +798,20 @@ def build_brimley():
         "The Sheriff'll tell you to leave. He knows you can't. He can't either.",
         "Stay on the roads. People who go off the roads come out wrong-side.",
         "[c=dim]Go on home, son. ...Oh. Right. None of us can.[/c]",
-    ], fold=True)
+    ], fold=True,
+        # TODO #10: the direct preacher-murder reaction. Garrick watches
+        # the whole town from the well; the pulpit going silent is
+        # exactly the kind of thing he'd clock first (he also SAID this
+        # would happen: folks who ask questions go quiet).
+        beats=[("beat_garrick_quiet",
+                lambda g: g.save.flag("preacher_doomed"), [
+            "The reverend's gone quiet. Any other week you'd hear him "
+            "clear from here, worked up over something or other.",
+            "[c=dim]Nothing out of him for days now. Man spends his life "
+            "raising his voice, then nothing at all.[/c]",
+            "[c=dim]You go by and look in on him, son. Somebody ought "
+            "to.[/c]",
+        ])])
     # The newcomer -- standing on the path to the haunted_house
     # (their house now). She is here to welcome you. She is patient.
     sc.add_npc(NPC(8 * TILE + 16, 95 * TILE + 16, "A woman", "townswoman",
@@ -808,6 +878,19 @@ def build_brimley():
     sc.add_decoration(Decoration(71 * TILE + 24, 72 * TILE + 12, "place_setting"))
     sc.add_decoration(Decoration(71 * TILE + 16, 72 * TILE + 2, "candle"))
     sc.add_decoration(Decoration(71 * TILE + 28, 74 * TILE + 12, "overturned_chair"))
+
+    # ---- Gardens, on some lots and not others (food scarcity, NARRATIVE
+    # 8): with no deliveries since the new year, the town feeds itself
+    # unevenly. The Tisdales keep a working bed dug in beside their house
+    # (fresh-turned rows, a staked string, the first cold-hardy shoots);
+    # the farmhouse plot has gone over -- collapsed furrows and last
+    # year's stubble, let go when its people were. The other lots never
+    # dug at all.
+    sc.add_decoration(Decoration(int(73.5 * TILE), 67 * TILE, "garden_patch",
+                                 tended=True, w=110, h=72, seed=41))
+    sc.add_decoration(Decoration(int(12.5 * TILE), 86 * TILE,
+                                 "garden_patch",
+                                 tended=False, w=100, h=64, seed=42))
 
     # ---- The churchyard -- the too-even graves of the vanished ----
     # Crooked headstones in two rows: the uncanny rows-of-the-vanished,
@@ -959,6 +1042,38 @@ def build_brimley():
                      (92 * TILE + 28, 14 * TILE + 22)]:
         sc.add_decoration(Decoration(fx, fy, "missing_flyer"))
 
+    # ---- Placed noisemakers (2026-07 sound overhaul) ----
+    # The stalled pickup's cab radio: an E-toggleable lure. Turn it on,
+    # slip away, and the patrol walks to the music instead of you,
+    # until a hand reaches into the cab and kills it.
+    sc.add_noise_source(
+        95 * TILE + 16, 56 * TILE + 16, "radio", sfx="radio_snatch",
+        on_notice="The truck radio catches. A dead station rolls out "
+                  "over the street.",
+        off_notice="You kill the radio.",
+        silenced_notice="The music stops dead.")
+    # Passive litter along the routes: glass under the truck's door,
+    # tins in the schoolyard lee, and a crow posted on the open
+    # approach to the stone ring that flushes screaming.
+    sc.add_noise_trap(94 * TILE + 16, 56 * TILE + 24, "glass", seed=7)
+    sc.add_noise_trap(61 * TILE + 16, 55 * TILE + 16, "cans", seed=8)
+    sc.add_noise_trap(75 * TILE + 16, 38 * TILE + 16, "crow", seed=9)
+
+    # ---- The cult's errands (Scene.add_cult_station) ----
+    # The roaming regulars have JOBS, not beats: kneel at the stone
+    # ring, look in on the well, stand over Mrs. Calder's laid table.
+    # They walk their rounds between stations and any noise or
+    # sighting peels them off (systems/stealth.errand_step). This is
+    # what makes the town read as THEIRS -- and what the bell and the
+    # lures interrupt. (The burn clearing is a sealed pocket off the
+    # walkable web, so no station goes there.)
+    sc.add_cult_station(79 * TILE + 16, 34 * TILE + 16, pose="kneel",
+                        face=(0, -1), dwell=(6.0, 10.0))
+    sc.add_cult_station(93 * TILE + 16, 13 * TILE + 16,
+                        face=(1, 0), dwell=(4.0, 7.0))
+    sc.add_cult_station(71 * TILE + 16, 73 * TILE + 16,
+                        face=(0, -1), dwell=(5.0, 9.0))
+
     # ---- Cult-taken territory: the south-west farmhouse ----
     # Bible §2: newcomers ARE the cult, and one or two contiguous lots
     # would be "their" houses. The haunted_house already reads as the
@@ -1008,10 +1123,13 @@ def build_brimley():
                        (20, 40), (52, 80), (75, 42), (36, 30)]:
         sc.add_decoration(Decoration(ltx * TILE + 16, lty * TILE + 16, "leaves"))
 
-    # No hide spots: the east bank's grass-tufts, watching-eyes and dead
-    # trees are visual cover the player breaks line of sight behind by
-    # moving; the open west bank still offers none.
-    sc.hide_spots = []
+    # Surface enclosed cover (STEALTH_REWORK §6): the corn and the tree
+    # lines are the CONCEALMENT system out here; the one rooted set-piece
+    # option is the gap under the dead pickup's bed. A searcher can check
+    # it like any other enclosed hide.
+    sc.hide_spots = [
+        (94 * TILE + 16, 56 * TILE + 8, "under"),   # under the dead pickup
+    ]
 
     # The PI's car has MOVED to the arrival road west of the Lodge (where it
     # died on the way in -- the SPREAD escape now lives there, scenes/

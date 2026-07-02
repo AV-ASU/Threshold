@@ -213,6 +213,15 @@ def _draw_cultist_raw(surf, x, y, facing, seed, t, pose=None):
         lean = 0
         sway = 0
         top = y - 4
+    elif pose == "eat":
+        # Eating at a counter: the body utterly still but for one arm, a
+        # slow metronomic loop from the bowl up under the mask's rim and
+        # back. It does not hurry. It does not look up. Ambient tableau,
+        # same contract as 'mine' -- never reacts to the player.
+        ph = t * 1.5 + x * 0.03
+        lean = 0
+        sway = 0
+        top = y - 7
     else:
         # A wrong, limping lurch: shoulders rock (lean), the body rises each
         # step (bob) and DRAGS lower on the off-step (hitch), and the ragged
@@ -256,6 +265,26 @@ def _draw_cultist_raw(surf, x, y, facing, seed, t, pose=None):
             pygame.draw.line(surf, (52, 44, 34),
                              (x + sgn * 3, top + 5),
                              (x + sgn * 6 + sway, top - 7 - lift), 2)
+    elif pose == "eat":
+        # The off-hand holds a pale tin bowl out at waist height; the
+        # spoon-hand loops from the bowl up under the mask's rim and back,
+        # dwelling at each end. The only thing moving on the whole figure.
+        d = mdir if mdir != 0 else 1
+        u = (math.sin(ph) + 1) / 2.0                     # 0 bowl .. 1 mask
+        u = u * u * (3 - 2 * u)                          # ease: dwell at ends
+        bx_, by_ = x + d * 7, top + 12                   # the held bowl
+        pygame.draw.line(surf, (46, 38, 30),
+                         (x + d * 2, top + 9), (bx_, by_), 2)      # off arm
+        pygame.draw.ellipse(surf, (168, 160, 144),
+                            (bx_ - 4, by_ - 2, 9, 5))              # tin bowl
+        pygame.draw.ellipse(surf, (70, 56, 40),
+                            (bx_ - 2, by_ - 1, 5, 2))              # what's in it
+        hx = int(bx_ + ((x + d * 1) - bx_) * u)          # spoon hand's loop
+        hy = int(by_ - 1 + ((top + 2) - (by_ - 1)) * u)
+        pygame.draw.line(surf, (52, 44, 34),
+                         (x + d * 3, top + 6), (hx, hy), 2)        # spoon arm
+        pygame.draw.line(surf, (176, 178, 184),
+                         (hx, hy), (hx + d * 3, hy + 1), 2)        # the spoon
     # the masked head LEADS the lurch (tips a touch past the shoulders)
     hcx, hcy = x + lean + int(step * 1), top - 1
     pygame.draw.ellipse(surf, (32, 26, 20), (hcx - 7, hcy - 7, 14, 15))   # fur hood

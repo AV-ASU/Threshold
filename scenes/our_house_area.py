@@ -413,6 +413,24 @@ def build_arrival_road():
     sc.add_decoration(Decoration(5 * TILE + 8, 28 * TILE + 22, "dead_crow"))
     sc.add_decoration(Decoration(4 * TILE + 16, 22 * TILE + 16, "missing_flyer"))
     sc.add_decoration(Decoration(5 * TILE + 8, 12 * TILE + 22, "dead_crow"))
+
+    # ---- Arrival-zone detail (2026-07 pass). South of the band only:
+    # the looping runway north stays landmark-free on purpose. ----
+    # The car died with a window gone: glass on the gravel by the
+    # driver's door (a noise trap underfoot).
+    sc.add_noise_trap((car_tx - 2) * TILE + 16, car_ty * TILE + 16,
+                      "glass", seed=23)
+    # The town walks the dirt path; the paved road keeps no prints.
+    sc.add_decoration(Decoration(3 * TILE + 16, PATH[0] * TILE + 16,
+                                 "mud_footprint"))
+    sc.add_decoration(Decoration(4 * TILE + 24, PMID * TILE + 8,
+                                 "mud_footprint"))
+    # A crow posted by the east mouth that flushes as you leave the yard.
+    sc.add_noise_trap((W - 4) * TILE + 16, (PMID - 2) * TILE + 16,
+                      "crow", seed=24)
+    for lx, ly in ((5, PMID - 6), (9, PMID + 1)):
+        sc.add_decoration(Decoration(lx * TILE + 16, ly * TILE + 16,
+                                     "leaves"))
     # Extra leafless trees just inside the WEST shoulder up the long runway --
     # under tilt they stand as billboards, deepening the forest wall and giving
     # the approach toward the idle King its perspective + scroll read (the
