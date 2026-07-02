@@ -173,6 +173,11 @@ class Enemy:
         self.attack_timer = 0
         self.flash = 0
         self._stun_t = 0.0      # player's shove freezes the AI for a beat
+        # Stable per-actor sprite seed (entities/npc.py sprite_seed_for):
+        # the fix for id()-alignment locking the cultist mask variant to
+        # even picks -- half the masks never spawned.
+        from entities.npc import sprite_seed_for
+        self.sprite_seed = sprite_seed_for(x, y)
         self.facing = (0, 1)
         self.move_timer = random.uniform(0, 2)
         self.move_target = None
@@ -647,10 +652,10 @@ class Enemy:
         m = getattr(self, "morph", 0.0)
         if m > 0.0:
             draw_vessel_bloom(surf, sx, sy, kind, self.facing, m,
-                              seed=id(self) & 0xffff)
+                              seed=self.sprite_seed)
         else:
             draw_npc_sprite(surf, sx, sy, kind, self.facing,
-                            seed=id(self) & 0xffff, view=view,
+                            seed=self.sprite_seed, view=view,
                             pose=getattr(self, "pose", None))
         # THRESHOLD: enemies can no longer hurt the player (atk is
         # zeroed every tick in update). Suppress the gold-ring

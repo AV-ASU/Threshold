@@ -997,7 +997,7 @@ class RenderMixin:
                           draw_with_alpha(self.screen, a,
                                           lambda s: draw_npc_corpse(
                                               s, sx, sy, npc.sprite_kind,
-                                              seed=id(npc) & 0xffff, mold=0),
+                                              seed=getattr(npc, 'sprite_seed', 0), mold=0),
                                           rect=(sx - 90, sy - 90, 180, 170)))
                 continue
             m = getattr(npc, "morph", 0.0)
@@ -1093,7 +1093,7 @@ class RenderMixin:
                               king_lean=king_lean, king_scale_mul=king_scale_mul):
                     if m > 0.0:
                         draw_vessel_bloom(target, sx, sy, npc.sprite_kind,
-                                          npc.facing, m, seed=id(npc) & 0xffff)
+                                          npc.facing, m, seed=getattr(npc, 'sprite_seed', 0))
                     else:
                         # (The curse is His own gaze now; NARRATIVE 1b/3.
                         # curse_v stays 0 for all normal NPCs.)
@@ -1112,7 +1112,8 @@ class RenderMixin:
                                         npc.facing, blink=(i == blink_idx),
                                         birth=getattr(npc, "_birth", None),
                                         gait=getattr(npc, "_gait", None),
-                                        threat=king_threat, seed=id(npc) & 0xffff,
+                                        threat=king_threat,
+                                        seed=getattr(npc, 'sprite_seed', 0),
                                         curse=curse_v, gaze=w_gaze, view=nview,
                                         to_player=king_to_player,
                                         lean=king_lean, scale_mul=king_scale_mul,
@@ -1123,7 +1124,7 @@ class RenderMixin:
                             draw_infested_overlay(target, sx, sy,
                                                   npc.sprite_kind, view=nview,
                                                   name=getattr(npc, "name", None),
-                                                  seed=id(npc) & 0xffff)
+                                                  seed=getattr(npc, 'sprite_seed', 0))
                     # The rising "?" tell (STEALTH_REWORK.md Pillar 1): a
                     # cultist whose suspicion is climbing but hasn't locked
                     # shows the half-seen hesitation over its head.

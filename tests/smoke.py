@@ -296,20 +296,49 @@ def check_reset_coverage():
     return errors
 
 
+def check_sprite_seed_variants():
+    """The cultist mask variant is (sprite_seed >> 3) % 6. Draw sites
+    used to seed from id(), whose 16-byte alignment locked the pick to
+    EVEN variants -- half the masks never spawned. Guard the fix: the
+    position-derived seed must cover all six variants over grid-
+    quantized spawn coords (multiples of 16 are the worst case), and
+    both actor classes must carry it."""
+    fails = 0
+    from entities.npc import NPC, sprite_seed_for
+    from entities.enemy import Enemy
+    seen = set()
+    for a in range(1, 60):
+        for b in range(1, 60):
+            seen.add((sprite_seed_for(a * 32 + 16, b * 32 + 16) >> 3) % 6)
+    if seen != set(range(6)):
+        fail(f"sprite_seed_for covers only variants {sorted(seen)} "
+             f"on grid coords (all 6 masks must be able to spawn)")
+        fails += 1
+    n = NPC(100, 200, "x", "cultist")
+    e = Enemy(100, 200, kind="cultist")
+    if getattr(n, "sprite_seed", None) != sprite_seed_for(100, 200) \
+            or getattr(e, "sprite_seed", None) != sprite_seed_for(100, 200):
+        fail("NPC/Enemy sprite_seed not wired to sprite_seed_for")
+        fails += 1
+    return fails
+
+
 def main():
     failures = 0
-    print("[1/6] scene builders ...")
+    print("[1/7] scene builders ...")
     failures += check_scene_builds()
-    print("[2/6] spawn walkability + non-overlapping with exits ...")
+    print("[2/7] spawn walkability + non-overlapping with exits ...")
     failures += check_spawns_walkable()
-    print("[3/6] exits resolve to target spawns ...")
+    print("[3/7] exits resolve to target spawns ...")
     failures += check_exits_resolve()
-    print("[4/6] room passability (flood-fill spawns -> exits/props) ...")
+    print("[4/7] room passability (flood-fill spawns -> exits/props) ...")
     failures += check_passability()
-    print("[5/6] canonical evidence beats wired to scenes ...")
+    print("[5/7] canonical evidence beats wired to scenes ...")
     failures += check_canonical_evidence_wired()
-    print("[6/6] per-run state reset coverage ...")
+    print("[6/7] per-run state reset coverage ...")
     failures += check_reset_coverage()
+    print("[7/7] sprite-seed variant coverage (all 6 cultist masks) ...")
+    failures += check_sprite_seed_variants()
     if failures:
         print(f"\n{failures} failure(s).")
         sys.exit(1)

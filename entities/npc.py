@@ -8,6 +8,22 @@ from systems.stealth import (detection_score, update_suspicion,
                              enter_search, sweep_check, hear_noise,
                              react_hold, errand_step, errand_drop)
 
+def sprite_seed_for(x, y):
+    """A stable per-actor sprite seed from the spawn position. Draw
+    sites used id(self)&0xffff, but CPython ids are 16-byte aligned --
+    the low bits were always zero, so seed-derived picks like the
+    cultist mask variant ((seed>>3)%6) could only land on EVEN values
+    (the antlered, SPLIT, and PLANK masks never spawned). Spawn coords
+    are grid-quantized (multiples of 16), which keeps low bits zero
+    even after an odd multiply, so a murmur-style finisher folds the
+    high bits down. Position-derived, so the byte-identity capture
+    stays reproducible."""
+    h = (int(x) * 73856093 ^ int(y) * 19349663) & 0xffffffff
+    h = ((h ^ (h >> 13)) * 0x5bd1e995) & 0xffffffff
+    h ^= h >> 15
+    return h & 0xffff
+
+
 class NPC:
     def __init__(self, x, y, name, sprite_kind, voice="blip_mid",
                  color=C_WHITE, portrait=None, dialogue_fn=None,
@@ -40,6 +56,9 @@ class NPC:
         # try_interact() picks it up but the prompt only shows when the
         # decoration's own indicator is up).
         self.no_prompt = no_prompt
+        # Stable per-actor sprite seed (see sprite_seed_for above): the
+        # fix for id()-alignment locking the cultist mask to even picks.
+        self.sprite_seed = sprite_seed_for(x, y)
         self.facing = (0, 1)
         self.move_timer = random.uniform(0, 2)
         self.move_target = None

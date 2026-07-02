@@ -576,6 +576,11 @@ class ThreatMixin:
             ]
             best_d = -1.0
             for sx, sy in corners:
+                # jitter like the `at` path above: exact corner points
+                # gave every corner-spawned cultist one of only FOUR
+                # sprite seeds -- the same mask on every respawn
+                sx += random.uniform(-12, 12)
+                sy += random.uniform(-12, 12)
                 if scene.is_solid_at(sx, sy):
                     continue
                 d = math.hypot(sx - self.player.x, sy - self.player.y)

@@ -1984,6 +1984,9 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
             from entities.npc import NPC
             corpse = NPC(e.x, e.y, "A cultist", "cultist",
                          movement="idle", solid=False, no_prompt=True)
+            # the body keeps the dead cultist's face (mask variant)
+            corpse.sprite_seed = getattr(e, "sprite_seed",
+                                         corpse.sprite_seed)
             corpse.alive = False
             corpse._is_corpse = True
             corpse._kill_processed = True
