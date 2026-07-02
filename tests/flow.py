@@ -1475,6 +1475,50 @@ def main():
           f"hides: every declared spot in every scene sits on walkable "
           f"ground {_bad_spots or ''}")
 
+    # --- 26. Floating NPC speech (2026-07 sound overhaul): a casual
+    # talkable-NPC line reached through the interact path FLOATS over
+    # the speaker's head and leaves the world running; narrator lines,
+    # choices, infested portraits, and scripted (on_complete) beats
+    # stay in the MODAL box.
+    gfs = new_game()
+    gfs.load_scene_now("old_man_house", "default")
+    for _ in range(20):
+        gfs.state = "playing"
+        gfs.step(1 / 30.0)
+    _crane = next(n for n in gfs.scene.npcs
+                  if getattr(n, "tag", "") == "preacher")
+    gfs.player.x, gfs.player.y = _crane.x, _crane.y + 30
+    gfs._speaking_npc = _crane
+    _crane.interact(gfs)
+    gfs._speaking_npc = None
+    check(gfs.float_speech.active and not gfs.dialog.active,
+          "float: an interact-path NPC line floats (not the modal box)")
+    check(gfs.float_speech.speaker is _crane,
+          "float: the caption tracks the speaker")
+    _wf = (gfs.dialog.active or gfs.inv_ui.open or gfs.notebook_ui.open
+           or gfs.text_input.active or gfs._flashback_phase is not None)
+    check(not _wf, "float: the world is not frozen while a float is up")
+    # narrator / choice / on_complete / no-context all stay modal
+    gfs.float_speech.active = False
+    gfs._speaking_npc = _crane
+    gfs.dialog.show(["A cold room."], speaker="", portrait="narrator")
+    gfs._speaking_npc = None
+    check(gfs.dialog.active and not gfs.float_speech.active,
+          "float: a narrator line stays modal")
+    gfs.dialog.active = False
+    gfs._speaking_npc = _crane
+    gfs.dialog.show_choice("Pick", ["a", "b"], lambda i: None,
+                           speaker="Crane", portrait="preacher")
+    gfs._speaking_npc = None
+    check(gfs.dialog.active and gfs.dialog.choices is not None
+          and not gfs.float_speech.active,
+          "float: a choice stays modal")
+    gfs.dialog.active = False
+    gfs.dialog.show(["Scene voice."], speaker="Someone",
+                    portrait="preacher")
+    check(gfs.dialog.active and not gfs.float_speech.active,
+          "float: a line outside the interact path stays modal")
+
     print()
     if FAILS:
         print(f"{len(FAILS)} flow failure(s).")

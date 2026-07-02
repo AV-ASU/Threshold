@@ -1491,6 +1491,10 @@ class RenderMixin:
         self._draw_interact_prompt()
         self._draw_hud()
         self._draw_notebook_toast()
+        # Floating NPC speech (above the speaker's head, non-modal, not
+        # sight-gated) sits under the modal dialog box -- the two are
+        # mutually exclusive in practice, but a scripted modal always wins.
+        self.float_speech.draw(self.screen, self)
         self.dialog.draw(self.screen)
         self.inv_ui.draw(self.screen, self.player)
         self.notebook_ui.draw(self.screen)

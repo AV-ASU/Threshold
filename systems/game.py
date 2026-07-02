@@ -24,6 +24,7 @@ from rendering.camera import Camera
 from systems.look_control import LookController
 from ui.fonts import make_fonts
 from ui.dialog import DialogueBox
+from ui.float_speech import FloatSpeech
 from ui.inventory_ui import InventoryUI
 from ui.notebook_ui import NotebookUI
 from ui.text_input import TextInputModal
@@ -100,6 +101,13 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         self.audio = Audio()
         self.save = Save(slot=1)
         self.dialog = DialogueBox(self.audio, self.fonts)
+        self.dialog.game = self        # so show() can route casual NPC
+        #                                lines to the floating layer
+        # Floating, non-modal NPC speech (above the speaker's head; the
+        # world keeps running). DialogueBox.show decides what floats.
+        self.float_speech = FloatSpeech(self.audio, self.fonts)
+        self._speaking_npc = None      # set during an interact so show()
+        #                                knows whose head to float over
         self.inv_ui = InventoryUI(self.fonts, self.audio, self.save)
         self.notebook_ui = NotebookUI(self.fonts, self.audio, self.save)
         self.notebook_ui.game = self   # the soft lead line reads live state
@@ -398,6 +406,10 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         # cleared on every load) + the between-visits cooldown.
         self._bleed = None
         self._bleed_cd = 0.0
+        # Floating NPC speech + the interact speaker context.
+        self.float_speech.active = False
+        self.float_speech.speaker = None
+        self._speaking_npc = None
         self._chant_t = 0.0
         self._breath_t = 0.0
         self._heartbeat_t = 0.0
@@ -720,6 +732,10 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         # A pending/live bleed visit belongs to the room it was armed
         # in; the transient itself was rebuilt away with the scene.
         self._bleed = None
+        # A floating conversation's speaker was rebuilt away with the
+        # scene -- drop the caption on load.
+        self.float_speech.active = False
+        self.float_speech.speaker = None
         self._build_fold_cache()
         # Fold pursuit hand-off: if the player fled here through a fold with
         # a hot cultist (stashed by _note_fold_pursuit), arm the beat-behind
@@ -1580,6 +1596,11 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
             self.show_notice("You slip out of cover.", duration=1.6)
             self.audio.play("hide_exit", 0.7)
             return
+        # A floating conversation is up and you're beside the speaker:
+        # E advances it (skip the reveal, then next line) instead of
+        # starting something new.
+        if self.float_speech.advance_from_input(self):
+            return
         # Hide-spot pickup: scenes declare hide_spots = [(x,y,kind)]
         # where kind is 'under', 'in', or 'behind'. Closest within
         # 36 px wins. Fires before NPC interaction so the player
@@ -1637,7 +1658,14 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
                 bd = d; best = npc
         if best:
             self.audio.play("confirm", 0.6)
-            best.interact(self)
+            # Mark the speaker so DialogueBox.show can float a casual
+            # line over their head; cleared right after so scene hooks
+            # that call dialog.show stay modal.
+            self._speaking_npc = best
+            try:
+                best.interact(self)
+            finally:
+                self._speaking_npc = None
             return
         # Toggleable noise sources (the truck radio, the works valve) --
         # after NPCs (talking always wins), before the scene handler.
@@ -2542,6 +2570,11 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
             self.audio.update_silence()
             self.audio.update_duck()
             self.dialog.update(dt)
+            # Floating NPC speech reveals + auto-advances with the world
+            # (it IS the non-modal path; it pauses when a modal freezes
+            # the world, same as everything else).
+            if not world_frozen:
+                self.float_speech.update(dt, self)
             self._tick_delayed_audio(dt)
             # The threat model is part of the world sim -- it freezes behind
             # a modal too, so visibility can't climb and the King can't close

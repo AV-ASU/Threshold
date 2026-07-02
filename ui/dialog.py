@@ -120,6 +120,23 @@ class DialogueBox:
     def show(self, pages, speaker="", voice="blip_mid", color=C_WHITE, portrait=None, on_complete=None, infested=False):
         if isinstance(pages, str):
             pages = [pages]
+        # Casual talkable-NPC speech FLOATS above the speaker's head
+        # instead of dropping the modal band, so the world keeps running
+        # (2026-07 sound overhaul; ui/float_speech.py). Only through the
+        # interact path (game._speaking_npc set), only a named NPC line
+        # (speaker + non-narrator portrait), never a choice, an infested
+        # portrait, or a scripted beat with a completion callback -- those
+        # want the frozen world and the full box.
+        g = getattr(self, "game", None)
+        if (not getattr(self, "_force_modal_next", False)
+                and g is not None
+                and getattr(g, "_speaking_npc", None) is not None
+                and speaker and portrait != "narrator"
+                and not infested and on_complete is None):
+            g.float_speech.begin(g._speaking_npc, pages, name=speaker,
+                                 voice=voice, color=color)
+            return
+        self._force_modal_next = False
         self.pages = [parse_dialogue(p, default_color=color, default_voice=voice) for p in pages]
         self.page_idx = 0
         self.glyphs = self.pages[0]
@@ -140,6 +157,9 @@ class DialogueBox:
         self.audio.play("menu_open", 0.5)
 
     def show_choice(self, prompt, options, callback, speaker="", voice="blip_mid", portrait=None):
+        # A choice is always MODAL -- it needs the frozen world and the
+        # option cursor. Force show() past the floating router.
+        self._force_modal_next = True
         self.show([prompt], speaker=speaker, voice=voice, portrait=portrait)
         self.choices = options
         self.choice_idx = 0
