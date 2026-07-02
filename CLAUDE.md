@@ -22,9 +22,10 @@ the lethal apex pursuer. (See the tilted-camera track below + `CAMERA.md`.)
 # Run (needs a display)
 python main.py
 
-# Full test gate — runs all five harnesses (smoke + flow + fold_pursuit +
-# king_roam + render_smoke) and exits nonzero if any fails. Self-configures SDL
-# dummy drivers, so no env vars needed. Run from repo root before every commit/push.
+# Full test gate — runs all six harnesses (smoke + flow + stealth +
+# fold_pursuit + king_roam + render_smoke) and exits nonzero if any fails.
+# Self-configures SDL dummy drivers, so no env vars needed. Run from repo
+# root before every commit/push.
 python tests/run_all.py
 
 # Or run a single harness (same drivers, standalone):
@@ -158,19 +159,32 @@ it renders the procedural sprites to a labelled PNG strip.
 - **`visibility`** ∈ [0, 1] (`_tick_visibility`): Watchers + cultist gaze
   raise it; hiding (`VIS_HIDE_BLEED`) and idle decay (`VIS_IDLE_DECAY`)
   lower it. Tuning lives in the `VIS_*` constant block.
-- **Hiding is positional (cult line of sight).** The cult AI detects by
-  **real line of sight**, not distance X-ray: `has_los` (`entities/enemy.py`
-  underground + `entities/npc.py` surface) gates on
-  `Scene.clear_sight_line(x0,y0,x1,y1)` — a wrap-aware march over the
-  `blocks_sight` predicate (walls + solid props occlude; windows + water do
-  not). Put cover between you and a cultist and the lock drops → SEARCH
-  (walk to last-seen, mill, give up). So the player breaks a chase by
-  **moving behind cover** (a wall, a pillar, the corn). The old "behind"
-  `hide_spots` were **removed** as redundant with this; the only E-press
-  hides left are the handful of crawl-**under**-furniture spots (`"under"`,
-  e.g. under a bed/desk/cot), which set `player.hidden` the same way corn
-  does (`game.py`). Apex pursuers (`_force_chase`: King, hollow Sheriff)
-  are **exempt** — they never lose sight.
+- **Detection is GRADED (2026-07 stealth rework; `STEALTH_REWORK.md`).**
+  Binary invisibility is gone. Each cultist carries a per-enemy
+  **suspicion** ∈ [0, 1] filled per tick by a detection **score** =
+  `los * distance_falloff * facing_cone * concealment`
+  (`systems/stealth.py` — one source for both cult machines,
+  `entities/npc.py` surface + `entities/enemy.py` underground; tuning in
+  the `SUS_*` config block). Only a FULL bar locks the CHASE; at
+  `SUS_NOTICE` the cultist stops and turns toward you (the rising "?"
+  tell, `_draw_sus_tell` in `render_mixin`). Walls/solid props still
+  occlude absolutely (`Scene.clear_sight_line`, wrap-aware; windows +
+  water do not block). **Two cover classes:** CONCEALMENT — corn: mobile
+  and leaky (`SUS_CONCEAL_CORN` scales score + gaze; a far cultist barely
+  reads you, a near one still fills, and a LOCKED chaser can grab you in
+  the stalks) — vs ENCLOSED — the `"under"`/`"in"` E-press hides: rooted,
+  zero score/gaze, but a SEARCHING cultist **sweeps and CHECKS** nearby
+  hides (`sweep_points`) → the timed **struggle**
+  (`_tick_struggle`/`_struggle_win` in `threat_mixin`, `STRUGGLE_*`
+  config): mash E to burst out (the checker staggers; a LOUD noise event
+  converges the room) or the window expires into the CAPTURED death.
+  `_tick_visibility` reads the concealment-weighted gaze; only an
+  enclosed hide keeps the strong `VIS_HIDE_BLEED` drain (corn gets idle
+  decay). Apex pursuers (`_force_chase`: King, hollow Sheriff) are
+  **exempt** — they bypass suspicion and cover entirely. Guarded
+  end-to-end by `tests/stealth.py`. (The Pillar-2 "peek" verb is
+  deliberately deferred — free look under tilt already gives the
+  information function; revisit in the human-tuning pass.)
 - **King in Yellow** (`_tick_king`): at `visibility >= 1.0` he spawns at
   `_king_anchor` (the player's scene-entry point); below `0.90` he
   dissolves; he catches at distance `< 24` **only once `_birth >= 1.0`**
@@ -330,7 +344,7 @@ it renders the procedural sprites to a labelled PNG strip.
   merge it into `main`** in the same action — not to stop after creating the
   PR and ask. Don't ask for a second confirmation.
 - **Verify before you commit.** Run compile + `python tests/run_all.py` (the
-  full gate: smoke + flow + fold_pursuit + king_roam + render_smoke) and confirm green
+  full gate: smoke + flow + stealth + fold_pursuit + king_roam + render_smoke) and confirm green
   BEFORE `git commit`/`push`. A commit was pushed twice this project with a
   `NameError` because edits were batched and not re-verified. For
   rendering/refactor work also run the byte-identity gate

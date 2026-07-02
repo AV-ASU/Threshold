@@ -380,6 +380,9 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         self.visibility = 0.0
         self._vis_floor = 0.0
         self._being_seen = 0.0
+        # The hide-check struggle (STEALTH_REWORK.md): a searcher checking
+        # the enclosed hide the player is in opens a timed mash window.
+        self._struggle = None
         self._chant_t = 0.0
         self._breath_t = 0.0
         self._heartbeat_t = 0.0
@@ -892,6 +895,11 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         # move. They can only watch.
         if getattr(self, "_closure_locked", False):
             return
+        # Mid-struggle the player is pinned in the hide: no movement,
+        # no interaction -- the mash (E/SPACE, handled in the event
+        # loop) is the only verb until it resolves.
+        if getattr(self, "_struggle", None) is not None:
+            return
         # Tick the sprint timers regardless of input -- cooldown has
         # to drain even when the player is standing still.
         self._tick_sprint(dt, keys)
@@ -943,6 +951,12 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         # only as visibility approaches the King-gate. Sprint multiplies on top.
         comp_mult = 1.0 - self.visibility * self.visibility * 0.45
         sprint_mult = 1.7 if self.player.sprint_active else 1.0
+        # The panic burst out of a won struggle: a short adrenaline window
+        # (doesn't stack with sprint -- the stronger of the two applies).
+        bt = getattr(self.player, "_burst_t", 0.0)
+        if bt > 0.0:
+            self.player._burst_t = max(0.0, bt - dt)
+            sprint_mult = max(sprint_mult, STRUGGLE_BURST_MULT)
         effective_speed = self.player.speed * comp_mult * sprint_mult
         # Build the input-driven TARGET velocity (world units/sec), then ease
         # the actual velocity toward it over MOVE_SMOOTH_TAU. Releasing input
@@ -2025,10 +2039,14 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
             # cultists, not the threat-system NPCs) reaching the player
             # TAKES them -- the same CAPTURED end the town cultists trigger.
             # Without this those cultists just chased and did nothing, so
-            # capture felt random ("some take me, some don't"). Hidden /
-            # invuln / mid-death are exempt, matching _tick_cultists.
+            # capture felt random ("some take me, some don't"). Enclosed
+            # hides / invuln / mid-death are exempt, matching
+            # _tick_cultists -- but corn is CONCEALMENT now, not armor: a
+            # cultist that has already locked (chase state, required in
+            # the loop below) takes you in the stalks too
+            # (STEALTH_REWORK.md Pillar 2).
             if (not world_frozen and self._death_kind is None
-                    and self.player.hidden is None
+                    and self.player.hidden in (None, "corn")
                     and self.player.invuln <= 0):
                 for e in self.scene.enemies:
                     # Only an AWARE cultist (actively chasing) takes you --
@@ -2086,6 +2104,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
             # while a box is up. Cutscene/audio drivers keep running.
             if not world_frozen:
                 self._tick_cultists(dt)
+                self._tick_struggle(dt)
                 self._tick_chase_cues_enemies(dt)
                 self._tick_fold_pursuit(dt)
                 self._tick_sheriff(dt)
@@ -2301,6 +2320,24 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
             return
         if self.state in ("playing", "transition"):
             if ev.type == pygame.KEYDOWN:
+                # The hide-check struggle owns E/SPACE while it runs: each
+                # press is a wrench against the hands reaching in. Enough
+                # presses inside the window tears the player free
+                # (_struggle_win); the timer running out is the grab.
+                if getattr(self, "_struggle", None) is not None:
+                    if ev.key in (pygame.K_e, pygame.K_SPACE, pygame.K_RETURN):
+                        self._struggle["presses"] += 1
+                        self.audio.play("bump", 0.35)
+                        if self._struggle["presses"] >= STRUGGLE_PRESSES:
+                            self._struggle_win()
+                    return
+                # Post-win swallow: the player is still mashing when the
+                # struggle resolves -- a stray E must not re-enter the
+                # hide they just tore out of.
+                if (getattr(self, "_post_struggle_t", 0.0) > 0.0
+                        and ev.key in (pygame.K_e, pygame.K_SPACE,
+                                       pygame.K_RETURN)):
+                    return
                 if self.dialog.active:
                     if ev.key in (pygame.K_UP, pygame.K_w):
                         self.dialog.move_choice(-1)

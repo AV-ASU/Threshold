@@ -25,6 +25,26 @@ from rendering.king_unfold import draw_unfold_catch
 from rendering.transform import draw_vessel_bloom
 from systems.config import *        # noqa: F401,F403
 
+def _draw_sus_tell(surf, x, y, actor):
+    """The rising "?" tell (STEALTH_REWORK.md Pillar 1): drawn over a
+    cultist whose suspicion is climbing but hasn't locked -- the player's
+    read on the "have they spotted me?" window. Procedural (no font glyph;
+    the HUD stays diegetic-minimal): a pale-gold curl + dot that brightens
+    and lifts as suspicion fills. No-ops for anything without suspicion,
+    or once the chase has locked (the lock has its own audio sting)."""
+    sus = getattr(actor, "_suspicion", 0.0)
+    if sus < SUS_NOTICE or getattr(actor, "_cult_state", "") == "chase":
+        return
+    a = int(110 + 130 * min(1.0, sus))
+    col = (222, 196, 120, a)
+    lay = pygame.Surface((12, 16), pygame.SRCALPHA)
+    pygame.draw.arc(lay, col, (2, 1, 8, 8), -math.pi * 0.7, math.pi * 0.95, 2)
+    pygame.draw.line(lay, col, (6, 8), (6, 10), 2)
+    pygame.draw.circle(lay, col, (6, 14), 1)
+    lift = int(4 * min(1.0, sus))
+    surf.blit(lay, (int(x) - 6, int(y) - 16 - lift))
+
+
 # Solid-prop card cache (see _draw_solid_prop). Static props rendered once per
 # (prop, camera angle) and blitted thereafter; FIFO-capped so roaming the town
 # doesn't grow it without bound.
@@ -1082,6 +1102,10 @@ class RenderMixin:
                                                   npc.sprite_kind, view=nview,
                                                   name=getattr(npc, "name", None),
                                                   seed=id(npc) & 0xffff)
+                    # The rising "?" tell (STEALTH_REWORK.md Pillar 1): a
+                    # cultist whose suspicion is climbing but hasn't locked
+                    # shows the half-seen hesitation over its head.
+                    _draw_sus_tell(target, sx, sy - 32, npc)
                 _emit(self.camera.depth(npc.x + ox, npc.y + oy),
                       lambda a=a, fn=_draw_npc, sx=sx, sy=sy:
                       draw_with_alpha(self.screen, a, fn,
@@ -1107,12 +1131,14 @@ class RenderMixin:
                 # Feed e.draw an offset that lands its internal `x - cam`
                 # exactly on the (lifted) projected point. At pitch 0 this is
                 # arithmetically the legacy (cam_x - ox) call -> identical.
+                def _draw_enemy(s, e=e, sx=sx, sy=sy, eview=eview):
+                    e.draw(s, e.x - sx, e.y - (sy - actor_lift), view=eview)
+                    # The rising "?" tell for a suspicious-but-not-locked
+                    # underground cultist (mirrors the NPC path).
+                    _draw_sus_tell(s, sx, sy - 32, e)
                 _emit(self.camera.depth(e.x + ox, e.y + oy),
-                      lambda a=a, sx=sx, sy=sy, e=e, eview=eview:
-                      draw_with_alpha(self.screen, a,
-                                      lambda s: e.draw(
-                                          s, e.x - sx, e.y - (sy - actor_lift),
-                                          view=eview),
+                      lambda a=a, sx=sx, sy=sy, fn=_draw_enemy:
+                      draw_with_alpha(self.screen, a, fn,
                                       rect=(sx - 110, sy - 160, 220, 250)))
         for p in self.scene.projectiles:
             psx, psy = self.camera.project(p.x, p.y)
@@ -1684,6 +1710,35 @@ class RenderMixin:
                              (sx2 - 1, sy2 - 1, sw + 2, sh + 2), 1)
             pygame.draw.rect(self.screen, fill,
                              (sx2, sy2, int(sw * ratio), sh))
+        # The hide-check struggle (STEALTH_REWORK.md §4): a pulsing centre
+        # prompt + press pips while the window runs. The prompt IS the
+        # mechanic's legibility -- unmistakable, urgent, brief.
+        st = getattr(self, "_struggle", None)
+        if st is not None:
+            t_now = pygame.time.get_ticks() / 1000.0
+            pulse = 0.6 + 0.4 * abs(math.sin(t_now * 9.0))
+            cx = SCREEN_W // 2
+            cy = SCREEN_H // 2 + 70
+            txt = self.fonts["serif"].render(
+                "FIGHT. Mash E.", True,
+                (int(230 * pulse), int(70 + 40 * pulse), int(50 * pulse)))
+            self.screen.blit(txt, (cx - txt.get_width() // 2, cy))
+            need = max(1, STRUGGLE_PRESSES)
+            got = min(need, st.get("presses", 0))
+            pw2, ph2, pg = 16, 6, 4
+            total = need * pw2 + (need - 1) * pg
+            px0 = cx - total // 2
+            py0 = cy + txt.get_height() + 8
+            for i in range(need):
+                c = ((236, 200, 120) if i < got else (60, 40, 40))
+                pygame.draw.rect(self.screen, c,
+                                 (px0 + i * (pw2 + pg), py0, pw2, ph2))
+            # The window itself: a thin draining bar under the pips.
+            frac = max(0.0, min(1.0, st.get("t", 0.0) / STRUGGLE_WINDOW))
+            pygame.draw.rect(self.screen, (90, 30, 26),
+                             (px0, py0 + ph2 + 4, total, 3))
+            pygame.draw.rect(self.screen, (210, 60, 48),
+                             (px0, py0 + ph2 + 4, int(total * frac), 3))
 
     def _draw_notebook_toast(self):
         """A small page in the upper-left that the PI scribbles a beat onto,

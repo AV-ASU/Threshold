@@ -237,27 +237,22 @@ class NPC:
                 self.move_target = None
 
     def _cult_tick(self, dt, scene, player):
-        """Cultist behaviour state machine. Replaces the prior
-        two-phase scout/chase dispatch. Transitions between
-        SCOUT, CHASE, SEARCH, INVESTIGATE based on LOS and
-        broadcast step events. Hunter (_force_chase=True)
-        bypasses the machine and walks straight at the player
-        every tick -- the apex avatar doesn't search or
-        investigate, it closes."""
+        """Cultist behaviour state machine: SCOUT, CHASE, SEARCH,
+        INVESTIGATE. Detection is GRADED (STEALTH_REWORK.md Pillar 1):
+        a per-enemy suspicion in [0, 1] fills from the detection score
+        (los * distance * facing cone * concealment) and only a FULL
+        bar locks the chase -- so there is a real "have they spotted
+        me?" window, corn is leaky cover instead of a blackout, and an
+        enclosed hide breaks sight entirely (its threat is the CHECK,
+        below). Searchers sweep nearby enclosed hides instead of
+        milling. Hunter (_force_chase=True) bypasses the machine and
+        walks straight at the player every tick -- the apex avatar
+        doesn't suspect or search, it closes."""
         import pygame
-        # Wrap-aware: chasers compute the shortest distance through
-        # the fold so the player can't escape by wrapping.
-        dx = scene.world_dx(self.x, player.x)
-        dy = scene.world_dy(self.y, player.y)
-        d = math.hypot(dx, dy)
-        # Real line of sight: walls + solid props occlude (windows/water do
-        # not), so the player breaks a chase by stepping behind cover and the
-        # cultist drops into SEARCH. The hunter (_force_chase, below) ignores
-        # this and closes regardless -- the apex avatar never loses you.
-        has_los = (d < 180
-                   and getattr(player, "hidden", None) is None
-                   and scene.clear_sight_line(self.x, self.y,
-                                              player.x, player.y))
+        from systems.config import (SUS_NOTICE, SUS_FILL_RATE, SUS_DECAY,
+                                    SUS_SCORE_HOLD, SUS_SWEEP_RADIUS,
+                                    SUS_CHECK_DIST, SUS_CHECK_PAUSE)
+        from systems.stealth import detection_score, sweep_points, is_enclosed
         # Hunter override: ignore the machine, ignore flanking.
         # The avatar's behaviour is dictated by _yk_update for the
         # YK sprite kind; non-YK NPCs with _force_chase set still
@@ -266,6 +261,18 @@ class NPC:
             self._cult_state = "chase"
             self._step_toward((player.x, player.y), dt, scene)
             return
+        # The graded detection score for this eye, this tick. Walls
+        # still occlude absolutely (clear_sight_line inside); corn
+        # scales it; an enclosed hide zeroes it.
+        score = detection_score(scene, self.x, self.y, self.facing,
+                                player, 180.0)
+        sus = getattr(self, "_suspicion", 0.0)
+        if score > 0.0:
+            sus = min(1.0, sus + score * SUS_FILL_RATE * dt)
+        else:
+            sus = max(0.0, sus - SUS_DECAY * dt)
+        self._suspicion = sus
+        self._sus_alert = False
         # Audio reaction. Fires only in SCOUT (an investigating or
         # searching cultist already has a target and shouldn't
         # rubber-band to every footstep). A fresh, close, loud
@@ -282,49 +289,110 @@ class NPC:
                     self._cult_state_t = 4.0
                     self._last_seen_pos = (ex, ey)
                     self._scout_target = None
-        # Promotion to CHASE on LOS, from any state.
-        if has_los:
-            if self._cult_state != "chase":
-                self._cult_state = "chase"
-                self._cult_state_t = 0.0
-                self._scout_target = None
-                self._just_locked = True
-            # A cultist that locks on blooms into His maw -- but ONLY once
-            # the world is corrupt enough (3+ evidence; flagged on the scene
-            # by Game each frame). Below that they stay mundane.
+        # An active CHASE holds while any usable score remains --
+        # cover has to actually break the line (a wall, an enclosed
+        # hide, or corn at real distance) to shake it. Close-range
+        # corn keeps the score above the hold, so diving into stalks
+        # at a pursuer's feet no longer erases you.
+        if self._cult_state == "chase":
+            if score >= SUS_SCORE_HOLD:
+                self._suspicion = 1.0
+                # A cultist that locks on blooms into His maw -- but ONLY
+                # once the world is corrupt enough (3+ evidence; flagged on
+                # the scene by Game each frame). Below that they stay mundane.
+                if self.sprite_kind == "cultist":
+                    self.morph_target = (1.0 if getattr(
+                        scene, "_bloom_enabled", False) else 0.0)
+                self._last_seen_pos = (player.x, player.y)
+                target = (self._flank_target if self._flank_target
+                          else (player.x, player.y))
+                self._step_toward(target, dt, scene, navigate=True)
+                return
+            # Lost the line. Drop flank intent and fall into SEARCH --
+            # and this searcher HUNTS: it will sweep the enclosed hides
+            # around where it last saw you (Pillar 3).
+            self._flank_target = None
+            self._cult_state = "search"
+            self._cult_state_t = 6.0
+            self._just_lost = True
+            if self._last_seen_pos is not None:
+                lx, ly = self._last_seen_pos
+                self._sweep_list = sweep_points(scene, lx, ly,
+                                                SUS_SWEEP_RADIUS)
+            else:
+                self._sweep_list = []
+            self._sweep_i = 0
+            self._check_t = 0.0
+        # Promotion to CHASE only on a FULL suspicion bar.
+        elif sus >= 1.0:
+            self._cult_state = "chase"
+            self._cult_state_t = 0.0
+            self._scout_target = None
+            self._just_locked = True
+            self._last_seen_pos = (player.x, player.y)
             if self.sprite_kind == "cultist":
                 self.morph_target = (1.0 if getattr(scene, "_bloom_enabled",
                                                     False) else 0.0)
-            self._last_seen_pos = (player.x, player.y)
             target = (self._flank_target if self._flank_target
                       else (player.x, player.y))
             self._step_toward(target, dt, scene, navigate=True)
             return
-        # No LOS. Drop flank intent; the leader/follower roles
-        # only mean anything when at least one cultist has LOS.
-        self._flank_target = None
-        # Demotion from CHASE: lost the player. Transition to
-        # SEARCH and walk to last-known position.
-        if self._cult_state == "chase":
-            self._cult_state = "search"
-            self._cult_state_t = 6.0
-            self._just_lost = True
+        # NOTICE: a scout whose suspicion is climbing stops and turns
+        # toward what it half-saw -- the telegraphed "have they spotted
+        # me?" window. The renderer reads _sus_alert for the tell.
+        if (self._cult_state == "scout" and sus >= SUS_NOTICE
+                and score > 0.0):
+            dxp = scene.world_dx(self.x, player.x)
+            dyp = scene.world_dy(self.y, player.y)
+            m = math.hypot(dxp, dyp) or 1.0
+            self.facing = (dxp / m, dyp / m)
+            self._sus_alert = True
+            self._scout_target = None
+            return
         if self._cult_state == "search":
             self._cult_state_t -= dt
             if self._cult_state_t <= 0 or self._last_seen_pos is None:
                 self._cult_state = "scout"
                 self._scout_target = None
                 self.morph_target = 0.0
+                self._sweep_list = []
                 return
             tx, ty = self._last_seen_pos
             d_target = scene.world_dist(self.x, self.y, tx, ty)
             if d_target > 30:
                 self._step_toward((tx, ty), dt, scene, navigate=True)
-            else:
-                # Arrived at last-known. Mill within ~80 px using
-                # the existing scout pick-and-look loop. Cultist
-                # reads as "checking the spot" rather than locked.
-                self._scout_step(dt, scene)
+                return
+            # At last-known. Sweep the enclosed hides nearby -- walk to
+            # each and CHECK it (look under / open it). A checked hide
+            # with the player inside starts the struggle (Game reads
+            # scene._hide_check). Only after the sweep runs dry does the
+            # searcher fall back to the old mill.
+            sweep = getattr(self, "_sweep_list", None) or []
+            i = getattr(self, "_sweep_i", 0)
+            if i < len(sweep):
+                hx, hy, hkind = sweep[i]
+                d_h = scene.world_dist(self.x, self.y, hx, hy)
+                if d_h > SUS_CHECK_DIST:
+                    self._check_t = 0.0
+                    self._step_toward((hx, hy), dt, scene, navigate=True)
+                else:
+                    # Face the hide and look into it for a beat.
+                    fdx = scene.world_dx(self.x, hx)
+                    fdy = scene.world_dy(self.y, hy)
+                    fm = math.hypot(fdx, fdy) or 1.0
+                    self.facing = (fdx / fm, fdy / fm)
+                    self._check_t = getattr(self, "_check_t", 0.0) + dt
+                    if self._check_t >= SUS_CHECK_PAUSE:
+                        if (is_enclosed(player)
+                                and scene.world_dist(player.x, player.y,
+                                                     hx, hy) < 24):
+                            scene._hide_check = (self, hx, hy)
+                        self._sweep_i = i + 1
+                        self._check_t = 0.0
+                return
+            # Sweep exhausted: mill within ~80 px using the existing
+            # scout pick-and-look loop until the budget runs out.
+            self._scout_step(dt, scene)
             return
         if self._cult_state == "investigate":
             self._cult_state_t -= dt

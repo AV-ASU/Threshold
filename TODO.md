@@ -13,18 +13,24 @@
 
 ## Open work
 
-### 0. Stealth rework — hiding mechanic + enemy/hide placement pass  *(see `STEALTH_REWORK.md`)*
+### 0. Stealth rework — MECHANIC DONE (2026-07); the placement pass remains
 
-The biggest planned change. Hiding today is a binary `player.hidden`
-invisibility toggle: it is not tense (wait out a 6 s timer) and "inside"
-something is too powerful (an enemy can stand next to your hide and never
-find you). The agreed direction is **"concealment, not invisibility"** —
-graded per-enemy suspicion, two cover classes (mobile/leaky vs
-rooted/strong/checkable), searchers that sweep hides, and a timed **struggle**
-when a searcher checks the enclosed hide you are in. Plus a placement pass
-(the gauntlet is 17 cultists with 0 dedicated hides today). **Design is
-settled and written up in `STEALTH_REWORK.md`; no code yet.** Build mechanic
-first, then the placement pass.
+**The mechanic is built and guarded** (`tests/stealth.py`, in the full
+gate): graded per-enemy suspicion (score = los x distance x facing cone x
+concealment, `systems/stealth.py` + the `SUS_*` config block), the NOTICE
+"?" tell before the lock, two cover classes (corn = mobile leaky
+concealment a locked chaser can still grab you in; enclosed "under"/"in"
+hides = rooted, sight-proof, CHECKABLE), searchers that sweep enclosed
+hides around last-seen, and the timed mash **struggle** on a checked hide
+(burst-out + stagger + a loud converge, or the CAPTURED death). Apex
+pursuers stay exempt. Deferred to the human-tuning pass: the peek verb +
+the exit-beat (see `STEALTH_REWORK.md` status note).
+
+**Still open: the placement pass** (`STEALTH_REWORK.md` §6) — the
+per-area cover rhythm + enclosed-hide audit (the gauntlet is 17 cultists
+with 0 dedicated hides). Pairs with #8's descent beats below. And the
+numbers (`SUS_FILL_RATE`, concealment factors, the struggle window) only
+prove out against a human player; expect a tuning loop.
 
 ### ~~1. Food scarcity — the VISUAL pass~~ — DONE (2026-07)
 

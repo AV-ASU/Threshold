@@ -343,9 +343,45 @@ LOCAL_KILL_VIS_SPIKE = 0.35
 LOCAL_KILL_VIS_CAP = 0.96
 GUN_PROJECTILE_SPEED = 340
 GUN_PROJECTILE_COLOR = (236, 232, 214)   # pale lead, distinct from cult amber
+
+# ---- Stealth rework (STEALTH_REWORK.md): graded suspicion + cover classes -
+# Detection is GRADED, not binary: each cultist carries a suspicion value in
+# [0, 1] filled per tick by score = los * distance_falloff * facing_cone *
+# concealment. Cover changes how HARD you are to detect, never WHETHER you
+# can be. Two cover classes: CONCEALMENT (corn -- mobile, leaky: a distant
+# cultist barely reads you, a near one still fills) and ENCLOSED ('under'/
+# 'in' hide spots -- rooted, a hard sight break, but a SEARCHING cultist
+# that reaches the hide CHECKS it -> the struggle). Apex pursuers
+# (_force_chase: the King, the hollow Sheriff) bypass all of this.
+SUS_NOTICE = 0.45             # alert threshold: turn toward you, the "?" tell
+SUS_FILL_RATE = 2.6           # /s at score 1.0 -> point-blank open lock ~0.4s
+SUS_DECAY = 0.55              # /s drain while the score is broken
+SUS_SCORE_HOLD = 0.12         # min score that sustains an active CHASE
+SUS_NEAR = 44.0               # px: inside this, facing no longer matters
+SUS_CONE_HALF = 1.40          # rad (~80 deg) enemy sight-cone half-angle
+SUS_CONE_FEATHER = 0.35       # rad soft edge on the cone lip
+SUS_CONCEAL_CORN = 0.30       # concealment factor in corn (leaky, not zero)
+# Searchers sweep cover instead of milling: enclosed hides near the
+# last-seen point get walked to and CHECKED (looked under / opened).
+SUS_SWEEP_RADIUS = 170.0      # px around last-seen a searcher will sweep
+SUS_CHECK_DIST = 22.0         # px: close enough to check a swept hide
+SUS_CHECK_PAUSE = 0.7         # s spent looking into each swept spot
+# The struggle: a searcher checks the enclosed hide you are in. A short
+# mash window decides it -- win = burst out (sprint burst, the checker
+# staggers, a LOUD noise event converges the room), lose = taken (the
+# CAPTURED card). Tuned so a ready player usually escapes.
+STRUGGLE_WINDOW = 1.6         # s to win the mash
+STRUGGLE_PRESSES = 5          # E/SPACE presses needed
+STRUGGLE_BURST_T = 0.9        # s of panic-burst speed after winning
+STRUGGLE_BURST_MULT = 1.8     # burst speed multiplier
+STRUGGLE_STUN = 1.4           # s the checker staggers after a burst-out
+
 # Visibility rates, per second. Watchers + cultist gaze push the meter
 # up; hiding pulls it down. Enough Watchers out-pace even hiding --
 # that is the spiral toward a King the player can no longer shake.
+# (Rework: the gaze term is now WEIGHTED by concealment -- corn scales
+# it by SUS_CONCEAL_CORN, an enclosed hide zeroes it; VIS_HIDE_BLEED
+# drains only in an enclosed hide, corn gets the idle decay.)
 VIS_HIDE_BLEED = 0.10
 VIS_IDLE_DECAY = 0.02
 VIS_WATCHER_OPEN = 0.03

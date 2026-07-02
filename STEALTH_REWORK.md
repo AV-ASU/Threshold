@@ -1,8 +1,16 @@
 # THRESHOLD — STEALTH REWORK (design doc)
 
-> **Status: DESIGN ONLY. No code yet.** This is the agreed direction for a
-> from-scratch rework of the hiding mechanic plus the enemy/hide placement
-> pass. Settled with the user 2026-06. Implement later, mechanic first.
+> **Status: MECHANIC BUILT (2026-07); the placement pass (§6) is still
+> open.** Pillars 1-3 + the struggle (§4) + the visibility model (§5) are
+> in code and guarded end-to-end by `tests/stealth.py` (wired into the
+> full gate). The scoring lives in `systems/stealth.py` (one source for
+> both cult machines), tuning in the `SUS_*`/`STRUGGLE_*` blocks of
+> `systems/config.py`. Two deliberate deferrals, both tuning-pass items:
+> the Pillar-2 **peek** verb (free look under tilt already gives the
+> information function) and the exit-takes-a-beat vulnerability window
+> (movement out of an enclosed hide is the bolt, as before). §1 below
+> describes the REPLACED system, kept as the design record.
+> Settled with the user 2026-06; built mechanic-first as planned.
 >
 > **Why:** two complaints with the current model — (1) it is **not tense or
 > engaging** (hiding is a safe pause button; you wait out a timer), and (2)
