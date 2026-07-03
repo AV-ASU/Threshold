@@ -286,6 +286,10 @@ def build_our_house_area():
                 "[c=dim](A nail under the back eave, out of the weather. "
                 "A heavy iron key, kept oiled. Nobody tends a key like "
                 "this to a door that doesn't matter.)[/c]",
+                "[c=dim]And two steps on, where the back wall should run "
+                "clean, a doorframe stands against the boards. No door "
+                "hung in it. Nobody frames a doorway on the outside of "
+                "their own lodge, either.[/c]",
             ], speaker="", voice="blip_soft", portrait="narrator")
         scene.add_item(kx, ky, "cellar_key", on_pickup=_took)
         scene.add_decoration(Decoration(kx, ky, "item_drop"))

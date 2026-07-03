@@ -223,20 +223,25 @@ it renders the procedural sprites to a labelled PNG strip.
   dissolves; he catches at distance `< 24` **only once `_birth >= 1.0`**
   (the eruption is the grace window). `SAFE_SCENES` never host him.
 - **The Moths** (the King's heralds; `MOTH_*` config, sim in
-  `systems/infest_mixin.py` `_spawn_moths`/`_tick_moths`, drawn as
-  hovering sight-gated billboards in `render_mixin`): evidence-scaled
-  wisps over the open surface, plus the King **sheds a FAST pair into
-  every room he enters** — roam hops stamp `game._king_trail`
-  (`_king_mark_trail`, `KING_TRAIL_FRESH`), a warm room grows them on
-  load, and `_materialize_roam_king` sheds live — so fast fliers in a
-  room mean *he was here*. Enter one's `MOTH_RADIUS` and it KINDLES
-  (`MOTH_KINDLE` window: back out, axe it quietly up close, or spend a
-  round from range); the window expiring is the **FLARE**: a
-  `MOTH_REACH` noise the cult converges on, a visibility spike capped
-  under the King, the dark broken around it (`_tick_dark_cover`) — it
-  burns `MOTH_FLARE_DUR`, then **falls** as a charred husk that stays
-  for the visit. First flare files a case NOTE (never evidence).
-  Guarded by `tests/stealth.py` §9.
+  `systems/infest_mixin.py` `_tick_moth_shed`/`_spawn_moths`/
+  `_tick_moths`, drawn as hovering sight-gated billboards in
+  `render_mixin`). **ONE source (2026-07-03 clarity rework)**: from
+  `MOTH_SHED_EV` (2) evidence on, every `MOTH_SHED_EVERY` (90s) the
+  King sheds `MOTH_SHED_COUNT` (2) moths into whatever room HE
+  occupies (`_roam_king["scene"]` — the idle road pre-gate, his roam
+  path once armed). They **PERSIST and STACK per room**
+  (`game._moth_field`, capped `MOTH_STACK_CAP`); rooms he lingers in
+  fill fuller and fuller, and the field only thins when the player
+  **spends** one (`_moth_spent`: a pop, or a flare burning out). So a
+  room whipping with fast fliers means *he keeps coming back here*.
+  Enter one's `MOTH_RADIUS` and it KINDLES (`MOTH_KINDLE` window: back
+  out, axe it quietly up close, or spend a round from range); the
+  window expiring is the **FLARE**: a `MOTH_REACH` noise the cult
+  converges on, a visibility spike capped under the King, the dark
+  broken around it (`_tick_dark_cover`) — it burns `MOTH_FLARE_DUR`,
+  then **falls** as a charred husk that stays for the visit. First
+  flare files a case NOTE (never evidence). Guarded by
+  `tests/stealth.py` §9.
 - **Curse** (the watcher-curse): a cultist ritual (`_tick_ritual` →
   `_apply_curse`) binds a **Watcher** to you (`_cursed`). It **clones** —
   up to `WATCHER_MAX` (5) — while you stay **exposed** (in the open;

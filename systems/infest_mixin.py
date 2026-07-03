@@ -125,33 +125,28 @@ class InfestationMixin:
         }
 
     def _spawn_moths(self):
-        """Seed this scene's moths on load (scene-local, rebuilt like
-        everything else). Count = evidence (capped) on any open surface
-        scene. On top of that, the King SHEDS a pair into every room he
-        enters: his current room, and any room his trail is still warm
-        in (KING_TRAIL_FRESH), grows two FAST fliers -- walk into a
-        room with them whipping around and you know he was here."""
+        """Seed this scene's moths on load from the PERSISTENT field
+        (game._moth_field: scene_key -> live count). The field is fed
+        only by the King's shedding (_tick_moth_shed) and thinned only
+        by the player spending a moth (a pop, or a flare burning out),
+        so a room he lingers in stacks fuller and fuller until you do
+        something about it."""
         sc = self.scene
         if sc is None:
             return
         sc._moths = []
         if sc.key not in MOTH_SCENES or sc.key in SAFE_SCENES:
             return
-        n = min(MOTH_COUNT_CAP, self._evidence_count())
-        rk = getattr(self, "_roam_king", None)
-        trail = getattr(self, "_king_trail", None) or {}
-        warm = (self.title_t - trail.get(sc.key, -1e9)) < KING_TRAIL_FRESH
-        n_fast = 0
-        if (rk is not None and rk.get("scene") == sc.key) or warm:
-            n_fast = MOTH_KING_RETINUE
-        if n + n_fast <= 0:
+        n = min(MOTH_STACK_CAP,
+                getattr(self, "_moth_field", {}).get(sc.key, 0))
+        if n <= 0:
             return
         rng = random.Random((sum(map(ord, sc.key)) * 131071) ^ 0x5A17)
         px = self.player.x if self.player else sc.w * TILE // 2
         py = self.player.y if self.player else sc.h * TILE // 2
         placed = 0
-        for _ in range((n + n_fast) * 30):
-            if placed >= n + n_fast:
+        for _ in range(n * 30):
+            if placed >= n:
                 break
             x = rng.uniform(2 * TILE, (sc.w - 2) * TILE)
             y = rng.uniform(2 * TILE, (sc.h - 2) * TILE)
@@ -160,32 +155,59 @@ class InfestationMixin:
             if math.hypot(x - px, y - py) < MOTH_RADIUS * 2.2:
                 continue          # never born already on top of you
             sc._moths.append(self._new_moth(
-                x, y, placed * 3 + 1, fast=placed < n_fast,
+                x, y, placed * 3 + 1, fast=True,
                 phase=rng.uniform(0.0, 6.28)))
             placed += 1
 
-    def _shed_king_moths(self):
-        """The King's body just entered the player's room: he sheds his
-        pair right there, live (they fan out from his position). Never
-        stacks past the retinue count."""
-        sc = self.scene
-        if sc is None or sc.key not in MOTH_SCENES:
+    def _tick_moth_shed(self, dt):
+        """The ONE source of moths: from MOTH_SHED_EV evidence on, every
+        MOTH_SHED_EVERY seconds the King sheds MOTH_SHED_COUNT into the
+        room HE currently occupies (the roam sim's scene, wherever it
+        is). If that is the player's room, they materialise live around
+        his position (or drift in at the edges while he is abstract)."""
+        if self._evidence_count() < MOTH_SHED_EV:
             return
-        moths = getattr(sc, "_moths", None)
-        if moths is None:
-            moths = sc._moths = []
-        n_fast = sum(1 for m in moths
-                     if m.get("fast") and m["state"] == "drift")
-        king = self._king
-        if king is None:
+        rk = getattr(self, "_roam_king", None)
+        if rk is None:
             return
-        for i in range(MOTH_KING_RETINUE - n_fast):
-            ang = random.uniform(0, 6.28)
-            moths.append(self._new_moth(
-                king.x + math.cos(ang) * 30,
-                king.y + math.sin(ang) * 30,
-                90 + i * 7, fast=True,
-                phase=random.uniform(0.0, 6.28)))
+        self._moth_shed_t = getattr(self, "_moth_shed_t", 0.0) + dt
+        while self._moth_shed_t >= MOTH_SHED_EVERY:
+            self._moth_shed_t -= MOTH_SHED_EVERY
+            key = rk.get("scene")
+            if key not in MOTH_SCENES or key in SAFE_SCENES:
+                continue
+            field = getattr(self, "_moth_field", None)
+            if field is None:
+                field = self._moth_field = {}
+            have = field.get(key, 0)
+            add = min(MOTH_SHED_COUNT, MOTH_STACK_CAP - have)
+            if add <= 0:
+                continue
+            field[key] = have + add
+            sc = self.scene
+            if sc is not None and sc.key == key:
+                # shed LIVE into the player's room
+                moths = getattr(sc, "_moths", None)
+                if moths is None:
+                    moths = sc._moths = []
+                king = self._king
+                ax = king.x if king is not None else self.player.x
+                ay = king.y if king is not None else self.player.y
+                for i in range(add):
+                    ang = random.uniform(0, 6.28)
+                    r = random.uniform(40, 90) if king is not None \
+                        else random.uniform(260, 380)
+                    moths.append(self._new_moth(
+                        ax + math.cos(ang) * r, ay + math.sin(ang) * r,
+                        90 + len(moths) * 7, fast=True,
+                        phase=random.uniform(0.0, 6.28)))
+
+    def _moth_spent(self, sc):
+        """A moth was killed or burned out: it comes off the room's
+        persistent count for good."""
+        field = getattr(self, "_moth_field", None)
+        if field and field.get(sc.key, 0) > 0:
+            field[sc.key] -= 1
 
     def _tick_moths(self, dt):
         """Drift, kindle, flare. Runs in the threat block (freezes with
@@ -211,6 +233,7 @@ class InfestationMixin:
                     m["state"] = "husk"
                     m["glow"] = 0.0
                     self.audio.play("bump", 0.35)
+                    self._moth_spent(sc)     # burned out: off the field
                 continue
             if m["state"] == "flare":
                 m["ft"] -= dt
@@ -236,6 +259,7 @@ class InfestationMixin:
                 self.audio.play("hit", 0.5)
                 self.audio.play("bump", 0.4)
                 sc.emit_noise(m["x"], m["y"], 0.25, kind="moth_pop")
+                self._moth_spent(sc)         # killed: off the field
                 continue
             if m["state"] == "drift":
                 fast = m.get("fast", False)
