@@ -41,6 +41,13 @@ class Narration:
 
     def begin(self, pages, voice="blip_soft", color=C_WHITE,
               on_complete=None):
+        # A chained beat pending on the caption being replaced must not
+        # silently vanish (the Sable follow-up on the register, e.g.) --
+        # fire it now, a page early, rather than never.
+        if self.active and self.on_complete is not None:
+            pend = self.on_complete
+            self.on_complete = None
+            pend()
         if isinstance(pages, str):
             pages = [pages]
         self.pages = [parse_dialogue(p, default_color=color,

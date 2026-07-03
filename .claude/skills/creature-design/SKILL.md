@@ -89,11 +89,15 @@ in, and step/draw a few hundred frames.
 Develop on the working branch; `git add` the changed files, commit with a
 clear message, push. Do not open a PR unless asked.
 
-## Active job
+## Shipped creatures (canon -- do not re-pitch)
 
-Redesign the **King in Yellow** as a **BROKEN BODY** (violated anatomy: too
-many limbs/joints bending wrong, distorted human pieces, locomotion nothing
-alive should have). Keep the fused-faces body-horror as suggestion, near-black
-with restrained gold eyes, three legible views with proper back-occlusion,
-looming/phasing. Start by sending 3-5 broken-body concepts for the user to
-pick; do not wire anything in until they choose.
+- **The King** is **THE UNFOLDING** (`rendering/king_unfold.py`): a 4D
+  everting wet-flesh mass, the Pallid Mask bonded to a host facet
+  (surfaces/sinks with the churn), a gape-lunge telegraph, the
+  throat-swallow catch. The old BROKEN BODY brief is superseded.
+- **The Moth** (`rendering/moth.py`): the King's herald, first flying
+  entity -- tented ragged wings at rest, kindle -> flare alarm -> falls
+  as a husk. Sim in `systems/infest_mixin.py`.
+
+No active job. When the user asks for a new creature, start at step 1
+(concept sheet) and converge before wiring.

@@ -107,14 +107,28 @@ it renders the procedural sprites to a labelled PNG strip.
     project 4D→3D→2D, silhouette never repeats), faceless, with eyes opening
     across the skin, 3D limbs that erupt where it everts forward and reach the
     player (≥2 above threat 0.8), and 3D toothed eversion-maws (patch-bound).
-    `draw_king_unfold(surf,x,y,t,threat,scale,to_player,birth,lean)` — `lean`
-    is the screen-space travel dir × speed; the mass everts FORWARD along it
-    (leading hemisphere surges+swells, tail tapers) as the locomotion tell. The
+    `draw_king_unfold(surf,x,y,t,threat,scale,to_player,birth,lean,gape)` —
+    `lean` is the screen-space travel dir × speed; the mass everts FORWARD
+    along it (leading hemisphere surges+swells, tail tapers) as the locomotion
+    tell. 2026-07 rework: an in-place blur melts the facets into wet flesh
+    (specular pass + drooling maws on top); above threat 0.25 the **Pallid
+    Mask BONDS to one host facet** and is drawn in that facet's projected
+    basis (`_pallid_mask_aff` — it skews/rolls/foreshortens WITH the flesh,
+    never billboarded; when its host churns away it SINKS under a tar welt
+    and rebonds; state in `_MASK_SURF`, reset via `reset_king_unfold_fx`);
+    `gape` (0..1, fed from `npc._gape` by the `KING_LUNGE_*` state machine in
+    `entities/npc.py _yk_update`) irises the leading face into the huge
+    toothed mouth with the Mask in its throat — the lunge telegraph. The
     death `draw_unfold_catch(surf,t)` is the throat-swallow (mouth iris → tunnel
     of teeth → gold furnace), routed from `_draw_death_screen`. Game feeds it
     live `threat`, `birth`, screen-space `to_player`/`lean`, and a tilt-only
     `scale_mul` depth-scale (`KING_TILT_DEPTH_*`, looms as he closes). Stateless
-    except a one-time cached `_FORM`. Preview: `tools/preview_king_unfold.py`.
+    except a one-time cached `_FORM` + `_MASK_SURF`. Preview:
+    `tools/preview_king_unfold.py`.
+  - `moth.py` — **the Moth**, the King's herald + first flying entity
+    (`draw_moth(surf,x,y,t,spread,glow,seed,flap,husk)`): tented ragged
+    wings at rest, a limb-knot snap at the flare, a crumpled husk on the
+    ground. Sim + spawn live in `systems/infest_mixin.py` (below).
   - `transform.py` — `draw_vessel_bloom`, the human→vessel morph.
   - **Tilted-camera track (LIVE — the oblique view is the default; F3
     toggles back to flat pitch-0):** `camera.py` (`Camera.project(wx,wy,wz)`,
@@ -124,7 +138,11 @@ it renders the procedural sprites to a labelled PNG strip.
     player), `pseudo3d.py` (the Watcher proof), `sight.py` (the **Phase 4
     blind-spot vision** buffer). The plan — render most objects as 3D solids
     projected to 2D, lock pitch ~55°, head-turn ±45°, skybox in the voids —
-    lives in **`CAMERA.md`**. Previews:
+    lives in **`CAMERA.md`**. Camera FEEL (2026-07): the position
+    lookahead follows the last WALK direction, eased, holding while you
+    stand (`_update_camera` `_cam_lead`) — it must never ride the aim
+    cursor; the yaw chase is aim-steady (trigger locks it, standing
+    damps it, `CHASE_*`/`TURN_RATE` config). Previews:
     `tools/preview_{tilt,skybox,occlusion,pseudo3d,sight,blindspot_live}.py`.
     Under tilt, **trees + cornstalks stand up as 3D billboards** (`_tilt_standee`
     in `scenes/base.py`, cached cards + a horizontal-run corn LOD `_corn_runs`)
@@ -152,7 +170,17 @@ it renders the procedural sprites to a labelled PNG strip.
     costs in the moment, not a ledger; NARRATIVE 1b/3).
   - `items.py` — `ITEM_DEFS`, `Inventory`.
   - `threat.py` — `proximity_tier` + `PROX_TIER_*` helpers.
-- `ui/` — dialog, inventory, notebook, fonts, text input.
+- `ui/` — dialog, inventory, notebook, fonts, text input. **Dialog is
+  three channels now (2026-07):** `dialog.py`'s modal band survives ONLY
+  for choices, the infested portraits, and scripted beats with an
+  `on_complete`; a named NPC line through the interact path floats over
+  the speaker's head (`float_speech.py`); narrator/world-object text
+  (examines, pickups, every `_evidence` beat) runs as the frameless
+  lower-third caption in `narration.py` while the WORLD KEEPS RUNNING.
+  `DialogueBox.show` does the routing. E answers the world first and only
+  skims the caption when nothing else takes the press (last in
+  `try_interact`). Replacing an active caption fires its pending
+  `on_complete` early rather than dropping it.
 
 ## Threat model (the core mechanic, in `systems/threat_mixin.py`)
 
@@ -189,6 +217,21 @@ it renders the procedural sprites to a labelled PNG strip.
   `_king_anchor` (the player's scene-entry point); below `0.90` he
   dissolves; he catches at distance `< 24` **only once `_birth >= 1.0`**
   (the eruption is the grace window). `SAFE_SCENES` never host him.
+- **The Moths** (the King's heralds; `MOTH_*` config, sim in
+  `systems/infest_mixin.py` `_spawn_moths`/`_tick_moths`, drawn as
+  hovering sight-gated billboards in `render_mixin`): evidence-scaled
+  wisps over the open surface, plus the King **sheds a FAST pair into
+  every room he enters** — roam hops stamp `game._king_trail`
+  (`_king_mark_trail`, `KING_TRAIL_FRESH`), a warm room grows them on
+  load, and `_materialize_roam_king` sheds live — so fast fliers in a
+  room mean *he was here*. Enter one's `MOTH_RADIUS` and it KINDLES
+  (`MOTH_KINDLE` window: back out, axe it quietly up close, or spend a
+  round from range); the window expiring is the **FLARE**: a
+  `MOTH_REACH` noise the cult converges on, a visibility spike capped
+  under the King, the dark broken around it (`_tick_dark_cover`) — it
+  burns `MOTH_FLARE_DUR`, then **falls** as a charred husk that stays
+  for the visit. First flare files a case NOTE (never evidence).
+  Guarded by `tests/stealth.py` §9.
 - **Curse** (the watcher-curse): a cultist ritual (`_tick_ritual` →
   `_apply_curse`) binds a **Watcher** to you (`_cursed`). It **clones** —
   up to `WATCHER_MAX` (5) — while you stay **exposed** (in the open;
