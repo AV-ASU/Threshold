@@ -1287,10 +1287,15 @@ def _tilt_tree_draw(surf, camera, scene, tx, ty, ch, far=False):
                    canopy_pal)
 
 
-# Corn-card cache. With the sway frozen (see _tilt_corn_draw) a corn cluster is
-# a pure function of (tile, far-LOD, angle), exactly like a tree, so it renders
-# once into a card and blits thereafter instead of re-projecting ~50 stalk lines
-# every frame. Same machinery as the trees.
+# Corn-card cache. With the sway frozen (see _tilt_corn_draw) a corn cluster
+# renders once into a card and blits thereafter instead of re-projecting ~50
+# stalk lines every frame. Cards are YAW-INDEPENDENT (2026-07 FPS fix): the
+# cluster is a seeded bundle of near-vertical stalks with no coherent facing,
+# so a yaw-0 card blitted at the live projected anchor is indistinguishable
+# from a re-projection at play scale -- exactly how the trees work. (The old
+# per-0.04-rad-bucket keys needed ~15k cards for a look sweep across the
+# maze's ~420 visible tiles against a 1200 cap: FIFO thrash rebuilt every
+# card every frame and a head-turn in the cornfield ran at slideshow speed.)
 _CORN_CARD_CACHE = {}
 _CORN_CARD_ORDER = []
 _CORN_CARD_CAP = 1200
@@ -1298,13 +1303,9 @@ _CORN_CARD_CAP = 1200
 
 def _tilt_corn_solid(surf, camera, scene, tx, ty, ch, far=False):
     """Draw a corn cluster by blitting its cached card (see _CORN_CARD_CACHE).
-    The stalks are rendered through `_tilt_corn_draw` on a cache miss. Yaw is
-    BUCKETED at 0.04 rad like the wall cards: at 0.01-rad keys a continuous
-    head-turn rebuilt every visible corn tile every frame (~500 card builds a
-    frame in the maze -- the single worst look-around cost in the game)."""
+    The stalks are rendered through `_tilt_corn_draw` on a cache miss."""
     bx, by = camera.project(tx * TILE + 16, ty * TILE + 16, 0)
-    key = (tx, ty, far, int(camera.yaw / 0.04),
-           round(camera.pitch, 2), round(camera.scale, 2))
+    key = (tx, ty, far, round(camera.pitch, 2), round(camera.scale, 2))
     entry = _CORN_CARD_CACHE.get(key)
     if entry is None:
         entry = _build_corn_card(camera, scene, tx, ty, ch, far)
@@ -1319,19 +1320,19 @@ def _tilt_corn_solid(surf, camera, scene, tx, ty, ch, far=False):
 
 def _build_corn_card(camera, scene, tx, ty, ch, far):
     """Cache-miss path: render one corn cluster to a tight SRCALPHA card via a
-    throwaway camera at the same angle, pinned at the tile centre."""
+    throwaway camera pinned at the tile centre. Always built at YAW 0 so one
+    card serves every look direction (the anchor still projects through the
+    live camera, so the FIELD rotates; only the parallax INSIDE one 30px
+    cluster is frozen, which nothing at play scale can read)."""
     from rendering.camera import Camera
-    # Scratch the cluster is drawn into before the tight crop. get_bounding_rect
-    # scans the WHOLE thing on every rebuild, and corn re-renders on every yaw
-    # bucket (a clump of stalks genuinely reshapes under yaw), so an oversized
-    # scratch was the top cost in cornfield scenes. Sized from the measured
-    # worst-case corn extents across every corn scene (up=49, down=10, half=27)
-    # at full tilt, scaled for the tilt-in max zoom (scale->1.0) and padded.
+    # Scratch the cluster is drawn into before the tight crop, sized from the
+    # measured worst-case corn extents across every corn scene (up=49,
+    # down=10, half=27) at full tilt and padded.
     PADX, PADY, BASE = 40, 65, 20
     tmp = pygame.Surface((PADX * 2, PADY + BASE), pygame.SRCALPHA)
     anchor = (PADX, PADY)
     tcam = Camera(cam_x=tx * TILE + 16, cam_y=ty * TILE + 16,
-                  pitch=camera.pitch, yaw=camera.yaw,
+                  pitch=camera.pitch, yaw=0.0,
                   scale=camera.scale, origin=anchor)
     _tilt_corn_draw(tmp, tcam, scene, tx, ty, ch, far)
     rect = tmp.get_bounding_rect()
@@ -2527,7 +2528,7 @@ def _tilt_window_half(camera):
     return half + TILE
 
 
-def _tilt_warp(flat, camera):
+def _tilt_warp(flat, camera, fast=False):
     """Affine warp of the flat floor to match camera.project() for z=0:
     world-rotate by yaw, then scale x by scale and y by scale*cos(pitch).
     At yaw 0 (the eased-to-rest head position, i.e. most walking frames) the
@@ -2540,7 +2541,13 @@ def _tilt_warp(flat, camera):
     scale^2 (~half) of the pixels -- it was the top per-frame cost of a
     head-turn. `scale` (nearest) rather than `smoothscale` throughout:
     the floor raster is a low-detail tile pattern under the tilt +
-    Brimley's haze, and smoothscale on surfaces this size was ~10x."""
+    Brimley's haze, and smoothscale on surfaces this size was ~10x.
+
+    `fast` (2026-07 cornfield FPS fix): DYNAMIC RESOLUTION for a look in
+    progress -- the whole pipeline runs at half res and one nearest
+    upscale lands it on the full target, quartering the rotate's pixels.
+    Motion hides the softness; the caller rebuilds SHARP the frame the
+    yaw settles."""
     cp = max(0.05, math.cos(camera.pitch))
     s = camera.scale
     deg = math.degrees(camera.yaw)
@@ -2548,6 +2555,13 @@ def _tilt_warp(flat, camera):
     if abs(deg) <= 1e-4:
         return pygame.transform.scale(
             flat, (max(1, int(w * s)), max(1, int(h * s * cp))))
+    if fast:
+        small = pygame.transform.scale(
+            flat, (max(1, int(w * s * 0.5)), max(1, int(h * s * 0.5))))
+        rotated = pygame.transform.rotate(small, deg)
+        rw, rh = rotated.get_size()
+        return pygame.transform.scale(
+            rotated, (rw * 2, max(1, int(rh * 2 * cp))))
     small = pygame.transform.scale(
         flat, (max(1, int(w * s)), max(1, int(h * s))))
     rotated = pygame.transform.rotate(small, deg)
@@ -3375,8 +3389,21 @@ def draw_terrain_tilted(surf, scene, camera, sight=None):
             round(camera.pitch, 4), round(camera.scale, 4))
     _fc = _TILT_FLOOR_CACHE
     if _fc["key"] == fkey:
+        # A soft (half-res) floor whose key held still: the look has
+        # settled -- re-warp SHARP once from the cached flat raster (no
+        # re-raster; only the transforms rerun).
+        if _fc.get("soft") and _fc.get("flat") is not None:
+            _fc["surf"] = _tilt_warp(_fc["flat"], camera)
+            _fc["soft"] = False
         warped = _fc["surf"]
     else:
+        # Only the yaw moved since the last build = a look in progress:
+        # warp at half res (dynamic resolution; motion hides it). Any
+        # other change (pan across a tile, pitch/scale ease) builds
+        # sharp as before.
+        pk = _fc["key"]
+        fast_look = (pk is not None and pk[:6] == fkey[:6]
+                     and pk[7:] == fkey[7:] and pk[6] != fkey[6])
         half_b = half + TILE                 # margin for the sub-tile shift
         span_b = int(half_b * 2)
         bx0, by0 = qx - half_b, qy - half_b
@@ -3410,9 +3437,10 @@ def draw_terrain_tilted(surf, scene, camera, sight=None):
                                       tx0, ty0, tx1, ty1)
             draw_scene_terrain(flat, scene, bx0, by0, tx0, ty0, tx1, ty1,
                                skip_billboard=True, skip_roofs=True)
-        warped = _tilt_warp(flat, camera)
+        warped = _tilt_warp(flat, camera, fast=fast_look)
         _fc["key"] = fkey
         _fc["surf"] = warped
+        _fc["soft"] = fast_look
     # Blit so the cached surface's centre (world point (qx, qy)) lands at
     # its CURRENT projection -- the affine shift that makes the tile-
     # anchored build valid for every sub-tile camera position.
