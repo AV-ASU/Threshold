@@ -150,16 +150,21 @@ KING_LUNGE_CD_LO = 3.5       # s between lunges (randomised)
 KING_LUNGE_CD_HI = 6.0
 
 # ---- the Moths (2026-07): the King's heralds, the first flying entity.
-# Folded dead-spider wisps drifting over the surface; count scales with
-# evidence, and a retinue attends whatever room the King himself
-# occupies. A player inside MOTH_RADIUS starts the KINDLE window (the
-# counterplay: back out past the radius, or kill it -- the axe up close,
-# a round from range); the window expiring is the FLARE: a MOTH_REACH
-# noise every cult ear converges on, a visibility spike, the dark broken
-# around it. Then it is gone until the scene rebuilds. Spawned by
-# _spawn_moths (infest_mixin) on every load of a MOTH_SCENES scene.
-MOTH_COUNT_CAP = 3           # evidence-scaled moths per surface scene
-MOTH_KING_RETINUE = 2        # extra moths in the King's current room
+# ONE source (the 2026-07-03 clarity rework): from MOTH_SHED_EV evidence
+# on, every MOTH_SHED_EVERY seconds the King sheds MOTH_SHED_COUNT moths
+# into whatever room HE currently occupies (the roam sim's scene). They
+# PERSIST and STACK per room (game._moth_field, capped at
+# MOTH_STACK_CAP): a room he lingers in fills with them, and the field
+# only thins when the player SPENDS one (a pop, or a flare burning out
+# into its husk). A player inside MOTH_RADIUS starts the KINDLE window
+# (the counterplay: back out past the radius, or kill it -- the axe up
+# close, a round from range); the window expiring is the FLARE: a
+# MOTH_REACH noise every cult ear converges on, a visibility spike, the
+# dark broken around it, then the husk falls and that moth is spent.
+MOTH_SHED_EV = 2             # evidence gate: the King starts shedding
+MOTH_SHED_EVERY = 90.0       # seconds between sheds (his current room)
+MOTH_SHED_COUNT = 2          # moths per shed
+MOTH_STACK_CAP = 10          # per-room ceiling (fairness + draw cost)
 MOTH_SPEED = 26.0            # drift speed px/s
 MOTH_SEEK_BIAS = 0.35        # chance a fresh waypoint aims near the player
 MOTH_RADIUS = 96.0           # trigger radius around the player
@@ -170,12 +175,9 @@ MOTH_FAST_MULT = 3.0         # the King's shed moths fly this much faster
 MOTH_REACH = 620.0           # cult hearing reach of the flare noise
 MOTH_VIS_SPIKE = 0.10        # visibility jump on flare (capped under the King)
 MOTH_LIGHT_R = 110.0         # kindle/flare light pool (breaks dark cover)
-# The King SHEDS a pair into every room he enters -- his trail. A room
-# he passed through recently still has them flying fast on arrival.
-KING_TRAIL_FRESH = 150.0     # seconds his trail stays warm in a room
 # MOTH_SCENES (where they fly) is defined next to KING_ROAM_SCENES
-# below: the moths' ground IS the King's ground, so his trail can grow
-# them anywhere he can walk.
+# below: the moths' ground IS the King's ground, so his shedding can
+# fill any room he can walk.
 
 # Dark scenes -- underground / interior cult sites where the
 # flashlight matters. Without the flashlight the screen is heavily

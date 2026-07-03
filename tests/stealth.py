@@ -639,40 +639,50 @@ def main():
     check((p.x, p.y) != (x0, y0), "beat: movement returns after the beat")
 
     # --- 9. the Moths (the King's heralds; MOTH_* config) ----------------
-    # Evidence-scaled surface wisps + the King's-room retinue. Inside the
-    # radius: kindle -> FLARE = a MOTH_REACH noise the cult converges on,
-    # a visibility spike, the moth spent. Backing out aborts the kindle.
-    from systems.config import (MOTH_RADIUS, MOTH_KING_RETINUE,
-                                MOTH_KINDLE, MOTH_REACH)
+    # ONE source (2026-07-03 rework): from MOTH_SHED_EV evidence, every
+    # MOTH_SHED_EVERY seconds the King sheds MOTH_SHED_COUNT into HIS
+    # current room; the field persists per room and stacks to the cap,
+    # thinning only when a moth is SPENT (a pop / a flare's burn-out).
+    # Inside the radius: kindle -> FLARE = a MOTH_REACH noise the cult
+    # converges on, a visibility spike, the burn-out husk. Backing out
+    # aborts the kindle.
+    from systems.config import (MOTH_RADIUS, MOTH_KINDLE, MOTH_REACH,
+                                MOTH_SHED_EVERY, MOTH_SHED_COUNT,
+                                MOTH_STACK_CAP)
     g = new_game()
-    g.load_scene_now("arrival_road", "default")
-    check(len(g.scene._moths) == MOTH_KING_RETINUE,
-          "moths: a retinue attends the King's own room from hour one")
-    check(all(m.get("fast") for m in g.scene._moths),
-          "moths: the King's shed pair fly FAST")
-    # the trail: a room he passed through recently grows his pair on
-    # load; a stale trail grows none
-    from systems.config import KING_TRAIL_FRESH
-    g._roam_king["scene"] = "gravel_road_north"
-    g._king_trail = {"country_lane": g.title_t}
-    g.load_scene_now("country_lane", "default")
-    check(sum(1 for m in g.scene._moths if m.get("fast"))
-          == MOTH_KING_RETINUE,
-          "moths: a warm King trail seeds his fast pair in the room")
-    g._king_trail = {"country_lane": g.title_t - KING_TRAIL_FRESH - 1}
-    g.load_scene_now("country_lane", "default")
-    check(not any(m.get("fast") for m in g.scene._moths),
-          "moths: a cold trail seeds nothing")
-    g.load_scene_now("house", "default")
-    check(len(getattr(g.scene, "_moths", [])) == 0,
-          "moths: a safe room never grows them")
+    g.load_scene_now("brimley", "default")
+    check(len(g.scene._moths) == 0,
+          "moths: below the evidence gate the world grows none")
+    g._tick_moth_shed(MOTH_SHED_EVERY + 1)
+    check(g._moth_field == {},
+          "moths: the King sheds nothing below the gate")
     ev = g.save.arg("evidence", [])
     ev += [{"name": "maras_room", "lines": [], "weight": 0.1},
            {"name": "the_ledger", "lines": [], "weight": 0.1}]
     g.save.set_arg("evidence", ev)
+    g._roam_king["scene"] = "brimley"      # he is HERE (the player's room)
+    g._tick_moth_shed(MOTH_SHED_EVERY + 1)
+    check(g._moth_field.get("brimley") == MOTH_SHED_COUNT,
+          "moths: at 2 evidence a shed lands in HIS room every interval")
+    check(len(g.scene._moths) == MOTH_SHED_COUNT
+          and all(m.get("fast") for m in g.scene._moths),
+          "moths: a co-located shed materialises live, flying fast")
+    g._tick_moth_shed(MOTH_SHED_EVERY)
+    check(g._moth_field.get("brimley") == MOTH_SHED_COUNT * 2,
+          "moths: the field STACKS shed over shed")
+    for _ in range(20):
+        g._tick_moth_shed(MOTH_SHED_EVERY)
+    check(g._moth_field.get("brimley") == MOTH_STACK_CAP,
+          "moths: the per-room stack respects the cap")
+    # persistence: leave and return; the field re-seeds the room
+    g.load_scene_now("country_lane", "default")
     g.load_scene_now("brimley", "default")
-    check(len(g.scene._moths) == 2,
-          "moths: the surface count scales with evidence")
+    check(len(g.scene._moths) == MOTH_STACK_CAP,
+          "moths: the field persists across the room's rebuilds")
+    g.load_scene_now("house", "default")
+    check(len(getattr(g.scene, "_moths", [])) == 0,
+          "moths: a safe room never grows them")
+    g.load_scene_now("brimley", "default")
     clear_cult(g)
     m = g.scene._moths[0]
     n = g._spawn_cultist("cult_regular", "cultist",
@@ -707,6 +717,8 @@ def main():
     check(m["state"] == "husk" and m in g.scene._moths
           and m.get("h", 1.0) <= 0.0 and m["glow"] <= 0.0,
           "moths: the flare burns ~2s, then the husk falls to the ground")
+    check(g._moth_field.get("brimley") == MOTH_STACK_CAP - 1,
+          "moths: a burn-out SPENDS the moth off the room's field")
     st = m["state"]
     g.player.x, g.player.y = m["x"] + 5, m["y"] + 5
     tick(g, 8)

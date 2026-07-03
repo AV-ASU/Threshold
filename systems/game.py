@@ -469,9 +469,12 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         self._heartbeat_t = 0.0
         self._king = None
         self._king_anchor = None
-        # The King's room-to-room trail: scene_key -> title_t stamp of
-        # his last passage (the shed-Moth spawn reads it on load).
-        self._king_trail = {}
+        # The Moth FIELD: scene_key -> live moth count. Fed only by the
+        # King's timed shedding (_tick_moth_shed), thinned only by the
+        # player spending one (a pop / a flare's burn-out). Persistent
+        # for the run; wiped on New Game / Continue.
+        self._moth_field = {}
+        self._moth_shed_t = 0.0
         reset_king_fx()        # clear his render trail/particles across runs
         self._reinforce_t = 0.0
         self._gun_cd = 0.0
@@ -2764,6 +2767,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
                 self._tick_bleed(dt)
                 self._tick_cultists(dt)
                 self._tick_moths(dt)
+                self._tick_moth_shed(dt)
                 self._tick_struggle(dt)
                 self._tick_chase_cues_enemies(dt)
                 self._tick_fold_pursuit(dt)
