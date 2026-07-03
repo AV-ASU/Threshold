@@ -318,7 +318,10 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
 
     def _title_menu_options(self):
         """THRESHOLD is a single-session game -- there is no save file
-        to continue from. The menu is just New Game / Quit."""
+        to continue from. Continue appears once the cot has written the
+        disk slot (systems/save.py; the typewriter rule)."""
+        if self.save.disk_exists():
+            return ["Continue", "New Game", "Quit"]
         return ["New Game", "Quit"]
 
     def title_input(self, ev):
@@ -344,6 +347,13 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
                 self.save.new()
                 self.audio.play("confirm", 0.8)
                 self._begin_opening()
+            elif opt == "Continue":
+                # Wake at the cot, exactly as the last sleep left things.
+                if self.save.load_disk():
+                    self.audio.play("confirm", 0.8)
+                    self._start_play()
+                else:
+                    self.audio.play("bump", 0.4)
             elif opt == "Quit":
                 pygame.quit(); sys.exit(0)
 
@@ -378,9 +388,44 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         self._log_case_entry()        # the PI starts with the case in hand
         self.player = Player(0, 0)
         self.player.from_save(self.save.data)
+        # A continued save wakes with the town's attention where sleep
+        # left it (cooled at the cot); a fresh save reads 0.
+        self.visibility = float(self.save.arg("visibility_at_sleep", 0.0)
+                                or 0.0)
         self.load_scene_now(self.save.data.get("scene", "bedroom"),
                              self.save.data.get("spawn", "default"))
         self.state = "playing"
+
+    def _sleep_at_cot(self):
+        """Sleep in the spare-room cot: THE save point (the pause menu's
+        typewriter rule, made real). Snapshots the run into save.data,
+        writes the disk slot, and rests the PI: hp restored, and the
+        town's attention cools while he is out of its sight (visibility
+        halves; the evidence floor pulls it back up on its own). Waking,
+        and Continue from the title, always land here at the cot."""
+        p = self.player
+        p.hp = p.max_hp
+        self.visibility = round(self.visibility * 0.5, 3)
+        self.save.data["player"] = p.to_save()
+        self.save.data["inventory"] = p.inventory.to_save()
+        self.save.data["scene"] = "bedroom"
+        self.save.data["spawn"] = "default"
+        self.save.set_arg("visibility_at_sleep", self.visibility)
+        ok = self.save.write_disk()
+        self.audio.play("low_pulse", 0.5)
+        self.audio.play("confirm", 0.5)
+        if ok:
+            self.dialog.show([
+                "You lie down. The Arcadia keeps its hours around you, "
+                "and for a while nothing asks anything of you.",
+                "[c=dim](Saved. Waking will find you here, at the "
+                "cot.)[/c]",
+            ], speaker="", voice="blip_soft", portrait="narrator")
+        else:
+            self.dialog.show([
+                "You lie down, but the rest doesn't hold.",
+                "[c=dim](The save could not be written to disk.)[/c]",
+            ], speaker="", voice="blip_soft", portrait="narrator")
 
     def _reset_run_state(self):
         """Wipe all per-run state so a New Game starts clean. The

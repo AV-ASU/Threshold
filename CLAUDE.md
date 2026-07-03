@@ -162,8 +162,13 @@ it renders the procedural sprites to a labelled PNG strip.
     never gated. All gating sits behind `_sight is not None` (set only when
     `_tilt_on()`), so **pitch 0 is byte-identical** (`tools/capture_world.py`).
 - `systems/`
-  - `save.py` — **in-memory only, no disk**. `Save.new()` builds from
-    `DEFAULT_SAVE`; quitting to title throws it away (single-session).
+  - `save.py` — the run state + **ONE disk slot (2026-07)**. `Save.new()`
+    builds from `DEFAULT_SAVE`; the ONLY writer of the slot is sleeping
+    at the spare-room cot (`Game._sleep_at_cot`: snapshots
+    hp/inventory/visibility, wake lands at the cot, atomic write to
+    `~/.threshold` / `%APPDATA%\THRESHOLD`, `THRESHOLD_SAVE_DIR`
+    overrides for tests). Continue on the title reads it back; a death
+    or a quit costs everything since the last sleep, never the run.
     Killed innocent **locals** lie where they fell **only while the player
     is in that room** (`_make_corpse`); the body is *not* persisted across
     scene loads — the scene rebuilds the local live on re-entry (the act
