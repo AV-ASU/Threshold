@@ -54,8 +54,10 @@ def build_bedroom():
     sc.set_spawn("default", 7, 6)
     sc.set_spawn("from_house", 7, 10)
     # The cot fills the NW corner (cols 2-3, rows 2-3). The player
-    # stands one tile east at col 4 row 3 to sleep/save.
+    # stands one tile east at col 4 row 3 to sleep/save (the game's one
+    # save point; bedroom_interact -> Game._sleep_at_cot).
     sc._cot_pos = (4 * TILE + 16, 3 * TILE + 16)
+    sc.add_interactable(sc._cot_pos[0], sc._cot_pos[1], 44)
     # Hide spots: BESIDE the wardrobe (col 3 row 8) and UNDER the
     # writing desk (col 11 row 6).
     sc.hide_spots = [
@@ -210,7 +212,9 @@ def bedroom_on_update(game, scene, dt):
 
 
 def bedroom_interact(game):
-    """E near the cot: a furniture-only save point in this build.
+    """E near the cot: SLEEP, the game's one save point (the typewriter
+    rule; Game._sleep_at_cot snapshots the run and writes the disk slot
+    Continue reads).
     E near the writing table: read the PI's own case notebook -- the
     persistent, re-readable statement of the premise (who hired you, who
     you're after, the job), complementing the skippable opening drive.
@@ -254,8 +258,11 @@ def bedroom_interact(game):
         if not game.save.flag("read_journal"):
             game.save.set_flag("read_journal", True)
         return
-    # The cot is just furniture now -- single-session game, no sleeping
-    # or saving.
+    # The cot (stand beside it, sc._cot_pos): sleep and save.
+    cx_, cy_ = getattr(sc, "_cot_pos", (4 * TILE + 16, 3 * TILE + 16))
+    if abs(px - cx_) <= 44 and abs(py - cy_) <= 52:
+        game._sleep_at_cot()
+        return
 
 
 # ---- innkeeper_house (key: 'house') ----

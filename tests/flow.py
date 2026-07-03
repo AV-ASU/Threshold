@@ -1536,6 +1536,46 @@ def main():
     check(gfs.dialog.active and not gfs.float_speech.active,
           "float: a line outside the interact path stays modal")
 
+    # --- 27. the cot's disk save + Continue (the typewriter rule) -----
+    # Sleeping at the spare-room cot is the ONLY writer of the disk
+    # slot; Continue reads it back and wakes at the cot; anything done
+    # after the sleep is the stake a death or a quit loses.
+    import tempfile
+    import shutil
+    _sd = tempfile.mkdtemp(prefix="th_save_")
+    os.environ["THRESHOLD_SAVE_DIR"] = _sd
+    try:
+        gsl = new_game()
+        check(gsl._title_menu_options() == ["New Game", "Quit"],
+              "save: no slot, no Continue")
+        gsl.save.set_flag("persist_probe", True)
+        gsl.player.inventory.add("lumber_axe", 1)
+        gsl.visibility = 0.6
+        fire(gsl, "bedroom", "_cot_pos")
+        check(os.path.isfile(gsl.save.disk_path()),
+              "save: sleeping at the cot writes the disk slot")
+        check(abs(gsl.visibility - 0.3) < 1e-9,
+              "save: sleep cools the town's attention (visibility halves)")
+        check(gsl._title_menu_options()[0] == "Continue",
+              "save: the title offers Continue once the slot exists")
+        gsl.save.set_flag("post_sleep_probe", True)
+        gsl.state = "title"                # any run end: death or quit
+        check(gsl.save.load_disk(), "save: Continue reads the slot back")
+        gsl._start_play()
+        check(gsl.save.flag("persist_probe")
+              and not gsl.save.flag("post_sleep_probe"),
+              "save: continue restores the last sleep, not the lost run")
+        check(gsl.scene.key == "bedroom", "save: waking lands at the cot")
+        check(gsl.player.inventory.has("lumber_axe"),
+              "save: the inventory survives the round trip")
+        check(abs(gsl.visibility - 0.3) < 1e-9,
+              "save: the cooled attention survives the round trip")
+        check(gsl.player.hp == gsl.player.max_hp,
+              "save: sleep rests the PI (hp restored)")
+    finally:
+        os.environ.pop("THRESHOLD_SAVE_DIR", None)
+        shutil.rmtree(_sd, ignore_errors=True)
+
     print()
     if FAILS:
         print(f"{len(FAILS)} flow failure(s).")
