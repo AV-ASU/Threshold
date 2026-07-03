@@ -620,6 +620,7 @@ class NarrativeMixin:
         self._opening_phase = "roll"          # roll | stall | dead
         self._opening_phase_t = 0.0
         self._opening_stalls_left = OPENING_STALLS
+        self._opening_fig_cued = False        # the figure's one audio sting
         self.state = "opening"
         self.audio.start_drive()              # engine + radio + static bed
 
@@ -633,6 +634,12 @@ class NarrativeMixin:
         self._opening_speed += (target - self._opening_speed) * min(1.0, dt * 4.0)
         self._opening_scroll += self._opening_speed * dt
         if ph == "roll":
+            # The final approach: something stands far up the road (the
+            # renderer draws it) -- one quiet tone under the engine, once.
+            if (self._opening_stalls_left == 0
+                    and not getattr(self, "_opening_fig_cued", False)):
+                self._opening_fig_cued = True
+                self.audio.play("yk_tone", 0.18)
             if self._opening_phase_t >= OPENING_ROLL_DUR:
                 self._opening_phase = "stall"
                 self._opening_phase_t = 0.0
