@@ -639,36 +639,70 @@ def main():
     check((p.x, p.y) != (x0, y0), "beat: movement returns after the beat")
 
     # --- 9. the Moths (the King's heralds; MOTH_* config) ----------------
-    # ONE source (2026-07-03 rework): from MOTH_SHED_EV evidence, every
-    # MOTH_SHED_EVERY seconds the King sheds MOTH_SHED_COUNT into HIS
-    # current room; the field persists per room and stacks to the cap,
-    # thinning only when a moth is SPENT (a pop / a flare's burn-out).
-    # Inside the radius: kindle -> FLARE = a MOTH_REACH noise the cult
-    # converges on, a visibility spike, the burn-out husk. Backing out
-    # aborts the kindle.
+    # The 2026-07 ladder: ONE omen pre-drifts HIS road from minute one;
+    # at 2 evidence the SEEKER finds the player's room every few minutes
+    # (never at a door); at 3 his own MOTH_SHED_EVERY shedding wakes in
+    # HIS room and the seeker slows. The field persists per room and
+    # stacks to the cap, thinning only when a moth is SPENT (a pop / a
+    # flare's burn-out). Inside the radius: kindle -> FLARE = a
+    # MOTH_REACH noise the cult converges on, a visibility spike, the
+    # burn-out husk. Backing out aborts the kindle.
     from systems.config import (MOTH_RADIUS, MOTH_KINDLE, MOTH_REACH,
                                 MOTH_SHED_EVERY, MOTH_SHED_COUNT,
-                                MOTH_STACK_CAP)
+                                MOTH_STACK_CAP, MOTH_SEEK2_HI,
+                                MOTH_SEEK3_LO)
     g = new_game()
+    check(g._moth_field == {"arrival_road": 1},
+          "moths: ONE omen pre-drifts the King's road from minute one")
+    g.load_scene_now("arrival_road", "default")
+    check(len(g.scene._moths) == 1,
+          "moths: the road omen is really there")
     g.load_scene_now("brimley", "default")
     check(len(g.scene._moths) == 0,
-          "moths: below the evidence gate the world grows none")
+          "moths: below the gates no other room grows any")
     g._tick_moth_shed(MOTH_SHED_EVERY + 1)
-    check(g._moth_field == {},
-          "moths: the King sheds nothing below the gate")
+    g._moth_seek_t = 0.01
+    g._tick_moth_seek(0.02)
+    check(g._moth_field.get("brimley") is None,
+          "moths: neither source fires below 2 evidence")
+    # evidence 2: HIS shedding still sleeps; the SEEKER finds your room
     ev = g.save.arg("evidence", [])
     ev += [{"name": "maras_room", "lines": [], "weight": 0.1},
            {"name": "the_ledger", "lines": [], "weight": 0.1}]
     g.save.set_arg("evidence", ev)
     g._roam_king["scene"] = "brimley"      # he is HERE (the player's room)
     g._tick_moth_shed(MOTH_SHED_EVERY + 1)
-    check(g._moth_field.get("brimley") == MOTH_SHED_COUNT,
-          "moths: at 2 evidence a shed lands in HIS room every interval")
-    check(len(g.scene._moths) == MOTH_SHED_COUNT
+    check(g._moth_field.get("brimley") is None,
+          "moths: at 2 evidence the King himself sheds nothing yet")
+    g.player.x, g.player.y = 50 * TILE, 50 * TILE
+    g._moth_seek_t = 0.01
+    g._tick_moth_seek(0.02)
+    check(g._moth_field.get("brimley") == 1
+          and len(g.scene._moths) == 1,
+          "moths: at 2 evidence a SEEKER lands in the player's room")
+    mk = g.scene._moths[0]
+    check(mk.get("b", 1.0) < 1.0,
+          "moths: the seeker ARRIVES (drop-in ramp, not a pop-in)")
+    _exits = [(tx, ty) for ty in range(g.scene.h)
+              for tx in range(g.scene.w)
+              if g.scene.objects[ty][tx] in g.scene.exits]
+    mtx, mty = int(mk["x"] // TILE), int(mk["y"] // TILE)
+    check(all(abs(mtx - ex) > 3 or abs(mty - ey) > 3
+              for ex, ey in _exits),
+          "moths: a seeker never lands at a door")
+    check(MOTH_SEEK2_HI <= MOTH_SEEK3_LO,
+          "moths: the seeker slows once he walks (ev3 interval longer)")
+    # evidence 3: HIS 90s shedding wakes on top of the seeker
+    ev.append({"name": "the_preacher", "lines": [], "weight": 0.16})
+    g.save.set_arg("evidence", ev)
+    g._tick_moth_shed(MOTH_SHED_EVERY + 1)
+    check(g._moth_field.get("brimley") == 1 + MOTH_SHED_COUNT,
+          "moths: at 3 a shed lands in HIS room every interval")
+    check(len(g.scene._moths) == 1 + MOTH_SHED_COUNT
           and all(m.get("fast") for m in g.scene._moths),
           "moths: a co-located shed materialises live, flying fast")
     g._tick_moth_shed(MOTH_SHED_EVERY)
-    check(g._moth_field.get("brimley") == MOTH_SHED_COUNT * 2,
+    check(g._moth_field.get("brimley") == 1 + MOTH_SHED_COUNT * 2,
           "moths: the field STACKS shed over shed")
     for _ in range(20):
         g._tick_moth_shed(MOTH_SHED_EVERY)
@@ -684,6 +718,8 @@ def main():
           "moths: a safe room never grows them")
     g.load_scene_now("brimley", "default")
     clear_cult(g)
+    for mm in g.scene._moths:
+        mm["b"] = 1.0                 # settle any arrival ramps
     m = g.scene._moths[0]
     n = g._spawn_cultist("cult_regular", "cultist",
                          at=(m["x"] + 400, m["y"]))
@@ -739,6 +775,23 @@ def main():
         tick(g, 1)
     check(m2["state"] == "drift" and m2 in g.scene._moths,
           "moths: backing out aborts the kindle (the counterplay)")
+
+    # --- 10. the cult WAKES at 1 evidence (CULT_WAKE_EV) -----------------
+    # Below the first find the surface spawns NO patrol: the town is
+    # only wrong, not yet hostile. The first evidence raises the hoods.
+    g = new_game()
+    g.load_scene_now("brimley", "default")
+    tick(g, 10)
+    check(not any(str(getattr(n, "tag", "")).startswith("cult_")
+                  for n in g.scene.npcs),
+          "wake: zero evidence, zero cult on the surface")
+    ev = g.save.arg("evidence", [])
+    ev.append({"name": "maras_room", "lines": [], "weight": 0.1})
+    g.save.set_arg("evidence", ev)
+    tick(g, 40)
+    check(any(str(getattr(n, "tag", "")).startswith("cult_")
+              for n in g.scene.npcs),
+          "wake: the first find raises the hooded ones")
 
     print()
     if FAILS:

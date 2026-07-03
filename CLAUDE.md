@@ -222,14 +222,24 @@ it renders the procedural sprites to a labelled PNG strip.
   `_king_anchor` (the player's scene-entry point); below `0.90` he
   dissolves; he catches at distance `< 24` **only once `_birth >= 1.0`**
   (the eruption is the grace window). `SAFE_SCENES` never host him.
+- **The evidence LADDER (2026-07)**: each surface beat flips a visible
+  world state. **Ev 0**: the town is only wrong — **no cult patrols
+  spawn** (`CULT_WAKE_EV`, gated at `_ensure_cultists`), the idle King
+  far up the road, ONE omen moth pre-drifting his road
+  (`_moth_field = {KING_ROAM_START: 1}` at run start). **Ev 1**: the
+  cult wakes (patrols spawn). **Ev 2**: his attention finds YOU — a
+  single SEEKER moth materialises in the player's room every
+  `MOTH_SEEK2_*` (2-3 min; `_tick_moth_seek`, never at a door, drops
+  in on the `"b"` arrival ramp). **Ev 3**: he walks (the roam arms),
+  his own shedding starts, the seeker slows to `MOTH_SEEK3_*`
+  (5-6 min).
 - **The Moths** (the King's heralds; `MOTH_*` config, sim in
-  `systems/infest_mixin.py` `_tick_moth_shed`/`_spawn_moths`/
-  `_tick_moths`, drawn as hovering sight-gated billboards in
-  `render_mixin`). **ONE source (2026-07-03 clarity rework)**: from
-  `MOTH_SHED_EV` (2) evidence on, every `MOTH_SHED_EVERY` (90s) the
-  King sheds `MOTH_SHED_COUNT` (2) moths into whatever room HE
-  occupies (`_roam_king["scene"]` — the idle road pre-gate, his roam
-  path once armed). They **PERSIST and STACK per room**
+  `systems/infest_mixin.py` `_tick_moth_shed`/`_tick_moth_seek`/
+  `_spawn_moths`/`_tick_moths`, drawn as hovering sight-gated
+  billboards in `render_mixin`). From `MOTH_SHED_EV` (3) evidence,
+  every `MOTH_SHED_EVERY` (90s) the King sheds `MOTH_SHED_COUNT` (2)
+  moths into whatever room HE occupies (`_roam_king["scene"]`), plus
+  the player-seeker drip above. They **PERSIST and STACK per room**
   (`game._moth_field`, capped `MOTH_STACK_CAP`); rooms he lingers in
   fill fuller and fuller, and the field only thins when the player
   **spends** one (`_moth_spent`: a pop, or a flare burning out). So a

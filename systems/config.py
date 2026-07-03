@@ -161,10 +161,19 @@ KING_LUNGE_CD_HI = 6.0
 # close, a round from range); the window expiring is the FLARE: a
 # MOTH_REACH noise every cult ear converges on, a visibility spike, the
 # dark broken around it, then the husk falls and that moth is spent.
-MOTH_SHED_EV = 2             # evidence gate: the King starts shedding
+MOTH_SHED_EV = 3             # evidence gate: HIS-room shedding starts once
+                             # he walks (the roam arms at the same gate)
 MOTH_SHED_EVERY = 90.0       # seconds between sheds (his current room)
 MOTH_SHED_COUNT = 2          # moths per shed
 MOTH_STACK_CAP = 10          # per-room ceiling (fairness + draw cost)
+# His attention finds YOU before his body does (the evidence-2 beat):
+# from 2 evidence a single moth materialises in the PLAYER'S room every
+# few minutes (never at a door), joining that room's field; once he
+# walks at 3 the seeker eases to a slow drip on top of his own shedding.
+MOTH_SEEK2_LO = 120.0        # ev2 seeker interval (s), rolled per spawn
+MOTH_SEEK2_HI = 180.0
+MOTH_SEEK3_LO = 300.0        # ev3+ seeker interval (s)
+MOTH_SEEK3_HI = 360.0
 MOTH_SPEED = 26.0            # drift speed px/s
 MOTH_SEEK_BIAS = 0.35        # chance a fresh waypoint aims near the player
 MOTH_RADIUS = 96.0           # trigger radius around the player
@@ -242,6 +251,11 @@ DIM_SAFE_SCENES = {"basement"}
 # ---- THRESHOLD: cult geography + threat tuning ----
 # Regular cultists roam every outdoor scene; the safe lodge interiors
 # (SAFE_SCENES) are the only refuge.
+# The cult WAKES at this evidence count (2026-07 ladder): below it the
+# surface spawns no patrol at all -- the town is only wrong, not yet
+# hostile. Your first find is what makes the hooded ones appear.
+CULT_WAKE_EV = 1
+
 CULTIST_SCENES = {
     "forest_path", "our_house_area", "graveyard",
     "brimley", "country_lane",

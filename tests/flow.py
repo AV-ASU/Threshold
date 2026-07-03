@@ -1551,6 +1551,33 @@ def main():
     check(gfs.dialog.active and not gfs.float_speech.active,
           "float: a line outside the interact path stays modal")
 
+    # --- 26b. the arrival road LOOPS south (silent same-scene fold) ---
+    # Walking south past the loop line lands you back NORTH of the
+    # crossing, still south of the render band -- so the idle King is
+    # NEVER in view off the loop; he only shows walking north onto the
+    # band (the maintainer's sightline rule).
+    from constants import TILE as _T
+    gr = new_game()
+    gr.load_scene_now("arrival_road", "default")
+    ready(gr)
+    _tm = gr.scene._treadmill
+    gr.player.x, gr.player.y = 7 * _T + 16, 74 * _T + 16
+    gr.player.facing = (0, 1)               # striding SOUTH onto the line
+    y_before = gr.player.y
+    gr.step(1 / 30.0)
+    check(gr.scene.key == "arrival_road" and gr.player.y < y_before - 300,
+          "loop: walking south folds you back north of the crossing")
+    check(gr.player.y >= _tm[1],
+          "loop: the landing sits SOUTH of the band (no King in view)")
+    gr.state = "playing"
+    gr.step(1 / 30.0)
+    check(gr._idle_king is None,
+          "loop: the idle King is hidden after the loop")
+    gr.player.y = _tm[1] - _T               # deliberately walk north onto it
+    gr.step(1 / 30.0)
+    check(gr._idle_king is not None,
+          "loop: he shows again only once you walk north up the band")
+
     # --- 27. the cot's disk save + Continue (the typewriter rule) -----
     # Sleeping at the spare-room cot is the ONLY writer of the disk
     # slot; Continue reads it back and wakes at the cot; anything done

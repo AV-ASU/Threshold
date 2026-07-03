@@ -1221,9 +1221,13 @@ class RenderMixin:
                 a = _vis_alpha(m["x"] + ox, m["y"] + oy)
                 if a is None:
                     continue
-                # hover collapses to the ground as a burnt-out moth FALLS
+                # hover collapses to the ground as a burnt-out moth FALLS;
+                # a newly ARRIVED seeker drops in from above while it
+                # fades up (the "b" ramp)
                 hf = m.get("h", 1.0)
-                hover = (34 + math.sin(m["t"] * 1.7 + m["seed"]) * 5.0) * hf
+                bm = m.get("b", 1.0)
+                hover = ((34 + math.sin(m["t"] * 1.7 + m["seed"]) * 5.0)
+                         * hf * (1.0 + 2.2 * (1.0 - bm)))
 
                 def _draw_moth_e(s, m=m, sx=sx, sy=sy, hover=hover):
                     gy = sy - actor_lift
@@ -1241,9 +1245,9 @@ class RenderMixin:
                               flap=(1.0 if m.get("fast") else 0.2),
                               husk=husk)
                 _emit(self.camera.depth(m["x"] + ox, m["y"] + oy),
-                      lambda a=a, sx=sx, sy=sy, fn=_draw_moth_e:
+                      lambda a=a * bm, sx=sx, sy=sy, fn=_draw_moth_e:
                       draw_with_alpha(self.screen, a, fn,
-                                      rect=(sx - 70, sy - 150, 140, 190)))
+                                      rect=(sx - 70, sy - 180, 140, 230)))
         for p in self.scene.projectiles:
             psx, psy = self.camera.project(p.x, p.y)
             _emit(self.camera.depth(p.x, p.y),

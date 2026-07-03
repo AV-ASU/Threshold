@@ -354,13 +354,46 @@ def build_arrival_road():
             if forest_rng.random() < 0.12:                          # lone pine E
                 row[forest_rng.choice((11, 12))] = "T"
         objects_l.append(row)
-    # Dead-end the road just SOUTH of the crossing: the fold only opens NORTH
-    # (the looping runway toward the King) and out via the E-W path. South of the
-    # path is solid woods, so you can't wander down the deep-south stub -- where
-    # walking off the bottom edge would otherwise wrap you jarringly up to the
-    # band. Keeps travel bounded; reads as the road swallowed by trees behind you.
+    # South of the crossing the road RUNS ON -- and loops (2026-07: the
+    # flat tree wall across the asphalt is gone). The lanes continue a
+    # short stretch with the pines crowding back in at the shoulders;
+    # walking south past the loop line folds you silently back onto the
+    # road NORTH of the crossing (a same-scene relocation, the maze
+    # pattern -- no fade, no frame): the roads loop, on foot, exactly as
+    # the town says. SIGHTLINE RULE (maintainer): the idle King is a
+    # NORTH-facing sight only -- the loop lands you SOUTH of the render
+    # band (the idol gate reads player.y >= band bottom), so after
+    # looping he is not in view until you deliberately walk north up
+    # the band again. Beyond the loop line the canopy closes over the
+    # lanes in a taper, so the far south reads as the woods taking the
+    # road, not a hedge pasted across it.
+    LOOP_ROW = PMID + 7
     for y in range(PMID + 2, H):
         objects_l[y] = ["T"] * W
+    for y in range(PMID + 2, LOOP_ROW + 1):
+        for x in range(4, 11):
+            objects_l[y][x] = "."          # the road strip stays open
+        if forest_rng.random() < 0.4:      # ragged inner tree edge
+            objects_l[y][4] = "T"
+        if forest_rng.random() < 0.4:
+            objects_l[y][10] = "T"
+    for i, y in enumerate(range(LOOP_ROW + 1, min(H, LOOP_ROW + 5))):
+        for x in range(5, 10):             # the taper past the loop line
+            if forest_rng.random() > 0.30 + 0.22 * i:
+                objects_l[y][x] = "."
+    for x in range(4, 11):                 # the silent loop line itself
+        if objects_l[LOOP_ROW][x] == ".":
+            objects_l[LOOP_ROW][x] = "I"
+    # CORN bleeds in at the WEST shoulder around the crossing (the corn
+    # lane is right through the west mouth; the hard pine/corn biome cut
+    # read disconnected). Passable stalks ('A') scattered over the
+    # shoulder rows so the field leaks toward its gap in the trees.
+    corn_rng = random.Random(1994)
+    for y in range(PMID - 5, PMID + 4):
+        for x in range(1, 5):
+            if 0 <= y < H and objects_l[y][x] in (".", "T") \
+                    and y not in PATH and corn_rng.random() < 0.45:
+                objects_l[y][x] = "A"
     for dy in (-1, 0, 1):                   # path mouths W (lane) + E (yard)
         objects_l[PMID + dy][0] = "a"
         objects_l[PMID + dy][W - 1] = "e"
@@ -387,6 +420,12 @@ def build_arrival_road():
     sc._render_band = (_BAND_TOP, _BAND_BOTTOM)   # tile rows that tile north
     sc.add_exit("a", "country_lane", "from_arrival_road")
     sc.add_exit("e", "our_house_area", "from_arrival_road")
+    # The south loop: a same-scene direction-gated fold (silent by canon;
+    # _build_fold_cache skips same-scene folds, so no frame is drawn).
+    # Southward walkers land back NORTH of the crossing, south of the
+    # render band, still striding south toward the crossing again.
+    sc.add_exit("I", "arrival_road", "reloc_south_loop", direction="south")
+    sc.set_spawn("reloc_south_loop", 7, PMID - 14)
     sc.set_spawn("default", 7, PMID)
     sc.set_spawn("from_our_house_area", W - 2, PMID)   # walked WEST from the yard
     sc.set_spawn("from_country_lane", 1, PMID)         # walked EAST from town side

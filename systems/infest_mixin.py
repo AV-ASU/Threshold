@@ -122,6 +122,7 @@ class InfestationMixin:
             "kt": 0.0, "ft": 0.0, "wt": 0.0,
             "wx": x, "wy": y, "spread": 0.0, "glow": 0.12,
             "h": 1.0,                     # hover factor (falls to 0)
+            "b": 1.0,                     # arrival: 0 -> 1 fades/drops in
         }
 
     def _spawn_moths(self):
@@ -209,6 +210,71 @@ class InfestationMixin:
         if field and field.get(sc.key, 0) > 0:
             field[sc.key] -= 1
 
+    def _tick_moth_seek(self, dt):
+        """His attention finds YOU before his body does (the evidence-2
+        beat): a single moth materialises in the player's room every
+        MOTH_SEEK2 minutes, never at a door; once he walks at 3 the
+        seeker eases to the slow MOTH_SEEK3 drip on top of his own
+        shedding. The spawn drops out of the dark (the "b" arrival ramp)
+        and joins the room's persistent field like any other."""
+        ev = self._evidence_count()
+        if ev < 2:
+            self._moth_seek_t = None
+            return
+        lo, hi = ((MOTH_SEEK2_LO, MOTH_SEEK2_HI) if ev < MOTH_SHED_EV
+                  else (MOTH_SEEK3_LO, MOTH_SEEK3_HI))
+        if getattr(self, "_moth_seek_t", None) is None:
+            self._moth_seek_t = random.uniform(lo, hi)
+        self._moth_seek_t -= dt
+        if self._moth_seek_t > 0:
+            return
+        self._moth_seek_t = random.uniform(lo, hi)
+        sc = self.scene
+        if (sc is None or self.player is None
+                or sc.key not in MOTH_SCENES or sc.key in SAFE_SCENES):
+            return
+        field = getattr(self, "_moth_field", None)
+        if field is None:
+            field = self._moth_field = {}
+        if field.get(sc.key, 0) >= MOTH_STACK_CAP:
+            return
+        pos = self._moth_seek_spot(sc)
+        if pos is None:
+            return
+        field[sc.key] = field.get(sc.key, 0) + 1
+        moths = getattr(sc, "_moths", None)
+        if moths is None:
+            moths = sc._moths = []
+        m = self._new_moth(pos[0], pos[1], 60 + len(moths) * 7,
+                           fast=True, phase=random.uniform(0.0, 6.28))
+        m["b"] = 0.0                  # it drops out of the dark
+        moths.append(m)
+        self.audio.play("whisper", 0.30)
+        self.audio.play("low_pulse", 0.25)
+
+    def _moth_seek_spot(self, sc):
+        """A landing spot for a seeker: walkable, a ring away from the
+        player (it comes TO you, not ON you), and NEVER at a door --
+        at least 3 tiles from every exit tile and off the scene rim."""
+        p = self.player
+        exits = [(tx, ty) for ty in range(sc.h) for tx in range(sc.w)
+                 if sc.objects[ty][tx] in sc.exits]
+        for _ in range(60):
+            ang = random.uniform(0.0, 6.28)
+            r = random.uniform(MOTH_RADIUS * 1.6, MOTH_RADIUS * 3.0)
+            x = p.x + math.cos(ang) * r
+            y = p.y + math.sin(ang) * r
+            tx, ty = int(x // TILE), int(y // TILE)
+            if not (2 <= tx < sc.w - 2 and 2 <= ty < sc.h - 2):
+                continue
+            if sc.is_solid_at(x, y):
+                continue
+            if any(abs(tx - ex) <= 3 and abs(ty - ey) <= 3
+                   for ex, ey in exits):
+                continue              # never at a door
+            return (x, y)
+        return None
+
     def _tick_moths(self, dt):
         """Drift, kindle, flare. Runs in the threat block (freezes with
         the world). The flare is an ALARM, not an attack: the loud noise
@@ -222,6 +288,11 @@ class InfestationMixin:
             return
         for m in list(moths):
             m["t"] += dt
+            if m.get("b", 1.0) < 1.0:
+                # the ARRIVAL: it drops out of the dark over ~1s (drawn
+                # descending + fading in); inert until it has landed
+                m["b"] = min(1.0, m.get("b", 1.0) + dt / 1.1)
+                continue
             if m["state"] == "husk":
                 continue                          # spent, on the ground
             if m["state"] == "fall":
