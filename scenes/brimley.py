@@ -485,10 +485,16 @@ def build_brimley():
             _pave(tx, ry)
     # Entry square + well -> spine: a 3-wide vertical run on the east side.
     for tx in (93, 94, 95):
-        for ty in range(7, 26):
+        for ty in range(6, 26):
             _pave(tx, ty)
-    for tx in range(94, 99):                          # entry stub to the map edge
-        _pave(tx, 7)
+    # The LODGE LANE (2026-07 playtest fix): the east-edge opening is 3
+    # tiles (rows 6-8), so the road that meets it is too -- a full-width
+    # lane from the edge to the junction, not a one-tile footpath the
+    # player can arrive beside and never see. The junction corner squares
+    # off against the north-south connector above.
+    for tx in range(93, w):
+        for ty in (6, 7, 8):
+            _pave(tx, ty)
     # East-bank branch: spine -> the store/school/kid/barn cluster.
     for tx in (57, 58, 59):
         for ty in range(25, 74):
@@ -930,8 +936,13 @@ def build_brimley():
     # spine's junctions (the well, the town cluster), and a run of lamps along
     # the main road -- the lit thread the player can always pick up and follow
     # across the wrapped town.
-    sc.add_decoration(Decoration(97 * TILE + 16, 8 * TILE + 16, "town_sign",
+    # The welcome sign stands on the lane's SOUTH shoulder (the lane
+    # itself is road now), and a TOWN board waits at the junction where
+    # the lane turns south -- the arriving player reads the turn.
+    sc.add_decoration(Decoration(97 * TILE + 16, 9 * TILE + 24, "town_sign",
                                  text="BRIMLEY"))
+    sc.add_decoration(Decoration(92 * TILE + 16, 7 * TILE + 20, "town_sign",
+                                 text="TOWN"))
     sc.add_decoration(Decoration(92 * TILE + 16, 22 * TILE + 16, "town_sign",
                                  text="WELL"))
     sc.add_decoration(Decoration(60 * TILE + 16, 26 * TILE + 16, "town_sign",
