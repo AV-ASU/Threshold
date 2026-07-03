@@ -56,17 +56,23 @@ _H = tuple(c / _HMAG for c in _H)
 
 _FORM = None
 
-# The Pallid Mask's drift state (2026-07 rework): the mask surfaces
-# through the churning skin and GLIDES between facets instead of
-# teleporting, so it needs a little screen-space memory between frames.
-# Reset per run like the other King fx state.
-_MASK_DRIFT = {"x": None, "y": None, "f": 0.0}
+# The Pallid Mask's surfacing state (2026-07 rework): the mask lives IN
+# the flesh. It bonds to ONE host facet (stable face index) and is drawn
+# in that facet's projected basis, so it skews, foreshortens and turns
+# WITH the surface -- never billboarded at the camera. When the churn
+# carries its facet edge-on or behind, it SINKS under the skin (em -> 0),
+# rebonds, and pushes up through the new site. `vf` fixes the jaw-ward
+# direction at bond time so the mask doesn't flip while riding. `lt`
+# remembers the last draw time for a dt. Reset per run like the other
+# King fx state.
+_MASK_SURF = {"host": None, "em": 0.0, "vf": 1.0, "lt": None}
 
 
 def reset_king_unfold_fx():
-    _MASK_DRIFT["x"] = None
-    _MASK_DRIFT["y"] = None
-    _MASK_DRIFT["f"] = 0.0
+    _MASK_SURF["host"] = None
+    _MASK_SURF["em"] = 0.0
+    _MASK_SURF["vf"] = 1.0
+    _MASK_SURF["lt"] = None
 
 
 # --------------------------------------------------------------------------- #
@@ -389,6 +395,64 @@ def _draw_maw3d(lay, sample, N, em, openf, cx, cy, sz, zmin, zr, seed, a,
     if drips is not None:
         lip = max((pr(p) for p in outer), key=lambda q: q[1])
         drips.append((lip[0], lip[1], openf, a))
+
+
+def _pallid_mask_aff(lay, C, U, V, a, glint=0.0, weep=0.0, t=0.0):
+    """The Pallid Mask laid ON a facet: every feature is drawn through the
+    facet's projected basis (C centre, U half-width vector, V half-height
+    vector, screen px), so the face skews, foreshortens and rolls WITH
+    the flesh it rides -- never billboarded at the camera. Local coords:
+    x across the face, +y down toward the jaw (the caller fixes V's sign
+    at bond time). `weep` draws the breach runnels off the jaw along +V."""
+    if a < 10:
+        return
+    cx_, cy_ = C
+    area = abs(U[0] * V[1] - U[1] * V[0])
+    if area < 8.0:                    # edge-on sliver
+        return
+
+    def P(lx, lyy):
+        return (cx_ + lx * U[0] + lyy * V[0],
+                cy_ + lx * U[1] + lyy * V[1])
+
+    def ell(rx, ry, ox=0.0, oy=0.0, n=16):
+        return [P(ox + math.cos(k / n * 2.0 * math.pi) * rx,
+                  oy + math.sin(k / n * 2.0 * math.pi) * ry)
+                for k in range(n)]
+
+    pygame.draw.polygon(lay, (74, 66, 58, a), ell(1.08, 1.08))
+    pygame.draw.polygon(lay, (164, 154, 136, a), ell(1.0, 1.0))
+    # the jaw falls into shade (the +y half-lens)
+    jaw = [P(math.cos(th) * 0.97, math.sin(th) * 0.97)
+           for th in (k / 10.0 * math.pi for k in range(11))]
+    pygame.draw.polygon(lay, (118, 109, 94, a), jaw)
+    # the brow catches what light there is
+    brow = [P(math.cos(th) * 0.78, -0.12 - abs(math.sin(th)) * 0.5)
+            for th in (k / 8.0 * math.pi for k in range(9))]
+    pygame.draw.lines(lay, (206, 196, 176, a), False, brow,
+                      max(1, int(math.sqrt(area) * 0.09)))
+    # recessed sockets (no mouth -- door_mask_surface's grammar)
+    for sx in (-0.42, 0.42):
+        pygame.draw.polygon(lay, (10, 8, 12, a),
+                            ell(0.26, 0.32, sx, -0.18, 10))
+        pygame.draw.polygon(lay, (3, 3, 5, a),
+                            ell(0.19, 0.25, sx, -0.18, 10))
+        if glint > 0.0:
+            gx, gy = P(sx, -0.13)
+            pygame.draw.circle(lay, (*_GOLD_HI, int(a * glint)),
+                               (int(gx), int(gy)), 1)
+    # a worn crack down one cheek (asymmetry: it is old)
+    pygame.draw.lines(lay, (140, 130, 112, a), False,
+                      [P(0.38, 0.12), P(0.29, 0.45), P(0.33, 0.72)], 1)
+    if weep > 0.0:
+        # dark runnels off the jaw, DOWN THE FACE (+V), not screen-down
+        for lx in (-0.28, 0.12, 0.4):
+            x0, y0 = P(lx, 0.7)
+            ln = 0.5 * weep
+            sway = math.sin(t * 2.0 + lx * 9.0) * 0.08
+            x1, y1 = P(lx + sway, 0.7 + ln)
+            pygame.draw.line(lay, (12, 9, 12, int(170 * weep)),
+                             (int(x0), int(y0)), (int(x1), int(y1)), 1)
 
 
 def _pallid_mask(lay, x, y, w, h, a, tilt=0.0, backlit=0.0, glint=0.0):
@@ -920,42 +984,114 @@ def draw_king_unfold(surf, cx, cy, t, threat=0.0, scale=96.0,
             pygame.draw.circle(lay, (*_SHEEN, int(da * 0.7)),
                                (x1, y0 + ln), 1)
 
-    # 5b) THE PALLID MASK surfaces through the skin (threat > 0.25, no
-    # gape): it rides the facet most turned toward the player, GLIDING
-    # between hosts (eased screen-space memory), pale against the tar,
-    # weeping where it breaks the surface. As the gape opens it sinks
-    # back in -- the mask and the throat-mask are the same object.
+    # 5b) THE PALLID MASK surfaces THROUGH the skin (threat > 0.25, no
+    # gape): it BONDS to one facet and rides it -- drawn in the facet's
+    # projected basis, so it skews and rolls with the flesh, foreshortens
+    # as its host turns, and is NEVER billboarded at the camera. When the
+    # churn carries the host edge-on or behind, it sinks (the skin closes
+    # over it), rebonds near the mass's forward side, and breaks through
+    # again: the skin tents, a rim of tar thins as it rises, it weeps
+    # hardest at the breach. As the gape opens it sinks back in -- the
+    # mask and the throat-mask are the same object.
     g_open = max(0.0, min(1.0, gape)) * body_b
     mask_a = 0.0
     if threat > 0.25 and body_b > 0.5:
-        mask_a = min(1.0, (threat - 0.25) / 0.35) * (1.0 - g_open)
+        mask_a = min(1.0, (threat - 0.25) / 0.35)
     if mask_a > 0.03 and front:
-        drift = (math.sin(t * 0.23) * 0.5, math.cos(t * 0.17) * 0.4)
-        want = _norm((pdx * 0.45 + drift[0], -pdy * 0.45 + drift[1], 1.0))
-        best = max(front, key=lambda r: _dot(r[3], want))
-        poly = [op[i] for i in best[2]]
-        tx_ = sum(p[0] for p in poly) / len(poly)
-        ty_ = sum(p[1] for p in poly) / len(poly)
-        if _MASK_DRIFT["x"] is None or \
-                abs(_MASK_DRIFT["x"] - cx) > sz * 4:
-            _MASK_DRIFT["x"], _MASK_DRIFT["y"] = tx_, ty_
-        _MASK_DRIFT["x"] += (tx_ - _MASK_DRIFT["x"]) * 0.06
-        _MASK_DRIFT["y"] += (ty_ - _MASK_DRIFT["y"]) * 0.06
-        facing = max(0.2, best[3][2])
-        mw = int(sz * 0.30 * (0.6 + 0.4 * facing))
-        mh = int(sz * 0.38)
-        _pallid_mask(lay, _MASK_DRIFT["x"], _MASK_DRIFT["y"], mw, mh,
-                     int(205 * mask_a),
-                     tilt=best[3][0] * 3.0,
-                     glint=max(0.0, (threat - 0.55) / 0.45))
-        # it WEEPS where it breaks the skin: dark runnels off the jaw
-        for wx_ in (-mw // 4, mw // 5):
-            dx0 = int(_MASK_DRIFT["x"]) + wx_
-            dy0 = int(_MASK_DRIFT["y"]) + mh // 2
-            pygame.draw.line(lay, (12, 9, 12, int(170 * mask_a)),
-                             (dx0, dy0),
-                             (dx0 + int(math.sin(t * 2 + wx_) * 1.5),
-                              dy0 + max(2, mh // 5)), 1)
+        dtm = 1.0 / 30.0
+        if _MASK_SURF["lt"] is not None:
+            dtm = max(0.0, min(0.1, t - _MASK_SURF["lt"]))
+        _MASK_SURF["lt"] = t
+
+        def _basis(rec):
+            """The host facet's projected half-basis (U across, V down
+            the face), its centre, and its screen area."""
+            p0, p1, p2, p3 = [op[i] for i in rec[2]]
+            Cx = (p0[0] + p1[0] + p2[0] + p3[0]) / 4.0
+            Cy = (p0[1] + p1[1] + p2[1] + p3[1]) / 4.0
+            Ux = ((p1[0] - p0[0]) + (p2[0] - p3[0])) * 0.25
+            Uy = ((p1[1] - p0[1]) + (p2[1] - p3[1])) * 0.25
+            Vx = ((p3[0] - p0[0]) + (p2[0] - p1[0])) * 0.25
+            Vy = ((p3[1] - p0[1]) + (p2[1] - p1[1])) * 0.25
+            return (Cx, Cy), (Ux, Uy), (Vx, Vy)
+
+        host_rec = None
+        if _MASK_SURF["host"] is not None:
+            for rec in front:
+                if rec[1] == _MASK_SURF["host"]:
+                    host_rec = rec
+                    break
+            # a host that has churned edge-on (facing ~0) is as gone as
+            # one that turned away -- the face slides under the rim
+            if host_rec is not None and host_rec[3][2] < 0.12:
+                host_rec = None
+        if host_rec is None or g_open > 0.05:
+            # host lost (or the gape is taking it): SINK
+            _MASK_SURF["em"] = max(0.0, _MASK_SURF["em"] - dtm * 2.6)
+            if _MASK_SURF["em"] <= 0.0 and g_open <= 0.05:
+                # rebond under the skin, biased toward the forward side
+                # (it pops up near where you stand; from then on the
+                # geometry owns it)
+                drift = (math.sin(t * 0.23) * 0.5,
+                         math.cos(t * 0.17) * 0.4)
+                want = _norm((pdx * 0.45 + drift[0],
+                              -pdy * 0.45 + drift[1], 1.0))
+                nb = max(front, key=lambda r: _dot(r[3], want))
+                _MASK_SURF["host"] = nb[1]
+                _, _, V0 = _basis(nb)
+                # fix jaw-ward ONCE at bond time; riding never re-flips
+                _MASK_SURF["vf"] = 1.0 if V0[1] >= 0 else -1.0
+                host_rec = None      # rises starting next frame
+        else:
+            _MASK_SURF["em"] = min(1.0, _MASK_SURF["em"] + dtm * 2.2)
+        em = _MASK_SURF["em"]
+        em_s = em * em * (3.0 - 2.0 * em)          # smoothstep
+        if host_rec is not None and em > 0.02:
+            C, U, V = _basis(host_rec)
+            vf = _MASK_SURF["vf"]
+            V = (V[0] * vf, V[1] * vf)
+            # mask spans ~1.5 facets across, taller than wide; emergence
+            # grows it out of the skin. All scale lives in the basis, so
+            # foreshortening comes straight from the geometry.
+            gs = 0.62 + 0.38 * em_s
+            U = (U[0] * 1.5 * gs, U[1] * 1.5 * gs)
+            V = (V[0] * 1.9 * gs, V[1] * 1.9 * gs)
+            area = abs(U[0] * V[1] - U[1] * V[0])
+            if area >= 8.0:
+                # the skin TENTS before it breaks (strongest mid-rise)
+                tent = em * (1.0 - em) * 4.0
+                if tent > 0.05:
+                    tpts = [(C[0] + math.cos(k / 12.0 * 2 * math.pi)
+                             * U[0] * 1.5
+                             + math.sin(k / 12.0 * 2 * math.pi) * V[0] * 1.3,
+                             C[1] + math.cos(k / 12.0 * 2 * math.pi)
+                             * U[1] * 1.5
+                             + math.sin(k / 12.0 * 2 * math.pi) * V[1] * 1.3)
+                            for k in range(12)]
+                    pygame.draw.polygon(
+                        lay, (*_MEM_HI, int(88 * tent * mask_a)), tpts)
+                    pygame.draw.polygon(
+                        lay, (*_SUBSURF, int(50 * tent * mask_a)),
+                        [(C[0] + (p[0] - C[0]) * 0.6,
+                          C[1] + (p[1] - C[1]) * 0.6) for p in tpts])
+                # the tar WELT the mask rises out of: thick while it's
+                # half-under, never quite gone -- it sits IN the flesh
+                rim = 1.55 - 0.35 * em_s
+                wpts = [(C[0] + math.cos(k / 14.0 * 2 * math.pi)
+                         * U[0] * rim
+                         + math.sin(k / 14.0 * 2 * math.pi) * V[0] * rim,
+                         C[1] + math.cos(k / 14.0 * 2 * math.pi)
+                         * U[1] * rim
+                         + math.sin(k / 14.0 * 2 * math.pi) * V[1] * rim)
+                        for k in range(14)]
+                pygame.draw.polygon(lay, (*_MEM, int(235 * mask_a)), wpts)
+                pygame.draw.polygon(
+                    lay, (*_MEM_HI, int(90 * mask_a * em_s)), wpts, 1)
+                weep = (0.45 + 0.55 * (1.0 - abs(em - 0.55) / 0.55))
+                _pallid_mask_aff(
+                    lay, C, U, V, int(178 * mask_a * em_s),
+                    glint=max(0.0, (threat - 0.55) / 0.45) * em_s,
+                    weep=weep * mask_a, t=t)
 
     # 5c) THE GAPE: the leading face irises open into one huge toothed
     # mouth -- the lunge tell. Jittered rim (never a clean ellipse),

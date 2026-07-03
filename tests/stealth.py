@@ -638,6 +638,75 @@ def main():
         g.update_player(1 / 30.0, fk)
     check((p.x, p.y) != (x0, y0), "beat: movement returns after the beat")
 
+    # --- 9. the Moths (the King's heralds; MOTH_* config) ----------------
+    # Evidence-scaled surface wisps + the King's-room retinue. Inside the
+    # radius: kindle -> FLARE = a MOTH_REACH noise the cult converges on,
+    # a visibility spike, the moth spent. Backing out aborts the kindle.
+    from systems.config import (MOTH_RADIUS, MOTH_KING_RETINUE,
+                                MOTH_KINDLE, MOTH_REACH)
+    g = new_game()
+    g.load_scene_now("arrival_road", "default")
+    check(len(g.scene._moths) == MOTH_KING_RETINUE,
+          "moths: a retinue attends the King's own room from hour one")
+    g.load_scene_now("house", "default")
+    check(len(getattr(g.scene, "_moths", [])) == 0,
+          "moths: a safe room never grows them")
+    ev = g.save.arg("evidence", [])
+    ev += [{"name": "maras_room", "lines": [], "weight": 0.1},
+           {"name": "the_ledger", "lines": [], "weight": 0.1}]
+    g.save.set_arg("evidence", ev)
+    g.load_scene_now("brimley", "default")
+    check(len(g.scene._moths) == 2,
+          "moths: the surface count scales with evidence")
+    clear_cult(g)
+    m = g.scene._moths[0]
+    n = g._spawn_cultist("cult_regular", "cultist",
+                         at=(m["x"] + 400, m["y"]))
+    n.x, n.y = m["x"] + 400, m["y"]
+    n._cult_state = "scout"
+    n._suspicion = 0.0
+    n.facing = (0.0, -1.0)
+    g.player.x, g.player.y = m["x"] + 8, m["y"] + 8
+    g.player.hidden = None
+    g.visibility = 0.2
+    v0 = g.visibility
+    flared = False
+    for _ in range(int((MOTH_KINDLE + 0.4) * 30)):
+        tick(g, 1)
+        if m["state"] == "flare":
+            flared = True
+            break
+    check(flared, "moths: standing in the radius kindles into the flare")
+    check(g.visibility > v0, "moths: the flare spikes visibility")
+    for _ in range(90):
+        tick(g, 1)
+        if n._cult_state == "investigate":
+            break
+    check(n._cult_state == "investigate"
+          and abs(n._last_seen_pos[0] - m["x"]) < MOTH_REACH,
+          "moths: a cultist 400px out converges on the flare")
+    for _ in range(60):
+        tick(g, 1)
+        if m not in g.scene._moths:
+            break
+    check(m not in g.scene._moths, "moths: the flare spends the moth")
+    check(any(nn.get("name") == "the_moths"
+              for nn in g.save.arg("notes", [])),
+          "moths: the first flare files a case NOTE (never evidence)")
+    check(not any(e.get("name") == "the_moths"
+                  for e in g.save.arg("evidence", [])),
+          "moths: the note stays out of the evidence log")
+    m2 = g.scene._moths[0]
+    g.player.x, g.player.y = m2["x"] + 20, m2["y"]
+    for _ in range(6):
+        tick(g, 1)
+    check(m2["state"] == "kindle", "moths: entering the radius kindles")
+    g.player.x = m2["x"] + MOTH_RADIUS * 2.0
+    for _ in range(8):
+        tick(g, 1)
+    check(m2["state"] == "drift" and m2 in g.scene._moths,
+          "moths: backing out aborts the kindle (the counterplay)")
+
     print()
     if FAILS:
         print(f"{len(FAILS)} FAILURES")

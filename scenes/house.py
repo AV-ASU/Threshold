@@ -508,6 +508,21 @@ def house_interact(game):
         "...Still. A year. That's a long time to forget to write down the "
         "day a guest left. I'll keep it in mind.[/c]",
     ])
+    # The world runs while you read now, and the man who keeps the book
+    # is standing right behind the desk. As the caption ends, Sable
+    # speaks up over your shoulder (a float, so he stays in the world).
+    clerk = next((n for n in sc.npcs
+                  if getattr(n, "tag", "") == "host_innkeeper"
+                  and getattr(n, "alive", True)
+                  and not getattr(n, "_is_corpse", False)), None)
+    if clerk is not None and game.narration.active:
+        def _sable_watches():
+            game.float_speech.begin(clerk, [
+                "Guests read back through it sometimes. Looking for a "
+                "name they know.",
+                "[c=dim]\"Find it?\"[/c]",
+            ], name="Mr. Sable", voice="blip_low")
+        game.narration.on_complete = _sable_watches
 
 
 # ---- the Clerk's Room (key: 'son_room') ----

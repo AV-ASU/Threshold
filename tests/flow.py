@@ -1498,14 +1498,31 @@ def main():
     _wf = (gfs.dialog.active or gfs.inv_ui.open or gfs.notebook_ui.open
            or gfs.text_input.active or gfs._flashback_phase is not None)
     check(not _wf, "float: the world is not frozen while a float is up")
-    # narrator / choice / on_complete / no-context all stay modal
+    # A narrator line goes NON-MODAL too now -- the lower-third
+    # narration caption (ui/narration.py), world still running.
     gfs.float_speech.active = False
     gfs._speaking_npc = _crane
     gfs.dialog.show(["A cold room."], speaker="", portrait="narrator")
     gfs._speaking_npc = None
-    check(gfs.dialog.active and not gfs.float_speech.active,
-          "float: a narrator line stays modal")
+    check(gfs.narration.active and not gfs.dialog.active,
+          "narration: a narrator line runs as the lower-third caption")
+    check(not (gfs.dialog.active or gfs.inv_ui.open),
+          "narration: the world is not frozen while a caption is up")
+    # E skims it: first press completes the reveal, further presses page
+    # through, and the last one ends it.
+    _consumed = gfs.narration.advance_from_input()
+    check(_consumed, "narration: E is consumed by an active caption")
+    gfs.narration.advance_from_input()
+    check(not gfs.narration.active,
+          "narration: paging past the last line ends the caption")
+    # A scripted narrator beat WITH a completion callback keeps the
+    # modal box (frozen world) -- those sequences depend on it.
+    gfs.dialog.show(["A held beat."], speaker="", portrait="narrator",
+                    on_complete=lambda: None)
+    check(gfs.dialog.active and not gfs.narration.active,
+          "narration: an on_complete narrator beat stays modal")
     gfs.dialog.active = False
+    gfs.dialog.on_complete = None
     gfs._speaking_npc = _crane
     gfs.dialog.show_choice("Pick", ["a", "b"], lambda i: None,
                            speaker="Crane", portrait="preacher")

@@ -747,6 +747,9 @@ def build_threshold():
         }
         game._closure_locked = True                   # he has crossed; hold
         game.dialog.active = False                    # nothing talks over it
+        game.narration.clear()
+        game.float_speech.active = False
+        game.float_speech.speaker = None
         game.notice_text = None
         game.audio.force_silence()
         game.audio.play("arg_chime", 0.7)

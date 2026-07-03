@@ -149,6 +149,29 @@ KING_LUNGE_GATHER = 0.30     # crawl multiplier during the telegraph
 KING_LUNGE_CD_LO = 3.5       # s between lunges (randomised)
 KING_LUNGE_CD_HI = 6.0
 
+# ---- the Moths (2026-07): the King's heralds, the first flying entity.
+# Folded dead-spider wisps drifting over the surface; count scales with
+# evidence, and a retinue attends whatever room the King himself
+# occupies. A player inside MOTH_RADIUS starts the KINDLE window (the
+# counterplay: back out past the radius, or kill it -- the axe up close,
+# a round from range); the window expiring is the FLARE: a MOTH_REACH
+# noise every cult ear converges on, a visibility spike, the dark broken
+# around it. Then it is gone until the scene rebuilds. Spawned by
+# _spawn_moths (infest_mixin) on every load of a MOTH_SCENES scene.
+MOTH_COUNT_CAP = 3           # evidence-scaled moths per surface scene
+MOTH_KING_RETINUE = 2        # extra moths in the King's current room
+MOTH_SPEED = 26.0            # drift speed px/s
+MOTH_SEEK_BIAS = 0.35        # chance a fresh waypoint aims near the player
+MOTH_RADIUS = 96.0           # trigger radius around the player
+MOTH_KINDLE = 0.8            # seconds of kindle before the flare
+MOTH_FLARE_DUR = 1.1         # seconds the flare burns before it is gone
+MOTH_REACH = 620.0           # cult hearing reach of the flare noise
+MOTH_VIS_SPIKE = 0.10        # visibility jump on flare (capped under the King)
+MOTH_LIGHT_R = 110.0         # kindle/flare light pool (breaks dark cover)
+# Where they fly: the open surface (town included), never the boss arena
+# and never a safe room.
+MOTH_SCENES = (OUTDOOR_SCENES | {"brimley"}) - {"void_boss"}
+
 # Dark scenes -- underground / interior cult sites where the
 # flashlight matters. Without the flashlight the screen is heavily
 # dimmed with a small clear circle around the player. With it,
