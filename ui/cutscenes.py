@@ -838,6 +838,49 @@ class CutsceneMixin:
                                      2 * rw, rh))
         s.blit(glow, (0, 0), special_flags=pygame.BLEND_RGBA_ADD)
 
+        # THE FIGURE far up the road -- the final approach only. Something
+        # stands at the beam's reach and does not resolve: it grows by
+        # fractions as the road hands you toward it, wavers like heat,
+        # eats the light around it, and when the engine dies the road
+        # ahead is empty. (The idle King owns this road from the first
+        # hour; the drive in is where he is first almost-seen.)
+        if ph == "roll" and getattr(self, "_opening_stalls_left", 1) == 0:
+            fig_f = min(1.0, self._opening_phase_t / OPENING_ROLL_DUR)
+            fh = int(12 + 16 * fig_f)               # grows toward you
+            fx = cx + int(math.sin(t * 0.7) * 2.0)
+            fy = int(H * 0.30) + 8                  # the beam's far reach
+            waver = 0.5 + 0.25 * math.sin(t * 6.3) + 0.25 * math.sin(t * 11.7)
+            fa = int(255 * min(1.0, (0.4 + 0.6 * fig_f))
+                     * (0.6 + 0.4 * waver) * max(0.25, light))
+            fig = pygame.Surface((fh + 8, fh * 2 + 6), pygame.SRCALPHA)
+            fcx = (fh + 8) // 2
+            wob = math.sin(t * 2.2) * fh * 0.06
+            # a tall thin dark mass, hem melting into the road
+            pygame.draw.polygon(fig, (8, 7, 10, fa), [
+                (fcx - 2 + wob, 2), (fcx + 2 + wob, 2),
+                (fcx + fh // 3, fh * 2 - 2), (fcx - fh // 3, fh * 2 - 2)])
+            # it EATS the beam: a soft dark halo pressed into the light
+            pygame.draw.ellipse(fig, (5, 5, 8, fa // 3),
+                                (0, fh // 2, fh + 8, fh))
+            # the faintest pale oval where a face would be
+            if fig_f > 0.25:
+                pygame.draw.ellipse(fig, (150, 142, 126, int(fa * 0.55)),
+                                    (int(fcx - 2 + wob), 3, 4, 5))
+            # one gold fleck, only near the end of the approach
+            if fig_f > 0.6:
+                fig.set_at((int(fcx - 1 + wob), 5),
+                           (222, 180, 70, int(fa * 0.8)))
+            s.blit(fig, (fx - fcx, fy - 2))
+
+        # A Moth crosses the beam once on the way in -- the first herald,
+        # tented wings beating through the only light for miles.
+        if 5.6 < t < 8.0 and ph != "dead":
+            from rendering.moth import draw_moth
+            mf = (t - 5.6) / 2.4
+            draw_moth(s, int(cx - 110 + 220 * mf),
+                      cy - 78 + int(math.sin(t * 3.1) * 7), t,
+                      spread=0.12, glow=0.18, seed=5, flap=0.85)
+
         # Dust / moths drifting up through the headlight beam -- a little
         # life in the only light for miles. They rise toward the beam's
         # reach and fade out, swaying side to side.
@@ -853,6 +896,18 @@ class CutsceneMixin:
         # The car. Exhaust puffs while it stalls and after it dies.
         exhaust = (1.0 - sp_frac) if ph in ("stall", "dead") else 0.0
         self._draw_car(s, cx, cy, light, exhaust=exhaust, scale=1.3)
+
+        # In the dead beat a Moth drops out of the dark and settles on
+        # the car's roof, wings folding to the tent -- the town's first
+        # greeter, already waiting where the engine chose to die.
+        if ph == "dead":
+            from rendering.moth import draw_moth
+            settle = min(1.0, self._opening_phase_t / 1.6)
+            # its ember is the one light left beside the taillights
+            draw_moth(s, cx + 20 - int(8 * settle),
+                      int(cy - 90 + 62 * (settle ** 0.8)), t,
+                      spread=0.10 * (1.0 - settle), glow=0.32, seed=9,
+                      flap=0.9 - 0.85 * settle)
 
         # --- Film grade: unify the drive with the cutscene look. Applied to the
         #     WORLD only -- the case cards stamp on top, crisp + legible. ---
@@ -918,3 +973,11 @@ class CutsceneMixin:
             self._draw_case_card(None, ["Engine won't turn over."], "STRANDED",
                                  ccx + 34, dcy + 46, dt_ - 0.8,
                                  OPENING_DEAD_HOLD - 0.8, 53)
+
+        # The stall's diegetic cue: a beat of dead engine, then the key.
+        # (Any key restarts; E is the game's hand-verb, so teach E.)
+        if ph == "stall" and self._opening_phase_t > 0.9:
+            f_ = self.fonts.get("serif_sm", self.fonts["serif"])
+            txt = f_.render("[E]  turn the key", True, (214, 206, 188))
+            txt.set_alpha(max(0, min(255, int(200 + 55 * math.sin(t * 3.0)))))
+            s.blit(txt, (cx - txt.get_width() // 2, int(H * 0.86)))
