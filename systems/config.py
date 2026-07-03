@@ -170,12 +170,12 @@ MOTH_FAST_MULT = 3.0         # the King's shed moths fly this much faster
 MOTH_REACH = 620.0           # cult hearing reach of the flare noise
 MOTH_VIS_SPIKE = 0.10        # visibility jump on flare (capped under the King)
 MOTH_LIGHT_R = 110.0         # kindle/flare light pool (breaks dark cover)
-# Where they fly: the open surface (town included), never the boss arena
-# and never a safe room.
-MOTH_SCENES = (OUTDOOR_SCENES | {"brimley"}) - {"void_boss"}
 # The King SHEDS a pair into every room he enters -- his trail. A room
 # he passed through recently still has them flying fast on arrival.
 KING_TRAIL_FRESH = 150.0     # seconds his trail stays warm in a room
+# MOTH_SCENES (where they fly) is defined next to KING_ROAM_SCENES
+# below: the moths' ground IS the King's ground, so his trail can grow
+# them anywhere he can walk.
 
 # Dark scenes -- underground / interior cult sites where the
 # flashlight matters. Without the flashlight the screen is heavily
@@ -290,6 +290,9 @@ CULT_TOPUP_INTERVAL = 8.0      # seconds between cultist (re)spawns
 # travels only the edges BETWEEN these (passages + folds); a door/ladder into
 # an interior is the player's escape, never his.
 KING_ROAM_SCENES = (SEAMLESS_WORLD_SCENES - {"void_boss"}) - SAFE_SCENES
+# The Moths fly exactly the King's ground (they are his heralds): every
+# room he can enter is a room his shed pair can attend.
+MOTH_SCENES = set(KING_ROAM_SCENES)
 KING_ROAM_START = "arrival_road"   # idle home: the looping road W of the Lodge
 KING_HOP_INTERVAL = 6.0      # s between adjacent-scene hops while off-camera
 KING_HOP_TOWARD = 0.55       # chance a search hop steps toward the player (lucky,

@@ -47,6 +47,13 @@ class FloatSpeech:
               color=C_WHITE, on_complete=None):
         """Start (or replace) a floating conversation over `speaker`.
         `pages` is a list of raw markup strings."""
+        # A chained beat pending on the replaced caption must not
+        # silently vanish (the fold reflection chains off a local's
+        # float) -- fire it now, early, rather than never.
+        if self.active and self.on_complete is not None:
+            pend = self.on_complete
+            self.on_complete = None
+            pend()
         if isinstance(pages, str):
             pages = [pages]
         self.pages = [parse_dialogue(p, default_color=color,
