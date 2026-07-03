@@ -271,10 +271,11 @@ def main():
     check(g2.scene.exit_gate_fn(g2, "G"),
           "egress: the circle releases you once the way down is dead")
 
-    # --- 1b. The Ledger fires from the Lodge FRONT DESK, not the cellar ---
-    # CANON (NARRATIVE §4, §5): one register, on the front desk; you sign on
-    # arrival and the evidence lands when you RE-READ it. The old cellar copy
-    # behind a loose panel is cut.
+    # --- 1b. The Ledger: the locked cellar + the key behind the house ---
+    # CANON (2026-07 rework): you SIGN the desk register on arrival; the
+    # desk re-read is only a LEAD (a clean, new book). The Ledger itself
+    # is the boxed old registers in the cellar, behind the padlocked
+    # kitchen hatch; the cellar key hangs on a nail behind the house.
     gl = new_game()
     gl.load_scene_now("house")
     ready(gl)
@@ -282,25 +283,37 @@ def main():
     gl.scene.on_interact_fn(gl)                      # first press: sign
     check(gl.save.flag("register_signed"),
           "ledger: first press signs the front-desk register")
-    check(not has_evidence(gl, "the_ledger"),
-          "ledger: signing alone does not log the evidence")
     ready(gl)
-    gl.scene.on_interact_fn(gl)                      # re-read: the evidence
+    gl.scene.on_interact_fn(gl)                      # re-read: only a lead
+    check(not has_evidence(gl, "the_ledger"),
+          "ledger: the desk register is a LEAD now, never the evidence")
+    check(not gl.scene.exit_gate_fn(gl, "L"),
+          "ledger: the cellar hatch is locked without the key")
+    gl.load_scene_now("our_house_area")
+    check(any(it["key"] == "cellar_key" for it in gl.scene.items),
+          "ledger: the cellar key hangs behind the house")
+    gl.player.inventory.add("cellar_key", 1)   # (walk-over pickup in play)
+    gl.save.set_flag("cellar_key_taken", True)
+    gl.load_scene_now("house")
+    check(gl.scene.exit_gate_fn(gl, "L")
+          and gl.save.flag("cellar_unlocked"),
+          "ledger: the carried key turns the padlock (one-time unlock)")
+    gl.load_scene_now("basement")
+    ready(gl)
+    gl.player.x, gl.player.y = gl.scene._ledger_pos
+    gl.scene.on_interact_fn(gl)
     check(has_evidence(gl, "the_ledger"),
-          "ledger: re-reading the front-desk register fires the_ledger")
-    # The cellar no longer carries the Ledger.
+          "ledger: the old registers in the cellar fire the_ledger")
+    # A fresh save's cellar is key-gated and panel-free.
     gcellar = new_game()
     gcellar.load_scene_now("basement")
     ready(gcellar)
     check(not hasattr(gcellar.scene, "_wall_panel_pos"),
-          "ledger: the cellar copy is cut (no loose wall panel)")
+          "ledger: no loose wall panel (the old cache stays cut)")
     import inspect as _insp_l
-    from scenes import house as _house_mod
-    check("the_ledger" not in _insp_l.getsource(_house_mod.basement_interact),
-          "ledger: basement_interact no longer logs the_ledger")
     from scenes.dialogue import clerk_dialogue as _clerk_src_fn
     check("cellar" not in _insp_l.getsource(_clerk_src_fn).lower(),
-          "ledger: Sable no longer points at a cellar register")
+          "ledger: Sable never points at the cellar himself")
 
     # --- 2. The Calling (Scriptorium) -- first cult-testimony fragment ---
     _ev_before = len(g.save.arg("evidence", []))
@@ -570,8 +583,10 @@ def main():
     # --- 12. Purged items stay purged (no defs, no icons) ---
     from systems.items import ITEM_DEFS
     from ui.item_icons import _DISPATCH
+    # ("cellar_key" left this list 2026-07: it returned as a REAL item,
+    # the gate on the padlocked cellar hatch where the Ledger lives.)
     for dead in ("charcoal", "paper", "car_keys", "cellar_bottle",
-                 "liquor_crate", "cellar_key", "polaroid"):
+                 "liquor_crate", "polaroid"):
         check(dead not in ITEM_DEFS and dead not in _DISPATCH,
               f"cleanup: '{dead}' has no item def or icon")
     # --- 13. The Brimley escape gates on the Sign alone (no car keys) ---
@@ -925,14 +940,14 @@ def main():
     check(gp2._evidence_count() == ev_pre,
           "voice: the leave-seed is a NOTE, not evidence (never arms the King-gate)")
     # The Ledger -- first evidence -- carries the PI's voice (the checkout-date
-    # confusion), not a dry description.
+    # confusion), not a dry description. Read from the cellar registers
+    # (2026-07: behind the padlocked hatch).
     gl2 = new_game()
-    gl2.load_scene_now("house", "from_bedroom")
+    gl2.player.inventory.add("cellar_key", 1)
+    gl2.load_scene_now("basement")
     ready(gl2)
-    gl2.player.x, gl2.player.y = gl2.scene._frontdesk_pos
-    gl2.scene.on_interact_fn(gl2)         # sign
-    ready(gl2)
-    gl2.scene.on_interact_fn(gl2)         # re-read -> evidence
+    gl2.player.x, gl2.player.y = gl2.scene._ledger_pos
+    gl2.scene.on_interact_fn(gl2)         # read the old registers
     _lt = " ".join(l for e in gl2.save.arg("evidence", [])
                    if e.get("name") == "the_ledger" for l in e["lines"]).lower()
     # CANON: the checkout dates stop A YEAR back (the same season the PI
