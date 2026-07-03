@@ -150,8 +150,19 @@ def _powder(s):
     pygame.draw.rect(s, (220, 120, 50), (10, 2, 1, 1))
 
 
+def _iron_key(s):
+    # A heavy iron key: round bow, straight shank, two teeth.
+    pygame.draw.circle(s, (128, 126, 130), (5, 5), 3, 1)
+    pygame.draw.line(s, (128, 126, 130), (7, 7), (12, 12), 2)
+    pygame.draw.line(s, (128, 126, 130), (11, 12), (11, 14), 1)
+    pygame.draw.line(s, (128, 126, 130), (13, 11), (13, 14), 1)
+    pygame.draw.circle(s, (86, 84, 90), (5, 5), 1)
+
+
 _DISPATCH = {
     "lumber_axe":      _axe,
+    "woodshed_key":    _iron_key,
+    "cellar_key":      _iron_key,
     "cross":           _cross,
     "flashlight":      _flashlight,
     "sigil_rubbing":   _sigil_rubbing,

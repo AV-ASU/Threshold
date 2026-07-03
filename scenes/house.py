@@ -271,8 +271,9 @@ def build_house():
     """The Clerk's downstairs: kitchen on the left half, living
     room on the right half. Wall divider with a door between them.
     Front door on the south wall (B exit -- the player may be
-    blocked here by the Clerk). Cellar hatch in the
-    kitchen. Door to spare_room hallway on the north (col 13). Door
+    blocked here by the Clerk). Cellar hatch in the kitchen,
+    PADLOCKED until the cellar key (behind the house) is carried.
+    Door to spare_room hallway on the north (col 13). Door
     to the Clerk's bedroom on the north (col 4) -- locked
     initially."""
     floor = [
@@ -331,6 +332,27 @@ def build_house():
     # Offset the spawn one column east so the player has to actively
     # navigate back to the hatch to descend again.
     sc.set_spawn("from_basement", 4, 8)
+    # The hatch is PADLOCKED (2026-07: the Ledger moved down there;
+    # the cellar key hangs on a nail behind the house). A gated-shut
+    # exit reads as floor, so house_interact carries the locked
+    # feedback at the hatch; the gate itself turns the key on the
+    # first crossing.
+    sc._hatch_pos = (3 * TILE + 16, 9 * TILE + 16)
+    sc.add_interactable(sc._hatch_pos[0], sc._hatch_pos[1], 40)
+
+    def _house_gate(game, ch):
+        if ch != "L":
+            return True
+        if game.save.flag("cellar_unlocked"):
+            return True
+        if game.player.inventory.has("cellar_key"):
+            game.save.set_flag("cellar_unlocked", True)
+            game.audio.play("door_open", 0.55)
+            game.show_notice("The iron key turns. The hatch swings up.",
+                             duration=2.4)
+            return True
+        return False
+    sc.exit_gate_fn = _house_gate
 
     # A large worn rug before the hearth in the living room -- off-grid
     # and multi-tile so it breaks the plank tiling. Added first so the
@@ -477,16 +499,30 @@ def house_on_enter(game, scene):
 
 
 def house_interact(game):
-    """Living-room interact handler. The Lodge FRONT DESK (E): the guest
-    register -- the Ledger, evidence #3 (NARRATIVE §4). One register, in
-    plain sight on the desk. First press SIGNS it (the light arrival beat);
-    re-reading it is where the evidence lands -- the pattern of guests who
-    check in and never out, your own wet name already among them.
+    """Living-room interact handler. The Lodge FRONT DESK (E): the
+    sign-in register. First press SIGNS it (the light arrival beat);
+    re-reading it is a LEAD now, not the evidence -- the book is nearly
+    new, and the full ones went somewhere when they filled. The Ledger
+    itself (evidence #3) is the boxed old registers in the PADLOCKED
+    cellar (2026-07 rework; the key hangs behind the house).
 
-    (The night key-on-hook interaction is gone; the woodshed key lives in
-    the cellar.)"""
+    The cellar hatch (E, kitchen): the locked feedback + the soft
+    pointer toward the key. The gate itself lives on the scene
+    (exit_gate_fn in build_house)."""
     sc = game.scene
     px, py = game.player.x, game.player.y
+    hx, hy = getattr(sc, "_hatch_pos", (None, None))
+    if hx is not None and abs(px - hx) <= 40 and abs(py - hy) <= 40:
+        if game.save.flag("cellar_unlocked"):
+            return                    # the open hatch is the exit now
+        game.audio.play("door_locked", 0.5)
+        game.dialog.show([
+            "[c=dim](A padlock through the cellar hatch, older than the "
+            "hinges and freshly oiled. Locked.)[/c]",
+            "[c=dim]A lodge this size keeps a spare key close. Out of "
+            "the rain, near a door. I'd start behind the house.[/c]",
+        ], speaker="", voice="blip_soft", portrait="narrator")
+        return
     dx, dy = getattr(sc, "_frontdesk_pos", (None, None))
     if dx is None or abs(px - dx) > 48 or abs(py - dy) > 48:
         return
@@ -502,34 +538,13 @@ def house_interact(game):
         return
     if game.save.flag("evidence_the_ledger"):
         return
-    game.audio.play("pickup_rare", 0.7)
-    game.audio.play("low_pulse", 0.45)
-    _evidence(game, "the_ledger", [
-        "You flip back through the register out of habit. Names signed in, in "
-        "the Clerk's hand, years of them, and a date beside each one where "
-        "they settled up and left.",
-        "Then those dates just... stop. The last anyone signed out was a year "
-        "back. Every name since signs in and never out. Yours among them now, "
-        "the ink still wet.",
-        "[c=dim]Probably nothing. A clerk who got lazy, dropped the habit. "
-        "...Still. A year. That's a long time to forget to write down the "
-        "day a guest left. I'll keep it in mind.[/c]",
-    ])
-    # The world runs while you read now, and the man who keeps the book
-    # is standing right behind the desk. As the caption ends, Sable
-    # speaks up over your shoulder (a float, so he stays in the world).
-    clerk = next((n for n in sc.npcs
-                  if getattr(n, "tag", "") == "host_innkeeper"
-                  and getattr(n, "alive", True)
-                  and not getattr(n, "_is_corpse", False)), None)
-    if clerk is not None and game.narration.active:
-        def _sable_watches():
-            game.float_speech.begin(clerk, [
-                "Guests read back through it sometimes. Looking for a "
-                "name they know.",
-                "[c=dim]\"Find it?\"[/c]",
-            ], name="Mr. Sable", voice="blip_low")
-        game.narration.on_complete = _sable_watches
+    game.dialog.show([
+        "You flip back through the register out of habit. A clean book, "
+        "barely started. The earliest name on the page is only weeks old.",
+        "[c=dim]A lodge this old has years of these. They go somewhere "
+        "when they fill. Down, if this place is like every hotel I've "
+        "worked. And the kitchen hatch wears a padlock.[/c]",
+    ], speaker="", voice="blip_soft", portrait="narrator")
 
 
 # ---- the Clerk's Room (key: 'son_room') ----
@@ -634,13 +649,15 @@ def clerk_room_interact(game):
 # ---- innkeeper_basement (key: 'basement') ----
 
 def build_basement():
-    """The Arcadia Lodge's cellar -- the Clerk's domain. Stone walls,
-    packed dirt floor, a single hanging bulb. A photograph stands on a
-    shelf (the Arcadia's people, never aging, never leaving -- it echoes
-    the front-desk Ledger); the workbench chest holds the woodshed key,
-    and the guttering candles pay off the cult-devotion beat once you've
-    seen the dark below. (The Ledger, evidence #3, lives on the front
-    desk now -- the old cellar copy behind a loose panel is cut.)
+    """The Arcadia Lodge's cellar -- the Clerk's domain, behind the
+    PADLOCKED kitchen hatch (the cellar key hangs behind the house).
+    Stone walls, packed dirt floor, a single hanging bulb. A photograph
+    stands on a shelf (the Arcadia's people, never aging, never
+    leaving); the workbench chest holds the woodshed key; the boxed OLD
+    REGISTERS on the east crates are the Ledger, evidence #3 (2026-07:
+    moved back down here from the front desk, behind the lock); and the
+    guttering candles pay off the cult-devotion beat once you've seen
+    the dark below.
 
     Single entry/exit via the kitchen cellar hatch. A previous build
     had a south-wall bulkhead leading to the back yard; removed
@@ -714,10 +731,16 @@ def build_basement():
     sc.add_decoration(Decoration(10 * TILE + 26, 1 * TILE + 6, "cobweb",
                                  ang=math.pi / 2))
     sc.add_furniture("firewood", [(3, 10), (4, 10)], w=58, h=24)
-    # Crates of stored goods filling out the cellar's east end.
+    # Crates of stored goods filling out the cellar's east end. The top
+    # of the west crate carries the Lodge's boxed OLD REGISTERS -- the
+    # Ledger, evidence #3 (read via basement_interact).
     sc.add_furniture("crate", [(10, 4)])
     sc.add_furniture("crate", [(11, 4)])
     sc.add_furniture("barrel", [(11, 2)])
+    sc._ledger_pos = (10 * TILE + 16, 4 * TILE + 16)
+    sc.add_decoration(Decoration(10 * TILE + 16, 4 * TILE + 4, "ledger",
+                                 z=14))
+    sc.add_interactable(sc._ledger_pos[0], sc._ledger_pos[1], 44)
     # Larder shelves of preserves on the north wall. The contents have
     # all gone the same murky shade, and one jar holds something the
     # light doesn't explain. A butter churn stands dry by the firewood.
@@ -738,9 +761,9 @@ def build_basement():
 
 def basement_on_enter(game, scene):
     """Drop the woodshed key on the workbench (idempotent via save flag).
-    (The Ledger, evidence #3, moved to the front desk -- nothing evidential
-    is hidden down here now; the cellar is the woodshed-key gate plus the
-    candle-devotion atmosphere beat.)"""
+    (The Ledger, evidence #3, is the boxed old registers on the east
+    crates -- basement_interact reads it; the padlocked hatch upstairs
+    is the gate.)"""
     game._provoke_cult(0.10)
     # The woodshed key lives in the workbench chest -- taken by opening it
     # (E) in basement_interact, not auto-grabbed off the floor. Sync the
@@ -767,10 +790,35 @@ def basement_on_enter(game, scene):
 
 
 def basement_interact(game):
-    """E at the workbench chest: the woodshed key (gate to the axe
-    in the shed). The Ledger evidence moved upstairs to the front desk;
-    nothing evidential is hidden down here now."""
+    """E at the old registers (east crates): the Ledger, evidence #3.
+    E at the workbench chest: the woodshed key (gate to the axe in the
+    shed)."""
     sc = game.scene
+    px, py = game.player.x, game.player.y
+    lx, ly = getattr(sc, "_ledger_pos", (None, None))
+    if lx is not None and abs(px - lx) <= 44 and abs(py - ly) <= 44:
+        if game.save.flag("evidence_the_ledger"):
+            game.dialog.show([
+                "[c=dim]Years of names that never signed out. You've "
+                "read enough of them.[/c]",
+            ], speaker="", voice="blip_soft", portrait="narrator")
+            return
+        game.audio.play("pickup_rare", 0.7)
+        game.audio.play("low_pulse", 0.45)
+        _evidence(game, "the_ledger", [
+            "Boxes of the Lodge's old registers, years deep, carried down "
+            "here as each book filled. You lift the top one out and start "
+            "back through it.",
+            "Names signed in, in the Clerk's hand, and a date beside each "
+            "one where they settled up and left. Then those dates just... "
+            "stop. The last anyone signed out was a year back. Every name "
+            "since signs in and never out.",
+            "[c=dim]Probably nothing. A clerk who got lazy, dropped the "
+            "habit. ...Still. A year of guests, and the clean book "
+            "upstairs starts right where these leave off. I'll keep it "
+            "in mind.[/c]",
+        ])
+        return
     # The workbench chest -- holds the woodshed key (gate to the axe
     # in the shed). chest_interact does its own range check and flips the
     # chest's open visual; the `woodshed_key_taken` flag keeps it emptied

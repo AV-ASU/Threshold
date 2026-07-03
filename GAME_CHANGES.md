@@ -19,10 +19,15 @@ Update-existing-content pass: descriptions, dialogue, item placement.
 Implemented + verified (compileall + smoke + flow green; canon guards added).
 *Old §-numbers in parens, for cross-reference with older notes.*
 
-1. **Ledger → the Lodge front desk** *(§1)* — sign the register on arrival;
-   evidence #3 `the_ledger` fires on **re-read** at the desk. Cellar loose-panel
-   copy + Sable's cellar pointer cut; the `basement` scene kept as the
-   woodshed-key gate + candle-devotion atmosphere (not a dead room).
+1. **Ledger → the PADLOCKED Lodge cellar** *(§1; re-decided 2026-07,
+   superseding the front-desk placement below)* — sign the register on
+   arrival; the desk **re-read is only a LEAD** (a clean new book; the
+   full ones went below). The **cellar key hangs on a nail behind the
+   house** (yard walk-over pickup); carrying it turns the padlock on the
+   kitchen hatch once; evidence #3 `the_ledger` fires reading the boxed
+   **old registers** on the cellar crates. Sable still never points at
+   the cellar (flow-guarded). *(2026-06 text, for history: front desk,
+   evidence on re-read; cellar loose-panel copy cut.)*
 2. **Sable → the most-attuned local** *(§2)* — menace is compulsion, not
    conspiracy; nothing tags him newcomer/recruiter; car talk stays deniable.
 3. **Royce has stopped driving out** *(§3)* — given-up past tense; kept *"You

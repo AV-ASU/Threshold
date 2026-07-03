@@ -266,6 +266,31 @@ def build_our_house_area():
         if 6 <= ty_ <= 8: continue
         sc.add_decoration(Decoration(gx, gy, "grass_tuft"))
 
+    def _yard_on_enter(game, scene):
+        # The CELLAR KEY hangs on a nail behind the house (2026-07: the
+        # Ledger moved down into the padlocked cellar; this is its
+        # gate). Walk-over pickup with a glimmer marker, flag-gated so
+        # it drops exactly once per save.
+        if (game.save.flag("cellar_key_taken")
+                or game.player.inventory.has("cellar_key")):
+            return
+        kx, ky = 7 * TILE + 16, 1 * TILE + 16
+
+        def _took(g):
+            g.save.set_flag("cellar_key_taken", True)
+            g.scene.decorations = [
+                d for d in g.scene.decorations
+                if not (d.kind == "item_drop"
+                        and abs(d.x - kx) < 2 and abs(d.y - ky) < 2)]
+            g.dialog.show([
+                "[c=dim](A nail under the back eave, out of the weather. "
+                "A heavy iron key, kept oiled. Nobody tends a key like "
+                "this to a door that doesn't matter.)[/c]",
+            ], speaker="", voice="blip_soft", portrait="narrator")
+        scene.add_item(kx, ky, "cellar_key", on_pickup=_took)
+        scene.add_decoration(Decoration(kx, ky, "item_drop"))
+    sc.on_enter_fn = _yard_on_enter
+
     return sc
 
 

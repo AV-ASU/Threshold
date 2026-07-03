@@ -308,7 +308,11 @@ it renders the procedural sprites to a labelled PNG strip.
   pass settled a batch of story decisions and the **code changes to make
   the game match** are tracked in `GAME_CHANGES.md` (with `NARRATIVE.md` §8
   pointing to it). Highlights that override older code/comments: the
-  **Ledger is on the Lodge front desk** (the cellar copy is cut), **Mr.
+  **Ledger is the boxed old registers in the PADLOCKED Lodge cellar**
+  (2026-07 rework, superseding the 2026-06 front-desk placement: the
+  cellar key hangs on a nail behind the house, the desk keeps the
+  sign-in register + the lead pointing down; Sable himself never points
+  at the cellar), **Mr.
   Sable is the most-attuned *local*** (not a newcomer), the **Playscript is
   the cult's own notes**, and the **Deep Stair no longer consumes the
   keystone** (Mask + notes are carried down and spent at the Threshold to

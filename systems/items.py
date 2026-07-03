@@ -33,6 +33,12 @@ ITEM_DEFS = {
     "woodshed_key":  {"name": "Woodshed Key",
                        "kind": "key",
                        "desc": "A key."},
+    "cellar_key":    {"name": "Cellar Key",
+                       "kind": "key",
+                       "desc": "A heavy iron key from a nail under the "
+                               "Lodge's back eave, kept oiled against the "
+                               "rain. It can only be the padlocked hatch "
+                               "in the kitchen."},
     "flashlight":    {"name": "Flashlight",
                        "kind": "key",
                        "desc": "A heavy steel flashlight. Press [F] to "
