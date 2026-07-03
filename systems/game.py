@@ -424,6 +424,9 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         self._heartbeat_t = 0.0
         self._king = None
         self._king_anchor = None
+        # The King's room-to-room trail: scene_key -> title_t stamp of
+        # his last passage (the shed-Moth spawn reads it on load).
+        self._king_trail = {}
         reset_king_fx()        # clear his render trail/particles across runs
         self._reinforce_t = 0.0
         self._gun_cd = 0.0

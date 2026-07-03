@@ -164,13 +164,18 @@ MOTH_SPEED = 26.0            # drift speed px/s
 MOTH_SEEK_BIAS = 0.35        # chance a fresh waypoint aims near the player
 MOTH_RADIUS = 96.0           # trigger radius around the player
 MOTH_KINDLE = 0.8            # seconds of kindle before the flare
-MOTH_FLARE_DUR = 1.1         # seconds the flare burns before it is gone
+MOTH_FLARE_DUR = 2.0         # seconds the flare burns before it falls
+MOTH_FALL_DUR = 0.6          # seconds the burnt-out husk takes to drop
+MOTH_FAST_MULT = 3.0         # the King's shed moths fly this much faster
 MOTH_REACH = 620.0           # cult hearing reach of the flare noise
 MOTH_VIS_SPIKE = 0.10        # visibility jump on flare (capped under the King)
 MOTH_LIGHT_R = 110.0         # kindle/flare light pool (breaks dark cover)
 # Where they fly: the open surface (town included), never the boss arena
 # and never a safe room.
 MOTH_SCENES = (OUTDOOR_SCENES | {"brimley"}) - {"void_boss"}
+# The King SHEDS a pair into every room he enters -- his trail. A room
+# he passed through recently still has them flying fast on arrival.
+KING_TRAIL_FRESH = 150.0     # seconds his trail stays warm in a room
 
 # Dark scenes -- underground / interior cult sites where the
 # flashlight matters. Without the flashlight the screen is heavily

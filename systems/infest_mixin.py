@@ -114,12 +114,23 @@ def _mutated_local_dialogue(game, npc):
 
 class InfestationMixin:
     # ---- the Moths (the King's heralds; MOTH_* config) ----------------
+    @staticmethod
+    def _new_moth(x, y, seed, fast=False, phase=0.0):
+        return {
+            "x": x, "y": y, "t": phase,
+            "seed": seed, "state": "drift", "fast": fast,
+            "kt": 0.0, "ft": 0.0, "wt": 0.0,
+            "wx": x, "wy": y, "spread": 0.0, "glow": 0.12,
+            "h": 1.0,                     # hover factor (falls to 0)
+        }
+
     def _spawn_moths(self):
         """Seed this scene's moths on load (scene-local, rebuilt like
         everything else). Count = evidence (capped) on any open surface
-        scene, plus a retinue wherever the King himself currently is --
-        including the idle road King, so the arrival road drifts with
-        them from the first hour."""
+        scene. On top of that, the King SHEDS a pair into every room he
+        enters: his current room, and any room his trail is still warm
+        in (KING_TRAIL_FRESH), grows two FAST fliers -- walk into a
+        room with them whipping around and you know he was here."""
         sc = self.scene
         if sc is None:
             return
@@ -128,16 +139,19 @@ class InfestationMixin:
             return
         n = min(MOTH_COUNT_CAP, self._evidence_count())
         rk = getattr(self, "_roam_king", None)
-        if rk is not None and rk.get("scene") == sc.key:
-            n += MOTH_KING_RETINUE
-        if n <= 0:
+        trail = getattr(self, "_king_trail", None) or {}
+        warm = (self.title_t - trail.get(sc.key, -1e9)) < KING_TRAIL_FRESH
+        n_fast = 0
+        if (rk is not None and rk.get("scene") == sc.key) or warm:
+            n_fast = MOTH_KING_RETINUE
+        if n + n_fast <= 0:
             return
         rng = random.Random((sum(map(ord, sc.key)) * 131071) ^ 0x5A17)
         px = self.player.x if self.player else sc.w * TILE // 2
         py = self.player.y if self.player else sc.h * TILE // 2
         placed = 0
-        for _ in range(n * 30):
-            if placed >= n:
+        for _ in range((n + n_fast) * 30):
+            if placed >= n + n_fast:
                 break
             x = rng.uniform(2 * TILE, (sc.w - 2) * TILE)
             y = rng.uniform(2 * TILE, (sc.h - 2) * TILE)
@@ -145,13 +159,33 @@ class InfestationMixin:
                 continue
             if math.hypot(x - px, y - py) < MOTH_RADIUS * 2.2:
                 continue          # never born already on top of you
-            sc._moths.append({
-                "x": x, "y": y, "t": rng.uniform(0.0, 6.28),
-                "seed": placed * 3 + 1, "state": "drift",
-                "kt": 0.0, "ft": 0.0, "wt": 0.0,
-                "wx": x, "wy": y, "spread": 0.0, "glow": 0.12,
-            })
+            sc._moths.append(self._new_moth(
+                x, y, placed * 3 + 1, fast=placed < n_fast,
+                phase=rng.uniform(0.0, 6.28)))
             placed += 1
+
+    def _shed_king_moths(self):
+        """The King's body just entered the player's room: he sheds his
+        pair right there, live (they fan out from his position). Never
+        stacks past the retinue count."""
+        sc = self.scene
+        if sc is None or sc.key not in MOTH_SCENES:
+            return
+        moths = getattr(sc, "_moths", None)
+        if moths is None:
+            moths = sc._moths = []
+        n_fast = sum(1 for m in moths
+                     if m.get("fast") and m["state"] == "drift")
+        king = self._king
+        if king is None:
+            return
+        for i in range(MOTH_KING_RETINUE - n_fast):
+            ang = random.uniform(0, 6.28)
+            moths.append(self._new_moth(
+                king.x + math.cos(ang) * 30,
+                king.y + math.sin(ang) * 30,
+                90 + i * 7, fast=True,
+                phase=random.uniform(0.0, 6.28)))
 
     def _tick_moths(self, dt):
         """Drift, kindle, flare. Runs in the threat block (freezes with
@@ -166,12 +200,24 @@ class InfestationMixin:
             return
         for m in list(moths):
             m["t"] += dt
+            if m["state"] == "husk":
+                continue                          # spent, on the ground
+            if m["state"] == "fall":
+                # burnt out: it drops, the light dying as it goes
+                m["h"] = max(0.0, m["h"] - dt / MOTH_FALL_DUR)
+                m["glow"] = max(0.0, m["glow"] - dt * 1.8)
+                m["spread"] = max(0.25, m["spread"] - dt * 1.4)
+                if m["h"] <= 0.0:
+                    m["state"] = "husk"
+                    m["glow"] = 0.0
+                    self.audio.play("bump", 0.35)
+                continue
             if m["state"] == "flare":
                 m["ft"] -= dt
                 m["spread"] = 1.0
                 m["glow"] = 1.0
                 if m["ft"] <= 0.0:
-                    moths.remove(m)
+                    m["state"] = "fall"           # 2s burn, then it drops
                 continue
             d = sc.world_dist(m["x"], m["y"], p.x, p.y)
             # the axe pops it quietly (the reward for darting in);
@@ -192,26 +238,32 @@ class InfestationMixin:
                 sc.emit_noise(m["x"], m["y"], 0.25, kind="moth_pop")
                 continue
             if m["state"] == "drift":
+                fast = m.get("fast", False)
                 m["wt"] -= dt
                 if (m["wt"] <= 0.0
                         or math.hypot(m["wx"] - m["x"],
                                       m["wy"] - m["y"]) < 12):
-                    m["wt"] = random.uniform(2.5, 5.5)
+                    # the King's shed pair WHIP around: short legs, far
+                    # throws, barely a pause
+                    m["wt"] = (random.uniform(0.7, 1.8) if fast
+                               else random.uniform(2.5, 5.5))
                     if random.random() < MOTH_SEEK_BIAS:
                         ang = random.uniform(0, 6.28)
                         r = random.uniform(70, 170)
                         m["wx"] = p.x + math.cos(ang) * r
                         m["wy"] = p.y + math.sin(ang) * r
                     else:
-                        m["wx"] = m["x"] + random.uniform(-260, 260)
-                        m["wy"] = m["y"] + random.uniform(-260, 260)
+                        rr = 420 if fast else 260
+                        m["wx"] = m["x"] + random.uniform(-rr, rr)
+                        m["wy"] = m["y"] + random.uniform(-rr, rr)
                     m["wx"] = max(TILE, min((sc.w - 1) * TILE, m["wx"]))
                     m["wy"] = max(TILE, min((sc.h - 1) * TILE, m["wy"]))
                 dx = m["wx"] - m["x"]
                 dy = m["wy"] - m["y"]
                 dl = math.hypot(dx, dy) or 1.0
-                m["x"] += dx / dl * MOTH_SPEED * dt
-                m["y"] += dy / dl * MOTH_SPEED * dt
+                spd = MOTH_SPEED * (MOTH_FAST_MULT if fast else 1.0)
+                m["x"] += dx / dl * spd * dt
+                m["y"] += dy / dl * spd * dt
                 m["spread"] = max(0.0, m["spread"] - dt * 1.6)
                 m["glow"] = max(0.12, m["glow"] - dt * 0.8)
                 if d < MOTH_RADIUS and p.hidden is None:

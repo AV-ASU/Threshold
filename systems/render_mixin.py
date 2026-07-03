@@ -1221,18 +1221,25 @@ class RenderMixin:
                 a = _vis_alpha(m["x"] + ox, m["y"] + oy)
                 if a is None:
                     continue
-                hover = 34 + math.sin(m["t"] * 1.7 + m["seed"]) * 5.0
+                # hover collapses to the ground as a burnt-out moth FALLS
+                hf = m.get("h", 1.0)
+                hover = (34 + math.sin(m["t"] * 1.7 + m["seed"]) * 5.0) * hf
 
                 def _draw_moth_e(s, m=m, sx=sx, sy=sy, hover=hover):
                     gy = sy - actor_lift
-                    smw = 20 + int(6 * m["glow"])
-                    smudge = pygame.Surface((smw * 2, 8), pygame.SRCALPHA)
-                    pygame.draw.ellipse(smudge, (8, 7, 12, 80),
-                                        (0, 0, smw * 2, 8))
-                    s.blit(smudge, (sx - smw, gy - 4))
+                    husk = m["state"] == "husk"
+                    if not husk:
+                        smw = 20 + int(6 * m["glow"])
+                        smudge = pygame.Surface((smw * 2, 8),
+                                                pygame.SRCALPHA)
+                        pygame.draw.ellipse(smudge, (8, 7, 12, 80),
+                                            (0, 0, smw * 2, 8))
+                        s.blit(smudge, (sx - smw, gy - 4))
                     draw_moth(s, sx, gy - hover, m["t"],
                               spread=m["spread"], glow=m["glow"],
-                              seed=m["seed"])
+                              seed=m["seed"],
+                              flap=(1.0 if m.get("fast") else 0.2),
+                              husk=husk)
                 _emit(self.camera.depth(m["x"] + ox, m["y"] + oy),
                       lambda a=a, sx=sx, sy=sy, fn=_draw_moth_e:
                       draw_with_alpha(self.screen, a, fn,
