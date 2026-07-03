@@ -168,6 +168,10 @@ def build_our_house_area():
                 sc.floor[ty][tx] = "d"
     for bx, by in _yd_bushes:
         sc.add_decoration(Decoration(bx, by, "bush"))
+    # A BRIMLEY board on the road's north shoulder by the WEST mouth
+    # (2026-07 playtest fix): leaving the Lodge yard, town is that way.
+    sc.add_decoration(Decoration(2 * TILE + 16, 5 * TILE + 24,
+                                 "town_sign", text="BRIMLEY"))
 
     sc.set_spawn("default", 12, 7)
     sc.set_spawn("from_house", 5, 6)             # one south of back door
@@ -331,6 +335,10 @@ def build_arrival_road():
     for dy in (-1, 0, 1):                   # path mouths W (lane) + E (yard)
         objects_l[PMID + dy][0] = "a"
         objects_l[PMID + dy][W - 1] = "e"
+    # Keep the crossing's north shoulders clear for the directional
+    # boards below (a lone pine or the wall jitter could land on them).
+    objects_l[PMID - 2][3] = "."
+    objects_l[PMID - 2][11] = "."
     objects = ["".join(r) for r in objects_l]
     sc = Scene("arrival_road", floor_rows, objects, music="outside")
     # A landmark-FREE forest band to the NORTH does two jobs: it RENDERS
@@ -363,6 +371,16 @@ def build_arrival_road():
                             "town_sign", text="BRIMLEY")
     _sign_deco._no_wrap = True                           # never clones into the road AHEAD
     sc.add_decoration(_sign_deco)
+    # Directional boards FLANKING the crossing (2026-07 playtest fix:
+    # "no clear roads from the lodge"). The junction is the one
+    # wayfinding moment on the lodge side; each board stands on the
+    # crossing's north shoulder beside the path it names, so a player
+    # at the asphalt reads town-west, lodge-east at a glance.
+    for bx, btxt in ((3, "BRIMLEY"), (11, "LODGE")):
+        b = Decoration(bx * TILE + 16, (PMID - 2) * TILE + 24,
+                       "town_sign", text=btxt)
+        b._no_wrap = True
+        sc.add_decoration(b)
     # The dead car a few tiles north of the sign -- seen from BEHIND (it died
     # facing up the road into town). Solid footprint under the sprite; the
     # interact anchor sits at its road-facing (west) edge. The Sign fires
