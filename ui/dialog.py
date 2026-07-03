@@ -136,6 +136,18 @@ class DialogueBox:
             g.float_speech.begin(g._speaking_npc, pages, name=speaker,
                                  voice=voice, color=color)
             return
+        # Narrator/world-object text (examines, pickups, every _evidence
+        # beat) drops the band too: it runs as a lower-third caption while
+        # the world keeps moving (ui/narration.py). Only choices, scripted
+        # beats with a completion callback, and the infested portraits
+        # still freeze the world under the modal box.
+        if (not getattr(self, "_force_modal_next", False)
+                and g is not None
+                and not speaker and portrait in (None, "narrator")
+                and not infested and on_complete is None
+                and getattr(g, "narration", None) is not None):
+            g.narration.begin(pages, voice=voice, color=color)
+            return
         self._force_modal_next = False
         self.pages = [parse_dialogue(p, default_color=color, default_voice=voice) for p in pages]
         self.page_idx = 0

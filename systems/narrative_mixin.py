@@ -358,6 +358,10 @@ class NarrativeMixin:
             ], speaker="", voice="blip_soft", portrait="narrator")
         if self.dialog.active:
             self.dialog.on_complete = _beat
+        elif self.float_speech.active:
+            # The local's line floats now -- land the reflection after
+            # they finish, not on top of them.
+            self.float_speech.on_complete = _beat
         else:
             _beat()
 

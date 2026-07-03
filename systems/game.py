@@ -25,6 +25,7 @@ from systems.look_control import LookController
 from ui.fonts import make_fonts
 from ui.dialog import DialogueBox
 from ui.float_speech import FloatSpeech
+from ui.narration import Narration
 from ui.inventory_ui import InventoryUI
 from ui.notebook_ui import NotebookUI
 from ui.text_input import TextInputModal
@@ -109,6 +110,9 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         self.float_speech = FloatSpeech(self.audio, self.fonts)
         self._speaking_npc = None      # set during an interact so show()
         #                                knows whose head to float over
+        # Non-modal narration: narrator/world-object text as a lower-third
+        # caption; the world keeps running while the PI reads.
+        self.narration = Narration(self.audio, self.fonts)
         self.inv_ui = InventoryUI(self.fonts, self.audio, self.save)
         self.notebook_ui = NotebookUI(self.fonts, self.audio, self.save)
         self.notebook_ui.game = self   # the soft lead line reads live state
@@ -399,6 +403,9 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         # movement-input flag _update_look reads (see CHASE_FIRE_LOCK).
         self._chase_lock_t = 0.0
         self._move_input_active = False
+        # The eased walk-lead the camera follows (see _update_camera).
+        self._cam_lead = (0.0, 0.0)
+        self._cam_lead_dir = None
         # The church bell: remaining peal time + the strike cadence
         # accumulator (see _ring_bell / _tick_bell, BELL_* config).
         self._bell_t = 0.0
@@ -410,6 +417,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         # Floating NPC speech + the interact speaker context.
         self.float_speech.active = False
         self.float_speech.speaker = None
+        self.narration.clear()
         self._speaking_npc = None
         self._chant_t = 0.0
         self._breath_t = 0.0
@@ -736,9 +744,12 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         # in; the transient itself was rebuilt away with the scene.
         self._bleed = None
         # A floating conversation's speaker was rebuilt away with the
-        # scene -- drop the caption on load.
+        # scene -- drop the caption on load. Narration goes too: an
+        # examine line (and any chained callback) belongs to the room
+        # it fired in.
         self.float_speech.active = False
         self.float_speech.speaker = None
+        self.narration.clear()
         self._build_fold_cache()
         # Fold pursuit hand-off: if the player fled here through a fold with
         # a hot cultist (stashed by _note_fold_pursuit), arm the beat-behind
@@ -816,6 +827,10 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
             # cross-scene ledger) -- a killed local lies there only while
             # you're in the room.
             self._apply_infestation()
+            # The Moths (the King's heralds) seed with the scene:
+            # evidence-scaled on the open surface, a retinue in the
+            # King's own room (infest_mixin, MOTH_* config).
+            self._spawn_moths()
 
     def _river_blocks(self, target_x, target_y):
         """Custom passability for the brimley river. The `~` floor is
@@ -837,16 +852,33 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
     def _update_camera(self, snap=False):
         target_x = self.player.x - SCREEN_W // 2
         target_y = self.player.y - SCREEN_H // 2
-        # Lead the camera in the way the player is walking so they can see
+        # Lead the camera in the way the player is WALKING so they can see
         # where a path is taking them BEFORE they commit -- vital where the
-        # road bends or folds back on itself. In a torus (wrap) scene the
-        # far side is already drawn as edge-clones, so leading toward a seam
-        # actually shows what's waiting across the fold. Eased by the lerp
-        # below so changing direction doesn't snap the view.
-        fx, fy = self.player.facing
-        flen = math.hypot(fx, fy) or 1.0
-        target_x += (fx / flen) * CAM_LOOKAHEAD
-        target_y += (fy / flen) * CAM_LOOKAHEAD
+        # road bends or folds back on itself. Under tilt the lead follows
+        # the last movement direction with its own easing, and HOLDS there
+        # while standing (2026-07 camera tuning): it must never ride the
+        # aim cursor, or every mouse flick drags the whole view around the
+        # player. The flat dev view keeps the old facing lead so pitch-0
+        # captures stay byte-identical.
+        if self._tilt_on():
+            ld = getattr(self, "_cam_lead_dir", None)
+            gx = gy = 0.0
+            if ld is not None:
+                gx, gy = ld[0] * CAM_LOOKAHEAD, ld[1] * CAM_LOOKAHEAD
+            lx, ly = getattr(self, "_cam_lead", (gx, gy))
+            if snap:
+                lx, ly = gx, gy
+            else:
+                lx += (gx - lx) * 0.06
+                ly += (gy - ly) * 0.06
+            self._cam_lead = (lx, ly)
+            target_x += lx
+            target_y += ly
+        else:
+            fx, fy = self.player.facing
+            flen = math.hypot(fx, fy) or 1.0
+            target_x += (fx / flen) * CAM_LOOKAHEAD
+            target_y += (fy / flen) * CAM_LOOKAHEAD
         scene_w = self.scene.w * Scene.TILE
         scene_h = self.scene.h * Scene.TILE
         # Clamp the camera to the scene bounds ONLY in the flat top-down view,
@@ -1008,6 +1040,12 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         # Shared with _update_look: the camera chase runs at full rate
         # only while movement keys are actually driving (aim-steady).
         self._move_input_active = input_active
+        # The camera's walk-lead direction (see _update_camera): the last
+        # direction the keys actually drove, held while standing so the
+        # view rests instead of recentring.
+        if input_active:
+            mlen = math.hypot(dx, dy) or 1.0
+            self._cam_lead_dir = (dx / mlen, dy / mlen)
         if input_active and self.player.hidden is not None:
             if self.player.hide_origin is not None:
                 self.player.hidden = None
@@ -1448,6 +1486,14 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         in_dark = (self.scene.key in DARK_SCENES
                    and not self._flashlight_lit()
                    and not self.scene.lit_at(p.x, p.y))
+        if in_dark:
+            # a kindling/flaring Moth is a lamp: its pool breaks the
+            # gloom around the player (the alarm also UNHIDES you)
+            for m in (getattr(self.scene, "_moths", None) or []):
+                if (m["glow"] > 0.3 and self.scene.world_dist(
+                        m["x"], m["y"], p.x, p.y) < MOTH_LIGHT_R):
+                    in_dark = False
+                    break
         was = getattr(p, "_in_dark", False)
         p._in_dark = in_dark
         if (in_dark and not was
@@ -1749,6 +1795,12 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
                 if ch in ("l", "z"):
                     self._listen_at_door(ch, sc.key)
                     return
+        # A narration caption with nothing else answering the press: E
+        # skims it (finish the reveal, then next page). LAST on purpose:
+        # the caption is ambient, and it must never gate the world -- a
+        # bell pull, a hide, a door all win the E over the text.
+        if self.narration.advance_from_input():
+            return
 
     def _listen_at_door(self, ch, scene_key):
         """Press an ear to a closed door. Plays a soft tap and shows a
@@ -2646,6 +2698,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
             # the world, same as everything else).
             if not world_frozen:
                 self.float_speech.update(dt, self)
+                self.narration.update(dt)
             self._tick_delayed_audio(dt)
             # The threat model is part of the world sim -- it freezes behind
             # a modal too, so visibility can't climb and the King can't close
@@ -2662,6 +2715,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
                 self._tick_doors(dt)
                 self._tick_bleed(dt)
                 self._tick_cultists(dt)
+                self._tick_moths(dt)
                 self._tick_struggle(dt)
                 self._tick_chase_cues_enemies(dt)
                 self._tick_fold_pursuit(dt)

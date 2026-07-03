@@ -113,6 +113,156 @@ def _mutated_local_dialogue(game, npc):
 
 
 class InfestationMixin:
+    # ---- the Moths (the King's heralds; MOTH_* config) ----------------
+    def _spawn_moths(self):
+        """Seed this scene's moths on load (scene-local, rebuilt like
+        everything else). Count = evidence (capped) on any open surface
+        scene, plus a retinue wherever the King himself currently is --
+        including the idle road King, so the arrival road drifts with
+        them from the first hour."""
+        sc = self.scene
+        if sc is None:
+            return
+        sc._moths = []
+        if sc.key not in MOTH_SCENES or sc.key in SAFE_SCENES:
+            return
+        n = min(MOTH_COUNT_CAP, self._evidence_count())
+        rk = getattr(self, "_roam_king", None)
+        if rk is not None and rk.get("scene") == sc.key:
+            n += MOTH_KING_RETINUE
+        if n <= 0:
+            return
+        rng = random.Random((sum(map(ord, sc.key)) * 131071) ^ 0x5A17)
+        px = self.player.x if self.player else sc.w * TILE // 2
+        py = self.player.y if self.player else sc.h * TILE // 2
+        placed = 0
+        for _ in range(n * 30):
+            if placed >= n:
+                break
+            x = rng.uniform(2 * TILE, (sc.w - 2) * TILE)
+            y = rng.uniform(2 * TILE, (sc.h - 2) * TILE)
+            if sc.is_solid_at(x, y):
+                continue
+            if math.hypot(x - px, y - py) < MOTH_RADIUS * 2.2:
+                continue          # never born already on top of you
+            sc._moths.append({
+                "x": x, "y": y, "t": rng.uniform(0.0, 6.28),
+                "seed": placed * 3 + 1, "state": "drift",
+                "kt": 0.0, "ft": 0.0, "wt": 0.0,
+                "wx": x, "wy": y, "spread": 0.0, "glow": 0.12,
+            })
+            placed += 1
+
+    def _tick_moths(self, dt):
+        """Drift, kindle, flare. Runs in the threat block (freezes with
+        the world). The flare is an ALARM, not an attack: the loud noise
+        converges the cult, visibility spikes, and the moth is spent."""
+        sc = self.scene
+        moths = getattr(sc, "_moths", None) if sc is not None else None
+        if not moths:
+            return
+        p = self.player
+        if p is None:
+            return
+        for m in list(moths):
+            m["t"] += dt
+            if m["state"] == "flare":
+                m["ft"] -= dt
+                m["spread"] = 1.0
+                m["glow"] = 1.0
+                if m["ft"] <= 0.0:
+                    moths.remove(m)
+                continue
+            d = sc.world_dist(m["x"], m["y"], p.x, p.y)
+            # the axe pops it quietly (the reward for darting in);
+            # a round pops it from range (the shot's own noise applies)
+            popped = (p.melee_swing_t > 0 and d < 46)
+            if not popped:
+                for pr in sc.projectiles:
+                    if (pr.alive and sc.world_dist(pr.x, pr.y,
+                                                   m["x"], m["y"]) < 14):
+                        pr.alive = False
+                        pr.hit = True
+                        popped = True
+                        break
+            if popped:
+                moths.remove(m)
+                self.audio.play("hit", 0.5)
+                self.audio.play("bump", 0.4)
+                sc.emit_noise(m["x"], m["y"], 0.25, kind="moth_pop")
+                continue
+            if m["state"] == "drift":
+                m["wt"] -= dt
+                if (m["wt"] <= 0.0
+                        or math.hypot(m["wx"] - m["x"],
+                                      m["wy"] - m["y"]) < 12):
+                    m["wt"] = random.uniform(2.5, 5.5)
+                    if random.random() < MOTH_SEEK_BIAS:
+                        ang = random.uniform(0, 6.28)
+                        r = random.uniform(70, 170)
+                        m["wx"] = p.x + math.cos(ang) * r
+                        m["wy"] = p.y + math.sin(ang) * r
+                    else:
+                        m["wx"] = m["x"] + random.uniform(-260, 260)
+                        m["wy"] = m["y"] + random.uniform(-260, 260)
+                    m["wx"] = max(TILE, min((sc.w - 1) * TILE, m["wx"]))
+                    m["wy"] = max(TILE, min((sc.h - 1) * TILE, m["wy"]))
+                dx = m["wx"] - m["x"]
+                dy = m["wy"] - m["y"]
+                dl = math.hypot(dx, dy) or 1.0
+                m["x"] += dx / dl * MOTH_SPEED * dt
+                m["y"] += dy / dl * MOTH_SPEED * dt
+                m["spread"] = max(0.0, m["spread"] - dt * 1.6)
+                m["glow"] = max(0.12, m["glow"] - dt * 0.8)
+                if d < MOTH_RADIUS and p.hidden is None:
+                    m["state"] = "kindle"
+                    m["kt"] = 0.0
+                    self.audio.play("low_pulse", 0.5)
+            else:                                     # kindle
+                if d > MOTH_RADIUS * 1.25 or p.hidden is not None:
+                    m["state"] = "drift"              # backed out in time
+                    m["wt"] = 0.0
+                    continue
+                m["kt"] += dt
+                f = min(1.0, m["kt"] / MOTH_KINDLE)
+                m["spread"] = 0.5 * f
+                m["glow"] = 0.12 + 0.88 * f
+                if m["kt"] >= MOTH_KINDLE:
+                    m["state"] = "flare"
+                    m["ft"] = MOTH_FLARE_DUR
+                    sc.emit_noise(m["x"], m["y"], 1.0,
+                                  kind="moth_flare", reach=MOTH_REACH)
+                    if self.visibility < 0.90:
+                        self.visibility = min(
+                            0.90, self.visibility + MOTH_VIS_SPIKE)
+                    self.audio.play("void_sting", 0.75)
+                    self.audio.play("low_pulse", 0.6)
+                    self._log_moth_note()
+
+    def _log_moth_note(self):
+        """The PI's first-flare case note. A NOTE, never evidence (the
+        King-gate must not move)."""
+        if self.save is None or self.save.flag("moth_note_seen"):
+            return
+        self.save.set_flag("moth_note_seen", True)
+        notes = self.save.arg("notes", [])
+        if isinstance(notes, list) and not any(
+                isinstance(e, dict) and e.get("name") == "the_moths"
+                for e in notes):
+            notes.append({"name": "the_moths", "lines": [
+                "Something hanging in the air out past the fences. Folded "
+                "up like a dead spider, drifting. I took it for a rag on "
+                "the wind until it turned against the wind.",
+                "I got close and it opened. Lit up gold and screamed, and "
+                "every hooded thing in earshot turned my way at once. Then "
+                "it was not there anymore.",
+                "A moth, then. A moth that works for whatever owns this "
+                "town. Keep clear of them or kill them quiet.",
+            ]})
+            self.save.set_arg("notes", notes)
+            if hasattr(self, "_flash_notebook"):
+                self._flash_notebook()
+
     # ---- Infestation -------------------------------------------------
     def _infest_stage(self):
         """Surface infestation stage 0..3, front-loaded to peak as the

@@ -22,6 +22,7 @@ from rendering.sprites import (draw_player_sprite, draw_npc_sprite,
                                draw_revolver_held, draw_gun_fire,
                                draw_king_death, view_from_facing, KING_UNFOLD)
 from rendering.king_unfold import draw_unfold_catch
+from rendering.moth import draw_moth
 from rendering.transform import draw_vessel_bloom
 from systems.config import *        # noqa: F401,F403
 
@@ -1209,6 +1210,33 @@ class RenderMixin:
                       lambda a=a, sx=sx, sy=sy, fn=_draw_enemy:
                       draw_with_alpha(self.screen, a, fn,
                                       rect=(sx - 110, sy - 160, 220, 250)))
+        # The Moths -- the first flying entity: a hovering billboard with
+        # a slow bob, sight-gated like every other actor. A faint cold
+        # smudge marks the ground point (never an honest shadow).
+        for m in (getattr(self.scene, "_moths", None) or []):
+            for ox, oy in _offsets:
+                sx, sy = self.camera.project(m["x"] + ox, m["y"] + oy)
+                if not _on_screen(sx, sy):
+                    continue
+                a = _vis_alpha(m["x"] + ox, m["y"] + oy)
+                if a is None:
+                    continue
+                hover = 34 + math.sin(m["t"] * 1.7 + m["seed"]) * 5.0
+
+                def _draw_moth_e(s, m=m, sx=sx, sy=sy, hover=hover):
+                    gy = sy - actor_lift
+                    smw = 20 + int(6 * m["glow"])
+                    smudge = pygame.Surface((smw * 2, 8), pygame.SRCALPHA)
+                    pygame.draw.ellipse(smudge, (8, 7, 12, 80),
+                                        (0, 0, smw * 2, 8))
+                    s.blit(smudge, (sx - smw, gy - 4))
+                    draw_moth(s, sx, gy - hover, m["t"],
+                              spread=m["spread"], glow=m["glow"],
+                              seed=m["seed"])
+                _emit(self.camera.depth(m["x"] + ox, m["y"] + oy),
+                      lambda a=a, sx=sx, sy=sy, fn=_draw_moth_e:
+                      draw_with_alpha(self.screen, a, fn,
+                                      rect=(sx - 70, sy - 150, 140, 190)))
         for p in self.scene.projectiles:
             psx, psy = self.camera.project(p.x, p.y)
             _emit(self.camera.depth(p.x, p.y),
@@ -1542,6 +1570,9 @@ class RenderMixin:
         # sight-gated) sits under the modal dialog box -- the two are
         # mutually exclusive in practice, but a scripted modal always wins.
         self.float_speech.draw(self.screen, self)
+        # Non-modal narration caption (lower third, frameless). Under the
+        # modal box for the same reason as the floats.
+        self.narration.draw(self.screen)
         self.dialog.draw(self.screen)
         self.inv_ui.draw(self.screen, self.player)
         self.notebook_ui.draw(self.screen)
