@@ -648,6 +648,21 @@ def main():
     g.load_scene_now("arrival_road", "default")
     check(len(g.scene._moths) == MOTH_KING_RETINUE,
           "moths: a retinue attends the King's own room from hour one")
+    check(all(m.get("fast") for m in g.scene._moths),
+          "moths: the King's shed pair fly FAST")
+    # the trail: a room he passed through recently grows his pair on
+    # load; a stale trail grows none
+    from systems.config import KING_TRAIL_FRESH
+    g._roam_king["scene"] = "gravel_road_north"
+    g._king_trail = {"country_lane": g.title_t}
+    g.load_scene_now("country_lane", "default")
+    check(sum(1 for m in g.scene._moths if m.get("fast"))
+          == MOTH_KING_RETINUE,
+          "moths: a warm King trail seeds his fast pair in the room")
+    g._king_trail = {"country_lane": g.title_t - KING_TRAIL_FRESH - 1}
+    g.load_scene_now("country_lane", "default")
+    check(not any(m.get("fast") for m in g.scene._moths),
+          "moths: a cold trail seeds nothing")
     g.load_scene_now("house", "default")
     check(len(getattr(g.scene, "_moths", [])) == 0,
           "moths: a safe room never grows them")
@@ -685,18 +700,24 @@ def main():
     check(n._cult_state == "investigate"
           and abs(n._last_seen_pos[0] - m["x"]) < MOTH_REACH,
           "moths: a cultist 400px out converges on the flare")
-    for _ in range(60):
+    for _ in range(150):
         tick(g, 1)
-        if m not in g.scene._moths:
+        if m["state"] == "husk":
             break
-    check(m not in g.scene._moths, "moths: the flare spends the moth")
+    check(m["state"] == "husk" and m in g.scene._moths
+          and m.get("h", 1.0) <= 0.0 and m["glow"] <= 0.0,
+          "moths: the flare burns ~2s, then the husk falls to the ground")
+    st = m["state"]
+    g.player.x, g.player.y = m["x"] + 5, m["y"] + 5
+    tick(g, 8)
+    check(m["state"] == st, "moths: a fallen husk never kindles again")
     check(any(nn.get("name") == "the_moths"
               for nn in g.save.arg("notes", [])),
           "moths: the first flare files a case NOTE (never evidence)")
     check(not any(e.get("name") == "the_moths"
                   for e in g.save.arg("evidence", [])),
           "moths: the note stays out of the evidence log")
-    m2 = g.scene._moths[0]
+    m2 = next(mm for mm in g.scene._moths if mm["state"] == "drift")
     g.player.x, g.player.y = m2["x"] + 20, m2["y"]
     for _ in range(6):
         tick(g, 1)

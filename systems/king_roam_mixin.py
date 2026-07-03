@@ -198,6 +198,7 @@ class KingRoamMixin:
                 rk["search_t"] = 0.0
                 rk["hop_t"] = KING_HOP_INTERVAL
                 rk["pos"] = self._king_scene_pos(KING_ROAM_START)
+                self._king_mark_trail(KING_ROAM_START)
                 self._idle_king = None     # the idol gives way to the real King
             else:
                 if (self.visibility >= 1.0
@@ -258,6 +259,7 @@ class KingRoamMixin:
         rk["scene"] = nxt
         rk["enter_at"] = "far"
         rk["pos"] = self._king_scene_pos(nxt)     # his exact spot in the new room
+        self._king_mark_trail(nxt)                # he sheds his pair as he goes
 
     # ---- concrete sim (he shares your scene) -----------------------------
     def _king_roam_in_scene(self, dt):
@@ -354,6 +356,19 @@ class KingRoamMixin:
         self._roam_king["pos"] = (king.x, king.y)
         self.audio.play("void_sting", 0.7)
         self._roam_king["enter_at"] = "far"
+        # He sheds his pair of Moths into the room as he arrives -- the
+        # live half of the trail (the on-load half reads _king_trail).
+        self._king_mark_trail(self.scene.key)
+        self._shed_king_moths()
+
+    def _king_mark_trail(self, scene_key):
+        """Stamp the King's passage through `scene_key`: for the next
+        KING_TRAIL_FRESH seconds a load of that room grows his shed pair
+        of fast Moths (infest_mixin._spawn_moths)."""
+        trail = getattr(self, "_king_trail", None)
+        if trail is None:
+            trail = self._king_trail = {}
+        trail[scene_key] = self.title_t
 
     def _king_leave_scene(self):
         """In check-nearby he gives up your room and drifts one scene out."""
@@ -363,6 +378,7 @@ class KingRoamMixin:
         self._despawn_king()
         if nbrs:
             rk["scene"] = random.choice(nbrs)
+            self._king_mark_trail(rk["scene"])
         rk["leave_t"] = KING_HOP_INTERVAL
         rk["enter_at"] = "far"
 
