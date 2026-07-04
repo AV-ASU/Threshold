@@ -989,19 +989,23 @@ class ThreatMixin:
             if speaker is not None:
                 speaker._stun_t = max(getattr(speaker, "_stun_t", 0.0), 1.0)
             self._log_note("the_talk", [
-                "One of them put hands on me today. A polite word to keep "
-                "out of their business, then he let go and walked off.",
-                "A warning costs them nothing. The next one will not be a "
-                "warning.",
+                "One of them put hands on me today. Told me to go back to "
+                "my room. Told me to run.",
+                "Well shit, this town really doesn't have a midwestern "
+                "welcome at all.",
             ])
+            # The reaction lands a beat later, as the world resumes: a
+            # frameless caption, not another box.
+            self.dialog.show([
+                "[c=dim]Well shit, this town really doesn't have a "
+                "midwestern welcome at all.[/c]",
+            ], speaker="", voice="blip_soft", portrait="narrator")
         self.dialog.show([
             "[c=dim]The hand lands on your shoulder before you hear him "
             "coming. The grip is friendly. Nothing else about it is.[/c]",
-            "\"Easy, friend. No harm done, and none wanted.\"",
-            "\"We have business in this town. It is not yours. Keep clear "
-            "of it, and you and I never speak again.\"",
-            "[c=dim]He lets you go. One flat pat on the shoulder, the way "
-            "a man settles a horse, and he walks back to his rounds.[/c]",
+            "\"Hey. You go back to your hotel room if you know what's "
+            "good for you.\"",
+            "\"Run.\"",
         ], speaker="", voice="blip_soft", portrait="narrator",
             on_complete=_release)
 

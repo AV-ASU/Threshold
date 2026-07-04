@@ -107,11 +107,23 @@ def build_old_man_house():
     pos = sc.consume_marker("O")
     if pos:
         tx, ty = pos
-        sc.add_npc(NPC(tx * TILE + 16, ty * TILE + 16,
-                       "Preacher", "preacher", voice="blip_low",
-                       portrait="preacher",
-                       dialogue_fn=preacher_dialogue, movement="idle",
-                       tag="preacher"))
+        rev = NPC(tx * TILE + 16, ty * TILE + 16,
+                  "Preacher", "preacher", voice="blip_low",
+                  portrait="preacher",
+                  dialogue_fn=preacher_dialogue, movement="worker",
+                  tag="preacher")
+        # His JOB (GAME_CHANGES §19): the lectern at the head of the
+        # nave (working the sermon that gets him killed), a slow walk
+        # down the empty nave, a spell at the vestry cot.
+        rev.stations = [
+            {"x": 8 * TILE + 16, "y": 2 * TILE + 16,
+             "dwell": (8.0, 14.0), "face": (0, 1)},      # the lectern
+            {"x": 9 * TILE + 16, "y": 8 * TILE + 16,
+             "dwell": (3.0, 6.0), "face": (0, 1)},       # the empty nave
+            {"x": 4 * TILE + 16, "y": 4 * TILE + 16,
+             "dwell": (3.0, 6.0), "face": (-1, 0)},      # the vestry cot
+        ]
+        sc.add_npc(rev)
 
     # Sized darkwood furniture. The altar + lectern stand at the head of the
     # nave; the preacher's cot is tucked in the vestry.

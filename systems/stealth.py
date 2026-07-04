@@ -291,8 +291,15 @@ def errand_step(actor, scene, dt, step_fn):
     Brimley), string-pulls it, then walks node to node. A station off
     the walkable web is SKIPPED; if every station fails in a row the
     actor gives errands up for this scene and falls back to the mill.
-    Returns True while the errand owns the actor's movement."""
-    stations = getattr(scene, "cult_stations", None)
+    Returns True while the errand owns the actor's movement.
+
+    2026-07 (GAME_CHANGES §19): a PERSONAL station list on the actor
+    (`actor.stations`) outranks the scene's shared cult pool -- the
+    villager JOBS layer (NPC movement mode "worker") rides the same
+    machinery, so workers walk, dwell, get interrupted, and resume
+    exactly like the cult's errands."""
+    stations = (getattr(actor, "stations", None)
+                or getattr(scene, "cult_stations", None))
     if not stations or getattr(actor, "_errand_off", False):
         return False
     i = getattr(actor, "_errand_i", None)

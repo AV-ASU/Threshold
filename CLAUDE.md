@@ -77,11 +77,14 @@ it renders the procedural sprites to a labelled PNG strip.
 - `entities/`
   - `player.py`
   - `npc.py` — movement modes (`idle`, `watch`, `wander`, `patrol`,
-    `stalker`, `follower`, `homebody`, `chaser`). `homebody` loiters
-    near the NPC's doorstep (`home`), then steps inside — sets
+    `stalker`, `follower`, `homebody`, `worker`, `chaser`). `homebody`
+    loiters near the NPC's doorstep (`home`), then steps inside — sets
     `_inside` True, drops `solid`, and Game skips drawing/talking to it
     — for a spell, then re-emerges (the door-anchored Brimley locals).
-    `chaser` runs the cultist state
+    `worker` (2026-07, the JOBS layer) walks a personal
+    `npc.stations` route — travel, dwell facing the work, next — on
+    the cult's errand machinery (`stealth.errand_step`; Garrick,
+    Royce, the store Hettie, Rev. Crane). `chaser` runs the cultist state
     machine (`_cult_tick`: scout→chase→search→investigate). The
     `yellow_king` sprite short-circuits to `_yk_update` (the `_birth`
     eruption ramp, 0→1 over ~1.2s, during which he cannot move).
@@ -317,8 +320,8 @@ it renders the procedural sprites to a labelled PNG strip.
   (threat_mixin) plays the courteous one-liner, stands the room down,
   grants a short re-grab grace, and files a NOTE (flag `cult_talk_given`;
   gates every grab site, struggle losses included). After that,
-  `kind="cultist"` shows the **CAPTURED** card (taken alive for the hive,
-  with their one-line reminder under it); `kind="sheriff"` the
+  `kind="cultist"` shows the **CAPTURED** card (taken alive for the
+  hive); `kind="sheriff"` the
   **TAKEN INTO CUSTODY** card (the hollow lawman); `kind="king"` plays the
   **Carcosa** mask-furnace cutscene. All end the run and return to title.
 - **The calling-out (2026-07):** Mara kneels among the Sign Chamber

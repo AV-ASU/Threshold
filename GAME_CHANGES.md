@@ -448,14 +448,17 @@ Two staged live-action beats from the "characters act in the scene"
 direction:
 
 1. **THE TALK.** The FIRST time the cult ever lays hands on the PI it is
-   a warning, not a capture: one courteous, wrong line ("We have business
-   in this town. It is not yours.") and they let go — the room stands
-   down, a short grace window covers the first steps away, and the PI
-   files a deadpan NOTE (never evidence). One freebie per run, spent at
-   whichever grab site fires first (surface grab, hide-check struggle
-   loss, underground contact — all routes gate inside `_trigger_death`).
-   Every later grab is the CAPTURED card, which now carries their
-   one-line reminder ("We did ask, friend."). Flow-guarded (§28).
+   a warning, not a capture. The locked lines (user-authored 2026-07):
+   *"Hey. You go back to your hotel room if you know what's good for
+   you."* then *"Run."* They let go — the room stands down, a short
+   grace window covers the first steps away, and the PI's reaction
+   lands as a caption a beat later and files as a NOTE (never
+   evidence): *"Well shit, this town really doesn't have a midwestern
+   welcome at all."* (a little humor against the grim, by direction).
+   One freebie per run, spent at whichever grab site fires first
+   (surface grab, hide-check struggle loss, underground contact — all
+   routes gate inside `_trigger_death`). Every later grab is the plain
+   CAPTURED card. Flow-guarded (§28).
 2. **The calling-out (the Sign Chamber).** Mara now kneels among the
    congregation at the Mask's foot (`works_sign`), one more hood in the
    rank. On first entry the kneelers rise one by one and turn to you,
@@ -492,6 +495,77 @@ thing older than them that they only half understand.
   found once, capped, and lost. The PI's seal repeats it (this time from
   the wrong side); SPREAD breaks the pattern — the first time it ever left.
 
+---
+
+## The 2026-07 design queue (settled in discussion with the user)
+
+> The full remaining worklist toward the $5 ship. Ordered roughly by
+> user priority; §17 (the altar) above rides §23.
+
+### ✅ 19. NPC jobs — generic routines for villagers — DONE  *(2026-07)*
+
+The world read as staged because most locals stood where they were
+placed. Named locals now carry a small JOB LOOP: walk between 2-3
+personal stations, dwell at each facing the work, move on.
+
+- [x] Generic mechanism: NPC movement mode **`"worker"`**
+  (`entities/npc.py`) riding the cult's errand machinery
+  (`systems/stealth.errand_step`, which now reads a personal
+  `actor.stations` list over the scene's shared cult pool). Same
+  interruption semantics as the cult's errands; unreachable stations
+  are skipped, and a fully blocked route degrades to anchored
+  wandering, never a freeze.
+- [x] Routes authored where they're seen: **Garrick** (his spot → the
+  well lip → the town track), **Royce** (pacing the stretch of road he
+  used to drive, standing a long look down it each way), the **store
+  Hettie** (counter → the bare goods shelves → the storeroom
+  preserves), **Rev. Crane** (lectern → the empty nave → the vestry
+  cot). Kept as-is by design: outdoor Hettie + Old Pell (homebody door
+  loops ARE their job), Mrs. Calder (the set place is the point, §6b),
+  Sable (`watch` — the man who was waiting for you).
+- [x] Flow guard §29: Garrick provably walks between stations and
+  dwells; the store/church workers carry routes.
+
+### 20. The PI THEORY ladder — the notebook thinks — OPEN
+
+An active "working theory" line in the case notebook that REVISES as
+evidence lands: each canonical beat strikes the old theory through and
+writes the next (rational → strained → the one he refuses to write).
+Shows what he forces himself to accept and how impossible this all is.
+Terse FACT / SOURCE / QUESTION entries alongside; never evidence, never
+a waypoint.
+
+### 21. The Works as a MINE — side-dug rooms, not hallways — OPEN
+
+The Works must read as a mining effort: timbered side-chambers dug off
+the halls (some finished, some half-dug, the deepest hand-clawed),
+spoil heaps, cart ruts, the degradation arc ending at the Deepest Face.
+Rooms gain dug-out side pockets (a few with loot/testimony placement,
+most just labor made visible).
+
+### 22. Deadpan narration editing pass — OPEN
+
+Sweep every narrator/world caption against the settled voice: objective,
+deadpan, a little curt (the talk reaction's register). Kill aphorism
+and poetry where it crept in; keep sensation-only cosmic rule (§1b).
+
+### 23. Brimley compression (~64x64) + the altar move — OPEN
+
+Brimley is too vast for its substance: compress toward ~64x64 with the
+same content density, cleaner road logic, shorter dead walks. §17 (the
+ancient altar to the riverbank) ships inside this pass.
+
+### 24. Liminal/eldritch beat pass — OPEN
+
+A handful of quiet wrongness beats (geometry that doesn't add up,
+sound with no source, a room that repeats) placed on the surface,
+escalating with evidence. Sensation only, never explained (§1b).
+
+### 25. Ship track — packaging — OPEN
+
+Itch-ready build: pyinstaller (or equivalent) one-file builds for
+win/linux, save-dir sanity, a settings sanity pass, version stamp.
+
 ## Status / sequencing notes
 
 - **Phase 1 is done + pushed.** Docs (`NARRATIVE.md`, `CLAUDE.md`) already
@@ -499,9 +573,9 @@ thing older than them that they only half understand.
 - **Coupling:** §6b (the three testimony fragments + Mask-only keystone) is
   DONE and flow-guarded; §8 (the PI's interior voice) and §9 (ashfall) landed
   earlier; §12 (Crane's pulpit condemnation) and §13 (the calendar sweep
-  around April 14) are DONE. §10 is a fence, not a ticket. **Open: §17**
-  (the ancient altar as the last sealing's cap, 2026-07 — ships with the
-  Brimley compression pass); otherwise only an optional Crane murder-beat
-  polish remains.
+  around April 14) are DONE. §10 is a fence, not a ticket. §18 (the talk +
+  the calling-out) is DONE.
+- **Open queue: §19 → §20 → §21 → §22 → §23 (carries §17) → §24 → §25**
+  (plus an optional Crane murder-beat polish).
 - Verify against `NARRATIVE.md` first; keep `tests/flow.py` green (run the full
   gate, `python tests/run_all.py`) and add a guard as each canon fact locks.
