@@ -1670,8 +1670,11 @@ def main():
     check(not any(("—" in s) or ("–" in s) or ("--" in s)
                   for s in _tshown),
           "talk: no dashes in the warning")
-    check("business" in " ".join(_tshown).lower(),
-          "talk: the warning names their business")
+    _tblob = " ".join(_tshown).lower()
+    check("hotel room" in _tblob and "run." in _tblob,
+          "talk: the warning is the locked line (hotel room, then run)")
+    check("midwestern welcome" in _tblob,
+          "talk: the PI's reaction lands after the release")
     gt2._trigger_death("cultist")
     check(gt2._death_kind == "cultist",
           "talk: the second grab is the CAPTURED card")
@@ -1721,6 +1724,40 @@ def main():
           "staging: the room folds back to the kneeling")
     check((_sc2._mara.x, _sc2._mara.y) == _sc2._mara_home,
           "staging: Mara returns to her place in the rank")
+
+    # --- 29. NPC jobs: a worker walks his stations (GAME_CHANGES §19) ---
+    gj = new_game()
+    gj.load_scene_now("brimley")
+    ready(gj)
+    _gar = next((n for n in gj.scene.npcs if n.name == "Garrick"), None)
+    check(_gar is not None and _gar.movement == "worker"
+          and len(getattr(_gar, "stations", [])) >= 2,
+          "jobs: Garrick carries a personal station route")
+    _visited = set()
+    for _ in range(1500):                    # ~2.5 sim minutes
+        _gar.update(0.1, gj.scene, gj.player)
+        for _si, _st in enumerate(_gar.stations):
+            if gj.scene.world_dist(_gar.x, _gar.y,
+                                   _st["x"], _st["y"]) < 20.0:
+                _visited.add(_si)
+        if len(_visited) >= 2:
+            break
+    check(len(_visited) >= 2,
+          "jobs: the worker walks between stations and dwells")
+    check(_gar.movement == "worker",
+          "jobs: the errand layer holds (his stations are reachable)")
+    gj.load_scene_now("shop")
+    ready(gj)
+    _het = next((n for n in gj.scene.npcs if n.name == "Hettie"), None)
+    check(_het is not None and _het.movement == "worker"
+          and len(getattr(_het, "stations", [])) >= 3,
+          "jobs: the store Hettie works her counter route")
+    gj.load_scene_now("old_man_house")
+    ready(gj)
+    _rev = next((n for n in gj.scene.npcs
+                 if getattr(n, "tag", "") == "preacher"), None)
+    check(_rev is not None and _rev.movement == "worker",
+          "jobs: Crane works the lectern route")
 
     print()
     if FAILS:

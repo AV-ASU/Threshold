@@ -707,11 +707,22 @@ def build_brimley():
     # the edges: denial, time-loop confusion, a child saying the quiet
     # part out loud.
     def _resident(tx, ty, name, kind, pages, movement="wander",
-                  voice="blip_mid", radius=52, fold=False, beats=None):
-        sc.add_npc(NPC(tx * TILE + 16, ty * TILE + 16, name, kind,
-                       dialogue_fn=_brimley_voice(pages, voice, fold=fold,
-                                                  beats=beats),
-                       movement=movement, radius=radius))
+                  voice="blip_mid", radius=52, fold=False, beats=None,
+                  stations=None):
+        n = NPC(tx * TILE + 16, ty * TILE + 16, name, kind,
+                dialogue_fn=_brimley_voice(pages, voice, fold=fold,
+                                           beats=beats),
+                movement=movement, radius=radius)
+        if stations:
+            # The JOBS layer (GAME_CHANGES §19): a personal station
+            # route -- walk there, stand the work a while, move on.
+            # Tile coords in; errand_step skips any station the nav web
+            # can't reach, so a bad spot degrades, never wedges.
+            n.movement = "worker"
+            n.stations = [{"x": sx * TILE + 16, "y": sy * TILE + 16,
+                           "dwell": dw, "face": fc}
+                          for (sx, sy, dw, fc) in stations]
+        sc.add_npc(n)
 
     # The locals anchored to their houses -- not patrolling random
     # waypoints. Each one stands within sight of where they actually
@@ -781,6 +792,12 @@ def build_brimley():
         "[c=dim]But you came IN. How did you come IN? ...Tell me how you came "
         "in.[/c]",
     ], fold=True,
+        # His job now is the road itself: he paces the stretch he used
+        # to drive, west toward the county line, back toward the
+        # bridge, and stands looking down it a long while each way.
+        stations=[(29, 24, (5.0, 9.0), (-1, 0)),
+                  (25, 24, (3.0, 6.0), (-1, 0)),
+                  (33, 24, (4.0, 7.0), (1, 0))],
         # TODO #10: his one impossible fact curdles as the case opens (he
         # converts at stage 3; window is evidence 0-2, fires at 2).
         beats=[("beat_royce_throat",
@@ -805,6 +822,11 @@ def build_brimley():
         "Stay on the roads. People who go off the roads come out wrong-side.",
         "[c=dim]Go on home, son. ...Oh. Right. None of us can.[/c]",
     ], fold=True,
+        # Town-centre rounds: his spot, a look in on the well, a stretch
+        # of the track where he watches who comes and goes.
+        stations=[(91, 12, (6.0, 10.0), (1, 0)),
+                  (94, 15, (4.0, 8.0), (0, -1)),
+                  (88, 13, (4.0, 7.0), (1, 0))],
         # TODO #10: the direct preacher-murder reaction. Garrick watches
         # the whole town from the well; the pulpit going silent is
         # exactly the kind of thing he'd clock first (he also SAID this

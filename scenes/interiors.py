@@ -179,10 +179,22 @@ def build_shop():
     pos = sc.consume_marker("S")
     if pos:
         tx, ty = pos
-        sc.add_npc(NPC(tx * TILE + 16, ty * TILE + 16,
-                       "Hettie", "hettie", voice="blip_high",
-                       portrait="hettie",
-                       dialogue_fn=hettie_dialogue, movement="idle"))
+        het = NPC(tx * TILE + 16, ty * TILE + 16,
+                  "Hettie", "hettie", voice="blip_high",
+                  portrait="hettie",
+                  dialogue_fn=hettie_dialogue, movement="worker")
+        # Her JOB (GAME_CHANGES §19): the counter mostly, a pass along
+        # the empty goods shelves (dusting stock that never comes), a
+        # trip to the storeroom preserves through the partition door.
+        het.stations = [
+            {"x": tx * TILE + 16, "y": ty * TILE + 16,
+             "dwell": (10.0, 16.0), "face": (0, 1)},     # the counter
+            {"x": 9 * TILE + 16, "y": 2 * TILE + 16,
+             "dwell": (3.0, 5.0), "face": (0, -1)},      # the bare shelves
+            {"x": 3 * TILE + 16, "y": 1 * TILE + 24,
+             "dwell": (4.0, 7.0), "face": (0, -1)},      # the preserves
+        ]
+        sc.add_npc(het)
     # Worn shop rug over the open floor -- multi-tile + off-grid to
     # break the plank tiling. First, so props draw on top.
     sc.add_decoration(Decoration(10 * TILE + 24, 9 * TILE + 8, "rug",

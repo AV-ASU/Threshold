@@ -788,7 +788,8 @@ def build_works_sign():
                 st["step"] = 1
                 caller = min(scene._kneelers,
                              key=lambda k: math.hypot(k.x - p.x, k.y - p.y))
-                game.float_speech.begin(caller, ["Mara."], name="A kneeler")
+                # No speaker label: just her name, said at the room.
+                game.float_speech.begin(caller, ["Mara."], name="")
         elif st["step"] == 1:
             if t > 3.1:
                 st["step"] = 2

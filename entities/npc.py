@@ -216,6 +216,19 @@ class NPC:
                 self.facing = player.facing
         elif self.movement == "homebody":
             self._homebody_tick(dt, scene)
+        elif self.movement == "worker":
+            # A local with a JOB (GAME_CHANGES §19): walk the personal
+            # station list (self.stations), dwell at each doing the
+            # work, move to the next. Same machinery as the cult's
+            # errands (systems/stealth.errand_step), so interruptions
+            # drop the chore and the rounds resume after. If every
+            # station is unreachable the errand layer switches itself
+            # off; fall back to anchored wandering so the local never
+            # just freezes.
+            if not errand_step(self, scene, dt,
+                               lambda nx, ny: self._step_toward(
+                                   (nx, ny), dt, scene)):
+                self.movement = "wander"
         elif self.movement == "chaser":
             self._cult_tick(dt, scene, player)
 
