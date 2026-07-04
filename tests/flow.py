@@ -5,8 +5,8 @@ asserts the spine is COMPLETABLE with no crash or soft-lock:
 
   3 evidence -> Sable hands over the Invitation -> the school rite
   (incense + the chalk door) -> the grove's descent fold -> take the
-  Playscript -> take the Pallid Mask -> fork at the Deep Stair (the
-  descent seals) -> cross the Depths -> the hive (speak to Mara) ->
+  Playscript -> the Sign Chamber (Mara rises; take the Pallid Mask) ->
+  fork at the Deep Stair (the descent seals) -> cross the Depths ->
   seal the Threshold (the SEAL ending).
 
 Plus the SPREAD ending (drive out with the Mask) and the 3-evidence King
@@ -397,15 +397,17 @@ def main():
           and hasattr(g, "begin_rite_dream"),
           "flashback: the mask-swarm + rite-dream systems are wired")
 
-    # --- 6. The hive: speaking to Mara is the #6 payoff ---
-    g.load_scene_now("dark")
+    # --- 6. The Sign Chamber: speaking to Mara is the #6 payoff ---
+    # (2026-07: she kneels at the Mask's foot now, not the deep hive.)
+    g.load_scene_now("works_sign")
     ready(g)
     mara = next((n for n in g.scene.npcs if n.name == "Mara"), None)
-    check(mara is not None, "hive: Mara is among the congregation")
+    check(mara is not None,
+          "sign chamber: Mara kneels among the congregation")
     if mara:
         mara.dialogue_fn(g, mara)
         check(g.save.flag("hive_seen"),
-              "hive: speaking to Mara fires the recognition")
+              "sign chamber: speaking to Mara fires the recognition")
 
     # --- 7. The Threshold seal -> the SEAL ending (consumes the keystone) ---
     # The keystone (the Mask) carried down from the Deep Stair is spent HERE,
@@ -511,7 +513,7 @@ def main():
           "barn: Mara's journal motivates the descent (points down/below)")
     check("learned my name" in jtext,
           "barn: the journal log carries her ache (grief, page 1)")
-    ge.load_scene_now("dark")                          # the_congregation (#6)
+    ge.load_scene_now("works_sign")                    # the_congregation (#6)
     ready(ge)
     mara_e = next((n for n in ge.scene.npcs if n.name == "Mara"), None)
     if mara_e:
@@ -1372,7 +1374,7 @@ def main():
     # --- 24b. Mara's exchange displays; the lure collides once (TODO #6/#7);
     # the SPREAD counterweight names the other road (TODO #9).
     gm = new_game()
-    gm.load_scene_now("dark")
+    gm.load_scene_now("works_sign")
     ready(gm)
     gm.save.set_flag("flashback_seen", True)
     _mshown = []
@@ -1404,7 +1406,7 @@ def main():
                       for p in _mshown),
               "lure: no dashes in the beat")
     else:
-        check(False, "mara: present in the hive")
+        check(False, "mara: present at the Sign Chamber")
 
     gw = new_game()
     gw.player.inventory.add("pallid_mask", 1)
@@ -1635,6 +1637,90 @@ def main():
     finally:
         os.environ.pop("THRESHOLD_SAVE_DIR", None)
         shutil.rmtree(_sd, ignore_errors=True)
+
+    # --- 28. THE TALK: the first cult grab is a warning, not a capture ---
+    gt2 = new_game()
+    gt2.load_scene_now("brimley")
+    ready(gt2)
+    _tshown = []
+    _torig = gt2.dialog.show
+
+    def _tspy(pages, *a, **k):
+        _tshown.extend([pages] if isinstance(pages, str) else list(pages))
+        return _torig(pages, *a, **k)
+    gt2.dialog.show = _tspy
+    check(not gt2.save.flag("cult_talk_given"), "talk: fresh run, no talk yet")
+    gt2._trigger_death("cultist")
+    check(gt2._death_kind is None,
+          "talk: the first grab does NOT capture (the freebie)")
+    check(gt2.save.flag("cult_talk_given"), "talk: the freebie is spent")
+    check(gt2.dialog.active, "talk: the warning is a modal beat")
+    for _ in range(20):
+        if not gt2.dialog.active:
+            break
+        gt2.dialog.advance()
+    check(not gt2.dialog.active, "talk: the warning closes cleanly")
+    check(gt2.player.invuln > 0,
+          "talk: release grants a re-grab grace window")
+    check(any(isinstance(e, dict) and e.get("name") == "the_talk"
+              for e in gt2.save.arg("notes", [])),
+          "talk: the PI files it as a NOTE")
+    check(not has_evidence(gt2, "the_talk"),
+          "talk: the note never inflates evidence")
+    check(not any(("—" in s) or ("–" in s) or ("--" in s)
+                  for s in _tshown),
+          "talk: no dashes in the warning")
+    check("business" in " ".join(_tshown).lower(),
+          "talk: the warning names their business")
+    gt2._trigger_death("cultist")
+    check(gt2._death_kind == "cultist",
+          "talk: the second grab is the CAPTURED card")
+
+    # --- 28b. The calling-out: the staged confrontation at the Sign
+    # Chamber (kneelers rise, one says her name, Mara comes to you).
+    from constants import TILE as _T28
+    gs2 = new_game()
+    gs2.load_scene_now("works_sign")
+    ready(gs2)
+    _sc2 = gs2.scene
+    check(all(getattr(k, "pose", None) == "kneel" for k in _sc2._kneelers)
+          and getattr(_sc2._mara, "pose", None) == "kneel",
+          "staging: the congregation and Mara start kneeling")
+    check(all(not str(getattr(k, "tag", "")).startswith("cult_")
+              for k in _sc2._kneelers + [_sc2._mara]),
+          "staging: the rank carries no cult tag (no gaze, no chase)")
+    gs2.state = "playing"
+    # Row 6, centre aisle: inside the calling-out band (rows 2..7), a
+    # step south of the kneeling rank.
+    gs2.player.x, gs2.player.y = 6 * _T28 + 16, 6 * _T28 + 16
+    for _ in range(400):
+        gs2.step(1 / 20.0)
+        if gs2.dialog.active:
+            break
+    check(gs2.save.flag("mara_called"),
+          "staging: entering the nave starts the calling-out")
+    check(any(getattr(k, "pose", "kneel") is None for k in _sc2._kneelers),
+          "staging: the kneelers rise")
+    check(gs2.dialog.active and len(gs2.dialog.pages) == 4,
+          "staging: Mara comes to you and her exchange fires unprompted")
+    check(gs2.save.flag("hive_seen")
+          and has_evidence(gs2, "the_congregation"),
+          "staging: the confrontation lands evidence #6")
+    for _ in range(20):
+        if not gs2.dialog.active:
+            break
+        gs2.dialog.advance()
+    for _ in range(400):
+        gs2.step(1 / 20.0)
+        if (getattr(gs2, "_mara_stage", None) is None
+                and getattr(_sc2._mara, "pose", None) == "kneel"):
+            break
+    check(getattr(_sc2._mara, "pose", None) == "kneel"
+          and all(getattr(k, "pose", None) == "kneel"
+                  for k in _sc2._kneelers),
+          "staging: the room folds back to the kneeling")
+    check((_sc2._mara.x, _sc2._mara.y) == _sc2._mara_home,
+          "staging: Mara returns to her place in the rank")
 
     print()
     if FAILS:

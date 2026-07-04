@@ -312,10 +312,21 @@ it renders the procedural sprites to a labelled PNG strip.
   compulsion echoes — survives in `sprites.py` as reusable art, just no
   longer driven by an accumulating stage.)
 - A pursuer reaching the player triggers the **death** sequence
-  (`_trigger_death(kind)` → `_tick_death`): `kind="cultist"` shows the
-  **CAPTURED** card (taken alive for the hive); `kind="sheriff"` the
+  (`_trigger_death(kind)` → `_tick_death`). **THE TALK (2026-07): the
+  FIRST cult grab of a run is a warning, not a capture** — `_cult_talk`
+  (threat_mixin) plays the courteous one-liner, stands the room down,
+  grants a short re-grab grace, and files a NOTE (flag `cult_talk_given`;
+  gates every grab site, struggle losses included). After that,
+  `kind="cultist"` shows the **CAPTURED** card (taken alive for the hive,
+  with their one-line reminder under it); `kind="sheriff"` the
   **TAKEN INTO CUSTODY** card (the hollow lawman); `kind="king"` plays the
   **Carcosa** mask-furnace cutscene. All end the run and return to title.
+- **The calling-out (2026-07):** Mara kneels among the Sign Chamber
+  congregation (`works_sign`, set-piece NPCs, no cult tag). First entry
+  stages it (`_call_out` trigger + `_sign_update` in `scenes/well.py`):
+  the kneelers rise, one says her name, she walks to the player and her
+  canon-guarded exchange fires (evidence #6 lands HERE now; the deep
+  hive `dark` keeps a nameless congregation). Flow §28b guards it.
 
 ## Conventions & gotchas
 

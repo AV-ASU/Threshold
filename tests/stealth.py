@@ -291,13 +291,18 @@ def main():
     check(e._cult_state == "investigate" and e._last_seen_pos[0] < e.x,
           "pull: a LOUD noise re-tasks the searcher")
 
+    # (2026-07: the Sign Chamber congregation are set-piece NPCs now --
+    # no cult tag, so no noise reaction, no gaze, no grab; their wake is
+    # the scripted calling-out. The east patrol stays the live threat.)
     g = underground("works_sign")
-    kneeler = next(x for x in g.scene.enemies
-                   if x.kind == "cultist" and getattr(x, "aggro", 1) == 0)
-    g.scene.emit_noise(kneeler.x + 40, kneeler.y, 1.0, kind="test")
-    tick(g, 1)
-    check(kneeler._cult_state == "scout",
-          "deaf: a set-piece kneeler ignores noise (its wake is scripted)")
+    _rank = [n for n in g.scene.npcs if getattr(n, "pose", "") == "kneel"]
+    check(len(_rank) >= 4,
+          "deaf: the congregation kneels as set-piece NPCs")
+    check(all(not str(getattr(n, "tag", "")).startswith("cult_")
+              for n in _rank),
+          "deaf: the rank carries no cult tag (its wake is scripted)")
+    check(any(e.kind == "cultist" and e.alive for e in g.scene.enemies),
+          "deaf: the east patrol is still the room's live threat")
 
     # --- 4d. the church bell (the town's dominant noise source) ---------
     # Rung from the tower pull (E, scenes/threshold_extras.py); Game.

@@ -15,7 +15,8 @@ client, **Walter Blaine** — hired you to find his adult daughter,
 and was **last seen in Brimley**. (The premise is delivered twice: the
 skippable opening drive carries the hook; the PI's **case notebook** on
 the spare-room writing table is the persistent, re-readable version —
-client, quarry, the job. After the hive (`hive_seen`), re-reading the
+client, quarry, the job. After the confrontation (`hive_seen`; since
+2026-07 it lands at the Sign Chamber calling-out), re-reading the
 case-board rewrites the entry — *"Subject: located. Recovery: declined."*)
 
 You drove in to ask a few questions and drive out. **You can't.** The
@@ -465,8 +466,9 @@ sit on the **surface** — the **journal** (barn, #2), the **Ledger** (the
 Lodge front desk, #3), and the **Preacher** (church, #4) — so a thorough
 town search arms Him while you're *still above ground*: a fair, brutal
 "you dug too deep, too fast." The deeper truths — **Mara's cell** (#1), the
-**Mask** (#5), and the **Congregation** (#6) — wait below, in the Works and
-the hive.
+**Mask** (#5), and the **Congregation** (#6) — wait below, in the Works
+(since 2026-07, #6 lands at the Sign Chamber too: Mara kneels at the
+Mask's foot and the calling-out stages her rising).
 
 | # | Evidence | Item / scene key | Where | What it proves |
 |---|---|---|---|---|
@@ -475,7 +477,7 @@ the hive.
 | 3 | **The Ledger** (the Lodge's old registers) | read in place | The **padlocked Lodge cellar** (2026-07 rework, GAME_CHANGES §1): the boxed old registers on the crates below. The front desk keeps the clean sign-in book + the LEAD pointing down; the cellar key hangs on a nail behind the house; Sable never points at the cellar | Guests who check in and never out — the checkout dates stop **a year back** (the same season the PI dreamed the door, once) — and your own name, signed in tonight, already among them. |
 | 4 | **The Preacher** | his **cross** (item `cross`) taken from the viscera | The **church** (`old_man_house`) — his own floor | The town murders the ones who name them — gutted for preaching against the cult |
 | 5 | **The Sign — the Pallid Mask** | `pallid_mask` (renamed 2026-07 from the legacy `sigil_rubbing`; `Save.load_disk` migrates old slots) | Sign Chamber (well) | His face made an object: what they worship, the shard the fold opens for (the **escape key** → *SPREAD IT*), and the keystone you carry to the door (the Mask alone; the cult's notes are decoupled, pure lore) |
-| 6 | **The Congregation** | (Mara, turned) | The Depths / the hive | There was never anyone to save |
+| 6 | **The Congregation** | (Mara, turned) | The **Sign Chamber** (`works_sign`; 2026-07 staging): she kneels among the congregation at the Mask's foot. First entry stages the **calling-out**: the kneelers rise, one says her name at the room, and she comes to you for the exchange | There was never anyone to save |
 
 > **The Sign IS the Pallid Mask.** Not a glyph — the King's own pale
 > half-mask, made an object. The jaundiced sigil scrawled through the
@@ -603,15 +605,15 @@ DEEPER          The Depths → the Threshold (END IT / seal) → the Hive
 
 - **Surface:** the Arcadia (lodge/yard/cornfields) ↔ Brimley (one map: the well, the church, the store, the sheriff's office, the school, the barn, the kid's house, the locals, the car). Sealed; sole way down = the rite (the grove's descent fold; the well itself is dread set-dressing).
 - **The Works** (a.k.a. the Basement Level): the first underground layer, reached by the well — a built 7-room gauntlet (§9): Mara's cell, the cult's testimony, the Pallid Mask.
-- **Deeper (Mask-gated at the Deep Stair):** the Depths, the Threshold (**End it**), and the Hive where **Mara** is — all built: the `dark` scene holds the kneeling congregation and Mara's one-shot recognition (evidence #6).
+- **Deeper (Mask-gated at the Deep Stair):** the Depths, the Threshold (**End it**), and the Hive — all built: the `dark` scene holds the claimed congregation, past names now (2026-07: **Mara** kneels at the Sign Chamber, where the calling-out stages her rising and evidence #6 lands).
 
 > **Naming, to avoid the collision:** the **lodge cellar** is the
 > `basement` *scene* — the Arcadia's own cellar, a *surface* interior.
-> (The Ledger, #3, now sits on the **front desk**, not down here; the
-> journal is in the barn. With the cellar ledger cut, the `basement`
-> scene's remaining role is a code TODO — §8.) **The Works** (a.k.a. the
-> Basement Level) is the underground stratum below the well. Different
-> places, similar words.
+> (The Ledger, #3, lives down here again — the 2026-07 rework put the
+> boxed old registers behind the padlocked kitchen hatch, keyed from the
+> nail behind the house; the journal is in the barn.) **The Works**
+> (a.k.a. the Basement Level) is the underground stratum below the well.
+> Different places, similar words.
 
 **Carcosa is not a level.** Your King sprite is the floating
 glow-of-faces, so Carcosa *is* the inside of Him: every mask drifting in
@@ -623,7 +625,7 @@ that fire is someone He already took. You only ever see it by losing.
 
 | Trigger | Outcome | Presentation | Existing hook |
 |---|---|---|---|
-| **A cultist catches you** | The cult takes you for the ritual | Stark text card — **CAPTURED** (cult takes you alive; worse than killed, and feeds the hive) | `_trigger_death("cultist")` → `_tick_death` (exists) |
+| **A cultist catches you** | The cult takes you for the ritual. **THE TALK (2026-07):** the FIRST grab of a run is a courteous warning instead — *"keep clear of our business"* — then they let go (a one-time freebie, spent at whichever grab site fires first; filed as a NOTE) | Stark text card — **CAPTURED** (cult takes you alive; worse than killed, and feeds the hive), with their one-line reminder under it | `_trigger_death("cultist")` → `_cult_talk` (first grab) / `_tick_death` |
 | **The King catches you** (vis `1.0`, *3+ evidence*, He reaches you) | He takes you into Himself | Brief cutscene: fire/hell, the floating masks of His sprite drifting in it — title **Carcosa** | `_trigger_death("king")` → `_tick_death` (exists; the bespoke `_trigger_closure` path was replaced by the shared death system) |
 | **Seal the threshold** — *END IT* | You carry the **keystone** (the Mask seated in the cult's notes) THROUGH the door; contain the hunger; **every acre the cult bent is warped whole into Carcosa** — the map's edges grow together over the place, and **Brimley simply was** | Three movements (2026-06 approved): a **LIVE warp** (the threshold scene's dressing, then the world's things, pour through the doorframe after you — in-engine, not a still); the **approved lines on black** (you under the **black stars** and **twin suns** of Carcosa); a **wordless wide shot** — the cult-bent acres adrift in the void, a towering figure behind, gold tracing a mask, almost visible. *"Rage approaches."* | `_threshold_seal`/`_tick_seal_warp` (scenes/depths.py, consumes the keystone at the doorframe) → `_play_ending("seal_threshold")` → `draw_seal_tableau` |
 | **Drive out with the Sign** — *SPREAD IT* | You pull the rite's keystone and carry it out — and at the edge of Brimley the Mask **claims you** (2026-06 rework, GAME_CHANGES §16): the PI gazes into its deep sunken eyes, completing the dream that broke off a year ago, and the King steps in. What he longed for most — to *feel* — floods back, and he drives south full, certain, and His. The breach rides out as a willing vector now, not a passive charge | The drive-out **cutscene** (`rendering/spread_drive.py`, ~38s): the engine roars to life, the gold wake trails the car (particles, never a body), the mask turns in the passenger seat, the fold's frame sweeps past *unwitnessed* mid-gaze, colour floods the first horizon of the run, and the verdict card closes it: *"Everyone will know."* | `_begin_car_escape()` → `_play_ending("escape_alone")` (exists). Gates on the **Mask** (`pallid_mask`) **alone** — your own car, no keys; the fold is the only lock, and only a shard of Him opens it. Caption lines are locked (flow-guarded); durations come from `SPREAD_BEAT_DURS`. |
@@ -658,7 +660,7 @@ So the fork is **experiential, not a menu.** With the keystone in hand:
 - **Carry it down to the door → SEAL.** Resist the pull. Take the keystone
   **past** the Deep Stair (which opens to His own authority pressed to the
   the blasted floor at the deepest face — the fall is the point of no
-  return), down through the Depths and the hive (Mara), to the
+  return), down through the Depths and the hive, to the
   **Threshold**, and **give the keystone to the door.** The geometry closes;
   everything the cult's doings touched — the town, the ground under it, the
   hunger, and you — is warped whole into Carcosa, and the county's edges
@@ -931,7 +933,7 @@ finds you — run it on cover, timing, and breaking their line of sight).
 | 4 | The Sorting Hall | `works_sorting` | The **worldly lives the congregation shed** when they were claimed — and the effects of the few the fold took — sorted and catalogued. 2 cultists, 3 hides (hardest crossing). A side door north → **Mara's room**. |
 | 4a | **Mara's Room** | `maras_room` | A convert's cell off the hall: cot, her cult robe + the unsent letter. **Evidence #1.** A quiet beat off the gauntlet, 1 hide. |
 | 5 | The Scriptorium | `works_scriptorium` | The Sign copied endlessly — the **attuned compulsively bleeding the dream-image out** onto every surface, none of them the door itself (§1b). 1 oblivious scribe, 2 hides. **The Calling** — the first of three cult-testimony fragments (§6b), the one bound, whole volume among the loose copies: the congregation's own personal testimony (their voice in the item description, the PI's reaction in his notes). Pure lore; it gates nothing (the keystone is the Mask alone). The Bargain + The Digging are found deeper (the Sump, the Ossuary). |
-| 6 | The Sign Chamber | `works_sign` | The Sign daubed on the wall + an altar; 3 kneelers + 1 patrol. **Lift the Pallid Mask → `pallid_mask` + evidence #5** (no charcoal — you take the object itself). |
+| 6 | The Sign Chamber | `works_sign` | The Sign daubed on the wall + an altar; the kneeling rank (set-piece NPCs) + 1 patrol. **The calling-out (2026-07):** Mara kneels among them; first entry, the kneelers rise, one says her name, she comes to you — the confrontation lands **evidence #6**. **Lift the Pallid Mask → `pallid_mask` + evidence #5** (no charcoal — you take the object itself). |
 | 7 | **The Deepest Face** | `works_deepstair` | The dig's END — the cult's testimony left "a few feet of earth"; there is no stair, no gate. With the **Mask in hand** (the sweep finished) and **powder from the Sump**, a two-press charge **blasts the floor through into the old workings**: the FALL into `depths_antechamber` is the one-way step. The Mask is **not consumed** — carried down and spent at the Threshold door. |
 
 **Rules wired:**
@@ -959,8 +961,9 @@ cache), `the_cells` (off `works_sorting`), and `maras_room` (4a, the cell
 off the Sorting Hall) — plus the **Depths**, which has grown to five rooms
 (`depths_antechamber` → `depths_procession` → `depths_hall` →
 `depths_threshing` → `depths_stair`, with `the_ossuary` branching off the
-procession) before the **Hive** (`dark`, the kneeling congregation + Mara,
-evidence #6) and the **Threshold** (`threshold`, the doorframe). The
+procession) before the **Hive** (`dark`, the claimed congregation, past
+names — Mara and evidence #6 moved up to the Sign Chamber, 2026-07) and
+the **Threshold** (`threshold`, the doorframe). The
 descent order is: grove rite → Works (7) → the blast → Depths (5) →
 Hive → Threshold.
 

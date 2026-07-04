@@ -730,7 +730,10 @@ class RenderMixin:
             label, col, sub = ("TAKEN INTO CUSTODY", (188, 172, 96),
                                "The badge was just clothing. The hold is not.")
         else:
-            label, col, sub = ("CAPTURED", (170, 150, 90), None)
+            # Every capture is post-talk now (the first grab of a run is
+            # the warning), so the card carries their one-line reminder.
+            label, col, sub = ("CAPTURED", (170, 150, 90),
+                               "\"We did ask, friend.\"")
         if self._death_t > 0.35:
             ta = min(255, int((self._death_t - 0.35) / 0.4 * 255))
             big = self.fonts["title"].render(label, True, col)
