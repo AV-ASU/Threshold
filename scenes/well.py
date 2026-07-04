@@ -41,7 +41,7 @@ from entities.decoration import Decoration
 from entities.npc import NPC
 from .base import Scene
 from .dialogue import _evidence
-from .depths import _box, _cultist, _ambient, _wall, _bevel
+from .depths import _box, _cultist, _ambient, _wall, _bevel, _flood, _rect_tiles
 
 
 # ---- Room 1: the Shaft Floor (key: well_bottom) ----
@@ -258,6 +258,12 @@ def build_works_vats():
     objs[5][0] = "F"          # west -> back to the racks
     objs[5][12] = "E"         # east -> the sorting hall
     objs[10][6] = "D"         # south arm -> the overflow sump (dead-end branch)
+    # Flood the N and S arms (the basin arms + the sump branch): reaching a
+    # basin, the SE hide, or the sump means WADING (slow + a loud splash the
+    # basin workers converge on). The E-W crossing (rows 4-6) stays dry, so
+    # the through route W<->E is a dry corridor -- the water is a risk you
+    # take on, not a wall (WADE_*).
+    floor = _flood(floor, objs, _rect_tiles(4, 1, 8, 3) + _rect_tiles(4, 7, 8, 9))
     objects = ["".join(r) for r in objs]
     sc = Scene("works_vats", floor, objects, music="basement")
     sc.add_exit("F", "well_passage", "from_below")
@@ -1019,6 +1025,11 @@ def build_the_sump():
     floor, objs = _box(10, 9)
     _bevel(objs, 3)
     objs[0][5] = "F"          # north -> back up to the Cistern
+    # Flood the south pool -- the two basins and the swallow-hole stand in
+    # black water (WADE_*): crossing to them is a slow, loud wade. The north
+    # ledge (rows 2-4: the diggers' barrel/crate + the DRY powder store) and
+    # the spawn row stay dry -- the powder is canonically "kept dry" here.
+    floor = _flood(floor, objs, _rect_tiles(2, 6, 7, 7))
     objects = ["".join(r) for r in objs]
     sc = Scene("the_sump", floor, objects, music="basement")
     sc.add_exit("F", "works_vats", "from_the_sump")

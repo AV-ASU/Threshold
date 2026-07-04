@@ -500,6 +500,22 @@ BELL_STOP_DIST = 70.0         # a hunter this close to the door stills it
 TRAP_REARM = 2.0              # s before a left-and-re-entered trap re-fires
 NOISE_SRC_SILENCE_DIST = 40.0 # a hunter this close shuts a source off
 
+# ---- Deep-water WADE (the flooded deep is loud) ---------------------------
+# The dig broke into the underground river, so the deepest works stand in
+# black water. Wading a `~` tile in a WADE scene HALVES the player's speed
+# (you cannot sprint clear of it) and throws a loud SPLASH the searchers
+# converge on -- turning standing water from set-dressing into a routing
+# risk (skirt it on dry stone, or take the wet shortcut and pay in noise;
+# it doubles as a deliberate lure to pull a searcher one way and slip past
+# on the dry). Scoped to the deep works so the Brimley river -- its own
+# set-piece, with its own in/out rules -- is untouched. No new AI: the
+# splash rides the existing Scene.emit_noise / stealth.hear_noise ear.
+WADE_SCENES = {"the_sump", "works_vats", "depths_threshing"}
+WADE_SPEED_MULT = 0.5         # wading halves speed (sprint can't clear it)
+WADE_STEP_EVERY = 0.46        # heavier, slower splash cadence than dry steps
+WADE_SPLASH_LOUD = 0.95       # a splash is LOUD -- over NOISE_SEARCH_PULL
+WADE_SPLASH_REACH = 260.0     # and carries further than an ordinary footfall
+
 # ---- One-hop noise bleed (the tunnels carry sound) -------------------------
 # A LOUD noise in an underground room (a gunshot, the struggle burst)
 # reaches the NEXT room: after a short walk-time a transient cultist

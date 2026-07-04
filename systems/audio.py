@@ -133,6 +133,9 @@ class Audio:                        #Starting screen needs music, something simp
         self.sfx["step_stone"]  = g(110, 60, 0.12, "square", attack_ms=2, decay_ms=30, noise_mix=0.5)
         self.sfx["step_carpet"] = g(90, 80, 0.06, "noise", attack_ms=4, decay_ms=50, noise_mix=1.0)
         self.sfx["step_void"]   = g(40, 220, 0.18, "sine", attack_ms=20, decay_ms=180)
+        # A wet splash: pure noise, soft attack, a longer wet tail than a
+        # dry footfall (deep-water WADE, systems/config WADE_*).
+        self.sfx["step_water"]  = g(70, 130, 0.20, "noise", attack_ms=6, decay_ms=150, noise_mix=1.0)
         self.sfx["bump"]        = g(80, 100, 0.18, "square", attack_ms=2, decay_ms=70, noise_mix=0.3)
         # Door foley: a latch + hinge-creak open and a whoosh + frame-
         # thud + latch close (the old raw saw sweeps read as synth, not
@@ -310,7 +313,7 @@ class Audio:                        #Starting screen needs music, something simp
         # baked above and is the void scenes' bespoke step. The dry
         # originals remain in self.sfx as the room fallback.
         for _cue in ("step_grass", "step_wood", "step_stone",
-                     "step_carpet", "gunshot"):
+                     "step_carpet", "step_water", "gunshot"):
             if _cue not in self.sfx:
                 continue
             dry = self.sfx[_cue]

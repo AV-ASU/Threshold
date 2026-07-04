@@ -798,6 +798,69 @@ def main():
               for n in g.scene.npcs),
           "wake: the first find raises the hooded ones")
 
+    # --- 10. deep-water WADE (TODO #8) -----------------------------------
+    # The flooded deep works slow the player and throw a loud splash the
+    # searchers converge on. Scoped to WADE_SCENES; the Brimley river is
+    # NOT one, so its `~` keeps its own set-piece rules.
+    from systems.config import (WADE_SCENES, WADE_SPEED_MULT,
+                                 WADE_SPLASH_LOUD, NOISE_SEARCH_PULL)
+    check(WADE_SPEED_MULT < 1.0, "wade: wading slows the player")
+    check(WADE_SPLASH_LOUD > NOISE_SEARCH_PULL,
+          "wade: a splash out-shouts the searcher-pull threshold")
+
+    def _find_water(g):
+        for ty, row in enumerate(g.scene.floor):
+            if "~" in row:                 # row may be a str or a list
+                return list(row).index("~"), ty
+        return None
+
+    for key in ("works_vats", "the_sump", "depths_threshing"):
+        g = new_game()
+        g.load_scene_now(key, "default")
+        wt = _find_water(g)
+        check(wt is not None, f"wade: {key} is flooded (has `~` water)")
+        if wt:
+            g.player.x, g.player.y = wt[0] * TILE + 16, wt[1] * TILE + 16
+            check(g._wading(), f"wade: standing in {key} water reads as wading")
+
+    g = new_game()
+    g.load_scene_now("works_vats", "default")
+    g.player.x, g.player.y = 6 * TILE + 16, 5 * TILE + 16   # dry crossing
+    check(not g._wading(), "wade: the dry central crossing is not wading")
+
+    # the Brimley river is EXCLUDED (its own set-piece, not a WADE scene)
+    g = new_game()
+    g.load_scene_now("brimley", "default")
+    check("brimley" not in WADE_SCENES, "wade: Brimley is not a WADE scene")
+    river = _find_water(g)
+    if river:
+        g.player.x, g.player.y = river[0] * TILE + 16, river[1] * TILE + 16
+        check(not g._wading(), "wade: the Brimley river never reads as wading")
+
+    # the real step path throws a SPLASH: drive movement across the flood
+    g = new_game()
+    g._cam_pitch_target = 0.0                # flat: raw WASD, no facing math
+    g.camera.pitch = 0.0
+    g.load_scene_now("works_vats", "default")
+    g.player.x, g.player.y = 4 * TILE + 16, 2 * TILE + 16   # W end of N arm
+    g.player.step_timer = 0.0
+
+    class _Held:
+        def __init__(self, ks): self.ks = set(ks)
+        def __getitem__(self, k): return 1 if k in self.ks else 0
+    _orig_gp = pygame.key.get_pressed
+    pygame.key.get_pressed = lambda: _Held({pygame.K_d})
+    splashed = False
+    try:
+        for _ in range(20):
+            tick(g, 1)
+            if any(e[4] == "splash" for e in g.scene._noise_events):
+                splashed = True
+                break
+    finally:
+        pygame.key.get_pressed = _orig_gp
+    check(splashed, "wade: a wet footfall throws a splash noise event")
+
     print()
     if FAILS:
         print(f"{len(FAILS)} FAILURES")

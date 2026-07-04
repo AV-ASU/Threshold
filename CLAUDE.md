@@ -221,6 +221,17 @@ it renders the procedural sprites to a labelled PNG strip.
   end-to-end by `tests/stealth.py`. (The Pillar-2 "peek" verb is
   deliberately deferred — free look under tilt already gives the
   information function; revisit in the human-tuning pass.)
+- **Deep-water WADE** (TODO #8, `WADE_*` config, `Game._wading`): the
+  flooded deep works (`WADE_SCENES` = works_vats / the_sump /
+  depths_threshing) stand in walkable `~` water. Wading a water tile
+  **halves the player's speed** (sprint can't clear it) and throws a
+  **loud splash** (`WADE_SPLASH_LOUD`, over `NOISE_SEARCH_PULL`, via
+  `Scene.emit_noise` kind `"splash"`) that searchers converge on, so
+  standing water is a routing risk, not just dressing. No new AI (rides
+  the existing `stealth.hear_noise` ear); the Brimley river is **excluded**
+  (not a WADE scene, keeps its own in/out rules). Water is authored per
+  scene with the `_flood` helper (`scenes/depths.py`); guarded by
+  `tests/stealth.py` §10.
 - **King in Yellow** (`_tick_king`): at `visibility >= 1.0` he spawns at
   `_king_anchor` (the player's scene-entry point); below `0.90` he
   dissolves; he catches at distance `< 24` **only once `_birth >= 1.0`**

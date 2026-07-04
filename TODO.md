@@ -25,18 +25,6 @@ deferred to this pass on purpose: the Pillar-2 **peek** verb (free look
 under tilt already carries the information function) and an
 exit-takes-a-beat vulnerability window on enclosed hides.
 
-### 8. One mechanical wrinkle in the deep  *(decide the fiction first)*
-
-The descent's narrative beats are done (see Verified done); what the
-~12-room midgame still lacks is a second mechanical idea beyond
-walk/hide/evade. Best candidates now that the noise model exists:
-**deep-water wade** (the dressed `~` tiles in works_vats / the_sump /
-depths_threshing slow the player and emit a splash noise event that
-pulls searchers — self-contained, no new AI), or a **listener cultist**
-(detects by movement noise instead of sight, inverting the cover rule in
-one or two deep rooms). Decide which fiction serves the dread before
-building.
-
 ### 11. Combat / difficulty — judgment calls (decide on purpose)
 
 Not bugs; deliberate choices worth confirming rather than leaving by default:
@@ -81,6 +69,17 @@ ticket — scope a concrete first scene before starting.
   sweep + CHECK enclosed hides, the timed struggle, the "?" tell, and an
   enclosed hide in every gauntlet room. `tests/stealth.py` is the sixth
   gate suite. Docs updated (`CLAUDE.md`, `STEALTH_REWORK.md`).
+- **#8 Deep mechanical wrinkle, the deep-water WADE** — the flooded deep
+  works (works_vats / the_sump / depths_threshing) now stand in walkable
+  `~` water: wading HALVES the player's speed (no sprinting clear) and
+  throws a loud splash searchers converge on, so standing water is a
+  routing risk (skirt it dry, take the wet shortcut and pay in noise, or
+  splash to bait a searcher and slip past). Self-contained: rides the
+  existing `Scene.emit_noise` / `stealth.hear_noise` ear, no new AI. The
+  Brimley river is excluded (its own set-piece). `WADE_*` config,
+  `Game._wading`, the `_flood` scene helper, a `step_water` splash SFX;
+  guarded by `tests/stealth.py` §10. (The listener-cultist alternative
+  was the road not taken.)
 - **#1 Food-scarcity visuals** — bare_shelf shop runs (+ book spines on
   stocked shelves), tended vs gone-over `garden_patch` beds in Brimley,
   and the stage-2 counter-eater in the shop (`pose="eat"`).
