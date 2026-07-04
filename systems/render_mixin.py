@@ -1261,6 +1261,60 @@ class RenderMixin:
             def _draw_player(psx=psx, psy=psy):
                 if getattr(self, "_seal_warp", None) is not None:
                     return        # SEAL live warp: he has gone through
+                # The camera-relative body view, computed once: it picks the
+                # sprite face AND decides whether the held weapon is occluded
+                # by the torso (see _draw_weapon below). Only meaningful under
+                # tilt; at pitch 0 it stays "front" so the draw order is
+                # byte-identical to before.
+                pview = "front"
+                if self._tilt_on() and self.player.hidden is None:
+                    pview = view_from_facing(self.player.facing[0],
+                                             self.player.facing[1],
+                                             self.camera.yaw)
+
+                # Held weapon + its use animation. The gun and axe share one
+                # slot (_active_weapon); each gets its OWN art. The gun no
+                # longer borrows the axe arc: it shows a held revolver, and a
+                # muzzle flash + recoil when fired. melee_swing_t drives the
+                # use animation for both (set by the swing / the shot).
+                def _draw_weapon():
+                    wpn = self._active_weapon()
+                    firing = self.player.melee_swing_t > 0
+                    prog = (1.0 - (self.player.melee_swing_t / AXE_SWING_DUR)
+                            if firing else 0.0)
+                    # The held weapon points where you AIM. facing/melee_dir are
+                    # WORLD headings; under the yawed camera, rotate them into
+                    # screen space (Camera.project's yaw rotation) so the gun/axe
+                    # lines up with the on-screen crosshair. The body view is
+                    # already yaw-aware via view_from_facing.
+                    def _sf(v):
+                        fx, fy = v
+                        if self._tilt_on() and self.camera.yaw:
+                            c, s = math.cos(self.camera.yaw), math.sin(self.camera.yaw)
+                            return (fx * c + fy * s, -fx * s + fy * c)
+                        return (fx, fy)
+                    if wpn == "pistol":
+                        if firing:
+                            draw_gun_fire(self.screen, psx, psy,
+                                          _sf(self.player.melee_dir), prog)
+                        else:
+                            draw_revolver_held(self.screen, psx, psy,
+                                               _sf(self.player.facing))
+                    elif wpn == "lumber_axe":
+                        if firing:
+                            draw_axe_swing(self.screen, psx, psy,
+                                           _sf(self.player.melee_dir), prog)
+                        else:
+                            draw_axe_held(self.screen, psx, psy,
+                                          _sf(self.player.facing))
+
+                # When the player faces AWAY (the "back" view) the torso should
+                # hide the held weapon, so draw it BEFORE the body. Otherwise the
+                # weapon reads in front of the hands, so it goes after.
+                weapon_behind = (pview == "back")
+                if weapon_behind:
+                    _draw_weapon()
+
                 if self.player.invuln > 0 and int(self.player.invuln * 12) % 2 == 0:
                     pass
                 elif self.player.hidden is not None:
@@ -1281,50 +1335,13 @@ class RenderMixin:
                     self.screen.blit(tag, (psx - tag.get_width() // 2,
                                            psy - 40))
                 else:
-                    pview = "front"
-                    if self._tilt_on():
-                        pview = view_from_facing(self.player.facing[0],
-                                                 self.player.facing[1],
-                                                 self.camera.yaw)
                     draw_player_sprite(self.screen, psx, psy, self.player.facing,
                                        self.player.walk_phase,
                                        armor=self.player.inventory.equipped["armor"],
                                        prone=getattr(self.player, "prone", False),
                                        view=pview)
-                # Held weapon + its use animation. The gun and axe share one
-                # slot (_active_weapon); each gets its OWN art. The gun no
-                # longer borrows the axe arc: it shows a held revolver, and a
-                # muzzle flash + recoil when fired. melee_swing_t drives the
-                # use animation for both (set by the swing / the shot).
-                wpn = self._active_weapon()
-                firing = self.player.melee_swing_t > 0
-                prog = (1.0 - (self.player.melee_swing_t / AXE_SWING_DUR)
-                        if firing else 0.0)
-                # The held weapon points where you AIM. facing/melee_dir are
-                # WORLD headings; under the yawed camera, rotate them into screen
-                # space (Camera.project's yaw rotation) so the gun/axe lines up
-                # with the on-screen crosshair. The body view is already
-                # yaw-aware via view_from_facing.
-                def _sf(v):
-                    fx, fy = v
-                    if self._tilt_on() and self.camera.yaw:
-                        c, s = math.cos(self.camera.yaw), math.sin(self.camera.yaw)
-                        return (fx * c + fy * s, -fx * s + fy * c)
-                    return (fx, fy)
-                if wpn == "pistol":
-                    if firing:
-                        draw_gun_fire(self.screen, psx, psy,
-                                      _sf(self.player.melee_dir), prog)
-                    else:
-                        draw_revolver_held(self.screen, psx, psy,
-                                           _sf(self.player.facing))
-                elif wpn == "lumber_axe":
-                    if firing:
-                        draw_axe_swing(self.screen, psx, psy,
-                                       _sf(self.player.melee_dir), prog)
-                    else:
-                        draw_axe_held(self.screen, psx, psy,
-                                      _sf(self.player.facing))
+                if not weapon_behind:
+                    _draw_weapon()
             _emit(self.camera.depth(self.player.x, self.player.y), _draw_player)
 
         # Under tilt, fold the upright occluders -- wall tiles + solid props --
