@@ -595,6 +595,60 @@ def build_works_scriptorium():
 
 # ---- Room 6: the Sign Chamber (key: works_sign) ----
 
+def _mara_voice(game, npc):
+    """Mara's one-shot recognition -- the #6 payoff. The case was never a
+    rescue; you went deeper and found her already gone. After it, she has
+    gone back to the kneeling. (2026-07: she kneels HERE, at the Mask's
+    foot, and the staged calling-out below walks her to you; this fn is
+    both the staging's exchange and her repeat E-press.)"""
+    if game.save.flag("hive_seen"):
+        game.dialog.show(
+            ["[c=dim]She has gone back to the kneeling. She won't look at "
+             "you again.[/c]"],
+            speaker="", voice="blip_soft", portrait="narrator")
+        return
+    game.save.set_flag("hive_seen", True)
+    game.audio.force_silence()
+    game.audio.play("low_pulse", 0.6)
+
+    def _lure_collision():
+        # TODO #7 -- the lure chain, felt ONCE (NARRATIVE §1/§10 fence:
+        # never stated, no chain named; the PI starts the thought and
+        # declines to finish it). Only for a player who lived the dream
+        # (flashback_seen); for anyone else her lines stand alone.
+        if not game.save.flag("flashback_seen"):
+            return
+        game.dialog.show([
+            "[c=dim](A door in your sleep, a year back. Then a grief job "
+            "you had no reason to take, and an itch that drove you north "
+            "with it.)[/c]",
+            "[c=dim](And every road in handed you here. To her, kneeling. "
+            "You start the arithmetic of that, and you put it down. Some "
+            "sums you don't finish standing up.)[/c]",
+        ], speaker="", voice="blip_soft", portrait="narrator")
+
+    # File evidence #6 FIRST and silently (show=False): the log + the
+    # King-gate land immediately, and the one-line evidence dialog no
+    # longer CLOBBERS her four lines (dialog.show replaces the open
+    # box, so the old order showed the player only the summary and the
+    # whole exchange was lost). The notebook keeps the summary text.
+    _evidence(game, "the_congregation", [
+        "Mara, kneeling with the congregation. Turned. There was never "
+        "anyone to bring back. Only this, and now you're in it with her.",
+    ], show=False)
+    game.dialog.show([
+        "[c=dim](The hood lifts. It is Mara.)[/c]",
+        "\"My father sent you. Of course he did. He never could let a thing "
+        "stay lost.\"",
+        "[s=slow]\"Tell him what I told him at the start. I'm not lost. I have "
+        "never been this close.\"[/s]",
+        "[c=dim]\"There was no one down here to bring back. I was not taken. I "
+        "was answered, and I went to it gladly. Go home, while the town still "
+        "lets you think you can.\"[/c]",
+    ], speaker="", voice="blip_soft", portrait="narrator",
+        on_complete=_lure_collision)
+
+
 def build_works_sign():
     # An apse: the north end rounded (beveled) around the altar, the
     # congregation floor opening out square to the south.
@@ -640,14 +694,27 @@ def build_works_sign():
     sc.hide_spots = [
         (4 * TILE + 16, 8 * TILE + 8, "under"),    # under the west pew
     ]
-    # The congregation: three kneelers facing the Sign (north), plus one
-    # patrol on the east flank. Kneelers start oblivious (aggro 0).
-    for kx in (4, 6, 8):
-        k = _cultist(kx * TILE + 16, 5 * TILE + 16, speed=0.8)
-        k.aggro = 0
+    # The congregation (2026-07 staging rework, settled with the user):
+    # the kneelers at the Mask's foot are set-piece NPCs now -- no tag,
+    # so no gaze, no chase, no grab (the ones IN the rite never break
+    # from it; the east patrol stays the room's live threat) -- and MARA
+    # KNEELS AMONG THEM, one more hood in the rank until the room says
+    # her name (the calling-out below). Evidence #6 lands here now.
+    sc._kneelers = []
+    for kx in (4, 5, 7, 8):
+        k = NPC(kx * TILE + 16, 5 * TILE + 16, "A kneeler", "cultist",
+                movement="idle", no_prompt=True)
+        k.pose = "kneel"
         k.facing = (0, -1)
-        k.lock_facing = True
-        sc.add_enemy(k)
+        sc.add_npc(k)
+        sc._kneelers.append(k)
+    mara = NPC(6 * TILE + 16, 5 * TILE + 16, "Mara", "cultist",
+               dialogue_fn=_mara_voice, movement="idle")
+    mara.pose = "kneel"
+    mara.facing = (0, -1)
+    sc.add_npc(mara)
+    sc._mara = mara
+    sc._mara_home = (mara.x, mara.y)
     sc.add_enemy(_cultist(10 * TILE + 16, 7 * TILE + 16, speed=0.9))
     # The rite-holder: one cultist bowed at the altar's foot, holding the rite,
     # oblivious to you. An NPC with NO tag -> excluded from the cultist-gaze
@@ -660,23 +727,120 @@ def build_works_sign():
     holder.pose = "chant"
     sc.add_npc(holder)
 
-    # The rite-holder's WEIGHT, felt on approach (TODO #8; NARRATIVE 1b:
-    # the self dissolved into the work). A one-shot trigger on stepping
-    # into the apse band -- not an E-press, so it can never steal the
+    # THE CALLING-OUT (2026-07, settled with the user). First entry into
+    # the nave: the kneelers rise one by one and turn to you, one of them
+    # says her name at the room, and Mara stands up out of the rank and
+    # comes to you for the exchange (_mara_voice, evidence #6). Then the
+    # room folds back to the kneeling as if you had never come in. The
+    # trigger is a walk-on band, never an E-press, so it cannot steal the
     # altar's Mask/rite choice.
-    def _holder_weight(game):
-        game.audio.play("low_pulse", 0.5)
-        game.dialog.show([
-            "[c=dim]The one bowed at the altar's foot never pauses. "
-            "Metronome steady. Whatever it was before, its share of the "
-            "rite is the whole of it now.[/c]",
-        ], speaker="", voice="blip_soft", portrait="narrator")
+    def _call_out(game):
+        if game.save.flag("mara_called"):
+            return
+        if getattr(game, "_mara_stage", None) is not None:
+            return
+        game.save.set_flag("mara_called", True)
+        game._mara_stage = {"t": 0.0, "step": 0, "sc": sc}
+        game.audio.play("low_pulse", 0.55)
     sc.triggers.append({
-        "rect": (3 * TILE, 3 * TILE, 10 * TILE, 5 * TILE),
-        "fn": _holder_weight,
+        "rect": (1 * TILE, 2 * TILE, 11 * TILE, 7 * TILE),
+        "fn": _call_out,
         "once": True,
         "fired": False,
     })
+
+    def _sign_update(game, scene, dt):
+        st = getattr(game, "_mara_stage", None)
+        if st is None:
+            return
+        # A stage born on a torn-down scene instance (the player walked
+        # out mid-beat) dies here: the room resets to the kneeling, and
+        # Mara's E-press still carries the full exchange (no soft-lock).
+        if st.get("sc") is not scene:
+            game._mara_stage = None
+            return
+        mn = getattr(scene, "_mara", None)
+        if mn is None or not getattr(mn, "alive", True):
+            game._mara_stage = None
+            return
+        st["t"] += dt
+        t = st["t"]
+        p = game.player
+
+        def _face(n, tx, ty):
+            dx, dy = tx - n.x, ty - n.y
+            dd = math.hypot(dx, dy) or 1.0
+            n.facing = (dx / dd, dy / dd)
+        # The patrol holds off while the room performs.
+        for e in scene.enemies:
+            if getattr(e, "kind", "") == "cultist" and e.alive:
+                e._stun_t = max(getattr(e, "_stun_t", 0.0), 0.3)
+                e._cult_state = "scout"
+                e._suspicion = 0.0
+        if st["step"] == 0:
+            # The kneelers rise one by one, and turn to face you.
+            for i, k in enumerate(scene._kneelers):
+                if t > 0.4 + 0.3 * i and getattr(k, "pose", None) == "kneel":
+                    k.pose = None
+                    _face(k, p.x, p.y)
+                    game.audio.play("wood_creak", 0.22)
+            if t > 0.4 + 0.3 * len(scene._kneelers) + 0.6:
+                st["step"] = 1
+                caller = min(scene._kneelers,
+                             key=lambda k: math.hypot(k.x - p.x, k.y - p.y))
+                game.float_speech.begin(caller, ["Mara."], name="A kneeler")
+        elif st["step"] == 1:
+            if t > 3.1:
+                st["step"] = 2
+                mn.pose = None
+                _face(mn, p.x, p.y)
+                game.audio.play("low_pulse", 0.5)
+        elif st["step"] == 2:
+            # She comes to you. A straight walk (the nave is open floor);
+            # the exchange fires when she arrives, or wherever she stands
+            # if you keep backing away from her.
+            dx, dy = p.x - mn.x, p.y - mn.y
+            d = math.hypot(dx, dy)
+            if t > 3.8 and d > 40.0:
+                step_len = min(52.0 * dt, d - 38.0)
+                mn.x += dx / d * step_len
+                mn.y += dy / d * step_len
+                _face(mn, p.x, p.y)
+            if (t > 3.8 and d <= 42.0) or t > 10.0:
+                st["step"] = 3
+                _face(mn, p.x, p.y)
+                _mara_voice(game, mn)
+        elif st["step"] == 3:
+            # Her exchange (and the lure beat chained off it) is modal;
+            # the sim freezes under it, so reaching this tick means it
+            # is over. The rank folds back down.
+            st["step"] = 4
+        elif st["step"] == 4:
+            hx, hy = scene._mara_home
+            dx, dy = hx - mn.x, hy - mn.y
+            d = math.hypot(dx, dy)
+            if d > 3.0:
+                step_len = min(48.0 * dt, d)
+                mn.x += dx / d * step_len
+                mn.y += dy / d * step_len
+                _face(mn, hx, hy)
+            else:
+                mn.x, mn.y = hx, hy
+                mn.pose = "kneel"
+                mn.facing = (0, -1)
+                for k in scene._kneelers:
+                    k.pose = "kneel"
+                    k.facing = (0, -1)
+                game._mara_stage = None
+                # The one that never moved is the room's last word
+                # (TODO #8; NARRATIVE 1b: the self dissolved into the
+                # work).
+                game.dialog.show([
+                    "[c=dim]The one bowed at the altar's foot never "
+                    "paused. Not when they rose. Not at her name. Its "
+                    "share of the rite is the whole of it now.[/c]",
+                ], speaker="", voice="blip_soft", portrait="narrator")
+    sc.on_update_fn = _sign_update
     _ambient(sc, "whisper", 0.16, 5.0, 9.0)
 
     def _take_mask(game):

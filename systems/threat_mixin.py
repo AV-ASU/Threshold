@@ -902,8 +902,18 @@ class ThreatMixin:
         you alive for the hive) or 'king' (the King-in-Yellow furnace of
         masks / Carcosa, ~3.5s). Both end the run and return to title. Input
         is locked for the duration via _closure_locked (the shared
-        sequence lock). Guarded so it can't re-trigger."""
+        sequence lock). Guarded so it can't re-trigger.
+
+        THE TALK (2026-07, settled with the user): the FIRST time the
+        cult ever lays hands on the PI it is a warning, not a capture.
+        One freebie per run, spent at whichever grab site fires first
+        (surface grab, hide-check struggle, underground contact); every
+        later cultist grab is the CAPTURED card."""
         if self._death_kind is not None:
+            return
+        if (kind == "cultist" and self.save is not None
+                and not self.save.flag("cult_talk_given")):
+            self._cult_talk()
             return
         self._death_kind = kind
         self._death_t = 0.0
@@ -916,6 +926,84 @@ class ThreatMixin:
             self.audio.play("custody_bed", 1.0)
         else:
             self.audio.play("captured_bed", 1.0)
+
+    def _cult_talk(self):
+        """The one warning (the freebie). The hand comes down, the
+        courteous line lands, and they let go: the room stands down and
+        a short grace window stops the same hand closing again on the
+        next frame. Fires from every grab site via _trigger_death. The
+        PI files it as a NOTE (never evidence)."""
+        self.save.set_flag("cult_talk_given", True)
+        p = self.player
+        # If the hands came down on a hide, they pull him out of it.
+        if p is not None and getattr(p, "hidden", None) is not None:
+            p.hidden = None
+            if getattr(p, "hide_origin", None) is not None:
+                p.x, p.y = p.hide_origin
+                p.hide_origin = None
+        self._struggle = None
+        # The nearest live cult body does the talking.
+        speaker = None
+        best = 1e9
+        if self.scene is not None and p is not None:
+            for n in self.scene.npcs:
+                tag = getattr(n, "tag", "")
+                if not (isinstance(tag, str) and tag.startswith("cult_")):
+                    continue
+                if (not getattr(n, "alive", True)
+                        or getattr(n, "_is_corpse", False)):
+                    continue
+                d = math.hypot(n.x - p.x, n.y - p.y)
+                if d < best:
+                    best, speaker = d, n
+            for e in self.scene.enemies:
+                if getattr(e, "kind", "") != "cultist":
+                    continue
+                if not getattr(e, "alive", True):
+                    continue
+                d = math.hypot(e.x - p.x, e.y - p.y)
+                if d < best:
+                    best, speaker = d, e
+        if speaker is not None and p is not None:
+            dx, dy = p.x - speaker.x, p.y - speaker.y
+            dd = math.hypot(dx, dy) or 1.0
+            speaker.facing = (dx / dd, dy / dd)
+        self.audio.play("cult_lock", 0.7)
+        self.audio.duck(0.8, depth=0.45)
+
+        def _release():
+            # They let go: the room stands down, and a grace window
+            # covers the first steps away.
+            if p is not None:
+                p.invuln = max(getattr(p, "invuln", 0.0), 2.0)
+            if self.scene is not None:
+                for n in self.scene.npcs:
+                    tag = getattr(n, "tag", "")
+                    if isinstance(tag, str) and tag.startswith("cult_"):
+                        n._cult_state = "scout"
+                        n._suspicion = 0.0
+                for e in self.scene.enemies:
+                    if getattr(e, "kind", "") == "cultist":
+                        e._cult_state = "scout"
+                        e._suspicion = 0.0
+            if speaker is not None:
+                speaker._stun_t = max(getattr(speaker, "_stun_t", 0.0), 1.0)
+            self._log_note("the_talk", [
+                "One of them put hands on me today. A polite word to keep "
+                "out of their business, then he let go and walked off.",
+                "A warning costs them nothing. The next one will not be a "
+                "warning.",
+            ])
+        self.dialog.show([
+            "[c=dim]The hand lands on your shoulder before you hear him "
+            "coming. The grip is friendly. Nothing else about it is.[/c]",
+            "\"Easy, friend. No harm done, and none wanted.\"",
+            "\"We have business in this town. It is not yours. Keep clear "
+            "of it, and you and I never speak again.\"",
+            "[c=dim]He lets you go. One flat pat on the shoulder, the way "
+            "a man settles a horse, and he walks back to his rounds.[/c]",
+        ], speaker="", voice="blip_soft", portrait="narrator",
+            on_complete=_release)
 
     def _tick_death(self, dt):
         """Hold the death screen, then resolve -- both END the run.

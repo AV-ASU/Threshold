@@ -442,6 +442,31 @@ cutscene, and the ending's canon sharpened by direction:
 
 ---
 
+### ✅ 18. Live staging: THE TALK + the calling-out — DONE  *(2026-07, settled with the user)*
+
+Two staged live-action beats from the "characters act in the scene"
+direction:
+
+1. **THE TALK.** The FIRST time the cult ever lays hands on the PI it is
+   a warning, not a capture: one courteous, wrong line ("We have business
+   in this town. It is not yours.") and they let go — the room stands
+   down, a short grace window covers the first steps away, and the PI
+   files a deadpan NOTE (never evidence). One freebie per run, spent at
+   whichever grab site fires first (surface grab, hide-check struggle
+   loss, underground contact — all routes gate inside `_trigger_death`).
+   Every later grab is the CAPTURED card, which now carries their
+   one-line reminder ("We did ask, friend."). Flow-guarded (§28).
+2. **The calling-out (the Sign Chamber).** Mara now kneels among the
+   congregation at the Mask's foot (`works_sign`), one more hood in the
+   rank. On first entry the kneelers rise one by one and turn to you,
+   one says her name at the room, and she stands up out of the rank and
+   comes to you for her (unchanged, canon-guarded) exchange — evidence
+   #6 lands here now. Then the room folds back to the kneeling. The
+   kneelers are set-piece NPCs (no tag: no gaze, no chase; the east
+   patrol stays the room's live threat, held off while the room
+   performs). The deep hive (`dark`) keeps its congregation, past names
+   now. Flow-guarded (§28b); the stealth deaf-kneeler guard reworked.
+
 ### 17. The ancient altar — the CAP of the last sealing — OPEN  *(2026-07, settled with the user)*
 
 **Canon (locked).** The standing stones out in the mid-Brimley field (the

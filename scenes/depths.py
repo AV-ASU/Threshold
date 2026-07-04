@@ -8,7 +8,8 @@ Floors, top to bottom:
   depths_hall         -- the kneeling grid
   depths_threshing    -- the threshing floor
   depths_stair        -- the empty spiral down
-  dark                -- the hive: the congregation + Mara, turned (scene
+  dark                -- the hive: the claimed congregation, past names
+                         (Mara kneels at the Sign Chamber now; scene
                          key kept; was the old-family-bodies room)
   threshold           -- the doorframe
 
@@ -491,62 +492,10 @@ def build_the_ossuary():
     return sc
 
 
-def _mara_voice(game, npc):
-    """Mara's one-shot recognition -- the #6 payoff. The case was never a
-    rescue; you went deeper and found her already gone. After it, she has
-    gone back to the kneeling."""
-    if game.save.flag("hive_seen"):
-        game.dialog.show(
-            ["[c=dim]She has gone back to the kneeling. She won't look at "
-             "you again.[/c]"],
-            speaker="", voice="blip_soft", portrait="narrator")
-        return
-    game.save.set_flag("hive_seen", True)
-    game.audio.force_silence()
-    game.audio.play("low_pulse", 0.6)
-
-    def _lure_collision():
-        # TODO #7 -- the lure chain, felt ONCE (NARRATIVE §1/§10 fence:
-        # never stated, no chain named; the PI starts the thought and
-        # declines to finish it). Only for a player who lived the dream
-        # (flashback_seen); for anyone else her lines stand alone.
-        if not game.save.flag("flashback_seen"):
-            return
-        game.dialog.show([
-            "[c=dim](A door in your sleep, a year back. Then a grief job "
-            "you had no reason to take, and an itch that drove you north "
-            "with it.)[/c]",
-            "[c=dim](And every road in handed you here. To her, kneeling. "
-            "You start the arithmetic of that, and you put it down. Some "
-            "sums you don't finish standing up.)[/c]",
-        ], speaker="", voice="blip_soft", portrait="narrator")
-
-    # File evidence #6 FIRST and silently (show=False): the log + the
-    # King-gate land immediately, and the one-line evidence dialog no
-    # longer CLOBBERS her four lines (dialog.show replaces the open
-    # box, so the old order showed the player only the summary and the
-    # whole exchange was lost). The notebook keeps the summary text.
-    _evidence(game, "the_congregation", [
-        "Mara, kneeling with the congregation. Turned. There was never "
-        "anyone to bring back. Only this, and now you're in it with her.",
-    ], show=False)
-    game.dialog.show([
-        "[c=dim](You say her name. The hooded head lifts. It is Mara.)[/c]",
-        "\"My father sent you. Of course he did. He never could let a thing "
-        "stay lost.\"",
-        "[s=slow]\"Tell him what I told him at the start. I'm not lost. I have "
-        "never been this close.\"[/s]",
-        "[c=dim]\"There was no one down here to bring back. I was not taken. I "
-        "was answered, and I went to it gladly. Go home, while the town still "
-        "lets you think you can.\"[/c]",
-    ], speaker="", voice="blip_soft", portrait="narrator",
-        on_complete=_lure_collision)
-
-
 def build_dark():
     floor, objs = _box(12, 10)
     objs[8][3] = "D"   # south-west to threshold -- off the centre aisle,
-                       # so the player never has to push through Mara
+                       # so the player never has to push through the rank
     objects = ["".join(r) for r in objs]
     sc = Scene("dark", floor, objects, music="basement")
     sc.add_exit("D", "threshold", "from_dark")
@@ -562,17 +511,15 @@ def build_dark():
             speaker="", voice="blip_soft", portrait="narrator")
     # The congregation: hooded, idle, facing the south doorframe they
     # worship. Solid, so the player threads between them in the dark.
-    for kx, ky in [(3, 4), (8, 4), (4, 6), (9, 6), (8, 7)]:
+    # (2026-07: Mara is no longer here -- she kneels at the Sign
+    # Chamber's altar now, where the calling-out stages her rising.
+    # Down here nothing has a name left; the hive is the ones who went
+    # first, past answering.)
+    for kx, ky in [(3, 4), (8, 4), (4, 6), (9, 6), (8, 7), (6, 5)]:
         n = NPC(kx * TILE + 16, ky * TILE + 16, "A kneeler", "cultist",
                 dialogue_fn=_murmur, movement="idle")
         n.facing = (0, 1)
         sc.add_npc(n)
-    # Mara, front and centre on the aisle -- the one head that lifts when
-    # you speak. Just one more hooded kneeler until you reach her.
-    mara = NPC(6 * TILE + 16, 5 * TILE + 16, "Mara", "cultist",
-               dialogue_fn=_mara_voice, movement="idle")
-    mara.facing = (0, -1)
-    sc.add_npc(mara)
     sc.hide_spots = []
     _ambient(sc, "heartbeat", 0.18, 3.5, 5.0)
     return sc
