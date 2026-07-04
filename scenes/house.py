@@ -82,10 +82,14 @@ def build_bedroom():
     # the glass.
     sc.add_decoration(Decoration(12 * TILE + 16, 1 * TILE - 6, "bookshelf",
                                  w=86, h=22, seed=5))
-    # The writing desk: a real furniture box (cols 10-11, row 5) so its top
-    # surface is recorded and the case file + revolver placed on it SEAT on
-    # the surface (seat_tabletop_props) instead of dropping to floor level.
-    sc.add_furniture("writing_desk", [(10, 5), (11, 5)], w=58, h=42)
+    # The writing desk: a real furniture box (cols 10-11, row 5). The open
+    # case FILE and the PI's REVOLVER are drawn FLAT on its top face by the
+    # furniture itself (_d_desk_top), so they foreshorten with the tilt and
+    # read as lying ON the desk. `gun_present` toggles the revolver off once
+    # it is taken (bedroom_interact / bedroom_on_enter).
+    desk = sc.add_furniture("writing_desk", [(10, 5), (11, 5)], w=58, h=42)
+    desk.tag = "writing_desk"
+    desk.gun_present = True
     sc.add_decoration(Decoration(12 * TILE + 18, 6 * TILE + 4, "chair",
                                  w=22, h=28))
     sc.add_decoration(Decoration(2 * TILE + 16, 8 * TILE, "wardrobe",
@@ -93,27 +97,11 @@ def build_bedroom():
     # Duffel bag beside the cot.
     sc.add_decoration(Decoration(2 * TILE + 28, 5 * TILE + 16, "bowl",
                                  filled=True))
-    # Lit clock on the writing table.
-    sc.add_decoration(Decoration(11 * TILE + 16, 5 * TILE + 6, "clock"))
     # Two candles on the bedside (north wall edge) and one on the
     # writing table.
     sc.add_decoration(Decoration(2 * TILE + 8,  0 * TILE + 22, "candle"))
     sc.add_decoration(Decoration(13 * TILE + 16, 0 * TILE + 22, "candle"))
     sc.add_decoration(Decoration(11 * TILE + 16, 5 * TILE + 4, "candle"))
-    # The case notes, open on the desk: a seated tabletop prop lifted onto
-    # the desk's top surface, so they read as papers ON the desk. The
-    # visible object the [E] read-prompt hovers over.
-    sc.add_decoration(Decoration(11 * TILE + 2, 5 * TILE + 12, "papers",
-                                 seed=3))
-    # The PI's sidearm, left on the desk beside the notes (drawn as a real
-    # revolver, seated on the surface). He wakes UNARMED; pressing [E] at the
-    # desk takes the gun (the sprite is removed and the pistol goes to his
-    # inventory -- see bedroom_interact), then reads the notes. The prop is
-    # tagged so bedroom_on_enter can drop it once `desk_pistol_taken` is set
-    # (the scene rebuilds each load, so the gun would otherwise reappear).
-    gun_deco = Decoration(10 * TILE + 14, 5 * TILE + 18, "desk_revolver")
-    gun_deco.tag = "desk_revolver"
-    sc.add_decoration(gun_deco)
     # Northern-MN lodge dressing on the north wall: a mounted buck
     # (replaces the old generic photo) between the windows, a trophy
     # walleye to the west, and cobwebs fanning from the high corners.
@@ -169,11 +157,13 @@ def bedroom_on_enter(game, scene):
     Subsequent visits (after sleeping in the cot, or returning
     later in the run) skip the opening entirely -- only the
     cot-as-save-point remains."""
-    # Once the sidearm has been taken off the desk, drop its sprite on every
-    # load (the scene rebuilds each time, so it would otherwise reappear).
+    # Once the sidearm has been taken off the desk, clear it from the desk's
+    # top on every load (the scene rebuilds each time, so it would otherwise
+    # reappear).
     if game.save.flag("desk_pistol_taken"):
-        scene.decorations = [d for d in scene.decorations
-                             if getattr(d, "tag", None) != "desk_revolver"]
+        for d in scene.decorations:
+            if getattr(d, "tag", None) == "writing_desk":
+                d.gun_present = False
     if game.save.flag("wake_up"):
         return
     game.save.set_flag("wake_up", True)
@@ -259,8 +249,10 @@ def bedroom_interact(game):
         # flag it so it can't be re-grabbed. The notes read on the next press.
         if not game.save.flag("desk_pistol_taken"):
             game.save.set_flag("desk_pistol_taken", True)
-            sc.decorations = [d for d in sc.decorations
-                              if getattr(d, "tag", None) != "desk_revolver"]
+            for d in sc.decorations:
+                if getattr(d, "tag", None) == "writing_desk":
+                    d.gun_present = False
+                    game._invalidate_prop_card(d)   # rebuild without the gun
             game.player.inventory.add("pistol", 1)
             game.player.inventory.equipped["weapon"] = "pistol"
             game.audio.play("pickup", 0.7)

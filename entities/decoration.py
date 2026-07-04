@@ -513,6 +513,21 @@ class Decoration:
         pygame.draw.circle(surf, (34, 26, 16),
                            (rx + w // 2, ry + th - 8), 2)                    # knob
         pygame.draw.rect(surf, (40, 27, 16), (rx, ry + th - 3, w, 3))        # front lip
+        # the open case file on the top (flat, top-down for pitch 0)
+        bx, by, bw, bh = rx + w // 2 - 9, ry + 5, 18, 13
+        pygame.draw.rect(surf, (206, 200, 182), (bx, by, bw, bh))
+        pygame.draw.rect(surf, (120, 112, 92), (bx, by, bw, bh), 1)
+        pygame.draw.line(surf, (120, 112, 92), (bx + bw // 2, by),
+                         (bx + bw // 2, by + bh), 1)
+        for iy in range(by + 3, by + bh - 1, 3):
+            pygame.draw.line(surf, (78, 70, 60), (bx + 2, iy), (bx + bw // 2 - 2, iy), 1)
+            pygame.draw.line(surf, (78, 70, 60), (bx + bw // 2 + 2, iy), (bx + bw - 2, iy), 1)
+        # the revolver on the top, until taken
+        if getattr(self, "gun_present", False):
+            gx = rx + 8
+            pygame.draw.line(surf, (66, 46, 30), (gx, ry + 14), (gx + 4, ry + 10), 3)
+            pygame.draw.line(surf, (32, 34, 38), (gx + 4, ry + 10), (gx + 13, ry + 6), 3)
+            pygame.draw.line(surf, (120, 124, 132), (gx + 4, ry + 10), (gx + 13, ry + 6), 1)
 
     def _draw_chair(self, surf, x, y):
         w = int(self.kwargs.get("w", 22)); h = int(self.kwargs.get("h", 28))
@@ -2037,39 +2052,6 @@ class Decoration:
         glow = 0.7 + math.sin(self.t * 4 + self.seed) * 0.3
         pygame.draw.circle(surf, (240, 200, 100),
                            (x, y - 13), max(2, int(3 * glow)))
-
-    def _draw_desk_revolver(self, surf, x, y):
-        """A revolver lying on the desk (a seated tabletop prop): dark steel
-        barrel + cylinder bump and a wood grip, angled across the surface.
-        Pressing [E] at the desk removes this and adds the pistol to the
-        inventory (scenes/house.py bedroom_interact)."""
-        import math as _m
-        a = -0.5                                 # barrel angle across the desk
-        ax, ay = _m.cos(a), _m.sin(a)
-        px, py = -_m.sin(a), _m.cos(a)
-        # a faint contact shadow so it sits ON the surface
-        sh = pygame.Surface((22, 10), pygame.SRCALPHA)
-        pygame.draw.ellipse(sh, (0, 0, 0, 80), sh.get_rect())
-        surf.blit(sh, (int(x) - 11, int(y) - 1))
-        gx, gy = x - ax * 7, y - ay * 7          # grip (butt) end
-        mx, my = x + ax * 9, y + ay * 9          # muzzle end
-        cx, cy = x + ax * 1, y + ay * 1          # cylinder just ahead of grip
-        # wood grip
-        pygame.draw.line(surf, (40, 28, 20), (int(gx), int(gy)),
-                         (int(x - ax * 2), int(y - ay * 2)), 4)
-        pygame.draw.line(surf, (96, 66, 40), (int(gx), int(gy)),
-                         (int(x - ax * 2), int(y - ay * 2)), 2)
-        # barrel: dark steel core + a lit top edge
-        pygame.draw.line(surf, (30, 32, 36), (int(cx), int(cy)),
-                         (int(mx), int(my)), 4)
-        pygame.draw.line(surf, (122, 126, 134), (int(cx), int(cy)),
-                         (int(mx), int(my)), 2)
-        pygame.draw.line(surf, (176, 180, 188),
-                         (int(cx - px), int(cy - py)),
-                         (int(mx - px), int(my - py)), 1)
-        # cylinder bump
-        pygame.draw.circle(surf, (52, 54, 60), (int(cx), int(cy)), 3)
-        pygame.draw.circle(surf, (104, 108, 116), (int(cx), int(cy)), 3, 1)
 
     def _draw_papers(self, surf, x, y):
         """An open notebook + a loose sheet fanned under it: pale pages with

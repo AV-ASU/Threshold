@@ -764,17 +764,20 @@ def main():
     # moved to the wardrobe.
     import math
     from constants import TILE
+    def _desk(g):
+        return next((d for d in g.scene.decorations
+                     if getattr(d, "tag", None) == "writing_desk"), None)
     def _gun_on_desk(g):
-        return any(getattr(d, "tag", None) == "desk_revolver"
-                   for d in g.scene.decorations)
+        d = _desk(g)
+        return bool(d and getattr(d, "gun_present", False))
     gsr = new_game()
     gsr.load_scene_now("bedroom", "default")
     check(not gsr.player.inventory.has("pistol"),
           "startroom: the PI wakes without the pistol in his pocket")
+    check(_desk(gsr) is not None,
+          "startroom: the writing desk (with the case file on top) is present")
     check(_gun_on_desk(gsr),
-          "startroom: the revolver sprite is on the desk")
-    check(any(getattr(d, "kind", "") == "papers" for d in gsr.scene.decorations),
-          "startroom: the case notes are a visible prop on the desk")
+          "startroom: the revolver is on the desk")
     # no hide spot overlaps the desk's [E] position
     dnx, dny = 11 * TILE, 6 * TILE
     hide_over_desk = any(math.hypot(hx - dnx, hy - dny) < 36
