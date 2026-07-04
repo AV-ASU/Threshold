@@ -26,9 +26,9 @@ def build_bedroom():
     place a person has been *staying*, not just sleeping. The cot
     is still the save point.
 
-    Hide spots: behind the wardrobe (real cover this time) and
-    under the writing table. The cot is the save trigger, not a
-    hide spot."""
+    Hide spot: into the wardrobe (real cover this time). The cot
+    is the save trigger, not a hide spot; the writing desk holds
+    the case notes + the PI's sidearm."""
     floor = ["=" * 16 for _ in range(12)]
     # Furniture is drawn as sized decorations (multi-tile / sub-tile)
     # with invisible solid 'X' tiles under their footprints for
@@ -58,10 +58,13 @@ def build_bedroom():
     # save point; bedroom_interact -> Game._sleep_at_cot).
     sc._cot_pos = (4 * TILE + 16, 3 * TILE + 16)
     sc.add_interactable(sc._cot_pos[0], sc._cot_pos[1], 44)
-    # Hide spots: BESIDE the wardrobe (col 3 row 8) and UNDER the
-    # writing desk (col 11 row 6).
+    # Hide spot: INTO the wardrobe (col 3 row 8). It used to be UNDER the
+    # writing desk, but that 36px hide radius sat right on the desk's
+    # notes-reading spot and stole the [E] press (you hid instead of
+    # reading), so the hide moved to the wardrobe the docstring always
+    # promised, leaving the desk's [E] free for the case notes.
     sc.hide_spots = [
-        (11 * TILE + 16, 6 * TILE + 16, "under"),    # under writing desk
+        (3 * TILE + 16, 8 * TILE + 16, "in"),        # step into the wardrobe
     ]
 
     # Worn rug over the open centre -- a multi-tile covering, set
@@ -94,6 +97,18 @@ def build_bedroom():
     sc.add_decoration(Decoration(2 * TILE + 8,  0 * TILE + 22, "candle"))
     sc.add_decoration(Decoration(13 * TILE + 16, 0 * TILE + 22, "candle"))
     sc.add_decoration(Decoration(11 * TILE + 16, 5 * TILE + 4, "candle"))
+    # The case notes themselves, open on the desk (a seated tabletop prop,
+    # so they read as papers on the surface, not a floor stain): the visible
+    # object the [E] prompt hovers over. Sit at the desk's FRONT (south) edge
+    # so they depth-sort in FRONT of the table body (a prop north of the
+    # anchor would be painted over) and land right under the notebook's
+    # interact anchor (11*TILE, 5*TILE+16) where the cue floats.
+    sc.add_decoration(Decoration(11 * TILE, 5 * TILE + 22, "papers", seed=3))
+    # The PI's sidearm, left on the desk beside the notes -- he wakes
+    # unarmed and takes it on the way out (it is no longer in his starting
+    # pocket; see systems/save.py). A scene item: auto-picked when he steps
+    # up to the desk to read.
+    sc.add_item(10 * TILE + 18, 5 * TILE + 24, "pistol", 1)
     # Northern-MN lodge dressing on the north wall: a mounted buck
     # (replaces the old generic photo) between the windows, a trophy
     # walleye to the west, and cobwebs fanning from the high corners.

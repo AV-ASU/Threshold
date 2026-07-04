@@ -21,14 +21,15 @@ DEFAULT_SAVE = {
     "scene": "bedroom",
     "spawn": "default",
     "player": {"hp": 100, "max_hp": 100},
-    # The PI starts with their sidearm and a handful of rounds (1994 noir),
-    # plus yesterday's paper: the April 14 issue, picked up before the
-    # drive north. Brimley hasn't seen a paper since the trucks stopped
-    # at the mid-January seal, so yesterday's date makes the three-month
-    # cut-off legible, and Hettie at the store trades a load of ammo for
-    # it (scenes/dialogue.py).
-    "inventory": {"items": [["pistol", 1], ["pistol_ammo", 8],
-                            ["newspaper", 1]],
+    # The PI starts with a handful of rounds (1994 noir) and yesterday's
+    # paper. The SIDEARM itself is not in his pocket at wake: it is on the
+    # writing desk in the spare room, beside his case notes, and he grabs
+    # it on the way out (scenes/house.py build_bedroom). The paper is the
+    # April 14 issue, picked up before the drive north; Brimley hasn't seen
+    # one since the trucks stopped at the mid-January seal, so yesterday's
+    # date makes the three-month cut-off legible, and Hettie at the store
+    # trades a load of ammo for it (scenes/dialogue.py).
+    "inventory": {"items": [["pistol_ammo", 8], ["newspaper", 1]],
                   "equipped": {"weapon": None, "armor": None}},
     "flags": {},
     "arg": {

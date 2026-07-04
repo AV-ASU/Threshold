@@ -2023,6 +2023,35 @@ class Decoration:
         pygame.draw.circle(surf, (240, 200, 100),
                            (x, y - 13), max(2, int(3 * glow)))
 
+    def _draw_papers(self, surf, x, y):
+        """An open notebook + a loose sheet fanned under it: pale pages with
+        a few lines of ink and a curled corner. A seated tabletop prop -- the
+        PI's case notes on the writing desk, the visible object the [E]
+        read-prompt hovers over (scenes/house.py build_bedroom)."""
+        seed = int(getattr(self, "seed", 0) or 0)
+        PAGE = (222, 216, 198); PAGE_HI = (238, 233, 219)
+        EDGE = (120, 112, 92); INK = (60, 54, 48)
+        # a loose sheet fanned out under the notebook (nudged by the seed)
+        ox = -6 + (seed % 3)
+        pygame.draw.polygon(surf, (206, 200, 182),
+                            [(x - 9 + ox, y - 2), (x + 7 + ox, y - 4),
+                             (x + 9 + ox, y + 8), (x - 7 + ox, y + 10)])
+        # the open notebook: two facing pages over a dark cover edge
+        pygame.draw.rect(surf, EDGE, (x - 10, y - 7, 20, 14))
+        pygame.draw.rect(surf, PAGE, (x - 9, y - 6, 9, 12))       # left page
+        pygame.draw.rect(surf, PAGE_HI, (x + 1, y - 6, 8, 12))    # right page
+        pygame.draw.line(surf, EDGE, (x, y - 6), (x, y + 6), 1)   # spine
+        # a few lines of ink on both pages
+        for i in range(4):
+            ly = y - 4 + i * 3
+            pygame.draw.line(surf, INK, (x - 8, ly),
+                             (x - 2 - (seed + i) % 2, ly), 1)
+            pygame.draw.line(surf, INK, (x + 2, ly),
+                             (x + 7 - (seed + i) % 3, ly), 1)
+        # curled corner catches the candlelight
+        pygame.draw.polygon(surf, PAGE_HI,
+                            [(x + 7, y + 6), (x + 9, y + 4), (x + 9, y + 6)])
+
     def _draw_apology_wall(self, surf, x, y):
         """A patch of wall covered in scratched 'I'M SORRY' text,
         repeated overlapping rows in cramped uneven handwriting.
