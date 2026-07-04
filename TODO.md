@@ -49,9 +49,6 @@ ticket — scope a concrete first scene before starting.
 - **Rev. Asa Crane murder beat** *(GAME_CHANGES.md §12)* — the
   `preacher_doomed` -> gutted-on-the-floor reveal could be punched up for
   impact. Lore unchanged; not requested.
-- **Held-weapon offset eyeball pass** *(HANDCRAFT_BACKLOG.md §3b)* — the
-  `draw_axe_held` / `draw_revolver_held` code is in and working; this is just
-  a visual check of the held-weapon offset at every camera yaw.
 - **Permanently-visible King through an OPEN fold** *(KING_PROMPT.md portal
   pass)* — the King currently looms through the rift only while it *forms*,
   then steps through (intentional per `PORTALS.md`). A persistent silhouette
@@ -64,6 +61,17 @@ ticket — scope a concrete first scene before starting.
 
 ### 2026-07 build sweep (this branch; each flow/stealth-guarded)
 
+- **Held-weapon offset eyeball pass** *(HANDCRAFT_BACKLOG.md §3b)* — audited
+  at every camera yaw; the offset held, but the held axe/revolver floated
+  over the PI's back on the `back` view (drawn after the body). Fixed: the
+  held weapon draws BEFORE the body when the view is `back` so the torso
+  occludes it (`render_mixin` `_draw_player`); pitch-0 byte-identical.
+- **Spare-room desk: the sidearm + case notes** — the revolver no longer
+  starts in the pocket (`DEFAULT_SAVE`); it and the open case file lie FLAT
+  on a real `writing_desk` furniture box (top-face detail, foreshortened
+  into the tilt). `[E]` takes the gun (sprite off + card invalidation,
+  pistol equipped), a second `[E]` reads the notes; the blocking hide spot
+  moved to the wardrobe. Guarded by `tests/flow.py` §14c.
 - **#0 Stealth rework, mechanic + placement** — graded per-enemy suspicion
   (`systems/stealth.py`, `SUS_*` config), two cover classes, searchers that
   sweep + CHECK enclosed hides, the timed struggle, the "?" tell, and an
