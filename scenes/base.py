@@ -2828,7 +2828,7 @@ _TABLETOP_PROP_KINDS = frozenset((
     "candle", "lantern", "kerosene_lamp", "oil_lamp", "lamp", "ledger",
     "bowl", "cup", "mug", "bottle", "jar", "plate", "radio", "papers",
     "book", "photo", "photo_frame", "tankard", "teapot",
-    "wrong_radio", "place_setting",
+    "wrong_radio", "place_setting", "desk_revolver",
 ))
 
 # Wall-mounted decorations. Under tilt these are lifted onto the wall face as

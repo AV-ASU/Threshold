@@ -209,9 +209,24 @@ def _d_butcher(surf, pal, c):
     pygame.draw.line(surf, stain, (int(d0[0]), int(d0[1])), (int(d1[0]), int(d1[1])), 1)
 
 
+def _d_desk_drawer(surf, pal, c):
+    # a single shallow drawer across the desk's front with a small knob
+    p = [_fp(c, 0.16, 0.28), _fp(c, 0.84, 0.28),
+         _fp(c, 0.84, 0.64), _fp(c, 0.16, 0.64)]
+    pts = [(int(x), int(y)) for x, y in p]
+    pygame.draw.polygon(surf, _shade(pal["dark"], 0.82), pts)
+    pygame.draw.polygon(surf, _shade(pal["dark"], 0.6), pts, 1)
+    k = _fp(c, 0.5, 0.46)
+    pygame.draw.circle(surf, (38, 30, 20), (int(k[0]), int(k[1])), 2)
+
+
 # -- spec: kind -> (w, d, h, palette, detail) -------------------------------
 FURNITURE = {
     "table":     (26, 20, 11, _WOOD_MID, None),
+    # the PI's writing desk (spare room): a table-height box with a drawer
+    # front, so the case file + revolver seated on its top read as ON the
+    # desk (scenes/house.py build_bedroom).
+    "writing_desk": (28, 20, 12, _WOOD_MID, _d_desk_drawer),
     "chair":     (13, 13, 16, _WOOD_DK, None),
     "bed":       (30, 46, 9,  _CLOTH,   _d_mattress),
     "bookshelf": (28, 13, 23, _WOOD_DK, _d_shelves),
