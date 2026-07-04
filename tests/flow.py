@@ -258,7 +258,7 @@ def main():
         g2.save.arg("evidence", []).append({"name": f"_e{i}", "lines": ["x"]})
     g2.save.set_flag("rite_performed", True)
     g2._rite_fold_t0 = None
-    g2.player.inventory.add("sigil_rubbing", 1)
+    g2.player.inventory.add("pallid_mask", 1)
     g2.load_scene_now("well_bottom", "from_grove")
     ready(g2)
     check(_take_fold(g2, "O") and g2.scene.key == "effigy_grove",
@@ -330,7 +330,7 @@ def main():
     fire(g, "works_sign", "_sign_pos")
     g.dialog.choice_idx = 0
     g.dialog.advance()                          # "Lift the mask."
-    check(g.player.inventory.has("sigil_rubbing"),
+    check(g.player.inventory.has("pallid_mask"),
           "sign chamber: lifting the mask grants it (the ONLY source)")
     check(has_evidence(g, "the_sign"),
           "sign chamber: logs the_sign evidence (canonical beat)")
@@ -375,7 +375,7 @@ def main():
           "face: the charge is spent")
     # CANON (NARRATIVE §7): the Mask is NOT consumed at the face -- you
     # carry it down to spend at the Threshold door (or out, for SPREAD).
-    check(g.player.inventory.has("sigil_rubbing"),
+    check(g.player.inventory.has("pallid_mask"),
           "face: the keystone is NOT consumed (carried down, not spent)")
 
     # --- 5. The Depths chain loads + steps with no crash ---
@@ -413,13 +413,13 @@ def main():
     g.load_scene_now("threshold")
     ready(g)
     sc = g.scene
-    check(g.player.inventory.has("sigil_rubbing"),
+    check(g.player.inventory.has("pallid_mask"),
           "threshold: the keystone (Mask) arrives in hand (carried from the stair)")
     g.player.x, g.player.y = sc._lintel_pos
     sc.on_update_fn(g, sc, 0.1)               # walking THROUGH the frame
     check(getattr(g, "_seal_warp", None) is not None,
           "threshold: walking through the frame starts the LIVE warp")
-    check(not g.player.inventory.has("sigil_rubbing"),
+    check(not g.player.inventory.has("pallid_mask"),
           "threshold: the seal CONSUMES the keystone (Mask) at the door")
     n_deco = len(sc.decorations)
     for _ in range(120):                      # the world pours through...
@@ -456,7 +456,7 @@ def main():
     # --- 8. The SPREAD ending: drive out with the Mask ---
     gs = new_game()
     ready(gs)
-    gs.player.inventory.add("sigil_rubbing", 1)
+    gs.player.inventory.add("pallid_mask", 1)
     gs._begin_car_escape()
     check(gs._ending_active == "escape_alone",
           "spread: holding the Mask fires the escape ending")
@@ -637,7 +637,7 @@ def main():
     gr.load_scene_now("arrival_road")
     ready(gr)
     gr.player.x, gr.player.y = gr.scene._car_pos
-    gr.player.inventory.add("sigil_rubbing", 1)
+    gr.player.inventory.add("pallid_mask", 1)
     gr.scene.on_interact_fn(gr)
     check(gr._ending_active == "escape_alone",
           "geo: SPREAD fires at the car on the arrival road (with the Sign)")
@@ -1407,14 +1407,14 @@ def main():
         check(False, "mara: present in the hive")
 
     gw = new_game()
-    gw.player.inventory.add("sigil_rubbing", 1)
+    gw.player.inventory.add("pallid_mask", 1)
     gw.load_scene_now("well_bottom")
     _wtext = "".join(str(getattr(gw.dialog, "pages", "")))
     check(gw.save.flag("spread_counterweight"),
           "spread: the counterweight beat fires at the shaft floor with "
           "the Mask in hand")
     gw2 = new_game()
-    gw2.player.inventory.add("sigil_rubbing", 1)
+    gw2.player.inventory.add("pallid_mask", 1)
     gw2.save.set_flag("descent_sealed", True)
     gw2.load_scene_now("well_bottom")
     check(not gw2.save.flag("spread_counterweight"),
@@ -1456,7 +1456,7 @@ def main():
     check("school" in (gl._current_lead() or ""),
           "lead: the Invitation points at the school")
     gl.save.set_flag("rite_performed", True)
-    gl.player.inventory.add("sigil_rubbing", 1)
+    gl.player.inventory.add("pallid_mask", 1)
     _leadm = gl._current_lead() or ""
     check("carry" in _leadm,
           "lead: the Mask stage names the carried choice")
@@ -1551,6 +1551,33 @@ def main():
     check(gfs.dialog.active and not gfs.float_speech.active,
           "float: a line outside the interact path stays modal")
 
+    # --- 26b. the arrival road LOOPS south (silent same-scene fold) ---
+    # Walking south past the loop line lands you back NORTH of the
+    # crossing, still south of the render band -- so the idle King is
+    # NEVER in view off the loop; he only shows walking north onto the
+    # band (the maintainer's sightline rule).
+    from constants import TILE as _T
+    gr = new_game()
+    gr.load_scene_now("arrival_road", "default")
+    ready(gr)
+    _tm = gr.scene._treadmill
+    gr.player.x, gr.player.y = 7 * _T + 16, 74 * _T + 16
+    gr.player.facing = (0, 1)               # striding SOUTH onto the line
+    y_before = gr.player.y
+    gr.step(1 / 30.0)
+    check(gr.scene.key == "arrival_road" and gr.player.y < y_before - 300,
+          "loop: walking south folds you back north of the crossing")
+    check(gr.player.y >= _tm[1],
+          "loop: the landing sits SOUTH of the band (no King in view)")
+    gr.state = "playing"
+    gr.step(1 / 30.0)
+    check(gr._idle_king is None,
+          "loop: the idle King is hidden after the loop")
+    gr.player.y = _tm[1] - _T               # deliberately walk north onto it
+    gr.step(1 / 30.0)
+    check(gr._idle_king is not None,
+          "loop: he shows again only once you walk north up the band")
+
     # --- 27. the cot's disk save + Continue (the typewriter rule) -----
     # Sleeping at the spare-room cot is the ONLY writer of the disk
     # slot; Continue reads it back and wakes at the cot; anything done
@@ -1587,6 +1614,24 @@ def main():
               "save: the cooled attention survives the round trip")
         check(gsl.player.hp == gsl.player.max_hp,
               "save: sleep rests the PI (hp restored)")
+        # A pre-rename slot (the keystone was keyed "sigil_rubbing"
+        # until 2026-07) must migrate on read: the item becomes
+        # pallid_mask, the flag sign_rubbing_taken becomes
+        # pallid_mask_taken.
+        import json as _json
+        with open(gsl.save.disk_path(), encoding="utf-8") as f:
+            _legacy = _json.load(f)
+        _legacy["inventory"]["items"].append(["sigil_rubbing", 1])
+        _legacy["flags"]["sign_rubbing_taken"] = True
+        with open(gsl.save.disk_path(), "w", encoding="utf-8") as f:
+            _json.dump(_legacy, f)
+        check(gsl.save.load_disk(), "save: a legacy slot still reads")
+        gsl._start_play()
+        check(gsl.player.inventory.has("pallid_mask"),
+              "save: a legacy sigil_rubbing migrates to pallid_mask")
+        check(gsl.save.flag("pallid_mask_taken")
+              and not gsl.save.flag("sign_rubbing_taken"),
+              "save: the legacy taken-flag migrates with it")
     finally:
         os.environ.pop("THRESHOLD_SAVE_DIR", None)
         shutil.rmtree(_sd, ignore_errors=True)

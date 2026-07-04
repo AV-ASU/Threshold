@@ -61,7 +61,12 @@ class ThreatMixin:
                     self._trigger_death("cultist")
                     return
             return
-        self._ensure_cultists(key, dt)
+        # The cult sleeps until the first find (CULT_WAKE_EV): no patrol
+        # spawns at zero evidence -- the town starts merely wrong. Gaze,
+        # grabs, and manually spawned cultists (tests, reinforcements)
+        # below keep full behaviour either way.
+        if self._evidence_count() >= CULT_WAKE_EV:
+            self._ensure_cultists(key, dt)
         # Cover WEIGHTS the gaze now instead of blanking it
         # (STEALTH_REWORK.md §5): corn scales each watching cultist's
         # contribution by SUS_CONCEAL_CORN, an enclosed hide zeroes it.

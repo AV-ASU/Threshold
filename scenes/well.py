@@ -83,7 +83,7 @@ def build_well_bottom():
         # one-way stays the King's signature; this pane is KEYED. The
         # crossing itself spends the privilege: the descent seals at
         # your back (descent_sealed), and SPREAD is all that is left.
-        if not game.player.inventory.has("sigil_rubbing"):
+        if not game.player.inventory.has("pallid_mask"):
             if not game.save.flag("pane_refused_noticed"):
                 game.save.set_flag("pane_refused_noticed", True)
                 game.audio.play("low_pulse", 0.5)
@@ -151,7 +151,7 @@ def build_well_bottom():
             return
         if game.save.flag("descent_sealed"):
             return
-        if not game.player.inventory.has("sigil_rubbing"):
+        if not game.player.inventory.has("pallid_mask"):
             return
         game.save.set_flag("spread_counterweight", True)
         game.audio.play("low_pulse", 0.5)
@@ -680,8 +680,8 @@ def build_works_sign():
     _ambient(sc, "whisper", 0.16, 5.0, 9.0)
 
     def _take_mask(game):
-        game.save.set_flag("sign_rubbing_taken", True)
-        game.player.inventory.add("sigil_rubbing", 1)
+        game.save.set_flag("pallid_mask_taken", True)
+        game.player.inventory.add("pallid_mask", 1)
         game.audio.play("pickup_rare", 0.7)
         game.audio.play("low_pulse", 0.5)
         _evidence(game, "the_sign", [
@@ -703,7 +703,7 @@ def build_works_sign():
         sx, sy = sc._sign_pos
         if (abs(game.player.x - sx) > 44 or abs(game.player.y - sy) > 56):
             return
-        if game.save.flag("sign_rubbing_taken"):
+        if game.save.flag("pallid_mask_taken"):
             return
         # Two instincts at the altar (NARRATIVE §6). Lifting the mask is the
         # controlled keystone-removal the chosen endings need. Tearing the
@@ -786,7 +786,7 @@ def build_works_deepstair():
                 "somewhere.",
             ], speaker="", voice="blip_soft", portrait="narrator")
             return
-        if not inv.has("sigil_rubbing"):
+        if not inv.has("pallid_mask"):
             # The investigator's discipline: you do not blow a scene
             # before you have seen all of it. (Mechanically: the Mask
             # first -- the temptation -- then the refusal.)

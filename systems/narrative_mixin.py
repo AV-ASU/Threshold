@@ -221,7 +221,7 @@ class NarrativeMixin:
                     "arrival road answers what you carry.")
         if s.flag("depths_breached"):
             return "Old stone under the face. It is close now. Down."
-        if has("sigil_rubbing"):
+        if has("pallid_mask"):
             return ("His face opens every door left in this town. Where "
                     "you carry it is the whole of the choice.")
         if s.flag("rite_performed"):
@@ -366,13 +366,14 @@ class NarrativeMixin:
             _beat()
 
     def _begin_car_escape(self):
-        """The car at the river's edge. The fold only opens for a shard of His
-        authority, so escape requires the SIGN (sigil_rubbing), not just the
-        keys -- with it the engine catches for the first time and you drive out
-        as the breach: SPREAD IT (NARRATIVE §1/§6)."""
+        """The car on the arrival road. The fold only opens for a shard of His
+        authority, so escape requires the Pallid Mask (His face, lifted off
+        the Sign Chamber altar), not just the keys -- with it the engine
+        catches for the first time and you drive out as the breach:
+        SPREAD IT (NARRATIVE §1/§6)."""
         if self._ending_active:
             return
-        if not (self.player and self.player.inventory.has("sigil_rubbing")):
+        if not (self.player and self.player.inventory.has("pallid_mask")):
             return
         self._play_ending("escape_alone")
 

@@ -769,14 +769,14 @@ def build_threshold():
         if abs(p.x - lintel_x) > 16 or abs(p.y - lintel_y) > 18:
             return                                    # not in the frame yet
         inv = p.inventory
-        if not inv.has("sigil_rubbing"):
+        if not inv.has("pallid_mask"):
             if not game.save.flag("threshold_blank_seen"):
                 game.save.set_flag("threshold_blank_seen", True)
                 game.show_notice("You step through the frame. You are standing "
                                  "in the same room. It is only a frame, and "
                                  "cold.")
             return
-        inv.remove("sigil_rubbing", 1)                # spent at the door
+        inv.remove("pallid_mask", 1)                # spent at the door
         # File the beat SILENTLY (show=False): no narrator box may talk
         # over the warp -- the world going through the door IS the line.
         _evidence(game, "the_seal", "It is done.", show=False)

@@ -122,5 +122,19 @@ class Save:
                 base[k].update(v)
             else:
                 base[k] = v
+        # 2026-07 rename: the keystone item was always the Pallid Mask,
+        # but its key was "sigil_rubbing" (a relic of a cut charcoal-
+        # rubbing design). Slots written before the rename migrate on
+        # read; the taken-flag came along for the same reason.
+        items = base.get("inventory", {}).get("items")
+        if isinstance(items, list):
+            for it in items:
+                if (isinstance(it, list) and it
+                        and it[0] == "sigil_rubbing"):
+                    it[0] = "pallid_mask"
+        flags = base.get("flags")
+        if isinstance(flags, dict) and flags.pop("sign_rubbing_taken",
+                                                 False):
+            flags["pallid_mask_taken"] = True
         self.data = base
         return True

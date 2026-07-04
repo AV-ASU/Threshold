@@ -46,7 +46,7 @@ ITEM_DEFS = {
                                "the dark is a thing that can be seen. The "
                                "longer it burns, the more the King feels "
                                "you."},
-    "sigil_rubbing": {"name": "The Pallid Mask",
+    "pallid_mask": {"name": "The Pallid Mask",
                        "kind": "lore",
                        "desc": "The King's own pale half-mask, made an "
                                "object. His face. The fold opens for it. So, "

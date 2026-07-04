@@ -201,7 +201,8 @@ class KingRoamMixin:
                 self._idle_king = None     # the idol gives way to the real King
             else:
                 if (self.visibility >= 1.0
-                        and self.scene.key not in KING_FREE_SCENES):
+                        and self.scene.key not in KING_FREE_SCENES
+                        and self._evidence_count() >= CULT_WAKE_EV):
                     self._muster_reinforcements()
                 self._king_dread = 0.0
                 self.audio.king_tone(False)
