@@ -904,6 +904,15 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         tty = int(target_y // Scene.TILE)
         return (ttx, tty) != RIVER_ENTRY_TILE
 
+    def _wading(self):
+        """True when the player stands in deep water: a `~` floor tile in a
+        WADE scene (the flooded deep works). Drives the wade slow + the loud
+        splash noise. The Brimley river is deliberately excluded -- it is not
+        a WADE scene, so its `~` keeps its own rules (see WADE_SCENES)."""
+        sc = self.scene
+        return (sc is not None and sc.key in WADE_SCENES
+                and sc.char_floor_at(self.player.x, self.player.y) == "~")
+
     def _update_camera(self, snap=False):
         target_x = self.player.x - SCREEN_W // 2
         target_y = self.player.y - SCREEN_H // 2
@@ -1121,6 +1130,10 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
             self.player._burst_t = max(0.0, bt - dt)
             sprint_mult = max(sprint_mult, STRUGGLE_BURST_MULT)
         effective_speed = self.player.speed * comp_mult * sprint_mult
+        # Deep water drags: wading a flooded `~` tile halves your speed on top
+        # of everything else, so you cannot sprint clear of it (WADE_*).
+        if self._wading():
+            effective_speed *= WADE_SPEED_MULT
         # Build the input-driven TARGET velocity (world units/sec), then ease
         # the actual velocity toward it over MOVE_SMOOTH_TAU. Releasing input
         # coasts to a stop instead of cutting cold.
@@ -1241,7 +1254,17 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
                     == "~"
                 )
                 self.player.step_timer -= dt
-                if self.player.step_timer <= 0:
+                if self.player.step_timer <= 0 and self._wading():
+                    # A wet footfall in the flooded deep: slow, heavy, and
+                    # LOUD -- a splash (over NOISE_SEARCH_PULL) the searchers
+                    # converge on (WADE_*). No creepy-desync, no sprint
+                    # scaling: water is loud whether you creep or run.
+                    self.player.step_timer = WADE_STEP_EVERY
+                    self.audio.play_in_scene("step_water", 0.75)
+                    self.scene.emit_noise(self.player.x, self.player.y,
+                                          WADE_SPLASH_LOUD, kind="splash",
+                                          reach=WADE_SPLASH_REACH)
+                elif self.player.step_timer <= 0:
                     self.player.step_timer = 0.32
                     ch = self.scene.char_floor_at(self.player.x, self.player.y)
                     sfx = tile_footstep(ch)

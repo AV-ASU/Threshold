@@ -499,6 +499,36 @@ class Decoration:
         for gx in range(rx + 8, rx + w - 4, 11):
             pygame.draw.line(surf, (56, 38, 22), (gx, ry + 4), (gx, ry + th - 5), 1)
 
+    def _draw_writing_desk(self, surf, x, y):
+        """Flat (pitch-0 / F3) fallback for the writing_desk furniture box.
+        A table with a drawer line + knob across the front."""
+        w = int(self.kwargs.get("w", 58)); h = int(self.kwargs.get("h", 42))
+        rx, ry = x - w // 2, y - h // 2
+        pygame.draw.rect(surf, (40, 27, 16), (rx + 3, ry + h - 8, 5, 8))     # legs
+        pygame.draw.rect(surf, (40, 27, 16), (rx + w - 8, ry + h - 8, 5, 8))
+        th = h - 8
+        pygame.draw.rect(surf, (74, 52, 32), (rx, ry, w, th))                # top
+        pygame.draw.rect(surf, (96, 70, 44), (rx, ry, w, 2))                 # lit back
+        pygame.draw.rect(surf, (52, 36, 22), (rx + 6, ry + th - 12, w - 12, 8))  # drawer
+        pygame.draw.circle(surf, (34, 26, 16),
+                           (rx + w // 2, ry + th - 8), 2)                    # knob
+        pygame.draw.rect(surf, (40, 27, 16), (rx, ry + th - 3, w, 3))        # front lip
+        # the open case file on the top (flat, top-down for pitch 0)
+        bx, by, bw, bh = rx + w // 2 - 9, ry + 5, 18, 13
+        pygame.draw.rect(surf, (206, 200, 182), (bx, by, bw, bh))
+        pygame.draw.rect(surf, (120, 112, 92), (bx, by, bw, bh), 1)
+        pygame.draw.line(surf, (120, 112, 92), (bx + bw // 2, by),
+                         (bx + bw // 2, by + bh), 1)
+        for iy in range(by + 3, by + bh - 1, 3):
+            pygame.draw.line(surf, (78, 70, 60), (bx + 2, iy), (bx + bw // 2 - 2, iy), 1)
+            pygame.draw.line(surf, (78, 70, 60), (bx + bw // 2 + 2, iy), (bx + bw - 2, iy), 1)
+        # the revolver on the top, until taken
+        if getattr(self, "gun_present", False):
+            gx = rx + 8
+            pygame.draw.line(surf, (66, 46, 30), (gx, ry + 14), (gx + 4, ry + 10), 3)
+            pygame.draw.line(surf, (32, 34, 38), (gx + 4, ry + 10), (gx + 13, ry + 6), 3)
+            pygame.draw.line(surf, (120, 124, 132), (gx + 4, ry + 10), (gx + 13, ry + 6), 1)
+
     def _draw_chair(self, surf, x, y):
         w = int(self.kwargs.get("w", 22)); h = int(self.kwargs.get("h", 28))
         rx, ry = x - w // 2, y - h // 2
@@ -2022,6 +2052,35 @@ class Decoration:
         glow = 0.7 + math.sin(self.t * 4 + self.seed) * 0.3
         pygame.draw.circle(surf, (240, 200, 100),
                            (x, y - 13), max(2, int(3 * glow)))
+
+    def _draw_papers(self, surf, x, y):
+        """An open notebook + a loose sheet fanned under it: pale pages with
+        a few lines of ink and a curled corner. A seated tabletop prop -- the
+        PI's case notes on the writing desk, the visible object the [E]
+        read-prompt hovers over (scenes/house.py build_bedroom)."""
+        seed = int(getattr(self, "seed", 0) or 0)
+        PAGE = (222, 216, 198); PAGE_HI = (238, 233, 219)
+        EDGE = (120, 112, 92); INK = (60, 54, 48)
+        # a loose sheet fanned out under the notebook (nudged by the seed)
+        ox = -6 + (seed % 3)
+        pygame.draw.polygon(surf, (206, 200, 182),
+                            [(x - 9 + ox, y - 2), (x + 7 + ox, y - 4),
+                             (x + 9 + ox, y + 8), (x - 7 + ox, y + 10)])
+        # the open notebook: two facing pages over a dark cover edge
+        pygame.draw.rect(surf, EDGE, (x - 10, y - 7, 20, 14))
+        pygame.draw.rect(surf, PAGE, (x - 9, y - 6, 9, 12))       # left page
+        pygame.draw.rect(surf, PAGE_HI, (x + 1, y - 6, 8, 12))    # right page
+        pygame.draw.line(surf, EDGE, (x, y - 6), (x, y + 6), 1)   # spine
+        # a few lines of ink on both pages
+        for i in range(4):
+            ly = y - 4 + i * 3
+            pygame.draw.line(surf, INK, (x - 8, ly),
+                             (x - 2 - (seed + i) % 2, ly), 1)
+            pygame.draw.line(surf, INK, (x + 2, ly),
+                             (x + 7 - (seed + i) % 3, ly), 1)
+        # curled corner catches the candlelight
+        pygame.draw.polygon(surf, PAGE_HI,
+                            [(x + 7, y + 6), (x + 9, y + 4), (x + 9, y + 6)])
 
     def _draw_apology_wall(self, surf, x, y):
         """A patch of wall covered in scratched 'I'M SORRY' text,

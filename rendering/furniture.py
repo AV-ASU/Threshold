@@ -209,9 +209,72 @@ def _d_butcher(surf, pal, c):
     pygame.draw.line(surf, stain, (int(d0[0]), int(d0[1])), (int(d1[0]), int(d1[1])), 1)
 
 
+def _tp(tc, u, v):
+    """A point on the TOP face at width-fraction u (left->right) and
+    depth-fraction v (far->near). tc = (far-left, far-right, near-right,
+    near-left)."""
+    far = _lerp(tc[0], tc[1], u)
+    near = _lerp(tc[3], tc[2], u)
+    return _lerp(far, near, v)
+
+
+def _d_desk_top(surf, pal, tc, deco=None):
+    """Objects lying FLAT on the writing desk's top, drawn in the top plane
+    so they foreshorten with the tilt (no billboarding): an open case file
+    (two pages + ink lines) and, until it is taken, the PI's revolver."""
+    def _q(pts, fill, edge=None):
+        p = [(int(x), int(y)) for x, y in pts]
+        pygame.draw.polygon(surf, fill, p)
+        if edge:
+            pygame.draw.polygon(surf, edge, p, 1)
+    # open file: two facing pages filling the back-centre of the desk top.
+    # Near-white so the pages still read as paper after the scene's dim grade.
+    EDGE = _shade(pal["dark"], 0.7)
+    _q([_tp(tc, 0.38, 0.18), _tp(tc, 0.55, 0.18),
+        _tp(tc, 0.55, 0.72), _tp(tc, 0.38, 0.72)], (236, 231, 216), EDGE)  # L
+    _q([_tp(tc, 0.55, 0.18), _tp(tc, 0.72, 0.18),
+        _tp(tc, 0.72, 0.72), _tp(tc, 0.55, 0.72)], (248, 244, 230), EDGE)  # R
+    s0, s1 = _tp(tc, 0.55, 0.18), _tp(tc, 0.55, 0.72)                      # spine
+    pygame.draw.line(surf, EDGE, (int(s0[0]), int(s0[1])),
+                     (int(s1[0]), int(s1[1])), 1)
+    ink = (78, 70, 60)
+    for v in (0.30, 0.42, 0.54, 0.66):
+        for u0, u1 in ((0.41, 0.53), (0.57, 0.69)):
+            a, b = _tp(tc, u0, v), _tp(tc, u1, v)
+            pygame.draw.line(surf, ink, (int(a[0]), int(a[1])),
+                             (int(b[0]), int(b[1])), 1)
+    # the revolver, flat on the desk to the left of the file (until taken)
+    if deco is None or getattr(deco, "gun_present", False):
+        g0, g1 = _tp(tc, 0.13, 0.74), _tp(tc, 0.19, 0.56)     # grip
+        cyl, muz = _tp(tc, 0.21, 0.52), _tp(tc, 0.33, 0.28)   # cylinder->muzzle
+        pygame.draw.line(surf, (66, 46, 30), (int(g0[0]), int(g0[1])),
+                         (int(g1[0]), int(g1[1])), 3)
+        pygame.draw.line(surf, (32, 34, 38), (int(cyl[0]), int(cyl[1])),
+                         (int(muz[0]), int(muz[1])), 3)
+        pygame.draw.line(surf, (120, 124, 132), (int(cyl[0]), int(cyl[1])),
+                         (int(muz[0]), int(muz[1])), 1)
+        pygame.draw.circle(surf, (58, 60, 66), (int(cyl[0]), int(cyl[1])), 2)
+
+
+def _d_desk_drawer(surf, pal, c):
+    # a single shallow drawer across the desk's front with a small knob
+    p = [_fp(c, 0.16, 0.28), _fp(c, 0.84, 0.28),
+         _fp(c, 0.84, 0.64), _fp(c, 0.16, 0.64)]
+    pts = [(int(x), int(y)) for x, y in p]
+    pygame.draw.polygon(surf, _shade(pal["dark"], 0.82), pts)
+    pygame.draw.polygon(surf, _shade(pal["dark"], 0.6), pts, 1)
+    k = _fp(c, 0.5, 0.46)
+    pygame.draw.circle(surf, (38, 30, 20), (int(k[0]), int(k[1])), 2)
+
+
 # -- spec: kind -> (w, d, h, palette, detail) -------------------------------
 FURNITURE = {
     "table":     (26, 20, 11, _WOOD_MID, None),
+    # the PI's writing desk (spare room): a WIDE table-height box (fills its
+    # 2-tile footprint so the wood shows around the props) with a drawer
+    # front, so the case file + revolver seated on its top read as sitting
+    # ON the desk (scenes/house.py build_bedroom).
+    "writing_desk": (54, 40, 13, _WOOD_MID, _d_desk_drawer, _d_desk_top),
     "chair":     (13, 13, 16, _WOOD_DK, None),
     "bed":       (30, 46, 9,  _CLOTH,   _d_mattress),
     "bookshelf": (28, 13, 23, _WOOD_DK, _d_shelves),
@@ -268,7 +331,8 @@ def draw_furniture_solid(surf, cam, deco):
     spec = FURNITURE.get(deco.kind)
     if spec is None:
         return False
-    w, d, h, pal, detail = spec
+    w, d, h, pal, detail = spec[:5]
+    top_detail = spec[5] if len(spec) > 5 else None
     s = getattr(deco, "scale", 1.0) or 1.0
     w *= s; d *= s; h *= s
     wx, wy = deco.x, deco.y
@@ -297,6 +361,10 @@ def draw_furniture_solid(surf, cam, deco):
     pygame.draw.polygon(surf, pal["top"], [ttl, ttr, tbr, tbl])    # top
     pygame.draw.polygon(surf, _shade(pal["top"], 0.55),
                         [ttl, ttr, tbr, tbl], 1)
+    if top_detail:
+        # objects lying FLAT on the top surface, foreshortened into the top
+        # plane (ttl far-left, ttr far-right, tbr near-right, tbl near-left).
+        top_detail(surf, pal, (ttl, ttr, tbr, tbl), deco)
     if detail:
         detail(surf, pal, (fbl, fbr, tbl, tbr))
     return True

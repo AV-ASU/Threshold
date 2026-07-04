@@ -757,6 +757,52 @@ def main():
     check(seen2 and "in sleep" not in seen2[0].lower(),
           "heknows: never dreamed -> no recognition line (doorframe only)")
 
+    # --- 14c. The starting room: sidearm on the desk, notes readable ---
+    # The PI wakes UNARMED; his revolver sits on the writing desk beside his
+    # case notes (a visible `papers` prop), and the desk's [E] READS the
+    # notes -- it used to be stolen by an overlapping hide spot, which has
+    # moved to the wardrobe.
+    import math
+    from constants import TILE
+    def _desk(g):
+        return next((d for d in g.scene.decorations
+                     if getattr(d, "tag", None) == "writing_desk"), None)
+    def _gun_on_desk(g):
+        d = _desk(g)
+        return bool(d and getattr(d, "gun_present", False))
+    gsr = new_game()
+    gsr.load_scene_now("bedroom", "default")
+    check(not gsr.player.inventory.has("pistol"),
+          "startroom: the PI wakes without the pistol in his pocket")
+    check(_desk(gsr) is not None,
+          "startroom: the writing desk (with the case file on top) is present")
+    check(_gun_on_desk(gsr),
+          "startroom: the revolver is on the desk")
+    # no hide spot overlaps the desk's [E] position
+    dnx, dny = 11 * TILE, 6 * TILE
+    hide_over_desk = any(math.hypot(hx - dnx, hy - dny) < 36
+                         for hx, hy, _k in (gsr.scene.hide_spots or []))
+    check(not hide_over_desk,
+          "startroom: no hide spot shadows the desk's [E]")
+    # 1st [E] at the desk TAKES the gun: sprite removed, pistol equipped
+    gsr.save.set_flag("wake_up", True)
+    gsr.player.x, gsr.player.y = dnx, dny
+    gsr.try_interact()
+    check(gsr.player.inventory.has("pistol") and not _gun_on_desk(gsr)
+          and gsr.player.inventory.equipped.get("weapon") == "pistol",
+          "startroom: [E] takes the revolver off the desk (sprite -> inventory)")
+    # 2nd [E] READS the notes (does not hide)
+    gsr.player.x, gsr.player.y = dnx, dny
+    gsr.player.hidden = None
+    gsr.dialog.active = False
+    gsr.try_interact()
+    check(gsr.player.hidden is None and gsr.save.flag("read_journal"),
+          "startroom: a second [E] READS the notes (does not hide)")
+    # the gun stays gone across a scene reload
+    gsr.load_scene_now("bedroom", "from_house")
+    check(not _gun_on_desk(gsr),
+          "startroom: the taken revolver does not reappear on re-entry")
+
     # --- 15. The gun: the false-power threshold (NARRATIVE §3) ---
     # "It exists to fail; lethal only on the victims." Lock the four canon
     # facts: below 3 evidence a clean round KILLS a cultist; at 3+ it only

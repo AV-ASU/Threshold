@@ -102,6 +102,28 @@ def _bevel(objs, n, corners=("NW", "NE", "SW", "SE")):
             _wall(objs, w - 1 - span, h - 1 - k, w - 2, h - 1 - k)
 
 
+def _flood(floor, objs, tiles):
+    """Set the given (tx, ty) FLOOR tiles to `~` deep water and return the
+    rebuilt floor rows. Only OPEN interior floor (objs[y][x] == '.') is
+    flooded, so a tile that landed on a wall, an exit, or a bevel corner is
+    skipped -- callers can pass a whole rectangle and let the walls mask it.
+    Water tiles stay walkable; the WADE mechanic (systems/config WADE_*)
+    slows the player + throws a splash on them. Call BEFORE the objects
+    layer is joined to strings (objs is still a list of char lists)."""
+    rows = [list(r) for r in floor]
+    h = len(rows); w = len(rows[0]) if rows else 0
+    for tx, ty in tiles:
+        if 0 <= ty < h and 0 <= tx < w and objs[ty][tx] == ".":
+            rows[ty][tx] = "~"
+    return ["".join(r) for r in rows]
+
+
+def _rect_tiles(x0, y0, x1, y1):
+    """Every (x, y) in an inclusive tile rectangle -- a convenient region to
+    hand to _flood()."""
+    return [(x, y) for y in range(y0, y1 + 1) for x in range(x0, x1 + 1)]
+
+
 def _cavern(objs, seed, keep_rows=(), keep_cols=(), bite=0.55):
     """Gnaw an irregular cave edge: walk the interior border tiles and turn
     some to wall, deterministically by `seed`. Rows/cols in keep_* are left
@@ -352,6 +374,12 @@ def build_depths_threshing():
     floor, objs = _box(13, 11)
     _cavern(objs, seed=7, keep_rows=(5,), bite=0.4)
     objs[5][12] = "E"   # east to stair
+    # Seep from the broken river pools in the cavern's north and south
+    # pockets -- the grain heaps at (4,4)/(4,7) stand in it, so raking over
+    # to read them is a slow, loud wade (WADE_*). The central aisle (row 5,
+    # kept clear by _cavern) and the east exit stay dry: the through route
+    # never forces the water. _flood skips the bitten cavern walls.
+    floor = _flood(floor, objs, _rect_tiles(3, 3, 5, 4) + _rect_tiles(3, 7, 5, 8))
     objects = ["".join(r) for r in objs]
     sc = Scene("depths_threshing", floor, objects, music="basement")
     sc.add_exit("E", "depths_stair", "from_threshing")

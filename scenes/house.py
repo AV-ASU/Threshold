@@ -26,9 +26,9 @@ def build_bedroom():
     place a person has been *staying*, not just sleeping. The cot
     is still the save point.
 
-    Hide spots: behind the wardrobe (real cover this time) and
-    under the writing table. The cot is the save trigger, not a
-    hide spot."""
+    Hide spot: into the wardrobe (real cover this time). The cot
+    is the save trigger, not a hide spot; the writing desk holds
+    the case notes + the PI's sidearm."""
     floor = ["=" * 16 for _ in range(12)]
     # Furniture is drawn as sized decorations (multi-tile / sub-tile)
     # with invisible solid 'X' tiles under their footprints for
@@ -58,10 +58,13 @@ def build_bedroom():
     # save point; bedroom_interact -> Game._sleep_at_cot).
     sc._cot_pos = (4 * TILE + 16, 3 * TILE + 16)
     sc.add_interactable(sc._cot_pos[0], sc._cot_pos[1], 44)
-    # Hide spots: BESIDE the wardrobe (col 3 row 8) and UNDER the
-    # writing desk (col 11 row 6).
+    # Hide spot: INTO the wardrobe (col 3 row 8). It used to be UNDER the
+    # writing desk, but that 36px hide radius sat right on the desk's
+    # notes-reading spot and stole the [E] press (you hid instead of
+    # reading), so the hide moved to the wardrobe the docstring always
+    # promised, leaving the desk's [E] free for the case notes.
     sc.hide_spots = [
-        (11 * TILE + 16, 6 * TILE + 16, "under"),    # under writing desk
+        (3 * TILE + 16, 8 * TILE + 16, "in"),        # step into the wardrobe
     ]
 
     # Worn rug over the open centre -- a multi-tile covering, set
@@ -79,7 +82,14 @@ def build_bedroom():
     # the glass.
     sc.add_decoration(Decoration(12 * TILE + 16, 1 * TILE - 6, "bookshelf",
                                  w=86, h=22, seed=5))
-    sc.add_decoration(Decoration(11 * TILE, 5 * TILE + 12, "table", w=58, h=42))
+    # The writing desk: a real furniture box (cols 10-11, row 5). The open
+    # case FILE and the PI's REVOLVER are drawn FLAT on its top face by the
+    # furniture itself (_d_desk_top), so they foreshorten with the tilt and
+    # read as lying ON the desk. `gun_present` toggles the revolver off once
+    # it is taken (bedroom_interact / bedroom_on_enter).
+    desk = sc.add_furniture("writing_desk", [(10, 5), (11, 5)], w=58, h=42)
+    desk.tag = "writing_desk"
+    desk.gun_present = True
     sc.add_decoration(Decoration(12 * TILE + 18, 6 * TILE + 4, "chair",
                                  w=22, h=28))
     sc.add_decoration(Decoration(2 * TILE + 16, 8 * TILE, "wardrobe",
@@ -87,8 +97,6 @@ def build_bedroom():
     # Duffel bag beside the cot.
     sc.add_decoration(Decoration(2 * TILE + 28, 5 * TILE + 16, "bowl",
                                  filled=True))
-    # Lit clock on the writing table.
-    sc.add_decoration(Decoration(11 * TILE + 16, 5 * TILE + 6, "clock"))
     # Two candles on the bedside (north wall edge) and one on the
     # writing table.
     sc.add_decoration(Decoration(2 * TILE + 8,  0 * TILE + 22, "candle"))
@@ -149,6 +157,13 @@ def bedroom_on_enter(game, scene):
     Subsequent visits (after sleeping in the cot, or returning
     later in the run) skip the opening entirely -- only the
     cot-as-save-point remains."""
+    # Once the sidearm has been taken off the desk, clear it from the desk's
+    # top on every load (the scene rebuilds each time, so it would otherwise
+    # reappear).
+    if game.save.flag("desk_pistol_taken"):
+        for d in scene.decorations:
+            if getattr(d, "tag", None) == "writing_desk":
+                d.gun_present = False
     if game.save.flag("wake_up"):
         return
     game.save.set_flag("wake_up", True)
@@ -229,6 +244,20 @@ def bedroom_interact(game):
     tx = 11 * TILE
     ty = 5 * TILE + 16
     if abs(px - tx) <= 44 and abs(py - ty) <= 44:
+        # Take the sidearm off the desk first, if it is still lying there:
+        # remove its sprite, put the pistol in the inventory (equipped), and
+        # flag it so it can't be re-grabbed. The notes read on the next press.
+        if not game.save.flag("desk_pistol_taken"):
+            game.save.set_flag("desk_pistol_taken", True)
+            for d in sc.decorations:
+                if getattr(d, "tag", None) == "writing_desk":
+                    d.gun_present = False
+                    game._invalidate_prop_card(d)   # rebuild without the gun
+            game.player.inventory.add("pistol", 1)
+            game.player.inventory.equipped["weapon"] = "pistol"
+            game.audio.play("pickup", 0.7)
+            game.show_notice("You take your revolver off the desk.")
+            return
         # After the Dark, the case has rewritten itself. The notebook
         # the player opens the game on is the same one that closes it.
         # First read is the gut-punch; subsequent reads collapse so

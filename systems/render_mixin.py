@@ -805,6 +805,21 @@ class RenderMixin:
         if card is not None:
             self.screen.blit(card, (bx - ax, by - ay))
 
+    def _invalidate_prop_card(self, deco):
+        """Drop any cached solid-prop card for `deco` so its next draw rebuilds
+        (the cards key on id(deco), so a prop whose look changed in place -- e.g.
+        the desk once its revolver is taken -- would otherwise show a stale
+        card until the scene reloads)."""
+        did = id(deco)
+        for cache, order in ((_PROP_CARD_CACHE, _PROP_CARD_ORDER),
+                             (_PROP_STATIC_CACHE, _PROP_STATIC_ORDER)):
+            for k in [k for k in cache if k[0] == did]:
+                cache.pop(k, None)
+                try:
+                    order.remove(k)
+                except ValueError:
+                    pass
+
     def _build_prop_card(self, d):
         """Cache-miss path: render one solid prop to a tight SRCALPHA card via a
         throwaway camera at the same angle whose origin pins the prop's ground
