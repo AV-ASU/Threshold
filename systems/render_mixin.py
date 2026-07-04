@@ -194,7 +194,7 @@ class RenderMixin:
         if key in SAFE_SCENES or key in DIM_SAFE_SCENES:
             return
         holds_mask = (self.player is not None
-                     and self.player.inventory.has("sigil_rubbing"))
+                     and self.player.inventory.has("pallid_mask"))
         if key == "brimley":
             # Daytime town: a LIGHT atmospheric haze, not the oppressive dim.
             # The "too dark" read was a flat black tint stacked on the

@@ -46,7 +46,7 @@ def _flashlight(s):
     pygame.draw.rect(s, _STEEL_DARK, (2, 9, 1, 2))              # tail cap
 
 
-def _sigil_rubbing(s):
+def _pallid_mask(s):
     # The Pallid Mask: a pale half-face, black eyeholes, a centre seam.
     pygame.draw.ellipse(s, _PAPER, (4, 2, 9, 13))
     pygame.draw.ellipse(s, _PAPER_DARK, (4, 2, 9, 13), 1)
@@ -165,7 +165,7 @@ _DISPATCH = {
     "cellar_key":      _iron_key,
     "cross":           _cross,
     "flashlight":      _flashlight,
-    "sigil_rubbing":   _sigil_rubbing,
+    "pallid_mask":   _pallid_mask,
     "robe":            _robe,
     "mom_notebook":    _mom_notebook,
     "unsent_letter":   _letter,

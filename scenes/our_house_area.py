@@ -472,9 +472,9 @@ def build_arrival_road():
     def _road_interact(game):
         cx, cy = sc._car_pos
         if abs(game.player.x - cx) < 44 and abs(game.player.y - cy) < 44:
-            if (game.player.inventory.has("sigil_rubbing")
+            if (game.player.inventory.has("pallid_mask")
                     and hasattr(game, "_begin_car_escape")):
-                game._begin_car_escape()          # the Sign breaks the fold
+                game._begin_car_escape()          # His face breaks the fold
                 return
             game.audio.play("door_locked", 0.6)
             game.show_notice("You turn the key. The engine catches, and "

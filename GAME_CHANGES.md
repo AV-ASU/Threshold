@@ -64,8 +64,9 @@ Implemented + verified (compileall + smoke + flow green; canon guards added).
 > constraint, not a task. **§6b is now DONE** (the three testimony fragments,
 > the Mask-only keystone, mining cultists + rite-holder — all in code and
 > flow-guarded). **§12 Crane is DONE** (murder-beat polish optional). **§13
-> (the calendar sweep around April 14) is DONE.** No genuinely-open work
-> remains.
+> (the calendar sweep around April 14) is DONE.** The one open item is
+> **§17 (the ancient altar, 2026-07)**, which lands with the Brimley
+> compression pass.
 >
 > These **author new prose or build new systems**. The hard part is the
 > NARRATIVE §1b discipline: cosmic truth arrives **only as sensation** — never
@@ -80,7 +81,8 @@ Implemented + verified (compileall + smoke + flow green; canon guards added).
 AND the §7 "Mask + notes" keystone).** Two decisions:
 
 1. **The keystone is the Pallid Mask ALONE.** The notes are decoupled from the
-   endgame entirely. SPREAD already gated on `sigil_rubbing` alone; now the
+   endgame entirely. SPREAD already gated on the Mask item alone (then keyed
+   `sigil_rubbing`; renamed `pallid_mask` 2026-07, disk slots migrate); now the
    **Deep Stair** gate (`scenes/well.py`) and the **Threshold seal**
    (`scenes/depths.py`) do too. This makes the fork symmetric and removes a
    soft-lock surface. See §7 (now Mask-only).
@@ -440,6 +442,31 @@ cutscene, and the ending's canon sharpened by direction:
 
 ---
 
+### 17. The ancient altar — the CAP of the last sealing — OPEN  *(2026-07, settled with the user)*
+
+**Canon (locked).** The standing stones out in the mid-Brimley field (the
+cult path off the east lane leads to them, `scenes/brimley.py`) are NOT the
+cult's work: they are a **long-forgotten remnant of whoever found the
+Threshold before it was lost to history** — the surviving surface **cap of
+the LAST sealing**. That is why they must stand **next to the river**: the
+river is the artery down to the door (§6b), so the cap sits directly over
+the Threshold. The cult's worn path to the stones reads as pilgrimage to a
+thing older than them that they only half understand.
+
+**Design intent (implementation lands with the Brimley compression pass):**
+
+- [ ] Move the standing-stones feature to the riverbank (over the point the
+  Threshold sits beneath; keep the worn cult path leading to it).
+- [ ] Pre-cult dressing: lichened, weathered, sunken — nothing daubed,
+  nothing yellow. It must read OLDER than every cult mark in town.
+- [ ] ONE worn carving on the stones that recontextualizes after the player
+  has seen the Sign (the carving matches the Mask's grammar) — a single
+  diegetic note (`notes`, never evidence), no explanation (§1b: sensation,
+  not cosmology).
+- [ ] It gives the SEAL ending its precedent without a word: the door was
+  found once, capped, and lost. The PI's seal repeats it (this time from
+  the wrong side); SPREAD breaks the pattern — the first time it ever left.
+
 ## Status / sequencing notes
 
 - **Phase 1 is done + pushed.** Docs (`NARRATIVE.md`, `CLAUDE.md`) already
@@ -447,7 +474,9 @@ cutscene, and the ending's canon sharpened by direction:
 - **Coupling:** §6b (the three testimony fragments + Mask-only keystone) is
   DONE and flow-guarded; §8 (the PI's interior voice) and §9 (ashfall) landed
   earlier; §12 (Crane's pulpit condemnation) and §13 (the calendar sweep
-  around April 14) are DONE. §10 is a fence, not a ticket. **No required
-  canon-alignment work remains** (only an optional Crane murder-beat polish).
+  around April 14) are DONE. §10 is a fence, not a ticket. **Open: §17**
+  (the ancient altar as the last sealing's cap, 2026-07 — ships with the
+  Brimley compression pass); otherwise only an optional Crane murder-beat
+  polish remains.
 - Verify against `NARRATIVE.md` first; keep `tests/flow.py` green (run the full
   gate, `python tests/run_all.py`) and add a guard as each canon fact locks.
