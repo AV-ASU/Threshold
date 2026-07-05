@@ -145,7 +145,32 @@ def _collect_revisit(game, name):
         game.save.set_flag("nudged_" + n["key"], True)
         _log_note(game, n["key"], n["lines"])
         out.extend(n["lines"])
+    out.extend(_ready_for_the_desk(game, name))
     return out
+
+
+def _ready_for_the_desk(game, name):
+    """When the PI crosses the readiness line (3 canonical beats) on the
+    surface, still without the Invitation, nudge him back to Sable -- so the
+    act break is signposted, not a silent 'walk back to the desk'. Fires
+    once, only if Sable has been met and has not yet handed it over. (Once
+    the PI is underground he already holds it, so this cannot fire there.)"""
+    if (name not in CANONICAL_EVIDENCE
+            or game._evidence_count() != 3
+            or not game.save.flag("sable_greeted")
+            or game.save.flag("rite_envelope_given")
+            or game.player.inventory.has("rite_envelope")
+            or game.save.flag("nudged_ready_for_desk")):
+        return []
+    game.save.set_flag("nudged_ready_for_desk", True)
+    lines = [
+        "[c=dim]That is the third thread that runs back into this town. I "
+        "have enough now to stop asking and start moving.",
+        "The clerk has been holding something for me since I walked in. Time "
+        "to go back to that desk and let him give it to me.[/c]",
+    ]
+    _log_note(game, "ready_for_the_desk", lines)
+    return lines
 
 
 # ---- The Preacher: Reverend Asa Crane ----
@@ -481,6 +506,46 @@ def _sable_showed_photo(game):
     ])
 
 
+def _sable_give_invitation(game):
+    """The act break, now a CHOSEN beat (not an auto-handoff). Fired by the
+    'the_way_down' exchange's on_ask when the PI asks Sable for the way: he
+    hands over the Invitation like a room key, sets the flag, and files the
+    PI's NOTE (never evidence)."""
+    save = game.save
+    if save.flag("rite_envelope_given") or game.player.inventory.has(
+            "rite_envelope"):
+        return
+    save.set_flag("rite_envelope_given", True)
+    game.player.inventory.add("rite_envelope", 1)
+    if hasattr(game, "audio"):
+        game.audio.play("pickup_rare", 0.7)
+    _log_note(game, "the_invitation", [
+        "Sable kept an envelope under the register. A year at least. Handed "
+        "it to me like a room key.",
+        "The guests who never signed out left it for him, for the day he was "
+        "ready. He gave it away instead. Says the desk needs him.",
+        "It reads like scripture and gives directions like a flyer. The "
+        "school first, it says. Where they slept.",
+    ])
+
+
+def sable_on_leave(game):
+    """A last word the first time the PI tries to walk off. Sable stops him,
+    and plants the sealed/warped town without spelling it out -- the host
+    keeping the guest a beat longer, and the compulsion leaking through as
+    hospitality. Fires once."""
+    if game.save.flag("sable_farewell_hook"):
+        return None
+    game.save.set_flag("sable_farewell_hook", True)
+    return [
+        ("npc", "Hold a moment. You came in off that road today, so you'll "
+                "know."),
+        ("npc", "Did it feel to you like it went anywhere? The road, I mean. "
+                "Folk say it does not, lately. I wouldn't know. I never "
+                "leave the desk."),
+    ]
+
+
 SABLE_CONVO = {
     "id":    "sable",
     "name":  "Mr. Sable",
@@ -495,6 +560,7 @@ SABLE_CONVO = {
                     "ask me. Anything at all."),
         ],
     },
+    "on_leave": sable_on_leave,
     "exchanges": [
         {
             "key": "mara",
@@ -532,16 +598,36 @@ SABLE_CONVO = {
                 ]),
             ],
         },
+        # A STARTING question that seeds the Ledger: he points you at the
+        # register on the desk (a lead) and shrugs off the padlocked cellar
+        # where the old books really went.
         {
-            "key": "guests",
-            "q": "The lodge is full, you keep saying. Where is everyone? I "
-                 "never hear a soul upstairs.",
+            "key": "cellar",
+            "q": "A lot of doors in this town stay locked. You keep a cellar "
+                 "under this place?",
             "beats": [
-                ("npc", "Every room above is spoken for. Has been a good "
-                        "while now."),
-                ("npc", "They keep to themselves, my guests. The register is "
-                        "right there on the desk, if you are the curious "
-                        "sort. Sign and guest both, all the way back."),
+                ("npc", "Storage, mostly. The key is about somewhere. Nothing "
+                        "down there worth the dust, I promise you."),
+                ("npc", "If it is names you want, sign-in register is right "
+                        "here on the desk. Guest and date, all the way back. "
+                        "Read it as long as you like."),
+            ],
+        },
+        # A STARTING question: the town has been sealed since the mid-January
+        # rite (it is mid-April now -- THREE months; NARRATIVE 1). The PI has
+        # the dates from his own case; Sable downplays a supernatural seal as
+        # ordinary winter and never lets the word "trapped" near it.
+        {
+            "key": "sealed",
+            "q": "Nothing leaves this town. No car, no truck, no mail since "
+                 "January. That's three months. What happened here?",
+            "beats": [
+                ("npc", "Happened? Nothing happened. The snows came in around "
+                        "the new year and the road just... stopped mattering. "
+                        "It does that, up here."),
+                ("npc", "Three months is nothing to a town like this. Folk "
+                        "get comfortable. Warm bed, full larder, good company. "
+                        "You will too, give it time."),
             ],
         },
         {
@@ -587,6 +673,50 @@ SABLE_CONVO = {
                 ("npc", "She stopped fretting, toward the end. Folk do, "
                         "here. It is a mercy, if you let it be. You will let "
                         "it be too, in time."),
+            ],
+        },
+        # The reproach: once the PI has learned the roads loop back on
+        # themselves (a local told him, filing the_fold_told note, or he has
+        # crossed a fold), he can put it to Sable -- who deflects by pointing
+        # out he DID say it, plainly, and the PI simply heard hospitality.
+        {
+            "key": "the_fold",
+            "q": "The roads loop back on themselves. This whole town is "
+                 "folded shut. You knew that, and you smiled at me.",
+            "avail": lambda g: any(
+                isinstance(e, dict) and e.get("name") == "the_fold_told"
+                for e in (g.save.arg("notes", []) or [])),
+            "beats": [
+                ("npc", "I told you the roads were not going anywhere. You "
+                        "heard a man being hospitable. I meant it plainly."),
+                ("npc", "There is no call to be cross about it. You are safe "
+                        "here. Safer than out there, if you follow me."),
+            ],
+        },
+        # THE WAY DOWN (the act break, now an explicit ASK -- not a silent
+        # auto-handoff). Offered once the PI is ready (3 evidence) and does
+        # not already carry it; picking it fires _sable_give_invitation. A
+        # case NOTE (_evidence readiness nudge) points him back to the desk
+        # when he crosses the threshold, so it is signposted, not a guess.
+        {
+            "key": "the_way_down",
+            "q": "You've been holding something for me. I think I'm ready "
+                 "for it now.",
+            "once": True,
+            "avail": lambda g: (g._evidence_count() >= 3
+                                and not g.save.flag("rite_envelope_given")
+                                and not g.player.inventory.has(
+                                    "rite_envelope")),
+            "on_ask": _sable_give_invitation,
+            "beats": [
+                ("npc", "You are past pretending to be a guest now, I think. "
+                        "All right."),
+                ("npc", "(He lays a long envelope on the desk. Wax seal, the "
+                        "Sign pressed into it. He handles it like a room "
+                        "key.)"),
+                ("npc", "The ones who stayed before you left this for the day "
+                        "they were ready to follow. I believe it meant you. "
+                        "Somebody has to keep the desk."),
             ],
         },
     ],
@@ -638,46 +768,14 @@ def clerk_dialogue(game, npc):
     guest ready in his place, and hands it over like a room key. Somebody
     has to keep the desk. State-gated on what the PI knows -- never
     farmable by repeat visits."""
-    save = game.save
     _cult_tell(game, "clerk")
-    # The handoff preempts the visit rotation the moment the PI is ready.
-    if (not save.flag("rite_envelope_given")
-            and not game.player.inventory.has("rite_envelope")
-            and game._evidence_count() >= 3):
-        save.set_flag("rite_envelope_given", True)
-        game.player.inventory.add("rite_envelope", 1)
-        game.audio.play("pickup_rare", 0.7)
-        game.dialog.show([
-            "You're past pretending to be a guest now, I think. All right.",
-            "[c=dim](He reaches under the register and lays a long envelope "
-            "on the desk. Wax seal, and the Sign pressed into the wax. He "
-            "handles it like a room key.)[/c]",
-            "The ones who stayed here before you left this at my desk when "
-            "they went. They said I would know when I was ready to follow.",
-            "I believe it meant you. Somebody has to keep the desk.",
-            "[c=dim]He smiles the way he always smiles. \"Anything else you "
-            "need, you ask me. Anything at all.\"[/c]",
-        ], speaker="Mr. Sable", voice="blip_low", portrait="clerk")
-        # The PI's case note (a NOTE, never evidence -- must not feed the
-        # King-gate). Same live-list append pattern as _log_case_entry.
-        notes = save.arg("notes", [])
-        if isinstance(notes, list) and not any(
-                isinstance(e, dict) and e.get("name") == "the_invitation"
-                for e in notes):
-            notes.append({"name": "the_invitation", "lines": [
-                "Sable kept an envelope under the register. A year at "
-                "least. Handed it to me like a room key.",
-                "The guests who never signed out left it for him, for the "
-                "day he was ready. He gave it away instead. Says the desk "
-                "needs him.",
-                "It reads like scripture and gives directions like a "
-                "flyer. The school first, it says. Where they slept.",
-            ]})
-        return
-    # Otherwise: the organic conversation. His welcome floats once (the
-    # greet in SABLE_CONVO), then the menu is the PI's own questions -- each
-    # picked line is spoken, and Sable answers in turn, over the desk, while
-    # the world keeps running. New questions surface as the case grows.
+    # The organic conversation. His welcome floats once (the greet in
+    # SABLE_CONVO), then the menu is the PI's own questions -- each picked
+    # line is spoken, Sable answers in turn over the desk, the world keeps
+    # running, and new questions surface as the case grows. The Invitation
+    # is no longer an auto-handoff the moment you hit 3 evidence: it is an
+    # explicit ASK ("the_way_down" exchange, gated on readiness), and a case
+    # NOTE nudges the PI back to the desk when he is ready (see _evidence).
     from ui.conversation import open_conversation
     open_conversation(game, npc, SABLE_CONVO)
 

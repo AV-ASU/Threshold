@@ -25,17 +25,22 @@ A conversation is plain data (see scenes/dialogue.py SABLE_CONVO):
       "leave":    "That's all for now.",
       "greet":    {"flag": "sable_greeted",
                    "beats": [("npc", "Sable. I keep the desk here.")]},
+      "on_leave": lambda g: [beats] or None,   # a last word as you go
       "exchanges": [ {exchange}, ... ],
     }
+
+`on_leave(game)` fires when the player picks the leave option; if it
+returns beats (e.g. a one-time hook), they float and the talk ends.
 
 An EXCHANGE (one askable question):
 
     {
-      "key":   "mara",                 # unique within the conversation
-      "q":     "I'm looking for a woman. Mara Blaine.",   # the PI's line
-      "avail": lambda g: True,         # optional; offered only when true
-      "once":  True,                   # drops from the menu once asked
-      "beats": [ beat, ... ],          # what follows the PI's question
+      "key":    "mara",                # unique within the conversation
+      "q":      "I'm looking for a woman. Mara Blaine.",  # the PI's line
+      "avail":  lambda g: True,        # optional; offered only when true
+      "once":   True,                  # drops from the menu once asked
+      "on_ask": lambda g: ...,         # optional side effect when picked
+      "beats":  [ beat, ... ],         # what follows the PI's question
     }
 
 A BEAT is one of:
@@ -56,6 +61,7 @@ class Conversation:
         self.convo = convo
         self.queue = []          # pending beats in the current exchange
         self.current = None      # key of the exchange being played
+        self._closing = False    # a leave-hook is playing; do not reopen
 
     # ---- entry ----------------------------------------------------------
     def start(self):
@@ -84,9 +90,24 @@ class Conversation:
 
         def _pick(idx):
             if idx >= len(avail):
-                return                       # left; E reopens the menu
+                # Leaving. The NPC may get one last word (a hook the first
+                # time you try to go); it floats, then the talk ends.
+                hook = self.convo.get("on_leave")
+                beats = hook(self.game) if hook else None
+                if beats:
+                    self._closing = True
+                    self.current = None
+                    self.queue = list(beats)
+                    self._step()
+                return
             ex = avail[idx]
             self.current = ex["key"]
+            # An exchange may carry a side effect fired the moment it is
+            # asked (hand over an item, file a note); the beats then narrate
+            # what just happened.
+            on_ask = ex.get("on_ask")
+            if on_ask:
+                on_ask(self.game)
             # The PI SPEAKS his question first, then the exchange plays.
             self.queue = [("pi", ex["q"])] + list(ex["beats"])
             self._step()
@@ -118,6 +139,9 @@ class Conversation:
                 if ex and ex.get("once"):
                     self.game.save.set_flag(self._asked_flag(self.current), True)
                 self.current = None
+            if self._closing:
+                self._closing = False        # leave-hook done; talk ends
+                return
             self._menu()
             return
         beat = self.queue.pop(0)
