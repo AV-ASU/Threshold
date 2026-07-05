@@ -1185,6 +1185,50 @@ def main():
     check(len(ask_beat[2]) == 2 and ask_beat[2][0][2] is not None,
           "ask: the photo beat is a two-way choice with a consequence")
 
+    # (6) TONE: the first local we meet does NOT give the girl up. He
+    # deflects the name, folds her in with the newcomers, and misdirects
+    # at the "unfriendly" locals (the trap the game punishes). He must
+    # never confirm he knows her or where she is.
+    _mtxt = " ".join(b[1].lower() for b in mara["beats"] if b[0] in ("npc", "pi"))
+    check("can't say the name" in mara["beats"][0][1].lower(),
+          "tone: Sable deflects the name instead of confirming it")
+    check(not any(s in _mtxt for s in
+                  ("that is her", "sat right where", "smiling, by the end",
+                   "i will know her")),
+          "tone: Sable never confirms he knows the girl or where she is")
+    check("new folk" in _mtxt
+          and any(s in _mtxt for s in ("cold as a root cellar", "unfriendly",
+                                       "not everyone")),
+          "tone: the opener sets the newcomer/hostile-local split for the town")
+
+    # (7) The Invitation drops with Sable if he is killed before the handoff
+    # (he carries the way down), and NOT if he already gave it -- and the
+    # drop never sets the _given flag (that would soft-lock a missed drop).
+    from scenes.dialogue import sable_on_death
+    gk = new_game()
+    gk.load_scene_now("bedroom")
+    _n0 = len(gk.scene.items)
+    sable_on_death(gk, type("N", (), {"x": 100.0, "y": 100.0})())
+    check(sum(1 for it in gk.scene.items if it.get("key") == "rite_envelope") == 1,
+          "drop: killing Sable before the handoff drops the Invitation")
+    check(not gk.save.flag("rite_envelope_given"),
+          "drop: the corpse drop never sets the _given flag (no soft-lock)")
+    gk2 = new_game()
+    gk2.load_scene_now("bedroom")
+    gk2.save.set_flag("rite_envelope_given", True)
+    _n2 = len(gk2.scene.items)
+    sable_on_death(gk2, type("N", (), {"x": 1.0, "y": 1.0})())
+    check(len(gk2.scene.items) == _n2,
+          "drop: no Invitation drops if he already handed it over")
+    # And the desk handoff will not double-give once the PI already carries one.
+    gk3 = new_game()
+    gk3.player.inventory.add("rite_envelope", 1)
+    for _i in range(3):
+        gk3.save.arg("evidence", []).append({"name": f"_d{_i}", "lines": ["x"]})
+    clerk_dialogue(gk3, None)
+    check(gk3.player.inventory.count("rite_envelope") == 1,
+          "drop: the desk handoff never gives a second Invitation")
+
     # --- 18. effigy_grove is a maker-less tableau (§1b/§8) ---------------
     # Individual cursing is redundant -- the closing rite claimed the town at
     # once -- so the grove is left as the work without the worker, with no

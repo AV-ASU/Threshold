@@ -13,7 +13,8 @@ from constants import TILE
 from entities.npc import NPC
 from entities.decoration import Decoration
 from .base import Scene, chest_interact
-from .dialogue import basement_photo_dialogue, clerk_dialogue, _evidence
+from .dialogue import (basement_photo_dialogue, clerk_dialogue, _evidence,
+                       sable_on_death)
 
 
 # ---- spare_room (key: 'bedroom') ----
@@ -528,6 +529,10 @@ def house_on_enter(game, scene):
                    movement="watch", speed=0.6, radius=320)
         host.facing = (0, 1)
         host.tag = "host_innkeeper"
+        # He carries the way down. Kill him before he hands over the
+        # Invitation and it drops with the body (dialogue.sable_on_death);
+        # if he already gave it, there is nothing to loot.
+        host.on_kill = lambda game, _n=host: sable_on_death(game, _n)
         scene.add_npc(host)
 
 

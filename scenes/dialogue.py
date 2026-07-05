@@ -10,6 +10,7 @@ beats are surfaced through `_evidence`; only the six in
 `CANONICAL_EVIDENCE` count toward the King-gate and the visibility
 floor.
 """
+import random
 
 
 # The SIX canonical evidence beats (NARRATIVE.md §4): ONLY these count toward
@@ -459,19 +460,24 @@ def sheriff_dialogue(game, npc):
 
 # ---- The Clerk: Mr. Sable ----
 # The organic ask-verb, piloted on Sable (TODO #1). The menu options ARE
-# the PI's own spoken lines; picking one plays a back-and-forth where he
-# and Sable each speak in turn, floating over their heads. Sable's voice
-# holds: hospitality with a funereal undertow, certainties voiced as
-# courtesies (compulsion, never a confessed scheme). New questions open as
-# the case grows -- the ledger and the journal each unlock a follow-up he
-# was not ready to be asked before. Engine: ui/conversation.Conversation.
+# the PI's own spoken lines; picking one plays a back-and-forth over their
+# heads. Sable is the FIRST local the PI meets, and the exchange sets the
+# tone for the whole town: he is the smiling, pro-newcomer host who DOES
+# NOT give the girl up. He deflects the name, folds Mara in with "the new
+# folk," and points the suspicion the wrong way -- at the "unfriendly" old
+# families -- which is the exact trap the game punishes (the warm ones are
+# the cult; NARRATIVE 2, Hettie's "don't trust the easy ones"). He is the
+# most-attuned LOCAL: he knows, and never says he knows. The mask only
+# thins as the case grows (the ledger and the journal each open a colder
+# follow-up). Compulsion, never a confessed scheme. Engine:
+# ui/conversation.Conversation.
 
 def _sable_showed_photo(game):
     game.save.set_flag("sable_saw_photo", True)
     _log_note(game, "showed_the_clerk", [
-        "I put her face on his desk. He knew it at once, and something in "
-        "the house seemed to lean in to look.",
-        "I don't know why I did it. I don't know why it felt like a mistake.",
+        "I put her face on his desk. He looked at it a long while, smiling "
+        "the whole time, and told me nothing at all.",
+        "I had the feeling he did not need the picture.",
     ])
 
 
@@ -495,27 +501,33 @@ SABLE_CONVO = {
             "q": "I'm looking for a woman. Mara Blaine. She'd have come "
                  "through here.",
             "beats": [
-                ("npc", "Miss Blaine. Of course. A lovely guest, full of "
-                        "questions. The way you are."),
-                ("npc", "You have the look of a man sent to fetch someone "
-                        "home. Family, is it?"),
-                ("pi", "Hired. I find people who would rather stay lost."),
-                ("npc", "Then we are nearly in the same trade. I keep them "
-                        "comfortable, so they stop wanting to be found."),
-                ("npc", "You will have a picture of her, I expect. Your "
-                        "sort always does."),
+                ("npc", "Blaine. No, I can't say the name lands anywhere. We "
+                        "get a great many faces through that door."),
+                ("npc", "You'll mean one of the new folk, though. We have had "
+                        "no end of those this past year. They come like they "
+                        "heard something worth the drive."),
+                ("npc", "And I am glad of every one. This town was drying up "
+                        "before they started arriving. I keep every room "
+                        "full now."),
+                ("pi", "And the rest of Brimley feels the same?"),
+                ("npc", "Ah. There you have it. Not everyone's been so warm. "
+                        "Some of the old families have gone cold as a root "
+                        "cellar about the newcomers."),
+                ("npc", "I would mind who you take your questions to, friend. "
+                        "Not everyone here wishes a stranger well. I do. You "
+                        "remember that."),
                 ("ask", "Show him her photograph?", [
                     ("Slide the photo across the desk.", [
                         ("pi", "(You lay her photo on the register.)"),
-                        ("npc", "Ah. That is her. She sat right where you "
-                                "are standing. Smiling, by the end."),
-                        ("npc", "I will know her now, wherever she has got "
-                                "to. So will the house."),
+                        ("npc", "(He looks at it a good while, smiling.) "
+                                "Pretty thing. No, I couldn't say. She'll "
+                                "have found her feet by now. They all do."),
                     ], _sable_showed_photo),
                     ("Keep it in your coat.", [
                         ("pi", "(You leave it where it is.)"),
-                        ("npc", "No matter. I remember every guest. She has "
-                                "not left. None of them have."),
+                        ("npc", "No matter. Ask around, if you must. Start "
+                                "with the friendly ones. There are fewer of "
+                                "those than you would think."),
                     ], None),
                 ]),
             ],
@@ -527,8 +539,9 @@ SABLE_CONVO = {
             "beats": [
                 ("npc", "Every room above is spoken for. Has been a good "
                         "while now."),
-                ("npc", "They keep to themselves. The register is right "
-                        "there on the desk, if you are the curious sort."),
+                ("npc", "They keep to themselves, my guests. The register is "
+                        "right there on the desk, if you are the curious "
+                        "sort. Sign and guest both, all the way back."),
             ],
         },
         {
@@ -543,34 +556,64 @@ SABLE_CONVO = {
             ],
         },
         # Unlocked by reading the cellar Ledger (evidence the_ledger); the
-        # discovery nudges the PI back here (see _REVISIT_NUDGES).
+        # discovery nudges the PI back here (see _REVISIT_NUDGES). The mask
+        # thins: he stops pretending to keep the paperwork, keeps the promise.
         {
             "key": "checkouts",
             "q": "I read your register. Every guest signs in. Not one ever "
                  "signs out.",
             "avail": lambda g: g.save.flag("evidence_the_ledger"),
             "beats": [
-                ("npc", "All checked in. Not a one checked out. And yet the "
-                        "halls stay so quiet."),
-                ("npc", "No matter. They will not have left. Nobody leaves. "
-                        "It is the one thing I can promise a guest."),
+                ("npc", "(The pleasant look does not shift.) Do they not? "
+                        "Fancy that. I never was much of a hand with the "
+                        "paperwork."),
+                ("npc", "They will not have gone far. Nobody does. It is a "
+                        "restful town, friend. People stay. It is the one "
+                        "thing I can promise a guest."),
             ],
         },
-        # Unlocked by reading Mara's journal (evidence maras_journal).
+        # Unlocked by reading Mara's journal (evidence maras_journal). This
+        # is where the mask thins the most: "she is not lost" is as close as
+        # he comes to admitting he knows, and still no scheme is confessed.
         {
             "key": "her_state",
             "q": "Her journal reads like someone already halfway out a "
                  "door. When did she change?",
             "avail": lambda g: g.save.flag("evidence_maras_journal"),
             "beats": [
-                ("npc", "She stopped asking her questions, toward the end. "
-                        "That is when a guest is happiest, I find."),
-                ("npc", "You will get there yourself. There is no hurry at "
-                        "all."),
+                ("npc", "(He sets his hands flat on the desk.) You keep "
+                        "telling me she is lost. I keep telling you she is "
+                        "not."),
+                ("npc", "She stopped fretting, toward the end. Folk do, "
+                        "here. It is a mercy, if you let it be. You will let "
+                        "it be too, in time."),
             ],
         },
     ],
 }
+
+
+def sable_on_death(game, npc):
+    """The Invitation drops with him. Sable is the most-attuned LOCAL and
+    the one who carries the way down (the envelope that opens the school
+    rite). If the PI kills him BEFORE the handoff, the sealed envelope
+    falls with the body and can be looted; if he already gave it (or the PI
+    already has one), there is nothing to find. The `_given` flag is left
+    ALONE on purpose -- setting it here would soft-lock a player who leaves
+    the drop, since a killed local rebuilds LIVE on scene re-entry and the
+    desk handoff (gated on the flag AND the item) could then re-arm."""
+    inv = game.player.inventory
+    if game.save.flag("rite_envelope_given") or inv.has("rite_envelope"):
+        return
+    game.scene.items.append({
+        "x": npc.x + random.uniform(-6, 6),
+        "y": npc.y + random.uniform(-6, 6),
+        "key": "rite_envelope", "qty": 1,
+    })
+    if hasattr(game, "show_notice"):
+        game.show_notice(
+            "Something stiff in the clerk's coat: a wax-sealed envelope.",
+            duration=2.6)
 
 
 def clerk_dialogue(game, npc):
@@ -599,6 +642,7 @@ def clerk_dialogue(game, npc):
     _cult_tell(game, "clerk")
     # The handoff preempts the visit rotation the moment the PI is ready.
     if (not save.flag("rite_envelope_given")
+            and not game.player.inventory.has("rite_envelope")
             and game._evidence_count() >= 3):
         save.set_flag("rite_envelope_given", True)
         game.player.inventory.add("rite_envelope", 1)
