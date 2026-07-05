@@ -14,6 +14,23 @@
 
 ## Open work
 
+### 12. Investigation dialogue verb — the ask-questions layer  *(breakthrough; NOT low-difficulty)*
+
+You play a PI, but the only social verb is press-E-to-advance scripted lines:
+every NPC conversation is a linear counter (`old_count`, `kid_count` ...). The
+choice engine already exists and works (`ui/dialog.py show_choice`) but is used
+in exactly ONE gameplay spot (the Sign Chamber altar fork, `scenes/well.py`
+~L890). Build an ask-about-topics layer (the girl / the well / the strangers /
+the preacher) with answers gated on evidence found + who is being asked. Makes
+the core fantasy active for the first time (NARRATIVE §2: reading the town IS
+the investigation). Content + design, not engine work.
+
+- **Pilot beat — the Crane choice** (proof-of-concept for the verb): in his
+  2nd conversation, a two-option `show_choice` — provoke him (he goes off to
+  "save" the cult) vs hold him back. Canon fence (§1b): the cult can NOT be
+  saved or converted (they were answered, not deceived); Crane dies for
+  believing he can. The provoke branch feeds the murder reveal below.
+
 ### 0. Stealth rework — the TUNING loop  *(needs a human at the keys)*
 
 The mechanic AND the placement pass are built and guarded
@@ -46,9 +63,19 @@ ticket — scope a concrete first scene before starting.
 
 ## Optional polish (no canon/lore change; do as time allows)
 
-- **Rev. Asa Crane murder beat** *(GAME_CHANGES.md §12)* — the
-  `preacher_doomed` -> gutted-on-the-floor reveal could be punched up for
-  impact. Lore unchanged; not requested.
+- **Rev. Asa Crane murder reveal + sprite** *(GAME_CHANGES.md §12)* — punch up
+  the `preacher_doomed` death, three parts. (1) **New discovery location**: the
+  provoke choice (§12 pilot) sends him to the cult's ground, so find his body
+  AWAY from the church — e.g. the well/grove edge, reaching for the souls he
+  couldn't save — a real investigative find, not a pop on re-entry. (2)
+  **Bespoke sprite**: the current corpse is a placeholder medieval knight
+  (`_draw_body`: helmet + spear + tabard-grey) — replace with a gutted-preacher
+  draw (dark palette, white collar, cross in the mess). (3) Stage the approach
+  (wrongness before sight, long sightline). Art + placement + a location move;
+  lore unchanged.
+- **Doc/code drift (quick)** — `README.md` says "no disk save" but the cot
+  save-slot exists (`systems/save.py`); `CAMERA.md` lists the sight cone as
+  62°/280/30 but `sight.py` ships 74°/360/40. Fix the docs to match code.
 - **Held-weapon offset eyeball pass** *(HANDCRAFT_BACKLOG.md §3b)* — the
   `draw_axe_held` / `draw_revolver_held` code is in and working; this is just
   a visual check of the held-weapon offset at every camera yaw.
