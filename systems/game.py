@@ -616,7 +616,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         self.cam_x = self.player.x - screen_dx
         self.cam_y = self.player.y - screen_dy
 
-    def begin_transition(self, target_scene, spawn_id="default"):
+    def begin_transition(self, target_scene, spawn_id="default", seamless=False):
         if self.state == "transition": return
         current_key = self.scene.key if self.scene else None
         # A same-scene exit is a fold RELOCATION (the maze 'I'/'Q' tiles):
@@ -683,6 +683,16 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
                 self.audio.play("void_sting", 0.55)
                 self._void_sting_played = True
             self.load_scene_now(target_scene, spawn_id)
+            return
+        if seamless:
+            # A SEE-THROUGH door: the room beyond was already visible through
+            # the opening, so crossing the sill should be continuous, not a
+            # fade to black. All the door gates above still applied (threshold
+            # ease, the bedroom stuck-gate, flags); we just step through with
+            # the seamless primitive -- the leaf swings, the door sounds, and
+            # the world swaps around a preserved stride + screen position.
+            self.audio.play("door_open", 0.7)
+            self.cross_fold(target_scene, spawn_id)
             return
         self.transition_target = (target_scene, spawn_id)
         self.transition_dir = "out"
@@ -2689,7 +2699,12 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
                         # door_open, so the swing must not double it.
                         self._pulse_door_at(self.player.x, self.player.y,
                                             quiet=True)
-                        self.begin_transition(*exit_data)
+                        # A SEE-THROUGH door crosses seamlessly (cross_fold, no
+                        # fade) since the far room was already in view; a plain
+                        # door keeps the fade. Both run the same door gates.
+                        seethrough = exit_ch in (
+                            self.scene.seethrough_doors or ())
+                        self.begin_transition(*exit_data, seamless=seethrough)
             # Suspend scene update (NPC patrols, decoration anims, triggers)
             # while any modal is up so the world freezes behind it.
             if not world_frozen:
