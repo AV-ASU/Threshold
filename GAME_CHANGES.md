@@ -543,6 +543,80 @@ spoil heaps, cart ruts, the degradation arc ending at the Deepest Face.
 Rooms gain dug-out side pockets (a few with loot/testimony placement,
 most just labor made visible).
 
+**Implementation approach (2026-07, planned — not yet built):**
+
+- **Scope = the WORKS only (`scenes/well.py`), not the Depths.** The fall
+  out of `works_deepstair` lands in `depths_antechamber`, whose fiction is
+  *older than the dig* ("cut stone, worn smooth by years of feet that came
+  this way before you", `depths.py`). The mining read must STOP at the
+  Deepest Face; the Depths keep their own (ancient-workings) read. Don't
+  bleed timber/spoil into `depths_*`.
+- **Exemptions:** `maras_room` (a lived-in refuge cell, evidence #1,
+  `FOLD_REFUGE_SCENES`) stays cot-and-candle, NOT a dig; and `works_sign`
+  (the sacred apse: the calling-out staging + the altar Mask/rite choice,
+  the pivot of both endings) stays clean of spoil/timber so nothing crowds
+  the altar interactable, the pews, Mara's staged walk, or the kneelers.
+- **Mechanism = carve pockets into ALREADY-SEALED stone.** Most Works rooms
+  wall off big solid blocks to make their shapes (`works_vats` four corners,
+  `works_sorting` upper hall, the beveled corners). Punch shallow (1-tile)
+  dug niches INTO that solid stone, frame with timber, fill with spoil +
+  tools. Zero collision risk (eating tiles that are already `#`): walkable
+  floor, patrol lanes, hide spots, spawns, and cult AI routing all untouched.
+  A `_dig_pocket(sc, objs, tx, ty, facing, stage, seed)` helper (next to
+  `_flood`) stamps niche + `pit_prop` mouth + `spoil_heap` back + stage-scaled
+  claw/rubble in one call, so the pass is uniform and guard-testable.
+- **In-place pockets, NOT new scene keys** (the recommended fork): keeps the
+  gauntlet length + the test suite stable, avoids per-room
+  `DARK_SCENES`/`UNDERGROUND_SCENES`/`CULT_AMBIENT_SCENES`/spawn/flow wiring.
+  (Optionally deepen ONE branch room into a real explorable dead-end pocket.)
+- **New art (3 procedural pieces + flat fallbacks).** Each upright piece
+  needs a 3D solid in `rendering/props.py` (`SOLID_PROPS`) AND a flat
+  `_draw_<kind>` in `entities/decoration.py` (dispatch + standee-card + F3):
+  - `pit_prop` — mine gallery support (two timber posts + lintel beam,
+    lagging behind), built from `_vbox` like `town_sign`/`headstone`. THE
+    signature "mine" read.
+  - `spoil_heap` — dark cone of dug earth + broken rock; near-clone of
+    `_draw_grain_heap_solid` with an earth/rock palette.
+  - `cart_ruts` — flat floor decal only (no 3D), drawn like `_draw_claw_marks`.
+  - *(optional)* `mine_cart` box in `FURNITURE` — a tipped ore cart, only if
+    the ruts want an anchor.
+  - Reuse existing: `firewood` (stacked cut timber), `crate`/`barrel`
+    (stores), `claw_marks` scaled (the hand-clawed face — already at
+    `works_deepstair`), `wall_torch` (dig-face light).
+- **The degradation arc (upper worked → lower raw), by room:**
+  - `well_bottom` — the collapsed shoring already here rereads as a caved-in
+    gallery; add cart ruts from the landing to the east door (sets vocabulary).
+  - `well_passage` — stage 0: one shored pocket off the north bay, corridor
+    cart ruts (a *worked* tunnel).
+  - `works_vats` — stage 0→1: pockets into the four sealed corners, one
+    finished/timbered, one half-dug with a spoil heap; ruts stop at the water
+    (where the dig hit the river).
+  - `works_sorting` — stage 1: pockets off the sealed upper hall, crates +
+    spoil; the NE stem toward Mara reads dug but STOPS at her door.
+  - `works_scriptorium` — stage 1, light: one shored niche + arriving ruts;
+    the chalk-door compulsion stays the point.
+  - `works_sign` — EXEMPT (apse).
+  - `works_deepstair` — stage 2 CLIMAX: the north face goes hand-clawed
+    (scaled `claw_marks`, abandoned tools, shoved-aside spoil, a broken
+    `pit_prop`, guttering torches). CRITICAL: keep the gate interactable,
+    the approach lane, the two-press fuse, and the `depths_breached`
+    re-descend clear — dress the wall + flanks, never the interaction point.
+  - Branches: `the_cells` light spoil/ruts; `the_sump` one `pit_prop`, leave
+    powder + `cult_bargain` placement as-is; `the_ossuary` is Depths-side,
+    untouched.
+  - The existing testimony fragments (`cult_calling`/`cult_bargain`/
+    `cult_digging`) ARE the "few pockets with loot/testimony"; most new
+    pockets are pure labor made visible.
+- **Verification:** full gate (`python tests/run_all.py`; `render_smoke`
+  catches any unhandled `kind`); byte-identity (`tools/capture_world.py
+  --tag before/after --diff`, flat pitch-0 only perturbed where new decos
+  land); new flow guard §30 (each mined Works room carries ≥1
+  `pit_prop`/`spoil_heap`; `maras_room` + `works_sign` carry none; the
+  `works_deepstair` gate + exits unchanged); before/after preview PNGs of
+  `works_vats`/`works_sorting`/`works_deepstair` + a `tools/preview_*` for
+  the new solids. Almost no new player-facing text; any goes through the
+  deadpan/no-dash rule and stays `notes`/narration, never `evidence`.
+
 ### 22. Deadpan narration editing pass — OPEN
 
 Sweep every narrator/world caption against the settled voice: objective,
