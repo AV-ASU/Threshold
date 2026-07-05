@@ -164,6 +164,22 @@ it renders the procedural sprites to a labelled PNG strip.
     last-seen memory). The **King is exempt** (relentless apex); the player is
     never gated. All gating sits behind `_sight is not None` (set only when
     `_tilt_on()`), so **pitch 0 is byte-identical** (`tools/capture_world.py`).
+    The **see-through doors** feed this SAME gate into the room beyond: the
+    aperture actor pass (`portal._draw_aperture_actors`, driven by
+    `scene._door_actor_sight` = the frame's sight fn) culls a figure in the far
+    room by the player's cone, so an empty room shows through the opening but a
+    corner-lurker stays hidden (the rift is exempt — it shows all by design).
+    Preview: `tools/preview_door_sight.py`.
+  - **Ground heightfield (`rendering/heightfield.py`, CAMERA.md Phase 6 —
+    PROTOTYPE, dormant):** a per-scene ground height so terrain rolls and a
+    crest you can't see over occludes like a wall. `Scene.set_ground(grid)` /
+    `Scene.ground_z(x_px, y_px)` (0.0 when unopted → dead-flat, pitch-0
+    byte-identical); author with `build_heightfield(w, h, bumps)`. Feeds SIGHT
+    (an optional `ground=` crest term in `sight.los_clear` + `clear_sight_line`,
+    `SIGHT_EYE_H`) and DRAW (`draw_ground_mesh` lays a projected floor mesh over
+    the flat affine raster, tilt-only; actors lift by `ground_z`). Movement
+    stays 2D (height is a passive READ; AI ignores it in v1). No shipping scene
+    opts in yet. Preview: `tools/preview_heightfield.py`.
 - `systems/`
   - `save.py` — the run state + **ONE disk slot (2026-07)**. `Save.new()`
     builds from `DEFAULT_SAVE`; the ONLY writer of the slot is sleeping

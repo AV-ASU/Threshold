@@ -142,4 +142,20 @@ pass (NARRATIVE.md §11 "One phenomenon, two presentations"):
   ring point by point (a floor ellipse under tilt) — never a vertical
   cylinder, which pinches at the side tangents.
 
+- **See-through doors obey the blind spot (2026-07).** The mundane
+  see-through door (`portal.draw_through_aperture`, opted in per scene via
+  `Scene.seethrough_doors`) shows the ACTUAL room beyond through the
+  opening. Its terrain is a cached CCTV-style buffer, but the far room's
+  **actors are a per-frame pass** (`portal._draw_aperture_actors`) gated by
+  the player's own sight cone: a far actor is mapped to its apparent
+  host-world position (both cameras share pitch/yaw/scale, so a far actor at
+  `(ax, ay)` shows where the host camera would draw `door_world + (actor -
+  anchor)`) and culled by `scene._door_actor_sight` (the frame's sight fn,
+  set in `draw_world`). So an empty room reads through the door but a threat
+  in a corner the player isn't looking at stays hidden — the same
+  restricted-sight rule the open world obeys. This is the mundane door's
+  point of difference from the RIFT, which shows everything by design (the
+  King's violence has no blind spot). The figure is clipped to the opening
+  (you see only the framed slice). Preview: `tools/preview_door_sight.py`.
+
 Live proof sheet: `tools/preview_rift_anchored.py`.

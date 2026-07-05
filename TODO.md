@@ -43,21 +43,33 @@ item on the list: engine exists, canon is settled, payoff is the core fantasy.**
   saved or converted (they were answered, not deceived); Crane dies for
   believing he can. The provoke branch feeds the murder reveal below.
 
-### 2. **[Opus]** Portal-door actor sight-gating  *(load-bearing consistency fix; PORTALS.md)*
+### 2. **[Opus]** Portal-door actor sight-gating  *(DONE 2026-07 — see Verified done)*
 
-The see-through door (rendering + seamless crossing) landed this branch: the
-recess through-view (`portal.draw_through_aperture` + `Game._build_door_views` +
-`scenes/base._draw_doorway`), the per-scene `Scene.seethrough_doors` opt-in
-(house's two interior doors), and `begin_transition(seamless=...)` routing.
-**The one open piece is a correctness issue, not polish:** the through-view is
-NOT gated by `sight.py`, so a threat standing in the next room shows through the
-door — which breaks the restricted-sight thesis the whole game rests on (unlike
-the rift, which shows everything by design). Gate the aperture's ACTORS through
-the sight cone so the empty room shows but the corner-lurker does not. *(The
-softer half — opting in higher-contrast doors, e.g. a lit room off a dark hall
-or the front door onto the yard — is real polish; see Optional polish.)*
+**DONE.** The see-through aperture now draws the far room's ACTORS as a
+per-frame pass (`portal._draw_aperture_actors`) gated by the player's own sight
+cone, so an empty room reads through the door but a corner-lurker the player
+isn't looking at stays hidden. (Investigation found the through-view drew NO
+actors at all before, so this both ADDED the far-room actors and gated them.)
+Byte-identical at pitch 0; guarded by `tests/render_smoke.py` [4/4]; preview
+`tools/preview_door_sight.py`. *(The softer half — opting in higher-contrast
+doors — remains real polish; see Optional polish.)*
 
-### 3. **[Opus]** Ground heightfield — blind-spot hills  *(CAMERA.md Phase 6; recommended verticality first build)*
+### 3. **[Opus]** Ground heightfield — blind-spot hills  *(CAMERA.md Phase 6; PROTOTYPE landed 2026-07 — floor-roll rewrite + live authoring deferred)*
+
+**PROTOTYPE DONE (behind a preview, dormant).** Built: `Scene.set_ground` /
+`Scene.ground_z` (bilinear, 0.0 unopted → dead-flat + pitch-0 byte-identical),
+the `_flood`-style `rendering/heightfield.build_heightfield`, the CREST
+sight-occlusion (an optional `ground=` term in `sight.los_clear` /
+`visible_factor` + `Scene.clear_sight_line`, `SIGHT_EYE_H`) feeding BOTH the
+draw gate and the cult AI, `draw_ground_mesh` (a projected floor mesh over the
+flat raster, tilt-only) + actor lift by `ground_z`. Movement stays 2D; height is
+a passive READ (AI ignores it in v1). Preview `tools/preview_heightfield.py`;
+guard `tests/render_smoke.py` [4/4]. **Key finding:** the tilt floor is ONE
+affine warp (`_tilt_warp`), not per-tile — so no shipping scene opts in yet, and
+two pieces are **deferred**: (a) rolling the whole floor RASTER (needs a
+mesh/displaced warp replacing the global affine `_tilt_warp` + a perf pass on
+the ~6000-tile bake), and (b) authoring a live Brimley hill + lifting every live
+actor project site (safe/dormant until then). *(Original brief kept below.)*
 
 The camera already carries a real height axis (`Camera.project(wx, wy, wz)`,
 `z` rises by `sin(pitch)`); the *simulation* is flat XY. Add a per-scene
@@ -249,6 +261,20 @@ Fable is doing the implementing, an Opus pass reviews it the same way.
 
 ### 2026-07 build sweep (this branch; each flow/stealth-guarded)
 
+- **Portal-door actor sight-gating (was Open #2)** — the see-through aperture
+  drew NO far-room actors before; now it draws them as a per-frame pass
+  (`portal._draw_aperture_actors`) gated by the player's sight cone (mapping
+  each far actor to its apparent host-world pos, since both cameras share
+  pitch/yaw/scale) and clipped to the opening. Empty room shows through, a
+  blind-spot lurker does not; the rift stays exempt. Byte-identical at pitch 0;
+  guarded by `tests/render_smoke.py` [4/4]; preview `tools/preview_door_sight.py`.
+- **Ground heightfield PROTOTYPE (Open #3, partial)** — `Scene.ground_z` +
+  `build_heightfield` + the crest sight-occlusion (`sight` `ground=` term, in
+  both the draw gate and the cult AI) + `draw_ground_mesh` + actor lift, all
+  dormant (no scene opts in) so pitch 0 stays byte-identical. Preview
+  `tools/preview_heightfield.py`; guarded by `tests/render_smoke.py` [4/4]. The
+  floor-raster roll (replacing the affine `_tilt_warp`) + live authoring stay
+  deferred (see Open #3).
 - **#0 Stealth rework, mechanic + placement** — graded per-enemy suspicion
   (`systems/stealth.py`, `SUS_*` config), two cover classes, searchers that
   sweep + CHECK enclosed hides, the timed struggle, the "?" tell, and an
