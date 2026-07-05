@@ -12,9 +12,13 @@
 
 ---
 
+> **Model tags** (2026-07): each ticket is marked **[Opus]** (systems
+> reasoning, geometry, rendering, correctness) or **[Fable]** (prose, voice,
+> atmosphere). A few straddle and say so. Routing hint, not a rule.
+
 ## Open work
 
-### 12. Investigation dialogue verb — the ask-questions layer  *(breakthrough; NOT low-difficulty)*
+### 12. **[Fable]** Investigation dialogue verb — the ask-questions layer  *(breakthrough; NOT low-difficulty)*
 
 You play a PI, but the only social verb is press-E-to-advance scripted lines:
 every NPC conversation is a linear counter (`old_count`, `kid_count` ...). The
@@ -31,7 +35,7 @@ the investigation). Content + design, not engine work.
   saved or converted (they were answered, not deceived); Crane dies for
   believing he can. The provoke branch feeds the murder reveal below.
 
-### 0. Stealth rework — the TUNING loop  *(needs a human at the keys)*
+### 0. **[Opus]** Stealth rework — the TUNING loop  *(needs a human at the keys)*
 
 The mechanic AND the placement pass are built and guarded
 (`tests/stealth.py` + flow §25; see `STEALTH_REWORK.md` for the design
@@ -42,7 +46,7 @@ deferred to this pass on purpose: the Pillar-2 **peek** verb (free look
 under tilt already carries the information function) and an
 exit-takes-a-beat vulnerability window on enclosed hides.
 
-### 11. Combat / difficulty — judgment calls (decide on purpose)
+### 11. **[Opus]** Combat / difficulty — judgment calls (decide on purpose)
 
 Not bugs; deliberate choices worth confirming rather than leaving by default:
 the gun goes **stun-only at 3 evidence** with ~14 rounds total per run, so the
@@ -53,13 +57,13 @@ resources (armor slots return 0). Consider: transforming the stun into a
 tactical window rather than a tax, an easy/hard toggle, or light resource
 tension — only if it serves the horror, not despite it.
 
-### 4. The liminal-composition pass  *(NARRATIVE.md §8/§10)*
+### 4. **[Fable]** The liminal-composition pass  *(NARRATIVE.md §8/§10)*
 
 Per-scene level-design polish: composed emptiness, long sightlines, uncanny
 repetition. Inherently ongoing/iterative rather than a single shippable
 ticket — scope a concrete first scene before starting.
 
-### 12. Brimley reshape — the sealed fog-island  *(design landed; not built)*
+### 12. **[Opus]** Brimley reshape — the sealed fog-island  *(design landed; not built)*
 
 Shrink Brimley and make it read as a bounded town swallowed by the fold,
 not a rectangle with edges. **Stays ONE scene** (`scenes/brimley.py`
@@ -118,7 +122,7 @@ town, not "island" (implies water). **Verify:** `tools/profile_brimley.py`
 before/after, a `tools/capture_world.py` tilt capture, full
 `python tests/run_all.py` gate.
 
-### 13. Verticality — an "up" axis  *(CAMERA.md Phase 6, design spike)*
+### 13. **[Opus]** Verticality — an "up" axis  *(CAMERA.md Phase 6, design spike)*
 
 The camera already carries a real height axis (`Camera.project(wx, wy, wz)`,
 `z` rises by `sin(pitch)`); the *simulation* is flat XY (player has no z,
@@ -148,7 +152,7 @@ collision + sight are 2D). Split by cost, cheapest first:
   rule, and the payoff (spatial spectacle) partly fights a game whose power is
   restricted sight. Revisit only if a specific set-piece demands it.
 
-### 14. See-through portal-doors  *(PORTALS.md; rendering + seamless crossing landed)*
+### 14. **[Opus]** See-through portal-doors  *(PORTALS.md; rendering + seamless crossing landed)*
 
 Doors stop being a fade-to-black: the aperture shows the ACTUAL room beyond,
 rendered through the live tilt camera, with the hinged leaf physically
@@ -166,7 +170,7 @@ dark hall, the front door onto the yard) where the effect reads strongest.
 
 ## Optional polish (no canon/lore change; do as time allows)
 
-- **Rev. Asa Crane murder reveal + sprite** *(GAME_CHANGES.md §12)* — punch up
+- **[Fable + Opus]** **Rev. Asa Crane murder reveal + sprite** *(GAME_CHANGES.md §12)* — Fable for the reveal writing + staging, Opus for the procedural corpse sprite. Punch up
   the `preacher_doomed` death, three parts. (1) **New discovery location**: the
   provoke choice (§12 pilot) sends him to the cult's ground, so find his body
   AWAY from the church — e.g. the well/grove edge, reaching for the souls he
@@ -176,17 +180,36 @@ dark hall, the front door onto the yard) where the effect reads strongest.
   draw (dark palette, white collar, cross in the mess). (3) Stage the approach
   (wrongness before sight, long sightline). Art + placement + a location move;
   lore unchanged.
-- **Doc/code drift (quick)** — `README.md` says "no disk save" but the cot
+- **[Opus]** **Doc/code drift (quick)** — `README.md` says "no disk save" but the cot
   save-slot exists (`systems/save.py`); `CAMERA.md` lists the sight cone as
   62°/280/30 but `sight.py` ships 74°/360/40. Fix the docs to match code.
-- **Held-weapon offset eyeball pass** *(HANDCRAFT_BACKLOG.md §3b)* — the
+- **[Opus]** **Held-weapon offset eyeball pass** *(HANDCRAFT_BACKLOG.md §3b)* — the
   `draw_axe_held` / `draw_revolver_held` code is in and working; this is just
   a visual check of the held-weapon offset at every camera yaw.
-- **Permanently-visible King through an OPEN fold** *(KING_PROMPT.md portal
+- **[Opus]** **Permanently-visible King through an OPEN fold** *(KING_PROMPT.md portal
   pass)* — the King currently looms through the rift only while it *forms*,
   then steps through (intentional per `PORTALS.md`). A persistent silhouette
   on the far side of an already-open fold is not built; revisit only if the
   direction changes.
+
+### R. **[Fable]** Cross-model review gate  *(process; new)*
+
+After an **[Opus]** ticket lands, run a **Fable** review pass before it
+merges. This is NOT a code-correctness re-audit (use `/code-review` or a
+fresh Opus context for that, since a model self-reviewing its own diff is the
+weakest check). Fable judges what it is strongest at for THIS game: **does the
+change land the feeling and hold canon.** For a given diff + the running
+build it answers:
+- Does it read as dread, or as a mechanic showing through? (atmosphere,
+  pacing, the tell)
+- Does any player-facing string break the no-dashes rule or the
+  `NARRATIVE.md` voice?
+- Does it contradict a locked canon fact (`NARRATIVE.md` / `GAME_CHANGES.md`)?
+- What is the cheapest change that would make it land harder?
+
+Output is a short verdict + ranked notes, not a rewrite. The value is a
+SECOND, independent model looking at the work, so the direction can flip: if
+Fable is doing the implementing, an Opus pass reviews it the same way.
 
 ---
 
