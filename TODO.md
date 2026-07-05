@@ -118,6 +118,50 @@ town, not "island" (implies water). **Verify:** `tools/profile_brimley.py`
 before/after, a `tools/capture_world.py` tilt capture, full
 `python tests/run_all.py` gate.
 
+### 13. Verticality — an "up" axis  *(CAMERA.md Phase 6, design spike)*
+
+The camera already carries a real height axis (`Camera.project(wx, wy, wz)`,
+`z` rises by `sin(pitch)`); the *simulation* is flat XY (player has no z,
+collision + sight are 2D). Split by cost, cheapest first:
+
+- **12a. Ground heightfield (blind-spot hills) — the recommended first
+  build.** A per-scene `ground_z(tx, ty)` sample, authored like the `_flood`
+  water helper. It feeds ONLY two places: the `wz` passed when projecting the
+  floor + any standee/actor on it (so ground rolls), and `blocks_sight` (a
+  crest higher than the player's eye occludes what's beyond it). Movement
+  stays 2D; `player.z` is a passive READ of the terrain under the feet, used
+  for draw + sight only — no jump, no gravity, no new collision. Lands
+  directly on the shipped blind-spot vision (`sight.py`): a hill you can't see
+  over is the same dread primitive as a wall. **Constraints:** strict no-op at
+  pitch 0 (byte-identity gate, `tools/capture_world.py`), and AI/pathing
+  ignores height in v1 (cosmetic + sight-only), or it jumps to the expensive
+  column. Prototype on one Brimley scene behind a preview before wiring.
+- **12b. Multi-floor buildings as FOLDS, not real z.** "Walk up the stairs,
+  the next floor becomes visible" done cheaply: a staircase is a same-building
+  `cross_fold` to a `lodge_upstairs`-style scene (no fade, stride preserved).
+  The "rooms appear as you move" reveal is already free from the live systems
+  (`occlusion.py` per-actor wall fade + blind-spot sight gating). Compose
+  shipped tools; do NOT build a continuous floor system.
+- **12c. Fully continuous traversable z (real ramps, actors at arbitrary
+  heights, whole-interior visible at once) — DEFERRED indefinitely.** Big
+  collision/AI/depth-sort/save lift, strains the "no roof over the play area"
+  rule, and the payoff (spatial spectacle) partly fights a game whose power is
+  restricted sight. Revisit only if a specific set-piece demands it.
+
+### 14. See-through portal-doors  *(PORTALS.md; rendering + seamless crossing landed)*
+
+Doors stop being a fade-to-black: the aperture shows the ACTUAL room beyond,
+rendered through the live tilt camera, with the hinged leaf physically
+swinging to reveal it, and an opted-in door crosses the sill via the seamless
+`cross_fold` (no fade). Landed this branch: the recess through-view
+(`portal.draw_through_aperture` + `Game._build_door_views` +
+`scenes/base._draw_doorway`), the per-scene `Scene.seethrough_doors` opt-in
+(house's two interior doors), and the `begin_transition(seamless=...)` routing.
+**Still open:** gating the through-view's ACTORS through `sight.py` so the empty
+room shows but a threat in its corner does not (unlike the rift, which shows
+everything by design), and opting in higher-contrast doors (a lit room off a
+dark hall, the front door onto the yard) where the effect reads strongest.
+
 ---
 
 ## Optional polish (no canon/lore change; do as time allows)

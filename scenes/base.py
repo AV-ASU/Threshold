@@ -2732,9 +2732,24 @@ def _draw_doorway(surf, camera, scene, tx, ty):
         # u: along the wall axis [-hw, hw]; z: height; off: depth into room (-)
         return camera.project(wx + wv[0] * u + r[0] * off,
                               wy + wv[1] * u + r[1] * off, z)
-    # 1. dark recess, set slightly INTO the wall (off +)
+    # 1. the recess (set slightly INTO the wall, off +): normally a flat dark
+    # doorway, but for an opted-in SEE-THROUGH door it shows the ACTUAL room
+    # beyond, rendered through this same tilt camera and masked to the recess
+    # (rendering.portal.draw_through_aperture). The frame + leaf draw on top.
     rec = [Q(-hw + 1, 0, 3), Q(hw - 1, 0, 3), Q(hw - 1, head, 3), Q(-hw + 1, head, 3)]
-    pygame.draw.polygon(surf, (7, 6, 9), rec)
+    views = getattr(scene, "_door_views", None)
+    view = views.get((wtx, wty)) if (views and not solid) else None
+    if view is not None:
+        try:
+            from rendering.portal import draw_through_aperture
+            draw_through_aperture(surf, view["target"], view["anchor_px"], rec,
+                                  camera, 0.0,
+                                  cache_key=("door", id(scene), wtx, wty),
+                                  desaturate=False)
+        except Exception:
+            pygame.draw.polygon(surf, (7, 6, 9), rec)
+    else:
+        pygame.draw.polygon(surf, (7, 6, 9), rec)
     # 2. wood frame on the room face (off -), a "n" around the opening
     tw, th, off = 4.0, 3.0, -1.0
 
@@ -3892,6 +3907,13 @@ class Scene:
         # If a char is in this dict, find_exit_at only fires the exit
         # when the player's facing matches that compass direction.
         self.exit_directions = {}
+        # SEE-THROUGH DOORS (opt-in): a set of door exit chars whose recess
+        # shows the ACTUAL room beyond (rendered through the tilt camera) rather
+        # than the flat dark doorway. None/empty = every door keeps the legacy
+        # dark recess (byte-identical). Game._build_door_views resolves these to
+        # built target scenes each load and stashes the result in _door_views.
+        self.seethrough_doors = None
+        self._door_views = {}
         self.spawns = {"default": (self.w * 16, self.h * 16)}
         self.npcs = []
         self.decorations = []
