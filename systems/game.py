@@ -806,6 +806,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         self.float_speech.speaker = None
         self.narration.clear()
         self._build_fold_cache()
+        self._build_door_views()
         # Fold pursuit hand-off: if the player fled here through a fold with
         # a hot cultist (stashed by _note_fold_pursuit), arm the beat-behind
         # spawn at the entry seam. Consume-once; the refuge is never breached.

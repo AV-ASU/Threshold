@@ -407,6 +407,46 @@ class ThreatMixin:
                 "char": ch,
             })
 
+    def _build_door_views(self):
+        """After a scene load, resolve every opted-in SEE-THROUGH door
+        (Scene.seethrough_doors, a set of door exit chars) to its built target
+        scene + arrival anchor, so scenes.base._draw_doorway can render the room
+        beyond through the recess instead of the flat dark doorway. Mirrors
+        _build_fold_cache; target scenes are built once per key. A no-op (and
+        byte-identical) when the scene opts nothing in."""
+        scene = self.scene
+        if scene is None:
+            return
+        scene._door_views = {}
+        chars = scene.seethrough_doors
+        if not chars:
+            return
+        from scenes import load_scene
+        from scenes.base import _DOOR_CHARS
+        cache = {}
+        for ty, row in enumerate(scene.objects):
+            for tx, ch in enumerate(row):
+                if ch not in chars or ch not in _DOOR_CHARS:
+                    continue
+                exit_data = scene.exits.get(ch)
+                if not exit_data:
+                    continue
+                target_key, spawn_id = exit_data
+                if target_key == scene.key:
+                    continue                       # a same-scene fold, not a door
+                if target_key not in cache:
+                    try:
+                        cache[target_key] = load_scene(target_key)
+                    except Exception:
+                        continue
+                target = cache[target_key]
+                spawn = (target.spawns.get(spawn_id)
+                         or target.spawns.get("default"))
+                anchor = spawn if spawn else (target.w * TILE // 2,
+                                              target.h * TILE // 2)
+                scene._door_views[(tx, ty)] = {"target": target,
+                                               "anchor_px": anchor}
+
     def _exit_is_fold(self, exit_data):
         """True if taking this exit is a FOLD or a seamless world-passage --
         the world's wrongness (a direction-gated fold) or its open ground (an

@@ -90,8 +90,20 @@ def _render_through_full(target, anchor_px, camera, door_origin, loom, t):
     return buf
 
 
+def _liminal_desaturate(full):
+    """Crush a through-view toward gray IN PLACE -- the 'space between' look the
+    rifts wear. Mundane see-through doors skip this (they open onto a real room,
+    which keeps its colour)."""
+    arr = pygame.surfarray.pixels3d(full)
+    gray = (arr[..., 0] * 0.30 + arr[..., 1] * 0.59 + arr[..., 2] * 0.11)
+    for c in range(3):
+        arr[..., c] = np.clip(arr[..., c] * 0.55 + gray * 0.30,
+                              0, 255).astype(arr.dtype)
+    del arr
+
+
 def _render_through(target, anchor_px, camera, rect, door_origin,
-                    loom=0.0, t=0.0, cache_key=None):
+                    loom=0.0, t=0.0, cache_key=None, desaturate=True):
     """Return a `rect`-sized Surface showing `target` through the rift, with the
     same tilt camera as the host. CACHED per `cache_key` (id of the fold/portal)
     and BUILT ONCE -- the destination room's orientation is frozen at
@@ -107,6 +119,8 @@ def _render_through(target, anchor_px, camera, rect, door_origin,
 
     `loom` (0..1) draws the King at the anchor -- him looming through the rift
     while it forms, before he comes (canon: you see him on the far side first).
+    `desaturate` gray-crushes the view (the rift's liminal look); a mundane door
+    passes False to keep the far room's colour.
     """
     pitch_b = round(camera.pitch, 3)
     scale_b = round(camera.scale, 3)
@@ -122,12 +136,8 @@ def _render_through(target, anchor_px, camera, rect, door_origin,
     if refresh:
         full = _render_through_full(target, anchor_px, camera, door_origin,
                                     loom, t)
-        arr = pygame.surfarray.pixels3d(full)
-        gray = (arr[..., 0] * 0.30 + arr[..., 1] * 0.59 + arr[..., 2] * 0.11)
-        for c in range(3):
-            arr[..., c] = np.clip(arr[..., c] * 0.55 + gray * 0.30,
-                                  0, 255).astype(arr.dtype)
-        del arr
+        if desaturate:
+            _liminal_desaturate(full)
         entry = {"buf": full,
                  "pitch": pitch_b, "scale": scale_b,
                  "origin": (int(door_origin[0]), int(door_origin[1])),
@@ -147,16 +157,45 @@ def _render_through(target, anchor_px, camera, rect, door_origin,
         # too far since the build. Force a fresh build (full-screen render).
         full = _render_through_full(target, anchor_px, camera, door_origin,
                                     loom, t)
-        arr = pygame.surfarray.pixels3d(full)
-        gray = (arr[..., 0] * 0.30 + arr[..., 1] * 0.59 + arr[..., 2] * 0.11)
-        for c in range(3):
-            arr[..., c] = np.clip(arr[..., c] * 0.55 + gray * 0.30,
-                                  0, 255).astype(arr.dtype)
-        del arr
+        if desaturate:
+            _liminal_desaturate(full)
         entry["buf"] = full
         entry["origin"] = (int(door_origin[0]), int(door_origin[1]))
         src_rect = rect
     return entry["buf"].subsurface(src_rect).copy()
+
+
+def draw_through_aperture(surf, target, anchor_px, quad, camera, t,
+                          cache_key, desaturate=False, dim=0.82):
+    """Fill an arbitrary screen POLYGON (`quad`, a list of screen points) with
+    the live through-view of `target`, aimed so `anchor_px` (a world point in
+    target) sits at the polygon's centre. The mundane-door counterpart to
+    draw_rift_door's masked window: no gold rim, colour kept (desaturate=False),
+    a slight `dim` so a room seen through a threshold reads a touch darker than
+    the one you stand in. The caller draws its own frame/leaf on top."""
+    xs = [p[0] for p in quad]
+    ys = [p[1] for p in quad]
+    left, top = int(min(xs)), int(min(ys))
+    rect = pygame.Rect(left, top, int(max(xs)) - left + 1,
+                       int(max(ys)) - top + 1).clip(surf.get_rect())
+    if rect.width <= 2 or rect.height <= 2:
+        return
+    cx, cy = sum(xs) / len(xs), sum(ys) / len(ys)
+    try:
+        win = _render_through(target, anchor_px, camera, rect, (cx, cy),
+                              loom=0.0, t=t, cache_key=cache_key,
+                              desaturate=desaturate).convert_alpha()
+    except Exception:
+        pygame.draw.polygon(surf, (7, 6, 9), quad)
+        return
+    mask = pygame.Surface(rect.size, pygame.SRCALPHA)
+    pygame.draw.polygon(mask, (255, 255, 255, 255),
+                        [(qx - rect.left, qy - rect.top) for qx, qy in quad])
+    win.blit(mask, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
+    if dim < 0.99:
+        d = int(dim * 255)
+        win.fill((d, d, d, 255), special_flags=pygame.BLEND_RGBA_MULT)
+    surf.blit(win, rect.topleft)
 
 
 def _aperture_mask(quad):

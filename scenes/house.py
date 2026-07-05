@@ -346,6 +346,10 @@ def build_house():
     sc.add_exit("D", "our_house_area", "from_house")
     # L = cellar hatch in the kitchen.
     sc.add_exit("L", "basement", "from_house")
+    # SEE-THROUGH DOORS: the two interior room doors show the actual room
+    # beyond through the tilt camera instead of a flat dark recess
+    # (rendering.portal.draw_through_aperture, wired via Game._build_door_views).
+    sc.seethrough_doors = {"B", "1"}
     sc.set_spawn("default", 9, 9)
     # The B door (spare-room) is at col 13 of the north wall.
     # The 1 door (Clerk's bedroom) is at col 4. They were both
