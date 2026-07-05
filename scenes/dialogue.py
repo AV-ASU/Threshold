@@ -57,7 +57,12 @@ def _evidence(game, name, content, weight=None, show=True):
     # for readable items whose text lives in the kit, so picking one up doesn't
     # hijack the moment to read it at you.
     if show:
-        game.dialog.show(lines,
+        # A discovery can point the PI back at someone he's met; those
+        # interior lines ride the SAME narration so it reads as one beat
+        # (and files their case notes). Defined after this fn; safe at
+        # call time.
+        extra = _collect_revisit(game, name)
+        game.dialog.show(lines + extra,
                          speaker="", voice="blip_soft",
                          portrait="narrator")
 
@@ -84,44 +89,62 @@ def _cult_tell(game, npc_key):
     return
 
 
-def open_ask_menu(game, npc, speaker, voice, portrait, topics,
-                  prompt="You could put a question to them. What do you ask?"):
-    """The PI's investigation verb: a modal menu of topics to ASK about,
-    whose chosen answer FLOATS above the speaker's head (ui/float_speech).
+def _log_note(game, key, lines):
+    """File a PI case NOTE once, keyed by name. NOTES are the interior
+    voice, shown in the notebook after the clues; they must NEVER go in
+    `evidence` (that count drives the King-gate and the visibility floor)."""
+    notes = game.save.arg("notes", [])
+    if isinstance(notes, list) and not any(
+            isinstance(e, dict) and e.get("name") == key for e in notes):
+        notes.append({"name": key, "lines": list(lines)})
+        game.save.set_arg("notes", notes)
 
-    The player's pick needs the cursor, so the menu is modal (the one
-    place `show_choice` fits gameplay). The NPC's answer is speech, so it
-    routes through the floating caption instead of the frozen band, which
-    keeps the world running while they talk. Press E again by the speaker
-    to reopen the menu and ask something else.
 
-    `topics` is a list of (label, answer) where `answer` is either a list
-    of raw markup pages or a resolver(game) -> pages -- resolvers gate the
-    reply on evidence found / who is asking. A trailing back-out option is
-    appended automatically. Reusable; currently wired on Mr. Sable as the
-    pilot for the ask-questions layer (TODO #1)."""
-    labels = [t[0] for t in topics] + ["Say nothing."]
+# The investigation grows: when the PI makes a DISCOVERY, some of what he
+# learns points back at someone he has already met (she left smiling; the
+# clerk saw her every day; go ask him). Each nudge fires ONCE, only if the
+# NPC has been met, and it (a) files a case note and (b) appends the PI's
+# interior line onto the discovery's own narration so it reads as one beat
+# ("...I should go back and ask him"). The matching follow-up QUESTION is
+# gated on the same evidence in that NPC's conversation, so even if the
+# nudge is missed (met the NPC after the find) the question still opens.
+_REVISIT_NUDGES = {
+    "the_ledger": [{
+        "key": "revisit_sable_checkouts",
+        "met": "sable_greeted",
+        "lines": [
+            "[c=dim]The register never shows a checkout. Not one, in years "
+            "of guests.",
+            "The clerk keeps that desk like it owes him something. I should "
+            "put it to him straight.[/c]",
+        ],
+    }],
+    "maras_journal": [{
+        "key": "revisit_sable_smile",
+        "met": "sable_greeted",
+        "lines": [
+            "[c=dim]She wrote like someone already halfway through a door.",
+            "The clerk saw her every day she stayed here. He would know the "
+            "day she stopped writing. Worth going back for.[/c]",
+        ],
+    }],
+}
 
-    def _pick(idx):
-        if idx >= len(topics):
-            return                       # backed out; ask again anytime
-        answer = topics[idx][1]
-        pages = answer(game) if callable(answer) else list(answer)
-        if not pages:
-            return
-        # Float the reply over the speaker. show() reads game._speaking_npc
-        # to route a named line to the floating caption; the interact path
-        # already cleared it, so set it around this one call and restore.
-        prev = getattr(game, "_speaking_npc", None)
-        game._speaking_npc = npc
-        try:
-            game.dialog.show(pages, speaker=speaker, voice=voice,
-                             portrait=portrait)
-        finally:
-            game._speaking_npc = prev
 
-    game.dialog.show_choice(prompt, labels, _pick,
-                            speaker="", voice="blip_soft", portrait="narrator")
+def _collect_revisit(game, name):
+    """For a just-fired discovery `name`, file any met-gated revisit notes
+    and return their interior-voice lines to append to the discovery's
+    narration."""
+    out = []
+    for n in _REVISIT_NUDGES.get(name, []):
+        if not game.save.flag(n["met"]):
+            continue
+        if game.save.flag("nudged_" + n["key"]):
+            continue
+        game.save.set_flag("nudged_" + n["key"], True)
+        _log_note(game, n["key"], n["lines"])
+        out.extend(n["lines"])
+    return out
 
 
 # ---- The Preacher: Reverend Asa Crane ----
@@ -435,74 +458,119 @@ def sheriff_dialogue(game, npc):
 
 
 # ---- The Clerk: Mr. Sable ----
-# The ask-questions verb, piloted on Sable (TODO #1). Each topic answers
-# in his voice -- hospitality with a funereal undertow, certainties he
-# voices as courtesies (compulsion, never a confessed scheme). The colder
-# tier keys on the EVIDENCE COUNT: the more the PI knows, the less Sable
-# bothers to keep the pleasant surface up, but he never admits a plot.
+# The organic ask-verb, piloted on Sable (TODO #1). The menu options ARE
+# the PI's own spoken lines; picking one plays a back-and-forth where he
+# and Sable each speak in turn, floating over their heads. Sable's voice
+# holds: hospitality with a funereal undertow, certainties voiced as
+# courtesies (compulsion, never a confessed scheme). New questions open as
+# the case grows -- the ledger and the journal each unlock a follow-up he
+# was not ready to be asked before. Engine: ui/conversation.Conversation.
 
-def _sable_girl(game):
-    if game._evidence_count() >= 2:
-        return [
-            "Miss Blaine. She stopped asking, toward the end.",
-            "That is when a guest is happiest, I find. You will get "
-            "there yourself. No hurry.",
-        ]
-    return [
-        "Miss Blaine. A lovely guest. Full of questions, the way you are.",
-        "She settled in. They all settle in, given a night or two.",
-    ]
+def _sable_showed_photo(game):
+    game.save.set_flag("sable_saw_photo", True)
+    _log_note(game, "showed_the_clerk", [
+        "I put her face on his desk. He knew it at once, and something in "
+        "the house seemed to lean in to look.",
+        "I don't know why I did it. I don't know why it felt like a mistake.",
+    ])
 
 
-def _sable_well(game):
-    if game._evidence_count() >= 2:
-        return [
-            "The guests take an interest in it, sooner or later. You "
-            "will too.",
-            "They go down for their look. They do not trouble to climb "
-            "back up. Restful, I expect.",
-        ]
-    return [
-        "The old well in the square? Set dressing, mostly. Nobody draws "
-        "from it now.",
-        "I would not lean over it. Poor footing, and a long way down.",
-    ]
-
-
-def _sable_guests(game):
-    if game._evidence_count() >= 2:
-        return [
-            "All checked in. Not a one checked out.",
-            "And yet the halls stay so quiet. No matter. They will not "
-            "have left. Nobody leaves.",
-        ]
-    return [
-        "Every room above is spoken for. Has been a good while now.",
-        "You will not hear them. They keep to themselves. The register "
-        "is right there on the desk, if you are the curious sort.",
-    ]
-
-
-def _sable_preacher(game):
-    if game.save.flag("preacher_doomed") or game._evidence_count() >= 2:
-        return [
-            "The Reverend took to naming names from his own pulpit. That "
-            "is not neighborly.",
-            "The town does not care for noise. It settles such things, "
-            "in its own time.",
-        ]
-    return [
-        "Reverend Crane? He rings his bell and shouts at the corn.",
-        "A loud man. Loud men tire themselves out, given long enough.",
-    ]
-
-
-_SABLE_TOPICS = [
-    ("The Blaine girl.",        _sable_girl),
-    ("The well in the square.", _sable_well),
-    ("The other guests.",       _sable_guests),
-    ("The Reverend.",           _sable_preacher),
-]
+SABLE_CONVO = {
+    "id":    "sable",
+    "name":  "Mr. Sable",
+    "voice": "blip_low",
+    "pi_voice": "blip_soft",
+    "prompt": "Sable folds his hands on the register and waits.",
+    "leave":  "That's all for now.",
+    "greet": {
+        "flag": "sable_greeted",
+        "beats": [
+            ("npc", "Sable. I keep the desk here. Anything you need, you "
+                    "ask me. Anything at all."),
+        ],
+    },
+    "exchanges": [
+        {
+            "key": "mara",
+            "q": "I'm looking for a woman. Mara Blaine. She'd have come "
+                 "through here.",
+            "beats": [
+                ("npc", "Miss Blaine. Of course. A lovely guest, full of "
+                        "questions. The way you are."),
+                ("npc", "You have the look of a man sent to fetch someone "
+                        "home. Family, is it?"),
+                ("pi", "Hired. I find people who would rather stay lost."),
+                ("npc", "Then we are nearly in the same trade. I keep them "
+                        "comfortable, so they stop wanting to be found."),
+                ("npc", "You will have a picture of her, I expect. Your "
+                        "sort always does."),
+                ("ask", "Show him her photograph?", [
+                    ("Slide the photo across the desk.", [
+                        ("pi", "(You lay her photo on the register.)"),
+                        ("npc", "Ah. That is her. She sat right where you "
+                                "are standing. Smiling, by the end."),
+                        ("npc", "I will know her now, wherever she has got "
+                                "to. So will the house."),
+                    ], _sable_showed_photo),
+                    ("Keep it in your coat.", [
+                        ("pi", "(You leave it where it is.)"),
+                        ("npc", "No matter. I remember every guest. She has "
+                                "not left. None of them have."),
+                    ], None),
+                ]),
+            ],
+        },
+        {
+            "key": "guests",
+            "q": "The lodge is full, you keep saying. Where is everyone? I "
+                 "never hear a soul upstairs.",
+            "beats": [
+                ("npc", "Every room above is spoken for. Has been a good "
+                        "while now."),
+                ("npc", "They keep to themselves. The register is right "
+                        "there on the desk, if you are the curious sort."),
+            ],
+        },
+        {
+            "key": "car",
+            "q": "My car won't start. I'm told no car in this town will.",
+            "beats": [
+                ("npc", "The roads are not going anywhere tonight. Neither "
+                        "are you. I would not fret over the car."),
+                ("pi", "That isn't an answer."),
+                ("npc", "It is the only one I have, and I have never needed "
+                        "another. Get some rest."),
+            ],
+        },
+        # Unlocked by reading the cellar Ledger (evidence the_ledger); the
+        # discovery nudges the PI back here (see _REVISIT_NUDGES).
+        {
+            "key": "checkouts",
+            "q": "I read your register. Every guest signs in. Not one ever "
+                 "signs out.",
+            "avail": lambda g: g.save.flag("evidence_the_ledger"),
+            "beats": [
+                ("npc", "All checked in. Not a one checked out. And yet the "
+                        "halls stay so quiet."),
+                ("npc", "No matter. They will not have left. Nobody leaves. "
+                        "It is the one thing I can promise a guest."),
+            ],
+        },
+        # Unlocked by reading Mara's journal (evidence maras_journal).
+        {
+            "key": "her_state",
+            "q": "Her journal reads like someone already halfway out a "
+                 "door. When did she change?",
+            "avail": lambda g: g.save.flag("evidence_maras_journal"),
+            "beats": [
+                ("npc", "She stopped asking her questions, toward the end. "
+                        "That is when a guest is happiest, I find."),
+                ("npc", "You will get there yourself. There is no hurry at "
+                        "all."),
+            ],
+        },
+    ],
+}
 
 
 def clerk_dialogue(game, npc):
@@ -562,47 +630,12 @@ def clerk_dialogue(game, npc):
                 "flyer. The school first, it says. Where they slept.",
             ]})
         return
-    count = save.arg("clerk_count", 0) + 1
-    save.set_arg("clerk_count", count)
-    if count == 1:
-        plain = [
-            "Sable. I keep the desk here. Anything you need, you ask me. "
-            "Anything at all.",
-            "Can't account for the gloom that's settled on the town of late. "
-            "Myself, I have never felt more content. Not in all my years "
-            "behind this desk.",
-            "The lodge has never been fuller, you know. Every room spoken for, "
-            "going back a good while now.",
-            "[c=dim]He doesn't ask what brought you. He just smiles, like "
-            "he's glad you'll be staying.[/c]",
-            "The roads aren't going anywhere tonight. Neither are you. Get "
-            "some rest.",
-        ]
-        game.dialog.show(escalate(game, low=plain, mid=plain, high=plain),
-                         speaker="Mr. Sable", voice="blip_low",
-                         portrait="clerk")
-        return
-    if count == 2:
-        game.dialog.show([
-            "Sleep all right? People do here, better than they expect.",
-            "[c=dim]Every room above is spoken for, and yet the halls stay so "
-            "quiet. They have all checked in. Not a one of them seems to be "
-            "about. ...No matter. They will not have left.[/c]",
-            "[c=dim]The register's right there on the desk if you're the "
-            "restless sort. Sign and guest both, all the way back.[/c]",
-            "Read it if you like. Folks always look for a name that left. "
-            "Won't change a thing.",
-        ], speaker="Mr. Sable", voice="blip_low", portrait="clerk")
-        return
-    # Visit 3 and after: the investigation verb. He has said his welcome
-    # and pointed you at the register; now he simply waits, and you decide
-    # what to put to him. The chosen answer floats over the desk (world
-    # keeps running) so asking never freezes the run. (Pilot for TODO #1;
-    # the ask-layer is reusable via open_ask_menu.)
-    open_ask_menu(
-        game, npc, "Mr. Sable", "blip_low", "clerk", _SABLE_TOPICS,
-        prompt="Sable waits behind the desk, pleasant and patient. "
-               "What do you put to him?")
+    # Otherwise: the organic conversation. His welcome floats once (the
+    # greet in SABLE_CONVO), then the menu is the PI's own questions -- each
+    # picked line is spoken, and Sable answers in turn, over the desk, while
+    # the world keeps running. New questions surface as the case grows.
+    from ui.conversation import open_conversation
+    open_conversation(game, npc, SABLE_CONVO)
 
 
 def basement_photo_dialogue(game, npc):

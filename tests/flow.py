@@ -1087,10 +1087,18 @@ def main():
         return cap[0] if cap else None
 
     roster = [("Sheriff Vane", sheriff_dialogue), ("Rev. Crane", preacher_dialogue),
-              ("Hettie", hettie_dialogue), ("Mr. Sable", clerk_dialogue)]
+              ("Hettie", hettie_dialogue)]
     for expected, fn in roster:
         check(first_speaker(fn) == expected,
               f"naming: a principal local speaks as '{expected}' (not a role-tag)")
+    # Sable now speaks through the floating conversation, not the modal
+    # band; his name rides every line via the convo, and the greeting is
+    # spoken (floated), not a role-tag.
+    from scenes.dialogue import SABLE_CONVO as _SC
+    check(_SC["name"] == "Mr. Sable",
+          "naming: Sable speaks as 'Mr. Sable' through the conversation")
+    check("Sable" in _SC["greet"]["beats"][0][1],
+          "naming: Sable's floated greeting introduces him by name")
 
     # --- 17b. Sable is the most-attuned LOCAL (NARRATIVE §2) -------------
     # His menace is compulsion, not conspiracy. Lock the framing: the
@@ -1105,42 +1113,77 @@ def main():
           "sable: never tagged newcomer/recruiter (compulsion, not conspiracy)")
 
     # --- 17c. The investigation ASK verb (pilot: Mr. Sable, TODO #1) -----
-    # After his two scripted intro visits, E opens a modal topic menu whose
-    # answer floats over the desk. Guard the wiring: the third visit opens
-    # the choice; the menu lists every topic plus a back-out; each topic
-    # answers at both evidence tiers; and the colder tier tracks knowing.
-    from scenes.dialogue import _SABLE_TOPICS, _sable_girl, _sable_well
+    # The menu options ARE the PI's own spoken lines; picking one plays an
+    # organic PI<->NPC exchange over their heads (ui/conversation), and new
+    # questions open as the case grows. Guard the engine + Sable's script.
+    from scenes.dialogue import SABLE_CONVO, _REVISIT_NUDGES
+    from ui.conversation import Conversation
+
+    def _npc_stub(gg):
+        return type("N", (), {"name": "Mr. Sable",
+                              "x": gg.player.x, "y": gg.player.y,
+                              "alive": True, "_is_corpse": False,
+                              "_inside": False})()
+
+    # (1) A fresh talk floats the greeting once, THEN opens the menu.
     ga = new_game()
-    ga.save.set_arg("clerk_count", 2)          # past intro + register nudge
+    convo = Conversation(ga, _npc_stub(ga), SABLE_CONVO)
     ga.dialog.active = False
-    ga.dialog.choices = None
-    clerk_dialogue(ga, None)
+    convo.start()
+    check(ga.save.flag("sable_greeted") and ga.float_speech.active
+          and not ga.dialog.active,
+          "ask: the first talk floats Sable's greeting (no modal band)")
+    # Drive the greeting to completion the way the loop would; the menu opens.
+    ga.float_speech._finish()
     check(ga.dialog.choices is not None,
-          "ask: Sable's third visit opens the investigative topic menu")
-    check(ga.dialog.choices is not None
-          and len(ga.dialog.choices) == len(_SABLE_TOPICS) + 1,
-          "ask: the menu lists every topic plus a back-out")
-    for _lbl, _res in _SABLE_TOPICS:
-        ga.save.set_arg("evidence", [])
-        _lo = _res(ga)
-        for _i in range(3):
-            ga.save.arg("evidence", []).append({"name": f"_ask{_i}",
-                                                "lines": ["x"]})
-        _hi = _res(ga)
-        check(bool(_lo) and bool(_hi),
-              f"ask: '{_lbl}' answers at low and high evidence")
-        check(_lo != _hi,
-              f"ask: '{_lbl}' turns colder as the PI learns more")
-    # Canon anchors: the girl reply names Blaine; the colder well reply
-    # knows the guests went down and did not return (never a confessed
-    # plot, just hospitality).
+          "ask: once greeted, the menu of the PI's questions opens")
+
+    # (2) The menu offers only AVAILABLE questions; base ones plus a leave.
+    base = [ex for ex in SABLE_CONVO["exchanges"] if "avail" not in ex]
+    check(len(ga.dialog.choices) == len(base) + 1,
+          "ask: the menu lists the open questions plus a leave option")
+    # Every option is a first-person spoken line, not an abstract topic
+    # label (the whole point of the rework): none is of the form "The X."
+    opts = ga.dialog.choices
+    check(all(not (o.startswith("The ") and o.endswith(".") and " " not in o[4:-1])
+              for o in opts),
+          "ask: options are the PI's spoken lines, not 'The X' topic tags")
+
+    # (3) Evidence-gated questions are hidden until the discovery is made.
+    q_checkouts = next(ex for ex in SABLE_CONVO["exchanges"]
+                       if ex["key"] == "checkouts")
+    check(not q_checkouts["avail"](ga),
+          "ask: the register question is hidden before the Ledger is found")
+    ga.save.set_flag("evidence_the_ledger", True)
+    check(q_checkouts["avail"](ga),
+          "ask: reading the Ledger opens the register question")
+
+    # (4) The discovery nudges the PI back. Reuse `ga`: not met yet -> no
+    # nudge (the question still opens on the evidence alone); once met, the
+    # discovery files a revisit NOTE (never evidence) and returns interior
+    # lines to ride the discovery's narration.
+    from scenes.dialogue import _collect_revisit
+    ga.save.set_flag("sable_greeted", False)
+    check(_collect_revisit(ga, "the_ledger") == [],
+          "ask: no nudge for a person the PI has not met")
+    ga.save.set_flag("sable_greeted", True)
     ga.save.set_arg("evidence", [])
-    check(any("Blaine" in p for p in _sable_girl(ga)),
-          "ask: the girl topic names the Blaine girl")
-    for _i in range(3):
-        ga.save.arg("evidence", []).append({"name": f"_w{_i}", "lines": ["x"]})
-    check(any("down" in p for p in _sable_well(ga)),
-          "ask: the colder well reply knows the guests went down")
+    extra = _collect_revisit(ga, "the_ledger")
+    check(extra and any("register" in ln.lower() for ln in extra),
+          "ask: a discovery nudges the PI to revisit the person he met")
+    check(any(isinstance(e, dict) and e.get("name") == "revisit_sable_checkouts"
+              for e in ga.save.arg("notes", [])),
+          "ask: the revisit nudge files a case NOTE, not evidence")
+    check(len(ga.save.arg("evidence", [])) == 0,
+          "ask: the nudge never inflates the evidence count")
+    check(_collect_revisit(ga, "the_ledger") == [],
+          "ask: the revisit nudge fires only once")
+
+    # (5) An inline branch (show the photo) is a real fork with a side effect.
+    mara = next(ex for ex in SABLE_CONVO["exchanges"] if ex["key"] == "mara")
+    ask_beat = next(b for b in mara["beats"] if b[0] == "ask")
+    check(len(ask_beat[2]) == 2 and ask_beat[2][0][2] is not None,
+          "ask: the photo beat is a two-way choice with a consequence")
 
     # --- 18. effigy_grove is a maker-less tableau (§1b/§8) ---------------
     # Individual cursing is redundant -- the closing rite claimed the town at

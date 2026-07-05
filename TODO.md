@@ -37,19 +37,27 @@ the core fantasy active for the first time (NARRATIVE §2: reading the town IS
 the investigation). Content + design, not engine work. **Highest value-to-risk
 item on the list: engine exists, canon is settled, payoff is the core fantasy.**
 
-- **VERB BUILT + PILOTED on Mr. Sable (2026-07).** `scenes/dialogue.open_ask_menu`
-  is the reusable layer: E opens a MODAL topic menu (the pick needs the cursor),
-  the chosen answer FLOATS over the speaker's head (`ui/float_speech`) so asking
-  never freezes the run, and the world keeps running while they talk. Topics are
-  `(label, resolver)` where the resolver gates the reply on evidence found; a
-  back-out is appended. Sable answers the girl / the well / the other guests /
-  the Reverend, each with a colder tier that keys on the evidence count (his
-  menace stays compulsion, never a confessed scheme). Wired after his two
-  scripted intro visits (intro + register nudge preserved) at `clerk_count >= 3`.
-  Guarded by `tests/flow.py` §17c. **To expand:** give Toby / Hettie / Vane /
-  Crane their own `_TOPICS` tables and swap their linear-count tails for
-  `open_ask_menu`, keeping each NPC's story-critical one-shots (witness, memory,
-  handoff) firing first.
+- **VERB BUILT + PILOTED on Mr. Sable (2026-07), organic redesign.** The menu
+  options ARE the PI's own first-person spoken lines (not abstract "The X"
+  topics you infer), and picking one plays a real EXCHANGE: the PI speaks, the
+  NPC answers, each floating over their own head (`ui/float_speech`) while the
+  world keeps running; an exchange can branch on an inline choice (show him the
+  photo, or don't) with a side effect. Engine: `ui/conversation.Conversation`
+  (`open_conversation`) is a small state machine wired entirely through the
+  float `on_complete` chain + `dialog.show_choice` callbacks (Game never ticks
+  it). A conversation is plain data: a one-time `greet`, then `exchanges` of
+  `{key, q, avail, once, beats}`; a beat is `("npc"/"pi", text)` or
+  `("ask", prompt, [(label, [beats], on_pick)])`. **The case GROWS the talk:**
+  questions gated by `avail` open as evidence is found (Sable's register + her-
+  state questions unlock on `the_ledger` / `maras_journal`), and the discovery
+  itself NUDGES the PI back, appending his interior line onto the find's
+  narration and filing a case NOTE (`_REVISIT_NUDGES` / `_collect_revisit`,
+  hooked into `_evidence`; never inflates the evidence count). Wired on Sable
+  after the envelope handoff preempt. Guarded by `tests/flow.py` §17c (17
+  checks) + the naming guard. **To expand:** give Toby / Hettie / Vane / Crane
+  their own `*_CONVO` data + `open_conversation`, keeping each NPC's story-
+  critical one-shots (witness, memory, handoff) firing first, and add
+  `_REVISIT_NUDGES` entries so their questions grow with the case too.
 
 - **Pilot beat — the Crane choice** (proof-of-concept for the verb): in his
   2nd conversation, a two-option `show_choice` — provoke him (he goes off to
