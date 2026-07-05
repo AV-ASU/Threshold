@@ -84,6 +84,12 @@ strict no-op at pitch 0 (byte-identity gate, `tools/capture_world.py`), and
 AI/pathing ignores height in v1 (cosmetic + sight-only). Prototype on one
 Brimley scene behind a preview before wiring.
 
+- **River spike DONE (2026-07):** `heightfield.carve_channel` cuts a sunken
+  trough (banks from `build_heightfield`, bed below grade); `draw_ground_mesh`
+  shades `~`/`@` bed tiles WET and the bank crest occludes the bed from the
+  grade (the sight-pit the WADE routing wants). Preview
+  `tools/preview_river_channel.py`; guard `tests/render_smoke.py` [4/4].
+
 - **Deferred siblings (do NOT pull forward without a set-piece that demands
   them):** *3b.* Multi-floor buildings as same-building `cross_fold`s to a
   `lodge_upstairs`-style scene (no fade, stride preserved; the reveal is already
@@ -93,6 +99,45 @@ Brimley scene behind a preview before wiring.
   **deferred indefinitely**: big collision/AI/depth-sort/save lift, strains the
   "no roof over the play area" rule, and the payoff partly fights a game whose
   power is restricted sight.
+
+### 3d. **[Opus]** Floor-roll warp — the real rolling ground  *(the next terrain build; unlocks large sloped areas)*
+
+The `draw_ground_mesh` prototype lays a projected mesh over the flat floor —
+fine for a discrete hill or a carved channel, but the surrounding raster stays
+flat, so relief is thin edge-on and it will not carry a whole rolling area. The
+honest fix is to replace the global affine `_tilt_warp` (`scenes/base.py`) with
+a **height-displaced warp** so the floor raster itself rolls with `ground_z`.
+**Constraints:** still strictly no-op when a scene has no heightfield (byte-
+identity gate, all shipping scenes flat); a perf pass on the one-time whole-map
+tilt bake (`_tilt_fullmap`, ~6000 tiles); feed `ground_z` into every live actor/
+standee/decoration `project()` **and** its paired `depth()` (so a figure on a
+bank sorts over the trough). This is the prerequisite for a large sloped
+outdoor area (the Brimley subsidence bowl below). Prototype behind
+`tools/capture_world.py` + a live tilt capture before wiring a scene.
+
+### 3e. **[Opus]** Terrain design directions — how terrain earns its keep  *(design note, not one ticket)*
+
+Terrain is the ONE tool that gives sight-occlusion in OPEN ground, where walls
+can't go — so it extends the game's core restricted-sight dread outdoors, its
+weakest zone. Standing directions (each rides the shipped heightfield + crest
+LOS; pick a set-piece before building):
+- **A third cover class — the sunken lane / ditch:** a depression you crouch-
+  move through BELOW a searcher's sightline. Unlike corn it isn't leaky; unlike
+  an enclosed hide it doesn't root you — mobile cover that slots into graded
+  suspicion (a searcher scores nothing until he crests the ridge). Also the
+  natural home for the deferred Pillar-2 **peek** verb (crest a rise slowly).
+- **King roam, crest-hidden:** put rises on his road so he crests a hill and is
+  suddenly close, or drops into a hollow and out of view. He stays sight-exempt
+  (always tracks you); the terrain hides HIM from YOU — the scarier asymmetry.
+- **Staged reveals (NARRATIVE §8/§10):** wrongness before sight, then crest and
+  SEE it — the exact approach the **Crane murder discovery** (Optional polish)
+  wants (a body found away from the church, long sightline, reveal on the rise).
+- **Herding without walls + the descent made physical:** a valley/bowl that
+  funnels toward the well (well-gravity as literal downhill), ridges that channel
+  movement onto the roads (roads-as-lifeline). Feeds the Brimley reshape below.
+- **Caution:** AI ignores height in v1, so terrain cover is a PLAYER-only
+  affordance for now (good asymmetry, but no cultist takes the high ground yet);
+  keep the sim Euclidean-honest so stealth distance-falloff + NPC nav stay true.
 
 ### 4. **[Opus]** Brimley reshape — the sealed fog-edge town  *(design landed; not built)*
 
@@ -135,6 +180,19 @@ fog mask + road/repel boundary) and verify the sim stays Euclidean-honest;
 only THEN pick ONE wishlist toy. Do not build the boundary and the spatial
 illusions in the same pass — each illusion below stresses stealth suspicion
 and King/NPC nav, so they land one at a time behind their own verify.
+
+**TERRAIN is now the recommended tool for this ticket (2026-07).** The ground
+heightfield (#3) + the floor-roll warp (#3d) turn Brimley from a see-everything
+field into a **subsidence bowl** whose ground sags toward the well at center —
+which does the herding (well-gravity as literal downhill), gives outdoor
+sight-occlusion where walls can't go (hollows + ridges break the long
+sightlines that currently kill outdoor dread), hides the King roam behind rises
+(he crests a hill and he's suddenly close), and turns the river into a stealth
+artery (the carved channel, `carve_channel`: bridge = exposed high route, wade
+the trough = hidden but slow + splashing, sight-trapped below the banks). This
+is the set-piece that earns the #3d floor-roll rewrite. Sequence: #3d first,
+then the bowl + sunken lanes behind a preview (as the river spike was). Keep the
+sim Euclidean-honest so stealth distance-falloff + nav stay true under the roll.
 
 **Wishlist — spatial manipulation the layout unlocks (ideas, pick later):**
 - *Draw-only (cheap/safe):* landmark repetition (pass "the same" well/pickup
