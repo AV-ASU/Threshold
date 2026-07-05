@@ -18,7 +18,14 @@
 
 ## Open work
 
-### 12. **[Fable]** Investigation dialogue verb — the ask-questions layer  *(breakthrough; NOT low-difficulty)*
+Grouped by readiness, not source-doc number. **Buildable now** items are
+scoped and unblocked; **Blocked on a human** items are built but need
+playtesting to finish; **Deferred** items are parked on purpose. Roughly
+priority order within each group.
+
+## Buildable now
+
+### 1. **[Fable]** Investigation dialogue verb — the ask-questions layer  *(breakthrough; NOT low-difficulty)*
 
 You play a PI, but the only social verb is press-E-to-advance scripted lines:
 every NPC conversation is a linear counter (`old_count`, `kid_count` ...). The
@@ -27,7 +34,8 @@ in exactly ONE gameplay spot (the Sign Chamber altar fork, `scenes/well.py`
 ~L890). Build an ask-about-topics layer (the girl / the well / the strangers /
 the preacher) with answers gated on evidence found + who is being asked. Makes
 the core fantasy active for the first time (NARRATIVE §2: reading the town IS
-the investigation). Content + design, not engine work.
+the investigation). Content + design, not engine work. **Highest value-to-risk
+item on the list: engine exists, canon is settled, payoff is the core fantasy.**
 
 - **Pilot beat — the Crane choice** (proof-of-concept for the verb): in his
   2nd conversation, a two-option `show_choice` — provoke him (he goes off to
@@ -35,35 +43,46 @@ the investigation). Content + design, not engine work.
   saved or converted (they were answered, not deceived); Crane dies for
   believing he can. The provoke branch feeds the murder reveal below.
 
-### 0. **[Opus]** Stealth rework — the TUNING loop  *(needs a human at the keys)*
+### 2. **[Opus]** Portal-door actor sight-gating  *(load-bearing consistency fix; PORTALS.md)*
 
-The mechanic AND the placement pass are built and guarded
-(`tests/stealth.py` + flow §25; see `STEALTH_REWORK.md` for the design
-and its status note). What remains only proves out against a human
-player: the suspicion fill curve (`SUS_FILL_RATE`), the concealment
-factors, the sweep budget, and the struggle window/presses. Also
-deferred to this pass on purpose: the Pillar-2 **peek** verb (free look
-under tilt already carries the information function) and an
-exit-takes-a-beat vulnerability window on enclosed hides.
+The see-through door (rendering + seamless crossing) landed this branch: the
+recess through-view (`portal.draw_through_aperture` + `Game._build_door_views` +
+`scenes/base._draw_doorway`), the per-scene `Scene.seethrough_doors` opt-in
+(house's two interior doors), and `begin_transition(seamless=...)` routing.
+**The one open piece is a correctness issue, not polish:** the through-view is
+NOT gated by `sight.py`, so a threat standing in the next room shows through the
+door — which breaks the restricted-sight thesis the whole game rests on (unlike
+the rift, which shows everything by design). Gate the aperture's ACTORS through
+the sight cone so the empty room shows but the corner-lurker does not. *(The
+softer half — opting in higher-contrast doors, e.g. a lit room off a dark hall
+or the front door onto the yard — is real polish; see Optional polish.)*
 
-### 11. **[Opus]** Combat / difficulty — judgment calls (decide on purpose)
+### 3. **[Opus]** Ground heightfield — blind-spot hills  *(CAMERA.md Phase 6; recommended verticality first build)*
 
-Not bugs; deliberate choices worth confirming rather than leaving by default:
-the gun goes **stun-only at 3 evidence** with ~14 rounds total per run, so the
-main combat verb is removed exactly when danger spikes (agency loss vs
-intended dread). There are **no difficulty options**, so the visibility/Watcher
-death-spiral hits newcomers and is trivial to experts. Items are gates, not
-resources (armor slots return 0). Consider: transforming the stun into a
-tactical window rather than a tax, an easy/hard toggle, or light resource
-tension — only if it serves the horror, not despite it.
+The camera already carries a real height axis (`Camera.project(wx, wy, wz)`,
+`z` rises by `sin(pitch)`); the *simulation* is flat XY. Add a per-scene
+`ground_z(tx, ty)` sample, authored like the `_flood` water helper. It feeds
+ONLY two places: the `wz` passed when projecting the floor + any standee/actor
+on it (so ground rolls), and `blocks_sight` (a crest higher than the player's
+eye occludes what's beyond it). Movement stays 2D; `player.z` is a passive READ
+of the terrain under the feet, used for draw + sight only — no jump, no gravity,
+no new collision. Lands directly on the shipped blind-spot vision (`sight.py`):
+a hill you can't see over is the same dread primitive as a wall. **Constraints:**
+strict no-op at pitch 0 (byte-identity gate, `tools/capture_world.py`), and
+AI/pathing ignores height in v1 (cosmetic + sight-only). Prototype on one
+Brimley scene behind a preview before wiring.
 
-### 4. **[Fable]** The liminal-composition pass  *(NARRATIVE.md §8/§10)*
+- **Deferred siblings (do NOT pull forward without a set-piece that demands
+  them):** *3b.* Multi-floor buildings as same-building `cross_fold`s to a
+  `lodge_upstairs`-style scene (no fade, stride preserved; the reveal is already
+  free from `occlusion.py` + blind-spot gating) — compose shipped tools, do not
+  build a continuous floor system. *3c.* Fully continuous traversable z (real
+  ramps, actors at arbitrary heights, whole interior visible at once) —
+  **deferred indefinitely**: big collision/AI/depth-sort/save lift, strains the
+  "no roof over the play area" rule, and the payoff partly fights a game whose
+  power is restricted sight.
 
-Per-scene level-design polish: composed emptiness, long sightlines, uncanny
-repetition. Inherently ongoing/iterative rather than a single shippable
-ticket — scope a concrete first scene before starting.
-
-### 12. **[Opus]** Brimley reshape — the sealed fog-island  *(design landed; not built)*
+### 4. **[Opus]** Brimley reshape — the sealed fog-edge town  *(design landed; not built)*
 
 Shrink Brimley and make it read as a bounded town swallowed by the fold,
 not a rectangle with edges. **Stays ONE scene** (`scenes/brimley.py`
@@ -99,6 +118,12 @@ purpose; splitting re-creates the discarded topology.
   you) and the Mask drive-out (SPREAD ending, a cutscene, never a walkable
   rim).
 
+**Sequencing (scope guard):** ship the DECIDED half first (smaller grid +
+fog mask + road/repel boundary) and verify the sim stays Euclidean-honest;
+only THEN pick ONE wishlist toy. Do not build the boundary and the spatial
+illusions in the same pass — each illusion below stresses stealth suspicion
+and King/NPC nav, so they land one at a time behind their own verify.
+
 **Wishlist — spatial manipulation the layout unlocks (ideas, pick later):**
 - *Draw-only (cheap/safe):* landmark repetition (pass "the same" well/pickup
   twice in fog); the town rearranges behind you (rides `sight.py`
@@ -106,10 +131,10 @@ purpose; splitting re-creates the discarded topology.
   road that imperceptibly spirals back to start.
 - *Geometry (needs sim kept Euclidean-honest under the lie):*
   **walls-closing-in** (animate the radius/drift inward over the run — this
-  IS #2, made a variable; the standout); **well-gravity** (heading bends a
-  few degrees toward the well each unmonitored moment); impossible adjacency
-  / one-way internal folds via `cross_fold` (same-scene folds render silent,
-  PORTALS.md); asymmetric in/out travel distance.
+  IS boundary mechanic #2, made a variable; the standout); **well-gravity**
+  (heading bends a few degrees toward the well each unmonitored moment);
+  impossible adjacency / one-way internal folds via `cross_fold` (same-scene
+  folds render silent, PORTALS.md); asymmetric in/out travel distance.
 - **Caution:** distance/collision tricks stress stealth suspicion (distance
   falloff) and NPC/King nav — keep the sim honest even while presentation
   lies. Star pairing with the decided work: **walls-closing-in +
@@ -122,49 +147,51 @@ town, not "island" (implies water). **Verify:** `tools/profile_brimley.py`
 before/after, a `tools/capture_world.py` tilt capture, full
 `python tests/run_all.py` gate.
 
-### 13. **[Opus]** Verticality — an "up" axis  *(CAMERA.md Phase 6, design spike)*
+## Blocked on a human at the keys
 
-The camera already carries a real height axis (`Camera.project(wx, wy, wz)`,
-`z` rises by `sin(pitch)`); the *simulation* is flat XY (player has no z,
-collision + sight are 2D). Split by cost, cheapest first:
+These are BUILT and guarded; what remains cannot be settled from code
+inspection and needs a person playing the game.
 
-- **12a. Ground heightfield (blind-spot hills) — the recommended first
-  build.** A per-scene `ground_z(tx, ty)` sample, authored like the `_flood`
-  water helper. It feeds ONLY two places: the `wz` passed when projecting the
-  floor + any standee/actor on it (so ground rolls), and `blocks_sight` (a
-  crest higher than the player's eye occludes what's beyond it). Movement
-  stays 2D; `player.z` is a passive READ of the terrain under the feet, used
-  for draw + sight only — no jump, no gravity, no new collision. Lands
-  directly on the shipped blind-spot vision (`sight.py`): a hill you can't see
-  over is the same dread primitive as a wall. **Constraints:** strict no-op at
-  pitch 0 (byte-identity gate, `tools/capture_world.py`), and AI/pathing
-  ignores height in v1 (cosmetic + sight-only), or it jumps to the expensive
-  column. Prototype on one Brimley scene behind a preview before wiring.
-- **12b. Multi-floor buildings as FOLDS, not real z.** "Walk up the stairs,
-  the next floor becomes visible" done cheaply: a staircase is a same-building
-  `cross_fold` to a `lodge_upstairs`-style scene (no fade, stride preserved).
-  The "rooms appear as you move" reveal is already free from the live systems
-  (`occlusion.py` per-actor wall fade + blind-spot sight gating). Compose
-  shipped tools; do NOT build a continuous floor system.
-- **12c. Fully continuous traversable z (real ramps, actors at arbitrary
-  heights, whole-interior visible at once) — DEFERRED indefinitely.** Big
-  collision/AI/depth-sort/save lift, strains the "no roof over the play area"
-  rule, and the payoff (spatial spectacle) partly fights a game whose power is
-  restricted sight. Revisit only if a specific set-piece demands it.
+### 5. **[Opus]** Stealth rework — the TUNING loop
 
-### 14. **[Opus]** See-through portal-doors  *(PORTALS.md; rendering + seamless crossing landed)*
+The mechanic AND the placement pass are built and guarded
+(`tests/stealth.py` + flow §25; see `STEALTH_REWORK.md` for the design
+and its status note). What remains only proves out against a human
+player: the suspicion fill curve (`SUS_FILL_RATE`), the concealment
+factors, the sweep budget, and the struggle window/presses. Also
+deferred to this pass on purpose: the Pillar-2 **peek** verb (free look
+under tilt already carries the information function) and an
+exit-takes-a-beat vulnerability window on enclosed hides.
 
-Doors stop being a fade-to-black: the aperture shows the ACTUAL room beyond,
-rendered through the live tilt camera, with the hinged leaf physically
-swinging to reveal it, and an opted-in door crosses the sill via the seamless
-`cross_fold` (no fade). Landed this branch: the recess through-view
-(`portal.draw_through_aperture` + `Game._build_door_views` +
-`scenes/base._draw_doorway`), the per-scene `Scene.seethrough_doors` opt-in
-(house's two interior doors), and the `begin_transition(seamless=...)` routing.
-**Still open:** gating the through-view's ACTORS through `sight.py` so the empty
-room shows but a threat in its corner does not (unlike the rift, which shows
-everything by design), and opting in higher-contrast doors (a lit room off a
-dark hall, the front door onto the yard) where the effect reads strongest.
+### 6. **[Opus]** Combat / difficulty — judgment calls (decide on purpose)
+
+Not bugs; deliberate choices worth confirming rather than leaving by default:
+the gun goes **stun-only at 3 evidence** with ~14 rounds total per run, so the
+main combat verb is removed exactly when danger spikes (agency loss vs
+intended dread). There are **no difficulty options**, so the visibility/Watcher
+death-spiral hits newcomers and is trivial to experts. Items are gates, not
+resources (armor slots return 0). Consider: transforming the stun into a
+tactical window rather than a tax, an easy/hard toggle, or light resource
+tension — only if it serves the horror, not despite it.
+
+## Deferred / north star
+
+### 7. **[Fable]** The liminal-composition pass  *(NARRATIVE.md §8/§10)*
+
+Not a discrete ticket — a standing direction for per-scene level-design polish:
+composed emptiness, long sightlines, uncanny repetition. Inherently
+iterative. **To turn it into work, name ONE scene and the ONE composition it
+gets** (this sightline, this repeated landmark); do not start against the
+abstract goal.
+
+---
+
+## Quick wins (zero-risk; just do them)
+
+- **[Opus]** **Doc/code drift** — `README.md` says "no disk save" but the cot
+  save-slot exists (`systems/save.py`); `CAMERA.md` lists the sight cone as
+  62°/280/30 but `sight.py` ships 74°/360/40. These are WRONG docs that will
+  mislead the next contributor. Fix the docs to match code.
 
 ---
 
@@ -172,7 +199,7 @@ dark hall, the front door onto the yard) where the effect reads strongest.
 
 - **[Fable + Opus]** **Rev. Asa Crane murder reveal + sprite** *(GAME_CHANGES.md §12)* — Fable for the reveal writing + staging, Opus for the procedural corpse sprite. Punch up
   the `preacher_doomed` death, three parts. (1) **New discovery location**: the
-  provoke choice (§12 pilot) sends him to the cult's ground, so find his body
+  provoke choice (item #1 pilot) sends him to the cult's ground, so find his body
   AWAY from the church — e.g. the well/grove edge, reaching for the souls he
   couldn't save — a real investigative find, not a pop on re-entry. (2)
   **Bespoke sprite**: the current corpse is a placeholder medieval knight
@@ -180,9 +207,10 @@ dark hall, the front door onto the yard) where the effect reads strongest.
   draw (dark palette, white collar, cross in the mess). (3) Stage the approach
   (wrongness before sight, long sightline). Art + placement + a location move;
   lore unchanged.
-- **[Opus]** **Doc/code drift (quick)** — `README.md` says "no disk save" but the cot
-  save-slot exists (`systems/save.py`); `CAMERA.md` lists the sight cone as
-  62°/280/30 but `sight.py` ships 74°/360/40. Fix the docs to match code.
+- **[Opus]** **Higher-contrast see-through doors** *(PORTALS.md; the softer half of item
+  #2)* — once the aperture's actors are sight-gated, opt in the doors where the
+  effect reads strongest: a lit room off a dark hall, the front door onto the
+  yard. Draw/opt-in only; no new tech.
 - **[Opus]** **Held-weapon offset eyeball pass** *(HANDCRAFT_BACKLOG.md §3b)* — the
   `draw_axe_held` / `draw_revolver_held` code is in and working; this is just
   a visual check of the held-weapon offset at every camera yaw.
@@ -191,6 +219,10 @@ dark hall, the front door onto the yard) where the effect reads strongest.
   then steps through (intentional per `PORTALS.md`). A persistent silhouette
   on the far side of an already-open fold is not built; revisit only if the
   direction changes.
+
+---
+
+## Process
 
 ### R. **[Fable]** Cross-model review gate  *(process; new)*
 
