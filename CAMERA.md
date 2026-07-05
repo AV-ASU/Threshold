@@ -34,7 +34,7 @@ isolated scaffolding — they are the live render path under tilt.
   turns, the **terrain** behind/around the player is revealed (it just draws),
   but **NPCs, items, and the infestation rot stay hidden until actually looked
   at** — gated to a forward sight cone (`rendering/sight.py`). Locked design
-  calls: cone **62° half-angle / 280px** range; **re-hide** when out of the
+  calls: cone **74° half-angle / 360px** range; **re-hide** when out of the
   cone (no last-seen memory — the dread is uncertainty, not a stale ghost); the
   world **keeps simulating off-camera** (entities move/chase normally while
   unseen — "not looking ≠ not there"), only the *render* is gated, so a thing
@@ -79,7 +79,7 @@ imported by the live game yet.
 | `rendering/solids.py` | **Volumetric kit.** `draw_solid` (body of revolution from stacked elliptical footprint sections — columns, figures, the Watcher), `draw_box` (crates, walls), `draw_billboard` (the **fallback**: a flat sprite stood up as a camera-facing card so un-converted objects still place correctly under tilt), `draw_with_alpha` (render-to-scratch helper used by occlusion). |
 | `rendering/skybox.py` | **Backdrop.** `draw_skybox(surf, rect, yaw, kind)` — sky gradient + sallow Sign-band + fog horizon + a wrapping near-black treeline/rooftop silhouette that parallaxes on yaw. `kind ∈ {overcast, void}`. |
 | `rendering/occlusion.py` | **Don't-hide-an-actor.** `occluder_alpha(...)` fades any solid that is nearer the camera than a focus actor AND covers it on screen (screen-space bbox overlap of base..top, feathered so walls ease rather than pop). Phase 5: `draw_world` calls it **per visible actor** and takes the min, so a wall fades for whichever actor it covers, not just the player. |
-| `rendering/sight.py` | **Blind-spot vision (Phase 4).** `visible_factor(px, py, heading, tx, ty, blocks)` → 0..1: a forward sight CONE keyed to the look heading (`SIGHT_HALF` 62°, `SIGHT_RANGE` 280px, an always-seen `SIGHT_NEAR` 30px bubble), gated to 0 by walls via `los_clear` (a coarse ray march against `Scene.blocks_sight`). Soft at the cone lips (`SIGHT_*_FEATHER`) so things fade in, not pop. Pure math; the gate the game draws through under tilt. |
+| `rendering/sight.py` | **Blind-spot vision (Phase 4).** `visible_factor(px, py, heading, tx, ty, blocks)` → 0..1: a forward sight CONE keyed to the look heading (`SIGHT_HALF` 74°, `SIGHT_RANGE` 360px, an always-seen `SIGHT_NEAR` 40px bubble), gated to 0 by walls via `los_clear` (a coarse ray march against `Scene.blocks_sight`). Soft at the cone lips (`SIGHT_*_FEATHER`) so things fade in, not pop. Pure math; the gate the game draws through under tilt. |
 | `rendering/pseudo3d.py` | The original proof: a volumetric Watcher (`draw_pseudo3d_watcher`) — self-occluding features (the gold eyes wrap around the back), travelling rim light. Superseded by `solids.py` for general use; kept as the worked reference. |
 
 ### Previews (headless; self-configure SDL dummy drivers)

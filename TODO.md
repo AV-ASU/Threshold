@@ -256,15 +256,6 @@ abstract goal.
 
 ---
 
-## Quick wins (zero-risk; just do them)
-
-- **[Opus]** **Doc/code drift** — `README.md` says "no disk save" but the cot
-  save-slot exists (`systems/save.py`); `CAMERA.md` lists the sight cone as
-  62°/280/30 but `sight.py` ships 74°/360/40. These are WRONG docs that will
-  mislead the next contributor. Fix the docs to match code.
-
----
-
 ## Optional polish (no canon/lore change; do as time allows)
 
 - **[Fable + Opus]** **Rev. Asa Crane murder reveal + sprite** *(GAME_CHANGES.md §12)* — Fable for the reveal writing + staging, Opus for the procedural corpse sprite. Punch up
@@ -319,6 +310,11 @@ Fable is doing the implementing, an Opus pass reviews it the same way.
 
 ### 2026-07 build sweep (this branch; each flow/stealth-guarded)
 
+- **Doc/code drift quick-win** — fixed the two stale docs the code had
+  outgrown: `README.md` claimed "no disk save" (the cot save-slot in
+  `systems/save.py` has existed since 2026-07), and `CAMERA.md` listed the
+  blind-spot sight cone as 62°/280/30 where `rendering/sight.py` ships
+  74°/360/40 (`SIGHT_HALF`/`SIGHT_RANGE`/`SIGHT_NEAR`). Docs now match code.
 - **Portal-door actor sight-gating (was Open #2)** — the see-through aperture
   drew NO far-room actors before; now it draws them as a per-frame pass
   (`portal._draw_aperture_actors`) gated by the player's sight cone (mapping

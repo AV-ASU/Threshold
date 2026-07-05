@@ -26,8 +26,10 @@ python main.py
 ```
 
 The game opens on the title screen. Choose **New Game** to start a run.
-There is no disk save: a run lives entirely in memory for a single
-session, and quitting to the title discards it.
+There is a single disk save slot, written only when you sleep at the
+spare-room cot (it snapshots hp, inventory, and visibility). **Continue**
+on the title reads it back; a death or a quit to the title costs
+everything since the last sleep, never the whole run.
 
 ## Controls
 
@@ -60,7 +62,7 @@ no display or audio device is required.
 
 - `main.py` — entry point
 - `constants.py` — screen geometry and colour palette
-- `systems/` — the runtime (`game.py`: main loop, input, transitions) plus `save` (in-memory only), `items`, `audio`, `threat`
+- `systems/` — the runtime (`game.py`: main loop, input, transitions) plus `save` (one disk slot, written at the cot), `items`, `audio`, `threat`
 - `scenes/` — tile-grid scene builders and the scene registry (`__init__.py`)
 - `entities/` — player, NPCs, enemies, decorations
 - `ui/` — dialogue box, inventory, notebook, text-input modal
