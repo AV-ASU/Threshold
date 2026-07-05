@@ -1104,6 +1104,44 @@ def main():
                   ("newcomer", "recruiter", "recruit")),
           "sable: never tagged newcomer/recruiter (compulsion, not conspiracy)")
 
+    # --- 17c. The investigation ASK verb (pilot: Mr. Sable, TODO #1) -----
+    # After his two scripted intro visits, E opens a modal topic menu whose
+    # answer floats over the desk. Guard the wiring: the third visit opens
+    # the choice; the menu lists every topic plus a back-out; each topic
+    # answers at both evidence tiers; and the colder tier tracks knowing.
+    from scenes.dialogue import _SABLE_TOPICS, _sable_girl, _sable_well
+    ga = new_game()
+    ga.save.set_arg("clerk_count", 2)          # past intro + register nudge
+    ga.dialog.active = False
+    ga.dialog.choices = None
+    clerk_dialogue(ga, None)
+    check(ga.dialog.choices is not None,
+          "ask: Sable's third visit opens the investigative topic menu")
+    check(ga.dialog.choices is not None
+          and len(ga.dialog.choices) == len(_SABLE_TOPICS) + 1,
+          "ask: the menu lists every topic plus a back-out")
+    for _lbl, _res in _SABLE_TOPICS:
+        ga.save.set_arg("evidence", [])
+        _lo = _res(ga)
+        for _i in range(3):
+            ga.save.arg("evidence", []).append({"name": f"_ask{_i}",
+                                                "lines": ["x"]})
+        _hi = _res(ga)
+        check(bool(_lo) and bool(_hi),
+              f"ask: '{_lbl}' answers at low and high evidence")
+        check(_lo != _hi,
+              f"ask: '{_lbl}' turns colder as the PI learns more")
+    # Canon anchors: the girl reply names Blaine; the colder well reply
+    # knows the guests went down and did not return (never a confessed
+    # plot, just hospitality).
+    ga.save.set_arg("evidence", [])
+    check(any("Blaine" in p for p in _sable_girl(ga)),
+          "ask: the girl topic names the Blaine girl")
+    for _i in range(3):
+        ga.save.arg("evidence", []).append({"name": f"_w{_i}", "lines": ["x"]})
+    check(any("down" in p for p in _sable_well(ga)),
+          "ask: the colder well reply knows the guests went down")
+
     # --- 18. effigy_grove is a maker-less tableau (§1b/§8) ---------------
     # Individual cursing is redundant -- the closing rite claimed the town at
     # once -- so the grove is left as the work without the worker, with no

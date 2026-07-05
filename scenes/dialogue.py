@@ -84,6 +84,46 @@ def _cult_tell(game, npc_key):
     return
 
 
+def open_ask_menu(game, npc, speaker, voice, portrait, topics,
+                  prompt="You could put a question to them. What do you ask?"):
+    """The PI's investigation verb: a modal menu of topics to ASK about,
+    whose chosen answer FLOATS above the speaker's head (ui/float_speech).
+
+    The player's pick needs the cursor, so the menu is modal (the one
+    place `show_choice` fits gameplay). The NPC's answer is speech, so it
+    routes through the floating caption instead of the frozen band, which
+    keeps the world running while they talk. Press E again by the speaker
+    to reopen the menu and ask something else.
+
+    `topics` is a list of (label, answer) where `answer` is either a list
+    of raw markup pages or a resolver(game) -> pages -- resolvers gate the
+    reply on evidence found / who is asking. A trailing back-out option is
+    appended automatically. Reusable; currently wired on Mr. Sable as the
+    pilot for the ask-questions layer (TODO #1)."""
+    labels = [t[0] for t in topics] + ["Say nothing."]
+
+    def _pick(idx):
+        if idx >= len(topics):
+            return                       # backed out; ask again anytime
+        answer = topics[idx][1]
+        pages = answer(game) if callable(answer) else list(answer)
+        if not pages:
+            return
+        # Float the reply over the speaker. show() reads game._speaking_npc
+        # to route a named line to the floating caption; the interact path
+        # already cleared it, so set it around this one call and restore.
+        prev = getattr(game, "_speaking_npc", None)
+        game._speaking_npc = npc
+        try:
+            game.dialog.show(pages, speaker=speaker, voice=voice,
+                             portrait=portrait)
+        finally:
+            game._speaking_npc = prev
+
+    game.dialog.show_choice(prompt, labels, _pick,
+                            speaker="", voice="blip_soft", portrait="narrator")
+
+
 # ---- The Preacher: Reverend Asa Crane ----
 
 def preacher_dialogue(game, npc):
@@ -395,6 +435,75 @@ def sheriff_dialogue(game, npc):
 
 
 # ---- The Clerk: Mr. Sable ----
+# The ask-questions verb, piloted on Sable (TODO #1). Each topic answers
+# in his voice -- hospitality with a funereal undertow, certainties he
+# voices as courtesies (compulsion, never a confessed scheme). The colder
+# tier keys on the EVIDENCE COUNT: the more the PI knows, the less Sable
+# bothers to keep the pleasant surface up, but he never admits a plot.
+
+def _sable_girl(game):
+    if game._evidence_count() >= 2:
+        return [
+            "Miss Blaine. She stopped asking, toward the end.",
+            "That is when a guest is happiest, I find. You will get "
+            "there yourself. No hurry.",
+        ]
+    return [
+        "Miss Blaine. A lovely guest. Full of questions, the way you are.",
+        "She settled in. They all settle in, given a night or two.",
+    ]
+
+
+def _sable_well(game):
+    if game._evidence_count() >= 2:
+        return [
+            "The guests take an interest in it, sooner or later. You "
+            "will too.",
+            "They go down for their look. They do not trouble to climb "
+            "back up. Restful, I expect.",
+        ]
+    return [
+        "The old well in the square? Set dressing, mostly. Nobody draws "
+        "from it now.",
+        "I would not lean over it. Poor footing, and a long way down.",
+    ]
+
+
+def _sable_guests(game):
+    if game._evidence_count() >= 2:
+        return [
+            "All checked in. Not a one checked out.",
+            "And yet the halls stay so quiet. No matter. They will not "
+            "have left. Nobody leaves.",
+        ]
+    return [
+        "Every room above is spoken for. Has been a good while now.",
+        "You will not hear them. They keep to themselves. The register "
+        "is right there on the desk, if you are the curious sort.",
+    ]
+
+
+def _sable_preacher(game):
+    if game.save.flag("preacher_doomed") or game._evidence_count() >= 2:
+        return [
+            "The Reverend took to naming names from his own pulpit. That "
+            "is not neighborly.",
+            "The town does not care for noise. It settles such things, "
+            "in its own time.",
+        ]
+    return [
+        "Reverend Crane? He rings his bell and shouts at the corn.",
+        "A loud man. Loud men tire themselves out, given long enough.",
+    ]
+
+
+_SABLE_TOPICS = [
+    ("The Blaine girl.",        _sable_girl),
+    ("The well in the square.", _sable_well),
+    ("The other guests.",       _sable_guests),
+    ("The Reverend.",           _sable_preacher),
+]
+
 
 def clerk_dialogue(game, npc):
     """The Lodge Clerk, Mr. Sable -- the smiling trap-keeper (NARRATIVE §2).
@@ -485,23 +594,15 @@ def clerk_dialogue(game, npc):
             "Won't change a thing.",
         ], speaker="Mr. Sable", voice="blip_low", portrait="clerk")
         return
-    if count == 3:
-        game.dialog.show([
-            "Still asking your questions. That's fine. Ask away.",
-            "[c=dim]She asked hers too, the Blaine girl. Right up until she "
-            "stopped needing to.[/c]",
-        ], speaker="Mr. Sable", voice="blip_low", portrait="clerk")
-        return
-    if count == 4:
-        game.dialog.show([
-            "[c=dim]He smiles, and it doesn't reach anything.[/c]",
-            "You're not a guest who checks out. None of my best ones are.",
-        ], speaker="Mr. Sable", voice="blip_low", portrait="clerk")
-        return
-    game.dialog.show(
-        ["[c=dim]He nods you toward the stairs, patient as a man with all "
-         "the time in the world.[/c]"],
-        speaker="Mr. Sable", voice="blip_low", portrait="clerk")
+    # Visit 3 and after: the investigation verb. He has said his welcome
+    # and pointed you at the register; now he simply waits, and you decide
+    # what to put to him. The chosen answer floats over the desk (world
+    # keeps running) so asking never freezes the run. (Pilot for TODO #1;
+    # the ask-layer is reusable via open_ask_menu.)
+    open_ask_menu(
+        game, npc, "Mr. Sable", "blip_low", "clerk", _SABLE_TOPICS,
+        prompt="Sable waits behind the desk, pleasant and patient. "
+               "What do you put to him?")
 
 
 def basement_photo_dialogue(game, npc):

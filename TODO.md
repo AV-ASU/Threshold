@@ -25,7 +25,7 @@ priority order within each group.
 
 ## Buildable now
 
-### 1. **[Fable]** Investigation dialogue verb — the ask-questions layer  *(breakthrough; NOT low-difficulty)*
+### 1. **[Fable]** Investigation dialogue verb — the ask-questions layer  *(VERB LANDED as a pilot 2026-07; expand to the rest of the cast)*
 
 You play a PI, but the only social verb is press-E-to-advance scripted lines:
 every NPC conversation is a linear counter (`old_count`, `kid_count` ...). The
@@ -36,6 +36,20 @@ the preacher) with answers gated on evidence found + who is being asked. Makes
 the core fantasy active for the first time (NARRATIVE §2: reading the town IS
 the investigation). Content + design, not engine work. **Highest value-to-risk
 item on the list: engine exists, canon is settled, payoff is the core fantasy.**
+
+- **VERB BUILT + PILOTED on Mr. Sable (2026-07).** `scenes/dialogue.open_ask_menu`
+  is the reusable layer: E opens a MODAL topic menu (the pick needs the cursor),
+  the chosen answer FLOATS over the speaker's head (`ui/float_speech`) so asking
+  never freezes the run, and the world keeps running while they talk. Topics are
+  `(label, resolver)` where the resolver gates the reply on evidence found; a
+  back-out is appended. Sable answers the girl / the well / the other guests /
+  the Reverend, each with a colder tier that keys on the evidence count (his
+  menace stays compulsion, never a confessed scheme). Wired after his two
+  scripted intro visits (intro + register nudge preserved) at `clerk_count >= 3`.
+  Guarded by `tests/flow.py` §17c. **To expand:** give Toby / Hettie / Vane /
+  Crane their own `_TOPICS` tables and swap their linear-count tails for
+  `open_ask_menu`, keeping each NPC's story-critical one-shots (witness, memory,
+  handoff) firing first.
 
 - **Pilot beat — the Crane choice** (proof-of-concept for the verb): in his
   2nd conversation, a two-option `show_choice` — provoke him (he goes off to
