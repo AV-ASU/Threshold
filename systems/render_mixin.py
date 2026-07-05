@@ -918,9 +918,20 @@ class RenderMixin:
             from rendering.sight import visible_factor, SIGHT_RENDER_STEP
             _spx, _spy, _shead = self.player.x, self.player.y, self.look.aim
             _blk = self.scene.blocks_sight
+            # Ground-crest occlusion feeds the draw gate too, so a figure behind
+            # a hill re-hides exactly like one behind a wall. None (no
+            # heightfield) keeps the pure cone+wall gate -- byte-identical.
+            _gz = (self.scene.ground_z
+                   if getattr(self.scene, "_ground_hf", None) is not None
+                   else None)
             def _sight(wx, wy):
                 return visible_factor(_spx, _spy, _shead, wx, wy, _blk,
-                                      step=SIGHT_RENDER_STEP)
+                                      step=SIGHT_RENDER_STEP, ground=_gz)
+        # Hand the see-through doors the SAME sight gate so a threat in the room
+        # beyond an opening is culled by the player's cone, like the open world
+        # (PORTALS.md; the through-view showed the far room ungated before). Only
+        # under tilt (the aperture is a tilt feature); cleared otherwise.
+        self.scene._door_actor_sight = _sight
         from rendering.solids import draw_with_alpha
 
         def _vis_alpha(wx, wy, exempt=False):
@@ -951,6 +962,12 @@ class RenderMixin:
             (_tilt_walls, _tilt_solid_decos, _tilt_wall_decos,
              _tilt_neighbor_solids) = draw_terrain_tilted(
                 self.screen, self.scene, self.camera, sight=_sight)
+            # Ground swell (CAMERA.md Phase 6): a projected floor mesh over the
+            # flat raster where a scene authored hills, so the terrain rolls and
+            # actors sit on it. No-op if no heightfield / flat camera.
+            if getattr(self.scene, "_ground_hf", None) is not None:
+                from rendering.heightfield import draw_ground_mesh
+                draw_ground_mesh(self.screen, self.camera, self.scene)
         else:
             self.scene.draw(self.screen, self.cam_x, self.cam_y, self.camera)
         if not self._tilt_on():

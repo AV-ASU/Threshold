@@ -166,13 +166,22 @@ def _render_through(target, anchor_px, camera, rect, door_origin,
 
 
 def draw_through_aperture(surf, target, anchor_px, quad, camera, t,
-                          cache_key, desaturate=False, dim=0.82):
+                          cache_key, desaturate=False, dim=0.82,
+                          door_world=None, sight=None):
     """Fill an arbitrary screen POLYGON (`quad`, a list of screen points) with
     the live through-view of `target`, aimed so `anchor_px` (a world point in
     target) sits at the polygon's centre. The mundane-door counterpart to
     draw_rift_door's masked window: no gold rim, colour kept (desaturate=False),
     a slight `dim` so a room seen through a threshold reads a touch darker than
-    the one you stand in. The caller draws its own frame/leaf on top."""
+    the one you stand in. The caller draws its own frame/leaf on top.
+
+    The cached terrain view shows the empty room. ACTORS in the far room are
+    drawn as a separate PER-FRAME pass (`_draw_aperture_actors`) gated by the
+    player's own sight cone, so an empty room reads through the door but a threat
+    lurking in a corner the player isn't looking at stays hidden -- the same
+    blind-spot rule the open world obeys (not the rift, which shows all by
+    design). `door_world` is the door's host-world (x, y); `sight(wx, wy)->0..1`
+    is the host sight factor. Both None -> no actor pass (byte-identical)."""
     xs = [p[0] for p in quad]
     ys = [p[1] for p in quad]
     left, top = int(min(xs)), int(min(ys))
@@ -196,6 +205,63 @@ def draw_through_aperture(surf, target, anchor_px, quad, camera, t,
         d = int(dim * 255)
         win.fill((d, d, d, 255), special_flags=pygame.BLEND_RGBA_MULT)
     surf.blit(win, rect.topleft)
+    if sight is not None and door_world is not None:
+        try:
+            _draw_aperture_actors(surf, target, anchor_px, quad, (cx, cy),
+                                  camera, door_world, sight, dim)
+        except Exception:
+            pass
+
+
+def _draw_aperture_actors(surf, target, anchor_px, quad, origin, camera,
+                          door_world, sight, dim):
+    """Draw the far room's actors through the aperture, each gated by the host
+    player's sight cone. The far scene is a frozen snapshot, so actor positions
+    are static; the GATE is re-evaluated every frame as the player turns/moves,
+    which is why this runs live over the cached terrain instead of baking in.
+
+    Both cameras share pitch/yaw/scale and put `anchor_px` (far) / `door_world`
+    (host) at the same screen point (`origin`), so a far actor at (ax, ay) shows
+    where the host camera would draw a thing at door_world + (actor - anchor).
+    That apparent host point is what we feed the sight factor -- so the aperture
+    figure appears and hides exactly like an open-world one at the same spot."""
+    from rendering.camera import Camera
+    from rendering.sprites import draw_npc_sprite, view_from_facing
+    from systems.config import TILT_ACTOR_STAND
+    ax, ay = anchor_px
+    dwx, dwy = door_world
+    pcam = Camera(cam_x=ax, cam_y=ay, pitch=camera.pitch, yaw=camera.yaw,
+                  scale=camera.scale, origin=(int(origin[0]), int(origin[1])))
+    lift = int(TILT_ACTOR_STAND * math.sin(camera.pitch))
+    left, top = origin[0], origin[1]
+    rleft = int(min(p[0] for p in quad))
+    rtop = int(min(p[1] for p in quad))
+    poly = [(qx - rleft, qy - rtop) for qx, qy in quad]
+    rw = int(max(p[0] for p in quad)) - rleft + 1
+    rh = int(max(p[1] for p in quad)) - rtop + 1
+    for npc in getattr(target, "npcs", ()):
+        if getattr(npc, "_inside", False) or not getattr(npc, "alive", True):
+            continue
+        nx, ny = npc.x, npc.y
+        f = sight(dwx + (nx - ax), dwy + (ny - ay))
+        if f <= 0.03:
+            continue
+        sx, sy = pcam.project(nx, ny)
+        sy -= lift
+        layer = pygame.Surface((rw, rh), pygame.SRCALPHA)
+        view = view_from_facing(npc.facing[0], npc.facing[1], pcam.yaw)
+        draw_npc_sprite(layer, sx - rleft, sy - rtop, npc.sprite_kind,
+                        npc.facing, view=view,
+                        seed=getattr(npc, "sprite_seed", 0))
+        # clip the figure to the opening (you see only the framed slice) and
+        # match the aperture's slight interior dim
+        m = pygame.Surface((rw, rh), pygame.SRCALPHA)
+        pygame.draw.polygon(m, (255, 255, 255, 255), poly)
+        layer.blit(m, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
+        a = int((255 if f >= 0.99 else int(255 * f)) * dim)
+        if a < 255:
+            layer.fill((255, 255, 255, a), special_flags=pygame.BLEND_RGBA_MULT)
+        surf.blit(layer, (rleft, rtop))
 
 
 def _aperture_mask(quad):

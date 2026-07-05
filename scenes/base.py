@@ -4,6 +4,7 @@ import math
 import random
 import pygame
 from constants import SCREEN_W, SCREEN_H, TILE
+from rendering.sight import SIGHT_EYE_H as _SIGHT_EYE_H
 
 
 # ---- Darkwood lighting / shadow helpers ----
@@ -2745,7 +2746,8 @@ def _draw_doorway(surf, camera, scene, tx, ty):
             draw_through_aperture(surf, view["target"], view["anchor_px"], rec,
                                   camera, 0.0,
                                   cache_key=("door", id(scene), wtx, wty),
-                                  desaturate=False)
+                                  desaturate=False, door_world=(wx, wy),
+                                  sight=getattr(scene, "_door_actor_sight", None))
         except Exception:
             pygame.draw.polygon(surf, (7, 6, 9), rec)
     else:
@@ -3920,6 +3922,13 @@ class Scene:
         # Furniture footprint tile (tx, ty) -> top height, so a tabletop prop
         # placed on that tile can be seated ON the surface (seat_tabletop_props).
         self._surface_tops = {}
+        # GROUND HEIGHTFIELD (CAMERA.md Phase 6, blind-spot hills). None = a
+        # dead-flat scene: `ground_z` returns 0.0 everywhere, so the floor, the
+        # actors, and the sight LOS are all a strict no-op (and pitch 0 is
+        # byte-identical). A builder opts in by attaching an (h x w) float grid
+        # of per-tile heights (world z, px) via `set_ground` -- authored with
+        # rendering.heightfield.build_heightfield, the _flood-style helper.
+        self._ground_hf = None
         self.enemies = []
         self.items = []          # list of {x,y,key,qty,on_pickup?}
         self.projectiles = []    # ranged-attack bullets
@@ -4252,6 +4261,44 @@ class Scene:
                 return False
         return True
 
+    def set_ground(self, heightfield):
+        """Attach a ground heightfield: an (h x w) float grid of per-tile
+        heights (world z, px), from rendering.heightfield.build_heightfield.
+        Pass None to clear it (back to dead-flat)."""
+        self._ground_hf = heightfield
+
+    def ground_z(self, x_px, y_px):
+        """Terrain height (world z, px) under a world point. 0.0 for a scene
+        with no heightfield -- so unopted scenes and pitch 0 are a strict
+        no-op. Bilinear over the per-tile grid (values sit at tile CENTRES),
+        clamped at the edges, so the surface reads as a smooth swell, not a
+        staircase."""
+        hf = self._ground_hf
+        if hf is None:
+            return 0.0
+        gx = x_px / TILE - 0.5
+        gy = y_px / TILE - 0.5
+        x0 = int(math.floor(gx))
+        y0 = int(math.floor(gy))
+        fx = gx - x0
+        fy = gy - y0
+        h = len(hf)
+        w = len(hf[0]) if h else 0
+        if w == 0:
+            return 0.0
+
+        def _s(tx, ty):
+            tx = 0 if tx < 0 else (w - 1 if tx >= w else tx)
+            ty = 0 if ty < 0 else (h - 1 if ty >= h else ty)
+            return hf[ty][tx]
+        a = _s(x0, y0)
+        b = _s(x0 + 1, y0)
+        c = _s(x0, y0 + 1)
+        d = _s(x0 + 1, y0 + 1)
+        top = a + (b - a) * fx
+        bot = c + (d - c) * fx
+        return top + (bot - top) * fy
+
     def clear_sight_line(self, x0, y0, x1, y1, step=10):
         """True if the straight (wrap-aware) segment from (x0,y0) to (x1,y1)
         crosses no SIGHT blocker -- walls and solid props occlude; windows and
@@ -4260,12 +4307,29 @@ class Scene:
         player, not merely sense distance: step behind a wall or a solid prop
         and you break the chase. Distinct from `nav_clear_line` (which treats
         water/pits as solid for pathing); a cultist can see ACROSS a pit it
-        cannot walk through, so sight must not reuse the nav predicate."""
+        cannot walk through, so sight must not reuse the nav predicate.
+
+        On a scene with a ground heightfield a terrain CREST also occludes: a
+        hill higher than the eye-to-target sight ray hides what is beyond it
+        (CAMERA.md Phase 6). The flat path (no heightfield) is unchanged."""
         dx = self.world_dx(x0, x1)
         dy = self.world_dy(y0, y1)
         n = max(1, int(math.hypot(dx, dy) // step))
+        hf = self._ground_hf
+        if hf is None:
+            for i in range(1, n + 1):
+                if self.blocks_sight(x0 + dx * i / n, y0 + dy * i / n):
+                    return False
+            return True
+        ez = self.ground_z(x0, y0) + _SIGHT_EYE_H
+        tz = self.ground_z(x1, y1) + _SIGHT_EYE_H
         for i in range(1, n + 1):
-            if self.blocks_sight(x0 + dx * i / n, y0 + dy * i / n):
+            f = i / n
+            sx = x0 + dx * f
+            sy = y0 + dy * f
+            if self.blocks_sight(sx, sy):
+                return False
+            if self.ground_z(sx, sy) > ez + (tz - ez) * f:
                 return False
         return True
 

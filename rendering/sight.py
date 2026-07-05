@@ -29,6 +29,12 @@ SIGHT_RANGE = 360.0                # px; how far the player can make things out
 SIGHT_NEAR = 40.0                  # px; always-seen bubble around the player
 SIGHT_ANG_FEATHER = math.radians(16)  # soft angular edge (eases in, no pop)
 SIGHT_RANGE_FEATHER = 56.0         # px; soft far-edge fade band
+# Eye height (world z, px) used by the ground-crest LOS term: the sight ray
+# runs at this height above the ground under the viewer/target, so a hill that
+# rises higher than the ray between them occludes what is beyond it -- the same
+# dread primitive as a wall (CAMERA.md Phase 6). Only consulted when a scene
+# authors a heightfield; a flat scene passes ground=None and this is inert.
+SIGHT_EYE_H = 22.0
 LOS_STEP = 7.0                     # px ray-march step for the wall check (AI)
 # The RENDER gate marches LOS for every visible actor/deco EVERY frame -- the
 # dominant per-frame sight cost. Walls are a full TILE (32px), so a coarser
@@ -70,34 +76,54 @@ def cone_factor(px, py, heading, tx, ty):
     return max(0.0, min(1.0, ang_f * range_f))
 
 
-def los_clear(px, py, tx, ty, blocks, step=LOS_STEP):
+def los_clear(px, py, tx, ty, blocks, step=LOS_STEP, ground=None,
+              eye=SIGHT_EYE_H):
     """True if no wall sits between (px, py) and (tx, ty). `blocks(x, y)` is a
     predicate returning True where sight is occluded (a wall tile). Coarse ray
     march; the endpoints themselves are not tested (the target may BE a wall-
-    adjacent thing and the player may stand on an open tile by a wall)."""
+    adjacent thing and the player may stand on an open tile by a wall).
+
+    `ground(x, y)` (optional) samples the terrain height (world z) under a
+    point. When given, a ground CREST between the eye and the target also
+    occludes: the sight ray runs from `ground(px,py)+eye` to `ground(tx,ty)+eye`
+    and any intermediate ground sample rising above it blocks the line, exactly
+    like a wall. Default None keeps the pure wall behaviour (byte-identical for
+    every flat scene) -- this term only ADDS occlusion, never removes it."""
     dx = tx - px
     dy = ty - py
     d = math.hypot(dx, dy)
     if d < 1e-6:
         return True
     n = int(d / step)
+    ez = tz = 0.0
+    if ground is not None:
+        ez = ground(px, py) + eye
+        tz = ground(tx, ty) + eye
     for i in range(1, n + 1):
         f = i / (n + 1)
-        if blocks(px + dx * f, py + dy * f):
+        sx, sy = px + dx * f, py + dy * f
+        if blocks(sx, sy):
+            return False
+        if ground is not None and ground(sx, sy) > ez + (tz - ez) * f:
             return False
     return True
 
 
-def visible_factor(px, py, heading, tx, ty, blocks=None, step=LOS_STEP):
+def visible_factor(px, py, heading, tx, ty, blocks=None, step=LOS_STEP,
+                   ground=None, eye=SIGHT_EYE_H):
     """Combined sight: the cone factor, gated to 0 if a wall occludes the
     target. `blocks` may be None (open arena — cone only). Returns 0..1.
 
     `step` is the LOS ray-march granularity; callers in the per-frame draw
     gate pass the coarser SIGHT_RENDER_STEP. The cheap cone test runs first
-    and short-circuits before any wall march."""
+    and short-circuits before any wall march.
+
+    `ground` (optional) adds the terrain-crest occlusion term (see los_clear):
+    a hill you can't see over hides what is beyond it. None = flat, no-op."""
     cf = cone_factor(px, py, heading, tx, ty)
     if cf <= 0.0 or blocks is None:
         return cf
-    return cf if los_clear(px, py, tx, ty, blocks, step=step) else 0.0
+    return cf if los_clear(px, py, tx, ty, blocks, step=step,
+                           ground=ground, eye=eye) else 0.0
 
 
