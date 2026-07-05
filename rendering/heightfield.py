@@ -56,26 +56,65 @@ def build_heightfield(w, h, bumps):
     return grid
 
 
+def carve_channel(w, h, centerline, half_width, depth, grid=None):
+    """Carve a river TROUGH into a heightfield: for each tile within
+    `half_width` tiles of the centerline, sink the ground toward -`depth` (world
+    z, px) at the channel axis, easing back to grade (0) at the rim (cosine).
+    `centerline` is a list of (cx, cy) tile points -- the river's path; the
+    trough is the union of the perpendicular cuts along it, so a bent river bends
+    its banks. The carve takes the MIN, so it deepens an existing grid (banks
+    from build_heightfield + a channel cut) instead of fighting it.
+
+    The rim (z 0) meets the surrounding flat floor continuously; the bed sits at
+    -depth, so a figure in the channel is below the bank crest and the crest
+    occludes the bank tops from them (and them from the bank), which is exactly
+    the sight-pit the WADE water routing wants. Pair with `~` water chars on the
+    bed tiles so the mesh shades the trough wet."""
+    grid = grid if grid is not None else [[0.0] * w for _ in range(h)]
+    if half_width <= 0:
+        return grid
+    for cx, cy in centerline:
+        x0 = max(0, int(math.floor(cx - half_width)))
+        x1 = min(w - 1, int(math.ceil(cx + half_width)))
+        y0 = max(0, int(math.floor(cy - half_width)))
+        y1 = min(h - 1, int(math.ceil(cy + half_width)))
+        for ty in range(y0, y1 + 1):
+            for tx in range(x0, x1 + 1):
+                dist = math.hypot(tx - cx, ty - cy)
+                if dist >= half_width:
+                    continue
+                z = -depth * (0.5 + 0.5 * math.cos(math.pi * dist / half_width))
+                if z < grid[ty][tx]:
+                    grid[ty][tx] = z
+    return grid
+
+
 # Earth-tone ramp the swell shades along: the mound reads by its LIGHT (a lit
 # crown falling to a shadowed far flank), so the two ends are pulled far enough
 # apart to read against the dark floor without looking like a foreign patch.
 _MESH_LIT = (96, 88, 66)
 _MESH_DARK = (20, 19, 15)
+# Cold, near-black water ramp for a sunken channel bed: the wet trough reads by
+# the same Lambert as the earth, just pulled to a drowned blue-grey so a river
+# cut into the ground looks wet, not muddy.
+_WATER_LIT = (44, 62, 74)
+_WATER_DARK = (10, 16, 22)
 # Fixed light: from the upper-left, a touch above the horizon. Slopes facing it
 # catch light, the far flank falls to shadow -- the cue that reads as 3D form.
 _LIGHT = (-0.42, -0.55, 0.72)
 
 
-def _shade(nx, ny, nz):
+def _shade(nx, ny, nz, lit=_MESH_LIT, dark=_MESH_DARK):
     """Directional Lambert for a ground face with (approx, un-normalised)
     surface normal (nx, ny, nz). Bright where the slope faces the light, dark on
-    the far flank -- the shading that makes the swell read as a rounded hill."""
+    the far flank -- the shading that makes the swell read as a rounded form.
+    `lit`/`dark` pick the palette (earth by default, water for a channel bed)."""
     ln = math.sqrt(nx * nx + ny * ny + nz * nz) or 1.0
     d = (nx * _LIGHT[0] + ny * _LIGHT[1] + nz * _LIGHT[2]) / ln
     k = max(0.0, min(1.0, 0.30 + 0.70 * d))
-    return (int(_MESH_DARK[0] + (_MESH_LIT[0] - _MESH_DARK[0]) * k),
-            int(_MESH_DARK[1] + (_MESH_LIT[1] - _MESH_DARK[1]) * k),
-            int(_MESH_DARK[2] + (_MESH_LIT[2] - _MESH_DARK[2]) * k))
+    return (int(dark[0] + (lit[0] - dark[0]) * k),
+            int(dark[1] + (lit[1] - dark[1]) * k),
+            int(dark[2] + (lit[2] - dark[2]) * k))
 
 
 def draw_ground_mesh(surf, camera, scene, alpha=200):
@@ -102,6 +141,17 @@ def draw_ground_mesh(surf, camera, scene, alpha=200):
         ty = 0 if ty < 0 else (h - 1 if ty >= h else ty)
         return hf[ty][tx]
 
+    floor = getattr(scene, "floor", None)
+    fh = len(floor) if floor else 0
+
+    def is_water(tx, ty):
+        # a mesh tile reads WET if the ground under it is a water char, so a
+        # channel BED renders as the sunken river rather than mud
+        if not floor or not (0 <= ty < fh):
+            return False
+        row = floor[ty]
+        return 0 <= tx < len(row) and row[tx] in ("~", "@")
+
     quads = []
     for ty in range(h - 1):
         for tx in range(w - 1):
@@ -109,8 +159,12 @@ def draw_ground_mesh(surf, camera, scene, alpha=200):
             z10 = cz(tx + 1, ty)
             z01 = cz(tx, ty + 1)
             z11 = cz(tx + 1, ty + 1)
-            if z00 <= 0.0 and z10 <= 0.0 and z01 <= 0.0 and z11 <= 0.0:
-                continue                       # dead-flat tile: leave the raster
+            # a tile whose four corners are all (near) grade keeps the flat
+            # raster; raised OR sunken corners get a mesh quad (a channel bed
+            # dips below 0, so test magnitude, not sign)
+            if (abs(z00) <= 1e-6 and abs(z10) <= 1e-6
+                    and abs(z01) <= 1e-6 and abs(z11) <= 1e-6):
+                continue
             # tile corners in world px (corners sit on the tile grid; the
             # per-tile heights sit at tile CENTRES, so a corner reads the mean
             # of the four tiles that meet there -- cheap and smooth enough)
@@ -126,7 +180,10 @@ def draw_ground_mesh(surf, camera, scene, alpha=200):
             # measured in px, so z shares the unit): n = (-dz/dx, -dz/dy, 1) up.
             dzdx = (z10 - z00 + z11 - z01) * 0.5
             dzdy = (z01 - z00 + z11 - z10) * 0.5
-            col = _shade(-dzdx, -dzdy, TILE)
+            if is_water(tx, ty) or is_water(tx + 1, ty + 1):
+                col = _shade(-dzdx, -dzdy, TILE, _WATER_LIT, _WATER_DARK)
+            else:
+                col = _shade(-dzdx, -dzdy, TILE)
             depth = camera.depth((wx0 + wx1) * 0.5, (wy0 + wy1) * 0.5,
                                  (z00 + z11) * 0.5)
             quads.append((depth, (p00, p10, p11, p01), col))

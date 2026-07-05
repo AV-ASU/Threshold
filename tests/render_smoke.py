@@ -69,7 +69,8 @@ def check_phase6_and_doors(g):
         not (so the empty room shows but a blind-spot lurker stays hidden)."""
     import math
     import numpy as np
-    from rendering.heightfield import build_heightfield, draw_ground_mesh
+    from rendering.heightfield import (build_heightfield, carve_channel,
+                                       draw_ground_mesh)
     from rendering.camera import Camera
     from rendering.portal import _draw_aperture_actors
     from scenes.base import Scene
@@ -97,6 +98,24 @@ def check_phase6_and_doors(g):
         errors += fail("heightfield: a crest must block LOS across it")
     if not hill.clear_sight_line(crest[0], crest[1], far[0], far[1]):
         errors += fail("heightfield: from the crest you must see over")
+
+    # -- carved river channel: a sunken bed + a bank crest that occludes -------
+    chan = Scene("hf_chan", ["." * 24] * 24)
+    banks = [(tx, 8.0, 2.0, 30.0) for tx in range(24)] + \
+            [(tx, 15.0, 2.0, 30.0) for tx in range(24)]   # clear of the cut
+    grid = build_heightfield(24, 24, banks)
+    grid = carve_channel(24, 24, [(tx, 11.5) for tx in range(24)], 3.0, 60.0,
+                         grid=grid)
+    chan.set_ground(grid)
+    if chan.ground_z(12 * TILE + 16, 11 * TILE + 16) > -20.0:
+        errors += fail("channel: the river bed must sink below grade")
+    if chan.ground_z(12 * TILE + 16, 8 * TILE + 16) < 10.0:
+        errors += fail("channel: the banks must rise above grade")
+    # a viewer up on the far bank cannot see a figure down on the channel bed
+    bank = (12 * TILE + 16, 6 * TILE + 16)
+    bed = (12 * TILE + 16, 11 * TILE + 16)
+    if chan.clear_sight_line(bank[0], bank[1], bed[0], bed[1]):
+        errors += fail("channel: the bank crest must hide the channel bed")
 
     # -- heightfield: the mesh renderer is a strict no-op at pitch 0 ----------
     surf0 = pygame.Surface((80, 80))
