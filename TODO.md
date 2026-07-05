@@ -42,6 +42,65 @@ Per-scene level-design polish: composed emptiness, long sightlines, uncanny
 repetition. Inherently ongoing/iterative rather than a single shippable
 ticket — scope a concrete first scene before starting.
 
+### 12. Brimley reshape — the sealed fog-island  *(design landed; not built)*
+
+Shrink Brimley and make it read as a bounded town swallowed by the fold,
+not a rectangle with edges. **Stays ONE scene** (`scenes/brimley.py`
+`build_brimley`, ~1236 lines). Do NOT split the buildings into a separate
+area — `NARRATIVE.md` §11 merged village+mistlands into one Brimley on
+purpose; splitting re-creates the discarded topology.
+
+**Decided (build this):**
+- **Smaller grid** — cut `w`/`h` from 100×100 toward ~64–72, re-pack the 7
+  buildings + well tighter. This is the real FPS/tedium win (the one-time
+  whole-map tilt bake, `scenes/base.py` `_tilt_fullmap`, ~6000 tiles).
+- **Circular/organic playable mask** — beyond a radius, fill with
+  treeline/void so the tilt camera + skybox render the rim as fog. Player
+  never sees a corner or a straight edge. (The border band + lobes are
+  already ~80% of this.)
+- **Boundary = two mechanics combined:**
+  1. Keep the rectangular torus `wrap_x/wrap_y` running *underneath*, hidden
+     by the fog rim (proven, low risk; wrap keys off `player.x >= world_w`
+     in `systems/game.py` ~1190).
+  2. Off the roads, a radial "handed-back" membrane: push into the fog and
+     your heading bends back with a **drift toward the center** (the well).
+     Royce's "the corn handed me back" made literal; claustrophobic by
+     design.
+- **Exit rule — roads pierce the fog, open ground repels.** A road runs into
+  the grey and doesn't come back out on your side; that crossing *is* the
+  scene transition (fade to the next sealed room). Everywhere else the fog
+  turns you back. The player **arrives on the road** (from `country_lane` /
+  the Lodge), so road-as-lifeline is taught at entry; the existing lit-lamp
+  road thread becomes load-bearing.
+- **No walkable escape.** Every edge is lateral — hands you to another sealed
+  room, and the "roads out" (south macro-loop) loop back to Brimley north.
+  The only true exits are DOWN (the well, at center, where the drift herds
+  you) and the Mask drive-out (SPREAD ending, a cutscene, never a walkable
+  rim).
+
+**Wishlist — spatial manipulation the layout unlocks (ideas, pick later):**
+- *Draw-only (cheap/safe):* landmark repetition (pass "the same" well/pickup
+  twice in fog); the town rearranges behind you (rides `sight.py`
+  blind-spot draw-gating — sim runs, only the cone is drawn); the straight
+  road that imperceptibly spirals back to start.
+- *Geometry (needs sim kept Euclidean-honest under the lie):*
+  **walls-closing-in** (animate the radius/drift inward over the run — this
+  IS #2, made a variable; the standout); **well-gravity** (heading bends a
+  few degrees toward the well each unmonitored moment); impossible adjacency
+  / one-way internal folds via `cross_fold` (same-scene folds render silent,
+  PORTALS.md); asymmetric in/out travel distance.
+- **Caution:** distance/collision tricks stress stealth suspicion (distance
+  falloff) and NPC/King nav — keep the sim honest even while presentation
+  lies. Star pairing with the decided work: **walls-closing-in +
+  landmark repetition.**
+
+**Preserve (load-bearing):** the fold road + Royce/Garrick looping-roads
+lines, the well (sole Works entrance), all exits, locals, cult stations.
+**Naming:** in player-facing text call it a bounded fog-edge / void-ringed
+town, not "island" (implies water). **Verify:** `tools/profile_brimley.py`
+before/after, a `tools/capture_world.py` tilt capture, full
+`python tests/run_all.py` gate.
+
 ---
 
 ## Optional polish (no canon/lore change; do as time allows)
