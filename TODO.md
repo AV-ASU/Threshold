@@ -14,6 +14,23 @@
 
 ## Open work
 
+### 12. Investigation dialogue verb — the ask-questions layer  *(breakthrough; NOT low-difficulty)*
+
+You play a PI, but the only social verb is press-E-to-advance scripted lines:
+every NPC conversation is a linear counter (`old_count`, `kid_count` ...). The
+choice engine already exists and works (`ui/dialog.py show_choice`) but is used
+in exactly ONE gameplay spot (the Sign Chamber altar fork, `scenes/well.py`
+~L890). Build an ask-about-topics layer (the girl / the well / the strangers /
+the preacher) with answers gated on evidence found + who is being asked. Makes
+the core fantasy active for the first time (NARRATIVE §2: reading the town IS
+the investigation). Content + design, not engine work.
+
+- **Pilot beat — the Crane choice** (proof-of-concept for the verb): in his
+  2nd conversation, a two-option `show_choice` — provoke him (he goes off to
+  "save" the cult) vs hold him back. Canon fence (§1b): the cult can NOT be
+  saved or converted (they were answered, not deceived); Crane dies for
+  believing he can. The provoke branch feeds the murder reveal below.
+
 ### 0. Stealth rework — the TUNING loop  *(needs a human at the keys)*
 
 The mechanic AND the placement pass are built and guarded
@@ -42,7 +59,66 @@ Per-scene level-design polish: composed emptiness, long sightlines, uncanny
 repetition. Inherently ongoing/iterative rather than a single shippable
 ticket — scope a concrete first scene before starting.
 
-### 12. Verticality — an "up" axis  *(CAMERA.md Phase 6, design spike)*
+### 12. Brimley reshape — the sealed fog-island  *(design landed; not built)*
+
+Shrink Brimley and make it read as a bounded town swallowed by the fold,
+not a rectangle with edges. **Stays ONE scene** (`scenes/brimley.py`
+`build_brimley`, ~1236 lines). Do NOT split the buildings into a separate
+area — `NARRATIVE.md` §11 merged village+mistlands into one Brimley on
+purpose; splitting re-creates the discarded topology.
+
+**Decided (build this):**
+- **Smaller grid** — cut `w`/`h` from 100×100 toward ~64–72, re-pack the 7
+  buildings + well tighter. This is the real FPS/tedium win (the one-time
+  whole-map tilt bake, `scenes/base.py` `_tilt_fullmap`, ~6000 tiles).
+- **Circular/organic playable mask** — beyond a radius, fill with
+  treeline/void so the tilt camera + skybox render the rim as fog. Player
+  never sees a corner or a straight edge. (The border band + lobes are
+  already ~80% of this.)
+- **Boundary = two mechanics combined:**
+  1. Keep the rectangular torus `wrap_x/wrap_y` running *underneath*, hidden
+     by the fog rim (proven, low risk; wrap keys off `player.x >= world_w`
+     in `systems/game.py` ~1190).
+  2. Off the roads, a radial "handed-back" membrane: push into the fog and
+     your heading bends back with a **drift toward the center** (the well).
+     Royce's "the corn handed me back" made literal; claustrophobic by
+     design.
+- **Exit rule — roads pierce the fog, open ground repels.** A road runs into
+  the grey and doesn't come back out on your side; that crossing *is* the
+  scene transition (fade to the next sealed room). Everywhere else the fog
+  turns you back. The player **arrives on the road** (from `country_lane` /
+  the Lodge), so road-as-lifeline is taught at entry; the existing lit-lamp
+  road thread becomes load-bearing.
+- **No walkable escape.** Every edge is lateral — hands you to another sealed
+  room, and the "roads out" (south macro-loop) loop back to Brimley north.
+  The only true exits are DOWN (the well, at center, where the drift herds
+  you) and the Mask drive-out (SPREAD ending, a cutscene, never a walkable
+  rim).
+
+**Wishlist — spatial manipulation the layout unlocks (ideas, pick later):**
+- *Draw-only (cheap/safe):* landmark repetition (pass "the same" well/pickup
+  twice in fog); the town rearranges behind you (rides `sight.py`
+  blind-spot draw-gating — sim runs, only the cone is drawn); the straight
+  road that imperceptibly spirals back to start.
+- *Geometry (needs sim kept Euclidean-honest under the lie):*
+  **walls-closing-in** (animate the radius/drift inward over the run — this
+  IS #2, made a variable; the standout); **well-gravity** (heading bends a
+  few degrees toward the well each unmonitored moment); impossible adjacency
+  / one-way internal folds via `cross_fold` (same-scene folds render silent,
+  PORTALS.md); asymmetric in/out travel distance.
+- **Caution:** distance/collision tricks stress stealth suspicion (distance
+  falloff) and NPC/King nav — keep the sim honest even while presentation
+  lies. Star pairing with the decided work: **walls-closing-in +
+  landmark repetition.**
+
+**Preserve (load-bearing):** the fold road + Royce/Garrick looping-roads
+lines, the well (sole Works entrance), all exits, locals, cult stations.
+**Naming:** in player-facing text call it a bounded fog-edge / void-ringed
+town, not "island" (implies water). **Verify:** `tools/profile_brimley.py`
+before/after, a `tools/capture_world.py` tilt capture, full
+`python tests/run_all.py` gate.
+
+### 13. Verticality — an "up" axis  *(CAMERA.md Phase 6, design spike)*
 
 The camera already carries a real height axis (`Camera.project(wx, wy, wz)`,
 `z` rises by `sin(pitch)`); the *simulation* is flat XY (player has no z,
@@ -72,28 +148,37 @@ collision + sight are 2D). Split by cost, cheapest first:
   rule, and the payoff (spatial spectacle) partly fights a game whose power is
   restricted sight. Revisit only if a specific set-piece demands it.
 
-### 13. See-through portal-doors  *(PORTALS.md; in progress this branch)*
+### 14. See-through portal-doors  *(PORTALS.md; rendering + seamless crossing landed)*
 
 Doors stop being a fade-to-black: the aperture shows the ACTUAL room beyond,
 rendered through the live tilt camera, with the hinged leaf physically
-swinging to reveal it. Crossing the sill is the existing seamless `cross_fold`
-(no fade). The through-view core already exists (`portal._render_through_full`,
-used by the King's rift + hidden folds) and the tilt door already draws a
-swinging leaf (`scenes/base._draw_doorway` + `_door_anim`); the work is
-replacing the near-black recess with the cached through-view, per-scene opt-in
-door metadata (seam + target + arrival anchor), routing opted-in doors through
-`cross_fold`, and — the horror-critical part — gating the through-view's
-ACTORS through `sight.py` so the empty room shows but a threat in its corner
-does not (unlike the rift, which shows everything by design). Prototype:
-`rendering/seethrough_door.py` + `tools/preview_seethrough_door.py`.
+swinging to reveal it, and an opted-in door crosses the sill via the seamless
+`cross_fold` (no fade). Landed this branch: the recess through-view
+(`portal.draw_through_aperture` + `Game._build_door_views` +
+`scenes/base._draw_doorway`), the per-scene `Scene.seethrough_doors` opt-in
+(house's two interior doors), and the `begin_transition(seamless=...)` routing.
+**Still open:** gating the through-view's ACTORS through `sight.py` so the empty
+room shows but a threat in its corner does not (unlike the rift, which shows
+everything by design), and opting in higher-contrast doors (a lit room off a
+dark hall, the front door onto the yard) where the effect reads strongest.
 
 ---
 
 ## Optional polish (no canon/lore change; do as time allows)
 
-- **Rev. Asa Crane murder beat** *(GAME_CHANGES.md §12)* — the
-  `preacher_doomed` -> gutted-on-the-floor reveal could be punched up for
-  impact. Lore unchanged; not requested.
+- **Rev. Asa Crane murder reveal + sprite** *(GAME_CHANGES.md §12)* — punch up
+  the `preacher_doomed` death, three parts. (1) **New discovery location**: the
+  provoke choice (§12 pilot) sends him to the cult's ground, so find his body
+  AWAY from the church — e.g. the well/grove edge, reaching for the souls he
+  couldn't save — a real investigative find, not a pop on re-entry. (2)
+  **Bespoke sprite**: the current corpse is a placeholder medieval knight
+  (`_draw_body`: helmet + spear + tabard-grey) — replace with a gutted-preacher
+  draw (dark palette, white collar, cross in the mess). (3) Stage the approach
+  (wrongness before sight, long sightline). Art + placement + a location move;
+  lore unchanged.
+- **Doc/code drift (quick)** — `README.md` says "no disk save" but the cot
+  save-slot exists (`systems/save.py`); `CAMERA.md` lists the sight cone as
+  62°/280/30 but `sight.py` ships 74°/360/40. Fix the docs to match code.
 - **Held-weapon offset eyeball pass** *(HANDCRAFT_BACKLOG.md §3b)* — the
   `draw_axe_held` / `draw_revolver_held` code is in and working; this is just
   a visual check of the held-weapon offset at every camera yaw.
