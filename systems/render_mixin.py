@@ -700,7 +700,7 @@ class RenderMixin:
 
     def _draw_death_screen(self):
         """Render the active death card over everything. King = the
-        furnace of masks (sprites.draw_king_death) stamped CARCOSA;
+        furnace of masks (sprites.draw_king_death), wordless;
         cultist = a stark CAPTURED card over a near-black wash."""
         if self._death_kind == "king":
             if KING_UNFOLD:
@@ -709,13 +709,6 @@ class RenderMixin:
                 draw_unfold_catch(self.screen, min(1.0, self._death_t / 3.0))
             else:
                 draw_king_death(self.screen, self._death_t)
-            if self._death_t > 3.0:                  # the name surfaces over the descent
-                w, h = self.screen.get_size()
-                ta = min(235, int((self._death_t - 3.0) / 0.55 * 235))
-                tt = self.fonts["title"].render("CARCOSA", True, (236, 204, 64))
-                tt.set_alpha(ta)
-                self.screen.blit(tt, (w // 2 - tt.get_width() // 2,
-                                      h // 2 - tt.get_height() // 2))
             return
         # Cultist: the cult takes you (CAPTURED). Sheriff: the hollow
         # lawman takes you in (TAKEN INTO CUSTODY). Fade to near-black,

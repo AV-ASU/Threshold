@@ -43,9 +43,9 @@ ITEM_DEFS = {
                        "kind": "key",
                        "desc": "A heavy steel flashlight. Press [F] to "
                                "switch it on in the dark. But a light in "
-                               "the dark is a thing that can be seen. The "
-                               "longer it burns, the more the King feels "
-                               "you."},
+                               "the dark is a thing that can be seen. Burn "
+                               "it too long and you will not be the only one "
+                               "who knows where you are."},
     "pallid_mask": {"name": "The Pallid Mask",
                        "kind": "lore",
                        "desc": "The King's own pale half-mask, made an "
