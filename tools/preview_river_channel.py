@@ -1,11 +1,12 @@
 """River-channel preview -- a sunken river with real depth (CAMERA.md Phase 6).
 
-A design spike for the "large outdoor area + a river that has depth" question:
-compose the shipped heightfield primitives into a CARVED river. The ground is
-cut into a trough (rendering.heightfield.carve_channel), water chars sit on the
-bed so the mesh shades it wet, and the bank crest occludes line of sight -- so a
-figure down in the channel is HIDDEN from someone back on the grade until they
-reach the rim (the sight-pit the WADE water routing wants).
+A design spike for the "large outdoor area + a river that has depth" question.
+It answers it as a DIRECT comparison: the same scene, same camera, same five
+figures placed ACROSS the river (grade -> bank -> water -> bank -> grade),
+rendered FLAT (no heightfield) vs CARVED (rendering.heightfield.carve_channel).
+In the carved view the bank figures ride UP and the water figure drops DOWN into
+the wet trough, and the near bank crest HIDES the figure in the bed -- the
+sight-pit the WADE water routing wants.
 
     python tools/preview_river_channel.py   -> /tmp/river_channel.png
 
@@ -34,124 +35,128 @@ from rendering.sprites import draw_npc_sprite, view_from_facing
 from rendering.sight import visible_factor, SIGHT_EYE_H
 from scenes.base import Scene, draw_terrain_tilted
 
-W, H = 30, 24
-RIVER_ROW = 12          # the river runs E-W across the middle
+W, H = 26, 26
+RIVER_ROW = 13          # the river runs E-W across the middle
 HALF = 3.2              # channel half-width, tiles
-DEPTH = 66.0            # how far the bed sinks below grade, world-z px
-CROP_W, CROP_H = 360, 300
+DEPTH = 82.0            # how far the bed sinks below grade, world-z px
+BANK = 34.0             # how far the banks rise above grade, world-z px
 
 
-def build_river_scene():
+def build_scene(carved):
     floor = [["." for _ in range(W)] for _ in range(H)]
-    # a two-tile-wide water ribbon on the channel axis
     for tx in range(W):
         for ty in (RIVER_ROW, RIVER_ROW + 1):
             floor[ty][tx] = "~"
-    sc = Scene("river_spike", ["".join(r) for r in floor],
-               music="wind")
+    sc = Scene("river_spike", ["".join(r) for r in floor], music="wind")
     sc.skybox_kind = "overcast"
-    # Raised BANKS (levees) either side of the cut, then carve the channel into
-    # them: the profile becomes grade -> bank crest (+) -> wet bed (-) -> bank
-    # -> grade, so there is real relief to read even over the flat floor raster.
-    banks = []
-    for tx in range(-1, W + 1):
-        banks.append((tx, RIVER_ROW - HALF, 2.4, 30.0))
-        banks.append((tx, RIVER_ROW + 1 + HALF, 2.4, 30.0))
-    grid = build_heightfield(W, H, banks)
-    centerline = [(tx, RIVER_ROW + 0.5) for tx in range(-1, W + 1)]
-    sc.set_ground(carve_channel(W, H, centerline, HALF, DEPTH, grid=grid))
+    if carved:
+        banks = []
+        for tx in range(-1, W + 1):
+            banks.append((tx, RIVER_ROW - HALF, 2.4, BANK))
+            banks.append((tx, RIVER_ROW + 1 + HALF, 2.4, BANK))
+        grid = build_heightfield(W, H, banks)
+        centerline = [(tx, RIVER_ROW + 0.5) for tx in range(-1, W + 1)]
+        sc.set_ground(carve_channel(W, H, centerline, HALF, DEPTH, grid=grid))
     return sc
 
 
-def _cam(px, py, yaw=math.radians(28)):
-    return Camera(cam_x=px, cam_y=py, pitch=math.radians(55), yaw=yaw,
-                  scale=1.7, origin=(SCREEN_W // 2, SCREEN_H // 2 + 40))
+# A row of identical stakes marching NORTH across the river on one column. Each
+# is a fixed world height planted on the ground -- so their bases trace the
+# terrain: flat they recede in a straight line; carved they plunge into the bed
+# and climb the banks. That base profile IS the depth.
+COL = W // 2
+STAKE_H = 30.0                         # world-px height of each stake
+STAKE_ROWS = [RIVER_ROW + 0.5 - i * 1.15 for i in range(-6, 7)]
+
+# The viewer stands back on the south grade, looking north over the river.
+VIEW_ROW = RIVER_ROW + 8.5
 
 
-def _standee(surf, cam, sc, px, py, aim, wx, wy, kind, facing):
-    """Draw an actor standing on the (possibly sunken) ground, gated by the
-    viewer's sight cone WITH the ground-crest term -- so the bank hides a figure
-    in the channel from a viewer up on the grade."""
-    gz = sc.ground_z(wx, wy)
-    sx, sy = cam.project(wx, wy, gz)
-    sy -= int(TILT_ACTOR_STAND * math.sin(cam.pitch))
-    f = visible_factor(px, py, aim, wx, wy, sc.blocks_sight,
-                       ground=sc.ground_z, eye=SIGHT_EYE_H)
-    if f <= 0.04:
-        return
-    layer = pygame.Surface((220, 250), pygame.SRCALPHA)
-    view = view_from_facing(facing[0], facing[1], cam.yaw)
-    draw_npc_sprite(layer, 110, 160, kind, facing, view=view)
-    if f < 0.99:
-        layer.set_alpha(int(255 * f))
-    surf.blit(layer, (sx - 110, sy - 160))
+def _cam():
+    px, py = COL * TILE + 16, VIEW_ROW * TILE
+    return Camera(cam_x=px, cam_y=py, pitch=math.radians(55),
+                  yaw=math.radians(22), scale=1.9,
+                  origin=(SCREEN_W // 2, SCREEN_H // 2 + 90))
 
 
-def _world(sc, cam):
+def _stakes(surf, sc, cam):
+    for row in STAKE_ROWS:
+        wx, wy = COL * TILE + 16, row * TILE
+        gz = sc.ground_z(wx, wy)
+        bx, by = cam.project(wx, wy, gz)
+        tx, ty = cam.project(wx, wy, gz + STAKE_H)
+        wet = sc.floor[int(row) % H][COL] == "~" if 0 <= int(row) < H else False
+        col = (120, 180, 210) if wet else (232, 210, 120)
+        pygame.draw.line(surf, (0, 0, 0), (bx, by + 2), (tx, ty), 6)
+        pygame.draw.line(surf, col, (bx, by), (tx, ty), 4)
+        pygame.draw.circle(surf, (255, 250, 235), (tx, ty), 5)
+        pygame.draw.circle(surf, (0, 0, 0), (bx, by), 3)
+
+
+def _draw(sc, cam, mode):
     surf = pygame.Surface((SCREEN_W, SCREEN_H))
     draw_skybox(surf, (0, 0, SCREEN_W, SCREEN_H), yaw=cam.yaw,
                 kind="overcast", horizon_frac=0.40)
     draw_terrain_tilted(surf, sc, cam)
     draw_ground_mesh(surf, cam, sc)
+    if mode in ("flat", "carved"):
+        _stakes(surf, sc, cam)
+    else:                              # "sight": a figure standing in the bed
+        # viewer at the near RIM (so the figure shows here); from the grade the
+        # bank crest would hide it -- that asymmetry IS the sight-pit
+        px, py = COL * TILE + 16, (RIVER_ROW + 1 + HALF) * TILE
+        wx, wy = COL * TILE + 16, (RIVER_ROW + 0.5) * TILE
+        f = visible_factor(px, py, -math.pi / 2, wx, wy, sc.blocks_sight,
+                           ground=sc.ground_z, eye=SIGHT_EYE_H)
+        if f > 0.04:
+            gz = sc.ground_z(wx, wy)
+            sx, sy = cam.project(wx, wy, gz)
+            sy -= int(TILT_ACTOR_STAND * math.sin(cam.pitch))
+            layer = pygame.Surface((220, 250), pygame.SRCALPHA)
+            view = view_from_facing(0.0, -1.0, cam.yaw)
+            draw_npc_sprite(layer, 110, 160, "cultist", (0.0, -1.0), view=view)
+            if f < 0.99:
+                layer.set_alpha(int(255 * f))
+            surf.blit(layer, (sx - 110, sy - 160))
     return surf
 
 
-def _panel(surf, label, focus, cam, font):
-    bx, by = cam.project(*focus)
-    cx = max(0, min(SCREEN_W - CROP_W, bx - CROP_W // 2))
-    cy = max(0, min(SCREEN_H - CROP_H, by - CROP_H // 2))
-    crop = surf.subsurface((cx, cy, CROP_W, CROP_H)).copy()
-    panel = pygame.transform.scale(crop, (CROP_W * 2, CROP_H * 2))
-    bar = pygame.Surface((CROP_W * 2, 24))
+def _panel(surf, label, font, sub):
+    # crop to the middle where the action is, 1.6x up
+    cw, ch = 460, 430
+    cx = (SCREEN_W - cw) // 2
+    cy = (SCREEN_H - ch) // 2 + 40
+    crop = surf.subsurface((cx, cy, cw, ch)).copy()
+    scaled = pygame.transform.scale(crop, (int(cw * 1.5), int(ch * 1.5)))
+    bar = pygame.Surface((scaled.get_width(), 46))
     bar.fill((0, 0, 0))
-    bar.blit(font.render(label, True, (228, 228, 218)), (8, 4))
-    sheet = pygame.Surface((CROP_W * 2, CROP_H * 2 + 24))
-    sheet.blit(panel, (0, 0))
-    sheet.blit(bar, (0, CROP_H * 2))
-    return sheet
+    bar.blit(font.render(label, True, (235, 233, 220)), (10, 4))
+    bar.blit(pygame.font.SysFont("monospace", 13).render(
+        sub, True, (150, 170, 180)), (10, 25))
+    out = pygame.Surface((scaled.get_width(), scaled.get_height() + 46))
+    out.blit(scaled, (0, 0))
+    out.blit(bar, (0, scaled.get_height()))
+    return out
 
 
 def main():
-    sc = build_river_scene()
-    font = pygame.font.SysFont("monospace", 15)
-    river_wy = (RIVER_ROW + 1) * TILE
-    focus = (W / 2 * TILE, river_wy)
+    font = pygame.font.SysFont("monospace", 17)
+    flat = _panel(_draw(build_scene(False), _cam(), "flat"),
+                  "FLAT  (no heightfield)", font,
+                  "a row of equal stakes -- their bases recede in a straight line")
+    carved = _panel(_draw(build_scene(True), _cam(), "carved"),
+                    "CARVED CHANNEL", font,
+                    "same stakes -- their bases PLUNGE into the wet bed, climb the banks")
+    gated = _panel(_draw(build_scene(True), _cam(), "sight"),
+                   "CARVED + SIGHT", font,
+                   "a figure stands down in the wet bed (from the grade the bank hides it)")
 
-    # A figure standing IN the channel bed (on the water axis).
-    fig = (W / 2 * TILE, river_wy)
-    facing_n = (0.0, -1.0)
-
-    shots = []
-
-    # 1. The carved channel itself: banks sloping to a wet trough.
-    px, py = W / 2 * TILE, river_wy + 6.0 * TILE     # stand back on the grade
-    cam = _cam(px, py)
-    surf = _world(sc, cam)
-    shots.append(_panel(surf, "1. the carved channel -- banks cut to a wet trough",
-                        focus, cam, font))
-
-    # 2. A figure down in the channel, viewer back on the grade: the near bank
-    #    crest HIDES it (below the line of sight over the rim).
-    surf = _world(sc, cam)
-    _standee(surf, cam, sc, px, py, -math.pi / 2, fig[0], fig[1],
-             "cultist", facing_n)
-    shots.append(_panel(surf, "2. viewer on the grade -- the figure in the channel is HIDDEN",
-                        focus, cam, font))
-
-    # 3. Viewer steps to the rim: the channel opens up and the figure RESOLVES.
-    px3, py3 = W / 2 * TILE, river_wy + HALF * TILE + 0.4 * TILE
-    cam3 = _cam(px3, py3)
-    surf = _world(sc, cam3)
-    _standee(surf, cam3, sc, px3, py3, -math.pi / 2, fig[0], fig[1],
-             "cultist", facing_n)
-    shots.append(_panel(surf, "3. step to the rim -- you see down into it, figure RESOLVES",
-                        focus, cam3, font))
-
-    pw, ph = shots[0].get_size()
-    sheet = pygame.Surface((pw, ph * len(shots)))
+    gap = 16
+    pw, ph = flat.get_size()
+    sheet = pygame.Surface((pw * 3 + gap * 2, ph))
     sheet.fill((12, 12, 14))
-    for i, s in enumerate(shots):
-        sheet.blit(s, (0, i * ph))
+    for i, p in enumerate((flat, carved, gated)):
+        sheet.blit(p, (i * (pw + gap), 0))
     pygame.image.save(sheet, "/tmp/river_channel.png")
     print("wrote /tmp/river_channel.png")
 
