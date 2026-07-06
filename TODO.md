@@ -112,6 +112,19 @@ Brimley scene behind a preview before wiring.
   grade (the sight-pit the WADE routing wants). Preview
   `tools/preview_river_channel.py`; guard `tests/render_smoke.py` [4/4].
 
+- **DECISION (2026-07): the carved channel is the shippable win; the general
+  floor-roll + subsidence bowl are PARKED (see Deferred).** A design pass
+  concluded the heightfield's payoff (outdoor sight-occlusion) fights its
+  geometry at ~55° tilt: a crest tall enough to hide a standing figure over a
+  SHORT outdoor sightline is a near-cliff, not a gentle hill, so "natural
+  sloped boundary" and "occludes like a wall" are different terrain and a
+  general rolling floor mostly reads wrong at this camera. And the tilt camera
+  + blind-spot sight-gating already hide the ground geometry, so the illusion
+  the roll was buying is largely already bought. The prototype stays DORMANT
+  (paid for, byte-identical at pitch 0 — leave it), the carved channel ships (a
+  trough is a controlled shape that dodges the cliff problem), and outdoor
+  dread now routes through COMPOSITION (#4), not new terrain tech.
+
 - **Deferred siblings (do NOT pull forward without a set-piece that demands
   them):** *3b.* Multi-floor buildings as same-building `cross_fold`s to a
   `lodge_upstairs`-style scene (no fade, stride preserved; the reveal is already
@@ -122,122 +135,36 @@ Brimley scene behind a preview before wiring.
   "no roof over the play area" rule, and the payoff partly fights a game whose
   power is restricted sight.
 
-### 3d. **[Opus]** Floor-roll warp — the real rolling ground  *(the next terrain build; unlocks large sloped areas)*
+### 4. **[Fable]** Outdoor dread — the composition pass  *(the outdoor-dread lever; replaces the parked Brimley reshape + terrain megabuilds)*
 
-The `draw_ground_mesh` prototype lays a projected mesh over the flat floor —
-fine for a discrete hill or a carved channel, but the surrounding raster stays
-flat, so relief is thin edge-on and it will not carry a whole rolling area. The
-honest fix is to replace the global affine `_tilt_warp` (`scenes/base.py`) with
-a **height-displaced warp** so the floor raster itself rolls with `ground_z`.
-**Constraints:** still strictly no-op when a scene has no heightfield (byte-
-identity gate, all shipping scenes flat); a perf pass on the one-time whole-map
-tilt bake (`_tilt_fullmap`, ~6000 tiles); feed `ground_z` into every live actor/
-standee/decoration `project()` **and** its paired `depth()` (so a figure on a
-bank sorts over the trough). This is the prerequisite for a large sloped
-outdoor area (the Brimley subsidence bowl below). Prototype behind
-`tools/capture_world.py` + a live tilt capture before wiring a scene.
+Open ground is the game's weakest dread zone (long sightlines, reads as an open
+field). The 2026-07 design call PARKED the two big-tech answers to this (the
+Brimley reshape and the ground floor-roll — see Deferred) because the tilt
+camera + blind-spot sight-gating already carry the geometry illusion, and the
+honest lever is COMPOSITION with tools already shipped, not new terrain tech.
+Attack it on ONE named outdoor scene at a time (this is §10's liminal-
+composition pass made concrete):
+- **Corn + treeline are the outdoor walls.** Denser stands, winding corn lanes
+  that break the long shot, a treeline that closes the rim. Draw + placement
+  only; the standee billboards + the `_corn_runs` LOD already exist.
+- **Fog / mist volume** between the player and the distance shortens the
+  effective sightline directly (the job the subsidence bowl wanted, minus the
+  geometry). Rides the skybox/void rim that is already ~80% there.
+- **Landmark repetition + same-scene silent folds** (`cross_fold`, PORTALS.md,
+  draw-only) give the "handed back / the town rearranges" uncanny with no sim
+  change (`sight.py` blind-spot draw-gating already runs the sim while drawing
+  only the cone).
 
-### 3e. **[Opus]** Terrain design directions — how terrain earns its keep  *(design note, not one ticket)*
-
-Terrain is the ONE tool that gives sight-occlusion in OPEN ground, where walls
-can't go — so it extends the game's core restricted-sight dread outdoors, its
-weakest zone. Standing directions (each rides the shipped heightfield + crest
-LOS; pick a set-piece before building):
-- **A third cover class — the sunken lane / ditch:** a depression you crouch-
-  move through BELOW a searcher's sightline. Unlike corn it isn't leaky; unlike
-  an enclosed hide it doesn't root you — mobile cover that slots into graded
-  suspicion (a searcher scores nothing until he crests the ridge). Also the
-  natural home for the deferred Pillar-2 **peek** verb (crest a rise slowly).
-- **King roam, crest-hidden:** put rises on his road so he crests a hill and is
-  suddenly close, or drops into a hollow and out of view. He stays sight-exempt
-  (always tracks you); the terrain hides HIM from YOU — the scarier asymmetry.
-- **Staged reveals (NARRATIVE §8/§10):** wrongness before sight, then crest and
-  SEE it — the exact approach the **Crane murder discovery** (Optional polish)
-  wants (a body found away from the church, long sightline, reveal on the rise).
-- **Herding without walls + the descent made physical:** a valley/bowl that
-  funnels toward the well (well-gravity as literal downhill), ridges that channel
-  movement onto the roads (roads-as-lifeline). Feeds the Brimley reshape below.
-- **Caution:** AI ignores height in v1, so terrain cover is a PLAYER-only
-  affordance for now (good asymmetry, but no cultist takes the high ground yet);
-  keep the sim Euclidean-honest so stealth distance-falloff + NPC nav stay true.
-
-### 4. **[Opus]** Brimley reshape — the sealed fog-edge town  *(design landed; not built)*
-
-Shrink Brimley and make it read as a bounded town swallowed by the fold,
-not a rectangle with edges. **Stays ONE scene** (`scenes/brimley.py`
-`build_brimley`, ~1236 lines). Do NOT split the buildings into a separate
-area — `NARRATIVE.md` §11 merged village+mistlands into one Brimley on
-purpose; splitting re-creates the discarded topology.
-
-**Decided (build this):**
-- **Smaller grid** — cut `w`/`h` from 100×100 toward ~64–72, re-pack the 7
-  buildings + well tighter. This is the real FPS/tedium win (the one-time
-  whole-map tilt bake, `scenes/base.py` `_tilt_fullmap`, ~6000 tiles).
-- **Circular/organic playable mask** — beyond a radius, fill with
-  treeline/void so the tilt camera + skybox render the rim as fog. Player
-  never sees a corner or a straight edge. (The border band + lobes are
-  already ~80% of this.)
-- **Boundary = two mechanics combined:**
-  1. Keep the rectangular torus `wrap_x/wrap_y` running *underneath*, hidden
-     by the fog rim (proven, low risk; wrap keys off `player.x >= world_w`
-     in `systems/game.py` ~1190).
-  2. Off the roads, a radial "handed-back" membrane: push into the fog and
-     your heading bends back with a **drift toward the center** (the well).
-     Royce's "the corn handed me back" made literal; claustrophobic by
-     design.
-- **Exit rule — roads pierce the fog, open ground repels.** A road runs into
-  the grey and doesn't come back out on your side; that crossing *is* the
-  scene transition (fade to the next sealed room). Everywhere else the fog
-  turns you back. The player **arrives on the road** (from `country_lane` /
-  the Lodge), so road-as-lifeline is taught at entry; the existing lit-lamp
-  road thread becomes load-bearing.
-- **No walkable escape.** Every edge is lateral — hands you to another sealed
-  room, and the "roads out" (south macro-loop) loop back to Brimley north.
-  The only true exits are DOWN (the well, at center, where the drift herds
-  you) and the Mask drive-out (SPREAD ending, a cutscene, never a walkable
-  rim).
-
-**Sequencing (scope guard):** ship the DECIDED half first (smaller grid +
-fog mask + road/repel boundary) and verify the sim stays Euclidean-honest;
-only THEN pick ONE wishlist toy. Do not build the boundary and the spatial
-illusions in the same pass — each illusion below stresses stealth suspicion
-and King/NPC nav, so they land one at a time behind their own verify.
-
-**TERRAIN is now the recommended tool for this ticket (2026-07).** The ground
-heightfield (#3) + the floor-roll warp (#3d) turn Brimley from a see-everything
-field into a **subsidence bowl** whose ground sags toward the well at center —
-which does the herding (well-gravity as literal downhill), gives outdoor
-sight-occlusion where walls can't go (hollows + ridges break the long
-sightlines that currently kill outdoor dread), hides the King roam behind rises
-(he crests a hill and he's suddenly close), and turns the river into a stealth
-artery (the carved channel, `carve_channel`: bridge = exposed high route, wade
-the trough = hidden but slow + splashing, sight-trapped below the banks). This
-is the set-piece that earns the #3d floor-roll rewrite. Sequence: #3d first,
-then the bowl + sunken lanes behind a preview (as the river spike was). Keep the
-sim Euclidean-honest so stealth distance-falloff + nav stay true under the roll.
-
-**Wishlist — spatial manipulation the layout unlocks (ideas, pick later):**
-- *Draw-only (cheap/safe):* landmark repetition (pass "the same" well/pickup
-  twice in fog); the town rearranges behind you (rides `sight.py`
-  blind-spot draw-gating — sim runs, only the cone is drawn); the straight
-  road that imperceptibly spirals back to start.
-- *Geometry (needs sim kept Euclidean-honest under the lie):*
-  **walls-closing-in** (animate the radius/drift inward over the run — this
-  IS boundary mechanic #2, made a variable; the standout); **well-gravity**
-  (heading bends a few degrees toward the well each unmonitored moment);
-  impossible adjacency / one-way internal folds via `cross_fold` (same-scene
-  folds render silent, PORTALS.md); asymmetric in/out travel distance.
-- **Caution:** distance/collision tricks stress stealth suspicion (distance
-  falloff) and NPC/King nav — keep the sim honest even while presentation
-  lies. Star pairing with the decided work: **walls-closing-in +
-  landmark repetition.**
-
-**Preserve (load-bearing):** the fold road + Royce/Garrick looping-roads
-lines, the well (sole Works entrance), all exits, locals, cult stations.
-**Naming:** in player-facing text call it a bounded fog-edge / void-ringed
-town, not "island" (implies water). **Verify:** `tools/profile_brimley.py`
-before/after, a `tools/capture_world.py` tilt capture, full
-`python tests/run_all.py` gate.
+**To turn into work:** name ONE scene (the Brimley approach road, or the
+effigy/husk grove) and the ONE composition it gets (this sightline broken by
+this corn lane, this landmark passed twice in fog). Do NOT start against the
+abstract goal. Keep the sim Euclidean-honest so stealth distance-falloff + NPC
+nav stay true under any presentation lie. **Preserve (load-bearing) if the
+scene is Brimley:** it stays ONE square scene (§11 merged village+mistlands on
+purpose; do not split, do not reshape); the fold road + Royce/Garrick looping-
+roads lines; the well as sole Works entrance; all exits/locals/cult stations;
+in player-facing text call it a bounded fog-edge / void-ringed town, never
+"island."
 
 ## Blocked on a human at the keys
 
@@ -274,12 +201,42 @@ Not a discrete ticket — a standing direction for per-scene level-design polish
 composed emptiness, long sightlines, uncanny repetition. Inherently
 iterative. **To turn it into work, name ONE scene and the ONE composition it
 gets** (this sightline, this repeated landmark); do not start against the
-abstract goal.
+abstract goal. *(The buildable-now #4 is this pass aimed specifically at
+outdoor dread — start there.)*
+
+### 8. Parked — terrain & reshape megabuilds  *(2026-07 design call; do NOT pull forward without a set-piece that demands it AND a fresh decision)*
+
+Cut from active work because their payoff (outdoor sight-occlusion / a sealed
+bounded town) fights their cost, and the tilt camera already buys most of the
+illusion for free. The cheap replacement is the composition pass (#4). The
+DORMANT heightfield prototype + the SHIPPED carved river channel STAY (harmless,
+byte-identical at pitch 0); it is the general-purpose builds below that are
+parked.
+
+- **Floor-roll warp (was #3d).** Replacing the global affine `_tilt_warp` with a
+  height-displaced warp so the whole floor raster rolls. Parked: at ~55° a crest
+  tall enough to occlude a standing figure over a short outdoor sightline is a
+  near-cliff, not a gentle hill, so a general rolling floor reads wrong at this
+  camera; plus a rendering rewrite + a perf pass on the ~6000-tile bake. The
+  controlled-shape cases (the carved river trough) already ship without it.
+- **Terrain design directions (was #3e).** The sunken-lane cover class, the King
+  crest-reveal, terrain-herding toward the well, the deferred peek verb's home.
+  All depend on the parked floor-roll and on AI that reads height (v1 ignores
+  it). Revisit only if the floor-roll is ever un-parked for a specific set-piece.
+- **Brimley reshape (was #4).** Round/organic fog-edge remask + radial
+  "handed-back" membrane + subsidence bowl. Parked: **Brimley STAYS a square** —
+  the tilt camera + sight cone + fog rim already mean the player never sees a
+  corner or a straight edge, so the reshape spent a real build (stressing stealth
+  suspicion + King/NPC nav) on an illusion break the camera does not allow. The
+  torus wrap + fog rim it wanted to keep "underneath" are already the shipped
+  substrate. The one salvaged win (a smaller grid, the actual FPS lever) is split
+  out to Optional polish.
 
 ---
 
 ## Optional polish (no canon/lore change; do as time allows)
 
+- **[Opus]** **Brimley smaller-grid perf pass** *(the one salvaged piece of the parked reshape, #8)* — cut `w`/`h` from 100×100 toward ~64–72 and re-pack the 7 buildings + well tighter, WITHOUT changing the shape or the boundary (the square + torus wrap + fog rim all stay). This is the real FPS/tedium win (the one-time whole-map tilt bake, `scenes/base.py` `_tilt_fullmap`, ~6000 tiles). Verify: `tools/profile_brimley.py` before/after, a `tools/capture_world.py` tilt capture, full `python tests/run_all.py` gate.
 - **[Fable + Opus]** **Rev. Asa Crane murder reveal + sprite** *(GAME_CHANGES.md §12)* — Fable for the reveal writing + staging, Opus for the procedural corpse sprite. Punch up
   the `preacher_doomed` death, three parts. (1) **New discovery location**: the
   provoke choice (item #1 pilot) sends him to the cult's ground, so find his body
