@@ -538,11 +538,10 @@ def sable_on_leave(game):
         return None
     game.save.set_flag("sable_farewell_hook", True)
     return [
-        ("npc", "Hold a moment. You came in off that road today, so you'll "
-                "know."),
-        ("npc", "Did it feel to you like it went anywhere? The road, I mean. "
-                "Folk say it does not, lately. I wouldn't know. I never "
-                "leave the desk."),
+        ("npc", "Hold a moment. You drove in off that road last night. So "
+                "you'll know."),
+        ("npc", "Did it feel to you like it went anywhere? Folk say it does "
+                "not, lately. I wouldn't know. I never leave the desk."),
     ]
 
 
@@ -636,7 +635,8 @@ SABLE_CONVO = {
             "beats": [
                 ("npc", "The roads are not going anywhere tonight. Neither "
                         "are you. I would not fret over the car."),
-                ("pi", "That isn't an answer."),
+                ("pi", "I didn't ask about tonight. I asked what's wrong "
+                       "with every car in this town."),
                 ("npc", "It is the only one I have, and I have never needed "
                         "another. Get some rest."),
             ],
@@ -681,8 +681,8 @@ SABLE_CONVO = {
         # out he DID say it, plainly, and the PI simply heard hospitality.
         {
             "key": "the_fold",
-            "q": "The roads loop back on themselves. This whole town is "
-                 "folded shut. You knew that, and you smiled at me.",
+            "q": "I walked the road out of town. Followed it two hours, due "
+                 "west. It set me back down past this window.",
             "avail": lambda g: any(
                 isinstance(e, dict) and e.get("name") == "the_fold_told"
                 for e in (g.save.arg("notes", []) or [])),
@@ -690,7 +690,7 @@ SABLE_CONVO = {
                 ("npc", "I told you the roads were not going anywhere. You "
                         "heard a man being hospitable. I meant it plainly."),
                 ("npc", "There is no call to be cross about it. You are safe "
-                        "here. Safer than out there, if you follow me."),
+                        "here. Safer than out there."),
             ],
         },
         # THE WAY DOWN (the act break, now an explicit ASK -- not a silent
@@ -700,8 +700,8 @@ SABLE_CONVO = {
         # when he crosses the threshold, so it is signposted, not a guess.
         {
             "key": "the_way_down",
-            "q": "You've been holding something for me. I think I'm ready "
-                 "for it now.",
+            "q": "You've kept something back from me since I walked in. "
+                 "I'll take it now.",
             "once": True,
             "avail": lambda g: (g._evidence_count() >= 3
                                 and not g.save.flag("rite_envelope_given")
