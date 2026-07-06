@@ -151,7 +151,8 @@ abstract goal. Keep the sim Euclidean-honest so stealth distance-falloff + NPC
 nav stay true under any presentation lie. **Preserve (load-bearing) if the
 scene is Brimley:** it stays ONE square scene (§11 merged village+mistlands on
 purpose; do not split, do not reshape); the fold road + Royce/Garrick looping-
-roads lines; the well as sole Works entrance; all exits/locals/cult stations;
+roads lines; the well as dread set-dressing (NOT the way down: the descent is
+the cult's dug mine at the grove, reached by the rite); all exits/locals/cult stations;
 in player-facing text call it a bounded fog-edge / void-ringed town, never
 "island."
 

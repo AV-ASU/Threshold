@@ -1252,10 +1252,11 @@ class Decoration:
             pygame.draw.line(surf, col, (x - 6, y + i * 2 + wy), (x + 6, y + i * 2 + wy), 2)
 
     def _draw_well(self, surf, x, y):
-        # A fuller, ominous wellhead -- the congregation's old mouth into
-        # the Works, unusable now (dread set-dressing; the rite is the way
-        # down). Mossy ring of fitted stones, a bottomless black shaft, a
-        # winch frame, and a frayed stub where the rope used to hang.
+        # A fuller, ominous wellhead -- a dead, dry town well, dread
+        # set-dressing (NOT the way down; the descent is the cult's dug mine
+        # out at the grove, reached by the rite). It goes nowhere the player
+        # can follow. Mossy ring of fitted stones, a bottomless black shaft, a
+        # winch frame, and a frayed stub where the bucket-rope used to hang.
         # Outer stone ring (3/4 top-down ellipse)
         pygame.draw.ellipse(surf, (78, 78, 88), (x - 18, y - 8, 36, 22))
         pygame.draw.ellipse(surf, (54, 54, 64), (x - 18, y - 8, 36, 22), 2)

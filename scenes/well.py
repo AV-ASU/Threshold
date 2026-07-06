@@ -48,9 +48,9 @@ from .depths import _box, _cultist, _ambient, _wall, _bevel, _flood, _rect_tiles
 
 def build_well_bottom():
     # The shaft floor: a round (octagonal) stone pit at the bottom of the
-    # well. No rope, no ladder: the descent fold in the grove lands you
-    # here, and its RETURN PANE ('O', walked west) stands where the rope
-    # once hung -- symmetric while it lives, dead once the Deep Stair
+    # cult's mine shaft. No rope, no ladder: the descent fold in the grove
+    # lands you here, and its RETURN PANE ('O', walked west) stands where the
+    # rope once hung -- symmetric while it lives, dead once the Deep Stair
     # seals the descent.
     floor, objs = _box(12, 10)
     _bevel(objs, 3)

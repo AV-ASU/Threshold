@@ -128,7 +128,7 @@ sites, 8 music sites, channel helpers).
 8. **`child_hum` now does what its comment promised.** It rides
    `Scene.add_ambient` in `CREEPY_SCENES` at a deliberately rare
    50–95 s cadence (most visits hear it at most once), panned so it
-   drifts from somewhere — including down the well rooms. The scripted
+   drifts from somewhere — including down in the Works rooms. The scripted
    forest_path beat is untouched.
 
 **Healthy, verified, leave alone:**
