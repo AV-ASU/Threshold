@@ -25,7 +25,7 @@ priority order within each group.
 
 ## Buildable now
 
-### 1. **[Fable]** Investigation dialogue verb — the ask-questions layer  *(breakthrough; NOT low-difficulty)*
+### 1. **[Fable]** Investigation dialogue verb — the ask-questions layer  *(VERB LANDED as a pilot 2026-07; expand to the rest of the cast)*
 
 You play a PI, but the only social verb is press-E-to-advance scripted lines:
 every NPC conversation is a linear counter (`old_count`, `kid_count` ...). The
@@ -36,6 +36,28 @@ the preacher) with answers gated on evidence found + who is being asked. Makes
 the core fantasy active for the first time (NARRATIVE §2: reading the town IS
 the investigation). Content + design, not engine work. **Highest value-to-risk
 item on the list: engine exists, canon is settled, payoff is the core fantasy.**
+
+- **VERB BUILT + PILOTED on Mr. Sable (2026-07), organic redesign.** The menu
+  options ARE the PI's own first-person spoken lines (not abstract "The X"
+  topics you infer), and picking one plays a real EXCHANGE: the PI speaks, the
+  NPC answers, each floating over their own head (`ui/float_speech`) while the
+  world keeps running; an exchange can branch on an inline choice (show him the
+  photo, or don't) with a side effect. Engine: `ui/conversation.Conversation`
+  (`open_conversation`) is a small state machine wired entirely through the
+  float `on_complete` chain + `dialog.show_choice` callbacks (Game never ticks
+  it). A conversation is plain data: a one-time `greet`, then `exchanges` of
+  `{key, q, avail, once, beats}`; a beat is `("npc"/"pi", text)` or
+  `("ask", prompt, [(label, [beats], on_pick)])`. **The case GROWS the talk:**
+  questions gated by `avail` open as evidence is found (Sable's register + her-
+  state questions unlock on `the_ledger` / `maras_journal`), and the discovery
+  itself NUDGES the PI back, appending his interior line onto the find's
+  narration and filing a case NOTE (`_REVISIT_NUDGES` / `_collect_revisit`,
+  hooked into `_evidence`; never inflates the evidence count). Wired on Sable
+  after the envelope handoff preempt. Guarded by `tests/flow.py` §17c (17
+  checks) + the naming guard. **To expand:** give Toby / Hettie / Vane / Crane
+  their own `*_CONVO` data + `open_conversation`, keeping each NPC's story-
+  critical one-shots (witness, memory, handoff) firing first, and add
+  `_REVISIT_NUDGES` entries so their questions grow with the case too.
 
 - **Pilot beat — the Crane choice** (proof-of-concept for the verb): in his
   2nd conversation, a two-option `show_choice` — provoke him (he goes off to
@@ -256,15 +278,6 @@ abstract goal.
 
 ---
 
-## Quick wins (zero-risk; just do them)
-
-- **[Opus]** **Doc/code drift** — `README.md` says "no disk save" but the cot
-  save-slot exists (`systems/save.py`); `CAMERA.md` lists the sight cone as
-  62°/280/30 but `sight.py` ships 74°/360/40. These are WRONG docs that will
-  mislead the next contributor. Fix the docs to match code.
-
----
-
 ## Optional polish (no canon/lore change; do as time allows)
 
 - **[Fable + Opus]** **Rev. Asa Crane murder reveal + sprite** *(GAME_CHANGES.md §12)* — Fable for the reveal writing + staging, Opus for the procedural corpse sprite. Punch up
@@ -319,6 +332,11 @@ Fable is doing the implementing, an Opus pass reviews it the same way.
 
 ### 2026-07 build sweep (this branch; each flow/stealth-guarded)
 
+- **Doc/code drift quick-win** — fixed the two stale docs the code had
+  outgrown: `README.md` claimed "no disk save" (the cot save-slot in
+  `systems/save.py` has existed since 2026-07), and `CAMERA.md` listed the
+  blind-spot sight cone as 62°/280/30 where `rendering/sight.py` ships
+  74°/360/40 (`SIGHT_HALF`/`SIGHT_RANGE`/`SIGHT_NEAR`). Docs now match code.
 - **Portal-door actor sight-gating (was Open #2)** — the see-through aperture
   drew NO far-room actors before; now it draws them as a per-frame pass
   (`portal._draw_aperture_actors`) gated by the player's sight cone (mapping

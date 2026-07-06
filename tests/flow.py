@@ -154,29 +154,35 @@ def main():
           "grove: at 0 evidence the descent fold will not cross")
     check(g.scene.key == "effigy_grove", "grove: still in the grove")
 
-    # (b) At 3 evidence: the handoff fires once, with the PI's note.
+    # (b) At 3 evidence the "way down" question OPENS; asking it hands over
+    # the Invitation once, with the PI's note. The silent auto-handoff is
+    # gone -- getting the rite is now an explicit, gated ask.
+    from scenes.dialogue import (SABLE_CONVO as _SCV,
+                                 _sable_give_invitation as _give)
+    _wd = next(ex for ex in _SCV["exchanges"] if ex["key"] == "the_way_down")
+    check(not _wd["avail"](g),
+          "sable: below 3 evidence the 'way down' question is not offered")
     for i in range(3):
         g.save.arg("evidence", []).append(
             {"name": f"_act1_{i}", "lines": ["x"]})
-    ready(g)
-    clerk_dialogue(g, None)
+    check(_wd["avail"](g),
+          "sable: at 3 evidence the 'way down' question opens")
+    _give(g)                       # the player asks; he hands it over
     check(g.player.inventory.has("rite_envelope"),
-          "sable: at 3 evidence he hands over the Invitation")
+          "sable: asking for the way hands over the Invitation")
     check(any(isinstance(e, dict) and e.get("name") == "the_invitation"
               for e in g.save.arg("notes", [])),
           "sable: the handoff logs the PI's NOTE (never evidence)")
     check(len(g.save.arg("evidence", [])) == 3,
           "sable: the handoff does not inflate the evidence count")
-    ready(g)
-    _notes_n = sum(1 for e in g.save.arg("notes", [])
-                   if isinstance(e, dict)
-                   and e.get("name") == "the_invitation")
-    clerk_dialogue(g, None)
-    check(_notes_n == 1 and sum(
-              1 for e in g.save.arg("notes", [])
-              if isinstance(e, dict)
-              and e.get("name") == "the_invitation") == 1,
-          "sable: the handoff fires exactly once (no duplicate note)")
+    check(not _wd["avail"](g),
+          "sable: the 'way down' question closes once he has given it")
+    _give(g)                       # asking again does nothing
+    check(g.player.inventory.count("rite_envelope") == 1
+          and sum(1 for e in g.save.arg("notes", [])
+                  if isinstance(e, dict)
+                  and e.get("name") == "the_invitation") == 1,
+          "sable: the handoff fires exactly once (no duplicate)")
 
     # (c) The school rite: incense first, then the chalk door; the fold
     # stays open from then on.
@@ -1087,10 +1093,18 @@ def main():
         return cap[0] if cap else None
 
     roster = [("Sheriff Vane", sheriff_dialogue), ("Rev. Crane", preacher_dialogue),
-              ("Hettie", hettie_dialogue), ("Mr. Sable", clerk_dialogue)]
+              ("Hettie", hettie_dialogue)]
     for expected, fn in roster:
         check(first_speaker(fn) == expected,
               f"naming: a principal local speaks as '{expected}' (not a role-tag)")
+    # Sable now speaks through the floating conversation, not the modal
+    # band; his name rides every line via the convo, and the greeting is
+    # spoken (floated), not a role-tag.
+    from scenes.dialogue import SABLE_CONVO as _SC
+    check(_SC["name"] == "Mr. Sable",
+          "naming: Sable speaks as 'Mr. Sable' through the conversation")
+    check("Sable" in _SC["greet"]["beats"][0][1],
+          "naming: Sable's floated greeting introduces him by name")
 
     # --- 17b. Sable is the most-attuned LOCAL (NARRATIVE §2) -------------
     # His menace is compulsion, not conspiracy. Lock the framing: the
@@ -1103,6 +1117,171 @@ def main():
     check(not any(w in _sable_src for w in
                   ("newcomer", "recruiter", "recruit")),
           "sable: never tagged newcomer/recruiter (compulsion, not conspiracy)")
+
+    # --- 17c. The investigation ASK verb (pilot: Mr. Sable, TODO #1) -----
+    # The menu options ARE the PI's own spoken lines; picking one plays an
+    # organic PI<->NPC exchange over their heads (ui/conversation), and new
+    # questions open as the case grows. Guard the engine + Sable's script.
+    from scenes.dialogue import SABLE_CONVO, _REVISIT_NUDGES
+    from ui.conversation import Conversation
+
+    def _npc_stub(gg):
+        return type("N", (), {"name": "Mr. Sable",
+                              "x": gg.player.x, "y": gg.player.y,
+                              "alive": True, "_is_corpse": False,
+                              "_inside": False})()
+
+    # (1) A fresh talk floats the greeting once, THEN opens the menu.
+    ga = new_game()
+    convo = Conversation(ga, _npc_stub(ga), SABLE_CONVO)
+    ga.dialog.active = False
+    convo.start()
+    check(ga.save.flag("sable_greeted") and ga.float_speech.active
+          and not ga.dialog.active,
+          "ask: the first talk floats Sable's greeting (no modal band)")
+    # Drive the greeting to completion the way the loop would; the menu opens.
+    ga.float_speech._finish()
+    check(ga.dialog.choices is not None,
+          "ask: once greeted, the menu of the PI's questions opens")
+
+    # (2) The menu offers only AVAILABLE questions; base ones plus a leave.
+    base = [ex for ex in SABLE_CONVO["exchanges"] if "avail" not in ex]
+    check(len(ga.dialog.choices) == len(base) + 1,
+          "ask: the menu lists the open questions plus a leave option")
+    # Every option is a first-person spoken line, not an abstract topic
+    # label (the whole point of the rework): none is of the form "The X."
+    opts = ga.dialog.choices
+    check(all(not (o.startswith("The ") and o.endswith(".") and " " not in o[4:-1])
+              for o in opts),
+          "ask: options are the PI's spoken lines, not 'The X' topic tags")
+
+    # (3) Evidence-gated questions are hidden until the discovery is made.
+    q_checkouts = next(ex for ex in SABLE_CONVO["exchanges"]
+                       if ex["key"] == "checkouts")
+    check(not q_checkouts["avail"](ga),
+          "ask: the register question is hidden before the Ledger is found")
+    ga.save.set_flag("evidence_the_ledger", True)
+    check(q_checkouts["avail"](ga),
+          "ask: reading the Ledger opens the register question")
+
+    # (4) The discovery nudges the PI back. Reuse `ga`: not met yet -> no
+    # nudge (the question still opens on the evidence alone); once met, the
+    # discovery files a revisit NOTE (never evidence) and returns interior
+    # lines to ride the discovery's narration.
+    from scenes.dialogue import _collect_revisit
+    ga.save.set_flag("sable_greeted", False)
+    check(_collect_revisit(ga, "the_ledger") == [],
+          "ask: no nudge for a person the PI has not met")
+    ga.save.set_flag("sable_greeted", True)
+    ga.save.set_arg("evidence", [])
+    extra = _collect_revisit(ga, "the_ledger")
+    check(extra and any("register" in ln.lower() for ln in extra),
+          "ask: a discovery nudges the PI to revisit the person he met")
+    check(any(isinstance(e, dict) and e.get("name") == "revisit_sable_checkouts"
+              for e in ga.save.arg("notes", [])),
+          "ask: the revisit nudge files a case NOTE, not evidence")
+    check(len(ga.save.arg("evidence", [])) == 0,
+          "ask: the nudge never inflates the evidence count")
+    check(_collect_revisit(ga, "the_ledger") == [],
+          "ask: the revisit nudge fires only once")
+
+    # (5) An inline branch (show the photo) is a real fork with a side effect.
+    mara = next(ex for ex in SABLE_CONVO["exchanges"] if ex["key"] == "mara")
+    ask_beat = next(b for b in mara["beats"] if b[0] == "ask")
+    check(len(ask_beat[2]) == 2 and ask_beat[2][0][2] is not None,
+          "ask: the photo beat is a two-way choice with a consequence")
+
+    # (6) TONE: the first local we meet does NOT give the girl up. He
+    # deflects the name, folds her in with the newcomers, and misdirects
+    # at the "unfriendly" locals (the trap the game punishes). He must
+    # never confirm he knows her or where she is.
+    _mtxt = " ".join(b[1].lower() for b in mara["beats"] if b[0] in ("npc", "pi"))
+    check("can't say the name" in mara["beats"][0][1].lower(),
+          "tone: Sable deflects the name instead of confirming it")
+    check(not any(s in _mtxt for s in
+                  ("that is her", "sat right where", "smiling, by the end",
+                   "i will know her")),
+          "tone: Sable never confirms he knows the girl or where she is")
+    check("new folk" in _mtxt
+          and any(s in _mtxt for s in ("cold as a root cellar", "unfriendly",
+                                       "not everyone")),
+          "tone: the opener sets the newcomer/hostile-local split for the town")
+
+    # (7) The Invitation drops with Sable if he is killed before the handoff
+    # (he carries the way down), and NOT if he already gave it -- and the
+    # drop never sets the _given flag (that would soft-lock a missed drop).
+    from scenes.dialogue import sable_on_death
+    gk = new_game()
+    gk.load_scene_now("bedroom")
+    _n0 = len(gk.scene.items)
+    sable_on_death(gk, type("N", (), {"x": 100.0, "y": 100.0})())
+    check(sum(1 for it in gk.scene.items if it.get("key") == "rite_envelope") == 1,
+          "drop: killing Sable before the handoff drops the Invitation")
+    check(not gk.save.flag("rite_envelope_given"),
+          "drop: the corpse drop never sets the _given flag (no soft-lock)")
+    gk2 = new_game()
+    gk2.load_scene_now("bedroom")
+    gk2.save.set_flag("rite_envelope_given", True)
+    _n2 = len(gk2.scene.items)
+    sable_on_death(gk2, type("N", (), {"x": 1.0, "y": 1.0})())
+    check(len(gk2.scene.items) == _n2,
+          "drop: no Invitation drops if he already handed it over")
+    # And the desk handoff will not double-give once the PI already carries one.
+    gk3 = new_game()
+    gk3.player.inventory.add("rite_envelope", 1)
+    for _i in range(3):
+        gk3.save.arg("evidence", []).append({"name": f"_d{_i}", "lines": ["x"]})
+    clerk_dialogue(gk3, None)
+    check(gk3.player.inventory.count("rite_envelope") == 1,
+          "drop: the desk handoff never gives a second Invitation")
+
+    # (8) THREE real starting questions the PI can open with (the user's
+    # brief): Mara, the cellar/register, and the sealed town. Plus the fact
+    # check: the seal is THREE months (mid-January to mid-April), not one.
+    _keys = {ex["key"] for ex in SABLE_CONVO["exchanges"] if "avail" not in ex}
+    check({"mara", "cellar", "sealed"} <= _keys,
+          "ask: Mara, the cellar, and the sealed town are all askable at once")
+    _sealed = next(ex for ex in SABLE_CONVO["exchanges"] if ex["key"] == "sealed")
+    _stxt = (_sealed["q"] + " " + " ".join(b[1] for b in _sealed["beats"])).lower()
+    check("three months" in _stxt and "january" in _stxt,
+          "ask: the sealed-town beat is fact-correct (three months, since Jan)")
+
+    # (9) The exit hook: the first time the PI tries to leave, Sable stops
+    # him with a last word (planting the warped road); it fires once.
+    from scenes.dialogue import sable_on_leave
+    gx = new_game()
+    _h1 = sable_on_leave(gx)
+    _h2 = sable_on_leave(gx)
+    check(_h1 and "Hold a moment" in _h1[0][1] and _h2 is None,
+          "ask: Sable gets one last word the first time you try to leave")
+
+    # (10) The reproach question opens only once the PI has learned the roads
+    # fold (a local told him / he crossed one), and it never confesses a plot.
+    q_fold = next(ex for ex in SABLE_CONVO["exchanges"] if ex["key"] == "the_fold")
+    gr = new_game()
+    check(not q_fold["avail"](gr),
+          "ask: the folded-roads reproach is hidden before the PI learns it")
+    gr.save.set_arg("notes", [{"name": "the_fold_told", "lines": ["x"]}])
+    check(q_fold["avail"](gr),
+          "ask: learning the roads loop opens the reproach to Sable")
+
+    # (11) The readiness nudge: crossing 3 canonical evidence on the surface,
+    # still without the rite, files a NOTE pointing the PI back to the desk
+    # (so the act break is signposted, not a silent walk-back). Never evidence.
+    from scenes.dialogue import _evidence as _evfn
+    gn = new_game()
+    gn.save.set_flag("sable_greeted", True)
+    _evfn(gn, "maras_room", "a")
+    _evfn(gn, "maras_journal", "b")
+    check(not any(e.get("name") == "ready_for_the_desk"
+                  for e in gn.save.arg("notes", [])),
+          "ask: no readiness nudge before the third evidence")
+    _evfn(gn, "the_ledger", "c")
+    check(any(e.get("name") == "ready_for_the_desk"
+              for e in gn.save.arg("notes", [])),
+          "ask: the third evidence nudges the PI back to the desk for the rite")
+    check(gn._evidence_count() == 3,
+          "ask: the readiness nudge is a NOTE, never evidence")
 
     # --- 18. effigy_grove is a maker-less tableau (§1b/§8) ---------------
     # Individual cursing is redundant -- the closing rite claimed the town at
