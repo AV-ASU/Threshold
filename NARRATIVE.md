@@ -76,12 +76,19 @@ thing that could ever take Carcosa past the corn.
 
 **What the fold actually is — the rite.** Brimley isn't sealed by ambient
 weather; the **congregation's ongoing rite seals it**, and the **Sign (the
-Pallid Mask) is that rite's keystone**. What *gathered* the congregation
-was the **door's dream** (§1b): the **attuned** "found religion,"
-converged on Brimley, and dug down toward the door (Mara was a late
-arrival). Once the congregation was whole they performed the **closing
-rite** — it **claimed every soul inside the town line at once** (cultist,
-local, child alike) and *bound the town shut*. The rite does **two jobs at
+Pallid Mask) is that rite's keystone — the seal itself made into an
+object**. What *gathered* the congregation was the **door's dream** (§1b):
+the **attuned** "found religion," converged on Brimley, and **dug down
+toward the door** (Mara was a late arrival). Once the congregation was whole
+they performed the **closing rite**, and **at its climax the Mask manifested
+on their altar**: the rite's built-up energy was finally enough
+for the King to push His own face through from Carcosa, and that arrival is
+the keystone that snaps the seal shut. (Unbound, His only reach into the flat
+world is the dream; the completed rite is the one thing that lets Him extend
+a single solid object — the Mask, no more. The cult cannot finish the seal
+without the Mask, and He cannot send the Mask without their rite: **neither
+closes the loop alone**.) The completed seal **claimed every soul inside the
+town line at once** (cultist, local, child alike) and *bound the town shut*. The rite does **two jobs at
 once: it seals Him in and it feeds Him** — every claimed soul is a cell in
 the battery, so **Brimley is His power bank**, and the pressure only
 mounts. Think of the rite as a **pressure vessel**: it holds the King's
@@ -89,7 +96,10 @@ influence compressed inside Brimley. The fold is not a cage for *you* —
 **it is the cage for *Him***. The rite has no end of its own; it would
 hold and feed forever. **The PI's arrival is the first thing that can
 decide its fate.** That single inversion drives the endings (§6): the
-kneeling cult you'll want to stop is the only lid on the pot.
+kneeling cult you'll want to stop is the only lid on the pot. And because the
+Mask **is** the seal (not a token of it), tearing it down in place does not
+free *you* — it shatters the lock itself and He floods out (the BREAK
+ending, §6).
 
 **Tone:** *Darkwood* (oppressive hide-or-die dread, a spreading
 corruption, bleak and ambiguous) + *Fear & Hunger* (grimdark descent to
@@ -124,15 +134,27 @@ as canon wherever a date surfaces. Locked in `tests/flow.py` §23a.
 Every dated reference in the game agrees with this chain; check new text
 against it:
 
+- **Before any of it (an earlier turn of the cycle)** — this has happened
+  before. The **surface altar** by the river, over the Threshold far below,
+  is a spent cap left by a **prior sealing** (§5) — the one quiet sign that
+  Brimley is not the first place the door has taken. Kept deliberately vague:
+  the altar signals the cycle, nothing more.
 - **~April 1993** — the river touches the frame; the door wakes (§1b "about
   a year ago"). The PI's single dream lands the same spring ("a year ago").
 - **Summer 1993** — the attuned start arriving (Vane: *"They started showing
-  up in the summer"*). The dig begins, following the water down.
+  up in the summer"*). They come by **ordinary means** — dream-lured, no
+  portal (unbound, His only reach is the dream) — and the **dig begins**,
+  following the water down toward the door.
 - **Fall 1993** — **Mara drives north**, the last one in (her cell journal:
   *"The rest had been here since the summer"*; the case note: *"Drove north
-  in the fall"*). The harvest is tithed down, never carried back up.
-- **Mid-January 1994** — the congregation is whole; the **closing rite**
-  seals the town. Deliveries stop (Hettie: *"Till's been empty since the
+  in the fall"*). The harvest is tithed down, never carried back up. In a
+  **night procession**, before the cold, the congregation goes **below** —
+  down the river to the dug-open ground; **Toby Tisdale follows and is the
+  only one who sees where they went** (§2). Mara is among them.
+- **Mid-January 1994** — the congregation is whole; they perform the
+  **closing rite** in the mine chamber, and at its climax the **Mask
+  manifests on the altar** — the seal snaps shut, the town binds, and the
+  King gains his compressed-inside-Brimley reach. Deliveries stop (Hettie: *"Till's been empty since the
   new year"*); Mara stops calling home; **every calendar in town stops at
   JAN 15** (the wall-calendar prop's default card). Three months of sealed
   winter follow.
@@ -178,8 +200,8 @@ Do not spend it.
 **The river woke it — and the river is to blame, which means no one is.**
 Carcosa always touched the world here, faintly, forever; Brimley was
 always a little wrong, a place hard to leave, a river that "keeps what it
-takes." The door made the lowest, flattest floor in the earth, and **water
-finds the lowest place.** For centuries the underground river crept toward
+takes." The door made the ground beneath Brimley unnaturally flat and low, and
+**water finds the low places.** For centuries the underground river crept toward
 it, and **about a year ago the first thread of water reached the frame and
 crossed its plane.** The world finally *touched the glass* — and on the
 far side, He **looked out.** No malice, no culprit, nobody's fault:
@@ -362,9 +384,9 @@ ordered and nobody can refuse.
 | **The Sheriff — Hollis Vane** | **Local** | Born here. Has stood at the rim of the well. Knows the fold is real and that none of his deputies will be coming back. **He did not kill your car — the fold did.** He patrols because patrolling is what he did before; he tells outsiders "leave, son" out of muscle memory, even though he knows you can't and he can't either. Not a believer, not a cultist. A witness who can't help. The badge is just clothing now. |
 | **The Preacher — Rev. Asa Crane** | **Local — innocent dissenter** | A small-town minister who **names the cult from his own pulpit** — oblivious to *what* they truly are, but loud that they're no church. Your **2nd** conversation (his hubris) sets `preacher_doomed`; on the next entry he's **gutted on his own church floor**, his cross in the viscera (evidence #4). The town murders the ones who name them. |
 | **The Store-Owner — Hettie** | **Local — quiet resister** | *(In-game this role is **Hettie** from the chorus — one person, not two; the counter-keeper and the quiet resister merged.)* The shop is gutted -- shelves bare, till empty, **nothing to sell** (deliveries stopped when the fold closed). Her value is what she risks saying out loud: frightened warnings about who to trust, never said outright. She has a one-shot reaction to the Preacher's death. **She does not know Walter Blaine.** No local does — Walter is a voice in Minneapolis and Brimley locals would have no reason to recognize the name. |
-| **The Kid — Toby Tisdale** | **Local — innocent witness** | Saw **Mara and the other cultists go down into the well**, in the procession, **before the rite** — and **tells you so**. And before that, **they lived in his school** (the commune). His witness does two jobs (§14 descent rework): it poses the descent question — the only honest account in town points down a well **you can never follow** (no rope, no rigging one; §5) — and it **seeds the school**, the room the Invitation names and the chalk-door rite reopens (his one-shot *"don't go in there"* warning lands once the envelope is in hand). What he gives you is the truth, not an object (the old keepsake item is purged; no inventory pickup). Children notice what adults pretend not to. |
+| **The Kid — Toby Tisdale** | **Local — innocent witness** | **Followed the night procession down the river** to the cult's dug-open ground and saw them go below, **before the rite** — the **sole witness** of where they went — and **tells you so**. And before that, **they lived in his school** (the commune). His witness does two jobs (§14 descent rework): it poses the descent question — the only honest account in town points at a way **you can never follow** (the grove is fold-hidden; only the rite reaches it; §5) — and it **seeds the school**, the room the Invitation names and the chalk-door rite reopens (his one-shot *"don't go in there"* warning lands once the envelope is in hand). He doesn't know *why* they dig; given the state of the town he's sure the evil is down there. What he gives you is the truth, not an object (the old keepsake item is purged; no inventory pickup). Children notice what adults pretend not to. |
 | **The Brimley chorus** (Hettie, Old Pell, Mrs. Calder, Royce, Garrick, the Tisdale boy) | **Locals** | The town still tries to live. Hettie keeps the store open. Mrs. Calder **sets a place at supper for a guest she can't name** — not a vanished husband, just a certainty she can't explain that someone is coming; she doesn't know why she does it. Old Pell stopped marking the calendar. Royce **has stopped** driving the river road out — he tried for weeks and the corn handed him back every time, and the futility finally broke him; he still clings to the one impossible fact he can't square (*you got* **in** — how?). They all know the fold is real; none of them understand it. **Naming the principal locals is DONE** — the Sheriff is **Hollis Vane**, the Preacher **Rev. Asa Crane**, the Store-Owner/quiet-resister is **Hettie**, the Kid **Toby Tisdale**, and the Lodge Clerk **Mr. Sable**; the names surface as the dialogue speaker (locked in `tests/flow.py`). |
-| **Mara Blaine** | **Newcomer** — the quarry, **already turned** | Attuned and aching for something; the door whispered her answer (§1b). She came north, "found religion," **went down the well** (not into the corn). **She was not deceived — she was answered**, and went gladly. Finding her proves there was never anyone to save: not because she was killed, but because she was *offered the one thing she needed.* In the **hive**. Reading her journal to the end drops the player into a **flashback of the burning doorframe** — the dream that took her, the game's clearest look at the lure. |
+| **Mara Blaine** | **Newcomer** — the quarry, **already turned** | Attuned and aching for something; the door whispered her answer (§1b). She came north, "found religion," **went down with the procession** (down the river to the dug-open ground, not into the corn). **She was not deceived — she was answered**, and went gladly. Finding her proves there was never anyone to save: not because she was killed, but because she was *offered the one thing she needed.* In the **hive**. Reading her journal to the end drops the player into a **flashback of the burning doorframe** — the dream that took her, the game's clearest look at the lure. |
 | **Walter Blaine** | **Outsider, off-screen — the unwitting bait** | The client. A Minneapolis voice on a phone that no longer connects. His grief is **real** — he genuinely lost his daughter — but the *case itself is the King's hook* (§1, *"You were lured"*): the one appetite a numb investigator can't refuse, used to walk the marked soul back to the door. **No one in Brimley has ever met him.** He exists only through the PI's case notebook and (optionally — §8) the polaroid he sent. He gets no resolution — the call never connects again, and that silence is the point. |
 | **Cult / Watchers / the King in Yellow** | **Newcomers + Their god** | The congregation are the attuned newcomers. **The Watchers are His gaze made local** — the higher-dimensional eye reaching into the flat plane wherever His attention falls (§3), *not* a side-cult's spell. The King is the thing above the door. *(Individual cursing is redundant once the closing rite claims the whole town at once; see §8.)* |
 
@@ -545,27 +567,47 @@ What rises with the stage:
 
 ## 5. The Descent — "how deep does this go"
 
-The descent is strictly **vertical**, and it has exactly **one mouth**:
-the **well in Brimley** — but the well is the *congregation's* mouth, not
-yours. A year of descents wore its lip smooth; there is no rope left and
-no rigging one. The player goes down by the **rite** instead: at **3
-evidence** Mr. Sable hands over the **Invitation** (the envelope the
-congregation left at the Lodge desk when they went below), the **school
+The descent is strictly **vertical**, and the **well in Brimley is NOT its
+mouth** — the well is a dead town shaft, dread set-dressing, and goes nowhere
+the player can follow. The real way down is the cult's own **dug mine**, out
+at the effigy grove by the river. The player goes down by the **rite**: at
+**3 evidence** Mr. Sable hands over the **Invitation** (the envelope the
+congregation left at the Lodge desk when they went below), and the **school
 rite** (incense at the commune's indoor fire, then the final chalk door
-drawn on the board) opens the school↔grove fold, and the **grove rite**
-finishes it: over the dead fire stands a rift that **clarifies as
-evidence mounts** (the meter), and at 3, with the Invitation in hand,
-the PI performs the rite — he **consciously re-enters his one, year-old
-dream** (the full door-dream, a pure cutscene; the journal only ever
-*flashes* the memory) and finally answers the door. The standing rift
-over the fire **tears fully open** (the same pane as every fold; one
-family, one presentation) and lands you at the bottom of the well
-shaft. **The circle then holds you:** the grove's
-surface exits refuse, and the shaft-floor pane answers only **His
-face** — *keyed* to the Mask, never one-way (one-way stays the King's
-signature). Surfacing with the Mask seals the descent at your back and
-locks the run to SPREAD. There is no other route down and **no secret
-paths**.
+drawn on the board) opens the school↔grove fold and lands you in the **grove
+clearing** — a fold-hidden hollow by the river where the **mouth of the
+cult's mine** stands open. Its edges wear the fold's own wrap, which is *why*
+the place cannot be reached on foot from anywhere else; it is not locked, it
+is **hidden by the folds**, and the rite is the only thread in. There the
+**grove rite** finishes the descent: over the dead fire stands a rift that
+**clarifies as evidence mounts** (the meter), and at 3, with the Invitation
+in hand, the PI performs the rite — he **consciously re-enters his one,
+year-old dream** (the full door-dream, a pure cutscene; the journal only ever
+*flashes* the memory) and finally answers the door. The standing rift **tears
+fully open** (the same pane as every fold; one family, one presentation) and
+carries you **down into the mine** (the Works) — the shaft the congregation
+dug and the chamber where they did the sealing rite. **The circle then holds
+you:** the clearing's surface exits refuse, and the return pane answers only
+**His face** — *keyed* to the Mask, never one-way (one-way stays the King's
+signature). Surfacing with the Mask seals the descent at your back and locks
+the run to SPREAD. There is no other route down and **no secret paths**.
+
+**Two altars, and the cycle.** This has happened before, and the Mask is
+where it shows — but it is **not** dug up or ancient. A **fresh Mask
+manifests on the cult's altar each time a congregation completes the sealing
+rite** (§0), so there are **two different altars** and they must never be
+confused. The **cult's ritual altar** is underground, in the mine chamber,
+where *this* cycle's rite was done and where the **current Mask sits** — that
+is where the PI finds it. The **surface altar** stands up in **Brimley, by
+the river, directly over the Threshold far below**: a spent, seemingly
+disconnected old stone left by a **prior sealing**, like a grave marker set
+over a hole that should be there. It holds nothing and is not His; it is only
+the world's scar, the one quiet sign that Brimley is not the first place this
+has taken. Deep beneath it, where the underground river runs, the
+**Threshold** stands on its unnaturally flat floor. The congregation mined
+the Works but never reached the frame itself; the **PI is the first to
+physically reach it**, blasting through the deepest face into the Depths —
+finishing, awake, the dream that never closed in sleep.
 The surface is one connected
 sprawl: the **Arcadia Lodge** (lodge, yard, cornfields) ↔ **Brimley**
 (the town itself — the well, the church, the store, the sheriff's
@@ -588,10 +630,11 @@ SURFACE         The ARCADIA LODGE (lodge + yard + cornfields) ─▶ BRIMLEY
                   │
                   │   THE ONLY WAY DOWN — the rite: the Invitation
                   │   (Sable, 3 evidence) → the school chalk door → the
-                  │   effigy grove's descent fold (lands at the bottom
-                  │   of the well shaft). No other route. No secret paths.
+                  │   effigy grove's descent fold (lands in the fold-hidden
+                  │   grove clearing, the mouth of the cult's mine). No
+                  │   other route. No secret paths.
                   ▼
-THE WORKS       The cult's underground labour, reached by the well: a
+THE WORKS       The cult's underground labour, reached by the mine: a
 (Basement Level)   built 7-room gauntlet (§9). Mara's cell branches off it;
                 the cult's testimony + the Pallid Mask are found down here.
                   │
@@ -604,7 +647,7 @@ DEEPER          The Depths → the Threshold (END IT / seal) → the Hive
 ```
 
 - **Surface:** the Arcadia (lodge/yard/cornfields) ↔ Brimley (one map: the well, the church, the store, the sheriff's office, the school, the barn, the kid's house, the locals, the car). Sealed; sole way down = the rite (the grove's descent fold; the well itself is dread set-dressing).
-- **The Works** (a.k.a. the Basement Level): the first underground layer, reached by the well — a built 7-room gauntlet (§9): Mara's cell, the cult's testimony, the Pallid Mask.
+- **The Works** (a.k.a. the Basement Level): the first underground layer, reached by the mine (the cult's dug shaft at the grove) — a built 7-room gauntlet (§9): Mara's cell, the cult's testimony, the Pallid Mask.
 - **Deeper (Mask-gated at the Deep Stair):** the Depths, the Threshold (**End it**), and the Hive — all built: the `dark` scene holds the claimed congregation, past names now (2026-07: **Mara** kneels at the Sign Chamber, where the calling-out stages her rising and evidence #6 lands).
 
 > **Naming, to avoid the collision:** the **lodge cellar** is the
@@ -622,6 +665,26 @@ that fire is someone He already took. You only ever see it by losing.
 ---
 
 ## 6. How a run ends
+
+**The run, in order (rough).**
+1. **Arrive.** The PI drives into Brimley as the ice goes out; the car dies
+   (the fold, not sabotage). He takes the spare room at the Arcadia Lodge.
+2. **Investigate.** Read the town and its locals (Sable, Hettie, Toby, Vane,
+   Crane); gather the **six evidence beats** (§4).
+3. **Cross 3 evidence.** The town wakes to him — cult patrols spawn, the King
+   arms — and **Sable hands over the Invitation**.
+4. **The school rite.** Incense at the commune's fire + the chalk door opens
+   the school↔grove fold and lands him in the **fold-hidden grove clearing**,
+   the mouth of the cult's dug mine.
+5. **Down the mine (the Works).** Mara's cell, the cult's testimony, the
+   **Sign Chamber** — lift the **Pallid Mask** (the seal made object) from the
+   cult's underground altar.
+6. **Deeper.** Past the **Deep Stair** (Mask-gated) into the Depths; **blast**
+   the deepest face → the one-way fall → the **Threshold** (the first living
+   soul ever to reach the frame).
+7. **The fork.** At the Threshold with the Mask: **SEAL** (carry it through)
+   or **SPREAD** (carry it out) — or, back at the Sign Chamber altar earlier,
+   **BREAK** (tear it down in place).
 
 | Trigger | Outcome | Presentation | Existing hook |
 |---|---|---|---|
@@ -715,6 +778,26 @@ horror is the lesson (Fear & Hunger: you die to learn). The only safe
 moves are *seal the source first* or *carry the keystone away clean*; the
 kneeling congregation that looks like the enemy is the only lid on the
 pot.
+
+### What each ending leaves — the world and Brimley
+
+- **SEAL / END IT.** *Brimley:* gone — the town, the ground under it, the
+  hunger, and the PI are warped whole into Carcosa; the county's edges grow
+  together and Brimley simply *was*. *The world:* spared and unknowing, it
+  heals over the place as if no town were ever there. *The cycle:* the King is
+  **contained, not destroyed** — the door here goes quiet with its
+  **altar-cap the only marker**, Carcosa is now one town larger, and it waits
+  for the next place water reaches.
+- **SPREAD / IT.** *Brimley:* stays bound and claimed behind you; nothing
+  there is freed. *The world:* the seal breaks by **removal** and His reach
+  leaves *with the Mask* — the Mask claims the PI at the town's edge and rides
+  out south in him, a latent charge that goes off later on His clock. *"Everyone
+  will know."* The one ending where the breach gets **out**.
+- **BREAK / the trap.** *Brimley:* the epicenter. *The world:* the seal is
+  torn **in place** with the source still open, and because the Mask **is** the
+  seal, His influence **floods out uncontained, here and now** — everyone, the
+  PI included, taken immediately. Not contained, not carried, just
+  **released**: the worst outcome.
 
 ---
 

@@ -560,7 +560,11 @@ def build_brimley():
     # The town's well + woodshed sit just inside the east edge so the
     # player walks in from the Lodge and sees the landmark immediately.
     # Footpaths to the well + shed are carved earlier in the floor pass.
-    # The well at col 94, row 13 -- the only mouth down into the Works.
+    # The well at col 94, row 13 -- dread set-dressing, NOT a way down. It is
+    # the town's dead shaft (worn smooth, no rope, no rigging one); it goes
+    # nowhere the player can follow. The real throat down is the cult's dug
+    # MINE out at the effigy grove by the river -- reached by the rite, never
+    # by this well.
     # Surrounding floor was already grass; the well is a decoration.
     # (The woodshed moved to the Lodge yard -- scenes/our_house_area. Brimley
     # no longer hosts a shed; the footpath that once led here is left as worn
@@ -871,8 +875,9 @@ def build_brimley():
     # Calder's plate, set at supper for a guest she can't name.
     sc.add_decoration(Decoration(58 * TILE + 16, 62 * TILE + 16, "payphone"))
     sc._payphone_pos = (58 * TILE + 16, 62 * TILE + 16)
-    # The well -- only mouth into the Works. Sits in the eastern
-    # village-square area, south of the country-lane entry.
+    # The well -- dread set-dressing, not a way down (a dead town shaft; the
+    # descent is the cult's dug mine at the grove, reached by the rite). Sits
+    # in the eastern village-square area, south of the country-lane entry.
     well_x = 94 * TILE + 16
     well_y = 13 * TILE + 16
     sc.add_decoration(Decoration(well_x, well_y, "well"))
@@ -1178,13 +1183,14 @@ def build_brimley():
     sc.objects = objects_list
 
     def _brimley_interact(game):
-        # The well -- DEMOTED to dread set-dressing. It was the
-        # congregation's mouth into the Works (a year of descents wore
-        # the lip smooth), but there is no rope and no rigging one: the
-        # player follows by the rite instead (the Invitation -> the
-        # school door -> the grove's descent fold). The well's job now
-        # is to pose the act-one question: they went down HERE, and you
-        # never can.
+        # The well -- DEMOTED to dread set-dressing, and fully SEVERED from
+        # the descent (2026-07): nobody went down HERE. The congregation went
+        # down the cult's dug MINE out at the grove (down the river; Toby is
+        # the witness, §2), reached now only by the rite (the Invitation ->
+        # the school door -> the grove's descent fold). This well is just a
+        # dead, dry town well gone wrong -- bottomless, cold air climbing out
+        # -- ominous, and going nowhere. The act-one descent question is
+        # Toby's job now, not the well's.
         wx, wy = sc._well_pos
         if abs(game.player.x - wx) < 36 and abs(game.player.y - wy) < 36:
             if not game.save.flag("well_examined"):
@@ -1194,11 +1200,11 @@ def build_brimley():
                     "[c=dim](You lean over the lip. The shaft drops "
                     "past where any water should be. No glint, no "
                     "bottom, just cold air climbing up out of it.)[/c]",
-                    "[c=dim]The stone is worn smooth where hands have "
-                    "gripped it, over and over. Years of hands. No "
-                    "rope, and no rig to hang one from.[/c]",
-                    "People went down here. There is no way you can "
-                    "follow.",
+                    "[c=dim]A dead well, dry a long time. The lip is worn "
+                    "smooth where the town used to lean and draw, back when "
+                    "it drew anything.[/c]",
+                    "Nothing down there now. And no way down it if there "
+                    "were.",
                 ], speaker="", voice="blip_soft", portrait="narrator")
                 return
             game.audio.play("low_pulse", 0.4)

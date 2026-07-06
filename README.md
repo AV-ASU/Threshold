@@ -53,8 +53,8 @@ python tests/flow.py    # drives the full critical path end-to-end
 
 `smoke.py` verifies that every scene builds, that spawn points are
 walkable, and that every exit resolves to a valid target spawn. `flow.py`
-drives a headless run down the well, through the Works to the Deep-Stair
-fork, across the Depths to the hive, and into both endings, proving the
+drives a headless run down through the Works (the cult's dug mine) to the
+Deep-Stair fork, across the Depths to the hive, and into both endings, proving the
 path is completable with no soft-lock. Both force SDL to dummy drivers, so
 no display or audio device is required.
 

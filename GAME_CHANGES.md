@@ -34,11 +34,13 @@ Implemented + verified (compileall + smoke + flow green; canon guards added).
    came IN. How did you come IN?"*
 4. **Mrs. Calder → a guest she can't name** *(§4)* — unnameable-guest beat;
    the vanished husband is cut.
-5. **Toby → the well clue** *(§5)* — Mara **and the other cultists**, in the
-   **procession**, **before the rite**, down the **well**. *(§14 rework: the
-   well can no longer be followed, so his witness now ALSO seeds the
-   **school** — the commune he watched empty out; the actionable route is
-   the rite.)*
+5. **Toby → the witness clue** *(§5)* — Toby **followed the night procession
+   down the river** to the cult's dug-open ground and saw them go below (D
+   rework, 2026-07): the **sole witness** of where they went. His witness
+   poses the descent question (a way **no one can follow now** — the grove is
+   fold-hidden; only the rite reaches it) and **seeds the school** (the commune
+   he watched empty out; the actionable route is the rite). He does not know
+   *why* they dig; given the town's state he's sure the evil is down there.
 6a. **Playscript → the cult's own notes — WRAPPER ONLY** *(§6, wrapper)* —
    display name (`The Cult's Notes`) + description + Scriptorium pickup +
    Toby's reaction reskinned; item key `playscript` + save flag kept; the
