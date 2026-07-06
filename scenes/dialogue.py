@@ -230,14 +230,16 @@ def preacher_dialogue(game, npc):
 # ---- The Kid: Toby Tisdale ----
 
 def tisdale_boy_dialogue(game, npc):
-    """Toby Tisdale -- innocent witness (NARRATIVE §2). He saw Mara AND the
-    other cultists go down into the well, in the procession, before the rite
-    -- and before that they LIVED in his school (the commune). His witness
-    does two jobs now (§14 descent rework): it poses the descent question
-    (they went down a well no one can follow) and it SEEDS THE SCHOOL --
-    the room the Invitation names and the chalk-door rite reopens. What he
-    gives you is what he tells you (no inventory item -- the old keepsake
-    object was purged). Children notice what adults pretend not to."""
+    """Toby Tisdale -- innocent witness (NARRATIVE §2). He FOLLOWED the night
+    procession down the river to the cult's dug-open ground and saw them go
+    below -- the sole witness of where they went (D rework, 2026-07) -- and
+    before that they LIVED in his school (the commune). His witness does two
+    jobs (§14 descent rework): it poses the descent question (they went down a
+    way no one can follow now -- the grove is fold-hidden) and it SEEDS THE
+    SCHOOL -- the room the Invitation names and the chalk-door rite reopens.
+    He does not know WHY they dig; given the state of the town he is sure the
+    evil is down there. What he gives you is what he tells you (no inventory
+    item). Children notice what adults pretend not to."""
     save = game.save
     inv = game.player.inventory
     # The witness beat: first real conversation, he tells you what he saw.
@@ -245,10 +247,13 @@ def tisdale_boy_dialogue(game, npc):
         save.set_flag("kid_witnessed", True)
         game.dialog.show([
             "You're looking for the lady from the lodge.",
-            "She went with the others. A whole line of them, at night, down "
-            "to the well in the square. Before the cold came.",
-            "They climbed down into it. Down the well. She didn't come back "
-            "up. None of them did. I saw.",
+            "She went with the others. A whole line of them, at night. I "
+            "followed. Down along the river, to where the ground is all "
+            "broke open. Before the cold came.",
+            "They climbed down into it, down into the dark under the field. "
+            "She never came back up. None of them did. I saw where they go.",
+            "[c=dim]Whatever they do down there, that is where it is. The bad "
+            "thing. I know it.[/c]",
             "[c=dim]Before that they had my school. All of them, living in "
             "it, in rows. Then one night they walked out of it in a "
             "line.[/c]",
