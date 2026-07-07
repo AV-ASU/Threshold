@@ -10,10 +10,8 @@ the scene exists to close a thread in the canon:
   effigy_grove     -- a cult work-clearing tended by no one: the dead fire,
                      the effigy ring, the nailed-up faces, no worker (the
                      rite claimed the whole town at once)
-  lodge_arrival   -- Mara's arrival at the Lodge, witnessed (makes the
-                     "she chose this" beat concrete)
 
-Both are in SEAMLESS_WORLD_SCENES so crossing into them carries no
+These scenes are in SEAMLESS_WORLD_SCENES so crossing into them carries no
 fade -- the player walks into the fold without realising they crossed
 a boundary.
 """
@@ -312,93 +310,6 @@ def build_effigy_grove():
     # tended by no one you'll ever see. It reads like its siblings
     # (husk_grove, scarecrow_ring): a maker-less dread tableau.
     sc.hide_spots = []
-    return sc
-
-
-# ----- #3: Mara's Arrival -------------------------------------------
-
-def build_lodge_arrival():
-    """The Lodge yard at a different moment -- Mara on the porch with
-    her suitcase, the Clerk welcoming her in. Both are frozen-feeling.
-    They do not see the PI. The PI can walk around them, see her face,
-    and leave by the south end of the yard. Makes 'she chose this'
-    concrete. Entered through the BACK of the Lodge (the fold pane
-    against its rear wall in lodge_yard, walked south): in the
-    back, out the front, years earlier -- the building is the fold."""
-    W, H = 18, 12
-    floor_rows = []
-    for ty in range(H):
-        row = []
-        for tx in range(W):
-            if 4 <= tx <= 13 and 4 <= ty <= 8:
-                row.append("d")     # the yard's worn dirt
-            else:
-                row.append("g")
-        floor_rows.append("".join(row))
-    objects_l = []
-    for ty in range(H):
-        row = []
-        for tx in range(W):
-            if ty == 0 or ty == H - 1 or tx == 0 or tx == W - 1:
-                row.append("T")
-            else:
-                row.append(".")
-        objects_l.append(row)
-    # Return tile on the SOUTH wall at col 9. The player stepped out of
-    # the Lodge's front; walking south down the yard (past the tableau)
-    # returns them to lodge_yard, back behind the building.
-    objects_l[H - 1][9] = "G"
-    # The Lodge's south face -- one row of wall + a door at col 9.
-    for tx in range(5, 14):
-        objects_l[3][tx] = "W"
-    objects_l[3][9] = "d"   # leave the doorway as floor so it reads
-                            # as the Lodge's open front door
-    objects = ["".join(r) for r in objects_l]
-    sc = Scene("lodge_arrival", floor_rows, objects, music="village")
-    sc.wrap_x = False
-    sc.wrap_y = False
-    sc.add_exit("G", "lodge_yard", "from_lodge_arrival")
-    sc.set_spawn("default", 9, H - 2)
-    # The player walked SOUTH into the back of the Lodge; they emerge
-    # just south of its porch in the past, stride preserved -- out the
-    # front door of the building they walked into the back of. Two
-    # tiles below Mara so the spawn never overlaps the figures; one
-    # turn and the tableau is there.
-    sc.set_spawn("from_lodge_yard", 9, 6)
-    # ---- Decorations ----
-    # Lit windows flanking the Lodge door.
-    sc.add_decoration(Decoration(7 * TILE + 16, 3 * TILE + 16, "candle"))
-    sc.add_decoration(Decoration(11 * TILE + 16, 3 * TILE + 16, "candle"))
-    # Mara's suitcase on the porch step.
-    sc.add_decoration(Decoration(10 * TILE + 16, 4 * TILE + 16, "table"))
-    # A single lantern over the door.
-    sc.add_decoration(Decoration(9 * TILE + 16, 2 * TILE + 22, "lantern"))
-    # Grass tufts and crows in the yard.
-    rng = random.Random(411)
-    for _ in range(18):
-        gx = rng.randint(2, W - 3) * TILE + rng.randint(2, 28)
-        gy = rng.randint(8, H - 2) * TILE + rng.randint(2, 28)
-        sc.add_decoration(Decoration(gx, gy, "grass_tuft"))
-    sc.add_decoration(Decoration(2 * TILE + 16, 9 * TILE + 16, "crow"))
-    sc.add_decoration(Decoration(15 * TILE + 16, 9 * TILE + 16, "crow"))
-    # The "this happened" mark -- one phantom_mark on the path.
-    sc.add_decoration(Decoration(9 * TILE + 16, 7 * TILE + 16,
-                                 "phantom_mark"))
-    # ---- The figures ----
-    # Mara on the porch, with her back partly to the PI (facing the
-    # door, which is north). She does not see the PI.
-    mara = NPC(9 * TILE + 16, 4 * TILE + 22, "Mara",
-               "townswoman", movement="idle", radius=20)
-    mara.facing = (0, -1)
-    mara.lock_facing = True
-    sc.add_npc(mara)
-    # The Clerk just inside the doorway, leaning out. He smiles. He
-    # does not see the PI either.
-    clerk = NPC(9 * TILE + 16, 3 * TILE + 8, "the Clerk",
-                "clerk", movement="idle", radius=18)
-    clerk.facing = (0, 1)   # facing Mara, south
-    clerk.lock_facing = True
-    sc.add_npc(clerk)
     return sc
 
 
