@@ -381,7 +381,7 @@ ordered and nobody can refuse.
 | Who | Origin | Their thread |
 |---|---|---|
 | **Lodge Clerk — Mr. Sable** | **Local — the most attuned of them** | The smiling trap-keeper, and a **local**, not a newcomer. He dreamed the door **longest and loudest** of anyone born here — attuned for years, **subconsciously preparing** for arrivals he couldn't name, keeping the desk and the guests ready. His menace is **compulsion, not conspiracy**: he voices certainties he can't explain (*"You're not a guest who checks out"*) because the door has been speaking through him so long he mistakes it for hospitality. Introduces himself first thing (*"Sable -- I keep the desk here. Anything you need, you ask me. Anything at all."*); the name is genteel and hospitable with a funereal undertow that pays off as he turns colder. Runs the only inn in town, the only place an outsider would naturally stay. The old fetch-quest chain (crate -> cellar bottle -> car keys) is **cut** -- the car answers only to the Sign now, so he has no keys to dangle; he handles the stranded car **deniably** (the Sheriff is the one who carries the plain truth, §below). **THE INVITATION (canon shift, 2026-06):** when the congregation went below, they left an envelope at his desk — the rite that opens the way down — and told him to hold it until *he* was ready to follow. He **knows** what it is and where its writers went (the pressed robe in his closet was always the tell); what he does with it stays **hospitality, never scheme**: at 3 evidence he judges the guest ready in his place and hands it over like a room key. Somebody has to keep the desk. |
-| **The Sheriff — Hollis Vane** | **Local** | Born here. Has stood at the rim of the well. Knows the fold is real and that none of his deputies will be coming back. **He did not kill your car — the fold did.** He patrols because patrolling is what he did before; he tells outsiders "leave, son" out of muscle memory, even though he knows you can't and he can't either. Not a believer, not a cultist. A witness who can't help. The badge is just clothing now. |
+| **The Sheriff — Hollis Vane** | **Local — the last holdout, and the one claimed-but-unattuned soul** | Born here; **alone among the named cast he never dreamed the door** (claimed by the seal like everyone inside the line, but never *attuned*). Not a believer, not a cultist: the town's one real **investigator**, the quiet-lawman counterpart to Crane's public pulpit denunciation. He started working the case just before the seal and chases the **how** — how a pack of outsiders talked his town into walking off and shut it — never a *who-took-whom* (**nobody was taken**; the congregation are all outsiders who came and *answered*, §1). His single thread is one post-seal conversation with a **nameless blind cultist**: radiant with a conviction he couldn't account for, promised his **sight restored** by the dream (his deepest want made flesh — to *see* again, and to see *Him* again), and in truth **sent to convert Vane** (the law asleep is worth having). Vane refused; that one exchange is his only window into the *how* — **the door answers your deepest want**. He does **not** know the King, the Threshold, or that the congregation went **below** — only that the outsiders filled the **school, barn, and lodge**, then walked out one night in a line and left those rooms empty. The car breaks by the fold, not by him (§1). **What he wants most is for all of it to end.** Toward the PI he is **hopeful but mistrusting** — the PI is one more outsider who drove in, the exact profile of every cultist — and his trust is earned only as the PI **shares real discoveries** with him. **His fall is player-driven, not infestation-gated (§4).** |
 | **The Preacher — Rev. Asa Crane** | **Local — innocent dissenter** | A small-town minister who **names the cult from his own pulpit** — oblivious to *what* they truly are, but loud that they're no church. Your **2nd** conversation (his hubris) sets `preacher_doomed`; on the next entry he's **gutted on his own church floor**, his cross in the viscera (evidence #4). The town murders the ones who name them. |
 | **The Store-Owner — Hettie** | **Local — quiet resister** | *(In-game this role is **Hettie** from the chorus — one person, not two; the counter-keeper and the quiet resister merged.)* The shop is gutted -- shelves bare, till empty, **nothing to sell** (deliveries stopped when the fold closed). Her value is what she risks saying out loud: frightened warnings about who to trust, never said outright. She has a one-shot reaction to the Preacher's death. **She does not know Walter Blaine.** No local does — Walter is a voice in Minneapolis and Brimley locals would have no reason to recognize the name. |
 | **The Kid — Toby** | **Local — innocent witness** | **Followed the night procession down the river** to the cult's dug-open ground and saw them go below, **before the rite** — the **sole witness** of where they went — and **tells you so**. And before that, **they lived in his school** (the commune). His witness does two jobs (§14 descent rework): it poses the descent question — the only honest account in town points at a way **you can never follow** (the grove is fold-hidden; only the rite reaches it; §5) — and it **seeds the school**, the room the Invitation names and the chalk-door rite reopens (his one-shot *"don't go in there"* warning lands once the envelope is in hand). He doesn't know *why* they dig; given the state of the town he's sure the evil is down there. What he gives you is the truth, not an object (the old keepsake item is purged; no inventory pickup). Children notice what adults pretend not to. |
@@ -576,12 +576,26 @@ What rises with the stage:
   Hettie (2), Old Pell and Toby (3): they keep their identity
   and their defiance, but their bodies betray them (eye-voids, the Sign
   etched into the chest, a jaundiced cast). Still themselves, rotting.
-- **Sheriff Vane is neither.** The last holdout. At stage 3 his office is
-  no longer a place you visit — he has gone **hollow**, a unique threat
-  encounter: he stands, says the line he can't say anymore ("leave,
-  son… I can't say it"), then comes for you, slow and unrelenting. He
-  catches you → **TAKEN INTO CUSTODY**. You escape by getting back out
-  his door (a run outpaces him). The best ammo cache in town is now his.
+- **Sheriff Vane is neither** — the last holdout, and the one soul in town
+  **claimed but unattuned** (he never dreamed the door; §2). **His hollowing
+  is no longer infestation-gated; it is driven by the player's relationship
+  with him.** A hidden **despair/hope balance** (surfaced only as his mood,
+  never a number) can tip him over, and a hard **neglect override** finishes
+  him regardless: reach the descent (**3 evidence**) having never let him into
+  a single discovery, and his last hope — that someone was actually working it
+  — dies, and he falls. Tend him instead (share what you find; the same act is
+  the trust he withholds by default) and he **holds**, the holdout who lives as
+  much as anyone here does. **Why the King takes him so completely:** what Vane
+  wants most is for all of it to *end*, and the King can only ever offer endless
+  *more* — the one appetite the door cannot answer; and being unattuned, the
+  claim can **compel him but not steer him** — he is the only soul who runs
+  *from* the door instead of toward it, a claimed man the cosmic law cannot
+  guide, so he goes **hollow** as a malfunction, not a convert. The encounter is
+  otherwise unchanged: he stands, says the line he can no longer finish, then
+  comes for you slow and unrelenting; contact → **TAKEN INTO CUSTODY**; you
+  escape back out his door (a run outpaces him); the best ammo cache in town is
+  his. The despair/hope ledger, its constants, and the newspaper break-lever
+  live with the build ticket (TODO #2 + the Vane arc).
 - **The dead.** A local you shoot lies where they fell **for as long as
   you're in that room** — the immediate weight of what you did. *The
   cross-scene corpse-persistence + `mold` system is cut* (overbuilt; §3,

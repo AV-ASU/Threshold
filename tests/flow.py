@@ -1471,7 +1471,7 @@ def main():
     gv.dialog.show = (lambda real: (lambda p, **k: (
         _vane_lines.extend(p if isinstance(p, list) else [p]),
         real(p, **k))[1]))(gv.dialog.show)
-    gv.save.set_arg("fisher_count", 6)          # well past the old slot
+    gv.save.set_arg("vane_count", 6)            # well past the old slot
     sheriff_dialogue(gv, None)
     check("preacher" not in " ".join(_vane_lines).lower(),
           "vane: never announces the murder before the body is found")
