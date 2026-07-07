@@ -8,8 +8,8 @@ prop is visible) and the true PLAYER POV (fog on, player dropped at the target
 facing `aim`, so only the forward sight cone reveals -- what actually ships).
 
     python tools/preview_tilt_scene.py SCENE [col,row] [--aim 0,1] [--zoom 1.4]
-    python tools/preview_tilt_scene.py void_boss 13,6
-    python tools/preview_tilt_scene.py forest_path            # centre of scene
+    python tools/preview_tilt_scene.py clearing 13,6
+    python tools/preview_tilt_scene.py cornfield_path            # centre of scene
 """
 import os
 import sys

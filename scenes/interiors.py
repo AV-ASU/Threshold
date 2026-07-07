@@ -60,7 +60,7 @@ def build_clearing():
             row = ["T"] + ["."] * 16 + ["T"]
             objects_l.append(row)
     # Transition tree at the south threshold. Visually identical to
-    # a tree, walking onto it sends the player back to forest_path.
+    # a tree, walking onto it sends the player back to cornfield_path.
     objects_l[13][9] = "j"
     # Cordwood stacks (decorative -- solid table tile). Two stacks
     # so the clearing reads as a tended ritual site, not a one-prop
@@ -407,7 +407,7 @@ def build_toby_house():
     sc.add_furniture("table", [(11, 1), (12, 1)], w=54, h=34)
     sc.add_furniture("chair", [(11, 2)], w=22, h=28)
     # The computer used to live here in round 3; in round 4 it migrated to
-    # old_man_house. Kid's house now reads as a child's room: a small
+    # church. Kid's house now reads as a child's room: a small
     # toy radio, candle, banner. No tech.
     sc.add_decoration(Decoration(11 * TILE + 16, 1 * TILE + 8, "radio"))
     sc.add_decoration(Decoration(7 * TILE + 16,  0 * TILE + 22 , "candle"))

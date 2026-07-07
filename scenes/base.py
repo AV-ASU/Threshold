@@ -163,15 +163,15 @@ OBJECT_DEFS = {
     "H": {"solid": False, "kind": "door"},
     "B": {"solid": False, "kind": "door"},
     "F": {"solid": False, "kind": "door"},
-    "J": {"solid": False, "kind": "door"},   # door to kid_house interior
+    "J": {"solid": False, "kind": "door"},   # door to toby_house interior
     # Per-house entry doors (each house in the new public square + the
-    # Clerk's place in our_house_area gets its own char so the layout
+    # Clerk's place in lodge_yard gets its own char so the layout
     # is self-documenting and the scene knows which interior to load).
-    "m": {"solid": False, "kind": "door"},   # door to old_man_house
+    "m": {"solid": False, "kind": "door"},   # door to church
     "y": {"solid": False, "kind": "door"},   # door to sheriff_office
     "h": {"solid": False, "kind": "door"},   # door to innkeeper_house
     "n": {"solid": False, "kind": "door"},   # door to barn (south of village)
-    "o": {"solid": False, "kind": "door"},   # door to haunted_house (red herring)
+    "o": {"solid": False, "kind": "door"},   # door to abandoned_farmhouse (red herring)
     # Locked-house door: SOLID until unlocked. The brass-key gate fires
     # from village.on_interact_fn -- pressing E from an adjacent tile
     # transitions if the key is in inventory, otherwise shows a locked
@@ -181,14 +181,14 @@ OBJECT_DEFS = {
     # Door "1" -> the Clerk's room (key 'clerk_room'), an unconditional
     # exit off the ground floor. ("2" is a vestigial tile from a cut
     # scene; no active map places it.)
-    "1": {"solid": False, "kind": "door"},   # door to son_room (Clerk's room)
+    "1": {"solid": False, "kind": "door"},   # door to clerk_room (Clerk's room)
     "2": {"solid": False, "kind": "door"},   # vestigial (cut scene)
     # Outdoor-passage style transition tiles -- non-solid, non-drawing
     # so the underlying floor (grass / water) shows through cleanly.
     # '4' is the village <-> brimley corridor.
     "4": {"solid": False, "kind": "outdoor_passage"},
     # Fake wall: looks like a wood wall, passable. Used inside the
-    # haunted_house red herring -- the player walks through it once to
+    # abandoned_farmhouse red herring -- the player walks through it once to
     # find the symbol-portal room. After the portal is used, the scene
     # build replaces this with a real "W" so the route closes for good.
     "%": {"solid": False, "kind": "fake_wall"},

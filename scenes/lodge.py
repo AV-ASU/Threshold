@@ -630,7 +630,7 @@ def build_clerk_room():
     # Hide spot under the bed. The wardrobe is NOT a hide spot: it's the
     # Clerk's-robe tell (clerk_room_interact), and a hide here took E
     # priority and made the only "the Clerk is one of them" clue
-    # unreachable. (son_room is a SAFE scene -- the hide was cosmetic.)
+    # unreachable. (clerk_room is a SAFE scene -- the hide was cosmetic.)
     sc.hide_spots = [
         (1 * TILE + 24, 6 * TILE + 24, "under"),   # the bed's walkable lip
     ]

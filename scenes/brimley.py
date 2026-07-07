@@ -566,7 +566,7 @@ def build_brimley():
     # MINE out at the effigy grove by the river -- reached by the rite, never
     # by this well.
     # Surrounding floor was already grass; the well is a decoration.
-    # (The woodshed moved to the Lodge yard -- scenes/our_house_area. Brimley
+    # (The woodshed moved to the Lodge yard -- scenes/lodge_yard. Brimley
     # no longer hosts a shed; the footpath that once led here is left as worn
     # ground to nowhere.)
     # Gravel road passage (north) -- single 'R' tile at col 96. Uses
@@ -584,7 +584,7 @@ def build_brimley():
     # South exit to cornfield_maze (the bottom of the loop). The road
     # at col 50 cuts down through the southern tree wall via a single
     # 'M' tile. Walking south long enough through cornfield_maze ->
-    # forest_path -> here brings you back to Brimley north.
+    # cornfield_path -> here brings you back to Brimley north.
     objects_list[h - 1][48] = "M"
     sc.objects = objects_list
     sc.add_exit("j", "clearing", "from_brimley")
@@ -610,7 +610,7 @@ def build_brimley():
     # a few tiles west of the river crossing -- the maze led you
     # somewhere wrong. Spawn point on the open north band.
     sc.set_spawn("from_cornfield_maze", 40, 1)
-    # The macro-loop return spawn: arriving from forest_path's south
+    # The macro-loop return spawn: arriving from cornfield_path's south
     # exit drops the player on Brimley's north edge.
     sc.set_spawn("from_cornfield_path", 48, 1)
     # Returning from the clearing -- spawn one tile EAST of the j
@@ -812,7 +812,7 @@ def build_brimley():
             "door only opens the one way, mister, it isn't a door.[/c]",
             "[c=dim]It's a throat.[/c]",
         ])])
-    # Toby lives INSIDE the kid's house (the `kid_house`
+    # Toby lives INSIDE the kid's house (the `toby_house`
     # scene, kid_dialogue). He used to also stand here on the front step,
     # but that put a solid NPC right on the `from_toby_house` doorway
     # spawn (col 68, row 71) -- so leaving the house wedged the player
@@ -844,7 +844,7 @@ def build_brimley():
             "[c=dim]You go by and look in on him, son. Somebody ought "
             "to.[/c]",
         ])])
-    # The newcomer -- standing on the path to the haunted_house
+    # The newcomer -- standing on the path to the abandoned_farmhouse
     # (their house now). She is here to welcome you. She is patient.
     sc.add_npc(NPC(8 * TILE + 16, 95 * TILE + 16, "A woman", "townswoman",
                    dialogue_fn=_brimley_voice([
@@ -1114,7 +1114,7 @@ def build_brimley():
 
     # ---- Cult-taken territory: the south-west farmhouse ----
     # Bible §2: newcomers ARE the cult, and one or two contiguous lots
-    # would be "their" houses. The haunted_house already reads as the
+    # would be "their" houses. The abandoned_farmhouse already reads as the
     # creep house; mark it as the newcomers' explicit territory. Yellow
     # sigils on the south wall, candles in the front yard (lit nightly
     # by no one anyone has met), brazier at the path -- the rest of
@@ -1171,7 +1171,7 @@ def build_brimley():
 
     # The PI's car has MOVED to the arrival road west of the Lodge (where it
     # died on the way in -- the SPREAD escape now lives there, scenes/
-    # our_house_area.build_arrival_road). Brimley keeps only the dead pickup.
+    # lodge_yard.build_arrival_road). Brimley keeps only the dead pickup.
     objects_list = [list(r) for r in sc.objects]
     # The dead pickup is a big hulk -- solid tiles under its length so
     # the player can't walk through it (decoration at tile 95,55).

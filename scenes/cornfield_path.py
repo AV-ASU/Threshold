@@ -32,7 +32,7 @@ def build_cornfield_path():
         row = ["."] * W
         objects_l.append(row)
 
-    # West passage from our_house_area.
+    # West passage from lodge_yard.
     for dy in (-1, 0, 1):
         objects_l[PATH_ROW + dy][0] = "a"
 
@@ -98,7 +98,7 @@ def build_cornfield_path():
     # straight through without having to centre on a single door.
     sc.add_exit("!", "cornfield_maze", "from_cornfield_path")
     # South exit to brimley -- closes the macro-loop. Walking south long
-    # enough through brimley -> cornfield_maze -> forest_path -> here
+    # enough through brimley -> cornfield_maze -> cornfield_path -> here
     # brings you back to brimley north.
     sc.add_exit("S", "brimley", "from_cornfield_path")
 

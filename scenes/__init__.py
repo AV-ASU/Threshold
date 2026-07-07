@@ -8,11 +8,11 @@ reused, so old saves that store a scene key load into the content
 for that key.
 """
 from .base import Scene, tile_footstep, OBJECT_DEFS, FLOOR_DEFS, TILE
-from .house import (build_bedroom, build_lodge, build_lodge_cellar,
+from .lodge import (build_bedroom, build_lodge, build_lodge_cellar,
                     build_clerk_room)
-from .our_house_area import (build_lodge_yard, build_woodshed,
-                             build_arrival_road)
-from .forest_path import build_cornfield_path
+from .lodge_yard import (build_lodge_yard, build_woodshed,
+                         build_arrival_road)
+from .cornfield_path import build_cornfield_path
 from .well import (build_well_bottom, build_well_passage,
                    build_works_vats, build_works_sorting,
                    build_works_scriptorium, build_works_sign,
@@ -39,12 +39,13 @@ from .threshold_extras import (build_schoolhouse, build_graveyard,
                                 build_cornfield_maze)
 
 
-# THRESHOLD scene registry. Keys name the CURRENT fiction (a 2026-07 pass
-# retired the old reused-geometry names: house/son_room/basement/our_house_area
-# -> lodge/clerk_room/lodge_cellar/lodge_yard; kid_house -> toby_house;
-# old_man_house -> church; fisherman_cottage -> sheriff_office;
-# forest_path -> cornfield_path; void_boss -> clearing;
-# haunted_house -> abandoned_farmhouse):
+# THRESHOLD scene registry. Keys name the CURRENT fiction. A 2026-07 pass
+# retired the old reused-geometry key names; the mapping (OLD -> new) was:
+#   house -> lodge, son_room -> clerk_room, basement -> lodge_cellar,
+#   our_house_area -> lodge_yard, kid_house -> toby_house,
+#   old_man_house -> church, fisherman_cottage -> sheriff_office,
+#   forest_path -> cornfield_path, void_boss -> clearing,
+#   haunted_house -> abandoned_farmhouse.
 #   bedroom            -> the player's room at the Arcadia (the cot)
 #   lodge              -> the Arcadia ground floor (Clerk's desk + floor)
 #   clerk_room         -> the Clerk's room (locked; flavor: his cult robe)

@@ -289,7 +289,7 @@ def build_country_lane():
     south edge. A single creepy_tree on the north side at midway.
 
     Two exits: west `a` -> village (from_country_lane), east `e` ->
-    our_house_area (from_country_lane). No interior building, no
+    lodge_yard (from_country_lane). No interior building, no
     NPCs by default; the Sheriff patrol can pass through here as
     part of his route (already wired by tag, no extra work).
     """
@@ -314,7 +314,7 @@ def build_country_lane():
     # West passage (a) -- to village
     for dy in (-1, 0, 1):
         objects_l[6 + dy][0] = "a"
-    # East passage (e) -- to our_house_area
+    # East passage (e) -- to lodge_yard
     for dy in (-1, 0, 1):
         objects_l[6 + dy][W - 1] = "e"
     objects = ["".join(r) for r in objects_l]
@@ -394,7 +394,7 @@ def build_graveyard():
     ]
     sc = Scene("graveyard", floor, objects, music="village")
     # Exit back into the church (the gate is in the back of the
-    # parsonage). Routes to old_man_house, which has spawn
+    # parsonage). Routes to church, which has spawn
     # 'from_graveyard' set up.
     sc.add_exit("H", "church", "from_graveyard")
     sc.set_spawn("default", 7, 7)
@@ -859,7 +859,7 @@ def build_cornfield_maze():
     head-high corn on every side; narrow lanes between rows; the
     sky is the only thing you can see over the stalks. A scarecrow
     at the centre that isn't quite where it was a moment ago.
-    Two exits: south `!` back to forest_path; north `^` continues
+    Two exits: south `!` back to cornfield_path; north `^` continues
     into the brimley -- the maze led you somewhere wrong.
     Lanes are dotted with `:` corn patches: walk into one and
     you're hidden, but only as long as you stay in the patch."""
@@ -875,7 +875,7 @@ def build_cornfield_maze():
             row[0] = "C"
             row[W - 1] = "C"
         objects_l.append(row)
-    # South exit (back to forest_path) in lane 3 (cols 11-12).
+    # South exit (back to cornfield_path) in lane 3 (cols 11-12).
     objects_l[H - 1][11] = "!"
     objects_l[H - 1][12] = "!"
     # North exit (into brimley) in lane 3 (cols 11-12).
@@ -1021,7 +1021,7 @@ def build_cornfield_maze():
     # The maze identity is endless corn -- but the OUTER wall was a
     # hard ring of solid C. Soften it with the shared scatter helper
     # using corn chars ('C' solid + 'A' passable) so the wrap is
-    # camouflaged the same way brimley / forest_path are. Interior
+    # camouflaged the same way brimley / cornfield_path are. Interior
     # corn-wall cols (3, 7, 11, 15) stay untouched -- that's the maze
     # design and must not be perforated. The existing :-corn-cover
     # patches are also preserved.
@@ -1032,7 +1032,7 @@ def build_cornfield_maze():
         # North brimley exit (cols 11, 12 at row 0).
         if tx in (11, 12) and ty == 0:
             return True
-        # South forest_path exit (cols 11, 12 at row H-1).
+        # South cornfield_path exit (cols 11, 12 at row H-1).
         if tx in (11, 12) and ty == H - 1:
             return True
         # Direction-sensitive fold tiles.

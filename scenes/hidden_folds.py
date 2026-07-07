@@ -323,7 +323,7 @@ def build_lodge_arrival():
     They do not see the PI. The PI can walk around them, see her face,
     and leave by the south end of the yard. Makes 'she chose this'
     concrete. Entered through the BACK of the Lodge (the fold pane
-    against its rear wall in our_house_area, walked south): in the
+    against its rear wall in lodge_yard, walked south): in the
     back, out the front, years earlier -- the building is the fold."""
     W, H = 18, 12
     floor_rows = []
@@ -346,7 +346,7 @@ def build_lodge_arrival():
         objects_l.append(row)
     # Return tile on the SOUTH wall at col 9. The player stepped out of
     # the Lodge's front; walking south down the yard (past the tableau)
-    # returns them to our_house_area, back behind the building.
+    # returns them to lodge_yard, back behind the building.
     objects_l[H - 1][9] = "G"
     # The Lodge's south face -- one row of wall + a door at col 9.
     for tx in range(5, 14):
