@@ -413,6 +413,15 @@ it renders the procedural sprites to a labelled PNG strip.
   clears it); `_king`, `_watchers`, and hide-state are cleared on every
   `load_scene_now`.
 - Sprites are 100% procedural — no art assets to edit.
+- **Adding a new decoration/prop kind under the tilt** (the dispatch map from
+  the retired HANDCRAFT_BACKLOG): register it in exactly ONE set or it renders
+  as a flat stain on the floor. `FURNITURE` / `SOLID_PROPS` = a real projected
+  volume; `_STANDEE_KINDS` (`props.py`, `scenes/base.py _tilt_standee`) = a flat
+  card stood up; `_WALL_DECO_KINDS` = hung on a wall; `_FLOOR_DECAL_KINDS` /
+  `_SURFACE_DECAL_KINDS` = warped flat onto the floor/surface plane;
+  `_TABLETOP_PROP_KINDS` (+ `seat_tabletop_props`) = seated on furniture. A kind
+  that must stay ANIMATED needs a LIVE solid fn (standee cards freeze at t=0).
+  Verify with a `tools/capture_world.py` tilt capture before/after.
 - `__pycache__/` is gitignored; never commit `.pyc`.
 
 ## The journal door-dream + "He knows you" (NARRATIVE §1b / §0)

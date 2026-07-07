@@ -5,7 +5,7 @@
 > folded in here (2026-07) and deleted, so its open items live below tagged
 > `(was GAME_CHANGES §N)` for provenance. `NARRATIVE.md` stays the canon
 > source of truth. Built from a verification sweep of every TODO source
-> (`NARRATIVE.md` §8, `HANDCRAFT_BACKLOG.md`) and pruned
+> (`NARRATIVE.md` §8) and pruned
 > against the 2026-07 build sweep. Each candidate was checked against the
 > actual code; **anything already implemented is deleted from this list
 > outright** (no "done" archive).
@@ -343,6 +343,7 @@ smaller-grid perf pass is the shippable core of this.
   draw (dark palette, white collar, cross in the mess). (3) Stage the approach
   (wrongness before sight, long sightline). Art + placement + a location move;
   lore unchanged.
+- **[Opus]** **Held-weapon offset per camera yaw** *(was HANDCRAFT_BACKLOG 3b)* — `draw_axe_held` reads at rest; the one remaining note is an eyeball pass on the equipped-weapon offset at every camera yaw so it never floats off the hand. Verify with a tilt capture across yaws.
 - **[Opus]** **Higher-contrast see-through doors** *(PORTALS.md)* — now that the
   aperture's actors are sight-gated, opt in the doors where the
   effect reads strongest: a lit room off a dark hall, the front door onto the

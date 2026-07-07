@@ -222,7 +222,7 @@ hides are cosmetic "under" spots in zero-threat rooms.
   crossings so breaking LOS is always *possible* but never *free*.
 - Keep SAFE_SCENES as refuges (their hides stay cosmetic / no searchers).
 - Respect the camera: hides must read under the oblique tilt (volumes /
-  standees / decals per `HANDCRAFT_BACKLOG.md`), not flat stickers.
+  standees / decals per the tilt dispatch map in `CLAUDE.md`), not flat stickers.
 
 **Per-area first cut (to refine during the mechanic build):**
 
