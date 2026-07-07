@@ -568,6 +568,90 @@ escalating with evidence. Sensation only, never explained (§1b).
 Itch-ready build: pyinstaller (or equivalent) one-file builds for
 win/linux, save-dir sanity, a settings sanity pass, version stamp.
 
+### 26. CUT townsperson mutation — the town reads normal — OPEN  *(2026-07, settled with the user)*
+
+**Decision.** The `_mutated` / `INFEST_MUTATE` body-horror is CUT. It reads
+as a **second impossible thing** (biological corruption) competing with the
+game's one spatial/dimensional truth, and it fights §1b's own line: *"the
+whole town reads normal and is entirely His... the visible wrongness is the
+rot and the folds, the place, not the people."* The **convert** layer
+(passive, gaze-only cult) STAYS; only the **mutate** layer goes. The dread of
+the people moves to **behavior + the folds**, never flesh.
+
+- [ ] Remove the `_mutated` flag + `INFEST_MUTATE` set + `_INFEST_NAMED`
+  (`systems/infest_mixin.py`, `systems/config.py`).
+- [ ] Cut the world overlay (`rendering/sprites_infested.py` `_INFEST_WORLD`)
+  and the dialog portrait path (`Dialogue._draw_infested_portrait`, the
+  `infested=` flag on `show()` / `_mutated_local_dialogue`).
+- [ ] Repoint the named resisters (Toby, Hettie, Garrick, Old Pell): their
+  defiance survives as **behavior + dialogue**, not deformation.
+- [ ] Rework/retire the `tests/flow.py` mutation guards; add a guard that no
+  living local ever carries a mutate form.
+- [ ] `NARRATIVE.md` §4b: strike the mutate paragraph, keep convert, move
+  "the people go" dread to behavior. Keep `_convert_local` (adds no new
+  impossible thing).
+
+### 27. Brimley = the northernmost corn town, est. 1894 — OPEN  *(2026-07, settled with the user)*
+
+**Decision.** Brimley **STAYS in northern Minnesota.** The corn (a summer
+crop, no climate for it that far north) is justified by **town identity**:
+founded **1894**, Brimley stubbornly made itself the **northernmost corn
+growers in the world and got genuinely good at it** — a century of pride.
+
+- **GUARDRAIL (load-bearing).** The corn is a **mundane human feat** — hardy
+  short-season varieties, a sheltered river-valley microclimate, a hundred
+  years of skill and stubbornness. It is **NEVER the door's doing.**
+  Supernatural corn would be a **second impossible thing** AND break the
+  timeline (the door only woke ~1993, not 1894). Keep the impossible count at
+  one (§1b).
+- **Theme it buys:** founding hubris ("we did the impossible and were the best
+  at it") rhymes with the town that later crosses the one threshold nobody
+  else would. The dead, uncut corn standing in April now reads as **their
+  pride rotting in the field.** 1894 → 1994: the centennial is the year it ends.
+- [ ] `NARRATIVE.md` §1 setting note 2: keep "northern Minnesota"; add the
+  1894 northernmost-corn identity + the mundane-feat guardrail.
+- [ ] Surfacing (mundane Americana that curdles): a weathered town sign
+  ("BRIMLEY, NORTHERNMOST CORN IN THE WORLD, EST. 1894"), a proud local line,
+  county-fair ribbons. (No dashes in the sign text — HARD RULE.)
+- [ ] Keep the existing §1 April dead-corn note; never call the corn
+  green/growing.
+
+### 28. Royce the trucker + the rusting semi — OPEN  *(2026-07, settled with the user)*
+
+**Decision.** Promote Royce from a generic "drove out" local to the man who
+drove **Brimley's supply run** — the **severed supply line made a person**
+(Hettie's shelves are bare because *his* deliveries stopped). His break is
+escape, job, and identity at once.
+
+- [ ] Small dialogue nudge (`scenes/brimley.py` Royce): he **ran the route**
+  (goods in and out), not just "drove out."
+- [ ] Place his **semi rusting at the edge of town, picked clean** (the town
+  ate its own last shipment) — an environmental landmark; optional light
+  scavenge (ammo/batteries, **never evidence**).
+- [ ] Reconcile with his existing worker job-loop (pacing the road) and his
+  stage-3 convert (`INFEST_CONVERT`).
+
+### 29. Dead-scene cleanup: cut `highway_walk` (the walkers) + the `town` orphan — OPEN  *(2026-07, settled with the user)*
+
+**Decision.** Cut the walkers entirely and the fold that holds them; sweep the
+legacy orphan while we're in there. (`highway_walk` is reachable in theory —
+`our_house_area → arrival_road → country_lane`, hidden east-only tile at
+(28,6) — but practically nobody triggers it, and it's two anonymous reused
+sprites walking away. Not carrying its weight.)
+
+- [ ] Remove the `highway_walk` scene (`scenes/hidden_folds.py`
+  `build_highway_walk`) + its registry entry (`scenes/__init__.py`).
+- [ ] Remove the `Q` fold tile + exit on `country_lane`
+  (`scenes/threshold_extras.py`) and the `from_highway_walk` spawn.
+- [ ] Drop `highway_walk` from the config sets (`SEAMLESS_WORLD_SCENES`, the
+  hidden-fold list, any decal tables in `systems/config.py`).
+- [ ] Remove the `town` legacy scene (unreachable orphan) from the registry +
+  scrub any refs. **Verify** it has no live inbound exit first.
+- [ ] `NARRATIVE.md` §11: strike the `highway_walk` row + any walker mention
+  (§2's "walked out to flag down help" is already thin post-Calder-cut — scrub).
+- [ ] Update `tests/flow.py` if it references `highway_walk`/`town`.
+- **Leave `woodshed`** — it is NOT an orphan (keyed off the yard shed door).
+
 ## Status / sequencing notes
 
 - **Phase 1 is done + pushed.** Docs (`NARRATIVE.md`, `CLAUDE.md`) already
