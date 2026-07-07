@@ -405,6 +405,31 @@ right now. Cultist gaze + Watcher figures push it up; **hiding** bleeds
 it back down (passive corn-cover tiles, plus the few crawl-**under**-
 furniture `hide_spots` via E).
 
+> **The King is a verdict, not a monster** *(the design spine of the roaming
+> King; the mechanics + tuning live in `CLAUDE.md` and the `KING_*` config,
+> this is the canon behind them).* Internalize these or the mechanics land
+> hollow:
+> - **He feeds on attention.** Worship and war are the same meal — the kneeling
+>   zealot and the charging hero both point their regard at Him and feed Him.
+>   The one thing that starves Him is **indifference**: a god known and left
+>   unworshipped, an evil left to rot. The survivable path is always to deny
+>   Him your visibility, never to confront Him. **Visibility *is* His
+>   attention** — the meter is how hard He is looking at you, not a stealth
+>   gauge.
+> - **Lucky, not omniscient** (§1). He does not know where you are; He hunts,
+>   has to *find* you, and *searches* when He loses you. Keep the seam of chance.
+> - **The asymmetry is godhood.** You can never reach Him (the road grows
+>   between you; He won't let you close); He can always reach you (the portal).
+>   Distance is His to spend, never yours.
+> - **Knowledge is the danger; agency is the trap.** Reaching the evidence gate
+>   is what arms Him; the instinct to confront is the mistake.
+> - **The horizon King.** By default He idles at the **end of the road north**,
+>   full-bloom and sky-huge but **indifferent, not hunting** — the safe look at
+>   the god, the thing that broke Royce, and the wall the Sign later gets you
+>   past (the SPREAD setup). The road grows between you so you never close it.
+> - **Systemic, not scripted.** The rules produce the dread; every run authors
+>   its own. We guarantee the physics of fear, not the scene.
+
 **Breaking a chase is positional.** The cult AI now has **real line of
 sight** (`Scene.clear_sight_line` over the `blocks_sight` predicate): a
 wall or a solid prop between a cultist and you drops their lock, and they

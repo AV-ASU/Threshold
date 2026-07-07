@@ -242,7 +242,8 @@ hides are cosmetic "under" spots in zero-threat rooms.
 ## 7. Build sequencing
 
 **Mechanic first, then the placement pass** (matches the project's own advice
-in `KING_PROMPT.md`: validate the room-to-room hunt loop before scaling it):
+in NARRATIVE §3 / the roaming-King design: validate the room-to-room hunt loop
+before scaling it):
 
 1. **Concealment model + suspicion** (Pillar 1) on one or two rooms; confirm
    the "spotted-yet?" window feels fair. Retire the binary `hidden` blackout.
@@ -262,7 +263,7 @@ in `KING_PROMPT.md`: validate the room-to-room hunt loop before scaling it):
   `_note_fold_pursuit`/`_tick_fold_pursuit`). Budget for re-greening
   `tests/flow.py` §20/§21 and the `fold_pursuit` harness.
 - **Tuning is the make-or-break and only proves out against a human player**
-  (per `KING_PROMPT.md`): the suspicion fill curve, the concealment factors,
+  (per NARRATIVE §3): the suspicion fill curve, the concealment factors,
   the struggle press-threshold. Expect a play-tuning loop, not one-shot
   numbers.
 - **Fairness:** a death from a checked hide must read as a *choice* (you hid

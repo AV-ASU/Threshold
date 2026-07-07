@@ -5,7 +5,7 @@
 > folded in here (2026-07) and deleted, so its open items live below tagged
 > `(was GAME_CHANGES §N)` for provenance. `NARRATIVE.md` stays the canon
 > source of truth. Built from a verification sweep of every TODO source
-> (`NARRATIVE.md` §8, `KING_PROMPT.md`, `HANDCRAFT_BACKLOG.md`) and pruned
+> (`NARRATIVE.md` §8, `HANDCRAFT_BACKLOG.md`) and pruned
 > against the 2026-07 build sweep. Each candidate was checked against the
 > actual code; **anything already implemented is deleted from this list
 > outright** (no "done" archive).
@@ -347,8 +347,7 @@ smaller-grid perf pass is the shippable core of this.
   aperture's actors are sight-gated, opt in the doors where the
   effect reads strongest: a lit room off a dark hall, the front door onto the
   yard. Draw/opt-in only; no new tech.
-- **[Opus]** **Permanently-visible King through an OPEN fold** *(KING_PROMPT.md portal
-  pass)* — the King currently looms through the rift only while it *forms*,
+- **[Opus]** **Permanently-visible King through an OPEN fold** *(NARRATIVE §3 / `PORTALS.md`)* — the King currently looms through the rift only while it *forms*,
   then steps through (intentional per `PORTALS.md`). A persistent silhouette
   on the far side of an already-open fold is not built; revisit only if the
   direction changes.
