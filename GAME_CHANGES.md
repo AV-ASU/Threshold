@@ -568,6 +568,29 @@ escalating with evidence. Sensation only, never explained (§1b).
 Itch-ready build: pyinstaller (or equivalent) one-file builds for
 win/linux, save-dir sanity, a settings sanity pass, version stamp.
 
+### 26. CUT townsperson mutation — the town reads normal — OPEN  *(2026-07, settled with the user)*
+
+**Decision.** The `_mutated` / `INFEST_MUTATE` body-horror is CUT. It reads
+as a **second impossible thing** (biological corruption) competing with the
+game's one spatial/dimensional truth, and it fights §1b's own line: *"the
+whole town reads normal and is entirely His... the visible wrongness is the
+rot and the folds, the place, not the people."* The **convert** layer
+(passive, gaze-only cult) STAYS; only the **mutate** layer goes. The dread of
+the people moves to **behavior + the folds**, never flesh.
+
+- [ ] Remove the `_mutated` flag + `INFEST_MUTATE` set + `_INFEST_NAMED`
+  (`systems/infest_mixin.py`, `systems/config.py`).
+- [ ] Cut the world overlay (`rendering/sprites_infested.py` `_INFEST_WORLD`)
+  and the dialog portrait path (`Dialogue._draw_infested_portrait`, the
+  `infested=` flag on `show()` / `_mutated_local_dialogue`).
+- [ ] Repoint the named resisters (Toby, Hettie, Garrick, Old Pell): their
+  defiance survives as **behavior + dialogue**, not deformation.
+- [ ] Rework/retire the `tests/flow.py` mutation guards; add a guard that no
+  living local ever carries a mutate form.
+- [ ] `NARRATIVE.md` §4b: strike the mutate paragraph, keep convert, move
+  "the people go" dread to behavior. Keep `_convert_local` (adds no new
+  impossible thing).
+
 ## Status / sequencing notes
 
 - **Phase 1 is done + pushed.** Docs (`NARRATIVE.md`, `CLAUDE.md`) already
