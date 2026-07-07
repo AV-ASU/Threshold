@@ -68,6 +68,32 @@ item on the list: engine exists, canon is settled, payoff is the core fantasy.**
   saved or converted (they were answered, not deceived); Crane dies for
   believing he can. The provoke branch feeds the murder reveal below.
 
+### 2. **[Fable + Opus]** The newspaper choice — pilot for the favor economy  *(planned with the user 2026-07; the broader favor economy stays direction-stage)*
+
+The PI starts with the **April 14, 1994 paper** (existing item; today only
+Hettie's one-shot cartridge trade). Make it a **choose-the-recipient gift**: a
+town cut off since January, starved for word of the outside, one copy — and who
+you give it to yields **different, incommensurable** payoffs, and the town
+**feels** the allocation. This is the concrete **pilot for the favor economy**
+(the action-choice half of the choices pillar, twin to #1's dialogue verb; the
+full economy table is still to be drafted).
+
+- **Recipients + payoffs (draft):** Hettie → cartridges (survival); Royce → his
+  hoarded flashlight batteries + the one road he got furthest on (escape-hope;
+  ties #12); Old Pell → he marks his calendar again, **no item** (mercy); Toby →
+  the funny pages (mercy).
+- **What's on the page (real April '94):** Kurt Cobain's death is the thematic
+  centerpiece (the outside world's own despair, the same wound that took
+  Brimley), plus Rwanda and the Bosnia/Goražde NATO strikes. The paper is **not
+  a comfort**.
+- **Requests variant (same engine):** a local asks for a thing → **fulfill /
+  refuse / SUBVERT** (use it another way) → the town feels it.
+- **Fences (the choices rules):** rewards are **incommensurable** (no dominant
+  pick); **never evidence**; the ripple is **mood, not a meter** (who greets you
+  warm vs curt, whose hope you fed or killed); it **never gates an ending**
+  (nothing stops the PI but himself); **existing verbs only** (give via E /
+  dialog).
+
 ### 3. **[Opus]** Ground heightfield — blind-spot hills  *(CAMERA.md Phase 6; PROTOTYPE landed 2026-07 — floor-roll rewrite + live authoring deferred)*
 
 **PROTOTYPE DONE (behind a preview, dormant).** Built: `Scene.set_ground` /
