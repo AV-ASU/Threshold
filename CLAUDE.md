@@ -360,10 +360,12 @@ it renders the procedural sprites to a labelled PNG strip.
 
 ## Conventions & gotchas
 
-- **Canon TODO lives in `GAME_CHANGES.md`.** A 2026-06 narrative-alignment
-  pass settled a batch of story decisions and the **code changes to make
-  the game match** are tracked in `GAME_CHANGES.md` (with `NARRATIVE.md` §8
-  pointing to it). Highlights that override older code/comments: the
+- **Open canon-alignment work lives in `TODO.md`.** A 2026-06 narrative-
+  alignment pass settled a batch of story decisions; the **code changes to
+  make the game match** were tracked in the former `GAME_CHANGES.md`, now
+  **folded into `TODO.md`** (2026-07) with its open items tagged
+  `(was GAME_CHANGES §N)`. `NARRATIVE.md` stays the canon source of truth.
+  Highlights that override older code/comments: the
   **Ledger is the boxed old registers in the PADLOCKED Lodge cellar**
   (2026-07 rework, superseding the 2026-06 front-desk placement: the
   cellar key hangs on a nail behind the house, the desk keeps the
@@ -384,8 +386,9 @@ it renders the procedural sprites to a labelled PNG strip.
   deeper is the **blast** at the deepest face (`powder` from the Sump,
   Mask in hand, two-press) → the one-way FALL into the Depths. The
   Brimley well is dread set-dressing; the Ledger's checkout dates stop
-  **a year** back (flow-guarded). Check `GAME_CHANGES.md` before
-  touching the cast, the ledger, the fork, the descent, or the face.
+  **a year** back (flow-guarded). Check `NARRATIVE.md` (and `TODO.md` for
+  open work) before touching the cast, the ledger, the fork, the descent,
+  or the face.
 - **Teleportation is consolidated — one primitive, don't add bespoke
   paths.** Doors/ladders fade (`begin_transition`'s fade path);
   EVERY other traversal — seamless world edges, direction-gated fold

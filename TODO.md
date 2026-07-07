@@ -1,11 +1,14 @@
 # THRESHOLD — TODO
 
-> A live to-do list of work that is **genuinely still open**, built from a
-> 2026-06 verification sweep of every TODO source in the repo
-> (`GAME_CHANGES.md`, `NARRATIVE.md` §8, `KING_PROMPT.md`,
-> `HANDCRAFT_BACKLOG.md`) and pruned again by the 2026-07 build sweep.
-> Each candidate was checked against the actual code; **anything already
-> implemented is deleted from this list outright** (no "done" archive).
+> A live to-do list of work that is **genuinely still open**. This is now the
+> **single** canon-alignment + build tracker: the former `GAME_CHANGES.md` was
+> folded in here (2026-07) and deleted, so its open items live below tagged
+> `(was GAME_CHANGES §N)` for provenance. `NARRATIVE.md` stays the canon
+> source of truth. Built from a verification sweep of every TODO source
+> (`NARRATIVE.md` §8, `KING_PROMPT.md`, `HANDCRAFT_BACKLOG.md`) and pruned
+> against the 2026-07 build sweep. Each candidate was checked against the
+> actual code; **anything already implemented is deleted from this list
+> outright** (no "done" archive).
 > Cross-check against `NARRATIVE.md` before writing prose, run the full
 > gate (`python tests/run_all.py`) before commit, and add a
 > `tests/flow.py` guard when a new note locks a canon fact.
@@ -156,6 +159,74 @@ the cult's dug mine at the grove, reached by the rite); all exits/locals/cult st
 in player-facing text call it a bounded fog-edge / void-ringed town, never
 "island."
 
+### 9. **[Opus]** Cut townsperson mutation — the town reads normal  *(was GAME_CHANGES §26)*
+
+The `_mutated` / `INFEST_MUTATE` body-horror is a **second impossible thing**
+competing with the spatial cosmology and fights §1b ("the wrongness is the
+*place*, not the people"). Cut the mutate layer; **KEEP convert** (passive,
+gaze-only). Dread of the people → behavior + folds. Remove `_mutated` +
+`INFEST_MUTATE` + `_INFEST_NAMED` (`infest_mixin`, `config`); cut the world
+overlay (`sprites_infested._INFEST_WORLD`) + the dialog portrait
+(`_draw_infested_portrait` / `infested=` path); repoint Toby/Hettie/Garrick/
+Old Pell to behavior + dialogue; rework the flow mutation guards + add a
+no-mutate-form guard; `NARRATIVE.md` §4b strike the mutate paragraph.
+
+### 10. **[Opus]** Dead-scene cleanup — cut `highway_walk` + the `town` orphan  *(was GAME_CHANGES §29)*
+
+Cut the walkers and their fold (reachable in theory —
+`our_house_area → arrival_road → country_lane`, hidden east-only tile at
+(28,6) — but practically never hit; two anonymous reused sprites). Remove
+`build_highway_walk` + registry (`scenes/__init__.py`); the `Q` fold tile /
+exit + `from_highway_walk` spawn on `country_lane` (`scenes/threshold_extras.py`);
+drop from the config sets (`SEAMLESS_WORLD_SCENES`, the hidden-fold list, decal
+tables); remove the legacy `town` orphan (verify no live inbound exit);
+`NARRATIVE.md` §11 strike the row + walker mentions; update `tests/flow.py`.
+**Leave `woodshed`** (keyed off the yard shed door, not an orphan).
+
+### 11. **[Fable]** Brimley = the northernmost corn town, est. 1894  *(was GAME_CHANGES §27)*
+
+Brimley **STAYS** northern MN; the corn is town identity — stubborn 1894
+founders made it the world's northernmost corn town and got good at it, a
+century of pride. **GUARDRAIL:** the corn is a **mundane human feat** (hardy
+short-season stock, a river-valley microclimate, skill), **never the door's
+doing** — else a second impossible thing AND it breaks the ~1993 door timeline.
+Keep the impossible count at one (§1b). Theme: founding hubris rhymes with
+crossing the threshold; the dead, uncut April corn reads as their pride rotting.
+Surfacing (mundane Americana that curdles): a weathered town sign ("BRIMLEY,
+NORTHERNMOST CORN IN THE WORLD, EST. 1894"), a proud local line, county-fair
+ribbons (no dashes). Keep the §1 April dead-corn note. `NARRATIVE.md` §1 setting
+note 2 gets the identity + guardrail.
+
+### 12. **[Fable + Opus]** Royce the trucker + the rusting semi  *(was GAME_CHANGES §28)*
+
+Promote Royce to the man who drove **Brimley's supply run** — the severed
+supply line made a person (Hettie's shelves are bare because *his* deliveries
+stopped). Fable: a small dialogue nudge (he ran the route, goods in and out).
+Opus: place his **picked-clean semi rusting at the town edge** (the town ate
+its own last shipment; optional light scavenge, **never evidence**). Reconcile
+with his worker job-loop (pacing the road) + his stage-3 convert.
+
+### 13. **[Fable]** PI theory ladder — the notebook thinks  *(was GAME_CHANGES §20)*
+
+An active "working theory" line in the case notebook that **REVISES** as
+evidence lands (rational → strained → the one he refuses to write), plus terse
+FACT / SOURCE / QUESTION entries. Never evidence, never a waypoint. Shows what
+he forces himself to accept and how impossible this all is.
+
+### 14. **[Opus]** The Works as a MINE — side-dug rooms, not hallways  *(was GAME_CHANGES §21)*
+
+Make the Works read as a mining effort: timbered side-chambers dug off the
+halls (some finished, some half-dug, the deepest hand-clawed), spoil heaps,
+cart ruts, a degradation arc ending at the Deepest Face. A few pockets carry
+loot / testimony placement; most is just labor made visible.
+
+### 15. **[Fable]** Deadpan narration editing pass  *(was GAME_CHANGES §22)*
+
+Sweep every narrator / world caption to the settled voice: objective, deadpan,
+a little curt (the talk-reaction register). Kill aphorism and poetry where it
+crept in; keep the sensation-only cosmic rule (§1b). *(The liminal-beat pass —
+was GAME_CHANGES §24 — folds into #4 and #7.)*
+
 ## Blocked on a human at the keys
 
 These are BUILT and guarded; what remains cannot be settled from code
@@ -222,12 +293,47 @@ parked.
   substrate. The one salvaged win (a smaller grid, the actual FPS lever) is split
   out to Optional polish.
 
+### 16. **[Opus]** Ship track — packaging  *(was GAME_CHANGES §25)*
+
+Itch-ready build: pyinstaller (or equivalent) one-file win/linux builds,
+save-dir sanity, a settings sanity pass, a version stamp. End-stage; do near ship.
+
+### 17. **[Opus + Fable]** The ancient altar — the CAP of the last sealing  *(was GAME_CHANGES §17; rides #18)*
+
+Move the mid-Brimley standing stones to the **riverbank** (over the point the
+Threshold sits beneath; keep the worn cult path). Pre-cult dressing: lichened,
+weathered, sunken, nothing yellow — reads OLDER than every cult mark. ONE worn
+carving that recontextualizes after the player has seen the Sign (matches the
+Mask grammar) + a single `notes` beat (never evidence, no cosmology, §1b). Gives
+SEAL its precedent without a word. Lands with the compression pass.
+
+### 18. **[Opus]** Brimley compression (~64x64)  *(was GAME_CHANGES §23)*
+
+Compress Brimley toward ~64x64 at the same content density — cleaner road logic,
+shorter dead walks; the altar move (#17) rides inside. **Reconcile with the
+parked reshape (#8) + the Optional smaller-grid perf pass:** the SHAPE stays a
+square (torus wrap + fog rim underneath); only the SIZE shrinks. The Optional
+smaller-grid perf pass is the shippable core of this.
+
+---
+
+## Standing fences (guardrails, not tickets)
+
+- **The lure chain is NEVER stated diegetically** *(was GAME_CHANGES §10)*.
+  King → Mara → Walter → PI is felt, not said; the one faint unease
+  (`the_case` note) already exists — do NOT build on it. King/Watcher moments
+  read as **luck, not omniscience** (powerful, not infallible).
+- **The corn is mundane, never the door's doing** (#11). Keep the impossible
+  count at **one** (§1b): the single unexplained door, everything else ordinary
+  cause-and-effect downstream of it.
+- **No dashes in player-facing text** (HARD RULE; flow-guarded).
+
 ---
 
 ## Optional polish (no canon/lore change; do as time allows)
 
 - **[Opus]** **Brimley smaller-grid perf pass** *(the one salvaged piece of the parked reshape, #8)* — cut `w`/`h` from 100×100 toward ~64–72 and re-pack the 7 buildings + well tighter, WITHOUT changing the shape or the boundary (the square + torus wrap + fog rim all stay). This is the real FPS/tedium win (the one-time whole-map tilt bake, `scenes/base.py` `_tilt_fullmap`, ~6000 tiles). Verify: `tools/profile_brimley.py` before/after, a `tools/capture_world.py` tilt capture, full `python tests/run_all.py` gate.
-- **[Fable + Opus]** **Rev. Asa Crane murder reveal + sprite** *(GAME_CHANGES.md §12)* — Fable for the reveal writing + staging, Opus for the procedural corpse sprite. Punch up
+- **[Fable + Opus]** **Rev. Asa Crane murder reveal + sprite** *(NARRATIVE.md §2; feeds off the #1 provoke pilot)* — Fable for the reveal writing + staging, Opus for the procedural corpse sprite. Punch up
   the `preacher_doomed` death, three parts. (1) **New discovery location**: the
   provoke choice (item #1 pilot) sends him to the cult's ground, so find his body
   AWAY from the church — e.g. the well/grove edge, reaching for the souls he
@@ -263,7 +369,7 @@ build it answers:
   pacing, the tell)
 - Does any player-facing string break the no-dashes rule or the
   `NARRATIVE.md` voice?
-- Does it contradict a locked canon fact (`NARRATIVE.md` / `GAME_CHANGES.md`)?
+- Does it contradict a locked canon fact (`NARRATIVE.md`)?
 - What is the cheapest change that would make it land harder?
 
 Output is a short verdict + ranked notes, not a rewrite. The value is a

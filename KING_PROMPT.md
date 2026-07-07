@@ -236,7 +236,7 @@ most contradicts.
    can fling you across the map (surface <-> underground). Feature (chaotic
    fold-escape that costs descent progress) or bounded (same depth band)?
 3. **Rope-snap / point of no return:** persistent portal-exits may rework the
-   Deep-Stair rope snap (fresh canon, `GAME_CHANGES` #7). My lean: keep the
+   Deep-Stair rope snap (fresh canon, the keystone rework). My lean: keep the
    commitment, change the mechanism — portals only ever go *lateral or deeper*,
    never back *up* to safety, so one-way-down dread survives.
 3b. **Director layer:** emergence does not respect pacing. Do we add a light
@@ -278,7 +278,7 @@ opening-drive road tech for the highway.
 King feeds on attention; lucky-not-omniscient; the lure chain is felt, never
 stated; no day/night cycle; `SAFE_SCENES` exist; **the Threshold door is NOT
 the gold-yellow portal aesthetic** (only the fold seams are); no em-dashes / no
-dashes in player-facing text. Check `GAME_CHANGES.md` before touching the fork,
+dashes in player-facing text. Check `NARRATIVE.md` before touching the fork,
 the Deep Stair, or the keystone.
 
 ## Verification
