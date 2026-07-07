@@ -429,11 +429,11 @@ def hettie_dialogue(game, npc):
 
 def sheriff_dialogue(game, npc):
     """The Sheriff -- a LOCAL, born here, broken (NARRATIVE §2). Not a
-    believer, not a cultist. He did NOT kill the car -- the fold did;
-    he's watched it happen before. He tells outsiders to leave out of
-    muscle memory, knowing they can't and he can't either. A witness who
-    can't help; the badge is just clothing now. Escalates over visits:
-    weary warning -> the car (not his doing) -> the town's history.
+    believer, not a cultist. He didn't disable the car and can't undo
+    what has. He tells the PI to leave knowing neither of them can. A
+    witness who can't help; the badge is just clothing now. Escalates
+    over visits: weary warning -> the car (not his doing) -> the town's
+    history.
     The preacher he couldn't save is a one-shot, gated on the player
     having SEEN the church floor (preacher_body_seen) -- it used to sit
     at visit 4, where it could announce the murder before it happened."""
@@ -443,7 +443,7 @@ def sheriff_dialogue(game, npc):
     # the player has found the body -- but never as a first impression.
     if (save.flag("preacher_body_seen")
             and not save.flag("vane_preacher_noticed")
-            and save.arg("fisher_count", 0) >= 1):
+            and save.arg("vane_count", 0) >= 1):
         save.set_flag("vane_preacher_noticed", True)
         game.dialog.show([
             "They killed the preacher.",
@@ -454,8 +454,8 @@ def sheriff_dialogue(game, npc):
             "nobody in town has.[/c]",
         ], speaker="Sheriff Vane", voice="blip_gruff", portrait="sheriff")
         return
-    n = save.arg("fisher_count", 0) + 1
-    save.set_arg("fisher_count", n)
+    n = save.arg("vane_count", 0) + 1
+    save.set_arg("vane_count", n)
     if n == 1:
         # Local, born here, weary. Not a believer. The line "head home"
         # is muscle memory of the job he used to do.
