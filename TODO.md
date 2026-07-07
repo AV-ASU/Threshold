@@ -82,6 +82,12 @@ full economy table is still to be drafted).
   hoarded flashlight batteries + the one road he got furthest on (escape-hope;
   ties #12); Old Pell → he marks his calendar again, **no item** (mercy); Toby →
   the funny pages (mercy).
+- **Sable → the null / eerie option (the tell).** Give the paper to the
+  trap-keeper (the most-attuned local) and it lands nowhere: he takes it
+  graciously and it means **nothing** — no reward, no thanks that reads as
+  real, a quiet non-reaction that the outside no longer exists for him. The
+  anti-reward that characterizes what Sable *is* (compulsion, not hospitality;
+  NARRATIVE §2). Outcome is a `notes` beat / a chill, never an item.
 - **What's on the page (real April '94):** Kurt Cobain's death is the thematic
   centerpiece (the outside world's own despair, the same wound that took
   Brimley), plus Rwanda and the Bosnia/Goražde NATO strikes. The paper is **not
