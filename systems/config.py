@@ -77,7 +77,7 @@ SEAMLESS_WORLD_SCENES = OUTDOOR_SCENES | {
     "brimley",
     # Hidden fold scenes -- the player stumbles into them through
     # direction-sensitive exits and shouldn't feel a transition.
-    "effigy_grove", "lodge_arrival",
+    "effigy_grove",
     "husk_grove", "scarecrow_ring",
 }
 

@@ -88,22 +88,7 @@ def build_lodge_yard():
     # country lane and town; east to the cornfield path.
     sc.add_exit("a", "arrival_road", "from_lodge_yard")
     sc.add_exit("e", "cornfield_path", "from_lodge_yard")
-    # Direction-sensitive hidden fold: the BACK of the Lodge. Walking
-    # SOUTH onto the 'M' tile pressed against the building's rear
-    # (north) wall opens onto Mara's arrival -- the day she walked up
-    # onto this porch with a suitcase. The pane stands flush along the
-    # back wall, so faced head-on it reads as a door the building
-    # shouldn't have; from any other angle the Lodge's rear is just
-    # wall. In the back, out the front, years earlier: the building IS
-    # the fold. You only ever face it by deliberately snooping behind
-    # your own lodge (the forest band crowds the strip), so the beat
-    # lands mid-investigation instead of on the first woodshed errand.
-    sc.add_exit("M", "lodge_arrival", "from_lodge_yard",
-                direction="south")
-    # The M tile sits at (5, 1), one tile off the Lodge's back wall,
-    # mirroring the H door on the front face.
     yard_obj = [list(r) for r in sc.objects]
-    yard_obj[1][5] = "M"
     # The WOODSHED in the SW of the yard -- west of the Lodge, where it
     # belongs (it used to sit clear across town in brimley). A small solid
     # structure with a facade door 'l' on its north face; locked until you
@@ -181,11 +166,6 @@ def build_lodge_yard():
     sc.set_spawn("from_forest", 22, 7)           # one west of east passage
     sc.set_spawn("from_river", 1, 7)             # west passage spawn alias
     sc.set_spawn("from_woodshed", 2, 11)         # one N of the shed door
-    # Return spawn from the lodge_arrival fold -- back behind the Lodge,
-    # BESIDE the pane (one tile east of the M tile) rather than in front
-    # of it, so the preserved southward stride can't immediately
-    # re-trigger the fold (one step south from here is the Lodge wall).
-    sc.set_spawn("from_lodge_arrival", 6, 1)
 
     # The pickup truck -- a decoration the player can SEE but not
     # use. The player's car (the escape vehicle) is on the Brimley
