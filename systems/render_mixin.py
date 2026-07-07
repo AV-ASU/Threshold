@@ -500,17 +500,25 @@ class RenderMixin:
                 fl = 0.82 + 0.18 * math.sin(tnow * 7.0 + d.x * 0.25)
                 torches.append((int(tx), int(ty) - 12, fl))
         # Build the beam cone geometry once (apex -> left -> tip -> right).
+        # The far points are laid out in WORLD space around the player's feet
+        # and projected through the camera, so the cone lies FLAT on the ground
+        # -- under tilt it foreshortens with the floor instead of shooting off
+        # the screen into the void. (At pitch 0, scale 1.0, this projects to the
+        # same screen pixels the old screen-space math produced.)
         cone = None
         if lit:
             fx, fy = getattr(self.player, "facing", (0, 1)) or (0, 1)
             flen = math.hypot(fx, fy) or 1.0
             ang = math.atan2(fy / flen, fx / flen)
             reach, spread = 300, math.radians(30)
-            tip = (psx + reach * math.cos(ang), psy + reach * math.sin(ang))
-            left = (psx + reach * math.cos(ang - spread),
-                    psy + reach * math.sin(ang - spread))
-            right = (psx + reach * math.cos(ang + spread),
-                     psy + reach * math.sin(ang + spread))
+            pwx, pwy = self.player.x, self.player.y
+
+            def _far(a):
+                return self.camera.project(pwx + reach * math.cos(a),
+                                           pwy + reach * math.sin(a))
+            tip = _far(ang)
+            left = _far(ang - spread)
+            right = _far(ang + spread)
             cone = [(psx, psy), left, tip, right]
         if lit:
             # A warm held-light pool at the feet -- not eyes adjusting.
