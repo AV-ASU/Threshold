@@ -130,7 +130,7 @@ since the trucks stopped is what makes the cut-off legible, and the
 trade is how starved for word they are). Treat **April 14 = yesterday**
 as canon wherever a date surfaces. Locked in `tests/flow.py` §23a.
 
-**THE TIMELINE (locked 2026-06 — the calendar sweep, GAME_CHANGES §13).**
+**THE TIMELINE (locked 2026-06 — the calendar sweep).**
 Every dated reference in the game agrees with this chain; check new text
 against it:
 
@@ -405,6 +405,31 @@ right now. Cultist gaze + Watcher figures push it up; **hiding** bleeds
 it back down (passive corn-cover tiles, plus the few crawl-**under**-
 furniture `hide_spots` via E).
 
+> **The King is a verdict, not a monster** *(the design spine of the roaming
+> King; the mechanics + tuning live in `CLAUDE.md` and the `KING_*` config,
+> this is the canon behind them).* Internalize these or the mechanics land
+> hollow:
+> - **He feeds on attention.** Worship and war are the same meal — the kneeling
+>   zealot and the charging hero both point their regard at Him and feed Him.
+>   The one thing that starves Him is **indifference**: a god known and left
+>   unworshipped, an evil left to rot. The survivable path is always to deny
+>   Him your visibility, never to confront Him. **Visibility *is* His
+>   attention** — the meter is how hard He is looking at you, not a stealth
+>   gauge.
+> - **Lucky, not omniscient** (§1). He does not know where you are; He hunts,
+>   has to *find* you, and *searches* when He loses you. Keep the seam of chance.
+> - **The asymmetry is godhood.** You can never reach Him (the road grows
+>   between you; He won't let you close); He can always reach you (the portal).
+>   Distance is His to spend, never yours.
+> - **Knowledge is the danger; agency is the trap.** Reaching the evidence gate
+>   is what arms Him; the instinct to confront is the mistake.
+> - **The horizon King.** By default He idles at the **end of the road north**,
+>   full-bloom and sky-huge but **indifferent, not hunting** — the safe look at
+>   the god, the thing that broke Royce, and the wall the Sign later gets you
+>   past (the SPREAD setup). The road grows between you so you never close it.
+> - **Systemic, not scripted.** The rules produce the dread; every run authors
+>   its own. We guarantee the physics of fear, not the scene.
+
 **Breaking a chase is positional.** The cult AI now has **real line of
 sight** (`Scene.clear_sight_line` over the `blocks_sight` predicate): a
 wall or a solid prop between a cultist and you drops their lock, and they
@@ -496,7 +521,7 @@ Mask's foot and the calling-out stages her rising).
 |---|---|---|---|---|
 | 1 | **Mara's Room** | `maras_room` (robe + unsent letter) | **Underground** — a convert's cell off the Sorting Hall (`works_sorting`) | She didn't rent a room and vanish — she *moved in* down here. She joined willingly; she was already home. Her last sane line — *"I'm not lost. I've never been this close."* — stays in your hand all the way to the Dark |
 | 2 | **Mara's Journal** | `mom_notebook` | The **barn** (`barn`) — behind the workbench | Her descent, in her own words (page 3 → the flashback) |
-| 3 | **The Ledger** (the Lodge's old registers) | read in place | The **padlocked Lodge cellar** (2026-07 rework, GAME_CHANGES §1): the boxed old registers on the crates below. The front desk keeps the clean sign-in book + the LEAD pointing down; the cellar key hangs on a nail behind the house; Sable never points at the cellar | Guests who check in and never out — the checkout dates stop **a year back** (the same season the PI dreamed the door, once) — and your own name, signed in tonight, already among them. |
+| 3 | **The Ledger** (the Lodge's old registers) | read in place | The **padlocked Lodge cellar** (2026-07 rework): the boxed old registers on the crates below. The front desk keeps the clean sign-in book + the LEAD pointing down; the cellar key hangs on a nail behind the house; Sable never points at the cellar | Guests who check in and never out — the checkout dates stop **a year back** (the same season the PI dreamed the door, once) — and your own name, signed in tonight, already among them. |
 | 4 | **The Preacher** | his **cross** (item `cross`) taken from the viscera | The **church** (`old_man_house`) — his own floor | The town murders the ones who name them — gutted for preaching against the cult |
 | 5 | **The Sign — the Pallid Mask** | `pallid_mask` (renamed 2026-07 from the legacy `sigil_rubbing`; `Save.load_disk` migrates old slots) | Sign Chamber (well) | His face made an object: what they worship, the shard the fold opens for (the **escape key** → *SPREAD IT*), and the keystone you carry to the door (the Mask alone; the cult's notes are decoupled, pure lore) |
 | 6 | **The Congregation** | (Mara, turned) | The **Sign Chamber** (`works_sign`; 2026-07 staging): she kneels among the congregation at the Mask's foot. First entry stages the **calling-out**: the kneelers rise, one says her name at the room, and she comes to you for the exchange | There was never anyone to save |
@@ -691,7 +716,7 @@ that fire is someone He already took. You only ever see it by losing.
 | **A cultist catches you** | The cult takes you for the ritual. **THE TALK (2026-07):** the FIRST grab of a run is a warning instead — *"Hey. You go back to your hotel room if you know what's good for you." "Run."* — then they let go (a one-time freebie, spent at whichever grab site fires first; the PI's wry reaction lands a beat later and files as a NOTE) | Stark text card — **CAPTURED** (cult takes you alive; worse than killed, and feeds the hive) | `_trigger_death("cultist")` → `_cult_talk` (first grab) / `_tick_death` |
 | **The King catches you** (vis `1.0`, *3+ evidence*, He reaches you) | He takes you into Himself | Brief cutscene: fire/hell, the floating masks of His sprite drifting in it — title **Carcosa** | `_trigger_death("king")` → `_tick_death` (exists; the bespoke `_trigger_closure` path was replaced by the shared death system) |
 | **Seal the threshold** — *END IT* | You carry the **keystone** (the Mask seated in the cult's notes) THROUGH the door; contain the hunger; **every acre the cult bent is warped whole into Carcosa** — the map's edges grow together over the place, and **Brimley simply was** | Three movements (2026-06 approved): a **LIVE warp** (the threshold scene's dressing, then the world's things, pour through the doorframe after you — in-engine, not a still); the **approved lines on black** (you under the **black stars** and **twin suns** of Carcosa); a **wordless wide shot** — the cult-bent acres adrift in the void, a towering figure behind, gold tracing a mask, almost visible. *"Rage approaches."* | `_threshold_seal`/`_tick_seal_warp` (scenes/depths.py, consumes the keystone at the doorframe) → `_play_ending("seal_threshold")` → `draw_seal_tableau` |
-| **Drive out with the Sign** — *SPREAD IT* | You pull the rite's keystone and carry it out — and at the edge of Brimley the Mask **claims you** (2026-06 rework, GAME_CHANGES §16): the PI gazes into its deep sunken eyes, completing the dream that broke off a year ago, and the King steps in. What he longed for most — to *feel* — floods back, and he drives south full, certain, and His. The breach rides out as a willing vector now, not a passive charge | The drive-out **cutscene** (`rendering/spread_drive.py`, ~38s): the engine roars to life, the gold wake trails the car (particles, never a body), the mask turns in the passenger seat, the fold's frame sweeps past *unwitnessed* mid-gaze, colour floods the first horizon of the run, and the verdict card closes it: *"Everyone will know."* | `_begin_car_escape()` → `_play_ending("escape_alone")` (exists). Gates on the **Mask** (`pallid_mask`) **alone** — your own car, no keys; the fold is the only lock, and only a shard of Him opens it. Caption lines are locked (flow-guarded); durations come from `SPREAD_BEAT_DURS`. |
+| **Drive out with the Sign** — *SPREAD IT* | You pull the rite's keystone and carry it out — and at the edge of Brimley the Mask **claims you** (2026-06 rework): the PI gazes into its deep sunken eyes, completing the dream that broke off a year ago, and the King steps in. What he longed for most — to *feel* — floods back, and he drives south full, certain, and His. The breach rides out as a willing vector now, not a passive charge | The drive-out **cutscene** (`rendering/spread_drive.py`, ~38s): the engine roars to life, the gold wake trails the car (particles, never a body), the mask turns in the passenger seat, the fold's frame sweeps past *unwitnessed* mid-gaze, colour floods the first horizon of the run, and the verdict card closes it: *"Everyone will know."* | `_begin_car_escape()` → `_play_ending("escape_alone")` (exists). Gates on the **Mask** (`pallid_mask`) **alone** — your own car, no keys; the fold is the only lock, and only a shard of Him opens it. Caption lines are locked (flow-guarded); durations come from `SPREAD_BEAT_DURS`. |
 | **Break the rite before sealing** — *YOU FUCKED UP* (a game over) | You tear down the rite *in place* — the obvious heroic move — with the source still open. The lid comes off a pressurized pot: His influence floods out, uncontained, here and now | Ending sequence: you destroy the altar/Sign/kneeling, one breath of quiet, then the flood — *"It was never a cage for you. It was a cage for Him."* | `_play_ending("rite_broken")`. Triggered at the **Sign Chamber altar** (the FIRST place you meet the active rite): a choice — *take the mask* (controlled) vs *tear it down* (the trap). |
 
 ### The Fork — the Mask is your way out, or your way down
@@ -839,7 +864,7 @@ The reworks the new fiction forced are all shipped. What must stay true:
   nailed shut from below; no secret paths. **The way home is keyed:**
   the shaft-floor pane opens only to the Mask, and crossing it spends
   the descent (SPREAD lock).
-- **Deep Stair gate (rework — see §8/GAME_CHANGES).** The **keystone** —
+- **Deep Stair gate (rework — see §8).** The **keystone** —
   the **Pallid Mask** (Sign Chamber), Mask-only now (§6b) — opens the stair to His own authority pressed to
   nothing — the Deep Stair is CUT (the dig never finished; §9). The way
   deeper is the **blast at the deepest face** (powder from the Sump,
@@ -868,8 +893,9 @@ The reworks the new fiction forced are all shipped. What must stay true:
 
 > **2026-06 canon-alignment pass (settled with the user).** A batch of
 > story/canon decisions were locked this session; the **concrete code
-> changes** to make the game match live in **`GAME_CHANGES.md`** (the
-> handoff TODO). In brief: **Ledger → front desk** (cut the cellar copy +
+> changes** to make the game match live in **`TODO.md`** (the former
+> `GAME_CHANGES.md` handoff tracker, folded into `TODO.md` in 2026-07). In
+> brief: **Ledger → front desk** (cut the cellar copy +
 > Sable's cellar line); **Sable is the most-attuned *local*** (not a
 > newcomer); **Royce has stopped driving out**; **Mrs. Calder sets a place
 > for a guest she can't name** (not a vanished husband); **the cult's notes = three pure-lore testimony fragments**
@@ -881,7 +907,7 @@ The reworks the new fiction forced are all shipped. What must stay true:
 > infestation layer; the **lure chain** (King→Mara→Walter→PI, felt not
 > stated); the **awareness model** (no visible tell; the cult knew the gist
 > of its bargain, the locals never knew they were claimed); and a **Rev.
-> Crane dialogue/murder rework** (lore unchanged). See `GAME_CHANGES.md`.
+> Crane dialogue/murder rework** (lore unchanged). See `TODO.md`.
 
 - ~~**Cultist movement → dynamic AI, not preset patrol coordinates.**~~
   **DONE.** The hard-coded `waypoints=[...]` are gone from `_cultist` and all
@@ -987,7 +1013,7 @@ The reworks the new fiction forced are all shipped. What must stay true:
   cell journal says the rest "had been here since the summer," the
   threshing tithe dropped its "season on season," and every wall calendar
   in town now defaults to a stopped **JAN 15** card. Flow-guarded
-  (`tests/flow.py` §23a). See `GAME_CHANGES.md` §13.
+  (`tests/flow.py` §23a). See §1 setting note 3 (the timeline).
 - **Food scarcity — the VISUAL pass.** The dialogue side is done
   (Hettie: "The shelves don't empty anymore... No deliveries."; the
   Store-Owner: "Shelves are bare. Till's been empty since the new year").

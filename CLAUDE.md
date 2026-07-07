@@ -360,10 +360,12 @@ it renders the procedural sprites to a labelled PNG strip.
 
 ## Conventions & gotchas
 
-- **Canon TODO lives in `GAME_CHANGES.md`.** A 2026-06 narrative-alignment
-  pass settled a batch of story decisions and the **code changes to make
-  the game match** are tracked in `GAME_CHANGES.md` (with `NARRATIVE.md` §8
-  pointing to it). Highlights that override older code/comments: the
+- **Open canon-alignment work lives in `TODO.md`.** A 2026-06 narrative-
+  alignment pass settled a batch of story decisions; the **code changes to
+  make the game match** were tracked in the former `GAME_CHANGES.md`, now
+  **folded into `TODO.md`** (2026-07) with its open items tagged
+  `(was GAME_CHANGES §N)`. `NARRATIVE.md` stays the canon source of truth.
+  Highlights that override older code/comments: the
   **Ledger is the boxed old registers in the PADLOCKED Lodge cellar**
   (2026-07 rework, superseding the 2026-06 front-desk placement: the
   cellar key hangs on a nail behind the house, the desk keeps the
@@ -384,8 +386,9 @@ it renders the procedural sprites to a labelled PNG strip.
   deeper is the **blast** at the deepest face (`powder` from the Sump,
   Mask in hand, two-press) → the one-way FALL into the Depths. The
   Brimley well is dread set-dressing; the Ledger's checkout dates stop
-  **a year** back (flow-guarded). Check `GAME_CHANGES.md` before
-  touching the cast, the ledger, the fork, the descent, or the face.
+  **a year** back (flow-guarded). Check `NARRATIVE.md` (and `TODO.md` for
+  open work) before touching the cast, the ledger, the fork, the descent,
+  or the face.
 - **Teleportation is consolidated — one primitive, don't add bespoke
   paths.** Doors/ladders fade (`begin_transition`'s fade path);
   EVERY other traversal — seamless world edges, direction-gated fold
@@ -410,6 +413,15 @@ it renders the procedural sprites to a labelled PNG strip.
   clears it); `_king`, `_watchers`, and hide-state are cleared on every
   `load_scene_now`.
 - Sprites are 100% procedural — no art assets to edit.
+- **Adding a new decoration/prop kind under the tilt** (the dispatch map from
+  the retired HANDCRAFT_BACKLOG): register it in exactly ONE set or it renders
+  as a flat stain on the floor. `FURNITURE` / `SOLID_PROPS` = a real projected
+  volume; `_STANDEE_KINDS` (`props.py`, `scenes/base.py _tilt_standee`) = a flat
+  card stood up; `_WALL_DECO_KINDS` = hung on a wall; `_FLOOR_DECAL_KINDS` /
+  `_SURFACE_DECAL_KINDS` = warped flat onto the floor/surface plane;
+  `_TABLETOP_PROP_KINDS` (+ `seat_tabletop_props`) = seated on furniture. A kind
+  that must stay ANIMATED needs a LIVE solid fn (standee cards freeze at t=0).
+  Verify with a `tools/capture_world.py` tilt capture before/after.
 - `__pycache__/` is gitignored; never commit `.pyc`.
 
 ## The journal door-dream + "He knows you" (NARRATIVE §1b / §0)
