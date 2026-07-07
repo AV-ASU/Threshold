@@ -283,7 +283,7 @@ def main():
     # is the boxed old registers in the cellar, behind the padlocked
     # kitchen hatch; the cellar key hangs on a nail behind the house.
     gl = new_game()
-    gl.load_scene_now("house")
+    gl.load_scene_now("lodge")
     ready(gl)
     gl.player.x, gl.player.y = gl.scene._frontdesk_pos
     gl.scene.on_interact_fn(gl)                      # first press: sign
@@ -295,16 +295,16 @@ def main():
           "ledger: the desk register is a LEAD now, never the evidence")
     check(not gl.scene.exit_gate_fn(gl, "L"),
           "ledger: the cellar hatch is locked without the key")
-    gl.load_scene_now("our_house_area")
+    gl.load_scene_now("lodge_yard")
     check(any(it["key"] == "cellar_key" for it in gl.scene.items),
           "ledger: the cellar key hangs behind the house")
     gl.player.inventory.add("cellar_key", 1)   # (walk-over pickup in play)
     gl.save.set_flag("cellar_key_taken", True)
-    gl.load_scene_now("house")
+    gl.load_scene_now("lodge")
     check(gl.scene.exit_gate_fn(gl, "L")
           and gl.save.flag("cellar_unlocked"),
           "ledger: the carried key turns the padlock (one-time unlock)")
-    gl.load_scene_now("basement")
+    gl.load_scene_now("lodge_cellar")
     ready(gl)
     gl.player.x, gl.player.y = gl.scene._ledger_pos
     gl.scene.on_interact_fn(gl)
@@ -312,7 +312,7 @@ def main():
           "ledger: the old registers in the cellar fire the_ledger")
     # A fresh save's cellar is key-gated and panel-free.
     gcellar = new_game()
-    gcellar.load_scene_now("basement")
+    gcellar.load_scene_now("lodge_cellar")
     ready(gcellar)
     check(not hasattr(gcellar.scene, "_wall_panel_pos"),
           "ledger: no loose wall panel (the old cache stays cut)")
@@ -529,10 +529,10 @@ def main():
 
     # --- 10. The Kid is the witness (NARRATIVE §2): tells, grants no item ---
     gk = new_game()
-    gk.load_scene_now("kid_house")
+    gk.load_scene_now("toby_house")
     ready(gk)
     kid = next((nn for nn in gk.scene.npcs
-                if nn.name == "the Tisdale boy"), None)   # renamed in the merge
+                if nn.name == "Toby"), None)   # renamed in the merge
     check(kid is not None, "kid: the Kid is present in his house")
     if kid:
         _kid_lines = []
@@ -609,12 +609,12 @@ def main():
     # road; the yard's west exit routes through it, and the road wraps (the
     # fold made the drive-in an endless loop you can turn off of any time).
     from scenes import load_scene as _ld13
-    _yard = _ld13("our_house_area")
+    _yard = _ld13("lodge_yard")
     check(_yard.exits.get("a", (None,))[0] == "arrival_road",
           "geo: the lodge yard's west exit lands on the arrival road")
     _road = _ld13("arrival_road")
     check(_road.exits.get("a", (None,))[0] == "country_lane"
-          and _road.exits.get("e", (None,))[0] == "our_house_area",
+          and _road.exits.get("e", (None,))[0] == "lodge_yard",
           "geo: the arrival road's dirt path links country_lane (W) and yard (E)")
     # The road reads INFINITE without a full-column wrap: a landmark-free north
     # BAND renders endlessly (_render_band) and loops travel (_treadmill), while
@@ -654,20 +654,20 @@ def main():
     # It used to sit across town in brimley; now it is a key-gated door in
     # the Arcadia yard (west of the lodge) and exits back to the yard. The
     # brimley shed door is gone.
-    _yard2 = _ld13("our_house_area")
+    _yard2 = _ld13("lodge_yard")
     _shed = _ld13("woodshed")
     check(hasattr(_yard2, "_shed_door_pos"),
           "geo: the lodge yard has the woodshed door (west of the lodge)")
-    check(_shed.exits.get("h", (None,))[0] == "our_house_area",
+    check(_shed.exits.get("h", (None,))[0] == "lodge_yard",
           "geo: the woodshed exits back into the lodge yard")
     check("_shed_door_pos" not in inspect.getsource(_ml.build_brimley),
           "geo: brimley no longer hosts the woodshed door (consolidated)")
     gw = new_game()
-    gw.load_scene_now("our_house_area")
+    gw.load_scene_now("lodge_yard")
     ready(gw)
     gw.player.x, gw.player.y = gw.scene._shed_door_pos
     gw.scene.on_interact_fn(gw)                       # locked, no key
-    check(gw.scene.key == "our_house_area",
+    check(gw.scene.key == "lodge_yard",
           "geo: the shed door is locked without the cellar key")
     gw.player.inventory.add("woodshed_key", 1)
     gw.scene.on_interact_fn(gw)                       # key in hand -> enters
@@ -805,7 +805,7 @@ def main():
     check(gsr.player.hidden is None and gsr.save.flag("read_journal"),
           "startroom: a second [E] READS the notes (does not hide)")
     # the gun stays gone across a scene reload
-    gsr.load_scene_now("bedroom", "from_house")
+    gsr.load_scene_now("bedroom", "from_lodge")
     check(not _gun_on_desk(gsr),
           "startroom: the taken revolver does not reappear on re-entry")
 
@@ -998,7 +998,7 @@ def main():
     # (2026-07: behind the padlocked hatch).
     gl2 = new_game()
     gl2.player.inventory.add("cellar_key", 1)
-    gl2.load_scene_now("basement")
+    gl2.load_scene_now("lodge_cellar")
     ready(gl2)
     gl2.player.x, gl2.player.y = gl2.scene._ledger_pos
     gl2.scene.on_interact_fn(gl2)         # read the old registers
@@ -1723,7 +1723,7 @@ def main():
     # choices, infested portraits, and scripted (on_complete) beats
     # stay in the MODAL box.
     gfs = new_game()
-    gfs.load_scene_now("old_man_house", "default")
+    gfs.load_scene_now("church", "default")
     for _ in range(20):
         gfs.state = "playing"
         gfs.step(1 / 30.0)
@@ -1977,7 +1977,7 @@ def main():
     check(_het is not None and _het.movement == "worker"
           and len(getattr(_het, "stations", [])) >= 3,
           "jobs: the store Hettie works her counter route")
-    gj.load_scene_now("old_man_house")
+    gj.load_scene_now("church")
     ready(gj)
     _rev = next((n for n in gj.scene.npcs
                  if getattr(n, "tag", "") == "preacher"), None)

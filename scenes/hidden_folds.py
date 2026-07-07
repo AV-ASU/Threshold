@@ -357,14 +357,14 @@ def build_lodge_arrival():
     sc = Scene("lodge_arrival", floor_rows, objects, music="village")
     sc.wrap_x = False
     sc.wrap_y = False
-    sc.add_exit("G", "our_house_area", "from_lodge_arrival")
+    sc.add_exit("G", "lodge_yard", "from_lodge_arrival")
     sc.set_spawn("default", 9, H - 2)
     # The player walked SOUTH into the back of the Lodge; they emerge
     # just south of its porch in the past, stride preserved -- out the
     # front door of the building they walked into the back of. Two
     # tiles below Mara so the spawn never overlaps the figures; one
     # turn and the tableau is there.
-    sc.set_spawn("from_our_house_area", 9, 6)
+    sc.set_spawn("from_lodge_yard", 9, 6)
     # ---- Decorations ----
     # Lit windows flanking the Lodge door.
     sc.add_decoration(Decoration(7 * TILE + 16, 3 * TILE + 16, "candle"))

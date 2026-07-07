@@ -325,10 +325,10 @@ def build_country_lane():
     sc.add_exit("e", "arrival_road", "from_country_lane")
     sc.set_spawn("default", 1, 6)
     # Player walked WEST off the arrival road: lands at the east end of the
-    # lane, facing west toward town. (from_our_house_area kept as an alias for
+    # lane, facing west toward town. (from_lodge_yard kept as an alias for
     # any save that still routes straight here.)
     sc.set_spawn("from_arrival_road", W - 2, 6)
-    sc.set_spawn("from_our_house_area", W - 2, 6)
+    sc.set_spawn("from_lodge_yard", W - 2, 6)
     # Player walked EAST out of Brimley: lands at the west end of
     # the lane, facing east toward home.
     sc.set_spawn("from_brimley", 1, 6)
@@ -396,7 +396,7 @@ def build_graveyard():
     # Exit back into the church (the gate is in the back of the
     # parsonage). Routes to old_man_house, which has spawn
     # 'from_graveyard' set up.
-    sc.add_exit("H", "old_man_house", "from_graveyard")
+    sc.add_exit("H", "church", "from_graveyard")
     sc.set_spawn("default", 7, 7)
     sc.set_spawn("from_church", 7, 7)
     sc.set_spawn("from_town_crossroads", 7, 7)
@@ -815,7 +815,7 @@ def build_bell_tower():
         "WWWWiWWLWWWW",    # 9  south-wall slit + L = stairs down to the church
     ]
     sc = Scene("bell_tower", floor_rows, objects, music="home")
-    sc.add_exit("L", "old_man_house", "from_bell_tower")
+    sc.add_exit("L", "church", "from_bell_tower")
     sc.set_spawn("default", 5, 8)
     sc.set_spawn("from_church", 7, 8)        # at the foot of the L stairs
     # The bell hangs off the housing's south face (drawn upward from its
@@ -1131,7 +1131,7 @@ def build_cornfield_maze():
     # feels natural until the player realises no direction escapes it.
     sc.wrap_x = True
     sc.wrap_y = True
-    sc.add_exit("!", "forest_path", "from_cornfield_maze")
+    sc.add_exit("!", "cornfield_path", "from_cornfield_maze")
     sc.add_exit("^", "brimley",   "from_cornfield_maze")
     # Direction-sensitive hidden fold: walking WEST across the 'Z'
     # tile (a regular-looking lane tile in the middle of the maze)
@@ -1155,7 +1155,7 @@ def build_cornfield_maze():
     sc.set_spawn("reloc_I", 16, 19)
     sc.set_spawn("reloc_Q", 3, 19)
     sc.set_spawn("default", 11, H - 2)
-    sc.set_spawn("from_forest_path", 11, H - 2)
+    sc.set_spawn("from_cornfield_path", 11, H - 2)
     sc.set_spawn("from_cornfield", 11, H - 2)
     sc.set_spawn("from_brimley", 11, 1)
     sc.set_spawn("from_brimley_south", 11, 1)

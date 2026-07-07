@@ -8,11 +8,11 @@ reused, so old saves that store a scene key load into the content
 for that key.
 """
 from .base import Scene, tile_footstep, OBJECT_DEFS, FLOOR_DEFS, TILE
-from .house import (build_bedroom, build_house, build_basement,
-                    build_son_room)
-from .our_house_area import (build_our_house_area, build_woodshed,
+from .house import (build_bedroom, build_lodge, build_lodge_cellar,
+                    build_clerk_room)
+from .our_house_area import (build_lodge_yard, build_woodshed,
                              build_arrival_road)
-from .forest_path import build_forest_path
+from .forest_path import build_cornfield_path
 from .well import (build_well_bottom, build_well_passage,
                    build_works_vats, build_works_sorting,
                    build_works_scriptorium, build_works_sign,
@@ -22,10 +22,10 @@ from .depths import (build_depths_antechamber, build_depths_procession,
                      build_depths_hall, build_depths_threshing,
                      build_depths_stair, build_dark, build_threshold,
                      build_the_ossuary)
-from .interiors import (build_shop, build_kid_house, build_barn,
-                        build_void_boss)
-from .villager_houses import (build_old_man_house, build_sheriff_office,
-                              build_haunted_house)
+from .interiors import (build_shop, build_toby_house, build_barn,
+                        build_clearing)
+from .villager_houses import (build_church, build_sheriff_office,
+                              build_abandoned_farmhouse)
 from .brimley import build_brimley
 from .hidden_folds import (build_effigy_grove, build_lodge_arrival,
                             build_husk_grove, build_scarecrow_ring)
@@ -39,43 +39,47 @@ from .threshold_extras import (build_schoolhouse, build_graveyard,
                                 build_cornfield_maze)
 
 
-# THRESHOLD scene registry. Keys map to the new fiction:
+# THRESHOLD scene registry. Keys name the CURRENT fiction (a 2026-07 pass
+# retired the old reused-geometry names: house/son_room/basement/our_house_area
+# -> lodge/clerk_room/lodge_cellar/lodge_yard; kid_house -> toby_house;
+# old_man_house -> church; fisherman_cottage -> sheriff_office;
+# forest_path -> cornfield_path; void_boss -> clearing;
+# haunted_house -> abandoned_farmhouse):
 #   bedroom            -> the player's room at the Arcadia (the cot)
-#   house              -> the Arcadia ground floor (Clerk's desk + floor)
-#   son_room           -> the Clerk's room (locked; flavor: his cult robe)
-#   basement           -> the Arcadia cellar (the Ledger #3; the workbench)
-#   our_house_area     -> the Arcadia yard (the woodshed; the dead car is on arrival_road)
-#   kid_house          -> kid_house (drawings on walls)
+#   lodge              -> the Arcadia ground floor (Clerk's desk + floor)
+#   clerk_room         -> the Clerk's room (locked; flavor: his cult robe)
+#   lodge_cellar       -> the Arcadia cellar (the Ledger #3; the workbench)
+#   lodge_yard         -> the Arcadia yard (the woodshed; the dead car is on arrival_road)
+#   toby_house         -> Toby's house (drawings on walls)
 #   brimley            -> the unified town map (was mistlands + village)
 #   shop               -> general_store
-#   old_man_house      -> church (with belfry; Preacher)
+#   church             -> church (with belfry; Preacher)
 #   sheriff_office     -> the Sheriff's office (his wooden box; reused fisherman_cottage geometry)
-#   forest_path        -> cornfield_path (cornstalk hides)
-#   void_boss          -> clearing (the burn site)
+#   cornfield_path     -> the dirt road east of the yard (cornstalk hides)
+#   clearing           -> the burn site
 #   barn               -> barn (hide spots, tunnel)
 #   well_bottom        -> well_bottom (sigil etched at the binding)
 #   well_passage       -> well_passage (cult tunnels)
-#   haunted_house      -> abandoned_farmhouse
-#   brimley          -> river_path (creek north of town)
+#   abandoned_farmhouse-> the abandoned farmhouse (cult site)
 #   schoolhouse        -> NEW: empty since the town's children vanished
 #   graveyard          -> NEW: behind the church
 SCENE_BUILDERS = {
     # The Arcadia Lodge (your room, the ground floor, the Clerk's room)
     "bedroom":            build_bedroom,            # the player's room
-    "house":              build_house,              # the ground floor
-    "son_room":           build_son_room,           # the Clerk's room
-    "basement":           build_basement,           # -> innkeeper_basement
-    "our_house_area":     build_our_house_area,     # -> yard (dead car removed -> arrival_road)
+    "lodge":              build_lodge,              # the ground floor
+    "clerk_room":         build_clerk_room,         # the Clerk's room
+    "lodge_cellar":       build_lodge_cellar,       # the Arcadia cellar
+    "lodge_yard":         build_lodge_yard,         # the yard (dead car removed -> arrival_road)
     "arrival_road":       build_arrival_road,       # -> the looping road W of the lodge (the SPREAD car)
     "woodshed":           build_woodshed,           # -> Clerk's shed interior
     # Next door
-    "kid_house":          build_kid_house,
+    "toby_house":         build_toby_house,         # Toby's house
     "shop":               build_shop,               # -> general_store
-    "old_man_house":      build_old_man_house,      # -> church
-    "sheriff_office":     build_sheriff_office,    # -> the Sheriff's office
+    "church":             build_church,             # -> church (Preacher)
+    "sheriff_office":     build_sheriff_office,     # -> the Sheriff's office
     # Outlying / paths
-    "forest_path":        build_forest_path,        # -> cornfield_path
-    "void_boss":          build_void_boss,          # -> clearing
+    "cornfield_path":     build_cornfield_path,     # the dirt road east of the yard
+    "clearing":           build_clearing,           # the burn site
     "barn":               build_barn,
     # The Works -- the Basement Level. Seven rooms, well is the sole
     # entrance (the grove's descent fold); the Mask gates the way to the Depths.
@@ -99,9 +103,9 @@ SCENE_BUILDERS = {
     "dark":               build_dark,
     "threshold":          build_threshold,
     # Cult sites
-    "haunted_house":       build_haunted_house,     # -> abandoned_farmhouse
-    # River escape
-    "brimley":          build_brimley,          # -> river_path
+    "abandoned_farmhouse": build_abandoned_farmhouse,  # the abandoned farmhouse
+    # The town
+    "brimley":            build_brimley,            # the unified town map
     # New scenes
     "schoolhouse":        build_schoolhouse,
     "graveyard":          build_graveyard,

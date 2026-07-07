@@ -106,13 +106,13 @@ def main():
     g.load_scene_now("brimley", "default")
     px, py = g.player.x, g.player.y
     spot = (px + 3.0 * TILE, py - 1.5 * TILE)
-    tgt = load_scene("forest_path")
+    tgt = load_scene("cornfield_path")
     tp = tgt.spawns.get("default")
     dxp, dyp = px - spot[0], py - spot[1]
     ln = math.hypot(dxp, dyp) or 1.0
     portal = {
         "x": spot[0], "y": spot[1],
-        "target": "forest_path", "spawn": "default", "target_pos": tp,
+        "target": "cornfield_path", "spawn": "default", "target_pos": tp,
         "_scene": tgt, "anchor": (int(tp[0] // TILE), int(tp[1] // TILE)),
         "charge": 0.55, "formed": False,
         "seam_dir": (-dyp / ln, dxp / ln),

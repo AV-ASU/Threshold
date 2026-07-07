@@ -657,7 +657,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         # candle dips once (handled in bedroom_on_update via the
         # `_door_stuck_recoil` flag below). Second attempt opens
         # normally and from then on this gate is permanently down.
-        if (current == "bedroom" and target_scene == "house"
+        if (current == "bedroom" and target_scene == "lodge"
                 and not self.save.flag("bedroom_door_passed")):
             if not getattr(self, "_bedroom_door_stuck_done", False):
                 self._bedroom_door_stuck_done = True
@@ -1420,7 +1420,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
             vol = 0.0                    # the peal doesn't reach down here
         elif key == "bell_tower":
             vol = 0.95                   # you are standing under it
-        elif key == "old_man_house":
+        elif key == "church":
             vol = 0.70                   # the church nave, one floor down
         elif bell_door is not None:
             vol = max(0.25, 0.85 * self.audio.distance_attenuation(
@@ -2861,7 +2861,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         # town square rather than their bed. The world_emptied flag
         # is checked in load_scene_now so every scene from now on has
         # its npc list zeroed -- the layouts persist, the people don't.
-        if self.scene and self.scene.key == "void_boss":
+        if self.scene and self.scene.key == "clearing":
             self.save.set_flag("void_path_closed", True)
             self.save.set_flag("world_emptied", True)
             self.player.hp = self.player.max_hp

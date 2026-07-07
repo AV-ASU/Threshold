@@ -14,7 +14,7 @@ _CORPSE_TINT = {
     "royce":        (118, 92, 60),
     "hettie":       (118, 70, 92),
     "townswoman":   (150, 56, 70),
-    "tisdale_boy":  (172, 156, 70),
+    "toby":  (172, 156, 70),
     "old_townsman": (78, 60, 42),
     "preacher":     (34, 32, 40),
     "clerk":        (60, 54, 60),
@@ -22,7 +22,7 @@ _CORPSE_TINT = {
 }
 
 
-def _corpse_echo_tisdale_boy(surf, hx, hy, x, y, mold):
+def _corpse_echo_toby(surf, hx, hy, x, y, mold):
     """The lying boy's mouth never stopped -- dropped, his head still hangs
     open as one big gaping maw. At corpse scale this has to be a BOLD shape,
     not teeth: the head end is overdrawn as an oversized dark open mouth with
@@ -54,7 +54,7 @@ def _corpse_echo_hettie(surf, hx, hy, x, y, mold):
 
 
 _CORPSE_ECHO = {
-    "tisdale_boy": _corpse_echo_tisdale_boy,
+    "toby": _corpse_echo_toby,
     "hettie": _corpse_echo_hettie,
 }
 
@@ -97,7 +97,7 @@ def _corpse_infect_generic(surf, x, y, body, body_lo, mold):
         _corpse_sign(surf, x, y)
 
 
-def _corpse_claim_tisdale_boy(surf, x, y, body, body_lo, mold):
+def _corpse_claim_toby(surf, x, y, body, body_lo, mold):
     # Toby's wound is the maw he became -- but it GLOWS: the fold's gold burns
     # up out of the split flesh, dark meat lips and a few pale teeth framing
     # it. An infected mouth opening down the body, not a black hole.
@@ -145,7 +145,7 @@ def _corpse_claim_old_townsman(surf, x, y, body, body_lo, mold):
 
 
 _CORPSE_CLAIM = {
-    "tisdale_boy": _corpse_claim_tisdale_boy,
+    "toby": _corpse_claim_toby,
     "hettie": _corpse_claim_hettie,
     "old_townsman": _corpse_claim_old_townsman,
 }

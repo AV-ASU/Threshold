@@ -28,7 +28,7 @@ from systems.game import Game
 
 # One scene per overlay category: outdoor vignette, safe interior,
 # dim-safe/dark cellar, brimley haze/eye, cult-dark dread, creepy well.
-SCENES = ["bedroom", "basement", "brimley",
+SCENES = ["bedroom", "lodge_cellar", "brimley",
           "depths_hall", "well_bottom"]
 
 
@@ -135,7 +135,7 @@ def check_phase6_and_doors(g):
 
     # -- see-through door: the aperture actor pass is sight-gated -------------
     target = load_scene("bedroom")
-    ax, ay = target.spawns.get("from_house", target.spawns["default"])
+    ax, ay = target.spawns.get("from_lodge", target.spawns["default"])
     lk = NPC(ax, ay - 0.4 * TILE, "F", "cultist", movement="idle")
     lk.facing = (0.0, 1.0)
     target.npcs = [lk]
@@ -173,7 +173,7 @@ def check_vignette_paints(g):
     actually draw. Fill the screen with a sentinel colour, invoke each
     method, and confirm pixels changed."""
     errors = 0
-    g.load_scene_now("our_house_area", "default")   # an OUTDOOR_SCENES key
+    g.load_scene_now("lodge_yard", "default")   # an OUTDOOR_SCENES key
     g.visibility = 0.95                      # late-game -> tighter overlay fires
     g.stillness_t = 10.0                     # tightest vignette level
     sentinel = (123, 45, 67)

@@ -29,7 +29,7 @@ _GLINT_COLD = (118, 122, 126)
 
 # The living human locals breathe at idle (_breath_lift): a slow desynced 1px
 # rise. Masked/hooded/inhuman kinds stay deathly still on purpose.
-_BREATH_KINDS = {"townswoman", "old_townsman", "hettie", "tisdale_boy",
+_BREATH_KINDS = {"townswoman", "old_townsman", "hettie", "toby",
                  "sheriff", "royce", "preacher", "clerk"}
 
 
@@ -204,7 +204,7 @@ def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False,
                     view="front", to_player=None, lean=None, scale_mul=1.0,
                     pose=None, gape=0.0):
     """`blink=True` suppresses eye dots for NPC kinds that have human
-    eyes (the named locals -- townswoman, tisdale_boy, sheriff, royce,
+    eyes (the named locals -- townswoman, toby, sheriff, royce,
     preacher, clerk, hettie, old_townsman). Used by Game.draw to make a
     single NPC's eyes vanish for a single frame -- a subliminal wrongness.
     `gaze=True` lights the watcher's eyes (sees the player). Watchers
@@ -349,8 +349,8 @@ def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False,
                     surf.set_at((x + 3, y - 14), (140, 150, 160))   # wrong-side glint
                 except (IndexError, ValueError):
                     pass
-    elif kind == "tisdale_boy":
-        # Toby Tisdale. Desaturated yellow tunic; the original bright
+    elif kind == "toby":
+        # Toby. Desaturated yellow tunic; the original bright
         # primary made the kid read as cheerful, which fights the use.
         # Hair hangs lower over the brow; the cheek dots used to be
         # freckles, now they sit slightly low and asymmetric so they

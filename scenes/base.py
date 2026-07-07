@@ -178,7 +178,7 @@ OBJECT_DEFS = {
     # notice. The wall blocks movement so the player can't just walk
     # through an unlocked-looking door.
     "z": {"solid": True,  "kind": "door"},   # door to locked_house (red herring)
-    # Door "1" -> the Clerk's room (key 'son_room'), an unconditional
+    # Door "1" -> the Clerk's room (key 'clerk_room'), an unconditional
     # exit off the ground floor. ("2" is a vestigial tile from a cut
     # scene; no active map places it.)
     "1": {"solid": False, "kind": "door"},   # door to son_room (Clerk's room)
@@ -971,17 +971,17 @@ def floor_step_sound(ch):
 # from this dict falls back to titlecase(key.replace('_', ' ')).
 DISPLAY_NAMES = {
     "bedroom":              "the Spare Room",
-    "house":                "the Inn",
-    "son_room":              "the Clerk's Room",
+    "lodge":                "the Inn",
+    "clerk_room":              "the Clerk's Room",
     "maras_room":           "Mara's Room",
-    "basement":             "the Cellar",
-    "our_house_area":       "the Yard",
-    "kid_house":            "the Kid's House",
+    "lodge_cellar":             "the Cellar",
+    "lodge_yard":       "the Yard",
+    "toby_house":            "the Kid's House",
     "shop":                 "General Store",
-    "old_man_house":        "the Church",
+    "church":        "the Church",
     "sheriff_office":    "Sheriff's Office",
-    "forest_path":          "Cornfield Path",
-    "void_boss":            "the Clearing",
+    "cornfield_path":          "Cornfield Path",
+    "clearing":            "the Clearing",
     "barn":                 "the Barn",
     "well_bottom":          "the Shaft Floor",
     "well_passage":         "the Drying Racks",
@@ -990,7 +990,7 @@ DISPLAY_NAMES = {
     "works_scriptorium":    "the Scriptorium",
     "works_sign":           "the Sign Chamber",
     "works_deepstair":      "the Deep Stair",
-    "haunted_house":        "the Abandoned Farmhouse",
+    "abandoned_farmhouse":        "the Abandoned Farmhouse",
     "brimley":            "Brimley",
     "schoolhouse":          "the Schoolhouse",
     "graveyard":            "the Graveyard",

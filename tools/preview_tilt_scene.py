@@ -68,7 +68,7 @@ def _shot(key, center_tile, aim, zoom, fog):
 
 def main():
     args = [a for a in sys.argv[1:]]
-    key = args[0] if args else "void_boss"
+    key = args[0] if args else "clearing"
     center = None
     aim = (0, 1)
     zoom = 1.4

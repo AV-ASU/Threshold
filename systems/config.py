@@ -10,15 +10,15 @@ every external `from systems.game import <CONST>` keeps resolving unchanged.
 # THRESHOLD: scene sets keyed to the cult fiction. The cult sites
 # (cult_chamber, the burn clearing) bypass the standard fade --
 # crossing into them is meant to feel like a snap, not a door.
-VOID_SCENES = {"void_boss"}
+VOID_SCENES = {"clearing"}
 
 
 # Day-phase cycle. Sleeping in the cot advances the phase by one
 # Scenes where dread-state effects engage: the stillness heartbeat
 # ramps up while the player stands still here, and the cult-site
 # floors get the rare delayed-footstep trick.
-CREEPY_SCENES = {"basement", "void_boss",
-                 "haunted_house", "well_bottom", "well_passage",
+CREEPY_SCENES = {"lodge_cellar", "clearing",
+                 "abandoned_farmhouse", "well_bottom", "well_passage",
                  "brimley"}
 
 
@@ -38,12 +38,12 @@ OUTDOOR_DECAY = {
     ("brimley", "high"):      [(8, 7, "bloody_handprint"),
                                 (12, 9, "dead_crow"),
                                 (4, 11, "claw_marks")],
-    ("our_house_area", "mid"):  [(5, 11, "claw_marks")],
-    ("our_house_area", "high"): [(5, 11, "claw_marks"),
+    ("lodge_yard", "mid"):  [(5, 11, "claw_marks")],
+    ("lodge_yard", "high"): [(5, 11, "claw_marks"),
                                   (15, 6, "phantom_mark"),
                                   (8, 13, "dead_crow")],
-    ("forest_path", "mid"):   [(6, 8, "dead_crow")],
-    ("forest_path", "high"):  [(6, 8, "dead_crow"),
+    ("cornfield_path", "mid"):   [(6, 8, "dead_crow")],
+    ("cornfield_path", "high"):  [(6, 8, "dead_crow"),
                                 (10, 12, "claw_marks"),
                                 (3, 5, "bloody_handprint")],
     ("graveyard", "mid"):     [(7, 9, "phantom_mark")],
@@ -59,8 +59,8 @@ OUTDOOR_DECAY = {
 # in these scenes so the world never feels safe between buildings.
 # Brimley runs its own (heavier) vignette via _draw_brimley_haze
 # and is intentionally NOT in this set so the two don't stack.
-OUTDOOR_SCENES = {"our_house_area", "forest_path",
-                  "void_boss", "graveyard",
+OUTDOOR_SCENES = {"lodge_yard", "cornfield_path",
+                  "clearing", "graveyard",
                   "country_lane", "cornfield_maze",
                   "arrival_road",
                   "gravel_road_north", "river_crossing"}
@@ -192,11 +192,11 @@ MOTH_LIGHT_R = 110.0         # kindle/flare light pool (breaks dark cover)
 # flashlight matters. Without the flashlight the screen is heavily
 # dimmed with a small clear circle around the player. With it,
 # the dimness lifts to a wider cone in the facing direction.
-DARK_SCENES = {"basement", "well_passage", "well_bottom",
+DARK_SCENES = {"lodge_cellar", "well_passage", "well_bottom",
                "works_vats", "works_sorting", "maras_room",
                "works_scriptorium",
                "works_sign", "works_deepstair",
-               "haunted_house",
+               "abandoned_farmhouse",
                "depths_antechamber", "depths_procession",
                "depths_hall", "depths_threshing", "depths_stair",
                "the_sump", "the_cells", "the_ossuary",
@@ -226,7 +226,7 @@ CULT_AMBIENT_SCENES = {"works_vats", "works_sorting", "works_scriptorium",
 # rest of the world is pressing against -- standing inside should
 # feel SAFE compared to outside. Hide vignette also suppressed
 # (you are already safe; the cramped read is wrong here).
-SAFE_SCENES = {"bedroom", "house", "son_room", "kid_house"}
+SAFE_SCENES = {"bedroom", "lodge", "clerk_room", "toby_house"}
 
 # Refuges a chase can never cross (NARRATIVE §8): the safe houses above, plus
 # Mara's cell -- a deliberate underground refuge that hosts no cult, so a
@@ -246,7 +246,7 @@ KING_FREE_SCENES = SAFE_SCENES | {"dark", "threshold"}
 # cellar wants the light -- but dread / apex / dip overlays are
 # suppressed so the navigation read stays usable. Hide vignette
 # still runs (cover here is meaningful).
-DIM_SAFE_SCENES = {"basement"}
+DIM_SAFE_SCENES = {"lodge_cellar"}
 
 # ---- THRESHOLD: cult geography + threat tuning ----
 # Regular cultists roam every outdoor scene; the safe lodge interiors
@@ -257,7 +257,7 @@ DIM_SAFE_SCENES = {"basement"}
 CULT_WAKE_EV = 1
 
 CULTIST_SCENES = {
-    "forest_path", "our_house_area", "graveyard",
+    "cornfield_path", "lodge_yard", "graveyard",
     "brimley", "country_lane",
     "gravel_road_north", "river_crossing", "backwoods_cabin",
     "cornfield_maze",
@@ -305,7 +305,7 @@ CULT_TOPUP_INTERVAL = 8.0      # seconds between cultist (re)spawns
 # fold groves. Never indoors, never a safe room, never the boss arena. He
 # travels only the edges BETWEEN these (passages + folds); a door/ladder into
 # an interior is the player's escape, never his.
-KING_ROAM_SCENES = (SEAMLESS_WORLD_SCENES - {"void_boss"}) - SAFE_SCENES
+KING_ROAM_SCENES = (SEAMLESS_WORLD_SCENES - {"clearing"}) - SAFE_SCENES
 # The Moths fly exactly the King's ground (they are his heralds): every
 # room he can enter is a room his shed pair can attend.
 MOTH_SCENES = set(KING_ROAM_SCENES)
@@ -602,7 +602,7 @@ RIVER_ENTRY_TILE = (34, 60)
 # turn.
 INFEST_CONVERT = {"A woman": 1, "Mrs. Calder": 2, "Royce": 3}
 INFEST_MUTATE = {"Hettie": 2, "Garrick": 3, "Old Pell": 3,
-                 "the Tisdale boy": 3}
+                 "Toby": 3}
 # Underground is wrong from the first rung -- a baseline infestation even
 # at 0 evidence, deepening on the full evidence count (not capped at 3).
 UNDERGROUND_SCENES = {

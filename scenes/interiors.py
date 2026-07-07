@@ -8,8 +8,8 @@ from constants import TILE
 from entities.npc import NPC
 from entities.decoration import Decoration
 from .base import Scene
-from .dialogue import tisdale_boy_dialogue, hettie_dialogue, _evidence
-def build_void_boss():
+from .dialogue import toby_dialogue, hettie_dialogue, _evidence
+def build_clearing():
     """THRESHOLD: the clearing -- the BURN SITE. A small open glade off
     the brimley river bank where the claimed burned their worldly
     effects before they went below (the surface twin of the Sorting
@@ -68,7 +68,7 @@ def build_void_boss():
     objects_l[6][2] = "t"
     objects_l[6][15] = "t"
     objects = ["".join(r) for r in objects_l]
-    sc = Scene("void_boss", floor, objects, music="wrong")
+    sc = Scene("clearing", floor, objects, music="wrong")
     # The clearing's south threshold now leads back to the brimley
     # river bank (where the new entrance is). Old saves' from_forest
     # / from_cornfield spawns still resolve to the same in-scene
@@ -372,7 +372,7 @@ def build_barn():
     return sc
 
 
-def build_kid_house():
+def build_toby_house():
     floor = ["=" * 14 for _ in range(10)]
     objects = [
         "WWWWWWWWWWWWWW",   # 0
@@ -381,14 +381,14 @@ def build_kid_house():
         "W............W",   # 3  doorway gap in the partition (col 5)
         "W....W.......W",   # 4
         "WWWWWW.......W",   # 5  closet sealed off below
-        "W........K...W",   # 6  K = the Tisdale boy
+        "W........K...W",   # 6  K = Toby
         "W............W",   # 7
         "W............W",   # 8
         "WWWWJWWWWWWWWW",   # 9  J = exit door back to the field
     ]
-    sc = Scene("kid_house", floor, objects, music="home")
+    sc = Scene("toby_house", floor, objects, music="home")
     # Kid's house now sits middle-south on the brimley east bank.
-    sc.add_exit("J", "brimley", "from_kid_house")
+    sc.add_exit("J", "brimley", "from_toby_house")
     sc.set_spawn("default", 8, 7)
     sc.set_spawn("from_brimley", 4, 8)         # one tile north of the J door
     sc.set_spawn("from_village", 4, 8)         # legacy fallback
@@ -397,9 +397,9 @@ def build_kid_house():
     if pos:
         tx, ty = pos
         sc.add_npc(NPC(tx * TILE + 16, ty * TILE + 16,
-                       "the Tisdale boy", "tisdale_boy", voice="blip_kid",
-                       portrait="tisdale_boy",
-                       dialogue_fn=tisdale_boy_dialogue, movement="idle"))
+                       "Toby", "toby", voice="blip_kid",
+                       portrait="toby",
+                       dialogue_fn=toby_dialogue, movement="idle"))
     # Sized darkwood furniture: a 2x2 kid's bed, a long bookshelf, a
     # small table (toy radio sits on it) and a chair.
     sc.add_furniture("bed", [(10, 6), (11, 6), (10, 7), (11, 7)], w=54, h=54)

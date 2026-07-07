@@ -411,7 +411,7 @@ class DialogueBox:
             pygame.draw.line(surf, GOLD, (hx, cy + 4), (hx, cy + 22), 2)
             pygame.draw.circle(surf, GOLD_HI, (hx, cy + 12), 2)
             return
-        if kind == "tisdale_boy":
+        if kind == "toby":
             # Head cleaved into a vertical MAW (matches the world sprite):
             # raw-flesh lips bow open around a deep dark throat, interlocking
             # fangs run down both lips, gold burns in the gullet, eyes shoved
@@ -524,7 +524,7 @@ class DialogueBox:
         cx = rect.centerx; cy = rect.centery
         if kind is None or kind == "narrator":
             return
-        if kind == "tisdale_boy":
+        if kind == "toby":
             pygame.draw.circle(surf, (240, 210, 180), (cx, cy - 6), 16)
             pygame.draw.rect(surf, (110, 70, 40), (cx - 16, cy - 22, 32, 12))
             pygame.draw.circle(surf, C_BLACK, (cx - 5, cy - 6), 2)

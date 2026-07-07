@@ -77,7 +77,7 @@ INFEST_MUTATE_LINES = {
         "[c=dim]Don't mind me. I've a customer face on. You get used to "
         "putting it on.[/c]",
     ],
-    "the Tisdale boy": [
+    "Toby": [
         "Mom set my place at supper. I sat down for it.",
         "[c=dim]It falls right through. I keep trying. She doesn't say "
         "anything.[/c]",

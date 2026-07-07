@@ -536,9 +536,9 @@ def build_brimley():
     # country lane. The other building doors wire into their interiors.
     sc.add_exit("4", "country_lane",      "from_brimley")
     sc.add_exit("a", "river_crossing", "from_brimley")
-    sc.add_exit("m", "old_man_house",     "from_brimley")  # Church
-    sc.add_exit("o", "haunted_house",     "from_brimley")  # Farmhouse
-    sc.add_exit("J", "kid_house",         "from_brimley")  # Kid
+    sc.add_exit("m", "church",     "from_brimley")  # Church
+    sc.add_exit("o", "abandoned_farmhouse",     "from_brimley")  # Farmhouse
+    sc.add_exit("J", "toby_house",         "from_brimley")  # Kid
     sc.add_exit("n", "barn",              "from_brimley")  # Barn
     # The town has come apart into Brimley's fog: the Sheriff's office,
     # General Store and Schoolhouse stand out here on the bank now, all
@@ -587,14 +587,14 @@ def build_brimley():
     # forest_path -> here brings you back to Brimley north.
     objects_list[h - 1][48] = "M"
     sc.objects = objects_list
-    sc.add_exit("j", "void_boss", "from_brimley")
+    sc.add_exit("j", "clearing", "from_brimley")
     sc.set_spawn("default", w - 2, 7)
     # Coming in from the Lodge via the country lane (east edge).
     sc.set_spawn("from_country_lane", w - 2, 7)
     # Legacy alias for any old "from_village" save references; resolves
     # to the same east-edge entry now that village is merged.
     sc.set_spawn("from_village", w - 2, 7)
-    sc.set_spawn("from_our_house_area", w - 2, 7)
+    sc.set_spawn("from_lodge_yard", w - 2, 7)
     # Climbing back out of the well lands beside it.
     sc.set_spawn("from_well", 94, 13)
     # Coming out of the woodshed door (the lumber axe + flashlight shed).
@@ -612,17 +612,17 @@ def build_brimley():
     sc.set_spawn("from_cornfield_maze", 40, 1)
     # The macro-loop return spawn: arriving from forest_path's south
     # exit drops the player on Brimley's north edge.
-    sc.set_spawn("from_forest_path", 48, 1)
+    sc.set_spawn("from_cornfield_path", 48, 1)
     # Returning from the clearing -- spawn one tile EAST of the j
     # tile so the player doesn't auto-retrigger.
     sc.set_spawn("from_clearing", clearing_tx + 1, clearing_ty)
     # Returning from each scattered building lands the player one
     # tile south of the door so they don't immediately re-enter.
-    sc.set_spawn("from_old_man_house",     church_door,  church_bot + 1)
+    sc.set_spawn("from_church",     church_door,  church_bot + 1)
     sc.set_spawn("from_sheriff_office", sheriff_door, sheriff_bot + 1)
-    sc.set_spawn("from_haunted_house",     farm_door,    farm_bot + 1)
+    sc.set_spawn("from_abandoned_farmhouse",     farm_door,    farm_bot + 1)
     sc.set_spawn("from_shop",              shop_door,    shop_bot + 1)
-    sc.set_spawn("from_kid_house",         kid_door,     kid_bot + 1)
+    sc.set_spawn("from_toby_house",         kid_door,     kid_bot + 1)
     sc.set_spawn("from_barn",              barn_door,    barn_bot + 1)
     sc.set_spawn("from_school",            school_door,  school_bot + 1)
     # The farm's old town road now drops you into the heart of Brimley,
@@ -812,9 +812,9 @@ def build_brimley():
             "door only opens the one way, mister, it isn't a door.[/c]",
             "[c=dim]It's a throat.[/c]",
         ])])
-    # The Tisdale boy lives INSIDE the kid's house (the `kid_house`
+    # Toby lives INSIDE the kid's house (the `kid_house`
     # scene, kid_dialogue). He used to also stand here on the front step,
-    # but that put a solid NPC right on the `from_kid_house` doorway
+    # but that put a solid NPC right on the `from_toby_house` doorway
     # spawn (col 68, row 71) -- so leaving the house wedged the player
     # against him -- and split one child into two. He's now a single NPC,
     # indoors; nothing stands on the step.
@@ -914,7 +914,7 @@ def build_brimley():
 
     # ---- Gardens, on some lots and not others (food scarcity, NARRATIVE
     # 8): with no deliveries since the new year, the town feeds itself
-    # unevenly. The Tisdales keep a working bed dug in beside their house
+    # unevenly. Toby's folks keep a working bed dug in beside their house
     # (fresh-turned rows, a staked string, the first cold-hardy shoots);
     # the farmhouse plot has gone over -- collapsed furrows and last
     # year's stubble, let go when its people were. The other lots never

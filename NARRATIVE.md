@@ -149,7 +149,7 @@ against it:
   *"The rest had been here since the summer"*; the case note: *"Drove north
   in the fall"*). The harvest is tithed down, never carried back up. In a
   **night procession**, before the cold, the congregation goes **below** —
-  down the river to the dug-open ground; **Toby Tisdale follows and is the
+  down the river to the dug-open ground; **Toby follows and is the
   only one who sees where they went** (§2). Mara is among them.
 - **Mid-January 1994** — the congregation is whole; they perform the
   **closing rite** in the mine chamber, and at its climax the **Mask
@@ -374,7 +374,7 @@ ordered and nobody can refuse.
 > grow their own and some can't, and the ones who can't slide cult-ward
 > by attrition. The horror is **domestic** — a cultist at the diner
 > counter eating a sandwich, returning a borrowed shovel, picking up the
-> Tisdale boy's mail. No rendering, no vats, no cannibalism: the cult
+> Toby's mail. No rendering, no vats, no cannibalism: the cult
 > **claims** souls (§1b), it does not consume bodies. (Code still
 > carries eat-cult fiction to scrub — see §8.)
 
@@ -384,8 +384,8 @@ ordered and nobody can refuse.
 | **The Sheriff — Hollis Vane** | **Local** | Born here. Has stood at the rim of the well. Knows the fold is real and that none of his deputies will be coming back. **He did not kill your car — the fold did.** He patrols because patrolling is what he did before; he tells outsiders "leave, son" out of muscle memory, even though he knows you can't and he can't either. Not a believer, not a cultist. A witness who can't help. The badge is just clothing now. |
 | **The Preacher — Rev. Asa Crane** | **Local — innocent dissenter** | A small-town minister who **names the cult from his own pulpit** — oblivious to *what* they truly are, but loud that they're no church. Your **2nd** conversation (his hubris) sets `preacher_doomed`; on the next entry he's **gutted on his own church floor**, his cross in the viscera (evidence #4). The town murders the ones who name them. |
 | **The Store-Owner — Hettie** | **Local — quiet resister** | *(In-game this role is **Hettie** from the chorus — one person, not two; the counter-keeper and the quiet resister merged.)* The shop is gutted -- shelves bare, till empty, **nothing to sell** (deliveries stopped when the fold closed). Her value is what she risks saying out loud: frightened warnings about who to trust, never said outright. She has a one-shot reaction to the Preacher's death. **She does not know Walter Blaine.** No local does — Walter is a voice in Minneapolis and Brimley locals would have no reason to recognize the name. |
-| **The Kid — Toby Tisdale** | **Local — innocent witness** | **Followed the night procession down the river** to the cult's dug-open ground and saw them go below, **before the rite** — the **sole witness** of where they went — and **tells you so**. And before that, **they lived in his school** (the commune). His witness does two jobs (§14 descent rework): it poses the descent question — the only honest account in town points at a way **you can never follow** (the grove is fold-hidden; only the rite reaches it; §5) — and it **seeds the school**, the room the Invitation names and the chalk-door rite reopens (his one-shot *"don't go in there"* warning lands once the envelope is in hand). He doesn't know *why* they dig; given the state of the town he's sure the evil is down there. What he gives you is the truth, not an object (the old keepsake item is purged; no inventory pickup). Children notice what adults pretend not to. |
-| **The Brimley chorus** (Hettie, Old Pell, Mrs. Calder, Royce, Garrick, the Tisdale boy) | **Locals** | The town still tries to live. Hettie keeps the store open. Mrs. Calder **sets a place at supper for a guest she can't name** — not a vanished husband, just a certainty she can't explain that someone is coming; she doesn't know why she does it. Old Pell stopped marking the calendar. Royce **has stopped** driving the river road out — he tried for weeks and the corn handed him back every time, and the futility finally broke him; he still clings to the one impossible fact he can't square (*you got* **in** — how?). They all know the fold is real; none of them understand it. **Naming the principal locals is DONE** — the Sheriff is **Hollis Vane**, the Preacher **Rev. Asa Crane**, the Store-Owner/quiet-resister is **Hettie**, the Kid **Toby Tisdale**, and the Lodge Clerk **Mr. Sable**; the names surface as the dialogue speaker (locked in `tests/flow.py`). |
+| **The Kid — Toby** | **Local — innocent witness** | **Followed the night procession down the river** to the cult's dug-open ground and saw them go below, **before the rite** — the **sole witness** of where they went — and **tells you so**. And before that, **they lived in his school** (the commune). His witness does two jobs (§14 descent rework): it poses the descent question — the only honest account in town points at a way **you can never follow** (the grove is fold-hidden; only the rite reaches it; §5) — and it **seeds the school**, the room the Invitation names and the chalk-door rite reopens (his one-shot *"don't go in there"* warning lands once the envelope is in hand). He doesn't know *why* they dig; given the state of the town he's sure the evil is down there. What he gives you is the truth, not an object (the old keepsake item is purged; no inventory pickup). Children notice what adults pretend not to. |
+| **The Brimley chorus** (Hettie, Old Pell, Mrs. Calder, Royce, Garrick, Toby) | **Locals** | The town still tries to live. Hettie keeps the store open. Mrs. Calder **sets a place at supper for a guest she can't name** — not a vanished husband, just a certainty she can't explain that someone is coming; she doesn't know why she does it. Old Pell stopped marking the calendar. Royce **has stopped** driving the river road out — he tried for weeks and the corn handed him back every time, and the futility finally broke him; he still clings to the one impossible fact he can't square (*you got* **in** — how?). They all know the fold is real; none of them understand it. **Naming the principal locals is DONE** — the Sheriff is **Hollis Vane**, the Preacher **Rev. Asa Crane**, the Store-Owner/quiet-resister is **Hettie**, the Kid **Toby**, and the Lodge Clerk **Mr. Sable**; the names surface as the dialogue speaker (locked in `tests/flow.py`). |
 | **Mara Blaine** | **Newcomer** — the quarry, **already turned** | Attuned and aching for something; the door whispered her answer (§1b). She came north, "found religion," **went down with the procession** (down the river to the dug-open ground, not into the corn). **She was not deceived — she was answered**, and went gladly. Finding her proves there was never anyone to save: not because she was killed, but because she was *offered the one thing she needed.* In the **hive**. Reading her journal to the end drops the player into a **flashback of the burning doorframe** — the dream that took her, the game's clearest look at the lure. |
 | **Walter Blaine** | **Outsider, off-screen — the unwitting bait** | The client. A Minneapolis voice on a phone that no longer connects. His grief is **real** — he genuinely lost his daughter — but the *case itself is the King's hook* (§1, *"You were lured"*): the one appetite a numb investigator can't refuse, used to walk the marked soul back to the door. **No one in Brimley has ever met him.** He exists only through the PI's case notebook and (optionally — §8) the polaroid he sent. He gets no resolution — the call never connects again, and that silence is the point. |
 | **Cult / Watchers / the King in Yellow** | **Newcomers + Their god** | The congregation are the attuned newcomers. **The Watchers are His gaze made local** — the higher-dimensional eye reaching into the flat plane wherever His attention falls (§3), *not* a side-cult's spell. The King is the thing above the door. *(Individual cursing is redundant once the closing rite claims the whole town at once; see §8.)* |
@@ -490,7 +490,7 @@ over them.
 
 **The cruelest truth of the gun: it only ever works on the victims.** A
 clean round drops any **local** instantly — Hettie, the Sheriff, the
-Tisdale boy — *regardless* of the evidence gate (that gate only ever
+Toby — *regardless* of the evidence gate (that gate only ever
 protected the cult). So the one thing your weapon reliably kills is the
 **claimed innocents you came to help and can't save** — your instrument of
 control, lethal only in the most useless, self-damning direction. It is
@@ -522,7 +522,7 @@ Mask's foot and the calling-out stages her rising).
 | 1 | **Mara's Room** | `maras_room` (robe + unsent letter) | **Underground** — a convert's cell off the Sorting Hall (`works_sorting`) | She didn't rent a room and vanish — she *moved in* down here. She joined willingly; she was already home. Her last sane line — *"I'm not lost. I've never been this close."* — stays in your hand all the way to the Dark |
 | 2 | **Mara's Journal** | `mom_notebook` | The **barn** (`barn`) — behind the workbench | Her descent, in her own words (page 3 → the flashback) |
 | 3 | **The Ledger** (the Lodge's old registers) | read in place | The **padlocked Lodge cellar** (2026-07 rework): the boxed old registers on the crates below. The front desk keeps the clean sign-in book + the LEAD pointing down; the cellar key hangs on a nail behind the house; Sable never points at the cellar | Guests who check in and never out — the checkout dates stop **a year back** (the same season the PI dreamed the door, once) — and your own name, signed in tonight, already among them. |
-| 4 | **The Preacher** | his **cross** (item `cross`) taken from the viscera | The **church** (`old_man_house`) — his own floor | The town murders the ones who name them — gutted for preaching against the cult |
+| 4 | **The Preacher** | his **cross** (item `cross`) taken from the viscera | The **church** (`church`) — his own floor | The town murders the ones who name them — gutted for preaching against the cult |
 | 5 | **The Sign — the Pallid Mask** | `pallid_mask` (renamed 2026-07 from the legacy `sigil_rubbing`; `Save.load_disk` migrates old slots) | Sign Chamber (well) | His face made an object: what they worship, the shard the fold opens for (the **escape key** → *SPREAD IT*), and the keystone you carry to the door (the Mask alone; the cult's notes are decoupled, pure lore) |
 | 6 | **The Congregation** | (Mara, turned) | The **Sign Chamber** (`works_sign`; 2026-07 staging): she kneels among the congregation at the Mask's foot. First entry stages the **calling-out**: the kneelers rise, one says her name at the room, and she comes to you for the exchange | There was never anyone to save |
 
@@ -573,7 +573,7 @@ What rises with the stage:
   Mrs. Calder who "hears the door" (2), Garrick and Royce (3). A convert
   is **passive cult**: they turn toward you and their watching raises
   visibility, but they never chase or grab. The **resisters mutate** —
-  Hettie (2), Old Pell and the Tisdale boy (3): they keep their identity
+  Hettie (2), Old Pell and Toby (3): they keep their identity
   and their defiance, but their bodies betray them (eye-voids, the Sign
   etched into the chest, a jaundiced cast). Still themselves, rotting.
 - **Sheriff Vane is neither.** The last holdout. At stage 3 his office is
@@ -676,7 +676,7 @@ DEEPER          The Depths → the Threshold (END IT / seal) → the Hive
 - **Deeper (Mask-gated at the Deep Stair):** the Depths, the Threshold (**End it**), and the Hive — all built: the `dark` scene holds the claimed congregation, past names now (2026-07: **Mara** kneels at the Sign Chamber, where the calling-out stages her rising and evidence #6 lands).
 
 > **Naming, to avoid the collision:** the **lodge cellar** is the
-> `basement` *scene* — the Arcadia's own cellar, a *surface* interior.
+> `lodge_cellar` *scene* — the Arcadia's own cellar, a *surface* interior.
 > (The Ledger, #3, lives down here again — the 2026-07 rework put the
 > boxed old registers behind the padlocked kitchen hatch, keyed from the
 > nail behind the house; the journal is in the barn.) **The Works**
@@ -875,7 +875,7 @@ The reworks the new fiction forced are all shipped. What must stay true:
   that is the change to make.)*
 - **The car answers only to the Sign.** No keys, no tab, no fetch chain
   — Brimley itself is the lock and only a shard of Him opens it.
-- **Innkeeper → Lodge Clerk** throughout. `son_room` is the Clerk's
+- **Innkeeper → Lodge Clerk** throughout. `clerk_room` is the Clerk's
   Room (his pressed cult robe is the only tell). Mara's room is the
   underground `maras_room` cell off the Sorting Hall.
 - **Item keys are load-bearing** (saves and game logic depend on them):
@@ -944,7 +944,7 @@ The reworks the new fiction forced are all shipped. What must stay true:
   counting toward?"*); the road carries the **fold** (Royce: *"the corn just
   hands you back where you started"*). No line says the days repeat / fold
   back on themselves. Locked by the flow.py §19 guard.
-- ~~**Cut the Tisdale-boy "dad" line.**~~ **DONE.** *"My dad went down too. He
+- ~~**Cut Toby's "dad" line.**~~ **DONE.** *"My dad went down too. He
   still comes home for dinner."* is gone (it leaked that claiming is
   *perceptible* + happens by *individual descent*, both forbidden by §1b). His
   unnameable-wrongness lines stay (*"I keep biting my tongue. To check."*).
@@ -995,7 +995,7 @@ The reworks the new fiction forced are all shipped. What must stay true:
   Now named, surfaced as the dialogue speaker: the Sheriff is **Hollis
   Vane**, the Preacher **Rev. Asa Crane**, the Store-Owner/quiet-resister
   is **Hettie** (one person, not two — merged with the chorus Hettie), the
-  Kid **Toby Tisdale**, and the Lodge Clerk **Mr. Sable** (a local — the most
+  Kid **Toby**, and the Lodge Clerk **Mr. Sable** (a local — the most
   attuned of them; the genteel name is the funereal-hospitality tell). The rest of the Brimley
   chorus was already named: Old Pell, Mrs. Calder, Royce, Garrick. Locked in
   `tests/flow.py`.
@@ -1077,7 +1077,7 @@ descent order is: grove rite → Works (7) → the blast → Depths (5) →
 Hive → Threshold.
 
 **Note:** the old cult chamber (`symbol_portal_room`) has been **removed
-entirely** — its only entrance was the `haunted_house` hatch, which is now
+entirely** — its only entrance was the `abandoned_farmhouse` hatch, which is now
 a nailed-shut dead end (a deliberate in-fiction seal: the grove's descent
 fold is the sole way down). Saves are in-memory only, so there were no persistent
 saves to keep it registered for. The `diner_gas_station` spur off the
@@ -1180,8 +1180,8 @@ bush hides you immediately.
 
 ### Per-scene torus
 
-`brimley`, `cornfield_maze`, `forest_path`, and the Lodge yard
-(`our_house_area`) all wrap on the relevant axes:
+`brimley`, `cornfield_maze`, `cornfield_path`, and the Lodge yard
+(`lodge_yard`) all wrap on the relevant axes:
 
 - **brimley.wrap_x** -- the cross-town road at row 24 loops
   east-west. Walking off either side carries you back in on the
@@ -1246,7 +1246,7 @@ relocations, which never show a frame.
 | Scene key | Where it lives | Access | What it shows |
 |---|---|---|---|
 | `effigy_grove` | new scene | `cornfield_maze` tile (6, 10), walked WEST | A maker-less dread tableau (§8): the dread set kept (effigies, a polaroid board of faces, hanging figures) but **without a maker** — a workshop with no worker, the corn-doll work of the congregation. The effigies-as-individual-curses reading is dropped. |
-| `lodge_arrival` | new scene | `our_house_area` tile (5, 1), against the Lodge's BACK wall, walked SOUTH | The Lodge porch at the moment Mara walked up to it. Mara with a suitcase, the Clerk smiling in the doorway. Neither sees the PI. Makes the bible's "she chose this" concrete -- the player *witnesses* the choice. The pane stands flush on the building's rear face and reads as a door the Lodge shouldn't have, seen only from behind it; you walk into the back of the building and step out of its front, years earlier. |
+| `lodge_arrival` | new scene | `lodge_yard` tile (5, 1), against the Lodge's BACK wall, walked SOUTH | The Lodge porch at the moment Mara walked up to it. Mara with a suitcase, the Clerk smiling in the doorway. Neither sees the PI. Makes the bible's "she chose this" concrete -- the player *witnesses* the choice. The pane stands flush on the building's rear face and reads as a door the Lodge shouldn't have, seen only from behind it; you walk into the back of the building and step out of its front, years earlier. |
 | `husk_grove` | new scene | `cornfield_maze` tile (21, 8), walked EAST | A small clearing where the cult assembles its corn-dolls. Two altars used as workbenches, unfinished dolls scattered, a stalk-marker, a candle still lit. No NPC -- the work is here, the worker isn't. |
 | `scarecrow_ring` | new scene | `cornfield_maze` tile (2, 14), walked WEST | A ring of six scarecrows facing inward around a doubled Yellow Sign in charred dirt. Two braziers, bloodstains underfoot. The cult's central mark in the corn. |
 

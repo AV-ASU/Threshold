@@ -26,7 +26,7 @@ from systems.game import Game
 from scenes import load_scene
 from rendering.seethrough_door import draw_seethrough_door
 
-HOST = "house"              # the room you stand in
+HOST = "lodge"              # the room you stand in
 TARGET = "bedroom"          # the room beyond the door
 
 CROP_W, CROP_H = 320, 250
