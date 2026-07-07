@@ -24,7 +24,7 @@ from .depths import (build_depths_antechamber, build_depths_procession,
                      build_the_ossuary)
 from .interiors import (build_shop, build_kid_house, build_barn,
                         build_void_boss)
-from .villager_houses import (build_old_man_house, build_fisherman_cottage,
+from .villager_houses import (build_old_man_house, build_sheriff_office,
                               build_haunted_house)
 from .brimley import build_brimley
 from .hidden_folds import (build_effigy_grove, build_lodge_arrival,
@@ -49,7 +49,7 @@ from .threshold_extras import (build_schoolhouse, build_graveyard,
 #   brimley            -> the unified town map (was mistlands + village)
 #   shop               -> general_store
 #   old_man_house      -> church (with belfry; Preacher)
-#   fisherman_cottage  -> sheriffs_office (Sheriff's wooden box)
+#   sheriff_office     -> the Sheriff's office (his wooden box; reused fisherman_cottage geometry)
 #   forest_path        -> cornfield_path (cornstalk hides)
 #   void_boss          -> clearing (the burn site)
 #   barn               -> barn (hide spots, tunnel)
@@ -72,7 +72,7 @@ SCENE_BUILDERS = {
     "kid_house":          build_kid_house,
     "shop":               build_shop,               # -> general_store
     "old_man_house":      build_old_man_house,      # -> church
-    "fisherman_cottage":  build_fisherman_cottage,  # -> sheriffs_office
+    "sheriff_office":     build_sheriff_office,    # -> the Sheriff's office
     # Outlying / paths
     "forest_path":        build_forest_path,        # -> cornfield_path
     "void_boss":          build_void_boss,          # -> clearing

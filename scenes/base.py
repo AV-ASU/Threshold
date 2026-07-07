@@ -168,7 +168,7 @@ OBJECT_DEFS = {
     # Clerk's place in our_house_area gets its own char so the layout
     # is self-documenting and the scene knows which interior to load).
     "m": {"solid": False, "kind": "door"},   # door to old_man_house
-    "y": {"solid": False, "kind": "door"},   # door to fisherman_cottage
+    "y": {"solid": False, "kind": "door"},   # door to sheriff_office
     "h": {"solid": False, "kind": "door"},   # door to innkeeper_house
     "n": {"solid": False, "kind": "door"},   # door to barn (south of village)
     "o": {"solid": False, "kind": "door"},   # door to haunted_house (red herring)
@@ -245,7 +245,7 @@ OBJECT_DEFS = {
     "$": {"solid": False, "kind": "bridge"},
     # Markers (consumed at scene-build time; never drawn)
     # P=basement photo, K=kid, S=shopkeep, O=oldman, M=mom, Z=basement note,
-    # Q=relocation marker (threshold_extras), Y=fisherman, N=innkeeper (quest)
+    # Q=relocation marker (threshold_extras), Y=sheriff, N=innkeeper (quest)
     "P": None, "K": None, "S": None, "O": None, "M": None, "Z": None,
     "Q": None, "Y": None, "N": None,
 }
@@ -979,7 +979,7 @@ DISPLAY_NAMES = {
     "kid_house":            "the Kid's House",
     "shop":                 "General Store",
     "old_man_house":        "the Church",
-    "fisherman_cottage":    "Sheriff's Office",
+    "sheriff_office":    "Sheriff's Office",
     "forest_path":          "Cornfield Path",
     "void_boss":            "the Clearing",
     "barn":                 "the Barn",

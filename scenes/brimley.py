@@ -543,7 +543,7 @@ def build_brimley():
     # The town has come apart into Brimley's fog: the Sheriff's office,
     # General Store and Schoolhouse stand out here on the bank now, all
     # enterable, their interiors returning to this scene.
-    sc.add_exit("y", "fisherman_cottage", "from_brimley")  # Sheriff's office
+    sc.add_exit("y", "sheriff_office", "from_brimley")  # Sheriff's office
     sc.add_exit("D", "shop",              "from_brimley")  # General Store
     sc.add_exit("B", "schoolhouse",       "from_brimley")  # Schoolhouse
     sc.add_exit("R", "gravel_road_north", "from_brimley")  # North gravel road
@@ -619,7 +619,7 @@ def build_brimley():
     # Returning from each scattered building lands the player one
     # tile south of the door so they don't immediately re-enter.
     sc.set_spawn("from_old_man_house",     church_door,  church_bot + 1)
-    sc.set_spawn("from_fisherman_cottage", sheriff_door, sheriff_bot + 1)
+    sc.set_spawn("from_sheriff_office", sheriff_door, sheriff_bot + 1)
     sc.set_spawn("from_haunted_house",     farm_door,    farm_bot + 1)
     sc.set_spawn("from_shop",              shop_door,    shop_bot + 1)
     sc.set_spawn("from_kid_house",         kid_door,     kid_bot + 1)

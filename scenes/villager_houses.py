@@ -228,7 +228,7 @@ def preacher_body_examine(game, npc):
     ])
 
 
-def build_fisherman_cottage():
+def build_sheriff_office():
     """The Sheriff's office. A main room where Vane watches from his desk, and
     a partitioned back RECORDS room (the case board he can't file on, the dead
     payphone, his cartridges) reached through an interior doorway -- the
@@ -248,10 +248,10 @@ def build_fisherman_cottage():
         "W..............W",   # 10
         "WWWWWyWWWWWWWWWW",   # 11  y = exit door back to the field
     ]
-    sc = Scene("fisherman_cottage", floor, objects, music="home")
+    sc = Scene("sheriff_office", floor, objects, music="home")
     # The Sheriff's office stands on the Brimley bank now; its door
     # opens back onto the field.
-    sc.add_exit("y", "brimley", "from_fisherman_cottage")
+    sc.add_exit("y", "brimley", "from_sheriff_office")
     sc.set_spawn("default", 4, 8)
     sc.set_spawn("from_brimley", 5, 10)      # one tile north of the y door
     sc.set_spawn("from_village", 5, 10)      # legacy fallback

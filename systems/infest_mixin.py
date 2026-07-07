@@ -508,7 +508,7 @@ class InfestationMixin:
         if surface_stage > 0:
             self._infest_locals(surface_stage)
         # Sheriff Vane's office becomes a unique threat at stage 3.
-        if surface_stage >= 3 and key == "fisherman_cottage":
+        if surface_stage >= 3 and key == "sheriff_office":
             self._spawn_hunting_sheriff()
         # The general store from stage 2: one of them eats at Hettie's
         # counter, calm as a lunch hour, while the shelves behind it stand
