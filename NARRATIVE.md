@@ -1225,8 +1225,8 @@ way. The fold stops being an escape.
 
 ### Direction-sensitive hidden folds
 
-Five hidden scenes are accessed only by walking a specific tile in a
-specific direction. All five are in `SEAMLESS_WORLD_SCENES` so the
+Four hidden scenes are accessed only by walking a specific tile in a
+specific direction. All four are in `SEAMLESS_WORLD_SCENES` so the
 crossing has no fade.
 
 **Canon update (2026-06, decided deliberately):** these folds are no
@@ -1247,7 +1247,6 @@ relocations, which never show a frame.
 |---|---|---|---|
 | `effigy_grove` | new scene | `cornfield_maze` tile (6, 10), walked WEST | A maker-less dread tableau (§8): the dread set kept (effigies, a polaroid board of faces, hanging figures) but **without a maker** — a workshop with no worker, the corn-doll work of the congregation. The effigies-as-individual-curses reading is dropped. |
 | `lodge_arrival` | new scene | `our_house_area` tile (5, 1), against the Lodge's BACK wall, walked SOUTH | The Lodge porch at the moment Mara walked up to it. Mara with a suitcase, the Clerk smiling in the doorway. Neither sees the PI. Makes the bible's "she chose this" concrete -- the player *witnesses* the choice. The pane stands flush on the building's rear face and reads as a door the Lodge shouldn't have, seen only from behind it; you walk into the back of the building and step out of its front, years earlier. |
-| `highway_walk` | new scene | `country_lane` tile (28, 6), walked EAST | A stretch of empty highway. Two figures walk east, their backs to the PI -- the locals who walked out to flag down help. The road wraps; they stay ahead; nobody arrives anywhere. |
 | `husk_grove` | new scene | `cornfield_maze` tile (21, 8), walked EAST | A small clearing where the cult assembles its corn-dolls. Two altars used as workbenches, unfinished dolls scattered, a stalk-marker, a candle still lit. No NPC -- the work is here, the worker isn't. |
 | `scarecrow_ring` | new scene | `cornfield_maze` tile (2, 14), walked WEST | A ring of six scarecrows facing inward around a doubled Yellow Sign in charred dirt. Two braziers, bloodstains underfoot. The cult's central mark in the corn. |
 

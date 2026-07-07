@@ -28,8 +28,7 @@ from .villager_houses import (build_old_man_house, build_fisherman_cottage,
                               build_haunted_house)
 from .brimley import build_brimley
 from .hidden_folds import (build_effigy_grove, build_lodge_arrival,
-                            build_highway_walk, build_husk_grove,
-                            build_scarecrow_ring)
+                            build_husk_grove, build_scarecrow_ring)
 from .threshold_extras import (build_schoolhouse, build_graveyard,
                                 build_country_lane,
                                 build_gravel_road_north,
@@ -37,8 +36,7 @@ from .threshold_extras import (build_schoolhouse, build_graveyard,
                                 build_backwoods_cabin_interior,
                                 build_river_crossing,
                                 build_bell_tower,
-                                build_cornfield_maze,
-                                build_town)
+                                build_cornfield_maze)
 
 
 # THRESHOLD scene registry. Keys map to the new fiction:
@@ -117,18 +115,17 @@ SCENE_BUILDERS = {
     # Hidden fold scenes (direction-sensitive warps off the main world).
     "effigy_grove":        build_effigy_grove,
     "lodge_arrival":      build_lodge_arrival,
-    "highway_walk":       build_highway_walk,
     "husk_grove":         build_husk_grove,
     "scarecrow_ring":     build_scarecrow_ring,
-    # The populated town hub -- store, sheriff, school open onto it.
-    "town":               build_town,
 }
 
 # DELETED (the prior combat/loot game -- removed wholesale, not just
 # unregistered): void, the cave arenas (_west/_east/_boss), easter_egg_room,
 # daughter_room, abducted_hallway, haunted_house_glitch, locked_house,
-# mist_house, alter_room, void_room_1/2. Any stale save or exit pointing at
-# one of these keys falls back to "bedroom" via load_scene below.
+# mist_house, alter_room, void_room_1/2. Also cut (2026-07 dead-scene pass):
+# highway_walk (the never-hit walked-out-road fold off country_lane) and the
+# legacy "town" orphan stub (no live inbound exit). Any stale save or exit
+# pointing at one of these keys falls back to "bedroom" via load_scene below.
 
 
 def load_scene(key):

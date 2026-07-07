@@ -323,17 +323,6 @@ def build_country_lane():
     # East now lands on the ARRIVAL ROAD (the looping road W of the Lodge),
     # whose dirt path carries on east to the yard.
     sc.add_exit("e", "arrival_road", "from_country_lane")
-    # Direction-sensitive hidden fold: walking EAST across the 'M2'
-    # tile (a piece of road past the lodge gate, late on the lane)
-    # opens onto the highway that doesn't end -- where the locals
-    # who walked out to flag down help are still walking. From any
-    # other angle the tile reads as floor.
-    sc.add_exit("Q", "highway_walk", "from_country_lane",
-                direction="east")
-    objects_ll = [list(r) for r in objects]
-    if 0 <= 6 < len(objects_ll) and W - 4 < len(objects_ll[6]):
-        objects_ll[6][W - 4] = "Q"
-    sc.objects = objects_ll
     sc.set_spawn("default", 1, 6)
     # Player walked WEST off the arrival road: lands at the east end of the
     # lane, facing west toward town. (from_our_house_area kept as an alias for
@@ -344,9 +333,6 @@ def build_country_lane():
     # the lane, facing east toward home.
     sc.set_spawn("from_brimley", 1, 6)
     sc.set_spawn("from_village", 1, 6)   # legacy alias
-    # Return spawn from the highway_walk fold -- lands one west of
-    # the U tile so the player doesn't immediately re-trigger.
-    sc.set_spawn("from_highway_walk", W - 5, 6)
 
     # Atmosphere -- corn tufts on both sides of the road, a few
     # crows, a leaning fence post deco, one creepy_tree, a dead
@@ -370,8 +356,8 @@ def build_country_lane():
 
     # ---- The walked-out road (2026-07 detail pass) ----
     # The locals who went to flag down help walked EAST down this lane
-    # and never came back (the highway fold): bootprints along the
-    # road that head east and simply stop, well short of the seam.
+    # and never came back: bootprints along the road that head east and
+    # simply stop, well short of the seam.
     for fx, fy in ((17, 6), (20, 5), (23, 6), (25, 6)):
         sc.add_decoration(Decoration(fx * TILE + 16, fy * TILE + 16,
                                      "mud_footprint"))
@@ -1244,37 +1230,4 @@ def build_cornfield_maze():
     sc.add_noise_trap(16 * TILE + 16, 10 * TILE + 16, "crow", seed=14)
 
     sc.hide_spots = []
-    return sc
-
-
-# ---------------------------------------------------------------------------
-# The town. A populated main street -- the civic centre of the world.
-#
-# Wired to: the general store (shop), the sheriff's office
-# (fisherman_cottage), the schoolhouse, and the road south back to the
-# village/farm. The church stays out in the brimley, so the town
-# reaches it the long way, through the fields.
-# ---------------------------------------------------------------------------
-def build_town():
-    """Retired. The town came apart into the fog -- its street, civic
-    buildings (Store, Sheriff, Schoolhouse) and residents now live in
-    the brimley, displayed as Brimley. This stub survives only so a
-    save left standing in the old 'town' scene bounces straight out to
-    Brimley on load, instead of soft-locking on a missing scene."""
-    floor = ["g" * 5 for _ in range(5)]
-    objects = ["." * 5 for _ in range(5)]
-    sc = Scene("town", floor, objects, music="wind")
-    for name in ("default", "from_village", "from_shop", "from_sheriff",
-                 "from_school", "from_town_crossroads"):
-        sc.set_spawn(name, 2, 2)
-
-    def _bounce(game):
-        if game.state == "transition":
-            return
-        game.begin_transition("brimley", "from_village")
-
-    sc.triggers.append({
-        "rect": (0, 0, 5 * TILE, 5 * TILE),
-        "fn": _bounce, "once": False, "fired": False,
-    })
     return sc
