@@ -51,9 +51,9 @@ def build_bedroom():
         "WWWWWWWDWWWWWWWW",   # 11 south wall, door D at col 7
     ]
     sc = Scene("bedroom", floor, objects, music="home")
-    sc.add_exit("D", "house", "from_bedroom")
+    sc.add_exit("D", "lodge", "from_bedroom")
     sc.set_spawn("default", 7, 6)
-    sc.set_spawn("from_house", 7, 10)
+    sc.set_spawn("from_lodge", 7, 10)
     # The cot fills the NW corner (cols 2-3, rows 2-3). The player
     # stands one tile east at col 4 row 3 to sleep/save (the game's one
     # save point; bedroom_interact -> Game._sleep_at_cot).
@@ -295,9 +295,9 @@ def bedroom_interact(game):
         return
 
 
-# ---- innkeeper_house (key: 'house') ----
+# ---- innkeeper_house (key: 'lodge') ----
 
-def build_house():
+def build_lodge():
     """The Clerk's downstairs: kitchen on the left half, living
     room on the right half. Wall divider with a door between them.
     Front door on the south wall (B exit -- the player may be
@@ -338,15 +338,15 @@ def build_house():
         "W................W",
         "WWWWWWWDWWWWWWWWWW",
     ]
-    sc = Scene("house", floor, objects, music="home")
+    sc = Scene("lodge", floor, objects, music="home")
     # B = front door (south wall, col 13). The Clerk blocks this.
-    sc.add_exit("B", "bedroom", "from_house")
+    sc.add_exit("B", "bedroom", "from_lodge")
     # 1 = Clerk's bedroom door (col 4). Locked at first.
-    sc.add_exit("1", "son_room", "from_house")
+    sc.add_exit("1", "clerk_room", "from_lodge")
     # D = back door, leads to the gravel yard.
-    sc.add_exit("D", "our_house_area", "from_house")
+    sc.add_exit("D", "lodge_yard", "from_lodge")
     # L = cellar hatch in the kitchen.
-    sc.add_exit("L", "basement", "from_house")
+    sc.add_exit("L", "lodge_cellar", "from_lodge")
     # SEE-THROUGH DOORS: the two interior room doors show the actual room
     # beyond through the tilt camera instead of a flat dark recess
     # (rendering.portal.draw_through_aperture, wired via Game._build_door_views).
@@ -358,14 +358,14 @@ def build_house():
     # the kitchen table at (4, 3). Each spawn is now under its own
     # door.
     sc.set_spawn("from_bedroom", 13, 1)        # south of B (spare-room)
-    sc.set_spawn("from_son_room", 4, 1)        # south of 1 (Clerk's bedroom)
-    sc.set_spawn("from_our_house_area", 7, 10)
+    sc.set_spawn("from_clerk_room", 4, 1)        # south of 1 (Clerk's bedroom)
+    sc.set_spawn("from_lodge_yard", 7, 10)
     # The L cellar hatch is at (3, 9). Spawning even one tile north
     # of it (3, 8) shares the same column -- a south key press would
     # walk the player straight back onto L and re-enter the basement.
     # Offset the spawn one column east so the player has to actively
     # navigate back to the hatch to descend again.
-    sc.set_spawn("from_basement", 4, 8)
+    sc.set_spawn("from_lodge_cellar", 4, 8)
     # The hatch is PADLOCKED (2026-07: the Ledger moved down there;
     # the cellar key hangs on a nail behind the house). A gated-shut
     # exit reads as floor, so house_interact carries the locked
@@ -546,7 +546,7 @@ def house_interact(game):
 
     The cellar hatch (E, kitchen): the locked feedback + the soft
     pointer toward the key. The gate itself lives on the scene
-    (exit_gate_fn in build_house)."""
+    (exit_gate_fn in build_lodge)."""
     sc = game.scene
     px, py = game.player.x, game.player.y
     hx, hy = getattr(sc, "_hatch_pos", (None, None))
@@ -585,14 +585,14 @@ def house_interact(game):
     ], speaker="", voice="blip_soft", portrait="narrator")
 
 
-# ---- the Clerk's Room (key: 'son_room') ----
+# ---- the Clerk's Room (key: 'clerk_room') ----
 # The Lodge Clerk's private room, off the main floor. No evidence lives
 # here -- Mara's room (robe + letter, #1) and the journal (#2) moved to the
 # Sorting-Hall cell and the barn, and the Playscript to the Scriptorium
 # (scenes/well.py, scenes/interiors.py). The one tell is a pressed cult
 # robe in his closet: the smiling trap-keeper is one of them.
 
-def build_son_room():
+def build_clerk_room():
     """The Lodge Clerk's private room. A bed, a closet (his pressed cult
     robe -- the tell that he's complicit), a bare dresser (he keeps your
     car keys downstairs, behind the tab), a window."""
@@ -614,12 +614,12 @@ def build_son_room():
         "W............W",   # 8
         "WWW1WWWWWWWWWW",   # 9  south wall, door 1 at col 3
     ]
-    sc = Scene("son_room", floor, objects, music="home")
-    sc.add_exit("1", "house", "from_son_room")
+    sc = Scene("clerk_room", floor, objects, music="home")
+    sc.add_exit("1", "lodge", "from_clerk_room")
     # Door is at (3, 9); spawn at (4, 8) is open floor and one tile
     # off-axis so the player doesn't auto-retrigger.
     sc.set_spawn("default", 8, 7)
-    sc.set_spawn("from_house", 4, 8)
+    sc.set_spawn("from_lodge", 4, 8)
 
     # The dresser (table sprite) holds the car keys. Out in the main room,
     # off the door column so a solid prop never traps the player inside.
@@ -630,7 +630,7 @@ def build_son_room():
     # Hide spot under the bed. The wardrobe is NOT a hide spot: it's the
     # Clerk's-robe tell (clerk_room_interact), and a hide here took E
     # priority and made the only "the Clerk is one of them" clue
-    # unreachable. (son_room is a SAFE scene -- the hide was cosmetic.)
+    # unreachable. (clerk_room is a SAFE scene -- the hide was cosmetic.)
     sc.hide_spots = [
         (1 * TILE + 24, 6 * TILE + 24, "under"),   # the bed's walkable lip
     ]
@@ -686,7 +686,7 @@ def clerk_room_interact(game):
 
 # ---- innkeeper_basement (key: 'basement') ----
 
-def build_basement():
+def build_lodge_cellar():
     """The Arcadia Lodge's cellar -- the Clerk's domain, behind the
     PADLOCKED kitchen hatch (the cellar key hangs behind the house).
     Stone walls, packed dirt floor, a single hanging bulb. A photograph
@@ -718,10 +718,10 @@ def build_basement():
     objects_l[1][10] = "U"          # ladder up to the kitchen
     objects_l[5][8]  = "P"          # photo marker -- consumed at build
     objects = ["".join(r) for r in objects_l]
-    sc = Scene("basement", floor, objects, music="basement")
-    sc.add_exit("U", "house", "from_basement")
+    sc = Scene("lodge_cellar", floor, objects, music="basement")
+    sc.add_exit("U", "lodge", "from_lodge_cellar")
     sc.set_spawn("default", 9, 1)
-    sc.set_spawn("from_house", 9, 1)
+    sc.set_spawn("from_lodge", 9, 1)
 
     # A photograph -- placed via the P marker, with the photo
     # NPC (basement_photo_dialogue) hosting interaction.

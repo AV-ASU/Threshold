@@ -41,7 +41,7 @@ def _gold_in_wound(surf, cx, cy, R, peak=64):
     surf.blit(g, (cx - R - 1, cy - R - 1), special_flags=pygame.BLEND_RGBA_ADD)
 
 
-def _infest_tisdale_boy(surf, x, y, t, view="front"):
+def _infest_toby(surf, x, y, t, view="front"):
     # The lying boy's mouth won't stop -- and now his whole BODY is the
     # mouth. A vertical MAW splits him head to hem: raw-flesh lips bow open
     # around a deep dark throat (gold burning down in the gullet), and rows
@@ -308,7 +308,7 @@ def _infest_old_pell(surf, x, y, t, view="front"):
 
 
 _INFEST_WORLD = {
-    "tisdale_boy": _infest_tisdale_boy,
+    "toby": _infest_toby,
     "hettie": _infest_hettie,
     "old_townsman": _infest_old_townsman,
 }

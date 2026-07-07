@@ -1,4 +1,4 @@
-"""outside_innkeeper_house (key: 'our_house_area') -- the gravel
+"""outside_innkeeper_house (key: 'lodge_yard') -- the gravel
 yard behind the Clerk's house. The WOODSHED sits in the SW (the axe,
 flashlight; a locked facade door 'l' -> the `woodshed`
 interior, key-gated by the Lodge cellar key). The dirt path leaves
@@ -12,7 +12,7 @@ bulkhead in this yard too -- removed because it created a one-way
 trip (basement only exits via the kitchen ladder) and a duplicate
 "door to the basement" two tiles outside the same building.
 
-THRESHOLD reskin: original 'our_house_area' had two houses, a patrol,
+THRESHOLD reskin: original 'lodge_yard' had two houses, a patrol,
 a rust-key cellar gate, and respawning enemies. All cut. The Sheriff
 patrols this scene as part of his random outdoor route (wired in Pass F).
 """
@@ -24,7 +24,7 @@ from .base import Scene
 from .dialogue import _evidence
 
 
-def build_our_house_area():
+def build_lodge_yard():
     # 24w x 18h. The Clerk's house occupies the upper-left quadrant
     # with a back door (H) into the kitchen. The woodshed sits in the
     # lower-left -- a locked facade door 'l' you interact with (key-gated)
@@ -73,21 +73,21 @@ def build_our_house_area():
         "........................",   # 16
         "........................",   # 17
     ]
-    sc = Scene("our_house_area", floor, objects, music="village")
+    sc = Scene("lodge_yard", floor, objects, music="village")
     # The Lodge yard wraps on the x axis. The country lane comes in
     # from the west; walking east through or past the yard wraps back
     # to its west side. The road past the Lodge to the highway doesn't
     # exist in fiction -- there is no past-the-Lodge; the fold makes
     # sure of it.
     sc.wrap_x = True
-    # H = back door of the Clerk's house. Returns to 'house' scene
+    # H = back door of the Clerk's house. Returns to 'lodge' scene
     # (the kitchen/living/hallway).
-    sc.add_exit("H", "house", "from_our_house_area")
+    sc.add_exit("H", "lodge", "from_lodge_yard")
     # Outdoor passages: west onto the ARRIVAL ROAD (the looping road the PI
     # drove in on, with the dead car), which the dirt path carries on to the
     # country lane and town; east to the cornfield path.
-    sc.add_exit("a", "arrival_road", "from_our_house_area")
-    sc.add_exit("e", "forest_path", "from_our_house_area")
+    sc.add_exit("a", "arrival_road", "from_lodge_yard")
+    sc.add_exit("e", "cornfield_path", "from_lodge_yard")
     # Direction-sensitive hidden fold: the BACK of the Lodge. Walking
     # SOUTH onto the 'M' tile pressed against the building's rear
     # (north) wall opens onto Mara's arrival -- the day she walked up
@@ -98,7 +98,7 @@ def build_our_house_area():
     # the fold. You only ever face it by deliberately snooping behind
     # your own lodge (the forest band crowds the strip), so the beat
     # lands mid-investigation instead of on the first woodshed errand.
-    sc.add_exit("M", "lodge_arrival", "from_our_house_area",
+    sc.add_exit("M", "lodge_arrival", "from_lodge_yard",
                 direction="south")
     # The M tile sits at (5, 1), one tile off the Lodge's back wall,
     # mirroring the H door on the front face.
@@ -174,7 +174,7 @@ def build_our_house_area():
                                  "town_sign", text="BRIMLEY"))
 
     sc.set_spawn("default", 12, 7)
-    sc.set_spawn("from_house", 5, 6)             # one south of back door
+    sc.set_spawn("from_lodge", 5, 6)             # one south of back door
     sc.set_spawn("from_country_lane", 1, 7)      # one east of west passage
     sc.set_spawn("from_arrival_road", 1, 7)      # walked EAST off the road
     sc.set_spawn("from_village", 1, 7)           # legacy save alias
@@ -419,7 +419,7 @@ def build_arrival_road():
     sc._treadmill = (_BAND_TOP * TILE, _BAND_BOTTOM * TILE)
     sc._render_band = (_BAND_TOP, _BAND_BOTTOM)   # tile rows that tile north
     sc.add_exit("a", "country_lane", "from_arrival_road")
-    sc.add_exit("e", "our_house_area", "from_arrival_road")
+    sc.add_exit("e", "lodge_yard", "from_arrival_road")
     # The south loop: a same-scene direction-gated fold (silent by canon;
     # _build_fold_cache skips same-scene folds, so no frame is drawn).
     # Southward walkers land back NORTH of the crossing, south of the
@@ -427,7 +427,7 @@ def build_arrival_road():
     sc.add_exit("I", "arrival_road", "reloc_south_loop", direction="south")
     sc.set_spawn("reloc_south_loop", 7, PMID - 14)
     sc.set_spawn("default", 7, PMID)
-    sc.set_spawn("from_our_house_area", W - 2, PMID)   # walked WEST from the yard
+    sc.set_spawn("from_lodge_yard", W - 2, PMID)   # walked WEST from the yard
     sc.set_spawn("from_country_lane", 1, PMID)         # walked EAST from town side
 
     # Same road as the intro drive: the "Entering Brimley" sign on the east
@@ -576,7 +576,7 @@ def build_woodshed():
     sc = Scene("woodshed", floor, objects, music="home")
     # `h` exit returns the player to the LODGE YARD (the shed is back in the
     # Arcadia yard, west of the Lodge).
-    sc.add_exit("h", "our_house_area", "from_woodshed")
+    sc.add_exit("h", "lodge_yard", "from_woodshed")
     sc.set_spawn("default",            5, 6)
     sc.set_spawn("from_yard",          4, 6)   # entered from the yard door
     sc.set_spawn("from_brimley_shed",  4, 6)   # legacy fallback

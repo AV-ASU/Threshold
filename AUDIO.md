@@ -133,7 +133,7 @@ sites, 8 music sites, channel helpers).
 
 **Healthy, verified, leave alone:**
 
-- Every scene `music=` key resolves (`home`, `village`, `basement`,
+- Every scene `music=` key resolves (`home`, `village`, `lodge_cellar`,
   `void`, `wrong`, `wind`, `outside`, + `threshold_drone` direct).
 - Every dialog `voice` name resolves to a blip.
 - No orphaned cues: everything in `self.sfx` has a live call site

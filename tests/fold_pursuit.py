@@ -161,7 +161,7 @@ def test_safe_scene_never_breached():
     tx, ty, ch = _find_exit_tile(g, fold=True)
     _stand_on(g, tx, ty)
     _add_hot_cultist(g)
-    g._note_fold_pursuit(("house", "from_cornfield_maze"))   # house is SAFE
+    g._note_fold_pursuit(("lodge", "from_cornfield_maze"))   # house is SAFE
     assert g._fold_pursuer is None, "the refuge is never breached, even via a fold"
     print("  OK  a fold into a refuge is refused")
 

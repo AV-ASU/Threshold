@@ -171,18 +171,6 @@ overlay (`sprites_infested._INFEST_WORLD`) + the dialog portrait
 Old Pell to behavior + dialogue; rework the flow mutation guards + add a
 no-mutate-form guard; `NARRATIVE.md` §4b strike the mutate paragraph.
 
-### 10. **[Opus]** Dead-scene cleanup — cut `highway_walk` + the `town` orphan  *(was GAME_CHANGES §29)*
-
-Cut the walkers and their fold (reachable in theory —
-`our_house_area → arrival_road → country_lane`, hidden east-only tile at
-(28,6) — but practically never hit; two anonymous reused sprites). Remove
-`build_highway_walk` + registry (`scenes/__init__.py`); the `Q` fold tile /
-exit + `from_highway_walk` spawn on `country_lane` (`scenes/threshold_extras.py`);
-drop from the config sets (`SEAMLESS_WORLD_SCENES`, the hidden-fold list, decal
-tables); remove the legacy `town` orphan (verify no live inbound exit);
-`NARRATIVE.md` §11 strike the row + walker mentions; update `tests/flow.py`.
-**Leave `woodshed`** (keyed off the yard shed door, not an orphan).
-
 ### 11. **[Fable]** Brimley = the northernmost corn town, est. 1894  *(was GAME_CHANGES §27)*
 
 Brimley **STAYS** northern MN; the corn is town identity — stubborn 1894

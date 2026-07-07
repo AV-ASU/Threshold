@@ -54,11 +54,11 @@ def main():
     g.save.new()
     g.audio.music_muted = True
     g._start_play()
-    g.load_scene_now("house", "default")
+    g.load_scene_now("lodge", "default")
     font = pygame.font.SysFont("monospace", 15)
     shots = []
 
-    for ch, name in (("B", "bedroom"), ("1", "son_room")):
+    for ch, name in (("B", "bedroom"), ("1", "clerk_room")):
         pos = g.scene.find_marker(ch)
         if pos is None:
             print("no marker", ch)

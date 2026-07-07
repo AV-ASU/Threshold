@@ -69,7 +69,7 @@ def main():
     g.save.new()
     g.audio.music_muted = True
     g._start_play()
-    g.load_scene_now("house", "default")
+    g.load_scene_now("lodge", "default")
     font = pygame.font.SysFont("monospace", 15)
 
     # Door "B" -> bedroom sits at tile (13, 0) on the north wall. Plant a figure

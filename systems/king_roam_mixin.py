@@ -460,7 +460,7 @@ class KingRoamMixin:
         # 100% (or step into his room / a refuge) before it completes.
         can = (rk["scene"] != self.scene.key
                and self.scene.key not in KING_FREE_SCENES
-               and self.scene.key != "void_boss")
+               and self.scene.key != "clearing")
         if can and self.visibility >= PORTAL_PIN_VIS:
             if p is None:
                 self._open_forming_portal()

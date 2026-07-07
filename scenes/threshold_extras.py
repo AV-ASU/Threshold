@@ -289,7 +289,7 @@ def build_country_lane():
     south edge. A single creepy_tree on the north side at midway.
 
     Two exits: west `a` -> village (from_country_lane), east `e` ->
-    our_house_area (from_country_lane). No interior building, no
+    lodge_yard (from_country_lane). No interior building, no
     NPCs by default; the Sheriff patrol can pass through here as
     part of his route (already wired by tag, no extra work).
     """
@@ -314,7 +314,7 @@ def build_country_lane():
     # West passage (a) -- to village
     for dy in (-1, 0, 1):
         objects_l[6 + dy][0] = "a"
-    # East passage (e) -- to our_house_area
+    # East passage (e) -- to lodge_yard
     for dy in (-1, 0, 1):
         objects_l[6 + dy][W - 1] = "e"
     objects = ["".join(r) for r in objects_l]
@@ -323,30 +323,16 @@ def build_country_lane():
     # East now lands on the ARRIVAL ROAD (the looping road W of the Lodge),
     # whose dirt path carries on east to the yard.
     sc.add_exit("e", "arrival_road", "from_country_lane")
-    # Direction-sensitive hidden fold: walking EAST across the 'M2'
-    # tile (a piece of road past the lodge gate, late on the lane)
-    # opens onto the highway that doesn't end -- where the locals
-    # who walked out to flag down help are still walking. From any
-    # other angle the tile reads as floor.
-    sc.add_exit("Q", "highway_walk", "from_country_lane",
-                direction="east")
-    objects_ll = [list(r) for r in objects]
-    if 0 <= 6 < len(objects_ll) and W - 4 < len(objects_ll[6]):
-        objects_ll[6][W - 4] = "Q"
-    sc.objects = objects_ll
     sc.set_spawn("default", 1, 6)
     # Player walked WEST off the arrival road: lands at the east end of the
-    # lane, facing west toward town. (from_our_house_area kept as an alias for
+    # lane, facing west toward town. (from_lodge_yard kept as an alias for
     # any save that still routes straight here.)
     sc.set_spawn("from_arrival_road", W - 2, 6)
-    sc.set_spawn("from_our_house_area", W - 2, 6)
+    sc.set_spawn("from_lodge_yard", W - 2, 6)
     # Player walked EAST out of Brimley: lands at the west end of
     # the lane, facing east toward home.
     sc.set_spawn("from_brimley", 1, 6)
     sc.set_spawn("from_village", 1, 6)   # legacy alias
-    # Return spawn from the highway_walk fold -- lands one west of
-    # the U tile so the player doesn't immediately re-trigger.
-    sc.set_spawn("from_highway_walk", W - 5, 6)
 
     # Atmosphere -- corn tufts on both sides of the road, a few
     # crows, a leaning fence post deco, one creepy_tree, a dead
@@ -370,8 +356,8 @@ def build_country_lane():
 
     # ---- The walked-out road (2026-07 detail pass) ----
     # The locals who went to flag down help walked EAST down this lane
-    # and never came back (the highway fold): bootprints along the
-    # road that head east and simply stop, well short of the seam.
+    # and never came back: bootprints along the road that head east and
+    # simply stop, well short of the seam.
     for fx, fy in ((17, 6), (20, 5), (23, 6), (25, 6)):
         sc.add_decoration(Decoration(fx * TILE + 16, fy * TILE + 16,
                                      "mud_footprint"))
@@ -408,9 +394,9 @@ def build_graveyard():
     ]
     sc = Scene("graveyard", floor, objects, music="village")
     # Exit back into the church (the gate is in the back of the
-    # parsonage). Routes to old_man_house, which has spawn
+    # parsonage). Routes to church, which has spawn
     # 'from_graveyard' set up.
-    sc.add_exit("H", "old_man_house", "from_graveyard")
+    sc.add_exit("H", "church", "from_graveyard")
     sc.set_spawn("default", 7, 7)
     sc.set_spawn("from_church", 7, 7)
     sc.set_spawn("from_town_crossroads", 7, 7)
@@ -829,7 +815,7 @@ def build_bell_tower():
         "WWWWiWWLWWWW",    # 9  south-wall slit + L = stairs down to the church
     ]
     sc = Scene("bell_tower", floor_rows, objects, music="home")
-    sc.add_exit("L", "old_man_house", "from_bell_tower")
+    sc.add_exit("L", "church", "from_bell_tower")
     sc.set_spawn("default", 5, 8)
     sc.set_spawn("from_church", 7, 8)        # at the foot of the L stairs
     # The bell hangs off the housing's south face (drawn upward from its
@@ -873,7 +859,7 @@ def build_cornfield_maze():
     head-high corn on every side; narrow lanes between rows; the
     sky is the only thing you can see over the stalks. A scarecrow
     at the centre that isn't quite where it was a moment ago.
-    Two exits: south `!` back to forest_path; north `^` continues
+    Two exits: south `!` back to cornfield_path; north `^` continues
     into the brimley -- the maze led you somewhere wrong.
     Lanes are dotted with `:` corn patches: walk into one and
     you're hidden, but only as long as you stay in the patch."""
@@ -889,7 +875,7 @@ def build_cornfield_maze():
             row[0] = "C"
             row[W - 1] = "C"
         objects_l.append(row)
-    # South exit (back to forest_path) in lane 3 (cols 11-12).
+    # South exit (back to cornfield_path) in lane 3 (cols 11-12).
     objects_l[H - 1][11] = "!"
     objects_l[H - 1][12] = "!"
     # North exit (into brimley) in lane 3 (cols 11-12).
@@ -1035,7 +1021,7 @@ def build_cornfield_maze():
     # The maze identity is endless corn -- but the OUTER wall was a
     # hard ring of solid C. Soften it with the shared scatter helper
     # using corn chars ('C' solid + 'A' passable) so the wrap is
-    # camouflaged the same way brimley / forest_path are. Interior
+    # camouflaged the same way brimley / cornfield_path are. Interior
     # corn-wall cols (3, 7, 11, 15) stay untouched -- that's the maze
     # design and must not be perforated. The existing :-corn-cover
     # patches are also preserved.
@@ -1046,7 +1032,7 @@ def build_cornfield_maze():
         # North brimley exit (cols 11, 12 at row 0).
         if tx in (11, 12) and ty == 0:
             return True
-        # South forest_path exit (cols 11, 12 at row H-1).
+        # South cornfield_path exit (cols 11, 12 at row H-1).
         if tx in (11, 12) and ty == H - 1:
             return True
         # Direction-sensitive fold tiles.
@@ -1145,7 +1131,7 @@ def build_cornfield_maze():
     # feels natural until the player realises no direction escapes it.
     sc.wrap_x = True
     sc.wrap_y = True
-    sc.add_exit("!", "forest_path", "from_cornfield_maze")
+    sc.add_exit("!", "cornfield_path", "from_cornfield_maze")
     sc.add_exit("^", "brimley",   "from_cornfield_maze")
     # Direction-sensitive hidden fold: walking WEST across the 'Z'
     # tile (a regular-looking lane tile in the middle of the maze)
@@ -1169,7 +1155,7 @@ def build_cornfield_maze():
     sc.set_spawn("reloc_I", 16, 19)
     sc.set_spawn("reloc_Q", 3, 19)
     sc.set_spawn("default", 11, H - 2)
-    sc.set_spawn("from_forest_path", 11, H - 2)
+    sc.set_spawn("from_cornfield_path", 11, H - 2)
     sc.set_spawn("from_cornfield", 11, H - 2)
     sc.set_spawn("from_brimley", 11, 1)
     sc.set_spawn("from_brimley_south", 11, 1)
@@ -1244,37 +1230,4 @@ def build_cornfield_maze():
     sc.add_noise_trap(16 * TILE + 16, 10 * TILE + 16, "crow", seed=14)
 
     sc.hide_spots = []
-    return sc
-
-
-# ---------------------------------------------------------------------------
-# The town. A populated main street -- the civic centre of the world.
-#
-# Wired to: the general store (shop), the sheriff's office
-# (fisherman_cottage), the schoolhouse, and the road south back to the
-# village/farm. The church stays out in the brimley, so the town
-# reaches it the long way, through the fields.
-# ---------------------------------------------------------------------------
-def build_town():
-    """Retired. The town came apart into the fog -- its street, civic
-    buildings (Store, Sheriff, Schoolhouse) and residents now live in
-    the brimley, displayed as Brimley. This stub survives only so a
-    save left standing in the old 'town' scene bounces straight out to
-    Brimley on load, instead of soft-locking on a missing scene."""
-    floor = ["g" * 5 for _ in range(5)]
-    objects = ["." * 5 for _ in range(5)]
-    sc = Scene("town", floor, objects, music="wind")
-    for name in ("default", "from_village", "from_shop", "from_sheriff",
-                 "from_school", "from_town_crossroads"):
-        sc.set_spawn(name, 2, 2)
-
-    def _bounce(game):
-        if game.state == "transition":
-            return
-        game.begin_transition("brimley", "from_village")
-
-    sc.triggers.append({
-        "rect": (0, 0, 5 * TILE, 5 * TILE),
-        "fn": _bounce, "once": False, "fired": False,
-    })
     return sc

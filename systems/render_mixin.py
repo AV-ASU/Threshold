@@ -1026,7 +1026,7 @@ class RenderMixin:
         # don't blink, except, very rarely, one does.
         blink_idx = -1
         if self.stillness_t > 1.5 and random.random() < 1 / 300:
-            human_kinds = ("townswoman", "tisdale_boy", "old_townsman",
+            human_kinds = ("townswoman", "toby", "old_townsman",
                            "hettie", "sheriff", "royce", "preacher", "clerk")
             human_npcs = [i for i, n in enumerate(self.scene.npcs)
                           if n.sprite_kind in human_kinds]

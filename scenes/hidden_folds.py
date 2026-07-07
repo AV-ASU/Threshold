@@ -12,10 +12,8 @@ the scene exists to close a thread in the canon:
                      rite claimed the whole town at once)
   lodge_arrival   -- Mara's arrival at the Lodge, witnessed (makes the
                      "she chose this" beat concrete)
-  highway_walk    -- the road the missing locals walked out on, where it
-                     stretches and never ends
 
-All three are in SEAMLESS_WORLD_SCENES so crossing into them carries no
+Both are in SEAMLESS_WORLD_SCENES so crossing into them carries no
 fade -- the player walks into the fold without realising they crossed
 a boundary.
 """
@@ -325,7 +323,7 @@ def build_lodge_arrival():
     They do not see the PI. The PI can walk around them, see her face,
     and leave by the south end of the yard. Makes 'she chose this'
     concrete. Entered through the BACK of the Lodge (the fold pane
-    against its rear wall in our_house_area, walked south): in the
+    against its rear wall in lodge_yard, walked south): in the
     back, out the front, years earlier -- the building is the fold."""
     W, H = 18, 12
     floor_rows = []
@@ -348,7 +346,7 @@ def build_lodge_arrival():
         objects_l.append(row)
     # Return tile on the SOUTH wall at col 9. The player stepped out of
     # the Lodge's front; walking south down the yard (past the tableau)
-    # returns them to our_house_area, back behind the building.
+    # returns them to lodge_yard, back behind the building.
     objects_l[H - 1][9] = "G"
     # The Lodge's south face -- one row of wall + a door at col 9.
     for tx in range(5, 14):
@@ -359,14 +357,14 @@ def build_lodge_arrival():
     sc = Scene("lodge_arrival", floor_rows, objects, music="village")
     sc.wrap_x = False
     sc.wrap_y = False
-    sc.add_exit("G", "our_house_area", "from_lodge_arrival")
+    sc.add_exit("G", "lodge_yard", "from_lodge_arrival")
     sc.set_spawn("default", 9, H - 2)
     # The player walked SOUTH into the back of the Lodge; they emerge
     # just south of its porch in the past, stride preserved -- out the
     # front door of the building they walked into the back of. Two
     # tiles below Mara so the spawn never overlaps the figures; one
     # turn and the tableau is there.
-    sc.set_spawn("from_our_house_area", 9, 6)
+    sc.set_spawn("from_lodge_yard", 9, 6)
     # ---- Decorations ----
     # Lit windows flanking the Lodge door.
     sc.add_decoration(Decoration(7 * TILE + 16, 3 * TILE + 16, "candle"))
@@ -401,105 +399,6 @@ def build_lodge_arrival():
     clerk.facing = (0, 1)   # facing Mara, south
     clerk.lock_facing = True
     sc.add_npc(clerk)
-    return sc
-
-
-# ----- #4: The Highway That Doesn't End -----------------------------
-
-def build_highway_walk():
-    """A short stretch of empty highway that wraps east-west forever.
-    Two figures walk east, their backs to the PI -- the locals who
-    walked out to flag down help and never came back. The PI can
-    follow as far as they want; the figures stay ahead. Walking west
-    returns to country_lane. The road never reaches anywhere."""
-    W, H = 60, 9
-    # Floor: a paved road through the middle, grass shoulders.
-    floor_rows = []
-    for ty in range(H):
-        row = []
-        for tx in range(W):
-            if 3 <= ty <= 5:
-                row.append("d")    # dirt-road tiles -- the highway
-            else:
-                row.append("g")
-        floor_rows.append("".join(row))
-    # Tree shoulders top and bottom. The road rows (3-5) stay OPEN at
-    # the left and right columns so the east-west wrap actually
-    # connects -- walking off the east edge of the road lands you on
-    # the west edge of the road and you keep going. (If the edge
-    # columns were solid here, wrap_x would be a no-op and the road
-    # would just dead-end against an invisible wall.)
-    objects_l = []
-    for ty in range(H):
-        row = []
-        on_road = 3 <= ty <= 5
-        for tx in range(W):
-            if ty == 0 or ty == H - 1:
-                row.append("T")
-            elif (tx == 0 or tx == W - 1) and not on_road:
-                row.append("T")     # tree shoulders pinch the grass
-            else:
-                row.append(".")
-        objects_l.append(row)
-    # Return barrier on the road, one tile IN from the west seam,
-    # spanning all three road rows. It's direction-sensitive (fires
-    # only when walked WEST), so heading back the way you came drops
-    # you to country_lane -- but walking EAST and wrapping across the
-    # seam runs straight over it (facing east, no trigger) and the
-    # road keeps going forever. Inland of the seam so the wrap itself
-    # never lands the player on the exit tile.
-    for ry in (3, 4, 5):
-        objects_l[ry][1] = "G"
-    objects = ["".join(r) for r in objects_l]
-    sc = Scene("highway_walk", floor_rows, objects, music="outside")
-    # The road wraps east-west. Walking east never gets anywhere.
-    sc.wrap_x = True
-    sc.wrap_y = False
-    sc.add_exit("G", "country_lane", "from_highway_walk", direction="west")
-    # Spawn a few tiles east of the G barrier, facing east (carried
-    # from the eastward walk into the fold) so arrival doesn't instantly
-    # bounce back out.
-    sc.set_spawn("default", 4, 4)
-    sc.set_spawn("from_country_lane", 4, 4)
-    # ---- The two figures ----
-    # Both walk east on the road, ahead of the player. Their facing
-    # is east. Movement is a slow patrol on a long eastward stretch;
-    # because the world wraps, they appear to walk forever. The
-    # waypoint loops them along row 4 from col 30 -> 58 -> 30 (the
-    # wrap eats the seam). They do not stop, do not turn.
-    # They are not here to be met -- they're the locals who already walked
-    # out and never arrived. Non-solid (you pass through them; they're
-    # ahead of you, not blocking) and no_prompt (no [E] over them, or they
-    # read as ordinary random NPCs you can talk to). The road just keeps
-    # them ahead of you forever.
-    walker_a = NPC(30 * TILE + 16, 4 * TILE + 16, "A figure on the road",
-                   "old_townsman", movement="patrol", solid=False, no_prompt=True,
-                   waypoints=[(30 * TILE + 16, 4 * TILE + 16),
-                              (58 * TILE + 16, 4 * TILE + 16)])
-    walker_a.facing = (1, 0)
-    walker_a.lock_facing = True
-    sc.add_npc(walker_a)
-    walker_b = NPC(35 * TILE + 16, 4 * TILE + 16, "A figure on the road",
-                   "old_townsman", movement="patrol", solid=False, no_prompt=True,
-                   waypoints=[(35 * TILE + 16, 4 * TILE + 16),
-                              (58 * TILE + 16, 4 * TILE + 16)])
-    walker_b.facing = (1, 0)
-    walker_b.lock_facing = True
-    sc.add_npc(walker_b)
-    # Dressing -- some grass tufts, a couple of distant crows, a
-    # single dropped item on the shoulder.
-    rng = random.Random(719)
-    for _ in range(50):
-        gx = rng.randint(2, W - 3) * TILE + rng.randint(2, 28)
-        gy_choice = rng.choice([1, 2, 6, 7])
-        gy = gy_choice * TILE + rng.randint(2, 28)
-        sc.add_decoration(Decoration(gx, gy, "grass_tuft"))
-    sc.add_decoration(Decoration(10 * TILE + 16, 2 * TILE + 16, "crow"))
-    sc.add_decoration(Decoration(48 * TILE + 16, 7 * TILE + 16, "crow"))
-    # One dropped object -- a hat or a small bag -- on the shoulder
-    # where someone began the walk.
-    sc.add_decoration(Decoration(5 * TILE + 16, 5 * TILE + 16,
-                                 "small_chair"))
     return sc
 
 

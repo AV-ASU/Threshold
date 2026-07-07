@@ -718,7 +718,7 @@ def main():
     g.load_scene_now("brimley", "default")
     check(len(g.scene._moths) == MOTH_STACK_CAP,
           "moths: the field persists across the room's rebuilds")
-    g.load_scene_now("house", "default")
+    g.load_scene_now("lodge", "default")
     check(len(getattr(g.scene, "_moths", [])) == 0,
           "moths: a safe room never grows them")
     g.load_scene_now("brimley", "default")

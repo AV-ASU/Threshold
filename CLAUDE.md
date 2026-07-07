@@ -481,7 +481,7 @@ it renders the procedural sprites to a labelled PNG strip.
   recurrence language). Keep it green; add a guard when you lock a canon fact.
 - **Watch for stale refs from the village→brimley merge.** Scene keys, the
   well position (`scene._well_pos`, col 94/row 13), and NPC names changed —
-  the Kid is **"the Tisdale boy"** (Toby Tisdale), not "Village Kid".
+  the Kid is **Toby** (sprite/portrait/dialogue kind `toby`), not "Village Kid".
 - **Previewing visuals headlessly:** render to PNG/GIF with
   `SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy` + Pillow (installable) and
   send with the file tool. For whole-screen cutscenes, step

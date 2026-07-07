@@ -1,4 +1,4 @@
-"""cornfield_path (key: 'forest_path') -- the dirt road east of
+"""cornfield_path (key: 'cornfield_path') -- the dirt road east of
 the Clerk's house. Stubble cornfield to the north and south,
 the trees thicken at the east end where the road bends into the
 woods.
@@ -12,7 +12,7 @@ from entities.decoration import Decoration
 from .base import Scene
 
 
-def build_forest_path():
+def build_cornfield_path():
     W = 60
     H = 14
     PATH_ROW = 7              # main horizontal walking lane
@@ -32,7 +32,7 @@ def build_forest_path():
         row = ["."] * W
         objects_l.append(row)
 
-    # West passage from our_house_area.
+    # West passage from lodge_yard.
     for dy in (-1, 0, 1):
         objects_l[PATH_ROW + dy][0] = "a"
 
@@ -81,7 +81,7 @@ def build_forest_path():
                             _fp_bushes.append((px, py)))
     floor = ["".join(r) for r in floor_ll_fp]
     objects = ["".join(r) for r in objects_l]
-    sc = Scene("forest_path", floor, objects, music="outside")
+    sc = Scene("cornfield_path", floor, objects, music="outside")
     for bx, by in _fp_bushes:
         sc.add_decoration(Decoration(bx, by, "bush"))
     # Walk through the woods only to be spit out where you walked in.
@@ -91,19 +91,19 @@ def build_forest_path():
     sc.wrap_x = True
     sc.wrap_y = True
 
-    sc.add_exit("a", "our_house_area",  "from_forest")
+    sc.add_exit("a", "lodge_yard",  "from_forest")
     # 2-wide passage north into the deeper cornfield (cornfield_maze).
     # Uses the `!` outdoor_passage char so it reads as a gap in the
     # corn rather than a door. Two adjacent tiles so the player walks
     # straight through without having to centre on a single door.
-    sc.add_exit("!", "cornfield_maze", "from_forest_path")
+    sc.add_exit("!", "cornfield_maze", "from_cornfield_path")
     # South exit to brimley -- closes the macro-loop. Walking south long
-    # enough through brimley -> cornfield_maze -> forest_path -> here
+    # enough through brimley -> cornfield_maze -> cornfield_path -> here
     # brings you back to brimley north.
-    sc.add_exit("S", "brimley", "from_forest_path")
+    sc.add_exit("S", "brimley", "from_cornfield_path")
 
     sc.set_spawn("default", 1, PATH_ROW)
-    sc.set_spawn("from_our_house_area", 1, PATH_ROW)
+    sc.set_spawn("from_lodge_yard", 1, PATH_ROW)
     sc.set_spawn("from_cave", W - 2, PATH_ROW)
     sc.set_spawn("from_barn", W - 2, PATH_ROW)
     sc.set_spawn("from_cornfield_maze", 30, PATH_ROW)

@@ -163,32 +163,32 @@ OBJECT_DEFS = {
     "H": {"solid": False, "kind": "door"},
     "B": {"solid": False, "kind": "door"},
     "F": {"solid": False, "kind": "door"},
-    "J": {"solid": False, "kind": "door"},   # door to kid_house interior
+    "J": {"solid": False, "kind": "door"},   # door to toby_house interior
     # Per-house entry doors (each house in the new public square + the
-    # Clerk's place in our_house_area gets its own char so the layout
+    # Clerk's place in lodge_yard gets its own char so the layout
     # is self-documenting and the scene knows which interior to load).
-    "m": {"solid": False, "kind": "door"},   # door to old_man_house
-    "y": {"solid": False, "kind": "door"},   # door to fisherman_cottage
+    "m": {"solid": False, "kind": "door"},   # door to church
+    "y": {"solid": False, "kind": "door"},   # door to sheriff_office
     "h": {"solid": False, "kind": "door"},   # door to innkeeper_house
     "n": {"solid": False, "kind": "door"},   # door to barn (south of village)
-    "o": {"solid": False, "kind": "door"},   # door to haunted_house (red herring)
+    "o": {"solid": False, "kind": "door"},   # door to abandoned_farmhouse (red herring)
     # Locked-house door: SOLID until unlocked. The brass-key gate fires
     # from village.on_interact_fn -- pressing E from an adjacent tile
     # transitions if the key is in inventory, otherwise shows a locked
     # notice. The wall blocks movement so the player can't just walk
     # through an unlocked-looking door.
     "z": {"solid": True,  "kind": "door"},   # door to locked_house (red herring)
-    # Door "1" -> the Clerk's room (key 'son_room'), an unconditional
+    # Door "1" -> the Clerk's room (key 'clerk_room'), an unconditional
     # exit off the ground floor. ("2" is a vestigial tile from a cut
     # scene; no active map places it.)
-    "1": {"solid": False, "kind": "door"},   # door to son_room (Clerk's room)
+    "1": {"solid": False, "kind": "door"},   # door to clerk_room (Clerk's room)
     "2": {"solid": False, "kind": "door"},   # vestigial (cut scene)
     # Outdoor-passage style transition tiles -- non-solid, non-drawing
     # so the underlying floor (grass / water) shows through cleanly.
     # '4' is the village <-> brimley corridor.
     "4": {"solid": False, "kind": "outdoor_passage"},
     # Fake wall: looks like a wood wall, passable. Used inside the
-    # haunted_house red herring -- the player walks through it once to
+    # abandoned_farmhouse red herring -- the player walks through it once to
     # find the symbol-portal room. After the portal is used, the scene
     # build replaces this with a real "W" so the route closes for good.
     "%": {"solid": False, "kind": "fake_wall"},
@@ -245,7 +245,7 @@ OBJECT_DEFS = {
     "$": {"solid": False, "kind": "bridge"},
     # Markers (consumed at scene-build time; never drawn)
     # P=basement photo, K=kid, S=shopkeep, O=oldman, M=mom, Z=basement note,
-    # Q=relocation marker (threshold_extras), Y=fisherman, N=innkeeper (quest)
+    # Q=relocation marker (threshold_extras), Y=sheriff, N=innkeeper (quest)
     "P": None, "K": None, "S": None, "O": None, "M": None, "Z": None,
     "Q": None, "Y": None, "N": None,
 }
@@ -971,17 +971,17 @@ def floor_step_sound(ch):
 # from this dict falls back to titlecase(key.replace('_', ' ')).
 DISPLAY_NAMES = {
     "bedroom":              "the Spare Room",
-    "house":                "the Inn",
-    "son_room":              "the Clerk's Room",
+    "lodge":                "the Inn",
+    "clerk_room":              "the Clerk's Room",
     "maras_room":           "Mara's Room",
-    "basement":             "the Cellar",
-    "our_house_area":       "the Yard",
-    "kid_house":            "the Kid's House",
+    "lodge_cellar":             "the Cellar",
+    "lodge_yard":       "the Yard",
+    "toby_house":            "the Kid's House",
     "shop":                 "General Store",
-    "old_man_house":        "the Church",
-    "fisherman_cottage":    "Sheriff's Office",
-    "forest_path":          "Cornfield Path",
-    "void_boss":            "the Clearing",
+    "church":        "the Church",
+    "sheriff_office":    "Sheriff's Office",
+    "cornfield_path":          "Cornfield Path",
+    "clearing":            "the Clearing",
     "barn":                 "the Barn",
     "well_bottom":          "the Shaft Floor",
     "well_passage":         "the Drying Racks",
@@ -990,7 +990,7 @@ DISPLAY_NAMES = {
     "works_scriptorium":    "the Scriptorium",
     "works_sign":           "the Sign Chamber",
     "works_deepstair":      "the Deep Stair",
-    "haunted_house":        "the Abandoned Farmhouse",
+    "abandoned_farmhouse":        "the Abandoned Farmhouse",
     "brimley":            "Brimley",
     "schoolhouse":          "the Schoolhouse",
     "graveyard":            "the Graveyard",

@@ -59,7 +59,7 @@ def _open_login_terminal(game, npc):
         game.show_notice("The terminal hums quietly.")
 
 
-def build_old_man_house():
+def build_church():
     """THRESHOLD: the church and parsonage. A long nave with a partitioned
     back VESTRY reached through an interior doorway -- the dividing wall blocks
     line of sight, so the vestry is a real indoor blind spot (you can't see who
@@ -91,11 +91,11 @@ def build_old_man_house():
     rows[comp_ty][comp_tx] = "."
     objects = ["".join(r) for r in rows]
 
-    sc = Scene("old_man_house", floor, objects, music="home")
+    sc = Scene("church", floor, objects, music="home")
     # Church now sits on the brimley west bank. The `m` exit routes
     # to the brimley; the legacy `from_village` spawn stays as a
     # save-state fallback.
-    sc.add_exit("m", "brimley", "from_old_man_house")
+    sc.add_exit("m", "brimley", "from_church")
     sc.add_exit("?", "graveyard", "from_church")
     sc.add_exit("U", "bell_tower", "from_church")
     sc.set_spawn("default", 8, 8)
@@ -228,7 +228,7 @@ def preacher_body_examine(game, npc):
     ])
 
 
-def build_fisherman_cottage():
+def build_sheriff_office():
     """The Sheriff's office. A main room where Vane watches from his desk, and
     a partitioned back RECORDS room (the case board he can't file on, the dead
     payphone, his cartridges) reached through an interior doorway -- the
@@ -248,10 +248,10 @@ def build_fisherman_cottage():
         "W..............W",   # 10
         "WWWWWyWWWWWWWWWW",   # 11  y = exit door back to the field
     ]
-    sc = Scene("fisherman_cottage", floor, objects, music="home")
+    sc = Scene("sheriff_office", floor, objects, music="home")
     # The Sheriff's office stands on the Brimley bank now; its door
     # opens back onto the field.
-    sc.add_exit("y", "brimley", "from_fisherman_cottage")
+    sc.add_exit("y", "brimley", "from_sheriff_office")
     sc.set_spawn("default", 4, 8)
     sc.set_spawn("from_brimley", 5, 10)      # one tile north of the y door
     sc.set_spawn("from_village", 5, 10)      # legacy fallback
@@ -320,7 +320,7 @@ def build_fisherman_cottage():
     return sc
 
 
-def build_haunted_house():
+def build_abandoned_farmhouse():
     """Round-10 rework: now the 'normal' face of a two-stage house.
     On first entry it looks like a plain empty interior -- a candle,
     a couple of motes, otherwise bare. The trick is the south face:
@@ -354,10 +354,10 @@ def build_haunted_house():
         "W..........W",   # 8
         "WWWWWWWWWWWW",   # 9  sealed south wall
     ]
-    sc = Scene("haunted_house", floor, objects, music="home")
+    sc = Scene("abandoned_farmhouse", floor, objects, music="home")
     # Abandoned farmhouse now sits deep south on the brimley
     # west bank.
-    sc.add_exit("o", "brimley", "from_haunted_house")
+    sc.add_exit("o", "brimley", "from_abandoned_farmhouse")
     sc.set_spawn("default",     3, 1)
     sc.set_spawn("from_brimley", 3, 1)
     sc.set_spawn("from_village", 3, 1)         # legacy fallback

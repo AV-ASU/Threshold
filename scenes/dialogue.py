@@ -227,10 +227,10 @@ def preacher_dialogue(game, npc):
         ], speaker="Rev. Crane", voice="blip_low", portrait="preacher")
 
 
-# ---- The Kid: Toby Tisdale ----
+# ---- The Kid: Toby ----
 
-def tisdale_boy_dialogue(game, npc):
-    """Toby Tisdale -- innocent witness (NARRATIVE §2). He FOLLOWED the night
+def toby_dialogue(game, npc):
+    """Toby -- innocent witness (NARRATIVE §2). He FOLLOWED the night
     procession down the river to the cult's dug-open ground and saw them go
     below -- the sole witness of where they went (D rework, 2026-07) -- and
     before that they LIVED in his school (the commune). His witness does two
@@ -257,14 +257,14 @@ def tisdale_boy_dialogue(game, npc):
             "[c=dim]Before that they had my school. All of them, living in "
             "it, in rows. Then one night they walked out of it in a "
             "line.[/c]",
-        ], speaker="Toby Tisdale", voice="blip_kid", portrait="tisdale_boy")
+        ], speaker="Toby", voice="blip_kid", portrait="toby")
         return
     if inv.has("cult_calling") and not save.flag("kid_playscript_noticed"):
         save.set_flag("kid_playscript_noticed", True)
         game.dialog.show([
             "That book. The one they write in.",
             "[c=dim]Don't open it where I can see.[/c]",
-        ], speaker="Toby Tisdale", voice="blip_kid", portrait="tisdale_boy")
+        ], speaker="Toby", voice="blip_kid", portrait="toby")
         return
     # The envelope in the PI's pocket points at the school; the boy it
     # belonged to confirms it, once, and begs him off it.
@@ -276,7 +276,7 @@ def tisdale_boy_dialogue(game, npc):
             "[c=dim]I looked in the window once. The board still has my "
             "lesson on it, under their door.[/c]",
             "Don't go in there, mister.",
-        ], speaker="Toby Tisdale", voice="blip_kid", portrait="tisdale_boy")
+        ], speaker="Toby", voice="blip_kid", portrait="toby")
         return
     count = save.arg("kid_count", 0) + 1
     save.set_arg("kid_count", count)
@@ -284,26 +284,26 @@ def tisdale_boy_dialogue(game, npc):
         game.dialog.show([
             "My mom hums a song that doesn't stop. She doesn't know "
             "she's doing it.",
-        ], speaker="Toby Tisdale", voice="blip_kid", portrait="tisdale_boy")
+        ], speaker="Toby", voice="blip_kid", portrait="toby")
     elif count == 2:
         game.dialog.show([
             "I keep biting my tongue. To check.",
             "[c=dim]It still bleeds right.[/c]",
-        ], speaker="Toby Tisdale", voice="blip_kid", portrait="tisdale_boy")
+        ], speaker="Toby", voice="blip_kid", portrait="toby")
     elif count == 3:
         game.dialog.show([
             "I don't walk past the church anymore.",
             "[c=dim]The door is open. They left it open.[/c]",
-        ], speaker="Toby Tisdale", voice="blip_kid", portrait="tisdale_boy")
+        ], speaker="Toby", voice="blip_kid", portrait="toby")
     elif count == 4:
         game.dialog.show([
             "If you find a way out, don't tell me.",
             "[c=dim]I tried to lie yesterday. My mouth wouldn't.[/c]",
-        ], speaker="Toby Tisdale", voice="blip_kid", portrait="tisdale_boy")
+        ], speaker="Toby", voice="blip_kid", portrait="toby")
     else:
         game.dialog.show([
             "[c=dim]The boy is watching the corn line.[/c]",
-        ], speaker="", voice="blip_soft", portrait="tisdale_boy")
+        ], speaker="", voice="blip_soft", portrait="toby")
 
 
 # ---- Hettie (the store) ----
