@@ -62,6 +62,17 @@ item on the list: engine exists, canon is settled, payoff is the core fantasy.**
   critical one-shots (witness, memory, handoff) firing first, and add
   `_REVISIT_NUDGES` entries so their questions grow with the case too.
 
+- **Two guaranteed options on EVERY townsperson (the case's front door).**
+  Regardless of who they are, the menu always offers (1) the PI **introducing
+  himself as a private investigator** (his job, and that he is looking for a
+  woman last heard headed to Brimley) and (2) **showing Mara's photograph** and
+  asking if they have seen or heard anything — intro first, photo second, a
+  shared pair injected into every NPC's `exchanges`. This is also the fiction's
+  fix: **news does not spread** (a town of ~six homebound locals), so no NPC
+  knows who the PI is or what he wants until he **says it** — greets must not
+  assume the case is known; the PI **initiates**. (Vane is a full ask-verb
+  conversion target — see the Vane arc ticket, #2a.)
+
 - **Pilot beat — the Crane choice** (proof-of-concept for the verb): in his
   2nd conversation, a two-option `show_choice` — provoke him (he goes off to
   "save" the cult) vs hold him back. Canon fence (§1b): the cult can NOT be
@@ -88,6 +99,17 @@ full economy table is still to be drafted).
   real, a quiet non-reaction that the outside no longer exists for him. The
   anti-reward that characterizes what Sable *is* (compulsion, not hospitality;
   NARRATIVE §2). Outcome is a `notes` beat / a chill, never an item.
+- **Vane is a recipient too — and his is a TRAP, not a gift.** To Vane the paper
+  is his **break lever, not a comfort**: Kurt Cobain (his favorite musician)
+  dead on the front page reads, to a man who wants it all to *end*, as
+  *permission*, not hope — the outside is dying the same death, one day north,
+  and its brightest walked out of a room he could have left any time. Giving
+  Vane the paper adds **+2 despair** (walks him to the lip of the hollow turn;
+  the give-beat telegraphs it as mood, no number shown). **This is the one
+  recipient whose allocation carries a TRACKED consequence** (the despair
+  ledger, ticket #2a) — the deliberate exception to the "mood, not a meter"
+  fence below, named here so it is not read as drift. One copy: giving it to
+  Vane means Hettie/Royce/Pell/Sable/Toby go without.
 - **What's on the page (real April '94):** Kurt Cobain's death is the thematic
   centerpiece (the outside world's own despair, the same wound that took
   Brimley), plus Rwanda and the Bosnia/Goražde NATO strikes. The paper is **not
@@ -99,6 +121,42 @@ full economy table is still to be drafted).
   warm vs curt, whose hope you fed or killed); it **never gates an ending**
   (nothing stops the PI but himself); **existing verbs only** (give via E /
   dialog).
+
+### 2a. **[Fable + Opus]** Sheriff Vane — the despair/hope arc + player-driven hollow turn  *(planned with the user 2026-07; couples #1's ask-verb + #2's newspaper; deepens a thin character)*
+
+Rework Vane from a linear counter into a real arc (the goal is DEPTH — he had
+little going on). Lore is settled in NARRATIVE §2 (his row) + §4 (the hollow
+turn, rewritten off infestation-gating). Two halves:
+
+- **Ask-verb conversion (rides #1).** Give Vane **multiple dialogue options**
+  (his own `*_CONVO`): the two guaranteed openers (introduce-as-PI + Mara's
+  photo, #1), plus his **investigation thread** — the nameless blind cultist,
+  the *how*, the emptied school/barn/lodge — **gated on TRUST**. Trust is earned
+  only by the player **sharing real discoveries** with him (he is
+  another-outsider-wary by default; §2).
+- **Player-driven hollow turn (replaces §4's infestation-stage-3 gate).** A
+  hidden **despair/hope ledger** decides his fate — the player never sees a
+  number, only his mood (the "mood, not a meter" fence is honored: it gates a
+  *character's fate*, not an ending). Two triggers:
+  - **The ledger** (fluid, latches — once hollow, no return). Starter constants,
+    all playtest-tunable (a `VANE_*` config block, same bucket as the stealth
+    `SUS_*` tuning): `VANE_HOLLOW_AT = 3` (net despair that latches the hollow
+    turn); hope act **−1**, despair act **+1**; `VANE_PAPER_DESPAIR = 2` (the
+    newspaper, #2 — walks him to the edge, not an instant kill from neutral);
+    `VANE_DESPAIR_FLOOR = -2` (hope can bank down to −2, so a careful player can
+    eat the paper and just survive; two ordinary bad beats can't undo real
+    rapport).
+  - **The neglect override** (hard, beats the ledger). Reach **3 evidence** with
+    fewer than `VANE_MIN_INFORMED = 1` discoveries shared → he hollows
+    regardless. Closes the "save him by pure inaction" loophole and keeps the
+    rough old timing (~evidence 3), now *earned by neglect* instead of automatic.
+- **The elegant coupling:** trust-by-sharing IS the hope currency — every real
+  lead brought to Vane both opens his help and buys down despair; the newspaper
+  (#2) is its exact inverse. So the same act builds the rapport that makes his
+  fall hurt, and holds him back from it. Encounter mechanics unchanged (stands →
+  force-chase → **TAKEN INTO CUSTODY**; escape out his door; best ammo cache).
+  Add `tests/flow.py` guards when it lands (both trigger paths + the latch + the
+  neglect gate).
 
 ### 3. **[Opus]** Ground heightfield — blind-spot hills  *(CAMERA.md Phase 6; PROTOTYPE landed 2026-07 — floor-roll rewrite + live authoring deferred)*
 
