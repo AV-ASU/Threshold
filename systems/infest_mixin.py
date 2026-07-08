@@ -65,11 +65,13 @@ def _converted_local_dialogue(game, npc):
     game.dialog.show(lines, speaker="", voice="blip_soft", portrait="narrator")
 
 
-# Mutated resisters: their flesh has turned, but they talk to you as if
-# nothing has. The horror is the GAP -- a flat, mundane, domestic line
-# delivered from a face that is now a wound. No cosmic-poetry; they report
-# small specifics and don't acknowledge what they've become.
-INFEST_MUTATE_LINES = {
+# Turned resisters: they look exactly as they did (the town reads NORMAL --
+# the wrongness is the PLACE, not the people; NARRATIVE 1b). What has
+# changed is what they SAY. They talk to you flatly, about small ordinary
+# things, from behind a face that no longer means them, and never
+# acknowledge the gap. No body-horror, no cosmic-poetry; the dread is the
+# ordinary line delivered by someone who is no longer home behind it.
+INFEST_TURN_LINES = {
     "Hettie": [
         "Truck still comes Thursdays. I unload it myself now.",
         "The driver won't get out of the cab anymore. That's all right. I "
@@ -79,15 +81,17 @@ INFEST_MUTATE_LINES = {
     ],
     "Toby": [
         "Mom set my place at supper. I sat down for it.",
-        "[c=dim]It falls right through. I keep trying. She doesn't say "
-        "anything.[/c]",
+        "[c=dim]I wasn't hungry. I sat there till she cleared it. She "
+        "didn't say anything.[/c]",
         "I can still talk. Listen. I sound just the same.",
     ],
     "Garrick": [
-        "I still know everyone comes up this road. Don't need to look.",
-        "[c=dim]Saw you coming a long way off. Didn't need eyes for it.[/c]",
-        "You'll want to keep moving, son. I'd point you the way, but my "
-        "arm doesn't.",
+        "I still know everyone who comes up this road. Don't need to look "
+        "anymore.",
+        "[c=dim]Saw you coming a long way off. Kept my eyes on the corn "
+        "the whole while.[/c]",
+        "You'll want to keep moving, son. I'd point you the way. I find "
+        "I'd rather not lift the arm.",
     ],
     "Old Pell": [
         "Crossed off the 14th this morning. It was already crossed.",
@@ -97,19 +101,18 @@ INFEST_MUTATE_LINES = {
 }
 
 
-def _mutated_local_dialogue(game, npc):
-    """A resister whose flesh has turned. They speak to you flatly, about
-    small ordinary things, from a face that is now a wound -- and never
-    acknowledge it. The portrait shows their bespoke infested form."""
+def _turned_local_dialogue(game, npc):
+    """A resister the case has turned. They look no different; they speak to
+    you flatly, about small ordinary things, from behind a face that no
+    longer means them, and never acknowledge the gap."""
     name = getattr(npc, "name", "")
-    lines = INFEST_MUTATE_LINES.get(name, [
-        "[c=dim]They answer something ordinary, in their own voice. They "
-        "do not seem to know what has happened to their face.[/c]",
+    lines = INFEST_TURN_LINES.get(name, [
+        "[c=dim]They answer something ordinary, in their own voice. Nothing "
+        "in it reaches you.[/c]",
     ])
     game.dialog.show(lines, speaker=name,
                      voice=getattr(npc, "voice", "blip_low"),
-                     portrait=getattr(npc, "portrait", None),
-                     infested=True)
+                     portrait=getattr(npc, "portrait", None))
 
 
 class InfestationMixin:
@@ -613,22 +616,22 @@ class InfestationMixin:
             placed += 1
 
     def _infest_locals(self, stage):
-        """Turn or rot the surface locals by name. Converts become passive
-        cult (a 'cult_convert' tag -- _tick_cultists counts their gaze but
-        they never grab); mutates keep themselves under a wrongness overlay."""
+        """Turn the surface locals by name. Converts become passive cult (a
+        'cult_convert' tag -- _tick_cultists counts their gaze but they never
+        grab). Resisters keep their body and their face entirely (the town
+        reads NORMAL); only their DIALOGUE curdles -- they answer flat and
+        off, no longer meaning what they say (TODO #9)."""
         for n in self.scene.npcs:
             if not getattr(n, "alive", True) or getattr(n, "_is_corpse", False):
                 continue
             nm = getattr(n, "name", "")
             cs = INFEST_CONVERT.get(nm)
-            ms = INFEST_MUTATE.get(nm)
+            ts = INFEST_TURN.get(nm)
             if cs is not None and stage >= cs:
                 self._convert_local(n)
-            elif ms is not None and stage >= ms:
-                n._mutated = True
-                # Their body has started speaking for the fold; the
-                # dialogue curdles to match the overlay.
-                n.dialogue_fn = _mutated_local_dialogue
+            elif ts is not None and stage >= ts:
+                # No overlay, no flag on the body -- just the curdled voice.
+                n.dialogue_fn = _turned_local_dialogue
         # Mrs. Calder's outdoor table: once she has joined, the extra
         # place she kept set for the guest she couldn't name is cleared
         # away -- the waiting is over. One setting stays (hers, unused).
@@ -652,7 +655,6 @@ class InfestationMixin:
         n.no_prompt = False
         n.solid = True
         n._gaze_range = 150
-        n._mutated = False
 
     def _spawn_counter_eater(self):
         """Stage 2+: a convert eating at the store counter (food scarcity,

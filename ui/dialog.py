@@ -115,36 +115,35 @@ class DialogueBox:
         self.choice_idx = 0
         self.choice_callback = None
         self.portrait_kind = None
-        self.portrait_infested = False
 
-    def show(self, pages, speaker="", voice="blip_mid", color=C_WHITE, portrait=None, on_complete=None, infested=False):
+    def show(self, pages, speaker="", voice="blip_mid", color=C_WHITE, portrait=None, on_complete=None):
         if isinstance(pages, str):
             pages = [pages]
         # Casual talkable-NPC speech FLOATS above the speaker's head
         # instead of dropping the modal band, so the world keeps running
         # (2026-07 sound overhaul; ui/float_speech.py). Only through the
         # interact path (game._speaking_npc set), only a named NPC line
-        # (speaker + non-narrator portrait), never a choice, an infested
-        # portrait, or a scripted beat with a completion callback -- those
-        # want the frozen world and the full box.
+        # (speaker + non-narrator portrait), never a choice or a scripted
+        # beat with a completion callback -- those want the frozen world and
+        # the full box.
         g = getattr(self, "game", None)
         if (not getattr(self, "_force_modal_next", False)
                 and g is not None
                 and getattr(g, "_speaking_npc", None) is not None
                 and speaker and portrait != "narrator"
-                and not infested and on_complete is None):
+                and on_complete is None):
             g.float_speech.begin(g._speaking_npc, pages, name=speaker,
                                  voice=voice, color=color)
             return
         # Narrator/world-object text (examines, pickups, every _evidence
         # beat) drops the band too: it runs as a lower-third caption while
-        # the world keeps moving (ui/narration.py). Only choices, scripted
-        # beats with a completion callback, and the infested portraits
-        # still freeze the world under the modal box.
+        # the world keeps moving (ui/narration.py). Only choices and
+        # scripted beats with a completion callback still freeze the world
+        # under the modal box.
         if (not getattr(self, "_force_modal_next", False)
                 and g is not None
                 and not speaker and portrait in (None, "narrator")
-                and not infested and on_complete is None
+                and on_complete is None
                 and getattr(g, "narration", None) is not None):
             g.narration.begin(pages, voice=voice, color=color)
             return
@@ -158,10 +157,6 @@ class DialogueBox:
         self.voice = voice
         self.color = color
         self.portrait_kind = portrait
-        # When True, _draw_portrait lays the speaker's bespoke infested
-        # flesh-horror form over their normal portrait (a mutated
-        # resister speaking up close -- NARRATIVE infestation).
-        self.portrait_infested = infested
         self.active = True
         self.on_complete = on_complete
         self.choices = None
@@ -256,8 +251,6 @@ class DialogueBox:
         pygame.draw.rect(surf, (20, 18, 26), prect)
         pygame.draw.rect(surf, (70, 64, 84), prect, 1)
         self._draw_portrait(surf, prect, self.portrait_kind)
-        if getattr(self, "portrait_infested", False):
-            self._draw_infested_portrait(surf, prect, self.portrait_kind)
         if self.speaker_name:
             name_surf = self.fonts["serif_sm"].render(
                 self.speaker_name, True, C_GOLD)
@@ -351,174 +344,6 @@ class DialogueBox:
                 pygame.draw.rect(surf, C_GOLD,
                                  (crect.x + 14, oy2 + 4, 2, rf.get_linesize() - 6))
             surf.blit(rf.render(opt, True, color), (crect.x + 26, oy2))
-
-    def _draw_infested_portrait(self, surf, rect, kind):
-        """Lay a mutated resister's bespoke flesh-horror over their normal
-        portrait -- the same transformation authored on their world sprite
-        (rendering.sprites), at portrait scale. The flesh deforms AND the
-        fold's gold/Sign shows in the wound."""
-        cx, cy = rect.centerx, rect.centery
-        MEAT = (96, 22, 26); MEAT_LO = (58, 12, 16)
-        SKIN = (214, 182, 150); BONE = (222, 214, 196)
-        GOLD = (236, 204, 64); GOLD_HI = (252, 232, 150)
-        t = pygame.time.get_ticks() / 1000.0
-        thr = 0.5 + 0.5 * math.sin(t * 2.4)
-
-        def gold_in(gx, gy, R, peak):
-            g = pygame.Surface((R * 2 + 2, R * 2 + 2), pygame.SRCALPHA)
-            for i in range(R, 0, -1):
-                a = int(peak * (1 - i / R))
-                if a > 0:
-                    pygame.draw.circle(g, (GOLD[0], GOLD[1], GOLD[2], a),
-                                       (R + 1, R + 1), i)
-            surf.blit(g, (gx - R - 1, gy - R - 1),
-                      special_flags=pygame.BLEND_RGBA_ADD)
-
-        if kind == "old_townsman" and getattr(self, "speaker_name", "") == "Old Pell":
-            # (Old Pell) the calendar counts him now: tally-scars carved in
-            # rows across the face, one eye crossed off (a scar X over a void
-            # socket), and the 14th re-cut heavier down the cheek, gold
-            # welling in the line. Same form as the world sprite, at
-            # portrait scale. (He shares Garrick's old_townsman sprite kind,
-            # so this resolves by speaker name first.)
-            SCAR = (66, 30, 32)
-
-            def tally(tx, ty, n=4, slash=True, h=7):
-                for i in range(n):
-                    pygame.draw.line(surf, SCAR, (tx + i * 4, ty),
-                                     (tx + i * 4, ty + h), 2)
-                if slash:
-                    pygame.draw.line(surf, MEAT, (tx - 2, ty + h),
-                                     (tx + n * 4 - 2, ty), 2)
-
-            tally(cx - 22, cy - 16, n=3)                  # across the brow
-            tally(cx + 6, cy - 18, n=3, slash=False, h=6)
-            tally(cx - 24, cy - 2, n=3)                   # down the far cheek
-            tally(cx - 22, cy + 12, n=3, slash=False, h=6)
-            tally(cx + 8, cy + 12, n=4, h=6)
-            # the crossed-off eye: scar X over a void socket, gold deep in it
-            ex, ey = cx + 10, cy - 6
-            pygame.draw.rect(surf, (10, 7, 10), (ex - 5, ey - 5, 10, 10))
-            gold_in(ex, ey, 4, 30 + int(16 * thr))
-            pygame.draw.line(surf, MEAT, (ex - 6, ey - 6), (ex + 6, ey + 6), 2)
-            pygame.draw.line(surf, MEAT, (ex + 6, ey - 6), (ex - 6, ey + 6), 2)
-            # the 14th, crossed twice: the heavier line, still open, run
-            # down the jaw off the crossed eye's side
-            hx = cx - 12
-            gold_in(hx, cy + 12, 6, 40 + int(20 * thr))
-            pygame.draw.line(surf, MEAT, (hx, cy + 2), (hx, cy + 24), 4)
-            pygame.draw.line(surf, MEAT_LO, (hx - 3, cy + 2), (hx - 3, cy + 24), 2)
-            pygame.draw.line(surf, GOLD, (hx, cy + 4), (hx, cy + 22), 2)
-            pygame.draw.circle(surf, GOLD_HI, (hx, cy + 12), 2)
-            return
-        if kind == "toby":
-            # Head cleaved into a vertical MAW (matches the world sprite):
-            # raw-flesh lips bow open around a deep dark throat, interlocking
-            # fangs run down both lips, gold burns in the gullet, eyes shoved
-            # to the corners of the cloven head.
-            top = cy - 20; bot = cy + 20; mid = cy; half = 20.0
-            gap = 7 + int(2 * thr)
-
-            def _edge(yy):
-                return gap * max(0.22, 1.0 - abs(yy - mid) / half)
-            gold_in(cx, mid, 12, 48 + int(24 * thr))
-            pygame.draw.polygon(surf, MEAT,                  # raw-flesh lips (outer lens)
-                                [(cx, top), (cx + gap + 2, mid), (cx, bot), (cx - gap - 2, mid)])
-            pygame.draw.polygon(surf, (30, 12, 14),          # the deep dark throat
-                                [(cx, top + 3), (cx + gap - 1, mid), (cx, bot - 3), (cx - gap + 1, mid)])
-            pygame.draw.line(surf, GOLD, (cx, top + 5), (cx, bot - 5), 2)   # gold down the gullet
-            pygame.draw.circle(surf, GOLD_HI, (cx, mid), 2)
-            for i, yy in enumerate(range(top + 3, bot - 1, 4)):  # interlocking fangs
-                w = _edge(yy)
-                if w < 2:
-                    continue
-                if i % 2 == 0:
-                    lx = int(cx - w)
-                    pygame.draw.polygon(surf, BONE, [(lx, yy - 2), (lx, yy + 3), (lx + 4, yy)])
-                else:
-                    rx = int(cx + w)
-                    pygame.draw.polygon(surf, BONE, [(rx, yy - 2), (rx, yy + 3), (rx - 4, yy)])
-            for ex in (-gap - 4, gap + 4):                   # eyes shoved to the corners
-                pygame.draw.circle(surf, (232, 230, 226), (cx + ex, top + 5), 4)
-                pygame.draw.circle(surf, C_BLACK, (cx + ex, top + 5), 2)
-        elif kind == "hettie":
-            # Face peeled into petals; the Yellow Sign carved in the meat.
-            fx, fy = cx, cy - 2
-            gold_in(fx, fy, 13, 44 + int(20 * thr))
-            pygame.draw.circle(surf, MEAT, (fx, fy), 10)
-            for dx, dy in [(-0.7, -0.7), (0.7, -0.7), (-0.7, 0.7), (0.7, 0.7)]:
-                nx, ny = -dy, dx
-                pygame.draw.polygon(surf, SKIN,
-                                    [(fx + nx * 6, fy + ny * 6),
-                                     (fx - nx * 6, fy - ny * 6),
-                                     (fx + dx * 18, fy + dy * 18)])
-            pygame.draw.circle(surf, MEAT_LO, (fx, fy), 6)
-            pygame.draw.line(surf, GOLD, (fx, fy - 6), (fx, fy + 6), 2)
-            pygame.draw.line(surf, GOLD, (fx, fy - 1), (fx - 5, fy - 4), 2)
-            pygame.draw.line(surf, GOLD, (fx, fy - 1), (fx + 5, fy - 4), 2)
-            pygame.draw.line(surf, GOLD, (fx, fy + 2), (fx - 4, fy + 6), 2)
-            pygame.draw.line(surf, GOLD, (fx, fy + 2), (fx + 4, fy + 6), 2)
-            pygame.draw.circle(surf, GOLD_HI, (fx, fy), 1)
-        elif kind == "old_townsman":
-            # (Garrick) the cancer took the arm that would point: ONE great
-            # black-gold mass swallows his right shoulder and jaw from below
-            # the frame (the fused arm is out of crop), a single gold
-            # fissure splits its crown, his eyes are sealed over ("didn't
-            # need eyes for it"), and a FEW thick vessels anchor it up the
-            # neck. The man stays recognisable under it. Same form as the
-            # world sprite, at portrait scale.
-            import random as _r
-            rng = _r.Random(11)
-            INFLAME = (150, 70, 62); INFLAME_LO = (90, 42, 37); VEIN = (120, 34, 36)
-            TDK = (9, 8, 12); TLIT = (60, 54, 66); TSPEC = (94, 88, 100)
-
-            def lerp(a, b, f):
-                f = max(0.0, min(1.0, f))
-                return tuple(int(a[i] + (b[i] - a[i]) * f) for i in range(3))
-
-            def tumor(tx, ty, r):
-                R = r + int(thr * 1.5)
-                shc = pygame.Surface((R * 3, R * 2), pygame.SRCALPHA)
-                pygame.draw.ellipse(shc, (0, 0, 0, 90), (0, 0, R * 3, R * 2))
-                surf.blit(shc, (tx - R - 1, ty + R - 6))
-                pygame.draw.circle(surf, INFLAME, (tx, ty + 2), R + 2)
-                pygame.draw.circle(surf, INFLAME_LO, (tx, ty + 3), R + 2, 1)
-                for _ in range(3):
-                    a = rng.uniform(0, 6.28); d = rng.uniform(0.5, 0.9) * R
-                    pygame.draw.circle(surf, TDK,
-                                       (int(tx + math.cos(a) * d), int(ty + math.sin(a) * d)),
-                                       max(1, int(rng.uniform(0.4, 0.6) * R)))
-                for i in range(R, 0, -1):
-                    f = (R - i) / R; oy = -int((R - i) * 0.55)
-                    pygame.draw.circle(surf, lerp(TDK, TLIT, f ** 1.4), (tx, ty + oy), i)
-                pygame.draw.circle(surf, TSPEC, (tx - R // 3, ty - R // 2), max(1, R // 4))
-                crown = (tx, ty - R // 2)
-                gold_in(crown[0], crown[1], max(3, R // 2), 40 + int(24 * thr))
-                rng2 = _r.Random(tx * 7 + ty)
-                for _ in range(3):
-                    a = rng2.uniform(-2.2, 2.2)
-                    ex = crown[0] + math.cos(a + 1.57) * R
-                    ey = crown[1] + math.sin(a + 1.57) * R * 0.95
-                    mx = (crown[0] + ex) / 2 + rng2.uniform(-3, 3); my = (crown[1] + ey) / 2
-                    pygame.draw.lines(surf, GOLD, False, [crown, (mx, my), (ex, ey)], 2)
-                pygame.draw.circle(surf, GOLD_HI, crown, 2)
-
-            # eyes sealed over: sick lids drawn shut, a dark healed seam
-            SEAL = (152, 136, 106)
-            for ex in (cx - 5, cx + 5):
-                pygame.draw.rect(surf, SEAL, (ex - 3, cy - 7, 7, 5))
-                pygame.draw.line(surf, (70, 54, 44), (ex - 3, cy - 5), (ex + 3, cy - 5), 1)
-            # a few THICK vessels, hand-placed, climbing from the mass into
-            # the jaw and neck -- anchors, not spaghetti
-            for pts in ([(cx - 4, cy + 2), (cx - 9, cy + 8), (cx - 13, cy + 14)],
-                        [(cx + 1, cy + 8), (cx - 5, cy + 13), (cx - 10, cy + 18)]):
-                for i in range(len(pts) - 1):
-                    pygame.draw.line(surf, VEIN, pts[i], pts[i + 1], 2)
-            # the ONE great mass, rising over the shoulder from below frame:
-            # under-lobes first so the dome reads as a single grown thing
-            pygame.draw.circle(surf, TDK, (cx - 25, cy + 17), 7)
-            pygame.draw.circle(surf, TDK, (cx - 4, cy + 24), 8)
-            tumor(cx - 15, cy + 20, 12)
 
     def _draw_portrait(self, surf, rect, kind):
         cx = rect.centerx; cy = rect.centery

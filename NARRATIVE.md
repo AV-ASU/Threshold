@@ -294,7 +294,7 @@ two halves is **knowledge**, not appearance:
 
 **The whole town reads normal and is entirely His.** The only soul who can
 feel the seam is the lone outsider who wasn't in the net when it closed —
-you. (How this squares with the body-horror of §4b: that is **the veil
+you. (How this squares with the turning of §4b: that is **the veil
 thinning for the PI specifically** — the King colonizing *your*
 perception as He turns His eye back on the face from the dream — not the
 townsfolk changing. Underneath, they were always His.)
@@ -543,7 +543,7 @@ Mask's foot and the calling-out stages her rising).
 > invisibly, before you arrived — nobody here is mid-conversion. The
 > infestation is **not the townsfolk changing**; it is the **veil thinning
 > for the PI** as he learns too much and He turns His eye back on the face
-> from the dream. "Convert" and "mutate" are how the truth **surfaces to
+> from the dream. "Convert" and "turn" are how the truth **surfaces to
 > you**, not allegiances being switched. Underneath, they were always His.
 
 Knowing dooms you, and it **shows**. Surface corruption is a pure,
@@ -572,10 +572,16 @@ What rises with the stage:
   **peace-makers convert** — the welcoming newcomer (first, at stage 1),
   Mrs. Calder who "hears the door" (2), Garrick and Royce (3). A convert
   is **passive cult**: they turn toward you and their watching raises
-  visibility, but they never chase or grab. The **resisters mutate** —
-  Hettie (2), Old Pell and Toby (3): they keep their identity
-  and their defiance, but their bodies betray them (eye-voids, the Sign
-  etched into the chest, a jaundiced cast). Still themselves, rotting.
+  visibility, but they never chase or grab. The **resisters turn** —
+  Hettie (2), Garrick, Old Pell and Toby (3): they keep their identity,
+  their defiance, and their **exact bodies** (the town reads NORMAL; the
+  wrongness is the *place*, not the people, §1b). What betrays them is what
+  they **say**: their talk goes flat and off, reporting small ordinary
+  things from behind a face that no longer means them, and never
+  acknowledging the gap. No body-horror overlay — the dread is the mundane
+  line delivered by someone who is no longer home behind it. *(The old
+  `_mutated` flesh-deform layer was cut, 2026-07: one impossible thing, and
+  it is the door.)*
 - **Sheriff Vane is neither** — the last holdout, and the one soul in town
   **claimed but unattuned** (he never dreamed the door; §2). **His hollowing
   is no longer infestation-gated; it is driven by the player's relationship

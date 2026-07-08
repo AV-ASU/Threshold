@@ -10,9 +10,8 @@ but is otherwise its own tiny state machine.
 What floats (Game routes it, DialogueBox.show decides): a line WITH a
 named speaker, an NPC portrait (not the narrator), no choice, no
 on_complete callback, reached through the interact path. Narrator
-beats, evidence, choices, the mutated-local infested portrait, and any
-scripted beat with a completion callback stay MODAL -- those want the
-frozen world and the full box.
+beats, evidence, choices, and any scripted beat with a completion
+callback stay MODAL -- those want the frozen world and the full box.
 
 Advance: auto after a page's read-time, or E while standing near the
 speaker. on_complete fires when the queue empties. Floats are never

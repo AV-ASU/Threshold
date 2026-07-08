@@ -24,8 +24,7 @@ _VP_GOR = (84, 46, 40); _VP_GOR_LO = (54, 30, 28)
 def _breath_lift(seed):
     """The locals' idle breath: a slow 1px rise-and-settle. Returns the pixel
     lift (0 or 1) for this frame. `seed` desyncs the phase per NPC so a room
-    full of people doesn't inhale in unison. Shared by the NPC body draw and
-    the infested overlay so a mutated local's wound rides the same breath.
+    full of people doesn't inhale in unison.
     (Locals cast no contact shadow, so the lift reads as breath, not float.)"""
     import math, pygame
     t = pygame.time.get_ticks() / 1000.0

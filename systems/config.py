@@ -590,19 +590,18 @@ RIVER_ENTRY_TILE = (34, 60)
 #   CONVERT -- the peace-makers cleanly join the cult (passive: they watch
 #              and raise visibility, but never chase or grab). Keyed by
 #              name -> the stage at which they turn.
-#   MUTATE  -- the resisters keep their identity and their defiance, but
-#              their bodies betray them (a render overlay of wrongness).
+#   TURN    -- the resisters keep their identity, their bodies, and their
+#              defiance; the town reads NORMAL (the wrongness is the PLACE,
+#              not the people -- NARRATIVE 1b). What curdles is what they
+#              SAY: their talk goes flat and off, reporting small ordinary
+#              things from behind a face that no longer means them. No body-
+#              horror overlay (the mutate render layer was cut, TODO #9).
 # Sheriff Vane is neither: at stage 3 he becomes a unique threat encounter
-# in his own office (_spawn_hunting_sheriff).
-# CONVERT -- peace-makers cleanly join the cult (passive). MUTATE -- the
-# resisters whose flesh deforms into a bespoke fold-horror (Toby, Hettie,
-# Garrick, and Old Pell each have a dedicated incident in rendering.sprites
-# / ui.dialog; Old Pell's resolves by NAME, since he shares Garrick's
-# old_townsman sprite kind). Values are the evidence stage at which they
-# turn.
+# in his own office (_spawn_hunting_sheriff). Values are the evidence stage
+# at which the local turns.
 INFEST_CONVERT = {"A woman": 1, "Mrs. Calder": 2, "Royce": 3}
-INFEST_MUTATE = {"Hettie": 2, "Garrick": 3, "Old Pell": 3,
-                 "Toby": 3}
+INFEST_TURN = {"Hettie": 2, "Garrick": 3, "Old Pell": 3,
+               "Toby": 3}
 # Underground is wrong from the first rung -- a baseline infestation even
 # at 0 evidence, deepening on the full evidence count (not capped at 3).
 UNDERGROUND_SCENES = {

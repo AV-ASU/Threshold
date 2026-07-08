@@ -11,8 +11,8 @@ pause menu.
 What lands here (DialogueBox.show routes it): a line with NO speaker
 and a narrator/absent portrait, no choice, no completion callback.
 Named NPC speech floats over the speaker's head (ui/float_speech.py);
-choices, infested portraits, and scripted beats with on_complete keep
-the modal band and the frozen world.
+choices and scripted beats with on_complete keep the modal band and
+the frozen world.
 
 Advance: auto after a read-time hold, or E anywhere (the caption owns
 the press before hides/NPCs so a skim never triggers something else).

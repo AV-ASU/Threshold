@@ -10,7 +10,7 @@ from constants import (
     C_BG, C_WHITE, C_BLACK, C_GOLD, C_BLOOD,
 )
 from rendering.sprites import (draw_player_sprite, draw_npc_sprite,
-                               draw_npc_corpse, draw_infested_overlay,
+                               draw_npc_corpse,
                                draw_axe_swing, draw_axe_held,
                                draw_revolver_held, draw_gun_fire,
                                draw_king_death,

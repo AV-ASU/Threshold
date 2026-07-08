@@ -8,7 +8,6 @@ import surface `from rendering.sprites import <name>` keeps working. See
 from rendering.sprites_common import KING_UNFOLD, KING_UNFOLD_SCALE
 from rendering.sprites_king import door_mask_surface, reset_king_fx
 from rendering.sprites_npc import draw_npc_sprite
-from rendering.sprites_infested import draw_infested_overlay
 from rendering.sprites_corpse import draw_npc_corpse
 from rendering.sprites_player import (
     draw_player_sprite, view_from_facing,
@@ -22,7 +21,7 @@ from rendering.sprites_carcosa import (
 
 __all__ = [
     "KING_UNFOLD", "KING_UNFOLD_SCALE",
-    "draw_npc_sprite", "draw_npc_corpse", "draw_infested_overlay",
+    "draw_npc_sprite", "draw_npc_corpse",
     "draw_player_sprite", "view_from_facing",
     "reset_king_fx", "door_mask_surface",
     "draw_axe_swing", "draw_axe_held", "draw_revolver_held", "draw_gun_fire",
