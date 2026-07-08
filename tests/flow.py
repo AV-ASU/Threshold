@@ -1512,6 +1512,43 @@ def main():
                   for e in _notes) and evidence_count(gc) == _ev_before,
               "calder: stopped-waiting lands as a NOTE, never evidence")
 
+    # (c2) The resisters TURN by DIALOGUE only -- the town reads NORMAL
+    # (TODO #9: the mutate body-horror layer is CUT). At stage 3 a resister
+    # keeps their exact sprite/portrait and never gets a _mutated flag; only
+    # their talk curdles (INFEST_TURN -> _turned_local_dialogue), delivered
+    # as an ordinary line (no infested portrait path), never evidence.
+    import systems.config as _cfg
+    import rendering.sprites as _spr
+    from ui.dialog import DialogueBox as _DB
+    from systems.infest_mixin import _turned_local_dialogue
+    check(not hasattr(_cfg, "INFEST_MUTATE") and hasattr(_cfg, "INFEST_TURN"),
+          "turn: INFEST_MUTATE is gone; INFEST_TURN replaces it")
+    check(not hasattr(_spr, "draw_infested_overlay"),
+          "turn: the infested world overlay is removed from the sprites facade")
+    check(not hasattr(_DB, "_draw_infested_portrait"),
+          "turn: the infested dialog portrait is removed from DialogueBox")
+    gm = new_game()
+    gm.save.set_arg("evidence", ["e0", "e1", "e2"])   # stage 3
+    gm.load_scene_now("brimley")
+    check(not any(getattr(nn, "_mutated", False) for nn in gm.scene.npcs),
+          "turn: no local carries a _mutated flag at stage 3 (mutation cut)")
+    _turned = [nn for nn in gm.scene.npcs
+               if getattr(nn, "name", "") in _cfg.INFEST_TURN]
+    check(bool(_turned), "turn: at least one resister stands in brimley at stage 3")
+    check(all(nn.dialogue_fn is _turned_local_dialogue for nn in _turned),
+          "turn: every present resister is repointed to the curdled voice")
+    if _turned:
+        _n = _turned[0]
+        _kind0 = _n.sprite_kind
+        _ev_b = evidence_count(gm)
+        _n.dialogue_fn(gm, _n)
+        check(_n.sprite_kind == _kind0 and evidence_count(gm) == _ev_b,
+              "turn: the curdled line keeps the sprite and never inflates evidence")
+    from systems.infest_mixin import INFEST_TURN_LINES as _TL
+    check(not any(d in ln for lines in _TL.values() for ln in lines
+                  for d in ("—", "–", "--")),
+          "turn: no dashes in any curdled resister line (HARD RULE)")
+
     # (d) The SPREAD drive-out is the CLAIMING (script locked 2026-06):
     # the mask rides the passenger seat and turns; the PI answers the
     # gaze his one dream broke off a year ago; the verdict card is the
@@ -1529,9 +1566,9 @@ def main():
           "spread: no dashes in player-facing ending text")
 
     # --- 24. The town reacts to state (TODO #10) + descent beats (#8) ----
-    # Each ambient local carries ONE pre-mutation state beat (a one-shot,
-    # gated on what the PI has learned) before falling back to their
-    # ambient loop; the procession's candle beat lands as a NOTE. None of
+    # Each ambient local carries ONE state beat (a one-shot, gated on what
+    # the PI has learned) before falling back to their ambient loop; the
+    # procession's candle beat lands as a NOTE. None of
     # it may ever inflate the evidence count (the six canonical beats are
     # locked), and all of it holds the no-dash + no-cosmology rules.
     gb = new_game()
@@ -1720,8 +1757,7 @@ def main():
     # --- 26. Floating NPC speech (2026-07 sound overhaul): a casual
     # talkable-NPC line reached through the interact path FLOATS over
     # the speaker's head and leaves the world running; narrator lines,
-    # choices, infested portraits, and scripted (on_complete) beats
-    # stay in the MODAL box.
+    # choices, and scripted (on_complete) beats stay in the MODAL box.
     gfs = new_game()
     gfs.load_scene_now("church", "default")
     for _ in range(20):

@@ -17,7 +17,7 @@ from constants import (TILE, SCREEN_W, SCREEN_H, RENDER_SCALE,
                        C_BG, C_BLACK, C_BLOOD, C_GOLD, C_WHITE)
 from systems.items import ITEM_DEFS
 from rendering.sprites import (draw_player_sprite, draw_npc_sprite,
-                               draw_npc_corpse, draw_infested_overlay,
+                               draw_npc_corpse,
                                draw_axe_swing, draw_axe_held,
                                draw_revolver_held, draw_gun_fire,
                                draw_king_death, view_from_facing, KING_UNFOLD)
@@ -1198,13 +1198,6 @@ class RenderMixin:
                                         lean=king_lean, scale_mul=king_scale_mul,
                                         pose=getattr(npc, "pose", None),
                                         gape=getattr(npc, "_gape", 0.0))
-                        # A resister whose flesh has turned: their bespoke
-                        # fold-horror form, laid over the person they were.
-                        if getattr(npc, "_mutated", False):
-                            draw_infested_overlay(target, sx, sy,
-                                                  npc.sprite_kind, view=nview,
-                                                  name=getattr(npc, "name", None),
-                                                  seed=getattr(npc, 'sprite_seed', 0))
                     # The rising "?" tell (STEALTH_REWORK.md Pillar 1): a
                     # cultist whose suspicion is climbing but hasn't locked
                     # shows the half-seen hesitation over its head.

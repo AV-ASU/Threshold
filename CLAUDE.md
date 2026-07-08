@@ -317,20 +317,16 @@ it renders the procedural sprites to a labelled PNG strip.
   transforms surface locals by name: **converts** the peace-makers
   (`INFEST_CONVERT` → `_convert_local`: sprite→`cultist`, tag
   `cult_convert` = *passive* cult, gaze-only via `_tick_cultists`, never
-  grabs) and **mutates** the resisters (`INFEST_MUTATE` → `_mutated` flag):
-  their flesh deforms into a **bespoke body-horror form** with the fold's
-  gold/Sign in the wound — Toby (head cleaves to a maw), Hettie (face
-  peels, Sign carved in), Garrick (the cancer took the arm that would
-  point: ONE black-gold mass swallows his shoulder and arm, a gold fissure
-  splits its crown, his eyes are sealed over, a few thick vessels anchor
-  it),
-  Old Pell (tally-scars carve themselves into him in rows, one eye crossed
-  off, the heavy re-cut 14th over his heart; resolved by NAME via
-  `_INFEST_NAMED`, since he shares Garrick's `old_townsman` sprite kind),
-  others use a generic fallback. Authored at BOTH scales that must agree:
-  the world sprite (`draw_infested_overlay` in `sprites.py`, `_INFEST_WORLD`)
-  and the dialog portrait (`Dialogue._draw_infested_portrait`, shown via
-  the `infested=True` flag on `show()` from `_mutated_local_dialogue`).
+  grabs) and **turns** the resisters (`INFEST_TURN` → `_turned_local_dialogue`;
+  Hettie, Garrick, Old Pell, Toby): the town reads **NORMAL** — they keep
+  their exact sprite, portrait, and body (the wrongness is the *place*, not
+  the people; §1b). Only their **dialogue** curdles: they answer flat and
+  off, reporting small ordinary things from behind a face that no longer
+  means them, never acknowledging the gap. (The old `_mutated` body-horror
+  layer — the `draw_infested_overlay` world sprite + the
+  `_draw_infested_portrait` dialog portrait + the `infested=True` `show()`
+  path — was **cut** 2026-07, TODO #9; `sprites_infested.py` keeps only the
+  shared `_gold_in_wound` helper the corpse art still uses.)
   And (c) at stage 3 turns
   the Sheriff's office into a **unique threat**: `_spawn_hunting_sheriff`
   (`sheriff_hollow` sprite) holds for an intro beat then force-chases

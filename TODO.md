@@ -249,18 +249,6 @@ the cult's dug mine at the grove, reached by the rite); all exits/locals/cult st
 in player-facing text call it a bounded fog-edge / void-ringed town, never
 "island."
 
-### 9. **[Opus]** Cut townsperson mutation — the town reads normal  *(was GAME_CHANGES §26)*
-
-The `_mutated` / `INFEST_MUTATE` body-horror is a **second impossible thing**
-competing with the spatial cosmology and fights §1b ("the wrongness is the
-*place*, not the people"). Cut the mutate layer; **KEEP convert** (passive,
-gaze-only). Dread of the people → behavior + folds. Remove `_mutated` +
-`INFEST_MUTATE` + `_INFEST_NAMED` (`infest_mixin`, `config`); cut the world
-overlay (`sprites_infested._INFEST_WORLD`) + the dialog portrait
-(`_draw_infested_portrait` / `infested=` path); repoint Toby/Hettie/Garrick/
-Old Pell to behavior + dialogue; rework the flow mutation guards + add a
-no-mutate-form guard; `NARRATIVE.md` §4b strike the mutate paragraph.
-
 ### 11. **[Fable]** Brimley = the northernmost corn town, est. 1894  *(was GAME_CHANGES §27)*
 
 Brimley **STAYS** northern MN; the corn is town identity — stubborn 1894
