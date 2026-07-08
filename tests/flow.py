@@ -1544,6 +1544,10 @@ def main():
         _n.dialogue_fn(gm, _n)
         check(_n.sprite_kind == _kind0 and evidence_count(gm) == _ev_b,
               "turn: the curdled line keeps the sprite and never inflates evidence")
+    from systems.infest_mixin import INFEST_TURN_LINES as _TL
+    check(not any(d in ln for lines in _TL.values() for ln in lines
+                  for d in ("—", "–", "--")),
+          "turn: no dashes in any curdled resister line (HARD RULE)")
 
     # (d) The SPREAD drive-out is the CLAIMING (script locked 2026-06):
     # the mask rides the passenger seat and turns; the PI answers the
