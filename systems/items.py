@@ -49,7 +49,7 @@ ITEM_DEFS = {
     "pallid_mask": {"name": "The Pallid Mask",
                        "kind": "lore",
                        "desc": "The King's own pale half-mask, made an "
-                               "object. His face. The fold opens for it. So, "
+                               "object. His face. Brimley opens for it. So, "
                                "you suspect, does the door in the deep."},
     "cross":         {"name": "The Preacher's Cross",
                        "kind": "lore",

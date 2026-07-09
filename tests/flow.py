@@ -246,9 +246,8 @@ def main():
     check(len(g.save.arg("evidence", [])) == 3,
           "rite: the rite never inflates evidence")
     g._rite_fold_t0 = None                        # skip the opening ramp
-    check(not g.scene.exit_gate_fn(g, "G")
-          and not g.scene.exit_gate_fn(g, "M"),
-          "rite: the circle seals the surface exits behind you")
+    check(not g.scene.exit_gate_fn(g, "M"),
+          "rite: the circle seals the surface exit behind you")
     ready(g)
     check(_take_fold(g, "O") and g.scene.key == "well_bottom",
           "rite: the opened pane lands at the shaft floor")
@@ -274,7 +273,9 @@ def main():
     check(g2.scene.fold_charge_fn(g2, "O") == 0.0
           and not _take_fold(g2, "O"),
           "egress: the descent fold is dead behind you")
-    check(g2.scene.exit_gate_fn(g2, "G"),
+    g2.save.set_flag("school_door_open", True)
+    g2._school_door_t0 = None
+    check(g2.scene.exit_gate_fn(g2, "M"),
           "egress: the circle releases you once the way down is dead")
 
     # --- 1b. The Ledger: the locked cellar + the key behind the house ---
@@ -1511,11 +1512,11 @@ def main():
     # --- 18. effigy_grove is a maker-less tableau (§1b/§8) ---------------
     # Individual cursing is redundant -- the closing rite claimed the town at
     # once -- so the grove is left as the work without the worker, with no
-    # NPC tending it, like its siblings husk_grove / scarecrow_ring.
+    # NPC tending it.
     from scenes import load_scene as _load2
     grove = _load2("effigy_grove")
     check(len(grove.npcs) == 0,
-          "effigy_grove is a maker-less tableau (no NPC, like its siblings)")
+          "effigy_grove is a maker-less tableau (no NPC)")
 
     # --- 19. Eat-cult + time-loop fiction stays scrubbed (NARRATIVE §1b/§8) -
     # Canon: a CLAIMING cult that renders no bodies (no cannibalism, no

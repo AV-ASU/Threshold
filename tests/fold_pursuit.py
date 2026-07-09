@@ -30,11 +30,17 @@ from constants import TILE
 from entities.npc import NPC
 
 
-def _boot():
+def _boot(scene="schoolhouse"):
+    # The maze's cross-scene discovery folds were cut (2026-07, the rite is
+    # the grove's only thread in), so fold-carry tests boot the schoolhouse,
+    # whose rite pane ('O', walked north -> effigy_grove) is the surviving
+    # cross-scene fold. The gate doesn't matter here: these tests drive
+    # _note_fold_pursuit / _roll_fold_watcher directly. The same-scene
+    # relocation test still boots the maze (the I/Q relocations live there).
     g = Game()
     g.save.new()
     g._start_play()
-    g.load_scene_now("cornfield_maze", "default")
+    g.load_scene_now(scene, "default")
     return g
 
 
@@ -237,7 +243,7 @@ def test_same_scene_reloc_silent_and_seamless():
     # the player with NO load, NO pursuer stash (the chaser is still
     # physically in the room), and NO visible frame -- the lie is the world
     # itself, never a gold seam.
-    g = _boot()
+    g = _boot("cornfield_maze")
     tx, ty, ch = _find_exit_tile(g, fold=True, same_scene=True)
     target, spawn = g.scene.exits[ch]
     assert target == g.scene.key, "the relocation targets the maze itself"

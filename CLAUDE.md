@@ -55,7 +55,8 @@ it renders the procedural sprites to a labelled PNG strip.
   `_reset_run_state()` (wipes per-run state on New Game; the `Game` instance
   is reused across quit-to-title). The big cohesive subsystems were split off
   into **mixins** that `Game` inherits (`class Game(CutsceneMixin,
-  ThreatMixin, InfestationMixin, RenderMixin, NarrativeMixin)`) — they are
+  ThreatMixin, KingRoamMixin, InfestationMixin, RenderMixin,
+  NarrativeMixin)`) — they are
   still `Game` methods, just housed in their own files:
   - `systems/config.py` — gameplay tuning constants + scene-gating sets
     (`SAFE_SCENES`, `CULTIST_SCENES`, `UNDERGROUND_SCENES`, the `VIS_*` /
@@ -71,7 +72,7 @@ it renders the procedural sprites to a labelled PNG strip.
   - `systems/narrative_mixin.py` — the journal flashback, the case-file /
     interior-voice notes (`_log_case_entry` …), the endings + opening crawl.
 - `scenes/` — `SCENE_BUILDERS` registry + `load_scene(key)`
-  (`scenes/__init__.py`, ~37 scenes). A scene has spawns, exits,
+  (`scenes/__init__.py`, ~44 scenes). A scene has spawns, exits,
   decorations, npcs, enemies, items, and optional
   `on_enter_fn` / `on_exit_fn` / `on_update` / `on_interact_fn` hooks.
 - `entities/`
@@ -248,10 +249,14 @@ it renders the procedural sprites to a labelled PNG strip.
   (not a WADE scene, keeps its own in/out rules). Water is authored per
   scene with the `_flood` helper (`scenes/depths.py`); guarded by
   `tests/stealth.py` §10.
-- **King in Yellow** (`_tick_king`): at `visibility >= 1.0` he spawns at
-  `_king_anchor` (the player's scene-entry point); below `0.90` he
-  dissolves; he catches at distance `< 24` **only once `_birth >= 1.0`**
-  (the eruption is the grace window). `SAFE_SCENES` never host him.
+- **King in Yellow** (`systems/king_roam_mixin.py` `_tick_king_roam`, the
+  sole King tick): the roam **arms at `KING_GATE_EVIDENCE` (3)** — he
+  walks scene to scene, concrete in the player's room, abstract elsewhere,
+  and hunts on sight. Below the gate a maxed meter (`visibility >= 1.0`,
+  cult awake) musters a cultist wave at `_king_anchor` instead
+  (`_muster_reinforcements`). He catches at `KING_CATCH_DIST` (24 px)
+  **only once `_birth >= 1.0`** (the eruption is the grace window).
+  `KING_FREE_SCENES` (the safe rooms + dark/threshold) never host him.
 - **The evidence LADDER (2026-07)**: each surface beat flips a visible
   world state. **Ev 0**: the town is only wrong — **no cult patrols
   spawn** (`CULT_WAKE_EV`, gated at `_ensure_cultists`), the idle King

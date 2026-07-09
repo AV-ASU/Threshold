@@ -1554,7 +1554,7 @@ class RenderMixin:
                                         _TILT_WALL_RISE),
                       lambda: self._draw_portal())
             # FOLDS: a scene can ship several direction-gated portals (the
-            # cornfield maze has three: effigy_grove, husk_grove, scarecrow_ring)
+            # grove stands the descent pane and the school pane)
             # and a naive draw runs a full target-room render for each. Cull
             # to the ones IN THE PLAYER'S SIGHT CONE -- a portal that is behind
             # you, beside you, or behind a wall isn't drawn. The canon already

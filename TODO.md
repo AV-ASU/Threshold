@@ -272,7 +272,7 @@ composition pass made concrete):
   only the cone).
 
 **To turn into work:** name ONE scene (the Brimley approach road, or the
-effigy/husk grove) and the ONE composition it gets (this sightline broken by
+effigy grove) and the ONE composition it gets (this sightline broken by
 this corn lane, this landmark passed twice in fog). Do NOT start against the
 abstract goal. Keep the sim Euclidean-honest so stealth distance-falloff + NPC
 nav stay true under any presentation lie. **Preserve (load-bearing) if the
@@ -444,6 +444,7 @@ smaller-grid perf pass is the shippable core of this.
   (wrongness before sight, long sightline). Art + placement + a location move;
   lore unchanged.
 - **[Opus]** **Held-weapon offset per camera yaw** *(was HANDCRAFT_BACKLOG 3b)* — `draw_axe_held` reads at rest; the one remaining note is an eyeball pass on the equipped-weapon offset at every camera yaw so it never floats off the hand. Verify with a tilt capture across yaws.
+- **[Fable + Opus]** **The grove reads north of Brimley, the river in view** *(2026-07 canon ruling)* — `effigy_grove` is the mouth of the cult's mine, north of town above the river (NARRATIVE §5), and the congregation walked there openly before the rite hid it; the scene art is still a bare corn crop circle. Dress the rim so the river reads below it (the water in view, the dug mouth framing the descent pane) and the northern placement lands without a line of dialogue. Decoration only; the rite, the gates, and the pane stay exactly as they are. Verify with a `tools/capture_world.py` tilt capture + the full `python tests/run_all.py` gate.
 - **[Opus]** **Higher-contrast see-through doors** *(PORTALS.md)* — now that the
   aperture's actors are sight-gated, opt in the doors where the
   effect reads strongest: a lit room off a dark hall, the front door onto the

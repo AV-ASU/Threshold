@@ -623,10 +623,14 @@ at the effigy grove by the river. The player goes down by the **rite**: at
 congregation left at the Lodge desk when they went below), and the **school
 rite** (incense at the commune's indoor fire, then the final chalk door
 drawn on the board) opens the school↔grove fold and lands you in the **grove
-clearing** — a fold-hidden hollow by the river where the **mouth of the
-cult's mine** stands open. Its edges wear the fold's own wrap, which is *why*
-the place cannot be reached on foot from anywhere else; it is not locked, it
-is **hidden by the folds**, and the rite is the only thread in. There the
+clearing** — a hollow **north of Brimley, above the river** (the water
+stays in view below its rim), where the **mouth of the cult's mine**
+stands open. The congregation **walked there openly once**: the night
+procession Toby followed came down the river to this ground **before the
+closing rite**. The rite is what hid it — since the seal its edges wear
+the fold's own wrap, so the place can no longer be reached on foot from
+anywhere; it is not locked, it is **hidden by the folds**, and the school
+rite is the only thread in. There the
 **grove rite** finishes the descent: over the dead fire stands a rift that
 **clarifies as evidence mounts** (the meter), and at 3, with the Invitation
 in hand, the PI performs the rite — he **consciously re-enters his one,
@@ -1007,11 +1011,12 @@ The reworks the new fiction forced are all shipped. What must stay true:
 - ~~**Reskin `effigy_grove` as a maker-less dread tableau.**~~ **DONE.**
   Individual cursing is redundant now the closing rite claims the whole town
   at once (§1b), so there is no maker. `effigy_grove` is a maker-less dread
-  tableau — a crop circle deep in the corn (the corn itself is the border):
-  the dead fire, the effigy ring, three weathered standing stones with the
-  nailed-up faces fixed to one, all tended by no one you'll ever see —
-  matching its siblings `husk_grove` /
-  `scarecrow_ring` (the work, no worker). Locked in `tests/flow.py`.
+  tableau — a crop circle in the corn north of Brimley, above the river (the
+  corn itself is the border): the dead fire, the effigy ring, three weathered
+  standing stones with the nailed-up faces fixed to one, all tended by no one
+  you'll ever see — the work, no worker. Locked in `tests/flow.py`. *(Its
+  one-time siblings `husk_grove` / `scarecrow_ring` were cut with the walk-in
+  discovery folds, 2026-07.)*
 - **Rehome the Watchers as His gaze (§3).** Keep the mechanic exactly
   (they raise visibility; dispel by breaking the gaze / axe / round) but
   change the *meaning and trigger*: they are **His eye reaching into the
@@ -1200,8 +1205,8 @@ corn rows) — that's per-scene level design, not a global draw change.
 The bible's central image -- *the roads loop, the corn never ends, you
 walk through the woods only to be spit out where you walked in* -- now
 has mechanical existence beyond the dread aperture. The outside world
-is built as a torus, with hidden direction-sensitive folds layered on
-top.
+is built as a torus, with the rite's standing folds and the silent
+same-scene relocations layered on top.
 
 ### Permeable forest border
 
@@ -1244,9 +1249,8 @@ bush hides you immediately.
   other.
 - **brimley.wrap_y** -- the perimeter forest loops north-south.
 - **cornfield_maze.wrap_x = wrap_y = True** -- corn never ends in
-  any direction. The exit tiles (^ to brimley, ! to cornfield_path, Z
-  to the effigy grove) are the only escape, and finding them is the
-  whole point.
+  any direction. The exit tiles (^ to brimley, ! to cornfield_path)
+  are the only escape, and finding them is the whole point.
 - **cornfield_path.wrap_x = wrap_y = True** -- the woods spit you out
   where you walked in.
 - **lodge_yard.wrap_x** -- walking east past the Lodge wraps you
@@ -1279,31 +1283,29 @@ the world dimensions. A cultist on the east edge reads a player on
 the west edge as one tile away (through the wrap) and pursues that
 way. The fold stops being an escape.
 
-### Direction-sensitive hidden folds
+### The standing folds (the rift panes)
 
-Three hidden scenes are accessed only by walking a specific tile in a
-specific direction. All three are in `SEAMLESS_WORLD_SCENES` so the
-crossing has no fade.
+**The walk-in discovery folds are CUT (2026-07, decided).** The maze's
+direction-gated secret-area folds — the effigy grove's corn back door,
+and the `husk_grove` / `scarecrow_ring` clearings that only those folds
+reached (both scenes removed with them, on the `symbol_portal_room`
+precedent, §9 note) — are gone. The congregation **walked to the grove
+openly before the closing rite**; the rite is what hid it, so no tile in
+the corn can reach it anymore. `effigy_grove` survives as the rite-hidden
+clearing at the mouth of the cult's mine, **north of Brimley above the
+river**, reached ONLY through the school rite's pane (§5).
 
-**Canon update (2026-06, decided deliberately):** these folds are no
-longer invisible-until-tripped. Faced head-on, a fold SHOWS itself: a
-standing black-gold rift frame anchored on its world seam, one visual
-family with the King's portal (`rendering/portal.py draw_rift_door`).
-Step to the side and the pane thins and dims toward nothing; from
-behind it isn't there at all (a 4D pane has no back) -- so from any
-other angle the tile still reads as floor and the player walks over it
-without consequence. The discovery beat changes from *stumbling* to
-*choosing*: the player sees a wound in the world ahead and walks into
-it on purpose. The crossing itself stays NOTHING -- no fade, no sting,
-no beat; the frame is the spectacle and stepping through is just
-walking. The world's silent lies remain the torus wrap and the in-maze
-relocations, which never show a frame.
-
-| Scene key | Where it lives | Access | What it shows |
-|---|---|---|---|
-| `effigy_grove` | new scene | `cornfield_maze` tile (6, 10), walked WEST | A maker-less dread tableau (§8): the dread set kept (effigies, a polaroid board of faces, hanging figures) but **without a maker** — a workshop with no worker, the corn-doll work of the congregation. The effigies-as-individual-curses reading is dropped. |
-| `husk_grove` | new scene | `cornfield_maze` tile (21, 8), walked EAST | A small clearing where the cult assembles its corn-dolls. Two altars used as workbenches, unfinished dolls scattered, a stalk-marker, a candle still lit. No NPC -- the work is here, the worker isn't. |
-| `scarecrow_ring` | new scene | `cornfield_maze` tile (2, 14), walked WEST | A ring of six scarecrows facing inward around a doubled Yellow Sign in charred dirt. Two braziers, bloodstains underfoot. The cult's central mark in the corn. |
+**The standing-pane canon (2026-06) holds for every fold that shows
+itself** — the school↔grove pane, the grove's descent fold, the shaft
+floor's keyed return, and the King's portal. Faced head-on, a fold SHOWS
+itself: a standing black-gold rift frame anchored on its world seam, one
+visual family with the King's portal (`rendering/portal.py
+draw_rift_door`). Step to the side and the pane thins and dims toward
+nothing; from behind it isn't there at all (a 4D pane has no back) -- so
+from any other angle the tile reads as floor. The crossing itself stays
+NOTHING -- no fade, no sting, no beat; the frame is the spectacle and
+stepping through is just walking. The world's silent lies remain the
+torus wrap and the in-maze relocations, which never show a frame.
 
 **In-maze fold relocations.** Two additional tiles inside the
 `cornfield_maze` (one at (8, 6) walked SOUTH, one at (16, 11) walked
@@ -1323,7 +1325,8 @@ the opposite edge -- the maze visibly has many exits and all of them
 loop.
 
 The framework (`Scene.add_exit(direction=...)` + `find_exit_at(facing=)`)
-is general -- more direction-sensitive folds can be added as wanted.
+is general -- the rite panes and the relocations ride it. (The hidden-
+scene discovery folds that also rode it were cut, 2026-07.)
 
 ### One phenomenon, two presentations (the consolidation)
 
@@ -1333,8 +1336,9 @@ There are exactly two kinds of spatial transition in THRESHOLD:
   fade, they make a sound, they feel like doorways. Architecture is
   the player-only escape.
 - **The Fold**: everything else. One phenomenon with two faces:
-  - **The fold you SEE** -- the standing rift frame: the five hidden
-    folds (at rest, quiet) and the King's portal (the same frame torn
+  - **The fold you SEE** -- the standing rift frame: the rite's panes
+    (the school door, the grove's descent fold, the shaft floor's keyed
+    return -- at rest, quiet) and the King's portal (the same frame torn
     violently). One renderer, one black-gold grammar.
   - **The fold you DON'T** -- the silent lie: the torus wrap, the
     seamless world edges, the in-maze relocations. The horror here is
