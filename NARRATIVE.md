@@ -867,7 +867,7 @@ the self lost in the dig (§1b: they were answered, not deceived).
 |---|---|---|---|
 | **The Calling** | `cult_calling` | The Scriptorium (`works_scriptorium`) — the one bound, whole volume among the loose Sign copies | How the dream gathered them: the drink taken away clean, the lost farm, a hundred strangers driving north to the same town |
 | **The Bargain** | `cult_bargain` | The Sump (`the_sump`) | What they understood they gave: *"He asks so little of us. Only everything, and only the once."* |
-| **The Digging** | `cult_digging` | The Ossuary (`the_ossuary`) | The labor eating the self: shifts that never stop, a few feet of earth left, *"The door. The door. The door."* |
+| **The Digging** | `cult_digging` | The Old Stores (`the_ossuary` — legacy key; the room is the old workings' storeroom now, 2026-07 mine retrofit) | The labor eating the self: shifts that never stop, a few feet of earth left, *"The door. The door. The door."* |
 
 ---
 
@@ -1102,7 +1102,7 @@ finds you — run it on cover, timing, and breaking their line of sight).
 | 3 | **The Cistern** (was "Tallow Vats" — cut) | `works_vats` | Where the dig **broke into the underground river** — the artery to the door (§1b), and the diggers' proof they were close. Wet stone, rising damp, 2 tending cultists, 2 hides. *No rendering, no tallow, no bodies — the claiming cult eats no one. Fiction redress is a code TODO (§8); the scene key stays `works_vats`.* |
 | 4 | The Sorting Hall | `works_sorting` | The **worldly lives the congregation shed** when they were claimed — and the effects of the few the fold took — sorted and catalogued. 2 cultists, 3 hides (hardest crossing). A side door north → **Mara's room**. |
 | 4a | **Mara's Room** | `maras_room` | A convert's cell off the hall: cot, her cult robe + the unsent letter. **Evidence #1.** A quiet beat off the gauntlet, 1 hide. |
-| 5 | The Scriptorium | `works_scriptorium` | The Sign copied endlessly — the **attuned compulsively bleeding the dream-image out** onto every surface, none of them the door itself (§1b). 1 oblivious scribe, 2 hides. **The Calling** — the first of three cult-testimony fragments (§6b), the one bound, whole volume among the loose copies: the congregation's own personal testimony (their voice in the item description, the PI's reaction in his notes). Pure lore; it gates nothing (the keystone is the Mask alone). The Bargain + The Digging are found deeper (the Sump, the Ossuary). |
+| 5 | The Scriptorium | `works_scriptorium` | The Sign copied endlessly — the **attuned compulsively bleeding the dream-image out** onto every surface, none of them the door itself (§1b). 1 oblivious scribe, 2 hides. **The Calling** — the first of three cult-testimony fragments (§6b), the one bound, whole volume among the loose copies: the congregation's own personal testimony (their voice in the item description, the PI's reaction in his notes). Pure lore; it gates nothing (the keystone is the Mask alone). The Bargain + The Digging are found deeper (the Sump, the Old Stores). |
 | 6 | The Sign Chamber | `works_sign` | The Sign daubed on the wall + an altar; the kneeling rank (set-piece NPCs) + 1 patrol. **The calling-out (2026-07):** Mara kneels among them; first entry, the kneelers rise, one says her name, she comes to you — the confrontation lands **evidence #6**. **Lift the Pallid Mask → `pallid_mask` + evidence #5** (no charcoal — you take the object itself). |
 | 7 | **The Deepest Face** | `works_deepstair` | The dig's END — the cult's testimony left "a few feet of earth"; there is no stair, no gate. With the **Mask in hand** (the sweep finished) and **powder from the Sump**, a two-press charge **blasts the floor through into the old workings**: the FALL into `depths_antechamber` is the one-way step. The Mask is **not consumed** — carried down and spent at the Threshold door. |
 
@@ -1121,16 +1121,29 @@ finds you — run it on cover, timing, and breaking their line of sight).
   (the investigator finishes the sweep before he blows the scene) and
   **does not consume it**. You carry the Mask down and spend it at the
   Threshold door (SEAL). The cult's notes are decoupled (pure lore, §6b).
+- **The underground is a MINE (locked 2026-07 — the fiction retrofit).**
+  Every room below reads as the dig, or as the **old workings** beneath it
+  that the blast breaks into: timber, stores, water, spoil, worn stone.
+  **No charnel fiction anywhere** — the claiming cult spills no one (§1b),
+  so there are no bone rooms, no captivity, no blood in the mine.
+  `the_cells` are the diggers' own **bunk cells** (Mara's cell is the same
+  kind, kept); `the_ossuary` (legacy key) is the old workings' **Old
+  Stores** — racked gear, tagged hafts, The Digging left on a shelf.
+  Guarded by `tests/flow.py` §19b (token scan of `well.py`/`depths.py` +
+  the purged `bone_rack` furniture kind). The ART half of the mine read
+  (timbered side-chambers, spoil heaps, cart ruts) is TODO #14.
 - The well sprite was redesigned and repositioned in `brimley` (the
   east village square — a landmark just off the road).
 
 **Re-audit (2026-06):** the 7-room gauntlet above matches the build
 exactly. Not tabled here but registered and reachable: three **dead-end
 side branches** off the Works — `the_sump` (off `works_vats`, an ammo
-cache), `the_cells` (off `works_sorting`), and `maras_room` (4a, the cell
+cache), `the_cells` (off `works_sorting`; the diggers' bunk cells since
+the 2026-07 mine retrofit), and `maras_room` (4a, the cell
 off the Sorting Hall) — plus the **Depths**, which has grown to five rooms
 (`depths_antechamber` → `depths_procession` → `depths_hall` →
-`depths_threshing` → `depths_stair`, with `the_ossuary` branching off the
+`depths_threshing` → `depths_stair`, with `the_ossuary` — the **Old
+Stores** since the retrofit — branching off the
 procession) before the **Hive** (`dark`, the claimed congregation, past
 names — Mara and evidence #6 moved up to the Sign Chamber, 2026-07) and
 the **Threshold** (`threshold`, the doorframe). The

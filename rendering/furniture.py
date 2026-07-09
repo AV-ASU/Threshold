@@ -19,7 +19,6 @@ _WOOD_DK = {"top": (94, 65, 41), "side": (72, 49, 31), "dark": (52, 35, 22)}
 _STONE = {"top": (122, 120, 126), "side": (96, 94, 100), "dark": (70, 68, 74)}
 _IRON = {"top": (86, 86, 94), "side": (64, 64, 72), "dark": (44, 44, 52)}
 _CLOTH = {"top": (152, 62, 60), "side": (120, 47, 46), "dark": (90, 34, 34)}
-_BONE = {"top": (196, 190, 170), "side": (150, 144, 126), "dark": (104, 99, 86)}
 
 
 def _lerp(a, b, f):
@@ -113,16 +112,6 @@ def _d_cot_pallet(surf, pal, c):
     _hline(surf, *c, 0.72, (150, 142, 128), 3)
     p = _lerp(_lerp(c[0], c[1], 0.22), _lerp(c[2], c[3], 0.22), 0.5)
     pygame.draw.circle(surf, (96, 88, 78), (int(p[0]), int(p[1])), 3)
-
-
-def _d_bones(surf, pal, c):
-    # stacked pale rows with knobbly ends -- shelved bones
-    for f in (0.22, 0.5, 0.78):
-        _hline(surf, *c, f, _shade(pal["dark"], 0.7), 2)
-        for fx in (0.28, 0.72):
-            p = _lerp(_lerp(c[0], c[1], fx), _lerp(c[2], c[3], fx), f)
-            pygame.draw.circle(surf, _shade(pal["top"], 1.05),
-                               (int(p[0]), int(p[1])), 2)
 
 
 def _d_pew_back(surf, pal, c):
@@ -292,7 +281,9 @@ FURNITURE = {
     "crate":     (18, 18, 16, _WOOD_MID, None),
     "barrel":    (16, 16, 18, _WOOD_MID, None),
     "cot":       (28, 13, 8,  _WOOD_DK, _d_cot_pallet),
-    "bone_rack": (26, 12, 24, _BONE,    _d_bones),
+    # ("bone_rack" purged 2026-07: the ossuary bone-vault fiction was a
+    # killer-cult relic -- the claiming cult spills no one, NARRATIVE §1b.
+    # The Old Stores rack ordinary "shelf" cases now.)
     "pew":       (40, 11, 11, _WOOD_DK, _d_pew_back),
     # Free-standing Tier-1 decorations promoted to real box volumes (they used
     # to float as flat top-down sprites under tilt).

@@ -225,13 +225,6 @@ class Decoration:
         pygame.draw.rect(surf, (52, 35, 22), (x - 14, y - 7, 28, 14), 1)
         pygame.draw.rect(surf, (150, 142, 128), (x - 12, y - 5, 24, 7))
 
-    def _draw_bone_rack(self, surf, x, y):
-        pygame.draw.rect(surf, (150, 144, 126), (x - 13, y - 6, 26, 12))
-        pygame.draw.rect(surf, (104, 99, 86), (x - 13, y - 6, 26, 12), 1)
-        for ox in (-7, 0, 7):
-            pygame.draw.line(surf, (196, 190, 170),
-                             (x + ox, y - 6), (x + ox, y + 6), 2)
-
     def _draw_pew(self, surf, x, y):
         pygame.draw.rect(surf, (72, 49, 31), (x - 20, y - 5, 40, 10))
         pygame.draw.rect(surf, (52, 35, 22), (x - 20, y - 5, 40, 10), 1)

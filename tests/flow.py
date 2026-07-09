@@ -1546,6 +1546,31 @@ def main():
           "scrub: no eat-cult/time-loop fiction in scene source"
           + (f" (found {_hits})" if _hits else ""))
 
+    # --- 19b. The underground is a MINE (2026-07 retrofit; NARRATIVE §9).
+    # The Works + Depths were dug by the willing over old workings; the
+    # claiming cult spills no one. Lock the charnel/killer-cult relics out
+    # of the underground scene source: no blood, no gore, no bones, no
+    # captivity fiction. ("bone_rack" is also purged from the furniture
+    # registry -- guard that too so the art can't quietly return.)
+    _charnel = [
+        "bloodstain", "\"gore\"", "bone", "in the clerk's hand",
+        "leave the body walking", "holding cell", "the claimed were kept",
+        "grain mixed with old blood",
+    ]
+    _chits = []
+    for fn in ("well.py", "depths.py"):
+        with open(os.path.join(_scene_dir, fn), encoding="utf-8") as fh:
+            low = fh.read().lower()
+        for phrase in _charnel:
+            if phrase in low:
+                _chits.append(f"{fn}:{phrase!r}")
+    check(not _chits,
+          "mine: no charnel/killer-cult fiction underground"
+          + (f" (found {_chits})" if _chits else ""))
+    from rendering.furniture import FURNITURE as _FURN
+    check("bone_rack" not in _FURN,
+          "mine: the bone_rack furniture kind stays purged")
+
     # --- 20. Cultists use dynamic AI, not preset coordinates (NARRATIVE §8) -
     # Pure-roam SCOUT + cover-aware pursuit. Guard the two canon facts: no
     # roaming cultist carries a baked patrol route, and the nav routes a

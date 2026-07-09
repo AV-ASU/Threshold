@@ -30,10 +30,21 @@ Maintainer rulings applied in the follow-up commit:
   rumor the boy Toby told him (they walked off down the river one night).
 - **B3 partly FIXED** — "cut the family off two years ago" deleted from the
   case intake; the Invitation note reads "Since the winter" (Sable received
-  the envelope shortly after the seal; NARRATIVE §2 updated). Remaining B3
-  items (ledger "not one ever signs out" lines, Hettie's January Mara
-  sighting, the chalk_deep stair note, the Deep Stair HUD label) and
-  everything from B4 onward await rulings.
+  the envelope shortly after the seal; NARRATIVE §2 updated); the Deep
+  Stair HUD label now reads "the Deepest Face". Remaining B3 items (ledger
+  "not one ever signs out" lines, Hettie's January Mara sighting, the
+  chalk_deep stair note) await rulings.
+- **B4 (partly) + B5 RESOLVED by the MINE RETROFIT (2026-07 ruling: the
+  whole underground reads as the cult's dig over old workings; kill every
+  killer-cult relic).** `the_ossuary` is the **Old Stores** (bone vault
+  purged, `bone_rack` deleted from the furniture registry, shelves of
+  tagged gear; the "Clerk's hand" and "leave the body walking" lines are
+  gone); `the_cells` are the diggers' **bunk cells** (captivity fiction
+  cut); every underground bloodstain/gore decal removed (antechamber,
+  threshing "grain mixed with old blood", shaft floor, racks, sorting,
+  deepest face); the Sorting Hall's "faces of the vanished" flyer wall
+  cut; HUD display names added for the whole underground. Guarded by flow
+  §19b. Toby's mouth line (B4 first bullet) still awaits a ruling.
 
 ## Verdict in one paragraph
 

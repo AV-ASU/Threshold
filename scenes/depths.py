@@ -1,5 +1,6 @@
-"""The depths -- everything below the basement level. The ritual at
-well_bottom drops the player here; from this point the only
+"""The depths -- everything below the basement level: the OLD WORKINGS,
+older than the cult's dig. The blast at the Deepest Face
+(works_deepstair) drops the player here; from this point the only
 direction is down.
 
 Floors, top to bottom:
@@ -10,7 +11,7 @@ Floors, top to bottom:
   depths_stair        -- the empty spiral down
   dark                -- the hive: the claimed congregation, past names
                          (Mara kneels at the Sign Chamber now; scene
-                         key kept; was the old-family-bodies room)
+                         key kept)
   threshold           -- the doorframe
 
 Hooded chasers populate the first three rooms. The flashlight is
@@ -166,8 +167,9 @@ def build_depths_antechamber():
     # mid-row passage to the east exit and the cultist's loop).
     sc.add_furniture("pillar", [(7, 3)])
     sc.add_furniture("pillar", [(3, 7)])
-    sc.add_decoration(Decoration(5 * TILE + 16, 5 * TILE + 16, "bloodstain"))
-    sc.add_decoration(Decoration(6 * TILE + 16, 7 * TILE + 16, "bloodstain"))
+    # Rubble from the blown floor above -- the landing text says the fall
+    # delivered you unbroken, so the zone wears dust and stone, no blood.
+    sc.add_decoration(Decoration(5 * TILE + 16, 5 * TILE + 16, "mud_footprint"))
     # Cobweb grime in the beveled corners of the fall zone.
     sc.add_decoration(Decoration(2 * TILE + 6, 2 * TILE + 6, "cobweb",
                                  ang=0.0))
@@ -401,11 +403,9 @@ def build_depths_threshing():
         m.facing = mf
         m.pose = mp
         sc.add_npc(m)
-    # The yield. Grain mixed with old blood. Hide spots tuck into the cavern's
-    # pockets.
-    for bx, by in [(4, 4), (6, 5), (8, 6), (5, 7), (7, 4)]:
-        sc.add_decoration(Decoration(bx * TILE + 16, by * TILE + 16,
-                                     "bloodstain"))
+    # (The old blood-in-the-grain stains were cut, 2026-07: the tithe is
+    # an offering carried down by the willing -- nobody bled into it.
+    # The heaps and the wading water carry the room.)
     # The yield itself: raked cones of tithed grain (3D heaps), clear of the
     # central walk (row 5) and the heap the player reads (6, 5).
     for gx, gy in [(4, 4), (8, 4), (4, 7), (8, 7)]:
@@ -461,10 +461,14 @@ def build_depths_stair():
 
 
 def build_the_ossuary():
-    """A bone vault off the procession -- a tall hexagonal cell where the
-    fold's lost are shelved: not the murdered (the cult kills no one), but
-    the ones the dark took early, their leavings racked and labelled. A
-    dead-end pocket of dread and cover."""
+    """The Old Stores off the procession -- a tall hexagonal cell where
+    the old workings kept their gear: racked shelves of dead lamps and
+    worn tools, every haft tagged in the same steady brown hand. A mine's
+    storeroom, nothing more, and the labor it inventories outlived the
+    hands that did it. A dead-end pocket of dread and cover. (2026-07
+    mine retrofit: the old charnel-vault fiction was a killer-cult relic --
+    the claiming cult spills no one; scene key stays the_ossuary --
+    load-bearing.)"""
     floor, objs = _box(9, 12)
     _bevel(objs, 2)
     objs[0][4] = "F"          # north -> back to the procession
@@ -473,12 +477,9 @@ def build_the_ossuary():
     sc.add_exit("F", "depths_procession", "from_the_ossuary")
     sc.set_spawn("default",         4, 6)
     sc.set_spawn("from_procession", 4, 2)
-    # Racks of shelved bones (3D) line the niches, old stains beneath them;
-    # candles gutter between.
+    # Racked store shelves (3D) line the niches; candles gutter between.
     for sx, sy in [(2, 4), (6, 4), (2, 8), (6, 8)]:
-        sc.add_furniture("bone_rack", [(sx, sy)])
-        sc.add_decoration(Decoration(sx * TILE + 16, sy * TILE + 16,
-                                     "bloodstain"))
+        sc.add_furniture("shelf", [(sx, sy)])
     sc.add_decoration(Decoration(4 * TILE + 16, 3 * TILE + 16, "phantom_mark"))
     sc.add_decoration(Decoration(2 * TILE + 16, 6 * TILE + 16, "candle"))
     sc.add_decoration(Decoration(6 * TILE + 16, 9 * TILE + 16, "candle"))
@@ -489,8 +490,9 @@ def build_the_ossuary():
     sc.hide_spots = []
     _ambient(sc, "whisper", 0.12, 7.0, 12.0)
     sc.add_interactable(4 * TILE + 16, 9 * TILE + 16, 36)   # [E] cue: the shelves
-    # Optional lore: The Digging (third, deepest testimony fragment), racked
-    # with one lost digger's leavings. Pure lore, gates nothing.
+    # Optional lore: The Digging (third, deepest testimony fragment), left
+    # on a shelf among the old gear -- the cult's one addition to the
+    # stores. Pure lore, gates nothing.
     sc._dig_note_pos = (6 * TILE + 16, 9 * TILE + 16)
     sc.add_interactable(sc._dig_note_pos[0], sc._dig_note_pos[1], 36)
 
@@ -498,10 +500,10 @@ def build_the_ossuary():
         px, py = game.player.x, game.player.y
         if abs(px - (4 * TILE + 16)) < 36 and abs(py - (9 * TILE + 16)) < 36:
             _evidence(game, "the_ossuary_shelves",
-                "Shelves of leavings: shoes, spectacles, a wedding band worn "
-                "thin, racked and labelled in the Clerk's hand. Not trophies. "
-                "An inventory of everything the dark took before it learned to "
-                "leave the body walking.")
+                "Shelves of the dig's gear: lamps burned black, pick hafts "
+                "worn down to the grain, every one tagged in the same "
+                "steady brown hand. An inventory of labor. The tools wore "
+                "out. The hands that held them kept going.")
             return
         nx, ny = sc._dig_note_pos
         if abs(px - nx) < 36 and abs(py - ny) < 36:

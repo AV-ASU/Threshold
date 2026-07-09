@@ -320,6 +320,16 @@ halls (some finished, some half-dug, the deepest hand-clawed), spoil heaps,
 cart ruts, a degradation arc ending at the Deepest Face. A few pockets carry
 loot / testimony placement; most is just labor made visible.
 
+- **The FICTION half landed (2026-07, the mine retrofit + killer-cult
+  scrub; guarded by flow §19b).** Room identities and text now read as the
+  dig over old workings: `the_cells` = the diggers' bunk cells (captivity
+  fiction cut), `the_ossuary` = the Old Stores (the bone vault is purged,
+  `bone_rack` deleted from the furniture registry), every underground
+  bloodstain/gore decal removed (the willing bled nobody), the Sorting
+  Hall's "faces of the vanished" flyer wall cut, HUD display names cover
+  the whole underground (the Deepest Face, not the cut Deep Stair). What
+  REMAINS here is the ART/level pass above (timber, spoil, cart ruts).
+
 ### 15. **[Fable]** Deadpan narration editing pass  *(was GAME_CHANGES §22)*
 
 Sweep every narrator / world caption to the settled voice: objective, deadpan,

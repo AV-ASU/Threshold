@@ -1,8 +1,9 @@
 """THE WORKS -- the Basement Level. The cult's underground labour,
 reached ONLY through the descent fold in the effigy grove (the rite:
 the Invitation at 3 evidence, the school door, the clearing). Seven
-rooms descend from the shaft floor to the Deep Stair, which the
-keystone (the Pallid Mask) opens onto the Depths:
+rooms descend from the shaft floor to the Deepest Face, where the
+blast (powder from the Sump, Mask in hand) opens the fall into the
+Depths:
 
   well_bottom        -- the Shaft Floor (the fold lands you here; its
                         return pane is the way back up)
@@ -96,7 +97,6 @@ def build_well_bottom():
     sc.exit_gate_fn = _up_gate
 
     sc.add_decoration(Decoration(4 * TILE + 16, 2 * TILE + 22, "candle"))
-    sc.add_decoration(Decoration(7 * TILE + 16, 6 * TILE + 16, "bloodstain"))
     # A "wrong" mount in the well dark -- too many eyes.
     sc.add_decoration(Decoration(6 * TILE + 16, 0 * TILE + 18,
                                  "wrong_taxidermy", wall="N", seed=31))
@@ -123,13 +123,13 @@ def build_well_bottom():
                                  ang=math.pi / 2, seed=5))
     sc.add_decoration(Decoration(5 * TILE + 16, 8 * TILE + 12, "water_trail",
                                  pool=True, seed=9))
-    # Grime: claw gouges in the stone, mud tracked from the landing, more
-    # old blood.
+    # Grime: the diggers' pick and hand gouges in the stone, mud tracked
+    # from the landing. (The old red stains were cut, 2026-07: the mine
+    # was dug by the willing; nobody bled anybody down here.)
     sc.add_decoration(Decoration(10 * TILE + 8, 4 * TILE + 16, "claw_marks",
                                  scale=1.8))
     sc.add_decoration(Decoration(5 * TILE + 16, 1 * TILE + 10, "claw_marks",
                                  scale=1.4))
-    sc.add_decoration(Decoration(4 * TILE + 16, 6 * TILE + 16, "bloodstain"))
     sc.add_decoration(Decoration(5 * TILE + 16, 4 * TILE + 16, "mud_footprint"))
     sc.add_decoration(Decoration(6 * TILE + 16, 4 * TILE + 16, "mud_footprint"))
     for mx, my in ((4, 4), (7, 5), (5, 7)):
@@ -205,7 +205,6 @@ def build_well_passage():
     # Stores stacked up in the north bay -- a barrel and a crate.
     sc.add_furniture("barrel", [(8, 2)])
     sc.add_furniture("crate", [(6, 1)])
-    sc.add_decoration(Decoration(8 * TILE + 16, 5 * TILE + 16, "bloodstain"))
     sc.add_decoration(Decoration(7 * TILE + 16, 0 * TILE + 22, "candle"))
     sc.add_decoration(Decoration(13 * TILE + 16, 7 * TILE + 22, "claw_marks"))
     # Cobweb grime in the high corners of the bay.
@@ -220,11 +219,10 @@ def build_well_passage():
     for (hx, hy) in ((6, 2), (8, 3), (9, 2), (5, 5), (12, 5)):
         sc.add_decoration(Decoration(hx * TILE + 16, hy * TILE + 16,
                                      "husk_bundle", seed=hx * 7 + hy))
-    # Grime: mud tracked from the shaft, a cold drip seeping through, old blood.
+    # Grime: mud tracked from the shaft, a cold drip seeping through.
     sc.add_decoration(Decoration(2 * TILE + 16, 5 * TILE + 16, "mud_footprint"))
     sc.add_decoration(Decoration(8 * TILE + 16, 7 * TILE + 16, "water_trail",
                                  ang=math.pi / 2, seed=6))
-    sc.add_decoration(Decoration(5 * TILE + 16, 6 * TILE + 16, "bloodstain"))
     for mx, my in ((7, 3), (11, 5), (3, 5)):
         sc.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16, "mote"))
 
@@ -349,7 +347,7 @@ def build_works_sorting():
     objs[6][0] = "F"          # west -> back to the vats
     objs[6][15] = "E"         # east -> the scriptorium
     objs[0][13] = "M"         # north (top of the stem) -> Mara's cell
-    objs[10][4] = "D"         # south -> the holding cells (dead-end branch)
+    objs[10][4] = "D"         # south -> the bunk cells (dead-end branch)
     # (the sorting tables are 3D furniture now -- added after the scene is built,
     # same footprint the cult AI routes around)
     objects = ["".join(r) for r in objs]
@@ -369,13 +367,12 @@ def build_works_sorting():
     # (NARRATIVE 1b/4: shed lives + the fold's lost, not murder victims).
     # Closed cases
     # (chests, never opened by the player -- interactive=False so they
-    # don't show a dead [E] prompt) + the stains of the work.
+    # don't show a dead [E] prompt).
     for tx, ty in [(5, 7), (12, 9)]:
         sc.add_decoration(Decoration(tx * TILE + 16, ty * TILE - 4,
                                      "chest", open=False, interactive=False))
     sc.add_decoration(Decoration(9 * TILE + 16, 7 * TILE - 4, "chest",
                                  open=False, interactive=False))
-    sc.add_decoration(Decoration(4 * TILE + 16, 6 * TILE + 16, "bloodstain"))
     sc.add_decoration(Decoration(10 * TILE + 16, 9 * TILE + 16, "phantom_mark"))
     # A "wrong" mount oversees the catalogued lives the claimed shed,
     # and cobwebs grime the high corners.
@@ -399,12 +396,11 @@ def build_works_sorting():
                          (3, 7, 4), (12, 7, 5), (8, 9, 6)):
         sc.add_decoration(Decoration(ex * TILE + 16, ey * TILE + 16,
                                      "effects_pile", seed=es))
-    # The catalogued faces of the vanished, pinned over the work beside the mount.
-    sc.add_decoration(Decoration(3 * TILE + 16, 3 * TILE + 18, "missing_flyer"))
-    sc.add_decoration(Decoration(5 * TILE + 16, 3 * TILE + 20, "polaroid_wall"))
-    # more grime: mud worked across the floor, blood, motes in the dead air.
+    # (The missing-flyer + polaroid wall were cut, 2026-07: a wall of "the
+    # vanished" read as a killer cult tracking victims. The shed lives in
+    # the effects piles carry the room; nobody down here was hunted.)
+    # more grime: mud worked across the floor, motes in the dead air.
     sc.add_decoration(Decoration(7 * TILE + 16, 9 * TILE + 16, "mud_footprint"))
-    sc.add_decoration(Decoration(11 * TILE + 16, 8 * TILE + 16, "bloodstain"))
     for mx, my in ((5, 4), (10, 7), (13, 5)):
         sc.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16, "mote"))
     sc._table_pos = (6 * TILE + 16, 5 * TILE + 16)
@@ -937,7 +933,6 @@ def build_works_deepstair():
     sc.add_decoration(Decoration(6 * TILE + 16, 2 * TILE + 12, "claw_marks",
                                  scale=1.2))
     sc.add_decoration(Decoration(3 * TILE + 16, 2 * TILE + 6, "candle"))
-    sc.add_decoration(Decoration(7 * TILE + 16, 6 * TILE + 16, "bloodstain"))
     # Cobweb grime in the beveled corners by the keystone gate.
     sc.add_decoration(Decoration(2 * TILE + 6, 1 * TILE + 6, "cobweb",
                                  ang=0.0))
@@ -1109,13 +1104,17 @@ def build_the_sump():
     return sc
 
 
-# ---- Side branch: the Holding Cells (key: the_cells) off the Sorting Hall ----
+# ---- Side branch: the Bunk Cells (key: the_cells) off the Sorting Hall ----
 
 def build_the_cells():
-    """A short corridor of holding cells off the Sorting Hall -- a comb of
-    narrow stalls where the claimed were kept the first night, before they
-    stopped needing keeping. Empty now, doors hanging. A dead-end branch:
-    cover, dread, and the cult's whisper."""
+    """The diggers' bunk cells off the Sorting Hall -- a comb of narrow
+    dug stalls the congregation slept in between shifts, a cot and a
+    candle apiece (Mara's room up the hall is the same kind of cell,
+    kept). Empty now: the ones who dug here are past sleeping. A dead-end
+    branch: cover, dread, and the cult's whisper. (2026-07 mine retrofit:
+    the old kept-overnight captivity fiction was a killer-cult relic --
+    nobody was ever kept; the claimed never know, NARRATIVE §1b. Scene
+    key stays the_cells -- load-bearing.)"""
     floor, objs = _box(12, 11)
     # A central corridor with cell stalls combed off the east and west walls.
     _wall(objs, 1, 1, 10, 1)            # seal the top...
@@ -1130,13 +1129,12 @@ def build_the_cells():
     sc.add_exit("F", "works_sorting", "from_the_cells")
     sc.set_spawn("default",     5, 2)
     sc.set_spawn("from_sorting", 5, 2)
-    # The leavings of the kept: bare cots in the stalls, old stains, a corn
-    # doll left behind. Phantom marks scratched at child height.
+    # The diggers' leavings: bare cots in the stalls, a corn doll left on
+    # a bunk, phantom marks scratched beside the pillows -- the door
+    # followed them into sleep.
     sc.add_furniture("cot", [(2, 4)])           # west cell
     sc.add_furniture("cot", [(9, 6)])           # east cell
     sc.add_furniture("cot", [(2, 8)])           # west cell
-    sc.add_decoration(Decoration(9 * TILE + 16, 4 * TILE + 16, "bloodstain"))
-    sc.add_decoration(Decoration(2 * TILE + 16, 6 * TILE + 16, "bloodstain"))
     sc.add_decoration(Decoration(9 * TILE + 16, 8 * TILE + 16, "corn_doll"))
     sc.add_decoration(Decoration(9 * TILE + 28, 4 * TILE + 16, "phantom_mark"))
     sc.add_decoration(Decoration(2 * TILE + 28, 6 * TILE + 16, "phantom_mark"))
