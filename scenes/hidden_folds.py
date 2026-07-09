@@ -1,19 +1,13 @@
-"""Hidden fold scenes -- direction-sensitive warps off the main outdoor
-world. Accessed by walking a specific tile in a specific direction;
-from any other angle the tile reads as floor and the player walks
-over it without consequence.
+"""The effigy grove -- the rite-hidden clearing at the mouth of the
+cult's mine, north of Brimley above the river.
 
-Each scene is small, atmospheric, and read-only -- the player witnesses
-something they're not supposed to see, can leave the way they came, and
-the scene exists to close a thread in the canon:
-
-  effigy_grove     -- a cult work-clearing tended by no one: the dead fire,
-                     the effigy ring, the nailed-up faces, no worker (the
-                     rite claimed the whole town at once)
-
-These scenes are in SEAMLESS_WORLD_SCENES so crossing into them carries no
-fade -- the player walks into the fold without realising they crossed
-a boundary.
+The congregation walked here openly once: the night procession Toby
+followed came down the river to this ground BEFORE the closing rite.
+The rite is what hid it -- since the seal its edges wear the fold's own
+wrap, nothing reaches it on foot, and the school rite's pane is the only
+thread in (the walk-in discovery folds were cut 2026-07, and their
+orphaned clearings husk_grove / scarecrow_ring with them). The grove is
+in SEAMLESS_WORLD_SCENES so the crossing carries no fade.
 """
 import math
 import random
@@ -26,9 +20,10 @@ from .base import Scene
 # ----- #2: The Work-Clearing (no worker) ----------------------------
 
 def build_effigy_grove():
-    """A CROP CIRCLE deep in the corn -- the clearing the cult once
-    worked, found by walking east-to-west through a specific cornstalk
-    gap in cornfield_maze, or (act break) through the school door. The
+    """A CROP CIRCLE in the corn north of Brimley, above the river --
+    the clearing the cult once worked, at the mouth of their mine.
+    Reached ONLY through the school rite's pane (the maze walk-in fold
+    was cut, 2026-07: the rite hid this place). The
     corn itself is the border: an oval of cut ground pressed into an
     unbroken field, charred at the heart. A dead fire pit at centre,
     effigy-dolls in a ring, THREE weathered standing stones (organic,
@@ -41,8 +36,8 @@ def build_effigy_grove():
     evidence with the Invitation, THE RITE (E at the fire, two-press)
     plays the FULL door-dream (begin_rite_dream, cutscene only); on
     completion the pane tears OPEN (the regular standing rift; one
-    presentation, one family) and the CIRCLE HOLDS: the maze return
-    ('G') and the school pane ('M') refuse while the way down lives --
+    presentation, one family) and the CIRCLE HOLDS: the school pane
+    ('M') refuses while the way down lives --
     the seal is DISCOVERED, never announced. The way home (well_bottom's pane) answers
     only His face; surfacing with the Mask sets descent_sealed (the
     SPREAD lock) and the circle lets go."""
@@ -79,10 +74,6 @@ def build_effigy_grove():
     # footprints ('x' object) so they block walking but never sight.
     for sx, sy in ((9, 5), (18, 12), (7, 12)):
         objects_l[sy][sx] = "x"
-    # Return exit through the corn on the east rim at the centre row.
-    # (Off the fold's column, so walking out east never brushes the way
-    # down.)
-    objects_l[9][W - 1] = "G"
     # THE WAY DOWN: the fold tile at the dead fire ('O', a marker char:
     # invisible, walkable), walked SOUTH into --
     # a deliberate step into the pane, never crossed by the natural
@@ -97,13 +88,9 @@ def build_effigy_grove():
     # are fade-less.
     sc.wrap_x = False
     sc.wrap_y = False
-    sc.add_exit("G", "cornfield_maze", "from_effigy_grove")
     sc.add_exit("O", "well_bottom", "from_grove", direction="south")
     sc.add_exit("M", "schoolhouse", "from_grove", direction="south")
     sc.set_spawn("default", 2, 9)
-    # The player walked WEST onto the entry tile in the maze; they
-    # arrive on the west bank of the circle, the fire ahead of them.
-    sc.set_spawn("from_cornfield_maze", 2, 9)
     # Back up out of the well: beside the fire, carried westward so
     # arrival never re-fires the south-walked crossing.
     sc.set_spawn("from_well_bottom", 12, 8)
@@ -128,10 +115,10 @@ def build_effigy_grove():
             # Pre-rite: a thread of gold at 0 evidence, a fully formed
             # (but shut) frame at 3. The frame IS the evidence meter.
             return min(1.0, 0.15 + 0.85 * (ev / 3.0))
-        if ch in ("G", "M") and (game.save.flag("rite_performed")
-                                 and not game.save.flag("descent_sealed")):
+        if ch == "M" and (game.save.flag("rite_performed")
+                          and not game.save.flag("descent_sealed")):
             # The circle holds you: while the way down lives, the school
-            # pane is dead (G has no pane; its gate below does the work).
+            # pane is dead.
             return 0.0
         if ch == "M":
             if not game.save.flag("school_door_open"):
@@ -161,19 +148,15 @@ def build_effigy_grove():
                 game.show_notice("The light over the fire will not take "
                                  "your weight. Not yet.", duration=3.2)
             return False
-        if ch == "G":
+        if ch == "M":
             if sealed_in:
                 # The circle holds you (one sensation line, once).
                 if not game.save.flag("grove_held_noticed"):
                     game.save.set_flag("grove_held_noticed", True)
                     game.audio.play("low_pulse", 0.5)
-                    game.show_notice("The corn does not open. The circle "
-                                     "holds. There is only down.",
-                                     duration=3.4)
-                return False
-            return True
-        if ch == "M":
-            if sealed_in:
+                    game.show_notice("The way you came does not open. "
+                                     "The circle holds. There is only "
+                                     "down.", duration=3.4)
                 return False
             return (game.save.flag("school_door_open")
                     and _charge(game, "M") >= 0.999)
@@ -307,134 +290,6 @@ def build_effigy_grove():
     # at once (NARRATIVE 1b/3), so individual cursing -- and the figure
     # who'd do it -- is gone. The grove is left as the work without the
     # worker: the dead fire, the effigy ring, the nailed-up faces, all
-    # tended by no one you'll ever see. It reads like its siblings
-    # (husk_grove, scarecrow_ring): a maker-less dread tableau.
-    sc.hide_spots = []
-    return sc
-
-
-# ----- The Husk Grove -- where the corn-dolls are made --------------
-
-def build_husk_grove():
-    """A small clearing in the corn where the cult assembles the
-    corn-dolls. Accessed by walking EAST off a specific tile in
-    lane 5 of the cornfield maze. Workbenches with unfinished dolls,
-    bundles of husks, twine wound on a stake. No NPC -- the work is
-    here, the worker is somewhere else. Walking west off the west
-    edge returns to the maze."""
-    W, H = 12, 9
-    floor_rows = []
-    for ty in range(H):
-        row = []
-        for tx in range(W):
-            row.append("d" if 1 <= tx <= W - 2 and 1 <= ty <= H - 2 else "g")
-        floor_rows.append("".join(row))
-    objects_l = []
-    for ty in range(H):
-        row = []
-        for tx in range(W):
-            if ty == 0 or ty == H - 1 or tx == 0 or tx == W - 1:
-                row.append("C")    # corn-wall perimeter
-            else:
-                row.append(".")
-        objects_l.append(row)
-    # Return tile on the west wall at row 4. Player walked east to
-    # get in; walking west takes them back to the maze.
-    objects_l[4][0] = "G"
-    objects = ["".join(r) for r in objects_l]
-    sc = Scene("husk_grove", floor_rows, objects, music="outside")
-    sc.wrap_x = False
-    sc.wrap_y = False
-    sc.add_exit("G", "cornfield_maze", "from_husk_grove")
-    sc.set_spawn("default", W - 2, 4)
-    sc.set_spawn("from_cornfield_maze", W - 2, 4)
-    # Two corn_altars used here as workbenches (visually they read
-    # as ritual mounds) with unfinished dolls scattered around.
-    sc.add_decoration(Decoration(4 * TILE + 16, 3 * TILE + 16, "corn_altar"))
-    sc.add_decoration(Decoration(7 * TILE + 16, 5 * TILE + 16, "corn_altar"))
-    # Unfinished dolls in two rows near the altars.
-    for dx, dy in [(3, 4), (5, 4), (6, 6), (8, 6),
-                   (4, 6), (3, 2), (5, 2)]:
-        sc.add_decoration(Decoration(dx * TILE + 16, dy * TILE + 16,
-                                     "corn_doll"))
-    # A stalk-marker stake -- the cult mark, the next to be tracked.
-    sc.add_decoration(Decoration(9 * TILE + 16, 4 * TILE + 16,
-                                 "stalk_marker"))
-    # A single candle still lit -- someone was just here.
-    sc.add_decoration(Decoration(7 * TILE + 16, 4 * TILE + 16, "candle"))
-    # Phantom marks scattered.
-    sc.add_decoration(Decoration(6 * TILE + 16, 3 * TILE + 16,
-                                 "phantom_mark"))
-    sc.add_decoration(Decoration(8 * TILE + 16, 7 * TILE + 16,
-                                 "phantom_mark"))
-    sc.hide_spots = []
-    return sc
-
-
-# ----- The Scarecrow Ring -------------------------------------------
-
-def build_scarecrow_ring():
-    """A ring of scarecrows facing inward around a Yellow Sign
-    carved into the dirt. Accessed by walking WEST off a specific
-    tile in lane 1 of the cornfield maze. Six scarecrows in a tight
-    ring; one of them is wearing clothes the player has seen on a
-    local. The Sign at the centre is bigger here than anywhere
-    above-ground. Walking east off the east edge returns to the
-    maze."""
-    W, H = 12, 10
-    floor_rows = []
-    for ty in range(H):
-        row = []
-        for tx in range(W):
-            # Charred dirt inside the ring, regular dirt outside.
-            if 3 <= tx <= 8 and 3 <= ty <= 7:
-                row.append("x")
-            elif 1 <= tx <= W - 2 and 1 <= ty <= H - 2:
-                row.append("d")
-            else:
-                row.append("g")
-        floor_rows.append("".join(row))
-    objects_l = []
-    for ty in range(H):
-        row = []
-        for tx in range(W):
-            if ty == 0 or ty == H - 1 or tx == 0 or tx == W - 1:
-                row.append("C")
-            else:
-                row.append(".")
-        objects_l.append(row)
-    # Return tile on the east wall at row 5.
-    objects_l[5][W - 1] = "G"
-    objects = ["".join(r) for r in objects_l]
-    sc = Scene("scarecrow_ring", floor_rows, objects, music="outside")
-    sc.wrap_x = False
-    sc.wrap_y = False
-    sc.add_exit("G", "cornfield_maze", "from_scarecrow_ring")
-    sc.set_spawn("default", 1, 5)
-    sc.set_spawn("from_cornfield_maze", 1, 5)
-    # The Sign at the centre -- much bigger / more obvious than the
-    # versions in the curse circles. The cult is centred here.
-    sc.add_decoration(Decoration(5 * TILE + 16, 5 * TILE + 16,
-                                 "yellow_sign"))
-    sc.add_decoration(Decoration(6 * TILE + 16, 5 * TILE + 16,
-                                 "yellow_sign"))
-    # Six scarecrows in a ring around the Sign, facing inward.
-    # Implemented as hanging_figure decorations (the closest
-    # available sprite to a scarecrow on a post).
-    ring = [(3, 3), (6, 3), (8, 4), (8, 6), (5, 7), (3, 6)]
-    for tx, ty in ring:
-        sc.add_decoration(Decoration(tx * TILE + 16, ty * TILE + 16,
-                                     "hanging_figure"))
-    # Two braziers flanking the Sign, lit.
-    sc.add_decoration(Decoration(4 * TILE + 16, 4 * TILE + 16, "brazier"))
-    sc.add_decoration(Decoration(7 * TILE + 16, 6 * TILE + 16, "brazier"))
-    # Bloodstains under the central Sign.
-    sc.add_decoration(Decoration(5 * TILE + 16, 6 * TILE + 16, "bloodstain"))
-    sc.add_decoration(Decoration(6 * TILE + 16, 4 * TILE + 16, "bloodstain"))
-    # Watching wounds at the corners.
-    sc.add_decoration(Decoration(0 * TILE + 16, 1 * TILE + 16,
-                                 "watching_wound", size="small"))
-    sc.add_decoration(Decoration(W * TILE - 16, H * TILE - 16,
-                                 "watching_wound", size="small"))
+    # tended by no one you'll ever see: a maker-less dread tableau.
     sc.hide_spots = []
     return sc

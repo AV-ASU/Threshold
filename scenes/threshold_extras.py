@@ -881,9 +881,6 @@ def build_cornfield_maze():
     # North exit (into brimley) in lane 3 (cols 11-12).
     objects_l[0][11] = "^"
     objects_l[0][12] = "^"
-    # The fold-grove access -- a regular-looking lane tile in lane 2.
-    # Walking WEST across it opens the fold-grove (effigy_grove).
-    objects_l[10][6] = "Z"
     # Internal corn walls at cols 4, 9, 14, 19 running N-S. Lanes
     # between: 1-3, 5-8, 10-13, 15-18, 20-22. The player loses
     # sightline immediately -- over the stalks there is only sky.
@@ -935,19 +932,6 @@ def build_cornfield_maze():
     objects_l[H - 2][12] = "."
     objects_l[1][11]     = "."
     objects_l[1][12]     = "."
-
-    # ---- Direction-sensitive hidden-scene folds (more secret areas) ----
-    # Same mechanic as the Z curse-grove tile, just opening onto two
-    # other small clearings. Each is a lane tile that looks like
-    # nothing; walking through it in the matching direction opens the
-    # hidden scene. From any other angle the tile is just floor.
-    # Lane 5 (cols 20-22): walking EAST through (21, 8) opens the
-    # husk_grove -- where the cult assembles the corn-dolls.
-    objects_l[8][21] = "P"
-    # Lane 1 (cols 1-3): walking WEST through (2, 14) opens the
-    # scarecrow_ring -- a ring of scarecrows facing inward around a
-    # Sign.
-    objects_l[14][2] = "S"
 
     # ---- In-maze direction-fold RELOCATION tiles ----
     # Different from the scene-fold tiles above: these don't open a
@@ -1133,19 +1117,6 @@ def build_cornfield_maze():
     sc.wrap_y = True
     sc.add_exit("!", "cornfield_path", "from_cornfield_maze")
     sc.add_exit("^", "brimley",   "from_cornfield_maze")
-    # Direction-sensitive hidden fold: walking WEST across the 'Z'
-    # tile (a regular-looking lane tile in the middle of the maze)
-    # opens onto the fold-grove (effigy_grove). From any other angle the
-    # tile reads as floor. Bible §8: the cult's work-clearing, tended by
-    # no one. Char 'Z' chosen because 'C' is the cornstalk
-    # tile char and would conflict.
-    sc.add_exit("Z", "effigy_grove", "from_cornfield_maze",
-                direction="west")
-    # Additional direction-sensitive secret-area folds.
-    sc.add_exit("P", "husk_grove", "from_cornfield_maze",
-                direction="east")
-    sc.add_exit("S", "scarecrow_ring", "from_cornfield_maze",
-                direction="west")
     # In-maze relocations: same-scene direction-gated folds (the 'I'/'Q'
     # tiles placed above). The target is the maze itself; Game.cross_fold
     # relocates with no load and the camera carried. Silent by canon --
@@ -1161,11 +1132,8 @@ def build_cornfield_maze():
     sc.set_spawn("from_brimley_south", 11, 1)
     # Return from effigy_grove -- one east of the Z tile so the player
     # doesn't immediately re-trigger walking west.
-    sc.set_spawn("from_effigy_grove", 7, 10)
     # Return from the additional hidden-scene folds. One tile inland
     # from each fold tile in the direction the player came back from.
-    sc.set_spawn("from_husk_grove", 20, 8)        # west of (21, 8)
-    sc.set_spawn("from_scarecrow_ring", 3, 14)    # east of (2, 14)
 
     # Scarecrow at the centre dead-end. Hanging-figure deco is
     # close enough to a scarecrow silhouette -- placed just south

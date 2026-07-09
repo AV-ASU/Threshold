@@ -13,7 +13,7 @@ Three spatial-transition flavors; two of them share one trick.
 
 | Term (this doc / chat) | `NARRATIVE.md` name | What it does |
 |---|---|---|
-| **Portal** | "direction-sensitive hidden fold" (§11) | Connects to a *different* scene. **The visible 4D piece.** |
+| **Portal** | "the standing folds (the rift panes)" (§11) | Connects to a *different* scene. **The visible 4D piece.** (The walk-in secret-area folds this family once included were cut, 2026-07; the shipped portals are the rite panes + the King's.) |
 | **Fold** | "the Fold" / torus wrap (§11) | Loops you inside *one* map (the corn maze never ends). **Invisible by canon.** |
 | Door / ladder / well | — | Ordinary plumbing; fade-to-black. |
 

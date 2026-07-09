@@ -27,8 +27,7 @@ from .interiors import (build_shop, build_toby_house, build_barn,
 from .villager_houses import (build_church, build_sheriff_office,
                               build_abandoned_farmhouse)
 from .brimley import build_brimley
-from .hidden_folds import (build_effigy_grove,
-                            build_husk_grove, build_scarecrow_ring)
+from .hidden_folds import build_effigy_grove
 from .threshold_extras import (build_schoolhouse, build_graveyard,
                                 build_country_lane,
                                 build_gravel_road_north,
@@ -119,8 +118,6 @@ SCENE_BUILDERS = {
     "cornfield_maze":     build_cornfield_maze,
     # Hidden fold scenes (direction-sensitive warps off the main world).
     "effigy_grove":        build_effigy_grove,
-    "husk_grove":         build_husk_grove,
-    "scarecrow_ring":     build_scarecrow_ring,
 }
 
 # DELETED (the prior combat/loot game -- removed wholesale, not just

@@ -75,10 +75,9 @@ OUTDOOR_SCENES = {"lodge_yard", "cornfield_path",
 # vignette and doesn't want the outdoor one stacked on top).
 SEAMLESS_WORLD_SCENES = OUTDOOR_SCENES | {
     "brimley",
-    # Hidden fold scenes -- the player stumbles into them through
-    # direction-sensitive exits and shouldn't feel a transition.
+    # The rite-hidden grove -- reached only through the school rite's
+    # pane; the crossing shouldn't feel a transition.
     "effigy_grove",
-    "husk_grove", "scarecrow_ring",
 }
 
 # How far (px) the camera leads the player in their facing direction so

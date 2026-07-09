@@ -458,7 +458,7 @@ def build_arrival_road():
                 return
             game.audio.play("door_locked", 0.6)
             game.show_notice("You turn the key. The engine catches, and "
-                             "catches, and dies. The fold won't let the car "
+                             "catches, and dies. Brimley won't let the car "
                              "go. Not with empty hands.")
     sc.on_interact_fn = _road_interact
     sc.add_interactable(sc._car_pos[0], sc._car_pos[1], 44)

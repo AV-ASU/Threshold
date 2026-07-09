@@ -455,11 +455,14 @@ the kind light fixes, and the dread aperture rules instead.
 **Investigating arms the threat.** The lethal apex is gated behind the
 case:
 
-- **Below 3 evidence:** visibility hitting `1.0` spawns **two cultists at
-  the door you entered from** (a reinforcement wave; short cooldown so it
-  pulses, not floods). The net tightens, but it isn't lethal yet.
-- **At 3+ evidence:** that same trigger spawns **the King** — the lethal
-  apex. *You make Brimley deadly by understanding it.*
+- **Below 3 evidence:** visibility hitting `1.0` musters **a wave of two
+  cultists at the door you entered from** (a reinforcement pulse on a
+  cooldown, and only once the cult is awake at 1+ evidence — the ev-0 town
+  spawns no patrols at all). The net tightens, but it isn't lethal yet.
+- **At 3+ evidence:** the King himself **walks** — the roam arms and He
+  hunts the world room by room (the design spine above; mechanics in
+  `systems/king_roam_mixin.py`). *You make Brimley deadly by understanding
+  it.*
 
 > **The King's pursuit is personal.** He isn't drawn to noise — he's drawn
 > back to the **face he met in the dream** (§1b). Read visibility as *how
@@ -510,7 +513,7 @@ its head) and pings the cult to **investigate the body**, and the body
 
 A pool of six. **Any 3 = the point of no return** (arms the King). Three
 sit on the **surface** — the **journal** (barn, #2), the **Ledger** (the
-Lodge front desk, #3), and the **Preacher** (church, #4) — so a thorough
+padlocked Lodge cellar, #3), and the **Preacher** (church, #4) — so a thorough
 town search arms Him while you're *still above ground*: a fair, brutal
 "you dug too deep, too fast." The deeper truths — **Mara's cell** (#1), the
 **Mask** (#5), and the **Congregation** (#6) — wait below, in the Works
@@ -620,10 +623,14 @@ at the effigy grove by the river. The player goes down by the **rite**: at
 congregation left at the Lodge desk when they went below), and the **school
 rite** (incense at the commune's indoor fire, then the final chalk door
 drawn on the board) opens the school↔grove fold and lands you in the **grove
-clearing** — a fold-hidden hollow by the river where the **mouth of the
-cult's mine** stands open. Its edges wear the fold's own wrap, which is *why*
-the place cannot be reached on foot from anywhere else; it is not locked, it
-is **hidden by the folds**, and the rite is the only thread in. There the
+clearing** — a hollow **north of Brimley, above the river** (the water
+stays in view below its rim), where the **mouth of the cult's mine**
+stands open. The congregation **walked there openly once**: the night
+procession Toby followed came down the river to this ground **before the
+closing rite**. The rite is what hid it — since the seal its edges wear
+the fold's own wrap, so the place can no longer be reached on foot from
+anywhere; it is not locked, it is **hidden by the folds**, and the school
+rite is the only thread in. There the
 **grove rite** finishes the descent: over the dead fire stands a rift that
 **clarifies as evidence mounts** (the meter), and at 3, with the Invitation
 in hand, the PI performs the rite — he **consciously re-enters his one,
@@ -657,8 +664,9 @@ The surface is one connected
 sprawl: the **Arcadia Lodge** (lodge, yard, cornfields) ↔ **Brimley**
 (the town itself — the well, the church, the store, the sheriff's
 office, the school, the barn, the kid's house, and the car). Going
-*deeper* than the first underground layer is gated at the **Deep
-Stair** by the **Pallid Mask** (the keystone).
+*deeper* than the first underground layer is gated by the **Pallid
+Mask** (the keystone) at the **blast through the Works' deepest face**
+(the Deep Stair is cut — the dig never finished; §9).
 
 > **Brimley is one place.** The old code had two scenes (`mistlands`
 > and `village`); they were merged into a single `brimley` scene so
@@ -724,9 +732,9 @@ that fire is someone He already took. You only ever see it by losing.
 5. **Down the mine (the Works).** Mara's cell, the cult's testimony, the
    **Sign Chamber** — lift the **Pallid Mask** (the seal made object) from the
    cult's underground altar.
-6. **Deeper.** Past the **Deep Stair** (Mask-gated) into the Depths; **blast**
-   the deepest face → the one-way fall → the **Threshold** (the first living
-   soul ever to reach the frame).
+6. **Deeper.** With the Mask in hand, **blast** the Works' deepest face
+   (powder from the Sump) → the one-way fall into the Depths → through the
+   Hive → the **Threshold** (the first living soul ever to reach the frame).
 7. **The fork.** At the Threshold with the Mask: **SEAL** (carry it through)
    or **SPREAD** (carry it out) — or, back at the Sign Chamber altar earlier,
    **BREAK** (tear it down in place).
@@ -735,7 +743,7 @@ that fire is someone He already took. You only ever see it by losing.
 |---|---|---|---|
 | **A cultist catches you** | The cult takes you for the ritual. **THE TALK (2026-07):** the FIRST grab of a run is a warning instead — *"Hey. You go back to your hotel room if you know what's good for you." "Run."* — then they let go (a one-time freebie, spent at whichever grab site fires first; the PI's wry reaction lands a beat later and files as a NOTE) | Stark text card — **CAPTURED** (cult takes you alive; worse than killed, and feeds the hive) | `_trigger_death("cultist")` → `_cult_talk` (first grab) / `_tick_death` |
 | **The King catches you** (vis `1.0`, *3+ evidence*, He reaches you) | He takes you into Himself | Brief cutscene: fire/hell, the floating masks of His sprite drifting in it — title **Carcosa** | `_trigger_death("king")` → `_tick_death` (exists; the bespoke `_trigger_closure` path was replaced by the shared death system) |
-| **Seal the threshold** — *END IT* | You carry the **keystone** (the Mask seated in the cult's notes) THROUGH the door; contain the hunger; **every acre the cult bent is warped whole into Carcosa** — the map's edges grow together over the place, and **Brimley simply was** | Three movements (2026-06 approved): a **LIVE warp** (the threshold scene's dressing, then the world's things, pour through the doorframe after you — in-engine, not a still); the **approved lines on black** (you under the **black stars** and **twin suns** of Carcosa); a **wordless wide shot** — the cult-bent acres adrift in the void, a towering figure behind, gold tracing a mask, almost visible. *"Rage approaches."* | `_threshold_seal`/`_tick_seal_warp` (scenes/depths.py, consumes the keystone at the doorframe) → `_play_ending("seal_threshold")` → `draw_seal_tableau` |
+| **Seal the threshold** — *END IT* | You carry the **keystone** (the Pallid Mask) THROUGH the door; contain the hunger; **every acre the cult bent is warped whole into Carcosa** — the map's edges grow together over the place, and **Brimley simply was** | Three movements (2026-06 approved): a **LIVE warp** (the threshold scene's dressing, then the world's things, pour through the doorframe after you — in-engine, not a still); the **approved lines on black** (you under the **black stars** and **twin suns** of Carcosa); a **wordless wide shot** — the cult-bent acres adrift in the void, a towering figure behind, gold tracing a mask, almost visible. *"Rage approaches."* | `_threshold_seal`/`_tick_seal_warp` (scenes/depths.py, consumes the keystone at the doorframe) → `_play_ending("seal_threshold")` → `draw_seal_tableau` |
 | **Drive out with the Sign** — *SPREAD IT* | You pull the rite's keystone and carry it out — and at the edge of Brimley the Mask **claims you** (2026-06 rework): the PI gazes into its deep sunken eyes, completing the dream that broke off a year ago, and the King steps in. What he longed for most — to *feel* — floods back, and he drives south full, certain, and His. The breach rides out as a willing vector now, not a passive charge | The drive-out **cutscene** (`rendering/spread_drive.py`, ~38s): the engine roars to life, the gold wake trails the car (particles, never a body), the mask turns in the passenger seat, the fold's frame sweeps past *unwitnessed* mid-gaze, colour floods the first horizon of the run, and the verdict card closes it: *"Everyone will know."* | `_begin_car_escape()` → `_play_ending("escape_alone")` (exists). Gates on the **Mask** (`pallid_mask`) **alone** — your own car, no keys; the fold is the only lock, and only a shard of Him opens it. Caption lines are locked (flow-guarded); durations come from `SPREAD_BEAT_DURS`. |
 | **Break the rite before sealing** — *YOU FUCKED UP* (a game over) | You tear down the rite *in place* — the obvious heroic move — with the source still open. The lid comes off a pressurized pot: His influence floods out, uncontained, here and now | Ending sequence: you destroy the altar/Sign/kneeling, one breath of quiet, then the flood — *"It was never a cage for you. It was a cage for Him."* | `_play_ending("rite_broken")`. Triggered at the **Sign Chamber altar** (the FIRST place you meet the active rite): a choice — *take the mask* (controlled) vs *tear it down* (the trap). |
 
@@ -766,10 +774,9 @@ So the fork is **experiential, not a menu.** With the keystone in hand:
   answers to. What you carry out is the Sign itself, and Carcosa bleeds
   through the hole you made. This is the off-ramp the Mask tempted you with.
 - **Carry it down to the door → SEAL.** Resist the pull. Take the keystone
-  **past** the Deep Stair (which opens to His own authority pressed to the
-  the blasted floor at the deepest face — the fall is the point of no
-  return), down through the Depths and the hive, to the
-  **Threshold**, and **give the keystone to the door.** The geometry closes;
+  down through the blasted floor at the Works' deepest face (the one-way
+  fall is the point of no return), down through the Depths and the hive, to
+  the **Threshold**, and **give the keystone to the door.** The geometry closes;
   everything the cult's doings touched — the town, the ground under it, the
   hunger, and you — is warped whole into Carcosa, and the county's edges
   grow together over the place. Brimley simply *was*. *The keystone is spent
@@ -798,8 +805,7 @@ The rite is a **pressure vessel** holding the King compressed (§1). Three
 ways to touch it, and an **order rule**:
 
 - **SEAL** — go *past* the rite and cap the **source** (the Threshold) by
-  **giving the keystone — the Mask seated in the cult's notes — to the
-  door.** With the source capped the pressure has nowhere to go; the rite
+  **giving the keystone — the Pallid Mask — to the door.** With the source capped the pressure has nowhere to go; the rite
   can lapse safely *because you sealed first*. Everything the cult bent is
   warped whole into Carcosa — Brimley and you included, sealed there with
   the hunger — and the map's edges grow together over the place.
@@ -846,21 +852,43 @@ pot.
 
 ---
 
+## 6b. The cult's testimony — the three fragments
+
+The cult's own notes, **decoupled from the keystone** (2026-06; the old
+`playscript` item that half-made the keystone is retired). Three fragments
+of the congregation's personal testimony, **pure lore that gates nothing**
+(the keystone is the Mask alone). Each is written in the congregation's own
+voice — what the cult believes, in the words it chose, **unconfirmed
+testimony**, never narration; the PI's reaction lands in his case notes,
+not in the item text. The arc runs from a human problem, to the bargain, to
+the self lost in the dig (§1b: they were answered, not deceived).
+
+| Fragment | Item key | Found | What it testifies |
+|---|---|---|---|
+| **The Calling** | `cult_calling` | The Scriptorium (`works_scriptorium`) — the one bound, whole volume among the loose Sign copies | How the dream gathered them: the drink taken away clean, the lost farm, a hundred strangers driving north to the same town |
+| **The Bargain** | `cult_bargain` | The Sump (`the_sump`) | What they understood they gave: *"He asks so little of us. Only everything, and only the once."* |
+| **The Digging** | `cult_digging` | The Ossuary (`the_ossuary`) | The labor eating the self: shifts that never stop, a few feet of earth left, *"The door. The door. The door."* |
+
+---
+
 ## 7. Implementation map (code ↔ canon)
 
 **Load-bearing — do NOT change:** item *keys* (`systems/items.py`) and
 scene *keys* (`scenes/__init__.py`). Saves and game logic depend on them.
 Only display names and fiction change.
 
-- **King gate:** `systems/game.py` `_tick_king` (~L2027). Spawn condition
-  becomes `visibility >= 1.0 and not in_safe and evidence_count >= 3`;
-  the `else` branch spawns 2 cultists at `_king_anchor` (with a cooldown).
+- **King gate:** `systems/king_roam_mixin.py` `_tick_king_roam` (the sole
+  King tick). The roam arms at `KING_GATE_EVIDENCE` (3); below the gate a
+  maxed meter (`visibility >= 1.0`, cult awake at `CULT_WAKE_EV`, scene not
+  in `KING_FREE_SCENES`) musters `REINFORCE_COUNT` (2) cultists at
+  `_king_anchor` on a cooldown (`_muster_reinforcements`).
 - **Evidence count:** `len(self.save.arg("evidence", []))`.
 - **Evidence logging:** `_evidence(game, name, content)` in
   `scenes/dialogue.py` → appends to `save.arg("evidence")`, shown in the
   notebook UI.
-- **Threat geography constants** (`game.py`): `CULTIST_SCENES`,
-  `CURSER_SCENES`, `SAFE_SCENES`, `OUTDOOR_SCENES`, `DARK_SCENES`.
+- **Threat geography constants** (`systems/config.py`, star-imported by
+  `game.py`): `CULTIST_SCENES`, `SAFE_SCENES`, `OUTDOOR_SCENES`,
+  `DARK_SCENES`, `KING_FREE_SCENES`.
 - **Evidence is a log, not inventory.** "Evidence" = entries appended to
   `save.arg("evidence")` by `_evidence(game, name, ...)` (shown in the
   notebook UI). The count for the 3-gate is `len(save.arg("evidence"))` —
@@ -884,15 +912,14 @@ The reworks the new fiction forced are all shipped. What must stay true:
   nailed shut from below; no secret paths. **The way home is keyed:**
   the shaft-floor pane opens only to the Mask, and crossing it spends
   the descent (SPREAD lock).
-- **Deep Stair gate (rework — see §8).** The **keystone** —
-  the **Pallid Mask** (Sign Chamber), Mask-only now (§6b) — opens the stair to His own authority pressed to
-  nothing — the Deep Stair is CUT (the dig never finished; §9). The way
-  deeper is the **blast at the deepest face** (powder from the Sump,
-  Mask in hand first); the keystone is **NOT consumed there.** You carry the keystone down and **spend it at the Threshold door
-  (SEAL).** Carrying it back out instead is **SPREAD**; tearing the Mask
-  down at the Sign Chamber altar before sealing is the **TRAP** (§6). *(The
-  current build consumes both items at the stair and seals empty-handed —
-  that is the change to make.)*
+- **Deep Stair gate (reworked — SHIPPED).** The Deep Stair is CUT (the dig
+  never finished; §9). The way deeper is the **blast at the deepest face**
+  (powder from the Sump, **Mask in hand** first), and the keystone — the
+  **Pallid Mask** (Sign Chamber), Mask-only now (§6b) — is **NOT consumed
+  there.** You carry the keystone down and **spend it at the Threshold
+  door (SEAL)** — `scenes/depths.py` removes `pallid_mask` at the frame.
+  Carrying it back out instead is **SPREAD**; tearing the Mask down at the
+  Sign Chamber altar before sealing is the **TRAP** (§6).
 - **The car answers only to the Sign.** No keys, no tab, no fetch chain
   — Brimley itself is the lock and only a shard of Him opens it.
 - **Innkeeper → Lodge Clerk** throughout. `clerk_room` is the Clerk's
@@ -915,8 +942,11 @@ The reworks the new fiction forced are all shipped. What must stay true:
 > story/canon decisions were locked this session; the **concrete code
 > changes** to make the game match live in **`TODO.md`** (the former
 > `GAME_CHANGES.md` handoff tracker, folded into `TODO.md` in 2026-07). In
-> brief: **Ledger → front desk** (cut the cellar copy +
-> Sable's cellar line); **Sable is the most-attuned *local*** (not a
+> brief: **Ledger → front desk** (cut the cellar copy + Sable's cellar
+> line; *superseded by the 2026-07 rework — the boxed registers live in the
+> padlocked Lodge cellar again, keyed from the nail behind the house, and
+> the desk keeps the sign-in book + the lead pointing down; see §4*);
+> **Sable is the most-attuned *local*** (not a
 > newcomer); **Royce has stopped driving out**; **Mrs. Calder sets a place
 > for a guest she can't name** (not a vanished husband); **the cult's notes = three pure-lore testimony fragments**
 > (the Calling, the Bargain, the Digging — unconfirmed testimony);
@@ -971,7 +1001,8 @@ The reworks the new fiction forced are all shipped. What must stay true:
   Locked by the flow.py §19 guard.
 - **Seed the door's dream (DONE).** The origin (§1b) is now diegetic: reading
   Mara's journal through a third time triggers a wordless **door-dream
-  cutscene** (`_tick_flashback`/`_draw_flashback` in `systems/game.py`), and
+  cutscene** (`_tick_flashback` in `systems/narrative_mixin.py`,
+  `_draw_flashback` in `ui/cutscenes.py`), and
   living it writes a half-dismissed memory to the **case notebook**
   (`_log_dream_entry`, stored in save arg `notes`, NOT `evidence`). Canon:
   the PI dreamed the door **once, a year ago, never reached it** — the note
@@ -980,23 +1011,28 @@ The reworks the new fiction forced are all shipped. What must stay true:
 - ~~**Reskin `effigy_grove` as a maker-less dread tableau.**~~ **DONE.**
   Individual cursing is redundant now the closing rite claims the whole town
   at once (§1b), so there is no maker. `effigy_grove` is a maker-less dread
-  tableau — a crop circle deep in the corn (the corn itself is the border):
-  the dead fire, the effigy ring, three weathered standing stones with the
-  nailed-up faces fixed to one, all tended by no one you'll ever see —
-  matching its siblings `husk_grove` /
-  `scarecrow_ring` (the work, no worker). Locked in `tests/flow.py`.
+  tableau — a crop circle in the corn north of Brimley, above the river (the
+  corn itself is the border): the dead fire, the effigy ring, three weathered
+  standing stones with the nailed-up faces fixed to one, all tended by no one
+  you'll ever see — the work, no worker. Locked in `tests/flow.py`. *(Its
+  one-time siblings `husk_grove` / `scarecrow_ring` were cut with the walk-in
+  discovery folds, 2026-07.)*
 - **Rehome the Watchers as His gaze (§3).** Keep the mechanic exactly
   (they raise visibility; dispel by breaking the gaze / axe / round) but
   change the *meaning and trigger*: they are **His eye reaching into the
   plane**, not a side-cult's spell. Re-point the fiction (and any
   `_tick_ritual`/`_apply_curse` flavor) at His attention.
-- **Gun = false-power threshold (§3).** Verify the mechanic matches canon:
-  **< 3 evidence kills cultists**, **3+ only stuns**, the **King is
-  unshootable**, and a **clean round always kills a local**. The framing
-  ("it exists to fail; lethal only on victims") is the intent.
-- **Scrap corpse persistence (§3, §4b).** Drop the cross-scene
-  `dead_locals` replay and the corpse `mold` system. Keep the in-room
-  body + the visibility spike + the cult body-investigate ping.
+- ~~**Gun = false-power threshold (§3).**~~ **DONE + flow-guarded.** The
+  mechanic matches canon and `tests/flow.py` locks all four facts:
+  **< 3 evidence kills cultists**, **3+ only staggers**, the **King and
+  the Watchers are bullet-phantom** (unshootable — you can't fire down a
+  direction you can't point at), and a **clean round always kills a
+  local** (the gate only ever protected the cult).
+- ~~**Scrap corpse persistence (§3, §4b).**~~ **DONE.** The cross-scene
+  `dead_locals` replay and the accumulating corpse `mold` stage are gone
+  from the code; the in-room body, the visibility spike, and the cult
+  body-investigate ping all stay. (`draw_npc_corpse` still *accepts* a
+  mold arg as reusable art; player kills draw at 0, a clean fresh kill.)
 - **Mara's journal → the door (DONE).** Reading `mom_notebook` to the end
   drops the **door-dream cutscene** (the lure that took her) — the game's
   clearest, wordless look at §1b: a dried-wood doorframe in black, a pulsing
@@ -1034,19 +1070,24 @@ The reworks the new fiction forced are all shipped. What must stay true:
   threshing tithe dropped its "season on season," and every wall calendar
   in town now defaults to a stopped **JAN 15** card. Flow-guarded
   (`tests/flow.py` §23a). See §1 setting note 3 (the timeline).
-- **Food scarcity — the VISUAL pass.** The dialogue side is done
-  (Hettie: "The shelves don't empty anymore... No deliveries."; the
-  Store-Owner: "Shelves are bare. Till's been empty since the new year").
-  What's left is the world art: visibly bare store shelves, gardens on
-  some lots and not others, a cultist eating at a counter. Wallpaper,
-  not a mechanic.
+- **Food scarcity — the VISUAL pass (mostly done).** The dialogue side is
+  done (Hettie: "The shelves don't empty anymore... No deliveries.";
+  "Shelves are bare. Till's been empty since the new year"), and the world
+  art largely landed: the shop's `bare_shelf` runs (dust-ghosts where the
+  stock stood, one tin left), Hettie's storeroom preserves, garden patches
+  on some Brimley lots and not others. Still open: the domestic-horror beat
+  of a cultist eating an ordinary meal at a counter (§2). Wallpaper, not a
+  mechanic.
 
 ---
 
 ## 9. The Basement Level — "The Works" (built)
 
 The cult's **year-long excavation**, reached *only* through the effigy
-grove's descent fold (which lands at the bottom of the village well). The attuned didn't build a temple — they **dug**, following
+grove's descent fold, which lands at the Shaft Floor of the cult's own
+mine (scene key `well_bottom` — a legacy name; the town well itself is
+dread set-dressing and goes nowhere, §5). The attuned didn't build a
+temple — they **dug**, following
 the water down toward the door the dream promised (§1b). The seven rooms
 are the **dig** at successive depths; partway down it broke into the
 underground river (Room 3), the diggers' proof they were close. A
@@ -1070,8 +1111,8 @@ finds you — run it on cover, timing, and breaking their line of sight).
   stays sealed (`scenes/interiors.py`). The shaft-floor return pane is
   **keyed to the Mask** (never one-way); crossing it up seals the
   descent (`descent_sealed`, the SPREAD lock).
-- **Point of no return:** the FALL through the blasted face (Room 7,
-  `depths_breached`) — the Works stay walkable both ways for the
+- **Point of no return:** the FALL through the blasted face (Room 7;
+  sets the `depths_breached` flag) — the Works stay walkable both ways for the
   Mask-bearer; the Depths do not give you back. **Seal vs. Spread is
   experiential, not a menu:** both live anytime you hold the Mask
   underground; the fork is where you carry His face (up through the
@@ -1164,8 +1205,8 @@ corn rows) — that's per-scene level design, not a global draw change.
 The bible's central image -- *the roads loop, the corn never ends, you
 walk through the woods only to be spit out where you walked in* -- now
 has mechanical existence beyond the dread aperture. The outside world
-is built as a torus, with hidden direction-sensitive folds layered on
-top.
+is built as a torus, with the rite's standing folds and the silent
+same-scene relocations layered on top.
 
 ### Permeable forest border
 
@@ -1208,12 +1249,11 @@ bush hides you immediately.
   other.
 - **brimley.wrap_y** -- the perimeter forest loops north-south.
 - **cornfield_maze.wrap_x = wrap_y = True** -- corn never ends in
-  any direction. The exit tiles (^ to brimley, ! to forest_path, Z
-  to the curse-grove) are the only escape, and finding them is the
-  whole point.
-- **forest_path.wrap_x = wrap_y = True** -- the woods spit you out
+  any direction. The exit tiles (^ to brimley, ! to cornfield_path)
+  are the only escape, and finding them is the whole point.
+- **cornfield_path.wrap_x = wrap_y = True** -- the woods spit you out
   where you walked in.
-- **our_house_area.wrap_x** -- walking east past the Lodge wraps you
+- **lodge_yard.wrap_x** -- walking east past the Lodge wraps you
   back to the west. There is no past-the-Lodge highway.
 
 ### Cross-scene macro-loop
@@ -1222,8 +1262,8 @@ Three direct south-chain exits close the outdoor world into one
 closed system:
 
 - **brimley** south edge ('M' tile, col 48 row 99) → cornfield_maze
-- **cornfield_maze** south ('!' tile) → forest_path
-- **forest_path** south ('S' tile) → brimley north
+- **cornfield_maze** south ('!' tile) → cornfield_path
+- **cornfield_path** south ('S' tile) → brimley north
 
 Walking south through any of the three eventually returns the player
 to brimley north. No direction escapes.
@@ -1243,31 +1283,29 @@ the world dimensions. A cultist on the east edge reads a player on
 the west edge as one tile away (through the wrap) and pursues that
 way. The fold stops being an escape.
 
-### Direction-sensitive hidden folds
+### The standing folds (the rift panes)
 
-Four hidden scenes are accessed only by walking a specific tile in a
-specific direction. All four are in `SEAMLESS_WORLD_SCENES` so the
-crossing has no fade.
+**The walk-in discovery folds are CUT (2026-07, decided).** The maze's
+direction-gated secret-area folds — the effigy grove's corn back door,
+and the `husk_grove` / `scarecrow_ring` clearings that only those folds
+reached (both scenes removed with them, on the `symbol_portal_room`
+precedent, §9 note) — are gone. The congregation **walked to the grove
+openly before the closing rite**; the rite is what hid it, so no tile in
+the corn can reach it anymore. `effigy_grove` survives as the rite-hidden
+clearing at the mouth of the cult's mine, **north of Brimley above the
+river**, reached ONLY through the school rite's pane (§5).
 
-**Canon update (2026-06, decided deliberately):** these folds are no
-longer invisible-until-tripped. Faced head-on, a fold SHOWS itself: a
-standing black-gold rift frame anchored on its world seam, one visual
-family with the King's portal (`rendering/portal.py draw_rift_door`).
-Step to the side and the pane thins and dims toward nothing; from
-behind it isn't there at all (a 4D pane has no back) -- so from any
-other angle the tile still reads as floor and the player walks over it
-without consequence. The discovery beat changes from *stumbling* to
-*choosing*: the player sees a wound in the world ahead and walks into
-it on purpose. The crossing itself stays NOTHING -- no fade, no sting,
-no beat; the frame is the spectacle and stepping through is just
-walking. The world's silent lies remain the torus wrap and the in-maze
-relocations, which never show a frame.
-
-| Scene key | Where it lives | Access | What it shows |
-|---|---|---|---|
-| `effigy_grove` | new scene | `cornfield_maze` tile (6, 10), walked WEST | A maker-less dread tableau (§8): the dread set kept (effigies, a polaroid board of faces, hanging figures) but **without a maker** — a workshop with no worker, the corn-doll work of the congregation. The effigies-as-individual-curses reading is dropped. |
-| `husk_grove` | new scene | `cornfield_maze` tile (21, 8), walked EAST | A small clearing where the cult assembles its corn-dolls. Two altars used as workbenches, unfinished dolls scattered, a stalk-marker, a candle still lit. No NPC -- the work is here, the worker isn't. |
-| `scarecrow_ring` | new scene | `cornfield_maze` tile (2, 14), walked WEST | A ring of six scarecrows facing inward around a doubled Yellow Sign in charred dirt. Two braziers, bloodstains underfoot. The cult's central mark in the corn. |
+**The standing-pane canon (2026-06) holds for every fold that shows
+itself** — the school↔grove pane, the grove's descent fold, the shaft
+floor's keyed return, and the King's portal. Faced head-on, a fold SHOWS
+itself: a standing black-gold rift frame anchored on its world seam, one
+visual family with the King's portal (`rendering/portal.py
+draw_rift_door`). Step to the side and the pane thins and dims toward
+nothing; from behind it isn't there at all (a 4D pane has no back) -- so
+from any other angle the tile reads as floor. The crossing itself stays
+NOTHING -- no fade, no sting, no beat; the frame is the spectacle and
+stepping through is just walking. The world's silent lies remain the
+torus wrap and the in-maze relocations, which never show a frame.
 
 **In-maze fold relocations.** Two additional tiles inside the
 `cornfield_maze` (one at (8, 6) walked SOUTH, one at (16, 11) walked
@@ -1287,7 +1325,8 @@ the opposite edge -- the maze visibly has many exits and all of them
 loop.
 
 The framework (`Scene.add_exit(direction=...)` + `find_exit_at(facing=)`)
-is general -- more direction-sensitive folds can be added as wanted.
+is general -- the rite panes and the relocations ride it. (The hidden-
+scene discovery folds that also rode it were cut, 2026-07.)
 
 ### One phenomenon, two presentations (the consolidation)
 
@@ -1297,8 +1336,9 @@ There are exactly two kinds of spatial transition in THRESHOLD:
   fade, they make a sound, they feel like doorways. Architecture is
   the player-only escape.
 - **The Fold**: everything else. One phenomenon with two faces:
-  - **The fold you SEE** -- the standing rift frame: the five hidden
-    folds (at rest, quiet) and the King's portal (the same frame torn
+  - **The fold you SEE** -- the standing rift frame: the rite's panes
+    (the school door, the grove's descent fold, the shaft floor's keyed
+    return -- at rest, quiet) and the King's portal (the same frame torn
     violently). One renderer, one black-gold grammar.
   - **The fold you DON'T** -- the silent lie: the torus wrap, the
     seamless world edges, the in-maze relocations. The horror here is
