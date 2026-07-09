@@ -1339,6 +1339,16 @@ def main():
     gg8.save.set_flag("voice_fold_heard", True)
     check(_hout["avail"](gg8) and _tout["avail"](gg8),
           "gate: hearing the fold opens the way-out questions")
+    # Once Hettie's volunteered memory has named the girl, the photo
+    # question retires (a denial she has already outrun) and the
+    # follow-up about the others opens without it.
+    _hphoto = next(ex for ex in _HC["exchanges"] if ex["key"] == "photo")
+    _hothers = next(ex for ex in _HC["exchanges"] if ex["key"] == "others")
+    check(_hphoto["avail"](gg8) and not _hothers["avail"](gg8),
+          "gate: pre-memory, the photo stands and the others wait")
+    gg8.save.set_flag("hettie_mara_memory", True)
+    check(not _hphoto["avail"](gg8) and _hothers["avail"](gg8),
+          "gate: her memory retires the photo and opens the others")
 
     # The Crane fork (the ticket's pilot choice): the flock exchange ends
     # on a real two-way ask. Pressing him latches the doom and files the
@@ -1371,6 +1381,45 @@ def main():
           "crane: the provocation never inflates the evidence count")
     check(not _flock["avail"](gcf),
           "crane: once doomed the flock question retires")
+
+    # The stall-breaker (R-gate): only three evidence beats are surface-
+    # reachable and the descent needs three, so when the SECOND canonical
+    # beat lands with Crane met and still un-provoked, the PI's interior
+    # voice points him back at the pulpit. Once, a NOTE, never evidence,
+    # and never once the preacher is already doomed.
+    from scenes.dialogue import _the_third_thread, _evidence as _evfn2
+    gtt = new_game()
+    gtt.save.set_flag("crane_greeted", True)
+    _evfn2(gtt, "maras_journal", "a")
+    check(not any(e.get("name") == "the_third_thread"
+                  for e in gtt.save.arg("notes", [])),
+          "crane: no pulpit nudge at one thread")
+    _evfn2(gtt, "the_ledger", "b")
+    check(any(e.get("name") == "the_third_thread"
+              for e in gtt.save.arg("notes", [])),
+          "crane: the second thread points the PI back at the pulpit")
+    check(gtt._evidence_count() == 2,
+          "crane: the pulpit nudge is a NOTE, never evidence")
+    check(_the_third_thread(gtt, "maras_journal") == [],
+          "crane: the pulpit nudge fires only once")
+    gtd = new_game()
+    gtd.save.set_flag("crane_greeted", True)
+    gtd.save.set_flag("preacher_doomed", True)
+    _evfn2(gtd, "maras_journal", "a")
+    _evfn2(gtd, "the_ledger", "b")
+    check(not any(e.get("name") == "the_third_thread"
+                  for e in gtd.save.arg("notes", [])),
+          "crane: no pulpit nudge once he is already doomed")
+
+    # A SILENTLY-filed beat (show=False -- the journal reads from the
+    # kit) must still land its nudges, or the case stalls voiceless:
+    # the journal really files revisit_sable_smile in-game.
+    gsf = new_game()
+    gsf.save.set_flag("sable_greeted", True)
+    _evfn2(gsf, "maras_journal", "a", show=False)
+    check(any(e.get("name") == "revisit_sable_smile"
+              for e in gsf.save.arg("notes", [])),
+          "ask: a silently-filed discovery still lands its revisit nudge")
 
     # Vane's car answer files the fold note WITHOUT hijacking the
     # conversation's float chain (reflect=False), and it opens Sable's
@@ -1413,7 +1462,10 @@ def main():
           "flow: out of earshot the talk ends instead of reopening the menu")
 
     # The talk-hold: the conversation partner stands their ground and
-    # faces the player instead of walking their route mid-exchange.
+    # faces the player instead of walking their route mid-exchange --
+    # INCLUDING while the PI's own line floats (the float speaker is the
+    # player then, and the partner must stay held through it; a worker
+    # otherwise walks off between the asked question and its answer).
     ghd = new_game()
     ghd.load_scene_now("church", "default")
     _cr = next(n for n in ghd.scene.npcs
@@ -1427,7 +1479,34 @@ def main():
           "flow: the talk-hold roots the partner at the desk")
     check(_cr.facing[0] > 0.9,
           "flow: the held partner faces the player")
+    ghd.float_speech.active = True          # a PI beat is floating
+    ghd.float_speech.speaker = ghd.player
+    for _ in range(30):
+        ghd.scene.update(1 / 30.0, ghd)
+    check((_cr.x, _cr.y) == _pos0,
+          "flow: the hold survives the PI's own floating beats")
+    ghd.float_speech.active = False
+    ghd.float_speech.speaker = None
     ghd._convo = None
+
+    # A replaced conversation goes INERT: its pending float callback
+    # must not reopen a menu over the talk that superseded it.
+    from ui.conversation import open_conversation as _oc
+    gor = new_game()
+    gor.save.set_flag("sable_greeted", True)
+    _stub_a = _npc_stub(gor)
+    _oc(gor, _stub_a, SABLE_CONVO)
+    _old = gor._convo
+    gor.dialog.active = False
+    gor.dialog.choices = None
+    _oc(gor, _npc_stub(gor), SABLE_CONVO)
+    check(_old.active is False and gor._convo is not _old,
+          "flow: opening a new talk deactivates the replaced one")
+    gor.dialog.active = False
+    gor.dialog.choices = None
+    _old._step()                            # the orphaned callback fires
+    check(gor.dialog.choices is None,
+          "flow: an orphaned talk's pending callback is inert")
 
     # --- 18. effigy_grove is a maker-less tableau (§1b/§8) ---------------
     # Individual cursing is redundant -- the closing rite claimed the town at

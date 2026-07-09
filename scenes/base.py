@@ -4652,9 +4652,13 @@ class Scene:
         if fs is not None and fs.active:
             held = fs.speaker
         convo = getattr(game, "_convo", None)
-        if held is None and convo is not None and getattr(
-                convo, "active", False):
-            held = convo.npc
+        if convo is not None and getattr(convo, "active", False):
+            # During the PI's own spoken beats the float speaker is the
+            # PLAYER -- the partner must stay held through those too, or
+            # a worker walks off exactly between the asked question and
+            # its answer.
+            if held is None or held is game.player:
+                held = convo.npc
         if held is not None and (getattr(held, "movement", "") == "chaser"
                                  or getattr(held, "sprite_kind", "")
                                  == "yellow_king"):

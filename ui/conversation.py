@@ -175,6 +175,11 @@ class Conversation:
             on_complete=self._step)
 
     def _step(self):
+        # An ended (or replaced -- see open_conversation) talk goes
+        # inert: its pending float on_complete must not reopen a menu
+        # over whatever superseded it.
+        if not self.active:
+            return
         if not self.queue:
             # Exchange finished: retire a one-shot question, reopen the menu.
             if self.current is not None:
@@ -224,6 +229,11 @@ class Conversation:
 def open_conversation(game, npc, convo):
     """Start (or restart) an organic conversation with `npc`. Held on
     `game._convo` so it survives the interact call; the callback chain
-    keeps it alive regardless."""
+    keeps it alive regardless. A replaced conversation (walked from one
+    talker to another mid-beat) is deactivated first so its pending
+    float callback goes inert instead of clobbering the new talk."""
+    old = getattr(game, "_convo", None)
+    if old is not None:
+        old.active = False
     game._convo = Conversation(game, npc, convo)
     game._convo.start()

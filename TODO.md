@@ -105,8 +105,13 @@ item on the list: engine exists, canon is settled, payoff is the core fantasy.**
   later; he is never savable-by-conversion, §1b — the player just decides
   whether HE is the one who points him). The provoke branch feeds the murder
   reveal below. NOTE the behavior change: his doom is no longer an automatic
-  visit-2 counter — a player who never presses him leaves evidence #4
-  unfired (3 of the other 5 beats still open the way down).
+  visit-2 counter. **The stall-breaker (R-gate finding):** only three beats
+  are surface-reachable (journal, Ledger, preacher) and the descent needs
+  three — so when the SECOND canonical beat lands with Crane met and still
+  un-provoked, the PI's interior voice points him back at the pulpit
+  (`_the_third_thread`, a NOTE, flow-guarded): the forced return reads as
+  the investigation forcing his hand. Fixed alongside it: a silently-filed
+  beat (`show=False`, the journal) now still lands its revisit nudges.
 
 ### 2. **[Fable + Opus]** The newspaper choice — pilot for the favor economy  *(planned with the user 2026-07; the broader favor economy stays direction-stage)*
 

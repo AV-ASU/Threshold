@@ -59,17 +59,24 @@ def _evidence(game, name, content, weight=None, show=True):
                 game._flash_notebook()    # corner scribble: you wrote it down
             if hasattr(game, "audio"):
                 game.audio.play("evidence_added", 0.7)
+    # A discovery can point the PI back at someone he's met; those
+    # interior lines ride the discovery's own narration so it reads as
+    # one beat (and files their case notes). Collected REGARDLESS of
+    # `show` -- a silently-filed beat (the journal reads from the kit)
+    # must still land its nudges, or the case stalls without a voice
+    # (the R-gate stall finding). Defined after this fn; safe at call
+    # time.
+    extra = _collect_revisit(game, name)
     # `show=False` files the beat (log + scribble) WITHOUT the forced dialog --
     # for readable items whose text lives in the kit, so picking one up doesn't
-    # hijack the moment to read it at you.
+    # hijack the moment to read it at you. Any nudges still surface, as
+    # their own caption.
     if show:
-        # A discovery can point the PI back at someone he's met; those
-        # interior lines ride the SAME narration so it reads as one beat
-        # (and files their case notes). Defined after this fn; safe at
-        # call time.
-        extra = _collect_revisit(game, name)
         game.dialog.show(lines + extra,
                          speaker="", voice="blip_soft",
+                         portrait="narrator")
+    elif extra:
+        game.dialog.show(extra, speaker="", voice="blip_soft",
                          portrait="narrator")
 
 
@@ -160,8 +167,36 @@ def _collect_revisit(game, name):
         game.save.set_flag("nudged_" + n["key"], True)
         _log_note(game, n["key"], n["lines"])
         out.extend(n["lines"])
+    out.extend(_the_third_thread(game, name))
     out.extend(_ready_for_the_desk(game, name))
     return out
+
+
+def _the_third_thread(game, name):
+    """The stall-breaker for the Crane fork (R-gate finding). Only three
+    evidence beats are reachable on the surface (the journal, the Ledger,
+    the preacher's remains), and the descent needs three -- so a player
+    who held Crane back (or never pressed him) caps at TWO and the case
+    goes silent. When the second canonical beat lands with the preacher
+    still alive, the PI's interior voice points him back at the pulpit:
+    the forced return reads as the investigation forcing his hand, not a
+    dead end. Fires once, only if Crane has been met. Never evidence."""
+    if (name not in CANONICAL_EVIDENCE
+            or game._evidence_count() != 2
+            or game.save.flag("preacher_doomed")
+            or not game.save.flag("crane_greeted")
+            or game.save.flag("nudged_third_thread")):
+        return []
+    game.save.set_flag("nudged_third_thread", True)
+    lines = [
+        "[c=dim]Two threads in hand, and both of them end somewhere under "
+        "this town.",
+        "One man here still says the quiet part out loud, from a pulpit, "
+        "to an empty room. He is not done saying it.",
+        "I should hear him out. However that ends.[/c]",
+    ]
+    _log_note(game, "the_third_thread", lines)
+    return lines
 
 
 def _ready_for_the_desk(game, name):
@@ -203,12 +238,15 @@ _INTRO_Q = ("I'm a private investigator, out of Minneapolis. A family "
 _PHOTO_Q = "I want you to look at a photograph. Have you seen this woman?"
 
 
-def _opener_exchanges(intro_beats, photo_beats, on_photo=None):
+def _opener_exchanges(intro_beats, photo_beats, on_photo=None,
+                      photo_avail=None):
     """Build the shared intro + photo exchanges from per-NPC answers.
     Both are once-asked (you only introduce yourself the one time); the
     photo exchange can carry a side effect (a flag another question
-    gates on). The menu shows the short labels (the choice box is
-    small); the full question still floats as the PI's spoken line."""
+    gates on) and an avail gate (Hettie's drops once her volunteered
+    memory has outrun it). The menu shows the short labels (the choice
+    box is small); the full question still floats as the PI's spoken
+    line."""
     photo = {
         "key": "photo", "q": _PHOTO_Q, "once": True,
         "label": "Have you seen this woman?",
@@ -217,6 +255,8 @@ def _opener_exchanges(intro_beats, photo_beats, on_photo=None):
     }
     if on_photo is not None:
         photo["on_ask"] = on_photo
+    if photo_avail is not None:
+        photo["avail"] = photo_avail
     return [
         {"key": "intro", "q": _INTRO_Q, "once": True,
          "label": "I'm a private investigator.",
@@ -282,9 +322,9 @@ CRANE_CONVO = {
         ],
         photo_beats=[
             ("npc", "(He looks, and his mouth goes tight.)"),
-            ("npc", "That's the one. She sat my pews twice, early on, "
-                    "right at the back. I remember thinking, there's one "
-                    "with her eyes still open."),
+            ("npc", "I know her. She sat my pews twice, early on, right "
+                    "at the back. I remember thinking, there's one with "
+                    "her eyes still open."),
             ("npc", "[c=dim]Then she stopped coming. They all stop.[/c]"),
         ],
     ) + [
@@ -302,8 +342,8 @@ CRANE_CONVO = {
                         "church of mine. It kneels under the ground."),
                 ("npc", "They weren't taken. They walked down willing, "
                         "and sold the Lord to ease their own aches."),
-                ("ask", "He is working himself hot. The next words could "
-                        "get him killed.", [
+                ("ask", "He is working himself hot. The next words go "
+                        "somewhere they can be heard.", [
                     ("Press him. Names carry.", [
                         ("pi", "Somebody should say it where they can "
                                "hear. You're the only one in this town "
@@ -424,8 +464,7 @@ TOBY_CONVO = {
         "beats": [
             ("npc", "You came back. Grownups mostly don't. Not a second "
                     "time."),
-            ("npc", "You can ask me stuff. I see things. Nobody figures a "
-                    "kid for watching."),
+            ("npc", "I see things. Nobody figures a kid for watching."),
         ],
     },
     "exchanges": _opener_exchanges(
@@ -547,10 +586,12 @@ HETTIE_CONVO = {
         photo_beats=[
             ("npc", "(She looks. Not long. Long enough.)"),
             ("npc", "Faces come through this shop. I stopped keeping them."),
-            ("pi", "[c=dim]She knew the face. She counted the cost of "
-                   "saying so before I finished asking.[/c]"),
         ],
         on_photo=_hettie_saw_photo,
+        # Once her volunteered memory has already named the girl, the
+        # photo question is moot -- showing it after the confession would
+        # earn a denial she has already outrun.
+        photo_avail=lambda g: not g.save.flag("hettie_mara_memory"),
     ) + [
         # Earned by the intro: she only said "don't go where they tell
         # you it's safe" to a man who told her what he is.
@@ -568,14 +609,15 @@ HETTIE_CONVO = {
                 ("npc", "That's the whole answer you're getting to that."),
             ],
         },
-        # Opens once she has seen the photograph and swallowed the lie:
-        # the counter remembers its customers, and he is not the first to
-        # come asking.
+        # Opens once she has seen the photograph and swallowed the lie
+        # (or already volunteered the memory): the counter remembers its
+        # customers, and he is not the first to come asking.
         {
             "key": "others",
             "q": "You've had people ask after faces before me. Haven't you?",
             "label": "Others came asking before me.",
-            "avail": lambda g: g.save.flag("hettie_saw_photo"),
+            "avail": lambda g: (g.save.flag("hettie_saw_photo")
+                                or g.save.flag("hettie_mara_memory")),
             "beats": [
                 ("npc", "I sold to the girl too. And the ones before her."),
                 ("npc", "[c=dim]None of them came back to buy again. "
@@ -624,7 +666,7 @@ def hettie_dialogue(game, npc):
             and game.player.inventory.has("mom_notebook")):
         save.set_flag("hettie_mara_memory", True)
         game.dialog.show([
-            "The Blaine girl. I'll tell you the one thing I know that's "
+            "Your girl. I'll tell you the one thing I know that's "
             "worth the telling.",
             "She used to come in here. Matches, canned milk. Counted her "
             "change twice, every time, like it mattered. Sad around the "
@@ -724,8 +766,8 @@ VANE_CONVO = {
         intro_beats=[
             ("npc", "A detective. Hired and paid, all the way up here."),
             ("npc", "The ones who came before you walked in friendly and "
-                    "asking after something too. Every last one of them. "
-                    "You understand my position."),
+                    "smiling too. Every last one of them. You understand "
+                    "my position."),
             ("pi", "If I were one of them, would I be standing in the "
                    "law's office announcing myself?"),
             ("npc", "No. No, they never had questions. That's the one "
