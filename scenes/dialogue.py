@@ -1,14 +1,19 @@
 """All NPC dialogue functions.
 
 The spoken lines are final, lore-bearing copy: each NPC reacts to the
-case (the Blaine girl, the well, the cult). State reactivity comes from
-per-NPC flag/count gates (see the stateful fns below and the `beats`
-hook in scenes/brimley.py _brimley_voice); `escalate` still exists but
-both its call sites pass identical tiers, so it is effectively inert --
-kept only in case visibility-tiered copy is ever authored. Evidence
-beats are surfaced through `_evidence`; only the six in
-`CANONICAL_EVIDENCE` count toward the King-gate and the visibility
-floor.
+case (the Blaine girl, the well, the cult). The PRINCIPALS (Sable, Vane,
+Hettie, Toby, Crane) all speak through the organic ask verb now
+(ui/conversation `*_CONVO` data, TODO #1): the menu options are the PI's
+own spoken lines, every principal leads with the two guaranteed openers
+(`_opener_exchanges`: introduce-as-PI + Mara's photograph), and each
+NPC's story-critical one-shots (the witness account, the memory of the
+girl, the murder he can't report, the paper trade) still VOLUNTEER
+themselves ahead of the menu. Other state reactivity comes from per-NPC
+flag gates and the `beats` hook in scenes/brimley.py _brimley_voice.
+`escalate` still exists but now has NO call sites -- kept only in case
+visibility-tiered copy is ever authored. Evidence beats are surfaced
+through `_evidence`; only the six in `CANONICAL_EVIDENCE` count toward
+the King-gate and the visibility floor.
 """
 import random
 
@@ -129,6 +134,16 @@ _REVISIT_NUDGES = {
             "day she stopped writing. Worth going back for.[/c]",
         ],
     }],
+    "the_preacher": [{
+        "key": "revisit_vane_murder",
+        "met": "vane_greeted",
+        "lines": [
+            "[c=dim]A man dies loud in his own church and the town walks "
+            "past the door.",
+            "The sheriff was born here. He will have stood on that floor "
+            "before I did. Worth hearing what he could not write down.[/c]",
+        ],
+    }],
 }
 
 
@@ -173,7 +188,149 @@ def _ready_for_the_desk(game, name):
     return lines
 
 
+# ---- The two GUARANTEED openers (TODO #1) ----
+# Every principal's question menu leads with the same two options: the PI
+# introducing himself as a private investigator, and showing Mara's
+# photograph. The QUESTIONS are shared word for word (he has said them a
+# hundred times by now); every ANSWER is the NPC's own. This is also the
+# fiction's fix: news does not spread in Brimley (a town of homebound
+# locals), so nobody knows who the PI is or what he wants until he says
+# it -- greets never assume the case is known; the PI initiates.
+
+_INTRO_Q = ("I'm a private investigator, out of Minneapolis. A family "
+            "hired me to find their daughter. She was last heard from "
+            "headed to Brimley.")
+_PHOTO_Q = "I want you to look at a photograph. Have you seen this woman?"
+
+
+def _opener_exchanges(intro_beats, photo_beats, on_photo=None):
+    """Build the shared intro + photo exchanges from per-NPC answers.
+    Both are once-asked (you only introduce yourself the one time); the
+    photo exchange can carry a side effect (a flag another question
+    gates on). The menu shows the short labels (the choice box is
+    small); the full question still floats as the PI's spoken line."""
+    photo = {
+        "key": "photo", "q": _PHOTO_Q, "once": True,
+        "label": "Have you seen this woman?",
+        "beats": ([("pi", "(You hold her photograph out.)")]
+                  + list(photo_beats)),
+    }
+    if on_photo is not None:
+        photo["on_ask"] = on_photo
+    return [
+        {"key": "intro", "q": _INTRO_Q, "once": True,
+         "label": "I'm a private investigator.",
+         "beats": list(intro_beats)},
+        photo,
+    ]
+
+
 # ---- The Preacher: Reverend Asa Crane ----
+# Ask-verb conversion (TODO #1 expand), carrying the ticket's pilot
+# choice: his doom is no longer an automatic visit counter. The flock
+# exchange ends on a real fork -- press him and he takes his naming to
+# where they can hear it (preacher_doomed; the church swaps him for his
+# remains on the next entry, evidence #4), or hold him back and he banks
+# the fire for now (the question stays open; a held-back Crane can still
+# be pressed later). Canon fence (§1b): the cult cannot be saved or
+# converted; Crane dies for believing he can. The choice decides whether
+# the PI is the one who points him.
+
+
+def _crane_provoked(game):
+    game.save.set_flag("preacher_doomed", True)
+    _log_note(game, "crane_provoked", [
+        "[c=dim]I wound the old man up and pointed him at them. He wanted "
+        "pointing. That is what I will tell myself.[/c]",
+    ])
+
+
+def crane_on_leave(game):
+    """His old dismissal, kept as the one-time last word."""
+    if game.save.flag("crane_farewell_hook"):
+        return None
+    game.save.set_flag("crane_farewell_hook", True)
+    return [
+        ("npc", "I've said what I've said. Go on now, and watch the road."),
+    ]
+
+
+CRANE_CONVO = {
+    "id":    "crane",
+    "name":  "Rev. Crane",
+    "voice": "blip_low",
+    "pi_voice": "blip_soft",
+    "prompt": "Crane waits, hands folded over the lectern.",
+    "leave":  "That's all for now.",
+    "greet": {
+        "flag": "crane_greeted",
+        "beats": [
+            ("npc", "Another new face. That's all that comes to Brimley "
+                    "anymore, strangers off the highway, more every "
+                    "season. And not one of them leaves."),
+        ],
+    },
+    "on_leave": crane_on_leave,
+    "exchanges": _opener_exchanges(
+        intro_beats=[
+            ("npc", "I don't trust it. They arrive too easy, like "
+                    "something held the door. Then they go quiet, drift "
+                    "out to the corn, and they don't come back."),
+            ("npc", "A young woman came through in the fall. Bright "
+                    "thing, full of questions, like you. She's one of "
+                    "them now, whatever they are. That who you're after?"),
+        ],
+        photo_beats=[
+            ("npc", "(He looks, and his mouth goes tight.)"),
+            ("npc", "That's the one. She sat my pews twice, early on, "
+                    "right at the back. I remember thinking, there's one "
+                    "with her eyes still open."),
+            ("npc", "[c=dim]Then she stopped coming. They all stop.[/c]"),
+        ],
+    ) + [
+        # Earned by the intro: his "they arrive too easy" answer is what
+        # the PI is following up on.
+        {
+            "key": "flock",
+            "q": "You watch this town from a pulpit. Tell me about the "
+                 "new folk. The congregation that isn't yours.",
+            "label": "Tell me about the new folk.",
+            "avail": lambda g: (g.save.flag("convo_crane_intro_asked")
+                                and not g.save.flag("preacher_doomed")),
+            "beats": [
+                ("npc", "There's a flock in this town that kneels in no "
+                        "church of mine. It kneels under the ground."),
+                ("npc", "They weren't taken. They walked down willing, "
+                        "and sold the Lord to ease their own aches."),
+                ("ask", "He is working himself hot. The next words could "
+                        "get him killed.", [
+                    ("Press him. Names carry.", [
+                        ("pi", "Somebody should say it where they can "
+                               "hear. You're the only one in this town "
+                               "still willing."),
+                        ("npc", "I preach it plain, and spare no sinner. "
+                                "The sheriff hears every word, and never "
+                                "once takes communion."),
+                        ("npc", "Let them come for an old man. I've "
+                                "buried better than the thing they kneel "
+                                "to."),
+                    ], _crane_provoked),
+                    ("Hold him back. It is not worth his life.", [
+                        ("pi", "Keep it inside these walls, Reverend. In "
+                               "this town the ones who go quiet are the "
+                               "loud ones."),
+                        ("npc", "(A long breath goes out of him.) You "
+                                "sound like a man who means it. All "
+                                "right. Inside these walls. For now."),
+                        ("pi", "[c=dim]For now. A man like that only "
+                               "banks a fire. He never puts it out.[/c]"),
+                    ], None),
+                ]),
+            ],
+        },
+    ],
+}
+
 
 def preacher_dialogue(game, npc):
     save = game.save
@@ -181,9 +338,9 @@ def preacher_dialogue(game, npc):
     # One-shot: the PI rang his bell. Crane claims it, and in claiming
     # it he teaches what the peal is FOR (everything in this town walks
     # toward a loud enough sound). Never preempts the first meeting,
-    # and doesn't advance his doom ladder.
+    # and never the fork.
     if (save.flag("bell_rung") and not save.flag("crane_bell_beat")
-            and save.arg("old_count", 0) >= 1):
+            and save.flag("crane_greeted")):
         save.set_flag("crane_bell_beat", True)
         game.dialog.show([
             "That was you in my tower. The bell has not swung in years. "
@@ -192,39 +349,8 @@ def preacher_dialogue(game, npc):
             "something rings loud enough. Remember that.",
         ], speaker="Rev. Crane", voice="blip_low", portrait="preacher")
         return
-    count = save.arg("old_count", 0) + 1
-    save.set_arg("old_count", count)
-    if count == 1:
-        game.dialog.show([
-            "Another new face. That's all that comes to Brimley anymore, "
-            "strangers off the highway, more every season. And not one of "
-            "them leaves.",
-            "I don't trust it. They arrive too easy, like something held "
-            "the door. Then they go quiet, drift out to the corn, and they "
-            "don't come back.",
-            "A young woman came through last month. Bright thing, full of "
-            "questions, like you. She's one of them now, whatever they "
-            "are. You looking for her?",
-        ], speaker="Rev. Crane", voice="blip_low", portrait="preacher")
-    elif count == 2:
-        # The hubris that gets him killed. After this he's marked: the
-        # church swaps him for his remains on the next entry (evidence #4).
-        game.dialog.show([
-            "You came back. They mostly don't.",
-            "There's a flock in this town that kneels in no church of "
-            "mine. It kneels under the ground.",
-            "They weren't taken. They walked down willing, and sold the "
-            "Lord to ease their own aches.",
-            "I preach it plain, and spare no sinner. The sheriff hears "
-            "every word, and never once takes communion.",
-            "Let them come for an old man. I've buried better than the "
-            "thing they kneel to.",
-        ], speaker="Rev. Crane", voice="blip_low", portrait="preacher")
-        save.set_flag("preacher_doomed", True)
-    else:
-        game.dialog.show([
-            "I've said my piece. Go on now, and watch the road.",
-        ], speaker="Rev. Crane", voice="blip_low", portrait="preacher")
+    from ui.conversation import open_conversation
+    open_conversation(game, npc, CRANE_CONVO)
 
 
 # ---- The Kid: Toby ----
@@ -278,38 +404,200 @@ def toby_dialogue(game, npc):
             "Don't go in there, mister.",
         ], speaker="Toby", voice="blip_kid", portrait="toby")
         return
-    count = save.arg("kid_count", 0) + 1
-    save.set_arg("kid_count", count)
-    if count == 1:
-        game.dialog.show([
-            "My mom hums a song that doesn't stop. She doesn't know "
-            "she's doing it.",
-        ], speaker="Toby", voice="blip_kid", portrait="toby")
-    elif count == 2:
-        game.dialog.show([
-            "I keep biting my tongue. To check.",
-            "[c=dim]It still bleeds right.[/c]",
-        ], speaker="Toby", voice="blip_kid", portrait="toby")
-    elif count == 3:
-        game.dialog.show([
-            "I don't walk past the church anymore.",
-            "[c=dim]The door is open. They left it open.[/c]",
-        ], speaker="Toby", voice="blip_kid", portrait="toby")
-    elif count == 4:
-        game.dialog.show([
-            "If you find a way out, don't tell me.",
-            "[c=dim]I tried to lie yesterday. My mouth wouldn't.[/c]",
-        ], speaker="Toby", voice="blip_kid", portrait="toby")
-    else:
-        game.dialog.show([
-            "[c=dim]The boy is watching the corn line.[/c]",
-        ], speaker="", voice="blip_soft", portrait="toby")
+    from ui.conversation import open_conversation
+    open_conversation(game, npc, TOBY_CONVO)
+
+
+# Ask-verb conversion (TODO #1 expand): everything Toby VOLUNTEERS (the
+# witness account, the playscript flinch, the school warning) fires ahead
+# of the menu in toby_dialogue above; the menu is what the PI chooses to
+# ask a child, and the old visit-ladder lines are now his answers.
+TOBY_CONVO = {
+    "id":    "toby",
+    "name":  "Toby",
+    "voice": "blip_kid",
+    "pi_voice": "blip_soft",
+    "prompt": "Toby watches the corn line while you think.",
+    "leave":  "That's all for now.",
+    "greet": {
+        "flag": "toby_greeted",
+        "beats": [
+            ("npc", "You came back. Grownups mostly don't. Not a second "
+                    "time."),
+            ("npc", "You can ask me stuff. I see things. Nobody figures a "
+                    "kid for watching."),
+        ],
+    },
+    "exchanges": _opener_exchanges(
+        intro_beats=[
+            ("npc", "A detective. For real? Like on the TV."),
+            ("npc", "Nobody here would hire one. Asking questions is what "
+                    "you stop doing, if you live here."),
+            ("pi", "You're talking to me."),
+            ("npc", "[c=dim]I know. Don't tell my mom.[/c]"),
+        ],
+        photo_beats=[
+            ("npc", "That's her. The lady from the lodge. I already told "
+                    "you where she went."),
+            ("npc", "Down where the ground is all broke open, past the "
+                    "river. You can't walk there. I tried to find it "
+                    "again in the daytime and the field just put me back."),
+            ("npc", "[c=dim]Keep her picture put away. Some of them look "
+                    "at what you carry.[/c]"),
+        ],
+    ) + [
+        {
+            "key": "home",
+            "q": "How are things at home? Anything strange?",
+            "label": "Anything strange at home?",
+            "once": True,
+            "beats": [
+                ("npc", "My mom hums a song that doesn't stop. She doesn't "
+                        "know she's doing it."),
+                ("npc", "I keep biting my tongue. To check."),
+                ("npc", "[c=dim]It still bleeds right.[/c]"),
+            ],
+        },
+        {
+            "key": "church",
+            "q": "Do you go by the church much?",
+            "once": True,
+            "beats": [
+                ("npc", "I don't walk past the church anymore."),
+                ("npc", "[c=dim]The door is open. They left it open.[/c]"),
+            ],
+        },
+        # Earned by the fold: the promise only means anything once he
+        # knows the town does not let go.
+        {
+            "key": "way_out",
+            "q": "If I find a way out of this town, I'll come get you "
+                 "first.",
+            "label": "If I find a way out, I'll come get you.",
+            "avail": lambda g: g.save.flag("voice_fold_heard"),
+            "once": True,
+            "beats": [
+                ("npc", "If you find a way out, don't tell me."),
+                ("npc", "[c=dim]I tried to lie yesterday. My mouth "
+                        "wouldn't.[/c]"),
+            ],
+        },
+        {
+            "key": "holding_up",
+            "q": "You holding up okay, kid?",
+            "beats": [
+                ("npc", "I'm keeping count of things. Somebody has to."),
+            ],
+        },
+    ],
+}
 
 
 # ---- Hettie (the store) ----
 # The quiet resister behind the counter -- the same Hettie who keeps the
 # shop open out in town. She has nothing left to sell (the shop is gutted
 # of its old vendor items) -- her value is what she risks saying out loud.
+# Ask-verb conversion (TODO #1 expand): her involuntary beats (the
+# preacher, the memory of the girl, the paper trade) stay volunteered
+# one-shots ahead of the menu; the old visit ladder is now questions the
+# PI chooses to put to her.
+
+
+def _hettie_saw_photo(game):
+    game.save.set_flag("hettie_saw_photo", True)
+
+
+def hettie_on_leave(game):
+    """Her old closing beat, kept as the one-time last word: she has
+    already said more than is safe."""
+    if game.save.flag("hettie_farewell_hook"):
+        return None
+    game.save.set_flag("hettie_farewell_hook", True)
+    return [
+        ("npc", "(She shakes her head, just slightly. She has said too "
+                "much already.)"),
+    ]
+
+
+HETTIE_CONVO = {
+    "id":    "hettie",
+    "name":  "Hettie",
+    "voice": "blip_high",
+    "pi_voice": "blip_soft",
+    "prompt": "Hettie keeps one eye on the window.",
+    "leave":  "That's all for now.",
+    "greet": {
+        "flag": "hettie_greeted",
+        "beats": [
+            ("npc", "We're open. Lord knows why, but we're open."),
+            ("npc", "There's nothing on the shelves worth your money. If "
+                    "it's talk you want, keep your voice down. In here."),
+        ],
+    },
+    "on_leave": hettie_on_leave,
+    "exchanges": _opener_exchanges(
+        intro_beats=[
+            ("npc", "A missing girl. And you came HERE after her."),
+            ("npc", "[c=dim]Can't help you. Not the way you want. Shelves "
+                    "are bare. Till's been empty since the new year. "
+                    "Nobody buys. Nobody sells.[/c]"),
+            ("npc", "I'll say this much. Then nothing. Don't go where they "
+                    "tell you it's safe. I've got a family. Look around."),
+        ],
+        photo_beats=[
+            ("npc", "(She looks. Not long. Long enough.)"),
+            ("npc", "Faces come through this shop. I stopped keeping them."),
+            ("pi", "[c=dim]She knew the face. She counted the cost of "
+                   "saying so before I finished asking.[/c]"),
+        ],
+        on_photo=_hettie_saw_photo,
+    ) + [
+        # Earned by the intro: she only said "don't go where they tell
+        # you it's safe" to a man who told her what he is.
+        {
+            "key": "safe",
+            "q": "You said don't go where they tell me it's safe. Who is "
+                 "'they'?",
+            "label": "Who is 'they'?",
+            "avail": lambda g: g.save.flag("convo_hettie_intro_asked"),
+            "beats": [
+                ("npc", "You haven't gone quiet. Like the others. Good. "
+                        "Then listen once."),
+                ("npc", "[c=dim]Don't trust the easy ones. The first to "
+                        "make peace, they went the soonest.[/c]"),
+                ("npc", "That's the whole answer you're getting to that."),
+            ],
+        },
+        # Opens once she has seen the photograph and swallowed the lie:
+        # the counter remembers its customers, and he is not the first to
+        # come asking.
+        {
+            "key": "others",
+            "q": "You've had people ask after faces before me. Haven't you?",
+            "label": "Others came asking before me.",
+            "avail": lambda g: g.save.flag("hettie_saw_photo"),
+            "beats": [
+                ("npc", "I sold to the girl too. And the ones before her."),
+                ("npc", "[c=dim]None of them came back to buy again. "
+                        "You're the first.[/c]"),
+            ],
+        },
+        # Earned by the fold: he only asks about a way OUT once a local
+        # has told him there isn't one (the looping roads).
+        {
+            "key": "way_out",
+            "q": "If there were a way out of this town, would you tell me?",
+            "label": "Is there a way out?",
+            "avail": lambda g: g.save.flag("voice_fold_heard"),
+            "beats": [
+                ("npc", "(She glances at the door before she speaks.)"),
+                ("npc", "If you find the way out. The real one. You don't "
+                        "owe this town a goodbye. Just go."),
+            ],
+        },
+    ],
+}
+
 
 def hettie_dialogue(game, npc):
     save = game.save
@@ -319,7 +607,7 @@ def hettie_dialogue(game, npc):
     # we've already met her -- it would be too personal for first contact.
     if (save.flag("preacher_doomed")
             and not save.flag("shop_preacher_noticed")
-            and save.arg("shop_count", 0) >= 1):
+            and save.flag("hettie_greeted")):
         save.set_flag("shop_preacher_noticed", True)
         game.dialog.show([
             "Heard about the preacher. I won't be saying his prayers in "
@@ -331,7 +619,7 @@ def hettie_dialogue(game, npc):
     # real). Mara passed through Brimley for a season before she went
     # below; Hettie knew her the way a counter knows anyone. NARRATIVE
     # §2: she does NOT know Walter; this is the girl, never the family.
-    if (save.arg("shop_count", 0) >= 1
+    if (save.flag("hettie_greeted")
             and not save.flag("hettie_mara_memory")
             and game.player.inventory.has("mom_notebook")):
         save.set_flag("hettie_mara_memory", True)
@@ -356,7 +644,7 @@ def hettie_dialogue(game, npc):
     # legible, and trading ammo for one is how starved for word they
     # are. Fires once, after she's met you (her first conversation is
     # too wary for it).
-    if (save.arg("shop_count", 0) >= 1
+    if (save.flag("hettie_greeted")
             and not save.flag("newspaper_traded")
             and game.player.inventory.has("newspaper")):
         save.set_flag("newspaper_traded", True)
@@ -378,72 +666,136 @@ def hettie_dialogue(game, npc):
             "she'd given up on.[/c]",
         ], speaker="Hettie", voice="blip_high", portrait="hettie")
         return
-    count = save.arg("shop_count", 0) + 1
-    save.set_arg("shop_count", count)
-    if count == 1:
-        plain = [
-            "You're the one asking after the Blaine girl. Keep your voice "
-            "down. In here.",
-            "[c=dim]Can't help you. Not the way you want. Shelves are bare. "
-            "Till's been empty since the new year. Nobody buys. Nobody "
-            "sells.[/c]",
-            "I'll say this much. Then nothing. Don't go where they tell you "
-            "it's safe. I've got a family. Look around.",
-        ]
-        game.dialog.show(escalate(game, low=plain, mid=plain, high=plain),
-                         speaker="Hettie", voice="blip_high",
-                         portrait="hettie")
-        return
-    if count == 2:
-        game.dialog.show([
-            "Back again. Good. You haven't gone quiet. Like the others.",
-            "[c=dim]Don't trust the easy ones. The first to make peace, "
-            "they went the soonest.[/c]",
-        ], speaker="Hettie", voice="blip_high", portrait="hettie")
-        return
-    if count == 3:
-        game.dialog.show([
-            "I sold to the girl too. And the ones before her.",
-            "[c=dim]None of them came back to buy again. You're the first.[/c]",
-        ], speaker="Hettie", voice="blip_high", portrait="hettie")
-        return
-    if count == 4:
-        game.dialog.show([
-            "[c=dim]She glances at the door before she speaks.[/c]",
-            "If you find the way out. The real one. You don't owe this "
-            "town a goodbye. Just go.",
-        ], speaker="Hettie", voice="blip_high", portrait="hettie")
-        return
-    if count == 5:
-        game.dialog.show([
-            "[c=dim]She shakes her head, just slightly. She's said too "
-            "much already.[/c]",
-        ], speaker="Hettie", voice="blip_high", portrait="hettie")
-        return
-    game.dialog.show([
-        "[c=dim]She sits behind the counter, watching the window.[/c]",
-    ], speaker="", voice="blip_soft", portrait="hettie")
+    from ui.conversation import open_conversation
+    open_conversation(game, npc, HETTIE_CONVO)
 
 
 # ---- The Sheriff: Hollis Vane ----
+# Ask-verb conversion (TODO #1 expand; the trust/despair arc itself is
+# ticket #2a and slots in on top of this later). A LOCAL, born here, the
+# last holdout, the town's one real investigator (NARRATIVE §2). Hopeful
+# but mistrusting: the PI is one more outsider who drove in, the exact
+# profile of every cultist, so he watches first. He did NOT kill the car
+# (the fold did) and he carries the plain truth about it; the badge is
+# just clothing now, and he keeps wearing it.
+
+
+def _vane_car_told(game):
+    """The car answer is a fold account (looping roads, nothing with an
+    engine leaves). File the PI's fold note WITHOUT the chained narrator
+    reflection -- the exchange carries the reflection as its own closing
+    beat, and the conversation owns the float's on_complete chain."""
+    if hasattr(game, "_fold_mentioned"):
+        game._fold_mentioned("Sheriff Vane", reflect=False)
+
+
+def vane_on_leave(game):
+    """A last word the first time the PI walks out of the office. The
+    holdout's hope, said sideways. Fires once."""
+    if game.save.flag("vane_farewell_hook"):
+        return None
+    game.save.set_flag("vane_farewell_hook", True)
+    return [
+        ("npc", "Hey. If you do find her, don't bring her by the office. "
+                "There's no report worth filing anymore."),
+        ("npc", "Just get her out. If you find a way that works, that is. "
+                "And then you come tell me what it was."),
+    ]
+
+
+VANE_CONVO = {
+    "id":    "vane",
+    "name":  "Sheriff Vane",
+    "voice": "blip_gruff",
+    "pi_voice": "blip_soft",
+    "prompt": "Vane waits you out, thumbs in his belt.",
+    "leave":  "That's all for now.",
+    "greet": {
+        "flag": "vane_greeted",
+        "beats": [
+            ("npc", "Sheriff Vane. That's the whole welcome I've got left."),
+            ("npc", "Nobody comes up that north road anymore. Then you. "
+                    "So you'll forgive me if I look at you a while before "
+                    "I decide anything."),
+        ],
+    },
+    "on_leave": vane_on_leave,
+    "exchanges": _opener_exchanges(
+        intro_beats=[
+            ("npc", "A detective. Hired and paid, all the way up here."),
+            ("npc", "The ones who came before you walked in friendly and "
+                    "asking after something too. Every last one of them. "
+                    "You understand my position."),
+            ("pi", "If I were one of them, would I be standing in the "
+                   "law's office announcing myself?"),
+            ("npc", "No. No, they never had questions. That's the one "
+                    "thing you've got going for you."),
+            ("npc", "[c=dim]I'd head home if I were you. I'm supposed to "
+                    "say that.[/c]"),
+        ],
+        photo_beats=[
+            ("npc", "(He takes it to the window light and works it corner "
+                    "to corner, a lawman's look.)"),
+            ("npc", "I can't put a day or a door to her. The new folk came "
+                    "in numbers and they keep to their own. She'd have "
+                    "been one of them."),
+            ("npc", "They filled the school, the barn, the lodge. Then one "
+                    "night those rooms were empty, all at once. Wherever "
+                    "your girl is, that's the direction. I can't tell you "
+                    "where it GOES."),
+            ("pi", "[c=dim]More of an answer than anyone else in this "
+                   "town has risked. He watched those rooms. He is still "
+                   "working it.[/c]"),
+        ],
+    ) + [
+        {
+            "key": "car",
+            "q": "My car died at the lodge steps the night I drove in. It "
+                 "won't turn over now.",
+            "label": "My car died the night I drove in.",
+            "on_ask": _vane_car_told,
+            "beats": [
+                ("npc", "Won't start. Won't ever. Nothing with an engine "
+                        "leaves Brimley."),
+                ("pi", "Engines don't all quit at once. Somebody got to it."),
+                ("npc", "Nobody touched your car. I know how that sounds. "
+                        "I've watched men tear three trucks down to the "
+                        "block hunting the part that failed. There is no "
+                        "part."),
+                ("npc", "[c=dim]It's the town.[/c]"),
+                ("pi", "[c=dim]He said it flat. Like weather. A town does "
+                       "not talk that way about nothing. So.[/c]"),
+            ],
+        },
+        {
+            "key": "town",
+            "q": "What happened to this town, Sheriff?",
+            "label": "What happened to this town?",
+            "beats": [
+                ("npc", "I was born here. So was my dad."),
+                ("npc", "They started showing up in the summer. The new "
+                        "ones. Polite folks. After a while the road "
+                        "stopped going anywhere."),
+                ("npc", "[c=dim]I tell people to leave. I haven't been "
+                        "able to in months.[/c]"),
+            ],
+        },
+    ],
+}
+
 
 def sheriff_dialogue(game, npc):
-    """The Sheriff -- a LOCAL, born here, broken (NARRATIVE §2). Not a
-    believer, not a cultist. He didn't disable the car and can't undo
-    what has. He tells the PI to leave knowing neither of them can. A
-    witness who can't help; the badge is just clothing now. Escalates
-    over visits: weary warning -> the car (not his doing) -> the town's
-    history.
-    The preacher he couldn't save is a one-shot, gated on the player
-    having SEEN the church floor (preacher_body_seen) -- it used to sit
-    at visit 4, where it could announce the murder before it happened."""
+    """The Sheriff -- Hollis Vane, the last holdout (NARRATIVE §2). The
+    murder he can't report stays a VOLUNTEERED one-shot ahead of the
+    menu, gated on the player having SEEN the church floor
+    (preacher_body_seen) and on having met him -- he can never announce
+    the killing before it is found, and never as a first impression.
+    Everything else is the organic ask verb (VANE_CONVO)."""
     save = game.save
     _cult_tell(game, "sheriff")
-    # The murder he can't report. Fires once, on the first visit after
-    # the player has found the body -- but never as a first impression.
     if (save.flag("preacher_body_seen")
             and not save.flag("vane_preacher_noticed")
-            and save.arg("vane_count", 0) >= 1):
+            and save.flag("vane_greeted")):
         save.set_flag("vane_preacher_noticed", True)
         game.dialog.show([
             "They killed the preacher.",
@@ -454,38 +806,8 @@ def sheriff_dialogue(game, npc):
             "nobody in town has.[/c]",
         ], speaker="Sheriff Vane", voice="blip_gruff", portrait="sheriff")
         return
-    n = save.arg("vane_count", 0) + 1
-    save.set_arg("vane_count", n)
-    if n == 1:
-        # Local, born here, weary. Not a believer. The line "head home"
-        # is muscle memory of the job he used to do.
-        game.dialog.show([
-            "Sheriff Vane.",
-            "You're the one asking after the Blaine girl.",
-            "[c=dim]I'd head home if I were you. I'm supposed to say that.[/c]",
-        ], speaker="Sheriff Vane", voice="blip_gruff", portrait="sheriff")
-    elif n == 2:
-        # The car. He did NOT kill it -- the fold did. He's seen it
-        # happen before. He's seen it many times.
-        game.dialog.show([
-            "Saw your car out by the lodge.",
-            "Won't start. Won't ever. Nothing with an engine leaves Brimley.",
-            "[c=dim]I didn't touch it. None of us did. It's the town.[/c]",
-        ], speaker="Sheriff Vane", voice="blip_gruff", portrait="sheriff")
-        if hasattr(game, "_fold_mentioned"):
-            game._fold_mentioned("Sheriff Vane")
-    elif n == 3:
-        # The town is gone. He's local. He watched it happen.
-        game.dialog.show([
-            "I was born here. So was my dad.",
-            "They started showing up in the summer. The new ones. "
-            "Polite folks. After a while the road stopped going anywhere.",
-            "[c=dim]I tell people to leave. I haven't been able to in months.[/c]",
-        ], speaker="Sheriff Vane", voice="blip_gruff", portrait="sheriff")
-    else:
-        game.dialog.show([
-            "[c=dim]The badge is just clothing now. He keeps wearing it.[/c]",
-        ], speaker="", voice="blip_soft", portrait="sheriff")
+    from ui.conversation import open_conversation
+    open_conversation(game, npc, VANE_CONVO)
 
 
 # ---- The Clerk: Mr. Sable ----
@@ -568,6 +890,7 @@ SABLE_CONVO = {
     "exchanges": [
         {
             "key": "mara",
+            "label": "I'm looking for someone.",
             "q": "I'm looking for a woman. Mara Blaine. She'd have come "
                  "through here.",
             "beats": [
@@ -607,6 +930,7 @@ SABLE_CONVO = {
         # where the old books really went.
         {
             "key": "cellar",
+            "label": "About that cellar of yours.",
             "q": "A lot of doors in this town stay locked. You keep a cellar "
                  "under this place?",
             "beats": [
@@ -623,6 +947,7 @@ SABLE_CONVO = {
         # ordinary winter and never lets the word "trapped" near it.
         {
             "key": "sealed",
+            "label": "Nothing leaves this town. Why?",
             "q": "Nothing leaves this town. No car, no truck, no mail since "
                  "January. That's three months. What happened here?",
             "beats": [
@@ -637,6 +962,7 @@ SABLE_CONVO = {
         {
             "key": "car",
             "q": "My car won't start. I'm told no car in this town will.",
+            "label": "My car won't start.",
             "beats": [
                 ("npc", "The roads are not going anywhere tonight. Neither "
                         "are you. I would not fret over the car."),
@@ -651,6 +977,7 @@ SABLE_CONVO = {
         # thins: he stops pretending to keep the paperwork, keeps the promise.
         {
             "key": "checkouts",
+            "label": "Nobody ever signs out.",
             "q": "I read your register. Every guest signs in. Not one ever "
                  "signs out.",
             "avail": lambda g: g.save.flag("evidence_the_ledger"),
@@ -668,6 +995,7 @@ SABLE_CONVO = {
         # he comes to admitting he knows, and still no scheme is confessed.
         {
             "key": "her_state",
+            "label": "When did she change?",
             "q": "Her journal reads like someone already halfway out a "
                  "door. When did she change?",
             "avail": lambda g: g.save.flag("evidence_maras_journal"),
@@ -686,6 +1014,7 @@ SABLE_CONVO = {
         # out he DID say it, plainly, and the PI simply heard hospitality.
         {
             "key": "the_fold",
+            "label": "The road out brought me back.",
             "q": "I walked the road out of town. Followed it two hours, due "
                  "west. It set me back down past this window.",
             "avail": lambda g: any(
@@ -705,6 +1034,7 @@ SABLE_CONVO = {
         # when he crosses the threshold, so it is signposted, not a guess.
         {
             "key": "the_way_down",
+            "label": "You've been holding something for me.",
             "q": "You've kept something back from me since I walked in. "
                  "I'll take it now.",
             "once": True,

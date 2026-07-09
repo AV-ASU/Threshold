@@ -464,6 +464,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         self.float_speech.speaker = None
         self.narration.clear()
         self._speaking_npc = None
+        self._convo = None
         self._chant_t = 0.0
         self._breath_t = 0.0
         self._heartbeat_t = 0.0
@@ -811,10 +812,12 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         # A floating conversation's speaker was rebuilt away with the
         # scene -- drop the caption on load. Narration goes too: an
         # examine line (and any chained callback) belongs to the room
-        # it fired in.
+        # it fired in. An organic conversation (ui/conversation) dies
+        # with its partner for the same reason.
         self.float_speech.active = False
         self.float_speech.speaker = None
         self.narration.clear()
+        self._convo = None
         self._build_fold_cache()
         self._build_door_views()
         # Fold pursuit hand-off: if the player fled here through a fold with

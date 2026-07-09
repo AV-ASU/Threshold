@@ -37,6 +37,9 @@ An EXCHANGE (one askable question):
     {
       "key":    "mara",                # unique within the conversation
       "q":      "I'm looking for a woman. Mara Blaine.",  # the PI's line
+      "label":  "I'm looking for someone.",  # optional SHORT menu text --
+                                       # the choice box is small; the full
+                                       # q still floats as the spoken line
       "avail":  lambda g: True,        # optional; offered only when true
       "once":   True,                  # drops from the menu once asked
       "on_ask": lambda g: ...,         # optional side effect when picked
@@ -62,10 +65,16 @@ class Conversation:
         self.queue = []          # pending beats in the current exchange
         self.current = None      # key of the exchange being played
         self._closing = False    # a leave-hook is playing; do not reopen
+        # True from start() until the talk ends (leave picked, the leave
+        # hook finishes, or the partner check below breaks it off). The
+        # world sim reads this to hold the partner in place (the talk-hold
+        # in Scene.update), so it must go False on EVERY exit path.
+        self.active = False
 
     # ---- entry ----------------------------------------------------------
     def start(self):
         """Run the one-time greeting (if unspent), then open the menu."""
+        self.active = True
         greet = self.convo.get("greet")
         if greet and not self.game.save.flag(greet["flag"]):
             self.game.save.set_flag(greet["flag"], True)
@@ -73,6 +82,34 @@ class Conversation:
             self._step()
         else:
             self._menu()
+
+    # ---- the partner check ----------------------------------------------
+    def _partner_here(self):
+        """True while the talk still has both parties: the NPC alive and
+        outside (not a homebody behind their door), and the player within
+        earshot of the desk/counter/step. Checked before the menu REOPENS
+        after an exchange -- so walking off mid-answer ends the talk
+        quietly instead of yanking the player back into a modal menu from
+        across the room. (A stub with no position, as the harnesses use,
+        always passes.)"""
+        npc = self.npc
+        if npc is None:
+            return True
+        if (not getattr(npc, "alive", True)
+                or getattr(npc, "_is_corpse", False)
+                or getattr(npc, "_inside", False)):
+            return False
+        try:
+            dx = npc.x - self.game.player.x
+            dy = npc.y - self.game.player.y
+        except (AttributeError, TypeError):
+            return True
+        return (dx * dx + dy * dy) <= 72 * 72
+
+    def _end(self):
+        self.active = False
+        if getattr(self.game, "_convo", None) is self:
+            self.game._convo = None
 
     # ---- the question menu ---------------------------------------------
     def _offered(self, ex):
@@ -86,7 +123,11 @@ class Conversation:
 
     def _menu(self):
         avail = [ex for ex in self.convo["exchanges"] if self._offered(ex)]
-        labels = [ex["q"] for ex in avail] + [self.convo.get("leave", "Leave.")]
+        # The menu shows the SHORT label when one is authored (the choice
+        # box is small); picking it still floats the full q as the PI's
+        # spoken line.
+        labels = ([ex.get("label", ex["q"]) for ex in avail]
+                  + [self.convo.get("leave", "Leave.")])
 
         def _pick(idx):
             if idx >= len(avail):
@@ -99,6 +140,8 @@ class Conversation:
                     self.current = None
                     self.queue = list(beats)
                     self._step()
+                else:
+                    self._end()
                 return
             ex = avail[idx]
             self.current = ex["key"]
@@ -141,6 +184,13 @@ class Conversation:
                 self.current = None
             if self._closing:
                 self._closing = False        # leave-hook done; talk ends
+                self._end()
+                return
+            # The partner walked off (or the player did) while the answer
+            # played out: end the talk quietly rather than reopening a
+            # modal menu across the room.
+            if not self._partner_here():
+                self._end()
                 return
             self._menu()
             return

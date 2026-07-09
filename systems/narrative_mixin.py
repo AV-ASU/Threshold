@@ -320,13 +320,18 @@ class NarrativeMixin:
         self.dialog.show(spec["beat"], speaker="", voice="blip_soft",
                          portrait="narrator")
 
-    def _fold_mentioned(self, name):
+    def _fold_mentioned(self, name, reflect=True):
         """The FIRST time any local describes the fold -- the roads that loop,
         the town you can't drive out of -- the PI files a note and a short
         reflection. One-shot globally (flag `voice_fold_heard`); the note names
         whoever told him. A NOTE, never evidence. §1b-safe: it is the SPATIAL
         fold (perceptible -- looping roads), never the door/cosmology. Chains
-        the reflection off the NPC's line so it lands after they finish."""
+        the reflection off the NPC's line so it lands after they finish.
+
+        `reflect=False` files the note only: an organic conversation
+        (ui/conversation) drives itself through the float's on_complete
+        chain, so it must NOT be hijacked here -- the exchange carries the
+        PI's reflection as its own closing beat instead."""
         if self.save is None or self.save.flag("voice_fold_heard"):
             return
         self.save.set_flag("voice_fold_heard", True)
@@ -348,6 +353,9 @@ class NarrativeMixin:
             self.save.set_arg("notes", notes)
             if hasattr(self, "_flash_notebook"):
                 self._flash_notebook()
+
+        if not reflect:
+            return
 
         def _beat():
             self.dialog.show([
