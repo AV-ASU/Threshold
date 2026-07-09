@@ -237,7 +237,7 @@ class NarrativeMixin:
                     "has been waiting for you to know that much.")
         if self._evidence_count() >= 1:
             return ("Pull the threads. The register at the Lodge, the "
-                    "barn she slept in, the well the boy watched. The "
+                    "barn she slept in, the river the boy watched. The "
                     "town talks around what it knows.")
         return ("Ask the town about the Blaine girl. Start where anyone "
                 "starts. The store, the law, the church.")

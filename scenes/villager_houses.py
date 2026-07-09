@@ -7,7 +7,7 @@ from entities.npc import NPC
 from entities.decoration import Decoration
 from .base import Scene
 from .dialogue import (
-    preacher_dialogue, sheriff_dialogue, _evidence,
+    preacher_dialogue, sheriff_dialogue,
 )
 
 
@@ -186,47 +186,23 @@ def build_church():
 
 def old_man_house_on_enter(game, scene):
     """Once the Preacher damns himself (the flock exchange's PRESS branch
-    sets `preacher_doomed`; scenes/dialogue.py CRANE_CONVO), the cult
-    silences him for naming them. The scene is rebuilt each load, so the
+    sets `preacher_doomed`; scenes/dialogue.py CRANE_CONVO), he leaves his
+    pulpit and goes to the river after his flock, believing they can be
+    talked home (2026-07 rework; the body is found on the Brimley
+    riverbank, scenes/brimley.py). The scene is rebuilt each load, so the
     builder re-adds the live Preacher every time; here we remove him and
-    lay out his remains + the cross (evidence #4)."""
+    let the emptied church point at the water."""
     if not game.save.flag("preacher_doomed"):
         return
-    # The player has now seen what's on the church floor. Sheriff Vane's
-    # murder one-shot (scenes/dialogue.py sheriff_dialogue) keys on this,
-    # so he can never announce the killing before the player finds it.
-    game.save.set_flag("preacher_body_seen", True)
     scene.npcs = [n for n in scene.npcs
                   if getattr(n, "tag", None) != "preacher"]
-    bx, by = 9 * TILE + 16, 4 * TILE + 16
-    scene.add_decoration(Decoration(bx - 6, by + 9, "bloodstain"))
-    scene.add_decoration(Decoration(bx + 9, by - 6, "gore"))
-    scene.add_decoration(Decoration(bx, by, "body"))
-    scene.add_npc(NPC(bx, by, "The Preacher", "_invisible",
-                      voice="blip_soft", portrait="narrator",
-                      dialogue_fn=preacher_body_examine,
-                      movement="idle", solid=True, tag="preacher_body"))
-
-
-def preacher_body_examine(game, npc):
-    """E on the Preacher's remains: take his cross + log evidence #4 once."""
-    if game.save.flag("cross_taken"):
-        game.dialog.show(["What's left of him. The flies have found it."],
-                         speaker="", voice="blip_soft", portrait="narrator")
-        return
-    game.save.set_flag("cross_taken", True)
-    game.player.inventory.add("cross", 1)
-    game.audio.play("pickup_rare", 0.7)
-    game.audio.play("low_pulse", 0.5)
-    _evidence(game, "the_preacher", [
-        "The Preacher. He watched the strangers drift into town and vanish "
-        "into the corn. And he said so, every Sunday, to the sheriff's "
-        "face.",
-        "They opened him for it, here on his own floor. He's gone to a "
-        "slick the cold won't set.",
-        "His collar's still white. His cross lies in the mess. You take it.",
-        "[c=dim]This is what naming them costs.[/c]",
-    ])
+    if not game.save.flag("church_empty_seen"):
+        game.save.set_flag("church_empty_seen", True)
+        game.dialog.show([
+            "[c=dim]The lectern stands empty. The stove is cold.[/c]",
+            "[c=dim]Mud on the aisle boards, dried in a line toward the "
+            "door. River mud.[/c]",
+        ], speaker="", voice="blip_soft", portrait="narrator")
 
 
 def build_sheriff_office():

@@ -434,14 +434,16 @@ smaller-grid perf pass is the shippable core of this.
 
 - **[Opus]** **Brimley smaller-grid perf pass** *(the one salvaged piece of the parked reshape, #8)* — cut `w`/`h` from 100×100 toward ~64–72 and re-pack the 7 buildings + well tighter, WITHOUT changing the shape or the boundary (the square + torus wrap + fog rim all stay). This is the real FPS/tedium win (the one-time whole-map tilt bake, `scenes/base.py` `_tilt_fullmap`, ~6000 tiles). Verify: `tools/profile_brimley.py` before/after, a `tools/capture_world.py` tilt capture, full `python tests/run_all.py` gate.
 - **[Fable + Opus]** **Rev. Asa Crane murder reveal + sprite** *(NARRATIVE.md §2; feeds off the #1 provoke pilot)* — Fable for the reveal writing + staging, Opus for the procedural corpse sprite. Punch up
-  the `preacher_doomed` death, three parts. (1) **New discovery location**: the
-  provoke choice (item #1 pilot) sends him to the cult's ground, so find his body
-  AWAY from the church — e.g. the well/grove edge, reaching for the souls he
-  couldn't save — a real investigative find, not a pop on re-entry. (2)
+  the `preacher_doomed` death. ~~(1) New discovery location~~ **DONE
+  (2026-07):** the doom sends Crane out of his church (the emptied nave's
+  one-shot river-mud line points at the water) and his body is found on the
+  **Brimley riverbank** (`_brimley_on_enter` / `_preacher_bank_pos`;
+  `preacher_body_seen` sets on walking up, so Vane's + Hettie's one-shots can
+  never announce an unfound killing). Still open: (2)
   **Bespoke sprite**: the current corpse is a placeholder medieval knight
   (`_draw_body`: helmet + spear + tabard-grey) — replace with a gutted-preacher
   draw (dark palette, white collar, cross in the mess). (3) Stage the approach
-  (wrongness before sight, long sightline). Art + placement + a location move;
+  (wrongness before sight, long sightline). Art only now;
   lore unchanged.
 - **[Opus]** **Held-weapon offset per camera yaw** *(was HANDCRAFT_BACKLOG 3b)* — `draw_axe_held` reads at rest; the one remaining note is an eyeball pass on the equipped-weapon offset at every camera yaw so it never floats off the hand. Verify with a tilt capture across yaws.
 - **[Fable + Opus]** **The grove reads north of Brimley, the river in view** *(2026-07 canon ruling)* — `effigy_grove` is the mouth of the cult's mine, north of town above the river (NARRATIVE §5), and the congregation walked there openly before the rite hid it; the scene art is still a bare corn crop circle. Dress the rim so the river reads below it (the water in view, the dug mouth framing the descent pane) and the northern placement lands without a line of dialogue. Decoration only; the rite, the gates, and the pane stay exactly as they are. Verify with a `tools/capture_world.py` tilt capture + the full `python tests/run_all.py` gate.

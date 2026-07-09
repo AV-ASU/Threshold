@@ -7,6 +7,34 @@
 > directly against source. No code was changed. Line numbers are as of this
 > audit's commit.
 
+## Resolutions (2026-07, same branch)
+
+Maintainer rulings applied in the follow-up commit:
+
+- **A1 FIXED** — the Mask temptation chains off whichever dialog channel is
+  actually live (`scenes/well.py`); `descent_mask` fires again.
+- **A2 WAIVED** — nonissue: the mutation/turn layer is being removed, which
+  unblocks Toby's warning.
+- **A3 FIXED + reworked** — Hettie now keys on `preacher_body_seen`; and per
+  the ruling, Crane no longer dies in his church: the doom sends him to the
+  river after his flock, the emptied church's river-mud line points there,
+  and the body is found on the Brimley riverbank (evidence #4 moved;
+  NARRATIVE §2/§4 updated).
+- **A4 RESOLVED doc-side** — BREAK stays wordless by design; the locked line
+  was removed from NARRATIVE §6 (the cage-for-Him truth belongs to the
+  cult's own notes, not the ending).
+- **A5 FIXED** — the notebook lead now reads "the river the boy watched."
+- **B1 FIXED** — the ageless staff photo is cut (dialogue + lodge cellar
+  registration removed).
+- **B2 FIXED** — Crane never mentions the underground; he carries only the
+  rumor the boy Toby told him (they walked off down the river one night).
+- **B3 partly FIXED** — "cut the family off two years ago" deleted from the
+  case intake; the Invitation note reads "Since the winter" (Sable received
+  the envelope shortly after the seal; NARRATIVE §2 updated). Remaining B3
+  items (ledger "not one ever signs out" lines, Hettie's January Mara
+  sighting, the chalk_deep stair note, the Deep Stair HUD label) and
+  everything from B4 onward await rulings.
+
 ## Verdict in one paragraph
 
 The spine is in excellent shape: the dash hard rule passes repo-wide (AST

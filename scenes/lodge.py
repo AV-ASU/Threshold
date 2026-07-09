@@ -13,7 +13,7 @@ from constants import TILE
 from entities.npc import NPC
 from entities.decoration import Decoration
 from .base import Scene, chest_interact
-from .dialogue import (basement_photo_dialogue, clerk_dialogue, _evidence,
+from .dialogue import (clerk_dialogue, _evidence,
                        sable_on_death)
 
 
@@ -278,8 +278,8 @@ def bedroom_interact(game):
             "it.)[/c]",
             "CLIENT: Walter Blaine. Wants his daughter found and brought "
             "home.",
-            "MARA BLAINE, 26. Cut the family off two years ago, 'found "
-            "religion' out past the highway. Last seen here, in Brimley.",
+            "MARA BLAINE, 26. 'Found religion' out past the highway. "
+            "Last seen here, in Brimley.",
             "The job: ask my questions, find the girl, drive home by "
             "morning.",
             "[c=dim]The drive in was easy. Then the engine died at the lodge "
@@ -716,25 +716,15 @@ def build_lodge_cellar():
         for xx in range(9, 13):
             objects_l[yy][xx] = "#"
     objects_l[1][10] = "U"          # ladder up to the kitchen
-    objects_l[5][8]  = "P"          # photo marker -- consumed at build
     objects = ["".join(r) for r in objects_l]
     sc = Scene("lodge_cellar", floor, objects, music="basement")
     sc.add_exit("U", "lodge", "from_lodge_cellar")
     sc.set_spawn("default", 9, 1)
     sc.set_spawn("from_lodge", 9, 1)
 
-    # A photograph -- placed via the P marker, with the photo
-    # NPC (basement_photo_dialogue) hosting interaction.
-    pos = sc.consume_marker("P")
-    if pos:
-        tx, ty = pos
-        photo = NPC(tx * TILE + 16, ty * TILE + 16, "Photo", "_invisible",
-                    voice="blip_soft", portrait="narrator",
-                    dialogue_fn=basement_photo_dialogue,
-                    movement="idle", solid=False, tag="basement_photo")
-        sc.add_npc(photo)
-        sc.add_decoration(Decoration(tx * TILE + 16, ty * TILE + 6,
-                                     "photo"))
+    # (The framed staff photograph is CUT, 2026-07: an unaged Clerk across
+    # "decades" was a second impossible thing -- NARRATIVE §1b keeps the
+    # impossible count at one, and Sable is a mortal local.)
 
     # Workbench in the SW corner (holds the woodshed key). The chest gets
     # its own chest prompt via basement_interact.

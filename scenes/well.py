@@ -866,9 +866,19 @@ def build_works_sign():
         ])
         # The TEMPTATION lands as the recognition finishes: with His face in
         # hand comes the certainty it is the way OUT -- the Spread off-ramp
-        # (NARRATIVE §6). Chained off the evidence dialog's completion so it
-        # reads as one continuous beat.
-        game.dialog.on_complete = lambda: game._descent_voice("descent_mask")
+        # (NARRATIVE §6). The recognition routes through whichever channel
+        # DialogueBox.show picked (the frameless caption for narrator text,
+        # the modal band otherwise), so chain off the channel that is
+        # actually live -- an on_complete parked on an inactive modal never
+        # fires (the 2026-07 audit found this beat dead).
+        _tempt = lambda: game._descent_voice("descent_mask")
+        if game.dialog.active:
+            game.dialog.on_complete = _tempt
+        elif getattr(game, "narration", None) is not None \
+                and game.narration.active:
+            game.narration.on_complete = _tempt
+        else:
+            _tempt()
 
     def _interact(game):
         sx, sy = sc._sign_pos
