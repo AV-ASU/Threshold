@@ -57,27 +57,61 @@ item on the list: engine exists, canon is settled, payoff is the core fantasy.**
   narration and filing a case NOTE (`_REVISIT_NUDGES` / `_collect_revisit`,
   hooked into `_evidence`; never inflates the evidence count). Wired on Sable
   after the envelope handoff preempt. Guarded by `tests/flow.py` §17c (17
-  checks) + the naming guard. **To expand:** give Toby / Hettie / Vane / Crane
-  their own `*_CONVO` data + `open_conversation`, keeping each NPC's story-
-  critical one-shots (witness, memory, handoff) firing first, and add
-  `_REVISIT_NUDGES` entries so their questions grow with the case too.
+  checks) + the naming guard.
 
-- **Two guaranteed options on EVERY townsperson (the case's front door).**
-  Regardless of who they are, the menu always offers (1) the PI **introducing
-  himself as a private investigator** (his job, and that he is looking for a
-  woman last heard headed to Brimley) and (2) **showing Mara's photograph** and
-  asking if they have seen or heard anything — intro first, photo second, a
-  shared pair injected into every NPC's `exchanges`. This is also the fiction's
-  fix: **news does not spread** (a town of ~six homebound locals), so no NPC
-  knows who the PI is or what he wants until he **says it** — greets must not
-  assume the case is known; the PI **initiates**. (Vane is a full ask-verb
-  conversion target — see the Vane arc ticket, #2a.)
+- **EXPANDED to all four remaining principals (2026-07).** Toby / Hettie /
+  Vane / Crane each carry their own `*_CONVO` + `open_conversation`, with
+  every story-critical one-shot (Toby's witness account + playscript + school
+  warning, Hettie's preacher reaction + Mara memory + paper trade, Vane's
+  murder-he-can't-report) still VOLUNTEERING itself ahead of the menu. Flow
+  polish shipped with it: the **talk-hold** (`scenes/base.py Scene.update` —
+  the conversation partner stands and faces the player instead of walking
+  their worker route mid-exchange; pursuit exempt), the **earshot guard**
+  (`ui/conversation.py _partner_here` — the menu only reopens while both
+  parties are still at the talk; walking off ends it quietly), and
+  `game._convo` is cleared on scene load / run reset. `_fold_mentioned` grew
+  `reflect=False` so a convo exchange (Vane's car answer) can file the fold
+  note without hijacking the float's `on_complete` chain — the exchange
+  carries the PI's reflection as its own closing beat. New `_REVISIT_NUDGES`:
+  `the_preacher` points the PI back at Vane. Guarded by `tests/flow.py` §17d.
+  **Still open:** `_REVISIT_NUDGES` entries for Hettie/Toby/Crane as their
+  case hooks land.
 
-- **Pilot beat — the Crane choice** (proof-of-concept for the verb): in his
-  2nd conversation, a two-option `show_choice` — provoke him (he goes off to
-  "save" the cult) vs hold him back. Canon fence (§1b): the cult can NOT be
-  saved or converted (they were answered, not deceived); Crane dies for
-  believing he can. The provoke branch feeds the murder reveal below.
+- ~~**Two guaranteed options on EVERY townsperson (the case's front door).**~~
+  **DONE for the principals (2026-07):** every principal's menu leads with
+  the shared pair (`_opener_exchanges`: (1) the PI **introducing himself as a
+  private investigator**, (2) **showing Mara's photograph**), intro first,
+  photo second, answers per-NPC; greets no longer assume the case is known —
+  the PI **initiates** (news does not spread). **Still open:** the Brimley
+  chorus (Old Pell, Mrs. Calder, Royce, Garrick, the newcomer woman) still
+  speak through `_brimley_voice` page-lists; give them the shared pair with
+  short per-NPC answers when they convert.
+
+- **The choice box is SMALL — menu labels are authored short (2026-07).**
+  An exchange carries an optional `label` (≤ ~44 chars, flow-guarded): the
+  menu shows the label, picking it still floats the full `q` as the PI's
+  spoken line. The option panel also sizes to its longest label and sits
+  ABOVE the dialog band (`ui/dialog.py _draw_choices`) so it never lies over
+  the prompt. And follow-up questions are **EARNED, not ambient**: Hettie's
+  "who is they" and Crane's flock question wait on the intro being asked
+  (`convo_<id>_intro_asked`); the way-out questions (Hettie, Toby) wait on a
+  local having told the PI about the looping roads (`voice_fold_heard`).
+
+- ~~**Pilot beat — the Crane choice**~~ **DONE (2026-07), upgraded to an
+  inline `ask` fork in CRANE_CONVO's flock exchange:** press him (he takes
+  the naming where they can hear it — `preacher_doomed` latches, evidence #4
+  proceeds, and the PI's culpability lands as a NOTE `crane_provoked`) vs
+  hold him back (the fire is only banked — the question stays open to press
+  later; he is never savable-by-conversion, §1b — the player just decides
+  whether HE is the one who points him). The provoke branch feeds the murder
+  reveal below. NOTE the behavior change: his doom is no longer an automatic
+  visit-2 counter. **The stall-breaker (R-gate finding):** only three beats
+  are surface-reachable (journal, Ledger, preacher) and the descent needs
+  three — so when the SECOND canonical beat lands with Crane met and still
+  un-provoked, the PI's interior voice points him back at the pulpit
+  (`_the_third_thread`, a NOTE, flow-guarded): the forced return reads as
+  the investigation forcing his hand. Fixed alongside it: a silently-filed
+  beat (`show=False`, the journal) now still lands its revisit nudges.
 
 ### 2. **[Fable + Opus]** The newspaper choice — pilot for the favor economy  *(planned with the user 2026-07; the broader favor economy stays direction-stage)*
 

@@ -324,18 +324,26 @@ class DialogueBox:
         flush_word()
 
     def _draw_choices(self, surf, box):
+        # The option panel sizes to its longest label (clamped to the
+        # screen) and sits ABOVE the band, so it never lies over the
+        # prompt text. Labels are authored short (ui/conversation
+        # `label`); the clamp is just the safety net.
+        rf = self.fonts["serif"]
         ox = box.x + 60
-        oy = box.bottom + 8
         h = 32 + 28 * len(self.choices)
-        cw = 220
-        crect = pygame.Rect(ox, oy - h, cw, h)
-        if crect.bottom > SCREEN_H - 8:
-            crect.bottom = SCREEN_H - 8
+        cw = max(220, max(rf.size(o)[0] for o in self.choices) + 44)
+        cw = min(cw, SCREEN_W - ox - 40)
+        crect = pygame.Rect(ox, box.top - 4 - h, cw, h)
+        if crect.top < 8:
+            # A menu taller than the space above the band SHRINKS to fit
+            # (rows clip) rather than sliding down over the prompt.
+            # Unreachable at current menu sizes (~15+ options); safety only.
+            crect = pygame.Rect(ox, 8, cw, box.top - 12)
         s = pygame.Surface((crect.width, crect.height), pygame.SRCALPHA)
         s.fill((*C_DIALOG_BG, 240))
         surf.blit(s, crect.topleft)
         pygame.draw.line(surf, (70, 64, 84), crect.topleft, crect.topright)
-        rf = self.fonts["serif"]
+        surf.set_clip(crect)
         for i, opt in enumerate(self.choices):
             selected = (i == self.choice_idx)
             color = C_GOLD if selected else (172, 166, 156)
@@ -344,6 +352,7 @@ class DialogueBox:
                 pygame.draw.rect(surf, C_GOLD,
                                  (crect.x + 14, oy2 + 4, 2, rf.get_linesize() - 6))
             surf.blit(rf.render(opt, True, color), (crect.x + 26, oy2))
+        surf.set_clip(None)
 
     def _draw_portrait(self, surf, rect, kind):
         cx = rect.centerx; cy = rect.centery

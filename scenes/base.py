@@ -4640,7 +4640,36 @@ class Scene:
             [random.uniform(lo, hi), name, vol, lo, hi, pan_spread])
 
     def update(self, dt, game):
+        # The talk-hold: whoever the player is actually TALKING to (the
+        # live float-caption speaker, or the partner of an organic
+        # conversation, ui/conversation) stands their ground and faces the
+        # player instead of walking their route mid-sentence -- a worker
+        # can't wander off between an asked question and its answer.
+        # Pursuit is exempt on purpose: a chaser mid-hunt and the King
+        # never pause for talk.
+        held = None
+        fs = getattr(game, "float_speech", None)
+        if fs is not None and fs.active:
+            held = fs.speaker
+        convo = getattr(game, "_convo", None)
+        if convo is not None and getattr(convo, "active", False):
+            # During the PI's own spoken beats the float speaker is the
+            # PLAYER -- the partner must stay held through those too, or
+            # a worker walks off exactly between the asked question and
+            # its answer.
+            if held is None or held is game.player:
+                held = convo.npc
+        if held is not None and (getattr(held, "movement", "") == "chaser"
+                                 or getattr(held, "sprite_kind", "")
+                                 == "yellow_king"):
+            held = None
         for npc in self.npcs:
+            if npc is held and npc.alive:
+                dx = game.player.x - npc.x
+                dy = game.player.y - npc.y
+                d = math.hypot(dx, dy) or 1.0
+                npc.facing = (dx / d, dy / d)
+                continue
             npc.update(dt, self, game.player)
         for d in self.decorations:
             d.update(dt)

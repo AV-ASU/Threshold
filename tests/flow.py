@@ -1077,12 +1077,13 @@ def main():
           + (f" (found {_dash_hits[:8]})" if _dash_hits else ""))
 
     # --- 17. The principal locals are named (NARRATIVE §2/§8) ---
-    # A small town knows its people by name. Each principal surfaces a
-    # proper-name speaker label, not a role-tag. (The Clerk, Mr. Sable, is
-    # the most-attuned LOCAL, NARRATIVE §2 -- not a newcomer; he introduces
-    # himself first thing all the same.)
-    from scenes.dialogue import (sheriff_dialogue, preacher_dialogue,
-                                 hettie_dialogue, clerk_dialogue)
+    # A small town knows its people by name. Every principal now speaks
+    # through the organic conversation (TODO #1 expand), so the
+    # proper-name label rides every floated line via the convo data.
+    from scenes.dialogue import (toby_dialogue, clerk_dialogue,
+                                 SABLE_CONVO as _SC, VANE_CONVO as _VC,
+                                 HETTIE_CONVO as _HC, TOBY_CONVO as _TC,
+                                 CRANE_CONVO as _CC)
 
     def first_speaker(dialogue_fn):
         g = new_game()
@@ -1092,19 +1093,20 @@ def main():
         dialogue_fn(g, type("N", (), {"name": "x", "x": 0, "y": 0})())
         return cap[0] if cap else None
 
-    roster = [("Sheriff Vane", sheriff_dialogue), ("Rev. Crane", preacher_dialogue),
-              ("Hettie", hettie_dialogue)]
-    for expected, fn in roster:
-        check(first_speaker(fn) == expected,
-              f"naming: a principal local speaks as '{expected}' (not a role-tag)")
-    # Sable now speaks through the floating conversation, not the modal
-    # band; his name rides every line via the convo, and the greeting is
-    # spoken (floated), not a role-tag.
-    from scenes.dialogue import SABLE_CONVO as _SC
-    check(_SC["name"] == "Mr. Sable",
-          "naming: Sable speaks as 'Mr. Sable' through the conversation")
+    for expected, cv in [("Mr. Sable", _SC), ("Sheriff Vane", _VC),
+                         ("Hettie", _HC), ("Toby", _TC),
+                         ("Rev. Crane", _CC)]:
+        check(cv["name"] == expected,
+              f"naming: a principal local speaks as '{expected}' "
+              "(not a role-tag)")
     check("Sable" in _SC["greet"]["beats"][0][1],
           "naming: Sable's floated greeting introduces him by name")
+    check("Vane" in _VC["greet"]["beats"][0][1],
+          "naming: Vane's floated greeting introduces him by name")
+    # Toby's witness account still VOLUNTEERS itself on the very first
+    # talk (ahead of the menu), under his own name.
+    check(first_speaker(toby_dialogue) == "Toby",
+          "naming: Toby's witness one-shot speaks under his own name")
 
     # --- 17b. Sable is the most-attuned LOCAL (NARRATIVE §2) -------------
     # His menace is compulsion, not conspiracy. Lock the framing: the
@@ -1283,6 +1285,229 @@ def main():
     check(gn._evidence_count() == 3,
           "ask: the readiness nudge is a NOTE, never evidence")
 
+    # --- 17d. The ask verb EXPANDED to the principals (TODO #1) ----------
+    # Vane, Hettie, Toby, and Crane each carry their own conversation, and
+    # every principal's menu leads with the two guaranteed openers: the PI
+    # introducing himself, and Mara's photograph. News does not spread in
+    # Brimley -- nobody knows the case until the PI says it.
+    from scenes.dialogue import _INTRO_Q, _PHOTO_Q
+    for _cv in (_VC, _HC, _TC, _CC):
+        _ks = [ex["key"] for ex in _cv["exchanges"]]
+        check(_ks[:2] == ["intro", "photo"],
+              f"ask: {_cv['id']} leads with the two guaranteed openers")
+        check(_cv["exchanges"][0]["q"] == _INTRO_Q
+              and _cv["exchanges"][1]["q"] == _PHOTO_Q,
+              f"ask: {_cv['id']} shares the openers word for word")
+        check(_cv["exchanges"][0].get("once")
+              and _cv["exchanges"][1].get("once"),
+              f"ask: {_cv['id']} openers are once-asked")
+        _gt = " ".join(b[1].lower() for b in _cv["greet"]["beats"])
+        check("blaine" not in _gt and "girl" not in _gt,
+              f"ask: {_cv['id']} greet never assumes the case is known")
+
+    # The choice box is SMALL: every menu label (an exchange's `label`,
+    # or its `q` where the q is short enough to be its own label) and
+    # every inline-ask option must fit it. Budget ~44 chars.
+    for _cv in (_SC, _VC, _HC, _TC, _CC):
+        for _ex in _cv["exchanges"]:
+            _lb = _ex.get("label", _ex["q"])
+            check(len(_lb) <= 44,
+                  f"ask: {_cv['id']}/{_ex['key']} menu label fits the "
+                  f"choice box ({len(_lb)} chars)")
+            for _b in _ex["beats"]:
+                if _b[0] != "ask":
+                    continue
+                for _opt in _b[2]:
+                    check(len(_opt[0]) <= 44,
+                          f"ask: {_cv['id']}/{_ex['key']} inline option "
+                          f"fits the choice box ({len(_opt[0])} chars)")
+
+    # Follow-up questions are EARNED, not ambient: Hettie's "who is
+    # they" needs her intro answer said; the way-out questions (Hettie,
+    # Toby) need a local to have told the PI about the looping roads.
+    gg8 = new_game()
+    _hsafe = next(ex for ex in _HC["exchanges"] if ex["key"] == "safe")
+    _hout = next(ex for ex in _HC["exchanges"] if ex["key"] == "way_out")
+    _tout = next(ex for ex in _TC["exchanges"] if ex["key"] == "way_out")
+    check(not _hsafe["avail"](gg8),
+          "gate: Hettie's 'they' follow-up waits on the intro")
+    gg8.save.set_flag("convo_hettie_intro_asked", True)
+    check(_hsafe["avail"](gg8),
+          "gate: the intro opens Hettie's 'they' follow-up")
+    check(not _hout["avail"](gg8) and not _tout["avail"](gg8),
+          "gate: the way-out questions wait on the fold being told")
+    gg8.save.set_flag("voice_fold_heard", True)
+    check(_hout["avail"](gg8) and _tout["avail"](gg8),
+          "gate: hearing the fold opens the way-out questions")
+    # Once Hettie's volunteered memory has named the girl, the photo
+    # question retires (a denial she has already outrun) and the
+    # follow-up about the others opens without it.
+    _hphoto = next(ex for ex in _HC["exchanges"] if ex["key"] == "photo")
+    _hothers = next(ex for ex in _HC["exchanges"] if ex["key"] == "others")
+    check(_hphoto["avail"](gg8) and not _hothers["avail"](gg8),
+          "gate: pre-memory, the photo stands and the others wait")
+    gg8.save.set_flag("hettie_mara_memory", True)
+    check(not _hphoto["avail"](gg8) and _hothers["avail"](gg8),
+          "gate: her memory retires the photo and opens the others")
+
+    # The Crane fork (the ticket's pilot choice): the flock exchange ends
+    # on a real two-way ask. Pressing him latches the doom and files the
+    # PI's culpability as a NOTE (never evidence); holding him back leaves
+    # the question open to press later; once doomed it retires.
+    gcf = new_game()
+    _flock = next(ex for ex in _CC["exchanges"] if ex["key"] == "flock")
+    check(not _flock["avail"](gcf),
+          "crane: the flock question waits on the intro")
+    gcf.save.set_flag("convo_crane_intro_asked", True)
+    check(_flock["avail"](gcf),
+          "crane: after the intro the flock question is open while he lives")
+    _fork = next(b for b in _flock["beats"] if b[0] == "ask")
+    check(len(_fork[2]) == 2 and _fork[2][0][2] is not None
+          and _fork[2][1][2] is None,
+          "crane: the fork is press-him (consequence) vs hold-him-back")
+    _hold_txt = " ".join(sb[1].lower() for sb in _fork[2][1][1])
+    check("for now" in _hold_txt,
+          "crane: holding him back only banks the fire (never a rescue)")
+    check(not gcf.save.flag("preacher_doomed") and _flock["avail"](gcf),
+          "crane: held back, he is not doomed and can be pressed later")
+    _ev_cf = len(gcf.save.arg("evidence", []))
+    _fork[2][0][2](gcf)                     # press him
+    check(gcf.save.flag("preacher_doomed"),
+          "crane: pressing him latches the doom (feeds evidence #4)")
+    check(any(isinstance(e, dict) and e.get("name") == "crane_provoked"
+              for e in gcf.save.arg("notes", [])),
+          "crane: the provocation files the PI's NOTE")
+    check(len(gcf.save.arg("evidence", [])) == _ev_cf,
+          "crane: the provocation never inflates the evidence count")
+    check(not _flock["avail"](gcf),
+          "crane: once doomed the flock question retires")
+
+    # The stall-breaker (R-gate): only three evidence beats are surface-
+    # reachable and the descent needs three, so when the SECOND canonical
+    # beat lands with Crane met and still un-provoked, the PI's interior
+    # voice points him back at the pulpit. Once, a NOTE, never evidence,
+    # and never once the preacher is already doomed.
+    from scenes.dialogue import _the_third_thread, _evidence as _evfn2
+    gtt = new_game()
+    gtt.save.set_flag("crane_greeted", True)
+    _evfn2(gtt, "maras_journal", "a")
+    check(not any(e.get("name") == "the_third_thread"
+                  for e in gtt.save.arg("notes", [])),
+          "crane: no pulpit nudge at one thread")
+    _evfn2(gtt, "the_ledger", "b")
+    check(any(e.get("name") == "the_third_thread"
+              for e in gtt.save.arg("notes", [])),
+          "crane: the second thread points the PI back at the pulpit")
+    check(gtt._evidence_count() == 2,
+          "crane: the pulpit nudge is a NOTE, never evidence")
+    check(_the_third_thread(gtt, "maras_journal") == [],
+          "crane: the pulpit nudge fires only once")
+    gtd = new_game()
+    gtd.save.set_flag("crane_greeted", True)
+    gtd.save.set_flag("preacher_doomed", True)
+    _evfn2(gtd, "maras_journal", "a")
+    _evfn2(gtd, "the_ledger", "b")
+    check(not any(e.get("name") == "the_third_thread"
+                  for e in gtd.save.arg("notes", [])),
+          "crane: no pulpit nudge once he is already doomed")
+
+    # A SILENTLY-filed beat (show=False -- the journal reads from the
+    # kit) must still land its nudges, or the case stalls voiceless:
+    # the journal really files revisit_sable_smile in-game.
+    gsf = new_game()
+    gsf.save.set_flag("sable_greeted", True)
+    _evfn2(gsf, "maras_journal", "a", show=False)
+    check(any(e.get("name") == "revisit_sable_smile"
+              for e in gsf.save.arg("notes", [])),
+          "ask: a silently-filed discovery still lands its revisit nudge")
+
+    # Vane's car answer files the fold note WITHOUT hijacking the
+    # conversation's float chain (reflect=False), and it opens Sable's
+    # folded-roads reproach.
+    from scenes.dialogue import _vane_car_told
+    gvf = new_game()
+    _sentinel = lambda: None
+    gvf.float_speech.active = True
+    gvf.float_speech.on_complete = _sentinel
+    _vane_car_told(gvf)
+    check(any(isinstance(e, dict) and e.get("name") == "the_fold_told"
+              for e in gvf.save.arg("notes", [])),
+          "vane: the car answer files the PI's fold note")
+    check(gvf.float_speech.on_complete is _sentinel,
+          "vane: the fold note never hijacks the conversation float chain")
+    _qf2 = next(ex for ex in SABLE_CONVO["exchanges"]
+                if ex["key"] == "the_fold")
+    check(_qf2["avail"](gvf),
+          "vane: his fold account opens the reproach to Sable")
+    gvf.float_speech.active = False
+    gvf.float_speech.on_complete = None
+
+    # The flow polish: once an exchange finishes, the menu only reopens
+    # while both parties are still AT the talk -- the partner walking off
+    # (or the player) ends it quietly instead of a modal yank.
+    gpx = new_game()
+    _stub = _npc_stub(gpx)
+    gpx.save.set_flag("sable_greeted", True)
+    cvx = Conversation(gpx, _stub, SABLE_CONVO)
+    cvx.start()
+    check(cvx.active and gpx.dialog.choices is not None,
+          "flow: at the desk, the menu opens and the talk is live")
+    gpx.dialog.active = False
+    gpx.dialog.choices = None
+    _stub.x = gpx.player.x + 500            # the player walked off
+    cvx.queue = []
+    cvx.current = None
+    cvx._step()
+    check(not cvx.active and gpx.dialog.choices is None,
+          "flow: out of earshot the talk ends instead of reopening the menu")
+
+    # The talk-hold: the conversation partner stands their ground and
+    # faces the player instead of walking their route mid-exchange --
+    # INCLUDING while the PI's own line floats (the float speaker is the
+    # player then, and the partner must stay held through it; a worker
+    # otherwise walks off between the asked question and its answer).
+    ghd = new_game()
+    ghd.load_scene_now("church", "default")
+    _cr = next(n for n in ghd.scene.npcs
+               if getattr(n, "tag", "") == "preacher")
+    ghd.player.x, ghd.player.y = _cr.x + 40, _cr.y
+    ghd._convo = type("C", (), {"active": True, "npc": _cr})()
+    _pos0 = (_cr.x, _cr.y)
+    for _ in range(30):
+        ghd.scene.update(1 / 30.0, ghd)
+    check((_cr.x, _cr.y) == _pos0,
+          "flow: the talk-hold roots the partner at the desk")
+    check(_cr.facing[0] > 0.9,
+          "flow: the held partner faces the player")
+    ghd.float_speech.active = True          # a PI beat is floating
+    ghd.float_speech.speaker = ghd.player
+    for _ in range(30):
+        ghd.scene.update(1 / 30.0, ghd)
+    check((_cr.x, _cr.y) == _pos0,
+          "flow: the hold survives the PI's own floating beats")
+    ghd.float_speech.active = False
+    ghd.float_speech.speaker = None
+    ghd._convo = None
+
+    # A replaced conversation goes INERT: its pending float callback
+    # must not reopen a menu over the talk that superseded it.
+    from ui.conversation import open_conversation as _oc
+    gor = new_game()
+    gor.save.set_flag("sable_greeted", True)
+    _stub_a = _npc_stub(gor)
+    _oc(gor, _stub_a, SABLE_CONVO)
+    _old = gor._convo
+    gor.dialog.active = False
+    gor.dialog.choices = None
+    _oc(gor, _npc_stub(gor), SABLE_CONVO)
+    check(_old.active is False and gor._convo is not _old,
+          "flow: opening a new talk deactivates the replaced one")
+    gor.dialog.active = False
+    gor.dialog.choices = None
+    _old._step()                            # the orphaned callback fires
+    check(gor.dialog.choices is None,
+          "flow: an orphaned talk's pending callback is inert")
+
     # --- 18. effigy_grove is a maker-less tableau (§1b/§8) ---------------
     # Individual cursing is redundant -- the closing rite claimed the town at
     # once -- so the grove is left as the work without the worker, with no
@@ -1431,7 +1656,7 @@ def main():
           "paper: the PI drives in with yesterday's paper")
     check("April 14" in _IDEFS["newspaper"]["desc"],
           "paper: the issue is dated April 14 (the cut-off yardstick)")
-    gp.save.set_arg("shop_count", 1)            # she has met you once
+    gp.save.set_flag("hettie_greeted", True)    # she has met you once
     _ammo0 = gp.player.inventory.count("pistol_ammo")
     hettie_dialogue(gp, None)
     check(gp.save.flag("newspaper_traded")
@@ -1471,7 +1696,7 @@ def main():
     gv.dialog.show = (lambda real: (lambda p, **k: (
         _vane_lines.extend(p if isinstance(p, list) else [p]),
         real(p, **k))[1]))(gv.dialog.show)
-    gv.save.set_arg("vane_count", 6)            # well past the old slot
+    gv.save.set_flag("vane_greeted", True)      # he has met you
     sheriff_dialogue(gv, None)
     check("preacher" not in " ".join(_vane_lines).lower(),
           "vane: never announces the murder before the body is found")
@@ -1687,7 +1912,7 @@ def main():
     gh = new_game()
     gh.load_scene_now("shop")
     ready(gh)
-    gh.save.set_arg("shop_count", 1)
+    gh.save.set_flag("hettie_greeted", True)
     gh.player.inventory.add("mom_notebook", 1)
     from scenes.dialogue import hettie_dialogue as _hd
     _hshown = []

@@ -185,10 +185,11 @@ def build_church():
 
 
 def old_man_house_on_enter(game, scene):
-    """Once the Preacher damns himself (the 2nd conversation sets
-    `preacher_doomed`), the cult silences him for naming them. The scene is
-    rebuilt each load, so the builder re-adds the live Preacher every time;
-    here we remove him and lay out his remains + the cross (evidence #4)."""
+    """Once the Preacher damns himself (the flock exchange's PRESS branch
+    sets `preacher_doomed`; scenes/dialogue.py CRANE_CONVO), the cult
+    silences him for naming them. The scene is rebuilt each load, so the
+    builder re-adds the live Preacher every time; here we remove him and
+    lay out his remains + the cross (evidence #4)."""
     if not game.save.flag("preacher_doomed"):
         return
     # The player has now seen what's on the church floor. Sheriff Vane's
