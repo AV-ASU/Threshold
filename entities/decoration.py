@@ -2865,6 +2865,77 @@ class Decoration:
             pygame.draw.line(surf, outer, top, bot, 2)
             pygame.draw.line(surf, deep, top, bot, 1)
 
+    # ---- The mine art pass (2026-07): the dig's own dressing ----
+
+    def _draw_spoil_heap(self, surf, x, y):
+        # top-down: a shoveled earth mound with stones caught in it
+        pygame.draw.circle(surf, (92, 80, 62), (x, y), 13)
+        pygame.draw.circle(surf, (54, 46, 36), (x, y), 13, 1)
+        pygame.draw.circle(surf, (120, 106, 84), (x - 3, y - 3), 5)
+        for ox, oy in ((-6, 4), (5, -2), (2, 7)):
+            pygame.draw.circle(surf, (120, 118, 122), (x + ox, y + oy), 1)
+
+    def _draw_shoring_post(self, surf, x, y):
+        # top-down: the cap block + the post's end grain
+        pygame.draw.rect(surf, (52, 39, 25), (x - 6, y - 4, 12, 8))
+        pygame.draw.circle(surf, (88, 66, 42), (x, y), 4)
+        pygame.draw.circle(surf, (116, 90, 58), (x, y), 4, 1)
+
+    def _draw_ore_cart(self, surf, x, y):
+        # top-down: the rusted tub, its dark mouth, four wheel hubs
+        pygame.draw.rect(surf, (58, 40, 30), (x - 13, y - 8, 26, 16))
+        pygame.draw.rect(surf, (96, 66, 48), (x - 11, y - 6, 22, 12))
+        pygame.draw.rect(surf, (26, 22, 20), (x - 8, y - 4, 16, 8))
+        for ox, oy in ((-10, -9), (10, -9), (-10, 9), (10, 9)):
+            pygame.draw.circle(surf, (50, 42, 38), (x + ox, y + oy), 2)
+
+    def _draw_tally_marks(self, surf, x, y):
+        """Shift tallies scratched into the stone in fours with a
+        cross-stroke -- the labor counted where it was done (the mine
+        art pass; The Digging made visible, no words)."""
+        rng = random.Random(self.seed)
+        col = (142, 138, 128)
+        gx = x - 20
+        for g in range(3):
+            n = 4 if g < 2 else 1 + rng.randint(0, 3)
+            for i in range(n):
+                sx = gx + i * 3
+                pygame.draw.line(surf, col,
+                                 (sx, y - 5 + rng.randint(-1, 1)),
+                                 (sx + 1, y + 5), 1)
+            if n >= 4:
+                pygame.draw.line(surf, col, (gx - 1, y + 3),
+                                 (gx + 10, y - 3), 1)
+            gx += 14
+
+    def _draw_mine_rail(self, surf, x, y):
+        """A stub of old haul rail: two iron rails on rotten ties, run
+        along `ang` (0 = east-west). The old workings' road; the
+        procession's candle line walks it."""
+        ang = self.kwargs.get("ang", 0.0) or 0.0
+        ca, sa = math.cos(ang), math.sin(ang)
+        px, py = -sa, ca                       # across the rails
+        L = 26
+        for lat in (-4, 4):                    # the two rails
+            x0 = x - ca * L + px * lat
+            y0 = y - sa * L + py * lat
+            x1 = x + ca * L + px * lat
+            y1 = y + sa * L + py * lat
+            pygame.draw.line(surf, (56, 52, 50), (int(x0), int(y0)),
+                             (int(x1), int(y1)), 2)
+            pygame.draw.line(surf, (84, 74, 66), (int(x0), int(y0)),
+                             (int(x1), int(y1)), 1)
+        rng = random.Random(self.seed)
+        for k in (-18, -6, 6, 18):             # the ties, some gone
+            if rng.random() < 0.25:
+                continue
+            tx0 = x + ca * k - px * 7
+            ty0 = y + sa * k - py * 7
+            tx1 = x + ca * k + px * 7
+            ty1 = y + sa * k + py * 7
+            pygame.draw.line(surf, (48, 38, 26), (int(tx0), int(ty0)),
+                             (int(tx1), int(ty1)), 3)
+
     def _draw_bloody_handprint(self, surf, x, y):
         """A blood-red handprint pressed onto a surface, with three
         downward streaks where the fingers dragged on the way off.

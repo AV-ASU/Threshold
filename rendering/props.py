@@ -409,7 +409,9 @@ def _draw_cistern_basin_solid(surf, cam, deco):
 
 
 def _draw_grain_heap_solid(surf, cam, deco):
-    """A raked cone of tithed grain, the dark of old blood pooled at its base."""
+    """A raked cone of tithed grain, a ring of dark chaff settled at its
+    base. (2026-07 mine retrofit: the old-blood ring is cut -- the tithe
+    is an offering carried down by the willing; nobody bled into it.)"""
     wx, wy = deco.x, deco.y
     s = (getattr(deco, "scale", 1.0) or 1.0)
     R = 15 * s
@@ -418,8 +420,80 @@ def _draw_grain_heap_solid(surf, cam, deco):
     draw_solid(surf, cam, wx, wy,
                [(0, R, R), (H * 0.6, R * 0.6, R * 0.6),
                 (H, R * 0.12, R * 0.12)], pal)
-    _disc(surf, cam, wx, wy, 0.5, R * 0.96, R * 0.96, (60, 30, 28),
+    _disc(surf, cam, wx, wy, 0.5, R * 0.96, R * 0.96, (58, 48, 30),
           fill=False, width=2)
+
+
+def _draw_spoil_heap_solid(surf, cam, deco):
+    """A shoveled cone of dug spoil -- broken earth and stone waiting on
+    the haul, lower and rougher than the grain tithe. The 2026-07 mine
+    art pass: spoil lives where the work put it (the haul heads, the
+    unhauled face)."""
+    wx, wy = deco.x, deco.y
+    s = (getattr(deco, "scale", 1.0) or 1.0)
+    seed = getattr(deco, "seed", 0)
+    R = (13 + (seed % 4)) * s
+    H = (9 + (seed % 4)) * s
+    pal = {"body": (92, 80, 62), "lo": (54, 46, 36), "rim": (120, 106, 84)}
+    draw_solid(surf, cam, wx, wy,
+               [(0, R, R), (H * 0.55, R * 0.62, R * 0.58),
+                (H, R * 0.18, R * 0.16)], pal)
+    # a few stones caught in the slope
+    for i in range(3):
+        a = 0.9 + i * 2.1 + (seed % 5) * 0.4
+        p = cam.project(wx + math.cos(a) * R * 0.55,
+                        wy + math.sin(a) * R * 0.55, H * 0.3)
+        pygame.draw.circle(surf, (120, 118, 122), (int(p[0]), int(p[1])),
+                           max(1, int(1.4 * s)))
+
+
+def _draw_shoring_post_solid(surf, cam, deco):
+    """A rough timber shoring post -- the mine's roof prop, bark-dark
+    wood with a cap block, standing a touch off plumb (old work, still
+    holding). Distinct from the pale stone `pillar` (the built rooms);
+    this is the DIG's upright."""
+    wx, wy = deco.x, deco.y
+    s = (getattr(deco, "scale", 1.0) or 1.0)
+    seed = getattr(deco, "seed", 0)
+    R = 4.5 * s
+    H = 42 * s
+    lean = ((seed % 5) - 2) * 0.5 * s
+    pal = {"body": (88, 66, 42), "lo": (52, 39, 25), "rim": (116, 90, 58)}
+    draw_solid(surf, cam, wx, wy,
+               [(0, R * 1.25, R * 1.25), (4 * s, R, R),
+                (H - 4 * s, R * 0.92, R * 0.92)], pal)
+    # the cap block, set slightly off the post's line
+    cap = {"body": (74, 56, 35), "lo": (46, 34, 21), "rim": (104, 80, 52)}
+    draw_solid(surf, cam, wx + lean, wy,
+               [(H - 4 * s, R * 1.6, R * 1.1), (H, R * 1.6, R * 1.1)], cap)
+    # a split down the grain
+    p0 = cam.project(wx - R * 0.4, wy, H * 0.2)
+    p1 = cam.project(wx - R * 0.3 + lean * 0.5, wy, H * 0.7)
+    pygame.draw.line(surf, pal["lo"], (int(p0[0]), int(p0[1])),
+                     (int(p1[0]), int(p1[1])), 1)
+
+
+def _draw_ore_cart_solid(surf, cam, deco):
+    """A seized ore cart -- the old workings' haul tub, rusted onto its
+    stub of rail, shoved aside a cycle ago. Iron gone brown, one plank
+    patch in the tub wall. (2026-07 mine art pass; the Depths' one piece
+    of machine evidence, kept mute per canon.)"""
+    wx, wy = deco.x, deco.y
+    s = (getattr(deco, "scale", 1.0) or 1.0)
+    seed = getattr(deco, "seed", 0)
+    yaw = ((seed % 7) - 3) * 0.12
+    rust = {"top": (110, 78, 56), "side": (84, 58, 42), "dark": (58, 40, 30)}
+    # wheels: four low iron discs under the tub corners
+    for cx, cy in ((-8, -5), (8, -5), (-8, 5), (8, 5)):
+        rx = wx + cx * math.cos(yaw) - cy * math.sin(yaw)
+        ry = wy + cx * math.sin(yaw) + cy * math.cos(yaw)
+        _disc(surf, cam, rx, ry, 3 * s, 3.2 * s, 3.2 * s, (50, 42, 38))
+    # the tub: a flared iron box (wider at the lip)
+    _vbox(surf, cam, wx, wy, 24 * s, 15 * s, 5 * s, 10 * s, rust, yaw=yaw)
+    _vbox(surf, cam, wx, wy, 27 * s, 17 * s, 10 * s, 16 * s, rust, yaw=yaw)
+    # the open tub mouth, dark, with a settle of old spoil in it
+    _disc(surf, cam, wx, wy, 16 * s, 9 * s, 5.5 * s, (26, 22, 20))
+    _disc(surf, cam, wx - 2 * s, wy, 16 * s, 4 * s, 2.5 * s, (70, 60, 46))
 
 
 def _draw_stalagmite_solid(surf, cam, deco):
@@ -1208,6 +1282,10 @@ SOLID_PROPS = {
     "pillar":        _draw_pillar_solid,
     "cistern_basin": _draw_cistern_basin_solid,
     "grain_heap":    _draw_grain_heap_solid,
+    # the mine art pass (2026-07): the dig's own furniture
+    "spoil_heap":    _draw_spoil_heap_solid,
+    "shoring_post":  _draw_shoring_post_solid,
+    "ore_cart":      _draw_ore_cart_solid,
     "player_car":    _draw_car_solid,
     "pickup_truck":  _draw_pickup_truck_solid,
     "stalagmite":    _draw_stalagmite_solid,

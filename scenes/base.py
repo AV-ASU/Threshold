@@ -2903,6 +2903,8 @@ _FLOOR_DECAL_KINDS = frozenset((
     # Noise-trap litter (add_noise_trap): tins, shards, and a board all
     # lie IN the ground plane. (The trap crow is the standing `crow`.)
     "tin_cans", "glass_litter", "loose_plank",
+    # The mine art pass (2026-07): old haul rail lies in the floor plane.
+    "mine_rail",
 ))
 
 # Decals that lie flat on a RAISED surface (a ledger open on a desktop): warped
@@ -2944,6 +2946,8 @@ _WALL_DECO_KINDS = frozenset((
     # Things that belong ON a wall, not lying flat on the floor: a cobweb
     # spans a corner; a passing silhouette glides past a window.
     "cobweb", "passing_silhouette",
+    # The mine art pass (2026-07): shift tallies scratched into the rock face.
+    "tally_marks",
 ))
 _WALL_MOUNT_Z = 18
 

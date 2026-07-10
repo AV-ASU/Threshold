@@ -107,7 +107,7 @@ def build_well_bottom():
                                  ang=-math.pi / 2))
     sc.add_decoration(Decoration(3 * TILE + 26, 1 * TILE + 6, "cobweb", ang=0.0))
 
-    # --- Shaft-floor dressing: the wet, dead bottom of the well ---
+    # --- Shaft-floor dressing: the head of the haul (2026-07 art pass) ---
     # Fallen shoring timbers collapsed into the SE -- the cover the hide spot
     # crouches behind.
     sc.add_furniture("firewood", [(7, 7)], w=44, h=22, seed=3)
@@ -116,6 +116,12 @@ def build_well_bottom():
     # a stray crate in the SW the second hide spot can crouch behind.
     sc.add_furniture("barrel", [(8, 2)])
     sc.add_furniture("crate", [(2, 6)])
+    # The haul head: spoil staged against the walls waiting on a rope
+    # that is gone, and the barrow that carried it, parked mid-floor.
+    sc.add_furniture("spoil_heap", [(3, 3)], seed=1)
+    sc.add_furniture("spoil_heap", [(7, 3)], seed=6)
+    sc.add_decoration(Decoration(6 * TILE + 16, 6 * TILE + 16,
+                                 "wheelbarrow"))
     # Water seeping to the lowest place (NARRATIVE 1b): a thin teal rivulet
     # pooling in the SW. (The drowned-body decal that lay in it was cut by
     # design call, 2026-07 -- the pool and the claw gouges carry the dread.)
@@ -209,6 +215,15 @@ def build_well_passage():
     # Stores stacked up in the north bay -- a barrel and a crate.
     sc.add_furniture("barrel", [(10, 2)])
     sc.add_furniture("crate", [(8, 1)])
+    # Timber shoring where the gallery needs holding (2026-07 art pass):
+    # posts flanking both portal mouths and framing the bay entry. Kept
+    # off row 5 (the walking lane) and off the rack weave gaps.
+    sc.add_furniture("shoring_post", [(1, 4)], seed=2)
+    sc.add_furniture("shoring_post", [(1, 6)], seed=7)
+    sc.add_furniture("shoring_post", [(22, 4)], seed=11)
+    sc.add_furniture("shoring_post", [(22, 6)], seed=13)
+    sc.add_furniture("shoring_post", [(8, 3)], seed=5)
+    sc.add_furniture("shoring_post", [(11, 3)], seed=9)
     sc.add_decoration(Decoration(9 * TILE + 16, 0 * TILE + 22, "candle"))
     sc.add_decoration(Decoration(20 * TILE + 16, 7 * TILE + 22, "claw_marks"))
     # Cobweb grime in the high corners of the bay.
@@ -407,6 +422,13 @@ def build_works_sorting():
     # (The missing-flyer + polaroid wall were cut, 2026-07: a wall of "the
     # vanished" read as a killer cult tracking victims. The shed lives in
     # the effects piles carry the room; nobody down here was hunted.)
+    # The warehouse work (2026-07 art pass): the barrow that moved the
+    # cases, parked between the table rows, and inventory tallies
+    # scratched on the wall over the sorting.
+    sc.add_decoration(Decoration(7 * TILE + 16, 4 * TILE + 16,
+                                 "wheelbarrow"))
+    sc.add_decoration(Decoration(4 * TILE + 16, 3 * TILE + 20,
+                                 "tally_marks", wall="N", seed=8))
     # more grime: mud worked across the floor, motes in the dead air.
     sc.add_decoration(Decoration(7 * TILE + 16, 9 * TILE + 16, "mud_footprint"))
     for mx, my in ((5, 4), (10, 7), (13, 5)):
@@ -941,6 +963,15 @@ def build_works_deepstair():
     sc.add_decoration(Decoration(6 * TILE + 16, 2 * TILE + 12, "claw_marks",
                                  scale=1.2))
     sc.add_decoration(Decoration(3 * TILE + 16, 2 * TILE + 6, "candle"))
+    # The arc's end (2026-07 art pass): the last shifts counted on the
+    # rock beside the face, spoil nobody hauled, hafts downed where the
+    # digging stopped. The work just... stops, a few feet short.
+    sc.add_decoration(Decoration(3 * TILE + 16, 0 * TILE + 20,
+                                 "tally_marks", wall="N", seed=3))
+    sc.add_decoration(Decoration(7 * TILE + 16, 0 * TILE + 20,
+                                 "tally_marks", wall="N", seed=12))
+    sc.add_furniture("spoil_heap", [(7, 4)], seed=8)
+    sc.add_furniture("firewood", [(3, 5)], w=30, h=16, seed=6)
     # Cobweb grime in the beveled corners by the keystone gate.
     sc.add_decoration(Decoration(2 * TILE + 6, 1 * TILE + 6, "cobweb",
                                  ang=0.0))

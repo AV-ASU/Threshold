@@ -327,8 +327,22 @@ loot / testimony placement; most is just labor made visible.
   `bone_rack` deleted from the furniture registry), every underground
   bloodstain/gore decal removed (the willing bled nobody), the Sorting
   Hall's "faces of the vanished" flyer wall cut, HUD display names cover
-  the whole underground (the Deepest Face, not the cut Deep Stair). What
-  REMAINS here is the ART/level pass above (timber, spoil, cart ruts).
+  the whole underground (the Deepest Face, not the cut Deep Stair).
+- **The DRESSING half landed too (2026-07 art pass).** New procedural
+  kinds, each registered in exactly one tilt set: `spoil_heap` /
+  `shoring_post` / `ore_cart` (SOLID_PROPS), `tally_marks` (wall deco),
+  `mine_rail` (floor decal). Placed by mine logic: spoil + the barrow at
+  the haul head (Shaft Floor), timber shoring at the gallery mouths and
+  down the procession drift (the drift's stone pillars swapped to wood),
+  the old workings' rail stubs under the candle line + the seized ore
+  cart in a bay, inventory tallies over the Sorting Hall tables, and the
+  degradation-arc climax at the Deepest Face (shift tallies by the face,
+  unhauled spoil, downed hafts). The grain heap's baked-in "old blood"
+  ring was recut to dark chaff (a killer-cult relic in the ART layer).
+  The Sign Chamber stays deliberately bare: the one properly FINISHED
+  room in the dig. What REMAINS here is the LEVEL-design half: timbered
+  side-chambers dug off the halls (new geometry, some finished, some
+  half-dug), doors under the cave-mouth adits.
 
 ### 15. **[Fable]** Deadpan narration editing pass  *(was GAME_CHANGES §22)*
 

@@ -176,8 +176,13 @@ def build_depths_antechamber():
     sc.add_decoration(Decoration(8 * TILE + 26, 8 * TILE + 26, "cobweb",
                                  ang=math.pi))
     # A supply crate from the old workings, and the gap beneath it: one
-    # enclosed hide near the patrol loop (STEALTH_REWORK §6).
+    # enclosed hide near the patrol loop (STEALTH_REWORK §6). Beside it,
+    # spoil never hauled and a stub of the old rail heading east -- the
+    # fall lands you in a working, not a room (2026-07 art pass).
     sc.add_furniture("crate", [(7, 4)])
+    sc.add_furniture("spoil_heap", [(6, 3)], seed=3)
+    sc.add_decoration(Decoration(8 * TILE + 24, 5 * TILE + 16,
+                                 "mine_rail", ang=0.0, seed=9))
     sc.hide_spots = [
         (7 * TILE + 16, 5 * TILE + 8, "under"),    # under the old crate
     ]
@@ -235,11 +240,21 @@ def build_depths_procession():
     for cx in range(2, 28, 2):
         sc.add_decoration(Decoration(cx * TILE + 16, 4 * TILE + 16,
                                      "candle"))
-    # A colonnade of roof-prop pillars flanking the central walk (clear
-    # of the bays and the walking line) -- the drift's shoring.
+    # Timber shoring posts flanking the central walk (clear of the bays
+    # and the walking line) -- the drift's roof props. Wood, not the pale
+    # stone `pillar` (that belongs to the built rooms); this is a mine
+    # (2026-07 art pass). Seeded so no two stand alike.
     for px in (5, 10, 16, 21, 26):
-        sc.add_furniture("pillar", [(px, 3)])
-        sc.add_furniture("pillar", [(px, 5)])
+        sc.add_furniture("shoring_post", [(px, 3)], seed=px * 3 + 1)
+        sc.add_furniture("shoring_post", [(px, 5)], seed=px * 5 + 2)
+    # The old workings' haul road: stubs of rusted rail down the drift's
+    # walking line (the candle line follows a dead mine's road), and the
+    # seized ore cart shoved aside into a south bay a cycle ago -- solid,
+    # so it doubles as bay cover.
+    for rx_ in (7, 13, 19, 25):
+        sc.add_decoration(Decoration(rx_ * TILE + 16, 4 * TILE + 16,
+                                     "mine_rail", ang=0.0, seed=rx_))
+    sc.add_furniture("ore_cart", [(17, 7)], seed=4)
     # Cobweb grime in the high corners of the procession column.
     sc.add_decoration(Decoration(1 * TILE + 6, 3 * TILE + 6, "cobweb",
                                  ang=0.0))
@@ -500,6 +515,10 @@ def build_the_ossuary():
     # Racked store shelves (3D) line the niches; candles gutter between.
     for sx, sy in [(2, 4), (6, 4), (2, 8), (6, 8)]:
         sc.add_furniture("shelf", [(sx, sy)])
+    # A dead lamp left on a shelf -- the old workings' light, burned out a
+    # cycle ago (seated onto the shelf top by seat_tabletop_props).
+    sc.add_decoration(Decoration(6 * TILE + 16, 4 * TILE + 16,
+                                 "kerosene_lamp"))
     sc.add_decoration(Decoration(4 * TILE + 16, 3 * TILE + 16, "phantom_mark"))
     sc.add_decoration(Decoration(2 * TILE + 16, 6 * TILE + 16, "candle"))
     sc.add_decoration(Decoration(6 * TILE + 16, 9 * TILE + 16, "candle"))
