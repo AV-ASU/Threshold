@@ -830,7 +830,7 @@ def _draw_pickup_truck_solid(surf, cam, deco):
 
 def _draw_waterfall_solid(surf, cam, deco):
     """A spring gushing from a HOLE in the cave cliff and falling into the river
-    -- the visible mouth of the artery (NARRATIVE 1b). A dark source recess
+    -- the visible mouth of the artery (NARRATIVE §2). A dark source recess
     gouged in the rock at the top, then a sheet of water sheeting down into the
     channel, foam churning where it strikes. Drawn each frame (animated; streaks
     scroll DOWN), depth-sorted against the wall. `ang` (radians) yaws the sheet
@@ -886,7 +886,7 @@ def _draw_waterfall_solid(surf, cam, deco):
 
 
 def _draw_doorframe_solid(surf, cam, deco):
-    """THE THRESHOLD (NARRATIVE 1b): a plain, blank, unmarked frame -- 'about the
+    """THE THRESHOLD (NARRATIVE §2): a plain, blank, unmarked frame -- 'about the
     size of a car stood on its nose' -- standing DEAD STRAIGHT on the impossible
     apron. 'Too slight to hold itself upright, yet it stands.' It is ONLY a
     frame: nothing fills the opening, you see the cave straight through it (walk

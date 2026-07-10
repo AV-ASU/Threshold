@@ -124,7 +124,7 @@ def build_lodge_yard():
         # The main dirt path running SOUTH from the Lodge porch toward the
         # woodshed corner. Protected so the forest band doesn't scatter
         # trees onto it; painted dirt just below (after scatter), cut
-        # clean through the band like the roads (NARRATIVE 11).
+        # clean through the band like the roads (DESIGN.md §7).
         if 4 <= tx <= 6 and 9 <= ty <= 14:
             return True
         # The woodshed footprint + its north approach (so the forest band
@@ -517,7 +517,7 @@ def build_arrival_road():
         # The TELL. Walking the northern band long enough warps you back to its
         # south edge (the `_treadmill`) -- the same anonymous forest coming round
         # with no landmark to catch the eye, the road going nowhere. No narration
-        # (NARRATIVE §1b discipline); a soft, escalating dread pulse underscores
+        # (NARRATIVE §2 discipline); a soft, escalating dread pulse underscores
         # the wrongness each time the fold folds the band back. Detected as the
         # single-frame y jump the treadmill warp produces (a band-height hop).
         p = game.player

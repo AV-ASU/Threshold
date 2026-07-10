@@ -227,7 +227,7 @@ CULT_AMBIENT_SCENES = {"works_vats", "works_sorting", "works_scriptorium",
 # (you are already safe; the cramped read is wrong here).
 SAFE_SCENES = {"bedroom", "lodge", "clerk_room", "toby_house"}
 
-# Refuges a chase can never cross (NARRATIVE §8): the safe houses above, plus
+# Refuges a chase can never cross (DESIGN.md §4): the safe houses above, plus
 # Mara's cell -- a deliberate underground refuge that hosts no cult, so a
 # pursuer fled into it is shaken. (A chase is also shaken by a mundane interior
 # door, but that's keyed on the EXIT type in _note_fold_pursuit, not the scene.)
@@ -262,7 +262,7 @@ CULTIST_SCENES = {
     "cornfield_maze",
 }
 # Scenes open enough for His gaze to fix on you and bind a Watcher -- the
-# claimed town under open sky (NARRATIVE.md 1b/3). The curse is His own
+# claimed town under open sky (NARRATIVE.md §4 / DESIGN.md §1). The curse is His own
 # attention. Safe rooms are exempt via KING_FREE_SCENES.
 GAZE_BIND_SCENES = {"brimley", "graveyard", "cornfield_maze"}
 # Sustained exposure (seconds) at high visibility before His eye fixes and the
@@ -547,7 +547,7 @@ VIS_LIT_RISE = 0.045          # per second the flashlight is ON in the dark:
 # higher your baseline exposure. You can hide back down TO the floor but never
 # below it -- so late, hiding stops saving you. The floor is summed from each
 # logged evidence's weight (scenes.dialogue._evidence); deeper finds weigh more.
-# Capped just under "unshakeable" so only the last beats pin him. (NARRATIVE §3.)
+# Capped just under "unshakeable" so only the last beats pin him. (DESIGN.md §1.)
 VIS_FLOOR_CAP = 0.9
 EVIDENCE_FLOOR_DEFAULT = 0.10  # per-evidence floor weight if none recorded
 # Investigating arms the apex. Below this many evidence, a maxed meter musters a
@@ -588,7 +588,7 @@ RIVER_ENTRY_TILE = (34, 60)
 #              name -> the stage at which they turn.
 #   TURN    -- the resisters keep their identity, their bodies, and their
 #              defiance; the town reads NORMAL (the wrongness is the PLACE,
-#              not the people -- NARRATIVE 1b). What curdles is what they
+#              not the people -- NARRATIVE §2). What curdles is what they
 #              SAY: their talk goes flat and off, reporting small ordinary
 #              things from behind a face that no longer means them. No body-
 #              horror overlay (the mutate render layer was cut, TODO #9).
@@ -611,7 +611,7 @@ UNDERGROUND_SCENES = {
     "the_sump", "the_cells", "the_ossuary",
 }
 
-# Ashfall (NARRATIVE 4b): a slow drifting pale-yellow ashfall, the pressure
+# Ashfall (DESIGN.md §2): a slow drifting pale-yellow ashfall, the pressure
 # of the vessel made visible -- His attention settling on you, not snow, not
 # weather. Density scales with the infestation stage (light at 1 -> a steady
 # yellow drift at 3) and thickens underground (nearer the source). Never on

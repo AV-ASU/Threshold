@@ -71,7 +71,7 @@ class CutsceneMixin:
 
 
     def _draw_flashback(self):
-        """Render the journal door-dream (NARRATIVE 1b): an OPEN doorway of
+        """Render the journal door-dream (NARRATIVE §2): an OPEN doorway of
         dried, sun-bleached wood suspended in black. Light pours from
         INSIDE it -- a warm glow the frame's own jamb cuts off at the
         edges, so it reads as a door standing open onto somewhere too

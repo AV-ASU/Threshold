@@ -121,7 +121,7 @@ def build_well_bottom():
     sc.add_furniture("spoil_heap", [(7, 3)], seed=6, see_over=True)
     sc.add_decoration(Decoration(6 * TILE + 16, 6 * TILE + 16,
                                  "wheelbarrow"))
-    # Water seeping to the lowest place (NARRATIVE 1b): a thin teal rivulet
+    # Water seeping to the lowest place (NARRATIVE §2): a thin teal rivulet
     # pooling in the SW. (The drowned-body decal that lay in it was cut by
     # design call, 2026-07 -- the pool and the claw gouges carry the dread.)
     sc.add_decoration(Decoration(4 * TILE + 16, 7 * TILE + 16, "water_trail",
@@ -313,7 +313,7 @@ def build_works_vats():
 
     # Stone cistern basins brimming with black water -- volumetric props now
     # (round 3D basins), one sunk in each arm, with cold mist rising off them
-    # (NARRATIVE 1b: the dig broke into the underground river, the artery to
+    # (NARRATIVE §2: the dig broke into the underground river, the artery to
     # the door). Wet stone, no bodies -- the claiming cult renders no one.
     for tx, ty in [(5, 2), (7, 2), (5, 8), (7, 8)]:
         sc.add_furniture("cistern_basin", [(tx, ty)])
@@ -366,7 +366,7 @@ def build_works_vats():
                         face=(0, 1), dwell=(3.0, 6.0))
 
     def _vats_on_enter(game, scene):
-        # First entry: the dig hit water. This is the river (NARRATIVE 1b) --
+        # First entry: the dig hit water. This is the river (NARRATIVE §2) --
         # the artery the cult followed down toward the door. Gated by the
         # evidence flag (non-canonical, so it doesn't move the King-gate).
         # Flag key kept (works_vats_seen) for save compat.
@@ -406,7 +406,7 @@ def build_works_sorting():
 
     # The worldly lives the congregation shed when they were claimed --
     # and the effects of the few the fold took -- sorted into piles
-    # (NARRATIVE 1b/4: shed lives + the fold's lost, not murder victims).
+    # (NARRATIVE §2/4: shed lives + the fold's lost, not murder victims).
     # Closed cases
     # (chests, never opened by the player -- interactive=False so they
     # don't show a dead [E] prompt).
@@ -435,7 +435,7 @@ def build_works_sorting():
         sc.add_furniture("table", [(tx, 5)], w=30, h=20)
         sc.add_furniture("table", [(tx, 8)], w=30, h=20)
     # The shed lives sorted into piles on the floor between the tables -- a
-    # folded coat, a shoe, a hat, a child's toy in each (NARRATIVE 1b/4).
+    # folded coat, a shoe, a hat, a child's toy in each (NARRATIVE §2/4).
     for (ex, ey, es) in ((4, 6, 1), (7, 7, 2), (10, 6, 3),
                          (3, 7, 4), (12, 7, 5), (8, 9, 6)):
         sc.add_decoration(Decoration(ex * TILE + 16, ey * TILE + 16,
@@ -605,7 +605,7 @@ def build_works_scriptorium():
     # the building it slept in (Vane: they filled the school; Toby's
     # lesson is still on the board) and carried the furniture down.
     # Child-size chairs still seated at two of them sell it without a
-    # word (2026-07 process audit; free canon from NARRATIVE §2).
+    # word (2026-07 process audit; free canon from NARRATIVE §4).
     sc.add_furniture("small_chair", [(4, 3)])
     sc.add_furniture("small_chair", [(8, 3)])
     sc._desk_pos = (4 * TILE + 16, 2 * TILE + 16)
@@ -786,7 +786,7 @@ def build_works_sign():
     # oblivious to you. An NPC with NO tag -> excluded from the cultist-gaze
     # tick entirely (no visibility, no chase, no grab); pose='kneel'; non-solid
     # so it never blocks the Mask. The closing rite made present, not told
-    # (NARRATIVE 1b: the rite claims the collective).
+    # (NARRATIVE §2: the rite claims the collective).
     holder = NPC(6 * TILE + 16, 3 * TILE + 16, "The rite-holder", "cultist",
                  movement="idle", solid=False, no_prompt=True)
     holder.facing = (0, -1)
@@ -900,7 +900,7 @@ def build_works_sign():
                     k.facing = (0, -1)
                 game._mara_stage = None
                 # The one that never moved is the room's last word
-                # (TODO #8; NARRATIVE 1b: the self dissolved into the
+                # (TODO #8; NARRATIVE §2: the self dissolved into the
                 # work).
                 game.dialog.show([
                     "[c=dim]The one bowed at the altar's foot never "
@@ -926,7 +926,7 @@ def build_works_sign():
         ])
         # The TEMPTATION lands as the recognition finishes: with His face in
         # hand comes the certainty it is the way OUT -- the Spread off-ramp
-        # (NARRATIVE §6). The recognition routes through whichever channel
+        # (NARRATIVE §8). The recognition routes through whichever channel
         # DialogueBox.show picked (the frameless caption for narrator text,
         # the modal band otherwise), so chain off the channel that is
         # actually live -- an on_complete parked on an inactive modal never
@@ -950,7 +950,7 @@ def build_works_sign():
             return
         if game.save.flag("pallid_mask_taken"):
             return
-        # Two instincts at the altar (NARRATIVE §6). Lifting the mask is the
+        # Two instincts at the altar (NARRATIVE §8). Lifting the mask is the
         # controlled keystone-removal the chosen endings need. Tearing the
         # whole rite down here -- the obvious heroic move -- is THE TRAP:
         # the rite is the only lid on Him, and breaking it before the source
@@ -1190,7 +1190,7 @@ def build_the_cells():
     kept). Empty now: the ones who dug here are past sleeping. A dead-end
     branch: cover, dread, and the cult's whisper. (2026-07 mine retrofit:
     the old kept-overnight captivity fiction was a killer-cult relic --
-    nobody was ever kept; the claimed never know, NARRATIVE §1b. Scene
+    nobody was ever kept; the claimed never know, NARRATIVE §2. Scene
     key stays the_cells -- load-bearing.)"""
     floor, objs = _box(12, 11)
     # A central corridor with cell stalls combed off the east and west walls.

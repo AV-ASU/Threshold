@@ -18,7 +18,7 @@ the King-gate and the visibility floor.
 import random
 
 
-# The SIX canonical evidence beats (NARRATIVE.md §4): ONLY these count toward
+# The SIX canonical evidence beats (NARRATIVE.md §6): ONLY these count toward
 # the King-gate (3 = armed) and the visibility floor. Each name's value is the
 # floor it adds -- surface finds light, the deep truths heavy; all six sum to
 # the cap. Every other `_evidence(...)` call is now just flavor narration.
@@ -400,7 +400,7 @@ def preacher_dialogue(game, npc):
 # ---- The Kid: Toby ----
 
 def toby_dialogue(game, npc):
-    """Toby -- innocent witness (NARRATIVE §2). He FOLLOWED the night
+    """Toby -- innocent witness (NARRATIVE §4). He FOLLOWED the night
     procession down the river to the cult's dug-open ground and saw them go
     below -- the sole witness of where they went (D rework, 2026-07) -- and
     before that they LIVED in his school (the commune). His witness does two
@@ -721,7 +721,7 @@ def hettie_dialogue(game, npc):
 # ---- The Sheriff: Hollis Vane ----
 # Ask-verb conversion (TODO #1 expand; the trust/despair arc itself is
 # ticket #2a and slots in on top of this later). A LOCAL, born here, the
-# last holdout, the town's one real investigator (NARRATIVE §2). Hopeful
+# last holdout, the town's one real investigator (NARRATIVE §4). Hopeful
 # but mistrusting: the PI is one more outsider who drove in, the exact
 # profile of every cultist, so he watches first. He did NOT kill the car
 # (the fold did) and he carries the plain truth about it; the badge is
@@ -833,7 +833,7 @@ VANE_CONVO = {
 
 
 def sheriff_dialogue(game, npc):
-    """The Sheriff -- Hollis Vane, the last holdout (NARRATIVE §2). The
+    """The Sheriff -- Hollis Vane, the last holdout (NARRATIVE §4). The
     murder he can't report stays a VOLUNTEERED one-shot ahead of the
     menu, gated on the player having FOUND the body on the riverbank
     (preacher_body_seen) and on having met him -- he can never announce
@@ -862,12 +862,13 @@ def sheriff_dialogue(game, npc):
 # ---- The Clerk: Mr. Sable ----
 # The organic ask-verb, piloted on Sable (TODO #1). The menu options ARE
 # the PI's own spoken lines; picking one plays a back-and-forth over their
-# heads. Sable is the FIRST local the PI meets, and the exchange sets the
-# tone for the whole town: he is the smiling, pro-newcomer host who DOES
-# NOT give the girl up. He deflects the name, folds Mara in with "the new
+# heads. Sable checked the PI in the night before the game opens
+# (NARRATIVE §3), so every exchange is a host RESUMING an acquaintance,
+# never an introduction. He sets the tone for the whole town: the
+# smiling, pro-newcomer host who DOES NOT give the girl up. He deflects the name, folds Mara in with "the new
 # folk," and points the suspicion the wrong way -- at the "unfriendly" old
 # families -- which is the exact trap the game punishes (the warm ones are
-# the cult; NARRATIVE 2, Hettie's "don't trust the easy ones"). He is the
+# the cult; NARRATIVE §4, Hettie's "don't trust the easy ones"). He is the
 # most-attuned LOCAL: he knows, and never says he knows. The mask only
 # thins as the case grows (the ledger and the journal each open a colder
 # follow-up). Compulsion, never a confessed scheme. Engine:
@@ -931,8 +932,8 @@ SABLE_CONVO = {
     "greet": {
         "flag": "sable_greeted",
         "beats": [
-            ("npc", "Sable. I keep the desk here. Anything you need, you "
-                    "ask me. Anything at all."),
+            ("npc", "Up early. You came in late off the north road. I put "
+                    "you down in the book as staying a while."),
         ],
     },
     "on_leave": sable_on_leave,
@@ -991,7 +992,7 @@ SABLE_CONVO = {
             ],
         },
         # A STARTING question: the town has been sealed since the mid-January
-        # rite (it is mid-April now -- THREE months; NARRATIVE 1). The PI has
+        # rite (it is mid-April now -- THREE months; NARRATIVE §1). The PI has
         # the dates from his own case; Sable downplays a supernatural seal as
         # ordinary winter and never lets the word "trapped" near it.
         {
@@ -1131,7 +1132,7 @@ def sable_on_death(game, npc):
 
 
 def clerk_dialogue(game, npc):
-    """The Lodge Clerk, Mr. Sable -- the smiling trap-keeper (NARRATIVE §2).
+    """The Lodge Clerk, Mr. Sable -- the smiling trap-keeper (NARRATIVE §4).
     A LOCAL, and the most attuned of them: he dreamed the door longest and
     loudest of anyone born here, and has spent years keeping the desk and
     the guests ready. His menace is COMPULSION, NOT CONSPIRACY -- he voices

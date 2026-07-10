@@ -1,4 +1,4 @@
-"""Headless preview of the ashfall overlay (NARRATIVE 4b).
+"""Headless preview of the ashfall overlay (DESIGN.md §2).
 
 Boots a Game, forces an evidence count (-> infest stage), loads a scene,
 fills the ash field, and renders draw_world to a PNG per case. Confirms the

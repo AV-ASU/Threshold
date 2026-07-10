@@ -219,7 +219,7 @@ class DecoLightingMixin:
 
     def _draw_swallow_hole(self, surf, x, y):
         """A sink where the river spirals down into the earth and is gone --
-        the underground river's mouth (NARRATIVE 1b: the river is the artery;
+        the underground river's mouth (NARRATIVE §2: the river is the artery;
         water finds the lowest place and creeps to the door). Depth rings that
         darken to black at the centre + a slow draining swirl. Used on the
         surface (the river vanishes here) and in the Sump (the same artery,

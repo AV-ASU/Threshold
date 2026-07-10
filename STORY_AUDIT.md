@@ -19,9 +19,9 @@ Maintainer rulings applied in the follow-up commit:
   the ruling, Crane no longer dies in his church: the doom sends him to the
   river after his flock, the emptied church's river-mud line points there,
   and the body is found on the Brimley riverbank (evidence #4 moved;
-  NARRATIVE §2/§4 updated).
+  NARRATIVE §4/§4 updated).
 - **A4 RESOLVED doc-side** — BREAK stays wordless by design; the locked line
-  was removed from NARRATIVE §6 (the cage-for-Him truth belongs to the
+  was removed from NARRATIVE §8 (the cage-for-Him truth belongs to the
   cult's own notes, not the ending).
 - **A5 FIXED** — the notebook lead now reads "the river the boy watched."
 - **B1 FIXED** — the ageless staff photo is cut (dialogue + lodge cellar
@@ -30,7 +30,7 @@ Maintainer rulings applied in the follow-up commit:
   rumor the boy Toby told him (they walked off down the river one night).
 - **B3 partly FIXED** — "cut the family off two years ago" deleted from the
   case intake; the Invitation note reads "Since the winter" (Sable received
-  the envelope shortly after the seal; NARRATIVE §2 updated); the Deep
+  the envelope shortly after the seal; NARRATIVE §4 updated); the Deep
   Stair HUD label now reads "the Deepest Face". Remaining B3 items (ledger
   "not one ever signs out" lines, Hettie's January Mara sighting, the
   chalk_deep stair note) await rulings.
@@ -106,7 +106,7 @@ gated on `preacher_body_seen` (`dialogue.py:838`); Hettie's should be too.
 player's 2nd+ beat the reaction is often lost anyway.)
 
 **A4. The BREAK ending is missing its locked line.** `systems/game.py:2410`:
-`"rite_broken": [("", 3.0 + 7.0)]`, comment "PURELY VISUAL". NARRATIVE §6
+`"rite_broken": [("", 3.0 + 7.0)]`, comment "PURELY VISUAL". NARRATIVE §8
 locks the presentation to *"It was never a cage for you. It was a cage for
 Him."* — grep finds that line ONLY in NARRATIVE.md. Either the code regressed
 or a later decision never made it back to the bible; NARRATIVE's header
@@ -338,7 +338,7 @@ supposedly never broke into.
 
 - Watcher bind/dispel notices still read as a bindable side-cult curse
   ("Something has been bound to you", "The curse lifts")
-  (`threat_mixin.py:783-789, 901-903`) — NARRATIVE §8 lists the re-point as
+  (`threat_mixin.py:783-789, 901-903`) — DESIGN.md §4 lists the re-point as
   open; the trigger half is already re-pointed.
 - Vane's blind-cultist thread is unauthored (TODO #2a).
 - Chorus lacks the shared intro/photo openers (TODO #1).

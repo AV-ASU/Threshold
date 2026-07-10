@@ -36,7 +36,7 @@ choice engine already exists and works (`ui/dialog.py show_choice`) but is used
 in exactly ONE gameplay spot (the Sign Chamber altar fork, `scenes/well.py`
 ~L890). Build an ask-about-topics layer (the girl / the well / the strangers /
 the preacher) with answers gated on evidence found + who is being asked. Makes
-the core fantasy active for the first time (NARRATIVE §2: reading the town IS
+the core fantasy active for the first time (NARRATIVE §4: reading the town IS
 the investigation). Content + design, not engine work. **Highest value-to-risk
 item on the list: engine exists, canon is settled, payoff is the core fantasy.**
 
@@ -132,7 +132,7 @@ full economy table is still to be drafted).
   graciously and it means **nothing** — no reward, no thanks that reads as
   real, a quiet non-reaction that the outside no longer exists for him. The
   anti-reward that characterizes what Sable *is* (compulsion, not hospitality;
-  NARRATIVE §2). Outcome is a `notes` beat / a chill, never an item.
+  NARRATIVE §4). Outcome is a `notes` beat / a chill, never an item.
 - **Vane is a recipient too — and his is a TRAP, not a gift.** To Vane the paper
   is his **break lever, not a comfort**: Kurt Cobain (his favorite musician)
   dead on the front page reads, to a man who wants it all to *end*, as
@@ -159,7 +159,7 @@ full economy table is still to be drafted).
 ### 2a. **[Fable + Opus]** Sheriff Vane — the despair/hope arc + player-driven hollow turn  *(planned with the user 2026-07; couples #1's ask-verb + #2's newspaper; deepens a thin character)*
 
 Rework Vane from a linear counter into a real arc (the goal is DEPTH — he had
-little going on). Lore is settled in NARRATIVE §2 (his row) + §4 (the hollow
+little going on). Lore is settled in NARRATIVE §4 (his row) + §4 (the hollow
 turn, rewritten off infestation-gating). Two halves:
 
 - **Ask-verb conversion (rides #1).** Give Vane **multiple dialogue options**
@@ -380,7 +380,7 @@ tension — only if it serves the horror, not despite it.
 
 ## Deferred / north star
 
-### 7. **[Fable]** The liminal-composition pass  *(NARRATIVE.md §8/§10)*
+### 7. **[Fable]** The liminal-composition pass  *(DESIGN.md §4/§10)*
 
 Not a discrete ticket — a standing direction for per-scene level-design polish:
 composed emptiness, long sightlines, uncanny repetition. Inherently
@@ -457,7 +457,7 @@ smaller-grid perf pass is the shippable core of this.
 ## Optional polish (no canon/lore change; do as time allows)
 
 - **[Opus]** **Brimley smaller-grid perf pass** *(the one salvaged piece of the parked reshape, #8)* — cut `w`/`h` from 100×100 toward ~64–72 and re-pack the 7 buildings + well tighter, WITHOUT changing the shape or the boundary (the square + torus wrap + fog rim all stay). This is the real FPS/tedium win (the one-time whole-map tilt bake, `scenes/base.py` `_tilt_fullmap`, ~6000 tiles). Verify: `tools/profile_brimley.py` before/after, a `tools/capture_world.py` tilt capture, full `python tests/run_all.py` gate.
-- **[Fable + Opus]** **Rev. Asa Crane murder reveal + sprite** *(NARRATIVE.md §2; feeds off the #1 provoke pilot)* — Fable for the reveal writing + staging, Opus for the procedural corpse sprite. Punch up
+- **[Fable + Opus]** **Rev. Asa Crane murder reveal + sprite** *(NARRATIVE.md §4; feeds off the #1 provoke pilot)* — Fable for the reveal writing + staging, Opus for the procedural corpse sprite. Punch up
   the `preacher_doomed` death. ~~(1) New discovery location~~ **DONE
   (2026-07):** the doom sends Crane out of his church (the emptied nave's
   one-shot river-mud line points at the water) and his body is found on the
@@ -470,12 +470,12 @@ smaller-grid perf pass is the shippable core of this.
   (wrongness before sight, long sightline). Art only now;
   lore unchanged.
 - **[Opus]** **Held-weapon offset per camera yaw** *(was HANDCRAFT_BACKLOG 3b)* — `draw_axe_held` reads at rest; the one remaining note is an eyeball pass on the equipped-weapon offset at every camera yaw so it never floats off the hand. Verify with a tilt capture across yaws.
-- **[Fable + Opus]** **The grove reads north of Brimley, the river in view** *(2026-07 canon ruling)* — `effigy_grove` is the mouth of the cult's mine, north of town above the river (NARRATIVE §5), and the congregation walked there openly before the rite hid it; the scene art is still a bare corn crop circle. Dress the rim so the river reads below it (the water in view, the dug mouth framing the descent pane) and the northern placement lands without a line of dialogue. Decoration only; the rite, the gates, and the pane stay exactly as they are. Verify with a `tools/capture_world.py` tilt capture + the full `python tests/run_all.py` gate.
+- **[Fable + Opus]** **The grove reads north of Brimley, the river in view** *(2026-07 canon ruling)* — `effigy_grove` is the mouth of the cult's mine, north of town above the river (NARRATIVE §7), and the congregation walked there openly before the rite hid it; the scene art is still a bare corn crop circle. Dress the rim so the river reads below it (the water in view, the dug mouth framing the descent pane) and the northern placement lands without a line of dialogue. Decoration only; the rite, the gates, and the pane stay exactly as they are. Verify with a `tools/capture_world.py` tilt capture + the full `python tests/run_all.py` gate.
 - **[Opus]** **Higher-contrast see-through doors** *(PORTALS.md)* — now that the
   aperture's actors are sight-gated, opt in the doors where the
   effect reads strongest: a lit room off a dark hall, the front door onto the
   yard. Draw/opt-in only; no new tech.
-- **[Opus]** **Permanently-visible King through an OPEN fold** *(NARRATIVE §3 / `PORTALS.md`)* — the King currently looms through the rift only while it *forms*,
+- **[Opus]** **Permanently-visible King through an OPEN fold** *(DESIGN.md §1 / `PORTALS.md`)* — the King currently looms through the rift only while it *forms*,
   then steps through (intentional per `PORTALS.md`). A persistent silhouette
   on the far side of an already-open fold is not built; revisit only if the
   direction changes.

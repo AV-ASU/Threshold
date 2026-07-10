@@ -29,7 +29,7 @@ def build_effigy_grove():
     effigy-dolls in a ring, THREE weathered standing stones (organic,
     seeded -- siblings, never copies) with the nailed-up faces on one of
     them -- the work without the worker (the closing rite claimed the
-    town at once, NARRATIVE 1b/3).
+    town at once, NARRATIVE §4 / DESIGN.md §1).
 
     THE WAY DOWN lives here now: a fold stands over the dead fire ('O'),
     clarifying with the evidence count (fold_charge_fn, the meter). At 3
@@ -287,7 +287,7 @@ def build_effigy_grove():
                                  "phantom_mark"))
     # ---- No worker ----
     # There is no worker here. The closing rite claimed the whole town
-    # at once (NARRATIVE 1b/3), so individual cursing -- and the figure
+    # at once (NARRATIVE §4 / DESIGN.md §1), so individual cursing -- and the figure
     # who'd do it -- is gone. The grove is left as the work without the
     # worker: the dead fire, the effigy ring, the nailed-up faces, all
     # tended by no one you'll ever see: a maker-less dread tableau.

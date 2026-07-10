@@ -350,7 +350,7 @@ def draw_king_death(surf, t):
 
 # ---- The Carcosa tableau: the rite_broken explosion ending --------------
 # Distinct from draw_king_death (the King catching YOU). This is the rite
-# torn down with the source still open (NARRATIVE §6): the King erupts as a
+# torn down with the source still open (NARRATIVE §8): the King erupts as a
 # TREE OF THE TAKEN -- every branch hung with a face He now wears -- and His
 # influence floods DOWN and OUT over the drowned town. A wholly procedural
 # homage in the Yellow palette; `t` = seconds since the break (held ~7s).
@@ -505,7 +505,7 @@ def _draw_carcosa_axe(surf, hx, hy, ang):
 
 
 def draw_mask_yank(surf, t):
-    """The act that breaks the rite (NARRATIVE §6): you SHATTER the Pallid
+    """The act that breaks the rite (NARRATIVE §8): you SHATTER the Pallid
     Mask with your splitting axe -- the catastrophic 'tear it down'. Dread
     stillness, the axe swings in, the mask bursts into shards and the Sign
     bleeds, whiting out into the blast. `t` = seconds into the act (~3s)."""
@@ -919,7 +919,7 @@ def draw_carcosa(surf, t, mode="spread"):
 
 
 # ---------------------------------------------------------------------------
-# The SEAL ending's wordless close -- THE WIDE SHOT (NARRATIVE §6): every
+# The SEAL ending's wordless close -- THE WIDE SHOT (NARRATIVE §8): every
 # acre the cult bent, seen from high above, a torn slab suspended in a black
 # void under black stars and the twin suns. Behind it a towering figure
 # looms, almost all void itself; faint traces of gold gutter along a mask

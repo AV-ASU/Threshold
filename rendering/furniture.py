@@ -289,7 +289,7 @@ FURNITURE = {
     "bed":       (30, 46, 9,  _CLOTH,   _d_mattress),
     "bookshelf": (28, 13, 23, _WOOD_DK, _d_shelves),
     "shelf":     (26, 10, 22, _WOOD_DK, _d_shelves),
-    # the general store's emptied goods run (food scarcity, NARRATIVE §8):
+    # the general store's emptied goods run (food scarcity, DESIGN.md §4):
     # same case as a bookshelf, nothing standing on the shelves
     "bare_shelf": (28, 13, 23, _WOOD_DK, _d_bare_shelves),
     # the Old Stores' racked gear (the mine art pass, 2026-07)
@@ -305,7 +305,7 @@ FURNITURE = {
     "barrel":    (16, 16, 18, _WOOD_MID, None),
     "cot":       (28, 13, 8,  _WOOD_DK, _d_cot_pallet),
     # ("bone_rack" purged 2026-07: the ossuary bone-vault fiction was a
-    # killer-cult relic -- the claiming cult spills no one, NARRATIVE §1b.
+    # killer-cult relic -- the claiming cult spills no one, NARRATIVE §2.
     # The Old Stores rack ordinary "shelf" cases now.)
     "pew":       (40, 11, 11, _WOOD_DK, _d_pew_back),
     # a backless plank on trestle legs -- the mine's own carpentry (the

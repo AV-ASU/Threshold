@@ -678,7 +678,7 @@ def build_brimley():
     sc.add_decoration(Decoration(74 * TILE + 16, 78 * TILE + 16, "dead_crow"))
     # A WHIRLPOOL in the river: the water keeps flowing past it, but at this
     # spot it spirals down a sink in the bed -- where the surface river drains
-    # into the one running under the town (NARRATIVE 1b: the river is the
+    # into the one running under the town (NARRATIVE §2: the river is the
     # artery the water, and the diggers, followed down to the door). Cold mist.
     _whirl_row = 38
     _whirl_col = _river_cols(_whirl_row)[1]
@@ -897,9 +897,9 @@ def build_brimley():
     # The residents say they can't leave; the town shows it. A payphone
     # that won't connect; missing-person flyers (one of them Mara);
     # a clock stopped dead and a calendar marked up to JAN 15 (the
-    # mid-January seal, NARRATIVE 1 setting note 3) and then stopped --
+    # mid-January seal, NARRATIVE §1 setting note 3) and then stopped --
     # the season kept turning, the marking didn't (the
-    # fold is spatial, NARRATIVE 1b); the truck that drove for the county line and
+    # fold is spatial, NARRATIVE §2); the truck that drove for the county line and
     # was handed back, nosed dead into the east tree line; and Mrs.
     # Calder's plate, set at supper for a guest she can't name.
     sc.add_decoration(Decoration(58 * TILE + 16, 62 * TILE + 16, "payphone"))
@@ -931,7 +931,7 @@ def build_brimley():
     # reinstated as a properly submerged form if wanted.)
     # Mrs. Calder's table, laid out in the open by the kid's house: two
     # settings (hers, and the extra place she lays every night for the
-    # guest she can't name -- NARRATIVE 2), a candle burned down, and a
+    # guest she can't name -- NARRATIVE §4), a candle burned down, and a
     # chair knocked over. Once she converts (stage 2) the infestation
     # pass clears the extra setting: she has stopped waiting
     # (systems/infest_mixin.py _infest_locals).

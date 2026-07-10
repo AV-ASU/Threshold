@@ -211,7 +211,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         # intense than the brimley vignette but never goes away --
         # the world edges are always pressing in. Cached on first need.
         self._outdoor_vignette_surf = None
-        # Ashfall motes (NARRATIVE 4b): live screen-space particle field,
+        # Ashfall motes (DESIGN.md §2): live screen-space particle field,
         # eased toward a stage-driven target each frame. See _tick_ashfall.
         self._ashfall_parts = []
 
@@ -222,7 +222,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         # the King hunts, holding it at 100% tears a portal he folds
         # through. See _tick_visibility + _tick_king_roam.
         self.visibility = 0.0
-        self._vis_floor = 0.0        # evidence-driven minimum (NARRATIVE §3)
+        self._vis_floor = 0.0        # evidence-driven minimum (DESIGN.md §1)
         self._being_seen = 0.0       # instantaneous cult/human gaze RATE (HUD)
         # Heartbeat schedule -- time to next thump. Kicks in only at
         # proximity >= 0.70 and only while the player is unhidden.
@@ -286,7 +286,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         # ---- THRESHOLD: flashback ----
         # Fires when the player reads Mara's journal through a third time.
         # Reading her words puts the PI back inside the ONE dream he had a
-        # year ago, before Brimley (NARRATIVE 1b / §0: attuned exactly once,
+        # year ago, before Brimley (NARRATIVE §2 / §0: attuned exactly once,
         # it never took) -- the same door her journal describes. Not text -- a
         # wordless held shot: an open doorway of dried wood suspended in
         # black, a pulsing yellow glow radiating from it (cut off by the
@@ -894,7 +894,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
             # Re-derive the world's infestation for this scene from the
             # evidence count (rot decals, turned/mutated locals, the
             # stage-3 Sheriff encounter). Corpses are NOT persisted across
-            # scene loads (NARRATIVE 1b/3: the act costs in the moment, no
+            # scene loads (NARRATIVE §4 / DESIGN.md §1: the act costs in the moment, no
             # cross-scene ledger) -- a killed local lies there only while
             # you're in the room.
             self._apply_infestation()
@@ -2114,7 +2114,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         # the body and a hard visibility spike. The body stays down for as
         # long as you're in the room (_make_corpse), but is NOT persisted
         # across scene loads -- the act costs in the moment, not a ledger
-        # (NARRATIVE 1b/3).
+        # (NARRATIVE §4 / DESIGN.md §1).
         self.visibility = min(LOCAL_KILL_VIS_CAP,
                               max(self.visibility,
                                   self.visibility + LOCAL_KILL_VIS_SPIKE))
@@ -2127,7 +2127,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         time the player is in this room: it stops moving (alive=False
         already), stops blocking, and answers E with a one-shot examine
         instead of its old dialogue. Not persisted across scene loads
-        (NARRATIVE 1b/3) -- the scene rebuilds the local live on re-entry."""
+        (NARRATIVE §4 / DESIGN.md §1) -- the scene rebuilds the local live on re-entry."""
         npc._is_corpse = True
         npc._kill_processed = True
         npc.solid = False
@@ -2211,7 +2211,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
     _FB_GAZE = [(math.cos(a * math.tau / 8), math.sin(a * math.tau / 8))
                 for a in range(8)] + [(0.0, 0.0)]
 
-    # The PI's interior voice down the descent (NARRATIVE §6, GAME_CHANGES §8):
+    # The PI's interior voice down the descent (NARRATIVE §8, GAME_CHANGES §8):
     # the put-together investigator coming apart as he understands too much,
     # baited toward the Mask's off-ramp (carry it OUT -- SPREAD). Each beat is
     # one-shot: a brief first-person flash on-screen, plus a fuller entry filed
@@ -2373,7 +2373,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
     # -- floods in as he crosses out. The visuals live in
     # rendering/spread_drive.py; the durations come from its beat table
     # so the captions and the picture can never drift. seal_threshold
-    # (END IT) closes the Threshold on Brimley and on you (NARRATIVE §6).
+    # (END IT) closes the Threshold on Brimley and on you (NARRATIVE §8).
     _ENDING_SCRIPTS = {
         "escape_alone": list(zip((
             "You turn the key and the engine roars to life.",
@@ -2405,7 +2405,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
             ("Rage approaches.", 3.4),
             ("", 8.0),
         ],
-        # rite_broken is the TRAP game over (NARRATIVE §6). PURELY VISUAL --
+        # rite_broken is the TRAP game over (NARRATIVE §8). PURELY VISUAL --
         # no text boxes -- and two beats the draw path special-cases: the
         # mask-yank (the culpable act, RITE_YANK_DUR) cutting to the Carcosa
         # blast (RITE_BLAST_DUR).

@@ -122,7 +122,7 @@ FLOOR_DEFS = {
     "x": {"color": (28, 22, 30),   "step": "step_stone"},  # basement floor
     # Smooth flat grey stone -- NO texture at all (no mottle, grout, jitter, or
     # macro shadow). The Threshold apron: an impossibly even, man-made-looking
-    # floor where geometry serves the door (NARRATIVE 1b). draw_floor flat-fills
+    # floor where geometry serves the door (NARRATIVE §2). draw_floor flat-fills
     # it and returns early.
     "0": {"color": (94, 94, 100),  "step": "step_stone"},
     # Dense corn cover. Walkable + step_grass, but the per-tick
@@ -1008,7 +1008,7 @@ DISPLAY_NAMES = {
     "works_scriptorium":    "the Scriptorium",
     "works_sign":           "the Sign Chamber",
     # (the scene KEY is legacy; the Deep Stair concept is CUT -- the room
-    # is the dig's dead end, NARRATIVE §9 room 7)
+    # is the dig's dead end, DESIGN.md §5 room 7)
     "works_deepstair":      "the Deepest Face",
     "the_sump":             "the Sump",
     "the_cells":            "the Cells",

@@ -253,7 +253,7 @@ class ThreatMixin:
         self.show_notice("You tear free.", duration=1.8)
 
     def _tick_gaze_bind(self, dt):
-        """His gaze, binding the curse (NARRATIVE 1b/3). In a GAZE_BIND_SCENES
+        """His gaze, binding the curse (NARRATIVE §4 / DESIGN.md §1). In a GAZE_BIND_SCENES
         scene, staying EXPOSED (not
         hidden) while visibility is high lets His eye fix on you: a timer
         climbs, and crossing GAZE_BIND_TIME binds the first Watcher. Hiding,
@@ -288,7 +288,7 @@ class ThreatMixin:
         """Keep the current cult scene topped up with CULT_REGULARS roaming
         cultists. Rate-limited so killing one buys a breather, not an instant
         respawn. (The watcher-curse is His own gaze, bound in
-        _tick_gaze_bind; NARRATIVE 1b/3.)"""
+        _tick_gaze_bind; NARRATIVE §4 / DESIGN.md §1.)"""
         self._cult_topup_t -= dt
         if self._cult_topup_t > 0:
             return
@@ -484,7 +484,7 @@ class ThreatMixin:
 
     def _note_fold_pursuit(self, exit_data):
         """Called the instant an exit fires, BEFORE the scene swaps. A chase
-        carries through PORTALS and FOLDS alike (NARRATIVE §8): if a cultist
+        carries through PORTALS and FOLDS alike (DESIGN.md §4): if a cultist
         is in active chase within FOLD_PURSUE_RANGE when the player crosses an
         exit, stash that one pursuer so it follows a beat behind, whether the
         exit is a door, ladder, rope, seamless passage, or a hidden fold. Both
@@ -703,7 +703,7 @@ class ThreatMixin:
 
     def _evidence_count(self):
         """How many distinct evidence beats have been logged -- the gate
-        that arms the King (NARRATIVE §3)."""
+        that arms the King (DESIGN.md §1)."""
         log = self.save.arg("evidence", []) if self.save else []
         return len(log) if isinstance(log, list) else 0
 

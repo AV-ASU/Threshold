@@ -13,7 +13,7 @@ def build_clearing():
     """THRESHOLD: the clearing -- the BURN SITE. A small open glade off
     the brimley river bank where the claimed burned their worldly
     effects before they went below (the surface twin of the Sorting
-    Hall's shed lives, NARRATIVE 1b/3): a fire pit big enough to stand
+    Hall's shed lives, NARRATIVE §4 / DESIGN.md §1): a fire pit big enough to stand
     a family around, cold now, ringed by what wouldn't burn. No pot, no
     offerings -- the claiming cult eats no one (the eat-cult imagery
     scrub); what fed this fire was luggage.
@@ -201,7 +201,7 @@ def build_shop():
                                  w=104, h=64, color=(58, 60, 64), seed=31))
     # Sized darkwood furniture. The two long goods runs on the shop floor
     # stand EMPTY (bare_shelf: dust-ghosts where stock stood, one tin left;
-    # no deliveries since the new year, NARRATIVE 8 food scarcity). Hettie
+    # no deliveries since the new year, DESIGN.md §4 food scarcity). Hettie
     # keeps a real counter now -- a low see-over volume like the Lodge
     # front desk -- plus a stool, and stocked shelves in the back room
     # (her preserves; nobody buys, so those never emptied).
@@ -244,7 +244,7 @@ def build_shop():
                                  "wrong_photo", stage=1))
     sc.add_decoration(Decoration(14 * TILE + 16, 1 * TILE + 22, "clock"))
     # Hettie's calendar -- "no deliveries in a while now," the days with
-    # nowhere left to count toward (stasis, not a loop -- NARRATIVE 1b).
+    # nowhere left to count toward (stasis, not a loop -- NARRATIVE §2).
     sc.add_decoration(Decoration(7 * TILE + 16, 0 * TILE + 24, "calendar"))
     for mx, my in [(8, 7), (12, 8), (10, 10)]:
         sc.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16,

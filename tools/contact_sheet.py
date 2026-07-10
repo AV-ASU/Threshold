@@ -3,7 +3,7 @@
 Renders EVERY registered scene (via tools/render_scenes.render_scene, so it
 shares the in-game terrain/decoration/grade draw) and tiles them into a
 single labelled grid PNG. This is the composition-audit tool for the
-liminal-composition pass (NARRATIVE §10): one glance at the whole game's
+liminal-composition pass (DESIGN.md §6): one glance at the whole game's
 per-scene layout, and clean before/after sheets as scenes are reworked.
 
 Usage (from the repo root):

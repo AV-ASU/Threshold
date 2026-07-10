@@ -212,7 +212,7 @@ it renders the procedural sprites to a labelled PNG strip.
     Killed innocent **locals** lie where they fell **only while the player
     is in that room** (`_make_corpse`); the body is *not* persisted across
     scene loads — the scene rebuilds the local live on re-entry (the act
-    costs in the moment, not a ledger; NARRATIVE 1b/3).
+    costs in the moment, not a ledger; NARRATIVE §4 / DESIGN.md §1).
   - `items.py` — `ITEM_DEFS`, `Inventory`.
   - `threat.py` — `proximity_tier` + `PROX_TIER_*` helpers.
 - `ui/` — dialog, inventory, notebook, fonts, text input. **Dialog is
@@ -345,7 +345,7 @@ it renders the procedural sprites to a labelled PNG strip.
   grabs) and **turns** the resisters (`INFEST_TURN` → `_turned_local_dialogue`;
   Hettie, Garrick, Old Pell, Toby): the town reads **NORMAL** — they keep
   their exact sprite, portrait, and body (the wrongness is the *place*, not
-  the people; §1b). Only their **dialogue** curdles: they answer flat and
+  the people; NARRATIVE §2). Only their **dialogue** curdles: they answer flat and
   off, reporting small ordinary things from behind a face that no longer
   means them, never acknowledging the gap. (The old `_mutated` body-horror
   layer — the `draw_infested_overlay` world sprite + the
@@ -385,7 +385,14 @@ it renders the procedural sprites to a labelled PNG strip.
   alignment pass settled a batch of story decisions; the **code changes to
   make the game match** were tracked in the former `GAME_CHANGES.md`, now
   **folded into `TODO.md`** (2026-07) with its open items tagged
-  `(was GAME_CHANGES §N)`. `NARRATIVE.md` stays the canon source of truth.
+  `(was GAME_CHANGES §N)`. `NARRATIVE.md` is the **story bible** and the
+  canon source of truth (rewritten 2026-07: it locks FACTS, never
+  phrasings; states what IS, not what isn't; one fact, one home; canon
+  invariants indexed at the bottom). The systems/design material that
+  used to live in it (threat-model canon, infestation, the implementation
+  map, the Works level design, art direction, fold mechanics) moved to
+  **`DESIGN.md`** — code comments cite `NARRATIVE §n` / `DESIGN.md §n`
+  in the NEW numbering.
   Highlights that override older code/comments: the
   **Ledger is the boxed old registers in the PADLOCKED Lodge cellar**
   (2026-07 rework, superseding the 2026-06 front-desk placement: the
@@ -423,7 +430,7 @@ it renders the procedural sprites to a labelled PNG strip.
   (`rendering/portal.py draw_rift_door`: pane stands along its world
   seam, foreshortens like a wall, thins to nothing off-angle). Same-scene
   folds are SILENT (skipped by `_build_fold_cache` — the lie is the world
-  itself). One-way is the King's signature alone. See NARRATIVE §11 "One
+  itself). One-way is the King's signature alone. See DESIGN.md §7 "One
   phenomenon, two presentations" + PORTALS.md "Decisions landed". Live
   proof sheet: `tools/preview_rift_anchored.py`.
 - **No day/night cycle** — it was removed; everything reads as one
@@ -473,7 +480,7 @@ it renders the procedural sprites to a labelled PNG strip.
      reachable) BEFORE the full gate.
 - `__pycache__/` is gitignored; never commit `.pyc`.
 
-## The journal door-dream + "He knows you" (NARRATIVE §1b / §0)
+## The journal door-dream + "He knows you" (NARRATIVE §4)
 
 - **Trigger (two-stage since the §15 rework):** reading `mom_notebook`
   (Mara's journal) a third time sets `flashback_pending`

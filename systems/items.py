@@ -62,7 +62,7 @@ ITEM_DEFS = {
     # NB: the journal READS from MARA_JOURNAL_PAGES below (the paged
     # leaves); this desc is the skim text and must stay consistent with
     # those pages -- the ache first (grief that learned her name), then
-    # the door, then the glad dig down (NARRATIVE 1b: answered, not
+    # the door, then the glad dig down (NARRATIVE §2: answered, not
     # deceived).
     "mom_notebook":  {"name": "Mara's Journal",
                        "kind": "lore",
@@ -139,7 +139,7 @@ ITEM_DEFS = {
     # The congregation's invitation -- left at the Lodge desk by the guests
     # who never signed out, handed over by Sable at 3 evidence. Carries the
     # rite: the school first (smoke, then the chalk door), then the clearing.
-    # Voice rules: compulsion-certainty, never explanation (NARRATIVE 1b);
+    # Voice rules: compulsion-certainty, never explanation (NARRATIVE §2);
     # NO dashes in this text.
     "rite_envelope": {"name": "The Invitation",
                        "kind": "lore",
@@ -187,7 +187,7 @@ def effective_desc(key, save=None):
 # Mara's Journal, in her own words: three short leaves the player turns
 # one Enter at a time in the inventory. The arc is the whole of her
 # descent in miniature -- the ache that drew her, the dream of the door,
-# the glad walk down toward it (NARRATIVE 1b: she was answered, not
+# the glad walk down toward it (NARRATIVE §2: she was answered, not
 # deceived). Turning past the LAST page is what fires the door-dream
 # flashback, so the count here must stay at three (it drives the
 # `notebook_pages_read` 3-gate the Game system polls). No dashes in any

@@ -571,7 +571,7 @@ class NPC:
 
     def _step_toward(self, target, dt, scene, navigate=False):
         tx, ty = target
-        # Cover-aware routing (NARRATIVE §8): the cult states bend the target
+        # Cover-aware routing (DESIGN.md §4): the cult states bend the target
         # around walls/props (and through folds) via scene.nav_toward. The
         # apex hunter (_force_chase) opts OUT -- it closes in a straight line.
         if navigate:
