@@ -510,8 +510,12 @@ class RotMixin:
         # Locals turn (convert) or rot (mutate) on the surface.
         if surface_stage > 0:
             self._rot_locals(surface_stage)
-        # Sheriff Vane's office becomes a unique threat at stage 3.
-        if surface_stage >= 3 and key == "sheriff_office":
+        # Sheriff Vane's office becomes a unique threat at stage 3 --
+        # unless the player already put Vane down: dead locals stay dead
+        # (the ledger normalizes "Sheriff Vane" to "Sheriff"), so a shot
+        # Vane never stands back up hollow; his body holds the office.
+        if surface_stage >= 3 and key == "sheriff_office" \
+                and not self._local_is_dead("Sheriff"):
             self._spawn_hunting_sheriff()
         # The general store from stage 2: one of them eats at Hettie's
         # counter, calm as a lunch hour, while the shelves behind it stand

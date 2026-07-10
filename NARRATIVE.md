@@ -266,10 +266,30 @@ never predation.
   cap above (a prior cycle's scar, holding nothing). The congregation
   mined toward the frame and never reached it; the PI is the first
   living soul to stand before it.
-- **Carcosa is not a level.** The King's sprite is the floating
-  glow-of-faces, so Carcosa is the inside of Him: every mask drifting
-  in that fire is someone He already took. You only ever see it by
-  losing.
+- **Carcosa (codified 2026-07).** The King's dead city on the far side
+  of the Threshold. It is not a level, and it is never a destination:
+  **no soul from Brimley is in Carcosa, and no one is ever carried
+  there one at a time.** Everyone inside the town line stays inside
+  the town line, living or dead, exactly where Brimley keeps them.
+  The single translation event in the whole fiction is the SEAL
+  ending, when the Mask crosses the frame and every acre of Brimley
+  is warped into Carcosa whole, at one stroke (§8). What the losing
+  player sees at the King's catch is not an arrival in Carcosa but a
+  look *into* Him — the furnace of drifting masks — and those masks
+  are slices of *Him* crossing the plane (§2), never trophies of the
+  taken. You only ever see it by losing.
+- **Carcosa's one look (codified 2026-07).** Black is the ground note:
+  a black sky, the black stars, the twin suns low at the horizon, and
+  His gold fire the only light — the rift's black-gold grammar at
+  cosmic scale. The SEAL tableau (lines on black under the black stars
+  and twin suns) is the reference image; every other glimpse (the
+  King-catch furnace, the BREAK blast) must read as the same place.
+  Any pale-teal or green cast is off-model (open work: `TODO.md` #19).
+- **The names stay off the page.** *Carcosa*, *the King in Yellow*,
+  and *the Yellow King* never appear in player-facing text — Chambers
+  is the inspiration, never quoted. The SEAL ending's black stars and
+  twin suns are the one deliberate reference, and it stays imagery
+  only, unnamed (guarded: `tests/flow.py` §33).
 
 ---
 
@@ -349,7 +369,7 @@ one choice.
 | Trigger | Card / presentation |
 |---|---|
 | A cultist reaches you | **CAPTURED** — taken alive for the hive. The FIRST grab of a run is the Talk instead: a courteous warning, the room stands down, and the PI's wry reaction files as a note (wording flow-guarded). |
-| The King reaches you | **Carcosa** — the mask-furnace cutscene: fire, and the drifting masks of everyone He has taken. |
+| The King reaches you | The **mask-furnace** cutscene — a look *into* Him: fire, and the drifting mask-slices of Himself (§2, §5). Not an arrival in Carcosa; nobody is ever carried there (§5). |
 
 **The fork.** Both chosen endings branch from one object, the **Pallid
 Mask**, lifted in the Sign Chamber. There is only one, and from the
@@ -460,3 +480,15 @@ purpose, and keep each one guarded where a guard exists.
   `cross`, `robe`, `unsent_letter`, `flashlight`, `lumber_axe`,
   `woodshed_key`, `rite_envelope`, `chalk`, `incense`. Display names
   and fiction may change; keys may not. → `DESIGN.md` §3
+- **Nobody is ever relocated to Carcosa.** Every soul inside the town
+  line stays there, living or dead; the SEAL ending's whole-town warp
+  is the single translation event, and the King-catch furnace is a
+  look *into* Him, never an arrival. → §5, §8
+- **Dead locals stay dead.** A killed local lies where they fell for
+  the rest of the run (the `dead_locals` ledger); nobody leaves
+  Brimley, not even by dying (guarded: `tests/flow.py` §32). → §5,
+  `DESIGN.md` §1
+- **The names stay off the page.** *Carcosa* / *the King in Yellow* /
+  *the Yellow King* never appear in player-facing text; the SEAL
+  ending's black stars + twin suns are the one unnamed reference
+  (guarded: `tests/flow.py` §33). → §5

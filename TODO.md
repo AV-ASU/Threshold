@@ -362,6 +362,21 @@ a little curt (the talk-reaction register). Kill aphorism and poetry where it
 crept in; keep the sensation-only cosmic rule (§1b). *(The liminal-beat pass —
 was GAME_CHANGES §24 — folds into #4 and #7.)*
 
+### 19. **[Opus]** Carcosa palette alignment — one look, every glimpse  *(2026-07 ruling; NARRATIVE §5)*
+
+Carcosa's look is codified (NARRATIVE §5): black is the ground note — black
+sky, black stars, twin suns low, His gold fire the only light (the rift's
+black-gold grammar at cosmic scale); the SEAL tableau is the reference image.
+The King-catch furnace and the BREAK blast are off-model: `_cold_fire_pit`
+(`rendering/sprites_carcosa.py`) burns pale-TEAL/green — tongues
+`(150, 214, 184)` / `(188, 220, 188)`, forms `(52, 92, 78)` — and the BREAK
+hard-cut (`draw_carcosa(..., "spread")`, `ui/cutscenes.py`) inherits it.
+Re-grade the cold fire into the black + gold family ("fire, but wrong and
+cold" must survive the recolor — wrongness by behavior and darkness, not by
+hue). Verify with a before/after frame capture at sampled timestamps
+(`tests/render_smoke.py` drives every ending) and a look from the maintainer
+before it lands.
+
 ## Blocked on a human at the keys
 
 These are BUILT and guarded; what remains cannot be settled from code

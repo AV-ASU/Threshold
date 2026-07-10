@@ -209,10 +209,12 @@ it renders the procedural sprites to a labelled PNG strip.
     `~/.threshold` / `%APPDATA%\THRESHOLD`, `THRESHOLD_SAVE_DIR`
     overrides for tests). Continue on the title reads it back; a death
     or a quit costs everything since the last sleep, never the run.
-    Killed innocent **locals** lie where they fell **only while the player
-    is in that room** (`_make_corpse`); the body is *not* persisted across
-    scene loads — the scene rebuilds the local live on re-entry (the act
-    costs in the moment, not a ledger; NARRATIVE §4 / DESIGN.md §1).
+    Killed innocent **locals stay dead for the run** (2026-07 ruling):
+    the kill is written to the `dead_locals` save arg
+    (`_record_dead_local`) and `_apply_dead_locals` (run from
+    `load_scene_now` before the rot pass) lays the body back down where
+    it fell on every re-entry. New Game clears it; the cot save
+    snapshots it like any arg (NARRATIVE §5 / DESIGN.md §1; flow §32).
   - `items.py` — `ITEM_DEFS`, `Inventory`.
   - `threat.py` — `proximity_tier` + `PROX_TIER_*` helpers.
 - `ui/` — dialog, inventory, notebook, fonts, text input. **Dialog is
@@ -324,14 +326,18 @@ it renders the procedural sprites to a labelled PNG strip.
   gate, which only ever protected the cult — see `Projectile._strike` /
   `_BULLET_PHANTOM`). A local kill spikes `visibility`
   (`LOCAL_KILL_VIS_SPIKE`, capped just under the King), pings the cult to
-  investigate the body, and leaves a corpse **for as long as the player is
-  in that room** (`_kill_npc` returns keep → `_make_corpse`). **Cultists now
-  leave bodies too** (override of the old "the cult reclaims its own" sweep):
-  NPC cultists keep via `_kill_npc` (no visibility spike — that's local-only),
-  and **enemy** cultists (well/depths, `kind="cultist"`) synthesize a corpse
-  NPC in `_kill_enemy` so the npc-corpse draw path renders them. The body is
-  **not** persisted across scene loads (no `dead_locals` ledger) — the scene
-  rebuilds live on re-entry.
+  investigate the body, and leaves a corpse **for the rest of the run**
+  (`_kill_npc` returns keep → `_make_corpse`, and writes the kill to the
+  `dead_locals` ledger; `_apply_dead_locals` lays the body back down on
+  every re-entry — 2026-07 ruling: dead locals stay dead, flow §32; a
+  dead Vane also suppresses the stage-3 `sheriff_hunt` spawn). **Cultists
+  leave bodies too** (override of the old "the cult reclaims its own"
+  sweep): NPC cultists keep via `_kill_npc` (no visibility spike — that's
+  local-only), and **enemy** cultists (well/depths, `kind="cultist"`)
+  synthesize a corpse NPC in `_kill_enemy` so the npc-corpse draw path
+  renders them. Cultist bodies are the one exception to persistence:
+  they last only the visit (patrols are dynamic spawns and respawn by
+  design).
 - **World rot** (`_apply_rot`, called from `load_scene_now`):
   the world rots as a pure, monotonic function of evidence —
   `_rot_stage()` = `min(3, evidence)`, **front-loaded** so the surface
@@ -355,10 +361,12 @@ it renders the procedural sprites to a labelled PNG strip.
   And (c) at stage 3 turns
   the Sheriff's office into a **unique threat**: `_spawn_hunting_sheriff`
   (`sheriff_hollow` sprite) holds for an intro beat then force-chases
-  (`_tick_sheriff`); contact → `_trigger_death("sheriff")`. Player-killed
+  (`_tick_sheriff`); contact → `_trigger_death("sheriff")`; the spawn is
+  skipped if the player already killed Vane (dead locals stay dead — his
+  body holds the office). Player-killed
   locals are drawn by `draw_npc_corpse` at **`mold=0`** (a clean fresh
-  kill) — since corpses no longer persist across loads, there's no growing
-  rot stage to track. (`draw_npc_corpse` still *accepts* a `mold` 0..3 and
+  kill) — the body persists across loads (the `dead_locals` ledger) but
+  no rot stage accumulates on it. (`draw_npc_corpse` still *accepts* a `mold` 0..3 and
   the fold-claim art — `_CORPSE_CLAIM` for named resisters, `_CORPSE_ECHO`
   compulsion echoes — survives in `sprites.py` as reusable art, just no
   longer driven by an accumulating stage.)

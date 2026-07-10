@@ -20,9 +20,11 @@ def _frand(i):
 
 
 def _cold_fire_pit(surf, cx, cy, R, t):
-    """A pit of COLD FIRE -- a shaft of sickly pale-teal/gold flame receding to a
-    black throat, that the King's mask opens into. You are dragged down it. The
-    'hell' of Carcosa: fire, but wrong and cold."""
+    """A pit of COLD FIRE -- a shaft of flame receding to a black throat,
+    that the King's mask opens into. You are dragged down it: a look INTO
+    Him, never an arrival anywhere (NARRATIVE §5 -- nobody is carried to
+    Carcosa). Fire, but wrong and cold. NOTE the current pale-teal/green
+    palette is off-model against the codified black+gold look (TODO #19)."""
     R = int(R)
     if R < 6:
         return
@@ -45,8 +47,9 @@ def _cold_fire_pit(surf, cx, cy, R, t):
         col = (150, 214, 184) if k % 2 else (206, 204, 130)
         pygame.draw.line(surf, col, (int(bx), int(by)), (int(tx), int(ty)),
                          max(1, int(R * 0.02)))
-    # WRITHING FORMS in the deep -- the taken glimpsed in the cold fire,
-    # distorted faces winding through the shaft.
+    # WRITHING FORMS in the deep -- distorted faces winding through the
+    # shaft: slices of HIM crossing the plane (NARRATIVE §2/§5), never
+    # the taken (nobody is in Carcosa).
     for k in range(6):
         a = k * 1.4 + t * 0.45
         rad = R * (0.45 + 0.18 * math.sin(t * 0.8 + k * 1.7))
@@ -77,10 +80,12 @@ def _cold_fire_pit(surf, cx, cy, R, t):
 
 def draw_king_death(surf, t):
     """THE KING REVEALED. The distant void you have fled all game finally
-    ARRIVES in full: His blazing Carcosa furnace floods the frame, His shattered
+    ARRIVES in full: His blazing furnace floods the frame, His shattered
     pallid mask commands the centre with the gaze fixed on you, His arms reach
-    out and DRAG you into the mask -- which cracks open into a pit of COLD FIRE,
-    the hell of Carcosa, that you are hauled down. The dread is recognition: the
+    out and DRAG you into the mask -- which cracks open into a pit of COLD
+    FIRE that you are hauled down. This is a look INTO Him, not an arrival
+    in Carcosa (NARRATIVE §5: nobody is ever carried there; the drifting
+    faces are slices of Him). The dread is recognition: the
     thing that hunted you is here, and it has you. `t` ~ 4.5s (caller holds 5s)."""
     w, h = surf.get_size()
     cx, cy = w // 2, int(h * 0.46)
@@ -137,7 +142,7 @@ def draw_king_death(surf, t):
         lng = fr * (0.7 + (0.9 + 1.3 * take) * grab)
         _yk_spire(scene, rx, ry, aim, lng, fr, t, i, pres, dk, gold, hot)
 
-    # 3. The taken, glimpsed faintly as soul-orbs adrift in His blaze.
+    # 3. Faces adrift in His blaze -- slices of Him (NARRATIVE §5), not souls.
     for i in range(5):
         a = i * 1.4 + t * 0.5
         rad = fr * (1.35 + 0.3 * math.sin(i * 2 + t))
@@ -351,9 +356,10 @@ def draw_king_death(surf, t):
 # ---- The Carcosa tableau: the rite_broken explosion ending --------------
 # Distinct from draw_king_death (the King catching YOU). This is the rite
 # torn down with the source still open (NARRATIVE §8): the King erupts as a
-# TREE OF THE TAKEN -- every branch hung with a face He now wears -- and His
-# influence floods DOWN and OUT over the drowned town. A wholly procedural
-# homage in the Yellow palette; `t` = seconds since the break (held ~7s).
+# TREE OF FACES -- every branch hung with a face of His (slices of Him,
+# NARRATIVE §5; nobody's soul hangs there) -- and His influence floods DOWN
+# and OUT over the drowned town. A wholly procedural homage in the Yellow
+# palette; `t` = seconds since the break (held ~7s).
 _CARCOSA_FACEKINDS = ("wail", "vacant", "gaunt", "hollow")
 
 
