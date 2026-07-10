@@ -5,6 +5,20 @@ dead-code and hygiene sweeps, test-gate economics, and doc-drift spot checks.
 Every finding below was verified against the code (grep/AST/runtime),
 not inferred.
 
+> **FOLLOW-UP SWEEP (2026-07-10, later same day).** Re-verified the whole
+> tree after the fixes above: `compileall` clean, full `tests/run_all.py`
+> gate green (~26 s), 0 dead config constants (all 170 referenced), scene
+> count (44) matches the docs, the no-dash HARD RULE still holds (every
+> dash-bearing string literal is a docstring, a `tests/` assertion, or a
+> `tools/` preview label, none player-facing), and `systems/game.py`'s
+> stated size matches. Two NEW dead private methods were found and removed
+> (AST scan across the runtime packages, cross-checked against the
+> `getattr`-dispatched decoration draw table to filter false positives):
+> `_enemy_sees_player` (`systems/threat_mixin.py`, a binary line-of-sight
+> helper orphaned by the graded-suspicion stealth rework) and
+> `_selected_key` (`ui/inventory_ui.py`, superseded by inline access in
+> `use_selected`). Gate re-run green after removal.
+
 > **STATUS (same day, this branch): all findings fixed** except L5
 > (awareness-only) and the "GAME_CHANGES §N" comment pointers in L3
 > (kept deliberately as historical provenance; TODO.md's header explains

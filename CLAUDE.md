@@ -75,6 +75,17 @@ it renders the procedural sprites to a labelled PNG strip.
   (`scenes/__init__.py`, ~44 scenes). A scene has spawns, exits,
   decorations, npcs, enemies, items, and optional
   `on_enter_fn` / `on_exit_fn` / `on_update` / `on_interact_fn` hooks.
+  - `scenes/base.py` — the `Scene` class + scene-builder helpers
+    (`scatter_forest_band`, `chest_interact` …). Since 2026-07 it is a
+    **facade**: the tile definitions + the entire terrain draw layer
+    (flat + tilted camera: `draw_terrain_tilted`, `draw_scene_terrain`,
+    the `_tilt_*` set, walls/roofs/water/doors, `apply_grade`) live in
+    the leaf `scenes/terrain.py`, which base re-exports wholesale
+    (public AND `_private` names, plus the `import scenes.base as _sb`
+    wildcard). So `from scenes.base import <x>` is unchanged; edit
+    `terrain.py` for draw code, `base.py` for the Scene model. terrain
+    depends only on `constants` + lazy `scenes`/`rendering.*` imports,
+    never on `Scene`, so there is no cycle.
 - `entities/`
   - `player.py`
   - `npc.py` — movement modes (`idle`, `watch`, `wander`, `patrol`,
@@ -91,6 +102,15 @@ it renders the procedural sprites to a labelled PNG strip.
     eruption ramp, 0→1 over ~1.2s, during which he cannot move).
   - `enemy.py` — only `kind == "cultist"` runs the cult state machine;
     other kinds use a straight-line chase.
+  - `decoration.py` — the `Decoration` prop class. Its per-kind draw is
+    dispatched by `getattr(self, f"_draw_{kind}")`; since 2026-07 the
+    ~128 `_draw_*` methods are split by theme into **mixin siblings**
+    (`deco_furniture` / `deco_lighting` / `deco_nature` / `deco_structure`
+    / `deco_mine` / `deco_horror`, mixed into `Decoration`), with shared
+    lighting/compass helpers in `decoration_common.py`. Like the
+    `sprites.py` facade, `from entities.decoration import Decoration` is
+    unchanged; add a new prop kind by dropping a `_draw_<kind>` method
+    into the fitting mixin.
 - `rendering/`
   - `sprites.py` — procedural sprite drawing (`draw_npc_sprite`). This is now a
     thin **facade** that re-exports the public surface from themed siblings, so
@@ -149,7 +169,7 @@ it renders the procedural sprites to a labelled PNG strip.
     damps it, `CHASE_*`/`TURN_RATE` config). Previews:
     `tools/preview_{tilt,skybox,occlusion,pseudo3d,sight,blindspot_live}.py`.
     Under tilt, **trees + cornstalks stand up as 3D billboards** (`_tilt_standee`
-    in `scenes/base.py`, cached cards + a horizontal-run corn LOD `_corn_runs`)
+    in `scenes/terrain.py`, cached cards + a horizontal-run corn LOD `_corn_runs`)
     and join the wall/occluder set returned by `draw_terrain_tilted` — so they
     depth-sort + fade per-actor like walls (`_TILT_BILLBOARD_CHARS` in the
     collection + `_tilt_tile_box` dispatch; the flat floor raster skips them via
@@ -417,7 +437,7 @@ it renders the procedural sprites to a labelled PNG strip.
 - **Adding a new decoration/prop kind under the tilt** (the dispatch map from
   the retired HANDCRAFT_BACKLOG): register it in exactly ONE set or it renders
   as a flat stain on the floor. `FURNITURE` / `SOLID_PROPS` = a real projected
-  volume; `_STANDEE_KINDS` (`props.py`, `scenes/base.py _tilt_standee`) = a flat
+  volume; `_STANDEE_KINDS` (`props.py`, `scenes/terrain.py _tilt_standee`) = a flat
   card stood up; `_WALL_DECO_KINDS` = hung on a wall; `_FLOOR_DECAL_KINDS` /
   `_SURFACE_DECAL_KINDS` = warped flat onto the floor/surface plane;
   `_TABLETOP_PROP_KINDS` (+ `seat_tabletop_props`) = seated on furniture. A kind
