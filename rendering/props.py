@@ -425,26 +425,45 @@ def _draw_grain_heap_solid(surf, cam, deco):
 
 
 def _draw_spoil_heap_solid(surf, cam, deco):
-    """A shoveled cone of dug spoil -- broken earth and stone waiting on
-    the haul, lower and rougher than the grain tithe. The 2026-07 mine
-    art pass: spoil lives where the work put it (the haul heads, the
-    unhauled face)."""
+    """Shoveled spoil -- broken earth and stone waiting on the haul.
+    Built from several offset lumps (never one smooth cone: a body of
+    revolution reads as a lampshade under the tilt, not dug ground),
+    with rubble scattered off its skirt and stones caught in the slope.
+    The 2026-07 mine art pass: spoil lives where the work put it."""
     wx, wy = deco.x, deco.y
     s = (getattr(deco, "scale", 1.0) or 1.0)
     seed = getattr(deco, "seed", 0)
-    R = (13 + (seed % 4)) * s
-    H = (9 + (seed % 4)) * s
-    pal = {"body": (92, 80, 62), "lo": (54, 46, 36), "rim": (120, 106, 84)}
-    draw_solid(surf, cam, wx, wy,
-               [(0, R, R), (H * 0.55, R * 0.62, R * 0.58),
-                (H, R * 0.18, R * 0.16)], pal)
-    # a few stones caught in the slope
-    for i in range(3):
-        a = 0.9 + i * 2.1 + (seed % 5) * 0.4
-        p = cam.project(wx + math.cos(a) * R * 0.55,
-                        wy + math.sin(a) * R * 0.55, H * 0.3)
-        pygame.draw.circle(surf, (120, 118, 122), (int(p[0]), int(p[1])),
-                           max(1, int(1.4 * s)))
+    rng_v = [(seed >> (i * 3)) % 7 for i in range(8)]
+    pal = {"body": (96, 82, 62), "lo": (56, 48, 36), "rim": (126, 110, 86)}
+    pal_lo = {"body": (82, 70, 54), "lo": (48, 41, 31), "rim": (108, 94, 74)}
+    # the main mound + two shoulder lumps, each its own squat cone with a
+    # jittered footprint so the merged silhouette is irregular
+    lumps = [
+        (0.0, 0.0, (11 + rng_v[0]) * s, (10 + rng_v[1] % 4) * s, pal),
+        ((-7 - rng_v[2]) * 0.9 * s, (4 + rng_v[3] % 3) * s,
+         (7 + rng_v[3] % 3) * s, (6 + rng_v[4] % 3) * s, pal_lo),
+        ((6 + rng_v[5] % 3) * s, (-5 - rng_v[6] % 3) * s,
+         (6 + rng_v[6] % 3) * s, (5 + rng_v[7] % 3) * s, pal_lo),
+    ]
+    lumps.sort(key=lambda l: l[1])              # far-to-near for overdraw
+    for lx, ly, lr, lh, lpal in lumps:
+        draw_solid(surf, cam, wx + lx, wy + ly,
+                   [(0, lr, lr * 0.92), (lh * 0.5, lr * 0.7, lr * 0.62),
+                    (lh, lr * 0.22, lr * 0.18)], lpal)
+    # rubble kicked off the skirt (flat, on the ground plane)
+    for i in range(5):
+        a = 0.7 + i * 1.27 + (seed % 5) * 0.5
+        rr = (13 + rng_v[i % 8]) * 1.15 * s
+        p = cam.project(wx + math.cos(a) * rr, wy + math.sin(a) * rr * 0.8, 0.5)
+        pygame.draw.circle(surf, (74, 66, 54), (int(p[0]), int(p[1])),
+                           max(1, int((1.0 + (rng_v[(i + 3) % 8] % 2)) * s)))
+    # stones caught in the slope, catching what light there is
+    for i in range(4):
+        a = 0.9 + i * 1.6 + (seed % 5) * 0.4
+        p = cam.project(wx + math.cos(a) * 6 * s,
+                        wy + math.sin(a) * 5 * s, (4 + rng_v[i] % 4) * s)
+        pygame.draw.circle(surf, (128, 124, 126), (int(p[0]), int(p[1])),
+                           max(1, int(1.5 * s)))
 
 
 def _draw_shoring_post_solid(surf, cam, deco):
@@ -461,39 +480,90 @@ def _draw_shoring_post_solid(surf, cam, deco):
     pal = {"body": (88, 66, 42), "lo": (52, 39, 25), "rim": (116, 90, 58)}
     draw_solid(surf, cam, wx, wy,
                [(0, R * 1.25, R * 1.25), (4 * s, R, R),
-                (H - 4 * s, R * 0.92, R * 0.92)], pal)
-    # the cap block, set slightly off the post's line
+                (H * 0.55, R * 1.06, R * 1.02),      # a swell mid-trunk
+                (H - 4 * s, R * 0.88, R * 0.88)], pal)
+    # the cap block, set slightly off the post's line, with a shim wedge
+    # driven under one end (mines are held by shims, not joinery)
     cap = {"body": (74, 56, 35), "lo": (46, 34, 21), "rim": (104, 80, 52)}
     draw_solid(surf, cam, wx + lean, wy,
-               [(H - 4 * s, R * 1.6, R * 1.1), (H, R * 1.6, R * 1.1)], cap)
-    # a split down the grain
-    p0 = cam.project(wx - R * 0.4, wy, H * 0.2)
-    p1 = cam.project(wx - R * 0.3 + lean * 0.5, wy, H * 0.7)
-    pygame.draw.line(surf, pal["lo"], (int(p0[0]), int(p0[1])),
-                     (int(p1[0]), int(p1[1])), 1)
+               [(H - 4 * s, R * 1.7, R * 1.15), (H, R * 1.7, R * 1.15)], cap)
+    shim = cam.project(wx + lean + R * 1.1, wy, H - 4.5 * s)
+    pygame.draw.rect(surf, (108, 84, 52),
+                     (int(shim[0]) - 2, int(shim[1]) - 1, 5, 3))
+    # hewn facets: grain stripes down the shaft (wood, not turned stone)
+    for uo, w_ in ((-R * 0.45, 1), (R * 0.15, 2), (R * 0.55, 1)):
+        p0 = cam.project(wx + uo, wy, 5 * s)
+        p1 = cam.project(wx + uo + lean * 0.6, wy, H - 5 * s)
+        pygame.draw.line(surf, pal["lo"], (int(p0[0]), int(p0[1])),
+                         (int(p1[0]), int(p1[1])), w_)
+    # a knot
+    kn = cam.project(wx + R * 0.3, wy, H * (0.3 + (seed % 4) * 0.12))
+    pygame.draw.circle(surf, (44, 33, 21), (int(kn[0]), int(kn[1])), 2)
 
 
 def _draw_ore_cart_solid(surf, cam, deco):
-    """A seized ore cart -- the old workings' haul tub, rusted onto its
-    stub of rail, shoved aside a cycle ago. Iron gone brown, one plank
-    patch in the tub wall. (2026-07 mine art pass; the Depths' one piece
-    of machine evidence, kept mute per canon.)"""
+    """A seized ore cart -- the old workings' haul tub, shoved aside a
+    cycle ago and rusted where it stopped. Designed FOR the tilt: the
+    near-side wheels show under the tub (dark iron discs, standing
+    vertical), rivet strap bands ride the visible faces, the lip wears a
+    bright rust rim, and the whole tub sits with one end dropped (off
+    its rail, never level). Mute machine evidence, per canon."""
     wx, wy = deco.x, deco.y
     s = (getattr(deco, "scale", 1.0) or 1.0)
     seed = getattr(deco, "seed", 0)
     yaw = ((seed % 7) - 3) * 0.12
-    rust = {"top": (110, 78, 56), "side": (84, 58, 42), "dark": (58, 40, 30)}
-    # wheels: four low iron discs under the tub corners
-    for cx, cy in ((-8, -5), (8, -5), (-8, 5), (8, 5)):
-        rx = wx + cx * math.cos(yaw) - cy * math.sin(yaw)
-        ry = wy + cx * math.sin(yaw) + cy * math.cos(yaw)
-        _disc(surf, cam, rx, ry, 3 * s, 3.2 * s, 3.2 * s, (50, 42, 38))
-    # the tub: a flared iron box (wider at the lip)
-    _vbox(surf, cam, wx, wy, 24 * s, 15 * s, 5 * s, 10 * s, rust, yaw=yaw)
-    _vbox(surf, cam, wx, wy, 27 * s, 17 * s, 10 * s, 16 * s, rust, yaw=yaw)
-    # the open tub mouth, dark, with a settle of old spoil in it
-    _disc(surf, cam, wx, wy, 16 * s, 9 * s, 5.5 * s, (26, 22, 20))
-    _disc(surf, cam, wx - 2 * s, wy, 16 * s, 4 * s, 2.5 * s, (70, 60, 46))
+    c, sn = math.cos(yaw), math.sin(yaw)
+    rust = {"top": (94, 72, 56), "side": (72, 55, 44), "dark": (50, 38, 31)}
+
+    def L(lx, ly, lz):
+        return cam.project(wx + lx * c - ly * sn, wy + lx * sn + ly * c, lz)
+    # the near-side wheels: vertical iron discs, visible UNDER the tub
+    for wxo in (-8 * s, 8 * s):
+        hub = L(wxo, 8.2 * s, 3.5 * s)
+        pygame.draw.circle(surf, (44, 38, 34), (int(hub[0]), int(hub[1])),
+                           max(2, int(3.6 * s)))
+        pygame.draw.circle(surf, (92, 82, 74), (int(hub[0]), int(hub[1])),
+                           max(2, int(3.6 * s)), 1)
+        pygame.draw.circle(surf, (110, 100, 90), (int(hub[0]), int(hub[1])),
+                           1)
+    # the axle shadow line between them
+    a0, a1 = L(-9 * s, 8 * s, 2 * s), L(9 * s, 8 * s, 2 * s)
+    pygame.draw.line(surf, (30, 26, 24), a0, a1, 1)
+    # the tub: flared iron box, one end dropped ~2px (derailed, not level)
+    drop = 2.0 * s
+    zlo, zhi = 6 * s, 17 * s
+    corners = [(-12 * s, -8 * s), (12 * s, -8 * s),
+               (12 * s, 8 * s), (-12 * s, 8 * s)]
+    lip = [(-14 * s, -9.5 * s), (14 * s, -9.5 * s),
+           (14 * s, 9.5 * s), (-14 * s, 9.5 * s)]
+
+    def ring(pts, z):
+        return [L(px, py, z - (drop if px < 0 else 0)) for px, py in pts]
+    base, waist, mouth = ring(corners, zlo), ring(corners, zhi - 3 * s), \
+        ring(lip, zhi)
+    # near face (the south side), then the two end faces, then the lip
+    pygame.draw.polygon(surf, rust["dark"],
+                        [base[3], base[2], waist[2], waist[3]])
+    pygame.draw.polygon(surf, rust["side"],
+                        [base[0], base[3], waist[3], waist[0]])
+    pygame.draw.polygon(surf, rust["side"],
+                        [base[2], base[1], waist[1], waist[2]])
+    pygame.draw.polygon(surf, rust["dark"],
+                        [waist[3], waist[2], mouth[2], mouth[3]])
+    pygame.draw.polygon(surf, rust["top"], mouth)
+    # the open mouth, dark, a settle of old spoil in one end
+    inner = ring([(-11 * s, -7 * s), (11 * s, -7 * s),
+                  (11 * s, 7 * s), (-11 * s, 7 * s)], zhi)
+    pygame.draw.polygon(surf, (24, 20, 18), inner)
+    sp = L(-6 * s, 0, zhi - drop)
+    pygame.draw.circle(surf, (70, 60, 46), (int(sp[0]), int(sp[1])),
+                       max(2, int(3 * s)))
+    # rivet strap bands down the near face + the bright lip rim
+    for bx in (-6 * s, 4 * s):
+        b0 = L(bx, 8 * s, zlo - (drop if bx < 0 else 0))
+        b1 = L(bx, 8 * s, zhi - 1 - (drop if bx < 0 else 0))
+        pygame.draw.line(surf, (48, 34, 26), b0, b1, 2)
+    pygame.draw.lines(surf, (114, 90, 68), True, mouth, 1)
 
 
 def _draw_stalagmite_solid(surf, cam, deco):
