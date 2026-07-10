@@ -1072,10 +1072,13 @@ def build_brimley():
         sc.add_decoration(Decoration(gx * TILE + 16, gy * TILE + 16, "creepy_tree"))
     # A cult standing-stone ring in the open north-east field, a Yellow
     # Sign cut into the ground at its centre, lit by two braziers -- a
-    # warm, watched focal point out in the dark.
+    # warm, watched focal point out in the dark. (2026-07: real weathered
+    # standing stones now; the placeholder fluted "pillar" columns read
+    # as Roman architecture in a Minnesota corn field.)
     for (px, py) in [(77, 31), (81, 31), (79, 30),
                      (76, 34), (82, 34), (79, 36)]:
-        sc.add_decoration(Decoration(px * TILE + 16, py * TILE + 16, "pillar"))
+        sc.add_decoration(Decoration(px * TILE + 16, py * TILE + 16,
+                                     "standing_stone", seed=px * 7 + py))
     sc.add_decoration(Decoration(79 * TILE + 16, 33 * TILE + 16, "yellow_sign"))
     sc.add_decoration(Decoration(77 * TILE + 16, 33 * TILE + 16, "brazier"))
     sc.add_decoration(Decoration(81 * TILE + 16, 33 * TILE + 16, "brazier"))

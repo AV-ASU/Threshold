@@ -215,15 +215,17 @@ def build_well_passage():
     # Stores stacked up in the north bay -- a barrel and a crate.
     sc.add_furniture("barrel", [(10, 2)])
     sc.add_furniture("crate", [(8, 1)])
-    # Timber shoring where the gallery needs holding (2026-07 art pass):
-    # posts flanking both portal mouths and framing the bay entry. Kept
-    # off row 5 (the walking lane) and off the rack weave gaps.
-    sc.add_furniture("shoring_post", [(1, 4)], seed=2)
-    sc.add_furniture("shoring_post", [(1, 6)], seed=7)
-    sc.add_furniture("shoring_post", [(22, 4)], seed=11)
-    sc.add_furniture("shoring_post", [(22, 6)], seed=13)
-    sc.add_furniture("shoring_post", [(8, 3)], seed=5)
-    sc.add_furniture("shoring_post", [(11, 3)], seed=9)
+    # Timber SETS where the gallery needs holding (2026-07 art pass):
+    # one frame over each portal mouth (uprights flanking the walking
+    # lane, the header beam passed under -- the Threshold's grammar in
+    # spiked lumber) and one wide frame over the bay entry. The uprights
+    # sit on the same tiles the old posts did; the lanes walk under.
+    sc.add_furniture("shoring_frame", [(1, 4), (1, 6)],
+                     seed=2, ang=math.pi / 2, span=64)
+    sc.add_furniture("shoring_frame", [(22, 4), (22, 6)],
+                     seed=11, ang=math.pi / 2, span=64)
+    sc.add_furniture("shoring_frame", [(8, 3), (11, 3)],
+                     seed=5, ang=0.0, span=96)
     sc.add_decoration(Decoration(9 * TILE + 16, 0 * TILE + 22, "candle"))
     sc.add_decoration(Decoration(20 * TILE + 16, 7 * TILE + 22, "claw_marks"))
     # Cobweb grime in the high corners of the bay.
@@ -566,9 +568,15 @@ def build_works_scriptorium():
         sc.add_decoration(Decoration(tx * TILE + 16, ty * TILE + 16,
                                      "yellow_sign"))
     sc.add_decoration(Decoration(8 * TILE + 16, 2 * TILE + 6, "candle"))
-    # Two stone columns hold up the vault.
-    sc.add_furniture("pillar", [(4, 6)])
-    sc.add_furniture("pillar", [(9, 6)])
+    # Timber sets hold the span -- the widest room the diggers cut,
+    # propped with the same spiked-lumber frames as the rest of the dig
+    # (2026-07: the stone columns were swapped out; the scribes copied
+    # the Sign under planks, not architecture). Walk-under at (4,6) and
+    # (9,6); the upright tiles flank them.
+    sc.add_furniture("shoring_frame", [(3, 6), (5, 6)],
+                     seed=6, ang=0.0, span=64)
+    sc.add_furniture("shoring_frame", [(8, 6), (10, 6)],
+                     seed=14, ang=0.0, span=64)
     # Cobweb grime in the beveled corners of the scriptorium.
     sc.add_decoration(Decoration(2 * TILE + 6, 1 * TILE + 6, "cobweb",
                                  ang=0.0))

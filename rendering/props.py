@@ -466,39 +466,62 @@ def _draw_spoil_heap_solid(surf, cam, deco):
                            max(1, int(1.5 * s)))
 
 
-def _draw_shoring_post_solid(surf, cam, deco):
-    """A rough timber shoring post -- the mine's roof prop, bark-dark
-    wood with a cap block, standing a touch off plumb (old work, still
-    holding). Distinct from the pale stone `pillar` (the built rooms);
-    this is the DIG's upright."""
+def _draw_shoring_frame_solid(surf, cam, deco):
+    """A DIY timber SET -- the mine's support frame in the Threshold's
+    own grammar: two board uprights and a header beam you walk UNDER,
+    built entirely from yaw-rotated boxes so the frame holds from every
+    camera angle (never a flat card, never a turned column). kwargs:
+    `ang` = the frame line's axis (the uprights sit +-span/2 along it),
+    `span` = distance between upright centres in px. span<=1 draws a
+    BROKEN set (a doubled upright and a sheared beam stub) -- the old
+    workings' collapsed props."""
     wx, wy = deco.x, deco.y
     s = (getattr(deco, "scale", 1.0) or 1.0)
     seed = getattr(deco, "seed", 0)
-    R = 4.5 * s
-    H = 42 * s
-    lean = ((seed % 5) - 2) * 0.5 * s
-    pal = {"body": (88, 66, 42), "lo": (52, 39, 25), "rim": (116, 90, 58)}
-    draw_solid(surf, cam, wx, wy,
-               [(0, R * 1.25, R * 1.25), (4 * s, R, R),
-                (H * 0.55, R * 1.06, R * 1.02),      # a swell mid-trunk
-                (H - 4 * s, R * 0.88, R * 0.88)], pal)
-    # the cap block, set slightly off the post's line, with a shim wedge
-    # driven under one end (mines are held by shims, not joinery)
-    cap = {"body": (74, 56, 35), "lo": (46, 34, 21), "rim": (104, 80, 52)}
-    draw_solid(surf, cam, wx + lean, wy,
-               [(H - 4 * s, R * 1.7, R * 1.15), (H, R * 1.7, R * 1.15)], cap)
-    shim = cam.project(wx + lean + R * 1.1, wy, H - 4.5 * s)
-    pygame.draw.rect(surf, (108, 84, 52),
-                     (int(shim[0]) - 2, int(shim[1]) - 1, 5, 3))
-    # hewn facets: grain stripes down the shaft (wood, not turned stone)
-    for uo, w_ in ((-R * 0.45, 1), (R * 0.15, 2), (R * 0.55, 1)):
-        p0 = cam.project(wx + uo, wy, 5 * s)
-        p1 = cam.project(wx + uo + lean * 0.6, wy, H - 5 * s)
-        pygame.draw.line(surf, pal["lo"], (int(p0[0]), int(p0[1])),
-                         (int(p1[0]), int(p1[1])), w_)
-    # a knot
-    kn = cam.project(wx + R * 0.3, wy, H * (0.3 + (seed % 4) * 0.12))
-    pygame.draw.circle(surf, (44, 33, 21), (int(kn[0]), int(kn[1])), 2)
+    ang = float(deco.kwargs.get("ang", 0.0))
+    span = float(deco.kwargs.get("span", 0.0)) * s
+    wood = {"top": (98, 76, 50), "side": (76, 58, 38), "dark": (62, 48, 32)}
+    wood2 = {"top": (86, 66, 43), "side": (66, 50, 33), "dark": (46, 36, 25)}
+    H = (26 + seed % 4) * s
+    dx, dy = math.cos(ang), math.sin(ang)
+
+    def upright(ux, uy, pal, hh):
+        # a doubled sawn board (two thin boxes, one an offcut shorter)
+        _vbox(surf, cam, ux - dx * 2.2 * s, uy - dy * 2.2 * s,
+              4.4 * s, 3.0 * s, 0, hh, pal, yaw=ang, outline=False)
+        _vbox(surf, cam, ux + dx * 2.2 * s, uy + dy * 2.2 * s,
+              4.4 * s, 3.0 * s, 0, hh - (1 + seed % 2) * s, wood2,
+              yaw=ang, outline=False)
+        n = cam.project(ux, uy, hh - 2 * s)
+        pygame.draw.circle(surf, (34, 30, 28), (int(n[0]), int(n[1])), 1)
+
+    if span <= 1:
+        # the broken set: one upright still standing, its beam sheared
+        # off short -- the rest went with whatever it was holding
+        upright(wx, wy, wood, H)
+        _vbox(surf, cam, wx + dx * 6 * s, wy + dy * 6 * s,
+              13 * s, 4.5 * s, H, H + 3 * s, wood, yaw=ang)
+        return
+    hs = span / 2.0
+    ends = [(wx - dx * hs, wy - dy * hs, wood, H),
+            (wx + dx * hs, wy + dy * hs, wood2, H - (seed % 2) * s)]
+    ends.sort(key=lambda e: e[1])                 # far upright first
+    for ux, uy, pal, hh in ends:
+        upright(ux, uy, pal, hh)
+    # the header beam spanning both uprights, overhanging each end
+    _vbox(surf, cam, wx, wy, span + 9 * s, 4.5 * s, H, H + 3.5 * s,
+          wood, yaw=ang)
+    # its sag: a dark underline that dips mid-span (old work, holding)
+    mza = H + 0.4 * s
+    m0 = cam.project(wx - dx * hs * 0.7, wy - dy * hs * 0.7, mza)
+    mm = cam.project(wx, wy, mza - 1.2 * s)
+    m1 = cam.project(wx + dx * hs * 0.7, wy + dy * hs * 0.7, mza)
+    pygame.draw.lines(surf, wood["dark"], False, [m0, mm, m1], 1)
+    # a diagonal brace board on one upright
+    bx0 = cam.project(wx + dx * (hs - 8 * s), wy + dy * (hs - 8 * s), 2 * s)
+    bx1 = cam.project(wx + dx * hs, wy + dy * hs, H * 0.75)
+    pygame.draw.line(surf, wood2["side"], bx0, bx1, max(2, int(2.2 * s)))
+    pygame.draw.line(surf, wood["dark"], bx0, bx1, 1)
 
 
 def _draw_ore_cart_solid(surf, cam, deco):
@@ -1354,7 +1377,7 @@ SOLID_PROPS = {
     "grain_heap":    _draw_grain_heap_solid,
     # the mine art pass (2026-07): the dig's own furniture
     "spoil_heap":    _draw_spoil_heap_solid,
-    "shoring_post":  _draw_shoring_post_solid,
+    "shoring_frame": _draw_shoring_frame_solid,
     "ore_cart":      _draw_ore_cart_solid,
     "player_car":    _draw_car_solid,
     "pickup_truck":  _draw_pickup_truck_solid,

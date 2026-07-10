@@ -2875,11 +2875,24 @@ class Decoration:
         for ox, oy in ((-6, 4), (5, -2), (2, 7)):
             pygame.draw.circle(surf, (120, 118, 122), (x + ox, y + oy), 1)
 
-    def _draw_shoring_post(self, surf, x, y):
-        # top-down: the cap block + the post's end grain
-        pygame.draw.rect(surf, (52, 39, 25), (x - 6, y - 4, 12, 8))
-        pygame.draw.circle(surf, (88, 66, 42), (x, y), 4)
-        pygame.draw.circle(surf, (116, 90, 58), (x, y), 4, 1)
+    def _draw_shoring_frame(self, surf, x, y):
+        # top-down: the header beam along `ang` + the board ends at
+        # both uprights (or one, for a broken span<=1 set)
+        import math as _m
+        ang = self.kwargs.get("ang", 0.0) or 0.0
+        span = self.kwargs.get("span", 0.0) or 0.0
+        ca, sa = _m.cos(ang), _m.sin(ang)
+        hl = max(8, span / 2 + 5)
+        pygame.draw.line(surf, (52, 39, 25),
+                         (int(x - ca * hl), int(y - sa * hl)),
+                         (int(x + ca * hl), int(y + sa * hl)), 4)
+        offs = [0.0] if span <= 1 else [-span / 2, span / 2]
+        for o in offs:
+            bx, by = x + ca * o, y + sa * o
+            pygame.draw.rect(surf, (98, 76, 50),
+                             (int(bx) - 3, int(by) - 2, 3, 4))
+            pygame.draw.rect(surf, (86, 66, 43),
+                             (int(bx) + 1, int(by) - 2, 3, 4))
 
     def _draw_ore_cart(self, surf, x, y):
         # top-down: the rusted tub, its dark mouth, four wheel hubs

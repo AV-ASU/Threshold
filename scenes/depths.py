@@ -163,10 +163,13 @@ def build_depths_antechamber():
     sc.set_spawn("from_above", 5, 5)
     sc.add_decoration(Decoration(3 * TILE + 16, 3 * TILE + 16, "candle"))
     sc.add_decoration(Decoration(7 * TILE + 16, 7 * TILE + 16, "candle"))
-    # Two stone pillars flank the landing on the diagonal (clear of the
-    # mid-row passage to the east exit and the cultist's loop).
-    sc.add_furniture("pillar", [(7, 3)])
-    sc.add_furniture("pillar", [(3, 7)])
+    # BROKEN timber sets flank the landing on the diagonal (clear of the
+    # mid-row passage to the east exit and the cultist's loop): a lone
+    # upright each, beam sheared off short -- the old workings' props
+    # gave up what they were holding a cycle ago (2026-07: the stone
+    # pillars were swapped out; nobody built columns down here).
+    sc.add_furniture("shoring_frame", [(7, 3)], seed=4, ang=0.6, span=0)
+    sc.add_furniture("shoring_frame", [(3, 7)], seed=10, ang=2.2, span=0)
     # Rubble from the blown floor above -- the landing text says the fall
     # delivered you unbroken, so the zone wears dust and stone, no blood.
     sc.add_decoration(Decoration(5 * TILE + 16, 5 * TILE + 16, "mud_footprint"))
@@ -240,13 +243,24 @@ def build_depths_procession():
     for cx in range(2, 28, 2):
         sc.add_decoration(Decoration(cx * TILE + 16, 4 * TILE + 16,
                                      "candle"))
-    # Timber shoring posts flanking the central walk (clear of the bays
-    # and the walking line) -- the drift's roof props. Wood, not the pale
-    # stone `pillar` (that belongs to the built rooms); this is a mine
-    # (2026-07 art pass). Seeded so no two stand alike.
+    # Timber SETS down the drift (2026-07 art pass): each is one frame --
+    # two board uprights flanking the walk and a header beam the player
+    # passes UNDER, the same structural grammar as the Threshold frame,
+    # drawn from yaw-rotated boxes so it holds at every camera angle.
+    # The uprights sit on the same tiles the old posts did (collision
+    # unchanged); row 4 walks under the beam. Seeded so no two match.
     for px in (5, 10, 16, 21, 26):
-        sc.add_furniture("shoring_post", [(px, 3)], seed=px * 3 + 1)
-        sc.add_furniture("shoring_post", [(px, 5)], seed=px * 5 + 2)
+        sc.add_furniture("shoring_frame", [(px, 3), (px, 5)],
+                         seed=px * 3 + 1, ang=math.pi / 2, span=64)
+    # Two more sets stand over south bay MOUTHS, facing the camera --
+    # the full frame read (uprights + header beam over the opening, the
+    # Threshold's grammar). Pure decoration: their uprights hug the bay
+    # cut's wall edges, which are already solid, so collision and the
+    # bays' cover value are untouched.
+    for bx0 in (6, 21):
+        sc.add_decoration(Decoration((bx0 + 0.5) * TILE + 16, 6 * TILE + 2,
+                                     "shoring_frame", seed=bx0,
+                                     ang=0.0, span=78))
     # The old workings' haul road: stubs of rusted rail down the drift's
     # walking line (the candle line follows a dead mine's road), and the
     # seized ore cart shoved aside into a south bay a cycle ago -- solid,

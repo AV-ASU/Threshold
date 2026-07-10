@@ -330,7 +330,7 @@ loot / testimony placement; most is just labor made visible.
   the whole underground (the Deepest Face, not the cut Deep Stair).
 - **The DRESSING half landed too (2026-07 art pass).** New procedural
   kinds, each registered in exactly one tilt set: `spoil_heap` /
-  `shoring_post` / `ore_cart` (SOLID_PROPS), `tally_marks` (wall deco),
+  `shoring_frame` / `ore_cart` (SOLID_PROPS), `tally_marks` (wall deco),
   `mine_rail` (floor decal). Placed by mine logic: spoil + the barrow at
   the haul head (Shaft Floor), timber shoring at the gallery mouths and
   down the procession drift (the drift's stone pillars swapped to wood),
