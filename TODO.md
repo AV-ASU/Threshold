@@ -91,10 +91,11 @@ item on the list: engine exists, canon is settled, payoff is the core fantasy.**
   the menu, and the **fold note moved off the old any-talk trigger onto
   the exchanges that carry the account** (Royce/Garrick `on_ask`,
   `reflect=False`, earned by asking). Guarded by `tests/flow.py` §17e +
-  the reworked §16c. **The newcomer woman stays OFF the verb by
-  maintainer call (2026-07): rot-adjacent set dressing, not a
-  townsperson to interview** — she keeps her three fixed lines
-  (flow-guarded).
+  the reworked §16c. **The unnamed "newcomer woman" NPC is CUT from the
+  project entirely (maintainer call, 2026-07)** — an unexplained
+  welcomer on the farmhouse path read as noise, not dread; her
+  `ROT_CONVERT` stage-1 entry went with her (flow-guarded: she never
+  spawns).
 
 - **The choice box is SMALL — menu labels are authored short (2026-07).**
   An exchange carries an optional `label` (≤ ~44 chars, flow-guarded): the

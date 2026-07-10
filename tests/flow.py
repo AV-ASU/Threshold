@@ -1539,9 +1539,7 @@ def main():
     # Old Pell, Mrs. Calder, Royce, and Garrick come off the
     # _brimley_voice page-lists: each carries a conversation that leads
     # with the two guaranteed openers, and their reactive one-shots (the
-    # town reacting to the case) still volunteer ahead of the menu. The
-    # newcomer woman stays OFF the verb by maintainer call (set
-    # dressing); she keeps her fixed lines.
+    # town reacting to the case) still volunteer ahead of the menu.
     from scenes.dialogue import (PELL_CONVO as _PLC, CALDER_CONVO as _CLC,
                                  ROYCE_CONVO as _RCC, GARRICK_CONVO as _GRC)
     for _cv in (_PLC, _CLC, _RCC, _GRC):
@@ -1608,8 +1606,9 @@ def main():
 
     # The LIVE wiring: the brimley scene's four chorus locals all open a
     # conversation, and a reactive beat (Garrick clocking the pulpit
-    # going quiet) still volunteers ahead of the menu, once. The
-    # newcomer woman stays on her fixed lines (no conversation).
+    # going quiet) still volunteers ahead of the menu, once. The unnamed
+    # "newcomer woman" NPC is CUT from the project (maintainer call,
+    # 2026-07); nobody unnamed stands in Brimley.
     gch = new_game()
     gch.load_scene_now("brimley")
     for _nm in ("Old Pell", "Mrs. Calder", "Royce", "Garrick"):
@@ -1624,16 +1623,9 @@ def main():
         gch._convo.active = False
         gch._convo = None
         gch.float_speech.active = False
-    _nw = next(n for n in gch.scene.npcs
-               if getattr(n, "name", "") == "A woman")
-    gch.player.x, gch.player.y = _nw.x + 20, _nw.y
-    ready(gch)
-    _nw.dialogue_fn(gch, _nw)
-    check(getattr(gch, "_convo", None) is None
-          and (gch.dialog.active or gch.float_speech.active),
-          "chorus: the newcomer woman stays off the verb (fixed lines)")
-    gch.float_speech.active = False
-    ready(gch)
+    check(not any(getattr(n, "name", "") == "A woman"
+                  for n in gch.scene.npcs),
+          "chorus: the cut newcomer woman never spawns in brimley")
     gch.save.set_flag("preacher_doomed", True)
     _gar = next(n for n in gch.scene.npcs if n.name == "Garrick")
     gch.player.x, gch.player.y = _gar.x + 20, _gar.y

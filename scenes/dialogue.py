@@ -11,8 +11,7 @@ NPC's story-critical one-shots (the witness account, the memory of the
 girl, the murder he can't report, the paper trade, the town-reaction
 beats) still VOLUNTEER themselves ahead of the menu. Other state
 reactivity comes from per-NPC flag gates; scenes/brimley.py
-_brimley_voice survives only for the doorstep Hettie cameo and the
-newcomer woman (set dressing, deliberately off the verb).
+_brimley_voice survives only for the doorstep Hettie cameo.
 `escalate` still exists but now has NO call sites -- kept only in case
 visibility-tiered copy is ever authored. Evidence beats are surfaced
 through `_evidence`; only the six in `CANONICAL_EVIDENCE` count toward
@@ -1171,12 +1170,9 @@ def clerk_dialogue(game, npc):
 # ---- The Brimley chorus ----
 # The last of the ask-verb expansion (TODO #1): Old Pell, Mrs. Calder,
 # Royce, and Garrick come off the _brimley_voice page-lists and onto the
-# organic conversation. (The newcomer woman stays OFF the verb by
-# maintainer call: she is rot-adjacent set dressing, not a townsperson
-# to interview -- she keeps her three fixed lines in brimley.py.) Every
-# one leads with the shared opener pair (introduce-as-PI + the
-# photograph) with short answers of their own, plus a question or two
-# carrying their signature material. Their reactive one-shots (the town reacting to the case,
+# organic conversation. Every one leads with the shared opener pair
+# (introduce-as-PI + the photograph) with short answers of their own,
+# plus a question or two carrying their signature material. Their reactive one-shots (the town reacting to the case,
 # TODO #10) keep firing ahead of the menu, exactly as the principals'
 # volunteered beats do. The rot machinery is untouched: the convert/turn
 # swap overwrites dialogue_fn at its stage, so each of these talks lives

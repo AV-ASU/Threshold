@@ -56,9 +56,8 @@ def _brimley_voice(pages, voice="blip_mid", fold=False, beats=None):
     globally one-shot, so only the first speaker triggers it).
 
     Since the chorus moved onto the ask verb (dialogue.py chorus_dialogue
-    + the *_CONVO data), the only remaining speakers here are the
-    doorstep Hettie cameo (her real conversation lives in the shop) and
-    the newcomer woman (set dressing, deliberately off the verb).
+    + the *_CONVO data), the only remaining speaker here is the doorstep
+    Hettie cameo; her real conversation lives in the shop.
 
     `beats` makes the town REACT to state (TODO #10): a list of
     (flag, predicate, beat_pages). On each talk the first beat whose
@@ -864,18 +863,11 @@ def build_brimley():
             "[c=dim]You go by and look in on him, son. Somebody ought "
             "to.[/c]",
         ])])
-    # The newcomer -- standing on the path to the abandoned_farmhouse
-    # (their house now). She is here to welcome you. She is patient.
-    # Deliberately NOT on the ask verb (maintainer call, 2026-07): she is
-    # rot-adjacent set dressing, not a townsperson to interview -- she
-    # keeps her three fixed lines and converts at rot stage 1.
-    sc.add_npc(NPC(8 * TILE + 16, 95 * TILE + 16, "A woman", "townswoman",
-                   dialogue_fn=_brimley_voice([
-                       "[c=dim]Hello.[/c]",
-                       "[c=dim]You'll like it here. Everyone does, eventually.[/c]",
-                       "[c=dim]It's easier once you stop trying the doors.[/c]",
-                   ], "blip_soft"),
-                   movement="watch"))
+    # (The unnamed "newcomer woman" who used to stand on the farmhouse
+    # path was CUT entirely, maintainer call 2026-07: an unexplained
+    # welcomer read as noise, not dread. Brimley's people are the named
+    # locals above; the cult presence out here is the set dressing
+    # below.)
 
     # Run-down + cult presence among the buildings: the Yellow Sign
     # worked into the open ground, dead crows at the doorsteps, a bloody
