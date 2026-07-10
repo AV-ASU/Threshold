@@ -58,7 +58,7 @@ def _brimley_voice(pages, voice="blip_mid", fold=False, beats=None):
     (flag, predicate, beat_pages). On each talk the first beat whose
     predicate(game) holds and whose one-shot save flag is unset fires
     INSTEAD of the base pages (and sets its flag); afterwards the local
-    falls back to their ambient loop. The infestation convert/mutate
+    falls back to their ambient loop. The world rot convert/mutate
     swap overwrites dialogue_fn at its stage, so each beat's window is
     the local's pre-turn stretch -- fired once, in it, or never."""
     def _fn(game, npc):
@@ -932,9 +932,9 @@ def build_brimley():
     # Mrs. Calder's table, laid out in the open by the kid's house: two
     # settings (hers, and the extra place she lays every night for the
     # guest she can't name -- NARRATIVE §4), a candle burned down, and a
-    # chair knocked over. Once she converts (stage 2) the infestation
+    # chair knocked over. Once she converts (stage 2) the world rot
     # pass clears the extra setting: she has stopped waiting
-    # (systems/infest_mixin.py _infest_locals).
+    # (systems/rot_mixin.py _rot_locals).
     # (The table itself is a solid 't' tile placed below.)
     sc.add_decoration(Decoration(71 * TILE + 10, 72 * TILE + 12, "place_setting"))
     sc.add_decoration(Decoration(71 * TILE + 24, 72 * TILE + 12, "place_setting"))

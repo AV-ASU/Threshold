@@ -97,7 +97,7 @@ clear message, push. Do not open a PR unless asked.
   throat-swallow catch. The old BROKEN BODY brief is superseded.
 - **The Moth** (`rendering/moth.py`): the King's herald, first flying
   entity -- tented ragged wings at rest, kindle -> flare alarm -> falls
-  as a husk. Sim in `systems/infest_mixin.py`.
+  as a husk. Sim in `systems/rot_mixin.py`.
 
 No active job. When the user asks for a new creature, start at step 1
 (concept sheet) and converge before wiring.

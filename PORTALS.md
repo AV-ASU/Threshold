@@ -80,7 +80,7 @@ Canon wants the fold **invisible** (visual sameness hides the wrap; the horror
 is *futility*, not spectacle — §11). 4D stays the *hidden logic* of the loop
 (a looping space is naturally a 4D torus), never an on-screen effect. The only
 sanctioned place for subtle fold-wrongness is **"off the roads, come out
-wrong-side"** (Garrick's warning), or **escalation with infestation** — but
+wrong-side"** (Garrick's warning), or **escalation with world rot** — but
 that last one is a **canon change** to decide deliberately, not a freebie.
 
 ## The Threshold doorframe — stays plain

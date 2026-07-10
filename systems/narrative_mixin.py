@@ -177,7 +177,7 @@ class NarrativeMixin:
         sets it down as a half-dismissed memory -- NOT a recurring dream.
         Stored in save arg 'notes', NOT 'evidence': the evidence log is
         canonical-clues-only and its length is _evidence_count (the King-gate
-        + infestation driver), so a note must never land there. The notebook
+        + world rot driver), so a note must never land there. The notebook
         UI shows notes alongside clues. Idempotent via name-dedup."""
         if self.save is None:
             return
@@ -247,7 +247,7 @@ class NarrativeMixin:
         Idempotent by `name` so re-triggering a pickup never dupes. Used by
         the cult-testimony fragments (the cult's voice is the item desc; this
         is the PI's reaction). NOTES never inflate `_evidence_count`, so they
-        never arm the King or the infestation -- only the six CANONICAL_EVIDENCE
+        never arm the King or the world rot -- only the six CANONICAL_EVIDENCE
         beats do."""
         notes = self.save.arg("notes", [])
         if not isinstance(notes, list):
@@ -538,8 +538,8 @@ class NarrativeMixin:
         cue("wh1", SPREAD_T_FLOOD + 2.2, "whisper", 0.45)
         cue("wh2", SPREAD_T_FLOOD + 4.4, "whisper", 0.55)
         cue("know", SPREAD_T_KNOW + 0.3, "low_pulse", 0.9)
-        cue("fog", SPREAD_T_ON + 2.8, "infest_throb", 0.40)   # it followed
-        cue("fog2", SPREAD_T_KNOW + 1.8, "infest_throb", 0.5)
+        cue("fog", SPREAD_T_ON + 2.8, "rot_throb", 0.40)   # it followed
+        cue("fog2", SPREAD_T_KNOW + 1.8, "rot_throb", 0.5)
         cue("know2", SPREAD_T_KNOW + 3.2, "low_pulse", 0.6)
 
         # Engine envelope: dead -> the roar -> settled cruise -> falling

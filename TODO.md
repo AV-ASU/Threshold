@@ -160,7 +160,7 @@ full economy table is still to be drafted).
 
 Rework Vane from a linear counter into a real arc (the goal is DEPTH — he had
 little going on). Lore is settled in NARRATIVE §4 (his row) + §4 (the hollow
-turn, rewritten off infestation-gating). Two halves:
+turn, rewritten off world rot-gating). Two halves:
 
 - **Ask-verb conversion (rides #1).** Give Vane **multiple dialogue options**
   (his own `*_CONVO`): the two guaranteed openers (introduce-as-PI + Mara's
@@ -168,7 +168,7 @@ turn, rewritten off infestation-gating). Two halves:
   the *how*, the emptied school/barn/lodge — **gated on TRUST**. Trust is earned
   only by the player **sharing real discoveries** with him (he is
   another-outsider-wary by default; §2).
-- **Player-driven hollow turn (replaces §4's infestation-stage-3 gate).** A
+- **Player-driven hollow turn (replaces §4's world rot-stage-3 gate).** A
   hidden **despair/hope ledger** decides his fate — the player never sees a
   number, only his mood (the "mood, not a meter" fence is honored: it gates a
   *character's fate*, not an ending). Two triggers:

@@ -39,7 +39,7 @@ CUE_SETS = {
     ],
     "narrative": [
         ("sfx", "captured_bed"), ("sfx", "custody_bed"),
-        ("sfx", "infest_throb"), ("sfx", "evidence_added"),
+        ("sfx", "rot_throb"), ("sfx", "evidence_added"),
         ("sfx", "sheriff_hunt"),
     ],
 }

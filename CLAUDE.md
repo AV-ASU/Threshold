@@ -55,7 +55,7 @@ it renders the procedural sprites to a labelled PNG strip.
   `_reset_run_state()` (wipes per-run state on New Game; the `Game` instance
   is reused across quit-to-title). The big cohesive subsystems were split off
   into **mixins** that `Game` inherits (`class Game(CutsceneMixin,
-  ThreatMixin, KingRoamMixin, InfestationMixin, RenderMixin,
+  ThreatMixin, KingRoamMixin, RotMixin, RenderMixin,
   NarrativeMixin)`) — they are
   still `Game` methods, just housed in their own files:
   - `systems/config.py` — gameplay tuning constants + scene-gating sets
@@ -67,8 +67,8 @@ it renders the procedural sprites to a labelled PNG strip.
     cultist + fold/portal pursuit, visibility + evidence floor, death.
   - `systems/render_mixin.py` — the draw layer: `draw_world`, overlays, HUD,
     the title/pause/settings screens, the death card.
-  - `systems/infest_mixin.py` — infestation/ashfall + the hunting sheriff,
-    plus the infested-local dialogue helpers.
+  - `systems/rot_mixin.py` — world rot/ashfall + the hunting sheriff,
+    plus the turned-local dialogue helpers.
   - `systems/narrative_mixin.py` — the journal flashback, the case-file /
     interior-voice notes (`_log_case_entry` …), the endings + opening crawl.
 - `scenes/` — `SCENE_BUILDERS` registry + `load_scene(key)`
@@ -117,7 +117,7 @@ it renders the procedural sprites to a labelled PNG strip.
     `from rendering.sprites import <name>` is unchanged. The siblings:
     `sprites_common.py` (shared palettes + the `KING_UNFOLD` flags),
     `sprites_cultist.py`, `sprites_npc.py` (`draw_npc_sprite` + per-view body/
-    head helpers), `sprites_corpse.py`, `sprites_infested.py`,
+    head helpers), `sprites_corpse.py`, `sprites_wound.py`,
     `sprites_player.py` (`draw_player_sprite`, `view_from_facing`),
     `sprites_king.py` (the pallid `_draw_king` fallback + `_YK_*` FX +
     `door_mask_surface`), `sprites_weapons.py`, and `sprites_carcosa.py` (the
@@ -152,7 +152,7 @@ it renders the procedural sprites to a labelled PNG strip.
   - `moth.py` — **the Moth**, the King's herald + first flying entity
     (`draw_moth(surf,x,y,t,spread,glow,seed,flap,husk)`): tented ragged
     wings at rest, a limb-knot snap at the flare, a crumpled husk on the
-    ground. Sim + spawn live in `systems/infest_mixin.py` (below).
+    ground. Sim + spawn live in `systems/rot_mixin.py` (below).
   - `transform.py` — `draw_vessel_bloom`, the human→vessel morph.
   - **Tilted-camera track (LIVE — the oblique view is the default; F3
     toggles back to flat pitch-0):** `camera.py` (`Camera.project(wx,wy,wz)`,
@@ -177,7 +177,7 @@ it renders the procedural sprites to a labelled PNG strip.
     flat top-down draws them flat as before.
   - **Blind-spot vision (`sight.py`, CAMERA.md Phase 4):** under tilt,
     `draw_world` gates what is **drawn** (NPCs, enemies, corpses, items, and
-    the infestation rot decals — flagged `_sight_gated`) to a forward sight
+    the world-rot decals — flagged `_sight_gated`) to a forward sight
     cone keyed to `look.aim` and clipped by `Scene.blocks_sight`, via
     `visible_factor(...)` → a soft-alpha fade (`draw_with_alpha`). The world
     keeps **simulating** off-camera (the update path is untouched); unseen
@@ -289,7 +289,7 @@ it renders the procedural sprites to a labelled PNG strip.
   his own shedding starts, the seeker slows to `MOTH_SEEK3_*`
   (5-6 min).
 - **The Moths** (the King's heralds; `MOTH_*` config, sim in
-  `systems/infest_mixin.py` `_tick_moth_shed`/`_tick_moth_seek`/
+  `systems/rot_mixin.py` `_tick_moth_shed`/`_tick_moth_seek`/
   `_spawn_moths`/`_tick_moths`, drawn as hovering sight-gated
   billboards in `render_mixin`). From `MOTH_SHED_EV` (3) evidence,
   every `MOTH_SHED_EVERY` (90s) the King sheds `MOTH_SHED_COUNT` (2)
@@ -332,17 +332,17 @@ it renders the procedural sprites to a labelled PNG strip.
   NPC in `_kill_enemy` so the npc-corpse draw path renders them. The body is
   **not** persisted across scene loads (no `dead_locals` ledger) — the scene
   rebuilds live on re-entry.
-- **Infestation** (`_apply_infestation`, called from `load_scene_now`):
+- **World rot** (`_apply_rot`, called from `load_scene_now`):
   the world rots as a pure, monotonic function of evidence —
-  `_infest_stage()` = `min(3, evidence)`, **front-loaded** so the surface
+  `_rot_stage()` = `min(3, evidence)`, **front-loaded** so the surface
   peaks as the player commits underground at 3. Scenes rebuild each load,
   so the pass is deterministic + additive (never accumulates). It (a)
-  scatters escalating rot decals (`_infest_decals`, seeded; surface +
+  scatters escalating rot decals (`_rot_decals`, seeded; surface +
   safe-rooms-at-3 + underground, which is baseline-rotted from ev0), (b)
   transforms surface locals by name: **converts** the peace-makers
-  (`INFEST_CONVERT` → `_convert_local`: sprite→`cultist`, tag
+  (`ROT_CONVERT` → `_convert_local`: sprite→`cultist`, tag
   `cult_convert` = *passive* cult, gaze-only via `_tick_cultists`, never
-  grabs) and **turns** the resisters (`INFEST_TURN` → `_turned_local_dialogue`;
+  grabs) and **turns** the resisters (`ROT_TURN` → `_turned_local_dialogue`;
   Hettie, Garrick, Old Pell, Toby): the town reads **NORMAL** — they keep
   their exact sprite, portrait, and body (the wrongness is the *place*, not
   the people; NARRATIVE §2). Only their **dialogue** curdles: they answer flat and
@@ -350,7 +350,7 @@ it renders the procedural sprites to a labelled PNG strip.
   means them, never acknowledging the gap. (The old `_mutated` body-horror
   layer — the `draw_infested_overlay` world sprite + the
   `_draw_infested_portrait` dialog portrait + the `infested=True` `show()`
-  path — was **cut** 2026-07, TODO #9; `sprites_infested.py` keeps only the
+  path — was **cut** 2026-07, TODO #9; `sprites_wound.py` keeps only the
   shared `_gold_in_wound` helper the corpse art still uses.)
   And (c) at stage 3 turns
   the Sheriff's office into a **unique threat**: `_spawn_hunting_sheriff`
@@ -389,7 +389,7 @@ it renders the procedural sprites to a labelled PNG strip.
   canon source of truth (rewritten 2026-07: it locks FACTS, never
   phrasings; states what IS, not what isn't; one fact, one home; canon
   invariants indexed at the bottom). The systems/design material that
-  used to live in it (threat-model canon, infestation, the implementation
+  used to live in it (threat-model canon, world rot, the implementation
   map, the Works level design, art direction, fold mechanics) moved to
   **`DESIGN.md`** — code comments cite `NARRATIVE §n` / `DESIGN.md §n`
   in the NEW numbering.
@@ -508,7 +508,7 @@ it renders the procedural sprites to a labelled PNG strip.
 - **"He knows you":** `_log_dream_entry` writes the dream to save arg
   **`notes`** (shown by `NotebookUI` after the clues). It must NOT go in
   `evidence` — `_evidence_count` is `len(save.arg("evidence"))` and drives the
-  King-gate + infestation; only the six `CANONICAL_EVIDENCE` beats belong
+  King-gate + world rot; only the six `CANONICAL_EVIDENCE` beats belong
   there. At the real Threshold (`scenes/depths.py build_threshold`
   `on_enter`), if `flashback_seen`, a recognition line lands before the
   doorframe beat: *"You have stood here before. In sleep."*

@@ -1665,7 +1665,7 @@ def main():
         check(_br in _UG, f"portal: branch room {_br} is registered underground")
         check(_br in _DK, f"dark: branch room {_br} gets the underground gloom")
 
-    # --- 22. Ashfall scales with the infestation, never on the Threshold ----
+    # --- 22. Ashfall scales with the world rot, never on the Threshold ----
     # (DESIGN.md §2) The pale-yellow ash is the vessel's pressure made
     # visible: zero at stage 0, light->steady as evidence climbs, thicker
     # underground (nearer the source), clean in safe rooms until stage 3, and
@@ -1771,7 +1771,7 @@ def main():
     _cal = next((nn for nn in gc.scene.npcs
                  if getattr(nn, "name", "") == "Mrs. Calder"), None)
     check(_cal is not None and getattr(_cal, "tag", "") == "cult_convert",
-          "calder: converted at stage 2 (INFEST_CONVERT)")
+          "calder: converted at stage 2 (ROT_CONVERT)")
     check(sum(1 for d in gc.scene.decorations
               if getattr(d, "kind", "") == "place_setting") == 1,
           "calder: the extra place is cleared once she joins")
@@ -1786,14 +1786,14 @@ def main():
     # (c2) The resisters TURN by DIALOGUE only -- the town reads NORMAL
     # (TODO #9: the mutate body-horror layer is CUT). At stage 3 a resister
     # keeps their exact sprite/portrait and never gets a _mutated flag; only
-    # their talk curdles (INFEST_TURN -> _turned_local_dialogue), delivered
+    # their talk curdles (ROT_TURN -> _turned_local_dialogue), delivered
     # as an ordinary line (no infested portrait path), never evidence.
     import systems.config as _cfg
     import rendering.sprites as _spr
     from ui.dialog import DialogueBox as _DB
-    from systems.infest_mixin import _turned_local_dialogue
-    check(not hasattr(_cfg, "INFEST_MUTATE") and hasattr(_cfg, "INFEST_TURN"),
-          "turn: INFEST_MUTATE is gone; INFEST_TURN replaces it")
+    from systems.rot_mixin import _turned_local_dialogue
+    check(not hasattr(_cfg, "INFEST_MUTATE") and hasattr(_cfg, "ROT_TURN"),
+          "turn: INFEST_MUTATE is gone; ROT_TURN replaces it")
     check(not hasattr(_spr, "draw_infested_overlay"),
           "turn: the infested world overlay is removed from the sprites facade")
     check(not hasattr(_DB, "_draw_infested_portrait"),
@@ -1804,7 +1804,7 @@ def main():
     check(not any(getattr(nn, "_mutated", False) for nn in gm.scene.npcs),
           "turn: no local carries a _mutated flag at stage 3 (mutation cut)")
     _turned = [nn for nn in gm.scene.npcs
-               if getattr(nn, "name", "") in _cfg.INFEST_TURN]
+               if getattr(nn, "name", "") in _cfg.ROT_TURN]
     check(bool(_turned), "turn: at least one resister stands in brimley at stage 3")
     check(all(nn.dialogue_fn is _turned_local_dialogue for nn in _turned),
           "turn: every present resister is repointed to the curdled voice")
@@ -1815,7 +1815,7 @@ def main():
         _n.dialogue_fn(gm, _n)
         check(_n.sprite_kind == _kind0 and evidence_count(gm) == _ev_b,
               "turn: the curdled line keeps the sprite and never inflates evidence")
-    from systems.infest_mixin import INFEST_TURN_LINES as _TL
+    from systems.rot_mixin import ROT_TURN_LINES as _TL
     check(not any(d in ln for lines in _TL.values() for ln in lines
                   for d in ("—", "–", "--")),
           "turn: no dashes in any curdled resister line (HARD RULE)")

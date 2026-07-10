@@ -1,8 +1,8 @@
-"""THRESHOLD infestation -- the world rotting as the case is understood.
+"""THRESHOLD world rot -- the world rotting as the case is understood.
 
 The evidence-driven decay pass (decals, local convert/mutate, the hunting
 sheriff) and the airborne ashfall overlay, extracted from systems/game.py as
-an InfestationMixin on the Game class. The mutated/converted/corpse dialogue
+an RotMixin on the Game class. The mutated/converted/corpse dialogue
 helpers travel with it (module-level; _corpse_examine is re-imported by
 game.py for _make_corpse). No behavior change; tuning lives in systems.config.
 """
@@ -71,7 +71,7 @@ def _converted_local_dialogue(game, npc):
 # things, from behind a face that no longer means them, and never
 # acknowledge the gap. No body-horror, no cosmic-poetry; the dread is the
 # ordinary line delivered by someone who is no longer home behind it.
-INFEST_TURN_LINES = {
+ROT_TURN_LINES = {
     "Hettie": [
         "Truck still comes Thursdays. I unload it myself now.",
         "The driver won't get out of the cab anymore. That's all right. I "
@@ -106,7 +106,7 @@ def _turned_local_dialogue(game, npc):
     you flatly, about small ordinary things, from behind a face that no
     longer means them, and never acknowledge the gap."""
     name = getattr(npc, "name", "")
-    lines = INFEST_TURN_LINES.get(name, [
+    lines = ROT_TURN_LINES.get(name, [
         "[c=dim]They answer something ordinary, in their own voice. Nothing "
         "in it reaches you.[/c]",
     ])
@@ -115,7 +115,7 @@ def _turned_local_dialogue(game, npc):
                      portrait=getattr(npc, "portrait", None))
 
 
-class InfestationMixin:
+class RotMixin:
     # ---- the Moths (the King's heralds; MOTH_* config) ----------------
     @staticmethod
     def _new_moth(x, y, seed, fast=False, phase=0.0):
@@ -413,9 +413,9 @@ class InfestationMixin:
             if hasattr(self, "_flash_notebook"):
                 self._flash_notebook()
 
-    # ---- Infestation -------------------------------------------------
-    def _infest_stage(self):
-        """Surface infestation stage 0..3, front-loaded to peak as the
+    # ---- World rot -------------------------------------------------
+    def _rot_stage(self):
+        """Surface world rot stage 0..3, front-loaded to peak as the
         player commits underground at 3 evidence. Monotonic with the
         evidence count (knowing rots the world, and you can't un-know)."""
         return min(3, self._evidence_count())
@@ -429,7 +429,7 @@ class InfestationMixin:
         key = self.scene.key
         if key == "threshold":
             return 0          # never on the Threshold (1b)
-        stage = self._infest_stage()
+        stage = self._rot_stage()
         if key in SAFE_SCENES and stage < 3:
             return 0          # safe rooms stay clean until it claims them too
         n = ASHFALL_BY_STAGE.get(stage, 0)
@@ -481,7 +481,7 @@ class InfestationMixin:
             elif p["x"] < -20:
                 p["x"] += SCREEN_W + 40
 
-    def _apply_infestation(self):
+    def _apply_rot(self):
         """Re-derive the world's rot for the freshly-loaded scene from the
         evidence count. Scenes rebuild every load, so this is deterministic
         and additive each time -- never accumulates. Runs after on_enter so
@@ -489,7 +489,7 @@ class InfestationMixin:
         if self.scene is None:
             return
         key = self.scene.key
-        surface_stage = self._infest_stage()
+        surface_stage = self._rot_stage()
         # Stage transition cue: the world rots one step further. Fires
         # on the scene load that lands AFTER an evidence cross (so the
         # audio aligns with the visible decal/ashfall change, not with
@@ -498,18 +498,18 @@ class InfestationMixin:
         last = getattr(self, "_last_infest_stage", 0)
         if surface_stage > last:
             self._last_infest_stage = surface_stage
-            self.audio.play("infest_throb", 0.80)
+            self.audio.play("rot_throb", 0.80)
             self.audio.duck(1.6, depth=0.40)
         underground = key in UNDERGROUND_SCENES
         if underground:
             # Wrong from the first rung: a baseline even at 0 evidence,
             # deepening on the FULL evidence count.
-            self._infest_decals(max(1, self._evidence_count()), underground=True)
+            self._rot_decals(max(1, self._evidence_count()), underground=True)
         elif surface_stage > 0:
-            self._infest_decals(surface_stage, underground=False)
+            self._rot_decals(surface_stage, underground=False)
         # Locals turn (convert) or rot (mutate) on the surface.
         if surface_stage > 0:
-            self._infest_locals(surface_stage)
+            self._rot_locals(surface_stage)
         # Sheriff Vane's office becomes a unique threat at stage 3.
         if surface_stage >= 3 and key == "sheriff_office":
             self._spawn_hunting_sheriff()
@@ -533,7 +533,7 @@ class InfestationMixin:
         panned so the house settles from somewhere. The surface
         equivalent of the depths' per-room cues.
 
-        ROT AIR -- the layer escalates with the infestation stage,
+        ROT AIR -- the layer escalates with the world rot stage,
         the audible twin of the decal pass: drips at 1, flies at 2,
         whisper + structural groan at 3. Outdoor scenes are carried
         by the wind bed and only gain the rot layers (flies, groan).
@@ -541,7 +541,7 @@ class InfestationMixin:
         decals. Underground rooms are skipped entirely -- their cues
         are authored per-room in the builders, baseline-rotted from
         the start. Scenes rebuild every load, so the pass is
-        deterministic + additive, like the rest of the infestation."""
+        deterministic + additive, like the rest of the world rot."""
         sc = self.scene
         key = sc.key
         if sc.music in ("void", "wrong"):
@@ -568,10 +568,10 @@ class InfestationMixin:
             sc.add_ambient("flies", 0.15, 14.0, 24.0, pan_spread=0.8)
         if (interior or outdoor) and rot >= 3:
             sc.add_ambient("whisper", 0.10, 12.0, 22.0, pan_spread=0.6)
-            sc.add_ambient("infest_throb", 0.12, 14.0, 24.0)
+            sc.add_ambient("rot_throb", 0.12, 14.0, 24.0)
 
-    def _infest_decals(self, stage, underground=False):
-        """Scatter escalating infestation decorations on walkable tiles,
+    def _rot_decals(self, stage, underground=False):
+        """Scatter escalating world rot decorations on walkable tiles,
         seeded by (scene, stage) so the spread is stable per load. Surface
         scenes (outdoor + the safe rooms at stage 3) and underground
         scenes only -- ordinary interiors are left to their own dressing."""
@@ -615,7 +615,7 @@ class InfestationMixin:
             self.scene.add_decoration(deco)
             placed += 1
 
-    def _infest_locals(self, stage):
+    def _rot_locals(self, stage):
         """Turn the surface locals by name. Converts become passive cult (a
         'cult_convert' tag -- _tick_cultists counts their gaze but they never
         grab). Resisters keep their body and their face entirely (the town
@@ -625,8 +625,8 @@ class InfestationMixin:
             if not getattr(n, "alive", True) or getattr(n, "_is_corpse", False):
                 continue
             nm = getattr(n, "name", "")
-            cs = INFEST_CONVERT.get(nm)
-            ts = INFEST_TURN.get(nm)
+            cs = ROT_CONVERT.get(nm)
+            ts = ROT_TURN.get(nm)
             if cs is not None and stage >= cs:
                 self._convert_local(n)
             elif ts is not None and stage >= ts:
@@ -637,7 +637,7 @@ class InfestationMixin:
         # away -- the waiting is over. One setting stays (hers, unused).
         # Her converted dialogue above carries the other half of the beat.
         if (self.scene.key == "brimley"
-                and stage >= INFEST_CONVERT.get("Mrs. Calder", 99)):
+                and stage >= ROT_CONVERT.get("Mrs. Calder", 99)):
             settings = [d for d in self.scene.decorations
                         if getattr(d, "kind", "") == "place_setting"]
             for d in settings[1:]:

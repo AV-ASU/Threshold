@@ -85,9 +85,9 @@ guards the wording, never the firing. (`systems/narrative_mixin.py:367-374`
 `rite_envelope_given`, so the kill-Sable-and-loot path (which deliberately
 does not set the flag, `dialogue.py:1103-1123`) never triggers it — sibling
 gates all check `flag or inventory.has("rite_envelope")`; (b) far worse, the
-envelope only exists at 3 evidence, and `INFEST_TURN["Toby"] = 3`
-(`systems/config.py:602-603`) means `_infest_locals`
-(`systems/infest_mixin.py:618-634`) replaces Toby's `dialogue_fn` with
+envelope only exists at 3 evidence, and `ROT_TURN["Toby"] = 3`
+(`systems/config.py:602-603`) means `_rot_locals`
+(`systems/rot_mixin.py:618-634`) replaces Toby's `dialogue_fn` with
 `_turned_local_dialogue` on every scene load at stage 3 — and reaching Toby
 from the handoff always crosses a scene load. So the §2-mandated one-shot
 *"Don't go in there, mister."* is dead code on every path. (His
@@ -186,7 +186,7 @@ Sable never went below — that is his whole §2 arc ("Somebody has to keep the
 desk"). Attribute the labels to the congregation.
 
 **B6. Converted-local narration contradicts the renderer.**
-`systems/infest_mixin.py:44-45, 61-62` — "The face is Mrs. Calder's. The
+`systems/rot_mixin.py:44-45, 61-62` — "The face is Mrs. Calder's. The
 voice underneath it is not." But `_convert_local` sets
 `sprite_kind = "cultist"` and drops the portrait: on screen she IS a hooded
 cultist. §4b gives only the turned RESISTERS their exact bodies, so the text
@@ -250,7 +250,7 @@ supposedly never broke into.
   the file's own news-does-not-spread rule. Gate on any intro/photo flag or
   reword to what a kid could infer.
 - **C12.** The hunting-sheriff intro replays on every stage-3 office entry
-  (`infest_mixin.py:513-515`); and the line "I'm supposed to tell you to
+  (`rot_mixin.py:513-515`); and the line "I'm supposed to tell you to
   leave, son. I can't say it anymore." reports the failure instead of
   performing the unfinished line (§4b: "says the line he can no longer
   finish").

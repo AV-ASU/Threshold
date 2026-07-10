@@ -578,7 +578,7 @@ MAX_FULLSCREEN_DARK = 204
 # until they step onto land or bridge, which flips in_river False.
 RIVER_ENTRY_TILE = (34, 60)
 
-# ---- Infestation (NARRATIVE §infestation) -----------------------------
+# ---- World rot (NARRATIVE §world rot) -----------------------------
 # As the case is understood the surface rots, front-loaded to peak as the
 # player commits underground at 3 evidence. The stage is min(3, evidence)
 # for the surface (monotonic; the underground deepens past that on its own
@@ -595,10 +595,10 @@ RIVER_ENTRY_TILE = (34, 60)
 # Sheriff Vane is neither: at stage 3 he becomes a unique threat encounter
 # in his own office (_spawn_hunting_sheriff). Values are the evidence stage
 # at which the local turns.
-INFEST_CONVERT = {"A woman": 1, "Mrs. Calder": 2, "Royce": 3}
-INFEST_TURN = {"Hettie": 2, "Garrick": 3, "Old Pell": 3,
+ROT_CONVERT = {"A woman": 1, "Mrs. Calder": 2, "Royce": 3}
+ROT_TURN = {"Hettie": 2, "Garrick": 3, "Old Pell": 3,
                "Toby": 3}
-# Underground is wrong from the first rung -- a baseline infestation even
+# Underground is wrong from the first rung -- a baseline world rot even
 # at 0 evidence, deepening on the full evidence count (not capped at 3).
 UNDERGROUND_SCENES = {
     "well_bottom", "well_passage",
@@ -613,7 +613,7 @@ UNDERGROUND_SCENES = {
 
 # Ashfall (DESIGN.md §2): a slow drifting pale-yellow ashfall, the pressure
 # of the vessel made visible -- His attention settling on you, not snow, not
-# weather. Density scales with the infestation stage (light at 1 -> a steady
+# weather. Density scales with the world rot stage (light at 1 -> a steady
 # yellow drift at 3) and thickens underground (nearer the source). Never on
 # the Threshold (the eye of it is still, 1b), and safe rooms stay clear until
 # stage 3 (mirrors the rot decals). Pure screen-space overlay, procedural.
