@@ -101,7 +101,7 @@ level floor are the same wrongness at different sizes"* (§1b).
 ## Decisions landed (2026-06 consolidation)
 
 The open questions below were settled in the teleportation-consolidation
-pass (NARRATIVE.md §11 "One phenomenon, two presentations"):
+pass (DESIGN.md §7 "One phenomenon, two presentations"):
 
 - **The crossing is NOTHING.** Not barely-there — literally nothing: no
   flourish, no sting, no fade, no input hitch. All crossings funnel through

@@ -66,7 +66,7 @@ def _converted_local_dialogue(game, npc):
 
 
 # Turned resisters: they look exactly as they did (the town reads NORMAL --
-# the wrongness is the PLACE, not the people; NARRATIVE 1b). What has
+# the wrongness is the PLACE, not the people; NARRATIVE §2). What has
 # changed is what they SAY. They talk to you flatly, about small ordinary
 # things, from behind a face that no longer means them, and never
 # acknowledge the gap. No body-horror, no cosmic-poetry; the dread is the
@@ -421,7 +421,7 @@ class InfestationMixin:
         return min(3, self._evidence_count())
 
     def _ashfall_target(self):
-        """How many ash motes the air should hold right now (NARRATIVE 4b).
+        """How many ash motes the air should hold right now (DESIGN.md §2).
         Zero on the Threshold (the still eye of it) and in safe rooms before
         stage 3; otherwise stage-driven, thicker underground (the source)."""
         if self.scene is None:
@@ -515,7 +515,7 @@ class InfestationMixin:
             self._spawn_hunting_sheriff()
         # The general store from stage 2: one of them eats at Hettie's
         # counter, calm as a lunch hour, while the shelves behind it stand
-        # empty (food scarcity, NARRATIVE 8 -- where the town's food goes).
+        # empty (food scarcity, DESIGN.md §4 -- where the town's food goes).
         # Same ambient contract as the depths diggers: idle, NO tag, so the
         # gaze tick never counts it. Pure tableau; it does not look up.
         if surface_stage >= 2 and key == "shop":
@@ -658,7 +658,7 @@ class InfestationMixin:
 
     def _spawn_counter_eater(self):
         """Stage 2+: a convert eating at the store counter (food scarcity,
-        NARRATIVE 8 -- the town's food goes where its faith went). Ambient
+        DESIGN.md §4 -- the town's food goes where its faith went). Ambient
         tableau on the depths-digger contract: idle, non-solid, no prompt,
         NO tag -- excluded from the gaze tick, never chases, never reacts.
         The tin bowl is part of the pose art (sprites_cultist 'eat')."""

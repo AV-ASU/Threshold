@@ -592,7 +592,7 @@ class Enemy:
                 ang = (pygame.time.get_ticks() / 1000.0) % math.tau
                 self.facing = (math.cos(ang), math.sin(ang))
             return
-        # Default SCOUT: pure roam (NARRATIVE §8 -- no preset waypoints).
+        # Default SCOUT: pure roam (DESIGN.md §4 -- no preset waypoints).
         # The cultist picks its own reachable goals and wanders the room,
         # pausing to scan, then rolls another -- emergent patrol that routes
         # around cover via _cult_step's nav. lock_facing kneelers are the one

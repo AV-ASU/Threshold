@@ -158,7 +158,7 @@ class DecoMineMixin:
 
     def _draw_water_channel(self, surf, x, y):
         """A SINGLE continuous fluid thread of the underground river on the cave
-        floor (NARRATIVE 1b): it leaves the channel, licks under the Threshold
+        floor (NARRATIVE §2): it leaves the channel, licks under the Threshold
         frame, and curves back into the river -- one unbroken ribbon, with a cold
         sheen that flows ALONG it. A FLOOR decal. `path` (kwarg) is a list of
         (dx, dy) world-px offsets from the anchor; joints are rounded so it reads
@@ -207,7 +207,7 @@ class DecoMineMixin:
 
     def _draw_water_trail(self, surf, x, y):
         """A thin thread of the underground river crossing a stone floor
-        (NARRATIVE 1b: the river is the artery; water finds the lowest place
+        (NARRATIVE §2: the river is the artery; water finds the lowest place
         and the first thread reached the Threshold frame and crossed its plane).
         A FLOOR decal -- warped onto the tilted floor -- so it lies IN the stone
         and turns with the room. A dark wet rivulet pooled in a shallow seam,

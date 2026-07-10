@@ -722,7 +722,7 @@ def build_lodge_cellar():
     sc.set_spawn("from_lodge", 9, 1)
 
     # (The framed staff photograph is CUT, 2026-07: an unaged Clerk across
-    # "decades" was a second impossible thing -- NARRATIVE §1b keeps the
+    # "decades" was a second impossible thing -- NARRATIVE §2 keeps the
     # impossible count at one, and Sable is a mortal local.)
 
     # Workbench in the SW corner (holds the woodshed key). The chest gets

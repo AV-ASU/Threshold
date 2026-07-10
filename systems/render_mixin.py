@@ -183,7 +183,7 @@ class RenderMixin:
         """Atmospheric overlay. Brimley and alter_room always run the
         outdoor haze + vignette. EVERY OTHER SCENE also runs the
         outdoor haze + vignette while the player is carrying the Pallid
-        Mask -- His face is the hostile object now (NARRATIVE 8: the Mask
+        Mask -- His face is the hostile object now (DESIGN.md §4: the Mask
         is the temptation and it draws Him), so the world dims around it."""
         if self.scene is None:
             return
@@ -1062,7 +1062,7 @@ class RenderMixin:
             # A corpse: draw it prone in its blood and skip all the
             # living-NPC logic (morph, blink, king-threat, gaze). A fresh
             # kill (mold=0) -- corpses don't persist across loads anymore, so
-            # there's no growing rot stage to track (NARRATIVE 1b/3).
+            # there's no growing rot stage to track (NARRATIVE §4 / DESIGN.md §1).
             if not getattr(npc, "alive", True):
                 for ox, oy in _offsets:
                     sx, sy = self.camera.project(npc.x + ox, npc.y + oy)
@@ -1174,7 +1174,7 @@ class RenderMixin:
                         draw_vessel_bloom(target, sx, sy, npc.sprite_kind,
                                           npc.facing, m, seed=getattr(npc, 'sprite_seed', 0))
                     else:
-                        # (The curse is His own gaze now; NARRATIVE 1b/3.
+                        # (The curse is His own gaze now; NARRATIVE §4 / DESIGN.md §1.
                         # curse_v stays 0 for all normal NPCs.)
                         curse_v = 0.0
                         # A Watcher being stared down: its eyes go dark (gaze)
@@ -1613,7 +1613,7 @@ class RenderMixin:
         # driven by the threshold scene's on_update, scenes/depths.py).
         if getattr(self, "_seal_warp", None) is not None:
             self._draw_seal_warp_overlay()
-        # Ashfall over the graded world (NARRATIVE 4b) -- the pale-yellow drift
+        # Ashfall over the graded world (DESIGN.md §2) -- the pale-yellow drift
         # rides on top so the grade's desaturate/cool-tint can't wash it out.
         # Under the HUD: it's atmosphere, not interface.
         self._draw_ashfall()
@@ -1809,7 +1809,7 @@ class RenderMixin:
         # The evidence FLOOR is seared in -- a dead, locked base the meter can
         # never bleed below. The bright live fill rides ABOVE it, so the
         # reclaimable headroom you can still hide back into visibly shrinks the
-        # more of the case you understand. (NARRATIVE §3, made legible.)
+        # more of the case you understand. (DESIGN.md §1, made legible.)
         floor = max(0.0, min(1.0, getattr(self, "_vis_floor", 0.0)))
         fw = int(bar_w * floor)
         pw = int(bar_w * prox)

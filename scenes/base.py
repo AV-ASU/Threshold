@@ -242,7 +242,7 @@ class Scene:
         self.noise_sources = []
         # The cult's errand stations (add_cult_station): scene-local
         # JOBS a scouting cultist walks between. Not patrol routes --
-        # per-enemy waypoints stay banned (NARRATIVE §8); this is the
+        # per-enemy waypoints stay banned (DESIGN.md §4); this is the
         # town's WORK, and any noise or sighting peels him off it.
         self.cult_stations = []
         # Live door-leaf animations (door_pulse): (tx, ty) -> {open,
@@ -511,7 +511,7 @@ class Scene:
             return self.objects[ty][tx]
         return "#"
 
-    # --- Cover-aware navigation (cultist pursuit, NARRATIVE §8) ----------
+    # --- Cover-aware navigation (cultist pursuit, DESIGN.md §4) ----------
     # The cult AI (entities/enemy.py + npc.py) routes AROUND the volumetric
     # cover now standing mid-floor (pillars, pews, cots, basins) via a
     # wrap-aware BFS over a walkable tile grid, while staying a straight shot

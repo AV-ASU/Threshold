@@ -378,7 +378,7 @@ def build_abandoned_farmhouse():
     def _farmhouse_interact(game):
         # Sealed. This hatch used to drop into the old cult chamber, which
         # passaged through to the Works -- a shortcut around the descent.
-        # Closed (NARRATIVE §5/§9: the grove fold is the only way down).
+        # Closed (NARRATIVE §7/§9: the grove fold is the only way down).
         if (abs(game.player.x - hatch_x) < 36
                 and abs(game.player.y - hatch_y) < 36):
             game.audio.play("door_close", 0.5)

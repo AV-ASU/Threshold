@@ -22,7 +22,7 @@ class DecoNatureMixin:
 
     def _draw_garden_patch(self, surf, x, y):
         """A household vegetable plot dug into the lot -- the town feeding
-        itself, unevenly (food scarcity, NARRATIVE 8). `tended=True` is a
+        itself, unevenly (food scarcity, DESIGN.md §4). `tended=True` is a
         working bed: fresh-turned cold soil, straight furrows, a staked
         string line, the first pale hardy shoots. `tended=False` is the
         same plot let go: dried ridges gone to dashes, a stake fallen

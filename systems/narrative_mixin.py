@@ -170,7 +170,7 @@ class NarrativeMixin:
 
     def _log_dream_entry(self):
         """Write the door-dream into the case notebook as a NOTE. CANON
-        (NARRATIVE 1b / spectrum note): the PI dreamed of the door exactly
+        (NARRATIVE §2 / spectrum note): the PI dreamed of the door exactly
         ONCE, a year ago -- walked up, looked in, met His eye for a blip, and
         never reached it; it never took root. Reading Mara's journal through
         REMINDS him of that single dream (what the flashback renders), and he
@@ -261,7 +261,7 @@ class NarrativeMixin:
 
     def _log_case_entry(self):
         """Seed the case notebook with the PI's intake the moment a run
-        begins. CANON (NARRATIVE 1/1b): the case is the LURE -- the King
+        begins. CANON (NARRATIVE §1/1b): the case is the LURE -- the King
         found the one appetite a numb investigator can't refuse, an
         unsolved thing, and walked the marked soul back to His door. This
         note must NEVER name that (truth arrives only as sensation): it

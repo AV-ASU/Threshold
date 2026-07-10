@@ -43,7 +43,7 @@ def _cultist(x, y, speed=1.0):
     slower than the player's walk so cover-running works. Aggro
     is short (~180px line of sight) and respects player.hidden, so
     the player can sneak past in cover and stand still in a hide
-    spot to break the chase. In SCOUT it PURE-ROAMS (NARRATIVE §8) --
+    spot to break the chase. In SCOUT it PURE-ROAMS (DESIGN.md §4) --
     no preset route; it picks its own reachable goals and paths around
     cover. Pin a stationary set-piece (a kneeler) by setting aggro=0 +
     lock_facing on the returned enemy instead of a one-point route."""
@@ -463,7 +463,7 @@ def build_depths_threshing():
     # facing the wall) while chanters sway at the dig's mouth. All idle NPCs
     # with NO tag -> excluded from the cultist-gaze tick (no visibility, no
     # chase, no grab); non-solid. The dig toward the door made present, and
-    # the rite chanted over it (NARRATIVE 1b / The Digging note).
+    # the rite chanted over it (NARRATIVE §2 / The Digging note).
     # NB: keep these on OPEN floor (rows 8-9 have wall pillars at cols 2/5/8) --
     # a body stamped on a '#' is embedded in the wall and never draws.
     for mx, my, mf, mp in [(6, 8, (-1, 0), "mine"), (7, 8, (1, 0), "mine"),
@@ -637,7 +637,7 @@ def build_threshold():
     # An underground RIVER CAVE -- not a box, and LONG: the player comes up from
     # the dark at the far SOUTH and walks a long way north, through a choked
     # stalagmite field, before reaching the frame. Ragged organic rock walls; the
-    # artery-river (NARRATIVE 1b) is the whole WEST boundary, fed by a wide
+    # artery-river (NARRATIVE §2) is the whole WEST boundary, fed by a wide
     # waterfall at the south-west and running off the north edge. The one place
     # the cave goes WRONG is the doorframe: a 5x5 of impossibly smooth, level
     # grey stone swept utterly clear of stalagmites -- geometry serving the door
@@ -679,7 +679,7 @@ def build_threshold():
     sc.set_spawn("default",   7, 38)
     sc.set_spawn("from_dark", 7, 38)
     # Doorframe on the apron (the cave's north-centre). It is ONLY a frame -- a
-    # door with no wall, nothing in the opening (NARRATIVE 1b). You SEAL by
+    # door with no wall, nothing in the opening (NARRATIVE §2). You SEAL by
     # walking THROUGH it carrying the keystone (the Pallid Mask), spent there
     # (§7, Mask-only); the walk-through is handled in on_update below. No [E]
     # prompt, no glow, no smoke. The keystone was carried down (the Deep Stair
@@ -689,7 +689,7 @@ def build_threshold():
     sc.add_decoration(Decoration(lintel_x, lintel_y, "doorframe"))
 
     # The waterfall: ONE wide spring (~3 tiles) gushing from a hole in the
-    # south-west cliff, covering the whole river mouth (NARRATIVE 1b -- the
+    # south-west cliff, covering the whole river mouth (NARRATIVE §2 -- the
     # artery's visible source). The river flows north from here.
     sc.add_decoration(Decoration(2 * TILE + 16, 37 * TILE + 16, "waterfall",
                                  w=110))
@@ -715,7 +715,7 @@ def build_threshold():
                     tx * TILE + 16, ty * TILE + 16, "stalagmite",
                     seed=tx * 31 + ty * 17, scale=round(rng.uniform(0.7, 1.3), 2)))
 
-    # The river THREAD (NARRATIVE 1b): ONE continuous, organic side-channel that
+    # The river THREAD (NARRATIVE §2): ONE continuous, organic side-channel that
     # branches OFF the river (the west wall) and returns to it -- a natural
     # distributary, not a drawn loop across the room. It leaves the channel low
     # in the south-west, is pulled east to the doorframe (the lowest place in the
@@ -779,7 +779,7 @@ def build_threshold():
     # through before the door slams) -- every acre the cult bent, funneling
     # through the one door. Then the approved black-screen lines + the
     # wordless tableau take over (_play_ending("seal_threshold")). Without
-    # the Mask the frame is only a frame; it never opens (NARRATIVE 1b).
+    # the Mask the frame is only a frame; it never opens (NARRATIVE §2).
     SEAL_WARP_DUR = 4.8
     _WARP_FOREIGN = [
         (1.60, "bush"), (1.75, "tall_grass"), (1.90, "firewood"),

@@ -345,7 +345,7 @@ def main():
           "sign chamber: lifting the mask grants it (the ONLY source)")
     check(has_evidence(g, "the_sign"),
           "sign chamber: logs the_sign evidence (canonical beat)")
-    # THE TRAP (NARRATIVE §6): tearing the rite down here -- before sealing
+    # THE TRAP (NARRATIVE §8): tearing the rite down here -- before sealing
     # the source -- is a game over, not a victory.
     gt = new_game()
     fire(gt, "works_sign", "_sign_pos")
@@ -384,7 +384,7 @@ def main():
           "face: the blast breaks the dig into the old workings")
     check(not g.player.inventory.has("powder"),
           "face: the charge is spent")
-    # CANON (NARRATIVE §7): the Mask is NOT consumed at the face -- you
+    # CANON (DESIGN.md §3): the Mask is NOT consumed at the face -- you
     # carry it down to spend at the Threshold door (or out, for SPREAD).
     check(g.player.inventory.has("pallid_mask"),
           "face: the keystone is NOT consumed (carried down, not spent)")
@@ -532,7 +532,7 @@ def main():
     n = evidence_count(ge)
     check(n >= 3, f"evidence: the 3-gate is reachable (gathered {n} canonical beats)")
 
-    # --- 10. The Kid is the witness (NARRATIVE §2): tells, grants no item ---
+    # --- 10. The Kid is the witness (NARRATIVE §4): tells, grants no item ---
     gk = new_game()
     gk.load_scene_now("toby_house")
     ready(gk)
@@ -548,7 +548,7 @@ def main():
         check(gk.save.flag("kid_witnessed")
               and not gk.player.inventory.has("polaroid"),
               "kid: the witness beat fires and grants no inventory item")
-        # CANON (NARRATIVE §2, D rework 2026-07): the witness does two jobs --
+        # CANON (NARRATIVE §4, D rework 2026-07): the witness does two jobs --
         # it poses the descent question (Toby FOLLOWED the procession down the
         # RIVER to the cult's dug-open ground, a way no one can follow now --
         # the grove is fold-hidden) and it SEEDS THE SCHOOL (the commune the
@@ -725,7 +725,7 @@ def main():
                        and e.get("name") == "the_dream"), None)
     check(dream_note is not None,
           "heknows: the dream logs a case-notebook NOTE")
-    # CANON (NARRATIVE 1b / spectrum note): the PI dreamed of the door
+    # CANON (NARRATIVE §2 / spectrum note): the PI dreamed of the door
     # exactly ONCE, a year ago -- it never took and never came again. The
     # note must read as that single, half-dismissed memory, NOT a recurring
     # dream. Guard against the recurrence regression.
@@ -814,7 +814,7 @@ def main():
     check(not _gun_on_desk(gsr),
           "startroom: the taken revolver does not reappear on re-entry")
 
-    # --- 15. The gun: the false-power threshold (NARRATIVE §3) ---
+    # --- 15. The gun: the false-power threshold (DESIGN.md §1) ---
     # "It exists to fail; lethal only on the victims." Lock the four canon
     # facts: below 3 evidence a clean round KILLS a cultist; at 3+ it only
     # STAGGERS; the King (and the Watchers) are unshootable; and a clean
@@ -1081,7 +1081,7 @@ def main():
           "style: no em-dashes in any player-facing string (keep it human)"
           + (f" (found {_dash_hits[:8]})" if _dash_hits else ""))
 
-    # --- 17. The principal locals are named (NARRATIVE §2/§8) ---
+    # --- 17. The principal locals are named (NARRATIVE §4/§8) ---
     # A small town knows its people by name. Every principal now speaks
     # through the organic conversation (TODO #1 expand), so the
     # proper-name label rides every floated line via the convo data.
@@ -1104,8 +1104,15 @@ def main():
         check(cv["name"] == expected,
               f"naming: a principal local speaks as '{expected}' "
               "(not a role-tag)")
-    check("Sable" in _SC["greet"]["beats"][0][1],
-          "naming: Sable's floated greeting introduces him by name")
+    # Sable checked the PI in the night before the game opens (NARRATIVE
+    # §3), so his greeting RESUMES the acquaintance instead of introducing
+    # him; his name still surfaces as the float-speech speaker label
+    # (guarded above). Lock the arrival fact, not the wording.
+    _sable_greet = _SC["greet"]["beats"][0][1]
+    check(("came in" in _sable_greet or "last night" in _sable_greet),
+          "canon: Sable's greeting acknowledges the night-before arrival")
+    check(not _sable_greet.startswith("Sable"),
+          "canon: Sable's greeting is not a self-introduction")
     check("Vane" in _VC["greet"]["beats"][0][1],
           "naming: Vane's floated greeting introduces him by name")
     # Toby's witness account still VOLUNTEERS itself on the very first
@@ -1113,7 +1120,7 @@ def main():
     check(first_speaker(toby_dialogue) == "Toby",
           "naming: Toby's witness one-shot speaks under his own name")
 
-    # --- 17b. Sable is the most-attuned LOCAL (NARRATIVE §2) -------------
+    # --- 17b. Sable is the most-attuned LOCAL (NARRATIVE §4) -------------
     # His menace is compulsion, not conspiracy. Lock the framing: the
     # characterization must not tag him a newcomer/recruiter or have him
     # scheme, and it must name him a local.
@@ -1522,7 +1529,7 @@ def main():
     check(len(grove.npcs) == 0,
           "effigy_grove is a maker-less tableau (no NPC)")
 
-    # --- 19. Eat-cult + time-loop fiction stays scrubbed (NARRATIVE §1b/§8) -
+    # --- 19. Eat-cult + time-loop fiction stays scrubbed (NARRATIVE §2/§8) -
     # Canon: a CLAIMING cult that renders no bodies (no cannibalism, no
     # tallow), and a SPATIAL fold -- stasis, nowhere to go -- never a TEMPORAL
     # loop. Those phrasings were scrubbed; lock them out of the scene source so
@@ -1550,7 +1557,7 @@ def main():
           "scrub: no eat-cult/time-loop fiction in scene source"
           + (f" (found {_hits})" if _hits else ""))
 
-    # --- 19b. The underground is a MINE (2026-07 retrofit; NARRATIVE §9).
+    # --- 19b. The underground is a MINE (2026-07 retrofit; DESIGN.md §5).
     # The Works + Depths were dug by the willing over old workings; the
     # claiming cult spills no one. Lock the charnel/killer-cult relics out
     # of the underground scene source: no blood, no gore, no bones, no
@@ -1584,7 +1591,7 @@ def main():
     check(getattr(_ldm("lodge"), "door_style", "") == "wood",
           "mine: surface doors stay framed wood")
 
-    # --- 20. Cultists use dynamic AI, not preset coordinates (NARRATIVE §8) -
+    # --- 20. Cultists use dynamic AI, not preset coordinates (DESIGN.md §4) -
     # Pure-roam SCOUT + cover-aware pursuit. Guard the two canon facts: no
     # roaming cultist carries a baked patrol route, and the nav routes a
     # pursuer AROUND a blocked line instead of straight through it.
@@ -1623,7 +1630,7 @@ def main():
     check(no_wp, "ai: cultist spawns were exercised by the waypoint guard")
     check(routed, "ai: a blocked-line route was found to exercise the nav guard")
 
-    # --- 21. A chase carries through PORTALS and folds (NARRATIVE §8) -------
+    # --- 21. A chase carries through PORTALS and folds (DESIGN.md §4) -------
     # The only thing that shakes a hot pursuer is a SAFE room. Guard both: a
     # plain portal (non-fold) exit to a non-safe scene stashes the pursuer; a
     # SAFE destination clears it (the refuge is never breached).
@@ -1659,7 +1666,7 @@ def main():
         check(_br in _DK, f"dark: branch room {_br} gets the underground gloom")
 
     # --- 22. Ashfall scales with the infestation, never on the Threshold ----
-    # (NARRATIVE §4b) The pale-yellow ash is the vessel's pressure made
+    # (DESIGN.md §2) The pale-yellow ash is the vessel's pressure made
     # visible: zero at stage 0, light->steady as evidence climbs, thicker
     # underground (nearer the source), clean in safe rooms until stage 3, and
     # NEVER on the Threshold (the still eye of it, §1b).
@@ -2339,7 +2346,7 @@ def main():
     check(any("preacher" in s.lower() for s in _hshown),
           "river: Hettie's one-shot lands once the body is found")
     # Crane's knowledge stays a LOCAL's: never the underground, only the
-    # rumor the boy told him (NARRATIVE §2).
+    # rumor the boy told him (NARRATIVE §4).
     from scenes.dialogue import CRANE_CONVO as _CCV
     _fl = next(e for e in _CCV["exchanges"] if e.get("key") == "flock")
     _fltxt = " ".join(b[1] for b in _fl["beats"]
@@ -2351,7 +2358,7 @@ def main():
 
     # --- 31. The Mask temptation FIRES (the 2026-07 audit found it dead:
     # an on_complete parked on an inactive modal). Lifting the Mask must
-    # end with the descent_mask NOTE in the case book (NARRATIVE §6, the
+    # end with the descent_mask NOTE in the case book (NARRATIVE §8, the
     # "permission to leave" beat).
     gmt = new_game()
     gmt.load_scene_now("works_sign")
