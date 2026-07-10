@@ -2360,23 +2360,33 @@ class Decoration:
         pygame.draw.circle(surf, (120, 108, 92), (x - 7, y + 4), 2, 1)
 
     def _draw_husk_bundle(self, surf, x, y):
-        """A tied sheaf of dried corn husks / reeds, bound with twine -- the
-        cult's material for the corn-dolls, hung on the racks to dry. An upright
-        sheaf (stood up as a standee under tilt; flat sprite at pitch 0)."""
-        base = (150, 134, 86)
-        blade = (180, 164, 116)
-        dk = (110, 96, 58)
-        twine = (124, 92, 52)
-        for dx in (-7, -4, -1, 2, 5, 8):                  # blades fanning up
-            sway = (dx % 3) - 1
-            tipx = x + dx + sway
-            tipy = y - 18 - (abs(dx) // 2) - (dx % 2)
-            pygame.draw.line(surf, base, (x + 1, y + 5), (tipx, tipy), 2)
-            pygame.draw.line(surf, blade, (x + 1, y + 5), (tipx, tipy), 1)
-        pygame.draw.polygon(surf, dk, [(x - 3, y + 4), (x + 5, y + 4),
-                                       (x + 1, y + 13)])      # tied point down
-        pygame.draw.line(surf, twine, (x - 5, y + 1), (x + 6, y + 1), 2)   # twine band
-        pygame.draw.line(surf, twine, (x - 4, y + 4), (x + 5, y + 4), 1)
+        """A tied sheaf of dried corn husks / reeds -- a STOOK: stalks
+        rising from a spread base, cinched to a visible WAIST by twine,
+        the tops splaying out and drooping past the tie. The waist is
+        the read (2026-07: the old draw fanned every blade up from one
+        point, and the resulting pale cone kept being mistaken for a
+        stalagmite under the tilt)."""
+        base = (140, 124, 80)
+        blade = (166, 150, 104)
+        dk = (100, 87, 52)
+        twine = (114, 84, 46)
+        wy = y - 8                                   # the waist height
+        # lower body: stalks from a spread base gathering to the waist
+        for dx in (-6, -3, 0, 3, 6):
+            pygame.draw.line(surf, base if dx % 2 else dk,
+                             (x + dx, y + 6), (x + dx // 3, wy), 2)
+        # upper heads: splay OUT from the waist, outermost tips drooping
+        for i, (ox, oy) in enumerate(((-9, -8), (-4, -12), (0, -13),
+                                      (4, -12), (9, -8))):
+            col = blade if i % 2 else base
+            droop = 4 if abs(ox) > 6 else 1
+            mid = (x + ox // 2, wy + oy // 2 - 2)
+            tip = (x + ox, wy + oy + droop)
+            pygame.draw.line(surf, col, (x, wy), mid, 2)
+            pygame.draw.line(surf, col, mid, tip, 1)
+        # the twine cinch -- the visible waist
+        pygame.draw.line(surf, twine, (x - 4, wy), (x + 4, wy), 3)
+        pygame.draw.line(surf, (66, 48, 28), (x - 4, wy + 2), (x + 4, wy + 2), 1)
 
     def _draw_shaft_ladder(self, surf, x, y):
         """The way up from the shaft floor: a single rope hanging from a hatch
