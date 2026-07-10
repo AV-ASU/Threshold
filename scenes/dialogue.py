@@ -1222,25 +1222,25 @@ def _garrick_roads_told(game):
         game._fold_mentioned("Garrick", reflect=False)
 
 
-# Old Pell -- the schoolhouse step, the cold that came and stayed, and
-# the corn: Pell corn, the town's northernmost-in-the-world pride (TODO
-# #11, a mundane human feat, never the door's doing), dead standing
-# since the missed fall harvest. Stasis register; he turns at rot stage
-# 3, so this talk is his pre-turn window. The stopped calendar stays a
-# rot-layer detail (the decoration + his turned lines), deliberately
-# NOT an ask topic.
+# Old Pell -- the schoolhouse step and the corn: Pell corn, the town's
+# northernmost-in-the-world pride (TODO #11, a mundane human feat, never
+# the door's doing), dead standing since the missed fall harvest. Stasis
+# register; he turns at rot stage 3, so this talk is his pre-turn
+# window. The stopped calendar stays a rot-layer detail (the decoration
+# + his turned lines), deliberately NOT an ask topic. (His old
+# persistent-cold line was CUT, maintainer call + STORY_AUDIT finding:
+# the ice goes out and the season turns -- weather stasis would be a
+# second impossible thing.)
 PELL_CONVO = {
     "id":    "pell",
     "name":  "Old Pell",
     "voice": "blip_low",
     "pi_voice": "blip_soft",
-    "prompt": "Pell stays on his step, arms folded against the cold.",
+    "prompt": "Pell stays put on his step, arms folded.",
     "leave":  "That's all for now.",
     "greet": {
         "flag": "pell_greeted",
         "beats": [
-            ("npc", "Cold came in early this year. And it never lifted. "
-                    "Just sat down on the town and stayed."),
             ("npc", "[c=dim]You're new. We don't get new. Nobody gets in. "
                     "Nobody gets...[/c]"),
             ("npc", "Hm. Well."),

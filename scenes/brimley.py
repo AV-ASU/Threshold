@@ -809,7 +809,7 @@ def build_brimley():
     ], movement="homebody", radius=34)
     # Old Pell -- the schoolhouse step, the calendar nailed to the wall
     # behind him. He stopped marking it. Another homebody: out on the
-    # step a while, then back indoors out of the cold that came early.
+    # step a while, then back indoors for a spell.
     # Ask verb (PELL_CONVO); the fold note now files from Royce/Garrick,
     # whose exchanges actually carry the looping-roads account.
     _resident(63, 54, "Old Pell", "old_townsman",
