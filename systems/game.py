@@ -60,12 +60,12 @@ from systems.stealth import (grab_allowed as _grab_ok,
                              is_enclosed as _is_enclosed_hide)
 from systems.threat_mixin import ThreatMixin
 from systems.king_roam_mixin import KingRoamMixin
-from systems.infest_mixin import InfestationMixin, _corpse_examine
+from systems.rot_mixin import RotMixin, _corpse_examine
 from systems.render_mixin import RenderMixin
 from systems.narrative_mixin import NarrativeMixin
 
 
-class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
+class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
            RenderMixin, NarrativeMixin):
     def __init__(self):
         pygame.init()
@@ -511,8 +511,8 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         self.stillness_t = 0.0
         self._delayed_audio = []
         self._creepy_step_count = 0
-        # Infestation stage-transition tracker (infest_mixin fires
-        # infest_throb when the surface stage steps up). New game
+        # World rot stage-transition tracker (rot_mixin fires
+        # rot_throb when the surface stage steps up). New game
         # starts at 0 so 0 -> 1 trips on the first evidence cross.
         self._last_infest_stage = 0
         # Flashback / ending state
@@ -891,16 +891,16 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         if self.save.flag("world_emptied"):
             self.scene.npcs = []
         else:
-            # Re-derive the world's infestation for this scene from the
+            # Re-derive the world's world rot for this scene from the
             # evidence count (rot decals, turned/mutated locals, the
             # stage-3 Sheriff encounter). Corpses are NOT persisted across
             # scene loads (NARRATIVE §4 / DESIGN.md §1: the act costs in the moment, no
             # cross-scene ledger) -- a killed local lies there only while
             # you're in the room.
-            self._apply_infestation()
+            self._apply_rot()
             # The Moths (the King's heralds) seed with the scene:
             # evidence-scaled on the open surface, a retinue in the
-            # King's own room (infest_mixin, MOTH_* config).
+            # King's own room (rot_mixin, MOTH_* config).
             self._spawn_moths()
 
     def _river_blocks(self, target_x, target_y):

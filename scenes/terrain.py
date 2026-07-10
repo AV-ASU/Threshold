@@ -3334,7 +3334,7 @@ _DECO_TALL_MARGIN = TILE
 def _deco_index(scene):
     """Categorise scene.decorations into the four downstream paths and bucket
     the per-frame-culled subset into a spatial grid. Lazy + cached on the
-    scene; rebuilt when scene.decorations changes length (covers infestation /
+    scene; rebuilt when scene.decorations changes length (covers world rot /
     runtime additions). Pure data, no draw."""
     cache = getattr(scene, "_deco_index_cache", None)
     if cache is not None and cache["len"] == len(scene.decorations):
@@ -3515,7 +3515,7 @@ def draw_terrain_tilted(surf, scene, camera, sight=None):
 
     `sight` is the optional Phase 4 blind-spot factor fn(wx, wy) -> 0..1
     (rendering/sight.py). When given, decorations flagged `_sight_gated`
-    (the infestation rot) only draw where the player actually looks -- the
+    (the world rot rot) only draw where the player actually looks -- the
     world's rot reveals on a peek and re-hides off-camera."""
     cx, cy = camera.cam_x, camera.cam_y
     half = _tilt_window_half(camera)

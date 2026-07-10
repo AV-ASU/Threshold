@@ -1,6 +1,6 @@
 # THRESHOLD — Design Notes
 
-> How the systems deliver the fiction: the threat model, infestation,
+> How the systems deliver the fiction: the threat model, world rot,
 > the implementation map, open design threads, the Works level design,
 > art direction, and the fold mechanics. The FICTION itself (premise,
 > door, timeline, cast, evidence, descent, endings, canon invariants)
@@ -122,21 +122,21 @@ its head) and pings the cult to **investigate the body**, and the body
 
 ---
 
-## 2. Infestation — the world rotting as you understand it
+## 2. World rot — the town curdling as you understand it
 
 > **Reconciles with NARRATIVE §2.** The town was *already* wholly claimed,
 > invisibly, before you arrived — nobody here is mid-conversion. The
-> infestation is **not the townsfolk changing**; it is the **veil thinning
+> world rot is **not the townsfolk changing**; it is the **veil thinning
 > for the PI** as he learns too much and He turns His eye back on the face
 > from the dream. "Convert" and "turn" are how the truth **surfaces to
 > you**, not allegiances being switched. Underneath, they were always His.
 
 Knowing dooms you, and it **shows**. Surface corruption is a pure,
-monotonic function of the evidence count — `_infest_stage = min(3,
+monotonic function of the evidence count — `_rot_stage = min(3,
 evidence)` — and it is deliberately **front-loaded** to peak exactly as
-you commit underground at 3. (The hard lock is *opening the Deep Stair*,
-not crossing 3; you can still resurface — and a fully-rotted town greets
-you when you do.) The underground is the asymmetry: it is **already
+you commit underground at 3. (The hard lock is the **blast at the
+deepest face**, not crossing 3; you can still resurface — and a
+fully-rotted town greets you when you do.) The underground is the asymmetry: it is **already
 wrong from the first rung** (a baseline at 0 evidence) and **deepens on
 the full count**, so the well is a wound the rest of the world only
 catches up to.
@@ -163,35 +163,29 @@ What rises with the stage:
   wrongness is the *place*, not the people, NARRATIVE §2). What betrays them is what
   they **say**: their talk goes flat and off, reporting small ordinary
   things from behind a face that no longer means them, and never
-  acknowledging the gap. No body-horror overlay — the dread is the mundane
-  line delivered by someone who is no longer home behind it. *(The old
-  `_mutated` flesh-deform layer was cut, 2026-07: one impossible thing, and
-  it is the door.)*
-- **Sheriff Vane is neither** — the last holdout, and the one soul in town
-  **claimed but unattuned** (he never dreamed the door; NARRATIVE §4). **His hollowing
-  is no longer infestation-gated; it is driven by the player's relationship
-  with him.** A hidden **despair/hope balance** (surfaced only as his mood,
-  never a number) can tip him over, and a hard **neglect override** finishes
-  him regardless: reach the descent (**3 evidence**) having never let him into
-  a single discovery, and his last hope — that someone was actually working it
-  — dies, and he falls. Tend him instead (share what you find; the same act is
-  the trust he withholds by default) and he **holds**, the holdout who lives as
-  much as anyone here does. **Why the King takes him so completely:** what Vane
-  wants most is for all of it to *end*, and the King can only ever offer endless
-  *more* — the one appetite the door cannot answer; and being unattuned, the
-  claim can **compel him but not steer him** — he is the only soul who runs
-  *from* the door instead of toward it, a claimed man the cosmic law cannot
-  guide, so he goes **hollow** as a malfunction, not a convert. The encounter is
-  otherwise unchanged: he stands, says the line he can no longer finish, then
-  comes for you slow and unrelenting; contact → **TAKEN INTO CUSTODY**; you
-  escape back out his door (a run outpaces him); the best ammo cache in town is
-  his. The despair/hope ledger, its constants, and the newspaper break-lever
-  live with the build ticket (TODO #2 + the Vane arc).
+  acknowledging the gap. The dread is the mundane line delivered by
+  someone who is no longer home behind it — one impossible thing, and it
+  is the door.
+- **Sheriff Vane falls last, and hardest** — the last holdout, and the
+  one soul in town **claimed but unattuned** (he never dreamed the door;
+  NARRATIVE §4). At stage 3 his office becomes a unique threat:
+  `_spawn_hunting_sheriff` stands the hollow lawman up (`sheriff_hollow`
+  sprite), he holds for an intro beat — says the line he can no longer
+  finish — then force-chases (`_tick_sheriff`), slow and unrelenting;
+  contact → **TAKEN INTO CUSTODY**; a run outpaces him back out his
+  door; the best ammo cache in town is his. **Why the King takes him so
+  completely:** what Vane wants most is for all of it to *end*, and the
+  King can only ever offer endless *more* — the one appetite the door
+  cannot answer; and being unattuned, the claim can **compel him but not
+  steer him** — the only soul who runs *from* the door instead of toward
+  it, so he goes **hollow** as a malfunction, not a convert. *(PLANNED,
+  TODO #2a: replace the stage gate with a player-driven despair/hope
+  arc — his fall earned or averted by whether the PI shares real
+  discoveries with him.)*
 - **The dead.** A local you shoot lies where they fell **for as long as
-  you're in that room** — the immediate weight of what you did. *The
-  cross-scene corpse-persistence + `mold` system is cut* (overbuilt; §1,
-  §4): no `dead_locals` replay, no growing rot on bodies. The act costs in
-  the moment; it doesn't need a ledger.
+  you're in that room** — the immediate weight of what you did. The scene
+  rebuilds the local live on re-entry: the act costs in the moment, and
+  the moment is the whole of it. It doesn't need a ledger.
 
 ---
 
@@ -243,7 +237,7 @@ Only display names and fiction change.
 > **distressed notes**, tempting SPREAD over going deeper; **keystone-to-
 > door rework** (the **Mask alone** is the keystone, NARRATIVE §9; the Deep Stair
 > opens without consuming it, spent at the Threshold to SEAL); the **ashfall**
-> infestation layer; the **lure chain** (King→Mara→Walter→PI, felt not
+> world rot layer; the **lure chain** (King→Mara→Walter→PI, felt not
 > stated); the **awareness model** (no visible tell; the cult knew the gist
 > of its bargain, the locals never knew they were claimed); and a **Rev.
 > Crane dialogue/murder rework** (lore unchanged). See `TODO.md`.

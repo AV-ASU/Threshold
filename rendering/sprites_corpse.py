@@ -3,7 +3,7 @@ import math
 import random
 import pygame
 from constants import C_BLACK
-from rendering.sprites_infested import _gold_in_wound
+from rendering.sprites_wound import _gold_in_wound
 
 
 # Dominant garment tint per local sprite kind, so a downed local still
@@ -157,7 +157,7 @@ def draw_npc_corpse(surf, x, y, kind, seed=0, mold=0):
     off the kind so the corpse still says who it was. Orientation is
     seeded so a row of bodies doesn't all face the same way.
 
-    `mold` (0..3) is the infestation stage -- the fold claiming the dead.
+    `mold` (0..3) is the world rot stage -- the fold claiming the dead.
     The body stays a recognisable body; the fold's INFECTION spreads over
     it as warm gold rot welling up from inside the flesh (never a black
     void): stage 1 a gold wound and sickly discolour, escalating through

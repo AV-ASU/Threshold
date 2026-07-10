@@ -268,7 +268,7 @@ class Scene:
         # Recurring ambient one-shots, ticked by Scene.update. Each
         # entry is [countdown, sfx_name, vol, lo, hi, pan_spread]; see
         # add_ambient. Additive: the depths' per-room cues and the
-        # infestation air layer both ride this list, so neither
+        # world rot air layer both ride this list, so neither
         # clobbers the other (or on_update_fn).
         self.ambient_cues = []
         self.combat = False
@@ -436,7 +436,7 @@ class Scene:
     def light_sources(self):
         """Cached [(x, y, r)] of the scene's light-emitting decorations
         (see _LIGHT_KINDS). Rebuilt when the decoration count changes
-        (infestation adds decals at load; nothing removes lights)."""
+        (world rot adds decals at load; nothing removes lights)."""
         cache = getattr(self, "_light_cache", None)
         if cache is not None and cache[0] == len(self.decorations):
             return cache[1]
@@ -528,7 +528,7 @@ class Scene:
     def nav_grid(self):
         """Cached [h][w] bool grid -- True where a tile centre is walkable.
         Built once per scene instance (objects/floor are static after the
-        build pass; infestation only adds non-solid decals + swaps NPCs)."""
+        build pass; world rot only adds non-solid decals + swaps NPCs)."""
         g = getattr(self, "_nav_grid", None)
         if g is None:
             half = TILE // 2
@@ -951,7 +951,7 @@ class Scene:
         lo..hi seconds (re-rolled per fire) at `vol` with a little
         volume jitter, panned within +-pan_spread so the cue comes
         from somewhere. Additive -- a scene can carry any number of
-        these. The depths' per-room cues and the infestation air
+        these. The depths' per-room cues and the world rot air
         layer both route through here."""
         self.ambient_cues.append(
             [random.uniform(lo, hi), name, vol, lo, hi, pan_spread])

@@ -355,7 +355,7 @@ class KingRoamMixin:
         self._roam_king["pos"] = (king.x, king.y)
         self.audio.play("void_sting", 0.7)
         self._roam_king["enter_at"] = "far"
-        # (Moth shedding is time-driven now -- infest_mixin
+        # (Moth shedding is time-driven now -- rot_mixin
         # _tick_moth_shed feeds game._moth_field every MOTH_SHED_EVERY
         # seconds from wherever rk["scene"] points; nothing to do here.)
 

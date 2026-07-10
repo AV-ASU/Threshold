@@ -73,7 +73,7 @@ all hold up under verification.
   detection math has crept back in.
 - **The infested-overlay cut is complete.** No `draw_infested_overlay` /
   `_draw_infested_portrait` / `infested=` leftovers outside
-  `sprites_infested.py`'s kept `_gold_in_wound`; `tests/flow.py` guards it.
+  `sprites_wound.py`'s kept `_gold_in_wound`; `tests/flow.py` guards it.
 - **Save slot.** `systems/save.py` writes via `tempfile.mkstemp` +
   `os.replace` — genuinely atomic.
 - **Exception hygiene.** Zero bare `except:` clauses repo-wide. 59

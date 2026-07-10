@@ -278,21 +278,21 @@ class Audio:                        #Starting screen needs music, something simp
         # Bespoke death-card beds (CAPTURED / TAKEN INTO CUSTODY) so
         # those endings carry their own identity instead of the generic
         # low_pulse. Both run for the death-screen hold (~2.8s) on a
-        # single play() call from _trigger_death. infest_throb fires on
+        # single play() call from _trigger_death. rot_throb fires on
         # each evidence-driven stage transition (the world rots more).
         # evidence_added is the small case-file chime per canonical
         # evidence beat. sheriff_hunt is the hollow lawman's signature.
         self.sfx["captured_bed"]   = self._build_captured_bed()
         self.sfx["custody_bed"]    = self._build_custody_bed()
-        self.sfx["infest_throb"]   = self._build_infest_throb()
+        self.sfx["rot_throb"]   = self._build_infest_throb()
         self.sfx["evidence_added"] = self._build_evidence_added()
         self.sfx["sheriff_hunt"]   = self._build_sheriff_hunt()
         # ---- Living-house + rot-air ambients -------------------------
         # The surface ambience layer. Interiors carry a quiet stick-
         # slip creak + a rare knock (Scene.add_ambient schedules them);
-        # the air then rots with the infestation stage -- drips at 1,
+        # the air then rots with the world rot stage -- drips at 1,
         # flies at 2, whisper + structural groan at 3 (wired in
-        # InfestationMixin._apply_ambient_air on every scene load).
+        # RotMixin._apply_ambient_air on every scene load).
         self.sfx["wood_creak"] = self._build_wood_creak()
         self.sfx["wood_pop"]   = g(150, 90, 0.20, "sine", attack_ms=1,
                                    decay_ms=70, noise_mix=0.35)
@@ -1678,7 +1678,7 @@ class Audio:                        #Starting screen needs music, something simp
 
     def _build_infest_throb(self, duration_ms=1600, vol=0.34):
         """A wet structural groan -- the world rots one stage further.
-        Plays on each infestation stage transition (0->1, 1->2, 2->3).
+        Plays on each world rot stage transition (0->1, 1->2, 2->3).
         Slow attack so it reads as ambient pressure rather than a hit;
         sub fundamental + mid partial so laptop speakers carry it."""
         sr = 22050

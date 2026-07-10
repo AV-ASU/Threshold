@@ -4,7 +4,7 @@ Boots the real Game headless, loads a populated outdoor scene, forces the
 oblique tilt on, and renders draw_world() for a spread of LOOK HEADINGS so the
 sight gate can be eyeballed: NPCs / items / rot are drawn only where the head
 is pointed, hidden (and free to keep simulating) in the blind spot. Evidence is
-bumped so the infestation rot is present to show its reveal-on-peek.
+bumped so the world rot rot is present to show its reveal-on-peek.
 
     python tools/preview_blindspot_live.py  -> /tmp/blindspot_live.png
 """
@@ -39,7 +39,7 @@ def _neutralize_grade(g):
 def boot():
     g = Game()
     g.save.new()
-    # bump evidence so infestation rot is scattered (reveal-on-peek target)
+    # bump evidence so world rot rot is scattered (reveal-on-peek target)
     g.save.arg("evidence")[:] = ["a", "b", "c"]
     g._start_play()
     g.load_scene_now(SCENE)

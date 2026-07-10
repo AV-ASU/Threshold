@@ -1,7 +1,7 @@
 # THRESHOLD — Story Bible
 
 > The canonical source of truth for the FICTION. How the systems deliver
-> it (threat model, infestation, fold mechanics, level design, art
+> it (threat model, world rot, fold mechanics, level design, art
 > direction, the code map) lives in `DESIGN.md`; open work lives in
 > `TODO.md`. Rules of this document: it locks **facts, never phrasings**
 > (exact wordings belong to `tests/flow.py` canon-guards, not to prose
