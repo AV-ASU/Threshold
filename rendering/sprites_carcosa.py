@@ -19,25 +19,6 @@ def _frand(i):
     return x - math.floor(x)
 
 
-def _flame_tongue(surf, bx, by, dx, dy, length, width, ph):
-    """One flame licking from base (bx,by) along direction (dx,dy):
-    three nested tapering triangles, outer ember -> hot core."""
-    pdx, pdy = -dy, dx                            # perpendicular
-    sway = math.sin(ph * 3.0) * 0.32
-
-    def tongue(frac_len, frac_w, col):
-        tip = (bx + dx * length * frac_len + pdx * sway * width * frac_w,
-               by + dy * length * frac_len + pdy * sway * width * frac_w)
-        lf = (bx + pdx * frac_w * width * 0.5, by + pdy * frac_w * width * 0.5)
-        rt = (bx - pdx * frac_w * width * 0.5, by - pdy * frac_w * width * 0.5)
-        pygame.draw.polygon(surf, col,
-                            [(int(lf[0]), int(lf[1])), (int(rt[0]), int(rt[1])),
-                             (int(tip[0]), int(tip[1]))])
-    tongue(1.0, 1.0, (196, 58, 16))
-    tongue(0.72, 0.62, (252, 146, 30))
-    tongue(0.46, 0.30, (255, 226, 128))
-
-
 def _cold_fire_pit(surf, cx, cy, R, t):
     """A pit of COLD FIRE -- a shaft of sickly pale-teal/gold flame receding to a
     black throat, that the King's mask opens into. You are dragged down it. The

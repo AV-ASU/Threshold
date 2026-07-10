@@ -49,7 +49,7 @@ it renders the procedural sprites to a labelled PNG strip.
 ## Layout
 
 - `main.py` — entry point: `Game().run()`.
-- `systems/game.py` — the orchestrator (~2k lines). State machine
+- `systems/game.py` — the orchestrator (~3k lines). State machine
   (`title` / `playing` / `transition`), `step(dt)`, scene loading
   (`load_scene_now`), the core update/input loop, combat, and
   `_reset_run_state()` (wipes per-run state on New Game; the `Game` instance

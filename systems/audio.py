@@ -15,6 +15,16 @@ except Exception:
     dsp = None
     _HAVE_DSP = False
 
+# The synthesized library, built ONCE per process and shared by every Audio
+# instance. Synthesis is deterministic (pure DSP, no per-run inputs) but
+# costs several seconds; the shipped game builds one Audio per launch, while
+# the test harnesses construct dozens of Game()s per run and were paying the
+# full build each time. Volumes are applied at play time (set_volume on every
+# play/loop start), so sharing the Sound objects across instances is safe.
+# Keyed cache fields: sfx dict, music dict, and the four named drive/Carcosa
+# loops _build_library also produces.
+_LIBRARY_CACHE = None
+
 
 class Audio:                        #Starting screen needs music, something simple
     def __init__(self):
@@ -47,7 +57,19 @@ class Audio:                        #Starting screen needs music, something simp
         # matching the active scene and falls back to dry.
         self._scene_reverb = None
         if self.enabled:
-            self._build_library()
+            global _LIBRARY_CACHE
+            if _LIBRARY_CACHE is None:
+                self._build_library()
+                _LIBRARY_CACHE = (dict(self.sfx), dict(self.music),
+                                  self.engine_snd, self.radio_snd,
+                                  self.carcosa_drone_snd,
+                                  self.carcosa_roar_snd)
+            else:
+                (sfx, music, self.engine_snd, self.radio_snd,
+                 self.carcosa_drone_snd,
+                 self.carcosa_roar_snd) = _LIBRARY_CACHE
+                self.sfx = dict(sfx)
+                self.music = dict(music)
             self.music_channel = pygame.mixer.Channel(0)
             self.ambient_channel = pygame.mixer.Channel(1)
             self.king_channel = pygame.mixer.Channel(2)

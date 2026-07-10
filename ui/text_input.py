@@ -5,6 +5,8 @@ to the on_submit callback; ESC cancels (calls on_cancel if provided).
 While active, the Game suspends gameplay and routes all key events here.
 The modal renders a panel with the prompt line + a typed buffer line
 underneath, with a blinking cursor."""
+import traceback
+
 import pygame
 from constants import (
     SCREEN_W, SCREEN_H,
@@ -63,8 +65,10 @@ class TextInputModal:
             cb = self.on_cancel
             self.close()
             if cb:
+                # Don't let a broken callback kill the input layer, but
+                # never lose the traceback either.
                 try: cb()
-                except Exception: pass
+                except Exception: traceback.print_exc()
             return True
         if ev.key == pygame.K_RETURN:
             buf = self.buffer
@@ -73,7 +77,7 @@ class TextInputModal:
             self.close()
             if cb:
                 try: cb(buf)
-                except Exception: pass
+                except Exception: traceback.print_exc()
             return True
         if ev.key == pygame.K_BACKSPACE:
             if self.buffer:

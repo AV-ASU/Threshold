@@ -13,6 +13,7 @@ from constants import TILE
 from entities.npc import NPC
 from scenes import Scene
 from rendering.sprites import reset_king_fx
+from rendering.king_unfold import reset_king_unfold_fx
 from systems.config import *        # noqa: F401,F403
 from systems.stealth import (concealment_factor as _conceal_factor,
                              is_enclosed as _is_enclosed,
@@ -768,6 +769,7 @@ class ThreatMixin:
                 pass
         self._king = None
         reset_king_fx()        # drop his trail/particles so they don't bleed on
+        reset_king_unfold_fx() # the UNFOLDING's mask-bond state goes with them
         self.audio.king_tone(False)
 
     def _apply_curse(self):

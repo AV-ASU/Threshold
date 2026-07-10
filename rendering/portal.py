@@ -264,26 +264,6 @@ def _draw_aperture_actors(surf, target, anchor_px, quad, origin, camera,
         surf.blit(layer, (rleft, rtop))
 
 
-def _aperture_mask(quad):
-    """A full-screen alpha mask shaped like the rift's standing-tear hole
-    (`quad` = 4 screen points, base then top), opaque at the base and fading up
-    into the liminal gray. White = show the room through; transparent = host."""
-    mask = pygame.Surface((SCREEN_W, SCREEN_H), pygame.SRCALPHA)
-    mask.fill((0, 0, 0, 0))
-    pygame.draw.polygon(mask, (255, 255, 255, 255), quad)
-    top = max(0, int(min(p[1] for p in quad)))
-    bot = min(SCREEN_H, int(max(p[1] for p in quad)))
-    if bot > top:
-        grad = pygame.Surface((SCREEN_W, SCREEN_H), pygame.SRCALPHA)
-        span = bot - top
-        for y in range(top, bot):
-            f = (bot - y) / span                  # 1 at base -> 0 at the top
-            a = int(255 * (0.32 + 0.68 * f))
-            pygame.draw.line(grad, (255, 255, 255, a), (0, y), (SCREEN_W, y))
-        mask.blit(grad, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
-    return mask
-
-
 # ---- the gold frame (light in the scene) ------------------------------------
 
 def _gold_pool(screen, cx, cy, r, intensity):
@@ -306,31 +286,6 @@ def _gold_pool(screen, cx, cy, r, intensity):
         pool = pool.copy()
         pool.fill((int(255 * k),) * 3, special_flags=pygame.BLEND_RGB_MULT)
     screen.blit(pool, (int(cx - r), int(cy - r * 0.55)),
-                special_flags=pygame.BLEND_RGB_ADD)
-
-
-def _tear_glow(screen, s0, s1, rise, intensity):
-    """A soft additive gold glow climbing the standing tear, brightest at the
-    base seam and fading up. Cached by (width, rise)."""
-    x0, y0 = s0
-    x1, y1 = s1
-    w = max(2, int(math.hypot(x1 - x0, y1 - y0)))
-    rise = max(2, int(rise))
-    glow = _GLOW_CACHE.get((w, rise))
-    if glow is None:
-        glow = pygame.Surface((w, rise))
-        glow.fill((0, 0, 0))
-        for j in range(rise):
-            ff = (1.0 - j / rise) ** 2
-            pygame.draw.line(glow, (int(120 * ff), int(92 * ff), int(28 * ff)),
-                             (0, rise - 1 - j), (w, rise - 1 - j))
-        _GLOW_CACHE[(w, rise)] = glow
-    k = max(0.2, min(1.0, intensity))
-    g = glow
-    if k < 0.99:
-        g = glow.copy()
-        g.fill((int(255 * k),) * 3, special_flags=pygame.BLEND_RGB_MULT)
-    screen.blit(g, (int(min(x0, x1)), int(min(y0, y1) - rise)),
                 special_flags=pygame.BLEND_RGB_ADD)
 
 

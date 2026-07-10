@@ -274,7 +274,6 @@ GAZE_BIND_VIS = 0.45          # visibility below which His gaze can't fix
 # fully manifests (blazing) by _NEAR px -- tune to slide the materialize window.
 KING_THREAT_NEAR = 48.0        # px: fully real / blazing inside this
 KING_THREAT_FAR = 340.0        # px: a dark void at/beyond this
-WATCHER_SPAWN_INTERVAL = 4.0   # seconds between Watcher manifestations
 # The watcher-curse (replaces the old permanent curse-level spiral): being
 # cursed binds ONE Watcher to you; it clones (up to WATCHER_MAX) while you
 # stay EXPOSED (in the open), and each live Watcher raises the visibility
@@ -537,8 +536,6 @@ BLEED_LINGER = 20.0           # hard cap on the look-around before leaving
 # drains only in an enclosed hide, corn gets the idle decay.)
 VIS_HIDE_BLEED = 0.10
 VIS_IDLE_DECAY = 0.02
-VIS_WATCHER_OPEN = 0.03
-VIS_WATCHER_HIDDEN = 0.015
 VIS_GAZE = 0.12               # a cultist's gaze fills the meter fast
 VIS_LIT_RISE = 0.045          # per second the flashlight is ON in the dark:
                               # light marks you, so visibility climbs. Net of

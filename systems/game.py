@@ -17,7 +17,7 @@ from rendering.sprites import (draw_player_sprite, draw_npc_sprite,
                                door_mask_surface, reset_king_fx,
                                view_from_facing, KING_UNFOLD,
                                KING_UNFOLD_SCALE)
-from rendering.king_unfold import draw_unfold_catch
+from rendering.king_unfold import draw_unfold_catch, reset_king_unfold_fx
 from rendering.spread_drive import SPREAD_BEAT_DURS
 from rendering.transform import draw_vessel_bloom
 from rendering.camera import Camera
@@ -481,6 +481,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         self._moth_shed_t = 0.0
         self._moth_seek_t = None      # rolled per spawn by _tick_moth_seek
         reset_king_fx()        # clear his render trail/particles across runs
+        reset_king_unfold_fx() # and the UNFOLDING's mask-bond state with them
         self._reinforce_t = 0.0
         self._gun_cd = 0.0
         self._roam_king = self._new_roam_king_state()
@@ -751,6 +752,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, InfestationMixin,
         # at the new entry if visibility is still pinned at the top.
         self._king = None
         reset_king_fx()        # his trail/particles don't follow across scenes
+        reset_king_unfold_fx() # nor the UNFOLDING's mask-bond state
         self._king_anchor = (self.player.x, self.player.y)
         # A torn portal belongs to the room it opened in: leaving the scene
         # (through the rift or any other exit) collapses it. The roaming King's

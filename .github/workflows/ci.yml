@@ -6,8 +6,8 @@ on:
   pull_request:
 
 jobs:
-  smoke:
-    name: Smoke test (Python ${{ matrix.python-version }})
+  test-gate:
+    name: Full test gate (Python ${{ matrix.python-version }})
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -23,7 +23,9 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-      - name: Run smoke test
-        run: python tests/smoke.py
-      - name: Run render smoke test
-        run: python tests/render_smoke.py
+      - name: Run full test gate
+        # All six harnesses (smoke + flow + stealth + fold_pursuit +
+        # king_roam + render_smoke) -- the same gate run before every
+        # commit. Self-configures the SDL dummy drivers.
+        timeout-minutes: 25
+        run: python tests/run_all.py
