@@ -321,6 +321,20 @@ class DecoStructureMixin:
         pygame.draw.ellipse(surf, tire, (x + 20, y + 13, 18, 8))         # flat tire
         pygame.draw.rect(surf, (60, 58, 60), (x + 27, y + 15, 4, 3))
 
+    def _draw_news_rack(self, surf, x, y):
+        """A coin-op newspaper vending box outside the shop, flat view.
+        The window still shows the last issue it was ever fed; the
+        examine in brimley.py carries the January 15 date."""
+        pygame.draw.line(surf, (40, 40, 44), (x - 5, y + 6), (x - 5, y + 10), 2)
+        pygame.draw.line(surf, (40, 40, 44), (x + 5, y + 6), (x + 5, y + 10), 2)
+        pygame.draw.rect(surf, (102, 43, 37), (x - 7, y - 12, 14, 18))
+        pygame.draw.rect(surf, (70, 30, 25), (x - 7, y - 12, 14, 18), 1)
+        pygame.draw.rect(surf, (186, 180, 160), (x - 5, y - 10, 10, 9))
+        pygame.draw.line(surf, (52, 50, 48), (x - 4, y - 8), (x + 4, y - 8), 2)
+        pygame.draw.line(surf, (108, 104, 94), (x - 4, y - 5), (x + 4, y - 5), 1)
+        pygame.draw.line(surf, (108, 104, 94), (x - 4, y - 3), (x, y - 3), 1)
+        pygame.draw.rect(surf, (24, 24, 26), (x + 2, y + 2, 3, 2))   # coin slot
+
     # Faded period paints for the dead-lot cars. Keep in step with
     # rendering/props.py _RUST_BASES (the tilt volumes), which is the
     # authoritative copy; this one only feeds the dev-only flat view.

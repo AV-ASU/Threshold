@@ -163,7 +163,11 @@ def dead_cars(objects_l, cars):
     from entities.decoration import Decoration
     h, w = len(objects_l), len(objects_l[0])
     out = []
-    for (tx, ty, kind, yaw, seed, axis) in cars:
+    for entry in cars:
+        tx, ty, kind, yaw, seed, axis = entry[:6]
+        # optional 7th element: extra Decoration kwargs (e.g. the barn
+        # wagon's {"luggage": True} roof cases)
+        extra = entry[6] if len(entry) > 6 else {}
         if axis == "h":
             wx, wy = (tx + 1) * TILE, ty * TILE + 16
             tiles = ((tx, ty), (tx + 1, ty))
@@ -173,7 +177,7 @@ def dead_cars(objects_l, cars):
         for ox, oy in tiles:
             if 0 <= oy < h and 0 <= ox < w:
                 objects_l[oy][ox] = "X"
-        out.append(Decoration(wx, wy, kind, seed=seed, yaw=yaw))
+        out.append(Decoration(wx, wy, kind, seed=seed, yaw=yaw, **extra))
     return out
 
 

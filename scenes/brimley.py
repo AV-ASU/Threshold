@@ -628,7 +628,7 @@ def build_brimley():
         # the barn rank, noses at the barn's west wall
         (73, 73, "rust_coupe", 0.55, 24, "h"),
         (75, 75, "rust_sedan", 0.10, 21, "h"),
-        (75, 77, "rust_wagon", -0.08, 22, "h"),
+        (75, 77, "rust_wagon", -0.08, 22, "h", {"luggage": True}),
         (75, 79, "rust_van", 0.15, 23, "h"),
         # the give-up line on the fold-road shoulders
         (56, 22, "rust_wagon", 0.10, 31, "h"),
@@ -918,6 +918,18 @@ def build_brimley():
     # Calder's plate, set at supper for a guest she can't name.
     sc.add_decoration(Decoration(58 * TILE + 16, 62 * TILE + 16, "payphone"))
     sc._payphone_pos = (58 * TILE + 16, 62 * TILE + 16)
+    # Burn barrels at the occupied yards: no garbage service since the
+    # January seal, so the town burns what it can't keep. Lit fires --
+    # the only warm light on the banks, and the eye crosses to them.
+    for _bx, _by, _bs in ((93, 6, 61), (48, 58, 62), (66, 74, 63)):
+        sc.add_decoration(Decoration(_bx * TILE + 16, _by * TILE + 16,
+                                     "burn_barrel", seed=_bs))
+    # The news rack outside the shop, still holding the seal-day issue.
+    # The examine (below) carries the January 15 date; pairs with the
+    # stopped calendar and Hettie's newspaper trade.
+    _nr_x, _nr_y = 55 * TILE + 16, 61 * TILE + 6
+    sc.add_decoration(Decoration(_nr_x, _nr_y, "news_rack"))
+    sc._news_rack_pos = (_nr_x, _nr_y)
     # The well -- dread set-dressing, not a way down (a dead town shaft; the
     # descent is the cult's dug mine at the grove, reached by the rite). Sits
     # in the eastern village-square area, south of the country-lane entry.
@@ -1264,6 +1276,17 @@ def build_brimley():
                 game.save.set_flag("barrow_inspected", True)
                 _evidence(game, "barrow_tools", "Some old tools.")
             return
+        # The news rack outside the shop -- the last issue it was fed.
+        nx_, ny_ = sc._news_rack_pos
+        if abs(game.player.x - nx_) < 36 and abs(game.player.y - ny_) < 36:
+            game.audio.play("blip_low", 0.4)
+            game.dialog.show([
+                "A coin rack of newspapers, bleached behind the scratched "
+                "plastic. The county weekly.",
+                "[c=dim]Dated January 15. Every copy in the stack. Nobody "
+                "ever fed it another.[/c]",
+            ], speaker="", voice="blip_soft", portrait="narrator")
+            return
         # The payphone -- it won't dial out. The line is never dead,
         # though; something is always already on it.
         px, py = sc._payphone_pos
@@ -1283,6 +1306,7 @@ def build_brimley():
     sc.add_interactable(sc._well_pos[0], sc._well_pos[1], 36)
     sc.add_interactable(sc._barrow_pos[0], sc._barrow_pos[1], 36)
     sc.add_interactable(sc._payphone_pos[0], sc._payphone_pos[1], 40)
+    sc.add_interactable(sc._news_rack_pos[0], sc._news_rack_pos[1], 36)
 
     sc.on_interact_fn = _brimley_interact
 

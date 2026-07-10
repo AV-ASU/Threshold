@@ -849,6 +849,17 @@ _RUST_BASES = [
 ]
 
 
+# Plate colors across the 1994 states the newcomers drove from: white,
+# gold, pale blue, sun-cooked tan. Variety IS the story (they came from
+# everywhere); no lettering at this scale, just a registration smudge.
+_PLATE_COLS = [
+    (204, 200, 188),
+    (196, 186, 122),
+    (172, 184, 198),
+    (188, 168, 148),
+]
+
+
 def _rust_pal(rng):
     base = _RUST_BASES[rng.randrange(len(_RUST_BASES))]
     fade = rng.uniform(0.72, 0.98)
@@ -995,6 +1006,20 @@ def _rust_car_solid(surf, cam, deco, L, W, cf, cb, cab_up, wagon=False,
             for ly in (-chW * 0.55, chW * 0.55):
                 _lp(surf, P, (cb + 2, ly, cz1 + 1), (cf - 2, ly, cz1 + 1),
                     _shade(cab["top"], 1.25), 1)
+            if deco.kwargs.get("luggage"):
+                # suitcases still strapped to the rack: whatever they
+                # came for mattered more than unpacking ever did again
+                for (lx0, lx1, hh, colc) in (
+                        (-20 * s, -8 * s, 4.5 * s, (88, 62, 42)),
+                        (-6 * s, 6 * s, 3.6 * s, (118, 104, 78))):
+                    lcx = (lx0 + lx1) / 2
+                    _vbox(surf, cam, wx + lcx * math.cos(yaw),
+                          wy + lcx * math.sin(yaw), lx1 - lx0, chW * 1.1,
+                          cz1 + 1, cz1 + 1 + hh,
+                          {"top": _shade(colc, 1.15), "side": colc,
+                           "dark": _shade(colc, 0.6)}, yaw=yaw)
+                    _lp(surf, P, (lcx, -chW * 0.6, cz1 + 1.5 + hh),
+                        (lcx, chW * 0.6, cz1 + 1.5 + hh), (40, 34, 30), 1)
         _lp(surf, P, ((cb + cf) / 2, ny, z0 + 1), ((cb + cf) / 2, ny, z1),
             _shade(body["dark"], 0.8), 1)          # door seam
     # bumpers dulled to dead steel; the rear one sometimes hangs
@@ -1015,6 +1040,20 @@ def _rust_car_solid(surf, cam, deco, L, W, cf, cb, cab_up, wagon=False,
         tp = P(-hL, ey, z1 - 2.5 * s)
         pygame.draw.circle(surf, (96, 30, 26), (int(tp[0]), int(tp[1])),
                            max(1, int(1.8 * s)))
+    # license plates, seeded from a spread of state colors: the
+    # newcomers drove in from EVERYWHERE, and the lots say so. Tail
+    # plate always; nose plate on the two-plate states.
+    plate = _PLATE_COLS[rng.randrange(len(_PLATE_COLS))]
+    pw, pz = 3.4 * s, z0 + 1.5 * s
+    _qp(surf, P, [(-hL - 0.3, -pw, pz), (-hL - 0.3, pw, pz),
+                  (-hL - 0.3, pw, pz + 2.6 * s),
+                  (-hL - 0.3, -pw, pz + 2.6 * s)], plate)
+    _lp(surf, P, (-hL - 0.3, -pw * 0.7, pz + 1.3 * s),
+        (-hL - 0.3, pw * 0.7, pz + 1.3 * s), (60, 62, 70), 1)
+    if rng.random() < 0.6:
+        _qp(surf, P, [(hL + 0.3, -pw, pz), (hL + 0.3, pw, pz),
+                      (hL + 0.3, pw, pz + 2.6 * s),
+                      (hL + 0.3, -pw, pz + 2.6 * s)], plate)
     _rust_dress(surf, P, rng, hL, ny, z0, z1, 12 if van else 10)
     for i, lx in enumerate((wbx, -wbx)):          # near wheels
         (_flat_wheel if i == flat_i else _round_wheel)(
@@ -1377,6 +1416,79 @@ def _draw_brazier_solid(surf, cam, deco):
                (208, 88, 28), (250, 178, 68))
 
 
+def _draw_burn_barrel_solid(surf, cam, deco):
+    """A 55 gallon burn drum, lit. No garbage service since the January
+    seal, so the town burns what it can't keep: a rusted drum at the
+    yard corner, scorched black at the rim, a trash fire guttering
+    inside. The fire is a LIGHT; the eye crosses a dark yard to it."""
+    wx, wy = deco.x, deco.y
+    s = (getattr(deco, "scale", 1.0) or 1.0)
+    r = 7 * s
+    h = 16 * s
+    drum = {"body": (104, 66, 44), "lo": (48, 30, 22), "rim": (30, 24, 20)}
+    draw_solid(surf, cam, wx, wy, [(0, r, r), (h, r * 0.96, r * 0.96)], drum)
+    # rolling rings around the drum
+    for rz in (h * 0.3, h * 0.68):
+        _disc(surf, cam, wx, wy, rz, r * 0.99, r * 0.99, (66, 42, 28),
+              fill=False, width=1)
+    # scorched mouth + the coal bed inside
+    _disc(surf, cam, wx, wy, h, r * 0.98, r * 0.98, (26, 20, 16))
+    _disc(surf, cam, wx, wy, h, r * 0.7, r * 0.7, (52, 26, 14))
+    # vent holes punched near the base, glowing with the fire behind them
+    t = getattr(deco, "t", 0.0)
+    for k, vx in enumerate((-r * 0.45, 0.0, r * 0.45)):
+        vp = cam.project(wx + vx, wy + r * 0.85, 3 * s)
+        gl = 190 + int(math.sin(t * 7 + deco.seed + k * 2.1) * 40)
+        pygame.draw.circle(surf, (gl, 96, 30), (int(vp[0]), int(vp[1])),
+                           max(1, int(1.2 * s)))
+    # the fire
+    fh = (9 + math.sin(t * 6 + deco.seed) * 3) * s
+    fw = 4.5 * s * cam.scale
+    _flame_tri(surf, cam, wx, wy, h, fh, fw, (208, 88, 28), (250, 178, 68))
+
+
+def _draw_news_rack_solid(surf, cam, deco):
+    """A coin-op newspaper vending box on four stub legs, enamel gone
+    chalky, the window still showing the last issue it was ever fed
+    (the January 15 seal-day weekly; the examine carries the date).
+    Faces SOUTH; placements stand it against a south wall face."""
+    wx, wy = deco.x, deco.y
+    s = (getattr(deco, "scale", 1.0) or 1.0)
+    bw, bd = 13 * s, 9 * s
+    legz, topz = 5 * s, 20 * s
+    red = (128, 54, 46)
+    pal = {"top": _shade(red, 1.15), "side": _shade(red, 0.8),
+           "dark": _shade(red, 0.55)}
+    hw, hd = bw / 2, bd / 2
+    for lx, ly in ((-hw + 1, -hd + 1), (hw - 1, -hd + 1),
+                   (-hw + 1, hd - 1), (hw - 1, hd - 1)):
+        a = cam.project(wx + lx, wy + ly, 0)
+        b = cam.project(wx + lx, wy + ly, legz)
+        pygame.draw.line(surf, (40, 40, 44), a, b, 2)
+    _vbox(surf, cam, wx, wy, bw, bd, legz, topz, pal)
+
+    def PP(lx, lz):
+        p = cam.project(wx + lx, wy + hd + 0.2, lz)
+        return (int(p[0]), int(p[1]))
+    # display window: bleached newsprint behind scratched plastic
+    paper = (186, 180, 160)
+    pygame.draw.polygon(surf, paper, [
+        PP(-hw + 2 * s, legz + 7 * s), PP(hw - 2 * s, legz + 7 * s),
+        PP(hw - 2 * s, topz - 2 * s), PP(-hw + 2 * s, topz - 2 * s)])
+    pygame.draw.line(surf, (52, 50, 48), PP(-hw + 3 * s, topz - 4 * s),
+                     PP(hw - 3 * s, topz - 4 * s), 2)       # the headline
+    pygame.draw.line(surf, (108, 104, 94), PP(-hw + 3 * s, topz - 6 * s),
+                     PP(hw - 3 * s, topz - 6 * s), 1)       # column smudge
+    pygame.draw.line(surf, (108, 104, 94), PP(-hw + 3 * s, topz - 8 * s),
+                     PP(-2 * s, topz - 8 * s), 1)
+    # coin box seam + slot below the window
+    pygame.draw.line(surf, pal["dark"], PP(-hw + 1, legz + 6 * s),
+                     PP(hw - 1, legz + 6 * s), 1)
+    slot = PP(hw - 4 * s, legz + 3 * s)
+    pygame.draw.rect(surf, (24, 24, 26), (slot[0], slot[1], max(1, int(2 * s)),
+                                          max(1, int(1 * s))))
+
+
 def _draw_wall_torch_solid(surf, cam, deco):
     """An iron wall sconce: a short vertical post rising off the floor with a
     flat iron cup at the top, a guttering flame in the cup. Drawn standing
@@ -1629,6 +1741,8 @@ SOLID_PROPS = {
     "rust_wagon":    _draw_rust_wagon_solid,
     "rust_coupe":    _draw_rust_coupe_solid,
     "rust_van":      _draw_rust_van_solid,
+    "burn_barrel":   _draw_burn_barrel_solid,
+    "news_rack":     _draw_news_rack_solid,
     "stalagmite":    _draw_stalagmite_solid,
     "candle":        _draw_candle_solid,
     "kerosene_lamp": _draw_kerosene_lamp_solid,
