@@ -7,7 +7,7 @@ Depths:
 
   well_bottom        -- the Shaft Floor (the fold lands you here; its
                         return pane is the way back up)
-  well_passage       -- the Drying Racks (first gauntlet)
+  well_passage       -- the Timber Racks (first gauntlet)
   works_vats         -- the Cistern (the dig broke into the river)
   works_sorting      -- the Sorting Hall (shed lives of the claimed)
   works_scriptorium  -- the Scriptorium (the Sign, copied endlessly)
@@ -55,7 +55,7 @@ def build_well_bottom():
     # seals the descent.
     floor, objs = _box(12, 10)
     _bevel(objs, 3)
-    objs[5][11] = "E"         # east -> the drying racks (deeper)
+    objs[5][11] = "E"         # east -> the timber racks (deeper)
     objs[2][3]  = "O"         # the way back up: the fold's return pane
     #                             (the marker char: invisible, walkable)
     objects = ["".join(r) for r in objs]
@@ -178,21 +178,25 @@ def build_well_bottom():
     return sc
 
 
-# ---- Room 2: the Drying Racks (key: well_passage) ----
+# ---- Room 2: the Timber Racks (key: well_passage) ----
 
 def build_well_passage():
-    # A T-shaped drying corridor, LONG: a 24-tile E-W run with a central
+    # A T-shaped storage gallery, LONG: a 24-tile E-W run with a central
     # north bay jutting up off it (a pocket of racks you have to step
-    # into). Lengthened 2026-07 (the stealth pass): the first gauntlet
-    # room teaches reading a patrol at distance, so the run must be long
-    # enough for "far" to mean something under the graded suspicion
-    # model -- and a mine gallery should walk long.
+    # into). The dig's LUMBER lives here -- shoring boards came down the
+    # shaft and staged in racks on their way to the faces (2026-07: the
+    # old "drying corn-doll material" fiction was cut; an obsessive dig
+    # runs no craft room, and the second gallery off the haul head is
+    # exactly where a mine keeps its timber). Lengthened 2026-07 (the
+    # stealth pass): the first gauntlet room teaches reading a patrol at
+    # distance, so the run must be long enough for "far" to mean
+    # something under the graded suspicion model.
     floor, objs = _box(24, 9)
     _wall(objs, 1, 1, 7, 3)        # seal the upper-left
     _wall(objs, 12, 1, 22, 3)      # seal the upper-right -> central bay at cols 8-11
     objs[5][0] = "F"          # west -> back to the shaft
     objs[5][23] = "E"         # east -> the cistern (deeper)
-    # Drying racks (solid shelves) staggered down the corridor + bay,
+    # Timber racks (solid shelves) staggered down the corridor + bay,
     # gaps to weave through -- the cover ladder the whole run.
     for cx in (3, 6, 9, 12, 15, 18, 21):
         objs[4][cx] = "s"
@@ -234,12 +238,13 @@ def build_well_passage():
     sc.add_decoration(Decoration(11 * TILE + 26, 1 * TILE + 6, "cobweb",
                                  ang=math.pi / 2))
 
-    # Sheaves of dried husks/reeds hung on the racks -- the cult's corn-doll
-    # material, drying (this is what the racks are FOR). A few in the bay pocket
-    # and leaning at the corridor rack ends, the whole length.
-    for (hx, hy) in ((8, 2), (10, 3), (11, 2), (5, 5), (14, 5), (19, 5)):
-        sc.add_decoration(Decoration(hx * TILE + 16, hy * TILE + 16,
-                                     "husk_bundle", seed=hx * 7 + hy))
+    # Sawn lumber staged in the bay pocket and against the south wall --
+    # board piles waiting on the faces (this is what the racks are FOR).
+    # Kept OFF the walking lane and the rack weave gaps; the far end of
+    # the run stands empty: the dig was eating its own stores by the end.
+    sc.add_furniture("firewood", [(11, 2)], w=38, h=18, seed=22)
+    sc.add_furniture("firewood", [(11, 1)], w=30, h=14, seed=21)
+    sc.add_furniture("firewood", [(18, 7)], w=28, h=14, seed=23)
     # Grime: mud tracked from the shaft, a cold drip seeping through.
     sc.add_decoration(Decoration(2 * TILE + 16, 5 * TILE + 16, "mud_footprint"))
     sc.add_decoration(Decoration(12 * TILE + 16, 7 * TILE + 16, "water_trail",
@@ -248,7 +253,7 @@ def build_well_passage():
         sc.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16, "mote"))
 
     # Two enclosed hides spaced down the run (STEALTH_REWORK §6): the gap
-    # under the bay's drying rack, and one under a far corridor rack --
+    # under the bay's timber rack, and one under a far corridor rack --
     # a long room needs a rooted option in each half, or the east end is
     # a dead sprint. A searcher that loses you will sweep and CHECK them.
     sc.hide_spots = [

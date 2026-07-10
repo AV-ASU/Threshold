@@ -53,6 +53,27 @@ def _d_shelves(surf, pal, c):
                              (int(p[0]) - 1, int(p[1]) - 3, 3, 7))
 
 
+def _d_gear_shelves(surf, pal, c):
+    # shelf runs racked with the dig's gear: dark tool silhouettes, a
+    # coiled shape, one pale dead lamp -- never book spines (the mine
+    # art pass, 2026-07)
+    for f in (0.20, 0.48, 0.74):
+        _hline(surf, *c, f, _shade(pal["dark"], 0.6), 2)
+    gear = ((58, 48, 36), (48, 42, 34), (66, 54, 38))
+    i = 0
+    for f in (0.20, 0.48, 0.74):
+        for fx in (0.2, 0.45, 0.7):
+            i += 1
+            if (i * 5) % 4 == 3:                 # gaps where gear went out
+                continue
+            p = _lerp(_lerp(c[0], c[1], fx), _lerp(c[2], c[3], fx), f)
+            pygame.draw.rect(surf, gear[i % 3],
+                             (int(p[0]) - 2, int(p[1]) - 3, 4, 5))
+    # the one dead lamp, pale glass catching what light there is
+    p = _lerp(_lerp(c[0], c[1], 0.82), _lerp(c[2], c[3], 0.82), 0.48)
+    pygame.draw.rect(surf, (128, 124, 112), (int(p[0]) - 1, int(p[1]) - 4, 3, 6))
+
+
 def _d_bare_shelves(surf, pal, c):
     # the emptied store shelf: the runs are there, the goods are not --
     # pale dust-ghosts where stock stood, and one tin nobody wanted
@@ -271,6 +292,8 @@ FURNITURE = {
     # the general store's emptied goods run (food scarcity, NARRATIVE §8):
     # same case as a bookshelf, nothing standing on the shelves
     "bare_shelf": (28, 13, 23, _WOOD_DK, _d_bare_shelves),
+    # the Old Stores' racked gear (the mine art pass, 2026-07)
+    "gear_shelf": (28, 13, 22, _WOOD_DK, _d_gear_shelves),
     "wardrobe":  (24, 15, 26, _WOOD_DK, _d_door_seam),
     "stove":     (22, 20, 18, _IRON,    _d_firebox),
     "fireplace": (30, 14, 24, _STONE,   _d_firebox),

@@ -526,9 +526,11 @@ def build_the_ossuary():
     sc.add_exit("F", "depths_procession", "from_the_ossuary")
     sc.set_spawn("default",         4, 6)
     sc.set_spawn("from_procession", 4, 2)
-    # Racked store shelves (3D) line the niches; candles gutter between.
+    # Racked gear shelves (3D) line the niches -- dark tools, gaps where
+    # gear went out, one dead lamp; candles gutter between. (2026-07:
+    # "shelf" drew book spines; a mine store shelves no library.)
     for sx, sy in [(2, 4), (6, 4), (2, 8), (6, 8)]:
-        sc.add_furniture("shelf", [(sx, sy)])
+        sc.add_furniture("gear_shelf", [(sx, sy)])
     # A dead lamp left on a shelf -- the old workings' light, burned out a
     # cycle ago (seated onto the shelf top by seat_tabletop_props).
     sc.add_decoration(Decoration(6 * TILE + 16, 4 * TILE + 16,

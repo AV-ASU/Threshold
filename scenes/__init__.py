@@ -84,7 +84,7 @@ SCENE_BUILDERS = {
     # The Works -- the Basement Level. Seven rooms, well is the sole
     # entrance (the grove's descent fold); the Mask gates the way to the Depths.
     "well_bottom":        build_well_bottom,        # the Shaft Floor
-    "well_passage":       build_well_passage,       # the Drying Racks
+    "well_passage":       build_well_passage,       # the Timber Racks
     "works_vats":         build_works_vats,
     "works_sorting":      build_works_sorting,
     "maras_room":         build_maras_room,         # cell off the Sorting Hall

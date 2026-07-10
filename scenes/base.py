@@ -77,7 +77,7 @@ _SHADOW_CASTERS = frozenset("#WTpj%&lzqKR")
 # draw_object kinds that get a soft contact shadow at their base.
 _STANDING_KINDS = frozenset((
     "tree", "cornstalk", "rock", "bed", "table", "chair",
-    "shelf", "stove", "crate", "debris",
+    "shelf", "stove", "crate", "debris", "timber_rack",
 ))
 
 _DARK_TILES = {}
@@ -148,7 +148,7 @@ OBJECT_DEFS = {
     "b": {"solid": True, "kind": "bed"},
     "t": {"solid": True, "kind": "table"},
     "c": {"solid": True, "kind": "chair"},
-    "s": {"solid": True, "kind": "shelf"},
+    "s": {"solid": True, "kind": "timber_rack"},   # the mine's lumber racks
     "i": {"solid": True, "kind": "window"},
     "f": {"solid": True, "kind": "fireplace"},
     "k": {"solid": True, "kind": "stove"},
@@ -403,6 +403,20 @@ def draw_object(surf, ch, rx, ry, tx, ty):
         pygame.draw.line(surf, (44, 30, 18), (rx + 19, ry + 7), (rx + 19, ry + 14), 1)
         pygame.draw.rect(surf, (78, 56, 34), (rx + 8, ry + 15, 16, 9))      # seat
         pygame.draw.rect(surf, (98, 72, 44), (rx + 8, ry + 15, 16, 2))      # lit seat
+    elif kind == "timber_rack":
+        # A mine lumber rack: two dark end posts bearing stacked sawn
+        # boards on their sides -- horizontal plank bands with end-grain
+        # ticks, nothing shelved, nothing bound (2026-07: the old 's'
+        # tiles drew BOOKSHELVES, which failed the man-made-dig logic).
+        pygame.draw.rect(surf, (40, 30, 19), (rx + 2, ry + 6, 4, 22))    # end posts
+        pygame.draw.rect(surf, (40, 30, 19), (rx + 26, ry + 6, 4, 22))
+        for i, by in enumerate((ry + 8, ry + 13, ry + 18, ry + 23)):
+            ln = 24 - ((tx * 7 + ty * 13 + i * 5) % 3) * 3              # board lengths vary
+            bcol = (96, 74, 48) if i % 2 else (84, 64, 41)
+            pygame.draw.rect(surf, bcol, (rx + 4, by, ln, 4))
+            pygame.draw.rect(surf, (52, 40, 27), (rx + 4, by, ln, 4), 1)
+            pygame.draw.rect(surf, (120, 100, 66), (rx + 4, by + 1, 2, 2))  # end grain
+        pygame.draw.rect(surf, (58, 44, 28), (rx + 2, ry + 6, 28, 2))    # top rail
     elif kind == "shelf":
         # Bookshelf in dark, grimy wood: a framed case with a lit top +
         # two under-shadowed shelf boards and rows of leaning books in
@@ -984,7 +998,7 @@ DISPLAY_NAMES = {
     "clearing":            "the Clearing",
     "barn":                 "the Barn",
     "well_bottom":          "the Shaft Floor",
-    "well_passage":         "the Drying Racks",
+    "well_passage":         "the Timber Racks",
     "works_vats":           "the Cistern",
     "works_sorting":        "the Sorting Hall",
     "works_scriptorium":    "the Scriptorium",
@@ -1036,6 +1050,7 @@ def scene_display_name(scene):
 # of wall stops reading as a row of grey blocks (the RimWorld tell).
 _WALL_CHARS = frozenset("#W%&")
 _COUNTER_CHARS = frozenset("5")   # kitchen counter / peninsula divider (waist-high box under tilt)
+_RACK_CHARS = frozenset("s")      # the mine's lumber racks (low timber box under tilt)
 # Door tiles cast the same floor-shadow as walls so a door in a south
 # wall grounds into the building instead of leaving a lit threshold gap
 # between the shadows of its flanking walls.
@@ -2399,7 +2414,8 @@ def draw_scene_terrain(surf, scene, cam_x, cam_y, x0, y0, x1, y1,
             if ch == "." or ch in _WALL_CHARS:
                 continue
             if skip_billboard and (ch in _TILT_BILLBOARD_CHARS
-                                   or ch in _COUNTER_CHARS):
+                                   or ch in _COUNTER_CHARS
+                                   or ch in _RACK_CHARS):
                 continue                     # stood up as a 3D box/standee under tilt
             rx = tx * TILE - cam_x
             ry = ty * TILE - cam_y
@@ -2738,6 +2754,29 @@ def _tilt_counter_box(surf, camera, scene, tx, ty):
     _extrude_box(surf, camera, scene, tx, ty, 0, _COUNTER_RISE,
                  neigh=_WALL_CHARS | _COUNTER_CHARS,
                  face_col=(96, 72, 48), top_col=(122, 98, 66))
+
+
+_RACK_RISE = 16         # a lumber rack: chest-high, seen over, hidden behind
+
+
+def _tilt_rack_box(surf, camera, scene, tx, ty):
+    """The mine's lumber rack as a real low volume: a chest-high timber
+    box (stacked sawn boards between end posts), with board seams on the
+    near face so it reads as lumber, not masonry. Adjacent racks merge
+    into one run (2026-07: the old 's' tiles drew flat bookshelf sprites
+    warped onto the floor)."""
+    _extrude_box(surf, camera, scene, tx, ty, 0, _RACK_RISE,
+                 neigh=_WALL_CHARS | _RACK_CHARS,
+                 face_col=(78, 60, 39), top_col=(100, 78, 51))
+    wx0, wx1 = tx * TILE + 2, tx * TILE + TILE - 2
+    wyf = ty * TILE + TILE
+    for z in (5, 10):
+        p0 = camera.project(wx0, wyf, z)
+        p1 = camera.project(wx1, wyf, z)
+        pygame.draw.line(surf, (52, 40, 27), p0, p1, 1)
+    # end grain: a pale tick at one end of the top board
+    pg = camera.project(wx0 + 2, wyf, _RACK_RISE - 2)
+    pygame.draw.rect(surf, (124, 102, 68), (int(pg[0]), int(pg[1]), 2, 2))
 
 
 def _tilt_door_box(surf, camera, scene, tx, ty):
@@ -3260,6 +3299,8 @@ def _tilt_tile_box(surf, camera, scene, tx, ty):
             _tilt_standee(surf, camera, scene, tx, ty, ch)
     elif ch in _COUNTER_CHARS:
         _tilt_counter_box(surf, camera, scene, tx, ty)
+    elif ch in _RACK_CHARS:
+        _tilt_rack_box(surf, camera, scene, tx, ty)
     elif ch in _DOOR_CHARS:
         _tilt_door_box(surf, camera, scene, tx, ty)
     elif ch in _WINDOW_CHARS:
@@ -3387,7 +3428,8 @@ def _collect_neighbor_solids(scene, camera, x0, y0, x1, y1):
                 if (ch in _WALL_CHARS or ch in _DOOR_CHARS
                         or ch in _WINDOW_CHARS
                         or ch in _TILT_BILLBOARD_CHARS
-                        or ch in _COUNTER_CHARS):
+                        or ch in _COUNTER_CHARS
+                        or ch in _RACK_CHARS):
                     out.append((tgt, ntx, nty,
                                 tx * TILE + TILE / 2,
                                 ty * TILE + TILE / 2,
@@ -3578,7 +3620,8 @@ def draw_terrain_tilted(surf, scene, camera, sight=None):
                 if (ch in _WALL_CHARS or ch in _DOOR_CHARS
                         or ch in _WINDOW_CHARS
                         or ch in _TILT_BILLBOARD_CHARS
-                        or ch in _COUNTER_CHARS):
+                        or ch in _COUNTER_CHARS
+                        or ch in _RACK_CHARS):
                     if ch in _TILT_BILLBOARD_CHARS:
                         dx = (tx * TILE + 16) - camera.cam_x
                         dy = (ty * TILE + 16) - camera.cam_y

@@ -1098,7 +1098,7 @@ finds you — run it on cover, timing, and breaking their line of sight).
 | # | Room | Key | Contents |
 |---|---|---|---|
 | 1 | The Shaft Floor | `well_bottom` | The descent fold lands you here; its return pane (the way back up) stands where the rope once hung. Quiet airlock, 1 hide. |
-| 2 | The Drying Racks | `well_passage` | A LONG rack gallery (24 tiles, lengthened 2026-07 -- the stealth pass: graded suspicion needs distance), 2 patrolling cultists offset down the run, 2 hides. |
+| 2 | The Timber Racks | `well_passage` | The dig's staged shoring lumber, racked on its way to the faces (renamed 2026-07: the old drying-corn-doll-material fiction was cut -- an obsessive dig runs no craft room). A LONG rack gallery (24 tiles, lengthened 2026-07 -- the stealth pass: graded suspicion needs distance), 2 patrolling cultists offset down the run, 2 hides. |
 | 3 | **The Cistern** (was "Tallow Vats" — cut) | `works_vats` | Where the dig **broke into the underground river** — the artery to the door (§1b), and the diggers' proof they were close. Wet stone, rising damp, 2 tending cultists, 2 hides. *No rendering, no tallow, no bodies — the claiming cult eats no one. Fiction redress is a code TODO (§8); the scene key stays `works_vats`.* |
 | 4 | The Sorting Hall | `works_sorting` | The **worldly lives the congregation shed** when they were claimed — and the effects of the few the fold took — sorted and catalogued. 2 cultists, 3 hides (hardest crossing). A side door north → **Mara's room**. |
 | 4a | **Mara's Room** | `maras_room` | A convert's cell off the hall: cot, her cult robe + the unsent letter. **Evidence #1.** A quiet beat off the gauntlet, 1 hide. |
@@ -1134,7 +1134,7 @@ finds you — run it on cover, timing, and breaking their line of sight).
   (timbered side-chambers, spoil heaps, cart ruts) is TODO #14.
   **The corridors walk LONG (2026-07, the stealth pass):** the graded
   suspicion model (distance falloff) only reads when "far" exists, so the
-  three corridor rooms were stretched -- the Drying Racks gallery (24
+  three corridor rooms were stretched -- the Timber Racks gallery (24
   tiles, 2 patrols, 2 hides), the Depths' **procession drift** (30 tiles,
   the main hallway: 3 patrols in spread phase, 3 bay hides down the run),
   and the Kneeling Hall's nave (20 tiles, pews + a hide in each half).
