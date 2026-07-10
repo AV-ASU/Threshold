@@ -300,11 +300,13 @@ Only display names and fiction change.
   you'll ever see — the work, no worker. Locked in `tests/flow.py`. *(Its
   one-time siblings `husk_grove` / `scarecrow_ring` were cut with the walk-in
   discovery folds, 2026-07.)*
-- **Rehome the Watchers as His gaze (§1).** Keep the mechanic exactly
-  (they raise visibility; dispel by breaking the gaze / axe / round) but
-  change the *meaning and trigger*: they are **His eye reaching into the
-  plane**, not a side-cult's spell. Re-point the fiction (and any
-  `_tick_ritual`/`_apply_curse` flavor) at His attention.
+- ~~**Rehome the Watchers as His gaze (§1).**~~ **DONE (2026-07).** The
+  mechanic is unchanged (they raise visibility; dispel by breaking the
+  gaze / axe / round) and both halves are re-pointed: the trigger is His
+  own gaze (`_tick_gaze_bind`), and the bind/escalate/clear notices in
+  `_apply_curse`/`_dispel_watcher` read as **His eye reaching into the
+  plane** ("An eye has opened on you"), never a side-cult's spell.
+  Internal names (`_cursed`, `_apply_curse`) stay as code plumbing.
 - ~~**Gun = false-power threshold (§1).**~~ **DONE + flow-guarded.** The
   mechanic matches canon and `tests/flow.py` locks all four facts:
   **< 3 evidence kills cultists**, **3+ only staggers**, the **King and

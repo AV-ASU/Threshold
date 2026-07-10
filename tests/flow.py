@@ -1469,6 +1469,38 @@ def main():
     gvf.float_speech.active = False
     gvf.float_speech.on_complete = None
 
+    # Vane's blind-cultist thread (NARRATIVE §4: his one window into the
+    # HOW). Earned, not ambient: it waits on the intro AND a first real
+    # thread found; asking files the PI's NOTE (never evidence); and the
+    # account keeps his knowledge boundary (the blind man, the dream's
+    # offer, no destination and no cosmology).
+    from scenes.dialogue import _vane_how_told
+    gvh = new_game()
+    _qhow = next(ex for ex in _VC["exchanges"] if ex["key"] == "how")
+    check(_qhow.get("once"),
+          "vane: the blind-cultist story is spent once")
+    check(not _qhow["avail"](gvh),
+          "gate: the how waits before the intro and any thread")
+    gvh.save.set_flag("convo_vane_intro_asked", True)
+    check(not _qhow["avail"](gvh),
+          "gate: the intro alone does not open the how")
+    _evfn2(gvh, "maras_journal", "a", show=False)
+    check(_qhow["avail"](gvh),
+          "gate: the intro plus a first thread opens the how")
+    _ev_h = len(gvh.save.arg("evidence", []))
+    _vane_how_told(gvh)
+    check(any(isinstance(e, dict) and e.get("name") == "the_how"
+              for e in gvh.save.arg("notes", [])),
+          "vane: asking the how files the PI's NOTE")
+    check(len(gvh.save.arg("evidence", [])) == _ev_h,
+          "vane: the how never inflates the evidence count")
+    _how_txt = " ".join(b[1].lower() for b in _qhow["beats"])
+    check("blind" in _how_txt and "dream" in _how_txt,
+          "canon: the account is the blind cultist promised by the dream")
+    check(not any(w in _how_txt for w in ("below", "down there", "under the",
+                                          "king", "door")),
+          "canon: Vane keeps his knowledge boundary (no destination)")
+
     # The flow polish: once an exchange finishes, the menu only reopens
     # while both parties are still AT the talk -- the partner walking off
     # (or the player) ends it quietly instead of a modal yank.

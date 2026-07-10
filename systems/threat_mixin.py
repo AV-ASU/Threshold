@@ -758,12 +758,12 @@ class ThreatMixin:
         if not self._cursed:
             self._cursed = True
             self._watcher_clone_t = WATCHER_CLONE_INTERVAL
-            self.show_notice("Something has been bound to you. It will not "
-                             "stop watching until you make it.", duration=3.8)
+            self.show_notice("An eye has opened on you. It will not close "
+                             "until you make it.", duration=3.8)
             self._spawn_watcher()
         else:
             self.visibility = min(1.0, self.visibility + 0.1)
-            self.show_notice("The binding tightens. More will open.",
+            self.show_notice("The gaze presses harder. More eyes will open.",
                              duration=3.0)
 
     def _tick_watchers(self, dt):
@@ -877,8 +877,8 @@ class ThreatMixin:
         if (self._cursed and not self._watchers and self.scene is not None
                 and self.scene.key not in KING_FREE_SCENES):
             self._cursed = False
-            self.show_notice("The last of the eyes closes. The curse lifts, "
-                             "for now.", duration=3.2)
+            self.show_notice("The last of the eyes closes. He looks "
+                             "elsewhere, for now.", duration=3.2)
 
     def _dispel_watcher_in_line(self, p, fx, fy):
         """A round (or the axe arc) puts a Watcher down instantly. The gun

@@ -826,7 +826,7 @@ def basement_interact(game):
     if lx is not None and abs(px - lx) <= 44 and abs(py - ly) <= 44:
         if game.save.flag("evidence_the_ledger"):
             game.dialog.show([
-                "[c=dim]Years of names that never signed out. You've "
+                "[c=dim]A year of names that never signed out. You've "
                 "read enough of them.[/c]",
             ], speaker="", voice="blip_soft", portrait="narrator")
             return

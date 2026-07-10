@@ -128,8 +128,8 @@ _REVISIT_NUDGES = {
         "key": "revisit_sable_checkouts",
         "met": "sable_greeted",
         "lines": [
-            "[c=dim]The register never shows a checkout. Not one, in years "
-            "of guests.",
+            "[c=dim]The old registers cut off a year back. A year of "
+            "guests signed in, and not one of them ever signed out.",
             "The clerk keeps that desk like it owes him something. I should "
             "put it to him straight.[/c]",
         ],
@@ -739,6 +739,20 @@ def _vane_car_told(game):
         game._fold_mentioned("Sheriff Vane", reflect=False)
 
 
+def _vane_how_told(game):
+    """Vane's blind-cultist account is the case's one honest piece of the
+    HOW (NARRATIVE §4). File it as a NOTE, never evidence."""
+    _log_note(game, "the_how", [
+        "[c=dim]The sheriff spent his one card. A blind man, no name, lit "
+        "up with certainty, promised his own eyes by the dream once the "
+        "work is finished. Sent to fetch the last holdout, and thanked "
+        "him for refusing.",
+        "So that is the how. Nobody was argued north. Each of them was "
+        "promised the one thing they were starving for, and every one of "
+        "them came gladly.[/c]",
+    ])
+
+
 def vane_on_leave(game):
     """A last word the first time the PI walks out of the office. The
     holdout's hope, said sideways. Fires once."""
@@ -828,6 +842,52 @@ VANE_CONVO = {
                         "stopped going anywhere."),
                 ("npc", "[c=dim]I tell people to leave. I haven't been "
                         "able to in months.[/c]"),
+            ],
+        },
+        # The blind cultist: his one window into the HOW (NARRATIVE §4:
+        # one post-seal conversation with a nameless blind cultist,
+        # radiant with unaccountable conviction, promised his own sight
+        # restored by the dream, in truth sent to convert him; Vane
+        # refused). Earned, not ambient: he spends it only once the PI
+        # has announced himself and is visibly working the case (a first
+        # real thread found). The full trust/despair arc is ticket #2a;
+        # this seeds it. He keeps his knowledge boundary: no destination,
+        # no direction, only the offer.
+        {
+            "key": "how",
+            "q": "A hundred strangers drove north to the same dying "
+                 "town. Nobody talks that many people into anything. How "
+                 "was it done?",
+            "label": "How were the newcomers gathered?",
+            "avail": lambda g: (g.save.flag("convo_vane_intro_asked")
+                                and g._evidence_count() >= 1),
+            "once": True,
+            "on_ask": _vane_how_told,
+            "beats": [
+                ("npc", "I asked that question every night for a year. "
+                        "What I've got is one conversation. I'll spend "
+                        "it on you."),
+                ("npc", "After the rooms emptied, one of them came back "
+                        "up the road to this office. Blind. Born blind, "
+                        "he said. Walked in without a stick and sat down "
+                        "square in that chair."),
+                ("npc", "No name. I asked twice. He sat there lit up "
+                        "like a man warming his hands at a stove. Said "
+                        "the dream had promised him his eyes. Said when "
+                        "the work is finished he'll open them, and "
+                        "they'll work."),
+                ("pi", "He wasn't there to confess anything. He was "
+                       "there to fetch you."),
+                ("npc", "He made the offer. Told me to name the thing I "
+                        "want most in this world, and come with him, and "
+                        "it would be waiting. I put him out. He thanked "
+                        "me for my time and he left smiling."),
+                ("npc", "So there's your how. You don't talk a hundred "
+                        "strangers onto one road. Something finds out "
+                        "what each of them is starving for, and it "
+                        "promises that. Nobody in that line was tricked "
+                        "into a thing. That's the piece that keeps my "
+                        "lights on at night."),
             ],
         },
     ],
@@ -1029,9 +1089,10 @@ SABLE_CONVO = {
         # thins: he stops pretending to keep the paperwork, keeps the promise.
         {
             "key": "checkouts",
-            "label": "Nobody ever signs out.",
-            "q": "I read your register. Every guest signs in. Not one ever "
-                 "signs out.",
+            "label": "The checkouts stop a year back.",
+            "q": "I read your old registers. Guests used to settle up and "
+                 "leave. The dates stop a year back. Since then everyone "
+                 "signs in and nobody signs out.",
             "avail": lambda g: g.save.flag("evidence_the_ledger"),
             "beats": [
                 ("npc", "(The pleasant look does not shift.) Do they not? "
