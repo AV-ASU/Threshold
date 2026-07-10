@@ -814,9 +814,10 @@ def build_brimley():
             "[c=dim]I've started leaving the door unlatched at night. It "
             "seemed... polite.[/c]",
         ])])
-    # Royce -- by the river bridge. He TRIED to drive out, for weeks, and
-    # the corn handed him back every time; the futility broke him and he's
-    # STOPPED. He still clings to the one fact he can't square: you got IN.
+    # Royce -- by the river bridge. He tried to drive out like everyone
+    # in town did (northern Minnesota; everyone drives) and the corn
+    # handed him back every time; he gave it up with the rest. He still
+    # clings to the one fact he can't square: you got IN.
     _resident(29, 24, "Royce", "royce",
               convo=ROYCE_CONVO,
         # His job now is the road itself: he paces the stretch he used

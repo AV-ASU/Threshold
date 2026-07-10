@@ -85,9 +85,9 @@ item on the list: engine exists, canon is settled, payoff is the core fantasy.**
   the PI **initiates** (news does not spread). **The Brimley chorus (Old
   Pell, Mrs. Calder, Royce, Garrick) converted** to `*_CONVO` +
   `chorus_dialogue` (scenes/dialogue.py): the shared pair with short
-  per-NPC answers, one or two signature questions each (Pell's calendar,
-  Calder's plate, Royce's roads + his you-got-IN counter-ask, Garrick's
-  road warning), the TODO #10 reactive beats still volunteering ahead of
+  per-NPC answers, one or two signature questions each (Pell's corn
+  pride, Calder's plate, Royce's roads + his you-got-IN counter-ask,
+  Garrick's road warning), the TODO #10 reactive beats still volunteering ahead of
   the menu, and the **fold note moved off the old any-talk trigger onto
   the exchanges that carry the account** (Royce/Garrick `on_ask`,
   `reflect=False`, earned by asking). Guarded by `tests/flow.py` §17e +
@@ -303,8 +303,9 @@ doing** — else a second impossible thing AND it breaks the ~1993 door timeline
 Keep the impossible count at one (§1b). Theme: founding hubris rhymes with
 crossing the threshold; the dead, uncut April corn reads as their pride rotting.
 Surfacing (mundane Americana that curdles): a weathered town sign ("BRIMLEY,
-NORTHERNMOST CORN IN THE WORLD, EST. 1894"), a proud local line, county-fair
-ribbons (no dashes). Keep the §1 April dead-corn note. `NARRATIVE.md` §1 setting
+NORTHERNMOST CORN IN THE WORLD, EST. 1894"), ~~a proud local line~~ (LANDED
+2026-07: Old Pell is the grower — his PELL_CONVO corn exchange carries the
+pride and the uncut-fields grief), county-fair ribbons (no dashes). Keep the §1 April dead-corn note. `NARRATIVE.md` §1 setting
 note 2 gets the identity + guardrail.
 
 ### 12. **[Fable + Opus]** Royce the trucker + the rusting semi  *(was GAME_CHANGES §28)*

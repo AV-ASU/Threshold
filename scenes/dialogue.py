@@ -1222,11 +1222,13 @@ def _garrick_roads_told(game):
         game._fold_mentioned("Garrick", reflect=False)
 
 
-# Old Pell -- the schoolhouse step, the stopped calendar, the cold that
-# came and stayed. Stasis register; he turns at rot stage 3, so this
-# talk is his pre-turn window. Canon fence (NARRATIVE §2): time runs
-# NORMALLY, it is space that folds -- his calendar stopped because it
-# wants somewhere to get to, never because the days repeat.
+# Old Pell -- the schoolhouse step, the cold that came and stayed, and
+# the corn: Pell corn, the town's northernmost-in-the-world pride (TODO
+# #11, a mundane human feat, never the door's doing), dead standing
+# since the missed fall harvest. Stasis register; he turns at rot stage
+# 3, so this talk is his pre-turn window. The stopped calendar stays a
+# rot-layer detail (the decoration + his turned lines), deliberately
+# NOT an ask topic.
 PELL_CONVO = {
     "id":    "pell",
     "name":  "Old Pell",
@@ -1250,8 +1252,8 @@ PELL_CONVO = {
             ("npc", "There's a foulness set over this whole town, son. You "
                     "feel it more than smell it. Folk are tired under it, "
                     "all of them, and sleep doesn't mend it."),
-            ("npc", "[c=dim]Whoever you're here after, mind how long you "
-                    "stand in it. It gets into a person by staying.[/c]"),
+            ("npc", "[c=dim]You're breathing it now too. Same as the rest "
+                    "of us.[/c]"),
         ],
         photo_beats=[
             ("npc", "(He tips the photograph toward the light, slow about "
@@ -1262,17 +1264,18 @@ PELL_CONVO = {
         ],
     ) + [
         {
-            "key": "calendar",
-            "q": "That calendar nailed up by the schoolhouse door. It "
-                 "stops in January. Yours?",
-            "label": "The calendar stopped in January.",
+            "key": "corn",
+            "q": "All that corn west of the river, dead and still standing "
+                 "in April. Nobody brought it in?",
+            "label": "Nobody brought the corn in?",
             "beats": [
-                ("npc", "Mine. Kept it marked fifty years. Boards, frosts, "
-                        "who owed what. This winter I stopped."),
-                ("npc", "Not the days. The days go on fine. Winter went, "
-                        "spring came up the same as ever."),
-                ("npc", "[c=dim]A calendar wants somewhere to get to, son. "
-                        "Where would I be counting toward?[/c]"),
+                ("npc", "That's Pell corn, son. Northernmost corn in the "
+                        "world, grown on this ground since 1894. My father "
+                        "took ribbons on it. So did I."),
+                ("npc", "Nobody cut it last fall. First harvest this town "
+                        "ever missed. It stood there and died standing."),
+                ("npc", "[c=dim]I don't look at the fields long "
+                        "anymore.[/c]"),
             ],
         },
     ],
@@ -1306,16 +1309,12 @@ CALDER_CONVO = {
             ("npc", "Somebody's daughter. And somebody sent for, to bring "
                     "her home. There's still such a thing. Isn't that "
                     "fine."),
-            ("npc", "[c=dim]I can't tell you anything worth your shoe "
-                    "leather, dear. I don't get past the end of the road "
-                    "anymore. But I am glad of you.[/c]"),
         ],
         photo_beats=[
             ("npc", "(She holds it out at arm's length, the way the "
                     "far-sighted do.)"),
-            ("npc", "A sweet face. No. I've not had her at my gate."),
-            ("npc", "[c=dim]She's not the one the place is set for. I'd "
-                    "know her. I'm sure I'd know.[/c]"),
+            ("npc", "No, dear. I don't know her. I've not seen her at my "
+                    "gate."),
         ],
     ) + [
         {
@@ -1330,20 +1329,18 @@ CALDER_CONVO = {
                 ("npc", "[c=dim]I'll know the face when it's across the "
                         "table from me. Till then it would be unkind not "
                         "to be ready.[/c]"),
-                ("pi", "[c=dim]Certainty like that doesn't grow in a "
-                       "person. It gets put there. I didn't say that to "
-                       "her.[/c]"),
             ],
         },
     ],
 }
 
 
-# Royce -- the trucker who beat himself against the fold for weeks and
-# stopped. His roads exchange is the town's plainest looping-roads
-# account and files the PI's fold note; his one impossible fact (you got
-# IN) is a question HE puts to the PI, once he's earned it. He converts
-# at rot stage 3.
+# Royce -- he tried to drive out like everyone in town did (it is
+# northern Minnesota; everyone drives) and gave it up with the rest.
+# His roads exchange is the town's plainest looping-roads account and
+# files the PI's fold note; his one impossible fact (you got IN) is a
+# question HE puts to the PI, once he's earned it. He converts at rot
+# stage 3.
 ROYCE_CONVO = {
     "id":    "royce",
     "name":  "Royce",
@@ -1357,8 +1354,7 @@ ROYCE_CONVO = {
             ("npc", "(He looks you over a long moment before he says a "
                     "word.)"),
             ("npc", "You're the one who drove in. Off the north road, at "
-                    "night. First engine to come UP a road into Brimley "
-                    "since the new year."),
+                    "night. Nothing has come up that road in months."),
             ("npc", "I'd shake your hand, mister, but I don't know yet "
                     "what you are."),
         ],
@@ -1375,11 +1371,8 @@ ROYCE_CONVO = {
         photo_beats=[
             ("npc", "(He wipes his hands on his jacket before he takes "
                     "it. Looks properly, corner to corner.)"),
-            ("npc", "Not off the road. I knew every face I passed on that "
-                    "blacktop, and hers wasn't one."),
-            ("npc", "If she came in, she came with the new folk. They "
-                    "came in numbers, and they don't ride where a man can "
-                    "see them."),
+            ("npc", "No. A lot of new faces drove in this past year, same "
+                    "as anybody comes anywhere. Hers isn't one I know."),
         ],
     ) + [
         {
@@ -1390,18 +1383,18 @@ ROYCE_CONVO = {
             "once": True,
             "on_ask": _royce_roads_told,
             "beats": [
-                ("npc", "I used to drive it. River road, county line, "
-                        "every road out of Brimley. Weeks of it. The corn "
-                        "handed me back every time."),
+                ("npc", "I drove it. River road, county line, every road "
+                        "out of Brimley. Same as everybody in this town "
+                        "with a set of keys. The corn handed me back "
+                        "every time."),
                 ("npc", "Same bend. Same bridge. Same town coming up in "
                         "the windshield. And I'd swear to you on anything "
                         "I never turned the wheel."),
-                ("npc", "[c=dim]I don't go anymore. There's no out to "
-                        "drive to. I worked that out the hard way, so you "
-                        "don't have to.[/c]"),
-                ("pi", "[c=dim]A man doesn't wear out that way over a "
-                       "wrong turn. Whatever the roads do, they did it to "
-                       "him a hundred times. So.[/c]"),
+                ("npc", "[c=dim]I gave it up. Everybody did. There's no "
+                        "out to drive to.[/c]"),
+                ("pi", "[c=dim]Said flat, no fear in it. A whole town of "
+                       "drivers doesn't quit the road over nothing. "
+                       "So.[/c]"),
             ],
         },
         {
@@ -1421,8 +1414,9 @@ ROYCE_CONVO = {
                                "past the county line, and the road just "
                                "drove. There was nothing to it."),
                         ("npc", "(Something goes out of him.) Nothing to "
-                                "it. A year I beat myself against that "
-                                "blacktop. For you it just drove."),
+                                "it. Every driver in this town tried that "
+                                "same drive till they quit. For you it "
+                                "just drove."),
                         ("npc", "[c=dim]Then it wanted you in, mister. "
                                 "I'd chew a while on what that means for "
                                 "getting out.[/c]"),
