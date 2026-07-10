@@ -1021,8 +1021,10 @@ def main():
     check(len(_cd) >= 6,
           "chalk: the Scriptorium is swarmed with chalk doors (the compulsion)")
 
-    # --- 16c. The fold-talk note: a local describing the fold (looping roads)
-    # files the PI's note ONCE (the first speaker), names them, stays a NOTE.
+    # --- 16c. The fold-talk note: the locals' looping-roads account now
+    # lives in the ask verb (TODO #1 chorus): Royce's roads exchange (and
+    # Garrick's warning) file the PI's note ONCE, named to the teller,
+    # and only when actually ASKED -- earned, not ambient.
     gf2 = new_game()
     gf2.load_scene_now("brimley", "default")
     ready(gf2)
@@ -1031,23 +1033,36 @@ def main():
     check(_royce is not None and _garrick is not None,
           "fold: the fold-mentioning locals are present")
     _evp = gf2._evidence_count()
-    if _royce:
-        _royce.dialogue_fn(gf2, _royce)
-        g_ = 0
-        while gf2.dialog.active and g_ < 30:
-            gf2.dialog.advance(); g_ += 1
+    # Drive the REAL path: greet floats, the menu opens, the PI picks
+    # "What do the roads do?", and the exchange files the note.
+    gf2.player.x, gf2.player.y = _royce.x + 20, _royce.y
+    _royce.dialogue_fn(gf2, _royce)
+    g_ = 0
+    while gf2.float_speech.active and g_ < 30:
+        gf2.float_speech._finish(); g_ += 1
+    check(gf2.dialog.choices is not None,
+          "fold: Royce's question menu opens after his greeting")
+    check(not gf2.save.flag("voice_fold_heard"),
+          "fold: merely talking to Royce files nothing (the ask earns it)")
+    gf2.dialog.choice_idx = gf2.dialog.choices.index("What do the roads do?")
+    gf2.dialog.advance()
     _ft = next((e for e in gf2.save.arg("notes", [])
                 if isinstance(e, dict) and e.get("name") == "the_fold_told"), None)
     check(_ft is not None and "Royce" in " ".join(_ft["lines"]),
           "fold: a local describing the fold files the note, naming who told you")
     check(gf2._evidence_count() == _evp,
           "fold: the fold note is a NOTE, not evidence (never arms the King-gate)")
-    if _garrick:
-        ready(gf2)
-        _garrick.dialogue_fn(gf2, _garrick)
+    # Garrick's warning carries the same account; the note stays one-shot.
+    from scenes.dialogue import _garrick_roads_told as _grt16
+    _grt16(gf2)
     check(sum(1 for e in gf2.save.arg("notes", [])
               if isinstance(e, dict) and e.get("name") == "the_fold_told") == 1,
           "fold: only the FIRST fold mention files the note (not every speaker)")
+    if getattr(gf2, "_convo", None) is not None:
+        gf2._convo.active = False
+        gf2._convo = None
+    gf2.float_speech.active = False
+    ready(gf2)
 
     # --- 16d. STYLE RULE: no em-dashes in ANY player-facing writing (keep it
     # human). Tokenize every source file and flag every non-docstring STRING
@@ -1520,6 +1535,121 @@ def main():
     check(gor.dialog.choices is None,
           "flow: an orphaned talk's pending callback is inert")
 
+    # --- 17e. The ask verb reaches the Brimley chorus (TODO #1) ----------
+    # Old Pell, Mrs. Calder, Royce, and Garrick come off the
+    # _brimley_voice page-lists: each carries a conversation that leads
+    # with the two guaranteed openers, and their reactive one-shots (the
+    # town reacting to the case) still volunteer ahead of the menu. The
+    # newcomer woman stays OFF the verb by maintainer call (set
+    # dressing); she keeps her fixed lines.
+    from scenes.dialogue import (PELL_CONVO as _PLC, CALDER_CONVO as _CLC,
+                                 ROYCE_CONVO as _RCC, GARRICK_CONVO as _GRC)
+    for _cv in (_PLC, _CLC, _RCC, _GRC):
+        _ks = [ex["key"] for ex in _cv["exchanges"]]
+        check(_ks[:2] == ["intro", "photo"],
+              f"chorus: {_cv['id']} leads with the two guaranteed openers")
+        check(_cv["exchanges"][0]["q"] == _INTRO_Q
+              and _cv["exchanges"][1]["q"] == _PHOTO_Q,
+              f"chorus: {_cv['id']} shares the openers word for word")
+        check(_cv["exchanges"][0].get("once")
+              and _cv["exchanges"][1].get("once"),
+              f"chorus: {_cv['id']} openers are once-asked")
+        _gt = " ".join(b[1].lower() for b in _cv["greet"]["beats"])
+        check("blaine" not in _gt and "girl" not in _gt,
+              f"chorus: {_cv['id']} greet never assumes the case is known")
+        for _ex in _cv["exchanges"]:
+            _lb = _ex.get("label", _ex["q"])
+            check(len(_lb) <= 44,
+                  f"chorus: {_cv['id']}/{_ex['key']} menu label fits the "
+                  f"choice box ({len(_lb)} chars)")
+            for _b in _ex["beats"]:
+                if _b[0] != "ask":
+                    continue
+                for _opt in _b[2]:
+                    check(len(_opt[0]) <= 44,
+                          f"chorus: {_cv['id']}/{_ex['key']} inline option "
+                          f"fits the choice box ({len(_opt[0])} chars)")
+
+    # The fold note moved off the old any-talk trigger onto the exchanges
+    # that actually carry the account: Royce's roads and Garrick's warning
+    # file it (reflect=False, never hijacking the float chain), and either
+    # opens Sable's reproach and the way-out questions.
+    from scenes.dialogue import _royce_roads_told, _garrick_roads_told
+    for _teller, _fn in (("royce", _royce_roads_told),
+                         ("garrick", _garrick_roads_told)):
+        gfd = new_game()
+        _sent = lambda: None
+        gfd.float_speech.active = True
+        gfd.float_speech.on_complete = _sent
+        _fn(gfd)
+        check(gfd.save.flag("voice_fold_heard") and any(
+                  isinstance(e, dict) and e.get("name") == "the_fold_told"
+                  for e in gfd.save.arg("notes", [])),
+              f"chorus: {_teller}'s roads answer files the PI's fold note")
+        check(gfd.float_speech.on_complete is _sent,
+              f"chorus: {_teller}'s fold note never hijacks the float chain")
+        gfd.float_speech.active = False
+        gfd.float_speech.on_complete = None
+    _rroads = next(ex for ex in _RCC["exchanges"] if ex["key"] == "roads")
+    check(_rroads.get("on_ask") is _royce_roads_told,
+          "chorus: Royce's roads exchange carries the fold filing")
+    # Royce's counter-question (you got IN) is EARNED by hearing his
+    # account first, and it ends on a real two-way ask.
+    ghi = new_game()
+    _rhow = next(ex for ex in _RCC["exchanges"] if ex["key"] == "how_in")
+    check(not _rhow["avail"](ghi),
+          "chorus: Royce's how-did-you-get-in waits on his roads account")
+    ghi.save.set_flag("convo_royce_roads_asked", True)
+    check(_rhow["avail"](ghi),
+          "chorus: hearing the roads opens Royce's counter-question")
+    _rask = next(b for b in _rhow["beats"] if b[0] == "ask")
+    check(len(_rask[2]) == 2,
+          "chorus: Royce's counter-question is a real two-way ask")
+
+    # The LIVE wiring: the brimley scene's four chorus locals all open a
+    # conversation, and a reactive beat (Garrick clocking the pulpit
+    # going quiet) still volunteers ahead of the menu, once. The
+    # newcomer woman stays on her fixed lines (no conversation).
+    gch = new_game()
+    gch.load_scene_now("brimley")
+    for _nm in ("Old Pell", "Mrs. Calder", "Royce", "Garrick"):
+        _lp = next(n for n in gch.scene.npcs
+                   if getattr(n, "name", "") == _nm)
+        gch.player.x, gch.player.y = _lp.x + 20, _lp.y
+        ready(gch)
+        gch._convo = None
+        _lp.dialogue_fn(gch, _lp)
+        check(getattr(gch, "_convo", None) is not None and gch._convo.active,
+              f"chorus: {_nm} opens the organic conversation in brimley")
+        gch._convo.active = False
+        gch._convo = None
+        gch.float_speech.active = False
+    _nw = next(n for n in gch.scene.npcs
+               if getattr(n, "name", "") == "A woman")
+    gch.player.x, gch.player.y = _nw.x + 20, _nw.y
+    ready(gch)
+    _nw.dialogue_fn(gch, _nw)
+    check(getattr(gch, "_convo", None) is None
+          and (gch.dialog.active or gch.float_speech.active),
+          "chorus: the newcomer woman stays off the verb (fixed lines)")
+    gch.float_speech.active = False
+    ready(gch)
+    gch.save.set_flag("preacher_doomed", True)
+    _gar = next(n for n in gch.scene.npcs if n.name == "Garrick")
+    gch.player.x, gch.player.y = _gar.x + 20, _gar.y
+    ready(gch)
+    _gar.dialogue_fn(gch, _gar)
+    check(gch.dialog.active and getattr(gch, "_convo", None) is None
+          and gch.save.flag("beat_garrick_quiet"),
+          "chorus: Garrick's pulpit beat volunteers ahead of the menu")
+    ready(gch)
+    _gar.dialogue_fn(gch, _gar)
+    check(getattr(gch, "_convo", None) is not None and gch._convo.active,
+          "chorus: once the beat is spent the conversation opens")
+    gch._convo.active = False
+    gch._convo = None
+    gch.float_speech.active = False
+
     # --- 18. effigy_grove is a maker-less tableau (§1b/§8) ---------------
     # Individual cursing is redundant -- the closing rite claimed the town at
     # once -- so the grove is left as the work without the worker, with no
@@ -1865,9 +1995,15 @@ def main():
         check(any("gone quiet" in p for p in shown),
               "react: Garrick clocks the pulpit going silent (murder beat)")
         ready(gb)
+        shown[:] = []
+        gb.player.x, gb.player.y = _ga.x + 20, _ga.y
         _ga.dialogue_fn(gb, _ga)
-        check(not any("gone quiet" in p for p in shown),
-              "react: the Garrick beat is one-shot; ambient loop resumes")
+        check(not any("gone quiet" in p for p in shown)
+              and getattr(gb, "_convo", None) is not None,
+              "react: the Garrick beat is one-shot; the conversation resumes")
+        gb._convo.active = False
+        gb._convo = None
+        gb.float_speech.active = False
         ready(gb)
     else:
         check(False, "react: Garrick present in brimley")

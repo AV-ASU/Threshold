@@ -28,7 +28,7 @@ priority order within each group.
 
 ## Buildable now
 
-### 1. **[Fable]** Investigation dialogue verb — the ask-questions layer  *(VERB LANDED as a pilot 2026-07; expand to the rest of the cast)*
+### 1. **[Fable]** Investigation dialogue verb — the ask-questions layer  *(VERB LANDED 2026-07; principals + chorus all converted — still open: `_REVISIT_NUDGES` for Hettie/Toby/Crane as their case hooks land)*
 
 You play a PI, but the only social verb is press-E-to-advance scripted lines:
 every NPC conversation is a linear counter (`old_count`, `kid_count` ...). The
@@ -78,14 +78,23 @@ item on the list: engine exists, canon is settled, payoff is the core fantasy.**
   case hooks land.
 
 - ~~**Two guaranteed options on EVERY townsperson (the case's front door).**~~
-  **DONE for the principals (2026-07):** every principal's menu leads with
+  **DONE (2026-07), chorus included:** every principal's menu leads with
   the shared pair (`_opener_exchanges`: (1) the PI **introducing himself as a
   private investigator**, (2) **showing Mara's photograph**), intro first,
   photo second, answers per-NPC; greets no longer assume the case is known —
-  the PI **initiates** (news does not spread). **Still open:** the Brimley
-  chorus (Old Pell, Mrs. Calder, Royce, Garrick, the newcomer woman) still
-  speak through `_brimley_voice` page-lists; give them the shared pair with
-  short per-NPC answers when they convert.
+  the PI **initiates** (news does not spread). **The Brimley chorus (Old
+  Pell, Mrs. Calder, Royce, Garrick) converted** to `*_CONVO` +
+  `chorus_dialogue` (scenes/dialogue.py): the shared pair with short
+  per-NPC answers, one or two signature questions each (Pell's calendar,
+  Calder's plate, Royce's roads + his you-got-IN counter-ask, Garrick's
+  road warning), the TODO #10 reactive beats still volunteering ahead of
+  the menu, and the **fold note moved off the old any-talk trigger onto
+  the exchanges that carry the account** (Royce/Garrick `on_ask`,
+  `reflect=False`, earned by asking). Guarded by `tests/flow.py` §17e +
+  the reworked §16c. **The newcomer woman stays OFF the verb by
+  maintainer call (2026-07): rot-adjacent set dressing, not a
+  townsperson to interview** — she keeps her three fixed lines
+  (flow-guarded).
 
 - **The choice box is SMALL — menu labels are authored short (2026-07).**
   An exchange carries an optional `label` (≤ ~44 chars, flow-guarded): the

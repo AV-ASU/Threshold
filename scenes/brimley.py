@@ -15,7 +15,8 @@ from constants import TILE
 from entities.decoration import Decoration
 from entities.npc import NPC
 from .base import Scene
-from .dialogue import _evidence, preacher_body_examine
+from .dialogue import (_evidence, preacher_body_examine, chorus_dialogue,
+                       PELL_CONVO, CALDER_CONVO, ROYCE_CONVO, GARRICK_CONVO)
 
 
 def _brimley_on_enter(game, scene):
@@ -53,6 +54,11 @@ def _brimley_voice(pages, voice="blip_mid", fold=False, beats=None):
     `fold=True` marks a local who describes the fold (looping roads): the
     FIRST such conversation files the PI's fold note (Game._fold_mentioned,
     globally one-shot, so only the first speaker triggers it).
+
+    Since the chorus moved onto the ask verb (dialogue.py chorus_dialogue
+    + the *_CONVO data), the only remaining speakers here are the
+    doorstep Hettie cameo (her real conversation lives in the shop) and
+    the newcomer woman (set dressing, deliberately off the verb).
 
     `beats` makes the town REACT to state (TODO #10): a list of
     (flag, predicate, beat_pages). On each talk the first beat whose
@@ -739,12 +745,18 @@ def build_brimley():
     # under the King's eye and stay whole. Innocent, and coming apart at
     # the edges: denial, time-loop confusion, a child saying the quiet
     # part out loud.
-    def _resident(tx, ty, name, kind, pages, movement="wander",
+    def _resident(tx, ty, name, kind, pages=None, movement="wander",
                   voice="blip_mid", radius=52, fold=False, beats=None,
-                  stations=None):
+                  stations=None, convo=None):
+        # A resident either carries the organic ask verb (`convo`, the
+        # chorus conversion; reactive beats volunteer ahead of the menu)
+        # or the old fixed page-list (`pages`, the doorstep cameo).
+        if convo is not None:
+            dfn = chorus_dialogue(convo, beats or ())
+        else:
+            dfn = _brimley_voice(pages, voice, fold=fold, beats=beats)
         n = NPC(tx * TILE + 16, ty * TILE + 16, name, kind,
-                dialogue_fn=_brimley_voice(pages, voice, fold=fold,
-                                           beats=beats),
+                dialogue_fn=dfn,
                 movement=movement, radius=radius)
         if stations:
             # The JOBS layer (GAME_CHANGES §19): a personal station
@@ -772,14 +784,10 @@ def build_brimley():
     # Old Pell -- the schoolhouse step, the calendar nailed to the wall
     # behind him. He stopped marking it. Another homebody: out on the
     # step a while, then back indoors out of the cold that came early.
-    _resident(63, 54, "Old Pell", "old_townsman", [
-        "Cold came in early this year. And it never lifted. Just sat down on the town and stayed.",
-        "A foulness came with it and spread over the whole town. You feel it "
-        "more than smell it. Folk are tired under it now, all of them, and "
-        "sleep doesn't mend it.",
-        "Stopped marking the calendar. Not the days. Where would I be counting toward?",
-        "[c=dim]You're new. We don't get new. Nobody gets in. Nobody gets...[/c]",
-    ], voice="blip_low", movement="homebody", radius=34, fold=True,
+    # Ask verb (PELL_CONVO); the fold note now files from Royce/Garrick,
+    # whose exchanges actually carry the looping-roads account.
+    _resident(63, 54, "Old Pell", "old_townsman",
+              movement="homebody", radius=34, convo=PELL_CONVO,
         # TODO #10: the town reacts to what the PI learns. Pell reads the
         # digging on him like weather (stasis register; he mutates at
         # stage 3, so this lives in his pre-turn window).
@@ -796,15 +804,8 @@ def build_brimley():
     # someone is coming. No vanished husband (that read as a perceptible
     # individual loss, forbidden by §1b); just the compulsion she doesn't
     # question. She watches the road. She does not wave.
-    _resident(96, 8, "Mrs. Calder", "townswoman", [
-        "Oh. Is it you? ...Are you the one the place is set for?",
-        "[c=dim]No. No, it couldn't be you. Forgive an old woman her "
-        "hoping.[/c]",
-        "I lay an extra plate at supper. Have done a while now. Couldn't tell "
-        "you who for. Someone's coming. I know it the way I know my own name.",
-        "[c=dim]I'll know the face when it's across the table from me. Till "
-        "then it would be unkind not to be ready.[/c]",
-    ], movement="idle",
+    _resident(96, 8, "Mrs. Calder", "townswoman",
+              movement="idle", convo=CALDER_CONVO,
         # TODO #10: the waiting sharpens as the case opens (she converts
         # at stage 2, so this is her only pre-turn window: evidence 1).
         beats=[("beat_calder_unlatched",
@@ -817,14 +818,8 @@ def build_brimley():
     # Royce -- by the river bridge. He TRIED to drive out, for weeks, and
     # the corn handed him back every time; the futility broke him and he's
     # STOPPED. He still clings to the one fact he can't square: you got IN.
-    _resident(29, 24, "Royce", "royce", [
-        "I used to drive it. River road, county line, every road out of "
-        "Brimley. Weeks of it. The corn handed me back every time.",
-        "[c=dim]I don't go anymore. There's no out to drive to. I worked "
-        "that out the hard way, so you don't have to.[/c]",
-        "[c=dim]But you came IN. How did you come IN? ...Tell me how you came "
-        "in.[/c]",
-    ], fold=True,
+    _resident(29, 24, "Royce", "royce",
+              convo=ROYCE_CONVO,
         # His job now is the road itself: he paces the stretch he used
         # to drive, west toward the county line, back toward the
         # bridge, and stands looking down it a long while each way.
@@ -849,12 +844,8 @@ def build_brimley():
     # indoors; nothing stands on the step.
     # Garrick -- the old man at the well. Town centre, watching
     # everyone come and go. The law is hollow now; he says so plainly.
-    _resident(91, 12, "Garrick", "old_townsman", [
-        "You're asking questions. Folks who ask questions go quiet. Real quiet.",
-        "The Sheriff'll tell you to leave. He knows you can't. He can't either.",
-        "Stay on the roads. People who go off the roads come out wrong-side.",
-        "[c=dim]Go on home, son. ...Oh. Right. None of us can.[/c]",
-    ], fold=True,
+    _resident(91, 12, "Garrick", "old_townsman",
+              convo=GARRICK_CONVO,
         # Town-centre rounds: his spot, a look in on the well, a stretch
         # of the track where he watches who comes and goes.
         stations=[(91, 12, (6.0, 10.0), (1, 0)),
@@ -875,6 +866,9 @@ def build_brimley():
         ])])
     # The newcomer -- standing on the path to the abandoned_farmhouse
     # (their house now). She is here to welcome you. She is patient.
+    # Deliberately NOT on the ask verb (maintainer call, 2026-07): she is
+    # rot-adjacent set dressing, not a townsperson to interview -- she
+    # keeps her three fixed lines and converts at rot stage 1.
     sc.add_npc(NPC(8 * TILE + 16, 95 * TILE + 16, "A woman", "townswoman",
                    dialogue_fn=_brimley_voice([
                        "[c=dim]Hello.[/c]",
