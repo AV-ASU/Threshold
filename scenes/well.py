@@ -931,7 +931,11 @@ def build_works_sign():
         # the modal band otherwise), so chain off the channel that is
         # actually live -- an on_complete parked on an inactive modal never
         # fires (the 2026-07 audit found this beat dead).
-        _tempt = lambda: game._descent_voice("descent_mask")
+        # The note (and its one-shot flag) files NOW: a scene load clears
+        # the caption channel WITHOUT firing chained callbacks, so only
+        # the on-screen beat may ride the chain, never the note.
+        game._descent_voice("descent_mask", note_only=True)
+        _tempt = lambda: game._descent_voice_beat("descent_mask")
         if game.dialog.active:
             game.dialog.on_complete = _tempt
         elif getattr(game, "narration", None) is not None \

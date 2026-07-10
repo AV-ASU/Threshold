@@ -145,10 +145,10 @@ _REVISIT_NUDGES = {
         "key": "revisit_vane_murder",
         "met": "vane_greeted",
         "lines": [
-            "[c=dim]A man dies loud in his own church and the town walks "
-            "past the door.",
-            "The sheriff was born here. He will have stood on that floor "
-            "before I did. Worth hearing what he could not write down.[/c]",
+            "[c=dim]They left him on the bank where the whole town draws "
+            "its water. Nobody carried him home.",
+            "The sheriff was born here. He knew this man his whole life. "
+            "Worth hearing what he could not write down.[/c]",
         ],
     }],
 }

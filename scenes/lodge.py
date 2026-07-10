@@ -689,9 +689,8 @@ def clerk_room_interact(game):
 def build_lodge_cellar():
     """The Arcadia Lodge's cellar -- the Clerk's domain, behind the
     PADLOCKED kitchen hatch (the cellar key hangs behind the house).
-    Stone walls, packed dirt floor, a single hanging bulb. A photograph
-    stands on a shelf (the Arcadia's people, never aging, never
-    leaving); the workbench chest holds the woodshed key; the boxed OLD
+    Stone walls, packed dirt floor, a single hanging bulb. The
+    workbench chest holds the woodshed key; the boxed OLD
     REGISTERS on the east crates are the Ledger, evidence #3 (2026-07:
     moved back down here from the front desk, behind the lock); and the
     guttering candles pay off the cult-devotion beat once you've seen
@@ -753,7 +752,7 @@ def build_lodge_cellar():
                                  scale=2.2))
     # Cellar grime + a split-wood stack against the SE wall. Cobwebs
     # fan from the high corners; the firewood is collision furniture
-    # tucked clear of the workbench, photo, and ladder paths.
+    # tucked clear of the workbench and ladder paths.
     sc.add_decoration(Decoration(1 * TILE + 6, 1 * TILE + 6, "cobweb",
                                  ang=0.0))
     sc.add_decoration(Decoration(10 * TILE + 26, 1 * TILE + 6, "cobweb",

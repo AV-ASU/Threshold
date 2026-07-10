@@ -4619,6 +4619,27 @@ class Scene:
         self.npcs.append(npc)
 
     def add_decoration(self, deco):
+        # A spanning shoring frame is SPLIT into its two uprights, each
+        # anchored on its own post, so the tilt depth sort can interleave
+        # an actor walking the lane between them (one shared anchor gave
+        # the whole set a single depth and the far post popped in front
+        # of whoever stood under the beam). The beam rides the +axis
+        # post ("b"); broken sets (span<=1) stay whole.
+        if (getattr(deco, "kind", None) == "shoring_frame"
+                and float(deco.kwargs.get("span", 0.0) or 0.0) > 1
+                and "half" not in deco.kwargs):
+            from entities.decoration import Decoration
+            ang = float(deco.kwargs.get("ang", 0.0) or 0.0)
+            s = (getattr(deco, "scale", 1.0) or 1.0)
+            hs = float(deco.kwargs["span"]) * s / 2.0
+            dx, dy = math.cos(ang), math.sin(ang)
+            for tag, sgn in (("a", -1.0), ("b", 1.0)):
+                kw = dict(deco.kwargs, half=tag)
+                self.decorations.append(
+                    Decoration(deco.x + dx * hs * sgn,
+                               deco.y + dy * hs * sgn, "shoring_frame",
+                               scale=deco.scale, seed=deco.seed, **kw))
+            return
         self.decorations.append(deco)
 
     def seat_tabletop_props(self):

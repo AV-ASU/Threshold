@@ -503,6 +503,34 @@ def _draw_shoring_frame_solid(surf, cam, deco):
               13 * s, 4.5 * s, H, H + 3 * s, wood, yaw=ang)
         return
     hs = span / 2.0
+    half = deco.kwargs.get("half")
+    if half == "a":
+        # The -axis upright alone. Spanning frames are SPLIT by
+        # Scene.add_decoration so each post depth-sorts at its own
+        # anchor: one shared anchor gave the whole set a single depth
+        # and the far post popped in front of an actor in the lane.
+        upright(wx, wy, wood, H)
+        return
+    if half == "b":
+        # The +axis upright, carrying the header beam, sag, and brace.
+        # The frame centre sits -hs back along the axis from this
+        # anchor, so the beam still spans both posts.
+        cx, cy = wx - dx * hs, wy - dy * hs
+        upright(wx, wy, wood2, H - (seed % 2) * s)
+        _vbox(surf, cam, cx, cy, span + 9 * s, 4.5 * s, H, H + 3.5 * s,
+              wood, yaw=ang)
+        mza = H + 0.4 * s
+        m0 = cam.project(cx - dx * hs * 0.7, cy - dy * hs * 0.7, mza)
+        mm = cam.project(cx, cy, mza - 1.2 * s)
+        m1 = cam.project(cx + dx * hs * 0.7, cy + dy * hs * 0.7, mza)
+        pygame.draw.lines(surf, wood["dark"], False, [m0, mm, m1], 1)
+        bx0 = cam.project(wx - dx * 8 * s, wy - dy * 8 * s, 2 * s)
+        bx1 = cam.project(wx, wy, H * 0.75)
+        pygame.draw.line(surf, wood2["side"], bx0, bx1,
+                         max(2, int(2.2 * s)))
+        pygame.draw.line(surf, wood["dark"], bx0, bx1, 1)
+        return
+    # unsplit fallback (a frame authored with an explicit half=None)
     ends = [(wx - dx * hs, wy - dy * hs, wood, H),
             (wx + dx * hs, wy + dy * hs, wood2, H - (seed % 2) * s)]
     ends.sort(key=lambda e: e[1])                 # far upright first

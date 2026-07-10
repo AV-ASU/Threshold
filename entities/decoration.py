@@ -2914,6 +2914,22 @@ class Decoration:
         ang = self.kwargs.get("ang", 0.0) or 0.0
         span = self.kwargs.get("span", 0.0) or 0.0
         ca, sa = _m.cos(ang), _m.sin(ang)
+        half = self.kwargs.get("half")
+        if half in ("a", "b"):
+            # split frame (Scene.add_decoration): this deco is ONE
+            # upright anchored on its post; the "b" twin draws the
+            # beam for both (its frame centre sits -span/2 back)
+            if half == "b":
+                cx, cy = x - ca * span / 2, y - sa * span / 2
+                hl = max(8, span / 2 + 5)
+                pygame.draw.line(surf, (52, 39, 25),
+                                 (int(cx - ca * hl), int(cy - sa * hl)),
+                                 (int(cx + ca * hl), int(cy + sa * hl)), 4)
+            pygame.draw.rect(surf, (98, 76, 50),
+                             (int(x) - 3, int(y) - 2, 3, 4))
+            pygame.draw.rect(surf, (86, 66, 43),
+                             (int(x) + 1, int(y) - 2, 3, 4))
+            return
         hl = max(8, span / 2 + 5)
         pygame.draw.line(surf, (52, 39, 25),
                          (int(x - ca * hl), int(y - sa * hl)),
