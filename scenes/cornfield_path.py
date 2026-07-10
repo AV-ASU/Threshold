@@ -79,9 +79,21 @@ def build_cornfield_path():
                         protected=_fp_protected,
                         place_bush=lambda px, py:
                             _fp_bushes.append((px, py)))
+    # The dead lots reach the road out (2026-07): two of the newcomers'
+    # cars walked away from on the shoulder -- nothing with an engine
+    # leaves. dead_cars stamps the solid 'X' footprint (bump + cover)
+    # over whatever the forest band scattered there.
+    from .base import dead_cars
+    _cp_cars = dead_cars(objects_l, [
+        (24, 4, "rust_wagon", -0.35, 51, "h"),
+        (41, 10, "rust_sedan", 2.85, 52, "h"),
+    ])
+
     floor = ["".join(r) for r in floor_ll_fp]
     objects = ["".join(r) for r in objects_l]
     sc = Scene("cornfield_path", floor, objects, music="outside")
+    for _d in _cp_cars:
+        sc.add_decoration(_d)
     for bx, by in _fp_bushes:
         sc.add_decoration(Decoration(bx, by, "bush"))
     # Walk through the woods only to be spit out where you walked in.

@@ -14,7 +14,7 @@ import random
 from constants import TILE
 from entities.decoration import Decoration
 from entities.npc import NPC
-from .base import Scene
+from .base import Scene, dead_cars
 from .dialogue import (_evidence, preacher_body_examine, chorus_dialogue,
                        PELL_CONVO, CALDER_CONVO, ROYCE_CONVO, GARRICK_CONVO)
 
@@ -615,12 +615,39 @@ def build_brimley():
     # wrap lands on road, not a tree.
     objects_list[24][0] = "."
     objects_list[24][99] = "."
+    # ---- The dead lots (2026-07): the abandoned cars ----
+    # Everyone drove into Brimley and nothing with an engine leaves
+    # (Royce/Vane, NARRATIVE §4), so the cars pool where their drivers
+    # finally stopped: a ragged rank beside the barn (the commune's own
+    # fleet, walked away from the night they went below), a give-up
+    # line on the fold-road shoulders east of the bridge, and two noses
+    # swallowed in the corn where somebody tried the field itself.
+    # dead_cars stamps a 2-tile solid 'X' footprint per hull (bump +
+    # hard cover); the Decorations are added after sc.objects lands.
+    _lot_cars = dead_cars(objects_list, [
+        # the barn rank, noses at the barn's west wall
+        (73, 73, "rust_coupe", 0.55, 24, "h"),
+        (75, 75, "rust_sedan", 0.10, 21, "h"),
+        (75, 77, "rust_wagon", -0.08, 22, "h"),
+        (75, 79, "rust_van", 0.15, 23, "h"),
+        # the give-up line on the fold-road shoulders
+        (56, 22, "rust_wagon", 0.10, 31, "h"),
+        (61, 22, "rust_coupe", -0.12, 32, "h"),
+        (66, 22, "rust_van", 3.05, 33, "h"),
+        (59, 26, "rust_sedan", 3.22, 34, "h"),
+        (64, 26, "rust_sedan", 0.05, 35, "h"),
+        # noses in the corn
+        (57, 36, "rust_wagon", 0.35, 41, "h"),
+        (26, 21, "rust_coupe", 2.95, 42, "h"),
+    ])
     # South exit to cornfield_maze (the bottom of the loop). The road
     # at col 50 cuts down through the southern tree wall via a single
     # 'M' tile. Walking south long enough through cornfield_maze ->
     # cornfield_path -> here brings you back to Brimley north.
     objects_list[h - 1][48] = "M"
     sc.objects = objects_list
+    for _d in _lot_cars:
+        sc.add_decoration(_d)
     sc.add_exit("j", "clearing", "from_brimley")
     sc.set_spawn("default", w - 2, 7)
     # Coming in from the Lodge via the country lane (east edge).

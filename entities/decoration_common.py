@@ -83,6 +83,7 @@ def _light_pool(surf, cx, cy, radius, color=(255, 170, 70), peak=70):
 
 _GROUNDED_DECOS = frozenset((
     "well", "creepy_tree", "pickup_truck", "player_car",
+    "rust_sedan", "rust_wagon", "rust_coupe", "rust_van",
     "gas_pump", "payphone", "pedestal", "pillar", "wheelbarrow",
     "headstone", "brazier", "town_sign", "flagpole", "bush",
     "corn_doll", "corn_altar", "stalk_marker", "standing_stone",
@@ -96,6 +97,7 @@ _NO_SCALE_DECOS = frozenset((
     "candle", "lantern", "brazier", "wall_torch", "swallow_hole",
     "smoke", "mist", "mote", "wisp",
     "flock", "leaves", "well", "steeple", "pickup_truck", "player_car",
+    "rust_sedan", "rust_wagon", "rust_coupe", "rust_van",
     "watching_eye", "watching_wound", "passing_silhouette",
     "gas_pump", "payphone", "terminal", "computer", "mirror", "rug",
     "creepy_tree", "crow", "flock", "town_sign", "flagpole",

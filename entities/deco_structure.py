@@ -321,6 +321,100 @@ class DecoStructureMixin:
         pygame.draw.ellipse(surf, tire, (x + 20, y + 13, 18, 8))         # flat tire
         pygame.draw.rect(surf, (60, 58, 60), (x + 27, y + 15, 4, 3))
 
+    # Faded period paints for the dead-lot cars. Keep in step with
+    # rendering/props.py _RUST_BASES (the tilt volumes), which is the
+    # authoritative copy; this one only feeds the dev-only flat view.
+    _RUST_CAR_BASES = [
+        (128, 62, 52), (86, 104, 122), (150, 142, 118),
+        (98, 84, 60), (92, 102, 74), (146, 118, 62),
+    ]
+
+    def _rust_car_flat(self, surf, x, y, L, cab0, cab1, van=False,
+                       rack=False):
+        """Flat-view TOP-DOWN hulk shared by the rust_* car kinds: a
+        weathered body pointing EAST, roof/glass from above, tyres
+        poking out the sides (one blown), seeded rust and weeds. The
+        real look is the tilt volume in rendering/props.py; this keeps
+        the dev pitch-0 view honest. Pair with solid 'X' tiles."""
+        rng = random.Random(self.seed)
+        hL = L // 2
+        base = self._RUST_CAR_BASES[rng.randrange(len(self._RUST_CAR_BASES))]
+        fade = rng.uniform(0.72, 0.98)
+        body = tuple(int(c * 0.9 * fade) for c in base)
+        body_lit = tuple(min(255, int(c * 1.12 * fade)) for c in base)
+        body_dark = tuple(int(c * 0.5 * fade) for c in base)
+        glass = (16, 17, 19) if rng.random() < 0.45 else (52, 60, 58)
+        tire, rust = (22, 20, 24), (110, 58, 30)
+        hw = 15 if van else 11                    # half-width incl. flanks
+        # Tyres at the corners; one blown flat (a wider smear).
+        flat_i = rng.randrange(4)
+        corners = ((x - hL + 8, y - hw - 2), (x + hL - 14, y - hw - 2),
+                   (x - hL + 8, y + hw - 8), (x + hL - 14, y + hw - 8))
+        for i, (wx, wy) in enumerate(corners):
+            if i == flat_i:
+                pygame.draw.rect(surf, tire, (wx - 2, wy + 2, 14, 6),
+                                 border_radius=2)
+            else:
+                pygame.draw.rect(surf, tire, (wx, wy, 10, 6),
+                                 border_radius=2)
+        # Body seen from above, nose east.
+        pygame.draw.rect(surf, body, (x - hL, y - hw + 2, L, 2 * hw - 4),
+                         border_radius=5)
+        pygame.draw.rect(surf, body_dark, (x - hL, y - hw + 2, L, 2 * hw - 4),
+                         1, border_radius=5)
+        if van:
+            # one long roof slab with a windshield band at the nose
+            pygame.draw.rect(surf, body_lit,
+                             (x - hL + 3, y - hw + 5, L - 12, 2 * hw - 10))
+            pygame.draw.rect(surf, glass,
+                             (x + hL - 9, y - hw + 5, 5, 2 * hw - 10))
+        else:
+            # windshield (east) + rear glass (west) + roof between
+            pygame.draw.rect(surf, glass, (x + cab1, y - hw + 5, 5,
+                                           2 * hw - 10))
+            pygame.draw.rect(surf, glass, (x + cab0, y - hw + 5, 4,
+                                           2 * hw - 10))
+            pygame.draw.rect(surf, body_lit, (x + cab0 + 5, y - hw + 5,
+                                              cab1 - cab0 - 6, 2 * hw - 10))
+            if rack:
+                for ry in (y - hw + 6, y + hw - 8):
+                    pygame.draw.line(surf, body_dark, (x + cab0 + 5, ry),
+                                     (x + cab1 - 2, ry), 1)
+        # Dead lamps.
+        pygame.draw.rect(surf, (150, 142, 108), (x + hL - 2, y - hw + 4, 2, 3))
+        pygame.draw.rect(surf, (150, 142, 108), (x + hL - 2, y + hw - 9, 2, 3))
+        pygame.draw.rect(surf, (96, 30, 26), (x - hL, y - hw + 4, 2, 3))
+        pygame.draw.rect(surf, (96, 30, 26), (x - hL, y + hw - 9, 2, 3))
+        # Rust blotches + weeds along the flanks.
+        for _ in range(10):
+            pygame.draw.circle(
+                surf, rust if rng.random() < 0.6 else (78, 40, 22),
+                (x - hL + rng.randint(2, L - 2),
+                 y - hw + rng.randint(2, 2 * hw - 2)), rng.randint(1, 3))
+        for _ in range(7):
+            wx = x - hL + rng.randint(0, L)
+            wy = y + hw - rng.randint(0, 3)
+            g = 58 + rng.randint(0, 42)
+            pygame.draw.line(surf, (44, g, 44), (wx, wy),
+                             (wx - rng.randint(0, 2), wy - rng.randint(4, 8)),
+                             1)
+
+    def _draw_rust_sedan(self, surf, x, y):
+        """Dead-lot sedan, flat view (see _rust_car_flat)."""
+        self._rust_car_flat(surf, x, y, 50, -17, 9)
+
+    def _draw_rust_wagon(self, surf, x, y):
+        """Dead-lot station wagon, flat view (long roof + rack)."""
+        self._rust_car_flat(surf, x, y, 54, -25, 10, rack=True)
+
+    def _draw_rust_coupe(self, surf, x, y):
+        """Dead-lot coupe, flat view (short greenhouse set back)."""
+        self._rust_car_flat(surf, x, y, 44, -15, 3)
+
+    def _draw_rust_van(self, surf, x, y):
+        """Dead-lot panel van, flat view (one tall slab)."""
+        self._rust_car_flat(surf, x, y, 52, 0, 0, van=True)
+
     def _draw_player_car(self, surf, x, y):
         """The PI's pale grey-blue sedan, dead on the shoulder, drawn TOP-DOWN
         (the game's overhead read) pointing NORTH up the road into town -- roof,

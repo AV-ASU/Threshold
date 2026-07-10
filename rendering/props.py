@@ -9,6 +9,7 @@ sorted alongside furniture). The flat top-down game (F3) never calls this -- it
 falls back to the 2D `_draw_<kind>` sprites in entities/decoration.py.
 """
 import math
+import random
 import pygame
 from rendering.solids import draw_solid, draw_box, draw_billboard, _shade
 
@@ -828,6 +829,221 @@ def _draw_pickup_truck_solid(surf, cam, deco):
     _round_wheel(surf, P, -wbx, hW, r)
 
 
+# ---- The dead lots: abandoned rusted cars (2026-07) ----------------------
+# Everyone DROVE into Brimley (northern Minnesota: the newcomers came on
+# their own wheels and the locals all drive), and nothing with an engine
+# leaves -- so the cars pool where their drivers finally stopped: ragged
+# ranks by the barn, a give-up line on the fold-road shoulder, noses
+# swallowed in the corn. Four body styles, all long dead. Seeded per
+# instance: faded period paint, rust eating up from the rockers, weeds
+# at the tyres, one blown corner, glass grimy or gone. Pair placements
+# with solid invisible 'X' tiles (the lodge-yard truck convention).
+
+_RUST_BASES = [
+    (128, 62, 52),    # dusty red
+    (86, 104, 122),   # faded blue
+    (150, 142, 118),  # dirty cream
+    (98, 84, 60),     # dun brown
+    (92, 102, 74),    # olive
+    (146, 118, 62),   # mustard
+]
+
+
+def _rust_pal(rng):
+    base = _RUST_BASES[rng.randrange(len(_RUST_BASES))]
+    fade = rng.uniform(0.72, 0.98)
+    return {
+        "top":  tuple(min(255, int(c * 1.10 * fade)) for c in base),
+        "side": tuple(int(c * 0.76 * fade) for c in base),
+        "dark": tuple(int(c * 0.42 * fade) for c in base),
+    }
+
+
+def _flat_wheel(surf, P, lx, ly, r):
+    """A blown tyre: the same standing disc, sagged to a low oval settled
+    into the dirt."""
+    n = 12
+    pts = [P(lx + math.cos(math.tau * i / n) * r * 1.12, ly,
+             r * 0.58 + math.sin(math.tau * i / n) * r * 0.58)
+           for i in range(n)]
+    pts = [(int(x), int(y)) for x, y in pts]
+    pygame.draw.polygon(surf, (20, 20, 22), pts)
+    pygame.draw.polygon(surf, (46, 46, 50), pts, 1)
+    h = P(lx, ly, r * 0.58)
+    pygame.draw.circle(surf, (96, 92, 86), (int(h[0]), int(h[1])),
+                       max(1, int(r * 0.4)))
+
+
+def _rust_dress(surf, P, rng, hL, ny, z0, z1, n):
+    """Rust eating the NEAR flank: a rotted rocker streak at the sill,
+    blotches climbing from it."""
+    _lp(surf, P, (-hL + 2, ny, z0 + 1), (hL - 2, ny, z0 + 1), (84, 46, 26), 2)
+    for _ in range(n):
+        lx = rng.uniform(-hL + 3, hL - 3)
+        lz = z0 + abs(rng.gauss(0.0, (z1 - z0) * 0.4))
+        p = P(lx, ny, min(z1 - 0.5, lz))
+        pygame.draw.circle(
+            surf, (118, 60, 32) if rng.random() < 0.6 else (78, 40, 22),
+            (int(p[0]), int(p[1])), rng.randint(1, 3))
+
+
+def _weed_dress(surf, P, rng, hL, hWs, n):
+    """Weeds grown up along the near flank (`hWs` is the SIGNED near-side
+    y); nothing has moved in months."""
+    sgn = 1.0 if hWs >= 0 else -1.0
+    for _ in range(n):
+        base = P(rng.uniform(-hL, hL), hWs + rng.uniform(1, 4) * sgn, 0)
+        g = 58 + rng.randint(0, 42)
+        pygame.draw.line(surf, (44, g, 44), (int(base[0]), int(base[1])),
+                         (int(base[0]) - rng.randint(0, 2),
+                          int(base[1]) - rng.randint(4, 9)), 1)
+
+
+def _rust_car_solid(surf, cam, deco, L, W, cf, cb, cab_up, wagon=False,
+                    van=False):
+    """Shared dead-car engine: a low body band + glassed cabin set on top
+    (or one tall slab box for the van), four wheels with one blown
+    corner, dead-steel bumpers, dead lamps, seeded paint/rust/weeds.
+    `cf`/`cb` are the cabin front/back in local x; `cab_up` its rise
+    above the body band. kwargs: `yaw` (radians) spins the hull."""
+    wx, wy = deco.x, deco.y
+    s = (getattr(deco, "scale", 1.0) or 1.0)
+    yaw = float(deco.kwargs.get("yaw", 0.0))
+    rng = random.Random(deco.seed)
+    P = _vframe(cam, wx, wy, yaw)
+    L, W = L * s, W * s
+    hL, hW = L / 2, W / 2
+    sink = rng.uniform(0.5, 1.5) * s              # settled into the dirt
+    z0 = 4 * s - sink
+    z1 = z0 + (17 * s if van else 9 * s)
+    cz1 = z1 + cab_up * s
+    cf, cb = cf * s, cb * s
+    chW = hW * (0.98 if van else 0.84)
+    r, wbx = 6 * s, hL * 0.60
+    # Which local side faces the camera flips with yaw: resolve the NEAR
+    # side sign from the projection so wheels/glass/rust always dress
+    # the flank the player actually sees.
+    ns = 1.0 if P(0, hW, 0)[1] >= P(0, -hW, 0)[1] else -1.0
+    ny = (hW + 0.2) * ns
+    cny = (chW + 0.2) * ns
+    body = _rust_pal(rng)
+    cab = {"top": _shade(body["top"], 0.9),
+           "side": _shade(body["side"], 0.72),
+           "dark": _shade(body["dark"], 0.72)}
+    flat_i = rng.randrange(4)                     # which corner is blown
+    glass_gone = rng.random() < 0.45
+    glass = (16, 17, 19) if glass_gone else (52, 60, 58)
+    steel = (108, 104, 96)
+    _vehicle_shadow(surf, cam, wx, wy, L, W)
+    for i, lx in enumerate((wbx, -wbx)):          # far wheels
+        (_flat_wheel if 2 + i == flat_i else _round_wheel)(
+            surf, P, lx, -hW * ns, r)
+    _vbox(surf, cam, wx, wy, L, W, z0, z1, body, yaw=yaw)
+    if van:
+        # the tall box IS the cabin: a high windshield on the nose, a
+        # small near-side cab window, sliding-door + rear-door seams
+        _qp(surf, P, [(hL - 0.5, -chW * 0.8, z1 - 9 * s),
+                      (hL - 0.5, chW * 0.8, z1 - 9 * s),
+                      (hL - 0.5, chW * 0.8, z1 - 2 * s),
+                      (hL - 0.5, -chW * 0.8, z1 - 2 * s)], glass)
+        _qp(surf, P, [(hL - 4 * s, ny, z1 - 9 * s),
+                      (hL - 13 * s, ny, z1 - 9 * s),
+                      (hL - 13 * s, ny, z1 - 3 * s),
+                      (hL - 4 * s, ny, z1 - 3 * s)], glass)
+        _lp(surf, P, (2 * s, ny, z0 + 1), (2 * s, ny, z1 - 1),
+            _shade(body["dark"], 0.8), 1)
+        _lp(surf, P, (-15 * s, ny, z0 + 1), (-15 * s, ny, z1 - 1),
+            _shade(body["dark"], 0.8), 1)
+        # rear barn doors: a centre seam + hinges on the tail face, and a
+        # roof edge line so the slab reads as a closed van from behind
+        _lp(surf, P, (-hL - 0.2, 0, z0 + 2), (-hL - 0.2, 0, z1 - 2 * s),
+            _shade(body["dark"], 0.7), 1)
+        _lp(surf, P, (-hL - 0.2, -chW * 0.5, z1 - 6 * s),
+            (-hL - 0.2, -chW * 0.32, z1 - 6 * s), _shade(body["dark"], 0.7), 1)
+        _lp(surf, P, (-hL, -chW, z1), (-hL, chW, z1),
+            _shade(body["top"], 1.3), 1)
+        _lp(surf, P, (-hL + 1, chW * ns, z1), (hL - 1, chW * ns, z1),
+            _shade(body["top"], 1.3), 1)
+    else:
+        ccx = (cf + cb) / 2
+        _vbox(surf, cam, wx + ccx * math.cos(yaw), wy + ccx * math.sin(yaw),
+              cf - cb, chW * 2, z1, cz1, cab, yaw=yaw)
+        # near-side glass band + windshield + rear glass. PILLARS split
+        # the band into real windows -- without them the long dark band
+        # reads as an OPEN BED (the wagon failed the mistaken-identity
+        # test as a trailer).
+        _qp(surf, P, [(cb + 2, cny, z1 + 1.5), (cf - 2, cny, z1 + 1.5),
+                      (cf - 2, cny, cz1 - 1.5), (cb + 2, cny, cz1 - 1.5)],
+            glass)
+        n_pil = 2 if wagon else 1
+        for k in range(1, n_pil + 1):
+            px = cb + (cf - cb) * k / (n_pil + 1)
+            _lp(surf, P, (px, cny, z1 + 1), (px, cny, cz1 - 1),
+                cab["side"], 2)
+        if not glass_gone:
+            _lp(surf, P, (cb + 2, cny, cz1 - 1.6),
+                (cf - 2, cny, cz1 - 1.6), (86, 102, 100), 1)
+        _qp(surf, P, [(cf, -chW, z1 + 1.5), (cf, chW, z1 + 1.5),
+                      (cf, chW, cz1 - 1.5), (cf, -chW, cz1 - 1.5)], glass)
+        _qp(surf, P, [(cb, -chW, z1 + 1.5), (cb, chW, z1 + 1.5),
+                      (cb, chW, cz1 - 1.5), (cb, -chW, cz1 - 1.5)], glass)
+        # roof edge highlight so the lid reads CLOSED at the low pitch
+        _lp(surf, P, (cb + 1, chW * ns, cz1), (cf - 1, chW * ns, cz1),
+            _shade(cab["top"], 1.35), 1)
+        if wagon:
+            # roof-rack rails the length of the long wagon roof
+            for ly in (-chW * 0.55, chW * 0.55):
+                _lp(surf, P, (cb + 2, ly, cz1 + 1), (cf - 2, ly, cz1 + 1),
+                    _shade(cab["top"], 1.25), 1)
+        _lp(surf, P, ((cb + cf) / 2, ny, z0 + 1), ((cb + cf) / 2, ny, z1),
+            _shade(body["dark"], 0.8), 1)          # door seam
+    # bumpers dulled to dead steel; the rear one sometimes hangs
+    _qp(surf, P, [(hL, -hW, z0), (hL, hW, z0), (hL, hW, z0 + 2.5 * s),
+                  (hL, -hW, z0 + 2.5 * s)], steel)
+    if rng.random() < 0.5:
+        _lp(surf, P, (-hL, hW * ns, z0 + 2 * s),
+            (-hL + 3 * s, (hW + 2 * s) * ns, 0), _shade(steel, 0.8), 2)
+    else:
+        _qp(surf, P, [(-hL, -hW, z0), (-hL, hW, z0), (-hL, hW, z0 + 2.5 * s),
+                      (-hL, -hW, z0 + 2.5 * s)], _shade(steel, 0.7))
+    # lamps long dead: dim sockets, one sometimes smashed dark
+    for k, ey in enumerate((-hW * 0.62, hW * 0.62)):
+        hp = P(hL, ey, z1 - 2.5 * s)
+        col = (30, 30, 32) if (glass_gone and k == 0) else (150, 142, 108)
+        pygame.draw.circle(surf, col, (int(hp[0]), int(hp[1])),
+                           max(1, int(2 * s)))
+        tp = P(-hL, ey, z1 - 2.5 * s)
+        pygame.draw.circle(surf, (96, 30, 26), (int(tp[0]), int(tp[1])),
+                           max(1, int(1.8 * s)))
+    _rust_dress(surf, P, rng, hL, ny, z0, z1, 12 if van else 10)
+    for i, lx in enumerate((wbx, -wbx)):          # near wheels
+        (_flat_wheel if i == flat_i else _round_wheel)(
+            surf, P, lx, hW * ns, r)
+    _weed_dress(surf, P, rng, hL, hW * ns, 8)
+
+
+def _draw_rust_sedan_solid(surf, cam, deco):
+    """A dead 80s sedan: mid-set cabin on a low body, rust and weeds."""
+    _rust_car_solid(surf, cam, deco, 52, 26, 9, -17, 8)
+
+
+def _draw_rust_wagon_solid(surf, cam, deco):
+    """A dead station wagon: the roof runs long to the tail, rack rails
+    still on it."""
+    _rust_car_solid(surf, cam, deco, 56, 26, 10, -25, 8, wagon=True)
+
+
+def _draw_rust_coupe_solid(surf, cam, deco):
+    """A dead two-door coupe: a short greenhouse set back on a low body."""
+    _rust_car_solid(surf, cam, deco, 46, 24, 3, -15, 7)
+
+
+def _draw_rust_van_solid(surf, cam, deco):
+    """A dead panel van: one tall slab-sided box, high windshield, a
+    sliding-door seam on the near flank."""
+    _rust_car_solid(surf, cam, deco, 54, 28, 0, 0, 0, van=True)
+
+
 def _draw_waterfall_solid(surf, cam, deco):
     """A spring gushing from a HOLE in the cave cliff and falling into the river
     -- the visible mouth of the artery (NARRATIVE §2). A dark source recess
@@ -1409,6 +1625,10 @@ SOLID_PROPS = {
     "ore_cart":      _draw_ore_cart_solid,
     "player_car":    _draw_car_solid,
     "pickup_truck":  _draw_pickup_truck_solid,
+    "rust_sedan":    _draw_rust_sedan_solid,
+    "rust_wagon":    _draw_rust_wagon_solid,
+    "rust_coupe":    _draw_rust_coupe_solid,
+    "rust_van":      _draw_rust_van_solid,
     "stalagmite":    _draw_stalagmite_solid,
     "candle":        _draw_candle_solid,
     "kerosene_lamp": _draw_kerosene_lamp_solid,

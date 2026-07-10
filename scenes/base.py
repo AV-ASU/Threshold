@@ -145,6 +145,38 @@ def scatter_forest_band(floor_ll, objects_l, w, h, *,
     return floor_ll, objects_l
 
 
+def dead_cars(objects_l, cars):
+    """The dead lots: ranks of the abandoned rusted cars. Everyone DROVE
+    into Brimley (northern Minnesota; the newcomers came on their own
+    wheels and the locals all drive) and nothing with an engine leaves,
+    so the cars pool where their drivers finally stopped.
+
+    Stamps the solid footprint and returns the Decorations for the
+    caller to add once its Scene exists. Each entry is
+    (tx, ty, kind, yaw, seed, axis): the hull is centred on the shared
+    edge of two tiles along `axis` ('h' spans (tx,ty)-(tx+1,ty), 'v'
+    spans (tx,ty)-(tx,ty+1)), and both tiles are stamped solid invisible
+    'X' (the lodge-yard truck convention) so the player bumps on the
+    metal -- and, X being sight-blocking, a hull is hard cover. Kinds:
+    rust_sedan / rust_wagon / rust_coupe / rust_van (rendering/props.py
+    tilt volumes; flat draws in entities/deco_structure.py)."""
+    from entities.decoration import Decoration
+    h, w = len(objects_l), len(objects_l[0])
+    out = []
+    for (tx, ty, kind, yaw, seed, axis) in cars:
+        if axis == "h":
+            wx, wy = (tx + 1) * TILE, ty * TILE + 16
+            tiles = ((tx, ty), (tx + 1, ty))
+        else:
+            wx, wy = tx * TILE + 16, (ty + 1) * TILE
+            tiles = ((tx, ty), (tx, ty + 1))
+        for ox, oy in tiles:
+            if 0 <= oy < h and 0 <= ox < w:
+                objects_l[oy][ox] = "X"
+        out.append(Decoration(wx, wy, kind, seed=seed, yaw=yaw))
+    return out
+
+
 class Scene:
     TILE = TILE
 
