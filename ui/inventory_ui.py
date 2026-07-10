@@ -83,12 +83,6 @@ class InventoryUI:
         self.cursor = (self.cursor + dy) % n
         self.audio.play("cursor", 0.5)
 
-    def _selected_key(self, inv):
-        items = self._filtered_items(inv)
-        if not items or self.cursor >= len(items):
-            return None
-        return items[self.cursor][1]
-
     def use_selected(self, player):
         inv = player.inventory
         items = self._filtered_items(inv)

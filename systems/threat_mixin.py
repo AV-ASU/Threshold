@@ -645,30 +645,6 @@ class ThreatMixin:
         self.scene.add_npc(n)
         return n
 
-    def _enemy_sees_player(self):
-        """True if any hostile currently has line of sight on the
-        player. Hostiles are the patrol/chaser NPCs; their sight
-        range matches the chaser AI (180 px). Hiding (corn cover or
-        a hide spot) breaks line of sight unconditionally, which is
-        what makes cover the player's main tool for shedding threat."""
-        if self.scene is None or self.player is None:
-            return False
-        if self.player.hidden is not None:
-            return False
-        px, py = self.player.x, self.player.y
-        for n in self.scene.npcs:
-            if not getattr(n, "alive", True):
-                continue
-            tag = getattr(n, "tag", None)
-            hostile = ((isinstance(tag, str) and tag.startswith("patrol_"))
-                       or getattr(n, "movement", None) in ("chaser",
-                                                            "stalker"))
-            if not hostile:
-                continue
-            if math.hypot(n.x - px, n.y - py) < 180:
-                return True
-        return False
-
     def _tick_visibility(self, dt):
         """The visibility meter [0, 1] -- how visible the player is to
         the King in Yellow. Watchers (spawned by a cultist's curse)
