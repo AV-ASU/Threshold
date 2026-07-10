@@ -730,6 +730,13 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         if self.scene and self.scene.on_exit_fn:
             self.scene.on_exit_fn(self, self.scene)
         self.scene = load_scene(key)
+        # Stamp a stable per-build identity on the builder's NPCs for the
+        # dead-locals ledger: scene builders create NPCs in deterministic
+        # order, so the index matches across loads. NPCs added later
+        # (on_enter staging, cult top-ups) carry none and are keyed by
+        # name alone if they ever reach the ledger.
+        for _bi, _bn in enumerate(self.scene.npcs):
+            _bn._build_idx = _bi
         self.save.visit_scene(key)
         self.save.data["spawn"] = spawn_id
         spawn = self.scene.spawns.get(spawn_id, self.scene.spawns.get("default"))
@@ -891,12 +898,15 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         if self.save.flag("world_emptied"):
             self.scene.npcs = []
         else:
+            # THE LEDGER OF THE DEAD (2026-07 ruling): a killed local
+            # stays dead for the rest of the run. Lay the run's bodies
+            # back down where they fell BEFORE the rot pass so a corpse
+            # is never converted/turned (rot skips _is_corpse). Nobody
+            # leaves Brimley, not even by dying (NARRATIVE §5).
+            self._apply_dead_locals()
             # Re-derive the world's world rot for this scene from the
             # evidence count (rot decals, turned/mutated locals, the
-            # stage-3 Sheriff encounter). Corpses are NOT persisted across
-            # scene loads (NARRATIVE §4 / DESIGN.md §1: the act costs in the moment, no
-            # cross-scene ledger) -- a killed local lies there only while
-            # you're in the room.
+            # stage-3 Sheriff encounter).
             self._apply_rot()
             # The Moths (the King's heralds) seed with the scene:
             # evidence-scaled on the open surface, a retinue in the
@@ -2111,29 +2121,93 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
             # persisted across scene loads; the scene rebuilds live on re-entry.
             return True
         # An innocent local. The cult reaction: a loud investigate ping at
-        # the body and a hard visibility spike. The body stays down for as
-        # long as you're in the room (_make_corpse), but is NOT persisted
-        # across scene loads -- the act costs in the moment, not a ledger
-        # (NARRATIVE §4 / DESIGN.md §1).
+        # the body and a hard visibility spike. The body stays down for
+        # good: the kill is written to the dead-locals ledger and the body
+        # is laid back down on every re-entry (_apply_dead_locals) -- dead
+        # locals stay dead for the rest of the run (NARRATIVE §5 /
+        # DESIGN.md §1).
         self.visibility = min(LOCAL_KILL_VIS_CAP,
                               max(self.visibility,
                                   self.visibility + LOCAL_KILL_VIS_SPIKE))
         if self.scene is not None:
             self.scene.emit_noise(npc.x, npc.y, 1.0, kind="body")
+        self._record_dead_local(npc)
         return True
 
     def _make_corpse(self, npc):
-        """Convert a just-killed local NPC into a corpse for the rest of the
-        time the player is in this room: it stops moving (alive=False
-        already), stops blocking, and answers E with a one-shot examine
-        instead of its old dialogue. Not persisted across scene loads
-        (NARRATIVE §4 / DESIGN.md §1) -- the scene rebuilds the local live on re-entry."""
+        """Convert a just-killed local NPC into a corpse: it stops moving
+        (alive=False already), stops blocking, and answers E with a flat
+        examine instead of its old dialogue. An innocent local's corpse is
+        also ledgered (_record_dead_local at the kill) and laid back down
+        on every re-entry (NARRATIVE §5 / DESIGN.md §1: dead locals stay
+        dead); a cultist's body lasts only the visit."""
         npc._is_corpse = True
         npc._kill_processed = True
         npc.solid = False
         npc.movement = "idle"
         npc.dialogue_fn = _corpse_examine
         npc.no_prompt = False
+
+    def _record_dead_local(self, npc):
+        """Write a killed local into the run's dead-locals ledger (save arg
+        `dead_locals`): scene, resting position, and an identity the scene
+        rebuild can be matched against (name first; the builder index from
+        load_scene_now for the nameless). The office Sheriff is normalized
+        to one identity so the watching "Sheriff" and the stage-3 hollow
+        "Sheriff Vane" cannot both exist once either is dead."""
+        if self.scene is None:
+            return
+        nm = getattr(npc, "name", "") or ""
+        if nm == "Sheriff Vane":
+            nm = "Sheriff"
+        bi = getattr(npc, "_build_idx", None)
+        if not nm and bi is None:
+            return                      # dynamic + nameless: not ledgerable
+        key = f"{self.scene.key}:{nm if nm else '#%d' % bi}"
+        dead = self.save.arg("dead_locals", {}) or {}
+        dead[key] = {"scene": self.scene.key,
+                     "x": npc.x, "y": npc.y,
+                     "name": nm, "idx": bi}
+        self.save.set_arg("dead_locals", dead)
+
+    def _local_is_dead(self, name):
+        """True if a local with this ledgered name was killed this run."""
+        dead = self.save.arg("dead_locals", {}) or {}
+        return any(rec.get("name") == name for rec in dead.values())
+
+    def _apply_dead_locals(self):
+        """Re-lay the run's killed locals on scene load (dead locals stay
+        dead, NARRATIVE §5): each ledgered body belonging to this scene
+        finds its rebuilt NPC (by name, else by builder index), moves it
+        to where it fell, and settles it back into a corpse. Runs BEFORE
+        _apply_rot so the rot pass skips the dead."""
+        dead = self.save.arg("dead_locals", {}) or {}
+        if not dead or self.scene is None:
+            return
+        claimed = set()
+        for rec in dead.values():
+            if rec.get("scene") != self.scene.key:
+                continue
+            nm, bi = rec.get("name") or "", rec.get("idx")
+            target = None
+            for n in self.scene.npcs:
+                if id(n) in claimed or getattr(n, "_is_corpse", False):
+                    continue
+                if nm:
+                    if getattr(n, "name", "") == nm:
+                        target = n
+                        break
+                elif bi is not None and getattr(n, "_build_idx", None) == bi:
+                    target = n
+                    break
+            if target is None:
+                continue                # rebuilt away (staged NPCs etc.)
+            claimed.add(id(target))
+            target.alive = False
+            target.x = rec.get("x", target.x)
+            target.y = rec.get("y", target.y)
+            target._inside = False      # a dead homebody can't be indoors
+            self._make_corpse(target)
 
     def _kill_enemy(self, e):
         """Run the death side-effects for `e`: marks dead, plays the

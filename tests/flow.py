@@ -2510,6 +2510,103 @@ def main():
               for n in gmt.save.arg("notes", [])),
           "tempt: the permission-to-leave beat fires (descent_mask note)")
 
+    # --- 32. DEAD LOCALS STAY DEAD (2026-07 ruling; NARRATIVE §5) --------
+    # A killed local is ledgered (save arg dead_locals) and the body is
+    # laid back down where it fell on every re-entry; New Game clears it.
+    gdl = new_game()
+    gdl.load_scene_now("brimley")
+    ready(gdl)
+    pell = next((n for n in gdl.scene.npcs
+                 if getattr(n, "name", "") == "Old Pell"), None)
+    check(pell is not None, "dead-locals: Old Pell stands in brimley")
+    if pell is not None:
+        rx, ry = pell.x, pell.y
+        pell.alive = False
+        if gdl._kill_npc(pell):
+            gdl._make_corpse(pell)
+        check(bool(gdl.save.arg("dead_locals")),
+              "dead-locals: the kill is written to the ledger")
+        gdl.load_scene_now("shop")
+        gdl.load_scene_now("brimley")
+        ready(gdl)
+        back = [n for n in gdl.scene.npcs
+                if getattr(n, "name", "") == "Old Pell"]
+        check(back and all(getattr(n, "_is_corpse", False)
+                           and not getattr(n, "alive", True) for n in back),
+              "dead-locals: the body persists across scene loads")
+        check(back and abs(back[0].x - rx) < 1 and abs(back[0].y - ry) < 1,
+              "dead-locals: the body lies where it fell")
+    # The office interplay: a shot Vane never stands back up hollow; his
+    # body holds the office at stage 3 instead of the sheriff_hunt spawn.
+    gdl.load_scene_now("sheriff_office")
+    ready(gdl)
+    sher = next((n for n in gdl.scene.npcs
+                 if getattr(n, "name", "") == "Sheriff"), None)
+    check(sher is not None, "dead-locals: the Sheriff stands in his office")
+    if sher is not None:
+        sher.alive = False
+        if gdl._kill_npc(sher):
+            gdl._make_corpse(sher)
+        gdl.save.set_arg("evidence",
+                         [{"name": f"dl_t{i}", "content": "x"}
+                          for i in range(3)])
+        gdl.load_scene_now("brimley")
+        gdl.load_scene_now("sheriff_office")
+        ready(gdl)
+        check(not any(getattr(n, "tag", "") == "sheriff_hunt"
+                      for n in gdl.scene.npcs),
+              "dead-locals: a dead Vane never rises as the hollow lawman")
+        check(any(getattr(n, "name", "") == "Sheriff"
+                  and getattr(n, "_is_corpse", False)
+                  for n in gdl.scene.npcs),
+              "dead-locals: Vane's body holds the stage-3 office")
+    gdl.save.new()
+    check(not gdl.save.arg("dead_locals"),
+          "dead-locals: New Game clears the ledger")
+
+    # --- 33. THE NAME STAYS OFF THE PAGE (Chambers, never quoted) --------
+    # "Carcosa" / "the King in Yellow" / "the Yellow King" never appear in
+    # a player-facing string. AST sweep of every string literal outside
+    # docstrings (dev docstrings/comments may still use the names); the
+    # SEAL ending's black stars + twin suns are the one deliberate,
+    # UNNAMED reference (NARRATIVE §5).
+    import ast as _ast
+    _BAN = ("Carcosa", "King in Yellow", "Yellow King")
+    _name_hits = []
+    for _dirpath, _dirs, _files in os.walk(ROOT):
+        _dirs[:] = [d for d in _dirs
+                    if d not in ("__pycache__", ".git", "tools", "tests")]
+        for _fn in _files:
+            if not _fn.endswith(".py"):
+                continue
+            _fp = os.path.join(_dirpath, _fn)
+            try:
+                with open(_fp, encoding="utf-8") as _fh:
+                    _tree = _ast.parse(_fh.read())
+            except (SyntaxError, OSError):
+                continue
+            _docids = set()
+            for _node in _ast.walk(_tree):
+                if isinstance(_node, (_ast.Module, _ast.ClassDef,
+                                      _ast.FunctionDef,
+                                      _ast.AsyncFunctionDef)):
+                    _body = getattr(_node, "body", [])
+                    if (_body and isinstance(_body[0], _ast.Expr)
+                            and isinstance(_body[0].value, _ast.Constant)
+                            and isinstance(_body[0].value.value, str)):
+                        _docids.add(id(_body[0].value))
+            for _node in _ast.walk(_tree):
+                if (isinstance(_node, _ast.Constant)
+                        and isinstance(_node.value, str)
+                        and id(_node) not in _docids
+                        and any(_tok in _node.value for _tok in _BAN)):
+                    _rel = os.path.relpath(_fp, ROOT)
+                    _name_hits.append(f"{_rel}:{_node.lineno}")
+    check(not _name_hits,
+          "name ban: Carcosa / the King in Yellow never surface in a "
+          "string literal" + (": " + ", ".join(_name_hits[:5])
+                              if _name_hits else ""))
+
     print()
     if FAILS:
         print(f"{len(FAILS)} flow failure(s).")

@@ -112,12 +112,16 @@ protected the cult). So the one thing your weapon reliably kills is the
 control, lethal only in the most useless, self-damning direction. It is
 never without cost: a local kill **spikes visibility** hard (the town turns
 its head) and pings the cult to **investigate the body**, and the body
-**lies there for as long as you're in that room**.
+**lies there for the rest of the run**.
 
-> **The kill costs in the moment, and the moment is the design.** The
-> visibility spike, the town's turned head, the body on the floor while
-> you're present — the scene rebuilds the local live on re-entry (§2).
-> The horror is the act, not a database.
+> **The kill costs in the moment, and then it keeps (2026-07 ruling:
+> dead locals stay dead).** The visibility spike and the town's turned
+> head land in the moment; the body itself is written to the
+> **dead-locals ledger** (`save.arg("dead_locals")`) and laid back down
+> where it fell on every re-entry (`_apply_dead_locals`, run from
+> `load_scene_now` before the rot pass). Nobody leaves Brimley, not
+> even by dying (NARRATIVE §5); a New Game clears the ledger, and the
+> cot save snapshots it like any other arg. Guarded: flow §32.
 
 ---
 
@@ -192,10 +196,12 @@ What rises with the stage:
   > itself is unchanged either way (the stand, the unfinished line, the
   > slow pursuit). The despair/hope ledger, its constants, and the
   > newspaper break-lever live with the build ticket (TODO #2 + #2a).
-- **The dead.** A local you shoot lies where they fell **for as long as
-  you're in that room** — the immediate weight of what you did. The scene
-  rebuilds the local live on re-entry: the act costs in the moment, and
-  the moment is the whole of it. It doesn't need a ledger.
+- **The dead.** A local you shoot lies where they fell **for the rest
+  of the run** (2026-07 ruling: dead locals stay dead). The kill is
+  written to the `dead_locals` ledger and the scene lays the body back
+  down on every re-entry (§1); the rot pass skips the dead, and a shot
+  Vane never stands back up hollow — his body holds the office at
+  stage 3 instead of the `sheriff_hunt` spawn.
 
 ---
 
@@ -311,11 +317,15 @@ Only display names and fiction change.
   the Watchers are bullet-phantom** (unshootable — you can't fire down a
   direction you can't point at), and a **clean round always kills a
   local** (the gate only ever protected the cult).
-- ~~**Scrap corpse persistence (§1, §2).**~~ **DONE.** The cross-scene
-  `dead_locals` replay and the accumulating corpse `mold` stage are gone
-  from the code; the in-room body, the visibility spike, and the cult
-  body-investigate ping all stay. (`draw_npc_corpse` still *accepts* a
-  mold arg as reusable art; player kills draw at 0, a clean fresh kill.)
+- ~~**Scrap corpse persistence (§1, §2).**~~ **SUPERSEDED (2026-07
+  ruling: dead locals stay dead).** The scrap removed the old replay
+  and the accumulating corpse `mold` stage; the ruling reinstated
+  persistence in its simplest form — a `dead_locals` save-arg ledger +
+  `_apply_dead_locals` on scene load lays each killed local's body back
+  down where it fell. No mold stage returns (corpses draw at 0, a clean
+  fresh kill); the visibility spike and the cult body-investigate ping
+  are unchanged; cultist bodies still last only the visit. Guarded by
+  flow §32.
 - **Mara's journal → the door (DONE).** Reading `mom_notebook` to the end
   drops the **door-dream cutscene** (the lure that took her) — the game's
   clearest, wordless look at NARRATIVE §2: a dried-wood doorframe in black, a pulsing
