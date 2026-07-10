@@ -2,8 +2,36 @@
 
 A full-repo health pass: baseline verification, structural cross-checks,
 dead-code and hygiene sweeps, test-gate economics, and doc-drift spot checks.
-Audit only — no behavior was changed. Every finding below was verified
-against the code (grep/AST/runtime), not inferred.
+Every finding below was verified against the code (grep/AST/runtime),
+not inferred.
+
+> **STATUS (same day, this branch): all findings fixed** except L5
+> (awareness-only) and the "GAME_CHANGES §N" comment pointers in L3
+> (kept deliberately as historical provenance; TODO.md's header explains
+> the fold). Fix outcomes:
+>
+> - **H1 FIXED** — `systems/audio.py` now builds the library once per
+>   process (`_LIBRARY_CACHE`) and shares it across `Audio` instances.
+>   Measured: second construction 5.2 s → ~0 s; `tests/flow.py`
+>   7 min → 7 s; the FULL `tests/run_all.py` gate **15+ min → 26 s**.
+> - **H2 FIXED** — `.github/workflows/ci.yml` runs `tests/run_all.py`
+>   (all six harnesses) across the 3.10/3.11/3.12 matrix.
+> - **M1 FIXED** — `reset_king_unfold_fx()` now runs beside all three
+>   `reset_king_fx()` sites (run reset, scene load, King despawn).
+> - **M2 FIXED** — every harness entry point sets
+>   `SDL_NO_SIGNAL_HANDLERS=1`, so SIGTERM/`timeout` kill tests again.
+>   Proven: a probe process ignored `timeout 3` for 20 s without the
+>   hint and died at 3 s with it.
+> - **L1/L2 FIXED** — the three dead config constants and four dead
+>   rendering helpers are deleted.
+> - **L3 FIXED (partial, see above)** — CLAUDE.md's `game.py` line
+>   count corrected.
+> - **L4 FIXED** — `ui/text_input.py` callback guards now
+>   `traceback.print_exc()` instead of swallowing silently.
+>
+> Verified after the fixes: `compileall` clean, full gate green in 26 s,
+> and the `tools/capture_world.py` byte-identity gate passes (all five
+> capture scenes IDENTICAL before/after).
 
 **Baseline:** 118 Python files, ~54,200 lines. `python -m compileall` clean.
 All six harnesses pass individually (smoke, flow, stealth, fold_pursuit,

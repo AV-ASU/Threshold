@@ -21,6 +21,10 @@ import os
 import sys
 
 os.environ.setdefault("SDL_VIDEODRIVER", "dummy")
+# SDL converts SIGTERM into a quit event instead of dying, so `timeout`
+# and CI cancellation cannot stop a harness (it runs to completion while
+# the wrapper reports 124). Keep the default kill behavior in tests.
+os.environ.setdefault("SDL_NO_SIGNAL_HANDLERS", "1")
 os.environ.setdefault("SDL_AUDIODRIVER", "dummy")
 
 # Resolve project root from this file's location so the test runs from

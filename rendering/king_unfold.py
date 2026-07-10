@@ -212,12 +212,6 @@ def _proj(p3, cx, cy, scale):
     return (cx + p3[0] * k3 * scale, cy - p3[1] * k3 * scale)
 
 
-def _project(p4, cx, cy, scale):     # kept for tools/explore_4d_shapes.py compat
-    p3 = _to3d(p4)
-    k3 = _FOCAL / (_Z_EYE - p3[2])
-    return (cx + p3[0] * k3 * scale, cy - p3[1] * k3 * scale, p3[2], k3)
-
-
 def _xform(verts, angs, wob_amp, t):
     out3 = []
     a, b, c, d = angs
