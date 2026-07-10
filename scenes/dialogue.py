@@ -2,14 +2,16 @@
 
 The spoken lines are final, lore-bearing copy: each NPC reacts to the
 case (the Blaine girl, the well, the cult). The PRINCIPALS (Sable, Vane,
-Hettie, Toby, Crane) all speak through the organic ask verb now
-(ui/conversation `*_CONVO` data, TODO #1): the menu options are the PI's
-own spoken lines, every principal leads with the two guaranteed openers
+Hettie, Toby, Crane) AND the Brimley chorus (Old Pell, Mrs. Calder,
+Royce, Garrick) all speak through the organic ask verb now
+(ui/conversation `*_CONVO` data, TODO #1): the menu options are
+the PI's own spoken lines, everyone leads with the two guaranteed openers
 (`_opener_exchanges`: introduce-as-PI + Mara's photograph), and each
 NPC's story-critical one-shots (the witness account, the memory of the
-girl, the murder he can't report, the paper trade) still VOLUNTEER
-themselves ahead of the menu. Other state reactivity comes from per-NPC
-flag gates and the `beats` hook in scenes/brimley.py _brimley_voice.
+girl, the murder he can't report, the paper trade, the town-reaction
+beats) still VOLUNTEER themselves ahead of the menu. Other state
+reactivity comes from per-NPC flag gates; scenes/brimley.py
+_brimley_voice survives only for the doorstep Hettie cameo.
 `escalate` still exists but now has NO call sites -- kept only in case
 visibility-tiered copy is ever authored. Evidence beats are surfaced
 through `_evidence`; only the six in `CANONICAL_EVIDENCE` count toward
@@ -1163,6 +1165,332 @@ def clerk_dialogue(game, npc):
     # NOTE nudges the PI back to the desk when he is ready (see _evidence).
     from ui.conversation import open_conversation
     open_conversation(game, npc, SABLE_CONVO)
+
+
+# ---- The Brimley chorus ----
+# The last of the ask-verb expansion (TODO #1): Old Pell, Mrs. Calder,
+# Royce, and Garrick come off the _brimley_voice page-lists and onto the
+# organic conversation. Every one leads with the shared opener pair
+# (introduce-as-PI + the photograph) with short answers of their own,
+# plus a question or two carrying their signature material. Their reactive one-shots (the town reacting to the case,
+# TODO #10) keep firing ahead of the menu, exactly as the principals'
+# volunteered beats do. The rot machinery is untouched: the convert/turn
+# swap overwrites dialogue_fn at its stage, so each of these talks lives
+# in the local's pre-turn window. The fold note moves off the old
+# any-talk trigger onto the exchanges that actually carry the account
+# (Royce's roads, Garrick's warning) -- earned by asking, like
+# everything else in the verb.
+
+
+def chorus_dialogue(convo, beats=()):
+    """Build a dialogue_fn for a Brimley chorus local. Reactive one-shot
+    `beats` keep the _brimley_voice contract: on each talk the first
+    beat whose predicate holds and whose one-shot flag is unset fires
+    INSTEAD of the conversation (and sets its flag); otherwise the
+    organic conversation opens."""
+    def _fn(game, npc):
+        portrait = (getattr(npc, "portrait", None)
+                    or getattr(npc, "sprite_kind", None))
+        for flag, pred, pages in beats:
+            if game.save.flag(flag):
+                continue
+            if pred(game):
+                game.save.set_flag(flag, True)
+                game.dialog.show(pages, speaker=npc.name,
+                                 voice=convo.get("voice", "blip_mid"),
+                                 portrait=portrait)
+                return
+        from ui.conversation import open_conversation
+        open_conversation(game, npc, convo)
+    return _fn
+
+
+def _royce_roads_told(game):
+    """Royce's account IS the looping-roads fact (the corn hands you
+    back); file the PI's fold note without hijacking the conversation
+    float chain (reflect=False) -- the exchange carries the PI's
+    reflection as its own closing beat."""
+    if hasattr(game, "_fold_mentioned"):
+        game._fold_mentioned("Royce", reflect=False)
+
+
+def _garrick_roads_told(game):
+    """Garrick's road warning carries the same account (make for the
+    county line and you are back at this well); same reflect=False
+    rule as Royce and Vane."""
+    if hasattr(game, "_fold_mentioned"):
+        game._fold_mentioned("Garrick", reflect=False)
+
+
+# Old Pell -- the schoolhouse step and the corn: Pell corn, the town's
+# northernmost-in-the-world pride (TODO #11, a mundane human feat, never
+# the door's doing), dead standing since the missed fall harvest. Stasis
+# register; he turns at rot stage 3, so this talk is his pre-turn
+# window. The stopped calendar stays a rot-layer detail (the decoration
+# + his turned lines), deliberately NOT an ask topic. (His old
+# persistent-cold line was CUT, maintainer call + STORY_AUDIT finding:
+# the ice goes out and the season turns -- weather stasis would be a
+# second impossible thing.)
+PELL_CONVO = {
+    "id":    "pell",
+    "name":  "Old Pell",
+    "voice": "blip_low",
+    "pi_voice": "blip_soft",
+    "prompt": "Pell stays put on his step, arms folded.",
+    "leave":  "That's all for now.",
+    "greet": {
+        "flag": "pell_greeted",
+        "beats": [
+            ("npc", "[c=dim]You're new. We don't get new. Nobody gets in. "
+                    "Nobody gets...[/c]"),
+            ("npc", "Hm. Well."),
+        ],
+    },
+    "exchanges": _opener_exchanges(
+        intro_beats=[
+            ("npc", "A detective. On my step."),
+            ("npc", "There's a foulness set over this whole town, son. You "
+                    "feel it more than smell it. Folk are tired under it, "
+                    "all of them, and sleep doesn't mend it."),
+            ("npc", "[c=dim]You're breathing it now too. Same as the rest "
+                    "of us.[/c]"),
+        ],
+        photo_beats=[
+            ("npc", "(He tips the photograph toward the light, slow about "
+                    "it.)"),
+            ("npc", "Could be she went by in the fall. Could be she "
+                    "didn't. The new faces all ran together after a "
+                    "while. Then they stopped going by at all."),
+        ],
+    ) + [
+        {
+            "key": "corn",
+            "q": "All that corn west of the river, dead and still standing "
+                 "in April. Nobody brought it in?",
+            "label": "Nobody brought the corn in?",
+            "beats": [
+                ("npc", "That's Pell corn, son. Northernmost corn in the "
+                        "world, grown on this ground since 1894. My father "
+                        "took ribbons on it. So did I."),
+                ("npc", "Nobody cut it last fall. First harvest this town "
+                        "ever missed. It stood there and died standing."),
+                ("npc", "[c=dim]I don't look at the fields long "
+                        "anymore.[/c]"),
+            ],
+        },
+    ],
+}
+
+
+# Mrs. Calder -- the east-edge road, the extra place set at supper for a
+# guest she cannot name (a certainty she doesn't question; §1b: no
+# perceptible individual loss). She converts at rot stage 2, so her talk
+# lives at evidence 0-1.
+CALDER_CONVO = {
+    "id":    "calder",
+    "name":  "Mrs. Calder",
+    "voice": "blip_mid",
+    "pi_voice": "blip_soft",
+    "prompt": "Mrs. Calder watches the road past your shoulder.",
+    "leave":  "That's all for now.",
+    "greet": {
+        "flag": "calder_greeted",
+        "beats": [
+            ("npc", "Oh. Is it you? ...Are you the one the place is set "
+                    "for?"),
+            ("npc", "[c=dim]No. No, it couldn't be you. Forgive an old "
+                    "woman her hoping.[/c]"),
+        ],
+    },
+    "exchanges": _opener_exchanges(
+        intro_beats=[
+            ("npc", "(She takes your hand in both of hers before you "
+                    "finish saying it.)"),
+            ("npc", "Somebody's daughter. And somebody sent for, to bring "
+                    "her home. There's still such a thing. Isn't that "
+                    "fine."),
+        ],
+        photo_beats=[
+            ("npc", "(She holds it out at arm's length, the way the "
+                    "far-sighted do.)"),
+            ("npc", "No, dear. I don't know her. I've not seen her at my "
+                    "gate."),
+        ],
+    ) + [
+        {
+            "key": "plate",
+            "q": "You asked if I was the one the place is set for. What "
+                 "place? Set for who?",
+            "label": "Who's the place set for?",
+            "beats": [
+                ("npc", "I lay an extra plate at supper. Have done a while "
+                        "now. Couldn't tell you who for. Someone's coming. "
+                        "I know it the way I know my own name."),
+                ("npc", "[c=dim]I'll know the face when it's across the "
+                        "table from me. Till then it would be unkind not "
+                        "to be ready.[/c]"),
+            ],
+        },
+    ],
+}
+
+
+# Royce -- he tried to drive out like everyone in town did (it is
+# northern Minnesota; everyone drives) and gave it up with the rest.
+# His roads exchange is the town's plainest looping-roads account and
+# files the PI's fold note; his one impossible fact (you got IN) is a
+# question HE puts to the PI, once he's earned it. He converts at rot
+# stage 3.
+ROYCE_CONVO = {
+    "id":    "royce",
+    "name":  "Royce",
+    "voice": "blip_mid",
+    "pi_voice": "blip_soft",
+    "prompt": "Royce looks down the road while you talk.",
+    "leave":  "That's all for now.",
+    "greet": {
+        "flag": "royce_greeted",
+        "beats": [
+            ("npc", "(He looks you over a long moment before he says a "
+                    "word.)"),
+            ("npc", "You're the one who drove in. Off the north road, at "
+                    "night. Nothing has come up that road in months."),
+            ("npc", "I'd shake your hand, mister, but I don't know yet "
+                    "what you are."),
+        ],
+    },
+    "exchanges": _opener_exchanges(
+        intro_beats=[
+            ("npc", "A detective. Come up here to find somebody, and then "
+                    "drive her home."),
+            ("pi", "That's the shape of it."),
+            ("npc", "[c=dim]The finding I can't speak to. The driving "
+                    "home I can. Ask me about the roads sometime. Ask me "
+                    "what they do.[/c]"),
+        ],
+        photo_beats=[
+            ("npc", "(He wipes his hands on his jacket before he takes "
+                    "it. Looks properly, corner to corner.)"),
+            ("npc", "No. A lot of new faces drove in this past year, same "
+                    "as anybody comes anywhere. Hers isn't one I know."),
+        ],
+    ) + [
+        {
+            "key": "roads",
+            "q": "Everyone in this town talks around the roads. You drove "
+                 "them. What do they do?",
+            "label": "What do the roads do?",
+            "once": True,
+            "on_ask": _royce_roads_told,
+            "beats": [
+                ("npc", "I drove it. River road, county line, every road "
+                        "out of Brimley. Same as everybody in this town "
+                        "with a set of keys. The corn handed me back "
+                        "every time."),
+                ("npc", "Same bend. Same bridge. Same town coming up in "
+                        "the windshield. And I'd swear to you on anything "
+                        "I never turned the wheel."),
+                ("npc", "[c=dim]I gave it up. Everybody did. There's no "
+                        "out to drive to.[/c]"),
+                ("pi", "[c=dim]Said flat, no fear in it. A whole town of "
+                       "drivers doesn't quit the road over nothing. "
+                       "So.[/c]"),
+            ],
+        },
+        {
+            "key": "how_in",
+            "q": "You keep looking at me like I owe you something. Say "
+                 "it.",
+            "label": "Something on your mind?",
+            "once": True,
+            "avail": lambda g: g.save.flag("convo_royce_roads_asked"),
+            "beats": [
+                ("npc", "You came IN. That's what's on my mind. That road "
+                        "only ever hands a man BACK, and it carried you "
+                        "in easy as Sunday."),
+                ("ask", "He wants the answer more than he wants air.", [
+                    ("Tell him the truth. The road just drove.", [
+                        ("pi", "I drove up at night. Radio went to static "
+                               "past the county line, and the road just "
+                               "drove. There was nothing to it."),
+                        ("npc", "(Something goes out of him.) Nothing to "
+                                "it. Every driver in this town tried that "
+                                "same drive till they quit. For you it "
+                                "just drove."),
+                        ("npc", "[c=dim]Then it wanted you in, mister. "
+                                "I'd chew a while on what that means for "
+                                "getting out.[/c]"),
+                    ], None),
+                    ("Give him nothing.", [
+                        ("pi", "Same as anybody drives anywhere. I wasn't "
+                               "paying attention."),
+                        ("npc", "Wasn't paying attention. (He laughs, and "
+                                "there's no fun in it.) No. I don't "
+                                "suppose you were."),
+                        ("npc", "[c=dim]The ones it wants, it waves "
+                                "through. You go on not paying "
+                                "attention.[/c]"),
+                    ], None),
+                ]),
+            ],
+        },
+    ],
+}
+
+
+# Garrick -- the old man at the well, watching the square. The law is
+# hollow and he says so plainly; his road warning carries the fold
+# account and files the note. He turns at rot stage 3.
+GARRICK_CONVO = {
+    "id":    "garrick",
+    "name":  "Garrick",
+    "voice": "blip_mid",
+    "pi_voice": "blip_soft",
+    "prompt": "Garrick leans on the well and waits.",
+    "leave":  "That's all for now.",
+    "greet": {
+        "flag": "garrick_greeted",
+        "beats": [
+            ("npc", "Seen you already, son. Door to door, both banks. I "
+                    "sit this square most of the day. Everything in "
+                    "Brimley crosses it sooner or later."),
+        ],
+    },
+    "exchanges": _opener_exchanges(
+        intro_beats=[
+            ("npc", "Folks who ask questions in this town go quiet. Real "
+                    "quiet. I'm not threatening you, son. I'm counting "
+                    "for you."),
+            ("npc", "[c=dim]The Sheriff will tell you to head on home. He "
+                    "knows you can't. He can't either.[/c]"),
+        ],
+        photo_beats=[
+            ("npc", "(He barely looks at the photograph. He looks at you "
+                    "instead.)"),
+            ("npc", "Faces pass this well all year. Maybe hers did too, "
+                    "with the new folk. They kept to their own side of "
+                    "things, and then they stopped being seen at all."),
+        ],
+    ) + [
+        {
+            "key": "roads",
+            "q": "Is there a safe way to move around this town? You watch "
+                 "it all day.",
+            "label": "Any safe way around this town?",
+            "on_ask": _garrick_roads_told,
+            "beats": [
+                ("npc", "Stay on the roads. People who go off the roads "
+                        "come out wrong-side of where they went in. I've "
+                        "watched it happen to better walkers than you."),
+                ("npc", "And don't put your faith in a road going where "
+                        "it went last week. Make for the county line and "
+                        "you'll be back at this well by supper."),
+                ("npc", "[c=dim]Go on home, son. ...Oh. Right. None of us "
+                        "can.[/c]"),
+            ],
+        },
+    ],
+}
 
 
 def preacher_body_examine(game, npc):

@@ -1801,9 +1801,16 @@ def _draw_scene_roofs(surf, scene, cam_x, cam_y, x0, y0, x1, y1):
 # walls + a ridge beam + a chimney. Material + tint are seeded per region so
 # the houses read as distinct without losing town cohesion.
 
+# Eave overhang in world px, shared by the roof prism geometry and its
+# depth key (emit_tilt_roofs) so the two can never drift apart.
+_ROOF_EAVE = 9
+
+
 def _building_palette(seed_a, seed_b):
     """Per-region (wall tint, trim accent, roof palette). Stable from the
     region's geometry seed so a given building keeps its look across reloads.
+    `roof["mat"]` names the material so the slope texture pass can draw
+    courses (shingle), down-slope ribs (tin), or lap seams (tar-paper).
     """
     rng = random.Random((seed_a * 73856093) ^ (seed_b * 19349663))
     mat = rng.randint(0, 2)
@@ -1811,14 +1818,17 @@ def _building_palette(seed_a, seed_b):
         roof = {"col": (94, 96, 100), "lit": (132, 134, 138),
                 "dark": (52, 54, 58), "ridge": (40, 42, 44),
                 "chimney": (60, 42, 36)}
-    elif mat == 2:                              # tar-paper
-        roof = {"col": (54, 50, 56), "lit": (80, 76, 84),
-                "dark": (32, 28, 34), "ridge": (24, 22, 26),
+    elif mat == 2:                              # tar-paper (lifted 2026-07:
+        # the old (54,50,56) went to black under the outdoor haze grade --
+        # a barn-sized void. Still tar-dark, but it keeps its form.)
+        roof = {"col": (76, 70, 78), "lit": (106, 100, 108),
+                "dark": (48, 44, 52), "ridge": (34, 32, 38),
                 "chimney": (44, 36, 36)}
     else:                                       # weathered cedar shingle
         roof = {"col": (118, 80, 56), "lit": (158, 110, 76),
                 "dark": (74, 50, 34), "ridge": (44, 28, 19),
                 "chimney": (58, 40, 36)}
+    roof["mat"] = mat
     # Per-building wall warmth: each house gets its own RGB offset so the
     # weathered wood reads cooler/warmer house to house. Wider than purely
     # subtle so adjacent buildings are unambiguously distinct but the
@@ -1845,6 +1855,75 @@ def _get_building_palette(region):
     return pal
 
 
+def _roof_slope_texture(surf, camera, rng, roof, e0, e1, r0, r1,
+                        base=None, sparse=False):
+    """Material texture over ONE roof slope, the quad between its EAVE
+    edge (e0->e1) and RIDGE edge (r0->r1), all world (x, y, z) triples
+    with e0 below r0. The flat-pitch roof draws shingle courses and
+    wear; without this the tilt prisms read as blank CAD. Shingle (mat
+    0) lays courses parallel to the ridge, corrugated tin (mat 1) runs
+    ribs DOWN the slope, tar-paper (mat 2) lays lap seams + patch
+    blotches. `base` overrides the slope colour (the shadow slope gets a
+    fainter pass); `sparse` halves the detail there. Seeded per region,
+    so no per-frame flicker."""
+    col = base if base is not None else roof["col"]
+    dk = _shade_col(col, 0.8)
+    lt = _shade_col(col, 1.18)
+    mat = roof.get("mat", 0)
+
+    def lerp(a, b, t):
+        return (a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t,
+                a[2] + (b[2] - a[2]) * t)
+
+    def pj(p):
+        x, y = camera.project(p[0], p[1], p[2])
+        return (int(x), int(y))
+
+    def at(t, u):                     # bilinear point on the slope
+        return lerp(lerp(e0, e1, u), lerp(r0, r1, u), t)
+    run = math.dist(e0, r0)
+    width = math.dist(e0, e1)
+    if mat == 1:
+        # corrugation ribs run eave -> ridge
+        n = max(3, int(width // (16 if sparse else 8)))
+        for k in range(1, n):
+            u = k / n
+            pygame.draw.line(surf, dk if k % 2 else lt,
+                             pj(lerp(e0, e1, u)), pj(lerp(r0, r1, u)), 1)
+        if not sparse:
+            for _ in range(max(2, int(width // 26))):   # rust at the eave
+                p = pj(at(rng.uniform(0.04, 0.3), rng.uniform(0.05, 0.95)))
+                pygame.draw.circle(surf, (104, 58, 34), p, rng.randint(1, 2))
+    elif mat == 2:
+        # tar-paper lap seams + darker patches
+        n = max(2, int(run // (22 if sparse else 12)))
+        for k in range(1, n + 1):
+            t = k / (n + 1)
+            pygame.draw.line(surf, dk, pj(lerp(e0, r0, t)),
+                             pj(lerp(e1, r1, t)), 1)
+        if not sparse:
+            for _ in range(rng.randint(2, 4)):
+                t = rng.uniform(0.1, 0.8)
+                u = rng.uniform(0.08, 0.8)
+                dt, du = rng.uniform(0.08, 0.16), rng.uniform(0.04, 0.1)
+                pygame.draw.polygon(surf, _shade_col(col, 0.68), [
+                    pj(at(t, u)), pj(at(t, u + du)),
+                    pj(at(t + dt, u + du)), pj(at(t + dt, u))])
+    else:
+        # shingle courses parallel to the ridge, plus moss/wear specks
+        n = max(3, int(run // (14 if sparse else 7)))
+        for k in range(1, n):
+            t = k / n
+            pygame.draw.line(surf, dk, pj(lerp(e0, r0, t)),
+                             pj(lerp(e1, r1, t)), 1)
+        if not sparse:
+            for _ in range(max(3, int(width * run // 3200))):
+                p = pj(at(rng.uniform(0.05, 0.95), rng.uniform(0.05, 0.95)))
+                pygame.draw.circle(
+                    surf, (58, 66, 48) if rng.random() < 0.5 else lt,
+                    p, 1)
+
+
 def _draw_building_3d(surf, camera, region, scene):
     """A real volumetric gabled roof over the building's footprint plus a
     ridge beam and a crooked chimney. All four slopes are drawn opaque so the
@@ -1855,12 +1934,12 @@ def _draw_building_3d(surf, camera, region, scene):
     typically the road-facing wall -- becomes the gable end). Aligned-with-
     the-road buildings get their gable end facing the street naturally."""
     minx, miny, maxx, maxy = region
-    EAVE = 9
     # outer footprint in world px (wall outer edges + eave overhang)
-    xL = (minx - 1) * TILE - EAVE
-    xR = (maxx + 2) * TILE + EAVE
-    yT = (miny - 1) * TILE - EAVE
-    yB = (maxy + 2) * TILE + EAVE
+    xL = (minx - 1) * TILE - _ROOF_EAVE
+    xR = (maxx + 2) * TILE + _ROOF_EAVE
+    yT = (miny - 1) * TILE - _ROOF_EAVE
+    yB = (maxy + 2) * TILE + _ROOF_EAVE
+    rng = random.Random((minx * 73856093) ^ (maxy * 19349663) ^ 0x5EED)
     width = xR - xL
     depth = yB - yT
     z_wall = _TILT_WALL_RISE
@@ -1887,6 +1966,15 @@ def _draw_building_3d(surf, camera, region, scene):
         pygame.draw.polygon(surf, roof["dark"], [NW, SW, Rw])      # west gable
         pygame.draw.polygon(surf, roof["dark"], [NE, SE, Re])      # east gable
         pygame.draw.polygon(surf, roof["col"], [SW, SE, Re, Rw])   # front slope
+        # material texture: full detail on the lit slope, a sparse pass
+        # on the shadow slope so it reads as the same surface in shade
+        _roof_slope_texture(surf, camera, rng, roof,
+                            (xL, yB, z_wall), (xR, yB, z_wall),
+                            (xL, yMid, z_apex), (xR, yMid, z_apex))
+        _roof_slope_texture(surf, camera, rng, roof,
+                            (xL, yT, z_wall), (xR, yT, z_wall),
+                            (xL, yMid, z_apex), (xR, yMid, z_apex),
+                            base=_shade_col(roof["dark"], 1.12), sparse=True)
         # gable rim outlines so the form catches the light
         pygame.draw.line(surf, roof["lit"], NW, Rw, 1)
         pygame.draw.line(surf, roof["lit"], NE, Re, 1)
@@ -1909,6 +1997,13 @@ def _draw_building_3d(surf, camera, region, scene):
         pygame.draw.polygon(surf, roof["dark"], [NW, NE, Rn])      # north gable
         pygame.draw.polygon(surf, roof["dark"], [SW, SE, Rs])      # south gable
         pygame.draw.polygon(surf, roof["col"], [NE, SE, Rs, Rn])   # east slope
+        _roof_slope_texture(surf, camera, rng, roof,
+                            (xR, yT, z_wall), (xR, yB, z_wall),
+                            (xMid, yT, z_apex), (xMid, yB, z_apex))
+        _roof_slope_texture(surf, camera, rng, roof,
+                            (xL, yT, z_wall), (xL, yB, z_wall),
+                            (xMid, yT, z_apex), (xMid, yB, z_apex),
+                            base=_shade_col(roof["dark"], 1.12), sparse=True)
         pygame.draw.line(surf, roof["lit"], NW, Rn, 1)
         pygame.draw.line(surf, roof["lit"], SW, Rs, 1)
         pygame.draw.line(surf, roof["lit"], NE, Rn, 1)
@@ -2059,14 +2154,25 @@ def emit_tilt_water_reeds(emit_fn, scene, camera, surf, x0, y0, x1, y1):
 def emit_tilt_roofs(emit_fn, scene, camera, surf, x0, y0, x1, y1):
     """Emit one depth-sorted draw closure per visible building region. The
     closure draws the volumetric roof + ridge + chimney for that region. The
-    flat (pitch-0) gabled roof is unrelated and still drawn by Scene.draw."""
+    flat (pitch-0) gabled roof is unrelated and still drawn by Scene.draw.
+
+    The roof keys at its NEAREST outer corner (max depth over the four
+    eave corners), never the building centre: the roof physically
+    overhangs every wall of its own footprint, so it must sort AFTER all
+    of them at any camera yaw. A centre key let the near-side wall boxes
+    paint their flat tops over the eave -- the crenellated 'teeth' rim on
+    every big building."""
     for region in _build_roof_regions(scene):
         minx, miny, maxx, maxy = region
         if maxx + 2 < x0 or minx - 2 > x1 or maxy + 2 < y0 or miny - 2 > y1:
             continue
-        cx_w = ((minx - 1) + (maxx + 2)) * TILE / 2
-        cy_w = ((miny - 1) + (maxy + 2)) * TILE / 2
-        emit_fn(camera.depth(cx_w, cy_w, _TILT_WALL_RISE / 2),
+        xL = (minx - 1) * TILE - _ROOF_EAVE
+        xR = (maxx + 2) * TILE + _ROOF_EAVE
+        yT = (miny - 1) * TILE - _ROOF_EAVE
+        yB = (maxy + 2) * TILE + _ROOF_EAVE
+        near = max(camera.depth(xL, yT, 0), camera.depth(xR, yT, 0),
+                   camera.depth(xL, yB, 0), camera.depth(xR, yB, 0))
+        emit_fn(near,
                 lambda region=region, scene=scene, camera=camera, surf=surf:
                 _draw_building_3d(surf, camera, region, scene))
 

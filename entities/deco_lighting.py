@@ -112,6 +112,26 @@ class DecoLightingMixin:
         pygame.draw.polygon(surf, (250, 178, 68),
                             [(x, y - 4 - int(fh * 0.6)), (x - 3, y - 3), (x + 3, y - 3)])
 
+    def _draw_burn_barrel(self, surf, x, y):
+        """A rusted 55 gallon trash drum, lit. No garbage service since
+        the January seal; the town burns what it can't keep."""
+        _light_pool(surf, x, y - 8, 36, (255, 150, 56), 76)
+        pygame.draw.rect(surf, (104, 66, 44), (x - 7, y - 14, 14, 26))
+        pygame.draw.rect(surf, (48, 30, 22), (x - 7, y - 14, 14, 26), 1)
+        for ry in (y - 8, y - 1, y + 6):
+            pygame.draw.line(surf, (66, 42, 28), (x - 6, ry), (x + 6, ry), 1)
+        pygame.draw.ellipse(surf, (26, 20, 16), (x - 6, y - 17, 12, 6))
+        for k, vx in enumerate((-3, 0, 3)):        # glowing vent holes
+            gl = 190 + int(math.sin(self.t * 7 + self.seed + k * 2.1) * 40)
+            pygame.draw.circle(surf, (gl, 96, 30), (x + vx, y + 9), 1)
+        t = self.t * 6 + self.seed
+        fh = 8 + int(math.sin(t) * 3)
+        pygame.draw.polygon(surf, (208, 88, 28),
+                            [(x, y - 17 - fh), (x - 4, y - 14), (x + 4, y - 14)])
+        pygame.draw.polygon(surf, (250, 178, 68),
+                            [(x, y - 16 - int(fh * 0.6)),
+                             (x - 2, y - 14), (x + 2, y - 14)])
+
     def _draw_campfire(self, surf, x, y):
         """The cold remnants of a campfire built INSIDE -- a scorch scar burned
         into the floorboards, grey ash, charred crossed logs, a ring of stones,

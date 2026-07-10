@@ -1436,9 +1436,10 @@ class RenderMixin:
                       _tilt_tile_box(self.screen, sat_cam, n_scene, ntx, nty))
             # Volumetric gabled roofs over each building region (tilt only --
             # the flat view paints the top-down roof art in draw_scene_terrain).
-            # Each region emits one depth entry at the building centre + apex
-            # half-height so the roof depth-sorts behind props closer to the
-            # camera and in front of things further back.
+            # Each region emits one depth entry keyed at its NEAREST eave
+            # corner (see emit_tilt_roofs): the roof overhangs its own walls,
+            # so it must sort after ALL of them, while anything truly nearer
+            # the camera still draws over it.
             from scenes.base import (emit_tilt_roofs, emit_tilt_water_reeds,
                                      _tilt_window_half as _twh)
             _rh = _twh(self.camera)

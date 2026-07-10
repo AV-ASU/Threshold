@@ -14,8 +14,9 @@ import random
 from constants import TILE
 from entities.decoration import Decoration
 from entities.npc import NPC
-from .base import Scene
-from .dialogue import _evidence, preacher_body_examine
+from .base import Scene, dead_cars
+from .dialogue import (_evidence, preacher_body_examine, chorus_dialogue,
+                       PELL_CONVO, CALDER_CONVO, ROYCE_CONVO, GARRICK_CONVO)
 
 
 def _brimley_on_enter(game, scene):
@@ -53,6 +54,10 @@ def _brimley_voice(pages, voice="blip_mid", fold=False, beats=None):
     `fold=True` marks a local who describes the fold (looping roads): the
     FIRST such conversation files the PI's fold note (Game._fold_mentioned,
     globally one-shot, so only the first speaker triggers it).
+
+    Since the chorus moved onto the ask verb (dialogue.py chorus_dialogue
+    + the *_CONVO data), the only remaining speaker here is the doorstep
+    Hettie cameo; her real conversation lives in the shop.
 
     `beats` makes the town REACT to state (TODO #10): a list of
     (flag, predicate, beat_pages). On each talk the first beat whose
@@ -610,12 +615,39 @@ def build_brimley():
     # wrap lands on road, not a tree.
     objects_list[24][0] = "."
     objects_list[24][99] = "."
+    # ---- The dead lots (2026-07): the abandoned cars ----
+    # Everyone drove into Brimley and nothing with an engine leaves
+    # (Royce/Vane, NARRATIVE §4), so the cars pool where their drivers
+    # finally stopped: a ragged rank beside the barn (the commune's own
+    # fleet, walked away from the night they went below), a give-up
+    # line on the fold-road shoulders east of the bridge, and two noses
+    # swallowed in the corn where somebody tried the field itself.
+    # dead_cars stamps a 2-tile solid 'X' footprint per hull (bump +
+    # hard cover); the Decorations are added after sc.objects lands.
+    _lot_cars = dead_cars(objects_list, [
+        # the barn rank, noses at the barn's west wall
+        (73, 73, "rust_coupe", 0.55, 24, "h"),
+        (75, 75, "rust_sedan", 0.10, 21, "h"),
+        (75, 77, "rust_wagon", -0.08, 22, "h", {"luggage": True}),
+        (75, 79, "rust_van", 0.15, 23, "h"),
+        # the give-up line on the fold-road shoulders
+        (56, 22, "rust_wagon", 0.10, 31, "h"),
+        (61, 22, "rust_coupe", -0.12, 32, "h"),
+        (66, 22, "rust_van", 3.05, 33, "h"),
+        (59, 26, "rust_sedan", 3.22, 34, "h"),
+        (64, 26, "rust_sedan", 0.05, 35, "h"),
+        # noses in the corn
+        (57, 36, "rust_wagon", 0.35, 41, "h"),
+        (26, 21, "rust_coupe", 2.95, 42, "h"),
+    ])
     # South exit to cornfield_maze (the bottom of the loop). The road
     # at col 50 cuts down through the southern tree wall via a single
     # 'M' tile. Walking south long enough through cornfield_maze ->
     # cornfield_path -> here brings you back to Brimley north.
     objects_list[h - 1][48] = "M"
     sc.objects = objects_list
+    for _d in _lot_cars:
+        sc.add_decoration(_d)
     sc.add_exit("j", "clearing", "from_brimley")
     sc.set_spawn("default", w - 2, 7)
     # Coming in from the Lodge via the country lane (east edge).
@@ -739,12 +771,18 @@ def build_brimley():
     # under the King's eye and stay whole. Innocent, and coming apart at
     # the edges: denial, time-loop confusion, a child saying the quiet
     # part out loud.
-    def _resident(tx, ty, name, kind, pages, movement="wander",
+    def _resident(tx, ty, name, kind, pages=None, movement="wander",
                   voice="blip_mid", radius=52, fold=False, beats=None,
-                  stations=None):
+                  stations=None, convo=None):
+        # A resident either carries the organic ask verb (`convo`, the
+        # chorus conversion; reactive beats volunteer ahead of the menu)
+        # or the old fixed page-list (`pages`, the doorstep cameo).
+        if convo is not None:
+            dfn = chorus_dialogue(convo, beats or ())
+        else:
+            dfn = _brimley_voice(pages, voice, fold=fold, beats=beats)
         n = NPC(tx * TILE + 16, ty * TILE + 16, name, kind,
-                dialogue_fn=_brimley_voice(pages, voice, fold=fold,
-                                           beats=beats),
+                dialogue_fn=dfn,
                 movement=movement, radius=radius)
         if stations:
             # The JOBS layer (GAME_CHANGES §19): a personal station
@@ -771,15 +809,11 @@ def build_brimley():
     ], movement="homebody", radius=34)
     # Old Pell -- the schoolhouse step, the calendar nailed to the wall
     # behind him. He stopped marking it. Another homebody: out on the
-    # step a while, then back indoors out of the cold that came early.
-    _resident(63, 54, "Old Pell", "old_townsman", [
-        "Cold came in early this year. And it never lifted. Just sat down on the town and stayed.",
-        "A foulness came with it and spread over the whole town. You feel it "
-        "more than smell it. Folk are tired under it now, all of them, and "
-        "sleep doesn't mend it.",
-        "Stopped marking the calendar. Not the days. Where would I be counting toward?",
-        "[c=dim]You're new. We don't get new. Nobody gets in. Nobody gets...[/c]",
-    ], voice="blip_low", movement="homebody", radius=34, fold=True,
+    # step a while, then back indoors for a spell.
+    # Ask verb (PELL_CONVO); the fold note now files from Royce/Garrick,
+    # whose exchanges actually carry the looping-roads account.
+    _resident(63, 54, "Old Pell", "old_townsman",
+              movement="homebody", radius=34, convo=PELL_CONVO,
         # TODO #10: the town reacts to what the PI learns. Pell reads the
         # digging on him like weather (stasis register; he mutates at
         # stage 3, so this lives in his pre-turn window).
@@ -796,15 +830,8 @@ def build_brimley():
     # someone is coming. No vanished husband (that read as a perceptible
     # individual loss, forbidden by §1b); just the compulsion she doesn't
     # question. She watches the road. She does not wave.
-    _resident(96, 8, "Mrs. Calder", "townswoman", [
-        "Oh. Is it you? ...Are you the one the place is set for?",
-        "[c=dim]No. No, it couldn't be you. Forgive an old woman her "
-        "hoping.[/c]",
-        "I lay an extra plate at supper. Have done a while now. Couldn't tell "
-        "you who for. Someone's coming. I know it the way I know my own name.",
-        "[c=dim]I'll know the face when it's across the table from me. Till "
-        "then it would be unkind not to be ready.[/c]",
-    ], movement="idle",
+    _resident(96, 8, "Mrs. Calder", "townswoman",
+              movement="idle", convo=CALDER_CONVO,
         # TODO #10: the waiting sharpens as the case opens (she converts
         # at stage 2, so this is her only pre-turn window: evidence 1).
         beats=[("beat_calder_unlatched",
@@ -814,17 +841,12 @@ def build_brimley():
             "[c=dim]I've started leaving the door unlatched at night. It "
             "seemed... polite.[/c]",
         ])])
-    # Royce -- by the river bridge. He TRIED to drive out, for weeks, and
-    # the corn handed him back every time; the futility broke him and he's
-    # STOPPED. He still clings to the one fact he can't square: you got IN.
-    _resident(29, 24, "Royce", "royce", [
-        "I used to drive it. River road, county line, every road out of "
-        "Brimley. Weeks of it. The corn handed me back every time.",
-        "[c=dim]I don't go anymore. There's no out to drive to. I worked "
-        "that out the hard way, so you don't have to.[/c]",
-        "[c=dim]But you came IN. How did you come IN? ...Tell me how you came "
-        "in.[/c]",
-    ], fold=True,
+    # Royce -- by the river bridge. He tried to drive out like everyone
+    # in town did (northern Minnesota; everyone drives) and the corn
+    # handed him back every time; he gave it up with the rest. He still
+    # clings to the one fact he can't square: you got IN.
+    _resident(29, 24, "Royce", "royce",
+              convo=ROYCE_CONVO,
         # His job now is the road itself: he paces the stretch he used
         # to drive, west toward the county line, back toward the
         # bridge, and stands looking down it a long while each way.
@@ -849,12 +871,8 @@ def build_brimley():
     # indoors; nothing stands on the step.
     # Garrick -- the old man at the well. Town centre, watching
     # everyone come and go. The law is hollow now; he says so plainly.
-    _resident(91, 12, "Garrick", "old_townsman", [
-        "You're asking questions. Folks who ask questions go quiet. Real quiet.",
-        "The Sheriff'll tell you to leave. He knows you can't. He can't either.",
-        "Stay on the roads. People who go off the roads come out wrong-side.",
-        "[c=dim]Go on home, son. ...Oh. Right. None of us can.[/c]",
-    ], fold=True,
+    _resident(91, 12, "Garrick", "old_townsman",
+              convo=GARRICK_CONVO,
         # Town-centre rounds: his spot, a look in on the well, a stretch
         # of the track where he watches who comes and goes.
         stations=[(91, 12, (6.0, 10.0), (1, 0)),
@@ -873,15 +891,11 @@ def build_brimley():
             "[c=dim]You go by and look in on him, son. Somebody ought "
             "to.[/c]",
         ])])
-    # The newcomer -- standing on the path to the abandoned_farmhouse
-    # (their house now). She is here to welcome you. She is patient.
-    sc.add_npc(NPC(8 * TILE + 16, 95 * TILE + 16, "A woman", "townswoman",
-                   dialogue_fn=_brimley_voice([
-                       "[c=dim]Hello.[/c]",
-                       "[c=dim]You'll like it here. Everyone does, eventually.[/c]",
-                       "[c=dim]It's easier once you stop trying the doors.[/c]",
-                   ], "blip_soft"),
-                   movement="watch"))
+    # (The unnamed "newcomer woman" who used to stand on the farmhouse
+    # path was CUT entirely, maintainer call 2026-07: an unexplained
+    # welcomer read as noise, not dread. Brimley's people are the named
+    # locals above; the cult presence out here is the set dressing
+    # below.)
 
     # Run-down + cult presence among the buildings: the Yellow Sign
     # worked into the open ground, dead crows at the doorsteps, a bloody
@@ -904,6 +918,18 @@ def build_brimley():
     # Calder's plate, set at supper for a guest she can't name.
     sc.add_decoration(Decoration(58 * TILE + 16, 62 * TILE + 16, "payphone"))
     sc._payphone_pos = (58 * TILE + 16, 62 * TILE + 16)
+    # Burn barrels at the occupied yards: no garbage service since the
+    # January seal, so the town burns what it can't keep. Lit fires --
+    # the only warm light on the banks, and the eye crosses to them.
+    for _bx, _by, _bs in ((93, 6, 61), (48, 58, 62), (66, 74, 63)):
+        sc.add_decoration(Decoration(_bx * TILE + 16, _by * TILE + 16,
+                                     "burn_barrel", seed=_bs))
+    # The news rack outside the shop, still holding the seal-day issue.
+    # The examine (below) carries the January 15 date; pairs with the
+    # stopped calendar and Hettie's newspaper trade.
+    _nr_x, _nr_y = 55 * TILE + 16, 61 * TILE + 6
+    sc.add_decoration(Decoration(_nr_x, _nr_y, "news_rack"))
+    sc._news_rack_pos = (_nr_x, _nr_y)
     # The well -- dread set-dressing, not a way down (a dead town shaft; the
     # descent is the cult's dug mine at the grove, reached by the rite). Sits
     # in the eastern village-square area, south of the country-lane entry.
@@ -1250,6 +1276,17 @@ def build_brimley():
                 game.save.set_flag("barrow_inspected", True)
                 _evidence(game, "barrow_tools", "Some old tools.")
             return
+        # The news rack outside the shop -- the last issue it was fed.
+        nx_, ny_ = sc._news_rack_pos
+        if abs(game.player.x - nx_) < 36 and abs(game.player.y - ny_) < 36:
+            game.audio.play("blip_low", 0.4)
+            game.dialog.show([
+                "A coin rack of newspapers, bleached behind the scratched "
+                "plastic. The county weekly.",
+                "[c=dim]Dated January 15. Every copy in the stack. Nobody "
+                "ever fed it another.[/c]",
+            ], speaker="", voice="blip_soft", portrait="narrator")
+            return
         # The payphone -- it won't dial out. The line is never dead,
         # though; something is always already on it.
         px, py = sc._payphone_pos
@@ -1269,6 +1306,7 @@ def build_brimley():
     sc.add_interactable(sc._well_pos[0], sc._well_pos[1], 36)
     sc.add_interactable(sc._barrow_pos[0], sc._barrow_pos[1], 36)
     sc.add_interactable(sc._payphone_pos[0], sc._payphone_pos[1], 40)
+    sc.add_interactable(sc._news_rack_pos[0], sc._news_rack_pos[1], 36)
 
     sc.on_interact_fn = _brimley_interact
 

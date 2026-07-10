@@ -595,7 +595,7 @@ RIVER_ENTRY_TILE = (34, 60)
 # Sheriff Vane is neither: at stage 3 he becomes a unique threat encounter
 # in his own office (_spawn_hunting_sheriff). Values are the evidence stage
 # at which the local turns.
-ROT_CONVERT = {"A woman": 1, "Mrs. Calder": 2, "Royce": 3}
+ROT_CONVERT = {"Mrs. Calder": 2, "Royce": 3}
 ROT_TURN = {"Hettie": 2, "Garrick": 3, "Old Pell": 3,
                "Toby": 3}
 # Underground is wrong from the first rung -- a baseline world rot even

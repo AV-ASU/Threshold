@@ -28,7 +28,7 @@ priority order within each group.
 
 ## Buildable now
 
-### 1. **[Fable]** Investigation dialogue verb — the ask-questions layer  *(VERB LANDED as a pilot 2026-07; expand to the rest of the cast)*
+### 1. **[Fable]** Investigation dialogue verb — the ask-questions layer  *(VERB LANDED 2026-07; principals + chorus all converted — still open: `_REVISIT_NUDGES` for Hettie/Toby/Crane as their case hooks land)*
 
 You play a PI, but the only social verb is press-E-to-advance scripted lines:
 every NPC conversation is a linear counter (`old_count`, `kid_count` ...). The
@@ -78,14 +78,24 @@ item on the list: engine exists, canon is settled, payoff is the core fantasy.**
   case hooks land.
 
 - ~~**Two guaranteed options on EVERY townsperson (the case's front door).**~~
-  **DONE for the principals (2026-07):** every principal's menu leads with
+  **DONE (2026-07), chorus included:** every principal's menu leads with
   the shared pair (`_opener_exchanges`: (1) the PI **introducing himself as a
   private investigator**, (2) **showing Mara's photograph**), intro first,
   photo second, answers per-NPC; greets no longer assume the case is known —
-  the PI **initiates** (news does not spread). **Still open:** the Brimley
-  chorus (Old Pell, Mrs. Calder, Royce, Garrick, the newcomer woman) still
-  speak through `_brimley_voice` page-lists; give them the shared pair with
-  short per-NPC answers when they convert.
+  the PI **initiates** (news does not spread). **The Brimley chorus (Old
+  Pell, Mrs. Calder, Royce, Garrick) converted** to `*_CONVO` +
+  `chorus_dialogue` (scenes/dialogue.py): the shared pair with short
+  per-NPC answers, one or two signature questions each (Pell's corn
+  pride, Calder's plate, Royce's roads + his you-got-IN counter-ask,
+  Garrick's road warning), the TODO #10 reactive beats still volunteering ahead of
+  the menu, and the **fold note moved off the old any-talk trigger onto
+  the exchanges that carry the account** (Royce/Garrick `on_ask`,
+  `reflect=False`, earned by asking). Guarded by `tests/flow.py` §17e +
+  the reworked §16c. **The unnamed "newcomer woman" NPC is CUT from the
+  project entirely (maintainer call, 2026-07)** — an unexplained
+  welcomer on the farmhouse path read as noise, not dread; her
+  `ROT_CONVERT` stage-1 entry went with her (flow-guarded: she never
+  spawns).
 
 - **The choice box is SMALL — menu labels are authored short (2026-07).**
   An exchange carries an optional `label` (≤ ~44 chars, flow-guarded): the
@@ -293,8 +303,9 @@ doing** — else a second impossible thing AND it breaks the ~1993 door timeline
 Keep the impossible count at one (§1b). Theme: founding hubris rhymes with
 crossing the threshold; the dead, uncut April corn reads as their pride rotting.
 Surfacing (mundane Americana that curdles): a weathered town sign ("BRIMLEY,
-NORTHERNMOST CORN IN THE WORLD, EST. 1894"), a proud local line, county-fair
-ribbons (no dashes). Keep the §1 April dead-corn note. `NARRATIVE.md` §1 setting
+NORTHERNMOST CORN IN THE WORLD, EST. 1894"), ~~a proud local line~~ (LANDED
+2026-07: Old Pell is the grower — his PELL_CONVO corn exchange carries the
+pride and the uncut-fields grief), county-fair ribbons (no dashes). Keep the §1 April dead-corn note. `NARRATIVE.md` §1 setting
 note 2 gets the identity + guardrail.
 
 ### 12. **[Fable + Opus]** Royce the trucker + the rusting semi  *(was GAME_CHANGES §28)*

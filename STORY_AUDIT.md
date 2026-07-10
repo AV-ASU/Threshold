@@ -283,9 +283,12 @@ supposedly never broke into.
   ("more every season", `dialogue.py:308`) and Sable's "no end of those this
   past year... They come" (`dialogue.py:942`) keep arrivals in the habitual
   present; arrivals ended before the seal.
-- Old Pell: "Cold came in early this year. And it never lifted."
+- ~~Old Pell: "Cold came in early this year. And it never lifted."
   (`brimley.py:747-750`) — should be last year, and "never lifted" brushes
-  weather-stasis against the ice-going-out present.
+  weather-stasis against the ice-going-out present.~~ **FIXED (2026-07,
+  maintainer call): the persistent-cold line is cut from PELL_CONVO's
+  greet entirely — the ice goes out and the season turns; weather stasis
+  would be a second impossible thing.**
 - Revolver description leaks mechanics: "(3+ evidence)"
   (`systems/items.py:18-22`); also "fires it in the way you're facing."
 - Descent interior voice wobbles POV (first person notes vs second person
