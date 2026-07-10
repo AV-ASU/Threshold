@@ -16,8 +16,49 @@ from constants import SCREEN_W, SCREEN_H
 from ui import menu_chrome as mc
 
 
+# Case-file headers for the save slugs that do not read like something
+# the PI typed ("Maras Room", "Descent Mask", "Showed The Clerk"...).
+# Slugs are load-bearing (saves and logic) and never change; only the
+# display does. Anything unmapped falls back to Title Case.
+_TITLES = {
+    "maras_room":              "Mara's Room",
+    "maras_journal":           "Mara's Journal",
+    "the_ledger":              "The Old Registers",
+    "chalk_surface":           "The Chalk Door",
+    "chalk_works":             "The Works",
+    "chalk_deep":              "Past the Deepest Face",
+    "descent_dig":             "The Dig",
+    "descent_leave":           "The Urge to Leave",
+    "descent_mask":            "Permission to Leave",
+    "showed_the_clerk":        "The Clerk, Shown Her Photo",
+    "revisit_sable_checkouts": "Back to the Desk",
+    "revisit_sable_smile":     "Ask the Clerk About Her",
+    "revisit_vane_murder":     "Tell the Sheriff",
+    "the_fold_told":           "The Roads",
+    "crane_provoked":          "The Preacher, Provoked",
+    "calder_table":            "Mrs. Calder's Table",
+    "cult_calling":            "The Calling",
+    "cult_bargain":            "The Bargain",
+    "cult_digging":            "The Digging",
+    "backwoods_note":          "The Backwoods Stash",
+    "barrow_tools":            "The Barrow",
+    "bell_tower_view":         "From the Bell Tower",
+    "clerk_robe":              "The Pressed Robe",
+    "lodge_candle_callback":   "Candles at the Lodge",
+    "scarecrow":               "The Scarecrow",
+    "the_ossuary_shelves":     "The Old Stores",
+    "threshing_floor":         "The Threshing Floor",
+    "works_vats_seen":         "The Water Below",
+    "worn_stone":              "The Worn Stone",
+}
+
+
 def _humanise(slug):
-    """Turn a slug like 'some_note' into a title 'Some Note'."""
+    """Case-file title for a save slug: the authored header where one
+    exists, else 'some_note' becomes 'Some Note'."""
+    t = _TITLES.get(slug)
+    if t:
+        return t
     parts = slug.split("_")
     return " ".join(p.capitalize() for p in parts)
 
