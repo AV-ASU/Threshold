@@ -237,7 +237,7 @@ class NarrativeMixin:
                     "has been waiting for you to know that much.")
         if self._evidence_count() >= 1:
             return ("Pull the threads. The register at the Lodge, the "
-                    "barn she slept in, the well the boy watched. The "
+                    "barn she slept in, the river the boy watched. The "
                     "town talks around what it knows.")
         return ("Ask the town about the Blaine girl. Start where anyone "
                 "starts. The store, the law, the church.")
@@ -294,11 +294,17 @@ class NarrativeMixin:
         ]})
         self.save.set_arg("notes", notes)
 
-    def _descent_voice(self, name):
+    def _descent_voice(self, name, note_only=False):
         """Fire one interior-voice beat (see `_DESCENT_VOICE`): file the note
         to the case notebook and surface the brief on-screen flash. One-shot
         per beat (flag `voice_<name>`). The note goes in save arg 'notes',
-        NEVER 'evidence' -- it must not move the King-gate."""
+        NEVER 'evidence' -- it must not move the King-gate.
+
+        `note_only=True` files the note and flag but skips the on-screen
+        beat, for callers that chain the display off a live text channel
+        (`_descent_voice_beat`). A chained callback can be dropped without
+        firing (narration.clear() on a scene load), so the note must never
+        ride the chain."""
         if self.save is None:
             return
         spec = self._DESCENT_VOICE.get(name)
@@ -317,6 +323,18 @@ class NarrativeMixin:
             self.save.set_arg("notes", notes)
             if hasattr(self, "_flash_notebook"):
                 self._flash_notebook()
+        if not note_only:
+            self.dialog.show(spec["beat"], speaker="", voice="blip_soft",
+                             portrait="narrator")
+
+    def _descent_voice_beat(self, name):
+        """The on-screen half of `_descent_voice` alone, for beats whose
+        note was already filed via `note_only=True`. At-most-once by
+        construction: the chained on_complete it rides fires once or is
+        dropped."""
+        spec = self._DESCENT_VOICE.get(name)
+        if spec is None:
+            return
         self.dialog.show(spec["beat"], speaker="", voice="blip_soft",
                          portrait="narrator")
 

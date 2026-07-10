@@ -409,7 +409,9 @@ def _draw_cistern_basin_solid(surf, cam, deco):
 
 
 def _draw_grain_heap_solid(surf, cam, deco):
-    """A raked cone of tithed grain, the dark of old blood pooled at its base."""
+    """A raked cone of tithed grain, a ring of dark chaff settled at its
+    base. (2026-07 mine retrofit: the old-blood ring is cut -- the tithe
+    is an offering carried down by the willing; nobody bled into it.)"""
     wx, wy = deco.x, deco.y
     s = (getattr(deco, "scale", 1.0) or 1.0)
     R = 15 * s
@@ -418,8 +420,201 @@ def _draw_grain_heap_solid(surf, cam, deco):
     draw_solid(surf, cam, wx, wy,
                [(0, R, R), (H * 0.6, R * 0.6, R * 0.6),
                 (H, R * 0.12, R * 0.12)], pal)
-    _disc(surf, cam, wx, wy, 0.5, R * 0.96, R * 0.96, (60, 30, 28),
+    _disc(surf, cam, wx, wy, 0.5, R * 0.96, R * 0.96, (58, 48, 30),
           fill=False, width=2)
+
+
+def _draw_spoil_heap_solid(surf, cam, deco):
+    """Shoveled spoil -- broken earth and stone waiting on the haul.
+    Built from several offset lumps (never one smooth cone: a body of
+    revolution reads as a lampshade under the tilt, not dug ground),
+    with rubble scattered off its skirt and stones caught in the slope.
+    The 2026-07 mine art pass: spoil lives where the work put it."""
+    wx, wy = deco.x, deco.y
+    s = (getattr(deco, "scale", 1.0) or 1.0)
+    seed = getattr(deco, "seed", 0)
+    rng_v = [(seed >> (i * 3)) % 7 for i in range(8)]
+    pal = {"body": (96, 82, 62), "lo": (56, 48, 36), "rim": (126, 110, 86)}
+    pal_lo = {"body": (82, 70, 54), "lo": (48, 41, 31), "rim": (108, 94, 74)}
+    # the main mound + two shoulder lumps, each its own squat cone with a
+    # jittered footprint so the merged silhouette is irregular
+    lumps = [
+        (0.0, 0.0, (11 + rng_v[0]) * s, (10 + rng_v[1] % 4) * s, pal),
+        ((-7 - rng_v[2]) * 0.9 * s, (4 + rng_v[3] % 3) * s,
+         (7 + rng_v[3] % 3) * s, (6 + rng_v[4] % 3) * s, pal_lo),
+        ((6 + rng_v[5] % 3) * s, (-5 - rng_v[6] % 3) * s,
+         (6 + rng_v[6] % 3) * s, (5 + rng_v[7] % 3) * s, pal_lo),
+    ]
+    lumps.sort(key=lambda l: l[1])              # far-to-near for overdraw
+    for lx, ly, lr, lh, lpal in lumps:
+        draw_solid(surf, cam, wx + lx, wy + ly,
+                   [(0, lr, lr * 0.92), (lh * 0.5, lr * 0.7, lr * 0.62),
+                    (lh, lr * 0.22, lr * 0.18)], lpal)
+    # rubble kicked off the skirt (flat, on the ground plane)
+    for i in range(5):
+        a = 0.7 + i * 1.27 + (seed % 5) * 0.5
+        rr = (13 + rng_v[i % 8]) * 1.15 * s
+        p = cam.project(wx + math.cos(a) * rr, wy + math.sin(a) * rr * 0.8, 0.5)
+        pygame.draw.circle(surf, (74, 66, 54), (int(p[0]), int(p[1])),
+                           max(1, int((1.0 + (rng_v[(i + 3) % 8] % 2)) * s)))
+    # stones caught in the slope, catching what light there is
+    for i in range(4):
+        a = 0.9 + i * 1.6 + (seed % 5) * 0.4
+        p = cam.project(wx + math.cos(a) * 6 * s,
+                        wy + math.sin(a) * 5 * s, (4 + rng_v[i] % 4) * s)
+        pygame.draw.circle(surf, (128, 124, 126), (int(p[0]), int(p[1])),
+                           max(1, int(1.5 * s)))
+
+
+def _draw_shoring_frame_solid(surf, cam, deco):
+    """A DIY timber SET -- the mine's support frame in the Threshold's
+    own grammar: two board uprights and a header beam you walk UNDER,
+    built entirely from yaw-rotated boxes so the frame holds from every
+    camera angle (never a flat card, never a turned column). kwargs:
+    `ang` = the frame line's axis (the uprights sit +-span/2 along it),
+    `span` = distance between upright centres in px. span<=1 draws a
+    BROKEN set (a doubled upright and a sheared beam stub) -- the old
+    workings' collapsed props."""
+    wx, wy = deco.x, deco.y
+    s = (getattr(deco, "scale", 1.0) or 1.0)
+    seed = getattr(deco, "seed", 0)
+    ang = float(deco.kwargs.get("ang", 0.0))
+    span = float(deco.kwargs.get("span", 0.0)) * s
+    wood = {"top": (98, 76, 50), "side": (76, 58, 38), "dark": (62, 48, 32)}
+    wood2 = {"top": (86, 66, 43), "side": (66, 50, 33), "dark": (46, 36, 25)}
+    H = (26 + seed % 4) * s
+    dx, dy = math.cos(ang), math.sin(ang)
+
+    def upright(ux, uy, pal, hh):
+        # a doubled sawn board (two thin boxes, one an offcut shorter)
+        _vbox(surf, cam, ux - dx * 2.2 * s, uy - dy * 2.2 * s,
+              4.4 * s, 3.0 * s, 0, hh, pal, yaw=ang, outline=False)
+        _vbox(surf, cam, ux + dx * 2.2 * s, uy + dy * 2.2 * s,
+              4.4 * s, 3.0 * s, 0, hh - (1 + seed % 2) * s, wood2,
+              yaw=ang, outline=False)
+        n = cam.project(ux, uy, hh - 2 * s)
+        pygame.draw.circle(surf, (34, 30, 28), (int(n[0]), int(n[1])), 1)
+
+    if span <= 1:
+        # the broken set: one upright still standing, its beam sheared
+        # off short -- the rest went with whatever it was holding
+        upright(wx, wy, wood, H)
+        _vbox(surf, cam, wx + dx * 6 * s, wy + dy * 6 * s,
+              13 * s, 4.5 * s, H, H + 3 * s, wood, yaw=ang)
+        return
+    hs = span / 2.0
+    half = deco.kwargs.get("half")
+    if half == "a":
+        # The -axis upright alone. Spanning frames are SPLIT by
+        # Scene.add_decoration so each post depth-sorts at its own
+        # anchor: one shared anchor gave the whole set a single depth
+        # and the far post popped in front of an actor in the lane.
+        upright(wx, wy, wood, H)
+        return
+    if half == "b":
+        # The +axis upright, carrying the header beam, sag, and brace.
+        # The frame centre sits -hs back along the axis from this
+        # anchor, so the beam still spans both posts.
+        cx, cy = wx - dx * hs, wy - dy * hs
+        upright(wx, wy, wood2, H - (seed % 2) * s)
+        _vbox(surf, cam, cx, cy, span + 9 * s, 4.5 * s, H, H + 3.5 * s,
+              wood, yaw=ang)
+        mza = H + 0.4 * s
+        m0 = cam.project(cx - dx * hs * 0.7, cy - dy * hs * 0.7, mza)
+        mm = cam.project(cx, cy, mza - 1.2 * s)
+        m1 = cam.project(cx + dx * hs * 0.7, cy + dy * hs * 0.7, mza)
+        pygame.draw.lines(surf, wood["dark"], False, [m0, mm, m1], 1)
+        bx0 = cam.project(wx - dx * 8 * s, wy - dy * 8 * s, 2 * s)
+        bx1 = cam.project(wx, wy, H * 0.75)
+        pygame.draw.line(surf, wood2["side"], bx0, bx1,
+                         max(2, int(2.2 * s)))
+        pygame.draw.line(surf, wood["dark"], bx0, bx1, 1)
+        return
+    # unsplit fallback (a frame authored with an explicit half=None)
+    ends = [(wx - dx * hs, wy - dy * hs, wood, H),
+            (wx + dx * hs, wy + dy * hs, wood2, H - (seed % 2) * s)]
+    ends.sort(key=lambda e: e[1])                 # far upright first
+    for ux, uy, pal, hh in ends:
+        upright(ux, uy, pal, hh)
+    # the header beam spanning both uprights, overhanging each end
+    _vbox(surf, cam, wx, wy, span + 9 * s, 4.5 * s, H, H + 3.5 * s,
+          wood, yaw=ang)
+    # its sag: a dark underline that dips mid-span (old work, holding)
+    mza = H + 0.4 * s
+    m0 = cam.project(wx - dx * hs * 0.7, wy - dy * hs * 0.7, mza)
+    mm = cam.project(wx, wy, mza - 1.2 * s)
+    m1 = cam.project(wx + dx * hs * 0.7, wy + dy * hs * 0.7, mza)
+    pygame.draw.lines(surf, wood["dark"], False, [m0, mm, m1], 1)
+    # a diagonal brace board on one upright
+    bx0 = cam.project(wx + dx * (hs - 8 * s), wy + dy * (hs - 8 * s), 2 * s)
+    bx1 = cam.project(wx + dx * hs, wy + dy * hs, H * 0.75)
+    pygame.draw.line(surf, wood2["side"], bx0, bx1, max(2, int(2.2 * s)))
+    pygame.draw.line(surf, wood["dark"], bx0, bx1, 1)
+
+
+def _draw_ore_cart_solid(surf, cam, deco):
+    """A seized ore cart -- the old workings' haul tub, shoved aside a
+    cycle ago and rusted where it stopped. Designed FOR the tilt: the
+    near-side wheels show under the tub (dark iron discs, standing
+    vertical), rivet strap bands ride the visible faces, the lip wears a
+    bright rust rim, and the whole tub sits with one end dropped (off
+    its rail, never level). Mute machine evidence, per canon."""
+    wx, wy = deco.x, deco.y
+    s = (getattr(deco, "scale", 1.0) or 1.0)
+    seed = getattr(deco, "seed", 0)
+    yaw = ((seed % 7) - 3) * 0.12
+    c, sn = math.cos(yaw), math.sin(yaw)
+    rust = {"top": (94, 72, 56), "side": (72, 55, 44), "dark": (50, 38, 31)}
+
+    def L(lx, ly, lz):
+        return cam.project(wx + lx * c - ly * sn, wy + lx * sn + ly * c, lz)
+    # the near-side wheels: vertical iron discs, visible UNDER the tub
+    for wxo in (-8 * s, 8 * s):
+        hub = L(wxo, 8.2 * s, 3.5 * s)
+        pygame.draw.circle(surf, (44, 38, 34), (int(hub[0]), int(hub[1])),
+                           max(2, int(3.6 * s)))
+        pygame.draw.circle(surf, (92, 82, 74), (int(hub[0]), int(hub[1])),
+                           max(2, int(3.6 * s)), 1)
+        pygame.draw.circle(surf, (110, 100, 90), (int(hub[0]), int(hub[1])),
+                           1)
+    # the axle shadow line between them
+    a0, a1 = L(-9 * s, 8 * s, 2 * s), L(9 * s, 8 * s, 2 * s)
+    pygame.draw.line(surf, (30, 26, 24), a0, a1, 1)
+    # the tub: flared iron box, one end dropped ~2px (derailed, not level)
+    drop = 2.0 * s
+    zlo, zhi = 6 * s, 17 * s
+    corners = [(-12 * s, -8 * s), (12 * s, -8 * s),
+               (12 * s, 8 * s), (-12 * s, 8 * s)]
+    lip = [(-14 * s, -9.5 * s), (14 * s, -9.5 * s),
+           (14 * s, 9.5 * s), (-14 * s, 9.5 * s)]
+
+    def ring(pts, z):
+        return [L(px, py, z - (drop if px < 0 else 0)) for px, py in pts]
+    base, waist, mouth = ring(corners, zlo), ring(corners, zhi - 3 * s), \
+        ring(lip, zhi)
+    # near face (the south side), then the two end faces, then the lip
+    pygame.draw.polygon(surf, rust["dark"],
+                        [base[3], base[2], waist[2], waist[3]])
+    pygame.draw.polygon(surf, rust["side"],
+                        [base[0], base[3], waist[3], waist[0]])
+    pygame.draw.polygon(surf, rust["side"],
+                        [base[2], base[1], waist[1], waist[2]])
+    pygame.draw.polygon(surf, rust["dark"],
+                        [waist[3], waist[2], mouth[2], mouth[3]])
+    pygame.draw.polygon(surf, rust["top"], mouth)
+    # the open mouth, dark, a settle of old spoil in one end
+    inner = ring([(-11 * s, -7 * s), (11 * s, -7 * s),
+                  (11 * s, 7 * s), (-11 * s, 7 * s)], zhi)
+    pygame.draw.polygon(surf, (24, 20, 18), inner)
+    sp = L(-6 * s, 0, zhi - drop)
+    pygame.draw.circle(surf, (70, 60, 46), (int(sp[0]), int(sp[1])),
+                       max(2, int(3 * s)))
+    # rivet strap bands down the near face + the bright lip rim
+    for bx in (-6 * s, 4 * s):
+        b0 = L(bx, 8 * s, zlo - (drop if bx < 0 else 0))
+        b1 = L(bx, 8 * s, zhi - 1 - (drop if bx < 0 else 0))
+        pygame.draw.line(surf, (48, 34, 26), b0, b1, 2)
+    pygame.draw.lines(surf, (114, 90, 68), True, mouth, 1)
 
 
 def _draw_stalagmite_solid(surf, cam, deco):
@@ -1208,6 +1403,10 @@ SOLID_PROPS = {
     "pillar":        _draw_pillar_solid,
     "cistern_basin": _draw_cistern_basin_solid,
     "grain_heap":    _draw_grain_heap_solid,
+    # the mine art pass (2026-07): the dig's own furniture
+    "spoil_heap":    _draw_spoil_heap_solid,
+    "shoring_frame": _draw_shoring_frame_solid,
+    "ore_cart":      _draw_ore_cart_solid,
     "player_car":    _draw_car_solid,
     "pickup_truck":  _draw_pickup_truck_solid,
     "stalagmite":    _draw_stalagmite_solid,

@@ -1546,6 +1546,40 @@ def main():
           "scrub: no eat-cult/time-loop fiction in scene source"
           + (f" (found {_hits})" if _hits else ""))
 
+    # --- 19b. The underground is a MINE (2026-07 retrofit; NARRATIVE §9).
+    # The Works + Depths were dug by the willing over old workings; the
+    # claiming cult spills no one. Lock the charnel/killer-cult relics out
+    # of the underground scene source: no blood, no gore, no bones, no
+    # captivity fiction. ("bone_rack" is also purged from the furniture
+    # registry -- guard that too so the art can't quietly return.)
+    _charnel = [
+        "bloodstain", "\"gore\"", "bone", "in the clerk's hand",
+        "leave the body walking", "holding cell", "the claimed were kept",
+        "grain mixed with old blood",
+    ]
+    _chits = []
+    for fn in ("well.py", "depths.py"):
+        with open(os.path.join(_scene_dir, fn), encoding="utf-8") as fh:
+            low = fh.read().lower()
+        for phrase in _charnel:
+            if phrase in low:
+                _chits.append(f"{fn}:{phrase!r}")
+    check(not _chits,
+          "mine: no charnel/killer-cult fiction underground"
+          + (f" (found {_chits})" if _chits else ""))
+    from rendering.furniture import FURNITURE as _FURN
+    check("bone_rack" not in _FURN,
+          "mine: the bone_rack furniture kind stays purged")
+    # Underground doors are CAVE MOUTHS (adits), never hinged wood; the
+    # surface keeps its framed doors. Draw-only, set by load_scene.
+    from scenes import load_scene as _ldm
+    from systems.config import UNDERGROUND_SCENES as _UG
+    for _uk in sorted(_UG) + ["dark"]:
+        check(getattr(_ldm(_uk), "door_style", "") == "cave",
+              f"mine: {_uk} doors draw as cave mouths")
+    check(getattr(_ldm("lodge"), "door_style", "") == "wood",
+          "mine: surface doors stay framed wood")
+
     # --- 20. Cultists use dynamic AI, not preset coordinates (NARRATIVE §8) -
     # Pure-roam SCOUT + cover-aware pursuit. Guard the two canon facts: no
     # roaming cultist carries a baked patrol route, and the nav routes a
@@ -2245,6 +2279,97 @@ def main():
                  if getattr(n, "tag", "") == "preacher"), None)
     check(_rev is not None and _rev.movement == "worker",
           "jobs: Crane works the lectern route")
+
+    # --- 30. The Preacher's end at the RIVER (2026-07 rework, NARRATIVE
+    # §2/§4): the doom sends Crane out of his church; the body is found on
+    # the Brimley riverbank, never on his own floor; the murder one-shots
+    # key on FINDING it. Plus his knowledge stays a local's (rumor only).
+    gpr = new_game()
+    gpr.save.set_flag("preacher_doomed", True)
+    gpr.load_scene_now("church")
+    ready(gpr)
+    check(not any(getattr(n, "tag", "") == "preacher"
+                  for n in gpr.scene.npcs),
+          "river: the doomed Crane has left his church")
+    check(not any(getattr(n, "tag", "") == "preacher_body"
+                  for n in gpr.scene.npcs),
+          "river: no body on the church floor (it lies at the river)")
+    check(gpr.save.flag("church_empty_seen")
+          and not gpr.save.flag("preacher_body_seen"),
+          "river: the emptied church never counts as finding him")
+    gpr.load_scene_now("brimley")
+    ready(gpr)
+    _pb = next((n for n in gpr.scene.npcs
+                if getattr(n, "tag", "") == "preacher_body"), None)
+    check(_pb is not None, "river: the remains lie on the brimley bank")
+    _bx, _by = gpr.scene._preacher_bank_pos
+    gpr.player.x, gpr.player.y = _bx + 60, _by
+    gpr.scene.update(1 / 30.0, gpr)
+    check(gpr.save.flag("preacher_body_seen"),
+          "river: walking up on the body counts as finding it")
+    if _pb is not None:
+        _pb.dialogue_fn(gpr, _pb)
+        check(gpr.player.inventory.has("cross")
+              and has_evidence(gpr, "the_preacher"),
+              "river: the cross + evidence #4 land at the bank")
+    _gnb = new_game()
+    _gnb.load_scene_now("brimley")
+    check(not any(getattr(n, "tag", "") == "preacher_body"
+                  for n in _gnb.scene.npcs),
+          "river: no remains before the doom")
+    # Hettie's one-shot keys on the FOUND body, never the mere doom.
+    from scenes.dialogue import hettie_dialogue as _hd
+    ghp = new_game()
+    ghp.save.set_flag("preacher_doomed", True)
+    ghp.save.set_flag("hettie_greeted", True)
+    _hshown = []
+    ghp.dialog.show = lambda p, **k: _hshown.extend(
+        p if isinstance(p, list) else [p])
+    _hn = type("N", (), {"name": "Hettie", "x": 0, "y": 0})()
+    _hd(ghp, _hn)
+    check(not any("preacher" in s.lower() for s in _hshown),
+          "river: Hettie never mourns a man still standing")
+    ghp.save.set_flag("preacher_body_seen", True)
+    del _hshown[:]
+    _hd(ghp, _hn)
+    check(any("preacher" in s.lower() for s in _hshown),
+          "river: Hettie's one-shot lands once the body is found")
+    # Crane's knowledge stays a LOCAL's: never the underground, only the
+    # rumor the boy told him (NARRATIVE §2).
+    from scenes.dialogue import CRANE_CONVO as _CCV
+    _fl = next(e for e in _CCV["exchanges"] if e.get("key") == "flock")
+    _fltxt = " ".join(b[1] for b in _fl["beats"]
+                      if b[0] in ("npc", "pi")).lower()
+    check("under the ground" not in _fltxt and "underground" not in _fltxt,
+          "river: Crane never speaks of the underground")
+    check("rumor" in _fltxt and "river" in _fltxt and "toby" in _fltxt,
+          "river: Crane carries only the boy's river rumor")
+
+    # --- 31. The Mask temptation FIRES (the 2026-07 audit found it dead:
+    # an on_complete parked on an inactive modal). Lifting the Mask must
+    # end with the descent_mask NOTE in the case book (NARRATIVE §6, the
+    # "permission to leave" beat).
+    gmt = new_game()
+    gmt.load_scene_now("works_sign")
+    ready(gmt)
+    _msx, _msy = gmt.scene._sign_pos
+    gmt.player.x, gmt.player.y = _msx, _msy + 20
+    gmt.scene.on_interact_fn(gmt)
+    if gmt.dialog.choices:
+        gmt.dialog.choice_idx = 0
+        gmt.dialog.advance()                  # "Lift the mask."
+    for _ in range(6000):
+        if gmt.narration.active:
+            gmt.narration.update(0.1)
+        elif gmt.dialog.active:
+            gmt.dialog.advance()
+        else:
+            break
+    check(gmt.player.inventory.has("pallid_mask"),
+          "tempt: the mask is lifted")
+    check(any(isinstance(n, dict) and n.get("name") == "descent_mask"
+              for n in gmt.save.arg("notes", [])),
+          "tempt: the permission-to-leave beat fires (descent_mask note)")
 
     print()
     if FAILS:

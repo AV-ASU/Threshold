@@ -423,6 +423,34 @@ it renders the procedural sprites to a labelled PNG strip.
   `_TABLETOP_PROP_KINDS` (+ `seat_tabletop_props`) = seated on furniture. A kind
   that must stay ANIMATED needs a LIVE solid fn (standee cards freeze at t=0).
   Verify with a `tools/capture_world.py` tilt capture before/after.
+- **SCENE-DRESSING PROCESS (2026-07 — five failures were caught by the
+  maintainer in one session; every one traces to skipping a step below.
+  Follow ALL of it before placing a single detail):**
+  1. **PROVENANCE.** Every detail answers: who made or carried this, with
+     what tools, why HERE, why does it remain? Place by WORK FLOW (haul
+     heads get spoil, portal mouths get shoring, dead faces get downed
+     tools), never by vibes. An obsessive dig runs no craft room; the
+     willing bleed nobody; nothing underground was made on a lathe.
+  2. **NEVER PLACE A KIND BY ITS NAME.** Render it first
+     (`tools/preview_props_sheet.py <kind> ...`): "pillar" was a fluted
+     Roman column, the `'s'` "shelf" tile a bookcase with colored book
+     spines, "husk_bundle" a stalagmite-shaped pale cone.
+  3. **DESIGN FOR THE PROJECTION.** Man-made things are flat-sided
+     yaw-rotated boxes/quads (a smooth body of revolution reads as a
+     lampshade); the parts that IDENTIFY the object (wheels, a tied
+     waist, board seams, a crossbeam) must be visible from the fixed
+     camera, not hidden under the volume.
+  4. **MISTAKEN-IDENTITY TEST.** Say out loud what else the silhouette
+     could be (especially natural-vs-man-made collisions). If it
+     collides, restyle before placing.
+  5. **VERIFY AT THREE ALTITUDES, THEN IN THE DARK.** Isolated contact
+     sheet (vs a wall-height ruler) -> room crop with actors stripped ->
+     live room -> the SAME shot with the darkness/aperture ON. Players
+     never see the brightened debug view; detail must survive
+     candlelight or sit beside a light source.
+  6. **PLACEMENT.** Never on walking lanes or cover weave gaps; solid
+     footprints re-checked with smoke's flood-fill (hides + exits
+     reachable) BEFORE the full gate.
 - `__pycache__/` is gitignored; never commit `.pyc`.
 
 ## The journal door-dream + "He knows you" (NARRATIVE §1b / §0)

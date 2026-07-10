@@ -1,5 +1,6 @@
-"""The depths -- everything below the basement level. The ritual at
-well_bottom drops the player here; from this point the only
+"""The depths -- everything below the basement level: the OLD WORKINGS,
+older than the cult's dig. The blast at the Deepest Face
+(works_deepstair) drops the player here; from this point the only
 direction is down.
 
 Floors, top to bottom:
@@ -10,7 +11,7 @@ Floors, top to bottom:
   depths_stair        -- the empty spiral down
   dark                -- the hive: the claimed congregation, past names
                          (Mara kneels at the Sign Chamber now; scene
-                         key kept; was the old-family-bodies room)
+                         key kept)
   threshold           -- the doorframe
 
 Hooded chasers populate the first three rooms. The flashlight is
@@ -162,20 +163,29 @@ def build_depths_antechamber():
     sc.set_spawn("from_above", 5, 5)
     sc.add_decoration(Decoration(3 * TILE + 16, 3 * TILE + 16, "candle"))
     sc.add_decoration(Decoration(7 * TILE + 16, 7 * TILE + 16, "candle"))
-    # Two stone pillars flank the landing on the diagonal (clear of the
-    # mid-row passage to the east exit and the cultist's loop).
-    sc.add_furniture("pillar", [(7, 3)])
-    sc.add_furniture("pillar", [(3, 7)])
-    sc.add_decoration(Decoration(5 * TILE + 16, 5 * TILE + 16, "bloodstain"))
-    sc.add_decoration(Decoration(6 * TILE + 16, 7 * TILE + 16, "bloodstain"))
+    # BROKEN timber sets flank the landing on the diagonal (clear of the
+    # mid-row passage to the east exit and the cultist's loop): a lone
+    # upright each, beam sheared off short -- the old workings' props
+    # gave up what they were holding a cycle ago (2026-07: the stone
+    # pillars were swapped out; nobody built columns down here).
+    sc.add_furniture("shoring_frame", [(7, 3)], seed=4, ang=0.6, span=0)
+    sc.add_furniture("shoring_frame", [(3, 7)], seed=10, ang=2.2, span=0)
+    # Rubble from the blown floor above -- the landing text says the fall
+    # delivered you unbroken, so the zone wears dust and stone, no blood.
+    sc.add_decoration(Decoration(5 * TILE + 16, 5 * TILE + 16, "mud_footprint"))
     # Cobweb grime in the beveled corners of the fall zone.
     sc.add_decoration(Decoration(2 * TILE + 6, 2 * TILE + 6, "cobweb",
                                  ang=0.0))
     sc.add_decoration(Decoration(8 * TILE + 26, 8 * TILE + 26, "cobweb",
                                  ang=math.pi))
     # A supply crate from the old workings, and the gap beneath it: one
-    # enclosed hide near the patrol loop (STEALTH_REWORK §6).
+    # enclosed hide near the patrol loop (STEALTH_REWORK §6). Beside it,
+    # spoil never hauled and a stub of the old rail heading east -- the
+    # fall lands you in a working, not a room (2026-07 art pass).
     sc.add_furniture("crate", [(7, 4)])
+    sc.add_furniture("spoil_heap", [(6, 3)], seed=3, see_over=True)
+    sc.add_decoration(Decoration(8 * TILE + 24, 5 * TILE + 16,
+                                 "mine_rail", ang=0.0, seed=9))
     sc.hide_spots = [
         (7 * TILE + 16, 5 * TILE + 8, "under"),    # under the old crate
     ]
@@ -203,55 +213,97 @@ def build_depths_antechamber():
 
 
 def build_depths_procession():
-    # A colonnade comb: a long E-W processional with alcove bays (teeth)
-    # jutting off north and south, staggered so the column never reads as
-    # one straight sightline.
-    floor, objs = _box(16, 9)
-    _wall(objs, 1, 1, 14, 2)            # seal the top band...
-    for cx in (3, 4, 8, 9, 12, 13):    # ...then open north bays (teeth)
-        objs[1][cx] = "."
+    # A colonnade comb, LONG -- the old workings' main drift, the game's
+    # main hallway segment. A 30-tile E-W processional with alcove bays
+    # (teeth) jutting off north and south, staggered so the column never
+    # reads as one straight sightline. Lengthened 2026-07 (the stealth
+    # pass): the graded suspicion model reads on DISTANCE, so the drift
+    # must be long enough to watch a patrol before it can read you, and
+    # a mine's main haul run should walk long.
+    floor, objs = _box(30, 9)
+    _wall(objs, 1, 1, 28, 2)            # seal the top band...
+    for cx in (3, 4, 8, 9, 13, 14, 18, 19, 23, 24, 27, 28):
+        objs[1][cx] = "."               # ...then open north bays (teeth)
         objs[2][cx] = "."
-    _wall(objs, 1, 6, 14, 7)           # seal the bottom band...
-    for cx in (2, 3, 6, 7, 11, 12):    # ...then open south bays
-        objs[6][cx] = "."
+    _wall(objs, 1, 6, 28, 7)           # seal the bottom band...
+    for cx in (2, 3, 6, 7, 11, 12, 16, 17, 21, 22, 25, 26):
+        objs[6][cx] = "."              # ...then open south bays
         objs[7][cx] = "."
-    objs[4][15] = "E"   # east to hall
-    objs[8][6] = "D"    # south (off a bay) -> the ossuary (dead-end branch)
+    objs[4][29] = "E"   # east to hall
+    objs[8][6] = "D"    # south (off a bay) -> the Old Stores branch
     objects = ["".join(r) for r in objs]
     sc = Scene("depths_procession", floor, objects, music="basement")
     sc.add_exit("E", "depths_hall", "from_procession")
     sc.add_exit("D", "the_ossuary", "from_procession")
     sc.set_spawn("default",          1, 4)
     sc.set_spawn("from_antechamber", 1, 4)
-    sc.set_spawn("from_the_ossuary", 6, 6)   # back up from the ossuary branch
-    # A line of candles along the centre, suggesting the procession
-    # column. Two cultists walking it at this hour.
-    for cx in range(2, 14, 2):
+    sc.set_spawn("from_the_ossuary", 6, 6)   # back up from the stores branch
+    # A line of candles down the whole drift, suggesting the procession
+    # column. (The [E] read stays at col 8 -- flow-guarded.)
+    for cx in range(2, 28, 2):
         sc.add_decoration(Decoration(cx * TILE + 16, 4 * TILE + 16,
                                      "candle"))
-    # A colonnade of stone pillars flanking the central walk (clear of the
-    # bays and the walking line).
-    for px in (5, 10):
-        sc.add_furniture("pillar", [(px, 3)])
-        sc.add_furniture("pillar", [(px, 5)])
+    # Timber SETS down the drift (2026-07 art pass): each is one frame --
+    # two board uprights flanking the walk and a header beam the player
+    # passes UNDER, the same structural grammar as the Threshold frame,
+    # drawn from yaw-rotated boxes so it holds at every camera angle.
+    # The uprights sit on the same tiles the old posts did (collision
+    # unchanged); row 4 walks under the beam. Seeded so no two match.
+    for px in (5, 10, 16, 21, 26):
+        sc.add_furniture("shoring_frame", [(px, 3), (px, 5)],
+                         seed=px * 3 + 1, ang=math.pi / 2, span=64)
+    # Two more sets stand over south bay MOUTHS, facing the camera --
+    # the full frame read (uprights + header beam over the opening, the
+    # Threshold's grammar). Pure decoration: their uprights hug the bay
+    # cut's wall edges, which are already solid, so collision and the
+    # bays' cover value are untouched.
+    for bx0 in (6, 21):
+        sc.add_decoration(Decoration((bx0 + 0.5) * TILE + 16, 6 * TILE + 2,
+                                     "shoring_frame", seed=bx0,
+                                     ang=0.0, span=78))
+    # The old workings' haul road: stubs of rusted rail down the drift's
+    # walking line (the candle line follows a dead mine's road), and the
+    # seized ore cart shoved aside into a south bay a cycle ago -- solid,
+    # so it doubles as bay cover.
+    for rx_ in (7, 13, 19, 25):
+        sc.add_decoration(Decoration(rx_ * TILE + 16, 4 * TILE + 16,
+                                     "mine_rail", ang=0.0, seed=rx_))
+    sc.add_furniture("ore_cart", [(17, 7)], seed=4)
     # Cobweb grime in the high corners of the procession column.
     sc.add_decoration(Decoration(1 * TILE + 6, 3 * TILE + 6, "cobweb",
                                  ang=0.0))
-    sc.add_decoration(Decoration(14 * TILE + 26, 3 * TILE + 6, "cobweb",
+    sc.add_decoration(Decoration(28 * TILE + 26, 3 * TILE + 6, "cobweb",
                                  ang=math.pi / 2))
-    # A crate tucked in a south bay + the gap under it: one enclosed hide
-    # off the column (STEALTH_REWORK §6) -- the bays themselves are the
-    # concealment; this is the rooted option a searcher can check.
+    # Crates tucked into bays along the run + the gaps under them: three
+    # enclosed hides spaced down the drift (STEALTH_REWORK §6) -- the
+    # bays themselves are the concealment; these are the rooted options
+    # a searcher can sweep and check. A long room needs hides the whole
+    # way, or its far half is a dead sprint.
     sc.add_furniture("crate", [(12, 7)])
+    sc.add_furniture("crate", [(19, 1)])
+    sc.add_furniture("crate", [(26, 7)])
     sc.hide_spots = [
-        (11 * TILE + 24, 7 * TILE + 16, "under"),  # beside the bay crate
+        (11 * TILE + 24, 7 * TILE + 16, "under"),  # beside the mid bay crate
+        (19 * TILE + 16, 2 * TILE + 8,  "under"),  # under the north bay crate
+        (25 * TILE + 24, 7 * TILE + 16, "under"),  # beside the far bay crate
     ]
-    # Two cultists walking the column, single file, opposite phases
-    # so they meet between (5..12) and pass each other. Endpoints
-    # held away from the west-edge spawn (col 1) so the player
-    # arrives with breathing room.
+    # Three cultists walking the column, single file, spread phases so
+    # the drift always has one in view somewhere and passing windows
+    # open between them. Endpoints held away from the west-edge spawn
+    # (col 1) so the player arrives with breathing room.
     sc.add_enemy(_cultist(5 * TILE + 16, 4 * TILE + 16, speed=0.9))
-    sc.add_enemy(_cultist(11 * TILE + 16, 4 * TILE + 16, speed=0.9))
+    sc.add_enemy(_cultist(14 * TILE + 16, 4 * TILE + 16, speed=0.9))
+    sc.add_enemy(_cultist(23 * TILE + 16, 4 * TILE + 16, speed=0.9))
+    # Candle-tending dwells down the drift (the JOBS layer, 2026-07
+    # stealth pass): the walkers pause over the flames in a rhythm the
+    # player can read from a bay -- the long room's patrols get a
+    # learnable beat instead of pure drift. Sightings still outrank it.
+    sc.add_cult_station(6 * TILE + 16, 4 * TILE + 16, pose="chant",
+                        face=(0, 1), dwell=(2.5, 4.5))
+    sc.add_cult_station(16 * TILE + 16, 4 * TILE + 16, pose="chant",
+                        face=(0, 1), dwell=(2.5, 4.5))
+    sc.add_cult_station(26 * TILE + 16, 4 * TILE + 16, pose="chant",
+                        face=(0, 1), dwell=(2.5, 4.5))
     _ambient(sc, "blip_soft", 0.12, 2.5, 4.5)
 
     # The procession's one diegetic beat (TODO #8): the candle line read
@@ -290,52 +342,74 @@ def build_depths_procession():
 
 
 def build_depths_hall():
-    # A cruciform basilica: a long E-W nave to the iron door, crossed by a
-    # N-S transept near its middle. The corners are solid stone, so the
-    # kneeling grid is reached only down the nave and across the crossing.
-    floor, objs = _box(15, 11)
+    # A cruciform basilica: a LONG E-W nave to the iron door, crossed by a
+    # N-S transept. The corners are solid stone, so the kneeling grid is
+    # reached only down the nave and across the crossing. Lengthened
+    # 2026-07 (the stealth pass): the nave east of the crossing gives the
+    # kneelers a real approach to read, and the pew rows run the length.
+    floor, objs = _box(20, 11)
     _wall(objs, 1, 1, 7, 3)        # NW
-    _wall(objs, 11, 1, 13, 3)      # NE
+    _wall(objs, 11, 1, 18, 3)      # NE
     _wall(objs, 1, 7, 7, 9)        # SW
-    _wall(objs, 11, 7, 13, 9)      # SE
-    objs[5][14] = "E"   # east to threshing floor (the iron door)
+    _wall(objs, 11, 7, 18, 9)      # SE
+    objs[5][19] = "E"   # east to threshing floor (the iron door)
     objects = ["".join(r) for r in objs]
     sc = Scene("depths_hall", floor, objects, music="basement")
     sc.add_exit("E", "depths_threshing", "from_hall")
     sc.set_spawn("default",        1, 5)
     sc.set_spawn("from_procession", 1, 5)
     # The east wall holds the iron door the kneeling grid faces.
-    # Three cultists in the room: two flanking the door, one on
+    # Four cultists in the room: two flanking the door, one on
     # patrol. Hide spots scatter so the player can pick a route.
-    sc.add_decoration(Decoration(13 * TILE + 16, 5 * TILE + 16,
+    sc.add_decoration(Decoration(18 * TILE + 16, 5 * TILE + 16,
                                  "phantom_mark"))
-    # A "wrong" mount watching from the transept wall -- belongs to the dark.
-    sc.add_decoration(Decoration(9 * TILE + 16, 0 * TILE + 18,
-                                 "wrong_taxidermy", wall="N", seed=21))
+    # (The "wrong" taxidermy mount was cut, 2026-07 process audit: a
+    # hunting trophy fails provenance in the old workings -- nobody hung
+    # a mount in a mine. The one in the Sorting Hall stays: it sits
+    # among the catalogued possessions the congregation shed.)
     sc.add_decoration(Decoration(5 * TILE + 16, 4 * TILE + 16, "candle"))
     sc.add_decoration(Decoration(5 * TILE + 16, 6 * TILE + 16, "candle"))
-    # Pews in two rows down the nave, a clear central aisle (row 5) between
-    # them up to the iron door.
+    sc.add_decoration(Decoration(14 * TILE + 16, 4 * TILE + 16, "candle"))
+    # Rough plank benches in two rows down BOTH halves of the nave, a
+    # clear central aisle (row 5) between them up to the iron door.
+    # (2026-07 process audit: PEWS are church joinery nobody hauled down
+    # a mine; the kneeling rows sit on backless planks the congregation
+    # knocked together from the dig's own lumber.)
     for px in (2, 4, 6):
-        sc.add_furniture("pew", [(px, 4)])
-        sc.add_furniture("pew", [(px, 6)])
+        sc.add_furniture("plank_bench", [(px, 4)])
+        sc.add_furniture("plank_bench", [(px, 6)])
+    for px in (12, 15):
+        sc.add_furniture("plank_bench", [(px, 4)])
+        sc.add_furniture("plank_bench", [(px, 6)])
     # Cobweb grime in the transept ends.
     sc.add_decoration(Decoration(8 * TILE + 6, 1 * TILE + 6, "cobweb",
                                  ang=0.0))
     sc.add_decoration(Decoration(10 * TILE + 26, 8 * TILE + 26, "cobweb",
                                  ang=math.pi))
-    # One enclosed hide on the nave route (STEALTH_REWORK §6): under a
-    # pew, in the roamer's sweep range.
+    # Cover down the nave (2026-07 stealth pass): the benches are
+    # see-over (knee-high planks hide nobody standing), which left the
+    # aisle a 16-tile naked run once the room was lengthened. Three
+    # BROKEN shoring sets stagger along it -- solid, sight-blocking,
+    # the old workings' own vocabulary -- so the dash to the door
+    # breaks into readable legs (longest exposed run ~5 tiles).
+    sc.add_furniture("shoring_frame", [(3, 6)], seed=7, ang=0.5, span=0)
+    sc.add_furniture("shoring_frame", [(9, 4)], seed=12, ang=2.4, span=0)
+    sc.add_furniture("shoring_frame", [(13, 6)], seed=3, ang=1.1, span=0)
+    # Enclosed hides on the nave route (STEALTH_REWORK §6): under a
+    # bench in each half, both in the roamer's sweep range -- the east half
+    # past the crossing needs its own rooted option once the kneelers
+    # wake, or the run to the door is a coin flip.
     sc.hide_spots = [
-        (4 * TILE + 16, 5 * TILE + 24, "under"),   # under a nave pew
+        (4 * TILE + 16, 5 * TILE + 24, "under"),    # under a west nave bench
+        (15 * TILE + 16, 5 * TILE + 24, "under"),   # under an east nave bench
     ]
     # Two stationary cultists kneel at the iron door, facing east.
     # Aggro starts at 0 (oblivious) so they don't react until the
     # crossing trigger flips them. aggro=0 + lock_facing pins them in
     # place (a stationary set-piece, exempt from the SCOUT roam) and keeps
     # them turned toward the door. The third cultist roams, regardless.
-    kneel_a = _cultist(12 * TILE + 16, 4 * TILE + 16, speed=0.8)
-    kneel_b = _cultist(12 * TILE + 16, 6 * TILE + 16, speed=0.8)
+    kneel_a = _cultist(17 * TILE + 16, 4 * TILE + 16, speed=0.8)
+    kneel_b = _cultist(17 * TILE + 16, 6 * TILE + 16, speed=0.8)
     for k in (kneel_a, kneel_b):
         k.aggro = 0
         k.facing = (1, 0)
@@ -401,11 +475,9 @@ def build_depths_threshing():
         m.facing = mf
         m.pose = mp
         sc.add_npc(m)
-    # The yield. Grain mixed with old blood. Hide spots tuck into the cavern's
-    # pockets.
-    for bx, by in [(4, 4), (6, 5), (8, 6), (5, 7), (7, 4)]:
-        sc.add_decoration(Decoration(bx * TILE + 16, by * TILE + 16,
-                                     "bloodstain"))
+    # (The old blood-in-the-grain stains were cut, 2026-07: the tithe is
+    # an offering carried down by the willing -- nobody bled into it.
+    # The heaps and the wading water carry the room.)
     # The yield itself: raked cones of tithed grain (3D heaps), clear of the
     # central walk (row 5) and the heap the player reads (6, 5).
     for gx, gy in [(4, 4), (8, 4), (4, 7), (8, 7)]:
@@ -461,10 +533,14 @@ def build_depths_stair():
 
 
 def build_the_ossuary():
-    """A bone vault off the procession -- a tall hexagonal cell where the
-    fold's lost are shelved: not the murdered (the cult kills no one), but
-    the ones the dark took early, their leavings racked and labelled. A
-    dead-end pocket of dread and cover."""
+    """The Old Stores off the procession -- a tall hexagonal cell where
+    the old workings kept their gear: racked shelves of dead lamps and
+    worn tools, every haft tagged in the same steady brown hand. A mine's
+    storeroom, nothing more, and the labor it inventories outlived the
+    hands that did it. A dead-end pocket of dread and cover. (2026-07
+    mine retrofit: the old charnel-vault fiction was a killer-cult relic --
+    the claiming cult spills no one; scene key stays the_ossuary --
+    load-bearing.)"""
     floor, objs = _box(9, 12)
     _bevel(objs, 2)
     objs[0][4] = "F"          # north -> back to the procession
@@ -473,12 +549,15 @@ def build_the_ossuary():
     sc.add_exit("F", "depths_procession", "from_the_ossuary")
     sc.set_spawn("default",         4, 6)
     sc.set_spawn("from_procession", 4, 2)
-    # Racks of shelved bones (3D) line the niches, old stains beneath them;
-    # candles gutter between.
+    # Racked gear shelves (3D) line the niches -- dark tools, gaps where
+    # gear went out, one dead lamp; candles gutter between. (2026-07:
+    # "shelf" drew book spines; a mine store shelves no library.)
     for sx, sy in [(2, 4), (6, 4), (2, 8), (6, 8)]:
-        sc.add_furniture("bone_rack", [(sx, sy)])
-        sc.add_decoration(Decoration(sx * TILE + 16, sy * TILE + 16,
-                                     "bloodstain"))
+        sc.add_furniture("gear_shelf", [(sx, sy)])
+    # A dead lamp left on a shelf -- the old workings' light, burned out a
+    # cycle ago (seated onto the shelf top by seat_tabletop_props).
+    sc.add_decoration(Decoration(6 * TILE + 16, 4 * TILE + 16,
+                                 "kerosene_lamp"))
     sc.add_decoration(Decoration(4 * TILE + 16, 3 * TILE + 16, "phantom_mark"))
     sc.add_decoration(Decoration(2 * TILE + 16, 6 * TILE + 16, "candle"))
     sc.add_decoration(Decoration(6 * TILE + 16, 9 * TILE + 16, "candle"))
@@ -489,8 +568,9 @@ def build_the_ossuary():
     sc.hide_spots = []
     _ambient(sc, "whisper", 0.12, 7.0, 12.0)
     sc.add_interactable(4 * TILE + 16, 9 * TILE + 16, 36)   # [E] cue: the shelves
-    # Optional lore: The Digging (third, deepest testimony fragment), racked
-    # with one lost digger's leavings. Pure lore, gates nothing.
+    # Optional lore: The Digging (third, deepest testimony fragment), left
+    # on a shelf among the old gear -- the cult's one addition to the
+    # stores. Pure lore, gates nothing.
     sc._dig_note_pos = (6 * TILE + 16, 9 * TILE + 16)
     sc.add_interactable(sc._dig_note_pos[0], sc._dig_note_pos[1], 36)
 
@@ -498,10 +578,10 @@ def build_the_ossuary():
         px, py = game.player.x, game.player.y
         if abs(px - (4 * TILE + 16)) < 36 and abs(py - (9 * TILE + 16)) < 36:
             _evidence(game, "the_ossuary_shelves",
-                "Shelves of leavings: shoes, spectacles, a wedding band worn "
-                "thin, racked and labelled in the Clerk's hand. Not trophies. "
-                "An inventory of everything the dark took before it learned to "
-                "leave the body walking.")
+                "Shelves of the dig's gear: lamps burned black, pick hafts "
+                "worn down to the grain, every one tagged in the same "
+                "steady brown hand. An inventory of labor. The tools wore "
+                "out. The hands that held them kept going.")
             return
         nx, ny = sc._dig_note_pos
         if abs(px - nx) < 36 and abs(py - ny) < 36:

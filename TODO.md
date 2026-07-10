@@ -320,6 +320,30 @@ halls (some finished, some half-dug, the deepest hand-clawed), spoil heaps,
 cart ruts, a degradation arc ending at the Deepest Face. A few pockets carry
 loot / testimony placement; most is just labor made visible.
 
+- **The FICTION half landed (2026-07, the mine retrofit + killer-cult
+  scrub; guarded by flow §19b).** Room identities and text now read as the
+  dig over old workings: `the_cells` = the diggers' bunk cells (captivity
+  fiction cut), `the_ossuary` = the Old Stores (the bone vault is purged,
+  `bone_rack` deleted from the furniture registry), every underground
+  bloodstain/gore decal removed (the willing bled nobody), the Sorting
+  Hall's "faces of the vanished" flyer wall cut, HUD display names cover
+  the whole underground (the Deepest Face, not the cut Deep Stair).
+- **The DRESSING half landed too (2026-07 art pass).** New procedural
+  kinds, each registered in exactly one tilt set: `spoil_heap` /
+  `shoring_frame` / `ore_cart` (SOLID_PROPS), `tally_marks` (wall deco),
+  `mine_rail` (floor decal). Placed by mine logic: spoil + the barrow at
+  the haul head (Shaft Floor), timber shoring at the gallery mouths and
+  down the procession drift (the drift's stone pillars swapped to wood),
+  the old workings' rail stubs under the candle line + the seized ore
+  cart in a bay, inventory tallies over the Sorting Hall tables, and the
+  degradation-arc climax at the Deepest Face (shift tallies by the face,
+  unhauled spoil, downed hafts). The grain heap's baked-in "old blood"
+  ring was recut to dark chaff (a killer-cult relic in the ART layer).
+  The Sign Chamber stays deliberately bare: the one properly FINISHED
+  room in the dig. What REMAINS here is the LEVEL-design half: timbered
+  side-chambers dug off the halls (new geometry, some finished, some
+  half-dug), doors under the cave-mouth adits.
+
 ### 15. **[Fable]** Deadpan narration editing pass  *(was GAME_CHANGES §22)*
 
 Sweep every narrator / world caption to the settled voice: objective, deadpan,
@@ -434,14 +458,16 @@ smaller-grid perf pass is the shippable core of this.
 
 - **[Opus]** **Brimley smaller-grid perf pass** *(the one salvaged piece of the parked reshape, #8)* — cut `w`/`h` from 100×100 toward ~64–72 and re-pack the 7 buildings + well tighter, WITHOUT changing the shape or the boundary (the square + torus wrap + fog rim all stay). This is the real FPS/tedium win (the one-time whole-map tilt bake, `scenes/base.py` `_tilt_fullmap`, ~6000 tiles). Verify: `tools/profile_brimley.py` before/after, a `tools/capture_world.py` tilt capture, full `python tests/run_all.py` gate.
 - **[Fable + Opus]** **Rev. Asa Crane murder reveal + sprite** *(NARRATIVE.md §2; feeds off the #1 provoke pilot)* — Fable for the reveal writing + staging, Opus for the procedural corpse sprite. Punch up
-  the `preacher_doomed` death, three parts. (1) **New discovery location**: the
-  provoke choice (item #1 pilot) sends him to the cult's ground, so find his body
-  AWAY from the church — e.g. the well/grove edge, reaching for the souls he
-  couldn't save — a real investigative find, not a pop on re-entry. (2)
+  the `preacher_doomed` death. ~~(1) New discovery location~~ **DONE
+  (2026-07):** the doom sends Crane out of his church (the emptied nave's
+  one-shot river-mud line points at the water) and his body is found on the
+  **Brimley riverbank** (`_brimley_on_enter` / `_preacher_bank_pos`;
+  `preacher_body_seen` sets on walking up, so Vane's + Hettie's one-shots can
+  never announce an unfound killing). Still open: (2)
   **Bespoke sprite**: the current corpse is a placeholder medieval knight
   (`_draw_body`: helmet + spear + tabard-grey) — replace with a gutted-preacher
   draw (dark palette, white collar, cross in the mess). (3) Stage the approach
-  (wrongness before sight, long sightline). Art + placement + a location move;
+  (wrongness before sight, long sightline). Art only now;
   lore unchanged.
 - **[Opus]** **Held-weapon offset per camera yaw** *(was HANDCRAFT_BACKLOG 3b)* — `draw_axe_held` reads at rest; the one remaining note is an eyeball pass on the equipped-weapon offset at every camera yaw so it never floats off the hand. Verify with a tilt capture across yaws.
 - **[Fable + Opus]** **The grove reads north of Brimley, the river in view** *(2026-07 canon ruling)* — `effigy_grove` is the mouth of the cult's mine, north of town above the river (NARRATIVE §5), and the congregation walked there openly before the rite hid it; the scene art is still a bare corn crop circle. Dress the rim so the river reads below it (the water in view, the dug mouth framing the descent pane) and the northern placement lands without a line of dialogue. Decoration only; the rite, the gates, and the pane stay exactly as they are. Verify with a `tools/capture_world.py` tilt capture + the full `python tests/run_all.py` gate.
@@ -453,6 +479,7 @@ smaller-grid perf pass is the shippable core of this.
   then steps through (intentional per `PORTALS.md`). A persistent silhouette
   on the far side of an already-open fold is not built; revisit only if the
   direction changes.
+- **[Opus]** **Mine retrofit tail cleanups** *(2026-07 code review; none player-visible)* — (a) cache the `_tilt_rack_box` extrusion per (tile, yaw-bucket) like the wall cards (well_passage re-projects ~280 points/frame live); (b) fold `_RACK_CHARS` into the shared wall-scan char-set plumbing instead of a third parallel set; (c) the cave `door_style` key list in `scenes/__init__.py` duplicates the `UNDERGROUND_SCENES` gating idea — derive from one source; (d) `husk_bundle` + `pillar` are registered kinds with no placements (keep as reusable art or cut). Verify: `tools/capture_world.py` tilt capture byte-diff + full gate.
 - **[Fable + Opus]** **The barn reads lived-in by several people** *(scene dressing; `scenes/interiors.py`)* — the barn is where Mara went, and it carries her journal (evidence #2), but it currently reads as one person's spot. Dress it so it looks inhabited by MORE than one: multiple bedrolls/pallets, several sets of belongings, more than one place set. Decoration only, no canon or lore change (the journal beat + descent hook stay exactly as they are). Verify with a `tools/capture_world.py` tilt capture + the full `python tests/run_all.py` gate.
 
 ---

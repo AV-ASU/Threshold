@@ -15,7 +15,36 @@ from constants import TILE
 from entities.decoration import Decoration
 from entities.npc import NPC
 from .base import Scene
-from .dialogue import _evidence
+from .dialogue import _evidence, preacher_body_examine
+
+
+def _brimley_on_enter(game, scene):
+    """Lay out the doomed Preacher's remains on the riverbank (2026-07
+    rework: he leaves his church to talk his flock home and is found
+    here, never on his own floor). Rebuilt every load after the doom."""
+    if not game.save.flag("preacher_doomed"):
+        return
+    bx, by = scene._preacher_bank_pos
+    scene.add_decoration(Decoration(bx - 6, by + 9, "bloodstain"))
+    scene.add_decoration(Decoration(bx + 9, by - 6, "gore"))
+    scene.add_decoration(Decoration(bx, by, "body"))
+    scene.add_npc(NPC(bx, by, "The Preacher", "_invisible",
+                      voice="blip_soft", portrait="narrator",
+                      dialogue_fn=preacher_body_examine,
+                      movement="idle", solid=True, tag="preacher_body"))
+
+
+def _brimley_update(game, scene, dt):
+    """Finding the body counts on SIGHT, not only on the E-press: walking
+    up on the remains sets `preacher_body_seen`, the flag Sheriff Vane's
+    and Hettie's murder one-shots key on (they can never announce a
+    killing the player hasn't found)."""
+    if (game.save.flag("preacher_doomed")
+            and not game.save.flag("preacher_body_seen")):
+        bx, by = scene._preacher_bank_pos
+        if (abs(game.player.x - bx) < 110
+                and abs(game.player.y - by) < 110):
+            game.save.set_flag("preacher_body_seen", True)
 
 
 def _brimley_voice(pages, voice="blip_mid", fold=False, beats=None):
@@ -1043,10 +1072,13 @@ def build_brimley():
         sc.add_decoration(Decoration(gx * TILE + 16, gy * TILE + 16, "creepy_tree"))
     # A cult standing-stone ring in the open north-east field, a Yellow
     # Sign cut into the ground at its centre, lit by two braziers -- a
-    # warm, watched focal point out in the dark.
+    # warm, watched focal point out in the dark. (2026-07: real weathered
+    # standing stones now; the placeholder fluted "pillar" columns read
+    # as Roman architecture in a Minnesota corn field.)
     for (px, py) in [(77, 31), (81, 31), (79, 30),
                      (76, 34), (82, 34), (79, 36)]:
-        sc.add_decoration(Decoration(px * TILE + 16, py * TILE + 16, "pillar"))
+        sc.add_decoration(Decoration(px * TILE + 16, py * TILE + 16,
+                                     "standing_stone", seed=px * 7 + py))
     sc.add_decoration(Decoration(79 * TILE + 16, 33 * TILE + 16, "yellow_sign"))
     sc.add_decoration(Decoration(77 * TILE + 16, 33 * TILE + 16, "brazier"))
     sc.add_decoration(Decoration(81 * TILE + 16, 33 * TILE + 16, "brazier"))
@@ -1239,4 +1271,13 @@ def build_brimley():
     sc.add_interactable(sc._payphone_pos[0], sc._payphone_pos[1], 40)
 
     sc.on_interact_fn = _brimley_interact
+
+    # The Preacher's end (2026-07 rework): the doom sends Crane out of his
+    # church, down to the river after his flock. His remains lie on the
+    # west bank (evidence #4, the cross); the emptied church's river-mud
+    # line points here. The scene rebuilds each load, so the remains are
+    # re-laid every entry after the doom.
+    sc._preacher_bank_pos = (31 * TILE + 16, 52 * TILE + 16)
+    sc.on_enter_fn = _brimley_on_enter
+    sc.on_update_fn = _brimley_update
     return sc

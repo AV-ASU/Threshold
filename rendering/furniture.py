@@ -19,7 +19,6 @@ _WOOD_DK = {"top": (94, 65, 41), "side": (72, 49, 31), "dark": (52, 35, 22)}
 _STONE = {"top": (122, 120, 126), "side": (96, 94, 100), "dark": (70, 68, 74)}
 _IRON = {"top": (86, 86, 94), "side": (64, 64, 72), "dark": (44, 44, 52)}
 _CLOTH = {"top": (152, 62, 60), "side": (120, 47, 46), "dark": (90, 34, 34)}
-_BONE = {"top": (196, 190, 170), "side": (150, 144, 126), "dark": (104, 99, 86)}
 
 
 def _lerp(a, b, f):
@@ -52,6 +51,27 @@ def _d_shelves(surf, pal, c):
             p = _fp(c, fx, f + 0.11)
             pygame.draw.rect(surf, spines[i % 4],
                              (int(p[0]) - 1, int(p[1]) - 3, 3, 7))
+
+
+def _d_gear_shelves(surf, pal, c):
+    # shelf runs racked with the dig's gear: dark tool silhouettes, a
+    # coiled shape, one pale dead lamp -- never book spines (the mine
+    # art pass, 2026-07)
+    for f in (0.20, 0.48, 0.74):
+        _hline(surf, *c, f, _shade(pal["dark"], 0.6), 2)
+    gear = ((58, 48, 36), (48, 42, 34), (66, 54, 38))
+    i = 0
+    for f in (0.20, 0.48, 0.74):
+        for fx in (0.2, 0.45, 0.7):
+            i += 1
+            if (i * 5) % 4 == 3:                 # gaps where gear went out
+                continue
+            p = _lerp(_lerp(c[0], c[1], fx), _lerp(c[2], c[3], fx), f)
+            pygame.draw.rect(surf, gear[i % 3],
+                             (int(p[0]) - 2, int(p[1]) - 3, 4, 5))
+    # the one dead lamp, pale glass catching what light there is
+    p = _lerp(_lerp(c[0], c[1], 0.82), _lerp(c[2], c[3], 0.82), 0.48)
+    pygame.draw.rect(surf, (128, 124, 112), (int(p[0]) - 1, int(p[1]) - 4, 3, 6))
 
 
 def _d_bare_shelves(surf, pal, c):
@@ -113,16 +133,6 @@ def _d_cot_pallet(surf, pal, c):
     _hline(surf, *c, 0.72, (150, 142, 128), 3)
     p = _lerp(_lerp(c[0], c[1], 0.22), _lerp(c[2], c[3], 0.22), 0.5)
     pygame.draw.circle(surf, (96, 88, 78), (int(p[0]), int(p[1])), 3)
-
-
-def _d_bones(surf, pal, c):
-    # stacked pale rows with knobbly ends -- shelved bones
-    for f in (0.22, 0.5, 0.78):
-        _hline(surf, *c, f, _shade(pal["dark"], 0.7), 2)
-        for fx in (0.28, 0.72):
-            p = _lerp(_lerp(c[0], c[1], fx), _lerp(c[2], c[3], fx), f)
-            pygame.draw.circle(surf, _shade(pal["top"], 1.05),
-                               (int(p[0]), int(p[1])), 2)
 
 
 def _d_pew_back(surf, pal, c):
@@ -282,6 +292,8 @@ FURNITURE = {
     # the general store's emptied goods run (food scarcity, NARRATIVE §8):
     # same case as a bookshelf, nothing standing on the shelves
     "bare_shelf": (28, 13, 23, _WOOD_DK, _d_bare_shelves),
+    # the Old Stores' racked gear (the mine art pass, 2026-07)
+    "gear_shelf": (28, 13, 22, _WOOD_DK, _d_gear_shelves),
     "wardrobe":  (24, 15, 26, _WOOD_DK, _d_door_seam),
     "stove":     (22, 20, 18, _IRON,    _d_firebox),
     "fireplace": (30, 14, 24, _STONE,   _d_firebox),
@@ -292,8 +304,13 @@ FURNITURE = {
     "crate":     (18, 18, 16, _WOOD_MID, None),
     "barrel":    (16, 16, 18, _WOOD_MID, None),
     "cot":       (28, 13, 8,  _WOOD_DK, _d_cot_pallet),
-    "bone_rack": (26, 12, 24, _BONE,    _d_bones),
+    # ("bone_rack" purged 2026-07: the ossuary bone-vault fiction was a
+    # killer-cult relic -- the claiming cult spills no one, NARRATIVE §1b.
+    # The Old Stores rack ordinary "shelf" cases now.)
     "pew":       (40, 11, 11, _WOOD_DK, _d_pew_back),
+    # a backless plank on trestle legs -- the mine's own carpentry (the
+    # old workings' seating; a PEW is church joinery nobody hauled down)
+    "plank_bench": (38, 9, 8, _WOOD_DK, None),
     # Free-standing Tier-1 decorations promoted to real box volumes (they used
     # to float as flat top-down sprites under tilt).
     "chest":            (24, 18, 13, _WOOD_MID, _d_chest_lid),

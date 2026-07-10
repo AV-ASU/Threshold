@@ -1,12 +1,13 @@
 """THE WORKS -- the Basement Level. The cult's underground labour,
 reached ONLY through the descent fold in the effigy grove (the rite:
 the Invitation at 3 evidence, the school door, the clearing). Seven
-rooms descend from the shaft floor to the Deep Stair, which the
-keystone (the Pallid Mask) opens onto the Depths:
+rooms descend from the shaft floor to the Deepest Face, where the
+blast (powder from the Sump, Mask in hand) opens the fall into the
+Depths:
 
   well_bottom        -- the Shaft Floor (the fold lands you here; its
                         return pane is the way back up)
-  well_passage       -- the Drying Racks (first gauntlet)
+  well_passage       -- the Timber Racks (first gauntlet)
   works_vats         -- the Cistern (the dig broke into the river)
   works_sorting      -- the Sorting Hall (shed lives of the claimed)
   works_scriptorium  -- the Scriptorium (the Sign, copied endlessly)
@@ -54,7 +55,7 @@ def build_well_bottom():
     # seals the descent.
     floor, objs = _box(12, 10)
     _bevel(objs, 3)
-    objs[5][11] = "E"         # east -> the drying racks (deeper)
+    objs[5][11] = "E"         # east -> the timber racks (deeper)
     objs[2][3]  = "O"         # the way back up: the fold's return pane
     #                             (the marker char: invisible, walkable)
     objects = ["".join(r) for r in objs]
@@ -96,10 +97,8 @@ def build_well_bottom():
     sc.exit_gate_fn = _up_gate
 
     sc.add_decoration(Decoration(4 * TILE + 16, 2 * TILE + 22, "candle"))
-    sc.add_decoration(Decoration(7 * TILE + 16, 6 * TILE + 16, "bloodstain"))
-    # A "wrong" mount in the well dark -- too many eyes.
-    sc.add_decoration(Decoration(6 * TILE + 16, 0 * TILE + 18,
-                                 "wrong_taxidermy", wall="N", seed=31))
+    # (The "wrong" taxidermy mount was cut, 2026-07 process audit:
+    # nobody hung a hunting trophy at the bottom of a mine shaft.)
     # Cobweb grime in the beveled corners away from the ladder.
     sc.add_decoration(Decoration(9 * TILE + 26, 1 * TILE + 6, "cobweb",
                                  ang=math.pi / 2))
@@ -107,7 +106,7 @@ def build_well_bottom():
                                  ang=-math.pi / 2))
     sc.add_decoration(Decoration(3 * TILE + 26, 1 * TILE + 6, "cobweb", ang=0.0))
 
-    # --- Shaft-floor dressing: the wet, dead bottom of the well ---
+    # --- Shaft-floor dressing: the head of the haul (2026-07 art pass) ---
     # Fallen shoring timbers collapsed into the SE -- the cover the hide spot
     # crouches behind.
     sc.add_furniture("firewood", [(7, 7)], w=44, h=22, seed=3)
@@ -116,6 +115,12 @@ def build_well_bottom():
     # a stray crate in the SW the second hide spot can crouch behind.
     sc.add_furniture("barrel", [(8, 2)])
     sc.add_furniture("crate", [(2, 6)])
+    # The haul head: spoil staged against the walls waiting on a rope
+    # that is gone, and the barrow that carried it, parked mid-floor.
+    sc.add_furniture("spoil_heap", [(3, 3)], seed=1, see_over=True)
+    sc.add_furniture("spoil_heap", [(7, 3)], seed=6, see_over=True)
+    sc.add_decoration(Decoration(6 * TILE + 16, 6 * TILE + 16,
+                                 "wheelbarrow"))
     # Water seeping to the lowest place (NARRATIVE 1b): a thin teal rivulet
     # pooling in the SW. (The drowned-body decal that lay in it was cut by
     # design call, 2026-07 -- the pool and the claw gouges carry the dread.)
@@ -123,13 +128,13 @@ def build_well_bottom():
                                  ang=math.pi / 2, seed=5))
     sc.add_decoration(Decoration(5 * TILE + 16, 8 * TILE + 12, "water_trail",
                                  pool=True, seed=9))
-    # Grime: claw gouges in the stone, mud tracked from the landing, more
-    # old blood.
+    # Grime: the diggers' pick and hand gouges in the stone, mud tracked
+    # from the landing. (The old red stains were cut, 2026-07: the mine
+    # was dug by the willing; nobody bled anybody down here.)
     sc.add_decoration(Decoration(10 * TILE + 8, 4 * TILE + 16, "claw_marks",
                                  scale=1.8))
     sc.add_decoration(Decoration(5 * TILE + 16, 1 * TILE + 10, "claw_marks",
                                  scale=1.4))
-    sc.add_decoration(Decoration(4 * TILE + 16, 6 * TILE + 16, "bloodstain"))
     sc.add_decoration(Decoration(5 * TILE + 16, 4 * TILE + 16, "mud_footprint"))
     sc.add_decoration(Decoration(6 * TILE + 16, 4 * TILE + 16, "mud_footprint"))
     for mx, my in ((4, 4), (7, 5), (5, 7)):
@@ -172,76 +177,108 @@ def build_well_bottom():
     return sc
 
 
-# ---- Room 2: the Drying Racks (key: well_passage) ----
+# ---- Room 2: the Timber Racks (key: well_passage) ----
 
 def build_well_passage():
-    # A T-shaped drying corridor: a long E-W run with a central north bay
-    # jutting up off it (a pocket of racks you have to step into).
-    floor, objs = _box(16, 9)
-    _wall(objs, 1, 1, 5, 3)        # seal the upper-left
-    _wall(objs, 10, 1, 14, 3)      # seal the upper-right -> central bay at cols 6-9
+    # A T-shaped storage gallery, LONG: a 24-tile E-W run with a central
+    # north bay jutting up off it (a pocket of racks you have to step
+    # into). The dig's LUMBER lives here -- shoring boards came down the
+    # shaft and staged in racks on their way to the faces (2026-07: the
+    # old "drying corn-doll material" fiction was cut; an obsessive dig
+    # runs no craft room, and the second gallery off the haul head is
+    # exactly where a mine keeps its timber). Lengthened 2026-07 (the
+    # stealth pass): the first gauntlet room teaches reading a patrol at
+    # distance, so the run must be long enough for "far" to mean
+    # something under the graded suspicion model.
+    floor, objs = _box(24, 9)
+    _wall(objs, 1, 1, 7, 3)        # seal the upper-left
+    _wall(objs, 12, 1, 22, 3)      # seal the upper-right -> central bay at cols 8-11
     objs[5][0] = "F"          # west -> back to the shaft
-    objs[5][15] = "E"         # east -> the cistern (deeper)
-    # Drying racks (solid shelves) staggered in the corridor + bay, gaps
-    # to weave through.
-    for cx in (3, 6, 9, 12):
+    objs[5][23] = "E"         # east -> the cistern (deeper)
+    # Timber racks (solid shelves) staggered down the corridor + bay,
+    # gaps to weave through -- the cover ladder the whole run.
+    for cx in (3, 6, 9, 12, 15, 18, 21):
         objs[4][cx] = "s"
-    for cx in (4, 7, 10, 13):
+    for cx in (4, 7, 10, 13, 16, 19):
         objs[6][cx] = "s"
-    objs[2][7] = "s"
+    objs[2][9] = "s"
     objects = ["".join(r) for r in objs]
     sc = Scene("well_passage", floor, objects, music="basement")
     sc.add_exit("F", "well_bottom", "from_below")
     sc.add_exit("E", "works_vats",  "from_above")
-    sc.set_spawn("default",    6, 5)
+    sc.set_spawn("default",    8, 5)
     sc.set_spawn("from_above", 1, 5)      # arriving from the shaft
-    sc.set_spawn("from_below", 14, 5)     # back from the vats
+    sc.set_spawn("from_below", 22, 5)     # back from the vats
     # Legacy spawns kept so old saves + the (now unreachable) cult
     # chamber's exit still resolve. The barn tunnel is nailed shut from
     # below now -- the grove's descent fold is the only way underground.
     sc.set_spawn("from_well",    1, 5)
-    sc.set_spawn("from_chamber", 14, 5)
+    sc.set_spawn("from_chamber", 22, 5)
 
     # Stores stacked up in the north bay -- a barrel and a crate.
-    sc.add_furniture("barrel", [(8, 2)])
-    sc.add_furniture("crate", [(6, 1)])
-    sc.add_decoration(Decoration(8 * TILE + 16, 5 * TILE + 16, "bloodstain"))
-    sc.add_decoration(Decoration(7 * TILE + 16, 0 * TILE + 22, "candle"))
-    sc.add_decoration(Decoration(13 * TILE + 16, 7 * TILE + 22, "claw_marks"))
+    sc.add_furniture("barrel", [(10, 2)])
+    sc.add_furniture("crate", [(8, 1)])
+    # Timber SETS where the gallery needs holding (2026-07 art pass):
+    # one frame over each portal mouth (uprights flanking the walking
+    # lane, the header beam passed under -- the Threshold's grammar in
+    # spiked lumber) and one wide frame over the bay entry. The uprights
+    # sit on the same tiles the old posts did; the lanes walk under.
+    sc.add_furniture("shoring_frame", [(1, 4), (1, 6)],
+                     seed=2, ang=math.pi / 2, span=64)
+    sc.add_furniture("shoring_frame", [(22, 4), (22, 6)],
+                     seed=11, ang=math.pi / 2, span=64)
+    sc.add_furniture("shoring_frame", [(8, 3), (11, 3)],
+                     seed=5, ang=0.0, span=96)
+    sc.add_decoration(Decoration(9 * TILE + 16, 0 * TILE + 22, "candle"))
+    sc.add_decoration(Decoration(20 * TILE + 16, 7 * TILE + 22, "claw_marks"))
     # Cobweb grime in the high corners of the bay.
-    sc.add_decoration(Decoration(6 * TILE + 6, 1 * TILE + 6, "cobweb",
+    sc.add_decoration(Decoration(8 * TILE + 6, 1 * TILE + 6, "cobweb",
                                  ang=0.0))
-    sc.add_decoration(Decoration(9 * TILE + 26, 1 * TILE + 6, "cobweb",
+    sc.add_decoration(Decoration(11 * TILE + 26, 1 * TILE + 6, "cobweb",
                                  ang=math.pi / 2))
 
-    # Sheaves of dried husks/reeds hung on the racks -- the cult's corn-doll
-    # material, drying (this is what the racks are FOR). A few in the bay pocket
-    # and leaning at the corridor rack ends.
-    for (hx, hy) in ((6, 2), (8, 3), (9, 2), (5, 5), (12, 5)):
-        sc.add_decoration(Decoration(hx * TILE + 16, hy * TILE + 16,
-                                     "husk_bundle", seed=hx * 7 + hy))
-    # Grime: mud tracked from the shaft, a cold drip seeping through, old blood.
+    # Sawn lumber staged in the bay pocket and against the south wall --
+    # board piles waiting on the faces (this is what the racks are FOR).
+    # Kept OFF the walking lane and the rack weave gaps; the far end of
+    # the run stands empty: the dig was eating its own stores by the end.
+    sc.add_furniture("firewood", [(11, 2)], w=38, h=18, seed=22)
+    sc.add_furniture("firewood", [(11, 1)], w=30, h=14, seed=21)
+    sc.add_furniture("firewood", [(18, 7)], w=28, h=14, seed=23)
+    # Grime: mud tracked from the shaft, a cold drip seeping through.
     sc.add_decoration(Decoration(2 * TILE + 16, 5 * TILE + 16, "mud_footprint"))
-    sc.add_decoration(Decoration(8 * TILE + 16, 7 * TILE + 16, "water_trail",
+    sc.add_decoration(Decoration(12 * TILE + 16, 7 * TILE + 16, "water_trail",
                                  ang=math.pi / 2, seed=6))
-    sc.add_decoration(Decoration(5 * TILE + 16, 6 * TILE + 16, "bloodstain"))
-    for mx, my in ((7, 3), (11, 5), (3, 5)):
+    for mx, my in ((9, 3), (15, 5), (3, 5), (20, 5)):
         sc.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16, "mote"))
 
-    # One enclosed hide off the patrol loop (STEALTH_REWORK §6): the gap
-    # under the bay's drying rack. Strong against the corridor patrol at
-    # range; a searcher that loses you here will sweep and CHECK it.
+    # Two enclosed hides spaced down the run (STEALTH_REWORK §6): the gap
+    # under the bay's timber rack, and one under a far corridor rack --
+    # a long room needs a rooted option in each half, or the east end is
+    # a dead sprint. A searcher that loses you will sweep and CHECK them.
     sc.hide_spots = [
-        (7 * TILE + 16, 3 * TILE + 8, "under"),   # under the bay rack
+        (9 * TILE + 16, 3 * TILE + 8, "under"),    # under the bay rack
+        (18 * TILE + 16, 5 * TILE + 8, "under"),   # under the far rack
     ]
-    # One cultist working the corridor, end to end.
+    # Two cultists working the corridor, end to end, offset phases --
+    # the west half and the east half are never both clear at once.
     sc.add_enemy(_cultist(3 * TILE + 16, 5 * TILE + 16, speed=0.85))
+    sc.add_enemy(_cultist(16 * TILE + 16, 5 * TILE + 16, speed=0.85))
+    # The lumber work (the JOBS layer, 2026-07 stealth pass): stations at
+    # the bay pile and the far stack, so the patrol has a READABLE rhythm
+    # the player can learn from cover -- travel, dwell over the boards,
+    # move on. Noise and sightings still outrank the chore.
+    sc.add_cult_station(10 * TILE + 16, 3 * TILE + 16,
+                        face=(0, -1), dwell=(3.0, 5.5))
+    sc.add_cult_station(18 * TILE + 16, 6 * TILE + 16,
+                        face=(0, 1), dwell=(3.0, 5.5))
+    sc.add_cult_station(2 * TILE + 16, 5 * TILE + 16,
+                        face=(-1, 0), dwell=(2.0, 4.0))
     _ambient(sc, "cult_breath", 0.16, 5.0, 9.0)
     # Chalk doors -- the motif thickening underground (floor + wall). The
     # first Works door carries the voice beat (rattled).
-    sc.add_chalk_door(3 * TILE + 16, 7 * TILE + 16, voice="chalk_works", seed=2)
-    sc.add_chalk_door(11 * TILE + 16, 7 * TILE + 16, seed=8)
-    sc.add_chalk_door(12 * TILE + 16, 7 * TILE + 28, seed=4, wall=True)
+    sc.add_chalk_door(3 * TILE + 16, 6 * TILE + 16, voice="chalk_works", seed=2)
+    sc.add_chalk_door(15 * TILE + 16, 6 * TILE + 16, seed=8)
+    sc.add_chalk_door(20 * TILE + 16, 7 * TILE + 28, seed=4, wall=True)
     return sc
 
 
@@ -298,18 +335,21 @@ def build_works_vats():
     sc.add_enemy(_cultist(6 * TILE + 16, 5 * TILE + 16, speed=0.8))
     sc.add_enemy(_cultist(9 * TILE + 16, 5 * TILE + 16, speed=0.8))
     _ambient(sc, "low_pulse", 0.14, 6.0, 10.0)
-    # A pressure valve on the west arm's pipe run: crack it open and
-    # the line knocks and hisses -- a lure that pulls the basin workers
-    # off the crossing until one of them seats it shut.
+    # The diggers' DEWATERING PUMP on the west arm (a hand pitcher pump
+    # on a driven well point; the dig broke into the river and has to be
+    # pumped or it drowns): knock the arm loose and the hose run clanks
+    # and hisses -- a lure that pulls the basin workers off the crossing
+    # until one of them wedges it still. (Kind stays "valve": the noise
+    # mechanic + tests key on it; this is a fiction/art reskin, 2026-07.)
     sc.add_decoration(Decoration(2 * TILE + 16, 4 * TILE + 6, "valve"))
     sc.add_noise_source(
         2 * TILE + 16, 4 * TILE + 12, "valve", period=1.1, reach=380.0,
         sfx="valve_hiss",
-        on_notice="You crack the valve. The line begins to knock and "
-                  "hiss.",
-        off_notice="You seat the valve shut.",
-        silenced_notice="A hand seats the valve shut. The hiss dies in "
-                        "the line.")
+        on_notice="You knock the pump arm loose. The hose line begins "
+                  "to clank and hiss.",
+        off_notice="You wedge the pump arm still.",
+        silenced_notice="A hand wedges the pump arm still. The hiss "
+                        "dies in the line.")
     # A loose plank over the south-arm runoff channel.
     sc.add_noise_trap(6 * TILE + 16, 7 * TILE + 16, "plank", seed=11)
     # The basin work: the two cultists tend the four vats in rounds --
@@ -349,7 +389,7 @@ def build_works_sorting():
     objs[6][0] = "F"          # west -> back to the vats
     objs[6][15] = "E"         # east -> the scriptorium
     objs[0][13] = "M"         # north (top of the stem) -> Mara's cell
-    objs[10][4] = "D"         # south -> the holding cells (dead-end branch)
+    objs[10][4] = "D"         # south -> the bunk cells (dead-end branch)
     # (the sorting tables are 3D furniture now -- added after the scene is built,
     # same footprint the cult AI routes around)
     objects = ["".join(r) for r in objs]
@@ -369,16 +409,17 @@ def build_works_sorting():
     # (NARRATIVE 1b/4: shed lives + the fold's lost, not murder victims).
     # Closed cases
     # (chests, never opened by the player -- interactive=False so they
-    # don't show a dead [E] prompt) + the stains of the work.
+    # don't show a dead [E] prompt).
     for tx, ty in [(5, 7), (12, 9)]:
         sc.add_decoration(Decoration(tx * TILE + 16, ty * TILE - 4,
                                      "chest", open=False, interactive=False))
     sc.add_decoration(Decoration(9 * TILE + 16, 7 * TILE - 4, "chest",
                                  open=False, interactive=False))
-    sc.add_decoration(Decoration(4 * TILE + 16, 6 * TILE + 16, "bloodstain"))
     sc.add_decoration(Decoration(10 * TILE + 16, 9 * TILE + 16, "phantom_mark"))
-    # A "wrong" mount oversees the catalogued lives the claimed shed,
-    # and cobwebs grime the high corners.
+    # A "wrong" mount among the catalogued lives the claimed shed --
+    # somebody's trophy buck, carried down with the rest of a life and
+    # hung where its owner left off (the one mount underground that
+    # SURVIVES provenance). Cobwebs grime the high corners.
     sc.add_decoration(Decoration(8 * TILE + 16, 3 * TILE + 18,
                                  "wrong_taxidermy", wall="N", seed=17))
     sc.add_decoration(Decoration(1 * TILE + 6, 4 * TILE + 6, "cobweb",
@@ -399,12 +440,18 @@ def build_works_sorting():
                          (3, 7, 4), (12, 7, 5), (8, 9, 6)):
         sc.add_decoration(Decoration(ex * TILE + 16, ey * TILE + 16,
                                      "effects_pile", seed=es))
-    # The catalogued faces of the vanished, pinned over the work beside the mount.
-    sc.add_decoration(Decoration(3 * TILE + 16, 3 * TILE + 18, "missing_flyer"))
-    sc.add_decoration(Decoration(5 * TILE + 16, 3 * TILE + 20, "polaroid_wall"))
-    # more grime: mud worked across the floor, blood, motes in the dead air.
+    # (The missing-flyer + polaroid wall were cut, 2026-07: a wall of "the
+    # vanished" read as a killer cult tracking victims. The shed lives in
+    # the effects piles carry the room; nobody down here was hunted.)
+    # The warehouse work (2026-07 art pass): the barrow that moved the
+    # cases, parked between the table rows, and inventory tallies
+    # scratched on the wall over the sorting.
+    sc.add_decoration(Decoration(7 * TILE + 16, 4 * TILE + 16,
+                                 "wheelbarrow"))
+    sc.add_decoration(Decoration(4 * TILE + 16, 3 * TILE + 20,
+                                 "tally_marks", wall="N", seed=8))
+    # more grime: mud worked across the floor, motes in the dead air.
     sc.add_decoration(Decoration(7 * TILE + 16, 9 * TILE + 16, "mud_footprint"))
-    sc.add_decoration(Decoration(11 * TILE + 16, 8 * TILE + 16, "bloodstain"))
     for mx, my in ((5, 4), (10, 7), (13, 5)):
         sc.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16, "mote"))
     sc._table_pos = (6 * TILE + 16, 5 * TILE + 16)
@@ -540,14 +587,27 @@ def build_works_scriptorium():
         sc.add_decoration(Decoration(tx * TILE + 16, ty * TILE + 16,
                                      "yellow_sign"))
     sc.add_decoration(Decoration(8 * TILE + 16, 2 * TILE + 6, "candle"))
-    # Two stone columns hold up the vault.
-    sc.add_furniture("pillar", [(4, 6)])
-    sc.add_furniture("pillar", [(9, 6)])
+    # Timber sets hold the span -- the widest room the diggers cut,
+    # propped with the same spiked-lumber frames as the rest of the dig
+    # (2026-07: the stone columns were swapped out; the scribes copied
+    # the Sign under planks, not architecture). Walk-under at (4,6) and
+    # (9,6); the upright tiles flank them.
+    sc.add_furniture("shoring_frame", [(3, 6), (5, 6)],
+                     seed=6, ang=0.0, span=64)
+    sc.add_furniture("shoring_frame", [(8, 6), (10, 6)],
+                     seed=14, ang=0.0, span=64)
     # Cobweb grime in the beveled corners of the scriptorium.
     sc.add_decoration(Decoration(2 * TILE + 6, 1 * TILE + 6, "cobweb",
                                  ang=0.0))
     sc.add_decoration(Decoration(11 * TILE + 26, 1 * TILE + 6, "cobweb",
                                  ang=math.pi / 2))
+    # The copying desks are the SCHOOL'S desks -- the commune stripped
+    # the building it slept in (Vane: they filled the school; Toby's
+    # lesson is still on the board) and carried the furniture down.
+    # Child-size chairs still seated at two of them sell it without a
+    # word (2026-07 process audit; free canon from NARRATIVE §2).
+    sc.add_furniture("small_chair", [(4, 3)])
+    sc.add_furniture("small_chair", [(8, 3)])
     sc._desk_pos = (4 * TILE + 16, 2 * TILE + 16)
     sc.add_interactable(sc._desk_pos[0], sc._desk_pos[1], 40)  # [E] cue: the Playscript
     # One enclosed hide (STEALTH_REWORK §6): under the centre copying
@@ -595,7 +655,7 @@ def build_works_scriptorium():
     # The scribes drew doors as obsessively as they copied the Sign -- swarm
     # the floor + walls with chalk doors, none overlapping (the room reads as
     # a compulsion, not a workshop). The Playscript desk is left clear.
-    sc.scatter_chalk_doors(7, seed=44, wall_count=3)
+    sc.scatter_chalk_doors(4, seed=44, wall_count=2)
     return sc
 
 
@@ -866,9 +926,23 @@ def build_works_sign():
         ])
         # The TEMPTATION lands as the recognition finishes: with His face in
         # hand comes the certainty it is the way OUT -- the Spread off-ramp
-        # (NARRATIVE §6). Chained off the evidence dialog's completion so it
-        # reads as one continuous beat.
-        game.dialog.on_complete = lambda: game._descent_voice("descent_mask")
+        # (NARRATIVE §6). The recognition routes through whichever channel
+        # DialogueBox.show picked (the frameless caption for narrator text,
+        # the modal band otherwise), so chain off the channel that is
+        # actually live -- an on_complete parked on an inactive modal never
+        # fires (the 2026-07 audit found this beat dead).
+        # The note (and its one-shot flag) files NOW: a scene load clears
+        # the caption channel WITHOUT firing chained callbacks, so only
+        # the on-screen beat may ride the chain, never the note.
+        game._descent_voice("descent_mask", note_only=True)
+        _tempt = lambda: game._descent_voice_beat("descent_mask")
+        if game.dialog.active:
+            game.dialog.on_complete = _tempt
+        elif getattr(game, "narration", None) is not None \
+                and game.narration.active:
+            game.narration.on_complete = _tempt
+        else:
+            _tempt()
 
     def _interact(game):
         sx, sy = sc._sign_pos
@@ -927,7 +1001,15 @@ def build_works_deepstair():
     sc.add_decoration(Decoration(6 * TILE + 16, 2 * TILE + 12, "claw_marks",
                                  scale=1.2))
     sc.add_decoration(Decoration(3 * TILE + 16, 2 * TILE + 6, "candle"))
-    sc.add_decoration(Decoration(7 * TILE + 16, 6 * TILE + 16, "bloodstain"))
+    # The arc's end (2026-07 art pass): the last shifts counted on the
+    # rock beside the face, spoil nobody hauled, hafts downed where the
+    # digging stopped. The work just... stops, a few feet short.
+    sc.add_decoration(Decoration(3 * TILE + 16, 0 * TILE + 20,
+                                 "tally_marks", wall="N", seed=3))
+    sc.add_decoration(Decoration(7 * TILE + 16, 0 * TILE + 20,
+                                 "tally_marks", wall="N", seed=12))
+    sc.add_furniture("spoil_heap", [(7, 4)], seed=8, see_over=True)
+    sc.add_furniture("firewood", [(3, 5)], w=30, h=16, seed=6)
     # Cobweb grime in the beveled corners by the keystone gate.
     sc.add_decoration(Decoration(2 * TILE + 6, 1 * TILE + 6, "cobweb",
                                  ang=0.0))
@@ -1099,13 +1181,17 @@ def build_the_sump():
     return sc
 
 
-# ---- Side branch: the Holding Cells (key: the_cells) off the Sorting Hall ----
+# ---- Side branch: the Bunk Cells (key: the_cells) off the Sorting Hall ----
 
 def build_the_cells():
-    """A short corridor of holding cells off the Sorting Hall -- a comb of
-    narrow stalls where the claimed were kept the first night, before they
-    stopped needing keeping. Empty now, doors hanging. A dead-end branch:
-    cover, dread, and the cult's whisper."""
+    """The diggers' bunk cells off the Sorting Hall -- a comb of narrow
+    dug stalls the congregation slept in between shifts, a cot and a
+    candle apiece (Mara's room up the hall is the same kind of cell,
+    kept). Empty now: the ones who dug here are past sleeping. A dead-end
+    branch: cover, dread, and the cult's whisper. (2026-07 mine retrofit:
+    the old kept-overnight captivity fiction was a killer-cult relic --
+    nobody was ever kept; the claimed never know, NARRATIVE §1b. Scene
+    key stays the_cells -- load-bearing.)"""
     floor, objs = _box(12, 11)
     # A central corridor with cell stalls combed off the east and west walls.
     _wall(objs, 1, 1, 10, 1)            # seal the top...
@@ -1120,13 +1206,12 @@ def build_the_cells():
     sc.add_exit("F", "works_sorting", "from_the_cells")
     sc.set_spawn("default",     5, 2)
     sc.set_spawn("from_sorting", 5, 2)
-    # The leavings of the kept: bare cots in the stalls, old stains, a corn
-    # doll left behind. Phantom marks scratched at child height.
+    # The diggers' leavings: bare cots in the stalls, a corn doll left on
+    # a bunk, phantom marks scratched beside the pillows -- the door
+    # followed them into sleep.
     sc.add_furniture("cot", [(2, 4)])           # west cell
     sc.add_furniture("cot", [(9, 6)])           # east cell
     sc.add_furniture("cot", [(2, 8)])           # west cell
-    sc.add_decoration(Decoration(9 * TILE + 16, 4 * TILE + 16, "bloodstain"))
-    sc.add_decoration(Decoration(2 * TILE + 16, 6 * TILE + 16, "bloodstain"))
     sc.add_decoration(Decoration(9 * TILE + 16, 8 * TILE + 16, "corn_doll"))
     sc.add_decoration(Decoration(9 * TILE + 28, 4 * TILE + 16, "phantom_mark"))
     sc.add_decoration(Decoration(2 * TILE + 28, 6 * TILE + 16, "phantom_mark"))

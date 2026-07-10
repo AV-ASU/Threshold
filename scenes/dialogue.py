@@ -145,10 +145,10 @@ _REVISIT_NUDGES = {
         "key": "revisit_vane_murder",
         "met": "vane_greeted",
         "lines": [
-            "[c=dim]A man dies loud in his own church and the town walks "
-            "past the door.",
-            "The sheriff was born here. He will have stood on that floor "
-            "before I did. Worth hearing what he could not write down.[/c]",
+            "[c=dim]They left him on the bank where the whole town draws "
+            "its water. Nobody carried him home.",
+            "The sheriff was born here. He knew this man his whole life. "
+            "Worth hearing what he could not write down.[/c]",
         ],
     }],
 }
@@ -339,8 +339,12 @@ CRANE_CONVO = {
                                 and not g.save.flag("preacher_doomed")),
             "beats": [
                 ("npc", "There's a flock in this town that kneels in no "
-                        "church of mine. It kneels under the ground."),
-                ("npc", "They weren't taken. They walked down willing, "
+                        "church of mine. Where they kneel now, I couldn't "
+                        "tell you."),
+                ("npc", "All I have is a rumor. The boy Toby swears he "
+                        "watched them walk off down the river one night. "
+                        "Nobody has seen them since."),
+                ("npc", "They weren't taken. They walked off willing, "
                         "and sold the Lord to ease their own aches."),
                 ("ask", "He is working himself hot. The next words go "
                         "somewhere they can be heard.", [
@@ -645,9 +649,11 @@ def hettie_dialogue(game, npc):
     save = game.save
     _cult_tell(game, "store_owner")
     # The resister registers the resister-who-spoke being killed. Fires
-    # once, on the first visit after the Preacher is doomed, but only if
-    # we've already met her -- it would be too personal for first contact.
-    if (save.flag("preacher_doomed")
+    # once, on the first visit after the player has FOUND the body (never
+    # before -- the doom flag latches while Crane still stands at his
+    # lectern), and only if we've already met her -- it would be too
+    # personal for first contact.
+    if (save.flag("preacher_body_seen")
             and not save.flag("shop_preacher_noticed")
             and save.flag("hettie_greeted")):
         save.set_flag("shop_preacher_noticed", True)
@@ -829,7 +835,7 @@ VANE_CONVO = {
 def sheriff_dialogue(game, npc):
     """The Sheriff -- Hollis Vane, the last holdout (NARRATIVE §2). The
     murder he can't report stays a VOLUNTEERED one-shot ahead of the
-    menu, gated on the player having SEEN the church floor
+    menu, gated on the player having FOUND the body on the riverbank
     (preacher_body_seen) and on having met him -- he can never announce
     the killing before it is found, and never as a first impression.
     Everything else is the organic ask verb (VANE_CONVO)."""
@@ -841,9 +847,10 @@ def sheriff_dialogue(game, npc):
         save.set_flag("vane_preacher_noticed", True)
         game.dialog.show([
             "They killed the preacher.",
-            "He named them from his pulpit. They came in the night.",
-            "[c=dim]I went over Tuesday morning. I didn't write a report. "
-            "Who would I send it to.[/c]",
+            "He named them from his pulpit. Then he walked down to the "
+            "water to fetch his flock home. They left him on the bank "
+            "for us to find.",
+            "[c=dim]I didn't write a report. Who would I send it to.[/c]",
             "[c=dim]He doesn't say the Reverend's name. You realize "
             "nobody in town has.[/c]",
         ], speaker="Sheriff Vane", voice="blip_gruff", portrait="sheriff")
@@ -889,7 +896,7 @@ def _sable_give_invitation(game):
     if hasattr(game, "audio"):
         game.audio.play("pickup_rare", 0.7)
     _log_note(game, "the_invitation", [
-        "Sable kept an envelope under the register. A year at least. Handed "
+        "Sable kept an envelope under the register. Since the winter. Handed "
         "it to me like a room key.",
         "The guests who never signed out left it for him, for the day he was "
         "ready. He gave it away instead. Says the desk needs him.",
@@ -1157,23 +1164,25 @@ def clerk_dialogue(game, npc):
     open_conversation(game, npc, SABLE_CONVO)
 
 
-def basement_photo_dialogue(game, npc):
-    """The framed staff photograph on the cellar shelf -- flavor that
-    echoes the Ledger (the Arcadia's people never age, never leave). The
-    Case Photo keepsake moved to the Kid (NARRATIVE §2), so this grants
-    nothing now; it's a lore examine that reinforces evidence #3."""
-    save = game.save
-    n = save.arg("photo_reads", 0) + 1
-    save.set_arg("photo_reads", n)
-    if n == 1:
-        game.dialog.show([
-            "[c=dim](A framed staff photograph on the shelf. The Arcadia's "
-            "people lined up out front, and a date in the corner from "
-            "decades back.)[/c]",
-            "[c=dim]The Clerk stands dead centre, smiling. He has not aged "
-            "a day.[/c]",
-        ], speaker="", voice="blip_soft", portrait="narrator")
-    else:
-        game.dialog.show([
-            "[c=dim](The same faces. The same unmoving eyes.)[/c]",
-        ], speaker="", voice="blip_soft", portrait="narrator")
+def preacher_body_examine(game, npc):
+    """E on the Preacher's remains at the riverbank: take his cross + log
+    evidence #4 once. (2026-07 rework: the doom sends Crane out of his
+    church to talk his flock home; the body is found by the river in
+    Brimley, never on the church floor.)"""
+    if game.save.flag("cross_taken"):
+        game.dialog.show(["What's left of him. The flies have found it."],
+                         speaker="", voice="blip_soft", portrait="narrator")
+        return
+    game.save.set_flag("cross_taken", True)
+    game.player.inventory.add("cross", 1)
+    game.audio.play("pickup_rare", 0.7)
+    game.audio.play("low_pulse", 0.5)
+    _evidence(game, "the_preacher", [
+        "The Preacher. He named them from his pulpit, every Sunday. Then "
+        "he went down to the river after them, believing a flock can be "
+        "talked home.",
+        "They opened him for it and left him on the bank, where the whole "
+        "town could find him.",
+        "His collar's still white. His cross lies in the mess. You take it.",
+        "[c=dim]This is what naming them costs.[/c]",
+    ])

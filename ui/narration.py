@@ -38,6 +38,7 @@ class Narration:
         self.color = C_WHITE
         self.on_complete = None
         self.chars_per_sec = 40
+        self._gen = 0            # bumps on every install (re-entrancy tell)
 
     def begin(self, pages, voice="blip_soft", color=C_WHITE,
               on_complete=None):
@@ -47,7 +48,27 @@ class Narration:
         if self.active and self.on_complete is not None:
             pend = self.on_complete
             self.on_complete = None
+            gen = self._gen
             pend()
+            if self._gen != gen and self.active:
+                # The fired beat started its OWN caption (a re-entrant
+                # begin -- the mask temptation, e.g.). Don't clobber it:
+                # queue this call's pages behind it instead.
+                if isinstance(pages, str):
+                    pages = [pages]
+                self.pages.extend(parse_dialogue(p, default_color=color,
+                                                 default_voice=voice)
+                                  for p in pages)
+                if on_complete is not None:
+                    prev = self.on_complete
+                    if prev is None:
+                        self.on_complete = on_complete
+                    else:
+                        def _both(a=prev, b=on_complete):
+                            a()
+                            b()
+                        self.on_complete = _both
+                return
         if isinstance(pages, str):
             pages = [pages]
         self.pages = [parse_dialogue(p, default_color=color,
@@ -64,6 +85,7 @@ class Narration:
         self.timer = 0.0
         self.hold_t = 0.0
         self.active = True
+        self._gen += 1
 
     def clear(self):
         """Drop the caption without firing on_complete (scene loads,

@@ -77,7 +77,7 @@ _SHADOW_CASTERS = frozenset("#WTpj%&lzqKR")
 # draw_object kinds that get a soft contact shadow at their base.
 _STANDING_KINDS = frozenset((
     "tree", "cornstalk", "rock", "bed", "table", "chair",
-    "shelf", "stove", "crate", "debris",
+    "shelf", "stove", "crate", "debris", "timber_rack",
 ))
 
 _DARK_TILES = {}
@@ -148,7 +148,7 @@ OBJECT_DEFS = {
     "b": {"solid": True, "kind": "bed"},
     "t": {"solid": True, "kind": "table"},
     "c": {"solid": True, "kind": "chair"},
-    "s": {"solid": True, "kind": "shelf"},
+    "s": {"solid": True, "kind": "timber_rack"},   # the mine's lumber racks
     "i": {"solid": True, "kind": "window"},
     "f": {"solid": True, "kind": "fireplace"},
     "k": {"solid": True, "kind": "stove"},
@@ -403,6 +403,20 @@ def draw_object(surf, ch, rx, ry, tx, ty):
         pygame.draw.line(surf, (44, 30, 18), (rx + 19, ry + 7), (rx + 19, ry + 14), 1)
         pygame.draw.rect(surf, (78, 56, 34), (rx + 8, ry + 15, 16, 9))      # seat
         pygame.draw.rect(surf, (98, 72, 44), (rx + 8, ry + 15, 16, 2))      # lit seat
+    elif kind == "timber_rack":
+        # A mine lumber rack: two dark end posts bearing stacked sawn
+        # boards on their sides -- horizontal plank bands with end-grain
+        # ticks, nothing shelved, nothing bound (2026-07: the old 's'
+        # tiles drew BOOKSHELVES, which failed the man-made-dig logic).
+        pygame.draw.rect(surf, (40, 30, 19), (rx + 2, ry + 6, 4, 22))    # end posts
+        pygame.draw.rect(surf, (40, 30, 19), (rx + 26, ry + 6, 4, 22))
+        for i, by in enumerate((ry + 8, ry + 13, ry + 18, ry + 23)):
+            ln = 24 - ((tx * 7 + ty * 13 + i * 5) % 3) * 3              # board lengths vary
+            bcol = (96, 74, 48) if i % 2 else (84, 64, 41)
+            pygame.draw.rect(surf, bcol, (rx + 4, by, ln, 4))
+            pygame.draw.rect(surf, (52, 40, 27), (rx + 4, by, ln, 4), 1)
+            pygame.draw.rect(surf, (120, 100, 66), (rx + 4, by + 1, 2, 2))  # end grain
+        pygame.draw.rect(surf, (58, 44, 28), (rx + 2, ry + 6, 28, 2))    # top rail
     elif kind == "shelf":
         # Bookshelf in dark, grimy wood: a framed case with a lit top +
         # two under-shadowed shelf boards and rows of leaning books in
@@ -984,12 +998,25 @@ DISPLAY_NAMES = {
     "clearing":            "the Clearing",
     "barn":                 "the Barn",
     "well_bottom":          "the Shaft Floor",
-    "well_passage":         "the Drying Racks",
+    "well_passage":         "the Timber Racks",
     "works_vats":           "the Cistern",
     "works_sorting":        "the Sorting Hall",
     "works_scriptorium":    "the Scriptorium",
     "works_sign":           "the Sign Chamber",
-    "works_deepstair":      "the Deep Stair",
+    # (the scene KEY is legacy; the Deep Stair concept is CUT -- the room
+    # is the dig's dead end, NARRATIVE §9 room 7)
+    "works_deepstair":      "the Deepest Face",
+    "the_sump":             "the Sump",
+    "the_cells":            "the Cells",
+    "the_ossuary":          "the Old Stores",
+    "depths_antechamber":   "the Old Workings",
+    "depths_procession":    "the Procession",
+    "depths_hall":          "the Kneeling Hall",
+    "depths_threshing":     "the Threshing Floor",
+    "depths_stair":         "the Winding Stair",
+    "dark":                 "the Dark",
+    "threshold":            "the Threshold",
+    "effigy_grove":         "the Effigy Grove",
     "abandoned_farmhouse":        "the Abandoned Farmhouse",
     "brimley":            "Brimley",
     "schoolhouse":          "the Schoolhouse",
@@ -1023,6 +1050,7 @@ def scene_display_name(scene):
 # of wall stops reading as a row of grey blocks (the RimWorld tell).
 _WALL_CHARS = frozenset("#W%&")
 _COUNTER_CHARS = frozenset("5")   # kitchen counter / peninsula divider (waist-high box under tilt)
+_RACK_CHARS = frozenset("s")      # the mine's lumber racks (low timber box under tilt)
 # Door tiles cast the same floor-shadow as walls so a door in a south
 # wall grounds into the building instead of leaving a lit threshold gap
 # between the shadows of its flanking walls.
@@ -2063,11 +2091,13 @@ def _door_room_dir(scene, tx, ty):
     return "W"
 
 
-def _draw_door_opening(surf, rx, ry, room, tx, ty):
+def _draw_door_opening(surf, rx, ry, room, tx, ty, style="wood"):
     """The doorway itself, drawn in-tile during the terrain pass: the
     wall fills through (continuous mass) with a dark opening punched in
     it + a lit face on the room side. The swung leaf is a separate,
-    unconfined sprite drawn later (draw_scene_doors)."""
+    unconfined sprite drawn later (draw_scene_doors). style="cave" (the
+    mine adit, 2026-07): the opening is a jagged rock mouth with two
+    timber posts and no leaf."""
     pygame.draw.rect(surf, _WALL_BASE, (rx, ry, TILE, TILE))
     hsh = (tx * 73856093) ^ (ty * 19349663)
     if hsh % 4 == 0:
@@ -2081,6 +2111,29 @@ def _draw_door_opening(surf, rx, ry, room, tx, ty):
         pygame.draw.rect(surf, _WALL_FACE, (rx + TILE - 2, ry, 2, TILE))
     else:
         pygame.draw.rect(surf, _WALL_FACE, (rx, ry, 2, TILE))
+    if style == "cave":
+        # The adit mouth: an irregular dark blob (never a neat rect) with
+        # a rock-crumb rim and two timber post ends at the room side.
+        cx, cy = rx + 16, ry + 16
+        pts = []
+        for i in range(8):
+            a = i * math.tau / 8
+            rr = 8 + ((hsh >> (i * 3)) % 5)          # 8..12 px, per-tile jitter
+            pts.append((cx + math.cos(a) * rr, cy + math.sin(a) * rr))
+        pygame.draw.polygon(surf, (3, 2, 5), pts)
+        for i in range(0, 8, 2):                     # rim crumbs
+            px_, py_ = pts[i]
+            pygame.draw.rect(surf, (52, 50, 56), (int(px_) - 1, int(py_) - 1, 2, 2))
+        wood = (72, 54, 32)
+        if room in ("S", "N"):
+            py_ = ry + (TILE - 6 if room == "S" else 2)
+            pygame.draw.rect(surf, wood, (rx + 5, py_, 3, 4))
+            pygame.draw.rect(surf, wood, (rx + TILE - 8, py_, 3, 4))
+        else:
+            px_ = rx + (TILE - 6 if room == "E" else 2)
+            pygame.draw.rect(surf, wood, (px_, ry + 5, 4, 3))
+            pygame.draw.rect(surf, wood, (px_, ry + TILE - 8, 4, 3))
+        return
     pygame.draw.rect(surf, (3, 2, 5), (rx + 9, ry + 9, 14, 14))      # the dark doorway
 
 
@@ -2361,12 +2414,15 @@ def draw_scene_terrain(surf, scene, cam_x, cam_y, x0, y0, x1, y1,
             if ch == "." or ch in _WALL_CHARS:
                 continue
             if skip_billboard and (ch in _TILT_BILLBOARD_CHARS
-                                   or ch in _COUNTER_CHARS):
+                                   or ch in _COUNTER_CHARS
+                                   or ch in _RACK_CHARS):
                 continue                     # stood up as a 3D box/standee under tilt
             rx = tx * TILE - cam_x
             ry = ty * TILE - cam_y
             if ch in _DOOR_CHARS:
-                _draw_door_opening(surf, rx, ry, _door_room_dir(scene, tx, ty), tx, ty)
+                _draw_door_opening(surf, rx, ry, _door_room_dir(scene, tx, ty),
+                                   tx, ty,
+                                   style=getattr(scene, "door_style", "wood"))
             else:
                 draw_object(surf, ch, rx, ry, tx, ty)
     # Unified gabled roofs, drawn over the walls so each building reads
@@ -2700,6 +2756,32 @@ def _tilt_counter_box(surf, camera, scene, tx, ty):
                  face_col=(96, 72, 48), top_col=(122, 98, 66))
 
 
+_RACK_RISE = 22         # a lumber rack: stacked to the shoulder -- it
+                        # BLOCKS sight (the rack maze is the room's
+                        # cover ladder), so the stack must look too
+                        # tall to see over (2026-07 stealth pass)
+
+
+def _tilt_rack_box(surf, camera, scene, tx, ty):
+    """The mine's lumber rack as a real low volume: a chest-high timber
+    box (stacked sawn boards between end posts), with board seams on the
+    near face so it reads as lumber, not masonry. Adjacent racks merge
+    into one run (2026-07: the old 's' tiles drew flat bookshelf sprites
+    warped onto the floor)."""
+    _extrude_box(surf, camera, scene, tx, ty, 0, _RACK_RISE,
+                 neigh=_WALL_CHARS | _RACK_CHARS,
+                 face_col=(78, 60, 39), top_col=(100, 78, 51))
+    wx0, wx1 = tx * TILE + 2, tx * TILE + TILE - 2
+    wyf = ty * TILE + TILE
+    for z in (5, 10, 15, 19):
+        p0 = camera.project(wx0, wyf, z)
+        p1 = camera.project(wx1, wyf, z)
+        pygame.draw.line(surf, (52, 40, 27), p0, p1, 1)
+    # end grain: a pale tick at one end of the top board
+    pg = camera.project(wx0 + 2, wyf, _RACK_RISE - 2)
+    pygame.draw.rect(surf, (124, 102, 68), (int(pg[0]), int(pg[1]), 2, 2))
+
+
 def _tilt_door_box(surf, camera, scene, tx, ty):
     """A doorway in the extruded wall: a lintel BEAM spanning the top of the
     tile (head->rise) with the passage open below. The flanking wall tiles
@@ -2752,6 +2834,46 @@ def _draw_doorway(surf, camera, scene, tx, ty):
             pygame.draw.polygon(surf, (7, 6, 9), rec)
     else:
         pygame.draw.polygon(surf, (7, 6, 9), rec)
+    if getattr(scene, "door_style", "wood") == "cave":
+        # THE ADIT (2026-07, the mine retrofit): a rough rock mouth with
+        # timber shoring instead of a framed, hinged door. No leaf -- a
+        # mine adit has no door; the dark (or the see-through room) shows
+        # straight through. Jagged rock lumps overlap the recess edges so
+        # the opening never reads as a neat rectangle, and the shoring is
+        # old work: one post leans, the lintel beam sags a little.
+        seed = (wtx * 73856093) ^ (wty * 19349663)
+        rock, rock_lo = (58, 55, 62), (34, 32, 38)
+
+        def _j(i, span=5):
+            return (seed >> (i * 3)) % span
+        for i in range(4):                       # rim lumps down both jambs
+            z0 = head * (0.12 + 0.22 * i)
+            bulge = 2.5 + _j(i)
+            for u_edge, sgn in ((-hw + 1, 1), (hw - 1, -1)):
+                pygame.draw.polygon(surf, rock_lo if i % 2 else rock, [
+                    Q(u_edge, z0, 2),
+                    Q(u_edge + sgn * bulge, z0 + head * 0.10, 1),
+                    Q(u_edge, z0 + head * 0.20, 2)])
+        for i in range(3):                       # teeth hanging under the head
+            u0 = -hw + 4 + i * (2 * hw - 8) / 2.6 + _j(i + 4, 3)
+            drop = 3.0 + _j(i + 8, 4)
+            pygame.draw.polygon(surf, rock_lo, [
+                Q(u0 - 2.5, head, 2), Q(u0 + 2.5, head, 2),
+                Q(u0, head - drop, 1)])
+        wood_f, wood_e = (86, 64, 40), (54, 40, 24)
+        lean = 1.0 + _j(9, 3) * 0.5
+        for u0, u1, tshift in ((-hw + 1.0, -hw + 4.5, 0.0),
+                               (hw - 4.5 - lean, hw - 1.0, lean)):
+            post = [Q(u0, 0, -1), Q(u1, 0, -1),
+                    Q(u1 + tshift, head - 2, -1), Q(u0 + tshift, head - 2, -1)]
+            pygame.draw.polygon(surf, wood_f, post)
+            pygame.draw.polygon(surf, wood_e, post, 1)
+        sag = 1.5 + _j(10, 3)
+        beam = [Q(-hw - 1, head - 1, -1.5), Q(hw + 1, head - 1 - sag, -1.5),
+                Q(hw + 1, head + 3 - sag, -1.5), Q(-hw - 1, head + 3, -1.5)]
+        pygame.draw.polygon(surf, wood_f, beam)
+        pygame.draw.polygon(surf, wood_e, beam, 1)
+        return
     # 2. wood frame on the room face (off -), a "n" around the opening
     tw, th, off = 4.0, 3.0, -1.0
 
@@ -2823,6 +2945,8 @@ _FLOOR_DECAL_KINDS = frozenset((
     # Noise-trap litter (add_noise_trap): tins, shards, and a board all
     # lie IN the ground plane. (The trap crow is the standing `crow`.)
     "tin_cans", "glass_litter", "loose_plank",
+    # The mine art pass (2026-07): old haul rail lies in the floor plane.
+    "mine_rail",
 ))
 
 # Decals that lie flat on a RAISED surface (a ledger open on a desktop): warped
@@ -2864,6 +2988,8 @@ _WALL_DECO_KINDS = frozenset((
     # Things that belong ON a wall, not lying flat on the floor: a cobweb
     # spans a corner; a passing silhouette glides past a window.
     "cobweb", "passing_silhouette",
+    # The mine art pass (2026-07): shift tallies scratched into the rock face.
+    "tally_marks",
 ))
 _WALL_MOUNT_Z = 18
 
@@ -3176,6 +3302,8 @@ def _tilt_tile_box(surf, camera, scene, tx, ty):
             _tilt_standee(surf, camera, scene, tx, ty, ch)
     elif ch in _COUNTER_CHARS:
         _tilt_counter_box(surf, camera, scene, tx, ty)
+    elif ch in _RACK_CHARS:
+        _tilt_rack_box(surf, camera, scene, tx, ty)
     elif ch in _DOOR_CHARS:
         _tilt_door_box(surf, camera, scene, tx, ty)
     elif ch in _WINDOW_CHARS:
@@ -3303,7 +3431,8 @@ def _collect_neighbor_solids(scene, camera, x0, y0, x1, y1):
                 if (ch in _WALL_CHARS or ch in _DOOR_CHARS
                         or ch in _WINDOW_CHARS
                         or ch in _TILT_BILLBOARD_CHARS
-                        or ch in _COUNTER_CHARS):
+                        or ch in _COUNTER_CHARS
+                        or ch in _RACK_CHARS):
                     out.append((tgt, ntx, nty,
                                 tx * TILE + TILE / 2,
                                 ty * TILE + TILE / 2,
@@ -3494,7 +3623,8 @@ def draw_terrain_tilted(surf, scene, camera, sight=None):
                 if (ch in _WALL_CHARS or ch in _DOOR_CHARS
                         or ch in _WINDOW_CHARS
                         or ch in _TILT_BILLBOARD_CHARS
-                        or ch in _COUNTER_CHARS):
+                        or ch in _COUNTER_CHARS
+                        or ch in _RACK_CHARS):
                     if ch in _TILT_BILLBOARD_CHARS:
                         dx = (tx * TILE + 16) - camera.cam_x
                         dy = (ty * TILE + 16) - camera.cam_y
@@ -3602,7 +3732,10 @@ def draw_scene_doors(surf, scene, cam_x, cam_y, x0, y0, x1, y1):
     """Late pass: the swung door leaves, drawn unconfined so each spills
     out of its tile into the room. Called after terrain + decorations
     and before entities, so a leaf sits over the floor but under anyone
-    walking through the doorway."""
+    walking through the doorway. Cave-mouth scenes hang no leaves (a
+    mine adit has no door)."""
+    if getattr(scene, "door_style", "wood") == "cave":
+        return
     W, H = scene.w, scene.h
     wx, wy = scene.wrap_x, scene.wrap_y
     for ty in range(y0, y1):
@@ -3964,6 +4097,12 @@ class Scene:
         # hold}. Read by the TILT doorway draw only -- the flat pitch-0
         # view keeps its static leaves (byte-identity gate).
         self._door_anim = {}
+        # Door LOOK for this scene's exit tiles: "wood" (default -- the
+        # framed, hinged surface doors) or "cave" (2026-07, the mine
+        # retrofit: a rough rock mouth with timber shoring and NO leaf --
+        # a mine adit; set on every underground scene by load_scene).
+        # Mechanics are identical either way; this is draw-only.
+        self.door_style = "wood"
         self.on_enter_fn = None
         self.on_exit_fn = None
         self.on_interact_fn = None    # called when E pressed and no NPC nearby
@@ -4480,6 +4619,27 @@ class Scene:
         self.npcs.append(npc)
 
     def add_decoration(self, deco):
+        # A spanning shoring frame is SPLIT into its two uprights, each
+        # anchored on its own post, so the tilt depth sort can interleave
+        # an actor walking the lane between them (one shared anchor gave
+        # the whole set a single depth and the far post popped in front
+        # of whoever stood under the beam). The beam rides the +axis
+        # post ("b"); broken sets (span<=1) stay whole.
+        if (getattr(deco, "kind", None) == "shoring_frame"
+                and float(deco.kwargs.get("span", 0.0) or 0.0) > 1
+                and "half" not in deco.kwargs):
+            from entities.decoration import Decoration
+            ang = float(deco.kwargs.get("ang", 0.0) or 0.0)
+            s = (getattr(deco, "scale", 1.0) or 1.0)
+            hs = float(deco.kwargs["span"]) * s / 2.0
+            dx, dy = math.cos(ang), math.sin(ang)
+            for tag, sgn in (("a", -1.0), ("b", 1.0)):
+                kw = dict(deco.kwargs, half=tag)
+                self.decorations.append(
+                    Decoration(deco.x + dx * hs * sgn,
+                               deco.y + dy * hs * sgn, "shoring_frame",
+                               scale=deco.scale, seed=deco.seed, **kw))
+            return
         self.decorations.append(deco)
 
     def seat_tabletop_props(self):
@@ -4607,7 +4767,12 @@ class Scene:
 
         floor = [(tx, ty) for ty in range(1, H - 1) for tx in range(1, W - 1)
                  if is_open(tx, ty)]
-        place(list(floor), count, False)
+        # A FLOOR door's art is taller than a tile: require the vertical
+        # neighbours open too, or the chalk spills across the wall band
+        # and reads as drawn OUTSIDE the room (2026-07 containment fix).
+        contained = [(tx, ty) for tx, ty in floor
+                     if is_open(tx, ty - 1) and is_open(tx, ty + 1)]
+        place(list(contained), count, False)
         if wall_count:
             edge = [(tx, ty) for tx, ty in floor
                     if tx in (1, W - 2) or ty in (1, H - 2)]

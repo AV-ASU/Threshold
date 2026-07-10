@@ -84,7 +84,7 @@ SCENE_BUILDERS = {
     # The Works -- the Basement Level. Seven rooms, well is the sole
     # entrance (the grove's descent fold); the Mask gates the way to the Depths.
     "well_bottom":        build_well_bottom,        # the Shaft Floor
-    "well_passage":       build_well_passage,       # the Drying Racks
+    "well_passage":       build_well_passage,       # the Timber Racks
     "works_vats":         build_works_vats,
     "works_sorting":      build_works_sorting,
     "maras_room":         build_maras_room,         # cell off the Sorting Hall
@@ -138,6 +138,14 @@ def load_scene(key):
     # Seat candles/lamps/bowls/etc. ON the furniture they're placed on, so they
     # don't float at the furniture's base under the tilt.
     sc.seat_tabletop_props()
+    # The mine's doors are CAVE MOUTHS (2026-07 retrofit): every
+    # underground room's exit tiles draw as a rock adit with timber
+    # shoring and no leaf, instead of the surface's framed hinged door.
+    # Applied here (not per builder) so a new underground room can never
+    # drift back to wooden doors. Draw-only; mechanics unchanged.
+    from systems.config import UNDERGROUND_SCENES
+    if key in UNDERGROUND_SCENES or key in ("dark", "threshold", "maras_room"):
+        sc.door_style = "cave"
     return sc
 
 
