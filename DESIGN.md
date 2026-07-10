@@ -178,10 +178,21 @@ What rises with the stage:
   King can only ever offer endless *more* — the one appetite the door
   cannot answer; and being unattuned, the claim can **compel him but not
   steer him** — the only soul who runs *from* the door instead of toward
-  it, so he goes **hollow** as a malfunction, not a convert. *(PLANNED,
-  TODO #2a: replace the stage gate with a player-driven despair/hope
-  arc — his fall earned or averted by whether the PI shares real
-  discoveries with him.)*
+  it, so he goes **hollow** as a malfunction, not a convert.
+
+  > **PLANNED (TODO #2a) — the player-driven fall. Not built; this is
+  > the guide for when it is.** Replace the stage gate with a
+  > relationship arc: a hidden **despair/hope balance** (surfaced only
+  > as his mood, never a number) can tip him over, and a hard **neglect
+  > override** finishes him regardless — reach the descent (**3
+  > evidence**) having never let him into a single discovery, and his
+  > last hope, that someone was actually working it, dies with the
+  > silence, and he falls. Tend him instead (share what you find; the
+  > same act is the trust he withholds by default) and he **holds**,
+  > the holdout who lives as much as anyone here does. The encounter
+  > itself is unchanged either way (the stand, the unfinished line, the
+  > slow pursuit). The despair/hope ledger, its constants, and the
+  > newspaper break-lever live with the build ticket (TODO #2 + #2a).
 - **The dead.** A local you shoot lies where they fell **for as long as
   you're in that room** — the immediate weight of what you did. The scene
   rebuilds the local live on re-entry: the act costs in the moment, and
