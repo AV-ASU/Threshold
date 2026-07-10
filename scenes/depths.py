@@ -183,7 +183,7 @@ def build_depths_antechamber():
     # spoil never hauled and a stub of the old rail heading east -- the
     # fall lands you in a working, not a room (2026-07 art pass).
     sc.add_furniture("crate", [(7, 4)])
-    sc.add_furniture("spoil_heap", [(6, 3)], seed=3)
+    sc.add_furniture("spoil_heap", [(6, 3)], seed=3, see_over=True)
     sc.add_decoration(Decoration(8 * TILE + 24, 5 * TILE + 16,
                                  "mine_rail", ang=0.0, seed=9))
     sc.hide_spots = [
@@ -294,6 +294,16 @@ def build_depths_procession():
     sc.add_enemy(_cultist(5 * TILE + 16, 4 * TILE + 16, speed=0.9))
     sc.add_enemy(_cultist(14 * TILE + 16, 4 * TILE + 16, speed=0.9))
     sc.add_enemy(_cultist(23 * TILE + 16, 4 * TILE + 16, speed=0.9))
+    # Candle-tending dwells down the drift (the JOBS layer, 2026-07
+    # stealth pass): the walkers pause over the flames in a rhythm the
+    # player can read from a bay -- the long room's patrols get a
+    # learnable beat instead of pure drift. Sightings still outrank it.
+    sc.add_cult_station(6 * TILE + 16, 4 * TILE + 16, pose="chant",
+                        face=(0, 1), dwell=(2.5, 4.5))
+    sc.add_cult_station(16 * TILE + 16, 4 * TILE + 16, pose="chant",
+                        face=(0, 1), dwell=(2.5, 4.5))
+    sc.add_cult_station(26 * TILE + 16, 4 * TILE + 16, pose="chant",
+                        face=(0, 1), dwell=(2.5, 4.5))
     _ambient(sc, "blip_soft", 0.12, 2.5, 4.5)
 
     # The procession's one diegetic beat (TODO #8): the candle line read
@@ -376,6 +386,15 @@ def build_depths_hall():
                                  ang=0.0))
     sc.add_decoration(Decoration(10 * TILE + 26, 8 * TILE + 26, "cobweb",
                                  ang=math.pi))
+    # Cover down the nave (2026-07 stealth pass): the benches are
+    # see-over (knee-high planks hide nobody standing), which left the
+    # aisle a 16-tile naked run once the room was lengthened. Three
+    # BROKEN shoring sets stagger along it -- solid, sight-blocking,
+    # the old workings' own vocabulary -- so the dash to the door
+    # breaks into readable legs (longest exposed run ~5 tiles).
+    sc.add_furniture("shoring_frame", [(3, 6)], seed=7, ang=0.5, span=0)
+    sc.add_furniture("shoring_frame", [(9, 4)], seed=12, ang=2.4, span=0)
+    sc.add_furniture("shoring_frame", [(13, 6)], seed=3, ang=1.1, span=0)
     # Enclosed hides on the nave route (STEALTH_REWORK §6): under a
     # bench in each half, both in the roamer's sweep range -- the east half
     # past the crossing needs its own rooted option once the kneelers

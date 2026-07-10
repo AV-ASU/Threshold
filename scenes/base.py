@@ -2756,7 +2756,10 @@ def _tilt_counter_box(surf, camera, scene, tx, ty):
                  face_col=(96, 72, 48), top_col=(122, 98, 66))
 
 
-_RACK_RISE = 16         # a lumber rack: chest-high, seen over, hidden behind
+_RACK_RISE = 22         # a lumber rack: stacked to the shoulder -- it
+                        # BLOCKS sight (the rack maze is the room's
+                        # cover ladder), so the stack must look too
+                        # tall to see over (2026-07 stealth pass)
 
 
 def _tilt_rack_box(surf, camera, scene, tx, ty):
@@ -2770,7 +2773,7 @@ def _tilt_rack_box(surf, camera, scene, tx, ty):
                  face_col=(78, 60, 39), top_col=(100, 78, 51))
     wx0, wx1 = tx * TILE + 2, tx * TILE + TILE - 2
     wyf = ty * TILE + TILE
-    for z in (5, 10):
+    for z in (5, 10, 15, 19):
         p0 = camera.project(wx0, wyf, z)
         p1 = camera.project(wx1, wyf, z)
         pygame.draw.line(surf, (52, 40, 27), p0, p1, 1)

@@ -117,8 +117,8 @@ def build_well_bottom():
     sc.add_furniture("crate", [(2, 6)])
     # The haul head: spoil staged against the walls waiting on a rope
     # that is gone, and the barrow that carried it, parked mid-floor.
-    sc.add_furniture("spoil_heap", [(3, 3)], seed=1)
-    sc.add_furniture("spoil_heap", [(7, 3)], seed=6)
+    sc.add_furniture("spoil_heap", [(3, 3)], seed=1, see_over=True)
+    sc.add_furniture("spoil_heap", [(7, 3)], seed=6, see_over=True)
     sc.add_decoration(Decoration(6 * TILE + 16, 6 * TILE + 16,
                                  "wheelbarrow"))
     # Water seeping to the lowest place (NARRATIVE 1b): a thin teal rivulet
@@ -263,6 +263,16 @@ def build_well_passage():
     # the west half and the east half are never both clear at once.
     sc.add_enemy(_cultist(3 * TILE + 16, 5 * TILE + 16, speed=0.85))
     sc.add_enemy(_cultist(16 * TILE + 16, 5 * TILE + 16, speed=0.85))
+    # The lumber work (the JOBS layer, 2026-07 stealth pass): stations at
+    # the bay pile and the far stack, so the patrol has a READABLE rhythm
+    # the player can learn from cover -- travel, dwell over the boards,
+    # move on. Noise and sightings still outrank the chore.
+    sc.add_cult_station(10 * TILE + 16, 3 * TILE + 16,
+                        face=(0, -1), dwell=(3.0, 5.5))
+    sc.add_cult_station(18 * TILE + 16, 6 * TILE + 16,
+                        face=(0, 1), dwell=(3.0, 5.5))
+    sc.add_cult_station(2 * TILE + 16, 5 * TILE + 16,
+                        face=(-1, 0), dwell=(2.0, 4.0))
     _ambient(sc, "cult_breath", 0.16, 5.0, 9.0)
     # Chalk doors -- the motif thickening underground (floor + wall). The
     # first Works door carries the voice beat (rattled).
@@ -994,7 +1004,7 @@ def build_works_deepstair():
                                  "tally_marks", wall="N", seed=3))
     sc.add_decoration(Decoration(7 * TILE + 16, 0 * TILE + 20,
                                  "tally_marks", wall="N", seed=12))
-    sc.add_furniture("spoil_heap", [(7, 4)], seed=8)
+    sc.add_furniture("spoil_heap", [(7, 4)], seed=8, see_over=True)
     sc.add_furniture("firewood", [(3, 5)], w=30, h=16, seed=6)
     # Cobweb grime in the beveled corners by the keystone gate.
     sc.add_decoration(Decoration(2 * TILE + 6, 1 * TILE + 6, "cobweb",
