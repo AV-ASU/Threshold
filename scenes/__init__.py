@@ -138,6 +138,14 @@ def load_scene(key):
     # Seat candles/lamps/bowls/etc. ON the furniture they're placed on, so they
     # don't float at the furniture's base under the tilt.
     sc.seat_tabletop_props()
+    # The mine's doors are CAVE MOUTHS (2026-07 retrofit): every
+    # underground room's exit tiles draw as a rock adit with timber
+    # shoring and no leaf, instead of the surface's framed hinged door.
+    # Applied here (not per builder) so a new underground room can never
+    # drift back to wooden doors. Draw-only; mechanics unchanged.
+    from systems.config import UNDERGROUND_SCENES
+    if key in UNDERGROUND_SCENES or key in ("dark", "threshold", "maras_room"):
+        sc.door_style = "cave"
     return sc
 
 

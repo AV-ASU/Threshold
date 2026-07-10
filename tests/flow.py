@@ -1570,6 +1570,15 @@ def main():
     from rendering.furniture import FURNITURE as _FURN
     check("bone_rack" not in _FURN,
           "mine: the bone_rack furniture kind stays purged")
+    # Underground doors are CAVE MOUTHS (adits), never hinged wood; the
+    # surface keeps its framed doors. Draw-only, set by load_scene.
+    from scenes import load_scene as _ldm
+    from systems.config import UNDERGROUND_SCENES as _UG
+    for _uk in sorted(_UG) + ["dark"]:
+        check(getattr(_ldm(_uk), "door_style", "") == "cave",
+              f"mine: {_uk} doors draw as cave mouths")
+    check(getattr(_ldm("lodge"), "door_style", "") == "wood",
+          "mine: surface doors stay framed wood")
 
     # --- 20. Cultists use dynamic AI, not preset coordinates (NARRATIVE §8) -
     # Pure-roam SCOUT + cover-aware pursuit. Guard the two canon facts: no

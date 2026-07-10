@@ -2076,11 +2076,13 @@ def _door_room_dir(scene, tx, ty):
     return "W"
 
 
-def _draw_door_opening(surf, rx, ry, room, tx, ty):
+def _draw_door_opening(surf, rx, ry, room, tx, ty, style="wood"):
     """The doorway itself, drawn in-tile during the terrain pass: the
     wall fills through (continuous mass) with a dark opening punched in
     it + a lit face on the room side. The swung leaf is a separate,
-    unconfined sprite drawn later (draw_scene_doors)."""
+    unconfined sprite drawn later (draw_scene_doors). style="cave" (the
+    mine adit, 2026-07): the opening is a jagged rock mouth with two
+    timber posts and no leaf."""
     pygame.draw.rect(surf, _WALL_BASE, (rx, ry, TILE, TILE))
     hsh = (tx * 73856093) ^ (ty * 19349663)
     if hsh % 4 == 0:
@@ -2094,6 +2096,29 @@ def _draw_door_opening(surf, rx, ry, room, tx, ty):
         pygame.draw.rect(surf, _WALL_FACE, (rx + TILE - 2, ry, 2, TILE))
     else:
         pygame.draw.rect(surf, _WALL_FACE, (rx, ry, 2, TILE))
+    if style == "cave":
+        # The adit mouth: an irregular dark blob (never a neat rect) with
+        # a rock-crumb rim and two timber post ends at the room side.
+        cx, cy = rx + 16, ry + 16
+        pts = []
+        for i in range(8):
+            a = i * math.tau / 8
+            rr = 8 + ((hsh >> (i * 3)) % 5)          # 8..12 px, per-tile jitter
+            pts.append((cx + math.cos(a) * rr, cy + math.sin(a) * rr))
+        pygame.draw.polygon(surf, (3, 2, 5), pts)
+        for i in range(0, 8, 2):                     # rim crumbs
+            px_, py_ = pts[i]
+            pygame.draw.rect(surf, (52, 50, 56), (int(px_) - 1, int(py_) - 1, 2, 2))
+        wood = (72, 54, 32)
+        if room in ("S", "N"):
+            py_ = ry + (TILE - 6 if room == "S" else 2)
+            pygame.draw.rect(surf, wood, (rx + 5, py_, 3, 4))
+            pygame.draw.rect(surf, wood, (rx + TILE - 8, py_, 3, 4))
+        else:
+            px_ = rx + (TILE - 6 if room == "E" else 2)
+            pygame.draw.rect(surf, wood, (px_, ry + 5, 4, 3))
+            pygame.draw.rect(surf, wood, (px_, ry + TILE - 8, 4, 3))
+        return
     pygame.draw.rect(surf, (3, 2, 5), (rx + 9, ry + 9, 14, 14))      # the dark doorway
 
 
@@ -2379,7 +2404,9 @@ def draw_scene_terrain(surf, scene, cam_x, cam_y, x0, y0, x1, y1,
             rx = tx * TILE - cam_x
             ry = ty * TILE - cam_y
             if ch in _DOOR_CHARS:
-                _draw_door_opening(surf, rx, ry, _door_room_dir(scene, tx, ty), tx, ty)
+                _draw_door_opening(surf, rx, ry, _door_room_dir(scene, tx, ty),
+                                   tx, ty,
+                                   style=getattr(scene, "door_style", "wood"))
             else:
                 draw_object(surf, ch, rx, ry, tx, ty)
     # Unified gabled roofs, drawn over the walls so each building reads
@@ -2765,6 +2792,46 @@ def _draw_doorway(surf, camera, scene, tx, ty):
             pygame.draw.polygon(surf, (7, 6, 9), rec)
     else:
         pygame.draw.polygon(surf, (7, 6, 9), rec)
+    if getattr(scene, "door_style", "wood") == "cave":
+        # THE ADIT (2026-07, the mine retrofit): a rough rock mouth with
+        # timber shoring instead of a framed, hinged door. No leaf -- a
+        # mine adit has no door; the dark (or the see-through room) shows
+        # straight through. Jagged rock lumps overlap the recess edges so
+        # the opening never reads as a neat rectangle, and the shoring is
+        # old work: one post leans, the lintel beam sags a little.
+        seed = (wtx * 73856093) ^ (wty * 19349663)
+        rock, rock_lo = (58, 55, 62), (34, 32, 38)
+
+        def _j(i, span=5):
+            return (seed >> (i * 3)) % span
+        for i in range(4):                       # rim lumps down both jambs
+            z0 = head * (0.12 + 0.22 * i)
+            bulge = 2.5 + _j(i)
+            for u_edge, sgn in ((-hw + 1, 1), (hw - 1, -1)):
+                pygame.draw.polygon(surf, rock_lo if i % 2 else rock, [
+                    Q(u_edge, z0, 2),
+                    Q(u_edge + sgn * bulge, z0 + head * 0.10, 1),
+                    Q(u_edge, z0 + head * 0.20, 2)])
+        for i in range(3):                       # teeth hanging under the head
+            u0 = -hw + 4 + i * (2 * hw - 8) / 2.6 + _j(i + 4, 3)
+            drop = 3.0 + _j(i + 8, 4)
+            pygame.draw.polygon(surf, rock_lo, [
+                Q(u0 - 2.5, head, 2), Q(u0 + 2.5, head, 2),
+                Q(u0, head - drop, 1)])
+        wood_f, wood_e = (86, 64, 40), (54, 40, 24)
+        lean = 1.0 + _j(9, 3) * 0.5
+        for u0, u1, tshift in ((-hw + 1.0, -hw + 4.5, 0.0),
+                               (hw - 4.5 - lean, hw - 1.0, lean)):
+            post = [Q(u0, 0, -1), Q(u1, 0, -1),
+                    Q(u1 + tshift, head - 2, -1), Q(u0 + tshift, head - 2, -1)]
+            pygame.draw.polygon(surf, wood_f, post)
+            pygame.draw.polygon(surf, wood_e, post, 1)
+        sag = 1.5 + _j(10, 3)
+        beam = [Q(-hw - 1, head - 1, -1.5), Q(hw + 1, head - 1 - sag, -1.5),
+                Q(hw + 1, head + 3 - sag, -1.5), Q(-hw - 1, head + 3, -1.5)]
+        pygame.draw.polygon(surf, wood_f, beam)
+        pygame.draw.polygon(surf, wood_e, beam, 1)
+        return
     # 2. wood frame on the room face (off -), a "n" around the opening
     tw, th, off = 4.0, 3.0, -1.0
 
@@ -3615,7 +3682,10 @@ def draw_scene_doors(surf, scene, cam_x, cam_y, x0, y0, x1, y1):
     """Late pass: the swung door leaves, drawn unconfined so each spills
     out of its tile into the room. Called after terrain + decorations
     and before entities, so a leaf sits over the floor but under anyone
-    walking through the doorway."""
+    walking through the doorway. Cave-mouth scenes hang no leaves (a
+    mine adit has no door)."""
+    if getattr(scene, "door_style", "wood") == "cave":
+        return
     W, H = scene.w, scene.h
     wx, wy = scene.wrap_x, scene.wrap_y
     for ty in range(y0, y1):
@@ -3977,6 +4047,12 @@ class Scene:
         # hold}. Read by the TILT doorway draw only -- the flat pitch-0
         # view keeps its static leaves (byte-identity gate).
         self._door_anim = {}
+        # Door LOOK for this scene's exit tiles: "wood" (default -- the
+        # framed, hinged surface doors) or "cave" (2026-07, the mine
+        # retrofit: a rough rock mouth with timber shoring and NO leaf --
+        # a mine adit; set on every underground scene by load_scene).
+        # Mechanics are identical either way; this is draw-only.
+        self.door_style = "wood"
         self.on_enter_fn = None
         self.on_exit_fn = None
         self.on_interact_fn = None    # called when E pressed and no NPC nearby
