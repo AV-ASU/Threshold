@@ -114,11 +114,10 @@ never without cost: a local kill **spikes visibility** hard (the town turns
 its head) and pings the cult to **investigate the body**, and the body
 **lies there for as long as you're in that room**.
 
-> **Corpse persistence is cut (was overbuilt).** Keep the *moment's*
-> weight — the visibility spike, the town's turned head, the body on the
-> floor while you're present — but drop the cross-scene `dead_locals`
-> replay/`mold` bookkeeping (§2, §4). The horror is the act, not a
-> database.
+> **The kill costs in the moment, and the moment is the design.** The
+> visibility spike, the town's turned head, the body on the floor while
+> you're present — the scene rebuilds the local live on re-entry (§2).
+> The horror is the act, not a database.
 
 ---
 
@@ -233,25 +232,15 @@ Only display names and fiction change.
 ## 4. Still loose (design TODO)
 
 > **2026-06 canon-alignment pass (settled with the user).** A batch of
-> story/canon decisions were locked this session; the **concrete code
+> story/canon decisions were locked that session; the **concrete code
 > changes** to make the game match live in **`TODO.md`** (the former
-> `GAME_CHANGES.md` handoff tracker, folded into `TODO.md` in 2026-07). In
-> brief: **Ledger → front desk** (cut the cellar copy + Sable's cellar
-> line; *superseded by the 2026-07 rework — the boxed registers live in the
-> padlocked Lodge cellar again, keyed from the nail behind the house, and
-> the desk keeps the sign-in book + the lead pointing down; see NARRATIVE §6*);
-> **Sable is the most-attuned *local*** (not a
-> newcomer); **Royce has stopped driving out**; **Mrs. Calder sets a place
-> for a guest she can't name** (not a vanished husband); **the cult's notes = three pure-lore testimony fragments**
-> (the Calling, the Bargain, the Digging — unconfirmed testimony);
-> **Mask reads as "permission to leave,"** built up by the PI's escalating
-> **distressed notes**, tempting SPREAD over going deeper; **keystone-to-
-> door rework** (the **Mask alone** is the keystone, NARRATIVE §9; the Deep Stair
-> opens without consuming it, spent at the Threshold to SEAL); the **ashfall**
-> world rot layer; the **lure chain** (King→Mara→Walter→PI, felt not
-> stated); the **awareness model** (no visible tell; the cult knew the gist
-> of its bargain, the locals never knew they were claimed); and a **Rev.
-> Crane dialogue/murder rework** (lore unchanged). See `TODO.md`.
+> `GAME_CHANGES.md` handoff tracker, folded into `TODO.md` in 2026-07).
+> The decisions themselves are canon now and live where canon lives:
+> the Ledger placement, Sable as the most-attuned local, Royce, Mrs.
+> Calder, the testimony fragments, the Mask-as-permission temptation,
+> the keystone spent at the Threshold, the lure chain, and the awareness
+> model are all stated in `NARRATIVE.md` (§§1, 2, 4, 6, 8, 9). This
+> section keeps only what is genuinely still loose below.
 
 - ~~**Cultist movement → dynamic AI, not preset patrol coordinates.**~~
   **DONE.** The hard-coded `waypoints=[...]` are gone from `_cultist` and all
