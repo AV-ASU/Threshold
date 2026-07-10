@@ -97,9 +97,8 @@ def build_well_bottom():
     sc.exit_gate_fn = _up_gate
 
     sc.add_decoration(Decoration(4 * TILE + 16, 2 * TILE + 22, "candle"))
-    # A "wrong" mount in the well dark -- too many eyes.
-    sc.add_decoration(Decoration(6 * TILE + 16, 0 * TILE + 18,
-                                 "wrong_taxidermy", wall="N", seed=31))
+    # (The "wrong" taxidermy mount was cut, 2026-07 process audit:
+    # nobody hung a hunting trophy at the bottom of a mine shaft.)
     # Cobweb grime in the beveled corners away from the ladder.
     sc.add_decoration(Decoration(9 * TILE + 26, 1 * TILE + 6, "cobweb",
                                  ang=math.pi / 2))
@@ -267,8 +266,8 @@ def build_well_passage():
     _ambient(sc, "cult_breath", 0.16, 5.0, 9.0)
     # Chalk doors -- the motif thickening underground (floor + wall). The
     # first Works door carries the voice beat (rattled).
-    sc.add_chalk_door(3 * TILE + 16, 7 * TILE + 16, voice="chalk_works", seed=2)
-    sc.add_chalk_door(15 * TILE + 16, 7 * TILE + 16, seed=8)
+    sc.add_chalk_door(3 * TILE + 16, 6 * TILE + 16, voice="chalk_works", seed=2)
+    sc.add_chalk_door(15 * TILE + 16, 6 * TILE + 16, seed=8)
     sc.add_chalk_door(20 * TILE + 16, 7 * TILE + 28, seed=4, wall=True)
     return sc
 
@@ -326,18 +325,21 @@ def build_works_vats():
     sc.add_enemy(_cultist(6 * TILE + 16, 5 * TILE + 16, speed=0.8))
     sc.add_enemy(_cultist(9 * TILE + 16, 5 * TILE + 16, speed=0.8))
     _ambient(sc, "low_pulse", 0.14, 6.0, 10.0)
-    # A pressure valve on the west arm's pipe run: crack it open and
-    # the line knocks and hisses -- a lure that pulls the basin workers
-    # off the crossing until one of them seats it shut.
+    # The diggers' DEWATERING PUMP on the west arm (a hand pitcher pump
+    # on a driven well point; the dig broke into the river and has to be
+    # pumped or it drowns): knock the arm loose and the hose run clanks
+    # and hisses -- a lure that pulls the basin workers off the crossing
+    # until one of them wedges it still. (Kind stays "valve": the noise
+    # mechanic + tests key on it; this is a fiction/art reskin, 2026-07.)
     sc.add_decoration(Decoration(2 * TILE + 16, 4 * TILE + 6, "valve"))
     sc.add_noise_source(
         2 * TILE + 16, 4 * TILE + 12, "valve", period=1.1, reach=380.0,
         sfx="valve_hiss",
-        on_notice="You crack the valve. The line begins to knock and "
-                  "hiss.",
-        off_notice="You seat the valve shut.",
-        silenced_notice="A hand seats the valve shut. The hiss dies in "
-                        "the line.")
+        on_notice="You knock the pump arm loose. The hose line begins "
+                  "to clank and hiss.",
+        off_notice="You wedge the pump arm still.",
+        silenced_notice="A hand wedges the pump arm still. The hiss "
+                        "dies in the line.")
     # A loose plank over the south-arm runoff channel.
     sc.add_noise_trap(6 * TILE + 16, 7 * TILE + 16, "plank", seed=11)
     # The basin work: the two cultists tend the four vats in rounds --
@@ -404,8 +406,10 @@ def build_works_sorting():
     sc.add_decoration(Decoration(9 * TILE + 16, 7 * TILE - 4, "chest",
                                  open=False, interactive=False))
     sc.add_decoration(Decoration(10 * TILE + 16, 9 * TILE + 16, "phantom_mark"))
-    # A "wrong" mount oversees the catalogued lives the claimed shed,
-    # and cobwebs grime the high corners.
+    # A "wrong" mount among the catalogued lives the claimed shed --
+    # somebody's trophy buck, carried down with the rest of a life and
+    # hung where its owner left off (the one mount underground that
+    # SURVIVES provenance). Cobwebs grime the high corners.
     sc.add_decoration(Decoration(8 * TILE + 16, 3 * TILE + 18,
                                  "wrong_taxidermy", wall="N", seed=17))
     sc.add_decoration(Decoration(1 * TILE + 6, 4 * TILE + 6, "cobweb",
@@ -587,6 +591,13 @@ def build_works_scriptorium():
                                  ang=0.0))
     sc.add_decoration(Decoration(11 * TILE + 26, 1 * TILE + 6, "cobweb",
                                  ang=math.pi / 2))
+    # The copying desks are the SCHOOL'S desks -- the commune stripped
+    # the building it slept in (Vane: they filled the school; Toby's
+    # lesson is still on the board) and carried the furniture down.
+    # Child-size chairs still seated at two of them sell it without a
+    # word (2026-07 process audit; free canon from NARRATIVE §2).
+    sc.add_furniture("small_chair", [(4, 3)])
+    sc.add_furniture("small_chair", [(8, 3)])
     sc._desk_pos = (4 * TILE + 16, 2 * TILE + 16)
     sc.add_interactable(sc._desk_pos[0], sc._desk_pos[1], 40)  # [E] cue: the Playscript
     # One enclosed hide (STEALTH_REWORK §6): under the centre copying
@@ -634,7 +645,7 @@ def build_works_scriptorium():
     # The scribes drew doors as obsessively as they copied the Sign -- swarm
     # the floor + walls with chalk doors, none overlapping (the room reads as
     # a compulsion, not a workshop). The Playscript desk is left clear.
-    sc.scatter_chalk_doors(7, seed=44, wall_count=3)
+    sc.scatter_chalk_doors(4, seed=44, wall_count=2)
     return sc
 
 

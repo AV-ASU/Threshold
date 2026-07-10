@@ -308,6 +308,9 @@ FURNITURE = {
     # killer-cult relic -- the claiming cult spills no one, NARRATIVE §1b.
     # The Old Stores rack ordinary "shelf" cases now.)
     "pew":       (40, 11, 11, _WOOD_DK, _d_pew_back),
+    # a backless plank on trestle legs -- the mine's own carpentry (the
+    # old workings' seating; a PEW is church joinery nobody hauled down)
+    "plank_bench": (38, 9, 8, _WOOD_DK, None),
     # Free-standing Tier-1 decorations promoted to real box volumes (they used
     # to float as flat top-down sprites under tilt).
     "chest":            (24, 18, 13, _WOOD_MID, _d_chest_lid),

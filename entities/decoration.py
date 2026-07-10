@@ -225,6 +225,13 @@ class Decoration:
         pygame.draw.rect(surf, (52, 35, 22), (x - 14, y - 7, 28, 14), 1)
         pygame.draw.rect(surf, (150, 142, 128), (x - 12, y - 5, 24, 7))
 
+    def _draw_plank_bench(self, surf, x, y):
+        # top-down: a rough backless plank on two trestle feet
+        pygame.draw.rect(surf, (72, 49, 31), (x - 19, y - 4, 38, 8))
+        pygame.draw.rect(surf, (46, 32, 20), (x - 19, y - 4, 38, 8), 1)
+        pygame.draw.rect(surf, (40, 28, 18), (x - 15, y - 2, 3, 4))
+        pygame.draw.rect(surf, (40, 28, 18), (x + 12, y - 2, 3, 4))
+
     def _draw_pew(self, surf, x, y):
         pygame.draw.rect(surf, (72, 49, 31), (x - 20, y - 5, 40, 10))
         pygame.draw.rect(surf, (52, 35, 22), (x - 20, y - 5, 40, 10), 1)
@@ -1395,22 +1402,31 @@ class Decoration:
         pygame.draw.circle(surf, (40, 36, 34), (x + 10, y - 1), 1)
 
     def _draw_valve(self, surf, x, y):
-        """A works pressure valve set in a wall pipe run -- the
-        toggleable hiss source. Iron pipe with flange bolts and a
-        spoked handwheel."""
-        pipe = (58, 60, 64)
-        pipe_dk = (34, 36, 40)
-        wheel = (108, 52, 40)
-        pygame.draw.rect(surf, pipe, (x - 3, y - 22, 6, 26))
-        pygame.draw.rect(surf, pipe_dk, (x - 3, y - 22, 6, 26), 1)
-        for fy in (y - 18, y - 2):
-            pygame.draw.rect(surf, pipe_dk, (x - 5, fy, 10, 3))
-        pygame.draw.circle(surf, wheel, (x, y - 10), 6, 2)
-        for ang in (0.3, 2.4, 4.5):
-            pygame.draw.line(surf, wheel, (x, y - 10),
-                             (x + int(math.cos(ang) * 5),
-                              y - 10 + int(math.sin(ang) * 5)), 1)
-        pygame.draw.circle(surf, pipe_dk, (x, y - 10), 1)
+        """The diggers' DEWATERING PUMP -- a hand pitcher pump on a
+        driven well point, its hose run knocking when the arm swings
+        loose. (2026-07 process audit: the old art was a pressure valve
+        in an iron pipe run -- industrial plumbing that failed
+        provenance in a hand dig. A farm town owns pitcher pumps, and a
+        dig that broke into the river NEEDS one.) Kind name kept: the
+        noise_source mechanic and its tests key on "valve"."""
+        iron = (58, 60, 64)
+        iron_dk = (34, 36, 40)
+        wood = (76, 58, 38)
+        # the driven pipe standing out of the ground + the pump body
+        pygame.draw.rect(surf, iron_dk, (x - 2, y - 8, 4, 10))
+        pygame.draw.rect(surf, iron, (x - 3, y - 18, 6, 11))
+        pygame.draw.rect(surf, iron_dk, (x - 3, y - 18, 6, 11), 1)
+        # the curved spout, mouth down
+        pygame.draw.rect(surf, iron, (x + 3, y - 16, 5, 3))
+        pygame.draw.rect(surf, iron, (x + 6, y - 14, 2, 4))
+        # the long pump arm, raised (wood handle on an iron pin)
+        pygame.draw.line(surf, iron_dk, (x - 2, y - 17), (x - 10, y - 25), 2)
+        pygame.draw.line(surf, wood, (x - 8, y - 23), (x - 13, y - 28), 3)
+        pygame.draw.circle(surf, (96, 92, 84), (x - 2, y - 17), 1)
+        # the hose run slumping off toward the arm's basin
+        pygame.draw.lines(surf, iron_dk, False,
+                          [(x + 7, y - 11), (x + 10, y - 6), (x + 9, y - 1)], 2)
+
 
     def _draw_grass_tuft(self, surf, x, y):
         sway = math.sin(self.t * 2 + self.seed) * 1
@@ -1423,42 +1439,48 @@ class Decoration:
     def _draw_chalk_door(self, surf, x, y):
         """A door drawn in chalk where no door is -- the cult's compulsion
         (the door's dream made into a crude life-size drawing). A floor decal
-        (see _FLOOR_DECAL_KINDS): a dark 'step-down' interior, jambs, lintel, a
-        knob it cannot open, all hand-drawn (jittered + doubled strokes) so it
-        reads as chalked by hand, not stamped. `seed` varies each one."""
+        (see _FLOOR_DECAL_KINDS): a faint 'step-down' interior, jambs, lintel,
+        a knob it cannot open. 2026-07 rework: DIMMER and SMALLER -- worn
+        chalk with skips where the stick lifted, not bright doubled strokes
+        (the old draw read as glowing white rectangles), and sized to stay
+        inside its tile's open floor."""
         rng = random.Random(self.seed * 7 + 3)
-        chalk = (234, 231, 221)
-        faint = (168, 165, 154)
-        w, h = 30, 48
+        chalk = (196, 192, 180)
+        faint = (134, 131, 121)
+        w, h = 24, 38
         L, R, T, B = x - w // 2, x + w // 2, y - h // 2, y + h // 2
-        # a faint dark wash inside the frame -- the "down through it" void that
-        # makes the chalk lines read even on a dark floor
+        # a faint dark wash inside the frame -- the "down through it" void
         void = pygame.Surface((w - 4, h - 4), pygame.SRCALPHA)
-        void.fill((6, 6, 9, 70))
+        void.fill((6, 6, 9, 60))
         surf.blit(void, (L + 2, T + 2))
 
-        def hand(x0, y0, x1, y1, col, wdt=2, passes=2):
-            for _ in range(passes):
-                mx = (x0 + x1) // 2 + rng.randint(-1, 1)
-                my = (y0 + y1) // 2 + rng.randint(-1, 1)
-                pygame.draw.lines(surf, col, False,
-                                  [(x0 + rng.randint(-1, 1), y0 + rng.randint(-1, 1)),
-                                   (mx, my),
-                                   (x1 + rng.randint(-1, 1), y1 + rng.randint(-1, 1))], wdt)
-        hand(L, B, L, T, chalk)              # left jamb
-        hand(R, B, R, T, chalk)              # right jamb
-        hand(L, T, R, T, chalk)              # lintel
-        hand(L, B, R, B, faint, 1, 1)        # threshold line
+        def hand(x0, y0, x1, y1, col, wdt=1):
+            # a hand stroke in 3 segments, one skipped where the chalk
+            # lifted -- worn, not stamped
+            skip = rng.randint(0, 2)
+            for i in range(3):
+                if i == skip and rng.random() < 0.7:
+                    continue
+                fx0 = x0 + (x1 - x0) * i / 3.0
+                fy0 = y0 + (y1 - y0) * i / 3.0
+                fx1 = x0 + (x1 - x0) * (i + 1) / 3.0
+                fy1 = y0 + (y1 - y0) * (i + 1) / 3.0
+                pygame.draw.line(surf, col,
+                                 (fx0 + rng.randint(-1, 1), fy0 + rng.randint(-1, 1)),
+                                 (fx1 + rng.randint(-1, 1), fy1 + rng.randint(-1, 1)),
+                                 wdt)
+        hand(L, B, L, T, chalk, 2)           # left jamb
+        hand(R, B, R, T, chalk, 2)           # right jamb
+        hand(L, T, R, T, chalk, 2)           # lintel
+        hand(L, B, R, B, faint, 1)           # threshold line
         # the knob -- the cruel detail; there is nothing to open
-        pygame.draw.circle(surf, chalk, (R - 4, y + 4), 2)
-        # chalk dust / scuff around it
-        for _ in range(8):
-            px = max(0, min(surf.get_width() - 1, x + rng.randint(-w, w)))
+        pygame.draw.circle(surf, chalk, (R - 4, y + 3), 1)
+        # a little chalk dust where the drawer knelt
+        for _ in range(5):
+            px = max(0, min(surf.get_width() - 1, x + rng.randint(-w // 2, w // 2)))
             py = max(0, min(surf.get_height() - 1, y + rng.randint(-h // 2, h // 2)))
             surf.set_at((px, py), faint)
 
-    # The same chalk door, but hung on a WALL (a _WALL_DECO_KINDS card lifted
-    # onto the wall plane) instead of lying on the floor. Same drawing.
     _draw_chalk_door_wall = _draw_chalk_door
 
     def _draw_bush(self, surf, x, y):

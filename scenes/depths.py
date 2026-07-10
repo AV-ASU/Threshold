@@ -353,32 +353,36 @@ def build_depths_hall():
     # patrol. Hide spots scatter so the player can pick a route.
     sc.add_decoration(Decoration(18 * TILE + 16, 5 * TILE + 16,
                                  "phantom_mark"))
-    # A "wrong" mount watching from the transept wall -- belongs to the dark.
-    sc.add_decoration(Decoration(9 * TILE + 16, 0 * TILE + 18,
-                                 "wrong_taxidermy", wall="N", seed=21))
+    # (The "wrong" taxidermy mount was cut, 2026-07 process audit: a
+    # hunting trophy fails provenance in the old workings -- nobody hung
+    # a mount in a mine. The one in the Sorting Hall stays: it sits
+    # among the catalogued possessions the congregation shed.)
     sc.add_decoration(Decoration(5 * TILE + 16, 4 * TILE + 16, "candle"))
     sc.add_decoration(Decoration(5 * TILE + 16, 6 * TILE + 16, "candle"))
     sc.add_decoration(Decoration(14 * TILE + 16, 4 * TILE + 16, "candle"))
-    # Pews in two rows down BOTH halves of the nave, a clear central
-    # aisle (row 5) between them up to the iron door.
+    # Rough plank benches in two rows down BOTH halves of the nave, a
+    # clear central aisle (row 5) between them up to the iron door.
+    # (2026-07 process audit: PEWS are church joinery nobody hauled down
+    # a mine; the kneeling rows sit on backless planks the congregation
+    # knocked together from the dig's own lumber.)
     for px in (2, 4, 6):
-        sc.add_furniture("pew", [(px, 4)])
-        sc.add_furniture("pew", [(px, 6)])
+        sc.add_furniture("plank_bench", [(px, 4)])
+        sc.add_furniture("plank_bench", [(px, 6)])
     for px in (12, 15):
-        sc.add_furniture("pew", [(px, 4)])
-        sc.add_furniture("pew", [(px, 6)])
+        sc.add_furniture("plank_bench", [(px, 4)])
+        sc.add_furniture("plank_bench", [(px, 6)])
     # Cobweb grime in the transept ends.
     sc.add_decoration(Decoration(8 * TILE + 6, 1 * TILE + 6, "cobweb",
                                  ang=0.0))
     sc.add_decoration(Decoration(10 * TILE + 26, 8 * TILE + 26, "cobweb",
                                  ang=math.pi))
-    # Enclosed hides on the nave route (STEALTH_REWORK §6): under a pew
-    # in each half, both in the roamer's sweep range -- the east half
+    # Enclosed hides on the nave route (STEALTH_REWORK §6): under a
+    # bench in each half, both in the roamer's sweep range -- the east half
     # past the crossing needs its own rooted option once the kneelers
     # wake, or the run to the door is a coin flip.
     sc.hide_spots = [
-        (4 * TILE + 16, 5 * TILE + 24, "under"),    # under a west nave pew
-        (15 * TILE + 16, 5 * TILE + 24, "under"),   # under an east nave pew
+        (4 * TILE + 16, 5 * TILE + 24, "under"),    # under a west nave bench
+        (15 * TILE + 16, 5 * TILE + 24, "under"),   # under an east nave bench
     ]
     # Two stationary cultists kneel at the iron door, facing east.
     # Aggro starts at 0 (oblivious) so they don't react until the

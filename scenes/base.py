@@ -4743,7 +4743,12 @@ class Scene:
 
         floor = [(tx, ty) for ty in range(1, H - 1) for tx in range(1, W - 1)
                  if is_open(tx, ty)]
-        place(list(floor), count, False)
+        # A FLOOR door's art is taller than a tile: require the vertical
+        # neighbours open too, or the chalk spills across the wall band
+        # and reads as drawn OUTSIDE the room (2026-07 containment fix).
+        contained = [(tx, ty) for tx, ty in floor
+                     if is_open(tx, ty - 1) and is_open(tx, ty + 1)]
+        place(list(contained), count, False)
         if wall_count:
             edge = [(tx, ty) for tx, ty in floor
                     if tx in (1, W - 2) or ty in (1, H - 2)]
