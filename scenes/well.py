@@ -175,71 +175,79 @@ def build_well_bottom():
 # ---- Room 2: the Drying Racks (key: well_passage) ----
 
 def build_well_passage():
-    # A T-shaped drying corridor: a long E-W run with a central north bay
-    # jutting up off it (a pocket of racks you have to step into).
-    floor, objs = _box(16, 9)
-    _wall(objs, 1, 1, 5, 3)        # seal the upper-left
-    _wall(objs, 10, 1, 14, 3)      # seal the upper-right -> central bay at cols 6-9
+    # A T-shaped drying corridor, LONG: a 24-tile E-W run with a central
+    # north bay jutting up off it (a pocket of racks you have to step
+    # into). Lengthened 2026-07 (the stealth pass): the first gauntlet
+    # room teaches reading a patrol at distance, so the run must be long
+    # enough for "far" to mean something under the graded suspicion
+    # model -- and a mine gallery should walk long.
+    floor, objs = _box(24, 9)
+    _wall(objs, 1, 1, 7, 3)        # seal the upper-left
+    _wall(objs, 12, 1, 22, 3)      # seal the upper-right -> central bay at cols 8-11
     objs[5][0] = "F"          # west -> back to the shaft
-    objs[5][15] = "E"         # east -> the cistern (deeper)
-    # Drying racks (solid shelves) staggered in the corridor + bay, gaps
-    # to weave through.
-    for cx in (3, 6, 9, 12):
+    objs[5][23] = "E"         # east -> the cistern (deeper)
+    # Drying racks (solid shelves) staggered down the corridor + bay,
+    # gaps to weave through -- the cover ladder the whole run.
+    for cx in (3, 6, 9, 12, 15, 18, 21):
         objs[4][cx] = "s"
-    for cx in (4, 7, 10, 13):
+    for cx in (4, 7, 10, 13, 16, 19):
         objs[6][cx] = "s"
-    objs[2][7] = "s"
+    objs[2][9] = "s"
     objects = ["".join(r) for r in objs]
     sc = Scene("well_passage", floor, objects, music="basement")
     sc.add_exit("F", "well_bottom", "from_below")
     sc.add_exit("E", "works_vats",  "from_above")
-    sc.set_spawn("default",    6, 5)
+    sc.set_spawn("default",    8, 5)
     sc.set_spawn("from_above", 1, 5)      # arriving from the shaft
-    sc.set_spawn("from_below", 14, 5)     # back from the vats
+    sc.set_spawn("from_below", 22, 5)     # back from the vats
     # Legacy spawns kept so old saves + the (now unreachable) cult
     # chamber's exit still resolve. The barn tunnel is nailed shut from
     # below now -- the grove's descent fold is the only way underground.
     sc.set_spawn("from_well",    1, 5)
-    sc.set_spawn("from_chamber", 14, 5)
+    sc.set_spawn("from_chamber", 22, 5)
 
     # Stores stacked up in the north bay -- a barrel and a crate.
-    sc.add_furniture("barrel", [(8, 2)])
-    sc.add_furniture("crate", [(6, 1)])
-    sc.add_decoration(Decoration(7 * TILE + 16, 0 * TILE + 22, "candle"))
-    sc.add_decoration(Decoration(13 * TILE + 16, 7 * TILE + 22, "claw_marks"))
+    sc.add_furniture("barrel", [(10, 2)])
+    sc.add_furniture("crate", [(8, 1)])
+    sc.add_decoration(Decoration(9 * TILE + 16, 0 * TILE + 22, "candle"))
+    sc.add_decoration(Decoration(20 * TILE + 16, 7 * TILE + 22, "claw_marks"))
     # Cobweb grime in the high corners of the bay.
-    sc.add_decoration(Decoration(6 * TILE + 6, 1 * TILE + 6, "cobweb",
+    sc.add_decoration(Decoration(8 * TILE + 6, 1 * TILE + 6, "cobweb",
                                  ang=0.0))
-    sc.add_decoration(Decoration(9 * TILE + 26, 1 * TILE + 6, "cobweb",
+    sc.add_decoration(Decoration(11 * TILE + 26, 1 * TILE + 6, "cobweb",
                                  ang=math.pi / 2))
 
     # Sheaves of dried husks/reeds hung on the racks -- the cult's corn-doll
     # material, drying (this is what the racks are FOR). A few in the bay pocket
-    # and leaning at the corridor rack ends.
-    for (hx, hy) in ((6, 2), (8, 3), (9, 2), (5, 5), (12, 5)):
+    # and leaning at the corridor rack ends, the whole length.
+    for (hx, hy) in ((8, 2), (10, 3), (11, 2), (5, 5), (14, 5), (19, 5)):
         sc.add_decoration(Decoration(hx * TILE + 16, hy * TILE + 16,
                                      "husk_bundle", seed=hx * 7 + hy))
     # Grime: mud tracked from the shaft, a cold drip seeping through.
     sc.add_decoration(Decoration(2 * TILE + 16, 5 * TILE + 16, "mud_footprint"))
-    sc.add_decoration(Decoration(8 * TILE + 16, 7 * TILE + 16, "water_trail",
+    sc.add_decoration(Decoration(12 * TILE + 16, 7 * TILE + 16, "water_trail",
                                  ang=math.pi / 2, seed=6))
-    for mx, my in ((7, 3), (11, 5), (3, 5)):
+    for mx, my in ((9, 3), (15, 5), (3, 5), (20, 5)):
         sc.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16, "mote"))
 
-    # One enclosed hide off the patrol loop (STEALTH_REWORK §6): the gap
-    # under the bay's drying rack. Strong against the corridor patrol at
-    # range; a searcher that loses you here will sweep and CHECK it.
+    # Two enclosed hides spaced down the run (STEALTH_REWORK §6): the gap
+    # under the bay's drying rack, and one under a far corridor rack --
+    # a long room needs a rooted option in each half, or the east end is
+    # a dead sprint. A searcher that loses you will sweep and CHECK them.
     sc.hide_spots = [
-        (7 * TILE + 16, 3 * TILE + 8, "under"),   # under the bay rack
+        (9 * TILE + 16, 3 * TILE + 8, "under"),    # under the bay rack
+        (18 * TILE + 16, 5 * TILE + 8, "under"),   # under the far rack
     ]
-    # One cultist working the corridor, end to end.
+    # Two cultists working the corridor, end to end, offset phases --
+    # the west half and the east half are never both clear at once.
     sc.add_enemy(_cultist(3 * TILE + 16, 5 * TILE + 16, speed=0.85))
+    sc.add_enemy(_cultist(16 * TILE + 16, 5 * TILE + 16, speed=0.85))
     _ambient(sc, "cult_breath", 0.16, 5.0, 9.0)
     # Chalk doors -- the motif thickening underground (floor + wall). The
     # first Works door carries the voice beat (rattled).
     sc.add_chalk_door(3 * TILE + 16, 7 * TILE + 16, voice="chalk_works", seed=2)
-    sc.add_chalk_door(11 * TILE + 16, 7 * TILE + 16, seed=8)
-    sc.add_chalk_door(12 * TILE + 16, 7 * TILE + 28, seed=4, wall=True)
+    sc.add_chalk_door(15 * TILE + 16, 7 * TILE + 16, seed=8)
+    sc.add_chalk_door(20 * TILE + 16, 7 * TILE + 28, seed=4, wall=True)
     return sc
 
 

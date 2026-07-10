@@ -205,55 +205,66 @@ def build_depths_antechamber():
 
 
 def build_depths_procession():
-    # A colonnade comb: a long E-W processional with alcove bays (teeth)
-    # jutting off north and south, staggered so the column never reads as
-    # one straight sightline.
-    floor, objs = _box(16, 9)
-    _wall(objs, 1, 1, 14, 2)            # seal the top band...
-    for cx in (3, 4, 8, 9, 12, 13):    # ...then open north bays (teeth)
-        objs[1][cx] = "."
+    # A colonnade comb, LONG -- the old workings' main drift, the game's
+    # main hallway segment. A 30-tile E-W processional with alcove bays
+    # (teeth) jutting off north and south, staggered so the column never
+    # reads as one straight sightline. Lengthened 2026-07 (the stealth
+    # pass): the graded suspicion model reads on DISTANCE, so the drift
+    # must be long enough to watch a patrol before it can read you, and
+    # a mine's main haul run should walk long.
+    floor, objs = _box(30, 9)
+    _wall(objs, 1, 1, 28, 2)            # seal the top band...
+    for cx in (3, 4, 8, 9, 13, 14, 18, 19, 23, 24, 27, 28):
+        objs[1][cx] = "."               # ...then open north bays (teeth)
         objs[2][cx] = "."
-    _wall(objs, 1, 6, 14, 7)           # seal the bottom band...
-    for cx in (2, 3, 6, 7, 11, 12):    # ...then open south bays
-        objs[6][cx] = "."
+    _wall(objs, 1, 6, 28, 7)           # seal the bottom band...
+    for cx in (2, 3, 6, 7, 11, 12, 16, 17, 21, 22, 25, 26):
+        objs[6][cx] = "."              # ...then open south bays
         objs[7][cx] = "."
-    objs[4][15] = "E"   # east to hall
-    objs[8][6] = "D"    # south (off a bay) -> the ossuary (dead-end branch)
+    objs[4][29] = "E"   # east to hall
+    objs[8][6] = "D"    # south (off a bay) -> the Old Stores branch
     objects = ["".join(r) for r in objs]
     sc = Scene("depths_procession", floor, objects, music="basement")
     sc.add_exit("E", "depths_hall", "from_procession")
     sc.add_exit("D", "the_ossuary", "from_procession")
     sc.set_spawn("default",          1, 4)
     sc.set_spawn("from_antechamber", 1, 4)
-    sc.set_spawn("from_the_ossuary", 6, 6)   # back up from the ossuary branch
-    # A line of candles along the centre, suggesting the procession
-    # column. Two cultists walking it at this hour.
-    for cx in range(2, 14, 2):
+    sc.set_spawn("from_the_ossuary", 6, 6)   # back up from the stores branch
+    # A line of candles down the whole drift, suggesting the procession
+    # column. (The [E] read stays at col 8 -- flow-guarded.)
+    for cx in range(2, 28, 2):
         sc.add_decoration(Decoration(cx * TILE + 16, 4 * TILE + 16,
                                      "candle"))
-    # A colonnade of stone pillars flanking the central walk (clear of the
-    # bays and the walking line).
-    for px in (5, 10):
+    # A colonnade of roof-prop pillars flanking the central walk (clear
+    # of the bays and the walking line) -- the drift's shoring.
+    for px in (5, 10, 16, 21, 26):
         sc.add_furniture("pillar", [(px, 3)])
         sc.add_furniture("pillar", [(px, 5)])
     # Cobweb grime in the high corners of the procession column.
     sc.add_decoration(Decoration(1 * TILE + 6, 3 * TILE + 6, "cobweb",
                                  ang=0.0))
-    sc.add_decoration(Decoration(14 * TILE + 26, 3 * TILE + 6, "cobweb",
+    sc.add_decoration(Decoration(28 * TILE + 26, 3 * TILE + 6, "cobweb",
                                  ang=math.pi / 2))
-    # A crate tucked in a south bay + the gap under it: one enclosed hide
-    # off the column (STEALTH_REWORK §6) -- the bays themselves are the
-    # concealment; this is the rooted option a searcher can check.
+    # Crates tucked into bays along the run + the gaps under them: three
+    # enclosed hides spaced down the drift (STEALTH_REWORK §6) -- the
+    # bays themselves are the concealment; these are the rooted options
+    # a searcher can sweep and check. A long room needs hides the whole
+    # way, or its far half is a dead sprint.
     sc.add_furniture("crate", [(12, 7)])
+    sc.add_furniture("crate", [(19, 1)])
+    sc.add_furniture("crate", [(26, 7)])
     sc.hide_spots = [
-        (11 * TILE + 24, 7 * TILE + 16, "under"),  # beside the bay crate
+        (11 * TILE + 24, 7 * TILE + 16, "under"),  # beside the mid bay crate
+        (19 * TILE + 16, 2 * TILE + 8,  "under"),  # under the north bay crate
+        (25 * TILE + 24, 7 * TILE + 16, "under"),  # beside the far bay crate
     ]
-    # Two cultists walking the column, single file, opposite phases
-    # so they meet between (5..12) and pass each other. Endpoints
-    # held away from the west-edge spawn (col 1) so the player
-    # arrives with breathing room.
+    # Three cultists walking the column, single file, spread phases so
+    # the drift always has one in view somewhere and passing windows
+    # open between them. Endpoints held away from the west-edge spawn
+    # (col 1) so the player arrives with breathing room.
     sc.add_enemy(_cultist(5 * TILE + 16, 4 * TILE + 16, speed=0.9))
-    sc.add_enemy(_cultist(11 * TILE + 16, 4 * TILE + 16, speed=0.9))
+    sc.add_enemy(_cultist(14 * TILE + 16, 4 * TILE + 16, speed=0.9))
+    sc.add_enemy(_cultist(23 * TILE + 16, 4 * TILE + 16, speed=0.9))
     _ambient(sc, "blip_soft", 0.12, 2.5, 4.5)
 
     # The procession's one diegetic beat (TODO #8): the candle line read
@@ -292,33 +303,39 @@ def build_depths_procession():
 
 
 def build_depths_hall():
-    # A cruciform basilica: a long E-W nave to the iron door, crossed by a
-    # N-S transept near its middle. The corners are solid stone, so the
-    # kneeling grid is reached only down the nave and across the crossing.
-    floor, objs = _box(15, 11)
+    # A cruciform basilica: a LONG E-W nave to the iron door, crossed by a
+    # N-S transept. The corners are solid stone, so the kneeling grid is
+    # reached only down the nave and across the crossing. Lengthened
+    # 2026-07 (the stealth pass): the nave east of the crossing gives the
+    # kneelers a real approach to read, and the pew rows run the length.
+    floor, objs = _box(20, 11)
     _wall(objs, 1, 1, 7, 3)        # NW
-    _wall(objs, 11, 1, 13, 3)      # NE
+    _wall(objs, 11, 1, 18, 3)      # NE
     _wall(objs, 1, 7, 7, 9)        # SW
-    _wall(objs, 11, 7, 13, 9)      # SE
-    objs[5][14] = "E"   # east to threshing floor (the iron door)
+    _wall(objs, 11, 7, 18, 9)      # SE
+    objs[5][19] = "E"   # east to threshing floor (the iron door)
     objects = ["".join(r) for r in objs]
     sc = Scene("depths_hall", floor, objects, music="basement")
     sc.add_exit("E", "depths_threshing", "from_hall")
     sc.set_spawn("default",        1, 5)
     sc.set_spawn("from_procession", 1, 5)
     # The east wall holds the iron door the kneeling grid faces.
-    # Three cultists in the room: two flanking the door, one on
+    # Four cultists in the room: two flanking the door, one on
     # patrol. Hide spots scatter so the player can pick a route.
-    sc.add_decoration(Decoration(13 * TILE + 16, 5 * TILE + 16,
+    sc.add_decoration(Decoration(18 * TILE + 16, 5 * TILE + 16,
                                  "phantom_mark"))
     # A "wrong" mount watching from the transept wall -- belongs to the dark.
     sc.add_decoration(Decoration(9 * TILE + 16, 0 * TILE + 18,
                                  "wrong_taxidermy", wall="N", seed=21))
     sc.add_decoration(Decoration(5 * TILE + 16, 4 * TILE + 16, "candle"))
     sc.add_decoration(Decoration(5 * TILE + 16, 6 * TILE + 16, "candle"))
-    # Pews in two rows down the nave, a clear central aisle (row 5) between
-    # them up to the iron door.
+    sc.add_decoration(Decoration(14 * TILE + 16, 4 * TILE + 16, "candle"))
+    # Pews in two rows down BOTH halves of the nave, a clear central
+    # aisle (row 5) between them up to the iron door.
     for px in (2, 4, 6):
+        sc.add_furniture("pew", [(px, 4)])
+        sc.add_furniture("pew", [(px, 6)])
+    for px in (12, 15):
         sc.add_furniture("pew", [(px, 4)])
         sc.add_furniture("pew", [(px, 6)])
     # Cobweb grime in the transept ends.
@@ -326,18 +343,21 @@ def build_depths_hall():
                                  ang=0.0))
     sc.add_decoration(Decoration(10 * TILE + 26, 8 * TILE + 26, "cobweb",
                                  ang=math.pi))
-    # One enclosed hide on the nave route (STEALTH_REWORK §6): under a
-    # pew, in the roamer's sweep range.
+    # Enclosed hides on the nave route (STEALTH_REWORK §6): under a pew
+    # in each half, both in the roamer's sweep range -- the east half
+    # past the crossing needs its own rooted option once the kneelers
+    # wake, or the run to the door is a coin flip.
     sc.hide_spots = [
-        (4 * TILE + 16, 5 * TILE + 24, "under"),   # under a nave pew
+        (4 * TILE + 16, 5 * TILE + 24, "under"),    # under a west nave pew
+        (15 * TILE + 16, 5 * TILE + 24, "under"),   # under an east nave pew
     ]
     # Two stationary cultists kneel at the iron door, facing east.
     # Aggro starts at 0 (oblivious) so they don't react until the
     # crossing trigger flips them. aggro=0 + lock_facing pins them in
     # place (a stationary set-piece, exempt from the SCOUT roam) and keeps
     # them turned toward the door. The third cultist roams, regardless.
-    kneel_a = _cultist(12 * TILE + 16, 4 * TILE + 16, speed=0.8)
-    kneel_b = _cultist(12 * TILE + 16, 6 * TILE + 16, speed=0.8)
+    kneel_a = _cultist(17 * TILE + 16, 4 * TILE + 16, speed=0.8)
+    kneel_b = _cultist(17 * TILE + 16, 6 * TILE + 16, speed=0.8)
     for k in (kneel_a, kneel_b):
         k.aggro = 0
         k.facing = (1, 0)
