@@ -404,60 +404,23 @@ def preacher_dialogue(game, npc):
 def toby_dialogue(game, npc):
     """Toby -- innocent witness (NARRATIVE §4). He FOLLOWED the night
     procession down the river to the cult's dug-open ground and saw them go
-    below -- the sole witness of where they went (D rework, 2026-07) -- and
-    before that they LIVED in his school (the commune). His witness does two
-    jobs (§14 descent rework): it poses the descent question (they went down a
+    below -- the sole witness of where they went. His account does two jobs
+    (NARRATIVE §4, D rework): it poses the descent question (they went down a
     way no one can follow now -- the grove is fold-hidden) and it SEEDS THE
     SCHOOL -- the room the Invitation names and the chalk-door rite reopens.
-    He does not know WHY they dig; given the state of the town he is sure the
-    evil is down there. What he gives you is what he tells you (no inventory
-    item). Children notice what adults pretend not to."""
-    save = game.save
-    inv = game.player.inventory
-    # The witness beat: first real conversation, he tells you what he saw.
-    if not save.flag("kid_witnessed"):
-        save.set_flag("kid_witnessed", True)
-        game.dialog.show([
-            "You're looking for the lady from the lodge.",
-            "She went with the others. A whole line of them, at night. I "
-            "followed. Down along the river, to where the ground is all "
-            "broke open. Before the cold came.",
-            "They climbed down into it, down into the dark under the field. "
-            "She never came back up. None of them did. I saw where they go.",
-            "[c=dim]Whatever they do down there, that is where it is. The bad "
-            "thing. I know it.[/c]",
-            "[c=dim]Before that they had my school. All of them, living in "
-            "it, in rows. Then one night they walked out of it in a "
-            "line.[/c]",
-        ], speaker="Toby", voice="blip_kid", portrait="toby")
-        return
-    if inv.has("cult_calling") and not save.flag("kid_playscript_noticed"):
-        save.set_flag("kid_playscript_noticed", True)
-        game.dialog.show([
-            "That book. The one they write in.",
-            "[c=dim]Don't open it where I can see.[/c]",
-        ], speaker="Toby", voice="blip_kid", portrait="toby")
-        return
-    # The envelope in the PI's pocket points at the school; the boy it
-    # belonged to confirms it, once, and begs him off it.
-    if (save.flag("rite_envelope_given")
-            and not save.flag("kid_school_warned")):
-        save.set_flag("kid_school_warned", True)
-        game.dialog.show([
-            "They slept in my school. All of them, in rows.",
-            "[c=dim]I looked in the window once. The board still has my "
-            "lesson on it, under their door.[/c]",
-            "Don't go in there, mister.",
-        ], speaker="Toby", voice="blip_kid", portrait="toby")
-        return
+    It is EARNED, never volunteered: he gives it when the PI holds Mara's
+    photograph out (the `photo` exchange below), not as a cold greeting -- a
+    kid has no way to know the case on sight (only Sable ever met the PI).
+    What he gives you is what he tells you, never an object."""
     from ui.conversation import open_conversation
     open_conversation(game, npc, TOBY_CONVO)
 
 
-# Ask-verb conversion (TODO #1 expand): everything Toby VOLUNTEERS (the
-# witness account, the playscript flinch, the school warning) fires ahead
-# of the menu in toby_dialogue above; the menu is what the PI chooses to
-# ask a child, and the old visit-ladder lines are now his answers.
+# Ask-verb conversation: Toby volunteers nothing cold (a kid can't know the
+# case on sight -- only Sable ever met the PI). His witness account is
+# EARNED -- it rides the `photo` exchange, given when the PI holds Mara's
+# picture out. The menu is what the PI chooses to ask a child; the old
+# visit-ladder lines are now his answers.
 TOBY_CONVO = {
     "id":    "toby",
     "name":  "Toby",
@@ -468,27 +431,34 @@ TOBY_CONVO = {
     "greet": {
         "flag": "toby_greeted",
         "beats": [
-            ("npc", "You came back. Grownups mostly don't. Not a second "
-                    "time."),
-            ("npc", "I see things. Nobody figures a kid for watching."),
+            ("npc", "You're not from here. I'd have seen you before."),
+            ("npc", "What are you doing, mister?"),
         ],
     },
     "exchanges": _opener_exchanges(
+        on_photo=lambda g: g.save.set_flag("toby_told", True),
         intro_beats=[
             ("npc", "A detective. For real? Like on the TV."),
             ("npc", "Nobody here would hire one. Asking questions is what "
                     "you stop doing, if you live here."),
-            ("pi", "You're talking to me."),
+            ("pi", "Well. I'm asking. And I don't mind talking to you."),
             ("npc", "[c=dim]I know. Don't tell my mom.[/c]"),
         ],
         photo_beats=[
-            ("npc", "That's her. The lady from the lodge. I already told "
-                    "you where she went."),
-            ("npc", "Down where the ground is all broke open, past the "
-                    "river. You can't walk there. I tried to find it "
-                    "again in the daytime and the field just put me back."),
-            ("npc", "[c=dim]Keep her picture put away. Some of them look "
-                    "at what you carry.[/c]"),
+            ("npc", "That's her. She came in with the others, back in the "
+                    "summer."),
+            ("npc", "They slept all over then. The barn. The lodge. My "
+                    "school too, in rows, right where we do our letters."),
+            ("npc", "Then one night they all went down. A whole line of "
+                    "them in the dark, along the river to where the ground "
+                    "is broke open. I followed."),
+            ("npc", "They climbed into it. Under the field. She never came "
+                    "back up. None of them did. I saw where they go."),
+            ("npc", "[c=dim]You can't walk there. I looked in the daytime "
+                    "and the field just put me back. And that is where the "
+                    "bad thing is. I know it.[/c]"),
+            ("npc", "[c=dim]Keep her picture put away. Some of them look at "
+                    "what you carry.[/c]"),
         ],
     ) + [
         {
@@ -527,11 +497,25 @@ TOBY_CONVO = {
                         "wouldn't.[/c]"),
             ],
         },
+        # The promise. Only after he has confided what he saw (`toby_told`,
+        # set by the photo exchange): you do not reassure a scared kid about
+        # a thing he has not told you, and the weight of it is that it is the
+        # man who listened. The player knows what the PI does not: nobody
+        # comes back for anybody in this town.
         {
             "key": "holding_up",
             "q": "You holding up okay, kid?",
+            "avail": lambda g: g.save.flag("toby_told"),
+            "once": True,
             "beats": [
-                ("npc", "I'm keeping count of things. Somebody has to."),
+                ("npc", "Do you know what's wrong here, mister? Nobody will "
+                        "tell me."),
+                ("pi", "Not all of it. But I'm going to find out, and I'm "
+                       "going to make it stop."),
+                ("npc", "Am I gonna be okay?"),
+                ("pi", "You're gonna be okay. I promise. When I'm done, I'll "
+                       "come back for you."),
+                ("npc", "[c=dim]Okay. I believe you.[/c]"),
             ],
         },
     ],
