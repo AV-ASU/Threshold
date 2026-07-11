@@ -61,9 +61,13 @@ item on the list: engine exists, canon is settled, payoff is the core fantasy.**
 
 - **EXPANDED to all four remaining principals (2026-07).** Toby / Hettie /
   Vane / Crane each carry their own `*_CONVO` + `open_conversation`, with
-  every story-critical one-shot (Toby's witness account + playscript + school
-  warning, Hettie's preacher reaction + Mara memory + paper trade, Vane's
-  murder-he-can't-report) still VOLUNTEERING itself ahead of the menu. Flow
+  every story-critical one-shot (Hettie's preacher reaction + Mara memory +
+  paper trade, Vane's murder-he-can't-report) still VOLUNTEERING itself
+  ahead of the menu. Toby is the exception since the 2026-07 rework: his
+  witness account is EARNED on the photo exchange (a kid can't know the
+  case on sight), and his playscript flinch + school warning were cut as
+  structurally unreachable (he turns at 3 evidence; the envelope and the
+  cult book only exist at 3). Flow
   polish shipped with it: the **talk-hold** (`scenes/base.py Scene.update` —
   the conversation partner stands and faces the player instead of walking
   their worker route mid-exchange; pursuit exempt), the **earshot guard**
@@ -138,11 +142,12 @@ full economy table is still to be drafted).
   ties #12); Old Pell → he marks his calendar again, **no item** (mercy); Toby →
   the funny pages (mercy).
 - **Sable → the null / eerie option (the tell).** Give the paper to the
-  trap-keeper (the most-attuned local) and it lands nowhere: he takes it
-  graciously and it means **nothing** — no reward, no thanks that reads as
-  real, a quiet non-reaction that the outside no longer exists for him. The
-  anti-reward that characterizes what Sable *is* (compulsion, not hospitality;
-  NARRATIVE §4). Outcome is a `notes` beat / a chill, never an item.
+  lucky host and it lands nowhere: he takes it graciously and it means
+  **nothing** — no reward, no thanks that reads as real. The whole town
+  aches for word of the outside; his want was never the outside, it was
+  the rooms full (NARRATIVE §4), and a newspaper cannot touch it. The
+  anti-reward that characterizes what Sable *is*. Outcome is a `notes`
+  beat / a chill, never an item.
 - ~~**Vane is a recipient too — and his is a TRAP, not a gift.**~~ **DONE
   (2026-07, shipped with the Vane arc):** the `paper` exchange in
   `VANE_CONVO` (Kurt Cobain dead on the front page reads, to a man who

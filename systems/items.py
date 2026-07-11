@@ -77,21 +77,33 @@ ITEM_DEFS = {
                                "them. We are digging down to it together "
                                "now. I am not lost. I have never been this "
                                "close.\""},
-    # The thing the player CARRIES out of her cell holds the ache: what
-    # she fled is named as a shape, never a person (canon keeps her
-    # grief unspecified; Dad knows "after" what, the player never does).
+    # The thing the player CARRIES out of her cell holds the ADMISSION
+    # (NARRATIVE §4/§6 #1, 2026-07): the pregnancy Walter never knew of,
+    # the son-for-a-daughter reflection, the boy's father dismissed in a
+    # clause. The door is never mentioned. Her guilt is grief's own lie,
+    # hers alone, never the story's verdict. The last thing the human
+    # Mara wrote.
     "unsent_letter": {"name": "Mara's Letter",
                        "kind": "lore",
                        "desc": "Stamped, never mailed.\n\n"
-                               "\"Dad. ...I'm sorry for how I left. I couldn't "
-                               "explain it and have it sound sane. You know "
-                               "what the apartment got like after. The quiet "
-                               "had a shape. I could not keep sitting inside "
-                               "it.\n\n"
-                               "The dreams aren't dreams anymore. They're "
-                               "full of answers. I'm just hunting the "
-                               "questions now. Don't come after me. I'm not "
-                               "lost. I've never been this close.\""},
+                               "\"Dad. There was going to be a baby. A boy. "
+                               "I never told you, and then I could not find "
+                               "a way to tell you the rest. I almost decided "
+                               "different, right at the last, and then I "
+                               "wanted him more than I have ever wanted "
+                               "anything. He came still.\n\n"
+                               "I keep finding ways it was my fault. I know "
+                               "that isn't sane. I keep finding them anyway. "
+                               "His father was never part of it. That was "
+                               "never the part that mattered.\n\n"
+                               "I wanted a son the way you wanted a "
+                               "daughter. Somebody to wait up for. You never "
+                               "once said it, but the kitchen light was "
+                               "always on, however late I came in. I was "
+                               "going to be that for him.\n\n"
+                               "Don't come after me. I'm not lost. I've "
+                               "never been this close.\"\n\n"
+                               "It stops there. No signature."},
     # ---- The cult's testimony (three found fragments; gate nothing) ----
     # The congregation's own record, split across three leaves found down the
     # descent. The cult's voice lives in the DESCRIPTION (their personal

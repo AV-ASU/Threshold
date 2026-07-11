@@ -44,6 +44,10 @@ An EXCHANGE (one askable question):
                                        # q still floats as the spoken line
       "avail":  lambda g: True,        # optional; offered only when true
       "once":   True,                  # drops from the menu once asked
+      "ends":   True,                  # optional; the talk CLOSES after
+                                       # this exchange's beats instead of
+                                       # reopening the menu (a walk-away
+                                       # beat -- Mara's father card)
       "on_ask": lambda g: ...,         # optional side effect when picked
       "beats":  [ beat, ... ],         # what follows the PI's question
     }
@@ -190,12 +194,17 @@ class Conversation:
         if not self.active:
             return
         if not self.queue:
-            # Exchange finished: retire a one-shot question, reopen the menu.
+            # Exchange finished: retire a one-shot question, reopen the menu
+            # (or close the talk outright for an "ends" exchange).
             if self.current is not None:
                 ex = self._find(self.current)
                 if ex and ex.get("once"):
                     self.game.save.set_flag(self._asked_flag(self.current), True)
+                ended = bool(ex and ex.get("ends"))
                 self.current = None
+                if ended:
+                    self._end()
+                    return
             if self._closing:
                 self._closing = False        # leave-hook done; talk ends
                 self._end()

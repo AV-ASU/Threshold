@@ -445,8 +445,9 @@ TOBY_CONVO = {
             ("npc", "[c=dim]I know. Don't tell my mom.[/c]"),
         ],
         photo_beats=[
-            ("npc", "That's her. She came in with the others, back in the "
-                    "summer."),
+            ("npc", "That's her. She came in after all the others did. The "
+                    "last one. Folks thought the strangers were done coming, "
+                    "and then her car came up the road alone."),
             ("npc", "They slept all over then. The barn. The lodge. My "
                     "school too, in rows, right where we do our letters."),
             ("npc", "Then one night they all went down. A whole line of "
@@ -1156,12 +1157,12 @@ SABLE_CONVO = {
             "beats": [
                 ("npc", "Blaine. No, I can't say the name lands anywhere. We "
                         "get a great many faces through that door."),
-                ("npc", "You'll mean one of the new folk, though. We have had "
-                        "no end of those this past year. They come like they "
+                ("npc", "You'll mean one of the new folk, though. We had no "
+                        "end of those this past year. They came like they had "
                         "heard something worth the drive."),
-                ("npc", "And I am glad of every one. This town was drying up "
-                        "before they started arriving. I keep every room "
-                        "full now."),
+                ("npc", "And I was glad of every one. This town was drying up "
+                        "before they came. I had every room full. You should "
+                        "have seen this house with every window lit."),
                 ("pi", "And the rest of Brimley feels the same?"),
                 ("npc", "Ah. There you have it. Not everyone's been so warm. "
                         "Some of the old families have gone cold as a root "
@@ -1310,8 +1311,11 @@ SABLE_CONVO = {
                 ("npc", "(He lays a long envelope on the desk. Wax seal, the "
                         "Sign pressed into it. He handles it like a room "
                         "key.)"),
-                ("npc", "The ones who stayed before you left this for the day "
-                        "they were ready to follow. I believe it meant you. "
+                ("npc", "My guests left it at the desk when they went below. "
+                        "It was meant for me. They wanted me to come down "
+                        "after them, and they meant it kindly."),
+                ("npc", "But I never wanted what they went to find. I wanted "
+                        "a full house, friend, and I had one. Take it. "
                         "Somebody has to keep the desk."),
             ],
         },
@@ -1343,27 +1347,27 @@ def sable_on_death(game, npc):
 
 
 def clerk_dialogue(game, npc):
-    """The Lodge Clerk, Mr. Sable -- the smiling trap-keeper (NARRATIVE §4).
-    A LOCAL, and the most attuned of them: he dreamed the door longest and
-    loudest of anyone born here, and has spent years keeping the desk and
-    the guests ready. His menace is COMPULSION, NOT CONSPIRACY -- he voices
-    certainties he can't account for (the door has spoken through him so
-    long he mistakes it for hospitality), never a scheme he's in on. He
-    keeps you comfortable, keeps you here, and the only thing he says about
-    the car is deniable (the Sheriff carries the plain truth). The old
-    fetch-quest chain is cut -- the car answers only to the Sign now, so he
-    has no keys to dangle. He escalates over visits from warm host to
-    something colder, and (visit 2) nudges you back to the front-desk
-    register he can't say why he keeps.
+    """The Lodge Clerk, Mr. Sable -- the LUCKY HOST (NARRATIVE §4, 2026-07
+    reframe: the door never spoke through him). A LOCAL, the most attuned
+    of them -- and the one soul in Brimley whose want was FED: he always
+    wanted a full house, and the migration the door caused filled the
+    Arcadia with real guests for a season (the door provided nothing; the
+    migration did). It was fun; he was fulfilled; and a fed want takes no
+    bait, so he alone among the attuned never followed the dream down.
+    His funereal undertow is GRIEF FOR A FULL HOUSE, never conspiracy or
+    a channel; his certainties are a host's pattern-sense. He keeps you
+    comfortable, keeps you here (you are the first guest since the seal),
+    and the only thing he says about the car is deniable (the Sheriff
+    carries the plain truth).
 
-    THE INVITATION (the act break): the congregation -- the guests who sign
-    in and never out -- left an envelope at his desk when they went below,
-    told to hold it until he was ready to follow. He KNOWS what it is and
-    where its writers went (the robe in his closet was always the tell);
-    what he does with it stays hospitality: at 3 evidence he judges the
-    guest ready in his place, and hands it over like a room key. Somebody
-    has to keep the desk. State-gated on what the PI knows -- never
-    farmable by repeat visits."""
+    THE INVITATION (the act break): the congregation -- his guests, the
+    ones who sign in and never out -- left the envelope at his desk when
+    they went below: THEIR OFFER TO BRING HIM WITH THEM. He knows what it
+    is and where its writers went (the never-worn robe in his closet came
+    with it); he just never wanted what they went to find. At 3 evidence
+    he judges the guest ready to go where he himself never wanted to, and
+    hands it over like a room key. Somebody has to keep the desk.
+    State-gated on what the PI knows -- never farmable by repeat visits."""
     _cult_tell(game, "clerk")
     # The organic conversation. His welcome floats once (the greet in
     # SABLE_CONVO), then the menu is the PI's own questions -- each picked

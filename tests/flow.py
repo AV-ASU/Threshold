@@ -2214,16 +2214,13 @@ def main():
     if _mara is not None:
         _evm = evidence_count(gm)
         _mara.dialogue_fn(gm, _mara)
-        check(len(gm.dialog.pages) == 4,
-              "mara: her four-line exchange is the ACTIVE dialog (evidence "
-              "one-liner no longer clobbers it)")
+        check(getattr(gm, "_convo", None) is not None and gm._convo.active,
+              "mara: the confrontation opens as a live conversation")
         check(evidence_count(gm) == _evm + 1,
               "mara: evidence #6 still files immediately")
-        if gm.dialog.on_complete:
-            gm.dialog.on_complete()
         _mj = " ".join(_mshown).lower()
         check("arithmetic" in _mj,
-              "lure: the dream+case+Mara collision fires after her lines")
+              "lure: the dream+case+Mara collision fires with her greeting")
         check(not any(w in _mj for w in ("marked", "lure", "bait",
                                          "the king", "dimension")),
               "lure: the collision beat holds the fence")
@@ -2232,6 +2229,65 @@ def main():
               "lure: no dashes in the beat")
     else:
         check(False, "mara: present at the Sign Chamber")
+
+    # The confrontation's shape (NARRATIVE §4 canon invariants, 2026-07).
+    import re as _re
+    from scenes.well import MARA_CONVO as _MCV
+    _mkeys = {ex["key"] for ex in _MCV["exchanges"]}
+    check(_mkeys == {"leave", "way_out", "father"},
+          "mara: the asks are come-with-me / the-way-out / her father")
+    _mf = next(ex for ex in _MCV["exchanges"] if ex["key"] == "father")
+    check(bool(_mf.get("once")) and bool(_mf.get("ends")),
+          "mara: the father card plays once and ENDS the talk (she turns "
+          "back; no exchange is a rescue)")
+    _ftxt = " ".join(b[1].lower() for b in _mf["beats"] if b[0] == "npc")
+    check("what am i doing" in _ftxt and "only deeper" in _ftxt,
+          "mara: the slip and the lucid turn-back live in the father card")
+    _lvtxt = " ".join(b[1].lower() for b in
+                      next(ex for ex in _MCV["exchanges"]
+                           if ex["key"] == "leave")["beats"])
+    check("nobody leaves" in _lvtxt,
+          "mara: asked to come away, no one leaves")
+    _wotxt = " ".join(b[1].lower() for b in
+                      next(ex for ex in _MCV["exchanges"]
+                           if ex["key"] == "way_out")["beats"])
+    check("we can't" in _wotxt,
+          "mara: asked the way out, there is none")
+    # The withheld noun: she never names what she dug for. Every "he" in
+    # her mouth stays undivided between her son and her god.
+    _mara_mouth = " ".join(
+        b[1].lower() for ex in _MCV["exchanges"] for b in ex["beats"]
+        if b[0] == "npc")
+    _mara_mouth += " " + " ".join(
+        b[1].lower() for b in _MCV["greet"]["beats"])
+    check(not _re.search(r"\b(son|baby|boy|child|children|pregnant)\b",
+                         _mara_mouth),
+          "mara: the withheld noun holds (her mouth never names the boy)")
+    _all_beats = ([b[1] for ex in _MCV["exchanges"] for b in ex["beats"]
+                   if b[0] in ("npc", "pi")]
+                  + [b[1] for b in _MCV["greet"]["beats"]]
+                  + [ex["q"] for ex in _MCV["exchanges"]])
+    check(not any(("—" in t) or ("–" in t) or ("--" in t)
+                  for t in _all_beats),
+          "mara: no dashes anywhere in the confrontation")
+
+    # The unsent letter (evidence #1's object) carries the ADMISSION
+    # (NARRATIVE §6 #1): the pregnancy Walter never knew of, the
+    # son-for-a-daughter line; the door is never mentioned.
+    from systems.items import ITEM_DEFS as _IDF
+    _lt = _IDF["unsent_letter"]["desc"].lower()
+    check("dad" in _lt and "a boy" in _lt and "came still" in _lt,
+          "letter: the admission is in the letter")
+    check("wait up" in _lt and "daughter" in _lt,
+          "letter: a son the way he wanted a daughter")
+    check("door" not in _lt,
+          "letter: the door is never mentioned")
+    check("never been this close" in _lt,
+          "letter: her leaving line survives")
+    check(not (("—" in _IDF["unsent_letter"]["desc"])
+               or ("–" in _IDF["unsent_letter"]["desc"])
+               or ("--" in _IDF["unsent_letter"]["desc"])),
+          "letter: no dashes")
 
     gw = new_game()
     gw.player.inventory.add("pallid_mask", 1)
@@ -2520,24 +2576,29 @@ def main():
     # Row 6, centre aisle: inside the calling-out band (rows 2..7), a
     # step south of the kneeling rank.
     gs2.player.x, gs2.player.y = 6 * _T28 + 16, 6 * _T28 + 16
-    for _ in range(400):
+    for _ in range(1200):
         gs2.step(1 / 20.0)
-        if gs2.dialog.active:
+        if gs2.dialog.active and gs2.dialog.choices is not None:
             break
     check(gs2.save.flag("mara_called"),
           "staging: entering the nave starts the calling-out")
     check(any(getattr(k, "pose", "kneel") is None for k in _sc2._kneelers),
           "staging: the kneelers rise")
-    check(gs2.dialog.active and len(gs2.dialog.pages) == 4,
-          "staging: Mara comes to you and her exchange fires unprompted")
+    check(getattr(gs2, "_convo", None) is not None and gs2._convo.active
+          and gs2.dialog.choices is not None,
+          "staging: Mara comes to you and the ask menu opens")
     check(gs2.save.flag("hive_seen")
           and has_evidence(gs2, "the_congregation"),
-          "staging: the confrontation lands evidence #6")
-    for _ in range(20):
-        if not gs2.dialog.active:
-            break
-        gs2.dialog.advance()
-    for _ in range(400):
+          "staging: the confrontation lands evidence #6 on arrival")
+    # Play the father card (the player's own ask) and let the talk run
+    # its length: the slip, the stall, the lucid turn-back.
+    _fidx = next(i for i, l in enumerate(gs2.dialog.choices)
+                 if "father" in l.lower())
+    gs2.dialog.choice_idx = _fidx
+    gs2.dialog.advance()
+    check(gs2.save.flag("mara_lucid"),
+          "staging: the father card breaks her certainty (mara_lucid)")
+    for _ in range(4000):
         gs2.step(1 / 20.0)
         if (getattr(gs2, "_mara_stage", None) is None
                 and getattr(_sc2._mara, "pose", None) == "kneel"):
@@ -2545,9 +2606,22 @@ def main():
     check(getattr(_sc2._mara, "pose", None) == "kneel"
           and all(getattr(k, "pose", None) == "kneel"
                   for k in _sc2._kneelers),
-          "staging: the room folds back to the kneeling")
+          "staging: lucidity changes nothing; the room folds back to the "
+          "kneeling")
     check((_sc2._mara.x, _sc2._mara.y) == _sc2._mara_home,
           "staging: Mara returns to her place in the rank")
+    # Her story's other end: a shot Mara kills the staging cleanly (no
+    # crash, no soft-lock; #6 is forfeited with her and the gate still
+    # opens on the other five beats).
+    gsd = new_game()
+    gsd.load_scene_now("works_sign")
+    ready(gsd)
+    gsd.scene._mara.alive = False
+    gsd._mara_stage = {"t": 0.0, "step": 0, "sc": gsd.scene}
+    gsd.scene.on_update_fn(gsd, gsd.scene, 0.05)
+    check(getattr(gsd, "_mara_stage", None) is None,
+          "staging: a dead Mara clears the calling-out (her story's other "
+          "end)")
 
     # --- 29. NPC jobs: a worker walks his stations (GAME_CHANGES §19) ---
     gj = new_game()

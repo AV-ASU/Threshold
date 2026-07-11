@@ -109,6 +109,19 @@ This is the engine of the game and the key to its darkest beat:
 because she was offered the one thing she needed and walked toward it
 willingly.
 
+**The door promises; it never provides.** The dream deals in bearings,
+never deliveries: the thing you ache for is just on the other side,
+nearer tonight than last night, nearer with every foot of earth.
+Everything it says is true except arrival. No one it called has ever
+been handed the thing itself — the completed rite bought the one object
+He can send (the Mask, above), and no wish anywhere in Brimley has ever
+been granted. What the attuned feel as relief is their own hope given a
+direction; hope is the anesthetic, which is why a digger stops feeling
+her hands. When the hope wears through, the labor remains — a cell in
+the battery (above), worth exactly what its hands have left to dig. He
+settles one account in the whole fiction, and it is a wage for service
+rendered, never an answered ache (§8, SPREAD).
+
 **The PI's immunity is his armor.** A hard case who long ago walled off
 whatever he most wants. The door can't answer a desire you refuse to
 feel, so its dream touched him exactly once, a year ago, and never
@@ -187,7 +200,7 @@ above it is why.
 | **est. 1894** | Brimley is founded on the ground above the door, the world's northernmost corn town. |
 | **~April 1993** | The river reaches the door's frame. The door wakes. Far away, the PI dreams it once, and never reaches it. |
 | **Summer 1993** | The attuned begin arriving by ordinary means, dream-lured, filling the school, the barn, and the Lodge. The dig begins, following the water down. |
-| **Fall 1993** | Mara drives north, the last one in. The harvest is tithed down and the fields are never cut. Before the cold, the congregation processes below in one night line; Toby follows and is the only one who sees where they went. |
+| **Fall 1993** | Mara drives north, the last one in, the loss that attuned her (§4) months behind her. The harvest is tithed down and the fields are never cut. Before the cold, the congregation processes below in one night line; Toby follows and is the only one who sees where they went. |
 | **Jan 15, 1994** | The closing rite in the mine chamber. The Mask manifests on the altar, the seal snaps shut, and every soul inside the town line is claimed at once. Deliveries stop; Mara stops calling home; every calendar in town stops on this date. Three months of sealed winter follow. |
 | **April 14, 1994, night** | The PI drives in as the ice goes out, carrying that day's paper. The fold kills the car. He takes the spare room at the Arcadia Lodge; Sable checks him in. |
 | **April 15, 1994** | **The present.** The game opens in the spare room the next morning. The paper he carried in is now yesterday's, the April 14 issue — a one-day-old date against a town that hasn't seen a paper since the trucks stopped. |
@@ -223,14 +236,14 @@ never predation.
 
 | Who | Origin | Their thread |
 |---|---|---|
-| **Mr. Sable**, Lodge Clerk | **Local — the most attuned of them** | He dreamed the door longest and loudest of anyone born here; attuned for years, subconsciously keeping the desk and the guests ready for arrivals he couldn't name. **He checked the PI in the night before the game opens** — every exchange after that is a host resuming a conversation, never an introduction. His menace is **compulsion, not conspiracy**: he voices certainties he can't explain because the door has spoken through him so long he mistakes it for hospitality; genteel, with a funereal undertow that pays off as the case grows colder. He deflects Mara's name, folds her in with "the new folk," and points suspicion at the unfriendly old families — the exact trap the game punishes, because the warm ones are the cult. **The Invitation:** shortly after the seal, the congregation's envelope reached his desk — the rite that opens the way down, left for him until he was ready to follow. It has sat under the register since the winter. At 3 evidence he judges the guest ready in his place and hands it over like a room key. Somebody has to keep the desk. |
+| **Mr. Sable**, Lodge Clerk | **Local — the most attuned of them, and the lucky one** | He dreamed the door longest and loudest of anyone born here, and what it baited him with was the only thing he ever wanted: a **full house**. The dream's one mark on him was a host's readiness — subconsciously keeping the desk and the guests ready for arrivals he couldn't name. Then the want was fed by accident: the same broadcast that lured the attuned north filled the Arcadia with real guests. The door provided nothing — the migration did (§2) — but for a season the lodge was full, and it was fun; he was fulfilled, the best year of his life. A fed want takes no bait, so the bearing lost its hold on him, and he alone among the attuned never followed it down. **The Invitation is the congregation's offer to bring him with them:** their envelope reached his desk shortly after the seal, the way down left so he could follow when ready — but the descent was never his want; the house was. It has sat under the register since the winter. So he keeps the desk of an empty lodge: genteel, with a funereal undertow that is **grief for a full house, never conspiracy** — the door never spoke through him, and his certainties are a host's pattern-sense, not a channel. He deflects Mara's name, folds her in with "the new folk," and points suspicion at the unfriendly old families — the exact trap the game punishes, because the warm ones are the cult, and the cult were his guests. **He checked the PI in the night before the game opens** — the first arrival since the seal, one guest against a winter of empty rooms — so every exchange after that is a host resuming a conversation, never an introduction. At 3 evidence he judges the guest ready to go where he himself never wanted to, and hands the envelope over like a room key. Somebody has to keep the desk. |
 | **Sheriff Hollis Vane** | **Local — the last holdout; claimed but never attuned** | Alone among the named cast he never dreamed the door. Not a believer: the town's one real investigator, chasing the *how* — how a pack of outsiders talked his town into walking off and shut it. His single window into it is one post-seal conversation with a nameless blind cultist, radiant with unaccountable conviction, promised his sight restored by the dream, and in truth sent to convert him. Vane refused; from that one exchange he holds the only piece of the how — the door answers your deepest want. He knows the outsiders filled the school, barn, and lodge, then walked out one night in a line; the King, the Threshold, and where the line went are beyond him. What he wants most is for all of it to end. Toward the PI he is hopeful but mistrusting — one more outsider who drove in is the exact profile of every cultist — and trust is earned only as the PI shares real discoveries. His fall is player-driven (`DESIGN.md` §2). |
 | **Rev. Asa Crane**, Preacher | **Local — innocent dissenter** | Names the cult from his own pulpit, oblivious to what they truly are but loud that they're no church. His doom is a chosen beat: the PI either presses him (his culpability filed as a note) or holds him back, which only banks the fire — when the case stalls at two surface threads, the PI's own interior voice points him back at the pulpit. He cannot be saved, only un-pointed: the cult cannot be talked out of anything, and Crane dies for believing he can. The doom sends him OUT — down to the river after his flock, believing they can be talked home. The church stands empty on the next entry, and his body is found on the Brimley riverbank, gutted, his cross in the viscera (evidence #4). All he ever knew was the rumor Toby told him. The town murders the ones who name it. |
 | **Hettie**, Store-Owner | **Local — quiet resister** | One person: the counter-keeper and the quiet resister merged. The shop is gutted — shelves bare, till empty since the new year, deliveries dead with the fold. Her value is what she risks saying out loud: frightened warnings about who to trust, never said outright, and a one-shot reaction to the Preacher's death. She trades a load of cartridges for the PI's one-day-old newspaper; that is how starved for word the town is. |
-| **Toby**, the Kid | **Local — innocent witness** | Followed the night procession down the river to the cult's dug-open ground and saw them go below, before the rite — the sole witness of where they went, and he tells you so. Before that, the commune lived in his school. His witness does two jobs: it poses the descent question (the only honest account in town points at ground you can never walk to — the grove is fold-hidden) and it seeds the school, the room the Invitation names; his one-shot warning about the school lands once the envelope is in hand. What he gives you is the truth, never an object. Children notice what adults pretend not to. |
+| **Toby**, the Kid | **Local — innocent witness** | Followed the night procession down the river to the cult's dug-open ground and saw them go below, before the rite — the sole witness of where they went. His account is **earned, never volunteered** (2026-07 rework): a kid has no way to know the case on sight, so the witness beat rides the PI holding out Mara's photograph. Before that, the commune lived in his school. His witness does two jobs: it poses the descent question (the only honest account in town points at ground you can never walk to — the grove is fold-hidden) and it seeds the school, the room the Invitation names. What he gives you is the truth, never an object. Children notice what adults pretend not to. |
 | **The Brimley chorus** (Hettie, Old Pell, Mrs. Calder, Royce, Garrick, Toby) | **Locals** | The town still tries to live. Mrs. Calder sets a place at supper for a guest she can't name — a certainty she can't explain that someone is coming. Old Pell grew the town's pride, the northernmost corn in the world (§1 note 2), and won't look long at the fields that died standing when the fall harvest went uncut; he also stopped marking the calendar (a rot-layer detail, not talk). Royce tried to drive out like everyone in town did — the corn handed every driver back — and gave it up with the rest; he clings to the one impossible fact he can't square: you got IN. They all know the fold is real; none of them understand it. The named principals — Vane, Crane, Hettie, Toby, Sable — surface as dialogue speakers (locked in `tests/flow.py`). |
-| **Mara Blaine** | **Newcomer — the quarry, already turned** | Attuned and aching; the door whispered her answer (§2). She came north, went down with the procession, and kneels now among the congregation. Finding her proves there was never anyone to save — she was offered the one thing she needed and went gladly. Reading her journal to the end drops the player into the flashback of the burning doorframe, the game's clearest look at the lure. |
-| **Walter Blaine** | **Outsider, off-screen — the unwitting bait** | A Minneapolis voice on a phone that no longer connects. His grief is real; the case itself is the King's hook (§1). No one in Brimley has ever met him — he exists only through the PI's case notebook. He gets no resolution; the call never connects again, and that silence is the point. |
+| **Mara Blaine** | **Newcomer — the quarry, already turned** | In her twenties, and her tragedy predates the door: she was pregnant, meant to end it, and changed her mind at the last moment because she wanted him — and the boy was born dead. An ordinary loss, no fault and no cosmic hand in it (the impossible count stays at one, §2); the guilt she carries for the hesitation is grief's own lie, hers alone, never the story's verdict. The dreams found that hole and gave it a bearing (§2): he is on the other side, nearer every night. She drove north in the fall, went down with the procession, and kneels now among the congregation — hands and knees bleeding from the dig, long past hunger, a cell in the battery worth what her hands have left. At the calling-out (§6 #6) she cannot be argued home: asked to come away, no one leaves; asked the way out, there is none. The PI can invoke her father — the player's own ask, never automatic — and her certainty breaks: the boy's image fades off the door and she sees what is actually in front of her, the ruined hands, the hunger, a man from the world that still has fathers in it. She asks herself what she is doing; then comes the stall — what does she have without this — and she answers it lucid: for her there is no out, only deeper, and she turns back to the dig with her eyes open. The lucidity is the darkest beat proven to the floor: un-deceived, she still goes; there was never anyone to save. She never speaks of the boy directly — every *he* in her mouth stays undivided between her son and her god. Her story has exactly two ends, the dig or the PI's round, and the round saves nothing. Reading her journal to the end drops the player into the flashback of the burning doorframe, the game's clearest look at the lure; the unsent letter in her cell carries the admission her father never got (§6 #1). |
+| **Walter Blaine** | **Outsider, off-screen — the unwitting bait** | A Minneapolis voice on a phone that no longer connects. His grief is real; the case itself is the King's hook (§1). No one in Brimley has ever met him — he exists only through the PI's case notebook. He gets no resolution; the call never connects again, and that silence is the point. He never knew Mara was pregnant — the letter that admits it is unsent and addressed to him (§6 #1) — so by the case's end the PI is the only living soul holding the whole of it, with no line back to Minneapolis to put it down. |
 | **The cult, the Watchers, the King** | **Newcomers + their god** | The congregation are the attuned newcomers. The Watchers are His gaze made local — the higher-dimensional eye reaching into the flat plane wherever His attention falls (`DESIGN.md` §1). The King is the thing above the door. |
 
 ---
@@ -302,12 +315,12 @@ fair, brutal "you dug too deep, too fast." The deeper three wait below.
 
 | # | Evidence | Item / scene key | Where | What it proves |
 |---|---|---|---|---|
-| 1 | **Mara's Room** | `maras_room` (robe + unsent letter) | Underground — a convert's cell off the Sorting Hall | She didn't rent a room and vanish; she *moved in* down here. She joined willingly; she was already home. |
+| 1 | **Mara's Room** | `maras_room` (robe + unsent letter) | Underground — a convert's cell off the Sorting Hall | She didn't rent a room and vanish; she *moved in* down here. She joined willingly; she was already home. The unsent letter is to her father: it admits the pregnancy he never knew of, and what she wanted — a son, the way he had wanted a daughter (§4). The boy's father is dismissed in a clause, unnamed and irrelevant; the door is never mentioned. The last thing the human Mara wrote. |
 | 2 | **Mara's Journal** | `mom_notebook` | The barn, behind the workbench | Her descent, in her own words (page 3 fires the flashback). |
 | 3 | **The Ledger** | read in place | The padlocked Lodge cellar — the boxed old registers | Guests who check in and never out. The checkout dates stop a year back, the same season the PI dreamed the door — and his own name, signed the night he arrived, is already among them. |
 | 4 | **The Preacher** | his cross (item `cross`), taken from the viscera | The Brimley riverbank; the emptied church points there | The town murders the ones who name it. |
 | 5 | **The Sign — the Pallid Mask** | `pallid_mask` | The Sign Chamber (the cult's underground altar) | His face made an object: what they worship, the key the fold answers to, and the keystone you carry down. |
-| 6 | **The Congregation** | (Mara, turned) | The Sign Chamber — she kneels at the Mask's foot; first entry stages the calling-out, the kneelers rise, one says her name, and she comes to you | There was never anyone to save. |
+| 6 | **The Congregation** | (Mara, turned) | The Sign Chamber — she kneels at the Mask's foot; first entry stages the calling-out, the kneelers rise, one says her name, and she comes to you — the confrontation that ends her thread (§4) | There was never anyone to save, and full lucidity changes nothing. |
 
 > **The Sign IS the Pallid Mask.** The King's own pale half-mask, made
 > an object — the jaundiced sigil scrawled through the cult's halls is
@@ -399,9 +412,11 @@ order rule governs all three outcomes:
 - **SPREAD / IT.** Carry the keystone out. The fold's pane answers His
   face; at the edge of Brimley the Mask claims the PI — he gazes into
   its eyes, completing the dream that broke off a year ago, and the
-  King steps in. What he longed for most, to *feel*, floods back, and
-  he drives south full, certain, and His: the breach riding out as a
-  willing vector, a latent charge on His clock. Brimley stays bound
+  King steps in. What he longed for most, to *feel*, floods back — not
+  the lure answering at last but the one account He ever settles, a
+  wage for the service of carrying Him out (§2) — and he drives south
+  full, certain, and His: the breach riding out as a willing vector, a
+  latent charge on His clock. Brimley stays bound
   behind him. The one ending where the breach gets out. Presentation:
   the ~38s drive-out cutscene; caption lines flow-guarded.
 - **BREAK / the trap.** Tear the Mask down at the Sign Chamber altar —
@@ -416,8 +431,12 @@ order rule governs all three outcomes:
 first — the Sign Chamber altar, kneelers worshipping His face — before
 they could possibly have sealed anything. The natural heroic instinct,
 destroy the evil and stop the ritual, is the catastrophic one. You are
-meant to reach for it and to lose; the horror is the lesson. The only
-safe moves are seal the source first, or carry the keystone away clean.
+meant to reach for it and to lose; the horror is the lesson. The
+confrontation with Mara charges it (§4): the player meets what the door
+did to her with the Mask already in hand, in the room where tearing it
+down is three steps away — the rage has somewhere to go, and BREAK is
+where it goes. The only safe moves are seal the source first, or carry
+the keystone away clean.
 
 ---
 
@@ -428,7 +447,11 @@ that gates nothing. Each is written in the congregation's own voice —
 what the cult believes, in the words it chose, unconfirmed testimony —
 and the PI's reactions land in his case notes, never in the item text.
 The arc runs from a human problem, to the bargain, to the self lost in
-the dig: they were answered, not deceived (§2).
+the dig: they were answered, not deceived (§2). Read them against §2's
+rule that the door provides nothing: every deliverance they report —
+the drink taken away clean — is what claiming feels like from the
+inside, the wanting dulled as the wanter dims, never a wish the door
+granted.
 
 | Fragment | Item key | Found | What it testifies |
 |---|---|---|---|
@@ -492,3 +515,25 @@ purpose, and keep each one guarded where a guard exists.
   *the Yellow King* never appear in player-facing text; the SEAL
   ending's black stars + twin suns are the one unnamed reference
   (guarded: `tests/flow.py` §33). → §5
+- **The door provides nothing.** The dream deals in bearings, never
+  deliveries; no wish in the fiction is ever granted, the only object
+  He sends is the Mask (bought by the rite), and the single account He
+  settles is SPREAD's wage. → §2, §8
+- **Mara's want is her stillborn son.** She was pregnant, chose him at
+  the last moment, and the boy was born dead — an ordinary loss, no
+  cosmic hand, before the dreams found her. Walter never knew; the
+  unsent letter that admits it is addressed to him and never arrives.
+  → §4, §6
+- **Full lucidity changes nothing.** At the calling-out Mara sees all
+  of it — the bare door, her ruined hands, the man from the world —
+  and turns back to the dig; her story has exactly two ends, the dig
+  or the PI's round. → §4, §6
+- **The boy stays unnamed and unspoken.** Mara never speaks of him
+  directly in player-facing text; every *he* in her mouth stays
+  undivided between her son and her god (guard lands with the scene).
+  → §4
+- **Sable is the lucky one.** His want was a full house; the migration
+  the door caused fed it for a season (the door itself provided
+  nothing); the Invitation is the congregation's offer to bring him
+  below, and the descent was never his want. The door never spoke
+  through him. → §4
