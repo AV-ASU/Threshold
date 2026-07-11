@@ -134,6 +134,12 @@ its head) and pings the cult to **investigate the body**, and the body
 > from the dream. "Convert" and "turn" are how the truth **surfaces to
 > you**, not allegiances being switched. Underneath, they were always His.
 
+> **The people underneath the rot are read by their WANTING (§8).** The
+> world rot is how the truth surfaces to the PI; §8 is why each local is
+> what the rot reveals. The two are one picture: the door strands every
+> want in Brimley, and the rot is the veil thinning until the PI can see
+> the stranding.
+
 Knowing dooms you, and it **shows**. Surface corruption is a pure,
 monotonic function of the evidence count — `_rot_stage = min(3,
 evidence)` — and it is deliberately **front-loaded** to peak exactly as
@@ -679,4 +685,99 @@ symmetric (every static fold has its return), the wrap is a loop, and
 the single one-way crossing in the game is the juke through the tear
 HE made (it shuts behind you). The Threshold doorframe stays plain --
 the world's folds scream so that the real door's silence lands (NARRATIVE §2).
+
+---
+
+## 8. Desire, and how the fold strands it
+
+> The reading that keeps the whole cast honest -- the character-design
+> twin of the world rot (§2). Every future line for a Brimley local
+> should be checkable against it, the way every cosmology line is
+> checkable against the bearing rule (NARRATIVE §2: the door promises,
+> never provides). It states the SHAPE of each person's wanting; the
+> hard per-character FACTS that are locked (Mara's son, Sable's full
+> house, Vane's ending) live in NARRATIVE §4.
+
+**The King does not kill desire. He strands it.** That is the engine,
+and it is crueler than taking anything. Every soul in Brimley still
+wants exactly what they wanted before; the door severed the want from
+its object and left the wanting switched on. Pell still wants his
+harvest, and it is rotting in the field he can no longer look at.
+Calder still wants a guest, and sets the plate for one who will never
+come. Vane still wants it to end, and it only ever offers more. **Hell
+here is a want with its object cut away and the appetite left running.**
+The fold "admits but never releases" (NARRATIVE §1) -- and what it will
+not release is the wanting.
+
+> Internalize this or the cast reads as generic sad villagers:
+> - **The machine runs on ordinary wants.** A full house, a harvest, a
+>   guest at supper, a road home, to save someone, to keep the shop
+>   open, for a child to be safe, for it all to end. Nothing cosmic --
+>   the door deals in the wants EVERYONE has, because those are the ones
+>   everyone has. "Someone wants something simple and doesn't get it,
+>   and there is forever no way to get it back" is the design doc for
+>   the entire town.
+> - **To want is to be strandable; to not want is to be already dead.**
+>   There is no safe dose. The PI is safe from the machine only because
+>   he refuses to feel (his numbness is walled-off want, NARRATIVE §2),
+>   and that refusal is its own death -- which is exactly why SPREAD is
+>   the cruelest ending (it hands the numb man his wanting back, as the
+>   damnation, §8/NARRATIVE §8).
+> - **The absent thing is the internal want.** An "invincible summer" is
+>   a want that lives inside you, that no external severing can reach --
+>   and no one in Brimley has one. Every want in this town points at an
+>   object the fold can cut. That absence IS the horror; do not
+>   accidentally give a character a self-sufficient want, or you have
+>   handed them an exit the game denies everyone.
+
+**Two families, one mechanism at two scales.** The door takes an
+individual's want and gives it a false BEARING (the leash); the closing
+rite took a whole town's wants and FROZE them (the stasis). Same act --
+separate a wanting creature from the thing it wants, permanently, leave
+the wanting intact -- performed on one person by the dream and on the
+collective by the seal.
+
+- **The attuned (the cult) -- desire as a LEASH.** The door gave the
+  ache a direction (down) and they follow it forever, never arriving.
+  Motion without destination; obsession is what that looks like from
+  outside. Their want is why they are His (attunement = the size of the
+  hole, NARRATIVE §2).
+- **The locals -- desire in STASIS.** Netted by the rite regardless of
+  what they wanted, they are frozen mid-reach with every object severed.
+  The appetite with nowhere to go; "stagnation" is what that looks like
+  from outside. Their want is NOT why they are His (see the guardrail
+  below) -- it is what the fold is doing to them now.
+
+**The roster** (each want is simple; the second column is the strand):
+
+| Who | The simple want | What the machine did to it | Family |
+|---|---|---|---|
+| **The PI** | (refused -- walled off) | nothing can bait what won't be felt; the armor is a death | control |
+| **Mara** | her stillborn son | the dream aimed it DOWN; she digs toward a door he is not behind | leash |
+| **The congregation** | each their own ache | the same bearing, the same dig; the self spent into the labor | leash |
+| **Sable** | a full house | FED, for one season, then bereaved (the migration filled his rooms, the door gave nothing); the anomaly, NARRATIVE §4 | fed, then taken |
+| **Vane** | for it all to end | the one appetite the door cannot answer; stasis so total it malfunctions into the hollow turn | stasis |
+| **Crane** | to save them, to matter | a dying ministry handed a real devil; the rescue instinct walks him to the river. **He is the player's Sign-Chamber mistake, previewed** | stasis |
+| **Hettie** | to provide, protect her kin | the supply line cut; she performs empty commerce over bare shelves, starved for word of the outside | stasis |
+| **Pell** | his legacy, the harvest endures | the corn dead standing, uncut; "I don't look at the fields long anymore" | stasis |
+| **Calder** | someone to come | the eternal plate; **she is the town's kitchen light** (Mara's letter: "somebody to wait up for") -- a guest who never crosses the table | stasis |
+| **Royce** | out; to drive somewhere | the road hands him back; he pins his last hope on the one exception (the PI got IN), not knowing the exception is a mouth | stasis |
+| **Garrick** | to watch, to warn, to matter | vigilance made futile; he sees everything, can stop nothing, warns toward roads that all loop | stasis |
+| **Toby** | to be safe, to be told the truth | the child's baseline want, answered by the one adult who listens with a promise the endings guarantee is a lie | stasis |
+
+The closest thing to an internal want anyone reaches is **the PI's
+promise to Toby** -- warmth generated from inside, pointed outward,
+expecting nothing back. The endings break even that (no reachable
+future returns for the boy), which is the point: the one summer the
+game lets a character find, it takes.
+
+> **GUARDRAIL -- keep the two mechanisms distinct.** The cult was
+> LURED (desire -> door, the leash); the locals were NETTED by the rite
+> regardless of their wants (desire -> stranded, the stasis). Do NOT
+> retrofit a local's want into a door-lure: their wants do not explain
+> why they are His, only what the fold does to them now. Collapse the
+> two and Brimley becomes a town of secret volunteers, which kills the
+> "claimed without ever knowing" horror (NARRATIVE §2) and cheapens the
+> whole cosmology. One impossible thing; the wanting is ordinary
+> downstream of it.
 
