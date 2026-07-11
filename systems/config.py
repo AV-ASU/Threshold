@@ -592,12 +592,36 @@ RIVER_ENTRY_TILE = (34, 60)
 #              SAY: their talk goes flat and off, reporting small ordinary
 #              things from behind a face that no longer means them. No body-
 #              horror overlay (the mutate render layer was cut, TODO #9).
-# Sheriff Vane is neither: at stage 3 he becomes a unique threat encounter
-# in his own office (_spawn_hunting_sheriff). Values are the evidence stage
-# at which the local turns.
+# Sheriff Vane is neither: his fall is PLAYER-DRIVEN (the VANE_* ledger
+# below, DESIGN.md §2) -- the world rot never turns him on its own. Values are
+# the evidence stage at which the local turns.
 ROT_CONVERT = {"Mrs. Calder": 2, "Royce": 3}
 ROT_TURN = {"Hettie": 2, "Garrick": 3, "Old Pell": 3,
                "Toby": 3}
+
+# ---- Sheriff Vane's despair/hope ledger (DESIGN.md §2; was TODO #2a) --
+# A hidden balance decides the last holdout's fate; the player never sees
+# a number, only his mood (the conversation's framing line + the beats).
+# HOPE is earned one way: the PI SHARING a real discovery with him
+# (scenes/dialogue._vane_share) -- the same act that buys his trust and
+# opens his investigation thread. DESPAIR comes from the beats that read,
+# to a man who wants it all to end, as permission: the preacher's murder
+# (+VANE_DESPAIR_ACT) and the newspaper's front page (+VANE_PAPER_DESPAIR,
+# the break lever, TODO #2). Net despair >= VANE_HOLLOW_AT latches
+# `vane_hollow` for good (once hollow, no return); his office then hosts
+# _spawn_hunting_sheriff on the next load, whatever the rot stage. The
+# NEGLECT OVERRIDE beats the ledger: reach VANE_NEGLECT_EVIDENCE canonical
+# beats having shared fewer than VANE_MIN_INFORMED discoveries and he
+# hollows regardless (evaluated at his office door, which every share
+# must walk through -- so it cannot be dodged by sharing after the fact).
+# All playtest-tunable, same bucket as the SUS_* stealth block.
+VANE_HOLLOW_AT = 3            # net despair that latches the hollow turn
+VANE_HOPE_ACT = -1            # one real discovery shared with him
+VANE_DESPAIR_ACT = 1          # an ordinary bad beat (the preacher's murder)
+VANE_PAPER_DESPAIR = 2        # the newspaper: walks him to the edge
+VANE_DESPAIR_FLOOR = -2       # hope banks to -2 at most (never immunity)
+VANE_MIN_INFORMED = 1         # shares needed to dodge the neglect override
+VANE_NEGLECT_EVIDENCE = 3     # the descent line: 3 canonical beats
 # Underground is wrong from the first rung -- a baseline world rot even
 # at 0 evidence, deepening on the full evidence count (not capped at 3).
 UNDERGROUND_SCENES = {
