@@ -533,33 +533,37 @@ def main():
     check(n >= 3, f"evidence: the 3-gate is reachable (gathered {n} canonical beats)")
 
     # --- 10. The Kid is the witness (NARRATIVE §4): tells, grants no item ---
+    from scenes.dialogue import TOBY_CONVO as _TOBY_CV
     gk = new_game()
     gk.load_scene_now("toby_house")
     ready(gk)
     kid = next((nn for nn in gk.scene.npcs
                 if nn.name == "Toby"), None)   # renamed in the merge
     check(kid is not None, "kid: the Kid is present in his house")
-    if kid:
-        _kid_lines = []
-        gk.dialog.show = (lambda real: (lambda p, **k: (
-            _kid_lines.extend(p if isinstance(p, list) else [p]),
-            real(p, **k))[1]))(gk.dialog.show)
-        kid.dialogue_fn(gk, kid)
-        check(gk.save.flag("kid_witnessed")
-              and not gk.player.inventory.has("polaroid"),
-              "kid: the witness beat fires and grants no inventory item")
-        # CANON (NARRATIVE §4, D rework 2026-07): the witness does two jobs --
-        # it poses the descent question (Toby FOLLOWED the procession down the
-        # RIVER to the cult's dug-open ground, a way no one can follow now --
-        # the grove is fold-hidden) and it SEEDS THE SCHOOL (the commune the
-        # Invitation names). Never the corn (the old wrong reading).
-        _kid_text = " ".join(_kid_lines).lower()
-        check("river" in _kid_text and "down" in _kid_text,
-              "kid: the witness points down the river to where they dug in")
-        check("school" in _kid_text,
-              "kid: the witness seeds the SCHOOL (the route the rite opens)")
-        check("corn" not in _kid_text,
-              "kid: the witness no longer sends you into the corn")
+    # The witness account is EARNED, not volunteered: it rides the photo
+    # exchange (the PI holds Mara's picture out), never a cold greeting -- a
+    # kid cannot know the case on sight (only Sable met the PI).
+    _photo = next((ex for ex in _TOBY_CV["exchanges"]
+                   if ex.get("key") == "photo"), None)
+    check(_photo is not None, "kid: the witness rides the photo exchange")
+    _kid_text = " ".join(b[1] for b in _photo["beats"]).lower()
+    # CANON (NARRATIVE §4, D rework 2026-07): the witness does two jobs -- it
+    # poses the descent question (Toby FOLLOWED the procession down the RIVER
+    # to the cult's dug-open ground, a way no one can follow now -- the grove
+    # is fold-hidden) and it SEEDS THE SCHOOL (the commune the Invitation
+    # names). Never the corn (the old wrong reading).
+    check("river" in _kid_text and "down" in _kid_text,
+          "kid: the witness points down the river to where they dug in")
+    check("school" in _kid_text,
+          "kid: the witness seeds the SCHOOL (the route the rite opens)")
+    check("corn" not in _kid_text,
+          "kid: the witness no longer sends you into the corn")
+    check(not gk.player.inventory.has("polaroid"),
+          "kid: the witness grants no inventory item")
+    # He knows nothing cold: the greeting must not pre-know the case.
+    _greet_text = " ".join(b[1] for b in _TOBY_CV["greet"]["beats"]).lower()
+    check("lodge" not in _greet_text and "looking for" not in _greet_text,
+          "kid: the greeting does not pre-know the case")
 
     # --- 11. The flashlight: found, toggles, double-edged in the dark ---
     gf = new_game()
@@ -1130,10 +1134,12 @@ def main():
           "canon: Sable's greeting is not a self-introduction")
     check("Vane" in _VC["greet"]["beats"][0][1],
           "naming: Vane's floated greeting introduces him by name")
-    # Toby's witness account still VOLUNTEERS itself on the very first
-    # talk (ahead of the menu), under his own name.
-    check(first_speaker(toby_dialogue) == "Toby",
-          "naming: Toby's witness one-shot speaks under his own name")
+    # Toby's witness account is EARNED on the photo exchange (a kid cannot
+    # know the case cold), and his conversation speaks under his own name.
+    check(_TC["name"] == "Toby",
+          "naming: Toby's conversation speaks under his own name")
+    check(any(ex.get("key") == "photo" for ex in _TC["exchanges"]),
+          "kid: the witness account rides the photo exchange, not a cold open")
 
     # --- 17b. Sable is the most-attuned LOCAL (NARRATIVE §4) -------------
     # His menace is compulsion, not conspiracy. Lock the framing: the
