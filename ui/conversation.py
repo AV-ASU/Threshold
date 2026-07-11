@@ -21,7 +21,9 @@ A conversation is plain data (see scenes/dialogue.py SABLE_CONVO):
       "id":   "sable",                 # namespaces the once-asked flags
       "name": "Mr. Sable",             # shown over the NPC's float
       "voice":    "blip_low",          # the NPC's blip voice
-      "prompt":   "He waits.",         # the modal menu's framing line
+      "prompt":   "He waits.",         # the modal menu's framing line --
+                                       # or a callable(game) -> str, for
+                                       # mood-reactive framing (Vane)
       "leave":    "That's all for now.",
       "greet":    {"flag": "sable_greeted",
                    "beats": [("npc", "Sable. I keep the desk here.")]},
@@ -129,6 +131,13 @@ class Conversation:
         labels = ([ex.get("label", ex["q"]) for ex in avail]
                   + [self.convo.get("leave", "Leave.")])
 
+        # The framing line may be authored as a callable(game) -> str so a
+        # conversation can read MOOD into it (Vane's despair/hope ledger,
+        # DESIGN.md §2: the player never sees a number, only how he sits).
+        prompt = self.convo.get("prompt", "What do you ask?")
+        if callable(prompt):
+            prompt = prompt(self.game)
+
         def _pick(idx):
             if idx >= len(avail):
                 # Leaving. The NPC may get one last word (a hook the first
@@ -156,8 +165,8 @@ class Conversation:
             self._step()
 
         self.game.dialog.show_choice(
-            self.convo.get("prompt", "What do you ask?"),
-            labels, _pick, speaker="", voice="blip_soft", portrait="narrator")
+            prompt, labels, _pick,
+            speaker="", voice="blip_soft", portrait="narrator")
 
     # ---- beat playback --------------------------------------------------
     def _speaker(self, who):

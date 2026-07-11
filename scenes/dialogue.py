@@ -721,13 +721,76 @@ def hettie_dialogue(game, npc):
 
 
 # ---- The Sheriff: Hollis Vane ----
-# Ask-verb conversion (TODO #1 expand; the trust/despair arc itself is
-# ticket #2a and slots in on top of this later). A LOCAL, born here, the
-# last holdout, the town's one real investigator (NARRATIVE §4). Hopeful
-# but mistrusting: the PI is one more outsider who drove in, the exact
-# profile of every cultist, so he watches first. He did NOT kill the car
-# (the fold did) and he carries the plain truth about it; the badge is
-# just clothing now, and he keeps wearing it.
+# The despair/hope arc (DESIGN.md §2; was TODO #2a) on top of the ask-verb conversion
+# (TODO #1). A LOCAL, born here, the last holdout, the town's one real
+# investigator (NARRATIVE §4). Hopeful but mistrusting: the PI is one
+# more outsider who drove in, the exact profile of every cultist, so he
+# watches first. He did NOT kill the car (the fold did) and he carries
+# the plain truth about it; the badge is just clothing now, and he keeps
+# wearing it.
+#
+# His FATE is player-driven: a hidden despair/hope ledger (vane_despair,
+# the VANE_* config block) that the player never sees as a number, only
+# as his mood. Sharing a real discovery with him is the one hope act,
+# and it is ALSO the trust that opens his investigation thread (the
+# blind-cultist how) -- the same act builds the rapport that makes his
+# fall hurt, and holds him back from it. The newspaper (TODO #2) is its
+# exact inverse: his break lever, +VANE_PAPER_DESPAIR. The hollow turn
+# latches at VANE_HOLLOW_AT net despair (or by the NEGLECT override in
+# systems/rot_mixin._vane_is_hollow); once hollow, no return -- the next
+# load of his office stands the hunter up instead of the man.
+
+
+def _vane_ledger(game, delta):
+    """Move Sheriff Vane's hidden despair/hope ledger (DESIGN.md §2).
+    Positive is despair, negative is hope. Hope banks only down to
+    VANE_DESPAIR_FLOOR (real rapport is not immunity), and reaching
+    VANE_HOLLOW_AT latches `vane_hollow` for good -- once hollow, no
+    return, whatever hope arrives after. The office spawn gate
+    (systems/rot_mixin._vane_is_hollow) reads the flag on scene load."""
+    from systems.config import VANE_HOLLOW_AT, VANE_DESPAIR_FLOOR
+    if game.save.flag("vane_hollow"):
+        return
+    net = max(VANE_DESPAIR_FLOOR,
+              int(game.save.arg("vane_despair", 0)) + delta)
+    game.save.set_arg("vane_despair", net)
+    if net >= VANE_HOLLOW_AT:
+        game.save.set_flag("vane_hollow", True)
+
+
+def _vane_share(game):
+    """A real discovery shared with Vane -- the trust currency and the
+    hope currency in one act (DESIGN.md §2). Counts toward dodging the
+    neglect override (vane_informed) and buys down despair."""
+    from systems.config import VANE_HOPE_ACT
+    game.save.set_arg("vane_informed",
+                      int(game.save.arg("vane_informed", 0)) + 1)
+    _vane_ledger(game, VANE_HOPE_ACT)
+
+
+def _vane_paper_given(game):
+    """The newspaper handed to Vane (TODO #2: his is a TRAP, not a
+    gift). To a man who wants it all to end, the front page reads as
+    permission, not hope -- the outside is dying the same death one day
+    north. One copy: giving it to him means everyone else goes without
+    (Hettie's cartridge trade among them)."""
+    from systems.config import VANE_PAPER_DESPAIR
+    game.player.inventory.remove("newspaper", 1)
+    game.save.set_flag("newspaper_given_vane", True)
+    _vane_ledger(game, VANE_PAPER_DESPAIR)
+
+
+def _vane_prompt(game):
+    """The 'mood, not a meter' surface (DESIGN.md §2): the question menu's
+    framing line reads the ledger without ever showing a number."""
+    net = int(game.save.arg("vane_despair", 0))
+    if net >= 2:
+        return ("Vane is looking at the window, not at you. It takes "
+                "him a moment to come back.")
+    if net <= -1:
+        return ("Vane hooks a chair out with his boot and nods at it. "
+                "As close to a welcome as this office gets.")
+    return "Vane waits you out, thumbs in his belt."
 
 
 def _vane_car_told(game):
@@ -772,7 +835,7 @@ VANE_CONVO = {
     "name":  "Sheriff Vane",
     "voice": "blip_gruff",
     "pi_voice": "blip_soft",
-    "prompt": "Vane waits you out, thumbs in his belt.",
+    "prompt": _vane_prompt,
     "leave":  "That's all for now.",
     "greet": {
         "flag": "vane_greeted",
@@ -844,15 +907,112 @@ VANE_CONVO = {
                         "able to in months.[/c]"),
             ],
         },
+        # The SHARES (DESIGN.md §2): the PI bringing a real discovery to the
+        # one other investigator in town. Each opens as its find lands,
+        # spends once, and is both the trust that opens his thread (the
+        # how, below) and the hope that holds him back from the hollow
+        # turn (_vane_share). Only the two surface-reachable finds an
+        # honest PI could put on his desk pre-descent (the journal, the
+        # Ledger); the preacher he learns of on his own, and it cuts the
+        # other way.
+        {
+            "key": "share_journal",
+            "q": "I found her journal. They all dreamed the same door, "
+                 "every one of them. She wrote that she was digging down "
+                 "to it. Glad about it.",
+            "label": "I found Mara's journal.",
+            "avail": lambda g: (g.save.flag("convo_vane_intro_asked")
+                                and g.save.flag("evidence_maras_journal")),
+            "once": True,
+            "on_ask": _vane_share,
+            "beats": [
+                ("npc", "Say the first part again. The same door. All of "
+                        "them."),
+                ("pi", "All of them. And she didn't write like a prisoner. "
+                       "She wrote like a woman nearly home."),
+                ("npc", "A year I've been asking this town for one honest "
+                        "page. You walk in off a dead road and hand me her "
+                        "whole hand."),
+                ("npc", "That's the first real piece of work anybody has "
+                        "brought through that door since it all shut. I "
+                        "won't forget you did."),
+                ("pi", "[c=dim]Something in him let go a notch. Not "
+                       "relief. More like a man who had been carrying a "
+                       "case alone and just heard a second pair of "
+                       "boots.[/c]"),
+            ],
+        },
+        {
+            "key": "share_ledger",
+            "q": "The lodge's old registers. A year of guests signed in "
+                 "and not one of them ever signed out. The clean book on "
+                 "the desk starts right where the boxes stop.",
+            "label": "The lodge registers are wrong.",
+            "avail": lambda g: (g.save.flag("convo_vane_intro_asked")
+                                and g.save.flag("evidence_the_ledger")),
+            "once": True,
+            "on_ask": _vane_share,
+            "beats": [
+                ("npc", "Now that is evidence. Paper with dates on it. "
+                        "God, I have missed paper with dates on it."),
+                ("npc", "I never got past that desk. Sable smiles, the "
+                        "whole building goes polite, and you walk out "
+                        "without whatever you came in for."),
+                ("npc", "Keep pulling threads like that and this town "
+                        "might finally owe somebody the truth. Watch who "
+                        "sees you pull them."),
+                ("pi", "[c=dim]He wrote it down. First thing I have said "
+                       "in this town that anyone wrote down.[/c]"),
+            ],
+        },
+        # The newspaper (TODO #2): to everyone else in Brimley the paper
+        # is word from outside. To Vane it is the break lever. The front
+        # page tells a man who wants it all to end that the outside is
+        # dying the same death, and its brightest walked out of a room he
+        # could have left any time. The give-beat telegraphs the damage
+        # as MOOD; the number (VANE_PAPER_DESPAIR) stays hidden.
+        {
+            "key": "paper",
+            "q": "I've got yesterday's paper in my coat. April "
+                 "fourteenth. Figured the law here should have some word "
+                 "from outside.",
+            "label": "I brought yesterday's newspaper.",
+            "avail": lambda g: (g.save.flag("convo_vane_intro_asked")
+                                and g.player.inventory.has("newspaper")),
+            "once": True,
+            "on_ask": _vane_paper_given,
+            "beats": [
+                ("npc", "(He takes it in both hands, careful, like "
+                        "something that might go out.)"),
+                ("npc", "(He spreads it flat on the desk and stands over "
+                        "the front page a long time.)"),
+                ("npc", "Kurt Cobain. Huh."),
+                ("npc", "I drove down to the Cities to see him play, "
+                        "before all this. Stood at the back. Best night I "
+                        "had that whole year."),
+                ("pi", "Sheriff?"),
+                ("npc", "He had every road out of every town, that man. "
+                        "The whole world open. And he shut the door on it "
+                        "from the inside."),
+                ("npc", "So it isn't just here. That's what a front page "
+                        "is for, I guess. Telling you the weather's the "
+                        "same all over."),
+                ("npc", "Thank you for the paper, son. Go on home now. "
+                        "(He doesn't look up from the page again.)"),
+                ("pi", "[c=dim]I meant it as a kindness. Walking out, I "
+                       "couldn't remember why I thought it would land as "
+                       "one.[/c]"),
+            ],
+        },
         # The blind cultist: his one window into the HOW (NARRATIVE §4:
         # one post-seal conversation with a nameless blind cultist,
         # radiant with unaccountable conviction, promised his own sight
         # restored by the dream, in truth sent to convert him; Vane
-        # refused). Earned, not ambient: he spends it only once the PI
-        # has announced himself and is visibly working the case (a first
-        # real thread found). The full trust/despair arc is ticket #2a;
-        # this seeds it. He keeps his knowledge boundary: no destination,
-        # no direction, only the offer.
+        # refused). TRUST-gated (DESIGN.md §2): he spends his one card only
+        # on a fellow investigator -- the PI has announced himself AND
+        # shared at least one real discovery (another outsider who only
+        # takes never earns it). He keeps his knowledge boundary: no
+        # destination, no direction, only the offer.
         {
             "key": "how",
             "q": "A hundred strangers drove north to the same dying "
@@ -860,7 +1020,7 @@ VANE_CONVO = {
                  "was it done?",
             "label": "How were the newcomers gathered?",
             "avail": lambda g: (g.save.flag("convo_vane_intro_asked")
-                                and g._evidence_count() >= 1),
+                                and int(g.save.arg("vane_informed", 0)) >= 1),
             "once": True,
             "on_ask": _vane_how_told,
             "beats": [
@@ -907,6 +1067,10 @@ def sheriff_dialogue(game, npc):
             and not save.flag("vane_preacher_noticed")
             and save.flag("vane_greeted")):
         save.set_flag("vane_preacher_noticed", True)
+        # An ordinary bad beat on the despair ledger (DESIGN.md §2): a man he
+        # knew his whole life, murdered, and no report worth filing.
+        from systems.config import VANE_DESPAIR_ACT
+        _vane_ledger(game, VANE_DESPAIR_ACT)
         game.dialog.show([
             "They killed the preacher.",
             "He named them from his pulpit. Then he walked down to the "

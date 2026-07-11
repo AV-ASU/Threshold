@@ -1470,23 +1470,30 @@ def main():
     gvf.float_speech.on_complete = None
 
     # Vane's blind-cultist thread (NARRATIVE §4: his one window into the
-    # HOW). Earned, not ambient: it waits on the intro AND a first real
-    # thread found; asking files the PI's NOTE (never evidence); and the
-    # account keeps his knowledge boundary (the blind man, the dream's
-    # offer, no destination and no cosmology).
+    # HOW). TRUST-gated (DESIGN.md §2): it waits on the intro AND a real
+    # discovery SHARED with him (found alone is not enough -- trust is
+    # earned, not ambient); asking files the PI's NOTE (never evidence);
+    # and the account keeps his knowledge boundary (the blind man, the
+    # dream's offer, no destination and no cosmology).
     from scenes.dialogue import _vane_how_told
     gvh = new_game()
     _qhow = next(ex for ex in _VC["exchanges"] if ex["key"] == "how")
     check(_qhow.get("once"),
           "vane: the blind-cultist story is spent once")
     check(not _qhow["avail"](gvh),
-          "gate: the how waits before the intro and any thread")
+          "gate: the how waits before the intro and any trust")
     gvh.save.set_flag("convo_vane_intro_asked", True)
     check(not _qhow["avail"](gvh),
           "gate: the intro alone does not open the how")
     _evfn2(gvh, "maras_journal", "a", show=False)
+    check(not _qhow["avail"](gvh),
+          "gate: a discovery found but never shared does not open the how")
+    _qsj = next(ex for ex in _VC["exchanges"] if ex["key"] == "share_journal")
+    check(_qsj["avail"](gvh),
+          "gate: finding the journal opens its share")
+    _qsj["on_ask"](gvh)
     check(_qhow["avail"](gvh),
-          "gate: the intro plus a first thread opens the how")
+          "gate: the intro plus a shared discovery opens the how")
     _ev_h = len(gvh.save.arg("evidence", []))
     _vane_how_told(gvh)
     check(any(isinstance(e, dict) and e.get("name") == "the_how"
@@ -1673,6 +1680,125 @@ def main():
     gch._convo.active = False
     gch._convo = None
     gch.float_speech.active = False
+
+    # --- 17f. Sheriff Vane's despair/hope arc (DESIGN.md §2; was TODO #2a) -
+    # A hidden ledger decides the last holdout's fate; the player never
+    # sees a number, only his mood. Sharing a discovery is the one hope
+    # act (and the trust currency, guarded in 17d); the preacher's murder
+    # and the newspaper are the despair acts. The hollow turn latches at
+    # VANE_HOLLOW_AT and never lets go; the NEGLECT override hollows him
+    # at the descent line with nothing ever shared.
+    from scenes.dialogue import (_vane_ledger, _vane_share, _vane_prompt,
+                                 _vane_paper_given, sheriff_dialogue)
+    from systems.config import (VANE_HOLLOW_AT, VANE_DESPAIR_FLOOR,
+                                VANE_PAPER_DESPAIR, VANE_MIN_INFORMED,
+                                VANE_NEGLECT_EVIDENCE)
+
+    # The ledger: shares bank hope only to the floor (real rapport is
+    # never immunity), and the mood line reads the balance, no number.
+    gva = new_game()
+    check("belt" in _vane_prompt(gva),
+          "vane-arc: the neutral mood is the old wait-you-out")
+    _vane_share(gva); _vane_share(gva); _vane_share(gva)
+    check(int(gva.save.arg("vane_despair", 0)) == VANE_DESPAIR_FLOOR,
+          "vane-arc: hope banks only down to the floor")
+    check(int(gva.save.arg("vane_informed", 0)) == 3,
+          "vane-arc: every share counts toward the neglect override")
+    check("welcome" in _vane_prompt(gva),
+          "vane-arc: banked hope warms the framing line")
+    _vane_ledger(gva, 4)
+    check("window" in _vane_prompt(gva) and not gva.save.flag("vane_hollow"),
+          "vane-arc: despair darkens the framing line before it latches")
+
+    # The newspaper is the break lever (TODO #2): the exchange waits on
+    # the intro, spends the one copy (Hettie's trade goes without), and
+    # telegraphs the damage as mood -- the PI's own closing line.
+    _qpp = next(ex for ex in _VC["exchanges"] if ex["key"] == "paper")
+    gvp = new_game()
+    check(not _qpp["avail"](gvp),
+          "vane-arc: the paper waits on the introduction")
+    gvp.save.set_flag("convo_vane_intro_asked", True)
+    check(_qpp["avail"](gvp),
+          "vane-arc: with the intro made, the paper can be given")
+    _vane_paper_given(gvp)
+    check(not gvp.player.inventory.has("newspaper"),
+          "vane-arc: giving Vane the paper spends the one copy")
+    check(int(gvp.save.arg("vane_despair", 0)) == VANE_PAPER_DESPAIR,
+          "vane-arc: the paper walks him toward the edge, not over it")
+    check(not _qpp["avail"](gvp),
+          "vane-arc: the spent paper cannot be given twice")
+    _pp_txt = " ".join(b[1] for b in _qpp["beats"])
+    check("Cobain" in _pp_txt,
+          "vane-arc: the front page carries its centerpiece")
+    check("kindness" in _pp_txt,
+          "vane-arc: the give-beat telegraphs the damage as mood")
+
+    # The despair path latches: the paper plus the preacher's murder tips
+    # a neutral Vane over, and once hollow no hope buys him back.
+    gvd = new_game()
+    gvd.save.set_flag("convo_vane_intro_asked", True)
+    _vane_paper_given(gvd)
+    gvd.save.set_flag("preacher_body_seen", True)
+    gvd.save.set_flag("vane_greeted", True)
+    sheriff_dialogue(gvd, None)             # the murder one-shot: +1
+    check(gvd.save.flag("vane_hollow"),
+          "vane-arc: paper plus the murder tips a neutral Vane over")
+    _vane_ledger(gvd, -10)
+    check(gvd.save.flag("vane_hollow")
+          and int(gvd.save.arg("vane_despair", 0)) >= VANE_HOLLOW_AT,
+          "vane-arc: once hollow, no return")
+    # ...while a careful player who shared first eats the same two beats
+    # and just survives (the floor is why).
+    gvc = new_game()
+    gvc.save.set_flag("convo_vane_intro_asked", True)
+    _vane_share(gvc); _vane_share(gvc)
+    _vane_paper_given(gvc)
+    gvc.save.set_flag("preacher_body_seen", True)
+    gvc.save.set_flag("vane_greeted", True)
+    sheriff_dialogue(gvc, None)
+    check(not gvc.save.flag("vane_hollow"),
+          "vane-arc: banked hope survives the paper and the murder")
+
+    # The NEGLECT override: the descent line reached with nothing ever
+    # shared kills his last hope regardless of the ledger; one shared
+    # discovery dodges it. Evaluated at the office gate (_vane_is_hollow),
+    # which every share must walk through first.
+    gvn = new_game()
+    gvn.save.set_arg("evidence",
+                     [{"name": f"vn_t{i}", "content": "x"}
+                      for i in range(VANE_NEGLECT_EVIDENCE)])
+    check(gvn._vane_is_hollow() and gvn.save.flag("vane_hollow"),
+          "vane-arc: the neglect override hollows him at the descent line")
+    gvm = new_game()
+    gvm.save.set_arg("evidence",
+                     [{"name": f"vm_t{i}", "content": "x"}
+                      for i in range(VANE_NEGLECT_EVIDENCE)])
+    for _ in range(VANE_MIN_INFORMED):
+        _vane_share(gvm)
+    check(not gvm._vane_is_hollow(),
+          "vane-arc: one discovery shared dodges the neglect override")
+
+    # The office reads the latch, not the rot stage: a hollow Vane hunts
+    # at zero evidence, and a tended Vane still stands at three.
+    gvo = new_game()
+    gvo.save.set_flag("vane_hollow", True)
+    gvo.load_scene_now("sheriff_office")
+    ready(gvo)
+    check(any(getattr(n, "tag", "") == "sheriff_hunt"
+              for n in gvo.scene.npcs),
+          "vane-arc: the hollow turn stands the hunter up, whatever the rot")
+    gvo2 = new_game()
+    gvo2.save.set_arg("evidence",
+                      [{"name": f"vo_t{i}", "content": "x"}
+                       for i in range(3)])
+    _vane_share(gvo2)
+    gvo2.load_scene_now("sheriff_office")
+    ready(gvo2)
+    check(not any(getattr(n, "tag", "") == "sheriff_hunt"
+                  for n in gvo2.scene.npcs)
+          and any(getattr(n, "name", "") == "Sheriff"
+                  and getattr(n, "alive", True) for n in gvo2.scene.npcs),
+          "vane-arc: the tended holdout still stands at three evidence")
 
     # --- 18. effigy_grove is a maker-less tableau (§1b/§8) ---------------
     # Individual cursing is redundant -- the closing rite claimed the town at

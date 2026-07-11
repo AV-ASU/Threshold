@@ -169,39 +169,48 @@ What rises with the stage:
   acknowledging the gap. The dread is the mundane line delivered by
   someone who is no longer home behind it — one impossible thing, and it
   is the door.
-- **Sheriff Vane falls last, and hardest** — the last holdout, and the
+- **Sheriff Vane falls last, and hardest — and his fall is
+  player-driven (TODO #2a, built 2026-07).** The last holdout, and the
   one soul in town **claimed but unattuned** (he never dreamed the door;
-  NARRATIVE §4). At stage 3 his office becomes a unique threat:
-  `_spawn_hunting_sheriff` stands the hollow lawman up (`sheriff_hollow`
-  sprite), he holds for an intro beat — says the line he can no longer
-  finish — then force-chases (`_tick_sheriff`), slow and unrelenting;
-  contact → **TAKEN INTO CUSTODY**; a run outpaces him back out his
-  door; the best ammo cache in town is his. **Why the King takes him so
+  NARRATIVE §4). The world rot never turns him on its own; a hidden
+  **despair/hope ledger** decides his fate (`vane_despair`, the `VANE_*`
+  config block; surfaced only as his **mood** — the conversation's
+  framing line and the beats — never a number). **Hope has one
+  currency:** the PI **sharing a real discovery** with him (the
+  `share_*` exchanges in `VANE_CONVO`, `_vane_share`) — the same act is
+  the **trust** that opens his investigation thread (the blind-cultist
+  *how* waits on a share, not on evidence found), so tending him and
+  earning his help are one gesture. **Despair** comes from the beats
+  that read, to a man who wants it all to *end*, as permission: the
+  preacher's murder (`+VANE_DESPAIR_ACT`) and the newspaper's front page
+  (`+VANE_PAPER_DESPAIR` — the break lever, TODO #2; the give-beat
+  telegraphs it as mood). Net despair at `VANE_HOLLOW_AT` **latches the
+  hollow turn** (`vane_hollow`) — once hollow, no return — and hope
+  banks only to `VANE_DESPAIR_FLOOR`, so rapport is real but never
+  immunity. The hard **neglect override** beats the ledger
+  (`_vane_is_hollow`, evaluated at his office door, which every share
+  must walk through): reach the descent (**3 evidence**) having never
+  let him into a single discovery, and his last hope, that someone was
+  actually working it, dies with the silence, and he falls. Tend him
+  instead and he **holds** — the holdout who lives as much as anyone
+  here does. The encounter itself is unchanged either way: on the next
+  office load `_spawn_hunting_sheriff` stands the hollow lawman up
+  (`sheriff_hollow` sprite), he holds for an intro beat — says the line
+  he can no longer finish — then force-chases (`_tick_sheriff`), slow
+  and unrelenting; contact → **TAKEN INTO CUSTODY**; a run outpaces him
+  back out his door; the best ammo cache in town is his. Guarded end to
+  end by `tests/flow.py` §17f. **Why the King takes him so
   completely:** what Vane wants most is for all of it to *end*, and the
   King can only ever offer endless *more* — the one appetite the door
   cannot answer; and being unattuned, the claim can **compel him but not
   steer him** — the only soul who runs *from* the door instead of toward
   it, so he goes **hollow** as a malfunction, not a convert.
-
-  > **PLANNED (TODO #2a) — the player-driven fall. Not built; this is
-  > the guide for when it is.** Replace the stage gate with a
-  > relationship arc: a hidden **despair/hope balance** (surfaced only
-  > as his mood, never a number) can tip him over, and a hard **neglect
-  > override** finishes him regardless — reach the descent (**3
-  > evidence**) having never let him into a single discovery, and his
-  > last hope, that someone was actually working it, dies with the
-  > silence, and he falls. Tend him instead (share what you find; the
-  > same act is the trust he withholds by default) and he **holds**,
-  > the holdout who lives as much as anyone here does. The encounter
-  > itself is unchanged either way (the stand, the unfinished line, the
-  > slow pursuit). The despair/hope ledger, its constants, and the
-  > newspaper break-lever live with the build ticket (TODO #2 + #2a).
 - **The dead.** A local you shoot lies where they fell **for the rest
   of the run** (2026-07 ruling: dead locals stay dead). The kill is
   written to the `dead_locals` ledger and the scene lays the body back
   down on every re-entry (§1); the rot pass skips the dead, and a shot
-  Vane never stands back up hollow — his body holds the office at
-  stage 3 instead of the `sheriff_hunt` spawn.
+  Vane never stands back up hollow — his body holds the office instead
+  of the `sheriff_hunt` spawn, whatever his ledger says.
 
 ---
 

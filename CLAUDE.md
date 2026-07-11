@@ -330,7 +330,7 @@ it renders the procedural sprites to a labelled PNG strip.
   (`_kill_npc` returns keep → `_make_corpse`, and writes the kill to the
   `dead_locals` ledger; `_apply_dead_locals` lays the body back down on
   every re-entry — 2026-07 ruling: dead locals stay dead, flow §32; a
-  dead Vane also suppresses the stage-3 `sheriff_hunt` spawn). **Cultists
+  dead Vane also suppresses the hollow-turn `sheriff_hunt` spawn). **Cultists
   leave bodies too** (override of the old "the cult reclaims its own"
   sweep): NPC cultists keep via `_kill_npc` (no visibility spike — that's
   local-only), and **enemy** cultists (well/depths, `kind="cultist"`)
@@ -358,12 +358,23 @@ it renders the procedural sprites to a labelled PNG strip.
   `_draw_infested_portrait` dialog portrait + the `infested=True` `show()`
   path — was **cut** 2026-07, TODO #9; `sprites_wound.py` keeps only the
   shared `_gold_in_wound` helper the corpse art still uses.)
-  And (c) at stage 3 turns
-  the Sheriff's office into a **unique threat**: `_spawn_hunting_sheriff`
+  Sheriff Vane is exempt from the rot pass: his fall is
+  **player-driven (TODO #2a, 2026-07)** — a hidden despair/hope ledger
+  (`vane_despair`, the `VANE_*` config block; `_vane_ledger`/`_vane_share`
+  in `scenes/dialogue.py`) surfaced only as his MOOD (the convo's framing
+  line + the beats, never a number). Sharing a discovery with him is both
+  the hope currency and the TRUST that opens his blind-cultist thread; the
+  preacher's murder (+1) and the newspaper give (+2, his break lever) are
+  the despair acts; net `VANE_HOLLOW_AT` (3) **latches `vane_hollow`**
+  (once hollow, no return), and the **neglect override**
+  (`_vane_is_hollow`, rot_mixin) hollows him regardless at 3 evidence
+  with fewer than `VANE_MIN_INFORMED` (1) discoveries shared. Once
+  hollow, the next office load turns it into a **unique threat**:
+  `_spawn_hunting_sheriff`
   (`sheriff_hollow` sprite) holds for an intro beat then force-chases
   (`_tick_sheriff`); contact → `_trigger_death("sheriff")`; the spawn is
   skipped if the player already killed Vane (dead locals stay dead — his
-  body holds the office). Player-killed
+  body holds the office). Guarded by flow §17f. Player-killed
   locals are drawn by `draw_npc_corpse` at **`mold=0`** (a clean fresh
   kill) — the body persists across loads (the `dead_locals` ledger) but
   no rot stage accumulates on it. (`draw_npc_corpse` still *accepts* a `mold` 0..3 and

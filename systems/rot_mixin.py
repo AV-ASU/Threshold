@@ -510,11 +510,14 @@ class RotMixin:
         # Locals turn (convert) or rot (mutate) on the surface.
         if surface_stage > 0:
             self._rot_locals(surface_stage)
-        # Sheriff Vane's office becomes a unique threat at stage 3 --
-        # unless the player already put Vane down: dead locals stay dead
-        # (the ledger normalizes "Sheriff Vane" to "Sheriff"), so a shot
-        # Vane never stands back up hollow; his body holds the office.
-        if surface_stage >= 3 and key == "sheriff_office" \
+        # Sheriff Vane's office becomes a unique threat once HE has gone
+        # hollow (DESIGN.md §2: the player-driven fall -- the despair ledger
+        # latch, or the neglect override read in _vane_is_hollow; the old
+        # rot-stage-3 gate is gone) -- unless the player already put Vane
+        # down: dead locals stay dead (the ledger normalizes "Sheriff
+        # Vane" to "Sheriff"), so a shot Vane never stands back up
+        # hollow; his body holds the office.
+        if key == "sheriff_office" and self._vane_is_hollow() \
                 and not self._local_is_dead("Sheriff"):
             self._spawn_hunting_sheriff()
         # The general store from stage 2: one of them eats at Hettie's
@@ -672,8 +675,29 @@ class RotMixin:
         e.pose = "eat"
         self.scene.add_npc(e)
 
+    def _vane_is_hollow(self):
+        """Sheriff Vane's fate gate (DESIGN.md §2; was TODO #2a). True once the hollow turn
+        has latched: by the despair ledger (scenes/dialogue._vane_ledger --
+        the newspaper and the preacher's murder against the hope the PI
+        shared), or by the NEGLECT OVERRIDE evaluated here: the case
+        reaches the descent line (VANE_NEGLECT_EVIDENCE canonical beats)
+        with fewer than VANE_MIN_INFORMED discoveries ever shared with
+        him, and his last hope, that somebody was actually working it,
+        dies with the silence. Every share happens across his own desk,
+        and entering the office runs this gate first -- so the override
+        cannot be dodged by sharing after the fact. Latches the flag
+        either way: once hollow, no return."""
+        if self.save.flag("vane_hollow"):
+            return True
+        if (self._evidence_count() >= VANE_NEGLECT_EVIDENCE
+                and int(self.save.arg("vane_informed", 0))
+                < VANE_MIN_INFORMED):
+            self.save.set_flag("vane_hollow", True)
+            return True
+        return False
+
     def _spawn_hunting_sheriff(self):
-        """Stage 3: Sheriff Vane's office is no longer a place you visit.
+        """The hollow turn: Sheriff Vane's office is no longer a place you visit.
         Replace the watching Sheriff with the hollow thing he became -- a
         unique, relentless pursuer. He holds for a beat (his last words),
         then comes for you. Reaching you ends the run (the 'sheriff' card).
@@ -693,7 +717,7 @@ class RotMixin:
         self.audio.play("sheriff_hunt", 0.85)
 
     def _tick_sheriff(self, dt):
-        """Drive the stage-3 Sheriff encounter: hold for the intro beat,
+        """Drive the hollow-Sheriff encounter: hold for the intro beat,
         then set him hunting (force-chase), and end the run if he reaches
         the player. No-op in any scene without a sheriff_hunt NPC."""
         if self.scene is None or self.player is None:
