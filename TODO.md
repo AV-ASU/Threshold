@@ -340,6 +340,35 @@ hue). Verify with a before/after frame capture at sampled timestamps
 (`tests/render_smoke.py` drives every ending) and a look from the maintainer
 before it lands.
 
+### 20. **[Fable]** Mara's thread — the son, the letter, the confrontation  *(2026-07 canon; NARRATIVE §2/§4/§6/§8)*
+
+Canon is locked in the bible (the bearing rule — the door promises, never
+provides; the stillborn son; Walter never knew; the lucid turn-back). The
+game text does not carry any of it yet. The work:
+
+- **The unsent letter** (`maras_room`, evidence #1): rewrite to the locked
+  facts — addressed to Walter, admits the pregnancy, lands on the
+  son-for-a-daughter reflection, the boy's father dismissed in a clause,
+  the door never mentioned. The last thing the human Mara wrote.
+- **The journal** (`mom_notebook`): align — the grief legible by assembly
+  (circling the loss, never stating it flat), the hope arriving with the
+  dreams. The near-ending of the pregnancy stays substrate: her guilt is
+  grief's own lie, never the story's verdict (impossible count stays at
+  one).
+- **The confrontation**: rework the calling-out (`works_sign`, `_call_out` /
+  `_sign_update` in `scenes/well.py`, flow §28b) into the full exchange —
+  ask her to leave (no one can), ask the way out (there is none), and the
+  Walter card as a PLAYER ask that breaks her certainty: the boy's image
+  fades, she sees her hands / the hunger / the PI, stalls, and turns back
+  lucid. She never speaks of the boy directly (every *he* stays undivided
+  between son and god — the withheld noun). Evidence #6 lands as today.
+- **Edge to decide in-build:** shooting Mara (a clean round works on her —
+  the one end the PI can give her, and it saves nothing). Reconcile with
+  the calling-out staging + evidence #6 if she dies first, and with the
+  underground body rules (dead-locals ledger vs visit-only cult bodies).
+- Guards: extend flow §28b (the exchange shape, the withheld noun, no
+  rescue branch); re-green the full gate.
+
 ## Blocked on a human at the keys
 
 These are BUILT and guarded; what remains cannot be settled from code
