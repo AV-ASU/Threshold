@@ -547,10 +547,15 @@ def build_maras_room():
             "worn soft. Chosen.",
             "Folded inside the robe: a letter to her father. Stamped, never "
             "mailed. It opens \"Dad.\"",
-            "\"...I'm sorry for how I left. I couldn't explain it and have "
-            "it sound sane. The dreams aren't dreams anymore. They're "
-            "full of answers. I'm just hunting the questions now. Don't "
-            "come after me. I'm not lost. I've never been this close.\"",
+            "\"There was going to be a baby. A boy. I never told you, and "
+            "then I could not find a way to tell you the rest. I almost "
+            "decided different, right at the last, and then I wanted him "
+            "more than I have ever wanted anything. He came still.\"",
+            "\"I keep finding ways it was my fault. I know that isn't sane. "
+            "I keep finding them anyway. I wanted a son the way you wanted "
+            "a daughter, Dad. Somebody to wait up for.\"",
+            "\"Don't come after me. I'm not lost. I've never been this "
+            "close.\" It stops there. No signature.",
             "A journal page, weighted flat under the candle: \"I was the last "
             "one in. The rest had been here since the summer, and "
             "still they looked up when I came down the road like they had set "
@@ -559,6 +564,8 @@ def build_maras_room():
             "dreaming it.\"",
             "This is a room someone moved into. Blaine hired you to bring "
             "her home. She was already home.",
+            "The letter is addressed to a man you cannot reach. You are "
+            "the only one who will ever read it.",
         ])
     sc.on_interact_fn = _interact
     return sc
@@ -661,12 +668,118 @@ def build_works_scriptorium():
 
 # ---- Room 6: the Sign Chamber (key: works_sign) ----
 
+# THE CONFRONTATION (2026-07, NARRATIVE §4/§6 #6). The calling-out walks
+# her to you; this is the exchange it opens. She cannot be argued home:
+# asked to come away, no one leaves; asked the way out, there is none.
+# The father card is the PLAYER'S OWN ASK, never automatic -- it breaks
+# her certainty (the slip), she sees what is actually in front of her,
+# stalls, and turns back lucid ("ends": the talk closes and the staging
+# folds her back to the rank). CANON INVARIANTS: she never names what
+# she dug for -- every "he" in her mouth stays undivided between her son
+# and her god (the letter in her cell holds the noun; her mouth never
+# does) -- and full lucidity changes nothing. No exchange is a rescue.
+MARA_CONVO = {
+    "id":    "mara_confront",
+    "name":  "Mara",
+    "voice": "blip_mid",
+    "pi_voice": "blip_soft",
+    "prompt": "She stands out of the rank, waiting.",
+    "leave":  "Say nothing.",
+    "greet": {
+        "flag": "mara_confront_greeted",
+        "beats": [
+            ("npc", "My father sent you. Of course he did. He never could "
+                    "let a thing stay lost."),
+            ("npc", "Tell him what I told him at the start. I'm not lost. "
+                    "I've never been this close."),
+            ("npc", "[c=dim]There was no one down here to bring back. I was "
+                    "not taken. I was answered, and I went to it gladly.[/c]"),
+        ],
+    },
+    "exchanges": [
+        {
+            "key": "leave",
+            "label": "Come with me.",
+            "q": "Come with me, Mara. Right now. I'll get you out.",
+            "once": True,
+            "beats": [
+                ("npc", "Out."),
+                ("npc", "Nobody leaves, mister. Nobody has left since the "
+                        "winter. You have walked the roads by now. You know "
+                        "it better than the ones who quit trying."),
+                ("npc", "[c=dim]And why would I go. He is right there. A few "
+                        "feet of earth, and he is right there.[/c]"),
+            ],
+        },
+        {
+            "key": "way_out",
+            "label": "How do I get out?",
+            "q": "Then tell me how I get out. There has to be a way out.",
+            "once": True,
+            "beats": [
+                ("npc", "There isn't. We can't. None of us can."),
+                ("npc", "It is not a wall, mister. A wall has a far side. "
+                        "Every way out of this town is a way further in."),
+                ("npc", "[c=dim]Go home, while the town still lets you think "
+                        "you can.[/c]"),
+            ],
+        },
+        # The Walter card. The slip: her certainty breaks, the light goes
+        # out, and she surfaces into an ordinary nightmare -- her hands,
+        # the hunger, a man from the world. Then the stall, and the turn.
+        {
+            "key": "father",
+            "label": "Your father is waiting.",
+            "q": "Walter is waiting, Mara. Your father. He picks up the "
+                 "phone every time it rings.",
+            "once": True,
+            "ends": True,
+            "on_ask": lambda g: g.save.set_flag("mara_lucid", True),
+            "beats": [
+                ("npc", "My father."),
+                ("npc", "[c=dim]He used to wait up. However late I came "
+                        "home. He never said a word about it, but the "
+                        "kitchen light would be on.[/c]"),
+                ("npc", "The light."),
+                ("npc", "It went out. It just went out. All this time there "
+                        "was a light at the bottom of the dig, under a door, "
+                        "like a house where somebody is waiting up. I could "
+                        "see it with my eyes open. I am looking right at "
+                        "where it was."),
+                ("npc", "My hands. Look at my hands. When did I eat, mister. "
+                        "What day is it, outside."),
+                ("npc", "You are real. You came from outside. What am I "
+                        "doing down here."),
+                ("pi",  "Come home. Come with me, right now, and don't look "
+                        "back."),
+                ("npc", "[c=dim]Home.[/c]"),
+                ("npc", "[c=dim]Say what is up there for me. Out loud. Say "
+                        "what I go back to.[/c]"),
+                ("npc", "Nothing. It happened, and up there it stays "
+                        "happened, every morning, forever. Down here it is "
+                        "not finished happening. Down here he is still "
+                        "coming."),
+                ("npc", "There is no out, mister. Not for me. Only deeper."),
+                ("npc", "[c=dim]Tell my father I was happy here. Tell him "
+                        "whatever makes him stop.[/c]"),
+            ],
+        },
+    ],
+}
+
+
 def _mara_voice(game, npc):
-    """Mara's one-shot recognition -- the #6 payoff. The case was never a
-    rescue; you went deeper and found her already gone. After it, she has
-    gone back to the kneeling. (2026-07: she kneels HERE, at the Mask's
-    foot, and the staged calling-out below walks her to you; this fn is
-    both the staging's exchange and her repeat E-press.)"""
+    """Mara's confrontation -- the #6 payoff (NARRATIVE §4). The case was
+    never a rescue; the calling-out walks her to you and this opens the
+    exchange (MARA_CONVO above). Evidence #6 files the moment it opens,
+    whatever the player asks. Full lucidity changes nothing: the father
+    card breaks her certainty and she still turns back to the dig. After
+    it, she has gone back to the kneeling. (A shot Mara forfeits #6: the
+    confrontation was the evidence, and the gate still opens on the
+    other five beats.)"""
+    st = getattr(game, "_mara_stage", None)
+    if st is not None and st.get("step", 0) < 3:
+        return   # the staging is already walking her to you; let it land
     if game.save.flag("hive_seen"):
         game.dialog.show(
             ["[c=dim]She has gone back to the kneeling. She won't look at "
@@ -676,14 +789,20 @@ def _mara_voice(game, npc):
     game.save.set_flag("hive_seen", True)
     game.audio.force_silence()
     game.audio.play("low_pulse", 0.6)
-
-    def _lure_collision():
-        # TODO #7 -- the lure chain, felt ONCE (NARRATIVE §1/§10 fence:
-        # never stated, no chain named; the PI starts the thought and
-        # declines to finish it). Only for a player who lived the dream
-        # (flashback_seen); for anyone else her lines stand alone.
-        if not game.save.flag("flashback_seen"):
-            return
+    # File evidence #6 FIRST and silently (show=False): the log + the
+    # King-gate land immediately, whatever the player does with the menu.
+    _evidence(game, "the_congregation", [
+        "Mara, kneeling with the congregation. Turned. There was never "
+        "anyone to bring back. Only this, and now you're in it with her.",
+    ], show=False)
+    from ui.conversation import open_conversation
+    open_conversation(game, npc, MARA_CONVO)
+    # TODO #7 -- the lure chain, felt ONCE (NARRATIVE §1/§10 fence: never
+    # stated, no chain named; the PI starts the thought and declines to
+    # finish it). A caption under her greeting, only for a player who
+    # lived the dream (flashback_seen); for anyone else her lines stand
+    # alone.
+    if game.save.flag("flashback_seen"):
         game.dialog.show([
             "[c=dim](A door in your sleep, a year back. Then a grief job "
             "you had no reason to take, and an itch that drove you north "
@@ -692,27 +811,6 @@ def _mara_voice(game, npc):
             "You start the arithmetic of that, and you put it down. Some "
             "sums you don't finish standing up.)[/c]",
         ], speaker="", voice="blip_soft", portrait="narrator")
-
-    # File evidence #6 FIRST and silently (show=False): the log + the
-    # King-gate land immediately, and the one-line evidence dialog no
-    # longer CLOBBERS her four lines (dialog.show replaces the open
-    # box, so the old order showed the player only the summary and the
-    # whole exchange was lost). The notebook keeps the summary text.
-    _evidence(game, "the_congregation", [
-        "Mara, kneeling with the congregation. Turned. There was never "
-        "anyone to bring back. Only this, and now you're in it with her.",
-    ], show=False)
-    game.dialog.show([
-        "[c=dim](The hood lifts. It is Mara.)[/c]",
-        "\"My father sent you. Of course he did. He never could let a thing "
-        "stay lost.\"",
-        "[s=slow]\"Tell him what I told him at the start. I'm not lost. I have "
-        "never been this close.\"[/s]",
-        "[c=dim]\"There was no one down here to bring back. I was not taken. I "
-        "was answered, and I went to it gladly. Go home, while the town still "
-        "lets you think you can.\"[/c]",
-    ], speaker="", voice="blip_soft", portrait="narrator",
-        on_complete=_lure_collision)
 
 
 def build_works_sign():
@@ -878,10 +976,13 @@ def build_works_sign():
                 _face(mn, p.x, p.y)
                 _mara_voice(game, mn)
         elif st["step"] == 3:
-            # Her exchange (and the lure beat chained off it) is modal;
-            # the sim freezes under it, so reaching this tick means it
-            # is over. The rank folds back down.
-            st["step"] = 4
+            # Her confrontation runs LIVE (floats + the ask menu; the
+            # world keeps moving). The rank folds back once the talk
+            # ends: the father card ("ends"), the player picking "Say
+            # nothing.", or walking out of earshot.
+            cv = getattr(game, "_convo", None)
+            if cv is None or not cv.active:
+                st["step"] = 4
         elif st["step"] == 4:
             hx, hy = scene._mara_home
             dx, dy = hx - mn.x, hy - mn.y

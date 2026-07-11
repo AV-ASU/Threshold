@@ -669,18 +669,22 @@ def build_clerk_room():
 
 
 def clerk_room_interact(game):
-    """The Clerk's room. CLOSET (E): his pressed cult robe -- the tell that
-    the smiling trap-keeper is one of them. A one-shot flavor clue, NOT
-    counted evidence ('clerk_robe' is not in CANONICAL_EVIDENCE, so it
-    narrates but never moves the King-gate). DRESSER (E): bare."""
+    """The Clerk's room. CLOSET (E): the cult robe -- the PI reads it as
+    membership; the truth (NARRATIVE §4, the lucky host) is that it came
+    with the Invitation, the congregation's offer to bring him below, and
+    he never once put it on. The never-worn detail is the quiet fact a
+    player can re-read later. A one-shot flavor clue, NOT counted evidence
+    ('clerk_robe' is not in CANONICAL_EVIDENCE, so it narrates but never
+    moves the King-gate). DRESSER (E): bare."""
     sc = game.scene
     px, py = game.player.x, game.player.y
     cx, cy = sc._closet_pos
     if abs(px - cx) <= 40 and abs(py - cy) <= 40:
         _evidence(game, "clerk_robe",
                   "A cult robe hangs in the Clerk's closet, pressed and "
-                  "folded, ready. The smiling man at the desk is one of "
-                  "them.")
+                  "folded. By the creases it has never once been worn. The "
+                  "smiling man at the desk is one of them, or was meant to "
+                  "be.")
         return
 
 
