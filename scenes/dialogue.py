@@ -438,26 +438,14 @@ def toby_dialogue(game, npc):
             "[c=dim]Don't open it where I can see.[/c]",
         ], speaker="Toby", voice="blip_kid", portrait="toby")
         return
-    # The envelope in the PI's pocket points at the school; the boy it
-    # belonged to confirms it, once, and begs him off it.
-    if (save.flag("rite_envelope_given")
-            and not save.flag("kid_school_warned")):
-        save.set_flag("kid_school_warned", True)
-        game.dialog.show([
-            "They slept in my school. All of them, in rows.",
-            "[c=dim]I looked in the window once. The board still has my "
-            "lesson on it, under their door.[/c]",
-            "Don't go in there, mister.",
-        ], speaker="Toby", voice="blip_kid", portrait="toby")
-        return
     from ui.conversation import open_conversation
     open_conversation(game, npc, TOBY_CONVO)
 
 
 # Ask-verb conversion (TODO #1 expand): everything Toby VOLUNTEERS (the
-# witness account, the playscript flinch, the school warning) fires ahead
-# of the menu in toby_dialogue above; the menu is what the PI chooses to
-# ask a child, and the old visit-ladder lines are now his answers.
+# witness account, the playscript flinch) fires ahead of the menu in
+# toby_dialogue above; the menu is what the PI chooses to ask a child,
+# and the old visit-ladder lines are now his answers.
 TOBY_CONVO = {
     "id":    "toby",
     "name":  "Toby",
