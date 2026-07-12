@@ -240,9 +240,9 @@ never predation.
 | **Sheriff Hollis Vane** | **Local — the last holdout; claimed but never attuned** | Alone among the named cast he never dreamed the door. Not a believer: the town's one real investigator, chasing the *how* — how a pack of outsiders talked his town into walking off and shut it. His single window into it is one post-seal conversation with a nameless blind cultist, radiant with unaccountable conviction, promised his sight restored by the dream, and in truth sent to convert him. Vane refused; from that one exchange he holds the only piece of the how — the door answers your deepest want. He knows the outsiders filled the school, barn, and lodge, then walked out one night in a line; the King, the Threshold, and where the line went are beyond him. What he wants most is for all of it to end. Toward the PI he is hopeful but mistrusting — one more outsider who drove in is the exact profile of every cultist — and trust is earned only as the PI shares real discoveries. His fall is player-driven (`DESIGN.md` §2). |
 | **Rev. Asa Crane**, Preacher | **Local — innocent dissenter** | Names the cult from his own pulpit, oblivious to what they truly are but loud that they're no church. His doom is a chosen beat: the PI either presses him (his culpability filed as a note) or holds him back, which only banks the fire — when the case stalls at two surface threads, the PI's own interior voice points him back at the pulpit. He cannot be saved, only un-pointed: the cult cannot be talked out of anything, and Crane dies for believing he can. The doom sends him OUT — down to the river after his flock, believing they can be talked home. The church stands empty on the next entry, and his body is found on the Brimley riverbank, gutted, his cross in the viscera (evidence #4). All he ever knew was the rumor Toby told him. The town murders the ones who name it. |
 | **Hettie**, Store-Owner | **Local — quiet resister** | One person: the counter-keeper and the quiet resister merged. The shop is gutted — shelves bare, till empty since the new year, deliveries dead with the fold. Her value is what she risks saying out loud: frightened warnings about who to trust, never said outright, and a one-shot reaction to the Preacher's death. She trades a load of cartridges for the PI's one-day-old newspaper; that is how starved for word the town is. |
-| **Toby**, the Kid | **Local — innocent witness** | Followed the night procession down the river to the cult's dug-open ground and saw them go below, before the rite — the sole witness of where they went. His account is **earned, never volunteered** (2026-07 rework): a kid has no way to know the case on sight, so the witness beat rides the PI holding out Mara's photograph. Before that, the commune lived in his school. His witness does two jobs: it poses the descent question (the only honest account in town points at ground you can never walk to — the grove is fold-hidden) and it seeds the school, the room the Invitation names. What he gives you is the truth, never an object. Children notice what adults pretend not to. |
+| **Toby**, the Kid | **Local — innocent witness** | Followed the night procession down the river to the cult's dug-open ground and saw them go below, before the rite — the sole witness of where they went. His account is **earned, never volunteered** (2026-07 rework): a kid has no way to know the case on sight, so the witness beat rides the PI holding out Mara's photograph. Before that, the commune lived in his school. His witness does two jobs: it poses the descent question (the only honest account in town points at ground you can never walk to — the grove is fold-hidden) and it seeds the school, the room the Invitation names. **He also holds Mara's bear** — she gave the sad lodge lady's only-toy-in-town to him, a stuffed bear whose tag reads *Sam*; he does not part with it easily, and only the PI's patience with a scared child earns it (the PI is numb but soft with kids). He **lends** it for a reunion that cannot happen: "if you find her, give it back." It is the case's secret fourth evidence (§6) and, carried below, the trigger for the confrontation's cruelest beat (§4 Mara). What he tells you is the truth; what he lends you is the wound. Children notice what adults pretend not to. |
 | **The Brimley chorus** (Hettie, Old Pell, Mrs. Calder, Royce, Garrick, Toby) | **Locals** | The town still tries to live. Mrs. Calder sets a place at supper for a guest she can't name — a certainty she can't explain that someone is coming. Old Pell grew the town's pride, the northernmost corn in the world (§1 note 2), and won't look long at the fields that died standing when the fall harvest went uncut; he also stopped marking the calendar (a rot-layer detail, not talk). Royce tried to drive out like everyone in town did — the corn handed every driver back — and gave it up with the rest; he clings to the one impossible fact he can't square: you got IN. They all know the fold is real; none of them understand it. The named principals — Vane, Crane, Hettie, Toby, Sable — surface as dialogue speakers (locked in `tests/flow.py`). |
-| **Mara Blaine** | **Newcomer — the quarry, already turned** | In her twenties, and her tragedy predates the door: she was pregnant, meant to end it, and changed her mind at the last moment because she wanted him — and the boy was born dead. An ordinary loss, no fault and no cosmic hand in it (the impossible count stays at one, §2); the guilt she carries for the hesitation is grief's own lie, hers alone, never the story's verdict. The dreams found that hole and gave it a bearing (§2): he is on the other side, nearer every night. She drove north in the fall, went down with the procession, and kneels now among the congregation — hands and knees bleeding from the dig, long past hunger, a cell in the battery worth what her hands have left. At the calling-out (§6 #6) she cannot be argued home: asked to come away, no one leaves; asked the way out, there is none. The PI can invoke her father — the player's own ask, never automatic — and her certainty breaks: the boy's image fades off the door and she sees what is actually in front of her, the ruined hands, the hunger, a man from the world that still has fathers in it. She asks herself what she is doing; then comes the stall — what does she have without this — and she answers it lucid: for her there is no out, only deeper, and she turns back to the dig with her eyes open. The lucidity is the darkest beat proven to the floor: un-deceived, she still goes; there was never anyone to save. She never speaks of the boy directly — every *he* in her mouth stays undivided between her son and her god. Her story has exactly two ends, the dig or the PI's round, and the round saves nothing. Reading her journal to the end drops the player into the flashback of the burning doorframe, the game's clearest look at the lure; the unsent letter in her cell carries the admission her father never got (§6 #1). |
+| **Mara Blaine** | **Newcomer — the quarry, already turned** | In her twenties, and her tragedy predates the door: she was pregnant, meant to end it, and changed her mind at the last moment because she wanted him — and the boy was born dead. An ordinary loss, no fault and no cosmic hand in it (the impossible count stays at one, §2); the guilt she carries for the hesitation is grief's own lie, hers alone, never the story's verdict. The dreams found that hole and gave it a bearing (§2): he is on the other side, nearer every night. She drove north in the fall, went down with the procession, and kneels now among the congregation — hands and knees bleeding from the dig, long past hunger, a cell in the battery worth what her hands have left. At the calling-out (§6 #6) she cannot be argued home: asked to come away, no one leaves; asked the way out, there is none. The PI can invoke her father — the player's own ask, never automatic — and her certainty breaks: the boy's image fades off the door and she sees what is actually in front of her, the ruined hands, the hunger, a man from the world that still has fathers in it. She asks herself what she is doing; then comes the stall — what does she have without this — and she answers it lucid: for her there is no out, only deeper, and she turns back to the dig with her eyes open. The lucidity is the darkest beat proven to the floor: un-deceived, she still goes; there was never anyone to save. She never speaks of the boy directly — every *he* in her mouth stays undivided between her son and her god. **The boy's name is Sam** (Samuel); it lives in the world but never in her mouth (the invariants). She carried a bear north for the nursery that never came, and gave it to Toby, the one living child she met — the tag still reads Sam's name (§4 Toby; §6 the secret fourth). If the PI carries that bear into the confrontation he can say the name, and it is the one word she cannot survive: it splits the fused *he*, and she comes apart — seizing him, the rite's stillness cracking — and in the break reveals the bottom of her, that she has always known Sam is not down there and digs on anyway, because stopping means he is nowhere at all. It changes nothing (she buries him and turns back to the dig); it only shatters her further and wounds the player for the reach. Her story has exactly two ends, the dig or the PI's round, and the round saves nothing. Reading her journal to the end drops the player into the flashback of the burning doorframe, the game's clearest look at the lure; the unsent letter in her cell carries the admission her father never got (§6 #1). |
 | **Walter Blaine** | **Outsider, off-screen — the unwitting bait** | A Minneapolis voice on a phone that no longer connects. His grief is real; the case itself is the King's hook (§1). No one in Brimley has ever met him — he exists only through the PI's case notebook. He gets no resolution; the call never connects again, and that silence is the point. He never knew Mara was pregnant — the letter that admits it is unsent and addressed to him (§6 #1) — so by the case's end the PI is the only living soul holding the whole of it, with no line back to Minneapolis to put it down. |
 | **The cult, the Watchers, the King** | **Newcomers + their god** | The congregation are the attuned newcomers. The Watchers are His gaze made local — the higher-dimensional eye reaching into the flat plane wherever His attention falls (`DESIGN.md` §1). The King is the thing above the door. |
 
@@ -308,29 +308,74 @@ never predation.
 
 ## 6. Evidence
 
-The thread that drags you down. A pool of six; **any 3 is the point of
-no return** (arms the King — `DESIGN.md` §1). Three sit on the surface,
-so a thorough town search arms Him while you are still above ground: a
-fair, brutal "you dug too deep, too fast." The deeper three wait below.
+The thread that drags you down. It is **Mara's case** — a missing
+person — so the evidence is **Mara's trail and nothing else**: a
+biography of one woman's descent, reconstructed piece by piece.
 
-| # | Evidence | Item / scene key | Where | What it proves |
-|---|---|---|---|---|
-| 1 | **Mara's Room** | `maras_room` (robe + unsent letter) | Underground — a convert's cell off the Sorting Hall | She didn't rent a room and vanish; she *moved in* down here. She joined willingly; she was already home. The unsent letter is to her father: it admits the pregnancy he never knew of, and what she wanted — a son, the way he had wanted a daughter (§4). The boy's father is dismissed in a clause, unnamed and irrelevant; the door is never mentioned. The last thing the human Mara wrote. |
-| 2 | **Mara's Journal** | `mom_notebook` | The barn, behind the workbench | Her descent, in her own words (page 3 fires the flashback). |
-| 3 | **The Ledger** | read in place | The padlocked Lodge cellar — the boxed old registers | Guests who check in and never out. The checkout dates stop a year back, the same season the PI dreamed the door — and his own name, signed the night he arrived, is already among them. |
-| 4 | **The Preacher** | his cross (item `cross`), taken from the viscera | The Brimley riverbank; the emptied church points there | The town murders the ones who name it. |
-| 5 | **The Sign — the Pallid Mask** | `pallid_mask` | The Sign Chamber (the cult's underground altar) | His face made an object: what they worship, the key the fold answers to, and the keystone you carry down. |
-| 6 | **The Congregation** | (Mara, turned) | The Sign Chamber — she kneels at the Mask's foot; first entry stages the calling-out, the kneelers rise, one says her name, and she comes to you — the confrontation that ends her thread (§4) | There was never anyone to save, and full lucidity changes nothing. |
+> **Rework in progress (2026-07).** This is the settled canon; the code
+> still implements the legacy six (`CANONICAL_EVIDENCE` = `maras_room`,
+> `maras_journal`, `the_ledger`, `the_preacher`, `the_sign`,
+> `the_congregation`) and is catching up (build: `TODO.md` #22; design:
+> `DESIGN.md` §9). Where this section and the code disagree, this
+> section is the target.
 
-> **The Sign IS the Pallid Mask.** The King's own pale half-mask, made
-> an object — the jaundiced sigil scrawled through the cult's halls is
-> only its flattened 2D brand. This one fact binds the set: the Mask is
-> the single keystone carried down to the door, carrying it breaks the
-> fold (it is a shard of Him), and possessing it draws Him.
+**Three categories, and only one is evidence:**
 
-Evidence is a **log, not inventory**: the six beats above are the only
-entries that count toward the gate, and the PI's other discoveries file
-as case NOTES (`DESIGN.md` §3 for the wiring).
+- **Statement** — testimony. What a person *says*. Fallible: they lie,
+  misremember, or do not understand. Hettie's memory, Toby's account,
+  Royce's roads, the cult's own testimony (§9). These file as **notes**,
+  never evidence.
+- **Evidence** — a tangible thing, tied to Mara, that proves itself.
+  Four tests, all required: it is **Mara's**; it is a **pickup item**
+  (carried, never a walk-into-a-room examine, so never missable or
+  ambiguous); it is **self-evident** (you could photograph that one
+  moment and anyone would read it — no cosmology, no witness needed);
+  **one per room**.
+- **Proof** — the found person. Mara herself. The case's
+  **resolution**, not a log entry.
+
+**The trail** — felt it → did it → why → the result. The surface
+stations are the **people she touched** (and they must exist, or the
+threat has nothing to gate against, `DESIGN.md` §9); the underground
+stations are the **things she did**:
+
+| Station | Evidence | Where | What it proves |
+|---|---|---|---|
+| She lived here | **the receipt** (Hettie) | the shop | Matches, canned milk. Not a visitor — a resident. |
+| She was cracking | **the detention record** (Vane) | the office | He had to book her. She was coming apart in public. (Garrick *saw* her curse at the sky — a **statement**, the witness to the same night.) |
+| She turned inward | **the journal** (`mom_notebook`) | the barn | Her grief and the dream, in her own hand. Fires the door-dream. |
+| *(the secret fourth)* | **the bear** | Toby lends it | A dead son's toy she gave the one living child she met. The tag reads his name (§4). Unexplained on the surface; it **detonates** when the letter names the son below. Optional; never gates. |
+| She laboured | **the dig** (a work-tally / the Sign in her hand) | the Works | Willing hands. Not a captive — a digger. |
+| Why she stays | **the letter** (`unsent_letter`) | her cell | To her father: the pregnancy he never knew, the son, "I'm not lost." The last thing the human Mara wrote. |
+| The result | **Mara** — *proof, not evidence* | the Sign Chamber | The trail ends at the found person, alive and unrecoverable. |
+
+The **surface records are world-persistent**: the NPC hands them over
+the warm way (show the photograph, they react), but the paper outlives
+them — the receipt on the shop spike, the record in the office files —
+so killing Hettie or Vane can never soft-lock the descent (the
+Sable-drop precedent). This makes **Hettie, Vane, and Toby** the
+load-bearing locals.
+
+**What leaves the count** (all real, none of it Mara, so none of it
+case-evidence): the **Ledger** (she was never at the lodge → a
+town-note), the **Preacher** (not Mara; the cult's hostility is already
+proven by the sealed roads and the grabbing cultists → a beat/note),
+and the **Pallid Mask** (its meaning needs the cosmology to read, and it
+is His face, not hers → the **keystone item** carried down to the door,
+never a case beat). The Sign is still the Mask made an object (§6a
+below); it is simply not *evidence*.
+
+> **§6a — The Sign IS the Pallid Mask.** The King's own pale half-mask,
+> made an object; the jaundiced sigil scrawled through the cult's halls
+> is its flattened 2D brand. The Mask is the single keystone carried
+> down to the door, carrying it breaks the fold (a shard of Him), and
+> possessing it draws Him. It is the run's key **item**, not a piece of
+> the case.
+
+Evidence is a **log, not inventory**: only Mara's trail counts toward
+the gate, and every other discovery — the Ledger, the Preacher, the
+cult's testimony, the dream — files as a case **note** (`DESIGN.md` §3
+for the wiring, §9 for the model).
 
 ---
 
@@ -483,8 +528,12 @@ purpose, and keep each one guarded where a guard exists.
   one of them, at home below. → §2, §4
 - **The Sign is the Pallid Mask itself** — the King's pale half-mask
   made an object; drawn sigils are its 2D brand. → §6
-- **Any 3 of the 6 evidence beats is the point of no return** and arms
-  the King; only the six canonical beats count. → §6
+- **Enough of Mara's trail arms the King** and is the point of no
+  return; only case-evidence (Mara's trail, §6) counts toward the gate,
+  never statements or notes. The surface trail must be reachable above
+  ground so the threat has something to ramp against; the descent is
+  gated on it. (The legacy code still uses "3 of the canonical six"; the
+  target count is settled with the trail set, `TODO.md` #22.) → §6
 - **One way down: the rite.** Invitation (Sable, 3 evidence) → school
   chalk door → grove rite → the Works. The well is set-dressing; the
   barn hatch is nailed shut from below. → §7
@@ -528,10 +577,20 @@ purpose, and keep each one guarded where a guard exists.
   of it — the bare door, her ruined hands, the man from the world —
   and turns back to the dig; her story has exactly two ends, the dig
   or the PI's round. → §4, §6
-- **The boy stays unnamed and unspoken.** Mara never speaks of him
-  directly in player-facing text; every *he* in her mouth stays
-  undivided between her son and her god (guard lands with the scene).
-  → §4
+- **The boy has a name — Sam — but only the world may say it, never
+  Mara.** His name lives on the bear's tag and can be spoken by the PI;
+  **Mara herself never says it.** Every *he* in her mouth stays
+  undivided between her son and her god, so by the confrontation the
+  player is carrying the name she can no longer speak. Spoken to her
+  with the bear in hand, the name is the one thing that breaks her —
+  and it still changes her fate not at all (guard lands with the
+  scene). → §4, §6
+- **Evidence is Mara's trail; testimony and relics are not evidence.**
+  A piece of evidence is a carryable item, tied to Mara, self-evident on
+  its face. A person's words are a **statement** (a note); the Mask and
+  the Ledger are not case-evidence (the first needs the cosmology to
+  read, the second was never hers). Mara found is **proof**, not
+  evidence. → §6, `DESIGN.md` §9
 - **Sable is the lucky one.** His want was a full house; the migration
   the door caused fed it for a season (the door itself provided
   nothing); the Invitation is the congregation's offer to bring him

@@ -345,6 +345,67 @@ hue). Verify with a before/after frame capture at sampled timestamps
 (`tests/render_smoke.py` drives every ending) and a look from the maintainer
 before it lands.
 
+### 22. **[Opus + Fable]** The Case — evidence as Mara's trail (the big rework)  *(2026-07, settled with the user; canon NARRATIVE §6, design DESIGN.md §9)*
+
+The evidence system is the game's crux (it drives attention, danger, and
+the PI's unraveling) and it is currently half-dead: the "pool of six, any
+3" never held (the surface three are mandatory, and evidence 4/5/6 gate
+NOTHING — every threshold is ≤ 3). Rework it into **Mara's trail**: a
+biography reconstructed from carryable, self-evident, Mara-only items.
+Canon + design are written; this is the code catch-up. Big — touches
+`CANONICAL_EVIDENCE`, the King-gate, the rot mixin, the confrontation,
+and the tests. Sequence it:
+
+- **22a. The roster.** Rebuild `CANONICAL_EVIDENCE` to the trail
+  (`DESIGN.md` §9): the **receipt** (Hettie/shop), the **detention
+  record** (Vane/office), the **journal** (barn, exists), a **dig item**
+  (a work-tally or the Sign in Mara's hand — a room that is not the cell),
+  the **letter** (her cell, exists). Drop `the_ledger` / `the_preacher` /
+  `the_sign` from the count (they become notes / the keystone item — the
+  Mask stays the carried key, just not case-evidence). **Mara is proof,
+  not evidence** (`the_congregation` leaves the count; the calling-out
+  still fires, it just is not a filed beat). New evidence are **pickup
+  items**, never walk-into-a-room examines. **World-persistent:** the
+  surface records survive the local's death (drop-on-body or
+  findable-in-place, the `sable_on_death` precedent) so killing Hettie or
+  Vane can never soft-lock the descent. Re-point the threat/descent gate
+  off the raw legacy count onto the new trail; keep the surface reachable
+  so the cult/King still ramp in Act 1 (no walking sim).
+
+- **22b. The bear + the name.** New item: a stuffed **bear**, tag reads
+  **Sam** (Samuel — pick the exact tag form; a 1993 nursery diminutive).
+  Toby **lends** it, gated on the PI's patience with a scared kid (his one
+  soft spot), for a reunion that cannot happen. Optional evidence (never
+  gates). A plant on the surface (unexplained), it detonates when the
+  letter names the son below. **The confrontation name-beat** (extend
+  `MARA_CONVO`, `scenes/well.py`): with the bear in inventory, a new
+  exchange lets the PI say the name; it splits the fused *he* and breaks
+  her — she seizes the PI, the rite's stillness cracks, and she reveals
+  she has always known Sam is not down there and digs on anyway. Fate
+  unchanged (turns back to the dig); it only shatters her and wounds the
+  player. **Invariant:** Mara never says the name; only the world/PI/bear
+  do (guard it). Decide: does she take the bear (Sam goes down with her,
+  Toby's loan broken) or refuse it.
+
+- **22c. The PI rots, not the town (four tiers).** Relocate the world rot
+  from the townsfolk to the PI (`DESIGN.md` §9; fixes STORY_AUDIT B6 and
+  NARRATIVE §2's "the wrongness is the place, not the people"). Cut the
+  people-change (`_convert_local` sprite swap + `_turned_local_dialogue`);
+  keep the town **ordinary to the end**. Layer a four-tier PI register
+  (0 / 1–2 / 3 / 4+ evidence) into the conversations — the `prompt`
+  callable + interior beats shift; the NPC's words never do. Re-source the
+  converts' lost visibility pressure if the surface goes too quiet (His
+  ash / the moths). This also revives 4/5/6 (they turn the sanity screw
+  below the King-gate). Pairs with the theory-ladder notebook (#13) that
+  strings the trail into a reconstruction.
+
+- **Guards:** rewrite smoke's six-beat check + flow's evidence/Mara guards
+  to the new roster; guard the world-persistence (kill the holder, still
+  reach the descent), the name invariant (Mara never says Sam), the
+  bear-gated name-beat (fate unchanged, ends the talk), and the
+  no-people-change rot. Re-green the full gate; update `DESIGN.md` §3 (the
+  code↔canon map) once the keys land.
+
 ## Blocked on a human at the keys
 
 These are BUILT and guarded; what remains cannot be settled from code

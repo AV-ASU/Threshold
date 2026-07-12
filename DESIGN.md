@@ -781,3 +781,127 @@ game lets a character find, it takes.
 > whole cosmology. One impossible thing; the wanting is ordinary
 > downstream of it.
 
+---
+
+## 9. The Case (evidence as Mara's trail)
+
+> The evidence rework, settled with the user 2026-07. This is the DESIGN
+> of record; the hard canon (the set, the invariants) lives in
+> NARRATIVE §6, and the code catch-up is TODO #22. It supersedes the
+> "pool of six, any 3" model, which was never true in play.
+
+**Three categories, and only one is evidence.**
+
+- **Statement** — testimony. What a person *says*. Fallible by nature:
+  they lie, misremember, or do not understand. Hettie's memory, Toby's
+  account, Royce's roads, the cult's own testimony. These are **notes**,
+  never evidence.
+- **Evidence** — a tangible thing, tied to Mara, that proves itself.
+  Four tests, all required: (1) **it is Mara's**; (2) **it is a pickup
+  ITEM** — carried, not a walk-into-a-room examine, so it is never
+  missable and never ambiguous; (3) **it is self-evident** — you could
+  photograph that one moment and anyone would understand it, no
+  cosmology and no witness required to read it; (4) **one per room** —
+  the trail is walked, not vacuumed from a single jackpot.
+- **Proof** — the found person. Mara herself. The case's
+  **resolution**, never a log entry.
+
+**Why the old six failed.** Run them through the rubric and four die:
+the **Ledger** (she was never at the lodge — zero Mara relation), the
+**Preacher** (not Mara; and "the cult is hostile" is already proven by
+the sealed town and the grabbing cultists), the **Mask** (its meaning
+needs the cosmology to read, and it is not Mara's — it is the keystone
+ITEM), and the **Congregation** (Mara is proof, not evidence). Only the
+journal and the cell/letter survive. And "any 3 of 6 is the point of no
+return" was a **fiction**: the only pre-descent evidence is the surface
+pieces and the descent needs 3, so the surface set was always
+mandatory, while the underground three drove **no mechanic at all**
+(every evidence gate is ≤ 3 — cult wakes at 1, King arms at 3, rot caps
+at `min(3, evidence)`). Half the system was inert.
+
+**Evidence is a biography, not a keypad.** The case reconstructs one
+woman's descent, and the trail has a shape: **felt it** (the journal) →
+**did it** (the dig) → **why** (the letter) → **the result** (Mara,
+found). The surface stations are the **people she touched**; the
+underground stations are the **things she did**.
+
+**The surface trail — her interactions with the town (and it MUST
+exist, or the game is a walking sim).** The threat is gated on evidence
+(cult wakes at 1, King arms at 3), so evidence has to live on the
+surface or Act 1 has no teeth. Mara barely existed visibly in town, so
+her surface trail is the physical TRACE she left in people's lives,
+findable in ANY order, each in its own place, each rising in
+temperature though the player walks them in any order:
+
+- **The receipt** (Hettie) — matches, canned milk. She *lived* here, a
+  resident buying staples, not a visitor. The mundane.
+- **The detention record** (Vane) — he had to book her. She was coming
+  apart in public. The crack. (Garrick's "she cursed at the sky" is the
+  **statement** that witnesses the same incident — testimony, not
+  evidence.)
+- **The journal** (the barn) — her own hand, the grief and the dream.
+  The turn. Fires the door-dream cutscene.
+
+The NPC is the **warm delivery** (show the photograph, they react and
+hand it over); the paper is **world-persistent**, so it outlives them
+(the Sable-drop precedent: the receipt is still on the shop spike, the
+record still in the office files, if the local is dead) — **no
+soft-lock, no looting a corpse required.** This makes Hettie, Vane, and
+Toby the load-bearing locals, and deepens three who were already
+central rather than inventing new ones.
+
+**The secret fourth — the bear.** The private Mara, against the three
+public records. The PI is numb everywhere but soft with children, and
+that one trait is the **key**: you cannot interrogate the bear out of
+Toby, you have to be the man he *wants* to give it to. He **lends** it —
+"she gave me the only toy in town; if you find her, give it back?" — so
+the PI carries a dead son's bear down toward the mother who gave it
+away, for a reunion he already knows can't happen. The tag reads the
+boy's name (**Sam**; NARRATIVE §4). On the surface it is a strange,
+tender, *unexplained* thing in a boy's hands; underground the letter
+names the son and **the bear detonates**. A plant in Act 1, a payoff in
+Act 2. The least admissible piece and the most devastating — and
+**optional**, so it can never gate progression.
+
+**The underground trail — her descent.** The **dig item** (proof she
+*laboured*, willing hands — a work-tally or the Sign in her own hand, in
+a room that is not the cell), then the **cell / letter** (the son, why
+she won't leave), then **Mara = proof** (the terminus; the trail ends
+at the found person, alive and unrecoverable).
+
+**The four jobs on one axis (evidence is the crux).** How far up Mara's
+trail you have climbed = **how hard He looks** (the lure chain: Mara is
+His bait, so tracing her is walking His own line back to Him) = **how
+much danger** the world holds = **how far gone the PI is.** One meter,
+personal, not bureaucratic.
+
+**The PI is the one who rots (four tiers).** The world rot was built
+backwards from its own bible (NARRATIVE §2: "the wrongness is the
+place, not the people"; STORY_AUDIT B6 caught it): the code turns
+locals into cultist sprites and curdles their dialogue. Relocate ALL of
+it to the PI. The town stays **ordinary to the end**; what deteriorates
+is the man hearing it, across four evidence tiers — **0** (safe town,
+professional) / **1–2** (unsettled, the seams show) / **3** (he knows;
+the King arms, the descent opens) / **4+** (underground, past return).
+The NPC's words never change; the PI's framing does (the conversation
+`prompt`, his interior beats — the engine already supports a
+`prompt(game)` callable, as Vane's mood proves). The uncanny inverts:
+not "their words curdle" but "his hearing does" — and warm-but-claimed
+is worse than curdled, because it never lets the player off the hook.
+This also **revives the inert underground evidence**: 4/5/6 turn the
+sanity screw even after the King-gate maxes.
+
+**The confrontation's cruelest reach — the name.** With the bear in
+hand, the PI can say the boy's name to Mara. He may mean it kindly (an
+acknowledgment: *you would have been a good mother to Sam*), but it is
+the one word she cannot survive: it drags the son out from under the
+god and forcibly **splits the fused "he"** she has spent months
+protecting. The reaction is **explosive** — she seizes the PI, the
+rite's stillness cracks, the congregation stirs — and in the break she
+reveals the bottom of herself: **she knows he is not down there, has
+always known, and digs anyway, because stopping means he is nowhere at
+all.** It changes her fate not at all (she buries him again and turns
+back to the dig); it only shatters her further and costs the player,
+who reached for the one word and gained nothing but the wound. The
+sharpest knife in the game, and it cuts only the hand that holds it.
+
