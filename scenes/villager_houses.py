@@ -112,7 +112,7 @@ def build_church():
                   portrait="preacher",
                   dialogue_fn=preacher_dialogue, movement="worker",
                   tag="preacher")
-        # His JOB (GAME_CHANGES §19): the lectern at the head of the
+        # His JOB (the JOBS layer): the lectern at the head of the
         # nave (working the sermon that gets him killed), a slow walk
         # down the empty nave, a spell at the vestry cot.
         rev.stations = [
@@ -324,21 +324,12 @@ def build_sheriff_office():
 
 
 def build_abandoned_farmhouse():
-    """Round-10 rework: now the 'normal' face of a two-stage house.
-    On first entry it looks like a plain empty interior -- a candle,
-    a couple of motes, otherwise bare. The trick is the south face:
-    one tile is a glitch wall (passable wood). Walking through it
-    drops the player into the haunted version of the same house
-    (haunted_house_glitch), which is where the phantom marks, broken
-    table, bloodstains, and the path to the portal room live.
-
-    Two seal conditions both turn the glitch wall back into a real W
-    on subsequent entries:
-      * haunted_glitch_sealed -- the player walked back out of the
-        haunted version through its north door (point-2 of the spec)
-      * symbol_portal_used    -- the player took the portal route
-                                 from the haunted version
-    Either way, after one trip through, the route is closed."""
+    """A plain abandoned farmhouse interior: a candle, a couple of
+    motes, otherwise bare. (The old two-stage glitch-wall trick -- a
+    passable south-face tile that dropped the player into a haunted
+    `haunted_house_glitch` version -- was CUT; the south face is now
+    solid, and the one live beat is the nailed-shut cult-chamber hatch
+    in the rear room.)"""
     # THRESHOLD: cleaned up the void buffer + passable % glitch
     # wall the original used to drop the player into the alternate
     # haunted version. South face is now solid; row 7 was an open
@@ -392,7 +383,7 @@ def build_abandoned_farmhouse():
 
     # Cult-chamber hatch: a sealed dead end, back in the rear room (the
     # blind spot). It once dropped into the old cult chamber (now removed);
-    # pressing E just reads the nailed-shut notice. Drawn as a cellar_hatch.
+    # pressing E plays a locked sound (the notice line is unwired, TODO C14). Drawn as a cellar_hatch.
     hatch_x = 8 * TILE + 16
     hatch_y = 3 * TILE + 16
     sc.add_decoration(Decoration(hatch_x, hatch_y, "cellar_hatch"))

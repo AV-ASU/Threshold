@@ -785,7 +785,7 @@ def build_brimley():
                 dialogue_fn=dfn,
                 movement=movement, radius=radius)
         if stations:
-            # The JOBS layer (GAME_CHANGES §19): a personal station
+            # The JOBS layer: a personal station
             # route -- walk there, stand the work a while, move on.
             # Tile coords in; errand_step skips any station the nav web
             # can't reach, so a bad spot degrades, never wedges.
@@ -1219,7 +1219,7 @@ def build_brimley():
                        (20, 40), (52, 80), (75, 42), (36, 30)]:
         sc.add_decoration(Decoration(ltx * TILE + 16, lty * TILE + 16, "leaves"))
 
-    # Surface enclosed cover (STEALTH_REWORK §6): the corn and the tree
+    # Surface enclosed cover (DESIGN.md §12): the corn and the tree
     # lines are the CONCEALMENT system out here; the one rooted set-piece
     # option is the gap under the dead pickup's bed. A searcher can check
     # it like any other enclosed hide.

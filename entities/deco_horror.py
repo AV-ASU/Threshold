@@ -1066,7 +1066,7 @@ class DecoHorrorMixin:
     def _draw_item_drop(self, surf, x, y):
         # generic loot bob: small box that bobs gently with subtle glow.
         # A faint ground-contact shadow sits under the bobbing icon so the
-        # pickup reads as ON the floor, not floating (HANDCRAFT_BACKLOG 2);
+        # pickup reads as ON the floor, not floating;
         # the icon bobs, the shadow stays put.
         _ground_shadow(surf, x, y + 5, 7, 3, 90)
         bob = int(math.sin(self.t * 2) * 1)

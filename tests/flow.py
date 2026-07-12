@@ -5,8 +5,8 @@ asserts the spine is COMPLETABLE with no crash or soft-lock:
 
   3 evidence -> Sable hands over the Invitation -> the school rite
   (incense + the chalk door) -> the grove's descent fold -> take the
-  Playscript -> the Sign Chamber (Mara rises; take the Pallid Mask) ->
-  fork at the Deep Stair (the descent seals) -> cross the Depths ->
+  Calling testimony -> the Sign Chamber (Mara rises; take the Pallid Mask) ->
+  the blast at the Deepest Face (the one-way fall) -> cross the Depths ->
   seal the Threshold (the SEAL ending).
 
 Plus the SPREAD ending (drive out with the Mask) and the 3-evidence King
@@ -423,8 +423,8 @@ def main():
               "sign chamber: speaking to Mara fires the recognition")
 
     # --- 7. The Threshold seal -> the SEAL ending (consumes the keystone) ---
-    # The keystone (the Mask) carried down from the Deep Stair is spent HERE,
-    # at the door (§7 rework, Mask-only). g still holds it (stair did not spend).
+    # The keystone (the Mask) carried down from the Deepest Face is spent HERE,
+    # at the door (§7 rework, Mask-only). g still holds it (the blast did not spend it).
     g.load_scene_now("threshold")
     ready(g)
     sc = g.scene
@@ -1010,7 +1010,7 @@ def main():
         "an hour ago", "when did", "started thinking", "didn't want that",
         "i don't trust a want", "a want i can't", "turn around")),
         "voice: the leave-urge never reads as the PI noticing his mind change")
-    # The Playscript (the cult's notes) SEEDS the want-to-leave -- a NOTE, not
+    # The Calling (the cult's testimony) SEEDS the want-to-leave -- a NOTE, not
     # evidence (and it must not arm the King-gate).
     gp2 = new_game()
     gp2.load_scene_now("works_scriptorium", "default")
@@ -1023,7 +1023,7 @@ def main():
         gp2.dialog.advance(); guard += 1
     _pn = [e["name"] for e in gp2.save.arg("notes", []) if isinstance(e, dict)]
     check("descent_leave" in _pn,
-          "voice: taking the Playscript seeds the want-to-leave (descent_leave)")
+          "voice: reading The Calling seeds the want-to-leave (descent_leave)")
     check(gp2._evidence_count() == ev_pre,
           "voice: the leave-seed is a NOTE, not evidence (never arms the King-gate)")
     # The Ledger -- a town NOTE now, not case-evidence (NARRATIVE §6) --
@@ -2003,7 +2003,7 @@ def main():
     check(gp.player.inventory.count("pistol_ammo") == _ammo1,
           "paper: the trade fires exactly once (can't be farmed)")
 
-    # (a2) The calendar sweep (GAME_CHANGES §13): the seal is mid-January
+    # (a2) The calendar sweep: the seal is mid-January
     # 1994, so nothing may date the cut-off to spring. Hettie's till went
     # empty at the new year, and the case note has Mara driving north in
     # the fall and going quiet by the new year.
@@ -2046,8 +2046,7 @@ def main():
     check("preacher" not in " ".join(_vane_lines).lower(),
           "vane: the murder beat fires exactly once")
 
-    # (c) The TOWN STAYS ORDINARY to the end (TODO #22c, NARRATIVE §2,
-    # STORY_AUDIT B6): the world rot is the PI's now, not the townsfolk's.
+    # (c) The TOWN STAYS ORDINARY to the end (TODO #22c, NARRATIVE §2): the world rot is the PI's now, not the townsfolk's.
     # The old people-change is CUT -- no peace-maker is repainted a cultist,
     # no resister's voice curdles, and the machinery is gone.
     import systems.config as _cfg
@@ -2365,7 +2364,7 @@ def main():
         check(not (("—" in _st) or ("–" in _st) or ("--" in _st)),
               "lead: no dashes in the thread line")
 
-    # --- 25. The placement pass (STEALTH_REWORK §6): the gauntlet rooms
+    # --- 25. The placement pass (DESIGN.md §12): the gauntlet rooms
     # HAVE an enclosed hide, and EVERY declared hide in EVERY scene sits
     # on walkable ground (a spot inside a solid roots the player in a
     # wall and a sweeping searcher can never close to check range).
@@ -2697,7 +2696,7 @@ def main():
     check(_re_b.search(r"\bsam\b", _nb["q"].lower()) is not None,
           "name: the PI is the one who says it (the name-beat spoken line)")
 
-    # --- 29. NPC jobs: a worker walks his stations (GAME_CHANGES §19) ---
+    # --- 29. NPC jobs: a worker walks his stations (the JOBS layer) ---
     gj = new_game()
     gj.load_scene_now("brimley")
     ready(gj)

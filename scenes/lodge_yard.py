@@ -112,8 +112,8 @@ def build_lodge_yard():
         # Lodge structure footprint + porch approach.
         if 2 <= tx <= 7 and 2 <= ty <= 6:
             return True
-        # The pocket clearing behind the Lodge (the 'M' arrival fold
-        # stands against the back wall at (5, 1)). The band still crowds
+        # The pocket clearing behind the Lodge (a protected pocket; the
+        # old 'M' arrival fold that stood here was cut). The band still crowds
         # the rest of the strip, so reaching the pocket means pushing
         # through the scattered trees around the building's sides.
         if 4 <= tx <= 6 and ty <= 1:
@@ -232,8 +232,8 @@ def build_lodge_yard():
     sc.add_decoration(Decoration(handprint_x, handprint_y, "bloodstain",
                                  scale=0.9))
     sc._handprint_pos = (handprint_x, handprint_y)
-    # Small mailbox on the road shoulder (use a gas_pump deco -- close
-    # enough silhouette; future polish could carve a true mailbox).
+    # A phantom mark in the road-shoulder dirt (a rot decal, not a
+    # real prop).
     sc.add_decoration(Decoration(11 * TILE + 16, 9 * TILE + 16,
                                  "phantom_mark"))   # mark in the dirt
     rng = random.Random(2026)

@@ -183,7 +183,7 @@ def build_shop():
                   "Hettie", "hettie", voice="blip_high",
                   portrait="hettie",
                   dialogue_fn=hettie_dialogue, movement="worker")
-        # Her JOB (GAME_CHANGES §19): the counter mostly, a pass along
+        # Her JOB (the JOBS layer): the counter mostly, a pass along
         # the empty goods shelves (dusting stock that never comes), a
         # trip to the storeroom preserves through the partition door.
         het.stations = [
@@ -466,7 +466,7 @@ def build_toby_house():
         (10 * TILE + 16, 8 * TILE + 8, "under"),
     ]
     # The kid's drawing of the King, pinned up inside the closet (a 'photo'
-    # decoration) -- examinable flavor, grants nothing. Out of sight from the
+    # decoration) -- decoration only; no interactable is wired. Out of sight from the
     # room until the player steps into the closet.
     drawing_x = 2 * TILE + 16
     drawing_y = 1 * TILE + 16

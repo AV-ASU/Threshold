@@ -433,7 +433,7 @@ SUS_NEAR = 44.0               # px: inside this, facing no longer matters
 SUS_CONE_HALF = 1.40          # rad (~80 deg) enemy sight-cone half-angle
 SUS_CONE_FEATHER = 0.35       # rad soft edge on the cone lip
 SUS_CONCEAL_CORN = 0.30       # concealment factor in corn (leaky, not zero)
-# Darkness is CONCEALMENT too (STEALTH_REWORK Pillar 2A "corn, shadow"):
+# Darkness is CONCEALMENT too (DESIGN.md §12 "corn, shadow"):
 # in a DARK scene, with the flashlight unlit and outside every light
 # pool (Scene.lit_at), the player reads as half-swallowed by the gloom.
 # Weaker than corn (a shape in the dark is still a shape), and it never
@@ -584,7 +584,7 @@ RIVER_ENTRY_TILE = (34, 60)
 # at 3 evidence. The stage is min(3, evidence) for the surface (monotonic;
 # the underground deepens past that on its own evidence clock).
 #
-# The TOWNSFOLK do NOT change (TODO #22c, NARRATIVE §2, STORY_AUDIT B6): the
+# The TOWNSFOLK do NOT change (TODO #22c, NARRATIVE §2): the
 # old ROT_CONVERT / ROT_TURN tables (peace-makers repainted cultist,
 # resisters' dialogue curdled) were CUT. The world rot is the PI's now, and
 # it lives in the four-tier conversation framing (scenes/dialogue._pi_framing

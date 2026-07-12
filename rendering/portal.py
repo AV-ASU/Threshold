@@ -113,7 +113,7 @@ def _render_through(target, anchor_px, camera, rect, door_origin,
     spikes that fast head whips otherwise provoke (~150 ms each).
 
     Pitch and scale changes still invalidate (those are rare in actual play,
-    and a pitch flip via F3 should genuinely repaint). Loom changes too, for
+    and a pitch change should genuinely repaint). Loom changes too, for
     the King's portal forming animation. Camera translation is handled by
     shifting the crop position on the cached buf, NOT by rebuilding.
 

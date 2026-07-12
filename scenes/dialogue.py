@@ -254,8 +254,7 @@ def _opener_exchanges(intro_beats, photo_beats, on_photo=None,
 
 
 # ---- The four-tier PI register (TODO #22c) ----
-# The world rot lives in the INVESTIGATOR now, not the town (NARRATIVE §2,
-# STORY_AUDIT B6): the locals stay exactly themselves, and what deteriorates
+# The world rot lives in the INVESTIGATOR now, not the town (NARRATIVE §2): the locals stay exactly themselves, and what deteriorates
 # is the man hearing them. It surfaces ONLY as the PI's framing of a
 # conversation -- the question menu's opening line -- never as a word the NPC
 # says. Four tiers, keyed to how far up Mara's trail he has climbed
@@ -1372,8 +1371,7 @@ SABLE_CONVO = {
             ],
         },
         # The reproach: once the PI has learned the roads loop back on
-        # themselves (a local told him, filing the_fold_told note, or he has
-        # crossed a fold), he can put it to Sable -- who deflects by pointing
+        # themselves (a local told him, filing the_fold_told note), he can put it to Sable -- who deflects by pointing
         # out he DID say it, plainly, and the PI simply heard hospitality.
         {
             "key": "the_fold",
@@ -1542,7 +1540,7 @@ def _garrick_roads_told(game):
 # register; he turns at rot stage 3, so this talk is his pre-turn
 # window. The stopped calendar stays a rot-layer detail (the decoration
 # + his turned lines), deliberately NOT an ask topic. (His old
-# persistent-cold line was CUT, maintainer call + STORY_AUDIT finding:
+# persistent-cold line was CUT, maintainer call (2026-07):
 # the ice goes out and the season turns -- weather stasis would be a
 # second impossible thing.)
 PELL_CONVO = {

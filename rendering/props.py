@@ -1177,7 +1177,7 @@ def _draw_shaft_ladder_solid(surf, cam, deco):
     """The way UP from the shaft floor: a single thick ROPE hanging from a hatch
     in the rock ceiling down to the landing. The dark shaft + a framed hatch sit
     high overhead; the rope sways slightly on its slack, knotted at intervals for
-    climbing, frayed where it coils on the floor. (Flat F3 uses the 2D sprite.)"""
+    climbing, frayed where it coils on the floor. (The flat pitch-0 view uses the 2D sprite.)"""
     wx, wy = deco.x, deco.y
     s = (getattr(deco, "scale", 1.0) or 1.0)
     H = 82 * s
@@ -1224,7 +1224,7 @@ def _draw_shaft_ladder_solid(surf, cam, deco):
 def _draw_cellar_hatch_solid(surf, cam, deco):
     """A timber cellar hatch with real volume: a low raised plank box on the
     floor (not a flat decal), cross-boarded and nailed shut, an iron pull-ring
-    on top. (Flat F3 uses the 2D sprite.)"""
+    on top. (The flat pitch-0 view uses the 2D sprite.)"""
     wx, wy = deco.x, deco.y
     s = (getattr(deco, "scale", 1.0) or 1.0)
     w, d, rim = 26 * s, 24 * s, 6 * s

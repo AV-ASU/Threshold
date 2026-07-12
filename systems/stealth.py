@@ -293,7 +293,7 @@ def errand_step(actor, scene, dt, step_fn):
     actor gives errands up for this scene and falls back to the mill.
     Returns True while the errand owns the actor's movement.
 
-    2026-07 (GAME_CHANGES §19): a PERSONAL station list on the actor
+    2026-07 (the JOBS layer): a PERSONAL station list on the actor
     (`actor.stations`) outranks the scene's shared cult pool -- the
     villager JOBS layer (NPC movement mode "worker") rides the same
     machinery, so workers walk, dwell, get interrupted, and resume

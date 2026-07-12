@@ -165,7 +165,7 @@ def build_effigy_grove():
 
     # ---- THE RITE (E at the dead fire) ----
     # Two-press commit (never a lone-press point of no return; the
-    # Deep Stair lesson): the first press lays the stakes out in
+    # point-of-no-return lesson): the first press lays the stakes out in
     # sensation, the second begins the FULL door-dream (a pure
     # cutscene). Completion tears the pane open and keys the way home to
     # His face. Re-armed on every scene exit.
@@ -210,7 +210,7 @@ def build_effigy_grove():
     sc.on_interact_fn = _grove_interact
 
     def _grove_exit(game, scene):
-        # Re-arm the two-press rite each visit (the Deep Stair lesson:
+        # Re-arm the two-press rite each visit (the point-of-no-return lesson:
         # a player who steps away and returns gets the warning again).
         game.save.set_flag("rite_laid", False)
     sc.on_exit_fn = _grove_exit
@@ -221,7 +221,7 @@ def build_effigy_grove():
         # louder and FASTER as the way down clarifies (ev 0: a faint
         # beat every ~5.5s; ev 3: a strong one every ~2s), panned to
         # the fire and leaning harder the closer you stand to it. Falls
-        # silent once the Deep Stair seals the descent.
+        # silent once the descent seals (descent_sealed).
         if game.save.flag("descent_sealed"):
             return
         t = getattr(scene, "_loom_t", 0.0) - dt

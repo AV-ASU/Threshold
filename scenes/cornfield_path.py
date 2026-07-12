@@ -3,8 +3,7 @@ the Clerk's house. Stubble cornfield to the north and south,
 the trees thicken at the east end where the road bends into the
 woods.
 
-The Preacher walks this road as part of his patrol route. The
-cornstalks and dense trees are perfect hide cover.
+The cornstalks and dense trees are perfect hide cover.
 """
 import random
 from constants import TILE

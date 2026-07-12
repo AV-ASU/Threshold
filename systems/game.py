@@ -1082,7 +1082,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         if getattr(self, "_struggle", None) is not None:
             return
         # Emerging from an enclosed hide takes a BEAT (the deferred
-        # exit-takes-a-beat window, STEALTH_REWORK): out, visible, and
+        # exit-takes-a-beat window, DESIGN.md §12): out, visible, and
         # rooted while you unfold. The struggle burst-out bypasses this
         # (it has its own panic sprint).
         emerge = getattr(self.player, "emerge_t", 0.0)
@@ -1575,7 +1575,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
             return True
         return False
 
-    # ---- Darkness as concealment (STEALTH_REWORK Pillar 2A) ----
+    # ---- Darkness as concealment (DESIGN.md §12) ----
     def _tick_dark_cover(self):
         """Stamp player._in_dark once per frame: True in a DARK scene
         with the flashlight unlit and the player outside every light
@@ -2285,7 +2285,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
     _FB_GAZE = [(math.cos(a * math.tau / 8), math.sin(a * math.tau / 8))
                 for a in range(8)] + [(0.0, 0.0)]
 
-    # The PI's interior voice down the descent (NARRATIVE §8, GAME_CHANGES §8):
+    # The PI's interior voice down the descent (NARRATIVE §8):
     # the put-together investigator coming apart as he understands too much,
     # baited toward the Mask's off-ramp (carry it OUT -- SPREAD). Each beat is
     # one-shot: a brief first-person flash on-screen, plus a fuller entry filed
@@ -2350,7 +2350,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
                 "myself more than a steady man would.",
             ],
         },
-        # The Playscript (the cult's notes): the SEED of the want-to-leave.
+        # The cult's testimony (The Calling): the SEED of the want-to-leave.
         # CANON (NARRATIVE §1/§6): this is the King's influence riding their
         # notes into the PI's head -- the pull to carry the Sign OUT and spread
         # Him. NEVER stated as His doing; felt only as a want he can't find the
@@ -2934,7 +2934,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         # (The old rope-fiction "death at the shaft floor snaps the rope"
         # seal is CUT: hp-death respawns the run in bed with flags intact,
         # so sealing the descent here silently softlocked the run. The
-        # descent only seals at the Deep Stair, by choice.)
+        # descent only seals on the way back up (descent_sealed), by choice.)
         # Death in the void boss arena seals the secret path forever,
         # empties the world of NPCs, and respawns the player on the
         # town square rather than their bed. The world_emptied flag

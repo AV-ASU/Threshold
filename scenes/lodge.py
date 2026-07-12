@@ -304,8 +304,7 @@ def build_lodge():
     blocked here by the Clerk). Cellar hatch in the kitchen,
     PADLOCKED until the cellar key (behind the house) is carried.
     Door to spare_room hallway on the north (col 13). Door
-    to the Clerk's bedroom on the north (col 4) -- locked
-    initially."""
+    to the Clerk's bedroom on the north (col 4)."""
     floor = [
         "==================",
         "==================",
@@ -341,7 +340,7 @@ def build_lodge():
     sc = Scene("lodge", floor, objects, music="home")
     # B = front door (south wall, col 13). The Clerk blocks this.
     sc.add_exit("B", "bedroom", "from_lodge")
-    # 1 = Clerk's bedroom door (col 4). Locked at first.
+    # 1 = Clerk's bedroom door (col 4). Not gated (TODO C6: intended locked?).
     sc.add_exit("1", "clerk_room", "from_lodge")
     # D = back door, leads to the gravel yard.
     sc.add_exit("D", "lodge_yard", "from_lodge")
@@ -588,14 +587,13 @@ def house_interact(game):
 # ---- the Clerk's Room (key: 'clerk_room') ----
 # The Lodge Clerk's private room, off the main floor. No evidence lives
 # here -- Mara's room (robe + letter, #1) and the journal (#2) moved to the
-# Sorting-Hall cell and the barn, and the Playscript to the Scriptorium
+# Sorting-Hall cell and the barn, and the testimony leaves to the Scriptorium
 # (scenes/well.py, scenes/interiors.py). The one tell is a pressed cult
 # robe in his closet: the smiling trap-keeper is one of them.
 
 def build_clerk_room():
     """The Lodge Clerk's private room. A bed, a closet (his pressed cult
-    robe -- the tell that he's complicit), a bare dresser (he keeps your
-    car keys downstairs, behind the tab), a window."""
+    robe -- the tell that he's complicit), a bare dresser, a window."""
     floor = ["=" * 14 for _ in range(10)]
     # A main room plus a partitioned CLOSET alcove (cols 9-12) reached
     # through an interior doorway. The Clerk's pressed cult robe hangs in
@@ -621,7 +619,7 @@ def build_clerk_room():
     sc.set_spawn("default", 8, 7)
     sc.set_spawn("from_lodge", 4, 8)
 
-    # The dresser (table sprite) holds the car keys. Out in the main room,
+    # The dresser (table sprite) is bare. Out in the main room,
     # off the door column so a solid prop never traps the player inside.
     sc._dresser_pos = (5 * TILE + 16, 7 * TILE + 16)
     # The closet (wardrobe sprite) holds the Clerk's pressed cult robe -- a

@@ -51,8 +51,8 @@ def build_well_bottom():
     # The shaft floor: a round (octagonal) stone pit at the bottom of the
     # cult's mine shaft. No rope, no ladder: the descent fold in the grove
     # lands you here, and its RETURN PANE ('O', walked west) stands where the
-    # rope once hung -- symmetric while it lives, dead once the Deep Stair
-    # seals the descent.
+    # rope once hung -- symmetric while it lives, dead once the descent
+    # seals (descent_sealed).
     floor, objs = _box(12, 10)
     _bevel(objs, 3)
     objs[5][11] = "E"         # east -> the timber racks (deeper)
@@ -251,7 +251,7 @@ def build_well_passage():
     for mx, my in ((9, 3), (15, 5), (3, 5), (20, 5)):
         sc.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16, "mote"))
 
-    # Two enclosed hides spaced down the run (STEALTH_REWORK §6): the gap
+    # Two enclosed hides spaced down the run (DESIGN.md §12): the gap
     # under the bay's timber rack, and one under a far corridor rack --
     # a long room needs a rooted option in each half, or the east end is
     # a dead sprint. A searcher that loses you will sweep and CHECK them.
@@ -324,7 +324,7 @@ def build_works_vats():
                                  ang=0.0))
     sc.add_decoration(Decoration(8 * TILE + 26, 1 * TILE + 6, "cobweb",
                                  ang=math.pi / 2))
-    # One enclosed hide (STEALTH_REWORK §6): the dry lee under the SE
+    # One enclosed hide (DESIGN.md §12): the dry lee under the SE
     # basin's lip -- inside the patrol's own arm, so it is a risky option
     # a searcher can sweep, not a panic room.
     sc.hide_spots = [
@@ -456,7 +456,7 @@ def build_works_sorting():
         sc.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16, "mote"))
     sc._table_pos = (6 * TILE + 16, 5 * TILE + 16)
     # The hardest crossing gets two enclosed hides among the cover lanes
-    # (STEALTH_REWORK §6): under a sorting table in each row. Both sit on
+    # (DESIGN.md §12): under a sorting table in each row. Both sit on
     # the patrol floor itself -- reachable mid-route, sweepable.
     sc.hide_spots = [
         (6 * TILE + 16, 6 * TILE + 8, "under"),    # under a north-row table
@@ -616,12 +616,12 @@ def build_works_scriptorium():
     sc.add_furniture("small_chair", [(4, 3)])
     sc.add_furniture("small_chair", [(8, 3)])
     sc._desk_pos = (4 * TILE + 16, 2 * TILE + 16)
-    sc.add_interactable(sc._desk_pos[0], sc._desk_pos[1], 40)  # [E] cue: the Playscript
+    sc.add_interactable(sc._desk_pos[0], sc._desk_pos[1], 40)  # [E] cue: The Calling (grants cult_calling)
     # Mara's OWN copy of the Sign, at a second desk (deep evidence; she
     # laboured, willing hands, DESIGN.md §9). A room that is not her cell.
     sc._mara_desk_pos = (8 * TILE + 16, 2 * TILE + 16)
     sc.add_interactable(sc._mara_desk_pos[0], sc._mara_desk_pos[1], 40)
-    # One enclosed hide (STEALTH_REWORK §6): under the centre copying
+    # One enclosed hide (DESIGN.md §12): under the centre copying
     # desk -- echoes the safe-room "under" spots, but down here it is
     # checkable, and the scribe's lane is a step away.
     sc.hide_spots = [
@@ -687,7 +687,7 @@ def build_works_scriptorium():
     sc.on_interact_fn = _interact
     # The scribes drew doors as obsessively as they copied the Sign -- swarm
     # the floor + walls with chalk doors, none overlapping (the room reads as
-    # a compulsion, not a workshop). The Playscript desk is left clear.
+    # a compulsion, not a workshop). The testimony desk is left clear.
     sc.scatter_chalk_doors(4, seed=44, wall_count=2)
     return sc
 
@@ -897,7 +897,7 @@ def build_works_sign():
     floor, objs = _box(13, 11)
     _bevel(objs, 3, corners=("NW", "NE"))
     objs[5][0] = "F"          # west -> back to the scriptorium
-    objs[5][12] = "E"         # east -> the deep stair
+    objs[5][12] = "E"         # east -> the Deepest Face
     objects = ["".join(r) for r in objs]
     sc = Scene("works_sign", floor, objects, music="void")
     sc.add_exit("F", "works_scriptorium", "from_below")
@@ -931,7 +931,7 @@ def build_works_sign():
                                  ang=-math.pi / 2))
     sc.add_decoration(Decoration(11 * TILE + 26, 9 * TILE + 26, "cobweb",
                                  ang=math.pi))
-    # Hides stay sparse + risky here on purpose (STEALTH_REWORK §6): one
+    # Hides stay sparse + risky here on purpose (DESIGN.md §12): one
     # spot under the west pew, a pew-length from the kneeling congregation.
     sc.hide_spots = [
         (4 * TILE + 16, 8 * TILE + 8, "under"),    # under the west pew

@@ -179,7 +179,7 @@ def build_depths_antechamber():
     sc.add_decoration(Decoration(8 * TILE + 26, 8 * TILE + 26, "cobweb",
                                  ang=math.pi))
     # A supply crate from the old workings, and the gap beneath it: one
-    # enclosed hide near the patrol loop (STEALTH_REWORK §6). Beside it,
+    # enclosed hide near the patrol loop (DESIGN.md §12). Beside it,
     # spoil never hauled and a stub of the old rail heading east -- the
     # fall lands you in a working, not a room (2026-07 art pass).
     sc.add_furniture("crate", [(7, 4)])
@@ -275,7 +275,7 @@ def build_depths_procession():
     sc.add_decoration(Decoration(28 * TILE + 26, 3 * TILE + 6, "cobweb",
                                  ang=math.pi / 2))
     # Crates tucked into bays along the run + the gaps under them: three
-    # enclosed hides spaced down the drift (STEALTH_REWORK §6) -- the
+    # enclosed hides spaced down the drift (DESIGN.md §12) -- the
     # bays themselves are the concealment; these are the rooted options
     # a searcher can sweep and check. A long room needs hides the whole
     # way, or its far half is a dead sprint.
@@ -395,7 +395,7 @@ def build_depths_hall():
     sc.add_furniture("shoring_frame", [(3, 6)], seed=7, ang=0.5, span=0)
     sc.add_furniture("shoring_frame", [(9, 4)], seed=12, ang=2.4, span=0)
     sc.add_furniture("shoring_frame", [(13, 6)], seed=3, ang=1.1, span=0)
-    # Enclosed hides on the nave route (STEALTH_REWORK §6): under a
+    # Enclosed hides on the nave route (DESIGN.md §12): under a
     # bench in each half, both in the roamer's sweep range -- the east half
     # past the crossing needs its own rooted option once the kneelers
     # wake, or the run to the door is a coin flip.
@@ -682,8 +682,8 @@ def build_threshold():
     # door with no wall, nothing in the opening (NARRATIVE §2). You SEAL by
     # walking THROUGH it carrying the keystone (the Pallid Mask), spent there
     # (§7, Mask-only); the walk-through is handled in on_update below. No [E]
-    # prompt, no glow, no smoke. The keystone was carried down (the Deep Stair
-    # opened WITHOUT spending it), so a player who descended always holds it.
+    # prompt, no glow, no smoke. The keystone was carried down (the blast opened the way down
+    # WITHOUT spending it), so a player who descended always holds it.
     lintel_x, lintel_y = 7 * TILE + 16, DR * TILE + 16
     sc._lintel_pos = (lintel_x, lintel_y)
     sc.add_decoration(Decoration(lintel_x, lintel_y, "doorframe"))

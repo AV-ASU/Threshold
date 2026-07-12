@@ -86,9 +86,9 @@ class ThreatMixin:
             if w > 0.0:
                 self._gaze_count += w
             if tag == "cult_convert":
-                # A turned local: passive cult. Their watching raises
-                # visibility (counted above) but they never chase, spot,
-                # grab, or flank. The fallen town just stares.
+                # Vestigial: the `cult_convert` tag is never set anymore (the
+                # turned-local layer was cut, TODO #22c; guarded dead by
+                # tests/flow.py). This branch no longer runs.
                 continue
             # Regular cultist: one "they've seen you" beat per fresh
             # spawn. Reaching you is the cult TAKING you -- the CAPTURED

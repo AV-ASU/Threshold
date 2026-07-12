@@ -580,94 +580,115 @@ Fable is doing the implementing, an Opus pass reviews it the same way.
 
 ---
 
-## Story & dialogue audit — open findings (migrated 2026-07)
+## Story & dialogue audit — open findings (re-verified 2026-07)
 
-> Folded in from the retired `STORY_AUDIT.md` (a read-only pass over every
-> player-facing string against `NARRATIVE.md`). The audit's **A** (broken
-> beats) and **B** (canon breaks) tiers were resolved on-branch; **B6**
-> (converted-local narration vs the renderer) and the convert half of **B7**
-> are mooted by the TODO #22c people-change cut. What survives is the long
-> tail below: interaction-logic bugs (**C**) and voice/polish (**D**).
-> **Caveat:** these predate the TODO #22 rework and their `file:line`
-> anchors were NOT all re-verified against the current tree, so a few may
-> already be resolved and line numbers may have drifted. Re-check each
-> against source before acting. (`C2` is confirmed still-open; the
-> `_the_third_thread` half of `C16` is moot, that stall-breaker was cut.)
+> Folded in from the retired `STORY_AUDIT.md`. The audit's **A** (broken
+> beats) and **B** (canon breaks) tiers were resolved on-branch; **B6** and
+> the convert half of **B7** are mooted by the TODO #22c people-change cut.
+> Every **C** item below was **re-verified against the current tree**
+> (2026-07); FIXED/MOOT ones were dropped or marked. The **D** voice/polish
+> items are player-facing TEXT (still open); the audit's "stale dev comments"
+> item is **DONE** (see the note under D).
 
-### C. Interaction-logic bugs
+### C. Interaction-logic bugs (re-verified)
 
-- **C1.** The lure-collision caption (`scenes/well.py`, the one place the
-  engineered-chain dread surfaces) runs as a non-modal caption during the
-  calling-out; Mara's walk-home rite-holder line replaces it mid-read on
-  essentially every playthrough (`ui/narration.py` drops unread text).
-- **C2.** `_mara_stage` is never cleared in `_reset_run_state`
-  (`systems/game.py`): a run ending mid-staging makes the next run's first
-  `works_sign` entry silently eat the calling-out for that visit.
-  **(Confirmed still-open, 2026-07.)**
-- **C3.** The grove's evidence-meter content is dead: `_grove_enter`'s
-  "thread of gold" line and the "not finished forming" refusal
-  (`scenes/hidden_folds.py`) gate on ev < 3, but the grove is only reachable
-  at 3+; the "clarifies as evidence mounts" fiction now has no
-  player-visible expression.
-- **C4.** `scenes/lodge_yard.py` — the cellar-key narration points at "a
-  doorframe... against the boards"; no doorframe exists in the scene (the
-  'M' arrival fold it referenced was cut).
-- **C5.** The church LOGIN terminal (`scenes/villager_houses.py`) is
-  permanently dead (`user_code` is never set anywhere) and tonally alien
-  (ARG leftovers in a 1994 parsonage). Cut or reskin to paper records.
-- **C6.** Dead/contradicted machinery in the lodge: `innkeeper_confronted`
-  is never set (the blocking-Clerk branch is unreachable); comments say the
-  Clerk's bedroom is "locked at first" but the exit has no gate, so the
-  pressed-robe tell is open from minute one with no reaction from the
-  watching Sable (`scenes/lodge.py`). Decide: lock it or fix the comments.
-- **C7.** Flash-mode caption leak: "You dream of a doorway."
-  (`ui/cutscenes.py`) renders during the journal's 0.55s MEMORY flash. The
-  flash is a waking memory; present-tense "you dream" is the recurrence
-  flavor the flow-guard polices in the note.
-- **C8.** Legacy hp-death respawn text survives (`systems/game.py`: "You
-  wake on the town square", `world_emptied`); if reachable it contradicts
-  the death model (CAPTURED/CUSTODY/Carcosa end the run).
-- **C9.** Old Pell is `fold=True` but never describes the fold
-  (`scenes/brimley.py`), so the PI's auto-filed note quotes him giving
-  Royce's roads account he never gave (`systems/narrative_mixin.py`).
-- **C10.** Elapsed-time claims that break under fast play: Garrick's
-  "Nothing out of him for days now" fires on `preacher_doomed` (can be
-  minutes old); Vane's "I went over Tuesday morning" can precede any
-  possible visit.
-- **C11.** Toby's cold-open "You're looking for the lady from the lodge."
-  assumes the case before the PI has stated it, against the news-does-not-
-  spread rule. Gate on any intro/photo flag or reword to what a kid could
-  infer. (Cross-check the TODO #22 Toby rework, which made his witness beat
-  photo-earned; this may already be addressed.)
-- **C12.** The hunting-sheriff intro replays on every stage-3 office entry
-  (`systems/rot_mixin.py`); and the line "I'm supposed to tell you to leave,
-  son. I can't say it anymore." reports the failure instead of performing
-  the unfinished line ("says the line he can no longer finish").
-- **C13.** The PI's fold question ("I walked the road out of town... It set
-  me back down past this window") gates only on being TOLD about the fold,
-  not on having crossed one, so the game can put a lie in his mouth.
-- **C14.** Silent/dead interact cues: the dresser E-cue with no handler
-  (`scenes/lodge.py`); Toby's closet drawing announced as examinable but no
-  interactable registered (`scenes/interiors.py`); the altar's [E] cue after
-  the Mask is taken (`scenes/well.py`); the barn/farmhouse sealed hatches
-  play a sound with no "nailed shut from below" line.
-- **C15.** Flagged tension, intentional per in-file comment: SEAL is a bare
-  walk-through at the frame (no confirm) while the blast and grove rite are
-  deliberately two-press "never a lone-press point-of-no-return"
-  (`scenes/depths.py`). Confirm on purpose.
-- **C16.** Missable-by-design signposts worth confirming:
-  `_ready_for_the_desk` needs `sable_greeted` at exactly 3 evidence; players
-  who never met Sable lose the act-break pointer forever. (The old
-  `_the_third_thread` / `crane_greeted` half is moot: that stall-breaker was
-  cut with TODO #22.)
+- **C1. STILL-OPEN (narrower than the audit said).** The lure caption in
+  `_mara_voice` (`scenes/well.py`) has no `on_complete`, so `_sign_update`'s
+  step-4 rite-holder line (`scenes/well.py`) clobbers it via the caption
+  channel (`ui/narration.py` only preserves unread text when the active
+  caption HAS an `on_complete`). It collides on the FAST conversation paths
+  (short exchanges), not "every playthrough" — long father/name cards finish
+  first. *Fix:* in step 4, hold the frame if `game.narration.active` instead
+  of showing over it.
+- **C2. STILL-OPEN (confirmed; bites on normal entry).** `_mara_stage` is set
+  in `_call_out` (`scenes/well.py`) but never cleared in `_reset_run_state`
+  (`systems/game.py`). The `works_sign` trigger latches `fired` BEFORE
+  `on_update` clears a stale stage, and the normal `from_above` spawn sits
+  inside the trigger rect, so a run that died/quit mid-staging silently eats
+  the next run's calling-out. *Fix:* add `self._mara_stage = None` to
+  `_reset_run_state`.
+- **C3. MOOT (audit reasoning was wrong).** The `< 3` grove-meter beats
+  (`scenes/hidden_folds.py`) are NOT unreachable: `sable_on_death` drops the
+  Invitation ungated (`scenes/dialogue.py`), so shooting Sable early + doing
+  the ungated schoolhouse rite reaches the grove below 3 evidence, where they
+  fire. Residual: on the INTENDED path (Invitation at ev 3) the gradual fill
+  is never seen — an authored-for-an-unreachable-progression smell, not dead
+  code.
+- **C4. STILL-OPEN.** The cellar-key pickup narration (`scenes/lodge_yard.py`
+  `_took`) still describes "a doorframe stands against the boards" — no such
+  prop exists (the 'M' fold was cut). Player-facing text bug. (The stale
+  *comment* about the 'M' fold was fixed in the 2026-07 comment pass.)
+- **C5. STILL-OPEN.** The church LOGIN terminal (`scenes/villager_houses.py`
+  `_open_login_terminal`, wired live in `build_church`) reads `user_code`
+  which is never set anywhere → always "ACCESS DENIED"; ARG tone in a 1994
+  parsonage. *Fix:* remove the terminal (even opened it only yields a blank
+  "Connection Terminated" bulletin).
+- **C6. STILL-OPEN (dead code).** `innkeeper_confronted` is never set, so the
+  `blocking_innkeeper` branch (`scenes/lodge.py`) is unreachable dead code
+  with a docstring promising a confrontation handler that doesn't exist.
+  (The two lying "locked at first" comments on the ungated bedroom exit were
+  corrected in the comment pass; the gate-vs-open design call is still open.)
+- **C7. STILL-OPEN.** "You dream of a doorway." (`ui/cutscenes.py`) renders
+  full-alpha during the 0.55s WAKING memory flash (`intro` clamps to 1.0
+  when `now < 1.4`) → present-tense recurrence flavor the dream-note canon
+  forbids. *Fix:* gate the caption to rite mode only.
+- **C8. MOOT (dead/unreachable).** The "You wake on the town square" /
+  `world_emptied` respawn (`systems/game.py`) is unreachable: `Player.take_damage`
+  is a no-op and nothing decrements `hp`, so `_on_player_death` never fires.
+  Safe to delete as cleanup; not a live bug.
+- **C10. STILL-OPEN (Garrick only; Vane FIXED).** Garrick's "Nothing out of
+  him for days now" fires on `preacher_doomed` (`scenes/brimley.py`), which
+  latches the instant Crane is pressed → "days" can be seconds. *Fix:* drop
+  the elapsed-time wording / gate on `preacher_body_seen`. (Vane's dated
+  "Tuesday morning" claim is gone — his reaction is now gated on
+  `preacher_body_seen`.)
+- **C12. STILL-OPEN.** `_spawn_hunting_sheriff` (`systems/rot_mixin.py`) is
+  called on EVERY hollow `sheriff_office` load with no one-shot guard, so the
+  intro notice replays on re-entry; and the line "I can't say it anymore."
+  reports the failure instead of performing a line that trails off. *Fix:*
+  per-run guard flag + reword to a broken-off line.
+- **C13. STILL-OPEN.** The PI's fold reproach to Sable (`scenes/dialogue.py`)
+  gates its `avail` only on the `the_fold_told` note (written when a local
+  DESCRIBES the roads), never on actually crossing a fold, so the
+  first-person "I walked the road out… it set me back down" can be a lie.
+  *Fix:* set a `crossed_a_fold` flag in `cross_fold` and require it (or reword
+  to hearsay). (The comment that falsely claimed "or he has crossed a fold"
+  was corrected in the comment pass.)
+- **C14. STILL-OPEN (all four dead/unwired cues).** (a) dresser `[E]` cue with
+  no handler (`scenes/lodge.py`); (b) Toby's closet drawing stored but no
+  interactable registered (`scenes/interiors.py` — no false prompt, just
+  unfulfilled); (c) the altar `[E]` cue reappears on backtrack after the Mask
+  is taken (`scenes/well.py`, handler early-returns); (d) barn + farmhouse
+  hatches play a sound with no notice line (`scenes/interiors.py`,
+  `scenes/villager_houses.py`). *Fix:* wire or drop each. (The two misleading
+  comments — "examinable flavor", "reads the notice" — were corrected in the
+  comment pass.)
+- **C15. STILL-OPEN — and the audit's premise was WRONG.** The audit said the
+  SEAL's bare single walk-through (vs the two-press blast/grove rite) is
+  "intentional per in-file comment"; there is NO such comment in
+  `scenes/depths.py` (`_threshold_seal` removes the Mask + warps on proximity,
+  unannotated). So it's an UN-annotated exception. *Decide:* mirror the
+  two-press commit (a re-armed `seal_laid` flag), OR add the explicit
+  "lone-trigger is intended here because carrying the Mask down is the commit"
+  comment the audit assumed existed.
+- **C16. STILL-OPEN (desk signpost only).** `_ready_for_the_desk`
+  (`scenes/dialogue.py`) needs `sable_greeted` at exactly 3 evidence; a player
+  who never greeted Sable loses the "go back to the desk" pointer (soft — the
+  Invitation is still offered at 3). The `_the_third_thread`/`crane_greeted`
+  half is MOOT (that stall-breaker was cut with TODO #22; confirmed only in a
+  `tests/flow.py` removal-comment).
 
-### D. Voice / polish
+*(FIXED and removed: **C9** — Pell no longer `fold=True`, the fold note is
+speaker-parameterized; **C11** — Toby's cold-open is gone, his witness
+account is photo-earned.)*
+
+### D. Voice / polish (player-facing text — still open)
 
 - Narrator "vanished into the corn" (`scenes/villager_houses.py`) adopts
   Crane's drift-away impression as fact; canon is one night procession, and
-  §2 corrects the image for Mara ("not into the corn"). Crane's greet ("more
-  every season") and Sable's "no end of those this past year... They come"
-  keep arrivals in the habitual present; arrivals ended before the seal.
+  §2 corrects the image for Mara ("not into the corn"). Crane's "more every
+  season" and Sable's "no end of those this past year... They come" keep
+  arrivals in the habitual present; arrivals ended before the seal.
 - Revolver description leaks mechanics: "(3+ evidence)" (`systems/items.py`);
   also "fires it in the way you're facing."
 - Descent interior voice wobbles POV (first-person notes vs second-person
@@ -683,29 +704,33 @@ Fable is doing the implementing, an Opus pass reviews it the same way.
 - Placeholder texts on cued interactions: "Some old tools." (the beat's
   designed contradiction is lost), "A small stash.", "A weathered
   headstone.", "A scarecrow.", "A key.", "An axe for chopping wood."
-- Small ones: payphone "your own voice, already mid-sentence" (the one
-  temporal-uncanny string; make it spatial); Sable's "last night"/"tonight"
-  against elapsed play; the robe "hangs... pressed and folded"; the
-  Invitation's "Sleep where we slept" with no sleep verb at the school;
-  Mara's "I have never been this close" vs the letter's locked "I've never
-  been this close" (make the expansion a choice or match it); the handoff's
-  "the day they were ready" (canon: HE was ready); burn-site "All of their
-  things." vs the Sorting Hall cataloguing everything; Mask desc "So, you
-  suspect, does the door in the deep" plants "the door can open"; threshold
-  recognition + "A doorframe with no wall." fire at the cave mouth, 13
-  sight-gated rows before the frame is visible; lowercase hide notices;
-  "waking the dark ." double space; "midwestern" casing; Garrick and hollow
-  Vane both call the PI "son"; two simultaneous Hetties (door + counter);
-  duplicate candle decoration in Toby's house.
+- Small ones: payphone "your own voice, already mid-sentence" (make it
+  spatial); Sable's "last night"/"tonight" against elapsed play; the robe
+  "hangs... pressed and folded"; the Invitation's "Sleep where we slept" with
+  no sleep verb at the school; Mara's "I have never been this close" vs the
+  letter's locked "I've never been this close"; the handoff's "the day they
+  were ready" (canon: HE was ready); burn-site "All of their things." vs the
+  Sorting Hall cataloguing everything; Mask desc "So, you suspect, does the
+  door in the deep" plants "the door can open"; threshold recognition + "A
+  doorframe with no wall." fire at the cave mouth, 13 sight-gated rows before
+  the frame is visible; lowercase hide notices; "waking the dark ." double
+  space; "midwestern" casing; Garrick and hollow Vane both call the PI "son";
+  two simultaneous Hetties (door + counter); duplicate candle decoration in
+  Toby's house.
 - Missing canon clincher: §4's ledger entry promises "your own name, signed
   in tonight, already among them" — the cellar text only gestures at it and
   the desk sign-in is optional; one clause conditioned on `register_signed`
   closes the loop.
-- Stale dev comments that will mislead future edits: Deep Stair references
-  in `scenes/well.py`, `scenes/hidden_folds.py`, `scenes/depths.py`; "[E]
-  cue: the Playscript"; the lodge car-keys/tab comments; the phantom 'M'
-  fold; cornfield_path's preacher-patrol note; the farmhouse glitch-wall
-  docstring.
+- ~~Stale dev comments that will mislead future edits.~~ **DONE (2026-07
+  comment pass):** the Deep Stair live-descriptions, the `[E] cue: the
+  Playscript` / testimony refs, the lodge car-keys/tab comments, the phantom
+  'M' fold, the cornfield_path preacher-patrol note, and the farmhouse
+  glitch-wall docstring were all corrected — along with every dangling
+  citation to a deleted doc (`GAME_CHANGES §N`, `STEALTH_REWORK`,
+  `STORY_AUDIT B6`, `HANDCRAFT_BACKLOG`), the dead in-game `F3` references,
+  and the C-item lying comments. Legacy scene keys (`works_deepstair`,
+  `the_ossuary`), the `sigil_rubbing` migration, and accurate "was CUT"
+  provenance notes were left intact.
 
 ### From the code-health audit (retired `CODE_HEALTH_AUDIT.md`)
 

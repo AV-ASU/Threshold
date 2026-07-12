@@ -3109,7 +3109,7 @@ _FLOOR_DECAL_CARD_CACHE = {}        # (id(deco), yaw_bkt, scale_bkt, pitch_bkt)
 # How tightly we quantise yaw/pitch/scale for the cache. Yaw eases by ~0.004
 # rad/frame during mouselook, so 0.05 rad (~3 deg) buckets give the cache
 # hits during smooth play and only re-warp on real turns. Pitch + scale are
-# typically constant in actual play -- F3 changes pitch but isn't wired in
+# typically constant in actual play -- the pitch is dev/capture-only and not wired in
 # game; scale is fixed at TILT_ZOOM -- so coarse buckets are fine.
 _FLOOR_DECAL_YAW_BKT = 0.05
 _FLOOR_DECAL_SCALE_BKT = 0.05

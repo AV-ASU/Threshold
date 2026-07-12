@@ -217,7 +217,7 @@ class NPC:
         elif self.movement == "homebody":
             self._homebody_tick(dt, scene)
         elif self.movement == "worker":
-            # A local with a JOB (GAME_CHANGES §19): walk the personal
+            # A local with a JOB (the JOBS layer): walk the personal
             # station list (self.stations), dwell at each doing the
             # work, move to the next. Same machinery as the cult's
             # errands (systems/stealth.errand_step), so interruptions
