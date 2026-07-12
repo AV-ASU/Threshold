@@ -1003,16 +1003,16 @@ DISPLAY_NAMES = {
     "barn":                 "the Barn",
     "well_bottom":          "the Shaft Floor",
     "well_passage":         "the Timber Racks",
-    "works_vats":           "the Cistern",
+    "works_cistern":           "the Cistern",
     "works_sorting":        "the Sorting Hall",
     "works_scriptorium":    "the Scriptorium",
     "works_sign":           "the Sign Chamber",
-    # (the scene KEY is legacy; the Deep Stair concept is CUT -- the room
-    # is the dig's dead end, DESIGN.md §5 room 7)
-    "works_deepstair":      "the Deepest Face",
+    # (the Deep Stair concept is CUT -- the room is the dig's dead end,
+    # DESIGN.md §5 room 7)
+    "works_deepface":      "the Deepest Face",
     "the_sump":             "the Sump",
     "the_cells":            "the Cells",
-    "the_ossuary":          "the Old Stores",
+    "the_old_stores":          "the Old Stores",
     "depths_antechamber":   "the Old Workings",
     "depths_procession":    "the Procession",
     "depths_hall":          "the Kneeling Hall",

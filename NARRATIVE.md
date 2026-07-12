@@ -553,12 +553,16 @@ purpose, and keep each one guarded where a guard exists.
   sabotaged it. → §1, §7
 - **The world holds one continuous daytime state** (no day/night
   cycle). → `DESIGN.md`
-- **Item and scene keys are load-bearing** (saves and logic):
-  `mom_notebook`, `pallid_mask` (disk loader migrates the legacy
-  `sigil_rubbing`), `cult_calling`, `cult_bargain`, `cult_digging`,
-  `cross`, `robe`, `unsent_letter`, `flashlight`, `lumber_axe`,
-  `woodshed_key`, `rite_envelope`, `chalk`, `incense`. Display names
-  and fiction may change; keys may not. → `DESIGN.md` §3
+- **Item and scene keys are load-bearing** (logic + the one in-session
+  save): `mom_notebook`, `pallid_mask`, `cult_calling`, `cult_bargain`,
+  `cult_digging`, `cross`, `robe`, `unsent_letter`, `flashlight`,
+  `lumber_axe`, `woodshed_key`, `rite_envelope`, `chalk`, `incense`.
+  A key **may** be renamed to match its fiction, but the rename must
+  update every reference in the same change (dialogue gates, scene logic,
+  config sets, tests). There is **no cross-run save migration** to
+  preserve (the save is in-memory / single-session, and git history holds
+  the past), so cut or renamed keys are updated outright rather than
+  aliased for old saves. → `DESIGN.md` §3
 - **Nobody is ever relocated to Carcosa.** Every soul inside the town
   line stays there, living or dead; the SEAL ending's whole-town warp
   is the single translation event, and the King-catch furnace is a

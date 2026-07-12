@@ -285,7 +285,7 @@ Only display names and fiction change.
   it. Guards: flow.py §20 (no preset routes + nav routes around cover) and §21
   (portals carry the chase; the refuge is never breached).
 - ~~**Scrub the eat-cult fiction (code ↔ NARRATIVE §2).**~~ **DONE.** Canon is a
-  **claiming** cult that renders no bodies (no cannibalism). The `works_vats`
+  **claiming** cult that renders no bodies (no cannibalism). The `works_cistern`
   is **the Cistern** (the dig hitting the river — *"the water runs on,
   downward, and does not echo back"*); `depths_threshing` is a literal grain
   **tithe** (*"An offering. Not a stockpile."*); and the last tallow leak —
@@ -409,12 +409,12 @@ finds you — run it on cover, timing, and breaking their line of sight).
 |---|---|---|---|
 | 1 | The Shaft Floor | `well_bottom` | The descent fold lands you here; its return pane (the way back up) stands where the rope once hung. Quiet airlock, 1 hide. |
 | 2 | The Timber Racks | `well_passage` | The dig's staged shoring lumber, racked on its way to the faces (renamed 2026-07: the old drying-corn-doll-material fiction was cut -- an obsessive dig runs no craft room). A LONG rack gallery (24 tiles, lengthened 2026-07 -- the stealth pass: graded suspicion needs distance), 2 patrolling cultists offset down the run, 2 hides. |
-| 3 | **The Cistern** (was "Tallow Vats" — cut) | `works_vats` | Where the dig **broke into the underground river** — the artery to the door (NARRATIVE §2), and the diggers' proof they were close. Wet stone, rising damp, 2 tending cultists, 2 hides. *No rendering, no tallow, no bodies — the claiming cult eats no one. Fiction redress is a code TODO (§4); the scene key stays `works_vats`.* |
+| 3 | **The Cistern** (was "Tallow Vats" — cut) | `works_cistern` | Where the dig **broke into the underground river** — the artery to the door (NARRATIVE §2), and the diggers' proof they were close. Wet stone, rising damp, 2 tending cultists, 2 hides. *No rendering, no tallow, no bodies — the claiming cult eats no one. The scene key is now `works_cistern` (renamed 2026-07 to match the Cistern).* |
 | 4 | The Sorting Hall | `works_sorting` | The **worldly lives the congregation shed** when they were claimed — and the effects of the few the fold took — sorted and catalogued. 2 cultists, 3 hides (hardest crossing). A side door north → **Mara's room**. |
 | 4a | **Mara's Room** | `maras_room` | A convert's cell off the hall: cot, her cult robe + the unsent letter. **Evidence: the unsent letter (`maras_room`, a canonical trail beat — NARRATIVE §6).** A quiet beat off the gauntlet, 1 hide. |
 | 5 | The Scriptorium | `works_scriptorium` | The Sign copied endlessly — the **attuned compulsively bleeding the dream-image out** onto every surface, none of them the door itself (NARRATIVE §2). 1 oblivious scribe, 2 hides. **The Calling** — the first of three cult-testimony fragments (NARRATIVE §9), the one bound, whole volume among the loose copies: the congregation's own personal testimony (their voice in the item description, the PI's reaction in his notes). Pure lore; it gates nothing (the keystone is the Mask alone). The Bargain + The Digging are found deeper (the Sump, the Old Stores). |
 | 6 | The Sign Chamber | `works_sign` | The Sign daubed on the wall + an altar; the kneeling rank (set-piece NPCs) + 1 patrol. **The calling-out (2026-07):** Mara kneels among them; first entry, the kneelers rise, one says her name, she comes to you — the confrontation lands (Mara is **proof, not a counted beat** since the TODO #22 rework: the calling-out fires but no longer counts). **Lift the Pallid Mask → `pallid_mask`** — the **keystone item**, not a case beat (it left the count; NARRATIVE §6). No charcoal; you take the object itself. |
-| 7 | **The Deepest Face** | `works_deepstair` | The dig's END — the cult's testimony left "a few feet of earth"; there is no stair, no gate. With the **Mask in hand** (the sweep finished) and **powder from the Sump**, a two-press charge **blasts the floor through into the old workings**: the FALL into `depths_antechamber` is the one-way step. The Mask is **not consumed** — carried down and spent at the Threshold door. |
+| 7 | **The Deepest Face** | `works_deepface` | The dig's END — the cult's testimony left "a few feet of earth"; there is no stair, no gate. With the **Mask in hand** (the sweep finished) and **powder from the Sump**, a two-press charge **blasts the floor through into the old workings**: the FALL into `depths_antechamber` is the one-way step. The Mask is **not consumed** — carried down and spent at the Threshold door. |
 
 **Rules wired:**
 - **One way down:** the grove rite's opened pane only; the barn cellar hatch
@@ -437,7 +437,7 @@ finds you — run it on cover, timing, and breaking their line of sight).
   **No charnel fiction anywhere** — the claiming cult spills no one (NARRATIVE §2),
   so there are no bone rooms, no captivity, no blood in the mine.
   `the_cells` are the diggers' own **bunk cells** (Mara's cell is the same
-  kind, kept); `the_ossuary` (legacy key) is the old workings' **Old
+  kind, kept); `the_old_stores` is the old workings' **Old
   Stores** — racked gear, tagged hafts, The Digging left on a shelf.
   Guarded by `tests/flow.py` §19b (token scan of `well.py`/`depths.py` +
   the purged `bone_rack` furniture kind). The ART half of the mine read
@@ -456,12 +456,12 @@ finds you — run it on cover, timing, and breaking their line of sight).
 
 **Re-audit (2026-06):** the 7-room gauntlet above matches the build
 exactly. Not tabled here but registered and reachable: three **dead-end
-side branches** off the Works — `the_sump` (off `works_vats`, an ammo
+side branches** off the Works — `the_sump` (off `works_cistern`, an ammo
 cache), `the_cells` (off `works_sorting`; the diggers' bunk cells since
 the 2026-07 mine retrofit), and `maras_room` (4a, the cell
 off the Sorting Hall) — plus the **Depths**, which has grown to five rooms
 (`depths_antechamber` → `depths_procession` → `depths_hall` →
-`depths_threshing` → `depths_stair`, with `the_ossuary` — the **Old
+`depths_threshing` → `depths_stair`, with `the_old_stores` — the **Old
 Stores** since the retrofit — branching off the
 procession) before the **Hive** (`dark`, the claimed congregation, past
 names — Mara (the calling-out) moved up to the Sign Chamber, 2026-07) and

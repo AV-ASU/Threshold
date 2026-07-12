@@ -115,7 +115,6 @@ def build_cornfield_path():
 
     sc.set_spawn("default", 1, PATH_ROW)
     sc.set_spawn("from_lodge_yard", 1, PATH_ROW)
-    sc.set_spawn("from_cave", W - 2, PATH_ROW)
     sc.set_spawn("from_barn", W - 2, PATH_ROW)
     sc.set_spawn("from_cornfield_maze", 30, PATH_ROW)
 

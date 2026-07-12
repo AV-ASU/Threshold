@@ -366,14 +366,14 @@ def main():
     # The investigator's discipline: no Mask, no fuse (sweep first).
     gb = new_game()
     gb.player.inventory.add("powder", 1)
-    gb.load_scene_now("works_deepstair")
+    gb.load_scene_now("works_deepface")
     ready(gb)
     gb.player.x, gb.player.y = gb.scene._gate_pos
     gb.scene.on_interact_fn(gb)
     check(not gb.save.flag("blast_laid"),
           "face: without the Mask the charge stays unlit (sweep first)")
     # The real run: Mask + powder, two-press, light it.
-    g.load_scene_now("works_deepstair")
+    g.load_scene_now("works_deepface")
     ready(g)
     sc = g.scene
     g.player.x, g.player.y = sc._gate_pos
@@ -495,14 +495,14 @@ def main():
           "sump: The Bargain never inflates evidence (lore, not a beat)")
     gt3 = new_game()
     _e3 = evidence_count(gt3)
-    fire(gt3, "the_ossuary", "_dig_note_pos")
+    fire(gt3, "the_old_stores", "_dig_note_pos")
     check(gt3.player.inventory.has("cult_digging"),
-          "ossuary: grants The Digging (optional testimony fragment)")
+          "old stores: grants The Digging (optional testimony fragment)")
     check(any(isinstance(e, dict) and e.get("name") == "cult_digging"
               for e in gt3.save.arg("notes", [])),
-          "ossuary: The Digging logs the PI reaction to NOTES")
+          "old stores: The Digging logs the PI reaction to NOTES")
     check(evidence_count(gt3) == _e3,
-          "ossuary: The Digging never inflates evidence")
+          "old stores: The Digging never inflates evidence")
     # CANON (§1b discipline): the dimensional truth is NEVER stated in the
     # testimony the player reads.
     _triptych = ("cult_calling", "cult_bargain", "cult_digging")
@@ -1950,7 +1950,7 @@ def main():
     # fled into them spawns as a surface NPC that _tick_cultists sweeps (the
     # chase silently evaporates). They also need the dark/flashlight gate.
     from systems.game import DARK_SCENES as _DK
-    for _br in ("the_sump", "the_cells", "the_ossuary"):
+    for _br in ("the_sump", "the_cells", "the_old_stores"):
         check(_br in _UG, f"portal: branch room {_br} is registered underground")
         check(_br in _DK, f"dark: branch room {_br} gets the underground gloom")
 
@@ -2369,7 +2369,7 @@ def main():
     # on walkable ground (a spot inside a solid roots the player in a
     # wall and a sweeping searcher can never close to check range).
     from scenes import load_scene as _ld2, SCENE_BUILDERS as _SB2
-    for _key in ("well_passage", "works_vats", "works_sorting",
+    for _key in ("well_passage", "works_cistern", "works_sorting",
                  "works_scriptorium", "works_sign", "depths_antechamber",
                  "depths_procession", "depths_hall", "brimley"):
         check(len(_ld2(_key).hide_spots) >= 1,
@@ -2510,24 +2510,6 @@ def main():
               "save: the cooled attention survives the round trip")
         check(gsl.player.hp == gsl.player.max_hp,
               "save: sleep rests the PI (hp restored)")
-        # A pre-rename slot (the keystone was keyed "sigil_rubbing"
-        # until 2026-07) must migrate on read: the item becomes
-        # pallid_mask, the flag sign_rubbing_taken becomes
-        # pallid_mask_taken.
-        import json as _json
-        with open(gsl.save.disk_path(), encoding="utf-8") as f:
-            _legacy = _json.load(f)
-        _legacy["inventory"]["items"].append(["sigil_rubbing", 1])
-        _legacy["flags"]["sign_rubbing_taken"] = True
-        with open(gsl.save.disk_path(), "w", encoding="utf-8") as f:
-            _json.dump(_legacy, f)
-        check(gsl.save.load_disk(), "save: a legacy slot still reads")
-        gsl._start_play()
-        check(gsl.player.inventory.has("pallid_mask"),
-              "save: a legacy sigil_rubbing migrates to pallid_mask")
-        check(gsl.save.flag("pallid_mask_taken")
-              and not gsl.save.flag("sign_rubbing_taken"),
-              "save: the legacy taken-flag migrates with it")
     finally:
         os.environ.pop("THRESHOLD_SAVE_DIR", None)
         shutil.rmtree(_sd, ignore_errors=True)

@@ -46,9 +46,9 @@ _TITLES = {
     "clerk_robe":              "The Pressed Robe",
     "lodge_candle_callback":   "Candles at the Lodge",
     "scarecrow":               "The Scarecrow",
-    "the_ossuary_shelves":     "The Old Stores",
+    "the_old_stores_shelves":     "The Old Stores",
     "threshing_floor":         "The Threshing Floor",
-    "works_vats_seen":         "The Water Below",
+    "works_cistern_seen":         "The Water Below",
     "worn_stone":              "The Worn Stone",
 }
 

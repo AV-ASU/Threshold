@@ -69,15 +69,11 @@ def build_clearing():
     objects_l[6][15] = "t"
     objects = ["".join(r) for r in objects_l]
     sc = Scene("clearing", floor, objects, music="wrong")
-    # The clearing's south threshold now leads back to the brimley
-    # river bank (where the new entrance is). Old saves' from_forest
-    # / from_cornfield spawns still resolve to the same in-scene
-    # position so loading is non-destructive.
+    # The clearing's south threshold leads back to the brimley river
+    # bank (where the entrance is).
     sc.add_exit("j", "brimley", "from_clearing")
     sc.set_spawn("default",        9, 11)
     sc.set_spawn("from_brimley", 9, 11)
-    sc.set_spawn("from_forest",    9, 11)   # legacy alias
-    sc.set_spawn("from_cornfield", 9, 11)   # legacy alias
 
     # The dead fire pit at centre -- scaled up so it reads as the
     # communal burn, not a campsite. Around it, what wouldn't burn:
@@ -173,8 +169,6 @@ def build_shop():
     sc.add_exit("D", "brimley", "from_shop")
     sc.set_spawn("default", 7, 9)
     sc.set_spawn("from_brimley", 8, 10)      # one tile north of the D door
-    sc.set_spawn("from_village", 8, 10)      # legacy fallback
-    sc.set_spawn("from_town", 8, 10)         # legacy fallback
 
     pos = sc.consume_marker("S")
     if pos:
@@ -296,8 +290,6 @@ def build_barn():
     # back stall -- behind the partition, so they're an indoor blind spot.
     sc.set_spawn("default", 5, 8)
     sc.set_spawn("from_brimley", 4, 1)       # one tile south of n door
-    sc.set_spawn("from_village", 4, 1)         # legacy fallback
-    sc.set_spawn("from_well_passage", 11, 5)   # beside the hatch in the stall
 
     # Sized furniture: stacked hay-bale shelves out front and the workbench
     # in the back stall.
@@ -407,7 +399,6 @@ def build_toby_house():
     sc.add_exit("J", "brimley", "from_toby_house")
     sc.set_spawn("default", 8, 7)
     sc.set_spawn("from_brimley", 4, 8)         # one tile north of the J door
-    sc.set_spawn("from_village", 4, 8)         # legacy fallback
 
     pos = sc.consume_marker("K")
     if pos:

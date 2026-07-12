@@ -809,7 +809,7 @@ def basement_on_enter(game, scene):
     # cult's devotion the whole time. One-shot, fires the next descent to
     # the cellar after the Cistern beat (non-canonical evidence -- doesn't
     # move the King-gate, and the claiming cult renders no bodies at all).
-    if (game.save.flag("evidence_works_vats_seen")
+    if (game.save.flag("evidence_works_cistern_seen")
             and not game.save.flag("evidence_lodge_candle_callback")):
         _evidence(game, "lodge_candle_callback", [
             "[c=dim]The same guttering candles as the dark below, kept "

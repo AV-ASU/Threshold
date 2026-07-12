@@ -304,7 +304,7 @@ loot / testimony placement; most is just labor made visible.
 - **The FICTION half landed (2026-07, the mine retrofit + killer-cult
   scrub; guarded by flow §19b).** Room identities and text now read as the
   dig over old workings: `the_cells` = the diggers' bunk cells (captivity
-  fiction cut), `the_ossuary` = the Old Stores (the bone vault is purged,
+  fiction cut), `the_old_stores` = the Old Stores (the bone vault is purged,
   `bone_rack` deleted from the furniture registry), every underground
   bloodstain/gore decal removed (the willing bled nobody), the Sorting
   Hall's "faces of the vanished" flyer wall cut, HUD display names cover
@@ -728,9 +728,9 @@ account is photo-earned.)*
   glitch-wall docstring were all corrected — along with every dangling
   citation to a deleted doc (`GAME_CHANGES §N`, `STEALTH_REWORK`,
   `STORY_AUDIT B6`, `HANDCRAFT_BACKLOG`), the dead in-game `F3` references,
-  and the C-item lying comments. Legacy scene keys (`works_deepstair`,
-  `the_ossuary`), the `sigil_rubbing` migration, and accurate "was CUT"
-  provenance notes were left intact.
+  and the C-item lying comments. Accurate "was CUT" provenance notes were left intact. (The legacy scene
+  keys and the `sigil_rubbing` save-migration were renamed / removed in the
+  follow-up legacy-key pass, per the 2026-07 no-backward-compat ruling.)
 
 ### From the code-health audit (retired `CODE_HEALTH_AUDIT.md`)
 

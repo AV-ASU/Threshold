@@ -162,9 +162,7 @@ def build_lodge_yard():
     sc.set_spawn("from_lodge", 5, 6)             # one south of back door
     sc.set_spawn("from_country_lane", 1, 7)      # one east of west passage
     sc.set_spawn("from_arrival_road", 1, 7)      # walked EAST off the road
-    sc.set_spawn("from_village", 1, 7)           # legacy save alias
     sc.set_spawn("from_forest", 22, 7)           # one west of east passage
-    sc.set_spawn("from_river", 1, 7)             # west passage spawn alias
     sc.set_spawn("from_woodshed", 2, 11)         # one N of the shed door
 
     # The pickup truck -- a decoration the player can SEE but not
@@ -559,8 +557,6 @@ def build_woodshed():
     sc.add_exit("h", "lodge_yard", "from_woodshed")
     sc.set_spawn("default",            5, 6)
     sc.set_spawn("from_yard",          4, 6)   # entered from the yard door
-    sc.set_spawn("from_brimley_shed",  4, 6)   # legacy fallback
-    sc.set_spawn("from_village_shed",  4, 6)   # legacy fallback
 
     # The splitting axe hangs in the back tool nook -- behind the partition,
     # so the weapon is an indoor blind spot you have to round the wall for.

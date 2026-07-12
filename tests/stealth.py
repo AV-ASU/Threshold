@@ -398,7 +398,7 @@ def main():
           "noisemakers: stepping in the litter turns the nearest head")
 
     g = new_game()
-    g.load_scene_now("works_vats", "default")
+    g.load_scene_now("works_cistern", "default")
     tick(g, 10)
     src = next(s for s in g.scene.noise_sources if s["kind"] == "valve")
     for e in g.scene.enemies:
@@ -453,7 +453,7 @@ def main():
     check(n_st >= 10, f"errands: stations present ({n_st})")
 
     g = new_game()
-    g.load_scene_now("works_vats", "default")
+    g.load_scene_now("works_cistern", "default")
     tick(g, 10)
     hx, hy, hkind = g.scene.hide_spots[0]
     g.player.x, g.player.y = hx, hy
@@ -618,7 +618,7 @@ def main():
           "dark: the daylit surface never grants it")
 
     g = new_game()
-    g.load_scene_now("works_vats", "default")
+    g.load_scene_now("works_cistern", "default")
     tick(g, 10)
     for e in g.scene.enemies:
         e.x, e.y = 10 * TILE + 16, 5 * TILE + 16
@@ -818,7 +818,7 @@ def main():
                 return list(row).index("~"), ty
         return None
 
-    for key in ("works_vats", "the_sump", "depths_threshing"):
+    for key in ("works_cistern", "the_sump", "depths_threshing"):
         g = new_game()
         g.load_scene_now(key, "default")
         wt = _find_water(g)
@@ -828,7 +828,7 @@ def main():
             check(g._wading(), f"wade: standing in {key} water reads as wading")
 
     g = new_game()
-    g.load_scene_now("works_vats", "default")
+    g.load_scene_now("works_cistern", "default")
     g.player.x, g.player.y = 6 * TILE + 16, 5 * TILE + 16   # dry crossing
     check(not g._wading(), "wade: the dry central crossing is not wading")
 
@@ -845,7 +845,7 @@ def main():
     g = new_game()
     g._cam_pitch_target = 0.0                # flat: raw WASD, no facing math
     g.camera.pitch = 0.0
-    g.load_scene_now("works_vats", "default")
+    g.load_scene_now("works_cistern", "default")
     g.player.x, g.player.y = 4 * TILE + 16, 2 * TILE + 16   # W end of N arm
     g.player.step_timer = 0.0
 

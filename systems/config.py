@@ -192,13 +192,13 @@ MOTH_LIGHT_R = 110.0         # kindle/flare light pool (breaks dark cover)
 # dimmed with a small clear circle around the player. With it,
 # the dimness lifts to a wider cone in the facing direction.
 DARK_SCENES = {"lodge_cellar", "well_passage", "well_bottom",
-               "works_vats", "works_sorting", "maras_room",
+               "works_cistern", "works_sorting", "maras_room",
                "works_scriptorium",
-               "works_sign", "works_deepstair",
+               "works_sign", "works_deepface",
                "abandoned_farmhouse",
                "depths_antechamber", "depths_procession",
                "depths_hall", "depths_threshing", "depths_stair",
-               "the_sump", "the_cells", "the_ossuary",
+               "the_sump", "the_cells", "the_old_stores",
                "dark", "threshold"}
 
 # Cult-dark: a subset of DARK_SCENES where the flashlight is
@@ -207,7 +207,7 @@ DARK_SCENES = {"lodge_cellar", "well_passage", "well_bottom",
 # normal physics.
 CULT_DARK_SCENES = {"depths_antechamber", "depths_procession",
                     "depths_hall", "depths_threshing",
-                    "depths_stair", "the_ossuary",
+                    "depths_stair", "the_old_stores",
                     "dark", "threshold"}
 
 # Scenes where the reactive cult-ambient layer (proximity-driven
@@ -215,8 +215,8 @@ CULT_DARK_SCENES = {"depths_antechamber", "depths_procession",
 # Works rooms and the Depths corridors. The fire-and-forget per-scene
 # _ambient hooks are scene colour; this layer is a SECOND layer that
 # swells with cultist proximity and pans from the closest cultist.
-CULT_AMBIENT_SCENES = {"works_vats", "works_sorting", "works_scriptorium",
-                       "works_sign", "works_deepstair",
+CULT_AMBIENT_SCENES = {"works_cistern", "works_sorting", "works_scriptorium",
+                       "works_sign", "works_deepface",
                        "depths_antechamber", "depths_procession",
                        "depths_hall", "depths_threshing", "depths_stair"}
 
@@ -508,7 +508,7 @@ NOISE_SRC_SILENCE_DIST = 40.0 # a hunter this close shuts a source off
 # on the dry). Scoped to the deep works so the Brimley river -- its own
 # set-piece, with its own in/out rules -- is untouched. No new AI: the
 # splash rides the existing Scene.emit_noise / stealth.hear_noise ear.
-WADE_SCENES = {"the_sump", "works_vats", "depths_threshing"}
+WADE_SCENES = {"the_sump", "works_cistern", "depths_threshing"}
 WADE_SPEED_MULT = 0.5         # wading halves speed (sprint can't clear it)
 WADE_STEP_EVERY = 0.46        # heavier, slower splash cadence than dry steps
 WADE_SPLASH_LOUD = 0.95       # a splash is LOUD -- over NOISE_SEARCH_PULL
@@ -618,13 +618,13 @@ VANE_NEGLECT_EVIDENCE = 3     # the descent line: 3 canonical beats
 # at 0 evidence, deepening on the full evidence count (not capped at 3).
 UNDERGROUND_SCENES = {
     "well_bottom", "well_passage",
-    "works_vats", "works_sorting", "works_scriptorium", "works_sign",
-    "works_deepstair",
+    "works_cistern", "works_sorting", "works_scriptorium", "works_sign",
+    "works_deepface",
     "depths_antechamber", "depths_procession", "depths_hall",
     "depths_threshing", "depths_stair",
     # the dead-end branch rooms hang off their parent corridors and share
     # its underground treatment (baseline rot + Enemy-cultist pursuit).
-    "the_sump", "the_cells", "the_ossuary",
+    "the_sump", "the_cells", "the_old_stores",
 }
 
 # Ashfall (DESIGN.md §2): a slow drifting pale-yellow ashfall, the pressure

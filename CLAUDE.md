@@ -86,8 +86,8 @@ it renders the procedural sprites to a labelled PNG strip.
     cultist + fold/portal pursuit, visibility + evidence floor, death.
   - `systems/render_mixin.py` — the draw layer: `draw_world`, overlays, HUD,
     the title/pause/settings screens, the death card.
-  - `systems/rot_mixin.py` — world rot/ashfall + the hunting sheriff,
-    plus the turned-local dialogue helpers.
+  - `systems/rot_mixin.py` — world rot/ashfall + the moth sim + the
+    hunting sheriff.
   - `systems/narrative_mixin.py` — the journal flashback, the case-file /
     interior-voice notes (`_log_case_entry` …), the endings + opening crawl.
 - `scenes/` — `SCENE_BUILDERS` registry + `load_scene(key)`
@@ -280,7 +280,7 @@ it renders the procedural sprites to a labelled PNG strip.
   deliberately deferred — free look under tilt already gives the
   information function; revisit in the human-tuning pass.)
 - **Deep-water WADE** (TODO #8, `WADE_*` config, `Game._wading`): the
-  flooded deep works (`WADE_SCENES` = works_vats / the_sump /
+  flooded deep works (`WADE_SCENES` = works_cistern / the_sump /
   depths_threshing) stand in walkable `~` water. Wading a water tile
   **halves the player's speed** (sprint can't clear it) and throws a
   **loud splash** (`WADE_SPLASH_LOUD`, over `NOISE_SEARCH_PULL`, via

@@ -8,11 +8,11 @@ Depths:
   well_bottom        -- the Shaft Floor (the fold lands you here; its
                         return pane is the way back up)
   well_passage       -- the Timber Racks (first gauntlet)
-  works_vats         -- the Cistern (the dig broke into the river)
+  works_cistern         -- the Cistern (the dig broke into the river)
   works_sorting      -- the Sorting Hall (shed lives of the claimed)
   works_scriptorium  -- the Scriptorium (the Sign, copied endlessly)
   works_sign         -- the Sign Chamber (lift the Pallid Mask, the keystone item)
-  works_deepstair    -- the Deepest Face (the dig's end: powder from the
+  works_deepface    -- the Deepest Face (the dig's end: powder from the
                         Sump blasts the last few feet; the FALL into the
                         old workings is one-way)
 
@@ -63,7 +63,6 @@ def build_well_bottom():
     sc.add_exit("E", "well_passage", "from_above")
     sc.add_exit("O", "effigy_grove", "from_well_bottom", direction="west")
     sc.set_spawn("default",   5, 5)
-    sc.set_spawn("from_well", 4, 3)       # legacy alias for the landing
     sc.set_spawn("from_grove", 4, 4)      # land here on the descent (east
     #                                       of the return pane, carried
     #                                       clear of it)
@@ -173,7 +172,7 @@ def build_well_bottom():
 
     # The Works gauntlet is walkable both ways for the Mask-bearer; for
     # anyone else the pane above refuses (keyed to His face). The fall
-    # through the blasted face (works_deepstair) is the one-way step.
+    # through the blasted face (works_deepface) is the one-way step.
     return sc
 
 
@@ -205,15 +204,12 @@ def build_well_passage():
     objects = ["".join(r) for r in objs]
     sc = Scene("well_passage", floor, objects, music="basement")
     sc.add_exit("F", "well_bottom", "from_below")
-    sc.add_exit("E", "works_vats",  "from_above")
+    sc.add_exit("E", "works_cistern",  "from_above")
     sc.set_spawn("default",    8, 5)
     sc.set_spawn("from_above", 1, 5)      # arriving from the shaft
     sc.set_spawn("from_below", 22, 5)     # back from the vats
-    # Legacy spawns kept so old saves + the (now unreachable) cult
-    # chamber's exit still resolve. The barn tunnel is nailed shut from
-    # below now -- the grove's descent fold is the only way underground.
-    sc.set_spawn("from_well",    1, 5)
-    sc.set_spawn("from_chamber", 22, 5)
+    # The barn tunnel is nailed shut from below now -- the grove's
+    # descent fold is the only way underground.
 
     # Stores stacked up in the north bay -- a barrel and a crate.
     sc.add_furniture("barrel", [(10, 2)])
@@ -282,9 +278,9 @@ def build_well_passage():
     return sc
 
 
-# ---- Room 3: the Cistern (key: works_vats) ----
+# ---- Room 3: the Cistern (key: works_cistern) ----
 
-def build_works_vats():
+def build_works_cistern():
     # A cruciform cistern: four flooded arms off a central crossing, the
     # corners walled off into solid stone, a basin sunk in each arm.
     floor, objs = _box(13, 11)
@@ -302,7 +298,7 @@ def build_works_vats():
     # take on, not a wall (WADE_*).
     floor = _flood(floor, objs, _rect_tiles(4, 1, 8, 3) + _rect_tiles(4, 7, 8, 9))
     objects = ["".join(r) for r in objs]
-    sc = Scene("works_vats", floor, objects, music="basement")
+    sc = Scene("works_cistern", floor, objects, music="basement")
     sc.add_exit("F", "well_passage", "from_below")
     sc.add_exit("E", "works_sorting", "from_above")
     sc.add_exit("D", "the_sump", "from_vats")
@@ -369,10 +365,10 @@ def build_works_vats():
         # First entry: the dig hit water. This is the river (NARRATIVE §2) --
         # the artery the cult followed down toward the door. Gated by the
         # evidence flag (non-canonical, so it doesn't move the King-gate).
-        # Flag key kept (works_vats_seen) for save compat.
-        if game.save.flag("evidence_works_vats_seen"):
+        # The note key is works_cistern_seen (the Water Below).
+        if game.save.flag("evidence_works_cistern_seen"):
             return
-        _evidence(game, "works_vats_seen", [
+        _evidence(game, "works_cistern_seen", [
             "[c=dim]The water runs on, downward, and does not echo back.[/c]",
         ])
     sc.on_enter_fn = _vats_on_enter
@@ -394,7 +390,7 @@ def build_works_sorting():
     # same footprint the cult AI routes around)
     objects = ["".join(r) for r in objs]
     sc = Scene("works_sorting", floor, objects, music="basement")
-    sc.add_exit("F", "works_vats", "from_below")
+    sc.add_exit("F", "works_cistern", "from_below")
     sc.add_exit("E", "works_scriptorium", "from_above")
     sc.add_exit("D", "the_cells", "from_sorting")
     sc.add_exit("M", "maras_room", "from_works_sorting")
@@ -901,7 +897,7 @@ def build_works_sign():
     objects = ["".join(r) for r in objs]
     sc = Scene("works_sign", floor, objects, music="void")
     sc.add_exit("F", "works_scriptorium", "from_below")
-    sc.add_exit("E", "works_deepstair", "from_above")
+    sc.add_exit("E", "works_deepface", "from_above")
     sc.set_spawn("default",    6, 9)      # enter from the south, away from it
     sc.set_spawn("from_above", 1, 5)
     sc.set_spawn("from_below", 11, 5)
@@ -1149,7 +1145,7 @@ def build_works_sign():
     return sc
 
 
-# ---- Room 7: the Deepest Face (key kept: works_deepstair) ----
+# ---- Room 7: the Deepest Face (works_deepface) ----
 # The dig's end. The cult's testimony says it plain: "a few feet of
 # earth left between us and the door". The mine NEVER finished -- there
 # is no stair, no gate, only the dead face where the digging stopped.
@@ -1158,13 +1154,13 @@ def build_works_sign():
 # FALLS into something older than the dig (depths_antechamber, the fall
 # zone -- cut stone worn smooth by feet that came before the cult).
 
-def build_works_deepstair():
+def build_works_deepface():
     # An octagonal dead-end chamber, the dig's final face in the north wall.
     floor, objs = _box(11, 9)
     _bevel(objs, 2)
     objs[4][0] = "F"          # west -> back to the sign chamber
     objects = ["".join(r) for r in objs]
-    sc = Scene("works_deepstair", floor, objects, music="void")
+    sc = Scene("works_deepface", floor, objects, music="void")
     sc.add_exit("F", "works_sign", "from_below")
     sc.set_spawn("default",    5, 5)
     sc.set_spawn("from_above", 2, 4)
@@ -1293,7 +1289,7 @@ def build_the_sump():
     floor = _flood(floor, objs, _rect_tiles(2, 6, 7, 7))
     objects = ["".join(r) for r in objs]
     sc = Scene("the_sump", floor, objects, music="basement")
-    sc.add_exit("F", "works_vats", "from_the_sump")
+    sc.add_exit("F", "works_cistern", "from_the_sump")
     sc.set_spawn("default",   5, 5)
     sc.set_spawn("from_vats", 5, 2)
     # Black water pooled in two stone basins, a barrel + crate of the diggers'

@@ -652,20 +652,13 @@ def build_brimley():
     sc.set_spawn("default", w - 2, 7)
     # Coming in from the Lodge via the country lane (east edge).
     sc.set_spawn("from_country_lane", w - 2, 7)
-    # Legacy alias for any old "from_village" save references; resolves
-    # to the same east-edge entry now that village is merged.
-    sc.set_spawn("from_village", w - 2, 7)
     sc.set_spawn("from_lodge_yard", w - 2, 7)
-    # Climbing back out of the well lands beside it.
-    sc.set_spawn("from_well", 94, 13)
     # Coming out of the woodshed door (the lumber axe + flashlight shed).
     # Spawn ONE TILE NORTH of the door so the player doesn't immediately
     # re-trigger and isn't stuck inside the shed walls.
     sc.set_spawn("from_woodshed", 91, 15)
     # The north passage to the gravel road (cult-priest territory).
     sc.set_spawn("from_gravel_road", 96, 2)
-    sc.set_spawn("from_mist_house", 7, church_bot + 1)
-    sc.set_spawn("from_alter", 1, 85)
     sc.set_spawn("from_river_crossing", 50, 1)
     # Cornfield maze pushes north and emerges into the brimley
     # a few tiles west of the river crossing -- the maze led you
@@ -686,9 +679,6 @@ def build_brimley():
     sc.set_spawn("from_toby_house",         kid_door,     kid_bot + 1)
     sc.set_spawn("from_barn",              barn_door,    barn_bot + 1)
     sc.set_spawn("from_school",            school_door,  school_bot + 1)
-    # The farm's old town road now drops you into the heart of Brimley,
-    # among the scattered buildings on the east bank.
-    sc.set_spawn("from_village_road",      58, 30)
 
     # Ambience -- crows and grass tufts. The banks once sat bare west
     # of the river (the dread of no cover); they now carry the walkable

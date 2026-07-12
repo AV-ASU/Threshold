@@ -93,14 +93,12 @@ def build_church():
 
     sc = Scene("church", floor, objects, music="home")
     # Church now sits on the brimley west bank. The `m` exit routes
-    # to the brimley; the legacy `from_village` spawn stays as a
-    # save-state fallback.
+    # to the brimley.
     sc.add_exit("m", "brimley", "from_church")
     sc.add_exit("?", "graveyard", "from_church")
     sc.add_exit("U", "bell_tower", "from_church")
     sc.set_spawn("default", 8, 8)
     sc.set_spawn("from_brimley", 8, 10)        # one tile north of the m door
-    sc.set_spawn("from_village", 8, 10)        # legacy fallback
     sc.set_spawn("from_graveyard", 10, 1)      # one tile south of the ? door
     sc.set_spawn("from_bell_tower", 2, 2)      # at the foot of the U stairs
 
@@ -231,8 +229,6 @@ def build_sheriff_office():
     sc.add_exit("y", "brimley", "from_sheriff_office")
     sc.set_spawn("default", 4, 8)
     sc.set_spawn("from_brimley", 5, 10)      # one tile north of the y door
-    sc.set_spawn("from_village", 5, 10)      # legacy fallback
-    sc.set_spawn("from_town", 5, 10)         # legacy fallback
 
     pos = sc.consume_marker("Y")
     if pos:
@@ -354,10 +350,8 @@ def build_abandoned_farmhouse():
     sc.add_exit("o", "brimley", "from_abandoned_farmhouse")
     sc.set_spawn("default",     3, 1)
     sc.set_spawn("from_brimley", 3, 1)
-    sc.set_spawn("from_village", 3, 1)         # legacy fallback
     # When the player climbs back up from the cult chamber, they come up
     # through the hatch in the back room. Spawn beside it.
-    sc.set_spawn("from_chamber", 9, 4)
     # The abandoned farmhouse. Phantom marks on the walls -- thick in the
     # back room. There's a (sealed) hatch back there too.
     sc.add_decoration(Decoration(2 * TILE + 16,  0 * TILE + 22 , "candle"))
