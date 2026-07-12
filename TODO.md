@@ -395,24 +395,32 @@ and the tests. Sequence it:
   a bespoke bear inventory sprite with a visible tag; the name currently
   lands through the item desc + dialog.)*
 
-- **22c. The PI rots, not the town (four tiers).** Relocate the world rot
-  from the townsfolk to the PI (`DESIGN.md` §9; fixes STORY_AUDIT B6 and
-  NARRATIVE §2's "the wrongness is the place, not the people"). Cut the
-  people-change (`_convert_local` sprite swap + `_turned_local_dialogue`);
-  keep the town **ordinary to the end**. Layer a four-tier PI register
-  (0 / 1–2 / 3 / 4+ evidence) into the conversations — the `prompt`
-  callable + interior beats shift; the NPC's words never do. Re-source the
-  converts' lost visibility pressure if the surface goes too quiet (His
-  ash / the moths). This also revives 4/5/6 (they turn the sanity screw
-  below the King-gate). Pairs with the theory-ladder notebook (#13) that
-  strings the trail into a reconstruction.
+- **22c. The PI rots, not the town (four tiers). LANDED (2026-07).** The
+  world rot is the INVESTIGATOR'S now (`DESIGN.md` §9; fixes STORY_AUDIT B6,
+  NARRATIVE §2). The people-change is CUT: `_convert_local`,
+  `_turned_local_dialogue`, `_converted_local_dialogue`, `ROT_TURN_LINES`,
+  `_rot_locals`, and the `_spawn_counter_eater` tableau are gone, and
+  `ROT_CONVERT` / `ROT_TURN` are removed from config. The town stays
+  ordinary to the end (Mrs. Calder never joins and keeps both place
+  settings; the resisters keep their voices; the rot DECALS + ambient air
+  still run, the place still rots). In their place, a four-tier PI register
+  (`scenes/dialogue._pi_tier` / `_PI_WEATHER` / `_pi_framing`) composes the
+  PI's deepening interior weather onto each surface principal's conversation
+  framing, keyed to evidence (0 / 1-2 / 3 / 4+); the NPC's words never
+  change, only the man's read of them (Vane keeps his own mood prompt). Per
+  the 2026-07 ruling, the converts' lost gaze pressure is **NOT** re-sourced
+  (the cult enemy patrols carry it). Guarded by flow §23 (c)/(c2). *(Open:
+  interior-beat tiering inside exchanges, and the theory-ladder notebook
+  #13, both left for later.)*
 
-- **Guards:** rewrite smoke's six-beat check + flow's evidence/Mara guards
-  to the new roster; guard the world-persistence (kill the holder, still
-  reach the descent), the name invariant (Mara never says Sam), the
-  bear-gated name-beat (fate unchanged, ends the talk), and the
-  no-people-change rot. Re-green the full gate; update `DESIGN.md` §3 (the
-  code↔canon map) once the keys land.
+- **Guards:** DONE across 22a-c. smoke's canonical scan follows the dict;
+  flow §9/§9b (roster + world-persistence), §28c (bear + name invariant +
+  bear-gated ending), §23 (no-people-change rot + four-tier register). Full
+  gate green. `DESIGN.md` §3 describes the mechanism generically (unchanged
+  by the key swap) and §9 already documents the model, so no §3 edit was
+  needed.
+
+**#22 is COMPLETE (22a + 22b + 22c all landed 2026-07).**
 
 ## Blocked on a human at the keys
 

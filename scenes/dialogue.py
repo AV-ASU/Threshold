@@ -253,6 +253,52 @@ def _opener_exchanges(intro_beats, photo_beats, on_photo=None,
     ]
 
 
+# ---- The four-tier PI register (TODO #22c) ----
+# The world rot lives in the INVESTIGATOR now, not the town (NARRATIVE §2,
+# STORY_AUDIT B6): the locals stay exactly themselves, and what deteriorates
+# is the man hearing them. It surfaces ONLY as the PI's framing of a
+# conversation -- the question menu's opening line -- never as a word the NPC
+# says. Four tiers, keyed to how far up Mara's trail he has climbed
+# (evidence count): 0 clear and professional / 1-2 unsettled / 3 he knows /
+# 4+ past return. (The engine already renders a callable prompt(game); Vane's
+# mood prompt proves it.)
+def _pi_tier(game):
+    if game is None or not hasattr(game, "_evidence_count"):
+        return 0
+    ev = game._evidence_count()
+    if ev >= 4:
+        return 3
+    if ev >= 3:
+        return 2
+    if ev >= 1:
+        return 1
+    return 0
+
+
+# The PI's own interior weather, composed onto a principal's framing line.
+# Empty at tier 0 (he is a professional doing a job); it deepens from there.
+# The NPC's words never change; only this framing does.
+_PI_WEATHER = (
+    "",
+    " Something in this town is not sitting right, and you cannot yet put a "
+    "name to it.",
+    " You know what is under this town now. It is work, keeping a plain face "
+    "plain while you listen.",
+    " You have been down where the road ends. Ordinary is a thing you decide "
+    "to believe now.",
+)
+
+
+def _pi_framing(base):
+    """Wrap a static framing line into a four-tier PI-register callable (TODO
+    #22c): the base observation at tier 0, the same observation plus the PI's
+    deepening interior weather after. The locals stay ordinary; the man
+    reading them is the one who rots."""
+    def _framing(game):
+        return base + _PI_WEATHER[_pi_tier(game)]
+    return _framing
+
+
 # ---- The Preacher: Reverend Asa Crane ----
 # Ask-verb conversion (TODO #1 expand), carrying the ticket's pilot
 # choice: his doom is no longer an automatic visit counter. The flock
@@ -288,7 +334,7 @@ CRANE_CONVO = {
     "name":  "Rev. Crane",
     "voice": "blip_low",
     "pi_voice": "blip_soft",
-    "prompt": "Crane waits, hands folded over the lectern.",
+    "prompt": _pi_framing("Crane waits, hands folded over the lectern."),
     "leave":  "That's all for now.",
     "greet": {
         "flag": "crane_greeted",
@@ -448,7 +494,7 @@ TOBY_CONVO = {
     "name":  "Toby",
     "voice": "blip_kid",
     "pi_voice": "blip_soft",
-    "prompt": "Toby watches the corn line while you think.",
+    "prompt": _pi_framing("Toby watches the corn line while you think."),
     "leave":  "That's all for now.",
     "greet": {
         "flag": "toby_greeted",
@@ -598,7 +644,7 @@ HETTIE_CONVO = {
     "name":  "Hettie",
     "voice": "blip_high",
     "pi_voice": "blip_soft",
-    "prompt": "Hettie keeps one eye on the window.",
+    "prompt": _pi_framing("Hettie keeps one eye on the window."),
     "leave":  "That's all for now.",
     "greet": {
         "flag": "hettie_greeted",
@@ -1193,7 +1239,7 @@ SABLE_CONVO = {
     "name":  "Mr. Sable",
     "voice": "blip_low",
     "pi_voice": "blip_soft",
-    "prompt": "Sable folds his hands on the register and waits.",
+    "prompt": _pi_framing("Sable folds his hands on the register and waits."),
     "leave":  "That's all for now.",
     "greet": {
         "flag": "sable_greeted",
@@ -1504,7 +1550,7 @@ PELL_CONVO = {
     "name":  "Old Pell",
     "voice": "blip_low",
     "pi_voice": "blip_soft",
-    "prompt": "Pell stays put on his step, arms folded.",
+    "prompt": _pi_framing("Pell stays put on his step, arms folded."),
     "leave":  "That's all for now.",
     "greet": {
         "flag": "pell_greeted",
@@ -1559,7 +1605,7 @@ CALDER_CONVO = {
     "name":  "Mrs. Calder",
     "voice": "blip_mid",
     "pi_voice": "blip_soft",
-    "prompt": "Mrs. Calder watches the road past your shoulder.",
+    "prompt": _pi_framing("Mrs. Calder watches the road past your shoulder."),
     "leave":  "That's all for now.",
     "greet": {
         "flag": "calder_greeted",
@@ -1614,7 +1660,7 @@ ROYCE_CONVO = {
     "name":  "Royce",
     "voice": "blip_mid",
     "pi_voice": "blip_soft",
-    "prompt": "Royce looks down the road while you talk.",
+    "prompt": _pi_framing("Royce looks down the road while you talk."),
     "leave":  "That's all for now.",
     "greet": {
         "flag": "royce_greeted",
@@ -1714,7 +1760,7 @@ GARRICK_CONVO = {
     "name":  "Garrick",
     "voice": "blip_mid",
     "pi_voice": "blip_soft",
-    "prompt": "Garrick leans on the well and waits.",
+    "prompt": _pi_framing("Garrick leans on the well and waits."),
     "leave":  "That's all for now.",
     "greet": {
         "flag": "garrick_greeted",

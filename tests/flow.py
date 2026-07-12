@@ -2046,68 +2046,77 @@ def main():
     check("preacher" not in " ".join(_vane_lines).lower(),
           "vane: the murder beat fires exactly once")
 
-    # (c) Mrs. Calder's place-setting thread pays off when she converts
-    # (stage 2): the extra place is cleared, her converted voice carries
-    # the beat, and it lands as a case NOTE (never evidence).
+    # (c) The TOWN STAYS ORDINARY to the end (TODO #22c, NARRATIVE §2,
+    # STORY_AUDIT B6): the world rot is the PI's now, not the townsfolk's.
+    # The old people-change is CUT -- no peace-maker is repainted a cultist,
+    # no resister's voice curdles, and the machinery is gone.
+    import systems.config as _cfg
+    import rendering.sprites as _spr
+    from ui.dialog import DialogueBox as _DB
+    from systems import rot_mixin as _rm
+    check(not hasattr(_cfg, "ROT_CONVERT") and not hasattr(_cfg, "ROT_TURN"),
+          "rot: the convert/turn tables are removed from config")
+    check(not any(hasattr(_rm, n) for n in
+                  ("ROT_TURN_LINES", "_turned_local_dialogue",
+                   "_converted_local_dialogue")),
+          "rot: the curdled-dialogue helpers are removed from rot_mixin")
+    check(not any(hasattr(_rm.RotMixin, m) for m in
+                  ("_rot_locals", "_convert_local", "_spawn_counter_eater")),
+          "rot: the people-change methods are removed from RotMixin")
+    # The older mutate body-horror layer stays cut too (TODO #9).
+    check(not hasattr(_cfg, "INFEST_MUTATE")
+          and not hasattr(_spr, "draw_infested_overlay")
+          and not hasattr(_DB, "_draw_infested_portrait"),
+          "rot: the infested/mutate overlay + portrait stay removed")
+    # Both place settings stand for the whole run: Mrs. Calder never joins
+    # and never stops waiting, before AND at the old descent-line peak.
     g0 = new_game()
     g0.load_scene_now("brimley")
     check(sum(1 for d in g0.scene.decorations
               if getattr(d, "kind", "") == "place_setting") == 2,
-          "calder: both settings stand before she turns")
+          "calder: both settings stand at 0 evidence")
     gc = new_game()
-    gc.save.set_arg("evidence", ["ev0", "ev1"])     # stage 2
+    gc.save.set_arg("evidence", ["e0", "e1", "e2"])   # stage 3 (the old peak)
     gc.load_scene_now("brimley")
+    check(sum(1 for d in gc.scene.decorations
+              if getattr(d, "kind", "") == "place_setting") == 2,
+          "calder: both settings STILL stand at stage 3 (she keeps waiting)")
     _cal = next((nn for nn in gc.scene.npcs
                  if getattr(nn, "name", "") == "Mrs. Calder"), None)
-    check(_cal is not None and getattr(_cal, "tag", "") == "cult_convert",
-          "calder: converted at stage 2 (ROT_CONVERT)")
-    check(sum(1 for d in gc.scene.decorations
-              if getattr(d, "kind", "") == "place_setting") == 1,
-          "calder: the extra place is cleared once she joins")
-    if _cal:
-        _ev_before = evidence_count(gc)
-        _cal.dialogue_fn(gc, _cal)
-        _notes = gc.save.arg("notes", [])
-        check(any(isinstance(e, dict) and e.get("name") == "calder_table"
-                  for e in _notes) and evidence_count(gc) == _ev_before,
-              "calder: stopped-waiting lands as a NOTE, never evidence")
+    check(_cal is not None and getattr(_cal, "sprite_kind", "") != "cultist"
+          and getattr(_cal, "tag", "") != "cult_convert",
+          "calder: stays an ordinary local at stage 3 (never converted)")
+    check(not any(getattr(nn, "_mutated", False)
+                  or getattr(nn, "tag", "") == "cult_convert"
+                  or getattr(nn, "sprite_kind", "") == "cultist"
+                  for nn in gc.scene.npcs),
+          "rot: no townsperson is mutated or a cultist at stage 3 (town reads "
+          "normal)")
 
-    # (c2) The resisters TURN by DIALOGUE only -- the town reads NORMAL
-    # (TODO #9: the mutate body-horror layer is CUT). At stage 3 a resister
-    # keeps their exact sprite/portrait and never gets a _mutated flag; only
-    # their talk curdles (ROT_TURN -> _turned_local_dialogue), delivered
-    # as an ordinary line (no infested portrait path), never evidence.
-    import systems.config as _cfg
-    import rendering.sprites as _spr
-    from ui.dialog import DialogueBox as _DB
-    from systems.rot_mixin import _turned_local_dialogue
-    check(not hasattr(_cfg, "INFEST_MUTATE") and hasattr(_cfg, "ROT_TURN"),
-          "turn: INFEST_MUTATE is gone; ROT_TURN replaces it")
-    check(not hasattr(_spr, "draw_infested_overlay"),
-          "turn: the infested world overlay is removed from the sprites facade")
-    check(not hasattr(_DB, "_draw_infested_portrait"),
-          "turn: the infested dialog portrait is removed from DialogueBox")
-    gm = new_game()
-    gm.save.set_arg("evidence", ["e0", "e1", "e2"])   # stage 3
-    gm.load_scene_now("brimley")
-    check(not any(getattr(nn, "_mutated", False) for nn in gm.scene.npcs),
-          "turn: no local carries a _mutated flag at stage 3 (mutation cut)")
-    _turned = [nn for nn in gm.scene.npcs
-               if getattr(nn, "name", "") in _cfg.ROT_TURN]
-    check(bool(_turned), "turn: at least one resister stands in brimley at stage 3")
-    check(all(nn.dialogue_fn is _turned_local_dialogue for nn in _turned),
-          "turn: every present resister is repointed to the curdled voice")
-    if _turned:
-        _n = _turned[0]
-        _kind0 = _n.sprite_kind
-        _ev_b = evidence_count(gm)
-        _n.dialogue_fn(gm, _n)
-        check(_n.sprite_kind == _kind0 and evidence_count(gm) == _ev_b,
-              "turn: the curdled line keeps the sprite and never inflates evidence")
-    from systems.rot_mixin import ROT_TURN_LINES as _TL
-    check(not any(d in ln for lines in _TL.values() for ln in lines
-                  for d in ("—", "–", "--")),
-          "turn: no dashes in any curdled resister line (HARD RULE)")
+    # (c2) The four-tier PI register (TODO #22c): the rot surfaces as the
+    # PI's FRAMING of a conversation, keyed to evidence (0 / 1-2 / 3 / 4+),
+    # never as a word the NPC says. The prompt is a callable that shifts;
+    # the NPC observation is identical across tiers.
+    from scenes.dialogue import (HETTIE_CONVO as _HCV_r, _pi_tier as _pit,
+                                 _PI_WEATHER as _PW)
+    _pr = _HCV_r["prompt"]
+    check(callable(_pr), "register: the framing is a callable prompt(game)")
+    gr = new_game()
+
+    def _frame(ev):
+        gr.save.set_arg("evidence", [{"name": f"e{i}"} for i in range(ev)])
+        return _pr(gr)
+    _f0, _f1, _f3, _f4 = _frame(0), _frame(1), _frame(3), _frame(4)
+    check(len({_f0, _f1, _f3, _f4}) == 4,
+          "register: the PI's framing deepens across all four tiers")
+    check(all("Hettie keeps one eye" in f for f in (_f0, _f1, _f3, _f4)),
+          "register: the NPC observation is unchanged (only the PI's read shifts)")
+    check(_frame(2) == _f1,
+          "register: 1 and 2 evidence share the unsettled tier")
+    gr.save.set_arg("evidence", [{"name": f"e{i}"} for i in range(4)])
+    check(_pit(gr) == 3, "register: 4+ evidence is the past-return tier")
+    check(not any(d in w for w in _PW for d in ("—", "–", "--")),
+          "register: no dashes in the PI weather (HARD RULE)")
 
     # (d) The SPREAD drive-out is the CLAIMING (script locked 2026-06):
     # the mask rides the passenger seat and turns; the PI answers the
