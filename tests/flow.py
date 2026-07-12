@@ -5,8 +5,8 @@ asserts the spine is COMPLETABLE with no crash or soft-lock:
 
   3 evidence -> Sable hands over the Invitation -> the school rite
   (incense + the chalk door) -> the grove's descent fold -> take the
-  Playscript -> the Sign Chamber (Mara rises; take the Pallid Mask) ->
-  fork at the Deep Stair (the descent seals) -> cross the Depths ->
+  Calling testimony -> the Sign Chamber (Mara rises; take the Pallid Mask) ->
+  the blast at the Deepest Face (the one-way fall) -> cross the Depths ->
   seal the Threshold (the SEAL ending).
 
 Plus the SPREAD ending (drive out with the Mask) and the 3-evidence King
@@ -141,7 +141,7 @@ def main():
     ready(g)
     check(0.0 < g.scene.fold_charge_fn(g, "O") < 0.2,
           "grove: at 0 evidence the descent fold is a faint thread")
-    # The gate and charge key on the EVIDENCE COUNT (the six canonical
+    # The gate and charge key on the EVIDENCE COUNT (the five canonical
     # beats), never on visibility or its floor -- Watchers raise the
     # visibility floor and must never open the way down.
     import inspect as _insp_g
@@ -339,7 +339,7 @@ def main():
     check(len(g.save.arg("evidence", [])) == _ev_before,
           "scriptorium: the testimony is lore, never inflates evidence")
 
-    # --- 3. The Pallid Mask (Sign Chamber, evidence #5) -- LIFT the mask ---
+    # --- 3. The Pallid Mask (Sign Chamber, the keystone item) -- LIFT the mask ---
     fire(g, "works_sign", "_sign_pos")
     g.dialog.choice_idx = 0
     g.dialog.advance()                          # "Lift the mask."
@@ -366,14 +366,14 @@ def main():
     # The investigator's discipline: no Mask, no fuse (sweep first).
     gb = new_game()
     gb.player.inventory.add("powder", 1)
-    gb.load_scene_now("works_deepstair")
+    gb.load_scene_now("works_deepface")
     ready(gb)
     gb.player.x, gb.player.y = gb.scene._gate_pos
     gb.scene.on_interact_fn(gb)
     check(not gb.save.flag("blast_laid"),
           "face: without the Mask the charge stays unlit (sweep first)")
     # The real run: Mask + powder, two-press, light it.
-    g.load_scene_now("works_deepstair")
+    g.load_scene_now("works_deepface")
     ready(g)
     sc = g.scene
     g.player.x, g.player.y = sc._gate_pos
@@ -423,8 +423,8 @@ def main():
               "sign chamber: speaking to Mara fires the recognition")
 
     # --- 7. The Threshold seal -> the SEAL ending (consumes the keystone) ---
-    # The keystone (the Mask) carried down from the Deep Stair is spent HERE,
-    # at the door (§7 rework, Mask-only). g still holds it (stair did not spend).
+    # The keystone (the Mask) carried down from the Deepest Face is spent HERE,
+    # at the door (§7 rework, Mask-only). g still holds it (the blast did not spend it).
     g.load_scene_now("threshold")
     ready(g)
     sc = g.scene
@@ -495,14 +495,14 @@ def main():
           "sump: The Bargain never inflates evidence (lore, not a beat)")
     gt3 = new_game()
     _e3 = evidence_count(gt3)
-    fire(gt3, "the_ossuary", "_dig_note_pos")
+    fire(gt3, "the_old_stores", "_dig_note_pos")
     check(gt3.player.inventory.has("cult_digging"),
-          "ossuary: grants The Digging (optional testimony fragment)")
+          "old stores: grants The Digging (optional testimony fragment)")
     check(any(isinstance(e, dict) and e.get("name") == "cult_digging"
               for e in gt3.save.arg("notes", [])),
-          "ossuary: The Digging logs the PI reaction to NOTES")
+          "old stores: The Digging logs the PI reaction to NOTES")
     check(evidence_count(gt3) == _e3,
-          "ossuary: The Digging never inflates evidence")
+          "old stores: The Digging never inflates evidence")
     # CANON (§1b discipline): the dimensional truth is NEVER stated in the
     # testimony the player reads.
     _triptych = ("cult_calling", "cult_bargain", "cult_digging")
@@ -1010,7 +1010,7 @@ def main():
         "an hour ago", "when did", "started thinking", "didn't want that",
         "i don't trust a want", "a want i can't", "turn around")),
         "voice: the leave-urge never reads as the PI noticing his mind change")
-    # The Playscript (the cult's notes) SEEDS the want-to-leave -- a NOTE, not
+    # The Calling (the cult's testimony) SEEDS the want-to-leave -- a NOTE, not
     # evidence (and it must not arm the King-gate).
     gp2 = new_game()
     gp2.load_scene_now("works_scriptorium", "default")
@@ -1023,7 +1023,7 @@ def main():
         gp2.dialog.advance(); guard += 1
     _pn = [e["name"] for e in gp2.save.arg("notes", []) if isinstance(e, dict)]
     check("descent_leave" in _pn,
-          "voice: taking the Playscript seeds the want-to-leave (descent_leave)")
+          "voice: reading The Calling seeds the want-to-leave (descent_leave)")
     check(gp2._evidence_count() == ev_pre,
           "voice: the leave-seed is a NOTE, not evidence (never arms the King-gate)")
     # The Ledger -- a town NOTE now, not case-evidence (NARRATIVE §6) --
@@ -1431,7 +1431,7 @@ def main():
     _ev_cf = len(gcf.save.arg("evidence", []))
     _fork[2][0][2](gcf)                     # press him
     check(gcf.save.flag("preacher_doomed"),
-          "crane: pressing him latches the doom (feeds evidence #4)")
+          "crane: pressing him latches the doom (his death files as a note, not evidence)")
     check(any(isinstance(e, dict) and e.get("name") == "crane_provoked"
               for e in gcf.save.arg("notes", [])),
           "crane: the provocation files the PI's NOTE")
@@ -1950,7 +1950,7 @@ def main():
     # fled into them spawns as a surface NPC that _tick_cultists sweeps (the
     # chase silently evaporates). They also need the dark/flashlight gate.
     from systems.game import DARK_SCENES as _DK
-    for _br in ("the_sump", "the_cells", "the_ossuary"):
+    for _br in ("the_sump", "the_cells", "the_old_stores"):
         check(_br in _UG, f"portal: branch room {_br} is registered underground")
         check(_br in _DK, f"dark: branch room {_br} gets the underground gloom")
 
@@ -2003,7 +2003,7 @@ def main():
     check(gp.player.inventory.count("pistol_ammo") == _ammo1,
           "paper: the trade fires exactly once (can't be farmed)")
 
-    # (a2) The calendar sweep (GAME_CHANGES §13): the seal is mid-January
+    # (a2) The calendar sweep: the seal is mid-January
     # 1994, so nothing may date the cut-off to spring. Hettie's till went
     # empty at the new year, and the case note has Mara driving north in
     # the fall and going quiet by the new year.
@@ -2046,8 +2046,7 @@ def main():
     check("preacher" not in " ".join(_vane_lines).lower(),
           "vane: the murder beat fires exactly once")
 
-    # (c) The TOWN STAYS ORDINARY to the end (TODO #22c, NARRATIVE §2,
-    # STORY_AUDIT B6): the world rot is the PI's now, not the townsfolk's.
+    # (c) The TOWN STAYS ORDINARY to the end (TODO #22c, NARRATIVE §2): the world rot is the PI's now, not the townsfolk's.
     # The old people-change is CUT -- no peace-maker is repainted a cultist,
     # no resister's voice curdles, and the machinery is gone.
     import systems.config as _cfg
@@ -2138,7 +2137,7 @@ def main():
     # Each ambient local carries ONE state beat (a one-shot, gated on what
     # the PI has learned) before falling back to their ambient loop; the
     # procession's candle beat lands as a NOTE. None of
-    # it may ever inflate the evidence count (the six canonical beats are
+    # it may ever inflate the evidence count (the five canonical beats are
     # locked), and all of it holds the no-dash + no-cosmology rules.
     gb = new_game()
     gb.load_scene_now("brimley")
@@ -2286,8 +2285,8 @@ def main():
                   for t in _all_beats),
           "mara: no dashes anywhere in the confrontation")
 
-    # The unsent letter (evidence #1's object) carries the ADMISSION
-    # (NARRATIVE §6 #1): the pregnancy Walter never knew of, the
+    # The unsent letter (the letter beat's object) carries the ADMISSION
+    # (NARRATIVE §6): the pregnancy Walter never knew of, the
     # son-for-a-daughter line; the door is never mentioned.
     from systems.items import ITEM_DEFS as _IDF
     _lt = _IDF["unsent_letter"]["desc"].lower()
@@ -2365,12 +2364,12 @@ def main():
         check(not (("—" in _st) or ("–" in _st) or ("--" in _st)),
               "lead: no dashes in the thread line")
 
-    # --- 25. The placement pass (STEALTH_REWORK §6): the gauntlet rooms
+    # --- 25. The placement pass (DESIGN.md §12): the gauntlet rooms
     # HAVE an enclosed hide, and EVERY declared hide in EVERY scene sits
     # on walkable ground (a spot inside a solid roots the player in a
     # wall and a sweeping searcher can never close to check range).
     from scenes import load_scene as _ld2, SCENE_BUILDERS as _SB2
-    for _key in ("well_passage", "works_vats", "works_sorting",
+    for _key in ("well_passage", "works_cistern", "works_sorting",
                  "works_scriptorium", "works_sign", "depths_antechamber",
                  "depths_procession", "depths_hall", "brimley"):
         check(len(_ld2(_key).hide_spots) >= 1,
@@ -2511,24 +2510,6 @@ def main():
               "save: the cooled attention survives the round trip")
         check(gsl.player.hp == gsl.player.max_hp,
               "save: sleep rests the PI (hp restored)")
-        # A pre-rename slot (the keystone was keyed "sigil_rubbing"
-        # until 2026-07) must migrate on read: the item becomes
-        # pallid_mask, the flag sign_rubbing_taken becomes
-        # pallid_mask_taken.
-        import json as _json
-        with open(gsl.save.disk_path(), encoding="utf-8") as f:
-            _legacy = _json.load(f)
-        _legacy["inventory"]["items"].append(["sigil_rubbing", 1])
-        _legacy["flags"]["sign_rubbing_taken"] = True
-        with open(gsl.save.disk_path(), "w", encoding="utf-8") as f:
-            _json.dump(_legacy, f)
-        check(gsl.save.load_disk(), "save: a legacy slot still reads")
-        gsl._start_play()
-        check(gsl.player.inventory.has("pallid_mask"),
-              "save: a legacy sigil_rubbing migrates to pallid_mask")
-        check(gsl.save.flag("pallid_mask_taken")
-              and not gsl.save.flag("sign_rubbing_taken"),
-              "save: the legacy taken-flag migrates with it")
     finally:
         os.environ.pop("THRESHOLD_SAVE_DIR", None)
         shutil.rmtree(_sd, ignore_errors=True)
@@ -2697,7 +2678,7 @@ def main():
     check(_re_b.search(r"\bsam\b", _nb["q"].lower()) is not None,
           "name: the PI is the one who says it (the name-beat spoken line)")
 
-    # --- 29. NPC jobs: a worker walks his stations (GAME_CHANGES §19) ---
+    # --- 29. NPC jobs: a worker walks his stations (the JOBS layer) ---
     gj = new_game()
     gj.load_scene_now("brimley")
     ready(gj)

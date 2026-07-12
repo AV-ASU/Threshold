@@ -38,7 +38,7 @@ def _corpse_examine(game, npc):
 # turned-local dialogue were CUT in TODO #22c. The town stays ordinary
 # to the end: no local joins on-screen and no resister's voice curdles.
 # The world rot is the PI's now, carried by the four-tier conversation
-# framing (scenes/dialogue._pi_framing); NARRATIVE §2, STORY_AUDIT B6.)
+# framing (scenes/dialogue._pi_framing); NARRATIVE §2.)
 
 
 class RotMixin:
@@ -433,8 +433,7 @@ class RotMixin:
             self._rot_decals(max(1, self._evidence_count()), underground=True)
         elif surface_stage > 0:
             self._rot_decals(surface_stage, underground=False)
-        # The town stays ORDINARY to the end (TODO #22c, NARRATIVE §2,
-        # STORY_AUDIT B6): the world rot is the INVESTIGATOR'S now, not the
+        # The town stays ORDINARY to the end (TODO #22c, NARRATIVE §2): the world rot is the INVESTIGATOR'S now, not the
         # townsfolk's. The old people-change (converting peace-makers into
         # cultist sprites, curdling the resisters' dialogue) is CUT; the
         # locals keep their bodies, faces, and voices. Only the PI curdles,
@@ -546,7 +545,7 @@ class RotMixin:
             deco = Decoration(wx, wy, rng.choice(pool))
             # Phase 4: the rot is a WORLD CHANGE — gated to line of sight under
             # tilt so it reveals only where the player actually looks (the
-            # infection 'updates in memory' when seen; CAMERA.md Phase 4).
+            # infection 'updates in memory' when seen; DESIGN.md §10).
             deco._sight_gated = True
             self.scene.add_decoration(deco)
             placed += 1

@@ -304,8 +304,7 @@ def build_lodge():
     blocked here by the Clerk). Cellar hatch in the kitchen,
     PADLOCKED until the cellar key (behind the house) is carried.
     Door to spare_room hallway on the north (col 13). Door
-    to the Clerk's bedroom on the north (col 4) -- locked
-    initially."""
+    to the Clerk's bedroom on the north (col 4)."""
     floor = [
         "==================",
         "==================",
@@ -341,7 +340,7 @@ def build_lodge():
     sc = Scene("lodge", floor, objects, music="home")
     # B = front door (south wall, col 13). The Clerk blocks this.
     sc.add_exit("B", "bedroom", "from_lodge")
-    # 1 = Clerk's bedroom door (col 4). Locked at first.
+    # 1 = Clerk's bedroom door (col 4). Not gated (TODO C6: intended locked?).
     sc.add_exit("1", "clerk_room", "from_lodge")
     # D = back door, leads to the gravel yard.
     sc.add_exit("D", "lodge_yard", "from_lodge")
@@ -428,7 +427,7 @@ def build_lodge():
     sc.add_decoration(Decoration(8 * TILE + 16, 9 * TILE + 16, "phantom_mark"))
 
     # The Lodge front desk -- the reception counter where Sable has every
-    # guest sign in. The guest register (the Ledger, evidence #3) sits open
+    # guest sign in. The guest register (the Ledger, a case note) sits open
     # on it; you sign on arrival, and re-reading it later is the evidence
     # (house_interact). A reception nook below the wall of the vanished, so
     # the names you sign under are the names that never checked out.
@@ -503,37 +502,26 @@ def house_on_enter(game, scene):
                   if getattr(n, "tag", None) not in
                   ("blocking_innkeeper", "host_innkeeper")]
     scene._key_hook_pos = None
-    if game.save.flag("innkeeper_confronted"):
-        nx = 6 * TILE + 16
-        ny = 10 * TILE + 16
-        host = NPC(nx, ny, "Clerk", "clerk",
-                   solid=True, no_prompt=True,
-                   voice="blip_low", portrait="clerk")
-        host.facing = (0, -1)
-        host.tag = "blocking_innkeeper"
-        host.dialogue_fn = None
-        scene.add_npc(host)
-    else:
-        # The trap-keeper at his post: standing BEHIND the front-desk
-        # register (north of it, against the wall), facing south into the
-        # room. The desk volume sits between him and the player, so he reads
-        # head-and-torso over the counter. `watch` turns him to follow the
-        # player -- the smiling man whose eyes never quite leave you -- so
-        # the arrival reads as a man who was waiting for you to come down.
-        nx = 9 * TILE              # centred behind the 2-tile desk (cols 8-9)
-        ny = 1 * TILE + 16         # row 1, between the desk (row 2) and wall
-        host = NPC(nx, ny, "Clerk", "clerk",
-                   solid=True, no_prompt=False,
-                   voice="blip_low", portrait="clerk",
-                   dialogue_fn=clerk_dialogue,
-                   movement="watch", speed=0.6, radius=320)
-        host.facing = (0, 1)
-        host.tag = "host_innkeeper"
-        # He carries the way down. Kill him before he hands over the
-        # Invitation and it drops with the body (dialogue.sable_on_death);
-        # if he already gave it, there is nothing to loot.
-        host.on_kill = lambda game, _n=host: sable_on_death(game, _n)
-        scene.add_npc(host)
+    # The trap-keeper at his post: standing BEHIND the front-desk
+    # register (north of it, against the wall), facing south into the
+    # room. The desk volume sits between him and the player, so he reads
+    # head-and-torso over the counter. `watch` turns him to follow the
+    # player -- the smiling man whose eyes never quite leave you -- so
+    # the arrival reads as a man who was waiting for you to come down.
+    nx = 9 * TILE              # centred behind the 2-tile desk (cols 8-9)
+    ny = 1 * TILE + 16         # row 1, between the desk (row 2) and wall
+    host = NPC(nx, ny, "Clerk", "clerk",
+               solid=True, no_prompt=False,
+               voice="blip_low", portrait="clerk",
+               dialogue_fn=clerk_dialogue,
+               movement="watch", speed=0.6, radius=320)
+    host.facing = (0, 1)
+    host.tag = "host_innkeeper"
+    # He carries the way down. Kill him before he hands over the
+    # Invitation and it drops with the body (dialogue.sable_on_death);
+    # if he already gave it, there is nothing to loot.
+    host.on_kill = lambda game, _n=host: sable_on_death(game, _n)
+    scene.add_npc(host)
 
 
 def house_interact(game):
@@ -541,7 +529,7 @@ def house_interact(game):
     sign-in register. First press SIGNS it (the light arrival beat);
     re-reading it is a LEAD now, not the evidence -- the book is nearly
     new, and the full ones went somewhere when they filled. The Ledger
-    itself (evidence #3) is the boxed old registers in the PADLOCKED
+    itself (the Ledger, a case note) is the boxed old registers in the PADLOCKED
     cellar (2026-07 rework; the key hangs behind the house).
 
     The cellar hatch (E, kitchen): the locked feedback + the soft
@@ -588,14 +576,13 @@ def house_interact(game):
 # ---- the Clerk's Room (key: 'clerk_room') ----
 # The Lodge Clerk's private room, off the main floor. No evidence lives
 # here -- Mara's room (robe + letter, #1) and the journal (#2) moved to the
-# Sorting-Hall cell and the barn, and the Playscript to the Scriptorium
+# Sorting-Hall cell and the barn, and the testimony leaves to the Scriptorium
 # (scenes/well.py, scenes/interiors.py). The one tell is a pressed cult
 # robe in his closet: the smiling trap-keeper is one of them.
 
 def build_clerk_room():
     """The Lodge Clerk's private room. A bed, a closet (his pressed cult
-    robe -- the tell that he's complicit), a bare dresser (he keeps your
-    car keys downstairs, behind the tab), a window."""
+    robe -- the tell that he's complicit), a bare dresser, a window."""
     floor = ["=" * 14 for _ in range(10)]
     # A main room plus a partitioned CLOSET alcove (cols 9-12) reached
     # through an interior doorway. The Clerk's pressed cult robe hangs in
@@ -621,7 +608,7 @@ def build_clerk_room():
     sc.set_spawn("default", 8, 7)
     sc.set_spawn("from_lodge", 4, 8)
 
-    # The dresser (table sprite) holds the car keys. Out in the main room,
+    # The dresser (table sprite) is bare. Out in the main room,
     # off the door column so a solid prop never traps the player inside.
     sc._dresser_pos = (5 * TILE + 16, 7 * TILE + 16)
     # The closet (wardrobe sprite) holds the Clerk's pressed cult robe -- a
@@ -695,7 +682,7 @@ def build_lodge_cellar():
     PADLOCKED kitchen hatch (the cellar key hangs behind the house).
     Stone walls, packed dirt floor, a single hanging bulb. The
     workbench chest holds the woodshed key; the boxed OLD
-    REGISTERS on the east crates are the Ledger, evidence #3 (2026-07:
+    REGISTERS on the east crates are the Ledger, a case note (2026-07:
     moved back down here from the front desk, behind the lock); and the
     guttering candles pay off the cult-devotion beat once you've seen
     the dark below.
@@ -764,7 +751,7 @@ def build_lodge_cellar():
     sc.add_furniture("firewood", [(3, 10), (4, 10)], w=58, h=24)
     # Crates of stored goods filling out the cellar's east end. The top
     # of the west crate carries the Lodge's boxed OLD REGISTERS -- the
-    # Ledger, evidence #3 (read via basement_interact).
+    # Ledger, a case note (read via basement_interact).
     sc.add_furniture("crate", [(10, 4)])
     sc.add_furniture("crate", [(11, 4)])
     sc.add_furniture("barrel", [(11, 2)])
@@ -792,7 +779,7 @@ def build_lodge_cellar():
 
 def basement_on_enter(game, scene):
     """Drop the woodshed key on the workbench (idempotent via save flag).
-    (The Ledger, evidence #3, is the boxed old registers on the east
+    (The Ledger, a case note, is the boxed old registers on the east
     crates -- basement_interact reads it; the padlocked hatch upstairs
     is the gate.)"""
     game._provoke_cult(0.10)
@@ -811,7 +798,7 @@ def basement_on_enter(game, scene):
     # cult's devotion the whole time. One-shot, fires the next descent to
     # the cellar after the Cistern beat (non-canonical evidence -- doesn't
     # move the King-gate, and the claiming cult renders no bodies at all).
-    if (game.save.flag("evidence_works_vats_seen")
+    if (game.save.flag("evidence_works_cistern_seen")
             and not game.save.flag("evidence_lodge_candle_callback")):
         _evidence(game, "lodge_candle_callback", [
             "[c=dim]The same guttering candles as the dark below, kept "
@@ -821,7 +808,7 @@ def basement_on_enter(game, scene):
 
 
 def basement_interact(game):
-    """E at the old registers (east crates): the Ledger, evidence #3.
+    """E at the old registers (east crates): the Ledger, a case note.
     E at the workbench chest: the woodshed key (gate to the axe in the
     shed)."""
     sc = game.scene

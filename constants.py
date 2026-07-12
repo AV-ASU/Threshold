@@ -21,7 +21,7 @@ RENDER_SCALE = 1.0
 # can't fill the screen with a small scene (or when a scene's @-floor
 # extends to a region the camera can show beyond the layout), there's
 # no visible seam between scene and screen-edge. The "invisible ground"
-# path off the haunted_house_glitch reads as truly continuous now.
+# path off any invisible-ground scene reads as truly continuous now.
 C_BG = (8, 6, 14)
 C_WHITE = (240, 238, 230)
 C_BLACK = (0, 0, 0)

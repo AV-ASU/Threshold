@@ -300,7 +300,7 @@ def test_portal_never_tears_in_safe_room():
 
 
 def test_portal_tears_underground():
-    # The descent rework (GAME_CHANGES 14): the Works/Depths are NOT
+    # The descent rework: the Works/Depths are NOT
     # KING_FREE -- pinning 100% underground still tears his rift in.
     from systems.config import UNDERGROUND_SCENES, KING_FREE_SCENES
     g = _boot("well_bottom")

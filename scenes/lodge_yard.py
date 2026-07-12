@@ -112,8 +112,8 @@ def build_lodge_yard():
         # Lodge structure footprint + porch approach.
         if 2 <= tx <= 7 and 2 <= ty <= 6:
             return True
-        # The pocket clearing behind the Lodge (the 'M' arrival fold
-        # stands against the back wall at (5, 1)). The band still crowds
+        # The pocket clearing behind the Lodge (a protected pocket; the
+        # old 'M' arrival fold that stood here was cut). The band still crowds
         # the rest of the strip, so reaching the pocket means pushing
         # through the scattered trees around the building's sides.
         if 4 <= tx <= 6 and ty <= 1:
@@ -162,9 +162,7 @@ def build_lodge_yard():
     sc.set_spawn("from_lodge", 5, 6)             # one south of back door
     sc.set_spawn("from_country_lane", 1, 7)      # one east of west passage
     sc.set_spawn("from_arrival_road", 1, 7)      # walked EAST off the road
-    sc.set_spawn("from_village", 1, 7)           # legacy save alias
     sc.set_spawn("from_forest", 22, 7)           # one west of east passage
-    sc.set_spawn("from_river", 1, 7)             # west passage spawn alias
     sc.set_spawn("from_woodshed", 2, 11)         # one N of the shed door
 
     # The pickup truck -- a decoration the player can SEE but not
@@ -232,8 +230,8 @@ def build_lodge_yard():
     sc.add_decoration(Decoration(handprint_x, handprint_y, "bloodstain",
                                  scale=0.9))
     sc._handprint_pos = (handprint_x, handprint_y)
-    # Small mailbox on the road shoulder (use a gas_pump deco -- close
-    # enough silhouette; future polish could carve a true mailbox).
+    # A phantom mark in the road-shoulder dirt (a rot decal, not a
+    # real prop).
     sc.add_decoration(Decoration(11 * TILE + 16, 9 * TILE + 16,
                                  "phantom_mark"))   # mark in the dirt
     rng = random.Random(2026)
@@ -528,7 +526,6 @@ def build_arrival_road():
         last = getattr(scene, "_last_py", None)
         if last is not None and abs(p.y - last) > band * 0.5:
             scene._loops = getattr(scene, "_loops", 0) + 1
-            game.save.set_flag("arrival_road_looped", True)
             game.audio.play("low_pulse", min(0.75, 0.34 + 0.12 * scene._loops))
         scene._last_py = p.y
     sc.on_update_fn = _road_update
@@ -559,8 +556,6 @@ def build_woodshed():
     sc.add_exit("h", "lodge_yard", "from_woodshed")
     sc.set_spawn("default",            5, 6)
     sc.set_spawn("from_yard",          4, 6)   # entered from the yard door
-    sc.set_spawn("from_brimley_shed",  4, 6)   # legacy fallback
-    sc.set_spawn("from_village_shed",  4, 6)   # legacy fallback
 
     # The splitting axe hangs in the back tool nook -- behind the partition,
     # so the weapon is an indoor blind spot you have to round the wall for.

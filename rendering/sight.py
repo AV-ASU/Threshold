@@ -1,4 +1,4 @@
-"""Line-of-sight / blind-spot sight model (CAMERA.md Phase 4) — PROTOTYPE.
+"""Line-of-sight / blind-spot sight model (DESIGN.md §10) — PROTOTYPE.
 
 The "what the player can currently SEE" buffer that the tilt redesign exists
 to pay off. A forward sight CONE from the player, keyed to the look heading
@@ -22,7 +22,7 @@ right around the player (you feel what is on top of you regardless of facing).
 """
 import math
 
-# Tuning. These are the design knobs the look/feel hangs on (see CAMERA.md
+# Tuning. These are the design knobs the look/feel hangs on (see DESIGN.md §10
 # Phase 4). Kept here so the preview tool and the live game read one source.
 SIGHT_HALF = math.radians(74)      # cone half-angle (~148 deg total field)
 SIGHT_RANGE = 360.0                # px; how far the player can make things out
@@ -32,7 +32,7 @@ SIGHT_RANGE_FEATHER = 56.0         # px; soft far-edge fade band
 # Eye height (world z, px) used by the ground-crest LOS term: the sight ray
 # runs at this height above the ground under the viewer/target, so a hill that
 # rises higher than the ray between them occludes what is beyond it -- the same
-# dread primitive as a wall (CAMERA.md Phase 6). Only consulted when a scene
+# dread primitive as a wall (DESIGN.md §10). Only consulted when a scene
 # authors a heightfield; a flat scene passes ground=None and this is inert.
 SIGHT_EYE_H = 22.0
 LOS_STEP = 7.0                     # px ray-march step for the wall check (AI)

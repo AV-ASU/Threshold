@@ -1,4 +1,4 @@
-"""Live blind-spot preview (CAMERA.md Phase 4).
+"""Live blind-spot preview (DESIGN.md §10).
 
 Boots the real Game headless, loads a populated outdoor scene, forces the
 oblique tilt on, and renders draw_world() for a spread of LOOK HEADINGS so the

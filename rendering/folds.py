@@ -98,7 +98,7 @@ def _draw_seam(frame, p0, p1, t, alpha=1.0):
 
 
 def _draw_rim(screen, quad, t, intensity):
-    """The rift's edge per the PORTALS.md spec: a dim desaturated gold band
+    """The rift's edge per the DESIGN.md §7 spec: a dim desaturated gold band
     plus a few jagged electric arcs that flick along it and die in a few
     frames -- the 'living wound'. Re-seeded each frame so the arcs crackle
     on and off; the randomness IS the visual, so no cache needed. Cheaper

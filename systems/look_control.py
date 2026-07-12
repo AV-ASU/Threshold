@@ -1,4 +1,4 @@
-"""Look / heading control for the oblique camera (CAMERA.md Phase 3).
+"""Look / heading control for the oblique camera (DESIGN.md §10).
 
 Tank steering: A/D turn the heading (and the camera that rides behind it); W/S
 drive forward/back along it. The mouse is a free cursor that aims the gun and

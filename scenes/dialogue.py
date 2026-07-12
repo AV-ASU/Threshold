@@ -14,7 +14,7 @@ reactivity comes from per-NPC flag gates; scenes/brimley.py
 _brimley_voice survives only for the doorstep Hettie cameo.
 `escalate` still exists but now has NO call sites -- kept only in case
 visibility-tiered copy is ever authored. Evidence beats are surfaced
-through `_evidence`; only the six in `CANONICAL_EVIDENCE` count toward
+through `_evidence`; only the five in `CANONICAL_EVIDENCE` count toward
 the King-gate and the visibility floor.
 """
 import random
@@ -94,22 +94,6 @@ def _evidence(game, name, content, weight=None, show=True, note=False):
     elif extra:
         game.dialog.show(extra, speaker="", voice="blip_soft",
                          portrait="narrator")
-
-
-def escalate(game, low, mid, high):
-    """Pick a page-list for an NPC dialog based on Pursuer proximity.
-
-    Signature and tiering preserved; the three tiers are now bland.
-    """
-    from systems.threat import (proximity_tier,
-                                 PROX_TIER_LOW, PROX_TIER_MID)
-    p = getattr(game, "visibility", 0.0)
-    tier = proximity_tier(p)
-    if tier == PROX_TIER_LOW:
-        return low
-    if tier == PROX_TIER_MID:
-        return mid
-    return high
 
 
 def _cult_tell(game, npc_key):
@@ -254,8 +238,7 @@ def _opener_exchanges(intro_beats, photo_beats, on_photo=None,
 
 
 # ---- The four-tier PI register (TODO #22c) ----
-# The world rot lives in the INVESTIGATOR now, not the town (NARRATIVE §2,
-# STORY_AUDIT B6): the locals stay exactly themselves, and what deteriorates
+# The world rot lives in the INVESTIGATOR now, not the town (NARRATIVE §2): the locals stay exactly themselves, and what deteriorates
 # is the man hearing them. It surfaces ONLY as the PI's framing of a
 # conversation -- the question menu's opening line -- never as a word the NPC
 # says. Four tiers, keyed to how far up Mara's trail he has climbed
@@ -304,7 +287,7 @@ def _pi_framing(base):
 # choice: his doom is no longer an automatic visit counter. The flock
 # exchange ends on a real fork -- press him and he takes his naming to
 # where they can hear it (preacher_doomed; the church swaps him for his
-# remains on the next entry, evidence #4), or hold him back and he banks
+# remains on the next entry, files a case note), or hold him back and he banks
 # the fire for now (the question stays open; a held-back Crane can still
 # be pressed later). Canon fence (§1b): the cult cannot be saved or
 # converted; Crane dies for believing he can. The choice decides whether
@@ -605,7 +588,7 @@ def _hettie_saw_photo(game):
     game.save.set_flag("hettie_saw_photo", True)
 
 
-# Mara's store tab -- surface evidence #1 (the receipt; NARRATIVE §6,
+# Mara's store tab -- surface evidence (the receipt; NARRATIVE §6,
 # DESIGN.md §9). WORLD-PERSISTENT: it lives on the shop spike, so it is
 # reachable whether Hettie is alive, dead, or never spoken to. Two ways in
 # funnel HERE so it can never double-fire or soft-lock: the cold find (the
@@ -759,7 +742,7 @@ def hettie_dialogue(game, npc):
             "on the counter. I never saw her again.[/c]",
             "[c=dim]It was the smiling I minded.[/c]",
         ]
-        # Her warm handover of the store tab (surface evidence #1), only if
+        # Her warm handover of the store tab (surface evidence), only if
         # the PI has not already lifted it off the spike himself. The tab
         # is world-persistent either way (grant_receipt is flag-gated).
         if not save.flag("evidence_maras_receipt"):
@@ -862,7 +845,6 @@ def _vane_paper_given(game):
     (Hettie's cartridge trade among them)."""
     from systems.config import VANE_PAPER_DESPAIR
     game.player.inventory.remove("newspaper", 1)
-    game.save.set_flag("newspaper_given_vane", True)
     _vane_ledger(game, VANE_PAPER_DESPAIR)
 
 
@@ -1187,7 +1169,6 @@ def sheriff_dialogue(game, npc):
 # ui/conversation.Conversation.
 
 def _sable_showed_photo(game):
-    game.save.set_flag("sable_saw_photo", True)
     _log_note(game, "showed_the_clerk", [
         "I put her face on his desk. He looked at it a long while, smiling "
         "the whole time, and told me nothing at all.",
@@ -1372,8 +1353,7 @@ SABLE_CONVO = {
             ],
         },
         # The reproach: once the PI has learned the roads loop back on
-        # themselves (a local told him, filing the_fold_told note, or he has
-        # crossed a fold), he can put it to Sable -- who deflects by pointing
+        # themselves (a local told him, filing the_fold_told note), he can put it to Sable -- who deflects by pointing
         # out he DID say it, plainly, and the PI simply heard hospitality.
         {
             "key": "the_fold",
@@ -1542,7 +1522,7 @@ def _garrick_roads_told(game):
 # register; he turns at rot stage 3, so this talk is his pre-turn
 # window. The stopped calendar stays a rot-layer detail (the decoration
 # + his turned lines), deliberately NOT an ask topic. (His old
-# persistent-cold line was CUT, maintainer call + STORY_AUDIT finding:
+# persistent-cold line was CUT, maintainer call (2026-07):
 # the ice goes out and the season turns -- weather stasis would be a
 # second impossible thing.)
 PELL_CONVO = {
@@ -1809,7 +1789,7 @@ GARRICK_CONVO = {
 
 def preacher_body_examine(game, npc):
     """E on the Preacher's remains at the riverbank: take his cross + log
-    evidence #4 once. (2026-07 rework: the doom sends Crane out of his
+    files a case note once. (2026-07 rework: the doom sends Crane out of his
     church to talk his flock home; the body is found by the river in
     Brimley, never on the church floor.)"""
     if game.save.flag("cross_taken"):

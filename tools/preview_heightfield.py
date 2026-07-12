@@ -1,4 +1,4 @@
-"""Ground heightfield preview -- blind-spot hills (CAMERA.md Phase 6).
+"""Ground heightfield preview -- blind-spot hills (DESIGN.md §10).
 
 Boots a real Game headlessly, attaches a ground heightfield (one rounded hill)
 to the live scene, and renders the REAL tilt pipeline so you can see:

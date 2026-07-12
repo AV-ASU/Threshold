@@ -1,4 +1,4 @@
-"""River-channel preview -- a sunken river with real depth (CAMERA.md Phase 6).
+"""River-channel preview -- a sunken river with real depth (DESIGN.md §10).
 
 A design spike for the "large outdoor area + a river that has depth" question.
 It answers it as a DIRECT comparison: the same scene, same camera, same five

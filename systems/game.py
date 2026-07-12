@@ -139,16 +139,16 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         self.transition_dir = "out"
         self.cam_x = 0
         self.cam_y = 0
-        # The single world->screen projection (CAMERA.md). At pitch 0 this is
+        # The single world->screen projection (DESIGN.md §10). At pitch 0 this is
         # exactly the legacy `int(x - cam_x)` top-down view; keeping every
         # render conversion behind it is what makes a future tilt a parameter
         # change rather than a 37-scene rewrite. `cam_x/cam_y` remain the
         # source of truth for the offset (camera update + input still use
         # them); the camera is re-synced to them each frame in draw_world.
         self.camera = Camera()
-        # The oblique view is the DEFAULT (CAMERA.md): start at the locked tilt
-        # pitch. F3 toggles back to the flat pitch-0 top-down view (which stays
-        # byte-identical to the legacy raster). _reset_run_state re-seeds this on
+        # The oblique view is the DEFAULT (DESIGN.md §10): start at the locked tilt
+        # pitch. the flat pitch-0 view is dev-only now (the
+        # headless capture tools set it directly), byte-identical to the legacy raster. _reset_run_state re-seeds this on
         # every New Game.
         self._cam_pitch_target = math.radians(TILT_PITCH_DEG)
         self.camera.pitch = self._cam_pitch_target
@@ -191,8 +191,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         # player has not moved; resets to 0 on any movement. Drives the
         # creepy-scene heartbeat ramp and the rare NPC blink. The
         # heartbeat schedule fires at tightening intervals while the
-        # player is still inside a CREEPY_SCENES key (or anywhere after
-        # world_emptied).
+        # player is still inside a CREEPY_SCENES key.
         self.stillness_t = 0.0
         # Delayed-audio queue: list of [seconds_left, sfx_name, volume].
         # Used by the void/basement footstep "out of body" effect that
@@ -431,8 +430,8 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         """Wipe all per-run state so a New Game starts clean. The
         Game instance is reused across Quit-to-Title -> New Game, so
         in-memory run state from a previous run is cleared here."""
-        # Debug oblique tilt (F3) starts off each run.
-        # Oblique view is the default; New Game starts tilted (F3 -> flat).
+        # Oblique view is the default; New Game starts tilted. Pitch 0 is
+        # dev/capture-only now (the headless tools set it directly).
         self._cam_pitch_target = math.radians(TILT_PITCH_DEG)
         self.camera.pitch = self._cam_pitch_target
         self.camera.yaw = 0.0
@@ -441,7 +440,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         self.visibility = 0.0
         self._vis_floor = 0.0
         self._being_seen = 0.0
-        # The hide-check struggle (STEALTH_REWORK.md): a searcher checking
+        # The hide-check struggle (DESIGN.md §12): a searcher checking
         # the enclosed hide the player is in opens a timed mash window.
         self._struggle = None
         # Aim-steady camera state: the post-shot chase lock and the
@@ -638,7 +637,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
                 and target_scene in SEAMLESS_WORLD_SCENES):
             self.cross_fold(target_scene, spawn_id)
             return
-        # The cellar is no longer key-gated -- the Ledger (evidence #3) is a
+        # The cellar is no longer key-gated -- the Ledger (a case note, not counted evidence) is a
         # core clue and shouldn't hide behind a fetch-quest. The Clerk's old
         # crate/key/bottle chain has been cut entirely.
         # Crossing a threshold eases the meter a touch -- you've put a
@@ -889,29 +888,19 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
                     if self.save.flag(
                             f"boards_broken_{self.scene.key}_{tx}_{ty}"):
                         self.scene.objects[ty][tx] = "."
-        # Round-9: dying to the Yellow King empties the world. Every
-        # scene loaded after `world_emptied` is set has its NPC list
-        # cleared post-on_enter, so any villagers / shopkeep / kid /
-        # innkeeper / terminal handler placed by the builder or
-        # on_enter fn is removed before the player sees the scene. The
-        # world keeps its layouts and items, just no people.
-        if self.save.flag("world_emptied"):
-            self.scene.npcs = []
-        else:
-            # THE LEDGER OF THE DEAD (2026-07 ruling): a killed local
-            # stays dead for the rest of the run. Lay the run's bodies
-            # back down where they fell BEFORE the rot pass so a corpse
-            # is never converted/turned (rot skips _is_corpse). Nobody
-            # leaves Brimley, not even by dying (NARRATIVE §5).
-            self._apply_dead_locals()
-            # Re-derive the world's world rot for this scene from the
-            # evidence count (rot decals, turned/mutated locals, the
-            # stage-3 Sheriff encounter).
-            self._apply_rot()
-            # The Moths (the King's heralds) seed with the scene:
-            # evidence-scaled on the open surface, a retinue in the
-            # King's own room (rot_mixin, MOTH_* config).
-            self._spawn_moths()
+        # THE LEDGER OF THE DEAD (2026-07 ruling): a killed local
+        # stays dead for the rest of the run. Lay the run's bodies
+        # back down where they fell BEFORE the rot pass so a corpse
+        # is never disturbed (rot skips _is_corpse). Nobody leaves
+        # Brimley, not even by dying (NARRATIVE §5).
+        self._apply_dead_locals()
+        # Re-derive the world rot for this scene from the evidence
+        # count (rot decals, the ambient air, the stage-3 Sheriff).
+        self._apply_rot()
+        # The Moths (the King's heralds) seed with the scene:
+        # evidence-scaled on the open surface, a retinue in the
+        # King's own room (rot_mixin, MOTH_* config).
+        self._spawn_moths()
 
     def _river_blocks(self, target_x, target_y):
         """Custom passability for the brimley river. The `~` floor is
@@ -991,12 +980,12 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
             self.cam_x = target_x; self.cam_y = target_y
             # Land already at the target pitch on a snap (game start / scene
             # load) so the default oblique view doesn't ease up from flat on
-            # every door; the F3 toggle still eases (non-snap path below).
+            # every door; a pitch change still eases (non-snap path below).
             self.camera.pitch = self._cam_pitch_target
         else:
             self.cam_x += (target_x - self.cam_x) * 0.18
             self.cam_y += (target_y - self.cam_y) * 0.18
-            # Ease the tilt pitch toward its target (the F3 toggle). Zoom out
+            # Ease the tilt pitch toward its target. Zoom out
             # slightly as it tilts so more of the room reads; both are exactly
             # the shipping values at pitch 0 (scale 1.0), keeping that view
             # untouched.
@@ -1082,7 +1071,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         if getattr(self, "_struggle", None) is not None:
             return
         # Emerging from an enclosed hide takes a BEAT (the deferred
-        # exit-takes-a-beat window, STEALTH_REWORK): out, visible, and
+        # exit-takes-a-beat window, DESIGN.md §12): out, visible, and
         # rooted while you unfold. The struggle burst-out bypasses this
         # (it has its own panic sprint).
         emerge = getattr(self.player, "emerge_t", 0.0)
@@ -1575,7 +1564,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
             return True
         return False
 
-    # ---- Darkness as concealment (STEALTH_REWORK Pillar 2A) ----
+    # ---- Darkness as concealment (DESIGN.md §12) ----
     def _tick_dark_cover(self):
         """Stamp player._in_dark once per frame: True in a DARK scene
         with the flashlight unlit and the player outside every light
@@ -2285,7 +2274,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
     _FB_GAZE = [(math.cos(a * math.tau / 8), math.sin(a * math.tau / 8))
                 for a in range(8)] + [(0.0, 0.0)]
 
-    # The PI's interior voice down the descent (NARRATIVE §8, GAME_CHANGES §8):
+    # The PI's interior voice down the descent (NARRATIVE §8):
     # the put-together investigator coming apart as he understands too much,
     # baited toward the Mask's off-ramp (carry it OUT -- SPREAD). Each beat is
     # one-shot: a brief first-person flash on-screen, plus a fuller entry filed
@@ -2350,7 +2339,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
                 "myself more than a steady man would.",
             ],
         },
-        # The Playscript (the cult's notes): the SEED of the want-to-leave.
+        # The cult's testimony (The Calling): the SEED of the want-to-leave.
         # CANON (NARRATIVE §1/§6): this is the King's influence riding their
         # notes into the PI's head -- the pull to carry the Sign OUT and spread
         # Him. NEVER stated as His doing; felt only as a want he can't find the
@@ -2859,8 +2848,6 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
                             self._make_corpse(n)
                             continue     # keep the body in the scene
                     self.scene.npcs.remove(n)
-            if self.player.hp <= 0:
-                self._on_player_death()
             self._update_camera()
             self._update_look(dt)
             self.audio.update_silence()
@@ -2929,27 +2916,6 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
             self.notice_t -= dt
             if self.notice_t <= 0:
                 self.notice_text = None
-
-    def _on_player_death(self):
-        # (The old rope-fiction "death at the shaft floor snaps the rope"
-        # seal is CUT: hp-death respawns the run in bed with flags intact,
-        # so sealing the descent here silently softlocked the run. The
-        # descent only seals at the Deep Stair, by choice.)
-        # Death in the void boss arena seals the secret path forever,
-        # empties the world of NPCs, and respawns the player on the
-        # town square rather than their bed. The world_emptied flag
-        # is checked in load_scene_now so every scene from now on has
-        # its npc list zeroed -- the layouts persist, the people don't.
-        if self.scene and self.scene.key == "clearing":
-            self.save.set_flag("void_path_closed", True)
-            self.save.set_flag("world_emptied", True)
-            self.player.hp = self.player.max_hp
-            self.show_notice("You wake on the town square. It is silent.")
-            self.load_scene_now("brimley", "default")
-            return
-        self.player.hp = self.player.max_hp
-        self.show_notice("You wake up in your bed.")
-        self.load_scene_now("bedroom", "default")
 
     def _flash_notebook(self):
         """Fire the corner notebook-scribble toast -- a new evidence beat was

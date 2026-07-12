@@ -8,11 +8,11 @@ Depths:
   well_bottom        -- the Shaft Floor (the fold lands you here; its
                         return pane is the way back up)
   well_passage       -- the Timber Racks (first gauntlet)
-  works_vats         -- the Cistern (the dig broke into the river)
+  works_cistern         -- the Cistern (the dig broke into the river)
   works_sorting      -- the Sorting Hall (shed lives of the claimed)
   works_scriptorium  -- the Scriptorium (the Sign, copied endlessly)
-  works_sign         -- the Sign Chamber (lift the Pallid Mask; evidence #5)
-  works_deepstair    -- the Deepest Face (the dig's end: powder from the
+  works_sign         -- the Sign Chamber (lift the Pallid Mask, the keystone item)
+  works_deepface    -- the Deepest Face (the dig's end: powder from the
                         Sump blasts the last few feet; the FALL into the
                         old workings is one-way)
 
@@ -51,8 +51,8 @@ def build_well_bottom():
     # The shaft floor: a round (octagonal) stone pit at the bottom of the
     # cult's mine shaft. No rope, no ladder: the descent fold in the grove
     # lands you here, and its RETURN PANE ('O', walked west) stands where the
-    # rope once hung -- symmetric while it lives, dead once the Deep Stair
-    # seals the descent.
+    # rope once hung -- symmetric while it lives, dead once the descent
+    # seals (descent_sealed).
     floor, objs = _box(12, 10)
     _bevel(objs, 3)
     objs[5][11] = "E"         # east -> the timber racks (deeper)
@@ -63,7 +63,6 @@ def build_well_bottom():
     sc.add_exit("E", "well_passage", "from_above")
     sc.add_exit("O", "effigy_grove", "from_well_bottom", direction="west")
     sc.set_spawn("default",   5, 5)
-    sc.set_spawn("from_well", 4, 3)       # legacy alias for the landing
     sc.set_spawn("from_grove", 4, 4)      # land here on the descent (east
     #                                       of the return pane, carried
     #                                       clear of it)
@@ -173,7 +172,7 @@ def build_well_bottom():
 
     # The Works gauntlet is walkable both ways for the Mask-bearer; for
     # anyone else the pane above refuses (keyed to His face). The fall
-    # through the blasted face (works_deepstair) is the one-way step.
+    # through the blasted face (works_deepface) is the one-way step.
     return sc
 
 
@@ -205,15 +204,12 @@ def build_well_passage():
     objects = ["".join(r) for r in objs]
     sc = Scene("well_passage", floor, objects, music="basement")
     sc.add_exit("F", "well_bottom", "from_below")
-    sc.add_exit("E", "works_vats",  "from_above")
+    sc.add_exit("E", "works_cistern",  "from_above")
     sc.set_spawn("default",    8, 5)
     sc.set_spawn("from_above", 1, 5)      # arriving from the shaft
     sc.set_spawn("from_below", 22, 5)     # back from the vats
-    # Legacy spawns kept so old saves + the (now unreachable) cult
-    # chamber's exit still resolve. The barn tunnel is nailed shut from
-    # below now -- the grove's descent fold is the only way underground.
-    sc.set_spawn("from_well",    1, 5)
-    sc.set_spawn("from_chamber", 22, 5)
+    # The barn tunnel is nailed shut from below now -- the grove's
+    # descent fold is the only way underground.
 
     # Stores stacked up in the north bay -- a barrel and a crate.
     sc.add_furniture("barrel", [(10, 2)])
@@ -251,7 +247,7 @@ def build_well_passage():
     for mx, my in ((9, 3), (15, 5), (3, 5), (20, 5)):
         sc.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16, "mote"))
 
-    # Two enclosed hides spaced down the run (STEALTH_REWORK §6): the gap
+    # Two enclosed hides spaced down the run (DESIGN.md §12): the gap
     # under the bay's timber rack, and one under a far corridor rack --
     # a long room needs a rooted option in each half, or the east end is
     # a dead sprint. A searcher that loses you will sweep and CHECK them.
@@ -282,9 +278,9 @@ def build_well_passage():
     return sc
 
 
-# ---- Room 3: the Cistern (key: works_vats) ----
+# ---- Room 3: the Cistern (key: works_cistern) ----
 
-def build_works_vats():
+def build_works_cistern():
     # A cruciform cistern: four flooded arms off a central crossing, the
     # corners walled off into solid stone, a basin sunk in each arm.
     floor, objs = _box(13, 11)
@@ -302,7 +298,7 @@ def build_works_vats():
     # take on, not a wall (WADE_*).
     floor = _flood(floor, objs, _rect_tiles(4, 1, 8, 3) + _rect_tiles(4, 7, 8, 9))
     objects = ["".join(r) for r in objs]
-    sc = Scene("works_vats", floor, objects, music="basement")
+    sc = Scene("works_cistern", floor, objects, music="basement")
     sc.add_exit("F", "well_passage", "from_below")
     sc.add_exit("E", "works_sorting", "from_above")
     sc.add_exit("D", "the_sump", "from_vats")
@@ -324,7 +320,7 @@ def build_works_vats():
                                  ang=0.0))
     sc.add_decoration(Decoration(8 * TILE + 26, 1 * TILE + 6, "cobweb",
                                  ang=math.pi / 2))
-    # One enclosed hide (STEALTH_REWORK §6): the dry lee under the SE
+    # One enclosed hide (DESIGN.md §12): the dry lee under the SE
     # basin's lip -- inside the patrol's own arm, so it is a risky option
     # a searcher can sweep, not a panic room.
     sc.hide_spots = [
@@ -369,10 +365,10 @@ def build_works_vats():
         # First entry: the dig hit water. This is the river (NARRATIVE §2) --
         # the artery the cult followed down toward the door. Gated by the
         # evidence flag (non-canonical, so it doesn't move the King-gate).
-        # Flag key kept (works_vats_seen) for save compat.
-        if game.save.flag("evidence_works_vats_seen"):
+        # The note key is works_cistern_seen (the Water Below).
+        if game.save.flag("evidence_works_cistern_seen"):
             return
-        _evidence(game, "works_vats_seen", [
+        _evidence(game, "works_cistern_seen", [
             "[c=dim]The water runs on, downward, and does not echo back.[/c]",
         ])
     sc.on_enter_fn = _vats_on_enter
@@ -394,7 +390,7 @@ def build_works_sorting():
     # same footprint the cult AI routes around)
     objects = ["".join(r) for r in objs]
     sc = Scene("works_sorting", floor, objects, music="basement")
-    sc.add_exit("F", "works_vats", "from_below")
+    sc.add_exit("F", "works_cistern", "from_below")
     sc.add_exit("E", "works_scriptorium", "from_above")
     sc.add_exit("D", "the_cells", "from_sorting")
     sc.add_exit("M", "maras_room", "from_works_sorting")
@@ -456,7 +452,7 @@ def build_works_sorting():
         sc.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16, "mote"))
     sc._table_pos = (6 * TILE + 16, 5 * TILE + 16)
     # The hardest crossing gets two enclosed hides among the cover lanes
-    # (STEALTH_REWORK §6): under a sorting table in each row. Both sit on
+    # (DESIGN.md §12): under a sorting table in each row. Both sit on
     # the patrol floor itself -- reachable mid-route, sweepable.
     sc.hide_spots = [
         (6 * TILE + 16, 6 * TILE + 8, "under"),    # under a north-row table
@@ -486,8 +482,7 @@ def build_works_sorting():
             # Examining the catalogued lives the diggers shed fires the PI's
             # voice (the dig's scale -- first fear). A distinct trigger from
             # the chalk doors: different thing, different words.
-            if not game.save.flag("voice_descent_dig"):
-                game._descent_voice("descent_dig")
+            game._descent_voice("descent_dig")
     sc.on_interact_fn = _interact
     return sc
 
@@ -498,11 +493,11 @@ def build_maras_room():
     """Mara Blaine's cell, a side room off the Sorting Hall. She didn't
     rent a lodge room and vanish -- she moved IN, down here among the
     cult's works. A cot, a burnt-down candle, her cult robe on a peg, and
-    folded in it the unsent letter to her father. Evidence #1: she came,
+    folded in it the unsent letter to her father. The letter (a deep trail beat): she came,
     and she joined willingly."""
     floor, objs = _box(10, 9)
     # A cramped cell with the cot walled off in a back alcove behind an
-    # interior partition + doorway -- so the robe + letter (evidence #1) sit
+    # interior partition + doorway -- so the robe + letter (a deep trail beat) sit
     # in an indoor blind spot, unseen from the cell until the player rounds
     # the wall.
     for y in range(1, 5):
@@ -518,7 +513,7 @@ def build_maras_room():
     sc.set_spawn("from_works_sorting", 5, 7)
 
     sc._cot_pos = (2 * TILE + 16, 2 * TILE + 16)
-    sc.add_interactable(sc._cot_pos[0], sc._cot_pos[1], 46)  # [E] cue: robe + letter (evidence #1)
+    sc.add_interactable(sc._cot_pos[0], sc._cot_pos[1], 46)  # [E] cue: robe + letter (a deep trail beat)
     sc.add_furniture("bed", [(1, 1), (1, 2)], w=34, h=52)
     sc.add_decoration(Decoration(6 * TILE + 16, 1 * TILE + 22, "candle"))
     sc.add_decoration(Decoration(8 * TILE + 16, 6 * TILE + 16, "phantom_mark"))
@@ -616,12 +611,12 @@ def build_works_scriptorium():
     sc.add_furniture("small_chair", [(4, 3)])
     sc.add_furniture("small_chair", [(8, 3)])
     sc._desk_pos = (4 * TILE + 16, 2 * TILE + 16)
-    sc.add_interactable(sc._desk_pos[0], sc._desk_pos[1], 40)  # [E] cue: the Playscript
+    sc.add_interactable(sc._desk_pos[0], sc._desk_pos[1], 40)  # [E] cue: The Calling (grants cult_calling)
     # Mara's OWN copy of the Sign, at a second desk (deep evidence; she
     # laboured, willing hands, DESIGN.md §9). A room that is not her cell.
     sc._mara_desk_pos = (8 * TILE + 16, 2 * TILE + 16)
     sc.add_interactable(sc._mara_desk_pos[0], sc._mara_desk_pos[1], 40)
-    # One enclosed hide (STEALTH_REWORK §6): under the centre copying
+    # One enclosed hide (DESIGN.md §12): under the centre copying
     # desk -- echoes the safe-room "under" spots, but down here it is
     # checkable, and the scribe's lane is a step away.
     sc.hide_spots = [
@@ -663,7 +658,7 @@ def build_works_scriptorium():
                 # here.
                 game._descent_voice("descent_leave")
             return
-        # Mara's OWN hand at the Sign (deep evidence #4; DESIGN.md §9). Proof
+        # Mara's OWN hand at the Sign (the dig, a deep trail beat; DESIGN.md §9). Proof
         # she was one of the willing, not a captive -- the same hand as the
         # journal and the letter, working the cult's compulsion. Files
         # silently; the leaf itself reads from the kit.
@@ -687,14 +682,14 @@ def build_works_scriptorium():
     sc.on_interact_fn = _interact
     # The scribes drew doors as obsessively as they copied the Sign -- swarm
     # the floor + walls with chalk doors, none overlapping (the room reads as
-    # a compulsion, not a workshop). The Playscript desk is left clear.
+    # a compulsion, not a workshop). The testimony desk is left clear.
     sc.scatter_chalk_doors(4, seed=44, wall_count=2)
     return sc
 
 
 # ---- Room 6: the Sign Chamber (key: works_sign) ----
 
-# THE CONFRONTATION (2026-07, NARRATIVE §4/§6 #6). The calling-out walks
+# THE CONFRONTATION (2026-07, NARRATIVE §4/§6). The calling-out walks
 # her to you; this is the exchange it opens. She cannot be argued home:
 # asked to come away, no one leaves; asked the way out, there is none.
 # The father card is the PLAYER'S OWN ASK, never automatic -- it breaks
@@ -846,7 +841,7 @@ MARA_CONVO = {
 def _mara_voice(game, npc):
     """Mara's confrontation -- the #6 payoff (NARRATIVE §4). The case was
     never a rescue; the calling-out walks her to you and this opens the
-    exchange (MARA_CONVO above). Evidence #6 files the moment it opens,
+    exchange (MARA_CONVO above). Mara is proof, not a counted beat; the calling-out fires the moment it opens,
     whatever the player asks. Full lucidity changes nothing: the father
     card breaks her certainty and she still turns back to the dig. After
     it, she has gone back to the kneeling. (A shot Mara forfeits #6: the
@@ -897,17 +892,17 @@ def build_works_sign():
     floor, objs = _box(13, 11)
     _bevel(objs, 3, corners=("NW", "NE"))
     objs[5][0] = "F"          # west -> back to the scriptorium
-    objs[5][12] = "E"         # east -> the deep stair
+    objs[5][12] = "E"         # east -> the Deepest Face
     objects = ["".join(r) for r in objs]
     sc = Scene("works_sign", floor, objects, music="void")
     sc.add_exit("F", "works_scriptorium", "from_below")
-    sc.add_exit("E", "works_deepstair", "from_above")
+    sc.add_exit("E", "works_deepface", "from_above")
     sc.set_spawn("default",    6, 9)      # enter from the south, away from it
     sc.set_spawn("from_above", 1, 5)
     sc.set_spawn("from_below", 11, 5)
 
     # The Yellow Sign, daubed vast across the apse -- the cult's 2D
-    # *brand* of Him. The thing itself, evidence #5, is the Pallid Mask on
+    # *brand* of Him. The thing itself, the keystone item, is the Pallid Mask on
     # the altar (a pedestal) in the apse. You lift it at the altar.
     sign_x = 6 * TILE + 16
     sc._sign_pos = (6 * TILE + 16, 2 * TILE + 20)   # the altar, not the wall
@@ -931,7 +926,7 @@ def build_works_sign():
                                  ang=-math.pi / 2))
     sc.add_decoration(Decoration(11 * TILE + 26, 9 * TILE + 26, "cobweb",
                                  ang=math.pi))
-    # Hides stay sparse + risky here on purpose (STEALTH_REWORK §6): one
+    # Hides stay sparse + risky here on purpose (DESIGN.md §12): one
     # spot under the west pew, a pew-length from the kneeling congregation.
     sc.hide_spots = [
         (4 * TILE + 16, 8 * TILE + 8, "under"),    # under the west pew
@@ -941,7 +936,7 @@ def build_works_sign():
     # so no gaze, no chase, no grab (the ones IN the rite never break
     # from it; the east patrol stays the room's live threat) -- and MARA
     # KNEELS AMONG THEM, one more hood in the rank until the room says
-    # her name (the calling-out below). Evidence #6 lands here now.
+    # her name (the calling-out below). Mara is proof; the calling-out lands here now but does not count.
     sc._kneelers = []
     for kx in (4, 5, 7, 8):
         k = NPC(kx * TILE + 16, 5 * TILE + 16, "A kneeler", "cultist",
@@ -972,7 +967,7 @@ def build_works_sign():
     # THE CALLING-OUT (2026-07, settled with the user). First entry into
     # the nave: the kneelers rise one by one and turn to you, one of them
     # says her name at the room, and Mara stands up out of the rank and
-    # comes to you for the exchange (_mara_voice, evidence #6). Then the
+    # comes to you for the exchange (_mara_voice; Mara is proof, not a counted beat). Then the
     # room folds back to the kneeling as if you had never come in. The
     # trigger is a walk-on band, never an E-press, so it cannot steal the
     # altar's Mask/rite choice.
@@ -1149,7 +1144,7 @@ def build_works_sign():
     return sc
 
 
-# ---- Room 7: the Deepest Face (key kept: works_deepstair) ----
+# ---- Room 7: the Deepest Face (works_deepface) ----
 # The dig's end. The cult's testimony says it plain: "a few feet of
 # earth left between us and the door". The mine NEVER finished -- there
 # is no stair, no gate, only the dead face where the digging stopped.
@@ -1158,13 +1153,13 @@ def build_works_sign():
 # FALLS into something older than the dig (depths_antechamber, the fall
 # zone -- cut stone worn smooth by feet that came before the cult).
 
-def build_works_deepstair():
+def build_works_deepface():
     # An octagonal dead-end chamber, the dig's final face in the north wall.
     floor, objs = _box(11, 9)
     _bevel(objs, 2)
     objs[4][0] = "F"          # west -> back to the sign chamber
     objects = ["".join(r) for r in objs]
-    sc = Scene("works_deepstair", floor, objects, music="void")
+    sc = Scene("works_deepface", floor, objects, music="void")
     sc.add_exit("F", "works_sign", "from_below")
     sc.set_spawn("default",    5, 5)
     sc.set_spawn("from_above", 2, 4)
@@ -1293,7 +1288,7 @@ def build_the_sump():
     floor = _flood(floor, objs, _rect_tiles(2, 6, 7, 7))
     objects = ["".join(r) for r in objs]
     sc = Scene("the_sump", floor, objects, music="basement")
-    sc.add_exit("F", "works_vats", "from_the_sump")
+    sc.add_exit("F", "works_cistern", "from_the_sump")
     sc.set_spawn("default",   5, 5)
     sc.set_spawn("from_vats", 5, 2)
     # Black water pooled in two stone basins, a barrel + crate of the diggers'

@@ -47,7 +47,7 @@ def _sus_tell_card(bucket):
 
 
 def _draw_sus_tell(surf, x, y, actor):
-    """The rising "?" tell (STEALTH_REWORK.md Pillar 1): drawn over a
+    """The rising "?" tell (DESIGN.md §12 Pillar 1): drawn over a
     SCOUTING cultist whose suspicion is climbing -- the player's read on
     the "have they spotted me?" window. Procedural (no font glyph; the
     HUD stays diegetic-minimal): a pale-gold curl + dot that brightens
@@ -747,8 +747,8 @@ class RenderMixin:
 
     # ---- Draw ----
     def _skybox_kind(self):
-        """The oblique-camera surround for the current scene (CAMERA.md Phase
-        5). A scene may pin `skybox_kind` ("overcast"/"void") explicitly;
+        """The oblique-camera surround for the current scene (DESIGN.md §10).
+        A scene may pin `skybox_kind` ("overcast"/"void") explicitly;
         otherwise every SURFACE scene gets the sallow daytime `overcast` sky and
         everything else (interiors, underground) keeps the near-black `void` so
         the horror keeps its dark. The surface set is `SEAMLESS_WORLD_SCENES`
@@ -764,7 +764,7 @@ class RenderMixin:
         """The player's projected SCREEN position, lifted to the sprite centre
         under tilt (sin pitch) so the player-centred overlays -- vignettes,
         flashlight cone apex, apex/hide discs -- align with the drawn body, not
-        the ground point ~15px below it (CAMERA.md Phase 5). At pitch 0 the lift
+        the ground point ~15px below it (DESIGN.md §10). At pitch 0 the lift
         is 0, so the flat view's overlays do not move a pixel."""
         psx, psy = self.camera.project(self.player.x, self.player.y)
         psy -= int(TILT_ACTOR_STAND * math.sin(self.camera.pitch))
@@ -905,7 +905,7 @@ class RenderMixin:
         self.camera.cam_y = self.cam_y + SCREEN_H // 2
         if _s < 1.0:
             self.camera.scale *= _s
-        # Phase 4 blind-spot vision (CAMERA.md Phase 4). Under tilt, gate WHAT
+        # Phase 4 blind-spot vision (DESIGN.md §10). Under tilt, gate WHAT
         # IS DRAWN to a forward sight cone keyed to the look heading + walls
         # (rendering/sight.py). The world keeps simulating off-camera (the
         # update path is untouched) -- only RENDERING is gated, so unseen
@@ -930,7 +930,7 @@ class RenderMixin:
                                       step=SIGHT_RENDER_STEP, ground=_gz)
         # Hand the see-through doors the SAME sight gate so a threat in the room
         # beyond an opening is culled by the player's cone, like the open world
-        # (PORTALS.md; the through-view showed the far room ungated before). Only
+        # (DESIGN.md §7; the through-view showed the far room ungated before). Only
         # under tilt (the aperture is a tilt feature); cleared otherwise.
         self.scene._door_actor_sight = _sight
         from rendering.solids import draw_with_alpha
@@ -949,7 +949,7 @@ class RenderMixin:
         _tilt = self.camera.pitch > 0.02
         _tilt_walls = _tilt_solid_decos = _tilt_wall_decos = None
         if _tilt:
-            # DEBUG oblique view (CAMERA.md Phase 2/5): skybox fills the void,
+            # DEBUG oblique view (DESIGN.md §10): skybox fills the void,
             # the floor warps to the tilted plane. The upright occluders -- wall
             # tiles + solid props -- are RETURNED (not drawn here) so they can be
             # depth-interleaved with the actors below and faded per-actor
@@ -963,7 +963,7 @@ class RenderMixin:
             (_tilt_walls, _tilt_solid_decos, _tilt_wall_decos,
              _tilt_neighbor_solids) = draw_terrain_tilted(
                 self.screen, self.scene, self.camera, sight=_sight)
-            # Ground swell (CAMERA.md Phase 6): a projected floor mesh over the
+            # Ground swell (DESIGN.md §10): a projected floor mesh over the
             # flat raster where a scene authored hills, so the terrain rolls and
             # actors sit on it. No-op if no heightfield / flat camera.
             if getattr(self.scene, "_ground_hf", None) is not None:
@@ -975,7 +975,7 @@ class RenderMixin:
             self._draw_folds()
             self._draw_portal()        # flat: drawn inline (legacy order)
         self._draw_idle_king()
-        # The unified scene-actor draw list (CAMERA.md Phase 5). Each entry is
+        # The unified scene-actor draw list (DESIGN.md §10). Each entry is
         # (depth, draw_callable). At pitch 0 it stays in INSERTION ORDER (==the
         # legacy item->npc->enemy->projectile->player order) and is drawn
         # straight through, so the flat view is byte-identical. Under tilt the
@@ -1150,7 +1150,7 @@ class RenderMixin:
                 if a is None:
                     continue
                 # A visible standing actor is a "focus": occluding walls fade for
-                # whichever of these they cover (CAMERA.md Phase 5 per-actor
+                # whichever of these they cover (DESIGN.md §10 per-actor
                 # occlusion), so a cultist seen behind a near wall reads through.
                 # Invisible interact MARKERS are exempt: they draw nothing, so
                 # fading a wall for one erases real architecture for a ghost
@@ -1198,7 +1198,7 @@ class RenderMixin:
                                         lean=king_lean, scale_mul=king_scale_mul,
                                         pose=getattr(npc, "pose", None),
                                         gape=getattr(npc, "_gape", 0.0))
-                    # The rising "?" tell (STEALTH_REWORK.md Pillar 1): a
+                    # The rising "?" tell (DESIGN.md §12 Pillar 1): a
                     # cultist whose suspicion is climbing but hasn't locked
                     # shows the half-seen hesitation over its head.
                     _draw_sus_tell(target, sx, sy - 32, npc)
@@ -1372,7 +1372,7 @@ class RenderMixin:
 
         # Under tilt, fold the upright occluders -- wall tiles + solid props --
         # into the same list and depth-sort EVERYTHING so actors, props, and
-        # walls interleave correctly (CAMERA.md Phase 5). A wall fades for
+        # walls interleave correctly (DESIGN.md §10). A wall fades for
         # whichever VISIBLE actor it actually covers (min over the focus set),
         # so the furnished rooms' partition walls + mid-floor props no longer
         # blanket an actor standing behind them. Solid props are wrap-cloned
@@ -1869,7 +1869,7 @@ class RenderMixin:
                              (sx2 - 1, sy2 - 1, sw + 2, sh + 2), 1)
             pygame.draw.rect(self.screen, fill,
                              (sx2, sy2, int(sw * ratio), sh))
-        # The hide-check struggle (STEALTH_REWORK.md §4): a pulsing centre
+        # The hide-check struggle (DESIGN.md §12): a pulsing centre
         # prompt + press pips while the window runs. The prompt IS the
         # mechanic's legibility -- unmistakable, urgent, brief.
         st = getattr(self, "_struggle", None)

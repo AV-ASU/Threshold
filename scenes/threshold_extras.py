@@ -53,9 +53,6 @@ def build_schoolhouse():
     sc.add_exit("O", "effigy_grove", "from_school", direction="north")
     sc.set_spawn("default", 7, 9)
     sc.set_spawn("from_brimley", 7, 10)       # one tile north of the H door
-    sc.set_spawn("from_village", 7, 10)
-    sc.set_spawn("from_town_crossroads", 7, 10)
-    sc.set_spawn("from_town", 7, 10)
     # Back through the pane from the grove: one tile south of it, carried
     # southward so arrival never re-fires the north-walked crossing.
     sc.set_spawn("from_grove", 9, 5)
@@ -332,7 +329,6 @@ def build_country_lane():
     # Player walked EAST out of Brimley: lands at the west end of
     # the lane, facing east toward home.
     sc.set_spawn("from_brimley", 1, 6)
-    sc.set_spawn("from_village", 1, 6)   # legacy alias
 
     # Atmosphere -- corn tufts on both sides of the road, a few
     # crows, a leaning fence post deco, one creepy_tree, a dead
@@ -399,7 +395,6 @@ def build_graveyard():
     sc.add_exit("H", "church", "from_graveyard")
     sc.set_spawn("default", 7, 7)
     sc.set_spawn("from_church", 7, 7)
-    sc.set_spawn("from_town_crossroads", 7, 7)
 
     # A worn, anonymous headstone -- the leftmost top row.
     worn_stone = (3 * TILE + 16, 2 * TILE + 16)
@@ -520,7 +515,6 @@ def build_gravel_road_north():
     sc.add_exit("a", "brimley", "from_gravel_road")
     sc.set_spawn("default", 7, H - 2)
     sc.set_spawn("from_brimley", 7, H - 2)
-    sc.set_spawn("from_village", 7, H - 2)   # legacy alias
     sc.set_spawn("from_backwoods_cabin", 7, 1)
 
     rng = random.Random(2031)
@@ -598,7 +592,6 @@ def build_backwoods_cabin():
     sc.add_exit("D", "backwoods_cabin_interior", "from_outside")
     sc.set_spawn("default", 7, 9)
     sc.set_spawn("from_road", 7, 9)
-    sc.set_spawn("from_gravel_road_north", 7, 9)
     sc.set_spawn("from_interior", 7, 8)
 
     # Tally-mark sigil (phantom_mark stand-in) on the south face
@@ -1127,7 +1120,6 @@ def build_cornfield_maze():
     sc.set_spawn("reloc_Q", 3, 19)
     sc.set_spawn("default", 11, H - 2)
     sc.set_spawn("from_cornfield_path", 11, H - 2)
-    sc.set_spawn("from_cornfield", 11, H - 2)
     sc.set_spawn("from_brimley", 11, 1)
     sc.set_spawn("from_brimley_south", 11, 1)
     # Return from effigy_grove -- one east of the Z tile so the player
@@ -1184,10 +1176,9 @@ def build_cornfield_maze():
         sx, sy = sc._scarecrow_pos
         if (abs(game.player.x - sx) < 40
                 and abs(game.player.y - sy) < 40):
-            if not game.save.flag("scarecrow_evidence"):
-                _evidence(game, "scarecrow",
-                    "A scarecrow."
-                )
+            _evidence(game, "scarecrow",
+                "A scarecrow."
+            )
             return
     sc.on_interact_fn = _cornfield_maze_interact
 

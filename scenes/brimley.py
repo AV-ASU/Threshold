@@ -652,20 +652,13 @@ def build_brimley():
     sc.set_spawn("default", w - 2, 7)
     # Coming in from the Lodge via the country lane (east edge).
     sc.set_spawn("from_country_lane", w - 2, 7)
-    # Legacy alias for any old "from_village" save references; resolves
-    # to the same east-edge entry now that village is merged.
-    sc.set_spawn("from_village", w - 2, 7)
     sc.set_spawn("from_lodge_yard", w - 2, 7)
-    # Climbing back out of the well lands beside it.
-    sc.set_spawn("from_well", 94, 13)
     # Coming out of the woodshed door (the lumber axe + flashlight shed).
     # Spawn ONE TILE NORTH of the door so the player doesn't immediately
     # re-trigger and isn't stuck inside the shed walls.
     sc.set_spawn("from_woodshed", 91, 15)
     # The north passage to the gravel road (cult-priest territory).
     sc.set_spawn("from_gravel_road", 96, 2)
-    sc.set_spawn("from_mist_house", 7, church_bot + 1)
-    sc.set_spawn("from_alter", 1, 85)
     sc.set_spawn("from_river_crossing", 50, 1)
     # Cornfield maze pushes north and emerges into the brimley
     # a few tiles west of the river crossing -- the maze led you
@@ -686,9 +679,6 @@ def build_brimley():
     sc.set_spawn("from_toby_house",         kid_door,     kid_bot + 1)
     sc.set_spawn("from_barn",              barn_door,    barn_bot + 1)
     sc.set_spawn("from_school",            school_door,  school_bot + 1)
-    # The farm's old town road now drops you into the heart of Brimley,
-    # among the scattered buildings on the east bank.
-    sc.set_spawn("from_village_road",      58, 30)
 
     # Ambience -- crows and grass tufts. The banks once sat bare west
     # of the river (the dread of no cover); they now carry the walkable
@@ -785,7 +775,7 @@ def build_brimley():
                 dialogue_fn=dfn,
                 movement=movement, radius=radius)
         if stations:
-            # The JOBS layer (GAME_CHANGES §19): a personal station
+            # The JOBS layer: a personal station
             # route -- walk there, stand the work a while, move on.
             # Tile coords in; errand_step skips any station the nav web
             # can't reach, so a bad spot degrades, never wedges.
@@ -983,7 +973,7 @@ def build_brimley():
     # ---- The churchyard -- the too-even graves of the vanished ----
     # Crooked headstones in two rows: the uncanny rows-of-the-vanished,
     # each leaning its own way a few px off the lattice. (The Preacher's
-    # body is no longer here -- evidence #4 is now found in his own church,
+    # body is no longer here -- the preacher's death (a case note, not counted evidence) is now found in his own church,
     # gutted for naming the cult; see scenes/villager_houses.py.)
     hs = random.Random(91)
     for ry_ in (12, 14):
@@ -1219,7 +1209,7 @@ def build_brimley():
                        (20, 40), (52, 80), (75, 42), (36, 30)]:
         sc.add_decoration(Decoration(ltx * TILE + 16, lty * TILE + 16, "leaves"))
 
-    # Surface enclosed cover (STEALTH_REWORK §6): the corn and the tree
+    # Surface enclosed cover (DESIGN.md §12): the corn and the tree
     # lines are the CONCEALMENT system out here; the one rooted set-piece
     # option is the gap under the dead pickup's bed. A searcher can check
     # it like any other enclosed hide.
@@ -1312,7 +1302,7 @@ def build_brimley():
 
     # The Preacher's end (2026-07 rework): the doom sends Crane out of his
     # church, down to the river after his flock. His remains lie on the
-    # west bank (evidence #4, the cross); the emptied church's river-mud
+    # west bank (the cross; a case note, not counted evidence); the emptied church's river-mud
     # line points here. The scene rebuilds each load, so the remains are
     # re-laid every entry after the doom.
     sc._preacher_bank_pos = (31 * TILE + 16, 52 * TILE + 16)

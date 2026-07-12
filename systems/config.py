@@ -113,8 +113,8 @@ CHASE_STATIONARY_MULT = 0.35
 # input-driven target over this window, giving a tactile accel/decel feel.
 MOVE_SMOOTH_TAU = 0.12
 
-# Oblique-camera tilt (CAMERA.md Phase 2). The tilt is the DEFAULT view;
-# F3 toggles back to the flat pitch-0 view (the legacy raster) and eases in.
+# Oblique-camera tilt (DESIGN.md §10). The tilt is the DEFAULT view;
+# The flat pitch-0 view is dev-only now (the capture tools set it directly).
 # pitch 0 = that flat fallback. TILT_PITCH_DEG is the locked ~55deg default.
 TILT_PITCH_DEG = 55
 TILT_EASE = 0.12             # per-frame lerp of pitch toward its target
@@ -192,13 +192,13 @@ MOTH_LIGHT_R = 110.0         # kindle/flare light pool (breaks dark cover)
 # dimmed with a small clear circle around the player. With it,
 # the dimness lifts to a wider cone in the facing direction.
 DARK_SCENES = {"lodge_cellar", "well_passage", "well_bottom",
-               "works_vats", "works_sorting", "maras_room",
+               "works_cistern", "works_sorting", "maras_room",
                "works_scriptorium",
-               "works_sign", "works_deepstair",
+               "works_sign", "works_deepface",
                "abandoned_farmhouse",
                "depths_antechamber", "depths_procession",
                "depths_hall", "depths_threshing", "depths_stair",
-               "the_sump", "the_cells", "the_ossuary",
+               "the_sump", "the_cells", "the_old_stores",
                "dark", "threshold"}
 
 # Cult-dark: a subset of DARK_SCENES where the flashlight is
@@ -207,7 +207,7 @@ DARK_SCENES = {"lodge_cellar", "well_passage", "well_bottom",
 # normal physics.
 CULT_DARK_SCENES = {"depths_antechamber", "depths_procession",
                     "depths_hall", "depths_threshing",
-                    "depths_stair", "the_ossuary",
+                    "depths_stair", "the_old_stores",
                     "dark", "threshold"}
 
 # Scenes where the reactive cult-ambient layer (proximity-driven
@@ -215,8 +215,8 @@ CULT_DARK_SCENES = {"depths_antechamber", "depths_procession",
 # Works rooms and the Depths corridors. The fire-and-forget per-scene
 # _ambient hooks are scene colour; this layer is a SECOND layer that
 # swells with cultist proximity and pans from the closest cultist.
-CULT_AMBIENT_SCENES = {"works_vats", "works_sorting", "works_scriptorium",
-                       "works_sign", "works_deepstair",
+CULT_AMBIENT_SCENES = {"works_cistern", "works_sorting", "works_scriptorium",
+                       "works_sign", "works_deepface",
                        "depths_antechamber", "depths_procession",
                        "depths_hall", "depths_threshing", "depths_stair"}
 
@@ -416,7 +416,7 @@ LOCAL_KILL_VIS_CAP = 0.96
 GUN_PROJECTILE_SPEED = 340
 GUN_PROJECTILE_COLOR = (236, 232, 214)   # pale lead, distinct from cult amber
 
-# ---- Stealth rework (STEALTH_REWORK.md): graded suspicion + cover classes -
+# ---- Stealth rework (DESIGN.md §12): graded suspicion + cover classes -
 # Detection is GRADED, not binary: each cultist carries a suspicion value in
 # [0, 1] filled per tick by score = los * distance_falloff * facing_cone *
 # concealment. Cover changes how HARD you are to detect, never WHETHER you
@@ -433,7 +433,7 @@ SUS_NEAR = 44.0               # px: inside this, facing no longer matters
 SUS_CONE_HALF = 1.40          # rad (~80 deg) enemy sight-cone half-angle
 SUS_CONE_FEATHER = 0.35       # rad soft edge on the cone lip
 SUS_CONCEAL_CORN = 0.30       # concealment factor in corn (leaky, not zero)
-# Darkness is CONCEALMENT too (STEALTH_REWORK Pillar 2A "corn, shadow"):
+# Darkness is CONCEALMENT too (DESIGN.md §12 "corn, shadow"):
 # in a DARK scene, with the flashlight unlit and outside every light
 # pool (Scene.lit_at), the player reads as half-swallowed by the gloom.
 # Weaker than corn (a shape in the dark is still a shape), and it never
@@ -508,7 +508,7 @@ NOISE_SRC_SILENCE_DIST = 40.0 # a hunter this close shuts a source off
 # on the dry). Scoped to the deep works so the Brimley river -- its own
 # set-piece, with its own in/out rules -- is untouched. No new AI: the
 # splash rides the existing Scene.emit_noise / stealth.hear_noise ear.
-WADE_SCENES = {"the_sump", "works_vats", "depths_threshing"}
+WADE_SCENES = {"the_sump", "works_cistern", "depths_threshing"}
 WADE_SPEED_MULT = 0.5         # wading halves speed (sprint can't clear it)
 WADE_STEP_EVERY = 0.46        # heavier, slower splash cadence than dry steps
 WADE_SPLASH_LOUD = 0.95       # a splash is LOUD -- over NOISE_SEARCH_PULL
@@ -584,7 +584,7 @@ RIVER_ENTRY_TILE = (34, 60)
 # at 3 evidence. The stage is min(3, evidence) for the surface (monotonic;
 # the underground deepens past that on its own evidence clock).
 #
-# The TOWNSFOLK do NOT change (TODO #22c, NARRATIVE §2, STORY_AUDIT B6): the
+# The TOWNSFOLK do NOT change (TODO #22c, NARRATIVE §2): the
 # old ROT_CONVERT / ROT_TURN tables (peace-makers repainted cultist,
 # resisters' dialogue curdled) were CUT. The world rot is the PI's now, and
 # it lives in the four-tier conversation framing (scenes/dialogue._pi_framing
@@ -618,13 +618,13 @@ VANE_NEGLECT_EVIDENCE = 3     # the descent line: 3 canonical beats
 # at 0 evidence, deepening on the full evidence count (not capped at 3).
 UNDERGROUND_SCENES = {
     "well_bottom", "well_passage",
-    "works_vats", "works_sorting", "works_scriptorium", "works_sign",
-    "works_deepstair",
+    "works_cistern", "works_sorting", "works_scriptorium", "works_sign",
+    "works_deepface",
     "depths_antechamber", "depths_procession", "depths_hall",
     "depths_threshing", "depths_stair",
     # the dead-end branch rooms hang off their parent corridors and share
     # its underground treatment (baseline rot + Enemy-cultist pursuit).
-    "the_sump", "the_cells", "the_ossuary",
+    "the_sump", "the_cells", "the_old_stores",
 }
 
 # Ashfall (DESIGN.md §2): a slow drifting pale-yellow ashfall, the pressure

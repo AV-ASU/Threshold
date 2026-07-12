@@ -93,14 +93,12 @@ def build_church():
 
     sc = Scene("church", floor, objects, music="home")
     # Church now sits on the brimley west bank. The `m` exit routes
-    # to the brimley; the legacy `from_village` spawn stays as a
-    # save-state fallback.
+    # to the brimley.
     sc.add_exit("m", "brimley", "from_church")
     sc.add_exit("?", "graveyard", "from_church")
     sc.add_exit("U", "bell_tower", "from_church")
     sc.set_spawn("default", 8, 8)
     sc.set_spawn("from_brimley", 8, 10)        # one tile north of the m door
-    sc.set_spawn("from_village", 8, 10)        # legacy fallback
     sc.set_spawn("from_graveyard", 10, 1)      # one tile south of the ? door
     sc.set_spawn("from_bell_tower", 2, 2)      # at the foot of the U stairs
 
@@ -112,7 +110,7 @@ def build_church():
                   portrait="preacher",
                   dialogue_fn=preacher_dialogue, movement="worker",
                   tag="preacher")
-        # His JOB (GAME_CHANGES §19): the lectern at the head of the
+        # His JOB (the JOBS layer): the lectern at the head of the
         # nave (working the sermon that gets him killed), a slow walk
         # down the empty nave, a spell at the vestry cot.
         rev.stations = [
@@ -231,8 +229,6 @@ def build_sheriff_office():
     sc.add_exit("y", "brimley", "from_sheriff_office")
     sc.set_spawn("default", 4, 8)
     sc.set_spawn("from_brimley", 5, 10)      # one tile north of the y door
-    sc.set_spawn("from_village", 5, 10)      # legacy fallback
-    sc.set_spawn("from_town", 5, 10)         # legacy fallback
 
     pos = sc.consume_marker("Y")
     if pos:
@@ -287,7 +283,7 @@ def build_sheriff_office():
         sc.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16,
                                      "mote"))
     # Mara's booking slip, in the back records room's filing table (surface
-    # evidence #2; NARRATIVE §6, DESIGN.md §9). It lives in the FILES, not
+    # a surface trail beat; NARRATIVE §6, DESIGN.md §9). It lives in the FILES, not
     # on Vane -- reachable whether he is alive, dead, or never spoken to
     # (world-persistent; killing him can never soft-lock the descent).
     sc._record_pos = (11 * TILE + 16, 4 * TILE + 16)
@@ -324,21 +320,12 @@ def build_sheriff_office():
 
 
 def build_abandoned_farmhouse():
-    """Round-10 rework: now the 'normal' face of a two-stage house.
-    On first entry it looks like a plain empty interior -- a candle,
-    a couple of motes, otherwise bare. The trick is the south face:
-    one tile is a glitch wall (passable wood). Walking through it
-    drops the player into the haunted version of the same house
-    (haunted_house_glitch), which is where the phantom marks, broken
-    table, bloodstains, and the path to the portal room live.
-
-    Two seal conditions both turn the glitch wall back into a real W
-    on subsequent entries:
-      * haunted_glitch_sealed -- the player walked back out of the
-        haunted version through its north door (point-2 of the spec)
-      * symbol_portal_used    -- the player took the portal route
-                                 from the haunted version
-    Either way, after one trip through, the route is closed."""
+    """A plain abandoned farmhouse interior: a candle, a couple of
+    motes, otherwise bare. (The old two-stage glitch-wall trick -- a
+    passable south-face tile that dropped the player into a haunted
+    `haunted_house_glitch` version -- was CUT; the south face is now
+    solid, and the one live beat is the nailed-shut cult-chamber hatch
+    in the rear room.)"""
     # THRESHOLD: cleaned up the void buffer + passable % glitch
     # wall the original used to drop the player into the alternate
     # haunted version. South face is now solid; row 7 was an open
@@ -363,10 +350,8 @@ def build_abandoned_farmhouse():
     sc.add_exit("o", "brimley", "from_abandoned_farmhouse")
     sc.set_spawn("default",     3, 1)
     sc.set_spawn("from_brimley", 3, 1)
-    sc.set_spawn("from_village", 3, 1)         # legacy fallback
     # When the player climbs back up from the cult chamber, they come up
     # through the hatch in the back room. Spawn beside it.
-    sc.set_spawn("from_chamber", 9, 4)
     # The abandoned farmhouse. Phantom marks on the walls -- thick in the
     # back room. There's a (sealed) hatch back there too.
     sc.add_decoration(Decoration(2 * TILE + 16,  0 * TILE + 22 , "candle"))
@@ -392,7 +377,7 @@ def build_abandoned_farmhouse():
 
     # Cult-chamber hatch: a sealed dead end, back in the rear room (the
     # blind spot). It once dropped into the old cult chamber (now removed);
-    # pressing E just reads the nailed-shut notice. Drawn as a cellar_hatch.
+    # pressing E plays a locked sound (the notice line is unwired, TODO C14). Drawn as a cellar_hatch.
     hatch_x = 8 * TILE + 16
     hatch_y = 3 * TILE + 16
     sc.add_decoration(Decoration(hatch_x, hatch_y, "cellar_hatch"))

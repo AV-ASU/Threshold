@@ -1,4 +1,4 @@
-"""Blind-spot sight preview (CAMERA.md Phase 4).
+"""Blind-spot sight preview (DESIGN.md §10).
 
 Top-down schematic of the line-of-sight model in rendering/sight.py: a player
 in a small room with a few walls and a scatter of NPC markers. As the head

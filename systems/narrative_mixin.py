@@ -35,7 +35,7 @@ class NarrativeMixin:
         swarm, no bed) -- the half-dismissed memory surfacing, not a
         scene. "rite": the FULL dream at the grove rite (the memory,
         finished): swarm, falling bed, the works."""
-        from ui.cutscenes import FLASHBACK_DUR, FLASHBACK_FLASH_DUR
+        from ui.cutscenes import FLASHBACK_FLASH_DUR
         self._flashback_mode = mode
         self._flashback_dur = (FLASHBACK_FLASH_DUR if mode == "flash"
                                else FLASHBACK_DUR)
@@ -247,7 +247,7 @@ class NarrativeMixin:
         Idempotent by `name` so re-triggering a pickup never dupes. Used by
         the cult-testimony fragments (the cult's voice is the item desc; this
         is the PI's reaction). NOTES never inflate `_evidence_count`, so they
-        never arm the King or the world rot -- only the six CANONICAL_EVIDENCE
+        never arm the King or the world rot -- only the five CANONICAL_EVIDENCE
         beats do."""
         notes = self.save.arg("notes", [])
         if not isinstance(notes, list):

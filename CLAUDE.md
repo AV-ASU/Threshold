@@ -1,5 +1,24 @@
 # THRESHOLD — Claude guide
 
+> **READ THIS FIRST — the four-doc canon.** This file (`CLAUDE.md`) is the
+> project's entry point and operating guide. Before doing ANY work on
+> THRESHOLD, read the other three canon docs in full and hold them in mind:
+> - **`NARRATIVE.md`** — the story bible: premise, lore, cast, place, the
+>   evidence trail, the endings, and the canon invariants. The source of
+>   truth for anything the fiction asserts.
+> - **`DESIGN.md`** — every game system and its code map: the threat model,
+>   world rot, the fold, the tilted camera, audio, stealth, the Works level,
+>   and art direction.
+> - **`TODO.md`** — the live list of genuinely open work. Not a place for
+>   lore.
+>
+> These four files are the ENTIRE doc canon. The old per-topic docs
+> (`CAMERA.md`, `PORTALS.md`, `STEALTH_REWORK.md`, `AUDIO.md`, and the two
+> audit files) were folded into them and deleted (2026-07), so every design
+> or story reference now lives in one of these four. When you change a canon
+> fact, change it in its ONE home and reconcile the others: a detail that is
+> true in one doc and stale in another is rot.
+
 > **HARD RULE — no dashes in player-facing text.** Never use em-dashes (—),
 > en-dashes (–), or double-hyphen dashes (`--`) as punctuation in ANY text the
 > player reads: item names/descriptions, dialogue, narrator beats, notices,
@@ -14,7 +33,7 @@ headless capture tools (`tools/capture_world.py`, the previews) set pitch 0
 directly for frame capture. Every sprite is drawn **procedurally** — there is
 no image-asset pipeline. The core loop is stealth/dread (walk, watch,
 hide), driven by a **visibility** meter that feeds the **King in Yellow**,
-the lethal apex pursuer. (See the tilted-camera track below + `CAMERA.md`.)
+the lethal apex pursuer. (See the tilted-camera track below + `DESIGN.md §10`.)
 
 ## Dev commands
 
@@ -67,8 +86,8 @@ it renders the procedural sprites to a labelled PNG strip.
     cultist + fold/portal pursuit, visibility + evidence floor, death.
   - `systems/render_mixin.py` — the draw layer: `draw_world`, overlays, HUD,
     the title/pause/settings screens, the death card.
-  - `systems/rot_mixin.py` — world rot/ashfall + the hunting sheriff,
-    plus the turned-local dialogue helpers.
+  - `systems/rot_mixin.py` — world rot/ashfall + the moth sim + the
+    hunting sheriff.
   - `systems/narrative_mixin.py` — the journal flashback, the case-file /
     interior-voice notes (`_log_case_entry` …), the endings + opening crawl.
 - `scenes/` — `SCENE_BUILDERS` registry + `load_scene(key)`
@@ -154,15 +173,15 @@ it renders the procedural sprites to a labelled PNG strip.
     wings at rest, a limb-knot snap at the flare, a crumpled husk on the
     ground. Sim + spawn live in `systems/rot_mixin.py` (below).
   - `transform.py` — `draw_vessel_bloom`, the human→vessel morph.
-  - **Tilted-camera track (LIVE — the oblique view is the default; F3
-    toggles back to flat pitch-0):** `camera.py` (`Camera.project(wx,wy,wz)`,
+  - **Tilted-camera track (LIVE — the oblique view is the only in-game
+    camera; flat pitch-0 is dev/capture-only):** `camera.py` (`Camera.project(wx,wy,wz)`,
     the single world→screen seam + `depth()` sort key), `solids.py`
     (volumetric `draw_solid`/`draw_box`/`draw_billboard`), `skybox.py`
     (procedural void-fill backdrop), `occlusion.py` (fade walls that hide the
     player), `pseudo3d.py` (the Watcher proof), `sight.py` (the **Phase 4
     blind-spot vision** buffer). The plan — render most objects as 3D solids
     projected to 2D, lock pitch ~55°, head-turn ±45°, skybox in the voids —
-    lives in **`CAMERA.md`**. Camera FEEL (2026-07): the position
+    lives in **`DESIGN.md §10`**. Camera FEEL (2026-07): the position
     lookahead follows the last WALK direction, eased, holding while you
     stand (`_update_camera` `_cam_lead`) — it must never ride the aim
     cursor; the yaw chase is aim-steady (trigger locks it, standing
@@ -175,7 +194,7 @@ it renders the procedural sprites to a labelled PNG strip.
     collection + `_tilt_tile_box` dispatch; the flat floor raster skips them via
     `draw_scene_terrain(..., skip_billboard=True)`). Collision is unchanged;
     flat top-down draws them flat as before.
-  - **Blind-spot vision (`sight.py`, CAMERA.md Phase 4):** under tilt,
+  - **Blind-spot vision (`sight.py`, DESIGN.md §10):** under tilt,
     `draw_world` gates what is **drawn** (NPCs, enemies, corpses, items, and
     the world-rot decals — flagged `_sight_gated`) to a forward sight
     cone keyed to `look.aim` and clipped by `Scene.blocks_sight`, via
@@ -191,7 +210,7 @@ it renders the procedural sprites to a labelled PNG strip.
     room by the player's cone, so an empty room shows through the opening but a
     corner-lurker stays hidden (the rift is exempt — it shows all by design).
     Preview: `tools/preview_door_sight.py`.
-  - **Ground heightfield (`rendering/heightfield.py`, CAMERA.md Phase 6 —
+  - **Ground heightfield (`rendering/heightfield.py`, DESIGN.md §10 —
     PROTOTYPE, dormant):** a per-scene ground height so terrain rolls and a
     crest you can't see over occludes like a wall. `Scene.set_ground(grid)` /
     `Scene.ground_z(x_px, y_px)` (0.0 when unopted → dead-flat, pitch-0
@@ -234,7 +253,7 @@ it renders the procedural sprites to a labelled PNG strip.
 - **`visibility`** ∈ [0, 1] (`_tick_visibility`): Watchers + cultist gaze
   raise it; hiding (`VIS_HIDE_BLEED`) and idle decay (`VIS_IDLE_DECAY`)
   lower it. Tuning lives in the `VIS_*` constant block.
-- **Detection is GRADED (2026-07 stealth rework; `STEALTH_REWORK.md`).**
+- **Detection is GRADED (2026-07 stealth rework; `DESIGN.md §12`).**
   Binary invisibility is gone. Each cultist carries a per-enemy
   **suspicion** ∈ [0, 1] filled per tick by a detection **score** =
   `los * distance_falloff * facing_cone * concealment`
@@ -261,7 +280,7 @@ it renders the procedural sprites to a labelled PNG strip.
   deliberately deferred — free look under tilt already gives the
   information function; revisit in the human-tuning pass.)
 - **Deep-water WADE** (TODO #8, `WADE_*` config, `Game._wading`): the
-  flooded deep works (`WADE_SCENES` = works_vats / the_sump /
+  flooded deep works (`WADE_SCENES` = works_cistern / the_sump /
   depths_threshing) stand in walkable `~` water. Wading a water tile
   **halves the player's speed** (sprint can't clear it) and throws a
   **loud splash** (`WADE_SPLASH_LOUD`, over `NOISE_SEARCH_PULL`, via
@@ -345,19 +364,23 @@ it renders the procedural sprites to a labelled PNG strip.
   so the pass is deterministic + additive (never accumulates). It (a)
   scatters escalating rot decals (`_rot_decals`, seeded; surface +
   safe-rooms-at-3 + underground, which is baseline-rotted from ev0), (b)
-  transforms surface locals by name: **converts** the peace-makers
-  (`ROT_CONVERT` → `_convert_local`: sprite→`cultist`, tag
-  `cult_convert` = *passive* cult, gaze-only via `_tick_cultists`, never
-  grabs) and **turns** the resisters (`ROT_TURN` → `_turned_local_dialogue`;
-  Hettie, Garrick, Old Pell, Toby): the town reads **NORMAL** — they keep
-  their exact sprite, portrait, and body (the wrongness is the *place*, not
-  the people; NARRATIVE §2). Only their **dialogue** curdles: they answer flat and
-  off, reporting small ordinary things from behind a face that no longer
-  means them, never acknowledging the gap. (The old `_mutated` body-horror
-  layer — the `draw_infested_overlay` world sprite + the
-  `_draw_infested_portrait` dialog portrait + the `infested=True` `show()`
-  path — was **cut** 2026-07, TODO #9; `sprites_wound.py` keeps only the
-  shared `_gold_in_wound` helper the corpse art still uses.)
+  escalates the **ambient air** to match (`_apply_ambient_air`:
+  `drip`/`flies`/`whisper` + `rot_throb` by stage, same SAFE_SCENES-at-3
+  rule as the decals; DESIGN.md §11). **The people do NOT change**
+  (2026-07 rework, TODO #22c): the town stays visually ordinary end to
+  end. The old people-transform layer was CUT —
+  `_convert_local` / `_turned_local_dialogue` / `ROT_TURN_LINES` /
+  `_rot_locals` / `_spawn_counter_eater` and the `ROT_CONVERT` / `ROT_TURN`
+  config are gone (as was the earlier `_mutated` body-horror overlay —
+  `draw_infested_overlay` / `_draw_infested_portrait` / the `infested=True`
+  `show()` path — TODO #9; `sprites_wound.py` keeps only the shared
+  `_gold_in_wound` helper the corpse art still uses). What rots now is the
+  **investigator**: the four-tier conversation framing
+  (`_pi_tier` / `_pi_framing` / `_PI_WEATHER` in `scenes/dialogue.py`) keyed
+  to evidence (0 / 1-2 / 3 / 4+) gives each principal's opening framing the
+  PI's deepening interior weather while the NPC's own words never change —
+  the wrongness is the *place* and the man hearing it, never the people
+  (NARRATIVE §2/§6, DESIGN.md §9).
   Sheriff Vane is exempt from the rot pass: his fall is
   **player-driven (TODO #2a, 2026-07)** — a hidden despair/hope ledger
   (`vane_despair`, the `VANE_*` config block; `_vane_ledger`/`_vane_share`
@@ -395,8 +418,10 @@ it renders the procedural sprites to a labelled PNG strip.
   congregation (`works_sign`, set-piece NPCs, no cult tag). First entry
   stages it (`_call_out` trigger + `_sign_update` in `scenes/well.py`):
   the kneelers rise, one says her name, she walks to the player and her
-  canon-guarded exchange fires (evidence #6 lands HERE now; the deep
-  hive `dark` keeps a nameless congregation). Flow §28b guards it.
+  canon-guarded exchange fires (Mara is **proof, not evidence** since the
+  TODO #22 rework: the calling-out still fires but no longer counts toward
+  the gate; the deep hive `dark` keeps a nameless congregation). Flow §28b
+  guards it.
 
 ## Conventions & gotchas
 
@@ -450,7 +475,7 @@ it renders the procedural sprites to a labelled PNG strip.
   seam, foreshortens like a wall, thins to nothing off-angle). Same-scene
   folds are SILENT (skipped by `_build_fold_cache` — the lie is the world
   itself). One-way is the King's signature alone. See DESIGN.md §7 "One
-  phenomenon, two presentations" + PORTALS.md "Decisions landed". Live
+  phenomenon, two presentations" + DESIGN.md §7 "Decisions landed". Live
   proof sheet: `tools/preview_rift_anchored.py`.
 - **No day/night cycle** — it was removed; everything reads as one
   (daytime) state. Don't reintroduce `day_phase` / `day_count`.
@@ -527,8 +552,10 @@ it renders the procedural sprites to a labelled PNG strip.
 - **"He knows you":** `_log_dream_entry` writes the dream to save arg
   **`notes`** (shown by `NotebookUI` after the clues). It must NOT go in
   `evidence` — `_evidence_count` is `len(save.arg("evidence"))` and drives the
-  King-gate + world rot; only the six `CANONICAL_EVIDENCE` beats belong
-  there. At the real Threshold (`scenes/depths.py build_threshold`
+  King-gate + world rot; only the five `CANONICAL_EVIDENCE` beats of Mara's
+  trail (`maras_receipt`/`maras_record`/`maras_journal`/`maras_dig`/`maras_room`;
+  NARRATIVE §6, TODO #22) belong there — the bear is an optional non-counting
+  item, and the Ledger/Preacher/dream file as notes. At the real Threshold (`scenes/depths.py build_threshold`
   `on_enter`), if `flashback_seen`, a recognition line lands before the
   doorframe beat: *"You have stood here before. In sleep."*
 

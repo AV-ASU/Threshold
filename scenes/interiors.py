@@ -69,15 +69,11 @@ def build_clearing():
     objects_l[6][15] = "t"
     objects = ["".join(r) for r in objects_l]
     sc = Scene("clearing", floor, objects, music="wrong")
-    # The clearing's south threshold now leads back to the brimley
-    # river bank (where the new entrance is). Old saves' from_forest
-    # / from_cornfield spawns still resolve to the same in-scene
-    # position so loading is non-destructive.
+    # The clearing's south threshold leads back to the brimley river
+    # bank (where the entrance is).
     sc.add_exit("j", "brimley", "from_clearing")
     sc.set_spawn("default",        9, 11)
     sc.set_spawn("from_brimley", 9, 11)
-    sc.set_spawn("from_forest",    9, 11)   # legacy alias
-    sc.set_spawn("from_cornfield", 9, 11)   # legacy alias
 
     # The dead fire pit at centre -- scaled up so it reads as the
     # communal burn, not a campsite. Around it, what wouldn't burn:
@@ -136,7 +132,7 @@ def build_clearing():
         px, py = game.player.x, game.player.y
         if abs(px - pyre_x) > 40 or abs(py - pyre_y) > 40:
             return
-        # Flavor narration only -- NOT one of the six canonical beats, so
+        # Flavor narration only -- NOT one of the five canonical beats, so
         # it never touches the evidence count or the King-gate.
         _evidence(game, "the_burning",
             "A fire pit big enough to stand a family around, cold a long "
@@ -173,8 +169,6 @@ def build_shop():
     sc.add_exit("D", "brimley", "from_shop")
     sc.set_spawn("default", 7, 9)
     sc.set_spawn("from_brimley", 8, 10)      # one tile north of the D door
-    sc.set_spawn("from_village", 8, 10)      # legacy fallback
-    sc.set_spawn("from_town", 8, 10)         # legacy fallback
 
     pos = sc.consume_marker("S")
     if pos:
@@ -183,7 +177,7 @@ def build_shop():
                   "Hettie", "hettie", voice="blip_high",
                   portrait="hettie",
                   dialogue_fn=hettie_dialogue, movement="worker")
-        # Her JOB (GAME_CHANGES §19): the counter mostly, a pass along
+        # Her JOB (the JOBS layer): the counter mostly, a pass along
         # the empty goods shelves (dusting stock that never comes), a
         # trip to the storeroom preserves through the partition door.
         het.stations = [
@@ -249,7 +243,7 @@ def build_shop():
     for mx, my in [(8, 7), (12, 8), (10, 10)]:
         sc.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16,
                                      "mote"))
-    # Mara's store tab, spiked on the counter (surface evidence #1;
+    # Mara's store tab, spiked on the counter (surface evidence;
     # NARRATIVE §6, DESIGN.md §9). It lives HERE, on the spike, so it is
     # reachable whether Hettie is alive, dead, or never spoken to -- the
     # world-persistent cold find. Her warm handover (the Mara-memory beat)
@@ -269,7 +263,7 @@ def build_shop():
     return sc
 def build_barn():
     """Small barn on the brimley east bank. Holds Mara's journal
-    (evidence #2) behind the workbench, and a boarded-over hatch where a
+    (a surface trail beat) behind the workbench, and a boarded-over hatch where a
     tunnel down to the Works once ran -- nailed shut now; the rite (the
     grove's descent fold) is the only way underground, and no hatch ever
     will be again. Lodge dressing (mounted buck, walleye,
@@ -296,8 +290,6 @@ def build_barn():
     # back stall -- behind the partition, so they're an indoor blind spot.
     sc.set_spawn("default", 5, 8)
     sc.set_spawn("from_brimley", 4, 1)       # one tile south of n door
-    sc.set_spawn("from_village", 4, 1)         # legacy fallback
-    sc.set_spawn("from_well_passage", 11, 5)   # beside the hatch in the stall
 
     # Sized furniture: stacked hay-bale shelves out front and the workbench
     # in the back stall.
@@ -337,7 +329,7 @@ def build_barn():
     sc.add_decoration(Decoration(hatch_x, hatch_y, "cellar_hatch"))
     sc._barn_hatch_pos = (hatch_x, hatch_y)
     sc.add_interactable(hatch_x, hatch_y, 36)   # [E] cue for the sealed hatch
-    # Mara's journal, stashed behind the workbench -- evidence #2.
+    # Mara's journal, stashed behind the workbench -- a surface trail beat.
     sc._journal_pos = (11 * TILE + 16, 3 * TILE + 16)
     # [E] cue so the player knows there's something behind the workbench.
     sc.add_interactable(sc._journal_pos[0], sc._journal_pos[1], 40)
@@ -350,7 +342,7 @@ def build_barn():
 
     def _barn_interact(game):
         px, py = game.player.x, game.player.y
-        # Mara's journal behind the workbench (evidence #2). Grants the
+        # Mara's journal behind the workbench (a surface trail beat). Grants the
         # journal item so the page-3 inventory flashback still fires.
         jx, jy = sc._journal_pos
         if abs(px - jx) < 40 and abs(py - jy) < 40:
@@ -407,7 +399,6 @@ def build_toby_house():
     sc.add_exit("J", "brimley", "from_toby_house")
     sc.set_spawn("default", 8, 7)
     sc.set_spawn("from_brimley", 4, 8)         # one tile north of the J door
-    sc.set_spawn("from_village", 4, 8)         # legacy fallback
 
     pos = sc.consume_marker("K")
     if pos:
@@ -466,7 +457,7 @@ def build_toby_house():
         (10 * TILE + 16, 8 * TILE + 8, "under"),
     ]
     # The kid's drawing of the King, pinned up inside the closet (a 'photo'
-    # decoration) -- examinable flavor, grants nothing. Out of sight from the
+    # decoration) -- decoration only; no interactable is wired. Out of sight from the
     # room until the player steps into the closet.
     drawing_x = 2 * TILE + 16
     drawing_y = 1 * TILE + 16

@@ -1,7 +1,7 @@
 """Hero preview of the LIVE tilted (oblique 55) view -- the DEFAULT player
 experience. Boots a real Game, loads a scene, tilts to ~55, and frames a chosen
 spot at the real game zoom so props/dressing can actually be judged the way the
-player sees them (the contact-sheet flat view is the legacy F3 fallback).
+player sees them (the contact-sheet flat view is the legacy pitch-0 fallback).
 
 Two columns per row: the CLEAN judging view (blind-spot fog disabled, so every
 prop is visible) and the true PLAYER POV (fog on, player dropped at the target

@@ -63,7 +63,7 @@ def check_draw_pipeline(g):
 
 
 def check_phase6_and_doors(g):
-    """Guards for the two CAMERA.md/PORTALS.md additions:
+    """Guards for the two DESIGN.md §10/§7 additions:
 
       * the ground HEIGHTFIELD (Phase 6, blind-spot hills): ground_z is 0 on a
         flat scene, rises on a hill, a crest occludes line of sight (but not

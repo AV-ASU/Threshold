@@ -1,11 +1,8 @@
 """Scene registry. Each scene_key -> builder function.
 
-Registry trimmed from ~32 scenes down to the active map. Builder
-functions for cut scenes are still imported (so static analysis
-stays clean) but they are not registered — nothing in the world
-reaches them. Reused scenes keep the same key when the geometry is
-reused, so old saves that store a scene key load into the content
-for that key.
+Registry trimmed from ~32 scenes down to the active map; cut-scene
+builders were removed, so every imported builder is registered.
+Reused scenes keep the same key when the geometry is reused.
 """
 from .base import Scene, tile_footstep, OBJECT_DEFS, FLOOR_DEFS, TILE
 from .lodge import (build_bedroom, build_lodge, build_lodge_cellar,
@@ -14,14 +11,14 @@ from .lodge_yard import (build_lodge_yard, build_woodshed,
                          build_arrival_road)
 from .cornfield_path import build_cornfield_path
 from .well import (build_well_bottom, build_well_passage,
-                   build_works_vats, build_works_sorting,
+                   build_works_cistern, build_works_sorting,
                    build_works_scriptorium, build_works_sign,
-                   build_works_deepstair, build_maras_room,
+                   build_works_deepface, build_maras_room,
                    build_the_sump, build_the_cells)
 from .depths import (build_depths_antechamber, build_depths_procession,
                      build_depths_hall, build_depths_threshing,
                      build_depths_stair, build_dark, build_threshold,
-                     build_the_ossuary)
+                     build_the_old_stores)
 from .interiors import (build_shop, build_toby_house, build_barn,
                         build_clearing)
 from .villager_houses import (build_church, build_sheriff_office,
@@ -85,18 +82,18 @@ SCENE_BUILDERS = {
     # entrance (the grove's descent fold); the Mask gates the way to the Depths.
     "well_bottom":        build_well_bottom,        # the Shaft Floor
     "well_passage":       build_well_passage,       # the Timber Racks
-    "works_vats":         build_works_vats,
+    "works_cistern":         build_works_cistern,
     "works_sorting":      build_works_sorting,
     "maras_room":         build_maras_room,         # cell off the Sorting Hall
     "the_sump":           build_the_sump,           # branch off the Cistern
     "the_cells":          build_the_cells,          # branch off the Sorting Hall
     "works_scriptorium":  build_works_scriptorium,
-    "works_sign":         build_works_sign,         # the Sign (evidence #5)
-    "works_deepstair":    build_works_deepstair,    # keystone gate -> Depths
+    "works_sign":         build_works_sign,         # the Sign (lift the Pallid Mask, the keystone item)
+    "works_deepface":    build_works_deepface,    # keystone gate -> Depths
     # The depths -- five rooms, one-way fall from well_bottom
     "depths_antechamber": build_depths_antechamber,
     "depths_procession":  build_depths_procession,
-    "the_ossuary":        build_the_ossuary,        # branch off the procession
+    "the_old_stores":        build_the_old_stores,        # branch off the procession
     "depths_hall":        build_depths_hall,
     "depths_threshing":   build_depths_threshing,
     "depths_stair":       build_depths_stair,
@@ -125,8 +122,8 @@ SCENE_BUILDERS = {
 # daughter_room, abducted_hallway, haunted_house_glitch, locked_house,
 # mist_house, alter_room, void_room_1/2. Also cut (2026-07 dead-scene pass):
 # highway_walk (the never-hit walked-out-road fold off country_lane) and the
-# legacy "town" orphan stub (no live inbound exit). Any stale save or exit
-# pointing at one of these keys falls back to "bedroom" via load_scene below.
+# legacy "town" orphan stub (no live inbound exit). Any exit or key that no longer
+# resolves falls back to "bedroom" via load_scene below.
 
 
 def load_scene(key):

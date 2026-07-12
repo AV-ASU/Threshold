@@ -1,6 +1,6 @@
 """The depths -- everything below the basement level: the OLD WORKINGS,
 older than the cult's dig. The blast at the Deepest Face
-(works_deepstair) drops the player here; from this point the only
+(works_deepface) drops the player here; from this point the only
 direction is down.
 
 Floors, top to bottom:
@@ -10,8 +10,7 @@ Floors, top to bottom:
   depths_threshing    -- the threshing floor
   depths_stair        -- the empty spiral down
   dark                -- the hive: the claimed congregation, past names
-                         (Mara kneels at the Sign Chamber now; scene
-                         key kept)
+                         (Mara kneels at the Sign Chamber now)
   threshold           -- the doorframe
 
 Hooded chasers populate the first three rooms. The flashlight is
@@ -69,7 +68,7 @@ def _box(w, h):
     return floor, objects_l
 
 
-# --- Shape toolkit (CAMERA.md Phase 4: vary the underground silhouettes) ---
+# --- Shape toolkit (DESIGN.md §10: vary the underground silhouettes) ---
 #
 # The underground was a stack of identical rectangles. Under the tilted
 # blind-spot camera the *shape* of a room is what makes a corner a place to
@@ -179,7 +178,7 @@ def build_depths_antechamber():
     sc.add_decoration(Decoration(8 * TILE + 26, 8 * TILE + 26, "cobweb",
                                  ang=math.pi))
     # A supply crate from the old workings, and the gap beneath it: one
-    # enclosed hide near the patrol loop (STEALTH_REWORK §6). Beside it,
+    # enclosed hide near the patrol loop (DESIGN.md §12). Beside it,
     # spoil never hauled and a stub of the old rail heading east -- the
     # fall lands you in a working, not a room (2026-07 art pass).
     sc.add_furniture("crate", [(7, 4)])
@@ -234,10 +233,10 @@ def build_depths_procession():
     objects = ["".join(r) for r in objs]
     sc = Scene("depths_procession", floor, objects, music="basement")
     sc.add_exit("E", "depths_hall", "from_procession")
-    sc.add_exit("D", "the_ossuary", "from_procession")
+    sc.add_exit("D", "the_old_stores", "from_procession")
     sc.set_spawn("default",          1, 4)
     sc.set_spawn("from_antechamber", 1, 4)
-    sc.set_spawn("from_the_ossuary", 6, 6)   # back up from the stores branch
+    sc.set_spawn("from_the_old_stores", 6, 6)   # back up from the stores branch
     # A line of candles down the whole drift, suggesting the procession
     # column. (The [E] read stays at col 8 -- flow-guarded.)
     for cx in range(2, 28, 2):
@@ -275,7 +274,7 @@ def build_depths_procession():
     sc.add_decoration(Decoration(28 * TILE + 26, 3 * TILE + 6, "cobweb",
                                  ang=math.pi / 2))
     # Crates tucked into bays along the run + the gaps under them: three
-    # enclosed hides spaced down the drift (STEALTH_REWORK §6) -- the
+    # enclosed hides spaced down the drift (DESIGN.md §12) -- the
     # bays themselves are the concealment; these are the rooted options
     # a searcher can sweep and check. A long room needs hides the whole
     # way, or its far half is a dead sprint.
@@ -309,7 +308,7 @@ def build_depths_procession():
     # The procession's one diegetic beat (TODO #8): the candle line read
     # up close. Wax on old wax -- they filed to the rite many more times
     # than once, and never hurried. Narration + a case NOTE (never
-    # evidence; the six canonical beats are locked).
+    # evidence; the five canonical beats are locked).
     sc.add_interactable(8 * TILE + 16, 4 * TILE + 16, 36)
 
     def _candles_interact(game):
@@ -395,7 +394,7 @@ def build_depths_hall():
     sc.add_furniture("shoring_frame", [(3, 6)], seed=7, ang=0.5, span=0)
     sc.add_furniture("shoring_frame", [(9, 4)], seed=12, ang=2.4, span=0)
     sc.add_furniture("shoring_frame", [(13, 6)], seed=3, ang=1.1, span=0)
-    # Enclosed hides on the nave route (STEALTH_REWORK §6): under a
+    # Enclosed hides on the nave route (DESIGN.md §12): under a
     # bench in each half, both in the roamer's sweep range -- the east half
     # past the crossing needs its own rooted option once the kneelers
     # wake, or the run to the door is a coin flip.
@@ -532,21 +531,20 @@ def build_depths_stair():
     return sc
 
 
-def build_the_ossuary():
+def build_the_old_stores():
     """The Old Stores off the procession -- a tall hexagonal cell where
     the old workings kept their gear: racked shelves of dead lamps and
     worn tools, every haft tagged in the same steady brown hand. A mine's
     storeroom, nothing more, and the labor it inventories outlived the
     hands that did it. A dead-end pocket of dread and cover. (2026-07
     mine retrofit: the old charnel-vault fiction was a killer-cult relic --
-    the claiming cult spills no one; scene key stays the_ossuary --
-    load-bearing.)"""
+    the claiming cult spills no one, NARRATIVE §2.)"""
     floor, objs = _box(9, 12)
     _bevel(objs, 2)
     objs[0][4] = "F"          # north -> back to the procession
     objects = ["".join(r) for r in objs]
-    sc = Scene("the_ossuary", floor, objects, music="basement")
-    sc.add_exit("F", "depths_procession", "from_the_ossuary")
+    sc = Scene("the_old_stores", floor, objects, music="basement")
+    sc.add_exit("F", "depths_procession", "from_the_old_stores")
     sc.set_spawn("default",         4, 6)
     sc.set_spawn("from_procession", 4, 2)
     # Racked gear shelves (3D) line the niches -- dark tools, gaps where
@@ -577,7 +575,7 @@ def build_the_ossuary():
     def _interact(game):
         px, py = game.player.x, game.player.y
         if abs(px - (4 * TILE + 16)) < 36 and abs(py - (9 * TILE + 16)) < 36:
-            _evidence(game, "the_ossuary_shelves",
+            _evidence(game, "the_old_stores_shelves",
                 "Shelves of the dig's gear: lamps burned black, pick hafts "
                 "worn down to the grain, every one tagged in the same "
                 "steady brown hand. An inventory of labor. The tools wore "
@@ -585,8 +583,8 @@ def build_the_ossuary():
             return
         nx, ny = sc._dig_note_pos
         if abs(px - nx) < 36 and abs(py - ny) < 36:
-            if not game.save.flag("ossuary_digging_taken"):
-                game.save.set_flag("ossuary_digging_taken", True)
+            if not game.save.flag("old_stores_digging_taken"):
+                game.save.set_flag("old_stores_digging_taken", True)
                 game.player.inventory.add("cult_digging", 1)
                 game.audio.play("pickup_rare", 0.6)
                 game._log_note("cult_digging", [
@@ -682,8 +680,8 @@ def build_threshold():
     # door with no wall, nothing in the opening (NARRATIVE §2). You SEAL by
     # walking THROUGH it carrying the keystone (the Pallid Mask), spent there
     # (§7, Mask-only); the walk-through is handled in on_update below. No [E]
-    # prompt, no glow, no smoke. The keystone was carried down (the Deep Stair
-    # opened WITHOUT spending it), so a player who descended always holds it.
+    # prompt, no glow, no smoke. The keystone was carried down (the blast opened the way down
+    # WITHOUT spending it), so a player who descended always holds it.
     lintel_x, lintel_y = 7 * TILE + 16, DR * TILE + 16
     sc._lintel_pos = (lintel_x, lintel_y)
     sc.add_decoration(Decoration(lintel_x, lintel_y, "doorframe"))

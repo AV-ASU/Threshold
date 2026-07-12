@@ -1,4 +1,4 @@
-"""Volumetric furniture for the oblique camera (CAMERA.md Tier-3 props).
+"""Volumetric furniture for the oblique camera (DESIGN.md §10 Tier-3 props).
 
 Upright props become real BOXES projected through the camera, so they have
 depth, rotate with the scene, and occlude correctly -- instead of the flat
@@ -304,7 +304,7 @@ FURNITURE = {
     "crate":     (18, 18, 16, _WOOD_MID, None),
     "barrel":    (16, 16, 18, _WOOD_MID, None),
     "cot":       (28, 13, 8,  _WOOD_DK, _d_cot_pallet),
-    # ("bone_rack" purged 2026-07: the ossuary bone-vault fiction was a
+    # ("bone_rack" purged 2026-07: the old bone-vault fiction was a
     # killer-cult relic -- the claiming cult spills no one, NARRATIVE §2.
     # The Old Stores rack ordinary "shelf" cases now.)
     "pew":       (40, 11, 11, _WOOD_DK, _d_pew_back),
