@@ -1176,10 +1176,9 @@ def build_cornfield_maze():
         sx, sy = sc._scarecrow_pos
         if (abs(game.player.x - sx) < 40
                 and abs(game.player.y - sy) < 40):
-            if not game.save.flag("scarecrow_evidence"):
-                _evidence(game, "scarecrow",
-                    "A scarecrow."
-                )
+            _evidence(game, "scarecrow",
+                "A scarecrow."
+            )
             return
     sc.on_interact_fn = _cornfield_maze_interact
 

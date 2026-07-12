@@ -191,8 +191,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         # player has not moved; resets to 0 on any movement. Drives the
         # creepy-scene heartbeat ramp and the rare NPC blink. The
         # heartbeat schedule fires at tightening intervals while the
-        # player is still inside a CREEPY_SCENES key (or anywhere after
-        # world_emptied).
+        # player is still inside a CREEPY_SCENES key.
         self.stillness_t = 0.0
         # Delayed-audio queue: list of [seconds_left, sfx_name, volume].
         # Used by the void/basement footstep "out of body" effect that
@@ -889,29 +888,19 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
                     if self.save.flag(
                             f"boards_broken_{self.scene.key}_{tx}_{ty}"):
                         self.scene.objects[ty][tx] = "."
-        # Round-9: dying to the Yellow King empties the world. Every
-        # scene loaded after `world_emptied` is set has its NPC list
-        # cleared post-on_enter, so any villagers / shopkeep / kid /
-        # innkeeper / terminal handler placed by the builder or
-        # on_enter fn is removed before the player sees the scene. The
-        # world keeps its layouts and items, just no people.
-        if self.save.flag("world_emptied"):
-            self.scene.npcs = []
-        else:
-            # THE LEDGER OF THE DEAD (2026-07 ruling): a killed local
-            # stays dead for the rest of the run. Lay the run's bodies
-            # back down where they fell BEFORE the rot pass so a corpse
-            # is never converted/turned (rot skips _is_corpse). Nobody
-            # leaves Brimley, not even by dying (NARRATIVE §5).
-            self._apply_dead_locals()
-            # Re-derive the world's world rot for this scene from the
-            # evidence count (rot decals, turned/mutated locals, the
-            # stage-3 Sheriff encounter).
-            self._apply_rot()
-            # The Moths (the King's heralds) seed with the scene:
-            # evidence-scaled on the open surface, a retinue in the
-            # King's own room (rot_mixin, MOTH_* config).
-            self._spawn_moths()
+        # THE LEDGER OF THE DEAD (2026-07 ruling): a killed local
+        # stays dead for the rest of the run. Lay the run's bodies
+        # back down where they fell BEFORE the rot pass so a corpse
+        # is never disturbed (rot skips _is_corpse). Nobody leaves
+        # Brimley, not even by dying (NARRATIVE §5).
+        self._apply_dead_locals()
+        # Re-derive the world rot for this scene from the evidence
+        # count (rot decals, the ambient air, the stage-3 Sheriff).
+        self._apply_rot()
+        # The Moths (the King's heralds) seed with the scene:
+        # evidence-scaled on the open surface, a retinue in the
+        # King's own room (rot_mixin, MOTH_* config).
+        self._spawn_moths()
 
     def _river_blocks(self, target_x, target_y):
         """Custom passability for the brimley river. The `~` floor is
@@ -2859,8 +2848,6 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
                             self._make_corpse(n)
                             continue     # keep the body in the scene
                     self.scene.npcs.remove(n)
-            if self.player.hp <= 0:
-                self._on_player_death()
             self._update_camera()
             self._update_look(dt)
             self.audio.update_silence()
@@ -2929,27 +2916,6 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
             self.notice_t -= dt
             if self.notice_t <= 0:
                 self.notice_text = None
-
-    def _on_player_death(self):
-        # (The old rope-fiction "death at the shaft floor snaps the rope"
-        # seal is CUT: hp-death respawns the run in bed with flags intact,
-        # so sealing the descent here silently softlocked the run. The
-        # descent only seals on the way back up (descent_sealed), by choice.)
-        # Death in the void boss arena seals the secret path forever,
-        # empties the world of NPCs, and respawns the player on the
-        # town square rather than their bed. The world_emptied flag
-        # is checked in load_scene_now so every scene from now on has
-        # its npc list zeroed -- the layouts persist, the people don't.
-        if self.scene and self.scene.key == "clearing":
-            self.save.set_flag("void_path_closed", True)
-            self.save.set_flag("world_emptied", True)
-            self.player.hp = self.player.max_hp
-            self.show_notice("You wake on the town square. It is silent.")
-            self.load_scene_now("brimley", "default")
-            return
-        self.player.hp = self.player.max_hp
-        self.show_notice("You wake up in your bed.")
-        self.load_scene_now("bedroom", "default")
 
     def _flash_notebook(self):
         """Fire the corner notebook-scribble toast -- a new evidence beat was

@@ -482,8 +482,7 @@ def build_works_sorting():
             # Examining the catalogued lives the diggers shed fires the PI's
             # voice (the dig's scale -- first fear). A distinct trigger from
             # the chalk doors: different thing, different words.
-            if not game.save.flag("voice_descent_dig"):
-                game._descent_voice("descent_dig")
+            game._descent_voice("descent_dig")
     sc.on_interact_fn = _interact
     return sc
 

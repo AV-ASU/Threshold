@@ -96,22 +96,6 @@ def _evidence(game, name, content, weight=None, show=True, note=False):
                          portrait="narrator")
 
 
-def escalate(game, low, mid, high):
-    """Pick a page-list for an NPC dialog based on Pursuer proximity.
-
-    Signature and tiering preserved; the three tiers are now bland.
-    """
-    from systems.threat import (proximity_tier,
-                                 PROX_TIER_LOW, PROX_TIER_MID)
-    p = getattr(game, "visibility", 0.0)
-    tier = proximity_tier(p)
-    if tier == PROX_TIER_LOW:
-        return low
-    if tier == PROX_TIER_MID:
-        return mid
-    return high
-
-
 def _cult_tell(game, npc_key):
     """No-op kept for signature compatibility. (Formerly surfaced a
     one-shot sensory notice; the story text has been removed.)"""
@@ -861,7 +845,6 @@ def _vane_paper_given(game):
     (Hettie's cartridge trade among them)."""
     from systems.config import VANE_PAPER_DESPAIR
     game.player.inventory.remove("newspaper", 1)
-    game.save.set_flag("newspaper_given_vane", True)
     _vane_ledger(game, VANE_PAPER_DESPAIR)
 
 
@@ -1186,7 +1169,6 @@ def sheriff_dialogue(game, npc):
 # ui/conversation.Conversation.
 
 def _sable_showed_photo(game):
-    game.save.set_flag("sable_saw_photo", True)
     _log_note(game, "showed_the_clerk", [
         "I put her face on his desk. He looked at it a long while, smiling "
         "the whole time, and told me nothing at all.",

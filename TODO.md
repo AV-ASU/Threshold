@@ -623,19 +623,20 @@ Fable is doing the implementing, an Opus pass reviews it the same way.
   which is never set anywhere → always "ACCESS DENIED"; ARG tone in a 1994
   parsonage. *Fix:* remove the terminal (even opened it only yields a blank
   "Connection Terminated" bulletin).
-- **C6. STILL-OPEN (dead code).** `innkeeper_confronted` is never set, so the
-  `blocking_innkeeper` branch (`scenes/lodge.py`) is unreachable dead code
-  with a docstring promising a confrontation handler that doesn't exist.
-  (The two lying "locked at first" comments on the ungated bedroom exit were
-  corrected in the comment pass; the gate-vs-open design call is still open.)
+- **C6. RESOLVED (dead code removed).** The unreachable `blocking_innkeeper`
+  branch (`innkeeper_confronted` was never set) and its phantom-confrontation
+  docstring were deleted in the 2026-07 dead-code sweep, and the lying "locked
+  at first" comments were corrected. The bedroom is intentionally ungated now;
+  the only thread left is the optional design call of whether to gate it (a
+  choice, not a bug).
 - **C7. STILL-OPEN.** "You dream of a doorway." (`ui/cutscenes.py`) renders
   full-alpha during the 0.55s WAKING memory flash (`intro` clamps to 1.0
   when `now < 1.4`) → present-tense recurrence flavor the dream-note canon
   forbids. *Fix:* gate the caption to rite mode only.
-- **C8. MOOT (dead/unreachable).** The "You wake on the town square" /
-  `world_emptied` respawn (`systems/game.py`) is unreachable: `Player.take_damage`
-  is a no-op and nothing decrements `hp`, so `_on_player_death` never fires.
-  Safe to delete as cleanup; not a live bug.
+- **C8. RESOLVED (dead code removed).** The unreachable `_on_player_death` /
+  "You wake on the town square" / `world_emptied` respawn path was deleted in
+  the 2026-07 dead-code sweep (`Player.take_damage` is a no-op, so hp never
+  drops and it could never fire).
 - **C10. STILL-OPEN (Garrick only; Vane FIXED).** Garrick's "Nothing out of
   him for days now" fires on `preacher_doomed` (`scenes/brimley.py`), which
   latches the instant Crane is pressed → "days" can be seconds. *Fix:* drop

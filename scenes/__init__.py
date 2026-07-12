@@ -1,10 +1,8 @@
 """Scene registry. Each scene_key -> builder function.
 
-Registry trimmed from ~32 scenes down to the active map. Builder
-functions for cut scenes are still imported (so static analysis
-stays clean) but they are not registered — nothing in the world
-reaches them. Reused scenes keep the same key when the geometry is
-reused.
+Registry trimmed from ~32 scenes down to the active map; cut-scene
+builders were removed, so every imported builder is registered.
+Reused scenes keep the same key when the geometry is reused.
 """
 from .base import Scene, tile_footstep, OBJECT_DEFS, FLOOR_DEFS, TILE
 from .lodge import (build_bedroom, build_lodge, build_lodge_cellar,

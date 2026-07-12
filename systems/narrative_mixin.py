@@ -35,7 +35,7 @@ class NarrativeMixin:
         swarm, no bed) -- the half-dismissed memory surfacing, not a
         scene. "rite": the FULL dream at the grove rite (the memory,
         finished): swarm, falling bed, the works."""
-        from ui.cutscenes import FLASHBACK_DUR, FLASHBACK_FLASH_DUR
+        from ui.cutscenes import FLASHBACK_FLASH_DUR
         self._flashback_mode = mode
         self._flashback_dur = (FLASHBACK_FLASH_DUR if mode == "flash"
                                else FLASHBACK_DUR)

@@ -502,37 +502,26 @@ def house_on_enter(game, scene):
                   if getattr(n, "tag", None) not in
                   ("blocking_innkeeper", "host_innkeeper")]
     scene._key_hook_pos = None
-    if game.save.flag("innkeeper_confronted"):
-        nx = 6 * TILE + 16
-        ny = 10 * TILE + 16
-        host = NPC(nx, ny, "Clerk", "clerk",
-                   solid=True, no_prompt=True,
-                   voice="blip_low", portrait="clerk")
-        host.facing = (0, -1)
-        host.tag = "blocking_innkeeper"
-        host.dialogue_fn = None
-        scene.add_npc(host)
-    else:
-        # The trap-keeper at his post: standing BEHIND the front-desk
-        # register (north of it, against the wall), facing south into the
-        # room. The desk volume sits between him and the player, so he reads
-        # head-and-torso over the counter. `watch` turns him to follow the
-        # player -- the smiling man whose eyes never quite leave you -- so
-        # the arrival reads as a man who was waiting for you to come down.
-        nx = 9 * TILE              # centred behind the 2-tile desk (cols 8-9)
-        ny = 1 * TILE + 16         # row 1, between the desk (row 2) and wall
-        host = NPC(nx, ny, "Clerk", "clerk",
-                   solid=True, no_prompt=False,
-                   voice="blip_low", portrait="clerk",
-                   dialogue_fn=clerk_dialogue,
-                   movement="watch", speed=0.6, radius=320)
-        host.facing = (0, 1)
-        host.tag = "host_innkeeper"
-        # He carries the way down. Kill him before he hands over the
-        # Invitation and it drops with the body (dialogue.sable_on_death);
-        # if he already gave it, there is nothing to loot.
-        host.on_kill = lambda game, _n=host: sable_on_death(game, _n)
-        scene.add_npc(host)
+    # The trap-keeper at his post: standing BEHIND the front-desk
+    # register (north of it, against the wall), facing south into the
+    # room. The desk volume sits between him and the player, so he reads
+    # head-and-torso over the counter. `watch` turns him to follow the
+    # player -- the smiling man whose eyes never quite leave you -- so
+    # the arrival reads as a man who was waiting for you to come down.
+    nx = 9 * TILE              # centred behind the 2-tile desk (cols 8-9)
+    ny = 1 * TILE + 16         # row 1, between the desk (row 2) and wall
+    host = NPC(nx, ny, "Clerk", "clerk",
+               solid=True, no_prompt=False,
+               voice="blip_low", portrait="clerk",
+               dialogue_fn=clerk_dialogue,
+               movement="watch", speed=0.6, radius=320)
+    host.facing = (0, 1)
+    host.tag = "host_innkeeper"
+    # He carries the way down. Kill him before he hands over the
+    # Invitation and it drops with the body (dialogue.sable_on_death);
+    # if he already gave it, there is nothing to loot.
+    host.on_kill = lambda game, _n=host: sable_on_death(game, _n)
+    scene.add_npc(host)
 
 
 def house_interact(game):

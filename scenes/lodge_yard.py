@@ -526,7 +526,6 @@ def build_arrival_road():
         last = getattr(scene, "_last_py", None)
         if last is not None and abs(p.y - last) > band * 0.5:
             scene._loops = getattr(scene, "_loops", 0) + 1
-            game.save.set_flag("arrival_road_looped", True)
             game.audio.play("low_pulse", min(0.75, 0.34 + 0.12 * scene._loops))
         scene._last_py = p.y
     sc.on_update_fn = _road_update
