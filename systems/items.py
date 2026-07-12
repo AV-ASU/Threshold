@@ -141,6 +141,24 @@ ITEM_DEFS = {
                                "No captive draws this. She sat and did the "
                                "work with her own hand, willing, like the "
                                "rest of them."},
+    # ---- The bear (the secret fourth; NARRATIVE §4/§6, DESIGN.md §9,
+    # TODO #22b). OPTIONAL, never case-evidence, never gates. Toby lends it.
+    # On the surface it is a tender, UNEXPLAINED thing in a boy's hands; once
+    # the PI has read her letter it detonates (effective_desc, below). The
+    # stitched tag is the ONLY place the boy's name appears besides the PI's
+    # own mouth -- MARA never says it (invariant, guarded).
+    "bear":          {"name": "A Stuffed Bear",
+                       "kind": "lore",
+                       "desc": "A small homemade bear, worn soft. A name is "
+                               "stitched into the tag at its neck in careful "
+                               "thread: SAM.\n\n"
+                               "Toby says the lady from the photograph gave "
+                               "it to him. She could not keep it, he said, "
+                               "and could not throw it out. The only toy in "
+                               "town.\n\n"
+                               "Why a grown woman drove a child's bear this "
+                               "far north, and then gave it away, you cannot "
+                               "yet say."},
     # ---- The cult's testimony (three found fragments; gate nothing) ----
     # The congregation's own record, split across three leaves found down the
     # descent. The cult's voice lives in the DESCRIPTION (their personal
@@ -225,11 +243,31 @@ ITEM_DEFS = {
 }
 
 
-def effective_desc(key, save=None):
-    """Return the inventory description for `key`.
+# The bear, AFTER the PI has read Mara's letter (evidence_maras_room): the
+# tag's name and the letter's stillborn son collide, and the tender surface
+# object becomes the worst thing he carries (TODO #22b, DESIGN.md §9). MARA
+# never says the name; the tag and the PI do.
+_BEAR_DESC_KNOWN = (
+    "A small homemade bear, worn soft. The name stitched into the tag "
+    "reads SAM.\n\n"
+    "Her letter told the rest. A boy. She wanted him more than anything, "
+    "and he came still. A nursery that never opened, and this bear meant "
+    "for it.\n\n"
+    "She could not keep it and could not throw it out, so she gave it to "
+    "the one living child she found up here. You are carrying her dead "
+    "son's bear down toward her."
+)
 
-    Signature is preserved for callers; the `save` parameter is
-    accepted but ignored (no dynamic flavour anymore)."""
+
+def effective_desc(key, save=None):
+    """Return the inventory description for `key`. Static, with one
+    exception: once the PI has read Mara's letter (evidence_maras_room) the
+    bear's tag and the letter's stillborn son collide and its description
+    DETONATES (TODO #22b) -- the surface plant made the worst thing he
+    carries. MARA never says the name; the tag and the PI do."""
+    if (key == "bear" and save is not None
+            and save.flag("evidence_maras_room")):
+        return _BEAR_DESC_KNOWN
     return ITEM_DEFS.get(key, {}).get("desc", "")
 
 

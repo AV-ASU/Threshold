@@ -2239,8 +2239,9 @@ def main():
     import re as _re
     from scenes.well import MARA_CONVO as _MCV
     _mkeys = {ex["key"] for ex in _MCV["exchanges"]}
-    check(_mkeys == {"leave", "way_out", "father"},
-          "mara: the asks are come-with-me / the-way-out / her father")
+    check(_mkeys == {"leave", "way_out", "father", "name"},
+          "mara: the asks are come-with-me / the-way-out / her father / "
+          "the boy's name (bear-gated, TODO #22b)")
     _mf = next(ex for ex in _MCV["exchanges"] if ex["key"] == "father")
     check(bool(_mf.get("once")) and bool(_mf.get("ends")),
           "mara: the father card plays once and ENDS the talk (she turns "
@@ -2627,6 +2628,65 @@ def main():
     check(getattr(gsd, "_mara_stage", None) is None,
           "staging: a dead Mara clears the calling-out (her story's other "
           "end)")
+
+    # --- 28c. The bear + the name-beat (TODO #22b) ---
+    from scenes.dialogue import (TOBY_CONVO as _TOBY_B,
+                                 CANONICAL_EVIDENCE as _CE_B)
+    from scenes.well import MARA_CONVO as _MARA_B
+    from systems.items import effective_desc as _edesc
+    import re as _re_b
+    # The bear is OPTIONAL -- never a counted beat, so it can never gate.
+    check("bear" not in _CE_B,
+          "bear: optional -- never a counted evidence beat (never gates)")
+    # Toby LENDS it, and only to the man he trusts: told what he saw
+    # (toby_told) AND reassured (the holding-up promise). Not interrogable.
+    gtb = new_game()
+    gtb.load_scene_now("toby_house")
+    ready(gtb)
+    _toby = next(n for n in gtb.scene.npcs if n.name == "Toby")
+    _toby.dialogue_fn(gtb, _toby)                      # cold: no lend
+    check(not gtb.player.inventory.has("bear"),
+          "bear: Toby never gives it up cold (trust is earned)")
+    gtb.save.set_flag("toby_told", True)
+    _toby.dialogue_fn(gtb, _toby)                      # told, not reassured
+    check(not gtb.player.inventory.has("bear"),
+          "bear: the witness alone does not earn the bear")
+    gtb.save.set_flag("convo_toby_holding_up_asked", True)
+    _toby.dialogue_fn(gtb, _toby)                      # trust earned -> lend
+    check(gtb.player.inventory.has("bear")
+          and gtb.save.flag("toby_lent_bear"),
+          "bear: reassuring the kid earns the loan (he brings it out himself)")
+    check(evidence_count(gtb) == 0
+          and any(isinstance(e, dict) and e.get("name") == "the_bear"
+                  for e in gtb.save.arg("notes", [])),
+          "bear: the loan files a NOTE, never evidence")
+    # It DETONATES once the letter is read (the tag's name + the stillborn son).
+    _d0 = _edesc("bear", gtb.save)
+    gtb.save.set_flag("evidence_maras_room", True)
+    _d1 = _edesc("bear", gtb.save)
+    check(_d0 != _d1 and "dead son" in _d1.lower(),
+          "bear: reading the letter detonates the tender surface object")
+    # The name-beat: bear-gated, ends the talk, changes her fate not at all.
+    _nb = next(ex for ex in _MARA_B["exchanges"] if ex["key"] == "name")
+    gnb = new_game()
+    check(not _nb["avail"](gnb),
+          "name: the name-beat is hidden without the bear")
+    gnb.player.inventory.add("bear", 1)
+    check(_nb["avail"](gnb) and _nb.get("ends") is True and _nb.get("once"),
+          "name: the bear opens it, and saying the name ends the talk")
+    _nb["on_ask"](gnb)
+    check(gnb.save.flag("mara_named"),
+          "name: the beat records that the PI reached for the name")
+    # INVARIANT (NARRATIVE §4/§6): MARA never says the boy's name -- only the
+    # PI and the tag do. Scan every line she speaks (greet + all exchanges).
+    _mara_said = [t for _ex in _MARA_B["exchanges"]
+                  for r, t in _ex["beats"] if r == "npc"]
+    _mara_said += [t for r, t in _MARA_B["greet"]["beats"] if r == "npc"]
+    check(not any(_re_b.search(r"\bsam(my|uel)?\b", t.lower())
+                  for t in _mara_said),
+          "name: INVARIANT -- Mara never says the boy's name (only the PI does)")
+    check(_re_b.search(r"\bsam\b", _nb["q"].lower()) is not None,
+          "name: the PI is the one who says it (the name-beat spoken line)")
 
     # --- 29. NPC jobs: a worker walks his stations (GAME_CHANGES §19) ---
     gj = new_game()

@@ -397,7 +397,43 @@ def toby_dialogue(game, npc):
     It is EARNED, never volunteered: he gives it when the PI holds Mara's
     photograph out (the `photo` exchange below), not as a cold greeting -- a
     kid has no way to know the case on sight (only Sable ever met the PI).
-    What he gives you is what he tells you, never an object."""
+    The one OBJECT he gives is the bear (TODO #22b), and only to the man he
+    trusts: once the PI has heard him out AND reassured him, Toby brings out
+    the only toy in town on his own."""
+    save = game.save
+    # The bear (22b). You cannot interrogate it out of him: the PI is numb
+    # everywhere but soft with children, and that trait is the key. Once he
+    # has told the PI what he saw (`toby_told`, the photo) AND been
+    # reassured (`convo_toby_holding_up_asked`, the "you holding up" promise
+    # -- his one soft spot), he LENDS it: Mara's, a loan for a reunion the
+    # PI already knows can't happen. OPTIONAL, never evidence, never gates.
+    # The tag reads the boy's name; MARA never says it.
+    if (save.flag("toby_told")
+            and save.flag("convo_toby_holding_up_asked")
+            and not save.flag("toby_lent_bear")
+            and not game.player.inventory.has("bear")):
+        save.set_flag("toby_lent_bear", True)
+        game.player.inventory.add("bear", 1)
+        game.audio.play("pickup_rare", 0.7)
+        game._log_note("the_bear", [
+            "The kid put a stuffed bear in my hands. Homemade, a name sewn "
+            "on the tag. Said the girl in the photo gave it to him, that "
+            "she couldn't keep it and couldn't throw it out.",
+            "He asked me to give it back to her, if I find her. I said I "
+            "would. I have carried worse lies than that one lighter.",
+        ])
+        game.dialog.show([
+            "[c=dim]He digs in his coat and holds something out with both "
+            "hands. A stuffed bear, worn soft, a name stitched on the "
+            "tag.[/c]",
+            "The lady gave it to me. The one in your picture. She said she "
+            "couldn't keep it and she couldn't throw it out.",
+            "It's the only toy in the whole town. If you find her... give "
+            "it back? She should have it.",
+            "[c=dim](You take a bear from a boy, and you promise. You do "
+            "not let yourself read the name on the tag. Not yet.)[/c]",
+        ], speaker="Toby", voice="blip_kid", portrait="toby")
+        return
     from ui.conversation import open_conversation
     open_conversation(game, npc, TOBY_CONVO)
 

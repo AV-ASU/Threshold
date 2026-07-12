@@ -378,20 +378,22 @@ and the tests. Sequence it:
   ledger/sign/preacher/congregation guards flipped to notes/proof. Full
   gate green.
 
-- **22b. The bear + the name.** New item: a stuffed **bear**, tag reads
-  **Sam** (Samuel — pick the exact tag form; a 1993 nursery diminutive).
-  Toby **lends** it, gated on the PI's patience with a scared kid (his one
-  soft spot), for a reunion that cannot happen. Optional evidence (never
-  gates). A plant on the surface (unexplained), it detonates when the
-  letter names the son below. **The confrontation name-beat** (extend
-  `MARA_CONVO`, `scenes/well.py`): with the bear in inventory, a new
-  exchange lets the PI say the name; it splits the fused *he* and breaks
-  her — she seizes the PI, the rite's stillness cracks, and she reveals
-  she has always known Sam is not down there and digs on anyway. Fate
-  unchanged (turns back to the dig); it only shatters her and wounds the
-  player. **Invariant:** Mara never says the name; only the world/PI/bear
-  do (guard it). Decide: does she take the bear (Sam goes down with her,
-  Toby's loan broken) or refuse it.
+- **22b. The bear + the name. LANDED (2026-07).** New item `bear` (tag
+  reads **SAM**; the letter stays "a boy" unnamed, per the 2026-07 ruling,
+  so the tag is the ONLY place the name appears besides the PI's mouth).
+  Toby **lends** it as a VOLUNTEERED beat, earned by the PI's patience with
+  a scared kid (`toby_told` + the `holding_up` reassurance), never
+  interrogable; optional, never in `CANONICAL_EVIDENCE`, files a note. On
+  the surface it is tender and unexplained; once the PI reads the letter
+  (`evidence_maras_room`) its inventory desc **detonates** (dynamic
+  `effective_desc`). The **name-beat** (`MARA_CONVO` "name" exchange,
+  bear-gated, `ends:True`): the PI says the name, she seizes him, the rite
+  cracks, she reveals she has always known the boy is not down there and
+  digs on anyway, and **REFUSES the bear** (2026-07 ruling); fate unchanged
+  (turns back to the dig). **Invariant guarded** (flow §28c): Mara never
+  says the name; only the PI and the tag do. Full gate green. *(Open polish:
+  a bespoke bear inventory sprite with a visible tag; the name currently
+  lands through the item desc + dialog.)*
 
 - **22c. The PI rots, not the town (four tiers).** Relocate the world rot
   from the townsfolk to the PI (`DESIGN.md` §9; fixes STORY_AUDIT B6 and

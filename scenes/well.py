@@ -790,6 +790,55 @@ MARA_CONVO = {
                         "whatever makes him stop.[/c]"),
             ],
         },
+        # The name-beat (TODO #22b). Bear-gated: only the man carrying the
+        # boy's bear can say his name. Meant kindly, it is the one word she
+        # cannot survive: it splits the fused "he" she has guarded for
+        # months. She DETONATES (seizes the PI, the rite's stillness cracks,
+        # the rank stirs), reveals the bottom of her (she has always known
+        # he is not down there, and digs anyway), and REFUSES the bear
+        # (2026-07 ruling). Her fate is unchanged: she turns back to the
+        # dig. INVARIANT: Mara never says the name -- only the PI and the
+        # tag do (guarded, flow §28c).
+        {
+            "key": "name",
+            "label": "Say the boy's name.",
+            "q": "You would have been a good mother to him, Mara. To Sam.",
+            "avail": lambda g: g.player.inventory.has("bear"),
+            "once": True,
+            "ends": True,
+            "on_ask": lambda g: g.save.set_flag("mara_named", True),
+            "beats": [
+                ("npc", "[c=dim]She goes still in a way the kneeling ones do "
+                        "not. Something behind her face tears loose.[/c]"),
+                ("npc", "Don't. You don't get to carry that name down here "
+                        "and set it down in front of me."),
+                ("npc", "[c=dim]Her hand closes on your coat, hard. Down the "
+                        "aisle the rank stirs all at once, like one body "
+                        "turning over in its sleep. The air pulls tight.[/c]"),
+                ("pi",  "(You hold out the bear. The tag toward her, the "
+                        "name toward her.)"),
+                ("npc", "[c=dim]She looks at it the way you would look at "
+                        "your own hand if it came off in the dark. She does "
+                        "not take it. She cannot make her arms cross the "
+                        "space.[/c]"),
+                ("npc", "Put it away. Put it AWAY."),
+                ("npc", "You think I don't know. You think I clawed my way "
+                        "down into this dark because I believe he is here, "
+                        "waiting up for me."),
+                ("npc", "He is not here. He was never anywhere. I knew it "
+                        "the day they laid him in my arms already gone, and "
+                        "I know it now, with my hands in this dirt."),
+                ("npc", "[c=dim]But while I am still going down toward "
+                        "something, he is still somewhere ahead of me. Stop "
+                        "digging and he is nowhere at all. That is what you "
+                        "are asking me to put down. Not the dig. Him.[/c]"),
+                ("npc", "So keep your bear. I will go back down to the only "
+                        "place he is still coming."),
+                ("npc", "[c=dim]She lets go of your coat, turns, and kneels "
+                        "back into the rank. Her hands find the dirt. The "
+                        "chamber settles, as though nothing rose.[/c]"),
+            ],
+        },
     ],
 }
 
