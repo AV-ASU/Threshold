@@ -836,6 +836,9 @@ def basement_interact(game):
             return
         game.audio.play("pickup_rare", 0.7)
         game.audio.play("low_pulse", 0.45)
+        # Real, and wrong, but not Mara -- she was never at the lodge -- so
+        # it files as a town NOTE, never case-evidence (NARRATIVE §6,
+        # DESIGN.md §9). note=True keeps it in the notebook off the gate.
         _evidence(game, "the_ledger", [
             "Boxes of the Lodge's old registers, years deep, carried down "
             "here as each book filled. You lift the top one out and start "
@@ -848,7 +851,7 @@ def basement_interact(game):
             "habit. ...Still. A year of guests, and the clean book "
             "upstairs starts right where these leave off. I'll keep it "
             "in mind.[/c]",
-        ])
+        ], note=True)
         return
     # The workbench chest -- holds the woodshed key (gate to the axe
     # in the shed). chest_interact does its own range check and flips the

@@ -617,6 +617,10 @@ def build_works_scriptorium():
     sc.add_furniture("small_chair", [(8, 3)])
     sc._desk_pos = (4 * TILE + 16, 2 * TILE + 16)
     sc.add_interactable(sc._desk_pos[0], sc._desk_pos[1], 40)  # [E] cue: the Playscript
+    # Mara's OWN copy of the Sign, at a second desk (deep evidence; she
+    # laboured, willing hands, DESIGN.md §9). A room that is not her cell.
+    sc._mara_desk_pos = (8 * TILE + 16, 2 * TILE + 16)
+    sc.add_interactable(sc._mara_desk_pos[0], sc._mara_desk_pos[1], 40)
     # One enclosed hide (STEALTH_REWORK §6): under the centre copying
     # desk -- echoes the safe-room "under" spots, but down here it is
     # checkable, and the scribe's lane is a step away.
@@ -633,30 +637,52 @@ def build_works_scriptorium():
     _ambient(sc, "blip_soft", 0.11, 3.0, 5.0)
 
     def _interact(game):
-        dx, dy = sc._desk_pos
-        if (abs(game.player.x - dx) > 40 or abs(game.player.y - dy) > 40):
-            return
+        px, py = game.player.x, game.player.y
         # The first of the congregation's testimony fragments (The Calling),
         # bound and whole among their endless flat copies of the Sign. Pure
         # lore -- it gates nothing (the keystone is the Mask alone now). The
         # cult's voice is the item description; the PI's reaction is the note
         # below. Reading it ALSO seeds the §8 want-to-leave (descent_leave).
-        if not game.save.flag("scriptorium_calling_taken"):
-            game.save.set_flag("scriptorium_calling_taken", True)
-            game.player.inventory.add("cult_calling", 1)
+        dx, dy = sc._desk_pos
+        if abs(px - dx) < 40 and abs(py - dy) < 40:
+            if not game.save.flag("scriptorium_calling_taken"):
+                game.save.set_flag("scriptorium_calling_taken", True)
+                game.player.inventory.add("cult_calling", 1)
+                game.audio.play("pickup_rare", 0.7)
+                game.audio.play("low_pulse", 0.45)
+                game._log_note("cult_calling", [
+                    "Every hand different. Every one of them grateful. I keep "
+                    "waiting for the page where somebody admits they were "
+                    "tricked. It isn't here.",
+                ])
+                game.show_notice("The Calling. Their own testimony.")
+                # Carrying off their confessions seeds the want-to-leave (the
+                # King's pull to bear the Sign out, felt as the PI's own
+                # sourceless urge, never named). The testimony itself reads
+                # from the kit, not on pickup; the PI's interior pull fires
+                # here.
+                game._descent_voice("descent_leave")
+            return
+        # Mara's OWN hand at the Sign (deep evidence #4; DESIGN.md §9). Proof
+        # she was one of the willing, not a captive -- the same hand as the
+        # journal and the letter, working the cult's compulsion. Files
+        # silently; the leaf itself reads from the kit.
+        mx, my = sc._mara_desk_pos
+        if abs(px - mx) < 40 and abs(py - my) < 40:
+            if game.save.flag("evidence_maras_dig"):
+                return
+            game.player.inventory.add("maras_scrawl", 1)
             game.audio.play("pickup_rare", 0.7)
             game.audio.play("low_pulse", 0.45)
-            game._log_note("cult_calling", [
-                "Every hand different. Every one of them grateful. I keep "
-                "waiting for the page where somebody admits they were tricked. "
-                "It isn't here.",
-            ])
-            game.show_notice("The Calling. Their own testimony.")
-            # Carrying off their confessions seeds the want-to-leave (the King's
-            # pull to bear the Sign out, felt as the PI's own sourceless urge,
-            # never named). The testimony itself reads from the kit, not on
-            # pickup; the PI's interior pull still fires here.
-            game._descent_voice("descent_leave")
+            _evidence(game, "maras_dig", [
+                "A leaf pulled from a copying desk. The Sign, inked over and "
+                "over down the page.",
+                "The hand is hers. The same as the journal, the same as the "
+                "letter.",
+                "No captive draws this. She sat here and did the work, "
+                "willing, like all of them.",
+            ], show=False)
+            game.show_notice("The Sign, in her hand.")
             return
     sc.on_interact_fn = _interact
     # The scribes drew doors as obsessively as they copied the Sign -- swarm
@@ -764,6 +790,55 @@ MARA_CONVO = {
                         "whatever makes him stop.[/c]"),
             ],
         },
+        # The name-beat (TODO #22b). Bear-gated: only the man carrying the
+        # boy's bear can say his name. Meant kindly, it is the one word she
+        # cannot survive: it splits the fused "he" she has guarded for
+        # months. She DETONATES (seizes the PI, the rite's stillness cracks,
+        # the rank stirs), reveals the bottom of her (she has always known
+        # he is not down there, and digs anyway), and REFUSES the bear
+        # (2026-07 ruling). Her fate is unchanged: she turns back to the
+        # dig. INVARIANT: Mara never says the name -- only the PI and the
+        # tag do (guarded, flow §28c).
+        {
+            "key": "name",
+            "label": "Say the boy's name.",
+            "q": "You would have been a good mother to him, Mara. To Sam.",
+            "avail": lambda g: g.player.inventory.has("bear"),
+            "once": True,
+            "ends": True,
+            "on_ask": lambda g: g.save.set_flag("mara_named", True),
+            "beats": [
+                ("npc", "[c=dim]She goes still in a way the kneeling ones do "
+                        "not. Something behind her face tears loose.[/c]"),
+                ("npc", "Don't. You don't get to carry that name down here "
+                        "and set it down in front of me."),
+                ("npc", "[c=dim]Her hand closes on your coat, hard. Down the "
+                        "aisle the rank stirs all at once, like one body "
+                        "turning over in its sleep. The air pulls tight.[/c]"),
+                ("pi",  "(You hold out the bear. The tag toward her, the "
+                        "name toward her.)"),
+                ("npc", "[c=dim]She looks at it the way you would look at "
+                        "your own hand if it came off in the dark. She does "
+                        "not take it. She cannot make her arms cross the "
+                        "space.[/c]"),
+                ("npc", "Put it away. Put it AWAY."),
+                ("npc", "You think I don't know. You think I clawed my way "
+                        "down into this dark because I believe he is here, "
+                        "waiting up for me."),
+                ("npc", "He is not here. He was never anywhere. I knew it "
+                        "the day they laid him in my arms already gone, and "
+                        "I know it now, with my hands in this dirt."),
+                ("npc", "[c=dim]But while I am still going down toward "
+                        "something, he is still somewhere ahead of me. Stop "
+                        "digging and he is nowhere at all. That is what you "
+                        "are asking me to put down. Not the dig. Him.[/c]"),
+                ("npc", "So keep your bear. I will go back down to the only "
+                        "place he is still coming."),
+                ("npc", "[c=dim]She lets go of your coat, turns, and kneels "
+                        "back into the rank. Her hands find the dirt. The "
+                        "chamber settles, as though nothing rose.[/c]"),
+            ],
+        },
     ],
 }
 
@@ -789,12 +864,15 @@ def _mara_voice(game, npc):
     game.save.set_flag("hive_seen", True)
     game.audio.force_silence()
     game.audio.play("low_pulse", 0.6)
-    # File evidence #6 FIRST and silently (show=False): the log + the
-    # King-gate land immediately, whatever the player does with the menu.
-    _evidence(game, "the_congregation", [
+    # Mara is PROOF, not a filed beat (NARRATIVE §6, DESIGN.md §9): the
+    # calling-out fires (hive_seen, the confrontation) but nothing lands in
+    # the evidence log -- the trail already ended at the found person. The
+    # PI's reaction keeps a home as a case NOTE, silent (no narrator
+    # interrupt before the menu opens).
+    game._log_note("the_congregation", [
         "Mara, kneeling with the congregation. Turned. There was never "
         "anyone to bring back. Only this, and now you're in it with her.",
-    ], show=False)
+    ])
     from ui.conversation import open_conversation
     open_conversation(game, npc, MARA_CONVO)
     # TODO #7 -- the lure chain, felt ONCE (NARRATIVE §1/§10 fence: never

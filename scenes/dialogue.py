@@ -20,26 +20,36 @@ the King-gate and the visibility floor.
 import random
 
 
-# The SIX canonical evidence beats (NARRATIVE.md §6): ONLY these count toward
-# the King-gate (3 = armed) and the visibility floor. Each name's value is the
-# floor it adds -- surface finds light, the deep truths heavy; all six sum to
-# the cap. Every other `_evidence(...)` call is now just flavor narration.
+# Mara's trail -- the ONLY evidence, and the whole point of the case
+# (NARRATIVE.md §6, DESIGN.md §9). Each is a carryable, self-evident thing
+# that is HERS: felt it (the journal) -> did it (the dig) -> why (the
+# letter). The three SURFACE beats (receipt, record, journal) keep the
+# Act-1 threat ramp reachable above ground (the cult wakes at 1, the King
+# arms at 3); the two DEEP beats run past the gate. Mara herself is PROOF,
+# never a filed beat; the Ledger, the Preacher and the Pallid Mask left the
+# count (they file as notes / the Mask is the keystone item). ONLY these
+# five count toward the King-gate and the visibility floor; every other
+# `_evidence(...)` call is flavor narration (or a case NOTE with
+# note=True). Each value is the floor it adds, rising along the trail.
 CANONICAL_EVIDENCE = {
-    "maras_room":       0.10,
-    "maras_journal":    0.12,
-    "the_ledger":       0.10,
-    "the_preacher":     0.16,
-    "the_sign":         0.18,
-    "the_congregation": 0.24,
+    "maras_receipt":  0.08,   # surface: her store tab (Hettie's shop)
+    "maras_record":   0.12,   # surface: her booking slip (Vane's office)
+    "maras_journal":  0.16,   # surface: her journal (the barn) -- fires the dream
+    "maras_dig":      0.20,   # deep: the Sign in her own hand (the Scriptorium)
+    "maras_room":     0.24,   # deep: her unsent letter (her cell)
 }
 
 
-def _evidence(game, name, content, weight=None, show=True):
-    """Surface a one-shot narrator line. If `name` is one of the six CANONICAL
+def _evidence(game, name, content, weight=None, show=True, note=False):
+    """Surface a one-shot narrator line. If `name` is one of the CANONICAL
     beats it is ALSO logged as evidence -- counting toward the King-gate and
     raising the visibility FLOOR by its canonical weight (the "knowing dooms
-    you" engine), and firing the notebook-scribble toast. Any other name is
-    just flavor narration. Gated by a per-name flag so a beat never re-fires.
+    you" engine), and firing the notebook-scribble toast. A non-canonical
+    name with `note=True` files the lines as a case NOTE instead (the
+    Ledger, the Preacher: real discoveries that are not Mara, so they keep a
+    home in the notebook without touching the gate -- NARRATIVE §6). Any
+    other name is just flavor narration. Gated by a per-name flag so a beat
+    never re-fires.
 
     Signature preserved for callers; `weight` is accepted but ignored --
     canonical weights above are authoritative."""
@@ -61,6 +71,10 @@ def _evidence(game, name, content, weight=None, show=True):
                 game._flash_notebook()    # corner scribble: you wrote it down
             if hasattr(game, "audio"):
                 game.audio.play("evidence_added", 0.7)
+    elif note:
+        # Not Mara's, so not case-evidence -- but a real find; keep it in
+        # the notebook as a case NOTE (never counts toward the gate).
+        _log_note(game, name, lines)
     # A discovery can point the PI back at someone he's met; those
     # interior lines ride the discovery's own narration so it reads as
     # one beat (and files their case notes). Collected REGARDLESS of
@@ -169,36 +183,8 @@ def _collect_revisit(game, name):
         game.save.set_flag("nudged_" + n["key"], True)
         _log_note(game, n["key"], n["lines"])
         out.extend(n["lines"])
-    out.extend(_the_third_thread(game, name))
     out.extend(_ready_for_the_desk(game, name))
     return out
-
-
-def _the_third_thread(game, name):
-    """The stall-breaker for the Crane fork (R-gate finding). Only three
-    evidence beats are reachable on the surface (the journal, the Ledger,
-    the preacher's remains), and the descent needs three -- so a player
-    who held Crane back (or never pressed him) caps at TWO and the case
-    goes silent. When the second canonical beat lands with the preacher
-    still alive, the PI's interior voice points him back at the pulpit:
-    the forced return reads as the investigation forcing his hand, not a
-    dead end. Fires once, only if Crane has been met. Never evidence."""
-    if (name not in CANONICAL_EVIDENCE
-            or game._evidence_count() != 2
-            or game.save.flag("preacher_doomed")
-            or not game.save.flag("crane_greeted")
-            or game.save.flag("nudged_third_thread")):
-        return []
-    game.save.set_flag("nudged_third_thread", True)
-    lines = [
-        "[c=dim]Two threads in hand, and both of them end somewhere under "
-        "this town.",
-        "One man here still says the quiet part out loud, from a pulpit, "
-        "to an empty room. He is not done saying it.",
-        "I should hear him out. However that ends.[/c]",
-    ]
-    _log_note(game, "the_third_thread", lines)
-    return lines
 
 
 def _ready_for_the_desk(game, name):
@@ -267,6 +253,52 @@ def _opener_exchanges(intro_beats, photo_beats, on_photo=None,
     ]
 
 
+# ---- The four-tier PI register (TODO #22c) ----
+# The world rot lives in the INVESTIGATOR now, not the town (NARRATIVE §2,
+# STORY_AUDIT B6): the locals stay exactly themselves, and what deteriorates
+# is the man hearing them. It surfaces ONLY as the PI's framing of a
+# conversation -- the question menu's opening line -- never as a word the NPC
+# says. Four tiers, keyed to how far up Mara's trail he has climbed
+# (evidence count): 0 clear and professional / 1-2 unsettled / 3 he knows /
+# 4+ past return. (The engine already renders a callable prompt(game); Vane's
+# mood prompt proves it.)
+def _pi_tier(game):
+    if game is None or not hasattr(game, "_evidence_count"):
+        return 0
+    ev = game._evidence_count()
+    if ev >= 4:
+        return 3
+    if ev >= 3:
+        return 2
+    if ev >= 1:
+        return 1
+    return 0
+
+
+# The PI's own interior weather, composed onto a principal's framing line.
+# Empty at tier 0 (he is a professional doing a job); it deepens from there.
+# The NPC's words never change; only this framing does.
+_PI_WEATHER = (
+    "",
+    " Something in this town is not sitting right, and you cannot yet put a "
+    "name to it.",
+    " You know what is under this town now. It is work, keeping a plain face "
+    "plain while you listen.",
+    " You have been down where the road ends. Ordinary is a thing you decide "
+    "to believe now.",
+)
+
+
+def _pi_framing(base):
+    """Wrap a static framing line into a four-tier PI-register callable (TODO
+    #22c): the base observation at tier 0, the same observation plus the PI's
+    deepening interior weather after. The locals stay ordinary; the man
+    reading them is the one who rots."""
+    def _framing(game):
+        return base + _PI_WEATHER[_pi_tier(game)]
+    return _framing
+
+
 # ---- The Preacher: Reverend Asa Crane ----
 # Ask-verb conversion (TODO #1 expand), carrying the ticket's pilot
 # choice: his doom is no longer an automatic visit counter. The flock
@@ -302,7 +334,7 @@ CRANE_CONVO = {
     "name":  "Rev. Crane",
     "voice": "blip_low",
     "pi_voice": "blip_soft",
-    "prompt": "Crane waits, hands folded over the lectern.",
+    "prompt": _pi_framing("Crane waits, hands folded over the lectern."),
     "leave":  "That's all for now.",
     "greet": {
         "flag": "crane_greeted",
@@ -411,7 +443,43 @@ def toby_dialogue(game, npc):
     It is EARNED, never volunteered: he gives it when the PI holds Mara's
     photograph out (the `photo` exchange below), not as a cold greeting -- a
     kid has no way to know the case on sight (only Sable ever met the PI).
-    What he gives you is what he tells you, never an object."""
+    The one OBJECT he gives is the bear (TODO #22b), and only to the man he
+    trusts: once the PI has heard him out AND reassured him, Toby brings out
+    the only toy in town on his own."""
+    save = game.save
+    # The bear (22b). You cannot interrogate it out of him: the PI is numb
+    # everywhere but soft with children, and that trait is the key. Once he
+    # has told the PI what he saw (`toby_told`, the photo) AND been
+    # reassured (`convo_toby_holding_up_asked`, the "you holding up" promise
+    # -- his one soft spot), he LENDS it: Mara's, a loan for a reunion the
+    # PI already knows can't happen. OPTIONAL, never evidence, never gates.
+    # The tag reads the boy's name; MARA never says it.
+    if (save.flag("toby_told")
+            and save.flag("convo_toby_holding_up_asked")
+            and not save.flag("toby_lent_bear")
+            and not game.player.inventory.has("bear")):
+        save.set_flag("toby_lent_bear", True)
+        game.player.inventory.add("bear", 1)
+        game.audio.play("pickup_rare", 0.7)
+        game._log_note("the_bear", [
+            "The kid put a stuffed bear in my hands. Homemade, a name sewn "
+            "on the tag. Said the girl in the photo gave it to him, that "
+            "she couldn't keep it and couldn't throw it out.",
+            "He asked me to give it back to her, if I find her. I said I "
+            "would. I have carried worse lies than that one lighter.",
+        ])
+        game.dialog.show([
+            "[c=dim]He digs in his coat and holds something out with both "
+            "hands. A stuffed bear, worn soft, a name stitched on the "
+            "tag.[/c]",
+            "The lady gave it to me. The one in your picture. She said she "
+            "couldn't keep it and she couldn't throw it out.",
+            "It's the only toy in the whole town. If you find her... give "
+            "it back? She should have it.",
+            "[c=dim](You take a bear from a boy, and you promise. You do "
+            "not let yourself read the name on the tag. Not yet.)[/c]",
+        ], speaker="Toby", voice="blip_kid", portrait="toby")
+        return
     from ui.conversation import open_conversation
     open_conversation(game, npc, TOBY_CONVO)
 
@@ -426,7 +494,7 @@ TOBY_CONVO = {
     "name":  "Toby",
     "voice": "blip_kid",
     "pi_voice": "blip_soft",
-    "prompt": "Toby watches the corn line while you think.",
+    "prompt": _pi_framing("Toby watches the corn line while you think."),
     "leave":  "That's all for now.",
     "greet": {
         "flag": "toby_greeted",
@@ -537,6 +605,28 @@ def _hettie_saw_photo(game):
     game.save.set_flag("hettie_saw_photo", True)
 
 
+# Mara's store tab -- surface evidence #1 (the receipt; NARRATIVE §6,
+# DESIGN.md §9). WORLD-PERSISTENT: it lives on the shop spike, so it is
+# reachable whether Hettie is alive, dead, or never spoken to. Two ways in
+# funnel HERE so it can never double-fire or soft-lock: the cold find (the
+# shop's on_interact_fn) and Hettie's warm handover (her Mara-memory beat).
+def grant_receipt(game):
+    if game.save.flag("evidence_maras_receipt"):
+        return
+    game.player.inventory.add("receipt", 1)
+    game.audio.play("pickup_rare", 0.7)
+    # Files silently and reads from the item (its desc carries the tab); the
+    # log excerpt is the case entry.
+    _evidence(game, "maras_receipt", [
+        "A store tab off Hettie's spike, headed 'M. Blaine' in her hand.",
+        "Matches, canned milk, the same short list run down most of a "
+        "year. The staples a resident buys, week on week.",
+        "Not a visitor passing through. She lived here.",
+    ], show=False)
+    if hasattr(game, "show_notice"):
+        game.show_notice("Her tab from the shop.")
+
+
 def hettie_on_leave(game):
     """Her old closing beat, kept as the one-time last word: she has
     already said more than is safe."""
@@ -554,7 +644,7 @@ HETTIE_CONVO = {
     "name":  "Hettie",
     "voice": "blip_high",
     "pi_voice": "blip_soft",
-    "prompt": "Hettie keeps one eye on the window.",
+    "prompt": _pi_framing("Hettie keeps one eye on the window."),
     "leave":  "That's all for now.",
     "greet": {
         "flag": "hettie_greeted",
@@ -658,7 +748,7 @@ def hettie_dialogue(game, npc):
             and not save.flag("hettie_mara_memory")
             and game.player.inventory.has("mom_notebook")):
         save.set_flag("hettie_mara_memory", True)
-        game.dialog.show([
+        _lines = [
             "Your girl. I'll tell you the one thing I know that's "
             "worth the telling.",
             "She used to come in here. Matches, canned milk. Counted her "
@@ -668,7 +758,18 @@ def hettie_dialogue(game, npc):
             "down half filled and walked out smiling. Left the basket "
             "on the counter. I never saw her again.[/c]",
             "[c=dim]It was the smiling I minded.[/c]",
-        ], speaker="Hettie", voice="blip_high", portrait="hettie")
+        ]
+        # Her warm handover of the store tab (surface evidence #1), only if
+        # the PI has not already lifted it off the spike himself. The tab
+        # is world-persistent either way (grant_receipt is flag-gated).
+        if not save.flag("evidence_maras_receipt"):
+            _lines.append(
+                "[c=dim]She works a curled slip off the spike by the till "
+                "and sets it on the counter, turned toward you. Her tab for "
+                "the girl. Matches, canned milk, week on week.[/c]")
+        game.dialog.show(_lines, speaker="Hettie", voice="blip_high",
+                         portrait="hettie")
+        grant_receipt(game)
         return
     # The trade: yesterday's paper (the April 14 issue, picked up before
     # the drive north) for ONE load of the cartridges she keeps under the
@@ -1138,7 +1239,7 @@ SABLE_CONVO = {
     "name":  "Mr. Sable",
     "voice": "blip_low",
     "pi_voice": "blip_soft",
-    "prompt": "Sable folds his hands on the register and waits.",
+    "prompt": _pi_framing("Sable folds his hands on the register and waits."),
     "leave":  "That's all for now.",
     "greet": {
         "flag": "sable_greeted",
@@ -1449,7 +1550,7 @@ PELL_CONVO = {
     "name":  "Old Pell",
     "voice": "blip_low",
     "pi_voice": "blip_soft",
-    "prompt": "Pell stays put on his step, arms folded.",
+    "prompt": _pi_framing("Pell stays put on his step, arms folded."),
     "leave":  "That's all for now.",
     "greet": {
         "flag": "pell_greeted",
@@ -1504,7 +1605,7 @@ CALDER_CONVO = {
     "name":  "Mrs. Calder",
     "voice": "blip_mid",
     "pi_voice": "blip_soft",
-    "prompt": "Mrs. Calder watches the road past your shoulder.",
+    "prompt": _pi_framing("Mrs. Calder watches the road past your shoulder."),
     "leave":  "That's all for now.",
     "greet": {
         "flag": "calder_greeted",
@@ -1559,7 +1660,7 @@ ROYCE_CONVO = {
     "name":  "Royce",
     "voice": "blip_mid",
     "pi_voice": "blip_soft",
-    "prompt": "Royce looks down the road while you talk.",
+    "prompt": _pi_framing("Royce looks down the road while you talk."),
     "leave":  "That's all for now.",
     "greet": {
         "flag": "royce_greeted",
@@ -1659,7 +1760,7 @@ GARRICK_CONVO = {
     "name":  "Garrick",
     "voice": "blip_mid",
     "pi_voice": "blip_soft",
-    "prompt": "Garrick leans on the well and waits.",
+    "prompt": _pi_framing("Garrick leans on the well and waits."),
     "leave":  "That's all for now.",
     "greet": {
         "flag": "garrick_greeted",
@@ -1719,6 +1820,10 @@ def preacher_body_examine(game, npc):
     game.player.inventory.add("cross", 1)
     game.audio.play("pickup_rare", 0.7)
     game.audio.play("low_pulse", 0.5)
+    # Real, and terrible, but not Mara -- so it files as a case NOTE, never
+    # case-evidence (NARRATIVE §6: the cult's hostility is already proven by
+    # the sealed roads and the grabbing cultists). note=True keeps it in the
+    # notebook without touching the King-gate.
     _evidence(game, "the_preacher", [
         "The Preacher. He named them from his pulpit, every Sunday. Then "
         "he went down to the river after them, believing a flock can be "
@@ -1727,4 +1832,4 @@ def preacher_body_examine(game, npc):
         "town could find him.",
         "His collar's still white. His cross lies in the mess. You take it.",
         "[c=dim]This is what naming them costs.[/c]",
-    ])
+    ], note=True)

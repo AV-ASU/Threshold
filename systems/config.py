@@ -579,25 +579,17 @@ MAX_FULLSCREEN_DARK = 204
 RIVER_ENTRY_TILE = (34, 60)
 
 # ---- World rot (NARRATIVE §world rot) -----------------------------
-# As the case is understood the surface rots, front-loaded to peak as the
-# player commits underground at 3 evidence. The stage is min(3, evidence)
-# for the surface (monotonic; the underground deepens past that on its own
-# evidence clock). Two ways a local goes:
-#   CONVERT -- the peace-makers cleanly join the cult (passive: they watch
-#              and raise visibility, but never chase or grab). Keyed by
-#              name -> the stage at which they turn.
-#   TURN    -- the resisters keep their identity, their bodies, and their
-#              defiance; the town reads NORMAL (the wrongness is the PLACE,
-#              not the people -- NARRATIVE §2). What curdles is what they
-#              SAY: their talk goes flat and off, reporting small ordinary
-#              things from behind a face that no longer means them. No body-
-#              horror overlay (the mutate render layer was cut, TODO #9).
-# Sheriff Vane is neither: his fall is PLAYER-DRIVEN (the VANE_* ledger
-# below, DESIGN.md §2) -- the world rot never turns him on its own. Values are
-# the evidence stage at which the local turns.
-ROT_CONVERT = {"Mrs. Calder": 2, "Royce": 3}
-ROT_TURN = {"Hettie": 2, "Garrick": 3, "Old Pell": 3,
-               "Toby": 3}
+# As the case is understood the surface rots (the DECALS + the ambient air,
+# systems/rot_mixin), front-loaded to peak as the player commits underground
+# at 3 evidence. The stage is min(3, evidence) for the surface (monotonic;
+# the underground deepens past that on its own evidence clock).
+#
+# The TOWNSFOLK do NOT change (TODO #22c, NARRATIVE §2, STORY_AUDIT B6): the
+# old ROT_CONVERT / ROT_TURN tables (peace-makers repainted cultist,
+# resisters' dialogue curdled) were CUT. The world rot is the PI's now, and
+# it lives in the four-tier conversation framing (scenes/dialogue._pi_framing
+# / _pi_tier). Sheriff Vane's fall stays PLAYER-DRIVEN (the VANE_* ledger
+# below, DESIGN.md §2).
 
 # ---- Sheriff Vane's despair/hope ledger (DESIGN.md §2; was TODO #2a) --
 # A hidden balance decides the last holdout's fate; the player never sees

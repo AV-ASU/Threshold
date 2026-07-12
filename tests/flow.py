@@ -313,8 +313,10 @@ def main():
     ready(gl)
     gl.player.x, gl.player.y = gl.scene._ledger_pos
     gl.scene.on_interact_fn(gl)
-    check(has_evidence(gl, "the_ledger"),
-          "ledger: the old registers in the cellar fire the_ledger")
+    check(not has_evidence(gl, "the_ledger")
+          and any(isinstance(e, dict) and e.get("name") == "the_ledger"
+                  for e in gl.save.arg("notes", [])),
+          "ledger: the old registers file a town NOTE, never case-evidence")
     # A fresh save's cellar is key-gated and panel-free.
     gcellar = new_game()
     gcellar.load_scene_now("lodge_cellar")
@@ -343,8 +345,8 @@ def main():
     g.dialog.advance()                          # "Lift the mask."
     check(g.player.inventory.has("pallid_mask"),
           "sign chamber: lifting the mask grants it (the ONLY source)")
-    check(has_evidence(g, "the_sign"),
-          "sign chamber: logs the_sign evidence (canonical beat)")
+    check(not has_evidence(g, "the_sign"),
+          "sign chamber: the Mask is the keystone ITEM, never case-evidence")
     # THE TRAP (NARRATIVE §8): tearing the rite down here -- before sealing
     # the source -- is a game over, not a victory.
     gt = new_game()
@@ -510,12 +512,21 @@ def main():
     check("playscript" not in _IDEFS,
           "items: the old single playscript keystone is retired")
 
-    # --- 9. The 3-evidence King gate is reachable ---
+    # --- 9. The 3-evidence King gate is reachable ON THE SURFACE (the
+    # Act-1 threat ramp; NARRATIVE §6, DESIGN.md §9). Mara's three surface-
+    # trail beats -- the store tab (shop), the booking slip (office), the
+    # journal (barn) -- each a world-persistent pickup, findable in any
+    # order. Three surface beats = exactly the King-gate above ground.
     ge = new_game()
-    fire(ge, "works_sign", "_sign_pos")               # the_sign (#5)
-    ge.dialog.choice_idx = 0
-    ge.dialog.advance()                               # "Lift the mask."
-    fire(ge, "barn", "_journal_pos")                  # maras_journal (#2)
+    fire(ge, "shop", "_receipt_pos")                   # maras_receipt
+    check(ge.player.inventory.has("receipt")
+          and has_evidence(ge, "maras_receipt"),
+          "shop: the store tab is a world-persistent pickup (surface evidence)")
+    fire(ge, "sheriff_office", "_record_pos")          # maras_record
+    check(ge.player.inventory.has("detention_record")
+          and has_evidence(ge, "maras_record"),
+          "office: the booking slip is a world-persistent pickup (surface evidence)")
+    fire(ge, "barn", "_journal_pos")                   # maras_journal
     jlines = next((e["lines"] for e in ge.save.arg("evidence", [])
                    if e.get("name") == "maras_journal"), [])
     jtext = " ".join(jlines).lower()
@@ -524,13 +535,26 @@ def main():
           "barn: Mara's journal motivates the descent (points down/below)")
     check("learned my name" in jtext,
           "barn: the journal log carries her ache (grief, page 1)")
-    ge.load_scene_now("works_sign")                    # the_congregation (#6)
-    ready(ge)
-    mara_e = next((n for n in ge.scene.npcs if n.name == "Mara"), None)
-    if mara_e:
-        mara_e.dialogue_fn(ge, mara_e)
     n = evidence_count(ge)
-    check(n >= 3, f"evidence: the 3-gate is reachable (gathered {n} canonical beats)")
+    check(n >= 3, f"evidence: the 3-gate is reachable on the SURFACE "
+                  f"(gathered {n} canonical beats above ground)")
+
+    # --- 9b. World-persistence: the surface records outlive the local, so
+    # killing Hettie or Vane can never soft-lock the descent (NARRATIVE §6,
+    # DESIGN.md §9). The tab is on the spike, the slip in the files, not on
+    # the person -- reachable with the local recorded dead.
+    gwp = new_game()
+    gwp.save.set_arg("dead_locals", {"shop:Hettie": {
+        "scene": "shop", "x": 0, "y": 0, "name": "Hettie", "idx": None}})
+    fire(gwp, "shop", "_receipt_pos")
+    check(has_evidence(gwp, "maras_receipt"),
+          "persist: the store tab is reachable with Hettie recorded dead")
+    gwp.save.set_arg("dead_locals", {"sheriff_office:Sheriff": {
+        "scene": "sheriff_office", "x": 0, "y": 0, "name": "Sheriff",
+        "idx": None}})
+    fire(gwp, "sheriff_office", "_record_pos")
+    check(has_evidence(gwp, "maras_record"),
+          "persist: the booking slip is reachable with Vane recorded dead")
 
     # --- 10. The Kid is the witness (NARRATIVE §4): tells, grants no item ---
     from scenes.dialogue import TOBY_CONVO as _TOBY_CV
@@ -1002,16 +1026,17 @@ def main():
           "voice: taking the Playscript seeds the want-to-leave (descent_leave)")
     check(gp2._evidence_count() == ev_pre,
           "voice: the leave-seed is a NOTE, not evidence (never arms the King-gate)")
-    # The Ledger -- first evidence -- carries the PI's voice (the checkout-date
-    # confusion), not a dry description. Read from the cellar registers
-    # (2026-07: behind the padlocked hatch).
+    # The Ledger -- a town NOTE now, not case-evidence (NARRATIVE §6) --
+    # still carries the PI's voice (the checkout-date confusion), not a dry
+    # description. Read from the cellar registers (behind the padlocked
+    # hatch).
     gl2 = new_game()
     gl2.player.inventory.add("cellar_key", 1)
     gl2.load_scene_now("lodge_cellar")
     ready(gl2)
     gl2.player.x, gl2.player.y = gl2.scene._ledger_pos
     gl2.scene.on_interact_fn(gl2)         # read the old registers
-    _lt = " ".join(l for e in gl2.save.arg("evidence", [])
+    _lt = " ".join(l for e in gl2.save.arg("notes", [])
                    if e.get("name") == "the_ledger" for l in e["lines"]).lower()
     # CANON: the checkout dates stop A YEAR back (the same season the PI
     # dreamed the door once) -- never "months". Guard the duration.
@@ -1306,15 +1331,15 @@ def main():
     from scenes.dialogue import _evidence as _evfn
     gn = new_game()
     gn.save.set_flag("sable_greeted", True)
-    _evfn(gn, "maras_room", "a")
-    _evfn(gn, "maras_journal", "b")
+    _evfn(gn, "maras_receipt", "a")
+    _evfn(gn, "maras_record", "b")
     check(not any(e.get("name") == "ready_for_the_desk"
                   for e in gn.save.arg("notes", [])),
           "ask: no readiness nudge before the third evidence")
-    _evfn(gn, "the_ledger", "c")
+    _evfn(gn, "maras_journal", "c")
     check(any(e.get("name") == "ready_for_the_desk"
               for e in gn.save.arg("notes", [])),
-          "ask: the third evidence nudges the PI back to the desk for the rite")
+          "ask: the third SURFACE evidence nudges the PI back to the desk")
     check(gn._evidence_count() == 3,
           "ask: the readiness nudge is a NOTE, never evidence")
 
@@ -1415,34 +1440,12 @@ def main():
     check(not _flock["avail"](gcf),
           "crane: once doomed the flock question retires")
 
-    # The stall-breaker (R-gate): only three evidence beats are surface-
-    # reachable and the descent needs three, so when the SECOND canonical
-    # beat lands with Crane met and still un-provoked, the PI's interior
-    # voice points him back at the pulpit. Once, a NOTE, never evidence,
-    # and never once the preacher is already doomed.
-    from scenes.dialogue import _the_third_thread, _evidence as _evfn2
-    gtt = new_game()
-    gtt.save.set_flag("crane_greeted", True)
-    _evfn2(gtt, "maras_journal", "a")
-    check(not any(e.get("name") == "the_third_thread"
-                  for e in gtt.save.arg("notes", [])),
-          "crane: no pulpit nudge at one thread")
-    _evfn2(gtt, "the_ledger", "b")
-    check(any(e.get("name") == "the_third_thread"
-              for e in gtt.save.arg("notes", [])),
-          "crane: the second thread points the PI back at the pulpit")
-    check(gtt._evidence_count() == 2,
-          "crane: the pulpit nudge is a NOTE, never evidence")
-    check(_the_third_thread(gtt, "maras_journal") == [],
-          "crane: the pulpit nudge fires only once")
-    gtd = new_game()
-    gtd.save.set_flag("crane_greeted", True)
-    gtd.save.set_flag("preacher_doomed", True)
-    _evfn2(gtd, "maras_journal", "a")
-    _evfn2(gtd, "the_ledger", "b")
-    check(not any(e.get("name") == "the_third_thread"
-                  for e in gtd.save.arg("notes", [])),
-          "crane: no pulpit nudge once he is already doomed")
+    # The Crane-provoke stall-breaker (`_the_third_thread`) was REMOVED with
+    # the evidence rework (NARRATIVE §6, DESIGN.md §9): the surface trail is
+    # now three carryable pickups in three fixed places (the tab, the slip,
+    # the journal), none of them provoke-gated, so there is no third beat to
+    # nudge the player toward and no stall to break.
+    from scenes.dialogue import _evidence as _evfn2
 
     # A SILENTLY-filed beat (show=False -- the journal reads from the
     # kit) must still land its nudges, or the case stalls voiceless:
@@ -2043,68 +2046,77 @@ def main():
     check("preacher" not in " ".join(_vane_lines).lower(),
           "vane: the murder beat fires exactly once")
 
-    # (c) Mrs. Calder's place-setting thread pays off when she converts
-    # (stage 2): the extra place is cleared, her converted voice carries
-    # the beat, and it lands as a case NOTE (never evidence).
+    # (c) The TOWN STAYS ORDINARY to the end (TODO #22c, NARRATIVE §2,
+    # STORY_AUDIT B6): the world rot is the PI's now, not the townsfolk's.
+    # The old people-change is CUT -- no peace-maker is repainted a cultist,
+    # no resister's voice curdles, and the machinery is gone.
+    import systems.config as _cfg
+    import rendering.sprites as _spr
+    from ui.dialog import DialogueBox as _DB
+    from systems import rot_mixin as _rm
+    check(not hasattr(_cfg, "ROT_CONVERT") and not hasattr(_cfg, "ROT_TURN"),
+          "rot: the convert/turn tables are removed from config")
+    check(not any(hasattr(_rm, n) for n in
+                  ("ROT_TURN_LINES", "_turned_local_dialogue",
+                   "_converted_local_dialogue")),
+          "rot: the curdled-dialogue helpers are removed from rot_mixin")
+    check(not any(hasattr(_rm.RotMixin, m) for m in
+                  ("_rot_locals", "_convert_local", "_spawn_counter_eater")),
+          "rot: the people-change methods are removed from RotMixin")
+    # The older mutate body-horror layer stays cut too (TODO #9).
+    check(not hasattr(_cfg, "INFEST_MUTATE")
+          and not hasattr(_spr, "draw_infested_overlay")
+          and not hasattr(_DB, "_draw_infested_portrait"),
+          "rot: the infested/mutate overlay + portrait stay removed")
+    # Both place settings stand for the whole run: Mrs. Calder never joins
+    # and never stops waiting, before AND at the old descent-line peak.
     g0 = new_game()
     g0.load_scene_now("brimley")
     check(sum(1 for d in g0.scene.decorations
               if getattr(d, "kind", "") == "place_setting") == 2,
-          "calder: both settings stand before she turns")
+          "calder: both settings stand at 0 evidence")
     gc = new_game()
-    gc.save.set_arg("evidence", ["ev0", "ev1"])     # stage 2
+    gc.save.set_arg("evidence", ["e0", "e1", "e2"])   # stage 3 (the old peak)
     gc.load_scene_now("brimley")
+    check(sum(1 for d in gc.scene.decorations
+              if getattr(d, "kind", "") == "place_setting") == 2,
+          "calder: both settings STILL stand at stage 3 (she keeps waiting)")
     _cal = next((nn for nn in gc.scene.npcs
                  if getattr(nn, "name", "") == "Mrs. Calder"), None)
-    check(_cal is not None and getattr(_cal, "tag", "") == "cult_convert",
-          "calder: converted at stage 2 (ROT_CONVERT)")
-    check(sum(1 for d in gc.scene.decorations
-              if getattr(d, "kind", "") == "place_setting") == 1,
-          "calder: the extra place is cleared once she joins")
-    if _cal:
-        _ev_before = evidence_count(gc)
-        _cal.dialogue_fn(gc, _cal)
-        _notes = gc.save.arg("notes", [])
-        check(any(isinstance(e, dict) and e.get("name") == "calder_table"
-                  for e in _notes) and evidence_count(gc) == _ev_before,
-              "calder: stopped-waiting lands as a NOTE, never evidence")
+    check(_cal is not None and getattr(_cal, "sprite_kind", "") != "cultist"
+          and getattr(_cal, "tag", "") != "cult_convert",
+          "calder: stays an ordinary local at stage 3 (never converted)")
+    check(not any(getattr(nn, "_mutated", False)
+                  or getattr(nn, "tag", "") == "cult_convert"
+                  or getattr(nn, "sprite_kind", "") == "cultist"
+                  for nn in gc.scene.npcs),
+          "rot: no townsperson is mutated or a cultist at stage 3 (town reads "
+          "normal)")
 
-    # (c2) The resisters TURN by DIALOGUE only -- the town reads NORMAL
-    # (TODO #9: the mutate body-horror layer is CUT). At stage 3 a resister
-    # keeps their exact sprite/portrait and never gets a _mutated flag; only
-    # their talk curdles (ROT_TURN -> _turned_local_dialogue), delivered
-    # as an ordinary line (no infested portrait path), never evidence.
-    import systems.config as _cfg
-    import rendering.sprites as _spr
-    from ui.dialog import DialogueBox as _DB
-    from systems.rot_mixin import _turned_local_dialogue
-    check(not hasattr(_cfg, "INFEST_MUTATE") and hasattr(_cfg, "ROT_TURN"),
-          "turn: INFEST_MUTATE is gone; ROT_TURN replaces it")
-    check(not hasattr(_spr, "draw_infested_overlay"),
-          "turn: the infested world overlay is removed from the sprites facade")
-    check(not hasattr(_DB, "_draw_infested_portrait"),
-          "turn: the infested dialog portrait is removed from DialogueBox")
-    gm = new_game()
-    gm.save.set_arg("evidence", ["e0", "e1", "e2"])   # stage 3
-    gm.load_scene_now("brimley")
-    check(not any(getattr(nn, "_mutated", False) for nn in gm.scene.npcs),
-          "turn: no local carries a _mutated flag at stage 3 (mutation cut)")
-    _turned = [nn for nn in gm.scene.npcs
-               if getattr(nn, "name", "") in _cfg.ROT_TURN]
-    check(bool(_turned), "turn: at least one resister stands in brimley at stage 3")
-    check(all(nn.dialogue_fn is _turned_local_dialogue for nn in _turned),
-          "turn: every present resister is repointed to the curdled voice")
-    if _turned:
-        _n = _turned[0]
-        _kind0 = _n.sprite_kind
-        _ev_b = evidence_count(gm)
-        _n.dialogue_fn(gm, _n)
-        check(_n.sprite_kind == _kind0 and evidence_count(gm) == _ev_b,
-              "turn: the curdled line keeps the sprite and never inflates evidence")
-    from systems.rot_mixin import ROT_TURN_LINES as _TL
-    check(not any(d in ln for lines in _TL.values() for ln in lines
-                  for d in ("—", "–", "--")),
-          "turn: no dashes in any curdled resister line (HARD RULE)")
+    # (c2) The four-tier PI register (TODO #22c): the rot surfaces as the
+    # PI's FRAMING of a conversation, keyed to evidence (0 / 1-2 / 3 / 4+),
+    # never as a word the NPC says. The prompt is a callable that shifts;
+    # the NPC observation is identical across tiers.
+    from scenes.dialogue import (HETTIE_CONVO as _HCV_r, _pi_tier as _pit,
+                                 _PI_WEATHER as _PW)
+    _pr = _HCV_r["prompt"]
+    check(callable(_pr), "register: the framing is a callable prompt(game)")
+    gr = new_game()
+
+    def _frame(ev):
+        gr.save.set_arg("evidence", [{"name": f"e{i}"} for i in range(ev)])
+        return _pr(gr)
+    _f0, _f1, _f3, _f4 = _frame(0), _frame(1), _frame(3), _frame(4)
+    check(len({_f0, _f1, _f3, _f4}) == 4,
+          "register: the PI's framing deepens across all four tiers")
+    check(all("Hettie keeps one eye" in f for f in (_f0, _f1, _f3, _f4)),
+          "register: the NPC observation is unchanged (only the PI's read shifts)")
+    check(_frame(2) == _f1,
+          "register: 1 and 2 evidence share the unsettled tier")
+    gr.save.set_arg("evidence", [{"name": f"e{i}"} for i in range(4)])
+    check(_pit(gr) == 3, "register: 4+ evidence is the past-return tier")
+    check(not any(d in w for w in _PW for d in ("—", "–", "--")),
+          "register: no dashes in the PI weather (HARD RULE)")
 
     # (d) The SPREAD drive-out is the CLAIMING (script locked 2026-06):
     # the mask rides the passenger seat and turns; the PI answers the
@@ -2216,8 +2228,10 @@ def main():
         _mara.dialogue_fn(gm, _mara)
         check(getattr(gm, "_convo", None) is not None and gm._convo.active,
               "mara: the confrontation opens as a live conversation")
-        check(evidence_count(gm) == _evm + 1,
-              "mara: evidence #6 still files immediately")
+        check(evidence_count(gm) == _evm
+              and any(isinstance(e, dict) and e.get("name") == "the_congregation"
+                      for e in gm.save.arg("notes", [])),
+              "mara: Mara is PROOF -- the calling-out files a NOTE, never evidence")
         _mj = " ".join(_mshown).lower()
         check("arithmetic" in _mj,
               "lure: the dream+case+Mara collision fires with her greeting")
@@ -2234,8 +2248,9 @@ def main():
     import re as _re
     from scenes.well import MARA_CONVO as _MCV
     _mkeys = {ex["key"] for ex in _MCV["exchanges"]}
-    check(_mkeys == {"leave", "way_out", "father"},
-          "mara: the asks are come-with-me / the-way-out / her father")
+    check(_mkeys == {"leave", "way_out", "father", "name"},
+          "mara: the asks are come-with-me / the-way-out / her father / "
+          "the boy's name (bear-gated, TODO #22b)")
     _mf = next(ex for ex in _MCV["exchanges"] if ex["key"] == "father")
     check(bool(_mf.get("once")) and bool(_mf.get("ends")),
           "mara: the father card plays once and ENDS the talk (she turns "
@@ -2588,8 +2603,8 @@ def main():
           and gs2.dialog.choices is not None,
           "staging: Mara comes to you and the ask menu opens")
     check(gs2.save.flag("hive_seen")
-          and has_evidence(gs2, "the_congregation"),
-          "staging: the confrontation lands evidence #6 on arrival")
+          and not has_evidence(gs2, "the_congregation"),
+          "staging: the calling-out fires, but Mara is PROOF, not a filed beat")
     # Play the father card (the player's own ask) and let the talk run
     # its length: the slip, the stall, the lucid turn-back.
     _fidx = next(i for i, l in enumerate(gs2.dialog.choices)
@@ -2622,6 +2637,65 @@ def main():
     check(getattr(gsd, "_mara_stage", None) is None,
           "staging: a dead Mara clears the calling-out (her story's other "
           "end)")
+
+    # --- 28c. The bear + the name-beat (TODO #22b) ---
+    from scenes.dialogue import (TOBY_CONVO as _TOBY_B,
+                                 CANONICAL_EVIDENCE as _CE_B)
+    from scenes.well import MARA_CONVO as _MARA_B
+    from systems.items import effective_desc as _edesc
+    import re as _re_b
+    # The bear is OPTIONAL -- never a counted beat, so it can never gate.
+    check("bear" not in _CE_B,
+          "bear: optional -- never a counted evidence beat (never gates)")
+    # Toby LENDS it, and only to the man he trusts: told what he saw
+    # (toby_told) AND reassured (the holding-up promise). Not interrogable.
+    gtb = new_game()
+    gtb.load_scene_now("toby_house")
+    ready(gtb)
+    _toby = next(n for n in gtb.scene.npcs if n.name == "Toby")
+    _toby.dialogue_fn(gtb, _toby)                      # cold: no lend
+    check(not gtb.player.inventory.has("bear"),
+          "bear: Toby never gives it up cold (trust is earned)")
+    gtb.save.set_flag("toby_told", True)
+    _toby.dialogue_fn(gtb, _toby)                      # told, not reassured
+    check(not gtb.player.inventory.has("bear"),
+          "bear: the witness alone does not earn the bear")
+    gtb.save.set_flag("convo_toby_holding_up_asked", True)
+    _toby.dialogue_fn(gtb, _toby)                      # trust earned -> lend
+    check(gtb.player.inventory.has("bear")
+          and gtb.save.flag("toby_lent_bear"),
+          "bear: reassuring the kid earns the loan (he brings it out himself)")
+    check(evidence_count(gtb) == 0
+          and any(isinstance(e, dict) and e.get("name") == "the_bear"
+                  for e in gtb.save.arg("notes", [])),
+          "bear: the loan files a NOTE, never evidence")
+    # It DETONATES once the letter is read (the tag's name + the stillborn son).
+    _d0 = _edesc("bear", gtb.save)
+    gtb.save.set_flag("evidence_maras_room", True)
+    _d1 = _edesc("bear", gtb.save)
+    check(_d0 != _d1 and "dead son" in _d1.lower(),
+          "bear: reading the letter detonates the tender surface object")
+    # The name-beat: bear-gated, ends the talk, changes her fate not at all.
+    _nb = next(ex for ex in _MARA_B["exchanges"] if ex["key"] == "name")
+    gnb = new_game()
+    check(not _nb["avail"](gnb),
+          "name: the name-beat is hidden without the bear")
+    gnb.player.inventory.add("bear", 1)
+    check(_nb["avail"](gnb) and _nb.get("ends") is True and _nb.get("once"),
+          "name: the bear opens it, and saying the name ends the talk")
+    _nb["on_ask"](gnb)
+    check(gnb.save.flag("mara_named"),
+          "name: the beat records that the PI reached for the name")
+    # INVARIANT (NARRATIVE §4/§6): MARA never says the boy's name -- only the
+    # PI and the tag do. Scan every line she speaks (greet + all exchanges).
+    _mara_said = [t for _ex in _MARA_B["exchanges"]
+                  for r, t in _ex["beats"] if r == "npc"]
+    _mara_said += [t for r, t in _MARA_B["greet"]["beats"] if r == "npc"]
+    check(not any(_re_b.search(r"\bsam(my|uel)?\b", t.lower())
+                  for t in _mara_said),
+          "name: INVARIANT -- Mara never says the boy's name (only the PI does)")
+    check(_re_b.search(r"\bsam\b", _nb["q"].lower()) is not None,
+          "name: the PI is the one who says it (the name-beat spoken line)")
 
     # --- 29. NPC jobs: a worker walks his stations (GAME_CHANGES §19) ---
     gj = new_game()
@@ -2687,8 +2761,10 @@ def main():
     if _pb is not None:
         _pb.dialogue_fn(gpr, _pb)
         check(gpr.player.inventory.has("cross")
-              and has_evidence(gpr, "the_preacher"),
-              "river: the cross + evidence #4 land at the bank")
+              and not has_evidence(gpr, "the_preacher")
+              and any(isinstance(e, dict) and e.get("name") == "the_preacher"
+                      for e in gpr.save.arg("notes", [])),
+              "river: the cross lands + the death files a NOTE, never evidence")
     _gnb = new_game()
     _gnb.load_scene_now("brimley")
     check(not any(getattr(n, "tag", "") == "preacher_body"

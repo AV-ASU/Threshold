@@ -958,9 +958,9 @@ def build_brimley():
     # Mrs. Calder's table, laid out in the open by the kid's house: two
     # settings (hers, and the extra place she lays every night for the
     # guest she can't name -- NARRATIVE §4), a candle burned down, and a
-    # chair knocked over. Once she converts (stage 2) the world rot
-    # pass clears the extra setting: she has stopped waiting
-    # (systems/rot_mixin.py _rot_locals).
+    # chair knocked over. Since TODO #22c she never converts and never stops
+    # waiting: both settings stand for the whole run (the town stays
+    # ordinary; the wrongness is the PI's, never Mrs. Calder's).
     # (The table itself is a solid 't' tile placed below.)
     sc.add_decoration(Decoration(71 * TILE + 10, 72 * TILE + 12, "place_setting"))
     sc.add_decoration(Decoration(71 * TILE + 24, 72 * TILE + 12, "place_setting"))

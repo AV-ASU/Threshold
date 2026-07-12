@@ -1,10 +1,12 @@
 """THRESHOLD world rot -- the world rotting as the case is understood.
 
-The evidence-driven decay pass (decals, local convert/mutate, the hunting
-sheriff) and the airborne ashfall overlay, extracted from systems/game.py as
-an RotMixin on the Game class. The mutated/converted/corpse dialogue
-helpers travel with it (module-level; _corpse_examine is re-imported by
-game.py for _make_corpse). No behavior change; tuning lives in systems.config.
+The evidence-driven decay pass (decals + the hunting sheriff) and the
+airborne ashfall overlay, extracted from systems/game.py as an RotMixin on
+the Game class. Since TODO #22c the pass NO LONGER changes the townsfolk
+(the town stays ordinary; the rot is the PI's, in the conversation
+framing) -- only the corpse dialogue helper travels here now
+(_corpse_examine, re-imported by game.py for _make_corpse). Tuning lives
+in systems.config.
 """
 import math
 import random
@@ -32,87 +34,11 @@ def _corpse_examine(game, npc):
     game.dialog.show(lines, speaker="", voice="blip_soft", portrait="narrator")
 
 
-def _converted_local_dialogue(game, npc):
-    """A local who has made their peace and joined. They no longer answer
-    as themselves -- they turn toward you and speak with the others'
-    mouth. A flat, patient line; no name. Mrs. Calder is the one bespoke
-    case: her place-setting thread (the guest she could never name) pays
-    off here -- she has stopped waiting. The guest is never named (1b);
-    the player draws the line themselves."""
-    if getattr(npc, "name", "") == "Mrs. Calder":
-        game.dialog.show([
-            "[c=dim]She turns toward you, unhurried. The face is Mrs. "
-            "Calder's. The voice underneath it is not.[/c]",
-            "\"I cleared the table this morning. All that setting and "
-            "waiting. There was no need.\"",
-            "[c=dim]\"He was never going to come by the road.\"[/c]",
-            "[c=dim]She smiles past you, toward the well.[/c]",
-        ], speaker="", voice="blip_soft", portrait="narrator")
-        if hasattr(game, "_log_note"):
-            game._log_note("calder_table", [
-                "Mrs. Calder cleared the extra place. Months of laying it "
-                "for a guest she couldn't name, and the day she stopped, "
-                "she looked relieved.",
-                "I keep starting the thought of who the plate was for. I "
-                "keep not finishing it.",
-            ])
-        return
-    lines = [
-        "[c=dim]They turn toward you, unhurried. The face is the one you "
-        "knew. The voice underneath it is not.[/c]",
-        "[c=dim]\"It's easier once you stop trying the doors.\"[/c]",
-    ]
-    game.dialog.show(lines, speaker="", voice="blip_soft", portrait="narrator")
-
-
-# Turned resisters: they look exactly as they did (the town reads NORMAL --
-# the wrongness is the PLACE, not the people; NARRATIVE §2). What has
-# changed is what they SAY. They talk to you flatly, about small ordinary
-# things, from behind a face that no longer means them, and never
-# acknowledge the gap. No body-horror, no cosmic-poetry; the dread is the
-# ordinary line delivered by someone who is no longer home behind it.
-ROT_TURN_LINES = {
-    "Hettie": [
-        "Truck still comes Thursdays. I unload it myself now.",
-        "The driver won't get out of the cab anymore. That's all right. I "
-        "manage the crates.",
-        "[c=dim]Don't mind me. I've a customer face on. You get used to "
-        "putting it on.[/c]",
-    ],
-    "Toby": [
-        "Mom set my place at supper. I sat down for it.",
-        "[c=dim]I wasn't hungry. I sat there till she cleared it. She "
-        "didn't say anything.[/c]",
-        "I can still talk. Listen. I sound just the same.",
-    ],
-    "Garrick": [
-        "I still know everyone who comes up this road. Don't need to look "
-        "anymore.",
-        "[c=dim]Saw you coming a long way off. Kept my eyes on the corn "
-        "the whole while.[/c]",
-        "You'll want to keep moving, son. I'd point you the way. I find "
-        "I'd rather not lift the arm.",
-    ],
-    "Old Pell": [
-        "Crossed off the 14th this morning. It was already crossed.",
-        "[c=dim]So I did it again, over the top. Mine's the heavier line. "
-        "You can tell.[/c]",
-    ],
-}
-
-
-def _turned_local_dialogue(game, npc):
-    """A resister the case has turned. They look no different; they speak to
-    you flatly, about small ordinary things, from behind a face that no
-    longer means them, and never acknowledge the gap."""
-    name = getattr(npc, "name", "")
-    lines = ROT_TURN_LINES.get(name, [
-        "[c=dim]They answer something ordinary, in their own voice. Nothing "
-        "in it reaches you.[/c]",
-    ])
-    game.dialog.show(lines, speaker=name,
-                     voice=getattr(npc, "voice", "blip_low"),
-                     portrait=getattr(npc, "portrait", None))
+# (The converted-local dialogue, the ROT_TURN line table, and the
+# turned-local dialogue were CUT in TODO #22c. The town stays ordinary
+# to the end: no local joins on-screen and no resister's voice curdles.
+# The world rot is the PI's now, carried by the four-tier conversation
+# framing (scenes/dialogue._pi_framing); NARRATIVE §2, STORY_AUDIT B6.)
 
 
 class RotMixin:
@@ -507,9 +433,14 @@ class RotMixin:
             self._rot_decals(max(1, self._evidence_count()), underground=True)
         elif surface_stage > 0:
             self._rot_decals(surface_stage, underground=False)
-        # Locals turn (convert) or rot (mutate) on the surface.
-        if surface_stage > 0:
-            self._rot_locals(surface_stage)
+        # The town stays ORDINARY to the end (TODO #22c, NARRATIVE §2,
+        # STORY_AUDIT B6): the world rot is the INVESTIGATOR'S now, not the
+        # townsfolk's. The old people-change (converting peace-makers into
+        # cultist sprites, curdling the resisters' dialogue) is CUT; the
+        # locals keep their bodies, faces, and voices. Only the PI curdles,
+        # and that lives in the conversation framing (the four-tier PI
+        # register, scenes/dialogue._pi_framing). The place still rots (the
+        # decals above); the people do not.
         # Sheriff Vane's office becomes a unique threat once HE has gone
         # hollow (DESIGN.md §2: the player-driven fall -- the despair ledger
         # latch, or the neglect override read in _vane_is_hollow; the old
@@ -520,13 +451,11 @@ class RotMixin:
         if key == "sheriff_office" and self._vane_is_hollow() \
                 and not self._local_is_dead("Sheriff"):
             self._spawn_hunting_sheriff()
-        # The general store from stage 2: one of them eats at Hettie's
-        # counter, calm as a lunch hour, while the shelves behind it stand
-        # empty (food scarcity, DESIGN.md §4 -- where the town's food goes).
-        # Same ambient contract as the depths diggers: idle, NO tag, so the
-        # gaze tick never counts it. Pure tableau; it does not look up.
-        if surface_stage >= 2 and key == "shop":
-            self._spawn_counter_eater()
+        # (The stage-2 counter-eater tableau -- a converted "neighbor"
+        # calmly eating in the shop -- was CUT with the people-change, TODO
+        # #22c: a joined local on display is exactly the town-curdling the
+        # rework relocates to the PI. The cult's mundane presence is carried
+        # by the enemy patrols now.)
         # The AIR rots too: schedule the scene's ambient one-shot
         # layer, escalating with the stage.
         self._apply_ambient_air(surface_stage)
@@ -622,58 +551,11 @@ class RotMixin:
             self.scene.add_decoration(deco)
             placed += 1
 
-    def _rot_locals(self, stage):
-        """Turn the surface locals by name. Converts become passive cult (a
-        'cult_convert' tag -- _tick_cultists counts their gaze but they never
-        grab). Resisters keep their body and their face entirely (the town
-        reads NORMAL); only their DIALOGUE curdles -- they answer flat and
-        off, no longer meaning what they say (TODO #9)."""
-        for n in self.scene.npcs:
-            if not getattr(n, "alive", True) or getattr(n, "_is_corpse", False):
-                continue
-            nm = getattr(n, "name", "")
-            cs = ROT_CONVERT.get(nm)
-            ts = ROT_TURN.get(nm)
-            if cs is not None and stage >= cs:
-                self._convert_local(n)
-            elif ts is not None and stage >= ts:
-                # No overlay, no flag on the body -- just the curdled voice.
-                n.dialogue_fn = _turned_local_dialogue
-        # Mrs. Calder's outdoor table: once she has joined, the extra
-        # place she kept set for the guest she couldn't name is cleared
-        # away -- the waiting is over. One setting stays (hers, unused).
-        # Her converted dialogue above carries the other half of the beat.
-        if (self.scene.key == "brimley"
-                and stage >= ROT_CONVERT.get("Mrs. Calder", 99)):
-            settings = [d for d in self.scene.decorations
-                        if getattr(d, "kind", "") == "place_setting"]
-            for d in settings[1:]:
-                self.scene.decorations.remove(d)
-
-    def _convert_local(self, n):
-        """A peace-maker, joined. Becomes a masked cultist that watches
-        you (raising visibility via the gaze count) but never chases or
-        grabs -- passive cult. Their old dialogue is gone."""
-        n.sprite_kind = "cultist"
-        n.portrait = None
-        n.tag = "cult_convert"
-        n.movement = "watch"
-        n.dialogue_fn = _converted_local_dialogue
-        n.no_prompt = False
-        n.solid = True
-        n._gaze_range = 150
-
-    def _spawn_counter_eater(self):
-        """Stage 2+: a convert eating at the store counter (food scarcity,
-        DESIGN.md §4 -- the town's food goes where its faith went). Ambient
-        tableau on the depths-digger contract: idle, non-solid, no prompt,
-        NO tag -- excluded from the gaze tick, never chases, never reacts.
-        The tin bowl is part of the pose art (sprites_cultist 'eat')."""
-        e = NPC(8 * TILE + 16, 9 * TILE + 16, "A neighbor", "cultist",
-                movement="idle", solid=False, no_prompt=True)
-        e.facing = (1, 0)                  # in profile, toward the counter
-        e.pose = "eat"
-        self.scene.add_npc(e)
+    # (_rot_locals / _convert_local / _spawn_counter_eater were CUT in TODO
+    # #22c. The town stays ordinary to the end: no local is repainted a
+    # cultist, no resister's voice curdles, and Mrs. Calder keeps her second
+    # place setting -- she never stops waiting. The world rot lives in the
+    # PI now, in the conversation framing, scenes/dialogue._pi_framing.)
 
     def _vane_is_hollow(self):
         """Sheriff Vane's fate gate (DESIGN.md §2; was TODO #2a). True once the hollow turn

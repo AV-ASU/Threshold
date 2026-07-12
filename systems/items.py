@@ -104,6 +104,61 @@ ITEM_DEFS = {
                                "Don't come after me. I'm not lost. I've "
                                "never been this close.\"\n\n"
                                "It stops there. No signature."},
+    # ---- Mara's surface trail (evidence; NARRATIVE §6, DESIGN.md §9) ----
+    # The physical trace she left in the town: a resident's record, not a
+    # visitor's. Each is carryable and self-evident (no cosmology, no
+    # witness needed to read it), and WORLD-PERSISTENT -- it survives the
+    # local who kept it, so killing Hettie or Vane can never soft-lock the
+    # descent (the record is still on the shop spike, still in the office
+    # files).
+    "receipt":       {"name": "A Store Tab",
+                       "kind": "lore",
+                       "desc": "A curled slip off the shop spike, headed "
+                               "\"M. Blaine\" in Hettie's careful hand.\n\n"
+                               "Matches. Canned milk. The same short list, "
+                               "week on week, run down most of a year. The "
+                               "staples a resident buys, not a traveler.\n\n"
+                               "She did not pass through Brimley. She lived "
+                               "here."},
+    "detention_record": {"name": "A Booking Slip",
+                       "kind": "lore",
+                       "desc": "A booking slip out of the Sheriff's files, "
+                               "filled in a flat official hand.\n\n"
+                               "NAME: Blaine, Mara. Held one night for a "
+                               "disturbance on the main road. Shouting at the "
+                               "sky, the report says, at nothing anyone else "
+                               "could see. Released at first light, no "
+                               "charge.\n\n"
+                               "She was coming apart in the open, and the law "
+                               "wrote it down and let her go."},
+    "maras_scrawl":  {"name": "The Sign, in Her Hand",
+                       "kind": "lore",
+                       "desc": "A single leaf off the copying desks in the "
+                               "deep.\n\n"
+                               "The Sign, inked over and over down the page, "
+                               "in the hand you know from her journal and "
+                               "her letter. Hers.\n\n"
+                               "No captive draws this. She sat and did the "
+                               "work with her own hand, willing, like the "
+                               "rest of them."},
+    # ---- The bear (the secret fourth; NARRATIVE §4/§6, DESIGN.md §9,
+    # TODO #22b). OPTIONAL, never case-evidence, never gates. Toby lends it.
+    # On the surface it is a tender, UNEXPLAINED thing in a boy's hands; once
+    # the PI has read her letter it detonates (effective_desc, below). The
+    # stitched tag is the ONLY place the boy's name appears besides the PI's
+    # own mouth -- MARA never says it (invariant, guarded).
+    "bear":          {"name": "A Stuffed Bear",
+                       "kind": "lore",
+                       "desc": "A small homemade bear, worn soft. A name is "
+                               "stitched into the tag at its neck in careful "
+                               "thread: SAM.\n\n"
+                               "Toby says the lady from the photograph gave "
+                               "it to him. She could not keep it, he said, "
+                               "and could not throw it out. The only toy in "
+                               "town.\n\n"
+                               "Why a grown woman drove a child's bear this "
+                               "far north, and then gave it away, you cannot "
+                               "yet say."},
     # ---- The cult's testimony (three found fragments; gate nothing) ----
     # The congregation's own record, split across three leaves found down the
     # descent. The cult's voice lives in the DESCRIPTION (their personal
@@ -188,11 +243,31 @@ ITEM_DEFS = {
 }
 
 
-def effective_desc(key, save=None):
-    """Return the inventory description for `key`.
+# The bear, AFTER the PI has read Mara's letter (evidence_maras_room): the
+# tag's name and the letter's stillborn son collide, and the tender surface
+# object becomes the worst thing he carries (TODO #22b, DESIGN.md §9). MARA
+# never says the name; the tag and the PI do.
+_BEAR_DESC_KNOWN = (
+    "A small homemade bear, worn soft. The name stitched into the tag "
+    "reads SAM.\n\n"
+    "Her letter told the rest. A boy. She wanted him more than anything, "
+    "and he came still. A nursery that never opened, and this bear meant "
+    "for it.\n\n"
+    "She could not keep it and could not throw it out, so she gave it to "
+    "the one living child she found up here. You are carrying her dead "
+    "son's bear down toward her."
+)
 
-    Signature is preserved for callers; the `save` parameter is
-    accepted but ignored (no dynamic flavour anymore)."""
+
+def effective_desc(key, save=None):
+    """Return the inventory description for `key`. Static, with one
+    exception: once the PI has read Mara's letter (evidence_maras_room) the
+    bear's tag and the letter's stillborn son collide and its description
+    DETONATES (TODO #22b) -- the surface plant made the worst thing he
+    carries. MARA never says the name; the tag and the PI do."""
+    if (key == "bear" and save is not None
+            and save.flag("evidence_maras_room")):
+        return _BEAR_DESC_KNOWN
     return ITEM_DEFS.get(key, {}).get("desc", "")
 
 

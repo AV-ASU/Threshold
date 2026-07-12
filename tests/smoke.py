@@ -192,12 +192,14 @@ def check_passability():
 
 
 def check_canonical_evidence_wired():
-    """Each of the six CANONICAL_EVIDENCE beats drives the King-gate and the
-    visibility floor. If a beat's only `_evidence(...)` call site is renamed
-    or deleted, the threat tuning silently changes and the King may become
-    unreachable -- with no test to catch it. Statically scan the scene source
-    tree for `_evidence(game, "<name>"` call sites and assert every canonical
-    name is still wired into at least one scene."""
+    """Each CANONICAL_EVIDENCE beat on Mara's trail (NARRATIVE §6, DESIGN.md
+    §9) drives the King-gate and the visibility floor. If a beat's only
+    `_evidence(...)` call site is renamed or deleted, the threat tuning
+    silently changes and the King may become unreachable -- with no test to
+    catch it. Statically scan the scene source tree for `_evidence(game,
+    "<name>"` call sites and assert every canonical name is still wired into
+    at least one scene. (grant_receipt wraps the receipt beat, so its call
+    site lives in dialogue.py -- also under scenes/.)"""
     import glob
     import re
     from scenes.dialogue import CANONICAL_EVIDENCE

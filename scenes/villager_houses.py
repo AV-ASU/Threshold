@@ -7,7 +7,7 @@ from entities.npc import NPC
 from entities.decoration import Decoration
 from .base import Scene
 from .dialogue import (
-    preacher_dialogue, sheriff_dialogue,
+    preacher_dialogue, sheriff_dialogue, _evidence,
 )
 
 
@@ -286,6 +286,32 @@ def build_sheriff_office():
     for mx, my in [(4, 7), (6, 8), (3, 9)]:
         sc.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16,
                                      "mote"))
+    # Mara's booking slip, in the back records room's filing table (surface
+    # evidence #2; NARRATIVE §6, DESIGN.md §9). It lives in the FILES, not
+    # on Vane -- reachable whether he is alive, dead, or never spoken to
+    # (world-persistent; killing him can never soft-lock the descent).
+    sc._record_pos = (11 * TILE + 16, 4 * TILE + 16)
+    sc.add_decoration(Decoration(11 * TILE + 16, 4 * TILE + 6, "papers",
+                                 seed=41))
+    sc.add_interactable(sc._record_pos[0], sc._record_pos[1], 40)
+
+    def _office_interact(game):
+        rx, ry = sc._record_pos
+        if abs(game.player.x - rx) > 40 or abs(game.player.y - ry) > 40:
+            return
+        if game.save.flag("evidence_maras_record"):
+            return
+        game.player.inventory.add("detention_record", 1)
+        game.audio.play("pickup_rare", 0.7)
+        _evidence(game, "maras_record", [
+            "A booking slip in the Sheriff's records. Blaine, Mara.",
+            "Held a night for a disturbance on the main road, shouting at "
+            "the sky. Released at dawn, no charge filed.",
+            "She was coming apart in the open, and the law wrote it down.",
+        ], show=False)
+        if hasattr(game, "show_notice"):
+            game.show_notice("Her booking slip.")
+    sc.on_interact_fn = _office_interact
     sc.hide_spots = []
 
     def _fc_on_enter(game, scene):

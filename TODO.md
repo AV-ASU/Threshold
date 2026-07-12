@@ -356,55 +356,71 @@ Canon + design are written; this is the code catch-up. Big — touches
 `CANONICAL_EVIDENCE`, the King-gate, the rot mixin, the confrontation,
 and the tests. Sequence it:
 
-- **22a. The roster.** Rebuild `CANONICAL_EVIDENCE` to the trail
-  (`DESIGN.md` §9): the **receipt** (Hettie/shop), the **detention
-  record** (Vane/office), the **journal** (barn, exists), a **dig item**
-  (a work-tally or the Sign in Mara's hand — a room that is not the cell),
-  the **letter** (her cell, exists). Drop `the_ledger` / `the_preacher` /
-  `the_sign` from the count (they become notes / the keystone item — the
-  Mask stays the carried key, just not case-evidence). **Mara is proof,
-  not evidence** (`the_congregation` leaves the count; the calling-out
-  still fires, it just is not a filed beat). New evidence are **pickup
-  items**, never walk-into-a-room examines. **World-persistent:** the
-  surface records survive the local's death (drop-on-body or
-  findable-in-place, the `sable_on_death` precedent) so killing Hettie or
-  Vane can never soft-lock the descent. Re-point the threat/descent gate
-  off the raw legacy count onto the new trail; keep the surface reachable
-  so the cult/King still ramp in Act 1 (no walking sim).
+- **22a. The roster. LANDED (2026-07).** `CANONICAL_EVIDENCE` is now the
+  trail: `maras_receipt` (the store tab, Hettie's shop), `maras_record`
+  (the booking slip, Vane's office), `maras_journal` (barn), `maras_dig`
+  (the Sign in Mara's own hand, the Scriptorium — a room that is not the
+  cell), `maras_room` (the unsent letter, her cell). All are **pickup
+  items** (new items `receipt` / `detention_record` / `maras_scrawl`). The
+  gate re-points for free (the count is `len(save.arg("evidence"))`, and
+  `_evidence` only logs canonical names) — no gate-constant edits; the
+  **three surface beats** keep the Act-1 ramp reachable above ground.
+  `the_ledger` + `the_preacher` now file as case **notes** (`_evidence(...,
+  note=True)`); `the_sign` leaves the count (the Mask stays the keystone
+  item); **Mara is proof** (`the_congregation` files a note via
+  `_log_note`, the calling-out still fires). **World-persistence:** the
+  records live in the scene (the shop spike, the office files), not on the
+  NPC, so a dead Hettie/Vane can never soft-lock the descent (warm handover
+  still rides Hettie's Mara-memory beat). The obsolete `_the_third_thread`
+  Crane-provoke stall-breaker was removed (the surface trail needs no
+  provoke). Guards: smoke's canonical-wired scan follows the dict; flow §9
+  gathers the three surface beats + a world-persistence check (§9b); the
+  ledger/sign/preacher/congregation guards flipped to notes/proof. Full
+  gate green.
 
-- **22b. The bear + the name.** New item: a stuffed **bear**, tag reads
-  **Sam** (Samuel — pick the exact tag form; a 1993 nursery diminutive).
-  Toby **lends** it, gated on the PI's patience with a scared kid (his one
-  soft spot), for a reunion that cannot happen. Optional evidence (never
-  gates). A plant on the surface (unexplained), it detonates when the
-  letter names the son below. **The confrontation name-beat** (extend
-  `MARA_CONVO`, `scenes/well.py`): with the bear in inventory, a new
-  exchange lets the PI say the name; it splits the fused *he* and breaks
-  her — she seizes the PI, the rite's stillness cracks, and she reveals
-  she has always known Sam is not down there and digs on anyway. Fate
-  unchanged (turns back to the dig); it only shatters her and wounds the
-  player. **Invariant:** Mara never says the name; only the world/PI/bear
-  do (guard it). Decide: does she take the bear (Sam goes down with her,
-  Toby's loan broken) or refuse it.
+- **22b. The bear + the name. LANDED (2026-07).** New item `bear` (tag
+  reads **SAM**; the letter stays "a boy" unnamed, per the 2026-07 ruling,
+  so the tag is the ONLY place the name appears besides the PI's mouth).
+  Toby **lends** it as a VOLUNTEERED beat, earned by the PI's patience with
+  a scared kid (`toby_told` + the `holding_up` reassurance), never
+  interrogable; optional, never in `CANONICAL_EVIDENCE`, files a note. On
+  the surface it is tender and unexplained; once the PI reads the letter
+  (`evidence_maras_room`) its inventory desc **detonates** (dynamic
+  `effective_desc`). The **name-beat** (`MARA_CONVO` "name" exchange,
+  bear-gated, `ends:True`): the PI says the name, she seizes him, the rite
+  cracks, she reveals she has always known the boy is not down there and
+  digs on anyway, and **REFUSES the bear** (2026-07 ruling); fate unchanged
+  (turns back to the dig). **Invariant guarded** (flow §28c): Mara never
+  says the name; only the PI and the tag do. Full gate green. *(Open polish:
+  a bespoke bear inventory sprite with a visible tag; the name currently
+  lands through the item desc + dialog.)*
 
-- **22c. The PI rots, not the town (four tiers).** Relocate the world rot
-  from the townsfolk to the PI (`DESIGN.md` §9; fixes STORY_AUDIT B6 and
-  NARRATIVE §2's "the wrongness is the place, not the people"). Cut the
-  people-change (`_convert_local` sprite swap + `_turned_local_dialogue`);
-  keep the town **ordinary to the end**. Layer a four-tier PI register
-  (0 / 1–2 / 3 / 4+ evidence) into the conversations — the `prompt`
-  callable + interior beats shift; the NPC's words never do. Re-source the
-  converts' lost visibility pressure if the surface goes too quiet (His
-  ash / the moths). This also revives 4/5/6 (they turn the sanity screw
-  below the King-gate). Pairs with the theory-ladder notebook (#13) that
-  strings the trail into a reconstruction.
+- **22c. The PI rots, not the town (four tiers). LANDED (2026-07).** The
+  world rot is the INVESTIGATOR'S now (`DESIGN.md` §9; fixes STORY_AUDIT B6,
+  NARRATIVE §2). The people-change is CUT: `_convert_local`,
+  `_turned_local_dialogue`, `_converted_local_dialogue`, `ROT_TURN_LINES`,
+  `_rot_locals`, and the `_spawn_counter_eater` tableau are gone, and
+  `ROT_CONVERT` / `ROT_TURN` are removed from config. The town stays
+  ordinary to the end (Mrs. Calder never joins and keeps both place
+  settings; the resisters keep their voices; the rot DECALS + ambient air
+  still run, the place still rots). In their place, a four-tier PI register
+  (`scenes/dialogue._pi_tier` / `_PI_WEATHER` / `_pi_framing`) composes the
+  PI's deepening interior weather onto each surface principal's conversation
+  framing, keyed to evidence (0 / 1-2 / 3 / 4+); the NPC's words never
+  change, only the man's read of them (Vane keeps his own mood prompt). Per
+  the 2026-07 ruling, the converts' lost gaze pressure is **NOT** re-sourced
+  (the cult enemy patrols carry it). Guarded by flow §23 (c)/(c2). *(Open:
+  interior-beat tiering inside exchanges, and the theory-ladder notebook
+  #13, both left for later.)*
 
-- **Guards:** rewrite smoke's six-beat check + flow's evidence/Mara guards
-  to the new roster; guard the world-persistence (kill the holder, still
-  reach the descent), the name invariant (Mara never says Sam), the
-  bear-gated name-beat (fate unchanged, ends the talk), and the
-  no-people-change rot. Re-green the full gate; update `DESIGN.md` §3 (the
-  code↔canon map) once the keys land.
+- **Guards:** DONE across 22a-c. smoke's canonical scan follows the dict;
+  flow §9/§9b (roster + world-persistence), §28c (bear + name invariant +
+  bear-gated ending), §23 (no-people-change rot + four-tier register). Full
+  gate green. `DESIGN.md` §3 describes the mechanism generically (unchanged
+  by the key swap) and §9 already documents the model, so no §3 edit was
+  needed.
+
+**#22 is COMPLETE (22a + 22b + 22c all landed 2026-07).**
 
 ## Blocked on a human at the keys
 

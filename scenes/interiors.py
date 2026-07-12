@@ -8,7 +8,7 @@ from constants import TILE
 from entities.npc import NPC
 from entities.decoration import Decoration
 from .base import Scene
-from .dialogue import toby_dialogue, hettie_dialogue, _evidence
+from .dialogue import toby_dialogue, hettie_dialogue, _evidence, grant_receipt
 def build_clearing():
     """THRESHOLD: the clearing -- the BURN SITE. A small open glade off
     the brimley river bank where the claimed burned their worldly
@@ -249,6 +249,22 @@ def build_shop():
     for mx, my in [(8, 7), (12, 8), (10, 10)]:
         sc.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16,
                                      "mote"))
+    # Mara's store tab, spiked on the counter (surface evidence #1;
+    # NARRATIVE §6, DESIGN.md §9). It lives HERE, on the spike, so it is
+    # reachable whether Hettie is alive, dead, or never spoken to -- the
+    # world-persistent cold find. Her warm handover (the Mara-memory beat)
+    # grants the SAME tab; both funnel through grant_receipt (flag-gated,
+    # never double-fires).
+    sc._receipt_pos = (9 * TILE + 16, 9 * TILE + 16)
+    sc.add_decoration(Decoration(9 * TILE + 16, 9 * TILE + 6, "papers",
+                                 seed=23))
+    sc.add_interactable(sc._receipt_pos[0], sc._receipt_pos[1], 40)
+
+    def _shop_interact(game):
+        rx, ry = sc._receipt_pos
+        if abs(game.player.x - rx) < 40 and abs(game.player.y - ry) < 40:
+            grant_receipt(game)
+    sc.on_interact_fn = _shop_interact
     sc.hide_spots = []
     return sc
 def build_barn():
