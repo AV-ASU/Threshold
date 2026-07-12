@@ -134,6 +134,12 @@ its head) and pings the cult to **investigate the body**, and the body
 > from the dream. "Convert" and "turn" are how the truth **surfaces to
 > you**, not allegiances being switched. Underneath, they were always His.
 
+> **The people underneath the rot are read by their WANTING (§8).** The
+> world rot is how the truth surfaces to the PI; §8 is why each local is
+> what the rot reveals. The two are one picture: the door strands every
+> want in Brimley, and the rot is the veil thinning until the PI can see
+> the stranding.
+
 Knowing dooms you, and it **shows**. Surface corruption is a pure,
 monotonic function of the evidence count — `_rot_stage = min(3,
 evidence)` — and it is deliberately **front-loaded** to peak exactly as
@@ -679,4 +685,223 @@ symmetric (every static fold has its return), the wrap is a loop, and
 the single one-way crossing in the game is the juke through the tear
 HE made (it shuts behind you). The Threshold doorframe stays plain --
 the world's folds scream so that the real door's silence lands (NARRATIVE §2).
+
+---
+
+## 8. Desire, and how the fold strands it
+
+> The reading that keeps the whole cast honest -- the character-design
+> twin of the world rot (§2). Every future line for a Brimley local
+> should be checkable against it, the way every cosmology line is
+> checkable against the bearing rule (NARRATIVE §2: the door promises,
+> never provides). It states the SHAPE of each person's wanting; the
+> hard per-character FACTS that are locked (Mara's son, Sable's full
+> house, Vane's ending) live in NARRATIVE §4.
+
+**The King does not kill desire. He strands it.** That is the engine,
+and it is crueler than taking anything. Every soul in Brimley still
+wants exactly what they wanted before; the door severed the want from
+its object and left the wanting switched on. Pell still wants his
+harvest, and it is rotting in the field he can no longer look at.
+Calder still wants a guest, and sets the plate for one who will never
+come. Vane still wants it to end, and it only ever offers more. **Hell
+here is a want with its object cut away and the appetite left running.**
+The fold "admits but never releases" (NARRATIVE §1) -- and what it will
+not release is the wanting.
+
+> Internalize this or the cast reads as generic sad villagers:
+> - **The machine runs on ordinary wants.** A full house, a harvest, a
+>   guest at supper, a road home, to save someone, to keep the shop
+>   open, for a child to be safe, for it all to end. Nothing cosmic --
+>   the door deals in the wants EVERYONE has, because those are the ones
+>   everyone has. "Someone wants something simple and doesn't get it,
+>   and there is forever no way to get it back" is the design doc for
+>   the entire town.
+> - **To want is to be strandable; to not want is to be already dead.**
+>   There is no safe dose. The PI is safe from the machine only because
+>   he refuses to feel (his numbness is walled-off want, NARRATIVE §2),
+>   and that refusal is its own death -- which is exactly why SPREAD is
+>   the cruelest ending (it hands the numb man his wanting back, as the
+>   damnation, §8/NARRATIVE §8).
+> - **The absent thing is the internal want.** An "invincible summer" is
+>   a want that lives inside you, that no external severing can reach --
+>   and no one in Brimley has one. Every want in this town points at an
+>   object the fold can cut. That absence IS the horror; do not
+>   accidentally give a character a self-sufficient want, or you have
+>   handed them an exit the game denies everyone.
+
+**Two families, one mechanism at two scales.** The door takes an
+individual's want and gives it a false BEARING (the leash); the closing
+rite took a whole town's wants and FROZE them (the stasis). Same act --
+separate a wanting creature from the thing it wants, permanently, leave
+the wanting intact -- performed on one person by the dream and on the
+collective by the seal.
+
+- **The attuned (the cult) -- desire as a LEASH.** The door gave the
+  ache a direction (down) and they follow it forever, never arriving.
+  Motion without destination; obsession is what that looks like from
+  outside. Their want is why they are His (attunement = the size of the
+  hole, NARRATIVE §2).
+- **The locals -- desire in STASIS.** Netted by the rite regardless of
+  what they wanted, they are frozen mid-reach with every object severed.
+  The appetite with nowhere to go; "stagnation" is what that looks like
+  from outside. Their want is NOT why they are His (see the guardrail
+  below) -- it is what the fold is doing to them now.
+
+**The roster** (each want is simple; the second column is the strand):
+
+| Who | The simple want | What the machine did to it | Family |
+|---|---|---|---|
+| **The PI** | (refused -- walled off) | nothing can bait what won't be felt; the armor is a death | control |
+| **Mara** | her stillborn son | the dream aimed it DOWN; she digs toward a door he is not behind | leash |
+| **The congregation** | each their own ache | the same bearing, the same dig; the self spent into the labor | leash |
+| **Sable** | a full house | FED, for one season, then bereaved (the migration filled his rooms, the door gave nothing); the anomaly, NARRATIVE §4 | fed, then taken |
+| **Vane** | for it all to end | the one appetite the door cannot answer; stasis so total it malfunctions into the hollow turn | stasis |
+| **Crane** | to save them, to matter | a dying ministry handed a real devil; the rescue instinct walks him to the river. **He is the player's Sign-Chamber mistake, previewed** | stasis |
+| **Hettie** | to provide, protect her kin | the supply line cut; she performs empty commerce over bare shelves, starved for word of the outside | stasis |
+| **Pell** | his legacy, the harvest endures | the corn dead standing, uncut; "I don't look at the fields long anymore" | stasis |
+| **Calder** | someone to come | the eternal plate; **she is the town's kitchen light** (Mara's letter: "somebody to wait up for") -- a guest who never crosses the table | stasis |
+| **Royce** | out; to drive somewhere | the road hands him back; he pins his last hope on the one exception (the PI got IN), not knowing the exception is a mouth | stasis |
+| **Garrick** | to watch, to warn, to matter | vigilance made futile; he sees everything, can stop nothing, warns toward roads that all loop | stasis |
+| **Toby** | to be safe, to be told the truth | the child's baseline want, answered by the one adult who listens with a promise the endings guarantee is a lie | stasis |
+
+The closest thing to an internal want anyone reaches is **the PI's
+promise to Toby** -- warmth generated from inside, pointed outward,
+expecting nothing back. The endings break even that (no reachable
+future returns for the boy), which is the point: the one summer the
+game lets a character find, it takes.
+
+> **GUARDRAIL -- keep the two mechanisms distinct.** The cult was
+> LURED (desire -> door, the leash); the locals were NETTED by the rite
+> regardless of their wants (desire -> stranded, the stasis). Do NOT
+> retrofit a local's want into a door-lure: their wants do not explain
+> why they are His, only what the fold does to them now. Collapse the
+> two and Brimley becomes a town of secret volunteers, which kills the
+> "claimed without ever knowing" horror (NARRATIVE §2) and cheapens the
+> whole cosmology. One impossible thing; the wanting is ordinary
+> downstream of it.
+
+---
+
+## 9. The Case (evidence as Mara's trail)
+
+> The evidence rework, settled with the user 2026-07. This is the DESIGN
+> of record; the hard canon (the set, the invariants) lives in
+> NARRATIVE §6, and the code catch-up is TODO #22. It supersedes the
+> "pool of six, any 3" model, which was never true in play.
+
+**Three categories, and only one is evidence.**
+
+- **Statement** — testimony. What a person *says*. Fallible by nature:
+  they lie, misremember, or do not understand. Hettie's memory, Toby's
+  account, Royce's roads, the cult's own testimony. These are **notes**,
+  never evidence.
+- **Evidence** — a tangible thing, tied to Mara, that proves itself.
+  Four tests, all required: (1) **it is Mara's**; (2) **it is a pickup
+  ITEM** — carried, not a walk-into-a-room examine, so it is never
+  missable and never ambiguous; (3) **it is self-evident** — you could
+  photograph that one moment and anyone would understand it, no
+  cosmology and no witness required to read it; (4) **one per room** —
+  the trail is walked, not vacuumed from a single jackpot.
+- **Proof** — the found person. Mara herself. The case's
+  **resolution**, never a log entry.
+
+**Why the old six failed.** Run them through the rubric and four die:
+the **Ledger** (she was never at the lodge — zero Mara relation), the
+**Preacher** (not Mara; and "the cult is hostile" is already proven by
+the sealed town and the grabbing cultists), the **Mask** (its meaning
+needs the cosmology to read, and it is not Mara's — it is the keystone
+ITEM), and the **Congregation** (Mara is proof, not evidence). Only the
+journal and the cell/letter survive. And "any 3 of 6 is the point of no
+return" was a **fiction**: the only pre-descent evidence is the surface
+pieces and the descent needs 3, so the surface set was always
+mandatory, while the underground three drove **no mechanic at all**
+(every evidence gate is ≤ 3 — cult wakes at 1, King arms at 3, rot caps
+at `min(3, evidence)`). Half the system was inert.
+
+**Evidence is a biography, not a keypad.** The case reconstructs one
+woman's descent, and the trail has a shape: **felt it** (the journal) →
+**did it** (the dig) → **why** (the letter) → **the result** (Mara,
+found). The surface stations are the **people she touched**; the
+underground stations are the **things she did**.
+
+**The surface trail — her interactions with the town (and it MUST
+exist, or the game is a walking sim).** The threat is gated on evidence
+(cult wakes at 1, King arms at 3), so evidence has to live on the
+surface or Act 1 has no teeth. Mara barely existed visibly in town, so
+her surface trail is the physical TRACE she left in people's lives,
+findable in ANY order, each in its own place, each rising in
+temperature though the player walks them in any order:
+
+- **The receipt** (Hettie) — matches, canned milk. She *lived* here, a
+  resident buying staples, not a visitor. The mundane.
+- **The detention record** (Vane) — he had to book her. She was coming
+  apart in public. The crack. (Garrick's "she cursed at the sky" is the
+  **statement** that witnesses the same incident — testimony, not
+  evidence.)
+- **The journal** (the barn) — her own hand, the grief and the dream.
+  The turn. Fires the door-dream cutscene.
+
+The NPC is the **warm delivery** (show the photograph, they react and
+hand it over); the paper is **world-persistent**, so it outlives them
+(the Sable-drop precedent: the receipt is still on the shop spike, the
+record still in the office files, if the local is dead) — **no
+soft-lock, no looting a corpse required.** This makes Hettie, Vane, and
+Toby the load-bearing locals, and deepens three who were already
+central rather than inventing new ones.
+
+**The secret fourth — the bear.** The private Mara, against the three
+public records. The PI is numb everywhere but soft with children, and
+that one trait is the **key**: you cannot interrogate the bear out of
+Toby, you have to be the man he *wants* to give it to. He **lends** it —
+"she gave me the only toy in town; if you find her, give it back?" — so
+the PI carries a dead son's bear down toward the mother who gave it
+away, for a reunion he already knows can't happen. The tag reads the
+boy's name (**Sam**; NARRATIVE §4). On the surface it is a strange,
+tender, *unexplained* thing in a boy's hands; underground the letter
+names the son and **the bear detonates**. A plant in Act 1, a payoff in
+Act 2. The least admissible piece and the most devastating — and
+**optional**, so it can never gate progression.
+
+**The underground trail — her descent.** The **dig item** (proof she
+*laboured*, willing hands — a work-tally or the Sign in her own hand, in
+a room that is not the cell), then the **cell / letter** (the son, why
+she won't leave), then **Mara = proof** (the terminus; the trail ends
+at the found person, alive and unrecoverable).
+
+**The four jobs on one axis (evidence is the crux).** How far up Mara's
+trail you have climbed = **how hard He looks** (the lure chain: Mara is
+His bait, so tracing her is walking His own line back to Him) = **how
+much danger** the world holds = **how far gone the PI is.** One meter,
+personal, not bureaucratic.
+
+**The PI is the one who rots (four tiers).** The world rot was built
+backwards from its own bible (NARRATIVE §2: "the wrongness is the
+place, not the people"; STORY_AUDIT B6 caught it): the code turns
+locals into cultist sprites and curdles their dialogue. Relocate ALL of
+it to the PI. The town stays **ordinary to the end**; what deteriorates
+is the man hearing it, across four evidence tiers — **0** (safe town,
+professional) / **1–2** (unsettled, the seams show) / **3** (he knows;
+the King arms, the descent opens) / **4+** (underground, past return).
+The NPC's words never change; the PI's framing does (the conversation
+`prompt`, his interior beats — the engine already supports a
+`prompt(game)` callable, as Vane's mood proves). The uncanny inverts:
+not "their words curdle" but "his hearing does" — and warm-but-claimed
+is worse than curdled, because it never lets the player off the hook.
+This also **revives the inert underground evidence**: 4/5/6 turn the
+sanity screw even after the King-gate maxes.
+
+**The confrontation's cruelest reach — the name.** With the bear in
+hand, the PI can say the boy's name to Mara. He may mean it kindly (an
+acknowledgment: *you would have been a good mother to Sam*), but it is
+the one word she cannot survive: it drags the son out from under the
+god and forcibly **splits the fused "he"** she has spent months
+protecting. The reaction is **explosive** — she seizes the PI, the
+rite's stillness cracks, the congregation stirs — and in the break she
+reveals the bottom of herself: **she knows he is not down there, has
+always known, and digs anyway, because stopping means he is nowhere at
+all.** It changes her fate not at all (she buries him again and turns
+back to the dig); it only shatters her further and costs the player,
+who reached for the one word and gained nothing but the wound. The
+sharpest knife in the game, and it cuts only the hand that holds it.
 
