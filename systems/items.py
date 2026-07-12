@@ -104,6 +104,43 @@ ITEM_DEFS = {
                                "Don't come after me. I'm not lost. I've "
                                "never been this close.\"\n\n"
                                "It stops there. No signature."},
+    # ---- Mara's surface trail (evidence; NARRATIVE §6, DESIGN.md §9) ----
+    # The physical trace she left in the town: a resident's record, not a
+    # visitor's. Each is carryable and self-evident (no cosmology, no
+    # witness needed to read it), and WORLD-PERSISTENT -- it survives the
+    # local who kept it, so killing Hettie or Vane can never soft-lock the
+    # descent (the record is still on the shop spike, still in the office
+    # files).
+    "receipt":       {"name": "A Store Tab",
+                       "kind": "lore",
+                       "desc": "A curled slip off the shop spike, headed "
+                               "\"M. Blaine\" in Hettie's careful hand.\n\n"
+                               "Matches. Canned milk. The same short list, "
+                               "week on week, run down most of a year. The "
+                               "staples a resident buys, not a traveler.\n\n"
+                               "She did not pass through Brimley. She lived "
+                               "here."},
+    "detention_record": {"name": "A Booking Slip",
+                       "kind": "lore",
+                       "desc": "A booking slip out of the Sheriff's files, "
+                               "filled in a flat official hand.\n\n"
+                               "NAME: Blaine, Mara. Held one night for a "
+                               "disturbance on the main road. Shouting at the "
+                               "sky, the report says, at nothing anyone else "
+                               "could see. Released at first light, no "
+                               "charge.\n\n"
+                               "She was coming apart in the open, and the law "
+                               "wrote it down and let her go."},
+    "maras_scrawl":  {"name": "The Sign, in Her Hand",
+                       "kind": "lore",
+                       "desc": "A single leaf off the copying desks in the "
+                               "deep.\n\n"
+                               "The Sign, inked over and over down the page, "
+                               "in the hand you know from her journal and "
+                               "her letter. Hers.\n\n"
+                               "No captive draws this. She sat and did the "
+                               "work with her own hand, willing, like the "
+                               "rest of them."},
     # ---- The cult's testimony (three found fragments; gate nothing) ----
     # The congregation's own record, split across three leaves found down the
     # descent. The cult's voice lives in the DESCRIPTION (their personal

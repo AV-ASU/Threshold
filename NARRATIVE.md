@@ -312,12 +312,16 @@ The thread that drags you down. It is **Mara's case** — a missing
 person — so the evidence is **Mara's trail and nothing else**: a
 biography of one woman's descent, reconstructed piece by piece.
 
-> **Rework in progress (2026-07).** This is the settled canon; the code
-> still implements the legacy six (`CANONICAL_EVIDENCE` = `maras_room`,
-> `maras_journal`, `the_ledger`, `the_preacher`, `the_sign`,
-> `the_congregation`) and is catching up (build: `TODO.md` #22; design:
-> `DESIGN.md` §9). Where this section and the code disagree, this
-> section is the target.
+> **Rework in progress (2026-07).** This is the settled canon; the code is
+> catching up in stages (build: `TODO.md` #22; design: `DESIGN.md` §9).
+> **22a has landed:** `CANONICAL_EVIDENCE` is now the trail (`maras_receipt`,
+> `maras_record`, `maras_journal`, `maras_dig`, `maras_room`), the Ledger and
+> Preacher file as notes, the Pallid Mask is the keystone item, and Mara is
+> proof (the calling-out fires but no longer counts). **Still pending:** the
+> bear and the confrontation name-beat (22b), and relocating the world rot
+> from the town to the PI (22c) -- until 22c, the code still curdles the
+> townsfolk. Where this section and the code disagree, this section is the
+> target.
 
 **Three categories, and only one is evidence:**
 

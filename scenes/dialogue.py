@@ -20,26 +20,36 @@ the King-gate and the visibility floor.
 import random
 
 
-# The SIX canonical evidence beats (NARRATIVE.md §6): ONLY these count toward
-# the King-gate (3 = armed) and the visibility floor. Each name's value is the
-# floor it adds -- surface finds light, the deep truths heavy; all six sum to
-# the cap. Every other `_evidence(...)` call is now just flavor narration.
+# Mara's trail -- the ONLY evidence, and the whole point of the case
+# (NARRATIVE.md §6, DESIGN.md §9). Each is a carryable, self-evident thing
+# that is HERS: felt it (the journal) -> did it (the dig) -> why (the
+# letter). The three SURFACE beats (receipt, record, journal) keep the
+# Act-1 threat ramp reachable above ground (the cult wakes at 1, the King
+# arms at 3); the two DEEP beats run past the gate. Mara herself is PROOF,
+# never a filed beat; the Ledger, the Preacher and the Pallid Mask left the
+# count (they file as notes / the Mask is the keystone item). ONLY these
+# five count toward the King-gate and the visibility floor; every other
+# `_evidence(...)` call is flavor narration (or a case NOTE with
+# note=True). Each value is the floor it adds, rising along the trail.
 CANONICAL_EVIDENCE = {
-    "maras_room":       0.10,
-    "maras_journal":    0.12,
-    "the_ledger":       0.10,
-    "the_preacher":     0.16,
-    "the_sign":         0.18,
-    "the_congregation": 0.24,
+    "maras_receipt":  0.08,   # surface: her store tab (Hettie's shop)
+    "maras_record":   0.12,   # surface: her booking slip (Vane's office)
+    "maras_journal":  0.16,   # surface: her journal (the barn) -- fires the dream
+    "maras_dig":      0.20,   # deep: the Sign in her own hand (the Scriptorium)
+    "maras_room":     0.24,   # deep: her unsent letter (her cell)
 }
 
 
-def _evidence(game, name, content, weight=None, show=True):
-    """Surface a one-shot narrator line. If `name` is one of the six CANONICAL
+def _evidence(game, name, content, weight=None, show=True, note=False):
+    """Surface a one-shot narrator line. If `name` is one of the CANONICAL
     beats it is ALSO logged as evidence -- counting toward the King-gate and
     raising the visibility FLOOR by its canonical weight (the "knowing dooms
-    you" engine), and firing the notebook-scribble toast. Any other name is
-    just flavor narration. Gated by a per-name flag so a beat never re-fires.
+    you" engine), and firing the notebook-scribble toast. A non-canonical
+    name with `note=True` files the lines as a case NOTE instead (the
+    Ledger, the Preacher: real discoveries that are not Mara, so they keep a
+    home in the notebook without touching the gate -- NARRATIVE §6). Any
+    other name is just flavor narration. Gated by a per-name flag so a beat
+    never re-fires.
 
     Signature preserved for callers; `weight` is accepted but ignored --
     canonical weights above are authoritative."""
@@ -61,6 +71,10 @@ def _evidence(game, name, content, weight=None, show=True):
                 game._flash_notebook()    # corner scribble: you wrote it down
             if hasattr(game, "audio"):
                 game.audio.play("evidence_added", 0.7)
+    elif note:
+        # Not Mara's, so not case-evidence -- but a real find; keep it in
+        # the notebook as a case NOTE (never counts toward the gate).
+        _log_note(game, name, lines)
     # A discovery can point the PI back at someone he's met; those
     # interior lines ride the discovery's own narration so it reads as
     # one beat (and files their case notes). Collected REGARDLESS of
@@ -169,36 +183,8 @@ def _collect_revisit(game, name):
         game.save.set_flag("nudged_" + n["key"], True)
         _log_note(game, n["key"], n["lines"])
         out.extend(n["lines"])
-    out.extend(_the_third_thread(game, name))
     out.extend(_ready_for_the_desk(game, name))
     return out
-
-
-def _the_third_thread(game, name):
-    """The stall-breaker for the Crane fork (R-gate finding). Only three
-    evidence beats are reachable on the surface (the journal, the Ledger,
-    the preacher's remains), and the descent needs three -- so a player
-    who held Crane back (or never pressed him) caps at TWO and the case
-    goes silent. When the second canonical beat lands with the preacher
-    still alive, the PI's interior voice points him back at the pulpit:
-    the forced return reads as the investigation forcing his hand, not a
-    dead end. Fires once, only if Crane has been met. Never evidence."""
-    if (name not in CANONICAL_EVIDENCE
-            or game._evidence_count() != 2
-            or game.save.flag("preacher_doomed")
-            or not game.save.flag("crane_greeted")
-            or game.save.flag("nudged_third_thread")):
-        return []
-    game.save.set_flag("nudged_third_thread", True)
-    lines = [
-        "[c=dim]Two threads in hand, and both of them end somewhere under "
-        "this town.",
-        "One man here still says the quiet part out loud, from a pulpit, "
-        "to an empty room. He is not done saying it.",
-        "I should hear him out. However that ends.[/c]",
-    ]
-    _log_note(game, "the_third_thread", lines)
-    return lines
 
 
 def _ready_for_the_desk(game, name):
@@ -537,6 +523,28 @@ def _hettie_saw_photo(game):
     game.save.set_flag("hettie_saw_photo", True)
 
 
+# Mara's store tab -- surface evidence #1 (the receipt; NARRATIVE §6,
+# DESIGN.md §9). WORLD-PERSISTENT: it lives on the shop spike, so it is
+# reachable whether Hettie is alive, dead, or never spoken to. Two ways in
+# funnel HERE so it can never double-fire or soft-lock: the cold find (the
+# shop's on_interact_fn) and Hettie's warm handover (her Mara-memory beat).
+def grant_receipt(game):
+    if game.save.flag("evidence_maras_receipt"):
+        return
+    game.player.inventory.add("receipt", 1)
+    game.audio.play("pickup_rare", 0.7)
+    # Files silently and reads from the item (its desc carries the tab); the
+    # log excerpt is the case entry.
+    _evidence(game, "maras_receipt", [
+        "A store tab off Hettie's spike, headed 'M. Blaine' in her hand.",
+        "Matches, canned milk, the same short list run down most of a "
+        "year. The staples a resident buys, week on week.",
+        "Not a visitor passing through. She lived here.",
+    ], show=False)
+    if hasattr(game, "show_notice"):
+        game.show_notice("Her tab from the shop.")
+
+
 def hettie_on_leave(game):
     """Her old closing beat, kept as the one-time last word: she has
     already said more than is safe."""
@@ -658,7 +666,7 @@ def hettie_dialogue(game, npc):
             and not save.flag("hettie_mara_memory")
             and game.player.inventory.has("mom_notebook")):
         save.set_flag("hettie_mara_memory", True)
-        game.dialog.show([
+        _lines = [
             "Your girl. I'll tell you the one thing I know that's "
             "worth the telling.",
             "She used to come in here. Matches, canned milk. Counted her "
@@ -668,7 +676,18 @@ def hettie_dialogue(game, npc):
             "down half filled and walked out smiling. Left the basket "
             "on the counter. I never saw her again.[/c]",
             "[c=dim]It was the smiling I minded.[/c]",
-        ], speaker="Hettie", voice="blip_high", portrait="hettie")
+        ]
+        # Her warm handover of the store tab (surface evidence #1), only if
+        # the PI has not already lifted it off the spike himself. The tab
+        # is world-persistent either way (grant_receipt is flag-gated).
+        if not save.flag("evidence_maras_receipt"):
+            _lines.append(
+                "[c=dim]She works a curled slip off the spike by the till "
+                "and sets it on the counter, turned toward you. Her tab for "
+                "the girl. Matches, canned milk, week on week.[/c]")
+        game.dialog.show(_lines, speaker="Hettie", voice="blip_high",
+                         portrait="hettie")
+        grant_receipt(game)
         return
     # The trade: yesterday's paper (the April 14 issue, picked up before
     # the drive north) for ONE load of the cartridges she keeps under the
@@ -1719,6 +1738,10 @@ def preacher_body_examine(game, npc):
     game.player.inventory.add("cross", 1)
     game.audio.play("pickup_rare", 0.7)
     game.audio.play("low_pulse", 0.5)
+    # Real, and terrible, but not Mara -- so it files as a case NOTE, never
+    # case-evidence (NARRATIVE §6: the cult's hostility is already proven by
+    # the sealed roads and the grabbing cultists). note=True keeps it in the
+    # notebook without touching the King-gate.
     _evidence(game, "the_preacher", [
         "The Preacher. He named them from his pulpit, every Sunday. Then "
         "he went down to the river after them, believing a flock can be "
@@ -1727,4 +1750,4 @@ def preacher_body_examine(game, npc):
         "town could find him.",
         "His collar's still white. His cross lies in the mess. You take it.",
         "[c=dim]This is what naming them costs.[/c]",
-    ])
+    ], note=True)

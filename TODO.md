@@ -356,21 +356,27 @@ Canon + design are written; this is the code catch-up. Big — touches
 `CANONICAL_EVIDENCE`, the King-gate, the rot mixin, the confrontation,
 and the tests. Sequence it:
 
-- **22a. The roster.** Rebuild `CANONICAL_EVIDENCE` to the trail
-  (`DESIGN.md` §9): the **receipt** (Hettie/shop), the **detention
-  record** (Vane/office), the **journal** (barn, exists), a **dig item**
-  (a work-tally or the Sign in Mara's hand — a room that is not the cell),
-  the **letter** (her cell, exists). Drop `the_ledger` / `the_preacher` /
-  `the_sign` from the count (they become notes / the keystone item — the
-  Mask stays the carried key, just not case-evidence). **Mara is proof,
-  not evidence** (`the_congregation` leaves the count; the calling-out
-  still fires, it just is not a filed beat). New evidence are **pickup
-  items**, never walk-into-a-room examines. **World-persistent:** the
-  surface records survive the local's death (drop-on-body or
-  findable-in-place, the `sable_on_death` precedent) so killing Hettie or
-  Vane can never soft-lock the descent. Re-point the threat/descent gate
-  off the raw legacy count onto the new trail; keep the surface reachable
-  so the cult/King still ramp in Act 1 (no walking sim).
+- **22a. The roster. LANDED (2026-07).** `CANONICAL_EVIDENCE` is now the
+  trail: `maras_receipt` (the store tab, Hettie's shop), `maras_record`
+  (the booking slip, Vane's office), `maras_journal` (barn), `maras_dig`
+  (the Sign in Mara's own hand, the Scriptorium — a room that is not the
+  cell), `maras_room` (the unsent letter, her cell). All are **pickup
+  items** (new items `receipt` / `detention_record` / `maras_scrawl`). The
+  gate re-points for free (the count is `len(save.arg("evidence"))`, and
+  `_evidence` only logs canonical names) — no gate-constant edits; the
+  **three surface beats** keep the Act-1 ramp reachable above ground.
+  `the_ledger` + `the_preacher` now file as case **notes** (`_evidence(...,
+  note=True)`); `the_sign` leaves the count (the Mask stays the keystone
+  item); **Mara is proof** (`the_congregation` files a note via
+  `_log_note`, the calling-out still fires). **World-persistence:** the
+  records live in the scene (the shop spike, the office files), not on the
+  NPC, so a dead Hettie/Vane can never soft-lock the descent (warm handover
+  still rides Hettie's Mara-memory beat). The obsolete `_the_third_thread`
+  Crane-provoke stall-breaker was removed (the surface trail needs no
+  provoke). Guards: smoke's canonical-wired scan follows the dict; flow §9
+  gathers the three surface beats + a world-persistence check (§9b); the
+  ledger/sign/preacher/congregation guards flipped to notes/proof. Full
+  gate green.
 
 - **22b. The bear + the name.** New item: a stuffed **bear**, tag reads
   **Sam** (Samuel — pick the exact tag form; a 1993 nursery diminutive).
