@@ -500,7 +500,7 @@ def house_on_enter(game, scene):
     # Strip any stale host instance so re-entries don't stack.
     scene.npcs = [n for n in scene.npcs
                   if getattr(n, "tag", None) not in
-                  ("blocking_innkeeper", "host_innkeeper")]
+                  ("host_innkeeper",)]
     scene._key_hook_pos = None
     # The trap-keeper at his post: standing BEHIND the front-desk
     # register (north of it, against the wall), facing south into the

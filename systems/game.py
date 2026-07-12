@@ -1971,14 +1971,6 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
                 n.flash = 0.12
                 n._has_been_spotted = False      # they lose the lock on you
                 hit = True
-        for e in self.scene.enemies:
-            if not getattr(e, "alive", False):
-                continue
-            if (getattr(e, "kind", "") == "black_figure"
-                    and math.hypot(e.x - cx, e.y - cy) < MELEE_REACH):
-                e._stun_t = MELEE_STUN_DUR
-                e.flash = 0.12
-                hit = True
         # The axe also instantly dissolves a Watcher of the curse caught in
         # the arc (silent, free, but you must close to it).
         for w in list(self._watchers):

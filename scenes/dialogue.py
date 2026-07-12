@@ -521,8 +521,6 @@ TOBY_CONVO = {
             "beats": [
                 ("npc", "My mom hums a song that doesn't stop. She doesn't "
                         "know she's doing it."),
-                ("npc", "I keep biting my tongue. To check."),
-                ("npc", "[c=dim]It still bleeds right.[/c]"),
             ],
         },
         {
@@ -1468,9 +1466,10 @@ def clerk_dialogue(game, npc):
 # (introduce-as-PI + the photograph) with short answers of their own,
 # plus a question or two carrying their signature material. Their reactive one-shots (the town reacting to the case,
 # TODO #10) keep firing ahead of the menu, exactly as the principals'
-# volunteered beats do. The rot machinery is untouched: the convert/turn
-# swap overwrites dialogue_fn at its stage, so each of these talks lives
-# in the local's pre-turn window. The fold note moves off the old
+# volunteered beats do. The town stays visually ordinary end to end
+# (TODO #22c): no dialogue swap, no people-transform. What rots is the
+# PI's framing (_pi_framing), never the locals' words. The fold note
+# moves off the old
 # any-talk trigger onto the exchanges that actually carry the account
 # (Royce's roads, Garrick's warning) -- earned by asking, like
 # everything else in the verb.

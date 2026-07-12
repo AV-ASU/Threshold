@@ -238,7 +238,7 @@ it renders the procedural sprites to a labelled PNG strip.
   - `threat.py` — `proximity_tier` + `PROX_TIER_*` helpers.
 - `ui/` — dialog, inventory, notebook, fonts, text input. **Dialog is
   three channels now (2026-07):** `dialog.py`'s modal band survives ONLY
-  for choices, the infested portraits, and scripted beats with an
+  for choices and scripted beats with an
   `on_complete`; a named NPC line through the interact path floats over
   the speaker's head (`float_speech.py`); narrator/world-object text
   (examines, pickups, every `_evidence` beat) runs as the frameless

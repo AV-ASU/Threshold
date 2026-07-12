@@ -13,7 +13,6 @@ every external `from systems.game import <CONST>` keeps resolving unchanged.
 VOID_SCENES = {"clearing"}
 
 
-# Day-phase cycle. Sleeping in the cot advances the phase by one
 # Scenes where dread-state effects engage: the stillness heartbeat
 # ramps up while the player stands still here, and the cult-site
 # floors get the rare delayed-footstep trick.
@@ -63,7 +62,8 @@ OUTDOOR_SCENES = {"lodge_yard", "cornfield_path",
                   "clearing", "graveyard",
                   "country_lane", "cornfield_maze",
                   "arrival_road",
-                  "gravel_road_north", "river_crossing"}
+                  "gravel_road_north", "river_crossing",
+                  "backwoods_cabin"}
 
 # The continuous outside world. Crossing between any two of these is
 # a seamless transition: no fade, no door sound, the player position
@@ -239,7 +239,7 @@ FOLD_REFUGE_SCENES = SAFE_SCENES | {"maras_room"}
 # curse carried down from the surface keeps spawning Watchers here (they
 # ignore CULTIST_SCENES gating), drives visibility to 1.0, and lets the
 # apex erupt in the one room that must not host him.
-KING_FREE_SCENES = SAFE_SCENES | {"dark", "threshold"}
+KING_FREE_SCENES = SAFE_SCENES | {"dark", "threshold", "maras_room"}
 
 # Dim-but-clear interiors. The flashlight cone still draws -- the
 # cellar wants the light -- but dread / apex / dip overlays are
