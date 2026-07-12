@@ -139,16 +139,16 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         self.transition_dir = "out"
         self.cam_x = 0
         self.cam_y = 0
-        # The single world->screen projection (CAMERA.md). At pitch 0 this is
+        # The single world->screen projection (DESIGN.md §10). At pitch 0 this is
         # exactly the legacy `int(x - cam_x)` top-down view; keeping every
         # render conversion behind it is what makes a future tilt a parameter
         # change rather than a 37-scene rewrite. `cam_x/cam_y` remain the
         # source of truth for the offset (camera update + input still use
         # them); the camera is re-synced to them each frame in draw_world.
         self.camera = Camera()
-        # The oblique view is the DEFAULT (CAMERA.md): start at the locked tilt
-        # pitch. F3 toggles back to the flat pitch-0 top-down view (which stays
-        # byte-identical to the legacy raster). _reset_run_state re-seeds this on
+        # The oblique view is the DEFAULT (DESIGN.md §10): start at the locked tilt
+        # pitch. the flat pitch-0 view is dev-only now (the
+        # headless capture tools set it directly), byte-identical to the legacy raster. _reset_run_state re-seeds this on
         # every New Game.
         self._cam_pitch_target = math.radians(TILT_PITCH_DEG)
         self.camera.pitch = self._cam_pitch_target
@@ -431,8 +431,8 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         """Wipe all per-run state so a New Game starts clean. The
         Game instance is reused across Quit-to-Title -> New Game, so
         in-memory run state from a previous run is cleared here."""
-        # Debug oblique tilt (F3) starts off each run.
-        # Oblique view is the default; New Game starts tilted (F3 -> flat).
+        # Oblique view is the default; New Game starts tilted. Pitch 0 is
+        # dev/capture-only now (the headless tools set it directly).
         self._cam_pitch_target = math.radians(TILT_PITCH_DEG)
         self.camera.pitch = self._cam_pitch_target
         self.camera.yaw = 0.0
@@ -441,7 +441,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         self.visibility = 0.0
         self._vis_floor = 0.0
         self._being_seen = 0.0
-        # The hide-check struggle (STEALTH_REWORK.md): a searcher checking
+        # The hide-check struggle (DESIGN.md §12): a searcher checking
         # the enclosed hide the player is in opens a timed mash window.
         self._struggle = None
         # Aim-steady camera state: the post-shot chase lock and the
@@ -638,7 +638,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
                 and target_scene in SEAMLESS_WORLD_SCENES):
             self.cross_fold(target_scene, spawn_id)
             return
-        # The cellar is no longer key-gated -- the Ledger (evidence #3) is a
+        # The cellar is no longer key-gated -- the Ledger (a case note, not counted evidence) is a
         # core clue and shouldn't hide behind a fetch-quest. The Clerk's old
         # crate/key/bottle chain has been cut entirely.
         # Crossing a threshold eases the meter a touch -- you've put a
@@ -991,12 +991,12 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
             self.cam_x = target_x; self.cam_y = target_y
             # Land already at the target pitch on a snap (game start / scene
             # load) so the default oblique view doesn't ease up from flat on
-            # every door; the F3 toggle still eases (non-snap path below).
+            # every door; a pitch change still eases (non-snap path below).
             self.camera.pitch = self._cam_pitch_target
         else:
             self.cam_x += (target_x - self.cam_x) * 0.18
             self.cam_y += (target_y - self.cam_y) * 0.18
-            # Ease the tilt pitch toward its target (the F3 toggle). Zoom out
+            # Ease the tilt pitch toward its target. Zoom out
             # slightly as it tilts so more of the room reads; both are exactly
             # the shipping values at pitch 0 (scale 1.0), keeping that view
             # untouched.

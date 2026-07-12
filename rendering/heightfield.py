@@ -1,4 +1,4 @@
-"""Ground heightfield -- blind-spot hills (CAMERA.md Phase 6).
+"""Ground heightfield -- blind-spot hills (DESIGN.md §10).
 
 The camera already carries a real height axis (`Camera.project(wx, wy, wz)`,
 z rises by sin(pitch)); the simulation stays flat XY. A scene may opt in to a

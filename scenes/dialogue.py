@@ -14,7 +14,7 @@ reactivity comes from per-NPC flag gates; scenes/brimley.py
 _brimley_voice survives only for the doorstep Hettie cameo.
 `escalate` still exists but now has NO call sites -- kept only in case
 visibility-tiered copy is ever authored. Evidence beats are surfaced
-through `_evidence`; only the six in `CANONICAL_EVIDENCE` count toward
+through `_evidence`; only the five in `CANONICAL_EVIDENCE` count toward
 the King-gate and the visibility floor.
 """
 import random
@@ -304,7 +304,7 @@ def _pi_framing(base):
 # choice: his doom is no longer an automatic visit counter. The flock
 # exchange ends on a real fork -- press him and he takes his naming to
 # where they can hear it (preacher_doomed; the church swaps him for his
-# remains on the next entry, evidence #4), or hold him back and he banks
+# remains on the next entry, files a case note), or hold him back and he banks
 # the fire for now (the question stays open; a held-back Crane can still
 # be pressed later). Canon fence (§1b): the cult cannot be saved or
 # converted; Crane dies for believing he can. The choice decides whether
@@ -605,7 +605,7 @@ def _hettie_saw_photo(game):
     game.save.set_flag("hettie_saw_photo", True)
 
 
-# Mara's store tab -- surface evidence #1 (the receipt; NARRATIVE §6,
+# Mara's store tab -- surface evidence (the receipt; NARRATIVE §6,
 # DESIGN.md §9). WORLD-PERSISTENT: it lives on the shop spike, so it is
 # reachable whether Hettie is alive, dead, or never spoken to. Two ways in
 # funnel HERE so it can never double-fire or soft-lock: the cold find (the
@@ -759,7 +759,7 @@ def hettie_dialogue(game, npc):
             "on the counter. I never saw her again.[/c]",
             "[c=dim]It was the smiling I minded.[/c]",
         ]
-        # Her warm handover of the store tab (surface evidence #1), only if
+        # Her warm handover of the store tab (surface evidence), only if
         # the PI has not already lifted it off the spike himself. The tab
         # is world-persistent either way (grant_receipt is flag-gated).
         if not save.flag("evidence_maras_receipt"):
@@ -1809,7 +1809,7 @@ GARRICK_CONVO = {
 
 def preacher_body_examine(game, npc):
     """E on the Preacher's remains at the riverbank: take his cross + log
-    evidence #4 once. (2026-07 rework: the doom sends Crane out of his
+    files a case note once. (2026-07 rework: the doom sends Crane out of his
     church to talk his flock home; the body is found by the river in
     Brimley, never on the church floor.)"""
     if game.save.flag("cross_taken"):

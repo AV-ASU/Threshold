@@ -1,11 +1,11 @@
-"""Volumetric NON-box props for the oblique camera (CAMERA.md Phase 4 dress).
+"""Volumetric NON-box props for the oblique camera (DESIGN.md §10 dress).
 
 rendering/furniture.py turns upright furniture into axis-aligned BOXES. This is
 its sibling for the shapes a box can't express -- bodies of revolution: the
 **well** (a round stone drum with a winch gallows), stone **pillars**, cistern
 **basins** brimming with black water, and raked **grain heaps**. Each is keyed
 by decoration `kind`, drawn through the same Camera in the tilt path (depth
-sorted alongside furniture). The flat top-down game (F3) never calls this -- it
+sorted alongside furniture). The flat top-down game (pitch 0) never calls this -- it
 falls back to the 2D `_draw_<kind>` sprites in entities/decoration.py.
 """
 import math

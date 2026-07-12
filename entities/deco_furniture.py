@@ -65,7 +65,7 @@ class DecoFurnitureMixin:
             pygame.draw.line(surf, (56, 38, 22), (gx, ry + 4), (gx, ry + th - 5), 1)
 
     def _draw_writing_desk(self, surf, x, y):
-        """Flat (pitch-0 / F3) fallback for the writing_desk furniture box.
+        """Flat (pitch-0) fallback for the writing_desk furniture box.
         A table with a drawer line + knob across the front."""
         w = int(self.kwargs.get("w", 58)); h = int(self.kwargs.get("h", 42))
         rx, ry = x - w // 2, y - h // 2
@@ -461,7 +461,7 @@ class DecoFurnitureMixin:
                 pass
 
     def _draw_crate(self, surf, x, y):
-        # Flat (pitch-0 / F3) fallback for the crate FURNITURE box -- it had
+        # Flat (pitch-0) fallback for the crate FURNITURE box -- it had
         # none and rendered as the magenta _draw_unknown square. A slatted
         # pine lid seen from above, cross-braced.
         w = int(self.kwargs.get("w", 30)); h = int(self.kwargs.get("h", 30))

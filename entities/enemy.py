@@ -468,7 +468,7 @@ class Enemy:
         """Cultist behaviour: SCOUT -> CHASE -> SEARCH (or
         INVESTIGATE on a loud step) -> back to SCOUT. Mirrors
         the NPC chaser machine, including the graded-suspicion
-        detection (STEALTH_REWORK.md Pillar 1): the score (los *
+        detection (DESIGN.md §12 Pillar 1): the score (los *
         distance * facing cone * concealment) fills a per-enemy
         suspicion bar, only a FULL bar locks the chase, and an
         active chase holds while any usable score remains. SCOUT

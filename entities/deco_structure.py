@@ -635,7 +635,7 @@ class DecoStructureMixin:
                                    (x - 6, y - 30), 1)
 
     def _draw_doorframe(self, surf, x, y):
-        """The Threshold frame (flat / F3 fallback; the tilt view stands it up as
+        """The Threshold frame (flat pitch-0 fallback; the tilt view stands it up as
         real geometry via rendering/props.py). A plain pale frame around an EMPTY
         opening -- a door with no wall. Nothing fills the gap (you see through
         it); walking through it is the seal."""
@@ -670,7 +670,7 @@ class DecoStructureMixin:
 
     def _draw_shaft_ladder(self, surf, x, y):
         """The way up from the shaft floor: a single rope hanging from a hatch
-        overhead (flat / F3 fallback; the tilt view draws it as a real 3D rope
+        overhead (flat pitch-0 fallback; the tilt view draws it as a real 3D rope
         rising into the ceiling via rendering/props.py)."""
         # hatch frame + dark shaft at the top
         pygame.draw.rect(surf, (6, 6, 8), (x - 10, y - 50, 20, 9))

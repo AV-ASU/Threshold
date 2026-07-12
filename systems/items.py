@@ -78,7 +78,7 @@ ITEM_DEFS = {
                                "now. I am not lost. I have never been this "
                                "close.\""},
     # The thing the player CARRIES out of her cell holds the ADMISSION
-    # (NARRATIVE §4/§6 #1, 2026-07): the pregnancy Walter never knew of,
+    # (NARRATIVE §4/§6, 2026-07): the pregnancy Walter never knew of,
     # the son-for-a-daughter reflection, the boy's father dismissed in a
     # clause. The door is never mentioned. Her guilt is grief's own lie,
     # hers alone, never the story's verdict. The last thing the human

@@ -7,7 +7,7 @@ camera and AT THREE VIEWING ANGLES so the one-directional rule reads:
   edge-on  -> a thin line, basically gone (you walk past it)
 
 Not wired into the game. Reuses rendering.camera.Camera (the live tilt seam).
-See PORTALS.md for the design.
+See DESIGN.md §7 for the design.
 
     python tools/preview_portal.py     # -> /tmp/portal.png (+ .gif if PIL)
 """

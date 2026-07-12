@@ -136,7 +136,7 @@ def build_clearing():
         px, py = game.player.x, game.player.y
         if abs(px - pyre_x) > 40 or abs(py - pyre_y) > 40:
             return
-        # Flavor narration only -- NOT one of the six canonical beats, so
+        # Flavor narration only -- NOT one of the five canonical beats, so
         # it never touches the evidence count or the King-gate.
         _evidence(game, "the_burning",
             "A fire pit big enough to stand a family around, cold a long "
@@ -249,7 +249,7 @@ def build_shop():
     for mx, my in [(8, 7), (12, 8), (10, 10)]:
         sc.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16,
                                      "mote"))
-    # Mara's store tab, spiked on the counter (surface evidence #1;
+    # Mara's store tab, spiked on the counter (surface evidence;
     # NARRATIVE §6, DESIGN.md §9). It lives HERE, on the spike, so it is
     # reachable whether Hettie is alive, dead, or never spoken to -- the
     # world-persistent cold find. Her warm handover (the Mara-memory beat)
@@ -269,7 +269,7 @@ def build_shop():
     return sc
 def build_barn():
     """Small barn on the brimley east bank. Holds Mara's journal
-    (evidence #2) behind the workbench, and a boarded-over hatch where a
+    (a surface trail beat) behind the workbench, and a boarded-over hatch where a
     tunnel down to the Works once ran -- nailed shut now; the rite (the
     grove's descent fold) is the only way underground, and no hatch ever
     will be again. Lodge dressing (mounted buck, walleye,
@@ -337,7 +337,7 @@ def build_barn():
     sc.add_decoration(Decoration(hatch_x, hatch_y, "cellar_hatch"))
     sc._barn_hatch_pos = (hatch_x, hatch_y)
     sc.add_interactable(hatch_x, hatch_y, 36)   # [E] cue for the sealed hatch
-    # Mara's journal, stashed behind the workbench -- evidence #2.
+    # Mara's journal, stashed behind the workbench -- a surface trail beat.
     sc._journal_pos = (11 * TILE + 16, 3 * TILE + 16)
     # [E] cue so the player knows there's something behind the workbench.
     sc.add_interactable(sc._journal_pos[0], sc._journal_pos[1], 40)
@@ -350,7 +350,7 @@ def build_barn():
 
     def _barn_interact(game):
         px, py = game.player.x, game.player.y
-        # Mara's journal behind the workbench (evidence #2). Grants the
+        # Mara's journal behind the workbench (a surface trail beat). Grants the
         # journal item so the page-3 inventory flashback still fires.
         jx, jy = sc._journal_pos
         if abs(px - jx) < 40 and abs(py - jy) < 40:

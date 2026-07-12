@@ -907,7 +907,7 @@ class DecoHorrorMixin:
     def _draw_ledger(self, surf, x, y):
         """The guest register open on the front desk: a leather-bound ledger,
         two cream pages with ruled lines + signature scrawls, a faint gold gleam
-        on the names (evidence #3 -- the guests who never checked out)."""
+        on the names (the Ledger, a case note -- the guests who never checked out)."""
         cover = (74, 52, 36); cover_lo = (52, 36, 24)
         page = (224, 214, 188); spine = (150, 138, 112)
         line = (158, 148, 126); ink = (44, 36, 30)

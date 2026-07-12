@@ -2544,7 +2544,7 @@ def draw_scene_terrain(surf, scene, cam_x, cam_y, x0, y0, x1, y1,
         _draw_scene_roofs(surf, scene, cam_x, cam_y, x0, y0, x1, y1)
 
 
-# --- Tilted (oblique-camera) terrain (CAMERA.md Phase 2) -------------------
+# --- Tilted (oblique-camera) terrain (DESIGN.md §10) -------------------
 # Active only when camera.pitch > 0. The floor is a flat z=0 plane, so we
 # render the visible window flat (exactly the legacy raster, wrap-aware) and
 # warp the whole image to the oblique plane -- preserving every procedural
@@ -3132,7 +3132,7 @@ def _draw_floor_decal(surf, camera, deco, woff=(0.0, 0.0)):
     decoration + camera-orientation bucket; the per-frame cost on a cache hit
     is just one project + blit. `woff` is the wrap-clone WORLD offset (added
     before projection so the seam clone lands through the camera, not in
-    screen space; CAMERA.md Phase 5)."""
+    screen space; DESIGN.md §10)."""
     drawfn = getattr(deco, f"_draw_{deco.kind}", None)
     if drawfn is None:
         return
@@ -3613,7 +3613,7 @@ def draw_terrain_tilted(surf, scene, camera, sight=None):
     The upright occluders -- WALL tiles and SOLID furniture/props -- are NOT
     drawn here. They are RETURNED as `(wall_tiles, solid_decos)` so the caller
     can depth-interleave them with the actors and fade each per-actor
-    (CAMERA.md Phase 5: every actor + prop sorts against every wall by
+    (DESIGN.md §10: every actor + prop sorts against every wall by
     Camera.depth, and a wall fades for whichever actor it actually covers, not
     just the player). Only the flat layer -- the warped floor raster and the
     ground decals / billboard decorations that lie on or rise from it -- is
@@ -3746,7 +3746,7 @@ def draw_terrain_tilted(surf, scene, camera, sight=None):
         _wc["scene"] = scene
     # Decorations. Ground decals (rugs, stains, blood) stay flat on the warped
     # floor; non-solid billboards rise from it -- both drawn now, wrap-cloned
-    # across the seam THROUGH the projection (CAMERA.md Phase 5) so a torus
+    # across the seam THROUGH the projection (DESIGN.md §10) so a torus
     # scene's decor doesn't tear or pop at the fold under tilt/yaw. Curated
     # upright furniture/props are SOLID occluders -> returned for the caller.
     from rendering.furniture import is_solid_furniture

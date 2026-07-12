@@ -1,4 +1,4 @@
-"""Visualize the LookController on a real scene (headless) -- CAMERA.md Phase 3.
+"""Visualize the LookController on a real scene (headless) -- DESIGN.md §10.
 
 Scripts a mouse path through the control states and renders the world
 responding, so the heading/rotation math + damping can be judged before live

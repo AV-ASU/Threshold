@@ -91,7 +91,7 @@ SCENE_BUILDERS = {
     "the_sump":           build_the_sump,           # branch off the Cistern
     "the_cells":          build_the_cells,          # branch off the Sorting Hall
     "works_scriptorium":  build_works_scriptorium,
-    "works_sign":         build_works_sign,         # the Sign (evidence #5)
+    "works_sign":         build_works_sign,         # the Sign (lift the Pallid Mask, the keystone item)
     "works_deepstair":    build_works_deepstair,    # keystone gate -> Depths
     # The depths -- five rooms, one-way fall from well_bottom
     "depths_antechamber": build_depths_antechamber,

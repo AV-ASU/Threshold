@@ -97,9 +97,9 @@ item on the list: engine exists, canon is settled, payoff is the core fantasy.**
   `reflect=False`, earned by asking). Guarded by `tests/flow.py` §17e +
   the reworked §16c. **The unnamed "newcomer woman" NPC is CUT from the
   project entirely (maintainer call, 2026-07)** — an unexplained
-  welcomer on the farmhouse path read as noise, not dread; her
-  `ROT_CONVERT` stage-1 entry went with her (flow-guarded: she never
-  spawns).
+  welcomer on the farmhouse path read as noise, not dread; she never spawns
+  (flow-guarded), and the whole convert layer she rode was later cut
+  (TODO #22c).
 
 - **The choice box is SMALL — menu labels are authored short (2026-07).**
   An exchange carries an optional `label` (≤ ~44 chars, flow-guarded): the
@@ -113,19 +113,20 @@ item on the list: engine exists, canon is settled, payoff is the core fantasy.**
 
 - ~~**Pilot beat — the Crane choice**~~ **DONE (2026-07), upgraded to an
   inline `ask` fork in CRANE_CONVO's flock exchange:** press him (he takes
-  the naming where they can hear it — `preacher_doomed` latches, evidence #4
+  the naming where they can hear it — `preacher_doomed` latches, his death
   proceeds, and the PI's culpability lands as a NOTE `crane_provoked`) vs
   hold him back (the fire is only banked — the question stays open to press
   later; he is never savable-by-conversion, §1b — the player just decides
   whether HE is the one who points him). The provoke branch feeds the murder
   reveal below. NOTE the behavior change: his doom is no longer an automatic
-  visit-2 counter. **The stall-breaker (R-gate finding):** only three beats
-  are surface-reachable (journal, Ledger, preacher) and the descent needs
-  three — so when the SECOND canonical beat lands with Crane met and still
-  un-provoked, the PI's interior voice points him back at the pulpit
-  (`_the_third_thread`, a NOTE, flow-guarded): the forced return reads as
-  the investigation forcing his hand. Fixed alongside it: a silently-filed
-  beat (`show=False`, the journal) now still lands its revisit nudges.
+  visit-2 counter. (**The old `_the_third_thread` stall-breaker was CUT
+  with the TODO #22 rework.**) The surface set is now three fixed,
+  always-reachable pickups — the receipt (Hettie's shop), the detention
+  record (Vane's office), and the journal (the barn), findable in any order —
+  so the case can no longer stall waiting on a provoke, and Crane's press/hold
+  choice is a pure character beat rather than a gate. The removal is
+  flow-guarded. The silently-filed journal beat (`show=False`) still lands
+  its revisit nudges.
 
 ### 2. **[Fable + Opus]** The newspaper choice — pilot for the favor economy  *(planned with the user 2026-07; the broader favor economy stays direction-stage)*
 
@@ -170,7 +171,7 @@ full economy table is still to be drafted).
   (nothing stops the PI but himself); **existing verbs only** (give via E /
   dialog).
 
-### 3. **[Opus]** Ground heightfield — blind-spot hills  *(CAMERA.md Phase 6; PROTOTYPE landed 2026-07 — floor-roll rewrite + live authoring deferred)*
+### 3. **[Opus]** Ground heightfield — blind-spot hills  *(DESIGN.md §10; PROTOTYPE landed 2026-07 — floor-roll rewrite + live authoring deferred)*
 
 **PROTOTYPE DONE (behind a preview, dormant).** Built: `Scene.set_ground` /
 `Scene.ground_z` (bilinear, 0.0 unopted → dead-flat + pitch-0 byte-identical),
@@ -244,7 +245,7 @@ composition pass made concrete):
 - **Fog / mist volume** between the player and the distance shortens the
   effective sightline directly (the job the subsidence bowl wanted, minus the
   geometry). Rides the skybox/void rim that is already ~80% there.
-- **Landmark repetition + same-scene silent folds** (`cross_fold`, PORTALS.md,
+- **Landmark repetition + same-scene silent folds** (`cross_fold`, DESIGN.md §7,
   draw-only) give the "handed back / the town rearranges" uncanny with no sim
   change (`sight.py` blind-spot draw-gating already runs the sim while drawing
   only the cone).
@@ -283,7 +284,8 @@ supply line made a person (Hettie's shelves are bare because *his* deliveries
 stopped). Fable: a small dialogue nudge (he ran the route, goods in and out).
 Opus: place his **picked-clean semi rusting at the town edge** (the town ate
 its own last shipment; optional light scavenge, **never evidence**). Reconcile
-with his worker job-loop (pacing the road) + his stage-3 convert.
+with his worker job-loop (pacing the road). Royce no longer converts (the
+rot-people layer was cut, TODO #22c); he stays an ordinary local.
 
 ### 13. **[Fable]** PI theory ladder — the notebook thinks  *(was GAME_CHANGES §20)*
 
@@ -430,7 +432,7 @@ inspection and needs a person playing the game.
 ### 5. **[Opus]** Stealth rework — the TUNING loop
 
 The mechanic AND the placement pass are built and guarded
-(`tests/stealth.py` + flow §25; see `STEALTH_REWORK.md` for the design
+(`tests/stealth.py` + flow §25; see `DESIGN.md §12` for the design
 and its status note). What remains only proves out against a human
 player: the suspicion fill curve (`SUS_FILL_RATE`), the concealment
 factors, the sweep budget, and the struggle window/presses. Also
@@ -542,16 +544,16 @@ smaller-grid perf pass is the shippable core of this.
   lore unchanged.
 - **[Opus]** **Held-weapon offset per camera yaw** *(was HANDCRAFT_BACKLOG 3b)* — `draw_axe_held` reads at rest; the one remaining note is an eyeball pass on the equipped-weapon offset at every camera yaw so it never floats off the hand. Verify with a tilt capture across yaws.
 - **[Fable + Opus]** **The grove reads north of Brimley, the river in view** *(2026-07 canon ruling)* — `effigy_grove` is the mouth of the cult's mine, north of town above the river (NARRATIVE §7), and the congregation walked there openly before the rite hid it; the scene art is still a bare corn crop circle. Dress the rim so the river reads below it (the water in view, the dug mouth framing the descent pane) and the northern placement lands without a line of dialogue. Decoration only; the rite, the gates, and the pane stay exactly as they are. Verify with a `tools/capture_world.py` tilt capture + the full `python tests/run_all.py` gate.
-- **[Opus]** **Higher-contrast see-through doors** *(PORTALS.md)* — now that the
+- **[Opus]** **Higher-contrast see-through doors** *(DESIGN.md §7)* — now that the
   aperture's actors are sight-gated, opt in the doors where the
   effect reads strongest: a lit room off a dark hall, the front door onto the
   yard. Draw/opt-in only; no new tech.
-- **[Opus]** **Permanently-visible King through an OPEN fold** *(DESIGN.md §1 / `PORTALS.md`)* — the King currently looms through the rift only while it *forms*,
-  then steps through (intentional per `PORTALS.md`). A persistent silhouette
+- **[Opus]** **Permanently-visible King through an OPEN fold** *(DESIGN.md §1 / `DESIGN.md §7`)* — the King currently looms through the rift only while it *forms*,
+  then steps through (intentional per `DESIGN.md §7`). A persistent silhouette
   on the far side of an already-open fold is not built; revisit only if the
   direction changes.
 - **[Opus]** **Mine retrofit tail cleanups** *(2026-07 code review; none player-visible)* — (a) cache the `_tilt_rack_box` extrusion per (tile, yaw-bucket) like the wall cards (well_passage re-projects ~280 points/frame live); (b) fold `_RACK_CHARS` into the shared wall-scan char-set plumbing instead of a third parallel set; (c) the cave `door_style` key list in `scenes/__init__.py` duplicates the `UNDERGROUND_SCENES` gating idea — derive from one source; (d) `husk_bundle` + `pillar` are registered kinds with no placements (keep as reusable art or cut). Verify: `tools/capture_world.py` tilt capture byte-diff + full gate.
-- **[Fable + Opus]** **The barn reads lived-in by several people** *(scene dressing; `scenes/interiors.py`)* — the barn is where Mara went, and it carries her journal (evidence #2), but it currently reads as one person's spot. Dress it so it looks inhabited by MORE than one: multiple bedrolls/pallets, several sets of belongings, more than one place set. Decoration only, no canon or lore change (the journal beat + descent hook stay exactly as they are). Verify with a `tools/capture_world.py` tilt capture + the full `python tests/run_all.py` gate.
+- **[Fable + Opus]** **The barn reads lived-in by several people** *(scene dressing; `scenes/interiors.py`)* — the barn is where Mara went, and it carries her journal (the `maras_journal` trail beat), but it currently reads as one person's spot. Dress it so it looks inhabited by MORE than one: multiple bedrolls/pallets, several sets of belongings, more than one place set. Decoration only, no canon or lore change (the journal beat + descent hook stay exactly as they are). Verify with a `tools/capture_world.py` tilt capture + the full `python tests/run_all.py` gate.
 
 ---
 
@@ -575,3 +577,142 @@ build it answers:
 Output is a short verdict + ranked notes, not a rewrite. The value is a
 SECOND, independent model looking at the work, so the direction can flip: if
 Fable is doing the implementing, an Opus pass reviews it the same way.
+
+---
+
+## Story & dialogue audit — open findings (migrated 2026-07)
+
+> Folded in from the retired `STORY_AUDIT.md` (a read-only pass over every
+> player-facing string against `NARRATIVE.md`). The audit's **A** (broken
+> beats) and **B** (canon breaks) tiers were resolved on-branch; **B6**
+> (converted-local narration vs the renderer) and the convert half of **B7**
+> are mooted by the TODO #22c people-change cut. What survives is the long
+> tail below: interaction-logic bugs (**C**) and voice/polish (**D**).
+> **Caveat:** these predate the TODO #22 rework and their `file:line`
+> anchors were NOT all re-verified against the current tree, so a few may
+> already be resolved and line numbers may have drifted. Re-check each
+> against source before acting. (`C2` is confirmed still-open; the
+> `_the_third_thread` half of `C16` is moot, that stall-breaker was cut.)
+
+### C. Interaction-logic bugs
+
+- **C1.** The lure-collision caption (`scenes/well.py`, the one place the
+  engineered-chain dread surfaces) runs as a non-modal caption during the
+  calling-out; Mara's walk-home rite-holder line replaces it mid-read on
+  essentially every playthrough (`ui/narration.py` drops unread text).
+- **C2.** `_mara_stage` is never cleared in `_reset_run_state`
+  (`systems/game.py`): a run ending mid-staging makes the next run's first
+  `works_sign` entry silently eat the calling-out for that visit.
+  **(Confirmed still-open, 2026-07.)**
+- **C3.** The grove's evidence-meter content is dead: `_grove_enter`'s
+  "thread of gold" line and the "not finished forming" refusal
+  (`scenes/hidden_folds.py`) gate on ev < 3, but the grove is only reachable
+  at 3+; the "clarifies as evidence mounts" fiction now has no
+  player-visible expression.
+- **C4.** `scenes/lodge_yard.py` — the cellar-key narration points at "a
+  doorframe... against the boards"; no doorframe exists in the scene (the
+  'M' arrival fold it referenced was cut).
+- **C5.** The church LOGIN terminal (`scenes/villager_houses.py`) is
+  permanently dead (`user_code` is never set anywhere) and tonally alien
+  (ARG leftovers in a 1994 parsonage). Cut or reskin to paper records.
+- **C6.** Dead/contradicted machinery in the lodge: `innkeeper_confronted`
+  is never set (the blocking-Clerk branch is unreachable); comments say the
+  Clerk's bedroom is "locked at first" but the exit has no gate, so the
+  pressed-robe tell is open from minute one with no reaction from the
+  watching Sable (`scenes/lodge.py`). Decide: lock it or fix the comments.
+- **C7.** Flash-mode caption leak: "You dream of a doorway."
+  (`ui/cutscenes.py`) renders during the journal's 0.55s MEMORY flash. The
+  flash is a waking memory; present-tense "you dream" is the recurrence
+  flavor the flow-guard polices in the note.
+- **C8.** Legacy hp-death respawn text survives (`systems/game.py`: "You
+  wake on the town square", `world_emptied`); if reachable it contradicts
+  the death model (CAPTURED/CUSTODY/Carcosa end the run).
+- **C9.** Old Pell is `fold=True` but never describes the fold
+  (`scenes/brimley.py`), so the PI's auto-filed note quotes him giving
+  Royce's roads account he never gave (`systems/narrative_mixin.py`).
+- **C10.** Elapsed-time claims that break under fast play: Garrick's
+  "Nothing out of him for days now" fires on `preacher_doomed` (can be
+  minutes old); Vane's "I went over Tuesday morning" can precede any
+  possible visit.
+- **C11.** Toby's cold-open "You're looking for the lady from the lodge."
+  assumes the case before the PI has stated it, against the news-does-not-
+  spread rule. Gate on any intro/photo flag or reword to what a kid could
+  infer. (Cross-check the TODO #22 Toby rework, which made his witness beat
+  photo-earned; this may already be addressed.)
+- **C12.** The hunting-sheriff intro replays on every stage-3 office entry
+  (`systems/rot_mixin.py`); and the line "I'm supposed to tell you to leave,
+  son. I can't say it anymore." reports the failure instead of performing
+  the unfinished line ("says the line he can no longer finish").
+- **C13.** The PI's fold question ("I walked the road out of town... It set
+  me back down past this window") gates only on being TOLD about the fold,
+  not on having crossed one, so the game can put a lie in his mouth.
+- **C14.** Silent/dead interact cues: the dresser E-cue with no handler
+  (`scenes/lodge.py`); Toby's closet drawing announced as examinable but no
+  interactable registered (`scenes/interiors.py`); the altar's [E] cue after
+  the Mask is taken (`scenes/well.py`); the barn/farmhouse sealed hatches
+  play a sound with no "nailed shut from below" line.
+- **C15.** Flagged tension, intentional per in-file comment: SEAL is a bare
+  walk-through at the frame (no confirm) while the blast and grove rite are
+  deliberately two-press "never a lone-press point-of-no-return"
+  (`scenes/depths.py`). Confirm on purpose.
+- **C16.** Missable-by-design signposts worth confirming:
+  `_ready_for_the_desk` needs `sable_greeted` at exactly 3 evidence; players
+  who never met Sable lose the act-break pointer forever. (The old
+  `_the_third_thread` / `crane_greeted` half is moot: that stall-breaker was
+  cut with TODO #22.)
+
+### D. Voice / polish
+
+- Narrator "vanished into the corn" (`scenes/villager_houses.py`) adopts
+  Crane's drift-away impression as fact; canon is one night procession, and
+  §2 corrects the image for Mara ("not into the corn"). Crane's greet ("more
+  every season") and Sable's "no end of those this past year... They come"
+  keep arrivals in the habitual present; arrivals ended before the seal.
+- Revolver description leaks mechanics: "(3+ evidence)" (`systems/items.py`);
+  also "fires it in the way you're facing."
+- Descent interior voice wobbles POV (first-person notes vs second-person
+  on-screen beats, `systems/game.py`).
+- Notebook headers from slugs (`ui/notebook_ui.py`): "Maras Room", "Chalk
+  Deep", "Descent Mask", "Showed The Clerk" — dev slugs where the case file
+  should read like the PI typed it.
+- HUD fall-through labels: "Dark" (the Hive!), "Depths Antechamber", "Effigy
+  Grove", "Threshold" (`scenes/base.py` fallback), plus `"lodge": "the Inn"`
+  against "Arcadia Lodge" everywhere else.
+- NPC object names "Clerk"/"Sheriff"/"Preacher" leak on generic paths
+  (corpse examine: "Clerk. Face-down where the round put them.").
+- Placeholder texts on cued interactions: "Some old tools." (the beat's
+  designed contradiction is lost), "A small stash.", "A weathered
+  headstone.", "A scarecrow.", "A key.", "An axe for chopping wood."
+- Small ones: payphone "your own voice, already mid-sentence" (the one
+  temporal-uncanny string; make it spatial); Sable's "last night"/"tonight"
+  against elapsed play; the robe "hangs... pressed and folded"; the
+  Invitation's "Sleep where we slept" with no sleep verb at the school;
+  Mara's "I have never been this close" vs the letter's locked "I've never
+  been this close" (make the expansion a choice or match it); the handoff's
+  "the day they were ready" (canon: HE was ready); burn-site "All of their
+  things." vs the Sorting Hall cataloguing everything; Mask desc "So, you
+  suspect, does the door in the deep" plants "the door can open"; threshold
+  recognition + "A doorframe with no wall." fire at the cave mouth, 13
+  sight-gated rows before the frame is visible; lowercase hide notices;
+  "waking the dark ." double space; "midwestern" casing; Garrick and hollow
+  Vane both call the PI "son"; two simultaneous Hetties (door + counter);
+  duplicate candle decoration in Toby's house.
+- Missing canon clincher: §4's ledger entry promises "your own name, signed
+  in tonight, already among them" — the cellar text only gestures at it and
+  the desk sign-in is optional; one clause conditioned on `register_signed`
+  closes the loop.
+- Stale dev comments that will mislead future edits: Deep Stair references
+  in `scenes/well.py`, `scenes/hidden_folds.py`, `scenes/depths.py`; "[E]
+  cue: the Playscript"; the lodge car-keys/tab comments; the phantom 'M'
+  fold; cornfield_path's preacher-patrol note; the farmhouse glitch-wall
+  docstring.
+
+### From the code-health audit (retired `CODE_HEALTH_AUDIT.md`)
+
+Every high/medium/low finding from that pass was fixed on-branch; only one
+awareness-only item remains: **L5 — complexity hotspots.** The largest
+function bodies (`tests/flow.py main`, `scenes/brimley.build_brimley`,
+`systems/render_mixin.draw_world`, `rendering/sprites_npc.draw_npc_sprite`,
+`rendering/king_unfold.draw_king_unfold`) match the project's deliberate
+"one cohesive beat per function" style and sit behind the test gate; listed
+so growth stays a choice, not an accident.

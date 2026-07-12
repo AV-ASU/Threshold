@@ -1,4 +1,4 @@
-"""Graded detection for the cult AI (STEALTH_REWORK.md, Pillar 1).
+"""Graded detection for the cult AI (DESIGN.md §12, Pillar 1).
 
 One source for the per-tick detection SCORE both cult machines read --
 entities/npc.py (surface chasers) and entities/enemy.py (underground

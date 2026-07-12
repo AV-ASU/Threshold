@@ -48,7 +48,7 @@ class Decoration(
             return                       # conditionally withheld (e.g. the
             #                              arrival-road car during the treadmill)
         # Route the point anchor through the shared projection when the live
-        # game supplies a camera (CAMERA.md); fall back to the legacy
+        # game supplies a camera (DESIGN.md §10); fall back to the legacy
         # top-down conversion for headless tools that pass raw offsets. At
         # pitch 0 the two are arithmetically identical. `wox/woy` is the
         # wrap-clone world offset (0 for the primary draw), passed explicitly

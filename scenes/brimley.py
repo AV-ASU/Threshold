@@ -983,7 +983,7 @@ def build_brimley():
     # ---- The churchyard -- the too-even graves of the vanished ----
     # Crooked headstones in two rows: the uncanny rows-of-the-vanished,
     # each leaning its own way a few px off the lattice. (The Preacher's
-    # body is no longer here -- evidence #4 is now found in his own church,
+    # body is no longer here -- the preacher's death (a case note, not counted evidence) is now found in his own church,
     # gutted for naming the cult; see scenes/villager_houses.py.)
     hs = random.Random(91)
     for ry_ in (12, 14):
@@ -1312,7 +1312,7 @@ def build_brimley():
 
     # The Preacher's end (2026-07 rework): the doom sends Crane out of his
     # church, down to the river after his flock. His remains lie on the
-    # west bank (evidence #4, the cross); the emptied church's river-mud
+    # west bank (the cross; a case note, not counted evidence); the emptied church's river-mud
     # line points here. The scene rebuilds each load, so the remains are
     # re-laid every entry after the doom.
     sc._preacher_bank_pos = (31 * TILE + 16, 52 * TILE + 16)

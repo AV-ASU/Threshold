@@ -278,7 +278,7 @@ class NPC:
 
     def _cult_tick(self, dt, scene, player):
         """Cultist behaviour state machine: SCOUT, CHASE, SEARCH,
-        INVESTIGATE. Detection is GRADED (STEALTH_REWORK.md Pillar 1):
+        INVESTIGATE. Detection is GRADED (DESIGN.md §12 Pillar 1):
         a per-enemy suspicion in [0, 1] fills from the detection score
         (los * distance * facing cone * concealment) and only a FULL
         bar locks the chase -- so there is a real "have they spotted

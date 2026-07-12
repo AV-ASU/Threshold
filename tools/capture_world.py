@@ -1,5 +1,5 @@
 """Deterministic draw_world capture — the before/after gate for the camera-seam
-refactor (CAMERA.md Phase 1).
+refactor (DESIGN.md §10).
 
 Boots a real Game headless, loads a set of scenes, freezes the clock + seeds
 RNG so output is reproducible, and saves draw_world() to PNG. Run it once

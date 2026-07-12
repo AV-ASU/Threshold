@@ -113,8 +113,8 @@ CHASE_STATIONARY_MULT = 0.35
 # input-driven target over this window, giving a tactile accel/decel feel.
 MOVE_SMOOTH_TAU = 0.12
 
-# Oblique-camera tilt (CAMERA.md Phase 2). The tilt is the DEFAULT view;
-# F3 toggles back to the flat pitch-0 view (the legacy raster) and eases in.
+# Oblique-camera tilt (DESIGN.md §10). The tilt is the DEFAULT view;
+# The flat pitch-0 view is dev-only now (the capture tools set it directly).
 # pitch 0 = that flat fallback. TILT_PITCH_DEG is the locked ~55deg default.
 TILT_PITCH_DEG = 55
 TILT_EASE = 0.12             # per-frame lerp of pitch toward its target
@@ -416,7 +416,7 @@ LOCAL_KILL_VIS_CAP = 0.96
 GUN_PROJECTILE_SPEED = 340
 GUN_PROJECTILE_COLOR = (236, 232, 214)   # pale lead, distinct from cult amber
 
-# ---- Stealth rework (STEALTH_REWORK.md): graded suspicion + cover classes -
+# ---- Stealth rework (DESIGN.md §12): graded suspicion + cover classes -
 # Detection is GRADED, not binary: each cultist carries a suspicion value in
 # [0, 1] filled per tick by score = los * distance_falloff * facing_cone *
 # concealment. Cover changes how HARD you are to detect, never WHETHER you

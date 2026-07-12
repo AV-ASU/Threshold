@@ -132,7 +132,7 @@ class DecoMineMixin:
                              (int(tx1), int(ty1)), 3)
 
     def _draw_waterfall(self, surf, x, y):
-        """A sheet of water falling down the cave cliff into the river (flat / F3
+        """A sheet of water falling down the cave cliff into the river (flat pitch-0
         fallback; the tilt view draws it as a real falling sheet via
         rendering/props.py). Animated streaks scroll down + foam at the base."""
         H = 46

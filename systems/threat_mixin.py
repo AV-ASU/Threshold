@@ -69,7 +69,7 @@ class ThreatMixin:
         if self._evidence_count() >= CULT_WAKE_EV:
             self._ensure_cultists(key, dt)
         # Cover WEIGHTS the gaze now instead of blanking it
-        # (STEALTH_REWORK.md §5): corn scales each watching cultist's
+        # (DESIGN.md §12): corn scales each watching cultist's
         # contribution by SUS_CONCEAL_CORN, an enclosed hide zeroes it.
         conceal = _conceal_factor(self.player)
         for n in self.scene.npcs:
@@ -155,7 +155,7 @@ class ThreatMixin:
                 self.audio.play("cult_lose", 0.45 * dmult, pan=pan)
 
     def _tick_struggle(self, dt):
-        """The hide-check struggle (STEALTH_REWORK.md §4). A SEARCHING
+        """The hide-check struggle (DESIGN.md §12). A SEARCHING
         cultist that reaches the enclosed hide the player is in CHECKS it
         (the cult ticks set scene._hide_check); that opens a short mash
         window -- E/SPACE presses count in the event loop. Enough presses
@@ -666,7 +666,7 @@ class ThreatMixin:
                     if (self._flashlight_lit()
                         and self.scene.key not in DIM_SAFE_SCENES)
                     else 0.0)
-        # Cover reads GRADED now (STEALTH_REWORK.md §5). The gaze term
+        # Cover reads GRADED now (DESIGN.md §12). The gaze term
         # (self._gaze_count) arrives already concealment-weighted from
         # _tick_cultists -- corn scales each watcher's contribution, an
         # enclosed hide zeroes it. Only the enclosed hide keeps the old

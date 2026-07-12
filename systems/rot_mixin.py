@@ -546,7 +546,7 @@ class RotMixin:
             deco = Decoration(wx, wy, rng.choice(pool))
             # Phase 4: the rot is a WORLD CHANGE — gated to line of sight under
             # tilt so it reveals only where the player actually looks (the
-            # infection 'updates in memory' when seen; CAMERA.md Phase 4).
+            # infection 'updates in memory' when seen; DESIGN.md §10).
             deco._sight_gated = True
             self.scene.add_decoration(deco)
             placed += 1

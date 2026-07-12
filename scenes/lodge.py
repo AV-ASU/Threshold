@@ -428,7 +428,7 @@ def build_lodge():
     sc.add_decoration(Decoration(8 * TILE + 16, 9 * TILE + 16, "phantom_mark"))
 
     # The Lodge front desk -- the reception counter where Sable has every
-    # guest sign in. The guest register (the Ledger, evidence #3) sits open
+    # guest sign in. The guest register (the Ledger, a case note) sits open
     # on it; you sign on arrival, and re-reading it later is the evidence
     # (house_interact). A reception nook below the wall of the vanished, so
     # the names you sign under are the names that never checked out.
@@ -541,7 +541,7 @@ def house_interact(game):
     sign-in register. First press SIGNS it (the light arrival beat);
     re-reading it is a LEAD now, not the evidence -- the book is nearly
     new, and the full ones went somewhere when they filled. The Ledger
-    itself (evidence #3) is the boxed old registers in the PADLOCKED
+    itself (the Ledger, a case note) is the boxed old registers in the PADLOCKED
     cellar (2026-07 rework; the key hangs behind the house).
 
     The cellar hatch (E, kitchen): the locked feedback + the soft
@@ -695,7 +695,7 @@ def build_lodge_cellar():
     PADLOCKED kitchen hatch (the cellar key hangs behind the house).
     Stone walls, packed dirt floor, a single hanging bulb. The
     workbench chest holds the woodshed key; the boxed OLD
-    REGISTERS on the east crates are the Ledger, evidence #3 (2026-07:
+    REGISTERS on the east crates are the Ledger, a case note (2026-07:
     moved back down here from the front desk, behind the lock); and the
     guttering candles pay off the cult-devotion beat once you've seen
     the dark below.
@@ -764,7 +764,7 @@ def build_lodge_cellar():
     sc.add_furniture("firewood", [(3, 10), (4, 10)], w=58, h=24)
     # Crates of stored goods filling out the cellar's east end. The top
     # of the west crate carries the Lodge's boxed OLD REGISTERS -- the
-    # Ledger, evidence #3 (read via basement_interact).
+    # Ledger, a case note (read via basement_interact).
     sc.add_furniture("crate", [(10, 4)])
     sc.add_furniture("crate", [(11, 4)])
     sc.add_furniture("barrel", [(11, 2)])
@@ -792,7 +792,7 @@ def build_lodge_cellar():
 
 def basement_on_enter(game, scene):
     """Drop the woodshed key on the workbench (idempotent via save flag).
-    (The Ledger, evidence #3, is the boxed old registers on the east
+    (The Ledger, a case note, is the boxed old registers on the east
     crates -- basement_interact reads it; the padlocked hatch upstairs
     is the gate.)"""
     game._provoke_cult(0.10)
@@ -821,7 +821,7 @@ def basement_on_enter(game, scene):
 
 
 def basement_interact(game):
-    """E at the old registers (east crates): the Ledger, evidence #3.
+    """E at the old registers (east crates): the Ledger, a case note.
     E at the workbench chest: the woodshed key (gate to the axe in the
     shed)."""
     sc = game.scene

@@ -11,7 +11,7 @@ Depths:
   works_vats         -- the Cistern (the dig broke into the river)
   works_sorting      -- the Sorting Hall (shed lives of the claimed)
   works_scriptorium  -- the Scriptorium (the Sign, copied endlessly)
-  works_sign         -- the Sign Chamber (lift the Pallid Mask; evidence #5)
+  works_sign         -- the Sign Chamber (lift the Pallid Mask, the keystone item)
   works_deepstair    -- the Deepest Face (the dig's end: powder from the
                         Sump blasts the last few feet; the FALL into the
                         old workings is one-way)
@@ -498,11 +498,11 @@ def build_maras_room():
     """Mara Blaine's cell, a side room off the Sorting Hall. She didn't
     rent a lodge room and vanish -- she moved IN, down here among the
     cult's works. A cot, a burnt-down candle, her cult robe on a peg, and
-    folded in it the unsent letter to her father. Evidence #1: she came,
+    folded in it the unsent letter to her father. The letter (a deep trail beat): she came,
     and she joined willingly."""
     floor, objs = _box(10, 9)
     # A cramped cell with the cot walled off in a back alcove behind an
-    # interior partition + doorway -- so the robe + letter (evidence #1) sit
+    # interior partition + doorway -- so the robe + letter (a deep trail beat) sit
     # in an indoor blind spot, unseen from the cell until the player rounds
     # the wall.
     for y in range(1, 5):
@@ -518,7 +518,7 @@ def build_maras_room():
     sc.set_spawn("from_works_sorting", 5, 7)
 
     sc._cot_pos = (2 * TILE + 16, 2 * TILE + 16)
-    sc.add_interactable(sc._cot_pos[0], sc._cot_pos[1], 46)  # [E] cue: robe + letter (evidence #1)
+    sc.add_interactable(sc._cot_pos[0], sc._cot_pos[1], 46)  # [E] cue: robe + letter (a deep trail beat)
     sc.add_furniture("bed", [(1, 1), (1, 2)], w=34, h=52)
     sc.add_decoration(Decoration(6 * TILE + 16, 1 * TILE + 22, "candle"))
     sc.add_decoration(Decoration(8 * TILE + 16, 6 * TILE + 16, "phantom_mark"))
@@ -663,7 +663,7 @@ def build_works_scriptorium():
                 # here.
                 game._descent_voice("descent_leave")
             return
-        # Mara's OWN hand at the Sign (deep evidence #4; DESIGN.md §9). Proof
+        # Mara's OWN hand at the Sign (the dig, a deep trail beat; DESIGN.md §9). Proof
         # she was one of the willing, not a captive -- the same hand as the
         # journal and the letter, working the cult's compulsion. Files
         # silently; the leaf itself reads from the kit.
@@ -694,7 +694,7 @@ def build_works_scriptorium():
 
 # ---- Room 6: the Sign Chamber (key: works_sign) ----
 
-# THE CONFRONTATION (2026-07, NARRATIVE §4/§6 #6). The calling-out walks
+# THE CONFRONTATION (2026-07, NARRATIVE §4/§6). The calling-out walks
 # her to you; this is the exchange it opens. She cannot be argued home:
 # asked to come away, no one leaves; asked the way out, there is none.
 # The father card is the PLAYER'S OWN ASK, never automatic -- it breaks
@@ -846,7 +846,7 @@ MARA_CONVO = {
 def _mara_voice(game, npc):
     """Mara's confrontation -- the #6 payoff (NARRATIVE §4). The case was
     never a rescue; the calling-out walks her to you and this opens the
-    exchange (MARA_CONVO above). Evidence #6 files the moment it opens,
+    exchange (MARA_CONVO above). Mara is proof, not a counted beat; the calling-out fires the moment it opens,
     whatever the player asks. Full lucidity changes nothing: the father
     card breaks her certainty and she still turns back to the dig. After
     it, she has gone back to the kneeling. (A shot Mara forfeits #6: the
@@ -907,7 +907,7 @@ def build_works_sign():
     sc.set_spawn("from_below", 11, 5)
 
     # The Yellow Sign, daubed vast across the apse -- the cult's 2D
-    # *brand* of Him. The thing itself, evidence #5, is the Pallid Mask on
+    # *brand* of Him. The thing itself, the keystone item, is the Pallid Mask on
     # the altar (a pedestal) in the apse. You lift it at the altar.
     sign_x = 6 * TILE + 16
     sc._sign_pos = (6 * TILE + 16, 2 * TILE + 20)   # the altar, not the wall
@@ -941,7 +941,7 @@ def build_works_sign():
     # so no gaze, no chase, no grab (the ones IN the rite never break
     # from it; the east patrol stays the room's live threat) -- and MARA
     # KNEELS AMONG THEM, one more hood in the rank until the room says
-    # her name (the calling-out below). Evidence #6 lands here now.
+    # her name (the calling-out below). Mara is proof; the calling-out lands here now but does not count.
     sc._kneelers = []
     for kx in (4, 5, 7, 8):
         k = NPC(kx * TILE + 16, 5 * TILE + 16, "A kneeler", "cultist",
@@ -972,7 +972,7 @@ def build_works_sign():
     # THE CALLING-OUT (2026-07, settled with the user). First entry into
     # the nave: the kneelers rise one by one and turn to you, one of them
     # says her name at the room, and Mara stands up out of the rank and
-    # comes to you for the exchange (_mara_voice, evidence #6). Then the
+    # comes to you for the exchange (_mara_voice; Mara is proof, not a counted beat). Then the
     # room folds back to the kneeling as if you had never come in. The
     # trigger is a walk-on band, never an E-press, so it cannot steal the
     # altar's Mask/rite choice.

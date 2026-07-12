@@ -69,7 +69,7 @@ def _box(w, h):
     return floor, objects_l
 
 
-# --- Shape toolkit (CAMERA.md Phase 4: vary the underground silhouettes) ---
+# --- Shape toolkit (DESIGN.md §10: vary the underground silhouettes) ---
 #
 # The underground was a stack of identical rectangles. Under the tilted
 # blind-spot camera the *shape* of a room is what makes a corner a place to
@@ -309,7 +309,7 @@ def build_depths_procession():
     # The procession's one diegetic beat (TODO #8): the candle line read
     # up close. Wax on old wax -- they filed to the rite many more times
     # than once, and never hurried. Narration + a case NOTE (never
-    # evidence; the six canonical beats are locked).
+    # evidence; the five canonical beats are locked).
     sc.add_interactable(8 * TILE + 16, 4 * TILE + 16, 36)
 
     def _candles_interact(game):

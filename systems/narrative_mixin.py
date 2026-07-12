@@ -247,7 +247,7 @@ class NarrativeMixin:
         Idempotent by `name` so re-triggering a pickup never dupes. Used by
         the cult-testimony fragments (the cult's voice is the item desc; this
         is the PI's reaction). NOTES never inflate `_evidence_count`, so they
-        never arm the King or the world rot -- only the six CANONICAL_EVIDENCE
+        never arm the King or the world rot -- only the five CANONICAL_EVIDENCE
         beats do."""
         notes = self.save.arg("notes", [])
         if not isinstance(notes, list):

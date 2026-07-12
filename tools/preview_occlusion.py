@@ -58,7 +58,7 @@ FOCUS = [(PX, PY, PLR_H), (CX, CY, PLR_H)]
 
 def _occ_alpha(cam, wx, wy, h):
     """Min occluder alpha over every focus actor -- the wall fades for whichever
-    of them it actually covers (CAMERA.md Phase 5 per-actor occlusion)."""
+    of them it actually covers (DESIGN.md §10 per-actor occlusion)."""
     a = 255
     for fx, fy, fh in FOCUS:
         a = min(a, occluder_alpha(cam, wx, wy, h, fx, fy, fh))

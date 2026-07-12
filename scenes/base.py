@@ -219,7 +219,7 @@ class Scene:
         # separate `_treadmill` loop. None = no band (see render_row). Off by
         # default; only the arrival road sets it.
         self._render_band = None
-        # Oblique-camera skybox surround (CAMERA.md Phase 5). None = let the
+        # Oblique-camera skybox surround (DESIGN.md §10). None = let the
         # game pick by scene type ("overcast" sallow sky for OUTDOOR_SCENES,
         # near-black "void" for interiors/underground so the horror keeps its
         # dark). A scene builder may pin "overcast"/"void" explicitly to
@@ -243,7 +243,7 @@ class Scene:
         # Furniture footprint tile (tx, ty) -> top height, so a tabletop prop
         # placed on that tile can be seated ON the surface (seat_tabletop_props).
         self._surface_tops = {}
-        # GROUND HEIGHTFIELD (CAMERA.md Phase 6, blind-spot hills). None = a
+        # GROUND HEIGHTFIELD (DESIGN.md §10, blind-spot hills). None = a
         # dead-flat scene: `ground_z` returns 0.0 everywhere, so the floor, the
         # actors, and the sight LOS are all a strict no-op (and pitch 0 is
         # byte-identical). A builder opts in by attaching an (h x w) float grid
@@ -638,7 +638,7 @@ class Scene:
 
         On a scene with a ground heightfield a terrain CREST also occludes: a
         hill higher than the eye-to-target sight ray hides what is beyond it
-        (CAMERA.md Phase 6). The flat path (no heightfield) is unchanged."""
+        (DESIGN.md §10). The flat path (no heightfield) is unchanged."""
         dx = self.world_dx(x0, x1)
         dy = self.world_dy(y0, y1)
         n = max(1, int(math.hypot(dx, dy) // step))

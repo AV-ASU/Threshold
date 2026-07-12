@@ -290,7 +290,7 @@ def _gold_pool(screen, cx, cy, r, intensity):
 
 
 def _flat_peek(target, anchor, charge):
-    """Pitch-0 (F3) fallback: the old flat top-down slice stood up as a panel."""
+    """Pitch-0 fallback: the old flat top-down slice stood up as a panel."""
     w, h = PORTAL_W, PORTAL_H
     ax, ay = anchor
     surf = pygame.Surface((w, h))

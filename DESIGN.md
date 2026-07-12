@@ -131,8 +131,9 @@ its head) and pings the cult to **investigate the body**, and the body
 > invisibly, before you arrived — nobody here is mid-conversion. The
 > world rot is **not the townsfolk changing**; it is the **veil thinning
 > for the PI** as he learns too much and He turns His eye back on the face
-> from the dream. "Convert" and "turn" are how the truth **surfaces to
-> you**, not allegiances being switched. Underneath, they were always His.
+> from the dream. What the PI reads as the town "going wrong" is the truth
+> **surfacing to him**, not allegiances being switched. Underneath, they
+> were always His.
 
 > **The people underneath the rot are read by their WANTING (§8).** The
 > world rot is how the truth surfaces to the PI; §8 is why each local is
@@ -162,19 +163,18 @@ What rises with the stage:
   It is **the pressure of the vessel made visible** — His attention
   settling on you, not snow, not weather. Light at stage 1, a steady
   yellow drift by stage 3.
-- **The people go — and *how* they go means something.** The
-  **peace-makers convert** — the welcoming newcomer (first, at stage 1),
-  Mrs. Calder who "hears the door" (2), Garrick and Royce (3). A convert
-  is **passive cult**: they turn toward you and their watching raises
-  visibility, but they never chase or grab. The **resisters turn** —
-  Hettie (2), Garrick, Old Pell and Toby (3): they keep their identity,
-  their defiance, and their **exact bodies** (the town reads NORMAL; the
-  wrongness is the *place*, not the people, NARRATIVE §2). What betrays them is what
-  they **say**: their talk goes flat and off, reporting small ordinary
-  things from behind a face that no longer means them, and never
-  acknowledging the gap. The dread is the mundane line delivered by
-  someone who is no longer home behind it — one impossible thing, and it
-  is the door.
+- **The people do NOT change — the man hearing them does (TODO #22c,
+  2026-07).** The town stays ordinary end to end: every local keeps their
+  exact sprite, portrait, body, AND words (the town reads NORMAL; the
+  wrongness is the *place*, not the people, NARRATIVE §2/§6). What rises
+  with the stage is the **PI's own reading** of them — a four-tier
+  interior register (`_pi_tier` / `_pi_framing` / `_PI_WEATHER` in
+  `scenes/dialogue.py`, keyed to evidence 0 / 1-2 / 3 / 4+) that colours
+  each principal's opening framing while the NPC's line is untouched. The
+  dread is the mundane line delivered warmly by someone the PI can no
+  longer hear as safe — one impossible thing, and it is the door. (The old
+  people-change layer — peace-makers *convert*, resisters *turn* — was CUT
+  with this rework; DESIGN.md §9, NARRATIVE §6.)
 - **Sheriff Vane falls last, and hardest — and his fall is
   player-driven (TODO #2a, built 2026-07).** The last holdout, and the
   one soul in town **claimed but unattuned** (he never dreamed the door;
@@ -411,9 +411,9 @@ finds you — run it on cover, timing, and breaking their line of sight).
 | 2 | The Timber Racks | `well_passage` | The dig's staged shoring lumber, racked on its way to the faces (renamed 2026-07: the old drying-corn-doll-material fiction was cut -- an obsessive dig runs no craft room). A LONG rack gallery (24 tiles, lengthened 2026-07 -- the stealth pass: graded suspicion needs distance), 2 patrolling cultists offset down the run, 2 hides. |
 | 3 | **The Cistern** (was "Tallow Vats" — cut) | `works_vats` | Where the dig **broke into the underground river** — the artery to the door (NARRATIVE §2), and the diggers' proof they were close. Wet stone, rising damp, 2 tending cultists, 2 hides. *No rendering, no tallow, no bodies — the claiming cult eats no one. Fiction redress is a code TODO (§4); the scene key stays `works_vats`.* |
 | 4 | The Sorting Hall | `works_sorting` | The **worldly lives the congregation shed** when they were claimed — and the effects of the few the fold took — sorted and catalogued. 2 cultists, 3 hides (hardest crossing). A side door north → **Mara's room**. |
-| 4a | **Mara's Room** | `maras_room` | A convert's cell off the hall: cot, her cult robe + the unsent letter. **Evidence #1.** A quiet beat off the gauntlet, 1 hide. |
+| 4a | **Mara's Room** | `maras_room` | A convert's cell off the hall: cot, her cult robe + the unsent letter. **Evidence: the unsent letter (`maras_room`, a canonical trail beat — NARRATIVE §6).** A quiet beat off the gauntlet, 1 hide. |
 | 5 | The Scriptorium | `works_scriptorium` | The Sign copied endlessly — the **attuned compulsively bleeding the dream-image out** onto every surface, none of them the door itself (NARRATIVE §2). 1 oblivious scribe, 2 hides. **The Calling** — the first of three cult-testimony fragments (NARRATIVE §9), the one bound, whole volume among the loose copies: the congregation's own personal testimony (their voice in the item description, the PI's reaction in his notes). Pure lore; it gates nothing (the keystone is the Mask alone). The Bargain + The Digging are found deeper (the Sump, the Old Stores). |
-| 6 | The Sign Chamber | `works_sign` | The Sign daubed on the wall + an altar; the kneeling rank (set-piece NPCs) + 1 patrol. **The calling-out (2026-07):** Mara kneels among them; first entry, the kneelers rise, one says her name, she comes to you — the confrontation lands **evidence #6**. **Lift the Pallid Mask → `pallid_mask` + evidence #5** (no charcoal — you take the object itself). |
+| 6 | The Sign Chamber | `works_sign` | The Sign daubed on the wall + an altar; the kneeling rank (set-piece NPCs) + 1 patrol. **The calling-out (2026-07):** Mara kneels among them; first entry, the kneelers rise, one says her name, she comes to you — the confrontation lands (Mara is **proof, not a counted beat** since the TODO #22 rework: the calling-out fires but no longer counts). **Lift the Pallid Mask → `pallid_mask`** — the **keystone item**, not a case beat (it left the count; NARRATIVE §6). No charcoal; you take the object itself. |
 | 7 | **The Deepest Face** | `works_deepstair` | The dig's END — the cult's testimony left "a few feet of earth"; there is no stair, no gate. With the **Mask in hand** (the sweep finished) and **powder from the Sump**, a two-press charge **blasts the floor through into the old workings**: the FALL into `depths_antechamber` is the one-way step. The Mask is **not consumed** — carried down and spent at the Threshold door. |
 
 **Rules wired:**
@@ -464,7 +464,7 @@ off the Sorting Hall) — plus the **Depths**, which has grown to five rooms
 `depths_threshing` → `depths_stair`, with `the_ossuary` — the **Old
 Stores** since the retrofit — branching off the
 procession) before the **Hive** (`dark`, the claimed congregation, past
-names — Mara and evidence #6 moved up to the Sign Chamber, 2026-07) and
+names — Mara (the calling-out) moved up to the Sign Chamber, 2026-07) and
 the **Threshold** (`threshold`, the doorframe). The
 descent order is: grove rite → Works (7) → the blast → Depths (5) →
 Hive → Threshold.
@@ -686,6 +686,70 @@ the single one-way crossing in the game is the juke through the tear
 HE made (it shuts behind you). The Threshold doorframe stays plain --
 the world's folds scream so that the real door's silence lands (NARRATIVE §2).
 
+### The rift pane -- 4D construction and look
+
+> Folded in from the retired `PORTALS.md` (2026-07). Its "decisions
+> landed" material was already this section's "one phenomenon, two
+> presentations"; these are the parts unique to it.
+
+A portal is the edge of a 4D "pane" poking up into Brimley. Face it
+**head-on** and you see through it (the peek) and can step through; step to
+the **side** and a pane seen edge-on is a thin line, nearly invisible;
+there is **no back** (its other faces point in the 4th direction, a way you
+can't walk), so from any angle but head-on it isn't there. We are not
+adding a rule -- we are drawing the rule already written (the pane reads as
+floor from any other angle).
+
+We run **no 4D world simulation**. We reuse the King's existing 4D math
+(`rendering/king_unfold.py`: `_rot` spins through the W axis, `_to3d`
+flattens back) in three spots only: the **border** (the lit grazing edge,
+the King's dim gold rim-light), the **peek** (the destination spun in
+through 4D -- impossible depth that naturally fades to nothing as the pane
+turns edge-on), and the **crossing** (stepping in *turns* the pane: this
+scene rotates out through W, the next rotates in -- a quick turn, not a
+fade, the brief "floating pieces" moment). Everything else -- walking,
+walls, tilt camera -- is unchanged.
+
+**Visual spec:** a tall thin **standing** slit that depth-sorts with
+trees/corn (never a floor mark, which would read as a stain), with a **dark
+core / mouth** so the rim has contrast at small size under the tilt, a
+**dim, desaturated gold** rim (cursed gold, not treasure gold), and thin
+**jagged electric arcs** that flick along the edge and die in a few frames
+(the living wound). The peek shows the **real destination** -- a
+recognizable place, live actors resolving out of the fog at the seam,
+fogging out toward the slit edges. **Hold the line:** black + dim-gold
+keeps it eldritch and out of Tron-blue; no bright/cyan "electric."
+
+### State-driven folds
+
+A scene may gate an exit on game state (`Scene.exit_gate_fn(game, char)`)
+and drive a fold's formation charge per frame (`Scene.fold_charge_fn(game,
+char)` → 0..1 into `draw_rift_door`'s charge ramp; 0 = not drawn, reads as
+floor). Direction-gated exits also route straight through `cross_fold`
+regardless of set membership, so a fold can join ANY two scenes --
+including surface↔underground. Shipped uses: the **effigy grove's descent
+fold** (clarity = evidence/3, opens at 3, lands at `well_bottom`, dies at
+`descent_sealed`), its **shaft-floor keyed return** (answers only the Mask
+after the grove rite), and the **school door** (opened by the chalk-door
+rite, then permanent). Folds stay two-way until they DIE or are **KEYED** --
+never one-way (the King keeps his signature). Live proof sheet:
+`tools/preview_rift_anchored.py`.
+
+### See-through doors and the blind spot (2026-07)
+
+The mundane **see-through door** (`portal.draw_through_aperture`, opted in
+per scene via `Scene.seethrough_doors`) shows the ACTUAL room beyond
+through the opening. Its terrain is a cached CCTV-style buffer, but the far
+room's **actors are a per-frame pass** (`portal._draw_aperture_actors`)
+gated by the player's own sight cone: a far actor is mapped to its apparent
+host-world position (both cameras share pitch/yaw/scale) and culled by
+`scene._door_actor_sight` (the frame's sight fn, set in `draw_world`). So an
+empty room reads through the door but a threat in a corner the player isn't
+looking at stays hidden -- the same restricted-sight rule the open world
+obeys, and the mundane door's point of difference from the RIFT, which
+shows everything by design (the King's violence has no blind spot). The
+figure is clipped to the opening. Preview: `tools/preview_door_sight.py`.
+
 ---
 
 ## 8. Desire, and how the fold strands it
@@ -905,3 +969,330 @@ back to the dig); it only shatters her further and costs the player,
 who reached for the one word and gained nothing but the wound. The
 sharpest knife in the game, and it cuts only the hand that holds it.
 
+
+## 10. The tilted camera
+
+> Folded in from the retired `CAMERA.md` (2026-07). The oblique view is
+> the shipped default; this section is its source of truth.
+
+Keep the game **100% procedural** (no image assets) but render **most
+objects as volumetric solids projected to 2D**, lock the camera to an
+**oblique ~55° pitch**, and let the player **turn their head** to peek
+around the world. The void around each scene is filled with a procedural
+**skybox**, not black. A horror **blind-spot vision** layer is the
+ambitious payoff (terrain reveals on a peek; threats do not).
+
+**LIVE + DEFAULT.** The game boots tilted (~55°) with mouse-look, and the
+oblique view is the **only in-game camera** (`Game._tilt_on`). The flat
+pitch-0 top-down view is **dev-only** now: the headless capture/preview
+tools set pitch 0 directly (there is no in-game toggle key). Pitch 0 stays
+**byte-identical** to the legacy raster, which is the refactor's win
+condition and is gated by `tools/capture_world.py`. The modules below are
+the live render path under tilt, not isolated scaffolding.
+
+### Decisions (locked with the user)
+
+- **Pitch:** fixed oblique, target **~55°**. Not free-pitch.
+- **Default camera:** glued **behind the player's facing** -- whatever
+  compass direction the player faces is "forward / camera home."
+- **Rotation = a head-turn, not an orbit.** Free-smooth yaw, **clamped to
+  a 90° total arc** (±45° off forward), **eases back to center** on
+  release. The player peeks left/right; they do not spin the world freely.
+- **Skybox, not black voids.** A procedural far backdrop fills the area
+  beyond the playfield and **parallaxes with yaw**. Scene-type aware: an
+  `overcast` sallow sky for Brimley daytime, a near-black `void` surround
+  for interiors/underground. It is a *skybox*, never a roof over the play
+  area or the UI.
+- **Blind-spot vision (Phase 4).** When the head turns, the **terrain**
+  behind/around the player is revealed (it just draws), but **NPCs, items,
+  and the world-rot decals stay hidden until actually looked at** -- gated
+  to a forward sight cone (`rendering/sight.py`). Locked calls: cone **74°
+  half-angle / 360px** range, an always-seen **40px** near bubble;
+  **re-hide** when out of the cone (no last-seen memory -- the dread is
+  uncertainty, not a stale ghost); the world **keeps simulating
+  off-camera** (entities move/chase normally while unseen -- "not looking ≠
+  not there"), only the *render* is gated, so a thing re-enters view
+  wherever its own logic carried it. The **King is exempt** (a relentless
+  apex you must be able to track); the player is never gated. The
+  blind-spot **fog** (`_draw_sight_fog`) is **shadow-cast**: each ray
+  across the cone stops at the first solid (`Scene.blocks_sight`), so the
+  clear region is a true visibility polygon with crisp tile-edged shadows.
+- **UI stays flat / screen-space.** HUD, dialog, notebook, vignettes, and
+  full-screen overlays (transition fade, apex wash, death cards, the
+  Carcosa cutscenes) are unaffected by the tilt and keep drawing in screen
+  space. Do **not** route them through the camera.
+
+### Why this fits the project
+
+THRESHOLD already draws every sprite procedurally and **already rewrites
+sprites at runtime** (the world-rot overlays, the human→vessel morph in
+`transform.py`, the King's per-frame `_YK_*` state). A
+3D-points-projected-to-2D approach is the same idiom -- matrix math in the
+draw call -- so it honors the "no image-asset pipeline" rule. We are
+**not** pre-rendering models to sprite sheets (that would be an asset
+pipeline and is off-ethos). The whole game converts world→screen with an
+ad-hoc `sx = x - cam_x; sy = y - cam_y` at every draw site; centralizing
+that one seam makes tilt + rotate a parameter change instead of a
+per-scene rewrite.
+
+### Coordinate convention
+
+- world **x** → screen right
+- world **y** → ground depth (screen-down at pitch 0)
+- world **z** → height **off** the ground (0 = on the floor), screen-up
+
+At `pitch = 0` this is exactly the top-down view (z has no screen effect --
+you see the tops of things). As pitch rises toward π/2 the ground
+foreshortens (`cos pitch`) and height projects upward (`sin pitch`).
+Optional `yaw` spins the world about the vertical axis (the head-turn).
+
+### Modules (all under `rendering/`)
+
+| Module | Role |
+| --- | --- |
+| `camera.py` | **The seam.** `Camera.project(wx, wy, wz)` → screen; `world_to_screen()` is a drop-in for the old `x - cam_x` form (identity at pitch 0). `depth()` is the painter's-algorithm sort key. Owns `pitch`, `yaw`, `scale`, `origin`. `ground_squash()` / `height_rise()` are pitch-aware footprint helpers. |
+| `solids.py` | **Volumetric kit.** `draw_solid` (body of revolution from stacked elliptical sections -- columns, figures, the Watcher), `draw_box` (crates, walls), `draw_billboard` (the fallback: a flat sprite stood up as a camera-facing card so un-converted objects still place under tilt), `draw_with_alpha` (render-to-scratch helper used by occlusion). |
+| `skybox.py` | **Backdrop.** `draw_skybox(surf, rect, yaw, kind)` -- sky gradient + sallow Sign-band + fog horizon + a wrapping near-black treeline/rooftop silhouette that parallaxes on yaw. `kind ∈ {overcast, void}`. |
+| `occlusion.py` | **Don't-hide-an-actor.** `occluder_alpha(...)` fades any solid nearer the camera than a focus actor AND covering it on screen (feathered so walls ease rather than pop). `draw_world` calls it **per visible actor** and takes the min, so a wall fades for whichever actor it covers. |
+| `sight.py` | **Blind-spot vision.** `visible_factor(px, py, heading, tx, ty, blocks)` → 0..1: a forward cone keyed to the look heading (`SIGHT_HALF` 74°, `SIGHT_RANGE` 360px, `SIGHT_NEAR` 40px), gated to 0 by walls via `los_clear` (a coarse ray march against `Scene.blocks_sight`). Soft at the cone lips (`SIGHT_*_FEATHER`). The gate the game draws through under tilt. |
+| `pseudo3d.py` | The original proof: a volumetric Watcher (`draw_pseudo3d_watcher`) with self-occluding features and travelling rim light. Superseded by `solids.py` for general use; kept as the worked reference. |
+
+### Working agreements for this track
+
+- **Pitch 0 must stay byte-identical.** The win condition is "the diff is a
+  refactor; the game looks pixel-for-pixel the same at pitch 0." Verify
+  with a before/after capture (`tools/capture_world.py`), not just smoke.
+- **Keep it asset-free.** No PNGs, no bake step. Solids are math.
+- **Previews before live wiring.** Render to PNG/GIF headless, eyeball it,
+  *then* touch `game.py`. Previews (headless, self-configure SDL dummy
+  drivers): `tools/preview_{pseudo3d,tilt,skybox,occlusion,look_control,sight,blindspot_live}.py`.
+
+### Ground heightfield (PROTOTYPE, dormant)
+
+A per-scene ground height so terrain rolls and a crest you can't see over
+occludes like a wall. `Scene.set_ground(grid)` / `Scene.ground_z(x_px,
+y_px)` (bilinear, 0.0 when unopted → dead-flat, pitch-0 byte-identical);
+authored with `rendering/heightfield.build_heightfield(w, h, bumps)`. It
+feeds SIGHT (an optional ground-crest term in `sight.los_clear` /
+`visible_factor` and `Scene.clear_sight_line`, `SIGHT_EYE_H`, so a hill
+hides what is beyond it in both the draw gate and the cult AI) and DRAW
+(`heightfield.draw_ground_mesh` lays a projected floor mesh over the flat
+affine raster where a scene authored hills, tilt-only; actors/standees
+lift by `ground_z`). Movement stays 2D (height is a passive READ; AI
+ignores it in v1). **River spike:** `heightfield.carve_channel` cuts a
+sunken trough (banks from `build_heightfield`, bed below grade), shaded WET
+on `~`/`@` bed tiles, the bank crest occluding the bed (the sight-pit the
+WADE water routing wants). Wired but **dormant** -- no shipping scene opts
+in yet. Guard: `tests/render_smoke.py` [4/4]. Preview:
+`tools/preview_heightfield.py`, `tools/preview_river_channel.py`.
+**Deferred:** rolling the whole floor raster (a mesh/displaced warp
+replacing the global affine `_tilt_warp`); multi-floor buildings;
+continuous traversable z (a big collision/AI/depth-sort/save lift).
+
+---
+
+## 11. Audio
+
+> Folded in from the retired `AUDIO.md` (2026-07). The 2026-06 call-site
+> audit that also lived there was fully actioned and has been dropped.
+
+The game ships **zero audio assets**. Every sound -- foley, stings, beds,
+"music" -- is synthesized at startup in `systems/audio.py` (pure-Python
+sample loops or numpy), optionally post-processed by `systems/dsp.py`
+(scipy biquad filters + a Schroeder reverb), and handed to pygame as
+finished `Sound`s. Nothing streams. If numpy/scipy are missing the library
+falls back to dry generators (or silent stand-ins for the numpy-only beds)
+and the game still runs. The library is built **once per process**
+(`_LIBRARY_CACHE`) and shared across `Audio` instances (the test-gate win).
+
+### Design language -- anti-melodic dread
+
+- **No tunes.** The music keys are drones. `home`/`village` are *haunted*
+  versions of melodies that used to exist (a detuning music-box ping over a
+  drone); `threshold_drone` is a bare low tritone (41 + 58 Hz) that never
+  resolves. The tritone is the house interval.
+- **Sub + partial.** Every low cue carries a mid partial (~200 Hz or a 4th
+  harmonic) so laptop speakers, which roll off ~120 Hz, still register it.
+  A sub-only cue is an inaudible cue.
+- **Breath, not stinger.** The threat vocabulary is built from breath
+  shapes: `breath` (an inhale that cuts), `cult_lose` (an exhale),
+  `yk_tone` (a *reversed* breath -- air pulled from the room),
+  `watcher_spawn` (a vacuum opening). Loud orchestral stings are not in the
+  palette; `cult_lock` (sub kick + tritone) is as big as it gets.
+- **Space is baked, not live.** The mixer can't do live reverb, so a space
+  is baked into a cue that always plays there (the rite cues get `cellar`,
+  the Carcosa set-pieces get `void`). Cues that play everywhere get
+  **pre-baked per-profile variants** (`step_*` and `gunshot` ×
+  `cellar`/`outdoor`) picked at play time by `play_in_scene` from the scene
+  tag (`Audio.set_scene_reverb`, called by `Game.load_scene_now`).
+- **Silence is a move.** `force_silence` (the testimony beat: the wind
+  stops and never comes back), `duck` (music drops so a horror cue lands in
+  the gap), and the dead-air stretch inside `custody_bed` are deliberate.
+  Don't fill them.
+
+### Mixer + channel map
+
+`pygame.mixer` at 22050 Hz / 16-bit / stereo, 16 channels. Reserved:
+
+| ch | owner | content |
+|----|-------|---------|
+| 0 | `music_channel` | the looping scene drone (`play_music`) |
+| 1 | `ambient_channel` | `falling_air` bed for the door-dream (`flashback_air`) |
+| 2 | `king_channel` | `yk_tone` loop while the King is on screen (`king_tone`) |
+| 3-5 | drive channels | opening drive: engine / radio / static (`start_drive` … `stop_drive`) |
+| rest | dynamic | one-shots; `play(pan=…)` grabs a free channel for L/R bias |
+
+Mix gains: `master_vol` × (`music_vol` | `sfx_vol`), settable live from the
+pause menu (`set_volumes`). Single-session, like the save model.
+
+### Spatial model
+
+- `pan_for_world(world_x, player_x)` → −1..+1, with a 15% floor on the off
+  ear so headphone listeners never lose a cue entirely.
+- `distance_attenuation(sx, sy, px, py)` → 1/(1+(d/falloff)²).
+- Apply both for positioned cues (enemy deaths, shots, phantom steps).
+- `play_in_scene(name)` is the scene-reverb dispatch: plays
+  `{name}_{profile}` if baked, else the dry cue.
+
+### Threat wiring (who fires what)
+
+| system | cues |
+|--------|------|
+| `_tick_visibility` / stillness (`game.py`) | `heartbeat` schedule above proximity 0.70 (interval tightens with threat, music ducks between beats) |
+| cult AI (`threat_mixin`, `_cult_tick`) | `cult_lock` (LOS acquired, ducks music), `cult_lose` (LOS broken), `low_pulse` accents |
+| watcher curse | `watcher_spawn` / `watcher_dispel` |
+| hide state | `hide_enter` / `hide_exit` |
+| King (`king_roam_mixin`, `_tick_king`) | `king_tone(on, vol)` -- vol swells with proximity; off the instant he dissolves |
+| world rot (`rot_mixin`) | `rot_throb` per stage transition; `sheriff_hunt` on the hollow lawman's spawn + chase start |
+| deaths (`_trigger_death`) | `captured_bed` (cult), `custody_bed` (sheriff), Carcosa drone/roar loops (King) |
+| case file (`narrative_mixin`) | `evidence_added` (canonical evidence only), `arg_chime` (notes) |
+| recurring one-shots (`Scene.add_ambient`) | the scheduler: each entry fires every lo..hi s (re-rolled per fire) with volume jitter and a random pan within `pan_spread`. Ticked by `Scene.update`; additive, never clobbers `on_update_fn` |
+| world-rot air (`rot_mixin._apply_ambient_air`) | the audible twin of the decal pass, applied on every scene load. Interiors (`music == "home"`) always carry the LIVING HOUSE base (`wood_creak` + rare `wood_pop`, panned); rot layers escalate with stage: `drip` at 1, `flies` at 2, `whisper` + `rot_throb` at 3. Outdoor scenes gain only the rot layers. SAFE_SCENES stay clean until stage 3; underground/void scenes are skipped (authored / silent by design) |
+| pursuer dressing | `breath`, `phantom_step`, `child_hum` in creepy scenes; every 12th creepy-tile step is delayed 0.12 s (the wrongness in the rhythm) |
+
+Dialog voices: per-NPC blip names in `ui/dialog.py` (`blip_low/mid/high/
+soft/kid/gruff`), `"__silence__"` for the things that shouldn't have a
+voice. **Deferred (dormant, not dead):** `Enemy.shoot_sfx` is plumbed
+(`game.py` plays it panned/attenuated) but no enemy sets it; the wiring is
+ready if a shooting enemy is ever added.
+
+---
+
+## 12. Stealth -- detection is graded
+
+> Folded in from the retired `STEALTH_REWORK.md` (2026-07). The mechanic is
+> BUILT and guarded end-to-end by `tests/stealth.py`; the replaced binary
+> `hidden`-flag system and the build-sequencing plan that also lived there
+> have been dropped as fossils. Tuning is the open item (`TODO.md` #5).
+
+Hiding is not an invisibility toggle; it is a **positional gamble**: cover
+lowers how detectable you are, distant enclosure is strong, a searcher
+closing on your hiding place is terrifying, and getting caught in one is a
+struggle you can still fight out of. The scoring lives in
+`systems/stealth.py` (one source for both cult machines -- `entities/npc.py`
+surface + `entities/enemy.py` underground); tuning in the
+`SUS_*`/`STRUGGLE_*` blocks of `systems/config.py`.
+
+**Design goals (the load-bearing ideas):** cover changes how hard you are
+to detect, never *whether* you can be (no binary invisibility); "inside" is
+powerful against distant threats but a trap up close; there is always a
+decision after you hide (hold, or bolt -- never wait out a timer); keep
+what worked (real line-of-sight as the primary tell, the SEARCH/SCOUT loop,
+SAFE_SCENES as the one true refuge, the apex exemption).
+
+### Pillar 1 -- detection is GRADED (suspicion), not binary
+
+A per-enemy **suspicion** value in [0, 1] fills from a per-tick
+**detection score**:
+
+```
+score = los_clear(0 or 1)
+      * distance_falloff(d)        # 1 near, 0 at gaze range
+      * facing_factor(aim, d)      # the sight cone in sight.py
+      * concealment_factor(player) # 1 open, < 1 in cover
+```
+
+- **No clear LOS** (a wall/solid prop between enemy and player) → score 0.
+  Cover as a hard sightline break stays exactly as fair as it is now
+  (windows + water do not block).
+- **Clear LOS, open ground** → `concealment_factor = 1.0`, suspicion fills
+  fast (≈ instant feel, but with a brief telegraph window).
+- **Clear LOS, in concealment cover (corn/shadow)** → `concealment_factor`
+  small AND `distance_falloff` bites hard, so far away you are effectively
+  invisible but an enemy a few feet away still fills suspicion. This kills
+  the "sit in cover right next to a cultist" exploit.
+
+**State transitions keyed to suspicion:** crossing `SUS_NOTICE` → the enemy
+turns toward you, slows, shows a rising "?" tell (SCOUT stays, but alert);
+reaching `SUS_LOCK` (1.0) → **CHASE** (the hard lock, fires the existing
+`cult_lock` audio); score 0 for a beat → suspicion decays at `SUS_DECAY`,
+and if it was high the enemy drops to **SEARCH** at the last-seen position.
+This adds the classic "have they spotted me yet?" window.
+
+### Pillar 2 -- two cover classes with opposite trade-offs
+
+**A. Concealment cover (mobile, leaky)** -- corn, shadow, behind low props.
+You can keep moving through it; it weakens LOS at range, but a close enemy
+with LOS still builds suspicion (you cannot camp it next to a searcher);
+moving fast rustles → a noise event. Corn scales score + gaze by
+`SUS_CONCEAL_CORN`. **Shadow cover:** `SUS_CONCEAL_DARK` for an unlit
+player in a DARK scene outside every light pool (`Scene.lit_at` /
+`Game._tick_dark_cover`).
+
+**B. Enclosed hide (rooted, strong, a trap)** -- under bed, closet, locker,
+"in". A hard LOS break vs enemies that do not come check it (strong at
+range); you are **rooted** (no movement while inside); exiting takes a beat
+and you are vulnerable during it (`HIDE_EXIT_BEAT` -- bolting is a
+commitment). A **searching enemy that reaches the hide tile checks it**
+(`sweep_points`) → the **struggle**. The inversion: powerful far away,
+lethal when a searcher closes.
+
+### Pillar 3 -- searchers hunt, and you make noise
+
+- **SEARCH sweeps cover.** Instead of milling randomly, a searching enemy
+  paths to and **checks nearby enclosed hides** and looks into nearby
+  concealment around the last-seen position (builds on the nav grid
+  `Scene.nav_path`/`nav_toward`).
+- **Noise events.** Running, bursting out of a hide, knocking a prop, and
+  the **deep-water WADE splash** (`WADE_SPLASH_LOUD` via `Scene.emit_noise`,
+  in the `WADE_SCENES`) emit a noise event through the existing loud-step →
+  INVESTIGATE channel (`stealth.hear_noise`); noise pulls searchers toward
+  you.
+
+### Getting caught -- the timed struggle
+
+When a searcher checks the enclosed hide you are in, a brief **struggle**
+decides it (`_tick_struggle`/`_struggle_win` in `threat_mixin`,
+`STRUGGLE_*` config): a short window (≈1.2-1.8 s) with a mash prompt. **Win**
+→ you burst out (a one-time short sprint burst, the checker is staggered for
+a beat, and a loud noise event converges every nearby searcher -- you won
+the moment, not the room). **Lose / ignore** → grabbed → the normal cultist
+capture death (`_trigger_death("cultist")`, the CAPTURED card). Only
+reachable from a checked enclosed hide; concealment cover never triggers it
+(getting found in corn just resumes CHASE). The **first cult grab of a run
+is THE TALK** (a warning, not a capture -- threat model §1).
+
+### Visibility model under the rework
+
+`_tick_visibility` reads **concealment**, not a binary hidden flag: open
+ground unchanged (gaze sum × `VIS_GAZE`, minus idle decay); concealment
+cover scales the gaze contribution by `concealment_factor` (leaky, not
+zero); an enclosed hide contributes ≈ 0 (the strong break) but the
+flashlight leak (`VIS_LIT_RISE`) still applies and the **check** is the real
+threat. The evidence/Watcher **floor** is unchanged (`WATCHER_FLOOR`,
+`VIS_FLOOR_TOTAL_CAP`); only an enclosed hide keeps the strong
+`VIS_HIDE_BLEED` drain (corn gets idle decay). SAFE_SCENES remain the only
+true refuge. **Apex pursuers** (`_force_chase`: King, hollow Sheriff) are
+exempt -- they bypass suspicion and cover entirely.
+
+### Placement principles (the tuning-pass guide, `TODO.md` #5)
+
+Place enclosed hides **near patrol routes**, not in safe corners (a risky
+option, not a panic room). Give each combat room a legible cover rhythm
+(sightline → cover → sightline). Pair concealment cover along long
+crossings so breaking LOS is always possible but never free. Keep
+SAFE_SCENES as refuges (cosmetic hides, no searchers). Respect the camera:
+hides must read under the oblique tilt (volumes / standees / decals per the
+tilt dispatch map), not flat stickers. The Pillar-2 **peek** verb is
+deliberately deferred (free look under tilt already gives the information
+function).

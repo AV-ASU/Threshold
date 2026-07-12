@@ -1,7 +1,7 @@
 # Threshold
 
 A 2D narrative-horror game built with pygame, played through an oblique
-tilted camera (~55° by default; F3 drops to the flat pitch-0 view). In 1994 you drive
+tilted camera (the view tilts ~55°; it is the only in-game camera). In 1994 you drive
 into **Brimley** -- a private investigator hired by a man named Blaine to
 find his daughter Mara, who found religion out past the highway and
 vanished. You came to ask a few questions and drive home. You can't: the
@@ -53,9 +53,9 @@ python tests/flow.py    # drives the full critical path end-to-end
 
 `smoke.py` verifies that every scene builds, that spawn points are
 walkable, and that every exit resolves to a valid target spawn. `flow.py`
-drives a headless run down through the Works (the cult's dug mine) to the
-Deep-Stair fork, across the Depths to the hive, and into both endings, proving the
-path is completable with no soft-lock. Both force SDL to dummy drivers, so
+drives a headless run down through the Works (the cult's dug mine), past the
+blast at the deepest face into the Depths and the hive, and into both
+endings, proving the path is completable with no soft-lock. Both force SDL to dummy drivers, so
 no display or audio device is required.
 
 ## Project layout

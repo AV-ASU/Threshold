@@ -1,4 +1,4 @@
-"""Stealth-rework guard (STEALTH_REWORK.md): graded suspicion, cover
+"""Stealth-rework guard (DESIGN.md §12): graded suspicion, cover
 classes, the hide-check struggle.
 
 Locks the rules the rework replaced binary invisibility with:

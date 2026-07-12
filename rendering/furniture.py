@@ -1,4 +1,4 @@
-"""Volumetric furniture for the oblique camera (CAMERA.md Tier-3 props).
+"""Volumetric furniture for the oblique camera (DESIGN.md §10 Tier-3 props).
 
 Upright props become real BOXES projected through the camera, so they have
 depth, rotate with the scene, and occlude correctly -- instead of the flat

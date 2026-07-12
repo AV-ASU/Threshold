@@ -287,7 +287,7 @@ def build_sheriff_office():
         sc.add_decoration(Decoration(mx * TILE + 16, my * TILE + 16,
                                      "mote"))
     # Mara's booking slip, in the back records room's filing table (surface
-    # evidence #2; NARRATIVE §6, DESIGN.md §9). It lives in the FILES, not
+    # a surface trail beat; NARRATIVE §6, DESIGN.md §9). It lives in the FILES, not
     # on Vane -- reachable whether he is alive, dead, or never spoken to
     # (world-persistent; killing him can never soft-lock the descent).
     sc._record_pos = (11 * TILE + 16, 4 * TILE + 16)

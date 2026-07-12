@@ -381,7 +381,7 @@ class DecoNatureMixin:
                              (x + fx + 1, y + fy - 2), 1)
 
     def _draw_stalagmite(self, surf, x, y):
-        """A wet limestone spike rising from the cave floor. Flat / F3 fallback
+        """A wet limestone spike rising from the cave floor. Flat pitch-0 fallback
         -- the tilt view draws it as a real tapered cone via rendering/props.py.
         Girth + height vary by seed so a field of them never reads as a stamp."""
         R = 5 + (self.seed % 5)

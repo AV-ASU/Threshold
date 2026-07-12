@@ -141,7 +141,7 @@ def main():
     ready(g)
     check(0.0 < g.scene.fold_charge_fn(g, "O") < 0.2,
           "grove: at 0 evidence the descent fold is a faint thread")
-    # The gate and charge key on the EVIDENCE COUNT (the six canonical
+    # The gate and charge key on the EVIDENCE COUNT (the five canonical
     # beats), never on visibility or its floor -- Watchers raise the
     # visibility floor and must never open the way down.
     import inspect as _insp_g
@@ -339,7 +339,7 @@ def main():
     check(len(g.save.arg("evidence", [])) == _ev_before,
           "scriptorium: the testimony is lore, never inflates evidence")
 
-    # --- 3. The Pallid Mask (Sign Chamber, evidence #5) -- LIFT the mask ---
+    # --- 3. The Pallid Mask (Sign Chamber, the keystone item) -- LIFT the mask ---
     fire(g, "works_sign", "_sign_pos")
     g.dialog.choice_idx = 0
     g.dialog.advance()                          # "Lift the mask."
@@ -1431,7 +1431,7 @@ def main():
     _ev_cf = len(gcf.save.arg("evidence", []))
     _fork[2][0][2](gcf)                     # press him
     check(gcf.save.flag("preacher_doomed"),
-          "crane: pressing him latches the doom (feeds evidence #4)")
+          "crane: pressing him latches the doom (his death files as a note, not evidence)")
     check(any(isinstance(e, dict) and e.get("name") == "crane_provoked"
               for e in gcf.save.arg("notes", [])),
           "crane: the provocation files the PI's NOTE")
@@ -2138,7 +2138,7 @@ def main():
     # Each ambient local carries ONE state beat (a one-shot, gated on what
     # the PI has learned) before falling back to their ambient loop; the
     # procession's candle beat lands as a NOTE. None of
-    # it may ever inflate the evidence count (the six canonical beats are
+    # it may ever inflate the evidence count (the five canonical beats are
     # locked), and all of it holds the no-dash + no-cosmology rules.
     gb = new_game()
     gb.load_scene_now("brimley")
@@ -2286,8 +2286,8 @@ def main():
                   for t in _all_beats),
           "mara: no dashes anywhere in the confrontation")
 
-    # The unsent letter (evidence #1's object) carries the ADMISSION
-    # (NARRATIVE §6 #1): the pregnancy Walter never knew of, the
+    # The unsent letter (the letter beat's object) carries the ADMISSION
+    # (NARRATIVE §6): the pregnancy Walter never knew of, the
     # son-for-a-daughter line; the door is never mentioned.
     from systems.items import ITEM_DEFS as _IDF
     _lt = _IDF["unsent_letter"]["desc"].lower()
