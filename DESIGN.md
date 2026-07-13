@@ -51,8 +51,11 @@ shake a pursuer by **putting cover between you** — round a pillar, slip
 behind a wall, melt into the corn — not by pressing E at a marked spot.
 The only E-press hides left are the handful where you **crawl under**
 furniture (a bed, a desk, the cot), a distinct act you can't do by simply
-walking. The apex pursuers (the King, the hollow Sheriff) are **exempt** —
-they never lose sight of you.
+walking. The **hollow Sheriff** (the `_force_chase` apex) is **exempt** — he
+never loses sight of you and cover cannot break him. The roaming **King** is
+not on that path: he honors `player.hidden` (stepping into corn OR an enclosed
+hide drops his hunt to searching, guarded by `tests/king_roam.py`), though he
+re-finds you rather than losing you for good, and his catch is birth-gated.
 
 **The flashlight (`[F]`) is the player's hand on that meter.** Found in
 the woodshed (beside the axe), it casts a long beam **cone** in
@@ -278,12 +281,19 @@ Only display names and fiction change.
   `scenes/base.py`) steers pursuers **around** the volumetric props (pillars,
   pews, cots, basins) while staying a straight shot in the open. Both wired
   into both cult paths (`enemy.py` underground + `npc.py` surface chasers); the
-  `_force_chase` apex stays straight and **never loses sight** (relentless). A chase carries **through
-  portals and folds** alike (`_note_fold_pursuit`/`_tick_fold_pursuit` —
-  surface NPC chasers AND underground Enemy cultists, the latter spawned native
-  to the destination), with **SAFE_SCENES the one refuge** that always shakes
-  it. Guards: flow.py §20 (no preset routes + nav routes around cover) and §21
-  (portals carry the chase; the refuge is never breached).
+  `_force_chase` apex stays straight and **never loses sight** (relentless). A
+  chase carries **only across a direction-gated rift FOLD** now
+  (`_note_fold_pursuit`/`_tick_fold_pursuit` — surface NPC chasers AND
+  underground Enemy cultists, the latter spawned native to the destination); an
+  **ordinary crossing shakes it** — a door, ladder, rope, a seamless outdoor
+  passage, a road loop, or any non-fold target — so a chaser follows within a
+  scene and across a fold but **never across an ordinary scene boundary**
+  (play-notes narrowing, 2026-07). **SAFE_SCENES** stay the refuge a fold can't
+  breach. The Watcher-curse gaze still seeds on any fold OR passage
+  (`_exit_is_fold`) — that is His attention reaching across the wrongness, not
+  a cultist on foot. Guards: flow.py §20 (no preset routes + nav routes around
+  cover) and §21 (only a rift fold carries the chase; the refuge is never
+  breached), plus tests/fold_pursuit.py.
 - ~~**Scrub the eat-cult fiction (code ↔ NARRATIVE §2).**~~ **DONE.** Canon is a
   **claiming** cult that renders no bodies (no cannibalism). The `works_cistern`
   is **the Cistern** (the dig hitting the river — *"the water runs on,
@@ -1284,8 +1294,11 @@ flashlight leak (`VIS_LIT_RISE`) still applies and the **check** is the real
 threat. The evidence/Watcher **floor** is unchanged (`WATCHER_FLOOR`,
 `VIS_FLOOR_TOTAL_CAP`); only an enclosed hide keeps the strong
 `VIS_HIDE_BLEED` drain (corn gets idle decay). SAFE_SCENES remain the only
-true refuge. **Apex pursuers** (`_force_chase`: King, hollow Sheriff) are
-exempt -- they bypass suspicion and cover entirely.
+true refuge. The **hollow Sheriff** (`_force_chase`) bypasses suspicion and
+cover entirely. The roaming **King** honors `player.hidden` instead (corn or
+an enclosed hide drops his hunt to searching, `tests/king_roam.py`); he is
+relentless in that he re-finds you and his catch is birth-gated, not in that
+cover fails against him.
 
 ### Placement principles (the tuning-pass guide, `TODO.md` #5)
 

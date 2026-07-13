@@ -452,8 +452,10 @@ class ThreatMixin:
         """True if taking this exit is a FOLD or a seamless world-passage --
         the world's wrongness (a direction-gated fold) or its open ground (an
         outdoor-to-outdoor crossing). A mundane fade -- a door, ladder, or
-        rope into an interior -- is NOT a fold. Shared by the fold-pursuit
-        stash and the fold-watcher roll so both read 'fold' the same way."""
+        rope into an interior -- is NOT a fold. Used by the fold-watcher roll
+        (His curse-gaze seeds on any fold OR passage). Pursuit no longer uses
+        this: a chaser on foot follows only across a direction-gated rift
+        fold (play-notes narrowing, see _note_fold_pursuit)."""
         if self.scene is None or self.player is None:
             return False
         target_scene = exit_data[0]
@@ -483,19 +485,16 @@ class ThreatMixin:
         self._cursed = True
 
     def _note_fold_pursuit(self, exit_data):
-        """Called the instant an exit fires, BEFORE the scene swaps. A chase
-        carries through PORTALS and FOLDS alike (DESIGN.md §4): if a cultist
-        is in active chase within FOLD_PURSUE_RANGE when the player crosses an
-        exit, stash that one pursuer so it follows a beat behind, whether the
-        exit is a door, ladder, rope, seamless passage, or a hidden fold. Both
+        """Called the instant an exit fires, BEFORE the scene swaps. A chaser
+        follows the player ONLY across a true rift FOLD -- a direction-gated
+        pane (play-notes narrowing of DESIGN.md §7): if a cultist is in active
+        chase within FOLD_PURSUE_RANGE when the player steps through a fold,
+        stash that one pursuer so it follows a beat behind at the seam. Both
         cultist classes count -- the surface NPC chasers AND the underground
-        Enemy cultists. The chase carries through a FOLD or seamless PASSAGE, or
-        a descent into cult-held ground (underground / a CULTIST_SCENE) -- INCL.
-        a hidden-fold grove that hosts no cult of its own: the one chaser you
-        brought with you crosses the seam and can still reach you (it does NOT
-        make the grove cult territory). The escapes that shake it: a refuge
-        (FOLD_REFUGE_SCENES), or a mundane door/ladder/rope into an ordinary
-        interior (architecture is the player-only way out)."""
+        Enemy cultists. Every ORDINARY crossing shakes the chase: a door,
+        ladder, rope, a seamless outdoor passage, a road loop, or any non-fold
+        target -- a chaser does not cross an ordinary scene boundary. A refuge
+        (FOLD_REFUGE_SCENES) is never breached even by a fold."""
         target_scene, _spawn_id = exit_data
         # A same-scene relocation (the maze 'I'/'Q' folds) never touches the
         # stash: no scene load follows, the pursuer is still physically in
@@ -506,15 +505,17 @@ class ThreatMixin:
         if target_scene in FOLD_REFUGE_SCENES:
             self._fold_pursuer = None
             return
-        # Otherwise the pursuer follows only where it can reach you on the far
-        # side: through a FOLD or seamless PASSAGE (the cult's own wrong-ground,
-        # incl. a hidden grove that hosts no cult of its own), or down into
-        # cult-held ground -- the underground (Enemy cultists) or a surface
-        # CULTIST_SCENE (NPC chasers). A mundane door / ladder / rope into an
-        # ordinary interior is the player-only escape: it shakes the chase.
-        if not (self._exit_is_fold(exit_data)
-                or target_scene in UNDERGROUND_SCENES
-                or target_scene in CULTIST_SCENES):
+        # A chaser follows ONLY across a true rift FOLD (a direction-gated
+        # pane: the descent rite, the King's tears). Every ORDINARY crossing
+        # shakes it now -- a door / ladder / rope, a seamless outdoor passage,
+        # a road loop, or any non-fold target (play-notes: pursuit is
+        # same-scene + rift folds only; this narrows the old passage /
+        # UNDERGROUND / CULTIST_SCENE carry, DESIGN.md §7). The Watcher-curse
+        # gaze still seeds on any fold OR passage (_exit_is_fold) -- that is
+        # His attention reaching across the wrongness, not a cultist on foot.
+        ch = (self.scene.char_object_at(self.player.x, self.player.y)
+              if self.scene is not None else None)
+        if ch is None or ch not in self.scene.exit_directions:
             self._fold_pursuer = None
             return
         hot, hot_d = None, FOLD_PURSUE_RANGE

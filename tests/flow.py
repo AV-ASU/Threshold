@@ -1973,10 +1973,12 @@ def main():
     check(no_wp, "ai: cultist spawns were exercised by the waypoint guard")
     check(routed, "ai: a blocked-line route was found to exercise the nav guard")
 
-    # --- 21. A chase carries through PORTALS and folds (DESIGN.md §4) -------
-    # The only thing that shakes a hot pursuer is a SAFE room. Guard both: a
-    # plain portal (non-fold) exit to a non-safe scene stashes the pursuer; a
-    # SAFE destination clears it (the refuge is never breached).
+    # --- 21. A chase carries ONLY through rift FOLDS, not ordinary exits ----
+    # (play-notes narrowing of DESIGN.md §7). A chaser follows within a scene
+    # and across a direction-gated fold; an ORDINARY crossing shakes it -- a
+    # seamless passage, a road loop, a door, or a descent target reached off a
+    # non-fold tile. The rift-fold carry itself is guarded in
+    # tests/fold_pursuit.py (which stands the player ON a fold tile).
     from systems.game import (CULTIST_SCENES as _CS, UNDERGROUND_SCENES as _UG,
                               SAFE_SCENES as _SAFE)
     gp = new_game()
@@ -1987,9 +1989,9 @@ def main():
     if _ch is not None:
         _ch.x, _ch.y = gp.player.x + 30, gp.player.y
         _ch._cult_state = "chase"
-        gp._note_fold_pursuit((next(iter(_UG)), "default"))   # plain portal
-        check(gp._fold_pursuer is not None,
-              "portal: an active chase carries through a portal exit")
+        gp._note_fold_pursuit((next(iter(_UG)), "default"))   # not on a fold tile
+        check(gp._fold_pursuer is None,
+              "portal: an ordinary crossing (non-fold) does NOT carry the chase")
         _ch._cult_state = "chase"
         gp._note_fold_pursuit((next(iter(_SAFE)), "default"))
         check(gp._fold_pursuer is None,

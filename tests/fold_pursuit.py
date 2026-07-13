@@ -4,8 +4,9 @@ not through mundane architecture.
 The design (the cult moves through the world's wrongness, not your ladders):
   - Flee through a direction-gated FOLD with a cultist hot on your heels
     and that one pursuer follows "a beat behind", re-emerging at the seam.
-  - Flee through a DOOR / LADDER / ROPE (a mundane exit) and the chase is
-    shaken -- architecture is player-only.
+  - Flee through a DOOR / LADDER / ROPE or a seamless outdoor PASSAGE (any
+    ordinary crossing) and the chase is shaken -- a chaser does not cross a
+    scene boundary, only a rift fold (play-notes narrowing of DESIGN.md §7).
   - The pursuer never spawns on top of the player (the beat-behind grace).
   - A refuge (SAFE_SCENES) is never breached, even via a fold.
 
@@ -103,9 +104,11 @@ def test_fold_carries_pursuer():
     print("  OK  a hot pursuer follows through a fold")
 
 
-def test_passage_carries_pursuer():
-    # A seamless outdoor PASSAGE (both scenes in the open world) is the
-    # cult's ground too -- they follow across it, just like a fold.
+def test_passage_does_not_carry_pursuer():
+    # A seamless outdoor PASSAGE (both scenes in the open world) is an
+    # ORDINARY crossing now, not a fold-carry: a chaser follows within a
+    # scene and across a direction-gated rift fold, never across a scene
+    # boundary (play-notes narrowing of DESIGN.md §7).
     g = _boot()
     g.load_scene_now("brimley", "default")    # an outdoor town, full of passages
     target, spawn, ch = None, None, None
@@ -119,8 +122,8 @@ def test_passage_carries_pursuer():
     _stand_on(g, pos[0], pos[1])
     _add_hot_cultist(g)
     g._note_fold_pursuit((target, spawn))
-    assert g._fold_pursuer is not None, "a seamless passage must carry a pursuer"
-    print("  OK  a hot pursuer follows through an outdoor passage")
+    assert g._fold_pursuer is None, "a seamless passage no longer carries a pursuer"
+    print("  OK  a seamless passage does NOT carry a pursuer (ordinary crossing)")
 
 
 def test_interior_door_loses_pursuer():
@@ -272,7 +275,7 @@ def test_same_scene_reloc_silent_and_seamless():
 
 if __name__ == "__main__":
     test_fold_carries_pursuer()
-    test_passage_carries_pursuer()
+    test_passage_does_not_carry_pursuer()
     test_interior_door_loses_pursuer()
     test_no_spawn_during_grace()
     test_safe_scene_never_breached()

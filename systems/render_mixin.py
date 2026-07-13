@@ -933,11 +933,26 @@ class RenderMixin:
         self.scene._door_actor_sight = _sight
         from rendering.solids import draw_with_alpha
 
-        def _vis_alpha(wx, wy, exempt=False):
+        def _vis_alpha(wx, wy, exempt=False, king=False):
             """0..255 alpha to draw a world thing at (wx, wy) under the sight
             gate, or None to skip it (fully in the blind spot). 255 when the
-            gate is off (pitch 0) or the thing is exempt (the King)."""
-            if _sight is None or exempt:
+            gate is off (pitch 0) or the thing is exempt (pickups). The KING
+            is never fully hidden (a trackable apex), but in the blind-spot
+            fog he reads as a DIM SMEAR, not a crisp full-opacity figure:
+            seeing him plainly in the fog killed the dread (play-notes). He
+            resolves to solid as you look AT him (f high) or as he CLOSES
+            (the near term), so trackability holds."""
+            if _sight is None:
+                return 255
+            if king:
+                f = _sight(wx, wy)
+                if f >= 0.99:
+                    return 255
+                d = math.hypot(wx - self.player.x, wy - self.player.y)
+                near = max(0.0, 1.0 - d / KING_SEE_RANGE)
+                floor = int(55 + 175 * near * near)
+                return max(floor, int(255 * f))
+            if exempt:
                 return 255
             f = _sight(wx, wy)
             if f <= 0.03:
@@ -1136,9 +1151,11 @@ class RenderMixin:
                                              1.0 + (f - 1.0) * pf))
             npc_lift = int(TILT_LIFT.get(npc.sprite_kind, TILT_ACTOR_STAND)
                            * math.sin(self.camera.pitch))
-            # The King is the relentless apex -- never gated to sight; you must
-            # be able to track him as he closes. Everyone else obeys the blind
-            # spot (idle locals, converts, watchers, mutated resisters).
+            # The King is the relentless apex -- you must be able to track
+            # him, but he is a DIM SMEAR in the blind-spot fog rather than a
+            # crisp full-opacity figure (play-notes; the _vis_alpha king
+            # branch), resolving solid as you look at him or as he closes.
+            # Everyone else obeys the blind spot outright.
             exempt = npc.sprite_kind == "yellow_king"
             # One image for the singular King; the wrap-clone set for everyone
             # else (so a townsperson near the seam still reads on both sides).
@@ -1147,7 +1164,7 @@ class RenderMixin:
                 sx, sy = self.camera.project(npc.x + ox, npc.y + oy)
                 if not _on_screen(sx, sy):
                     continue
-                a = _vis_alpha(npc.x + ox, npc.y + oy, exempt=exempt)
+                a = _vis_alpha(npc.x + ox, npc.y + oy, king=exempt)
                 if a is None:
                     continue
                 # A visible standing actor is a "focus": occluding walls fade for

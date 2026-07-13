@@ -323,7 +323,15 @@ KING_SEARCH_TIME = 120.0     # s searching after losing you before he loosens to
 KING_SEE_RANGE = 360.0       # px; how far he can pick you out (LOS, unhidden)
 KING_GAZE_RISE = 0.45        # /s visibility climb while he has eyes on you (fast)
 KING_CATCH_DIST = 24.0       # px; contact range that ends the run (birth-gated)
-KING_ROAM_SPEED = 1.7        # in-room float speed (px*60/s via _yk_update)
+KING_ROAM_SPEED = 1.95       # in-room float speed (px*60/s via _yk_update);
+                             # ~117 px/s, just above the player's ~105 px/s
+                             # sprint so a locked King always closes the gap
+                             # (play-notes rebalance)
+# Player sprint = PLAYER_SPRINT_MULT x the base walk (entities/player.py
+# speed). Tuned so sprint reads ~2.5x the walk yet stays ~0.9x the King
+# above: you can flee a cultist but never the apex (play-notes rebalance;
+# TODO #5 is the human tuning loop).
+PLAYER_SPRINT_MULT = 2.5
 KING_DREAD_ASH = 70          # extra ash motes when he is one room away (the tell)
 
 # The portal (KING_PROMPT M2): pin visibility at 100% for PORTAL_CHARGE_TIME and

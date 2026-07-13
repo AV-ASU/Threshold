@@ -372,18 +372,35 @@ class KingRoamMixin:
 
     def _king_far_spot(self):
         """The farthest walkable point from the player among the scene's
-        corners + edge mids -- 'a point away from the door'."""
+        corners + edge mids -- 'a point away from the door' -- but never on
+        top of an EXIT: he must not re-form blocking the way the player just
+        came through or is about to leave by (play-notes)."""
         scene = self.scene
         cands = [(4, 4), (scene.w - 4, 4), (4, scene.h - 4),
                  (scene.w - 4, scene.h - 4),
                  (scene.w // 2, 4), (scene.w // 2, scene.h - 4),
                  (4, scene.h // 2), (scene.w - 4, scene.h // 2)]
+        # Exit tile centres, so a candidate sitting on a door is penalised.
+        exits_px = []
+        exit_chars = set(getattr(scene, "exits", {}).keys())
+        if exit_chars:
+            for ty, row in enumerate(scene.objects):
+                for tx, ch in enumerate(row):
+                    if ch in exit_chars:
+                        exits_px.append((tx * TILE + TILE // 2,
+                                         ty * TILE + TILE // 2))
         best, bestd = None, -1.0
         for tx, ty in cands:
             sx, sy = tx * TILE + TILE // 2, ty * TILE + TILE // 2
             if scene.is_solid_at(sx, sy):
                 continue
             d = math.hypot(sx - self.player.x, sy - self.player.y)
+            near_exit = min((math.hypot(sx - ex, sy - ey)
+                             for ex, ey in exits_px), default=1e9)
+            # Heavy penalty for forming within ~3 tiles of a door, so an
+            # exit-corner is chosen only if nothing else is walkable.
+            if near_exit < 3 * TILE:
+                d -= 5000.0
             if d > bestd:
                 bestd, best = d, (sx, sy)
         return best

@@ -315,8 +315,10 @@ it renders the procedural sprites to a labelled PNG strip.
   converges the room) or the window expires into the CAPTURED death.
   `_tick_visibility` reads the concealment-weighted gaze; only an
   enclosed hide keeps the strong `VIS_HIDE_BLEED` drain (corn gets idle
-  decay). Apex pursuers (`_force_chase`: King, hollow Sheriff) are
-  **exempt** — they bypass suspicion and cover entirely. Guarded
+  decay). The **hollow Sheriff** (`_force_chase`) is **exempt** — it bypasses
+  suspicion and cover entirely. The roaming **King** honors `player.hidden`
+  (corn OR an enclosed hide drops his hunt to searching, `tests/king_roam.py`);
+  he is relentless in re-finding you, not in seeing through cover. Guarded
   end-to-end by `tests/stealth.py`. (The Pillar-2 "peek" verb is
   deliberately deferred — free look under tilt already gives the
   information function; revisit in the human-tuning pass.)

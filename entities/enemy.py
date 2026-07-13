@@ -479,10 +479,8 @@ class Enemy:
         if self._cult_state == "chase":
             if score >= SUS_SCORE_HOLD:
                 self._suspicion = 1.0
-                # Bloom into His maw only once the world is corrupt enough
-                # (3+ evidence -- set on the scene by Game each frame).
-                self.morph_target = (1.0 if getattr(scene, "_bloom_enabled",
-                                                    False) else 0.0)
+                # Bloom is decided ONCE at the lock (below) and held for the
+                # chase (play-notes: the first-ever cultist stays human).
                 self._last_seen_pos = (player.x, player.y)
                 if d > self.atk_range:
                     self._cult_step(player.x, player.y, dt, scene)
@@ -498,8 +496,15 @@ class Enemy:
             self._cult_state_t = 0.0
             self.move_target = None
             self._just_locked = True
-            self.morph_target = (1.0 if getattr(scene, "_bloom_enabled",
-                                                False) else 0.0)
+            if getattr(scene, "_bloom_enabled", False):
+                if getattr(scene, "_bloom_armed", False):
+                    self.morph_target = 1.0
+                else:
+                    # First cultist of the run: introduced HUMAN, arms the rest.
+                    self.morph_target = 0.0
+                    scene._bloom_arm_pending = True
+            else:
+                self.morph_target = 0.0
             self._last_seen_pos = (player.x, player.y)
             if d > self.atk_range:
                 self._cult_step(player.x, player.y, dt, scene)

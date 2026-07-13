@@ -295,12 +295,10 @@ class NPC:
         if self._cult_state == "chase":
             if score >= SUS_SCORE_HOLD:
                 self._suspicion = 1.0
-                # A cultist that locks on blooms into His maw -- but ONLY
-                # once the world is corrupt enough (3+ evidence; flagged on
-                # the scene by Game each frame). Below that they stay mundane.
-                if self.sprite_kind == "cultist":
-                    self.morph_target = (1.0 if getattr(
-                        scene, "_bloom_enabled", False) else 0.0)
+                # Bloom is decided ONCE at the lock (below) and HELD for the
+                # whole chase, so the first cultist of a run stays human even
+                # as evidence crosses the gate mid-chase (play-notes: the
+                # first-ever cultist must not erupt into His maw).
                 self._last_seen_pos = (player.x, player.y)
                 target = (self._flank_target if self._flank_target
                           else (player.x, player.y))
@@ -320,8 +318,16 @@ class NPC:
             self._just_locked = True
             self._last_seen_pos = (player.x, player.y)
             if self.sprite_kind == "cultist":
-                self.morph_target = (1.0 if getattr(scene, "_bloom_enabled",
-                                                    False) else 0.0)
+                if getattr(scene, "_bloom_enabled", False):
+                    if getattr(scene, "_bloom_armed", False):
+                        self.morph_target = 1.0
+                    else:
+                        # The first cultist of the run: introduced HUMAN, and
+                        # it arms the bloom for every cultist after it.
+                        self.morph_target = 0.0
+                        scene._bloom_arm_pending = True
+                else:
+                    self.morph_target = 0.0
             target = (self._flank_target if self._flank_target
                       else (player.x, player.y))
             self._step_toward(target, dt, scene, navigate=True)

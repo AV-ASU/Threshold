@@ -1135,7 +1135,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         # Quadratic visibility compression: barely shows in normal play, bites
         # only as visibility approaches the King-gate. Sprint multiplies on top.
         comp_mult = 1.0 - self.visibility * self.visibility * 0.45
-        sprint_mult = 1.7 if self.player.sprint_active else 1.0
+        sprint_mult = PLAYER_SPRINT_MULT if self.player.sprint_active else 1.0
         # The panic burst out of a won struggle: a short adrenaline window
         # (doesn't stack with sprint -- the stronger of the two applies).
         bt = getattr(self.player, "_burst_t", 0.0)
@@ -2728,8 +2728,17 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
             # once you understand too much (3+ evidence). Read by the
             # cultist AI when it locks on (enemy._cult_tick / npc chaser).
             if self.scene is not None:
+                # Arm blooms once the FIRST cultist of the run has been met
+                # human (a chaser sets _bloom_arm_pending on the scene): the
+                # first-ever cultist is introduced mundane, every one after
+                # it erupts (play-notes: the "100 eyes on my first cultist"
+                # break). The pending flag is per-scene/frame; the armed
+                # state is a run save-flag so it survives scene loads.
+                if getattr(self.scene, "_bloom_arm_pending", False):
+                    self.save.set_flag("bloom_armed", True)
                 self.scene._bloom_enabled = (
                     self._evidence_count() >= KING_GATE_EVIDENCE)
+                self.scene._bloom_armed = self.save.flag("bloom_armed")
             if not world_frozen:
                 exit_data = self.scene.find_exit_at(
                     self.player.x, self.player.y,
