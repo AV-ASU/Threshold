@@ -307,10 +307,21 @@ pane, awe; `_note_fold_loop` = the SECOND silent loop, the creep), latching
 `crossed_a_fold`. The FACT/SOURCE/QUESTION idea from the original brief became
 the Timeline (a chronology reads truer than a flat list). Canon locked: the
 NARRATIVE invariant "the PI accepts the impossible; he never learns the
-mechanism." First person was swept across the whole notebook (the lead +
-`_PI_WEATHER`; §23/§24c still green). *(Open polish: a scrollable card if the
-theory ever outgrows one page; interior-beat tiering inside conversations,
-still parked from #22c.)*
+mechanism."
+
+**Opening rework (maintainer review):** the old soft-lead line (`_current_lead`)
+is **cut from the notebook display** — the direction lives in the case file now,
+not a header (the method + its §24c guard linger as dead code; retire both if the
+soft-lead is fully abandoned). Theory + timeline are **earned** — pinned only
+once they have content — so a fresh run opens on just `the_case`, never an empty
+"theory." `the_case` was rewritten as a real case file (`Client:` / `Subject:`
+format): minimal intake knowledge (drove north, went silent, trail to Brimley, no
+religion or cult on the page), Walter's plea after the PI leveled with him, and
+the PI's finisher pride SHOWN not told. The **robes-as-lever** thread now gates on
+actually meeting the cult (the grab / their testimony), not the evidence count,
+so the notebook never gets ahead of what he has met. First person throughout
+(`_PI_WEATHER` too; §23/§24c green). *(Open polish: a scrollable card if the
+theory outgrows one page; interior-beat tiering, parked from #22c.)*
 
 ### 14. **[Opus]** The Works as a MINE — side-dug rooms, not hallways  *(was GAME_CHANGES §21)*
 
@@ -535,9 +546,12 @@ smaller-grid perf pass is the shippable core of this.
 ## Standing fences (guardrails, not tickets)
 
 - **The lure chain is NEVER stated diegetically** *(was GAME_CHANGES §10)*.
-  King → Mara → Walter → PI is felt, not said; the one faint unease
-  (`the_case` note) already exists — do NOT build on it. King/Watcher moments
-  read as **luck, not omniscience** (powerful, not infallible).
+  King → Mara → Walter → PI is felt, not said. The faint unease now lives in the
+  `the_dream` and `the_congregation` notes (NOT `the_case`, which the 2026-07
+  review rewrote into a clean mundane intake, cutting its old "couldn't say why"
+  beat); the "why is a finisher this deep on a nothing-case" disproportion is
+  left to be FELT in play, never stated. Do NOT build on any of it. King/Watcher
+  moments read as **luck, not omniscience** (powerful, not infallible).
 - **The corn is mundane, never the door's doing** (#11). Keep the impossible
   count at **one** (§1b): the single unexplained door, everything else ordinary
   cause-and-effect downstream of it.
