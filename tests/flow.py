@@ -188,6 +188,20 @@ def main():
                   and e.get("name") == "the_invitation") == 1,
           "sable: the handoff fires exactly once (no duplicate)")
 
+    # (b2) Knowledge continuity: the early (ungated) 'car' exchange must not
+    # put town-wide car/fold knowledge in the PI's mouth. He speaks only from
+    # his OWN experience (his car died the night he drove in); that no engine
+    # in Brimley catches is the fold, and he learns it from Vane/Royce, never
+    # asserts it to Sable first. Guards the "cars not working with Sable" leak.
+    _car = next(ex for ex in _SCV["exchanges"] if ex["key"] == "car")
+    check("avail" not in _car,
+          "sable: the car question is an early, ungated exchange")
+    _pi_car = (_car["q"] + " " + " ".join(
+        t for (who, t) in _car["beats"] if who == "pi")).lower()
+    for _leak in ("no car in this town", "every car in this town", "i'm told"):
+        check(_leak not in _pi_car,
+              f"sable: the PI never leaks town-wide car knowledge ({_leak!r})")
+
     # (c) The school rite: incense first, then the chalk door; the fold
     # stays open from then on.
     g.load_scene_now("schoolhouse")
@@ -1674,6 +1688,16 @@ def main():
     check(not any(getattr(n, "name", "") == "A woman"
                   for n in gch.scene.npcs),
           "chorus: the cut newcomer woman never spawns in brimley")
+    # Homebody vanish only where the door doesn't lie: Old Pell keeps his
+    # step (the schoolhouse behind him is enterable + empty), Hettie still
+    # ducks into her shop (whose interior holds a Hettie). Guards the
+    # "walked into a building, nobody there" consistency fix.
+    _pell = next(n for n in gch.scene.npcs if n.name == "Old Pell")
+    check(getattr(_pell, "_hb_vanish", True) is False,
+          "homebody: Old Pell never vanishes (empty schoolhouse behind him)")
+    _het = next((n for n in gch.scene.npcs if n.name == "Hettie"), None)
+    check(_het is not None and getattr(_het, "_hb_vanish", None) is True,
+          "homebody: Hettie still ducks into her shop (interior holds a Hettie)")
     gch.save.set_flag("preacher_doomed", True)
     _gar = next(n for n in gch.scene.npcs if n.name == "Garrick")
     gch.player.x, gch.player.y = _gar.x + 20, _gar.y

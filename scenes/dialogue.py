@@ -1301,16 +1301,23 @@ SABLE_CONVO = {
             ],
         },
         {
+            # The PI speaks only from his OWN experience -- his car died at
+            # the lodge steps the night he drove in. He does NOT yet know the
+            # fold kills every engine (that comes from Vane / Royce), so this
+            # exchange must not put town-wide car knowledge in his mouth.
+            # Sable's answer stays deniable hospitality (the Sheriff carries
+            # the plain truth; NARRATIVE §7).
             "key": "car",
-            "q": "My car won't start. I'm told no car in this town will.",
+            "q": "My car died at the lodge steps the night I drove in. "
+                 "Turns over and never catches.",
             "label": "My car won't start.",
             "beats": [
                 ("npc", "The roads are not going anywhere tonight. Neither "
                         "are you. I would not fret over the car."),
                 ("pi", "I didn't ask about tonight. I asked what's wrong "
-                       "with every car in this town."),
-                ("npc", "It is the only one I have, and I have never needed "
-                        "another. Get some rest."),
+                       "with it."),
+                ("npc", "Nothing a night's rest won't settle. It will keep "
+                        "till morning. Everything here does. Get some rest."),
             ],
         },
         # Unlocked by reading the cellar Ledger (evidence the_ledger); the
