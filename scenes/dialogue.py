@@ -68,7 +68,7 @@ def _evidence(game, name, content, weight=None, show=True, note=False):
                         "weight": CANONICAL_EVIDENCE[name]})
             game.save.set_arg("evidence", log)
             if hasattr(game, "_flash_notebook"):
-                game._flash_notebook()    # corner scribble: you wrote it down
+                game._flash_notebook(name)    # corner scribble: you wrote it down
             if hasattr(game, "audio"):
                 game.audio.play("evidence_added", 0.7)
     elif note:
@@ -105,12 +105,17 @@ def _cult_tell(game, npc_key):
 def _log_note(game, key, lines):
     """File a PI case NOTE once, keyed by name. NOTES are the interior
     voice, shown in the notebook after the clues; they must NEVER go in
-    `evidence` (that count drives the King-gate and the visibility floor)."""
+    `evidence` (that count drives the King-gate and the visibility floor).
+    Fires the corner scribble like every other case-book write, so the
+    player always gets the one quiet 'noted that' tell (the Ledger, the
+    Preacher, etc. used to file silently -- a bug)."""
     notes = game.save.arg("notes", [])
     if isinstance(notes, list) and not any(
             isinstance(e, dict) and e.get("name") == key for e in notes):
         notes.append({"name": key, "lines": list(lines)})
         game.save.set_arg("notes", notes)
+        if hasattr(game, "_flash_notebook"):
+            game._flash_notebook(key)
 
 
 # The investigation grows: when the PI makes a DISCOVERY, some of what he

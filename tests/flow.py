@@ -727,10 +727,11 @@ def main():
     # Lock that the three-read count drives the door-dream, since the
     # mechanic is the only in-game trigger for the §1b cutscene.
     from systems.items import MARA_JOURNAL_PAGES, journal_page as _jpage
+    from ui.journal_ui import PAPERS_TAB
     gj = new_game()
     gj.player.inventory.add("mom_notebook", 1)
     gj.inv_ui.open = True
-    gj.inv_ui.tab = 1                                 # Notes tab
+    gj.inv_ui.tab = PAPERS_TAB                        # the readable journal lives here
     _fk = [k for _, k, _ in gj.inv_ui._filtered_items(gj.player.inventory)]
     gj.inv_ui.cursor = _fk.index("mom_notebook")
     check(_jpage(gj.save)[1] == 0,

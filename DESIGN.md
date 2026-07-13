@@ -233,14 +233,14 @@ Only display names and fiction change.
   `_king_anchor` on a cooldown (`_muster_reinforcements`).
 - **Evidence count:** `len(self.save.arg("evidence", []))`.
 - **Evidence logging:** `_evidence(game, name, content)` in
-  `scenes/dialogue.py` → appends to `save.arg("evidence")`, shown in the
-  notebook UI.
+  `scenes/dialogue.py` → appends to `save.arg("evidence")`, shown on the
+  Casebook's Case tab (`ui/journal_ui.py`).
 - **Threat geography constants** (`systems/config.py`, star-imported by
   `game.py`): `CULTIST_SCENES`, `SAFE_SCENES`, `OUTDOOR_SCENES`,
   `DARK_SCENES`, `KING_FREE_SCENES`.
 - **Evidence is a log, not inventory.** "Evidence" = entries appended to
-  `save.arg("evidence")` by `_evidence(game, name, ...)` (shown in the
-  notebook UI). The count for the 3-gate is `len(save.arg("evidence"))` —
+  `save.arg("evidence")` by `_evidence(game, name, ...)` (shown on the
+  Casebook's Case tab). The count for the 3-gate is `len(save.arg("evidence"))` —
   it counts *log entries*, not held items. So every pickup that should
   count (Mara's journal, the Ledger, the Pallid Mask) must ALSO fire
   a matching `_evidence()` call, or it won't move the gate.
