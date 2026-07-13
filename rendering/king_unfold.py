@@ -1174,144 +1174,85 @@ def draw_king_unfold(surf, cx, cy, t, threat=0.0, scale=96.0,
 # the player rather than resolving into a picture.
 # --------------------------------------------------------------------------- #
 def draw_unfold_catch(surf, t):
-    """The catch, t 0..1 (~3.5s). You are drawn INTO the Unfolding: the real
-    4D King looms and everts open (His faceted flesh, NOT teeth), His dark maw
-    eats the frame, and inside is the FURNACE OF FACES -- His pallid mask-
-    slices (the 4D cross-sections of Him) placed and TURNED through 4D, rising
-    out of the dim gold depth with every gold gaze on you, His face largest at
-    the heart -- then the dark closes over. Black + cursed gold, His fire the
-    only light; no white flood (NARRATIVE §5, DESIGN.md §5)."""
+    """The catch, t 0..1 (~3.5s). The Unfolding looms and everts OPEN -- His
+    maw gapes -- and you FALL INTO THE MOUTH: past the lips, toward His Pallid
+    Mask waiting in the dark of the throat, lit from behind by His fire (the
+    only light). Then the black closes over you. Carcosa is never shown; the
+    not-knowing is the flame (NARRATIVE §2/§5). Dim black + cursed gold, no
+    white flood."""
+    from rendering.sprites_king import door_mask_surface
     W, H = surf.get_size()
     cx, cy = W * 0.5, H * 0.5
-    surf.fill((5, 4, 6))
+    surf.fill((4, 3, 5))
     base = max(W, H)
 
     def sstep(x):
         x = 0.0 if x < 0 else 1.0 if x > 1 else x
         return x * x * (3.0 - 2.0 * x)
 
-    def nz(i):                                   # deterministic [0,1) scatter
-        v = math.sin(i * 12.9898) * 43758.5453
-        return v - math.floor(v)
-
     loom = sstep(t / 0.26)
-    gape = sstep((t - 0.03) / 0.24)
-    eat = sstep((t - 0.22) / 0.34)               # His dark eats the frame
-    furnace = sstep((t - 0.26) / 0.46)           # the faces resolve + close in
-    close = sstep((t - 0.88) / 0.12)             # swallowed to black
-    clock = t * 5.6                              # 4D churn phase
+    gape = sstep((t - 0.05) / 0.24)
+    fall = sstep((t - 0.34) / 0.42)          # the plunge into the mouth
+    black = sstep((t - 0.74) / 0.24)         # blackness closes over
+    clock = t * 5.0
 
-    # 1. THE 4D KING, looming + everting open, fading as His dark eats the
-    #    frame. This is the actual sprite -- the King before the swallow reads
-    #    as the real 4D object, not a flat stand-in.
-    king_vis = max(0.0, 1.0 - 1.2 * eat)
+    # 1. The real 4D King, looming + everting OPEN (the maw) -- the King right
+    #    before the swallow. Fades cleanly as we pass the lips into the dark.
+    king_vis = max(0.0, 1.0 - 1.7 * fall)
     if king_vis > 0.02:
         tmp = pygame.Surface((W, H))
-        tmp.fill((5, 4, 6))
+        tmp.fill((4, 3, 5))
         try:
             draw_king_unfold(tmp, cx, cy, 2.0 + clock, threat=1.0,
-                             scale=base * (0.30 + 0.14 * loom),
-                             to_player=(0.0, 1.0), birth=1.0,
-                             gape=gape, eat_light=False)
+                             scale=base * (0.30 + 0.24 * loom + 0.40 * fall),
+                             to_player=(0.0, 1.0), birth=1.0, gape=gape,
+                             eat_light=False)
         except Exception:
             pass
         tmp.set_alpha(int(255 * king_vis))
         surf.blit(tmp, (0, 0))
 
-    # 2. His fire at the depth -- the only light, dim cursed gold, growing.
+    # 2. His fire deep in the throat -- the only light, swelling as you fall
+    #    toward it (dim cursed gold; it backlights the Mask, never floods).
     _heart_glow(surf, cx, cy,
-                int(base * (0.10 + 0.28 * eat + 0.22 * furnace)),
-                int(60 + 80 * eat + 26 * furnace))
+                int(base * (0.10 + 0.20 * gape + 0.36 * fall)),
+                int(64 + 40 * gape + 70 * fall))
 
-    lay = pygame.Surface((W, H), pygame.SRCALPHA)
+    # 3. His Pallid Mask waiting in the dark of the throat -- the face you fall
+    #    toward, the last thing before the black. A pale carved face hanging in
+    #    His fire, its gold gaze on you (the flashback-mask you already know).
+    mvis = sstep((t - 0.36) / 0.30) * (1.0 - 0.9 * black)
+    if mvis > 0.02:
+        mh = int(base * (0.34 + 0.42 * fall))
+        if mh >= 12:
+            # a tight hot core right behind it so the bone reads gold-lit
+            _heart_glow(surf, cx, cy, int(mh * 0.62), int(150 * mvis))
+            m = door_mask_surface(height=mh, vis=0.66, gaze=(0.0, 0.06),
+                                  seed=7).copy()
+            m.set_alpha(int(255 * mvis))
+            surf.blit(m, (int(cx - m.get_width() / 2),
+                          int(cy - m.get_height() / 2)))
 
-    # 3. DOWN THE THROAT -- everting flesh facets receding (NO teeth): irregular
-    #    dark shards folding inward with a gold seam of His fire in each fold,
-    #    the ring skewed per depth (the cross-section shifting = the 4D tell).
-    throat = sstep((t - 0.14) / 0.30) * (1.0 - 0.6 * furnace)
-    if throat > 0.02:
-        NR = 9
-        phase = eat * NR * 1.5
-        for ring in range(NR):
-            p = ((ring - phase) % NR) / NR
-            depth = 0.18 + p * 1.25
-            rad = (0.58 * base) / depth
-            if rad < 8 or rad > base * 1.7:
-                continue
-            near = (1.0 if rad < base * 0.9
-                    else max(0.0, 1 - (rad - base * 0.9) / (base * 0.5)))
-            a = int(238 * near * throat * min(1.0, (1 - p) * 2.2 + 0.12))
-            if a < 8:
-                continue
-            skew = 0.035 * base * math.sin(depth * 2.0 + clock * 0.4)
-            nf = 18
-            for k in range(nf):
-                ang = math.tau * k / nf + depth * 3.1
-                dA = (math.tau / nf) * (0.30 + 0.16 * nz(ring * 9 + k))
-                reach = 0.12 + 0.18 * nz(ring * 5 + k)
-                b0 = (cx + skew + math.cos(ang - dA) * rad,
-                      cy + math.sin(ang - dA) * rad)
-                b1 = (cx + skew + math.cos(ang + dA) * rad,
-                      cy + math.sin(ang + dA) * rad)
-                tip = (cx + skew + math.cos(ang) * rad * (1 - reach),
-                       cy + math.sin(ang) * rad * (1 - reach))
-                sh = 0.28 + 0.72 * (1 - p)
-                col = _ci(_cmix(_MEM_SHADOW, _MEM_HI, 0.20 + 0.70 * sh))
-                pygame.draw.polygon(lay, (*col, a), [b0, b1, tip])
-                pygame.draw.line(lay, (*_GOLD_RIM, int(a * (0.55 + 0.45 * sh))),
-                                 b0, tip, 1)
+    # 4. the dark of the throat closes in from the RIM as we go deeper inside
+    #    the mouth: edges darken first, the clear lit centre shrinking as we
+    #    fall (never eats the Mask + fire until the very end).
+    if fall > 0.02:
+        vig = pygame.Surface((W, H), pygame.SRCALPHA)
+        R = int(base * 0.98)
+        hole = base * (0.52 - 0.44 * fall)       # the clear centre shrinks
+        steps = 30
+        for i in range(steps + 1):
+            rr = int(R * (1.0 - i / steps))
+            if rr <= hole:
+                break
+            edgef = (rr - hole) / max(1.0, R - hole)
+            a = int(238 * fall * edgef ** 1.35)
+            pygame.draw.circle(vig, (2, 2, 4, a), (int(cx), int(cy)), rr)
+        surf.blit(vig, (0, 0))
 
-    # 4. THE FURNACE OF FACES -- His pallid mask-slices placed + TURNED through
-    #    4D, converging out of the depth, every gold gaze on you (glint),
-    #    furnace-backlit. His face largest at the heart. The hero beat.
-    if furnace > 0.01:
-        a4, b4, c4 = clock * 0.5, clock * 0.36, clock * 0.62
-        cloud = []
-        NM = 24
-        for i in range(NM):
-            u = nz(i * 2) * math.tau
-            vv = nz(i * 3) * math.pi
-            wq = (nz(i * 5) - 0.5) * 2.0
-            p4 = [math.cos(u) * math.sin(vv), math.sin(u) * math.sin(vv),
-                  math.cos(vv), wq]
-            p4 = _rot(p4, 0, 3, a4)
-            p4 = _rot(p4, 1, 3, b4)
-            p4 = _rot(p4, 2, 1, c4)
-            x3, y3, z3 = _to3d(p4)
-            z3 += (0.6 + 1.5 * furnace)              # the cloud closes toward you
-            cloud.append((z3, x3, y3, i))
-        cloud.sort(reverse=True)                     # far (big z) first
-        for z3, x3, y3, i in cloud:
-            denom = _Z_EYE - z3
-            if denom < 0.12:
-                continue
-            k3 = _FOCAL / denom
-            sx = cx + x3 * k3 * base * 0.42
-            sy = cy - y3 * k3 * base * 0.42
-            size = int(base * 0.15 * k3)
-            if size < 6 or size > base * 1.3:
-                continue
-            if sx < -size or sx > W + size or sy < -size or sy > H + size:
-                continue
-            depthf = max(0.0, min(1.0, (k3 - 0.4) / 1.6))
-            a = int(min(255, (105 + 150 * depthf) * min(1.0, furnace * 1.35)))
-            tilt = x3 * size * 0.28                   # skew by its 4D-turned pose
-            _pallid_mask(lay, sx, sy, size, int(size * 1.28), a,
-                         tilt=tilt, backlit=0.7 * furnace, glint=furnace)
-        hz = int(base * (0.30 + 0.26 * furnace))     # His face at the heart
-        _pallid_mask(lay, cx, cy - hz * 0.06, hz, int(hz * 1.3),
-                     int(255 * furnace), tilt=6 * math.sin(clock * 0.5),
-                     backlit=furnace, glint=furnace)
-
-    surf.blit(lay, (0, 0))
-
-    # 5. the dark eats the rim -- we are inside Him. Eases off as the furnace
-    #    lights up (His fire is the light there), so the faces are not eaten.
-    _eat_light(surf, cx, cy, base * 1.5, int(30 + 84 * eat * (1.0 - 0.5 * furnace)))
-
-    # 6. SWALLOWED -- the dark closes over, to black. No white flood.
-    if close > 0.0:
+    # 5. BLACKNESS closes over. Hold on black (Carcosa unshown).
+    if black > 0.0:
         v = pygame.Surface((W, H))
-        v.fill((2, 2, 4))
-        v.set_alpha(int(238 * close))
+        v.fill((0, 0, 0))
+        v.set_alpha(int(255 * black))
         surf.blit(v, (0, 0))

@@ -176,12 +176,13 @@ it renders the procedural sprites to a labelled PNG strip.
     `entities/npc.py _yk_update`) irises the leading face into the huge
     toothed mouth with the Mask in its throat — the lunge telegraph. The
     death `draw_unfold_catch(surf,t)` (~3.5s, 2026-07 remake) draws you INTO
-    Him: the real 4D King looms + everts open, His faceted-flesh maw eats the
-    frame, and inside is the FURNACE OF FACES — His pallid mask-slices
-    (`_pallid_mask`) placed + turned through the King's own 4D math (`_rot`/
-    `_to3d`), converging with every gold gaze on you, His face largest at the
-    heart, then swallowed to black. Dim black + cursed-gold, His fire the only
-    light, no white flood (NARRATIVE §5/§8). Routed from `_draw_death_screen`.
+    Him: the real 4D King (`draw_king_unfold`) looms + everts OPEN, His maw
+    gaping and His fire kindling in the throat, then you FALL INTO THE MOUTH
+    toward His Pallid Mask (`door_mask_surface`, the carved flashback mask)
+    hanging alone in the gold throat-fire with its gold gaze on you, the dark
+    closing from the rim, then swallowed to BLACK. Carcosa is never shown (the
+    not-knowing is the flame). Dim black + cursed-gold, His fire the only
+    light, no white flood (NARRATIVE §2/§5). Routed from `_draw_death_screen`.
     Game feeds the live SPRITE (not the death) its
     `threat`, `birth`, screen-space `to_player`/`lean`, and a tilt-only
     `scale_mul` depth-scale (`KING_TILT_DEPTH_*`, looms as he closes). Stateless
