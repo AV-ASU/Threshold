@@ -1097,8 +1097,12 @@ def build_brimley():
     sc.add_decoration(Decoration(77 * TILE + 16, 33 * TILE + 16, "brazier"))
     sc.add_decoration(Decoration(81 * TILE + 16, 33 * TILE + 16, "brazier"))
     # The church steeple -- the one tall thing for miles, a landmark to
-    # orient by, rising over the roof into the treeline.
-    sc.add_decoration(Decoration(7 * TILE + 16, 7 * TILE + 16, "steeple"))
+    # orient by, rising over the roof into the treeline. `rise` grows the
+    # tower out of the church roof ridge (~z 50) and `depth_bias` sorts it
+    # just after that opaque roof so the belfry + spire read clearly above it
+    # instead of being buried (the roof otherwise paints over the whole tower).
+    sc.add_decoration(Decoration(7 * TILE + 16, 7 * TILE + 16, "steeple",
+                                 rise=50, depth_bias=170))
     # A brazier marking the burn-clearing threshold.
     sc.add_decoration(Decoration(13 * TILE + 16, 80 * TILE + 16, "brazier"))
     # A murder of crows posted along the treeline, watching.
