@@ -467,7 +467,8 @@ class Scene:
     # (px). Mirrors the fixtures _draw_dark renders visibly so what
     # LOOKS lit IS lit to the stealth model.
     _LIGHT_KINDS = {"wall_torch": 90.0, "brazier": 90.0,
-                    "campfire": 80.0, "lantern": 60.0, "candle": 55.0}
+                    "campfire": 80.0, "camp_fire": 88.0,
+                    "lantern": 60.0, "candle": 55.0}
 
     def light_sources(self):
         """Cached [(x, y, r)] of the scene's light-emitting decorations

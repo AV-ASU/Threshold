@@ -231,6 +231,25 @@ Only display names and fiction change.
   maxed meter (`visibility >= 1.0`, cult awake at `CULT_WAKE_EV`, scene not
   in `KING_FREE_SCENES`) musters `REINFORCE_COUNT` (2) cultists at
   `_king_anchor` on a cooldown (`_muster_reinforcements`).
+- **Cultist spawn geography** (`systems/threat_mixin.py` `_ensure_cultists` /
+  `_spawn_cultist`): a cult scene is kept topped to `Scene.cult_target`
+  roamers (default `CULT_REGULARS`), spawned at the farthest unoccupied point
+  in `Scene.cult_spawns` (a hand-placed anchor pool, `from_pool=True`) or the
+  map corners if none is defined. The scene is PREFILLED to target on the
+  first awake tick after each load (`_cult_prefilled`) so it reads populated
+  on entry, then refills one at a time on the `CULT_TOPUP_INTERVAL` breather.
+  All of it stays behind the `CULT_WAKE_EV` gate. **Brimley** uses
+  `cult_target = 10` over 14 anchors (9 spread + a 5-strong SE **cult camp**
+  crew, `_camp_pos`); the crew fills from the pool when the cult wakes. At ev 0
+  the camp spot is just a stand of corn (only its trees are pre-cleared so the
+  anchors + tend station stay reachable). The camp itself is raised in
+  `_raise_cult_camp` (`scenes/brimley.py` on_enter) only at 1+ evidence
+  (nothing at ev 0 -- the town reads normal): the **worn packed ground** is
+  beaten in (corn -> dirt) and a lit `camp_fire` (a new SOLID light volume,
+  distinct from the dead indoor `campfire` scorch decal) is ringed by
+  `bedroll` + `log_seat` floor decals and a hung lantern, with a tend-the-fire
+  errand station just south of the flames. The ground is the cult's OWN doing,
+  so it appears with them, not before.
 - **Evidence count:** `len(self.save.arg("evidence", []))`.
 - **Evidence logging:** `_evidence(game, name, content)` in
   `scenes/dialogue.py` → appends to `save.arg("evidence")`, shown on the
@@ -452,7 +471,9 @@ finds you — run it on cover, timing, and breaking their line of sight).
   enclosed hide in each half, and patrol phases are spread so no half is
   permanently clear.
 - The well sprite was redesigned and repositioned in `brimley` (the
-  east village square — a landmark just off the road).
+  eastern lodge/well square just inside the lodge-road entry — a
+  landmark just off the road; `scene._well_pos`, col 52 row 17 since the
+  60x60 redesign, TODO #18).
 
 **Re-audit (2026-06):** the 7-room gauntlet above matches the build
 exactly. Not tabled here but registered and reachable: three **dead-end
@@ -576,7 +597,7 @@ bush hides you immediately.
 `brimley`, `cornfield_maze`, `cornfield_path`, and the Lodge yard
 (`lodge_yard`) all wrap on the relevant axes:
 
-- **brimley.wrap_x** -- the cross-town road at row 24 loops
+- **brimley.wrap_x** -- the cross-town fold road at row 25 loops
   east-west. Walking off either side carries you back in on the
   other.
 - **brimley.wrap_y** -- the perimeter forest loops north-south.
@@ -593,7 +614,7 @@ bush hides you immediately.
 Three direct south-chain exits close the outdoor world into one
 closed system:
 
-- **brimley** south edge ('M' tile, col 48 row 99) → cornfield_maze
+- **brimley** south edge ('M' tile, col 20 row 59) → cornfield_maze
 - **cornfield_maze** south ('!' tile) → cornfield_path
 - **cornfield_path** south ('S' tile) → brimley north
 
@@ -749,6 +770,16 @@ looking at stays hidden -- the same restricted-sight rule the open world
 obeys, and the mundane door's point of difference from the RIFT, which
 shows everything by design (the King's violence has no blind spot). The
 figure is clipped to the opening. Preview: `tools/preview_door_sight.py`.
+
+**Door opening direction is geometry-derived.** A door can be punched into any
+wall face; `_door_room_dir` (`scenes/terrain.py`, used by BOTH the flat
+`_draw_door_opening` and the tilt `_draw_doorway`) reads the door's wall
+neighbours to resolve which way it opens. It counts windows (`i`) as part of the
+wall line and treats a building's roof (`r`) as the INTERIOR side, so a door
+flanked by lit windows on an east/west/north face still resolves correctly (not
+just the old south default). This is what lets an overworld building FRONT the
+street it sits on -- Brimley's houses face east/west/north onto the central
+spine and their access road rather than all facing south (TODO #18 follow-up).
 
 ---
 

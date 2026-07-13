@@ -1467,6 +1467,44 @@ def _draw_burn_barrel_solid(surf, cam, deco):
     _flame_tri(surf, cam, wx, wy, h, fh, fw, (208, 88, 28), (250, 178, 68))
 
 
+def _draw_camp_fire_solid(surf, cam, deco):
+    """A lit ground fire at the cult camp: a ring of fieldstones, a glowing
+    coal bed, a low teepee of charred logs, and guttering flame. A LIGHT the
+    dark field crosses to (the crew gathers around it). Distinct from the dead
+    indoor `campfire` scorch decal."""
+    wx, wy = deco.x, deco.y
+    s = (getattr(deco, "scale", 1.0) or 1.0)
+    t = getattr(deco, "t", 0.0)
+    # ash + coal bed on the ground
+    _disc(surf, cam, wx, wy, 0, 9 * s, 6.5 * s, (36, 30, 26))
+    _disc(surf, cam, wx, wy, 0, 5.5 * s, 4 * s, (70, 40, 22))
+    gl = 150 + int(math.sin(t * 5 + deco.seed) * 40)
+    _disc(surf, cam, wx, wy, 0, 3 * s, 2.2 * s, (gl, 60, 24))
+    # ring of fieldstones
+    for k in range(9):
+        a = k * (2 * math.pi / 9) + 0.3
+        sx = wx + math.cos(a) * 11 * s
+        sy = wy + math.sin(a) * 11 * s
+        _disc(surf, cam, sx, sy, 0, 2.3 * s, 1.9 * s, (98, 94, 98))
+        _disc(surf, cam, sx, sy, 0, 2.3 * s, 1.9 * s, (58, 56, 60),
+              fill=False, width=1)
+    # a low teepee of charred logs leaning into the middle
+    log = {"body": (54, 38, 24), "lo": (28, 18, 12), "rim": (86, 62, 38)}
+    for k in range(3):
+        a = k * (2 * math.pi / 3) + 0.5
+        lx = wx + math.cos(a) * 5.5 * s
+        ly = wy + math.sin(a) * 5.5 * s
+        draw_solid(surf, cam, lx, ly,
+                   [(0, 2.2 * s, 2.2 * s), (8 * s, 1.1 * s, 1.1 * s)], log)
+    # flame
+    for k, (fx, fy, m) in enumerate(((0, 0, 1.0), (-3.2 * s, 1.4 * s, 0.66),
+                                     (3.2 * s, -1.2 * s, 0.72))):
+        fh = (11 + math.sin(t * 6 + deco.seed + k * 1.7) * 4.5) * s * m
+        fw = 4.6 * s * cam.scale * (0.7 + 0.3 * m)
+        _flame_tri(surf, cam, wx + fx, wy + fy, 4 * s, fh, fw,
+                   (206, 84, 26), (250, 182, 74))
+
+
 def _draw_news_rack_solid(surf, cam, deco):
     """A coin-op newspaper vending box on four stub legs, enamel gone
     chalky, the window still showing the last issue it was ever fed
@@ -2155,6 +2193,7 @@ SOLID_PROPS = {
     "rust_coupe":    _draw_rust_coupe_solid,
     "rust_van":      _draw_rust_van_solid,
     "burn_barrel":   _draw_burn_barrel_solid,
+    "camp_fire":     _draw_camp_fire_solid,
     "news_rack":     _draw_news_rack_solid,
     "stalagmite":    _draw_stalagmite_solid,
     # anchored volumes (the sprite-depth-anchoring pass): props that used to

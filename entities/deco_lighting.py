@@ -151,6 +151,22 @@ class DecoLightingMixin:
         e = 0.5 + 0.5 * math.sin(self.t * 2.0)                             # last dull ember
         pygame.draw.circle(surf, (int(110 + 70 * e), 48, 22), (x, y), 1)
 
+    def _draw_camp_fire(self, surf, x, y):
+        """A LIT ground fire (top-down): ring of fieldstones, ash bed, live
+        flame. The cult camp's warm centre. Distinct from the dead indoor
+        `campfire` scorch. (The tilt view draws the volume via
+        rendering.props._draw_camp_fire_solid.)"""
+        pygame.draw.ellipse(surf, (34, 28, 24), (x - 12, y - 10, 24, 20))    # ash
+        pygame.draw.ellipse(surf, (70, 40, 22), (x - 7, y - 6, 14, 12))      # coals
+        for i in range(9):
+            a = i * 0.698
+            sx = int(x + math.cos(a) * 12); sy = int(y + math.sin(a) * 10)
+            pygame.draw.circle(surf, (104, 100, 104), (sx, sy), 2)
+            pygame.draw.circle(surf, (64, 62, 66), (sx, sy), 2, 1)
+        f = 0.5 + 0.5 * math.sin(self.t * 6 + self.seed)
+        pygame.draw.circle(surf, (int(196 + 44 * f), 92, 32), (x, y), 4)
+        pygame.draw.circle(surf, (250, int(168 + 22 * f), 68), (x, y), 2)
+
     def _draw_smoke(self, surf, x, y):
         for i in range(4):
             phase = (self.t * 0.6 + i * 0.4 + self.seed * 0.1) % 1.0
