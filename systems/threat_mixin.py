@@ -285,20 +285,35 @@ class ThreatMixin:
         self._gaze_bind_t = t
 
     def _ensure_cultists(self, key, dt):
-        """Keep the current cult scene topped up with CULT_REGULARS roaming
-        cultists. Rate-limited so killing one buys a breather, not an instant
-        respawn. (The watcher-curse is His own gaze, bound in
+        """Keep the current cult scene topped up to its roaming target
+        (`Scene.cult_target`, else CULT_REGULARS). On the FIRST awake tick
+        after a load the scene is PREFILLED straight to target from its
+        spawn-point pool (`Scene.cult_spawns`, else the map corners) so a
+        cult scene reads populated the moment you enter; after that a killed
+        cultist respawns only on the rate-limited breather
+        (CULT_TOPUP_INTERVAL). (The watcher-curse is His own gaze, bound in
         _tick_gaze_bind; NARRATIVE §4 / DESIGN.md §1.)"""
+        target = getattr(self.scene, "cult_target", None) or CULT_REGULARS
+        regulars = [n for n in self.scene.npcs
+                    if getattr(n, "tag", "") == "cult_regular"
+                    and getattr(n, "alive", True)]
+        missing = target - len(regulars)
+        if missing <= 0:
+            return
+        if not self._cult_prefilled:
+            for _ in range(missing):
+                if self._spawn_cultist("cult_regular", "cultist", speed=0.85,
+                                       gaze_range=180, from_pool=True) is None:
+                    break
+            self._cult_prefilled = True
+            self._cult_topup_t = CULT_TOPUP_INTERVAL
+            return
         self._cult_topup_t -= dt
         if self._cult_topup_t > 0:
             return
         self._cult_topup_t = CULT_TOPUP_INTERVAL
-        regulars = [n for n in self.scene.npcs
-                    if getattr(n, "tag", "") == "cult_regular"
-                    and getattr(n, "alive", True)]
-        if len(regulars) < CULT_REGULARS:
-            self._spawn_cultist("cult_regular", "cultist",
-                                 speed=0.85, gaze_range=180)
+        self._spawn_cultist("cult_regular", "cultist",
+                             speed=0.85, gaze_range=180, from_pool=True)
 
     def _flank_cultists(self):
         """When 2+ regular cultists are chasing in an open scene, the
@@ -601,11 +616,14 @@ class ThreatMixin:
         self._fold_pursuer_grace = 0.0
 
     def _spawn_cultist(self, tag, kind, speed=0.85, gaze_range=180,
-                       movement="chaser", name="", at=None):
+                       movement="chaser", name="", at=None, from_pool=False):
         """Plant a cultist. If `at` (x, y) is given and walkable, they enter
-        there (the door you came in by -- for reinforcement waves); otherwise
-        at the farthest walkable scene corner from the player, so they enter
-        from the edges rather than on top of you. Returns the NPC, or None."""
+        there (the door you came in by -- for reinforcement waves). Else if
+        `from_pool` and the scene defines `cult_spawns`, they enter at the
+        farthest unoccupied pool point from the player (hand-placed spawn
+        anchors). Otherwise at the farthest walkable scene corner. Either way
+        they enter from a distance, never on top of you. Returns the NPC, or
+        None."""
         scene = self.scene
         best = None
         if at is not None:
@@ -613,6 +631,24 @@ class ThreatMixin:
             ay = at[1] + random.uniform(-12, 12)
             if not scene.is_solid_at(ax, ay):
                 best = (ax, ay)
+        if best is None and from_pool:
+            pool = getattr(scene, "cult_spawns", None)
+            if pool:
+                occ = [(n.x, n.y) for n in scene.npcs
+                       if str(getattr(n, "tag", "")).startswith("cult_")
+                       and getattr(n, "alive", True)]
+                cands = []
+                for px, py in pool:
+                    if scene.is_solid_at(px, py):
+                        continue
+                    if any(abs(px - ox) < Scene.TILE * 1.5
+                           and abs(py - oy) < Scene.TILE * 1.5
+                           for ox, oy in occ):
+                        continue          # one cultist per point
+                    cands.append((px, py))
+                if cands:
+                    best = max(cands, key=lambda p: scene.world_dist(
+                        p[0], p[1], self.player.x, self.player.y))
         if best is None:
             corners = [
                 (4 * Scene.TILE, 4 * Scene.TILE),

@@ -278,6 +278,15 @@ def build_brimley():
     kid_dt, kid_out = _stamp_building(
         objects_l, kid_left, kid_right, kid_top, kid_bot, "J", "n", 46)
 
+    # Hand-placed cultist spawn ANCHORS (the maintainer's marks) -- 9 spread
+    # over town + 5 at the SE camp. Defined here so the scattered-tree pass
+    # below can keep them clear; wired to the scene as `cult_spawns` at the end.
+    _ANCHORS = [
+        (6, 6), (7, 16), (17, 24), (13, 28), (26, 31), (43, 30),
+        (48, 22), (17, 51), (20, 43),                       # spread over town
+        (40, 50), (44, 50), (41, 52), (43, 52), (42, 49),   # the camp crew
+    ]
+
     # Road corridors poke cleanly through the 7-tile forest band so the
     # scattered trees don't grow over an exit or the lodge square.
     def _border_protected(tx, ty):
@@ -327,8 +336,11 @@ def build_brimley():
                 nx = (tx - lx) / float(rx + 1)
                 ny = (ty - ly) / float(ry + 1)
                 d = nx * nx + ny * ny
-                if d <= 0.55 or (d <= 1.0 and lr.random() < 0.55):
-                    objects_l[ty][tx] = "T"
+                # BROKEN-UP stands (maintainer note): thinner than a solid blob
+                # and ~half passable ('p', identical-looking) so the lobe reads
+                # as a scattered stand you can push through, never a wall.
+                if d <= 0.4 or (d <= 1.0 and lr.random() < 0.4):
+                    objects_l[ty][tx] = "p" if lr.random() < 0.5 else "T"
 
     # Lit windows flanking a few doors (the 'i' tile glows + a dark figure
     # passes behind the glass on its own clock), on the SAME wall face as
@@ -414,6 +426,40 @@ def build_brimley():
             _pave(tx, ty)
     for ty in range(26, 41):
         _pave(48, ty)
+
+    # ---- Scattered field trees (maintainer note: break the empty fields) ----
+    # The long open sightlines are the map's weak dread zone; sprinkle single
+    # trees (mixed solid/passable) across the bare grass so the fields read as
+    # a thinning wood, not a lawn -- the trees the broken-up clumps shed. Only
+    # plain grass converts, so roads, corn cover, marsh, the river, and worn
+    # tracks survive; skips building aprons, the protected corridors, the
+    # stealth glade, the camp, and the cultist spawn anchors so nothing walls
+    # off and the cover weave stays legible.
+    _scatter = random.Random(88)
+    _anchor_set = set(_ANCHORS)
+
+    def _near_building(tx, ty):
+        for oy in range(ty - 1, ty + 2):
+            for ox in range(tx - 1, tx + 2):
+                if (0 <= oy < h and 0 <= ox < w
+                        and objects_l[oy][ox] in ("W", "r", "i")):
+                    return True
+        return False
+
+    for ty in range(7, h - 7):
+        for tx in range(7, w - 7):
+            if objects_l[ty][tx] != "." or floor_ll[ty][tx] != "g":
+                continue
+            if _border_protected(tx, ty):
+                continue
+            if 8 <= tx <= 20 and 27 <= ty <= 40:          # the stealth glade
+                continue
+            if 38 <= tx <= 46 and 46 <= ty <= 54:         # the camp clearing
+                continue
+            if (tx, ty) in _anchor_set or _near_building(tx, ty):
+                continue
+            if _scatter.random() < 0.07:
+                objects_l[ty][tx] = "p" if _scatter.random() < 0.45 else "T"
 
     # Stamp the permeable forest band on top of everything else.
     _band_bushes = []
@@ -915,6 +961,28 @@ def build_brimley():
     # Mrs. Calder's outdoor table (solid), her settings drawn on top.
     objects_list[42][42] = "t"
     sc.objects = objects_list
+
+    # ---- The cult camp clearing + the cultist spawn pool ----
+    # A worn clearing beaten into the SE corn where the newcomers rest and
+    # gather (the camp proper is raised at 1 evidence, in on_enter). Clear the
+    # stalks + any stray tree so the fire and gear read on open ground; the
+    # corn around it stays as the approach cover.
+    _camp_tx, _camp_ty = 42, 51
+    for cy in range(49, 53):
+        for cx in range(40, 45):
+            if 0 <= cy < h and 0 <= cx < w:
+                if sc.objects[cy][cx] in ("T", "p"):
+                    sc.objects[cy][cx] = "."
+                if sc.floor[cy][cx] in (":", ";", "g"):
+                    sc.floor[cy][cx] = "d"
+    sc._camp_pos = (_camp_tx * TILE + 16, _camp_ty * TILE + 16)
+    # Hand-placed cultist spawn ANCHORS (the maintainer's marks): the cult
+    # ENTERS from these when it wakes (1 evidence) and roams normally (it is
+    # NOT static). The scene keeps `cult_target` filled, prefilled on entry
+    # from the farthest unoccupied anchors (systems/threat_mixin
+    # _ensure_cultists / _spawn_cultist from_pool). 14 anchors, 10 kept.
+    sc.cult_target = 10
+    sc.cult_spawns = [(tx * TILE + 16, ty * TILE + 16) for (tx, ty) in _ANCHORS]
 
     def _brimley_interact(game):
         # The well -- dread set-dressing, fully SEVERED from the descent:

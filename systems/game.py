@@ -277,6 +277,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         self._watcher_clone_t = 0.0    # exposure-gated timer between clones
         self._gaze_count = 0           # cultists watching the player this frame
         self._cult_topup_t = 0.0       # rate-limits cultist (re)spawns per scene
+        self._cult_prefilled = False   # per-load: filled roamers to scene target yet?
         self.flashlight_on = False     # player intent; only "lit" in DARK scenes
 
         # ---- THRESHOLD: flashback ----
@@ -493,6 +494,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         self._watcher_clone_t = 0.0
         self._gaze_count = 0
         self._cult_topup_t = 0.0
+        self._cult_prefilled = False
         self.flashlight_on = False
         self._void_sting_played = False
         self._ashfall_parts = []      # clear the ash field on New Game
@@ -789,6 +791,10 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         self._watchers = []
         self._gaze_count = 0
         self._cult_topup_t = 0.0
+        # Fresh scene: re-fill roaming cultists to the scene's target on the
+        # first awake tick (so a cult scene reads populated the moment you
+        # enter), then rate-limit single respawns after (_ensure_cultists).
+        self._cult_prefilled = False
         # Hide state never carries across scenes. Corn cover (`:`
         # tile) is per-tile; an explicit hide_spot's hide_origin
         # would point at OLD-scene coords if it leaked through.

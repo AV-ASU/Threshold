@@ -728,6 +728,12 @@ def main():
           "moths: a safe room never grows them")
     g.load_scene_now("brimley", "default")
     clear_cult(g)
+    # Isolate the moth mechanics from Brimley's ambient cult: at 2 evidence the
+    # scene otherwise prefills its cult_target of roamers on the next tick
+    # (threat_mixin._ensure_cultists), which would re-populate what clear_cult
+    # just swept. Suppress the pool for this controlled moth stage.
+    g.scene.cult_target = 0
+    g._cult_prefilled = True
     for mm in g.scene._moths:
         mm["b"] = 1.0                 # settle any arrival ramps
     m = g.scene._moths[0]

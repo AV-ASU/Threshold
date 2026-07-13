@@ -231,6 +231,17 @@ Only display names and fiction change.
   maxed meter (`visibility >= 1.0`, cult awake at `CULT_WAKE_EV`, scene not
   in `KING_FREE_SCENES`) musters `REINFORCE_COUNT` (2) cultists at
   `_king_anchor` on a cooldown (`_muster_reinforcements`).
+- **Cultist spawn geography** (`systems/threat_mixin.py` `_ensure_cultists` /
+  `_spawn_cultist`): a cult scene is kept topped to `Scene.cult_target`
+  roamers (default `CULT_REGULARS`), spawned at the farthest unoccupied point
+  in `Scene.cult_spawns` (a hand-placed anchor pool, `from_pool=True`) or the
+  map corners if none is defined. The scene is PREFILLED to target on the
+  first awake tick after each load (`_cult_prefilled`) so it reads populated
+  on entry, then refills one at a time on the `CULT_TOPUP_INTERVAL` breather.
+  All of it stays behind the `CULT_WAKE_EV` gate. **Brimley** uses
+  `cult_target = 10` over 14 anchors (9 spread + a 5-strong SE **cult camp**
+  crew); the camp clearing (`_camp_pos`) is beaten into the SE corn and its
+  crew fills from the pool when the cult wakes.
 - **Evidence count:** `len(self.save.arg("evidence", []))`.
 - **Evidence logging:** `_evidence(game, name, content)` in
   `scenes/dialogue.py` → appends to `save.arg("evidence")`, shown in the
