@@ -444,28 +444,6 @@ class DialogueBox:
             pygame.draw.line(surf, C_BLACK, (cx - 4, cy + 6), (cx + 4, cy + 6), 1)
             for sx2, sy2 in [(-6, 9), (0, 11), (6, 9), (-3, 10), (3, 10)]:
                 pygame.draw.circle(surf, (150, 124, 104), (cx + sx2, cy + sy2), 1)
-        elif kind == "shadow":
-            pygame.draw.rect(surf, (8, 6, 14), rect.inflate(-4, -4))
-            pygame.draw.circle(surf, (10, 8, 16), (cx, cy), 18)
-            pygame.draw.circle(surf, (220, 30, 30), (cx - 5, cy - 4), 2)
-            pygame.draw.circle(surf, (220, 30, 30), (cx + 5, cy - 4), 2)
-        elif kind == "static_figure":
-            pygame.draw.rect(surf, (40, 40, 50), rect.inflate(-8, -8))
-            pygame.draw.circle(surf, (200, 180, 160), (cx, cy - 4), 12)
-            pygame.draw.rect(surf, (30, 25, 20), (cx - 12, cy - 14, 24, 10))
-        elif kind == "doll":
-            pygame.draw.rect(surf, (200, 100, 130), (cx - 9, cy - 2, 18, 16))
-            pygame.draw.circle(surf, (250, 230, 220), (cx, cy - 9), 9)
-            pygame.draw.line(surf, C_BLACK, (cx - 6, cy - 12), (cx - 2, cy - 8), 1)
-            pygame.draw.line(surf, C_BLACK, (cx - 2, cy - 12), (cx - 6, cy - 8), 1)
-            pygame.draw.line(surf, C_BLACK, (cx + 2, cy - 12), (cx + 6, cy - 8), 1)
-            pygame.draw.line(surf, C_BLACK, (cx + 6, cy - 12), (cx + 2, cy - 8), 1)
-        elif kind == "glitch":
-            for _ in range(80):
-                px = rect.x + random.randint(2, rect.w - 4)
-                py = rect.y + random.randint(2, rect.h - 4)
-                col = (random.randint(0,255), random.randint(0,80), random.randint(0,80))
-                pygame.draw.rect(surf, col, (px, py, 2, 2))
         else:
             # Neutral fallback face -- a plain head, so an unmapped portrait
             # kind (cultist, newcomer, etc.) shows *a* face instead of an

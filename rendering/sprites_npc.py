@@ -657,43 +657,6 @@ def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False,
             _void_eyes(0)                                                  # gold eyes pop up all over the void
             _oldhat(surf, x, y, hc, hc_lo, hc_hi, hb, hb_lo)
             _sign(x - 5)                                                   # Sign on the chest
-    elif kind == "shadow":
-        pygame.draw.rect(surf, (8, 4, 12), (x - 8, y - 4, 16, 18))
-        pygame.draw.circle(surf, (8, 4, 12), (x, y - 10), 8)
-        pygame.draw.circle(surf, (220, 30, 30), (x - 3, y - 11), 1)
-        pygame.draw.circle(surf, (220, 30, 30), (x + 3, y - 11), 1)
-    elif kind == "tall_shadow":
-        # Tall, THIN smear of darkness. ~2.5x a normal NPC vertically, but
-        # narrow enough that it reads as not-quite-human. In lore the
-        # figure is a pilgrim of the Yellow King -- which is why the eyes
-        # are three jaundiced dots stacked vertically, not a face we
-        # recognise.
-        # The silhouette now BREATHES on a slow sine: top of the body
-        # drifts left/right by a pixel, and the seam wavers. Adds a
-        # subliminal "this isn't standing still" cue without changing
-        # the silhouette enough to mistake for movement.
-        import pygame as _pg
-        t = _pg.time.get_ticks() / 1000.0
-        sway = math.sin(t * 0.9) * 1
-        body_rect = pygame.Rect(x - 8 + int(sway), y - 50, 16, 64)
-        pygame.draw.rect(surf, (4, 2, 8), body_rect)
-        pygame.draw.rect(surf, (12, 8, 18), body_rect.inflate(-4, -6))
-        # Wavering vertical seam
-        for sy_step in range(0, 60, 4):
-            seam_x = x + int(math.sin(t * 1.3 + sy_step * 0.2) * 1)
-            pygame.draw.line(surf, (2, 0, 4),
-                             (seam_x, y - 48 + sy_step),
-                             (seam_x, y - 48 + sy_step + 4), 1)
-        # Three vertical eye dots. One of the three flickers off on a
-        # staggered cycle so the row is rarely all lit at the same time
-        # -- the eyes never quite "match" each other.
-        flicker = int(t * 2.4) % 7
-        if flicker != 0:
-            pygame.draw.circle(surf, (210, 188, 70), (x, y - 42), 1)
-        if flicker != 3:
-            pygame.draw.circle(surf, (210, 188, 70), (x, y - 38), 1)
-        if flicker != 5:
-            pygame.draw.circle(surf, (210, 188, 70), (x, y - 34), 1)
     elif kind == "yellow_king":
         # The King in Yellow -- a floating tear-in-space: a churning clot of
         # gold light packed with the cult's fused faces, arms reaching out to
@@ -720,25 +683,6 @@ def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False,
                              to_player=tp, birth=b, lean=ln, gape=gape)
         else:
             _draw_king(surf, x, y, facing, t, b, g, threat)
-    elif kind == "black_figure":
-        # Pure-black humanoid silhouette, NPC proportions. No eyes, no
-        # facial detail -- just the hole-shaped outline of a person.
-        # Spawned in the player's house on the 7th re-entry.
-        outline = (0, 0, 0)
-        # Slight darker-than-black aura behind the body so it reads as
-        # absence rather than a flat sprite on dark floors.
-        aura = pygame.Surface((30, 36), pygame.SRCALPHA)
-        pygame.draw.ellipse(aura, (0, 0, 0, 90), (0, 0, 30, 36))
-        surf.blit(aura, (x - 15, y - 18))
-        # Body
-        pygame.draw.rect(surf, outline, (x - 9, y - 4, 18, 18))
-        # Head
-        pygame.draw.circle(surf, outline, (x, y - 12), 7)
-        # Shoulders / cloak hint
-        pygame.draw.rect(surf, outline, (x - 11, y - 4, 22, 6))
-        # Legs
-        pygame.draw.rect(surf, outline, (x - 6, y + 14, 5, 8))
-        pygame.draw.rect(surf, outline, (x + 1, y + 14, 5, 8))
     elif kind == "cultist":
         # Stitched animal-hide coat + a carved wooden mask (one of six,
         # chosen per individual by `seed`). Directional: mask front/side,
@@ -746,66 +690,6 @@ def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False,
         # _draw_cultist + the mask helpers at the top of this module.
         t = pygame.time.get_ticks() / 1000.0
         _draw_cultist(surf, x, y, facing, seed, t, pose)
-    elif kind == "vessel_avatar":
-        # A towering Yellow-King vessel with reaching tentacles. Body is
-        # the tall_shadow silhouette enlarged + four wiggling tentacles
-        # that point in the `facing` direction (toward the player when
-        # in chase). Animated by pygame.time so the wiggle keeps moving
-        # even when the figure is mid-lunge.
-        import pygame as _pg
-        t = _pg.time.get_ticks() / 1000.0
-        body_rect = pygame.Rect(x - 11, y - 56, 22, 72)
-        pygame.draw.rect(surf, (4, 2, 8), body_rect)
-        pygame.draw.rect(surf, (12, 8, 18), body_rect.inflate(-6, -8))
-        pygame.draw.line(surf, (2, 0, 4), (x, y - 54), (x, y + 14), 1)
-        for ey in (-46, -42, -38):
-            pygame.draw.circle(surf, (210, 188, 70), (x, y + ey), 2)
-        fx, fy = facing
-        for i in range(4):
-            phase = t * 6 + i * 1.4
-            wiggle = math.sin(phase) * 6
-            sway_x = -fy * wiggle
-            sway_y = fx * wiggle
-            origin = (x + (i - 1.5) * 4, y - 4)
-            mid = (origin[0] + fx * 12 + sway_x * 0.5,
-                   origin[1] + fy * 12 + sway_y * 0.5)
-            tip = (origin[0] + fx * 26 + sway_x,
-                   origin[1] + fy * 26 + sway_y)
-            pygame.draw.line(surf, (8, 6, 14),
-                             (int(origin[0]), int(origin[1])),
-                             (int(mid[0]), int(mid[1])), 3)
-            pygame.draw.line(surf, (16, 12, 24),
-                             (int(mid[0]), int(mid[1])),
-                             (int(tip[0]), int(tip[1])), 2)
-            pygame.draw.circle(surf, (210, 188, 70),
-                               (int(tip[0]), int(tip[1])), 1)
-    elif kind == "static_figure":
-        pygame.draw.rect(surf, (40, 40, 50), (x - 8, y - 2, 16, 18))
-        pygame.draw.circle(surf, (200, 180, 160), (x, y - 10), 7)
-        pygame.draw.rect(surf, (30, 25, 20), (x - 8, y - 17, 16, 8))
-    elif kind == "doll":
-        # Pink-dress doll with X-stitched eyes. Once every ~4 seconds
-        # there's a brief frame where the X eyes invert into open
-        # round pupils -- the doll is looking at you. The window is
-        # ~80ms (one stale frame) so the player questions whether
-        # they saw it. Tear streak under the right eye.
-        import pygame as _pg
-        t = _pg.time.get_ticks() / 1000.0
-        anomaly = (t % 4.0) > 3.92
-        pygame.draw.rect(surf, (200, 100, 130), (x - 6, y - 2, 12, 14))
-        pygame.draw.circle(surf, (250, 230, 220), (x, y - 9), 6)
-        if anomaly:
-            # Open black eyes
-            pygame.draw.circle(surf, C_BLACK, (x - 3, y - 10), 1)
-            pygame.draw.circle(surf, C_BLACK, (x + 3, y - 10), 1)
-        else:
-            pygame.draw.line(surf, C_BLACK, (x - 4, y - 11), (x - 2, y - 9), 1)
-            pygame.draw.line(surf, C_BLACK, (x - 2, y - 11), (x - 4, y - 9), 1)
-            pygame.draw.line(surf, C_BLACK, (x + 2, y - 11), (x + 4, y - 9), 1)
-            pygame.draw.line(surf, C_BLACK, (x + 4, y - 11), (x + 2, y - 9), 1)
-        # Faint tear streak under the right eye (always visible)
-        pygame.draw.line(surf, (180, 130, 140),
-                         (x + 3, y - 7), (x + 3, y - 4), 1)
     elif kind == "watcher":
         # A Watcher -- the curse made visible. NOT an eye and NOT a vessel:
         # a tall, too-thin, ragged faceless apparition that stands at the
@@ -882,11 +766,6 @@ def draw_npc_sprite(surf, x, y, kind, facing, blink=False, gaze=False,
         surf.blit(layer, (ox - sway * 3 - 1, oy - 2))
         layer.set_alpha(int(230 * phase))
         surf.blit(layer, (ox, oy))
-    elif kind == "glitch_npc":
-        for _ in range(30):
-            ox = random.randint(-9, 9); oy = random.randint(-12, 8)
-            col = (random.randint(80,255), random.randint(0,60), random.randint(0,60))
-            pygame.draw.rect(surf, col, (x + ox, y + oy, 2, 2))
     else:
         # generic placeholder
         pygame.draw.rect(surf, (200, 200, 200), (x - 8, y - 8, 16, 16))

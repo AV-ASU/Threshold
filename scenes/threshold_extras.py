@@ -588,6 +588,7 @@ def build_backwoods_cabin():
     objects_l[H - 1][7] = "H"
     objects = ["".join(r) for r in objects_l]
     sc = Scene("backwoods_cabin", floor_rows, objects, music="outside")
+    sc.skybox_kind = "overcast"   # open-sky clearing, not the night void
     sc.add_exit("H", "gravel_road_north", "from_backwoods_cabin")
     sc.add_exit("D", "backwoods_cabin_interior", "from_outside")
     sc.set_spawn("default", 7, 9)

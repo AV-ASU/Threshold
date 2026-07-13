@@ -27,10 +27,9 @@
 > still use them; this rule is about strings the player sees.)
 
 A narrative-horror game in **pygame**, played through an **oblique
-tilted camera** (the view tilts ~55°; it is the only in-game camera). The
-flat pitch-0 view is **dev-only** now (there is no in-game toggle): the
-headless capture tools (`tools/capture_world.py`, the previews) set pitch 0
-directly for frame capture. Every sprite is drawn **procedurally** — there is
+tilted camera** (the view tilts ~55°; it is the ONLY camera). The pitch is
+locked to ~55°; there is no flat/pitch-0 view (the capture and preview tools
+render that same tilt). Every sprite is drawn **procedurally** — there is
 no image-asset pipeline. The core loop is stealth/dread (walk, watch,
 hide), driven by a **visibility** meter that feeds the **King in Yellow**,
 the lethal apex pursuer. (See the tilted-camera track below + `DESIGN.md §10`.)
@@ -173,8 +172,8 @@ it renders the procedural sprites to a labelled PNG strip.
     wings at rest, a limb-knot snap at the flare, a crumpled husk on the
     ground. Sim + spawn live in `systems/rot_mixin.py` (below).
   - `transform.py` — `draw_vessel_bloom`, the human→vessel morph.
-  - **Tilted-camera track (LIVE — the oblique view is the only in-game
-    camera; flat pitch-0 is dev/capture-only):** `camera.py` (`Camera.project(wx,wy,wz)`,
+  - **Tilted-camera track (LIVE — the oblique view is the ONLY camera; the
+    pitch is locked, there is no flat/pitch-0 view):** `camera.py` (`Camera.project(wx,wy,wz)`,
     the single world→screen seam + `depth()` sort key), `solids.py`
     (volumetric `draw_solid`/`draw_box`/`draw_billboard`), `skybox.py`
     (procedural void-fill backdrop), `occlusion.py` (fade walls that hide the
@@ -202,8 +201,8 @@ it renders the procedural sprites to a labelled PNG strip.
     keeps **simulating** off-camera (the update path is untouched); unseen
     things simply aren't rendered and **re-hide** when you look away (no
     last-seen memory). The **King is exempt** (relentless apex); the player is
-    never gated. All gating sits behind `_sight is not None` (set only when
-    `_tilt_on()`), so **pitch 0 is byte-identical** (`tools/capture_world.py`).
+    never gated. All gating sits behind `_sight is not None` (always live now, since the
+    tilt is the only camera; `tools/capture_world.py` captures that view).
     The **see-through doors** feed this SAME gate into the room beyond: the
     aperture actor pass (`portal._draw_aperture_actors`, driven by
     `scene._door_actor_sight` = the frame's sight fn) culls a figure in the far
@@ -238,7 +237,7 @@ it renders the procedural sprites to a labelled PNG strip.
   - `threat.py` — `proximity_tier` + `PROX_TIER_*` helpers.
 - `ui/` — dialog, inventory, notebook, fonts, text input. **Dialog is
   three channels now (2026-07):** `dialog.py`'s modal band survives ONLY
-  for choices, the infested portraits, and scripted beats with an
+  for choices and scripted beats with an
   `on_complete`; a named NPC line through the interact path floats over
   the speaker's head (`float_speech.py`); narrator/world-object text
   (examines, pickups, every `_evidence` beat) runs as the frameless

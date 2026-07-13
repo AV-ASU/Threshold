@@ -267,11 +267,13 @@ never predation.
 - **The Works** (the Basement Level). The cult's underground labour, a
   dug mine of side rooms off the shaft: the Sorting Hall, Mara's cell
   (`maras_room`, an underground cell — distinct from the surface
-  `lodge_cellar`), the Scriptorium, the Sump, the Old Stores, and the
+  `lodge_cellar`), the Scriptorium, the Sump, and the
   **Sign Chamber**, where the cult's ritual altar holds the current
   Mask and the congregation kneels.
 - **The Depths and the hive.** Past the blasted deepest face, reached
-  by a one-way fall. The hive holds the claimed congregation.
+  by a one-way fall: the procession, the **Old Stores** (`the_old_stores`,
+  a branch off the procession, holding the Digging testimony), and the
+  hive that holds the claimed congregation.
 - **The Threshold.** The doorframe on the level floor where the
   underground river runs, directly below the spent **surface altar** by
   the Brimley river. Two altars, never confused: the cult's ritual

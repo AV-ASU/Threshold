@@ -27,10 +27,7 @@ def _is_cultist(obj):
 # interact-markers, and the various non-corporeal apparitions. Everything
 # NOT in this set -- the human locals and the cult -- is flesh and can be
 # shot. The player CAN now gun down innocent locals; the cult reacts.
-_BULLET_PHANTOM = frozenset({
-    "_invisible", "yellow_king", "watcher", "tall_shadow", "vessel_avatar",
-    "black_figure", "static_figure", "doll", "glitch_npc", "shadow",
-})
+_BULLET_PHANTOM = frozenset({"_invisible", "yellow_king", "watcher"})
 
 
 def _is_shootable(obj):
@@ -250,7 +247,7 @@ class Enemy:
         # Mirrors the player's charge ring so combat reads symmetrically.
         self.telegraph = False
         # Cultist behaviour state machine. Mirrors the one on
-        # NPC.chaser: SCOUT (wander/waypoints) -> CHASE on LOS
+        # NPC.chaser: SCOUT (wander) -> CHASE on LOS
         # -> SEARCH on lost LOS -> back to SCOUT, with INVESTIGATE
         # detours triggered by loud step events. Only applied to
         # kind=="cultist" enemies. Depths corridors are too narrow
@@ -388,47 +385,25 @@ class Enemy:
                     player.take_damage(self.atk)
                     self.attack_timer = self.attack_cd
         else:
-            wps = getattr(self, "waypoints", None)
-            if wps:
-                # Fixed-route patrol: walk to current waypoint, advance
-                # the index when arrived. No random wander.
-                wi = getattr(self, "_wp_i", 0) % len(wps)
-                tx, ty = wps[wi]
-                ddx = tx - self.x; ddy = ty - self.y
-                dd = math.hypot(ddx, ddy)
-                if dd <= 4:
-                    self._wp_i = (wi + 1) % len(wps)
-                    self.move_timer = getattr(self, "wp_pause", 1.2)
-                elif self.move_timer > 0:
-                    self.move_timer -= dt
-                else:
-                    step_x = (ddx / dd) * self.speed * 30 * dt
-                    step_y = (ddy / dd) * self.speed * 30 * dt
-                    if not scene.is_solid_at(self.x + step_x, self.y):
-                        self.x += step_x
-                    if not scene.is_solid_at(self.x, self.y + step_y):
-                        self.y += step_y
+            self.move_timer -= dt
+            if self.move_timer <= 0 or self.move_target is None:
+                self.move_timer = random.uniform(2, 4)
+                ang = random.uniform(0, math.tau)
+                r = random.uniform(20, 80)
+                self.move_target = (self.home[0] + math.cos(ang) * r,
+                                    self.home[1] + math.sin(ang) * r)
+            tx, ty = self.move_target
+            ddx = tx - self.x; ddy = ty - self.y
+            dd = math.hypot(ddx, ddy)
+            if dd > 2:
+                step_x = (ddx / dd) * self.speed * 30 * dt
+                step_y = (ddy / dd) * self.speed * 30 * dt
+                if not scene.is_solid_at(self.x + step_x, self.y):
+                    self.x += step_x
+                if not scene.is_solid_at(self.x, self.y + step_y):
+                    self.y += step_y
+                if not getattr(self, "lock_facing", False):
                     self.facing = (ddx / dd, ddy / dd)
-            else:
-                self.move_timer -= dt
-                if self.move_timer <= 0 or self.move_target is None:
-                    self.move_timer = random.uniform(2, 4)
-                    ang = random.uniform(0, math.tau)
-                    r = random.uniform(20, 80)
-                    self.move_target = (self.home[0] + math.cos(ang) * r,
-                                        self.home[1] + math.sin(ang) * r)
-                tx, ty = self.move_target
-                ddx = tx - self.x; ddy = ty - self.y
-                dd = math.hypot(ddx, ddy)
-                if dd > 2:
-                    step_x = (ddx / dd) * self.speed * 30 * dt
-                    step_y = (ddy / dd) * self.speed * 30 * dt
-                    if not scene.is_solid_at(self.x + step_x, self.y):
-                        self.x += step_x
-                    if not scene.is_solid_at(self.x, self.y + step_y):
-                        self.y += step_y
-                    if not getattr(self, "lock_facing", False):
-                        self.facing = (ddx / dd, ddy / dd)
 
     def _cult_step(self, tx, ty, dt, scene, speed_mult=1.0):
         """Move toward (tx, ty) with the chase-style step. Mirrors
@@ -648,7 +623,7 @@ class Enemy:
     def draw(self, surf, cam_x, cam_y, view="front"):
         if not self.alive: return
         sx = int(self.x - cam_x); sy = int(self.y - cam_y)
-        kind = "glitch_npc" if self.kind == "_glitch" else self.kind
+        kind = self.kind
         m = getattr(self, "morph", 0.0)
         if m > 0.0:
             draw_vessel_bloom(surf, sx, sy, kind, self.facing, m,

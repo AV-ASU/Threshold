@@ -68,11 +68,8 @@ def _boot_game():
     g = Game()
     g.save.new()                  # fresh in-memory save (DEFAULT_SAVE)
     g._start_play()               # reset + player + initial scene + state=playing
-    # Pin the FLAT pitch-0 reference. The live game now defaults to the oblique
-    # view, but this tool is the byte-identity gate for the *flat* raster, so
-    # force pitch 0 here (the pitch-0 view must stay pixel-for-pixel stable).
-    g._cam_pitch_target = 0.0
-    g.camera.pitch = 0.0
+    # The oblique tilt is the only camera; this tool now captures IT (the
+    # pitch is locked in Game.__init__ -- there is no flat/pitch-0 view).
     return g
 
 

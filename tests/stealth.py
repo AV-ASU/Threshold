@@ -843,8 +843,12 @@ def main():
 
     # the real step path throws a SPLASH: drive movement across the flood
     g = new_game()
-    g._cam_pitch_target = 0.0                # flat: raw WASD, no facing math
-    g.camera.pitch = 0.0
+    # The tilt is the only camera, so movement is body-relative. Pin the
+    # look east and hold FORWARD to drive the real step path east across the
+    # flooded N arm; stub _update_look so the (dummy) mouse can't drag the
+    # heading off east mid-walk.
+    g._update_look = lambda dt: None
+    g.look.body = 0.0
     g.load_scene_now("works_cistern", "default")
     g.player.x, g.player.y = 4 * TILE + 16, 2 * TILE + 16   # W end of N arm
     g.player.step_timer = 0.0
@@ -853,7 +857,7 @@ def main():
         def __init__(self, ks): self.ks = set(ks)
         def __getitem__(self, k): return 1 if k in self.ks else 0
     _orig_gp = pygame.key.get_pressed
-    pygame.key.get_pressed = lambda: _Held({pygame.K_d})
+    pygame.key.get_pressed = lambda: _Held({pygame.K_w})
     splashed = False
     try:
         for _ in range(20):

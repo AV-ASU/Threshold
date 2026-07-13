@@ -29,7 +29,7 @@ def _boot(key):
     g._start_play()
     g.load_scene_now(key)
     # engage the oblique view (the tilt), settled (no ease)
-    g._cam_pitch_target = math.radians(TILT_PITCH_DEG)
+    g.camera.pitch = math.radians(TILT_PITCH_DEG)
     g.camera.pitch = math.radians(TILT_PITCH_DEG)
     g.camera.scale = TILT_ZOOM
     g._update_camera(snap=True)

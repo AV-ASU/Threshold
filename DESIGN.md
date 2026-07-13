@@ -983,11 +983,10 @@ around the world. The void around each scene is filled with a procedural
 ambitious payoff (terrain reveals on a peek; threats do not).
 
 **LIVE + DEFAULT.** The game boots tilted (~55°) with mouse-look, and the
-oblique view is the **only in-game camera** (`Game._tilt_on`). The flat
-pitch-0 top-down view is **dev-only** now: the headless capture/preview
-tools set pitch 0 directly (there is no in-game toggle key). Pitch 0 stays
-**byte-identical** to the legacy raster, which is the refactor's win
-condition and is gated by `tools/capture_world.py`. The modules below are
+oblique view is the **only camera** (`Game._tilt_on`, always true). The
+pitch is locked to ~55° for the life of the Game; there is no flat/pitch-0
+view. The capture/preview tools render that same tilt, and
+`tools/capture_world.py` is the tilt render-regression gate. The modules below are
 the live render path under tilt, not isolated scaffolding.
 
 ### Decisions (locked with the user)
@@ -1059,9 +1058,9 @@ Optional `yaw` spins the world about the vertical axis (the head-turn).
 
 ### Working agreements for this track
 
-- **Pitch 0 must stay byte-identical.** The win condition is "the diff is a
-  refactor; the game looks pixel-for-pixel the same at pitch 0." Verify
-  with a before/after capture (`tools/capture_world.py`), not just smoke.
+- **The tilt is the only camera.** There is no flat/pitch-0 view; the pitch
+  is locked. Verify render changes with a before/after tilt capture
+  (`tools/capture_world.py`), not just smoke.
 - **Keep it asset-free.** No PNGs, no bake step. Solids are math.
 - **Previews before live wiring.** Render to PNG/GIF headless, eyeball it,
   *then* touch `game.py`. Previews (headless, self-configure SDL dummy

@@ -359,10 +359,8 @@ class RenderMixin:
         it now matches the actor gate (visible_factor -> los_clear), which
         already hides things behind walls. The cone is keyed to look.aim
         (half-angle SIGHT_HALF, out to SIGHT_RANGE) with a clear near-bubble.
-        Tilt only -- at pitch 0 the sight gate is off and the flat shipping
-        view stays untouched."""
-        if not (self._tilt_on() and self.player is not None
-                and self.state == "playing"):
+        Engaged whenever the player is present and playing."""
+        if not (self.player is not None and self.state == "playing"):
             return
         from rendering.sight import (SIGHT_HALF, SIGHT_RANGE, SIGHT_NEAR,
                                      SIGHT_ANG_FEATHER, LOS_STEP)
@@ -971,9 +969,6 @@ class RenderMixin:
                 draw_ground_mesh(self.screen, self.camera, self.scene)
         else:
             self.scene.draw(self.screen, self.cam_x, self.cam_y, self.camera)
-        if not self._tilt_on():
-            self._draw_folds()
-            self._draw_portal()        # flat: drawn inline (legacy order)
         self._draw_idle_king()
         # The unified scene-actor draw list (DESIGN.md §10). Each entry is
         # (depth, draw_callable). At pitch 0 it stays in INSERTION ORDER (==the

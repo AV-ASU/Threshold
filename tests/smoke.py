@@ -329,22 +329,70 @@ def check_sprite_seed_variants():
     return fails
 
 
+def check_no_dead_labels():
+    """Every NPC movement mode handled in entities/npc.py and every NPC sprite
+    kind drawn in rendering/sprites_npc.py must be REACHABLE -- assigned or
+    spawned somewhere in the game. This kills the dead-label bug class: a
+    movement branch or a sprite branch left behind by cut content (the
+    patrol/stalker/follower modes, the cut haunted-house sprite kinds) fails
+    HERE instead of lingering as unreachable code that survives 'cleanups'.
+    A kind/mode that is genuinely runtime-only (assigned via self.movement =
+    "x") still counts, because that assignment matches too."""
+    import glob
+    import re
+
+    def repo_sources():
+        for sub in ("scenes", "systems", "entities", "rendering", "ui"):
+            for path in glob.glob(os.path.join(PROJECT_ROOT, sub, "*.py")):
+                with open(path, encoding="utf-8") as f:
+                    yield path, f.read()
+
+    npc_src = open(os.path.join(PROJECT_ROOT, "entities", "npc.py"),
+                   encoding="utf-8").read()
+    spr_src = open(os.path.join(PROJECT_ROOT, "rendering", "sprites_npc.py"),
+                   encoding="utf-8").read()
+    sources = list(repo_sources())
+    errors = 0
+
+    # 1) movement modes handled in the update dispatch must be assigned.
+    handled = set(re.findall(r'self\.movement == "(\w+)"', npc_src))
+    assigned = set()
+    for _p, src in sources:
+        assigned |= set(re.findall(r'movement\s*=\s*"(\w+)"', src))
+    for m in sorted(handled - assigned):
+        errors += fail(f"movement mode '{m}' is handled in npc.py but never "
+                       f"assigned anywhere -- dead label (delete it)")
+
+    # 2) NPC sprite kinds with a draw branch must be spawned (the quoted
+    #    literal appears in game code outside the draw file itself).
+    drawn = set(re.findall(r'kind == "(\w+)"', spr_src))
+    spawn_text = "".join(src for _p, src in sources
+                         if not _p.endswith("sprites_npc.py"))
+    for k in sorted(drawn):
+        if f'"{k}"' not in spawn_text:
+            errors += fail(f"sprite kind '{k}' has a draw branch in "
+                           f"sprites_npc.py but is never spawned -- dead label")
+    return errors
+
+
 def main():
     failures = 0
-    print("[1/7] scene builders ...")
+    print("[1/8] scene builders ...")
     failures += check_scene_builds()
-    print("[2/7] spawn walkability + non-overlapping with exits ...")
+    print("[2/8] spawn walkability + non-overlapping with exits ...")
     failures += check_spawns_walkable()
-    print("[3/7] exits resolve to target spawns ...")
+    print("[3/8] exits resolve to target spawns ...")
     failures += check_exits_resolve()
-    print("[4/7] room passability (flood-fill spawns -> exits/props) ...")
+    print("[4/8] room passability (flood-fill spawns -> exits/props) ...")
     failures += check_passability()
-    print("[5/7] canonical evidence beats wired to scenes ...")
+    print("[5/8] canonical evidence beats wired to scenes ...")
     failures += check_canonical_evidence_wired()
-    print("[6/7] per-run state reset coverage ...")
+    print("[6/8] per-run state reset coverage ...")
     failures += check_reset_coverage()
-    print("[7/7] sprite-seed variant coverage (all 6 cultist masks) ...")
+    print("[7/8] sprite-seed variant coverage (all 6 cultist masks) ...")
     failures += check_sprite_seed_variants()
+    print("[8/8] no dead movement-mode / sprite-kind labels ...")
+    failures += check_no_dead_labels()
     if failures:
         print(f"\n{failures} failure(s).")
         sys.exit(1)

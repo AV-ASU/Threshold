@@ -32,8 +32,8 @@ class NPC:
     def __init__(self, x, y, name, sprite_kind, voice="blip_mid",
                  color=C_WHITE, portrait=None, dialogue_fn=None,
                  movement="idle", speed=1.0, radius=64,
-                 waypoints=None, home=None, solid=True, tag=None,
-                 patrol_pause=1.0, no_prompt=False,
+                 home=None, solid=True, tag=None,
+                 no_prompt=False,
                  hp=30, drops=None, on_kill=None):
         self.x = x; self.y = y
         self.home = home if home else (x, y)
@@ -46,14 +46,8 @@ class NPC:
         self.movement = movement
         self.speed = speed
         self.radius = radius
-        self.waypoints = waypoints or []
-        self.wp_idx = 0
         self.solid = solid
         self.tag = tag
-        # patrol_pause: seconds the patroller dwells at each waypoint before
-        # advancing to the next. Keeps the patrol from looking robotic.
-        self.patrol_pause = patrol_pause
-        self.patrol_pause_t = 0.0
         # When True, the [E] interact prompt is suppressed even when the
         # player is in range. Used for the "invisible interact NPC" pattern
         # (e.g. the computer terminal hosts a no_prompt NPC at its tile so
@@ -75,14 +69,12 @@ class NPC:
         self._scout_target = None
         self._scout_pause_t = 0.0
         self._scout_look_t = 0.0
-        # When True, the chaser state machine bypasses SCOUT and
-        # walks straight at the player every tick. Currently
-        # *unused in flight*: the only patrol that wants this is
-        # the Hunter, and the Hunter sprite_kind == "yellow_king"
-        # short-circuits to _yk_update before reaching the chaser
-        # branch. Field + check are kept as a forward-compatible
-        # hook -- a future non-YK apex patrol can flip this on
-        # without rewriting the state machine.
+        # When True, the chaser state machine bypasses SCOUT and walks
+        # straight at the player every tick. The hollow Sheriff
+        # (sheriff_hollow sprite, movement="chaser") sets this on his
+        # force-chase spawn (systems/rot_mixin.py) so he closes the
+        # instant he manifests; the roaming King uses the separate
+        # yellow_king / _yk_update path, not this one.
         self._force_chase = False
         # Cultist behaviour state machine. Used by the chaser
         # movement branch:
@@ -180,40 +172,6 @@ class NPC:
                 ty = self.home[1] + math.sin(ang) * r
                 self.move_target = (tx, ty)
             self._step_toward(self.move_target, dt, scene)
-        elif self.movement == "patrol":
-            if not self.waypoints: return
-            # If we're paused at a waypoint, count down before moving on.
-            if self.patrol_pause_t > 0:
-                self.patrol_pause_t -= dt
-                return
-            tx, ty = self.waypoints[self.wp_idx]
-            # Detect arrival within ~6 px (covers float drift), then pause
-            # briefly before advancing to the next waypoint.
-            if math.hypot(self.x - tx, self.y - ty) < 6:
-                self.wp_idx = (self.wp_idx + 1) % len(self.waypoints)
-                self.patrol_pause_t = self.patrol_pause
-                return
-            self._step_toward((tx, ty), dt, scene)
-        elif self.movement == "stalker":
-            dx = player.x - self.x; dy = player.y - self.y
-            d = math.hypot(dx, dy) or 1
-            # (dx,dy) points npc->player, so this dot/d is +1 when the
-            # player faces away from us and -1 when facing toward us.
-            # Advance only while unobserved (or too far to matter).
-            facing_away = (player.facing[0] * dx + player.facing[1] * dy) / d > -0.2
-            if facing_away or d > 220:
-                self._step_toward((player.x, player.y), dt, scene)
-        elif self.movement == "follower":
-            # THRESHOLD kid-follower. Keeps a small distance behind
-            # the player at all times. Doesn't catch up too quickly
-            # (looks unnatural) and stops within a comfort zone.
-            dx = player.x - self.x; dy = player.y - self.y
-            d = math.hypot(dx, dy) or 1
-            if d > 28:
-                self._step_toward((player.x, player.y), dt, scene)
-            else:
-                # Within comfort range. Just match the player's facing.
-                self.facing = player.facing
         elif self.movement == "homebody":
             self._homebody_tick(dt, scene)
         elif self.movement == "worker":
