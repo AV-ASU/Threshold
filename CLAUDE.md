@@ -560,6 +560,19 @@ it renders the procedural sprites to a labelled PNG strip.
 
 ## Working agreements (process — learned the hard way)
 
+- **DOCS ARE PART OF THE CHANGE, NOT A FOLLOW-UP (do this automatically, top
+  priority).** Whenever you touch code, updating the doc that governs what you
+  touched is part of the SAME task and belongs in the SAME commit; it ranks
+  above declaring the work done. NEVER wait to be asked. Match the doc to what
+  moved: **`TODO.md`** when a ticket lands, changes scope, or a new task
+  surfaces (mark it, do not leave it stale); **`NARRATIVE.md`** when a canon
+  fact, invariant, or player-facing story detail changes; **`DESIGN.md`** when
+  a system, a mechanic, or its code-map changes; **`CLAUDE.md`** when the
+  layout, a convention, or a workflow changes. One fact, one home, then
+  reconcile the siblings (a detail true in one doc and stale in another is
+  rot). A change is not "done" until its docs match it, so before you commit,
+  ask which of the four canon docs your diff just made stale and fix them in
+  the same breath.
 - **"Push to main" MEANS MERGE TO MAIN.** When the maintainer says "push to
   main" / "PR and push to main", that is an instruction to open the PR **and
   merge it into `main`** in the same action — not to stop after creating the
