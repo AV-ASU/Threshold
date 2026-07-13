@@ -1072,6 +1072,16 @@ def build_works_sign():
                 for k in scene._kneelers:
                     k.pose = "kneel"
                     k.facing = (0, -1)
+                # Hold the closer while the lure caption is still up (C1).
+                # It is a narrator caption with no on_complete, so
+                # narration.begin() would NOT preserve its unread page
+                # (ui/narration.py) -- showing over it would drop it. Mara
+                # has already settled home above, so returning early each
+                # frame is idempotent; the stage re-enters step 4 until the
+                # caption clears, then the closer shows.
+                if getattr(game, "narration", None) is not None \
+                        and game.narration.active:
+                    return
                 game._mara_stage = None
                 # The one that never moved is the room's last word
                 # (TODO #8; NARRATIVE §2: the self dissolved into the
@@ -1140,6 +1150,15 @@ def build_works_sign():
             "at your back. The whole machine of it, here in reach.",
             ["Lift the mask.", "Tear it down. End this."],
             _pick, speaker="", voice="blip_soft", portrait="narrator")
+
+    def _sign_on_enter(game, scene):
+        # C14c: once the Mask is lifted, _interact early-returns, so drop
+        # the altar's [E] cue to stop a phantom prompt on backtrack. Scenes
+        # rebuild each load, so this re-applies cleanly on every re-entry.
+        if game.save.flag("pallid_mask_taken"):
+            scene.interactables = [t for t in scene.interactables
+                                   if (t[0], t[1]) != scene._sign_pos]
+    sc.on_enter_fn = _sign_on_enter
     sc.on_interact_fn = _interact
     return sc
 

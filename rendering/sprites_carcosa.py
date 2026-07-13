@@ -23,8 +23,10 @@ def _cold_fire_pit(surf, cx, cy, R, t):
     """A pit of COLD FIRE -- a shaft of flame receding to a black throat,
     that the King's mask opens into. You are dragged down it: a look INTO
     Him, never an arrival anywhere (NARRATIVE §5 -- nobody is carried to
-    Carcosa). Fire, but wrong and cold. NOTE the current pale-teal/green
-    palette is off-model against the codified black+gold look (TODO #19)."""
+    Carcosa). Fire, but wrong and cold -- the wrongness reads through its
+    darkness and its writhing/drooling motion, NOT through hue: the palette
+    is the codified black + dim cursed gold over a black throat (NARRATIVE
+    §5; regraded from the old pale-teal/green, TODO #19)."""
     R = int(R)
     if R < 6:
         return
@@ -34,7 +36,7 @@ def _cold_fire_pit(surf, cx, cy, R, t):
         f = i / 14.0
         rr = max(2, int(R * f))
         fl = 0.55 + 0.45 * math.sin(t * 8 + i * 0.8)
-        c = (int((18 + 66 * f) * fl), int((54 + 150 * f) * fl), int((50 + 120 * f) * fl))
+        c = (int((20 + 130 * f) * fl), int((14 + 92 * f) * fl), int((6 + 30 * f) * fl))
         pygame.draw.ellipse(surf, c, (cx - rr, cy - int(rr * 0.92), 2 * rr, int(rr * 1.84)))
     pygame.draw.ellipse(surf, (3, 5, 6), (cx - int(R * 0.3), cy - int(R * 0.28),
                                           int(R * 0.6), int(R * 0.56)))
@@ -44,7 +46,7 @@ def _cold_fire_pit(surf, cx, cy, R, t):
         bx, by = cx + math.cos(a) * R * 0.92, cy + math.sin(a) * R * 0.84
         fl = R * (0.12 + 0.12 * (0.5 + 0.5 * math.sin(t * 7 + k * 1.6)))
         tx, ty = bx + math.cos(a) * fl, by + math.sin(a) * fl * 0.9
-        col = (150, 214, 184) if k % 2 else (206, 204, 130)
+        col = (146, 108, 40) if k % 2 else (178, 138, 58)
         pygame.draw.line(surf, col, (int(bx), int(by)), (int(tx), int(ty)),
                          max(1, int(R * 0.02)))
     # WRITHING FORMS in the deep -- distorted faces winding through the
@@ -56,7 +58,7 @@ def _cold_fire_pit(surf, cx, cy, R, t):
         fx = cx + math.cos(a) * rad
         fy = cy + math.sin(a) * rad * 0.86
         rs = max(2, int(R * (0.05 + 0.03 * _frand(k * 3))))
-        pygame.draw.ellipse(surf, (52, 92, 78),
+        pygame.draw.ellipse(surf, (70, 52, 24),
                             (int(fx - rs), int(fy - int(rs * 1.1)), rs * 2, int(rs * 2.2)))
         pygame.draw.circle(surf, (4, 6, 7), (int(fx - rs * 0.32), int(fy - rs * 0.2)),
                            max(1, int(rs * 0.25)))
@@ -74,7 +76,7 @@ def _cold_fire_pit(surf, cx, cy, R, t):
         pts = [(int(cx + math.cos(a0 + s * 0.32) * R * (0.85 - s * 0.13)),
                 int(cy + math.sin(a0 + s * 0.32) * R * (0.85 - s * 0.13) * 0.88))
                for s in range(6)]
-        col = (188, 220, 188) if k % 2 else (220, 212, 140)
+        col = (190, 150, 70) if k % 2 else (210, 168, 84)
         pygame.draw.lines(surf, col, False, pts, max(1, int(R * 0.012)))
 
 

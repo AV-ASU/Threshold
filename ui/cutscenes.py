@@ -245,7 +245,7 @@ class CutsceneMixin:
         # image to carry it. Lives in the first ~2.2s only.
         intro = max(0.0, min(1.0, 1.0 - (now - 1.4) / 0.8))
         intro *= fade
-        if intro > 0.01:
+        if intro > 0.01 and getattr(self, "_flashback_mode", "rite") == "rite":
             txt = self.fonts["lg"].render("You dream of a doorway.", True,
                                           (210, 206, 214))
             txt.set_alpha(int(255 * intro))

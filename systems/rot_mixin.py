@@ -592,10 +592,15 @@ class RotMixin:
         s.facing = (0, 1)
         self.scene.add_npc(s)
         self._sheriff_intro_t = 2.0
-        self.show_notice("Sheriff Vane stands. \"I'm supposed to tell you "
-                         "to leave, son. I can't say it anymore.\"",
-                         duration=3.2)
-        self.audio.play("sheriff_hunt", 0.85)
+        # The intro notice + sting fire ONCE per run (C12): the NPC + the
+        # 2.0s hold still stand up on every hollow-office load so the room
+        # stays lethal on re-entry, but the announce does not replay.
+        if not getattr(self, "_sheriff_announced", False):
+            self._sheriff_announced = True
+            self.show_notice("Sheriff Vane stands. \"I'm supposed to tell you "
+                             "to leave, son. I can't...\"",
+                             duration=3.2)
+            self.audio.play("sheriff_hunt", 0.85)
 
     def _tick_sheriff(self, dt):
         """Drive the hollow-Sheriff encounter: hold for the intro beat,

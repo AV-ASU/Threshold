@@ -829,6 +829,16 @@ def build_threshold():
                                  "in the same room. It is only a frame, and "
                                  "cold.")
             return
+        # DELIBERATE lone-trigger (NOT the blast/grove two-press commit).
+        # Unlike the blast (well.py) and the grove rite (hidden_folds.py),
+        # there is no *_laid re-arm and no second press here -- ON PURPOSE
+        # (C15). The point-of-no-return fork is spent UPSTREAM: the blast at
+        # the Deepest Face is the two-press choice (climb out to SPREAD vs
+        # light it and FALL, "no way back up"). A player standing at the
+        # frame has already chosen the descent AND carried the Mask down;
+        # walking it through IS the commit (NARRATIVE §7, Mask-only). A
+        # redundant warning here would only blunt that upstream fork, so the
+        # crossing stays silent.
         inv.remove("pallid_mask", 1)                # spent at the door
         # File the beat SILENTLY (show=False): no narrator box may talk
         # over the warp -- the world going through the door IS the line.
