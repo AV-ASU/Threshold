@@ -1,8 +1,20 @@
 # THRESHOLD — Claude guide
 
-> **READ THIS FIRST — the four-doc canon.** This file (`CLAUDE.md`) is the
-> project's entry point and operating guide. Before doing ANY work on
-> THRESHOLD, read the other three canon docs in full and hold them in mind:
+> **HARD RULE #0 — READ THE CANON IN FULL, EVERY TIME, BEFORE YOU ANSWER.**
+> Before responding to ANY request about THRESHOLD — a question, a review, a
+> design chat, a one-line edit, anything — you MUST read **`NARRATIVE.md`,
+> `DESIGN.md`, and `TODO.md` IN FULL**, from top to bottom, in this same turn.
+> Not a section. Not a grep. Not "I read them earlier." Not from memory or a
+> summary. All three, whole, every single time, no exceptions. Treat your
+> memory of them as STALE by default — the docs are the only source of truth,
+> they change, and answering from a half-remembered version is how canon gets
+> broken (it has been, repeatedly). If you have not read all three this turn,
+> you are not ready to answer: read them first, then answer. This is the
+> project's non-negotiable first step; do it automatically, never wait to be
+> asked, and never announce you are "about to" instead of doing it.
+>
+> **The four-doc canon.** This file (`CLAUDE.md`) is the project's entry
+> point and operating guide; the three docs above are the rest of the canon:
 > - **`NARRATIVE.md`** — the story bible: premise, lore, cast, place, the
 >   evidence trail, the endings, and the canon invariants. The source of
 >   truth for anything the fiction asserts.
