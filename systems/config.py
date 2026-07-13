@@ -33,10 +33,10 @@ CREEPY_SCENES = {"lodge_cellar", "clearing",
 # The brimley is intentionally absent: it's already heavily
 # dressed, and a rework is in flight.
 OUTDOOR_DECAY = {
-    ("brimley", "mid"):       [(8, 7, "bloody_handprint")],
-    ("brimley", "high"):      [(8, 7, "bloody_handprint"),
-                                (12, 9, "dead_crow"),
-                                (4, 11, "claw_marks")],
+    ("brimley", "mid"):       [(8, 13, "bloody_handprint")],
+    ("brimley", "high"):      [(8, 13, "bloody_handprint"),
+                                (22, 13, "dead_crow"),
+                                (10, 23, "claw_marks")],
     ("lodge_yard", "mid"):  [(5, 11, "claw_marks")],
     ("lodge_yard", "high"): [(5, 11, "claw_marks"),
                                   (15, 6, "phantom_mark"),

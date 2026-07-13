@@ -452,7 +452,9 @@ finds you — run it on cover, timing, and breaking their line of sight).
   enclosed hide in each half, and patrol phases are spread so no half is
   permanently clear.
 - The well sprite was redesigned and repositioned in `brimley` (the
-  east village square — a landmark just off the road).
+  eastern lodge/well square just inside the lodge-road entry — a
+  landmark just off the road; `scene._well_pos`, col 52 row 17 since the
+  60x60 redesign, TODO #18).
 
 **Re-audit (2026-06):** the 7-room gauntlet above matches the build
 exactly. Not tabled here but registered and reachable: three **dead-end
@@ -576,7 +578,7 @@ bush hides you immediately.
 `brimley`, `cornfield_maze`, `cornfield_path`, and the Lodge yard
 (`lodge_yard`) all wrap on the relevant axes:
 
-- **brimley.wrap_x** -- the cross-town road at row 24 loops
+- **brimley.wrap_x** -- the cross-town fold road at row 25 loops
   east-west. Walking off either side carries you back in on the
   other.
 - **brimley.wrap_y** -- the perimeter forest loops north-south.
@@ -593,7 +595,7 @@ bush hides you immediately.
 Three direct south-chain exits close the outdoor world into one
 closed system:
 
-- **brimley** south edge ('M' tile, col 48 row 99) → cornfield_maze
+- **brimley** south edge ('M' tile, col 20 row 59) → cornfield_maze
 - **cornfield_maze** south ('!' tile) → cornfield_path
 - **cornfield_path** south ('S' tile) → brimley north
 

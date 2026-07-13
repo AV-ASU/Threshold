@@ -629,8 +629,13 @@ it renders the procedural sprites to a labelled PNG strip.
   **canon-guards** (e.g. the dream note must say "a year" and contain no
   recurrence language). Keep it green; add a guard when you lock a canon fact.
 - **Watch for stale refs from the village→brimley merge.** Scene keys, the
-  well position (`scene._well_pos`, col 94/row 13), and NPC names changed —
-  the Kid is **Toby** (sprite/portrait/dialogue kind `toby`), not "Village Kid".
+  well position (`scene._well_pos`, col 52 row 17 since the 60x60 redesign,
+  TODO #18), and NPC names changed — the Kid is **Toby** (sprite/portrait/
+  dialogue kind `toby`), not "Village Kid". **Brimley is 60x60 now** (a full
+  reshape at the same content density; the square + torus wrap + fog rim all
+  stay). Nothing in the town sits where the old 100x100 code put it, so a
+  hard-coded brimley tile coordinate in another file is a red flag: read the
+  scene, don't trust a remembered spot.
 - **Previewing visuals headlessly:** render to PNG/GIF with
   `SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy` + Pillow (installable) and
   send with the file tool. For whole-screen cutscenes, step

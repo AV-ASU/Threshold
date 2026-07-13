@@ -553,13 +553,28 @@ carving that recontextualizes after the player has seen the Sign (matches the
 Mask grammar) + a single `notes` beat (never evidence, no cosmology, §1b). Gives
 SEAL its precedent without a word. Lands with the compression pass.
 
-### 18. **[Opus]** Brimley compression (~64x64)  *(was GAME_CHANGES §23)*
+### 18. **[Opus]** Brimley compression (60x60)  *(LANDED 2026-07; was GAME_CHANGES §23)*
 
-Compress Brimley toward ~64x64 at the same content density — cleaner road logic,
-shorter dead walks; the altar move (#17) rides inside. **Reconcile with the
-parked reshape (#8) + the Optional smaller-grid perf pass:** the SHAPE stays a
-square (torus wrap + fog rim underneath); only the SIZE shrinks. The Optional
-smaller-grid perf pass is the shippable core of this.
+**DONE.** `scenes/brimley.py` `build_brimley` was rewritten from 100x100 to
+**60x60** as a full RESHAPE (not a scale-down): the river moved to col 30 with
+the bridge + fold road crossing at rows 24-26, the seven buildings redistributed
+around a central west-bank plaza (church + barn north, shop + school
+upper-middle, sheriff + farmhouse south) with the kid's house alone on the
+narrow east bank, and the well/noticeboard/wheelbarrow gathered into an eastern
+lodge square just inside the lodge-road entry. Nothing sits where the old code
+put it; everything is KEPT (all 7 buildings + doors, all exits + spawn names, the
+well/barrow/news-rack/payphone landmarks, the standing-stone ring, the burn-
+clearing entrance, the bridge + whirlpool, all locals + cult stations +
+noisemakers, the corn/marsh/forest-band cover). The SHAPE stays a square with the
+torus wrap (fold road row 25 E-W, forest N-S) + fog rim underneath. Reconciled
+callers: `systems/config.py` OUTDOOR_DECAY brimley tiles re-pointed to the new
+building thresholds; `tests/stealth.py` `open_field` + the bell/walls fixtures
+moved to the new geometry (semantics unchanged). Full `python tests/run_all.py`
+gate green; a tilt capture confirms the arrival view. **This also lands the
+Optional smaller-grid perf pass** (the one-time whole-map tilt bake dropped from
+~10k tiles to 3,600). **Still open:** the altar move (#17) did NOT ride inside
+this pass — the cult standing-stone ring stayed in the open NE field rather than
+relocating to the riverbank; #17 remains its own narrative-dressing ticket.
 
 ---
 
@@ -582,7 +597,7 @@ smaller-grid perf pass is the shippable core of this.
 ## Optional polish (no canon/lore change; do as time allows)
 
 - **[Opus]** **SPREAD ending sign sync** *(2026-07; deferred with the intro-sign rework, TODO #11)* — the intro drive-in sign and the in-game welcome sign now render the old-timey BRIMLEY board (WELCOME TO / NORTHERNMOST CORN / EST. 1894, POP struck through). The SPREAD ending's drive-OUT shows the **blank back** of that same sign (`rendering/spread_drive.py _sign_back`, "the side they never painted"), which was left untouched. Update `_sign_back` so its board proportions + posts match the new welcome board (the back stays blank/unpainted by design; only the shape needs to agree). Verify with a headless capture of the SPREAD drive-out (`tests/render_smoke.py` drives every ending). Do NOT touch the rest of the ending.
-- **[Opus]** **Brimley smaller-grid perf pass** *(the one salvaged piece of the parked reshape, #8)* — cut `w`/`h` from 100×100 toward ~64–72 and re-pack the 7 buildings + well tighter, WITHOUT changing the shape or the boundary (the square + torus wrap + fog rim all stay). This is the real FPS/tedium win (the one-time whole-map tilt bake, `scenes/base.py` `_tilt_fullmap`, ~6000 tiles). Verify: `tools/profile_brimley.py` before/after, a `tools/capture_world.py` tilt capture, full `python tests/run_all.py` gate.
+- ~~**[Opus]** **Brimley smaller-grid perf pass**~~ **DONE (2026-07), landed with the full 60x60 reshape (#18).** `w`/`h` cut 100×100 → 60×60 and the 7 buildings + well re-packed, shape + boundary unchanged (square + torus wrap + fog rim stay). The whole-map tilt bake (`scenes/base.py` `_tilt_fullmap`) drops from ~10k tiles to 3,600. Verified with a `tools/capture_world.py` tilt capture + the full `python tests/run_all.py` gate.
 - **[Fable + Opus]** **Rev. Asa Crane murder reveal + sprite** *(NARRATIVE.md §4; feeds off the #1 provoke pilot)* — Fable for the reveal writing + staging, Opus for the procedural corpse sprite. Punch up
   the `preacher_doomed` death. ~~(1) New discovery location~~ **DONE
   (2026-07):** the doom sends Crane out of his church (the emptied nave's
