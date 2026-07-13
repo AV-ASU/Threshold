@@ -31,6 +31,15 @@ def _raise_cult_camp(game, scene):
     if game._evidence_count() < 1:
         return
     cx, cy = scene._camp_pos
+    # Beat the worn packed ground in NOW (the cult set the camp up): the corn
+    # underfoot goes to trodden dirt. On_enter runs before the first draw, so
+    # the floor bake picks it up; scenes rebuild each load, so it re-applies.
+    ctx, cty = int(cx // TILE), int(cy // TILE)
+    for ty in range(cty - 2, cty + 2):
+        for tx in range(ctx - 2, ctx + 3):
+            if 0 <= ty < scene.h and 0 <= tx < scene.w \
+                    and scene.floor[ty][tx] in (":", ";", "g"):
+                scene.floor[ty][tx] = "d"
     scene.add_decoration(Decoration(cx, cy, "camp_fire", seed=71))
     for (dx, dy, kind, sd) in [
             (-42, -4, "bedroll", 1), (36, -12, "bedroll", 2), (-8, 40, "bedroll", 3),
@@ -981,19 +990,17 @@ def build_brimley():
     objects_list[42][42] = "t"
     sc.objects = objects_list
 
-    # ---- The cult camp clearing + the cultist spawn pool ----
-    # A worn clearing beaten into the SE corn where the newcomers rest and
-    # gather (the camp proper is raised at 1 evidence, in on_enter). Clear the
-    # stalks + any stray tree so the fire and gear read on open ground; the
-    # corn around it stays as the approach cover.
+    # ---- The cult camp footprint + the cultist spawn pool ----
+    # The camp sits in the SE corn. At 0 evidence it is just a stand of corn
+    # (only the trees are pre-cleared, so the spawn anchors + tend station stay
+    # reachable); the WORN PACKED GROUND is not beaten in until the cult sets
+    # the camp up at 1 evidence (_raise_cult_camp), so the ground itself is
+    # their doing, not there before them.
     _camp_tx, _camp_ty = 42, 51
-    for cy in range(49, 53):
-        for cx in range(40, 45):
-            if 0 <= cy < h and 0 <= cx < w:
-                if sc.objects[cy][cx] in ("T", "p"):
-                    sc.objects[cy][cx] = "."
-                if sc.floor[cy][cx] in (":", ";", "g"):
-                    sc.floor[cy][cx] = "d"
+    for cy in range(_camp_ty - 2, _camp_ty + 2):
+        for cx in range(_camp_tx - 2, _camp_tx + 3):
+            if 0 <= cy < h and 0 <= cx < w and sc.objects[cy][cx] in ("T", "p"):
+                sc.objects[cy][cx] = "."
     sc._camp_pos = (_camp_tx * TILE + 16, _camp_ty * TILE + 16)
     # A roamer tends the camp fire (an errand station just south of it, facing
     # the flames). Only occupied once the cult wakes and fills the pool.

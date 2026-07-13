@@ -240,13 +240,16 @@ Only display names and fiction change.
   on entry, then refills one at a time on the `CULT_TOPUP_INTERVAL` breather.
   All of it stays behind the `CULT_WAKE_EV` gate. **Brimley** uses
   `cult_target = 10` over 14 anchors (9 spread + a 5-strong SE **cult camp**
-  crew); the camp clearing (`_camp_pos`) is beaten into the SE corn and its
-  crew fills from the pool when the cult wakes. The camp DRESSING is raised in
+  crew, `_camp_pos`); the crew fills from the pool when the cult wakes. At ev 0
+  the camp spot is just a stand of corn (only its trees are pre-cleared so the
+  anchors + tend station stay reachable). The camp itself is raised in
   `_raise_cult_camp` (`scenes/brimley.py` on_enter) only at 1+ evidence
-  (nothing at ev 0 -- the town reads normal): a lit `camp_fire` (a new SOLID
-  light volume, distinct from the dead indoor `campfire` scorch decal) ringed
-  by `bedroll` + `log_seat` floor decals and a hung lantern, with a
-  tend-the-fire errand station just south of the flames.
+  (nothing at ev 0 -- the town reads normal): the **worn packed ground** is
+  beaten in (corn -> dirt) and a lit `camp_fire` (a new SOLID light volume,
+  distinct from the dead indoor `campfire` scorch decal) is ringed by
+  `bedroll` + `log_seat` floor decals and a hung lantern, with a tend-the-fire
+  errand station just south of the flames. The ground is the cult's OWN doing,
+  so it appears with them, not before.
 - **Evidence count:** `len(self.save.arg("evidence", []))`.
 - **Evidence logging:** `_evidence(game, name, content)` in
   `scenes/dialogue.py` → appends to `save.arg("evidence")`, shown in the
