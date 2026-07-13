@@ -572,9 +572,23 @@ building thresholds; `tests/stealth.py` `open_field` + the bell/walls fixtures
 moved to the new geometry (semantics unchanged). Full `python tests/run_all.py`
 gate green; a tilt capture confirms the arrival view. **This also lands the
 Optional smaller-grid perf pass** (the one-time whole-map tilt bake dropped from
-~10k tiles to 3,600). **Still open:** the altar move (#17) did NOT ride inside
-this pass — the cult standing-stone ring stayed in the open NE field rather than
-relocating to the riverbank; #17 remains its own narrative-dressing ticket.
+~10k tiles to 3,600).
+
+**Follow-up (2026-07): buildings front the street.** Each door was reoriented
+onto the wall that faces its adjacent road instead of all facing south:
+`_stamp_building` now takes a `face` ('n'/'s'/'e'/'w'), the west-row buildings
+(church, shop, sheriff) open EAST onto the central spine, the east row (barn,
+school, farmhouse) opens WEST, and the kid's house opens NORTH onto its access
+road (no south doors). Spurs, spawn-backs, the bell-door anchor, the flanking lit
+windows, the door lanterns, the homebody anchors (Hettie/Pell), and the farm's
+cult front-yard all moved to the new faces. The shared door renderer's
+`_door_room_dir` (`scenes/terrain.py`, used by BOTH the flat and tilt draws) was
+made **roof-aware and window-aware** so a door on any face resolves its opening
+direction correctly (a census proved the change flips ONLY these three
+window-flanked Brimley doors and is byte-identical for every other door in the
+game). **Still open:** the altar move (#17) did NOT ride inside this pass — the
+cult standing-stone ring stayed in the open NE field rather than relocating to
+the riverbank; #17 remains its own narrative-dressing ticket.
 
 ---
 

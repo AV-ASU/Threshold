@@ -85,10 +85,17 @@ def _brimley_voice(pages, voice="blip_mid", fold=False, beats=None):
 
 
 def _stamp_building(objects_l, left, right, top, bot,
-                     door_char, door_col):
+                     door_char, face, door_pos):
     """Stamp a rectangular building footprint into objects_l. Outer
     perimeter is wall (W); interior is roof (r); a single door tile
-    (door_char) is punched through the south face at door_col."""
+    (door_char) is punched through ONE face so the building can front the
+    street it actually sits on -- `face` is 's'/'n' (door at column
+    `door_pos`) or 'e'/'w' (door at row `door_pos`). The tilt + flat door
+    renderers derive the opening direction from the wall geometry
+    (`_door_room_dir`), so a door on any face draws correctly.
+
+    Returns ((door_tx, door_ty), (out_tx, out_ty)) -- the door tile and the
+    walkable tile just outside it (the approach + the spawn-back)."""
     for cx in range(left, right + 1):
         objects_l[top][cx] = "W"
         objects_l[bot][cx] = "W"
@@ -97,8 +104,16 @@ def _stamp_building(objects_l, left, right, top, bot,
         objects_l[ry][right] = "W"
         for cx in range(left + 1, right):
             objects_l[ry][cx] = "r"
-    # Punch the door on the south face.
-    objects_l[bot][door_col] = door_char
+    if face == "s":
+        dt, out = (door_pos, bot), (door_pos, bot + 1)
+    elif face == "n":
+        dt, out = (door_pos, top), (door_pos, top - 1)
+    elif face == "e":
+        dt, out = (right, door_pos), (right + 1, door_pos)
+    else:  # "w"
+        dt, out = (left, door_pos), (left - 1, door_pos)
+    objects_l[dt[1]][dt[0]] = door_char
+    return dt, out
 
 
 def _carve_track(floor_ll, objects_l, pts, rng):
@@ -219,33 +234,37 @@ def build_brimley():
     for ry in (24, 25, 26):
         objects_l[ry][w - 1] = "4"
 
-    # ---- Scattered buildings (6w x 5h; door on the south face) ----
+    # ---- Scattered buildings (6w x 5h) ----
     # Church + barn stand north; shop + school upper-middle; sheriff +
-    # farmhouse south; the kid's house alone on the east bank. Every one
-    # is somewhere new versus the old map.
-    church_left, church_right, church_top, church_bot, church_door = 6, 11, 8, 12, 8
-    _stamp_building(objects_l, church_left, church_right,
-                    church_top, church_bot, "m", church_door)
+    # farmhouse south; the kid's house alone on the east bank. Every one is
+    # somewhere new versus the old map, and each DOOR FRONTS THE STREET it
+    # sits on: the west-side row (church, shop, sheriff) opens EAST toward
+    # the central spine, the east-side row (barn, school, farmhouse) opens
+    # WEST toward it, and the kid's house opens NORTH onto its access road.
+    # Nothing faces south.
+    church_left, church_right, church_top, church_bot = 6, 11, 8, 12
+    church_dt, church_out = _stamp_building(
+        objects_l, church_left, church_right, church_top, church_bot, "m", "e", 10)
 
-    barn_left, barn_right, barn_top, barn_bot, barn_door = 20, 25, 8, 12, 22
-    _stamp_building(objects_l, barn_left, barn_right,
-                    barn_top, barn_bot, "n", barn_door)
+    barn_left, barn_right, barn_top, barn_bot = 20, 25, 8, 12
+    barn_dt, barn_out = _stamp_building(
+        objects_l, barn_left, barn_right, barn_top, barn_bot, "n", "w", 10)
 
-    shop_left, shop_right, shop_top, shop_bot, shop_door = 8, 13, 18, 22, 10
-    _stamp_building(objects_l, shop_left, shop_right,
-                    shop_top, shop_bot, "D", shop_door)
+    shop_left, shop_right, shop_top, shop_bot = 8, 13, 18, 22
+    shop_dt, shop_out = _stamp_building(
+        objects_l, shop_left, shop_right, shop_top, shop_bot, "D", "e", 20)
 
-    school_left, school_right, school_top, school_bot, school_door = 20, 25, 18, 22, 22
-    _stamp_building(objects_l, school_left, school_right,
-                    school_top, school_bot, "B", school_door)
+    school_left, school_right, school_top, school_bot = 20, 25, 18, 22
+    school_dt, school_out = _stamp_building(
+        objects_l, school_left, school_right, school_top, school_bot, "B", "w", 20)
 
-    sheriff_left, sheriff_right, sheriff_top, sheriff_bot, sheriff_door = 7, 12, 44, 48, 9
-    _stamp_building(objects_l, sheriff_left, sheriff_right,
-                    sheriff_top, sheriff_bot, "y", sheriff_door)
+    sheriff_left, sheriff_right, sheriff_top, sheriff_bot = 7, 12, 44, 48
+    sheriff_dt, sheriff_out = _stamp_building(
+        objects_l, sheriff_left, sheriff_right, sheriff_top, sheriff_bot, "y", "e", 46)
 
-    farm_left, farm_right, farm_top, farm_bot, farm_door = 19, 24, 44, 48, 21
-    _stamp_building(objects_l, farm_left, farm_right,
-                    farm_top, farm_bot, "o", farm_door)
+    farm_left, farm_right, farm_top, farm_bot = 19, 24, 44, 48
+    farm_dt, farm_out = _stamp_building(
+        objects_l, farm_left, farm_right, farm_top, farm_bot, "o", "w", 46)
     # A lean-to shed bolted onto the farmhouse's east wall (cols 25-26,
     # rows 45-47, no door -- a closed store), so the footprint stops
     # reading as one clean rectangle.
@@ -255,9 +274,9 @@ def build_brimley():
     objects_l[46][25] = "r"
     objects_l[46][26] = "W"
 
-    kid_left, kid_right, kid_top, kid_bot, kid_door = 44, 49, 36, 40, 46
-    _stamp_building(objects_l, kid_left, kid_right,
-                    kid_top, kid_bot, "J", kid_door)
+    kid_left, kid_right, kid_top, kid_bot = 44, 49, 36, 40
+    kid_dt, kid_out = _stamp_building(
+        objects_l, kid_left, kid_right, kid_top, kid_bot, "J", "n", 46)
 
     # Road corridors poke cleanly through the 7-tile forest band so the
     # scattered trees don't grow over an exit or the lodge square.
@@ -312,11 +331,11 @@ def build_brimley():
                     objects_l[ty][tx] = "T"
 
     # Lit windows flanking a few doors (the 'i' tile glows + a dark figure
-    # passes behind the glass on its own clock). South walls so they face
-    # the approach.
-    for (wy, wx) in [(22, 21), (22, 23),     # school
-                     (22, 9), (22, 11),      # shop
-                     (40, 45), (40, 47)]:    # kid's house
+    # passes behind the glass on its own clock), on the SAME wall face as
+    # the door so they read together on the street front.
+    for (wy, wx) in [(19, 20), (21, 20),     # school (west wall)
+                     (19, 13), (21, 13),     # shop (east wall)
+                     (36, 45), (36, 47)]:    # kid's house (north wall)
         objects_l[wy][wx] = "i"
 
     # ---- Worn dirt tracks + the roads ----
@@ -324,16 +343,18 @@ def build_brimley():
     trk = random.Random(7)
     # West-town N-S spine: down the plaza between the two building columns.
     _carve_track(floor_ll, objects_l, [(16, 8), (16, 25), (16, 52)], trk)
-    # Spurs to each west-bank door.
-    _carve_track(floor_ll, objects_l, [(16, 10), (10, 11), (8, 13)], trk)     # -> Church
-    _carve_track(floor_ll, objects_l, [(16, 10), (20, 11), (22, 13)], trk)    # -> Barn
-    _carve_track(floor_ll, objects_l, [(16, 21), (12, 22), (10, 23)], trk)    # -> Shop
-    _carve_track(floor_ll, objects_l, [(16, 21), (20, 22), (22, 23)], trk)    # -> School
-    _carve_track(floor_ll, objects_l, [(16, 49), (11, 49), (9, 49)], trk)     # -> Sheriff
-    _carve_track(floor_ll, objects_l, [(16, 49), (19, 49), (21, 49)], trk)    # -> Farmhouse
-    _carve_track(floor_ll, objects_l, [(16, 40), (11, 46), (10, 50)], trk)    # -> clearing entrance
-    # East bank: the lodge square -> the kid's house + Mrs. Calder's table.
-    _carve_track(floor_ll, objects_l, [(50, 26), (48, 33), (48, 40), (46, 41)], trk)
+    # Spurs from the spine to each street-facing door (E doors on the west
+    # row, W doors on the east row) so the door opens onto worn ground.
+    _carve_track(floor_ll, objects_l, [(15, 10), (12, 10)], trk)   # -> Church (E)
+    _carve_track(floor_ll, objects_l, [(17, 10), (19, 10)], trk)   # -> Barn (W)
+    _carve_track(floor_ll, objects_l, [(15, 20), (14, 20)], trk)   # -> Shop (E)
+    _carve_track(floor_ll, objects_l, [(17, 20), (19, 20)], trk)   # -> School (W)
+    _carve_track(floor_ll, objects_l, [(15, 46), (13, 46)], trk)   # -> Sheriff (E)
+    _carve_track(floor_ll, objects_l, [(17, 46), (18, 46)], trk)   # -> Farmhouse (W)
+    _carve_track(floor_ll, objects_l, [(16, 40), (11, 46), (10, 50)], trk)   # -> clearing
+    # East bank: the lodge square -> the kid's house (N door) down the
+    # connector, then west to the door.
+    _carve_track(floor_ll, objects_l, [(50, 26), (48, 33), (48, 35), (46, 35)], trk)
     # A cult path worn off the east bank out to the standing stones.
     _carve_track(floor_ll, objects_l, [(44, 20), (42, 17), (40, 15)], trk)
 
@@ -409,8 +430,8 @@ def build_brimley():
     sc = Scene("brimley", floor_rows, objects, music="wind")
     # The church-door point the pealing bell broadcasts from
     # (Game._tick_bell): cult hunters converge here while it rings.
-    sc._bell_door = (church_door * TILE + 16,
-                     (church_bot + 1) * TILE + 16)
+    sc._bell_door = (church_out[0] * TILE + 16,
+                     church_out[1] * TILE + 16)
     for bx, by in _band_bushes:
         sc.add_decoration(Decoration(bx, by, "bush"))
     # Brimley's world is toroidal on both axes -- the fold-road at row 25
@@ -446,9 +467,9 @@ def build_brimley():
     # cars pool where their drivers finally stopped: a rank beside the barn,
     # a give-up line on the fold-road shoulders, and a nose in the corn.
     _lot_cars = dead_cars(objects_list, [
-        # the barn rank, noses at the barn's west wall
-        (18, 9, "rust_coupe", 0.55, 24, "h"),
-        (18, 11, "rust_wagon", -0.08, 22, "h", {"luggage": True}),
+        # the barn rank, noses at the barn's south wall (clear of the west door)
+        (21, 13, "rust_coupe", 0.55, 24, "h"),
+        (23, 13, "rust_wagon", -0.08, 22, "h", {"luggage": True}),
         # the give-up line on the fold-road shoulders (east of the bridge)
         (36, 23, "rust_wagon", 0.10, 31, "h"),
         (40, 23, "rust_coupe", -0.12, 32, "h"),
@@ -476,13 +497,13 @@ def build_brimley():
     sc.set_spawn("from_cornfield_maze", 22, 1)
     sc.set_spawn("from_cornfield_path", 36, 1)
     sc.set_spawn("from_clearing", clearing_tx + 1, clearing_ty)
-    sc.set_spawn("from_church",     church_door,  church_bot + 1)
-    sc.set_spawn("from_sheriff_office", sheriff_door, sheriff_bot + 1)
-    sc.set_spawn("from_abandoned_farmhouse", farm_door, farm_bot + 1)
-    sc.set_spawn("from_shop",              shop_door,    shop_bot + 1)
-    sc.set_spawn("from_toby_house",         kid_door,     kid_bot + 1)
-    sc.set_spawn("from_barn",              barn_door,    barn_bot + 1)
-    sc.set_spawn("from_school",            school_door,  school_bot + 1)
+    sc.set_spawn("from_church",     *church_out)
+    sc.set_spawn("from_sheriff_office", *sheriff_out)
+    sc.set_spawn("from_abandoned_farmhouse", *farm_out)
+    sc.set_spawn("from_shop",              *shop_out)
+    sc.set_spawn("from_toby_house",         *kid_out)
+    sc.set_spawn("from_barn",              *barn_out)
+    sc.set_spawn("from_school",            *school_out)
 
     # ---- Ambience -- crows + grass tufts ----
     sc.add_decoration(Decoration(22 * TILE + 16, 15 * TILE + 16, "crow"))
@@ -557,14 +578,14 @@ def build_brimley():
 
     # Hettie keeps the shop open. A homebody: she steps out front to sweep
     # a step that doesn't get dirty, then ducks back inside for a spell.
-    _resident(shop_door, shop_bot + 1, "Hettie", "hettie", [
+    _resident(shop_out[0], shop_out[1], "Hettie", "hettie", [
         "Still open. Always open. The shelves don't empty anymore. Have you noticed.",
         "No deliveries. In a while now. But we manage. We always.",
         "[c=dim]I keep the lights on. So they know. Someone's keeping them on.[/c]",
     ], movement="homebody", radius=34)
     # Old Pell -- the schoolhouse step, the stopped calendar behind him.
     # He never ducks inside (the schoolhouse is enterable and empty).
-    _resident(school_door, school_bot + 1, "Old Pell", "old_townsman",
+    _resident(school_out[0], school_out[1], "Old Pell", "old_townsman",
               movement="homebody", radius=34, convo=PELL_CONVO,
               vanish=False,
         beats=[("beat_pell_coal",
@@ -629,15 +650,16 @@ def build_brimley():
     # ---- The loop, made visible ----
     # The payphone (won't connect), the news rack (seal-day paper), a
     # stopped calendar, the well, the noticeboard, Mrs. Calder's plate.
-    _pp_x, _pp_y = 12 * TILE + 16, 23 * TILE + 16
+    _pp_x, _pp_y = 14 * TILE + 16, 22 * TILE + 16
     sc.add_decoration(Decoration(_pp_x, _pp_y, "payphone"))
     sc._payphone_pos = (_pp_x, _pp_y)
     # Burn barrels at the occupied yards -- the only warm light on the banks.
     for _bx, _by, _bs in ((49, 20, 61), (11, 23, 62), (47, 42, 63)):
         sc.add_decoration(Decoration(_bx * TILE + 16, _by * TILE + 16,
                                      "burn_barrel", seed=_bs))
-    # The news rack outside the shop, still holding the seal-day issue.
-    _nr_x, _nr_y = 11 * TILE + 16, 23 * TILE + 6
+    # The news rack outside the shop (its east front now), still holding
+    # the seal-day issue.
+    _nr_x, _nr_y = 14 * TILE + 16, 18 * TILE + 16
     sc.add_decoration(Decoration(_nr_x, _nr_y, "news_rack"))
     sc._news_rack_pos = (_nr_x, _nr_y)
     # The well -- dread set-dressing, not a way down (a dead town shaft;
@@ -652,10 +674,10 @@ def build_brimley():
     barrow_x, barrow_y = 49 * TILE + 16, 18 * TILE + 16
     sc.add_decoration(Decoration(barrow_x, barrow_y, "wheelbarrow"))
     sc._barrow_pos = (barrow_x, barrow_y)
-    sc.add_decoration(Decoration(10 * TILE + 16, 23 * TILE + 16, "missing_flyer"))
+    sc.add_decoration(Decoration(14 * TILE + 16, 19 * TILE + 16, "missing_flyer"))
     # The calendar, marked up to JAN 15 (the seal) and then stopped.
-    # Nailed to the schoolhouse wall beside the door.
-    sc.add_decoration(Decoration(21 * TILE + 16, 23 * TILE + 16, "calendar"))
+    # Nailed to the schoolhouse wall beside the (west) door.
+    sc.add_decoration(Decoration(19 * TILE + 16, 21 * TILE + 16, "calendar"))
     sc.add_decoration(Decoration(54 * TILE + 16, 30 * TILE + 16, "pickup_truck"))
 
     # Mrs. Calder's table, laid out in the open by the kid's house: two
@@ -687,12 +709,15 @@ def build_brimley():
     # ---- Light is the mood ----
     # A guttering lamppost one tile SW of each occupied door (they throw a
     # pool across the threshold without standing IN the doorway).
-    for (lx, ly) in [(church_door, church_bot),  (barn_door, barn_bot),
-                     (shop_door, shop_bot),      (school_door, school_bot),
-                     (sheriff_door, sheriff_bot), (farm_door, farm_bot),
-                     (kid_door, kid_bot)]:
-        sc.add_decoration(Decoration((lx - 1) * TILE + 20,
-                                     (ly + 1) * TILE + 16, "lantern"))
+    for (lx, ly) in [(church_out[0], church_out[1] + 1),
+                     (barn_out[0], barn_out[1] + 1),
+                     (shop_out[0], shop_out[1] + 1),
+                     (school_out[0], school_out[1] + 1),
+                     (sheriff_out[0], sheriff_out[1] + 1),
+                     (farm_out[0], farm_out[1] + 1),
+                     (kid_out[0] + 1, kid_out[1])]:
+        sc.add_decoration(Decoration(lx * TILE + 20,
+                                     ly * TILE + 16, "lantern"))
     # The bridge: a single lantern on the exposed crossing, a creepy_tree
     # on each bank for a held-breath pocket.
     sc.add_decoration(Decoration(river_center_x * TILE + 16,
@@ -793,8 +818,9 @@ def build_brimley():
     # lived-in detail the arriving PI sees.
     sc.add_decoration(Decoration(55 * TILE + 16, 23 * TILE + 16,
                                  "town_sign", text="BRIMLEY"))
-    # Schoolhouse flagpole -- flag at half-mast, faded, frayed.
-    sc.add_decoration(Decoration(23 * TILE + 16, 24 * TILE + 16, "flagpole"))
+    # Schoolhouse flagpole -- flag at half-mast, faded, frayed (by its
+    # west front now).
+    sc.add_decoration(Decoration(18 * TILE + 16, 22 * TILE + 16, "flagpole"))
     # The community noticeboard at the well -- three flyers tacked tight
     # with a hooded lantern above them.
     sc.add_decoration(Decoration(54 * TILE + 16, 16 * TILE + 16, "lantern"))
@@ -825,18 +851,18 @@ def build_brimley():
     sc.add_cult_station(42 * TILE + 16, 43 * TILE + 16,
                         face=(0, -1), dwell=(5.0, 9.0))
 
-    # ---- Cult-taken territory: the south-central farmhouse ----
-    farm_door_x = farm_door * TILE + 16
-    sc.add_decoration(Decoration((farm_door - 2) * TILE + 16,
-                                 (farm_bot + 2) * TILE + 16, "yellow_sign"))
-    sc.add_decoration(Decoration((farm_door + 2) * TILE + 16,
-                                 (farm_bot + 2) * TILE + 16, "yellow_sign"))
-    for (cx, cy) in [(farm_door - 1, farm_bot + 3),
-                     (farm_door,       farm_bot + 4),
-                     (farm_door + 1, farm_bot + 3)]:
+    # ---- Cult-taken territory: the farmhouse's WEST front yard ----
+    # The door fronts west now, so the "kept" attention (sigils, candles,
+    # the brazier lighting the way in) lines the west approach.
+    fox, foy = farm_out
+    sc.add_decoration(Decoration(fox * TILE + 16, (foy - 2) * TILE + 16,
+                                 "yellow_sign"))
+    sc.add_decoration(Decoration(fox * TILE + 16, (foy + 2) * TILE + 16,
+                                 "yellow_sign"))
+    for (cx, cy) in [(fox - 1, foy - 1), (fox - 2, foy), (fox - 1, foy + 1)]:
         sc.add_decoration(Decoration(cx * TILE + 16, cy * TILE + 16,
                                      "candle"))
-    sc.add_decoration(Decoration(farm_door_x, (farm_bot + 5) * TILE + 16,
+    sc.add_decoration(Decoration((fox - 3) * TILE + 16, foy * TILE + 16,
                                  "brazier"))
 
     # ---- Mist + marsh wisps ----

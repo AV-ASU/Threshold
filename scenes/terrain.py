@@ -2181,16 +2181,38 @@ def _door_room_dir(scene, tx, ty):
     """Which way the door opens -- the floor (room) side its leaf swings
     into. Off-map edges don't count as wall, so a building's south-edge
     exit still opens toward its interior."""
+    # A window ('i') is part of the wall LINE (structure), not a floor side:
+    # counting it lets a door flanked by lit windows still resolve its wall
+    # axis (else both perpendicular neighbours read as non-wall and the door
+    # mis-detects). Only affects window-flanked doors; the rest are unchanged.
+    struct = _WALL_CHARS | _WINDOW_CHARS
     def w(ax, ay):
         return (0 <= ay < scene.h and 0 <= ax < scene.w
-                and scene.objects[ay][ax] in _WALL_CHARS)
+                and scene.objects[ay][ax] in struct)
     def fl(ax, ay):
         return (0 <= ay < scene.h and 0 <= ax < scene.w
-                and scene.objects[ay][ax] not in _WALL_CHARS)
+                and scene.objects[ay][ax] not in struct)
+    def roof(ax, ay):
+        # A building's INTERIOR is roof ('r'); the door opens the OTHER way,
+        # toward the exterior/street. Both sides of a 1-thick wall read as
+        # non-wall (roof interior + open exterior), so pick the exterior by
+        # ruling out the roof side. Leaves S/E doors byte-identical (the roof
+        # always sits on the interior side, which the old default already
+        # skipped) and correctly resolves N/W doors the old code mis-called.
+        return (0 <= ay < scene.h and 0 <= ax < scene.w
+                and scene.objects[ay][ax] == "r")
     wl, wr, wu, wd = w(tx - 1, ty), w(tx + 1, ty), w(tx, ty - 1), w(tx, ty + 1)
     if (wu or wd) and not (wl or wr):           # vertical wall -> opens L/R
+        if roof(tx + 1, ty) and not roof(tx - 1, ty):
+            return "W"                          # interior east -> opens west
+        if roof(tx - 1, ty) and not roof(tx + 1, ty):
+            return "E"                          # interior west -> opens east
         return "E" if fl(tx + 1, ty) else "W"
     if (wl or wr) and not (wu or wd):           # horizontal wall -> opens up/down
+        if roof(tx, ty + 1) and not roof(tx, ty - 1):
+            return "N"                          # interior south -> opens north
+        if roof(tx, ty - 1) and not roof(tx, ty + 1):
+            return "S"                          # interior north -> opens south
         return "S" if fl(tx, ty + 1) else "N"
     if fl(tx, ty + 1):                          # corner / ambiguous
         return "S"

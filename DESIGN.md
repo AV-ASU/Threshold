@@ -752,6 +752,16 @@ obeys, and the mundane door's point of difference from the RIFT, which
 shows everything by design (the King's violence has no blind spot). The
 figure is clipped to the opening. Preview: `tools/preview_door_sight.py`.
 
+**Door opening direction is geometry-derived.** A door can be punched into any
+wall face; `_door_room_dir` (`scenes/terrain.py`, used by BOTH the flat
+`_draw_door_opening` and the tilt `_draw_doorway`) reads the door's wall
+neighbours to resolve which way it opens. It counts windows (`i`) as part of the
+wall line and treats a building's roof (`r`) as the INTERIOR side, so a door
+flanked by lit windows on an east/west/north face still resolves correctly (not
+just the old south default). This is what lets an overworld building FRONT the
+street it sits on -- Brimley's houses face east/west/north onto the central
+spine and their access road rather than all facing south (TODO #18 follow-up).
+
 ---
 
 ## 8. Desire, and how the fold strands it
