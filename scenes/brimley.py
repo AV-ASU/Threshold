@@ -1015,8 +1015,6 @@ def build_brimley():
                                  text="BRIMLEY"))
     sc.add_decoration(Decoration(92 * TILE + 16, 7 * TILE + 20, "town_sign",
                                  text="TOWN"))
-    sc.add_decoration(Decoration(92 * TILE + 16, 22 * TILE + 16, "town_sign",
-                                 text="WELL"))
     sc.add_decoration(Decoration(60 * TILE + 16, 26 * TILE + 16, "town_sign",
                                  text="TOWN"))
     for lx in (12, 24, 46, 70, 88):                  # lamps along the E-W spine

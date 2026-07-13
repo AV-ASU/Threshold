@@ -527,47 +527,29 @@ class CutsceneMixin:
 
 
     def _draw_road_sign(self, s, x, y, light):
-        """The old-timey BRIMLEY welcome board as it passes in the
-        headlights: a weathered painted plank carrying the town's civic
-        boast (NORTHERNMOST CORN IN THE WORLD, EST. 1894), the population
-        count struck through -- the quiet subtraction is the first wrong
-        note. Matches the in-game welcome sign (rendering/props.py
-        _draw_town_sign_solid). The corn pride is a mundane human feat,
-        never the door's doing (TODO #11 guardrail)."""
+        """The BRIMLEY welcome board as it passes in the headlights. Renders
+        the SAME content + palette as the in-game welcome sign
+        (rendering/props.py _draw_town_sign_solid, the BRIMLEY variant): the
+        name, the corn boast, the founding year, on a weathered two-post
+        wooden board. The corn pride is a mundane human feat, never the
+        door's doing (TODO #11 guardrail)."""
         def L(c):
             return (int(c[0] * light), int(c[1] * light), int(c[2] * light))
-        bw, bh = 120, 64
+        bw, bh = 112, 48
         bx, by = x - bw // 2, y - bh
-        # Post below the board (the board sits above the anchor y).
-        pygame.draw.rect(s, L((58, 48, 36)), (x - 3, y, 6, 44))
-        # Weathered painted plank: a warm board, a darker frame, an inner bevel.
-        pygame.draw.rect(s, L((116, 100, 74)), (bx, by, bw, bh), border_radius=4)
-        pygame.draw.rect(s, L((150, 132, 98)), (bx + 3, by + 3, bw - 6, bh - 6),
-                         border_radius=3)
-        pygame.draw.rect(s, L((44, 36, 26)), (bx, by, bw, bh), 2, border_radius=4)
-        pygame.draw.rect(s, L((70, 58, 40)), (bx + 3, by + 3, bw - 6, bh - 6),
-                         1, border_radius=3)
-        ink = L((48, 40, 26))
-        # WELCOME TO / BRIMLEY.
-        wel = self.fonts["tiny"].render("WELCOME TO", True, ink)
-        s.blit(wel, (x - wel.get_width() // 2, by + 5))
-        nm = self.fonts["sm"].render("BRIMLEY", True, L((60, 50, 30)))
-        s.blit(nm, (x - nm.get_width() // 2, by + 14))
-        # The civic boast, two tight lines.
-        b1 = self.fonts["tiny"].render("NORTHERNMOST CORN", True, ink)
-        s.blit(b1, (x - b1.get_width() // 2, by + 31))
-        b2 = self.fonts["tiny"].render("IN THE WORLD", True, ink)
-        s.blit(b2, (x - b2.get_width() // 2, by + 40))
-        # A hairline rule, then EST. 1894 and the struck-through count.
-        pygame.draw.line(s, L((92, 78, 54)), (bx + 12, by + 50),
-                         (bx + bw - 12, by + 50), 1)
-        est = self.fonts["tiny"].render("EST. 1894", True, ink)
-        s.blit(est, (bx + 11, by + 52))
-        pop = self.fonts["tiny"].render("POP. 412", True, L((120, 108, 84)))
-        px = bx + bw - 11 - pop.get_width()
-        s.blit(pop, (px, by + 52))
-        pygame.draw.line(s, L((150, 52, 42)),
-                         (px - 1, by + 57), (px + pop.get_width() + 1, by + 56), 2)
+        # Two posts + a board nailed across (the in-game signpost's shape).
+        for px in (x - 24, x + 24):
+            pygame.draw.rect(s, L((62, 44, 28)), (px - 2, by + 8, 4, 46))
+        pygame.draw.rect(s, L((96, 70, 44)), (bx, by, bw, bh))
+        pygame.draw.rect(s, L((60, 42, 22)), (bx, by, bw, bh), 1)
+        pygame.draw.line(s, L((124, 92, 58)), (bx + 1, by + 1),
+                         (bx + bw - 1, by + 1), 1)
+        nm = self.fonts["sm"].render("BRIMLEY", True, L((30, 20, 8)))
+        s.blit(nm, (x - nm.get_width() // 2, by + 5))
+        b1 = self.fonts["tiny"].render("NORTHERNMOST CORN", True, L((44, 32, 16)))
+        s.blit(b1, (x - b1.get_width() // 2, by + 23))
+        est = self.fonts["tiny"].render("EST. 1894", True, L((44, 32, 16)))
+        s.blit(est, (x - est.get_width() // 2, by + 34))
 
 
     def _draw_lodge_sign(self, s, x, ground_y, f):
@@ -645,6 +627,10 @@ class CutsceneMixin:
         road_w = int(W * 0.46)
         rx0 = cx - road_w // 2
         rx1 = rx0 + road_w
+        # Right-hand traffic: driving IN is northbound (up-screen), so the
+        # car rides the EAST lane -- the screen-RIGHT half of the road (the
+        # inverse of the SPREAD drive-out, which rides the west lane south).
+        car_x = cx + int(road_w * 0.21)
 
         # Night sky + a faint scatter of cold, twinkling stars at the top.
         s.fill((7, 8, 13))
@@ -791,7 +777,7 @@ class CutsceneMixin:
             a = int(20 * (1 - f) * light)
             if a > 0:
                 pygame.draw.ellipse(wet, (150, 134, 90, a),
-                                    (cx - rw, gy, 2 * rw,
+                                    (car_x - rw, gy, 2 * rw,
                                      max(2, int((cy - gy) * 0.95))))
         # Taillights bleeding red onto the road behind the car (battery: they
         # stay lit even when the engine's dead, so this persists -- subtly).
@@ -802,7 +788,7 @@ class CutsceneMixin:
                 a = int(15 * (1 - f))
                 if a > 0:
                     pygame.draw.ellipse(wet, (165, 40, 30, a),
-                                        (cx + txo - rw, cy + 24, 2 * rw,
+                                        (car_x + txo - rw, cy + 24, 2 * rw,
                                          int(50 * f)))
         s.blit(wet, (0, 0), special_flags=pygame.BLEND_RGBA_ADD)
 
@@ -851,7 +837,7 @@ class CutsceneMixin:
                    min(255, int(104 * b)))
             if col[0] + col[1] + col[2] > 3:
                 pygame.draw.ellipse(glow, col,
-                                    (cx - half, y - eh // 2, 2 * half, eh))
+                                    (car_x - half, y - eh // 2, 2 * half, eh))
         for i in range(13, 0, -1):               # hotspot just ahead of bumper
             f = i / 13
             rw, rh = int(40 * f) + 3, int(56 * f) + 3
@@ -860,7 +846,7 @@ class CutsceneMixin:
                    min(255, int(150 * hb)))
             if col[0] + col[1] + col[2] > 3:
                 pygame.draw.ellipse(glow, col,
-                                    (cx - rw, (front - 38) - rh // 2,
+                                    (car_x - rw, (front - 38) - rh // 2,
                                      2 * rw, rh))
         s.blit(glow, (0, 0), special_flags=pygame.BLEND_RGBA_ADD)
 
@@ -875,7 +861,7 @@ class CutsceneMixin:
         for i in range(7):
             mt = (t * 0.55 + i * 0.37) % 1.0
             my = int(cy - 24 - mt * (cy - top_y - 24))
-            mx = cx + int(math.sin(t * 1.3 + i * 2.1) * (16 + mt * 34))
+            mx = car_x + int(math.sin(t * 1.3 + i * 2.1) * (16 + mt * 34))
             mc = int(210 * (1 - mt) * min(1.0, light + 0.1))
             if mc > 6:
                 pygame.draw.circle(s, (mc, int(mc * 0.94), int(mc * 0.74)),
@@ -883,7 +869,7 @@ class CutsceneMixin:
 
         # The car. Exhaust puffs while it stalls and after it dies.
         exhaust = (1.0 - sp_frac) if ph in ("stall", "dead") else 0.0
-        self._draw_car(s, cx, cy, light, exhaust=exhaust, scale=1.3)
+        self._draw_car(s, car_x, cy, light, exhaust=exhaust, scale=1.3)
 
         # --- Film grade: unify the drive with the cutscene look. Applied to the
         #     WORLD only -- the case cards stamp on top, crisp + legible. ---
