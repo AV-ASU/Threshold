@@ -196,7 +196,14 @@ class NPC:
         then comes back out and loiters again. The only time you see
         them is going in or out their door. While 'inside' the NPC sets
         `_inside` True and drops `solid`; Game skips drawing it and won't
-        let the player talk to it."""
+        let the player talk to it.
+
+        The vanish is only honest when the door doesn't lie: it must lead
+        either nowhere the player can walk (a closed house) or to an
+        interior that actually holds this local. A homebody anchored at an
+        ENTERABLE-but-empty building would read as "walked in, nobody
+        there", so those spawn with `_hb_vanish=False` and just keep to
+        their step instead of disappearing."""
         st = getattr(self, "_hb_state", None)
         if st is None:
             self._hb_state = st = "loiter"
@@ -214,8 +221,13 @@ class NPC:
                                     self.home[1] + math.sin(ang) * r)
             self._step_toward(self.move_target, dt, scene)
             if self._hb_t <= 0:
-                self._hb_state = "returning"
-                self.move_target = self.home
+                if getattr(self, "_hb_vanish", True):
+                    self._hb_state = "returning"
+                    self.move_target = self.home
+                else:
+                    # No vanish: this doorstep can't swallow them, so they
+                    # linger on their step rather than duck into an empty room.
+                    self._hb_t = random.uniform(5.0, 10.0)
         elif st == "returning":
             if scene.world_dist(self.x, self.y,
                                 self.home[0], self.home[1]) < 8:

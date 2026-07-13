@@ -113,6 +113,15 @@ CHASE_STATIONARY_MULT = 0.35
 # input-driven target over this window, giving a tactile accel/decel feel.
 MOVE_SMOOTH_TAU = 0.12
 
+# Walk-cycle cadence (rad/s of walk_phase) at the BASE walking speed
+# (Player.speed). The phase advance is scaled by the actual ground speed
+# (hypot(vel) / base speed), so the legs never skate: a slow wade trudges, a
+# sprint pumps, and at base speed the leg cycle syncs to the footstep cadence
+# (one step = pi rad; 10 rad/s ~= the 0.32s step timer). Before this the phase
+# advanced at a fixed rate, so halving the base speed (130 -> 64) left the legs
+# cycling twice as fast as the ground covered.
+WALK_ANIM_RATE = 10.0
+
 # Oblique-camera tilt (DESIGN.md §10). The tilt is the ONLY camera; the
 # pitch is locked to TILT_PITCH_DEG for the life of the Game. No flat view.
 TILT_PITCH_DEG = 55

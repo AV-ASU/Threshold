@@ -1015,6 +1015,12 @@ class RenderMixin:
                     pygame.draw.rect(s, C_BLACK, (sx - 4, sy - 4 + bob, 8, 8), 1)
             _emit(self.camera.depth(it["x"], it["y"]),
                   lambda a=a, fn=_draw_item: draw_with_alpha(self.screen, a, fn))
+            # A pickup is a "focus" too: an occluding wall/prop fades for it the
+            # same way it does for an actor (below), so a gem tucked behind a
+            # near wall or a tall prop still reads through instead of vanishing
+            # under the tilt. Low height -- it sits on the floor.
+            if _tilt_items:
+                _focus.append((it["x"], it["y"], 14))
         # Pick at most one NPC to "blink" this frame -- their eye dots
         # will skip drawing for a single frame. Only fires while the
         # player is standing still, and only rarely. The villagers

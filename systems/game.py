@@ -1165,7 +1165,14 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         vx, vy = self.player.vel_x, self.player.vel_y
         in_motion = bool(input_active or vx or vy)
         if in_motion:
-            self.player.walk_phase += dt * 12
+            # Stride cadence tracks ACTUAL ground speed, so the legs never
+            # skate: scale the walk-phase advance by how fast we're really
+            # moving (WALK_ANIM_RATE is the cadence at the base walk speed).
+            # A fixed rate made the feet cycle twice as fast as the ground
+            # covered after the base speed was halved (130 -> 64 px/s).
+            spd = math.hypot(vx, vy)
+            self.player.walk_phase += (dt * WALK_ANIM_RATE
+                                       * (spd / self.player.speed))
             new_x = self.player.x + vx * dt
             new_y = self.player.y + vy * dt
             blocked_x = (self.scene.is_solid_at(new_x, self.player.y)
