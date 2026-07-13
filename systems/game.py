@@ -2990,13 +2990,11 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         if self.state == "paused":
             self.pause_input(ev); return
         if self.state == "opening":
-            if ev.type == pygame.KEYDOWN:
-                if ev.key == pygame.K_ESCAPE:
-                    self._end_opening()            # silent skip, no on-screen tell
-                elif self._opening_phase == "stall":
-                    self._opening_restart()         # tap: the engine catches
-                elif self._opening_phase == "dead":
-                    self.audio.play("bump", 0.3)    # it just turns over
+            # A passive cutscene: only ESC skips it (silent, no on-screen
+            # tell). The stalls coast and the engine catches on their own
+            # timer in _tick_opening -- no key-press is asked of the player.
+            if ev.type == pygame.KEYDOWN and ev.key == pygame.K_ESCAPE:
+                self._end_opening()
             return
         # THRESHOLD: during the closure sequence, only allow advancing
         # the dialog. Everything else (movement, interaction, save,

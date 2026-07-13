@@ -1880,6 +1880,27 @@ def main():
     check(getattr(_ldm("lodge"), "door_style", "") == "wood",
           "mine: surface doors stay framed wood")
 
+    # --- 19c. The intro is CULT-FREE, and the welcome sign carries the
+    # town's mundane corn pride (2026-07 intro rework; NARRATIVE §1, TODO
+    # #11). The PI arrives knowing none of the cult, so the opening drive
+    # cards and the bedroom case notebook must never say "found religion".
+    # The old-timey BRIMLEY welcome board (intro drive-in + in-game) carries
+    # the boast + the founding year.
+    _root = os.path.join(os.path.dirname(__file__), "..")
+
+    def _srclow(*parts):
+        with open(os.path.join(_root, *parts), encoding="utf-8") as fh:
+            return fh.read().lower()
+    _cuts = _srclow("ui", "cutscenes.py")
+    _lodge_src = _srclow("scenes", "lodge.py")
+    check("found religion" not in _cuts and "found religion" not in _lodge_src,
+          "intro: no 'found religion' in the drive cards or bedroom notebook")
+    _props = _srclow("rendering", "props.py")
+    check("northernmost corn" in _cuts and "1894" in _cuts,
+          "intro sign: the drive-in welcome board carries the corn boast + EST. 1894")
+    check("northernmost corn" in _props and "1894" in _props,
+          "welcome sign: the in-game board carries the corn boast + EST. 1894")
+
     # --- 20. Cultists use dynamic AI, not preset coordinates (DESIGN.md §4) -
     # Pure-roam SCOUT + cover-aware pursuit. Guard the two canon facts: no
     # roaming cultist carries a baked patrol route, and the nav routes a

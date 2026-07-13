@@ -170,10 +170,12 @@ def _draw_town_sign_solid(surf, cam, deco):
         pygame.draw.polygon(surf, _shade(post_col, 0.7),
                             [b[1], b[2], t[2], t[1]])
         pygame.draw.polygon(surf, post_lit, [t[0], t[1], t[2], t[3]])
-    # Board: a thin plank box at z = POST_H * 0.55 .. * 0.85
-    BOARD_Z0 = POST_H * 0.55
-    BOARD_Z1 = POST_H * 0.95
-    BOARD_W = 14 * s
+    # Board: a thin plank box. The BRIMLEY welcome board is bigger and
+    # carries the town's civic boast; directional signs stay compact.
+    welcome = (text == "BRIMLEY")
+    BOARD_Z0 = POST_H * (0.38 if welcome else 0.55)
+    BOARD_Z1 = POST_H * (1.00 if welcome else 0.95)
+    BOARD_W = (22 if welcome else 14) * s
     BOARD_DEPTH = 1.0 * s
     by = wy - POST_T / 2 - BOARD_DEPTH * 0.6     # nailed to the FRONT of posts
     bb = (cam.project(wx - BOARD_W, by - BOARD_DEPTH / 2, BOARD_Z0),
@@ -203,13 +205,31 @@ def _draw_town_sign_solid(surf, cam, deco):
     # a small surface and blit centered on the projected board front centre
     # (the board is mostly facing the camera under pitch 55, so this reads).
     try:
-        font_h = max(7, int(7 * s * cam.scale))
-        font = pygame.font.SysFont(None, font_h, bold=True)
-        txt = font.render(text, True, (28, 18, 8))
         tcx = int((bb[0][0] + bb[1][0]) / 2)
-        tcy = int((bb[0][1] + bt[1][1]) / 2)
-        surf.blit(txt, (tcx - txt.get_width() // 2,
-                        tcy - txt.get_height() // 2))
+        top_y = (bt[0][1] + bt[1][1]) / 2
+        bot_y = (bb[0][1] + bb[1][1]) / 2
+        span = max(1.0, bot_y - top_y)
+        if welcome:
+            # Three stacked lines: the name, the corn boast, the founding
+            # year -- an old-timey painted welcome board (TODO #11; the
+            # corn pride is a mundane human feat, never the door's doing).
+            big = pygame.font.SysFont(None, max(9, int(9 * s * cam.scale)),
+                                      bold=True)
+            sm = pygame.font.SysFont(None, max(6, int(6 * s * cam.scale)),
+                                     bold=True)
+            for img, fr in ((big.render("BRIMLEY", True, (30, 20, 8)), 0.24),
+                            (sm.render("NORTHERNMOST CORN", True,
+                                       (44, 32, 16)), 0.55),
+                            (sm.render("EST. 1894", True, (44, 32, 16)), 0.80)):
+                yy = int(top_y + span * fr)
+                surf.blit(img, (tcx - img.get_width() // 2,
+                                yy - img.get_height() // 2))
+        else:
+            font = pygame.font.SysFont(None, max(7, int(7 * s * cam.scale)),
+                                       bold=True)
+            txt = font.render(text, True, (28, 18, 8))
+            surf.blit(txt, (tcx - txt.get_width() // 2,
+                            int((top_y + bot_y) / 2) - txt.get_height() // 2))
     except Exception:
         pass
 
