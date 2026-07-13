@@ -554,10 +554,13 @@ EVIDENCE_FLOOR_DEFAULT = 0.10  # per-evidence floor weight if none recorded
 KING_GATE_EVIDENCE = 3
 REINFORCE_COUNT = 2            # cultists per wave
 REINFORCE_COOLDOWN = 8.0      # seconds between waves (pulses, never floods)
-# A small notebook-scribble toast flashes in a corner when a new evidence beat
-# is logged -- the PI jotting it down. Diegetic "you wrote it down (and that's
-# what doomed you)" feedback, paired with the floor seared a notch higher.
-NOTEBOOK_TOAST_DUR = 1.4
+# The notebook-scribble toast: the corner card the PI scribbles a beat onto
+# when ANYTHING is written to the case book (a clue or a note). Diegetic "you
+# wrote it down" feedback -- and now the ONLY per-write feedback, since the
+# world no longer narrates a conclusion at the player on every pickup. It
+# names the beat it recorded, so the player knows to go read it. Long enough
+# to actually read the title.
+NOTEBOOK_TOAST_DUR = 2.8
 
 
 # ~80% combined-darkness cap. The two full-screen black washes that

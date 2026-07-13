@@ -337,7 +337,7 @@ class RotMixin:
             ]})
             self.save.set_arg("notes", notes)
             if hasattr(self, "_flash_notebook"):
-                self._flash_notebook()
+                self._flash_notebook("the_moths")
 
     # ---- World rot -------------------------------------------------
     def _rot_stage(self):

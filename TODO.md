@@ -296,10 +296,10 @@ rot-people layer was cut, TODO #22c); he stays an ordinary local.
 
 ### 13. **[Fable]** PI theory ladder — the notebook thinks  *(LANDED 2026-07; was GAME_CHANGES §20)*
 
-**DONE.** The case notebook carries two derived, first-person surfaces pinned
-above the clue list (`ui/notebook_ui.py`; `Game._working_theory` /
-`_case_timeline` in `systems/narrative_mixin.py`, guarded by `tests/flow.py`
-§24d):
+**DONE.** The case book carries two derived, first-person surfaces pinned
+above the clue list (`ui/journal_ui.py`, the merged Casebook's Case tab;
+`Game._working_theory` / `_case_timeline` in `systems/narrative_mixin.py`,
+guarded by `tests/flow.py` §24d):
 - **Working Theory** — a **set-aware** synthesis composed from WHICH clues are
   held, in any order (not a count tier): the read of Mara (taken → willing, the
   pivot needs the dig), the **bear-gated** son thread, the trap ("how do I get
@@ -329,6 +329,38 @@ actually meeting the cult (the grab / their testimony), not the evidence count,
 so the notebook never gets ahead of what he has met. First person throughout
 (`_PI_WEATHER` too; §23/§24c green). *(Open polish: a scrollable card if the
 theory outgrows one page; interior-beat tiering, parked from #22c.)*
+
+### 13b. **[Fable]** Interior voice — quiet the routine reactions  *(maintainer call 2026-07; the Casebook merge landed the structure, this is the copy pass)*
+
+**Structure LANDED (2026-07 Casebook merge, `ui/journal_ui.py`):** Inventory
+(I) + Case Notebook (N) are ONE tabbed book now (Case | Tools | Papers), and
+the Case tab opens on the **Working Theory pinned first**, so the notebook
+READS as an evolving theory rather than a flat pile of reactions. Every
+case-book write fires the (now NAMED + enlarged) corner scribble toast, the
+one reliable per-write tell. **Still open (the maintainer's actual grievance:
+"every interaction does something and never leaves the player thinking"):**
+the on-screen PI narrator captions still fire on nearly every world-prop
+examine. The census (grouped) for the copy pass:
+- **Cut candidates (ROUTINE-REACTION, ~30 sites)** — prop examines that
+  editorialize a conclusion: the lodge register/ledger recaps, the well /
+  news-rack / payphone / cellar-key monologues, headstone + candle
+  re-examines, `barrow_tools` / `scarecrow` / `backwoods_note` / `worn_stone`
+  / `bell_tower` / `the_burning` / `the_fall` / `threshing_floor` /
+  `works_cistern_seen` / `the_doorframe` flavor `_evidence` (these write
+  NOTHING to the book — caption only). Trim to a terse factual line (state
+  the thing, cut the PI's spelled-out conclusion) or silence, so the player
+  draws the inference. **The revisit-nudges** (`_REVISIT_NUDGES`, the
+  "I should go back and ask him" appends) are the clearest "the game does the
+  thinking for you" — decide with the maintainer whether they go.
+- **KEEP (not reactions-to-random-things):** the five CANONICAL_EVIDENCE
+  beats, the descent-voice arc (`_DESCENT_VOICE`), the dream, the Mask
+  temptation, Mara's calling-out, the fold notes, the threshold recognition,
+  and the deliberate atmospheric one-shots that ARE the dread (the frozen
+  news rack, the payphone with your own voice, the empty church). Cutting
+  these would hurt the game.
+- Each cut must keep the flow.py guards green (many assert on these
+  captions/notes — §16, §17b/c/d, §24) and update the ones whose behavior
+  legitimately changes.
 
 ### 14. **[Opus]** The Works as a MINE — side-dug rooms, not hallways  *(was GAME_CHANGES §21)*
 
@@ -715,9 +747,13 @@ is gone, his witness account is photo-earned.)*
   also "fires it in the way you're facing."
 - Descent interior voice wobbles POV (first-person notes vs second-person
   on-screen beats, `systems/game.py`).
-- Notebook headers from slugs (`ui/notebook_ui.py`): "Maras Room", "Chalk
+- ~~Notebook headers from slugs (`ui/notebook_ui.py`): "Maras Room", "Chalk
   Deep", "Descent Mask", "Showed The Clerk" — dev slugs where the case file
-  should read like the PI typed it.
+  should read like the PI typed it.~~ **MOSTLY DONE (2026-07 Casebook merge):**
+  the slug→title map moved to `ui/case_titles.py` (`humanise`, shared by the
+  book and the scribble toast) and was expanded to cover the interior beats;
+  any unmapped slug still falls back to Title Case, so add authored titles
+  there as new beats land.
 - HUD fall-through labels: "Dark" (the Hive!), "Depths Antechamber", "Effigy
   Grove", "Threshold" (`scenes/base.py` fallback), plus `"lodge": "the Inn"`
   against "Arcadia Lodge" everywhere else.

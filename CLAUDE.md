@@ -249,8 +249,26 @@ it renders the procedural sprites to a labelled PNG strip.
     snapshots it like any arg (NARRATIVE §5 / DESIGN.md §1; flow §32).
   - `items.py` — `ITEM_DEFS`, `Inventory`.
   - `threat.py` — `proximity_tier` + `PROX_TIER_*` helpers.
-- `ui/` — dialog, inventory, notebook, fonts, text input. **Dialog is
-  three channels now (2026-07):** `dialog.py`'s modal band survives ONLY
+- `ui/` — dialog, the Casebook, fonts, text input. **The Casebook is ONE
+  book now (2026-07 merge):** the old split Inventory (I) + Case Notebook
+  (N) were fused into `ui/journal_ui.py` (`JournalUI`), a single tabbed book
+  — **Case** (the working theory + timeline + clues + interior notes),
+  **Tools** (axe, gun, keys, flashlight), **Papers** (Mara's journal +
+  letter, the records, the cult testimony, the Mask). Both `I` and `N` open
+  the SAME book (N lands on Case, I on Tools; pressing the ribbon you're on
+  closes it); left/right turns the tab, up/down walks the index, Enter reads
+  or takes in hand. `game.inv_ui` / `game.notebook_ui` are kept as **aliases**
+  onto the one `game.journal_ui`, so old call sites (draw gating, tests)
+  still resolve. Note titles for save slugs live in `ui/case_titles.py`
+  (`humanise`), shared by the book AND the corner scribble toast. The dead
+  combat-era "Consumables" tab is gone. **Writing to the case book fires the
+  corner scribble toast** (`_flash_notebook(name)` → `_draw_notebook_toast`
+  in `render_mixin`): a small leaf the PI scribbles a beat onto, now NAMED
+  (the humanised title beside it) so the player knows what was recorded —
+  the one reliable per-write tell. EVERY note/evidence write flashes it now
+  (the module `_log_note`, `the_ledger`/`the_preacher`, and the revisit
+  notes used to file silently — a bug). **Dialog is
+  three channels:** `dialog.py`'s modal band survives ONLY
   for choices and scripted beats with an
   `on_complete`; a named NPC line through the interact path floats over
   the speaker's head (`float_speech.py`); narrator/world-object text
@@ -541,7 +559,7 @@ it renders the procedural sprites to a labelled PNG strip.
 
 - **Trigger (two-stage since the §15 rework):** reading `mom_notebook`
   (Mara's journal) a third time sets `flashback_pending`
-  (`ui/inventory_ui.py`); `Game._tick_flashback` polls it, sets
+  (`ui/journal_ui.py`); `Game._tick_flashback` polls it, sets
   `flashback_seen`, and fires a ~0.5s MEMORY FLASH (two flickers of the
   door, no swarm; `FLASHBACK_FLASH_DUR`). The FULL ~7s wordless dream
   (`_draw_flashback`, mode "rite") plays at the GROVE RITE via
@@ -563,7 +581,7 @@ it renders the procedural sprites to a labelled PNG strip.
   of that single dream — it is **not** recurring. The case note
   (`Game._log_dream_entry`) must read as that half-dismissed memory.
 - **"He knows you":** `_log_dream_entry` writes the dream to save arg
-  **`notes`** (shown by `NotebookUI` after the clues). It must NOT go in
+  **`notes`** (shown on the Casebook's Case tab after the clues). It must NOT go in
   `evidence` — `_evidence_count` is `len(save.arg("evidence"))` and drives the
   King-gate + world rot; only the five `CANONICAL_EVIDENCE` beats of Mara's
   trail (`maras_receipt`/`maras_record`/`maras_journal`/`maras_dig`/`maras_room`;

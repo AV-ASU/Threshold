@@ -84,7 +84,7 @@ class NarrativeMixin:
         ])
 
     def _tick_flashback(self, dt):
-        """Poll the flashback_pending save flag (set by inventory_ui
+        """Poll the flashback_pending save flag (set by journal_ui
         when the player reads page 3 of Mom's notebook) -> the SHORT
         memory flash. (The grove rite starts the FULL dream directly
         via begin_rite_dream.) Once started, walk the stills phase by
@@ -201,7 +201,7 @@ class NarrativeMixin:
         ]})
         self.save.set_arg("notes", notes)
         if hasattr(self, "_flash_notebook"):
-            self._flash_notebook()
+            self._flash_notebook("the_dream")
 
     def _current_lead(self):
         """The single soft "where the thread points" line the notebook
@@ -421,7 +421,7 @@ class NarrativeMixin:
         notes.append({"name": name, "lines": list(lines)})
         self.save.set_arg("notes", notes)
         if hasattr(self, "_flash_notebook"):
-            self._flash_notebook()
+            self._flash_notebook(name)
 
     def _log_case_entry(self):
         """Seed the case notebook with the PI's intake the moment a run
@@ -486,7 +486,7 @@ class NarrativeMixin:
             notes.append({"name": name, "lines": list(spec["note"])})
             self.save.set_arg("notes", notes)
             if hasattr(self, "_flash_notebook"):
-                self._flash_notebook()
+                self._flash_notebook(name)
         if not note_only:
             self.dialog.show(spec["beat"], speaker="", voice="blip_soft",
                              portrait="narrator")
@@ -534,7 +534,7 @@ class NarrativeMixin:
             ]})
             self.save.set_arg("notes", notes)
             if hasattr(self, "_flash_notebook"):
-                self._flash_notebook()
+                self._flash_notebook("the_fold_told")
 
         if not reflect:
             return

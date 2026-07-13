@@ -1624,12 +1624,11 @@ class RenderMixin:
         # modal box for the same reason as the floats.
         self.narration.draw(self.screen)
         self.dialog.draw(self.screen)
-        self.inv_ui.draw(self.screen, self.player)
-        self.notebook_ui.draw(self.screen)
+        self.journal_ui.draw(self.screen, self.player)
         # Text-input modal (LOGIN: terminal etc.) drawn over inventory so
         # it always wins focus.
         self.text_input.draw(self.screen)
-        if self.notice_text:
+        if self.notice_text and not self.journal_ui.open:
             self._draw_notice()
         if self.state == "transition":
             t = self.transition_t / 0.85
@@ -1905,54 +1904,74 @@ class RenderMixin:
                              (px0, py0 + ph2 + 4, int(total * frac), 3))
 
     def _draw_notebook_toast(self):
-        """A small page in the upper-left that the PI scribbles a beat onto,
-        then it fades -- the diegetic 'added to the notebook' tell, fired by
-        _flash_notebook when _evidence logs a new entry."""
+        """The corner card the PI scribbles a beat onto, then it fades -- the
+        diegetic 'written to the case book' tell, fired by _flash_notebook on
+        EVERY clue/note write. It NAMES the beat beside the scribble, so the
+        player knows what got recorded and can open the book (I / N) to read
+        it. Now the only per-write feedback: the world no longer narrates a
+        conclusion at the player on every pickup, so this is how you know the
+        PI set something down."""
         tt = getattr(self, "_notebook_toast_t", 0.0)
         if tt <= 0:
             return
         frac = max(0.0, min(1.0, (NOTEBOOK_TOAST_DUR - tt) / NOTEBOOK_TOAST_DUR))
-        if frac < 0.15:
-            a = frac / 0.15
-        elif frac > 0.75:
-            a = max(0.0, (1.0 - frac) / 0.25)
+        if frac < 0.10:
+            a = frac / 0.10
+        elif frac > 0.84:
+            a = max(0.0, (1.0 - frac) / 0.16)
         else:
             a = 1.0
         if a <= 0.0:
             return
-        W, H = 34, 42
-        surf = pygame.Surface((W, H), pygame.SRCALPHA)
+        ox, oy = 16, 16
+        # --- the scribbled leaf ---
+        W, H = 46, 56
+        page = pygame.Surface((W, H), pygame.SRCALPHA)
 
         def C(r, g, b, al=255):
             return (r, g, b, int(al * a))
-        # Page + edge + a dog-eared top-right corner.
-        pygame.draw.rect(surf, C(224, 218, 202), (2, 3, W - 6, H - 6))
-        pygame.draw.rect(surf, C(150, 142, 120), (2, 3, W - 6, H - 6), 1)
-        pygame.draw.polygon(surf, C(198, 190, 172),
-                            [(W - 8, 3), (W - 8, 9), (W - 4, 3)])
-        # Ink lines write on left-to-right over frac ~0.12..0.78.
-        write = max(0.0, min(1.0, (frac - 0.12) / 0.66))
-        lx0, lx1 = 6, W - 9
+        pygame.draw.rect(page, C(226, 220, 204), (2, 3, W - 6, H - 6))
+        pygame.draw.rect(page, C(150, 142, 120), (2, 3, W - 6, H - 6), 1)
+        pygame.draw.polygon(page, C(198, 190, 172),
+                            [(W - 10, 3), (W - 10, 11), (W - 4, 3)])
+        # Ink lines write left-to-right over the toast's first stretch.
+        write = max(0.0, min(1.0, (frac - 0.06) / 0.5))
+        lx0, lx1 = 7, W - 10
         head = None
-        for i in range(4):
-            lp = max(0.0, min(1.0, write * 4 - i))
+        for i in range(5):
+            lp = max(0.0, min(1.0, write * 5 - i))
             if lp <= 0:
                 break
-            ly = 12 + i * 7
+            ly = 14 + i * 8
             x_end = lx0 + int((lx1 - lx0) * lp)
             pts, x = [], lx0
             while x <= x_end:
                 pts.append((x, ly + (1 if (x // 3) % 2 == 0 else 0)))
                 x += 3
             if len(pts) >= 2:
-                pygame.draw.lines(surf, C(38, 32, 42), False, pts, 1)
+                pygame.draw.lines(page, C(38, 32, 42), False, pts, 1)
             head = (x_end, ly)
-        # Pen nib at the writing head while it's still scribbling.
-        if 0.12 < frac < 0.8 and head:
+        if 0.06 < frac < 0.58 and head:
             px, py = head
-            pygame.draw.polygon(surf, C(26, 24, 32),
-                                [(px, py - 1), (px + 3, py - 6), (px + 4, py - 1)])
-        self.screen.blit(surf, (14, 14))
+            pygame.draw.polygon(page, C(26, 24, 32),
+                                [(px, py - 1), (px + 3, py - 7), (px + 4, py - 1)])
+        self.screen.blit(page, (ox, oy))
+        # --- the beat's name beside the leaf, over a soft legibility wash ---
+        from ui.case_titles import humanise
+        name = getattr(self, "_notebook_toast_name", None)
+        title_txt = humanise(name) if name else "Case book"
+        lbl = self.fonts["serif_tiny"].render("Noted", True, (206, 178, 108))
+        ttl = self.fonts["serif_sm"].render(title_txt, True, (216, 210, 196))
+        tx = ox + W + 12
+        wash_w = max(lbl.get_width(), ttl.get_width()) + 18
+        wash_h = lbl.get_height() + ttl.get_height() + 14
+        wash = pygame.Surface((wash_w, wash_h), pygame.SRCALPHA)
+        wash.fill((8, 7, 12, int(150 * a)))
+        self.screen.blit(wash, (tx - 8, oy + 4))
+        lbl.set_alpha(int(255 * a))
+        ttl.set_alpha(int(255 * a))
+        self.screen.blit(lbl, (tx, oy + 8))
+        self.screen.blit(ttl, (tx, oy + 8 + lbl.get_height() + 2))
 
     def _draw_notice(self):
         s = self.fonts["serif"].render(self.notice_text, True, C_WHITE)

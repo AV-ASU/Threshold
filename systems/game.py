@@ -26,8 +26,9 @@ from ui.fonts import make_fonts
 from ui.dialog import DialogueBox
 from ui.float_speech import FloatSpeech
 from ui.narration import Narration
-from ui.inventory_ui import InventoryUI
-from ui.notebook_ui import NotebookUI
+from ui.journal_ui import (
+    JournalUI, CASE_TAB as JOURNAL_CASE_TAB, TOOLS_TAB as JOURNAL_TOOLS_TAB,
+)
 from ui.text_input import TextInputModal
 from systems.audio import Audio
 from systems.save import Save
@@ -113,9 +114,14 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         # Non-modal narration: narrator/world-object text as a lower-third
         # caption; the world keeps running while the PI reads.
         self.narration = Narration(self.audio, self.fonts)
-        self.inv_ui = InventoryUI(self.fonts, self.audio, self.save)
-        self.notebook_ui = NotebookUI(self.fonts, self.audio, self.save)
-        self.notebook_ui.game = self   # the soft lead line reads live state
+        # ONE book (I + N merged): the Casebook holds the case notes AND
+        # the carried tools/papers behind a tab ribbon. `inv_ui` and
+        # `notebook_ui` are kept as aliases onto it so the many existing
+        # call sites (draw gating, tests) resolve to the single object.
+        self.journal_ui = JournalUI(self.fonts, self.audio, self.save)
+        self.journal_ui.game = self    # the derived theory reads live state
+        self.inv_ui = self.journal_ui
+        self.notebook_ui = self.journal_ui
         # Text-input modal -- used by the old man's computer terminal
         # (LOGIN: prompt) and reusable for any future ARG hooks. While
         # active, the Game suspends play and routes key events here.
@@ -530,7 +536,8 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         # Carcosa furnace) then ENDS the run -- both return to title.
         self._death_kind = None
         self._death_t = 0.0
-        self._notebook_toast_t = 0.0   # evidence-scribble toast timer
+        self._notebook_toast_t = 0.0   # case-book scribble toast timer
+        self._notebook_toast_name = None   # the beat the scribble names
         # Opening wake state. When the bedroom_on_enter fires for
         # the first session it sets these to non-zero values; the
         # _tick_wake_muffle ticker then dampens the music channel
@@ -2897,10 +2904,13 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
             if self.notice_t <= 0:
                 self.notice_text = None
 
-    def _flash_notebook(self):
-        """Fire the corner notebook-scribble toast -- a new evidence beat was
-        just logged (the PI jotting it down)."""
+    def _flash_notebook(self, name=None):
+        """Fire the corner notebook-scribble toast -- something was just
+        written to the case book (a clue or a note), the PI jotting it down.
+        `name` is the beat's save slug; the toast titles the card with it so
+        the player knows what got recorded and can go read it in the book."""
         self._notebook_toast_t = NOTEBOOK_TOAST_DUR
+        self._notebook_toast_name = name
 
     def show_notice(self, text, duration=2.5):
         self.notice_text = text
@@ -2917,8 +2927,8 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         ("Use weapon",          "Left-click"),
         ("Switch weapon",       "Equip it in the Inventory"),
         ("Flashlight",          "F  (in the dark)"),
-        ("Inventory",           "I"),
-        ("Notebook",            "N"),
+        ("Casebook (tools)",    "I"),
+        ("Casebook (notes)",    "N"),
         ("Pause / Back",        "Esc"),
         ("Fullscreen",          "F11"),
         ("Save",                "Sleep at the cot"),
@@ -3016,38 +3026,28 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
             # Modal owns all input while active. It swallows the event.
             self.text_input.handle_event(ev)
             return
-        if self.inv_ui.open:
+        if self.journal_ui.open:
+            # One book: left/right turns the tab (Case | Tools | Papers),
+            # up/down walks the index, Enter reads or takes in hand. I jumps
+            # to the Tools ribbon, N to the Case ribbon (pressing the ribbon
+            # you're already on closes the book), Esc always closes.
             if ev.type == pygame.KEYDOWN:
-                if ev.key in (pygame.K_i, pygame.K_ESCAPE):
-                    self.inv_ui.toggle()
-                elif ev.key == pygame.K_n:
-                    # Hot-swap from inventory to notebook so the
-                    # player doesn't have to close one to open
-                    # the other.
-                    self.inv_ui.toggle()
-                    self.notebook_ui.toggle()
-                elif ev.key in (pygame.K_UP, pygame.K_w):
-                    self.inv_ui.move(-1, self.player.inventory)
-                elif ev.key in (pygame.K_DOWN, pygame.K_s):
-                    self.inv_ui.move(1, self.player.inventory)
-                elif ev.key in (pygame.K_LEFT, pygame.K_a):
-                    self.inv_ui.change_tab(-1, self.player.inventory)
-                elif ev.key in (pygame.K_RIGHT, pygame.K_d):
-                    self.inv_ui.change_tab(1, self.player.inventory)
-                elif ev.key in (pygame.K_RETURN, pygame.K_e, pygame.K_SPACE):
-                    self.inv_ui.use_selected(self.player)
-            return
-        if self.notebook_ui.open:
-            if ev.type == pygame.KEYDOWN:
-                if ev.key in (pygame.K_n, pygame.K_ESCAPE):
-                    self.notebook_ui.toggle()
+                if ev.key == pygame.K_ESCAPE:
+                    self.journal_ui.toggle()
                 elif ev.key == pygame.K_i:
-                    self.notebook_ui.toggle()
-                    self.inv_ui.toggle()
+                    self.journal_ui.open_to(JOURNAL_TOOLS_TAB)
+                elif ev.key == pygame.K_n:
+                    self.journal_ui.open_to(JOURNAL_CASE_TAB)
                 elif ev.key in (pygame.K_UP, pygame.K_w):
-                    self.notebook_ui.move(-1)
+                    self.journal_ui.move(-1)
                 elif ev.key in (pygame.K_DOWN, pygame.K_s):
-                    self.notebook_ui.move(1)
+                    self.journal_ui.move(1)
+                elif ev.key in (pygame.K_LEFT, pygame.K_a):
+                    self.journal_ui.change_tab(-1)
+                elif ev.key in (pygame.K_RIGHT, pygame.K_d):
+                    self.journal_ui.change_tab(1)
+                elif ev.key in (pygame.K_RETURN, pygame.K_e, pygame.K_SPACE):
+                    self.journal_ui.use_selected(self.player)
             return
         if self.state in ("playing", "transition"):
             if ev.type == pygame.KEYDOWN:
@@ -3088,9 +3088,9 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
                 if ev.key in (pygame.K_e, pygame.K_SPACE, pygame.K_RETURN):
                     self.try_interact()
                 elif ev.key == pygame.K_i:
-                    self.inv_ui.toggle()
+                    self.journal_ui.open_to(JOURNAL_TOOLS_TAB)
                 elif ev.key == pygame.K_n:
-                    self.notebook_ui.toggle()
+                    self.journal_ui.open_to(JOURNAL_CASE_TAB)
                 elif ev.key == pygame.K_f:
                     self._toggle_flashlight()
                 elif ev.key == pygame.K_F5:
