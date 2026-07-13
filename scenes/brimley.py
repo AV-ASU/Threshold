@@ -873,7 +873,7 @@ def build_brimley():
         # exactly the kind of thing he'd clock first (he also SAID this
         # would happen: folks who ask questions go quiet).
         beats=[("beat_garrick_quiet",
-                lambda g: g.save.flag("preacher_doomed"), [
+                lambda g: g.save.flag("preacher_body_seen"), [
             "The reverend's gone quiet. Any other week you'd hear him "
             "clear from here, worked up over something or other.",
             "[c=dim]Nothing out of him for days now. Man spends his life "

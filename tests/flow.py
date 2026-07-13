@@ -1315,13 +1315,19 @@ def main():
     check(_h1 and "Hold a moment" in _h1[0][1] and _h2 is None,
           "ask: Sable gets one last word the first time you try to leave")
 
-    # (10) The reproach question opens only once the PI has learned the roads
-    # fold (a local told him / he crossed one), and it never confesses a plot.
+    # (10) The reproach question opens only once the PI has BOTH heard a
+    # local name the fold (the_fold_told note) AND crossed one himself
+    # (crossed_a_fold, C13) -- so his first-person "it set me back down"
+    # can never be a lie -- and it never confesses a plot.
     q_fold = next(ex for ex in SABLE_CONVO["exchanges"] if ex["key"] == "the_fold")
     gr = new_game()
     check(not q_fold["avail"](gr),
           "ask: the folded-roads reproach is hidden before the PI learns it")
     gr.save.set_arg("notes", [{"name": "the_fold_told", "lines": ["x"]}])
+    check(not q_fold["avail"](gr),
+          "ask: hearing of the fold without crossing one keeps the reproach "
+          "hidden (C13)")
+    gr.save.set_flag("crossed_a_fold", True)
     check(q_fold["avail"](gr),
           "ask: learning the roads loop opens the reproach to Sable")
 
@@ -1473,6 +1479,7 @@ def main():
           "vane: the fold note never hijacks the conversation float chain")
     _qf2 = next(ex for ex in SABLE_CONVO["exchanges"]
                 if ex["key"] == "the_fold")
+    gvf.save.set_flag("crossed_a_fold", True)   # C13: the PI must have crossed one himself
     check(_qf2["avail"](gvf),
           "vane: his fold account opens the reproach to Sable")
     gvf.float_speech.active = False
@@ -1675,6 +1682,7 @@ def main():
                   for n in gch.scene.npcs),
           "chorus: the cut newcomer woman never spawns in brimley")
     gch.save.set_flag("preacher_doomed", True)
+    gch.save.set_flag("preacher_body_seen", True)   # C10: Garrick's beat gates on the body found
     _gar = next(n for n in gch.scene.npcs if n.name == "Garrick")
     gch.player.x, gch.player.y = _gar.x + 20, _gar.y
     ready(gch)
@@ -2179,6 +2187,7 @@ def main():
     _ev0 = evidence_count(gb)
     if _ga is not None:
         gb.save.set_flag("preacher_doomed", True)
+        gb.save.set_flag("preacher_body_seen", True)   # C10: beat gates on the body found
         _ga.dialogue_fn(gb, _ga)
         check(any("gone quiet" in p for p in shown),
               "react: Garrick clocks the pulpit going silent (murder beat)")

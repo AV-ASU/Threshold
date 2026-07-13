@@ -621,9 +621,9 @@ def build_clerk_room():
     sc.hide_spots = [
         (1 * TILE + 24, 6 * TILE + 24, "under"),   # the bed's walkable lip
     ]
-    # [E] cues for the robe closet (the tell) and the bare dresser.
+    # [E] cue for the robe closet (the tell). The dresser is bare and has
+    # no handler in clerk_room_interact, so it gets no [E] prompt (C14a).
     sc.add_interactable(sc._closet_pos[0], sc._closet_pos[1], 40)
-    sc.add_interactable(sc._dresser_pos[0], sc._dresser_pos[1], 40)
 
     # Sized darkwood furniture: a 2x2 bed, a tall closet (the Clerk's robe
     # -> _closet_pos), a low dresser (bare -> _dresser_pos).
@@ -662,7 +662,7 @@ def clerk_room_interact(game):
     he never once put it on. The never-worn detail is the quiet fact a
     player can re-read later. A one-shot flavor clue, NOT counted evidence
     ('clerk_robe' is not in CANONICAL_EVIDENCE, so it narrates but never
-    moves the King-gate). DRESSER (E): bare."""
+    moves the King-gate)."""
     sc = game.scene
     px, py = game.player.x, game.player.y
     cx, cy = sc._closet_pos

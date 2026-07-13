@@ -376,6 +376,8 @@ def build_barn():
         # now (no secret paths).
         if (abs(px - hatch_x) < 36 and abs(py - hatch_y) < 36):
             game.audio.play("door_locked", 0.6)
+            game.show_notice("Nailed fast from the underside. It does "
+                             "not give.")
     sc.on_interact_fn = _barn_interact
     return sc
 

@@ -546,10 +546,17 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         # (_folds is also rebuilt every load by _build_fold_cache; cleared
         # here too so the title/opening state carries nothing stale.)
         self._sheriff_intro_t = 0.0    # hunting-Sheriff intro hold (_tick_sheriff)
+        self._sheriff_announced = False  # one-shot hollow-Sheriff intro notice/sting
         self._gaze_bind_t = 0.0        # cultist gaze-bind dwell (_tick_gaze_bind)
         self._sprint_step_t = 0.0      # sprint footstep cadence (_tick_sprint)
         self._rite_cues = set()        # one-shot rite cue latches (ending)
         self._folds = []               # seen-fold peek cache (_build_fold_cache)
+        # Mara calling-out staging (scenes/well.py _call_out/_sign_update).
+        # Cleared per run so a death/quit mid-staging can't leave a stale
+        # stage that makes _call_out early-return on the next run's first
+        # works_sign entry (the trigger latches 'fired' before on_update
+        # can clear it) and silently eat the calling-out.
+        self._mara_stage = None
 
     # ---- Scene management ----
     def cross_fold(self, target_scene, spawn_id="default", dest_pos=None):

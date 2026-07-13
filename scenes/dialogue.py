@@ -175,11 +175,13 @@ def _ready_for_the_desk(game, name):
     """When the PI crosses the readiness line (3 canonical beats) on the
     surface, still without the Invitation, nudge him back to Sable -- so the
     act break is signposted, not a silent 'walk back to the desk'. Fires
-    once, only if Sable has been met and has not yet handed it over. (Once
-    the PI is underground he already holds it, so this cannot fire there.)"""
+    once, as long as Sable has not yet handed it over. (Once the PI is
+    underground he already holds it, so this cannot fire there.) C16: the
+    pointer no longer requires having greeted Sable first -- the PI checked
+    in at that desk on arrival, so the nudge reads for any player who
+    crosses the line without the Invitation.)"""
     if (name not in CANONICAL_EVIDENCE
             or game._evidence_count() != 3
-            or not game.save.flag("sable_greeted")
             or game.save.flag("rite_envelope_given")
             or game.player.inventory.has("rite_envelope")
             or game.save.flag("nudged_ready_for_desk")):
@@ -1350,15 +1352,17 @@ SABLE_CONVO = {
                         "it be too, in time."),
             ],
         },
-        # The reproach: once the PI has learned the roads loop back on
-        # themselves (a local told him, filing the_fold_told note), he can put it to Sable -- who deflects by pointing
+        # The reproach: the PI puts the looping road to Sable once he has
+        # both HEARD a local name it (the_fold_told note) AND actually
+        # walked it himself (crossed_a_fold, C13) -- so the first-person
+        # "it set me back down" is never a lie. Sable deflects by pointing
         # out he DID say it, plainly, and the PI simply heard hospitality.
         {
             "key": "the_fold",
             "label": "The road out brought me back.",
             "q": "I walked the road out of town. Followed it two hours, due "
                  "west. It set me back down past this window.",
-            "avail": lambda g: any(
+            "avail": lambda g: g.save.flag("crossed_a_fold") and any(
                 isinstance(e, dict) and e.get("name") == "the_fold_told"
                 for e in (g.save.arg("notes", []) or [])),
             "beats": [

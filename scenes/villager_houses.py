@@ -11,54 +11,6 @@ from .dialogue import (
 )
 
 
-def _open_login_terminal(game, npc):
-    """Invisible-NPC dialogue handler bolted onto the computer's tile.
-    Pressing E next to the computer opens the LOGIN: text-input modal.
-    The modal accepts the User-D### credential. Anything else returns
-    ACCESS DENIED. The credential is stored
-    lowercase ('user-d###') so the case-insensitive compare just lowers
-    the input."""
-    def _on_submit(s):
-        # Round-9: credential compare is digit-only. The Badge in the
-        # player's pocket reads as "D-234"; the saved arg is "d-234".
-        # Accept anything whose digit-run matches the saved digits, so
-        # "D-234", "d-234", "234", and the legacy "user-d234" form all
-        # validate.
-        import re
-        saved = game.save.arg("user_code") or ""
-        attempt = (s or "").strip()
-        m = re.search(r"\d+", saved)
-        saved_digits = m.group() if m else None
-        m = re.search(r"\d+", attempt)
-        attempt_digits = m.group() if m else None
-        ok = bool(saved_digits) and saved_digits == attempt_digits
-        if ok:
-            if not game.save.flag("terminal_unlocked"):
-                game.save.set_flag("terminal_unlocked", True)
-            game.audio.play("arg_chime", 0.7)
-            game.show_notice("ACCESS GRANTED.")
-            # A bulletin loads in dialog on every grant so the player
-            # can re-read it from the terminal at any time.
-            game.dialog.show([
-                "[c=dim](The terminal flickers. A bulletin loads.)[/c]",
-                "[c=dim]The text is blank.[/c]",
-                "[c=dim]error: Connection Terminated...[/c]",
-            ], speaker="", voice="blip_soft", portrait="narrator")
-        else:
-            game.audio.play("door_locked", 0.7)
-            game.show_notice("ACCESS DENIED.")
-    def _on_cancel():
-        game.audio.play("menu_close", 0.5)
-    if hasattr(game, "text_input") and game.text_input is not None:
-        game.audio.play("menu_open", 0.6)
-        game.text_input.open(prompt="LOGIN:",
-                             on_submit=_on_submit, on_cancel=_on_cancel)
-    else:
-        # Defensive fallback so the prompt isn't silent if the modal
-        # somehow hasn't been wired in yet.
-        game.show_notice("The terminal hums quietly.")
-
-
 def build_church():
     """THRESHOLD: the church and parsonage. A long nave with a partitioned
     back VESTRY reached through an interior doorway -- the dividing wall blocks
@@ -71,7 +23,7 @@ def build_church():
     objects = [
         "WWWWWWWWWW?WWWWW",   # 0  ? = graveyard gate (north, over the nave)
         "W.U...W........W",   # 1  U = stairs up the bell tower (in the vestry)
-        "W...C.W........W",   # 2  C = church-records terminal (placeholder)
+        "W...C.W........W",   # 2  C = legacy terminal marker (cut, blanked below)
         "W.....W........W",   # 3   vestry (cols 1-5) | nave (cols 7-14)
         "W.....W..O.....W",   # 4  O = preacher, out in the nave
         "W.....W........W",   # 5
@@ -82,10 +34,9 @@ def build_church():
         "W..............W",   # 10
         "WWWWWWWWmWWWWWWW",   # 11  m = exit south to the crossroads
     ]
-    # Replace the placeholder C with '.' so it doesn't draw as anything,
-    # and remember its tile -- the invisible interact NPC + the computer
-    # decoration both go there. (We can't put a marker into OBJECT_DEFS
-    # for "computer" without polluting the global table.)
+    # Replace the placeholder C (a legacy terminal marker; the church
+    # LOGIN terminal was cut, C5) with '.' so it renders as plain floor.
+    # Nothing stands on the tile now.
     rows = [list(r) for r in objects]
     comp_tx, comp_ty = 4, 2
     rows[comp_ty][comp_tx] = "."
@@ -130,23 +81,12 @@ def build_church():
     sc.add_furniture("chair", [(9, 2)], w=22, h=28)
     sc.add_furniture("bed", [(1, 4), (1, 5)], w=34, h=56)
 
-    # Computer: a beige CRT decoration plus an invisible solid NPC at the
-    # same tile so try_interact() picks it up and the [E] prompt shows.
-    comp_x = comp_tx * TILE + 16
-    comp_y = comp_ty * TILE + 16
-    sc.add_decoration(Decoration(comp_x, comp_y, "computer"))
-    sc.add_npc(NPC(comp_x, comp_y, "Terminal", "_invisible",
-                   voice="blip_soft", portrait="narrator",
-                   dialogue_fn=_open_login_terminal,
-                   movement="idle", solid=True, tag="computer"))
-
     sc.add_decoration(Decoration(13 * TILE + 16, 0 * TILE + 22, "candle"))
     sc.add_decoration(Decoration(8 * TILE + 16, 0 * TILE + 22, "candle"))
     # The Preacher's parsonage in rural hunting country: a mounted buck
     # + trophy walleye on the north wall (replacing the old banner and
     # stray photo), a cobweb in the vestry corner, and a kerosene lamp on
-    # the desk. The old computer is the cult's ancient church-records
-    # terminal -- the LOGIN: prompt is unchanged.
+    # the desk.
     sc.add_decoration(Decoration(11 * TILE + 16, 0 * TILE + 22, "buck_head",
                                  wall="N"))
     sc.add_decoration(Decoration(12 * TILE + 16, 0 * TILE + 24,
@@ -377,7 +317,8 @@ def build_abandoned_farmhouse():
 
     # Cult-chamber hatch: a sealed dead end, back in the rear room (the
     # blind spot). It once dropped into the old cult chamber (now removed);
-    # pressing E plays a locked sound (the notice line is unwired, TODO C14). Drawn as a cellar_hatch.
+    # pressing E plays a locked sound + a sealed-hatch notice (C14d). Drawn
+    # as a cellar_hatch.
     hatch_x = 8 * TILE + 16
     hatch_y = 3 * TILE + 16
     sc.add_decoration(Decoration(hatch_x, hatch_y, "cellar_hatch"))
@@ -393,6 +334,7 @@ def build_abandoned_farmhouse():
         if (abs(game.player.x - hatch_x) < 36
                 and abs(game.player.y - hatch_y) < 36):
             game.audio.play("door_close", 0.5)
+            game.show_notice("The hatch is sealed shut. It does not budge.")
     sc.on_interact_fn = _farmhouse_interact
 
     return sc
