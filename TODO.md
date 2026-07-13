@@ -661,9 +661,11 @@ was MOOT. Kept as a resolution log, not open work.
   (`scenes/hidden_folds.py`) are reachable via the ungated `sable_on_death`
   Invitation drop. Residual: on the intended path the gradual fill is never
   seen (an authored-for-an-unreachable-progression smell, not dead code).
-- **C4. RESOLVED.** The cellar-key pickup narration (`scenes/lodge_yard.py`
-  `_took`) dropped the phantom "a doorframe stands against the boards"
-  paragraph (the 'M' fold was cut); only the key-on-a-nail beat remains.
+- **C4. RESOLVED.** The cellar-key pickup dialog (`scenes/lodge_yard.py`
+  `_took`) was deleted outright (superseding the earlier trim that kept the
+  key-on-a-nail line): the cellar key is now a quiet walk-over pickup, the
+  "Picked up: Cellar Key" HUD notice + chime its only feedback. Maintainer
+  call: a key pickup should not give off dialog.
 - **C5. RESOLVED.** The church LOGIN terminal (`scenes/villager_houses.py`)
   was removed outright — the `_open_login_terminal` handler, the invisible
   interact NPC, and the CRT prop — killing the always-"ACCESS DENIED" ARG

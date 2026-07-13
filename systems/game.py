@@ -1886,7 +1886,9 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         # A narration caption with nothing else answering the press: E
         # skims it (finish the reveal, then next page). LAST on purpose:
         # the caption is ambient, and it must never gate the world -- a
-        # bell pull, a hide, a door all win the E over the text.
+        # bell pull, a hide, a door all win the E over the text. (Re-
+        # pressing an object that re-shows its OWN caption pages it
+        # instead of restarting; that is handled in Narration.begin.)
         if self.narration.advance_from_input():
             return
 
@@ -2685,6 +2687,11 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
             self.show_notice("The beam dies the moment it leaves the lens. "
                              "The dark here is not the kind light fixes.",
                              duration=2.6)
+        elif (self.flashlight_on and self.scene is not None
+                and self.scene.key not in DARK_SCENES):
+            # A lit room: the beam does nothing here (it only bites in the
+            # dark), so tell the player rather than click a dead switch.
+            self.show_notice("Bright enough here without it.", duration=1.8)
 
     # ---- Step ----
     def step(self, dt):
