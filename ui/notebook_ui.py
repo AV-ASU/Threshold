@@ -89,9 +89,13 @@ class NotebookUI:
         g = self.game
         if g is not None:
             if hasattr(g, "_working_theory"):
-                out.append(("working_theory", g._working_theory()))
+                wt = g._working_theory()
+                if wt:
+                    out.append(("working_theory", wt))
             if hasattr(g, "_case_timeline"):
-                out.append(("case_timeline", g._case_timeline()))
+                tl = g._case_timeline()
+                if tl:
+                    out.append(("case_timeline", tl))
         log = self.save.arg("evidence", [])
         notes = self.save.arg("notes", [])
         # Clues first (canonical evidence), then personal notes (the
@@ -133,18 +137,6 @@ class NotebookUI:
         entries = self._entries()
         lx = 84
         ly = 140
-        # The soft lead (TODO #5): one italic PI-voiced line, where the
-        # thread points right now. Derived live from run state
-        # (Game._current_lead) -- never a checklist, never a waypoint.
-        lead = None
-        if self.game is not None and hasattr(self.game, "_current_lead"):
-            lead = self.game._current_lead()
-        if lead:
-            end_y = mc.wrap(surf, self.fonts["serif_it"],
-                            lead,
-                            66, 112, 400, color=(176, 162, 128),
-                            line_h=22)
-            ly = max(ly, end_y + 18)
         if not entries:
             surf.blit(self.fonts["serif_it"].render(
                 "The page is still blank.", True, FAINT), (lx, ly))

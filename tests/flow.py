@@ -2384,12 +2384,22 @@ def main():
         return {e.get("name") for e in g.save.arg("notes", [])
                 if isinstance(e, dict)}
     gt = new_game()
-    check(len(gt._working_theory()) >= 1 and "close it out" in _theory(gt),
-          "theory: a fresh run carries the professional intake read")
-    check("Nothing on paper yet" in _timeline(gt),
+    check(gt._working_theory() == [],
+          "theory: a fresh run has no theory yet (the job lives in the_case note)")
+    check(gt._case_timeline() == [],
           "timeline: a fresh run has no chronology yet")
     check("get out" not in _theory(gt),
           "theory: no escape thread before a fold is crossed")
+    # The notebook pins a surface only when it has content: nothing at the
+    # start, the theory card the moment a clue lands.
+    gpin = new_game()
+    gpin.notebook_ui.save = gpin.save
+    gpin.notebook_ui.game = gpin
+    check("working_theory" not in {n for n, _ in gpin.notebook_ui._entries()},
+          "notebook: a fresh run pins no theory card (just the job)")
+    gpin.save.set_arg("evidence", [{"name": "maras_receipt"}])
+    check("working_theory" in {n for n, _ in gpin.notebook_ui._entries()},
+          "notebook: the theory card appears once a clue lands")
     gt.save.set_arg("evidence", [{"name": "maras_receipt"}])
     check("resident" in _theory(gt),
           "theory: the receipt reads her as a resident, not a drifter")
@@ -2400,8 +2410,11 @@ def main():
           "theory: record + journal read her breaking here")
     check("Booked one night" in _timeline(gt),
           "timeline: the booking slots into her chronology")
+    check("robes" not in _theory(gt),
+          "theory: no robes thread on clues alone, before he's met the cult")
+    gt.save.set_flag("cult_talk_given", True)
     check("robes" in _theory(gt),
-          "theory: the robes-as-lever read (the wrong lever) appears with the cult awake")
+          "theory: meeting the cult (the grab) opens the robes-as-lever read")
     gt.save.set_arg("evidence", [{"name": "maras_dig"}])
     check("willing" in _theory(gt),
           "theory: the dig pivots her to willing, not taken")

@@ -329,9 +329,10 @@ class NarrativeMixin:
         elif ev_has("maras_receipt"):
             out.append("A resident, not a drifter. She didn't wander off. "
                        "Something kept her here.")
-        else:
-            out.append("Grown woman cuts off her people, joins something past "
-                       "the highway. Happens. Find her, close it out.")
+        # No clue yet means no theory yet: a run opens with the JOB, not a
+        # guess (the_case note carries that, and the notebook skips an empty
+        # theory). The tail threads below can still fire on a crossed fold or
+        # the waking cult before any clue lands.
         # The son: only with the bear AND the letter that names him.
         if has_item("bear") and ev_has("maras_room"):
             out.append("A boy, Sam. She gave his bear to the one live kid "
@@ -342,7 +343,10 @@ class NarrativeMixin:
         if s.flag("crossed_a_fold"):
             tail.append("And the town won't let go. I've felt the ground fold "
                         "back under my own feet. Her or not, how do I get out?")
-        cult_seen = (self._evidence_count() >= 1 or s.flag("cult_talk_given")
+        # Only once he's actually RUN INTO the cult (grabbed, or their
+        # testimony / the preacher noted), not merely because the count says
+        # they've woken -- the notebook shouldn't get ahead of what he's met.
+        cult_seen = (s.flag("cult_talk_given")
                      or any(n in note_names for n in
                             ("the_preacher", "cult_calling", "cult_bargain",
                              "cult_digging")))
@@ -357,7 +361,8 @@ class NarrativeMixin:
                         "the town lets me go. Down doesn't come back. God help "
                         "me, I want out.")
         if tail:
-            out.append("")
+            if out:
+                out.append("")
             out.extend(tail)
         return out
 
@@ -392,8 +397,7 @@ class NarrativeMixin:
             out.append("Last thing she wrote is the letter in her cell. A "
                        "boy. \"I'm not lost.\"")
         if not out:
-            return ["Nothing on paper yet. A girl who drove up in the fall "
-                    "and went quiet by winter."]
+            return []
         out.append("")
         out.append("No dates on most of it. Ordering by what comes before "
                    "what.")
@@ -441,16 +445,16 @@ class NarrativeMixin:
                for e in notes):
             return
         notes.insert(0, {"name": "the_case", "lines": [
-            "Walter Blaine, Minneapolis. The client. Grief in the voice"
-            " you could lean a ladder on.",
-            "His girl, Mara, 26. Drove north in the fall. Stopped"
-            " calling home by the new year.",
-            "Last address: Brimley. Had to find it on a map. North woods,"
-            " near nothing.",
-            "Skip-trace. A weekend's work. Ask around, turn up the girl,"
-            " drive back by dawn.",
-            "I don't take grief jobs. Took this one. Couldn't tell you why"
-            ". Only that the not-knowing itched, and I wanted it gone.",
+            "Client: Walter Blaine, Minneapolis. Wants his girl home.",
+            "Subject: his daughter Mara, 26. Drove north in the fall, quit"
+            " calling home by the new year, and that was the last of her.",
+            "I told him what he already knew. She's grown, and nobody makes a"
+            " grown woman come home who won't. \"See what you can do,\" he"
+            " says. \"Please.\"",
+            "So I went looking. Trail ends in Brimley. Find her, put her"
+            " father's word to her, let her decide. That's the job.",
+            "I don't leave a case open. Whatever's up here, Walter gets his"
+            " answer.",
         ]})
         self.save.set_arg("notes", notes)
 
