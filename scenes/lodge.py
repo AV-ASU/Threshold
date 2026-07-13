@@ -278,8 +278,8 @@ def bedroom_interact(game):
             "it.)[/c]",
             "CLIENT: Walter Blaine. Wants his daughter found and brought "
             "home.",
-            "MARA BLAINE, 26. 'Found religion' out past the highway. "
-            "Last seen here, in Brimley.",
+            "MARA BLAINE, 26. Cut ties, drove north, quit calling home. "
+            "The trail runs cold at Brimley.",
             "The job: ask my questions, find the girl, drive home by "
             "morning.",
             "[c=dim]The drive in was easy. Then the engine died at the lodge "

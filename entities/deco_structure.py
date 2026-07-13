@@ -53,7 +53,9 @@ class DecoStructureMixin:
         name. Weathered, the paint mostly gone. The text is the
         decoration's `text` kwarg ('BRIMLEY' by default). Two posts
         with the boards nailed across them, edge highlights so the
-        sign reads as raised."""
+        sign reads as raised. (Flat/pitch-0 fallback; the live tilt view
+        draws the richer BRIMLEY old-timey welcome board in
+        rendering/props.py _draw_town_sign_solid.)"""
         text = self.kwargs.get("text", "BRIMLEY")
         post_col = (62, 44, 28)
         post_lit = (88, 64, 40)

@@ -14,9 +14,11 @@
 
 Brimley, 1994. You are an unnamed **private investigator**. The client,
 **Walter Blaine** of Minneapolis, hired you to find his adult daughter
-**Mara**, who cut ties, "found religion" out past the highway, and was
-last seen in Brimley, a small corn town in northern Minnesota. You drove
-in to ask a few questions and drive out.
+**Mara**, who cut ties, drove north, and stopped calling home. The only
+lead runs to Brimley, a small corn town in northern Minnesota — that she
+found the cult there is something the PI **learns on the ground, never
+intake** (his case file carries no religion or cult; §4, `TODO.md` #13).
+You drove in to ask a few questions and drive out.
 
 You can't. The **King in Yellow** has the town folded shut: the roads
 loop, the corn never ends, your engine turns over and never catches. The

@@ -271,8 +271,15 @@ short-season stock, a river-valley microclimate, skill), **never the door's
 doing** — else a second impossible thing AND it breaks the ~1993 door timeline.
 Keep the impossible count at one (§1b). Theme: founding hubris rhymes with
 crossing the threshold; the dead, uncut April corn reads as their pride rotting.
-Surfacing (mundane Americana that curdles): a weathered town sign ("BRIMLEY,
-NORTHERNMOST CORN IN THE WORLD, EST. 1894"), ~~a proud local line~~ (LANDED
+Surfacing (mundane Americana that curdles): ~~a weathered town sign ("BRIMLEY,
+NORTHERNMOST CORN IN THE WORLD, EST. 1894")~~ (LANDED 2026-07: the old-timey
+welcome board carries the boast + EST. 1894 in BOTH the intro drive-in sign
+(`ui/cutscenes.py _draw_road_sign`) and the in-game welcome sign
+(`rendering/props.py _draw_town_sign_solid`, the BRIMLEY variant only;
+directional TOWN/WELL signs stay compact) — matching designs. **Still open:**
+the SPREAD ending's blank-back BRIMLEY sign (`rendering/spread_drive.py
+_sign_back`) was left untouched on purpose; sync it to the new board, see
+Optional polish below), ~~a proud local line~~ (LANDED
 2026-07: Old Pell is the grower — his PELL_CONVO corn exchange carries the
 pride and the uncut-fields grief), county-fair ribbons (no dashes). Keep the §1 April dead-corn note. `NARRATIVE.md` §1 setting
 note 2 gets the identity + guardrail.
@@ -561,6 +568,7 @@ smaller-grid perf pass is the shippable core of this.
 
 ## Optional polish (no canon/lore change; do as time allows)
 
+- **[Opus]** **SPREAD ending sign sync** *(2026-07; deferred with the intro-sign rework, TODO #11)* — the intro drive-in sign and the in-game welcome sign now render the old-timey BRIMLEY board (WELCOME TO / NORTHERNMOST CORN / EST. 1894, POP struck through). The SPREAD ending's drive-OUT shows the **blank back** of that same sign (`rendering/spread_drive.py _sign_back`, "the side they never painted"), which was left untouched. Update `_sign_back` so its board proportions + posts match the new welcome board (the back stays blank/unpainted by design; only the shape needs to agree). Verify with a headless capture of the SPREAD drive-out (`tests/render_smoke.py` drives every ending). Do NOT touch the rest of the ending.
 - **[Opus]** **Brimley smaller-grid perf pass** *(the one salvaged piece of the parked reshape, #8)* — cut `w`/`h` from 100×100 toward ~64–72 and re-pack the 7 buildings + well tighter, WITHOUT changing the shape or the boundary (the square + torus wrap + fog rim all stay). This is the real FPS/tedium win (the one-time whole-map tilt bake, `scenes/base.py` `_tilt_fullmap`, ~6000 tiles). Verify: `tools/profile_brimley.py` before/after, a `tools/capture_world.py` tilt capture, full `python tests/run_all.py` gate.
 - **[Fable + Opus]** **Rev. Asa Crane murder reveal + sprite** *(NARRATIVE.md §4; feeds off the #1 provoke pilot)* — Fable for the reveal writing + staging, Opus for the procedural corpse sprite. Punch up
   the `preacher_doomed` death. ~~(1) New discovery location~~ **DONE

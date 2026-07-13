@@ -40,7 +40,7 @@ FLASHBACK_FOCAL_Y = 0.80       # focal point: base of the doorway (slightly abov
 # it silently, with no on-screen tell.
 OPENING_SCROLL_SPEED = 220.0  # px/sec the road scrolls -- the sense of speed
 OPENING_ROLL_DUR = 2.6        # seconds rolling between stalls
-OPENING_STALL_TIMEOUT = 4.5   # auto-restart if the player never taps (no softlock)
+OPENING_STALL_TIMEOUT = 2.0   # passive: the stall's dwell before the engine catches on its own
 OPENING_DEAD_HOLD = 3.0       # the final dead beat before the hand-off
 OPENING_STALLS = 2            # normal stalls; the one after is the fatal one
 
@@ -527,21 +527,47 @@ class CutsceneMixin:
 
 
     def _draw_road_sign(self, s, x, y, light):
-        """A weathered roadside sign reading BRIMLEY, the population struck
-        through -- lit by the headlights as it passes. The struck-out count
-        is the first wrong note: a town quietly subtracting itself."""
+        """The old-timey BRIMLEY welcome board as it passes in the
+        headlights: a weathered painted plank carrying the town's civic
+        boast (NORTHERNMOST CORN IN THE WORLD, EST. 1894), the population
+        count struck through -- the quiet subtraction is the first wrong
+        note. Matches the in-game welcome sign (rendering/props.py
+        _draw_town_sign_solid). The corn pride is a mundane human feat,
+        never the door's doing (TODO #11 guardrail)."""
         def L(c):
             return (int(c[0] * light), int(c[1] * light), int(c[2] * light))
-        pygame.draw.rect(s, L((58, 48, 36)), (x - 2, y, 4, 44))          # post
-        bw, bh = 86, 38
+        bw, bh = 120, 64
         bx, by = x - bw // 2, y - bh
-        pygame.draw.rect(s, L((52, 56, 50)), (bx, by, bw, bh), border_radius=3)
-        pygame.draw.rect(s, L((28, 32, 28)), (bx, by, bw, bh), 2, border_radius=3)
-        txt = self.fonts["sm"].render("BRIMLEY", True, L((202, 208, 198)))
-        s.blit(txt, (x - txt.get_width() // 2, by + 4))
-        pop = self.fonts["tiny"].render("POP. 412", True, L((150, 156, 148)))
-        s.blit(pop, (x - pop.get_width() // 2, by + 21))
-        pygame.draw.line(s, L((132, 44, 38)), (x - 26, by + 25), (x + 26, by + 27), 2)
+        # Post below the board (the board sits above the anchor y).
+        pygame.draw.rect(s, L((58, 48, 36)), (x - 3, y, 6, 44))
+        # Weathered painted plank: a warm board, a darker frame, an inner bevel.
+        pygame.draw.rect(s, L((116, 100, 74)), (bx, by, bw, bh), border_radius=4)
+        pygame.draw.rect(s, L((150, 132, 98)), (bx + 3, by + 3, bw - 6, bh - 6),
+                         border_radius=3)
+        pygame.draw.rect(s, L((44, 36, 26)), (bx, by, bw, bh), 2, border_radius=4)
+        pygame.draw.rect(s, L((70, 58, 40)), (bx + 3, by + 3, bw - 6, bh - 6),
+                         1, border_radius=3)
+        ink = L((48, 40, 26))
+        # WELCOME TO / BRIMLEY.
+        wel = self.fonts["tiny"].render("WELCOME TO", True, ink)
+        s.blit(wel, (x - wel.get_width() // 2, by + 5))
+        nm = self.fonts["sm"].render("BRIMLEY", True, L((60, 50, 30)))
+        s.blit(nm, (x - nm.get_width() // 2, by + 14))
+        # The civic boast, two tight lines.
+        b1 = self.fonts["tiny"].render("NORTHERNMOST CORN", True, ink)
+        s.blit(b1, (x - b1.get_width() // 2, by + 31))
+        b2 = self.fonts["tiny"].render("IN THE WORLD", True, ink)
+        s.blit(b2, (x - b2.get_width() // 2, by + 40))
+        # A hairline rule, then EST. 1894 and the struck-through count.
+        pygame.draw.line(s, L((92, 78, 54)), (bx + 12, by + 50),
+                         (bx + bw - 12, by + 50), 1)
+        est = self.fonts["tiny"].render("EST. 1894", True, ink)
+        s.blit(est, (bx + 11, by + 52))
+        pop = self.fonts["tiny"].render("POP. 412", True, L((120, 108, 84)))
+        px = bx + bw - 11 - pop.get_width()
+        s.blit(pop, (px, by + 52))
+        pygame.draw.line(s, L((150, 52, 42)),
+                         (px - 1, by + 57), (px + pop.get_width() + 1, by + 56), 2)
 
 
     def _draw_lodge_sign(self, s, x, ground_y, f):
@@ -838,52 +864,14 @@ class CutsceneMixin:
                                      2 * rw, rh))
         s.blit(glow, (0, 0), special_flags=pygame.BLEND_RGBA_ADD)
 
-        # THE FIGURE far up the road -- the final approach only. Something
-        # stands at the beam's reach and does not resolve: it grows by
-        # fractions as the road hands you toward it, wavers like heat,
-        # eats the light around it, and when the engine dies the road
-        # ahead is empty. (The idle King owns this road from the first
-        # hour; the drive in is where he is first almost-seen.)
-        if ph == "roll" and getattr(self, "_opening_stalls_left", 1) == 0:
-            fig_f = min(1.0, self._opening_phase_t / OPENING_ROLL_DUR)
-            fh = int(12 + 16 * fig_f)               # grows toward you
-            fx = cx + int(math.sin(t * 0.7) * 2.0)
-            fy = int(H * 0.30) + 8                  # the beam's far reach
-            waver = 0.5 + 0.25 * math.sin(t * 6.3) + 0.25 * math.sin(t * 11.7)
-            fa = int(255 * min(1.0, (0.4 + 0.6 * fig_f))
-                     * (0.6 + 0.4 * waver) * max(0.25, light))
-            fig = pygame.Surface((fh + 8, fh * 2 + 6), pygame.SRCALPHA)
-            fcx = (fh + 8) // 2
-            wob = math.sin(t * 2.2) * fh * 0.06
-            # a tall thin dark mass, hem melting into the road
-            pygame.draw.polygon(fig, (8, 7, 10, fa), [
-                (fcx - 2 + wob, 2), (fcx + 2 + wob, 2),
-                (fcx + fh // 3, fh * 2 - 2), (fcx - fh // 3, fh * 2 - 2)])
-            # it EATS the beam: a soft dark halo pressed into the light
-            pygame.draw.ellipse(fig, (5, 5, 8, fa // 3),
-                                (0, fh // 2, fh + 8, fh))
-            # the faintest pale oval where a face would be
-            if fig_f > 0.25:
-                pygame.draw.ellipse(fig, (150, 142, 126, int(fa * 0.55)),
-                                    (int(fcx - 2 + wob), 3, 4, 5))
-            # one gold fleck, only near the end of the approach
-            if fig_f > 0.6:
-                fig.set_at((int(fcx - 1 + wob), 5),
-                           (222, 180, 70, int(fa * 0.8)))
-            s.blit(fig, (fx - fcx, fy - 2))
+        # (The road King and the herald moths were CUT from the drive,
+        # 2026-07: the arrival shows nothing supernatural. The dread is
+        # implicit -- the engine that won't catch, the radio going dead.
+        # The idle King lives on the town's north road in play, not here.)
 
-        # A Moth crosses the beam once on the way in -- the first herald,
-        # tented wings beating through the only light for miles.
-        if 5.6 < t < 8.0 and ph != "dead":
-            from rendering.moth import draw_moth
-            mf = (t - 5.6) / 2.4
-            draw_moth(s, int(cx - 110 + 220 * mf),
-                      cy - 78 + int(math.sin(t * 3.1) * 7), t,
-                      spread=0.12, glow=0.18, seed=5, flap=0.85)
-
-        # Dust / moths drifting up through the headlight beam -- a little
-        # life in the only light for miles. They rise toward the beam's
-        # reach and fade out, swaying side to side.
+        # Dust drifting up through the headlight beam -- a little life in
+        # the only light for miles. Rises toward the beam's reach and
+        # fades out, swaying side to side.
         for i in range(7):
             mt = (t * 0.55 + i * 0.37) % 1.0
             my = int(cy - 24 - mt * (cy - top_y - 24))
@@ -896,18 +884,6 @@ class CutsceneMixin:
         # The car. Exhaust puffs while it stalls and after it dies.
         exhaust = (1.0 - sp_frac) if ph in ("stall", "dead") else 0.0
         self._draw_car(s, cx, cy, light, exhaust=exhaust, scale=1.3)
-
-        # In the dead beat a Moth drops out of the dark and settles on
-        # the car's roof, wings folding to the tent -- the town's first
-        # greeter, already waiting where the engine chose to die.
-        if ph == "dead":
-            from rendering.moth import draw_moth
-            settle = min(1.0, self._opening_phase_t / 1.6)
-            # its ember is the one light left beside the taillights
-            draw_moth(s, cx + 20 - int(8 * settle),
-                      int(cy - 90 + 62 * (settle ** 0.8)), t,
-                      spread=0.10 * (1.0 - settle), glow=0.32, seed=9,
-                      flap=0.9 - 0.85 * settle)
 
         # --- Film grade: unify the drive with the cutscene look. Applied to the
         #     WORLD only -- the case cards stamp on top, crisp + legible. ---
@@ -958,7 +934,7 @@ class CutsceneMixin:
             self._draw_case_card("CASE FILE  \xb7  BLAINE",
                                  ["MISSING:  Mara Blaine, 26"],
                                  "OPEN", ccx, ccy, t - 0.2, 4.2, 11)
-            self._draw_case_card(None, ["LAST SEEN:  Brimley"],
+            self._draw_case_card(None, ["TRAIL TO:  Brimley"],
                                  None, ccx + 34, ccy + 44, t - 0.9, 3.5, 23)
             self._draw_case_card(None, ["JOB:  ask around, drive home by dawn"],
                                  None, ccx - 12, ccy + 86, t - 1.6, 2.8, 37)
@@ -974,10 +950,6 @@ class CutsceneMixin:
                                  ccx + 34, dcy + 46, dt_ - 0.8,
                                  OPENING_DEAD_HOLD - 0.8, 53)
 
-        # The stall's diegetic cue: a beat of dead engine, then the key.
-        # (Any key restarts; E is the game's hand-verb, so teach E.)
-        if ph == "stall" and self._opening_phase_t > 0.9:
-            f_ = self.fonts.get("serif_sm", self.fonts["serif"])
-            txt = f_.render("[E]  turn the key", True, (214, 206, 188))
-            txt.set_alpha(max(0, min(255, int(200 + 55 * math.sin(t * 3.0)))))
-            s.blit(txt, (cx - txt.get_width() // 2, int(H * 0.86)))
+        # The drive is a passive cutscene: no key prompt. The stall coasts
+        # to a stop and the engine catches on its own (the fatal one, at
+        # the lodge, does not), so nothing is asked of the player.
