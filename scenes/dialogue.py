@@ -263,12 +263,12 @@ def _pi_tier(game):
 # The NPC's words never change; only this framing does.
 _PI_WEATHER = (
     "",
-    " Something in this town is not sitting right, and you cannot yet put a "
-    "name to it.",
-    " You know what is under this town now. It is work, keeping a plain face "
-    "plain while you listen.",
-    " You have been down where the road ends. Ordinary is a thing you decide "
-    "to believe now.",
+    " Something in this town isn't sitting right, and I can't put a name to "
+    "it yet.",
+    " I know what's under this town now. It's work, keeping a plain face "
+    "plain while I listen.",
+    " I've been down where the road ends. Ordinary's a thing I decide to "
+    "believe now.",
 )
 
 
@@ -477,7 +477,7 @@ TOBY_CONVO = {
     "name":  "Toby",
     "voice": "blip_kid",
     "pi_voice": "blip_soft",
-    "prompt": _pi_framing("Toby watches the corn line while you think."),
+    "prompt": _pi_framing("Toby watches the corn line while I think."),
     "leave":  "That's all for now.",
     "greet": {
         "flag": "toby_greeted",
@@ -1584,7 +1584,7 @@ CALDER_CONVO = {
     "name":  "Mrs. Calder",
     "voice": "blip_mid",
     "pi_voice": "blip_soft",
-    "prompt": _pi_framing("Mrs. Calder watches the road past your shoulder."),
+    "prompt": _pi_framing("Mrs. Calder watches the road past my shoulder."),
     "leave":  "That's all for now.",
     "greet": {
         "flag": "calder_greeted",
@@ -1639,7 +1639,7 @@ ROYCE_CONVO = {
     "name":  "Royce",
     "voice": "blip_mid",
     "pi_voice": "blip_soft",
-    "prompt": _pi_framing("Royce looks down the road while you talk."),
+    "prompt": _pi_framing("Royce looks down the road while I talk."),
     "leave":  "That's all for now.",
     "greet": {
         "flag": "royce_greeted",

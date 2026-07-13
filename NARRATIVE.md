@@ -609,3 +609,11 @@ purpose, and keep each one guarded where a guard exists.
   nothing); the Invitation is the congregation's offer to bring him
   below, and the descent was never his want. The door never spoke
   through him. → §4
+- **The PI accepts the impossible; he never learns the mechanism.** He
+  works the ordinary explanations first and drops them when the town
+  hands them back: a door that opens onto elsewhere, roads that walk him
+  in a circle on foot. What he never gets is the mechanism, the why, or
+  that he was lured (the why-him stays the felt unease of §1). Accepting
+  the impossible *fact* is his arc; the cosmology stays dark. His written
+  theory is allowed to reason WRONG (the robes are the ones who could
+  stop this) and the game never corrects him. → §1b, §2, `TODO.md` #13

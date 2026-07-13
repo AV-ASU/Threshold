@@ -21,6 +21,8 @@ from ui import menu_chrome as mc
 # Slugs are load-bearing (saves and logic) and never change; only the
 # display does. Anything unmapped falls back to Title Case.
 _TITLES = {
+    "working_theory":          "Working Theory",
+    "case_timeline":           "Timeline",
     "maras_room":              "Mara's Room",
     "maras_journal":           "Mara's Journal",
     "the_ledger":              "The Old Registers",
@@ -80,9 +82,18 @@ class NotebookUI:
     def _entries(self):
         if self.save is None:
             return []
+        out = []
+        # Pinned first (TODO #13): the PI's live working theory + reconstructed
+        # timeline, derived from run state each open (never save entries), so
+        # opening the book lands on the theory card by default.
+        g = self.game
+        if g is not None:
+            if hasattr(g, "_working_theory"):
+                out.append(("working_theory", g._working_theory()))
+            if hasattr(g, "_case_timeline"):
+                out.append(("case_timeline", g._case_timeline()))
         log = self.save.arg("evidence", [])
         notes = self.save.arg("notes", [])
-        out = []
         # Clues first (canonical evidence), then personal notes (the
         # door-dream). Notes live in their own save list so they never
         # count toward the evidence/King-gate -- see Game._log_dream_entry.

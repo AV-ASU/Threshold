@@ -2364,6 +2364,74 @@ def main():
         check(not (("—" in _st) or ("–" in _st) or ("--" in _st)),
               "lead: no dashes in the thread line")
 
+    # --- 24d. The PI theory ladder (TODO #13): the notebook THINKS. The
+    # working theory + timeline are first-person syntheses derived from WHICH
+    # clues are held (any order); they revise as the case grows, never inflate
+    # the evidence count, carry no dashes, keep the cosmology unnamed, and lean
+    # toward SPREAD. The two wrong-space fold beats latch crossed_a_fold and
+    # open the trap thread; the robes-as-lever read is the WRONG conclusion the
+    # game never corrects (NARRATIVE invariant).
+    def _dashed(t):
+        return ("—" in t) or ("–" in t) or ("--" in t)
+
+    def _theory(g):
+        return " ".join(g._working_theory())
+
+    def _timeline(g):
+        return " ".join(g._case_timeline())
+
+    def _nnames(g):
+        return {e.get("name") for e in g.save.arg("notes", [])
+                if isinstance(e, dict)}
+    gt = new_game()
+    check(len(gt._working_theory()) >= 1 and "close it out" in _theory(gt),
+          "theory: a fresh run carries the professional intake read")
+    check("Nothing on paper yet" in _timeline(gt),
+          "timeline: a fresh run has no chronology yet")
+    check("get out" not in _theory(gt),
+          "theory: no escape thread before a fold is crossed")
+    gt.save.set_arg("evidence", [{"name": "maras_receipt"}])
+    check("resident" in _theory(gt),
+          "theory: the receipt reads her as a resident, not a drifter")
+    gt.save.set_arg("evidence", [{"name": "maras_journal"},
+                                 {"name": "maras_receipt"},
+                                 {"name": "maras_record"}])
+    check("came apart" in _theory(gt),
+          "theory: record + journal read her breaking here")
+    check("Booked one night" in _timeline(gt),
+          "timeline: the booking slots into her chronology")
+    check("robes" in _theory(gt),
+          "theory: the robes-as-lever read (the wrong lever) appears with the cult awake")
+    gt.save.set_arg("evidence", [{"name": "maras_dig"}])
+    check("willing" in _theory(gt),
+          "theory: the dig pivots her to willing, not taken")
+    gt._note_fold_portal()
+    check(gt.save.flag("crossed_a_fold") and "saw_the_door" in _nnames(gt),
+          "fold: a visible pane latches crossed_a_fold and files the awe note")
+    check("get out" in _theory(gt),
+          "theory: crossing a fold opens the trap / escape thread")
+    gl2 = new_game()
+    gl2._note_fold_loop("cornfield_path")
+    check("walked_in_circles" not in _nnames(gl2),
+          "fold: one silent loop is not enough to notice")
+    gl2._note_fold_loop("cornfield_path")
+    check("walked_in_circles" in _nnames(gl2),
+          "fold: the second silent loop is the tell")
+    gt4 = new_game()
+    gt4.save.set_arg("evidence", [{"name": "maras_room"}])
+    check("Sam" not in _theory(gt4), "theory: no son thread without the bear")
+    gt4.player.inventory.add("bear", 1)
+    check("Sam" in _theory(gt4), "theory: bear + letter opens the son thread")
+    gt4.player.inventory.add("pallid_mask", 1)
+    check("carry it out" in _theory(gt4),
+          "theory: the Mask leans the read toward carrying it out (SPREAD)")
+    _all = _theory(gt4) + " " + _timeline(gt4)
+    check(not _dashed(_theory(gt)) and not _dashed(_timeline(gt))
+          and not _dashed(_all),
+          "theory / timeline: no dashes in any produced line")
+    check(("King" not in _all) and ("Carcosa" not in _all),
+          "theory: the cosmology stays unnamed (sensation-only)")
+
     # --- 25. The placement pass (DESIGN.md §12): the gauntlet rooms
     # HAVE an enclosed hide, and EVERY declared hide in EVERY scene sits
     # on walkable ground (a spot inside a solid roots the player in a
