@@ -287,12 +287,41 @@ its own last shipment; optional light scavenge, **never evidence**). Reconcile
 with his worker job-loop (pacing the road). Royce no longer converts (the
 rot-people layer was cut, TODO #22c); he stays an ordinary local.
 
-### 13. **[Fable]** PI theory ladder — the notebook thinks  *(was GAME_CHANGES §20)*
+### 13. **[Fable]** PI theory ladder — the notebook thinks  *(LANDED 2026-07; was GAME_CHANGES §20)*
 
-An active "working theory" line in the case notebook that **REVISES** as
-evidence lands (rational → strained → the one he refuses to write), plus terse
-FACT / SOURCE / QUESTION entries. Never evidence, never a waypoint. Shows what
-he forces himself to accept and how impossible this all is.
+**DONE.** The case notebook carries two derived, first-person surfaces pinned
+above the clue list (`ui/notebook_ui.py`; `Game._working_theory` /
+`_case_timeline` in `systems/narrative_mixin.py`, guarded by `tests/flow.py`
+§24d):
+- **Working Theory** — a **set-aware** synthesis composed from WHICH clues are
+  held, in any order (not a count tier): the read of Mara (taken → willing, the
+  pivot needs the dig), the **bear-gated** son thread, the trap ("how do I get
+  out?"), the **robes-as-lever** WRONG conclusion the game never corrects, and
+  the Mask's SPREAD gravity. Absent threads simply are not there.
+- **Timeline** — Mara's life in HER order (barn → store tab → booking → dig →
+  letter), dated where the paper gives one and best-guess otherwise, capped by
+  the frozen town clock.
+
+The **wrong-space** beats fire from `cross_fold` (`_note_fold_portal` = a visible
+pane, awe; `_note_fold_loop` = the SECOND silent loop, the creep), latching
+`crossed_a_fold`. The FACT/SOURCE/QUESTION idea from the original brief became
+the Timeline (a chronology reads truer than a flat list). Canon locked: the
+NARRATIVE invariant "the PI accepts the impossible; he never learns the
+mechanism."
+
+**Opening rework (maintainer review):** the old soft-lead line (`_current_lead`)
+is **cut from the notebook display** — the direction lives in the case file now,
+not a header (the method + its §24c guard linger as dead code; retire both if the
+soft-lead is fully abandoned). Theory + timeline are **earned** — pinned only
+once they have content — so a fresh run opens on just `the_case`, never an empty
+"theory." `the_case` was rewritten as a real case file (`Client:` / `Subject:`
+format): minimal intake knowledge (drove north, went silent, trail to Brimley, no
+religion or cult on the page), Walter's plea after the PI leveled with him, and
+the PI's finisher pride SHOWN not told. The **robes-as-lever** thread now gates on
+actually meeting the cult (the grab / their testimony), not the evidence count,
+so the notebook never gets ahead of what he has met. First person throughout
+(`_PI_WEATHER` too; §23/§24c green). *(Open polish: a scrollable card if the
+theory outgrows one page; interior-beat tiering, parked from #22c.)*
 
 ### 14. **[Opus]** The Works as a MINE — side-dug rooms, not hallways  *(was GAME_CHANGES §21)*
 
@@ -517,9 +546,12 @@ smaller-grid perf pass is the shippable core of this.
 ## Standing fences (guardrails, not tickets)
 
 - **The lure chain is NEVER stated diegetically** *(was GAME_CHANGES §10)*.
-  King → Mara → Walter → PI is felt, not said; the one faint unease
-  (`the_case` note) already exists — do NOT build on it. King/Watcher moments
-  read as **luck, not omniscience** (powerful, not infallible).
+  King → Mara → Walter → PI is felt, not said. The faint unease now lives in the
+  `the_dream` and `the_congregation` notes (NOT `the_case`, which the 2026-07
+  review rewrote into a clean mundane intake, cutting its old "couldn't say why"
+  beat); the "why is a finisher this deep on a nothing-case" disproportion is
+  left to be FELT in play, never stated. Do NOT build on any of it. King/Watcher
+  moments read as **luck, not omniscience** (powerful, not infallible).
 - **The corn is mundane, never the door's doing** (#11). Keep the impossible
   count at **one** (§1b): the single unexplained door, everything else ordinary
   cause-and-effect downstream of it.
@@ -648,13 +680,14 @@ Fable is doing the implementing, an Opus pass reviews it the same way.
   intro notice replays on re-entry; and the line "I can't say it anymore."
   reports the failure instead of performing a line that trails off. *Fix:*
   per-run guard flag + reword to a broken-off line.
-- **C13. STILL-OPEN.** The PI's fold reproach to Sable (`scenes/dialogue.py`)
-  gates its `avail` only on the `the_fold_told` note (written when a local
-  DESCRIBES the roads), never on actually crossing a fold, so the
-  first-person "I walked the road out… it set me back down" can be a lie.
-  *Fix:* set a `crossed_a_fold` flag in `cross_fold` and require it (or reword
-  to hearsay). (The comment that falsely claimed "or he has crossed a fold"
-  was corrected in the comment pass.)
+- **C13. PARTLY ADDRESSED.** `cross_fold` now sets a `crossed_a_fold` flag
+  (added with TODO #13's wrong-space beats), so the data C13 wanted exists.
+  STILL-OPEN: the PI's fold reproach to Sable (`scenes/dialogue.py`) still
+  gates its `avail` only on the `the_fold_told` note (a local DESCRIBING the
+  roads), never on that flag, so the first-person "I walked the road out… it
+  set me back down" can still be a lie. *Fix:* require `crossed_a_fold` on the
+  reproach (or reword to hearsay). (The comment that falsely claimed "or he
+  has crossed a fold" was corrected in the comment pass.)
 - **C14. STILL-OPEN (all four dead/unwired cues).** (a) dresser `[E]` cue with
   no handler (`scenes/lodge.py`); (b) Toby's closet drawing stored but no
   interactable registered (`scenes/interiors.py` — no false prompt, just

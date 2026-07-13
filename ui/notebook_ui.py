@@ -21,6 +21,8 @@ from ui import menu_chrome as mc
 # Slugs are load-bearing (saves and logic) and never change; only the
 # display does. Anything unmapped falls back to Title Case.
 _TITLES = {
+    "working_theory":          "Working Theory",
+    "case_timeline":           "Timeline",
     "maras_room":              "Mara's Room",
     "maras_journal":           "Mara's Journal",
     "the_ledger":              "The Old Registers",
@@ -80,9 +82,22 @@ class NotebookUI:
     def _entries(self):
         if self.save is None:
             return []
+        out = []
+        # Pinned first (TODO #13): the PI's live working theory + reconstructed
+        # timeline, derived from run state each open (never save entries), so
+        # opening the book lands on the theory card by default.
+        g = self.game
+        if g is not None:
+            if hasattr(g, "_working_theory"):
+                wt = g._working_theory()
+                if wt:
+                    out.append(("working_theory", wt))
+            if hasattr(g, "_case_timeline"):
+                tl = g._case_timeline()
+                if tl:
+                    out.append(("case_timeline", tl))
         log = self.save.arg("evidence", [])
         notes = self.save.arg("notes", [])
-        out = []
         # Clues first (canonical evidence), then personal notes (the
         # door-dream). Notes live in their own save list so they never
         # count toward the evidence/King-gate -- see Game._log_dream_entry.
@@ -122,18 +137,6 @@ class NotebookUI:
         entries = self._entries()
         lx = 84
         ly = 140
-        # The soft lead (TODO #5): one italic PI-voiced line, where the
-        # thread points right now. Derived live from run state
-        # (Game._current_lead) -- never a checklist, never a waypoint.
-        lead = None
-        if self.game is not None and hasattr(self.game, "_current_lead"):
-            lead = self.game._current_lead()
-        if lead:
-            end_y = mc.wrap(surf, self.fonts["serif_it"],
-                            "The thread: " + lead,
-                            66, 112, 400, color=(176, 162, 128),
-                            line_h=22)
-            ly = max(ly, end_y + 18)
         if not entries:
             surf.blit(self.fonts["serif_it"].render(
                 "The page is still blank.", True, FAINT), (lx, ly))

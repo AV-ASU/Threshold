@@ -375,7 +375,7 @@ Only display names and fiction change.
   (door wakes ~April '93 → attuned from summer '93 → Mara north in the
   fall → rite mid-January → the PI in on April 15, 1994). Swept: Hettie's
   till is empty "since the new year" (both lines), the case note reads
-  "Drove north in the fall. Stopped calling home by the new year," Mara's
+  "Drove north in the fall, quit calling home by the new year," Mara's
   cell journal says the rest "had been here since the summer," the
   threshing tithe dropped its "season on season," and every wall calendar
   in town now defaults to a stopped **JAN 15** card. Flow-guarded

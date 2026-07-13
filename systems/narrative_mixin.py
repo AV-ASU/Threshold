@@ -217,15 +217,15 @@ class NarrativeMixin:
         def has(k):
             return bool(inv is not None and inv.has(k))
         if s.flag("descent_sealed"):
-            return ("Up was spent the moment you crossed. The car on the "
-                    "arrival road answers what you carry.")
+            return ("Up was spent the moment I crossed. The car on the "
+                    "arrival road answers what I carry.")
         if s.flag("depths_breached"):
-            return "Old stone under the face. It is close now. Down."
+            return "Old stone under the face. It's close now. Down."
         if has("pallid_mask"):
-            return ("His face opens every door left in this town. Where "
-                    "you carry it is the whole of the choice.")
+            return ("His face opens every door left in this town. Where I "
+                    "carry it is the whole of the choice.")
         if s.flag("rite_performed"):
-            return "The circle took you once already. Down."
+            return "The circle took me once already. Down."
         if s.flag("school_door_open"):
             return ("The clearing deep in the corn. Speak nothing there. "
                     "The dead fire knows the way down.")
@@ -234,13 +234,177 @@ class NarrativeMixin:
                     "slept. Sweeten the air. Draw the last door.")
         if self._evidence_count() >= 3:
             return ("Enough of it holds together now. The Arcadia's desk "
-                    "has been waiting for you to know that much.")
+                    "has been waiting on me to know that much.")
         if self._evidence_count() >= 1:
             return ("Pull the threads. The register at the Lodge, the "
                     "barn she slept in, the river the boy watched. The "
                     "town talks around what it knows.")
         return ("Ask the town about the Blaine girl. Start where anyone "
                 "starts. The store, the law, the church.")
+
+    def _note_fold_portal(self):
+        """First time I cross a VISIBLE fold pane on foot (the gold-rimmed
+        door, rendering.portal.draw_rift_door): I SAW it and stepped through,
+        so there is no explaining it away. Awe, not confusion. One-shot via
+        the note name; latches crossed_a_fold (the theory reads it; closes
+        the flag audit C13 wanted)."""
+        if self.save is None:
+            return
+        self.save.set_flag("crossed_a_fold", True)
+        self.save.set_flag("saw_a_portal", True)
+        self._log_note("saw_the_door", [
+            "Saw the damnedest thing I ever have. A gold rim, shaped like a "
+            "door, standing in the open air.",
+            "Where the other side should be, it just goes somewhere else. And "
+            "I stepped through it, on foot. I did.",
+            "No word for it. The car dying I could tell myself a story about. "
+            "Not this.",
+        ])
+
+    def _note_fold_loop(self, src_scene):
+        """The SILENT fold (a same-scene maze relocation or a seamless world
+        edge): no frame, the world just sets me down elsewhere, so I only
+        clock it once the pattern repeats. Fire on the SECOND crossing, when
+        the repeat is the tell; never announce the fold itself (the lie is
+        the world). Terrain noun keyed to where I am; latches
+        crossed_a_fold."""
+        if self.save is None:
+            return
+        self.save.set_flag("crossed_a_fold", True)
+        self._fold_loop_count = getattr(self, "_fold_loop_count", 0) + 1
+        if self._fold_loop_count < 2:
+            return
+        noun = self._fold_terrain_noun(src_scene)
+        self._log_note("walked_in_circles", [
+            "Couldn't get through the %s. It just kept going." % noun,
+            "Figured I'd forgotten how to walk a straight line, till the same "
+            "landmarks came round a second time. And the way back's too short "
+            "for how far I went.",
+            "This is concerning. Writing it down so I quit telling myself I "
+            "imagined it.",
+        ])
+
+    def _fold_terrain_noun(self, scene_key):
+        """The looping-terrain word for the fold-loop note, keyed to where the
+        world caught me: corn in the fields, trees in the grove, road on the
+        approach. Plain fallback."""
+        k = (scene_key or "").lower()
+        if "corn" in k or "field" in k:
+            return "corn"
+        if "grove" in k or "forest" in k or "wood" in k:
+            return "trees"
+        return "road"
+
+    def _working_theory(self):
+        """The PI's live working theory (TODO #13): a first-person synthesis
+        composed from WHICH clues I hold, in any order. Each thread reads only
+        its own inputs, so a partial or out-of-order case still reads true and
+        an absent thread (no bear, no fold yet) simply is not there. Never
+        evidence, never a waypoint. Its gravity leans toward carrying the Sign
+        OUT (SPREAD, the numb man's pull), and it is allowed to reason WRONG
+        about the robes: the game never corrects it (NARRATIVE invariant).
+        Returns case-card lines."""
+        s = self.save
+        if s is None:
+            return []
+        inv = getattr(self.player, "inventory", None)
+
+        def has_item(k):
+            return bool(inv is not None and inv.has(k))
+        ev_names = {e.get("name") for e in s.arg("evidence", [])
+                    if isinstance(e, dict)}
+        note_names = {n.get("name") for n in s.arg("notes", [])
+                      if isinstance(n, dict)}
+
+        def ev_has(*names):
+            return any(n in ev_names for n in names)
+        out = []
+        # The case: the honest read of Mara, deepening as her trail does.
+        if ev_has("maras_dig", "maras_room"):
+            out.append("She wasn't taken. She walked to it willing. I'm too "
+                       "late to be solving a kidnapping.")
+        elif ev_has("maras_record", "maras_journal"):
+            out.append("She didn't pass through. She lived here and came "
+                       "apart here. This town took her apart.")
+        elif ev_has("maras_receipt"):
+            out.append("A resident, not a drifter. She didn't wander off. "
+                       "Something kept her here.")
+        # No clue yet means no theory yet: a run opens with the JOB, not a
+        # guess (the_case note carries that, and the notebook skips an empty
+        # theory). The tail threads below can still fire on a crossed fold or
+        # the waking cult before any clue lands.
+        # The son: only with the bear AND the letter that names him.
+        if has_item("bear") and ev_has("maras_room"):
+            out.append("A boy, Sam. She gave his bear to the one live kid "
+                       "here. His name breaks her.")
+        # The tail: what's happening to ME, split from her story by a blank
+        # line. The trap, the wrong lever, the Mask's pull.
+        tail = []
+        if s.flag("crossed_a_fold"):
+            tail.append("And the town won't let go. I've felt the ground fold "
+                        "back under my own feet. Her or not, how do I get out?")
+        # Only once he's actually RUN INTO the cult (grabbed, or their
+        # testimony / the preacher noted), not merely because the count says
+        # they've woken -- the notebook shouldn't get ahead of what he's met.
+        cult_seen = (s.flag("cult_talk_given")
+                     or any(n in note_names for n in
+                            ("the_preacher", "cult_calling", "cult_bargain",
+                             "cult_digging")))
+        if cult_seen:
+            # The WRONG lever the game never corrects (NARRATIVE invariant).
+            tail.append("The robes run this. If anyone can shut it off it's "
+                        "them, and the only way out runs through all of them. "
+                        "I hate it.")
+        if has_item("pallid_mask"):
+            # The SPREAD gravity: out is the easy road, down is the other.
+            tail.append("Got the mask. And I know it clean: carry it out and "
+                        "the town lets me go. Down doesn't come back. God help "
+                        "me, I want out.")
+        if tail:
+            if out:
+                out.append("")
+            out.extend(tail)
+        return out
+
+    def _case_timeline(self):
+        """The PI's reconstructed order of events (TODO #13): Mara's life in
+        HER order, not the order I found it. Dated where the paper gives one,
+        best-guess order otherwise. The frozen town clock lands as the closing
+        wrongness once I've clocked it. Never evidence. Returns case-card
+        lines."""
+        s = self.save
+        if s is None:
+            return []
+        ev_names = {e.get("name") for e in s.arg("evidence", [])
+                    if isinstance(e, dict)}
+
+        def ev_has(n):
+            return n in ev_names
+        out = []
+        if ev_has("maras_journal"):
+            out.append("Barn first, for somewhere to sleep. Her journal's "
+                       "there.")
+        if ev_has("maras_receipt"):
+            out.append("Store tab runs most of a year. She lived here, plain "
+                       "as that.")
+        if ev_has("maras_record"):
+            out.append("Booked one night for a disturbance on the main road. "
+                       "Starting to come apart.")
+        if ev_has("maras_dig"):
+            out.append("Went under with the rest. Copied the Sign in her own "
+                       "hand, willing.")
+        if ev_has("maras_room"):
+            out.append("Last thing she wrote is the letter in her cell. A "
+                       "boy. \"I'm not lost.\"")
+        if not out:
+            return []
+        out.append("")
+        out.append("No dates on most of it. Ordering by what comes before "
+                   "what.")
+        if s.flag("crossed_a_fold") or self._evidence_count() >= 3:
+            out.append("And the calendars all stopped in January. It's spring "
+                       "now.")
+        return out
 
     def _log_note(self, name, lines):
         """Append a PI case-notebook NOTE (arg `notes`, never `evidence`).
@@ -281,16 +445,16 @@ class NarrativeMixin:
                for e in notes):
             return
         notes.insert(0, {"name": "the_case", "lines": [
-            "Walter Blaine, Minneapolis. The client. Grief in the voice"
-            " you could lean a ladder on.",
-            "His girl, Mara, 26. Drove north in the fall. Stopped"
-            " calling home by the new year.",
-            "Last address: Brimley. Had to find it on a map. North woods,"
-            " near nothing.",
-            "Skip-trace. A weekend's work. Ask around, turn up the girl,"
-            " drive back by dawn.",
-            "I don't take grief jobs. Took this one. Couldn't tell you why"
-            ". Only that the not-knowing itched, and I wanted it gone.",
+            "Client: Walter Blaine, Minneapolis. Wants his girl home.",
+            "Subject: his daughter Mara, 26. Drove north in the fall, quit"
+            " calling home by the new year, and that was the last of her.",
+            "I told him what he already knew. She's grown, and nobody makes a"
+            " grown woman come home who won't. \"See what you can do,\" he"
+            " says. \"Please.\"",
+            "So I went looking. Trail ends in Brimley. Find her, put her"
+            " father's word to her, let her decide. That's the job.",
+            "I don't leave a case open. Whatever's up here, Walter gets his"
+            " answer.",
         ]})
         self.save.set_arg("notes", notes)
 
