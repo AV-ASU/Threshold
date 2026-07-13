@@ -489,6 +489,21 @@ class DecoFurnitureMixin:
                         (x - r + 2, y - r + 2, (r - 2) * 2, (r - 2) * 2),
                         2.2, 3.4, 1)                                     # cold glint
 
+    def _draw_bedroll(self, surf, x, y):
+        # A laid-out bedroll at the cult camp: a worn wool mat, a folded
+        # blanket, a rolled pillow at one end. A floor decal (warps flat onto
+        # the ground under tilt) -- the newcomers rest here.
+        pygame.draw.rect(surf, (78, 66, 52), (x - 15, y - 8, 30, 16),
+                         border_radius=5)
+        pygame.draw.rect(surf, (52, 43, 33), (x - 15, y - 8, 30, 16), 1,
+                         border_radius=5)
+        pygame.draw.rect(surf, (94, 42, 36), (x - 11, y - 5, 22, 10),
+                         border_radius=4)          # the blanket
+        pygame.draw.rect(surf, (58, 26, 23), (x - 11, y - 5, 22, 10), 1,
+                         border_radius=4)
+        pygame.draw.ellipse(surf, (112, 100, 84), (x - 15, y - 7, 9, 14))  # pillow roll
+        pygame.draw.ellipse(surf, (70, 60, 48), (x - 15, y - 7, 9, 14), 1)
+
     def _draw_firewood(self, surf, x, y):
         # A stack of split logs -- pale ringed ends in a dark cradle.
         w = int(self.kwargs.get("w", 40)); h = int(self.kwargs.get("h", 24))

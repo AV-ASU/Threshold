@@ -70,9 +70,10 @@ def clear_cult(g):
 
 
 def open_field(g):
-    """A verified-open patch of brimley grass (east of the kid's house)
-    so the measurements aren't at the mercy of spawn-side tree clutter."""
-    g.player.x, g.player.y = 73 * TILE + 16, 68 * TILE
+    """A verified-open patch of brimley grass (the west-central glade,
+    kept clear of corn/marsh/trees in the 60x60 redesign) so the
+    measurements aren't at the mercy of spawn-side tree clutter."""
+    g.player.x, g.player.y = 14 * TILE + 16, 34 * TILE + 16
     g.player.hidden = None
     g.player.hide_origin = None
 
@@ -324,11 +325,11 @@ def main():
     g.load_scene_now("brimley", "default")
     tick(g, 10)
     clear_cult(g)
-    g.player.x, g.player.y = 73 * TILE + 16, 68 * TILE
+    g.player.x, g.player.y = 48 * TILE + 16, 42 * TILE + 16   # by the kid's house
     g.player.hidden = None
     n = g._spawn_cultist("cult_regular", "cultist",
-                         at=(70 * TILE + 16, 66 * TILE))
-    n.x, n.y = 70 * TILE + 16, 66 * TILE
+                         at=(46 * TILE + 16, 42 * TILE + 16))
+    n.x, n.y = 46 * TILE + 16, 42 * TILE + 16
     n._cult_state = "scout"
     n._suspicion = 0.0
     n.facing = (0.0, -1.0)
@@ -562,8 +563,8 @@ def main():
     clear_cult(g)
     n = plant(g, 90)
     n._suspicion = 0.6
-    g.player.x, g.player.y = 7 * TILE, 12 * TILE    # south of the church wall
-    n.x, n.y = 7 * TILE, 2 * TILE                   # north, wall between
+    g.player.x, g.player.y = 8 * TILE + 16, 24 * TILE + 16   # south of the shop wall
+    n.x, n.y = 8 * TILE + 16, 15 * TILE + 16                 # north, wall between
     tick(g, 30)
     check(n._suspicion < 0.6, "walls: suspicion decays behind one")
 
@@ -727,6 +728,12 @@ def main():
           "moths: a safe room never grows them")
     g.load_scene_now("brimley", "default")
     clear_cult(g)
+    # Isolate the moth mechanics from Brimley's ambient cult: at 2 evidence the
+    # scene otherwise prefills its cult_target of roamers on the next tick
+    # (threat_mixin._ensure_cultists), which would re-populate what clear_cult
+    # just swept. Suppress the pool for this controlled moth stage.
+    g.scene.cult_target = 0
+    g._cult_prefilled = True
     for mm in g.scene._moths:
         mm["b"] = 1.0                 # settle any arrival ramps
     m = g.scene._moths[0]

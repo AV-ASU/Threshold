@@ -346,7 +346,16 @@ it renders the procedural sprites to a labelled PNG strip.
   spawn** (`CULT_WAKE_EV`, gated at `_ensure_cultists`), the idle King
   far up the road, ONE omen moth pre-drifting his road
   (`_moth_field = {KING_ROAM_START: 1}` at run start). **Ev 1**: the
-  cult wakes (patrols spawn). **Ev 2**: his attention finds YOU — a
+  cult wakes (patrols spawn). **Cultist spawn geography (2026-07):** a cult
+  scene keeps `Scene.cult_target` roamers filled (default `CULT_REGULARS` 2),
+  spawning them at the farthest unoccupied point in `Scene.cult_spawns` (a
+  hand-placed spawn-anchor pool) else the map corners — `_spawn_cultist(...,
+  from_pool=True)`. On the first awake tick after a load the scene is
+  PREFILLED straight to target (`_cult_prefilled`, reset per load) so it reads
+  populated the moment you enter; killed cultists then respawn one at a time on
+  the `CULT_TOPUP_INTERVAL` breather. **Brimley** sets `cult_target = 10` over
+  **14 anchors** (9 spread + a 5-strong crew at the SE cult camp), all
+  evidence-gated like any patrol. **Ev 2**: his attention finds YOU — a
   single SEEKER moth materialises in the player's room every
   `MOTH_SEEK2_*` (2-3 min; `_tick_moth_seek`, never at a door, drops
   in on the `"b"` arrival ramp). **Ev 3**: he walks (the roam arms),
@@ -659,6 +668,10 @@ it renders the procedural sprites to a labelled PNG strip.
 
 ## Working agreements (process — learned the hard way)
 
+- **NEVER use the `AskUserQuestion` tool — it errors out every time (the
+  permission stream closes) and burns a turn.** When you need the maintainer to
+  choose between options or clarify something, ask in plain text in your reply
+  (a short numbered list with your recommendation) and stop for their answer.
 - **DOCS ARE PART OF THE CHANGE, NOT A FOLLOW-UP (do this automatically, top
   priority).** Whenever you touch code, updating the doc that governs what you
   touched is part of the SAME task and belongs in the SAME commit; it ranks
@@ -693,8 +706,13 @@ it renders the procedural sprites to a labelled PNG strip.
   **canon-guards** (e.g. the dream note must say "a year" and contain no
   recurrence language). Keep it green; add a guard when you lock a canon fact.
 - **Watch for stale refs from the village→brimley merge.** Scene keys, the
-  well position (`scene._well_pos`, col 94/row 13), and NPC names changed —
-  the Kid is **Toby** (sprite/portrait/dialogue kind `toby`), not "Village Kid".
+  well position (`scene._well_pos`, col 52 row 17 since the 60x60 redesign,
+  TODO #18), and NPC names changed — the Kid is **Toby** (sprite/portrait/
+  dialogue kind `toby`), not "Village Kid". **Brimley is 60x60 now** (a full
+  reshape at the same content density; the square + torus wrap + fog rim all
+  stay). Nothing in the town sits where the old 100x100 code put it, so a
+  hard-coded brimley tile coordinate in another file is a red flag: read the
+  scene, don't trust a remembered spot.
 - **Previewing visuals headlessly:** render to PNG/GIF with
   `SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy` + Pillow (installable) and
   send with the file tool. For whole-screen cutscenes, step

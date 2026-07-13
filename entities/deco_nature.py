@@ -84,6 +84,21 @@ class DecoNatureMixin:
                                  (gx + rng.randint(-2, 2),
                                   gy - rng.randint(2, 5)), 1)
 
+    def _draw_log_seat(self, surf, x, y):
+        """A felled log the cult camp sits on: bark-brown body, grooved bark,
+        a pale ringed cut-end. A low floor decal (warps flat onto the ground
+        under tilt)."""
+        pygame.draw.rect(surf, (74, 56, 38), (x - 16, y - 6, 32, 12),
+                         border_radius=5)
+        pygame.draw.rect(surf, (42, 31, 21), (x - 16, y - 6, 32, 12), 1,
+                         border_radius=5)
+        for gx in range(-10, 12, 6):                      # bark grooves
+            pygame.draw.line(surf, (52, 38, 26), (x + gx, y - 5),
+                             (x + gx, y + 5), 1)
+        pygame.draw.ellipse(surf, (150, 120, 82), (x + 11, y - 6, 8, 12))  # cut end
+        pygame.draw.ellipse(surf, (96, 74, 48), (x + 11, y - 6, 8, 12), 1)
+        pygame.draw.ellipse(surf, (120, 94, 62), (x + 13, y - 3, 4, 6), 1)  # rings
+
     def _draw_bush(self, surf, x, y):
         """A dense leafy bush -- walkable, but if the floor under it
         is corn-cover (':') the player hides in it. Used in the
