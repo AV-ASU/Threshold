@@ -22,10 +22,29 @@ from .dialogue import (_evidence, preacher_body_examine, chorus_dialogue,
                        PELL_CONVO, CALDER_CONVO, ROYCE_CONVO, GARRICK_CONVO)
 
 
+def _raise_cult_camp(game, scene):
+    """The newcomers' rest/gathering camp in the SE corn clearing. NOTHING at
+    0 evidence (the town reads normal, NARRATIVE §2); at 1 evidence -- the cult
+    awake -- the whole camp is set up: a lit ground fire ringed by bedrolls and
+    felled-log seats, a hung lantern. The crew fills it from the cult spawn
+    pool (systems/threat_mixin). Rebuilt every load once the cult wakes."""
+    if game._evidence_count() < 1:
+        return
+    cx, cy = scene._camp_pos
+    scene.add_decoration(Decoration(cx, cy, "camp_fire", seed=71))
+    for (dx, dy, kind, sd) in [
+            (-42, -4, "bedroll", 1), (36, -12, "bedroll", 2), (-8, 40, "bedroll", 3),
+            (44, 18, "log_seat", 4), (-44, 22, "log_seat", 5), (10, -40, "log_seat", 6)]:
+        scene.add_decoration(Decoration(cx + dx, cy + dy, kind, seed=sd))
+    scene.add_decoration(Decoration(cx + 48, cy - 34, "lantern"))
+
+
 def _brimley_on_enter(game, scene):
-    """Lay out the doomed Preacher's remains on the riverbank (2026-07
-    rework: he leaves his church to talk his flock home and is found
-    here, never on his own floor). Rebuilt every load after the doom."""
+    """On-enter set-pieces, rebuilt every load: the cult CAMP (raised once the
+    cult wakes at 1 evidence) and the doomed Preacher's riverbank remains
+    (2026-07 rework: he leaves his church to talk his flock home and is found
+    here, never on his own floor)."""
+    _raise_cult_camp(game, scene)
     if not game.save.flag("preacher_doomed"):
         return
     bx, by = scene._preacher_bank_pos
@@ -976,6 +995,10 @@ def build_brimley():
                 if sc.floor[cy][cx] in (":", ";", "g"):
                     sc.floor[cy][cx] = "d"
     sc._camp_pos = (_camp_tx * TILE + 16, _camp_ty * TILE + 16)
+    # A roamer tends the camp fire (an errand station just south of it, facing
+    # the flames). Only occupied once the cult wakes and fills the pool.
+    sc.add_cult_station(_camp_tx * TILE + 16, (_camp_ty + 1) * TILE + 16,
+                        face=(0, -1), dwell=(8.0, 14.0))
     # Hand-placed cultist spawn ANCHORS (the maintainer's marks): the cult
     # ENTERS from these when it wakes (1 evidence) and roams normally (it is
     # NOT static). The scene keeps `cult_target` filled, prefilled on entry

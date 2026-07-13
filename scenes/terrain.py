@@ -3079,6 +3079,10 @@ _FLOOR_DECAL_KINDS = frozenset((
     "tin_cans", "glass_litter", "loose_plank",
     # The mine art pass (2026-07): old haul rail lies in the floor plane.
     "mine_rail",
+    # The cult camp (2026-07): a laid-out bedroll and a felled log seat both
+    # lie flat on the ground and warp onto the floor under tilt (the lit
+    # `camp_fire` centrepiece is a SOLID volume instead).
+    "bedroll", "log_seat",
 ))
 
 # Decals that lie flat on a RAISED surface (a ledger open on a desktop): warped
