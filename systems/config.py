@@ -36,7 +36,7 @@ OUTDOOR_DECAY = {
     ("brimley", "mid"):       [(12, 10, "bloody_handprint")],
     ("brimley", "high"):      [(12, 10, "bloody_handprint"),
                                 (19, 10, "dead_crow"),
-                                (14, 20, "claw_marks")],
+                                (10, 23, "claw_marks")],
     ("lodge_yard", "mid"):  [(5, 11, "claw_marks")],
     ("lodge_yard", "high"): [(5, 11, "claw_marks"),
                                   (15, 6, "phantom_mark"),

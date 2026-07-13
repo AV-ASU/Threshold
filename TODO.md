@@ -575,18 +575,22 @@ Optional smaller-grid perf pass** (the one-time whole-map tilt bake dropped from
 ~10k tiles to 3,600).
 
 **Follow-up (2026-07): buildings front the street.** Each door was reoriented
-onto the wall that faces its adjacent road instead of all facing south:
-`_stamp_building` now takes a `face` ('n'/'s'/'e'/'w'), the west-row buildings
-(church, shop, sheriff) open EAST onto the central spine, the east row (barn,
-school, farmhouse) opens WEST, and the kid's house opens NORTH onto its access
-road (no south doors). Spurs, spawn-backs, the bell-door anchor, the flanking lit
-windows, the door lanterns, the homebody anchors (Hettie/Pell), and the farm's
-cult front-yard all moved to the new faces. The shared door renderer's
-`_door_room_dir` (`scenes/terrain.py`, used by BOTH the flat and tilt draws) was
-made **roof-aware and window-aware** so a door on any face resolves its opening
-direction correctly (a census proved the change flips ONLY these three
-window-flanked Brimley doors and is byte-identical for every other door in the
-game). **Still open:** the altar move (#17) did NOT ride inside this pass — the
+onto the wall that faces its adjacent road, a natural MIX rather than all south:
+`_stamp_building` now takes a `face` ('n'/'s'/'e'/'w'). Church + sheriff open
+EAST onto the central spine; barn + farmhouse open WEST; the shop + school (which
+sit right above the E-W fold road) open SOUTH onto that main drag; the kid's
+house opens NORTH onto its access road. Spurs, spawn-backs, the bell-door anchor,
+the flanking lit windows, the door lanterns, the homebody anchors (Hettie/Pell),
+and the farm's cult front-yard all moved to the new faces. The shared door
+renderer's `_door_room_dir` (`scenes/terrain.py`, used by BOTH the flat and tilt
+draws) was made **roof-aware** (roof = interior) **and window-aware** (a window
+is part of the wall line) so a door on ANY face resolves its opening direction
+correctly (a census proved it changes only these Brimley doors and is
+byte-identical for every other door in the game). A **fold guarantee** was also
+added: the forest band's de-clump skips the outermost ring, so a post-pass flips
+any wrap-edge tree with no walkable neighbour to a passable look-alike ('p') --
+the torus crossing is never blocked by an edge tree, and there is no solid
+perimeter wall. **Still open:** the altar move (#17) did NOT ride inside this pass — the
 cult standing-stone ring stayed in the open NE field rather than relocating to
 the riverbank; #17 remains its own narrative-dressing ticket.
 
