@@ -341,6 +341,12 @@ one reliable per-write tell. **Still open (the maintainer's actual grievance:
 "every interaction does something and never leaves the player thinking"):**
 the on-screen PI narrator captions still fire on nearly every world-prop
 examine. The census (grouped) for the copy pass:
+- **First trim landed (2026-07):** the three clearest "spell out the
+  conclusion for you" lines were cut to state-the-fact — `clerk_robe` (dropped
+  "the smiling man is one of them"), `lodge_candle_callback` (dropped "part of
+  it the whole time"), and the cellar-key pickup (dropped "nobody tends a key
+  like this to a door that doesn't matter"). The player draws the inference
+  now. The rest of the sweep below is still open.
 - **Cut candidates (ROUTINE-REACTION, ~30 sites)** — prop examines that
   editorialize a conclusion: the lodge register/ledger recaps, the well /
   news-rack / payphone / cellar-key monologues, headstone + candle

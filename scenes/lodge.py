@@ -669,9 +669,7 @@ def clerk_room_interact(game):
     if abs(px - cx) <= 40 and abs(py - cy) <= 40:
         _evidence(game, "clerk_robe",
                   "A cult robe hangs in the Clerk's closet, pressed and "
-                  "folded. By the creases it has never once been worn. The "
-                  "smiling man at the desk is one of them, or was meant to "
-                  "be.")
+                  "folded. By the creases it has never once been worn.")
         return
 
 
@@ -802,8 +800,7 @@ def basement_on_enter(game, scene):
             and not game.save.flag("evidence_lodge_candle_callback")):
         _evidence(game, "lodge_candle_callback", [
             "[c=dim]The same guttering candles as the dark below, kept "
-            "burning up here too. The Lodge has been part of it the whole "
-            "time.[/c]",
+            "burning up here too.[/c]",
         ])
 
 

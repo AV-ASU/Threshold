@@ -262,8 +262,7 @@ def build_lodge_yard():
                         and abs(d.x - kx) < 2 and abs(d.y - ky) < 2)]
             g.dialog.show([
                 "[c=dim](A nail under the back eave, out of the weather. "
-                "A heavy iron key, kept oiled. Nobody tends a key like "
-                "this to a door that doesn't matter.)[/c]",
+                "A heavy iron key, kept oiled against the rain.)[/c]",
             ], speaker="", voice="blip_soft", portrait="narrator")
         scene.add_item(kx, ky, "cellar_key", on_pickup=_took)
         scene.add_decoration(Decoration(kx, ky, "item_drop"))
