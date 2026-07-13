@@ -14,8 +14,12 @@ Named NPC speech floats over the speaker's head (ui/float_speech.py);
 choices and scripted beats with on_complete keep the modal band and
 the frozen world.
 
-Advance: auto after a read-time hold, or E anywhere (the caption owns
-the press before hides/NPCs so a skim never triggers something else).
+Advance: auto after a read-time hold, or E. The E-advance sits LAST in
+Game.try_interact -- a hide, a bell pull, a door all win the press over
+the ambient caption, so it never gates the world. The one exception is a
+re-readable object (the case notebook, a register): re-pressing E re-runs
+its scene interaction and calls begin() again with identical text, and
+begin() PAGES the caption instead of snapping back to page one.
 """
 import math
 import pygame
@@ -30,6 +34,7 @@ class Narration:
         self.fonts = fonts
         self.active = False
         self.pages = []              # list[list[DialogueGlyph]]
+        self._raw = []               # the current caption's raw strings
         self.page_idx = 0
         self.revealed = 0
         self.timer = 0.0
@@ -42,6 +47,19 @@ class Narration:
 
     def begin(self, pages, voice="blip_soft", color=C_WHITE,
               on_complete=None):
+        if isinstance(pages, str):
+            pages = [pages]
+        # Re-triggering the SAME caption while it is still on screen must
+        # PAGE it, not restart from page one. This is the E-on-a-re-readable-
+        # object case: the player presses E to advance the case notebook (or
+        # a register), which re-runs the scene interaction and calls begin()
+        # again with identical text -- without this it would snap back to
+        # page one on every press. An interaction that shows DIFFERENT text
+        # (or carries a completion beat) falls through to the normal path.
+        if (self.active and on_complete is None and self.on_complete is None
+                and list(pages) == self._raw):
+            self.advance_from_input()
+            return
         # A chained beat pending on the caption being replaced must not
         # silently vanish (the Sable follow-up on the register, e.g.) --
         # fire it now, a page early, rather than never.
@@ -54,11 +72,10 @@ class Narration:
                 # The fired beat started its OWN caption (a re-entrant
                 # begin -- the mask temptation, e.g.). Don't clobber it:
                 # queue this call's pages behind it instead.
-                if isinstance(pages, str):
-                    pages = [pages]
                 self.pages.extend(parse_dialogue(p, default_color=color,
                                                  default_voice=voice)
                                   for p in pages)
+                self._raw.extend(pages)
                 if on_complete is not None:
                     prev = self.on_complete
                     if prev is None:
@@ -69,8 +86,7 @@ class Narration:
                             b()
                         self.on_complete = _both
                 return
-        if isinstance(pages, str):
-            pages = [pages]
+        self._raw = list(pages)
         self.pages = [parse_dialogue(p, default_color=color,
                                      default_voice=voice) for p in pages]
         if not self.pages:

@@ -182,6 +182,7 @@ def build_schoolhouse():
                 inv.add("chalk", 1)
                 game.audio.play("pickup_rare", 0.7)
                 game.show_notice("A stub of chalk off the teacher's desk.")
+                game.scene.clear_ground_marker(cx, cy)
                 return
         # Incense among the cot relics.
         ix, iy = sc._incense_pos
@@ -191,6 +192,7 @@ def build_schoolhouse():
                 inv.add("incense", 1)
                 game.audio.play("pickup_rare", 0.7)
                 game.show_notice("Dried incense, left beside a cot.")
+                game.scene.clear_ground_marker(ix, iy)
                 return
         # The indoor campfire: where the air is sweetened.
         fx, fy = sc._fire_pos

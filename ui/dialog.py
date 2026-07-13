@@ -148,7 +148,11 @@ class DialogueBox:
             g.narration.begin(pages, voice=voice, color=color)
             return
         self._force_modal_next = False
-        self.pages = [parse_dialogue(p, default_color=color, default_voice=voice) for p in pages]
+        # Body text renders at serif_sm (17), not serif (20): the band was
+        # shrunk (160 -> 118px), so the text shrinks with it to keep the
+        # proportions. Explicit [f=...] markup still overrides per-run.
+        self.pages = [parse_dialogue(p, default_color=color, default_voice=voice,
+                                     default_font="serif_sm") for p in pages]
         self.page_idx = 0
         self.glyphs = self.pages[0]
         self.revealed = 0
@@ -230,8 +234,8 @@ class DialogueBox:
 
     def draw(self, surf):
         if not self.active: return
-        box_h = 160
-        box_y = SCREEN_H - box_h - 14
+        box_h = 118
+        box_y = SCREEN_H - box_h - 12
         box = pygame.Rect(20, box_y, SCREEN_W - 40, box_h)
         # A cinematic lower band rather than a bordered game panel: a soft
         # dark wash, a little more opaque toward the foot for legibility,
@@ -244,9 +248,9 @@ class DialogueBox:
         pygame.draw.line(surf, (70, 64, 84), box.topleft, (box.right, box.top))
         pygame.draw.line(surf, (44, 40, 54),
                          (box.left, box.bottom - 1), (box.right, box.bottom - 1))
-        portrait_x = box.x + 14
-        portrait_y = box.y + 14
-        portrait_size = 64
+        portrait_x = box.x + 12
+        portrait_y = box.y + 12
+        portrait_size = 48
         prect = pygame.Rect(portrait_x, portrait_y, portrait_size, portrait_size)
         pygame.draw.rect(surf, (20, 18, 26), prect)
         pygame.draw.rect(surf, (70, 64, 84), prect, 1)
@@ -254,9 +258,9 @@ class DialogueBox:
         if self.speaker_name:
             name_surf = self.fonts["serif_sm"].render(
                 self.speaker_name, True, C_GOLD)
-            surf.blit(name_surf, (portrait_x, portrait_y + portrait_size + 6))
-        tx = portrait_x + portrait_size + 16
-        ty = box.y + 16
+            surf.blit(name_surf, (portrait_x, portrait_y + portrait_size + 4))
+        tx = portrait_x + portrait_size + 14
+        ty = box.y + 14
         max_w = box.right - tx - 14
         self._draw_glyphs(surf, tx, ty, max_w)
         if self.choices is not None and self.revealed >= len(self.glyphs):
@@ -271,7 +275,7 @@ class DialogueBox:
 
     def _draw_glyphs(self, surf, x, y, max_w):
         cx, cy = x, y
-        line_h = self.fonts["serif"].get_linesize()
+        line_h = self.fonts["serif_sm"].get_linesize()
         t = pygame.time.get_ticks() / 1000.0
         word_buf = []
         word_w = 0
@@ -292,7 +296,7 @@ class DialogueBox:
                 ch = g.ch
                 if g.glitch and random.random() < 0.4:
                     ch = random.choice(self.GLITCH_CHARS)
-                font = self.fonts.get(g.font_key, self.fonts["serif"])
+                font = self.fonts.get(g.font_key, self.fonts["serif_sm"])
                 color = g.color
                 if g.glitch:
                     color = (random.randint(120,255), random.randint(0,80), random.randint(0,80))
@@ -310,7 +314,7 @@ class DialogueBox:
             if g.ch == "\n":
                 flush_word(force_newline=True)
                 continue
-            font = self.fonts.get(g.font_key, self.fonts["md"])
+            font = self.fonts.get(g.font_key, self.fonts["serif_sm"])
             ch_w = font.size(g.ch)[0]
             if g.ch == " ":
                 flush_word()
@@ -328,10 +332,10 @@ class DialogueBox:
         # screen) and sits ABOVE the band, so it never lies over the
         # prompt text. Labels are authored short (ui/conversation
         # `label`); the clamp is just the safety net.
-        rf = self.fonts["serif"]
+        rf = self.fonts["serif_sm"]
         ox = box.x + 60
-        h = 32 + 28 * len(self.choices)
-        cw = max(220, max(rf.size(o)[0] for o in self.choices) + 44)
+        h = 26 + 24 * len(self.choices)
+        cw = max(200, max(rf.size(o)[0] for o in self.choices) + 40)
         cw = min(cw, SCREEN_W - ox - 40)
         crect = pygame.Rect(ox, box.top - 4 - h, cw, h)
         if crect.top < 8:
@@ -347,7 +351,7 @@ class DialogueBox:
         for i, opt in enumerate(self.choices):
             selected = (i == self.choice_idx)
             color = C_GOLD if selected else (172, 166, 156)
-            oy2 = crect.y + 12 + i * 28
+            oy2 = crect.y + 10 + i * 24
             if selected:
                 pygame.draw.rect(surf, C_GOLD,
                                  (crect.x + 14, oy2 + 4, 2, rf.get_linesize() - 6))

@@ -260,10 +260,6 @@ def build_lodge_yard():
                 d for d in g.scene.decorations
                 if not (d.kind == "item_drop"
                         and abs(d.x - kx) < 2 and abs(d.y - ky) < 2)]
-            g.dialog.show([
-                "[c=dim](A nail under the back eave, out of the weather. "
-                "A heavy iron key, kept oiled against the rain.)[/c]",
-            ], speaker="", voice="blip_soft", portrait="narrator")
         scene.add_item(kx, ky, "cellar_key", on_pickup=_took)
         scene.add_decoration(Decoration(kx, ky, "item_drop"))
     sc.on_enter_fn = _yard_on_enter
@@ -584,6 +580,7 @@ def build_woodshed():
                 game.player.inventory.add("lumber_axe", 1)
                 game.audio.play("pickup_rare", 0.7)
                 game.show_notice("Splitting axe.")
+                game.scene.clear_ground_marker(*axe_pos)
                 return
         # Flashlight left on the chopping stump in the centre.
         if abs(px - flash_pos[0]) < 36 and abs(py - flash_pos[1]) < 36:
@@ -593,6 +590,7 @@ def build_woodshed():
                 game.audio.play("pickup_rare", 0.7)
                 game.show_notice("A flashlight. Press [F] in the dark, "
                                  "but light draws the eye.")
+                game.scene.clear_ground_marker(*flash_pos)
                 return
     sc.on_interact_fn = _woodshed_interact
 
@@ -607,8 +605,5 @@ def build_woodshed():
             if not game.save.flag(flag):
                 scene.add_decoration(Decoration(pos[0], pos[1], "item_drop"))
                 scene.add_interactable(pos[0], pos[1], 36)
-        # A box of cartridges by the hunting gear (this is a hunting town).
-        from .base import drop_ammo_cache
-        drop_ammo_cache(game, scene, 4, 3, 6, "ammo_woodshed")
     sc.on_enter_fn = _woodshed_on_enter
     return sc

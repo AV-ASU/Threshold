@@ -763,7 +763,7 @@ def build_brimley():
     # part out loud.
     def _resident(tx, ty, name, kind, pages=None, movement="wander",
                   voice="blip_mid", radius=52, fold=False, beats=None,
-                  stations=None, convo=None):
+                  stations=None, convo=None, vanish=True):
         # A resident either carries the organic ask verb (`convo`, the
         # chorus conversion; reactive beats volunteer ahead of the menu)
         # or the old fixed page-list (`pages`, the doorstep cameo).
@@ -774,6 +774,9 @@ def build_brimley():
         n = NPC(tx * TILE + 16, ty * TILE + 16, name, kind,
                 dialogue_fn=dfn,
                 movement=movement, radius=radius)
+        # A homebody at an enterable-but-empty building (Pell's schoolhouse
+        # step) must NOT duck out of sight, or entering finds nobody there.
+        n._hb_vanish = vanish
         if stations:
             # The JOBS layer: a personal station
             # route -- walk there, stand the work a while, move on.
@@ -798,12 +801,16 @@ def build_brimley():
         "[c=dim]I keep the lights on. So they know. Someone's keeping them on.[/c]",
     ], movement="homebody", radius=34)
     # Old Pell -- the schoolhouse step, the calendar nailed to the wall
-    # behind him. He stopped marking it. Another homebody: out on the
-    # step a while, then back indoors for a spell.
+    # behind him. He stopped marking it. A homebody who keeps to his step:
+    # the schoolhouse door behind him is enterable and empty, so he never
+    # ducks inside (that would read as a man who walked into a bare room).
     # Ask verb (PELL_CONVO); the fold note now files from Royce/Garrick,
     # whose exchanges actually carry the looping-roads account.
     _resident(63, 54, "Old Pell", "old_townsman",
               movement="homebody", radius=34, convo=PELL_CONVO,
+              # The schoolhouse behind him is enterable and holds no one, so
+              # he keeps his step instead of vanishing into an empty room.
+              vanish=False,
         # TODO #10: the town reacts to what the PI learns. Pell reads the
         # digging on him like weather (stasis register; he mutates at
         # stage 3, so this lives in his pre-turn window).
@@ -1097,8 +1104,12 @@ def build_brimley():
     sc.add_decoration(Decoration(77 * TILE + 16, 33 * TILE + 16, "brazier"))
     sc.add_decoration(Decoration(81 * TILE + 16, 33 * TILE + 16, "brazier"))
     # The church steeple -- the one tall thing for miles, a landmark to
-    # orient by, rising over the roof into the treeline.
-    sc.add_decoration(Decoration(7 * TILE + 16, 7 * TILE + 16, "steeple"))
+    # orient by, rising over the roof into the treeline. `rise` grows the
+    # tower out of the church roof ridge (~z 50) and `depth_bias` sorts it
+    # just after that opaque roof so the belfry + spire read clearly above it
+    # instead of being buried (the roof otherwise paints over the whole tower).
+    sc.add_decoration(Decoration(7 * TILE + 16, 7 * TILE + 16, "steeple",
+                                 rise=50, depth_bias=170))
     # A brazier marking the burn-clearing threshold.
     sc.add_decoration(Decoration(13 * TILE + 16, 80 * TILE + 16, "brazier"))
     # A murder of crows posted along the treeline, watching.

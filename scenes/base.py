@@ -893,6 +893,21 @@ class Scene:
         system otherwise can't see)."""
         self.interactables.append((x, y, radius))
 
+    def clear_ground_marker(self, x, y, tol=3):
+        """Drop the glimmer `item_drop` decoration AND the [E] interactable
+        at (x, y) once its pickup has been taken. Scenes that glimmer-mark a
+        takeable in on_enter (the woodshed axe/flashlight, the school
+        chalk/incense) must call this the moment the item is grabbed, or the
+        marker and prompt linger on the empty ground for the rest of the
+        visit (the flag only stops them re-spawning on the NEXT load)."""
+        self.decorations = [
+            d for d in self.decorations
+            if not (getattr(d, "kind", None) == "item_drop"
+                    and abs(d.x - x) <= tol and abs(d.y - y) <= tol)]
+        self.interactables = [
+            t for t in self.interactables
+            if not (abs(t[0] - x) <= tol and abs(t[1] - y) <= tol)]
+
     def add_chalk_door(self, x, y, voice=None, seed=0, wall=False):
         """Place a chalk-drawn door (the cult's drawn-door compulsion) AND an
         [E]-examinable point. `wall=False` draws it flat on the FLOOR (a decal

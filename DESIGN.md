@@ -88,7 +88,7 @@ be *believed in* before it can be *taken away*. The gun is the player's
 first answer to fear — *I can fight this* — and the whole game is the slow
 proof that the real thing **cannot be shot**. It is hung on the **same
 3-evidence line** as everything else (limited rounds; caches in the
-woodshed, the cellar, the Sheriff's office), so crossing that line strips
+cellar and the Sheriff's office), so crossing that line strips
 your agency on the exact line that arms the King:
 
 - **Below 3 evidence:** a clean shot **kills** a cultist (they fall and
@@ -1003,8 +1003,8 @@ the live render path under tilt, not isolated scaffolding.
   for interiors/underground. It is a *skybox*, never a roof over the play
   area or the UI.
 - **Blind-spot vision (Phase 4).** When the head turns, the **terrain**
-  behind/around the player is revealed (it just draws), but **NPCs, items,
-  and the world-rot decals stay hidden until actually looked at** -- gated
+  behind/around the player is revealed (it just draws), but **NPCs and
+  the world-rot decals stay hidden until actually looked at** -- gated
   to a forward sight cone (`rendering/sight.py`). Locked calls: cone **74°
   half-angle / 360px** range, an always-seen **40px** near bubble;
   **re-hide** when out of the cone (no last-seen memory -- the dread is
@@ -1012,7 +1012,10 @@ the live render path under tilt, not isolated scaffolding.
   off-camera** (entities move/chase normally while unseen -- "not looking ≠
   not there"), only the *render* is gated, so a thing re-enters view
   wherever its own logic carried it. The **King is exempt** (a relentless
-  apex you must be able to track); the player is never gated. The
+  apex you must be able to track); the player is never gated. **Pickup
+  items are exempt too** -- a pickup is not a threat, so it always draws
+  (it was tiny + easy to miss), and it joins the occlusion **focus** set
+  so an occluding wall/prop fades for a gem instead of hiding it. The
   blind-spot **fog** (`_draw_sight_fog`) is **shadow-cast**: each ray
   across the cone stops at the first solid (`Scene.blocks_sight`), so the
   clear region is a true visibility polygon with crisp tile-edged shadows.

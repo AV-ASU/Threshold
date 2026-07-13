@@ -125,6 +125,12 @@ it renders the procedural sprites to a labelled PNG strip.
     loiters near the NPC's doorstep (`home`), then steps inside — sets
     `_inside` True, drops `solid`, and Game skips drawing/talking to it
     — for a spell, then re-emerges (the door-anchored Brimley locals).
+    The vanish is only honest when the door doesn't lie: spawn with
+    `_hb_vanish=False` (a `_resident(..., vanish=False)` arg) for a
+    homebody at an ENTERABLE-but-empty building (Old Pell's schoolhouse
+    step) so it keeps its step instead of disappearing into a room the
+    player can walk into and find empty. Hettie keeps `vanish=True` — her
+    shop interior holds a Hettie.
     `worker` (2026-07, the JOBS layer) walks a personal
     `npc.stations` route — travel, dwell facing the work, next — on
     the cult's errand machinery (`stealth.errand_step`; Garrick,
@@ -208,14 +214,18 @@ it renders the procedural sprites to a labelled PNG strip.
     `draw_scene_terrain(..., skip_billboard=True)`). Collision is unchanged;
     flat top-down draws them flat as before.
   - **Blind-spot vision (`sight.py`, DESIGN.md §10):** under tilt,
-    `draw_world` gates what is **drawn** (NPCs, enemies, corpses, items, and
+    `draw_world` gates what is **drawn** (NPCs, enemies, corpses, and
     the world-rot decals — flagged `_sight_gated`) to a forward sight
     cone keyed to `look.aim` and clipped by `Scene.blocks_sight`, via
     `visible_factor(...)` → a soft-alpha fade (`draw_with_alpha`). The world
     keeps **simulating** off-camera (the update path is untouched); unseen
     things simply aren't rendered and **re-hide** when you look away (no
     last-seen memory). The **King is exempt** (relentless apex); the player is
-    never gated. All gating sits behind `_sight is not None` (always live now, since the
+    never gated. **Pickup items are exempt too** (`_vis_alpha(..., exempt=True)`)
+    — they always READ as existing in the world (they were tiny + easy to
+    miss) and are added to the occlusion **focus** set, so an occluding
+    wall/prop **fades** for a gem the same way it does for an actor rather
+    than hiding it under the tilt. All gating sits behind `_sight is not None` (always live now, since the
     tilt is the only camera; `tools/capture_world.py` captures that view).
     The **see-through doors** feed this SAME gate into the room beyond: the
     aperture actor pass (`portal._draw_aperture_actors`, driven by
@@ -525,6 +535,17 @@ it renders the procedural sprites to a labelled PNG strip.
   `_TABLETOP_PROP_KINDS` (+ `seat_tabletop_props`) = seated on furniture. A kind
   that must stay ANIMATED needs a LIVE solid fn (standee cards freeze at t=0).
   Verify with a `tools/capture_world.py` tilt capture before/after.
+  **Prefer a real `SOLID_PROPS`/`FURNITURE` volume over a standee card for
+  MAN-MADE things** (they read as flat cards that swivel to face the camera
+  otherwise; the sprite-depth-anchoring pass converted `standing_stone` /
+  `wheelbarrow` / `pedestal` / `corn_altar` / `butter_churn` / `washstand` /
+  `birdcage` / `steeple` / `radio` / `wrong_radio` / `church_bell` / `valve`).
+  Standees stay right only for genuinely organic/thin things (trees, grass, the
+  corn-husk effigies, a doll). A tall solid at a building's centre is buried by
+  its own opaque 3D roof (the roof depth-sorts after it); the escape hatch is
+  the per-prop **`depth_bias`** kwarg (read in `render_mixin`'s solid-emit;
+  defaults 0) plus a `rise` so the prop grows OUT of the roof (the Brimley
+  `steeple` uses both).
 - **SCENE-DRESSING PROCESS (2026-07 — five failures were caught by the
   maintainer in one session; every one traces to skipping a step below.
   Follow ALL of it before placing a single detail):**
