@@ -171,8 +171,9 @@ class FloatSpeech:
         # Wrap the revealed glyphs into lines (word-aware), then draw a
         # soft plate behind them and the caption on top, centred over
         # the head and clamped on-screen.
-        font = self.fonts.get("serif_sm", self.fonts["serif"])
-        max_w = 240
+        font = self.fonts.get("serif_tiny",
+                              self.fonts.get("serif_sm", self.fonts["serif"]))
+        max_w = 210
         space_w = font.size(" ")[0]
         lines = [[]]
         line_w = [0]
@@ -209,9 +210,9 @@ class FloatSpeech:
             lines = [[]]
         lh = font.get_linesize()
         name_h = lh if self.name else 0
-        block_h = name_h + lh * len(lines) + 10
+        block_h = name_h + lh * len(lines) + 7
         name_w = font.size(self.name)[0] if self.name else 0
-        block_w = min(max_w + 40, max(max(line_w), name_w)) + 16
+        block_w = min(max_w + 32, max(max(line_w), name_w)) + 12
         bx = int(hx - block_w / 2)
         by = int(hy - block_h - 6)
         bx = max(6, min(SCREEN_W - block_w - 6, bx))
@@ -227,13 +228,13 @@ class FloatSpeech:
                             [(stem_x - 5, by + block_h),
                              (stem_x + 5, by + block_h),
                              (stem_x, by + block_h + 6)])
-        cy = by + 5
+        cy = by + 4
         if self.name:
             nm = font.render(self.name, True, C_GOLD)
-            surf.blit(nm, (bx + 8, cy))
+            surf.blit(nm, (bx + 7, cy))
             cy += lh
         for ln in lines:
-            cx = bx + 8
+            cx = bx + 7
             for ch, f, col in ln:
                 surf.blit(f.render(ch, True, col), (cx, cy))
                 cx += f.size(ch)[0]
