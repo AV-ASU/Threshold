@@ -88,7 +88,7 @@ be *believed in* before it can be *taken away*. The gun is the player's
 first answer to fear — *I can fight this* — and the whole game is the slow
 proof that the real thing **cannot be shot**. It is hung on the **same
 3-evidence line** as everything else (limited rounds; caches in the
-woodshed, the cellar, the Sheriff's office), so crossing that line strips
+cellar and the Sheriff's office), so crossing that line strips
 your agency on the exact line that arms the King:
 
 - **Below 3 evidence:** a clean shot **kills** a cultist (they fall and

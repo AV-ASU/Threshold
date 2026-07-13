@@ -2680,6 +2680,11 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
             self.show_notice("The beam dies the moment it leaves the lens. "
                              "The dark here is not the kind light fixes.",
                              duration=2.6)
+        elif (self.flashlight_on and self.scene is not None
+                and self.scene.key not in DARK_SCENES):
+            # A lit room: the beam does nothing here (it only bites in the
+            # dark), so tell the player rather than click a dead switch.
+            self.show_notice("Bright enough here without it.", duration=1.8)
 
     # ---- Step ----
     def step(self, dt):
