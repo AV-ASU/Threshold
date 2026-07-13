@@ -260,11 +260,6 @@ def build_lodge_yard():
                 d for d in g.scene.decorations
                 if not (d.kind == "item_drop"
                         and abs(d.x - kx) < 2 and abs(d.y - ky) < 2)]
-            g.dialog.show([
-                "[c=dim](A nail under the back eave, out of the weather. "
-                "A heavy iron key, kept oiled. Nobody tends a key like "
-                "this to a door that doesn't matter.)[/c]",
-            ], speaker="", voice="blip_soft", portrait="narrator")
         scene.add_item(kx, ky, "cellar_key", on_pickup=_took)
         scene.add_decoration(Decoration(kx, ky, "item_drop"))
     sc.on_enter_fn = _yard_on_enter

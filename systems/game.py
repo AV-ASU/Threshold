@@ -1879,7 +1879,9 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         # A narration caption with nothing else answering the press: E
         # skims it (finish the reveal, then next page). LAST on purpose:
         # the caption is ambient, and it must never gate the world -- a
-        # bell pull, a hide, a door all win the E over the text.
+        # bell pull, a hide, a door all win the E over the text. (Re-
+        # pressing an object that re-shows its OWN caption pages it
+        # instead of restarting; that is handled in Narration.begin.)
         if self.narration.advance_from_input():
             return
 

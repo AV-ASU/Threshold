@@ -230,8 +230,8 @@ class DialogueBox:
 
     def draw(self, surf):
         if not self.active: return
-        box_h = 160
-        box_y = SCREEN_H - box_h - 14
+        box_h = 118
+        box_y = SCREEN_H - box_h - 12
         box = pygame.Rect(20, box_y, SCREEN_W - 40, box_h)
         # A cinematic lower band rather than a bordered game panel: a soft
         # dark wash, a little more opaque toward the foot for legibility,
@@ -244,9 +244,9 @@ class DialogueBox:
         pygame.draw.line(surf, (70, 64, 84), box.topleft, (box.right, box.top))
         pygame.draw.line(surf, (44, 40, 54),
                          (box.left, box.bottom - 1), (box.right, box.bottom - 1))
-        portrait_x = box.x + 14
-        portrait_y = box.y + 14
-        portrait_size = 64
+        portrait_x = box.x + 12
+        portrait_y = box.y + 12
+        portrait_size = 48
         prect = pygame.Rect(portrait_x, portrait_y, portrait_size, portrait_size)
         pygame.draw.rect(surf, (20, 18, 26), prect)
         pygame.draw.rect(surf, (70, 64, 84), prect, 1)
@@ -254,9 +254,9 @@ class DialogueBox:
         if self.speaker_name:
             name_surf = self.fonts["serif_sm"].render(
                 self.speaker_name, True, C_GOLD)
-            surf.blit(name_surf, (portrait_x, portrait_y + portrait_size + 6))
-        tx = portrait_x + portrait_size + 16
-        ty = box.y + 16
+            surf.blit(name_surf, (portrait_x, portrait_y + portrait_size + 4))
+        tx = portrait_x + portrait_size + 14
+        ty = box.y + 14
         max_w = box.right - tx - 14
         self._draw_glyphs(surf, tx, ty, max_w)
         if self.choices is not None and self.revealed >= len(self.glyphs):
