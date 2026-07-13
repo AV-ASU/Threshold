@@ -141,7 +141,7 @@ class NotebookUI:
             lead = self.game._current_lead()
         if lead:
             end_y = mc.wrap(surf, self.fonts["serif_it"],
-                            "The thread: " + lead,
+                            lead,
                             66, 112, 400, color=(176, 162, 128),
                             line_h=22)
             ly = max(ly, end_y + 18)
