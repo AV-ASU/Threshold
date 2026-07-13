@@ -12,33 +12,28 @@ The Inventory class is unchanged.
 
 ITEM_DEFS = {
     # ---- Core items (in circulation) ----
-    "pistol":        {"name": "Revolver",
+    "pistol":        {"name": "Pistol",
                        "kind": "weapon",
-                       "desc": "Your sidearm. Left-click fires it in "
-                               "the way you're facing. While the case is "
-                               "still shallow a clean shot drops a cultist; "
-                               "once you understand too much (3+ evidence) the "
-                               "rounds only stagger them. The deeper you "
-                               "see, the less the world lets you kill."},
+                       "desc": "Your gun."},
     "pistol_ammo":   {"name": "Cartridges",
                        "kind": "key",
                        "desc": "Pistol rounds. Never as many as you'd like."},
     "newspaper":     {"name": "Yesterday's Paper",
                        "kind": "lore",
-                       "desc": "The Minneapolis paper for April 14. "
-                               "Yesterday. Picked up before the drive "
-                               "north. Ordinary headlines, box scores, the "
-                               "funnies. The freshest thing in Brimley by "
-                               "months."},
+                       "desc": "The Minneapolis paper for April 14, "
+                               "carried in on the drive north. Yesterday's "
+                               "date, and the freshest thing in Brimley by "
+                               "months.\n\n"
+                               "The whole front page is Kurt Cobain. "
+                               "Tributes pouring in from everywhere at "
+                               "once. Inside, the box scores, and a fat "
+                               "Sunday run of the funnies."},
     "woodshed_key":  {"name": "Woodshed Key",
                        "kind": "key",
                        "desc": "A key."},
-    "cellar_key":    {"name": "Cellar Key",
+    "cellar_key":    {"name": "Lodge cellar key",
                        "kind": "key",
-                       "desc": "A heavy iron key from a nail under the "
-                               "Lodge's back eave, kept oiled against the "
-                               "rain. It can only be the padlocked hatch "
-                               "in the kitchen."},
+                       "desc": "A heavy iron key."},
     "flashlight":    {"name": "Flashlight",
                        "kind": "key",
                        "desc": "A heavy steel flashlight. Press [F] to "
@@ -115,22 +110,27 @@ ITEM_DEFS = {
                        "kind": "lore",
                        "desc": "A curled slip off the shop spike, headed "
                                "\"M. Blaine\" in Hettie's careful hand.\n\n"
-                               "Matches. Canned milk. The same short list, "
-                               "week on week, run down most of a year. The "
-                               "staples a resident buys, not a traveler.\n\n"
-                               "She did not pass through Brimley. She lived "
-                               "here."},
+                               "Matches, two boxes.\n"
+                               "Canned milk, a case.\n"
+                               "Bread. Kerosene. Lamp oil.\n"
+                               "A few dollars, cash, week on week, run "
+                               "down most of a year.\n\n"
+                               "Staples a resident lays in, not a "
+                               "traveler's kit. She lived here."},
     "detention_record": {"name": "A Booking Slip",
                        "kind": "lore",
                        "desc": "A booking slip out of the Sheriff's files, "
                                "filled in a flat official hand.\n\n"
-                               "NAME: Blaine, Mara. Held one night for a "
-                               "disturbance on the main road. Shouting at the "
-                               "sky, the report says, at nothing anyone else "
-                               "could see. Released at first light, no "
-                               "charge.\n\n"
-                               "She was coming apart in the open, and the law "
-                               "wrote it down and let her go."},
+                               "NAME: Blaine, Mara\n"
+                               "AGE: 24\n"
+                               "DATE: Dec. 11, 1993\n"
+                               "INCIDENT: disturbance, main road. Shouting "
+                               "at the sky, at nothing anyone else could "
+                               "see.\n"
+                               "DISPOSITION: held overnight to calm. "
+                               "Released at first light. No charge.\n\n"
+                               "She was coming apart in the open, and the "
+                               "law wrote it down and let her go."},
     "maras_scrawl":  {"name": "The Sign, in Her Hand",
                        "kind": "lore",
                        "desc": "A single leaf off the copying desks in the "
