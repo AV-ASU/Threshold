@@ -1739,6 +1739,399 @@ def _draw_stalk_marker_solid(surf, cam, deco):
                        (int(tok[0]), int(tok[1])), max(1, int(1.5 * s)))
 
 
+# -- Anchored volumes (the sprite-depth-anchoring pass) --------------------
+# Props that used to draw as flat CAMERA-FACING cards (standees) or flat
+# top-down stickers under tilt because they were registered in no solid set.
+# Each now renders as world-oriented geometry so it depth-sorts + foreshortens
+# with the room instead of pointing at the camera forever. Palettes + silhouettes
+# match the authored 2D art in entities/deco_* so the object stays recognizable.
+
+
+def _draw_standing_stone_solid(surf, cam, deco):
+    """A weathered monolith as a real leaning slab: a tapering stone with two
+    visible side faces catching the tilt, moss at the foot, lichen up one face,
+    a hairline crack. Seeded so a row reads as siblings, never copies (matches
+    entities/deco_structure `_draw_standing_stone`)."""
+    wx, wy = deco.x, deco.y
+    s = (getattr(deco, "scale", 1.0) or 1.0)
+    seed = getattr(deco, "seed", 0)
+    H = (26 + (seed % 12)) * s                     # world height
+    W = (9 + ((seed >> 3) % 4)) * s                # base width
+    T = (4.0 + ((seed >> 5) % 3) * 0.8) * s        # depth
+    lean_x = (((seed >> 7) % 7) - 3) * 0.5 * s
+    lean_y = (((seed >> 9) % 5) - 2) * 0.3 * s
+    stone = {"body": (96, 94, 98), "lo": (52, 50, 56), "rim": (126, 124, 130)}
+    _disc(surf, cam, wx, wy, 0.3, W * 0.7 + 2, T + 2, (34, 40, 30))   # moss foot
+    cxt, cyt = wx + lean_x, wy + lean_y
+    topw = W * 0.5                                 # tapers toward the crown
+    b = (cam.project(wx - W / 2, wy - T / 2, 0),
+         cam.project(wx + W / 2, wy - T / 2, 0),
+         cam.project(wx + W / 2, wy + T / 2, 0),
+         cam.project(wx - W / 2, wy + T / 2, 0))
+    t = (cam.project(cxt - topw / 2, cyt - T / 2, H),
+         cam.project(cxt + topw / 2, cyt - T / 2, H),
+         cam.project(cxt + topw / 2, cyt + T / 2, H),
+         cam.project(cxt - topw / 2, cyt + T / 2, H))
+    pygame.draw.polygon(surf, stone["body"], [b[3], b[2], t[2], t[3]])   # near
+    pygame.draw.polygon(surf, stone["lo"], [b[0], b[3], t[3], t[0]])     # west
+    pygame.draw.polygon(surf, stone["lo"], [b[1], b[2], t[2], t[1]])     # east
+    pygame.draw.polygon(surf, stone["rim"], [t[0], t[1], t[2], t[3]])    # crown
+    pygame.draw.line(surf, stone["rim"], t[0], t[3], 1)
+    # a hairline crack wandering down the near face
+    fq = (t[3], t[2], b[2], b[3])                  # TL,TR,BR,BL of the near face
+    fx = 0.45 + ((seed >> 2) % 4) * 0.05
+    cr = []
+    for k in range(4):
+        fx += (((seed >> (k + 1)) % 3) - 1) * 0.06
+        cr.append(_quad_pt(fq, min(0.9, max(0.1, fx)), 0.12 + k * 0.24))
+    pygame.draw.lines(surf, stone["lo"], False,
+                      [(int(px), int(py)) for px, py in cr], 1)
+    lich = _quad_pt(fq, 0.72, 0.4)                 # lichen bloom
+    pygame.draw.circle(surf, (134, 138, 118), (int(lich[0]), int(lich[1])),
+                       max(1, int(2 * s)))
+    mo = cam.project(wx - W * 0.3, wy + T * 0.2, H * 0.1)   # moss clump
+    pygame.draw.circle(surf, (58, 74, 50), (int(mo[0]), int(mo[1])),
+                       max(1, int(2 * s)))
+
+
+def _draw_wheelbarrow_solid(surf, cam, deco):
+    """A single-wheel barrow as real volume: an open tapered tub on a wheel at
+    the front + two rear legs + two handles running back and up, a pile of
+    rusted tools in the tub. Built FOR the tilt (the wheel + handles that
+    identify it are the visible parts). `yaw` kwarg turns it."""
+    wx, wy = deco.x, deco.y
+    s = (getattr(deco, "scale", 1.0) or 1.0)
+    yaw = float(getattr(deco, "kwargs", {}).get("yaw", 0.9))
+    P = _vframe(cam, wx, wy, yaw)
+    L, W = 24 * s, 16 * s
+    hL, hW = L / 2, W / 2
+    z0, z1 = 6 * s, 13 * s
+    r = 5 * s
+    wood = {"top": (120, 86, 54), "side": (92, 64, 40), "dark": (60, 40, 24)}
+    _vehicle_shadow(surf, cam, wx, wy, L, W)
+    _round_wheel(surf, P, hL + 2 * s, 0, r)        # single wheel at the front
+    for ly in (-hW * 0.7, hW * 0.7):               # two rear legs
+        pygame.draw.line(surf, wood["dark"],
+                         P(-hL + 2 * s, ly, 0), P(-hL + 2 * s, ly, z0 + 1 * s),
+                         max(2, int(2 * s)))
+    _vbox(surf, cam, wx, wy, L, W, z0, z1, wood, yaw=yaw)
+    mouth = [P(-hL + 2 * s, -hW + 1.5 * s, z1), P(hL - 2 * s, -hW + 1.5 * s, z1),
+             P(hL - 2 * s, hW - 1.5 * s, z1), P(-hL + 2 * s, hW - 1.5 * s, z1)]
+    pygame.draw.polygon(surf, (40, 28, 20), mouth)     # open tub mouth
+    tp = P(2 * s, 0, z1 + 1 * s)                        # tool pile
+    pygame.draw.circle(surf, (150, 120, 96), (int(tp[0]), int(tp[1])),
+                       max(2, int(2.4 * s)))
+    pygame.draw.line(surf, (170, 150, 140), P(-4 * s, -2 * s, z1 + 1 * s),
+                     P(6 * s, 2 * s, z1 + 3 * s), max(1, int(1.5 * s)))
+    for ly in (-hW * 0.8, hW * 0.8):                   # two handles back-and-up
+        pygame.draw.line(surf, wood["side"], P(-hL, ly, z1 - 1 * s),
+                         P(-hL - 9 * s, ly, z1 + 4 * s), max(2, int(2 * s)))
+    pygame.draw.lines(surf, _shade(wood["top"], 1.2), True,
+                      [P(-hL, -hW, z1), P(hL, -hW, z1),
+                       P(hL, hW, z1), P(-hL, hW, z1)], 1)
+
+
+def _draw_pedestal_solid(surf, cam, deco):
+    """A stone pedestal as a stacked plinth: a wide base slab, a slimmer shaft,
+    a wide cap slab -- square faces that catch the tilt (the flat card read as
+    a floating tablet). Keeps the soft `lit` glow pooled above the cap."""
+    wx, wy = deco.x, deco.y
+    s = (getattr(deco, "scale", 1.0) or 1.0)
+    body = {"top": (120, 120, 130), "side": (96, 96, 106), "dark": (60, 60, 70)}
+    slab = {"top": (140, 140, 150), "side": (110, 110, 120), "dark": (72, 72, 82)}
+    _vbox(surf, cam, wx, wy, 22 * s, 16 * s, 0, 3 * s, slab)          # base
+    _vbox(surf, cam, wx, wy, 17 * s, 12 * s, 3 * s, 15 * s, body)     # shaft
+    _vbox(surf, cam, wx, wy, 22 * s, 16 * s, 15 * s, 18 * s, slab)    # cap
+    if getattr(deco, "kwargs", {}).get("lit", True):
+        pulse = 0.6 + math.sin(getattr(deco, "t", 0.0) * 2.0 + deco.seed) * 0.4
+        cx, cy = cam.project(wx, wy, 20 * s)
+        gw = int(10 * s * cam.scale)
+        gh = max(2, int(4 * s * cam.ground_squash() * cam.scale))
+        glow = pygame.Surface((gw * 2 + 2, gh * 2 + 2), pygame.SRCALPHA)
+        pygame.draw.ellipse(glow, (200, 180, 220, int(120 * pulse)),
+                            (1, 1, gw * 2, gh * 2))
+        surf.blit(glow, (cx - gw - 1, cy - gh - 1))
+
+
+def _draw_corn_altar_solid(surf, cam, deco):
+    """The cult's small offering as a mounded solid: a low husk-stalk heap,
+    three corn cobs stacked on top, a half-burned candle stub with a live
+    flame -- depth instead of a flat top-down sticker."""
+    wx, wy = deco.x, deco.y
+    s = (getattr(deco, "scale", 1.0) or 1.0)
+    t = getattr(deco, "t", 0.0)
+    husk = {"body": (110, 92, 52), "lo": (66, 52, 30), "rim": (140, 118, 66)}
+    draw_solid(surf, cam, wx, wy,
+               [(0, 11 * s, 9 * s), (4 * s, 8 * s, 6 * s),
+                (7 * s, 4 * s, 3 * s)], husk)
+    cob = {"body": (218, 192, 88), "lo": (160, 130, 56), "rim": (250, 226, 130)}
+    for ox, oy, cz in [(-3 * s, 1 * s, 7 * s), (3 * s, -1 * s, 7 * s),
+                       (0, 0, 9 * s)]:
+        draw_solid(surf, cam, wx + ox, wy + oy,
+                   [(cz, 3 * s, 2 * s), (cz + 4 * s, 1.4 * s, 1 * s)], cob)
+    zc = 12 * s
+    draw_solid(surf, cam, wx, wy,
+               [(zc, 1.4 * s, 1.4 * s), (zc + 3 * s, 1.2 * s, 1.2 * s)],
+               {"body": (208, 200, 178), "lo": (150, 144, 126),
+                "rim": (230, 224, 206)})
+    fh = (5 + math.sin(t * 15) * 0.8) * s
+    _flame_tri(surf, cam, wx, wy, zc + 3 * s, fh, 1.4 * s * cam.scale,
+               (255, 200, 80), (255, 240, 180))
+
+
+def _draw_butter_churn_solid(surf, cam, deco):
+    """A barrel butter churn as a body of revolution: tapered staves, two iron
+    hoops, a lid, the plunger staff leaning out of it. Lifts to `kwargs['z']`
+    if it sits on a surface (else on the floor)."""
+    wx, wy = deco.x, deco.y
+    s = (getattr(deco, "scale", 1.0) or 1.0)
+    z0 = float(getattr(deco, "kwargs", {}).get("z", 0.0))
+    H, Rb, Rt = 18 * s, 7 * s, 5.5 * s
+    wood = {"body": (92, 66, 40), "lo": (56, 40, 24), "rim": (120, 92, 58)}
+    draw_solid(surf, cam, wx, wy,
+               [(z0, Rb, Rb), (z0 + H * 0.9, Rt, Rt),
+                (z0 + H, Rt * 0.92, Rt * 0.92)], wood)
+    iron = (70, 68, 74)
+    _disc(surf, cam, wx, wy, z0 + H * 0.16, Rb * 0.99, Rb * 0.99, iron,
+          fill=False, width=2)
+    _disc(surf, cam, wx, wy, z0 + H * 0.72, Rt * 1.02, Rt * 1.02, iron,
+          fill=False, width=2)
+    _disc(surf, cam, wx, wy, z0 + H, Rt * 0.9, Rt * 0.9, (70, 50, 30))   # lid
+    p0 = cam.project(wx, wy, z0 + H)
+    p1 = cam.project(wx + 4 * s, wy - 1 * s, z0 + H + 12 * s)
+    pygame.draw.line(surf, (84, 62, 40), p0, p1, max(2, int(2 * s)))
+    pygame.draw.circle(surf, (84, 62, 40), (int(p1[0]), int(p1[1])),
+                       max(2, int(2 * s)))
+
+
+def _draw_washstand_solid(surf, cam, deco):
+    """A bedroom washstand as real volume: a box stand with a porcelain basin
+    sunk in the top (the water a shade too dark), a ewer jug beside it, a limp
+    towel over the near edge."""
+    wx, wy = deco.x, deco.y
+    s = (getattr(deco, "scale", 1.0) or 1.0)
+    W, D, H = 19 * s, 13 * s, 13 * s
+    wood = {"top": (72, 54, 38), "side": (56, 42, 30), "dark": (38, 28, 20)}
+    _vbox(surf, cam, wx, wy, W, D, 0, H, wood)
+    _disc(surf, cam, wx, wy, H, W * 0.32, W * 0.32, (208, 202, 188))   # basin
+    _disc(surf, cam, wx, wy, H, W * 0.22, W * 0.22, (44, 48, 50))      # dark water
+    ex, ey = wx + W * 0.3, wy - D * 0.15                               # ewer jug
+    draw_solid(surf, cam, ex, ey,
+               [(H, 2.6 * s, 2.6 * s), (H + 3 * s, 3 * s, 3 * s),
+                (H + 5.5 * s, 1.6 * s, 1.6 * s)],
+               {"body": (208, 202, 188), "lo": (148, 142, 130),
+                "rim": (230, 224, 210)})
+    tw = [cam.project(wx - W * 0.5, wy + D * 0.35, H * 0.9),            # towel
+          cam.project(wx - W * 0.5, wy + D * 0.5, H * 0.9),
+          cam.project(wx - W * 0.5, wy + D * 0.5, H * 0.25),
+          cam.project(wx - W * 0.5, wy + D * 0.35, H * 0.25)]
+    pygame.draw.polygon(surf, (168, 160, 144), tw)
+    pygame.draw.polygon(surf, (132, 124, 110), tw, 1)
+
+
+def _draw_birdcage_solid(surf, cam, deco):
+    """A domed wire birdcage on a floor stand as a real cage: a stand post, a
+    ring of vertical bars (near bars brighter than far), a stepped dome cap, a
+    finial, the empty perch swaying. The bars stand in the room, not on a card."""
+    wx, wy = deco.x, deco.y
+    s = (getattr(deco, "scale", 1.0) or 1.0)
+    t = getattr(deco, "t", 0.0)
+    seed = getattr(deco, "seed", 0) or 0
+    stand, bar, bar_dk = (70, 66, 60), (96, 90, 78), (60, 56, 48)
+    post_h = 8 * s
+    pygame.draw.line(surf, stand, cam.project(wx, wy, 0),
+                     cam.project(wx, wy, post_h), max(2, int(2 * s)))
+    _disc(surf, cam, wx, wy, 0.3, 4 * s, 4 * s, (40, 38, 36))          # foot
+    R = 6 * s
+    z_lo, z_hi = post_h, post_h + 16 * s
+    _disc(surf, cam, wx, wy, z_lo, R, R, bar_dk, fill=False, width=2)  # base ring
+    n = 10
+    bars = sorted(range(n), key=lambda i: math.sin(i * math.tau / n))  # far first
+    for i in bars:
+        ang = i * math.tau / n
+        bx, by = wx + math.cos(ang) * R, wy + math.sin(ang) * R
+        col = bar if math.sin(ang) > -0.3 else bar_dk
+        pygame.draw.line(surf, col, cam.project(bx, by, z_lo),
+                         cam.project(bx, by, z_hi), 1)
+    for rz, rr in ((z_hi, R), (z_hi + 2 * s, R * 0.78),                # stepped dome
+                   (z_hi + 3.5 * s, R * 0.48)):
+        _disc(surf, cam, wx, wy, rz, rr, rr, bar_dk, fill=False, width=1)
+    fin = cam.project(wx, wy, z_hi + 5 * s)                            # finial
+    pygame.draw.circle(surf, bar, (int(fin[0]), int(fin[1])), max(1, int(1.4 * s)))
+    sway = math.sin(t * 0.9 + seed) * 1.2 * s                          # empty perch
+    pygame.draw.line(surf, (84, 62, 40),
+                     cam.project(wx - R * 0.6 + sway, wy, (z_lo + z_hi) / 2),
+                     cam.project(wx + R * 0.6 + sway, wy, (z_lo + z_hi) / 2), 1)
+
+
+def _draw_steeple_solid(surf, cam, deco):
+    """The church bell-tower as a real tapered tower: a square shaft rising into
+    a dark louvered belfry (a bell hung inside), a pyramidal spire cap, a
+    crooked cross on top -- the one TALL thing for miles, a landmark that
+    foreshortens + depth-sorts instead of swivelling to face the camera.
+
+    `rise` (kwarg, world units) lifts the visible shaft base so the tower grows
+    OUT OF the church roof: with a matching `depth_bias` (set at the placement)
+    the tower sorts just after its own opaque roof and the belfry + spire read
+    clearly above the roofline instead of being buried under it. `rise=0` (the
+    default) grows a full tower from the ground for any free-standing use."""
+    wx, wy = deco.x, deco.y
+    s = (getattr(deco, "scale", 1.0) or 1.0)
+    seed = getattr(deco, "seed", 0) or 0
+    rise = float(getattr(deco, "kwargs", {}).get("rise", 0.0)) * s
+    lean = math.sin(seed) * 0.4 * s
+    body = {"top": (86, 78, 66), "side": (70, 64, 54), "dark": (46, 42, 34)}
+    TH = 40 * s                                    # tower height above the rise
+    z0 = rise
+    z_bel0, z_bel1 = rise + TH * 0.48, rise + TH * 0.72
+    z_cap = rise + TH                              # spire base
+    Wb, Wt = 7.5 * s, 5.5 * s
+
+    def sq(hw, cx, cy, z):
+        return [cam.project(cx - hw, cy - hw, z), cam.project(cx + hw, cy - hw, z),
+                cam.project(cx + hw, cy + hw, z), cam.project(cx - hw, cy + hw, z)]
+    b = sq(Wb, wx, wy, z0)
+    tp = sq(Wt, wx + lean, wy, z_bel0)             # shaft up to the belfry
+    pygame.draw.polygon(surf, body["top"], [b[0], b[1], tp[1], tp[0]])   # far (lit)
+    pygame.draw.polygon(surf, body["side"], [b[0], b[3], tp[3], tp[0]])  # west
+    pygame.draw.polygon(surf, body["side"], [b[1], b[2], tp[2], tp[1]])  # east
+    pygame.draw.polygon(surf, body["dark"], [b[3], b[2], tp[2], tp[3]])  # near
+    bel0 = sq(Wt * 1.04, wx + lean, wy, z_bel0)                          # belfry box
+    bel1 = sq(Wt * 1.04, wx + lean, wy, z_bel1)
+    pygame.draw.polygon(surf, (34, 30, 26), [bel0[0], bel0[1], bel1[1], bel1[0]])
+    pygame.draw.polygon(surf, (24, 21, 18), [bel0[1], bel0[2], bel1[2], bel1[1]])
+    pygame.draw.polygon(surf, (15, 13, 17), [bel0[3], bel0[2], bel1[2], bel1[3]])
+    bl = cam.project(wx + lean, wy + Wt * 0.7, (z_bel0 + z_bel1) / 2)    # hung bell
+    pygame.draw.circle(surf, (108, 92, 56), (int(bl[0]), int(bl[1])),
+                       max(2, int(2.4 * s)))
+    pygame.draw.circle(surf, (60, 50, 32), (int(bl[0]), int(bl[1])),
+                       max(2, int(2.4 * s)), 1)
+    apex = cam.project(wx + lean, wy, z_cap + 12 * s)                    # spire cap
+    tc = sq(Wt, wx + lean, wy, z_bel1)
+    pygame.draw.polygon(surf, (58, 44, 32), [tc[0], tc[1], apex])        # far
+    pygame.draw.polygon(surf, (36, 28, 20), [tc[3], tc[2], apex])        # near
+    pygame.draw.polygon(surf, (48, 36, 26), [tc[0], tc[3], apex])
+    pygame.draw.polygon(surf, (48, 36, 26), [tc[1], tc[2], apex])
+    cz = z_cap + 12 * s                                                  # crooked cross
+    pygame.draw.line(surf, (52, 48, 40), cam.project(wx + lean, wy, cz),
+                     cam.project(wx + lean, wy, cz + 8 * s), 2)
+    pygame.draw.line(surf, (52, 48, 40),
+                     cam.project(wx + lean - 3.5 * s, wy, cz + 5 * s),
+                     cam.project(wx + lean + 3.5 * s, wy, cz + 5 * s), 2)
+
+
+def _draw_radio_solid(surf, cam, deco):
+    """A radio as a small box volume: wood body, a dark speaker/dial face on the
+    near side, the red tuning needle creeping. Lifts to `kwargs['z']` so a radio
+    on a counter sits ON it (was a flat card pointing at the camera)."""
+    wx, wy = deco.x, deco.y
+    s = (getattr(deco, "scale", 1.0) or 1.0)
+    z0 = float(getattr(deco, "kwargs", {}).get("z", 0.0))
+    t = getattr(deco, "t", 0.0)
+    body = {"top": (104, 72, 50), "side": (90, 60, 40), "dark": (66, 44, 28)}
+    W, D, H = 20 * s, 10 * s, 10 * s
+    _vbox(surf, cam, wx, wy, W, D, z0, z0 + H, body)
+    P = _vframe(cam, wx, wy, 0.0)
+    hD = D / 2
+    _qp(surf, P, [(-8 * s, hD, z0 + 2 * s), (4 * s, hD, z0 + 2 * s),
+                  (4 * s, hD, z0 + H - 2 * s), (-8 * s, hD, z0 + H - 2 * s)],
+        (20, 18, 22))
+    nx = -8 * s + (math.sin(t * 0.6) + 1) * 6 * s
+    _lp(surf, P, (nx, hD, z0 + 2 * s), (nx, hD, z0 + H - 2 * s), (220, 60, 60), 1)
+
+
+def _draw_wrong_radio_solid(surf, cam, deco):
+    """The transistor radio nobody is touching, as a box volume: brown body, a
+    static-crawling speaker grille + a chrome tuning dial whose needle creeps,
+    the antenna raised, the carry strap slumped. Reads z for tabletop placement."""
+    wx, wy = deco.x, deco.y
+    s = (getattr(deco, "scale", 1.0) or 1.0)
+    z0 = float(getattr(deco, "kwargs", {}).get("z", 0.0))
+    t = getattr(deco, "t", 0.0)
+    seed = getattr(deco, "seed", 0) or 0
+    body = {"top": (104, 72, 50), "side": (90, 60, 40), "dark": (66, 44, 28)}
+    W, D, H = 20 * s, 10 * s, 11 * s
+    _vbox(surf, cam, wx, wy, W, D, z0, z0 + H, body)
+    P = _vframe(cam, wx, wy, 0.0)
+    hD = D / 2
+    _qp(surf, P, [(-9 * s, hD, z0 + 2 * s), (-1 * s, hD, z0 + 2 * s),        # grille
+                  (-1 * s, hD, z0 + H - 2 * s), (-9 * s, hD, z0 + H - 2 * s)],
+        (20, 18, 22))
+    for i in range(3):
+        sz = z0 + 2 * s + (t * 6 + i * 3) % (H - 4 * s)
+        _lp(surf, P, (-8.5 * s, hD, sz), (-1.5 * s, hD, sz), (110, 130, 110), 1)
+    _qp(surf, P, [(1 * s, hD, z0 + 3 * s), (8 * s, hD, z0 + 3 * s),          # dial
+                  (8 * s, hD, z0 + H - 3 * s), (1 * s, hD, z0 + H - 3 * s)],
+        (20, 18, 22))
+    nx = 1 * s + (math.sin(t * 0.4 + seed) + 1) * 3.4 * s
+    _lp(surf, P, (nx, hD, z0 + 3 * s), (nx, hD, z0 + H - 3 * s), (220, 60, 60), 1)
+    _lp(surf, P, (8 * s, hD, z0 + H), (12 * s, hD, z0 + H + 8 * s),          # antenna
+        (180, 180, 200), 1)
+    _lp(surf, P, (-W / 2, hD, z0 + H), (-W / 2 - 4 * s, hD, z0 + H * 0.4),   # strap
+        (50, 32, 18), 1)
+
+
+def _draw_church_bell_solid(surf, cam, deco):
+    """The church bell hung in its hoist frame as real volume: two grounded
+    uprights, the yoke beam across them, the aged-bronze bell swinging between
+    (a pendulum lean while `ring_t` lives, dead-still at rest). Anchored, not a
+    flat card standing on the floor."""
+    wx, wy = deco.x, deco.y
+    s = (getattr(deco, "scale", 1.0) or 1.0)
+    t = getattr(deco, "t", 0.0)
+    ring = getattr(deco, "ring_t", 0.0)
+    sway = 0.0
+    if ring > 0.0:
+        sway = math.sin(t * 5.4) * 3.0 * s * min(1.0, ring / 2.0)
+    wood = {"top": (68, 54, 40), "side": (56, 44, 32), "dark": (34, 26, 20)}
+    H = 26 * s
+    for ox in (-11 * s, 11 * s):                        # two uprights
+        _vbox(surf, cam, wx + ox, wy, 3 * s, 3 * s, 0, H, wood)
+    _vbox(surf, cam, wx, wy, 26 * s, 3.5 * s, H, H + 4 * s, wood)   # yoke beam
+    bronze = {"body": (118, 100, 62), "lo": (78, 66, 42), "rim": (178, 160, 108)}
+    bz_bot, bz_top = H - 13 * s, H - 1 * s
+    bx = wx + sway
+    draw_solid(surf, cam, bx, wy,                       # bell (wide lip -> shoulder)
+               [(bz_bot, 6.5 * s, 5.5 * s), (bz_bot + 3 * s, 5.5 * s, 4.6 * s),
+                (bz_bot + 8 * s, 3.2 * s, 2.7 * s), (bz_top, 2.4 * s, 2.0 * s)],
+               bronze)
+    _disc(surf, cam, bx, wy, bz_bot, 6.5 * s, 5.5 * s, (178, 160, 108),
+          fill=False, width=1)                          # bright lip
+    cl = cam.project(bx, wy, bz_top)                    # crown loop
+    pygame.draw.circle(surf, (78, 66, 42), (int(cl[0]), int(cl[1])),
+                       max(1, int(1.6 * s)))
+
+
+def _draw_valve_solid(surf, cam, deco):
+    """The diggers' dewatering PITCHER PUMP as real volume: a driven pipe out of
+    the ground, an iron pump body, the spout, the long wood-handled pump arm
+    raised, the hose slumping to its basin. Kind name kept for the noise_source
+    mechanic (matches entities/deco_mine `_draw_valve`)."""
+    wx, wy = deco.x, deco.y
+    s = (getattr(deco, "scale", 1.0) or 1.0)
+    iron = {"body": (58, 60, 64), "lo": (34, 36, 40), "rim": (96, 92, 84)}
+    wood = (76, 58, 38)
+    draw_solid(surf, cam, wx, wy,                       # driven standpipe
+               [(0, 1.4 * s, 1.4 * s), (10 * s, 1.4 * s, 1.4 * s)], iron)
+    _vbox(surf, cam, wx, wy, 5 * s, 4 * s, 10 * s, 18 * s,          # pump body
+          {"top": (72, 74, 80), "side": (58, 60, 64), "dark": (34, 36, 40)})
+    pygame.draw.lines(surf, iron["body"], False,        # spout, mouth down
+                      [cam.project(wx + 2 * s, wy, 15 * s),
+                       cam.project(wx + 6 * s, wy, 15 * s),
+                       cam.project(wx + 7 * s, wy, 12 * s)], max(2, int(2 * s)))
+    a0 = cam.project(wx, wy, 17 * s)                    # pump arm, raised
+    pygame.draw.line(surf, iron["lo"], a0,
+                     cam.project(wx - 8 * s, wy, 24 * s), max(2, int(2 * s)))
+    pygame.draw.line(surf, wood, cam.project(wx - 7 * s, wy, 23 * s),
+                     cam.project(wx - 12 * s, wy, 27 * s), max(3, int(3 * s)))
+    pygame.draw.circle(surf, (96, 92, 84), (int(a0[0]), int(a0[1])),
+                       max(1, int(1.4 * s)))
+    pygame.draw.lines(surf, iron["lo"], False,          # hose slump
+                      [cam.project(wx + 6 * s, wy, 10 * s),
+                       cam.project(wx + 9 * s, wy + 3 * s, 4 * s),
+                       cam.project(wx + 8 * s, wy + 5 * s, 0)], max(2, int(2 * s)))
+
+
 SOLID_PROPS = {
     "doorframe":     _draw_doorframe_solid,
     "waterfall":     _draw_waterfall_solid,
@@ -1764,6 +2157,20 @@ SOLID_PROPS = {
     "burn_barrel":   _draw_burn_barrel_solid,
     "news_rack":     _draw_news_rack_solid,
     "stalagmite":    _draw_stalagmite_solid,
+    # anchored volumes (the sprite-depth-anchoring pass): props that used to
+    # draw as flat camera-facing cards / stickers under tilt
+    "standing_stone": _draw_standing_stone_solid,
+    "wheelbarrow":    _draw_wheelbarrow_solid,
+    "pedestal":       _draw_pedestal_solid,
+    "corn_altar":     _draw_corn_altar_solid,
+    "butter_churn":   _draw_butter_churn_solid,
+    "washstand":      _draw_washstand_solid,
+    "birdcage":       _draw_birdcage_solid,
+    "steeple":        _draw_steeple_solid,
+    "radio":          _draw_radio_solid,
+    "wrong_radio":    _draw_wrong_radio_solid,
+    "church_bell":    _draw_church_bell_solid,
+    "valve":          _draw_valve_solid,
     "candle":        _draw_candle_solid,
     "kerosene_lamp": _draw_kerosene_lamp_solid,
     "lantern":       _draw_lantern_solid,
@@ -1790,10 +2197,14 @@ SOLID_PROPS = {
 # the 2D sprite via Scene.draw, so it stays byte-identical. `hanging_figure`
 # hangs instead: its card is hung from a mount height so the body dangles.
 _STANDEE_HANG = frozenset(("hanging_figure",))
+# corn_altar / standing_stone / wheelbarrow / pedestal / steeple were promoted
+# from flat standee cards to anchored SOLID_PROPS volumes (the sprite-depth-
+# anchoring pass); town_sign / flagpole already draw as solids. What remains
+# here is genuinely organic (trees, grass, corn-husk effigies) or too slight to
+# volumize (the doll), where a stood-up card is the right read.
 _STANDEE_GROUND = frozenset((
-    "creepy_tree", "corn_doll", "corn_altar", "standing_stone",
-    "wheelbarrow", "pedestal", "steeple", "town_sign", "flagpole",
-    "tall_grass", "grass_tuft", "doll", "husk_bundle",
+    "creepy_tree", "corn_doll", "tall_grass", "grass_tuft", "doll",
+    "husk_bundle",
 ))
 _STANDEE_KINDS = _STANDEE_GROUND | _STANDEE_HANG
 _STANDEE_HANG_MOUNT = 34          # world height the hanging card is hung from

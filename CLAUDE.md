@@ -507,6 +507,17 @@ it renders the procedural sprites to a labelled PNG strip.
   `_TABLETOP_PROP_KINDS` (+ `seat_tabletop_props`) = seated on furniture. A kind
   that must stay ANIMATED needs a LIVE solid fn (standee cards freeze at t=0).
   Verify with a `tools/capture_world.py` tilt capture before/after.
+  **Prefer a real `SOLID_PROPS`/`FURNITURE` volume over a standee card for
+  MAN-MADE things** (they read as flat cards that swivel to face the camera
+  otherwise; the sprite-depth-anchoring pass converted `standing_stone` /
+  `wheelbarrow` / `pedestal` / `corn_altar` / `butter_churn` / `washstand` /
+  `birdcage` / `steeple` / `radio` / `wrong_radio` / `church_bell` / `valve`).
+  Standees stay right only for genuinely organic/thin things (trees, grass, the
+  corn-husk effigies, a doll). A tall solid at a building's centre is buried by
+  its own opaque 3D roof (the roof depth-sorts after it); the escape hatch is
+  the per-prop **`depth_bias`** kwarg (read in `render_mixin`'s solid-emit;
+  defaults 0) plus a `rise` so the prop grows OUT of the roof (the Brimley
+  `steeple` uses both).
 - **SCENE-DRESSING PROCESS (2026-07 — five failures were caught by the
   maintainer in one session; every one traces to skipping a step below.
   Follow ALL of it before placing a single detail):**

@@ -1483,7 +1483,15 @@ class RenderMixin:
                             if not (-_SOL_MX <= psx <= SCREEN_W + _SOL_MX
                                     and -_SOL_MTOP <= psy <= SCREEN_H + _SOL_MBOT):
                                 continue
-                            _emit(self.camera.depth(d.x + ox, d.y + oy),
+                            # Optional per-prop depth bias: a prop whose visible
+                            # mass sits ABOVE a nearer occluder can key itself
+                            # later (e.g. a bell-tower spire that rises out of
+                            # its own church roof, which otherwise sorts after
+                            # and paints over the whole tower). Defaults to 0 --
+                            # every other prop is unaffected.
+                            _dbias = float(getattr(d, "kwargs", {})
+                                           .get("depth_bias", 0.0))
+                            _emit(self.camera.depth(d.x + ox, d.y + oy) + _dbias,
                                   lambda d=d, ox=ox, oy=oy:
                                   self._draw_solid_prop(d, ox, oy))
             # Surface props seated ON furniture (a ledger, plate, lamp on a
