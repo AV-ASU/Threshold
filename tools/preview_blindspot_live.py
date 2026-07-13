@@ -46,7 +46,6 @@ def boot():
     _neutralize_grade(g)
     g._update_camera(snap=True)
     # force the tilt fully on
-    g._cam_pitch_target = math.radians(TILT_PITCH_DEG)
     g.camera.pitch = math.radians(TILT_PITCH_DEG)
     g.camera.scale = TILT_ZOOM
     return g

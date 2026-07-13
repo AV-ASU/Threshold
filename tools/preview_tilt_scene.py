@@ -31,7 +31,7 @@ def _shot(key, center_tile, aim, zoom, fog):
     g = Game()
     g.save.new()
     g._start_play()
-    g._cam_pitch_target = math.radians(55)
+    g.camera.pitch = math.radians(55)
     g.camera.pitch = math.radians(55)
     random.seed(7)
     g.load_scene_now(key)

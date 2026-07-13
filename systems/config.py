@@ -113,11 +113,9 @@ CHASE_STATIONARY_MULT = 0.35
 # input-driven target over this window, giving a tactile accel/decel feel.
 MOVE_SMOOTH_TAU = 0.12
 
-# Oblique-camera tilt (DESIGN.md §10). The tilt is the DEFAULT view;
-# The flat pitch-0 view is dev-only now (the capture tools set it directly).
-# pitch 0 = that flat fallback. TILT_PITCH_DEG is the locked ~55deg default.
+# Oblique-camera tilt (DESIGN.md §10). The tilt is the ONLY camera; the
+# pitch is locked to TILT_PITCH_DEG for the life of the Game. No flat view.
 TILT_PITCH_DEG = 55
-TILT_EASE = 0.12             # per-frame lerp of pitch toward its target
 TILT_ZOOM = 0.72             # camera scale at full tilt (1.0 = top-down)
 TILT_ACTOR_STAND = 15        # default px a sprite centre rises to stand
 # Blind-spot fog: thin cold gray veiling the AREA outside the forward sight

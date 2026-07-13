@@ -146,12 +146,9 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         # source of truth for the offset (camera update + input still use
         # them); the camera is re-synced to them each frame in draw_world.
         self.camera = Camera()
-        # The oblique view is the DEFAULT (DESIGN.md §10): start at the locked tilt
-        # pitch. the flat pitch-0 view is dev-only now (the
-        # headless capture tools set it directly), byte-identical to the legacy raster. _reset_run_state re-seeds this on
-        # every New Game.
-        self._cam_pitch_target = math.radians(TILT_PITCH_DEG)
-        self.camera.pitch = self._cam_pitch_target
+        # The oblique tilt is the ONLY camera (DESIGN.md §10). Pitch is locked
+        # here for the life of the Game; there is no flat/pitch-0 view.
+        self.camera.pitch = math.radians(TILT_PITCH_DEG)
         self.look = LookController()       # look/heading model (tilt mode)
         # Dev perf overlay (F1): FPS + frame-time readout, off by default. The
         # last frame's dt feeds the ms number; clock.get_fps() is pygame's own
@@ -432,8 +429,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         in-memory run state from a previous run is cleared here."""
         # Oblique view is the default; New Game starts tilted. Pitch 0 is
         # dev/capture-only now (the headless tools set it directly).
-        self._cam_pitch_target = math.radians(TILT_PITCH_DEG)
-        self.camera.pitch = self._cam_pitch_target
+        self.camera.pitch = math.radians(TILT_PITCH_DEG)
         self.camera.yaw = 0.0
         self.look = LookController()
         # Visibility meter + the King in Yellow
@@ -958,40 +954,15 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
             flen = math.hypot(fx, fy) or 1.0
             target_x += (fx / flen) * CAM_LOOKAHEAD
             target_y += (fy / flen) * CAM_LOOKAHEAD
-        scene_w = self.scene.w * Scene.TILE
-        scene_h = self.scene.h * Scene.TILE
-        # Clamp the camera to the scene bounds ONLY in the flat top-down view,
-        # where the world is axis-aligned and a small room should sit centred.
-        # Under the tilted "behind the PI" camera the view is rotated and the
-        # skybox fills the voids, so the camera must FOLLOW the player instead
-        # of locking to scene-centre -- otherwise small rooms (the bedroom is
-        # smaller than the screen) leave the camera anchored to the scene and
-        # the player walks around under a static view.
-        if not self._tilt_on():
-            if not self.scene.wrap_x:
-                target_x = max(0, min(scene_w - SCREEN_W, target_x))
-                if scene_w < SCREEN_W:
-                    target_x = (scene_w - SCREEN_W) // 2
-            if not self.scene.wrap_y:
-                target_y = max(0, min(scene_h - SCREEN_H, target_y))
-                if scene_h < SCREEN_H:
-                    target_y = (scene_h - SCREEN_H) // 2
+        # The oblique tilt follows the player (the skybox fills the voids);
+        # there is no flat scene-centre clamp.
         if snap:
             self.cam_x = target_x; self.cam_y = target_y
-            # Land already at the target pitch on a snap (game start / scene
-            # load) so the default oblique view doesn't ease up from flat on
-            # every door; a pitch change still eases (non-snap path below).
-            self.camera.pitch = self._cam_pitch_target
         else:
             self.cam_x += (target_x - self.cam_x) * 0.18
             self.cam_y += (target_y - self.cam_y) * 0.18
-            # Ease the tilt pitch toward its target. Zoom out
-            # slightly as it tilts so more of the room reads; both are exactly
-            # the shipping values at pitch 0 (scale 1.0), keeping that view
-            # untouched.
-            self.camera.pitch += (self._cam_pitch_target - self.camera.pitch) * TILT_EASE
-        pf = self.camera.pitch / math.radians(TILT_PITCH_DEG)
-        self.camera.scale = 1.0 - (1.0 - TILT_ZOOM) * pf
+        # Pitch is locked to the tilt, so the paired zoom-out is constant.
+        self.camera.scale = TILT_ZOOM
         # Keep the camera's spatial pivot in sync here (was only in draw_world)
         # so mouse->world (unproject) in _update_look reads the live frame.
         self.camera.origin = (SCREEN_W // 2, SCREEN_H // 2)
@@ -999,11 +970,9 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         self.camera.cam_y = self.cam_y + SCREEN_H // 2
 
     def _tilt_on(self):
-        """The oblique view is engaged. It is the ONLY in-game camera now (the
-        flat pitch-0 view is dev-only -- the headless capture tools set pitch 0
-        directly). Always true during play; false only when a dev/capture script
-        forces pitch 0."""
-        return self._cam_pitch_target > 0.0
+        """The oblique tilt is the only camera. Kept as a stable predicate for
+        the render/look code: always true, there is no flat/pitch-0 view."""
+        return True
 
     def _update_look(self, dt):
         """The camera rides behind the player's body heading. The body chases
@@ -1015,7 +984,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         micro-jitter near straight-ahead doesn't shake the view. The sprite +
         gun still face the unprojected world cursor directly (free aim).
         Tilt mode only."""
-        if not (self._tilt_on() and self.state == "playing" and self.player):
+        if not (self.state == "playing" and self.player):
             return
         mx, my = pygame.mouse.get_pos()
         # Free aim for the gun: world heading to the point under the cursor.
@@ -1155,12 +1124,9 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         if input_active:
             mag = math.hypot(dx, dy) or 1
             ndx, ndy = dx / mag, dy / mag
-            # In tilt mode (dx,dy) is already a world heading vector (W/S along
-            # the body facing, A/D strafe); the sprite faces the cursor, set by
-            # _update_look. Flat mode (dev capture only) keeps raw WASD as
-            # the facing.
-            if not self._tilt_on():
-                self.player.facing = (ndx, ndy)
+            # (dx,dy) is already a world heading vector (W/S along the body
+            # facing, A/D strafe); the sprite faces the cursor, set by
+            # _update_look.
             target_vx = ndx * effective_speed
             target_vy = ndy * effective_speed
         else:
