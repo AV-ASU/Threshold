@@ -278,9 +278,10 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         # Watchers -- staring figures only the cursed sees -- and every
         # Watcher pushes visibility up,
         # marching the player toward a King they can no longer shake.
-        self._cursed = False           # the watcher-curse: active until cleared
+        self._cursed = False           # a Watcher wave is active until cleared
         self._watchers = []            # Watcher NPCs currently manifested
-        self._watcher_clone_t = 0.0    # exposure-gated timer between clones
+        self._watcher_clone_t = WATCHER_GRACE   # exposure timer to next spawn
+        self._watcher_gaze = 0.0       # live Watchers holding the exposed player
         self._gaze_count = 0           # cultists watching the player this frame
         self._cult_topup_t = 0.0       # rate-limits cultist (re)spawns per scene
         self._cult_prefilled = False   # per-load: filled roamers to scene target yet?
@@ -497,7 +498,8 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         # Cultists, the curse, and Watchers
         self._cursed = False
         self._watchers = []
-        self._watcher_clone_t = 0.0
+        self._watcher_clone_t = WATCHER_GRACE
+        self._watcher_gaze = 0.0
         self._gaze_count = 0
         self._cult_topup_t = 0.0
         self._cult_prefilled = False
@@ -556,7 +558,6 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         # here too so the title/opening state carries nothing stale.)
         self._sheriff_intro_t = 0.0    # hunting-Sheriff intro hold (_tick_sheriff)
         self._sheriff_announced = False  # one-shot hollow-Sheriff intro notice/sting
-        self._gaze_bind_t = 0.0        # cultist gaze-bind dwell (_tick_gaze_bind)
         self._sprint_step_t = 0.0      # sprint footstep cadence (_tick_sprint)
         self._rite_cues = set()        # one-shot rite cue latches (ending)
         self._folds = []               # seen-fold peek cache (_build_fold_cache)
@@ -2898,7 +2899,6 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
                 self._tick_chase_cues_enemies(dt)
                 self._tick_fold_pursuit(dt)
                 self._tick_sheriff(dt)
-                self._tick_gaze_bind(dt)
                 self._tick_watchers(dt)
                 self._tick_visibility(dt)
                 self._tick_heartbeat(dt)

@@ -380,18 +380,26 @@ it renders the procedural sprites to a labelled PNG strip.
   then **falls** as a charred husk that stays for the visit. First
   flare files a case NOTE (never evidence). Guarded by
   `tests/stealth.py` §9.
-- **Curse** (the watcher-curse): a cultist ritual (`_tick_ritual` →
-  `_apply_curse`) binds a **Watcher** to you (`_cursed`). It **clones** —
-  up to `WATCHER_MAX` (5) — while you stay **exposed** (in the open;
-  cloning pauses in cover), and **each live Watcher raises the visibility
-  floor** by `WATCHER_FLOOR` (summed, capped at `VIS_FLOOR_TOTAL_CAP`
-  0.92 — just under the King, so it's survivable). You **cure** it by
-  clearing them all (`_tick_watchers`/`_dispel_watcher`): hold one in
-  your **gaze** for `WATCHER_GAZE_DISPEL` s (its eyes go dark, then it
-  dissolves), or put one down instantly with the **axe** arc or a
-  **round**. `SAFE_SCENES` only *suppress* Watchers; they re-form on the
-  way out. The gun and axe **share one weapon slot** (left-click to use;
-  switch which one is equipped from the inventory screen).
+- **The Watchers** (His gaze made manifest; the play-notes rework made them
+  **THE below-3 threat**, `_tick_watchers`/`_apply_curse`). From
+  `WATCHER_WAKE_EV` (1) evidence, while you are **exposed** (in the open, not
+  in cover / a safe room), the domain **opens** a Watcher on a timer:
+  `WATCHER_GRACE` (6s) before the FIRST of a wave (and after you clear one),
+  then the **evidence-scaled** interval between the rest
+  (`_watcher_spawn_interval`: `WATCHER_SPAWN_BASE` shaved per further
+  evidence down to `WATCHER_SPAWN_MIN` — the King floods them deep). Each live
+  Watcher **HOLDS you while you are exposed and drives visibility UP** by
+  `WATCHER_GAZE`/s (the active climb — `_watcher_gaze`, the main visibility
+  driver below the cult), on top of a small residual `WATCHER_FLOOR` (summed,
+  capped `VIS_FLOOR_TOTAL_CAP` 0.92, just under the King). Ignore them and it
+  **snowballs** (more open, faster); it caps at `WATCHER_MAX` (5). You clear
+  them (`_dispel_watcher`): hold one in your **gaze** `WATCHER_GAZE_DISPEL` s
+  (its eyes go dark, then it dissolves), or the **axe** / a **round**.
+  **Cover pauses the spawn timer and drops the hold**; `SAFE_SCENES` /
+  `KING_FREE_SCENES` suppress them (re-form on the way out); a rift fold has a
+  `FOLD_WATCHER_CHANCE` to open an extra. (The old GAZE_BIND high-visibility
+  trigger is retired.) The gun and axe **share one weapon slot** (left-click
+  to use; switch which is equipped from the inventory screen).
 - **Killing locals**: the gun is *not* cult-only. A clean round drops any
   living **local** instantly (lethal regardless of the evidence stagger
   gate, which only ever protected the cult — see `Projectile._strike` /
