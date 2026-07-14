@@ -575,7 +575,8 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         self._mara_stage = None
 
     # ---- Scene management ----
-    def cross_fold(self, target_scene, spawn_id="default", dest_pos=None):
+    def cross_fold(self, target_scene, spawn_id="default", dest_pos=None,
+                   is_rift=False):
         """The ONE seamless fold-crossing primitive. Every non-door traversal
         funnels here: seamless world edges, direction-gated fold exits, the
         maze's same-scene relocations, and the King's rift juke. The crossing
@@ -604,8 +605,11 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
             if same_scene or (src in SEAMLESS_WORLD_SCENES
                               and target_scene in SEAMLESS_WORLD_SCENES):
                 self._note_fold_loop(src)
-            else:
+            elif is_rift:
                 self._note_fold_portal()
+            # else: a SEE-THROUGH door (a mundane door with no fade, the far
+            # room already in view) -- NOT a rift, so no "saw the door" note
+            # (play-notes: it wrongly fired on the lodge interior doors).
         if same_scene:
             # A same-scene relocation (the maze 'I'/'Q' tiles): no load, no
             # per-load state clears. The world IS the same room; it just put
@@ -2788,7 +2792,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
                     # routing in begin_transition (seamless passages vs the
                     # door fade).
                     if exit_ch in self.scene.exit_directions:
-                        self.cross_fold(*exit_data)
+                        self.cross_fold(*exit_data, is_rift=True)
                     else:
                         # The leaf swings as you go through (tilt view).
                         # quiet: begin_transition plays its own

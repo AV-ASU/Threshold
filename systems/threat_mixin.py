@@ -273,7 +273,7 @@ class ThreatMixin:
             return
         if not self._cult_prefilled:
             for _ in range(missing):
-                if self._spawn_cultist("cult_regular", "cultist", speed=0.85,
+                if self._spawn_cultist("cult_regular", "cultist", speed=0.95,
                                        gaze_range=180, from_pool=True) is None:
                     break
             self._cult_prefilled = True
@@ -284,7 +284,7 @@ class ThreatMixin:
             return
         self._cult_topup_t = CULT_TOPUP_INTERVAL
         self._spawn_cultist("cult_regular", "cultist",
-                             speed=0.85, gaze_range=180, from_pool=True)
+                             speed=0.95, gaze_range=180, from_pool=True)
 
     def _flank_cultists(self):
         """When 2+ regular cultists are chasing in an open scene, the
@@ -587,7 +587,7 @@ class ThreatMixin:
         self._fold_pursuer = None
         self._fold_pursuer_grace = 0.0
 
-    def _spawn_cultist(self, tag, kind, speed=0.85, gaze_range=180,
+    def _spawn_cultist(self, tag, kind, speed=0.95, gaze_range=180,
                        movement="chaser", name="", at=None, from_pool=False):
         """Plant a cultist. If `at` (x, y) is given and walkable, they enter
         there (the door you came in by -- for reinforcement waves). Else if
@@ -743,7 +743,7 @@ class ThreatMixin:
         self._reinforce_t = REINFORCE_COOLDOWN
         for _ in range(REINFORCE_COUNT):
             self._spawn_cultist("cult_regular", "cultist",
-                                 speed=0.85, gaze_range=180,
+                                 speed=0.95, gaze_range=180,
                                  at=self._king_anchor)
 
     def _despawn_king(self):
