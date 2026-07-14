@@ -33,6 +33,31 @@ sheet. The maintainer wants to see it, not audit it. Pick the clearest angle.
 
 ---
 
+## TWO TILT TRAPS TO CATCH
+
+**1. Camera-facing is the EXCEPTION, not the norm.** A sprite that looks the
+**same from all four cardinal directions** is "facing the camera" (a billboard
+/ standee that swivels to the view). A few things genuinely read better that
+way and should stay so: **fire / flame, a glow, and thin organic things**
+(grass, a wisp) are easier and truer as a camera-facing card. Those are
+**rare**. For anything **man-made or solid**, camera-facing is a bug: it reads
+as a flat sticker that pivots to look at you. So the rule: **anything that
+faces the camera must carry a stated REASON why** (a comment, or an obvious
+tilt-set choice like fire). If a camera-facing object has **no good reason**,
+it is wrong and gets updated to fit the tilt: a real `SOLID_PROPS` /
+`FURNITURE` volume for a man-made thing, or a `_WALL_DECO` for a hung detail
+(the tilt dispatch map in `CLAUDE.md`). When you render a scene, actively ask
+of each swiveling card: *should this really face the camera?*
+
+**2. Wall detail can HIDE at the cardinal facings (check +/- 45 degrees).**
+Details attached to a wall (`_WALL_DECO`, hung things, window and door trim,
+anything on a wall face) go **edge-on or occluded** when you look straight down
+a cardinal direction, so a pure N/E/S/W sweep can miss them entirely and you
+will think a wall is bare when it is dressed. So **when you are checking a
+scene's WALL sprites specifically, also render +/- 45 degrees off each facing**
+(the same head-turn arc the player has). Look at what sits on the walls from
+the angles that actually reveal the wall faces, not just dead-on.
+
 ## HOW TO RENDER
 
 - **The fixed regression set** (`tools/capture_world.py --tag <t>`): boots the
