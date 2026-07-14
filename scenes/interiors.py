@@ -324,6 +324,18 @@ def build_barn():
                                  "butter_churn"))
     sc.add_decoration(Decoration(11 * TILE + 16, 0 * TILE + 22,
                                  "preserve_shelf", seed=21))
+    # It read like one farmer's barn, but the newcomers bedded down here in
+    # numbers (Toby: "They slept all over then. The barn.") -- dress it so it
+    # reads inhabited by MANY (TODO #691). Several bedrolls laid out across
+    # the main floor (staggered off the grid, clear of the spawn tile and the
+    # door approach), with a couple of gear crates for their belongings.
+    for (bx, by, ba) in [(2, 7, 0.0), (3, 9, 0.5), (6, 7, -0.4), (7, 9, 0.2)]:
+        sc.add_decoration(Decoration(bx * TILE + 14, by * TILE + 18,
+                                     "bedroll", ang=ba, seed=bx * 7 + by))
+    sc.add_decoration(Decoration(2 * TILE + 18, 10 * TILE + 12, "crate",
+                                 seed=3))
+    sc.add_decoration(Decoration(7 * TILE + 14, 10 * TILE + 12, "crate",
+                                 seed=8))
     # The well-passage tunnel hatch -- a proper cellar_hatch sprite,
     # NOT a chest. Drawn as a wooden floor hatch with iron pull-ring;
     # the player presses E adjacent to descend. In the back stall.

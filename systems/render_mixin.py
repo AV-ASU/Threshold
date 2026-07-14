@@ -1675,6 +1675,9 @@ class RenderMixin:
         # Ending overlay -- preempts everything during the ending
         # sequences.
         self._draw_ending()
+        # Close-up examine tableau -- a full-frame modal close-up over the
+        # world + HUD (world is frozen while it is up).
+        self._draw_tableau()
         # Death screen -- the King's mask furnace or the cultist KILLED
         # card. Drawn over EVERYTHING (HUD, dialog) so the catch takes
         # the whole frame.

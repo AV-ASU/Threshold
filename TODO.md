@@ -174,6 +174,21 @@ full economy table is still to be drafted).
   (nothing stops the PI but himself); **existing verbs only** (give via E /
   dialog).
 
+### 2b. **[Opus + Fable]** Close-up examine tableaux  *(play-notes feature; PILOT LANDED 2026-07)*
+
+The diegetic "look at the thing" modal: press `[E]` on a tagged prop and the
+world pauses on an animated procedural close-up with a **menu** that mutates it
+live (take the gun off the desk, read the case file) and can open readable text
+(walking away interrupts). Art in `ui/tableau.py`, state machine in
+`systems/tableau_mixin.py` (a `Game` mixin), wired like the flashback cutscene
+(`_tableau is not None` freezes the world; `_draw_tableau` paints over
+everything; `_tableau_input` owns input). **PILOT LANDED:** the bedroom writing
+desk (pistol + case file) replaced the old linear "E takes gun, next E reads
+notes." Guarded by `tests/flow.py` §14; player-facing text in `DIALOGUE.md`
+Part B. **Still open (the maintainer greenlights each):** reuse the system for
+a **pedestal** (the Mask on the altar) and the **"face across a table"** beats
+(Mara's confrontation, the cult Talk). Art refinement per beat, then wire.
+
 ### 3. **[Opus]** Ground heightfield — blind-spot hills  *(DESIGN.md §10; PROTOTYPE landed 2026-07 — floor-roll rewrite + live authoring deferred)*
 
 **PROTOTYPE DONE (behind a preview, dormant).** Built: `Scene.set_ground` /

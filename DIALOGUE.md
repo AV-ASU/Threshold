@@ -507,6 +507,25 @@ spatial fold only (looping roads), never the door or the cosmology.
   `flashback_seen`): "You have stood here before. In sleep." then the plain
   doorframe beat.
 
+## The close-up examine tableaux
+Diegetic close-up "look at the thing" modals (art in `ui/tableau.py`, state in
+`systems/tableau_mixin.py`): press `[E]` on a tagged prop and the world pauses
+on an animated close-up with a menu that mutates it live. Player-facing text:
+- **The bedroom desk** (`_open_desk_tableau`, opened from `bedroom_interact`).
+  Menu labels: **"Take the pistol"** (drops once taken), **"Read the case
+  file"**, **"Step back"**. Reading hint: "(walk away to close)".
+  - **The case file** (`_tableau_read_case`, sets `read_journal`): "CLIENT:
+    Walter Blaine. Wants his daughter found and brought home." / "MARA BLAINE,
+    26. Cut ties, drove north, quit calling home. The trail runs cold at
+    Brimley." / "The job: ask my questions, find the girl, drive home by
+    morning." / "The drive in was easy. Then the engine died at the lodge
+    steps and wouldn't catch again."
+  - **After the Dark** (`hive_seen`, the file has rewritten itself): "Subject:
+    located. Recovery: declined." / "The handwriting is yours. You don't
+    remember writing it."
+  - Taking the pistol also fires the notice "You take your pistol off the
+    desk."
+
 ## The death cards
 `systems/game.py` `_trigger_death(kind)`: `cultist` → CAPTURED (taken alive);
 `sheriff` → TAKEN INTO CUSTODY (the hollow lawman); `king` → the Carcosa

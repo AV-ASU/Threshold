@@ -64,10 +64,11 @@ from systems.king_roam_mixin import KingRoamMixin
 from systems.rot_mixin import RotMixin, _corpse_examine
 from systems.render_mixin import RenderMixin
 from systems.narrative_mixin import NarrativeMixin
+from systems.tableau_mixin import TableauMixin
 
 
 class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
-           RenderMixin, NarrativeMixin):
+           RenderMixin, NarrativeMixin, TableauMixin):
     def __init__(self):
         pygame.init()
         self.fullscreen = True
@@ -301,6 +302,8 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         # _flashback_phase is None (inactive) or 0 (the one held phase).
         self._flashback_phase = None
         self._flashback_t = 0.0
+        # Close-up examine tableau (None, or the active modal dict).
+        self._tableau = None
         self._flashback_stills = [(None, FLASHBACK_DUR)]
         # Mask swarm: tick spawns dark-wood faces (accelerating) into
         # _flashback_masks; draw blits + ages them. _flashback_pool caches
@@ -532,6 +535,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         # Flashback / ending state
         self._flashback_phase = None
         self._flashback_t = 0.0
+        self._tableau = None
         self._flashback_masks = []
         self._flashback_pool = None
         self._flashback_spawn_acc = 0.0
@@ -2744,7 +2748,9 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
                             # The door-dream (flash or rite) freezes the
                             # sim: nothing closes in while the PI is inside
                             # the memory.
-                            or self._flashback_phase is not None)
+                            or self._flashback_phase is not None
+                            # A close-up examine tableau freezes the world too.
+                            or self._tableau is not None)
             # Evidence-gated corruption: cultists only bloom into His maw
             # once you understand too much (3+ evidence). Read by the
             # cultist AI when it locks on (enemy._cult_tick / npc chaser).
@@ -2921,6 +2927,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
             self._tick_wake_muffle(dt)
             self._tick_ashfall(dt)        # atmosphere: drifts behind modals too
             self._tick_flashback(dt)
+            self._tick_tableau(dt)
             self._tick_ending(dt)
         elif self.state == "transition":
             self.transition_t += dt
@@ -3091,6 +3098,11 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
                     self.journal_ui.change_tab(1)
                 elif ev.key in (pygame.K_RETURN, pygame.K_e, pygame.K_SPACE):
                     self.journal_ui.use_selected(self.player)
+            return
+        if self._tableau is not None:
+            # A close-up examine tableau owns all input while it is up: the
+            # menu cursor, selecting, reading, and walking away to close.
+            self._tableau_input(ev)
             return
         if self.state in ("playing", "transition"):
             if ev.type == pygame.KEYDOWN:
