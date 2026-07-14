@@ -285,6 +285,18 @@ def build_effigy_grove():
                                  "bloodstain"))
     sc.add_decoration(Decoration(11 * TILE + 16, 12 * TILE + 16,
                                  "phantom_mark"))
+    # The DUG MOUTH (TODO #681): this clearing is the mouth of the cult's
+    # mine, and the way down stands in the fire. A timber shoring frame set
+    # behind the descent (north, the far side under the tilt) frames the pane
+    # like a mine adit, with spoil thrown up off the ring where they dug --
+    # so the descent reads as going DOWN into worked ground, not just a fire.
+    # Kept sparse so the fire, the stones and the fold stay the focus.
+    sc.add_decoration(Decoration(13 * TILE + 16, 5 * TILE + 16,
+                                 "shoring_frame"))
+    sc.add_decoration(Decoration(10 * TILE + 12, 6 * TILE + 16,
+                                 "spoil_heap", seed=5))
+    sc.add_decoration(Decoration(16 * TILE + 20, 11 * TILE + 16,
+                                 "spoil_heap", seed=9))
     # ---- No worker ----
     # There is no worker here. The closing rite claimed the whole town
     # at once (NARRATIVE §4 / DESIGN.md §1), so individual cursing -- and the figure
