@@ -62,7 +62,7 @@ OUTDOOR_SCENES = {"lodge_yard", "cornfield_path",
                   "clearing", "graveyard",
                   "country_lane", "cornfield_maze",
                   "arrival_road",
-                  "gravel_road_north", "river_crossing",
+                  "gravel_road_north",
                   "backwoods_cabin"}
 
 # The continuous outside world. Crossing between any two of these is
@@ -265,7 +265,7 @@ CULT_WAKE_EV = 1
 CULTIST_SCENES = {
     "cornfield_path", "lodge_yard", "graveyard",
     "brimley", "country_lane",
-    "gravel_road_north", "river_crossing", "backwoods_cabin",
+    "gravel_road_north", "backwoods_cabin",
     "cornfield_maze",
 }
 # (The old GAZE_BIND high-visibility trigger was retired in the play-notes
