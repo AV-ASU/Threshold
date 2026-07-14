@@ -862,20 +862,38 @@ def main():
                          for hx, hy, _k in (gsr.scene.hide_spots or []))
     check(not hide_over_desk,
           "startroom: no hide spot shadows the desk's [E]")
-    # 1st [E] at the desk TAKES the gun: sprite removed, pistol equipped
+    # [E] at the desk opens the close-up EXAMINE TABLEAU (play-notes): a
+    # lamp-lit close-up of the pistol + case file with a menu.
     gsr.save.set_flag("wake_up", True)
     gsr.player.x, gsr.player.y = dnx, dny
     gsr.try_interact()
+    check(gsr._tableau is not None and gsr._tableau["kind"] == "desk",
+          "startroom: [E] at the desk opens the close-up examine tableau")
+    _labels = [o[0] for o in gsr._tableau_options()]
+    check("Take the pistol" in _labels and "Read the case file" in _labels
+          and "Step back" in _labels,
+          "startroom: the tableau menu offers take / read / step back")
+    # Selecting TAKE removes the gun from the tableau AND the desk, equips it,
+    # and drops the option.
+    gsr._tableau_take_gun()
     check(gsr.player.inventory.has("pistol") and not _gun_on_desk(gsr)
-          and gsr.player.inventory.equipped.get("weapon") == "pistol",
-          "startroom: [E] takes the revolver off the desk (sprite -> inventory)")
-    # 2nd [E] READS the notes (does not hide)
-    gsr.player.x, gsr.player.y = dnx, dny
-    gsr.player.hidden = None
-    gsr.dialog.active = False
-    gsr.try_interact()
-    check(gsr.player.hidden is None and gsr.save.flag("read_journal"),
-          "startroom: a second [E] READS the notes (does not hide)")
+          and gsr.player.inventory.equipped.get("weapon") == "pistol"
+          and not gsr._tableau["state"]["gun_present"]
+          and "Take the pistol" not in [o[0] for o in gsr._tableau_options()],
+          "startroom: TAKE lifts the pistol off the desk and drops the option")
+    # Selecting READ overlays the case notes (sets read_journal); the player
+    # never hides from this.
+    gsr._tableau_read_case()
+    check(gsr._tableau["reading"] and gsr.save.flag("read_journal")
+          and gsr.player.hidden is None,
+          "startroom: READ opens the case notes and never hides the player")
+    # Walking away (a movement key) interrupts and closes the tableau.
+    class _MoveKey:
+        type = pygame.KEYDOWN
+        key = pygame.K_a
+    gsr._tableau_input(_MoveKey())
+    check(gsr._tableau is None,
+          "startroom: walking away interrupts and closes the tableau")
     # the gun stays gone across a scene reload
     gsr.load_scene_now("bedroom", "from_lodge")
     check(not _gun_on_desk(gsr),

@@ -245,48 +245,14 @@ def bedroom_interact(game):
     tx = 11 * TILE
     ty = 5 * TILE + 16
     if abs(px - tx) <= 44 and abs(py - ty) <= 44:
-        # Take the sidearm off the desk first, if it is still lying there:
-        # remove its sprite, put the pistol in the inventory (equipped), and
-        # flag it so it can't be re-grabbed. The notes read on the next press.
-        if not game.save.flag("desk_pistol_taken"):
-            game.save.set_flag("desk_pistol_taken", True)
-            for d in sc.decorations:
-                if getattr(d, "tag", None) == "writing_desk":
-                    d.gun_present = False
-                    game._invalidate_prop_card(d)   # rebuild without the gun
-            game.player.inventory.add("pistol", 1)
-            game.player.inventory.equipped["weapon"] = "pistol"
-            game.audio.play("pickup", 0.7)
-            game.show_notice("You take your pistol off the desk.")
-            return
-        # After the Dark, the case has rewritten itself. The notebook
-        # the player opens the game on is the same one that closes it.
-        # First read is the gut-punch; subsequent reads collapse so
-        # repetition doesn't dilute it.
-        if game.save.flag("hive_seen"):
-            if game.save.flag("case_closed_read"):
-                return
-            game.save.set_flag("case_closed_read", True)
-            game.dialog.show([
-                "Subject: located. Recovery: declined.",
-                "[c=dim]The handwriting is yours. You don't remember "
-                "writing it.[/c]",
-            ], speaker="", voice="blip_soft", portrait="narrator")
-            return
-        game.dialog.show([
-            "[c=dim](Your case notebook, open on the table where you left "
-            "it.)[/c]",
-            "CLIENT: Walter Blaine. Wants his daughter found and brought "
-            "home.",
-            "MARA BLAINE, 26. Cut ties, drove north, quit calling home. "
-            "The trail runs cold at Brimley.",
-            "The job: ask my questions, find the girl, drive home by "
-            "morning.",
-            "[c=dim]The drive in was easy. Then the engine died at the lodge "
-            "steps and wouldn't catch again.[/c]",
-        ], speaker="", voice="blip_soft", portrait="narrator")
-        if not game.save.flag("read_journal"):
-            game.save.set_flag("read_journal", True)
+        # The desk is a close-up EXAMINE TABLEAU (play-notes): E cuts to a
+        # lamp-lit close-up of the pistol + the open case file with a menu.
+        # Taking the pistol removes it from the tableau live; reading the
+        # case file overlays the notes (walking away interrupts); the file
+        # rewrites itself after the Dark. All the state (desk_pistol_taken,
+        # read_journal, case_closed_read) is set from the tableau callbacks
+        # in systems/tableau_mixin.py.
+        game._open_desk_tableau()
         return
     # The cot (stand beside it, sc._cot_pos): sleep and save.
     cx_, cy_ = getattr(sc, "_cot_pos", (4 * TILE + 16, 3 * TILE + 16))

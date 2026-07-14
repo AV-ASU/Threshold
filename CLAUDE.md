@@ -98,7 +98,7 @@ it renders the procedural sprites to a labelled PNG strip.
   is reused across quit-to-title). The big cohesive subsystems were split off
   into **mixins** that `Game` inherits (`class Game(CutsceneMixin,
   ThreatMixin, KingRoamMixin, RotMixin, RenderMixin,
-  NarrativeMixin)`) — they are
+  NarrativeMixin, TableauMixin)`) — they are
   still `Game` methods, just housed in their own files:
   - `systems/config.py` — gameplay tuning constants + scene-gating sets
     (`SAFE_SCENES`, `CULTIST_SCENES`, `UNDERGROUND_SCENES`, the `VIS_*` /
@@ -113,6 +113,14 @@ it renders the procedural sprites to a labelled PNG strip.
     hunting sheriff.
   - `systems/narrative_mixin.py` — the journal flashback, the case-file /
     interior-voice notes (`_log_case_entry` …), the endings + opening crawl.
+  - `systems/tableau_mixin.py` — the **close-up examine tableaux**
+    (`_open_desk_tableau` / `_tableau_input` / `_draw_tableau`): a modal
+    close-up of a prop with a menu that mutates it live (take the gun off the
+    desk, read the case file), the world frozen while it is up. Art (the
+    procedural close-ups) lives in `ui/tableau.py`; the pilot is the bedroom
+    writing desk, and the system is meant to be reused for a pedestal / a face
+    across a table (Mara, the cult Talk). Player-facing text is in
+    `DIALOGUE.md` Part B.
 - `scenes/` — `SCENE_BUILDERS` registry + `load_scene(key)`
   (`scenes/__init__.py`, ~44 scenes). A scene has spawns, exits,
   decorations, npcs, enemies, items, and optional
