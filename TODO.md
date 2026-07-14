@@ -820,8 +820,9 @@ is gone, his witness account is photo-earned.)*
   any unmapped slug still falls back to Title Case, so add authored titles
   there as new beats land.
 - HUD fall-through labels: "Dark" (the Hive!), "Depths Antechamber", "Effigy
-  Grove", "Threshold" (`scenes/base.py` fallback), plus `"lodge": "the Inn"`
-  against "Arcadia Lodge" everywhere else.
+  Grove", "Threshold" (`scenes/base.py` fallback). *(The `"lodge": "the Inn"`
+  mismatch is FIXED 2026-07 with the Lodge expansion: `lodge` now reads
+  "Arcadia Lodge".)*
 - NPC object names "Clerk"/"Sheriff"/"Preacher" leak on generic paths
   (corpse examine: "Clerk. Face-down where the round put them.").
 - Placeholder texts on cued interactions: "Some old tools." (the beat's

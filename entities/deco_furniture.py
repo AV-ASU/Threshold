@@ -94,6 +94,21 @@ class DecoFurnitureMixin:
             pygame.draw.line(surf, (32, 34, 38), (gx + 4, ry + 10), (gx + 13, ry + 6), 3)
             pygame.draw.line(surf, (120, 124, 132), (gx + 4, ry + 10), (gx + 13, ry + 6), 1)
 
+    def _draw_nightstand(self, surf, x, y):
+        """Flat (pitch-0) fallback for the nightstand box: a small bedside
+        end table, a drawer with a brass knob over an open shelf recess."""
+        w = int(self.kwargs.get("w", 26)); h = int(self.kwargs.get("h", 28))
+        rx, ry = x - w // 2, y - h // 2
+        pygame.draw.rect(surf, (44, 30, 18), (rx + 2, ry + h - 7, 4, 7))     # legs
+        pygame.draw.rect(surf, (44, 30, 18), (rx + w - 6, ry + h - 7, 4, 7))
+        th = h - 7
+        pygame.draw.rect(surf, (74, 52, 32), (rx, ry, w, th))                # body/top
+        pygame.draw.rect(surf, (96, 70, 44), (rx, ry, w, 2))                 # lit back
+        pygame.draw.rect(surf, (52, 36, 22), (rx + 4, ry + 4, w - 8, 7))     # drawer
+        pygame.draw.circle(surf, (206, 182, 118), (rx + w // 2, ry + 7), 2)  # brass knob
+        pygame.draw.rect(surf, (30, 21, 12), (rx + 5, ry + 13, w - 10, th - 15))  # shelf recess
+        pygame.draw.rect(surf, (40, 27, 16), (rx, ry + th - 3, w, 3))        # front lip
+
     def _draw_chair(self, surf, x, y):
         w = int(self.kwargs.get("w", 22)); h = int(self.kwargs.get("h", 28))
         rx, ry = x - w // 2, y - h // 2

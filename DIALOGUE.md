@@ -534,6 +534,10 @@ mask-furnace cutscene. Card text is flow-guarded.
 ## Prop examines
 Transcribed as the narrator sweep (`TODO.md` #13b/#15) reaches each. The
 ones landed so far:
+- **the Arcadia guest-hall LOCKED doors** (`build_lodge_hall._hall_interact`,
+  `scenes/lodge.py`; every locked 'l' door in the guest wing): "[c=dim](Locked.
+  A row of them, all the same, all shut.)[/c]" (the uncanny hotel of shut
+  rooms kept ready for guests who won't come, NARRATIVE §4).
 - **`the_burning`** (`build_clearing._void_boss_interact`,
   `scenes/interiors.py`): "A fire pit big enough to stand a family around,
   cold a long while. What it burned was not all wood. Buckles, bowl rims,

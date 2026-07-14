@@ -259,9 +259,12 @@ never predation.
   school, the barn, the kid's house, the named locals on their stoops,
   and the car at the edge. The well is a dead town shaft — dread
   set-dressing, and the descent runs elsewhere.
-- **The Arcadia Lodge.** The hotel the PI is staying at: lodge, yard,
-  cornfields. Sable's desk keeps the clean sign-in book and the lead
-  pointing down; the **padlocked lodge cellar** (a surface interior)
+- **The Arcadia Lodge.** The two-storey hotel the PI is staying at: the
+  common room (Sable's reception desk keeps the clean sign-in book and the
+  lead pointing down), a guest wing of mostly-locked rooms kept empty and
+  ready (§4, Sable's want), the PI's spare room and two open guest rooms
+  off the hall, Sable's own room up in the loft, the yard, and the
+  cornfields beyond. The **padlocked lodge cellar** (a surface interior)
   holds the boxed old registers, keyed from the nail behind the house.
 - **The grove.** A hollow north of Brimley, above the river: the mouth
   of the cult's dug mine. The congregation walked there openly once —

@@ -232,7 +232,8 @@ CULT_AMBIENT_SCENES = {"works_cistern", "works_sorting", "works_scriptorium",
 # rest of the world is pressing against -- standing inside should
 # feel SAFE compared to outside. Hide vignette also suppressed
 # (you are already safe; the cramped read is wrong here).
-SAFE_SCENES = {"bedroom", "lodge", "clerk_room", "toby_house"}
+SAFE_SCENES = {"bedroom", "lodge", "lodge_hall", "guest_room_a",
+               "guest_room_b", "clerk_room", "toby_house"}
 
 # Refuges a chase can never cross (DESIGN.md §4): the safe houses above, plus
 # Mara's cell -- a deliberate underground refuge that hosts no cult, so a

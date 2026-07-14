@@ -989,8 +989,11 @@ def floor_step_sound(ch):
 # from this dict falls back to titlecase(key.replace('_', ' ')).
 DISPLAY_NAMES = {
     "bedroom":              "the Spare Room",
-    "lodge":                "the Inn",
-    "clerk_room":              "the Clerk's Room",
+    "lodge":                "Arcadia Lodge",
+    "lodge_hall":           "the Guest Hall",
+    "guest_room_a":         "a Guest Room",
+    "guest_room_b":         "a Guest Room",
+    "clerk_room":              "the Clerk's Loft",
     "maras_room":           "Mara's Room",
     "lodge_cellar":             "the Cellar",
     "lodge_yard":       "the Yard",

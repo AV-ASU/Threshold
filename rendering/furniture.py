@@ -277,9 +277,31 @@ def _d_desk_drawer(surf, pal, c):
     pygame.draw.circle(surf, (38, 30, 20), (int(k[0]), int(k[1])), 2)
 
 
+def _d_nightstand(surf, pal, c):
+    # a bedside end table: one drawer set HIGH on the near face with a
+    # small brass knob, and a dark open shelf recess below it. The two
+    # bands read the piece as a stand you'd keep by a bed (a plain box
+    # otherwise reads as a crate under the tilt).
+    drawer = [_fp(c, 0.14, 0.56), _fp(c, 0.86, 0.56),
+              _fp(c, 0.86, 0.86), _fp(c, 0.14, 0.86)]
+    pts = [(int(x), int(y)) for x, y in drawer]
+    pygame.draw.polygon(surf, _shade(pal["side"], 1.04), pts)
+    pygame.draw.polygon(surf, _shade(pal["dark"], 0.66), pts, 1)
+    k = _fp(c, 0.5, 0.71)
+    pygame.draw.circle(surf, (206, 182, 118), (int(k[0]), int(k[1])), 2)   # brass knob
+    # the open shelf beneath the drawer -- a shadowed cubby
+    shelf = [_fp(c, 0.20, 0.12), _fp(c, 0.80, 0.12),
+             _fp(c, 0.80, 0.46), _fp(c, 0.20, 0.46)]
+    pts2 = [(int(x), int(y)) for x, y in shelf]
+    pygame.draw.polygon(surf, _shade(pal["dark"], 0.5), pts2)
+
+
 # -- spec: kind -> (w, d, h, palette, detail) -------------------------------
 FURNITURE = {
     "table":     (26, 20, 11, _WOOD_MID, None),
+    # a small bedside end table (the guest-room template piece): a squat
+    # box, drawer high + open shelf below. Short enough to see over.
+    "nightstand": (16, 14, 16, _WOOD_MID, _d_nightstand),
     # the PI's writing desk (spare room): a WIDE table-height box (fills its
     # 2-tile footprint so the wood shows around the props) with a drawer
     # front, so the case file + revolver seated on its top read as sitting

@@ -1,11 +1,23 @@
-"""The Clerk's house (above the inn): spare_room (player's cot),
-main floor (kitchen + living + front door), the Clerk's bedroom
-(locked, holds the robe), the basement (photograph,
-notebook, flashlight, bulkhead exit).
+"""The Arcadia Lodge -- a small hotel, expanded 2026-07 to match the
+lore (Sable's "every room full ... every window lit"). The floor plan:
 
-The bedroom KEY means the spare room above the inn. The house KEY
-means the Clerk's downstairs. Geometries, pickups, decorations,
-NPCs, and triggers are preserved.
+  bedroom       -- the player's spare room (the cot save point)
+  lodge         -- the ground-floor COMMON ROOM: kitchen + sitting +
+                   the reception/intake front desk (Sable's post)
+  lodge_hall    -- the guest wing HALLWAY: a row of doors, most LOCKED,
+                   with the stairs up to the loft at the east end
+  guest_room_a  -- a guest room kept made-up and ready (the eerie tell:
+                   Sable keeps the rooms ready for guests who won't come)
+  guest_room_b  -- a guest room shut up under dust sheets
+  clerk_room    -- Sable's own room, now the upstairs LOFT (his cult robe
+                   in the closet -- the flavor tell)
+  lodge_cellar  -- behind the padlocked kitchen hatch (the boxed Ledger)
+
+Arrival flow: wake in `bedroom` -> `lodge_hall` -> `lodge` (meet Sable
+at the desk) -> `lodge_yard` -> town. The two new guest rooms share a
+template (bed, nightstand, chair, rug, table) via `_build_guest_room`.
+The locked guest doors are solid facade doors ('l'); the enterable ones
+(ours + the two new) plus Sable's loft are the only rooms with interiors.
 """
 import math
 import time
@@ -51,9 +63,11 @@ def build_bedroom():
         "WWWWWWWDWWWWWWWW",   # 11 south wall, door D at col 7
     ]
     sc = Scene("bedroom", floor, objects, music="home")
-    sc.add_exit("D", "lodge", "from_bedroom")
+    # South door -> the guest-wing HALLWAY (2026-07 Lodge expansion; the
+    # spare room opens onto the hall, and the common room is one more door on).
+    sc.add_exit("D", "lodge_hall", "from_bedroom")
     sc.set_spawn("default", 7, 6)
-    sc.set_spawn("from_lodge", 7, 10)
+    sc.set_spawn("from_hall", 7, 10)
     # The cot fills the NW corner (cols 2-3, rows 2-3). The player
     # stands one tile east at col 4 row 3 to sleep/save (the game's one
     # save point; bedroom_interact -> Game._sleep_at_cot).
@@ -78,6 +92,10 @@ def build_bedroom():
     # shallow bookshelf on the north wall, a writing desk + chair, a
     # tall wardrobe on the west wall.
     sc.add_decoration(Decoration(3 * TILE, 2 * TILE + 16, "bed", w=60, h=92))
+    # A bedside nightstand east of the cot (ties the spare room into the
+    # guest-room template; a candle is seated on it by seat_tabletop_props).
+    sc.add_furniture("nightstand", [(5, 2)], w=26, h=30)
+    sc.add_decoration(Decoration(5 * TILE + 16, 2 * TILE + 16, "candle"))
     # Bookshelf shoved up against the north wall so it covers the lower
     # part of the east window -- a tall room, a long low case crowding
     # the glass.
@@ -264,13 +282,13 @@ def bedroom_interact(game):
 # ---- innkeeper_house (key: 'lodge') ----
 
 def build_lodge():
-    """The Clerk's downstairs: kitchen on the left half, living
-    room on the right half. Wall divider with a door between them.
-    Front door on the south wall (B exit -- the player may be
-    blocked here by the Clerk). Cellar hatch in the kitchen,
-    PADLOCKED until the cellar key (behind the house) is carried.
-    Door to spare_room hallway on the north (col 13). Door
-    to the Clerk's bedroom on the north (col 4)."""
+    """The Arcadia's ground-floor COMMON ROOM + guest intake (2026-07
+    expansion). Kitchen on the left, sitting room on the right, and the
+    reception FRONT DESK where Sable checks guests in (his post). Three
+    ways out: the guest-wing HALLWAY through the north door (H), the
+    front door out to the yard (D, south), and the PADLOCKED cellar hatch
+    in the kitchen (L). The old direct doors to the spare room and the
+    Clerk's room are gone -- both hang off the hall now."""
     floor = [
         "==================",
         "==================",
@@ -290,7 +308,7 @@ def build_lodge():
     # ('5' down col 7) reads as a kitchen peninsula dividing the kitchen
     # from the living room, replacing the old blank wall divider.
     objects = [
-        "WWWW1WWWWWWWWBWWWW",
+        "WWWWWWWWWWWWWHWWWW",
         "W................W",
         "W................W",
         "W.tt...5.........W",
@@ -304,26 +322,21 @@ def build_lodge():
         "WWWWWWWDWWWWWWWWWW",
     ]
     sc = Scene("lodge", floor, objects, music="home")
-    # B = front door (south wall, col 13). The Clerk blocks this.
-    sc.add_exit("B", "bedroom", "from_lodge")
-    # 1 = Clerk's bedroom door (col 4). Not gated (TODO C6: intended locked?).
-    sc.add_exit("1", "clerk_room", "from_lodge")
-    # D = back door, leads to the gravel yard.
+    # H = the guest-wing HALLWAY door (north wall, col 13). The whole guest
+    # wing -- the spare room, the two guest rooms, and Sable's loft -- is on
+    # the far side of it.
+    sc.add_exit("H", "lodge_hall", "from_lodge")
+    # D = front door, out to the gravel yard (and on to town).
     sc.add_exit("D", "lodge_yard", "from_lodge")
     # L = cellar hatch in the kitchen.
     sc.add_exit("L", "lodge_cellar", "from_lodge")
-    # SEE-THROUGH DOORS: the two interior room doors show the actual room
-    # beyond through the tilt camera instead of a flat dark recess
+    # SEE-THROUGH DOOR: the hall door shows the actual corridor beyond
+    # through the tilt camera instead of a flat dark recess
     # (rendering.portal.draw_through_aperture, wired via Game._build_door_views).
-    sc.seethrough_doors = {"B", "1"}
+    sc.seethrough_doors = {"H"}
     sc.set_spawn("default", 9, 9)
-    # The B door (spare-room) is at col 13 of the north wall.
-    # The 1 door (Clerk's bedroom) is at col 4. They were both
-    # set to (4, 1) which trapped the spare-room arrival south of
-    # the kitchen table at (4, 3). Each spawn is now under its own
-    # door.
-    sc.set_spawn("from_bedroom", 13, 1)        # south of B (spare-room)
-    sc.set_spawn("from_clerk_room", 4, 1)        # south of 1 (Clerk's bedroom)
+    # Arriving from the hall lands under the H door (col 13, north wall).
+    sc.set_spawn("from_hall", 13, 1)
     sc.set_spawn("from_lodge_yard", 7, 10)
     # The L cellar hatch is at (3, 9). Spawning even one tile north
     # of it (3, 8) shares the same column -- a south key press would
@@ -539,16 +552,209 @@ def house_interact(game):
     ], speaker="", voice="blip_soft", portrait="narrator")
 
 
-# ---- the Clerk's Room (key: 'clerk_room') ----
-# The Lodge Clerk's private room, off the main floor. No evidence lives
-# here -- Mara's room (robe + letter, #1) and the journal (#2) moved to the
+# ---- the guest wing HALLWAY (key: 'lodge_hall') ----
+
+def build_lodge_hall():
+    """The Arcadia's guest-wing corridor (2026-07 expansion). A long hall
+    of doors, most of them LOCKED and shut -- the uncanny hotel kept ready
+    for guests who will never come (NARRATIVE §4, Sable). Three rooms open
+    off it (the spare room, the two guest rooms), plus the STAIRS UP to
+    Sable's loft at the east end and the door back to the common room on
+    the west wall."""
+    W, H = 22, 6
+    floor = ["=" * W for _ in range(H)]
+    # N wall: enterable doors B (spare room), F (guest_a), J (guest_b), then
+    # two LOCKED facade doors 'l'. Mid-height side doors: H (west -> common),
+    # U (east -> stairs up to the loft). One more locked 'l' on the S wall.
+    objects = [
+        "WWWBWWWFWWWJWWWlWWWlWW",   # 0  north wall + door row (doors 3,7,11,15,19)
+        "W....................W",   # 1
+        "H...................UW",   # 2  H west -> common ; U (col 20) -> loft stairs
+        "W....................W",   # 3
+        "W....................W",   # 4
+        "WWWWWWWWWWlWWWWWWWWWWW",   # 5  south wall + one locked door (col 10)
+    ]
+    sc = Scene("lodge_hall", floor, objects, music="home")
+    sc.add_exit("H", "lodge", "from_hall")           # back to the common room
+    sc.add_exit("B", "bedroom", "from_hall")         # the spare room (ours)
+    sc.add_exit("F", "guest_room_a", "from_hall")    # guest room, made-up
+    sc.add_exit("J", "guest_room_b", "from_hall")    # guest room, shut up
+    sc.add_exit("U", "clerk_room", "from_hall")      # stairs up to the loft
+    # The hall door shows the room/stairs beyond through the tilt aperture.
+    sc.seethrough_doors = {"H"}
+    # Arrival spawns, each under the door the player came through.
+    sc.set_spawn("default", 2, 2)
+    sc.set_spawn("from_lodge", 1, 2)                 # just east of the H door
+    sc.set_spawn("from_bedroom", 3, 1)               # under the B door
+    sc.set_spawn("from_guest_a", 7, 1)               # under the F door
+    sc.set_spawn("from_guest_b", 11, 1)              # under the J door
+    sc.set_spawn("from_clerk_room", 19, 2)           # off the loft stairs
+    sc.hide_spots = []
+
+    # A long runner rug down the middle of the corridor -- off-grid, multi-tile.
+    sc.add_decoration(Decoration(11 * TILE, 2 * TILE + 20, "rug",
+                                 w=440, h=60, color=(72, 44, 46), seed=41))
+    # The STAIRS UP to the loft, standing on the U tile (east end). A real
+    # SOLID_PROPS volume that climbs north past wall height.
+    sc.add_decoration(Decoration(20 * TILE + 16, 2 * TILE + 8, "staircase"))
+    # Wall lamps between the doors (north wall), a couple of them dark. The
+    # kerosene lamps hang low on the wall face; the hall is dim between them.
+    for lx in (5, 13, 17):
+        sc.add_decoration(Decoration(lx * TILE + 16, 0 * TILE + 22,
+                                     "kerosene_lamp"))
+    # A varnish-dark portrait and a framed sampler on the north wall, between
+    # the doors -- the Arcadia's genteel dressing, gone to murk.
+    sc.add_decoration(Decoration(9 * TILE + 16, 0 * TILE + 22,
+                                 "oil_portrait", seed=4))
+    sc.add_decoration(Decoration(21 * TILE + 4, 0 * TILE + 22, "sampler",
+                                 seed=7))
+    # A hall side table against the south wall with an unlit candle.
+    sc.add_furniture("nightstand", [(6, 4)], w=26, h=30)
+    sc.add_decoration(Decoration(6 * TILE + 16, 4 * TILE + 16, "candle"))
+    # Cobwebs fanning from the high corners; dust motes down the hall.
+    sc.add_decoration(Decoration(1 * TILE + 6, 1 * TILE + 6, "cobweb", ang=0.0))
+    sc.add_decoration(Decoration(20 * TILE + 26, 1 * TILE + 6, "cobweb",
+                                 ang=math.pi / 2))
+    sc.add_decoration(Decoration(14 * TILE + 20, 4 * TILE + 20, "cobweb",
+                                 ang=math.pi))
+    for i in range(6):
+        sc.add_decoration(Decoration((3 + i * 3) * TILE + 20,
+                                     (2 + (i % 2)) * TILE + 16, "mote"))
+    # A phantom mark scratched into a floorboard, half under the runner.
+    sc.add_decoration(Decoration(15 * TILE + 16, 3 * TILE + 16, "phantom_mark"))
+
+    # The LOCKED facade doors ('l'): solid, closed, and never open. Collect
+    # their world centres so house-hall interact can voice them.
+    locked = []
+    for ty, row in enumerate(objects):
+        for tx, ch in enumerate(row):
+            if ch == "l":
+                locked.append((tx * TILE + 16, ty * TILE + 16))
+                sc.add_interactable(tx * TILE + 16, ty * TILE + 16, 40)
+    sc._locked_doors = locked
+
+    def _hall_interact(game):
+        px, py = game.player.x, game.player.y
+        for lx, ly in getattr(sc, "_locked_doors", []):
+            if abs(px - lx) <= 40 and abs(py - ly) <= 44:
+                game.audio.play("door_locked", 0.5)
+                game.dialog.show([
+                    "[c=dim](Locked. A row of them, all the same, all shut.)[/c]",
+                ], speaker="", voice="blip_soft", portrait="narrator")
+                return
+    sc.on_interact_fn = _hall_interact
+    return sc
+
+
+# ---- the guest rooms (keys: 'guest_room_a', 'guest_room_b') ----
+
+def _build_guest_room(key, *, mirrored, shut, seed):
+    """Shared template for an Arcadia guest room (2026-07 expansion): a bed,
+    a bedside nightstand, a chair, a rug, and a table -- the layout every
+    room repeats, with variety in arrangement and dressing. `mirrored` flips
+    the room left-to-right; `shut` dresses it closed-up under dust and cobwebs
+    (vs kept made-up and ready). Rooms read empty: the guests walked out one
+    night and never came back, and Sable keeps the doors shut on them."""
+    W, H = 14, 10
+
+    def mx(col):
+        return (W - 1 - col) if mirrored else col
+
+    win_c = mx(3)           # window on the N wall, over the bed
+    door_c = mx(8)          # door on the S wall (offset from the window)
+    floor = ["=" * W for _ in range(H)]
+    objects = []
+    for y in range(H):
+        if y == 0:
+            row = list("W" * W); row[win_c] = "i"
+        elif y == H - 1:
+            row = list("W" * W); row[door_c] = "D"
+        else:
+            row = ["W"] + ["."] * (W - 2) + ["W"]
+        objects.append("".join(row))
+    sc = Scene(key, floor, objects, music="home")
+    sc.add_exit("D", "lodge_hall",
+                "from_guest_a" if key == "guest_room_a" else "from_guest_b")
+    sc.set_spawn("default", mx(6), 6)
+    sc.set_spawn("from_hall", door_c, H - 2)     # just inside the S door
+    sc.hide_spots = [
+        # crawl under the bed from the foot -- the walkable lip just south of
+        # the bed's solid footprint (flow §25: never inside the furniture).
+        (mx(2) * TILE + 16, 4 * TILE + 16, "under"),
+    ]
+
+    # The rug first, so the furniture sits on top of it.
+    rug_col = (70, 44, 46) if not shut else (60, 56, 52)
+    sc.add_decoration(Decoration(mx(6) * TILE, 5 * TILE + 8, "rug",
+                                 w=150, h=96, color=rug_col, seed=seed))
+    # The template pieces. Bed in the back corner under the window, nightstand
+    # beside it, a table + chair across the room.
+    sc.add_furniture("bed", [(mx(2), 2), (mx(3), 2), (mx(2), 3), (mx(3), 3)],
+                     w=56, h=56)
+    sc.add_furniture("nightstand", [(mx(4), 2)], w=26, h=30)
+    sc.add_furniture("table", [(mx(9), 6), (mx(10), 6)], w=54, h=32)
+    sc.add_furniture("chair", [(mx(9), 7)], w=22, h=28)
+
+    if not shut:
+        # A room kept READY: a lit candle on the nightstand, a kerosene lamp
+        # on the table, a made bed. Warm, waiting, and empty.
+        sc.add_decoration(Decoration(mx(4) * TILE + 16, 2 * TILE + 10,
+                                     "candle"))
+        sc.add_decoration(Decoration(mx(9) * TILE + 20, 6 * TILE + 6,
+                                     "kerosene_lamp"))
+        sc.add_decoration(Decoration(mx(11) * TILE + 10, 0 * TILE + 22,
+                                     "buck_head", wall="N"))
+    else:
+        # A room SHUT UP: no light, heavy cobwebs, a barrel of stored effects
+        # and an overturned chair. The dust has had a season to settle.
+        sc.add_furniture("barrel", [(mx(11), 8)])
+        sc.add_decoration(Decoration(mx(6) * TILE + 16, 7 * TILE + 16,
+                                     "overturned_chair"))
+        sc.add_decoration(Decoration(mx(12) * TILE + 20, 1 * TILE + 6,
+                                     "cobweb", ang=math.pi / 2))
+        sc.add_decoration(Decoration(mx(11) * TILE + 10, 0 * TILE + 22,
+                                     "sampler", seed=seed + 1))
+    # Shared dressing: a washstand against a side wall, a cobweb in a high
+    # corner, dust motes, a faint phantom mark near the door.
+    sc.add_decoration(Decoration(mx(1) * TILE + 18, 6 * TILE + 8, "washstand"))
+    sc.add_decoration(Decoration(mx(1) * TILE + 6, 1 * TILE + 6, "cobweb",
+                                 ang=0.0))
+    for i in range(4):
+        sc.add_decoration(Decoration(mx(5) * TILE + i * 40,
+                                     (4 + (i % 2)) * TILE + 16, "mote"))
+    sc.add_decoration(Decoration(door_c * TILE + 16, (H - 2) * TILE + 12,
+                                 "phantom_mark"))
+    return sc
+
+
+def build_guest_room_a():
+    """A guest room kept made-up and READY (the eerie tell: Sable holds the
+    rooms waiting for guests who won't return). Bed, nightstand, chair, rug,
+    table; a lit candle, warm and empty."""
+    return _build_guest_room("guest_room_a", mirrored=False, shut=False,
+                             seed=19)
+
+
+def build_guest_room_b():
+    """A guest room SHUT UP under dust and cobwebs -- mirrored layout, no
+    light, stored effects. The template room's other face."""
+    return _build_guest_room("guest_room_b", mirrored=True, shut=True,
+                             seed=33)
+
+
+# ---- the Clerk's Room / the LOFT (key: 'clerk_room') ----
+# Sable's own room, now the upstairs LOFT (2026-07 expansion), reached by
+# the stairs at the east end of the guest hall. No evidence lives here --
+# Mara's room (robe + letter, #1) and the journal (#2) moved to the
 # Sorting-Hall cell and the barn, and the testimony leaves to the Scriptorium
 # (scenes/well.py, scenes/interiors.py). The one tell is a pressed cult
 # robe in his closet: the smiling trap-keeper is one of them.
 
 def build_clerk_room():
-    """The Lodge Clerk's private room. A bed, a closet (his pressed cult
-    robe -- the tell that he's complicit), a bare dresser, a window."""
+    """The Lodge Clerk's private room, up in the loft. A bed + bedside
+    nightstand, a closet (his pressed cult robe -- the tell that he's
+    complicit), a bare dresser, a washstand, a dormer window. The door is
+    the stair head down to the guest hall."""
     floor = ["=" * 14 for _ in range(10)]
     # A main room plus a partitioned CLOSET alcove (cols 9-12) reached
     # through an interior doorway. The Clerk's pressed cult robe hangs in
@@ -568,11 +774,12 @@ def build_clerk_room():
         "WWW1WWWWWWWWWW",   # 9  south wall, door 1 at col 3
     ]
     sc = Scene("clerk_room", floor, objects, music="home")
-    sc.add_exit("1", "lodge", "from_clerk_room")
+    # Door "1" is the stair head DOWN to the guest hall (the loft, 2026-07).
+    sc.add_exit("1", "lodge_hall", "from_clerk_room")
     # Door is at (3, 9); spawn at (4, 8) is open floor and one tile
     # off-axis so the player doesn't auto-retrigger.
     sc.set_spawn("default", 8, 7)
-    sc.set_spawn("from_lodge", 4, 8)
+    sc.set_spawn("from_hall", 4, 8)
 
     # The dresser (table sprite) is bare. Out in the main room,
     # off the door column so a solid prop never traps the player inside.
@@ -594,6 +801,7 @@ def build_clerk_room():
     # Sized darkwood furniture: a 2x2 bed, a tall closet (the Clerk's robe
     # -> _closet_pos), a low dresser (bare -> _dresser_pos).
     sc.add_furniture("bed", [(2, 6), (3, 6), (2, 7), (3, 7)], w=56, h=56)
+    sc.add_furniture("nightstand", [(4, 6)], w=26, h=30)   # bedside stand
     sc.add_furniture("wardrobe", [(10, 2), (10, 3)], w=26, h=54)
     sc.add_furniture("table", [(5, 7), (6, 7)], w=54, h=32)
 

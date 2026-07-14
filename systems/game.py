@@ -700,7 +700,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         # candle dips once (handled in bedroom_on_update via the
         # `_door_stuck_recoil` flag below). Second attempt opens
         # normally and from then on this gate is permanently down.
-        if (current == "bedroom" and target_scene == "lodge"
+        if (current == "bedroom" and target_scene == "lodge_hall"
                 and not self.save.flag("bedroom_door_passed")):
             if not getattr(self, "_bedroom_door_stuck_done", False):
                 self._bedroom_door_stuck_done = True

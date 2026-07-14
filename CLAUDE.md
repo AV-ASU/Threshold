@@ -122,7 +122,7 @@ it renders the procedural sprites to a labelled PNG strip.
     across a table (Mara, the cult Talk). Player-facing text is in
     `DIALOGUE.md` Part B.
 - `scenes/` — `SCENE_BUILDERS` registry + `load_scene(key)`
-  (`scenes/__init__.py`, ~44 scenes). A scene has spawns, exits,
+  (`scenes/__init__.py`, ~47 scenes). A scene has spawns, exits,
   decorations, npcs, enemies, items, and optional
   `on_enter_fn` / `on_exit_fn` / `on_update` / `on_interact_fn` hooks.
   - `scenes/base.py` — the `Scene` class + scene-builder helpers

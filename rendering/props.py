@@ -1241,6 +1241,49 @@ def _draw_shaft_ladder_solid(surf, cam, deco):
                          int(12 * s), int(5 * s)), max(1, int(2 * s)))
 
 
+def _draw_staircase_solid(surf, cam, deco):
+    """A wooden flight of stairs climbing AWAY from the camera (north) up to a
+    loft. Built as a stack of tread boxes: each successive step sits further
+    north and rises higher, so the near risers occlude the ones behind and the
+    tops read as treads. The top step climbs well past wall height (26), so it
+    reads as going up to a second floor. `yaw` rotates the whole flight (default
+    ascends north). (The flat pitch-0 view uses the 2D sprite.)"""
+    wx, wy = deco.x, deco.y
+    s = (getattr(deco, "scale", 1.0) or 1.0)
+    steps = 6
+    W = 30 * s                     # tread width
+    total_d = 44 * s               # depth the whole flight covers
+    step_d = total_d / steps
+    rise = 9 * s                   # height gained per step
+    pal = {"top": (110, 80, 50), "side": (80, 56, 34), "dark": (56, 39, 24)}
+    yaw = getattr(deco, "yaw", 0.0) or 0.0
+    c, sn = math.cos(yaw), math.sin(yaw)
+    # contact shadow under the whole footprint
+    bx, by = cam.project(wx, wy, 0)
+    shw = max(4, int(W * 0.5 * cam.scale * 1.1))
+    shh = max(3, int(total_d * 0.5 * cam.ground_squash() * cam.scale * 1.1))
+    sh = pygame.Surface((shw * 2 + 4, shh * 2 + 4), pygame.SRCALPHA)
+    pygame.draw.ellipse(sh, (0, 0, 0, 95), (2, 2, shw * 2, shh * 2))
+    surf.blit(sh, (int(bx) - shw - 2, int(by) - shh - 2))
+    # far (top) step first so the near risers paint over the ones behind
+    for i in range(steps - 1, -1, -1):
+        # local depth centre: near step (i=0) at +total_d/2, far (top) at -total_d/2
+        ly = total_d / 2 - (i + 0.5) * step_d
+        cx = wx + (-ly) * sn        # yaw the depth axis into world x
+        cy = wy + ly * c
+        _vbox(surf, cam, cx, cy, W, step_d, 0, (i + 1) * rise, pal, yaw=yaw)
+    # a dark loft mouth above the top step -- the way up reads as an opening
+    ty = total_d / 2 - steps * step_d
+    mx = wx + (-ty) * sn
+    my = wy + ty * c
+    top_z = steps * rise
+    mw = W * 0.42
+    mouth = [cam.project(mx - mw, my, top_z), cam.project(mx + mw, my, top_z),
+             cam.project(mx + mw, my, top_z + 12 * s),
+             cam.project(mx - mw, my, top_z + 12 * s)]
+    pygame.draw.polygon(surf, (10, 8, 12), mouth)
+
+
 def _draw_cellar_hatch_solid(surf, cam, deco):
     """A timber cellar hatch with real volume: a low raised plank box on the
     floor (not a flat decal), cross-boarded and nailed shut, an iron pull-ring
@@ -2058,6 +2101,42 @@ def _draw_steeple_solid(surf, cam, deco):
                      cam.project(wx + lean + 3.5 * s, wy, cz + 5 * s), 2)
 
 
+def _draw_lodge_gable_solid(surf, cam, deco):
+    """The Arcadia's upper storey / loft, as a gabled dormer block rising above
+    the main roofline so the hotel reads as two-storey (2026-07 expansion). A
+    dark upper wall with a warm lit loft window, capped by a shingled gable.
+    Like the steeple, `rise` lifts its base onto the roof and a matching
+    `depth_bias` (set at placement) sorts it above the opaque roof."""
+    wx, wy = deco.x, deco.y
+    s = (getattr(deco, "scale", 1.0) or 1.0)
+    rise = float(getattr(deco, "kwargs", {}).get("rise", 0.0)) * s
+    wall = {"top": (78, 60, 44), "side": (60, 46, 33), "dark": (42, 32, 23)}
+    W, D = 34 * s, 15 * s
+    z0, z1 = rise, rise + 16 * s                    # the upper-storey wall
+    _vbox(surf, cam, wx, wy, W, D, z0, z1, wall)
+    hw, hd = W / 2, D / 2
+    peak = 13 * s
+    ridge_f = cam.project(wx, wy - hd, z1 + peak)
+    ridge_n = cam.project(wx, wy + hd, z1 + peak)
+    fl, fr = cam.project(wx - hw, wy - hd, z1), cam.project(wx + hw, wy - hd, z1)
+    nl, nr = cam.project(wx - hw, wy + hd, z1), cam.project(wx + hw, wy + hd, z1)
+    # W + E roof slopes, then the near + far gable triangles
+    pygame.draw.polygon(surf, (48, 37, 29), [nl, ridge_n, ridge_f, fl])   # W slope
+    pygame.draw.polygon(surf, (66, 51, 39), [nr, ridge_n, ridge_f, fr])   # E slope
+    pygame.draw.polygon(surf, (40, 31, 24), [fl, fr, ridge_f])            # far gable
+    pygame.draw.polygon(surf, (56, 43, 33), [nl, nr, ridge_n])            # near gable
+    pygame.draw.polygon(surf, (30, 23, 17), [nl, nr, ridge_n], 1)
+    # the warm loft window on the near (south) face of the upper wall
+    P = _vframe(cam, wx, wy, 0.0)
+    win = [(-6 * s, hd, z0 + 4 * s), (6 * s, hd, z0 + 4 * s),
+           (6 * s, hd, z1 - 2 * s), (-6 * s, hd, z1 - 2 * s)]
+    _qp(surf, P, win, (198, 150, 74))
+    _qp(surf, P, win, (46, 34, 22), w=1)
+    _lp(surf, P, (0, hd, z0 + 4 * s), (0, hd, z1 - 2 * s), (46, 34, 22), 1)
+    _lp(surf, P, (-6 * s, hd, (z0 + z1) / 2), (6 * s, hd, (z0 + z1) / 2),
+        (46, 34, 22), 1)
+
+
 def _draw_radio_solid(surf, cam, deco):
     """A radio as a small box volume: wood body, a dark speaker/dial face on the
     near side, the red tuning needle creeping. Lifts to `kwargs['z']` so a radio
@@ -2174,6 +2253,7 @@ SOLID_PROPS = {
     "doorframe":     _draw_doorframe_solid,
     "waterfall":     _draw_waterfall_solid,
     "shaft_ladder":  _draw_shaft_ladder_solid,
+    "staircase":     _draw_staircase_solid,
     "cellar_hatch":  _draw_cellar_hatch_solid,
     "well":          _draw_well_solid,
     "headstone":     _draw_headstone_solid,
@@ -2206,6 +2286,7 @@ SOLID_PROPS = {
     "washstand":      _draw_washstand_solid,
     "birdcage":       _draw_birdcage_solid,
     "steeple":        _draw_steeple_solid,
+    "lodge_gable":    _draw_lodge_gable_solid,
     "radio":          _draw_radio_solid,
     "wrong_radio":    _draw_wrong_radio_solid,
     "church_bell":    _draw_church_bell_solid,
