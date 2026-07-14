@@ -135,7 +135,8 @@ its head) and pings the cult to **investigate the body**, and the body
 > where it fell on every re-entry (`_apply_dead_locals`, run from
 > `load_scene_now` before the rot pass). Nobody leaves Brimley, not
 > even by dying (NARRATIVE §5); a New Game clears the ledger, and the
-> cot save snapshots it like any other arg. Guarded: flow §32.
+> evidence-pickup autosave (`Game._autosave`, play-notes) persists it like
+> any other arg. Guarded: flow §27/§32.
 
 ---
 

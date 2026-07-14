@@ -72,6 +72,10 @@ def _evidence(game, name, content, weight=None, show=True, note=False):
                 game._flash_notebook(name)    # corner scribble: you wrote it down
             if hasattr(game, "audio"):
                 game.audio.play("evidence_added", 0.7)
+            # Save on evidence pickup (play-notes): the clue IS the
+            # checkpoint, not a trip back to the cot.
+            if hasattr(game, "_autosave"):
+                game._autosave()
     elif note:
         # Not Mara's, so not case-evidence -- but a real find; keep it in
         # the notebook as a case NOTE (never counts toward the gate).

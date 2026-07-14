@@ -245,18 +245,23 @@ it renders the procedural sprites to a labelled PNG strip.
     opts in yet. Preview: `tools/preview_heightfield.py`.
 - `systems/`
   - `save.py` — the run state + **ONE disk slot (2026-07)**. `Save.new()`
-    builds from `DEFAULT_SAVE`; the ONLY writer of the slot is sleeping
-    at the spare-room cot (`Game._sleep_at_cot`: snapshots
-    hp/inventory/visibility, wake lands at the cot, atomic write to
-    `~/.threshold` / `%APPDATA%\THRESHOLD`, `THRESHOLD_SAVE_DIR`
-    overrides for tests). Continue on the title reads it back; a death
-    or a quit costs everything since the last sleep, never the run.
-    Killed innocent **locals stay dead for the run** (2026-07 ruling):
-    the kill is written to the `dead_locals` save arg
-    (`_record_dead_local`) and `_apply_dead_locals` (run from
-    `load_scene_now` before the rot pass) lays the body back down where
-    it fell on every re-entry. New Game clears it; the cot save
-    snapshots it like any arg (NARRATIVE §5 / DESIGN.md §1; flow §32).
+    builds from `DEFAULT_SAVE`; the ONLY writer of the slot is now
+    **evidence pickup** (`Game._autosave`, play-notes: the clue IS the
+    checkpoint, not a trip to the cot): it snapshots hp/inventory/current
+    scene + a COOLED visibility (halved, so a reload never lands in a
+    maxed-out death), atomic write to `~/.threshold` /
+    `%APPDATA%\THRESHOLD` (`THRESHOLD_SAVE_DIR` overrides for tests), and
+    fires from `_evidence`'s canonical branch (`scenes/dialogue.py`).
+    Continue reads it back and **wakes at the scene the last clue was
+    found in** (its `default` spawn); a death or a quit costs everything
+    since the last clue, never the run. The **cot** (`Game._sleep_at_cot`)
+    is now a pure **REST** (heal + visibility cool), NOT a save. Killed
+    innocent **locals stay dead for the run** (2026-07 ruling): the kill is
+    written to the `dead_locals` save arg (`_record_dead_local`) and
+    `_apply_dead_locals` (run from `load_scene_now` before the rot pass)
+    lays the body back down where it fell on every re-entry. New Game
+    clears it; the autosave snapshots it like any arg (NARRATIVE §5 /
+    DESIGN.md §1; flow §27/§32).
   - `items.py` — `ITEM_DEFS`, `Inventory`.
   - `threat.py` — `proximity_tier` + `PROX_TIER_*` helpers.
 - `ui/` — dialog, the Casebook, fonts, text input. **The Casebook is ONE

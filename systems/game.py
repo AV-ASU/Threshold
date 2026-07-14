@@ -401,36 +401,40 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
                              self.save.data.get("spawn", "default"))
         self.state = "playing"
 
+    def _autosave(self):
+        """Autosave on evidence pickup (play-notes: the clue IS the
+        checkpoint, not a trip back to the cot). Snapshots hp + inventory +
+        the current scene, plus a COOLED visibility so a reload never drops
+        you straight into a maxed-out death. Evidence / notes / flags /
+        dead_locals are already live in save.data; this persists them.
+        Continue wakes at this scene's entry spawn."""
+        if self.save is None or self.player is None or self.scene is None:
+            return
+        p = self.player
+        self.save.data["player"] = p.to_save()
+        self.save.data["inventory"] = p.inventory.to_save()
+        self.save.data["scene"] = self.scene.key
+        self.save.data["spawn"] = "default"
+        self.save.set_arg("visibility_at_sleep",
+                          round(self.visibility * 0.5, 3))
+        self.save.write_disk()
+
     def _sleep_at_cot(self):
-        """Sleep in the spare-room cot: THE save point (the pause menu's
-        typewriter rule, made real). Snapshots the run into save.data,
-        writes the disk slot, and rests the PI: hp restored, and the
-        town's attention cools while he is out of its sight (visibility
-        halves; the evidence floor pulls it back up on its own). Waking,
-        and Continue from the title, always land here at the cot."""
+        """Rest in the spare-room cot. Saving moved to evidence pickup
+        (_autosave, play-notes), so the cot is now purely the game's REST: hp
+        restored and the town's attention cools while the PI is out of its
+        sight (visibility halves; the evidence floor pulls it back up on its
+        own). It no longer writes the disk slot."""
         p = self.player
         p.hp = p.max_hp
         self.visibility = round(self.visibility * 0.5, 3)
-        self.save.data["player"] = p.to_save()
-        self.save.data["inventory"] = p.inventory.to_save()
-        self.save.data["scene"] = "bedroom"
-        self.save.data["spawn"] = "default"
-        self.save.set_arg("visibility_at_sleep", self.visibility)
-        ok = self.save.write_disk()
         self.audio.play("low_pulse", 0.5)
         self.audio.play("confirm", 0.5)
-        if ok:
-            self.dialog.show([
-                "You lie down. The Arcadia keeps its hours around you, "
-                "and for a while nothing asks anything of you.",
-                "[c=dim](Saved. Waking will find you here, at the "
-                "cot.)[/c]",
-            ], speaker="", voice="blip_soft", portrait="narrator")
-        else:
-            self.dialog.show([
-                "You lie down, but the rest doesn't hold.",
-                "[c=dim](The save could not be written to disk.)[/c]",
-            ], speaker="", voice="blip_soft", portrait="narrator")
+        self.dialog.show([
+            "You lie down. The Arcadia keeps its hours around you, and for "
+            "a while nothing asks anything of you.",
+            "You wake rested. A little steadier.",
+        ], speaker="", voice="blip_soft", portrait="narrator")
 
     def _reset_run_state(self):
         """Wipe all per-run state so a New Game starts clean. The

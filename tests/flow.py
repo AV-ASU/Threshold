@@ -2612,12 +2612,13 @@ def main():
     check(gr._idle_king is not None,
           "loop: he shows again only once you walk north up the band")
 
-    # --- 27. the cot's disk save + Continue (the typewriter rule) -----
-    # Sleeping at the spare-room cot is the ONLY writer of the disk
-    # slot; Continue reads it back and wakes at the cot; anything done
-    # after the sleep is the stake a death or a quit loses.
+    # --- 27. save-on-evidence + Continue (play-notes) ----------------
+    # Evidence pickup is the ONLY writer of the disk slot now; Continue
+    # reads it back and wakes at the scene the clue was found in, with a
+    # COOLED visibility. The cot is a REST (heal + cool), not a save.
     import tempfile
     import shutil
+    from scenes.dialogue import _evidence as _ev27
     _sd = tempfile.mkdtemp(prefix="th_save_")
     os.environ["THRESHOLD_SAVE_DIR"] = _sd
     try:
@@ -2626,28 +2627,41 @@ def main():
               "save: no slot, no Continue")
         gsl.save.set_flag("persist_probe", True)
         gsl.player.inventory.add("lumber_axe", 1)
-        gsl.visibility = 0.6
-        fire(gsl, "bedroom", "_cot_pos")
+        gsl.load_scene_now("barn", "default")
+        gsl.visibility = 0.8
+        _ev27(gsl, "maras_journal", ["a line"], show=False)   # a canonical clue
         check(os.path.isfile(gsl.save.disk_path()),
-              "save: sleeping at the cot writes the disk slot")
-        check(abs(gsl.visibility - 0.3) < 1e-9,
-              "save: sleep cools the town's attention (visibility halves)")
+              "save: picking up evidence writes the disk slot")
+        check(gsl.save.data.get("scene") == "barn",
+              "save: the slot remembers the scene the clue was found in")
+        check(abs(float(gsl.save.arg("visibility_at_sleep")) - 0.4) < 1e-9,
+              "save: the reload visibility is cooled (halved)")
         check(gsl._title_menu_options()[0] == "Continue",
               "save: the title offers Continue once the slot exists")
-        gsl.save.set_flag("post_sleep_probe", True)
+        gsl.save.set_flag("post_save_probe", True)
         gsl.state = "title"                # any run end: death or quit
         check(gsl.save.load_disk(), "save: Continue reads the slot back")
         gsl._start_play()
         check(gsl.save.flag("persist_probe")
-              and not gsl.save.flag("post_sleep_probe"),
-              "save: continue restores the last sleep, not the lost run")
-        check(gsl.scene.key == "bedroom", "save: waking lands at the cot")
+              and not gsl.save.flag("post_save_probe"),
+              "save: continue restores the last clue, not the lost run")
+        check(gsl.scene.key == "barn",
+              "save: waking lands where the clue was found")
         check(gsl.player.inventory.has("lumber_axe"),
               "save: the inventory survives the round trip")
-        check(abs(gsl.visibility - 0.3) < 1e-9,
+        check(abs(gsl.visibility - 0.4) < 1e-9,
               "save: the cooled attention survives the round trip")
+        # The cot is now a REST, not a save: it heals + cools, no disk write.
+        gsl.player.hp = 10
+        gsl.visibility = 0.8
+        _mtime = os.path.getmtime(gsl.save.disk_path())
+        fire(gsl, "bedroom", "_cot_pos")
         check(gsl.player.hp == gsl.player.max_hp,
-              "save: sleep rests the PI (hp restored)")
+              "save: the cot rest restores hp")
+        check(abs(gsl.visibility - 0.4) < 1e-9,
+              "save: the cot rest cools the town's attention (halves it)")
+        check(os.path.getmtime(gsl.save.disk_path()) == _mtime,
+              "save: the cot no longer writes the disk slot")
     finally:
         os.environ.pop("THRESHOLD_SAVE_DIR", None)
         shutil.rmtree(_sd, ignore_errors=True)
