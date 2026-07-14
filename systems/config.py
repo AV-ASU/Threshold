@@ -334,10 +334,11 @@ KING_ROAM_SPEED = 1.95       # in-room float speed (px*60/s via _yk_update);
                              # sprint so a locked King always closes the gap
                              # (play-notes rebalance)
 # Player sprint = PLAYER_SPRINT_MULT x the base walk (entities/player.py
-# speed). Tuned so sprint reads ~2.5x the walk yet stays ~0.9x the King
-# above: you can flee a cultist but never the apex (play-notes rebalance;
-# TODO #5 is the human tuning loop).
-PLAYER_SPRINT_MULT = 2.5
+# speed). With the walk doubled (play-notes), sprint is a modest gear-up
+# that still lands ~0.9x the King above: you can never outrun the apex,
+# only hide (TODO #5 is the human tuning loop; raising this needs the King
+# raised too, or you outrun him).
+PLAYER_SPRINT_MULT = 1.25
 KING_DREAD_ASH = 70          # extra ash motes when he is one room away (the tell)
 
 # The portal (KING_PROMPT M2): pin visibility at 100% for PORTAL_CHARGE_TIME and
@@ -478,6 +479,15 @@ STRUGGLE_PRESSES = 5          # E/SPACE presses needed
 STRUGGLE_BURST_T = 0.9        # s of panic-burst speed after winning
 STRUGGLE_BURST_MULT = 1.8     # burst speed multiplier
 STRUGGLE_STUN = 1.4           # s the checker staggers after a burst-out
+# Two-touch cult grab (play-notes): the cult CAPTURES, it does not kill, so a
+# first grab is a shove, not the end. The FIRST grab of an encounter tears the
+# PI free (grabbers stagger STRUGGLE_STUN, he bursts on STRUGGLE_BURST_T) with
+# CULT_SHRUG_INVULN s of grace; a SECOND grab before he reaches a SAFE_SCENE is
+# the capture. The touch count resets only on reaching a safe zone (no decay),
+# so a swarm still buries you and getting cornered still ends the run. The
+# one-time Talk (cult_talk_given) is still the very first contact of a run.
+CULT_SHRUG_INVULN = 0.7       # s of grace after tearing free (no re-grab)
+CULT_SHRUG_RANGE = 44.0       # px: grabbers within this stagger on the shove
 
 # ---- The noise core (2026-07 sound overhaul) ------------------------------
 # World noises broadcast through Scene.emit_noise; the cult hears them
@@ -575,6 +585,14 @@ EVIDENCE_FLOOR_DEFAULT = 0.10  # per-evidence floor weight if none recorded
 # cultist reinforcement wave at your entry instead of the King -- the net
 # tightening, not yet lethal. At/above it, the same trigger brings the King.
 KING_GATE_EVIDENCE = 3
+# The King-arrival RAMP (play-notes). Crossing the gate shouldn't be an
+# ambush: at KING_GATE_EVIDENCE the roam arms but the world HOLDS ITS BREATH
+# for KING_ARM_GRACE seconds first -- he stands far and does not close, the
+# window to reach the lodge for the Invitation before the hunt begins. One
+# tier earlier (KING_TURNS_HEAD_EV) a single telegraph note lands: he has
+# turned his head toward you, but has not moved yet.
+KING_TURNS_HEAD_EV = 2        # evidence at which the "he turns his head" beat fires
+KING_ARM_GRACE = 25.0         # s the world holds its breath before the hunt begins
 REINFORCE_COUNT = 2            # cultists per wave
 REINFORCE_COOLDOWN = 8.0      # seconds between waves (pulses, never floods)
 # The notebook-scribble toast: the corner card the PI scribbles a beat onto

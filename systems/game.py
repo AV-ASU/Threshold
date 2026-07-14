@@ -282,6 +282,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         self._watchers = []            # Watcher NPCs currently manifested
         self._watcher_clone_t = WATCHER_GRACE   # exposure timer to next spawn
         self._watcher_gaze = 0.0       # live Watchers holding the exposed player
+        self._cult_touch_count = 0     # two-touch cult grab: resets in a safe zone
         self._gaze_count = 0           # cultists watching the player this frame
         self._cult_topup_t = 0.0       # rate-limits cultist (re)spawns per scene
         self._cult_prefilled = False   # per-load: filled roamers to scene target yet?
@@ -400,36 +401,40 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
                              self.save.data.get("spawn", "default"))
         self.state = "playing"
 
+    def _autosave(self):
+        """Autosave on evidence pickup (play-notes: the clue IS the
+        checkpoint, not a trip back to the cot). Snapshots hp + inventory +
+        the current scene, plus a COOLED visibility so a reload never drops
+        you straight into a maxed-out death. Evidence / notes / flags /
+        dead_locals are already live in save.data; this persists them.
+        Continue wakes at this scene's entry spawn."""
+        if self.save is None or self.player is None or self.scene is None:
+            return
+        p = self.player
+        self.save.data["player"] = p.to_save()
+        self.save.data["inventory"] = p.inventory.to_save()
+        self.save.data["scene"] = self.scene.key
+        self.save.data["spawn"] = "default"
+        self.save.set_arg("visibility_at_sleep",
+                          round(self.visibility * 0.5, 3))
+        self.save.write_disk()
+
     def _sleep_at_cot(self):
-        """Sleep in the spare-room cot: THE save point (the pause menu's
-        typewriter rule, made real). Snapshots the run into save.data,
-        writes the disk slot, and rests the PI: hp restored, and the
-        town's attention cools while he is out of its sight (visibility
-        halves; the evidence floor pulls it back up on its own). Waking,
-        and Continue from the title, always land here at the cot."""
+        """Rest in the spare-room cot. Saving moved to evidence pickup
+        (_autosave, play-notes), so the cot is now purely the game's REST: hp
+        restored and the town's attention cools while the PI is out of its
+        sight (visibility halves; the evidence floor pulls it back up on its
+        own). It no longer writes the disk slot."""
         p = self.player
         p.hp = p.max_hp
         self.visibility = round(self.visibility * 0.5, 3)
-        self.save.data["player"] = p.to_save()
-        self.save.data["inventory"] = p.inventory.to_save()
-        self.save.data["scene"] = "bedroom"
-        self.save.data["spawn"] = "default"
-        self.save.set_arg("visibility_at_sleep", self.visibility)
-        ok = self.save.write_disk()
         self.audio.play("low_pulse", 0.5)
         self.audio.play("confirm", 0.5)
-        if ok:
-            self.dialog.show([
-                "You lie down. The Arcadia keeps its hours around you, "
-                "and for a while nothing asks anything of you.",
-                "[c=dim](Saved. Waking will find you here, at the "
-                "cot.)[/c]",
-            ], speaker="", voice="blip_soft", portrait="narrator")
-        else:
-            self.dialog.show([
-                "You lie down, but the rest doesn't hold.",
-                "[c=dim](The save could not be written to disk.)[/c]",
-            ], speaker="", voice="blip_soft", portrait="narrator")
+        self.dialog.show([
+            "You lie down. The Arcadia keeps its hours around you, and for "
+            "a while nothing asks anything of you.",
+            "You wake rested. A little steadier.",
+        ], speaker="", voice="blip_soft", portrait="narrator")
 
     def _reset_run_state(self):
         """Wipe all per-run state so a New Game starts clean. The
@@ -500,6 +505,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         self._watchers = []
         self._watcher_clone_t = WATCHER_GRACE
         self._watcher_gaze = 0.0
+        self._cult_touch_count = 0
         self._gaze_count = 0
         self._cult_topup_t = 0.0
         self._cult_prefilled = False
@@ -569,7 +575,8 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         self._mara_stage = None
 
     # ---- Scene management ----
-    def cross_fold(self, target_scene, spawn_id="default", dest_pos=None):
+    def cross_fold(self, target_scene, spawn_id="default", dest_pos=None,
+                   is_rift=False):
         """The ONE seamless fold-crossing primitive. Every non-door traversal
         funnels here: seamless world edges, direction-gated fold exits, the
         maze's same-scene relocations, and the King's rift juke. The crossing
@@ -598,8 +605,11 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
             if same_scene or (src in SEAMLESS_WORLD_SCENES
                               and target_scene in SEAMLESS_WORLD_SCENES):
                 self._note_fold_loop(src)
-            else:
+            elif is_rift:
                 self._note_fold_portal()
+            # else: a SEE-THROUGH door (a mundane door with no fade, the far
+            # room already in view) -- NOT a rift, so no "saw the door" note
+            # (play-notes: it wrongly fired on the lodge interior doors).
         if same_scene:
             # A same-scene relocation (the maze 'I'/'Q' tiles): no load, no
             # per-load state clears. The world IS the same room; it just put
@@ -797,6 +807,11 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         # the new scene from the persistent curse. Clear the old set and
         # the per-scene cultist top-up timer so cultists re-populate.
         self._watchers = []
+        # Reaching a SAFE_SCENE resets the two-touch cult grab (play-notes):
+        # you can't be mid-grab inside a refuge, so a fresh encounter after
+        # starts the touch count over.
+        if key in SAFE_SCENES:
+            self._cult_touch_count = 0
         self._gaze_count = 0
         self._cult_topup_t = 0.0
         # Fresh scene: re-fill roaming cultists to the scene's target on the
@@ -2777,7 +2792,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
                     # routing in begin_transition (seamless passages vs the
                     # door fade).
                     if exit_ch in self.scene.exit_directions:
-                        self.cross_fold(*exit_data)
+                        self.cross_fold(*exit_data, is_rift=True)
                     else:
                         # The leaf swings as you go through (tilt view).
                         # quiet: begin_transition plays its own

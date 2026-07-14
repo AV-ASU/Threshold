@@ -273,7 +273,7 @@ class ThreatMixin:
             return
         if not self._cult_prefilled:
             for _ in range(missing):
-                if self._spawn_cultist("cult_regular", "cultist", speed=0.85,
+                if self._spawn_cultist("cult_regular", "cultist", speed=0.95,
                                        gaze_range=180, from_pool=True) is None:
                     break
             self._cult_prefilled = True
@@ -284,7 +284,7 @@ class ThreatMixin:
             return
         self._cult_topup_t = CULT_TOPUP_INTERVAL
         self._spawn_cultist("cult_regular", "cultist",
-                             speed=0.85, gaze_range=180, from_pool=True)
+                             speed=0.95, gaze_range=180, from_pool=True)
 
     def _flank_cultists(self):
         """When 2+ regular cultists are chasing in an open scene, the
@@ -587,7 +587,7 @@ class ThreatMixin:
         self._fold_pursuer = None
         self._fold_pursuer_grace = 0.0
 
-    def _spawn_cultist(self, tag, kind, speed=0.85, gaze_range=180,
+    def _spawn_cultist(self, tag, kind, speed=0.95, gaze_range=180,
                        movement="chaser", name="", at=None, from_pool=False):
         """Plant a cultist. If `at` (x, y) is given and walkable, they enter
         there (the door you came in by -- for reinforcement waves). Else if
@@ -743,7 +743,7 @@ class ThreatMixin:
         self._reinforce_t = REINFORCE_COOLDOWN
         for _ in range(REINFORCE_COUNT):
             self._spawn_cultist("cult_regular", "cultist",
-                                 speed=0.85, gaze_range=180,
+                                 speed=0.95, gaze_range=180,
                                  at=self._king_anchor)
 
     def _despawn_king(self):
@@ -771,11 +771,8 @@ class ThreatMixin:
         if not self._cursed:
             self._cursed = True
             self._watcher_clone_t = self._watcher_spawn_interval()
-            if not (self.save and self.save.flag("teach_watcher")):
-                if self.save:
-                    self.save.set_flag("teach_watcher", True)
-                self.show_notice("An eye has opened on you. It will not close "
-                                 "until you make it.", duration=3.8)
+            # No narrator box on a Watcher opening (play-notes) -- the
+            # void-sting + the eye itself are the tell.
             self._spawn_watcher()
         else:
             self.visibility = min(1.0, self.visibility + 0.1)
@@ -845,7 +842,7 @@ class ThreatMixin:
         spot = None
         for _ in range(12):
             ang = random.uniform(0, math.tau)
-            r = random.uniform(180, 300)
+            r = random.uniform(110, 200)   # closer in (play-notes: hard to see far)
             wx = self.player.x + math.cos(ang) * r
             wy = self.player.y + math.sin(ang) * r
             if (0 < wx < scene.w * Scene.TILE
@@ -913,8 +910,8 @@ class ThreatMixin:
                 and self.scene.key not in KING_FREE_SCENES):
             self._cursed = False
             self._watcher_clone_t = WATCHER_GRACE   # the breather before the next
-            self.show_notice("The last of the eyes closes. He looks "
-                             "elsewhere, for now.", duration=3.2)
+            # No narrator box on the last eye closing (play-notes) -- the
+            # watcher_dispel sound carries it.
 
     def _dispel_watcher_in_line(self, p, fx, fy):
         """A round (or the axe arc) puts a Watcher down instantly. The gun
@@ -965,10 +962,15 @@ class ThreatMixin:
         later cultist grab is the CAPTURED card."""
         if self._death_kind is not None:
             return
-        if (kind == "cultist" and self.save is not None
-                and not self.save.flag("cult_talk_given")):
-            self._cult_talk()
-            return
+        if kind == "cultist" and self.save is not None:
+            if not self.save.flag("cult_talk_given"):
+                self._cult_talk()
+                return
+            # Two-touch (play-notes): the first grab of an encounter shoves the
+            # PI free; only a SECOND grab before he reaches a safe zone takes
+            # him. The cult captures, it does not kill -- one hold is survivable.
+            if self._cult_shrug_off():
+                return
         self._death_kind = kind
         self._death_t = 0.0
         self._closure_locked = True
@@ -980,6 +982,44 @@ class ThreatMixin:
             self.audio.play("custody_bed", 1.0)
         else:
             self.audio.play("captured_bed", 1.0)
+
+    def _cult_shrug_off(self):
+        """The two-touch grab (play-notes). The FIRST grab of an encounter is
+        a shove, not the end: the grabbers stagger, the PI tears free on a
+        burst of speed with a beat of grace. Returns True (handled -- no
+        capture) for that first touch; False on the SECOND, so the capture
+        proceeds. The count resets only on reaching a safe zone
+        (load_scene_now), so a swarm or a corner still takes you."""
+        self._cult_touch_count = getattr(self, "_cult_touch_count", 0) + 1
+        if self._cult_touch_count >= 2:
+            return False                     # second touch -> the capture
+        p = self.player
+        if p is None:
+            return False
+        # Tear free: a panic burst, a beat of grace, and a stagger on every
+        # near cultist so the shove reads and the burst has room to run.
+        p._burst_t = max(getattr(p, "_burst_t", 0.0), STRUGGLE_BURST_T)
+        p.invuln = max(getattr(p, "invuln", 0.0), CULT_SHRUG_INVULN)
+        if getattr(p, "hidden", None) is not None:      # pulled from a hide
+            p.hidden = None
+            if getattr(p, "hide_origin", None) is not None:
+                p.x, p.y = p.hide_origin
+                p.hide_origin = None
+        self._struggle = None
+        if self.scene is not None:
+            grabbers = list(self.scene.npcs) + list(
+                getattr(self.scene, "enemies", []))
+            for n in grabbers:
+                tag = getattr(n, "tag", "")
+                is_cult = (getattr(n, "kind", "") == "cultist"
+                           or (isinstance(tag, str)
+                               and tag.startswith("cult_")))
+                if is_cult and math.hypot(n.x - p.x,
+                                          n.y - p.y) < CULT_SHRUG_RANGE:
+                    n._stun_t = max(getattr(n, "_stun_t", 0.0), STRUGGLE_STUN)
+        self.audio.play("cult_lose", 0.7)
+        self.show_notice("Hands on you. You tear free.", duration=2.0)
+        return True
 
     def _cult_talk(self):
         """The one warning (the freebie). The hand comes down, the

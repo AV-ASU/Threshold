@@ -5,13 +5,11 @@ from systems.items import Inventory
 class Player:
     def __init__(self, x, y):
         self.x = x; self.y = y
-        # Deliberate dread WALK (play-notes rebalance): slower than a
-        # chasing cultist (0.85*60 = 51 px/s), so a locked patrol must be
-        # SPRINTED away from, not strolled past. Sprint (PLAYER_SPRINT_MULT
-        # x this = ~105 px/s) reads much faster than the walk and lands at
-        # ~0.9x the King (KING_ROAM_SPEED, ~117 px/s): you never outrun the
-        # apex, only hide.
-        self.speed = 42
+        # WALK speed (play-notes: doubled from the first pass, which read too
+        # slow on the 60x60 map). Sprint (PLAYER_SPRINT_MULT x this = ~105
+        # px/s) still lands ~0.9x the King (KING_ROAM_SPEED, ~117 px/s), so
+        # you can never outrun the apex, only hide.
+        self.speed = 84
         self.facing = (0, 1)
         self.size = 12
         self.walk_phase = 0.0

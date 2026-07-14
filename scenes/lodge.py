@@ -268,7 +268,7 @@ def bedroom_interact(game):
                 return
             game.save.set_flag("case_closed_read", True)
             game.dialog.show([
-                "[c=dim]Subject: located. Recovery: declined.[/c]",
+                "Subject: located. Recovery: declined.",
                 "[c=dim]The handwriting is yours. You don't remember "
                 "writing it.[/c]",
             ], speaker="", voice="blip_soft", portrait="narrator")
@@ -283,7 +283,7 @@ def bedroom_interact(game):
             "The job: ask my questions, find the girl, drive home by "
             "morning.",
             "[c=dim]The drive in was easy. Then the engine died at the lodge "
-            "steps and wouldn't catch again. First wrong note.[/c]",
+            "steps and wouldn't catch again.[/c]",
         ], speaker="", voice="blip_soft", portrait="narrator")
         if not game.save.flag("read_journal"):
             game.save.set_flag("read_journal", True)
@@ -559,7 +559,7 @@ def house_interact(game):
             "a pen across the page without being asked.)[/c]",
             "You sign your name under tonight's date. He turns the book back "
             "and never reads it.",
-            "[c=dim]\"There. Now you're on the books.\"[/c]",
+            "\"There. Now you're on the books.\"",
         ], speaker="", voice="blip_soft", portrait="narrator")
         return
     if game.save.flag("evidence_the_ledger"):

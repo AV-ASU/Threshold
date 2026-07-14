@@ -4,8 +4,9 @@
 > the implementation map, open design threads, the Works level design,
 > art direction, and the fold mechanics. The FICTION itself (premise,
 > door, timeline, cast, evidence, descent, endings, canon invariants)
-> lives in `NARRATIVE.md`, the story bible; open work lives in
-> `TODO.md`. These sections were relocated whole from the old
+> lives in `NARRATIVE.md`, the story bible; the exact player-facing TEXT
+> (spoken lines + narrator boxes) lives in `DIALOGUE.md`; open work lives
+> in `TODO.md`. These sections were relocated whole from the old
 > NARRATIVE.md (2026-07 split); §-references here use this file's own
 > numbering, and cross-references into the bible say `NARRATIVE §n`.
 
@@ -76,10 +77,17 @@ case:
   cultists at the door you entered from** (a reinforcement pulse on a
   cooldown, and only once the cult is awake at 1+ evidence — the ev-0 town
   spawns no patrols at all). The net tightens, but it isn't lethal yet.
+- **At 2 evidence (`KING_TURNS_HEAD_EV`):** the ramp's telegraph — he
+  **turns his head** toward you (the `the_turning` note), aware but not yet
+  moving, so the gate is not an ambush (play-notes).
 - **At 3+ evidence:** the King himself **walks** — the roam arms and He
   hunts the world room by room (the design spine above; mechanics in
-  `systems/king_roam_mixin.py`). *You make Brimley deadly by understanding
-  it.*
+  `systems/king_roam_mixin.py`). But crossing the gate is not an ambush: the
+  world **holds its breath** for `KING_ARM_GRACE` (~25s) first — he stands
+  far and does not close (`arm_grace`, the `the_breath` note), the window to
+  reach the lodge for the Invitation before the hunt begins (play-notes ramp;
+  decouples the difficulty spike from progression). *You make Brimley deadly
+  by understanding it.*
 
 > **The King's pursuit is personal.** He isn't drawn to noise — he's drawn
 > back to the **face he met in the dream** (NARRATIVE §2). Read visibility as *how
@@ -101,9 +109,12 @@ your agency on the exact line that arms the King:
   cultist that locks on **blooms into His maw** (the vessel transform). *The
   deeper you see, the less the world lets you kill.*
 
-The gun never makes you safe: **capture-on-contact is still the fail state**
-(a cultist that reaches you takes you — CAPTURED), and **the King cannot be
-shot at all** — you can't fire down a direction you can't point at (NARRATIVE §2).
+The gun never makes you safe: the cult still takes you — but the grab is
+**two-touch** now (play-notes): the first grab of an encounter shoves you
+free (`_cult_shrug_off`), and only a **second** grab before you reach a safe
+zone is the CAPTURED fail state (a swarm or a corner still ends it). **The
+King cannot be shot at all** — you can't fire down a direction you can't
+point at (NARRATIVE §2).
 A shot is **loud** — His gaze hears it. The flashlight, the splitting axe
 (chop + stun), and hide-spots remain; the pistol sits alongside them, not
 over them.
@@ -125,7 +136,8 @@ its head) and pings the cult to **investigate the body**, and the body
 > where it fell on every re-entry (`_apply_dead_locals`, run from
 > `load_scene_now` before the rot pass). Nobody leaves Brimley, not
 > even by dying (NARRATIVE §5); a New Game clears the ledger, and the
-> cot save snapshots it like any other arg. Guarded: flow §32.
+> evidence-pickup autosave (`Game._autosave`, play-notes) persists it like
+> any other arg. Guarded: flow §27/§32.
 
 ---
 
@@ -1323,7 +1335,13 @@ the moment, not the room). **Lose / ignore** → grabbed → the normal cultist
 capture death (`_trigger_death("cultist")`, the CAPTURED card). Only
 reachable from a checked enclosed hide; concealment cover never triggers it
 (getting found in corn just resumes CHASE). The **first cult grab of a run
-is THE TALK** (a warning, not a capture -- threat model §1).
+is THE TALK** (a warning, not a capture -- threat model §1), and after that
+every cult grab is **two-touch**: the first hold of an encounter shoves you
+free (`_cult_shrug_off` -- the grabbers stagger, you burst loose with a beat
+of grace), and only a SECOND grab before you reach a SAFE_SCENE is the
+capture (`_cult_touch_count`, reset only on a safe zone, so a swarm or a
+corner still takes you). A struggle LOSS counts as a grab through the same
+path.
 
 ### Visibility model under the rework
 

@@ -3,20 +3,20 @@
 > **HARD RULE #0 — READ THE CANON IN FULL, EVERY TIME, BEFORE YOU ANSWER.**
 > Before responding to ANY request about THRESHOLD — a question, a review, a
 > design chat, a one-line edit, anything — you MUST read **`CLAUDE.md`,
-> `NARRATIVE.md`, `DESIGN.md`, and `TODO.md` IN FULL**, from top to bottom, in
-> this same turn.
+> `NARRATIVE.md`, `DESIGN.md`, `TODO.md`, and `DIALOGUE.md` IN FULL**, from
+> top to bottom, in this same turn.
 > Not a section. Not a grep. Not "I read them earlier." Not from memory or a
-> summary. All four, whole, every single time, no exceptions. Treat your
+> summary. All five, whole, every single time, no exceptions. Treat your
 > memory of them as STALE by default — the docs are the only source of truth,
 > they change, and answering from a half-remembered version is how canon gets
-> broken (it has been, repeatedly). If you have not read all four this turn,
+> broken (it has been, repeatedly). If you have not read all five this turn,
 > you are not ready to answer: read them first, then answer. This is the
 > project's non-negotiable first step; do it automatically, never wait to be
 > asked, and never announce you are "about to" instead of doing it.
 >
-> **The four-doc canon.** This file (`CLAUDE.md`) is the project's entry
-> point and operating guide, and now the first of the four you read in full;
-> the other three named above are the rest of the canon:
+> **The five-doc canon.** This file (`CLAUDE.md`) is the project's entry
+> point and operating guide, and now the first of the five you read in full;
+> the other four named above are the rest of the canon:
 > - **`NARRATIVE.md`** — the story bible: premise, lore, cast, place, the
 >   evidence trail, the endings, and the canon invariants. The source of
 >   truth for anything the fiction asserts.
@@ -25,11 +25,17 @@
 >   and art direction.
 > - **`TODO.md`** — the live list of genuinely open work. Not a place for
 >   lore.
+> - **`DIALOGUE.md`** — the dialogue & narrator bible: every word the player
+>   reads (spoken NPC/PI lines and narrator/world boxes), organized by WHO
+>   says what and WHAT causes what, plus the voice rules. **Its contract:
+>   the code and `DIALOGUE.md` are ONE — any change to a player-facing line
+>   in code is a change to `DIALOGUE.md` in the SAME commit, and the reverse.
+>   A disagreement between them is rot.**
 >
-> These four files are the ENTIRE doc canon. The old per-topic docs
+> These five files are the ENTIRE doc canon. The old per-topic docs
 > (`CAMERA.md`, `PORTALS.md`, `STEALTH_REWORK.md`, `AUDIO.md`, and the two
 > audit files) were folded into them and deleted (2026-07), so every design
-> or story reference now lives in one of these four. When you change a canon
+> or story reference now lives in one of these five. When you change a canon
 > fact, change it in its ONE home and reconcile the others: a detail that is
 > true in one doc and stale in another is rot.
 
@@ -245,18 +251,23 @@ it renders the procedural sprites to a labelled PNG strip.
     opts in yet. Preview: `tools/preview_heightfield.py`.
 - `systems/`
   - `save.py` — the run state + **ONE disk slot (2026-07)**. `Save.new()`
-    builds from `DEFAULT_SAVE`; the ONLY writer of the slot is sleeping
-    at the spare-room cot (`Game._sleep_at_cot`: snapshots
-    hp/inventory/visibility, wake lands at the cot, atomic write to
-    `~/.threshold` / `%APPDATA%\THRESHOLD`, `THRESHOLD_SAVE_DIR`
-    overrides for tests). Continue on the title reads it back; a death
-    or a quit costs everything since the last sleep, never the run.
-    Killed innocent **locals stay dead for the run** (2026-07 ruling):
-    the kill is written to the `dead_locals` save arg
-    (`_record_dead_local`) and `_apply_dead_locals` (run from
-    `load_scene_now` before the rot pass) lays the body back down where
-    it fell on every re-entry. New Game clears it; the cot save
-    snapshots it like any arg (NARRATIVE §5 / DESIGN.md §1; flow §32).
+    builds from `DEFAULT_SAVE`; the ONLY writer of the slot is now
+    **evidence pickup** (`Game._autosave`, play-notes: the clue IS the
+    checkpoint, not a trip to the cot): it snapshots hp/inventory/current
+    scene + a COOLED visibility (halved, so a reload never lands in a
+    maxed-out death), atomic write to `~/.threshold` /
+    `%APPDATA%\THRESHOLD` (`THRESHOLD_SAVE_DIR` overrides for tests), and
+    fires from `_evidence`'s canonical branch (`scenes/dialogue.py`).
+    Continue reads it back and **wakes at the scene the last clue was
+    found in** (its `default` spawn); a death or a quit costs everything
+    since the last clue, never the run. The **cot** (`Game._sleep_at_cot`)
+    is now a pure **REST** (heal + visibility cool), NOT a save. Killed
+    innocent **locals stay dead for the run** (2026-07 ruling): the kill is
+    written to the `dead_locals` save arg (`_record_dead_local`) and
+    `_apply_dead_locals` (run from `load_scene_now` before the rot pass)
+    lays the body back down where it fell on every re-entry. New Game
+    clears it; the autosave snapshots it like any arg (NARRATIVE §5 /
+    DESIGN.md §1; flow §27/§32).
   - `items.py` — `ITEM_DEFS`, `Inventory`.
   - `threat.py` — `proximity_tier` + `PROX_TIER_*` helpers.
 - `ui/` — dialog, the Casebook, fonts, text input. **The Casebook is ONE
@@ -355,12 +366,18 @@ it renders the procedural sprites to a labelled PNG strip.
   populated the moment you enter; killed cultists then respawn one at a time on
   the `CULT_TOPUP_INTERVAL` breather. **Brimley** sets `cult_target = 10` over
   **14 anchors** (9 spread + a 5-strong crew at the SE cult camp), all
-  evidence-gated like any patrol. **Ev 2**: his attention finds YOU — a
-  single SEEKER moth materialises in the player's room every
-  `MOTH_SEEK2_*` (2-3 min; `_tick_moth_seek`, never at a door, drops
-  in on the `"b"` arrival ramp). **Ev 3**: he walks (the roam arms),
-  his own shedding starts, the seeker slows to `MOTH_SEEK3_*`
-  (5-6 min).
+  evidence-gated like any patrol. **Ev 2** (`KING_TURNS_HEAD_EV`): his
+  attention finds YOU — a single SEEKER moth materialises in the player's
+  room every `MOTH_SEEK2_*` (2-3 min; `_tick_moth_seek`, never at a door,
+  drops in on the `"b"` arrival ramp), AND a one-time telegraph note lands
+  (`the_turning`, `_tick_king_roam`): he has **turned his head** toward you
+  but has not moved — the ramp's "he sees you" beat so ev3 is not an ambush
+  (play-notes). **Ev 3**: he walks (the roam arms) — but the world **holds
+  its breath** first: `KING_ARM_GRACE` (~25s) where he stands far and does
+  NOT close (`arm_grace` in `_roam_king`; the `the_breath` note fires), the
+  window to reach the lodge for the Invitation before the hunt begins
+  (decouples the spike from progression). Then his shedding starts and the
+  seeker slows to `MOTH_SEEK3_*` (5-6 min).
 - **The Moths** (the King's heralds; `MOTH_*` config, sim in
   `systems/rot_mixin.py` `_tick_moth_shed`/`_tick_moth_seek`/
   `_spawn_moths`/`_tick_moths`, drawn as hovering sight-gated
@@ -469,9 +486,15 @@ it renders the procedural sprites to a labelled PNG strip.
   FIRST cult grab of a run is a warning, not a capture** — `_cult_talk`
   (threat_mixin) plays the courteous one-liner, stands the room down,
   grants a short re-grab grace, and files a NOTE (flag `cult_talk_given`;
-  gates every grab site, struggle losses included). After that,
-  `kind="cultist"` shows the **CAPTURED** card (taken alive for the
-  hive); `kind="sheriff"` the
+  gates every grab site, struggle losses included). After the Talk, the
+  cult grab is **TWO-TOUCH** (play-notes): the FIRST grab of an encounter
+  shoves the PI free (`_cult_shrug_off` — grabbers stagger `STRUGGLE_STUN`,
+  he tears loose on a `STRUGGLE_BURST_T` burst with `CULT_SHRUG_INVULN`
+  grace); only a SECOND grab before he reaches a `SAFE_SCENE` is the
+  capture (`_cult_touch_count`, reset on a safe-scene load, no time decay,
+  so a swarm or a corner still takes you). The cult CAPTURES, it does not
+  kill. Then `kind="cultist"` shows the **CAPTURED** card (taken alive for
+  the hive); `kind="sheriff"` the
   **TAKEN INTO CUSTODY** card (the hollow lawman); `kind="king"` plays the
   **Carcosa** mask-furnace cutscene. All end the run and return to title.
 - **The calling-out (2026-07):** Mara kneels among the Sign Chamber
@@ -641,11 +664,14 @@ it renders the procedural sprites to a labelled PNG strip.
 
 ## The journal door-dream + "He knows you" (NARRATIVE §4)
 
-- **Trigger (two-stage since the §15 rework):** reading `mom_notebook`
-  (Mara's journal) a third time sets `flashback_pending`
-  (`ui/journal_ui.py`); `Game._tick_flashback` polls it, sets
-  `flashback_seen`, and fires a ~0.5s MEMORY FLASH (two flickers of the
-  door, no swarm; `FLASHBACK_FLASH_DUR`). The FULL ~7s wordless dream
+- **Trigger (two-stage):** picking up `mom_notebook` (Mara's journal, a
+  WALK-OVER pickup in the barn, `scenes/interiors.py _barn_update`) sets
+  `flashback_pending` (play-notes: the dream fires ON PICKUP, not the old
+  3rd-read; reading the journal is now just reading); `Game._tick_flashback`
+  polls it, sets `flashback_seen`, and fires a ~2.2s MEMORY FLASH (a dwelling
+  fade-in/hold/out look at the door, no swarm; `FLASHBACK_FLASH_DUR`). The
+  pickup logs the gate beat QUIETLY (`_evidence(..., quiet=True)`) so no case
+  note pops before he has read it. The FULL ~7s wordless dream
   (`_draw_flashback`, mode "rite") plays at the GROVE RITE via
   `begin_rite_dream` — completing it opens the descent fold
   (`rite_performed`) and also sets `flashback_seen`. `_tick_flashback` lives in `systems/narrative_mixin.py`;
@@ -687,12 +713,20 @@ it renders the procedural sprites to a labelled PNG strip.
   moved: **`TODO.md`** when a ticket lands, changes scope, or a new task
   surfaces (mark it, do not leave it stale); **`NARRATIVE.md`** when a canon
   fact, invariant, or player-facing story detail changes; **`DESIGN.md`** when
-  a system, a mechanic, or its code-map changes; **`CLAUDE.md`** when the
-  layout, a convention, or a workflow changes. One fact, one home, then
-  reconcile the siblings (a detail true in one doc and stale in another is
-  rot). A change is not "done" until its docs match it, so before you commit,
-  ask which of the four canon docs your diff just made stale and fix them in
-  the same breath.
+  a system, a mechanic, or its code-map changes; **`DIALOGUE.md`** when ANY
+  player-facing spoken line or narrator box changes (see the next bullet);
+  **`CLAUDE.md`** when the layout, a convention, or a workflow changes. One
+  fact, one home, then reconcile the siblings (a detail true in one doc and
+  stale in another is rot). A change is not "done" until its docs match it,
+  so before you commit, ask which of the five canon docs your diff just made
+  stale and fix them in the same breath.
+- **DIALOGUE AND ITS DOC ARE ONE (non-negotiable, `DIALOGUE.md` contract).**
+  Every word the player reads lives in two homes: the code that ships it and
+  `DIALOGUE.md`. They are the same text. If your diff changes, adds, or cuts
+  a spoken line or a narrator box, it changes `DIALOGUE.md` in the SAME
+  commit, and vice versa. There is no "update the dialogue doc later." A
+  disagreement between code and `DIALOGUE.md` is a bug (rot), reconciled on
+  sight; a `tests/flow.py` canon-guard on an exact wording wins over both.
 - **"Push to main" MEANS MERGE TO MAIN.** When the maintainer says "push to
   main" / "PR and push to main", that is an instruction to open the PR **and
   merge it into `main`** in the same action — not to stop after creating the

@@ -88,6 +88,22 @@ def test_arms_at_gate():
     print("  OK  3 evidence arms him into searching, off the road")
 
 
+def test_arm_grace_holds_the_breath():
+    # The play-notes ramp: crossing the gate arms him, but the world HOLDS ITS
+    # BREATH for KING_ARM_GRACE first -- he does not materialise or hunt, the
+    # window to reach the lodge before the hunt begins.
+    g = _boot(KING_ROAM_START)                 # player in his arm scene
+    _arm(g)
+    g._tick_king_roam(0.05)                     # arm frame
+    assert g._roam_king["armed"], "the gate arms him"
+    assert g._roam_king["arm_grace"] > 0, "arming opens the grace window"
+    assert g._king is None, "he does not materialise during the grace"
+    g._roam_king["arm_grace"] = 0.0            # burn past the grace
+    g._tick_king_roam(0.05)
+    assert g._king is not None, "past the grace he materialises in your scene"
+    print("  OK  the arm-grace holds the hunt, then releases it")
+
+
 def test_never_returns_to_idle():
     g = _boot()
     _arm(g)
@@ -239,7 +255,10 @@ def _arm_elsewhere(g):
     _arm(g)
     g._tick_king_roam(0.05)               # arm
     other = next(t for t in KING_ROAM_SCENES if t != g.scene.key)
-    g._roam_king.update(armed=True, state="searching", scene=other)
+    # arm_grace=0.0: past the "world holds its breath" window, the hunt is on
+    # (the play-notes ramp holds him for KING_ARM_GRACE right after arming).
+    g._roam_king.update(armed=True, state="searching", scene=other,
+                        arm_grace=0.0)
     g._king = None
 
 
@@ -357,6 +376,7 @@ def test_portal_cross_jukes_and_clears():
 if __name__ == "__main__":
     test_idle_until_gate()
     test_arms_at_gate()
+    test_arm_grace_holds_the_breath()
     test_never_returns_to_idle()
     test_leaving_his_scene_drops_the_hunt()
     test_roam_domain_excludes_indoors_and_safe()

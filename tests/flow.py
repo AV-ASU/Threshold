@@ -412,13 +412,13 @@ def main():
         g.step(1 / 60.0)
         check(g.scene.key == k, f"depths: {k} loads and ticks")
     # The door-dream is TWO-STAGE now: the journal fires a brief memory
-    # FLASH (two flickers, ~0.5s, no swarm -- the half-dismissed memory
-    # surfacing); the FULL wordless dream (door + accelerating mask
-    # swarm) plays at the GROVE RITE. Same dream, two weights.
+    # FLASH (a longer dwelling look on PICKUP now, ~2s, no swarm -- the
+    # half-dismissed memory surfacing); the FULL wordless dream (door +
+    # accelerating mask swarm) plays at the GROVE RITE. Same dream, two weights.
     from ui.cutscenes import (FLASHBACK_DUR as _FBD,
                               FLASHBACK_FLASH_DUR as _FBF)
-    check(0.0 < _FBF <= 1.0 < _FBD,
-          "flashback: the journal flash is brief; the rite dream is long")
+    check(0.0 < _FBF <= 3.0 < _FBD,
+          "flashback: the journal flash is short; the rite dream is long")
     check(hasattr(g, "_spawn_flashback_masks")
           and hasattr(g, "_build_flashback_pool")
           and hasattr(g, "begin_rite_dream"),
@@ -531,16 +531,29 @@ def main():
     # trail beats -- the store tab (shop), the booking slip (office), the
     # journal (barn) -- each a world-persistent pickup, findable in any
     # order. Three surface beats = exactly the King-gate above ground.
+    from scenes.dialogue import hettie_dialogue as _hettie_fn
     ge = new_game()
-    fire(ge, "shop", "_receipt_pos")                   # maras_receipt
+    # The store tab comes from Hettie's WARM handover now (play-notes): show
+    # her Mara's photo, she works the tab off the spike and hands it over.
+    ge.load_scene_now("shop")
+    ready(ge)
+    _het = next((nn for nn in ge.scene.npcs if nn.name == "Hettie"), None)
+    check(_het is not None, "shop: Hettie keeps the counter")
+    ge.save.set_flag("hettie_greeted", True)
+    ge.save.set_flag("hettie_saw_photo", True)         # the PI showed the photo
+    _hettie_fn(ge, _het)                                # her Mara-memory beat
     check(ge.player.inventory.has("receipt")
           and has_evidence(ge, "maras_receipt"),
-          "shop: the store tab is a world-persistent pickup (surface evidence)")
+          "shop: Hettie hands over the store tab shown Mara's photo (surface evidence)")
     fire(ge, "sheriff_office", "_record_pos")          # maras_record
     check(ge.player.inventory.has("detention_record")
           and has_evidence(ge, "maras_record"),
           "office: the booking slip is a world-persistent pickup (surface evidence)")
-    fire(ge, "barn", "_journal_pos")                   # maras_journal
+    # The journal is a WALK-OVER pickup now (play-notes), not an [E] interact.
+    ge.load_scene_now("barn")
+    ready(ge)
+    ge.player.x, ge.player.y = ge.scene._journal_pos   # step onto it
+    ge.scene.on_update_fn(ge, ge.scene, 0.05)          # the walk-over pickup
     jlines = next((e["lines"] for e in ge.save.arg("evidence", [])
                    if e.get("name") == "maras_journal"), [])
     jtext = " ".join(jlines).lower()
@@ -560,7 +573,12 @@ def main():
     gwp = new_game()
     gwp.save.set_arg("dead_locals", {"shop:Hettie": {
         "scene": "shop", "x": 0, "y": 0, "name": "Hettie", "idx": None}})
-    fire(gwp, "shop", "_receipt_pos")
+    # With Hettie dead, the spike is the FALLBACK: a walk-over pickup the
+    # shop's on_update_fn opens (no warm handover to lean on).
+    gwp.load_scene_now("shop")
+    ready(gwp)
+    gwp.player.x, gwp.player.y = gwp.scene._receipt_pos   # step onto the spike
+    gwp.scene.on_update_fn(gwp, gwp.scene, 0.05)          # the walk-over pickup
     check(has_evidence(gwp, "maras_receipt"),
           "persist: the store tab is reachable with Hettie recorded dead")
     gwp.save.set_arg("dead_locals", {"sheriff_office:Sheriff": {
@@ -721,31 +739,37 @@ def main():
     check(getattr(gw, "transition_target", (None,))[0] == "woodshed",
           "geo: the cellar key opens the yard shed -> woodshed interior")
 
-    # --- 13c. Reading Mara's journal in the inventory fires the dream ---
-    # The journal is a paged, readable item: opening it shows page 1, and
-    # turning past the LAST leaf (the third Enter) sets flashback_pending.
-    # Lock that the three-read count drives the door-dream, since the
-    # mechanic is the only in-game trigger for the §1b cutscene.
+    # --- 13c. Picking up Mara's journal (walk-over) fires the dream -----
+    # The journal is a WALK-OVER pickup now (play-notes): stepping onto it
+    # takes the item, logs the gate beat QUIETLY (no scribble before he has
+    # read it), and fires the door-dream ON PICKUP. Reading it later is just
+    # reading -- no second trigger.
     from systems.items import MARA_JOURNAL_PAGES, journal_page as _jpage
     from ui.journal_ui import PAPERS_TAB
     gj = new_game()
-    gj.player.inventory.add("mom_notebook", 1)
+    gj.load_scene_now("barn", "default")
+    ready(gj)
+    gj.player.x, gj.player.y = gj.scene._journal_pos
+    gj.scene.on_update_fn(gj, gj.scene, 0.05)         # step onto it
+    check(gj.player.inventory.has("mom_notebook"),
+          "journal: walking onto it picks it up (a ground item, not an [E] cue)")
+    check(has_evidence(gj, "maras_journal"),
+          "journal: the pickup logs the gate beat")
+    check(gj.save.flag("flashback_pending"),
+          "journal: the door-dream fires ON PICKUP, not the 3rd read")
+    # Reading it is now just reading -- no second dream trigger.
+    gj.save.set_flag("flashback_pending", False)
     gj.inv_ui.open = True
-    gj.inv_ui.tab = PAPERS_TAB                        # the readable journal lives here
+    gj.inv_ui.tab = PAPERS_TAB
     _fk = [k for _, k, _ in gj.inv_ui._filtered_items(gj.player.inventory)]
     gj.inv_ui.cursor = _fk.index("mom_notebook")
     check(_jpage(gj.save)[1] == 0,
           "journal: opens on page 1 (its words are visible immediately)")
-    gj.inv_ui.use_selected(gj.player)                 # turn 1 -> page 2
-    gj.inv_ui.use_selected(gj.player)                 # turn 2 -> page 3
-    check(_jpage(gj.save)[1] == len(MARA_JOURNAL_PAGES) - 1
-          and not gj.save.flag("flashback_pending"),
-          "journal: reading short of the last leaf does NOT fire the dream")
-    gj.inv_ui.use_selected(gj.player)                 # turn past the last leaf
-    check(gj.save.flag("flashback_pending"),
-          "journal: turning past the last leaf fires the door-dream")
-    check(not gj.inv_ui.open,
-          "journal: the inventory closes as the dream takes over")
+    gj.inv_ui.use_selected(gj.player)                 # turn the leaves
+    gj.inv_ui.use_selected(gj.player)
+    gj.inv_ui.use_selected(gj.player)
+    check(not gj.save.flag("flashback_pending"),
+          "journal: reading it does NOT re-fire the dream (pickup is the trigger)")
 
     # --- 14. "He knows you": the dream note + Threshold recognition ---
     # Living the journal door-dream writes a personal NOTE (not a clue), and
@@ -2378,7 +2402,7 @@ def main():
     gh.load_scene_now("shop")
     ready(gh)
     gh.save.set_flag("hettie_greeted", True)
-    gh.player.inventory.add("mom_notebook", 1)
+    gh.save.set_flag("hettie_saw_photo", True)     # the PI showed Mara's photo
     from scenes.dialogue import hettie_dialogue as _hd
     _hshown = []
     _horig = gh.dialog.show
@@ -2392,7 +2416,10 @@ def main():
         pass
     _hd(gh, _HStub())
     check(any("smiling I minded" in p for p in _hshown),
-          "hettie: the memory of the girl fires once the journal is carried")
+          "hettie: the memory of the girl fires once shown Mara's photo")
+    check(gh.player.inventory.has("receipt")
+          and has_evidence(gh, "maras_receipt"),
+          "hettie: the memory beat hands over the store tab (warm handover)")
     check(not any(("—" in p) or ("–" in p) or ("--" in p) for p in _hshown),
           "hettie: no dashes in the memory beat")
 
@@ -2612,12 +2639,13 @@ def main():
     check(gr._idle_king is not None,
           "loop: he shows again only once you walk north up the band")
 
-    # --- 27. the cot's disk save + Continue (the typewriter rule) -----
-    # Sleeping at the spare-room cot is the ONLY writer of the disk
-    # slot; Continue reads it back and wakes at the cot; anything done
-    # after the sleep is the stake a death or a quit loses.
+    # --- 27. save-on-evidence + Continue (play-notes) ----------------
+    # Evidence pickup is the ONLY writer of the disk slot now; Continue
+    # reads it back and wakes at the scene the clue was found in, with a
+    # COOLED visibility. The cot is a REST (heal + cool), not a save.
     import tempfile
     import shutil
+    from scenes.dialogue import _evidence as _ev27
     _sd = tempfile.mkdtemp(prefix="th_save_")
     os.environ["THRESHOLD_SAVE_DIR"] = _sd
     try:
@@ -2626,28 +2654,41 @@ def main():
               "save: no slot, no Continue")
         gsl.save.set_flag("persist_probe", True)
         gsl.player.inventory.add("lumber_axe", 1)
-        gsl.visibility = 0.6
-        fire(gsl, "bedroom", "_cot_pos")
+        gsl.load_scene_now("barn", "default")
+        gsl.visibility = 0.8
+        _ev27(gsl, "maras_journal", ["a line"], show=False)   # a canonical clue
         check(os.path.isfile(gsl.save.disk_path()),
-              "save: sleeping at the cot writes the disk slot")
-        check(abs(gsl.visibility - 0.3) < 1e-9,
-              "save: sleep cools the town's attention (visibility halves)")
+              "save: picking up evidence writes the disk slot")
+        check(gsl.save.data.get("scene") == "barn",
+              "save: the slot remembers the scene the clue was found in")
+        check(abs(float(gsl.save.arg("visibility_at_sleep")) - 0.4) < 1e-9,
+              "save: the reload visibility is cooled (halved)")
         check(gsl._title_menu_options()[0] == "Continue",
               "save: the title offers Continue once the slot exists")
-        gsl.save.set_flag("post_sleep_probe", True)
+        gsl.save.set_flag("post_save_probe", True)
         gsl.state = "title"                # any run end: death or quit
         check(gsl.save.load_disk(), "save: Continue reads the slot back")
         gsl._start_play()
         check(gsl.save.flag("persist_probe")
-              and not gsl.save.flag("post_sleep_probe"),
-              "save: continue restores the last sleep, not the lost run")
-        check(gsl.scene.key == "bedroom", "save: waking lands at the cot")
+              and not gsl.save.flag("post_save_probe"),
+              "save: continue restores the last clue, not the lost run")
+        check(gsl.scene.key == "barn",
+              "save: waking lands where the clue was found")
         check(gsl.player.inventory.has("lumber_axe"),
               "save: the inventory survives the round trip")
-        check(abs(gsl.visibility - 0.3) < 1e-9,
+        check(abs(gsl.visibility - 0.4) < 1e-9,
               "save: the cooled attention survives the round trip")
+        # The cot is now a REST, not a save: it heals + cools, no disk write.
+        gsl.player.hp = 10
+        gsl.visibility = 0.8
+        _mtime = os.path.getmtime(gsl.save.disk_path())
+        fire(gsl, "bedroom", "_cot_pos")
         check(gsl.player.hp == gsl.player.max_hp,
-              "save: sleep rests the PI (hp restored)")
+              "save: the cot rest restores hp")
+        check(abs(gsl.visibility - 0.4) < 1e-9,
+              "save: the cot rest cools the town's attention (halves it)")
+        check(os.path.getmtime(gsl.save.disk_path()) == _mtime,
+              "save: the cot no longer writes the disk slot")
     finally:
         os.environ.pop("THRESHOLD_SAVE_DIR", None)
         shutil.rmtree(_sd, ignore_errors=True)
@@ -2689,6 +2730,13 @@ def main():
           "talk: the warning is the locked line (hotel room, then run)")
     check("midwestern welcome" in _tblob,
           "talk: the PI's reaction lands after the release")
+    # After the Talk, the grab is TWO-TOUCH (play-notes): the first grab of an
+    # encounter shoves the PI free, only the second is the capture.
+    gt2._trigger_death("cultist")
+    check(gt2._death_kind is None,
+          "talk: after the Talk, the first grab SHOVES you free (two-touch)")
+    check(gt2._cult_touch_count == 1,
+          "talk: the shove registers one touch")
     gt2._trigger_death("cultist")
     check(gt2._death_kind == "cultist",
           "talk: the second grab is the CAPTURED card")

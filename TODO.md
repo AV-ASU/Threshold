@@ -9,9 +9,12 @@
 > against the 2026-07 build sweep. Each candidate was checked against the
 > actual code; **anything already implemented is deleted from this list
 > outright** (no "done" archive).
-> Cross-check against `NARRATIVE.md` before writing prose, run the full
-> gate (`python tests/run_all.py`) before commit, and add a
-> `tests/flow.py` guard when a new note locks a canon fact.
+> Cross-check against `NARRATIVE.md` (the facts) and `DIALOGUE.md` (the
+> exact spoken lines + narrator boxes) before writing prose; land any
+> dialogue/narrator-text change in the code and `DIALOGUE.md` together (the
+> `DIALOGUE.md` contract); run the full gate (`python tests/run_all.py`)
+> before commit, and add a `tests/flow.py` guard when a new note locks a
+> canon fact.
 
 ---
 
@@ -537,6 +540,14 @@ death-spiral hits newcomers and is trivial to experts. Items are gates, not
 resources (armor slots return 0). Consider: transforming the stun into a
 tactical window rather than a tax, an easy/hard toggle, or light resource
 tension — only if it serves the horror, not despite it.
+
+- **Two-touch cult grab LANDED (play-notes 2026-07).** Capture-on-contact
+  was softened: after the one-time Talk, the FIRST grab of an encounter shoves
+  the PI free (`_cult_shrug_off` — grabbers stagger, he bursts loose with
+  `CULT_SHRUG_INVULN` grace), and only a SECOND grab before he reaches a
+  SAFE_SCENE is the CAPTURED fail state (`_cult_touch_count`, reset only on a
+  safe zone). Directly answers the "nothing you can do once they're on you"
+  play-note. Still open here: the gun stun-window and difficulty options.
 
 ## Deferred / north star
 

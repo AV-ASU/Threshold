@@ -61,6 +61,7 @@ class KingRoamMixin:
             "hop_t": KING_HOP_INTERVAL,    # cooldown between off-camera scene hops
             "leave_t": KING_HOP_INTERVAL,  # cooldown before he gives up your room
             "follow_grace": 0.0,       # beat-behind delay after following you in
+            "arm_grace": 0.0,          # "world holds its breath" after arming (ev3)
             "last_seen": None,         # (x, y) where he last saw you, for searching
             "last_surface": None,      # last surface scene you stood in (path goal)
             "enter_at": "far",         # where the body materialises (away from you)
@@ -191,7 +192,21 @@ class KingRoamMixin:
         if not rk["armed"]:
             if self._reinforce_t > 0:
                 self._reinforce_t -= dt
-            if self._evidence_count() >= KING_GATE_EVIDENCE:
+            ev = self._evidence_count()
+            # One tier before the roam: he TURNS HIS HEAD toward you -- a single
+            # telegraph, no movement yet, so the gate is not an ambush
+            # (play-notes ramp). Audio gated by the flag; the note dedups.
+            if (ev >= KING_TURNS_HEAD_EV and self.save is not None
+                    and not self.save.flag("king_turns_head")):
+                self.save.set_flag("king_turns_head", True)
+                self.audio.play("low_pulse", 0.7)
+                self._log_note("the_turning", [
+                    "Something at the end of the north road turned to face "
+                    "me. It has not moved. It does not need to yet.",
+                    "It knows my face. Like a draft off a door left open "
+                    "somewhere behind you.",
+                ])
+            if ev >= KING_GATE_EVIDENCE:
                 rk["armed"] = True
                 rk["scene"] = KING_ROAM_START
                 rk["state"] = "searching"
@@ -199,16 +214,35 @@ class KingRoamMixin:
                 rk["hop_t"] = KING_HOP_INTERVAL
                 rk["pos"] = self._king_scene_pos(KING_ROAM_START)
                 self._idle_king = None     # the idol gives way to the real King
+                # The world holds its breath: he stands far and does NOT close
+                # for KING_ARM_GRACE -- the window to reach the lodge for the
+                # Invitation before the hunt begins (decouples the spike from
+                # progression). Fires once (the arm block is one-shot).
+                rk["arm_grace"] = KING_ARM_GRACE
+                self.audio.play("void_sting", 0.8)
+                self.audio.play("low_pulse", 0.7)
+                self._log_note("the_breath", [
+                    "The road has gone still, all at once. No wind, no "
+                    "birds. The whole town holding its breath.",
+                    "I have what I came for. I should not be standing in the "
+                    "open when it lets that breath go.",
+                ])
             else:
                 if (self.visibility >= 1.0
                         and self.scene.key not in KING_FREE_SCENES
-                        and self._evidence_count() >= CULT_WAKE_EV):
+                        and ev >= CULT_WAKE_EV):
                     self._muster_reinforcements()
                 self._king_dread = 0.0
                 self.audio.king_tone(False)
                 return
-        # Armed: concrete in the player's scene, abstract everywhere else. A
-        # safe room / dark / threshold can never host him.
+        # The grace after arming: he holds far and does not close, but the
+        # dread tell still rises so the player feels the countdown (play-notes).
+        if rk["arm_grace"] > 0.0:
+            rk["arm_grace"] -= dt
+            self._king_roam_dread()
+            return
+        # Armed + past the grace: concrete in the player's scene, abstract
+        # everywhere else. A safe room / dark / threshold can never host him.
         co_located = (rk["scene"] == self.scene.key
                       and self.scene.key not in KING_FREE_SCENES)
         if co_located:
