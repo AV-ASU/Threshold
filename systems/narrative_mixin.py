@@ -529,8 +529,7 @@ class NarrativeMixin:
                 "Said it flat. The way you'd say it always rains here. No fear "
                 "left in it. A fact they've all stopped arguing with.",
                 "A whole town doesn't go strange like that over a lie. [c=dim]"
-                "And my own engine turned over and died at the lodge steps. "
-                "So.[/c]",
+                "And my own engine turned over and died at the lodge steps.[/c]",
             ]})
             self.save.set_arg("notes", notes)
             if hasattr(self, "_flash_notebook"):
@@ -544,7 +543,7 @@ class NarrativeMixin:
                 f"[c=dim]{name} says there's no driving out of here. The "
                 "roads loop, the corn hands you back. Said it like weather.[/c]",
                 "[c=dim]A town doesn't talk like that about nothing. And my "
-                "car died at the steps. ...So.[/c]",
+                "car died at the steps.[/c]",
             ], speaker="", voice="blip_soft", portrait="narrator")
         if self.dialog.active:
             self.dialog.on_complete = _beat

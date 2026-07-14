@@ -713,8 +713,7 @@ MARA_CONVO = {
                     "let a thing stay lost."),
             ("npc", "Tell him what I told him at the start. I'm not lost. "
                     "I've never been this close."),
-            ("npc", "[c=dim]There was no one down here to bring back. I was "
-                    "not taken. I was answered, and I went to it gladly.[/c]"),
+            ("npc", "[c=dim]I was not taken. I was answered, and I went to it gladly.[/c]"),
         ],
     },
     "exchanges": [
@@ -728,8 +727,7 @@ MARA_CONVO = {
                 ("npc", "Nobody leaves, mister. Nobody has left since the "
                         "winter. You have walked the roads by now. You know "
                         "it better than the ones who quit trying."),
-                ("npc", "[c=dim]And why would I go. He is right there. A few "
-                        "feet of earth, and he is right there.[/c]"),
+                ("npc", "And why would I go. He is right there. A few feet of earth, and he is right there."),
             ],
         },
         {
@@ -741,8 +739,7 @@ MARA_CONVO = {
                 ("npc", "There isn't. We can't. None of us can."),
                 ("npc", "It is not a wall, mister. A wall has a far side. "
                         "Every way out of this town is a way further in."),
-                ("npc", "[c=dim]Go home, while the town still lets you think "
-                        "you can.[/c]"),
+                ("npc", "Go home, while the town still lets you think you can."),
             ],
         },
         # The Walter card. The slip: her certainty breaks, the light goes
@@ -774,8 +771,7 @@ MARA_CONVO = {
                 ("pi",  "Come home. Come with me, right now, and don't look "
                         "back."),
                 ("npc", "[c=dim]Home.[/c]"),
-                ("npc", "[c=dim]Say what is up there for me. Out loud. Say "
-                        "what I go back to.[/c]"),
+                ("npc", "Say what is up there for me. Out loud. Say what I go back to."),
                 ("npc", "Nothing. It happened, and up there it stays "
                         "happened, every morning, forever. Down here it is "
                         "not finished happening. Down here he is still "
@@ -810,8 +806,7 @@ MARA_CONVO = {
                 ("npc", "[c=dim]Her hand closes on your coat, hard. Down the "
                         "aisle the rank stirs all at once, like one body "
                         "turning over in its sleep. The air pulls tight.[/c]"),
-                ("pi",  "(You hold out the bear. The tag toward her, the "
-                        "name toward her.)"),
+                ("pi",  "[c=dim](You hold out the bear. The tag toward her, the name toward her.)[/c]"),
                 ("npc", "[c=dim]She looks at it the way you would look at "
                         "your own hand if it came off in the dark. She does "
                         "not take it. She cannot make her arms cross the "
@@ -823,10 +818,7 @@ MARA_CONVO = {
                 ("npc", "He is not here. He was never anywhere. I knew it "
                         "the day they laid him in my arms already gone, and "
                         "I know it now, with my hands in this dirt."),
-                ("npc", "[c=dim]But while I am still going down toward "
-                        "something, he is still somewhere ahead of me. Stop "
-                        "digging and he is nowhere at all. That is what you "
-                        "are asking me to put down. Not the dig. Him.[/c]"),
+                ("npc", "But while I am still going down toward something, he is still somewhere ahead of me. Stop digging and he is nowhere at all. That is what you are asking me to put down. Not the dig. Him."),
                 ("npc", "So keep your bear. I will go back down to the only "
                         "place he is still coming."),
                 ("npc", "[c=dim]She lets go of your coat, turns, and kneels "
@@ -865,8 +857,7 @@ def _mara_voice(game, npc):
     # PI's reaction keeps a home as a case NOTE, silent (no narrator
     # interrupt before the menu opens).
     game._log_note("the_congregation", [
-        "Mara, kneeling with the congregation. Turned. There was never "
-        "anyone to bring back. Only this, and now you're in it with her.",
+        "Mara, kneeling with the congregation. Turned. There was never anyone to bring back.",
     ])
     from ui.conversation import open_conversation
     open_conversation(game, npc, MARA_CONVO)
@@ -1263,8 +1254,7 @@ def build_works_deepface():
                 "could climb out and let the world learn His name.",
                 "[s=slow]Or you light it, and you cut this thing off at "
                 "its source.[/s]",
-                "[c=dim](Press again to light the fuse. There is no way "
-                "back up from where this goes.)[/c]",
+                "[c=dim](Your thumb finds the striker. Once it catches, there is no way back up from where this goes.)[/c]",
             ], speaker="", voice="blip_soft", portrait="narrator")
             return
         # Light it. The wall goes, and the floor goes with it -- the dig

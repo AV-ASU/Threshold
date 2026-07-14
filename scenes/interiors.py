@@ -383,7 +383,7 @@ def build_barn():
             # the evidence beat and the readable journal never drift apart.
             _evidence(game, "maras_journal", [
                 "A notebook, shoved down behind the workbench. You know the "
-                "hand. It's hers, the same as the letter.",
+                "hand. It's hers.",
                 "Her journal. Three leaves, in a hand that gets calmer "
                 "as it goes:",
                 "\"They told me grief would pass. It did not pass. It only "

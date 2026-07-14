@@ -161,8 +161,7 @@ _REVISIT_NUDGES = {
         "lines": [
             "[c=dim]The old registers cut off a year back. A year of "
             "guests signed in, and not one of them ever signed out.",
-            "The clerk keeps that desk like it owes him something. I should "
-            "put it to him straight.[/c]",
+            "The clerk keeps that desk like it owes him something.[/c]",
         ],
     }],
     "maras_journal": [{
@@ -171,7 +170,7 @@ _REVISIT_NUDGES = {
         "lines": [
             "[c=dim]She wrote like someone already halfway through a door.",
             "The clerk saw her every day she stayed here. He would know the "
-            "day she stopped writing. Worth going back for.[/c]",
+            "day she stopped writing.[/c]",
         ],
     }],
     "the_preacher": [{
@@ -180,8 +179,7 @@ _REVISIT_NUDGES = {
         "lines": [
             "[c=dim]They left him on the bank where the whole town draws "
             "its water. Nobody carried him home.",
-            "The sheriff was born here. He knew this man his whole life. "
-            "Worth hearing what he could not write down.[/c]",
+            "The sheriff was born here. He knew this man his whole life.[/c]",
         ],
     }],
 }
@@ -221,10 +219,8 @@ def _ready_for_the_desk(game, name):
         return []
     game.save.set_flag("nudged_ready_for_desk", True)
     lines = [
-        "[c=dim]That is the third thread that runs back into this town. I "
-        "have enough now to stop asking and start moving.",
-        "The clerk has been holding something for me since I walked in. Time "
-        "to go back to that desk and let him give it to me.[/c]",
+        "[c=dim]The clerk has been holding something for me since I walked "
+        "in.[/c]",
     ]
     _log_note(game, "ready_for_the_desk", lines)
     return lines
@@ -418,8 +414,7 @@ CRANE_CONVO = {
                         ("npc", "(A long breath goes out of him.) You "
                                 "sound like a man who means it. All "
                                 "right. Inside these walls. For now."),
-                        ("pi", "[c=dim]For now. A man like that only "
-                               "banks a fire. He never puts it out.[/c]"),
+                        ("pi", "[c=dim]For now. He's only banking the fire.[/c]"),
                     ], None),
                 ]),
             ],
@@ -441,8 +436,7 @@ def preacher_dialogue(game, npc):
         game.dialog.show([
             "That was you in my tower. The bell has not swung in years. "
             "Nobody left worth calling.",
-            "They heard it, though. Everything in this town comes when "
-            "something rings loud enough. Remember that.",
+            "They heard it, though. Down that road, something always does.",
         ], speaker="Rev. Crane", voice="blip_low", portrait="preacher")
         return
     from ui.conversation import open_conversation
@@ -528,7 +522,7 @@ TOBY_CONVO = {
             ("npc", "Nobody here would hire one. Asking questions is what "
                     "you stop doing, if you live here."),
             ("pi", "Well. I'm asking. And I don't mind talking to you."),
-            ("npc", "[c=dim]I know. Don't tell my mom.[/c]"),
+            ("npc", "I know. Don't tell my mom."),
         ],
         photo_beats=[
             ("npc", "That's her. She came in after all the others did. The "
@@ -541,9 +535,7 @@ TOBY_CONVO = {
                     "is broke open. I followed."),
             ("npc", "They climbed into it. Under the field. She never came "
                     "back up. None of them did. I saw where they go."),
-            ("npc", "[c=dim]You can't walk there. I looked in the daytime "
-                    "and the field just put me back. And that is where the "
-                    "bad thing is. I know it.[/c]"),
+            ("npc", "You can't walk there. I looked in the daytime, and the field just put me back."),
             ("npc", "[c=dim]Keep her picture put away. Some of them look at "
                     "what you carry.[/c]"),
         ],
@@ -702,8 +694,8 @@ HETTIE_CONVO = {
             "beats": [
                 ("npc", "You haven't gone quiet. Like the others. Good. "
                         "Then listen once."),
-                ("npc", "[c=dim]Don't trust the easy ones. The first to "
-                        "make peace, they went the soonest.[/c]"),
+                ("npc", "Don't trust the easy ones. The first to "
+                        "make peace, they went the soonest."),
                 ("npc", "That's the whole answer you're getting to that."),
             ],
         },
@@ -718,8 +710,8 @@ HETTIE_CONVO = {
                                 or g.save.flag("hettie_mara_memory")),
             "beats": [
                 ("npc", "I sold to the girl too. And the ones before her."),
-                ("npc", "[c=dim]None of them came back to buy again. "
-                        "You're the first.[/c]"),
+                ("npc", "None of them came back to buy again. "
+                        "You're the first."),
             ],
         },
         # Earned by the fold: he only asks about a way OUT once a local
@@ -772,9 +764,9 @@ def hettie_dialogue(game, npc):
             "She used to come in here. Matches, canned milk. Counted her "
             "change twice, every time, like it mattered. Sad around the "
             "eyes, and polite with it.",
-            "[c=dim]Then one day past the new year she set her basket "
+            "Then one day past the new year she set her basket "
             "down half filled and walked out smiling. Left the basket "
-            "on the counter. I never saw her again.[/c]",
+            "on the counter. I never saw her again.",
             "[c=dim]It was the smiling I minded.[/c]",
         ]
         # Her warm handover of the store tab (surface evidence), only if
@@ -913,9 +905,7 @@ def _vane_how_told(game):
         "up with certainty, promised his own eyes by the dream once the "
         "work is finished. Sent to fetch the last holdout, and thanked "
         "him for refusing.",
-        "So that is the how. Nobody was argued north. Each of them was "
-        "promised the one thing they were starving for, and every one of "
-        "them came gladly.[/c]",
+        "Nobody was argued north. Each of them was promised the one thing they were starving for, and every one came gladly.[/c]",
     ])
 
 
@@ -960,8 +950,8 @@ VANE_CONVO = {
                    "law's office announcing myself?"),
             ("npc", "No. No, they never had questions. That's the one "
                     "thing you've got going for you."),
-            ("npc", "[c=dim]I'd head home if I were you. I'm supposed to "
-                    "say that.[/c]"),
+            ("npc", "I'd head home if I were you. I'm supposed to "
+                    "say that."),
         ],
         photo_beats=[
             ("npc", "(He takes it to the window light and works it corner "
@@ -973,9 +963,7 @@ VANE_CONVO = {
                     "night those rooms were empty, all at once. Wherever "
                     "your girl is, that's the direction. I can't tell you "
                     "where it GOES."),
-            ("pi", "[c=dim]More of an answer than anyone else in this "
-                   "town has risked. He watched those rooms. He is still "
-                   "working it.[/c]"),
+            ("pi", "[c=dim]More of an answer than anyone in this town has risked. He watched those rooms.[/c]"),
         ],
     ) + [
         {
@@ -993,8 +981,7 @@ VANE_CONVO = {
                         "block hunting the part that failed. There is no "
                         "part."),
                 ("npc", "[c=dim]It's the town.[/c]"),
-                ("pi", "[c=dim]He said it flat. Like weather. A town does "
-                       "not talk that way about nothing. So.[/c]"),
+                ("pi", "[c=dim]He said it flat. Like weather. So.[/c]"),
             ],
         },
         {
@@ -1006,8 +993,8 @@ VANE_CONVO = {
                 ("npc", "They started showing up in the summer. The new "
                         "ones. Polite folks. After a while the road "
                         "stopped going anywhere."),
-                ("npc", "[c=dim]I tell people to leave. I haven't been "
-                        "able to in months.[/c]"),
+                ("npc", "I tell people to leave. I haven't been "
+                        "able to in months."),
             ],
         },
         # The SHARES (DESIGN.md §2): the PI bringing a real discovery to the
@@ -1039,10 +1026,7 @@ VANE_CONVO = {
                 ("npc", "That's the first real piece of work anybody has "
                         "brought through that door since it all shut. I "
                         "won't forget you did."),
-                ("pi", "[c=dim]Something in him let go a notch. Not "
-                       "relief. More like a man who had been carrying a "
-                       "case alone and just heard a second pair of "
-                       "boots.[/c]"),
+                ("pi", "[c=dim]Something in him let go a notch.[/c]"),
             ],
         },
         {
@@ -1064,8 +1048,7 @@ VANE_CONVO = {
                 ("npc", "Keep pulling threads like that and this town "
                         "might finally owe somebody the truth. Watch who "
                         "sees you pull them."),
-                ("pi", "[c=dim]He wrote it down. First thing I have said "
-                       "in this town that anyone wrote down.[/c]"),
+                ("pi", "[c=dim]He wrote it down.[/c]"),
             ],
         },
         # The newspaper (TODO #2): to everyone else in Brimley the paper
@@ -1145,12 +1128,7 @@ VANE_CONVO = {
                         "want most in this world, and come with him, and "
                         "it would be waiting. I put him out. He thanked "
                         "me for my time and he left smiling."),
-                ("npc", "So there's your how. You don't talk a hundred "
-                        "strangers onto one road. Something finds out "
-                        "what each of them is starving for, and it "
-                        "promises that. Nobody in that line was tricked "
-                        "into a thing. That's the piece that keeps my "
-                        "lights on at night."),
+                ("npc", "You don't talk a hundred strangers onto one road. They weren't tricked. Every one of them was going toward something, and glad of it. What it was, who was holding it out, I never got closer than that chair. That's the piece that keeps my lights on at night."),
             ],
         },
     ],
@@ -1179,9 +1157,8 @@ def sheriff_dialogue(game, npc):
             "He named them from his pulpit. Then he walked down to the "
             "water to fetch his flock home. They left him on the bank "
             "for us to find.",
-            "[c=dim]I didn't write a report. Who would I send it to.[/c]",
-            "[c=dim]He doesn't say the Reverend's name. You realize "
-            "nobody in town has.[/c]",
+            "I didn't write a report. Who would I send it to.",
+            "[c=dim]He doesn't say the Reverend's name. Nobody in town has.[/c]",
         ], speaker="Sheriff Vane", voice="blip_gruff", portrait="sheriff")
         return
     from ui.conversation import open_conversation
@@ -1637,8 +1614,8 @@ CALDER_CONVO = {
         "beats": [
             ("npc", "Oh. Is it you? ...Are you the one the place is set "
                     "for?"),
-            ("npc", "[c=dim]No. No, it couldn't be you. Forgive an old "
-                    "woman her hoping.[/c]"),
+            ("npc", "No. No, it couldn't be you. Forgive an old "
+                    "woman her hoping."),
         ],
     },
     "exchanges": _opener_exchanges(
@@ -1703,9 +1680,9 @@ ROYCE_CONVO = {
             ("npc", "A detective. Come up here to find somebody, and then "
                     "drive her home."),
             ("pi", "That's the shape of it."),
-            ("npc", "[c=dim]The finding I can't speak to. The driving "
+            ("npc", "The finding I can't speak to. The driving "
                     "home I can. Ask me about the roads sometime. Ask me "
-                    "what they do.[/c]"),
+                    "what they do."),
         ],
         photo_beats=[
             ("npc", "(He wipes his hands on his jacket before he takes "
@@ -1731,9 +1708,7 @@ ROYCE_CONVO = {
                         "I never turned the wheel."),
                 ("npc", "[c=dim]I gave it up. Everybody did. There's no "
                         "out to drive to.[/c]"),
-                ("pi", "[c=dim]Said flat, no fear in it. A whole town of "
-                       "drivers doesn't quit the road over nothing. "
-                       "So.[/c]"),
+                ("pi", "[c=dim]Said flat. No fear left in it.[/c]"),
             ],
         },
         {
@@ -1766,9 +1741,7 @@ ROYCE_CONVO = {
                         ("npc", "Wasn't paying attention. (He laughs, and "
                                 "there's no fun in it.) No. I don't "
                                 "suppose you were."),
-                        ("npc", "[c=dim]The ones it wants, it waves "
-                                "through. You go on not paying "
-                                "attention.[/c]"),
+                        ("npc", "[c=dim]Sure you weren't. (He looks back down the road.) Nobody drives that road easy. Nobody but you.[/c]"),
                     ], None),
                 ]),
             ],

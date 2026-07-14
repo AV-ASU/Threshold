@@ -666,7 +666,7 @@ def build_brimley():
     _resident(shop_out[0], shop_out[1], "Hettie", "hettie", [
         "Still open. Always open. The shelves don't empty anymore. Have you noticed.",
         "No deliveries. In a while now. But we manage. We always.",
-        "[c=dim]I keep the lights on. So they know. Someone's keeping them on.[/c]",
+        "I keep the lights on. So they know. Someone's keeping them on.",
     ], movement="homebody", radius=34)
     # Old Pell -- BESIDE the schoolhouse door (2 tiles east of the step), the
     # stopped calendar behind him. He never ducks inside (the schoolhouse is
@@ -680,9 +680,7 @@ def build_brimley():
                 lambda g: g._evidence_count() >= 1, [
             "You've been digging at it. I can tell. It's on you like "
             "coal dust.",
-            "[c=dim]Whatever you're finding out there, don't bring it up "
-            "my step. I've got the calendar where I want it. Stopped. "
-            "Some of us need it stopped.[/c]",
+            "Whatever you're finding out there, don't bring it up my step. I've got the calendar where I want it. Stopped. Some of us need it stopped.",
         ])])
     # Mrs. Calder -- by the east-bank square. She sets a place for a guest
     # she can't name. She watches the road. She does not wave.
@@ -692,8 +690,7 @@ def build_brimley():
                 lambda g: g._evidence_count() >= 1, [
             "Closer now. Whoever the place is set for. An old woman can "
             "feel a knock coming before it lands.",
-            "[c=dim]I've started leaving the door unlatched at night. It "
-            "seemed... polite.[/c]",
+            "I've started leaving the door unlatched at night. It seemed... polite.",
         ])])
     # Royce -- by the river bridge. He tried to drive out like everyone
     # did; the corn handed him back. He clings to the one fact: you got IN.
@@ -705,9 +702,7 @@ def build_brimley():
         beats=[("beat_royce_throat",
                 lambda g: g._evidence_count() >= 2, [
             "You're still here. Course you're still here.",
-            "[c=dim]I keep turning it over. Every road out of Brimley "
-            "hands you back. Except the one that carried you in. If a "
-            "door only opens the one way, mister, it isn't a door.[/c]",
+            "I keep turning it over. Every road out of Brimley hands you back. Except the one that carried you in. If a door only opens the one way, mister, it isn't a door.",
             "[c=dim]It's a throat.[/c]",
         ])])
     # Garrick -- the old man at the well, town square, watching who comes
@@ -721,10 +716,8 @@ def build_brimley():
                 lambda g: g.save.flag("preacher_body_seen"), [
             "The reverend's gone quiet. Any other week you'd hear him "
             "clear from here, worked up over something or other.",
-            "[c=dim]Nothing out of him for days now. Man spends his life "
-            "raising his voice, then nothing at all.[/c]",
-            "[c=dim]You go by and look in on him, son. Somebody ought "
-            "to.[/c]",
+            "Nothing out of him for days now. Man spends his life raising his voice, then nothing at all.",
+            "You go by and look in on him, son. Somebody ought to.",
         ])])
 
     # ---- Run-down + cult presence among the buildings ----

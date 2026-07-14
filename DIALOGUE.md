@@ -176,33 +176,33 @@ the words.
   - (npc) "The ones who came before you walked in friendly and smiling too. Every last one of them. You understand my position."
   - (pi) "If I were one of them, would I be standing in the law's office announcing myself?"
   - (npc) "No. No, they never had questions. That's the one thing you've got going for you."
-  - (npc) "[c=dim]I'd head home if I were you. I'm supposed to say that.[/c]"
+  - (npc) "I'd head home if I were you. I'm supposed to say that."
 - **Opener photo:**
   - (npc) "(He takes it to the window light and works it corner to corner, a lawman's look.)"
   - (npc) "I can't put a day or a door to her. The new folk came in numbers and they keep to their own. She'd have been one of them."
   - (npc) "They filled the school, the barn, the lodge. Then one night those rooms were empty, all at once. Wherever your girl is, that's the direction. I can't tell you where it GOES."
-  - (pi) "[c=dim]More of an answer than anyone else in this town has risked. He watched those rooms. He is still working it.[/c]"
+  - (pi) "[c=dim]More of an answer than anyone in this town has risked. He watched those rooms.[/c]"
 - **Exchange `car`** — "My car died the night I drove in." (files the fold note, no chained reflection)
   - (npc) "Won't start. Won't ever. Nothing with an engine leaves Brimley."
   - (pi) "Engines don't all quit at once. Somebody got to it."
   - (npc) "Nobody touched your car. I know how that sounds. I've watched men tear three trucks down to the block hunting the part that failed. There is no part."
   - (npc) "[c=dim]It's the town.[/c]"
-  - (pi) "[c=dim]He said it flat. Like weather. A town does not talk that way about nothing. So.[/c]"
+  - (pi) "[c=dim]He said it flat. Like weather. So.[/c]"
 - **Exchange `town`** — "What happened to this town?"
   - (npc) "I was born here. So was my dad."
   - (npc) "They started showing up in the summer. The new ones. Polite folks. After a while the road stopped going anywhere."
-  - (npc) "[c=dim]I tell people to leave. I haven't been able to in months.[/c]"
+  - (npc) "I tell people to leave. I haven't been able to in months."
 - **Exchange `share_journal`** (avail: intro asked + journal found; hope + trust) — "I found Mara's journal."
   - (npc) "Say the first part again. The same door. All of them."
   - (pi) "All of them. And she didn't write like a prisoner. She wrote like a woman nearly home."
   - (npc) "A year I've been asking this town for one honest page. You walk in off a dead road and hand me her whole hand."
   - (npc) "That's the first real piece of work anybody has brought through that door since it all shut. I won't forget you did."
-  - (pi) "[c=dim]Something in him let go a notch. Not relief. More like a man who had been carrying a case alone and just heard a second pair of boots.[/c]"
+  - (pi) "[c=dim]Something in him let go a notch.[/c]"
 - **Exchange `share_ledger`** (avail: intro asked + Ledger read) — "The lodge registers are wrong."
   - (npc) "Now that is evidence. Paper with dates on it. God, I have missed paper with dates on it."
   - (npc) "I never got past that desk. Sable smiles, the whole building goes polite, and you walk out without whatever you came in for."
   - (npc) "Keep pulling threads like that and this town might finally owe somebody the truth. Watch who sees you pull them."
-  - (pi) "[c=dim]He wrote it down. First thing I have said in this town that anyone wrote down.[/c]"
+  - (pi) "[c=dim]He wrote it down.[/c]"
 - **Exchange `paper`** (avail: intro asked + carries newspaper) — "I brought yesterday's newspaper." (despair lever, +VANE_PAPER_DESPAIR)
   - (npc) "(He takes it in both hands, careful, like something that might go out.)"
   - (npc) "(He spreads it flat on the desk and stands over the front page a long time.)"
@@ -219,15 +219,15 @@ the words.
   - (npc) "No name. I asked twice. He sat there lit up like a man warming his hands at a stove. Said the dream had promised him his eyes. Said when the work is finished he'll open them, and they'll work."
   - (pi) "He wasn't there to confess anything. He was there to fetch you."
   - (npc) "He made the offer. Told me to name the thing I want most in this world, and come with him, and it would be waiting. I put him out. He thanked me for my time and he left smiling."
-  - (npc) "So there's your how. You don't talk a hundred strangers onto one road. Something finds out what each of them is starving for, and it promises that. Nobody in that line was tricked into a thing. That's the piece that keeps my lights on at night."
+  - (npc) "You don't talk a hundred strangers onto one road. They weren't tricked. Every one of them was going toward something, and glad of it. What it was, who was holding it out, I never got closer than that chair. That's the piece that keeps my lights on at night."
 - **On leave** (`vane_on_leave`, once):
   - (npc) "Hey. If you do find her, don't bring her by the office. There's no report worth filing anymore."
   - (npc) "Just get her out. If you find a way that works, that is. And then you come tell me what it was."
 - **One-shot: the preacher** (`sheriff_dialogue`, avail: body found + met him; +VANE_DESPAIR_ACT):
   - "They killed the preacher."
   - "He named them from his pulpit. Then he walked down to the water to fetch his flock home. They left him on the bank for us to find."
-  - "[c=dim]I didn't write a report. Who would I send it to.[/c]"
-  - "[c=dim]He doesn't say the Reverend's name. You realize nobody in town has.[/c]"
+  - "I didn't write a report. Who would I send it to."
+  - "[c=dim]He doesn't say the Reverend's name. Nobody in town has.[/c]"
 
 ## Hettie — the store, quiet resister
 - **Voice:** `blip_high`. **Code:** `scenes/dialogue.py` `HETTIE_CONVO`,
@@ -245,11 +245,11 @@ the words.
   - (npc) "Faces come through this shop. I stopped keeping them."
 - **Exchange `safe`** (avail: intro asked) — "Who is 'they'?"
   - (npc) "You haven't gone quiet. Like the others. Good. Then listen once."
-  - (npc) "[c=dim]Don't trust the easy ones. The first to make peace, they went the soonest.[/c]"
+  - (npc) "Don't trust the easy ones. The first to make peace, they went the soonest."
   - (npc) "That's the whole answer you're getting to that."
 - **Exchange `others`** (avail: saw photo or volunteered memory) — "Others came asking before me."
   - (npc) "I sold to the girl too. And the ones before her."
-  - (npc) "[c=dim]None of them came back to buy again. You're the first.[/c]"
+  - (npc) "None of them came back to buy again. You're the first."
 - **Exchange `way_out`** (avail: heard the fold) — "Is there a way out?"
   - (npc) "(She glances at the door before she speaks.)"
   - (npc) "If you find the way out. The real one. You don't owe this town a goodbye. Just go."
@@ -258,7 +258,7 @@ the words.
 - **One-shot: the Mara memory** (avail: shown the photo; hands over the tab, `grant_receipt`):
   - "Your girl. I'll tell you the one thing I know that's worth the telling."
   - "She used to come in here. Matches, canned milk. Counted her change twice, every time, like it mattered. Sad around the eyes, and polite with it."
-  - "[c=dim]Then one day past the new year she set her basket down half filled and walked out smiling. Left the basket on the counter. I never saw her again.[/c]"
+  - "Then one day past the new year she set her basket down half filled and walked out smiling. Left the basket on the counter. I never saw her again."
   - "[c=dim]It was the smiling I minded.[/c]"
   - (if tab not yet lifted) "[c=dim]She works a curled slip off the spike by the till and sets it on the counter, turned toward you. Her tab for the girl. Matches, canned milk, week on week.[/c]"
 - **One-shot: the newspaper trade** (avail: met her, carries newspaper):
@@ -291,10 +291,10 @@ the words.
   - (npc) "They weren't taken. They walked off willing, and sold the Lord to ease their own aches."
   - (ask) "He is working himself hot. The next words go somewhere they can be heard."
     - **Press him. Names carry.** → (pi) "Somebody should say it where they can hear. You're the only one in this town still willing." / (npc) "I preach it plain, and spare no sinner. The sheriff hears every word, and never once takes communion." / (npc) "Let them come for an old man. I've buried better than the thing they kneel to." *(`_crane_provoked`)*
-    - **Hold him back. It is not worth his life.** → (pi) "Keep it inside these walls, Reverend. In this town the ones who go quiet are the loud ones." / (npc) "(A long breath goes out of him.) You sound like a man who means it. All right. Inside these walls. For now." / (pi) "[c=dim]For now. A man like that only banks a fire. He never puts it out.[/c]"
+    - **Hold him back. It is not worth his life.** → (pi) "Keep it inside these walls, Reverend. In this town the ones who go quiet are the loud ones." / (npc) "(A long breath goes out of him.) You sound like a man who means it. All right. Inside these walls. For now." / (pi) "[c=dim]For now. He's only banking the fire.[/c]"
 - **One-shot: the bell** (`preacher_dialogue`, avail: bell rung + met him):
   - "That was you in my tower. The bell has not swung in years. Nobody left worth calling."
-  - "They heard it, though. Everything in this town comes when something rings loud enough. Remember that."
+  - "They heard it, though. Down that road, something always does."
 - **On leave** (`crane_on_leave`, once):
   - (npc) "I've said what I've said. Go on now, and watch the road."
 - **Provoke note** (`_crane_provoked`, case note): "[c=dim]I wound the old man up and pointed him at them. He wanted pointing. That is what I will tell myself.[/c]"
@@ -310,13 +310,13 @@ the words.
   - (npc) "A detective. For real? Like on the TV."
   - (npc) "Nobody here would hire one. Asking questions is what you stop doing, if you live here."
   - (pi) "Well. I'm asking. And I don't mind talking to you."
-  - (npc) "[c=dim]I know. Don't tell my mom.[/c]"
+  - (npc) "I know. Don't tell my mom."
 - **Opener photo** (sets `toby_told`):
   - (npc) "That's her. She came in after all the others did. The last one. Folks thought the strangers were done coming, and then her car came up the road alone."
   - (npc) "They slept all over then. The barn. The lodge. My school too, in rows, right where we do our letters."
   - (npc) "Then one night they all went down. A whole line of them in the dark, along the river to where the ground is broke open. I followed."
   - (npc) "They climbed into it. Under the field. She never came back up. None of them did. I saw where they go."
-  - (npc) "[c=dim]You can't walk there. I looked in the daytime and the field just put me back. And that is where the bad thing is. I know it.[/c]"
+  - (npc) "You can't walk there. I looked in the daytime, and the field just put me back."
   - (npc) "[c=dim]Keep her picture put away. Some of them look at what you carry.[/c]"
 - **Exchange `home`** — "Anything strange at home?"
   - (npc) "My mom hums a song that doesn't stop. She doesn't know she's doing it."
@@ -344,20 +344,20 @@ the words.
   `scenes/brimley.py`. Locals describe **failure, never pattern** about the
   roads (§4). Each carries the shared opener pair + one or two signature
   questions. **Royce (blip_mid):**
-  - Intro tail: (npc) "[c=dim]The finding I can't speak to. The driving home I can. Ask me about the roads sometime. Ask me what they do.[/c]"
-  - `roads` — "What do the roads do?": (npc) "I drove it. River road, county line, every road out of Brimley. Same as everybody in this town with a set of keys. The corn handed me back every time." / (npc) "Same bend. Same bridge. Same town coming up in the windshield. And I'd swear to you on anything I never turned the wheel." / (npc) "[c=dim]I gave it up. Everybody did. There's no out to drive to.[/c]" / (pi) "[c=dim]Said flat, no fear in it. A whole town of drivers doesn't quit the road over nothing. So.[/c]"
+  - Intro tail: (npc) "The finding I can't speak to. The driving home I can. Ask me about the roads sometime. Ask me what they do."
+  - `roads` — "What do the roads do?": (npc) "I drove it. River road, county line, every road out of Brimley. Same as everybody in this town with a set of keys. The corn handed me back every time." / (npc) "Same bend. Same bridge. Same town coming up in the windshield. And I'd swear to you on anything I never turned the wheel." / (npc) "[c=dim]I gave it up. Everybody did. There's no out to drive to.[/c]" / (pi) "[c=dim]Said flat. No fear left in it.[/c]"
   - `how_in` (avail: roads asked) — "Something on your mind?": (npc) "You came IN. That's what's on my mind. That road only ever hands a man BACK, and it carried you in easy as Sunday." → ask:
     - **Tell him the truth** → (pi) "I drove up at night. Radio went to static past the county line, and the road just drove. There was nothing to it." / (npc) "(Something goes out of him.) Nothing to it. Every driver in this town tried that same drive till they quit. For you it just drove." / (npc) "[c=dim]Then it wanted you in, mister. I'd chew a while on what that means for getting out.[/c]"
-    - **Give him nothing** → (pi) "Same as anybody drives anywhere. I wasn't paying attention." / (npc) "Wasn't paying attention. (He laughs, and there's no fun in it.) No. I don't suppose you were." / (npc) "[c=dim]The ones it wants, it waves through. You go on not paying attention.[/c]"
+    - **Give him nothing** → (pi) "Same as anybody drives anywhere. I wasn't paying attention." / (npc) "Wasn't paying attention. (He laughs, and there's no fun in it.) No. I don't suppose you were." / (npc) "[c=dim]Sure you weren't. (He looks back down the road.) Nobody drives that road easy. Nobody but you.[/c]"
 - **Garrick (blip_mid):** greet "Seen you already, son. Door to door, both banks. I sit this square most of the day. Everything in Brimley crosses it sooner or later." Intro tail: (npc) "[c=dim]The Sheriff will tell you to head on home. He knows you can't. He can't either.[/c]"
   - `roads` — "Any safe way around this town?": (npc) "Stay on the roads. People who go off the roads come out wrong-side of where they went in. I've watched it happen to better walkers than you." / (npc) "And don't put your faith in a road going where it went last week. Make for the county line and you'll be back at this well by supper." / (npc) "[c=dim]Go on home, son. ...Oh. Right. None of us can.[/c]"
 - **Old Pell (grower, the corn pride + uncut-fields grief), Mrs. Calder (the plate for a guest she can't name):** their `PELL_CONVO` / `CALDER_CONVO` beats carry the shared opener + signature questions; their reactive stoop lines live in `scenes/brimley.py` (`beat_pell_coal`, `beat_calder_unlatched`, Calder greet). Key stoop beats:
-  - Pell: "[c=dim]Whatever you're finding out there, don't bring it up my step. I've got the calendar where I want it. Stopped. Some of us need it stopped.[/c]"
-  - Calder greet: "[c=dim]No. No, it couldn't be you. Forgive an old woman her hoping.[/c]"
-  - Calder: "[c=dim]I've started leaving the door unlatched at night. It seemed... polite.[/c]"
-  - Royce stoop: "[c=dim]I keep turning it over. Every road out of Brimley hands you back. Except the one that carried you in. If a door only opens the one way, mister, it isn't a door.[/c]"
-  - Garrick stoop (preacher): "[c=dim]Nothing out of him for days now. Man spends his life raising his voice, then nothing at all.[/c]" / "[c=dim]You go by and look in on him, son. Somebody ought to.[/c]"
-  - Hettie stoop: "[c=dim]I keep the lights on. So they know. Someone's keeping them on.[/c]"
+  - Pell: "Whatever you're finding out there, don't bring it up my step. I've got the calendar where I want it. Stopped. Some of us need it stopped."
+  - Calder greet: "No. No, it couldn't be you. Forgive an old woman her hoping."
+  - Calder: "I've started leaving the door unlatched at night. It seemed... polite."
+  - Royce stoop: "I keep turning it over. Every road out of Brimley hands you back. Except the one that carried you in. If a door only opens the one way, mister, it isn't a door."
+  - Garrick stoop (preacher): "Nothing out of him for days now. Man spends his life raising his voice, then nothing at all." / "You go by and look in on him, son. Somebody ought to."
+  - Hettie stoop: "I keep the lights on. So they know. Someone's keeping them on."
 
 ## Mara — the confrontation
 - **Voice:** `blip_mid`. **Code:** `scenes/well.py` `MARA_CONVO`,
@@ -368,15 +368,15 @@ the words.
 - **Greet** (`mara_confront_greeted`):
   - (npc) "My father sent you. Of course he did. He never could let a thing stay lost."
   - (npc) "Tell him what I told him at the start. I'm not lost. I've never been this close."
-  - (npc) "[c=dim]There was no one down here to bring back. I was not taken. I was answered, and I went to it gladly.[/c]"
+  - (npc) "[c=dim]I was not taken. I was answered, and I went to it gladly.[/c]"
 - **Exchange `leave`** — "Come with me.":
   - (npc) "Out."
   - (npc) "Nobody leaves, mister. Nobody has left since the winter. You have walked the roads by now. You know it better than the ones who quit trying."
-  - (npc) "[c=dim]And why would I go. He is right there. A few feet of earth, and he is right there.[/c]"
+  - (npc) "And why would I go. He is right there. A few feet of earth, and he is right there."
 - **Exchange `way_out`** — "How do I get out?":
   - (npc) "There isn't. We can't. None of us can."
   - (npc) "It is not a wall, mister. A wall has a far side. Every way out of this town is a way further in."
-  - (npc) "[c=dim]Go home, while the town still lets you think you can.[/c]"
+  - (npc) "Go home, while the town still lets you think you can."
 - **Exchange `father`** (ends the confrontation; sets `mara_lucid`) — "Your father is waiting.":
   - (npc) "My father."
   - (npc) "[c=dim]He used to wait up. However late I came home. He never said a word about it, but the kitchen light would be on.[/c]"
@@ -386,7 +386,7 @@ the words.
   - (npc) "You are real. You came from outside. What am I doing down here."
   - (pi) "Come home. Come with me, right now, and don't look back."
   - (npc) "[c=dim]Home.[/c]"
-  - (npc) "[c=dim]Say what is up there for me. Out loud. Say what I go back to.[/c]"
+  - (npc) "Say what is up there for me. Out loud. Say what I go back to."
   - (npc) "Nothing. It happened, and up there it stays happened, every morning, forever. Down here it is not finished happening. Down here he is still coming."
   - (npc) "There is no out, mister. Not for me. Only deeper."
   - (npc) "[c=dim]Tell my father I was happy here. Tell him whatever makes him stop.[/c]"
@@ -394,12 +394,12 @@ the words.
   - (npc) "[c=dim]She goes still in a way the kneeling ones do not. Something behind her face tears loose.[/c]"
   - (npc) "Don't. You don't get to carry that name down here and set it down in front of me."
   - (npc) "[c=dim]Her hand closes on your coat, hard. Down the aisle the rank stirs all at once, like one body turning over in its sleep. The air pulls tight.[/c]"
-  - (pi) "(You hold out the bear. The tag toward her, the name toward her.)"
+  - (pi) "[c=dim](You hold out the bear. The tag toward her, the name toward her.)[/c]"
   - (npc) "[c=dim]She looks at it the way you would look at your own hand if it came off in the dark. She does not take it. She cannot make her arms cross the space.[/c]"
   - (npc) "Put it away. Put it AWAY."
   - (npc) "You think I don't know. You think I clawed my way down into this dark because I believe he is here, waiting up for me."
   - (npc) "He is not here. He was never anywhere. I knew it the day they laid him in my arms already gone, and I know it now, with my hands in this dirt."
-  - (npc) "[c=dim]But while I am still going down toward something, he is still somewhere ahead of me. Stop digging and he is nowhere at all. That is what you are asking me to put down. Not the dig. Him.[/c]"
+  - (npc) "But while I am still going down toward something, he is still somewhere ahead of me. Stop digging and he is nowhere at all. That is what you are asking me to put down. Not the dig. Him."
   - (npc) "So keep your bear. I will go back down to the only place he is still coming."
   - (npc) "[c=dim]She lets go of your coat, turns, and kneels back into the rank. The chamber settles, as though nothing rose.[/c]"
 
@@ -438,12 +438,9 @@ counted): `the_ledger`, `the_preacher`, `the_congregation`, `the_dream`,
 - **`the_how`** (`_vane_how_told`, note): "[c=dim]The sheriff spent his one
   card. A blind man, no name, lit up with certainty, promised his own eyes by
   the dream once the work is finished. Sent to fetch the last holdout, and
-  thanked him for refusing. / So that is the how. Nobody was argued north.
-  Each of them was promised the one thing they were starving for, and every
-  one of them came gladly.[/c]"
-- **`the_congregation`** (`_mara_voice`, note): "Mara, kneeling with the
-  congregation. Turned. There was never anyone to bring back. Only this, and
-  now you're in it with her."
+  thanked him for refusing. / Nobody was argued north.
+  Each of them was promised the one thing they were starving for, and every one came gladly.[/c]"
+- **`the_congregation`** (`_mara_voice`, note): "Mara, kneeling with the congregation. Turned. There was never anyone to bring back."
 - **`the_dream`** (`_log_dream_entry`, note; canon-guarded "a year", no
   recurrence): "I never reached it. One dream, a year ago, and it never came
   again. So why do I know this place."
@@ -477,11 +474,9 @@ a case note.
 roads) and `Game.cross_fold` (`_note_fold_portal` = a visible pane, awe;
 `_note_fold_loop` = the second silent loop, the creep). The perceptible
 spatial fold only (looping roads), never the door or the cosmology.
-- **`the_fold_told`** note: "[c=dim]... And my own engine turned over and died
-  at the lodge steps. So.[/c]"; the spoken reflection: "{name} says there's no
+- **`the_fold_told`** note: "[c=dim]... And my own engine turned over and died at the lodge steps.[/c]"; the spoken reflection: "{name} says there's no
   driving out of here. The roads loop, the corn hands you back. Said it like
-  weather." / "A town doesn't talk like that about nothing. And my car died
-  at the steps. ...So."
+  weather." / "A town doesn't talk like that about nothing. And my car died at the steps."
 
 ## The dream & the threshold recognition
 - **The journal door-dream** (on `mom_notebook` pickup): wordless cutscene,
