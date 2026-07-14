@@ -538,6 +538,14 @@ resources (armor slots return 0). Consider: transforming the stun into a
 tactical window rather than a tax, an easy/hard toggle, or light resource
 tension — only if it serves the horror, not despite it.
 
+- **Two-touch cult grab LANDED (play-notes 2026-07).** Capture-on-contact
+  was softened: after the one-time Talk, the FIRST grab of an encounter shoves
+  the PI free (`_cult_shrug_off` — grabbers stagger, he bursts loose with
+  `CULT_SHRUG_INVULN` grace), and only a SECOND grab before he reaches a
+  SAFE_SCENE is the CAPTURED fail state (`_cult_touch_count`, reset only on a
+  safe zone). Directly answers the "nothing you can do once they're on you"
+  play-note. Still open here: the gun stun-window and difficulty options.
+
 ## Deferred / north star
 
 ### 7. **[Fable]** The liminal-composition pass  *(DESIGN.md §4/§10)*

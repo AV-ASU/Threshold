@@ -2689,6 +2689,13 @@ def main():
           "talk: the warning is the locked line (hotel room, then run)")
     check("midwestern welcome" in _tblob,
           "talk: the PI's reaction lands after the release")
+    # After the Talk, the grab is TWO-TOUCH (play-notes): the first grab of an
+    # encounter shoves the PI free, only the second is the capture.
+    gt2._trigger_death("cultist")
+    check(gt2._death_kind is None,
+          "talk: after the Talk, the first grab SHOVES you free (two-touch)")
+    check(gt2._cult_touch_count == 1,
+          "talk: the shove registers one touch")
     gt2._trigger_death("cultist")
     check(gt2._death_kind == "cultist",
           "talk: the second grab is the CAPTURED card")

@@ -965,10 +965,15 @@ class ThreatMixin:
         later cultist grab is the CAPTURED card."""
         if self._death_kind is not None:
             return
-        if (kind == "cultist" and self.save is not None
-                and not self.save.flag("cult_talk_given")):
-            self._cult_talk()
-            return
+        if kind == "cultist" and self.save is not None:
+            if not self.save.flag("cult_talk_given"):
+                self._cult_talk()
+                return
+            # Two-touch (play-notes): the first grab of an encounter shoves the
+            # PI free; only a SECOND grab before he reaches a safe zone takes
+            # him. The cult captures, it does not kill -- one hold is survivable.
+            if self._cult_shrug_off():
+                return
         self._death_kind = kind
         self._death_t = 0.0
         self._closure_locked = True
@@ -980,6 +985,44 @@ class ThreatMixin:
             self.audio.play("custody_bed", 1.0)
         else:
             self.audio.play("captured_bed", 1.0)
+
+    def _cult_shrug_off(self):
+        """The two-touch grab (play-notes). The FIRST grab of an encounter is
+        a shove, not the end: the grabbers stagger, the PI tears free on a
+        burst of speed with a beat of grace. Returns True (handled -- no
+        capture) for that first touch; False on the SECOND, so the capture
+        proceeds. The count resets only on reaching a safe zone
+        (load_scene_now), so a swarm or a corner still takes you."""
+        self._cult_touch_count = getattr(self, "_cult_touch_count", 0) + 1
+        if self._cult_touch_count >= 2:
+            return False                     # second touch -> the capture
+        p = self.player
+        if p is None:
+            return False
+        # Tear free: a panic burst, a beat of grace, and a stagger on every
+        # near cultist so the shove reads and the burst has room to run.
+        p._burst_t = max(getattr(p, "_burst_t", 0.0), STRUGGLE_BURST_T)
+        p.invuln = max(getattr(p, "invuln", 0.0), CULT_SHRUG_INVULN)
+        if getattr(p, "hidden", None) is not None:      # pulled from a hide
+            p.hidden = None
+            if getattr(p, "hide_origin", None) is not None:
+                p.x, p.y = p.hide_origin
+                p.hide_origin = None
+        self._struggle = None
+        if self.scene is not None:
+            grabbers = list(self.scene.npcs) + list(
+                getattr(self.scene, "enemies", []))
+            for n in grabbers:
+                tag = getattr(n, "tag", "")
+                is_cult = (getattr(n, "kind", "") == "cultist"
+                           or (isinstance(tag, str)
+                               and tag.startswith("cult_")))
+                if is_cult and math.hypot(n.x - p.x,
+                                          n.y - p.y) < CULT_SHRUG_RANGE:
+                    n._stun_t = max(getattr(n, "_stun_t", 0.0), STRUGGLE_STUN)
+        self.audio.play("cult_lose", 0.7)
+        self.show_notice("Hands on you. You tear free.", duration=2.0)
+        return True
 
     def _cult_talk(self):
         """The one warning (the freebie). The hand comes down, the

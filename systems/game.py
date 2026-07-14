@@ -282,6 +282,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         self._watchers = []            # Watcher NPCs currently manifested
         self._watcher_clone_t = WATCHER_GRACE   # exposure timer to next spawn
         self._watcher_gaze = 0.0       # live Watchers holding the exposed player
+        self._cult_touch_count = 0     # two-touch cult grab: resets in a safe zone
         self._gaze_count = 0           # cultists watching the player this frame
         self._cult_topup_t = 0.0       # rate-limits cultist (re)spawns per scene
         self._cult_prefilled = False   # per-load: filled roamers to scene target yet?
@@ -500,6 +501,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         self._watchers = []
         self._watcher_clone_t = WATCHER_GRACE
         self._watcher_gaze = 0.0
+        self._cult_touch_count = 0
         self._gaze_count = 0
         self._cult_topup_t = 0.0
         self._cult_prefilled = False
@@ -797,6 +799,11 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
         # the new scene from the persistent curse. Clear the old set and
         # the per-scene cultist top-up timer so cultists re-populate.
         self._watchers = []
+        # Reaching a SAFE_SCENE resets the two-touch cult grab (play-notes):
+        # you can't be mid-grab inside a refuge, so a fresh encounter after
+        # starts the touch count over.
+        if key in SAFE_SCENES:
+            self._cult_touch_count = 0
         self._gaze_count = 0
         self._cult_topup_t = 0.0
         # Fresh scene: re-fill roaming cultists to the scene's target on the

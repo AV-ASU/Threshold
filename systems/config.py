@@ -478,6 +478,15 @@ STRUGGLE_PRESSES = 5          # E/SPACE presses needed
 STRUGGLE_BURST_T = 0.9        # s of panic-burst speed after winning
 STRUGGLE_BURST_MULT = 1.8     # burst speed multiplier
 STRUGGLE_STUN = 1.4           # s the checker staggers after a burst-out
+# Two-touch cult grab (play-notes): the cult CAPTURES, it does not kill, so a
+# first grab is a shove, not the end. The FIRST grab of an encounter tears the
+# PI free (grabbers stagger STRUGGLE_STUN, he bursts on STRUGGLE_BURST_T) with
+# CULT_SHRUG_INVULN s of grace; a SECOND grab before he reaches a SAFE_SCENE is
+# the capture. The touch count resets only on reaching a safe zone (no decay),
+# so a swarm still buries you and getting cornered still ends the run. The
+# one-time Talk (cult_talk_given) is still the very first contact of a run.
+CULT_SHRUG_INVULN = 0.7       # s of grace after tearing free (no re-grab)
+CULT_SHRUG_RANGE = 44.0       # px: grabbers within this stagger on the shove
 
 # ---- The noise core (2026-07 sound overhaul) ------------------------------
 # World noises broadcast through Scene.emit_noise; the cult hears them

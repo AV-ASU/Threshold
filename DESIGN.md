@@ -101,9 +101,12 @@ your agency on the exact line that arms the King:
   cultist that locks on **blooms into His maw** (the vessel transform). *The
   deeper you see, the less the world lets you kill.*
 
-The gun never makes you safe: **capture-on-contact is still the fail state**
-(a cultist that reaches you takes you — CAPTURED), and **the King cannot be
-shot at all** — you can't fire down a direction you can't point at (NARRATIVE §2).
+The gun never makes you safe: the cult still takes you — but the grab is
+**two-touch** now (play-notes): the first grab of an encounter shoves you
+free (`_cult_shrug_off`), and only a **second** grab before you reach a safe
+zone is the CAPTURED fail state (a swarm or a corner still ends it). **The
+King cannot be shot at all** — you can't fire down a direction you can't
+point at (NARRATIVE §2).
 A shot is **loud** — His gaze hears it. The flashlight, the splitting axe
 (chop + stun), and hide-spots remain; the pistol sits alongside them, not
 over them.
@@ -1323,7 +1326,13 @@ the moment, not the room). **Lose / ignore** → grabbed → the normal cultist
 capture death (`_trigger_death("cultist")`, the CAPTURED card). Only
 reachable from a checked enclosed hide; concealment cover never triggers it
 (getting found in corn just resumes CHASE). The **first cult grab of a run
-is THE TALK** (a warning, not a capture -- threat model §1).
+is THE TALK** (a warning, not a capture -- threat model §1), and after that
+every cult grab is **two-touch**: the first hold of an encounter shoves you
+free (`_cult_shrug_off` -- the grabbers stagger, you burst loose with a beat
+of grace), and only a SECOND grab before you reach a SAFE_SCENE is the
+capture (`_cult_touch_count`, reset only on a safe zone, so a swarm or a
+corner still takes you). A struggle LOSS counts as a grab through the same
+path.
 
 ### Visibility model under the rework
 

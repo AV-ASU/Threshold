@@ -469,9 +469,15 @@ it renders the procedural sprites to a labelled PNG strip.
   FIRST cult grab of a run is a warning, not a capture** — `_cult_talk`
   (threat_mixin) plays the courteous one-liner, stands the room down,
   grants a short re-grab grace, and files a NOTE (flag `cult_talk_given`;
-  gates every grab site, struggle losses included). After that,
-  `kind="cultist"` shows the **CAPTURED** card (taken alive for the
-  hive); `kind="sheriff"` the
+  gates every grab site, struggle losses included). After the Talk, the
+  cult grab is **TWO-TOUCH** (play-notes): the FIRST grab of an encounter
+  shoves the PI free (`_cult_shrug_off` — grabbers stagger `STRUGGLE_STUN`,
+  he tears loose on a `STRUGGLE_BURST_T` burst with `CULT_SHRUG_INVULN`
+  grace); only a SECOND grab before he reaches a `SAFE_SCENE` is the
+  capture (`_cult_touch_count`, reset on a safe-scene load, no time decay,
+  so a swarm or a corner still takes you). The cult CAPTURES, it does not
+  kill. Then `kind="cultist"` shows the **CAPTURED** card (taken alive for
+  the hive); `kind="sheriff"` the
   **TAKEN INTO CUSTODY** card (the hollow lawman); `kind="king"` plays the
   **Carcosa** mask-furnace cutscene. All end the run and return to title.
 - **The calling-out (2026-07):** Mara kneels among the Sign Chamber
