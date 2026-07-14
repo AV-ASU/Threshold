@@ -1033,7 +1033,9 @@ def build_brimley():
         if abs(game.player.x - bx) < 36 and abs(game.player.y - by) < 36:
             if not game.save.flag("barrow_inspected"):
                 game.save.set_flag("barrow_inspected", True)
-                _evidence(game, "barrow_tools", "Some old tools.")
+                _evidence(game, "barrow_tools",
+                          "Digging tools left in the barrow, rusted over. "
+                          "The edges are still bright.")
             return
         # The news rack outside the shop -- the last issue it was fed.
         nx_, ny_ = sc._news_rack_pos
@@ -1046,19 +1048,11 @@ def build_brimley():
                 "ever fed it another.[/c]",
             ], speaker="", voice="blip_soft", portrait="narrator")
             return
-        # The payphone -- it won't dial out. The line is never dead,
-        # though; something is always already on it.
-        px, py = sc._payphone_pos
-        if abs(game.player.x - px) < 40 and abs(game.player.y - py) < 40:
-            game.audio.play("blip_low", 0.5)
-            game.dialog.show([
-                "No dial tone. No ringing. The line is open to something.",
-                "[c=dim]Far down it, under the hiss, you hear your own "
-                "voice, already mid-sentence.[/c]",
-            ], speaker="", voice="blip_soft", portrait="narrator")
+        # The payphone examine was CUT (play-notes): the dead phone stays as
+        # silent set-dressing (the prop), but the narrator no longer says its
+        # line for you. It carries no evidence or pointer, so nothing is lost.
     sc.add_interactable(sc._well_pos[0], sc._well_pos[1], 36)
     sc.add_interactable(sc._barrow_pos[0], sc._barrow_pos[1], 36)
-    sc.add_interactable(sc._payphone_pos[0], sc._payphone_pos[1], 40)
     sc.add_interactable(sc._news_rack_pos[0], sc._news_rack_pos[1], 36)
 
     sc.on_interact_fn = _brimley_interact

@@ -1221,7 +1221,7 @@ def main():
     # The menu options ARE the PI's own spoken lines; picking one plays an
     # organic PI<->NPC exchange over their heads (ui/conversation), and new
     # questions open as the case grows. Guard the engine + Sable's script.
-    from scenes.dialogue import SABLE_CONVO, _REVISIT_NUDGES
+    from scenes.dialogue import SABLE_CONVO
     from ui.conversation import Conversation
 
     def _npc_stub(gg):
@@ -1263,26 +1263,20 @@ def main():
     check(q_checkouts["avail"](ga),
           "ask: reading the Ledger opens the register question")
 
-    # (4) The discovery nudges the PI back. Reuse `ga`: not met yet -> no
-    # nudge (the question still opens on the evidence alone); once met, the
-    # discovery files a revisit NOTE (never evidence) and returns interior
-    # lines to ride the discovery's narration.
+    # (4) The per-discovery revisit nudges were CUT (play-notes): a discovery
+    # no longer appends an "I should go back and ask him" line or files a
+    # revisit note. The follow-up QUESTION still opens on the evidence alone
+    # (tested above), so nothing is lost but the hand-holding.
     from scenes.dialogue import _collect_revisit
-    ga.save.set_flag("sable_greeted", False)
-    check(_collect_revisit(ga, "the_ledger") == [],
-          "ask: no nudge for a person the PI has not met")
     ga.save.set_flag("sable_greeted", True)
     ga.save.set_arg("evidence", [])
-    extra = _collect_revisit(ga, "the_ledger")
-    check(extra and any("register" in ln.lower() for ln in extra),
-          "ask: a discovery nudges the PI to revisit the person he met")
-    check(any(isinstance(e, dict) and e.get("name") == "revisit_sable_checkouts"
-              for e in ga.save.arg("notes", [])),
-          "ask: the revisit nudge files a case NOTE, not evidence")
-    check(len(ga.save.arg("evidence", [])) == 0,
-          "ask: the nudge never inflates the evidence count")
+    ga.save.set_arg("notes", [])
     check(_collect_revisit(ga, "the_ledger") == [],
-          "ask: the revisit nudge fires only once")
+          "ask: the revisit nudge is cut (a discovery adds no interior append)")
+    check(not any(isinstance(e, dict)
+                  and e.get("name") == "revisit_sable_checkouts"
+                  for e in ga.save.arg("notes", [])),
+          "ask: no revisit note is filed (the nudges were cut)")
 
     # (5) An inline branch (show the photo) is a real fork with a side effect.
     mara = next(ex for ex in SABLE_CONVO["exchanges"] if ex["key"] == "mara")
@@ -1492,15 +1486,16 @@ def main():
     # nudge the player toward and no stall to break.
     from scenes.dialogue import _evidence as _evfn2
 
-    # A SILENTLY-filed beat (show=False -- the journal reads from the
-    # kit) must still land its nudges, or the case stalls voiceless:
-    # the journal really files revisit_sable_smile in-game.
+    # The per-discovery revisit nudges were CUT (play-notes): even a
+    # silently-filed beat (show=False) no longer files a revisit note. The
+    # follow-up question still opens on the evidence alone, so the case can
+    # never stall on a missing nudge.
     gsf = new_game()
     gsf.save.set_flag("sable_greeted", True)
     _evfn2(gsf, "maras_journal", "a", show=False)
-    check(any(e.get("name") == "revisit_sable_smile"
-              for e in gsf.save.arg("notes", [])),
-          "ask: a silently-filed discovery still lands its revisit nudge")
+    check(not any(e.get("name") == "revisit_sable_smile"
+                  for e in gsf.save.arg("notes", [])),
+          "ask: the revisit nudges are cut (no note on a silent discovery)")
 
     # Vane's car answer files the fold note WITHOUT hijacking the
     # conversation's float chain (reflect=False), and it opens Sable's
