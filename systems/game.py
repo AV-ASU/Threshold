@@ -2387,8 +2387,7 @@ class Game(CutsceneMixin, ThreatMixin, KingRoamMixin, RotMixin,
             "beat": [
                 "[c=dim]His face, in your hands. Light as folded paper, cold, "
                 "and it knows your grip.[/c]",
-                "[c=dim]The origin of every half reflection daubed on this "
-                "town's walls. The pale mask hums in your hand.[/c]",
+                "[c=dim]The pale mask hums in your hand.[/c]",
                 "[c=dim]And you KNOW it, the way you know a thing in a dream. "
                 "Carry this, and the town opens. The roads let you out.[/c]",
                 "[c=dim]The names, the register, the girl her father wanted "

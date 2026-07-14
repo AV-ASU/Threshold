@@ -203,9 +203,7 @@ def build_depths_antechamber():
         px, py = game.player.x, game.player.y
         if abs(px - (5 * TILE + 16)) < 36 and abs(py - (5 * TILE + 16)) < 36:
             _evidence(game, "the_fall",
-                "There is no way back above you and you are not hurt. The "
-                "way down didn't want you broken, only delivered. Cut stone, "
-                "worn smooth by years of feet that came this way before you."
+                "There is no way back above you, and you are not hurt. Cut stone, worn smooth by years of feet that came this way before you."
             )
     sc.on_interact_fn = _interact
     return sc
@@ -326,9 +324,7 @@ def build_depths_procession():
         game.dialog.show([
             "[c=dim]A line of candles down the dark, burned to coins. Each "
             "one stands in older wax, and older wax under that.[/c]",
-            "[c=dim]They walked this in single file, carrying light, many "
-            "more times than once. Nobody hurried. The wax says nobody "
-            "ever hurried.[/c]",
+            "[c=dim]They walked this in single file, carrying light. Nobody hurried. The wax says nobody ever hurried.[/c]",
         ], speaker="", voice="blip_soft", portrait="narrator")
         if hasattr(game, "_log_note"):
             game._log_note("the_procession", [
@@ -503,9 +499,7 @@ def build_depths_threshing():
         if abs(px - (6 * TILE + 16)) < 36 and abs(py - (5 * TILE + 16)) < 36:
             _evidence(game, "threshing_floor",
                 "The yield, raked into low heaps: grain, all of it, tithed "
-                "down from the fields above. The town's whole harvest, given "
-                "over to the dark below, carried down and never carried "
-                "back up. An offering. Not a stockpile."
+                "down from the fields above. The town's whole harvest, carried down and never carried back up."
             )
     sc.on_interact_fn = _interact
     return sc
@@ -577,9 +571,7 @@ def build_the_old_stores():
         if abs(px - (4 * TILE + 16)) < 36 and abs(py - (9 * TILE + 16)) < 36:
             _evidence(game, "the_old_stores_shelves",
                 "Shelves of the dig's gear: lamps burned black, pick hafts "
-                "worn down to the grain, every one tagged in the same "
-                "steady brown hand. An inventory of labor. The tools wore "
-                "out. The hands that held them kept going.")
+                "worn down to the grain, every one tagged in the same steady brown hand.")
             return
         nx, ny = sc._dig_note_pos
         if abs(px - nx) < 36 and abs(py - ny) < 36:
@@ -588,9 +580,7 @@ def build_the_old_stores():
                 game.player.inventory.add("cult_digging", 1)
                 game.audio.play("pickup_rare", 0.6)
                 game._log_note("cult_digging", [
-                    "The last pages stop being sentences. Just the word door, "
-                    "over and over, pressed hard enough to tear the paper. "
-                    "Whatever these people used to be, the digging finished it.",
+                    "The last pages stop being sentences. Just the word door, over and over, pressed hard enough to tear the paper.",
                 ])
                 game.show_notice("The Digging. Their last pages.")
                 return

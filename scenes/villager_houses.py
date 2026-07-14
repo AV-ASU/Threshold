@@ -243,7 +243,6 @@ def build_sheriff_office():
             "A booking slip in the Sheriff's records. Blaine, Mara.",
             "Held a night for a disturbance on the main road, shouting at "
             "the sky. Released at dawn, no charge filed.",
-            "She was coming apart in the open, and the law wrote it down.",
         ], show=False)
         if hasattr(game, "show_notice"):
             game.show_notice("Her booking slip.")
